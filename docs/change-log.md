@@ -73,6 +73,125 @@
 - 当前 Blueprint 已无 active queue；后续必须从 runtime-pack-unification version plan 做下一条 downstream queue admission review，而不是继续在已关闭的 runtime-family-contract queue 内扩张。
 - 剩余 residue 被分类为 cross-family：authoring convergence、export unification、base-pack inheritance、fixed-pack consumer deprivileging、compatibility retirement 仍按候选队列顺序推进。
 
+## 2026-07-14 Script Editor Runtime Family Authoring Convergence Queue Admission
+
+### Changed
+- 新增 [docs/blueprints/queues/script-editor-runtime-family-authoring-convergence-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-runtime-family-authoring-convergence-queue.md)，将 `queue.script-editor-runtime-family-authoring-convergence` 写成当前 live queue truth，并把范围收敛在作者面并行结构退场与 runtime 归一之前的最小 lawful 收口，不允许顺手扩张到 export unification、base-pack inheritance 或 consumer deprivileging。
+- 更新 [docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md) 与 [docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)，将 live entry 从已关闭的 runtime-family-contract queue 切换到 authoring-convergence queue，并记录当前 active task。
+- 补充 version plan 的 admission review record，明确 fresh evidence 来自 `src/domain/script-editor-project.ts`、`src/application/script-editor/runtime-pack-import.ts`、`src/application/script-editor/runtime-pack-export.ts`、`src/application/script-editor/workspace-shell.ts` 与 `src/ui/main-ui/main-ui-flow.js` 中仍然并存的 authoring-only 和 runtime family surface。
+
+### Impact
+- Blueprint 当前重新进入 active execution，但控制权已经从 contract freeze 转到 authoring convergence；后续代码/文档动作必须先收口作者面并行结构，再谈 export unification。
+- 当前 active queue 文档已明确下一步任务序列，避免把 authoring convergence 误当成 exporter 或 consumer 的实现 queue。
+
+## 2026-07-14 Script Editor Runtime Family Authoring Baseline Reconcile
+
+### Changed
+- 更新 [docs/blueprints/queues/script-editor-runtime-family-authoring-convergence-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-runtime-family-authoring-convergence-queue.md)，将 `task.script-editor-runtime-family-authoring-convergence.boundary-baseline-reconcile` 标记为 completed，并把当前 active task 推进到 `task.script-editor-runtime-family-authoring-convergence.authoring-parallel-structure-retirement-map`。
+- 更新 [docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md)，记录当前 queue 进展：作者面并行结构仍然存在，且该队列仍比 export unification、base-pack inheritance、fixed-pack consumer deprivileging、compatibility retirement 更窄。
+
+### Impact
+- 当前 authoring-convergence queue 已完成 baseline reconcile；下一步只能写 authoring-only parallel structure 的退场映射，不能提前进入导出实现或消费者改线。
+
+## 2026-07-14 Script Editor Runtime Family Authoring Retirement Map
+
+### Changed
+- 更新 [docs/blueprints/queues/script-editor-runtime-family-authoring-convergence-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-runtime-family-authoring-convergence-queue.md)，新增 Authoring Parallel Structure Retirement Map，明确 `people/cities/buildings/events/quests/textEntries` 可按 runtime-owned contract 收口，`dialogues/storyNodes/minigames` 必须交给后续 export unification 下沉，`conditionGroups/effectBundles` 只能作为 compiler input，`compatibilityImport.unresolvedFamilies` 必须从日常 authoring truth 退回迁移证据。
+- 更新 [docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md)，记录 retirement-map task 完成，并把当前 active task 推进到 `task.script-editor-runtime-family-authoring-convergence.queue-closeout-and-handoff`。
+
+### Impact
+- 当前 queue 已有明确的 authoring 结构退场图；剩余工作是 closeout/handoff，把仍需后续实现的 export、inheritance、consumer、compatibility residue 路由回版本级 review。
+
+## 2026-07-14 Script Editor Runtime Family Authoring Queue Closeout
+
+### Changed
+- 更新 [docs/blueprints/queues/script-editor-runtime-family-authoring-convergence-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-runtime-family-authoring-convergence-queue.md)，将 `queue.script-editor-runtime-family-authoring-convergence` 从 active 收口为 `done`，记录 bounded authoring-convergence slice 已完成并 verified。
+- 更新 [docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md) 与 [docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)，将 live version 从 active-execution 切回 promotion-review，清空 active_queue，并把 downstream recommendation 指向 `queue.script-editor-runtime-pack-export-unification`。
+
+### Impact
+- 当前 Blueprint 再次无 active queue；后续必须从 runtime-pack-unification version plan 做 export-unification admission review，而不是继续在已关闭的 authoring-convergence queue 内扩张。
+- 剩余 residue 被分类为 cross-family：export unification、base-pack inheritance governance、fixed-pack consumer deprivileging、compatibility retirement 仍按后续候选队列推进。
+
+## 2026-07-14 Script Editor Runtime Pack Export Unification Queue Admission
+
+### Changed
+- 新增 [docs/blueprints/queues/script-editor-runtime-pack-export-unification-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-runtime-pack-export-unification-queue.md)，将 `queue.script-editor-runtime-pack-export-unification` 写成当前 live queue truth，并把范围收敛在 formal startup-consumable scenario-pack export contract，不允许扩张进 basePackId inheritance、fixed-pack consumer deprivileging 或 compatibility retirement。
+- 更新 [docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md) 与 [docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)，将 live entry 从 version-level promotion-review 切回 active-execution，并记录当前 active task。
+- 记录 fresh evidence：`src/application/script-editor/runtime-pack-export.ts` 当前仍写空 `scenes.json`、未在 manifest 中输出 `activities`、对 `dialogues/minigames/storyNodes` fail closed，并且仍会因 `compatibilityImport.unresolvedFamilies` 阻塞 export；而 startup loader 已能消费 manifest-driven scenario-pack。
+
+### Impact
+- Blueprint 当前重新进入 active execution，但控制权已经从 authoring convergence 转到 runtime-pack export unification。
+- 后续动作必须先冻结 formal startup-consumable export contract，再决定是否进入实现或 closeout；不能用空 scenes、缺失 activities 或 compatibility residue 作为最终 runtime truth。
+
+## 2026-07-14 Script Editor Runtime Pack Export Baseline Reconcile
+
+### Changed
+- 更新 [docs/blueprints/queues/script-editor-runtime-pack-export-unification-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-runtime-pack-export-unification-queue.md)，将 `task.script-editor-runtime-pack-export-unification.boundary-baseline-reconcile` 标记为 completed，并把当前 active task 推进到 `task.script-editor-runtime-pack-export-unification.startup-consumable-export-contract-map`。
+- 更新 [docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md)，记录当前 exporter 仍是 bounded partial seam：空 `scenes.json`、缺少 `activities` manifest 输出、对 `dialogues/minigames/storyNodes` fail closed，并且仍受 `compatibilityImport.unresolvedFamilies` 阻塞。
+
+### Impact
+- 当前 export-unification queue 已完成 baseline reconcile；下一步只能写 startup-consumable export contract map，不能提前扩张到 basePackId inheritance、consumer deprivileging 或 compatibility retirement。
+
+## 2026-07-14 Script Editor Runtime Pack Export Contract Map
+
+### Changed
+- 更新 [docs/blueprints/queues/script-editor-runtime-pack-export-unification-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-runtime-pack-export-unification-queue.md)，新增 Startup-Consumable Export Contract Map，明确 `scenarioProfile/characters/cities/houses/events/scenes/activities/tasks/textEntries` 的正式导出义务、当前 gap、queue decision，以及 export fail-closed rules。
+- 更新 [docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md)，记录 export contract map 完成，并把当前 active task 推进到 `task.script-editor-runtime-pack-export-unification.queue-closeout-and-handoff`。
+
+### Impact
+- 当前 queue 已有正式 startup-consumable export 契约图；后续实现不得再用空 `scenes`、缺失 `activities`、private export dialect 或 `compatibilityImport` 残留来宣称 runtime-pack export 成功。
+- basePackId family overlay、fixed-pack consumer deprivileging、compatibility retirement 仍明确属于后续队列，不在当前 queue 内顺手实现。
+
+## 2026-07-14 Script Editor Runtime Pack Export Queue Closeout
+
+### Changed
+- 更新 [docs/blueprints/queues/script-editor-runtime-pack-export-unification-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-runtime-pack-export-unification-queue.md)，将 `queue.script-editor-runtime-pack-export-unification` 从 active 收口为 `done`，记录 bounded export-contract slice 已完成并 verified。
+- 更新 [docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md) 与 [docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)，将 live version 从 active-execution 切回 promotion-review，清空 active_queue，并把 downstream recommendation 指向 `queue.script-editor-base-pack-inheritance-governance`。
+
+### Impact
+- 当前 Blueprint 已无 active queue；后续必须从 runtime-pack-unification version plan 做 base-pack inheritance governance admission review，而不是继续在已关闭的 export-unification queue 内扩张。
+- 剩余 residue 被分类为 cross-family：base-pack inheritance governance、fixed-pack consumer deprivileging、compatibility retirement 仍按后续候选队列推进。
+
+## 2026-07-14 Script Editor Base Pack Inheritance Governance Queue Admission
+
+### Changed
+- 新增 [docs/blueprints/queues/script-editor-base-pack-inheritance-governance-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-base-pack-inheritance-governance-queue.md)，将 `queue.script-editor-base-pack-inheritance-governance` 写成当前 live queue truth，并把范围收敛在 `basePackId` 的 family-level overlay 与 fail-closed 继承契约，不允许扩张到 fixed-pack consumer deprivileging 或 compatibility retirement。
+- 更新 [docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md) 与 [docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)，将 live entry 从 version-level promotion-review 切回 active-execution，并记录当前 active task。
+- 更新 [docs/blueprints/blueprint.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/blueprint.md)，同步 active version registry 备注，避免继续把已关闭的 runtime-family-contract queue 描述成当前执行队列。
+
+### Impact
+- Blueprint 当前重新进入 active execution，但控制权已经从 export contract 转到 base-pack inheritance governance。
+- 后续动作必须先写明确的 family overlay contract，不能把当前 builtin fallback、空输出或 metadata passthrough 当成正式继承语义。
+
+## 2026-07-14 Script Editor Base Pack Inheritance Baseline Reconcile
+
+### Changed
+- 更新 [docs/blueprints/queues/script-editor-base-pack-inheritance-governance-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-base-pack-inheritance-governance-queue.md)，将 `task.script-editor-base-pack-inheritance-governance.boundary-baseline-reconcile` 标记为 completed，并把当前 active task 推进到 `task.script-editor-base-pack-inheritance-governance.family-overlay-contract-map`。
+- 更新 [docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md)，记录当前 baseline 证据：`runtime-pack-import.ts` 只保存 `rawPack.basePackId` / `manifest.basePackId` 元数据，`runtime-pack-export.ts` 只通过 `pickOptionalPackMetadata` 透传 `storyPack.basePackId`，尚未解析 mandatory 或 explicitly inheritable runtime families。
+
+### Impact
+- 当前 base-pack-inheritance queue 已完成 baseline reconcile；下一步只能写 family-level overlay contract map，不能提前进入 fixed-pack consumer rewiring 或 compatibility retirement。
+
+## 2026-07-14 Script Editor Base Pack Inheritance Contract Map
+
+### Changed
+- 更新 [docs/blueprints/queues/script-editor-base-pack-inheritance-governance-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-base-pack-inheritance-governance-queue.md)，新增 Family Overlay Contract Map，明确 mandatory runtime families 与 explicitly inheritable runtime families 的 overlay rule、inheritance source 与 failure rule。
+- 更新 [docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md)，记录 family overlay contract map 完成，并把当前 active task 推进到 `task.script-editor-base-pack-inheritance-governance.queue-closeout-and-handoff`。
+
+### Impact
+- 当前 queue 已有正式 basePackId family overlay 契约图；后续实现不得再把 metadata passthrough、builtin hard import、空数组、hidden default 或 compatibility residue 当成 lawful inheritance resolution。
+- fixed-pack consumer deprivileging 与 compatibility retirement 仍属于后续队列，不在当前 queue 内顺手实现。
+
+## 2026-07-14 Script Editor Base Pack Inheritance Queue Closeout
+
+### Changed
+- 更新 [docs/blueprints/queues/script-editor-base-pack-inheritance-governance-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-base-pack-inheritance-governance-queue.md)，将 `queue.script-editor-base-pack-inheritance-governance` 从 active 收口为 `done`，记录 bounded inheritance-governance slice 已完成并 verified。
+- 更新 [docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md) 与 [docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)，将 live version 从 active-execution 切回 promotion-review，清空 active_queue，并把 downstream recommendation 指向 `queue.script-editor-fixed-pack-consumer-deprivileging`。
+
+### Impact
+- 当前 Blueprint 已无 active queue；后续必须从 runtime-pack-unification version plan 做 fixed-pack consumer deprivileging admission review，而不是继续在已关闭的 inheritance queue 内扩张。
+- 剩余 residue 被分类为 cross-family：fixed-pack consumer deprivileging 与 compatibility retirement 仍按后续候选队列推进。
+
 ## 2026-07-14 Script Editor Person Runtime Attribute Editing Alignment
 
 ### Changed

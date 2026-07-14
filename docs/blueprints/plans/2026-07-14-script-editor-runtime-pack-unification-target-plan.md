@@ -22,16 +22,15 @@
 - intake_summary: `none`
 - intake_result: `none`
 - intake_feedback_mode: `none`
-- closure_review_subject: `queue.script-editor-runtime-family-contract-alignment`
+- closure_review_subject: `queue.script-editor-base-pack-inheritance-governance`
 - closure_review_status: `routed`
-- residue_candidate_id: `item.script-editor-runtime-family-authoring-convergence`
+- residue_candidate_id: `item.script-editor-fixed-pack-consumer-deprivileging`
 - residue_candidate_family: `cross-family`
-- routing_basis: `queue.script-editor-runtime-family-contract-alignment closed after freezing the runtime-family contract; remaining work now belongs to downstream family convergence, export unification, inheritance, consumer deprivileging, and compatibility retirement queues rather than additional same-family contract definition.`
-- next_lawful_queue_recommendation: `queue.script-editor-runtime-family-authoring-convergence`
+- routing_basis: `queue.script-editor-base-pack-inheritance-governance closed after writing the explicit family-level overlay contract and fail-closed inheritance obligations; fresh evidence still shows fixed builtin scenario-pack imports remain in shared content access, so the next lawful queue to inspect is fixed-pack consumer deprivileging.`
+- next_lawful_queue_recommendation: `queue.script-editor-fixed-pack-consumer-deprivileging`
 - auto_admission_ready: `false`
 - blocked_by: []
 - candidate_queue_ids:
-  - `queue.script-editor-runtime-family-contract-alignment`
   - `queue.script-editor-runtime-family-authoring-convergence`
   - `queue.script-editor-runtime-pack-export-unification`
   - `queue.script-editor-base-pack-inheritance-governance`
@@ -50,17 +49,17 @@
   - `Fresh repository evidence also proves that basePackId and active-content ownership remain incomplete at the final-contract layer: src/application/script-editor/runtime-pack-import.ts and src/application/script-editor/runtime-pack-export.ts currently treat basePackId largely as metadata passthrough, while src/content/pack-content-access.ts still directly imports builtin zhuyuanzhang scenario-pack files instead of routing all covered consumers through one active scenario-pack selector.`
   - `The current script-editor workspace and shell still surface compatibility residue counts as daily authoring/export truth through src/application/script-editor/workspace-shell.ts and src/ui/main-ui/main-ui-flow.js, which confirms that compatibility residue is not yet retired to migration-only duty.`
 - Admission conclusion:
-  - `target.script-editor-runtime-pack-unification is now the live open successor version, and queue.script-editor-runtime-family-contract-alignment is the first admitted active queue because the final family contract is the smallest lawful first cut on current evidence.`
-  - `Execution now resumes from task.script-editor-runtime-family-contract-alignment.boundary-baseline-reconcile inside the admitted queue document.`
+  - `target.script-editor-runtime-pack-unification is now the live open successor version, and queue.script-editor-runtime-family-authoring-convergence is the next admitted active queue because fresh evidence still shows editor-facing data ownership depends on long-lived authoring-only parallel families.`
+  - `Execution now resumes from task.script-editor-runtime-family-authoring-convergence.boundary-baseline-reconcile inside the admitted queue document.`
 
 ### Queue Promotion Ledger
 
 | Queue ID | Current Disposition | Promote When | Notes |
 | --- | --- | --- | --- |
 | `queue.script-editor-runtime-family-contract-alignment` | `done` | `only if fresh repository evidence later disproves the frozen mandatory/inheritable/unsupported/fail-closed family contract or proves still-blocking same-family contract residue` | `Closed on 2026-07-14 after docs/scenario-pack-unified-format.md and the active version spec froze the family contract for downstream queues.` |
-| `queue.script-editor-runtime-family-authoring-convergence` | `candidate` | `now eligible for admission review if fresh evidence confirms that editor-facing data ownership still depends on long-lived authoring-only parallel structures after the family contract freeze` | `This is the next lawful recommendation because authoring-structure convergence depends on the family contract that is now frozen, and it precedes export unification so export does not encode an obsolete authoring shadow dialect.` |
-| `queue.script-editor-runtime-pack-export-unification` | `candidate` | `only after queue.script-editor-runtime-family-contract-alignment closes and fresh evidence still shows that export emits a bounded project artifact instead of the final startup-consumable scenario-pack artifact` | `Owns export-path unification, not the upstream family-contract freeze.` |
-| `queue.script-editor-base-pack-inheritance-governance` | `candidate` | `only after queue.script-editor-runtime-family-contract-alignment closes and fresh evidence still shows implicit or inconsistent inheritance behavior` | `Must formalize basePackId semantics after the mandatory-vs-inheritable contract is explicit.` |
+| `queue.script-editor-runtime-family-authoring-convergence` | `done` | `only if fresh repository evidence later proves still-blocking same-family authoring-convergence residue after the written retirement map` | `Closed on 2026-07-14 after the queue wrote the authoring parallel-structure retirement map and routed remaining residue to downstream queue families.` |
+| `queue.script-editor-runtime-pack-export-unification` | `done` | `only if fresh repository evidence later proves still-blocking same-family export-contract residue after the written startup-consumable export contract map` | `Closed on 2026-07-14 after the queue wrote the formal startup-consumable export contract map and routed remaining residue to downstream queue families.` |
+| `queue.script-editor-base-pack-inheritance-governance` | `done` | `only if fresh repository evidence later proves still-blocking same-family inheritance-governance residue after the written family overlay contract map` | `Closed on 2026-07-14 after the queue wrote explicit family overlay rules, inheritance sources, and fail-closed obligations for mandatory and explicitly inheritable runtime families.` |
 | `queue.script-editor-fixed-pack-consumer-deprivileging` | `candidate` | `when fresh repository evidence still proves that runtime or application consumers bypass active content resolution through fixed builtin pack imports or equivalent privileged access` | `Current direct imports in src/content/pack-content-access.ts keep this queue candidate live, but it remains downstream to the family-contract freeze because deprivileging should consume the final contract rather than pre-guess it.` |
 | `queue.script-editor-compatibility-boundary-retirement` | `candidate` | `only after the formal runtime-pack export path exists and fresh evidence still shows compatibility residue participating in daily authoring/export truth` | `Must remain later than export unification because compatibility cannot retire until the replacement runtime-pack path is already formal and live.` |
 
@@ -70,9 +69,9 @@
 | --- | --- | --- | --- | --- |
 | `item.script-editor-runtime-pack-unification-version-open` | `current-target-item` | `none` | `version opened; first queue subsequently admitted` | `The operator explicitly requested that the successor draft become the next active Blueprint version once the PRD alignment version proved queue-complete and closeable; the version then completed admission review for its first bounded queue.` |
 | `item.script-editor-runtime-family-contract-alignment` | `queue-candidate` | `queue.script-editor-runtime-family-contract-alignment` | `admitted + queue closed` | `Mandatory-vs-inheritable runtime family truth was unresolved across runtime startup, editor import, editor export, and compatibility residue handling; this queue has now frozen the contract and closed as historical evidence.` |
-| `item.script-editor-runtime-family-authoring-convergence` | `queue-candidate` | `queue.script-editor-runtime-family-authoring-convergence` | `candidate-recorded` | `Editor-owned authoring structures still preserve bounded authoring-only residue, but lawful convergence depends on the final family contract first.` |
-| `item.script-editor-runtime-pack-export-unification` | `queue-candidate` | `queue.script-editor-runtime-pack-export-unification` | `candidate-recorded` | `The current export path still fails closed on compatibility residue and remains a bounded runtime-compatible seam rather than the single formal startup-consumable runtime-pack artifact.` |
-| `item.script-editor-base-pack-inheritance-governance` | `queue-candidate` | `queue.script-editor-base-pack-inheritance-governance` | `candidate-recorded` | `basePackId is present in current import/export metadata flow, but family-level inheritance semantics are not yet formalized as contract truth.` |
+| `item.script-editor-runtime-family-authoring-convergence` | `queue-candidate` | `queue.script-editor-runtime-family-authoring-convergence` | `admitted + queue closed` | `Editor-owned authoring structures preserved bounded authoring-only residue; this queue has now written the retirement map and closed as historical evidence.` |
+| `item.script-editor-runtime-pack-export-unification` | `queue-candidate` | `queue.script-editor-runtime-pack-export-unification` | `admitted + queue closed` | `The export path was still a bounded partial seam; this queue has now written the startup-consumable export contract map and closed as historical evidence.` |
+| `item.script-editor-base-pack-inheritance-governance` | `queue-candidate` | `queue.script-editor-base-pack-inheritance-governance` | `admitted + queue closed` | `basePackId was present in import/export metadata flow without family-level inheritance semantics; this queue has now written the formal overlay and fail-closed contract map.` |
 | `item.script-editor-fixed-pack-consumer-deprivileging` | `queue-candidate` | `queue.script-editor-fixed-pack-consumer-deprivileging` | `candidate-recorded` | `src/content/pack-content-access.ts still directly imports builtin zhuyuanzhang pack files, so active-content-only resolution is not yet the sole lawful consumer path.` |
 | `item.script-editor-compatibility-boundary-retirement` | `queue-candidate` | `queue.script-editor-compatibility-boundary-retirement` | `candidate-recorded` | `The script-editor shell and workspace still surface compatibility residue as live authoring/export truth, so compatibility has not yet been reduced to migration-only duty.` |
 
@@ -82,6 +81,46 @@
 - `queue.script-editor-runtime-family-contract-alignment is now closed historical evidence because every later convergence queue can consume one explicit answer for mandatory runtime families, inheritable families, unsupported/transitional families, and fail-closed obligations.`
 - `No later queue may create a new long-lived authoring-only family, a new export-only shadow dialect, or a new builtin fallback rule as a convenience patch while this version is open.`
 - `The successor version owns architecture convergence, not unrelated gameplay redesign, generic runtime cleanup, or repository-wide visual polish.`
+
+### Admission Review Record
+
+- `queue.script-editor-runtime-family-authoring-convergence was reviewed on 2026-07-14 as the next lawful queue candidate.`
+- `Fresh repository evidence still shows separate authoring-only and runtime family surfaces in src/domain/script-editor-project.ts, src/application/script-editor/runtime-pack-import.ts, src/application/script-editor/runtime-pack-export.ts, src/application/script-editor/workspace-shell.ts, and src/ui/main-ui/main-ui-flow.js, so authoring convergence remains the smallest lawful next cut.`
+- `The version plan now resumes from queue-level execution truth instead of keeping a live admission review subject in the Control Block.`
+
+### Current Queue Progress
+
+- `task.script-editor-runtime-family-authoring-convergence.boundary-baseline-reconcile completed on 2026-07-14 after fresh repository evidence confirmed that authoring-only parallel structures still shadow runtime ownership and that this queue remains narrower than export unification, base-pack inheritance, fixed-pack consumer deprivileging, or compatibility retirement.`
+- `task.script-editor-runtime-family-authoring-convergence.authoring-parallel-structure-retirement-map completed on 2026-07-14 after the queue classified direct runtime-owned authoring surfaces, export-deferred narrative/playable surfaces, shared-rule compiler inputs, and compatibility residue into explicit retirement dispositions.`
+- `task.script-editor-runtime-family-authoring-convergence.queue-closeout-and-handoff completed on 2026-07-14 after the queue verified its bounded authoring-convergence slice, classified remaining residue as cross-family, and returned control to version-level promotion review.`
+
+### Runtime Pack Export Unification Admission Record
+
+- `queue.script-editor-runtime-pack-export-unification was reviewed on 2026-07-14 and admitted as the next active same-version queue.`
+- `Fresh repository evidence shows src/application/script-editor/runtime-pack-export.ts still writes empty scenes.json, omits activities from its export manifest, fails closed on dialogues/minigames/storyNodes, and blocks on compatibilityImport.unresolvedFamilies.`
+- `The startup loader in src/application/scenario/scenario-pack-loader.ts can consume manifest-driven scenario packs with scenes and optional activities, so the exporter remains a bounded partial seam rather than the final startup-consumable scenario-pack truth.`
+
+### Runtime Pack Export Unification Progress
+
+- `task.script-editor-runtime-pack-export-unification.boundary-baseline-reconcile completed on 2026-07-14 after fresh evidence confirmed that the exporter still writes empty scenes.json, omits activities from the manifest, fails closed on dialogues/minigames/storyNodes, and blocks on compatibilityImport residue while the startup loader can consume fuller scenario-pack truth.`
+- `task.script-editor-runtime-pack-export-unification.startup-consumable-export-contract-map completed on 2026-07-14 after the queue wrote mandatory-family export obligations, authoring lowering obligations, fail-closed rules, and downstream boundaries for formal startup-consumable export.`
+- `task.script-editor-runtime-pack-export-unification.queue-closeout-and-handoff completed on 2026-07-14 after the queue verified its bounded export-contract slice, classified remaining residue as cross-family, and returned control to version-level promotion review.`
+
+### Base Pack Inheritance Governance Admission Record
+
+- `queue.script-editor-base-pack-inheritance-governance was reviewed on 2026-07-14 and admitted as the next active same-version queue.`
+- `Fresh repository evidence shows src/application/script-editor/runtime-pack-import.ts preserves manifest.basePackId/rawPack.basePackId only as storyPack metadata, while src/application/script-editor/runtime-pack-export.ts only copies storyPack.basePackId through pack metadata without resolving mandatory or inheritable families.`
+- `The shared scenario-pack contract already requires missing mandatory/inheritable families to resolve through explicit basePackId inheritance or fail closed, so base-pack inheritance governance is now the smallest lawful next cut.`
+
+### Base Pack Inheritance Governance Progress
+
+- `task.script-editor-base-pack-inheritance-governance.boundary-baseline-reconcile completed on 2026-07-14 after fresh evidence confirmed basePackId remains metadata passthrough in runtime-pack import/export while the frozen family/export contracts require explicit family-level inheritance or fail-closed behavior.`
+- `task.script-editor-base-pack-inheritance-governance.family-overlay-contract-map completed on 2026-07-14 after the queue wrote explicit family-level overlay rules, inheritance sources, and fail-closed obligations for mandatory and explicitly inheritable runtime families.`
+- `task.script-editor-base-pack-inheritance-governance.queue-closeout-and-handoff completed on 2026-07-14 after the queue verified its bounded inheritance-governance slice, closed same-family residue, and returned control to version-level promotion review.`
+
+### Current Queue Activation
+
+- `none`
 
 ### Version Boundary Record
 
