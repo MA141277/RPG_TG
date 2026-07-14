@@ -3905,6 +3905,76 @@
   font-size: 0.92rem;
 }
 
+.c-city-directory__panel {
+  box-sizing: border-box;
+  border: 48px solid transparent;
+  border-width: 48px 22px 26px;
+  border-image-source: url("../../ui/yuansu/评定/generated/20260709-205114_popup-slice-seamless.png");
+  border-image-slice: 48 22 26 22 fill;
+  border-image-width: 48px 22px 26px 22px;
+  border-image-repeat: stretch;
+  border-radius: 0;
+  padding: 0 18px 14px;
+  background: transparent;
+  box-shadow: 0 24px 80px rgb(0 0 0 / 28%);
+}
+
+.c-city-menu-panel__panel {
+  gap: 14px;
+}
+
+.c-city-menu-panel__section {
+  gap: 10px;
+}
+
+.c-city-directory__option,
+.c-city-menu-panel__meta div,
+.c-city-menu-panel__intel-item,
+.c-city-menu-panel__location,
+.c-city-menu-panel__lock {
+  box-sizing: border-box;
+  border: 10px solid transparent;
+  border-image-source: url("../../ui/yuansu/评定/generated/20260709-205119_item-slice-seamless.png");
+  border-image-slice: 10 18 fill;
+  border-image-width: 10px 18px;
+  border-image-repeat: stretch;
+  border-radius: 0;
+  background: transparent;
+}
+
+.c-city-directory__option {
+  padding: 10px 12px;
+}
+
+.c-city-menu-panel__meta div {
+  padding: 6px 8px;
+}
+
+.c-city-menu-panel__intel-item,
+.c-city-menu-panel__location,
+.c-city-menu-panel__lock {
+  padding: 8px 10px;
+}
+
+.c-city-menu-panel__primary-action {
+  box-sizing: border-box;
+  min-width: 104px;
+  min-height: 40px;
+  padding: 0 16px;
+  color: #f7e6ba;
+  border: 10px solid transparent;
+  border-image-source: url("../../ui/yuansu/评定/generated/20260709-205123_button-clean-seamless.png");
+  border-image-slice: 10 18 fill;
+  border-image-width: 10px 18px;
+  border-image-repeat: stretch;
+  font-family: var(--font-title);
+  font-size: 0.96rem;
+  line-height: 1;
+  text-shadow: 0 1px 1px rgb(57 16 8 / 66%);
+  background: transparent;
+  cursor: pointer;
+}
+
 .c-city-locations-view {
   position: absolute;
   inset: 0;
