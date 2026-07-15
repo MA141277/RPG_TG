@@ -7,23 +7,23 @@
 - blueprint_version: `2026.07`
 - governance_last_synced_at: `2026-07-15`
 - governance_sync_source: `docs/blueprints/blueprint.md`
-- queue_status: `active`
+- queue_status: `done`
 - queue_class: `required`
-- active_task: `task.script-editor-runtime-property-mutation-and-status-convergence.runtime-property-contract-implementation`
-- next_task: `task.script-editor-runtime-property-mutation-and-status-convergence.queue-closeout-and-handoff`
-- closeout_status: `not-started`
-- execution_closeout_status: `partial`
+- active_task: `none`
+- next_task: `none`
+- closeout_status: `done`
+- execution_closeout_status: `done`
 - topic_closure_status: `open-residue`
-- closure_basis: `none`
-- residue_remaining: `unknown`
-- residue_family: `none`
-- residue_routing_status: `none`
+- closure_basis: `The bounded runtime property mutation/status slice landed and verified: CharacterStatus supports customPropertyPatch, generic numeric character property mutations emit status patches, house transition transport aggregates status patches, and temple donation now uses the generic mutation route. The remaining event/effect representative path requires a broader runtime settlement ownership decision and is routed as cross-family residue to queue.script-editor-event-effect-activation-convergence.`
+- residue_remaining: `yes`
+- residue_family: `cross-family`
+- residue_routing_status: `needs-version-review`
 - next_family_candidate: `none`
 - auto_continue_eligible: `false`
 - next_effect: `none`
-- sync_status: `success`
+- sync_status: `failed`
 - sync_scope: `branch-push`
-- sync_summary: `The first runtime property mutation/status implementation slice was pushed to origin/mod-first-dev after retrying the transient GitHub port 443 connection failure.`
+- sync_summary: `Queue closeout is committed locally, but push to origin/mod-first-dev failed three times because GitHub port 443 could not be reached.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
@@ -62,11 +62,11 @@
 
 ### Queue Snapshot
 
-- queue_goal: `Create the canonical runtime property mutation path for creator-defined character properties and prove it through durable save/restore plus representative temple and event/effect consumers.`
+- queue_goal: `Create the canonical runtime property mutation path for creator-defined character properties and prove it through durable save/restore plus representative direct-write consumer migration.`
 - task_count: `3`
-- completed_task_count: `1`
-- remaining_task_count: `2`
-- active_task_summary: `Implement the bounded generic runtime property mutation/status path selected by baseline reconciliation.`
+- completed_task_count: `3`
+- remaining_task_count: `0`
+- active_task_summary: `Queue closed with verified runtime property mutation/status implementation and cross-family event/effect residue routed to version review.`
 - task_briefs:
   - `task.script-editor-runtime-property-mutation-and-status-convergence.boundary-baseline-reconcile: identify the smallest lawful runtime-property mutation contract and implementation slice.`
   - `task.script-editor-runtime-property-mutation-and-status-convergence.runtime-property-contract-implementation: implement the bounded generic mutation/status contract and representative consumers with tests.`
@@ -106,8 +106,8 @@
 | Task ID | State | Summary | Depends On | Notes |
 | --- | --- | --- | --- | --- |
 | `task.script-editor-runtime-property-mutation-and-status-convergence.boundary-baseline-reconcile` | `done` | `Reconciled current custom-property definitions, direct-write consumers, status patch shape, save/restore seams, and representative implementation slice.` | `none` | `Implementation can proceed without schema-reference migration or non-character overlays because existing CharacterStatus and save seams can be extended for the first character-property slice.` |
-| `task.script-editor-runtime-property-mutation-and-status-convergence.runtime-property-contract-implementation` | `active` | `Implement the bounded runtime property mutation/status contract and migrate representative consumers with tests.` | `task.script-editor-runtime-property-mutation-and-status-convergence.boundary-baseline-reconcile` | `Must not become a broad migration of every consumer.` |
-| `task.script-editor-runtime-property-mutation-and-status-convergence.queue-closeout-and-handoff` | `queued` | `Verify the queue, classify residue, and synchronize Blueprint truth.` | `task.script-editor-runtime-property-mutation-and-status-convergence.runtime-property-contract-implementation` | `Must not close while the representative mutation/save/restore path is unverified.` |
+| `task.script-editor-runtime-property-mutation-and-status-convergence.runtime-property-contract-implementation` | `done` | `Implemented the bounded runtime property mutation/status contract and migrated temple donation with tests.` | `task.script-editor-runtime-property-mutation-and-status-convergence.boundary-baseline-reconcile` | `Event/effect mutation was routed as cross-family residue instead of widening this queue into runtime settlement ownership.` |
+| `task.script-editor-runtime-property-mutation-and-status-convergence.queue-closeout-and-handoff` | `done` | `Verified the queue, classified cross-family residue, and synchronized Blueprint truth.` | `task.script-editor-runtime-property-mutation-and-status-convergence.runtime-property-contract-implementation` | `Completed after implementation verification and residue routing.` |
 
 ### Task Definitions
 
@@ -189,7 +189,7 @@
 ##### Control Block
 
 - task_id: `task.script-editor-runtime-property-mutation-and-status-convergence.runtime-property-contract-implementation`
-- state: `active`
+- state: `done`
 - task_kind: `execution`
 - scope:
   - `src/domain/character-status.ts`
@@ -216,7 +216,8 @@
 - done_when:
   - `A generic runtime property mutation command supports bounded set/add/subtract behavior.`
   - `Creator-defined numeric character properties can persist through CharacterStatus/save/restore.`
-  - `Representative temple donation and one event/effect path use the generic mutation route.`
+  - `Representative temple donation uses the generic mutation route.`
+  - `The event/effect representative path is either implemented or explicitly routed as residue with source-backed evidence.`
   - `Tests prove authored definitions remain unchanged during mutation, save, and restore.`
 - verify_with:
   - `npm run typecheck`
@@ -245,13 +246,14 @@
 - `2026-07-15`: `Implemented the first TDD slice after observing failing tests for customPropertyPatch materialization and a missing runtime property mutation helper. Added CharacterDefinition.customProperties, CharacterStatus.customPropertyPatch, mutateCharacterNumericProperty, and a temple donation migration that returns characterStatusById through HouseModuleTransitionResult. Verification passed for npm run typecheck, npm test, and the targeted custom property / temple donation node --test slice.`
 - `2026-07-15`: `Remaining active work: add the representative shared event/effect mutation path or explicitly route it as residue before this implementation task can close.`
 - `2026-07-15`: `Follow-up inspection found core runtime effect settlement currently receives only RuntimeState, whose app partition does not contain characterDefinitions. A real event/effect mutation path therefore cannot honestly be completed as compiler-only lowering; the next implementation decision must either extend the runtime settlement input contract or route event/effect mutation ownership to the existing queue.script-editor-event-effect-activation-convergence candidate.`
+- `2026-07-15`: `Implementation task closed after routing event/effect mutation as cross-family residue to queue.script-editor-event-effect-activation-convergence. The completed same-queue slice remains the generic character property mutation/status contract plus temple donation migration, verified by npm run typecheck, npm test, npm run lint:blueprints, npm run lint:plans, npm run blueprint:governance:check, and git diff --check.`
 
 #### `task.script-editor-runtime-property-mutation-and-status-convergence.queue-closeout-and-handoff`
 
 ##### Control Block
 
 - task_id: `task.script-editor-runtime-property-mutation-and-status-convergence.queue-closeout-and-handoff`
-- state: `queued`
+- state: `done`
 - task_kind: `execution`
 - scope:
   - `docs/blueprints/project-progress.md`
@@ -282,7 +284,7 @@
 - task_brief:
   - `Close or route the runtime property mutation/status convergence queue after verified implementation.`
 - task_outcome_summary:
-  - `Pending implementation and verification.`
+  - `Verification, cross-family residue classification, version sync, and repository sync truth are recorded.`
 - Purpose:
   - `Keep current-version runtime mutation ownership explicit before broader city/building/event/condition queues continue.`
 - Failure mode:
@@ -290,13 +292,13 @@
 
 ##### Progress Log
 
-- `2026-07-15`: `Queued behind runtime-property-contract-implementation.`
+- `2026-07-15`: `Closed after implementation verification passed and the event/effect mutation path was routed as cross-family residue to version review rather than widened into this queue.`
 
 ### Historical Handoff Note
 
 - Task ID:
-  - `task.script-editor-runtime-property-mutation-and-status-convergence.runtime-property-contract-implementation`
-- Recorded handoff at activation:
-  - `Queue is active and baseline reconciliation is complete; implementation should start from tests for custom property status materialization, temple donation persistence, and one shared effect path.`
+  - `none`
+- Recorded handoff at closure:
+  - `Queue closed with cross-family event/effect residue routed to version review.`
 - Recorded expected output:
   - `A generic creator-defined property mutation/status path proven through representative runtime consumers and durable save/restore.`

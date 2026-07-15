@@ -25,7 +25,8 @@
 - severity: `high`
 - classification: `current-version-governance-gap`
 - owning_queue: `queue.script-editor-runtime-property-mutation-and-status-convergence`
-- admission_status: `admitted-active`
+- admission_status: `queue-closed-with-routed-residue`
+- latest_disposition: `generic character property mutation/status and temple donation slice fixed; event/effect mutation ownership routed to queue.script-editor-event-effect-activation-convergence`
 - affected_families:
   - `character custom properties`
   - `CharacterStatus`
@@ -50,6 +51,13 @@
 - The temple donation result does not emit an equivalent `characterStatusById` patch.
 - Multiple feature modules implement field-specific helpers such as `mutatePlayerGold`, so migration coverage depends on each consumer remembering to call the correct helper.
 - The script editor can expose `customMap` authoring controls, but that does not provide a generic runtime mutation or persistence contract for those custom fields.
+
+#### Current Disposition
+
+- `queue.script-editor-runtime-property-mutation-and-status-convergence` implemented the bounded generic character property mutation/status slice.
+- CharacterStatus now supports custom property patches, and temple donation now emits a status patch through the generic numeric property mutation helper.
+- The remaining event/effect mutation path needs broader runtime settlement and effect activation ownership, so it is routed to `queue.script-editor-event-effect-activation-convergence`.
+- BUG-001 remains open until the routed event/effect and broader consumer-migration requirements are verified or explicitly dispositioned.
 
 #### Root Cause
 
@@ -99,7 +107,7 @@ No current candidate or active queue explicitly owns the complete generic custom
 - proposed_queue_id: `queue.script-editor-runtime-property-mutation-and-status-convergence`
 - proposed_class: `required`
 - proposed_goal: `Establish a schema-driven runtime property mutation and status persistence mechanism for creator-defined properties, then migrate representative direct-write consumers without creating feature-specific durable truths.`
-- admission_note: `Admitted on 2026-07-15 as the active current-version queue after version-plan promotion review. Closure still requires verified implementation and queue closeout sync.`
+- admission_note: `Admitted on 2026-07-15 as an active current-version queue, then closed with the bounded generic character property mutation/status slice complete and event/effect mutation routed as cross-family residue.`
 
 #### Proposed Queue Boundary
 
