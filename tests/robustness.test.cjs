@@ -2942,6 +2942,26 @@ test("script editor export persists the current project draft before runtime pac
   );
 });
 
+test("script editor save records durable directory location and blocks stale continue entries", () => {
+  const mainUiSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    "utf8"
+  );
+
+  assert.match(
+    mainUiSource,
+    /canContinueScriptEditorProjectEntry/
+  );
+  assert.match(
+    mainUiSource,
+    /this\.rememberScriptEditorProjectPackageLocation\(result\)/
+  );
+  assert.match(
+    mainUiSource,
+    /if \(!canContinueScriptEditorProjectEntry\(projectEntry\)\)/
+  );
+});
+
 test(
   "script editor runtime export emits a runtime-compatible scenario pack for the bounded direct-mapping slice",
   async () => {

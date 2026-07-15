@@ -9,8 +9,8 @@
 - governance_sync_source: `docs/blueprints/blueprint.md`
 - queue_status: `active`
 - queue_class: `required-priority`
-- active_task: `task.script-editor-project-cache-save-export-preview-continuation.durable-package-workflow-implementation`
-- next_task: `task.script-editor-project-cache-save-export-preview-continuation.queue-closeout-and-handoff`
+- active_task: `task.script-editor-project-cache-save-export-preview-continuation.queue-closeout-and-handoff`
+- next_task: `return-to-version-review`
 - closeout_status: `in-progress`
 - execution_closeout_status: `partial`
 - topic_closure_status: `open-residue`
@@ -21,9 +21,9 @@
 - next_family_candidate: `none`
 - auto_continue_eligible: `false`
 - next_effect: `none`
-- sync_status: `pending`
-- sync_scope: `none`
-- sync_summary: `No repository sync batch is recorded yet for this newly admitted continuation queue.`
+- sync_status: `failed`
+- sync_scope: `baseline-push`
+- sync_summary: `Local commit 7ff88cf was created on mod-first-dev, but git push --porcelain origin mod-first-dev failed on 2026-07-15 because github.com:443 could not be reached. Repository sync failure is non-governing; execution continues from the written Blueprint truth.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
@@ -56,12 +56,12 @@
 
 - queue_goal: `Finish durable package skeleton, stale cache, imported edit-in-place, and preview-from-disk semantics for the script-editor package persistence boundary.`
 - task_count: `3`
-- completed_task_count: `1`
-- remaining_task_count: `2`
-- active_task_summary: `Implement durable package skeleton, stale cache, imported edit-in-place, and preview-from-disk behavior or record explicit blockers.`
+- completed_task_count: `2`
+- remaining_task_count: `1`
+- active_task_summary: `Verify the continuation slice, classify residue, and return control to version review.`
 - task_briefs:
   - `task.script-editor-project-cache-save-export-preview-continuation.boundary-baseline-reconcile: completed after evidence confirmed the predecessor queue landed packageLocation/validity metadata and export-before-output persistence while UI state still relies on transient directory handles and an in-memory library.`
-  - `task.script-editor-project-cache-save-export-preview-continuation.durable-package-workflow-implementation: implement durable package skeleton, stale cache, imported edit-in-place, and preview-from-disk behavior or record explicit blockers.`
+  - `task.script-editor-project-cache-save-export-preview-continuation.durable-package-workflow-implementation: completed after landing durable save-location recording and stale continue gating for project library entries; broader create-at-save-path, imported edit-in-place, and runtime preview-from-disk semantics remain to be classified at closeout.`
   - `task.script-editor-project-cache-save-export-preview-continuation.queue-closeout-and-handoff: verify the continuation slice, classify residue, and return control to version review.`
 
 ### Operator Snapshot Contract
@@ -118,8 +118,8 @@
 | Task ID | State | Summary | Depends On | Notes |
 | --- | --- | --- | --- | --- |
 | `task.script-editor-project-cache-save-export-preview-continuation.boundary-baseline-reconcile` | `completed` | `Inspected the first queue's landed helpers and confirmed the smallest continuation implementation boundary.` | `none` | `Completed on 2026-07-15 after evidence confirmed packageLocation/validity metadata and export-before-output persistence are landed, while durable skeleton, stale probing, imported edit-in-place, and preview-from-disk remain unimplemented.` |
-| `task.script-editor-project-cache-save-export-preview-continuation.durable-package-workflow-implementation` | `active` | `Implement durable package skeleton, stale cache, imported edit-in-place, and preview-from-disk behavior or record explicit blockers.` | `task.script-editor-project-cache-save-export-preview-continuation.boundary-baseline-reconcile` | `Must keep scope bounded to package persistence workflow semantics.` |
-| `task.script-editor-project-cache-save-export-preview-continuation.queue-closeout-and-handoff` | `queued` | `Verify the continuation slice, classify residue, and return control to version review.` | `task.script-editor-project-cache-save-export-preview-continuation.durable-package-workflow-implementation` | `Must run lint and relevant tests before queue closeout.` |
+| `task.script-editor-project-cache-save-export-preview-continuation.durable-package-workflow-implementation` | `completed` | `Landed durable save-location recording and stale continue gating for project library entries.` | `task.script-editor-project-cache-save-export-preview-continuation.boundary-baseline-reconcile` | `Completed on 2026-07-15 with targeted regression coverage; create-at-save-path skeleton, imported edit-in-place, and runtime preview-from-disk remain for closeout classification.` |
+| `task.script-editor-project-cache-save-export-preview-continuation.queue-closeout-and-handoff` | `active` | `Verify the continuation slice, classify residue, and return control to version review.` | `task.script-editor-project-cache-save-export-preview-continuation.durable-package-workflow-implementation` | `Must run lint and relevant tests before queue closeout.` |
 
 ### Task Definitions
 
@@ -175,7 +175,7 @@
 ##### Control Block
 
 - task_id: `task.script-editor-project-cache-save-export-preview-continuation.durable-package-workflow-implementation`
-- state: `active`
+- state: `completed`
 - task_kind: `execution`
 - scope:
   - `src/application/script-editor`
@@ -206,7 +206,7 @@
 - task_brief:
   - `Implement or explicitly block the remaining durable package workflow semantics.`
 - task_outcome_summary:
-  - `Expected output is a closed package persistence workflow or an explicit platform-governed residue route.`
+  - `Completed a bounded implementation slice: saving a project now records a durable directory package location when the browser supplies a directory handle, download saves remain non-durable, and stale library entries are blocked before continue opens the editor.`
 - Purpose:
   - `Complete the package persistence foundation before broader authoring/data schema work depends on it.`
 - Failure mode:
@@ -217,7 +217,7 @@
 ##### Control Block
 
 - task_id: `task.script-editor-project-cache-save-export-preview-continuation.queue-closeout-and-handoff`
-- state: `queued`
+- state: `active`
 - task_kind: `execution`
 - scope:
   - `docs/blueprints/project-progress.md`

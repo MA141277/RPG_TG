@@ -19,6 +19,7 @@ import {
 } from "../../application/script-editor/runtime-pack-export";
 import { loadScriptEditorProjectFromScenarioPackFiles } from "../../application/script-editor/runtime-pack-import";
 import {
+  canContinueScriptEditorProjectEntry,
   createScriptEditorProjectLibraryEntry,
   findScriptEditorProjectLibraryEntry,
   removeScriptEditorProjectLibraryEntry,
@@ -6005,6 +6006,7 @@ export class MainUiFlow {
         }
       );
       this.scriptEditorProjectDirectoryHandle = result.directoryHandle ?? null;
+      this.rememberScriptEditorProjectPackageLocation(result);
       this.recordScriptEditorNotice({
         tone: "success",
         message:
@@ -6452,12 +6454,63 @@ export class MainUiFlow {
     );
   }
 
+  rememberScriptEditorProjectPackageLocation(result) {
+    if (this.scriptEditorProject == null) {
+      return;
+    }
+
+    const existingEntry = findScriptEditorProjectLibraryEntry(
+      this.scriptEditorProjectLibrary,
+      this.scriptEditorProject.id
+    );
+    const entry =
+      existingEntry ??
+      createScriptEditorProjectLibraryEntry(
+        this.scriptEditorProject,
+        this.scriptEditorProjectSource
+      );
+    const directoryName =
+      typeof result.directoryHandle?.name === "string"
+        ? result.directoryHandle.name
+        : "";
+    const displayPath =
+      directoryName.trim() !== "" ? directoryName : this.scriptEditorProject.id;
+
+    this.scriptEditorProjectLibrary = upsertScriptEditorProjectLibraryEntry(
+      this.scriptEditorProjectLibrary,
+      {
+        ...entry,
+        project: this.scriptEditorProject,
+        title: this.scriptEditorProject.title,
+        description: this.scriptEditorProject.description ?? "",
+        source: this.scriptEditorProjectSource,
+        packageLocation: {
+          locationKind: result.mode === "directory" ? "directory" : "download",
+          displayPath,
+          durable: result.mode === "directory",
+        },
+        validity: {
+          state: "valid",
+        },
+      }
+    );
+  }
+
   continueScriptEditorProject(projectId) {
     const projectEntry = findScriptEditorProjectLibraryEntry(
       this.scriptEditorProjectLibrary,
       projectId
     );
     if (projectEntry == null) {
+      return;
+    }
+
+    if (!canContinueScriptEditorProjectEntry(projectEntry)) {
+      this.recordScriptEditorNotice({
+        tone: "warning",
+        message: projectEntry.validity.reason,
+      });
+      this.render();
       return;
     }
 

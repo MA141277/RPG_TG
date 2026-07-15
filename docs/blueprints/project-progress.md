@@ -37,7 +37,7 @@
 - `Admission history, queue closeout history, and review narrative must stay in the version plan, queue docs, or docs/change-log.md rather than living here as competing current-state prose.`
 - `The pointed version is now the open successor version for script-editor authoring/data-structure unification.`
 - `The latest governance action admitted queue.script-editor-project-cache-save-export-preview-continuation as the active same-family continuation after queue.script-editor-project-cache-save-export-preview closed with residue.`
-- `The current active task is task.script-editor-project-cache-save-export-preview-continuation.durable-package-workflow-implementation, which must implement durable package skeleton, stale cache, imported edit-in-place, and preview-from-disk behavior or record explicit blockers.`
+- `The current active task is task.script-editor-project-cache-save-export-preview-continuation.queue-closeout-and-handoff, which must verify the continuation slice, classify remaining package workflow residue, and return control to version review.`
 
 ### Historical References
 
