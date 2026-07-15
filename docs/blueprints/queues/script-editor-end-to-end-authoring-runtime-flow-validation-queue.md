@@ -9,8 +9,8 @@
 - governance_sync_source: `docs/blueprints/blueprint.md`
 - queue_status: `active`
 - queue_class: `required-final`
-- active_task: `task.script-editor-end-to-end-authoring-runtime-flow-validation.validation-baseline-reconcile`
-- next_task: `task.script-editor-end-to-end-authoring-runtime-flow-validation.flow-validation-execution`
+- active_task: `task.script-editor-end-to-end-authoring-runtime-flow-validation.flow-validation-execution`
+- next_task: `task.script-editor-end-to-end-authoring-runtime-flow-validation.queue-closeout-and-version-handoff`
 - closeout_status: `in-progress`
 - execution_closeout_status: `partial`
 - topic_closure_status: `blocked`
@@ -21,9 +21,9 @@
 - next_family_candidate: `none`
 - auto_continue_eligible: `false`
 - next_effect: `none`
-- sync_status: `success`
+- sync_status: `pending`
 - sync_scope: `branch-push`
-- sync_summary: `Queue admission and activation landed in commit 1582b7b7 and pushed to origin/mod-first-dev.`
+- sync_summary: `Validation baseline completion is pending repository sync.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
@@ -56,9 +56,9 @@
 
 - queue_goal: `Run final representative editor-authored package validation across save/export/import/runtime/startup/status/restore surfaces before version closeout can be considered.`
 - task_count: `3`
-- completed_task_count: `0`
-- remaining_task_count: `3`
-- active_task_summary: `Inventory the final validation fixture, coverage seams, and minimum validation commands before executing the end-to-end proof.`
+- completed_task_count: `1`
+- remaining_task_count: `2`
+- active_task_summary: `Execute the selected representative final validation proof with TDD for any blocker uncovered by the proof.`
 - task_briefs:
   - `task.script-editor-end-to-end-authoring-runtime-flow-validation.validation-baseline-reconcile: define the representative final validation fixture and verify prerequisites are present.`
   - `task.script-editor-end-to-end-authoring-runtime-flow-validation.flow-validation-execution: run or implement the bounded final validation proof with tests and browser/runtime checks as needed.`
@@ -97,8 +97,8 @@
 
 | Task ID | State | Summary | Depends On | Notes |
 | --- | --- | --- | --- | --- |
-| `task.script-editor-end-to-end-authoring-runtime-flow-validation.validation-baseline-reconcile` | `active` | `Define the final validation fixture, commands, and prerequisite evidence before execution.` | `none` | `No production changes during baseline unless required to unblock documentation lint.` |
-| `task.script-editor-end-to-end-authoring-runtime-flow-validation.flow-validation-execution` | `pending` | `Run or implement the bounded end-to-end validation proof.` | `task.script-editor-end-to-end-authoring-runtime-flow-validation.validation-baseline-reconcile` | `Use TDD for any code change required by a validation blocker.` |
+| `task.script-editor-end-to-end-authoring-runtime-flow-validation.validation-baseline-reconcile` | `done` | `Selected the representative final validation fixture, commands, and prerequisite evidence; execution can proceed without a prerequisite status-overlay queue.` | `none` | `No production code changed during baseline.` |
+| `task.script-editor-end-to-end-authoring-runtime-flow-validation.flow-validation-execution` | `active` | `Run or implement the bounded end-to-end validation proof.` | `task.script-editor-end-to-end-authoring-runtime-flow-validation.validation-baseline-reconcile` | `Use TDD for any code change required by a validation blocker.` |
 | `task.script-editor-end-to-end-authoring-runtime-flow-validation.queue-closeout-and-version-handoff` | `pending` | `Classify residue and decide whether version closeout can be proposed.` | `task.script-editor-end-to-end-authoring-runtime-flow-validation.flow-validation-execution` | `Must not mark the version done without explicit human closeout confirmation.` |
 
 ### Task Definitions
@@ -108,7 +108,7 @@
 ##### Control Block
 
 - task_id: `task.script-editor-end-to-end-authoring-runtime-flow-validation.validation-baseline-reconcile`
-- state: `active`
+- state: `done`
 - task_kind: `decision-dispatch`
 - scope:
   - `tests/robustness.test.cjs`
@@ -153,7 +153,7 @@
 - task_brief:
   - `Baseline the final validation proof before running or adding it.`
 - task_outcome_summary:
-  - `Pending.`
+  - `Completed after inspecting the target spec and plan, the closed playable/minigame binding queue, existing robustness coverage, runtime-pack export/import, scenario-pack loading, mod runtime activation, and playable runtime registry seams. Existing split tests already cover export/import for core families, launch policy, dialogue scenes, typed condition lowering/evaluation, taskInputs, activities, playable family round-trip, startup coordinator behavior, and CharacterStatus overlays. The selected final validation proof is one representative editor-authored fixture that combines the covered happy-path families into a single save/export/import/runtime-load proof: scenarioProfile plus launchPolicy, character/city/building/task records, dialogue/story scene materialization, an event with supported typed conditions and taskInputs, an activity record, a valid minigame/playable binding, runtime pack loading through loadScenarioPackFromFiles, mod activation/playable registry configuration, runStoryTriggerRuntime event entry, dispatchRuntimeRequest task settlement, a CharacterStatus mutation overlay, and save/restore inspection. Baseline found no fresh prerequisite requiring queue.script-editor-status-overlay-generalization-review before this final validation; any blocker uncovered by the proof must be handled as a bounded TDD fix inside flow-validation-execution or routed if it exceeds the selected proof.`
 - Purpose:
   - `Ensure final validation proves the version acceptance path rather than becoming another ad hoc feature queue.`
 - Failure mode:
@@ -164,12 +164,27 @@
 ##### Control Block
 
 - task_id: `task.script-editor-end-to-end-authoring-runtime-flow-validation.flow-validation-execution`
-- state: `pending`
+- state: `active`
 - task_kind: `execution`
 - scope:
-  - `TBD by validation-baseline-reconcile`
+  - `tests/robustness.test.cjs`
+  - `src/application/script-editor/runtime-pack-export.ts`
+  - `src/application/script-editor/runtime-pack-import.ts`
+  - `src/application/scenario/scenario-pack-loader.ts`
+  - `src/core/mods/mod-runtime.ts`
+  - `src/core/runtime/playable-runtime.ts`
+  - `src/core/runtime/runtime-dispatch.ts`
+  - `src/core/runtime/scene-runtime.ts`
+  - `src/application/character/character-status.ts`
 - must_inspect:
   - `task.script-editor-end-to-end-authoring-runtime-flow-validation.validation-baseline-reconcile output`
+  - `tests/robustness.test.cjs`
+  - `src/application/script-editor/runtime-pack-export.ts`
+  - `src/application/scenario/scenario-pack-loader.ts`
+  - `src/core/mods/mod-runtime.ts`
+  - `src/core/runtime/playable-runtime.ts`
+  - `src/core/runtime/runtime-dispatch.ts`
+  - `src/core/runtime/scene-runtime.ts`
 - must_not_change:
   - `Do not widen beyond the baseline-selected validation proof or blocker fix.`
   - `Do not mark version closeout from this task.`
@@ -252,3 +267,4 @@
 ### Progress Log
 
 - `2026-07-16`: `Promotion review admitted queue.script-editor-end-to-end-authoring-runtime-flow-validation as the single active required-final queue after all required non-final same-version queues were closed or left as review-only. queue.script-editor-status-overlay-generalization-review remains candidate-review because no fresh evidence currently proves it must precede final validation. The first live task is validation-baseline-reconcile.`
+- `2026-07-16`: `Validation baseline completed. The selected execution proof is a single representative editor-authored fixture that combines scenarioProfile/launchPolicy, character/city/building/task data, dialogue/story materialization, supported typed event conditions, taskInputs, activities, playable/minigame bindings, runtime pack loading, mod activation, playable registry configuration, story-trigger runtime entry, task settlement, CharacterStatus mutation, and save/restore inspection. Existing evidence does not require status-overlay generalization before final validation; the active task is now flow-validation-execution.`
