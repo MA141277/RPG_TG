@@ -21,9 +21,9 @@
 - next_family_candidate: `none`
 - auto_continue_eligible: `false`
 - next_effect: `none`
-- sync_status: `pending`
+- sync_status: `success`
 - sync_scope: `branch-push`
-- sync_summary: `Implementation commit 311dfae pushed to origin/mod-first-dev after the legacy supersession disposition slice landed and advanced this queue to closeout; closeout repository sync is pending.`
+- sync_summary: `Implementation commit 311dfae and closeout commit e7bc9b9 are pushed to origin/mod-first-dev; queue closeout sync is complete.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
