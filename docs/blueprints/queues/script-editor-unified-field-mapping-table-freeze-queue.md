@@ -9,8 +9,8 @@
 - governance_sync_source: `docs/blueprints/blueprint.md`
 - queue_status: `active`
 - queue_class: `required`
-- active_task: `task.script-editor-unified-field-mapping-table-freeze.boundary-baseline-reconcile`
-- next_task: `task.script-editor-unified-field-mapping-table-freeze.field-mapping-contract-freeze`
+- active_task: `task.script-editor-unified-field-mapping-table-freeze.field-mapping-contract-freeze`
+- next_task: `task.script-editor-unified-field-mapping-table-freeze.queue-closeout-and-handoff`
 - closeout_status: `in-progress`
 - execution_closeout_status: `partial`
 - topic_closure_status: `open-residue`
@@ -57,12 +57,12 @@
 
 - queue_goal: `Freeze a reusable field mapping table contract for script-editor authoring controls, labels, value types, validation hints, editability, runtime mutability, and ordering.`
 - task_count: `3`
-- completed_task_count: `0`
-- remaining_task_count: `3`
-- active_task_summary: `Reconcile current hardcoded script-editor field rendering and validation surfaces before freezing the mapping contract.`
+- completed_task_count: `1`
+- remaining_task_count: `2`
+- active_task_summary: `Add the bounded field-definition contract, validation helpers, and representative tests without migrating every object family.`
 - task_briefs:
-  - `task.script-editor-unified-field-mapping-table-freeze.boundary-baseline-reconcile: inspect current authoring field lists, label maps, validation diagnostics, and object-family helpers before implementation.`
-  - `task.script-editor-unified-field-mapping-table-freeze.field-mapping-contract-freeze: add the bounded field-definition contract, validation helpers, and representative tests without migrating every object family.`
+  - `task.script-editor-unified-field-mapping-table-freeze.boundary-baseline-reconcile: completed after current authoring field lists, label maps, enum constants, validation diagnostics, and helper seams were identified.`
+  - `task.script-editor-unified-field-mapping-table-freeze.field-mapping-contract-freeze: active task to add the bounded field-definition contract, validation helpers, and representative tests without migrating every object family.`
   - `task.script-editor-unified-field-mapping-table-freeze.queue-closeout-and-handoff: verify, classify residue, and return control to version review.`
 
 ### Operator Snapshot Contract
@@ -96,8 +96,8 @@
 
 | Task ID | State | Summary | Depends On | Notes |
 | --- | --- | --- | --- | --- |
-| `task.script-editor-unified-field-mapping-table-freeze.boundary-baseline-reconcile` | `active` | `Reconcile current field rendering, label, validation, and helper surfaces before freezing the shared field-definition contract.` | `none` | `Must identify the smallest representative slice before implementation.` |
-| `task.script-editor-unified-field-mapping-table-freeze.field-mapping-contract-freeze` | `pending` | `Implement the bounded field mapping table contract and representative validation tests.` | `task.script-editor-unified-field-mapping-table-freeze.boundary-baseline-reconcile` | `Must not widen into full object-family migration.` |
+| `task.script-editor-unified-field-mapping-table-freeze.boundary-baseline-reconcile` | `completed` | `Reconciled current field rendering, label, validation, and helper surfaces before freezing the shared field-definition contract.` | `none` | `Completed on 2026-07-15 after source evidence showed field metadata is split across workspace shell family labels/diagnostic targets/preview summaries, person imported-attribute labels and value parsing, object-family enum constants, update helpers, and validation diagnostics.` |
+| `task.script-editor-unified-field-mapping-table-freeze.field-mapping-contract-freeze` | `active` | `Implement the bounded field mapping table contract and representative validation tests.` | `task.script-editor-unified-field-mapping-table-freeze.boundary-baseline-reconcile` | `Must not widen into full object-family migration.` |
 | `task.script-editor-unified-field-mapping-table-freeze.queue-closeout-and-handoff` | `pending` | `Verify the field mapping contract slice, classify residue, and return control to version review.` | `task.script-editor-unified-field-mapping-table-freeze.field-mapping-contract-freeze` | `Must run lint and relevant tests before queue closeout.` |
 
 ### Task Definitions
@@ -107,7 +107,7 @@
 ##### Control Block
 
 - task_id: `task.script-editor-unified-field-mapping-table-freeze.boundary-baseline-reconcile`
-- state: `active`
+- state: `completed`
 - task_kind: `execution`
 - scope:
   - `src/application/script-editor`
@@ -147,18 +147,23 @@
 - task_brief:
   - `Reconcile the current field rendering and validation boundary before writing the shared field mapping contract.`
 - task_outcome_summary:
-  - `Expected output is a source-backed implementation boundary for the field mapping contract.`
+  - `Completed with a source-backed implementation boundary: the first contract slice should define shared field definitions and validation helpers, prove representative person fields for base/profile/stat/skill/custom/enum/boolean/list/reference cases, and leave full city/building/narrative/minigame migration to later queue tasks.`
 - Purpose:
   - `Prevent later authoring queues from inventing incompatible field ids, labels, value types, and validation hints per panel.`
 - Failure mode:
   - `Freezing a mapping table without source evidence could create a second hardcoded field list rather than the shared contract later queues need.`
+
+##### Progress Log
+
+- `2026-07-15`: `Inspected target/draft specs plus src/application/script-editor/workspace-shell.ts, person-authoring.ts, city-building-authoring.ts, story-dialogue-event-authoring.ts, minigame-binding-authoring.ts, UI field bindings in src/ui/main-ui/main-ui-flow.js, and robustness tests. Current field metadata is distributed across FAMILY_LABELS/TREE_GROUPS, export diagnostic fieldPath targeting, createRecordPreview/localizePreviewKey, person SCRIPT_EDITOR_PERSON_ATTRIBUTE_LABELS and numeric/boolean parsing, city/building access/menu enum constants, story/dialogue/event enum constants and update helpers, minigame enum constants, and shared-rule diagnostic field paths.`
+- `2026-07-15`: `Chose the bounded implementation slice: introduce shared field-definition metadata plus validation helpers and representative tests, using person authoring fields to cover base string, profile text, stat/skill numeric paths, custom key/value entries, enum, boolean, list, and reference-style ids. Full object-family UI migration remains out of this task.`
 
 #### `task.script-editor-unified-field-mapping-table-freeze.field-mapping-contract-freeze`
 
 ##### Control Block
 
 - task_id: `task.script-editor-unified-field-mapping-table-freeze.field-mapping-contract-freeze`
-- state: `pending`
+- state: `active`
 - task_kind: `execution`
 - scope:
   - `src/application/script-editor`

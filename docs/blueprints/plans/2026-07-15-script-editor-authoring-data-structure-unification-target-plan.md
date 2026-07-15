@@ -119,7 +119,7 @@
 
 - `queue.script-editor-unified-field-mapping-table-freeze`
 - Active task:
-  - `task.script-editor-unified-field-mapping-table-freeze.boundary-baseline-reconcile`
+  - `task.script-editor-unified-field-mapping-table-freeze.field-mapping-contract-freeze`
 
 ### Version Boundary Record
 
