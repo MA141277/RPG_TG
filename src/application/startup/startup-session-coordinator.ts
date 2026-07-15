@@ -9,6 +9,10 @@ import type {
   ModSourceDescriptor,
 } from "../../core/contracts/mod-runtime";
 import type { CharacterDefinition } from "../../domain/character";
+import {
+  materializeCharacterDefinitions,
+  type CharacterStatusById,
+} from "../../domain/character-status";
 import type {
   ScenarioPackDefinition,
   ScenarioPackSummary,
@@ -19,6 +23,7 @@ export type StartupSaveData = {
   selectedCharacterId?: string | null;
   selectedModId?: string | null;
   selectedModSource?: ModSourceDescriptor | null;
+  modState?: Record<string, unknown>;
 } | null;
 
 export type StartupScenario = "default" | "haozhou-return-encounter";
@@ -200,6 +205,7 @@ async function createRestoreStartupSession(
     );
   }
 
+  const characterStatusById = readSavedCharacterStatusById(saveData);
   const activatedContentSource = readActivatedContentSource(activationResult);
   if (isScenarioPackSource(activatedContentSource)) {
     const playerCharacterId =
@@ -217,7 +223,8 @@ async function createRestoreStartupSession(
             playerCharacterId
           ),
         readScenarioStartupStoryBootstrap(activatedContentSource),
-        deps
+        deps,
+        characterStatusById
       ),
     });
   }
@@ -234,7 +241,8 @@ async function createRestoreStartupSession(
           deps.createPrototypeAppState(playerCharacterId)
         ),
       readBuiltinStartupStoryBootstrap("haozhou-return-encounter"),
-      deps
+      deps,
+      characterStatusById
     ),
   });
 }
@@ -307,13 +315,37 @@ async function createLoadedScenarioPackStartupSession(
 function createStartupAppStateBuilder(
   createBaseAppState: () => AppState,
   bootstrap: StartupStoryBootstrap | null,
-  deps: StartupSessionCoordinatorDeps
+  deps: StartupSessionCoordinatorDeps,
+  characterStatusById?: CharacterStatusById
 ): () => AppState {
-  return () =>
-    deps.bootstrapStartupStoryAppState({
+  return () => {
+    const appState = deps.bootstrapStartupStoryAppState({
       appState: createBaseAppState(),
       bootstrap,
     });
+
+    if (characterStatusById == null) {
+      return appState;
+    }
+
+    return {
+      ...appState,
+      characterDefinitions: materializeCharacterDefinitions(
+        appState.characterDefinitions,
+        characterStatusById
+      ),
+      characterStatusById,
+    };
+  };
+}
+
+function readSavedCharacterStatusById(
+  saveData: StartupSaveData
+): CharacterStatusById | undefined {
+  const value = saveData?.modState?.characterStatusById;
+  return value != null && typeof value === "object"
+    ? (value as CharacterStatusById)
+    : undefined;
 }
 
 function readBuiltinStartupStoryBootstrap(

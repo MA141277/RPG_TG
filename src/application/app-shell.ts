@@ -1,4 +1,5 @@
 import type { CharacterDefinition } from "../domain/character";
+import type { CharacterStatusById } from "../domain/character-status";
 import type { CityBeggingMiniGameState } from "../domain/city-begging-minigame";
 import type { CityEntryDirectoryType, CityEntryOption } from "../domain/city-entry";
 import type {
@@ -45,6 +46,7 @@ export type AppLocationDialogueState =
 export type AppState = {
   gameState: ReturnType<typeof createInitialState>;
   characterDefinitions: CharacterDefinition[];
+  characterStatusById?: CharacterStatusById;
   playerCoordinate: GridCoordinate;
   campaignActorState: {
     facingDegrees: number;

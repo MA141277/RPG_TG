@@ -44,7 +44,8 @@ export function commitRuntimeRequest<
     state: stateSyncCoreSeam.applyRuntimeStateToAppState(
       input.state,
       runtimeResult.state,
-      runtimeResult.characterDefinitions
+      runtimeResult.characterDefinitions,
+      runtimeResult.characterStatusById
     ),
     runtimeResult,
   };

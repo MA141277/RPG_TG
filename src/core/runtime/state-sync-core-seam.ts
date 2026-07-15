@@ -5,6 +5,10 @@ import type {
   SaveState,
 } from "../contracts/state-sync-runtime";
 import type { RuntimeState as LegacyBridgeRuntimeState } from "../contracts/runtime-state";
+import {
+  mergeCharacterStatusMaps,
+  type CharacterStatusById,
+} from "../../domain/character-status";
 import { syncAppState as rebuildAppStateBridge } from "./state-sync-app-bridge";
 import { hydrateFromSave as hydrateCanonicalRuntimeState } from "./state-sync-hydration";
 import { normalizeRuntimeState } from "./state-sync-normalization";
@@ -21,6 +25,7 @@ export type RuntimeAppStateInput = {
   locationDialogueState: LegacyBridgeRuntimeState["app"]["locationDialogueState"];
   modalState: LegacyBridgeRuntimeState["app"]["modalState"];
   characterDefinitions?: unknown;
+  characterStatusById?: CharacterStatusById;
 };
 
 function createRuntimeStateFromAppState(
@@ -44,8 +49,17 @@ function createRuntimeStateFromAppState(
 function applyRuntimeStateToAppState<TAppState extends RuntimeAppStateInput>(
   state: TAppState,
   runtimeState: LegacyBridgeRuntimeState,
-  characterDefinitions?: unknown
+  characterDefinitions?: unknown,
+  characterStatusPatchById?: CharacterStatusById
 ): TAppState {
+  const characterStatusById =
+    characterStatusPatchById == null
+      ? state.characterStatusById
+      : mergeCharacterStatusMaps(
+          state.characterStatusById ?? {},
+          characterStatusPatchById
+        );
+
   return {
     ...state,
     gameState: runtimeState.core,
@@ -59,6 +73,9 @@ function applyRuntimeStateToAppState<TAppState extends RuntimeAppStateInput>(
     ...(characterDefinitions == null
       ? {}
       : { characterDefinitions }),
+    ...(characterStatusById == null
+      ? {}
+      : { characterStatusById }),
   } as TAppState;
 }
 

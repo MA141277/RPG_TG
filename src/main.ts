@@ -1434,7 +1434,13 @@ function readCurrentCoreGameStateForSave() {
         .filter((instance) => instance.status === "active")
         .map((instance) => instance.taskId),
     },
-    modState: {},
+    modState:
+      appState.characterStatusById == null ||
+      Object.keys(appState.characterStatusById).length === 0
+        ? {}
+        : {
+            characterStatusById: appState.characterStatusById,
+          },
   };
 }
 

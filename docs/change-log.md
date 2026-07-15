@@ -5,6 +5,20 @@
 `docs/change-log.md` 的正式定位是“历史记录 + 人类可读摘要”。
 它不是当前 Blueprint / legacy superpowers 治理的 live execution truth，不作为 resume entry、promotion gate、closeout gate 或固定同步门。
 
+## 2026-07-15 CharacterStatus Save And Runtime Continuation
+
+### Changed
+- 新增 [src/domain/character-status.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/domain/character-status.ts)，将 `CharacterStatus`、materializer 和 patch merge 作为 domain 纯契约提供，同时保留 [src/application/character/character-status.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/character/character-status.ts) 的兼容导出入口。
+- 更新 [src/application/app-shell.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/app-shell.ts)、[src/core/contracts/runtime-result.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/core/contracts/runtime-result.ts)、[src/core/runtime/state-sync-core-seam.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/core/runtime/state-sync-core-seam.ts) 和 [src/core/runtime/state-sync-runtime.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/core/runtime/state-sync-runtime.ts)，让 `AppState.characterStatusById` 成为运行期状态仓，并在共享 `commitRuntimeRequest` 边界合并补丁。
+- 更新城市化缘 settlement、playable runtime 与 interactive runtime，使化缘完成时产生并透传金钱和耐力 `CharacterStatus` 补丁；未改变 playableId、family、registry、owner 或 handoff。
+- 更新 [src/core/save/browser-save-record.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/core/save/browser-save-record.ts)、[src/application/startup/startup-session-coordinator.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/startup/startup-session-coordinator.ts) 和 [src/main.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/main.ts)，将非空状态保存到 `SaveEnvelope.modState.characterStatusById`，并在恢复时覆盖到新创建的人物运行视图，不修改 authored definition。
+- 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，覆盖无状态新游戏、补丁合并、城市化缘端到端聚合、浏览器存档往返、启动恢复和 authored definition 不变性。
+
+### Impact
+- 已覆盖的角色金钱与耐力变化可以跨浏览器存档和启动恢复保留，不再只存在于瞬时 `characterDefinitions` 视图中。
+- 新游戏或没有状态补丁的 runtime commit 不会创建空 `characterStatusById` 记录。
+- 其他 house/playable/object-family 的状态迁移未在本批扩展，后续按 Blueprint residue 分类继续治理。
+
 ## 2026-07-15 Script Editor Project Completion State Gating
 
 ### Changed

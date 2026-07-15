@@ -7,6 +7,11 @@ import { CITY_BEGGING_RUNTIME_KEYS } from "../../domain/city-begging-minigame";
 import type { CharacterDefinition } from "../../domain/character";
 import type { GameState } from "../../domain/game-state";
 import {
+  mergeCharacterStatusById,
+  mergeCharacterStatusMaps,
+  type CharacterStatusById,
+} from "../../domain/character-status";
+import {
   ensurePlayerGrainInventory,
   mutatePlayerGrainDou,
 } from "../inventory/trade-inventory";
@@ -153,24 +158,37 @@ export function applyCityBeggingMiniGameCompletion(
 ): {
   state: GameState;
   characterDefinitions: CharacterDefinition[];
+  characterStatusById: CharacterStatusById;
 } {
   let nextState = recordCityBeggingMiniGameCompletion(
     mutatePlayerGrainDou(ensurePlayerGrainInventory(state), result.foodGain),
     result
   );
-  let nextCharacters = characterDefinitions.map((characterDefinition) => {
-    if (characterDefinition.id !== playerCharacterId || result.goldGain <= 0) {
-      return characterDefinition;
-    }
+  let nextCharacters = characterDefinitions;
+  let characterStatusById: CharacterStatusById = {};
 
-    return {
-      ...characterDefinition,
-      stats: {
-        ...characterDefinition.stats,
-        gold: characterDefinition.stats.gold + result.goldGain,
-      },
-    };
-  });
+  if (result.goldGain > 0) {
+    nextCharacters = nextCharacters.map((characterDefinition) => {
+      if (characterDefinition.id !== playerCharacterId) {
+        return characterDefinition;
+      }
+
+      const nextGold = characterDefinition.stats.gold + result.goldGain;
+      characterStatusById = mergeCharacterStatusById(
+        characterStatusById,
+        playerCharacterId,
+        { statPatch: { gold: nextGold } }
+      );
+
+      return {
+        ...characterDefinition,
+        stats: {
+          ...characterDefinition.stats,
+          gold: nextGold,
+        },
+      };
+    });
+  }
 
   const staminaMutation = spendPlayerStamina(
     nextState,
@@ -179,9 +197,14 @@ export function applyCityBeggingMiniGameCompletion(
   );
   nextState = staminaMutation.state;
   nextCharacters = staminaMutation.characterDefinitions;
+  characterStatusById = mergeCharacterStatusMaps(
+    characterStatusById,
+    staminaMutation.characterStatusById ?? {}
+  );
 
   return {
     state: nextState,
     characterDefinitions: nextCharacters,
+    characterStatusById,
   };
 }

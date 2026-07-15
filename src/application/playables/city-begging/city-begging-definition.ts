@@ -1,6 +1,7 @@
 import type { CharacterDefinition } from "../../../domain/character";
 import type { CityBeggingGameCompletionResult } from "../../../domain/city-begging-minigame";
 import type { RuntimeState } from "../../../core/contracts/runtime-state";
+import type { CharacterStatusById } from "../../../domain/character-status";
 import {
   applyCityBeggingMiniGameCompletion,
   createCityBeggingMiniGameState,
@@ -86,6 +87,7 @@ export function completeCityBeggingPlayable(input: {
 }): {
   state: RuntimeState;
   characterDefinitions: CharacterDefinition[];
+  characterStatusById: CharacterStatusById;
 } {
   const completion = applyCityBeggingMiniGameCompletion(
     input.state.core,
@@ -116,6 +118,7 @@ export function completeCityBeggingPlayable(input: {
       },
     },
     characterDefinitions: completion.characterDefinitions,
+    characterStatusById: completion.characterStatusById,
   };
 }
 

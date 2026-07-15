@@ -17,6 +17,7 @@ export type BrowserStartupSaveData = {
   selectedCharacterId?: string | null;
   selectedModId: string;
   selectedModSource: ModSourceDescriptor | null;
+  modState: CoreGameState["modState"];
 };
 
 export function readBrowserSaveRecord(input: {
@@ -51,6 +52,7 @@ export function readBrowserSaveRecord(input: {
       ...(selectedCharacterId === undefined ? {} : { selectedCharacterId }),
       selectedModId: envelope.selectedModId,
       selectedModSource: envelope.selectedModSource,
+      modState: envelope.modState,
     };
   } catch {
     return null;

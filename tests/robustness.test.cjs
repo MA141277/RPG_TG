@@ -3261,6 +3261,294 @@ test("shared character mutations expose CharacterStatus patches while preserving
   assert.equal(player.skills.arithmetic, 2);
 });
 
+test("runtime commit merges CharacterStatus patches into the AppState-owned status store", () => {
+  const {
+    commitRuntimeRequest,
+  } = require("../.test-dist/core/runtime/state-sync-runtime.js");
+  const state = {
+    gameState: createBaseState(),
+    characterDefinitions: prototypeCharacters,
+    characterStatusById: {
+      "character.zhu_yuanzhang": {
+        statPatch: { gold: 50 },
+      },
+    },
+    playerCoordinate: { x: 0, y: 0 },
+    campaignActorState: { facingDegrees: 0, isMoving: false },
+    campaignTravelState: null,
+    modalState: null,
+    locationDialogueState: null,
+    beggingMiniGameState: null,
+    cityMenuState: null,
+    cityDirectoryState: null,
+    autoAdvanceState: null,
+    uiLayouts: {},
+  };
+
+  const result = commitRuntimeRequest({
+    state,
+    request: {
+      family: "action",
+      type: "action",
+      actionId: "test.character-status",
+    },
+    context: {
+      router: {
+        route: ({ state: runtimeState }) => ({
+          state: runtimeState,
+          effects: [],
+          characterStatusById: {
+            "character.zhu_yuanzhang": {
+              statPatch: { leadership: 70 },
+              stamina: 65,
+            },
+          },
+        }),
+      },
+    },
+  });
+
+  assert.deepEqual(
+    result.state.characterStatusById["character.zhu_yuanzhang"],
+    {
+      statPatch: {
+        gold: 50,
+        leadership: 70,
+      },
+      stamina: 65,
+    }
+  );
+});
+
+test("runtime commit does not create CharacterStatus records when no patch is emitted", () => {
+  const {
+    commitRuntimeRequest,
+  } = require("../.test-dist/core/runtime/state-sync-runtime.js");
+  const state = {
+    gameState: createBaseState(),
+    characterDefinitions: prototypeCharacters,
+    playerCoordinate: { x: 0, y: 0 },
+    campaignActorState: { facingDegrees: 0, isMoving: false },
+    campaignTravelState: null,
+    modalState: null,
+    locationDialogueState: null,
+    beggingMiniGameState: null,
+    cityMenuState: null,
+    cityDirectoryState: null,
+    autoAdvanceState: null,
+    uiLayouts: {},
+  };
+
+  const result = commitRuntimeRequest({
+    state,
+    request: {
+      family: "action",
+      type: "action",
+      actionId: "test.no-character-status",
+    },
+    context: {
+      router: {
+        route: ({ state: runtimeState }) => ({
+          state: runtimeState,
+          effects: [],
+        }),
+      },
+    },
+  });
+
+  assert.equal(
+    Object.prototype.hasOwnProperty.call(result.state, "characterStatusById"),
+    false
+  );
+});
+
+test("city begging completion emits combined gold and stamina CharacterStatus patches", () => {
+  const {
+    applyCityBeggingMiniGameCompletion,
+  } = require("../.test-dist/application/minigames/city-begging-minigame.js");
+  const player = {
+    ...prototypeCharacters[0],
+    id: "char.status.city-begging",
+    stamina: 80,
+    stats: {
+      ...prototypeCharacters[0].stats,
+      gold: 120,
+    },
+  };
+
+  const result = applyCityBeggingMiniGameCompletion(
+    createBaseState(),
+    [player],
+    player.id,
+    {
+      foodGain: 3,
+      goldGain: 7,
+      maxCombo: 5,
+      success: true,
+    }
+  );
+
+  assert.deepEqual(result.characterStatusById[player.id], {
+    statPatch: { gold: 127 },
+    stamina: 65,
+  });
+  assert.equal(player.stats.gold, 120);
+  assert.equal(player.stamina, 80);
+});
+
+test("city begging playable completion persists its CharacterStatus through runtime commit", () => {
+  const {
+    commitRuntimeRequest,
+  } = require("../.test-dist/core/runtime/state-sync-runtime.js");
+  const {
+    createPlayableActionRequest,
+    runPlayableRuntime,
+  } = require("../.test-dist/core/runtime/playable-runtime.js");
+  const player = {
+    ...prototypeCharacters[0],
+    id: "char.status.city-begging-runtime",
+    stamina: 80,
+    stats: {
+      ...prototypeCharacters[0].stats,
+      gold: 120,
+    },
+  };
+  const state = {
+    gameState: createBaseState(),
+    characterDefinitions: [player],
+    playerCoordinate: { x: 0, y: 0 },
+    campaignActorState: { facingDegrees: 0, isMoving: false },
+    campaignTravelState: null,
+    modalState: null,
+    locationDialogueState: null,
+    beggingMiniGameState: null,
+    cityMenuState: null,
+    cityDirectoryState: null,
+    autoAdvanceState: null,
+    uiLayouts: {},
+  };
+  const request = createPlayableActionRequest("city-begging", "complete", {
+    result: {
+      foodGain: 3,
+      goldGain: 7,
+      maxCombo: 5,
+      success: true,
+    },
+  });
+
+  const result = commitRuntimeRequest({
+    state,
+    request,
+    context: {
+      router: {
+        route: ({ state: runtimeState, request: runtimeRequest }) =>
+          runPlayableRuntime({
+            state: runtimeState,
+            request: runtimeRequest,
+            characterDefinitions: state.characterDefinitions,
+            playerCharacterId: player.id,
+          }),
+      },
+    },
+  });
+
+  assert.deepEqual(result.state.characterStatusById[player.id], {
+    statPatch: { gold: 127 },
+    stamina: 65,
+  });
+  assert.equal(result.state.characterDefinitions[0].stats.gold, 127);
+  assert.equal(result.state.characterDefinitions[0].stamina, 65);
+});
+
+test("startup restore materializes saved CharacterStatus without mutating authored definitions", async () => {
+  const {
+    runStartupSessionCoordinator,
+  } = require("../.test-dist/application/startup/startup-session-coordinator.js");
+  const authoredCharacter = {
+    ...prototypeCharacters[0],
+    id: "char.status.restore",
+    stamina: 80,
+    stats: {
+      ...prototypeCharacters[0].stats,
+      gold: 120,
+    },
+  };
+  const createAuthoredAppState = () => ({
+    gameState: createBaseState(),
+    characterDefinitions: [authoredCharacter],
+    playerCoordinate: { x: 0, y: 0 },
+    campaignActorState: { facingDegrees: 0, isMoving: false },
+    campaignTravelState: null,
+    modalState: null,
+    locationDialogueState: null,
+    beggingMiniGameState: null,
+    cityMenuState: null,
+    cityDirectoryState: null,
+    autoAdvanceState: null,
+    uiLayouts: {},
+  });
+  const activationResult = {
+    ok: true,
+    activatedMod: {
+      normalizedContentSources: [],
+    },
+  };
+
+  const result = await runStartupSessionCoordinator(
+    {
+      type: "restore",
+      selectedCharacter: authoredCharacter,
+      saveData: {
+        selectedCharacterId: authoredCharacter.id,
+        selectedModId: "builtin.default",
+        selectedModSource: {
+          kind: "builtin",
+          modId: "builtin.default",
+        },
+        modState: {
+          characterStatusById: {
+            [authoredCharacter.id]: {
+              statPatch: { gold: 175 },
+              stamina: 60,
+            },
+          },
+        },
+      },
+    },
+    {
+      activateBuiltinDefaultMod: async () => activationResult,
+      restoreModFromSave: async () => activationResult,
+      activateScenarioPackMod: async () => activationResult,
+      createPrototypeAppState: createAuthoredAppState,
+      createHaozhouReturnEncounterAppState: (appState) => appState,
+      createScenarioPackAppState: createAuthoredAppState,
+      createStartupContentContext: () => ({
+        packId: "builtin.default",
+        storyContent: {
+          eventDefinitionsById: {},
+          sceneDefinitionsById: {},
+          activityDefinitionsById: {},
+          textEntriesById: {},
+        },
+      }),
+      bootstrapStartupStoryAppState: ({ appState }) => appState,
+    }
+  );
+
+  assert.equal(result.ok, true);
+  const restoredAppState = result.session.createAppState();
+  assert.equal(restoredAppState.characterDefinitions[0].stats.gold, 175);
+  assert.equal(restoredAppState.characterDefinitions[0].stamina, 60);
+  assert.deepEqual(restoredAppState.characterStatusById, {
+    [authoredCharacter.id]: {
+      statPatch: { gold: 175 },
+      stamina: 60,
+    },
+  });
+  assert.equal(authoredCharacter.stats.gold, 120);
+  assert.equal(authoredCharacter.stamina, 80);
+});
+
 test(
   "script editor runtime export lowers the minimal authored narrative into startup-loadable scenes",
   async () => {
@@ -13543,7 +13831,14 @@ test("browser save record round-trips selected character and mod source through 
         activeEventId: "event.story.start",
         activeTaskIds: ["task.main"],
       },
-      modState: {},
+      modState: {
+        characterStatusById: {
+          "char.player": {
+            statPatch: { gold: 175 },
+            stamina: 60,
+          },
+        },
+      },
     },
   });
 
@@ -13558,6 +13853,14 @@ test("browser save record round-trips selected character and mod source through 
     kind: "url",
     name: "Imported Pack",
     url: "https://example.com/mods/imported-pack.json",
+  });
+  assert.deepEqual(loaded?.modState, {
+    characterStatusById: {
+      "char.player": {
+        statPatch: { gold: 175 },
+        stamina: 60,
+      },
+    },
   });
 });
 

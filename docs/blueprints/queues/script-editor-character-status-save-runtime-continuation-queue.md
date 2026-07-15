@@ -9,8 +9,8 @@
 - governance_sync_source: `docs/blueprints/blueprint.md`
 - queue_status: `active`
 - queue_class: `required`
-- active_task: `task.script-editor-character-status-save-runtime-continuation.save-runtime-overlay-implementation`
-- next_task: `task.script-editor-character-status-save-runtime-continuation.queue-closeout-and-handoff`
+- active_task: `task.script-editor-character-status-save-runtime-continuation.queue-closeout-and-handoff`
+- next_task: `none`
 - closeout_status: `in-progress`
 - execution_closeout_status: `partial`
 - topic_closure_status: `open-residue`
@@ -57,9 +57,9 @@
 
 - queue_goal: `Connect CharacterStatus patch output to durable save state and startup restore through one bounded runtime-owned aggregation seam.`
 - task_count: `3`
-- completed_task_count: `1`
-- remaining_task_count: `2`
-- active_task_summary: `Implement the reconciled AppState-owned CharacterStatus store, runtime commit aggregation, save-envelope persistence, and startup materialization path.`
+- completed_task_count: `2`
+- remaining_task_count: `1`
+- active_task_summary: `Classify bounded residue, synchronize closeout truth, and return control to version review after verified CharacterStatus persistence implementation.`
 - task_briefs:
   - `task.script-editor-character-status-save-runtime-continuation.boundary-baseline-reconcile: identify the canonical status aggregation and restore seam.`
   - `task.script-editor-character-status-save-runtime-continuation.save-runtime-overlay-implementation: implement durable CharacterStatus save/restore for the bounded covered path with tests.`
@@ -97,8 +97,8 @@
 | Task ID | State | Summary | Depends On | Notes |
 | --- | --- | --- | --- | --- |
 | `task.script-editor-character-status-save-runtime-continuation.boundary-baseline-reconcile` | `done` | `Reconciled AppState ownership, runtime commit aggregation, save-envelope modState persistence, startup restore materialization, and the city-begging covered mutation path.` | `none` | `The bounded implementation does not require schema-reference-and-migration freeze or non-character status generalization.` |
-| `task.script-editor-character-status-save-runtime-continuation.save-runtime-overlay-implementation` | `active` | `Implement bounded CharacterStatus persistence, restore materialization, and covered status aggregation tests.` | `task.script-editor-character-status-save-runtime-continuation.boundary-baseline-reconcile` | `Must preserve no-status new-game behavior.` |
-| `task.script-editor-character-status-save-runtime-continuation.queue-closeout-and-handoff` | `pending` | `Verify the continuation, classify residue, and synchronize Blueprint truth.` | `task.script-editor-character-status-save-runtime-continuation.save-runtime-overlay-implementation` | `Must not close without save/restore evidence.` |
+| `task.script-editor-character-status-save-runtime-continuation.save-runtime-overlay-implementation` | `done` | `Implemented AppState-owned CharacterStatus aggregation, city-begging covered settlement patches, save modState persistence, and startup materialization.` | `task.script-editor-character-status-save-runtime-continuation.boundary-baseline-reconcile` | `No-status commits remain record-free; authored definitions remain unchanged during restore.` |
+| `task.script-editor-character-status-save-runtime-continuation.queue-closeout-and-handoff` | `active` | `Verify the continuation, classify residue, and synchronize Blueprint truth.` | `task.script-editor-character-status-save-runtime-continuation.save-runtime-overlay-implementation` | `Fresh verification passed; residue classification and repository sync remain.` |
 
 ### Task Definitions
 
@@ -175,7 +175,7 @@
 ##### Control Block
 
 - task_id: `task.script-editor-character-status-save-runtime-continuation.save-runtime-overlay-implementation`
-- state: `active`
+- state: `done`
 - task_kind: `execution`
 - scope:
   - `src/application/app-shell.ts`
@@ -217,18 +217,27 @@
 - task_brief:
   - `Implement durable CharacterStatus aggregation and restore through the canonical runtime/save seam.`
 - task_outcome_summary:
-  - `Active with the exact AppState/runtime commit/save/startup/city-begging implementation boundary frozen by the predecessor task.`
+  - `CharacterStatus now has an AppState-owned runtime store, merges through commitRuntimeRequest, persists under SaveEnvelope.modState.characterStatusById, restores over fresh authored definitions, and is emitted by the covered city-begging gold/stamina settlement path.`
 - Purpose:
   - `Make covered runtime character mutations survive save and restore.`
 - Failure mode:
   - `A transient-only patch output would leave current gameplay behavior unsaved.`
+
+##### Progress Log
+
+- `2026-07-15`: `Added failing tests for runtime commit merge, city-begging gold/stamina patch output, browser modState round-trip, and startup restore materialization; all four failed for the expected missing-link reasons before implementation.`
+- `2026-07-15`: `Moved the pure CharacterStatus contract and materializer to src/domain/character-status.ts while preserving the existing application re-export, then added AppState ownership and RuntimeResult patch transport.`
+- `2026-07-15`: `commitRuntimeRequest now merges status patches without creating empty records. City-begging completion emits combined gold and stamina patches through playable and interactive runtime results.`
+- `2026-07-15`: `Browser save reads now preserve envelope modState, readCurrentCoreGameStateForSave persists non-empty characterStatusById, and restore sessions materialize saved status over fresh authored definitions without mutating source records.`
+- `2026-07-15`: `Playable governance classified the city-begging change as existing-playable settlement plus shared RuntimeResult contract work; playable identity, family, registry, owner, handoff, and house lifecycle remain unchanged.`
+- `2026-07-15`: `Fresh verification passed: npm run test reported 517 pass and 0 fail; npm run typecheck, npm run lint:blueprints, npm run lint:plans, npm run blueprint:governance:check, and git diff --check all passed.`
 
 #### `task.script-editor-character-status-save-runtime-continuation.queue-closeout-and-handoff`
 
 ##### Control Block
 
 - task_id: `task.script-editor-character-status-save-runtime-continuation.queue-closeout-and-handoff`
-- state: `pending`
+- state: `active`
 - task_kind: `execution`
 - scope:
   - `docs/blueprints/project-progress.md`
