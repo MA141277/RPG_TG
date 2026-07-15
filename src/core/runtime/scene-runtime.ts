@@ -24,7 +24,7 @@ export function runSceneFromEvent(input: SceneRuntimeInput): SceneRuntimeResult 
     state: result.state,
     characterDefinitions: result.characterDefinitions,
     session: createSceneSession(result.state),
-    taskInputs: [],
+    taskInputs: input.taskInputs ?? [],
     effects: [],
   };
 }
@@ -68,5 +68,6 @@ export function runStoryTriggerRuntime(input: {
     eventDefinitionsById: input.eventDefinitionsById,
     activityDefinitionsById: input.activityDefinitionsById,
     textEntriesById: input.textEntriesById,
+    taskInputs: eventRuntimeResult.candidate?.taskInputs ?? [],
   });
 }

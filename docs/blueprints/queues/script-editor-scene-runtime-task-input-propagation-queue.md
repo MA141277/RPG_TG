@@ -9,8 +9,8 @@
 - governance_sync_source: `docs/blueprints/blueprint.md`
 - queue_status: `active`
 - queue_class: `required-continuation`
-- active_task: `task.script-editor-scene-runtime-task-input-propagation.runtime-propagation-implementation`
-- next_task: `task.script-editor-scene-runtime-task-input-propagation.queue-closeout-and-handoff`
+- active_task: `task.script-editor-scene-runtime-task-input-propagation.queue-closeout-and-handoff`
+- next_task: `none`
 - closeout_status: `pending`
 - execution_closeout_status: `partial`
 - topic_closure_status: `open-residue`
@@ -56,9 +56,9 @@
 
 - queue_goal: `Carry event runtime candidate taskInputs through scene runtime output for canonical task settlement.`
 - task_count: `3`
-- completed_task_count: `1`
-- remaining_task_count: `2`
-- active_task_summary: `Implement the selected SceneRuntimeInput taskInputs propagation slice with tests.`
+- completed_task_count: `2`
+- remaining_task_count: `1`
+- active_task_summary: `Verify implementation closeout, classify residue, and return control to version review.`
 - task_briefs:
   - `task.script-editor-scene-runtime-task-input-propagation.boundary-baseline-reconcile: inventory scene runtime taskInputs propagation seams and select the smallest lawful implementation slice.`
   - `task.script-editor-scene-runtime-task-input-propagation.runtime-propagation-implementation: implement the selected propagation slice with tests.`
@@ -96,8 +96,8 @@
 | Task ID | State | Summary | Depends On | Notes |
 | --- | --- | --- | --- | --- |
 | `task.script-editor-scene-runtime-task-input-propagation.boundary-baseline-reconcile` | `done` | `Inventoried scene runtime taskInputs propagation seams and selected SceneRuntimeInput.taskInputs passthrough as the smallest runtime-owned slice.` | `none` | `No production code changed during baseline.` |
-| `task.script-editor-scene-runtime-task-input-propagation.runtime-propagation-implementation` | `active` | `Implement the selected SceneRuntimeInput taskInputs propagation slice with tests.` | `task.script-editor-scene-runtime-task-input-propagation.boundary-baseline-reconcile` | `Must preserve RuntimeResult.taskInputs as the only settlement channel.` |
-| `task.script-editor-scene-runtime-task-input-propagation.queue-closeout-and-handoff` | `pending` | `Verify, classify residue, and return control to version review.` | `task.script-editor-scene-runtime-task-input-propagation.runtime-propagation-implementation` | `Do not infer version closeout from this queue.` |
+| `task.script-editor-scene-runtime-task-input-propagation.runtime-propagation-implementation` | `done` | `Implemented the selected SceneRuntimeInput taskInputs propagation slice with tests.` | `task.script-editor-scene-runtime-task-input-propagation.boundary-baseline-reconcile` | `RuntimeResult.taskInputs remains the only settlement channel.` |
+| `task.script-editor-scene-runtime-task-input-propagation.queue-closeout-and-handoff` | `active` | `Verify, classify residue, and return control to version review.` | `task.script-editor-scene-runtime-task-input-propagation.runtime-propagation-implementation` | `Do not infer version closeout from this queue.` |
 
 ### Task Definitions
 
@@ -162,7 +162,7 @@
 ##### Control Block
 
 - task_id: `task.script-editor-scene-runtime-task-input-propagation.runtime-propagation-implementation`
-- state: `active`
+- state: `done`
 - task_kind: `execution`
 - scope:
   - `src/core/runtime/scene-runtime.ts`
@@ -199,11 +199,17 @@
 - task_brief:
   - `Implement scene runtime taskInputs propagation.`
 - task_outcome_summary:
-  - `Active after boundary baseline selected SceneRuntimeInput.taskInputs passthrough.`
+  - `Done. SceneRuntimeInput.taskInputs passthrough landed; runStoryTriggerRuntime passes activated candidate taskInputs into runSceneFromEvent, and runSceneFromEvent returns them through SceneRuntimeResult.taskInputs.`
 - Purpose:
   - `Allow scene runtime callers to receive taskInputs emitted by activated event candidates.`
 - Failure mode:
   - `Manual caller-side stitching would make task handoff inconsistent across runtime paths.`
+
+##### Progress Log
+
+- `2026-07-16`: `RED target test added for script editor story trigger runtime taskInputs propagation; it failed because runStoryTriggerRuntime returned taskInputs: [] even when the activated event candidate carried taskInputs.`
+- `2026-07-16`: `GREEN implementation added optional SceneRuntimeInput.taskInputs, returned input.taskInputs ?? [] from runSceneFromEvent, and passed eventRuntimeResult.candidate?.taskInputs ?? [] from runStoryTriggerRuntime.`
+- `2026-07-16`: `Verification passed: targeted node --test pattern for scene runtime taskInputs propagation, npm run typecheck, npm test, npm run build, npm run lint:blueprints, npm run lint:plans, and npm run blueprint:governance:check. Build retained existing Vite warnings for the battle demo non-module script, unresolved ../../ui/yuansu/1_021_medium_blank_panel_1.0.png, and chunk size.`
 
 #### `task.script-editor-scene-runtime-task-input-propagation.queue-closeout-and-handoff`
 

@@ -19,6 +19,7 @@ export type SceneRuntimeInput = {
   eventDefinitionsById: Record<string, EventDefinition>;
   activityDefinitionsById?: Record<string, ActivityDefinition> | undefined;
   textEntriesById?: Record<string, string> | undefined;
+  taskInputs?: RuntimeTaskInput[] | undefined;
 };
 
 export type SceneRuntimeResult = {

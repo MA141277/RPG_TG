@@ -5009,6 +5009,84 @@ test(
   }
 );
 
+test(
+  "script editor story trigger runtime returns activated event taskInputs",
+  () => {
+    const {
+      exportScriptEditorProjectToScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    const {
+      runStoryTriggerRuntime,
+    } = require("../.test-dist/core/runtime/scene-runtime.js");
+    const project = createExportableScriptEditorProjectDefinition();
+    project.textEntries = [{ id: "text.opening", text: "Opening line." }];
+    project.dialogues = [
+      {
+        id: "dialogue.opening",
+        title: "Opening",
+        nodes: [
+          {
+            id: "dialogue-node.opening",
+            nodeType: "dialogue",
+            speakerPersonId: "person.hero",
+            textId: "text.opening",
+          },
+        ],
+      },
+    ];
+    project.quests = [
+      {
+        id: "task.opening",
+        title: "Opening Task",
+        objectives: [{ id: "report", target: 1, signalType: "scene.reported" }],
+      },
+    ];
+    project.events = [
+      {
+        id: "event.opening",
+        title: "Opening Event",
+        triggerTiming: "city-enter",
+        relations: { cityIds: ["city.kulan"] },
+        destination: { family: "dialogue", targetId: "dialogue.opening" },
+        taskInputs: [
+          {
+            type: "start",
+            taskId: "task.opening",
+            occurredAt: "2026-07-15T00:00:00.000Z",
+            source: "script-editor:event.opening",
+          },
+        ],
+      },
+    ];
+
+    const files = exportScriptEditorProjectToScenarioPackFiles(project);
+    const events = JSON.parse(files["events.json"]);
+    const scenes = JSON.parse(files["scenes.json"]);
+    const textEntries = JSON.parse(files["text-entries.json"]);
+    const result = runStoryTriggerRuntime({
+      timing: "city-enter",
+      state: createBaseState(),
+      characterDefinitions: JSON.parse(files["characters.json"]),
+      eventDefinitionsById: Object.fromEntries(
+        events.map((eventDefinition) => [eventDefinition.id, eventDefinition])
+      ),
+      sceneDefinitionsById: Object.fromEntries(
+        scenes.map((sceneDefinition) => [sceneDefinition.id, sceneDefinition])
+      ),
+      textEntriesById: textEntries,
+    });
+
+    assert.deepEqual(result.taskInputs, [
+      {
+        type: "start",
+        taskId: "task.opening",
+        occurredAt: "2026-07-15T00:00:00.000Z",
+        source: "script-editor:event.opening",
+      },
+    ]);
+  }
+);
+
 test("script editor runtime export rejects missing event taskInput task targets", () => {
   const {
     exportScriptEditorProjectToScenarioPackFiles,
