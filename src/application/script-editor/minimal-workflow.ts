@@ -1,16 +1,18 @@
-import type {
-  ScriptEditorBuildingRecord,
-  ScriptEditorCityRecord,
-  ScriptEditorDialogueRecord,
-  ScriptEditorEntityRecord,
-  ScriptEditorEventRecord,
-  ScriptEditorMinigameRecord,
-  ScriptEditorPersonRecord,
-  ScriptEditorProjectDefinition,
-  ScriptEditorProjectFileKey,
-  ScriptEditorStoryNodeRecord,
-  ScriptEditorStoryPackRecord,
-  ScriptEditorTextEntryRecord,
+import {
+  SCRIPT_EDITOR_PROJECT_KIND,
+  SCRIPT_EDITOR_PROJECT_SCHEMA_VERSION,
+  type ScriptEditorBuildingRecord,
+  type ScriptEditorCityRecord,
+  type ScriptEditorDialogueRecord,
+  type ScriptEditorEntityRecord,
+  type ScriptEditorEventRecord,
+  type ScriptEditorMinigameRecord,
+  type ScriptEditorPersonRecord,
+  type ScriptEditorProjectDefinition,
+  type ScriptEditorProjectFileKey,
+  type ScriptEditorStoryNodeRecord,
+  type ScriptEditorStoryPackRecord,
+  type ScriptEditorTextEntryRecord,
 } from "../../domain/script-editor-project";
 import {
   createDefaultScriptEditorBuildingRecord,
@@ -61,8 +63,8 @@ export function createDefaultScriptEditorProjectDefinition(input?: {
   const title = input?.title?.trim() || "Script Editor Demo Project";
 
   return {
-    schemaVersion: 1,
-    kind: "script-editor-project",
+    schemaVersion: SCRIPT_EDITOR_PROJECT_SCHEMA_VERSION,
+    kind: SCRIPT_EDITOR_PROJECT_KIND,
     id: `project.${idBase}`,
     title,
     description:

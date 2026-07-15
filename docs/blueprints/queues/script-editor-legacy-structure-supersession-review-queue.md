@@ -9,8 +9,8 @@
 - governance_sync_source: `docs/blueprints/blueprint.md`
 - queue_status: `active`
 - queue_class: `required`
-- active_task: `task.script-editor-legacy-structure-supersession-review.supersession-disposition-review`
-- next_task: `task.script-editor-legacy-structure-supersession-review.queue-closeout-and-handoff`
+- active_task: `task.script-editor-legacy-structure-supersession-review.queue-closeout-and-handoff`
+- next_task: `none`
 - closeout_status: `in-progress`
 - execution_closeout_status: `partial`
 - topic_closure_status: `open-residue`
@@ -56,9 +56,9 @@
 
 - queue_goal: `Review legacy script-editor structures and write explicit supersession dispositions before deletion, adapter removal, or final validation.`
 - task_count: `3`
-- completed_task_count: `1`
-- remaining_task_count: `2`
-- active_task_summary: `Implement the selected minimal supersession disposition slice with tests.`
+- completed_task_count: `2`
+- remaining_task_count: `1`
+- active_task_summary: `Verify, classify residue, and return control to version review.`
 - task_briefs:
   - `task.script-editor-legacy-structure-supersession-review.boundary-baseline-reconcile: inventory legacy structure references and decide the bounded disposition surface.`
   - `task.script-editor-legacy-structure-supersession-review.supersession-disposition-review: implement or document the selected retained/migrated/adapter-supported/retired dispositions with tests where code changes are required.`
@@ -96,8 +96,8 @@
 | Task ID | State | Summary | Depends On | Notes |
 | --- | --- | --- | --- | --- |
 | `task.script-editor-legacy-structure-supersession-review.boundary-baseline-reconcile` | `done` | `Inventoried legacy structure references and selected minimal-workflow schema literal replacement plus retained adapter-supported compatibility/runtime event dispositions as the smallest lawful slice.` | `none` | `No deletion during baseline.` |
-| `task.script-editor-legacy-structure-supersession-review.supersession-disposition-review` | `active` | `Record and implement selected retained/migrated/adapter-supported/retired dispositions.` | `task.script-editor-legacy-structure-supersession-review.boundary-baseline-reconcile` | `Tests required for any code behavior change.` |
-| `task.script-editor-legacy-structure-supersession-review.queue-closeout-and-handoff` | `pending` | `Verify, classify residue, and return control to version review.` | `task.script-editor-legacy-structure-supersession-review.supersession-disposition-review` | `Does not infer version closeout from this queue.` |
+| `task.script-editor-legacy-structure-supersession-review.supersession-disposition-review` | `done` | `Replaced default project schema/kind literals with centralized references and locked the disposition with tests.` | `task.script-editor-legacy-structure-supersession-review.boundary-baseline-reconcile` | `CompatibilityImport and runtimeEvents remain retained adapter-supported structures.` |
+| `task.script-editor-legacy-structure-supersession-review.queue-closeout-and-handoff` | `active` | `Verify, classify residue, and return control to version review.` | `task.script-editor-legacy-structure-supersession-review.supersession-disposition-review` | `Does not infer version closeout from this queue.` |
 
 ### Task Definitions
 
@@ -157,7 +157,7 @@
 ##### Control Block
 
 - task_id: `task.script-editor-legacy-structure-supersession-review.supersession-disposition-review`
-- state: `active`
+- state: `done`
 - task_kind: `execution`
 - scope:
   - `src/application/script-editor/minimal-workflow.ts`
@@ -190,7 +190,7 @@
 - task_brief:
   - `Record and implement the baseline-selected legacy structure dispositions.`
 - task_outcome_summary:
-  - `Pending implementation.`
+  - `Completed after createDefaultScriptEditorProjectDefinition began consuming SCRIPT_EDITOR_PROJECT_SCHEMA_VERSION and SCRIPT_EDITOR_PROJECT_KIND, and robustness coverage locked that default-project creation path against schema/kind literals. Existing compatibilityImport and runtimeEvents coverage continues to preserve those adapter-supported structures.`
 - Purpose:
   - `Make old-vs-new structure ownership explicit before final validation.`
 - Failure mode:
@@ -201,7 +201,7 @@
 ##### Control Block
 
 - task_id: `task.script-editor-legacy-structure-supersession-review.queue-closeout-and-handoff`
-- state: `pending`
+- state: `active`
 - task_kind: `decision-dispatch`
 - scope:
   - `docs/blueprints/queues/script-editor-legacy-structure-supersession-review-queue.md`
@@ -231,7 +231,7 @@
 - task_brief:
   - `Close or route the legacy supersession queue after verified disposition work.`
 - task_outcome_summary:
-  - `Pending implementation.`
+  - `Pending closeout.`
 - Purpose:
   - `Return control to version review without hiding legacy structure residue.`
 - Failure mode:
@@ -258,3 +258,4 @@
 
 - `2026-07-16`: `Promotion review admitted queue.script-editor-legacy-structure-supersession-review as the single active queue because schema reference closeout routed legacy deletion, supersession disposition, and concrete future-version migration adapters back to version review. The first live task is boundary-baseline-reconcile.`
 - `2026-07-16`: `Boundary baseline completed after scanning src/domain/script-editor-project.ts, src/application/script-editor, src/ui/main-ui/main-ui-flow.js, and tests/robustness.test.cjs for legacy/compatibility/residue/runtime adapter structures. Active surfaces are storyPack.compatibilityImport, storyPack.runtimeEvents, compatibility residue UI summaries, imported runtime event summaries, and one remaining minimal-workflow schemaVersion/kind literal. The smallest lawful implementation slice is to replace the minimal-workflow schema/kind literal with centralized references and test that compatibilityImport/runtimeEvents are retained adapter-supported structures rather than silently deletable residue.`
+- `2026-07-16`: `Supersession-disposition-review implementation completed with TDD. Added a failing robustness guard for default project schema/kind literals, then updated src/application/script-editor/minimal-workflow.ts to consume SCRIPT_EDITOR_PROJECT_SCHEMA_VERSION and SCRIPT_EDITOR_PROJECT_KIND. Verification passed after fixing type-only imports: targeted RED/GREEN test, npm run typecheck, npm test, npm run lint:blueprints, npm run lint:plans, npm run blueprint:governance:check, and git diff --check. The active task is now queue-closeout-and-handoff.`

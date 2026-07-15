@@ -2883,6 +2883,18 @@ test("script editor schema reference drives project save and runtime export vers
   );
 });
 
+test("script editor default project creation consumes schema reference constants", () => {
+  const minimalWorkflowSource = fs.readFileSync(
+    path.join(process.cwd(), "src/application/script-editor/minimal-workflow.ts"),
+    "utf8"
+  );
+
+  assert.match(minimalWorkflowSource, /SCRIPT_EDITOR_PROJECT_SCHEMA_VERSION/);
+  assert.match(minimalWorkflowSource, /SCRIPT_EDITOR_PROJECT_KIND/);
+  assert.doesNotMatch(minimalWorkflowSource, /schemaVersion:\s*1\b/);
+  assert.doesNotMatch(minimalWorkflowSource, /kind:\s*"script-editor-project"/);
+});
+
 test("script editor project completion state persists through project save and load", async () => {
   const {
     loadScriptEditorProjectFromFiles,
