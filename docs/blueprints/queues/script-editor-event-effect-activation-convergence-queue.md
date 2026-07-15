@@ -7,17 +7,17 @@
 - blueprint_version: `2026.07`
 - governance_last_synced_at: `2026-07-15`
 - governance_sync_source: `docs/blueprints/blueprint.md`
-- queue_status: `active`
+- queue_status: `done`
 - queue_class: `required`
-- active_task: `task.script-editor-event-effect-activation-convergence.effect-activation-contract-implementation`
-- next_task: `task.script-editor-event-effect-activation-convergence.queue-closeout-and-handoff`
-- closeout_status: `not-started`
-- execution_closeout_status: `partial`
+- active_task: `none`
+- next_task: `none`
+- closeout_status: `done`
+- execution_closeout_status: `done`
 - topic_closure_status: `open-residue`
-- closure_basis: `none`
-- residue_remaining: `unknown`
-- residue_family: `none`
-- residue_routing_status: `none`
+- closure_basis: `The bounded task/shared-rule explicit character numeric property mutation effect slice landed with verification. Remaining event/scene/domain action effect convergence is outside this queue's selected implementation slice and must be promoted through version review.`
+- residue_remaining: `yes`
+- residue_family: `cross-family`
+- residue_routing_status: `needs-version-review`
 - next_family_candidate: `none`
 - auto_continue_eligible: `false`
 - next_effect: `none`
@@ -60,9 +60,9 @@
 
 - queue_goal: `Define the bounded effect activation contract and prove whether runtime property mutation can be invoked from typed effects without widening into unrelated event/condition/schema queues.`
 - task_count: `3`
-- completed_task_count: `1`
-- remaining_task_count: `2`
-- active_task_summary: `Implement the selected task/shared-rule typed character property mutation effect through runtime settlement ownership.`
+- completed_task_count: `2`
+- remaining_task_count: `1`
+- active_task_summary: `Queue closed after the implemented typed character property mutation effect slice verified; cross-family event/scene effect residue returned to version review.`
 - task_briefs:
   - `task.script-editor-event-effect-activation-convergence.boundary-baseline-reconcile: identify the smallest lawful effect activation slice and prerequisite queues.`
   - `task.script-editor-event-effect-activation-convergence.effect-activation-contract-implementation: implement the selected typed effect activation slice with tests.`
@@ -101,8 +101,8 @@
 | Task ID | State | Summary | Depends On | Notes |
 | --- | --- | --- | --- | --- |
 | `task.script-editor-event-effect-activation-convergence.boundary-baseline-reconcile` | `done` | `Reconciled current effect record shapes, settlement input ownership, target resolution needs, and prerequisite queue ordering.` | `none` | `Selected task/shared-rule character property mutation as the smallest lawful effect activation slice.` |
-| `task.script-editor-event-effect-activation-convergence.effect-activation-contract-implementation` | `active` | `Implement the bounded typed effect activation slice chosen by baseline reconciliation.` | `task.script-editor-event-effect-activation-convergence.boundary-baseline-reconcile` | `Must not become a broad event system rewrite.` |
-| `task.script-editor-event-effect-activation-convergence.queue-closeout-and-handoff` | `queued` | `Verify the queue, classify residue, and synchronize Blueprint truth.` | `task.script-editor-event-effect-activation-convergence.effect-activation-contract-implementation` | `Must not close without typed effect activation verification or explicit residue routing.` |
+| `task.script-editor-event-effect-activation-convergence.effect-activation-contract-implementation` | `done` | `Implemented the bounded typed effect activation slice chosen by baseline reconciliation.` | `task.script-editor-event-effect-activation-convergence.boundary-baseline-reconcile` | `Landed shared-rule/task explicit character numeric property mutation through runtime settlement and CharacterStatus patches.` |
+| `task.script-editor-event-effect-activation-convergence.queue-closeout-and-handoff` | `done` | `Verified the queue, classified residue, and synchronized Blueprint truth.` | `task.script-editor-event-effect-activation-convergence.effect-activation-contract-implementation` | `Closed with cross-family residue returned to version promotion review.` |
 
 ### Task Definitions
 
@@ -215,7 +215,7 @@
 - task_brief:
   - `Implement the typed effect activation slice selected by baseline reconciliation.`
 - task_outcome_summary:
-  - `Active. Implement the selected task/shared-rule explicit character numeric property mutation effect through core runtime settlement.`
+  - `Done. Shared-rule export now lowers mutateCharacterNumericProperty effects. Core runtime settlement applies the effect through mutateCharacterNumericProperty when characterDefinitions are supplied, emits CharacterStatus patches, and fail-closes unsupported/missing-context cases through unsupportedEffects and warnings. Runtime dispatch propagates task-emitted mutation effects into RuntimeResult characterDefinitions and characterStatusById.`
 - Purpose:
   - `Make authored effects executable through runtime-owned mutation paths.`
 - Failure mode:
@@ -225,13 +225,16 @@
 
 - `2026-07-15`: `Queued behind boundary-baseline-reconcile.`
 - `2026-07-15`: `Activated after baseline selected the task/shared-rule explicit character numeric property mutation effect as the smallest lawful typed effect activation slice.`
+- `2026-07-15`: `Added failing tests for shared-rule export lowering, runtime settlement CharacterStatus patch output, and runtime dispatch task-effect propagation; confirmed they failed before implementation.`
+- `2026-07-15`: `Implemented the selected slice in src/core/contracts/effect.ts, src/core/contracts/effect-settlement.ts, src/core/contracts/runtime-result.ts, src/core/runtime/runtime-router.ts, src/core/runtime/runtime-settlement.ts, src/core/runtime/runtime-dispatch.ts, and src/application/script-editor/shared-rule-compiler.ts.`
+- `2026-07-15`: `Verification passed: npm test, npm run typecheck, npm run lint:blueprints, npm run lint:plans, npm run blueprint:governance:check, and git diff --check.`
 
 #### `task.script-editor-event-effect-activation-convergence.queue-closeout-and-handoff`
 
 ##### Control Block
 
 - task_id: `task.script-editor-event-effect-activation-convergence.queue-closeout-and-handoff`
-- state: `queued`
+- state: `active`
 - task_kind: `execution`
 - scope:
   - `docs/blueprints/project-progress.md`
@@ -262,7 +265,7 @@
 - task_brief:
   - `Close or route the event effect activation convergence queue after verified implementation.`
 - task_outcome_summary:
-  - `Pending implementation and verification.`
+  - `Done. The bounded implementation slice verified. Remaining scene/choice legacy domain effect-applier migration and broader event structure/effect activation migration are cross-family residue for version promotion review, not same-family continuation of this queue.`
 - Purpose:
   - `Keep effect activation ownership explicit before branching/task-chain or final validation queues continue.`
 - Failure mode:
@@ -271,6 +274,8 @@
 ##### Progress Log
 
 - `2026-07-15`: `Queued behind effect-activation-contract-implementation.`
+- `2026-07-15`: `Activated after implementation verification passed for the task/shared-rule character property mutation effect slice.`
+- `2026-07-15`: `Closed after verification. Residue classified as cross-family because scene/choice effects still use the legacy domain action effect-applier and broader event effect activation depends on event/story structure convergence rather than this task/shared-rule settlement slice.`
 
 ### Historical Handoff Note
 

@@ -1,5 +1,6 @@
 import type { RuntimeRequest } from "../contracts/runtime-request";
 import type { RuntimeResult } from "../contracts/runtime-result";
+import type { EffectSettlementResult } from "../contracts/effect-settlement";
 import type { RuntimeState } from "../contracts/runtime-state";
 import type {
   TaskAction,
@@ -47,21 +48,44 @@ function settleRoutedRuntimeResult(input: {
     effects: routed.effects,
     emittedBy: "runtime-router",
     appliedBy: "runtime-settlement",
+    ...(routed.characterDefinitions == null
+      ? {}
+      : { characterDefinitions: routed.characterDefinitions }),
+    ...(routed.characterStatusById == null
+      ? {}
+      : { characterStatusById: routed.characterStatusById }),
   });
   const settledTasks = settleRuntimeTasks({
     state: settledEffects.state,
     taskInputs: routed.taskInputs,
     taskDefinitionsById,
   });
-  const finalState =
+  const finalState: EffectSettlementResult =
     settledTasks.effects.length === 0
-      ? { state: settledTasks.state }
-      : settleRuntimeEffects({
+      ? {
           state: settledTasks.state,
-          effects: settledTasks.effects,
-          emittedBy: "task-runtime",
-          appliedBy: "runtime-settlement",
-        });
+          ...(settledEffects.characterDefinitions == null
+            ? {}
+            : { characterDefinitions: settledEffects.characterDefinitions }),
+          ...(settledEffects.characterStatusById == null
+            ? {}
+            : { characterStatusById: settledEffects.characterStatusById }),
+          settledEffects: [],
+          unsupportedEffects: [],
+          warnings: [],
+        }
+      : settleRuntimeEffects({
+        state: settledTasks.state,
+        effects: settledTasks.effects,
+        emittedBy: "task-runtime",
+        appliedBy: "runtime-settlement",
+        ...(settledEffects.characterDefinitions == null
+          ? {}
+          : { characterDefinitions: settledEffects.characterDefinitions }),
+        ...(settledEffects.characterStatusById == null
+          ? {}
+          : { characterStatusById: settledEffects.characterStatusById }),
+      });
   const handledFollowUp = settleRuntimeFollowUp({
     state: finalState.state,
     followUp: routed.followUp,
@@ -73,6 +97,13 @@ function settleRoutedRuntimeResult(input: {
     ...(handledFollowUp.characterDefinitions === undefined
       ? {}
       : { characterDefinitions: handledFollowUp.characterDefinitions }),
+    ...(handledFollowUp.characterDefinitions !== undefined ||
+    finalState.characterDefinitions === undefined
+      ? {}
+      : { characterDefinitions: finalState.characterDefinitions }),
+    ...(finalState.characterStatusById === undefined
+      ? {}
+      : { characterStatusById: finalState.characterStatusById }),
     state: handledFollowUp.state,
     ...(handledFollowUp.followUp === undefined
       ? {}
@@ -178,11 +209,11 @@ function settleRuntimeFollowUp(input: {
   context: RuntimeFollowUpContext | undefined;
 }): {
   state: RuntimeState;
-  characterDefinitions?: unknown;
+  characterDefinitions?: RuntimeResult["characterDefinitions"];
   followUp: RuntimeResult["followUp"];
 } {
   let state = input.state;
-  let characterDefinitions: unknown;
+  let characterDefinitions: RuntimeResult["characterDefinitions"];
   let followUp = input.followUp;
 
   if (

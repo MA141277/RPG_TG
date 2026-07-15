@@ -78,6 +78,13 @@ type SharedEffectNode =
       days?: number;
     }
   | {
+      type: "mutateCharacterNumericProperty";
+      characterId: string;
+      propertyId: string;
+      operation: "set" | "add" | "subtract";
+      value: number;
+    }
+  | {
       type: string;
       [key: string]: unknown;
     };
@@ -507,6 +514,34 @@ function compileTaskEffectNode(
     }
 
     return [{ type: "advanceTime", ...(hours == null ? {} : { hours }), ...(days == null ? {} : { days }) }];
+  }
+
+  if (effectNode.type === "mutateCharacterNumericProperty") {
+    if (
+      typeof effectNode.characterId !== "string" ||
+      typeof effectNode.propertyId !== "string" ||
+      !["set", "add", "subtract"].includes(String(effectNode.operation)) ||
+      typeof effectNode.value !== "number" ||
+      !Number.isFinite(effectNode.value)
+    ) {
+      diagnostics.push({
+        code: "invalid-field",
+        fieldPath,
+        message:
+          "Shared mutateCharacterNumericProperty effect requires string characterId/propertyId, set/add/subtract operation, and finite numeric value.",
+      });
+      return [];
+    }
+
+    return [
+      {
+        type: "mutateCharacterNumericProperty",
+        characterId: effectNode.characterId,
+        propertyId: effectNode.propertyId,
+        operation: effectNode.operation as "set" | "add" | "subtract",
+        value: effectNode.value,
+      },
+    ];
   }
 
   diagnostics.push({

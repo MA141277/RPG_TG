@@ -2,6 +2,7 @@ import type { Effect } from "./effect";
 import type { NavigationTarget } from "./navigation";
 import type { RuntimeState } from "./runtime-state";
 import type { TaskAction, TaskSignal } from "./task-runtime";
+import type { CharacterDefinition } from "../../domain/character";
 import type { CharacterStatusById } from "../../domain/character-status";
 
 export type RuntimeTaskSignal =
@@ -36,7 +37,7 @@ export type RuntimeFollowUp =
 export type RuntimeResult = {
   state: RuntimeState;
   effects: Effect[];
-  characterDefinitions?: unknown;
+  characterDefinitions?: CharacterDefinition[];
   characterStatusById?: CharacterStatusById;
   navigation?: NavigationTarget | null;
   scene?:

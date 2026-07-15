@@ -4354,6 +4354,51 @@ test(
 );
 
 test(
+  "script editor runtime export lowers shared character property mutation effects",
+  () => {
+    const {
+      exportScriptEditorProjectToScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    const project = createExportableScriptEditorProjectDefinition();
+    project.quests = [
+      {
+        id: "quest.shared-rule",
+        title: "Shared Rule Quest",
+        objectives: [{ id: "report", target: 1, signalType: "scene.reported" }],
+        onCompleteEffectBundleId: "effect.character-devotion",
+      },
+    ];
+    project.effectBundles = [
+      {
+        id: "effect.character-devotion",
+        effects: [
+          {
+            type: "mutateCharacterNumericProperty",
+            characterId: "person.hero",
+            propertyId: "custom.character.devotion",
+            operation: "add",
+            value: 5,
+          },
+        ],
+      },
+    ];
+
+    const serializedFiles = exportScriptEditorProjectToScenarioPackFiles(project);
+    const exportedTasks = JSON.parse(serializedFiles["tasks.json"]);
+
+    assert.deepEqual(exportedTasks[0]?.onCompleteEffects, [
+      {
+        type: "mutateCharacterNumericProperty",
+        characterId: "person.hero",
+        propertyId: "custom.character.devotion",
+        operation: "add",
+        value: 5,
+      },
+    ]);
+  }
+);
+
+test(
   "script editor runtime export fails closed on unsupported shared-rule lowering",
   () => {
     const {
@@ -14534,6 +14579,111 @@ test("runtime settlement uses explicit contract and reports unsupported effect k
   assert.match(source, /unsupportedEffects/);
   assert.match(source, /warnings/);
   assert.doesNotMatch(source, /runTask|activateEvent|renderApp|writeSave/);
+});
+
+test("runtime settlement applies character numeric property mutation effects through status patches", () => {
+  const {
+    settleRuntimeEffects,
+  } = require("../.test-dist/core/runtime/runtime-settlement.js");
+  const player = {
+    ...prototypeCharacters.find((character) => character.id === playerCharacterId),
+    customProperties: {
+      "character.devotion": 10,
+    },
+  };
+
+  const result = settleRuntimeEffects({
+    state: createRuntimeState(),
+    effects: [
+      {
+        type: "mutateCharacterNumericProperty",
+        characterId: player.id,
+        propertyId: "custom.character.devotion",
+        operation: "add",
+        value: 5,
+      },
+    ],
+    emittedBy: "task-runtime",
+    appliedBy: "runtime-settlement",
+    characterDefinitions: [player],
+    characterStatusById: {},
+  });
+
+  assert.equal(result.unsupportedEffects.length, 0);
+  assert.equal(
+    result.characterDefinitions[0].customProperties["character.devotion"],
+    15
+  );
+  assert.deepEqual(result.characterStatusById[player.id], {
+    customPropertyPatch: {
+      "character.devotion": 15,
+    },
+  });
+});
+
+test("runtime dispatch propagates task character property mutation effect status", () => {
+  const {
+    dispatchRuntimeRequest,
+  } = require("../.test-dist/core/runtime/runtime-dispatch.js");
+  const player = {
+    ...prototypeCharacters.find((character) => character.id === playerCharacterId),
+    customProperties: {
+      "character.devotion": 10,
+    },
+  };
+  const taskId = "task.character-devotion";
+
+  const result = dispatchRuntimeRequest({
+    state: createRuntimeState(),
+    request: {
+      family: "action",
+      type: "action",
+      actionId: "task.start",
+    },
+    context: {
+      router: {
+        route: ({ state }) => ({
+          state,
+          effects: [],
+          taskInputs: [
+            {
+              type: "start",
+              taskId,
+              occurredAt: "2026-07-15T00:00:00.000Z",
+            },
+          ],
+          characterDefinitions: [player],
+          characterStatusById: {},
+        }),
+      },
+      taskDefinitionsById: {
+        [taskId]: {
+          id: taskId,
+          title: "Character Devotion",
+          objectives: [{ id: "report", target: 1, signalType: "scene.reported" }],
+          onStartEffects: [
+            {
+              type: "mutateCharacterNumericProperty",
+              characterId: player.id,
+              propertyId: "custom.character.devotion",
+              operation: "add",
+              value: 5,
+            },
+          ],
+        },
+      },
+    },
+  });
+
+  assert.equal(
+    result.characterDefinitions[0].customProperties["character.devotion"],
+    15
+  );
+  assert.deepEqual(result.characterStatusById[player.id], {
+    customPropertyPatch: {
+      "character.devotion": 15,
+    },
+  });
 });
 
 test("runtime spine commit helper is exported from state sync runtime", () => {

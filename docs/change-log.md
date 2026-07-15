@@ -2762,3 +2762,18 @@
 - The top-of-sheet wording is now consistent with the current authoring model, which exposes editable custom attributes rather than a raw JSON inspection panel.
 - The person editor header is visually simpler and closer to the approved wireframe rhythm because the creator now sees one active control band instead of duplicated labels plus a separate tab row.
 - The people editor's primary form reads more like a continuous authoring sheet and wastes less vertical space, which better matches the current creator-first workbench layout.
+
+## 2026-07-15 Script Editor Task Effect Mutation Settlement
+
+### Added
+- Added a core `mutateCharacterNumericProperty` effect for shared-rule task effects, with runtime settlement support that writes through `CharacterStatus` patches instead of mutating authored character definitions directly.
+- Added coverage proving shared-rule export lowering, runtime settlement status output, and task-runtime dispatch propagation for explicit character numeric property mutations.
+
+### Changed
+- `EffectSettlementInput` and `EffectSettlementResult` can now carry character definitions and `characterStatusById` when an effect path needs canonical character mutation ownership.
+- `RuntimeResult.characterDefinitions` is now typed as `CharacterDefinition[]`, matching the runtime paths that propagate settled character materialization.
+- Blueprint truth closes `queue.script-editor-event-effect-activation-convergence` after the bounded task/shared-rule mutation slice and routes broader event/scene effect convergence residue back to version promotion review.
+
+### Impact
+- Editor-authored task effects can now mutate numeric character properties through the same durable status overlay path used by covered runtime property mutations.
+- Remaining scene/choice legacy effect application and broader event activation migration stay explicit future work instead of being hidden inside this settlement slice.

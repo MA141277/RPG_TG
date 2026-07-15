@@ -4,6 +4,7 @@ import type {
 } from "../contracts/runtime-result";
 import type { RuntimeResult } from "../contracts/runtime-result";
 import type { RuntimeState } from "../contracts/runtime-state";
+import type { CharacterDefinition } from "../../domain/character";
 
 export type RuntimeRouteInput = {
   state: RuntimeState;
@@ -17,7 +18,7 @@ export type RuntimeFollowUpInput = {
 
 export type RuntimeFollowUpResult = {
   state: RuntimeState;
-  characterDefinitions?: unknown;
+  characterDefinitions?: CharacterDefinition[];
 };
 
 export type RuntimeFollowUpContext = {

@@ -1,5 +1,7 @@
 import type { Effect } from "./effect";
 import type { RuntimeState } from "./runtime-state";
+import type { CharacterDefinition } from "../../domain/character";
+import type { CharacterStatusById } from "../../domain/character-status";
 
 export type EffectEmitter =
   | "runtime-router"
@@ -17,10 +19,14 @@ export type EffectSettlementInput = {
   effects: Effect[];
   emittedBy: EffectEmitter;
   appliedBy: EffectSettlementApplier;
+  characterDefinitions?: CharacterDefinition[];
+  characterStatusById?: CharacterStatusById;
 };
 
 export type EffectSettlementResult = {
   state: RuntimeState;
+  characterDefinitions?: CharacterDefinition[];
+  characterStatusById?: CharacterStatusById;
   settledEffects: Effect[];
   unsupportedEffects: Effect[];
   warnings: string[];
