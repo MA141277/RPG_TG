@@ -7,23 +7,23 @@
 - blueprint_version: `2026.07`
 - governance_last_synced_at: `2026-07-15`
 - governance_sync_source: `docs/blueprints/blueprint.md`
-- queue_status: `active`
+- queue_status: `done`
 - queue_class: `required-continuation`
-- active_task: `task.script-editor-task-chain-runtime-handoff-convergence.queue-closeout-and-handoff`
+- active_task: `none`
 - next_task: `none`
-- closeout_status: `pending`
-- execution_closeout_status: `partial`
+- closeout_status: `done`
+- execution_closeout_status: `done`
 - topic_closure_status: `open-residue`
-- closure_basis: `none`
-- residue_remaining: `no`
-- residue_family: `none`
-- residue_routing_status: `none`
-- next_family_candidate: `none`
-- auto_continue_eligible: `false`
-- next_effect: `execute-active-task`
+- closure_basis: `The bounded event-level taskInputs handoff landed and passed verification: editor event taskInputs lower into runtime EventDefinition.taskInputs, imported runtime event taskInputs are preserved, EventRuntimeCandidate exposes those inputs, missing task action targets fail closed, and dispatchRuntimeRequest can settle the emitted inputs through the existing task runtime. SceneRuntimeResult.taskInputs still returns an empty array from runSceneFromEvent/runStoryTriggerRuntime, so automatic scene-runtime propagation remains same-family residue.`
+- residue_remaining: `yes`
+- residue_family: `same-family`
+- residue_routing_status: `auto-routable`
+- next_family_candidate: `queue.script-editor-scene-runtime-task-input-propagation`
+- auto_continue_eligible: `true`
+- next_effect: `promote-next-queue`
 - sync_status: `success`
 - sync_scope: `branch-push`
-- sync_summary: `Commit 1410f43 pushed to origin/mod-first-dev after same-family task-chain runtime handoff continuation admission.`
+- sync_summary: `Commit 7ba5c96 pushed to origin/mod-first-dev after event-level taskInputs handoff implementation landed and advanced this queue to closeout.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
@@ -57,9 +57,9 @@
 
 - queue_goal: `Create the next runtime-owned task handoff path from editor-authored event/scene chain data into unified taskInputs settlement.`
 - task_count: `3`
-- completed_task_count: `2`
-- remaining_task_count: `1`
-- active_task_summary: `Verify, classify residue, and return control to version review after event-level taskInputs handoff landed.`
+- completed_task_count: `3`
+- remaining_task_count: `0`
+- active_task_summary: `Queue closed with same-family scene runtime taskInputs propagation residue routed to queue.script-editor-scene-runtime-task-input-propagation.`
 - task_briefs:
   - `task.script-editor-task-chain-runtime-handoff-convergence.boundary-baseline-reconcile: inventory editor task-chain seams and select the smallest lawful runtime handoff slice.`
   - `task.script-editor-task-chain-runtime-handoff-convergence.task-handoff-runtime-implementation: implement the selected task handoff slice with tests.`
@@ -99,7 +99,7 @@
 | --- | --- | --- | --- | --- |
 | `task.script-editor-task-chain-runtime-handoff-convergence.boundary-baseline-reconcile` | `done` | `Inventoried task-chain seams and selected event-level taskInputs handoff as the smallest runtime-owned slice.` | `none` | `No production code changed during baseline.` |
 | `task.script-editor-task-chain-runtime-handoff-convergence.task-handoff-runtime-implementation` | `done` | `Implemented the selected event-level taskInputs handoff runtime slice with tests.` | `task.script-editor-task-chain-runtime-handoff-convergence.boundary-baseline-reconcile` | `Editor event taskInputs now lower into runtime EventDefinition.taskInputs, event runtime candidates expose them, and dispatch settles them through RuntimeResult.taskInputs.` |
-| `task.script-editor-task-chain-runtime-handoff-convergence.queue-closeout-and-handoff` | `active` | `Verify, classify residue, and return control to version review.` | `task.script-editor-task-chain-runtime-handoff-convergence.task-handoff-runtime-implementation` | `Do not infer version closeout from this queue.` |
+| `task.script-editor-task-chain-runtime-handoff-convergence.queue-closeout-and-handoff` | `done` | `Verified, classified residue, and routed the unique same-family continuation.` | `task.script-editor-task-chain-runtime-handoff-convergence.task-handoff-runtime-implementation` | `Closed on 2026-07-16 with scene runtime taskInputs propagation residue routed to queue.script-editor-scene-runtime-task-input-propagation.` |
 
 ### Task Definitions
 
@@ -249,7 +249,7 @@
 ##### Control Block
 
 - task_id: `task.script-editor-task-chain-runtime-handoff-convergence.queue-closeout-and-handoff`
-- state: `active`
+- state: `done`
 - task_kind: `execution`
 - scope:
   - `docs/blueprints/project-progress.md`
@@ -286,11 +286,15 @@
 - task_brief:
   - `Verify, classify residue, and return control to version review.`
 - task_outcome_summary:
-  - `Active after task-handoff-runtime-implementation verification passed.`
+  - `Done. Event-level taskInputs handoff is verified and closed with same-family scene runtime taskInputs propagation residue routed to queue.script-editor-scene-runtime-task-input-propagation.`
 - Purpose:
   - `Prevent the bounded task handoff implementation from being mistaken for full version completion.`
 - Failure mode:
   - `Closing without residue classification would hide remaining task-chain runtime blockers.`
+
+##### Progress Log
+
+- `2026-07-16`: `Closeout classified residue as same-family: EventRuntimeCandidate now carries editor-authored taskInputs, but runSceneFromEvent/runStoryTriggerRuntime still return SceneRuntimeResult.taskInputs: [] instead of propagating activated event candidate task inputs through the scene runtime result. Routed the unique continuation to queue.script-editor-scene-runtime-task-input-propagation; version closeout was not inferred.`
 
 ### Historical Handoff Note
 
