@@ -5,12 +5,12 @@
 - document_role: `version-governor`
 - version_id: `target.script-editor-authoring-data-structure-unification`
 - version_status: `open`
-- active_phase: `phase.promotion-review`
-- active_queue: `none`
-- decision_state: `promotion-review`
-- next_decision: `same-version-admission-or-version-closeout`
-- next_action: `return-to-promotion-review`
-- resume_gate: `promotion-review`
+- active_phase: `phase.active-execution`
+- active_queue: `queue.script-editor-character-definition-status-convergence`
+- decision_state: `active-execution`
+- next_decision: `queue-closeout-or-return-to-version-review`
+- next_action: `resume-active-queue`
+- resume_gate: `open-active-queue`
 - promotion_review_result: `none`
 - review_subject_id: `none`
 - review_subject_classification: `none`
@@ -27,7 +27,7 @@
 - residue_candidate_id: `none`
 - residue_candidate_family: `cross-family`
 - routing_basis: `queue.script-editor-unified-field-mapping-table-freeze closed after freezing the bounded shared field-definition contract and representative validation slice. Remaining mapping consumption belongs to later object-family queues rather than another same-family contract-freeze continuation.`
-- next_lawful_queue_recommendation: `queue.script-editor-character-definition-status-convergence`
+- next_lawful_queue_recommendation: `none`
 - auto_admission_ready: `false`
 - blocked_by: []
 - candidate_queue_ids:
@@ -80,8 +80,8 @@
 | `item.script-editor-project-cache-save-export-preview-residue-continuation` | `queue-candidate` | `queue.script-editor-project-cache-save-export-preview-continuation` | `admitted + queue closed` | `only if fresh evidence proves the residue can be merged into a smaller already-recorded queue without losing persistence semantics` | `Admitted from closed queue residue; this continuation closed after durable save-location recording and stale continue gating landed, with remaining same-family residue routed onward.` |
 | `item.script-editor-durable-package-workflow-residue-continuation` | `queue-candidate` | `queue.script-editor-durable-package-workflow-continuation` | `admitted + queue closed` | `only if fresh evidence proves package workflow closeout missed same-family persistence residue` | `Closed after create-at-save-path package skeleton creation, writable-directory draft opening/edit-in-place, and runtime preview-from-disk landed with verification and no remaining same-family residue.` |
 | `item.script-editor-project-completion-state-gating` | `queue-candidate` | `queue.script-editor-project-completion-state-gating` | `admitted + queue closed` | `only if fresh evidence proves completion-state gating missed same-family project completion truth` | `Closed after durable project completion-state truth, save/load preservation, runtime-import draft state, and export-only completion upgrade landed with verification and no same-family residue.` |
-| `item.script-editor-unified-field-mapping-table-freeze` | `queue-candidate` | `queue.script-editor-unified-field-mapping-table-freeze` | `admitted + active` | `only if fresh evidence proves the first object-family queue must own the bounded mapping slice instead` | `Admitted after completion-state gating closeout because authoring controls need one shared field id/display/value-type contract before broad object-family UI convergence.` |
-| `item.script-editor-character-definition-status-convergence` | `queue-candidate` | `queue.script-editor-character-definition-status-convergence` | `candidate-recorded` | `after persistence boundaries are stable enough to migrate character data` | `Unifies CharacterDefinition, CharacterStatus overlays, selectors, and covered runtime consumers.` |
+| `item.script-editor-unified-field-mapping-table-freeze` | `queue-candidate` | `queue.script-editor-unified-field-mapping-table-freeze` | `admitted + queue closed` | `only if fresh evidence proves the first object-family queue must own the bounded mapping slice instead` | `Closed after the bounded field-definition contract and representative validation slice landed; field mapping UI consumption is routed as cross-family residue to later object-family queues.` |
+| `item.script-editor-character-definition-status-convergence` | `queue-candidate` | `queue.script-editor-character-definition-status-convergence` | `admitted + active` | `only if fresh evidence proves schema-reference-and-migration-freeze must run before character migration` | `Admitted after field mapping freeze closeout because package persistence, completion-state, and shared field metadata are stable enough to migrate character definitions/status ownership.` |
 | `item.script-editor-city-building-entry-and-npc-authoring-priority` | `queue-candidate` | `queue.script-editor-city-building-entry-and-npc-authoring-priority` | `candidate-recorded` | `when field/condition basics are sufficient for building/city entry and NPC assignment authoring` | `Covers priority authoring additions recorded in the source draft.` |
 | `item.script-editor-scenario-launch-policy-authoring` | `queue-candidate` | `queue.script-editor-scenario-launch-policy-authoring` | `candidate-recorded` | `when startup policy authoring is the smallest blocker to editor-exported packs launching without manual JSON patching` | `Owns character selection vs fixed startup, initial map/city/building/view, and entry event timing authoring.` |
 | `item.script-editor-playable-minigame-binding-convergence` | `queue-candidate` | `queue.script-editor-playable-minigame-binding-convergence` | `candidate-recorded` | `only after playable governance is loaded and the queue is admitted` | `Requires playable governance before shared playable runtime or house-hosted playable integration changes.` |
@@ -96,7 +96,7 @@
 | `queue.script-editor-durable-package-workflow-continuation` | `done` | `Already completed; do not reopen except by explicit governance record.` | `Closed after package skeleton creation, writable-directory draft opening/edit-in-place, and runtime preview-from-disk semantics landed with verification.` |
 | `queue.script-editor-project-completion-state-gating` | `done` | `Already completed; do not reopen except by explicit governance record.` | `Closed after project completion-state persistence and export-only completion upgrade landed with verification and no same-family residue.` |
 | `queue.script-editor-unified-field-mapping-table-freeze` | `done` | `Already completed; do not reopen except by explicit governance record.` | `Closed after the bounded shared field-definition contract and representative validation slice landed; object-family mapping consumption is cross-family residue for later queues.` |
-| `queue.script-editor-character-definition-status-convergence` | `candidate` | `After package persistence is stable enough to change character storage without creating dual durable truth.` | `Covers character definitions, optional status overlays, selectors/materializers, and runtime mutation ownership.` |
+| `queue.script-editor-character-definition-status-convergence` | `active` | `Admitted after package persistence, completion-state gating, and field mapping freeze all closed.` | `Covers character definitions, optional status overlays, selectors/materializers, and runtime mutation ownership.` |
 | `queue.script-editor-character-authoring-surface-completion` | `candidate` | `If character UI/control work outgrows the character definition convergence queue.` | `Covers base/profile/stat/skill/custom maps plus dialogue/event/trade bindings.` |
 | `queue.script-editor-schema-reference-and-migration-freeze` | `candidate` | `Before retiring legacy structures or when multiple queues need one replacement reference.` | `Owns formal schema reference, legacy supersession, migration adapters, and schema versions.` |
 | `queue.script-editor-city-building-entry-and-npc-authoring-priority` | `candidate` | `When field/condition basics can support the priority city/building authoring additions.` | `Covers building dialogue binding, entry conditions, refusal text, city building selection, and NPC assignment.` |
@@ -117,16 +117,16 @@
 
 ### Current Queue Activation
 
-- `none`
+- `queue.script-editor-character-definition-status-convergence`
 - Active task:
-  - `none`
+  - `task.script-editor-character-definition-status-convergence.boundary-baseline-reconcile`
 
 ### Version Boundary Record
 
 - `This version governs authoring/data-structure convergence after runtime-pack-unification closeout.`
 - `It must consume the closed runtime-pack export/import/startup truth as baseline evidence rather than reopening it as a compatibility patch surface.`
 - `It may supersede previously frozen script-editor structures only through explicit schema/migration/supersession records.`
-- `It now resumes from promotion review after the unified field mapping table freeze queue closed with cross-family residue routed to later object-family queues.`
+- `It now resumes from the admitted character definition/status convergence queue after unified field mapping table freeze closeout satisfied the first object-family migration prerequisite.`
 
 ### Queue Admission Startup Rules
 
@@ -195,3 +195,4 @@
 - `2026-07-15: queue.script-editor-project-completion-state-gating closed after durable project completion-state truth, save/load preservation, runtime-import draft state, and export-only completion upgrade landed with verification and no same-family residue; the version returned to promotion review for the next candidate queue.`
 - `2026-07-15: admission review then promoted queue.script-editor-unified-field-mapping-table-freeze as the single active queue after completion-state gating closeout satisfied the persistence prerequisite for shared field metadata.`
 - `2026-07-15: queue.script-editor-unified-field-mapping-table-freeze closed after the bounded shared field-definition contract and representative validation slice landed; field-mapping UI consumption was routed as cross-family residue to later object-family queues, with character definition/status convergence recommended next.`
+- `2026-07-15: admission review then promoted queue.script-editor-character-definition-status-convergence as the single active queue after package persistence, completion-state gating, and field mapping freeze satisfied the prerequisites for bounded character data/status migration.`
