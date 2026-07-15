@@ -3964,6 +3964,51 @@ test("script editor PRD workspace shell exposes a Chinese-first project overview
   );
 });
 
+test("script editor workspace renders a visible save project action", () => {
+  const workspaceViewSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/views/script-editor/script-editor-workspace-view.ts"),
+    "utf8"
+  );
+
+  assert.doesNotMatch(
+    workspaceViewSource,
+    /\.filter\(\(action\) => action\.id !== "save"\)/
+  );
+  assert.match(workspaceViewSource, /data-script-editor-action="\$\{escapeHtml\(action\.id\)\}"/);
+});
+
+test("script editor landing labels opening an existing project as opening a draft", () => {
+  const mainUiSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    "utf8"
+  );
+
+  assert.match(mainUiSource, /新建剧本/);
+  assert.match(mainUiSource, /打开草稿/);
+  assert.match(mainUiSource, /使用模板/);
+  assert.match(mainUiSource, />\s*返回\s*<\/button>/);
+  assert.match(mainUiSource, /c-script-editor-landing__help-button/);
+  assert.match(mainUiSource, />\s*\?\s*<\/button>/);
+  assert.doesNotMatch(mainUiSource, /c-script-editor-landing__header/);
+  assert.doesNotMatch(mainUiSource, />\s*新建剧本项目\s*<\/button>/);
+  assert.doesNotMatch(mainUiSource, />\s*新建模板\s*<\/button>/);
+  assert.doesNotMatch(mainUiSource, />\s*打开剧本项目\s*<\/button>/);
+  assert.doesNotMatch(mainUiSource, />\s*导入现有剧本包\s*<\/button>/);
+  assert.doesNotMatch(mainUiSource, />\s*返回主菜单\s*<\/button>/);
+});
+
+test("script editor landing help action is styled as a circular question button", () => {
+  const scriptEditorStyles = fs.readFileSync(
+    path.join(process.cwd(), "src/styles/script-editor.css"),
+    "utf8"
+  );
+
+  assert.match(scriptEditorStyles, /\.c-script-editor-landing__help-button/);
+  assert.match(scriptEditorStyles, /margin-left:\s*auto/);
+  assert.match(scriptEditorStyles, /border-radius:\s*50%/);
+  assert.match(scriptEditorStyles, /aspect-ratio:\s*1/);
+});
+
 test("script editor workspace shell surfaces export blockers and compatibility residue", () => {
   const {
     createScriptEditorWorkspaceShellViewModel,

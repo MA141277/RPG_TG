@@ -572,25 +572,17 @@ export class MainUiFlow {
     return `
       <section class="c-main-ui-screen c-main-ui-screen--script-editor-flow" aria-label="剧本编辑器入口">
         <div class="c-script-editor-landing">
-          <header class="c-script-editor-landing__header">
-            <p class="c-script-editor-landing__eyebrow">剧本编辑器</p>
-            <h1 class="c-script-editor-landing__title">项目总览优先的创作工作台</h1>
-            <p class="c-script-editor-landing__description">
-              新建项目、打开现有项目，或导入运行时剧本包后，都回到同一个中文创作工作台继续编辑。
-            </p>
-          </header>
-
           ${this.renderScriptEditorNotice()}
 
           <div class="c-script-editor-landing__actions">
             <button type="button" class="c-main-ui-json-text-button c-main-ui-json-text-button--accent" data-script-editor-action="new-project">
-              新建剧本项目
+              新建剧本
             </button>
             <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="open-project">
-              打开剧本项目
+              打开草稿
             </button>
             <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="import-pack">
-              导入现有剧本包
+              使用模板
             </button>
             ${
               hasSession
@@ -602,7 +594,15 @@ export class MainUiFlow {
                 : ""
             }
             <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="back-to-menu">
-              返回主菜单
+              返回
+            </button>
+            <button
+              type="button"
+              class="c-script-editor-landing__help-button"
+              aria-label="帮助"
+              title="帮助"
+            >
+              ?
             </button>
           </div>
 
@@ -618,28 +618,28 @@ export class MainUiFlow {
     return `
       <section class="c-main-ui-screen c-main-ui-screen--script-editor-flow" aria-label="剧本编辑器入口">
         <div class="c-script-editor-landing">
-          <header class="c-script-editor-landing__header">
-            <p class="c-script-editor-landing__eyebrow">剧本编辑器</p>
-            <h1 class="c-script-editor-landing__title">项目总览优先的创作工作台</h1>
-            <p class="c-script-editor-landing__description">
-              新建项目、打开现有项目或导入运行时剧本包后，都回到同一个中文创作工作台继续编辑。
-            </p>
-          </header>
-
           ${this.renderScriptEditorNotice()}
 
           <div class="c-script-editor-landing__actions">
             <button type="button" class="c-main-ui-json-text-button c-main-ui-json-text-button--accent" data-script-editor-action="new-project">
-              新建剧本项目
+              新建剧本
             </button>
             <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="open-project">
-              打开剧本项目
+              打开草稿
             </button>
             <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="import-pack">
-              导入现有剧本包
+              使用模板
             </button>
             <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="back-to-menu">
-              返回主菜单
+              返回
+            </button>
+            <button
+              type="button"
+              class="c-script-editor-landing__help-button"
+              aria-label="帮助"
+              title="帮助"
+            >
+              ?
             </button>
           </div>
 

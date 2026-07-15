@@ -100,7 +100,6 @@ function splitWorkspaceTreeGroups(groups: ScriptEditorWorkspaceTreeGroup[]): {
 
 function renderToolbarButtons(model: ScriptEditorWorkspaceViewModel): string {
   return model.toolbarActions
-    .filter((action) => action.id !== "save")
     .map((action) => {
       const modifierClass =
         action.id === "export"
