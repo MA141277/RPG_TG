@@ -22,9 +22,10 @@
 - 新增 [docs/blueprints/queues/script-editor-durable-package-workflow-continuation-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-durable-package-workflow-continuation-queue.md)，并将其作为新的 active queue 启动，当前 active task 为 `task.script-editor-durable-package-workflow-continuation.boundary-baseline-reconcile`。
 - 更新 [src/ui/main-ui/main-ui-flow.js](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/main-ui/main-ui-flow.js)、[src/application/script-editor/workspace-shell.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/workspace-shell.ts) 和 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，让新建剧本先创建可保存项目骨架，“打开草稿”改为可写目录打开并保留目录 handle，工作台新增“运行预览”并在启动前从已保存项目目录重读再加载 runtime pack。
 - 关闭 `queue.script-editor-durable-package-workflow-continuation`，记录 package skeleton、writable-directory draft edit-in-place 与 runtime preview-from-disk 已落地且无 same-family residue；version 回到 promotion review 以筛选下一候选队列。
+- 新增 [docs/blueprints/queues/script-editor-project-completion-state-gating-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-project-completion-state-gating-queue.md)，并将其作为新的 active queue 启动，当前 active task 为 `task.script-editor-project-completion-state-gating.boundary-baseline-reconcile`。
 
 ### Impact
-- 当前 Blueprint 已进入新的 open successor version；project package persistence 相关三个队列均已关闭，剧本编辑器后续 authoring/data convergence 队列可以依赖稳定的 editable project package truth。
+- 当前 Blueprint 已进入新的 open successor version；project package persistence 相关三个队列均已关闭，剧本编辑器后续 authoring/data convergence 队列可以依赖稳定的 editable project package truth；当前继续推进项目完成状态 gating。
 - 后续 script-editor authoring/data-structure 工作不再挂回已关闭的 `target.script-editor-runtime-pack-unification`。
 
 ## 2026-07-15 Script Editor Runtime Pack Unification Version Closeout
