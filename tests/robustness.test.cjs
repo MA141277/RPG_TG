@@ -5942,6 +5942,53 @@ test(
 );
 
 test(
+  "script editor building authoring records own runtime house structure fields",
+  () => {
+    const {
+      createDefaultScriptEditorBuildingRecord,
+      normalizeScriptEditorBuildingRecord,
+    } = require("../.test-dist/application/script-editor/city-building-authoring.js");
+
+    const defaultBuilding = createDefaultScriptEditorBuildingRecord(0, "city.kulan");
+    assert.equal(defaultBuilding.type, "custom");
+    assert.deepEqual(defaultBuilding.characterIds, []);
+    assert.equal(defaultBuilding.defaultCharacterId, null);
+    assert.equal(defaultBuilding.activityLocationId, "custom");
+    assert.deepEqual(defaultBuilding.backAction, {
+      label: "返回",
+      targetView: "city",
+    });
+
+    const normalizedBuilding = normalizeScriptEditorBuildingRecord({
+      id: "building.market",
+      cityId: "city.kulan",
+      name: "市集",
+      type: "merchant",
+      characterIds: ["person.host", "", "person.guest"],
+      defaultCharacterId: "person.host",
+      activityLocationId: "market",
+      backAction: { label: "回城", targetView: "city" },
+      onEnterEventId: "event.enter.market",
+      onLeaveEventId: "event.leave.market",
+    });
+
+    assert.equal(normalizedBuilding.type, "merchant");
+    assert.deepEqual(normalizedBuilding.characterIds, [
+      "person.host",
+      "person.guest",
+    ]);
+    assert.equal(normalizedBuilding.defaultCharacterId, "person.host");
+    assert.equal(normalizedBuilding.activityLocationId, "market");
+    assert.deepEqual(normalizedBuilding.backAction, {
+      label: "回城",
+      targetView: "city",
+    });
+    assert.equal(normalizedBuilding.onEnterEventId, "event.enter.market");
+    assert.equal(normalizedBuilding.onLeaveEventId, "event.leave.market");
+  }
+);
+
+test(
   "script editor runtime export materializes city building entry npc and refusal families from authoring fields",
   () => {
     const {

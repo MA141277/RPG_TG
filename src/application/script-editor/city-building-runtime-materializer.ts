@@ -79,6 +79,7 @@ function materializeHouses(
       ...(onEnterEventId.length === 0 ? {} : { onEnterEventId }),
       ...(onLeaveEventId.length === 0 ? {} : { onLeaveEventId }),
       backAction,
+      moduleId: building.moduleId ?? null,
       activityLocationId: readActivityLocationId(building.activityLocationId),
     };
   });

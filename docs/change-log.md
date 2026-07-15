@@ -2817,3 +2817,14 @@
 
 ### Impact
 - A simple editor-authored building with an assigned NPC and disabled/hidden access can export a runnable runtime pack without manual JSON edits for city entries, NPC pools, house roster fields, or refusal rules.
+
+## 2026-07-15 Script Editor Building Runtime House Structure
+
+### Changed
+- `ScriptEditorBuildingRecord` now explicitly owns covered runtime `HouseDefinition` fields including house type, character ids, default character, activity location, back action, module id, event ids, story-stage fields, and current-city matching.
+- City/building authoring defaults and normalization now produce runtime-house-compatible building records.
+- Runtime pack import normalizes imported `houses` into the editor building contract instead of storing them as implicit unknown fields.
+
+### Impact
+- Building authoring no longer relies on export-only projection as the durable source for required `houses.json` structure fields.
+- City-local placement ids, override layering, and centralized resolver ownership remain explicit follow-up residue for the placement resolver queue.

@@ -7,6 +7,7 @@ import type {
   ScriptEditorMenuEntry,
   ScriptEditorMenuTargetFamily,
 } from "../../domain/script-editor-project";
+import type { HouseDefinition } from "../../domain/house";
 
 export const SCRIPT_EDITOR_CITY_DEFAULT_MENU_FAMILIES = [
   "风土人情",
@@ -63,6 +64,13 @@ function createDefaultBuildingEntryBinding(): ScriptEditorBuildingEntryBinding {
   };
 }
 
+function createDefaultBackAction(): HouseDefinition["backAction"] {
+  return {
+    label: "返回",
+    targetView: "city",
+  };
+}
+
 export function createDefaultScriptEditorCityRecord(index: number): ScriptEditorCityRecord {
   const suffix = index + 1;
   return {
@@ -85,6 +93,11 @@ export function createDefaultScriptEditorBuildingRecord(
     id: `building.new.${suffix}`,
     cityId,
     name: `新建筑 ${suffix}`,
+    type: "custom",
+    characterIds: [],
+    defaultCharacterId: null,
+    activityLocationId: "custom",
+    backAction: createDefaultBackAction(),
     description: "",
     menuEntries: SCRIPT_EDITOR_BUILDING_DEFAULT_MENU_FAMILIES.map((family) =>
       createDefaultMenuEntry(`building.new.${suffix}.menu`, family)
@@ -113,10 +126,28 @@ export function normalizeScriptEditorBuildingRecord(
     ...building,
     cityId: normalizeString(building.cityId, "city.start"),
     name: normalizeString(building.name, building.id),
+    type: normalizeHouseType(building.type),
+    characterIds: normalizeStringArray(building.characterIds),
+    defaultCharacterId: normalizeNullableString(building.defaultCharacterId),
+    activityLocationId: normalizeActivityLocationId(building.activityLocationId),
+    backAction: normalizeBackAction(building.backAction),
     description: normalizeOptionalString(building.description),
     menuEntries: normalizeMenuEntries(building.menuEntries, `${building.id}.menu`),
     access: normalizeAccessRule(building.access),
     entryBinding: normalizeBuildingEntryBinding(building.entryBinding),
+    ...(normalizeHouseModuleId(building.moduleId) == null
+      ? {}
+      : { moduleId: normalizeHouseModuleId(building.moduleId) }),
+    ...(normalizeOptionalString(building.onEnterEventId).length === 0
+      ? {}
+      : { onEnterEventId: normalizeOptionalString(building.onEnterEventId) }),
+    ...(normalizeOptionalString(building.onLeaveEventId).length === 0
+      ? {}
+      : { onLeaveEventId: normalizeOptionalString(building.onLeaveEventId) }),
+    visibleStoryStages: normalizeStringArray(building.visibleStoryStages),
+    enterableStoryStages: normalizeStringArray(building.enterableStoryStages),
+    requiresPlayerCurrentCityMatch:
+      building.requiresPlayerCurrentCityMatch === true,
   };
 }
 
@@ -279,6 +310,85 @@ function normalizeBuildingEntryBinding(
     onLeaveEventId: normalizeOptionalString(binding?.onLeaveEventId),
     returnTarget: normalizeString(binding?.returnTarget, "city"),
   };
+}
+
+function normalizeHouseType(value: unknown): HouseDefinition["type"] {
+  switch (value) {
+    case "castle":
+    case "merchant":
+    case "inn":
+    case "dojo":
+    case "tea-house":
+    case "temple":
+    case "medicine-house":
+    case "residence":
+    case "custom":
+      return value;
+    default:
+      return "custom";
+  }
+}
+
+function normalizeActivityLocationId(
+  value: unknown
+): HouseDefinition["activityLocationId"] {
+  if (value === null) {
+    return null;
+  }
+  switch (value) {
+    case "tea-house":
+    case "tavern":
+    case "market":
+    case "street":
+    case "custom":
+      return value as NonNullable<HouseDefinition["activityLocationId"]>;
+    default:
+      return "custom";
+  }
+}
+
+function normalizeHouseModuleId(value: unknown): HouseDefinition["moduleId"] {
+  switch (value) {
+    case "home-house":
+    case "keep-house":
+    case "leader-residence":
+    case "grain-shop":
+    case "market-house":
+    case "tea-house":
+    case "tavern":
+    case "temple-house":
+    case "medicine-house":
+      return value;
+    default:
+      return null;
+  }
+}
+
+function normalizeBackAction(value: unknown): HouseDefinition["backAction"] {
+  if (value != null && typeof value === "object" && !Array.isArray(value)) {
+    const record = value as Record<string, unknown>;
+    if (record.targetView === "city") {
+      return {
+        label: normalizeString(record.label, "返回"),
+        targetView: "city",
+      };
+    }
+  }
+  return createDefaultBackAction();
+}
+
+function normalizeStringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+  return value
+    .map((entry) => normalizeOptionalString(entry).trim())
+    .filter((entry) => entry.length > 0);
+}
+
+function normalizeNullableString(value: unknown): string | null {
+  const normalized = normalizeOptionalString(value).trim();
+  return normalized.length > 0 ? normalized : null;
 }
 
 function normalizeAccessState(value?: string): ScriptEditorAccessState {

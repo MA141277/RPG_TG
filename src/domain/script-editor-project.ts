@@ -1,3 +1,5 @@
+import type { HouseDefinition } from "./house";
+
 export const SCRIPT_EDITOR_PROJECT_KIND = "script-editor-project";
 export const SCRIPT_EDITOR_PROJECT_MANIFEST_FILE = "project.json";
 
@@ -145,10 +147,21 @@ export type ScriptEditorCityRecord = ScriptEditorEntityRecord & {
 export type ScriptEditorBuildingRecord = ScriptEditorEntityRecord & {
   cityId: string;
   name: string;
+  type: HouseDefinition["type"];
+  characterIds: string[];
+  defaultCharacterId: string | null;
+  activityLocationId: HouseDefinition["activityLocationId"];
+  backAction: HouseDefinition["backAction"];
   description?: string;
   menuEntries?: ScriptEditorMenuEntry[];
   access?: ScriptEditorAccessRule;
   entryBinding?: ScriptEditorBuildingEntryBinding;
+  moduleId?: HouseDefinition["moduleId"];
+  onEnterEventId?: string;
+  onLeaveEventId?: string;
+  visibleStoryStages?: string[];
+  enterableStoryStages?: string[];
+  requiresPlayerCurrentCityMatch?: boolean;
 };
 
 export type ScriptEditorStoryProgressMode =

@@ -7,23 +7,23 @@
 - blueprint_version: `2026.07`
 - governance_last_synced_at: `2026-07-15`
 - governance_sync_source: `docs/blueprints/blueprint.md`
-- queue_status: `active`
+- queue_status: `done`
 - queue_class: `required`
-- active_task: `task.script-editor-city-building-structure-convergence.structure-contract-implementation`
-- next_task: `task.script-editor-city-building-structure-convergence.queue-closeout-and-handoff`
-- closeout_status: `not-started`
-- execution_closeout_status: `partial`
+- active_task: `none`
+- next_task: `none`
+- closeout_status: `done`
+- execution_closeout_status: `done`
 - topic_closure_status: `open-residue`
-- closure_basis: `none`
+- closure_basis: `The bounded city/building structure convergence slice landed with verification: ScriptEditorBuildingRecord now explicitly owns the covered runtime HouseDefinition fields, building defaults and normalization produce runtime-house-compatible records, and runtime pack import normalizes houses into the editor building contract. City-local entry/placement/resolver convergence remains cross-family residue for the placement resolver queue.`
 - residue_remaining: `yes`
-- residue_family: `none`
-- residue_routing_status: `none`
+- residue_family: `cross-family`
+- residue_routing_status: `needs-version-review`
 - next_family_candidate: `none`
 - auto_continue_eligible: `false`
-- next_effect: `execute-active-task`
+- next_effect: `return-to-version-review`
 - sync_status: `pending`
 - sync_scope: `branch-push`
-- sync_summary: `No repository sync has run yet for the structure baseline task.`
+- sync_summary: `City/building structure implementation and closeout are pending repository sync.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
@@ -57,9 +57,9 @@
 
 - queue_goal: `Determine and implement the smallest city/building structure convergence slice that makes editor city/building records runtime-consumable without relying on export-only projection as the final durable model.`
 - task_count: `3`
-- completed_task_count: `1`
-- remaining_task_count: `2`
-- active_task_summary: `Implement the selected runtime-house-compatible building structure contract slice.`
+- completed_task_count: `3`
+- remaining_task_count: `0`
+- active_task_summary: `Queue closed after runtime-house-compatible building structure contract hardening verified; placement/resolver residue returned to version review.`
 - task_briefs:
   - `task.script-editor-city-building-structure-convergence.boundary-baseline-reconcile: inventory city/building authoring records, runtime HouseDefinition/CityEntryDefinition consumption, import/export materialization, and placement-resolver boundaries before code changes.`
   - `task.script-editor-city-building-structure-convergence.structure-contract-implementation: implement the selected city/building structure convergence slice with tests.`
@@ -97,8 +97,8 @@
 | Task ID | State | Summary | Depends On | Notes |
 | --- | --- | --- | --- | --- |
 | `task.script-editor-city-building-structure-convergence.boundary-baseline-reconcile` | `done` | `Inventoried city/building authoring/runtime/export seams and selected runtime-house-compatible building structure contract hardening as the smallest implementation slice.` | `none` | `Production code was not changed during baseline.` |
-| `task.script-editor-city-building-structure-convergence.structure-contract-implementation` | `active` | `Implement the selected runtime-house-compatible building structure contract slice.` | `task.script-editor-city-building-structure-convergence.boundary-baseline-reconcile` | `Must be test-first and must not widen into placement resolver migration without baseline evidence.` |
-| `task.script-editor-city-building-structure-convergence.queue-closeout-and-handoff` | `pending` | `Verify, classify residue, and return control to version review.` | `task.script-editor-city-building-structure-convergence.structure-contract-implementation` | `Must not close the parent version without explicit version closeout confirmation.` |
+| `task.script-editor-city-building-structure-convergence.structure-contract-implementation` | `done` | `Implemented runtime-house-compatible building structure contract hardening.` | `task.script-editor-city-building-structure-convergence.boundary-baseline-reconcile` | `Landed with test-first coverage and verification.` |
+| `task.script-editor-city-building-structure-convergence.queue-closeout-and-handoff` | `done` | `Verified, classified residue, and returned control to version review.` | `task.script-editor-city-building-structure-convergence.structure-contract-implementation` | `Closed without version closeout.` |
 
 ### Task Definitions
 
@@ -175,7 +175,7 @@
 ##### Control Block
 
 - task_id: `task.script-editor-city-building-structure-convergence.structure-contract-implementation`
-- state: `active`
+- state: `done`
 - task_kind: `execution`
 - scope:
   - `Files identified by boundary-baseline-reconcile.`
@@ -203,7 +203,7 @@
 - task_brief:
   - `Implement the selected city/building structure convergence slice.`
 - task_outcome_summary:
-  - `none`
+  - `Done. ScriptEditorBuildingRecord now explicitly owns the covered runtime HouseDefinition fields, default and normalized buildings carry runtime-house-compatible values, and runtime pack import normalizes imported houses into that editor contract.`
 - Purpose:
   - `Make the covered city/building records durable runtime-consumable structures.`
 - Failure mode:
@@ -213,13 +213,15 @@
 
 - `2026-07-15`: `Queued behind boundary-baseline-reconcile.`
 - `2026-07-15`: `Activated after baseline selected runtime-house-compatible building structure contract hardening as the smallest convergence slice.`
+- `2026-07-15`: `Added failing robustness coverage for default and normalized building records owning runtime house fields, then updated ScriptEditorBuildingRecord, city-building authoring defaults/normalization, runtime import normalization, and materializer type handling.`
+- `2026-07-15`: `Verification passed: npm run typecheck, npm test, npm run build, npm run lint:blueprints, npm run lint:plans, npm run blueprint:governance:check, and git diff --check. Build emitted only existing Vite resource/size warnings; git diff --check emitted only line-ending warnings.`
 
 #### `task.script-editor-city-building-structure-convergence.queue-closeout-and-handoff`
 
 ##### Control Block
 
 - task_id: `task.script-editor-city-building-structure-convergence.queue-closeout-and-handoff`
-- state: `pending`
+- state: `done`
 - task_kind: `execution`
 - scope:
   - `docs/blueprints/project-progress.md`
@@ -249,7 +251,7 @@
 - task_brief:
   - `Close or route the city/building structure convergence queue after verified implementation.`
 - task_outcome_summary:
-  - `none`
+  - `Done. Queue closed with cross-family residue routed to version review for city-local entry/placement/resolver convergence.`
 - Purpose:
   - `Keep city/building structure convergence explicit before placement resolver or broader runtime lookup work continues.`
 - Failure mode:
@@ -258,6 +260,7 @@
 ##### Progress Log
 
 - `2026-07-15`: `Queued behind structure-contract-implementation.`
+- `2026-07-15`: `Closed after implementation verification. The covered building/house structure contract is now durable; city-local placement ids, override layering, centralized resolver seams, and city-entry ownership remain for queue.script-editor-city-building-placement-resolver-convergence review.`
 
 ### Historical Handoff Note
 
