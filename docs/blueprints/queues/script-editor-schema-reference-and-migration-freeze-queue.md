@@ -9,8 +9,8 @@
 - governance_sync_source: `docs/blueprints/blueprint.md`
 - queue_status: `active`
 - queue_class: `required`
-- active_task: `task.script-editor-schema-reference-and-migration-freeze.boundary-baseline-reconcile`
-- next_task: `task.script-editor-schema-reference-and-migration-freeze.schema-reference-freeze`
+- active_task: `task.script-editor-schema-reference-and-migration-freeze.schema-reference-freeze`
+- next_task: `task.script-editor-schema-reference-and-migration-freeze.queue-closeout-and-handoff`
 - closeout_status: `in-progress`
 - execution_closeout_status: `partial`
 - topic_closure_status: `open-residue`
@@ -56,9 +56,9 @@
 
 - queue_goal: `Freeze the durable script-editor schema reference, migration adapter boundary, and versioning rules needed before legacy supersession and final validation.`
 - task_count: `3`
-- completed_task_count: `0`
-- remaining_task_count: `3`
-- active_task_summary: `Inventory current schema/version/migration seams and select the smallest lawful freeze slice.`
+- completed_task_count: `1`
+- remaining_task_count: `2`
+- active_task_summary: `Implement the centralized schema reference and supported-version migration-boundary slice selected by baseline.`
 - task_briefs:
   - `task.script-editor-schema-reference-and-migration-freeze.boundary-baseline-reconcile: inventory current schemaVersion, project definition, import/export/save migration, and legacy-shape references before implementation.`
   - `task.script-editor-schema-reference-and-migration-freeze.schema-reference-freeze: implement the selected schema reference and migration-boundary slice with tests.`
@@ -102,8 +102,8 @@
 
 | Task ID | State | Summary | Depends On | Notes |
 | --- | --- | --- | --- | --- |
-| `task.script-editor-schema-reference-and-migration-freeze.boundary-baseline-reconcile` | `active` | `Inventory current schema/version/migration seams and select the smallest lawful freeze slice.` | `none` | `No production code changes before this baseline is recorded.` |
-| `task.script-editor-schema-reference-and-migration-freeze.schema-reference-freeze` | `pending` | `Implement the selected schema reference and migration-boundary slice with tests.` | `task.script-editor-schema-reference-and-migration-freeze.boundary-baseline-reconcile` | `Must not become legacy deletion or compatibility-only masking.` |
+| `task.script-editor-schema-reference-and-migration-freeze.boundary-baseline-reconcile` | `done` | `Inventoried schema/version/migration seams and selected centralized schema reference plus supported-version migration-boundary helpers as the smallest lawful freeze slice.` | `none` | `No production code changed during baseline.` |
+| `task.script-editor-schema-reference-and-migration-freeze.schema-reference-freeze` | `active` | `Implement the selected schema reference and migration-boundary slice with tests.` | `task.script-editor-schema-reference-and-migration-freeze.boundary-baseline-reconcile` | `Must not become legacy deletion or compatibility-only masking.` |
 | `task.script-editor-schema-reference-and-migration-freeze.queue-closeout-and-handoff` | `pending` | `Verify, classify residue, and return control to version review.` | `task.script-editor-schema-reference-and-migration-freeze.schema-reference-freeze` | `Does not infer version closeout from this queue.` |
 
 ### Task Definitions
@@ -113,7 +113,7 @@
 ##### Control Block
 
 - task_id: `task.script-editor-schema-reference-and-migration-freeze.boundary-baseline-reconcile`
-- state: `active`
+- state: `done`
 - task_kind: `decision-dispatch`
 - scope:
   - `src/domain/script-editor-project.ts`
@@ -159,7 +159,7 @@
 - task_brief:
   - `Reconcile the current schema and migration boundary before freezing durable script-editor schema reference truth.`
 - task_outcome_summary:
-  - `Pending baseline.`
+  - `Completed with a source-backed implementation boundary: create a centralized script-editor schema reference for project and runtime pack schemaVersion 1, add supported-version/migration-boundary helpers, and make loader/save/import/export consume those references instead of scattering numeric literals.`
 - Purpose:
   - `Avoid deleting, superseding, or final-validating old script-editor shapes without a written durable schema and migration boundary.`
 - Failure mode:
@@ -170,16 +170,28 @@
 ##### Control Block
 
 - task_id: `task.script-editor-schema-reference-and-migration-freeze.schema-reference-freeze`
-- state: `pending`
+- state: `active`
 - task_kind: `execution`
 - scope:
-  - `to-be-selected-by-boundary-baseline`
+  - `src/domain/script-editor-project.ts`
+  - `src/application/script-editor/editor-project-loader.ts`
+  - `src/application/script-editor/editor-project-save.ts`
+  - `src/application/script-editor/runtime-pack-import.ts`
+  - `src/application/script-editor/runtime-pack-export.ts`
+  - `tests/robustness.test.cjs`
 - must_inspect:
-  - `task.script-editor-schema-reference-and-migration-freeze.boundary-baseline-reconcile output`
+  - `src/domain/script-editor-project.ts`
+  - `src/application/script-editor/editor-project-loader.ts`
+  - `src/application/script-editor/editor-project-save.ts`
+  - `src/application/script-editor/runtime-pack-import.ts`
+  - `src/application/script-editor/runtime-pack-export.ts`
+  - `tests/robustness.test.cjs`
 - must_not_change:
   - `Do not implement unselected broad legacy retirement.`
 - done_when:
-  - `The selected schema reference and migration-boundary slice lands with tests.`
+  - `Project and runtime-pack schemaVersion 1 constants are centralized in the script-editor schema reference boundary.`
+  - `Loader/save/runtime import/export consume the centralized schema reference rather than scattering version literals.`
+  - `Unsupported future project or runtime pack schema versions still fail closed with explicit diagnostics.`
 - verify_with:
   - `npm run typecheck`
   - `npm test`
@@ -195,7 +207,7 @@
 - task_brief:
   - `Implement the baseline-selected schema reference freeze slice.`
 - task_outcome_summary:
-  - `Pending baseline selection.`
+  - `Pending implementation.`
 - Purpose:
   - `Make the schema and migration boundary explicit enough for later supersession and final validation.`
 - Failure mode:
@@ -262,3 +274,4 @@
 ### Progress Log
 
 - `2026-07-16`: `Promotion review admitted queue.script-editor-schema-reference-and-migration-freeze as the single active queue because legacy supersession and final validation need an explicit schema and migration boundary first. The first live task is boundary-baseline-reconcile.`
+- `2026-07-16`: `Boundary baseline completed after inspecting src/domain/script-editor-project.ts, editor-project-loader/save, runtime-pack-import/export, field-mapping, and robustness tests. Current project and runtime pack schemaVersion values are all version 1 but are scattered across type definitions, parsers, serializers, import, and export. The selected smallest implementation slice is a centralized schema reference plus supported-version/migration-boundary helpers consumed by those seams; legacy structure deletion and playable/minigame bindings remain out of scope.`
