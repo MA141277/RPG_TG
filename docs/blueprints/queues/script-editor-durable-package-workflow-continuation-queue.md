@@ -9,8 +9,8 @@
 - governance_sync_source: `docs/blueprints/blueprint.md`
 - queue_status: `active`
 - queue_class: `required-priority`
-- active_task: `task.script-editor-durable-package-workflow-continuation.boundary-baseline-reconcile`
-- next_task: `task.script-editor-durable-package-workflow-continuation.package-skeleton-import-preview-implementation`
+- active_task: `task.script-editor-durable-package-workflow-continuation.package-skeleton-import-preview-implementation`
+- next_task: `task.script-editor-durable-package-workflow-continuation.queue-closeout-and-handoff`
 - closeout_status: `in-progress`
 - execution_closeout_status: `partial`
 - topic_closure_status: `open-residue`
@@ -23,7 +23,7 @@
 - next_effect: `none`
 - sync_status: `pending`
 - sync_scope: `none`
-- sync_summary: `No repository sync batch is recorded yet for this newly admitted queue.`
+- sync_summary: `Boundary baseline reconcile truth is written locally; repository sync for this active-task handoff batch has not yet been recorded.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
@@ -57,12 +57,12 @@
 
 - queue_goal: `Complete package skeleton creation, imported package edit-in-place, and runtime preview-from-disk semantics for the script-editor package persistence boundary.`
 - task_count: `3`
-- completed_task_count: `0`
-- remaining_task_count: `3`
-- active_task_summary: `Reconcile the remaining package workflow boundary against the landed save-location and stale continue gating slice before implementation.`
+- completed_task_count: `1`
+- remaining_task_count: `2`
+- active_task_summary: `Implement or explicitly block create-at-save-path package skeleton creation, imported package edit-in-place, and runtime preview-from-disk with tests.`
 - task_briefs:
-  - `task.script-editor-durable-package-workflow-continuation.boundary-baseline-reconcile: inspect the landed packageLocation/validity helpers, transient directory handles, save/export flows, import flows, and runtime pack loader seams before implementation.`
-  - `task.script-editor-durable-package-workflow-continuation.package-skeleton-import-preview-implementation: implement or explicitly block create-at-save-path skeleton creation, imported edit-in-place, and runtime preview-from-disk with tests.`
+  - `task.script-editor-durable-package-workflow-continuation.boundary-baseline-reconcile: completed after source evidence confirmed the landed packageLocation/validity/stale gating helpers and the still-open package skeleton/imported edit-in-place/runtime preview-from-disk boundary.`
+  - `task.script-editor-durable-package-workflow-continuation.package-skeleton-import-preview-implementation: active implementation task for create-at-save-path skeleton creation, imported edit-in-place, and runtime preview-from-disk.`
   - `task.script-editor-durable-package-workflow-continuation.queue-closeout-and-handoff: verify the implementation slice, classify residue, and return control to version review.`
 
 ### Operator Snapshot Contract
@@ -117,8 +117,8 @@
 
 | Task ID | State | Summary | Depends On | Notes |
 | --- | --- | --- | --- | --- |
-| `task.script-editor-durable-package-workflow-continuation.boundary-baseline-reconcile` | `active` | `Reconcile the remaining package skeleton/imported edit-in-place/runtime preview boundary against landed persistence helpers.` | `none` | `Must inspect predecessor queue truth and current source before implementation.` |
-| `task.script-editor-durable-package-workflow-continuation.package-skeleton-import-preview-implementation` | `pending` | `Implement or explicitly block create-at-save-path skeleton creation, imported edit-in-place, and runtime preview-from-disk with tests.` | `task.script-editor-durable-package-workflow-continuation.boundary-baseline-reconcile` | `Must not broaden into project completion-state gating or data-family schemas.` |
+| `task.script-editor-durable-package-workflow-continuation.boundary-baseline-reconcile` | `completed` | `Reconciled the remaining package skeleton/imported edit-in-place/runtime preview boundary against landed persistence helpers.` | `none` | `Completed on 2026-07-15 after rg evidence confirmed packageLocation/validity/stale gating helpers are landed while new-project, import, and preview remain transient or auxiliary-panel only.` |
+| `task.script-editor-durable-package-workflow-continuation.package-skeleton-import-preview-implementation` | `active` | `Implement or explicitly block create-at-save-path skeleton creation, imported edit-in-place, and runtime preview-from-disk with tests.` | `task.script-editor-durable-package-workflow-continuation.boundary-baseline-reconcile` | `Must not broaden into project completion-state gating or data-family schemas.` |
 | `task.script-editor-durable-package-workflow-continuation.queue-closeout-and-handoff` | `pending` | `Verify the implementation slice, classify residue, and return control to version review.` | `task.script-editor-durable-package-workflow-continuation.package-skeleton-import-preview-implementation` | `Must run lint and relevant tests before queue closeout.` |
 
 ### Task Definitions
@@ -128,7 +128,7 @@
 ##### Control Block
 
 - task_id: `task.script-editor-durable-package-workflow-continuation.boundary-baseline-reconcile`
-- state: `active`
+- state: `completed`
 - task_kind: `execution`
 - scope:
   - `docs/blueprints/queues/script-editor-project-cache-save-export-preview-continuation-queue.md`
@@ -164,7 +164,7 @@
 - task_brief:
   - `Reconcile the remaining durable package workflow residue before writing more persistence code.`
 - task_outcome_summary:
-  - `Expected output is a bounded implementation plan that consumes the landed metadata/persistence slice.`
+  - `Completed with a bounded implementation handoff: consume landed packageLocation/validity/stale gating helpers, then implement or explicitly block package skeleton creation, imported edit-in-place, and runtime preview-from-disk without widening into completion-state or schema queues.`
 - Purpose:
   - `Avoid building a second persistence model or overclaiming browser file handle durability.`
 - Failure mode:
@@ -175,7 +175,7 @@
 ##### Control Block
 
 - task_id: `task.script-editor-durable-package-workflow-continuation.package-skeleton-import-preview-implementation`
-- state: `pending`
+- state: `active`
 - task_kind: `execution`
 - scope:
   - `src/application/script-editor`
