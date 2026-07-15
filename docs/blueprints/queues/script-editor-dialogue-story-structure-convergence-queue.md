@@ -1,0 +1,259 @@
+# Script Editor Dialogue Story Structure Convergence Queue
+
+## Control Block
+
+- queue_id: `queue.script-editor-dialogue-story-structure-convergence`
+- belongs_to_version: `target.script-editor-authoring-data-structure-unification`
+- blueprint_version: `2026.07`
+- governance_last_synced_at: `2026-07-15`
+- governance_sync_source: `docs/blueprints/blueprint.md`
+- queue_status: `active`
+- queue_class: `required`
+- active_task: `task.script-editor-dialogue-story-structure-convergence.boundary-baseline-reconcile`
+- next_task: `none`
+- closeout_status: `in-progress`
+- execution_closeout_status: `partial`
+- topic_closure_status: `open-residue`
+- closure_basis: `none`
+- residue_remaining: `no`
+- residue_family: `none`
+- residue_routing_status: `none`
+- next_family_candidate: `none`
+- auto_continue_eligible: `false`
+- next_effect: `execute-active-task`
+- sync_status: `pending`
+- sync_scope: `branch-push`
+- sync_summary: `Queue admitted locally; repository sync is pending after baseline or terminal queue state.`
+- blocked_by: []
+- allowed_item_classifications:
+  - `current-target-item`
+- reject_item_classifications:
+  - `content-pipeline-item`
+  - `asset-pipeline-item`
+  - `future-target-candidate`
+
+## Human Context
+
+### Queue Explanation
+
+- Goal:
+  - `Converge dialogue/story authoring records into runtime-consumable structures so editor-authored narrative content no longer depends on private export-only lowering, empty scenes placeholders, or manual compatibility residue.`
+- Forbidden expansions:
+  - `Do not implement broad dialogue/story progression runtime handoff until the structure baseline proves the first lawful slice.`
+  - `Do not fold scenario launch policy, event/effect activation, playable/minigame bindings, or branching task-chain behavior into this queue by convenience.`
+  - `Do not solve narrative export through compatibility-only adapters as the final model.`
+
+### Parent Version
+
+- Version spec:
+  - `docs/blueprints/specs/2026-07-15-script-editor-authoring-data-structure-unification-target.md`
+- Version plan:
+  - `docs/blueprints/plans/2026-07-15-script-editor-authoring-data-structure-unification-target-plan.md`
+- Residue source:
+  - `docs/blueprints/queues/script-editor-city-building-placement-resolver-convergence-queue.md`
+
+### Queue Snapshot
+
+- queue_goal: `Determine and implement the smallest dialogue/story structure convergence slice that turns editor-authored dialogue/story records into validated runtime-consumable narrative data without widening into full progression handoff.`
+- task_count: `3`
+- completed_task_count: `0`
+- remaining_task_count: `3`
+- active_task_summary: `Baseline must inspect current dialogue/story authoring, export, runtime scene/text-entry consumption, and prior export-unification residue before selecting the first implementation slice.`
+- task_briefs:
+  - `task.script-editor-dialogue-story-structure-convergence.boundary-baseline-reconcile: inventory dialogue/story authoring and runtime consumption seams, decide the smallest lawful structure slice, and record test-first implementation boundaries.`
+  - `task.script-editor-dialogue-story-structure-convergence.structure-contract-implementation: implement the selected dialogue/story structure convergence slice with tests.`
+  - `task.script-editor-dialogue-story-structure-convergence.queue-closeout-and-handoff: verify, classify residue, record next-step truth, and return control to version review.`
+
+### Operator Snapshot Contract
+
+- `The fixed operator receipt must source 褰撳墠鎵ц闃熷垪 from queue_id.`
+- `The fixed operator receipt must source 褰撳墠浠诲姟 from active_task.`
+- `The fixed operator receipt must source 褰撳墠闃熷垪鐩爣 from queue_goal.`
+- `Queue Snapshot exists to support concise operator visibility without exposing Blueprint internal ranking or admission internals by default.`
+
+### Closeout Judgement Rule
+
+- `Queue execution closeout is not equivalent to true topic closure.`
+- `execution_closeout_status = done means the bounded execution slice landed and verified.`
+- `topic_closure_status = closed is legal only when no still-blocking same-family residue remains inside the queue's bounded topic surface.`
+- `If residue_remaining = yes, classify it as same-family / cross-family / accepted-residue / none before version-level routing continues.`
+- `If residue_family = same-family and one lawful continuation exists, name it in next_family_candidate and allow automatic continuation instead of returning to open-ended human queue selection.`
+
+### Admission Preconditions
+
+- `queue.script-editor-city-building-placement-resolver-convergence closed after landing the bounded resolver API and routing dialogue inheritance plus broader consumer migration back to version review.`
+- `The target spec marks dialogue records, dialogue nodes, story nodes, participant/text references, and runtime dialogue/story consumption as required authoring/data-structure convergence work.`
+- `Prior runtime-pack export unification evidence showed dialogues/storyNodes could not remain authoring-only while export writes empty scenes placeholders or fails on unresolved narrative records.`
+
+### Repository Sync Record Rule
+
+- `After a task reaches any terminal after-state and the required docs are updated, run one minimum repository sync batch.`
+- `The queue-local sync record stores only repository sync result; it does not change task, queue, or version truth.`
+- `sync failure must not be copied into blocked_by, queue closeout gates, version closeout gates, or version scheduling truth.`
+
+### Task Ledger
+
+| Task ID | State | Summary | Depends On | Notes |
+| --- | --- | --- | --- | --- |
+| `task.script-editor-dialogue-story-structure-convergence.boundary-baseline-reconcile` | `active` | `Inventory dialogue/story authoring and runtime seams and select the smallest lawful structure convergence slice.` | `none` | `Production code must not change before baseline records the selected slice.` |
+| `task.script-editor-dialogue-story-structure-convergence.structure-contract-implementation` | `pending` | `Implement the selected dialogue/story structure convergence slice with tests.` | `task.script-editor-dialogue-story-structure-convergence.boundary-baseline-reconcile` | `Implementation scope is determined by baseline only.` |
+| `task.script-editor-dialogue-story-structure-convergence.queue-closeout-and-handoff` | `pending` | `Verify, classify residue, and return control to version review.` | `task.script-editor-dialogue-story-structure-convergence.structure-contract-implementation` | `Closeout must not infer version closeout.` |
+
+### Task Definitions
+
+#### `task.script-editor-dialogue-story-structure-convergence.boundary-baseline-reconcile`
+
+##### Control Block
+
+- task_id: `task.script-editor-dialogue-story-structure-convergence.boundary-baseline-reconcile`
+- state: `active`
+- task_kind: `execution`
+- scope:
+  - `src/domain/script-editor-project.ts`
+  - `src/application/script-editor/story-dialogue-event-authoring.ts`
+  - `src/application/script-editor/runtime-pack-import.ts`
+  - `src/application/script-editor/runtime-pack-export.ts`
+  - `src/domain/scene.ts`
+  - `src/domain/text-entry.ts`
+  - `src/core/runtime/scene-runtime.ts`
+  - `src/core/runtime/scene-session.ts`
+  - `tests/robustness.test.cjs`
+  - `docs/blueprints/queues/script-editor-dialogue-story-structure-convergence-queue.md`
+- must_inspect:
+  - `docs/blueprints/specs/2026-07-15-script-editor-authoring-data-structure-unification-target.md`
+  - `docs/blueprints/specs/2026-07-14-script-editor-authoring-data-structure-unification-draft.md`
+  - `docs/blueprints/queues/script-editor-runtime-pack-export-unification-queue.md`
+  - `docs/blueprints/queues/script-editor-narrative-authoring-export-convergence-queue.md`
+  - `docs/blueprints/queues/script-editor-city-building-placement-resolver-convergence-queue.md`
+  - `src/domain/script-editor-project.ts`
+  - `src/application/script-editor/story-dialogue-event-authoring.ts`
+  - `src/application/script-editor/runtime-pack-import.ts`
+  - `src/application/script-editor/runtime-pack-export.ts`
+  - `src/domain/scene.ts`
+  - `src/domain/text-entry.ts`
+  - `src/core/runtime/scene-runtime.ts`
+  - `src/core/runtime/scene-session.ts`
+  - `tests/robustness.test.cjs`
+- must_not_change:
+  - `production code before baseline reconciliation records the selected implementation slice`
+  - `scenario launch policy`
+  - `event/effect activation beyond required narrative structure references`
+  - `playable/minigame bindings`
+  - `full dialogue/story progression runtime handoff`
+- done_when:
+  - `Current dialogue/story authoring records, import/export behavior, runtime scenes/textEntries, and scene runtime consumption are inventoried.`
+  - `The exact mismatch between authoring dialogue/story records and runtime-consumable narrative structures is recorded.`
+  - `The smallest lawful dialogue/story structure implementation slice is selected, or the queue is blocked/routed to a narrower prerequisite.`
+  - `A test-first implementation plan names exact files, schema rules, import/export behavior, runtime consumer boundary, residue posture, and verification commands for the next task.`
+- verify_with:
+  - `npm run lint:blueprints`
+  - `rg -n "dialogues|storyNodes|scenes|textEntries|SceneDefinition|TextEntryDefinition|story-dialogue-event|runtime-pack-export|runtime-pack-import|scene-runtime|scene-session" docs/blueprints src/domain src/application/script-editor src/core/runtime tests/robustness.test.cjs`
+- if_blocked:
+  - `Record the blocker and return to version review if launch policy, condition runtime, or event structure must precede the selected structure slice.`
+- promote_next_if_done: `task.script-editor-dialogue-story-structure-convergence.structure-contract-implementation`
+- stop_if:
+  - `Fresh evidence proves this queue cannot own the first dialogue/story structure slice without another required queue first.`
+
+##### Human Context
+
+- task_brief:
+  - `Find the smallest honest dialogue/story structure boundary before changing production code.`
+- task_outcome_summary:
+  - `Active. Baseline must decide whether the first lawful slice is schema/runtime-family structure, export lowering into scenes/textEntries, or a prerequisite routing decision.`
+- Purpose:
+  - `Prevent editor-authored narrative data from staying authoring-only while runtime consumers depend on scenes and textEntries.`
+- Failure mode:
+  - `A later export/runtime handoff queue would have no stable narrative structure to consume, forcing another compatibility-only lowering patch.`
+
+##### Progress Log
+
+- `2026-07-15`: `Queue admitted from version promotion review after placement resolver closeout routed dialogue inheritance and broader resolver consumer migration back to version review.`
+
+#### `task.script-editor-dialogue-story-structure-convergence.structure-contract-implementation`
+
+##### Control Block
+
+- task_id: `task.script-editor-dialogue-story-structure-convergence.structure-contract-implementation`
+- state: `pending`
+- task_kind: `execution`
+- scope:
+  - `Files identified by boundary-baseline-reconcile.`
+- must_inspect:
+  - `Boundary baseline evidence from the active task.`
+- must_not_change:
+  - `scenario launch policy`
+  - `playable/minigame bindings`
+  - `unbounded dialogue/story progression runtime handoff`
+- done_when:
+  - `The selected dialogue/story structure convergence slice is implemented.`
+  - `Tests cover the selected import/export/runtime structure behavior and fail-closed diagnostics for unsupported or missing references.`
+- verify_with:
+  - `npm test`
+  - `npm run typecheck`
+  - `npm run lint:blueprints`
+- if_blocked:
+  - `Record the blocker and do not widen into unrelated runtime handoff work.`
+- promote_next_if_done: `task.script-editor-dialogue-story-structure-convergence.queue-closeout-and-handoff`
+- stop_if:
+  - `Implementation requires another prerequisite queue to be admitted first.`
+
+##### Human Context
+
+- task_brief:
+  - `Implement the selected dialogue/story structure convergence slice.`
+- task_outcome_summary:
+  - `Pending baseline.`
+- Purpose:
+  - `Make covered editor-authored narrative data runtime-consumable through governed structures.`
+- Failure mode:
+  - `The queue lands only an export patch while leaving dialogue/story structure ownership unresolved.`
+
+#### `task.script-editor-dialogue-story-structure-convergence.queue-closeout-and-handoff`
+
+##### Control Block
+
+- task_id: `task.script-editor-dialogue-story-structure-convergence.queue-closeout-and-handoff`
+- state: `pending`
+- task_kind: `execution`
+- scope:
+  - `docs/blueprints/project-progress.md`
+  - `docs/blueprints/blueprint.md`
+  - `docs/blueprints/plans/2026-07-15-script-editor-authoring-data-structure-unification-target-plan.md`
+  - `docs/blueprints/queues/script-editor-dialogue-story-structure-convergence-queue.md`
+  - `docs/change-log.md`
+- must_inspect:
+  - `Current queue, version plan, Blueprint, project-progress, and residue truth.`
+- must_not_change:
+  - `version closeout without explicit human confirmation`
+  - `new queue admission without routing truth`
+- done_when:
+  - `Verification, residue classification, next-step sync, and repository sync truth are recorded.`
+- verify_with:
+  - `npm run lint:blueprints`
+  - `npm run lint:plans`
+  - `npm run blueprint:governance:check`
+- if_blocked:
+  - `Record the blocker without marking the queue done.`
+- promote_next_if_done: `return-to-version-review`
+- stop_if:
+  - `Dialogue/story structure acceptance has not passed or residue has not been routed.`
+
+##### Human Context
+
+- task_brief:
+  - `Close or route the dialogue/story structure convergence queue after verified implementation.`
+- task_outcome_summary:
+  - `Pending implementation.`
+- Purpose:
+  - `Keep dialogue/story structure convergence explicit before runtime handoff or branching/task-chain queues continue.`
+- Failure mode:
+  - `Closing without structure evidence would leave narrative runtime behavior dependent on export-only lowering or legacy scenes.`
+
+### Historical Handoff Note
+
+- Task ID:
+  - `task.script-editor-city-building-placement-resolver-convergence.queue-closeout-and-handoff`
+- Recorded handoff at activation:
+  - `Placement resolver convergence closed after landing a shared resolver API; dialogue inheritance, richer placement schema, and broader consumer migration require later version routing.`
+- Recorded expected output:
+  - `A bounded dialogue/story structure implementation path or an explicit prerequisite routing decision.`
