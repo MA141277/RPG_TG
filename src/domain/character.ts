@@ -82,6 +82,7 @@ export type CharacterFunction = {
 };
 
 export type CharacterStats = Record<CharacterStatKey, number>;
+export type CharacterCustomProperties = Record<string, string | number | boolean>;
 
 export type CharacterDefinition = {
   id: CharacterId;
@@ -110,6 +111,7 @@ export type CharacterDefinition = {
   leaderResidenceEligible?: boolean;
   leaderResidenceStatus?: LeaderResidenceStatus;
   availableFunctions: CharacterFunction[];
+  customProperties?: CharacterCustomProperties;
   onTalkSceneId?: SceneId;
   skills?: Record<SkillKey, number>;
   teachableSkillKeys?: SkillKey[];

@@ -21,9 +21,9 @@
 - next_family_candidate: `none`
 - auto_continue_eligible: `false`
 - next_effect: `none`
-- sync_status: `pending`
-- sync_scope: `none`
-- sync_summary: `No repository sync has run for this newly admitted queue yet.`
+- sync_status: `failed`
+- sync_scope: `branch-push`
+- sync_summary: `The first runtime property mutation/status implementation slice is committed locally, but push to origin/mod-first-dev failed three times because GitHub port 443 could not be reached or reset the connection.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
@@ -233,7 +233,7 @@
 - task_brief:
   - `Implement the bounded generic runtime property mutation/status path chosen by baseline reconciliation.`
 - task_outcome_summary:
-  - `Active after baseline reconciliation selected the bounded generic character-property mutation/status slice.`
+  - `Partially implemented: CharacterStatus now supports customPropertyPatch materialization/merge, the generic mutateCharacterNumericProperty helper supports stats/skills/custom numeric set/add/subtract operations, house transition results can transport CharacterStatus patches, and temple donation now emits a gold status patch while preserving materialized compatibility. The event/effect representative path remains active work.`
 - Purpose:
   - `Make creator-defined runtime properties durable through the same status/save owner rather than direct authored-definition writes.`
 - Failure mode:
@@ -242,6 +242,8 @@
 ##### Progress Log
 
 - `2026-07-15`: `Activated after baseline reconciliation proved the existing RuntimeResult/save/startup seams can carry the first character-property status slice without schema-reference migration or non-character overlays.`
+- `2026-07-15`: `Implemented the first TDD slice after observing failing tests for customPropertyPatch materialization and a missing runtime property mutation helper. Added CharacterDefinition.customProperties, CharacterStatus.customPropertyPatch, mutateCharacterNumericProperty, and a temple donation migration that returns characterStatusById through HouseModuleTransitionResult. Verification passed for npm run typecheck, npm test, and the targeted custom property / temple donation node --test slice.`
+- `2026-07-15`: `Remaining active work: add the representative shared event/effect mutation path or explicitly route it as residue before this implementation task can close.`
 
 #### `task.script-editor-runtime-property-mutation-and-status-convergence.queue-closeout-and-handoff`
 

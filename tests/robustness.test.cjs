@@ -3214,6 +3214,88 @@ test("character status materializer overlays stat skill and stamina patches with
   assert.equal(materializedFromMap.stats.leadership, 65);
 });
 
+test("character status materializer overlays custom property patches without mutating definitions", () => {
+  const {
+    materializeCharacterDefinition,
+    mergeCharacterStatusById,
+  } = require("../.test-dist/application/character/character-status.js");
+  const baseCharacter = {
+    ...prototypeCharacters[0],
+    id: "char.status.custom",
+    customProperties: {
+      "character.devotion": 3,
+      "character.currency": 120,
+    },
+  };
+
+  const mergedStatus = mergeCharacterStatusById({}, baseCharacter.id, {
+    customPropertyPatch: {
+      "character.devotion": 8,
+      "character.currency": 90,
+    },
+  });
+  const withPatch = materializeCharacterDefinition(
+    baseCharacter,
+    mergedStatus[baseCharacter.id]
+  );
+
+  assert.deepEqual(withPatch.customProperties, {
+    "character.devotion": 8,
+    "character.currency": 90,
+  });
+  assert.deepEqual(baseCharacter.customProperties, {
+    "character.devotion": 3,
+    "character.currency": 120,
+  });
+});
+
+test("runtime property mutation applies numeric custom properties through CharacterStatus patches", () => {
+  const {
+    mutateCharacterNumericProperty,
+  } = require("../.test-dist/application/character/runtime-property-mutation.js");
+  const state = createBaseState();
+  const player = {
+    ...prototypeCharacters[0],
+    id: "char.runtime.custom",
+    customProperties: {
+      "character.devotion": 3,
+    },
+  };
+
+  const addResult = mutateCharacterNumericProperty({
+    state,
+    characterDefinitions: [player],
+    characterId: player.id,
+    propertyId: "custom.character.devotion",
+    operation: "add",
+    value: 5,
+  });
+  const subtractResult = mutateCharacterNumericProperty({
+    state,
+    characterDefinitions: addResult.characterDefinitions,
+    characterId: player.id,
+    propertyId: "custom.character.devotion",
+    operation: "subtract",
+    value: 2,
+  });
+
+  assert.equal(
+    addResult.characterDefinitions[0].customProperties["character.devotion"],
+    8
+  );
+  assert.equal(
+    addResult.characterStatusById[player.id].customPropertyPatch[
+      "character.devotion"
+    ],
+    8
+  );
+  assert.equal(
+    subtractResult.characterDefinitions[0].customProperties["character.devotion"],
+    6
+  );
+  assert.equal(player.customProperties["character.devotion"], 3);
+});
+
 test("shared character mutations expose CharacterStatus patches while preserving materialized compatibility", () => {
   const {
     spendPlayerStamina,
@@ -7934,6 +8016,9 @@ test("temple house daily flow resolves fortune and donation through unified stat
 
   const playerCharacter = getPlayerCharacter(donatedResult.characterDefinitions);
   assert.equal(playerCharacter.stats.gold, 450);
+  assert.deepEqual(donatedResult.characterStatusById?.[playerCharacterId], {
+    statPatch: { gold: 450 },
+  });
   assert.equal(
     donatedResult.gameState.runtime.variables[
       TEMPLE_HOUSE_VARIABLE_KEYS.donationTotal

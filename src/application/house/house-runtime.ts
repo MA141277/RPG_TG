@@ -21,6 +21,7 @@ import {
   builtinHouseModuleRegistry,
   type HouseModuleRegistry,
 } from "../house-modules/house-module-registry";
+import { mergeCharacterStatusMaps } from "../../domain/character-status";
 
 type HouseRuntimeDependencies = {
   getAppState(): AppState;
@@ -92,6 +93,14 @@ export function createHouseRuntime(dependencies: HouseRuntimeDependencies) {
         },
       },
       characterDefinitions: result.characterDefinitions,
+      ...(result.characterStatusById == null
+        ? {}
+        : {
+            characterStatusById: mergeCharacterStatusMaps(
+              appState.characterStatusById ?? {},
+              result.characterStatusById
+            ),
+          }),
     });
 
     applyHouseSideEffects(houseDefinition, moduleId, result.sideEffects ?? []);

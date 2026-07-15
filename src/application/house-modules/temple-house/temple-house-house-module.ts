@@ -49,6 +49,7 @@ import {
   selectHouseNpcCharacterIds,
   selectHouseNpcCharacters,
 } from "../../character/character-manager";
+import { mutateCharacterNumericProperty } from "../../character/runtime-property-mutation";
 import {
   ensurePlayerGrainInventory,
   mutatePlayerGrainDou,
@@ -3299,31 +3300,41 @@ function handleAction(
     );
     const nextDonationTotal = currentDonationTotal + donationAmount;
     const fameGain = nextDonationTotal % 200 === 0 ? 1 : 0;
-    const nextPlayerCharacter: CharacterDefinition = {
-      ...playerCharacter,
-      stats: {
-        ...playerCharacter.stats,
-        gold: playerCharacter.stats.gold - donationAmount,
-        fame: playerCharacter.stats.fame + fameGain,
-      },
-    };
-    const nextCharacterDefinitions = replaceCharacter(
-      input.characterDefinitions,
-      nextPlayerCharacter
-    );
+    const goldMutation = mutateCharacterNumericProperty({
+      state: nextState,
+      characterDefinitions: input.characterDefinitions,
+      characterId: playerCharacter.id,
+      propertyId: "stats.gold",
+      operation: "subtract",
+      value: donationAmount,
+    });
+    const finalMutation =
+      fameGain <= 0
+        ? goldMutation
+        : mutateCharacterNumericProperty({
+            state: goldMutation.state,
+            characterDefinitions: goldMutation.characterDefinitions,
+            characterStatusById: goldMutation.characterStatusById,
+            characterId: playerCharacter.id,
+            propertyId: "stats.fame",
+            operation: "add",
+            value: fameGain,
+          });
+    const nextCharacterDefinitions = finalMutation.characterDefinitions;
 
     return {
       gameState: {
-        ...nextState,
+        ...finalMutation.state,
         runtime: {
-          ...nextState.runtime,
+          ...finalMutation.state.runtime,
           variables: {
-            ...nextState.runtime.variables,
+            ...finalMutation.state.runtime.variables,
             [TEMPLE_HOUSE_VARIABLE_KEYS.donationTotal]: nextDonationTotal,
           },
         },
       },
       characterDefinitions: nextCharacterDefinitions,
+      characterStatusById: finalMutation.characterStatusById,
       sessionState: {
         ...sessionState,
         overlay: createAlertOverlay(

@@ -1,4 +1,5 @@
 import type {
+  CharacterCustomProperties,
   CharacterDefinition,
   CharacterStatKey,
   SkillKey,
@@ -18,6 +19,7 @@ export type CharacterStatus = {
   >;
   statPatch?: Partial<Record<CharacterStatKey, number>>;
   skillPatch?: Partial<Record<SkillKey, number>>;
+  customPropertyPatch?: CharacterCustomProperties;
   stamina?: number;
 };
 
@@ -45,6 +47,9 @@ export function materializeCharacterDefinition(
           })),
         }),
     ...(definition.flags == null ? {} : { flags: [...definition.flags] }),
+    ...(definition.customProperties == null
+      ? {}
+      : { customProperties: { ...definition.customProperties } }),
     ...(definition.teachableSkillKeys == null
       ? {}
       : { teachableSkillKeys: [...definition.teachableSkillKeys] }),
@@ -71,6 +76,13 @@ export function materializeCharacterDefinition(
       ...status.skillPatch,
     } as Record<SkillKey, number>;
     nextDefinition.skills = nextSkills;
+  }
+
+  if (status.customPropertyPatch != null) {
+    nextDefinition.customProperties = {
+      ...(nextDefinition.customProperties ?? {}),
+      ...status.customPropertyPatch,
+    };
   }
 
   if (typeof status.stamina === "number" && Number.isFinite(status.stamina)) {
@@ -121,6 +133,14 @@ export function mergeCharacterStatusById(
             skillPatch: {
               ...(currentStatus.skillPatch ?? {}),
               ...patch.skillPatch,
+            },
+          }),
+      ...(patch.customPropertyPatch == null
+        ? {}
+        : {
+            customPropertyPatch: {
+              ...(currentStatus.customPropertyPatch ?? {}),
+              ...patch.customPropertyPatch,
             },
           }),
       ...(patch.stamina == null ? {} : { stamina: patch.stamina }),

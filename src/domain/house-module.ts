@@ -5,6 +5,7 @@ import type {
   ActivityFortuneBoardTripletReward,
 } from "./activity-session";
 import type { GameState } from "./game-state";
+import type { CharacterStatusById } from "./character-status";
 import type { HouseDefinition } from "./house";
 import type { HomeHouseSessionState } from "./house-modules/home-house-session";
 import type { GrainShopSessionState } from "./house-modules/grain-shop-session";
@@ -559,6 +560,7 @@ export type HouseModuleTransitionResult<ModuleId extends HouseModuleId = HouseMo
     advanceHintText?: string;
   } | undefined;
   sideEffects?: HouseModuleSideEffect[];
+  characterStatusById?: CharacterStatusById;
   navigation?: { type: "stay-in-house" };
 };
 
