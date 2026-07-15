@@ -6,11 +6,11 @@
 - version_id: `target.script-editor-authoring-data-structure-unification`
 - version_status: `open`
 - active_phase: `phase.active-execution`
-- active_queue: `queue.script-editor-character-authoring-surface-completion`
-- decision_state: `active-execution`
-- next_decision: `queue-closeout-or-return-to-version-review`
-- next_action: `resume-active-queue`
-- resume_gate: `open-active-queue`
+- active_queue: `none`
+- decision_state: `promotion-review`
+- next_decision: `same-version-admission-or-version-closeout`
+- next_action: `return-to-promotion-review`
+- resume_gate: `open-promotion-review`
 - promotion_review_result: `none`
 - review_subject_id: `none`
 - review_subject_classification: `none`
@@ -22,12 +22,12 @@
 - intake_summary: `none`
 - intake_result: `none`
 - intake_feedback_mode: `none`
-- closure_review_subject: `queue.script-editor-character-status-save-runtime-continuation`
+- closure_review_subject: `queue.script-editor-character-authoring-surface-completion`
 - closure_review_status: `routed`
 - residue_candidate_id: `none`
 - residue_candidate_family: `none`
-- routing_basis: `queue.script-editor-character-status-save-runtime-continuation closed its bounded save/runtime continuation with verified AppState-owned status aggregation, save-envelope persistence, startup restore, and no blocking same-family residue. The next lawful candidate is creator-facing character authoring surface completion because the character definition/status and persistence prerequisites are now closed.`
-- next_lawful_queue_recommendation: `queue.script-editor-character-authoring-surface-completion`
+- routing_basis: `queue.script-editor-character-authoring-surface-completion closed its bounded creator-facing character surface slice with verified mapping-driven controls, custom key editing, and no blocking same-family residue. The version now returns to promotion review.`
+- next_lawful_queue_recommendation: `none`
 - auto_admission_ready: `false`
 - blocked_by: []
 - candidate_queue_ids:
@@ -84,7 +84,7 @@
 | `item.script-editor-unified-field-mapping-table-freeze` | `queue-candidate` | `queue.script-editor-unified-field-mapping-table-freeze` | `admitted + queue closed` | `only if fresh evidence proves the first object-family queue must own the bounded mapping slice instead` | `Closed after the bounded field-definition contract and representative validation slice landed; field mapping UI consumption is routed as cross-family residue to later object-family queues.` |
 | `item.script-editor-character-definition-status-convergence` | `queue-candidate` | `queue.script-editor-character-definition-status-convergence` | `admitted + queue closed` | `only if fresh evidence proves the bounded definition/materializer slice regressed` | `Closed after CharacterStatus materialization, editor person runtime CharacterDefinition import/export, covered mutation patch outputs, and fresh verification landed.` |
 | `item.script-editor-character-status-save-runtime-continuation` | `queue-candidate` | `queue.script-editor-character-status-save-runtime-continuation` | `admitted + queue closed` | `only if fresh evidence proves the bounded save/runtime continuation regressed` | `Closed after AppState-owned CharacterStatus aggregation, save-envelope modState persistence, startup restore materialization, covered city-begging settlement, and fresh verification landed.` |
-| `item.script-editor-character-authoring-surface-completion` | `queue-candidate` | `queue.script-editor-character-authoring-surface-completion` | `admitted + active` | `only if fresh evidence proves schema-reference-and-migration-freeze must precede creator-facing character controls` | `Admitted after character definition/status convergence and CharacterStatus save/runtime persistence closed, because full creator-facing character controls were intentionally kept separate from the prior bounded contract and persistence queues.` |
+| `item.script-editor-character-authoring-surface-completion` | `queue-candidate` | `queue.script-editor-character-authoring-surface-completion` | `admitted + queue closed` | `only if fresh evidence proves the bounded creator-facing character controls regressed` | `Closed after mapping-driven base/profile/stat/skill controls, reference selectors, custom key editing, verification, and repository sync landed without blocking same-family residue.` |
 | `item.script-editor-city-building-entry-and-npc-authoring-priority` | `queue-candidate` | `queue.script-editor-city-building-entry-and-npc-authoring-priority` | `candidate-recorded` | `when field/condition basics are sufficient for building/city entry and NPC assignment authoring` | `Covers priority authoring additions recorded in the source draft.` |
 | `item.script-editor-scenario-launch-policy-authoring` | `queue-candidate` | `queue.script-editor-scenario-launch-policy-authoring` | `candidate-recorded` | `when startup policy authoring is the smallest blocker to editor-exported packs launching without manual JSON patching` | `Owns character selection vs fixed startup, initial map/city/building/view, and entry event timing authoring.` |
 | `item.script-editor-playable-minigame-binding-convergence` | `queue-candidate` | `queue.script-editor-playable-minigame-binding-convergence` | `candidate-recorded` | `only after playable governance is loaded and the queue is admitted` | `Requires playable governance before shared playable runtime or house-hosted playable integration changes.` |
@@ -101,7 +101,7 @@
 | `queue.script-editor-unified-field-mapping-table-freeze` | `done` | `Already completed; do not reopen except by explicit governance record.` | `Closed after the bounded shared field-definition contract and representative validation slice landed; object-family mapping consumption is cross-family residue for later queues.` |
 | `queue.script-editor-character-definition-status-convergence` | `done` | `Already completed; do not reopen except by explicit governance record.` | `Closed its bounded definition/materializer and covered mutation patch slice with same-family save/runtime residue routed onward.` |
 | `queue.script-editor-character-status-save-runtime-continuation` | `done` | `Already completed; do not reopen except by explicit governance record.` | `Closed after canonical CharacterStatus save aggregation, save-envelope persistence, startup restore, and bounded runtime commit integration landed with verification.` |
-| `queue.script-editor-character-authoring-surface-completion` | `active` | `Admitted after character definition/status and save/runtime persistence prerequisites closed.` | `Covers base/profile/stat/skill/custom maps plus dialogue/event/trade bindings.` |
+| `queue.script-editor-character-authoring-surface-completion` | `done` | `Already completed; do not reopen except by explicit governance record.` | `Closed after mapping-driven base/profile/stat/skill controls, reference selectors, custom key editing, verification, and repository sync landed.` |
 | `queue.script-editor-schema-reference-and-migration-freeze` | `candidate` | `Before retiring legacy structures or when multiple queues need one replacement reference.` | `Owns formal schema reference, legacy supersession, migration adapters, and schema versions.` |
 | `queue.script-editor-city-building-entry-and-npc-authoring-priority` | `candidate` | `When field/condition basics can support the priority city/building authoring additions.` | `Covers building dialogue binding, entry conditions, refusal text, city building selection, and NPC assignment.` |
 | `queue.script-editor-city-building-structure-convergence` | `candidate` | `After priority authoring gaps are mapped or if runtime city/building structure is the smaller blocker.` | `Unifies city/building authoring and runtime structures.` |
@@ -121,16 +121,16 @@
 
 ### Current Queue Activation
 
-- `queue.script-editor-character-authoring-surface-completion`
+- `none`
 - Active task:
-  - `task.script-editor-character-authoring-surface-completion.boundary-baseline-reconcile`
+  - `none`
 
 ### Version Boundary Record
 
 - `This version governs authoring/data-structure convergence after runtime-pack-unification closeout.`
 - `It must consume the closed runtime-pack export/import/startup truth as baseline evidence rather than reopening it as a compatibility patch surface.`
 - `It may supersede previously frozen script-editor structures only through explicit schema/migration/supersession records.`
-- `It now resumes from the admitted character authoring surface completion queue after the bounded character definition/status and save/runtime persistence queues closed.`
+- `It has returned to promotion review after the bounded character authoring surface completion queue closed with no blocking same-family residue.`
 
 ### Queue Admission Startup Rules
 
@@ -203,3 +203,4 @@
 - `2026-07-15: queue.script-editor-character-definition-status-convergence closed its verified bounded definition/materializer slice with same-family residue because status patches were not yet durable in save state; queue.script-editor-character-status-save-runtime-continuation was automatically admitted as the unique continuation.`
 - `2026-07-15: queue.script-editor-character-status-save-runtime-continuation closed after CharacterStatus patches became durable through AppState-owned aggregation, save-envelope modState persistence, startup restore materialization, and covered runtime commit tests; no blocking same-family residue remained.`
 - `2026-07-15: admission review then promoted queue.script-editor-character-authoring-surface-completion as the single active queue because creator-facing character controls were intentionally separated from the completed definition/status and persistence queues.`
+- `2026-07-15: queue.script-editor-character-authoring-surface-completion closed after mapping-driven authoring controls, reference selectors, custom key editing, verification, and repository sync landed; the version returned to promotion review with no active queue.`

@@ -7,15 +7,15 @@
 - blueprint_version: `2026.07`
 - governance_last_synced_at: `2026-07-15`
 - governance_sync_source: `docs/blueprints/blueprint.md`
-- queue_status: `active`
+- queue_status: `done`
 - queue_class: `required`
-- active_task: `task.script-editor-character-authoring-surface-completion.queue-closeout-and-handoff`
+- active_task: `none`
 - next_task: `none`
-- closeout_status: `in-progress`
-- execution_closeout_status: `partial`
-- topic_closure_status: `open-residue`
-- closure_basis: `Queue admitted after character definition/status convergence and CharacterStatus save/runtime continuation closed; creator-facing character controls remain unimplemented as a separate version candidate.`
-- residue_remaining: `yes`
+- closeout_status: `done`
+- execution_closeout_status: `done`
+- topic_closure_status: `closed`
+- closure_basis: `The bounded creator-facing character authoring surface now renders mapping-driven base/profile/stat/skill fields over the existing flat CharacterDefinition canonical keys, provides reference selectors for dialogue/event/trade bindings, and exposes editable custom attribute keys without creating a second durable character truth.`
+- residue_remaining: `no`
 - residue_family: `none`
 - residue_routing_status: `none`
 - next_family_candidate: `none`
@@ -23,7 +23,7 @@
 - next_effect: `none`
 - sync_status: `success`
 - sync_scope: `branch-push`
-- sync_summary: `Commit ac5a0d2 was pushed to origin/mod-first-dev, carrying queue admission and the active boundary baseline task.`
+- sync_summary: `Commit 46932c0 was pushed to origin/mod-first-dev, carrying the mapping-driven authoring surface implementation and queue closeout sync.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
@@ -58,9 +58,9 @@
 
 - queue_goal: `Expose complete creator-facing controls for character base/profile/stat/skill/custom and bounded relation fields already supported by the character contract.`
 - task_count: `3`
-- completed_task_count: `2`
-- remaining_task_count: `1`
-- active_task_summary: `Verify the implemented character authoring surface, classify any residue, and synchronize Blueprint truth.`
+- completed_task_count: `3`
+- remaining_task_count: `0`
+- active_task_summary: `Queue closed after verified character authoring surface implementation and Blueprint sync.`
 - task_briefs:
   - `task.script-editor-character-authoring-surface-completion.boundary-baseline-reconcile: identify the exact missing character controls and storage helpers already covered by the character contract.`
   - `task.script-editor-character-authoring-surface-completion.authoring-controls-implementation: implement the bounded creator-facing controls with tests.`
@@ -100,7 +100,7 @@
 | --- | --- | --- | --- | --- |
 | `task.script-editor-character-authoring-surface-completion.boundary-baseline-reconcile` | `completed` | `Reconciled current character editor UI, helper storage, field mapping, and import/export behavior before implementation.` | `none` | `Completed after freezing a mapping-driven UI/control slice over the existing flat CharacterDefinition canonical keys.` |
 | `task.script-editor-character-authoring-surface-completion.authoring-controls-implementation` | `completed` | `Implement the selected character authoring controls and helper tests.` | `task.script-editor-character-authoring-surface-completion.boundary-baseline-reconcile` | `Completed after field-definition expansion, typed mapped-field controls, custom key editing, and full verification passed.` |
-| `task.script-editor-character-authoring-surface-completion.queue-closeout-and-handoff` | `active` | `Verify the queue, classify residue, and synchronize Blueprint truth.` | `task.script-editor-character-authoring-surface-completion.authoring-controls-implementation` | `Must not close without UI/storage/import-export evidence.` |
+| `task.script-editor-character-authoring-surface-completion.queue-closeout-and-handoff` | `completed` | `Verify the queue, classify residue, and synchronize Blueprint truth.` | `task.script-editor-character-authoring-surface-completion.authoring-controls-implementation` | `Completed after verification, residue classification, version sync, and successful push.` |
 
 ### Task Definitions
 
@@ -221,7 +221,7 @@
 ##### Control Block
 
 - task_id: `task.script-editor-character-authoring-surface-completion.queue-closeout-and-handoff`
-- state: `active`
+- state: `completed`
 - task_kind: `execution`
 - scope:
   - `docs/blueprints/project-progress.md`
@@ -251,7 +251,7 @@
 - task_brief:
   - `Close or route the character authoring surface queue after verified implementation.`
 - task_outcome_summary:
-  - `Pending verification, residue classification, and synchronization of the queue and version truth.`
+  - `Verification, residue classification, version sync, and repository sync truth are recorded.`
 - Purpose:
   - `Keep character-family UI completion routing explicit before city/building or schema queues continue.`
 - Failure mode:
@@ -262,6 +262,6 @@
 - Task ID:
   - `none`
 - Recorded handoff at closure:
-  - `Queue is active and now awaits closeout verification.`
+  - `Queue closed after verified implementation, residue classified as none, and repository sync succeeded on commit 46932c0.`
 - Recorded expected output:
   - `A creator-facing character authoring surface aligned with the completed character definition/status contract.`
