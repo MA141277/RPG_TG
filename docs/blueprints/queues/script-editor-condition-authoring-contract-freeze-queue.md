@@ -7,20 +7,20 @@
 - blueprint_version: `2026.07`
 - governance_last_synced_at: `2026-07-15`
 - governance_sync_source: `docs/blueprints/blueprint.md`
-- queue_status: `active`
+- queue_status: `done`
 - queue_class: `required`
-- active_task: `task.script-editor-condition-authoring-contract-freeze.condition-authoring-contract-implementation`
-- next_task: `task.script-editor-condition-authoring-contract-freeze.queue-closeout-and-handoff`
-- closeout_status: `open`
-- execution_closeout_status: `partial`
+- active_task: `none`
+- next_task: `none`
+- closeout_status: `done`
+- execution_closeout_status: `done`
 - topic_closure_status: `open-residue`
-- closure_basis: `none`
-- residue_remaining: `unknown`
-- residue_family: `none`
-- residue_routing_status: `none`
+- closure_basis: `The typed condition authoring contract slice landed with verification; runtime condition evaluation remains outside this authoring-contract queue and is routed to version promotion review.`
+- residue_remaining: `yes`
+- residue_family: `cross-family`
+- residue_routing_status: `needs-version-review`
 - next_family_candidate: `none`
 - auto_continue_eligible: `false`
-- next_effect: `execute-active-task`
+- next_effect: `return-to-version-review`
 - sync_status: `failed`
 - sync_scope: `branch-push`
 - sync_summary: `Local activation commit 7e133dd was created, but two push attempts to origin/mod-first-dev failed because github.com:443 could not be reached.`
@@ -58,9 +58,9 @@
 
 - queue_goal: `Freeze the smallest typed condition authoring contract that can replace stringly event condition records and be reused by event/story/city/building queues without widening into runtime evaluation.`
 - task_count: `3`
-- completed_task_count: `1`
-- remaining_task_count: `2`
-- active_task_summary: `Baseline selected a typed editor condition contract slice; implementation must start with failing tests before changing condition authoring code.`
+- completed_task_count: `3`
+- remaining_task_count: `0`
+- active_task_summary: `Queue closed after the typed condition authoring contract implementation verified; runtime evaluation residue returned to version review.`
 - task_briefs:
   - `task.script-editor-condition-authoring-contract-freeze.boundary-baseline-reconcile: inventory current condition record shapes, UI controls, export lowering, runtime evaluators, and decide the smallest contract slice.`
   - `task.script-editor-condition-authoring-contract-freeze.condition-authoring-contract-implementation: implement the selected typed authoring contract slice with fail-closed validation and tests.`
@@ -99,8 +99,8 @@
 | Task ID | State | Summary | Depends On | Notes |
 | --- | --- | --- | --- | --- |
 | `task.script-editor-condition-authoring-contract-freeze.boundary-baseline-reconcile` | `done` | `Inventoried existing condition authoring/runtime shapes and selected the smallest lawful typed authoring contract slice.` | `none` | `Production code was not changed during baseline.` |
-| `task.script-editor-condition-authoring-contract-freeze.condition-authoring-contract-implementation` | `active` | `Implement the typed condition authoring contract slice selected by baseline reconciliation.` | `task.script-editor-condition-authoring-contract-freeze.boundary-baseline-reconcile` | `Must use tests before implementation changes.` |
-| `task.script-editor-condition-authoring-contract-freeze.queue-closeout-and-handoff` | `queued` | `Verify the queue, classify residue, and synchronize Blueprint truth.` | `task.script-editor-condition-authoring-contract-freeze.condition-authoring-contract-implementation` | `Must not close the version without explicit human confirmation.` |
+| `task.script-editor-condition-authoring-contract-freeze.condition-authoring-contract-implementation` | `done` | `Implemented the typed condition authoring contract slice selected by baseline reconciliation.` | `task.script-editor-condition-authoring-contract-freeze.boundary-baseline-reconcile` | `Landed with test-first coverage and verification.` |
+| `task.script-editor-condition-authoring-contract-freeze.queue-closeout-and-handoff` | `done` | `Verified the queue, classified residue, and synchronized Blueprint truth.` | `task.script-editor-condition-authoring-contract-freeze.condition-authoring-contract-implementation` | `Closed without version closeout.` |
 
 ### Task Definitions
 
@@ -179,7 +179,7 @@
 ##### Control Block
 
 - task_id: `task.script-editor-condition-authoring-contract-freeze.condition-authoring-contract-implementation`
-- state: `active`
+- state: `done`
 - task_kind: `execution`
 - scope:
   - `Files identified by boundary-baseline-reconcile.`
@@ -209,7 +209,7 @@
 - task_brief:
   - `Implement the typed condition authoring contract slice selected by baseline reconciliation.`
 - task_outcome_summary:
-  - `Not started.`
+  - `Done. The script-editor domain now exposes an editor-owned ScriptEditorConditionNode/ScriptEditorConditionGroup contract. Event authoring helpers now create condition groups with typed conditions instead of conditionType/operator/value items, normalize typed nodes, drop legacy free-text items, and keep valid variable values typed. The event condition UI uses a condition-type select and typed key/value bindings. Shared-rule task lowering now consumes the shared editor condition contract and keeps the bounded task condition subset compatible.`
 - Purpose:
   - `Give later event/story/city/building queues one typed condition authoring source instead of per-family ad hoc condition strings.`
 - Failure mode:
@@ -218,13 +218,15 @@
 ##### Progress Log
 
 - `2026-07-15`: `Queued behind boundary-baseline-reconcile.`
+- `2026-07-15`: `Added failing tests for typed event condition defaults/normalization and legacy free-text condition item rejection, then implemented the typed authoring contract slice in src/domain/script-editor-project.ts, src/application/script-editor/story-dialogue-event-authoring.ts, src/application/script-editor/shared-rule-compiler.ts, src/application/script-editor/runtime-pack-export.ts, and src/ui/main-ui/main-ui-flow.js.`
+- `2026-07-15`: `Verification passed: npm test, npm run typecheck, npm run build, npm run lint:blueprints, npm run lint:plans, npm run blueprint:governance:check, and git diff --check.`
 
 #### `task.script-editor-condition-authoring-contract-freeze.queue-closeout-and-handoff`
 
 ##### Control Block
 
 - task_id: `task.script-editor-condition-authoring-contract-freeze.queue-closeout-and-handoff`
-- state: `queued`
+- state: `done`
 - task_kind: `execution`
 - scope:
   - `docs/blueprints/project-progress.md`
@@ -254,7 +256,7 @@
 - task_brief:
   - `Close or route the condition authoring contract freeze queue after verified implementation.`
 - task_outcome_summary:
-  - `Not started.`
+  - `Done. Queue closed with cross-family runtime evaluation residue routed to version promotion review.`
 - Purpose:
   - `Keep condition authoring ownership explicit before condition runtime evaluation, event structure expansion, or final validation continues.`
 - Failure mode:
@@ -263,6 +265,7 @@
 ##### Progress Log
 
 - `2026-07-15`: `Queued behind condition-authoring-contract-implementation.`
+- `2026-07-15`: `Closed after implementation verification. The remaining typed-condition blocker is runtime evaluation context/reference resolution, which belongs to queue.script-editor-condition-runtime-evaluation-convergence rather than this authoring-contract queue.`
 
 ### Historical Handoff Note
 

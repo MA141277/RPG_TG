@@ -5,6 +5,8 @@ import type {
   TaskStatus,
 } from "../../core/contracts/task-runtime";
 import type {
+  ScriptEditorConditionGroup,
+  ScriptEditorConditionNode,
   ScriptEditorEntityRecord,
   ScriptEditorProjectDefinition,
 } from "../../domain/script-editor-project";
@@ -20,41 +22,8 @@ export type ScriptEditorSharedRuleDiagnostic = {
   message: string;
 };
 
-type SharedConditionGroupRecord = {
-  id: string;
-  operator: "all" | "any" | "not";
-  conditions: SharedConditionNode[];
-};
-
-type SharedConditionNode =
-  | {
-      type: "group";
-      operator: "all" | "any" | "not";
-      conditions: SharedConditionNode[];
-    }
-  | {
-      type: "flag";
-      key: string;
-      expected: boolean;
-    }
-  | {
-      type: "task-status";
-      taskId: string;
-      status: "inactive" | "active" | "completed" | "failed";
-    }
-  | {
-      type: "signal";
-      signalType: string;
-    }
-  | {
-      type: "elapsed-time";
-      since: string;
-      atLeastDays: number;
-    }
-  | {
-      type: string;
-      [key: string]: unknown;
-    };
+type SharedConditionGroupRecord = ScriptEditorConditionGroup;
+type SharedConditionNode = ScriptEditorConditionNode;
 
 type SharedEffectBundleRecord = {
   id: string;

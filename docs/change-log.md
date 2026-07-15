@@ -2777,3 +2777,17 @@
 ### Impact
 - Editor-authored task effects can now mutate numeric character properties through the same durable status overlay path used by covered runtime property mutations.
 - Remaining scene/choice legacy effect application and broader event activation migration stay explicit future work instead of being hidden inside this settlement slice.
+
+## 2026-07-15 Script Editor Typed Condition Authoring Contract
+
+### Added
+- Added an editor-owned typed condition authoring contract for script-editor condition groups and event conditions.
+- Added coverage for typed event condition defaults/normalization and rejection of legacy free-text event condition items.
+
+### Changed
+- Event authoring now stores condition groups as typed condition nodes instead of `conditionType/operator/value` string items.
+- The event condition UI uses a condition-type selector with typed key/value bindings.
+- Shared-rule task condition lowering now consumes the shared editor condition contract while preserving the existing bounded task condition subset.
+
+### Impact
+- Later event/story/city/building queues can build on one typed condition authoring source instead of inventing per-family string parsing.

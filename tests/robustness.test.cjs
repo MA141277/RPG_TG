@@ -5874,23 +5874,25 @@ test("script editor story/dialogue/event authoring helpers normalize bounded nar
   let eventRecord = createDefaultScriptEditorEventRecord(0);
   eventRecord = updateScriptEditorEventField(eventRecord, "triggerTiming", "story-progress");
   eventRecord = toggleScriptEditorEventRepeatable(eventRecord, true);
+  assert.deepEqual(eventRecord.conditionGroups[0].conditions, []);
   eventRecord = appendScriptEditorEventConditionGroup(eventRecord);
   eventRecord = updateScriptEditorEventConditionGroupMode(eventRecord, 1, "any");
   eventRecord = appendScriptEditorEventConditionItem(eventRecord, 1);
   eventRecord = updateScriptEditorEventConditionItemField(
     eventRecord,
     1,
-    1,
-    "conditionType",
-    "story-node"
+    0,
+    "type",
+    "variable"
   );
-  eventRecord = updateScriptEditorEventConditionItemField(eventRecord, 1, 1, "operator", "==");
+  eventRecord = updateScriptEditorEventConditionItemField(eventRecord, 1, 0, "key", "story.progress");
+  eventRecord = updateScriptEditorEventConditionItemField(eventRecord, 1, 0, "operator", ">=");
   eventRecord = updateScriptEditorEventConditionItemField(
     eventRecord,
     1,
-    1,
+    0,
     "value",
-    "story-node.hero"
+    "3"
   );
   eventRecord = updateScriptEditorEventDestinationField(eventRecord, "family", "event");
   eventRecord = updateScriptEditorEventDestinationField(
@@ -5926,13 +5928,50 @@ test("script editor story/dialogue/event authoring helpers normalize bounded nar
   assert.equal(normalizedDialogue.followUps[0].targetId, "building.teahouse");
   assert.equal(normalizedEvent.triggerTiming, "story-progress");
   assert.equal(normalizedEvent.repeatable, true);
-  assert.equal(normalizedEvent.conditionGroups[1].mode, "any");
-  assert.equal(normalizedEvent.conditionGroups[1].items[1].conditionType, "story-node");
+  assert.equal(normalizedEvent.conditionGroups[1].operator, "any");
+  assert.deepEqual(normalizedEvent.conditionGroups[1].conditions[0], {
+    type: "variable",
+    key: "story.progress",
+    operator: ">=",
+    value: 3,
+  });
   assert.equal(normalizedEvent.destination.family, "event");
   assert.equal(normalizedEvent.destination.targetId, "event.follow-up");
   assert.equal(normalizedEvent.relations.storyNodeId, "story-node.hero");
   assert.deepEqual(normalizedEvent.relations.personIds, ["person.hero"]);
   assert.equal(normalizedEvent.previewSummary.previewNotes, "Preview the event branch.");
+});
+
+test("script editor event condition normalization drops legacy free-text condition items", () => {
+  const {
+    normalizeScriptEditorEventRecord,
+  } = require("../.test-dist/application/script-editor/story-dialogue-event-authoring.js");
+
+  const normalizedEvent = normalizeScriptEditorEventRecord({
+    id: "event.legacy-condition",
+    title: "Legacy Condition",
+    conditionGroups: [
+      {
+        id: "condition-group.legacy",
+        mode: "all",
+        items: [
+          {
+            id: "condition-item.legacy",
+            conditionType: "story-node",
+            operator: "==",
+            value: "story-node.hero",
+          },
+        ],
+      },
+    ],
+  });
+
+  assert.equal(normalizedEvent.conditionGroups[0].operator, "all");
+  assert.deepEqual(normalizedEvent.conditionGroups[0].conditions, []);
+  assert.equal(
+    Object.hasOwn(normalizedEvent.conditionGroups[0], "items"),
+    false
+  );
 });
 
 test(

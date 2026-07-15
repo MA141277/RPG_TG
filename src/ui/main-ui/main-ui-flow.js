@@ -89,6 +89,7 @@ import {
   removeScriptEditorStoryNodeRelation,
   SCRIPT_EDITOR_DIALOGUE_FOLLOWUP_FAMILIES,
   SCRIPT_EDITOR_DIALOGUE_NODE_TYPES,
+  SCRIPT_EDITOR_CONDITION_NODE_TYPES,
   SCRIPT_EDITOR_EVENT_CONDITION_GROUP_MODES,
   SCRIPT_EDITOR_EVENT_DESTINATION_FAMILIES,
   SCRIPT_EDITOR_EVENT_TRIGGER_TIMINGS,
@@ -2823,7 +2824,7 @@ export class MainUiFlow {
                         <span>组合关系</span>
                         <select class="c-script-editor-form-field__input" data-script-editor-event-condition-group-mode data-script-editor-event-condition-group-index="${groupIndex}">
                           ${SCRIPT_EDITOR_EVENT_CONDITION_GROUP_MODES.map(
-                            (mode) => `<option value="${mode}" ${group.mode === mode ? "selected" : ""}>${mode}</option>`
+                            (mode) => `<option value="${mode}" ${group.operator === mode ? "selected" : ""}>${mode}</option>`
                           ).join("")}
                         </select>
                       </label>
@@ -2837,13 +2838,13 @@ export class MainUiFlow {
                       </div>
                     </div>
                     <div class="c-script-editor-narrative-list">
-                      ${group.items
+                      ${(group.conditions ?? [])
                         .map(
                           (item, itemIndex) => `
                             <div class="c-script-editor-narrative-inline">
-                              <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(item.conditionType)}" placeholder="条件类型" data-script-editor-event-condition-item-field="conditionType" data-script-editor-event-condition-group-index="${groupIndex}" data-script-editor-event-condition-item-index="${itemIndex}" />
-                              <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(item.operator)}" placeholder="运算符" data-script-editor-event-condition-item-field="operator" data-script-editor-event-condition-group-index="${groupIndex}" data-script-editor-event-condition-item-index="${itemIndex}" />
-                              <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(item.value)}" placeholder="比较值" data-script-editor-event-condition-item-field="value" data-script-editor-event-condition-group-index="${groupIndex}" data-script-editor-event-condition-item-index="${itemIndex}" />
+                              <select class="c-script-editor-form-field__input" data-script-editor-event-condition-item-field="type" data-script-editor-event-condition-group-index="${groupIndex}" data-script-editor-event-condition-item-index="${itemIndex}">${SCRIPT_EDITOR_CONDITION_NODE_TYPES.map((conditionType) => `<option value="${conditionType}" ${item.type === conditionType ? "selected" : ""}>${conditionType}</option>`).join("")}</select>
+                              <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(item.key ?? item.taskId ?? item.signalType ?? item.eventId ?? "")}" placeholder="condition key" data-script-editor-event-condition-item-field="key" data-script-editor-event-condition-group-index="${groupIndex}" data-script-editor-event-condition-item-index="${itemIndex}" />
+                              <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(item.value ?? item.expected ?? "")}" placeholder="condition value" data-script-editor-event-condition-item-field="value" data-script-editor-event-condition-group-index="${groupIndex}" data-script-editor-event-condition-item-index="${itemIndex}" />
                               <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="remove-event-condition-item" data-script-editor-event-condition-group-index="${groupIndex}" data-script-editor-event-condition-item-index="${itemIndex}">
                                 删除
                               </button>
@@ -4108,7 +4109,7 @@ export class MainUiFlow {
         10
       );
       if (
-        (field === "conditionType" || field === "operator" || field === "value") &&
+        (field === "type" || field === "key" || field === "operator" || field === "value" || field === "expected") &&
         Number.isInteger(groupIndex) &&
         groupIndex >= 0 &&
         Number.isInteger(itemIndex) &&

@@ -553,8 +553,7 @@ function lowerEditorEventToRuntimeEvent(
 
   if (
     (eventRecord.conditionGroups ?? []).some(
-      (conditionGroup) =>
-        conditionGroup.items.some((item) => item.conditionType.length > 0)
+      (conditionGroup) => conditionGroup.conditions.length > 0
     )
   ) {
     diagnostics.push({

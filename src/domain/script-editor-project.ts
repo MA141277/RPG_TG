@@ -207,23 +207,89 @@ export type ScriptEditorEventTriggerTiming =
   | "dialogue-finished"
   | "story-progress";
 
-export type ScriptEditorEventConditionGroupMode =
+export type ScriptEditorConditionGroupOperator =
   | "all"
   | "any"
   | "not";
 
-export type ScriptEditorEventConditionItem = {
+export type ScriptEditorConditionComparisonOperator =
+  | "=="
+  | "!="
+  | ">="
+  | "<="
+  | ">"
+  | "<";
+
+export type ScriptEditorConditionNode =
+  | {
+      type: "group";
+      operator: ScriptEditorConditionGroupOperator;
+      conditions: ScriptEditorConditionNode[];
+    }
+  | {
+      type: "flag";
+      key: string;
+      expected: boolean;
+    }
+  | {
+      type: "variable";
+      key: string;
+      operator: ScriptEditorConditionComparisonOperator;
+      value: number | string;
+    }
+  | {
+      type: "task-status";
+      taskId: string;
+      status: "inactive" | "active" | "completed" | "failed";
+    }
+  | {
+      type: "signal";
+      signalType: string;
+    }
+  | {
+      type: "elapsed-time";
+      since: string;
+      atLeastDays: number;
+    }
+  | {
+      type: "event-fired";
+      eventId: string;
+      expected?: boolean;
+    }
+  | {
+      type: "chapter";
+      chapterId: string;
+    }
+  | {
+      type: "location";
+      cityId?: string;
+      houseId?: string;
+    }
+  | {
+      type: "character-exists" | "character-available";
+      characterId: string;
+      expected?: boolean;
+    }
+  | {
+      type: "character-in-city";
+      characterId: string;
+      cityId: string;
+    }
+  | {
+      type: "mission-status";
+      missionId: string;
+      status: "inactive" | "active" | "completed" | "failed";
+    };
+
+export type ScriptEditorConditionGroup = {
   id: string;
-  conditionType: string;
-  operator: string;
-  value: string;
+  operator: ScriptEditorConditionGroupOperator;
+  conditions: ScriptEditorConditionNode[];
 };
 
-export type ScriptEditorEventConditionGroup = {
-  id: string;
-  mode: ScriptEditorEventConditionGroupMode;
-  items: ScriptEditorEventConditionItem[];
-};
+export type ScriptEditorEventConditionGroupMode = ScriptEditorConditionGroupOperator;
+
+export type ScriptEditorEventConditionGroup = ScriptEditorConditionGroup;
 
 export type ScriptEditorEventDestinationFamily =
   | "dialogue"
