@@ -21,9 +21,9 @@
 - next_family_candidate: `queue.script-editor-durable-package-workflow-continuation`
 - auto_continue_eligible: `true`
 - next_effect: `return-to-version-review`
-- sync_status: `pending`
-- sync_scope: `none`
-- sync_summary: `Queue closeout and same-family continuation routing truth is written locally; repository sync for this governance closeout batch has not yet been recorded.`
+- sync_status: `success`
+- sync_scope: `baseline-push`
+- sync_summary: `Commit ca6cf5d on mod-first-dev was pushed successfully to origin/mod-first-dev after this continuation queue closeout and same-family durable package workflow admission truth was written.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
