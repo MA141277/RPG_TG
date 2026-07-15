@@ -1,4 +1,9 @@
 import type {
+  CharacterDefinition,
+  CharacterStats,
+  SkillKey,
+} from "../../domain/character";
+import type {
   ScriptEditorKeyValueEntry,
   ScriptEditorPersonRecord,
 } from "../../domain/script-editor-project";
@@ -51,6 +56,40 @@ const SCRIPT_EDITOR_PERSON_ATTRIBUTE_LABELS: Record<string, string> = {
   "stats.politics": "政务",
   "stats.charm": "魅力",
   "stats.fame": "名声",
+};
+
+const DEFAULT_CHARACTER_STATS: CharacterStats = {
+  leadership: 0,
+  martial: 0,
+  intelligence: 0,
+  politics: 0,
+  charm: 0,
+  fame: 0,
+  gold: 0,
+};
+
+const DEFAULT_CHARACTER_SKILLS: Record<SkillKey, number> = {
+  ashigaru: 0,
+  horse: 0,
+  teppo: 0,
+  navy: 0,
+  archery: 0,
+  martial: 0,
+  military: 0,
+  ninjutsu: 0,
+  construction: 0,
+  development: 0,
+  mining: 0,
+  arithmetic: 0,
+  etiquette: 0,
+  rhetoric: 0,
+  tea: 0,
+  medicine: 0,
+};
+
+export type ScriptEditorPersonRuntimeDefaults = {
+  cityId?: string;
+  portraitId?: string;
 };
 
 export function normalizeScriptEditorPersonRecord(
@@ -110,6 +149,53 @@ export function createDefaultScriptEditorPersonRecord(
       enabled: false,
       entryId: "",
     },
+  };
+}
+
+export function materializeScriptEditorPersonRuntimeCharacter(
+  person: ScriptEditorPersonRecord,
+  defaults: ScriptEditorPersonRuntimeDefaults = {}
+): CharacterDefinition {
+  const normalizedPerson = normalizeScriptEditorPersonRecord(
+    person as Record<string, unknown>
+  ) as ScriptEditorPersonRecord & Partial<CharacterDefinition>;
+  const stats = normalizeCharacterStats(normalizedPerson.stats);
+  const skills = normalizeCharacterSkills(normalizedPerson.skills);
+
+  return {
+    ...normalizedPerson,
+    id: normalizedPerson.id,
+    name: normalizedPerson.name,
+    birthYear: readFiniteNumber(normalizedPerson.birthYear, 0),
+    deathYear:
+      normalizedPerson.deathYear == null
+        ? null
+        : readFiniteNumber(normalizedPerson.deathYear, 0),
+    age: readFiniteNumber(normalizedPerson.age, 0),
+    cityId:
+      typeof normalizedPerson.cityId === "string" &&
+      normalizedPerson.cityId.length > 0
+        ? normalizedPerson.cityId
+        : (defaults.cityId ?? ""),
+    portraitId:
+      typeof normalizedPerson.portraitId === "string" &&
+      normalizedPerson.portraitId.length > 0
+        ? normalizedPerson.portraitId
+        : (defaults.portraitId ?? "portrait.default"),
+    stats,
+    stamina: readFiniteNumber(normalizedPerson.stamina, 100),
+    availableFunctions: Array.isArray(normalizedPerson.availableFunctions)
+      ? normalizedPerson.availableFunctions
+      : [],
+    skills,
+    ...(normalizedPerson.personType == null
+      ? {}
+      : { personType: normalizedPerson.personType }),
+    ...(normalizedPerson.role == null ? {} : { role: normalizedPerson.role }),
+    ...(normalizedPerson.houseId == null
+      ? {}
+      : { houseId: normalizedPerson.houseId }),
+    portraitVariantId: normalizedPerson.portraitVariantId ?? null,
   };
 }
 
@@ -479,6 +565,38 @@ function isScriptEditorPersonNumericAttribute(keyPath: string): boolean {
     keyPath.startsWith("stats.") ||
     keyPath.startsWith("skills.")
   );
+}
+
+function normalizeCharacterStats(value: unknown): CharacterStats {
+  const source =
+    value != null && typeof value === "object" && !Array.isArray(value)
+      ? (value as Partial<Record<keyof CharacterStats, unknown>>)
+      : {};
+
+  return Object.fromEntries(
+    Object.entries(DEFAULT_CHARACTER_STATS).map(([key, fallback]) => [
+      key,
+      readFiniteNumber(source[key as keyof CharacterStats], fallback),
+    ])
+  ) as CharacterStats;
+}
+
+function normalizeCharacterSkills(value: unknown): Record<SkillKey, number> {
+  const source =
+    value != null && typeof value === "object" && !Array.isArray(value)
+      ? (value as Partial<Record<SkillKey, unknown>>)
+      : {};
+
+  return Object.fromEntries(
+    Object.entries(DEFAULT_CHARACTER_SKILLS).map(([key, fallback]) => [
+      key,
+      readFiniteNumber(source[key as SkillKey], fallback),
+    ])
+  ) as Record<SkillKey, number>;
+}
+
+function readFiniteNumber(value: unknown, fallback: number): number {
+  return typeof value === "number" && Number.isFinite(value) ? value : fallback;
 }
 
 function readScriptEditorPersonValueAtPath(

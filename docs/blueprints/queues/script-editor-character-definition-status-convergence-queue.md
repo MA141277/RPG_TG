@@ -9,8 +9,8 @@
 - governance_sync_source: `docs/blueprints/blueprint.md`
 - queue_status: `active`
 - queue_class: `required`
-- active_task: `task.script-editor-character-definition-status-convergence.character-definition-status-contract-implementation`
-- next_task: `task.script-editor-character-definition-status-convergence.queue-closeout-and-handoff`
+- active_task: `task.script-editor-character-definition-status-convergence.queue-closeout-and-handoff`
+- next_task: `none`
 - closeout_status: `in-progress`
 - execution_closeout_status: `partial`
 - topic_closure_status: `open-residue`
@@ -21,9 +21,9 @@
 - next_family_candidate: `none`
 - auto_continue_eligible: `false`
 - next_effect: `none`
-- sync_status: `success`
-- sync_scope: `branch-push`
-- sync_summary: `Commits 30d1522, 1245eb9, and 23ba515 were pushed to origin/mod-first-dev, carrying queue admission, the transient sync-failure record, and boundary baseline closeout.`
+- sync_status: `pending`
+- sync_scope: `none`
+- sync_summary: `Character definition/status implementation has passed local verification; repository sync is pending for this terminal task state.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
@@ -57,13 +57,13 @@
 
 - queue_goal: `Unify authored character definitions, runtime character views, and save-time CharacterStatus overlays without creating a second durable character truth.`
 - task_count: `3`
-- completed_task_count: `1`
-- remaining_task_count: `2`
-- active_task_summary: `Implement the bounded CharacterDefinition/CharacterStatus selector/materializer and migration-helper slice chosen by baseline reconciliation.`
+- completed_task_count: `2`
+- remaining_task_count: `1`
+- active_task_summary: `Close or route the queue after verified CharacterDefinition/CharacterStatus implementation.`
 - task_briefs:
   - `task.script-editor-character-definition-status-convergence.boundary-baseline-reconcile: completed after current character schemas, old-shape adapters, save/status ownership, and direct mutation seams were reconciled.`
-  - `task.script-editor-character-definition-status-convergence.character-definition-status-contract-implementation: implement the bounded CharacterDefinition/CharacterStatus selector or materializer slice with tests.`
-  - `task.script-editor-character-definition-status-convergence.queue-closeout-and-handoff: verify the bounded slice, classify residue, and return control to version review.`
+  - `task.script-editor-character-definition-status-convergence.character-definition-status-contract-implementation: completed after CharacterStatus overlay helpers, editor person runtime materialization, and covered mutation status patch outputs landed with tests.`
+  - `task.script-editor-character-definition-status-convergence.queue-closeout-and-handoff: active; verify the bounded slice, classify residue, and return control to version review.`
 
 ### Operator Snapshot Contract
 
@@ -98,8 +98,8 @@
 | Task ID | State | Summary | Depends On | Notes |
 | --- | --- | --- | --- | --- |
 | `task.script-editor-character-definition-status-convergence.boundary-baseline-reconcile` | `completed` | `Reconciled current character authoring, runtime definitions, save/status structures, selectors, materializers, and direct runtime consumers before implementation.` | `none` | `Completed on 2026-07-15 after source evidence identified the smallest lawful implementation slice.` |
-| `task.script-editor-character-definition-status-convergence.character-definition-status-contract-implementation` | `active` | `Implement the bounded CharacterDefinition/CharacterStatus contract slice and tests chosen by baseline reconciliation.` | `task.script-editor-character-definition-status-convergence.boundary-baseline-reconcile` | `Must not widen into unrelated object-family migrations.` |
-| `task.script-editor-character-definition-status-convergence.queue-closeout-and-handoff` | `pending` | `Verify, classify residue, update queue/version/project-progress truth, and route the next lawful queue.` | `task.script-editor-character-definition-status-convergence.character-definition-status-contract-implementation` | `Must run governance checks before repository sync record is marked success.` |
+| `task.script-editor-character-definition-status-convergence.character-definition-status-contract-implementation` | `completed` | `Implemented the bounded CharacterDefinition/CharacterStatus contract slice and tests chosen by baseline reconciliation.` | `task.script-editor-character-definition-status-convergence.boundary-baseline-reconcile` | `Completed on 2026-07-15 after typecheck and full tests passed.` |
+| `task.script-editor-character-definition-status-convergence.queue-closeout-and-handoff` | `active` | `Verify, classify residue, update queue/version/project-progress truth, and route the next lawful queue.` | `task.script-editor-character-definition-status-convergence.character-definition-status-contract-implementation` | `Must run governance checks before repository sync record is marked success.` |
 
 ### Task Definitions
 
@@ -172,7 +172,7 @@
 ##### Control Block
 
 - task_id: `task.script-editor-character-definition-status-convergence.character-definition-status-contract-implementation`
-- state: `active`
+- state: `completed`
 - task_kind: `execution`
 - scope:
   - `src/domain/character.ts`
@@ -212,18 +212,23 @@
 - task_brief:
   - `Implement the bounded character definition/status convergence slice chosen by baseline reconciliation.`
 - task_outcome_summary:
-  - `Active; implement the first selector/materializer and mutation-helper slice chosen by baseline reconciliation.`
+  - `Completed with CharacterStatus overlay/materializer helpers, editor person runtime CharacterDefinition materialization for import/export, and covered stamina/gold/arithmetic mutation helpers emitting status patches while preserving materialized compatibility output.`
 - Purpose:
   - `Move character reads and runtime mutations toward explicit definition plus status-overlay ownership.`
 - Failure mode:
   - `Implementing before baseline could either be too narrow to prove status ownership or too broad to remain a bounded queue.`
+
+##### Progress Log
+
+- `2026-07-15`: `Added src/application/character/character-status.ts with CharacterStatus, CharacterStatusById, materializeCharacterDefinition, materializeCharacterDefinitions, and mergeCharacterStatusById. Added editor person runtime materialization so minimal script-editor people export to characters.json with required CharacterDefinition fields, defaults, stats, skills, stamina, and availableFunctions. Runtime pack import now normalizes imported characters through person-authoring helpers. Covered player stamina, grain-shop gold, and grain-shop arithmetic mutations now expose CharacterStatus patches while preserving existing characterDefinitions materialized output for compatibility.`
+- `2026-07-15`: `Verified RED/GREEN target tests for runtime export character shape, CharacterStatus overlay materialization, and shared mutation status patches; then ran npm run typecheck and npm run test with 512 passing tests.`
 
 #### `task.script-editor-character-definition-status-convergence.queue-closeout-and-handoff`
 
 ##### Control Block
 
 - task_id: `task.script-editor-character-definition-status-convergence.queue-closeout-and-handoff`
-- state: `pending`
+- state: `active`
 - task_kind: `execution`
 - scope:
   - `docs/blueprints/project-progress.md`
@@ -259,7 +264,7 @@
 - task_brief:
   - `Close or route the character definition/status convergence queue after verified implementation.`
 - task_outcome_summary:
-  - `Pending; queue is still in baseline reconciliation.`
+  - `Active; implementation has passed local verification and now needs queue residue classification plus version/project-progress routing.`
 - Purpose:
   - `Keep version scheduling honest after the bounded character convergence slice lands.`
 - Failure mode:

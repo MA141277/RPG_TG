@@ -18,13 +18,17 @@
 - 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，补入人物字段代表切片测试，覆盖 base string、profile text/reference、stat number、skill number、enum、boolean、reference-list 与 key-value-list custom 字段，并验证重复 id、缺失 metadata、非法 valueType 和非法 order 会 fail closed。
 - 关闭 `queue.script-editor-unified-field-mapping-table-freeze`，记录字段映射 UI 消费和对象族迁移属于 cross-family residue，并将 version 返回 promotion review，推荐下一步筛选 `queue.script-editor-character-definition-status-convergence`。
 - 新增 [docs/blueprints/queues/script-editor-character-definition-status-convergence-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-character-definition-status-convergence-queue.md)，将 `queue.script-editor-character-definition-status-convergence` 提升为当前 active queue，并启动 `task.script-editor-character-definition-status-convergence.boundary-baseline-reconcile`。
+- 新增 [src/application/character/character-status.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/character/character-status.ts)，提供 `CharacterStatus` overlay、`characterStatusById` merge helper，以及 status-aware materialized character view。
+- 更新 [src/application/script-editor/person-authoring.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/person-authoring.ts)、[src/application/script-editor/runtime-pack-import.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/runtime-pack-import.ts) 与 [src/application/script-editor/runtime-pack-export.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/runtime-pack-export.ts)，让剧本编辑器人物记录在导入/导出边界 materialize 为 runtime `CharacterDefinition`，最小人物也会导出完整 stats/skills/stamina/default functions 字段。
+- 更新 [src/application/player/player-stamina.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/player/player-stamina.ts) 与 [src/application/grain-shop/grain-shop-mutations.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/grain-shop/grain-shop-mutations.ts)，让体力、金钱和算术技能的共享 mutation 返回 `characterStatusById` patch，同时保留既有 materialized `characterDefinitions` 兼容输出。
+- 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，补入 runtime export 角色 shape、CharacterStatus overlay materialization、以及共享 mutation status patch 输出的回归覆盖。
 
 ### Impact
 - 后续 authoring/data convergence 队列可以依赖项目级 `draft/complete` truth，而不需要从缓存、UI 状态或 runtime 包存在性推断项目是否完成。
 - 未完成项目保持可继续编辑的草稿语义；只有成功导出的 runtime 剧本包会把项目推进到完成状态。
 - 后续角色、城市/建筑、叙事、事件和条件队列会先消费共享字段映射契约，而不是继续在各面板里复制字段标签、类型和排序。
 - 当前字段映射实现仍是 bounded representative slice；全量城市/建筑/叙事/小游戏 UI 迁移保留给后续对象族队列。
-- 当前 Blueprint 已进入角色定义/状态收敛队列；下一步会先核对 authored people、runtime CharacterDefinition、CharacterStatus/save overlay 和 runtime consumer seam，再决定最小实现切片。
+- 当前 Blueprint 已进入角色定义/状态收敛队列；已落地第一段 CharacterDefinition/CharacterStatus selector/materializer 与 mutation patch 输出，后续 closeout 会分类仍未迁移的 broad runtime consumer 和完整角色 UI residue。
 
 ## 2026-07-15 Script Editor Authoring Data Structure Unification Version Activation
 

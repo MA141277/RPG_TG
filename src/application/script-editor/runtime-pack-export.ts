@@ -6,6 +6,7 @@ import {
   compileScriptEditorProjectTasks,
   type ScriptEditorSharedRuleDiagnostic,
 } from "./shared-rule-compiler";
+import { materializeScriptEditorPersonRuntimeCharacter } from "./person-authoring";
 import type {
   ScriptEditorDialogueRecord,
   ScriptEditorEventRecord,
@@ -122,6 +123,7 @@ export function validateScriptEditorProjectForRuntimeExport(
 
   const scenarioProfile = extractScenarioProfile(project.storyPack, diagnostics);
   const exportedTextEntries = mapTextEntries(project.textEntries, diagnostics);
+  const exportedCharacters = materializeRuntimeCharacters(project);
   const exportedScenes = lowerMinimalNarrativeScenes(project, diagnostics);
   const exportedEvents = extractRuntimeEvents(
     project,
@@ -153,7 +155,7 @@ export function validateScriptEditorProjectForRuntimeExport(
         : { description: project.storyPack.description }),
       scenarioProfile,
       maps: project.maps,
-      characters: project.people,
+      characters: exportedCharacters,
       cities: project.cities,
       houses: project.buildings,
       cityEntries: project.cityEntries,
@@ -197,6 +199,7 @@ export function exportScriptEditorProjectToScenarioPackFiles(
 
   const scenarioProfile = extractScenarioProfile(project.storyPack, []);
   const exportedTextEntries = mapTextEntries(project.textEntries, []);
+  const exportedCharacters = materializeRuntimeCharacters(project);
   const exportedScenes = lowerMinimalNarrativeScenes(project, []);
   const exportedEvents = extractRuntimeEvents(project, exportedScenes ?? [], []);
   const exportedTasks = compileScriptEditorProjectTasks(project, []);
@@ -233,7 +236,7 @@ export function exportScriptEditorProjectToScenarioPackFiles(
       project.maps
     ),
     [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.characters)]: stringifyJson(
-      project.people
+      exportedCharacters
     ),
     [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.cities)]: stringifyJson(
       project.cities
@@ -287,6 +290,18 @@ export function exportScriptEditorProjectToScenarioPackFiles(
       project.historicalCharacterIdByCharacterId
     ),
   };
+}
+
+function materializeRuntimeCharacters(
+  project: ScriptEditorProjectDefinition
+) {
+  const defaultCityId = project.cities[0]?.id;
+  return project.people.map((person) =>
+    materializeScriptEditorPersonRuntimeCharacter(person, {
+      ...(defaultCityId == null ? {} : { cityId: defaultCityId }),
+      portraitId: "portrait.default",
+    })
+  );
 }
 
 function extractScenarioProfile(

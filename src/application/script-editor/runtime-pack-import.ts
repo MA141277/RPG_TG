@@ -1,5 +1,6 @@
 import { parseScenarioPack } from "../scenario/scenario-pack-loader";
 import { parseScriptEditorProject } from "./editor-project-loader";
+import { normalizeScriptEditorPersonRecord } from "./person-authoring";
 import { createDraftScriptEditorProjectCompletionState } from "./project-completion-state";
 import {
   SCRIPT_EDITOR_PROJECT_MANIFEST_FILE,
@@ -185,7 +186,9 @@ export function importScenarioPackToScriptEditorProject(
       collectCompatibilityImportResidue(rawPack, diagnostics)
     ),
     maps: readEntityArrayFamily(rawPack, "maps"),
-    people: pack.characters ?? [],
+    people: (pack.characters ?? []).map((character) =>
+      normalizeScriptEditorPersonRecord(character as Record<string, unknown>)
+    ),
     cities: pack.cities ?? [],
     buildings: pack.houses ?? [],
     cityEntries: pack.cityEntries ?? [],

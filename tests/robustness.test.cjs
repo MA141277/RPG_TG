@@ -3151,11 +3151,115 @@ test(
     assert.equal(exportedTextEntries["text.opening"], "Opening line.");
     assert.equal(exportedPack.scenarioProfile.id, "scenario.test.script-editor");
     assert.equal(exportedPack.characters[0]?.id, "person.hero");
+    assert.equal(exportedPack.characters[0]?.birthYear, 0);
+    assert.equal(exportedPack.characters[0]?.age, 0);
+    assert.equal(exportedPack.characters[0]?.cityId, "city.start");
+    assert.equal(exportedPack.characters[0]?.portraitId, "portrait.default");
+    assert.equal(exportedPack.characters[0]?.stats?.leadership, 0);
+    assert.equal(exportedPack.characters[0]?.stats?.gold, 0);
+    assert.equal(exportedPack.characters[0]?.skills?.military, 0);
+    assert.equal(exportedPack.characters[0]?.stamina, 100);
+    assert.deepEqual(exportedPack.characters[0]?.availableFunctions, []);
     assert.equal(exportedPack.houses?.[0]?.id, "building.home");
     assert.equal(exportedPack.tasks?.[0]?.id, "quest.first");
     assert.equal(exportedPack.textEntries?.["text.opening"], "Opening line.");
   }
 );
+
+test("character status materializer overlays stat skill and stamina patches without mutating definitions", () => {
+  const {
+    materializeCharacterDefinition,
+    materializeCharacterDefinitions,
+  } = require("../.test-dist/application/character/character-status.js");
+  const baseCharacter = {
+    ...prototypeCharacters[0],
+    id: "char.status.test",
+    stats: {
+      ...prototypeCharacters[0].stats,
+      gold: 120,
+      leadership: 60,
+    },
+    skills: {
+      ...prototypeCharacters[0].skills,
+      military: 2,
+    },
+    stamina: 80,
+  };
+
+  const withoutStatus = materializeCharacterDefinition(baseCharacter);
+  const withEmptyStatus = materializeCharacterDefinition(baseCharacter, {});
+  const withPatch = materializeCharacterDefinition(baseCharacter, {
+    statPatch: { gold: 150 },
+    skillPatch: { military: 3 },
+    stamina: 70,
+  });
+  const [materializedFromMap] = materializeCharacterDefinitions(
+    [baseCharacter],
+    {
+      "char.status.test": {
+        statPatch: { leadership: 65 },
+      },
+    }
+  );
+
+  assert.notEqual(withoutStatus, baseCharacter);
+  assert.deepEqual(withoutStatus, baseCharacter);
+  assert.deepEqual(withEmptyStatus, baseCharacter);
+  assert.equal(withPatch.stats.gold, 150);
+  assert.equal(withPatch.skills.military, 3);
+  assert.equal(withPatch.stamina, 70);
+  assert.equal(baseCharacter.stats.gold, 120);
+  assert.equal(baseCharacter.skills.military, 2);
+  assert.equal(baseCharacter.stamina, 80);
+  assert.equal(materializedFromMap.stats.leadership, 65);
+});
+
+test("shared character mutations expose CharacterStatus patches while preserving materialized compatibility", () => {
+  const {
+    spendPlayerStamina,
+  } = require("../.test-dist/application/player/player-stamina.js");
+  const {
+    mutatePlayerGold,
+    mutatePlayerArithmetic,
+  } = require("../.test-dist/application/grain-shop/grain-shop-mutations.js");
+  const state = createBaseState();
+  const player = {
+    ...prototypeCharacters[0],
+    id: "char.status.mutation",
+    stamina: 80,
+    stats: {
+      ...prototypeCharacters[0].stats,
+      gold: 120,
+    },
+    skills: {
+      ...prototypeCharacters[0].skills,
+      arithmetic: 2,
+    },
+  };
+
+  const staminaResult = spendPlayerStamina(state, [player], player.id, 15);
+  const goldResult = mutatePlayerGold(state, [player], player.id, -20);
+  const skillResult = mutatePlayerArithmetic(state, [player], player.id, 1);
+
+  assert.equal(staminaResult.characterDefinitions[0].stamina, 65);
+  assert.equal(
+    staminaResult.characterStatusById[player.id].stamina,
+    65
+  );
+  assert.equal(goldResult.characterDefinitions[0].stats.gold, 100);
+  assert.equal(
+    goldResult.characterStatusById[player.id].statPatch.gold,
+    100
+  );
+  assert.equal(skillResult.characterDefinitions[0].skills.arithmetic, 3);
+  assert.equal(
+    skillResult.characterStatusById[player.id].skillPatch.arithmetic,
+    3
+  );
+  assert.equal(player.stamina, 80);
+  assert.equal(player.stats.gold, 120);
+  assert.equal(player.skills.arithmetic, 2);
+});
 
 test(
   "script editor runtime export lowers the minimal authored narrative into startup-loadable scenes",
