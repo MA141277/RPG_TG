@@ -13,10 +13,12 @@
 - 更新 [src/ui/main-ui/main-ui-flow.js](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/main-ui/main-ui-flow.js)，让“导出剧本包”成为唯一会把项目标记为 `complete` 的 UI 路径，并且只在 runtime package 成功写出后再回写项目草稿；保存、打开、导入和运行预览都不隐式标记完成。
 - 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，补入 completion state 保存/加载持久化和 export-only 完成标记的回归覆盖。
 - 关闭 `queue.script-editor-project-completion-state-gating`，记录该队列无 same-family residue，并将 `target.script-editor-authoring-data-structure-unification` 返回 promotion review。
+- 新增 [docs/blueprints/queues/script-editor-unified-field-mapping-table-freeze-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-unified-field-mapping-table-freeze-queue.md)，并将其作为新的 active queue 启动，当前 active task 为 `task.script-editor-unified-field-mapping-table-freeze.boundary-baseline-reconcile`。
 
 ### Impact
 - 后续 authoring/data convergence 队列可以依赖项目级 `draft/complete` truth，而不需要从缓存、UI 状态或 runtime 包存在性推断项目是否完成。
 - 未完成项目保持可继续编辑的草稿语义；只有成功导出的 runtime 剧本包会把项目推进到完成状态。
+- 后续角色、城市/建筑、叙事、事件和条件队列会先消费共享字段映射契约，而不是继续在各面板里复制字段标签、类型和排序。
 
 ## 2026-07-15 Script Editor Authoring Data Structure Unification Version Activation
 
