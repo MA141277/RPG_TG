@@ -23,7 +23,7 @@
 - next_effect: `execute-active-task`
 - sync_status: `success`
 - sync_scope: `branch-push`
-- sync_summary: `Commit 0f2a560 pushed to origin/mod-first-dev after branching/event/task-chain queue admission.`
+- sync_summary: `Commit 85b2a46 pushed to origin/mod-first-dev after progression-contract-implementation landed and advanced the queue to closeout.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
