@@ -5,13 +5,13 @@
 - document_role: `version-governor`
 - version_id: `target.script-editor-authoring-data-structure-unification`
 - version_status: `open`
-- active_phase: `phase.promotion-review`
-- active_queue: `none`
-- decision_state: `promotion-review`
-- next_decision: `same-version-admission-or-version-closeout`
-- next_action: `return-to-promotion-review`
-- resume_gate: `version-plan-review`
-- promotion_review_result: `pending`
+- active_phase: `phase.active-execution`
+- active_queue: `queue.script-editor-dialogue-story-runtime-handoff-convergence`
+- decision_state: `active-execution`
+- next_decision: `queue-closeout-or-return-to-version-review`
+- next_action: `resume-active-queue`
+- resume_gate: `open-active-queue`
+- promotion_review_result: `admitted`
 - review_subject_id: `none`
 - review_subject_classification: `none`
 - proposed_queue_id: `none`
@@ -95,6 +95,7 @@
 | `item.script-editor-city-building-structure-convergence` | `queue-candidate` | `queue.script-editor-city-building-structure-convergence` | `admitted + queue closed with cross-family residue` | `only if fresh evidence proves the runtime-house-compatible building contract regressed` | `Closed after ScriptEditorBuildingRecord explicitly owned covered HouseDefinition fields and runtime import normalized houses into the editor building contract. Placement/resolver residue was routed to version review.` |
 | `item.script-editor-city-building-placement-resolver-convergence` | `queue-candidate` | `queue.script-editor-city-building-placement-resolver-convergence` | `admitted + queue closed with cross-family residue` | `only if fresh evidence proves the bounded resolver API regressed` | `Closed after landing the shared city-building placement resolver API over existing runtime families; persistent placement schema migration, override layering, dialogue inheritance, and broader consumer migration were routed back to version review.` |
 | `item.script-editor-dialogue-story-structure-convergence` | `queue-candidate` | `queue.script-editor-dialogue-story-structure-convergence` | `admitted + queue closed with cross-family residue` | `only if fresh evidence proves the bounded materializer seam regressed` | `Closed after landing the shared materializer seam for minimal dialogue/story runtime scene/text-entry assembly; runtime handoff/progression, branching/followUps, story-node relation lowering, and import reconstruction residue were routed back to version review.` |
+| `item.script-editor-dialogue-story-runtime-handoff-convergence` | `queue-candidate` | `queue.script-editor-dialogue-story-runtime-handoff-convergence` | `admitted + active` | `only if fresh evidence proves scenario launch policy or another prerequisite blocks baseline before any production code changes` | `Admitted after dialogue/story structure convergence closed and routed runtime handoff/progression residue to version review; the first task is boundary-baseline-reconcile.` |
 | `item.script-editor-scenario-launch-policy-authoring` | `queue-candidate` | `queue.script-editor-scenario-launch-policy-authoring` | `candidate-recorded` | `when startup policy authoring is the smallest blocker to editor-exported packs launching without manual JSON patching` | `Owns character selection vs fixed startup, initial map/city/building/view, and entry event timing authoring.` |
 | `item.script-editor-playable-minigame-binding-convergence` | `queue-candidate` | `queue.script-editor-playable-minigame-binding-convergence` | `candidate-recorded` | `only after playable governance is loaded and the queue is admitted` | `Requires playable governance before shared playable runtime or house-hosted playable integration changes.` |
 | `item.script-editor-end-to-end-authoring-runtime-flow-validation` | `queue-candidate` | `queue.script-editor-end-to-end-authoring-runtime-flow-validation` | `candidate-recorded-final` | `after required data, runtime handoff, and persistence queues provide enough coverage to prove closeout` | `Final validation queue, not a first implementation slice.` |
@@ -117,7 +118,7 @@
 | `queue.script-editor-city-building-structure-convergence` | `done` | `Already completed; do not reopen except by explicit governance record.` | `Closed after runtime-house-compatible building structure contract hardening landed; placement/resolver residue returned to version review.` |
 | `queue.script-editor-city-building-placement-resolver-convergence` | `done` | `Already completed; do not reopen except by explicit governance record.` | `Closed after bounded shared resolver API verification; persistent placement schema, overrides, dialogue inheritance, and broader consumer migration remain cross-family residue.` |
 | `queue.script-editor-dialogue-story-structure-convergence` | `done` | `Already completed; do not reopen except by explicit governance record.` | `Closed after bounded shared materializer seam verification; runtime handoff/progression and richer narrative behavior remain cross-family residue.` |
-| `queue.script-editor-dialogue-story-runtime-handoff-convergence` | `candidate` | `After structure convergence exposes runtime handoff residue.` | `Owns dialogue/story progression runtime handoff.` |
+| `queue.script-editor-dialogue-story-runtime-handoff-convergence` | `active` | `After structure convergence exposes runtime handoff residue.` | `Owns dialogue/story progression runtime handoff. Active task is boundary-baseline-reconcile.` |
 | `queue.script-editor-condition-authoring-contract-freeze` | `done` | `Already completed; do not reopen except by explicit governance record.` | `Closed after the typed authoring contract slice landed and routed runtime evaluation residue back to promotion review.` |
 | `queue.script-editor-condition-runtime-evaluation-convergence` | `done` | `Already completed; do not reopen except by explicit governance record.` | `Closed after bounded event condition export/evaluation convergence landed with verification and routed broader condition consumption residue back to promotion review.` |
 | `queue.script-editor-event-structure-convergence` | `done` | `Already completed; do not reopen except by explicit governance record.` | `Closed at baseline with prerequisite condition authoring contract freeze residue returned to promotion review.` |
@@ -129,13 +130,12 @@
 | `queue.script-editor-legacy-structure-supersession-review` | `candidate` | `Before deleting or invalidating previously frozen structures.` | `Records retained, migrated, adapter-supported, or retired structure dispositions.` |
 | `queue.script-editor-end-to-end-authoring-runtime-flow-validation` | `candidate-final` | `After required data/runtime/persistence queues provide enough coverage to prove version acceptance.` | `Final closeout validation queue.` |
 
-### Current Promotion Review
+### Current Queue Activation
 
-- Active queue:
-  - `none`
-- Review subject:
-  - `queue.script-editor-dialogue-story-runtime-handoff-convergence`
-- Review basis:
+- `queue.script-editor-dialogue-story-runtime-handoff-convergence`
+- Active task:
+  - `task.script-editor-dialogue-story-runtime-handoff-convergence.boundary-baseline-reconcile`
+- Activation basis:
   - `queue.script-editor-dialogue-story-structure-convergence closed after the bounded materializer seam landed and verified.`
   - `Full dialogue/story runtime handoff, story progression state, and branch entry/exit semantics remain outside the structure slice and are now the next recorded recommendation.`
 
@@ -144,7 +144,7 @@
 - `This version governs authoring/data-structure convergence after runtime-pack-unification closeout.`
 - `It must consume the closed runtime-pack export/import/startup truth as baseline evidence rather than reopening it as a compatibility patch surface.`
 - `It may supersede previously frozen script-editor structures only through explicit schema/migration/supersession records.`
-- `It has closed queue.script-editor-dialogue-story-structure-convergence after landing the bounded materializer seam; execution has returned to promotion review with dialogue/story runtime handoff convergence recommended next.`
+- `It has admitted queue.script-editor-dialogue-story-runtime-handoff-convergence after dialogue/story structure closeout; execution resumes from the runtime handoff boundary baseline task.`
 
 ### Queue Admission Startup Rules
 
@@ -246,3 +246,4 @@
 - `2026-07-15: queue.script-editor-dialogue-story-structure-convergence completed boundary-baseline-reconcile after selecting a shared dialogue/story runtime materializer seam over existing editor narrative records, runtime SceneDefinition actions, and textEntries as the smallest lawful structure slice; the active task is now structure-contract-implementation.`
 - `2026-07-15: queue.script-editor-dialogue-story-structure-convergence completed structure-contract-implementation after landing the shared dialogue/story runtime materializer seam and rewiring runtime-pack export to consume it; the active task is now queue-closeout-and-handoff.`
 - `2026-07-15: queue.script-editor-dialogue-story-structure-convergence closed after verification; full dialogue/story runtime handoff/progression, branching choices, followUps, story-node relation lowering, and runtime-scene import reconstruction were routed as cross-family residue to version promotion review, with queue.script-editor-dialogue-story-runtime-handoff-convergence recommended next.`
+- `2026-07-15: admission review promoted queue.script-editor-dialogue-story-runtime-handoff-convergence as the single active queue because runtime handoff/progression is the next dialogue/story prerequisite after the materializer seam landed. The first live task is boundary-baseline-reconcile.`

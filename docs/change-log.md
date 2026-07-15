@@ -12,6 +12,7 @@
 - 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，覆盖 placement derivation、缺失目标 house fail-closed、访问拒绝、NPC 摘要、单个 view 解析和缺失 placement 返回 `null`。
 - 新增 [docs/blueprints/queues/script-editor-dialogue-story-structure-convergence-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-dialogue-story-structure-convergence-queue.md)，作为后续 dialogue/story runtime-consumable structure 收敛的 active queue，当前任务为 `boundary-baseline-reconcile`。
 - 新增 [src/application/script-editor/dialogue-story-runtime-materializer.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/dialogue-story-runtime-materializer.ts)，把编辑器 dialogue/story/textEntries 到 runtime `SceneDefinition[]` 与 `textEntries` map 的最小 materialization 从 exporter 私有逻辑提升为共享 seam。
+- 新增 [docs/blueprints/queues/script-editor-dialogue-story-runtime-handoff-convergence-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-dialogue-story-runtime-handoff-convergence-queue.md)，作为后续 dialogue/story runtime handoff/progression 收敛的 active queue，当前任务为 `boundary-baseline-reconcile`。
 
 ### Changed
 - resolver 当前以 `CityEntryDefinition.id` 作为 placement id，连接现有 `cityEntries`、`houses`、`cityNpcPools` 和 `houseAccessRefusalRules`，避免消费者继续分散手工拼接这些 runtime family。
