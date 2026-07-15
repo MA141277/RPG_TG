@@ -21,9 +21,9 @@
 - next_family_candidate: `none`
 - auto_continue_eligible: `false`
 - next_effect: `execute-active-task`
-- sync_status: `pending`
-- sync_scope: `none`
-- sync_summary: `Queue admitted locally; repository sync pending.`
+- sync_status: `failed`
+- sync_scope: `branch-push`
+- sync_summary: `Local activation commit 7e133dd was created, but two push attempts to origin/mod-first-dev failed because github.com:443 could not be reached.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
