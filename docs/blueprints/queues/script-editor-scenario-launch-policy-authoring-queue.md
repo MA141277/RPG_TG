@@ -21,9 +21,9 @@
 - next_family_candidate: `none`
 - auto_continue_eligible: `false`
 - next_effect: `return-to-version-review`
-- sync_status: `pending`
+- sync_status: `success`
 - sync_scope: `branch-push`
-- sync_summary: `Implementation commit 91889c4 pushed to origin/mod-first-dev after launch policy authoring fields landed and advanced this queue to closeout; closeout repository sync is pending.`
+- sync_summary: `Implementation commit 91889c4 and closeout commit 0957ebc6 were pushed to origin/mod-first-dev; queue closeout repository sync is complete.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
