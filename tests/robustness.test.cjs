@@ -103,6 +103,9 @@ const {
   createInitialGrainShopSessionState,
 } = require("../.test-dist/application/house-modules/grain-shop/grain-shop-session-state.js");
 const {
+  orderHouseStandbyRoster,
+} = require("../.test-dist/application/house/house-primary-actor-roster.js");
+const {
   equipValuableItem,
   getVisibleOwnedCards,
   getVisibleValuables,
@@ -3787,6 +3790,40 @@ test("grain trade fails when the player cannot afford the purchase", () => {
 
   assert.equal(result.errorTitle.length > 0, true);
   assert.equal(result.errorMessage.length > 0, true);
+});
+
+test("primary house actor roster helper places the default actor first", () => {
+  const roster = orderHouseStandbyRoster({
+    primaryCharacterId: "char.owner",
+    actors: [
+      { characterId: "char.guest", name: "Guest" },
+      { characterId: "char.owner", name: "Owner", actionId: "open-owner-dialogue" },
+      { characterId: "char.extra", name: "Extra" },
+    ],
+  });
+
+  assert.deepEqual(
+    roster.map((actor) => actor.characterId),
+    ["char.owner", "char.guest", "char.extra"]
+  );
+  assert.equal(roster[0].actionId, "open-owner-dialogue");
+});
+
+test("primary house actor roster helper deduplicates actors without losing the first primary model", () => {
+  const roster = orderHouseStandbyRoster({
+    primaryCharacterId: "char.owner",
+    actors: [
+      { characterId: "char.owner", name: "Owner", actionId: "open-owner-dialogue" },
+      { characterId: "char.guest", name: "Guest" },
+      { characterId: "char.owner", name: "Owner Duplicate" },
+      { characterId: "char.guest", name: "Guest Duplicate" },
+    ],
+  });
+
+  assert.deepEqual(
+    roster.map((actor) => actor.name),
+    ["Owner", "Guest"]
+  );
 });
 
 test("house enter and leave keep session wiring and interval side effects consistent", () => {
