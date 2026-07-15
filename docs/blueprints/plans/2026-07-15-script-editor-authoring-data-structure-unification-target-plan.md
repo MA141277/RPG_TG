@@ -135,7 +135,7 @@
 | `queue.script-editor-branching-event-task-chain-convergence` | `done` | `Already completed; do not reopen except by explicit governance record.` | `Closed after the fail-closed node progression guard landed; real node-target branching routed to queue.script-editor-dialogue-node-target-branching-convergence.` |
 | `queue.script-editor-dialogue-node-target-branching-convergence` | `done` | `Already completed; do not reopen except by explicit governance record.` | `Closed after node-target scene splitting and bounded choice target lowering landed; broader event/task-chain progression returned to version review.` |
 | `queue.script-editor-event-task-chain-runtime-convergence` | `done` | `Already completed; do not reopen except by explicit governance record.` | `Closed after explicit event nextEventId export/runtime chaining landed; task-chain runtime handoff routed to queue.script-editor-task-chain-runtime-handoff-convergence.` |
-| `queue.script-editor-task-chain-runtime-handoff-convergence` | `active` | `After event-chain runtime convergence verified and task handoff remains same-family residue.` | `Owns the next bounded path from editor-authored task progression data into RuntimeResult.taskInputs. Active task is boundary-baseline-reconcile.` |
+| `queue.script-editor-task-chain-runtime-handoff-convergence` | `active` | `After event-chain runtime convergence verified and task handoff remains same-family residue.` | `Owns the next bounded path from editor-authored task progression data into RuntimeResult.taskInputs. Active task is task-handoff-runtime-implementation after baseline selected event-level taskInputs lowering.` |
 | `queue.script-editor-status-overlay-generalization-review` | `candidate-review` | `When non-character runtime mutation needs explicit save/status ownership.` | `Review queue; do not create non-character overlays for convenience.` |
 | `queue.script-editor-legacy-structure-supersession-review` | `candidate` | `Before deleting or invalidating previously frozen structures.` | `Records retained, migrated, adapter-supported, or retired structure dispositions.` |
 | `queue.script-editor-end-to-end-authoring-runtime-flow-validation` | `candidate-final` | `After required data/runtime/persistence queues provide enough coverage to prove version acceptance.` | `Final closeout validation queue.` |
@@ -144,19 +144,20 @@
 
 - `queue.script-editor-task-chain-runtime-handoff-convergence`
 - Active task:
-  - `task.script-editor-task-chain-runtime-handoff-convergence.boundary-baseline-reconcile`
+  - `task.script-editor-task-chain-runtime-handoff-convergence.task-handoff-runtime-implementation`
 - Activation basis:
   - `queue.script-editor-event-task-chain-runtime-convergence closed after explicit editor nextEventId export/runtime chaining landed.`
   - `The target spec marks task stages, long-running task state, completion/failure conditions, rewards, and runtime progression handoff as required.`
   - `Closeout routed task-chain runtime handoff as the unique same-family continuation.`
-  - `Execution resumes from the task-chain runtime handoff boundary baseline task.`
+  - `Boundary baseline selected event-level taskInputs lowering into the existing RuntimeResult.taskInputs settlement path.`
+  - `Execution resumes from the task-chain runtime handoff implementation task.`
 
 ### Version Boundary Record
 
 - `This version governs authoring/data-structure convergence after runtime-pack-unification closeout.`
 - `It must consume the closed runtime-pack export/import/startup truth as baseline evidence rather than reopening it as a compatibility patch surface.`
 - `It may supersede previously frozen script-editor structures only through explicit schema/migration/supersession records.`
-- `It has admitted queue.script-editor-task-chain-runtime-handoff-convergence after event-chain runtime convergence closeout; execution resumes from the task-chain boundary baseline task.`
+- `It has admitted queue.script-editor-task-chain-runtime-handoff-convergence after event-chain runtime convergence closeout; execution resumes from the task-chain runtime handoff implementation task after baseline selected event-level taskInputs lowering.`
 
 ### Queue Admission Startup Rules
 
@@ -272,3 +273,4 @@
 - `2026-07-15: admission review promoted queue.script-editor-event-task-chain-runtime-convergence as the single active queue because event-to-event runtime progression is the next bounded chain blocker after node-target dialogue branching. Boundary baseline selected explicit editor nextEventId lowering into runtime EventDefinition.nextEventId; the active task became event-chain-runtime-implementation.`
 - `2026-07-15: queue.script-editor-event-task-chain-runtime-convergence completed event-chain-runtime-implementation after editor-authored nextEventId began exporting to EventDefinition.nextEventId and scene completion began chaining into the next runtime event; the active task is now queue-closeout-and-handoff.`
 - `2026-07-15: queue.script-editor-event-task-chain-runtime-convergence closed with same-family residue after verification; editor-authored task start/progress/complete/fail still needs to enter the unified RuntimeResult.taskInputs seam, so queue.script-editor-task-chain-runtime-handoff-convergence was admitted as the active continuation with boundary-baseline-reconcile as the first task.`
+- `2026-07-15: queue.script-editor-task-chain-runtime-handoff-convergence completed boundary-baseline-reconcile after selecting event-level taskInputs lowering as the smallest lawful handoff slice: editor event taskInputs lower into runtime EventDefinition.taskInputs, EventRuntimeCandidate exposes those inputs, and existing runtime dispatch/task runtime remains the only settlement path. The active task is now task-handoff-runtime-implementation.`
