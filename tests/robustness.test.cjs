@@ -3936,6 +3936,104 @@ test("primary house actor appears first in tavern roster during greeting", () =>
   assert.ok(viewModel.standbyRoster[0]?.actionId);
 });
 
+test("primary house actor appears first in grain shop roster during greeting", () => {
+  const state = createBaseState();
+  const entered = grainShopHouseModule.enter({
+    gameState: state,
+    characterDefinitions: prototypeCharacters,
+    houseDefinition: grainShopHouse,
+    playerCharacterId,
+  });
+  const viewModel = grainShopHouseModule.selectViewModel({
+    gameState: entered.gameState,
+    characterDefinitions: entered.characterDefinitions,
+    houseDefinition: grainShopHouse,
+    playerCharacterId,
+    sessionState: entered.sessionState,
+  });
+
+  assert.ok(viewModel.dialogue);
+  assert.equal(viewModel.standbyRoster[0]?.characterId, grainShopHouse.defaultCharacterId);
+});
+
+test("primary house actor appears first in tea house roster during greeting", () => {
+  const state = createInitialState({
+    cards: prototypeCards,
+    characters: prototypeCharacters,
+    houses: prototypeHouses,
+    cityEntries: prototypeCityEntries,
+    map: prototypeMap,
+  });
+  const entered = teaHouseHouseModule.enter({
+    gameState: state,
+    characterDefinitions: prototypeCharacters,
+    houseDefinition: teaHouse,
+    playerCharacterId,
+  });
+  const viewModel = teaHouseHouseModule.selectViewModel({
+    gameState: entered.gameState,
+    characterDefinitions: entered.characterDefinitions,
+    houseDefinition: teaHouse,
+    playerCharacterId,
+    sessionState: entered.sessionState,
+  });
+
+  assert.ok(viewModel.dialogue);
+  assert.equal(viewModel.standbyRoster[0]?.characterId, teaHouse.defaultCharacterId);
+});
+
+test("primary house actor appears first in market house roster during greeting", () => {
+  const state = createInitialState({
+    cards: prototypeCards,
+    characters: prototypeCharacters,
+    houses: prototypeHouses,
+    cityEntries: prototypeCityEntries,
+    map: prototypeMap,
+  });
+  const entered = marketHouseHouseModule.enter({
+    gameState: state,
+    characterDefinitions: prototypeCharacters,
+    houseDefinition: marketHouse,
+    playerCharacterId,
+  });
+  const viewModel = marketHouseHouseModule.selectViewModel({
+    gameState: entered.gameState,
+    characterDefinitions: entered.characterDefinitions,
+    houseDefinition: marketHouse,
+    playerCharacterId,
+    sessionState: entered.sessionState,
+  });
+
+  assert.ok(viewModel.dialogue);
+  assert.equal(viewModel.standbyRoster[0]?.characterId, marketHouse.defaultCharacterId);
+});
+
+test("primary house actor appears first in medicine house roster during greeting", () => {
+  const state = createInitialState({
+    cards: prototypeCards,
+    characters: prototypeCharacters,
+    houses: prototypeHouses,
+    cityEntries: prototypeCityEntries,
+    map: prototypeMap,
+  });
+  const entered = medicineHouseHouseModule.enter({
+    gameState: state,
+    characterDefinitions: prototypeCharacters,
+    houseDefinition: medicineHouse,
+    playerCharacterId,
+  });
+  const viewModel = medicineHouseHouseModule.selectViewModel({
+    gameState: entered.gameState,
+    characterDefinitions: entered.characterDefinitions,
+    houseDefinition: medicineHouse,
+    playerCharacterId,
+    sessionState: entered.sessionState,
+  });
+
+  assert.ok(viewModel.dialogue);
+  assert.equal(viewModel.standbyRoster[0]?.characterId, medicineHouse.defaultCharacterId);
+});
+
 test("primary house actor dialogue does not render separate right-side portrait", () => {
   const state = createInitialState({
     cards: prototypeCards,

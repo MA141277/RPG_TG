@@ -62,6 +62,7 @@ import {
   formatHouseActivityCostLine,
   getHouseMinigameDurationDays,
 } from "../../house/house-activity-costs";
+import { orderHouseStandbyRoster } from "../../house/house-primary-actor-roster";
 import { getInsufficientDaysForTimedActivity } from "../../time/council-priority";
 import { createInitialTeaHouseSessionState } from "./tea-house-session-state";
 
@@ -1218,24 +1219,26 @@ export const teaHouseHouseModule: HouseModuleDefinition<"tea-house"> = {
     const isGreeting = sessionState.dialoguePhase === "greeting";
     const isOpen = sessionState.dialoguePhase === "open";
     const isDebate = sessionState.overlay?.type === "debate";
+    const standbyRoster = orderHouseStandbyRoster({
+      primaryCharacterId: input.houseDefinition.defaultCharacterId,
+      actors: actors.map((actor) => ({
+        characterId: actor.id,
+        name: actor.name,
+        title: actor.title,
+        actionId:
+          actor.id === selectedActor?.id
+            ? "open-npc-dialogue"
+            : `${SELECT_ACTOR_ACTION_PREFIX}${actor.id}`,
+        isSelected: selectedActor?.id === actor.id,
+      })),
+    });
 
     return {
       moduleId: "tea-house",
       houseId: input.houseDefinition.id,
       sceneTitle: input.houseDefinition.name,
       sceneSubtitle: "一壶清茶 / 四方传闻",
-      standbyRoster: isIdle
-        ? actors.map((actor) => ({
-            characterId: actor.id,
-            name: actor.name,
-            title: actor.title,
-            actionId:
-              actor.id === selectedActor?.id
-                ? "open-npc-dialogue"
-                : `${SELECT_ACTOR_ACTION_PREFIX}${actor.id}`,
-            isSelected: selectedActor?.id === actor.id,
-          }))
-        : [],
+      standbyRoster,
       dialogue:
         isIdle || selectedActor == null
           ? null

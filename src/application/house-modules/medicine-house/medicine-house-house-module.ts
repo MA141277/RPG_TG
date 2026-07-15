@@ -58,6 +58,7 @@ import {
   formatHouseActivityCostLine,
   getHouseMinigameDurationDays,
 } from "../../house/house-activity-costs";
+import { orderHouseStandbyRoster } from "../../house/house-primary-actor-roster";
 import {
   createHousePlayableRuntimeState,
   readHousePlayableSessionState,
@@ -1029,23 +1030,27 @@ export const medicineHouseHouseModule: HouseModuleDefinition<"medicine-house"> =
     const isGreeting = sessionState.dialoguePhase === "greeting";
     const isOpen = sessionState.dialoguePhase === "open";
     const hasOverlay = sessionState.overlay != null;
-
-    return {
-      moduleId: "medicine-house",
-      houseId: input.houseDefinition.id,
-      sceneTitle: input.houseDefinition.name,
-      sceneSubtitle: "陈记药铺 / 坐堂问诊",
-      standbyRoster:
-        isIdle && npc != null
-          ? [
+    const standbyRoster = orderHouseStandbyRoster({
+      primaryCharacterId: input.houseDefinition.defaultCharacterId,
+      actors:
+        npc == null
+          ? []
+          : [
               {
                 characterId: npc.id,
                 name: npc.name,
                 ...(npc.title == null ? {} : { title: npc.title }),
                 actionId: "open-npc-dialogue",
               },
-            ]
-          : [],
+            ],
+    });
+
+    return {
+      moduleId: "medicine-house",
+      houseId: input.houseDefinition.id,
+      sceneTitle: input.houseDefinition.name,
+      sceneSubtitle: "陈记药铺 / 坐堂问诊",
+      standbyRoster,
       dialogue:
         isIdle || npc == null
           ? null

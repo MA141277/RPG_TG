@@ -48,6 +48,7 @@ import { assertExists } from "../../../shared/assert";
 import { pickRandom, randomInt } from "../../../shared/random";
 import { defaultRuntimeContent } from "../../content/default-runtime-content";
 import { resolveTextEntry, resolveTextTemplateEntry } from "../../content/text-resolution";
+import { orderHouseStandbyRoster } from "../../house/house-primary-actor-roster";
 import { ensureShopMarketData, readShopMarketData } from "../../markets/market-refresh-system";
 import { createInitialMarketHouseSessionState } from "./market-house-session-state";
 
@@ -1441,22 +1442,43 @@ export const marketHouseHouseModule: HouseModuleDefinition<"market-house"> = {
     const isGreeting = sessionState.dialoguePhase === "greeting";
     const isOpen = sessionState.dialoguePhase === "open";
     const selectedActor = snapshot.selectedActor;
+    const primaryCharacter =
+      input.houseDefinition.defaultCharacterId == null
+        ? null
+        : input.characterDefinitions.find(
+            (characterDefinition) =>
+              characterDefinition.id === input.houseDefinition.defaultCharacterId
+          ) ?? null;
+    const standbyRoster = orderHouseStandbyRoster({
+      primaryCharacterId: input.houseDefinition.defaultCharacterId,
+      actors: [
+        ...(primaryCharacter == null
+          ? []
+          : [
+              {
+                characterId: primaryCharacter.id,
+                name: primaryCharacter.name,
+                ...(primaryCharacter.title == null
+                  ? {}
+                  : { title: primaryCharacter.title }),
+              },
+            ]),
+        ...snapshot.actors.map((actor) => ({
+          characterId: actor.id,
+          name: actor.name,
+          title: actor.title,
+          actionId: `${SELECT_ACTOR_ACTION_PREFIX}${actor.id}`,
+          isSelected: actor.id === selectedActor?.id,
+        })),
+      ],
+    });
 
     return {
       moduleId: "market-house",
       houseId: input.houseDefinition.id,
       sceneTitle: input.houseDefinition.name,
       sceneSubtitle: "跑商 / 倒卖 / 交易",
-      standbyRoster:
-        !isIdle
-          ? []
-          : snapshot.actors.map((actor) => ({
-              characterId: actor.id,
-              name: actor.name,
-              title: actor.title,
-              actionId: `${SELECT_ACTOR_ACTION_PREFIX}${actor.id}`,
-              isSelected: actor.id === selectedActor?.id,
-            })),
+      standbyRoster,
       dialogue:
         isIdle || selectedActor == null
           ? null

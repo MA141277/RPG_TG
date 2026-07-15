@@ -28,6 +28,7 @@ import {
   formatHouseActivityCostLine,
   getHouseMinigameDurationDays,
 } from "../../house/house-activity-costs";
+import { orderHouseStandbyRoster } from "../../house/house-primary-actor-roster";
 import { getInsufficientDaysForTimedActivity } from "../../time/council-priority";
 import {
   ACTIVITY_COMPLETION_STAMINA_COST,
@@ -906,23 +907,27 @@ export const grainShopHouseModule: HouseModuleDefinition<"grain-shop"> = {
     const isGreeting = sessionState.dialoguePhase === "greeting";
     const isOpen = sessionState.dialoguePhase === "open";
     const isBuyBlocked = isHaozhouShortageDuringBeggingJourney(input.gameState);
-
-    return {
-      moduleId: "grain-shop",
-      houseId: input.houseDefinition.id,
-      sceneTitle: input.houseDefinition.name,
-      sceneSubtitle: "陈记粮行 / 南北通商",
-      standbyRoster:
-        isIdle && npc != null
-          ? [
+    const standbyRoster = orderHouseStandbyRoster({
+      primaryCharacterId: input.houseDefinition.defaultCharacterId,
+      actors:
+        npc == null
+          ? []
+          : [
               {
                 characterId: npc.id,
                 name: npc.name,
                 ...(npc.title == null ? {} : { title: npc.title }),
                 actionId: "open-npc-dialogue",
               },
-            ]
-          : [],
+            ],
+    });
+
+    return {
+      moduleId: "grain-shop",
+      houseId: input.houseDefinition.id,
+      sceneTitle: input.houseDefinition.name,
+      sceneSubtitle: "陈记粮行 / 南北通商",
+      standbyRoster,
       dialogue:
         isIdle || npc == null
           ? null
