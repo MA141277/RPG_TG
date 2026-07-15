@@ -21,9 +21,9 @@
 - next_family_candidate: `none`
 - auto_continue_eligible: `false`
 - next_effect: `none`
-- sync_status: `pending`
-- sync_scope: `none`
-- sync_summary: `Boundary baseline reconcile truth is written locally; repository sync for this active-task handoff batch has not yet been recorded.`
+- sync_status: `success`
+- sync_scope: `baseline-push`
+- sync_summary: `Commit f698c18 on mod-first-dev was pushed successfully to origin/mod-first-dev after boundary baseline reconcile completed and package skeleton/imported edit-in-place/runtime preview-from-disk implementation became the active task.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
