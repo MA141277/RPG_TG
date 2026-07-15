@@ -21,9 +21,9 @@
 - next_family_candidate: `none`
 - auto_continue_eligible: `false`
 - next_effect: `return-to-version-review`
-- sync_status: `pending`
+- sync_status: `failed`
 - sync_scope: `branch-push`
-- sync_summary: `Priority authoring implementation and closeout are pending repository sync.`
+- sync_summary: `Push of local closeout commit 02d7199 to origin/mod-first-dev failed after three attempts because TCP 443 connection to github.com timed out.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
