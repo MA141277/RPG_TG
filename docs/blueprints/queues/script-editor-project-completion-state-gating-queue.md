@@ -23,7 +23,7 @@
 - next_effect: `none`
 - sync_status: `success`
 - sync_scope: `baseline-push`
-- sync_summary: `Commit 604b320 on mod-first-dev was pushed successfully to origin/mod-first-dev after queue.script-editor-project-completion-state-gating admission and baseline reconcile activation.`
+- sync_summary: `Commit bd96b37 on mod-first-dev was pushed successfully to origin/mod-first-dev after completion-state baseline reconcile completed and implementation became the active task.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
