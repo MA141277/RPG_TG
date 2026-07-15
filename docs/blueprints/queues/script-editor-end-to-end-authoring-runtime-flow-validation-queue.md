@@ -21,9 +21,9 @@
 - next_family_candidate: `none`
 - auto_continue_eligible: `false`
 - next_effect: `none`
-- sync_status: `pending`
+- sync_status: `success`
 - sync_scope: `branch-push`
-- sync_summary: `Flow validation execution is pending repository sync.`
+- sync_summary: `Flow validation execution landed in commit 49997703 and pushed to origin/mod-first-dev.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
