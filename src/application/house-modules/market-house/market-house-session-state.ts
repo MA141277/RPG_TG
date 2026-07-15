@@ -2,7 +2,7 @@ import type { MarketHouseSessionState } from "../../../domain/house-modules/mark
 
 export function createInitialMarketHouseSessionState(
   guestActorIds: string[] = [],
-  selectedActorId: string | null = "shopkeeper_qian",
+  selectedActorId: string | null = null,
   dialogueLines: string[] = ["市集里人声杂沓，商贩正等你开口。"]
 ): MarketHouseSessionState {
   return {

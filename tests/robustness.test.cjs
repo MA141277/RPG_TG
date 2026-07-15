@@ -4005,7 +4005,14 @@ test("primary house actor appears first in market house roster during greeting",
   });
 
   assert.ok(viewModel.dialogue);
+  assert.equal(viewModel.dialogue.characterId, marketHouse.defaultCharacterId);
   assert.equal(viewModel.standbyRoster[0]?.characterId, marketHouse.defaultCharacterId);
+  assert.equal(viewModel.standbyRoster[0]?.actionId, `select-market-actor:${marketHouse.defaultCharacterId}`);
+  assert.equal(viewModel.standbyRoster[0]?.isSelected, true);
+  assert.equal(
+    viewModel.standbyRoster.some((actor) => actor.characterId === "shopkeeper_qian"),
+    false
+  );
 });
 
 test("primary house actor appears first in medicine house roster during greeting", () => {
@@ -6361,8 +6368,18 @@ test("market house follows greeting open idle rhythm with fixed boss and guest r
     playerCharacterId,
   });
 
-  assert.equal(enterResult.sessionState?.selectedActorId, "shopkeeper_qian");
+  assert.equal(enterResult.sessionState?.selectedActorId, marketHouse.defaultCharacterId);
   assert.equal(enterResult.sessionState?.guestActorIds.length >= 1, true);
+
+  const greetingViewModel = marketHouseHouseModule.selectViewModel({
+    gameState: enterResult.gameState,
+    characterDefinitions: enterResult.characterDefinitions,
+    houseDefinition: marketHouse,
+    playerCharacterId,
+    sessionState: enterResult.sessionState,
+  });
+
+  assert.equal(greetingViewModel.dialogue?.characterId, marketHouse.defaultCharacterId);
 
   const openResult = marketHouseHouseModule.dispatch({
     gameState: enterResult.gameState,
@@ -6377,6 +6394,7 @@ test("market house follows greeting open idle rhythm with fixed boss and guest r
   });
 
   assert.equal(openResult.sessionState?.dialoguePhase, "open");
+  assert.equal(openResult.sessionState?.selectedActorId, marketHouse.defaultCharacterId);
   assert.equal(openResult.sessionState?.dialogueLines[0].includes("货单"), true);
 
   const idleResult = marketHouseHouseModule.dispatch({

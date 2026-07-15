@@ -97,6 +97,33 @@ type MarketHouseViewSnapshot = {
   totalOwnedGoods: number;
 };
 
+function getFixedHostActorId(houseDefinition: HouseDefinition): string {
+  return houseDefinition.defaultCharacterId ?? marketHouseFixedBoss.id;
+}
+
+function createFixedHostActor(state: GameState, houseDefinition: HouseDefinition): MarketHouseActor {
+  const actorId = getFixedHostActorId(houseDefinition);
+
+  return {
+    ...marketHouseFixedBoss,
+    id: actorId,
+    favorability: readActorFavorability(
+      state,
+      houseDefinition.id,
+      actorId,
+      marketHouseFixedBoss.favorability
+    ),
+  };
+}
+
+function findFixedHostActor(
+  actors: MarketHouseActor[],
+  houseDefinition: HouseDefinition
+): MarketHouseActor | null {
+  const actorId = getFixedHostActorId(houseDefinition);
+  return actors.find((actor) => actor.id === actorId) ?? null;
+}
+
 function getPlayerCharacter(
   characterDefinitions: CharacterDefinition[],
   playerCharacterId: string
@@ -288,22 +315,17 @@ function readActorFavorability(
   );
 }
 
-function createActors(state: GameState, houseId: string, guestActorIds: string[]): MarketHouseActor[] {
-  const actors: MarketHouseActor[] = [
-    {
-      ...marketHouseFixedBoss,
-      favorability: readActorFavorability(
-        state,
-        houseId,
-        marketHouseFixedBoss.id,
-        marketHouseFixedBoss.favorability
-      ),
-    },
-  ];
+function createActors(
+  state: GameState,
+  houseDefinition: HouseDefinition,
+  guestActorIds: string[]
+): MarketHouseActor[] {
+  const fixedHostActor = createFixedHostActor(state, houseDefinition);
+  const actors: MarketHouseActor[] = [fixedHostActor];
 
   guestActorIds.forEach((guestActorId) => {
     const actorDefinition = marketHouseRandomNpcPool.find((actor) => actor.id === guestActorId);
-    if (actorDefinition == null) {
+    if (actorDefinition == null || actorDefinition.id === fixedHostActor.id) {
       return;
     }
 
@@ -311,7 +333,7 @@ function createActors(state: GameState, houseId: string, guestActorIds: string[]
       ...actorDefinition,
       favorability: readActorFavorability(
         state,
-        houseId,
+        houseDefinition.id,
         actorDefinition.id,
         actorDefinition.favorability
       ),
@@ -492,8 +514,9 @@ function createViewSnapshot(
   sessionState: MarketHouseSessionState | null
 ): MarketHouseViewSnapshot {
   const runtime = ensureMarketHouseRuntime(gameState, houseDefinition);
-  const actors = createActors(runtime.state, houseDefinition.id, runtime.guestActorIds);
-  const bossFavorability = actors.find((actor) => actor.id === marketHouseFixedBoss.id)?.favorability ?? 0;
+  const actors = createActors(runtime.state, houseDefinition, runtime.guestActorIds);
+  const fixedHostActor = findFixedHostActor(actors, houseDefinition);
+  const bossFavorability = fixedHostActor?.favorability ?? marketHouseFixedBoss.favorability;
   const displayedGoods = createGoodsSnapshots(
     runtime.state,
     houseDefinition,
@@ -507,10 +530,11 @@ function createViewSnapshot(
     runtime.cityDefinition,
     bossFavorability
   );
-  const selectedActorId = sessionState?.selectedActorId ?? marketHouseFixedBoss.id;
+  const fixedHostActorId = getFixedHostActorId(houseDefinition);
+  const selectedActorId = sessionState?.selectedActorId ?? fixedHostActorId;
   const selectedActor =
     actors.find((actor) => actor.id === selectedActorId) ??
-    actors.find((actor) => actor.id === marketHouseFixedBoss.id) ??
+    fixedHostActor ??
     null;
 
   return {
@@ -713,6 +737,7 @@ function mutateActorFavorability(
   state: GameState,
   houseId: string,
   actorId: string,
+  fallbackFavorability: number,
   delta: number
 ): GameState {
   return withVariable(
@@ -721,7 +746,7 @@ function mutateActorFavorability(
     readNumericVariable(
       state,
       getMarketHouseFavorabilityVariableKey(houseId, actorId),
-      actorId === marketHouseFixedBoss.id ? marketHouseFixedBoss.favorability : 0
+      fallbackFavorability
     ) + delta
   );
 }
@@ -795,6 +820,7 @@ function applyActionOutcome(
       nextState,
       input.houseDefinition.id,
       actor.id,
+      actor.favorability,
       outcome.relationshipChange
     );
   }
@@ -822,8 +848,9 @@ function pickInvestigationMessage(
     cityDefinition.specialDemand.length > 0
       ? cityDefinition.specialDemand.join(" / ")
       : "无";
+  const specialtyActorId = actor.isFixedHost ? marketHouseFixedBoss.id : actor.id;
   const specialtyTextId =
-    marketHouseInvestigationSpecialtyTextIdByActorId[actor.id] ??
+    marketHouseInvestigationSpecialtyTextIdByActorId[specialtyActorId] ??
     "runtime.zhu_yuanzhang.market_house.investigate.specialty.default";
 
   return [
@@ -991,6 +1018,11 @@ function handleAction(
   const currentOverlay = sessionState?.overlay;
 
   if (input.request.actionId === "advance-greeting") {
+    const fixedHostActor = findFixedHostActor(snapshot.actors, input.houseDefinition);
+    if (fixedHostActor == null) {
+      return createTransitionResult(input, { gameState: snapshot.state });
+    }
+
     return withSessionState(
       {
         gameState: snapshot.state,
@@ -998,9 +1030,9 @@ function handleAction(
       },
       sessionState,
       {
-        selectedActorId: marketHouseFixedBoss.id,
+        selectedActorId: fixedHostActor.id,
         dialoguePhase: "open",
-        dialogueLines: getActorOpenLines(marketHouseFixedBoss, input.textEntriesById),
+        dialogueLines: getActorOpenLines(fixedHostActor, input.textEntriesById),
         overlay: null,
       }
     );
@@ -1402,13 +1434,14 @@ export const marketHouseHouseModule: HouseModuleDefinition<"market-house"> = {
   moduleId: "market-house",
   enter(input) {
     const runtime = ensureMarketHouseRuntime(input.gameState, input.houseDefinition);
+    const fixedHostActorId = getFixedHostActorId(input.houseDefinition);
 
     return {
       gameState: runtime.state,
       characterDefinitions: input.characterDefinitions,
       sessionState: createInitialMarketHouseSessionState(
         runtime.guestActorIds,
-        marketHouseFixedBoss.id,
+        fixedHostActorId,
         getInitialMarketHouseDialogueLines(input.textEntriesById)
       ),
     };
@@ -1429,11 +1462,12 @@ export const marketHouseHouseModule: HouseModuleDefinition<"market-house"> = {
   },
   selectViewModel(input): HouseModuleViewModel {
     const runtime = ensureMarketHouseRuntime(input.gameState, input.houseDefinition);
+    const fixedHostActorId = getFixedHostActorId(input.houseDefinition);
     const sessionState =
       input.sessionState ??
       createInitialMarketHouseSessionState(
         runtime.guestActorIds,
-        marketHouseFixedBoss.id,
+        fixedHostActorId,
         getInitialMarketHouseDialogueLines(input.textEntriesById)
       );
     const snapshot = createViewSnapshot(runtime.state, input.houseDefinition, sessionState);
@@ -1442,35 +1476,15 @@ export const marketHouseHouseModule: HouseModuleDefinition<"market-house"> = {
     const isGreeting = sessionState.dialoguePhase === "greeting";
     const isOpen = sessionState.dialoguePhase === "open";
     const selectedActor = snapshot.selectedActor;
-    const primaryCharacter =
-      input.houseDefinition.defaultCharacterId == null
-        ? null
-        : input.characterDefinitions.find(
-            (characterDefinition) =>
-              characterDefinition.id === input.houseDefinition.defaultCharacterId
-          ) ?? null;
     const standbyRoster = orderHouseStandbyRoster({
       primaryCharacterId: input.houseDefinition.defaultCharacterId,
-      actors: [
-        ...(primaryCharacter == null
-          ? []
-          : [
-              {
-                characterId: primaryCharacter.id,
-                name: primaryCharacter.name,
-                ...(primaryCharacter.title == null
-                  ? {}
-                  : { title: primaryCharacter.title }),
-              },
-            ]),
-        ...snapshot.actors.map((actor) => ({
-          characterId: actor.id,
-          name: actor.name,
-          title: actor.title,
-          actionId: `${SELECT_ACTOR_ACTION_PREFIX}${actor.id}`,
-          isSelected: actor.id === selectedActor?.id,
-        })),
-      ],
+      actors: snapshot.actors.map((actor) => ({
+        characterId: actor.id,
+        name: actor.name,
+        title: actor.title,
+        actionId: `${SELECT_ACTOR_ACTION_PREFIX}${actor.id}`,
+        isSelected: actor.id === selectedActor?.id,
+      })),
     });
 
     return {
