@@ -21,9 +21,9 @@
 - next_family_candidate: `none`
 - auto_continue_eligible: `false`
 - next_effect: `execute-active-task`
-- sync_status: `pending`
+- sync_status: `success`
 - sync_scope: `branch-push`
-- sync_summary: `Queue admitted locally; repository sync has not yet been attempted for this queue.`
+- sync_summary: `Queue admission commit 1399b8e was pushed successfully to origin/mod-first-dev.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`

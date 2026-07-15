@@ -21,9 +21,9 @@
 - next_family_candidate: `none`
 - auto_continue_eligible: `false`
 - next_effect: `return-to-version-review`
-- sync_status: `failed`
+- sync_status: `success`
 - sync_scope: `branch-push`
-- sync_summary: `Local activation, implementation, and closeout commits through d57b30c were created, but push to origin/mod-first-dev failed because the GitHub HTTPS connection closed abruptly during transfer.`
+- sync_summary: `Local activation, implementation, closeout, and follow-up sync-record commits were pushed to origin/mod-first-dev as part of the successful branch sync ending at 1399b8e.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
