@@ -133,7 +133,7 @@
 | `queue.script-editor-event-structure-convergence` | `done` | `Already completed; do not reopen except by explicit governance record.` | `Closed at baseline with prerequisite condition authoring contract freeze residue returned to promotion review.` |
 | `queue.script-editor-event-effect-activation-convergence` | `done` | `Already completed; do not reopen except by explicit governance record.` | `Closed its bounded task/shared-rule typed character property mutation effect slice with cross-family event/scene effect residue returned to promotion review.` |
 | `queue.script-editor-scenario-launch-policy-authoring` | `done` | `Already completed; do not reopen except by explicit governance record.` | `Closed after storyPack.scenarioProfile entry event and launchPolicy authoring fields landed with verification and no same-family residue.` |
-| `queue.script-editor-playable-minigame-binding-convergence` | `active` | `Currently active; resume from the admitted queue document.` | `Playable governance classified this as shared playable contract work for editor-authored playable/minigame integration bindings; boundary baseline selected runtime pack playable family materialization/import and the active task is binding-contract-implementation.` |
+| `queue.script-editor-playable-minigame-binding-convergence` | `active` | `Currently active; resume from the admitted queue document.` | `Runtime pack playable family materialization/import landed and verified; the active task is queue-closeout-and-handoff.` |
 | `queue.script-editor-branching-event-task-chain-convergence` | `done` | `Already completed; do not reopen except by explicit governance record.` | `Closed after the fail-closed node progression guard landed; real node-target branching routed to queue.script-editor-dialogue-node-target-branching-convergence.` |
 | `queue.script-editor-dialogue-node-target-branching-convergence` | `done` | `Already completed; do not reopen except by explicit governance record.` | `Closed after node-target scene splitting and bounded choice target lowering landed; broader event/task-chain progression returned to version review.` |
 | `queue.script-editor-event-task-chain-runtime-convergence` | `done` | `Already completed; do not reopen except by explicit governance record.` | `Closed after explicit event nextEventId export/runtime chaining landed; task-chain runtime handoff routed to queue.script-editor-task-chain-runtime-handoff-convergence.` |
@@ -147,7 +147,7 @@
 
 - `queue.script-editor-playable-minigame-binding-convergence`
 - Active task:
-  - `task.script-editor-playable-minigame-binding-convergence.binding-contract-implementation`
+  - `task.script-editor-playable-minigame-binding-convergence.queue-closeout-and-handoff`
 - Admission basis:
   - `queue.script-editor-legacy-structure-supersession-review closed after verified legacy supersession disposition work landed.`
   - `No same-family legacy supersession residue remains inside that bounded queue surface.`
@@ -295,3 +295,4 @@
 - `2026-07-16: queue.script-editor-legacy-structure-supersession-review closed with no same-family residue after verification; the version returned to promotion review with queue.script-editor-playable-minigame-binding-convergence recommended next, subject to playable governance.`
 - `2026-07-16: promotion review admitted queue.script-editor-playable-minigame-binding-convergence as the single active queue after playable governance was loaded. The queue is classified as shared playable contract work for script-editor authored playable/minigame integration bindings over existing playable mechanics; the first live task is boundary-baseline-reconcile.`
 - `2026-07-16: queue.script-editor-playable-minigame-binding-convergence completed boundary-baseline-reconcile after selecting runtime pack playable family materialization/import as the smallest lawful slice; the active task became binding-contract-implementation.`
+- `2026-07-16: queue.script-editor-playable-minigame-binding-convergence completed binding-contract-implementation after runtime pack export/import began preserving editor minigame bindings as playables/playableIntegrations with verification; the active task became queue-closeout-and-handoff.`

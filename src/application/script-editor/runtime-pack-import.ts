@@ -11,6 +11,11 @@ import {
   type ScriptEditorEntityRecord,
   type ScriptEditorEventRecord,
   type ScriptEditorEventTriggerTiming,
+  type ScriptEditorKeyValueEntry,
+  type ScriptEditorMinigameOutcome,
+  type ScriptEditorMinigameOutcomeRoute,
+  type ScriptEditorMinigameOwnerKind,
+  type ScriptEditorMinigameReturnPolicy,
   type ScriptEditorProjectDefinition,
   type ScriptEditorRuntimePackSchemaVersion,
   type ScriptEditorRuntimeRecord,
@@ -18,6 +23,7 @@ import {
   type ScriptEditorTextEntryRecord,
 } from "../../domain/script-editor-project";
 import type { EventDefinition } from "../../domain/event";
+import type { PlayableIntegrationDefinition } from "../../core/contracts/playable-runtime";
 
 export type ScriptEditorCompatibilityImportDiagnostic = {
   code:
@@ -45,6 +51,8 @@ type RuntimePackManifestFiles = {
   events: string;
   scenes: string;
   tasks?: string;
+  playables?: string;
+  playableIntegrations?: string;
   cities?: string;
   houses?: string;
   maps?: string;
@@ -214,7 +222,7 @@ export function importScenarioPackToScriptEditorProject(
       pack.historicalCharacterIdByCharacterId
     ),
     dialogues: [],
-    minigames: [],
+    minigames: mapImportedPlayableIntegrations(rawPack),
     storyNodes: [],
     textEntries: mapTextEntries(pack.textEntries),
     conditionGroups: [],
@@ -365,6 +373,115 @@ function mapTextEntries(
     id,
     text,
   }));
+}
+
+function mapImportedPlayableIntegrations(
+  rawPack: Record<string, unknown>
+): ScriptEditorProjectDefinition["minigames"] {
+  const playableIntegrations = rawPack.playableIntegrations;
+  if (!Array.isArray(playableIntegrations)) {
+    return [];
+  }
+
+  return playableIntegrations.flatMap((value, index) => {
+    if (value == null || typeof value !== "object" || Array.isArray(value)) {
+      return [];
+    }
+
+    const integration = value as PlayableIntegrationDefinition & {
+      editorRecordId?: string;
+    };
+    if (
+      typeof integration.integrationId !== "string" ||
+      typeof integration.playableId !== "string"
+    ) {
+      return [];
+    }
+
+    const ownerDefaults = integration.ownerDefaults ?? {};
+    const trigger = integration.trigger;
+    const ownerKind =
+      typeof ownerDefaults.ownerKind === "string"
+        ? ownerDefaults.ownerKind
+        : typeof trigger?.ownerKind === "string"
+          ? trigger.ownerKind
+          : "external";
+    const returnPolicy =
+      typeof ownerDefaults.returnPolicy === "string"
+        ? ownerDefaults.returnPolicy
+        : "close-only";
+
+    return [
+      {
+        id:
+          typeof integration.editorRecordId === "string" &&
+          integration.editorRecordId.length > 0
+            ? integration.editorRecordId
+            : `minigame.imported.${index + 1}`,
+        title: integration.integrationId,
+        description: "",
+        playableId: integration.playableId,
+        integrationId: integration.integrationId,
+        ownerKind: normalizeImportedOwnerKind(ownerKind),
+        ownerId:
+          typeof ownerDefaults.ownerId === "string" ? ownerDefaults.ownerId : "",
+        returnPolicy: normalizeImportedReturnPolicy(returnPolicy),
+        triggerId: typeof trigger?.triggerId === "string" ? trigger.triggerId : "",
+        triggerSource: "manual",
+        triggerEvent: typeof trigger?.trigger === "string" ? trigger.trigger : "",
+        launchPayload: mapImportedLaunchPayload(trigger?.launchPayload),
+        outcomeRoutes: mapImportedOutcomeRoutes(integration.outcomeConfig),
+        notes: "Imported from runtime playable integration.",
+      },
+    ];
+  });
+}
+
+function mapImportedLaunchPayload(
+  launchPayload: Record<string, unknown> | undefined
+): ScriptEditorKeyValueEntry[] {
+  return Object.entries(launchPayload ?? {}).map(([key, value]) => ({
+    key,
+    value: typeof value === "string" ? value : JSON.stringify(value),
+  }));
+}
+
+function mapImportedOutcomeRoutes(
+  outcomeConfig: PlayableIntegrationDefinition["outcomeConfig"] | undefined
+): ScriptEditorMinigameOutcomeRoute[] {
+  return Object.entries(outcomeConfig?.handoffByOutcome ?? {}).map(
+    ([outcome, handoffPolicy], index) => ({
+      id: `outcome-route.${index + 1}`,
+      outcome: normalizeImportedOutcome(outcome),
+      handoffPolicy: normalizeImportedReturnPolicy(handoffPolicy),
+      summary: "",
+      effectHint: "",
+    })
+  );
+}
+
+function normalizeImportedOwnerKind(
+  value: string
+): ScriptEditorMinigameOwnerKind {
+  return value === "house" || value === "scene" || value === "task" || value === "external"
+    ? value
+    : "external";
+}
+
+function normalizeImportedReturnPolicy(
+  value: unknown
+): ScriptEditorMinigameReturnPolicy {
+  return value === "resume-owner" || value === "reenter-owner" || value === "close-only"
+    ? value
+    : "close-only";
+}
+
+function normalizeImportedOutcome(
+  value: string
+): ScriptEditorMinigameOutcome {
+  return value === "success" || value === "failure" || value === "cancelled"
+    ? value
+    : "success";
 }
 
 function readArrayFamily(

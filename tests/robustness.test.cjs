@@ -3936,6 +3936,112 @@ test(
 );
 
 test(
+  "script editor minigame bindings export as playable runtime families and round-trip",
+  async () => {
+    const {
+      exportScriptEditorProjectToScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    const {
+      loadScriptEditorProjectFromScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-import.js");
+    const {
+      loadScenarioPackFromFiles,
+    } = require("../.test-dist/application/scenario/scenario-pack-loader.js");
+
+    const project = {
+      ...createExportableScriptEditorProjectDefinition(),
+      minigames: [
+        {
+          id: "minigame.training.qte",
+          title: "Training QTE",
+          description: "Opening training playable binding.",
+          playableId: "activity-qte",
+          integrationId: "playable.activity-qte.scene.training",
+          ownerKind: "scene",
+          ownerId: "scene.opening",
+          returnPolicy: "resume-owner",
+          triggerId: "trigger.playable.activity-qte.scene.training",
+          triggerSource: "event-destination",
+          triggerEvent: "event.opening",
+          launchPayload: [
+            {
+              key: "difficulty",
+              value: "easy",
+            },
+          ],
+          outcomeRoutes: [
+            {
+              id: "outcome.success",
+              outcome: "success",
+              handoffPolicy: "resume-owner",
+              summary: "Training completed.",
+              effectHint: "",
+            },
+          ],
+          notes: "Runtime export should preserve this as playable integration data.",
+        },
+      ],
+    };
+
+    const serializedFiles = exportScriptEditorProjectToScenarioPackFiles(project);
+    const manifest = JSON.parse(serializedFiles["pack.json"]);
+
+    assert.equal(manifest.files.playables, "./playables.json");
+    assert.equal(manifest.files.playableIntegrations, "./playable-integrations.json");
+    assert.ok(serializedFiles["playables.json"], "playables.json should be exported");
+    assert.ok(
+      serializedFiles["playable-integrations.json"],
+      "playable-integrations.json should be exported"
+    );
+
+    const exportedPack = await loadScenarioPackFromFiles(
+      createImportedFilesFromSerializedJsonRecord(
+        serializedFiles,
+        "exported-playable-pack"
+      )
+    );
+
+    assert.deepEqual(exportedPack.playables, [
+      {
+        id: "activity-qte",
+        family: "minigame",
+        commandPrefix: "interactive.activity-qte.",
+      },
+    ]);
+    assert.equal(exportedPack.playableIntegrations?.[0]?.integrationId, "playable.activity-qte.scene.training");
+    assert.equal(exportedPack.playableIntegrations?.[0]?.playableId, "activity-qte");
+    assert.deepEqual(exportedPack.playableIntegrations?.[0]?.ownerDefaults, {
+      ownerKind: "scene",
+      ownerId: "scene.opening",
+      returnPolicy: "resume-owner",
+    });
+    assert.deepEqual(exportedPack.playableIntegrations?.[0]?.trigger, {
+      triggerId: "trigger.playable.activity-qte.scene.training",
+      ownerKind: "scene",
+      trigger: "event.opening",
+      launchPayload: {
+        difficulty: "easy",
+      },
+    });
+
+    const importedProject = await loadScriptEditorProjectFromScenarioPackFiles(
+      createImportedFilesFromSerializedJsonRecord(
+        serializedFiles,
+        "imported-playable-pack"
+      )
+    );
+
+    assert.equal(importedProject.minigames.length, 1);
+    assert.equal(importedProject.minigames[0]?.id, "minigame.training.qte");
+    assert.equal(importedProject.minigames[0]?.playableId, "activity-qte");
+    assert.equal(
+      importedProject.minigames[0]?.integrationId,
+      "playable.activity-qte.scene.training"
+    );
+  }
+);
+
+test(
   "script editor preserves imported Zhu Yuanzhang runtime families through export",
   async () => {
     const {

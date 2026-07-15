@@ -19,6 +19,10 @@ import type { ScreenSchema } from "./ui/screen-schema";
 import type { ScreenSkinPreset } from "./ui/screen-skin";
 import type { ValuableItemDefinition } from "./valuable-item";
 import type { TaskDefinition } from "../core/contracts/task-runtime";
+import type {
+  PlayableDefinition,
+  PlayableIntegrationDefinition,
+} from "../core/contracts/playable-runtime";
 
 export type ContentPackDefinition = {
   schemaVersion: 1;
@@ -34,6 +38,8 @@ export type ContentPackDefinition = {
   events?: EventDefinition[];
   scenes?: SceneDefinition[];
   tasks?: TaskDefinition[];
+  playables?: PlayableDefinition[];
+  playableIntegrations?: PlayableIntegrationDefinition[];
   activities?: ActivityDefinition[];
   cards?: CardDefinition[];
   valuables?: ValuableItemDefinition[];

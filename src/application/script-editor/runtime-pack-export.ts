@@ -21,6 +21,15 @@ import type { ScenarioProfileDefinition } from "../../domain/scenario-profile";
 import type { SceneDefinition } from "../../domain/action";
 import type { EventDefinition, EventTriggerTiming } from "../../domain/event";
 import type { RuntimeTaskInput } from "../../core/contracts/runtime-result";
+import type {
+  PlayableDefinition,
+  PlayableIntegrationDefinition,
+  PlayableOutcome,
+  PlayableReturnPolicy,
+} from "../../core/contracts/playable-runtime";
+import {
+  builtinPlayableDefinitionRegistry,
+} from "../../core/registry/builtin-playable-definition-registry";
 
 export type ScriptEditorRuntimeExportDiagnostic = {
   code:
@@ -45,6 +54,8 @@ type RuntimePackManifestFiles = {
   events: string;
   scenes: string;
   activities: string;
+  playables: string;
+  playableIntegrations: string;
   tasks: string;
   textEntries: string;
   cards: string;
@@ -83,6 +94,8 @@ const RUNTIME_PACK_CANONICAL_FILES: RuntimePackManifestFiles = {
   events: "./events.json",
   scenes: "./scenes.json",
   activities: "./activities.json",
+  playables: "./playables.json",
+  playableIntegrations: "./playable-integrations.json",
   tasks: "./tasks.json",
   textEntries: "./text-entries.json",
   cards: "./cards.json",
@@ -96,33 +109,19 @@ const RUNTIME_PACK_CANONICAL_FILES: RuntimePackManifestFiles = {
   historicalCharacterIdByCharacterId: "./historical-character-id-map.json",
 };
 
-const DEFERRED_FAMILY_MESSAGES = {
-  minigames:
-    "minigames export is deferred in this bounded slice; activity/playable assembly belongs to a later export step.",
-} as const;
-
 export function validateScriptEditorProjectForRuntimeExport(
   value: ScriptEditorProjectDefinition
 ): ScriptEditorRuntimeExportDiagnostic[] {
   const project = parseScriptEditorProject(value);
   const diagnostics: ScriptEditorRuntimeExportDiagnostic[] = [];
 
-  for (const [familyKey, message] of Object.entries(DEFERRED_FAMILY_MESSAGES) as [
-    keyof typeof DEFERRED_FAMILY_MESSAGES,
-    string,
-  ][]) {
-    if (project[familyKey].length > 0) {
-      diagnostics.push({
-        code: "unsupported-family",
-        fieldPath: `project.${familyKey}`,
-        message,
-      });
-    }
-  }
-
   appendCompatibilityImportResidueDiagnostics(project.storyPack, diagnostics);
 
   appendActivityDiagnostics(project.activities, diagnostics);
+  const playableRuntimeFamilies = materializeScriptEditorPlayableRuntimeFamilies(
+    project,
+    diagnostics
+  );
 
   const scenarioProfile = extractScenarioProfile(project.storyPack, diagnostics);
   const narrativeRuntime = materializeScriptEditorDialogueStoryRuntime(project);
@@ -169,6 +168,8 @@ export function validateScriptEditorProjectForRuntimeExport(
       events: exportedEvents,
       scenes: exportedScenes,
       activities: project.activities,
+      playables: playableRuntimeFamilies.playables,
+      playableIntegrations: playableRuntimeFamilies.playableIntegrations,
       tasks: exportedTasks,
       textEntries: exportedTextEntries,
       cards: project.cards,
@@ -214,6 +215,10 @@ export function exportScriptEditorProjectToScenarioPackFiles(
   const exportedScenes = narrativeRuntime.scenes;
   const exportedEvents = extractRuntimeEvents(project, exportedScenes ?? [], []);
   const exportedTasks = compileScriptEditorProjectTasks(project, []);
+  const playableRuntimeFamilies = materializeScriptEditorPlayableRuntimeFamilies(
+    project,
+    []
+  );
   if (
     scenarioProfile == null ||
     exportedTextEntries == null ||
@@ -267,6 +272,12 @@ export function exportScriptEditorProjectToScenarioPackFiles(
     [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.activities)]: stringifyJson(
       project.activities
     ),
+    [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.playables)]: stringifyJson(
+      playableRuntimeFamilies.playables
+    ),
+    [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.playableIntegrations)]: stringifyJson(
+      playableRuntimeFamilies.playableIntegrations
+    ),
     [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.tasks)]: stringifyJson(
       exportedTasks
     ),
@@ -301,6 +312,227 @@ export function exportScriptEditorProjectToScenarioPackFiles(
       project.historicalCharacterIdByCharacterId
     ),
   };
+}
+
+function materializeScriptEditorPlayableRuntimeFamilies(
+  project: ScriptEditorProjectDefinition,
+  diagnostics: ScriptEditorRuntimeExportDiagnostic[]
+): {
+  playables: PlayableDefinition[];
+  playableIntegrations: PlayableIntegrationDefinition[];
+} {
+  const playablesById = new Map<string, PlayableDefinition>();
+  const playableIntegrations: PlayableIntegrationDefinition[] = [];
+  const integrationIds = new Set<string>();
+
+  for (const [index, minigame] of project.minigames.entries()) {
+    const fieldPath = `project.minigames[${index}]`;
+    const playableId = readRequiredTrimmedString(
+      minigame.playableId,
+      `${fieldPath}.playableId`,
+      diagnostics
+    );
+    const integrationId = readRequiredTrimmedString(
+      minigame.integrationId,
+      `${fieldPath}.integrationId`,
+      diagnostics
+    );
+    const ownerKind = readRequiredTrimmedString(
+      minigame.ownerKind,
+      `${fieldPath}.ownerKind`,
+      diagnostics
+    );
+    const returnPolicy = readRequiredTrimmedString(
+      minigame.returnPolicy,
+      `${fieldPath}.returnPolicy`,
+      diagnostics
+    );
+    const triggerId = readRequiredTrimmedString(
+      minigame.triggerId,
+      `${fieldPath}.triggerId`,
+      diagnostics
+    );
+    const triggerEvent = readRequiredTrimmedString(
+      minigame.triggerEvent,
+      `${fieldPath}.triggerEvent`,
+      diagnostics
+    );
+
+    if (
+      playableId == null ||
+      integrationId == null ||
+      ownerKind == null ||
+      returnPolicy == null ||
+      triggerId == null ||
+      triggerEvent == null
+    ) {
+      continue;
+    }
+
+    const definition = builtinPlayableDefinitionRegistry.get(playableId);
+    if (definition == null || definition.family !== "minigame") {
+      diagnostics.push({
+        code: "missing-reference",
+        fieldPath: `${fieldPath}.playableId`,
+        message: `Minigame binding references unknown playable "${playableId}".`,
+      });
+      continue;
+    }
+
+    if (!isPlayableOwnerKind(ownerKind)) {
+      diagnostics.push({
+        code: "invalid-field",
+        fieldPath: `${fieldPath}.ownerKind`,
+        message: `Minigame binding ownerKind must be one of: house, scene, task, external.`,
+      });
+      continue;
+    }
+
+    if (!isPlayableReturnPolicy(returnPolicy)) {
+      diagnostics.push({
+        code: "invalid-field",
+        fieldPath: `${fieldPath}.returnPolicy`,
+        message:
+          `Minigame binding returnPolicy must be one of: resume-owner, reenter-owner, close-only.`,
+      });
+      continue;
+    }
+
+    if (ownerKind !== "external" && (minigame.ownerId == null || minigame.ownerId.trim().length === 0)) {
+      diagnostics.push({
+        code: "missing-field",
+        fieldPath: `${fieldPath}.ownerId`,
+        message: `Minigame binding ownerId is required for ${ownerKind} owners.`,
+      });
+      continue;
+    }
+
+    if (integrationIds.has(integrationId)) {
+      diagnostics.push({
+        code: "duplicate-id",
+        fieldPath: `${fieldPath}.integrationId`,
+        message: `Duplicate playable integration id "${integrationId}" cannot be exported.`,
+      });
+      continue;
+    }
+
+    const outcomeConfig = materializeMinigameOutcomeConfig(
+      minigame.outcomeRoutes,
+      fieldPath,
+      diagnostics
+    );
+    if (outcomeConfig == null) {
+      continue;
+    }
+
+    integrationIds.add(integrationId);
+    playablesById.set(playableId, {
+      id: definition.id,
+      family: definition.family,
+      commandPrefix: definition.commandPrefix,
+    });
+    playableIntegrations.push({
+      editorRecordId: minigame.id,
+      integrationId,
+      playableId,
+      ownerDefaults: {
+        ownerKind,
+        ownerId:
+          ownerKind === "external" ? null : minigame.ownerId?.trim() ?? null,
+        returnPolicy,
+      },
+      trigger: {
+        triggerId,
+        ownerKind,
+        trigger: triggerEvent,
+        ...materializeLaunchPayload(minigame.launchPayload),
+      },
+      outcomeConfig,
+    } as PlayableIntegrationDefinition & { editorRecordId: string });
+  }
+
+  return {
+    playables: Array.from(playablesById.values()),
+    playableIntegrations,
+  };
+}
+
+function materializeMinigameOutcomeConfig(
+  outcomeRoutes: ScriptEditorProjectDefinition["minigames"][number]["outcomeRoutes"],
+  fieldPath: string,
+  diagnostics: ScriptEditorRuntimeExportDiagnostic[]
+): PlayableIntegrationDefinition["outcomeConfig"] | null {
+  if (outcomeRoutes == null || outcomeRoutes.length === 0) {
+    diagnostics.push({
+      code: "missing-field",
+      fieldPath: `${fieldPath}.outcomeRoutes`,
+      message: "Minigame binding requires at least one outcome route.",
+    });
+    return null;
+  }
+
+  const handoffByOutcome: Partial<Record<PlayableOutcome, PlayableReturnPolicy>> = {};
+  for (const [index, route] of outcomeRoutes.entries()) {
+    if (!isPlayableOutcome(route.outcome)) {
+      diagnostics.push({
+        code: "invalid-field",
+        fieldPath: `${fieldPath}.outcomeRoutes[${index}].outcome`,
+        message: "Minigame outcome route must be success, failure, or cancelled.",
+      });
+      continue;
+    }
+    if (!isPlayableReturnPolicy(route.handoffPolicy)) {
+      diagnostics.push({
+        code: "invalid-field",
+        fieldPath: `${fieldPath}.outcomeRoutes[${index}].handoffPolicy`,
+        message:
+          "Minigame outcome route handoffPolicy must be resume-owner, reenter-owner, or close-only.",
+      });
+      continue;
+    }
+    handoffByOutcome[route.outcome] = route.handoffPolicy;
+  }
+
+  return Object.keys(handoffByOutcome).length === 0 ? null : { handoffByOutcome };
+}
+
+function materializeLaunchPayload(
+  entries: ScriptEditorProjectDefinition["minigames"][number]["launchPayload"]
+): Pick<PlayableIntegrationDefinition["trigger"], "launchPayload"> {
+  const launchPayload = Object.fromEntries(
+    (entries ?? [])
+      .filter((entry) => entry.key.trim().length > 0)
+      .map((entry) => [entry.key.trim(), entry.value])
+  );
+  return Object.keys(launchPayload).length === 0 ? {} : { launchPayload };
+}
+
+function readRequiredTrimmedString(
+  value: unknown,
+  fieldPath: string,
+  diagnostics: ScriptEditorRuntimeExportDiagnostic[]
+): string | null {
+  if (typeof value !== "string" || value.trim().length === 0) {
+    diagnostics.push({
+      code: value == null ? "missing-field" : "invalid-field",
+      fieldPath,
+      message: `${fieldPath} must be a non-empty string.`,
+    });
+    return null;
+  }
+  return value.trim();
+}
+
+function isPlayableOwnerKind(value: string): value is PlayableIntegrationDefinition["ownerDefaults"]["ownerKind"] & string {
+  return value === "house" || value === "scene" || value === "task" || value === "external";
+}
+
+function isPlayableReturnPolicy(value: string): value is PlayableReturnPolicy {
+  return value === "resume-owner" || value === "reenter-owner" || value === "close-only";
+}
+
+function isPlayableOutcome(value: string): value is PlayableOutcome {
+  return value === "success" || value === "failure" || value === "cancelled";
 }
 
 function materializeRuntimeCharacters(
