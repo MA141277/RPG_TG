@@ -4750,7 +4750,14 @@ test("script editor person authoring queue exposes dedicated person detail tabs 
   assert.match(mainUiSource, /"add-person-event-link"/);
   assert.match(mainUiSource, /renderScriptEditorPersonRelationSelect/);
   assert.match(mainUiSource, /createScriptEditorDialogueReferenceOptions/);
+  assert.match(mainUiSource, /createScriptEditorEventReferenceOptions/);
+  assert.match(mainUiSource, /createScriptEditorTradeBindingReferenceOptions/);
   assert.match(mainUiSource, /this\.scriptEditorProject\?\.dialogues/);
+  assert.match(mainUiSource, /this\.scriptEditorProject\?\.events/);
+  assert.match(mainUiSource, /this\.scriptEditorProject\?\.buildings/);
+  assert.match(mainUiSource, /listScriptEditorPersonFieldDefinitions/);
+  assert.match(mainUiSource, /data-script-editor-person-mapped-field/);
+  assert.match(mainUiSource, /renderScriptEditorPersonMappedFieldGroups/);
   assert.match(mainUiSource, /data-script-editor-record-search-family="people"/);
   assert.match(mainUiSource, /filterScriptEditorRecords\("people", records\)/);
   assert.match(
@@ -4783,9 +4790,10 @@ test("script editor person authoring queue renders current json-backed person at
     /<p class="c-script-editor-editor-card__eyebrow">已有属性<\/p>/
   );
   assert.match(mainUiSource, /自定义属性/);
+  assert.match(mainUiSource, /data-script-editor-person-attribute-field="key"/);
   assert.match(mainUiSource, /data-script-editor-person-attribute-field="label"/);
   assert.match(mainUiSource, /data-script-editor-person-attribute-field="value"/);
-  assert.doesNotMatch(mainUiSource, /data-script-editor-person-attribute-field="key"/);
+  assert.match(mainUiSource, /placeholder="属性键"/);
   assert.match(mainUiSource, /placeholder="属性名"/);
   assert.match(mainUiSource, /data-script-editor-action="remove-person-attribute"/);
   assert.match(mainUiSource, /c-script-editor-person-summary__remove/);
@@ -5044,6 +5052,22 @@ test("script editor person authoring helpers normalize trade and relation entry 
   assert.equal(normalized.tradeBinding.enabled, true);
   assert.equal(normalized.tradeBinding.entryId, "trade.market");
   assert.deepEqual(normalized.dialogueIds, ["dialogue.hero.open"]);
+
+  const withProfile = updateScriptEditorPersonField(normalized, "birthYear", "1328");
+  const withStat = updateScriptEditorPersonField(
+    withProfile,
+    "stats.leadership",
+    "72"
+  );
+  const withSkill = updateScriptEditorPersonField(
+    withStat,
+    "skills.military",
+    "4"
+  );
+
+  assert.equal(withSkill.birthYear, 1328);
+  assert.equal(withSkill.stats.leadership, 72);
+  assert.equal(withSkill.skills.military, 4);
 });
 
 test("script editor field mapping contract exposes representative person field definitions", () => {
@@ -5065,11 +5089,54 @@ test("script editor field mapping contract exposes representative person field d
     ["角色", "NPC"]
   );
   assert.equal(definitionById.get("person.stats.leadership")?.valueType, "number");
-  assert.equal(definitionById.get("person.skills.strategy")?.valueType, "number");
+  assert.equal(definitionById.has("person.skills.strategy"), false);
+  assert.equal(definitionById.get("person.skills.military")?.valueType, "number");
+  assert.equal(definitionById.get("person.birthYear")?.group, "profile");
+  assert.equal(definitionById.get("person.stamina")?.group, "stat");
+  assert.equal(definitionById.get("person.stats.gold")?.group, "stat");
+  assert.equal(definitionById.get("person.skills.medicine")?.group, "skill");
   assert.equal(definitionById.get("person.tradeBinding.enabled")?.valueType, "boolean");
   assert.equal(definitionById.get("person.dialogueIds")?.valueType, "reference-list");
   assert.equal(definitionById.get("person.dialogueIds")?.referenceFamily, "dialogues");
   assert.equal(definitionById.get("person.extendedAttributes")?.valueType, "key-value-list");
+  assert.deepEqual(
+    definitions
+      .filter((definition) => definition.group === "stat")
+      .map((definition) => definition.canonicalKey),
+    [
+      "stats.leadership",
+      "stats.martial",
+      "stats.intelligence",
+      "stats.politics",
+      "stats.charm",
+      "stats.fame",
+      "stats.gold",
+      "stamina",
+    ]
+  );
+  assert.deepEqual(
+    definitions
+      .filter((definition) => definition.group === "skill")
+      .map((definition) => definition.canonicalKey),
+    [
+      "skills.ashigaru",
+      "skills.horse",
+      "skills.teppo",
+      "skills.navy",
+      "skills.archery",
+      "skills.martial",
+      "skills.military",
+      "skills.ninjutsu",
+      "skills.construction",
+      "skills.development",
+      "skills.mining",
+      "skills.arithmetic",
+      "skills.etiquette",
+      "skills.rhetoric",
+      "skills.tea",
+      "skills.medicine",
+    ]
+  );
   assert.deepEqual(validateScriptEditorFieldDefinitions(definitions), []);
 });
 

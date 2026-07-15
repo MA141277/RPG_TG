@@ -51,6 +51,7 @@ import {
   updateScriptEditorPersonField,
   updateScriptEditorPersonRelation,
 } from "../../application/script-editor/person-authoring";
+import { listScriptEditorPersonFieldDefinitions } from "../../application/script-editor/field-mapping";
 import {
   appendScriptEditorMinigameLaunchPayloadEntry,
   appendScriptEditorMinigameOutcomeRoute,
@@ -1259,6 +1260,14 @@ export class MainUiFlow {
                   <input
                     class="c-script-editor-form-field__input"
                     type="text"
+                    value="${escapeHtml(entry.key)}"
+                    placeholder="属性键"
+                    data-script-editor-person-attribute-field="key"
+                    data-script-editor-person-attribute-index="${index}"
+                  />
+                  <input
+                    class="c-script-editor-form-field__input"
+                    type="text"
                     value="${escapeHtml(entry.label ?? "")}"
                     placeholder="属性名"
                     data-script-editor-person-attribute-field="label"
@@ -1539,12 +1548,16 @@ export class MainUiFlow {
           </label>
           <label class="c-script-editor-form-field">
             <span>交易入口 ID</span>
-            <input
+            <select
               class="c-script-editor-form-field__input"
-              type="text"
-              value="${escapeHtml(person.tradeBinding?.entryId ?? "")}"
               data-script-editor-person-field="tradeBinding.entryId"
-            />
+            >
+              ${this.renderScriptEditorSelectOptions(
+                this.createScriptEditorTradeBindingReferenceOptions(),
+                person.tradeBinding?.entryId ?? "",
+                "未选择交易入口"
+              )}
+            </select>
           </label>
         </section>
       `;
@@ -1619,8 +1632,148 @@ export class MainUiFlow {
           </label>
         </div>
       </section>
+      ${this.renderScriptEditorPersonMappedFieldGroups(person)}
       ${this.renderScriptEditorPersonSummaryAttributes(person)}
     `;
+  }
+
+  renderScriptEditorPersonMappedFieldGroups(person) {
+    const groupLabels = {
+      base: "基础",
+      profile: "履历",
+      stat: "能力",
+      skill: "技能",
+    };
+    const definitions = listScriptEditorPersonFieldDefinitions().filter(
+      (definition) => Object.hasOwn(groupLabels, definition.group)
+    );
+
+    return `
+      <section class="c-script-editor-person-panel" aria-label="人物映射字段">
+        <div class="c-script-editor-person-attributes__header">
+          <div>
+            <p class="c-script-editor-editor-card__eyebrow">映射字段</p>
+            <h3 class="c-script-editor-editor-card__title">角色资料字段组</h3>
+          </div>
+        </div>
+        <div class="c-script-editor-person-mapped-fields">
+          ${Object.entries(groupLabels)
+            .map(([group, label]) => {
+              const groupDefinitions = definitions.filter(
+                (definition) => definition.group === group
+              );
+              return `
+                <section class="c-script-editor-person-mapped-fields__group">
+                  <h4>${escapeHtml(label)}</h4>
+                  <div class="c-script-editor-form-grid">
+                    ${groupDefinitions
+                      .map((definition) =>
+                        this.renderScriptEditorPersonMappedFieldControl(person, definition)
+                      )
+                      .join("")}
+                  </div>
+                </section>
+              `;
+            })
+            .join("")}
+        </div>
+      </section>
+    `;
+  }
+
+  renderScriptEditorPersonMappedFieldControl(person, definition) {
+    const value = this.getScriptEditorPersonMappedFieldValue(person, definition.canonicalKey);
+    const dataAttribute = `data-script-editor-person-mapped-field="${escapeHtml(definition.canonicalKey)}"`;
+
+    if (definition.valueType === "enum") {
+      return `
+        <label class="c-script-editor-form-field">
+          <span>${escapeHtml(definition.label)}</span>
+          <select class="c-script-editor-form-field__input" ${dataAttribute}>
+            ${this.renderScriptEditorSelectOptions(
+              definition.enumOptions ?? [],
+              value,
+              `未设置${definition.label}`
+            )}
+          </select>
+        </label>
+      `;
+    }
+
+    if (definition.valueType === "reference") {
+      const options =
+        definition.referenceFamily === "cities"
+          ? this.getScriptEditorPersonCityOptions()
+          : definition.referenceFamily === "buildings"
+            ? this.getScriptEditorPersonHouseOptions(person.cityId ?? "")
+            : definition.referenceFamily === "portraits"
+              ? this.getScriptEditorPersonPortraitOptions()
+              : definition.referenceFamily === "portraitVariants"
+                ? this.getScriptEditorPersonPortraitVariantOptions(person)
+                : [];
+      return `
+        <label class="c-script-editor-form-field">
+          <span>${escapeHtml(definition.label)}</span>
+          <select class="c-script-editor-form-field__input" ${dataAttribute}>
+            ${this.renderScriptEditorSelectOptions(options, value, `未设置${definition.label}`)}
+          </select>
+        </label>
+      `;
+    }
+
+    if (definition.valueType === "boolean") {
+      return `
+        <label class="c-script-editor-person-editor__toggle">
+          <input
+            type="checkbox"
+            ${value === "true" ? "checked" : ""}
+            ${dataAttribute}
+          />
+          <span>${escapeHtml(definition.label)}</span>
+        </label>
+      `;
+    }
+
+    if (definition.valueType === "text") {
+      return `
+        <label class="c-script-editor-form-field c-script-editor-form-field--wide">
+          <span>${escapeHtml(definition.label)}</span>
+          <textarea
+            class="c-script-editor-record-editor__textarea c-script-editor-record-editor__textarea--compact"
+            spellcheck="false"
+            ${dataAttribute}
+          >${escapeHtml(value)}</textarea>
+        </label>
+      `;
+    }
+
+    return `
+      <label class="c-script-editor-form-field">
+        <span>${escapeHtml(definition.label)}</span>
+        <input
+          class="c-script-editor-form-field__input"
+          type="${definition.valueType === "number" ? "number" : "text"}"
+          value="${escapeHtml(value)}"
+          ${dataAttribute}
+        />
+      </label>
+    `;
+  }
+
+  getScriptEditorPersonMappedFieldValue(person, canonicalKey) {
+    return String(
+      canonicalKey.split(".").reduce((currentValue, segment) => {
+        if (
+          currentValue == null ||
+          typeof currentValue !== "object" ||
+          Array.isArray(currentValue)
+        ) {
+          return undefined;
+        }
+
+        return currentValue[segment];
+      }, person) ?? ""
+    );
   }
 
   renderScriptEditorPersonRelationPanel(title, hint, family, entries, addAction, removeAction) {
@@ -1650,6 +1803,14 @@ export class MainUiFlow {
                           emptyLabel: "未选择对话",
                           options: this.createScriptEditorDialogueReferenceOptions(),
                         })
+                      : family === "eventIds"
+                        ? this.renderScriptEditorPersonRelationSelect({
+                            family,
+                            index,
+                            value: entry,
+                            emptyLabel: "未选择事件",
+                            options: this.createScriptEditorEventReferenceOptions(),
+                          })
                       : `<input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(entry)}" placeholder="event.id" data-script-editor-person-relation-family="${family}" data-script-editor-person-relation-index="${index}" />`
                   }
                   <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="${removeAction}" data-script-editor-person-relation-index="${index}">
@@ -2615,6 +2776,20 @@ export class MainUiFlow {
     return (this.scriptEditorProject?.dialogues ?? []).map((dialogue) => ({
       value: dialogue.id,
       label: `${dialogue.title ?? dialogue.name ?? dialogue.id} (${dialogue.id})`,
+    }));
+  }
+
+  createScriptEditorEventReferenceOptions() {
+    return (this.scriptEditorProject?.events ?? []).map((eventRecord) => ({
+      value: eventRecord.id,
+      label: `${eventRecord.title ?? eventRecord.name ?? eventRecord.id} (${eventRecord.id})`,
+    }));
+  }
+
+  createScriptEditorTradeBindingReferenceOptions() {
+    return (this.scriptEditorProject?.buildings ?? []).map((building) => ({
+      value: building.id,
+      label: `${building.name ?? building.id} (${building.id})`,
     }));
   }
 
@@ -3786,13 +3961,30 @@ export class MainUiFlow {
       return;
     }
 
+    if (target.matches("[data-script-editor-person-mapped-field]")) {
+      const field = target.dataset.scriptEditorPersonMappedField;
+      if (field != null) {
+        const value =
+          target instanceof globalThis.HTMLInputElement &&
+          target.type === "checkbox"
+            ? String(target.checked)
+            : target.value;
+        this.applyScriptEditorPersonField(field, value);
+      }
+      return;
+    }
+
     if (target.matches("[data-script-editor-person-attribute-field]")) {
       const field = target.dataset.scriptEditorPersonAttributeField;
       const index = Number.parseInt(
         target.dataset.scriptEditorPersonAttributeIndex ?? "-1",
         10
       );
-      if ((field === "label" || field === "value") && Number.isInteger(index) && index >= 0) {
+      if (
+        (field === "key" || field === "label" || field === "value") &&
+        Number.isInteger(index) &&
+        index >= 0
+      ) {
         this.applyScriptEditorPersonAttributeField(index, field, target.value);
       }
       return;

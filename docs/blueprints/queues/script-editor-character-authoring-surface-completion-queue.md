@@ -9,8 +9,8 @@
 - governance_sync_source: `docs/blueprints/blueprint.md`
 - queue_status: `active`
 - queue_class: `required`
-- active_task: `task.script-editor-character-authoring-surface-completion.authoring-controls-implementation`
-- next_task: `task.script-editor-character-authoring-surface-completion.queue-closeout-and-handoff`
+- active_task: `task.script-editor-character-authoring-surface-completion.queue-closeout-and-handoff`
+- next_task: `none`
 - closeout_status: `in-progress`
 - execution_closeout_status: `partial`
 - topic_closure_status: `open-residue`
@@ -58,9 +58,9 @@
 
 - queue_goal: `Expose complete creator-facing controls for character base/profile/stat/skill/custom and bounded relation fields already supported by the character contract.`
 - task_count: `3`
-- completed_task_count: `1`
-- remaining_task_count: `2`
-- active_task_summary: `Implement the bounded mapping-driven character field groups, reference selectors, and valid custom-attribute editing chosen by baseline reconciliation.`
+- completed_task_count: `2`
+- remaining_task_count: `1`
+- active_task_summary: `Verify the implemented character authoring surface, classify any residue, and synchronize Blueprint truth.`
 - task_briefs:
   - `task.script-editor-character-authoring-surface-completion.boundary-baseline-reconcile: identify the exact missing character controls and storage helpers already covered by the character contract.`
   - `task.script-editor-character-authoring-surface-completion.authoring-controls-implementation: implement the bounded creator-facing controls with tests.`
@@ -99,8 +99,8 @@
 | Task ID | State | Summary | Depends On | Notes |
 | --- | --- | --- | --- | --- |
 | `task.script-editor-character-authoring-surface-completion.boundary-baseline-reconcile` | `completed` | `Reconciled current character editor UI, helper storage, field mapping, and import/export behavior before implementation.` | `none` | `Completed after freezing a mapping-driven UI/control slice over the existing flat CharacterDefinition canonical keys.` |
-| `task.script-editor-character-authoring-surface-completion.authoring-controls-implementation` | `active` | `Implement the selected character authoring controls and helper tests.` | `task.script-editor-character-authoring-surface-completion.boundary-baseline-reconcile` | `Must not edit live CharacterStatus save overlays or migrate the persisted character schema.` |
-| `task.script-editor-character-authoring-surface-completion.queue-closeout-and-handoff` | `pending` | `Verify the queue, classify residue, and synchronize Blueprint truth.` | `task.script-editor-character-authoring-surface-completion.authoring-controls-implementation` | `Must not close without UI/storage/import-export evidence.` |
+| `task.script-editor-character-authoring-surface-completion.authoring-controls-implementation` | `completed` | `Implement the selected character authoring controls and helper tests.` | `task.script-editor-character-authoring-surface-completion.boundary-baseline-reconcile` | `Completed after field-definition expansion, typed mapped-field controls, custom key editing, and full verification passed.` |
+| `task.script-editor-character-authoring-surface-completion.queue-closeout-and-handoff` | `active` | `Verify the queue, classify residue, and synchronize Blueprint truth.` | `task.script-editor-character-authoring-surface-completion.authoring-controls-implementation` | `Must not close without UI/storage/import-export evidence.` |
 
 ### Task Definitions
 
@@ -171,7 +171,7 @@
 ##### Control Block
 
 - task_id: `task.script-editor-character-authoring-surface-completion.authoring-controls-implementation`
-- state: `active`
+- state: `completed`
 - task_kind: `execution`
 - scope:
   - `src/application/script-editor/field-mapping.ts`
@@ -205,7 +205,7 @@
 - task_brief:
   - `Implement the bounded creator-facing character controls chosen by baseline reconciliation.`
 - task_outcome_summary:
-  - `Pending implementation of the frozen mapping-driven character authoring controls and helper behavior.`
+  - `The bounded character authoring controls now render a mapping-driven base/profile/stat/skill field surface over the existing flat CharacterDefinition keys, provide reference selectors for dialogue/event/trade bindings, and allow custom attribute keys to be edited without touching CharacterStatus or the draft nested schema.`
 - Purpose:
   - `Make the character contract actually editable from the script-editor workbench.`
 - Failure mode:
@@ -214,13 +214,14 @@
 ##### Progress Log
 
 - `2026-07-15`: `Activated after boundary reconciliation froze the implementation boundary. The UI may group existing flat canonical keys as base/profile/stat/skill/custom, but must not introduce the draft nested character schema or expose live CharacterStatus editing.`
+- `2026-07-15`: `Implemented the mapping-driven authoring surface over the current flat canonical keys, added reference selectors for event and trade binding fields, exposed a custom attribute key editor, and verified the change with npm run build:test, a targeted node --test slice, npm run typecheck, npm run lint:blueprints, and npm test.`
 
 #### `task.script-editor-character-authoring-surface-completion.queue-closeout-and-handoff`
 
 ##### Control Block
 
 - task_id: `task.script-editor-character-authoring-surface-completion.queue-closeout-and-handoff`
-- state: `pending`
+- state: `active`
 - task_kind: `execution`
 - scope:
   - `docs/blueprints/project-progress.md`
@@ -250,7 +251,7 @@
 - task_brief:
   - `Close or route the character authoring surface queue after verified implementation.`
 - task_outcome_summary:
-  - `Pending.`
+  - `Pending verification, residue classification, and synchronization of the queue and version truth.`
 - Purpose:
   - `Keep character-family UI completion routing explicit before city/building or schema queues continue.`
 - Failure mode:
@@ -261,6 +262,6 @@
 - Task ID:
   - `none`
 - Recorded handoff at closure:
-  - `Queue is active and has not reached closure.`
+  - `Queue is active and now awaits closeout verification.`
 - Recorded expected output:
   - `A creator-facing character authoring surface aligned with the completed character definition/status contract.`

@@ -224,15 +224,28 @@ export function updateScriptEditorPersonField(
         role: normalizedValue === "角色" ? "playable" : "support",
       });
     case "title":
+      return updateScriptEditorPersonMappedAttribute(person, "title", value);
+    case "role":
       return materializeScriptEditorPersonExtendedAttributes({
         ...person,
-        title: value,
+        role: value,
       });
+    case "birthYear":
+      return updateScriptEditorPersonMappedAttribute(person, "birthYear", normalizedValue);
+    case "deathYear":
+      return updateScriptEditorPersonMappedAttribute(person, "deathYear", normalizedValue);
+    case "age":
+      return updateScriptEditorPersonMappedAttribute(person, "age", normalizedValue);
+    case "clanId":
+      return updateScriptEditorPersonMappedAttribute(person, "clanId", value);
     case "occupation":
-      return materializeScriptEditorPersonExtendedAttributes({
-        ...person,
-        occupation: value,
-      });
+      return updateScriptEditorPersonMappedAttribute(person, "occupation", value);
+    case "affiliationLabel":
+      return updateScriptEditorPersonMappedAttribute(
+        person,
+        "affiliationLabel",
+        value
+      );
     case "biography":
       return materializeScriptEditorPersonExtendedAttributes({
         ...person,
@@ -260,6 +273,38 @@ export function updateScriptEditorPersonField(
         ...person,
         portraitVariantId: normalizedValue,
       });
+    case "isHistoricalFigure":
+      return updateScriptEditorPersonMappedAttribute(
+        person,
+        "isHistoricalFigure",
+        normalizedValue
+      );
+    case "stamina":
+      return updateScriptEditorPersonMappedAttribute(person, "stamina", normalizedValue);
+    case "stats.leadership":
+    case "stats.martial":
+    case "stats.intelligence":
+    case "stats.politics":
+    case "stats.charm":
+    case "stats.fame":
+    case "stats.gold":
+    case "skills.ashigaru":
+    case "skills.horse":
+    case "skills.teppo":
+    case "skills.navy":
+    case "skills.archery":
+    case "skills.martial":
+    case "skills.military":
+    case "skills.ninjutsu":
+    case "skills.construction":
+    case "skills.development":
+    case "skills.mining":
+    case "skills.arithmetic":
+    case "skills.etiquette":
+    case "skills.rhetoric":
+    case "skills.tea":
+    case "skills.medicine":
+      return updateScriptEditorPersonMappedAttribute(person, field, normalizedValue);
     case "tradeBinding.entryId":
       return materializeScriptEditorPersonExtendedAttributes({
         ...person,
@@ -313,7 +358,7 @@ export function removeScriptEditorPersonAttribute(
 export function updateScriptEditorPersonAttribute(
   person: ScriptEditorPersonRecord,
   index: number,
-  field: keyof ScriptEditorKeyValueEntry,
+  field: keyof ScriptEditorKeyValueEntry | "key",
   value: string
 ): ScriptEditorPersonRecord {
   return materializeScriptEditorPersonExtendedAttributes({
@@ -360,6 +405,44 @@ export function updateScriptEditorPersonRelation(
       entryIndex === index ? value.trim() : entry
     ),
   };
+}
+
+function updateScriptEditorPersonMappedAttribute(
+  person: ScriptEditorPersonRecord,
+  keyPath: string,
+  value: string
+): ScriptEditorPersonRecord {
+  const normalizedKey = keyPath.trim();
+  if (normalizedKey.length === 0) {
+    return person;
+  }
+
+  const entries = normalizeKeyValueEntries(person.extendedAttributes);
+  const existingIndex = entries.findIndex(
+    (entry) => entry.key.trim() === normalizedKey
+  );
+  const nextEntry = {
+    key: normalizedKey,
+    label: getScriptEditorPersonAttributeLabel(normalizedKey),
+    value,
+  };
+  const nextEntries =
+    existingIndex >= 0
+      ? entries.map((entry, index) =>
+          index === existingIndex
+            ? {
+                ...entry,
+                key: normalizedKey,
+                value,
+              }
+            : entry
+        )
+      : [...entries, nextEntry];
+
+  return materializeScriptEditorPersonExtendedAttributes({
+    ...person,
+    extendedAttributes: nextEntries,
+  });
 }
 
 function normalizeTradeBinding(value: unknown) {

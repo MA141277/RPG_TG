@@ -1,3 +1,9 @@
+import {
+  SKILL_LABELS,
+  type CharacterStatKey,
+  type SkillKey,
+} from "../../domain/character";
+
 export const SCRIPT_EDITOR_FIELD_VALUE_TYPES = [
   "string",
   "text",
@@ -47,6 +53,22 @@ export type ScriptEditorFieldDefinitionDiagnostic = {
 
 const FIELD_VALUE_TYPE_SET = new Set<string>(SCRIPT_EDITOR_FIELD_VALUE_TYPES);
 
+const CHARACTER_STAT_LABELS: Record<CharacterStatKey, string> = {
+  leadership: "统率",
+  martial: "武勇",
+  intelligence: "智略",
+  politics: "政务",
+  charm: "魅力",
+  fame: "名声",
+  gold: "金钱",
+};
+
+const CHARACTER_STAT_KEYS = Object.keys(
+  CHARACTER_STAT_LABELS
+) as CharacterStatKey[];
+
+const CHARACTER_SKILL_KEYS = Object.keys(SKILL_LABELS) as SkillKey[];
+
 const PERSON_FIELD_DEFINITIONS: readonly ScriptEditorFieldDefinition[] = [
   {
     id: "person.name",
@@ -71,12 +93,76 @@ const PERSON_FIELD_DEFINITIONS: readonly ScriptEditorFieldDefinition[] = [
     ],
   },
   {
+    id: "person.role",
+    canonicalKey: "role",
+    label: "角色定位",
+    group: "base",
+    valueType: "string",
+    order: 30,
+  },
+  {
     id: "person.biography",
     canonicalKey: "biography",
     label: "人物传记",
     group: "profile",
     valueType: "text",
-    order: 30,
+    order: 100,
+  },
+  {
+    id: "person.birthYear",
+    canonicalKey: "birthYear",
+    label: "出生年",
+    group: "profile",
+    valueType: "number",
+    order: 110,
+  },
+  {
+    id: "person.deathYear",
+    canonicalKey: "deathYear",
+    label: "去世年",
+    group: "profile",
+    valueType: "number",
+    order: 120,
+  },
+  {
+    id: "person.age",
+    canonicalKey: "age",
+    label: "年龄",
+    group: "profile",
+    valueType: "number",
+    order: 130,
+  },
+  {
+    id: "person.clanId",
+    canonicalKey: "clanId",
+    label: "所属势力",
+    group: "profile",
+    valueType: "string",
+    order: 140,
+  },
+  {
+    id: "person.title",
+    canonicalKey: "title",
+    label: "正式身份",
+    group: "profile",
+    valueType: "string",
+    order: 150,
+  },
+  {
+    id: "person.occupation",
+    canonicalKey: "occupation",
+    label: "职业/定位",
+    group: "profile",
+    valueType: "string",
+    order: 160,
+  },
+  {
+    id: "person.affiliationLabel",
+    canonicalKey: "affiliationLabel",
+    label: "所属显示名",
+    group: "profile",
+    valueType: "string",
+    order: 170,
   },
   {
     id: "person.cityId",
@@ -84,35 +170,92 @@ const PERSON_FIELD_DEFINITIONS: readonly ScriptEditorFieldDefinition[] = [
     label: "所在城市",
     group: "profile",
     valueType: "reference",
-    order: 40,
+    order: 180,
     referenceFamily: "cities",
   },
   {
-    id: "person.stats.leadership",
-    canonicalKey: "stats.leadership",
-    label: "统率",
-    group: "stat",
-    valueType: "number",
-    order: 50,
-    defaultValue: 0,
+    id: "person.houseId",
+    canonicalKey: "houseId",
+    label: "所在建筑",
+    group: "profile",
+    valueType: "reference",
+    order: 190,
+    referenceFamily: "buildings",
   },
   {
-    id: "person.skills.strategy",
-    canonicalKey: "skills.strategy",
-    label: "军略",
+    id: "person.portraitId",
+    canonicalKey: "portraitId",
+    label: "立绘 ID",
+    group: "profile",
+    valueType: "reference",
+    order: 200,
+    referenceFamily: "portraits",
+  },
+  {
+    id: "person.portraitVariantId",
+    canonicalKey: "portraitVariantId",
+    label: "立绘变体",
+    group: "profile",
+    valueType: "reference",
+    order: 210,
+    referenceFamily: "portraitVariants",
+  },
+  {
+    id: "person.isHistoricalFigure",
+    canonicalKey: "isHistoricalFigure",
+    label: "历史人物",
+    group: "profile",
+    valueType: "boolean",
+    order: 220,
+    defaultValue: false,
+  },
+  ...CHARACTER_STAT_KEYS.map<ScriptEditorFieldDefinition>((key, index) => ({
+    id: `person.stats.${key}`,
+    canonicalKey: `stats.${key}`,
+    label: CHARACTER_STAT_LABELS[key],
+    group: "stat",
+    valueType: "number",
+    order: 300 + index * 10,
+    defaultValue: 0,
+    runtimeMutable: true,
+  })),
+  {
+    id: "person.stamina",
+    canonicalKey: "stamina",
+    label: "体力",
+    group: "stat",
+    valueType: "number",
+    order: 370,
+    defaultValue: 100,
+    runtimeMutable: true,
+  },
+  ...CHARACTER_SKILL_KEYS.map<ScriptEditorFieldDefinition>((key, index) => ({
+    id: `person.skills.${key}`,
+    canonicalKey: `skills.${key}`,
+    label: SKILL_LABELS[key],
     group: "skill",
     valueType: "number",
-    order: 60,
+    order: 400 + index * 10,
     defaultValue: 0,
-  },
+    runtimeMutable: true,
+  })),
   {
     id: "person.tradeBinding.enabled",
     canonicalKey: "tradeBinding.enabled",
     label: "启用交易",
     group: "trade",
     valueType: "boolean",
-    order: 70,
+    order: 600,
     defaultValue: false,
+  },
+  {
+    id: "person.tradeBinding.entryId",
+    canonicalKey: "tradeBinding.entryId",
+    label: "交易入口",
+    group: "trade",
+    valueType: "reference",
+    order: 610,
+    referenceFamily: "buildings",
   },
   {
     id: "person.dialogueIds",
@@ -120,7 +263,7 @@ const PERSON_FIELD_DEFINITIONS: readonly ScriptEditorFieldDefinition[] = [
     label: "关联对话",
     group: "references",
     valueType: "reference-list",
-    order: 80,
+    order: 700,
     referenceFamily: "dialogues",
   },
   {
@@ -129,7 +272,7 @@ const PERSON_FIELD_DEFINITIONS: readonly ScriptEditorFieldDefinition[] = [
     label: "关联事件",
     group: "references",
     valueType: "reference-list",
-    order: 90,
+    order: 710,
     referenceFamily: "events",
   },
   {
@@ -138,12 +281,23 @@ const PERSON_FIELD_DEFINITIONS: readonly ScriptEditorFieldDefinition[] = [
     label: "自定义属性",
     group: "custom",
     valueType: "key-value-list",
-    order: 100,
+    order: 800,
   },
 ];
 
 export function listScriptEditorPersonFieldDefinitions(): ScriptEditorFieldDefinition[] {
   return PERSON_FIELD_DEFINITIONS.map(cloneFieldDefinition);
+}
+
+export function findScriptEditorPersonFieldDefinition(
+  canonicalKey: string
+): ScriptEditorFieldDefinition | null {
+  const normalizedKey = canonicalKey.trim();
+  const definition = PERSON_FIELD_DEFINITIONS.find(
+    (candidate) => candidate.canonicalKey === normalizedKey
+  );
+
+  return definition == null ? null : cloneFieldDefinition(definition);
 }
 
 export function validateScriptEditorFieldDefinitions(
