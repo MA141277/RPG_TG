@@ -130,7 +130,7 @@
 
 - `queue.script-editor-city-building-entry-and-npc-authoring-priority`
 - Active task:
-  - `task.script-editor-city-building-entry-and-npc-authoring-priority.boundary-baseline-reconcile`
+  - `task.script-editor-city-building-entry-and-npc-authoring-priority.priority-authoring-implementation`
 - Activation basis:
   - `queue.script-editor-condition-runtime-evaluation-convergence closed after bounded editor event conditionGroups could export supported typed condition nodes into runtime EventConditionNode arrays and trigger selection could evaluate them. Broader city/building/story/scenario condition consumption remains family-specific residue; field and condition basics are now sufficient to admit the priority city/building entry and NPC authoring queue.`
 
@@ -228,3 +228,4 @@
 - `2026-07-15: queue.script-editor-condition-runtime-evaluation-convergence completed boundary-baseline-reconcile after selecting bounded event condition export lowering into runtime EventConditionNode arrays as the smallest lawful implementation slice; the active task is now runtime-evaluation-contract-implementation.`
 - `2026-07-15: queue.script-editor-condition-runtime-evaluation-convergence closed after supported event condition groups export into runtime EventConditionNode arrays, unsupported task-only condition nodes fail closed, and trigger selection evaluates the exported conditions; broader condition consumption was routed as cross-family residue with queue.script-editor-city-building-entry-and-npc-authoring-priority recommended next.`
 - `2026-07-15: admission review promoted queue.script-editor-city-building-entry-and-npc-authoring-priority as the single active queue because field mapping and typed-condition basics now satisfy the priority city/building/NPC authoring prerequisite; the first live task is boundary-baseline-reconcile.`
+- `2026-07-15: queue.script-editor-city-building-entry-and-npc-authoring-priority completed boundary-baseline-reconcile after selecting bounded city/building runtime-family materialization from existing authoring fields as the smallest lawful implementation slice; the active task is now priority-authoring-implementation.`

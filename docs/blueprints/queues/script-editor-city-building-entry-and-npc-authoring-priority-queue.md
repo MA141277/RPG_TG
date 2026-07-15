@@ -9,8 +9,8 @@
 - governance_sync_source: `docs/blueprints/blueprint.md`
 - queue_status: `active`
 - queue_class: `required-priority`
-- active_task: `task.script-editor-city-building-entry-and-npc-authoring-priority.boundary-baseline-reconcile`
-- next_task: `none`
+- active_task: `task.script-editor-city-building-entry-and-npc-authoring-priority.priority-authoring-implementation`
+- next_task: `task.script-editor-city-building-entry-and-npc-authoring-priority.queue-closeout-and-handoff`
 - closeout_status: `not-started`
 - execution_closeout_status: `partial`
 - topic_closure_status: `open-residue`
@@ -57,9 +57,9 @@
 
 - queue_goal: `Determine and implement the smallest priority city/building authoring slice that lets creators bind buildings, entry/access conditions, refusal text references, and NPC assignment without duplicating runtime structures.`
 - task_count: `3`
-- completed_task_count: `0`
-- remaining_task_count: `3`
-- active_task_summary: `Baseline current city/building/project records, city entries, house access refusal rules, NPC data, UI surfaces, export/import behavior, and runtime consumers before code changes.`
+- completed_task_count: `1`
+- remaining_task_count: `2`
+- active_task_summary: `Implement the selected materialization/export slice for priority city/building entry and NPC authoring.`
 - task_briefs:
   - `task.script-editor-city-building-entry-and-npc-authoring-priority.boundary-baseline-reconcile: inventory current city/building entry and NPC authoring/export/runtime seams and select the smallest lawful implementation slice.`
   - `task.script-editor-city-building-entry-and-npc-authoring-priority.priority-authoring-implementation: implement the selected priority authoring slice with tests.`
@@ -96,8 +96,8 @@
 
 | Task ID | State | Summary | Depends On | Notes |
 | --- | --- | --- | --- | --- |
-| `task.script-editor-city-building-entry-and-npc-authoring-priority.boundary-baseline-reconcile` | `active` | `Inventory city/building entry and NPC authoring/export/runtime seams and select the smallest implementation slice.` | `none` | `Production code must not change before this baseline records its selected slice.` |
-| `task.script-editor-city-building-entry-and-npc-authoring-priority.priority-authoring-implementation` | `pending` | `Implement the selected priority authoring slice.` | `task.script-editor-city-building-entry-and-npc-authoring-priority.boundary-baseline-reconcile` | `Must be test-first and must not widen into broad resolver migration without baseline evidence.` |
+| `task.script-editor-city-building-entry-and-npc-authoring-priority.boundary-baseline-reconcile` | `done` | `Inventoried city/building entry and NPC authoring/export/runtime seams and selected materialized runtime family export as the smallest implementation slice.` | `none` | `Production code was not changed during baseline.` |
+| `task.script-editor-city-building-entry-and-npc-authoring-priority.priority-authoring-implementation` | `active` | `Implement the selected priority authoring slice.` | `task.script-editor-city-building-entry-and-npc-authoring-priority.boundary-baseline-reconcile` | `Must be test-first and must not widen into broad resolver migration without baseline evidence.` |
 | `task.script-editor-city-building-entry-and-npc-authoring-priority.queue-closeout-and-handoff` | `pending` | `Verify, classify residue, and return control to version review.` | `task.script-editor-city-building-entry-and-npc-authoring-priority.priority-authoring-implementation` | `Must not close the parent version without explicit version closeout confirmation.` |
 
 ### Task Definitions
@@ -107,7 +107,7 @@
 ##### Control Block
 
 - task_id: `task.script-editor-city-building-entry-and-npc-authoring-priority.boundary-baseline-reconcile`
-- state: `active`
+- state: `done`
 - task_kind: `execution`
 - scope:
   - `src/domain/script-editor-project.ts`
@@ -153,7 +153,7 @@
 - task_brief:
   - `Find the smallest city/building/NPC authoring slice that is useful to creators and honest to existing runtime data.`
 - task_outcome_summary:
-  - `none`
+  - `Done. Existing city/building authoring already exposes dedicated city/building detail tabs, menu entries, access fields, and building entryBinding controls, and person authoring already carries cityId/houseId with selectors. Runtime pack import/export currently preserves cityEntries, cityNpcPools, and houseAccessRefusalRules as generic runtime families, but new/minimal projects seed those arrays empty and no authoring materialization path turns the existing city/building/person authoring fields into those runtime families. Runtime consumers read CityEntryDefinition, CityNpcPoolDefinition, HouseAccessRefusalRule, and HouseDefinition fields directly from the exported pack. The smallest lawful slice is to add a script-editor materializer/export path that derives bounded cityEntries, cityNpcPools, and houseAccessRefusalRules from existing city/building/person authoring records while preserving explicitly authored/imported records and leaving broad placement resolver migration for a later queue.`
 - Purpose:
   - `Move priority city/building entry and NPC authoring out of generic JSON shadows while preserving the canonical runtime pack families.`
 - Failure mode:
@@ -162,13 +162,17 @@
 ##### Progress Log
 
 - `2026-07-15`: `Queue admitted from promotion review after condition runtime evaluation convergence closed and field/condition basics were sufficient for the priority city/building authoring candidate.`
+- `2026-07-15`: `Baseline inspected script-editor city/building domain records, city-building-authoring helpers, workspace shell visibility, minimal workflow defaults, runtime-pack import/export preservation, UI city/building panels, person city/house assignment controls, runtime city entry/NPC/access/refusal domain shapes, and current robustness tests.`
+- `2026-07-15`: `Current inventory: city/building profile/menu/access/entryBinding authoring controls already exist; person records already carry personType, cityId, and houseId; cityEntries/cityNpcPools/houseAccessRefusalRules are imported/exported as runtime families but not generated from authoring records; runtime consumers expect CityEntryDefinition, CityNpcPoolDefinition, HouseAccessRefusalRule, and HouseDefinition-compatible fields.`
+- `2026-07-15`: `Selected smallest lawful slice: implement a bounded script-editor city/building runtime-family materializer used by runtime export that adds missing cityEntries for authored buildings, cityNpcPools for authored NPC people assigned to city/house, and houseAccessRefusalRules for disabled/hidden building access with refusal text, while preserving explicit imported records and avoiding resolver/main.ts changes.`
+- `2026-07-15`: `Implementation plan for the next task: write failing tests proving exported packs derive city entry, city NPC pool, and house access refusal records from authored city/building/person fields and do not duplicate explicitly imported records; then implement the materializer in script-editor application code and wire runtime-pack-export to use it. Verification must include npm test, npm run typecheck, npm run build, npm run lint:blueprints, npm run lint:plans, npm run blueprint:governance:check, and git diff --check.`
 
 #### `task.script-editor-city-building-entry-and-npc-authoring-priority.priority-authoring-implementation`
 
 ##### Control Block
 
 - task_id: `task.script-editor-city-building-entry-and-npc-authoring-priority.priority-authoring-implementation`
-- state: `pending`
+- state: `active`
 - task_kind: `execution`
 - scope:
   - `Files identified by boundary-baseline-reconcile.`
@@ -206,6 +210,7 @@
 ##### Progress Log
 
 - `2026-07-15`: `Queued behind boundary-baseline-reconcile.`
+- `2026-07-15`: `Activated after baseline selected bounded city/building runtime-family materialization from existing authoring fields as the smallest priority slice.`
 
 #### `task.script-editor-city-building-entry-and-npc-authoring-priority.queue-closeout-and-handoff`
 
