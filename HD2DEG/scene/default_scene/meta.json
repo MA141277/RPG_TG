@@ -3,10 +3,10 @@
   "kind": "scene",
   "title": "default_scene",
   "createdAt": "2026-04-27T16:56:48+08:00",
-  "updatedAt": "2026-06-11T20:07:30+08:00",
+  "updatedAt": "2026-06-23T17:04:55+08:00",
   "schemaVersion": 1,
-  "objectCount": 37,
-  "buildingCount": 37,
+  "objectCount": 35,
+  "buildingCount": 35,
   "npcCount": 10,
   "files": {
     "scene": "scene/default_scene/scene.json"

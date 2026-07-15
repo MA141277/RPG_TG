@@ -3,11 +3,17 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "main": "electron/main.cjs",
   "scripts": {
     "dev": "vite --host 0.0.0.0 --port 5173",
     "dev:localhost": "vite --host localhost --port 5173",
     "build": "vite build",
     "preview": "vite preview --host 0.0.0.0",
+    "scaffold:playable": "node tools/scaffold-playable.mjs",
+    "scaffold:playable-integration": "node tools/scaffold-playable-integration.mjs",
+    "validate:playables": "node tools/validate-playables.mjs",
+    "desktop:dir": "npm run build && electron-builder --dir",
+    "desktop:build": "npm run build && electron-builder --win portable",
     "kb:history:build": "node tools/build-history-kb.mjs",
     "kb:history:search": "node tools/search-history-kb.mjs",
     "kb:yuanmo-person-pool:build": "node tools/build-yuanmo-person-pool.mjs",
@@ -16,14 +22,17 @@
     "spine:replace-pieces": "node tools/replace-faxian-spine-pieces.mjs",
     "serve:prod": "node scripts/serve-static.mjs",
     "build:test": "tsc -p tsconfig.test.json && node -e \"require('node:fs').writeFileSync('.test-dist/package.json', '{\\\"type\\\":\\\"commonjs\\\"}')\"",
-    "test": "npm run build:test && node --test tests/robustness.test.cjs",
+    "test": "npm run build:test && node --test tests/robustness.test.cjs tests/hardcoded-scenario-pack-boundary.test.cjs",
     "typecheck": "tsc --noEmit -p tsconfig.json",
+    "lint:plans": "node tools/lint-superpowers-plans.mjs",
     "lint:ts": "eslint .",
     "lint:css": "stylelint \"src/styles/**/*.css\"",
     "lint": "npm run lint:ts && npm run lint:css"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
+    "electron": "^43.0.0",
+    "electron-builder": "^26.15.3",
     "eslint": "^9.39.1",
     "stylelint": "^16.26.0",
     "stylelint-config-standard": "^39.0.1",
@@ -35,6 +44,35 @@
     "@esotericsoftware/spine-player": "^4.3.6",
     "gdal3.js": "^2.8.1",
     "pngjs": "^7.0.0",
-    "tga": "^1.0.7"
+    "tga": "^1.0.7",
+    "three": "^0.185.1"
+  },
+  "build": {
+    "appId": "com.rpgtg.desktop",
+    "productName": "RPG_TG",
+    "asar": true,
+    "npmRebuild": false,
+    "directories": {
+      "output": "release"
+    },
+    "extraMetadata": {
+      "dependencies": {}
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "artifactName": "${productName}-${version}-${arch}.${ext}"
+    }
   }
 }

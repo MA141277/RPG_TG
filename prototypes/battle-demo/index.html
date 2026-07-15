@@ -32,6 +32,8 @@
       --tile-w: calc(56px * var(--page-scale));
       --tile-h: calc(32px * var(--page-scale));
       --tile-side: calc(40px * var(--page-scale));
+      --battle-cursor-brush: url("../../ui/yuansu/red_brush_cursor_48.png") 3 4, auto;
+      --battle-popup-frame: url("../../ui/battle/战斗/battle_popup_frame_9slice.png");
       --cell: min(
         calc((100vh - var(--header-h) - var(--deploy-h) - var(--controls-h) - 20px) / 10 - 2px),
         calc((100vw - var(--side-w) - 40px) / 12 - 2px),
@@ -52,6 +54,12 @@
       color: var(--text);
       display: flex;
       flex-direction: column;
+    }
+
+    html,
+    body,
+    body * {
+      cursor: var(--battle-cursor-brush) !important;
     }
 
     header {
@@ -281,7 +289,7 @@
       justify-content: center;
       background:
         linear-gradient(rgba(18, 16, 14, 0.08), rgba(18, 16, 14, 0.08)),
-        url("../../ui/battle/battlegroun_forest.png") center / cover no-repeat;
+        url("../../ui/battle/c6faf4c11fa04d4da9584c9b90c458a9.png") center / cover no-repeat;
       border: 0;
       border-radius: 0;
       padding: 0;
@@ -299,7 +307,7 @@
       width: var(--tile-w);
       height: var(--tile-h);
       position: absolute;
-      cursor: default;
+      cursor: var(--battle-cursor-brush);
       font-size: clamp(0.4rem, calc(var(--tile-w) * 0.12), 0.6rem);
       display: flex;
       flex-direction: column;
@@ -330,12 +338,12 @@
 
     .cell.deploy-zone { outline: 1px dashed rgba(100,180,255,0.4); }
     .cell.defense-zone { outline: 1px dashed rgba(201,162,39,0.35); }
-    .cell.can-move { cursor: pointer; }
+    .cell.can-move { cursor: var(--battle-cursor-brush); }
     .cell.can-move::before { --tile-edge: #8dd4ff; filter: brightness(1.18); box-shadow: 0 4px 0 rgba(0,0,0,0.22), 0 0 12px var(--highlight-move); }
-    .cell.can-attack { cursor: crosshair; }
+    .cell.can-attack { cursor: var(--battle-cursor-brush); }
     .cell.can-attack::before { --tile-edge: #ff746b; filter: brightness(1.22); box-shadow: 0 4px 0 rgba(0,0,0,0.22), 0 0 14px var(--highlight-attack); }
     .cell.attack-range::before { --tile-edge: #d86a4c; filter: brightness(1.08); box-shadow: 0 4px 0 rgba(0,0,0,0.22), 0 0 8px rgba(255, 100, 80, 0.28); }
-    .cell.can-skill { cursor: pointer; }
+    .cell.can-skill { cursor: var(--battle-cursor-brush); }
     .cell.can-skill::before { --tile-edge: #ffd166; filter: brightness(1.22); box-shadow: 0 4px 0 rgba(0,0,0,0.22), 0 0 12px var(--highlight-skill); }
     .cell.post-move::before,
     .cell.selected::before { --tile-edge: #ffe17a; transform: scaleY(0.52) rotate(45deg); translate: 0 -2px; box-shadow: 0 6px 0 rgba(0,0,0,0.28), 0 0 16px rgba(255, 225, 122, 0.72); }
@@ -400,7 +408,7 @@
       justify-content: flex-end;
       font-size: clamp(0.4rem, calc(var(--tile-w) * 0.1), 0.55rem);
       font-weight: 600;
-      cursor: grab;
+      cursor: var(--battle-cursor-brush);
       border: 0;
       position: relative;
       z-index: 1;
@@ -562,13 +570,13 @@
       color: var(--text);
       border: 1px solid var(--border);
       border-radius: 4px;
-      cursor: pointer;
+      cursor: var(--battle-cursor-brush);
       font-size: 0.78rem;
       white-space: nowrap;
       flex-shrink: 0;
     }
     button:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
-    button:disabled { opacity: 0.4; cursor: not-allowed; }
+    button:disabled { opacity: 0.4; cursor: var(--battle-cursor-brush); }
     button.primary { background: #3a2e10; border-color: var(--accent); color: var(--accent); }
 
     .skill-bar { display: flex; gap: 4px; overflow: hidden; min-width: 0; }
@@ -768,14 +776,46 @@
     }
     .overlay-msg.hidden { display: none; }
     .overlay-box {
-      background: var(--panel);
-      border: 2px solid var(--accent);
-      border-radius: 8px;
-      padding: 28px 40px;
+      width: fit-content;
+      min-width: min(520px, calc(100vw - 48px));
+      max-width: min(72vw, 820px);
+      min-height: 260px;
+      max-height: min(70vh, 520px);
+      background: transparent;
+      border: 48px solid transparent;
+      border-left-width: 42px;
+      border-right-width: 42px;
+      border-image-source: var(--battle-popup-frame);
+      border-image-slice: 54 42 54 42 fill;
+      border-image-width: 48px 42px;
+      border-image-repeat: stretch;
+      border-radius: 0;
+      padding: clamp(8px, 1.2vw, 18px) clamp(52px, 6vw, 88px);
       text-align: center;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
     }
-    .overlay-box h2 { font-size: 1.4rem; color: var(--accent); margin-bottom: 10px; }
-    .overlay-box p { font-size: 0.88rem; line-height: 1.5; color: var(--text); }
+    .overlay-box h2 {
+      max-width: min(52vw, 560px);
+      font-size: clamp(0.82rem, 1.45vw, 1.12rem);
+      line-height: 1.16;
+      color: #5b3512;
+      margin-bottom: clamp(6px, 1vw, 12px);
+      overflow-wrap: anywhere;
+      text-shadow: 0 1px 0 rgba(255, 239, 188, 0.7);
+    }
+    .overlay-box p {
+      max-width: min(52vw, 560px);
+      font-size: clamp(0.58rem, 0.92vw, 0.78rem);
+      line-height: 1.45;
+      color: #3d250d;
+      overflow-wrap: anywhere;
+      text-shadow: 0 1px 0 rgba(255, 239, 188, 0.6);
+    }
     .recap-box {
       margin-top: 14px;
       text-align: left;
@@ -793,17 +833,43 @@
       bottom: 24px;
       left: 50%;
       transform: translateX(-50%);
-      width: min(360px, calc(100vw - 32px));
-      background: var(--panel);
-      border: 2px solid var(--accent);
-      border-radius: 8px;
-      padding: 14px 16px;
+      width: fit-content;
+      min-width: min(420px, calc(100vw - 32px));
+      max-width: min(58vw, 620px);
+      min-height: 220px;
+      background: transparent;
+      border: 42px solid transparent;
+      border-left-width: 36px;
+      border-right-width: 36px;
+      border-image-source: var(--battle-popup-frame);
+      border-image-slice: 54 42 54 42 fill;
+      border-image-width: 42px 36px;
+      border-image-repeat: stretch;
+      border-radius: 0;
+      padding: 2px 46px 4px;
       z-index: 110;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+      box-shadow: none;
+      box-sizing: border-box;
+      text-align: center;
+      overflow: hidden;
     }
     .tutorial-toast.hidden { display: none; }
-    .tutorial-toast h3 { font-size: 0.95rem; color: var(--accent); margin-bottom: 6px; }
-    .tutorial-toast p { font-size: 0.82rem; line-height: 1.55; color: var(--text); margin-bottom: 10px; }
+    .tutorial-toast h3 {
+      font-size: 0.84rem;
+      line-height: 1.16;
+      color: #5b3512;
+      margin-bottom: 6px;
+      overflow-wrap: anywhere;
+      text-shadow: 0 1px 0 rgba(255, 239, 188, 0.7);
+    }
+    .tutorial-toast p {
+      font-size: 0.62rem;
+      line-height: 1.42;
+      color: #3d250d;
+      margin-bottom: 8px;
+      overflow-wrap: anywhere;
+      text-shadow: 0 1px 0 rgba(255, 239, 188, 0.6);
+    }
     .tutorial-toast button { width: 100%; }
 
     .objective-intro {
@@ -817,15 +883,69 @@
     }
     .objective-intro.hidden { display: none; }
     .objective-intro-box {
-      background: var(--panel);
-      border: 2px solid var(--accent);
-      border-radius: 10px;
-      padding: 28px 36px;
+      width: fit-content;
+      min-width: min(520px, calc(100vw - 48px));
+      max-width: min(72vw, 820px);
+      min-height: 260px;
+      max-height: min(70vh, 520px);
+      background: transparent;
+      border: 48px solid transparent;
+      border-left-width: 42px;
+      border-right-width: 42px;
+      border-image-source: var(--battle-popup-frame);
+      border-image-slice: 54 42 54 42 fill;
+      border-image-width: 48px 42px;
+      border-image-repeat: stretch;
+      border-radius: 0;
+      padding: clamp(8px, 1.2vw, 18px) clamp(52px, 6vw, 88px);
       text-align: center;
-      max-width: 380px;
+      max-width: none;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: clamp(6px, 1vw, 12px);
+      overflow: hidden;
     }
-    .objective-intro-box h2 { font-size: 1.3rem; color: var(--accent); margin-bottom: 10px; }
-    .objective-intro-box p { font-size: 0.9rem; line-height: 1.6; color: var(--text); margin-bottom: 16px; }
+    .objective-intro-box h2 {
+      max-width: min(52vw, 560px);
+      font-size: clamp(0.78rem, 1.42vw, 1.08rem);
+      line-height: 1.16;
+      color: #5b3512;
+      margin-top: clamp(10px, 1.8vw, 22px);
+      margin-bottom: clamp(4px, 0.8vw, 10px);
+      overflow-wrap: anywhere;
+      text-shadow: 0 1px 0 rgba(255, 239, 188, 0.7);
+    }
+    .objective-intro-box p {
+      max-width: min(52vw, 560px);
+      font-size: clamp(0.56rem, 0.9vw, 0.76rem);
+      line-height: 1.42;
+      color: #3d250d;
+      margin-bottom: clamp(8px, 1.4vw, 16px);
+      overflow-wrap: anywhere;
+      text-shadow: 0 1px 0 rgba(255, 239, 188, 0.6);
+    }
+    .objective-intro-box #btn-objective-ok {
+      width: min(20.4%, 157px);
+      max-width: calc(100% - 40px);
+      min-width: 96px;
+      aspect-ratio: 262 / 108;
+      height: auto;
+      padding: 0;
+      border: 0;
+      border-radius: 0;
+      background: url("../../ui/battle/战斗/20260702-195750(1).png") center / contain no-repeat;
+      color: #f8e5b2;
+      font-size: clamp(0.64rem, 1.05vw, 0.9rem);
+      font-weight: 800;
+      text-shadow: 0 1px 1px rgba(36, 18, 5, 0.85);
+      box-shadow: none;
+      box-sizing: border-box;
+      flex: 0 0 auto;
+      transform: translateY(-15px);
+    }
 
     .formation-battle {
       position: fixed;
@@ -847,61 +967,81 @@
     }
     .battle-morale-frame {
       position: absolute;
-      left: 50%;
-      top: 8px;
-      width: min(680px, 58vw);
-      height: 42px;
-      transform: translateX(-50%);
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      transform: none;
       z-index: 3;
-      display: grid;
-      grid-template-columns: 1fr 88px 1fr;
-      align-items: center;
-      gap: 8px;
-      padding: 7px 12px;
-      background: rgba(18, 16, 14, 0.86);
-      border: 2px solid rgba(70, 56, 36, 0.96);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.55), inset 0 0 0 1px rgba(201,162,39,0.25);
+      display: block;
+      padding: 0;
+      background: url("../../ui/battle/演出/20260703-171157.png") center top / contain no-repeat;
+      border: 0;
+      box-shadow: none;
+      pointer-events: none;
     }
     .battle-morale-frame::after {
-      content: "MORALE";
-      color: #f0e4cf;
-      font-size: 0.78rem;
+      content: "MORALE / 士气";
+      position: absolute;
+      left: 50%;
+      top: 2.55%;
+      transform: translateX(-50%);
+      color: #ead6a4;
+      font-size: 0.68rem;
       font-weight: 700;
       text-align: center;
-      text-shadow: 0 2px 2px #000;
-      grid-column: 2;
-      grid-row: 1;
+      letter-spacing: 0;
+      text-shadow: 0 2px 2px #000, 0 0 8px rgba(201, 162, 39, 0.45);
     }
     .battle-morale-bar {
-      height: 13px;
-      border: 1px solid rgba(0,0,0,0.7);
-      background: rgba(0,0,0,0.55);
-      box-shadow: inset 0 0 5px rgba(255,255,255,0.14);
-      overflow: hidden;
+      position: absolute;
+      top: 3.55%;
+      width: 23.6%;
+      height: 1.18%;
+      border: 1px solid rgba(201, 162, 39, 0.78);
+      background: rgba(5, 8, 12, 0.78);
+      box-shadow: inset 0 0 5px rgba(255,255,255,0.12), 0 0 4px rgba(0,0,0,0.55);
+      overflow: visible;
     }
-    .battle-morale-bar.player { grid-column: 1; }
-    .battle-morale-bar.enemy { grid-column: 3; }
+    .battle-morale-bar::before {
+      position: absolute;
+      top: -1.25rem;
+      color: #ead6a4;
+      font-size: 0.56rem;
+      font-weight: 700;
+      white-space: nowrap;
+      text-shadow: 0 2px 2px #000;
+    }
+    .battle-morale-bar.player {
+      left: 22.3%;
+    }
+    .battle-morale-bar.player::before { content: none; }
+    .battle-morale-bar.enemy {
+      right: 22.3%;
+    }
+    .battle-morale-bar.enemy::before { content: none; }
     .battle-morale-fill {
+      display: block;
       height: 100%;
       width: 50%;
       transition: width 0.2s ease;
     }
-    .battle-morale-bar.player .battle-morale-fill { margin-left: auto; background: linear-gradient(90deg, #1f6ea3, #28b8ef); }
-    .battle-morale-bar.enemy .battle-morale-fill { background: linear-gradient(90deg, #cf3e45, #65171b); }
+    .battle-morale-bar.player .battle-morale-fill { margin-left: auto; background: linear-gradient(90deg, #1780a5, #35d7ce); }
+    .battle-morale-bar.enemy .battle-morale-fill { background: linear-gradient(90deg, #c83b36, #7b171b); }
     .formation-side {
       position: absolute;
       top: auto;
-      bottom: 182px;
-      width: min(400px, 34vw);
-      height: min(340px, 46vh);
-      min-height: 270px;
+      bottom: 197px;
+      width: min(430px, 35vw);
+      height: min(390px, 48vh);
+      min-height: 320px;
       z-index: 2;
+      overflow: visible;
     }
-    .formation-side.player { left: clamp(88px, 16vw, 240px); }
-    .formation-side.enemy { right: clamp(88px, 16vw, 240px); }
+    .formation-side.player { left: clamp(92px, 12vw, 190px); }
+    .formation-side.enemy { right: clamp(92px, 12vw, 190px); }
     .formation-side h2 {
       position: absolute;
-      top: -32px;
+      top: -82px;
       left: 0;
       right: 0;
       font-size: 0.78rem;
@@ -913,6 +1053,7 @@
       position: relative;
       width: 100%;
       height: 100%;
+      overflow: visible;
     }
     .formation-slot {
       position: absolute;
@@ -928,18 +1069,21 @@
       line-height: 1.2;
       transition: transform 0.18s, box-shadow 0.18s, border-color 0.18s, opacity 0.18s;
       filter: drop-shadow(0 14px 8px rgba(0,0,0,0.42));
+      transform: translate(-50%, -100%) scale(var(--slot-scale, 1));
+      transform-origin: bottom center;
+      overflow: visible;
     }
     .formation-side.enemy .formation-slot {
-      left: auto;
-      right: calc(var(--x) * 1%);
+      left: calc(var(--x) * 1%);
+      right: auto;
     }
     .formation-slot.empty { opacity: 0; pointer-events: none; }
     .formation-slot.fallen { opacity: 0.42; filter: grayscale(0.85) drop-shadow(0 10px 6px rgba(0,0,0,0.35)); }
     .formation-slot.striker {
       filter: drop-shadow(0 0 18px rgba(255, 225, 122, 0.8)) drop-shadow(0 14px 8px rgba(0,0,0,0.42));
     }
-    .formation-side.player .formation-slot.striker { transform: translateX(30px) scale(1.06); }
-    .formation-side.enemy .formation-slot.striker { transform: translateX(-30px) scale(1.06); }
+    .formation-side.player .formation-slot.striker { transform: translate(-50%, -100%) translateX(30px) scale(var(--slot-scale, 1)); }
+    .formation-side.enemy .formation-slot.striker { transform: translate(-50%, -100%) translateX(-30px) scale(var(--slot-scale, 1)); }
     .formation-slot.targeted {
       filter: drop-shadow(0 0 18px rgba(255, 95, 80, 0.78)) drop-shadow(0 14px 8px rgba(0,0,0,0.42));
       animation: hitShake 0.26s ease;
@@ -1002,42 +1146,58 @@
     .formation-slot .slot-name {
       position: absolute;
       left: 50%;
-      bottom: 25px;
+      bottom: 28px;
       transform: translateX(-50%);
-      min-width: 54px;
-      padding: 1px 5px;
-      border-radius: 3px;
-      background: rgba(0,0,0,0.5);
-      color: rgba(240,228,207,0.78);
-      font-size: 0.48rem;
+      min-width: 66px;
+      padding: 1px 7px;
+      border-radius: 2px 2px 0 0;
+      border: 1px solid rgba(201, 162, 39, 0.58);
+      border-bottom: 0;
+      background: rgba(18, 14, 10, 0.78);
+      color: rgba(238,220,170,0.92);
+      font-size: 0.44rem;
+      line-height: 1.15;
       text-align: center;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.35);
     }
     .formation-slot .member-name {
       position: absolute;
       left: 50%;
-      bottom: 10px;
+      bottom: 12px;
       transform: translateX(-50%);
-      min-width: 74px;
-      color: var(--text);
+      min-width: 82px;
+      max-width: 112px;
+      padding: 2px 8px 3px;
+      color: #f3e1b4;
       font-weight: 600;
+      font-size: 0.5rem;
+      line-height: 1.15;
       text-align: center;
+      border: 1px solid rgba(201, 162, 39, 0.68);
+      background: rgba(12, 17, 21, 0.82);
       text-shadow: 0 1px 2px #000;
       white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.42), inset 0 0 0 1px rgba(255,255,255,0.06);
     }
     .formation-slot .member-hp {
       position: absolute;
       left: 50%;
-      bottom: -10px;
+      bottom: 4px;
       transform: translateX(-50%);
-      width: 74px;
-      height: 8px;
-      border: 1px solid rgba(0,0,0,0.75);
-      background: #111827;
+      width: 82px;
+      height: 5px;
+      border: 1px solid rgba(201, 162, 39, 0.58);
+      background: rgba(10, 13, 16, 0.9);
       overflow: hidden;
     }
     .formation-slot .member-hp-fill {
       height: 100%;
       background: linear-gradient(90deg, #0ba34a, #70e081);
+    }
+    .formation-side.enemy .formation-slot .member-hp-fill {
+      background: linear-gradient(90deg, #8f151b, #d84a38);
     }
     .formation-slot .member-loss {
       position: absolute;
@@ -1058,44 +1218,873 @@
     }
     .battle-sequence {
       position: absolute;
-      left: 50%;
-      bottom: 12px;
-      width: min(680px, 58vw);
-      height: 142px;
-      transform: translateX(-50%);
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      transform: none;
       z-index: 4;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      background: rgba(30, 23, 16, 0.88);
-      border: 2px solid rgba(70, 56, 36, 0.96);
-      box-shadow: 0 8px 24px rgba(0,0,0,0.55), inset 0 0 0 1px rgba(201,162,39,0.2);
-      padding: 8px 12px;
+      display: block;
+      background: url("../../ui/battle/演出/20260703-171148.png") center bottom / contain no-repeat;
+      border: 0;
+      box-shadow: none;
+      padding: 0;
+      box-sizing: border-box;
+      overflow: hidden;
+      pointer-events: none;
     }
     .battle-sequence h2 {
+      position: absolute;
+      left: 20%;
+      bottom: calc(17.8% + 20px);
+      width: 60%;
       text-align: center;
-      color: var(--accent);
-      font-size: 1rem;
+      color: #111;
+      font-size: 0.9rem;
+      line-height: 1.12;
+      text-shadow: 0 1px 0 rgba(255, 239, 188, 0.82), 0 1px 2px rgba(47, 22, 8, 0.28);
     }
     .battle-event-list {
-      flex: 1;
+      position: absolute;
+      left: 14.8%;
+      bottom: 8.8%;
+      width: 74.2%;
+      height: 7.9%;
       overflow-y: auto;
-      font-size: 0.68rem;
-      line-height: 1.42;
-      color: var(--text);
+      font-size: 0.6rem;
+      line-height: 1.34;
+      color: #3a170a;
+      text-align: left;
+      box-sizing: border-box;
+      padding: 0 16% 0 6px;
+      pointer-events: auto;
+      scrollbar-width: thin;
+      scrollbar-color: #9F3622 rgba(86, 38, 16, 0.16);
     }
-    .battle-event-list .entry { margin-bottom: 4px; }
-    .battle-event-list .round { color: var(--accent); margin-top: 6px; }
-    .battle-event-list .miss { color: var(--muted); }
-    .battle-event-list .damage { color: #ffb0a8; }
-    .battle-sequence button { width: 100%; }
+    .battle-event-list::-webkit-scrollbar { width: 3px; }
+    .battle-event-list::-webkit-scrollbar-track { background: rgba(86, 38, 16, 0.16); }
+    .battle-event-list::-webkit-scrollbar-thumb {
+      background: #9F3622;
+      border-radius: 999px;
+    }
+    .battle-event-list .entry { margin-bottom: 3px; }
+    .battle-event-list .round { color: #9F3622; margin-top: 5px; font-weight: 700; }
+    .battle-event-list .miss { color: #6b4a2c; }
+    .battle-event-list .damage { color: #9F3622; font-weight: 700; }
+    .battle-sequence button {
+      position: absolute;
+      right: 13.8%;
+      bottom: 7.2%;
+      width: 9.8%;
+      min-height: 26px;
+      max-height: 40px;
+      padding-top: 3px;
+      padding-bottom: 3px;
+      pointer-events: auto;
+    }
+
+    .battle-stage {
+      position: fixed;
+      left: 50%;
+      top: 50%;
+      width: min(100vw, 177.7778vh);
+      height: min(100vh, 56.25vw);
+      transform: translate(-50%, -50%);
+      overflow: hidden;
+      background: var(--bg);
+      color: #3d250d;
+    }
+
+    .battle-ui-overlays {
+      position: absolute;
+      inset: 0;
+      z-index: 3;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    .battle-ui-overlays img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      pointer-events: none;
+    }
+
+    body {
+      display: block;
+    }
+
+    .battle-stage header {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 8.0729%;
+      padding: 0;
+      border: 0;
+      z-index: 6;
+      display: block;
+      color: #3c250d;
+      text-shadow: 0 1px 0 rgba(255, 242, 191, 0.65);
+    }
+
+    .battle-stage .header-row {
+      position: absolute;
+      left: 33.4%;
+      top: 16%;
+      width: 33.2%;
+      height: 32%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 1.1vw;
+      overflow: hidden;
+      font-size: 0.66rem;
+    }
+
+    .battle-stage header h1 {
+      display: none;
+    }
+
+    .battle-stage .phase-badge {
+      flex-shrink: 0;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      color: #463014;
+      font-size: 0.62rem;
+    }
+
+    .battle-stage .phase-badge.player,
+    .battle-stage .phase-badge.enemy {
+      color: #463014;
+    }
+
+    .battle-stage #turn-info {
+      flex: 0 1 auto;
+      color: #463014;
+      font-size: 0.62rem;
+      text-align: center;
+    }
+
+    .battle-stage .objective-bar {
+      position: absolute;
+      left: 46.25%;
+      top: 56%;
+      width: 27%;
+      color: #4e3213;
+      font-size: 0.58rem;
+      line-height: 1.2;
+      text-align: left;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .battle-stage .objective-progress {
+      display: none;
+    }
+
+    .top-side-info {
+      position: absolute;
+      top: 0;
+      height: 100%;
+      display: grid;
+      grid-template-columns: auto 1fr auto 1fr;
+      align-items: center;
+      column-gap: 0.42vw;
+      overflow: hidden;
+      font-size: 0.55rem;
+      color: #41290f;
+    }
+
+    .top-side-info.ally {
+      left: 0;
+      width: 30.4%;
+      padding-left: 7.7%;
+    }
+
+    .top-side-info.enemy {
+      left: 68.945%;
+      right: auto;
+      width: 29%;
+      padding-left: 6.25%;
+    }
+
+    .top-side-info .side-name {
+      position: absolute;
+      top: 22%;
+      width: 16.9%;
+      height: 54%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.72rem;
+      font-weight: 700;
+      white-space: nowrap;
+      color: #f8e5b2;
+      text-shadow: 0 1px 1px rgba(36, 18, 5, 0.85);
+      pointer-events: none;
+    }
+
+    .top-side-info.ally .side-name {
+      left: 0;
+    }
+
+    .top-side-info.enemy .side-name {
+      left: 0;
+      width: 17%;
+    }
+
+    .top-side-info .stat-label {
+      white-space: nowrap;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .battle-stat-bar {
+      position: relative;
+      width: 6.3vw;
+      max-width: 8.6vh;
+      min-width: 56px;
+      height: 0.48rem;
+      overflow: hidden;
+      background-image: url("../../ui/battle/战斗/20260702-201601.png");
+      background-repeat: no-repeat;
+      background-size: 145.558% 1056.881%;
+      background-position: 65.211% 50.815%;
+    }
+
+    .battle-stat-bar .fill {
+      position: absolute;
+      left: 0;
+      top: 0;
+      height: 100%;
+      width: 0%;
+      background-repeat: no-repeat;
+      background-size: 145.558% 1056.881%;
+      background-position: 65.211% 50.815%;
+    }
+
+    .battle-stat-bar .fill.player {
+      background-image: url("../../ui/battle/战斗/20260702-201713.png");
+    }
+
+    .battle-stat-bar .fill.enemy {
+      background-image: url("../../ui/battle/战斗/20260702-201718.png");
+    }
+
+    .battle-stage main {
+      position: absolute;
+      inset: 0;
+      display: block;
+      padding: 0;
+      overflow: hidden;
+    }
+
+    .battle-stage .battle-area {
+      position: absolute;
+      inset: 0;
+      z-index: auto;
+      display: block;
+      overflow: hidden;
+    }
+
+    .battle-stage .board-wrap {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      padding: 0;
+      border: 0;
+      border-radius: 0;
+      background:
+        linear-gradient(rgba(18, 16, 14, 0.08), rgba(18, 16, 14, 0.08)),
+        url("../../ui/battle/c6faf4c11fa04d4da9584c9b90c458a9.png") center / cover no-repeat;
+    }
+
+    .battle-stage #board {
+      transform: translate(0, 3.4%);
+    }
+
+    .battle-stage .command-panel {
+      position: absolute;
+      left: 0;
+      top: 16.1458%;
+      width: 14.2578%;
+      height: 67.6215%;
+      z-index: 6;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      padding: 4.25% 1.05% 1.6%;
+      overflow: visible;
+      color: #3d250d;
+      text-shadow: 0 1px 0 rgba(255, 242, 191, 0.55);
+    }
+
+    .battle-stage .unit-card,
+    .battle-stage .unit-formation-panel,
+    .battle-stage .battle-status-panel {
+      background: transparent;
+      border: 0;
+      border-radius: 0;
+      overflow: hidden;
+    }
+
+    .battle-stage .unit-card {
+      flex: 0 0 41%;
+      min-height: 0;
+      overflow: visible;
+      transform: translateY(-10px);
+    }
+
+    .battle-stage .unit-card .panel-title {
+      display: none;
+    }
+
+    .battle-stage .unit-card-body {
+      height: 100%;
+      padding: 0;
+      display: grid;
+      grid-template-columns: 39% 1fr;
+      gap: 3.5%;
+      align-items: start;
+      min-height: 0;
+      font-size: 0.6rem;
+      overflow: visible;
+    }
+
+    .battle-stage .unit-portrait {
+      width: 100%;
+      aspect-ratio: 426 / 535;
+      min-height: 0;
+      border: 0;
+      background: url("../../ui/battle/战斗/20260702-195804.png") center / contain no-repeat;
+      color: #4d2f11;
+      font-size: 0.56rem;
+      font-weight: 700;
+      line-height: 1.18;
+      padding: 31% 8% 10%;
+      transform: translateY(-14px) scale(1.18);
+      transform-origin: top center;
+      text-align: center;
+    }
+
+    .battle-stage .unit-summary {
+      color: #3d250d;
+      font-size: 0.58rem;
+      line-height: 1.28;
+      padding-top: 0;
+      display: flex;
+      min-width: 0;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .battle-stage .unit-summary-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 4px;
+      padding-bottom: 3px;
+      border-bottom: 1px solid rgba(122, 82, 29, 0.22);
+    }
+
+    .battle-stage .unit-summary .name {
+      color: #2e1907;
+      font-size: 0.88rem;
+      font-weight: 700;
+      line-height: 1.08;
+      text-align: left;
+      white-space: normal;
+      overflow: visible;
+      word-break: break-word;
+    }
+
+    .battle-stage .unit-state-pill {
+      flex: 0 0 auto;
+      min-width: 40px;
+      padding: 2px 6px 3px;
+      border-radius: 2px;
+      background: rgba(45, 89, 126, 0.88);
+      color: #f6e5b7;
+      font-size: 0.48rem;
+      line-height: 1.15;
+      text-align: center;
+      box-shadow: inset 0 0 0 1px rgba(255, 241, 190, 0.22);
+    }
+
+    .battle-stage .unit-summary .muted {
+      color: #714f25;
+      text-align: left;
+      font-size: 0.5rem;
+      line-height: 1.18;
+      white-space: normal;
+      word-break: break-word;
+    }
+
+    .battle-stage .unit-meter {
+      display: grid;
+      grid-template-columns: 40px 1fr;
+      align-items: center;
+      gap: 5px;
+      color: #5a3916;
+      font-size: 0.5rem;
+      line-height: 1.15;
+    }
+
+    .battle-stage .unit-meter-track {
+      height: 5px;
+      background: rgba(74, 45, 13, 0.22);
+      border: 1px solid rgba(90, 57, 22, 0.2);
+      overflow: hidden;
+    }
+
+    .battle-stage .unit-meter-fill {
+      display: block;
+      height: 100%;
+      background: linear-gradient(90deg, #2b83b8, #40b5e8);
+    }
+
+    .battle-stage .unit-meter--morale .unit-meter-fill {
+      background: linear-gradient(90deg, #bb3f2e, #d8a04a);
+    }
+
+    .battle-stage .unit-meter strong {
+      grid-column: 1 / -1;
+      color: #2e1907;
+      font-size: 0.5rem;
+      text-align: left;
+      white-space: normal;
+      word-break: break-word;
+    }
+
+    .battle-stage .unit-stat-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 6px;
+      border-top: 1px solid rgba(122, 82, 29, 0.22);
+      padding: 3px 0 0;
+      margin: 0 0 0 -72px;
+      width: calc(100% + 72px);
+      min-width: 0;
+    }
+
+    .battle-stage .unit-stat-row span {
+      flex: 0 0 52px;
+      color: #714f25;
+      font-size: 0.5rem;
+    }
+
+    .battle-stage .unit-stat-row strong {
+      min-width: 0;
+      color: #2e1907;
+      font-size: 0.5rem;
+      font-weight: 700;
+      text-align: left;
+      white-space: normal;
+      overflow: visible;
+      word-break: break-word;
+    }
+
+    .battle-stage .unit-formation-panel {
+      flex: 1;
+      min-height: 0;
+      padding-top: 6.3%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .battle-stage .unit-formation-panel .panel-title {
+      height: 8.4%;
+      padding: 0;
+      border: 0;
+      color: #3d250d;
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-align: center;
+    }
+
+    .battle-stage .unit-formation-grid {
+      flex: 1;
+      padding: 2.2% 4.6% 7%;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-auto-rows: 1fr;
+      gap: 2.2%;
+      overflow: hidden;
+    }
+
+    .battle-stage .unit-formation-cell {
+      border: 0;
+      border-radius: 0;
+      background: url("../../ui/battle/战斗/20260702-195813(1).png") center / contain no-repeat;
+      color: #2e1907;
+      font-size: 0.48rem;
+      line-height: 1.16;
+      padding: 12% 6% 9%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      min-width: 0;
+      overflow: hidden;
+      text-align: center;
+      text-shadow: 0 1px 0 rgba(255, 238, 181, 0.66);
+    }
+
+    .battle-stage .unit-formation-cell.empty {
+      opacity: 0.58;
+    }
+
+    .battle-stage .unit-formation-cell .slot,
+    .battle-stage .unit-formation-cell .muted {
+      display: none;
+    }
+
+    .battle-stage .unit-formation-cell .troop,
+    .battle-stage .unit-formation-cell .hp {
+      overflow: visible;
+      white-space: normal;
+      text-overflow: clip;
+      text-align: center;
+    }
+
+    .battle-stage .unit-formation-cell .troop {
+      color: #173f5c;
+      font-size: 0.54rem;
+      font-weight: 800;
+      letter-spacing: 0;
+    }
+
+    .battle-stage .unit-formation-cell .hp {
+      color: #4a2510;
+      font-size: 0.45rem;
+      font-weight: 700;
+    }
+
+    .battle-stage .unit-formation-cell.empty div {
+      color: #7a5a2a;
+      font-size: 0.44rem;
+      font-weight: 700;
+      line-height: 1.15;
+    }
+
+    .battle-stage .unit-formation-cell .bar {
+      height: 3px;
+      margin-top: 1px;
+      width: 78%;
+      background: rgba(64, 38, 12, 0.32);
+    }
+
+    .battle-stage .unit-formation-cell .fill {
+      background: #22886f;
+    }
+
+    .battle-stage .right-panel {
+      position: absolute;
+      left: 72.6074%;
+      top: 12.5%;
+      width: 27.3438%;
+      height: 19.0972%;
+      z-index: 6;
+      padding: 2.4% 2.25% 1.35%;
+      display: block;
+      color: #3d250d;
+      text-shadow: 0 1px 0 rgba(255, 242, 191, 0.55);
+      overflow: hidden;
+    }
+
+    .battle-stage .battle-status-panel {
+      display: none;
+    }
+
+    .battle-stage .battle-log-panel {
+      width: 100%;
+      height: 100%;
+      background: transparent;
+      border: 0;
+      border-radius: 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .battle-stage .battle-log-panel h3 {
+      flex: 0 0 auto;
+      padding: 0 0 0.45rem;
+      border: 0;
+      color: #2e1907;
+      text-align: center;
+      font-size: 0.62rem;
+      font-weight: 700;
+    }
+
+    .battle-log-scroll {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      padding-right: 0.25rem;
+      font-size: 0.48rem;
+      line-height: 1.48;
+    }
+
+    .battle-stage .log-panel {
+      overflow: visible;
+      padding: 0;
+      font-size: inherit;
+      line-height: inherit;
+    }
+
+    .battle-stage .morale-log-panel {
+      height: auto;
+      overflow: visible;
+      background: transparent;
+      border: 0;
+      border-radius: 0;
+      padding: 0.25rem 0 0;
+      font-size: inherit;
+      line-height: inherit;
+    }
+
+    .battle-stage .morale-log-panel h3 {
+      display: none;
+    }
+
+    .battle-stage .debug-panel {
+      display: none;
+    }
+
+    .battle-stage .controls {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      transform: none;
+      z-index: 7;
+      display: block;
+      padding: 0;
+      background: transparent;
+      border: 0;
+      border-radius: 0;
+      overflow: visible;
+      pointer-events: none;
+    }
+
+    .battle-stage #btn-start,
+    .battle-stage #btn-end-turn {
+      position: absolute;
+      height: 6.1%;
+      border: 0;
+      background: transparent;
+      color: #f8e5b2;
+      text-indent: 0;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0;
+      line-height: 1;
+      text-shadow: 0 1px 1px rgba(36, 18, 5, 0.85);
+      pointer-events: auto;
+    }
+
+    .battle-stage #btn-start {
+      left: 78.35%;
+      top: 92.52%;
+      width: 9.45%;
+    }
+
+    .battle-stage #btn-end-turn {
+      left: 89.55%;
+      top: 92.46%;
+      width: 9.45%;
+    }
+
+    .battle-stage #btn-wait,
+    .battle-stage .controls .skill-bar {
+      display: none;
+    }
+
+    .battle-stage .deploy-pool {
+      left: 21.35%;
+      right: auto;
+      top: 86.05%;
+      width: 54.95%;
+      height: 10.25%;
+      transform: translate(20px, 15px);
+      z-index: 8;
+      display: flex;
+      gap: 0.55vw;
+      align-items: center;
+      padding: 0.35% 1.05%;
+      background: transparent;
+      border: 0;
+      border-radius: 0;
+      color: #3d250d;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scrollbar-width: none;
+      pointer-events: none;
+    }
+
+    .battle-stage .deploy-pool::-webkit-scrollbar {
+      display: none;
+    }
+
+    .battle-stage .deploy-pool .unit {
+      width: 10.15%;
+      min-width: 62px;
+      height: 100%;
+      min-height: 0;
+      flex-shrink: 0;
+      padding: 18px 6px 12px;
+      border: 0;
+      border-radius: 0;
+      background: url("../../ui/battle/战斗/20260702-195813(1).png") center / contain no-repeat;
+      color: #2f1a08;
+      font-size: 0.46rem;
+      font-weight: 800;
+      line-height: 1.12;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      overflow: hidden;
+      pointer-events: auto;
+      text-shadow: 0 1px 0 rgba(255, 239, 187, 0.66);
+    }
+
+    .battle-stage .deploy-pool .unit.player {
+      background: url("../../ui/battle/战斗/20260702-195813(1).png") center / contain no-repeat;
+      border: 0;
+      color: #2e1907;
+    }
+
+    .battle-stage .deploy-pool .unit-caption {
+      width: 82%;
+      min-width: 0;
+      max-height: 2.35em;
+      padding: 0;
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
+      overflow: hidden;
+      white-space: normal;
+      text-overflow: clip;
+      word-break: keep-all;
+      overflow-wrap: anywhere;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+
+    .battle-stage .deploy-pool .unit-caption + .unit-caption {
+      color: #173f5c;
+      font-size: 0.42rem;
+      font-weight: 800;
+    }
+
+    .battle-stage .deploy-pool > span {
+      margin: 0 auto;
+      color: #5a3a18 !important;
+      font-size: 0.58rem !important;
+    }
+
+    .battle-stage .action-menu {
+      z-index: 8;
+      min-width: 0;
+      width: 5.36%;
+      height: 14.14%;
+      padding: 1.2% 0.35% 0.85%;
+      gap: 1.5%;
+      background: url("../../ui/battle/战斗/20260702-195709.png") center / contain no-repeat;
+      border: 0;
+      border-radius: 0;
+      box-shadow: none;
+      box-sizing: border-box;
+    }
+
+    .battle-stage .action-menu .hint {
+      width: 72%;
+      height: 12%;
+      color: #3d250d;
+      font-size: 0.38rem;
+      line-height: 1.15;
+      overflow: hidden;
+      padding: 0;
+      margin: 20px auto 0;
+      text-align: center;
+    }
+
+    .battle-stage .action-menu button {
+      width: 74%;
+      height: 16.2%;
+      min-height: 0;
+      padding: 0;
+      margin: 0 auto;
+      border: 0;
+      border-radius: 0;
+      color: #3d250d;
+      font-size: 0.58rem;
+      font-weight: 700;
+      line-height: 1;
+      text-shadow: 0 1px 0 rgba(255, 232, 173, 0.7);
+      background: url("../../ui/battle/战斗/20260702-195736.png") no-repeat;
+      background-size: 1528.358% 2173.585%;
+      background-position: 49.425% 34.486%;
+    }
+
+    .battle-stage .action-menu button:hover:not(:disabled),
+    .battle-stage .action-menu button:focus-visible {
+      color: #2b1707;
+      background-image: url("../../ui/battle/战斗/20260702-195740.png");
+      background-size: 1402.74% 2215.385%;
+      background-position: 49.106% 34.455%;
+      outline: 0;
+    }
   </style>
 </head>
 <body>
+  <div class="battle-stage">
+  <div class="battle-ui-overlays" aria-hidden="true">
+    <img src="../../ui/battle/战斗/img_v3_02137_ec7e6caa-dff7-4634-a7d1-823c5e41ad1g.png" alt="">
+    <img src="../../ui/battle/战斗/img_v3_02137_a9d528c7-134a-4dff-b66a-e930a361e12g.png" alt="">
+    <img src="../../ui/battle/战斗/img_v3_02137_763f3c5c-9c2b-49be-9acb-bd52f99829ag.png" alt="">
+    <img src="../../ui/battle/战斗/20260702-195702.png" alt="">
+    <img src="../../ui/battle/战斗/20260702-195648.png" alt="">
+    <img src="../../ui/battle/战斗/img_v3_02137_c83b7d73-03ae-4c9f-88dd-36c12f66f68g.png" alt="">
+    <img src="../../ui/battle/战斗/20260702-195750.png" alt="">
+    <img src="../../ui/battle/战斗/20260702-195746.png" alt="">
+  </div>
   <header>
+    <div class="top-side-info ally" id="ally-top-info">
+      <span class="side-name">明</span>
+      <span class="stat-label" id="ally-soldiers-label">总兵力 —</span>
+      <div class="battle-stat-bar"><span class="fill player" id="ally-soldiers-fill"></span></div>
+      <span class="stat-label" id="ally-morale-label">总士气 —</span>
+      <div class="battle-stat-bar"><span class="fill player" id="ally-morale-fill"></span></div>
+    </div>
+    <div class="top-side-info enemy" id="enemy-top-info">
+      <span class="side-name">元</span>
+      <span class="stat-label" id="enemy-soldiers-label">总兵力 —</span>
+      <div class="battle-stat-bar"><span class="fill enemy" id="enemy-soldiers-fill"></span></div>
+      <span class="stat-label" id="enemy-morale-label">总士气 —</span>
+      <div class="battle-stat-bar"><span class="fill enemy" id="enemy-morale-fill"></span></div>
+    </div>
     <div class="header-row">
       <h1>棋盘格战斗原型</h1>
       <span class="phase-badge" id="phase-badge">部署阶段</span>
+      <span class="weather-badge">天气：晴</span>
       <span id="turn-info"></span>
     </div>
     <div class="objective-bar" id="objective-bar">战斗目标：—</div>
@@ -1124,7 +2113,6 @@
         <div class="skill-bar" id="skill-bar"></div>
       </div>
       <div class="action-menu hidden" id="action-menu">
-        <span class="hint" id="action-menu-hint">选择行动</span>
         <button id="action-wait">待机</button>
         <button id="action-rally">整顿</button>
         <button id="action-attack">攻击</button>
@@ -1138,19 +2126,22 @@
         <div class="battle-status-list" id="battle-status-list"></div>
       </section>
       <section class="battle-log-panel">
-        <h3>战斗日志</h3>
-        <div class="log-panel" id="log"></div>
+        <h3>战报 / 日志</h3>
+        <div class="battle-log-scroll">
+          <div class="log-panel" id="log"></div>
+          <div class="morale-log-panel">
+            <h3>士气变化</h3>
+            <div id="morale-log"></div>
+          </div>
+        </div>
       </section>
-      <div class="morale-log-panel">
-        <h3>士气变化</h3>
-        <div id="morale-log"></div>
-      </div>
       <div class="debug-panel">
         <h2>部队数据</h2>
         <div class="debug-list" id="debug-list"></div>
       </div>
     </aside>
   </main>
+  </div>
 
   <div class="objective-intro hidden" id="objective-intro">
     <div class="objective-intro-box">
@@ -2491,14 +3482,35 @@
       const pos = unit.x >= 0 ? `(${unit.x}, ${unit.y})` : '未部署';
       const sideLabel = unit.side === 'player' ? '我方' : unit.side === 'enemy' ? '敌方' : '中立';
       const total = unit.maxSoldiers ? `${unit.soldiers}/${unit.maxSoldiers}` : unit.soldiers;
+      const soldierPercent = unit.maxSoldiers
+        ? Math.max(0, Math.min(100, Math.round(unit.soldiers / unit.maxSoldiers * 100)))
+        : 0;
+      const moralePercent = Math.max(0, Math.min(100, Math.round(unit.morale || 0)));
+      const actionState = unit.hasActed || unit.hasMoved ? '已行动' : '待命';
+      const moveText = typeof moveRange === 'function' ? moveRange(unit) : 0;
+      const rangeText = unit.range ?? getEffectiveRange(unit);
       card.innerHTML = `
         <div class="unit-portrait">${escapeHtml(unit.general?.name || unit.name)}</div>
         <div class="unit-summary">
-          <div class="name">${escapeHtml(unit.name)}${unit.isCommander ? ' · 主将' : ''}</div>
-          <div class="muted">${sideLabel} · ${escapeHtml(getFormationTemplateLabel(unit))} · ${pos}</div>
-          <div class="unit-stat-row"><span>总兵力</span><strong>${total}</strong></div>
-          <div class="unit-stat-row"><span>士气</span><strong>${unit.morale ?? 0}/100 · ${escapeHtml(tier.label)}</strong></div>
-          <div class="unit-stat-row"><span>内部构成</span><strong>${escapeHtml(getFormationCompositionText(unit))}</strong></div>
+          <div class="unit-summary-header">
+            <div class="name">${escapeHtml(unit.name)}</div>
+            <div class="unit-state-pill">${actionState}</div>
+          </div>
+          <div class="muted">主将：${escapeHtml(unit.general?.name || unit.name)}${unit.isCommander ? ' · 主帅' : ''}</div>
+          <div class="unit-meter">
+            <span>总兵力</span>
+            <div class="unit-meter-track"><i class="unit-meter-fill" style="width:${soldierPercent}%"></i></div>
+            <strong>${total}</strong>
+          </div>
+          <div class="unit-meter unit-meter--morale">
+            <span>士气</span>
+            <div class="unit-meter-track"><i class="unit-meter-fill" style="width:${moralePercent}%"></i></div>
+            <strong>${unit.morale ?? 0}/100</strong>
+          </div>
+          <div class="unit-stat-row"><span>阵型</span><strong>${escapeHtml(getFormationTemplateLabel(unit))}</strong></div>
+          <div class="unit-stat-row"><span>机动/射程</span><strong>${moveText} / ${rangeText}</strong></div>
+          <div class="unit-stat-row"><span>兵种构成</span><strong>${escapeHtml(getFormationCompositionText(unit))}</strong></div>
+          <div class="unit-stat-row"><span>状态</span><strong>${escapeHtml(tier.label)} · ${sideLabel} · ${pos}</strong></div>
         </div>
       `;
 
@@ -2535,6 +3547,39 @@
         <div class="status-item"><div class="label">当前选择</div><div>${escapeHtml(selectedText)}</div></div>
         <div class="status-item"><div class="label">战场兵力</div><div>我方 ${playerAlive} 队 · 敌方 ${enemyAlive} 队</div></div>
       `;
+    }
+
+    function getSideBattleTotals(side) {
+      const sideUnits = units.filter(unit => unit.side === side && !unit.isSupplyCart);
+      const soldiers = sideUnits.reduce((total, unit) => total + Math.max(0, unit.soldiers || 0), 0);
+      const maxSoldiers = sideUnits.reduce((total, unit) => total + Math.max(0, unit.maxSoldiers || 0), 0);
+      const activeUnits = sideUnits.filter(unit => unit.soldiers > 0);
+      const morale = activeUnits.length
+        ? Math.round(activeUnits.reduce((total, unit) => total + (unit.morale || 0), 0) / activeUnits.length)
+        : 0;
+      return { soldiers, maxSoldiers, morale };
+    }
+
+    function renderTopBattleStats() {
+      const configs = [
+        { side: 'player', prefix: 'ally' },
+        { side: 'enemy', prefix: 'enemy' },
+      ];
+      for (const { side, prefix } of configs) {
+        const totals = getSideBattleTotals(side);
+        const soldierPct = totals.maxSoldiers
+          ? Math.max(0, Math.min(100, Math.round(totals.soldiers / totals.maxSoldiers * 100)))
+          : 0;
+        const moralePct = Math.max(0, Math.min(100, totals.morale));
+        const soldiersLabel = document.getElementById(`${prefix}-soldiers-label`);
+        const moraleLabel = document.getElementById(`${prefix}-morale-label`);
+        const soldiersFill = document.getElementById(`${prefix}-soldiers-fill`);
+        const moraleFill = document.getElementById(`${prefix}-morale-fill`);
+        if (soldiersLabel) soldiersLabel.textContent = `总兵力 ${totals.soldiers}`;
+        if (moraleLabel) moraleLabel.textContent = `总士气 ${totals.morale}`;
+        if (soldiersFill) soldiersFill.style.width = `${soldierPct}%`;
+        if (moraleFill) moraleFill.style.width = `${moralePct}%`;
+      }
     }
 
     function getDefaultUnitFacing(side) {
@@ -3269,24 +4314,46 @@
       phase = 'ended';
     }
 
+    const BATTLE_ROW_Y = [38, 64, 90];
+    const BATTLE_ALLY_SLOTS = {
+      'rear-left': { row: 0, x: 36, z: 10, scale: 0.92, anchor: 'bottom-center' },
+      'rear-center': { row: 0, x: 56, z: 11, scale: 0.92, anchor: 'bottom-center' },
+      'rear-right': { row: 0, x: 76, z: 12, scale: 0.92, anchor: 'bottom-center' },
+      'middle-left': { row: 1, x: 26, z: 20, scale: 0.92, anchor: 'bottom-center' },
+      'middle-center': { row: 1, x: 46, z: 21, scale: 0.92, anchor: 'bottom-center' },
+      'middle-right': { row: 1, x: 66, z: 22, scale: 0.92, anchor: 'bottom-center' },
+      'front-left': { row: 2, x: 16, z: 30, scale: 0.92, anchor: 'bottom-center' },
+      'front-center': { row: 2, x: 36, z: 31, scale: 0.92, anchor: 'bottom-center' },
+      'front-right': { row: 2, x: 56, z: 32, scale: 0.92, anchor: 'bottom-center' },
+    };
+    const BATTLE_ENEMY_SLOTS = {
+      'rear-left': { row: 0, x: 44, z: 10, scale: 0.92, anchor: 'bottom-center' },
+      'rear-center': { row: 0, x: 64, z: 11, scale: 0.92, anchor: 'bottom-center' },
+      'rear-right': { row: 0, x: 84, z: 12, scale: 0.92, anchor: 'bottom-center' },
+      'middle-left': { row: 1, x: 34, z: 20, scale: 0.92, anchor: 'bottom-center' },
+      'middle-center': { row: 1, x: 54, z: 21, scale: 0.92, anchor: 'bottom-center' },
+      'middle-right': { row: 1, x: 74, z: 22, scale: 0.92, anchor: 'bottom-center' },
+      'front-left': { row: 2, x: 24, z: 30, scale: 0.92, anchor: 'bottom-center' },
+      'front-center': { row: 2, x: 44, z: 31, scale: 0.92, anchor: 'bottom-center' },
+      'front-right': { row: 2, x: 64, z: 32, scale: 0.92, anchor: 'bottom-center' },
+    };
+
     function getBattleSlotPosition(slotKey, mirrorCols = false) {
       const [rowName, colName] = slotKey.split('-');
-      const rowMap = { front: 0, middle: 1, rear: 2 };
       const colMap = { left: 0, center: 1, right: 2 };
-      const displayColName = mirrorCols
-        ? ({ left: 'right', center: 'center', right: 'left' }[colName] || colName)
-        : colName;
-      const xByRow = { front: 66, middle: 38, rear: 10 };
-      const xByCol = { left: -6, center: 0, right: 6 };
-      const yByCol = { left: 16, center: 50, right: 84 };
-      const rowLift = { front: 0, middle: 10, rear: 20 };
+      const slotConfig = (mirrorCols ? BATTLE_ALLY_SLOTS : BATTLE_ENEMY_SLOTS)[slotKey] ||
+        BATTLE_ALLY_SLOTS[slotKey] ||
+        { row: 1, x: 50, z: 10, scale: 0.92, anchor: 'bottom-center' };
+      const row = Math.max(0, Math.min(2, slotConfig.row));
       return {
-        row: rowMap[rowName] ?? 0,
+        row,
         col: colMap[colName] ?? 0,
         rowClass: `row-${rowName}`,
-        x: (xByRow[rowName] ?? 38) + (xByCol[displayColName] ?? 0),
-        y: (yByCol[displayColName] ?? 51) + (rowLift[rowName] ?? 0),
-        z: 10 + (colMap[displayColName] ?? 0) * 3 + (rowMap[rowName] ?? 0),
+        x: slotConfig.x,
+        y: BATTLE_ROW_Y[row],
+        z: slotConfig.z,
+        scale: slotConfig.scale,
+        anchor: slotConfig.anchor,
       };
     }
 
@@ -3725,6 +4792,8 @@
       slot.style.setProperty('--col', String(pos.col));
       slot.style.setProperty('--x', String(pos.x));
       slot.style.setProperty('--y', String(pos.y));
+      slot.style.setProperty('--slot-scale', String(pos.scale ?? 1));
+      slot.dataset.anchor = pos.anchor || 'bottom-center';
       slot.style.zIndex = String(pos.z);
 
       const canvas = document.createElement('canvas');
@@ -3866,21 +4935,21 @@
       const targetRect = targetCanvas.getBoundingClientRect();
       const proxy = document.createElement('canvas');
       const sourceUnit = getBattleTimelineUnit(report, step.sourceSide);
-      const proxyOffsetX = 27;
-      const proxyOffsetTop = 44;
       proxy.className = `battle-spine-proxy ${sourceUnit.side === 'enemy' ? 'enemy' : 'player'}`;
-      proxy.style.left = `${sourceRect.left - boxRect.left - proxyOffsetX}px`;
-      proxy.style.top = `${sourceRect.top - boxRect.top - proxyOffsetTop}px`;
+      proxy.style.width = `${sourceRect.width}px`;
+      proxy.style.height = `${sourceRect.height}px`;
+      proxy.style.left = `${sourceRect.left - boxRect.left}px`;
+      proxy.style.top = `${sourceRect.top - boxRect.top}px`;
       box.appendChild(proxy);
       sourceSlot.classList.add('is-proxying');
 
       const from = {
-        x: sourceRect.left - boxRect.left - proxyOffsetX,
-        y: sourceRect.top - boxRect.top - proxyOffsetTop,
+        x: sourceRect.left - boxRect.left,
+        y: sourceRect.top - boxRect.top,
       };
       const to = {
-        x: targetRect.left - boxRect.left - proxyOffsetX,
-        y: targetRect.top - boxRect.top - proxyOffsetTop,
+        x: targetRect.left - boxRect.left,
+        y: targetRect.top - boxRect.top,
       };
 
       await animateBattleSpineProxy(proxy, renderer, from, to, 'jump', renderer.getActionDurationMs('jump'), {
@@ -4521,6 +5590,7 @@
       updateDebug();
       renderInspectedUnitPanel();
       renderBattleStatusPanel();
+      renderTopBattleStats();
       renderActionMenu();
     }
 
@@ -4543,7 +5613,6 @@
 
     function renderActionMenu() {
       const menu = document.getElementById('action-menu');
-      const hint = document.getElementById('action-menu-hint');
       const waitBtn = document.getElementById('action-wait');
       const rallyBtn = document.getElementById('action-rally');
       const attackBtn = document.getElementById('action-attack');
@@ -4560,9 +5629,6 @@
       }
       const attackCount = attackable.length;
       const selectingAttackTarget = mode === 'target-attack';
-      hint.textContent = mode === 'target-attack'
-        ? '选择攻击目标'
-        : `选择行动 · 右键可撤回 · 可攻 ${attackCount}`;
       waitBtn.hidden = selectingAttackTarget;
       rallyBtn.hidden = selectingAttackTarget;
       attackBtn.hidden = selectingAttackTarget;

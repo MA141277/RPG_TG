@@ -165,7 +165,7 @@ export class MainUiFlow {
     this.onStartGame = options.onStartGame;
     this.onContinueGame = options.onContinueGame;
     this.onStartScenarioPack = options.onStartScenarioPack;
-    this.onImportScenarioPackText = options.onImportScenarioPackText;
+    this.onImportScenarioPackFiles = options.onImportScenarioPackFiles;
     this.loadSaveData = options.loadSaveData;
     this.getAppState = options.getAppState;
     this.selectedCharacterId = this.characters[0]?.id ?? null;
@@ -335,7 +335,7 @@ export class MainUiFlow {
             <button type="button" class="c-main-ui-json-text-button" data-main-ui-action="import-scenario-file">
               导入 JSON
             </button>
-            <input class="c-main-ui-scenario-file-input" type="file" accept="application/json,.json" data-main-ui-scenario-file hidden>
+            <input class="c-main-ui-scenario-file-input" type="file" accept="application/json,.json" data-main-ui-scenario-file webkitdirectory directory multiple hidden>
           </div>
         </div>
       </section>
@@ -645,7 +645,7 @@ export class MainUiFlow {
 
   async onChange(event) {
     const target = event.target;
-    if (!(target instanceof HTMLInputElement)) {
+    if (!(target instanceof globalThis.HTMLInputElement)) {
       return;
     }
 
@@ -653,13 +653,13 @@ export class MainUiFlow {
       return;
     }
 
-    const file = target.files?.[0];
+    const files = Array.from(target.files ?? []);
     target.value = "";
-    if (file == null) {
+    if (files.length === 0) {
       return;
     }
 
-    await this.onImportScenarioPackText?.(file.name, await file.text());
+    await this.onImportScenarioPackFiles?.(files);
   }
 
   scheduleCharacterDetailTransitionCleanup() {
@@ -745,6 +745,19 @@ export class MainUiFlow {
 
     this.inkParticleSystem = new InkParticleSystem(canvas);
     this.installInkParticleDebugTools();
+    this.overlayRoot
+      .querySelectorAll(
+        [
+          ".c-main-ui-character-card[data-character-id]",
+          ".c-main-ui-page-button",
+          ".c-main-ui-page-turn-button",
+          ".c-main-ui-image-button--choose",
+          ".c-main-ui-book-tab",
+        ].join(", ")
+      )
+      .forEach((element) => {
+        this.inkParticleSystem?.prepareElementShape(element);
+      });
     const selectedCard = this.overlayRoot.querySelector(".c-main-ui-character-card.is-selected");
     if (
       selectedCard != null &&
@@ -848,6 +861,12 @@ const INK_PARTICLE_COLORS = [
   [182, 71, 47],
   [150, 35, 25],
 ];
+const INK_CONTOUR_ALPHA_THRESHOLD = 28;
+const INK_CONTOUR_SAMPLE_MAX_SIZE = 128;
+const INK_CONTOUR_MIN_POINTS = 12;
+const INK_IMAGE_TARGET_SELECTORS = [
+  ".c-main-ui-character-card__avatar-image",
+].join(", ");
 
 class InkParticleSystem {
   constructor(canvas) {
@@ -860,6 +879,12 @@ class InkParticleSystem {
     this.lastTimestamp = 0;
     this.width = 0;
     this.height = 0;
+    this.shapeCache = new Map();
+    this.maskCanvas =
+      typeof globalThis.OffscreenCanvas === "function"
+        ? new globalThis.OffscreenCanvas(1, 1)
+        : globalThis.document.createElement("canvas");
+    this.maskContext = this.maskCanvas.getContext("2d", { willReadFrequently: true });
     this.isReducedMotion =
       typeof globalThis.matchMedia === "function" &&
       globalThis.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -905,6 +930,13 @@ class InkParticleSystem {
 
     this.spawnForElement(element, options.count ?? randomInt(28, 45), options);
     this.ensureRunning();
+  }
+
+  prepareElementShape(element) {
+    const source = getElementInkImageSource(element);
+    if (source != null) {
+      this.loadShapeCacheEntry(source.url);
+    }
   }
 
   startLoopForElement(id, element, options = {}) {
@@ -1018,7 +1050,8 @@ class InkParticleSystem {
 
   spawnForElement(element, count, options = {}) {
     const canvasRect = this.canvas.getBoundingClientRect();
-    const targetRect = element.getBoundingClientRect();
+    const targetShape = this.resolveTargetShape(element);
+    const targetRect = targetShape.rect;
     if (
       targetRect.width <= 0 ||
       targetRect.height <= 0 ||
@@ -1031,14 +1064,15 @@ class InkParticleSystem {
     }
 
     for (let index = 0; index < count; index += 1) {
-      const particle = createInkParticle(targetRect, canvasRect, options);
+      const particle = createInkParticle(targetShape, canvasRect, options);
       this.particles.push(particle);
     }
   }
 
   drawRectForElement(element) {
     const canvasRect = this.canvas.getBoundingClientRect();
-    const targetRect = element.getBoundingClientRect();
+    const targetShape = this.resolveTargetShape(element);
+    const targetRect = targetShape.rect;
     const bleed = 4;
     this.debugRects.push({
       x: targetRect.left - canvasRect.left - bleed,
@@ -1100,16 +1134,77 @@ class InkParticleSystem {
     globalThis.removeEventListener("resize", this.resize);
     globalThis.document.removeEventListener("visibilitychange", this.handleVisibilityChange);
   }
+
+  resolveTargetShape(element) {
+    const fallbackRect = element.getBoundingClientRect();
+    const source = getElementInkImageSource(element);
+    if (source == null) {
+      return { type: "rect", rect: fallbackRect };
+    }
+
+    const entry = this.loadShapeCacheEntry(source.url);
+    if (entry.status !== "ready") {
+      return { type: "rect", rect: source.rect ?? fallbackRect };
+    }
+
+    const rect = getInkImageDrawRect(source, entry.image) ?? fallbackRect;
+    if (entry.contour.points.length < INK_CONTOUR_MIN_POINTS) {
+      return { type: "rect", rect };
+    }
+
+    return {
+      type: "contour",
+      rect,
+      contour: entry.contour,
+    };
+  }
+
+  loadShapeCacheEntry(url) {
+    const cached = this.shapeCache.get(url);
+    if (cached != null) {
+      return cached;
+    }
+
+    const image = new globalThis.Image();
+    const entry = {
+      status: "loading",
+      image,
+      contour: { points: [] },
+    };
+    this.shapeCache.set(url, entry);
+
+    image.onload = () => {
+      entry.contour = extractInkContourFromImage(image, this.maskCanvas, this.maskContext);
+      entry.status = entry.contour.points.length >= INK_CONTOUR_MIN_POINTS ? "ready" : "failed";
+    };
+    image.onerror = () => {
+      entry.status = "failed";
+    };
+    image.src = url;
+
+    if (image.complete && image.naturalWidth > 0 && image.naturalHeight > 0) {
+      entry.contour = extractInkContourFromImage(image, this.maskCanvas, this.maskContext);
+      entry.status = entry.contour.points.length >= INK_CONTOUR_MIN_POINTS ? "ready" : "failed";
+    }
+
+    return entry;
+  }
 }
 
-function createInkParticle(targetRect, canvasRect, options = {}) {
+function createInkParticle(targetShape, canvasRect, options = {}) {
   const edge = chooseInkEdge(options.edgeBias);
-  const source = getEdgePoint(targetRect, edge);
+  const source =
+    targetShape.type === "contour"
+      ? getContourPoint(targetShape, edge)
+      : getRectEdgePoint(targetShape.rect, edge);
   const x = source.x - canvasRect.left;
   const y = source.y - canvasRect.top;
   const distance = randomRange(options.distanceMin ?? 6, options.distanceMax ?? 22);
   const spread = randomRange(-0.62, 0.62);
-  const direction = getEdgeDirection(edge) + spread;
+  const direction =
+    source.normalX == null || source.normalY == null
+      ? getEdgeDirection(edge) + spread
+      : Math.atan2(source.normalY, source.normalX) + spread;
   const isLargeDrop = Math.random() < 0.08;
 
   return {
@@ -1127,6 +1222,338 @@ function createInkParticle(targetRect, canvasRect, options = {}) {
     drift: 0,
     driftSpeed: randomRange(-2.4, 2.4),
     seed: Math.random(),
+  };
+}
+
+function getElementInkImageSource(element) {
+  if (element == null || typeof element.querySelector !== "function") {
+    return null;
+  }
+
+  const backgroundUrl = getCssBackgroundImageUrl(element);
+  if (backgroundUrl != null) {
+    return {
+      type: "background",
+      element,
+      url: backgroundUrl,
+    };
+  }
+
+  const imageElement =
+    typeof globalThis.HTMLImageElement === "function" &&
+    element instanceof globalThis.HTMLImageElement
+      ? element
+      : element.querySelector(INK_IMAGE_TARGET_SELECTORS);
+  if (
+    imageElement == null ||
+    ((imageElement.currentSrc ?? "") === "" && (imageElement.src ?? "") === "")
+  ) {
+    return null;
+  }
+
+  return {
+    type: "image",
+    element: imageElement,
+    url: imageElement.currentSrc || imageElement.src,
+  };
+}
+
+function getCssBackgroundImageUrl(element) {
+  const style = globalThis.getComputedStyle(element);
+  const backgroundImage = getFirstCssLayer(style.backgroundImage);
+  if (backgroundImage === "" || backgroundImage === "none") {
+    return null;
+  }
+
+  const match = backgroundImage.match(/^url\((?:"([^"]+)"|'([^']+)'|(.+))\)$/);
+  if (match == null) {
+    return null;
+  }
+
+  return match[1] ?? match[2] ?? match[3]?.trim() ?? null;
+}
+
+function getInkImageDrawRect(source, image) {
+  if (source.type === "background") {
+    return getBackgroundImageDrawRect(source.element, image);
+  }
+
+  return getObjectFitImageDrawRect(source.element, image);
+}
+
+function getBackgroundImageDrawRect(element, image) {
+  const rect = element.getBoundingClientRect();
+  if (image.naturalWidth <= 0 || image.naturalHeight <= 0) {
+    return rect;
+  }
+
+  const style = globalThis.getComputedStyle(element);
+  const size = resolveBackgroundSize(
+    getFirstCssLayer(style.backgroundSize),
+    rect.width,
+    rect.height,
+    image.naturalWidth,
+    image.naturalHeight
+  );
+  const position = resolveBackgroundPosition(
+    getFirstCssLayer(style.backgroundPosition),
+    rect.width,
+    rect.height,
+    size.width,
+    size.height
+  );
+
+  return createRectLike(
+    rect.left + position.x,
+    rect.top + position.y,
+    size.width,
+    size.height
+  );
+}
+
+function getObjectFitImageDrawRect(imageElement, image) {
+  const rect = imageElement.getBoundingClientRect();
+  if (image.naturalWidth <= 0 || image.naturalHeight <= 0) {
+    return rect;
+  }
+
+  const style = globalThis.getComputedStyle(imageElement);
+  const objectFit = style.objectFit || "fill";
+  if (objectFit === "fill" || objectFit === "none") {
+    return rect;
+  }
+
+  const scale =
+    objectFit === "cover"
+      ? Math.max(rect.width / image.naturalWidth, rect.height / image.naturalHeight)
+      : Math.min(rect.width / image.naturalWidth, rect.height / image.naturalHeight);
+  const width = image.naturalWidth * scale;
+  const height = image.naturalHeight * scale;
+  const position = resolveBackgroundPosition(
+    style.objectPosition || "50% 50%",
+    rect.width,
+    rect.height,
+    width,
+    height
+  );
+
+  return createRectLike(rect.left + position.x, rect.top + position.y, width, height);
+}
+
+function resolveBackgroundSize(sizeValue, boxWidth, boxHeight, imageWidth, imageHeight) {
+  const value = sizeValue.trim();
+  if (value === "contain" || value === "") {
+    const scale = Math.min(boxWidth / imageWidth, boxHeight / imageHeight);
+    return { width: imageWidth * scale, height: imageHeight * scale };
+  }
+
+  if (value === "cover") {
+    const scale = Math.max(boxWidth / imageWidth, boxHeight / imageHeight);
+    return { width: imageWidth * scale, height: imageHeight * scale };
+  }
+
+  const tokens = value.split(/\s+/);
+  const widthValue = parseCssLengthOrPercent(tokens[0], boxWidth);
+  const heightValue =
+    tokens.length > 1 ? parseCssLengthOrPercent(tokens[1], boxHeight) : null;
+
+  if (widthValue == null && heightValue == null) {
+    return { width: boxWidth, height: boxHeight };
+  }
+
+  if (widthValue == null) {
+    return {
+      width: (heightValue / imageHeight) * imageWidth,
+      height: heightValue,
+    };
+  }
+
+  if (heightValue == null) {
+    return {
+      width: widthValue,
+      height: (widthValue / imageWidth) * imageHeight,
+    };
+  }
+
+  return { width: widthValue, height: heightValue };
+}
+
+function resolveBackgroundPosition(positionValue, boxWidth, boxHeight, imageWidth, imageHeight) {
+  const tokens = positionValue.trim().split(/\s+/).filter(Boolean);
+  const horizontalToken = tokens[0] ?? "50%";
+  const verticalToken = tokens[1] ?? "50%";
+
+  return {
+    x: resolvePositionOffset(horizontalToken, boxWidth, imageWidth, "x"),
+    y: resolvePositionOffset(verticalToken, boxHeight, imageHeight, "y"),
+  };
+}
+
+function resolvePositionOffset(token, boxSize, imageSize, axis) {
+  if (token === "center") {
+    return (boxSize - imageSize) * 0.5;
+  }
+  if ((axis === "x" && token === "right") || (axis === "y" && token === "bottom")) {
+    return boxSize - imageSize;
+  }
+  if ((axis === "x" && token === "left") || (axis === "y" && token === "top")) {
+    return 0;
+  }
+  if (token.endsWith("%")) {
+    return (boxSize - imageSize) * (Number.parseFloat(token) / 100);
+  }
+  if (token.endsWith("px")) {
+    return Number.parseFloat(token);
+  }
+  const numericValue = Number.parseFloat(token);
+  return Number.isFinite(numericValue) ? numericValue : (boxSize - imageSize) * 0.5;
+}
+
+function parseCssLengthOrPercent(value, total) {
+  if (value == null || value === "auto") {
+    return null;
+  }
+  if (value.endsWith("%")) {
+    return total * (Number.parseFloat(value) / 100);
+  }
+  if (value.endsWith("px")) {
+    return Number.parseFloat(value);
+  }
+  const numericValue = Number.parseFloat(value);
+  return Number.isFinite(numericValue) ? numericValue : null;
+}
+
+function getFirstCssLayer(value) {
+  return value.split(",")[0]?.trim() ?? "";
+}
+
+function createRectLike(left, top, width, height) {
+  return {
+    left,
+    top,
+    right: left + width,
+    bottom: top + height,
+    width,
+    height,
+  };
+}
+
+function extractInkContourFromImage(image, canvas, context) {
+  if (context == null || image.naturalWidth <= 0 || image.naturalHeight <= 0) {
+    return createEmptyInkContour();
+  }
+
+  const scale = Math.min(
+    1,
+    INK_CONTOUR_SAMPLE_MAX_SIZE / Math.max(image.naturalWidth, image.naturalHeight)
+  );
+  const width = Math.max(1, Math.round(image.naturalWidth * scale));
+  const height = Math.max(1, Math.round(image.naturalHeight * scale));
+  canvas.width = width;
+  canvas.height = height;
+  context.clearRect(0, 0, width, height);
+  context.drawImage(image, 0, 0, width, height);
+
+  let imageData;
+  try {
+    imageData = context.getImageData(0, 0, width, height);
+  } catch {
+    return createEmptyInkContour();
+  }
+
+  const alphaAt = (x, y) => {
+    if (x < 0 || x >= width || y < 0 || y >= height) {
+      return 0;
+    }
+    return imageData.data[(y * width + x) * 4 + 3];
+  };
+  const contour = createEmptyInkContour();
+  contour.width = width;
+  contour.height = height;
+
+  for (let y = 0; y < height; y += 1) {
+    for (let x = 0; x < width; x += 1) {
+      if (alphaAt(x, y) <= INK_CONTOUR_ALPHA_THRESHOLD) {
+        continue;
+      }
+
+      let normalX = 0;
+      let normalY = 0;
+      for (let neighborY = -1; neighborY <= 1; neighborY += 1) {
+        for (let neighborX = -1; neighborX <= 1; neighborX += 1) {
+          if (neighborX === 0 && neighborY === 0) {
+            continue;
+          }
+          if (alphaAt(x + neighborX, y + neighborY) <= INK_CONTOUR_ALPHA_THRESHOLD) {
+            normalX += neighborX;
+            normalY += neighborY;
+          }
+        }
+      }
+
+      if (normalX === 0 && normalY === 0) {
+        continue;
+      }
+
+      const normalized = normalizeVector(normalX, normalY);
+      const point = {
+        x: (x + 0.5) / width,
+        y: (y + 0.5) / height,
+        normalX: normalized.x,
+        normalY: normalized.y,
+        edge: classifyContourEdge((x + 0.5) / width, (y + 0.5) / height),
+      };
+      contour.points.push(point);
+      contour.byEdge[point.edge].push(point);
+    }
+  }
+
+  return contour;
+}
+
+function createEmptyInkContour() {
+  return {
+    width: 0,
+    height: 0,
+    points: [],
+    byEdge: {
+      left: [],
+      right: [],
+      top: [],
+      bottom: [],
+    },
+  };
+}
+
+function classifyContourEdge(x, y) {
+  const distances = [
+    ["left", x],
+    ["right", 1 - x],
+    ["top", y],
+    ["bottom", 1 - y],
+  ];
+  distances.sort((a, b) => a[1] - b[1]);
+  return distances[0][0];
+}
+
+function getContourPoint(targetShape, edge) {
+  const { rect, contour } = targetShape;
+  const edgePoints = contour.byEdge[edge] ?? [];
+  const candidates = edgePoints.length > 0 ? edgePoints : contour.points;
+  const point = candidates[randomInt(0, candidates.length - 1)];
+  const jitterX = randomRange(-0.45, 0.45) / Math.max(1, contour.width);
+  const jitterY = randomRange(-0.45, 0.45) / Math.max(1, contour.height);
+  const screenNormal = normalizeVector(
+    point.normalX * rect.width,
+    point.normalY * rect.height
+  );
+  const bleed = randomRange(-1.5, 3.5);
+
+  return {
+    x: rect.left + clamp01(point.x + jitterX) * rect.width + screenNormal.x * bleed,
+    y: rect.top + clamp01(point.y + jitterY) * rect.height + screenNormal.y * bleed,
+    normalX: screenNormal.x,
+    normalY: screenNormal.y,
   };
 }
 
@@ -1167,28 +1594,36 @@ function chooseInkEdge(edgeBias) {
   return "top";
 }
 
-function getEdgePoint(rect, edge) {
+function getRectEdgePoint(rect, edge) {
   const inset = 6;
   switch (edge) {
     case "left":
       return {
         x: rect.left + randomRange(-4, inset),
         y: randomRange(rect.top + inset, rect.bottom - inset),
+        normalX: -1,
+        normalY: 0,
       };
     case "right":
       return {
         x: rect.right + randomRange(-inset, 4),
         y: randomRange(rect.top + inset, rect.bottom - inset),
+        normalX: 1,
+        normalY: 0,
       };
     case "bottom":
       return {
         x: randomRange(rect.left + inset, rect.right - inset),
         y: rect.bottom + randomRange(-inset, 4),
+        normalX: 0,
+        normalY: 1,
       };
     default:
       return {
         x: randomRange(rect.left + inset, rect.right - inset),
         y: rect.top + randomRange(-4, inset),
+        normalX: 0,
+        normalY: -1,
       };
   }
 }
@@ -1216,6 +1651,14 @@ function randomInt(min, max) {
 
 function clamp01(value) {
   return Math.min(1, Math.max(0, value));
+}
+
+function normalizeVector(x, y) {
+  const length = Math.hypot(x, y);
+  if (length <= 0.0001) {
+    return { x: 0, y: -1 };
+  }
+  return { x: x / length, y: y / length };
 }
 
 function rectToDebugData(rect) {

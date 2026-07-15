@@ -12,6 +12,7 @@ export type GameContent = {
   eventDefinitionsById: Record<string, EventDefinition>;
   sceneDefinitionsById: Record<string, SceneDefinition>;
   activityDefinitionsById?: Record<string, ActivityDefinition> | undefined;
+  textEntriesById?: Record<string, string> | undefined;
 };
 
 export type GameStoreSnapshot = {
@@ -39,6 +40,7 @@ export function createGameStore(initialState: GameState, content: GameContent) {
         eventDefinitionsById: content.eventDefinitionsById,
         activityDefinitionsById: content.activityDefinitionsById,
         characterDefinitions,
+        textEntriesById: content.textEntriesById,
       });
 
       state = result.state;
@@ -53,6 +55,7 @@ export function createGameStore(initialState: GameState, content: GameContent) {
         eventDefinitionsById: content.eventDefinitionsById,
         activityDefinitionsById: content.activityDefinitionsById,
         characterDefinitions,
+        textEntriesById: content.textEntriesById,
       });
 
       state = result.state;

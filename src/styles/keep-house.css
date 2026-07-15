@@ -12,10 +12,11 @@
   inset: 17% 11% 26% 7%;
   z-index: 1;
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 2.4rem 1.6rem;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 1.7rem 1rem;
   align-content: center;
   justify-items: center;
+  transform: translateY(-100px);
   pointer-events: none;
 }
 
@@ -27,9 +28,16 @@
   min-width: 0;
 }
 
-.view-house-keep .c-keep-house-seat.is-selected .c-keep-house-seat__avatar {
-  filter: brightness(1.04);
-  transform: translateY(-4px);
+.view-house-keep .c-keep-house-seat__card {
+  width: 112px;
+  transition:
+    transform var(--duration-fast) ease,
+    filter var(--duration-fast) ease;
+}
+
+.view-house-keep .c-keep-house-seat.is-selected .c-keep-house-seat__card {
+  filter: brightness(1.06) drop-shadow(0 16px 24px rgb(0 0 0 / 28%));
+  transform: translateY(-5px);
 }
 
 .view-house-keep .c-keep-house-seat__avatar {
@@ -38,6 +46,11 @@
   transition:
     transform var(--duration-fast) ease,
     filter var(--duration-fast) ease;
+}
+
+.view-house-keep .c-keep-house-seat.is-selected .c-keep-house-seat__avatar {
+  filter: brightness(1.04);
+  transform: translateY(-4px);
 }
 
 .view-house-keep .c-keep-house-seat__nameplate {
@@ -71,9 +84,13 @@
 
 @media (width <= 900px) {
   .view-house-keep .c-keep-house-meeting {
-    inset: 12% 4% 30% 4%;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 1.4rem 0.9rem;
+    inset: 12% 4% 30%;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.2rem 0.8rem;
+  }
+
+  .view-house-keep .c-keep-house-seat__card {
+    width: 100px;
   }
 
   .view-house-keep .c-keep-house-seat__avatar {

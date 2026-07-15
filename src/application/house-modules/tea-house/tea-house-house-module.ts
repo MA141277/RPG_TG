@@ -1,4 +1,8 @@
 import {
+  teaHouseBossDialogueTextIds,
+  teaHouseBossGreetingTextIds,
+  teaHouseBossIntelTextIds,
+  teaHouseBossOpenTextIds,
   teaHouseBossProfile,
   teaHouseLowIntelChance,
   teaHouseTeaCost,
@@ -28,6 +32,7 @@ import {
 import { assertExists } from "../../../shared/assert";
 import { pickRandom } from "../../../shared/random";
 import { defaultRuntimeContent } from "../../content/default-runtime-content";
+import { resolveTextEntry, resolveTextTemplateEntry } from "../../content/text-resolution";
 import { sampleCityNpcIdsForLocation } from "../../city-npcs/city-npc-pool-state";
 import {
   createTeaHouseBossActor,
@@ -196,6 +201,53 @@ function createTeaHouseActors(
   return [bossActor, ...guestActors];
 }
 
+function getTeaHouseTextEntries(
+  textEntriesById?: Record<string, string>
+): Record<string, string> {
+  return textEntriesById ?? defaultRuntimeContent.textEntriesById ?? {};
+}
+
+function resolveTeaHouseText(
+  textEntriesById: Record<string, string>,
+  textId: string,
+  fallback?: string
+): string {
+  return resolveTextEntry(
+    textEntriesById,
+    textId,
+    fallback ?? `MISSING_TEXT:${textId}`
+  );
+}
+
+function resolveTeaHouseTemplateText(
+  textEntriesById: Record<string, string>,
+  textId: string,
+  values: Record<string, string | number | boolean | null | undefined>,
+  fallback?: string
+): string {
+  return resolveTextTemplateEntry(
+    textEntriesById,
+    textId,
+    values,
+    fallback ?? `MISSING_TEXT:${textId}`
+  );
+}
+
+function resolveTeaHouseTextLines(
+  textEntriesById: Record<string, string>,
+  textIds: readonly string[]
+): string[] {
+  return textIds.map((textId) => resolveTeaHouseText(textEntriesById, textId));
+}
+
+function pickRandomResolvedTeaHouseText(
+  textEntriesById: Record<string, string>,
+  textIds: readonly string[]
+): string {
+  const textId = pickRandom(textIds);
+  return resolveTeaHouseText(textEntriesById, textId);
+}
+
 function getSelectedActor(
   gameState: HouseModuleDispatchInput["gameState"],
   houseId: string,
@@ -212,32 +264,76 @@ function getSelectedActor(
   );
 }
 
-function pickActorDialogueLine(actor: TeaHouseActor): string {
+function pickActorDialogueLine(
+  actor: TeaHouseActor,
+  textEntriesById?: Record<string, string>
+): string {
+  if (actor.isFixedHost) {
+    return pickRandomResolvedTeaHouseText(
+      getTeaHouseTextEntries(textEntriesById),
+      teaHouseBossDialogueTextIds
+    );
+  }
+
   return actor.dialoguePool.length > 0
     ? pickRandom(actor.dialoguePool)
-    : "（轻轻抿茶）没有立刻开口。";
+    : resolveTeaHouseText(
+        getTeaHouseTextEntries(textEntriesById),
+        "runtime.zhu_yuanzhang.tea_house.dialogue.default"
+      );
 }
 
-function getActorGreetingLines(actor: TeaHouseActor): string[] {
+function getActorGreetingLines(
+  actor: TeaHouseActor,
+  textEntriesById?: Record<string, string>
+): string[] {
+  const entries = getTeaHouseTextEntries(textEntriesById);
+  if (actor.isFixedHost) {
+    return resolveTeaHouseTextLines(entries, teaHouseBossGreetingTextIds);
+  }
+
   return [
-    actor.isFixedHost
-      ? "（擦着茶盏）像是已经知道你会来。"
-      : "（抬眼看了你一下）像是在判断你值不值得多说两句。",
+    resolveTeaHouseText(
+      entries,
+      "runtime.zhu_yuanzhang.tea_house.greeting.guest.001"
+    ),
   ];
 }
 
-function getActorOpenLines(actor: TeaHouseActor): string[] {
+function getActorOpenLines(
+  actor: TeaHouseActor,
+  textEntriesById?: Record<string, string>
+): string[] {
+  const entries = getTeaHouseTextEntries(textEntriesById);
+  if (actor.isFixedHost) {
+    return resolveTeaHouseTextLines(entries, teaHouseBossOpenTextIds);
+  }
+
   return [
-    actor.isFixedHost
-      ? "（笑着抬手）请你入座。"
-      : "（看了你一眼）像是在等你先开口。",
+    resolveTeaHouseText(
+      entries,
+      "runtime.zhu_yuanzhang.tea_house.open.guest.001"
+    ),
   ];
 }
 
-function pickActorIntelLine(actor: TeaHouseActor): string {
+function pickActorIntelLine(
+  actor: TeaHouseActor,
+  textEntriesById?: Record<string, string>
+): string {
+  if (actor.isFixedHost) {
+    return pickRandomResolvedTeaHouseText(
+      getTeaHouseTextEntries(textEntriesById),
+      teaHouseBossIntelTextIds
+    );
+  }
+
   return actor.intelPool.length > 0
     ? pickRandom(actor.intelPool)
-    : "这会儿还没什么新鲜消息。";
+    : resolveTeaHouseText(
+        getTeaHouseTextEntries(textEntriesById),
+        "runtime.zhu_yuanzhang.tea_house.intel.default"
+      );
 }
 
 function formatOutcomeSummaryLines(outcome: TeaHouseActionOutcome): string[] {
@@ -380,20 +476,38 @@ function createActivityConfirmOverlay(
 }
 
 function createCouncilTimeInsufficientOverlay(
-  _actorName: string,
   durationDays: number,
-  remainingDays: number
+  remainingDays: number,
+  textEntriesById?: Record<string, string>
 ): TeaHouseOverlayState {
+  const entries = getTeaHouseTextEntries(textEntriesById);
   return createAlertOverlay(
-    "时日不够",
+    resolveTeaHouseText(
+      entries,
+      "runtime.zhu_yuanzhang.tea_house.debate.insufficient_time.title"
+    ),
     remainingDays <= 0
       ? [
-          `（抬手按住茶盏）评定日期已到，这一场少说要磨上 ${durationDays} 天，眼下已经来不及了。`,
-          "先去把评定应下，改日再坐下来论。",
+          resolveTeaHouseTemplateText(
+            entries,
+            "runtime.zhu_yuanzhang.tea_house.debate.insufficient_time.arrived.001",
+            { durationDays }
+          ),
+          resolveTeaHouseText(
+            entries,
+            "runtime.zhu_yuanzhang.tea_house.debate.insufficient_time.arrived.002"
+          ),
         ]
       : [
-          `（抬手按住茶盏）离评定只剩 ${remainingDays} 天，这一场少说要磨上 ${durationDays} 天，眼下已经来不及了。`,
-          "先去把评定应下，改日再坐下来论。",
+          resolveTeaHouseTemplateText(
+            entries,
+            "runtime.zhu_yuanzhang.tea_house.debate.insufficient_time.remaining.001",
+            { durationDays, remainingDays }
+          ),
+          resolveTeaHouseText(
+            entries,
+            "runtime.zhu_yuanzhang.tea_house.debate.insufficient_time.remaining.002"
+          ),
         ],
     "warning"
   );
@@ -669,7 +783,6 @@ function handleActorAction(
     input.houseDefinition.cityId,
     sessionState
   );
-
   const actorId = parseActorActionId(input.request.actionId);
   if (actorId != null) {
     const nextActor = createTeaHouseActors(
@@ -685,7 +798,7 @@ function handleActorAction(
 
     return withSessionState(input, sessionState, {
       selectedActorId: nextActor.id,
-      dialogueLines: getActorOpenLines(nextActor),
+      dialogueLines: getActorOpenLines(nextActor, input.textEntriesById),
       dialoguePhase: "open",
       overlay: null,
     });
@@ -733,9 +846,9 @@ function handleActorAction(
     if (remainingDays != null) {
       return withSessionState(input, sessionState, {
         overlay: createCouncilTimeInsufficientOverlay(
-          selectedActor.name,
           durationDays,
-          remainingDays
+          remainingDays,
+          input.textEntriesById
         ),
       });
     }
@@ -744,7 +857,12 @@ function handleActorAction(
       input,
       sessionState,
       {
-        dialogueLines: ["（放下茶盏）示意你出题。"],
+        dialogueLines: [
+          resolveTeaHouseText(
+            getTeaHouseTextEntries(input.textEntriesById),
+            "runtime.zhu_yuanzhang.tea_house.debate.opening.001"
+          ),
+        ],
         dialoguePhase: "open",
         overlay: createDebateOverlay(
           selectedActor,
@@ -782,22 +900,30 @@ function handleActorAction(
         input,
         sessionState,
         "open",
-        getActorOpenLines(selectedActor)
+        getActorOpenLines(selectedActor, input.textEntriesById)
       );
     case "open-npc-dialogue":
       return withDialoguePhase(
         input,
         sessionState,
         "open",
-        getActorOpenLines(selectedActor)
+        getActorOpenLines(selectedActor, input.textEntriesById)
       );
     case "dismiss-dialogue":
       return withDialoguePhase(input, sessionState, "idle");
     case "talk": {
       const intelGain = Math.random() < teaHouseLowIntelChance ? 1 : 0;
-      const line = pickActorDialogueLine(selectedActor);
+      const entries = getTeaHouseTextEntries(input.textEntriesById);
+      const line = pickActorDialogueLine(selectedActor, input.textEntriesById);
       const extraLines =
-        intelGain > 0 ? ["你从字里行间又听出了一条可用情报。"] : [];
+        intelGain > 0
+          ? [
+              resolveTeaHouseText(
+                entries,
+                "runtime.zhu_yuanzhang.tea_house.talk.extra_intel"
+              ),
+            ]
+          : [];
 
       return finalizeInteraction(
         input,
@@ -811,7 +937,10 @@ function handleActorAction(
           moneyChange: 0,
           timeCost: 1,
         },
-        "闲谈",
+        resolveTeaHouseText(
+          entries,
+          "runtime.zhu_yuanzhang.tea_house.talk.overlay.title"
+        ),
         extraLines
       );
     }
@@ -853,12 +982,19 @@ function handleActorAction(
       );
     }
     case "inquire": {
-      const intelLine = pickActorIntelLine(selectedActor);
+      const entries = getTeaHouseTextEntries(input.textEntriesById);
+      const intelLine = pickActorIntelLine(selectedActor, input.textEntriesById);
       return finalizeInteraction(
         input,
         sessionState,
         selectedActor,
-        [`（压低声音）${intelLine}`],
+        [
+          resolveTeaHouseTemplateText(
+            entries,
+            "runtime.zhu_yuanzhang.tea_house.inquire.dialogue.001",
+            { intelLine }
+          ),
+        ],
         {
           relationshipChange: 1,
           attributeChange: [],
@@ -866,8 +1002,16 @@ function handleActorAction(
           moneyChange: 0,
           timeCost: 1,
         },
-        "打听消息",
-        ["你把这条消息牢牢记下了。"],
+        resolveTeaHouseText(
+          entries,
+          "runtime.zhu_yuanzhang.tea_house.inquire.overlay.title"
+        ),
+        [
+          resolveTeaHouseText(
+            entries,
+            "runtime.zhu_yuanzhang.tea_house.inquire.overlay.001"
+          ),
+        ],
         "success"
       );
     }
@@ -877,12 +1021,23 @@ function handleActorAction(
         input.playerCharacterId
       );
       if (!canAffordActivityCost(playerCharacter)) {
+        const entries = getTeaHouseTextEntries(input.textEntriesById);
         return withSessionState(input, sessionState, {
           overlay: createAlertOverlay(
-            "先缓口气",
+            resolveTeaHouseText(
+              entries,
+              "runtime.zhu_yuanzhang.tea_house.debate.low_stamina.title"
+            ),
             [
-              "（放下茶盏，摇了摇头）你这会儿神浮气短，真要舌战，也只是强撑。",
-              `先去歇一歇，体力攒到 ${ACTIVITY_COMPLETION_STAMINA_COST} 点以上，再来和我论个高下。`,
+              resolveTeaHouseText(
+                entries,
+                "runtime.zhu_yuanzhang.tea_house.debate.low_stamina.001"
+              ),
+              resolveTeaHouseTemplateText(
+                entries,
+                "runtime.zhu_yuanzhang.tea_house.debate.low_stamina.002",
+                { requiredStamina: ACTIVITY_COMPLETION_STAMINA_COST }
+              ),
             ],
             "warning"
           ),
@@ -899,18 +1054,22 @@ function handleActorAction(
       if (remainingDays != null) {
         return withSessionState(input, sessionState, {
           overlay: createCouncilTimeInsufficientOverlay(
-            selectedActor.name,
             durationDays,
-            remainingDays
+            remainingDays,
+            input.textEntriesById
           ),
         });
       }
 
       return withSessionState(input, sessionState, {
-        overlay: createActivityConfirmOverlay("舌战", [
-          `（抬手压住茶盏）真要论起来，照你如今的辩才，这一场少说也要磨上 ${durationDays} 天。`,
-          formatHouseActivityCostLine(durationDays),
-        ], CONFIRM_START_DEBATE_ACTION_ID),
+        overlay: createActivityConfirmOverlay(
+          "舌战",
+          [
+            `（抬手压住茶盏）真要论起来，照你如今的辩才，这一场少说也要磨上 ${durationDays} 天。`,
+            formatHouseActivityCostLine(durationDays),
+          ],
+          CONFIRM_START_DEBATE_ACTION_ID
+        ),
       });
     }
     default:
@@ -1002,7 +1161,7 @@ export const teaHouseHouseModule: HouseModuleDefinition<"tea-house"> = {
       sessionState: createInitialTeaHouseSessionState(
         guestNpcIds,
         bossActorId,
-        getActorGreetingLines(bossActor)
+        getActorGreetingLines(bossActor, input.textEntriesById)
       ),
       sideEffects: [{ type: "stop-interval", intervalId: DEBATE_INTERVAL_ID }],
     };

@@ -1,4 +1,3 @@
-import { getHouseModule } from "../house-modules/house-module-registry";
 import type { AppState } from "../app-shell";
 import type { HouseDefinition } from "../../domain/house";
 import type { EventDefinition } from "../../domain/event";
@@ -17,6 +16,10 @@ import type {
 import { triggerStoryEvents } from "../story/story-runtime";
 import { advanceGameStateTimeSegments } from "../time/time-progression";
 import { assertExists } from "../../shared/assert";
+import {
+  builtinHouseModuleRegistry,
+  type HouseModuleRegistry,
+} from "../../core/registry/house-module-registry";
 
 type HouseRuntimeDependencies = {
   getAppState(): AppState;
@@ -36,6 +39,8 @@ type HouseRuntimeDependencies = {
   eventDefinitionsById: Record<string, EventDefinition>;
   sceneDefinitionsById: Record<string, SceneDefinition>;
   activityDefinitionsById?: Record<string, ActivityDefinition> | undefined;
+  textEntriesById?: Record<string, string> | undefined;
+  houseModuleRegistry?: HouseModuleRegistry | undefined;
   syncCouncilPriorityAfterGameStateChange(
     previousGameState: GameState,
     councilArrivalNotice?: HouseModuleTransitionResult["councilArrivalNotice"]
@@ -46,6 +51,8 @@ export type HouseRuntime = ReturnType<typeof createHouseRuntime>;
 
 export function createHouseRuntime(dependencies: HouseRuntimeDependencies) {
   const intervalHandles: Record<string, number> = {};
+  const houseModuleRegistry =
+    dependencies.houseModuleRegistry ?? builtinHouseModuleRegistry;
 
   function getActiveHouseDefinition(): HouseDefinition | null {
     const appState = dependencies.getAppState();
@@ -111,13 +118,19 @@ export function createHouseRuntime(dependencies: HouseRuntimeDependencies) {
     }
 
     const appState = dependencies.getAppState();
-    const houseModule = getHouseModule(moduleId);
+    const houseModule = houseModuleRegistry.getModule(moduleId);
+    assertExists(
+      houseModule,
+      `House module "${moduleId}" is not registered for runtime dispatch.`
+    );
     const result = houseModule.dispatch({
       gameState: appState.gameState,
       characterDefinitions: appState.characterDefinitions,
       houseDefinition: activeHouse,
       playerCharacterId: dependencies.playerCharacterId,
       sessionState: appState.gameState.ui.houseSession?.state ?? null,
+      activityDefinitionsById: dependencies.activityDefinitionsById,
+      textEntriesById: dependencies.textEntriesById,
       request,
     });
 
@@ -247,12 +260,18 @@ export function createHouseRuntime(dependencies: HouseRuntimeDependencies) {
     const moduleId = houseDefinition.moduleId;
     if (moduleId != null) {
       const nextAppState = dependencies.getAppState();
-      const houseModule = getHouseModule(moduleId);
+      const houseModule = houseModuleRegistry.getModule(moduleId);
+      assertExists(
+        houseModule,
+        `House module "${moduleId}" is not registered for house entry.`
+      );
       const result = houseModule.enter({
         gameState: nextAppState.gameState,
         characterDefinitions: nextAppState.characterDefinitions,
         houseDefinition,
         playerCharacterId: dependencies.playerCharacterId,
+        activityDefinitionsById: dependencies.activityDefinitionsById,
+        textEntriesById: dependencies.textEntriesById,
       });
       applyHouseModuleResult(houseDefinition, moduleId, result);
     }
@@ -266,6 +285,7 @@ export function createHouseRuntime(dependencies: HouseRuntimeDependencies) {
         eventDefinitionsById: dependencies.eventDefinitionsById,
         sceneDefinitionsById: dependencies.sceneDefinitionsById,
         activityDefinitionsById: dependencies.activityDefinitionsById,
+        textEntriesById: dependencies.textEntriesById,
       },
       {
         timing: "house-enter",
@@ -290,13 +310,19 @@ export function createHouseRuntime(dependencies: HouseRuntimeDependencies) {
     const activeHouse = getActiveHouseDefinition();
     if (activeHouse?.moduleId != null) {
       const appState = dependencies.getAppState();
-      const houseModule = getHouseModule(activeHouse.moduleId);
+      const houseModule = houseModuleRegistry.getModule(activeHouse.moduleId);
+      assertExists(
+        houseModule,
+        `House module "${activeHouse.moduleId}" is not registered for house leave.`
+      );
       const result = houseModule.leave({
         gameState: appState.gameState,
         characterDefinitions: appState.characterDefinitions,
         houseDefinition: activeHouse,
         playerCharacterId: dependencies.playerCharacterId,
         sessionState: appState.gameState.ui.houseSession?.state ?? null,
+        activityDefinitionsById: dependencies.activityDefinitionsById,
+        textEntriesById: dependencies.textEntriesById,
       });
       const councilTriggered = applyHouseModuleResult(
         activeHouse,

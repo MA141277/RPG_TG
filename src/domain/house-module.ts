@@ -1,4 +1,14 @@
 import type { CharacterDefinition, CharacterId } from "./character";
+import type { ActivityDefinition } from "./activity";
+import type {
+  ActivityFortuneBoardCell,
+  ActivityFortuneBoardTripletReward,
+  ActivityPachinkoBoardBall,
+  ActivityPachinkoBoardEventLogEntry,
+  ActivityPachinkoBoardPin,
+  ActivityPachinkoBoardRewardQueueItem,
+  ActivityPachinkoBoardWheelState,
+} from "./activity-session";
 import type { GameState } from "./game-state";
 import type { HouseDefinition } from "./house";
 import type { HomeHouseSessionState } from "./house-modules/home-house-session";
@@ -112,12 +122,15 @@ export type HouseActionContainerViewModel = {
   actions: HouseActionViewModel[];
 };
 
+export type HouseCharacterCardLevel = 1 | 2 | 3 | 4 | 5;
+
 export type HouseStandbyActorViewModel = {
   characterId: CharacterId;
   name: string;
   title?: string;
   actionId?: string;
   isSelected?: boolean;
+  cardLevel?: HouseCharacterCardLevel;
   avatarImageUrl?: string | null;
   portraitImageUrl?: string | null;
   avatarArtClassName?: string;
@@ -161,6 +174,13 @@ export type HouseOverlayViewModel =
       type: "confirm";
       title: string;
       paragraphs: string[];
+      workDescriptionLines?: string[];
+      relatedAbilityLines?: string[];
+      costLines?: string[];
+      bestScore?: number;
+      quickCompleteScore?: number;
+      quickCompleteActionId?: string;
+      quickCompleteLabel?: string;
       confirmActionId: string;
       confirmLabel: string;
       cancelActionId: string;
@@ -450,6 +470,61 @@ export type HouseOverlayViewModel =
       finishLabel: string;
     }
   | {
+      type: "fortune-board";
+      title: string;
+      taskLabel: string;
+      board: ActivityFortuneBoardCell[];
+      remainingPieces: number;
+      wager: number;
+      phase: string;
+      highlightedColumn: number | null;
+      selectedColumn: number | null;
+      flashActive: boolean;
+      pickFlashActive: boolean;
+      highlightedCellKey: string | null;
+      pickedCellKey: string | null;
+      selectedCellKeys: string[];
+      score: number;
+      baseScore: number;
+      tripletRewards: ActivityFortuneBoardTripletReward[];
+      resonanceCount: number;
+      rumorCount: number;
+      rerollCount: number;
+      animationTickMs: number;
+      speedFieldId: string;
+      playActionId: string;
+      decreaseWagerActionId: string;
+      increaseWagerActionId: string;
+    }
+  | {
+      type: "pachinko-board";
+      title: string;
+      taskLabel: string;
+      boardWidth: number;
+      boardHeight: number;
+      remainingBalls: number;
+      totalBalls: number;
+      phase: string;
+      activeBall: ActivityPachinkoBoardBall | null;
+      activeBalls: ActivityPachinkoBoardBall[];
+      pins: ActivityPachinkoBoardPin[];
+      movingGatePins: [ActivityPachinkoBoardPin, ActivityPachinkoBoardPin];
+      gatePassCount: number;
+      eventCharge: number;
+      eventLog: ActivityPachinkoBoardEventLogEntry[];
+      score: number;
+      lastSlotIndex: number | null;
+      slotValues: Array<number | "wheel">;
+      rewardQueue: ActivityPachinkoBoardRewardQueueItem[];
+      wheelState: ActivityPachinkoBoardWheelState;
+      flipperAngle: number;
+      movingGateX: number;
+      layoutRefreshElapsedMs: number;
+      layoutRefreshPeriodMs: number;
+      layoutVersion: number;
+      playActionId: string;
+    }
+  | {
       type: "qte-bar";
       title: string;
       taskLabel: string;
@@ -476,12 +551,18 @@ export type HouseModuleViewModel = {
   leaveAction: HouseActionViewModel;
 };
 
+export type HouseModuleViewRenderer = (
+  viewModel: HouseModuleViewModel
+) => string;
+
 export type HouseModuleBaseInput<ModuleId extends HouseModuleId = HouseModuleId> = {
   gameState: GameState;
   characterDefinitions: CharacterDefinition[];
   houseDefinition: HouseDefinition;
   playerCharacterId: CharacterId;
   sessionState: HouseModuleSessionState<ModuleId> | null;
+  activityDefinitionsById?: Record<string, ActivityDefinition> | undefined;
+  textEntriesById?: Record<string, string> | undefined;
 };
 
 export type HouseModuleEnterInput<ModuleId extends HouseModuleId = HouseModuleId> =

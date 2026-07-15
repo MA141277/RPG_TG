@@ -12,7 +12,12 @@ import type {
 } from "./historical-character";
 import type { HouseDefinition, HouseAccessRefusalRule } from "./house";
 import type { MapDefinition } from "./map";
+import type { UiAssetCatalog } from "./ui/asset-catalog";
+import type { ScreenLayoutPreset } from "./ui/screen-layout";
+import type { ScreenSchema } from "./ui/screen-schema";
+import type { ScreenSkinPreset } from "./ui/screen-skin";
 import type { ValuableItemDefinition } from "./valuable-item";
+import type { TaskDefinition } from "../core/contracts/task-runtime";
 
 export type ContentPackDefinition = {
   schemaVersion: 1;
@@ -27,6 +32,7 @@ export type ContentPackDefinition = {
   characters?: CharacterDefinition[];
   events?: EventDefinition[];
   scenes?: SceneDefinition[];
+  tasks?: TaskDefinition[];
   activities?: ActivityDefinition[];
   cards?: CardDefinition[];
   valuables?: ValuableItemDefinition[];
@@ -36,4 +42,8 @@ export type ContentPackDefinition = {
   historicalCharacterIdByCharacterId?: Record<string, string>;
   historicalCharacters?: HistoricalCharacterRecord[];
   historicalCityRosters?: HistoricalCityRoster[];
+  uiScreenSchemas?: ScreenSchema[];
+  uiLayouts?: ScreenLayoutPreset[];
+  uiSkins?: ScreenSkinPreset[];
+  uiAssetCatalogs?: UiAssetCatalog[];
 };

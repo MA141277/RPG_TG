@@ -6,6 +6,11 @@ import map_heightsUrl from "../assets/yuanmo-map/yuanmo-map-heights.png";
 import map_ground_typesUrl from "../assets/yuanmo-map/yuanmo-map-ground-types.png";
 import map_trade_routesUrl from "../assets/yuanmo-map/yuanmo-map-trade-routes.png";
 import map_climatesUrl from "../assets/yuanmo-map/yuanmo-map-climates.png";
+import map_water_noiseUrl from "../assets/yuanmo-map/yuanmo-water-noise.png";
+import map_fog_noiseUrl from "../assets/yuanmo-map/yuanmo-fog-noise.png";
+import map_grass_textureUrl from "../assets/yuanmo-map/campaign-grass-texture.png";
+import map_sand_textureUrl from "../assets/yuanmo-map/campaign-sand-texture.png";
+import map_tietuUrl from "../../tietu.png";
 
 export const yuanmoCampaignMap: MapDefinition = {
   id: "map.yuanmo_campaign",
@@ -971,9 +976,14 @@ export const yuanmoCampaignMap: MapDefinition = {
   layers: [
     {"id": "map_FE", "label": "Front-end campaign map", "width": 1484, "height": 1060, "description": "HD.png", "imageUrl": map_HDUrl},
     {"id": "map_material_texture", "label": "Material detail texture", "width": 1331, "height": 1181, "description": "tie1.png", "imageUrl": map_tie1Url},
+    {"id": "map_hex_texture_atlas", "label": "Hex texture atlas", "width": 1024, "height": 1024, "description": "tietu.png 4x4", "imageUrl": map_tietuUrl},
     {"id": "map_regions", "label": "Province color mask", "width": 509, "height": 451, "description": "map_regions.tga", "imageUrl": map_regionsUrl},
     {"id": "map_heights", "label": "Height map", "width": 1019, "height": 903, "description": "map_heights.tga", "imageUrl": map_heightsUrl},
     {"id": "map_ground_types", "label": "Ground types", "width": 1019, "height": 903, "description": "map_ground_types.tga", "imageUrl": map_ground_typesUrl},
+    {"id": "map_grass_texture", "label": "Campaign grass texture", "width": 1254, "height": 1254, "description": "grass.png", "imageUrl": map_grass_textureUrl},
+    {"id": "map_sand_texture", "label": "Campaign sand texture", "width": 1254, "height": 1254, "description": "sand.png", "imageUrl": map_sand_textureUrl},
+    {"id": "map_water_noise", "label": "Water noise texture", "width": 512, "height": 512, "description": "tileable ancient-map water ripple noise", "imageUrl": map_water_noiseUrl},
+    {"id": "map_fog_noise", "label": "Fog noise texture", "width": 640, "height": 640, "description": "tileable campaign fog noise", "imageUrl": map_fog_noiseUrl},
     {"id": "map_trade_routes", "label": "Trade routes", "width": 509, "height": 451, "description": "map_trade_routes.tga", "imageUrl": map_trade_routesUrl},
     {"id": "map_climates", "label": "Climate map", "width": 1019, "height": 903, "description": "map_climates.tga", "imageUrl": map_climatesUrl},
   ],

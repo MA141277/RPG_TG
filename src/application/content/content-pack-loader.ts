@@ -9,6 +9,7 @@ const CONTENT_PACK_FILE_KEYS = [
   "characters",
   "events",
   "scenes",
+  "tasks",
   "textEntries",
   "activities",
   "cards",
@@ -19,6 +20,10 @@ const CONTENT_PACK_FILE_KEYS = [
   "historicalCharacters",
   "historicalCityRosters",
   "historicalCharacterIdByCharacterId",
+  "uiScreenSchemas",
+  "uiLayouts",
+  "uiSkins",
+  "uiAssetCatalogs",
 ] as const;
 
 type ContentPackFileKey = (typeof CONTENT_PACK_FILE_KEYS)[number];

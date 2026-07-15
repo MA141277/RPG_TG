@@ -3,7 +3,7 @@
   "kind": "interior",
   "id": "default_scene__interior__house_3",
   "title": "default_scene__interior__house_3",
-  "savedAt": 1778069466746,
+  "savedAt": 1782205359503,
   "nextBuildingId": 1,
   "tilemapBaseDataUrl": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA8AAAAQCAYAAADJViUEAAAAAXNSR0IArs4c6QAAAC9JREFUOE9jFJRQ/M9AJmAc1UxayI0GGGnhxTAiA4yBgQFnljRV4mU4fe8zzmAEAMPZF1fA4T1XAAAAAElFTkSuQmCC",
   "tilemapDataUrl": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA8AAAAQCAYAAADJViUEAAAAAXNSR0IArs4c6QAAAC9JREFUOE9jFJRQ/M9AJmAc1UxayI0GGGnhxTAiA4yBgQFnljRV4mU4fe8zzmAEAMPZF1fA4T1XAAAAAElFTkSuQmCC",
@@ -89,8 +89,8 @@
         }
       ]
     },
-    "returnWorldX": -185.76247204270175,
-    "returnWorldY": -15.80491883784407
+    "returnWorldX": -186.6561269050602,
+    "returnWorldY": -15.397374015464417
   },
   "sceneMeta": {
     "kind": "interior",
@@ -157,8 +157,8 @@
         }
       ]
     },
-    "returnWorldX": -185.76247204270175,
-    "returnWorldY": -15.80491883784407
+    "returnWorldX": -186.6561269050602,
+    "returnWorldY": -15.397374015464417
   },
-  "updatedAt": "2026-05-06T20:11:06+08:00"
+  "updatedAt": "2026-06-23T17:02:39+08:00"
 }

@@ -6,6 +6,7 @@ import type { CityDefinition } from "../../domain/city";
 import type { CityEntryDefinition } from "../../domain/city-entry";
 import type { CityNpcPoolDefinition, CityNpcPoolRuntimeState } from "../../domain/city-npc";
 import type { ContentPackDefinition } from "../../domain/content-pack";
+import type { ModActivationResult } from "../../core/contracts/mod-runtime";
 import type { EventDefinition } from "../../domain/event";
 import type {
   HistoricalCharacterRecord,
@@ -13,6 +14,9 @@ import type {
 } from "../../domain/historical-character";
 import type { HouseAccessRefusalRule, HouseDefinition } from "../../domain/house";
 import type { MapDefinition, MapNode } from "../../domain/map";
+import type { GridCoordinate } from "../navigation/travel-to-coordinate";
+import type { TaskDefinition } from "../../core/contracts/task-runtime";
+import type { ScenarioPackDefinition } from "../../domain/scenario-pack";
 import type { ValuableItemDefinition } from "../../domain/valuable-item";
 
 type Identified = { id: string };
@@ -37,6 +41,8 @@ export type ActiveGameContent = {
   eventDefinitionsById: Record<string, EventDefinition>;
   sceneDefinitions: SceneDefinition[];
   sceneDefinitionsById: Record<string, SceneDefinition>;
+  taskDefinitions: TaskDefinition[];
+  taskDefinitionsById: Record<string, TaskDefinition>;
   activityDefinitions: ActivityDefinition[];
   activityDefinitionsById: Record<string, ActivityDefinition>;
   cards: CardDefinition[];
@@ -47,6 +53,36 @@ export type ActiveGameContent = {
   historicalCharacterIdByCharacterId: Record<string, string>;
   historicalCharacters: HistoricalCharacterRecord[];
   historicalCityRosters: HistoricalCityRoster[];
+};
+
+export type ActiveGameContentContext = {
+  packId: string;
+  gameContent: ActiveGameContent;
+  maps: MapDefinition[];
+  mapDefinitionById: Record<string, MapDefinition>;
+  cities: CityDefinition[];
+  cityDefinitionById: Record<string, CityDefinition>;
+  houses: HouseDefinition[];
+  houseDefinitionById: Record<string, HouseDefinition>;
+  cityEntries: CityEntryDefinition[];
+  cards: CardDefinition[];
+  cityNpcPools: CityNpcPoolDefinition[];
+  historicalCharacters: HistoricalCharacterRecord[];
+  historicalCityRosters: HistoricalCityRoster[];
+  historicalCharacterIdByCharacterId: Record<string, string>;
+  cityPortraits: Record<string, string>;
+  textEntriesById: Record<string, string>;
+  cityCoordinatesById: Record<string, GridCoordinate>;
+  cityNameById: Record<string, string>;
+  houseNameById: Record<string, string>;
+  characterNameById: Record<string, string>;
+  taskDefinitionsById: Record<string, TaskDefinition>;
+  storyContent: {
+    eventDefinitionsById: Record<string, EventDefinition>;
+    sceneDefinitionsById: Record<string, SceneDefinition>;
+    activityDefinitionsById: Record<string, ActivityDefinition>;
+    textEntriesById: Record<string, string>;
+  };
 };
 
 export function createActiveGameContent(
@@ -65,6 +101,7 @@ export function createActiveGameContent(
   const characters = resolvedPack.characters ?? [];
   const eventDefinitions = resolvedPack.events ?? [];
   const sceneDefinitions = resolvedPack.scenes ?? [];
+  const taskDefinitions = resolvedPack.tasks ?? [];
   const activityDefinitions = resolvedPack.activities ?? [];
   const cards = resolvedPack.cards ?? [];
   const valuables = resolvedPack.valuables ?? [];
@@ -113,6 +150,10 @@ export function createActiveGameContent(
     sceneDefinitionsById: Object.fromEntries(
       sceneDefinitions.map((sceneDefinition) => [sceneDefinition.id, sceneDefinition])
     ),
+    taskDefinitions,
+    taskDefinitionsById: Object.fromEntries(
+      taskDefinitions.map((taskDefinition) => [taskDefinition.id, taskDefinition])
+    ),
     activityDefinitions,
     activityDefinitionsById: Object.fromEntries(
       activityDefinitions.map((activityDefinition) => [activityDefinition.id, activityDefinition])
@@ -128,6 +169,59 @@ export function createActiveGameContent(
     historicalCharacters,
     historicalCityRosters,
   };
+}
+
+export function createActiveGameContentContext(
+  basePack: ContentPackDefinition,
+  overridePack?: ContentPackDefinition
+): ActiveGameContentContext {
+  const gameContent = createActiveGameContent(basePack, overridePack);
+
+  return {
+    packId: gameContent.packId,
+    gameContent,
+    maps: gameContent.maps,
+    mapDefinitionById: gameContent.mapDefinitionById,
+    cities: gameContent.cities,
+    cityDefinitionById: gameContent.cityDefinitionById,
+    houses: gameContent.houses,
+    houseDefinitionById: gameContent.houseDefinitionById,
+    cityEntries: gameContent.cityEntries,
+    cards: gameContent.cards,
+    cityNpcPools: gameContent.cityNpcPools,
+    historicalCharacters: gameContent.historicalCharacters,
+    historicalCityRosters: gameContent.historicalCityRosters,
+    historicalCharacterIdByCharacterId:
+      gameContent.historicalCharacterIdByCharacterId,
+    cityPortraits: gameContent.cityPortraits,
+    textEntriesById: gameContent.textEntriesById,
+    cityCoordinatesById: createCityCoordinatesById(
+      gameContent.cities,
+      gameContent.mapNodesById
+    ),
+    cityNameById: createCityNameById(gameContent.cities),
+    houseNameById: createHouseNameById(gameContent.houses),
+    characterNameById: gameContent.characterNameById,
+    taskDefinitionsById: gameContent.taskDefinitionsById,
+    storyContent: {
+      eventDefinitionsById: gameContent.eventDefinitionsById,
+      sceneDefinitionsById: gameContent.sceneDefinitionsById,
+      activityDefinitionsById: gameContent.activityDefinitionsById,
+      textEntriesById: gameContent.textEntriesById,
+    },
+  };
+}
+
+export function createActiveGameContentContextFromModActivation(input: {
+  basePack: ContentPackDefinition;
+  activationResult: ModActivationResult;
+}): ActiveGameContentContext {
+  const overridePack = readActivatedContentSource(input.activationResult);
+  if (overridePack == null || overridePack.id === input.basePack.id) {
+    return createActiveGameContentContext(input.basePack);
+  }
+
+  return createActiveGameContentContext(input.basePack, overridePack);
 }
 
 export function mergeContentPacks(
@@ -149,6 +243,7 @@ export function mergeContentPacks(
     characters: mergeById(basePack.characters ?? [], overridePack.characters ?? []),
     events: mergeById(basePack.events ?? [], overridePack.events ?? []),
     scenes: mergeById(basePack.scenes ?? [], overridePack.scenes ?? []),
+    tasks: mergeById(basePack.tasks ?? [], overridePack.tasks ?? []),
     activities: mergeById(basePack.activities ?? [], overridePack.activities ?? []),
     cards: mergeById(basePack.cards ?? [], overridePack.cards ?? []),
     valuables: mergeById(basePack.valuables ?? [], overridePack.valuables ?? []),
@@ -188,6 +283,7 @@ function normalizeContentPack(pack: ContentPackDefinition): ContentPackDefinitio
     characters: pack.characters ?? [],
     events: pack.events ?? [],
     scenes: pack.scenes ?? [],
+    tasks: pack.tasks ?? [],
     activities: pack.activities ?? [],
     cards: pack.cards ?? [],
     valuables: pack.valuables ?? [],
@@ -198,6 +294,60 @@ function normalizeContentPack(pack: ContentPackDefinition): ContentPackDefinitio
     historicalCharacters: pack.historicalCharacters ?? [],
     historicalCityRosters: pack.historicalCityRosters ?? [],
   };
+}
+
+function readActivatedContentSource(
+  activationResult: ModActivationResult
+): ScenarioPackDefinition | ContentPackDefinition | null {
+  if (!activationResult.ok) {
+    return null;
+  }
+
+  const primarySource = activationResult.activatedMod.normalizedContentSources[0];
+  if (primarySource == null || typeof primarySource !== "object") {
+    return null;
+  }
+
+  return primarySource as ScenarioPackDefinition | ContentPackDefinition;
+}
+
+function createCityCoordinatesById(
+  definitions: CityDefinition[],
+  mapNodesById: ActiveGameContent["mapNodesById"]
+): Record<string, GridCoordinate> {
+  return Object.fromEntries(
+    definitions.flatMap((cityDefinition) => {
+      const mapNodeId = cityDefinition.mapNodeId;
+      if (mapNodeId == null) {
+        return [];
+      }
+
+      const mapNode = mapNodesById[mapNodeId];
+      if (mapNode == null) {
+        return [];
+      }
+
+      return [[cityDefinition.id, { x: mapNode.x, y: mapNode.y }]];
+    })
+  );
+}
+
+function createCityNameById(definitions: CityDefinition[]): Record<string, string> {
+  return Object.fromEntries(
+    definitions.map((cityDefinition) => [
+      cityDefinition.id,
+      cityDefinition.name,
+    ])
+  );
+}
+
+function createHouseNameById(definitions: HouseDefinition[]): Record<string, string> {
+  return Object.fromEntries(
+    definitions.map((houseDefinition) => [
+      houseDefinition.id,
+      houseDefinition.name,
+    ])
+  );
 }
 
 function mergeById<T extends Identified>(base: T[], override: T[]): T[] {

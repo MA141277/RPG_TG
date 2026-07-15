@@ -1,4 +1,6 @@
 ﻿import {
+  tavernBossGreetingTextIds,
+  tavernBossOpenTextIds,
   tavernBossProfile,
   tavernDefaultWager,
   tavernDrinkPrice,
@@ -26,6 +28,8 @@ import {
   getTavernTimeVariableKey,
   type TavernWorkOffer,
 } from "../../../domain/tavern";
+import { defaultRuntimeContent } from "../../content/default-runtime-content";
+import { resolveTextEntry, resolveTextTemplateEntry } from "../../content/text-resolution";
 import {
   advanceTavernGambleMeldCountdown,
   advanceTavernLongPublicReveal,
@@ -132,12 +136,72 @@ function createAlertOverlay(
   };
 }
 
-function createLowStaminaOverlay(actionLabel: string): TavernOverlayState {
+function getTavernTextEntries(
+  textEntriesById?: Record<string, string>
+): Record<string, string> {
+  return textEntriesById ?? defaultRuntimeContent.textEntriesById ?? {};
+}
+
+function resolveTavernText(
+  textEntriesById: Record<string, string>,
+  textId: string,
+  fallback?: string
+): string {
+  return resolveTextEntry(
+    textEntriesById,
+    textId,
+    fallback ?? `MISSING_TEXT:${textId}`
+  );
+}
+
+function resolveTavernTemplateText(
+  textEntriesById: Record<string, string>,
+  textId: string,
+  values: Record<string, string | number | boolean | null | undefined>,
+  fallback?: string
+): string {
+  return resolveTextTemplateEntry(
+    textEntriesById,
+    textId,
+    values,
+    fallback ?? `MISSING_TEXT:${textId}`
+  );
+}
+
+function pickRandomResolvedTavernText(
+  textEntriesById: Record<string, string>,
+  textIds: readonly string[]
+): string {
+  if (textIds.length === 0) {
+    return "MISSING_TEXT";
+  }
+
+  const textId =
+    textIds.length === 1
+      ? textIds[0]!
+      : textIds[Math.floor(Math.random() * textIds.length)] ?? textIds[0]!;
+
+  return resolveTavernText(textEntriesById, textId);
+}
+
+function createLowStaminaOverlay(
+  actionLabel: string,
+  textEntriesById?: Record<string, string>
+): TavernOverlayState {
+  const entries = getTavernTextEntries(textEntriesById);
   return createAlertOverlay(
-    "先去休息",
+    resolveTavernText(entries, "runtime.zhu_yuanzhang.tavern.low_stamina.title"),
     [
-      `（摆了摆手）你这会儿脚下都发虚，还想${actionLabel}？只会把事情办砸。`,
-      `先去歇够，体力至少回到 ${ACTIVITY_COMPLETION_STAMINA_COST} 点，再来柜上说话。`,
+      resolveTavernTemplateText(
+        entries,
+        "runtime.zhu_yuanzhang.tavern.low_stamina.001",
+        { actionLabel }
+      ),
+      resolveTavernTemplateText(
+        entries,
+        "runtime.zhu_yuanzhang.tavern.low_stamina.002",
+        { requiredStamina: ACTIVITY_COMPLETION_STAMINA_COST }
+      ),
     ],
     "warning"
   );
@@ -521,6 +585,7 @@ function beginAcceptedWorkOffer(
   if (remainingDays != null) {
     return withSessionState(input, sessionState, {
       overlay: createCouncilTimeInsufficientOverlay(
+        input.textEntriesById,
         offer.title,
         durationDays,
         remainingDays
@@ -579,20 +644,41 @@ function createActivityConfirmOverlay(
 }
 
 function createCouncilTimeInsufficientOverlay(
+  textEntriesById: Record<string, string> | undefined,
   offerTitle: string,
   durationDays: number,
   remainingDays: number
 ): TavernOverlayState {
+  const entries = getTavernTextEntries(textEntriesById);
   return createAlertOverlay(
-    "时日不够",
+    resolveTavernText(
+      entries,
+      "runtime.zhu_yuanzhang.tavern.work.blocked_by_council.title"
+    ),
     remainingDays <= 0
       ? [
-          `（把“${offerTitle}”的活牌收回手边，抬眼看着你）评定日期已到，这活至少得占你 ${durationDays} 天，眼下接不得。`,
-          "先去把评定应下，回来再谈这单。",
+          resolveTavernTemplateText(
+            entries,
+            "runtime.zhu_yuanzhang.tavern.work.blocked_by_council.expired.001",
+            { offerTitle, durationDays }
+          ),
+          resolveTavernTemplateText(
+            entries,
+            "runtime.zhu_yuanzhang.tavern.work.blocked_by_council.expired.002",
+            { offerTitle, durationDays }
+          ),
         ]
       : [
-          `（把“${offerTitle}”的活牌收回手边，抬眼看着你）离评定只剩 ${remainingDays} 天，这活至少得占你 ${durationDays} 天，眼下接不得。`,
-          "先去把评定应下，回来再谈这单。",
+          resolveTavernTemplateText(
+            entries,
+            "runtime.zhu_yuanzhang.tavern.work.blocked_by_council.soon.001",
+            { offerTitle, durationDays, remainingDays }
+          ),
+          resolveTavernTemplateText(
+            entries,
+            "runtime.zhu_yuanzhang.tavern.work.blocked_by_council.soon.002",
+            { offerTitle, durationDays, remainingDays }
+          ),
         ],
     "warning"
   );
@@ -614,16 +700,21 @@ function handleWorkAction(
   const lists = refreshWorkLists(input.gameState, houseId, playerCharacter.stats.fame);
 
   if (input.request.actionId === "open-work") {
+    const entries = getTavernTextEntries(input.textEntriesById);
     return withSessionState(input, sessionState, {
       ...lists,
       workPanelMode: "main",
       dialoguePhase: "open",
-      dialogueLines: ["（把活计牌翻了出来）", "你可以先接取，也可以提交已经接下的活。"],
+      dialogueLines: [
+        resolveTavernText(entries, "runtime.zhu_yuanzhang.tavern.work.main.001"),
+        resolveTavernText(entries, "runtime.zhu_yuanzhang.tavern.work.main.002"),
+      ],
       overlay: null,
     });
   }
 
   if (input.request.actionId === "open-work-accept") {
+    const entries = getTavernTextEntries(input.textEntriesById);
     return withSessionState(input, sessionState, {
       ...lists,
       workPanelMode: "accept",
@@ -631,13 +722,32 @@ function handleWorkAction(
       dialoguePhase: "open",
       dialogueLines:
         lists.availableOffers.length === 0
-          ? ["（翻了翻账本）", "眼下没有适合你接的新活。"]
-          : ["这些是当前酒馆还能接的活。", "前期只能接一个主命以外的任务，名声高了才会放宽。"],
+          ? [
+              resolveTavernText(
+                entries,
+                "runtime.zhu_yuanzhang.tavern.work.accept.empty.001"
+              ),
+              resolveTavernText(
+                entries,
+                "runtime.zhu_yuanzhang.tavern.work.accept.empty.002"
+              ),
+            ]
+          : [
+              resolveTavernText(
+                entries,
+                "runtime.zhu_yuanzhang.tavern.work.accept.available.001"
+              ),
+              resolveTavernText(
+                entries,
+                "runtime.zhu_yuanzhang.tavern.work.accept.available.002"
+              ),
+            ],
       overlay: null,
     });
   }
 
   if (input.request.actionId === "open-work-submit") {
+    const entries = getTavernTextEntries(input.textEntriesById);
     return withSessionState(input, sessionState, {
       ...lists,
       workPanelMode: "submit",
@@ -645,8 +755,26 @@ function handleWorkAction(
       dialoguePhase: "open",
       dialogueLines:
         lists.acceptedOffers.length === 0
-          ? ["（看了你一眼）", "你在这家酒馆还没有接下的活。"]
-          : ["提交只显示当前酒馆已经接取的任务。", "没做完也能交，但会按失败算。"],
+          ? [
+              resolveTavernText(
+                entries,
+                "runtime.zhu_yuanzhang.tavern.work.submit.empty.001"
+              ),
+              resolveTavernText(
+                entries,
+                "runtime.zhu_yuanzhang.tavern.work.submit.empty.002"
+              ),
+            ]
+          : [
+              resolveTavernText(
+                entries,
+                "runtime.zhu_yuanzhang.tavern.work.submit.available.001"
+              ),
+              resolveTavernText(
+                entries,
+                "runtime.zhu_yuanzhang.tavern.work.submit.available.002"
+              ),
+            ],
       overlay: null,
     });
   }
@@ -659,17 +787,31 @@ function handleWorkAction(
   if (acceptOfferId != null) {
     if (!canAffordActivityCost(playerCharacter)) {
       return withSessionState(input, sessionState, {
-        overlay: createLowStaminaOverlay("接活"),
+        overlay: createLowStaminaOverlay("接活", input.textEntriesById),
       });
     }
 
     const offer = findWorkOffer(acceptOfferId);
     const capacity = getWorkCapacity(playerCharacter.stats.fame);
     if (lists.acceptedOffers.length >= capacity) {
+      const entries = getTavernTextEntries(input.textEntriesById);
       return withSessionState(input, sessionState, {
         overlay: createAlertOverlay(
-          "接不了更多活",
-          [`你当前最多能同时接 ${capacity} 个主命以外的任务。`, "名声高了以后，老板才会把更多活交给你。"],
+          resolveTavernText(
+            entries,
+            "runtime.zhu_yuanzhang.tavern.work.capacity.title"
+          ),
+          [
+            resolveTavernTemplateText(
+              entries,
+              "runtime.zhu_yuanzhang.tavern.work.capacity.001",
+              { capacity }
+            ),
+            resolveTavernText(
+              entries,
+              "runtime.zhu_yuanzhang.tavern.work.capacity.002"
+            ),
+          ],
           "warning"
         ),
       });
@@ -686,6 +828,7 @@ function handleWorkAction(
     if (remainingDays != null) {
       return withSessionState(input, sessionState, {
         overlay: createCouncilTimeInsufficientOverlay(
+          input.textEntriesById,
           offer.title,
           durationDays,
           remainingDays
@@ -747,7 +890,7 @@ function handleWorkAction(
   if (input.request.actionId === "confirm-submit-work") {
     if (!canAffordActivityCost(playerCharacter)) {
       return withSessionState(input, sessionState, {
-        overlay: createLowStaminaOverlay("交活"),
+        overlay: createLowStaminaOverlay("交活", input.textEntriesById),
       });
     }
 
@@ -787,12 +930,26 @@ function handleDrinkAction(
   }
 
   if (input.request.actionId === "order-drink") {
+    const entries = getTavernTextEntries(input.textEntriesById);
     return withSessionState(input, sessionState, {
       overlay: {
         type: "drink-confirm",
-        title: "点一杯酒",
+        title: resolveTavernText(
+          entries,
+          "runtime.zhu_yuanzhang.tavern.drink.confirm.title"
+        ),
         price: tavernDrinkPrice,
-        paragraphs: ["（抬手敲了敲酒坛）", `要花 ${tavernDrinkPrice} 文买一杯酒吗？`],
+        paragraphs: [
+          resolveTavernText(
+            entries,
+            "runtime.zhu_yuanzhang.tavern.drink.confirm.001"
+          ),
+          resolveTavernTemplateText(
+            entries,
+            "runtime.zhu_yuanzhang.tavern.drink.confirm.002",
+            { price: tavernDrinkPrice }
+          ),
+        ],
         confirmActionId: "confirm-drink",
         cancelActionId: "cancel-overlay",
       },
@@ -809,10 +966,23 @@ function handleDrinkAction(
   );
 
   if (playerCharacter.stats.gold < tavernDrinkPrice) {
+    const entries = getTavernTextEntries(input.textEntriesById);
     return withSessionState(input, sessionState, {
       overlay: createAlertOverlay(
-        "钱不够",
-        ["你摸了摸钱袋。", "这一杯酒你现在还喝不起。"],
+        resolveTavernText(
+          entries,
+          "runtime.zhu_yuanzhang.tavern.drink.insufficient_money.title"
+        ),
+        [
+          resolveTavernText(
+            entries,
+            "runtime.zhu_yuanzhang.tavern.drink.insufficient_money.001"
+          ),
+          resolveTavernText(
+            entries,
+            "runtime.zhu_yuanzhang.tavern.drink.insufficient_money.002"
+          ),
+        ],
         "warning"
       ),
     });
@@ -827,6 +997,7 @@ function handleDrinkAction(
     input.playerCharacterId,
     -tavernDrinkPrice
   );
+  const entries = getTavernTextEntries(input.textEntriesById);
 
   return {
     gameState: goldMutation.state,
@@ -837,10 +1008,32 @@ function handleDrinkAction(
         : {
             ...sessionState,
             dialoguePhase: "open",
-            dialogueLines: ["（给你斟了一杯温酒）", "辛辣下肚，整个人也慢慢松了下来。"],
+            dialogueLines: [
+              resolveTavernText(
+                entries,
+                "runtime.zhu_yuanzhang.tavern.drink.result.dialogue.001"
+              ),
+              resolveTavernText(
+                entries,
+                "runtime.zhu_yuanzhang.tavern.drink.result.dialogue.002"
+              ),
+            ],
             overlay: createAlertOverlay(
-              "喝酒",
-              [`你花了 ${tavernDrinkPrice} 文买酒。`, "当前先按单次喝酒状态结算。"],
+              resolveTavernText(
+                entries,
+                "runtime.zhu_yuanzhang.tavern.drink.result.title"
+              ),
+              [
+                resolveTavernTemplateText(
+                  entries,
+                  "runtime.zhu_yuanzhang.tavern.drink.result.001",
+                  { price: tavernDrinkPrice }
+                ),
+                resolveTavernText(
+                  entries,
+                  "runtime.zhu_yuanzhang.tavern.drink.result.002"
+                ),
+              ],
               "success"
             ),
           },
@@ -883,6 +1076,7 @@ function resolveGambleSettlement(
   sessionState: TavernSessionState,
   session: TavernGambleSession
 ): HouseModuleTransitionResult<"tavern"> {
+  const entries = getTavernTextEntries(input.textEntriesById);
   const delta = getGambleNetResult(session);
   const nextState = increaseTavernTime(input.gameState, input.houseDefinition.id, 1);
   const staminaMutation = spendPlayerStamina(
@@ -909,14 +1103,45 @@ function resolveGambleSettlement(
       dialoguePhase: "open",
       dialogueLines: [
         "牌局已结。",
-        delta >= 0 ? `你本局净赚 ${delta} 文。` : `你本局净输 ${Math.abs(delta)} 文。`,
+        delta >= 0
+          ? resolveTavernTemplateText(
+              entries,
+              "runtime.zhu_yuanzhang.tavern.gamble.settlement.dialogue.win",
+              { amount: delta }
+            )
+          : resolveTavernTemplateText(
+              entries,
+              "runtime.zhu_yuanzhang.tavern.gamble.settlement.dialogue.loss",
+              { amount: Math.abs(delta) }
+            ),
       ],
       overlay: createAlertOverlay(
-        "赌局结算",
+        resolveTavernText(
+          entries,
+          "runtime.zhu_yuanzhang.tavern.gamble.settlement.title"
+        ),
         [
-          `底池 ${session.pot} 文。`,
-          delta >= 0 ? `本次金钱变化 +${delta} 文。` : `本次金钱变化 ${delta} 文。`,
-          `体力 -${ACTIVITY_COMPLETION_STAMINA_COST}`,
+          resolveTavernTemplateText(
+            entries,
+            "runtime.zhu_yuanzhang.tavern.gamble.settlement.001",
+            { pot: session.pot }
+          ),
+          delta >= 0
+            ? resolveTavernTemplateText(
+                entries,
+                "runtime.zhu_yuanzhang.tavern.gamble.settlement.delta.win",
+                { delta }
+              )
+            : resolveTavernTemplateText(
+                entries,
+                "runtime.zhu_yuanzhang.tavern.gamble.settlement.delta.loss",
+                { delta }
+              ),
+          resolveTavernTemplateText(
+            entries,
+            "runtime.zhu_yuanzhang.tavern.gamble.settlement.002",
+            { requiredStamina: ACTIVITY_COMPLETION_STAMINA_COST }
+          ),
         ],
         delta >= 0 ? "success" : "warning"
       ),
@@ -957,7 +1182,16 @@ function withGambleSession(
         session: gambleSession,
       },
       dialoguePhase: "open",
-      dialogueLines: ["你坐上赌桌。", "四轮下注、摸打、碰杠之后摊牌比番。"],
+      dialogueLines: [
+        resolveTavernText(
+          getTavernTextEntries(input.textEntriesById),
+          "runtime.zhu_yuanzhang.tavern.gamble.start.001"
+        ),
+        resolveTavernText(
+          getTavernTextEntries(input.textEntriesById),
+          "runtime.zhu_yuanzhang.tavern.gamble.start.002"
+        ),
+      ],
     },
     getGambleSideEffects(gambleSession)
   );
@@ -1026,10 +1260,24 @@ function handleGambleAction(
 
   if (input.request.actionId === "open-gamble") {
     if (playerCharacter.stats.gold < tavernWagerStep) {
+      const entries = getTavernTextEntries(input.textEntriesById);
       return withSessionState(input, sessionState, {
         overlay: createAlertOverlay(
-          "赌本不够",
-          ["（摇了摇头）", `至少要有 ${tavernWagerStep} 文，才能上桌。`],
+          resolveTavernText(
+            entries,
+            "runtime.zhu_yuanzhang.tavern.gamble.insufficient_wager.title"
+          ),
+          [
+            resolveTavernTemplateText(
+              entries,
+              "runtime.zhu_yuanzhang.tavern.gamble.insufficient_wager.001",
+              { minimumWager: tavernWagerStep }
+            ),
+            resolveTavernText(
+              entries,
+              "runtime.zhu_yuanzhang.tavern.gamble.insufficient_wager.002"
+            ),
+          ],
           "warning"
         ),
       });
@@ -1224,17 +1472,31 @@ function handleGambleAction(
   );
 
   if (playerCharacter.stats.gold < wager) {
+    const entries = getTavernTextEntries(input.textEntriesById);
     return withSessionState(input, sessionState, {
       overlay: createAlertOverlay(
-        "赌本不够",
-        ["你摸了摸钱袋。", "临到上桌，才发现钱不够。"],
+        resolveTavernText(
+          entries,
+          "runtime.zhu_yuanzhang.tavern.gamble.insufficient_wager.title"
+        ),
+        [
+          resolveTavernTemplateText(
+            entries,
+            "runtime.zhu_yuanzhang.tavern.gamble.insufficient_wager.001",
+            { minimumWager: wager }
+          ),
+          resolveTavernText(
+            entries,
+            "runtime.zhu_yuanzhang.tavern.gamble.insufficient_wager.002"
+          ),
+        ],
         "warning"
       ),
     });
   }
   if (!canAffordActivityCost(playerCharacter)) {
     return withSessionState(input, sessionState, {
-      overlay: createLowStaminaOverlay("上桌"),
+      overlay: createLowStaminaOverlay("上桌", input.textEntriesById),
     });
   }
   if (sessionState == null) {
@@ -1650,7 +1912,12 @@ export const tavernHouseModule: HouseModuleDefinition<"tavern"> = {
         lists.availableOffers,
         lists.acceptedOffers,
         input.houseDefinition.defaultCharacterId ?? tavernBossProfile.actorId,
-        ["（抬眼看了你一眼）要找活、喝酒，还是上桌赌两把？"]
+        [
+          pickRandomResolvedTavernText(
+            getTavernTextEntries(input.textEntriesById),
+            tavernBossGreetingTextIds
+          ),
+        ]
       ),
       sideEffects: [
         { type: "stop-interval", intervalId: TAVERN_WORK_INTERVAL_ID },
@@ -1676,7 +1943,12 @@ export const tavernHouseModule: HouseModuleDefinition<"tavern"> = {
     if (input.request.actionId === "advance-greeting") {
       return withSessionState(input, input.sessionState, {
         dialoguePhase: "open",
-        dialogueLines: ["（把算盘往旁边一拨）说吧，你今天想干什么？"],
+        dialogueLines: [
+          resolveTavernText(
+            getTavernTextEntries(input.textEntriesById),
+            "runtime.zhu_yuanzhang.tavern.open.001"
+          ),
+        ],
       });
     }
 
@@ -1692,7 +1964,12 @@ export const tavernHouseModule: HouseModuleDefinition<"tavern"> = {
       return withSessionState(input, input.sessionState, {
         dialoguePhase: "open",
         workPanelMode: "closed",
-        dialogueLines: ["（站在柜后看着你）酒、活、赌，三样都明码标价。"],
+        dialogueLines: [
+          resolveTavernText(
+            getTavernTextEntries(input.textEntriesById),
+            "runtime.zhu_yuanzhang.tavern.open.002"
+          ),
+        ],
         overlay: null,
       });
     }
@@ -1784,7 +2061,12 @@ export const tavernHouseModule: HouseModuleDefinition<"tavern"> = {
         lists.availableOffers,
         lists.acceptedOffers,
         input.houseDefinition.defaultCharacterId ?? tavernBossProfile.actorId,
-        ["（抬眼看了你一眼）要找活、喝酒，还是上桌赌两把？"]
+        [
+          pickRandomResolvedTavernText(
+            getTavernTextEntries(input.textEntriesById),
+            tavernBossGreetingTextIds
+          ),
+        ]
       );
     const currentTime = readNumericVariable(
       input.gameState,

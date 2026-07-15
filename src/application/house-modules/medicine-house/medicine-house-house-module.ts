@@ -1,8 +1,9 @@
 import {
-  medicineHouseDialoguePool,
+  medicineHouseDialogueTextIds,
   medicineHouseDoctorProfile,
-  medicineHouseGreetingLines,
+  medicineHouseGreetingTextIds,
   medicineHouseHealService,
+  medicineHouseOpenTextIds,
   medicineHousePreparedMedicines,
 } from "../../../content/houses/medicine-house-content";
 import type { CharacterDefinition } from "../../../domain/character";
@@ -27,6 +28,14 @@ import {
 import { assertExists } from "../../../shared/assert";
 import { pickRandom } from "../../../shared/random";
 import {
+  createExitPlayableRequest,
+  createLaunchPlayableRequest,
+  createPlayableActionRequest,
+  runPlayableRuntime,
+} from "../../../core/runtime/playable-runtime";
+import { defaultRuntimeContent } from "../../content/default-runtime-content";
+import { resolveTextEntry, resolveTextTemplateEntry } from "../../content/text-resolution";
+import {
   addHerbSelection,
   getAvailableHerbsForSkill,
   getCompoundingLimits,
@@ -49,6 +58,11 @@ import {
   formatHouseActivityCostLine,
   getHouseMinigameDurationDays,
 } from "../../house/house-activity-costs";
+import {
+  createHousePlayableRuntimeState,
+  readHousePlayableSessionState,
+} from "../../playables/house-playable-runtime-bridge";
+import { getMedicineCompoundingTimeAdvanceCost } from "../../playables/medicine-compounding/medicine-compounding-definition";
 import { getInsufficientDaysForTimedActivity } from "../../time/council-priority";
 import { createInitialMedicineHouseSessionState } from "./medicine-house-session-state";
 
@@ -135,6 +149,60 @@ function withSessionState(
   };
 }
 
+function runMedicineCompoundingPlayableRequest(
+  input: HouseModuleDispatchInput<"medicine-house">,
+  sessionState: MedicineHouseSessionState | null,
+  request:
+    | ReturnType<typeof createLaunchPlayableRequest>
+    | ReturnType<typeof createPlayableActionRequest>
+    | ReturnType<typeof createExitPlayableRequest>,
+  sideEffects?: HouseModuleTransitionResult<"medicine-house">["sideEffects"]
+): HouseModuleTransitionResult<"medicine-house"> {
+  const runtimeResult = runPlayableRuntime({
+    state: createHousePlayableRuntimeState({
+      gameState: input.gameState,
+      moduleId: "medicine-house",
+      sessionState,
+    }),
+    request,
+    characterDefinitions: input.characterDefinitions,
+    playerCharacterId: input.playerCharacterId,
+  });
+  const nextSessionState = readHousePlayableSessionState(
+    runtimeResult.state,
+    "medicine-house"
+  );
+  const completed =
+    sessionState?.overlay?.type === "compounding" &&
+    nextSessionState?.overlay?.type === "result" &&
+    runtimeResult.state.core.runtime.playableSession == null;
+
+  return {
+    gameState: runtimeResult.state.core,
+    characterDefinitions:
+      runtimeResult.characterDefinitions ?? input.characterDefinitions,
+    sessionState: nextSessionState,
+    ...((sideEffects == null && !completed)
+      ? {}
+      : {
+          sideEffects: [
+            ...(sideEffects ?? []),
+            ...(completed
+              ? [{ type: "stop-interval" as const, intervalId: COMPOUNDING_INTERVAL_ID }]
+              : []),
+          ],
+        }),
+    ...(completed
+      ? {
+          timeAdvanceCost: getMedicineCompoundingTimeAdvanceCost(
+            input.characterDefinitions,
+            input.playerCharacterId
+          ),
+        }
+      : {}),
+  };
+}
+
 function withDialoguePhase(
   input: Pick<
     HouseModuleDispatchInput<"medicine-house">,
@@ -157,6 +225,46 @@ function createAlertOverlay(
     paragraphs,
     ...(tone == null ? {} : { tone }),
   };
+}
+
+function getMedicineHouseTextEntries(
+  textEntriesById?: Record<string, string>
+): Record<string, string> {
+  return textEntriesById ?? defaultRuntimeContent.textEntriesById ?? {};
+}
+
+function resolveMedicineHouseText(
+  textEntriesById: Record<string, string>,
+  textId: string,
+  fallback?: string
+): string {
+  return resolveTextEntry(
+    textEntriesById,
+    textId,
+    fallback ?? `MISSING_TEXT:${textId}`
+  );
+}
+
+function resolveMedicineHouseTemplateText(
+  textEntriesById: Record<string, string>,
+  textId: string,
+  values: Record<string, string | number | boolean | null | undefined>,
+  fallback?: string
+): string {
+  return resolveTextTemplateEntry(
+    textEntriesById,
+    textId,
+    values,
+    fallback ?? `MISSING_TEXT:${textId}`
+  );
+}
+
+function pickRandomResolvedMedicineHouseText(
+  textEntriesById: Record<string, string>,
+  textIds: readonly string[]
+): string {
+  const textId = pickRandom(textIds);
+  return resolveMedicineHouseText(textEntriesById, textId);
 }
 
 function formatOutcomeSummary(outcome: MedicineHouseActionOutcome): string[] {
@@ -242,19 +350,38 @@ function createActivityConfirmOverlay(
 }
 
 function createCouncilTimeInsufficientOverlay(
+  textEntriesById: Record<string, string> | undefined,
   durationDays: number,
   remainingDays: number
 ): MedicineHouseOverlayState {
+  const entries = getMedicineHouseTextEntries(textEntriesById);
   return createAlertOverlay(
-    "时日不够",
+    resolveMedicineHouseText(
+      entries,
+      "runtime.zhu_yuanzhang.medicine_house.compounding.blocked_by_council.title"
+    ),
     remainingDays <= 0
       ? [
-          `（把药杵收了回去，先摇了摇头）评定日期已到，这炉药至少要 ${durationDays} 天，眼下开不得。`,
-          "先去把评定应下，回来我再看你这一炉。",
+          resolveMedicineHouseTemplateText(
+            entries,
+            "runtime.zhu_yuanzhang.medicine_house.compounding.blocked_by_council.expired.001",
+            { durationDays }
+          ),
+          resolveMedicineHouseText(
+            entries,
+            "runtime.zhu_yuanzhang.medicine_house.compounding.blocked_by_council.expired.002"
+          ),
         ]
       : [
-          `（把药杵收了回去，先摇了摇头）离评定只剩 ${remainingDays} 天，这炉药至少要 ${durationDays} 天，眼下开不得。`,
-          "先去把评定应下，回来我再看你这一炉。",
+          resolveMedicineHouseTemplateText(
+            entries,
+            "runtime.zhu_yuanzhang.medicine_house.compounding.blocked_by_council.soon.001",
+            { remainingDays, durationDays }
+          ),
+          resolveMedicineHouseText(
+            entries,
+            "runtime.zhu_yuanzhang.medicine_house.compounding.blocked_by_council.soon.002"
+          ),
         ],
     "warning"
   );
@@ -273,6 +400,17 @@ function finalizeCompounding(
     return createTransitionResult(input, {
       sideEffects: [{ type: "stop-interval", intervalId: COMPOUNDING_INTERVAL_ID }],
     });
+  }
+
+  if (
+    input.gameState.runtime.playableSession?.playableId ===
+    "medicine-compounding"
+  ) {
+    return runMedicineCompoundingPlayableRequest(
+      input,
+      sessionState,
+      createPlayableActionRequest("medicine-compounding", "tick")
+    );
   }
 
   const gradeResult = resolveCompoundingGrade(
@@ -400,11 +538,18 @@ function handleAction(
         [{ type: "stop-interval", intervalId: COMPOUNDING_INTERVAL_ID }]
       );
     case "talk": {
-      const line = pickRandom([...medicineHouseDialoguePool]);
+      const entries = getMedicineHouseTextEntries(input.textEntriesById);
+      const line = pickRandomResolvedMedicineHouseText(
+        entries,
+        medicineHouseDialogueTextIds
+      );
       return finalizeInteraction(
         input,
         sessionState,
-        "闲谈",
+        resolveMedicineHouseText(
+          entries,
+          "runtime.zhu_yuanzhang.medicine_house.talk.overlay.title"
+        ),
         [line],
         {
           relationshipChange: 1,
@@ -417,6 +562,7 @@ function handleAction(
       );
     }
     case "heal": {
+      const entries = getMedicineHouseTextEntries(input.textEntriesById);
       if (playerCharacter.stats.gold < medicineHouseHealService.cost) {
         return withSessionState(input, sessionState, {
           overlay: createAlertOverlay(
@@ -430,10 +576,20 @@ function handleAction(
       return finalizeInteraction(
         input,
         sessionState,
-        "疗伤",
+        resolveMedicineHouseText(
+          entries,
+          "runtime.zhu_yuanzhang.medicine_house.heal.overlay.title"
+        ),
         [
-          "（为你把脉施针）你的气色渐渐平复。",
-          `收费 ${medicineHouseHealService.cost} 文。`,
+          resolveMedicineHouseText(
+            entries,
+            "runtime.zhu_yuanzhang.medicine_house.heal.001"
+          ),
+          resolveMedicineHouseTemplateText(
+            entries,
+            "runtime.zhu_yuanzhang.medicine_house.heal.002",
+            { cost: medicineHouseHealService.cost }
+          ),
         ],
         {
           relationshipChange: 0,
@@ -494,12 +650,23 @@ function handleAction(
     }
     case "start-compounding": {
       if (!canAffordActivityCost(playerCharacter)) {
+        const entries = getMedicineHouseTextEntries(input.textEntriesById);
         return withSessionState(input, sessionState, {
           overlay: createAlertOverlay(
-            "先去歇息",
+            resolveMedicineHouseText(
+              entries,
+              "runtime.zhu_yuanzhang.medicine_house.compounding.low_stamina.title"
+            ),
             [
-              "（按住药杵，皱起眉）你这会儿气息不稳，硬要配药，只会把药性配岔了。",
-              `回去静一静，体力至少缓到 ${ACTIVITY_COMPLETION_STAMINA_COST} 点，再来动手。`,
+              resolveMedicineHouseText(
+                entries,
+                "runtime.zhu_yuanzhang.medicine_house.compounding.low_stamina.001"
+              ),
+              resolveMedicineHouseTemplateText(
+                entries,
+                "runtime.zhu_yuanzhang.medicine_house.compounding.low_stamina.002",
+                { requiredStamina: ACTIVITY_COMPLETION_STAMINA_COST }
+              ),
             ],
             "warning"
           ),
@@ -514,7 +681,11 @@ function handleAction(
       );
       if (remainingDays != null) {
         return withSessionState(input, sessionState, {
-          overlay: createCouncilTimeInsufficientOverlay(durationDays, remainingDays),
+          overlay: createCouncilTimeInsufficientOverlay(
+            input.textEntriesById,
+            durationDays,
+            remainingDays
+          ),
         });
       }
 
@@ -534,27 +705,24 @@ function handleAction(
       );
       if (remainingDays != null) {
         return withSessionState(input, sessionState, {
-          overlay: createCouncilTimeInsufficientOverlay(durationDays, remainingDays),
+          overlay: createCouncilTimeInsufficientOverlay(
+            input.textEntriesById,
+            durationDays,
+            remainingDays
+          ),
         });
       }
 
-      const limits = getCompoundingLimits(medicineSkill);
-      const target = pickCompoundingTarget(medicineSkill);
-      const availableHerbs = getAvailableHerbsForSkill(medicineSkill);
-
-      return withSessionState(
+      return runMedicineCompoundingPlayableRequest(
         input,
         sessionState,
-        {
-          overlay: {
-            type: "compounding",
-            target,
-            availableHerbs,
-            selections: [],
-            selectionsLeft: limits.maxTurns,
-            secondsLeft: limits.durationSec,
+        createLaunchPlayableRequest("medicine-compounding", {
+          ownerContext: {
+            ownerKind: "house",
+            ownerId: input.houseDefinition.id,
+            returnPolicy: "resume-owner",
           },
-        },
+        }),
         [
           { type: "stop-interval", intervalId: COMPOUNDING_INTERVAL_ID },
           {
@@ -577,6 +745,17 @@ function handleAction(
         return createTransitionResult(input);
       }
 
+      if (
+        input.gameState.runtime.playableSession?.playableId ===
+        "medicine-compounding"
+      ) {
+        return runMedicineCompoundingPlayableRequest(
+          input,
+          sessionState,
+          createPlayableActionRequest("medicine-compounding", "clear")
+        );
+      }
+
       const refundedSelections = countCompoundingSelections(overlay.selections);
 
       return withSessionState(input, sessionState, {
@@ -588,6 +767,16 @@ function handleAction(
       });
     }
     case "compound-finish":
+      if (
+        input.gameState.runtime.playableSession?.playableId ===
+        "medicine-compounding"
+      ) {
+        return runMedicineCompoundingPlayableRequest(
+          input,
+          sessionState,
+          createPlayableActionRequest("medicine-compounding", "finish")
+        );
+      }
       return finalizeCompounding(input, sessionState);
     default: {
       if (input.request.actionId.startsWith(BUY_SELECT_ACTION_PREFIX)) {
@@ -610,6 +799,19 @@ function handleAction(
         const overlay = sessionState?.overlay;
         if (overlay?.type !== "compounding" || overlay.selectionsLeft <= 0) {
           return createTransitionResult(input);
+        }
+
+        if (
+          input.gameState.runtime.playableSession?.playableId ===
+          "medicine-compounding"
+        ) {
+          return runMedicineCompoundingPlayableRequest(
+            input,
+            sessionState,
+            createPlayableActionRequest("medicine-compounding", "select-herb", {
+              herbId,
+            })
+          );
         }
 
         const nextSelections = addHerbSelection(overlay.selections, herbId);
@@ -752,7 +954,10 @@ export const medicineHouseHouseModule: HouseModuleDefinition<"medicine-house"> =
       gameState: input.gameState,
       characterDefinitions: input.characterDefinitions,
       sessionState: createInitialMedicineHouseSessionState(
-        pickRandom([...medicineHouseGreetingLines])
+        pickRandomResolvedMedicineHouseText(
+          getMedicineHouseTextEntries(input.textEntriesById),
+          medicineHouseGreetingTextIds
+        )
       ),
       sideEffects: [{ type: "stop-interval", intervalId: COMPOUNDING_INTERVAL_ID }],
     };
@@ -765,8 +970,23 @@ export const medicineHouseHouseModule: HouseModuleDefinition<"medicine-house"> =
     return handleAction(input, input.sessionState);
   },
   leave(input) {
+    const nextGameState =
+      input.gameState.runtime.playableSession?.playableId ===
+      "medicine-compounding"
+        ? runPlayableRuntime({
+            state: createHousePlayableRuntimeState({
+              gameState: input.gameState,
+              moduleId: "medicine-house",
+              sessionState: input.sessionState,
+            }),
+            request: createExitPlayableRequest("medicine-compounding"),
+            characterDefinitions: input.characterDefinitions,
+            playerCharacterId: input.playerCharacterId,
+          }).state.core
+        : input.gameState;
+
     return {
-      gameState: input.gameState,
+      gameState: nextGameState,
       characterDefinitions: input.characterDefinitions,
       sessionState: null,
       sideEffects: [{ type: "stop-interval", intervalId: COMPOUNDING_INTERVAL_ID }],
@@ -834,7 +1054,14 @@ export const medicineHouseHouseModule: HouseModuleDefinition<"medicine-house"> =
               speakerName: npc.name,
               characterId: npc.id,
               position: "right",
-              textLines: [isGreeting ? sessionState.npcGreeting : "（看着你）等你开口。"],
+              textLines: [
+                isGreeting
+                  ? sessionState.npcGreeting
+                  : pickRandomResolvedMedicineHouseText(
+                      getMedicineHouseTextEntries(input.textEntriesById),
+                      medicineHouseOpenTextIds
+                    ),
+              ],
               advanceActionId: isGreeting ? "advance-greeting" : null,
               advanceHintText: isGreeting ? "点击继续" : null,
             },

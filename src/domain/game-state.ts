@@ -5,13 +5,16 @@ import type { CityNpcPoolRuntimeState } from "./city-npc";
 import type { EventId } from "./event";
 import type { HouseId } from "./house";
 import type { CityMarketData } from "./market";
-import type { MapId } from "./map";
+import type { MapExplorationState, MapId } from "./map";
 import type { MissionId } from "./mission";
 import type { ActiveStoryBattleSession } from "./story-battle";
 import type { ActiveActivitySession } from "./activity-session";
 import type { GlobalUIState } from "./global-ui";
 import type { CardInventory } from "./card";
 import type { ValuableItemInventory } from "./valuable-item";
+import type { TaskRuntimeState } from "../core/contracts/task-runtime";
+import type { ActivePlayableSession } from "../core/contracts/playable-runtime";
+import type { CampaignMapExplorationState } from "./map-exploration";
 
 export type ViewName =
   | "map"
@@ -67,9 +70,13 @@ export type GameState = {
   runtime: {
     flags: Record<string, boolean>;
     variables: Record<string, number | string>;
+    tasks: TaskRuntimeState;
+    playableSession: ActivePlayableSession | null;
     cityNpcPools: Record<CityId, CityNpcPoolRuntimeState>;
     cityMarkets: Record<CityId, CityMarketData>;
+    mapExplorationByMapId: Record<MapId, MapExplorationState>;
     activitySession: ActiveActivitySession;
+    mapExploration: CampaignMapExplorationState;
     eventHistory: Record<
       EventId,
       {

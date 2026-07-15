@@ -1,8 +1,12 @@
 import {
   keepHouseDefaultContributions,
   keepHouseDefaultStrategy,
-  keepHouseTaskDefinitions,
 } from "../../../content/houses/keep-house-content";
+import {
+  defaultPackActivities,
+  defaultPackTextEntries,
+} from "../../content/pack-content-access";
+import type { ActivityDefinition } from "../../../domain/activity";
 import type { CharacterDefinition } from "../../../domain/character";
 import type { CalendarDate, GameState } from "../../../domain/game-state";
 import type {
@@ -33,9 +37,165 @@ import {
   formatCouncilStatusText,
   getCouncilStatusText,
 } from "../../time/time-progression";
+import {
+  resolveTextEntry,
+  resolveTextTemplateEntry,
+} from "../../content/text-resolution";
 import { createInitialKeepHouseSessionState } from "./keep-house-session-state";
 
 const ASSIGN_TASK_ACTION_PREFIX = "assign-keep-task:";
+
+const defaultZhuyuanzhangActivities =
+  defaultPackActivities as ActivityDefinition[];
+const defaultZhuyuanzhangTextEntries = defaultPackTextEntries;
+const defaultKeepActivityDefinitionsById = Object.fromEntries(
+  defaultZhuyuanzhangActivities.map((activityDefinition) => [
+    activityDefinition.id,
+    activityDefinition,
+  ])
+);
+
+function getKeepTextEntries(
+  input: {
+    textEntriesById?: Record<string, string> | undefined;
+  }
+): Record<string, string> {
+  return {
+    ...defaultZhuyuanzhangTextEntries,
+    ...(input.textEntriesById ?? {}),
+  };
+}
+
+function resolveKeepText(
+  textEntriesById: Record<string, string>,
+  textId: string
+): string {
+  return resolveTextEntry(textEntriesById, textId, `MISSING_TEXT:${textId}`);
+}
+
+function resolveKeepTemplateText(
+  textEntriesById: Record<string, string>,
+  textId: string,
+  values: Record<string, string | number | boolean | null | undefined>
+): string {
+  return resolveTextTemplateEntry(
+    textEntriesById,
+    textId,
+    values,
+    `MISSING_TEXT:${textId}`
+  );
+}
+
+function getKeepActivityDefinitionsById(
+  input: {
+    activityDefinitionsById?: Record<string, ActivityDefinition> | undefined;
+  }
+): Record<string, ActivityDefinition> {
+  return {
+    ...defaultKeepActivityDefinitionsById,
+    ...(input.activityDefinitionsById ?? {}),
+  };
+}
+
+function isKeepTaskActivityDefinition(
+  activityDefinition: ActivityDefinition
+): activityDefinition is ActivityDefinition & {
+  houseModuleId: "keep-house";
+  taskId: string;
+  missionId: string;
+  titleTextId: string;
+  briefingTextId: string;
+  orderLineTextIds: string[];
+  keepMinTier: KeepHouseTaskTier;
+} {
+  return (
+    activityDefinition.houseModuleId === "keep-house" &&
+    typeof activityDefinition.taskId === "string" &&
+    typeof activityDefinition.missionId === "string" &&
+    typeof activityDefinition.titleTextId === "string" &&
+    typeof activityDefinition.briefingTextId === "string" &&
+    Array.isArray(activityDefinition.orderLineTextIds) &&
+    typeof activityDefinition.keepMinTier === "string"
+  );
+}
+
+function resolveKeepDefaultStrategyTitle(textEntriesById: Record<string, string>): string {
+  return resolveKeepText(textEntriesById, keepHouseDefaultStrategy.titleTextId);
+}
+
+function resolveKeepTaskDefinition(
+  input: {
+    activityDefinitionsById?: Record<string, ActivityDefinition> | undefined;
+    textEntriesById?: Record<string, string> | undefined;
+  },
+  taskId: string
+): KeepHouseTaskDefinition {
+  const textEntriesById = getKeepTextEntries(input);
+  const taskActivityDefinition = Object.values(getKeepActivityDefinitionsById(input))
+    .filter(
+      (activityDefinition) =>
+        isKeepTaskActivityDefinition(activityDefinition) &&
+        activityDefinition.taskId === taskId
+    )
+    .at(-1);
+  assertExists(taskActivityDefinition, `Keep house task not found for id "${taskId}".`);
+  const {
+    taskId: resolvedTaskId,
+    missionId,
+    titleTextId,
+    briefingTextId,
+    orderLineTextIds,
+    keepMinTier,
+  } = taskActivityDefinition;
+  assertExists(resolvedTaskId, `Keep house task is missing taskId for "${taskId}".`);
+  assertExists(missionId, `Keep house task is missing missionId for "${taskId}".`);
+  assertExists(titleTextId, `Keep house task is missing titleTextId for "${taskId}".`);
+  assertExists(
+    briefingTextId,
+    `Keep house task is missing briefingTextId for "${taskId}".`
+  );
+  assertExists(
+    orderLineTextIds,
+    `Keep house task is missing orderLineTextIds for "${taskId}".`
+  );
+  assertExists(
+    keepMinTier,
+    `Keep house task is missing keepMinTier for "${taskId}".`
+  );
+
+  return {
+    id: resolvedTaskId,
+    missionId,
+    title: resolveKeepText(textEntriesById, titleTextId),
+    briefing: resolveKeepText(textEntriesById, briefingTextId),
+    orderLines: orderLineTextIds.map((textId) =>
+      resolveKeepText(textEntriesById, textId)
+    ),
+    minTier: keepMinTier,
+  };
+}
+
+function getKeepTaskDefinitions(
+  input: {
+    activityDefinitionsById?: Record<string, ActivityDefinition> | undefined;
+    textEntriesById?: Record<string, string> | undefined;
+  }
+): KeepHouseTaskDefinition[] {
+  const byTaskId = new Map<string, KeepHouseTaskDefinition>();
+
+  for (const activityDefinition of Object.values(getKeepActivityDefinitionsById(input))) {
+    if (!isKeepTaskActivityDefinition(activityDefinition)) {
+      continue;
+    }
+
+    byTaskId.set(
+      activityDefinition.taskId,
+      resolveKeepTaskDefinition(input, activityDefinition.taskId)
+    );
+  }
+
+  return [...byTaskId.values()];
+}
 
 function getPlayerCharacter(
   characterDefinitions: CharacterDefinition[],
@@ -122,10 +282,10 @@ function addDaysToDate(date: CalendarDate, days: number): CalendarDate {
 
 function getTaskTier(character: CharacterDefinition): KeepHouseTaskTier {
   const title = character.title ?? "";
-  if (title.includes("统领") || title.includes("偏将") || character.stats.fame >= 35) {
+  if (character.stats.fame >= 35) {
     return "commander";
   }
-  if (title.includes("百户") || title.includes("队长") || character.stats.fame >= 18) {
+  if (character.stats.fame >= 18) {
     return "officer";
   }
   return "runner";
@@ -133,16 +293,20 @@ function getTaskTier(character: CharacterDefinition): KeepHouseTaskTier {
 
 function ensureKeepRuntimeState(
   gameState: HouseModuleDispatchInput["gameState"],
-  characterDefinitions: CharacterDefinition[]
+  characterDefinitions: CharacterDefinition[],
+  textEntriesById?: Record<string, string> | undefined
 ): HouseModuleDispatchInput["gameState"] {
   const nextVariables = { ...gameState.runtime.variables };
+  const resolvedTextEntriesById = textEntriesById ?? {};
 
   if (typeof nextVariables[KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown] !== "number") {
     nextVariables[KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown] = 0;
   }
 
   if (typeof nextVariables[KEEP_HOUSE_VARIABLE_KEYS.currentStrategy] !== "string") {
-    nextVariables[KEEP_HOUSE_VARIABLE_KEYS.currentStrategy] = keepHouseDefaultStrategy.title;
+    nextVariables[KEEP_HOUSE_VARIABLE_KEYS.currentStrategy] = resolveKeepDefaultStrategyTitle(
+      resolvedTextEntriesById
+    );
   }
 
   keepHouseDefaultContributions.forEach((entry) => {
@@ -158,8 +322,8 @@ function ensureKeepRuntimeState(
       ...gameState.ui,
       reviewDateText: getCouncilStatusText(gameState),
       mainHouseMissionText:
-        gameState.ui.mainHouseMissionText === "前往评定会场"
-          ? "前往帅府听候差遣"
+        gameState.ui.mainHouseMissionText === "review-hall"
+          ? "report-to-keep"
           : gameState.ui.mainHouseMissionText,
     },
     runtime: {
@@ -259,65 +423,93 @@ function isPlayersLord(
 }
 
 function getAvailableTasks(
+  input: {
+    activityDefinitionsById?: Record<string, ActivityDefinition> | undefined;
+    textEntriesById?: Record<string, string> | undefined;
+  },
   playerCharacter: CharacterDefinition
 ): KeepHouseTaskDefinition[] {
   const tierOrder: KeepHouseTaskTier[] = ["runner", "officer", "commander"];
   const playerTier = getTaskTier(playerCharacter);
 
-  return keepHouseTaskDefinitions.filter(
+  return getKeepTaskDefinitions(input).filter(
     (taskDefinition) =>
       tierOrder.indexOf(taskDefinition.minTier) <= tierOrder.indexOf(playerTier)
   );
 }
 
-function getAudienceGreetingLines(_lordCharacter: CharacterDefinition): string[] {
+function getAudienceGreetingLines(textEntriesById: Record<string, string>): string[] {
   return [
-    "（抬了抬手）示意你上前。",
-    "“有话就说，军中事务不喜拖沓。”",
+    resolveKeepText(textEntriesById, "runtime.zhu_yuanzhang.keep.audience.greeting.001"),
+    resolveKeepText(textEntriesById, "runtime.zhu_yuanzhang.keep.audience.greeting.002"),
   ];
 }
 
-function getAudienceOpenLines(_lordCharacter: CharacterDefinition): string[] {
+function getAudienceOpenLines(textEntriesById: Record<string, string>): string[] {
   return [
-    "（翻着案上的军报）仍分出神来看了你一眼。",
-    "“军情、粮道、市面，凡是看见的，都可以报上来。”",
+    resolveKeepText(textEntriesById, "runtime.zhu_yuanzhang.keep.audience.open.001"),
+    resolveKeepText(textEntriesById, "runtime.zhu_yuanzhang.keep.audience.open.002"),
   ];
 }
 
-function getMeetingIntroLines(_lordCharacter: CharacterDefinition): string[] {
+function getMeetingIntroLines(textEntriesById: Record<string, string>): string[] {
   return [
-    "（端坐主位）厅中诸将已经依次列坐。",
-    "“评定已到，今日先报功过，再定今后的方针与差事。”",
+    resolveKeepText(textEntriesById, "runtime.zhu_yuanzhang.keep.review.intro.001"),
+    resolveKeepText(textEntriesById, "runtime.zhu_yuanzhang.keep.review.intro.002"),
   ];
 }
 
 function getLateMeetingIntroLines(
-  _lordCharacter: CharacterDefinition,
+  textEntriesById: Record<string, string>,
   lateDays: number,
   contributionPenalty: number
 ): string[] {
   return lateDays > 5
     ? [
-        "（冷冷看了你一眼）堂中气氛一下子沉了下去。",
-        `“评定过了 ${lateDays} 天，你才露面，还敢让众人等你？”`,
-        `“先削去你 ${contributionPenalty} 点功劳，再把这轮评定补上。坐下听令。”`,
+        resolveKeepText(textEntriesById, "runtime.zhu_yuanzhang.keep.review.late.heavy.001"),
+        resolveKeepTemplateText(
+          textEntriesById,
+          "runtime.zhu_yuanzhang.keep.review.late.heavy.002",
+          { lateDays }
+        ),
+        resolveKeepTemplateText(
+          textEntriesById,
+          "runtime.zhu_yuanzhang.keep.review.late.heavy.003",
+          { contributionPenalty }
+        ),
       ]
     : [
-        "（敲了敲案角）目光没再挪开。",
-        `“评定拖了 ${lateDays} 天才来，军中不养散漫之人。”`,
-        `“先记你迟到，削去 ${contributionPenalty} 点功劳。坐下，把这轮评定补完。”`,
+        resolveKeepText(textEntriesById, "runtime.zhu_yuanzhang.keep.review.late.light.001"),
+        resolveKeepTemplateText(
+          textEntriesById,
+          "runtime.zhu_yuanzhang.keep.review.late.light.002",
+          { lateDays }
+        ),
+        resolveKeepTemplateText(
+          textEntriesById,
+          "runtime.zhu_yuanzhang.keep.review.late.light.003",
+          { contributionPenalty }
+        ),
       ];
 }
 
 function getLateExpulsionLines(
-  _lordCharacter: CharacterDefinition,
+  textEntriesById: Record<string, string>,
   lateDays: number,
   contributionPenalty: number
 ): string[] {
   return [
-    "（把案上的军报一合）声音冷得发硬。",
-    `“评定过了 ${lateDays} 天，你才来应声，还想继续混在营里？”`,
-    `“功劳先削去 ${contributionPenalty} 点。从今日起，你不再算我营中之人。”`,
+    resolveKeepText(textEntriesById, "runtime.zhu_yuanzhang.keep.review.expulsion.001"),
+    resolveKeepTemplateText(
+      textEntriesById,
+      "runtime.zhu_yuanzhang.keep.review.expulsion.002",
+      { lateDays }
+    ),
+    resolveKeepTemplateText(
+      textEntriesById,
+      "runtime.zhu_yuanzhang.keep.review.expulsion.003",
+      { contributionPenalty }
+    ),
   ];
 }
 
@@ -341,13 +533,20 @@ function applyKeepLateCouncilAttendancePenalty(
 
   const contributionKey = getKeepHouseContributionVariableKey(playerCharacterId);
   const currentContribution = readNumericVariable(state, contributionKey, 0);
+  const effectiveContributionPenalty =
+    resolution.severity === "minor"
+      ? Math.min(
+          resolution.contributionPenalty,
+          Math.max(1, resolution.lateDays * 2)
+        )
+      : resolution.contributionPenalty;
   let nextState = markLateCouncilAttendancePenaltyProcessed({
     ...state,
     runtime: {
       ...state.runtime,
       variables: {
         ...state.runtime.variables,
-        [contributionKey]: Math.max(0, currentContribution - resolution.contributionPenalty),
+        [contributionKey]: Math.max(0, currentContribution - effectiveContributionPenalty),
       },
     },
   });
@@ -357,7 +556,7 @@ function applyKeepLateCouncilAttendancePenalty(
     const playerCharacter = getPlayerCharacter(characterDefinitions, playerCharacterId);
     const expelledPlayer: CharacterDefinition = {
       ...playerCharacter,
-      affiliationLabel: "无所属",
+      affiliationLabel: "unaffiliated",
     };
     delete expelledPlayer.clanId;
     nextCharacterDefinitions = replaceCharacter(characterDefinitions, expelledPlayer);
@@ -373,7 +572,7 @@ function applyKeepLateCouncilAttendancePenalty(
       ui: {
         ...nextState.ui,
         reviewDateText: formatReviewDateText(60),
-        mainHouseMissionText: "另谋出路",
+        mainHouseMissionText: "grain-procurement",
       },
       runtime: {
         ...nextState.runtime,
@@ -388,52 +587,86 @@ function applyKeepLateCouncilAttendancePenalty(
   return {
     state: nextState,
     characterDefinitions: nextCharacterDefinitions,
-    resolution,
+    resolution: {
+      ...resolution,
+      contributionPenalty: effectiveContributionPenalty,
+    },
   };
 }
 
 function getMeetingPraiseLines(
   lordCharacter: CharacterDefinition,
-  contributionEntries: KeepHouseContributionEntry[]
+  contributionEntries: KeepHouseContributionEntry[],
+  textEntriesById: Record<string, string>
 ): string[] {
   const topEntries = contributionEntries.slice(0, 2);
   if (topEntries.length === 0) {
-    return [`${lordCharacter.name}扫视众人：“这期无人立功，诸位都该警醒。”`];
+    return [
+      resolveKeepTemplateText(
+        textEntriesById,
+        "runtime.zhu_yuanzhang.keep.review.praise.none.001",
+        {
+          lordName: lordCharacter.name,
+        }
+      ),
+    ];
   }
 
-  const praiseLines = topEntries.map(
-    (entry, index) =>
-      `“${index + 1 === 1 ? "首功" : "次功"}记在${entry.name}身上，${entry.contribution}点功劳，做得不错。”`
+  const praiseLines = topEntries.map((entry, index) =>
+    resolveKeepTemplateText(
+      textEntriesById,
+      `runtime.zhu_yuanzhang.keep.review.praise.rank.${String(index + 1).padStart(3, "0")}`,
+      {
+        lordName: lordCharacter.name,
+        entryName: entry.name,
+        contribution: entry.contribution,
+      }
+    )
   );
 
   return [
-    `${lordCharacter.name}点了点案上的名册。`,
+    resolveKeepTemplateText(
+      textEntriesById,
+      "runtime.zhu_yuanzhang.keep.review.praise.header.001",
+      {
+        lordName: lordCharacter.name,
+      }
+    ),
     ...praiseLines,
   ];
 }
 
-function getMeetingStrategyLines(): string[] {
-  return [
-    "郭子兴展开舆图，手指城中仓廪与市集。",
-    ...keepHouseDefaultStrategy.lines,
-  ];
+function getMeetingStrategyLines(textEntriesById: Record<string, string>): string[] {
+  return keepHouseDefaultStrategy.lineTextIds.map((textId) =>
+    resolveKeepText(textEntriesById, textId)
+  );
 }
 
 function getAssignTaskLines(
+  textEntriesById: Record<string, string>,
   playerCharacter: CharacterDefinition,
   availableTasks: KeepHouseTaskDefinition[]
 ): string[] {
-  const availableTaskText =
-    availableTasks.length === 0
-      ? "你暂且在堂下听令，待以后再领差事。"
-      : `照你现在的资历，可接的差事有：${availableTasks
-          .map((taskDefinition) => taskDefinition.title)
-          .join("、")}。`;
-
   return [
-    `${playerCharacter.name}出列听令。`,
-    availableTaskText,
-    "“自己选一件，领了就立刻去办。”",
+    resolveKeepTemplateText(
+      textEntriesById,
+      "runtime.zhu_yuanzhang.keep.review.assign.001",
+      {
+        playerName: playerCharacter.name,
+      }
+    ),
+    resolveKeepTemplateText(
+      textEntriesById,
+      "runtime.zhu_yuanzhang.keep.review.assign.002",
+      {
+        playerName: playerCharacter.name,
+        availableTaskList:
+          availableTasks.length === 0
+            ? "none"
+            : availableTasks.map((taskDefinition) => taskDefinition.title).join(", "),
+      }
+    ),
+    resolveKeepText(textEntriesById, "runtime.zhu_yuanzhang.keep.review.assign.003"),
   ];
 }
 
@@ -447,6 +680,7 @@ function assignTaskToPlayer(
   input: HouseModuleDispatchInput<"keep-house">,
   taskDefinition: KeepHouseTaskDefinition
 ): HouseModuleTransitionResult<"keep-house"> {
+  const textEntriesById = getKeepTextEntries(input);
   const nextState = {
     ...input.gameState,
     world: {
@@ -471,7 +705,8 @@ function assignTaskToPlayer(
       variables: {
         ...input.gameState.runtime.variables,
         [KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown]: 60,
-        [KEEP_HOUSE_VARIABLE_KEYS.currentStrategy]: keepHouseDefaultStrategy.title,
+        [KEEP_HOUSE_VARIABLE_KEYS.currentStrategy]:
+          resolveKeepDefaultStrategyTitle(textEntriesById),
         [KEEP_HOUSE_VARIABLE_KEYS.lastAssignedTaskId]: taskDefinition.id,
       },
     },
@@ -490,13 +725,32 @@ function assignTaskToPlayer(
       selectedTaskId: taskDefinition.id,
       dialogueLines: [
         ...taskDefinition.orderLines,
-        `“${taskDefinition.title}这件事，就由你去办。”`,
+        resolveKeepTemplateText(
+          textEntriesById,
+          "runtime.zhu_yuanzhang.keep.review.assignment.order.001",
+          {
+            taskTitle: taskDefinition.title,
+          }
+        ),
       ],
       overlay: createAlertOverlay(
-        "军令下达",
+        resolveKeepText(
+          textEntriesById,
+          "runtime.zhu_yuanzhang.keep.review.assignment.overlay.title"
+        ),
         [
-          taskDefinition.briefing,
-          "本次评定结束，下一次评定倒计时已重置为 60 天。",
+          resolveKeepTemplateText(
+            textEntriesById,
+            "runtime.zhu_yuanzhang.keep.review.assignment.overlay.001",
+            {
+              taskTitle: taskDefinition.title,
+              taskBriefing: taskDefinition.briefing,
+            }
+          ),
+          resolveKeepText(
+            textEntriesById,
+            "runtime.zhu_yuanzhang.keep.review.assignment.overlay.002"
+          ),
         ],
         "success"
       ),
@@ -520,6 +774,7 @@ function handleAction(
     input.characterDefinitions,
     input.playerCharacterId
   );
+  const textEntriesById = getKeepTextEntries(input);
 
   if (input.request.actionId === "advance-keep-dialogue") {
     if (sessionState.mode === "meeting") {
@@ -529,9 +784,9 @@ function handleAction(
             meetingStage: "contribution",
             dialoguePhase: "open",
             overlay: createAlertOverlay(
-              "诸将贡献",
+              "Contribution Report",
               sessionState.contributionEntries.map(
-                (entry) => `${entry.name}：${entry.contribution} 点`
+                (entry) => `${entry.name}: ${entry.contribution} contribution`
               )
             ),
           });
@@ -539,15 +794,16 @@ function handleAction(
           return withSessionState(input, sessionState, {
             meetingStage: "strategy",
             dialoguePhase: "open",
-            dialogueLines: getMeetingStrategyLines(),
+            dialogueLines: getMeetingStrategyLines(textEntriesById),
           });
         case "strategy":
           return withSessionState(input, sessionState, {
             meetingStage: "assign-task",
             dialoguePhase: "open",
             dialogueLines: getAssignTaskLines(
+              textEntriesById,
               playerCharacter,
-              getAvailableTasks(playerCharacter)
+              getAvailableTasks(input, playerCharacter)
             ),
           });
         default:
@@ -558,7 +814,7 @@ function handleAction(
     return withSessionState(input, sessionState, {
       meetingStage: "finished",
       dialoguePhase: "open",
-      dialogueLines: getAudienceOpenLines(lordCharacter),
+      dialogueLines: getAudienceOpenLines(textEntriesById),
     });
   }
 
@@ -570,7 +826,8 @@ function handleAction(
         dialoguePhase: "open",
         dialogueLines: getMeetingPraiseLines(
           lordCharacter,
-          sessionState.contributionEntries
+          sessionState.contributionEntries,
+          textEntriesById
         ),
       });
     }
@@ -597,16 +854,13 @@ function handleAction(
   if (input.request.actionId === "open-lord-dialogue") {
     return withSessionState(input, sessionState, {
       dialoguePhase: "open",
-      dialogueLines: getAudienceOpenLines(lordCharacter),
+      dialogueLines: getAudienceOpenLines(textEntriesById),
     });
   }
 
   const selectedTaskId = parseTaskActionId(input.request.actionId);
   if (selectedTaskId != null) {
-    const taskDefinition = keepHouseTaskDefinitions.find(
-      (taskCandidate) => taskCandidate.id === selectedTaskId
-    );
-    assertExists(taskDefinition, `Keep house task not found for id "${selectedTaskId}".`);
+    const taskDefinition = resolveKeepTaskDefinition(input, selectedTaskId);
     return assignTaskToPlayer(input, taskDefinition);
   }
 
@@ -626,14 +880,19 @@ function selectOverlayViewModel(
     paragraphs: overlay.paragraphs,
     ...(overlay.tone == null ? {} : { tone: overlay.tone }),
     confirmActionId: "close-alert",
-    confirmLabel: "收下",
+    confirmLabel: "Close",
   };
 }
 
 export const keepHouseHouseModule: HouseModuleDefinition<"keep-house"> = {
   moduleId: "keep-house",
   enter(input) {
-    const preparedState = ensureKeepRuntimeState(input.gameState, input.characterDefinitions);
+    const textEntriesById = getKeepTextEntries(input);
+    const preparedState = ensureKeepRuntimeState(
+      input.gameState,
+      input.characterDefinitions,
+      input.textEntriesById
+    );
     const lateAttendance = applyKeepLateCouncilAttendancePenalty(
       preparedState,
       input.characterDefinitions,
@@ -663,9 +922,9 @@ export const keepHouseHouseModule: HouseModuleDefinition<"keep-house"> = {
           "meeting",
           "intro",
           lateAttendance.resolution == null
-            ? getMeetingIntroLines(lordCharacter)
+            ? getMeetingIntroLines(textEntriesById)
             : getLateMeetingIntroLines(
-                lordCharacter,
+                textEntriesById,
                 lateAttendance.resolution.lateDays,
                 lateAttendance.resolution.contributionPenalty
               ),
@@ -676,11 +935,11 @@ export const keepHouseHouseModule: HouseModuleDefinition<"keep-house"> = {
           "finished",
           lateExpelled && lateAttendance.resolution != null
             ? getLateExpulsionLines(
-                lordCharacter,
+                textEntriesById,
                 lateAttendance.resolution.lateDays,
                 lateAttendance.resolution.contributionPenalty
               )
-            : getAudienceGreetingLines(lordCharacter),
+            : getAudienceGreetingLines(textEntriesById),
           contributionEntries
         );
 
@@ -692,10 +951,10 @@ export const keepHouseHouseModule: HouseModuleDefinition<"keep-house"> = {
             ...baseSessionState,
             dialoguePhase: "open",
             overlay: createAlertOverlay(
-              "逐出营门",
+              "expelled",
               [
-                `你迟到了 ${lateAttendance.resolution?.lateDays ?? 0} 天。`,
-                `军中先扣去 ${lateAttendance.resolution?.contributionPenalty ?? 0} 点功劳，再将你逐出营门。`,
+                `Late by ${lateAttendance.resolution?.lateDays ?? 0} days.`, 
+                `Penalty ${lateAttendance.resolution?.contributionPenalty ?? 0} contribution, then expelled from the camp.`, 
               ],
               "warning"
             ),
@@ -714,7 +973,11 @@ export const keepHouseHouseModule: HouseModuleDefinition<"keep-house"> = {
     };
   },
   selectViewModel(input): HouseModuleViewModel {
-    const nextState = ensureKeepRuntimeState(input.gameState, input.characterDefinitions);
+    const nextState = ensureKeepRuntimeState(
+      input.gameState,
+      input.characterDefinitions,
+      input.textEntriesById
+    );
     const lordCharacter = getLordCharacter(
       input.characterDefinitions,
       input.houseDefinition.defaultCharacterId
@@ -728,26 +991,24 @@ export const keepHouseHouseModule: HouseModuleDefinition<"keep-house"> = {
       createInitialKeepHouseSessionState(
         "audience",
         "finished",
-        getAudienceGreetingLines(lordCharacter),
+        getAudienceGreetingLines(getKeepTextEntries(input)),
         createContributionEntries(nextState, input.characterDefinitions, lordCharacter.clanId)
       );
     const currentStrategy = readStringVariable(
       nextState,
       KEEP_HOUSE_VARIABLE_KEYS.currentStrategy,
-      keepHouseDefaultStrategy.title
+      resolveKeepDefaultStrategyTitle(getKeepTextEntries(input))
     );
     const countdown = readNumericVariable(
       nextState,
       KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown,
       0
     );
-    const availableTasks = getAvailableTasks(playerCharacter);
+    const availableTasks = getAvailableTasks(input, playerCharacter);
     const assignedTask =
       sessionState.selectedTaskId == null
         ? null
-        : keepHouseTaskDefinitions.find(
-            (taskDefinition) => taskDefinition.id === sessionState.selectedTaskId
-          ) ?? null;
+        : resolveKeepTaskDefinition(input, sessionState.selectedTaskId);
     const shouldShowMeetingTasks =
       sessionState.mode === "meeting" &&
       sessionState.meetingStage === "assign-task" &&
@@ -773,18 +1034,18 @@ export const keepHouseHouseModule: HouseModuleDefinition<"keep-house"> = {
     const statusTaskText =
       assignedTask?.title ??
       (nextState.ui.mainHouseMissionText === ""
-        ? "暂无"
+        ? "none"
         : nextState.ui.mainHouseMissionText);
     const strategySubtitle =
       sessionState.mode === "meeting"
-        ? "评定中 / 诸将列席"
-        : `${lordCharacter.title ?? "城主"} / 发号施令`;
+        ? "review / assembled officers"
+        : `${lordCharacter.title ?? "lord"} / command`;
 
     return {
       moduleId: "keep-house",
       houseId: input.houseDefinition.id,
       sceneTitle: input.houseDefinition.name,
-      sceneSubtitle: "城中中枢 / 评定与军令",
+      sceneSubtitle: "keep / review and command",
       standbyRoster: rosterEntries.map((entry) => ({
         characterId: entry.characterId,
         name: entry.name,
@@ -820,12 +1081,12 @@ export const keepHouseHouseModule: HouseModuleDefinition<"keep-house"> = {
                 (sessionState.mode === "audience" &&
                   sessionState.meetingStage === "finished" &&
                   sessionState.dialoguePhase === "greeting"))
-                ? "点击继续"
+                ? "Continue"
                 : null,
           },
       actionContainer: shouldShowMeetingTasks
         ? {
-            title: "本次可领差事",
+            title: "Current Orders",
             actions: availableTasks.map<HouseActionViewModel>((taskDefinition) => ({
               id: `${ASSIGN_TASK_ACTION_PREFIX}${taskDefinition.id}`,
               label: taskDefinition.title,
@@ -833,29 +1094,30 @@ export const keepHouseHouseModule: HouseModuleDefinition<"keep-house"> = {
           }
         : sessionState.mode === "audience" && sessionState.dialoguePhase === "open"
           ? {
-              title: "帅府事务",
+              title: "Audience Actions",
               actions: [
-                { id: "dismiss-dialogue", label: "退下" },
+                { id: "dismiss-dialogue", label: "Dismiss" },
               ],
             }
           : null,
       statusCard: {
-        eyebrow: "帅府",
+        eyebrow: "Keep",
         title: currentStrategy,
         subtitle: strategySubtitle,
         metrics: [
-          { label: "主帅", value: lordCharacter.name },
-          { label: "评定倒计时", value: `${countdown} 天` },
-          { label: "本次首功", value: sessionState.contributionEntries[0]?.name ?? "暂无" },
-          { label: "当前差事", value: statusTaskText },
+          { label: "Commander", value: lordCharacter.name },
+          { label: "Review Countdown", value: `${countdown} days` },
+          { label: "Top Merit", value: sessionState.contributionEntries[0]?.name ?? "none" },
+          { label: "Current Duty", value: statusTaskText },
         ],
       },
       overlay: selectOverlayViewModel(sessionState.overlay),
       leaveAction: {
         id: "leave-house",
-        label: "离开帅府",
+        label: "Leave",
         ...(sessionState.dialoguePhase === "idle" ? { tone: "accent" } : {}),
       },
     };
   },
 };
+

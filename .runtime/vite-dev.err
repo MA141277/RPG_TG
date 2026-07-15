@@ -1,0 +1,141 @@
+10:13:14 [vite] (client) Pre-transform error: Transform failed with 1 error:
+C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/house-modules/home-house/home-house-house-module.ts:698:58: ERROR: Unterminated string literal
+  Plugin: vite:esbuild
+  File: C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/house-modules/home-house/home-house-house-module.ts:698:58
+  
+  Unterminated string literal
+  700 |  
+  701 |    return items.map(
+  702 |      (item) => `${item.name} x${item.ownedCount} / ${item.kindText}`
+      |    ^
+  703 |    );
+  704 |  }
+  
+10:13:14 [vite] Internal server error: Transform failed with 1 error:
+C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/house-modules/home-house/home-house-house-module.ts:698:58: ERROR: Unterminated string literal
+  Plugin: vite:esbuild
+  File: C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/house-modules/home-house/home-house-house-module.ts:698:58
+  
+  Unterminated string literal
+  700 |  
+  701 |    return items.map(
+  702 |      (item) => `${item.name} x${item.ownedCount} / ${item.kindText}`
+      |    ^
+  703 |    );
+  704 |  }
+  
+      at failureErrorWithLog (C:\Users\Administrator\Desktop\workspace\project\RPG_TG\node_modules\esbuild\lib\main.js:1748:15)
+      at C:\Users\Administrator\Desktop\workspace\project\RPG_TG\node_modules\esbuild\lib\main.js:1017:50
+      at responseCallbacks.<computed> (C:\Users\Administrator\Desktop\workspace\project\RPG_TG\node_modules\esbuild\lib\main.js:884:9)
+      at handleIncomingPacket (C:\Users\Administrator\Desktop\workspace\project\RPG_TG\node_modules\esbuild\lib\main.js:939:12)
+      at Socket.readFromStdout (C:\Users\Administrator\Desktop\workspace\project\RPG_TG\node_modules\esbuild\lib\main.js:862:7)
+      at Socket.emit (node:events:509:28)
+      at addChunk (node:internal/streams/readable:563:12)
+      at readableAddChunkPushByteMode (node:internal/streams/readable:514:3)
+      at Readable.push (node:internal/streams/readable:394:5)
+      at Pipe.onStreamRead (node:internal/stream_base_commons:189:23)
+10:13:20 [vite] Internal server error: Transform failed with 1 error:
+C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/house-modules/home-house/home-house-house-module.ts:698:58: ERROR: Unterminated string literal
+  Plugin: vite:esbuild
+  File: C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/house-modules/home-house/home-house-house-module.ts:698:58
+  
+  Unterminated string literal
+  700 |  
+  701 |    return items.map(
+  702 |      (item) => `${item.name} x${item.ownedCount} / ${item.kindText}`
+      |    ^
+  703 |    );
+  704 |  }
+  
+      at failureErrorWithLog (C:\Users\Administrator\Desktop\workspace\project\RPG_TG\node_modules\esbuild\lib\main.js:1748:15)
+      at C:\Users\Administrator\Desktop\workspace\project\RPG_TG\node_modules\esbuild\lib\main.js:1017:50
+      at responseCallbacks.<computed> (C:\Users\Administrator\Desktop\workspace\project\RPG_TG\node_modules\esbuild\lib\main.js:884:9)
+      at handleIncomingPacket (C:\Users\Administrator\Desktop\workspace\project\RPG_TG\node_modules\esbuild\lib\main.js:939:12)
+      at Socket.readFromStdout (C:\Users\Administrator\Desktop\workspace\project\RPG_TG\node_modules\esbuild\lib\main.js:862:7)
+      at Socket.emit (node:events:509:28)
+      at addChunk (node:internal/streams/readable:563:12)
+      at readableAddChunkPushByteMode (node:internal/streams/readable:514:3)
+      at Readable.push (node:internal/streams/readable:394:5)
+      at Pipe.onStreamRead (node:internal/stream_base_commons:189:23)
+10:13:55 [vite] (client) Pre-transform error: Transform failed with 1 error:
+C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/house-modules/home-house/home-house-house-module.ts:698:58: ERROR: Unterminated string literal
+  Plugin: vite:esbuild
+  File: C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/house-modules/home-house/home-house-house-module.ts:698:58
+  
+  Unterminated string literal
+  700 |  
+  701 |    return items.map(
+  702 |      (item) => `${item.name} x${item.ownedCount} / ${item.kindText}`
+      |    ^
+  703 |    );
+  704 |  }
+  
+10:13:56 [vite] Internal server error: Transform failed with 1 error:
+C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/house-modules/home-house/home-house-house-module.ts:698:58: ERROR: Unterminated string literal
+  Plugin: vite:esbuild
+  File: C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/house-modules/home-house/home-house-house-module.ts:698:58
+  
+  Unterminated string literal
+  700 |  
+  701 |    return items.map(
+  702 |      (item) => `${item.name} x${item.ownedCount} / ${item.kindText}`
+      |    ^
+  703 |    );
+  704 |  }
+  
+      at failureErrorWithLog (C:\Users\Administrator\Desktop\workspace\project\RPG_TG\node_modules\esbuild\lib\main.js:1748:15)
+      at C:\Users\Administrator\Desktop\workspace\project\RPG_TG\node_modules\esbuild\lib\main.js:1017:50
+      at responseCallbacks.<computed> (C:\Users\Administrator\Desktop\workspace\project\RPG_TG\node_modules\esbuild\lib\main.js:884:9)
+      at handleIncomingPacket (C:\Users\Administrator\Desktop\workspace\project\RPG_TG\node_modules\esbuild\lib\main.js:939:12)
+      at Socket.readFromStdout (C:\Users\Administrator\Desktop\workspace\project\RPG_TG\node_modules\esbuild\lib\main.js:862:7)
+      at Socket.emit (node:events:509:28)
+      at addChunk (node:internal/streams/readable:563:12)
+      at readableAddChunkPushByteMode (node:internal/streams/readable:514:3)
+      at Readable.push (node:internal/streams/readable:394:5)
+      at Pipe.onStreamRead (node:internal/stream_base_commons:189:23)
+10:13:56 [vite] Internal server error: Transform failed with 1 error:
+C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/house-modules/home-house/home-house-house-module.ts:698:58: ERROR: Unterminated string literal
+  Plugin: vite:esbuild
+  File: C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/house-modules/home-house/home-house-house-module.ts:698:58
+  
+  Unterminated string literal
+  700 |  
+  701 |    return items.map(
+  702 |      (item) => `${item.name} x${item.ownedCount} / ${item.kindText}`
+      |    ^
+  703 |    );
+  704 |  }
+  
+      at failureErrorWithLog (C:\Users\Administrator\Desktop\workspace\project\RPG_TG\node_modules\esbuild\lib\main.js:1748:15)
+      at C:\Users\Administrator\Desktop\workspace\project\RPG_TG\node_modules\esbuild\lib\main.js:1017:50
+      at responseCallbacks.<computed> (C:\Users\Administrator\Desktop\workspace\project\RPG_TG\node_modules\esbuild\lib\main.js:884:9)
+      at handleIncomingPacket (C:\Users\Administrator\Desktop\workspace\project\RPG_TG\node_modules\esbuild\lib\main.js:939:12)
+      at Socket.readFromStdout (C:\Users\Administrator\Desktop\workspace\project\RPG_TG\node_modules\esbuild\lib\main.js:862:7)
+      at Socket.emit (node:events:509:28)
+      at addChunk (node:internal/streams/readable:563:12)
+      at readableAddChunkPushByteMode (node:internal/streams/readable:514:3)
+      at Readable.push (node:internal/streams/readable:394:5)
+      at Pipe.onStreamRead (node:internal/stream_base_commons:189:23)
+10:15:12 [vite] Internal server error: Transform failed with 1 error:
+C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/house-modules/home-house/home-house-house-module.ts:698:58: ERROR: Unterminated string literal
+  Plugin: vite:esbuild
+  File: C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/house-modules/home-house/home-house-house-module.ts:698:58
+  
+  Unterminated string literal
+  700 |  
+  701 |    return items.map(
+  702 |      (item) => `${item.name} x${item.ownedCount} / ${item.kindText}`
+      |    ^
+  703 |    );
+  704 |  }
+  
+      at failureErrorWithLog (C:\Users\Administrator\Desktop\workspace\project\RPG_TG\node_modules\esbuild\lib\main.js:1748:15)
+      at C:\Users\Administrator\Desktop\workspace\project\RPG_TG\node_modules\esbuild\lib\main.js:1017:50
+      at responseCallbacks.<computed> (C:\Users\Administrator\Desktop\workspace\project\RPG_TG\node_modules\esbuild\lib\main.js:884:9)
+      at handleIncomingPacket (C:\Users\Administrator\Desktop\workspace\project\RPG_TG\node_modules\esbuild\lib\main.js:939:12)
+      at Socket.readFromStdout (C:\Users\Administrator\Desktop\workspace\project\RPG_TG\node_modules\esbuild\lib\main.js:862:7)
+      at Socket.emit (node:events:509:28)
+      at addChunk (node:internal/streams/readable:563:12)
+      at readableAddChunkPushByteMode (node:internal/streams/readable:514:3)
+      at Readable.push (node:internal/streams/readable:394:5)
+      at Pipe.onStreamRead (node:internal/stream_base_commons:189:23)

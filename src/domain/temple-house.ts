@@ -1,5 +1,6 @@
 export type TempleHouseTaskDefinition = {
   id: string;
+  activityId: string;
   missionId: string;
   title: string;
   briefing: string;

@@ -2,6 +2,775 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-13 Generic Activity Pachinko Board
+
+### Added
+- 新增 `pachinko-board` activity session contract，作为 `activity-qte` playable 的新默认小游戏：长方形 2D 弹珠盘、同步顶部双摆臂、固定 6/7 交错弹柱、移动双柱积分门、底部 7 分栏和 5 枚默认小球。
+- `HouseOverlayViewModel` 增加 `pachinko-board` 结构化 overlay，寺庙 house-hosted activity work 可直接渲染 shared playable session，不需要恢复 house-local QTE timer。
+- `activity-confirm` overlay 增加工作描述、相关能力、消耗、历史最高分和快速完成 action 字段；寺庙工作按 `activityId` 记录 `var.activity.<activityId>.best_score`，第二次可用历史最高分 90% 快速完成。
+
+### Changed
+- `generic.qte` / `activity-qte` 默认启动路径从旧 `fortune-board` 棋盘切换为 `pachinko-board`；旧 `fortune-board` session、渲染和兼容 action seam 保留。
+- 寺庙帮忙类工作继续通过 `playable.activity-qte.house.temple` 启动 shared playable runtime，但验收流程现在显示并结算新的弹珠玩法。
+- `pachinko-board` 支持多颗 active ball、去除前两行固定弹柱，并由 runtime tick 每 20 秒刷新底部随机槽位；最终球落定后保留确认状态，不在同一 tick 内退出棋盘。
+- `pachinko-board` 移动槽穿过奖励改为立即 `+1球`，底部 `+1` 槽改为转盘槽；转盘通过 typed `rewardQueue` / `wheelState` 串行处理加分、加球、扣分和奇遇结果，UI 只负责渲染转盘动画与闪烁结果。
+
+### Impact
+- 默认活动 fallback 与寺庙工作共用同一套弹珠机制；得分仍通过统一 activity result 写回，并由寺庙模块按原有贡献、体力和时间规则结算。
+- 同一玩法的不同工作入口会分别保存最高分，例如抄经和扫地互不覆盖，快速完成不降低历史最高分。
+
+## 2026-07-09 Three.js Renderer Boundary
+
+### Added
+- 新增 `three` 运行时依赖，作为后续 3D / WebGL 表现层基础库。
+- `docs/architecture.md` 记录 3D renderer 依赖边界：`three` 只能直接用于 `src/ui/**` 表现层，不能进入 `content`、`domain`、`application` 或 runtime 模块。
+
+### Impact
+- 后续 3D 场景、模型、特效、拾取和后处理可以复用 three.js 的现成渲染能力；玩法状态、探索、通行、事件、任务、house 会话和资源变化仍必须通过统一 game state / runtime 结构流转，不能藏进 three.js scene graph 或 `Object3D.userData`。
+
+## 2026-07-08 Character Select Ink Feedback
+
+### Changed
+- 角色选择界面的墨点反馈从 DOM 矩形边缘采样改为图片 alpha 轮廓采样：`main-ui-flow.js` 会优先读取目标控件自身 CSS 背景图，按当前 `background-size` / `background-position` 计算实际绘制区域，再从透明像素边界提取轮廓点和外法线生成墨点。
+- 角色选择界面初始化时会预热角色卡、书签、翻页按钮、返回按钮和开始按钮的轮廓缓存；无可采样图片或图片尚未加载时仍保留旧矩形采样兜底，避免 UI 反馈完全丢失。
+
+### Impact
+- 玩家在角色选择页悬浮或键盘聚焦控件时，墨点点选效果会贴近 UI 图片自身的不规则轮廓，而不是贴住控件外接方框；视觉资产仍由现有 CSS / 布局编辑器背景图维护。
+
+## 2026-07-08 Campaign Map Interaction Stability
+
+### Added
+- 大地图新增可踏足 hex 悬浮反馈层：`map-view.ts` 生成 `data-campaign-hover-hex` SVG overlay，`main.ts` 根据当前 terrain 投影、探索状态、地形通行判定和寻路结果绘制白色六边形描边，`prototype.css` 将其放在云层之上且不接管鼠标事件。
+
+### Changed
+- 大地图 marker 和 marker summary 增加稳定 DOM 身份，`renderAppFrame()` 在地图重绘时像保活 terrain / actor / cloud canvas 一样移植旧 marker 节点，并只同步语义属性，保留 terrain 投影产生的位置样式，减少玩家移动结束时城市/建筑标识被销毁重建造成的刷新感。
+- `docs/architecture.md` 同步大地图 marker 保活、可踏足 hex hover 反馈只读寻路结果、以及 hover 描边位于云层上方的层级契约。
+- 云层 reveal mask 新增上一帧探索纹理与 `uRevealTransition` 过渡；新探索格开洞时按云噪声做溶解式切换，避免云层直接消失。
+- 云层 shader 在已探索空洞内进一步衰减全图空气雾层和孤立云团残留，但不改变洞口边缘云壁的语义来源。
+- 大地图通行网格改为按 `map_ground_types` 的水域材质语义生成，和 terrain shader 的陆地/水体渲染判断对齐；`map_heights` 不再负责寻路通行判定，避免低矮陆地被当成水体。
+- 可踏足 hex 悬浮描边改为几何角点投影、高度锚定到当前 hex 中心，避免角点误采邻格高度导致六边形端点翘起或下陷。
+- 云层空洞内的次级残留层同步衰减，减少已探索核心区里额外覆盖整层薄雾或外云团残影。
+- 云层 reveal mask 的 hex 多边形同样改为角点投影、中心高度锚定，避免 mask 轮廓因角点误采邻格高度而变形。
+- 大地图通行性收紧为 terrain shader 同款“hex 中心材质”语义，并直接使用 `map_ground_types` 原始尺寸采样；岸边水格不再因为角点陆地样本被放行。
+- 云洞核心区的 inner wisp、云影与 outer puff 后叠层统一随空气雾层 keep mask 衰减到 0，避免洞内残留独立薄层。
+- 云洞边缘扰动按视觉反馈恢复旧版单向 offset 采样路径，保留此前更强的云墙撕裂和融合效果。
+- 云洞流动边缘恢复使用 reveal red 通道浅云层生成 `edgeBand` / `shallowZone` / `rimAlpha`；真正的硬六边形块改为从 raw `baseClear` 迁出，核心清空、空气雾和孤立云残留都改读 offset 后的有机 clear field，避免原始 mask 块作为独立透明度分区显露。
+
+### Impact
+- 玩家移动后地图标识节点保持稳定，地图 hover 反馈只提示当前实际可抵达的已探索陆地 hex；低矮陆地按渲染材质参与寻路，云层开图仍由探索状态驱动，视觉过渡更接近云层被逐步拨开的效果。
+
+## 2026-07-07 Campaign Viewport Cloud Shader
+
+### Added
+- 新增大地图视口级云雾 overlay renderer `src/ui/views/map/campaign-cloud-webgl.ts`，通过独立 `data-campaign-map-cloud` canvas 渲染慢速动态云层。
+- 新增 `campaign-cloud.vert.glsl` 与 `campaign-cloud.frag.glsl`，使用连续程序 FBM、billow 云雾变体与 `map_fog_noise` 轻量贴图扰动生成云体密度、明暗层次和轻微自阴影质感。
+- 新增视口空间探索挖空 reveal mask：`map-view.ts` 将当前地图累计 `revealedHexKeys` 传给云层 canvas，`campaign-cloud-webgl.ts` 生成 `uRevealTexture`，`campaign-cloud.frag.glsl` 用它裁切云层 alpha。
+- `campaign-terrain-webgl.ts` 新增只读投影 helper，将 terrain UV 投影到当前视口 client 坐标；云层 renderer 用它在完整视口云层上对齐地图 hex 挖空。
+- `travel-to-coordinate.ts` 新增 `hexToCoordinatePolygon()`，让探索挖空复用 navigation 的尖顶 axial hex 几何。
+
+### Changed
+- 大地图初始相机改为以玩家当前坐标为屏幕中心，默认缩放改为 40x；地图 reset 会回到同一 home camera。
+- `campaign-terrain-webgl.ts` 新增按地图坐标生成居中相机的 helper，避免 `main.ts` 复制 terrain 投影矩阵细节。
+- 未探索 campaign marker 在 view model 层标记为不可交互，渲染时不再带 `data-map-node-id`，并通过 disabled / pointer-events 屏蔽点击和 hover 详情。
+- campaign 地形通行网格从 hex 中心单点高度判定改为 hex 区域多点采样：中心为明确陆地或区域内有足够陆地样本才可通行，减少低矮陆地被误判为水体导致无法寻路的问题。
+- `docs/architecture.md` 收敛为地图模块责任、数据流和层级契约，不再记录云层 shader 的噪声、距离场、阈值等实现细节。
+- `map-view.ts` 在 `c-campaign-map` 视口内生成云雾 canvas，并把 marker 悬浮详情拆成独立 overlay；`prototype.css` 将云层限制在地图视口中，`pointer-events: none`，层级压过地图建筑点本体，但低于 marker 悬浮详情、debug 控件、全局 UI 和确认 modal。
+- `campaign-terrain-webgl.ts` 的地形投影同步不再给 marker 本体或玩家写入深度排序高层级；marker、玩家 DOM sprite 和 actor canvas 固定在云层下方，只有 marker 悬浮详情固定在云层上方。
+- 云雾 shader 重构为烟雾式密度场：云体主体形状、团块边界、明暗和 reveal 边缘撕裂由连续 FBM、billow 变体与贴图扰动主导，Worley/胞体距离场只保留为低权重团块破碎，不再形成可见细胞纹。
+- 云雾 shader 移除导致屏幕斜向条纹的剪切雾丝层，改用各向同性的细粒度 puff / vapor breakup 扰动补充云面细节；最终 alpha 遮挡表达保持由 shader 末端统一控制。
+- 云雾主密度噪声从单个低频 `coverage` 门控改为三组独立中频 puff field 的加权密度场，低频噪声只参与域扭曲和明暗；避免 `max()` 并集把整屏填成白雾，也避免通过常量保底掩盖采样不均。云层颜色同步调回偏亮白的云体反照率。
+- 云雾密度拆成连续 `overcast` 覆盖层和 `cloudHeightField()` 高度层，屏幕覆盖由连续云幕维持，云团形状不再依赖透明度空洞。
+- 云雾颜色层改为基于高度场梯度的近似法线光照：通过邻近采样估算坡度，再由 `slopeLight`、`ambientOcclusion`、`selfShadow` 和 `cloudHighlight` 生成亮面与软阴影，避免“白底叠黑块”或纯白无结构。
+- 云雾光照继续加入沿光照方向的高度差采样：`upwindHeight` 产生云体投影式软阴影，`downwindHeight` 产生背光侧亮边，让满屏云幕内部出现可读的明暗起伏，而不是只有均匀白色。
+- 云雾 shader 提高高度场细节和阴影动态范围：`microShadow` / `microHighlight` 参与 RGB 细节，阴影色加深但最终 alpha 遮挡表达保持不变。
+- `campaign-cloud.frag.glsl` 顶部新增云层调参表，集中暴露 `CLOUD_SAMPLE_SCALE`、`CLOUD_FLOW_SPEED`、`CLOUD_TEXTURE_SAMPLE_SCALE`、细节/阴影/高光强度、reveal 距离场侵蚀和浅云参数，便于后续直接调整云团大小、噪声采样区域、流速和空洞形态。
+- 云层动态从单纯移动噪声 offset 改为 `buildCloudSpace()` 平流采样坐标：低频风向、缓慢 curl 和 flow warp 共同驱动云体高度场、贴图细节和 reveal 边缘，使整片云层具有连续慢速流动。
+- `campaign-terrain-webgl.ts` 新增只读 `getCampaignTerrainCamera()`，`campaign-cloud-webgl.ts` 每帧将当前地图相机作为 `uMapCamera` 传入云层 shader；云层采样空间按 `offset / scale` 的有效相机平移做弱反向采样偏移、按相机 scale 做部分缩放，保持气象层自身流动的同时响应地图拖拽和缩放，并避免单纯缩放因 offset 同步变化产生额外漂移。
+- 探索空洞从单一 reveal alpha 裁切改为距离场驱动：`campaign-cloud-webgl.ts` 先栅格化已探索尖顶 hex 联合区域，再用边界距离场写入 `uRevealTexture`，shader 只负责用云阻力噪声侵蚀 `clearMask`，不再额外叠加完整云墙环。
+- `campaign-cloud-webgl.ts` 的 reveal mask 不再通过核心/外肩/外圈多层 polygon alpha 与 canvas blur 生成；red 通道改为洞外距离带浅云近场，green 通道改为清空 signed-distance 场，texture alpha 固定为 255 以避免 canvas 预乘 alpha 吃掉语义通道。
+- 云洞外侧浅云近场改为距离场语义：`CLOUD_REVEAL_FIELD_*_RATIO` 根据当前投影 hex 半径生成内清空、外清空和浅云距离带，`REVEAL_SHALLOW_*` 在 shader 中只把它解释为浅云区，外圈之外恢复当前深云层。
+- 浅云层从“深云降透明度 / RGB 染色”改为独立稀疏云体：`sampleShallowCloudLayer()` 使用更高覆盖阈值、更小 puff 采样和自身明暗来生成少量浅云团；主合成在浅云语义区降低深云保留量，再叠加浅云层，避免形成均匀浅白盘或透明度锐减的假过渡。
+- 浅云到深云、浅云到空洞的过渡改为 reveal 语义场与 `cloudResistance` 云阻力共同决定云体替换比例；边界处会按云团/细节噪声破碎，而不是只依赖 smoothstep 圆滑羽化。
+- 修正浅云密度场过稀的问题：浅云层改用更符合当前高度场分布的成云阈值，并新增 `puffPresence` 云团存在场与干区削减场，让浅云区出现少量可见云团，而不是完全无云或只靠 alpha 提亮。
+- 云洞边缘移除独立 `cloudWall` 合成层；边界厚度现在只能来自距离场 clear mask 被云阻力噪声局部侵蚀，以及浅云层对深云层的替换，避免截图中那种预制白色厚环。
+- 云洞 shader 移除低 alpha `discard`，让透明边缘继续走正常 alpha blend，避免在云洞边界重新切出像素级硬边。
+- 云洞边缘从“mask 加少量噪声扰动”改为“开洞压力与云阻力对抗”：`cloudResistance` 由大团块、billow 扇贝状云缘、细节纹理和云丝纹理组成，密云会咬住边界形成残留云壁，薄云才会被打开，确保 reveal 边缘能看到实际噪声轮廓。
+- reveal field 删除外肩半径和 blur 管线，避免 CPU mask 把边界预先抹成圆滑轮廓或同心厚环；自然边缘应主要来自 signed distance 与 shader 云体密度对抗。
+- 云洞内部移除独立丝状残雾层，`inwardWisps` 不再增加洞内透明材质；云壁不再对 RGB 做压暗/染色，只通过较低 alpha 保留边缘厚度，避免云洞边缘发黑。
+- 云层动画时间改为 renderer 启动后的相对秒数，避免直接把过大的 `performance.now()` 传入 mediump fragment shader 导致慢速流动精度下降。
+- 地图重绘时保留云层 canvas，与 terrain/actor canvas 一起从旧 DOM 移植到新 DOM；`campaign-cloud-webgl.ts` 不再因玩家移动重建 WebGL program 或重载噪声贴图，只同步新的 `data-*` 属性和 reveal texture。
+- `campaign-cloud-webgl.ts` 的 reveal mask 投影 root 改为每次同步时动态解析，确保保活 canvas 移植到新地图 DOM 后仍使用当前 viewport 投影。
+- 云层继续保持完整视口 overlay，不移动回地图 transform；探索挖空改为屏幕空间 mask，随 terrain 相机缩放、拖拽、视口尺寸和累计探索集合重新生成。
+- reveal mask 的核心区域完全透明，外侧宽羽化带由 shader 中的云噪声扰动，避免六边形硬边或规则描边感。
+- 修正 reveal mask 的纹理采样方向：离屏 2D canvas 的原点在左上，fragment shader 的屏幕 UV 原点在左下，`campaign-cloud.frag.glsl` 采样 `uRevealTexture` 时翻转 Y 轴，避免挖空区域上下错位。
+- 云雾合成按参考图重新拆成连续底雾、外围厚云团、洞口灰雾和稀疏浅云四个视觉层；底雾只负责基础遮挡和空气感，外围厚云团用低频圆润云包与局部梯度光照生成亮云顶、软阴影和缓慢流动。
+- `campaign-cloud.frag.glsl` 新增 `sampleOuterCloudBankField()`、`sampleOuterPuffCloudLayer()` 和 `sampleApertureHazeLayer()`，让洞口附近不再只靠透明度羽化，而是由云团高度场、浅云距离带和 clear mask 共同决定参考式云洞外缘。
+- `campaign-cloud-webgl.ts` 放宽 reveal 浅云距离场，给已探索区外侧提供更宽的灰雾/浅云承接区；中心清空仍由 green 通道 signed-distance field 控制，地图 UI 点击和寻路语义不变。
+- 按本地专栏文章的 mask 桥接思路重做云洞路径：云层 shader 先用双向流动的云纹理场采样，再把同一份云灰度场用于扰动 reveal mask UV，最后用 `clampAndPowValue()` 分别重映射洞口边缘和核心清空区。
+- 云洞合成新增轻量“投影在前、云体在后”的单 pass 模拟：偏移采样 reveal mask 生成很弱的云体厚度影，但不再形成独立黑色云墙；洞内只保留低强度、由团块噪声触发的零散 wisps，移除完整半透明膜。
+- 浅云距离场从过宽外圈收回到更接近已探索区外 1-2 圈的语义范围，深云区重新由低底雾加高 alpha 团块云主导，避免整屏浅雾导致地图大面积透出或白茫茫一片。
+- `main.ts` 接入 `syncCampaignCloudWebGl()`；云层只作为视觉 renderer 消费探索状态生成透明 mask，不修改点击、寻路、地形高度、水体 shader 或通行网格。
+- `docs/architecture.md` 更新为当前活动的视口云雾 overlay 契约，替换此前“当前不启用云雾 shader renderer”的说明。
+
+### Impact
+- 大地图现在有独立、缓慢动态的视口气象云层，并会在玩家累计探索记录覆盖的 hex 上挖空；现有探索机制已在玩家走过的 hex 及其相邻一圈写入 `revealedHexKeys`，云层 renderer 只消费这个累计结果。
+
+## 2026-07-07 Campaign Fog Shader Removal
+
+### Changed
+- 删除当前云雾 shader 渲染实现：移除 `campaign-fog-webgl.ts`、`campaign-volumetric-cloud.vert.glsl`、`campaign-volumetric-cloud.frag.glsl`，并停止在大地图 markup 中生成 `data-campaign-map-fog` overlay canvas。
+- 保留迷雾探索功能本身：`runtime.mapExplorationByMapId`、进入新 hex 解锁周围一圈、未探索 hex 点击屏蔽和移动路径解锁逻辑继续存在。
+- `map_fog_noise` 内容资产暂时保留为后续视觉重做的资源入口，但当前没有活动 fog shader 消费它。
+
+## 2026-07-07 Campaign Fog Volumetric Cloud Adaptation
+
+### Changed
+- 大地图迷雾 shader 替换为参考式体积云模型：使用原版 procedural `hash3D`/`noise3D`/`fbm`/伪 Worley、44 步吸收式 raymarch、相位光照和 3 步自阴影生成云层质感。
+- 明确“挖空”语义只属于探索可见区域：`revealHole`/`holeSoftness` 由 reveal mask 驱动，用于从云层中扣出已探索地图块和边缘羽化；未探索云层内部不再因为 hollow/noise 露出底图。
+- 删除旧的 `campaign-fog.*.glsl` shader 文件，新增 `campaign-volumetric-cloud.vert.glsl` 与 `campaign-volumetric-cloud.frag.glsl`；`campaign-fog-webgl.ts` 只保留 renderer 职责并导入新的体积云 shader。
+- 迷雾 renderer 从平面 `createFogSheetMesh` 改为 cube volume mesh，并向 shader 传入原版风格的 `u_time`、`u_cameraPosition`、`u_hollowness`、`u_softness`、`u_density`、`u_detail`、`u_absorption` uniforms；大地图 reveal mask 只在最终 alpha 上裁切已探索区域。
+- 修正体积云空间归属：云盒顶点拆分为大地图投影坐标和体积云局部坐标，投影复用 terrain 矩阵并覆盖真实 campaign map 坐标范围，删除相机前方/屏幕空间云块矩阵。
+
+## 2026-07-06 Campaign Fog Shader
+
+### Added
+- 新增统一迷雾噪声贴图 `map_fog_noise`，内置元末地图与朱元璋 scenario pack 都通过地图 layer 引用同一类 640x640 可平铺 PNG 资产。
+- 新增独立大地图迷雾 WebGL overlay renderer 与独立 shader 文件：迷雾覆盖 terrain、城市标记和 actor/player 层，但不覆盖地图 debug UI。
+- 新增 campaign 地图探索状态 `runtime.mapExplorationByMapId`：玩家所在 hex 及一圈邻居会被记录为已探索，新进入的 hex 会记录消散开始时间。
+- 新增回归测试，覆盖迷雾资源 layer、content pack 路径解析、独立 fog shader 管线和探索状态解锁逻辑。
+
+### Changed
+- 大地图点击现在会先检查目标 hex 是否已探索；未探索迷雾格不会触发城市 marker 移动或空地旅行，水格不可点击/不可踏足逻辑保持由通行网格处理。
+- 玩家沿六边形路径移动时会逐步解锁路径中经过的 hex 及其一圈，fog renderer 使用 reveal texture 渲染深雾、浅雾和新格子的慢速消散。
+- 迷雾噪声贴图替换为用户提供的 `640x640` `noise_3.png`，内置地图与朱元璋 scenario pack 的 `map_fog_noise` layer 元数据同步为真实尺寸。
+- 迷雾 renderer 改为单张连续 overlay 雾面，不再加载高度图或按单个 hex 生成雾层 mesh；hex reveal mask 只负责透明洞口、浅雾范围和消散 alpha。
+- 迷雾动态改为持续、缓慢的噪声贴图 UV 平移；即使没有新格子正在消散，雾面也会保持整体漂移，不用明暗闪烁假装动态。
+- 迷雾 shader 的 reveal 边界距离场改为与大地图真实竖向 hex 一致，并增强雾面主体的灰白云层密度和对比，避免远处未知区域像一层过浅白膜。
+- 迷雾云层改为纯白遮挡层：噪声只驱动 alpha 厚薄和云纹，不再给云层混入灰蓝颜色；深雾区域保持高 alpha 以遮挡下方地图内容。
+- 修正迷雾 alpha 合成：浅雾/深雾先各自按云纹计算遮挡强度，再由已探索透明洞口裁切；不再用深雾 mask 乘掉浅雾层，避免整张地图变成几乎不遮挡的白色薄膜。
+- 删除上一版叠加式云雾公式，重建为更直接的纯白云层模型：移动噪声采样只生成 `cloudShape`，再分别映射为未知区高遮挡和边缘浅雾 alpha，降低后续视觉调参复杂度。
+- 按参考图重新实现云雾视觉：fog shader 恢复使用 `map_fog_noise` 与 `uTimeSeconds` 生成缓慢移动的纯白云团；已探索区域由 reveal mask 硬切为完全透明，云雾只在未探索侧和边缘外侧出现。
+- 云雾密度模型曾改为低频云团、中频云卷和高频纤维三层噪声组合；后续体积云版本已移除固定未知区 alpha 底膜，避免读成半透明白膜。
+- 云雾渲染改为参考式体积云模型：fog shader 使用 FBM、伪 Worley、共享噪声贴图、吸收式步进和简化自阴影生成云体；探索区域通过 `revealHole`/`holeSoftness` 从云层中开窗，挖空只服务可见地图区域，不在未探索云体内部打洞。
+- 大地图 renderer 架构继续保持语义分层：水体视觉仍在 terrain shader 内，迷雾作为独立 overlay shader 消费探索状态，不参与寻路、地形高度或水体判断。
+
+### Impact
+- 迷雾状态进入可保存 runtime 数据；旧 runtime 没有 `mapExplorationByMapId` 时按空探索状态兼容处理。
+- 后续可替换 `map_fog_noise` 调整雾面质感；运行时只维护一张 compact reveal mask，不为单个格子生成独立贴图或独立雾面几何。
+
+## 2026-07-06 Campaign Water Shader Texture
+
+### Added
+- 新增统一水体噪声贴图 `map_water_noise`，内置元末地图与朱元璋 scenario pack 都通过地图 layer 引用同一类 512x512 可平铺 PNG 资产。
+- 大地图 WebGL terrain shader 新增 `uWaterTexture` 与 `uTimeSeconds`，水面在 fragment shader 中使用同一张水纹贴图双层滚动采样，形成轻微动态水纹。
+- 新增回归测试，锁定 scenario pack 水纹资产路径、内置地图水纹 layer，以及 renderer 的统一水纹 texture/time uniform 契约。
+
+### Changed
+- 大地图水体颜色现在会依据周围六边形材质采样计算近岸程度：靠近陆地的水体更浅、更绿，深水保持偏蓝。
+- 近岸浅色不再按完整六边形块整格铺开，而是按当前片元到陆地相邻边的距离形成边缘渐变；水纹噪声采样频率提高，避免水面退化成低频纯色块。
+- 大地图 WebGL shader 已从 `campaign-terrain-webgl.ts` 的内嵌模板字符串拆到 `src/ui/views/map/shaders/*.glsl`；renderer 只负责 raw import 与少量地图常量占位符替换。
+- 浅色近岸边缘范围扩大，水波采样频率、速度和明暗扰动增强，使动态水纹在大地图缩放下更明显。
+- 水纹采样改为方向拉伸坐标并沿纹理长轴做轻量平滑，水面纹理从碎噪声改为更长的条状波纹。
+- 近岸浅色改为近岸线、浅海线、深海线三层水色带，并采样更远的陆地邻域，使岸边浅色范围更粗、更有层次。
+- 修正水体 shader 的过度拉伸噪声与圆形近岸扩散：波纹改为连续长波函数，近岸扩散改用 hex 边界距离，并明确保留近岸、浅海、中层水域三段颜色。
+- 海域水体修正为完整 hex ring 采样岸线距离，并移除交叉阈值波线，避免大面积海面出现棋盘格水纹。
+- 水体 shader 移除手写正弦波线，改为统一水体噪声图的方向拉伸多层采样，并增加开放海面的噪声明暗颗粒；近岸第一层改按当前水格到共享 hex 边的距离计算，后续海色边界用更宽的低频噪声扰动过渡。
+- 水体 shader 的海色分层改以连续 UV 上的 12 向软联合岸线采样为主，扩大第二层浅海覆盖范围；水面 hex 网格线强度大幅降低，噪声波纹对比和明暗扰动增强，减少六边形切分导致的块内断裂。
+- 水体 shader 移除了不再参与渲染的旧 hex-ring 岸线函数，避免后续维护时重新把海色分层绑定到单个六边形块。
+- 水体波纹调回慢速、克制的单主方向噪声流：细节层改为同向轻扰动，降低 crest/trough 对比、表面明暗扰动和所有时间偏移速度，避免海面出现过强、过快、交叉流动的观感。
+- 水体海色分界线新增独立慢变噪声漂移；近岸绿色层缩小为一格内的岸边缘效果，避免绿色浅岸带向外海过宽扩散。
+- 水体岸线采样改回与真实大地图六边形 mesh 一致的 6 个邻接方向，移除导致约 30 度错位的半格方向采样；海色分界噪声改为直接扰动岸线采样半径，使浅海/深海边界形状随时间缓慢漂移。
+- 水体 shader 删除海岸线噪声、近岸浅色层和浅海/中海/深海分界噪声，仅保留统一水色上的动态水波噪声；水波改用此前更明显的双层滚动噪声采样，并作为全水域表面动态效果叠加。
+- 水体 shader 新增连续宽近海区：贴陆地的绿色近岸线继续按真实相邻 hex 共享边计算，不参与噪声扰动；浅海/深海的外缘改用连续 UV 多方向岸距采样，并叠加独立 `nearSeaBoundary` 粗糙撕纸状动态噪声，避免外缘被六边形格子切分。
+- 水体浅海外缘采样从固定方向/固定半径的 max 命中改为连续 UV 软采样盘，并让越界 UV 不再计入陆地邻近度，修复远海点阵、射线状浅色碎片和地图边缘异常浅海带。
+- 水体近岸线删除此前的实心绿色线、过渡层和 core 阈值分层，重做为单层偏鲜绿 tint：仍按真实相邻 hex 边生成范围，但从陆地边缘向水中平滑衰减，并加入轻微动态噪声位移，避免锐化描边和硬绿墙。
+- 水体视觉仍只属于渲染层；水格不可点击、不可踏足、寻路避水继续由 `map_heights` passable hex 网格与 navigation 层负责。
+
+### Impact
+- 设计侧可通过 `map_water_noise` 替换水纹资产来调整大地图水体质感；运行时不会为单个水格生成独立贴图，避免引入逐格资源开销。
+
+## 2026-07-06 Campaign Hex Travel Path
+
+### Added
+- `src/application/navigation/travel-to-coordinate.ts` 新增 campaign 坐标到六边形路径的纯逻辑转换：点击目标会先映射到与 WebGL 地形一致的 axial hex 坐标，再生成相邻 hex 路径。
+- 新增回归测试，锁定 campaign 长距离移动必须产出多步相邻六边形路径，而不是只返回起点和终点。
+- 新增基于 `map_heights` 图层的 passable hex 网格：水域 hex 不进入通行集合，navigation 层通过 A* 在可通行 hex 上避开水格。
+- 新增回归测试，锁定被阻塞的水格不会出现在路径中，且水面目标会被判定为不可达。
+
+### Changed
+- `src/main.ts` 的大地图点击移动改为按路径分段播放，保留原有取消、到达城市确认与移动后推进 1 个时段的行为。
+- 大地图空地点击现在会先检查目标 hex 是否可通行；水格点击不会发起旅行。城市/标记移动也会通过同一 passable grid 校验，避免角色踏上水面。
+- `docs/architecture.md` 明确：UI 点击层只提交目标坐标，地图路径必须由 application navigation 层生成，不能在视图层或主入口重新实现直线插值。
+- `docs/architecture.md` 明确：campaign 地图通行性必须来自地形资产采样，不要在 gameplay 代码里手写水格坐标。
+
+### Impact
+- 当前大地图点击寻路会沿六边形格逐段移动并避开水域；后续接入道路、山地等通行成本时，可以继续扩展同一个 navigation 路径生成模块。
+
+## 2026-07-07 Campaign Volumetric Fog Of War
+
+### Added
+- 大地图新增 `runtime.mapExploration` 统一探索状态，用 `revealedHexKeysByMapId` 持久记录各地图已解锁 hex。
+- 新增 campaign hex 坐标工具和地图探索应用层 helper，玩家初始位置与移动落点会解锁脚下及周围一圈六边形。
+- 大地图 WebGL 增加独立 fog canvas/pass，用 reveal mask texture 与分层噪声渲染体积云式战争迷雾；已探索和玩家周围一圈区域保持无云可见。
+
+### Changed
+- 地图 view model 会把当前地图探索状态传给 campaign map，渲染层不再自行决定 gameplay 可见性。
+- campaign terrain canvas 保留逻辑扩展到 fog canvas，并在保留旧 canvas 时同步新的 data 属性，避免移动后 mask 不刷新。
+- fog shader 调整为轻量伪体积云，使用基础形状、细节侵蚀、Beer 吸收和 powder 高光思路；fog mesh 只绘制顶面，避免重新出现六边形侧墙块状云。
+- 当前暂时关闭 fog canvas 输出，保留探索状态、解锁逻辑和 shader 代码，后续可以通过 map view 开关恢复显示。
+
+### Impact
+- 战争迷雾成为共享游戏状态的一部分，后续存档接入后可以自然保存探索进度。
+- 当前实现保留为独立 WebGL 方案，不依赖外部参考工程或 Unity 工具链；后续可单独替换为真正 3D 噪声 texture 或更完整的 ray march。
+
+## 2026-07-07 Generic Activity Fortune Board Minigame
+
+### Added
+- 新增 `fortune-board` activity session contract，用于通用活动 fallback 的 5x5 棋盘落子玩法，保留 `activity-qte` playable id 与 legacy compatibility action seam。
+- 新增 scene activity overlay 的棋盘 UI：开局按 `天时 / 顺意 / 周全 / 灵犀 / 奇闻 / 平` 分布棋格，玩家用左右按钮调整本轮珠数，点击游玩开始列高亮，再次点击选列落子。
+- 新增 `playable.activity-qte.house.temple` integration，使寺庙 house work 可以通过 shared playable runtime 启动同一个 fallback 玩法。
+
+### Changed
+- `generic.qte` 启动路径现在默认创建 `fortune-board` session，不再创建停点式 `qte-bar` session；旧 `qte-bar` 和上一版 `work-sequence` 类型仍保留为兼容路径。
+- `interactive.activity-qte.play` / `wager-minus` / `wager-plus` 现在经 shared playable runtime 推进棋盘扫描、选列、闪烁、落子、重掷和结算。
+- 棋盘结算按被选中格子计算：每格基础 1 分，`天时 / 顺意 / 周全 / 平` 三连分别额外给 10 / 6 / 4 / 1 贡献，`灵犀` 每枚追加 3 枚棋子，`奇闻` 先记录为待补特殊事件。
+- 选列后的动画拆为双闪、逐格高亮、随机定格和单枚落子；列扫描与列内扫描 tick 缩短到 0.5 秒，多枚棋子会重复该流程，列内空间不足时未落下的棋子返还。
+- `fortune-board` session 新增 `animationTickMs`，overlay 新增“间隔”滑条，玩家可在 250-1000ms 内调整列扫描、列内扫描和阶段 tick 速度；寺庙 house-hosted fallback 会同步重启自己的 work interval，避免继续沿用旧的 1000ms。
+- 开始列扫描时不再立刻点亮第一列，而是先进入 scanning 状态并等待下一次 tick 点亮，避免第一次切换视觉上比后续切换更快。
+- 列内扫描现在先确定结果再播表现：2/3 概率正向到目标后停下，1/3 概率继续反向复扫；第二次同样 2/3 概率停下，否则第三次正向必定停在既定目标。
+- 未选中的棋格重掷时改为棋格自身遮罩动画：旧结果柔边矩形在 1 秒内向下移出棋格，每格有 0-1 秒错峰延迟；全部移出后停半秒，新结果再以同样错峰节奏下翻进入；即使新旧品质相同也会按 `rerollCount` 播放，动画结束前不提前显示新格面。
+- 棋盘重掷牌池改为扣除已选棋格后的剩余池：例如 `灵犀` 被选中后后续不再出现，`天时` 被选中一枚后后续池内只剩两枚。
+- 最后一枚棋子选中后不再立即退出，先让所有已选棋格闪烁，再让未选中棋格走一次遮罩重掷动画，之后才返回结算。
+- fortune board overlay tick 现在优先同步既有 DOM 节点的棋格 class、文案和按钮状态，不再为了高亮变化重建包含按钮的整块 HTML。
+- 列内命中的棋格现在会在 `cell-pick` 阶段保留 4 个 tick，并通过 `pickFlashActive` 驱动两次亮起后才结算；重掷遮罩期间父格子会立即移除旧品质 class，旧品质只保留在下滑伪元素中，且伪元素铺满棋格，避免旧格面残留或动画矩形缩水。
+- 寺庙帮忙类工作不再启动 house-local `qte-bar` timer；确认工作后会写入 `runtime.playableSession` / `runtime.activitySession`，由 `activity-qte` playable 推进棋盘玩法，完成后再回到寺庙模块按棋盘分数结算贡献、体力、时间和化缘解锁。
+- `HouseOverlayViewModel` 增加 `fortune-board` 结构化 overlay，供 house view 渲染 shared activity session，不需要把棋盘玩法复制成寺庙私有 overlay state。
+
+### Impact
+- 后续缺少专属 handler 的场景活动会进入新的棋盘落子小游戏，而不是默认停点 QTE。
+- 寺庙工作现在和场景 fallback 共享同一个玩法机制；以后改 `generic.qte` / `activity-qte` 的棋盘规则时，场景 fallback 和寺庙工作会一起受益。
+- 酒馆等其他 house-local `qte-bar` overlay 尚未替换，后续若要替换应继续通过 shared playable handoff 迁移。
+
+## 2026-07-06 Fail-Closed Progress-Driven Governance Spec
+
+### Added
+- 新增仓库级治理 spec：[docs/superpowers/specs/2026-07-06-fail-closed-progress-driven-governance-spec.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/superpowers/specs/2026-07-06-fail-closed-progress-driven-governance-spec.md)，把后续执行模型从 `weekly plan / weekly set / weekly orchestration` 切换为以 `项目进度文档` 为唯一续接真相源的 fail-closed 工作流。
+
+### Changed
+- 明确规定：如果 closeout 不能唯一推出 `next child / next action / next entry document`，则当前 child 或 task 不得标记为 `closed`。
+- 明确规定：child closeout 必须同时满足结构化 closeout、项目进度同步、next child recheck/none、以及远端 push 成功等硬门禁，否则只能停留在 `running`、`blocked` 或 `completed-but-open`。
+- 明确规定：旧 `weekly` 治理文档后续只作为历史记录保留，不再作为当前执行入口或当前队列控制器。
+- `docs/superpowers/specs/plan-governance-spec.md`、`docs/superpowers/README.md`、`docs/superpowers/plans/_plan-template.md`、`docs/superpowers/plans/_playable-plan-template.md`、`AGENTS.md` 与 `tools/lint-superpowers-plans.mjs` 已同步切到新模型，避免 spec、入口说明、模板和结构化校验继续各说各话。
+- 新增 `docs/superpowers/project-progress.md` 与 `docs/superpowers/templates/project-progress-template.md`、`child-closeout-template.md`、`task-closeout-template.md`，把唯一续接真相源与标准 closeout 输出格式正式落库。
+- `docs/superpowers/templates/weekly-*.md` 现已显式标记为历史模板，避免后续再被误当成当前执行入口。
+- `docs/superpowers/specs/weekly-orchestration-spec.md` 已显式降级为历史 spec，避免它继续和新治理 spec 形成并列入口。
+- 第三轮去歧义清扫已为仍保留旧 `weekly` 术语的历史 child plan / design spec 批量补上 `Legacy Governance Context` 头注，明确这些文件只保留技术与历史语境，不再充当现行治理入口。
+
+### Impact
+- 后续治理重构将围绕 `docs/superpowers/project-progress.md`、child plan 模板、closeout 模板与 plan governance spec 展开，而不是继续修补旧 weekly 模型。
+- 这次 spec 为正式弃用 weekly plan 提供了仓库内的第一份主规范，后续 README、模板、lint 约束与历史文档定位都将按它收敛。
+
+## 2026-07-02 Spine Plugin Workflow Contract
+
+### Added
+- 新增 `docs/spine-plugin.md`，记录 Spine 节点时间轴/绑定管理工具的启动方式、绑定编辑规则、物块图片来源和 JSON 保存交接规则。
+- 新增项目内 Codex skill `.codex/skills/start-spine-plugin/SKILL.md`，用于在用户输入“启动spine插件”等请求时自动启动 `tools/spine-node-timeline-editor.html` 对应的 Vite 服务并说明用法。
+
+### Changed
+- `AGENTS.md` 新增 Spine 插件触发规则，明确该请求不属于 house work，优先使用项目内 skill。
+- Spine 工具协作约定收口为：新增物块图片必须位于 `src/faxian/leg/`，JSON 保存 `leg:` 图片引用和绑定数据，不再把新上传图片内嵌为 base64。
+
+### Impact
+- 后续拉取仓库的 Codex 会话可以通过“启动spine插件”进入固定启动流程。
+- 复制/导出 JSON 适合提交给 Codex 修改骨骼、绑定、物块变换和动作数据；图片文件本体仍由项目目录管理。
+
+## 2026-07-03 Child 34 Playable Enforcement And Legacy Closeout
+
+### Added
+- 新增 `tools/scaffold-playable.mjs`、`tools/scaffold-playable-integration.mjs` 与 `tools/validate-playables.mjs`，把新 playable mechanic、scenario/integration artifact 与仓库级 fail-closed 校验收口到统一 CLI。
+- 新增 `.github/workflows/validate-playables.yml`，让 playable artifact 校验在 push / pull request 时进入独立 CI gate。
+- 新增 Child 34 定向回归测试，锁定 `package.json` 必须暴露 `scaffold:playable` / `scaffold:playable-integration` / `validate:playables` 三个入口，并要求 scaffold 产出 canonical artifact 与 validator 能拒绝缺失 outcome 条件的 integration 配置。
+
+### Changed
+- `package.json` 现已提供 `npm run scaffold:playable`、`npm run scaffold:playable-integration` 与 `npm run validate:playables`，后续新增 playable 不再依赖人工分散找目录、文件名或校验入口。
+- `src/core/runtime/interactive-runtime.ts` 删除了已无生产调用方的 `createLaunchInteractiveRequest()` helper；`activity-qte` 与 `city-begging` 的兼容 action id 仍然保留，避免在 Child 34 误删尚未退役的 compatibility seam。
+- `src/main.ts` 与已有 robustness 回归已同步收窄到 Child 34 的真实 closeout 边界：只移除已废弃 launch helper，不把仍活跃的 covered compatibility path 伪装成“已完成迁移”。
+- `docs/superpowers/specs/2026-07-03-unified-playable-runtime-contract-spec.md` 与 Child 34 / weekly orchestration 计划现已记录仓库实际采用的 artifact 目录、脚手架命令、validator 与 CI gate 路径。
+
+### Impact
+- 仓库现在对 playable 新增和迁移形成了真正闭环：创作者或 AI 不需要再决定“文件放哪、资源放哪、怎么接校验”，而是通过 framework-owned scaffold 进入统一位置，再由 validator/CI 守约。
+- 第一轮 playable-runtime migration queue 至此闭合：`activity-qte`、`city-begging`、`grain-accounting`、`medicine-compounding`、`story-battle` 的统一 runtime proof 已完成，剩余兼容层只保留当前仍在生产路径上有调用方的 action seam。
+
+## 2026-07-03 Child 33 Battle-Family Playable Migration
+
+### Added
+- 新增 `src/application/playables/story-battle/story-battle-definition.ts`，把 `story-battle` 的 battle-family launch、action、exit、settlement 与回返语义包进 shared playable wrapper，而不是继续让 `interactive-runtime` 直接持有 battle 业务。
+- 新增 Child 33 定向回归测试，锁定 story callback 启动 battle 时必须写入 shared `runtime.playableSession`，并要求 story-battle 结算必须通过 playable-runtime 清空该 session 且返回正确的 keep-house reentry。
+
+### Changed
+- `src/application/story/story-callbacks.ts` 现已通过 battle-family playable wrapper 启动 `story-battle`，不再直接把 `storyBattle` 会话启动逻辑当作 story callback 的本地 owner。
+- `src/core/runtime/playable-runtime.ts` 现已接管 `story-battle` 的 action/exit/settlement，并允许 battle-family completion 通过 shared runtime result 发出 `reenter-house` handoff。
+- `src/core/runtime/interactive-runtime.ts` 对 `story-battle` 已收窄为 compatibility delegation layer；legacy `interactive.story-battle.action` 仍可用，但最终 owner 已切到 playable-runtime。
+- `src/main.ts` 的 battle action dispatch 现已通过 `createPlayableActionRequest("story-battle", "battle-action")` 与 `runPlayableRuntime()` 进入 shared playable path，而不再把 `story-battle` 当成 interactive-runtime 专属业务分支。
+
+### Impact
+- 仓库现在已经完成 `activity-qte`、`city-begging`、`grain-accounting`、`medicine-compounding`、`story-battle` 五条既有 playable 路径的统一 runtime proof，并且明确保留了 `story-battle` 的 `family: "battle"` 边界。
+- 后续 playable 迁移只剩 Child 34 的 enforcement / validator / legacy closeout；battle-family 本身不再需要继续停留在 `interactive-runtime` 的直接 owner line 上。
+
+## 2026-07-03 Child 32 House-Local Mechanic Promotion
+
+### Added
+- 新增 `src/application/playables/house-playable-runtime-bridge.ts`，为 house module 提供 shared `gameState + houseSession -> RuntimeState` 桥接，避免 house-local playable 再造一套独立 runtime carrier。
+- 新增 `src/application/playables/grain-accounting/grain-accounting-definition.ts` 与 `src/application/playables/medicine-compounding/medicine-compounding-definition.ts`，把粮铺算账与药铺配药的 launch/action/tick/settlement 收口到 shared playable definition 层。
+- 新增 Child 32 定向回归测试，锁定 `grain-accounting` 与 `medicine-compounding` 的 launch 必须写入 shared `runtime.playableSession`，settlement 后必须清空该 session 且仍返回正确的 house result overlay。
+
+### Changed
+- `src/core/registry/playable-definition-registry.ts` 与 `src/core/registry/playable-integration-registry.ts` 现已纳入 `grain-accounting` 与 `medicine-compounding`，并为两条 house-owned mechanic 建立正式 `integrationId`。
+- `src/core/runtime/playable-runtime.ts` 现已接管这两个 house-local mechanic 的 launch/action/finish/exit lifecycle，不再只覆盖 covered interactive playables。
+- `src/application/house-modules/grain-shop/grain-shop-house-module.ts` 与 `src/application/house-modules/medicine-house/medicine-house-house-module.ts` 已收窄为 host integration owner：它们继续决定何时触发、何时回到本 house，但具体 mechanic state progression 与 settlement 已委托给 shared playable runtime。
+- `docs/special-house-interface.md` 现已明确：house-owned reusable playables 必须通过 shared playable runtime launch/settlement，而不是继续在单个 house module 内维持永久的私有 mechanic runtime。
+
+### Impact
+- 仓库现在已经证明 shared playable runtime 不只适用于 covered interactive 路径，也能承接 house-local mechanic，而不需要把 `main.ts` 或 house runtime 重新改回 concrete house business owner。
+- `grain-accounting` 与 `medicine-compounding` 迁移完成后，下一条合法 promotion 路径只剩 `story-battle` 的 battle-family child；`Child 34` 仍必须保持 enforcement/legacy closeout 边界，不能被提前打开成 battle migration 的替代品。
+
+## 2026-07-03 Child 31 Covered Interactive Playables Migration
+
+### Added
+- 新增 `src/application/playables/activity-qte/activity-qte-definition.ts` 与 `src/application/playables/city-begging/city-begging-definition.ts`，把 `activity-qte` 与 `city-begging` 的 launch/session/result state handler 正式包进 shared playable definition wrapper。
+- 在 `src/domain/game-state.ts` 与 `src/application/state/create-initial-state.ts` 增加 shared `runtime.playableSession` carrier，作为 playable-runtime 拥有的统一 active session write-back 路径。
+- 新增 Child 31 定向回归测试，锁定 covered activity-qte launch、activity-qte closeout、以及 city-begging settlement 都必须经过 shared playable session 和 playable-runtime lifecycle。
+
+### Changed
+- `src/application/activity/activity-runner.ts` 现在通过 playable definition wrapper 启动 generic activity QTE，不再直接把 concrete activity session 写进旧路径。
+- `src/core/runtime/playable-runtime.ts` 现已接管 `activity-qte` 与 `city-begging` 的 covered lifecycle mutation、action dispatch、exit closeout 与 city-begging settlement。
+- `src/core/runtime/interactive-runtime.ts` 对 `activity-qte` 和 `city-begging` 已收窄为 compatibility delegation layer；`story-battle` 仍保持原边界，等待后续 battle-family child 处理。
+
+### Impact
+- 仓库现在已经证明 shared playable runtime 不只是 launch skeleton，而是能真实承接短流程 minigame-family 的 session ownership、action routing 与 settlement write-back。
+- `grain-accounting`、`medicine-compounding` 与 `story-battle` 仍未被这轮吞并；后续必须分别按 Child 32 和 Child 33 的边界推进，而不是回头继续扩大 Child 31。
+
+## 2026-07-03 Child 30 Playable Runtime Skeleton And Integration Registry
+
+### Added
+- 新增 `src/core/contracts/playable-runtime.ts`，正式定义 `playableId / integrationId / ownerContext / launch / session / settlement` 这一组共享 playable skeleton contract。
+- 新增 `src/core/registry/playable-definition-registry.ts` 与 `src/core/registry/playable-integration-registry.ts`，提供 builtin playable definition registry 和 scenario-owned integration-instance registry 的第一版安装面。
+- 新增 `src/core/runtime/playable-runtime.ts`，提供 `createLaunchPlayableRequest()`、`resolvePlayableLaunchRequest()`、legacy compatibility session shell，以及统一的 launch normalization seam。
+- 新增 Child 30 定向回归测试，锁定 playable contract、definition registry、integration ambiguity fail-closed 规则，以及 `interactive-runtime` 可以通过新的 playable launch seam 启动 covered session。
+
+### Changed
+- `src/core/contracts/interactive-runtime.ts` 现已为 active interactive session 补入 `playable` session shell，并要求 launch request 携带经过规范化的 `playableLaunch`。
+- `src/core/runtime/interactive-runtime.ts` 不再只靠硬编码 launch/action branch 识别 covered playables；external launch 现在先经过 playable launch normalization，再回到当前兼容路径执行具体 city-begging/activity/story-battle 行为。
+- `src/main.ts` 已把 city-begging 的启动入口从 concrete `interactive.city-begging.launch` 字符串收窄到 `createLaunchPlayableRequest("city-begging")`，为后续 Child 31 的 covered playable migration 提前建立 playableId-based intake。
+
+### Impact
+- 仓库现在第一次具备了统一 playable runtime 的真实代码骨架，而不再只有文档约束；后续 Child 31-34 可以在这条 skeleton 上继续迁移 covered playables、house-local mechanics 和 `story-battle`。
+- 这轮仍然保持 compatibility-first：具体 reducer/presenter/settlement 逻辑还没有迁到 definition-driven playable modules，避免 Child 30 在同一批里膨胀成全量迁移。
+- 后续若要继续推进 playable runtime，必须先对 Child 31 做 fresh baseline recheck，再显式 promotion，不能直接跳到 Child 32-34 或把 concrete migration 重新塞回 Child 30。
+
+## 2026-07-03 Child 24 Main Runtime Orchestration Ownerization
+
+### Added
+- 新增 `src/application/runtime/main-runtime-orchestrator.ts`，为 `main.ts` 提供显式 `MainRuntimeOrchestratorRequest / Result` seam，把 startup session apply、story timing follow-up、scene progression / choice、以及 passive story trigger sync 收口到一个独立 orchestration owner。
+- 新增 Child 24 ownership 回归测试，锁定 `main-runtime-orchestrator` 模块必须存在、`main.ts` 不得继续直接内联 startup apply / scene choice progression / render-time passive trigger 逻辑，并把 Child 15 / 16 / 23 的结构化 guard 放宽到接受新的 orchestrator seam。
+
+### Changed
+- `src/main.ts` 现在通过 `createMainRuntimeOrchestrator()` 委托 covered startup session apply，不再在 `applyActivatedModSession()` 本地持有 `syncActivatedContentSource()` + `createAppState()` + house runtime recreation 这一段业务编排。
+- `src/main.ts` 现在通过 `main-runtime-orchestrator` 委托 covered story / event / scene follow-up：`city-enter` story handoff、scene advance、scene option choice 不再直接调用 `runStoryTriggerRuntime()`、`advanceStorySceneStep()` 或 `chooseStorySceneOption()`。
+- `src/main.ts` 的 `renderApp()` 现已拆成 “显式 orchestration sync + 纯 render frame” 结构；被动 `indoor-screen-shown` story trigger 不再在 presenter pre-pass 中以内联 helper 形式修改 gameplay state。
+- Child 24 没有重开 `state-sync-runtime.ts` 的 covered runtime commit sink；`commitRuntimeRequest()` 仍然是 covered runtime request 的正式 write-back 路径，本轮只把 shell 侧 follow-up owner 从 `main.ts` 移到了新的 orchestrator seam。
+
+### Impact
+- Child 24 已把这轮目标中的 `main.ts` runtime 编排权显式收窄：shell 仍负责输入和 render scheduling，但 covered startup/session apply、story timing follow-up、scene progression、以及 passive trigger sync 已不再由 `main.ts` 直接主导。
+- 这轮没有扩张到 presenter/render redesign、`MainUiFlow` redesign、task/house contract 扩张、或 registry/mod manifest 新族；如果后续还要继续瘦 `main.ts`，必须从 fresh weekly review 重新证明那是不同问题类型。
+
+## 2026-07-03 Child 23 Main Startup Orchestration Extraction
+
+### Added
+- 新增 `src/application/startup/startup-session-coordinator.ts`，把 builtin startup、continue/restore、以及 scenario import/start 的 request/result contract 收口到一个显式 coordinator seam，并为 `main.ts` 提供统一的 startup session bootstrap surface。
+- 新增 Child 23 ownership 回归测试，锁定 startup coordinator 模块必须存在、`main.ts` 必须改为委托 `runStartupSessionCoordinator()`、以及 Child 22 的 continue/restore/bootstrap parity guard 不能在这轮抽离中退化。
+
+### Changed
+- `src/main.ts` 现已把 startup-family 的主决策树从本地 helper 中抽离出来：builtin startup、continue、restore、scenario summary import、scenario file import 都改为通过 `runStartupSessionCoordinator()` 解析 activation/bootstrap，再由 `main.ts` 只负责 loading shell 和最终 session 应用。
+- `src/main.ts` 的 activated-session bootstrap helper 现已收口为直接消费 coordinator 返回的 `playerCharacterId + appState + activationResult`，不再在多个 startup entry 函数里各自拼装 fallback player/app-state 逻辑。
+- `tests/robustness.test.cjs` 现已把 Child 22 的 continue guard 放宽到允许 direct coordinator delegation，确保新的 startup owner line 不会被旧 helper 名称绑定住。
+
+### Impact
+- Child 23 已把 `startup / continue / restore / scenario import` 的 primary orchestration owner 从 `src/main.ts` 挪到独立 coordinator seam，同时保持 `renderApp()`、runtime settlement、`MainUiFlow` 和后续 runtime follow-up 边界不变。
+- 这轮没有继续扩张到 render orchestration redesign、save contract 新族、或更大的 `main.ts` thin-shell 改造；若还要继续拆主入口，必须从新的 weekly review 重新证明是不同问题类型。
+
+## 2026-07-02 Child 21 Unified Gameplay Contribution Registry
+
+### Added
+- 新增 `src/core/contracts/gameplay-contribution.ts`，正式定义 mod-facing `GameplayContributionDeclaration` 与 activation-facing `GameplayContributionRegistry`，把 navigation / event / scene / task / house contribution families 收口到同一组 contract。
+- 新增 Child 21 定向回归测试，锁定 manifest 可声明 `gameplayContributions`、`ActivatedMod` 必须暴露已安装 contribution registry、以及 activation 必须从 content source 安装 navigation / event / scene / task / house / house-module 贡献。
+
+### Changed
+- `src/core/contracts/mod-manifest.ts` 现已允许 mod manifest 显式声明 `gameplayContributions`；`src/core/mods/mod-parser.ts` 会校验并规范化这一字段。
+- `src/core/contracts/mod-runtime.ts` 与 `src/core/mods/mod-runtime.ts` 现已在 activation output 中携带统一 `gameplayContributions`，并在激活时校验声明的 event / scene / task / house ids 必须真实存在于当前 content source 中。
+- `src/core/registry/content-registry.ts` 不再停留在 `Record<string, unknown>` 占位类型，而是收口到稳定的 `ContentPackDefinition` registry typing，避免后续 Child 22 继续建立在 placeholder registry 上。
+
+### Impact
+- Child 21 已完成：mod activation 现在不只返回 manifest/source，还会产出一份经过安装和存在性校验的统一 gameplay contribution registry，后续 Child 22 可以围绕这条 activation output 做 builtin/imported/save-restore 的端到端闭环，而不必再重开 contribution contract 讨论。
+- 本轮没有把 runtime play、save round-trip 或 presenter parity 吞进来；这些仍然属于 Child 22 的 end-to-end closure 边界。
+
+## 2026-07-02 Child 22 End-to-End Mod-First Runtime Closure
+
+### Changed
+- `src/core/save/save-migrations.ts` 现在会把 `engineState.selectedModId` 归一到 envelope 的 `selectedModId`，避免读档后 engine/runtime 对当前激活 mod 的身份判断继续分叉。
+- `src/core/save/save-envelope.ts`、`src/core/save/save-migrations.ts` 与 `src/core/save/save-loader.ts` 现在会持久化并恢复 `selectedModSource`，对 builtin save 自动补齐 builtin source，对 imported file/url save 保留可恢复的 source descriptor，而不是只保存 `selectedModId`。
+- `src/main.ts` 新增 shared activated-session bootstrap helper，并让 builtin startup、scenario-pack startup、以及 continue/restore 路径都通过同一条 activation-result -> active-content sync -> app-state bootstrap 线路进入会话。
+- `src/main.ts` 的 continue 流程不再在 restore 之后重新覆盖回 builtin startup；当存在已保存的 `selectedModId` 时，它现在优先走 restore-first 的 loading/startup 路径。
+- `src/main.ts` 的 restore 路径现在会在 fresh page load 后优先按 `selectedModSource` 重新 load builtin/file/url mod source，而不是假定 imported mod 仍然残留在内存里的 `availableModsById` 中。
+
+### Impact
+- Child 22 现已完成：builtin startup、imported activation、save envelope、fresh restore 以及 covered runtime spine 现在组成一条更完整的 mod-first closure path，不再要求 imported mod restore 依赖旧内存中的 activation residue。
+- 这轮没有继续扩到 editor/tooling/UI redesign；后续如果还要继续拆分，只能通过新的 weekly review 打开不同问题类型，而不是继续在 Child 22 上追加同类闭环 work。
+
+## 2026-07-02 Child 20 House Runtime Mod Registration
+
+### Added
+- 新增 `src/core/registry/house-module-registry.ts`，定义共享 `HouseModuleRegistration` / `HouseModuleRegistry` seam，并提供 builtin fallback registry 装配点。
+- 新增 `src/application/house-modules/builtin-house-module-registrations.ts` 与 `src/ui/views/house/builtin-house-module-renderers.ts`，把 builtin house module 与 renderer 贡献改为通过共享 registration seam 装配，而不是由 runtime / presenter / view 各自维护静态表。
+- 新增 Child 20 定向回归测试，锁定 shared house registry seam、core runtime / presenter / renderer lookup 不再依赖 application 静态 registry，以及 `docs/special-house-interface.md` 必须明确 builtin 与 mod-owned house 共用同一条 registration path。
+
+### Changed
+- `src/core/runtime/house-runtime.ts` 与 `src/application/house/house-runtime.ts` 现已通过共享 `HouseModuleRegistry` 解析 house module，并支持后续以依赖注入方式替换 builtin registry。
+- `src/application/presenter/stage-presenters.ts` 现已通过共享 `HouseModuleRegistry` 解析 house module view-model，而不再直接依赖 `src/application/house-modules/house-module-registry.ts`。
+- `src/ui/views/house/house-module-view-registry.ts` 现已通过共享 `HouseModuleRegistry` 解析 renderer，而不再保留本地静态 renderer 表。
+- `docs/special-house-interface.md` 现已明确：builtin houses 与 mod-owned houses 必须通过同一条 shared registration seam 进入 runtime / presenter / renderer 路径。
+
+### Impact
+- Child 20 当前批次已完成基线复核和 shared registry seam 首次落地；house runtime owner line 不再被 builtin application registry 直接绑定。
+- 后续 Child 20 剩余工作应继续停留在 house registration boundary 内，避免把这轮实现扩张成 Child 21 的 generalized gameplay contribution registry redesign。
+
+## 2026-07-02 Unified Minigame Contract Spec
+
+### Added
+- 新增仓库级 spec：[docs/superpowers/specs/2026-07-02-unified-minigame-contract-spec.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/superpowers/specs/2026-07-02-unified-minigame-contract-spec.md)，统一定义小游戏的 registry、launch、session、command、presenter、result、settlement 与 owner handoff contract。
+
+### Changed
+- 明确后续小游戏工作不再视为 house-local 或 overlay-local 约定，而是统一纳入仓库级 runtime/presenter/settlement 边界。
+- 明确现有 `activity-qte`、`city-begging`、`grain-accounting` 与 `medicine-compounding` 的渐进迁移顺序，以及“完成后必须回到正确 owner/session”的硬性要求。
+- 明确 `story-battle` 不属于这套小游戏 taxonomy；它必须与小游戏 registry/runtime 作为并列 interactive family 区分，而不是被收进统一小游戏注册面。
+
+### Impact
+- 后续新增或改造小游戏时，启动、渲染、结算与回跳将有统一 contract 可依，不再继续把接线逻辑扩散到 `main.ts`、house module 或局部 overlay 分支中。
+- 这份 spec 为后续 implementation plan 提供了正式边界；下一步应基于该 spec 写可执行迁移计划，而不是直接散点重构。
+- 后续若整理 `story-battle`，应单独走 battle/combat 方向的 spec，而不是复用本小游戏 spec 直接改名套用。
+
+## 2026-07-03 Unified Playable Runtime Contract Spec
+
+### Added
+- 新增仓库级 spec：[docs/superpowers/specs/2026-07-03-unified-playable-runtime-contract-spec.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/superpowers/specs/2026-07-03-unified-playable-runtime-contract-spec.md)，把统一 runtime 的顶层 taxonomy 从 `minigame` 提升为 `playable`，并以 `family: "minigame" | "battle"` 约束具体子类。
+- 新增 candidate-only 的 fresh weekly orchestration 计划：[docs/superpowers/plans/2026-07-03-playable-runtime-migration-weekly-orchestration-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/superpowers/plans/2026-07-03-playable-runtime-migration-weekly-orchestration-plan.md)，为 playable runtime 迁移预先建立独立队列，而不是把该问题类型附着到当前进行中的 `main-shell-ownerization` weekly set 上。
+- 新增未来阶段用的独立 child plan：
+  - [docs/superpowers/plans/2026-07-03-child-30-playable-runtime-skeleton-and-integration-registry-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/superpowers/plans/2026-07-03-child-30-playable-runtime-skeleton-and-integration-registry-plan.md)
+  - [docs/superpowers/plans/2026-07-03-child-31-covered-interactive-playables-migration-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/superpowers/plans/2026-07-03-child-31-covered-interactive-playables-migration-plan.md)
+  - [docs/superpowers/plans/2026-07-03-child-32-house-local-mechanic-promotion-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/superpowers/plans/2026-07-03-child-32-house-local-mechanic-promotion-plan.md)
+  - [docs/superpowers/plans/2026-07-03-child-33-battle-family-playable-migration-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/superpowers/plans/2026-07-03-child-33-battle-family-playable-migration-plan.md)
+  - [docs/superpowers/plans/2026-07-03-child-34-playable-enforcement-and-legacy-closeout-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/superpowers/plans/2026-07-03-child-34-playable-enforcement-and-legacy-closeout-plan.md)
+- 新增轻量 queued child specs：
+  - [docs/superpowers/specs/2026-07-03-child-30-playable-runtime-skeleton-and-integration-registry-spec.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/superpowers/specs/2026-07-03-child-30-playable-runtime-skeleton-and-integration-registry-spec.md)
+  - [docs/superpowers/specs/2026-07-03-child-31-covered-interactive-playables-migration-spec.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/superpowers/specs/2026-07-03-child-31-covered-interactive-playables-migration-spec.md)
+  - [docs/superpowers/specs/2026-07-03-child-32-house-local-mechanic-promotion-spec.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/superpowers/specs/2026-07-03-child-32-house-local-mechanic-promotion-spec.md)
+  - [docs/superpowers/specs/2026-07-03-child-33-battle-family-playable-migration-spec.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/superpowers/specs/2026-07-03-child-33-battle-family-playable-migration-spec.md)
+  - [docs/superpowers/specs/2026-07-03-child-34-playable-enforcement-and-legacy-closeout-spec.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/superpowers/specs/2026-07-03-child-34-playable-enforcement-and-legacy-closeout-spec.md)
+- 新增当前 playable 盘点文档：[docs/superpowers/specs/2026-07-03-playable-current-state-inventory-and-ownership-matrix.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/superpowers/specs/2026-07-03-playable-current-state-inventory-and-ownership-matrix.md)，记录首轮 playable queue 的 current-state ownership matrix 以及未纳入 Child 30-34 的后续 playable-like 候选。
+- 新增四份 playable companion docs：
+  - [docs/superpowers/specs/2026-07-03-playable-naming-and-artifact-conventions.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/superpowers/specs/2026-07-03-playable-naming-and-artifact-conventions.md)
+  - [docs/superpowers/specs/2026-07-03-playable-scaffold-and-validator-io-draft.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/superpowers/specs/2026-07-03-playable-scaffold-and-validator-io-draft.md)
+  - [docs/superpowers/specs/2026-07-03-playable-ai-authoring-protocol.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/superpowers/specs/2026-07-03-playable-ai-authoring-protocol.md)
+  - [docs/superpowers/specs/2026-07-03-playable-test-strategy.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/superpowers/specs/2026-07-03-playable-test-strategy.md)
+
+### Changed
+- 明确 `story-battle` 现纳入统一 playable runtime 范围，不再被排除在顶层 registry/runtime/presenter/settlement/handoff contract 之外。
+- 明确 `story-battle` 必须保留 `family: "battle"` 的边界，不能为了统一 runtime 而被压平成普通小游戏语义。
+- 将 [docs/superpowers/specs/2026-07-02-unified-minigame-contract-spec.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/superpowers/specs/2026-07-02-unified-minigame-contract-spec.md) 降为 superseded 历史文档。
+- 为 playable spec 补充“创作者责任边界”和“统一接入/目录归位/资源放置规则”，明确后续新增 playable 时，内容作者只关心玩法内容，不负责工程接线与资源管理策略。
+- 将 playable spec 的结果模型进一步收紧为“玩法产出 fact result，剧本/集成层提供 outcome config，runtime 按配置判断胜负/取消并发放奖励”，避免把剧情语义硬编码回 playable 机制层。
+- 为 playable spec 补充“缺失配置语义”规则，明确触发信息、owner 信息、outcome 条件缺失时必须 fail-closed，而奖励和 handoff 仅在文档明确允许时才可走显式 fallback。
+- 继续将 playable spec 从“原则性 contract”收紧为“可执行闭环 contract”：新增 `integrationId` 这一层 scenario-owned playable use-site identity，明确同一 `playableId` 被多处复用时，触发、结算、奖励与回跳都必须绑定到唯一 integration instance。
+- 为 playable spec 新增 trigger evaluation contract，明确“触发由谁配置”之外，还要求 framework-owned trigger evaluator 负责把命中的 trigger 规约为唯一的 `integrationId + playableId + ownerContext` launch request。
+- 为 playable spec 新增 owner session recovery contract，明确 `sessionToken` 的签发、恢复、失效和 fallback 语义，防止统一结算后再次退回到 view/shell 猜测回跳目标。
+- 为 playable spec 新增 scaffold / validator / CI enforcement 要求，明确该 spec 后续必须通过脚手架、schema/typed validator 和 CI 门禁执行，而不是只靠文档约定。
+- 新增 [docs/superpowers/plans/_playable-plan-template.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/superpowers/plans/_playable-plan-template.md)，作为后续新增 playable、迁移 legacy playable、以及从 house/scene 流程中剥离 playable 的统一 active-plan 骨架。
+- 在 playable spec 的 follow-up 中明确：后续 playable 相关执行计划应从 `_playable-plan-template.md` 起步，同时仍受通用 `_plan-template.md` 与 `plan-governance-spec.md` 约束。
+- 将 playable runtime 迁移进一步拆成多 child 的阶段式候选队列，而不是预设成一个超大 child：当前 candidate 队列先记录 Child 30（runtime skeleton 与 integration registry）、Child 31（`activity-qte` / `city-begging` 迁移）、以及更后的 Child 32-34 候选阶段。
+- 将 Child 30-34 全部预写成独立 future plan 文件，但明确保持为 non-executable；它们现在只是后续 fresh weekly promotion 的候选执行载体，不改变当前 active weekly set 的执行权。
+- 将 Child 30-34 的计划文档 `Based On Spec` 回补为各自独立 child spec，而不再只引用顶层 playable contract spec，便于后续按 child 做 baseline recheck 与 promote。
+- 为 playable runtime 这条线继续补齐实施前文档：冻结 `playableId / integrationId / triggerId / sessionId` 命名规则，预写 scaffold/validator 命令的输入输出草案，定义 AI 创作时的角色分工与提示协议，并按 Child 30-34 规划测试策略。
+
+### Impact
+- 后续 runtime 规划和迁移不再围绕“小游戏是否包含战斗”反复分叉，而是统一围绕 playable runtime 展开。
+- 后续实现 plan 需要以 playable registry/runtime 为主线，同时对 `minigame` 与 `battle` 两类保留不同内部语义与 presenter/layout 约束。
+- 后续若框架仍要求新增玩法的人手动决定代码目录、资产归位、注册点或 glue 路径，应视为 framework 缺口，而不是让内容创作者承担该复杂度。
+- 后续同一 playable 可以被不同剧本以不同胜负条件、奖励和回跳方式复用，机制实现与剧本结算配置不再强耦合。
+- 后续 runtime / editor / validator 在面对缺失配置时不能再各自猜默认行为，必须遵守 spec 里定义的 fail-closed 与 explicit fallback 规则。
+- 这份 playable spec 现在不再只回答“该怎么设计”，而是开始回答“触发如何归一、结算如何唯一定位、回跳如何恢复、门禁如何执行”；后续实现 plan 可以直接围绕这些强制节点展开，而不是再次补概念口子。
+- 后续不管是“新增 playable”、还是“把分散在 house / scene / local flow 的玩法剥离出来”，都可以沿同一份 plan 模板落地，减少每次重新定义迁移骨架的成本，也降低 AI/多人协作时的 plan 漂移。
+- 后续 playable runtime 工作现在既不会破坏“同一时间只允许一个 active executable child”的治理规则，也不会因为前置拆分不足而把多个机制问题揉进一个难以验证的大迁移批次。
+- 当前在不触碰 active weekly set 的前提下，playable runtime 这条线已经具备“candidate queue + queued child spec + future child plan + ownership inventory”四层前置文档，后续只需等当前 active set 关闭后从 Child 30 做正式 baseline recheck 即可。
+- 当前这条线又向前补成“candidate queue + queued child spec + future child plan + ownership inventory + naming rules + scaffold/validator I/O draft + AI protocol + test strategy”的前置文档组合；后续 promote 时不需要再从零发明命名、输入输出或 AI 协作规则。
+
+## 2026-07-02 Child 19 Task Runtime Mod Contract
+
+### Added
+- 新增 Child 19 回归测试，明确要求 `src/domain/content-pack.ts` 暴露可选 `tasks` contribution surface，`src/application/content/content-pack-loader.ts` 能从 shared manifest path 加载 `tasks.json`，并且 `src/application/scenario/scenario-pack-loader.ts` 把 `tasks` 视为正式可校验的 optional split-table。
+
+### Changed
+- `src/domain/content-pack.ts` 现已增加 `tasks?: TaskDefinition[]`，使 content-pack / scenario-pack 都能通过同一条 pack contract 携带 task definitions。
+- `src/application/content/content-pack-loader.ts` 现已把 `tasks` 纳入 shared `CONTENT_PACK_FILE_KEYS`，使 manifest-driven content pack 可以加法式加载 task contribution，而不影响不提供该文件的旧 pack。
+- `src/application/scenario/scenario-pack-loader.ts` 现已显式声明 `tasks?: string` manifest file slot，并在 parse 阶段校验 `tasks` 必须是数组，避免 scenario pack 对 task contribution 继续停留在隐式透传状态。
+- `src/application/content/active-game-content.ts` 现已把 task definitions 纳入 active content assembly，导出 `taskDefinitions` 与 `taskDefinitionsById`，使已激活 pack 的 task contribution 能进入统一 lookup surface。
+- `src/domain/game-state.ts` 与 `src/application/state/create-initial-state.ts` 现已把 `TaskRuntimeState` 落入 `gameState.runtime.tasks`，让任务运行态通过统一游戏状态结构保存，而不是停留在外部临时容器。
+- `src/core/runtime/runtime-dispatch.ts` 现已新增 shared task settlement pass：当 routed runtime result 返回 `taskActions` / `taskSignals` 且 commit context 提供 `taskDefinitionsById` 时，dispatch 会调用 task runtime、写回 `gameState.runtime.tasks`、合并 `taskUpdates`，并继续通过 runtime settlement 应用 task effects。
+- `src/main.ts` 现已维护 active task definition 索引，并为 covered runtime commit context 提供该索引，使 shared runtime dispatch 具备消费已激活 task contributions 的注册面。
+
+### Impact
+- Child 19 已完成：task definitions 现在可以通过 shared pack contract 声明、进入 active content lookup、并由 shared runtime dispatch 通过 typed task actions/signals 驱动 task runtime progression。
+- 这次收口没有重开 house registration、general contribution registry、或完整 task authoring DSL；后续边界应转向 Child 20 的 house runtime mod registration baseline recheck，而不是把 Child 19 扩成更大的 registry redesign。
+
+## 2026-07-02 Child 14 Interactive Remaining Legacy Convergence
+
+## 2026-07-02 Child 17 Pack Content Decoupling
+
+## 2026-07-02 Child 18 Runtime Spine Unification
+
+### Added
+- 新增 Child 18 回归测试，明确要求 `src/core/runtime/state-sync-runtime.ts` 导出共享 `commitRuntimeRequest()`，并要求 `src/main.ts` 的 covered `day-start`、`advance-segments`、`enter-city`、`story-battle`、`city-begging` 与 `activity-qte` 路径不再手工重复 runtime bridge create/apply write-back。
+
+### Changed
+- `src/core/runtime/state-sync-runtime.ts` 新增 `commitRuntimeRequest()`，把 `createRuntimeBridgeState()` -> `dispatchRuntimeRequest()` -> `applyRuntimeBridgeState()` 这一条 shared runtime commit 链收口为一个正式 helper。
+- `src/main.ts` 的 covered `day-start`、`advance-segments`、`enter-city` 与 `story-battle` dispatch 路径，现已统一通过 `commitRuntimeRequest()` 提交 runtime request，而不再各自手写 bridge create/apply glue。
+- `src/main.ts` 的 covered `city-begging` 与 `activity-qte` interactive write-back 路径，也已统一改为通过 `commitRuntimeRequest()` 提交到 interactive runtime route，不再直接组合 `createInteractiveRuntimeState()` / `applyInteractiveRuntimeResult()`。
+
+### Impact
+- Child 18 已完成：covered runtime entry 与 covered interactive write-back 现在共享一条更明确的 commit spine，`src/main.ts` 在这些路径上不再持有重复的 runtime bridge write-back 逻辑。
+- 这次收敛没有吸收 task contract、house registration、manifest/registry policy redesign；下一个后续项应回到 Child 19 的 task-runtime mod-facing baseline recheck，而不是继续扩张 Child 18 边界。
+
+### Added
+- 新增 Child 17 回归测试，明确要求 `src/content/story/index.ts`、`src/content/houses/*.ts`、以及 covered `keep-house` / `temple-house` house module 消费端不再直接 hard-import `scenario-packs/zhuyuanzhang/**`。
+- 新增 `src/content/pack-content-access.ts`，把默认 builtin `zhuyuanzhang` pack 的 story / house-content / activities / text JSON 读取集中到一个共享内容访问接缝。
+- 新增 `src/application/content/pack-content-access.ts`，给 application 层消费端提供 pack-content access re-export seam。
+
+### Changed
+- `src/content/story/index.ts` 现在通过 `src/content/pack-content-access.ts` 获取默认 story events/scenes/text entries，不再直接导入 `zhuyuanzhang` pack 文件。
+- `src/content/houses/home-house-content.ts`、`grain-shop-content.ts`、`keep-house-content.ts`、`market-house-content.ts`、`medicine-house-content.ts`、`tavern-content.ts` 与 `tea-house-content.ts` 现在通过共享 pack-content access seam 读取默认 house content，不再各自直接导入 `zhuyuanzhang` house-content JSON。
+- `src/application/house-modules/keep-house/keep-house-house-module.ts` 与 `src/application/house-modules/temple-house/temple-house-house-module.ts` 现在通过共享 pack-content access seam 读取默认 activities / text entries，不再直接导入 `zhuyuanzhang` pack 表。
+
+### Impact
+- Child 17 已完成：covered production consumers 不再通过 scenario-specific 源码路径直接读取 `zhuyuanzhang` pack 内容，后续 mod-first 工作可以建立在共享 content access seam 上，而不是继续扩散 direct-import coupling。
+- 这次收敛没有重开 Child 15/16 的 runtime handoff 设计，也没有改动 task/house/registry 的共享 contract 边界；下一个后续项应回到 Child 18 的 runtime spine baseline recheck。
+
+### Added
+- 新增 Child 14 回归测试，明确要求 `src/core/runtime/interactive-runtime.ts` 不再依赖 `legacy-interactive-adapter.ts` 持有 covered `activity-qte` / `story-battle` 生命周期，并要求 `src/main.ts` 关闭 `activity-qte` 结果面板时必须通过 `createExitInteractiveRequest("activity-qte")` 回到 interactive runtime。
+
+### Changed
+- `src/core/runtime/interactive-runtime.ts` 现在直接调用 `advanceActivityQteMarker()`、`stopActivityQte()` 与 `dispatchStoryBattleAction()`，不再通过 legacy interactive adapter 持有 covered `activity-qte` tick/stop 和 `story-battle` action dispatch ownership。
+- `src/main.ts` 的 `closeCurrentActivityResult()` 不再直接调用 `clearActivityResult()`；该关闭路径现在通过 interactive runtime exit request 完成。
+- `src/core/adapters/legacy-interactive-adapter.ts` 已降为历史占位文件，不再作为 covered 生产路径的实际 owner。
+
+### Impact
+- Child 14 已完成：remaining same-type covered interactive legacy tails 已从 adapter/shell 侧收口到 runtime owner line，后续 weekly continuation 不需要再把 interactive family 作为下一优先收敛边界。
+- 当前后续 priority 已转向 Child 15 的 navigation/time mixed entry convergence；Child 16 仍保留为 event/scene handoff 的锁定后续项。
+
+## 2026-07-02 Child 15 Navigation + Time Runtime Convergence
+
+### Added
+- 新增 Child 15 回归测试，明确要求 `src/main.ts` 在 covered `enter-city`、`day-start`、`advance-segments` 生产路径上不再直接调用 `runNavigationRuntime()` / `runTimeRuntime()`，而必须通过 shared `dispatchRuntimeRequest()` 收口。
+
+### Changed
+- `src/core/runtime/navigation-runtime.ts` 新增 `routeNavigationRuntime()`，把 navigation runtime 接入 shared `RuntimeState` / `RuntimeResult` dispatch 语言。
+- `src/core/runtime/time-runtime.ts` 新增 `routeTimeRuntime()`，把 covered 时间推进入口接入 shared `RuntimeState` / `RuntimeResult` dispatch 语言。
+- `src/core/runtime/state-sync-runtime.ts` 新增通用 bridge helper：`createRuntimeBridgeState()`、`applyRuntimeBridgeState()` 与 `applyRuntimeBridgeResult()`；原 interactive helper 改为委托给这些通用桥接函数。
+- `src/main.ts` 的 covered `enter-city`、`day-start` 与 `advance-segments` 入口已改为 shared dispatch + runtime bridge write-back，不再直接把 shell 绑定到 navigation/time helper。
+
+### Impact
+- Child 15 已完成：covered navigation/time mixed entry 已收口到 shared runtime dispatch line，`src/main.ts` 只保留 bounded shell residue：`triggerStoryEventsForTiming("city-enter")` 与 `syncCouncilPriorityAfterGameStateChange()`。
+- 下一个应审查的边界不再是同类 navigation/time 入口，而是 Child 16 的 event/scene handoff；是否还需要进一步处理 bounded residue，必须在 Child 16 baseline recheck 后再决定。
+
+## 2026-07-02 Child 16 Event + Scene Handoff Convergence
+
+### Added
+- 新增 Child 16 回归测试，明确要求 `src/main.ts` 的 covered `triggerStoryEventsForTiming()` helper 不再直接 stitch `runEventRuntime()` 与 `runSceneFromEvent()`，同时锁定 covered `city-enter` 与 `indoor-screen-shown` 路径继续通过同一条 shared story-trigger seam 收口。
+
+### Changed
+- `src/core/runtime/event-runtime.ts` 新增 `runStoryEventRuntime()`，把基于 `EventTriggerTiming` 的 story trigger request 和 trigger input 组装收口到 event runtime 内。
+- `src/core/runtime/scene-runtime.ts` 新增 `runStoryTriggerRuntime()`，把 covered story trigger 的 event activation 与 event -> scene handoff 串接收口到 runtime family 内，而不是继续由 `src/main.ts` 手工拼接。
+- `src/main.ts` 的 `triggerStoryEventsForTiming()` 现在只调用 `runStoryTriggerRuntime()` 并做结果写回，不再自己直接调用 `runEventRuntime()` / `runSceneFromEvent()`。
+
+### Impact
+- Child 16 已完成：covered `city-enter` 与 `indoor-screen-shown` story handoff 已收口到一个 runtime-owned seam；本周这条 same-type event/scene handoff debt 不再保留 queued child。
+- `2026-07-02` weekly set 已消费完 visible queue 并关闭。后续如果还要继续抽取，必须以新的 weekly review 重新证明它是不同的问题类型，而不是继续追加同类 child。
+
+## 2026-07-02 Child 13 Shared Dispatch Reentry Convergence
+
+### Added
+- 新增 Child 13 回归测试，明确要求 `src/main.ts` 不再内联处理 `reenter-house` follow-up，且 `HouseRuntimeBridge` 必须能直接接管该 shared-dispatch reentry 收口路径。
+
+### Changed
+- `src/core/runtime/house-runtime.ts` 现在导出 `applyInteractiveFollowUp()` bridge seam，可在不额外触发浏览器层 render 分支的前提下，把 `reenter-house` follow-up 直接收口到 house runtime 自身。
+- `src/main.ts` 的 `dispatchCurrentStoryBattleAction()` 不再自己判断 `interactive.houseId` 或维护 `followUpRendered` 分支；story-battle action 的剩余 Bucket A reentry 路径现在通过 shared dispatch follow-up -> `houseRuntime.applyInteractiveFollowUp()` 完成。
+- `tests/robustness.test.cjs` 新增 Child 13 red-to-green coverage，锁定 `main.ts` 的 branch removal 和 `HouseRuntimeBridge` 的 reentry ownership。
+
+### Impact
+- Child 13 已完成：剩余同类 post-Child-11 Bucket A follow-up/reentry 路径已全部收口到 shared dispatch line 下，不再留下新的同类 Bucket A remainder。
+- 本次审计没有发现 Bucket B 的 Child 11 backfill 问题，也没有发现 Bucket C 的新边界 follow-up；后续若还要继续 runtime continuation，必须先经过新的 weekly review/spec/plan，而不是继续扩写 Child 13。
+
+## 2026-07-02 UI Contract Reserve
+
+### Added
+- 新增 `src/domain/ui/*` 未来 UI contract reserve 类型：`screen-schema`、`screen-layout`、`screen-skin`、`asset-catalog` 与组合后的 `ui-screen-contract`。
+- 新增 `src/application/ui/*` 纯 UI reserve seam：validator、layout/skin resolver、asset layered alias resolver 与 builtin registry。
+- 新增 `src/content/ui/*` builtin reserve 数据，覆盖当前 layout editor 的四个 screen target，并提供 alias-based UI asset catalog。
+
+### Changed
+- `src/domain/content-pack.ts` 增加可选 `uiScreenSchemas`、`uiLayouts`、`uiSkins`、`uiAssetCatalogs` reserve 字段。
+- `src/application/content/content-pack-loader.ts` 以加法方式支持对应的 optional UI split-table file keys，不要求现有 pack 提供这些文件。
+- `tests/robustness.test.cjs` 增加 UI contract reserve、builtin reserve seed、optional pack UI reserve、以及 inactive-by-default 保护测试。
+- `tsconfig.test.json` 现在覆盖 `src/content/ui/**/*.ts`，使 Child 12 reserve 模块进入测试编译；同时避免把依赖 `import.meta.glob` 的现有 layout-editor runtime 文件误纳入 CommonJS 测试构建。
+
+### Impact
+- Child 12 已完成：future UI contract reserve、pack UI split-table reserve 与 explicit asset layering rules 均已落地，但当前 `src/main.ts`、现有 layout editor 路径和默认 runtime/render 行为保持不变。
+- 这次落地没有启用 Editor mode，也没有把 reserve registry 接进当前生产运行时；后续 UI override / schema-driven renderer 工作仍需新的 child 明确接手。
+
+## 2026-07-01 Runtime Contract Hardening
+
+### Added
+- 新增 `src/core/contracts/effect-settlement.ts`，定义 effect settlement 的 emitter/applier、输入、输出、unsupported-effects 与 warnings seam。
+- 新增 `src/core/contracts/house-runtime.ts`，定义 house runtime 的 core-owned `enter / leave / dispatch` request contract。
+
+### Changed
+- `src/core/contracts/runtime-request.ts` 现在导出显式 typed request families；`src/core/runtime/runtime-router.ts` 由函数别名升级为正式 router seam；`src/core/runtime/runtime-dispatch.ts` 改为通过 formal router 和 formal settlement entrypoint 工作。
+- `src/core/contracts/interactive-runtime.ts` 与 `src/core/runtime/interactive-runtime.ts` 现在定义 launch/action/exit/result/session seam，并通过一个 normalizer 统一覆盖 `activity-qte`、`city-begging`、`story-battle` 的公开 dispatch 语言。
+- `src/core/runtime/runtime-settlement.ts` 现在显式报告 settled/unsupported effects 和 warnings，而不是静默忽略未覆盖 effect kinds。
+- `src/core/runtime/house-runtime.ts` 不再把 domain `HouseModuleRequest` 作为 shared public contract 暴露；legacy adapter 仍在内部兼容层保留。
+
+### Impact
+- Child 9 已完成 shared contract baseline：后续 ownerization 可以围绕正式的 request/router、interactive dispatch、effect settlement 和 house runtime request seams 进行，而不必再依赖隐式 bridge 行为。
+- Child 9 没有移除 legacy house/interactive adapters，也没有吸收 UI/layout 或 runtime ownerization 工作；这些明确递延到 Child 10 / Child 11。
+
+## 2026-07-01 StateSync Runtime
+
+### Added
+- 新增 `src/core/contracts/state-sync-runtime.ts`，定义 `CanonicalRuntimeState`、`AppStateBridge`、`SaveState`、`PresentationInput`、`StateSyncTrigger`、`StateSyncResult` 与 `StateSyncRuntime`。
+- 新增 `src/core/runtime/state-sync-*` 首版 StateSync Runtime seam，覆盖 validation、normalization、hydration、app bridge、pre-save snapshot、mod activation rebuild 与 presentation input preparation。
+
+### Changed
+- `src/main.ts` 不再直接声明 interactive RuntimeState creation/write-back helpers；这些 bridge-period helpers 已移入 StateSync runtime boundary。
+- `src/core/contracts/runtime-state.ts` 和 `src/core/contracts/core-state.ts` 增加 legacy/bridge-period alias，避免继续把旧 `RuntimeState` 名称误认为 canonical authority。
+
+### Impact
+- StateSync Runtime 已有 formal runtime owner；Child 8 不接管 gameplay dispatch、save IO、mod activation、presenter/render 或 feature-specific business logic。
+
+## 2026-07-01 Mod Runtime
+
+### Added
+- 新增 `src/core/contracts/mod-runtime.ts`，定义 `ModSourceDescriptor`、`LoadedMod`、`ActivatedMod`、`ModRuntimeState`、`ModRuntimeRequest`、`ModRuntimeFailure` 与 `ModActivationResult`。
+- 新增 `src/core/mods/*` 首版 Mod Runtime seam，覆盖 source normalization/loading/parsing、dependency/capability validation 与 atomic activation rollback。
+- 新增 `src/core/adapters/mod-runtime-main-adapter.ts`，把 `ModActivationResult` 转为当前 bootstrap/content assembly 可消费的兼容输入。
+
+### Changed
+- `src/main.ts` 的 builtin、file import、url import 与 restore selected-mod activation 现在先经过 Mod Runtime，再继续走现有 content assembly / bootstrap 路径。
+- `src/core/contracts/mod-manifest.ts` 增加 `schemaVersion`、dependency/conflict/capability 和 default start 字段，供 Mod Runtime validation 与 startup handoff 使用。
+
+### Impact
+- Mod activation/startup 已有 formal runtime owner；Child 7 不接管最终内容合成、save/load IO、gameplay runtime execution、UI/menu/loading-screen、hot reload 或 sandboxing。
+
+## 2026-07-01 Task Runtime
+
+### Added
+- 新增 `src/core/contracts/task-runtime.ts`，定义 `TaskDefinition`、`TaskInstance`、`TaskRuntimeState`、`TaskAction`、`TaskSignal`、`TaskUpdate` 与 `TaskRuntimeResult`。
+- 新增 `src/core/runtime/task-runtime.ts`，提供 `startTask()`、`applyTaskAction()`、`applyTaskSignal()` 与首版 signal-driven progression。
+
+### Changed
+- `src/core/contracts/runtime-result.ts` 现在可携带 `taskUpdates`，同时保留 legacy `RuntimeTaskAction` / `RuntimeTaskSignal` 兼容形态。
+
+### Impact
+- Task lifecycle 和 signal progression 已有 formal runtime owner；Task Runtime 返回 task updates、effects 与 follow-up signals，但不应用 effects，也不接管 Event、Scene、Interaction、Time、Save/Load 或 Presentation 边界。
+
+## 2026-06-30 Presenter Output Render Decoupling
+
+### Added
+- 新增 `src/application/presenter/presenter-output.ts`、`app-presenter.ts`、`stage-presenters.ts` 与 `overlay-presenters.ts`，形成首版 `Presentation Bridge Runtime` / presenter output seam。
+
+### Changed
+- `src/main.ts` 现在在调用 `renderAppMarkup()` 前先组装 `createAppPresenterOutput()`，不再在 render 入参里内联组装 scene action / choice options。
+- `src/ui/app-render.ts` 改为消费 `presenterOutput` 中的 stage、overlay、HUD 和 scene 选择结果，不再直接导入 `getHouseModule`、`isCityEntryVisibleForStoryStage` 或 `selectCityNpcSummariesForHouse`。
+
+### Impact
+- render-time gameplay selection 已从 UI renderer 移到 application presenter 层，`app-render.ts` 更接近纯渲染消费端；后续 Task Runtime、Mod Runtime 与 StateSync Runtime 可以在不重新扩大 presenter/render 边界的前提下继续推进。
+
+## 2026-06-30 Minimum Unified RuntimeState Carrier
+
+### Added
+- 新增 `src/core/contracts/runtime-state.ts`，为 Child 4 的最小统一运行态补出 `RuntimeState.core`、`RuntimeState.app` 与 `RuntimeState.view` 三段式 carrier。
+
+### Changed
+- `src/core/contracts/runtime-result.ts`、`src/core/runtime/runtime-router.ts`、`src/core/runtime/runtime-dispatch.ts` 与 `src/core/runtime/runtime-settlement.ts` 现在围绕 `RuntimeState` 工作，而不是继续把 Child 4 卡在 Child 1 的 `CoreGameState` 形状上。
+- `src/core/runtime/interactive-runtime.ts` 不再返回私有 `{ appState, enterHouseId }` 结果，而是返回共享 `RuntimeResult.state` 与 `RuntimeResult.interactive`；`src/main.ts` 至少已有一条覆盖中的 story-battle action 路径通过 `dispatchRuntimeRequest()` 回到共享 runtime line。
+- `characterDefinitions` 本轮继续走独立兼容参数，不并入 `RuntimeState.core`；是否后续提升为 convergence step，改由 weekly promotion gate 决定。
+
+### Impact
+- Child 4 现在已经具备最小统一 runtime state/result carrier，后续可以先继续扩大 shared dispatch 覆盖和统一 signal，再决定是否需要更高成本的 `characterDefinitions` 或 Child 1 `CoreGameState` convergence。
+
+## 2026-06-30 Interactive Runtime Bridge Extraction
+
+### Added
+- 新增 `src/core/contracts/interactive-runtime.ts`，为受控交互运行态补出统一的 kind/source/session 基础类型。
+- 新增 `src/core/runtime/interactive-runtime.ts` 与 `src/core/runtime/house-runtime.ts`，提供交互启动/动作请求与 house runtime 进出/派发的 core bridge 入口。
+- 新增 `src/core/adapters/legacy-house-adapter.ts` 与 `src/core/adapters/legacy-interactive-adapter.ts`，把当前 house runtime、city-begging、activity-qte、story-battle 的旧实现包进过渡适配层。
+
+### Changed
+- `src/main.ts` 不再直接导入 `application/house/house-runtime`，已覆盖的 house / city-begging / activity-qte / story-battle 入口改为先走 `src/core/runtime` 的桥接层。
+- 已覆盖的交互 launch/action 入口现在先经过 `createLaunchInteractiveRequest()` / `createInteractiveActionRequest()` 和 `runInteractiveRuntime()`，而不是由 `main.ts` 直接组装并调用旧 helper。
+
+### Impact
+- 项目现在具备了第一层 production 级 `Interaction Runtime` / `House Runtime` bridge seam，后续可以继续把交互请求并入统一 runtime-router/runtime-dispatch，逐步减少 `main.ts` 作为并行交互控制器的职责，而不必立即重写现有小游戏和剧情战实现。
+
+## 2026-06-29 Save Migration Hardening
+
+### Added
+- 新增 `src/core/save/save-migrations.ts`，为旧存档到当前 `SaveEnvelope` 的归一化提供确定性的迁移入口。
+- 新增 `src/core/save/save-loader.ts`，在读取时统一执行迁移并校验 `selectedModId` 是否仍然可用。
+- 新增 `src/core/save/save-writer.ts`，为当前标准化后的引擎存档提供统一序列化出口。
+
+### Changed
+- `src/core/save/save-envelope.ts` 补出当前 envelope 版本常量，使 loader / migration / writer 能围绕同一版本边界工作。
+- 存档读取现在支持旧形态 `state.flags/state.variables` 迁移到 `runtimeState`，并在缺失 `engineState` 时补出默认引擎态。
+- 存档读取不再静默接受缺失的 `selectedModId`；当所选 mod 不可用时，会显式抛错而不是带着损坏状态继续运行。
+- 标准化后的存档写回路径会保留未知 mod 的 `modState` 负载，不会因为核心运行时不理解字段含义而丢失数据。
+
+### Impact
+- `src/core/save` 已从“最小 envelope seam”推进到“可迁移、可校验、可回写”的 persistence boundary，后续 Child 3/4/5 可以建立在这个稳定读写合同之上，而不必再回头发明新的存档形状。
+
+## 2026-06-29 Core Engine Runtime Boundary
+
+### Added
+- 新增首批 `src/core` 边界文件：`contracts`、`engine`、`runtime`、`save` 与 `adapters/legacy-main-adapter.ts`，把 mod manifest、EngineSession、RuntimeRequest/Result、Effect、SaveEnvelope 等最小运行时契约落到生产代码目录。
+- 新增 `src/core/registry/mod-registry.ts` 与 `src/core/registry/content-registry.ts`，让引擎启动可以通过选中的 mod id 和 registry 进入统一 bootstrap seam。
+
+### Changed
+- 增加 runtime dispatch 与 effect settlement 接缝，首条 routed request 已由 `src/core/runtime` 接管并回写 `CoreGameState`。
+- 增加最小 `SaveEnvelope` 契约，保存层现在有了可继续硬化的 engine/modState 边界。
+- `src/main.ts` 新增 `legacy-main-adapter` handoff seam，默认启动流程会先经过 `src/core` bootstrap，再继续沿用现有主运行时逻辑。
+
+### Impact
+- 项目第一次具备了面向 mod-first 改造的生产级 `src/core` 入口边界，后续可以在不继续扩大 `main.ts` 架构职责的前提下，逐步拆分 navigation、event/task、interactive module、save hardening 和 UI presenter。
+
+## 2026-06-26 Standalone Static Service Script
+
+### Added
+- 新增 Windows 独立服务管理脚本 `scripts/standalone-service.ps1`，支持 `start / stop / restart / status`，可在后台启动构建后的静态站点服务。
+- 新增便捷包装脚本 `scripts/start-standalone-service.ps1`，用于一条命令启动独立服务。
+
+### Changed
+- README 增补独立后台服务启动说明、默认地址和运行时日志目录说明。
+
+### Impact
+- 现在可以不占用前台终端运行构建后的项目，便于局域网演示、临时部署和手工验收。
+
 ## 2026-06-18 JSON Scenario Pack Entry
 
 ### Added
@@ -898,6 +1667,21 @@
 - `ScenarioPackDefinition` now accepts optional `cities` and `houses` arrays, so a JSON start pack can materialize world entities instead of only swapping character/event/scene/activity data.
 - Added shared `GameState.runtime.activitySession` plus a reusable `generic.qte` activity session runner. Scene `start-activity` now opens an interactive QTE overlay and settles configured outcome effects only after the player clicks through the rounds.
 - Liu Bang's JSON opening pack now defines `city.pei_county` and starts Liu Bang, Xiao He, and Lu Wan in that city.
+
+## 2026-06-29 Navigation Time Event Runtime Extraction
+
+### Added
+- 在 `src/core/contracts/` 新增 `event-runtime.ts` 与 `scene-runtime.ts`，明确 Child 3 的事件候选、事件激活、scene handoff、task action、task signal 这些过渡期合同。
+- 在 `src/core/runtime/` 新增 `navigation-runtime.ts`、`time-runtime.ts`、`event-runtime.ts`、`event-candidate-selector.ts`、`event-condition-evaluator.ts`、`event-activation.ts`、`scene-runtime.ts`、`scene-session.ts`、`scene-choice-resolution.ts`，把导航入口、时间推进入口、事件候选选择、事件激活、scene 会话接力拆成独立 seam。
+
+### Changed
+- `src/main.ts` 不再在对应入口点直接内联 `enterCity()`、`advanceGameStateOneDay()`、`advanceGameStateTimeSegments()` 和 `triggerStoryEvents()` 作为唯一控制路径，而是先创建 typed runtime request，再经由 Child 3 的 runtime wrapper 进入导航、时间、事件、scene seam。
+- `src/core/contracts/runtime-request.ts` 的 `tick` 请求现在支持可选 `payload`，以便时间推进 seam 携带段数等最小 runtime 输入。
+- `src/core/contracts/runtime-result.ts` 现在可以携带 `scene`、`taskActions` 与 `taskSignals`，为后续 Task Runtime / Interactive Runtime 抽离预留统一返回通道。
+
+### Impact
+- Child 3 让 `main.ts` 第一次从“直接控制导航/时间/剧情触发”转成“创建 request 并交给 runtime seam”，后续 Child 4 可以在这个基础上继续把 interactive/minigame/story-battle 接到统一 runtime。
+- 事件系统和 scene 系统现在已经有第一层明确的 core-runtime 接缝，但仍然是过渡实现：具体剧情播放和任务状态机还没有被完全抽离，后续要继续通过 Child 4/后续 task runtime work 收口。
 
 ### Changed
 - Runtime city and house registries in `main.ts` are now resettable and scenario-pack aware, rather than fixed startup constants.

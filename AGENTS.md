@@ -83,3 +83,31 @@ In short:
 - prefer extraction over duplication
 - prefer reusable systems over temporary patches
 - prefer genre-proven design over ad hoc invention
+
+## Spine Plugin Trigger
+
+If the user says "启动spine插件", "启动 Spine 插件", "打开骨骼绑定工具", or asks to start the spine/binding editor, use the project skill:
+
+- `.codex/skills/start-spine-plugin/SKILL.md`
+
+The tool and collaboration rules are documented in:
+
+- `docs/spine-plugin.md`
+
+Do not treat this as house work. Start the dev server if needed and explain the tool's save rules, especially that new piece images must live under `src/faxian/leg/` and JSON stores `leg:` references rather than image bytes.
+
+## Superpowers Plan Governance
+
+For work tracked under `docs/superpowers/plans/`:
+
+1. New plan files must follow `docs/superpowers/plans/_plan-template.md`.
+2. Plan structure and lifecycle rules must follow `docs/superpowers/specs/plan-governance-spec.md`.
+3. Before resuming governed work, inspect `docs/superpowers/project-progress.md` first, then open the referenced owner document.
+4. After each completed work batch, update:
+   - checkbox state
+   - `Execution State`
+   - `Progress Log`
+5. Do not mark a child plan `closed` if required verification has not passed.
+6. Do not mark a child or task `closed` unless structured closeout, project-progress sync, next-step sync, and remote push success are all recorded.
+7. Do not leave a `blocked` plan without recording the blocker in `Progress Log`.
+8. When creating or materially restructuring a plan, run `npm run lint:plans`.

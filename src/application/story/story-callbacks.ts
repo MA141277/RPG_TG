@@ -11,16 +11,25 @@ import {
   formatCouncilStatusText,
 } from "../time/time-progression";
 import {
-  createSundeyaRescueBattleSession,
-  startStoryBattle,
-} from "../story-battle/story-battle-runtime";
+  launchStoryBattlePlayable,
+} from "../playables/story-battle/story-battle-definition";
+import { resolveTextEntry } from "../content/text-resolution";
 
 type StoryCallbackPayload = Record<string, unknown> | undefined;
 
 export type StoryCallbackRuntime = {
   state: GameState;
   characterDefinitions: CharacterDefinition[];
+  textEntriesById?: Record<string, string> | undefined;
 };
+
+function getStoryCallbackText(
+  runtime: StoryCallbackRuntime,
+  textId: string | undefined,
+  fallback?: string
+): string {
+  return resolveTextEntry(runtime.textEntriesById ?? {}, textId, fallback);
+}
 
 function readStringPayloadValue(
   payload: StoryCallbackPayload,
@@ -96,7 +105,10 @@ function runJoinGuoZixingCampCallback(
         ...runtime.state.ui,
         activeMissionId: null,
         reviewDateText: formatCouncilStatusText(60),
-        mainHouseMissionText: "前往帅府听候差遣",
+        mainHouseMissionText: getStoryCallbackText(
+          runtime,
+          "runtime.zhu_yuanzhang.main_mission.guo_zixing_keep"
+        ),
       },
       runtime: {
         ...runtime.state.runtime,
@@ -117,13 +129,24 @@ function runJoinGuoZixingCampCallback(
         ? characterDefinition
         : {
             ...characterDefinition,
-            title: "亲兵",
-            occupation: "郭子兴部亲兵",
-            affiliationLabel: "濠州郭子兴集团",
+            title: getStoryCallbackText(
+              runtime,
+              "runtime.zhu_yuanzhang.player.title.guo_zixing_camp"
+            ),
+            occupation: getStoryCallbackText(
+              runtime,
+              "runtime.zhu_yuanzhang.player.occupation.guo_zixing_camp"
+            ),
+            affiliationLabel: getStoryCallbackText(
+              runtime,
+              "runtime.zhu_yuanzhang.player.affiliation.guo_zixing_camp"
+            ),
             clanId: "clan.guo",
             houseId: "house.kulan.keep",
-            biography:
-              "你已被郭子兴留置左右，暂从亲兵与粮道杂务做起，开始真正卷入濠州红巾军的秩序之中。",
+            biography: getStoryCallbackText(
+              runtime,
+              "runtime.zhu_yuanzhang.player.biography.guo_zixing_camp"
+            ),
           }
     ),
   };
@@ -148,17 +171,22 @@ function runStartSundeyaRescueBattleCallback(
   }
 
   return {
-    state: startStoryBattle(
-      runtime.state,
-      createSundeyaRescueBattleSession({
+    state: launchStoryBattlePlayable({
+      state: runtime.state,
+      ownerId: runtime.state.scene.activeSceneId ?? "scene.unknown",
+      completion: {
         completedFlagKey,
         winFlagKey,
         battleIdVariableKey,
         resultVariableKey,
         enterHouseId: "house.kulan.keep",
-        mainMissionText: "战后帅府评定",
-      })
-    ),
+        mainMissionText: getStoryCallbackText(
+          runtime,
+          "runtime.zhu_yuanzhang.main_mission.sundeya_battle_review"
+        ),
+      },
+      textEntriesById: runtime.textEntriesById,
+    }),
     characterDefinitions: runtime.characterDefinitions,
   };
 }

@@ -29,6 +29,11 @@ export type MapStats = {
   resourceSummary: string;
 };
 
+export type MapExplorationState = {
+  revealedHexKeys: string[];
+  revealingHexStartedAtMsByKey: Record<string, number>;
+};
+
 export type MapDefinition = {
   id: MapId;
   name: string;

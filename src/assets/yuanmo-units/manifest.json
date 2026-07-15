@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-29T09:05:56.351Z",
+  "generatedAt": "2026-07-09T00:00:00.000Z",
   "targets": [
     {
       "id": "red-turban-strat",
@@ -8,6 +8,27 @@
       "vertexCount": 2906,
       "triangleCount": 4578,
       "boneCount": 20
+    },
+    {
+      "id": "zhu-yuanzhang-monk-strat",
+      "modelFile": "zhu-yuanzhang-monk-strat.json",
+      "textureFile": "zhu-yuanzhang-monk-strat.jpg",
+      "sourceFormat": "fbx",
+      "sourceDirectory": "C:/Users/13568/Downloads/tripo_convert_c1796d8e-6bbb-44ae-accb-c7db71cd537d",
+      "animationDirectory": "src/assets/yuanmo-unit-animations/zhu-yuanzhang-monk-strat",
+      "idleSourceStack": "NlaTrack.001",
+      "idleAnimationFile": "look_around.json",
+      "walkSourceStack": "NlaTrack",
+      "walkFrameStart": 0,
+      "walkFrameEnd": 29,
+      "walkAnimationFile": "run.json",
+      "walkLoopMode": "blend-tail",
+      "walkLoopBlendFrames": 2,
+      "walkRootMotionMode": "in-place-horizontal",
+      "walkRootMotionAnchor": "end",
+      "vertexCount": 14622,
+      "triangleCount": 4874,
+      "boneCount": 42
     },
     {
       "id": "yuan-infantry-strat",

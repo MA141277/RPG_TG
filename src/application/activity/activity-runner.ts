@@ -2,7 +2,7 @@ import type { ActivityDefinition, ActivityHandlerId } from "../../domain/activit
 import { GENERIC_QTE_ACTIVITY_HANDLER_ID } from "../../domain/activity";
 import type { CharacterDefinition } from "../../domain/character";
 import type { GameState } from "../../domain/game-state";
-import { createActivityQteSession } from "./activity-qte-runtime";
+import { startActivityQtePlayable } from "../playables/activity-qte/activity-qte-definition";
 
 export type ActivityRunnerContext = {
   activityDefinitionsById: Record<string, ActivityDefinition>;
@@ -90,14 +90,26 @@ function runGenericQteActivity(
   context: ActivityRunnerContext,
   handlerId: ActivityHandlerId
 ): ActivityRunResult {
-  return {
-    state: {
-      ...state,
-      runtime: {
-        ...state.runtime,
-        activitySession: createActivityQteSession(activityDefinition, handlerId),
-      },
+  const runtimeState = {
+    core: state,
+    app: {
+      beggingMiniGameState: null,
+      autoAdvanceState: null,
+      campaignTravelState: null,
+      cityDirectoryState: null,
+      cityMenuState: null,
+      locationDialogueState: null,
+      modalState: null,
     },
+    view: {},
+  };
+
+  return {
+    state: startActivityQtePlayable({
+      state: runtimeState,
+      activityDefinition,
+      handlerId,
+    }).core,
     characterDefinitions: context.characterDefinitions,
     handled: true,
     activityId: activityDefinition.id,

@@ -15,6 +15,7 @@ type StoryContent = {
   eventDefinitionsById: Record<string, EventDefinition>;
   sceneDefinitionsById: Record<string, SceneDefinition>;
   activityDefinitionsById?: Record<string, ActivityDefinition> | undefined;
+  textEntriesById?: Record<string, string> | undefined;
 };
 
 type StoryRuntimeContext = {
@@ -80,6 +81,7 @@ export function syncStoryScene(
     eventDefinitionsById: content.eventDefinitionsById,
     activityDefinitionsById: content.activityDefinitionsById,
     characterDefinitions: runtime.characterDefinitions,
+    textEntriesById: content.textEntriesById,
   });
 
   return {
@@ -141,6 +143,7 @@ export function advanceStorySceneStep(
     eventDefinitionsById: content.eventDefinitionsById,
     activityDefinitionsById: content.activityDefinitionsById,
     characterDefinitions: runtime.characterDefinitions,
+    textEntriesById: content.textEntriesById,
   });
 
   return {

@@ -23,6 +23,7 @@ The goal is:
 - no house-specific state globals
 - no hidden mutations to unrelated player data
 - no UI markup generated inside `application`
+- builtin houses and mod-owned houses enter through the same shared registration seam
 - future houses can be added by following the same module contract
 
 ## Layer Split
@@ -42,6 +43,12 @@ Do not place special-house business logic in:
 - `shared/*`
 
 except for stable registry wiring.
+
+Registry wiring rules:
+
+- the shared registration seam may assemble builtin and mod-owned house contributions
+- builtin fallback registrations may exist, but they must still be expressed through the same shared registration seam
+- core runtime, presenter lookup, and house renderer lookup must not each keep their own unrelated static table
 
 ## Required Domain Contract
 
@@ -270,6 +277,14 @@ The module should update its typed session state with structured dialogue or
 overlay data explaining the rejection. The runtime may honor the navigation
 result, but it must not contain house-specific leave reasons.
 
+If a house hosts a reusable playable mechanic:
+
+- the house module may remain the trigger owner and integration owner
+- the playable launch must still resolve through the shared playable runtime contract
+- active mechanic lifecycle, result emission, and settlement must not stay as ad hoc house-local timer branches once a shared playable exists
+- the house session may remain the host shell and return target, but it should recover through typed house session state plus shared playable handoff semantics rather than a second hidden state path
+- do not rebuild a one-off mini runtime in the house module after the repository already has a shared playable runtime
+
 ## State Rules
 
 Persistent state must be stored in unified runtime structures.
@@ -382,6 +397,13 @@ Use an `activity-confirm` style session overlay when a house needs to warn the p
 world-time and stamina costs before starting a minigame or work loop. The overlay should stay
 typed, dispatch through normal house action ids, and the actual persistent time/stamina mutation
 should still happen only inside the module lifecycle when the activity resolves.
+If a house-owned work entry supports the shared work-minigame confirmation standard, the same
+typed overlay may include `workDescriptionLines`, `relatedAbilityLines`, `costLines`, `bestScore`,
+`quickCompleteScore`, `quickCompleteActionId`, and `quickCompleteLabel`. Entry-specific persistent
+best scores must be stored in `GameState.runtime.variables` using `var.activity.<activityId>.best_score`,
+so different work entries that share one playable implementation do not overwrite each other.
+Quick-complete actions must still dispatch through the house module and settle through the same
+activity completion path as normal play.
 For staged table overlays such as tavern gambling, per-player public summaries may include
 current best pattern data and visible discard history, while private hand tiles remain hidden
 from other players in the view model.
@@ -411,6 +433,31 @@ further betting or draw controls without reading private session rules.
 If a module-specific overlay needs extra controls, extend the shared typed contract
 (for example a medicine compounding clear action or a shared QTE bar-stop minigame overlay)
 instead of relying on DOM-only behavior.
+For house-owned activity work that reuses the generic activity playable, expose a structured
+shared activity overlay such as `fortune-board` or `pachinko-board` from the shared activity
+session rather than rebuilding a separate house-local QTE timer. The house module may still own
+settlement, rewards, time cost, and return-to-house result copy after the shared playable emits
+its result.
+If that shared activity overlay has staged visual phases, expose the phase and stable animation
+version fields as typed data. For example `fortune-board` carries `phase`, highlighted cell ids,
+selected cell ids, flash state fields such as `flashActive` / `pickFlashActive`,
+`rerollCount`, and speed control fields such as `animationTickMs` / `speedFieldId`;
+renderers use those fields to animate current state and must not infer reroll timing from
+button text, DOM order, or whether a visible label changed.
+For physics-like shared overlays such as `pachinko-board`, expose render-facing positions,
+active ball state, fixed and moving collision pins, gate counters, event log, slot values,
+and launch action ids as typed data. The house renderer may draw those positions, but the
+application/playable runtime owns simulation, scoring, random event selection, and completion.
+If the board supports continuous launches, expose `activeBalls` as the canonical render list;
+`activeBall` may exist only as a compatibility field while older consumers are migrated. Runtime-owned
+layout variation such as lower slot refresh timing must be exposed through typed fields such as
+`layoutRefreshElapsedMs`, `layoutRefreshPeriodMs`, and `layoutVersion`; views may render the updated
+slot values, but must not shuffle or rescore the board themselves.
+If `pachinko-board` includes staged rewards such as a wheel spin, expose the queue and animation
+state as typed fields such as `rewardQueue` and `wheelState`. The runtime owns reward selection,
+weighted probabilities, spin/slow/flash timing, and reward application. Renderers may draw the
+wheel, pointer, selected segment, and dimmed board state, but must not apply score, ball, or
+encounter effects themselves.
 If one overlay contains a staged interaction
 (for example "select a topic, then confirm"),
 extend the shared overlay contract with the staged control fields first
@@ -457,39 +504,43 @@ Rules:
 
 ## Registry Pattern
 
-Use a registry to bind module ids to behavior.
+Use one shared registration seam to bind module ids to behavior and rendering.
+
+Builtin and mod-owned houses must both contribute through the same seam.
+
+Recommended shared registration shape:
+
+```ts
+type HouseModuleRegistration = {
+  moduleId: HouseModuleId;
+  module?: HouseModuleDefinition;
+  render?: HouseModuleViewRenderer;
+};
+
+type HouseModuleRegistry = {
+  register(registration: HouseModuleRegistration): void;
+  getModule(moduleId: HouseModuleId): HouseModuleDefinition | null;
+  getRenderer(moduleId: HouseModuleId): HouseModuleViewRenderer | null;
+};
+```
+
+Rules:
+
+- builtin fallback registrations may be preloaded into the shared registration seam
+- later mod-owned houses must add to the same seam instead of introducing a second registry path
+- runtime ownership, presenter lookup, and renderer lookup must all consume the same shared registration seam
+- `src/main.ts` may pass a shared registry dependency through stable wiring, but it must not author house-specific registration branches
 
 Example:
 
 ```ts
-export const houseModuleRegistry: Record<HouseModuleId, HouseModuleDefinition> = {
-  "home-house": homeHouseHouseModule,
-  "grain-shop": grainShopHouseModule,
-  "keep-house": keepHouseHouseModule,
-  "leader-residence": leaderResidenceHouseModule,
-  "market-house": marketHouseHouseModule,
-  "temple-house": templeHouseHouseModule,
-  tavern: tavernHouseModule,
-  "tea-house": teaHouseHouseModule,
-};
-```
+const houseModuleRegistry = createBuiltinHouseModuleRegistry();
 
-UI renderers should follow the same rule:
-
-```ts
-export const houseModuleViewRegistry: Record<
-  HouseModuleId,
-  (viewModel: HouseModuleViewModel) => string
-> = {
-  "home-house": renderHomeHouseView,
-  "grain-shop": renderGrainShopHouseView,
-  "keep-house": renderKeepHouseView,
-  "leader-residence": renderLeaderResidenceHouseView,
-  "market-house": renderMarketHouseView,
-  "temple-house": renderTempleHouseView,
-  tavern: renderTavernHouseView,
-  "tea-house": renderTeaHouseHouseView,
-};
+houseModuleRegistry.register({
+  moduleId: "grain-shop",
+  module: grainShopHouseModule,
+  render: renderGrainShopHouseView,
+});
 ```
 
 The app should:
@@ -497,9 +548,9 @@ The app should:
 1. read `currentHouseId`
 2. find `HouseDefinition`
 3. read `moduleId`
-4. resolve registry entry
+4. resolve the shared registration seam
 5. call generic module lifecycle methods
-6. resolve the registered renderer for the returned view model
+6. resolve the registered renderer for the returned view model through the same seam
 
 If a city entry first opens a directory, that directory should still resolve to a stable target house id and then continue through the same registry path.
 
@@ -553,6 +604,7 @@ A new house implementation is acceptable only if all are true:
 
 - `main.ts` contains no house-specific business branch
 - house behavior is resolved through `moduleId` + registry
+- builtin and mod-owned houses share one registration seam
 - application layer returns structured data, not HTML
 - persistent changes are written through unified state
 - entering house does not reset player base stats
@@ -560,6 +612,7 @@ A new house implementation is acceptable only if all are true:
 - timer behavior, if any, runs through `tick` requests plus shared side-effect wiring
 - map-based time skip, if any, runs through shared side-effect wiring instead of entrypoint special cases
 - single-step activity time costs, if any, are returned through shared `timeAdvanceCost` instead of ad hoc `calendar` mutations
+- house-owned reusable playables, if any, launch and settle through the shared playable runtime while keeping the house module as host integration owner
 - `docs/change-log.md` is updated for shared-interface changes
 
 ## Review Checklist
