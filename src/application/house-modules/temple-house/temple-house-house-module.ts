@@ -1637,7 +1637,8 @@ function getTempleMeetingParticipantIds(
   return Array.from(
     new Set([
       playerCharacterId,
-      ...houseCharacterIds.filter((characterId) => characterId !== abbotCharacterId),
+      abbotCharacterId,
+      ...houseCharacterIds,
     ])
   );
 }
@@ -4463,13 +4464,10 @@ export const templeHouseHouseModule: HouseModuleDefinition<"temple-house"> = {
           : { title: characterDefinition.title }),
       };
     });
-    const orderedStandbyActors =
-      sessionState.mode === "meeting"
-        ? standbyActors
-        : orderHouseStandbyRoster({
-            primaryCharacterId: input.houseDefinition.defaultCharacterId,
-            actors: standbyActors,
-          });
+    const orderedStandbyActors = orderHouseStandbyRoster({
+      primaryCharacterId: input.houseDefinition.defaultCharacterId,
+      actors: standbyActors,
+    });
 
     return {
       moduleId: "temple-house",

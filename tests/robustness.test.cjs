@@ -3857,6 +3857,55 @@ test("primary house actor appears first in temple daily roster during greeting",
   );
 });
 
+test("primary house actor appears first in temple meeting roster with player still selected", () => {
+  const monkCharacters = createPrototypeCharactersForStoryStage(
+    ZHU_YUANZHANG_STORY_STAGES.huangjueTemple
+  );
+  const baseState = createMonkStageState();
+  const entered = templeHouseHouseModule.enter({
+    gameState: {
+      ...baseState,
+      runtime: {
+        ...baseState.runtime,
+        variables: {
+          ...baseState.runtime.variables,
+          [KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown]: 0,
+        },
+      },
+    },
+    characterDefinitions: monkCharacters,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+  });
+  const viewModel = templeHouseHouseModule.selectViewModel({
+    gameState: entered.gameState,
+    characterDefinitions: entered.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: entered.sessionState,
+  });
+
+  assert.equal(entered.sessionState?.mode, "meeting");
+  assert.equal(viewModel.standbyRoster[0]?.characterId, templeHouse.defaultCharacterId);
+  assert.ok(
+    viewModel.standbyRoster.some(
+      (actor) => actor.characterId === templeHouse.defaultCharacterId
+    )
+  );
+  assert.equal(
+    viewModel.standbyRoster.find((actor) => actor.characterId === playerCharacterId)
+      ?.isSelected,
+    true
+  );
+  assert.ok(
+    viewModel.standbyRoster.some(
+      (actor) =>
+        actor.characterId !== templeHouse.defaultCharacterId &&
+        actor.characterId !== playerCharacterId
+    )
+  );
+});
+
 test("primary house actor appears first in tavern roster during greeting", () => {
   const state = createInitialState({
     cards: prototypeCards,
