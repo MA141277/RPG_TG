@@ -39,6 +39,38 @@ function getHouseArtworkClass(houseDefinition: HouseDefinition): string {
   }
 }
 
+function renderCityChoiceSkin(): string {
+  return `
+    <span class="c-city-choice-skin" aria-hidden="true">
+      <span class="c-city-choice-skin__part c-city-choice-skin__part--tl"></span>
+      <span class="c-city-choice-skin__part c-city-choice-skin__part--t"></span>
+      <span class="c-city-choice-skin__part c-city-choice-skin__part--tr"></span>
+      <span class="c-city-choice-skin__part c-city-choice-skin__part--l"></span>
+      <span class="c-city-choice-skin__part c-city-choice-skin__part--c"></span>
+      <span class="c-city-choice-skin__part c-city-choice-skin__part--r"></span>
+      <span class="c-city-choice-skin__part c-city-choice-skin__part--bl"></span>
+      <span class="c-city-choice-skin__part c-city-choice-skin__part--b"></span>
+      <span class="c-city-choice-skin__part c-city-choice-skin__part--br"></span>
+    </span>
+  `;
+}
+
+function renderCityMenuButtonSkin(): string {
+  return `
+    <span class="c-city-menu-button-skin" aria-hidden="true">
+      <span class="c-city-menu-button-skin__part c-city-menu-button-skin__part--tl"></span>
+      <span class="c-city-menu-button-skin__part c-city-menu-button-skin__part--t"></span>
+      <span class="c-city-menu-button-skin__part c-city-menu-button-skin__part--tr"></span>
+      <span class="c-city-menu-button-skin__part c-city-menu-button-skin__part--l"></span>
+      <span class="c-city-menu-button-skin__part c-city-menu-button-skin__part--c"></span>
+      <span class="c-city-menu-button-skin__part c-city-menu-button-skin__part--r"></span>
+      <span class="c-city-menu-button-skin__part c-city-menu-button-skin__part--bl"></span>
+      <span class="c-city-menu-button-skin__part c-city-menu-button-skin__part--b"></span>
+      <span class="c-city-menu-button-skin__part c-city-menu-button-skin__part--br"></span>
+    </span>
+  `;
+}
+
 function renderCityDirectoryOption(option: CityEntryOption): string {
   return `
     <button
@@ -47,6 +79,7 @@ function renderCityDirectoryOption(option: CityEntryOption): string {
       data-city-directory-character-id="${option.characterId}"
       ${option.disabled ? "disabled" : ""}
     >
+      ${renderCityChoiceSkin()}
       <div class="c-city-directory__option-copy">
         <div class="c-city-directory__option-header">
           <strong class="c-city-directory__option-title">${option.title}</strong>
@@ -118,7 +151,8 @@ function renderCityMenuButtons(playerCharacter: CharacterDefinition): string {
               class="c-city-menu__button${button.id === "begging" ? " c-city-menu__button--special" : ""}"
               data-city-menu-open="${button.id}"
             >
-              ${button.label}
+              ${renderCityMenuButtonSkin()}
+              <span class="c-city-menu__button-label">${button.label}</span>
             </button>
           `
         )
@@ -243,6 +277,7 @@ function renderCityMenuPanel(input: {
               .map(
                 (intelItem) => `
                   <article class="c-city-menu-panel__intel-item">
+                    ${renderCityChoiceSkin()}
                     <p>${intelItem}</p>
                   </article>
                 `
@@ -258,6 +293,7 @@ function renderCityMenuPanel(input: {
       bodyMarkup = `
         <section class="c-city-menu-panel__section">
           <div class="c-city-menu-panel__lock">
+            ${renderCityChoiceSkin()}
             <strong class="c-city-menu-panel__lock-title">需要成为城主或势力领袖后解锁。</strong>
             <p class="c-city-menu-panel__hint">当前版本仅保留接口，不实现建设、升级、税率与治安功能。</p>
           </div>
@@ -276,6 +312,7 @@ function renderCityMenuPanel(input: {
       bodyMarkup = `
         <section class="c-city-menu-panel__section">
           <div class="c-city-menu-panel__lock">
+            ${renderCityChoiceSkin()}
             <strong class="c-city-menu-panel__lock-title">开始一次化缘</strong>
             <p class="c-city-menu-panel__hint">在城中接取粮食与钱物，小游戏结束后结算收益。</p>
             <button type="button" class="c-city-menu-panel__primary-action" data-action="start-begging-minigame">

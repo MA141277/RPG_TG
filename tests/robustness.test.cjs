@@ -41,6 +41,9 @@ const {
   templeHouseHouseModule,
 } = require("../.test-dist/application/house-modules/temple-house/temple-house-house-module.js");
 const {
+  renderTempleHouseView,
+} = require("../.test-dist/ui/views/house/temple-house-view.js");
+const {
   marketHouseHouseModule,
 } = require("../.test-dist/application/house-modules/market-house/market-house-house-module.js");
 const {
@@ -2875,21 +2878,22 @@ test("campaign terrain WebGL shader uses separate shared animated water texture 
   assert.doesNotMatch(terrainFragmentSource, /getBoundaryEdgeMask/);
   assert.doesNotMatch(terrainFragmentSource, /getHexDirectionUv/);
   assert.doesNotMatch(terrainFragmentSource, /float openWater = 1\.0/);
-  assert.match(terrainFragmentSource, /getWaterAmountAtUv/);
-  assert.match(terrainFragmentSource, /getLandAmountAtUv/);
-  assert.match(terrainFragmentSource, /getLandAmountAtCell/);
-  assert.match(terrainFragmentSource, /getLandFacingShoreFade/);
-  assert.match(terrainFragmentSource, /getNearShoreTint/);
+  assert.match(terrainFragmentSource, /getSemanticWaterAmountAtUv/);
+  assert.match(terrainFragmentSource, /getSemanticLandAmountAtUv/);
+  assert.match(terrainFragmentSource, /getMaterialSemanticLandAtCell/);
+  assert.match(terrainFragmentSource, /getShorelineBoundaryWater/);
+  assert.match(terrainFragmentSource, /getShorelineNearShoreTint/);
+  assert.match(terrainFragmentSource, /sampleShorelineChainData/);
   assert.match(terrainFragmentSource, /getNearSeaEdgeBand/);
   assert.match(terrainFragmentSource, /getTerrainUvOffset/);
   assert.match(terrainFragmentSource, /getMapUvInsideAmount/);
   assert.match(terrainFragmentSource, /sampleLandAtDiskOffset/);
   assert.match(terrainFragmentSource, /sampleSoftLandDisk/);
   assert.match(terrainFragmentSource, /sampleNearShoreEdgeNoise/);
-  assert.match(terrainFragmentSource, /edgeDistance = clamp\(neighborDistance - centerDistance \+ edgeShift, 0\.0, width\)/);
-  assert.match(terrainFragmentSource, /return 1\.0 - smoothstep\(0\.0, width, edgeDistance\)/);
-  assert.match(terrainFragmentSource, /getLandFacingShoreFade\(point, cell, vec2\(1\.0, 0\.0\), 0\.74, edgeShift\)/);
-  assert.match(terrainFragmentSource, /shoreTint \* water/);
+  assert.match(terrainFragmentSource, /boundaryWater = getShorelineBoundaryWater/);
+  assert.match(terrainFragmentSource, /nearShoreTint = getShorelineNearShoreTint/);
+  assert.match(terrainFragmentSource, /getLocalShorelineBoundaryData\(point, cell, vec2\(1\.0, 0\.0\), 0\.0, hexScale, mapAspect, water\)/);
+  assert.match(terrainFragmentSource, /nearShoreTint \* mapInterior/);
   assert.match(terrainFragmentSource, /nearSea \* water/);
   assert.doesNotMatch(terrainFragmentSource, /getNearSeaEdgeContribution/);
   assert.doesNotMatch(terrainFragmentSource, /sampleLandInDirection/);
@@ -2914,21 +2918,20 @@ test("campaign terrain WebGL shader uses separate shared animated water texture 
   assert.match(terrainFragmentSource, /roughOuterRadius = max\(4\.30, 6\.10 \+ edgeShift\)/);
   assert.match(terrainFragmentSource, /sampleSoftLandDisk\(uv, roughOuterRadius/);
   assert.match(terrainFragmentSource, /smoothstep\(0\.055, 0\.170, outerLand\)/);
-  assert.match(terrainFragmentSource, /nearShoreEdgeShift = nearShoreNoise \* 0\.12/);
   assert.match(
     terrainFragmentSource,
-    /getNearShoreTint\(\s*hexPoint,\s*hexCell,\s*hexScale,\s*mapAspect,\s*water,\s*nearShoreEdgeShift\s*\)/s
+    /getShorelineNearShoreTint\(\s*vUv,\s*hexPoint,\s*hexCell,\s*water,\s*hexScale,\s*mapAspect\s*\)/s
   );
+  assert.match(terrainFragmentSource, /waveInset = sampleShorelineChainWave/);
+  assert.match(terrainFragmentSource, /chainMileage \* uShorelineErosionFrequency/);
   assert.doesNotMatch(terrainFragmentSource, /nearShoreTransition =/);
-  assert.match(terrainFragmentSource, /getNearSeaEdgeBand\(\s*vUv,\s*hexScale,\s*mapAspect,\s*water,\s*nearSeaBoundaryEdgeShift/s);
+  assert.match(terrainFragmentSource, /getNearSeaEdgeBand\(\s*vUv,\s*hexScale,\s*mapAspect,\s*boundaryWater,\s*nearSeaBoundaryEdgeShift/s);
   assert.doesNotMatch(
     terrainFragmentSource,
     /vec3 shoreBands = getContinuousShoreBands\(vUv, hexScale, mapAspect, water\)/
   );
-  assert.match(
-    terrainFragmentSource,
-    /border \* mix\(0\.34, 0\.025, water\)/
-  );
+  assert.match(terrainFragmentSource, /border \* mix\(uTerrainGridLandOpacity, uTerrainGridWaterOpacity, water\)/);
+  assert.match(terrainFragmentSource, /mix\(landColor, waterColor, boundaryWater\)/);
   assert.doesNotMatch(terrainFragmentSource, /getSharedHexEdgeShoreContribution/);
   assert.doesNotMatch(terrainFragmentSource, /distanceToSharedEdge/);
   assert.doesNotMatch(terrainFragmentSource, /getShoreRing2Amount/);
@@ -4687,11 +4690,59 @@ test("temple house review copy resolves from text entries during work-plan assig
   });
 
   assert.equal(reopenResult.sessionState?.overlay?.type, "activity-confirm");
-  assert.deepEqual(reopenResult.sessionState?.overlay?.paragraphs.slice(0, 3), [
+  assert.deepEqual(reopenResult.sessionState?.overlay?.paragraphs, []);
+  assert.deepEqual(reopenResult.sessionState?.overlay?.workDescriptionLines, [
     "今日先按自定义经卷目录抄录。",
-    "先净手，再依自定义次序展卷。",
-    "抄完后把自定义册页送回偏殿。",
   ]);
+  assert.notDeepEqual(
+    reopenResult.sessionState?.overlay?.workDescriptionLines,
+    [
+      "今日先按自定义经卷目录抄录。",
+      "先净手，再依自定义次序展卷。",
+      "抄完后把自定义册页送回偏殿。",
+    ]
+  );
+});
+
+test("pachinko play actions use a single-button nine-slice action layout", () => {
+  const houseViewSource = fs.readFileSync(
+    "src/ui/views/house/temple-house-view.ts",
+    "utf8"
+  );
+  const sceneViewSource = fs.readFileSync("src/ui/views/scene/scene-view.ts", "utf8");
+  const pachinkoCss = fs.readFileSync("src/styles/temple-house.css", "utf8");
+
+  const housePachinkoStart = houseViewSource.indexOf("function renderPachinkoBoardOverlay");
+  const scenePachinkoStart = sceneViewSource.indexOf("function renderPachinkoBoard");
+  assert.notEqual(housePachinkoStart, -1);
+  assert.notEqual(scenePachinkoStart, -1);
+
+  const housePachinkoSource = houseViewSource.slice(housePachinkoStart);
+  const scenePachinkoSource = sceneViewSource.slice(
+    scenePachinkoStart,
+    sceneViewSource.indexOf("function renderActivityOverlay")
+  );
+
+  assert.equal(
+    housePachinkoSource.includes("c-grain-shop-modal__actions c-pachinko-board__actions"),
+    true
+  );
+  assert.equal(
+    scenePachinkoSource.includes("c-grain-shop-modal__actions c-pachinko-board__actions"),
+    true
+  );
+  assert.equal(housePachinkoSource.includes("c-fortune-board__actions"), false);
+  assert.equal(scenePachinkoSource.includes("c-fortune-board__actions"), false);
+  assert.equal(pachinkoCss.includes(".c-pachinko-board__actions"), true);
+  assert.equal(pachinkoCss.includes(".c-pachinko-board__play"), true);
+  assert.match(
+    pachinkoCss,
+    /\.c-pachinko-board__actions\s*\{[^}]*grid-template-columns:\s*minmax\(180px,\s*260px\);/s
+  );
+  assert.match(
+    pachinkoCss,
+    /\.c-pachinko-board__play\s*\{[^}]*border-image-source:\s*var\(--grain-shop-button-gold\);/s
+  );
 });
 
 test("temple house greeting, open, beg-alms assignment, and leave refusal resolve from text entries", () => {
@@ -5351,6 +5402,21 @@ test("temple house daily flow resolves fortune and donation through unified stat
     request: { type: "action", actionId: "open-donate" },
   });
   assert.equal(donatePromptResult.sessionState?.overlay?.type, "donate-confirm");
+  const donatePromptViewModel = templeHouseHouseModule.selectViewModel({
+    gameState: donatePromptResult.gameState,
+    characterDefinitions: donatePromptResult.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: donatePromptResult.sessionState,
+  });
+  const donatePromptHtml = renderTempleHouseView(donatePromptViewModel);
+  assert.match(donatePromptHtml, /暂缓/);
+  assert.match(donatePromptHtml, /c-house-temple-utility-popup/);
+  assert.match(donatePromptHtml, /c-house-temple-confirm-popup/);
+  assert.match(
+    donatePromptHtml,
+    /data-house-overlay-variant="temple-utility-popup"/
+  );
 
   const donatedResult = templeHouseHouseModule.dispatch({
     gameState: donatePromptResult.gameState,
@@ -9029,6 +9095,14 @@ test("temple work confirmation shows work sections and quick complete from best 
   assert.equal(result.sessionState.overlay.quickCompleteScore, 18);
   assert.equal(result.sessionState.overlay.quickCompleteActionId, "quick-complete-temple-task:copy-scripture");
   assert.deepEqual(result.sessionState.overlay.paragraphs, []);
+  assert.deepEqual(result.sessionState.overlay.workDescriptionLines, [
+    "在偏殿抄录残缺经卷，顺便替住持整理寺中的旧账与香火名册。",
+  ]);
+  assert.ok(
+    result.sessionState.overlay.workDescriptionLines.every(
+      (line) => !line.startsWith("“")
+    )
+  );
   assert.deepEqual(result.sessionState.overlay.relatedAbilityLines, [
     "相关能力：待接入",
   ]);
@@ -9100,6 +9174,54 @@ test("temple work quick complete uses ninety percent and preserves separate best
     result.gameState.runtime.variables[`var.activity.${sweepActivityId}.best_score`],
     9
   );
+});
+
+test("temple work result overlay only shows score contribution and gains", () => {
+  const html = renderTempleHouseView({
+    moduleId: "temple-house",
+    houseId: templeHouse.id,
+    sceneTitle: templeHouse.name,
+    standbyRoster: [],
+    dialogue: null,
+    actionContainer: null,
+    statusCard: null,
+    leaveAction: {
+      id: "leave-house",
+      label: "离开寺庙",
+    },
+    overlay: {
+      type: "result",
+      title: "寺务结算",
+      grade: "勤勉",
+      score: 24,
+      rewardLines: [
+        "本次评定：打扫庭院",
+        "玩法分数 24",
+        "贡献值 +24（1:1）",
+        "寺中贡献 +24",
+        "累计贡献 49 / 30",
+        "时间 +3天",
+        "体力 -15",
+        "获得物品：粗布袈裟 x1",
+        "属性：耐力 +1",
+        "方丈似乎已经留意到你的踏实，回到寺中后或许会有新的安排。",
+      ],
+      confirmActionId: "close-temple-result",
+      confirmLabel: "收工",
+    },
+  });
+
+  assert.match(html, /玩法分数 24/);
+  assert.match(html, /贡献值 \+24（1:1）/);
+  assert.match(html, /获得物品：粗布袈裟 x1/);
+  assert.match(html, /属性：耐力 \+1/);
+  assert.doesNotMatch(html, /本次评定/);
+  assert.doesNotMatch(html, /寺中贡献/);
+  assert.doesNotMatch(html, /累计贡献/);
+  assert.doesNotMatch(html, /时间 \+3天/);
+  assert.doesNotMatch(html, /体力 -15/);
+  assert.doesNotMatch(html, /方丈似乎/);
+  assert.doesNotMatch(html, /勤勉/);
 });
 
 test("temple begging settlement is blocked when stamina is below activity cost", () => {

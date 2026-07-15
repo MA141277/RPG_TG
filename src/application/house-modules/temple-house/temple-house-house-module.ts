@@ -816,10 +816,7 @@ function createTempleWorkConfirmDetails(
   const quickCompleteScore =
     bestScore == null ? null : Math.floor(bestScore * 0.9);
   return {
-    workDescriptionLines: [
-      taskDefinition.briefing,
-      ...taskDefinition.orderLines,
-    ],
+    workDescriptionLines: [taskDefinition.briefing],
     relatedAbilityLines: ["相关能力：待接入"],
     costLines: [
       `体力 -${ACTIVITY_COMPLETION_STAMINA_COST}`,

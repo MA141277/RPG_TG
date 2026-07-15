@@ -13,6 +13,8 @@ type CampaignTerrainInput = {
   textureUrl: string;
   heightUrl: string;
   materialUrl: string;
+  grassTextureUrl: string | null;
+  sandTextureUrl: string | null;
   waterTextureUrl: string | null;
   renderMode: "terrain" | "actor";
 };
@@ -126,20 +128,90 @@ const GRID_COLUMNS = 768;
 const GRID_ROWS = 680;
 const HEIGHT_SCALE = 0.0675;
 const TERRAIN_SCALE = 1.46;
-const CAMERA_TILT_RADIANS = -0.82;
-const CAMERA_BASE_DISTANCE = 2.72;
+const CAMERA_TILT_TOP_DOWN_RADIANS = -0.36;
+const CAMERA_TILT_CLOSE_RADIANS = -0.96;
+const CAMERA_TILT_TOP_DOWN_SCALE = 8;
+const CAMERA_TILT_CLOSE_SCALE = 48;
+const CAMERA_BASE_DISTANCE = 20;
 const CAMERA_OFFSET_UNIT = 0.0032;
 const CAMERA_REFERENCE_SCALE = 15;
-const FOV_RADIANS = 38 * Math.PI / 180;
+const FOV_RADIANS = 24 * Math.PI / 180;
 const ACTOR_REFERENCE_CAMERA_SCALE = 40;
 const ACTOR_MODEL_BASE_SCALE = 0.011;
 const ACTOR_MODEL_FACING_OFFSET_RADIANS = Math.PI / 2;
 const ACTOR_ANIMATION_BLEND_DURATION_MS = 180;
 const HEX_TERRAIN_SCALE = 138;
 const HEX_MAP_ASPECT = 1.1285;
-const HEX_ELEVATION_LEVELS = 8;
-const HEX_WATER_HEIGHT_THRESHOLD = 0.005;
-const HEX_WALL_HEIGHT_EPSILON = 0.01;
+const SMOOTH_TERRAIN_MESH_STEP = 3;
+const SMOOTH_TERRAIN_PASSES = 2;
+const SMOOTH_TERRAIN_LAND_BLEND = 0.65;
+const SMOOTH_TERRAIN_COAST_BLEND = 0.35;
+const TERRAIN_GRID_LAND_OPACITY = 0.08;
+const TERRAIN_GRID_WATER_OPACITY = 0.015;
+const TERRAIN_NORMAL_SAMPLE_RADIUS_PIXELS = 5;
+const TERRAIN_NORMAL_RELIEF_SCALE = 3.4;
+const TERRAIN_DIRECTIONAL_LIGHT_STRENGTH = 0.30;
+const TERRAIN_BACK_SHADOW_STRENGTH = 0.20;
+const TERRAIN_STEEP_SHADOW_STRENGTH = 0;
+const TERRAIN_WATER_SHADOW_STRENGTH = 0.12;
+const TERRAIN_CAMERA_LIGHT_HEIGHT = 0.34;
+const TERRAIN_CAMERA_LIGHT_HORIZONTAL_PULL = 0.64;
+const TERRAIN_LAND_TEXTURE_TILING = 7.5;
+const SHORELINE_CHAIN_DIRECTIONS = [
+  { x: 1, y: 0 },
+  { x: -1, y: 0 },
+  { x: 0, y: 1 },
+  { x: 0, y: -1 },
+  { x: 1, y: -1 },
+  { x: -1, y: 1 },
+] as const;
+const SHORELINE_CHAIN_OPPOSITE_DIRECTION_INDEXES = [1, 0, 3, 2, 5, 4] as const;
+type CampaignTerrainBeachTuning = {
+  textureTiling: number;
+  blendStrength: number;
+  innerRadius: number;
+  outerRadius: number;
+  fineNoiseTiling: number;
+  fineNoiseStrength: number;
+  shorelineVisualWaterStrength: number;
+  shorelineEdgeWidth: number;
+  shorelineWaveStrength: number;
+  shorelineWaveFrequency: number;
+  shorelineErosionStrength: number;
+  shorelineErosionFrequency: number;
+  shorelineCornerRoundness: number;
+};
+
+type CampaignTerrainBeachConsoleCommand = (
+  command?: "status" | "reset" | Partial<CampaignTerrainBeachTuning>
+) => CampaignTerrainBeachTuning;
+
+const DEFAULT_TERRAIN_BEACH_TUNING: CampaignTerrainBeachTuning = {
+  textureTiling: 18,
+  blendStrength: 1.0,
+  innerRadius: 2.0,
+  outerRadius: 2.4,
+  fineNoiseTiling: 30,
+  fineNoiseStrength: 0.16,
+  shorelineVisualWaterStrength: 0.76,
+  shorelineEdgeWidth: 0.38,
+  shorelineWaveStrength: 0.30,
+  shorelineWaveFrequency: 4.8,
+  shorelineErosionStrength: 0.055,
+  shorelineErosionFrequency: 22,
+  shorelineCornerRoundness: 0.86,
+};
+const SMOOTH_TERRAIN_KERNEL = [
+  { x: -1, y: -1, weight: 1 },
+  { x: 0, y: -1, weight: 2 },
+  { x: 1, y: -1, weight: 1 },
+  { x: -1, y: 0, weight: 2 },
+  { x: 0, y: 0, weight: 4 },
+  { x: 1, y: 0, weight: 2 },
+  { x: -1, y: 1, weight: 1 },
+  { x: 0, y: 1, weight: 2 },
+  { x: 1, y: 1, weight: 1 },
+] as const;
 const GRASS_TEXTURE_DETAIL = 1.15;
 const GRASS_AMBIENT_LIGHT = 0.58;
 const CITY_DEPTH_MESH_WORLD_SCALE = 0.035;
@@ -148,17 +220,21 @@ const CITY_DEPTH_MESH_BASE_LIFT = 0.0015;
 const CITY_DEPTH_MESH_TILE_OFFSET_X_SCALE = 2 / (HEX_MAP_ASPECT * HEX_TERRAIN_SCALE);
 const CITY_DEPTH_MESH_TILE_OFFSET_Y_SCALE = 2 / HEX_TERRAIN_SCALE;
 const WATER_ANIMATION_FRAME_INTERVAL_MS = 1000 / 24;
-const vertexShaderSource = createShaderSource(terrainVertexShaderRaw, {
-  __HEIGHT_SCALE__: HEIGHT_SCALE.toFixed(2),
-});
-const fragmentShaderSource = createShaderSource(terrainFragmentShaderRaw, {
-  __GRASS_AMBIENT_LIGHT__: GRASS_AMBIENT_LIGHT.toFixed(2),
-  __GRASS_TEXTURE_DETAIL__: GRASS_TEXTURE_DETAIL.toFixed(2),
-  __HEX_MAP_ASPECT__: HEX_MAP_ASPECT.toFixed(4),
-  __HEX_TERRAIN_SCALE__: HEX_TERRAIN_SCALE.toFixed(1),
-});
+const vertexShaderSource = createShaderSource(terrainVertexShaderRaw);
+const fragmentShaderSource = createShaderSource(terrainFragmentShaderRaw);
 const actorVertexShaderSource = actorVertexShaderRaw;
 const actorFragmentShaderSource = actorFragmentShaderRaw;
+
+function createShaderSource(
+  source: string,
+  replacements: Record<string, string> = {}
+): string {
+  return Object.entries(replacements).reduce(
+    (nextSource, [token, value]) => nextSource.replaceAll(token, value),
+    source
+  );
+}
+
 export const DEFAULT_CAMPAIGN_CITY_DEPTH_MESH_TRANSFORM: CampaignCityDepthMeshTransform = {
   rotationDegrees: 0,
   pitchDegrees: 0,
@@ -208,8 +284,9 @@ export function createCampaignTerrainCameraCenteredOnCoordinate(input: {
   const scaledX = worldPoint[0] * TERRAIN_SCALE;
   const scaledY = worldPoint[1] * TERRAIN_SCALE;
   const scaledZ = worldPoint[2];
-  const tiltCos = Math.cos(CAMERA_TILT_RADIANS);
-  const tiltSin = Math.sin(CAMERA_TILT_RADIANS);
+  const cameraTilt = getCampaignTerrainCameraTiltRadiansForScale(safeScale);
+  const tiltCos = Math.cos(cameraTilt);
+  const tiltSin = Math.sin(cameraTilt);
   const tiltedY = scaledY * tiltCos - scaledZ * tiltSin;
   const cameraTranslateX = -scaledX;
   const cameraTranslateY = -tiltedY;
@@ -227,15 +304,8 @@ type CampaignTerrainRenderer = {
   render: () => void;
   requestRender: (reason?: "static" | "dynamic") => void;
   hasActorAsset: boolean;
-  projectionInput: {
-    canvas: HTMLCanvasElement;
-    heights: Float32Array;
-    materialLandMask: Uint8Array;
-    materialColumns: number;
-    materialRows: number;
-    columns: number;
-    rows: number;
-  };
+  inputSignature: string;
+  projectionInput: CampaignTerrainProjectionInput;
   travelGrid: HexTravelGrid;
 };
 
@@ -256,11 +326,48 @@ const pendingRendererCanvases = new Set<HTMLCanvasElement>();
 type CampaignTerrainProjectionInput = {
   canvas: HTMLCanvasElement;
   heights: Float32Array;
-  materialLandMask: Uint8Array;
-  materialColumns: number;
-  materialRows: number;
+  materialSemanticModel: CampaignMaterialSemanticModel;
   columns: number;
   rows: number;
+};
+
+type CampaignMaterialSemanticModel = {
+  source: ImageData;
+  textureColumns: number;
+  textureRows: number;
+  minCellX: number;
+  minCellY: number;
+  cellColumns: number;
+  cellRows: number;
+  cells: GridCoordinate[];
+  landByCellKey: Map<string, boolean>;
+};
+
+type ShorelineChainTextureModel = {
+  source: ImageData;
+  textureColumns: number;
+  textureRows: number;
+  minCellX: number;
+  minCellY: number;
+  cellColumns: number;
+  cellRows: number;
+  maxMileage: number;
+};
+
+type ShorelineChainEdge = {
+  id: number;
+  landCell: GridCoordinate;
+  waterCell: GridCoordinate;
+  landDirectionIndex: number;
+  waterDirectionIndex: number;
+  start: { x: number; y: number };
+  end: { x: number; y: number };
+  startKey: string;
+  endKey: string;
+  chainStartMileage: number;
+  chainLength: number;
+  chainSeed: number;
+  reverseInChain: boolean;
 };
 
 export type CampaignTerrainUvPoint = {
@@ -280,12 +387,76 @@ let currentCamera: CampaignTerrainCamera = {
   offsetX: 0,
   offsetY: 0,
 };
+let terrainBeachTuning: CampaignTerrainBeachTuning = {
+  ...DEFAULT_TERRAIN_BEACH_TUNING,
+};
+
+declare global {
+  interface Window {
+    rpgTerrainBeach?: CampaignTerrainBeachConsoleCommand;
+  }
+}
 
 export function requestCampaignTerrainRender(reason: "static" | "dynamic" = "dynamic"): void {
   for (const renderer of activeRenderers.values()) {
     renderer.requestRender(reason);
   }
 }
+
+function clampTerrainBeachTuning(
+  tuning: CampaignTerrainBeachTuning
+): CampaignTerrainBeachTuning {
+  return {
+    textureTiling: clampNumber(tuning.textureTiling, 2, 80),
+    blendStrength: clampNumber(tuning.blendStrength, 0, 2),
+    innerRadius: clampNumber(tuning.innerRadius, 0.05, 2.4),
+    outerRadius: clampNumber(
+      tuning.outerRadius,
+      Math.max(tuning.innerRadius + 0.02, 0.07),
+      3.6
+    ),
+    fineNoiseTiling: clampNumber(tuning.fineNoiseTiling, 4, 120),
+    fineNoiseStrength: clampNumber(tuning.fineNoiseStrength, 0, 0.5),
+    shorelineVisualWaterStrength: clampNumber(tuning.shorelineVisualWaterStrength, 0, 1),
+    shorelineEdgeWidth: clampNumber(tuning.shorelineEdgeWidth, 0.02, 1.2),
+    shorelineWaveStrength: clampNumber(tuning.shorelineWaveStrength, 0, 0.5),
+    shorelineWaveFrequency: clampNumber(tuning.shorelineWaveFrequency, 0.2, 12),
+    shorelineErosionStrength: clampNumber(tuning.shorelineErosionStrength, 0, 0.45),
+    shorelineErosionFrequency: clampNumber(tuning.shorelineErosionFrequency, 2, 80),
+    shorelineCornerRoundness: clampNumber(tuning.shorelineCornerRoundness, 0, 1),
+  };
+}
+
+function clampNumber(value: number, min: number, max: number): number {
+  if (!Number.isFinite(value)) {
+    return min;
+  }
+
+  return Math.min(Math.max(value, min), max);
+}
+
+function setCampaignTerrainBeachTuning(
+  nextTuning: Partial<CampaignTerrainBeachTuning>
+): CampaignTerrainBeachTuning {
+  terrainBeachTuning = clampTerrainBeachTuning({
+    ...terrainBeachTuning,
+    ...nextTuning,
+  });
+  requestCampaignTerrainRender("static");
+
+  return { ...terrainBeachTuning };
+}
+
+window.rpgTerrainBeach = (command = "status") => {
+  if (command === "reset") {
+    return setCampaignTerrainBeachTuning(DEFAULT_TERRAIN_BEACH_TUNING);
+  }
+  if (command !== "status") {
+    return setCampaignTerrainBeachTuning(command);
+  }
+
+  return { ...terrainBeachTuning };
+};
 
 export function setCampaignTerrainCamera(camera: CampaignTerrainCamera): void {
   currentCamera = camera;
@@ -296,6 +467,38 @@ export function setCampaignTerrainCamera(camera: CampaignTerrainCamera): void {
 
 export function getCampaignTerrainCamera(): CampaignTerrainCamera {
   return currentCamera;
+}
+
+export function getCampaignTerrainMapCoupledCamera(): CampaignTerrainCamera {
+  const tiltCos = Math.cos(getCampaignTerrainCameraTiltRadians(currentCamera));
+  const safeTiltCos = Math.abs(tiltCos) < 0.0001 ? 1 : tiltCos;
+
+  return {
+    scale: currentCamera.scale,
+    offsetX: currentCamera.offsetX,
+    offsetY: currentCamera.offsetY / safeTiltCos,
+  };
+}
+
+function getCampaignTerrainCameraTiltRadians(
+  camera: CampaignTerrainCamera
+): number {
+  return getCampaignTerrainCameraTiltRadiansForScale(camera.scale);
+}
+
+export function getCampaignTerrainCameraTiltRadiansForScale(scale: number): number {
+  const normalizedScale = clamp(
+    (scale - CAMERA_TILT_TOP_DOWN_SCALE) /
+      Math.max(CAMERA_TILT_CLOSE_SCALE - CAMERA_TILT_TOP_DOWN_SCALE, 0.0001),
+    0,
+    1
+  );
+  const curvedScale = easeOutCubic(normalizedScale);
+
+  return (
+    CAMERA_TILT_TOP_DOWN_RADIANS +
+    (CAMERA_TILT_CLOSE_RADIANS - CAMERA_TILT_TOP_DOWN_RADIANS) * curvedScale
+  );
 }
 
 export function getCampaignTerrainProjectionSignature(root: ParentNode): string {
@@ -427,9 +630,7 @@ export function isCampaignTerrainUvPassable(
   }
 
   return isHexPassableAtUv(
-    renderer.projectionInput.materialLandMask,
-    renderer.projectionInput.materialColumns,
-    renderer.projectionInput.materialRows,
+    renderer.projectionInput.materialSemanticModel,
     u,
     v
   );
@@ -442,6 +643,47 @@ export function getCampaignTerrainTravelGrid(root: ParentNode): HexTravelGrid | 
   }
 
   return activeRenderers.get(terrainCanvas)?.travelGrid ?? null;
+}
+
+function readCampaignTerrainInput(canvas: HTMLCanvasElement): CampaignTerrainInput | null {
+  const textureUrl = canvas.dataset.mapTextureUrl;
+  const heightUrl = canvas.dataset.mapHeightUrl;
+  const materialUrl = canvas.dataset.mapMaterialUrl;
+  const renderMode =
+    canvas.dataset.campaignMapActorLayer === "true" ? "actor" : "terrain";
+  if (
+    textureUrl == null ||
+    heightUrl == null ||
+    materialUrl == null
+  ) {
+    return null;
+  }
+
+  return {
+    canvas,
+    textureUrl,
+    heightUrl,
+    materialUrl,
+    grassTextureUrl:
+      renderMode === "terrain" ? canvas.dataset.mapGrassTextureUrl ?? null : null,
+    sandTextureUrl:
+      renderMode === "terrain" ? canvas.dataset.mapSandTextureUrl ?? null : null,
+    waterTextureUrl:
+      renderMode === "terrain" ? canvas.dataset.mapWaterTextureUrl ?? null : null,
+    renderMode,
+  };
+}
+
+function getCampaignTerrainInputSignature(input: CampaignTerrainInput): string {
+  return [
+    input.renderMode,
+    input.textureUrl,
+    input.heightUrl,
+    input.materialUrl,
+    input.grassTextureUrl ?? "",
+    input.sandTextureUrl ?? "",
+    input.waterTextureUrl ?? "",
+  ].join("|");
 }
 
 export function syncCampaignTerrainWebGl(root: ParentNode): void {
@@ -469,33 +711,27 @@ export function syncCampaignTerrainWebGl(root: ParentNode): void {
   }
 
   for (const canvas of canvases) {
-    if (activeRenderers.has(canvas) || pendingRendererCanvases.has(canvas)) {
+    const input = readCampaignTerrainInput(canvas);
+    if (input == null) {
       continue;
     }
+    const inputSignature = getCampaignTerrainInputSignature(input);
+    const activeRenderer = activeRenderers.get(canvas);
+    if (activeRenderer != null) {
+      if (activeRenderer.inputSignature === inputSignature) {
+        continue;
+      }
 
-    const textureUrl = canvas.dataset.mapTextureUrl;
-    const heightUrl = canvas.dataset.mapHeightUrl;
-    const materialUrl = canvas.dataset.mapMaterialUrl;
-    const waterTextureUrl = canvas.dataset.mapWaterTextureUrl ?? null;
-    const renderMode =
-      canvas.dataset.campaignMapActorLayer === "true" ? "actor" : "terrain";
-    if (
-      textureUrl == null ||
-      heightUrl == null ||
-      materialUrl == null
-    ) {
+      activeRenderer.dispose();
+      activeRenderers.delete(canvas);
+      canvas.classList.remove("is-ready", "has-error", "has-actor-model");
+    }
+    if (pendingRendererCanvases.has(canvas)) {
       continue;
     }
 
     pendingRendererCanvases.add(canvas);
-    void initCampaignTerrainWebGl({
-      canvas,
-      textureUrl,
-      heightUrl,
-      materialUrl,
-      waterTextureUrl,
-      renderMode,
-    }).then((renderer) => {
+    void initCampaignTerrainWebGl(input).then((renderer) => {
       if (!nextCanvasSet.has(canvas) || !canvas.isConnected) {
         renderer.dispose();
         return;
@@ -547,11 +783,27 @@ async function initCampaignTerrainWebGl(
         return null;
       })
       : Promise.resolve(null);
+  const grassTextureImagePromise =
+    renderTerrain && input.grassTextureUrl != null
+      ? loadImage(input.grassTextureUrl).catch((error: unknown) => {
+        console.error("Failed to load campaign grass texture.", error);
+        return null;
+      })
+      : Promise.resolve(null);
+  const sandTextureImagePromise =
+    renderTerrain && input.sandTextureUrl != null
+      ? loadImage(input.sandTextureUrl).catch((error: unknown) => {
+        console.error("Failed to load campaign sand texture.", error);
+        return null;
+      })
+      : Promise.resolve(null);
   const [
     textureImage,
     heightImage,
     materialImage,
     waterTextureImage,
+    grassTextureImage,
+    sandTextureImage,
     actorAsset,
     cityDepthAsset,
   ] = await Promise.all([
@@ -559,36 +811,120 @@ async function initCampaignTerrainWebGl(
     loadImage(input.heightUrl),
     loadImage(input.materialUrl),
     waterTextureImagePromise,
+    grassTextureImagePromise,
+    sandTextureImagePromise,
     actorAssetPromise,
     cityDepthAssetPromise,
   ]);
   const baseHeightSamples = sampleHeightImage(heightImage, GRID_COLUMNS, GRID_ROWS);
   const materialLandMask = sampleMaterialLandMask(materialImage);
-  const heightSamples = createHexLayeredHeightSamples(
+  const materialSemanticModel = createCampaignMaterialSemanticModel(
+    materialLandMask.landMask,
+    materialLandMask.columns,
+    materialLandMask.rows
+  );
+  const heightSamples = createSmoothTerrainHeightSamples(
     baseHeightSamples,
     GRID_COLUMNS,
-    GRID_ROWS
+    GRID_ROWS,
+    materialLandMask.landMask,
+    materialLandMask.columns,
+    materialLandMask.rows
   );
   const mesh = renderTerrain
-    ? createHexLayeredTerrainMesh(
+    ? createSmoothTerrainMesh(
       heightSamples,
       GRID_COLUMNS,
-      GRID_ROWS
+      GRID_ROWS,
+      SMOOTH_TERRAIN_MESH_STEP
     )
     : null;
   const program = createProgram(gl, vertexShaderSource, fragmentShaderSource);
   const actorProgram = createProgram(gl, actorVertexShaderSource, actorFragmentShaderSource);
   const positionLocation = gl.getAttribLocation(program, "aPosition");
   const uvLocation = gl.getAttribLocation(program, "aUv");
+  const normalLocation = gl.getAttribLocation(program, "aNormal");
   const matrixLocation = gl.getUniformLocation(program, "uMatrix");
+  const heightScaleLocation = gl.getUniformLocation(program, "uHeightScale");
+  const terrainCameraTiltSinCosLocation = gl.getUniformLocation(
+    program,
+    "uTerrainCameraTiltSinCos"
+  );
   const textureLocation = gl.getUniformLocation(program, "uTexture");
   const materialTextureLocation = gl.getUniformLocation(program, "uMaterialTexture");
+  const materialSemanticTextureLocation = gl.getUniformLocation(
+    program,
+    "uMaterialSemanticTexture"
+  );
+  const materialSemanticTextureSizeLocation = gl.getUniformLocation(
+    program,
+    "uMaterialSemanticTextureSize"
+  );
+  const materialSemanticBoundsLocation = gl.getUniformLocation(
+    program,
+    "uMaterialSemanticBounds"
+  );
+  const shorelineChainTextureLocation = gl.getUniformLocation(
+    program,
+    "uShorelineChainTexture"
+  );
+  const shorelineChainTextureSizeLocation = gl.getUniformLocation(
+    program,
+    "uShorelineChainTextureSize"
+  );
+  const shorelineChainBoundsLocation = gl.getUniformLocation(
+    program,
+    "uShorelineChainBounds"
+  );
+  const shorelineChainMaxMileageLocation = gl.getUniformLocation(
+    program,
+    "uShorelineChainMaxMileage"
+  );
   const waterTextureLocation = gl.getUniformLocation(program, "uWaterTexture");
+  const grassTextureLocation = gl.getUniformLocation(program, "uGrassTexture");
+  const sandTextureLocation = gl.getUniformLocation(program, "uSandTexture");
   const waterTextureEnabledLocation = gl.getUniformLocation(
     program,
     "uWaterTextureEnabled"
   );
   const timeSecondsLocation = gl.getUniformLocation(program, "uTimeSeconds");
+  const grassAmbientLightLocation = gl.getUniformLocation(program, "uGrassAmbientLight");
+  const grassTextureDetailLocation = gl.getUniformLocation(program, "uGrassTextureDetail");
+  const hexMapAspectLocation = gl.getUniformLocation(program, "uHexMapAspect");
+  const hexTerrainScaleLocation = gl.getUniformLocation(program, "uHexTerrainScale");
+  const terrainGridLandOpacityLocation = gl.getUniformLocation(
+    program,
+    "uTerrainGridLandOpacity"
+  );
+  const terrainGridWaterOpacityLocation = gl.getUniformLocation(
+    program,
+    "uTerrainGridWaterOpacity"
+  );
+  const terrainDirectionalLightStrengthLocation = gl.getUniformLocation(
+    program,
+    "uTerrainDirectionalLightStrength"
+  );
+  const terrainBackShadowStrengthLocation = gl.getUniformLocation(
+    program,
+    "uTerrainBackShadowStrength"
+  );
+  const terrainSteepShadowStrengthLocation = gl.getUniformLocation(
+    program,
+    "uTerrainSteepShadowStrength"
+  );
+  const terrainWaterShadowStrengthLocation = gl.getUniformLocation(
+    program,
+    "uTerrainWaterShadowStrength"
+  );
+  const terrainViewportSizeLocation = gl.getUniformLocation(program, "uTerrainViewportSize");
+  const terrainCameraLightHeightLocation = gl.getUniformLocation(
+    program,
+    "uTerrainCameraLightHeight"
+  );
+  const terrainCameraLightHorizontalPullLocation = gl.getUniformLocation(
+    program,
+    "uTerrainCameraLightHorizontalPull"
+  );
   const landTextureColorAdjustLocation = gl.getUniformLocation(
     program,
     "uLandTextureColorAdjust"
@@ -596,6 +932,44 @@ async function initCampaignTerrainWebGl(
   const landTextureShadeRangeLocation = gl.getUniformLocation(
     program,
     "uLandTextureShadeRange"
+  );
+  const landTextureTilingLocation = gl.getUniformLocation(program, "uLandTextureTiling");
+  const beachTextureTilingLocation = gl.getUniformLocation(program, "uBeachTextureTiling");
+  const beachBlendStrengthLocation = gl.getUniformLocation(program, "uBeachBlendStrength");
+  const beachInnerRadiusLocation = gl.getUniformLocation(program, "uBeachInnerRadius");
+  const beachOuterRadiusLocation = gl.getUniformLocation(program, "uBeachOuterRadius");
+  const beachFineNoiseTilingLocation = gl.getUniformLocation(
+    program,
+    "uBeachFineNoiseTiling"
+  );
+  const beachFineNoiseStrengthLocation = gl.getUniformLocation(
+    program,
+    "uBeachFineNoiseStrength"
+  );
+  const shorelineVisualWaterStrengthLocation = gl.getUniformLocation(
+    program,
+    "uShorelineVisualWaterStrength"
+  );
+  const shorelineEdgeWidthLocation = gl.getUniformLocation(program, "uShorelineEdgeWidth");
+  const shorelineWaveStrengthLocation = gl.getUniformLocation(
+    program,
+    "uShorelineWaveStrength"
+  );
+  const shorelineWaveFrequencyLocation = gl.getUniformLocation(
+    program,
+    "uShorelineWaveFrequency"
+  );
+  const shorelineErosionStrengthLocation = gl.getUniformLocation(
+    program,
+    "uShorelineErosionStrength"
+  );
+  const shorelineErosionFrequencyLocation = gl.getUniformLocation(
+    program,
+    "uShorelineErosionFrequency"
+  );
+  const shorelineCornerRoundnessLocation = gl.getUniformLocation(
+    program,
+    "uShorelineCornerRoundness"
   );
   const actorPositionLocation = gl.getAttribLocation(actorProgram, "aPosition");
   const actorNormalLocation = gl.getAttribLocation(actorProgram, "aNormal");
@@ -613,6 +987,21 @@ async function initCampaignTerrainWebGl(
   const cityDepthIndexBuffer = gl.createBuffer();
   const texture = createTexture(gl, textureImage);
   const materialTexture = createTexture(gl, materialImage);
+  const materialSemanticTexture = createTexture(
+    gl,
+    materialSemanticModel.source,
+    {
+      minFilter: gl.NEAREST,
+      magFilter: gl.NEAREST,
+    }
+  );
+  const shorelineChainTextureModel = createShorelineChainTextureModel(materialSemanticModel);
+  const shorelineChainTexture = createTexture(gl, shorelineChainTextureModel.source, {
+    minFilter: gl.NEAREST,
+    magFilter: gl.NEAREST,
+  });
+  const grassTexture = createTexture(gl, grassTextureImage ?? textureImage);
+  const sandTexture = createTexture(gl, sandTextureImage ?? textureImage);
   const waterTexture =
     waterTextureImage == null
       ? null
@@ -633,14 +1022,55 @@ async function initCampaignTerrainWebGl(
   const missingResources = [
     positionLocation < 0 ? "aPosition" : null,
     uvLocation < 0 ? "aUv" : null,
+    normalLocation < 0 ? "aNormal" : null,
     matrixLocation == null ? "uMatrix" : null,
+    heightScaleLocation == null ? "uHeightScale" : null,
+    terrainCameraTiltSinCosLocation == null ? "uTerrainCameraTiltSinCos" : null,
     textureLocation == null ? "uTexture" : null,
     materialTextureLocation == null ? "uMaterialTexture" : null,
+    materialSemanticTextureLocation == null ? "uMaterialSemanticTexture" : null,
+    materialSemanticTextureSizeLocation == null ? "uMaterialSemanticTextureSize" : null,
+    materialSemanticBoundsLocation == null ? "uMaterialSemanticBounds" : null,
+    shorelineChainTextureLocation == null ? "uShorelineChainTexture" : null,
+    shorelineChainTextureSizeLocation == null ? "uShorelineChainTextureSize" : null,
+    shorelineChainBoundsLocation == null ? "uShorelineChainBounds" : null,
+    shorelineChainMaxMileageLocation == null ? "uShorelineChainMaxMileage" : null,
     waterTextureLocation == null ? "uWaterTexture" : null,
+    grassTextureLocation == null ? "uGrassTexture" : null,
+    sandTextureLocation == null ? "uSandTexture" : null,
     waterTextureEnabledLocation == null ? "uWaterTextureEnabled" : null,
     timeSecondsLocation == null ? "uTimeSeconds" : null,
+    grassAmbientLightLocation == null ? "uGrassAmbientLight" : null,
+    grassTextureDetailLocation == null ? "uGrassTextureDetail" : null,
+    hexMapAspectLocation == null ? "uHexMapAspect" : null,
+    hexTerrainScaleLocation == null ? "uHexTerrainScale" : null,
+    terrainGridLandOpacityLocation == null ? "uTerrainGridLandOpacity" : null,
+    terrainGridWaterOpacityLocation == null ? "uTerrainGridWaterOpacity" : null,
+    terrainDirectionalLightStrengthLocation == null ? "uTerrainDirectionalLightStrength" : null,
+    terrainBackShadowStrengthLocation == null ? "uTerrainBackShadowStrength" : null,
+    terrainSteepShadowStrengthLocation == null ? "uTerrainSteepShadowStrength" : null,
+    terrainWaterShadowStrengthLocation == null ? "uTerrainWaterShadowStrength" : null,
+    terrainViewportSizeLocation == null ? "uTerrainViewportSize" : null,
+    terrainCameraLightHeightLocation == null ? "uTerrainCameraLightHeight" : null,
+    terrainCameraLightHorizontalPullLocation == null
+      ? "uTerrainCameraLightHorizontalPull"
+      : null,
     landTextureColorAdjustLocation == null ? "uLandTextureColorAdjust" : null,
     landTextureShadeRangeLocation == null ? "uLandTextureShadeRange" : null,
+    landTextureTilingLocation == null ? "uLandTextureTiling" : null,
+    beachTextureTilingLocation == null ? "uBeachTextureTiling" : null,
+    beachBlendStrengthLocation == null ? "uBeachBlendStrength" : null,
+    beachInnerRadiusLocation == null ? "uBeachInnerRadius" : null,
+    beachOuterRadiusLocation == null ? "uBeachOuterRadius" : null,
+    beachFineNoiseTilingLocation == null ? "uBeachFineNoiseTiling" : null,
+    beachFineNoiseStrengthLocation == null ? "uBeachFineNoiseStrength" : null,
+    shorelineVisualWaterStrengthLocation == null ? "uShorelineVisualWaterStrength" : null,
+    shorelineEdgeWidthLocation == null ? "uShorelineEdgeWidth" : null,
+    shorelineWaveStrengthLocation == null ? "uShorelineWaveStrength" : null,
+    shorelineWaveFrequencyLocation == null ? "uShorelineWaveFrequency" : null,
+    shorelineErosionStrengthLocation == null ? "uShorelineErosionStrength" : null,
+    shorelineErosionFrequencyLocation == null ? "uShorelineErosionFrequency" : null,
+    shorelineCornerRoundnessLocation == null ? "uShorelineCornerRoundness" : null,
     actorPositionLocation < 0 ? "actor.aPosition" : null,
     actorNormalLocation < 0 ? "actor.aNormal" : null,
     actorUvLocation < 0 ? "actor.aUv" : null,
@@ -694,17 +1124,11 @@ async function initCampaignTerrainWebGl(
   const projectionInput: CampaignTerrainProjectionInput = {
     canvas: input.canvas,
     heights: heightSamples,
-    materialLandMask: materialLandMask.landMask,
-    materialColumns: materialLandMask.columns,
-    materialRows: materialLandMask.rows,
+    materialSemanticModel,
     columns: GRID_COLUMNS,
     rows: GRID_ROWS,
   };
-  const travelGrid = createHexTravelGrid(
-    materialLandMask.landMask,
-    materialLandMask.columns,
-    materialLandMask.rows
-  );
+  const travelGrid = createHexTravelGrid(materialSemanticModel);
 
   let frameId: number | null = null;
   let isDisposed = false;
@@ -750,8 +1174,63 @@ async function initCampaignTerrainWebGl(
       gl.activeTexture(gl.TEXTURE2);
       gl.bindTexture(gl.TEXTURE_2D, waterTexture ?? texture);
       gl.uniform1i(waterTextureLocation, 2);
+      gl.activeTexture(gl.TEXTURE3);
+      gl.bindTexture(gl.TEXTURE_2D, grassTexture);
+      gl.uniform1i(grassTextureLocation, 3);
+      gl.activeTexture(gl.TEXTURE4);
+      gl.bindTexture(gl.TEXTURE_2D, sandTexture);
+      gl.uniform1i(sandTextureLocation, 4);
+      gl.activeTexture(gl.TEXTURE5);
+      gl.bindTexture(gl.TEXTURE_2D, shorelineChainTexture);
+      gl.uniform1i(shorelineChainTextureLocation, 5);
+      gl.activeTexture(gl.TEXTURE6);
+      gl.bindTexture(gl.TEXTURE_2D, materialSemanticTexture);
+      gl.uniform1i(materialSemanticTextureLocation, 6);
+      gl.uniform2f(
+        materialSemanticTextureSizeLocation,
+        materialSemanticModel.textureColumns,
+        materialSemanticModel.textureRows
+      );
+      gl.uniform4f(
+        materialSemanticBoundsLocation,
+        materialSemanticModel.minCellX,
+        materialSemanticModel.minCellY,
+        materialSemanticModel.cellColumns,
+        materialSemanticModel.cellRows
+      );
       gl.uniform1f(waterTextureEnabledLocation, waterTexture == null ? 0 : 1);
       gl.uniform1f(timeSecondsLocation, performance.now() * 0.001);
+      gl.uniform1f(heightScaleLocation, HEIGHT_SCALE);
+      const terrainCameraTilt = getCampaignTerrainCameraTiltRadians(currentCamera);
+      gl.uniform2f(
+        terrainCameraTiltSinCosLocation,
+        Math.sin(terrainCameraTilt),
+        Math.cos(terrainCameraTilt)
+      );
+      gl.uniform1f(grassAmbientLightLocation, GRASS_AMBIENT_LIGHT);
+      gl.uniform1f(grassTextureDetailLocation, GRASS_TEXTURE_DETAIL);
+      gl.uniform1f(hexMapAspectLocation, HEX_MAP_ASPECT);
+      gl.uniform1f(hexTerrainScaleLocation, HEX_TERRAIN_SCALE);
+      gl.uniform1f(terrainGridLandOpacityLocation, TERRAIN_GRID_LAND_OPACITY);
+      gl.uniform1f(terrainGridWaterOpacityLocation, TERRAIN_GRID_WATER_OPACITY);
+      gl.uniform1f(
+        terrainDirectionalLightStrengthLocation,
+        TERRAIN_DIRECTIONAL_LIGHT_STRENGTH
+      );
+      gl.uniform1f(terrainBackShadowStrengthLocation, TERRAIN_BACK_SHADOW_STRENGTH);
+      gl.uniform1f(terrainSteepShadowStrengthLocation, TERRAIN_STEEP_SHADOW_STRENGTH);
+      gl.uniform1f(terrainWaterShadowStrengthLocation, TERRAIN_WATER_SHADOW_STRENGTH);
+      const terrainMatrix = createTerrainMatrix(input.canvas.width / Math.max(input.canvas.height, 1));
+      gl.uniform2f(
+        terrainViewportSizeLocation,
+        input.canvas.width,
+        input.canvas.height
+      );
+      gl.uniform1f(terrainCameraLightHeightLocation, TERRAIN_CAMERA_LIGHT_HEIGHT);
+      gl.uniform1f(
+        terrainCameraLightHorizontalPullLocation,
+        TERRAIN_CAMERA_LIGHT_HORIZONTAL_PULL
+      );
       const terrainStyle = readCampaignTerrainStyle(input.canvas);
       gl.uniform3f(
         landTextureColorAdjustLocation,
@@ -764,13 +1243,49 @@ async function initCampaignTerrainWebGl(
         terrainStyle.shadeMin,
         terrainStyle.shadeMax
       );
+      gl.uniform1f(landTextureTilingLocation, TERRAIN_LAND_TEXTURE_TILING);
+      gl.uniform1f(beachTextureTilingLocation, terrainBeachTuning.textureTiling);
+      gl.uniform1f(beachBlendStrengthLocation, terrainBeachTuning.blendStrength);
+      gl.uniform1f(beachInnerRadiusLocation, terrainBeachTuning.innerRadius);
+      gl.uniform1f(beachOuterRadiusLocation, terrainBeachTuning.outerRadius);
+      gl.uniform1f(beachFineNoiseTilingLocation, terrainBeachTuning.fineNoiseTiling);
+      gl.uniform1f(beachFineNoiseStrengthLocation, terrainBeachTuning.fineNoiseStrength);
+      gl.uniform1f(
+        shorelineVisualWaterStrengthLocation,
+        terrainBeachTuning.shorelineVisualWaterStrength
+      );
+      gl.uniform1f(shorelineEdgeWidthLocation, terrainBeachTuning.shorelineEdgeWidth);
+      gl.uniform1f(shorelineWaveStrengthLocation, terrainBeachTuning.shorelineWaveStrength);
+      gl.uniform1f(shorelineWaveFrequencyLocation, terrainBeachTuning.shorelineWaveFrequency);
+      gl.uniform1f(
+        shorelineErosionStrengthLocation,
+        terrainBeachTuning.shorelineErosionStrength
+      );
+      gl.uniform1f(
+        shorelineErosionFrequencyLocation,
+        terrainBeachTuning.shorelineErosionFrequency
+      );
+      gl.uniform1f(shorelineCornerRoundnessLocation, terrainBeachTuning.shorelineCornerRoundness);
+      gl.uniform2f(
+        shorelineChainTextureSizeLocation,
+        shorelineChainTextureModel.textureColumns,
+        shorelineChainTextureModel.textureRows
+      );
+      gl.uniform4f(
+        shorelineChainBoundsLocation,
+        shorelineChainTextureModel.minCellX,
+        shorelineChainTextureModel.minCellY,
+        shorelineChainTextureModel.cellColumns,
+        shorelineChainTextureModel.cellRows
+      );
+      gl.uniform1f(shorelineChainMaxMileageLocation, shorelineChainTextureModel.maxMileage);
       gl.uniformMatrix4fv(
         matrixLocation,
         false,
-        createTerrainMatrix(input.canvas.width / Math.max(input.canvas.height, 1))
+        terrainMatrix
       );
 
-      const stride = 5 * Float32Array.BYTES_PER_ELEMENT;
+      const stride = 8 * Float32Array.BYTES_PER_ELEMENT;
       gl.enableVertexAttribArray(positionLocation);
       gl.vertexAttribPointer(positionLocation, 3, gl.FLOAT, false, stride, 0);
       gl.enableVertexAttribArray(uvLocation);
@@ -781,6 +1296,15 @@ async function initCampaignTerrainWebGl(
         false,
         stride,
         3 * Float32Array.BYTES_PER_ELEMENT
+      );
+      gl.enableVertexAttribArray(normalLocation);
+      gl.vertexAttribPointer(
+        normalLocation,
+        3,
+        gl.FLOAT,
+        false,
+        stride,
+        5 * Float32Array.BYTES_PER_ELEMENT
       );
       gl.drawElements(gl.TRIANGLES, mesh.indices.length, gl.UNSIGNED_INT, 0);
     }
@@ -973,6 +1497,7 @@ async function initCampaignTerrainWebGl(
     render,
     requestRender,
     hasActorAsset: actorAsset != null && actorTexture != null,
+    inputSignature: getCampaignTerrainInputSignature(input),
     projectionInput,
     travelGrid,
     dispose: () => {
@@ -993,6 +1518,10 @@ async function initCampaignTerrainWebGl(
       gl.deleteBuffer(cityDepthIndexBuffer);
       gl.deleteTexture(texture);
       gl.deleteTexture(materialTexture);
+      gl.deleteTexture(materialSemanticTexture);
+      gl.deleteTexture(shorelineChainTexture);
+      gl.deleteTexture(grassTexture);
+      gl.deleteTexture(sandTexture);
       if (waterTexture != null) {
         gl.deleteTexture(waterTexture);
       }
@@ -1342,6 +1871,55 @@ function sampleMaterialLandMask(
   };
 }
 
+function createCampaignMaterialSemanticModel(
+  materialLandMask: Uint8Array,
+  columns: number,
+  rows: number
+): CampaignMaterialSemanticModel {
+  const cells = getTerrainHexCells();
+  const minCellX = cells.length > 0 ? Math.min(...cells.map((cell) => cell.x)) : 0;
+  const maxCellX = cells.length > 0 ? Math.max(...cells.map((cell) => cell.x)) : 0;
+  const minCellY = cells.length > 0 ? Math.min(...cells.map((cell) => cell.y)) : 0;
+  const maxCellY = cells.length > 0 ? Math.max(...cells.map((cell) => cell.y)) : 0;
+  const cellColumns = Math.max(maxCellX - minCellX + 1, 1);
+  const cellRows = Math.max(maxCellY - minCellY + 1, 1);
+  const textureColumns = cellColumns;
+  const textureRows = cellRows;
+  const pixels = new Uint8ClampedArray(textureColumns * textureRows * 4);
+  const landByCellKey = new Map<string, boolean>();
+
+  for (const cell of cells) {
+    const isLand = isHexPassableAtHexPoint(
+      materialLandMask,
+      columns,
+      rows,
+      hexToPixel(cell.x, cell.y)
+    );
+    const pixelX = cell.x - minCellX;
+    const pixelY = cell.y - minCellY;
+    const pixelOffset = (pixelY * textureColumns + pixelX) * 4;
+    const value = isLand ? 255 : 0;
+
+    landByCellKey.set(getHexCellKey(cell.x, cell.y), isLand);
+    pixels[pixelOffset] = value;
+    pixels[pixelOffset + 1] = value;
+    pixels[pixelOffset + 2] = value;
+    pixels[pixelOffset + 3] = 255;
+  }
+
+  return {
+    source: new ImageData(pixels, textureColumns, textureRows),
+    textureColumns,
+    textureRows,
+    minCellX,
+    minCellY,
+    cellColumns,
+    cellRows,
+    cells,
+    landByCellKey,
+  };
+}
+
 function hexToPixel(x: number, y: number): { x: number; y: number } {
   return {
     x: Math.sqrt(3) * (x + y * 0.5),
@@ -1455,9 +2033,22 @@ function sampleHeightAt(
   u: number,
   v: number
 ): number {
-  const x = Math.min(Math.max(Math.round(u * (columns - 1)), 0), columns - 1);
-  const y = Math.min(Math.max(Math.round(v * (rows - 1)), 0), rows - 1);
-  return heights[y * columns + x] ?? 0;
+  const sampleX = clamp(u, 0, 1) * Math.max(columns - 1, 0);
+  const sampleY = clamp(v, 0, 1) * Math.max(rows - 1, 0);
+  const leftX = Math.floor(sampleX);
+  const topY = Math.floor(sampleY);
+  const rightX = Math.min(leftX + 1, Math.max(columns - 1, 0));
+  const bottomY = Math.min(topY + 1, Math.max(rows - 1, 0));
+  const mixX = sampleX - leftX;
+  const mixY = sampleY - topY;
+  const topLeft = heights[topY * columns + leftX] ?? 0;
+  const topRight = heights[topY * columns + rightX] ?? topLeft;
+  const bottomLeft = heights[bottomY * columns + leftX] ?? topLeft;
+  const bottomRight = heights[bottomY * columns + rightX] ?? bottomLeft;
+  const top = topLeft + (topRight - topLeft) * mixX;
+  const bottom = bottomLeft + (bottomRight - bottomLeft) * mixX;
+
+  return top + (bottom - top) * mixY;
 }
 
 function sampleLandMaskAt(
@@ -1475,6 +2066,375 @@ function sampleLandMaskAt(
   const y = Math.min(Math.max(Math.round(v * (rows - 1)), 0), rows - 1);
 
   return materialLandMask[y * columns + x] ?? 0;
+}
+
+function createShorelineChainTextureModel(
+  materialSemanticModel: CampaignMaterialSemanticModel
+): ShorelineChainTextureModel {
+  const cells = materialSemanticModel.cells;
+  const minCellX = materialSemanticModel.minCellX;
+  const minCellY = materialSemanticModel.minCellY;
+  const cellColumns = materialSemanticModel.cellColumns;
+  const cellRows = materialSemanticModel.cellRows;
+  const directionsPerCell = SHORELINE_CHAIN_DIRECTIONS.length;
+  const textureColumns = Math.max(cellColumns * directionsPerCell, 1);
+  const textureRows = cellRows;
+  const pixels = new Uint8ClampedArray(textureColumns * textureRows * 4);
+  const cellKeys = new Set(cells.map((cell) => getHexCellKey(cell.x, cell.y)));
+  const landByCellKey = materialSemanticModel.landByCellKey;
+
+  const edges: ShorelineChainEdge[] = [];
+  const endpointToEdgeIds = new Map<string, number[]>();
+
+  for (const landCell of cells) {
+    if (landByCellKey.get(getHexCellKey(landCell.x, landCell.y)) !== true) {
+      continue;
+    }
+
+    SHORELINE_CHAIN_DIRECTIONS.forEach((direction, landDirectionIndex) => {
+      const waterCell = {
+        x: landCell.x + direction.x,
+        y: landCell.y + direction.y,
+      };
+      const waterCellKey = getHexCellKey(waterCell.x, waterCell.y);
+      if (!cellKeys.has(waterCellKey) || landByCellKey.get(waterCellKey) !== false) {
+        return;
+      }
+
+      const landCenter = hexToPixel(landCell.x, landCell.y);
+      const waterCenter = hexToPixel(waterCell.x, waterCell.y);
+      const normalToWater = normalizeVector2({
+        x: waterCenter.x - landCenter.x,
+        y: waterCenter.y - landCenter.y,
+      });
+      const tangent = { x: -normalToWater.y, y: normalToWater.x };
+      const edgeCenter = {
+        x: (landCenter.x + waterCenter.x) * 0.5,
+        y: (landCenter.y + waterCenter.y) * 0.5,
+      };
+      const start = {
+        x: edgeCenter.x - tangent.x * 0.5,
+        y: edgeCenter.y - tangent.y * 0.5,
+      };
+      const end = {
+        x: edgeCenter.x + tangent.x * 0.5,
+        y: edgeCenter.y + tangent.y * 0.5,
+      };
+      const edge: ShorelineChainEdge = {
+        id: edges.length,
+        landCell,
+        waterCell,
+        landDirectionIndex,
+        waterDirectionIndex:
+          SHORELINE_CHAIN_OPPOSITE_DIRECTION_INDEXES[landDirectionIndex] ?? 0,
+        start,
+        end,
+        startKey: getShorelineEndpointKey(start),
+        endKey: getShorelineEndpointKey(end),
+        chainStartMileage: 0,
+        chainLength: 1,
+        chainSeed: 1,
+        reverseInChain: false,
+      };
+      edges.push(edge);
+      addShorelineEndpointEdge(endpointToEdgeIds, edge.startKey, edge.id);
+      addShorelineEndpointEdge(endpointToEdgeIds, edge.endKey, edge.id);
+    });
+  }
+
+  const maxMileage = Math.max(
+    assignShorelineChainMetadata(edges, endpointToEdgeIds),
+    1
+  );
+
+  for (const edge of edges) {
+    writeShorelineChainEdgeMetadata(
+      pixels,
+      textureColumns,
+      minCellX,
+      minCellY,
+      edge.landCell,
+      edge.landDirectionIndex,
+      edge,
+      maxMileage
+    );
+    writeShorelineChainEdgeMetadata(
+      pixels,
+      textureColumns,
+      minCellX,
+      minCellY,
+      edge.waterCell,
+      edge.waterDirectionIndex,
+      edge,
+      maxMileage
+    );
+  }
+
+  return {
+    source: new ImageData(pixels, textureColumns, textureRows),
+    textureColumns,
+    textureRows,
+    minCellX,
+    minCellY,
+    cellColumns,
+    cellRows,
+    maxMileage,
+  };
+}
+
+function assignShorelineChainMetadata(
+  edges: ShorelineChainEdge[],
+  endpointToEdgeIds: Map<string, number[]>
+): number {
+  const usedEdgeIds = new Set<number>();
+  let maxMileage = 0;
+  let chainIndex = 0;
+
+  while (usedEdgeIds.size < edges.length) {
+    const startEdge = findShorelineChainStartEdge(edges, endpointToEdgeIds, usedEdgeIds);
+    if (startEdge == null) {
+      break;
+    }
+
+    const chainSeed = createShorelineChainSeedByte(startEdge, chainIndex);
+    const chainEdgeIds: number[] = [];
+    const chainStartKey = startEdge.startKey;
+    let currentEdge: ShorelineChainEdge | null = startEdge;
+    let currentEndpointKey = startEdge.startKey;
+    let previousDirection: { x: number; y: number } | null = null;
+    let chainMileage = 0;
+
+    while (currentEdge != null && !usedEdgeIds.has(currentEdge.id)) {
+      const entersAtStart = currentEdge.startKey === currentEndpointKey;
+      const entersAtEnd = currentEdge.endKey === currentEndpointKey;
+      if (!entersAtStart && !entersAtEnd) {
+        break;
+      }
+
+      const from = entersAtStart ? currentEdge.start : currentEdge.end;
+      const to = entersAtStart ? currentEdge.end : currentEdge.start;
+      const direction = normalizeVector2({
+        x: to.x - from.x,
+        y: to.y - from.y,
+      });
+
+      currentEdge.chainStartMileage = chainMileage;
+      currentEdge.chainSeed = chainSeed;
+      currentEdge.reverseInChain = !entersAtStart;
+      usedEdgeIds.add(currentEdge.id);
+      chainEdgeIds.push(currentEdge.id);
+
+      chainMileage += getDistance(from, to);
+      currentEndpointKey = entersAtStart ? currentEdge.endKey : currentEdge.startKey;
+      previousDirection = direction;
+
+      if (currentEndpointKey === chainStartKey && chainEdgeIds.length > 1) {
+        break;
+      }
+
+      currentEdge = findNextShorelineChainEdge(
+        edges,
+        endpointToEdgeIds,
+        usedEdgeIds,
+        currentEndpointKey,
+        previousDirection
+      )?.edge ?? null;
+    }
+
+    for (const edgeId of chainEdgeIds) {
+      const edge = edges[edgeId];
+      if (edge != null) {
+        edge.chainLength = Math.max(chainMileage, 1);
+      }
+    }
+
+    maxMileage = Math.max(maxMileage, chainMileage);
+    chainIndex += 1;
+  }
+
+  return maxMileage;
+}
+
+function findShorelineChainStartEdge(
+  edges: ShorelineChainEdge[],
+  endpointToEdgeIds: Map<string, number[]>,
+  usedEdgeIds: Set<number>
+): ShorelineChainEdge | null {
+  return (
+    edges.find((edge) => {
+      if (usedEdgeIds.has(edge.id)) {
+        return false;
+      }
+      return countUnusedShorelineIncidentEdgesAt(
+        edges,
+        endpointToEdgeIds,
+        usedEdgeIds,
+        edge.startKey
+      ) <= 1;
+    }) ??
+    edges.find((edge) => !usedEdgeIds.has(edge.id)) ??
+    null
+  );
+}
+
+function findNextShorelineChainEdge(
+  edges: ShorelineChainEdge[],
+  endpointToEdgeIds: Map<string, number[]>,
+  usedEdgeIds: Set<number>,
+  currentEndpointKey: string,
+  previousDirection: { x: number; y: number } | null
+): {
+  edge: ShorelineChainEdge;
+  entersAtStart: boolean;
+  direction: { x: number; y: number };
+} | null {
+  const incidentEdgeIds = endpointToEdgeIds.get(currentEndpointKey) ?? [];
+  const candidateIds = incidentEdgeIds.filter((edgeId) => {
+    const edge = edges[edgeId];
+    return edge != null && !usedEdgeIds.has(edge.id);
+  });
+
+  let best:
+    | {
+      edge: ShorelineChainEdge;
+      entersAtStart: boolean;
+      direction: { x: number; y: number };
+      score: number;
+    }
+    | null = null;
+
+  for (const edgeId of candidateIds) {
+    const edge = edges[edgeId];
+    if (edge == null) {
+      continue;
+    }
+
+    const entersAtStart = edge.startKey === currentEndpointKey;
+    const entersAtEnd = edge.endKey === currentEndpointKey;
+    if (!entersAtStart && !entersAtEnd) {
+      continue;
+    }
+
+    const from = entersAtStart ? edge.start : edge.end;
+    const to = entersAtStart ? edge.end : edge.start;
+    const direction = normalizeVector2({
+      x: to.x - from.x,
+      y: to.y - from.y,
+    });
+    const score =
+      previousDirection == null
+        ? 0
+        : direction.x * previousDirection.x + direction.y * previousDirection.y;
+
+    if (best == null || score > best.score) {
+      best = {
+        edge,
+        entersAtStart,
+        direction,
+        score,
+      };
+    }
+  }
+
+  return best == null
+    ? null
+    : {
+      edge: best.edge,
+      entersAtStart: best.entersAtStart,
+      direction: best.direction,
+    };
+}
+
+function countUnusedShorelineIncidentEdgesAt(
+  edges: ShorelineChainEdge[],
+  endpointToEdgeIds: Map<string, number[]>,
+  usedEdgeIds: Set<number>,
+  endpointKey: string
+): number {
+  let count = 0;
+  for (const edgeId of endpointToEdgeIds.get(endpointKey) ?? []) {
+    const edge = edges[edgeId];
+    if (edge != null && !usedEdgeIds.has(edge.id)) {
+      count += 1;
+    }
+  }
+
+  return count;
+}
+
+function addShorelineEndpointEdge(
+  endpointToEdgeIds: Map<string, number[]>,
+  endpointKey: string,
+  edgeId: number
+): void {
+  const edgeIds = endpointToEdgeIds.get(endpointKey) ?? [];
+  edgeIds.push(edgeId);
+  endpointToEdgeIds.set(endpointKey, edgeIds);
+}
+
+function writeShorelineChainEdgeMetadata(
+  pixels: Uint8ClampedArray,
+  textureColumns: number,
+  minCellX: number,
+  minCellY: number,
+  cell: GridCoordinate,
+  directionIndex: number,
+  edge: ShorelineChainEdge,
+  maxMileage: number
+): void {
+  const pixelX = (cell.x - minCellX) * SHORELINE_CHAIN_DIRECTIONS.length + directionIndex;
+  const pixelY = cell.y - minCellY;
+  const offset = (pixelY * textureColumns + pixelX) * 4;
+  if (pixelX < 0 || pixelX >= textureColumns || offset < 0 || offset + 3 >= pixels.length) {
+    return;
+  }
+
+  const packedMileage = packNormalizedUint16(edge.chainStartMileage / maxMileage);
+  const encodedSeedAndDirection = (edge.reverseInChain ? 128 : 0) + edge.chainSeed;
+  pixels[offset] = packedMileage.high;
+  pixels[offset + 1] = packedMileage.low;
+  pixels[offset + 2] = Math.round(clamp(edge.chainLength / maxMileage, 0, 1) * 255);
+  pixels[offset + 3] = encodedSeedAndDirection;
+}
+
+function packNormalizedUint16(value: number): { high: number; low: number } {
+  const integer = Math.round(clamp(value, 0, 1) * 65535);
+
+  return {
+    high: Math.floor(integer / 256),
+    low: integer % 256,
+  };
+}
+
+function createShorelineChainSeedByte(edge: ShorelineChainEdge, chainIndex: number): number {
+  const hash =
+    Math.imul(edge.landCell.x, 73856093) ^
+    Math.imul(edge.landCell.y, 19349663) ^
+    Math.imul(edge.waterCell.x, 83492791) ^
+    Math.imul(edge.waterCell.y, 2654435761) ^
+    Math.imul(chainIndex + 1, 374761393);
+
+  return Math.abs(hash % 127) + 1;
+}
+
+function getShorelineEndpointKey(point: { x: number; y: number }): string {
+  return `${Math.round(point.x * 10000)},${Math.round(point.y * 10000)}`;
+}
+
+function normalizeVector2(input: { x: number; y: number }): { x: number; y: number } {
+  const length = Math.hypot(input.x, input.y) || 1;
+
+  return {
+    x: input.x / length,
+    y: input.y / length,
+  };
+}
+
+function getDistance(
+  left: { x: number; y: number },
+  right: { x: number; y: number }
+): number {
+  return Math.hypot(right.x - left.x, right.y - left.y);
 }
 
 function isWaterHeightColor(red: number, green: number, blue: number): boolean {
@@ -2156,36 +3116,121 @@ function nlerpQuaternion(
   ]);
 }
 
-function createHexLayeredHeightSamples(
+function createSmoothTerrainHeightSamples(
   heights: Float32Array,
   columns: number,
-  rows: number
+  rows: number,
+  materialLandMask: Uint8Array,
+  materialColumns: number,
+  materialRows: number
 ): Float32Array {
-  const layeredHeights = new Float32Array(heights.length);
+  let currentHeights: Float32Array<ArrayBufferLike> = new Float32Array(heights.length);
 
   for (let y = 0; y < rows; y += 1) {
     const v = y / Math.max(rows - 1, 1);
     for (let x = 0; x < columns; x += 1) {
       const u = x / Math.max(columns - 1, 1);
-      const hexPoint = terrainUvToHexPoint(u, v);
-      const hexCell = pixelToRoundedHex(hexPoint.x, hexPoint.y);
-      const hexCenter = hexToPixel(hexCell.x, hexCell.y);
-      const centerU = hexPointToTerrainU(hexCenter.x);
-      const centerV = hexPointToTerrainV(hexCenter.y);
-      const centerHeight = sampleHeightAt(heights, columns, rows, centerU, centerV);
-      layeredHeights[y * columns + x] = quantizeHexElevation(centerHeight);
+      const isLand = sampleLandMaskAt(
+        materialLandMask,
+        materialColumns,
+        materialRows,
+        u,
+        v
+      ) > 0;
+      currentHeights[y * columns + x] = isLand ? heights[y * columns + x] ?? 0 : 0;
     }
   }
 
-  return layeredHeights;
+  for (let pass = 0; pass < SMOOTH_TERRAIN_PASSES; pass += 1) {
+    currentHeights = smoothTerrainHeightPass(
+      currentHeights,
+      columns,
+      rows,
+      materialLandMask,
+      materialColumns,
+      materialRows
+    );
+  }
+
+  return currentHeights;
 }
 
-function createHexTravelGrid(
-  materialLandMask: Uint8Array,
+function smoothTerrainHeightPass(
+  heights: Float32Array,
   columns: number,
-  rows: number
-): HexTravelGrid {
-  const hexCells = getTerrainHexCells();
+  rows: number,
+  materialLandMask: Uint8Array,
+  materialColumns: number,
+  materialRows: number
+): Float32Array {
+  const smoothedHeights = new Float32Array(heights.length);
+  const maxX = Math.max(columns - 1, 0);
+  const maxY = Math.max(rows - 1, 0);
+
+  for (let y = 0; y < rows; y += 1) {
+    const v = y / Math.max(rows - 1, 1);
+    for (let x = 0; x < columns; x += 1) {
+      const u = x / Math.max(columns - 1, 1);
+      const outputIndex = y * columns + x;
+      const centerHeight = heights[outputIndex] ?? 0;
+      const isLand = sampleLandMaskAt(
+        materialLandMask,
+        materialColumns,
+        materialRows,
+        u,
+        v
+      ) > 0;
+
+      if (!isLand) {
+        smoothedHeights[outputIndex] = 0;
+        continue;
+      }
+
+      let heightSum = 0;
+      let landWeight = 0;
+      let totalWeight = 0;
+      for (const sample of SMOOTH_TERRAIN_KERNEL) {
+        const sampleX = clamp(x + sample.x, 0, maxX);
+        const sampleY = clamp(y + sample.y, 0, maxY);
+        const sampleU = sampleX / Math.max(columns - 1, 1);
+        const sampleV = sampleY / Math.max(rows - 1, 1);
+        totalWeight += sample.weight;
+
+        if (
+          sampleLandMaskAt(
+            materialLandMask,
+            materialColumns,
+            materialRows,
+            sampleU,
+            sampleV
+          ) <= 0
+        ) {
+          continue;
+        }
+
+        heightSum += (heights[sampleY * columns + sampleX] ?? centerHeight) * sample.weight;
+        landWeight += sample.weight;
+      }
+
+      if (landWeight <= 0 || totalWeight <= 0) {
+        smoothedHeights[outputIndex] = centerHeight;
+        continue;
+      }
+
+      const coastAmount = 1 - landWeight / totalWeight;
+      const blend =
+        SMOOTH_TERRAIN_LAND_BLEND +
+        (SMOOTH_TERRAIN_COAST_BLEND - SMOOTH_TERRAIN_LAND_BLEND) * coastAmount;
+      smoothedHeights[outputIndex] =
+        centerHeight + (heightSum / landWeight - centerHeight) * blend;
+    }
+  }
+
+  return smoothedHeights;
+}
+
+function createHexTravelGrid(materialSemanticModel: CampaignMaterialSemanticModel): HexTravelGrid {
+  const hexCells = materialSemanticModel.cells;
   const passableHexKeys = new Set<string>();
   const bounds = {
     minX: Number.POSITIVE_INFINITY,
@@ -2199,15 +3244,16 @@ function createHexTravelGrid(
     bounds.maxX = Math.max(bounds.maxX, cell.x);
     bounds.minY = Math.min(bounds.minY, cell.y);
     bounds.maxY = Math.max(bounds.maxY, cell.y);
-    const center = hexToPixel(cell.x, cell.y);
-    if (isHexPassableAtHexPoint(
-      materialLandMask,
-      columns,
-      rows,
-      center
-    )) {
+    if (isHexPassableAtHexCell(materialSemanticModel, cell)) {
       passableHexKeys.add(getHexCellKey(cell.x, cell.y));
     }
+  }
+
+  if (hexCells.length <= 0) {
+    bounds.minX = 0;
+    bounds.maxX = 0;
+    bounds.minY = 0;
+    bounds.maxY = 0;
   }
 
   return {
@@ -2216,68 +3262,39 @@ function createHexTravelGrid(
   };
 }
 
-function createHexLayeredTerrainMesh(
+function createSmoothTerrainMesh(
   heights: Float32Array,
   columns: number,
-  rows: number
+  rows: number,
+  meshStep: number
 ): MeshData {
   const vertices: number[] = [];
   const indices: number[] = [];
-  const hexCells = getTerrainHexCells();
-  const heightByCellKey = new Map<string, number>();
+  const columnSamples = createTerrainMeshSampleIndices(columns, meshStep);
+  const rowSamples = createTerrainMeshSampleIndices(rows, meshStep);
+  const vertexColumns = columnSamples.length;
 
-  for (const cell of hexCells) {
-    const center = hexToPixel(cell.x, cell.y);
-    const height = sampleHeightAt(
-      heights,
-      columns,
-      rows,
-      hexPointToTerrainU(center.x),
-      hexPointToTerrainV(center.y)
-    );
-    heightByCellKey.set(getHexCellKey(cell.x, cell.y), height);
-  }
-
-  for (const cell of hexCells) {
-    const center = hexToPixel(cell.x, cell.y);
-    const height = heightByCellKey.get(getHexCellKey(cell.x, cell.y)) ?? 0;
-    const centerVertexIndex = addHexTerrainVertex(vertices, center.x, center.y, height);
-    const cornerVertexIndices = HEX_CORNER_OFFSETS.map((corner) =>
-      addHexTerrainVertex(vertices, center.x + corner.x, center.y + corner.y, height)
-    );
-
-    for (let cornerIndex = 0; cornerIndex < cornerVertexIndices.length; cornerIndex += 1) {
-      const nextCornerIndex = (cornerIndex + 1) % cornerVertexIndices.length;
-      indices.push(
-        centerVertexIndex,
-        cornerVertexIndices[nextCornerIndex] ?? centerVertexIndex,
-        cornerVertexIndices[cornerIndex] ?? centerVertexIndex
+  for (const sampleY of rowSamples) {
+    const v = sampleY / Math.max(rows - 1, 1);
+    for (const sampleX of columnSamples) {
+      const u = sampleX / Math.max(columns - 1, 1);
+      addSmoothTerrainVertex(
+        vertices,
+        u,
+        v,
+        sampleHeightAt(heights, columns, rows, u, v),
+        createSmoothTerrainNormal(heights, columns, rows, u, v)
       );
     }
+  }
 
-    for (let edgeIndex = 0; edgeIndex < HEX_NEIGHBOR_DIRECTIONS.length; edgeIndex += 1) {
-      const neighbor = HEX_NEIGHBOR_DIRECTIONS[edgeIndex] ?? { x: 0, y: 0 };
-      const neighborHeight =
-        heightByCellKey.get(getHexCellKey(cell.x + neighbor.x, cell.y + neighbor.y)) ??
-        0;
-      if (height <= neighborHeight + HEX_WALL_HEIGHT_EPSILON) {
-        continue;
-      }
-
-      const firstCorner = HEX_CORNER_OFFSETS[edgeIndex] ?? HEX_CORNER_OFFSETS[0];
-      const secondCorner =
-        HEX_CORNER_OFFSETS[(edgeIndex + 1) % HEX_CORNER_OFFSETS.length] ??
-        HEX_CORNER_OFFSETS[0];
-      addHexTerrainWall(
-        vertices,
-        indices,
-        center.x + firstCorner.x,
-        center.y + firstCorner.y,
-        center.x + secondCorner.x,
-        center.y + secondCorner.y,
-        height,
-        neighborHeight
-      );
+  for (let row = 0; row < rowSamples.length - 1; row += 1) {
+    for (let column = 0; column < columnSamples.length - 1; column += 1) {
+      const topLeft = row * vertexColumns + column;
+      const topRight = topLeft + 1;
+      const bottomLeft = topLeft + vertexColumns;
+      const bottomRight = bottomLeft + 1;
+      indices.push(topLeft, bottomLeft, topRight, topRight, bottomLeft, bottomRight);
     }
   }
 
@@ -2287,23 +3304,21 @@ function createHexLayeredTerrainMesh(
   };
 }
 
-const HEX_CORNER_OFFSETS = [
-  { x: 0, y: -1 },
-  { x: Math.sqrt(3) / 2, y: -0.5 },
-  { x: Math.sqrt(3) / 2, y: 0.5 },
-  { x: 0, y: 1 },
-  { x: -Math.sqrt(3) / 2, y: 0.5 },
-  { x: -Math.sqrt(3) / 2, y: -0.5 },
-] as const;
+function createTerrainMeshSampleIndices(count: number, step: number): number[] {
+  const sampleIndices: number[] = [];
+  const safeStep = Math.max(Math.floor(step), 1);
 
-const HEX_NEIGHBOR_DIRECTIONS = [
-  { x: 0, y: -1 },
-  { x: 1, y: -1 },
-  { x: 1, y: 0 },
-  { x: 0, y: 1 },
-  { x: -1, y: 1 },
-  { x: -1, y: 0 },
-] as const;
+  for (let index = 0; index < count; index += safeStep) {
+    sampleIndices.push(index);
+  }
+
+  const lastIndex = Math.max(count - 1, 0);
+  if (sampleIndices[sampleIndices.length - 1] !== lastIndex) {
+    sampleIndices.push(lastIndex);
+  }
+
+  return sampleIndices;
+}
 
 function getTerrainHexCells(): Array<{ x: number; y: number }> {
   const mapMinX = -HEX_MAP_ASPECT * HEX_TERRAIN_SCALE * 0.5;
@@ -2340,42 +3355,57 @@ function getTerrainHexCells(): Array<{ x: number; y: number }> {
   return cells;
 }
 
-function addHexTerrainWall(
+function addSmoothTerrainVertex(
   vertices: number[],
-  indices: number[],
-  firstX: number,
-  firstY: number,
-  secondX: number,
-  secondY: number,
-  topHeight: number,
-  bottomHeight: number
-): void {
-  const topFirst = addHexTerrainVertex(vertices, firstX, firstY, topHeight);
-  const topSecond = addHexTerrainVertex(vertices, secondX, secondY, topHeight);
-  const bottomFirst = addHexTerrainVertex(vertices, firstX, firstY, bottomHeight);
-  const bottomSecond = addHexTerrainVertex(vertices, secondX, secondY, bottomHeight);
-
-  indices.push(topFirst, bottomFirst, topSecond, topSecond, bottomFirst, bottomSecond);
-}
-
-function addHexTerrainVertex(
-  vertices: number[],
-  hexPointX: number,
-  hexPointY: number,
-  height: number
+  u: number,
+  v: number,
+  height: number,
+  normal: [number, number, number]
 ): number {
-  const u = hexPointToTerrainU(hexPointX);
-  const v = hexPointToTerrainV(hexPointY);
-  const vertexIndex = vertices.length / 5;
+  const vertexIndex = vertices.length / 8;
   vertices.push(
     (u - 0.5) * 2,
     (0.5 - v) * 2,
     height * HEIGHT_SCALE,
     u,
-    v
+    v,
+    normal[0],
+    normal[1],
+    normal[2]
   );
 
   return vertexIndex;
+}
+
+function createSmoothTerrainNormal(
+  heights: Float32Array,
+  columns: number,
+  rows: number,
+  u: number,
+  v: number
+): [number, number, number] {
+  const deltaU = TERRAIN_NORMAL_SAMPLE_RADIUS_PIXELS / Math.max(columns - 1, 1);
+  const deltaV = TERRAIN_NORMAL_SAMPLE_RADIUS_PIXELS / Math.max(rows - 1, 1);
+  const leftHeight = sampleHeightAt(heights, columns, rows, u - deltaU, v);
+  const rightHeight = sampleHeightAt(heights, columns, rows, u + deltaU, v);
+  const topHeight = sampleHeightAt(heights, columns, rows, u, v - deltaV);
+  const bottomHeight = sampleHeightAt(heights, columns, rows, u, v + deltaV);
+  const tangentU: [number, number, number] = [
+    deltaU * 2,
+    0,
+    (rightHeight - leftHeight) * HEIGHT_SCALE * TERRAIN_NORMAL_RELIEF_SCALE,
+  ];
+  const tangentV: [number, number, number] = [
+    0,
+    -deltaV * 2,
+    (bottomHeight - topHeight) * HEIGHT_SCALE * TERRAIN_NORMAL_RELIEF_SCALE,
+  ];
+
+  return normalizeVector3([
+    tangentV[1] * tangentU[2] - tangentV[2] * tangentU[1],
+    tangentV[2] * tangentU[0] - tangentV[0] * tangentU[2],
+    tangentV[0] * tangentU[1] - tangentV[1] * tangentU[0],
+  ]);
 }
 
 function terrainUvToHexPoint(u: number, v: number): { x: number; y: number } {
@@ -2397,34 +3427,21 @@ function getHexCellKey(x: number, y: number): string {
   return `${x},${y}`;
 }
 
-function quantizeHexElevation(height: number): number {
-  if (height <= HEX_WATER_HEIGHT_THRESHOLD) {
-    return 0;
-  }
-
-  const level = Math.max(
-    1,
-    Math.round(clamp(height, 0, 1) * (HEX_ELEVATION_LEVELS - 1))
-  );
-
-  return level / (HEX_ELEVATION_LEVELS - 1);
-}
-
 function isHexPassableAtUv(
-  materialLandMask: Uint8Array,
-  columns: number,
-  rows: number,
+  materialSemanticModel: CampaignMaterialSemanticModel,
   u: number,
   v: number
 ): boolean {
   const point = terrainUvToHexPoint(u, v);
   const cell = pixelToRoundedHex(point.x, point.y);
-  return isHexPassableAtHexPoint(
-    materialLandMask,
-    columns,
-    rows,
-    hexToPixel(cell.x, cell.y)
-  );
+  return isHexPassableAtHexCell(materialSemanticModel, cell);
+}
+
+function isHexPassableAtHexCell(
+  materialSemanticModel: CampaignMaterialSemanticModel,
+  cell: GridCoordinate
+): boolean {
+  return materialSemanticModel.landByCellKey.get(getHexCellKey(cell.x, cell.y)) === true;
 }
 
 function isHexPassableAtHexPoint(
@@ -2450,6 +3467,8 @@ function createTexture(
   options?: {
     wrapS?: number;
     wrapT?: number;
+    minFilter?: number;
+    magFilter?: number;
   }
 ): WebGLTexture {
   const texture = gl.createTexture();
@@ -2470,8 +3489,8 @@ function createTexture(
     gl.TEXTURE_WRAP_T,
     options?.wrapT ?? gl.CLAMP_TO_EDGE
   );
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, options?.minFilter ?? gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, options?.magFilter ?? gl.LINEAR);
 
   return texture;
 }
@@ -2491,12 +3510,13 @@ function createTerrainMatrix(aspectRatio: number): Mat4 {
   const safeScale = Math.max(currentCamera.scale, 0.1);
   const screenScale = safeScale / CAMERA_REFERENCE_SCALE;
   const projection = createPerspectiveMatrix(FOV_RADIANS, aspectRatio, 0.1, 20);
-  const translation = createTranslationMatrix(
-    currentCamera.offsetX * CAMERA_OFFSET_UNIT / CAMERA_REFERENCE_SCALE / screenScale,
-    -currentCamera.offsetY * CAMERA_OFFSET_UNIT / CAMERA_REFERENCE_SCALE / screenScale,
+  const cameraDistance = createTranslationMatrix(
+    0,
+    0,
     -CAMERA_BASE_DISTANCE / CAMERA_REFERENCE_SCALE
   );
-  const tilt = createRotationXMatrix(CAMERA_TILT_RADIANS);
+  const terrainPlanePan = createTerrainPlanePanMatrix(currentCamera);
+  const tilt = createRotationXMatrix(getCampaignTerrainCameraTiltRadians(currentCamera));
   const scale = createScaleMatrix(TERRAIN_SCALE, TERRAIN_SCALE, 1);
   const screenZoom = createScaleMatrix(screenScale, screenScale, 1);
 
@@ -2504,8 +3524,23 @@ function createTerrainMatrix(aspectRatio: number): Mat4 {
     screenZoom,
     multiplyMatrices(
       projection,
-      multiplyMatrices(translation, multiplyMatrices(tilt, scale))
+      multiplyMatrices(
+        cameraDistance,
+        multiplyMatrices(tilt, multiplyMatrices(terrainPlanePan, scale))
+      )
     )
+  );
+}
+
+function createTerrainPlanePanMatrix(camera: CampaignTerrainCamera): Mat4 {
+  const safeScale = Math.max(camera.scale, 0.1);
+  const tiltCos = Math.cos(getCampaignTerrainCameraTiltRadians(camera));
+  const safeTiltCos = Math.abs(tiltCos) < 0.0001 ? 1 : tiltCos;
+
+  return createTranslationMatrix(
+    camera.offsetX * CAMERA_OFFSET_UNIT / safeScale,
+    -camera.offsetY * CAMERA_OFFSET_UNIT / safeScale / safeTiltCos,
+    0
   );
 }
 
@@ -2700,16 +3735,6 @@ function createProgram(
   return program;
 }
 
-function createShaderSource(
-  source: string,
-  replacements: Record<string, string>
-): string {
-  return Object.entries(replacements).reduce(
-    (shaderSource, [token, value]) => shaderSource.replaceAll(token, value),
-    source
-  );
-}
-
 function multiplyMatrices(left: Mat4, right: Mat4): Mat4 {
   const result = new Float32Array(16);
 
@@ -2817,6 +3842,12 @@ function invertMatrix4(matrix: Mat4): Mat4 {
 
 function readMatrixValue(matrix: Mat4, index: number): number {
   return matrix[index] ?? 0;
+}
+
+function easeOutCubic(value: number): number {
+  const clampedValue = clamp(value, 0, 1);
+
+  return 1 - (1 - clampedValue) ** 3;
 }
 
 function clamp(value: number, min: number, max: number): number {

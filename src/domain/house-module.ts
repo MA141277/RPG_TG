@@ -122,12 +122,15 @@ export type HouseActionContainerViewModel = {
   actions: HouseActionViewModel[];
 };
 
+export type HouseCharacterCardLevel = 1 | 2 | 3 | 4 | 5;
+
 export type HouseStandbyActorViewModel = {
   characterId: CharacterId;
   name: string;
   title?: string;
   actionId?: string;
   isSelected?: boolean;
+  cardLevel?: HouseCharacterCardLevel;
   avatarImageUrl?: string | null;
   portraitImageUrl?: string | null;
   avatarArtClassName?: string;

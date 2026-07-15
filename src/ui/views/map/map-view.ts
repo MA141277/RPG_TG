@@ -71,6 +71,8 @@ export type MapViewModel = {
   heightmapImageUrl: string | null;
   hexTextureAtlasImageUrl: string | null;
   materialTextureImageUrl: string | null;
+  grassTextureImageUrl: string | null;
+  sandTextureImageUrl: string | null;
   waterTextureImageUrl: string | null;
   cloudNoiseTextureImageUrl: string | null;
   revealedHexKeys: string[];
@@ -178,6 +180,12 @@ export function createMapViewModel(input: {
       input.mapDefinition.layers?.find((layer) => layer.id === "map_material_texture")
         ?.imageUrl ??
       null,
+    grassTextureImageUrl:
+      input.mapDefinition.layers?.find((layer) => layer.id === "map_grass_texture")
+        ?.imageUrl ?? null,
+    sandTextureImageUrl:
+      input.mapDefinition.layers?.find((layer) => layer.id === "map_sand_texture")
+        ?.imageUrl ?? null,
     waterTextureImageUrl:
       input.mapDefinition.layers?.find((layer) => layer.id === "map_water_noise")
         ?.imageUrl ?? null,
@@ -482,6 +490,8 @@ function renderCampaignMapVisualLayer(
           data-map-texture-url="${model.hexTextureAtlasImageUrl}"
           data-map-height-url="${model.heightmapImageUrl}"
           data-map-material-url="${model.materialTextureImageUrl}"
+          ${model.grassTextureImageUrl == null ? "" : `data-map-grass-texture-url="${model.grassTextureImageUrl}"`}
+          ${model.sandTextureImageUrl == null ? "" : `data-map-sand-texture-url="${model.sandTextureImageUrl}"`}
           ${model.waterTextureImageUrl == null ? "" : `data-map-water-texture-url="${model.waterTextureImageUrl}"`}
           ${cityDepthMeshAttributes}
           aria-label="${model.mapName} terrain"

@@ -139,3 +139,46 @@
 [2m13:01:17[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
 [2m13:01:31[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
 [2m13:07:37[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/activity/activity-qte-runtime.ts[22m
+<<<<<<< Updated upstream
+=======
+[2m15:16:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/navigation/campaign-map-exploration.ts[22m
+[2m15:16:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/map/campaign-map-exploration.ts[22m
+[2m15:16:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/assets/yuanmo-map/yuanmo-fog-noise.png[22m
+[2m15:16:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/assets/yuanmo-map/yuanmo-water-noise.png[22m
+[2m15:16:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/assets/yuanmo-unit-animations/zhu-yuanzhang-monk-strat/look_around.json[22m
+[2m15:16:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/assets/yuanmo-unit-animations/zhu-yuanzhang-monk-strat/run.json[22m
+[2m15:16:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/assets/yuanmo-units/zhu-yuanzhang-monk-strat.jpg[22m
+[2m15:16:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/domain/campaign-hex.ts[22m
+[2m15:16:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/map/campaign-cloud-webgl.ts[22m
+[2m15:16:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/map/shaders/campaign-actor.frag.glsl[22m
+[2m15:16:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/map/shaders/campaign-actor.vert.glsl[22m
+[2m15:16:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/map/shaders/campaign-cloud.vert.glsl[22m
+[2m15:16:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/map/shaders/campaign-cloud.frag.glsl[22m
+[2m15:16:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/map/shaders/campaign-terrain.frag.glsl[22m
+[2m15:16:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/map/shaders/campaign-terrain.vert.glsl[22m
+[2m15:16:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/assets/yuanmo-units/zhu-yuanzhang-monk-strat.json[22m
+[2m15:16:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/map/map-view.ts[22m
+[2m15:16:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/activity/activity-qte-runtime.ts[22m
+[2m15:16:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/house-modules/temple-house/temple-house-house-module.ts[22m
+[2m15:16:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/navigation/travel-to-coordinate.ts[22m
+[2m15:16:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/playables/activity-qte/activity-qte-definition.ts[22m
+[2m15:16:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/state/create-initial-state.ts[22m
+[2m15:16:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/core/registry/playable-integration-registry.ts[22m
+[2m15:16:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/core/runtime/interactive-runtime.ts[22m
+[2m15:16:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/domain/activity-session.ts[22m
+[2m15:16:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
+[2m15:16:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/main-ui/main-ui-flow.js[22m
+[2m15:16:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/app-render.ts[22m
+[2m15:16:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/house/temple-house-view.ts[22m
+[2m15:16:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/map/campaign-terrain-webgl.ts[22m
+[2m15:16:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/scene/scene-view.ts[22m
+[2m15:16:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/content/yuanmo-strat-unit-assets.ts[22m
+[2m15:16:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/main.ts[22m
+[2m15:16:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/core/runtime/playable-runtime.ts[22m
+[2m15:16:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/domain/game-state.ts[22m
+[2m15:16:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/domain/house-module.ts[22m
+[2m15:16:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/domain/map.ts[22m
+[2m15:16:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/domain/temple-house.ts[22m
+[2m15:16:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
+[2m15:16:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/map/map-view.ts[22m
+>>>>>>> Stashed changes

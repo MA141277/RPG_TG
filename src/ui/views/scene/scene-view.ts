@@ -299,8 +299,8 @@ function renderPachinkoBoard(input: {
         <span>最近奖励 ${latestEvent?.label ?? "未触发"}</span>
         <span>底槽：5 / 3 / 3 / 2 / 2 / 2 / 转盘</span>
       </div>
-      <div class="c-grain-shop-modal__actions c-fortune-board__actions">
-        <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--gold" ${input.playButtonAttributes} ${input.phase === "dropping" ? "disabled" : ""}>
+      <div class="c-grain-shop-modal__actions c-pachinko-board__actions">
+        <button type="button" class="c-button c-grain-shop-button c-pachinko-board__play" ${input.playButtonAttributes} ${input.phase === "dropping" ? "disabled" : ""}>
           ${playButtonLabel}
         </button>
       </div>

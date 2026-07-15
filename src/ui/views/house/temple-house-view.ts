@@ -10,15 +10,31 @@ import {
   renderHouseActionContainer,
   renderHouseAlertOverlay,
   renderHouseDialogue,
+  renderHouseCharacterCard,
   renderHouseIdleOwner,
   renderHouseLeaveButton,
   renderHouseQuantityConfirmOverlay,
   renderHouseStandbyRoster,
 } from "./house-shared-view";
 
+const templePopupOverlayAttribute =
+  ' data-house-overlay-variant="temple-utility-popup"';
+const templePopupModalClassName =
+  " c-house-contribution-settlement c-house-temple-utility-popup";
+
 function renderConfirmOverlay(
   overlay: Extract<HouseOverlayViewModel, { type: "confirm" }>
 ): string {
+  const isTempleTaskConfirm =
+    overlay.confirmLabel === "现在开始" && overlay.cancelLabel === "稍后再领";
+  const overlayVariantAttribute = isTempleTaskConfirm
+    ? ' data-house-overlay-variant="temple-task-confirm"'
+    : templePopupOverlayAttribute;
+  const modalClassName = `c-grain-shop-modal c-grain-shop-skin-panel${
+    isTempleTaskConfirm
+      ? " c-house-contribution-settlement c-house-temple-task-confirm"
+      : `${templePopupModalClassName} c-house-temple-confirm-popup`
+  }`;
   const workDescription =
     overlay.workDescriptionLines == null
       ? ""
@@ -53,8 +69,8 @@ function renderConfirmOverlay(
         </div>
       `;
   return `
-    <div class="c-grain-shop-overlay" data-house-overlay="confirm">
-      <div class="c-grain-shop-modal c-grain-shop-skin-panel" role="dialog" aria-modal="true">
+    <div class="c-grain-shop-overlay" data-house-overlay="confirm"${overlayVariantAttribute}>
+      <div class="${modalClassName}" role="dialog" aria-modal="true">
         <h3 class="c-grain-shop-modal__title c-grain-shop-nameplate">${overlay.title}</h3>
         <div class="c-grain-shop-modal__body">
           ${overlay.paragraphs.map((paragraph) => `<p>${paragraph}</p>`).join("")}
@@ -342,8 +358,8 @@ function renderPachinkoBoardOverlay(
           <span>最近奖励 ${latestEvent?.label ?? "未触发"}</span>
           <span>底槽：5 / 3 / 3 / 2 / 2 / 2 / 转盘</span>
         </div>
-        <div class="c-grain-shop-modal__actions c-fortune-board__actions">
-          <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--gold" data-house-action="${overlay.playActionId}" ${overlay.phase === "dropping" ? "disabled" : ""}>
+        <div class="c-grain-shop-modal__actions c-pachinko-board__actions">
+          <button type="button" class="c-button c-grain-shop-button c-pachinko-board__play" data-house-action="${overlay.playActionId}" ${overlay.phase === "dropping" ? "disabled" : ""}>
             ${playButtonLabel}
           </button>
         </div>
@@ -352,17 +368,44 @@ function renderPachinkoBoardOverlay(
   `;
 }
 
+function isTempleResultGainLine(line: string): boolean {
+  if (/^(获得|得到|取得|物品|道具|装备|粮食|金钱)/u.test(line)) {
+    return true;
+  }
+
+  return /^(属性|能力|技能|武力|智谋|政务|魅力|统率|耐力|名声|声望|体力上限).*([+＋]\d|\d+\s*->)/u.test(
+    line
+  );
+}
+
+function selectTempleResultSummaryLines(
+  overlay: Extract<HouseOverlayViewModel, { type: "result" }>
+): string[] {
+  const scoreLine =
+    overlay.rewardLines.find((line) => line.startsWith("玩法分数 ")) ??
+    `玩法分数 ${overlay.score}`;
+  const contributionLine =
+    overlay.rewardLines.find((line) => /^贡献值\s*\+/u.test(line)) ??
+    overlay.rewardLines.find((line) => /^寺中贡献\s*\+/u.test(line));
+  const lines = [
+    scoreLine,
+    ...(contributionLine == null ? [] : [contributionLine]),
+    ...overlay.rewardLines.filter(isTempleResultGainLine),
+  ];
+
+  return [...new Set(lines)];
+}
+
 function renderResultOverlay(
   overlay: Extract<HouseOverlayViewModel, { type: "result" }>
 ): string {
+  const summaryLines = selectTempleResultSummaryLines(overlay);
   return `
-    <div class="c-grain-shop-overlay" data-house-overlay="result">
-      <div class="c-grain-shop-modal c-grain-shop-skin-panel c-temple-house-modal" role="dialog" aria-modal="true">
+    <div class="c-grain-shop-overlay" data-house-overlay="result"${templePopupOverlayAttribute}>
+      <div class="c-grain-shop-modal c-grain-shop-skin-panel c-temple-house-modal${templePopupModalClassName}" role="dialog" aria-modal="true">
         <h3 class="c-grain-shop-modal__title c-grain-shop-nameplate">${overlay.title}</h3>
         <div class="c-grain-shop-modal__body">
-          <p class="c-temple-house-result__grade">评语：${overlay.grade}</p>
-          <p class="c-temple-house-result__grade">命中：${overlay.score}</p>
-          ${overlay.rewardLines.map((line) => `<p>${line}</p>`).join("")}
+          ${summaryLines.map((line) => `<p>${line}</p>`).join("")}
         </div>
         <div class="c-grain-shop-modal__actions">
           <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--gold" data-house-action="${overlay.confirmActionId}">
@@ -378,8 +421,8 @@ function renderRestDaysOverlay(
   overlay: Extract<HouseOverlayViewModel, { type: "rest-days" }>
 ): string {
   return `
-    <div class="c-grain-shop-overlay" data-house-overlay="rest-days">
-      <div class="c-grain-shop-modal c-grain-shop-skin-panel c-temple-house-modal" role="dialog" aria-modal="true">
+    <div class="c-grain-shop-overlay" data-house-overlay="rest-days"${templePopupOverlayAttribute}>
+      <div class="c-grain-shop-modal c-grain-shop-skin-panel c-temple-house-modal${templePopupModalClassName}" role="dialog" aria-modal="true">
         <h3 class="c-grain-shop-modal__title c-grain-shop-nameplate">${overlay.title}</h3>
         <div class="c-grain-shop-modal__body">
           ${overlay.paragraphs.map((paragraph) => `<p>${paragraph}</p>`).join("")}
@@ -413,7 +456,10 @@ function renderOverlay(overlay: HouseOverlayViewModel | null): string {
   }
 
   if (overlay.type === "alert") {
-    return renderHouseAlertOverlay(overlay);
+    return renderHouseAlertOverlay(overlay, {
+      overlayAttribute: templePopupOverlayAttribute,
+      modalClassName: templePopupModalClassName,
+    });
   }
 
   if (overlay.type === "confirm") {
@@ -421,7 +467,10 @@ function renderOverlay(overlay: HouseOverlayViewModel | null): string {
   }
 
   if (overlay.type === "quantity-confirm") {
-    return renderHouseQuantityConfirmOverlay(overlay);
+    return renderHouseQuantityConfirmOverlay(overlay, {
+      overlayAttribute: templePopupOverlayAttribute,
+      modalClassName: templePopupModalClassName,
+    });
   }
 
   if (overlay.type === "qte-bar") {
@@ -455,23 +504,21 @@ function renderMeetingRoster(viewModel: HouseModuleViewModel): string {
   return `
     <section class="c-keep-house-meeting c-temple-house-meeting" aria-label="寺庙评定席">
       ${viewModel.standbyRoster
-        .map(
-          (actor) => `
+        .map((actor) => {
+          const secondaryText =
+            actor.title == null
+              ? ""
+              : `<span class="c-house-character-card__title">${actor.title}</span>`;
+
+          return `
             <article class="c-keep-house-seat c-temple-house-seat${actor.isSelected ? " is-selected" : ""}">
-              <div class="c-grain-shop-avatar c-keep-house-seat__avatar" aria-hidden="true">
-                <span class="c-grain-shop-avatar__art ${actor.avatarArtClassName ?? ""}"></span>
-              </div>
-              <div class="c-keep-house-seat__nameplate">
-                <span class="c-keep-house-seat__name">${actor.name}</span>
-                ${
-                  actor.title == null
-                    ? ""
-                    : `<span class="c-keep-house-seat__title">${actor.title}</span>`
-                }
-              </div>
+              ${renderHouseCharacterCard(actor, {
+                className: "c-keep-house-seat__card",
+                secondaryText,
+              })}
             </article>
-          `
-        )
+          `;
+        })
         .join("")}
     </section>
   `;
