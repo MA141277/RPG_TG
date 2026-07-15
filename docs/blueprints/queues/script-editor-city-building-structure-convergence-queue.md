@@ -21,9 +21,9 @@
 - next_family_candidate: `none`
 - auto_continue_eligible: `false`
 - next_effect: `return-to-version-review`
-- sync_status: `pending`
+- sync_status: `failed`
 - sync_scope: `branch-push`
-- sync_summary: `City/building structure implementation and closeout are pending repository sync.`
+- sync_summary: `City/building structure implementation and closeout attempted repository sync, but git push origin mod-first-dev failed because github.com:443 could not be reached.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
@@ -261,6 +261,7 @@
 
 - `2026-07-15`: `Queued behind structure-contract-implementation.`
 - `2026-07-15`: `Closed after implementation verification. The covered building/house structure contract is now durable; city-local placement ids, override layering, centralized resolver seams, and city-entry ownership remain for queue.script-editor-city-building-placement-resolver-convergence review.`
+- `2026-07-15`: `Repository sync attempted with git push origin mod-first-dev and failed because github.com:443 could not be reached; per sync record rule this records sync failure only and does not block version-level routing.`
 
 ### Historical Handoff Note
 
