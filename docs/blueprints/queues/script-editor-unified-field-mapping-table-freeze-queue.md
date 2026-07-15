@@ -7,20 +7,20 @@
 - blueprint_version: `2026.07`
 - governance_last_synced_at: `2026-07-15`
 - governance_sync_source: `docs/blueprints/blueprint.md`
-- queue_status: `active`
+- queue_status: `done`
 - queue_class: `required`
-- active_task: `task.script-editor-unified-field-mapping-table-freeze.queue-closeout-and-handoff`
-- next_task: `return-to-version-review`
-- closeout_status: `in-progress`
-- execution_closeout_status: `partial`
+- active_task: `none`
+- next_task: `none`
+- closeout_status: `done`
+- execution_closeout_status: `done`
 - topic_closure_status: `open-residue`
-- closure_basis: `This queue has just been admitted after project package persistence and completion-state gating stabilized durable project truth.`
+- closure_basis: `The bounded field mapping contract freeze slice landed a reusable field-definition contract, representative person-field definitions, validation diagnostics, and tests. Remaining work is field-mapping consumption by later object-family authoring queues rather than another same-family contract-freeze task.`
 - residue_remaining: `yes`
-- residue_family: `none`
-- residue_routing_status: `none`
+- residue_family: `cross-family`
+- residue_routing_status: `needs-version-review`
 - next_family_candidate: `none`
 - auto_continue_eligible: `false`
-- next_effect: `none`
+- next_effect: `return-to-version-review`
 - sync_status: `success`
 - sync_scope: `baseline-push`
 - sync_summary: `Commit 23ccfdb was pushed to origin/mod-first-dev, carrying the bounded field mapping contract implementation and active-task promotion to closeout.`
@@ -59,11 +59,11 @@
 - task_count: `3`
 - completed_task_count: `2`
 - remaining_task_count: `1`
-- active_task_summary: `Verify the field mapping contract slice, classify residue, and return control to version review.`
+- active_task_summary: `Queue closed after verification; field-mapping UI consumption residue is routed to version review as cross-family work.`
 - task_briefs:
   - `task.script-editor-unified-field-mapping-table-freeze.boundary-baseline-reconcile: completed after current authoring field lists, label maps, enum constants, validation diagnostics, and helper seams were identified.`
   - `task.script-editor-unified-field-mapping-table-freeze.field-mapping-contract-freeze: completed after the bounded field-definition contract, validation helpers, and representative person-field tests landed.`
-  - `task.script-editor-unified-field-mapping-table-freeze.queue-closeout-and-handoff: active task to verify the field mapping contract slice, classify residue, and return control to version review.`
+  - `task.script-editor-unified-field-mapping-table-freeze.queue-closeout-and-handoff: completed after verification and cross-family residue routing returned control to version review.`
 
 ### Operator Snapshot Contract
 
@@ -98,7 +98,7 @@
 | --- | --- | --- | --- | --- |
 | `task.script-editor-unified-field-mapping-table-freeze.boundary-baseline-reconcile` | `completed` | `Reconciled current field rendering, label, validation, and helper surfaces before freezing the shared field-definition contract.` | `none` | `Completed on 2026-07-15 after source evidence showed field metadata is split across workspace shell family labels/diagnostic targets/preview summaries, person imported-attribute labels and value parsing, object-family enum constants, update helpers, and validation diagnostics.` |
 | `task.script-editor-unified-field-mapping-table-freeze.field-mapping-contract-freeze` | `completed` | `Implemented the bounded field mapping table contract and representative validation tests.` | `task.script-editor-unified-field-mapping-table-freeze.boundary-baseline-reconcile` | `Completed on 2026-07-15 after the shared field-definition contract, person-field representative slice, duplicate/invalid metadata diagnostics, typecheck, full tests, and Blueprint lint passed.` |
-| `task.script-editor-unified-field-mapping-table-freeze.queue-closeout-and-handoff` | `active` | `Verify the field mapping contract slice, classify residue, and return control to version review.` | `task.script-editor-unified-field-mapping-table-freeze.field-mapping-contract-freeze` | `Must run lint and relevant tests before queue closeout.` |
+| `task.script-editor-unified-field-mapping-table-freeze.queue-closeout-and-handoff` | `completed` | `Verified the field mapping contract slice, classified cross-family residue, and returned control to version review.` | `task.script-editor-unified-field-mapping-table-freeze.field-mapping-contract-freeze` | `Completed on 2026-07-15 after npm run typecheck, npm run test, npm run lint:blueprints, npm run lint:plans, and Blueprint governance check passed.` |
 
 ### Task Definitions
 
@@ -211,7 +211,7 @@
 ##### Control Block
 
 - task_id: `task.script-editor-unified-field-mapping-table-freeze.queue-closeout-and-handoff`
-- state: `active`
+- state: `completed`
 - task_kind: `execution`
 - scope:
   - `docs/blueprints/project-progress.md`
@@ -244,20 +244,24 @@
 - task_brief:
   - `Close the field mapping table freeze queue only after implementation is verified or honestly routed.`
 - task_outcome_summary:
-  - `Expected output is a clean handoff back to version review with field mapping either closed or explicitly routed.`
+  - `Completed with cross-family residue: the field mapping contract is frozen for the bounded representative slice, while object-family UI consumption and broader field migration are routed back to version review for later character, city/building, narrative, event, condition, and validation queues.`
 - Purpose:
   - `Prevent later object-family queues from depending on ambiguous field metadata ownership.`
 - Failure mode:
   - `Closing without explicit validation would let later queues reintroduce per-panel field definitions.`
 
+##### Progress Log
+
+- `2026-07-15`: `Closed queue after npm run typecheck, npm run test, npm run lint:blueprints, npm run lint:plans, and npm run blueprint:governance:check passed. Classified residue_remaining=yes with residue_family=cross-family because later object-family queues must consume the frozen mapping contract when migrating UI rendering, validation, and per-family schemas, but the shared field-definition contract itself is now in place.`
+
 ### Historical Handoff Note
 
 - Task ID:
-  - `none`
+  - `task.script-editor-unified-field-mapping-table-freeze.queue-closeout-and-handoff`
 - Recorded handoff at closure:
-  - `none yet`
+  - `Returned control to target.script-editor-authoring-data-structure-unification version review with field-mapping UI consumption residue classified as cross-family.`
 - Recorded expected output:
-  - `Field mapping table contract is frozen or explicitly routed as prerequisite residue.`
+  - `Later authoring/data convergence queues can consume a shared field-definition contract instead of inventing per-panel field metadata.`
 
 ### Historical Candidate Notes
 

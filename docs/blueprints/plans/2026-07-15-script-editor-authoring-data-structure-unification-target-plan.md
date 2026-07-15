@@ -5,13 +5,13 @@
 - document_role: `version-governor`
 - version_id: `target.script-editor-authoring-data-structure-unification`
 - version_status: `open`
-- active_phase: `phase.active-execution`
-- active_queue: `queue.script-editor-unified-field-mapping-table-freeze`
-- decision_state: `active-execution`
-- next_decision: `queue-closeout-or-return-to-version-review`
-- next_action: `resume-active-queue`
-- resume_gate: `open-active-queue`
-- promotion_review_result: `admit`
+- active_phase: `phase.promotion-review`
+- active_queue: `none`
+- decision_state: `promotion-review`
+- next_decision: `same-version-admission-or-version-closeout`
+- next_action: `return-to-promotion-review`
+- resume_gate: `promotion-review`
+- promotion_review_result: `none`
 - review_subject_id: `none`
 - review_subject_classification: `none`
 - proposed_queue_id: `none`
@@ -22,12 +22,12 @@
 - intake_summary: `none`
 - intake_result: `none`
 - intake_feedback_mode: `none`
-- closure_review_subject: `none`
-- closure_review_status: `none`
+- closure_review_subject: `queue.script-editor-unified-field-mapping-table-freeze`
+- closure_review_status: `routed`
 - residue_candidate_id: `none`
-- residue_candidate_family: `none`
-- routing_basis: `none`
-- next_lawful_queue_recommendation: `none`
+- residue_candidate_family: `cross-family`
+- routing_basis: `queue.script-editor-unified-field-mapping-table-freeze closed after freezing the bounded shared field-definition contract and representative validation slice. Remaining mapping consumption belongs to later object-family queues rather than another same-family contract-freeze continuation.`
+- next_lawful_queue_recommendation: `queue.script-editor-character-definition-status-convergence`
 - auto_admission_ready: `false`
 - blocked_by: []
 - candidate_queue_ids:
@@ -95,7 +95,7 @@
 | `queue.script-editor-project-cache-save-export-preview-continuation` | `done` | `Already completed; do not reopen except by explicit governance record.` | `Continuation queue closed after durable save-location recording and stale continue gating landed; same-family residue was routed to queue.script-editor-durable-package-workflow-continuation.` |
 | `queue.script-editor-durable-package-workflow-continuation` | `done` | `Already completed; do not reopen except by explicit governance record.` | `Closed after package skeleton creation, writable-directory draft opening/edit-in-place, and runtime preview-from-disk semantics landed with verification.` |
 | `queue.script-editor-project-completion-state-gating` | `done` | `Already completed; do not reopen except by explicit governance record.` | `Closed after project completion-state persistence and export-only completion upgrade landed with verification and no same-family residue.` |
-| `queue.script-editor-unified-field-mapping-table-freeze` | `active` | `Already admitted.` | `Provides field id, canonical key, labels, groups, value types, and ordering metadata.` |
+| `queue.script-editor-unified-field-mapping-table-freeze` | `done` | `Already completed; do not reopen except by explicit governance record.` | `Closed after the bounded shared field-definition contract and representative validation slice landed; object-family mapping consumption is cross-family residue for later queues.` |
 | `queue.script-editor-character-definition-status-convergence` | `candidate` | `After package persistence is stable enough to change character storage without creating dual durable truth.` | `Covers character definitions, optional status overlays, selectors/materializers, and runtime mutation ownership.` |
 | `queue.script-editor-character-authoring-surface-completion` | `candidate` | `If character UI/control work outgrows the character definition convergence queue.` | `Covers base/profile/stat/skill/custom maps plus dialogue/event/trade bindings.` |
 | `queue.script-editor-schema-reference-and-migration-freeze` | `candidate` | `Before retiring legacy structures or when multiple queues need one replacement reference.` | `Owns formal schema reference, legacy supersession, migration adapters, and schema versions.` |
@@ -117,16 +117,16 @@
 
 ### Current Queue Activation
 
-- `queue.script-editor-unified-field-mapping-table-freeze`
+- `none`
 - Active task:
-  - `task.script-editor-unified-field-mapping-table-freeze.queue-closeout-and-handoff`
+  - `none`
 
 ### Version Boundary Record
 
 - `This version governs authoring/data-structure convergence after runtime-pack-unification closeout.`
 - `It must consume the closed runtime-pack export/import/startup truth as baseline evidence rather than reopening it as a compatibility patch surface.`
 - `It may supersede previously frozen script-editor structures only through explicit schema/migration/supersession records.`
-- `It now resumes from the admitted unified field mapping table freeze queue and must not admit a second queue while that queue remains active.`
+- `It now resumes from promotion review after the unified field mapping table freeze queue closed with cross-family residue routed to later object-family queues.`
 
 ### Queue Admission Startup Rules
 
@@ -194,3 +194,4 @@
 - `2026-07-15: admission review then promoted queue.script-editor-project-completion-state-gating as the single active queue after durable package workflow closeout satisfied the persistence prerequisite.`
 - `2026-07-15: queue.script-editor-project-completion-state-gating closed after durable project completion-state truth, save/load preservation, runtime-import draft state, and export-only completion upgrade landed with verification and no same-family residue; the version returned to promotion review for the next candidate queue.`
 - `2026-07-15: admission review then promoted queue.script-editor-unified-field-mapping-table-freeze as the single active queue after completion-state gating closeout satisfied the persistence prerequisite for shared field metadata.`
+- `2026-07-15: queue.script-editor-unified-field-mapping-table-freeze closed after the bounded shared field-definition contract and representative validation slice landed; field-mapping UI consumption was routed as cross-family residue to later object-family queues, with character definition/status convergence recommended next.`
