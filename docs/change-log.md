@@ -2828,3 +2828,14 @@
 ### Impact
 - Building authoring no longer relies on export-only projection as the durable source for required `houses.json` structure fields.
 - City-local placement ids, override layering, and centralized resolver ownership remain explicit follow-up residue for the placement resolver queue.
+
+## 2026-07-15 Script Editor City Building Placement Resolver Queue
+
+### Added
+- Added `queue.script-editor-city-building-placement-resolver-convergence` as the active Blueprint queue for city-local placements, entry ownership, NPC assignment ownership, access/refusal lookup, dialogue inheritance, and centralized resolver seams.
+
+### Changed
+- Blueprint entry points now resume from the placement resolver queue's `boundary-baseline-reconcile` task instead of version promotion review.
+
+### Impact
+- The next city/building slice must first inventory resolver boundaries and select the smallest lawful implementation before changing production code.
