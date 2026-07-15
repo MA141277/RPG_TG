@@ -9,8 +9,8 @@
 - governance_sync_source: `docs/blueprints/blueprint.md`
 - queue_status: `active`
 - queue_class: `required`
-- active_task: `task.script-editor-schema-reference-and-migration-freeze.schema-reference-freeze`
-- next_task: `task.script-editor-schema-reference-and-migration-freeze.queue-closeout-and-handoff`
+- active_task: `task.script-editor-schema-reference-and-migration-freeze.queue-closeout-and-handoff`
+- next_task: `none`
 - closeout_status: `in-progress`
 - execution_closeout_status: `partial`
 - topic_closure_status: `open-residue`
@@ -56,9 +56,9 @@
 
 - queue_goal: `Freeze the durable script-editor schema reference, migration adapter boundary, and versioning rules needed before legacy supersession and final validation.`
 - task_count: `3`
-- completed_task_count: `1`
-- remaining_task_count: `2`
-- active_task_summary: `Implement the centralized schema reference and supported-version migration-boundary slice selected by baseline.`
+- completed_task_count: `2`
+- remaining_task_count: `1`
+- active_task_summary: `Verify, classify residue, and return control to version review.`
 - task_briefs:
   - `task.script-editor-schema-reference-and-migration-freeze.boundary-baseline-reconcile: inventory current schemaVersion, project definition, import/export/save migration, and legacy-shape references before implementation.`
   - `task.script-editor-schema-reference-and-migration-freeze.schema-reference-freeze: implement the selected schema reference and migration-boundary slice with tests.`
@@ -103,8 +103,8 @@
 | Task ID | State | Summary | Depends On | Notes |
 | --- | --- | --- | --- | --- |
 | `task.script-editor-schema-reference-and-migration-freeze.boundary-baseline-reconcile` | `done` | `Inventoried schema/version/migration seams and selected centralized schema reference plus supported-version migration-boundary helpers as the smallest lawful freeze slice.` | `none` | `No production code changed during baseline.` |
-| `task.script-editor-schema-reference-and-migration-freeze.schema-reference-freeze` | `active` | `Implement the selected schema reference and migration-boundary slice with tests.` | `task.script-editor-schema-reference-and-migration-freeze.boundary-baseline-reconcile` | `Must not become legacy deletion or compatibility-only masking.` |
-| `task.script-editor-schema-reference-and-migration-freeze.queue-closeout-and-handoff` | `pending` | `Verify, classify residue, and return control to version review.` | `task.script-editor-schema-reference-and-migration-freeze.schema-reference-freeze` | `Does not infer version closeout from this queue.` |
+| `task.script-editor-schema-reference-and-migration-freeze.schema-reference-freeze` | `done` | `Centralized project/runtime pack schemaVersion references and made save/load/import/export consume them with coverage.` | `task.script-editor-schema-reference-and-migration-freeze.boundary-baseline-reconcile` | `Legacy deletion and compatibility-only masking stayed out of scope.` |
+| `task.script-editor-schema-reference-and-migration-freeze.queue-closeout-and-handoff` | `active` | `Verify, classify residue, and return control to version review.` | `task.script-editor-schema-reference-and-migration-freeze.schema-reference-freeze` | `Does not infer version closeout from this queue.` |
 
 ### Task Definitions
 
@@ -170,7 +170,7 @@
 ##### Control Block
 
 - task_id: `task.script-editor-schema-reference-and-migration-freeze.schema-reference-freeze`
-- state: `active`
+- state: `done`
 - task_kind: `execution`
 - scope:
   - `src/domain/script-editor-project.ts`
@@ -207,7 +207,7 @@
 - task_brief:
   - `Implement the baseline-selected schema reference freeze slice.`
 - task_outcome_summary:
-  - `Pending implementation.`
+  - `Completed after script-editor project and runtime pack schemaVersion 1 references were centralized in the domain script-editor project boundary, loader/save/runtime import/runtime export consumed those references, and robustness coverage locked project save plus runtime export/import boundary consumption.`
 - Purpose:
   - `Make the schema and migration boundary explicit enough for later supersession and final validation.`
 - Failure mode:
@@ -218,7 +218,7 @@
 ##### Control Block
 
 - task_id: `task.script-editor-schema-reference-and-migration-freeze.queue-closeout-and-handoff`
-- state: `pending`
+- state: `active`
 - task_kind: `decision-dispatch`
 - scope:
   - `docs/blueprints/queues/script-editor-schema-reference-and-migration-freeze-queue.md`
@@ -248,7 +248,7 @@
 - task_brief:
   - `Close or route the schema reference queue after verified implementation.`
 - task_outcome_summary:
-  - `Pending implementation.`
+  - `Pending closeout.`
 - Purpose:
   - `Return control to version review without hiding schema/migration residue.`
 - Failure mode:
@@ -275,3 +275,4 @@
 
 - `2026-07-16`: `Promotion review admitted queue.script-editor-schema-reference-and-migration-freeze as the single active queue because legacy supersession and final validation need an explicit schema and migration boundary first. The first live task is boundary-baseline-reconcile.`
 - `2026-07-16`: `Boundary baseline completed after inspecting src/domain/script-editor-project.ts, editor-project-loader/save, runtime-pack-import/export, field-mapping, and robustness tests. Current project and runtime pack schemaVersion values are all version 1 but are scattered across type definitions, parsers, serializers, import, and export. The selected smallest implementation slice is a centralized schema reference plus supported-version/migration-boundary helpers consumed by those seams; legacy structure deletion and playable/minigame bindings remain out of scope.`
+- `2026-07-16`: `Schema-reference-freeze implementation completed with TDD. Added centralized SCRIPT_EDITOR_PROJECT_SCHEMA_VERSION and SCRIPT_EDITOR_RUNTIME_PACK_SCHEMA_VERSION references, updated project loader/save and runtime pack import/export to consume them, and added robustness coverage proving project save/runtime export versions plus runtime import schema boundary consumption. Verification passed: targeted RED/GREEN test, npm run typecheck, npm test, npm run build, npm run lint:blueprints, npm run lint:plans, npm run blueprint:governance:check, and git diff --check. The active task is now queue-closeout-and-handoff.`

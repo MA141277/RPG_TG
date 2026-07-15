@@ -6,10 +6,13 @@ import { createDraftScriptEditorProjectCompletionState } from "./project-complet
 import {
   SCRIPT_EDITOR_PROJECT_MANIFEST_FILE,
   SCRIPT_EDITOR_PROJECT_KIND,
+  SCRIPT_EDITOR_PROJECT_SCHEMA_VERSION,
+  SCRIPT_EDITOR_RUNTIME_PACK_SCHEMA_VERSION,
   type ScriptEditorEntityRecord,
   type ScriptEditorEventRecord,
   type ScriptEditorEventTriggerTiming,
   type ScriptEditorProjectDefinition,
+  type ScriptEditorRuntimePackSchemaVersion,
   type ScriptEditorRuntimeRecord,
   type ScriptEditorStoryPackRecord,
   type ScriptEditorTextEntryRecord,
@@ -64,7 +67,7 @@ type RuntimePackManifestFiles = {
 };
 
 type RuntimePackManifest = {
-  schemaVersion: 1;
+  schemaVersion: ScriptEditorRuntimePackSchemaVersion;
   kind?: "scenario-pack";
   id: string;
   title: string;
@@ -175,7 +178,7 @@ export function importScenarioPackToScriptEditorProject(
   const diagnostics = validateScenarioPackForScriptEditorImport(pack);
   const rawPack = pack as Record<string, unknown>;
   const project = {
-    schemaVersion: 1,
+    schemaVersion: SCRIPT_EDITOR_PROJECT_SCHEMA_VERSION,
     kind: SCRIPT_EDITOR_PROJECT_KIND,
     id: pack.id,
     title: pack.title,
@@ -734,7 +737,11 @@ function isScenarioPackManifest(value: unknown): value is RuntimePackManifest {
     return false;
   }
 
-  if (typeof candidate.id !== "string" || typeof candidate.title !== "string") {
+  if (
+    candidate.schemaVersion !== SCRIPT_EDITOR_RUNTIME_PACK_SCHEMA_VERSION ||
+    typeof candidate.id !== "string" ||
+    typeof candidate.title !== "string"
+  ) {
     return false;
   }
 

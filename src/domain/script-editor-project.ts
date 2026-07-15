@@ -3,6 +3,13 @@ import type { RuntimeTaskInput } from "../core/contracts/runtime-result";
 
 export const SCRIPT_EDITOR_PROJECT_KIND = "script-editor-project";
 export const SCRIPT_EDITOR_PROJECT_MANIFEST_FILE = "project.json";
+export const SCRIPT_EDITOR_PROJECT_SCHEMA_VERSION = 1;
+export const SCRIPT_EDITOR_RUNTIME_PACK_SCHEMA_VERSION = 1;
+
+export type ScriptEditorProjectSchemaVersion =
+  typeof SCRIPT_EDITOR_PROJECT_SCHEMA_VERSION;
+export type ScriptEditorRuntimePackSchemaVersion =
+  typeof SCRIPT_EDITOR_RUNTIME_PACK_SCHEMA_VERSION;
 
 export const SCRIPT_EDITOR_PROJECT_FILE_KEYS = [
   "storyPack",
@@ -418,7 +425,7 @@ export type ScriptEditorTextEntryRecord = ScriptEditorEntityRecord & {
 };
 
 export type ScriptEditorProjectManifest = {
-  schemaVersion: 1;
+  schemaVersion: ScriptEditorProjectSchemaVersion;
   kind: typeof SCRIPT_EDITOR_PROJECT_KIND;
   id: string;
   title: string;
@@ -428,7 +435,7 @@ export type ScriptEditorProjectManifest = {
 };
 
 export type ScriptEditorProjectDefinition = {
-  schemaVersion: 1;
+  schemaVersion: ScriptEditorProjectSchemaVersion;
   kind: typeof SCRIPT_EDITOR_PROJECT_KIND;
   id: string;
   title: string;

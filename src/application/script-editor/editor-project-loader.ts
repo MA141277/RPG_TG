@@ -2,6 +2,7 @@ import {
   SCRIPT_EDITOR_PROJECT_FILE_KEYS,
   SCRIPT_EDITOR_PROJECT_KIND,
   SCRIPT_EDITOR_PROJECT_MANIFEST_FILE,
+  SCRIPT_EDITOR_PROJECT_SCHEMA_VERSION,
   type ScriptEditorEntityRecord,
   type ScriptEditorProjectDefinition,
   type ScriptEditorProjectFileKey,
@@ -37,8 +38,10 @@ export function parseScriptEditorProjectManifest(
   value: unknown
 ): ScriptEditorProjectManifest {
   assertObject(value, "script editor project manifest");
-  if (value.schemaVersion !== 1) {
-    throw new Error("Script editor project schemaVersion must be 1.");
+  if (value.schemaVersion !== SCRIPT_EDITOR_PROJECT_SCHEMA_VERSION) {
+    throw new Error(
+      `Script editor project schemaVersion must be ${SCRIPT_EDITOR_PROJECT_SCHEMA_VERSION}.`
+    );
   }
   if (value.kind !== SCRIPT_EDITOR_PROJECT_KIND) {
     throw new Error(`Script editor project kind must be ${SCRIPT_EDITOR_PROJECT_KIND}.`);
@@ -66,8 +69,10 @@ export function parseScriptEditorProject(
   value: unknown
 ): ScriptEditorProjectDefinition {
   assertObject(value, "script editor project");
-  if (value.schemaVersion !== 1) {
-    throw new Error("Script editor project schemaVersion must be 1.");
+  if (value.schemaVersion !== SCRIPT_EDITOR_PROJECT_SCHEMA_VERSION) {
+    throw new Error(
+      `Script editor project schemaVersion must be ${SCRIPT_EDITOR_PROJECT_SCHEMA_VERSION}.`
+    );
   }
   if (value.kind !== SCRIPT_EDITOR_PROJECT_KIND) {
     throw new Error(`Script editor project kind must be ${SCRIPT_EDITOR_PROJECT_KIND}.`);

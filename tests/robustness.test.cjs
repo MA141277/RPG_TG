@@ -2850,6 +2850,39 @@ test("script editor project save emits canonical split files", async () => {
   assert.equal(savedPeople[0]?.id, project.people[0]?.id);
 });
 
+test("script editor schema reference drives project save and runtime export versions", () => {
+  const {
+    SCRIPT_EDITOR_PROJECT_SCHEMA_VERSION,
+    SCRIPT_EDITOR_RUNTIME_PACK_SCHEMA_VERSION,
+  } = require("../.test-dist/domain/script-editor-project.js");
+  const {
+    serializeScriptEditorProjectToFiles,
+  } = require("../.test-dist/application/script-editor/editor-project-save.js");
+  const {
+    exportScriptEditorProjectToScenarioPackFiles,
+  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  const project = createExportableScriptEditorProjectDefinition();
+
+  const projectManifest = JSON.parse(
+    serializeScriptEditorProjectToFiles(project)["project.json"]
+  );
+  const runtimePackManifest = JSON.parse(
+    exportScriptEditorProjectToScenarioPackFiles(project)["pack.json"]
+  );
+  const runtimePackImportSource = fs.readFileSync(
+    path.join(process.cwd(), "src/application/script-editor/runtime-pack-import.ts"),
+    "utf8"
+  );
+
+  assert.equal(projectManifest.schemaVersion, SCRIPT_EDITOR_PROJECT_SCHEMA_VERSION);
+  assert.equal(runtimePackManifest.schemaVersion, SCRIPT_EDITOR_RUNTIME_PACK_SCHEMA_VERSION);
+  assert.match(runtimePackImportSource, /SCRIPT_EDITOR_RUNTIME_PACK_SCHEMA_VERSION/);
+  assert.match(
+    runtimePackImportSource,
+    /candidate\.schemaVersion\s*!==\s*SCRIPT_EDITOR_RUNTIME_PACK_SCHEMA_VERSION/
+  );
+});
+
 test("script editor project completion state persists through project save and load", async () => {
   const {
     loadScriptEditorProjectFromFiles,

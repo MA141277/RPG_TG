@@ -2,6 +2,7 @@ import {
   SCRIPT_EDITOR_PROJECT_CANONICAL_FILES,
   SCRIPT_EDITOR_PROJECT_KIND,
   SCRIPT_EDITOR_PROJECT_MANIFEST_FILE,
+  SCRIPT_EDITOR_PROJECT_SCHEMA_VERSION,
   type ScriptEditorProjectDefinition,
   type ScriptEditorProjectFileKey,
 } from "../../domain/script-editor-project";
@@ -13,7 +14,7 @@ export function serializeScriptEditorProjectToFiles(
   const project = parseScriptEditorProject(value);
   const files: Record<string, string> = {
     [SCRIPT_EDITOR_PROJECT_MANIFEST_FILE]: stringifyJson({
-      schemaVersion: project.schemaVersion,
+      schemaVersion: SCRIPT_EDITOR_PROJECT_SCHEMA_VERSION,
       kind: SCRIPT_EDITOR_PROJECT_KIND,
       id: project.id,
       title: project.title,

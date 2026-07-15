@@ -13,8 +13,10 @@ import type {
   ScriptEditorConditionNode,
   ScriptEditorEventRecord,
   ScriptEditorProjectDefinition,
+  ScriptEditorRuntimePackSchemaVersion,
   ScriptEditorStoryPackRecord,
 } from "../../domain/script-editor-project";
+import { SCRIPT_EDITOR_RUNTIME_PACK_SCHEMA_VERSION } from "../../domain/script-editor-project";
 import type { ScenarioProfileDefinition } from "../../domain/scenario-profile";
 import type { SceneDefinition } from "../../domain/action";
 import type { EventDefinition, EventTriggerTiming } from "../../domain/event";
@@ -57,7 +59,7 @@ type RuntimePackManifestFiles = {
 };
 
 type RuntimePackManifest = {
-  schemaVersion: 1;
+  schemaVersion: ScriptEditorRuntimePackSchemaVersion;
   kind: "scenario-pack";
   id: string;
   title: string;
@@ -152,7 +154,7 @@ export function validateScriptEditorProjectForRuntimeExport(
 
   try {
     parseScenarioPack({
-      schemaVersion: 1,
+      schemaVersion: SCRIPT_EDITOR_RUNTIME_PACK_SCHEMA_VERSION,
       id: project.storyPack.id,
       title: project.storyPack.title,
       ...(project.storyPack.description == null
@@ -225,7 +227,7 @@ export function exportScriptEditorProjectToScenarioPackFiles(
   }
 
   const manifest: RuntimePackManifest = {
-    schemaVersion: 1,
+    schemaVersion: SCRIPT_EDITOR_RUNTIME_PACK_SCHEMA_VERSION,
     kind: "scenario-pack",
     id: project.storyPack.id,
     title: project.storyPack.title,
