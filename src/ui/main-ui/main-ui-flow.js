@@ -4381,8 +4381,19 @@ export class MainUiFlow {
     const targetEntityId = actionElement?.dataset.scriptEditorEntityId ?? null;
 
     if (action === "new-project") {
-      this.scriptEditorProjectSource = "new";
-      this.commitScriptEditorProject(createDefaultScriptEditorProjectDefinition());
+      try {
+        await this.createScriptEditorProjectAtSavePath();
+      } catch (error) {
+        this.recordScriptEditorNotice({
+          tone: "warning",
+          message:
+            error instanceof Error
+              ? error.message
+              : "Failed to create script editor project.",
+        });
+        this.render();
+        return;
+      }
       this.resetScriptEditorRecordListPages();
       this.resetScriptEditorRecordSearch();
       this.scriptEditorSelection = {
@@ -4390,7 +4401,6 @@ export class MainUiFlow {
         entityId: null,
       };
       this.scriptEditorAuxiliaryPanelOpen = false;
-      this.scriptEditorProjectDirectoryHandle = null;
       this.scriptEditorExportDirectoryHandle = null;
       this.scriptEditorPendingDeleteProjectId = null;
       this.resetScriptEditorNoticeTimeline();
@@ -6023,6 +6033,23 @@ export class MainUiFlow {
     }
 
     this.render();
+  }
+
+  async createScriptEditorProjectAtSavePath() {
+    const project = createDefaultScriptEditorProjectDefinition();
+    const result = await writeTextFilesWithDirectoryPicker(
+      serializeScriptEditorProjectToFiles(project),
+      {
+        directoryHandle: null,
+        suggestedName: project.id,
+        downloadPrefix: project.id,
+      }
+    );
+
+    this.scriptEditorProjectSource = "new";
+    this.commitScriptEditorProject(project);
+    this.scriptEditorProjectDirectoryHandle = result.directoryHandle ?? null;
+    this.rememberScriptEditorProjectPackageLocation(result);
   }
 
   async exportScriptEditorProject() {

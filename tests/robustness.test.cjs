@@ -2962,6 +2962,30 @@ test("script editor save records durable directory location and blocks stale con
   );
 });
 
+test("script editor new project creates a package skeleton before opening the workspace", () => {
+  const mainUiSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    "utf8"
+  );
+
+  assert.match(
+    mainUiSource,
+    /await this\.createScriptEditorProjectAtSavePath\(\)/
+  );
+  assert.match(
+    mainUiSource,
+    /async createScriptEditorProjectAtSavePath\(\)/
+  );
+  assert.match(
+    mainUiSource,
+    /serializeScriptEditorProjectToFiles\(project\)/
+  );
+  assert.match(
+    mainUiSource,
+    /this\.rememberScriptEditorProjectPackageLocation\(result\)/
+  );
+});
+
 test(
   "script editor runtime export emits a runtime-compatible scenario pack for the bounded direct-mapping slice",
   async () => {
