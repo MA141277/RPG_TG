@@ -12,6 +12,7 @@ import {
   upsertScriptEditorWorkflowRecord,
 } from "../../application/script-editor/minimal-workflow";
 import { loadScriptEditorProjectFromFiles } from "../../application/script-editor/editor-project-loader";
+import { loadScenarioPackFromFiles } from "../../application/scenario/scenario-pack-loader";
 import { serializeScriptEditorProjectToFiles } from "../../application/script-editor/editor-project-save";
 import {
   exportScriptEditorProjectToScenarioPackFiles,
@@ -4413,9 +4414,7 @@ export class MainUiFlow {
     }
 
     if (action === "open-project") {
-      this.overlayRoot
-        .querySelector("[data-script-editor-project-file]")
-        ?.click();
+      await this.openScriptEditorProjectFromDirectory();
       return;
     }
 
@@ -4484,6 +4483,11 @@ export class MainUiFlow {
 
     if (action === "validate") {
       this.runScriptEditorValidation();
+      return;
+    }
+
+    if (action === "preview-runtime") {
+      await this.previewSavedScriptEditorProjectRuntime();
       return;
     }
 
@@ -6105,6 +6109,78 @@ export class MainUiFlow {
     );
   }
 
+  async previewSavedScriptEditorProjectRuntime() {
+    if (this.scriptEditorProject == null) {
+      return;
+    }
+
+    if (this.scriptEditorProjectDirectoryHandle == null) {
+      this.recordScriptEditorNotice({
+        tone: "warning",
+        message: "Save or open a project directory before runtime preview.",
+      });
+      this.render();
+      return;
+    }
+
+    try {
+      await this.persistScriptEditorProjectDraftBeforeExport();
+      const project = await loadScriptEditorProjectFromFiles(
+        await readFilesFromDirectoryHandle(this.scriptEditorProjectDirectoryHandle)
+      );
+      const serializedPackFiles =
+        exportScriptEditorProjectToScenarioPackFiles(project);
+      const scenarioPack = await loadScenarioPackFromFiles(
+        createTextImportFilesFromRecord(serializedPackFiles)
+      );
+      await this.onStartScenarioPack?.(scenarioPack);
+    } catch (error) {
+      this.recordScriptEditorNotice({
+        tone: "warning",
+        message:
+          error instanceof Error ? error.message : "Failed to start runtime preview.",
+      });
+      this.render();
+    }
+  }
+
+  async openScriptEditorProjectFromDirectory() {
+    try {
+      const directoryHandle = await pickScriptEditorDirectory({
+        mode: "readwrite",
+      });
+      const files = await readFilesFromDirectoryHandle(directoryHandle);
+      this.scriptEditorProjectSource = "opened";
+      this.commitScriptEditorProject(await loadScriptEditorProjectFromFiles(files));
+      this.resetScriptEditorRecordListPages();
+      this.resetScriptEditorRecordSearch();
+      this.scriptEditorSelection = {
+        family: "storyPack",
+        entityId: null,
+      };
+      this.scriptEditorAuxiliaryPanelOpen = false;
+      this.scriptEditorProjectDirectoryHandle = directoryHandle;
+      this.rememberScriptEditorProjectPackageLocation({
+        mode: "directory",
+        directoryHandle,
+      });
+      this.scriptEditorPendingDeleteProjectId = null;
+      this.resetScriptEditorNoticeTimeline();
+      this.recordScriptEditorNotice({
+        tone: "success",
+        message: "Script editor project draft opened.",
+      });
+      this.setScreen("script-editor-workspace");
+    } catch (error) {
+      this.recordScriptEditorNotice({
+        tone: "warning",
+        message:
+          error instanceof Error ? error.message : "Failed to open script editor project.",
+      });
+      this.render();
+    }
+  }
+
   async handleScriptEditorProjectFileImport(files) {
     try {
       this.scriptEditorProjectSource = "opened";
@@ -6602,13 +6678,6 @@ async function writeTextFilesWithDirectoryPicker(
   files,
   options = {}
 ) {
-  const directoryPicker =
-    typeof globalThis.showDirectoryPicker === "function"
-      ? globalThis.showDirectoryPicker.bind(globalThis)
-      : typeof globalThis.window?.showDirectoryPicker === "function"
-        ? globalThis.window.showDirectoryPicker.bind(globalThis.window)
-        : null;
-
   if (options.directoryHandle != null) {
     await writeTextFilesToDirectory(options.directoryHandle, files);
     return {
@@ -6617,6 +6686,7 @@ async function writeTextFilesWithDirectoryPicker(
     };
   }
 
+  const directoryPicker = getScriptEditorDirectoryPicker();
   if (directoryPicker == null) {
     triggerFileDownloads(files, options.downloadPrefix);
     return {
@@ -6634,6 +6704,26 @@ async function writeTextFilesWithDirectoryPicker(
     mode: "directory",
     directoryHandle,
   };
+}
+
+async function pickScriptEditorDirectory(options = {}) {
+  const directoryPicker = getScriptEditorDirectoryPicker();
+  if (directoryPicker == null) {
+    throw new Error("This browser cannot open a writable project directory.");
+  }
+
+  return directoryPicker({
+    id: "script-editor-workflow",
+    mode: options.mode ?? "read",
+  });
+}
+
+function getScriptEditorDirectoryPicker() {
+  return typeof globalThis.showDirectoryPicker === "function"
+    ? globalThis.showDirectoryPicker.bind(globalThis)
+    : typeof globalThis.window?.showDirectoryPicker === "function"
+      ? globalThis.window.showDirectoryPicker.bind(globalThis.window)
+      : null;
 }
 
 async function writeTextFilesToDirectory(directoryHandle, files) {
@@ -6658,6 +6748,52 @@ async function writeTextFilesToDirectory(directoryHandle, files) {
     await writable.write(content);
     await writable.close();
   }
+}
+
+async function readFilesFromDirectoryHandle(directoryHandle) {
+  const files = [];
+  await collectFilesFromDirectoryHandle(directoryHandle, "", files);
+  return files;
+}
+
+async function collectFilesFromDirectoryHandle(directoryHandle, basePath, files) {
+  for await (const [name, handle] of directoryHandle.entries()) {
+    const relativePath = basePath.length === 0 ? name : `${basePath}/${name}`;
+    if (handle.kind === "directory") {
+      await collectFilesFromDirectoryHandle(handle, relativePath, files);
+      continue;
+    }
+    if (handle.kind !== "file") {
+      continue;
+    }
+
+    const file = await handle.getFile();
+    files.push(createDirectoryImportFile(file, relativePath));
+  }
+}
+
+function createDirectoryImportFile(file, relativePath) {
+  const importedFile = new File([file], file.name, {
+    type: file.type,
+    lastModified: file.lastModified,
+  });
+  Object.defineProperty(importedFile, "webkitRelativePath", {
+    value: relativePath,
+  });
+  return importedFile;
+}
+
+function createTextImportFilesFromRecord(files) {
+  return Object.entries(files).map(([relativePath, content]) => {
+    const fileName = relativePath.split("/").filter(Boolean).pop() ?? relativePath;
+    const file = new File([content], fileName, {
+      type: "application/json",
+    });
+    Object.defineProperty(file, "webkitRelativePath", {
+      value: relativePath,
+    });
+    return file;
+  });
 }
 
 function triggerFileDownloads(files, downloadPrefix = "script-editor") {

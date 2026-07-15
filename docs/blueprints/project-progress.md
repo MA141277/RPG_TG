@@ -5,8 +5,8 @@
 - entry_id: `project-progress.rpg-tg`
 - active_blueprint: `blueprint.rpg-tg`
 - active_version: `target.script-editor-authoring-data-structure-unification`
-- has_active_queue: `true`
-- next_file: `docs/blueprints/queues/script-editor-durable-package-workflow-continuation-queue.md`
+- has_active_queue: `false`
+- next_file: `docs/blueprints/plans/2026-07-15-script-editor-authoring-data-structure-unification-target-plan.md`
 - entry_action: `open-next-file`
 
 ## Human Context
@@ -36,8 +36,8 @@
 - `This file only states the current resume entry and downstream pointer set.`
 - `Admission history, queue closeout history, and review narrative must stay in the version plan, queue docs, or docs/change-log.md rather than living here as competing current-state prose.`
 - `The pointed version is now the open successor version for script-editor authoring/data-structure unification.`
-- `The latest governance action closed queue.script-editor-project-cache-save-export-preview-continuation after durable save-location recording and stale continue gating landed, then admitted queue.script-editor-durable-package-workflow-continuation as the active same-family continuation.`
-- `The current active task is task.script-editor-durable-package-workflow-continuation.boundary-baseline-reconcile, which must verify the remaining package skeleton/imported edit-in-place/runtime preview-from-disk boundary before implementation.`
+- `The latest governance action closed queue.script-editor-durable-package-workflow-continuation after package skeleton creation, writable-directory draft opening/edit-in-place, and runtime preview-from-disk landed with verification and no same-family residue.`
+- `There is no active queue; resume at the active version plan promotion review to select the next lawful candidate queue.`
 
 ### Historical References
 

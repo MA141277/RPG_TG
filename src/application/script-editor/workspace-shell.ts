@@ -47,7 +47,7 @@ export type ScriptEditorWorkspaceNavigationItem = {
 };
 
 export type ScriptEditorWorkspaceToolbarAction = {
-  id: "save" | "validate" | "export";
+  id: "save" | "validate" | "preview-runtime" | "export";
   label: string;
   status: "ready" | "attention" | "blocked";
   description: string;
@@ -310,6 +310,15 @@ function createToolbarActions(
         exportDiagnostics.length === 0
           ? "当前工作台未发现 runtime-pack 导出阻塞，可继续创作或预览。"
           : `当前发现 ${exportDiagnostics.length} 个导出前阻塞，需先处理后再交付。`,
+    },
+    {
+      id: "preview-runtime",
+      label: "运行预览",
+      status: exportDiagnostics.length === 0 ? "ready" : "blocked",
+      description:
+        exportDiagnostics.length === 0
+          ? "保存当前草稿后，从项目目录重新读取并启动运行时预览。"
+          : exportDiagnostics[0]?.message ?? "存在尚未处理的运行预览阻塞。",
     },
     {
       id: "export",

@@ -7,20 +7,20 @@
 - blueprint_version: `2026.07`
 - governance_last_synced_at: `2026-07-15`
 - governance_sync_source: `docs/blueprints/blueprint.md`
-- queue_status: `active`
+- queue_status: `done`
 - queue_class: `required-priority`
-- active_task: `task.script-editor-durable-package-workflow-continuation.package-skeleton-import-preview-implementation`
-- next_task: `task.script-editor-durable-package-workflow-continuation.queue-closeout-and-handoff`
-- closeout_status: `in-progress`
-- execution_closeout_status: `partial`
-- topic_closure_status: `open-residue`
-- closure_basis: `This queue has just been admitted from same-family residue left by queue.script-editor-project-cache-save-export-preview-continuation.`
-- residue_remaining: `yes`
+- active_task: `none`
+- next_task: `none`
+- closeout_status: `done`
+- execution_closeout_status: `done`
+- topic_closure_status: `closed`
+- closure_basis: `The durable package workflow continuation landed create-at-save-path package skeleton creation, writable-directory draft opening/edit-in-place, and runtime preview-from-disk with verification. Runtime pack import remains template import by design and does not claim writable edit-in-place over runtime package directories.`
+- residue_remaining: `no`
 - residue_family: `none`
 - residue_routing_status: `none`
 - next_family_candidate: `none`
 - auto_continue_eligible: `false`
-- next_effect: `none`
+- next_effect: `return-to-version-review`
 - sync_status: `success`
 - sync_scope: `baseline-push`
 - sync_summary: `Commit f698c18 on mod-first-dev was pushed successfully to origin/mod-first-dev after boundary baseline reconcile completed and package skeleton/imported edit-in-place/runtime preview-from-disk implementation became the active task.`
@@ -57,13 +57,13 @@
 
 - queue_goal: `Complete package skeleton creation, imported package edit-in-place, and runtime preview-from-disk semantics for the script-editor package persistence boundary.`
 - task_count: `3`
-- completed_task_count: `1`
-- remaining_task_count: `2`
-- active_task_summary: `Implement or explicitly block create-at-save-path package skeleton creation, imported package edit-in-place, and runtime preview-from-disk with tests.`
+- completed_task_count: `3`
+- remaining_task_count: `0`
+- active_task_summary: `Queue closed with durable package workflow semantics complete and no same-family residue.`
 - task_briefs:
   - `task.script-editor-durable-package-workflow-continuation.boundary-baseline-reconcile: completed after source evidence confirmed the landed packageLocation/validity/stale gating helpers and the still-open package skeleton/imported edit-in-place/runtime preview-from-disk boundary.`
-  - `task.script-editor-durable-package-workflow-continuation.package-skeleton-import-preview-implementation: active implementation task for create-at-save-path skeleton creation, imported edit-in-place, and runtime preview-from-disk.`
-  - `task.script-editor-durable-package-workflow-continuation.queue-closeout-and-handoff: verify the implementation slice, classify residue, and return control to version review.`
+  - `task.script-editor-durable-package-workflow-continuation.package-skeleton-import-preview-implementation: completed after create-at-save-path package skeleton creation, writable-directory draft opening/edit-in-place, and saved-directory runtime preview-from-disk landed with tests.`
+  - `task.script-editor-durable-package-workflow-continuation.queue-closeout-and-handoff: completed after verification and no-residue closeout returned control to version review.`
 
 ### Operator Snapshot Contract
 
@@ -118,8 +118,8 @@
 | Task ID | State | Summary | Depends On | Notes |
 | --- | --- | --- | --- | --- |
 | `task.script-editor-durable-package-workflow-continuation.boundary-baseline-reconcile` | `completed` | `Reconciled the remaining package skeleton/imported edit-in-place/runtime preview boundary against landed persistence helpers.` | `none` | `Completed on 2026-07-15 after rg evidence confirmed packageLocation/validity/stale gating helpers are landed while new-project, import, and preview remain transient or auxiliary-panel only.` |
-| `task.script-editor-durable-package-workflow-continuation.package-skeleton-import-preview-implementation` | `active` | `Implement or explicitly block create-at-save-path skeleton creation, imported edit-in-place, and runtime preview-from-disk with tests.` | `task.script-editor-durable-package-workflow-continuation.boundary-baseline-reconcile` | `Must not broaden into project completion-state gating or data-family schemas.` |
-| `task.script-editor-durable-package-workflow-continuation.queue-closeout-and-handoff` | `pending` | `Verify the implementation slice, classify residue, and return control to version review.` | `task.script-editor-durable-package-workflow-continuation.package-skeleton-import-preview-implementation` | `Must run lint and relevant tests before queue closeout.` |
+| `task.script-editor-durable-package-workflow-continuation.package-skeleton-import-preview-implementation` | `completed` | `Implemented create-at-save-path skeleton creation, writable-directory draft opening/edit-in-place, and runtime preview-from-disk with tests.` | `task.script-editor-durable-package-workflow-continuation.boundary-baseline-reconcile` | `Completed on 2026-07-15 with npm run typecheck, npm run test, and npm run lint:blueprints passing.` |
+| `task.script-editor-durable-package-workflow-continuation.queue-closeout-and-handoff` | `completed` | `Verified the implementation slice, classified no same-family residue, and returned control to version review.` | `task.script-editor-durable-package-workflow-continuation.package-skeleton-import-preview-implementation` | `Completed on 2026-07-15 with npm run lint:blueprints and npm run lint:plans passing after implementation verification.` |
 
 ### Task Definitions
 
@@ -175,7 +175,7 @@
 ##### Control Block
 
 - task_id: `task.script-editor-durable-package-workflow-continuation.package-skeleton-import-preview-implementation`
-- state: `active`
+- state: `completed`
 - task_kind: `execution`
 - scope:
   - `src/application/script-editor`
@@ -206,18 +206,22 @@
 - task_brief:
   - `Implement or explicitly block the remaining durable package workflow semantics.`
 - task_outcome_summary:
-  - `Expected output is a verified package workflow slice or explicit blocker routing.`
+  - `Completed with package skeleton creation before new-project workspace entry, writable directory project opening that keeps the directory handle for edit-in-place saves, and runtime preview that persists then reloads the saved project directory before starting through the scenario-pack file loader.`
 - Purpose:
   - `Complete the package persistence foundation before broader authoring/data schema work depends on it.`
 - Failure mode:
   - `Claiming durable edit-in-place or runtime preview support where the browser can only hold transient or permission-gated handles.`
+
+##### Progress Log
+
+- `2026-07-15`: `Implemented createScriptEditorProjectAtSavePath for new projects, openScriptEditorProjectFromDirectory for writable project draft opening/edit-in-place, and previewSavedScriptEditorProjectRuntime for save-then-reload runtime preview. Verified with targeted red/green tests, npm run typecheck, npm run test, and npm run lint:blueprints.`
 
 #### `task.script-editor-durable-package-workflow-continuation.queue-closeout-and-handoff`
 
 ##### Control Block
 
 - task_id: `task.script-editor-durable-package-workflow-continuation.queue-closeout-and-handoff`
-- state: `pending`
+- state: `completed`
 - task_kind: `execution`
 - scope:
   - `docs/blueprints/project-progress.md`
@@ -250,20 +254,24 @@
 - task_brief:
   - `Close the durable package workflow continuation only after remaining package workflow semantics are verified or honestly routed.`
 - task_outcome_summary:
-  - `Expected output is a clean handoff back to version review with the package workflow topic either closed or explicitly routed.`
+  - `Completed with no same-family residue: the package skeleton, writable-directory draft edit-in-place, and saved-directory runtime preview semantics are implemented and verified; control returns to version review for the next candidate queue.`
 - Purpose:
   - `Prevent hidden same-family persistence gaps from leaking into later schema queues.`
 - Failure mode:
   - `Closing this continuation without testing or platform-blocker routing would make later authoring/data queues depend on unreliable package truth.`
 
+##### Progress Log
+
+- `2026-07-15`: `Closed queue after npm run typecheck, npm run test, npm run lint:blueprints, and npm run lint:plans passed. Classified residue_remaining=no because runtime package import is intentionally template import, while editable draft packages now use writable project directories.`
+
 ### Historical Handoff Note
 
 - Task ID:
-  - `none`
+  - `task.script-editor-durable-package-workflow-continuation.queue-closeout-and-handoff`
 - Recorded handoff at closure:
-  - `none yet`
+  - `Returned control to target.script-editor-authoring-data-structure-unification version review with no durable package workflow same-family residue.`
 - Recorded expected output:
-  - `Remaining durable package workflow semantics are implemented or explicitly routed as platform-governed residue.`
+  - `Package persistence foundation is now stable enough for broader authoring/data convergence queues to rely on editable project package truth.`
 
 ### Historical Candidate Notes
 

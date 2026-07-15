@@ -2986,6 +2986,68 @@ test("script editor new project creates a package skeleton before opening the wo
   );
 });
 
+test("script editor opens project drafts through a writable directory handle", () => {
+  const mainUiSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    "utf8"
+  );
+
+  assert.match(
+    mainUiSource,
+    /await this\.openScriptEditorProjectFromDirectory\(\)/
+  );
+  assert.match(
+    mainUiSource,
+    /async openScriptEditorProjectFromDirectory\(\)/
+  );
+  assert.match(
+    mainUiSource,
+    /readFilesFromDirectoryHandle\(directoryHandle\)/
+  );
+  assert.match(
+    mainUiSource,
+    /this\.scriptEditorProjectDirectoryHandle = directoryHandle/
+  );
+  assert.match(
+    mainUiSource,
+    /this\.rememberScriptEditorProjectPackageLocation\(\{\s*mode: "directory",\s*directoryHandle,\s*\}\)/
+  );
+});
+
+test("script editor runtime preview reloads the saved project package from disk", () => {
+  const mainUiSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    "utf8"
+  );
+  const workspaceShellSource = fs.readFileSync(
+    path.join(process.cwd(), "src/application/script-editor/workspace-shell.ts"),
+    "utf8"
+  );
+
+  assert.match(workspaceShellSource, /id: "preview-runtime"/);
+  assert.match(
+    mainUiSource,
+    /if \(action === "preview-runtime"\) \{\s*await this\.previewSavedScriptEditorProjectRuntime\(\);/
+  );
+  assert.match(
+    mainUiSource,
+    /async previewSavedScriptEditorProjectRuntime\(\)/
+  );
+  assert.match(
+    mainUiSource,
+    /await this\.persistScriptEditorProjectDraftBeforeExport\(\)/
+  );
+  assert.match(
+    mainUiSource,
+    /loadScriptEditorProjectFromFiles\(\s*await readFilesFromDirectoryHandle\(this\.scriptEditorProjectDirectoryHandle\)/
+  );
+  assert.match(
+    mainUiSource,
+    /loadScenarioPackFromFiles\(\s*createTextImportFilesFromRecord\(serializedPackFiles\)/
+  );
+  assert.match(mainUiSource, /await this\.onStartScenarioPack\?\.\(scenarioPack\)/);
+});
+
 test(
   "script editor runtime export emits a runtime-compatible scenario pack for the bounded direct-mapping slice",
   async () => {
