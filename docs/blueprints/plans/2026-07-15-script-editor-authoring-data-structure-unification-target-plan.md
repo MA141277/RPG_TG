@@ -129,7 +129,7 @@
 
 - `queue.script-editor-condition-authoring-contract-freeze`
 - Active task:
-  - `task.script-editor-condition-authoring-contract-freeze.boundary-baseline-reconcile`
+  - `task.script-editor-condition-authoring-contract-freeze.condition-authoring-contract-implementation`
 - Queue document:
   - `docs/blueprints/queues/script-editor-condition-authoring-contract-freeze-queue.md`
 - Queue goal:

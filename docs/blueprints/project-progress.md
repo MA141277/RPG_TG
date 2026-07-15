@@ -37,7 +37,7 @@
 - `Admission history, queue closeout history, and review narrative must stay in the version plan, queue docs, or docs/change-log.md rather than living here as competing current-state prose.`
 - `The pointed version is now the open successor version for script-editor authoring/data-structure unification.`
 - `The latest governance action admitted queue.script-editor-condition-authoring-contract-freeze as the active queue after queue.script-editor-event-structure-convergence routed typed condition authoring as the lawful prerequisite.`
-- `Resume from task.script-editor-condition-authoring-contract-freeze.boundary-baseline-reconcile inside the active queue document.`
+- `Resume from task.script-editor-condition-authoring-contract-freeze.condition-authoring-contract-implementation inside the active queue document.`
 
 ### Historical References
 

@@ -9,8 +9,8 @@
 - governance_sync_source: `docs/blueprints/blueprint.md`
 - queue_status: `active`
 - queue_class: `required`
-- active_task: `task.script-editor-condition-authoring-contract-freeze.boundary-baseline-reconcile`
-- next_task: `task.script-editor-condition-authoring-contract-freeze.condition-authoring-contract-implementation`
+- active_task: `task.script-editor-condition-authoring-contract-freeze.condition-authoring-contract-implementation`
+- next_task: `task.script-editor-condition-authoring-contract-freeze.queue-closeout-and-handoff`
 - closeout_status: `open`
 - execution_closeout_status: `partial`
 - topic_closure_status: `open-residue`
@@ -58,9 +58,9 @@
 
 - queue_goal: `Freeze the smallest typed condition authoring contract that can replace stringly event condition records and be reused by event/story/city/building queues without widening into runtime evaluation.`
 - task_count: `3`
-- completed_task_count: `0`
-- remaining_task_count: `3`
-- active_task_summary: `Baseline must inventory current shared-rule conditions, event condition records, runtime condition evaluators, and UI authoring helpers before production changes.`
+- completed_task_count: `1`
+- remaining_task_count: `2`
+- active_task_summary: `Baseline selected a typed editor condition contract slice; implementation must start with failing tests before changing condition authoring code.`
 - task_briefs:
   - `task.script-editor-condition-authoring-contract-freeze.boundary-baseline-reconcile: inventory current condition record shapes, UI controls, export lowering, runtime evaluators, and decide the smallest contract slice.`
   - `task.script-editor-condition-authoring-contract-freeze.condition-authoring-contract-implementation: implement the selected typed authoring contract slice with fail-closed validation and tests.`
@@ -98,8 +98,8 @@
 
 | Task ID | State | Summary | Depends On | Notes |
 | --- | --- | --- | --- | --- |
-| `task.script-editor-condition-authoring-contract-freeze.boundary-baseline-reconcile` | `active` | `Inventory existing condition authoring/runtime shapes and select the smallest lawful typed authoring contract slice.` | `none` | `Must finish before production code changes.` |
-| `task.script-editor-condition-authoring-contract-freeze.condition-authoring-contract-implementation` | `queued` | `Implement the typed condition authoring contract slice selected by baseline reconciliation.` | `task.script-editor-condition-authoring-contract-freeze.boundary-baseline-reconcile` | `Must use tests before implementation changes.` |
+| `task.script-editor-condition-authoring-contract-freeze.boundary-baseline-reconcile` | `done` | `Inventoried existing condition authoring/runtime shapes and selected the smallest lawful typed authoring contract slice.` | `none` | `Production code was not changed during baseline.` |
+| `task.script-editor-condition-authoring-contract-freeze.condition-authoring-contract-implementation` | `active` | `Implement the typed condition authoring contract slice selected by baseline reconciliation.` | `task.script-editor-condition-authoring-contract-freeze.boundary-baseline-reconcile` | `Must use tests before implementation changes.` |
 | `task.script-editor-condition-authoring-contract-freeze.queue-closeout-and-handoff` | `queued` | `Verify the queue, classify residue, and synchronize Blueprint truth.` | `task.script-editor-condition-authoring-contract-freeze.condition-authoring-contract-implementation` | `Must not close the version without explicit human confirmation.` |
 
 ### Task Definitions
@@ -109,7 +109,7 @@
 ##### Control Block
 
 - task_id: `task.script-editor-condition-authoring-contract-freeze.boundary-baseline-reconcile`
-- state: `active`
+- state: `done`
 - task_kind: `execution`
 - scope:
   - `src/domain/script-editor-project.ts`
@@ -160,7 +160,7 @@
 - task_brief:
   - `Find the smallest honest typed condition authoring boundary before changing export or runtime evaluation.`
 - task_outcome_summary:
-  - `Not started.`
+  - `Done. Current project.conditionGroups records already carry typed shared-rule JSON for task conditions, but their compiler-private SharedConditionNode type supports only the task-oriented subset: flag, task-status, signal, elapsed-time, and nested all groups. Event authoring separately stores conditionGroups as conditionType/operator/value strings, with the UI rendering three free-text inputs. Runtime EventDefinition already supports typed EventConditionNode and trigger evaluation, but runtime-pack export rejects any non-empty editor event condition group. The smallest lawful slice is to freeze an editor-owned ScriptEditorConditionNode contract shared by conditionGroups and event conditionGroups, migrate event condition items from string triples to typed nodes, and add fail-closed validation/normalization without changing runtime condition evaluation yet.`
 - Purpose:
   - `Avoid widening event/story/city/building condition support through stringly or UI-only records that cannot become a shared runtime-facing contract.`
 - Failure mode:
@@ -169,13 +169,17 @@
 ##### Progress Log
 
 - `2026-07-15`: `Queue admitted from promotion review after queue.script-editor-event-structure-convergence routed typed condition authoring contract freeze as the lawful prerequisite.`
+- `2026-07-15`: `Baseline inspected src/domain/script-editor-project.ts, src/domain/event.ts, src/application/script-editor/shared-rule-compiler.ts, src/application/script-editor/story-dialogue-event-authoring.ts, src/application/script-editor/runtime-pack-export.ts, src/application/script-editor/workspace-shell.ts, src/ui/main-ui/main-ui-flow.js, src/application/events/condition-evaluator.ts, src/application/events/trigger-evaluator.ts, src/core/runtime/event-condition-evaluator.ts, src/core/contracts/task-runtime.ts, and tests/robustness.test.cjs.`
+- `2026-07-15`: `Current inventory: project.conditionGroups are generic ScriptEditorEntityRecord entries but shared-rule compiler parses them as typed JSON condition groups for task export; event conditionGroups are separate ScriptEditorEventConditionGroup records containing free-text conditionType/operator/value items; UI renders those event fields as text inputs; runtime EventConditionNode already has typed flag, variable, event, chapter, date, location, character, clan, city, mission, and custom conditions; event export currently rejects non-empty editor event conditionGroups instead of lowering them.`
+- `2026-07-15`: `Selected smallest lawful slice: introduce/freeze an editor-owned typed condition authoring contract in the script-editor domain, covering the shared task subset plus the event-runtime subset needed for later lowering, and migrate event authoring helpers/defaults/normalization to condition nodes rather than free-text conditionType/operator/value. Runtime evaluation and event condition lowering remain later queues except for validation helpers needed to fail closed at authoring/export boundaries.`
+- `2026-07-15`: `Implementation plan for the next task: write failing robustness tests for typed event condition defaults/normalization, rejection of legacy free-text event condition items, and shared-rule task condition compatibility; then update src/domain/script-editor-project.ts, src/application/script-editor/story-dialogue-event-authoring.ts, src/application/script-editor/shared-rule-compiler.ts if needed for the shared type, src/ui/main-ui/main-ui-flow.js event condition controls, and tests only. Verification must include npm test, npm run typecheck, npm run lint:blueprints, npm run lint:plans, npm run blueprint:governance:check, and git diff --check.`
 
 #### `task.script-editor-condition-authoring-contract-freeze.condition-authoring-contract-implementation`
 
 ##### Control Block
 
 - task_id: `task.script-editor-condition-authoring-contract-freeze.condition-authoring-contract-implementation`
-- state: `queued`
+- state: `active`
 - task_kind: `execution`
 - scope:
   - `Files identified by boundary-baseline-reconcile.`
