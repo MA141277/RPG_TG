@@ -24,6 +24,8 @@
 - status: `open`
 - severity: `high`
 - classification: `current-version-governance-gap`
+- owning_queue: `queue.script-editor-runtime-property-mutation-and-status-convergence`
+- admission_status: `admitted-active`
 - affected_families:
   - `character custom properties`
   - `CharacterStatus`
@@ -97,7 +99,7 @@ No current candidate or active queue explicitly owns the complete generic custom
 - proposed_queue_id: `queue.script-editor-runtime-property-mutation-and-status-convergence`
 - proposed_class: `required`
 - proposed_goal: `Establish a schema-driven runtime property mutation and status persistence mechanism for creator-defined properties, then migrate representative direct-write consumers without creating feature-specific durable truths.`
-- admission_note: `The current active queue remains the sole execution queue. This suggestion must enter version-level classification and admission review before implementation.`
+- admission_note: `Admitted on 2026-07-15 as the active current-version queue after version-plan promotion review. Closure still requires verified implementation and queue closeout sync.`
 
 #### Proposed Queue Boundary
 
@@ -142,4 +144,3 @@ Out of scope:
 - Temple donation regression test.
 - End-to-end browser or equivalent integration test for refresh and continue behavior.
 - Repository search evidence showing the covered temple path no longer directly writes the configured currency field.
-
