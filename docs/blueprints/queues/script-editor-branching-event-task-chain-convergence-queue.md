@@ -7,20 +7,20 @@
 - blueprint_version: `2026.07`
 - governance_last_synced_at: `2026-07-15`
 - governance_sync_source: `docs/blueprints/blueprint.md`
-- queue_status: `active`
+- queue_status: `done`
 - queue_class: `required`
-- active_task: `task.script-editor-branching-event-task-chain-convergence.queue-closeout-and-handoff`
+- active_task: `none`
 - next_task: `none`
-- closeout_status: `in-progress`
-- execution_closeout_status: `partial`
+- closeout_status: `done`
+- execution_closeout_status: `done`
 - topic_closure_status: `open-residue`
-- closure_basis: `none`
-- residue_remaining: `no`
-- residue_family: `none`
-- residue_routing_status: `none`
-- next_family_candidate: `none`
-- auto_continue_eligible: `false`
-- next_effect: `execute-active-task`
+- closure_basis: `The bounded progression-contract slice landed and passed verification: non-empty dialogue nextNodeId and choiceTargetNodeId references now fail closed during materialization instead of being silently exported as linear runtime scenes. Real node-target branching remains same-family residue because runtime still lacks a safe dialogue-node target scene/cursor model.`
+- residue_remaining: `yes`
+- residue_family: `same-family`
+- residue_routing_status: `auto-routable`
+- next_family_candidate: `queue.script-editor-dialogue-node-target-branching-convergence`
+- auto_continue_eligible: `true`
+- next_effect: `promote-next-queue`
 - sync_status: `success`
 - sync_scope: `branch-push`
 - sync_summary: `Commit 85b2a46 pushed to origin/mod-first-dev after progression-contract-implementation landed and advanced the queue to closeout.`
@@ -57,9 +57,9 @@
 
 - queue_goal: `Determine and implement the smallest branching/event/task-chain convergence slice after basic dialogue structures and runtime handoff are verified.`
 - task_count: `3`
-- completed_task_count: `2`
-- remaining_task_count: `1`
-- active_task_summary: `Verify, classify residue, record next-step truth, and return control to version review after the fail-closed dialogue node progression guard landed.`
+- completed_task_count: `3`
+- remaining_task_count: `0`
+- active_task_summary: `Queue closed with same-family node-target branching residue routed to queue.script-editor-dialogue-node-target-branching-convergence.`
 - task_briefs:
   - `task.script-editor-branching-event-task-chain-convergence.boundary-baseline-reconcile: inventory branching/event/task-chain seams and select the smallest lawful progression implementation slice.`
   - `task.script-editor-branching-event-task-chain-convergence.progression-contract-implementation: implement the selected branching/event/task-chain slice with tests.`
@@ -99,7 +99,7 @@
 | --- | --- | --- | --- | --- |
 | `task.script-editor-branching-event-task-chain-convergence.boundary-baseline-reconcile` | `done` | `Inventoried branching dialogue, event progression, task-chain seams, and selected fail-closed dialogue node progression guards as the smallest lawful first slice.` | `none` | `No production code changed during baseline.` |
 | `task.script-editor-branching-event-task-chain-convergence.progression-contract-implementation` | `done` | `Implemented the selected fail-closed dialogue node progression guard with tests.` | `task.script-editor-branching-event-task-chain-convergence.boundary-baseline-reconcile` | `Non-empty nextNodeId and choiceTargetNodeId now emit unsupported-lowering diagnostics instead of being silently flattened into linear runtime scenes.` |
-| `task.script-editor-branching-event-task-chain-convergence.queue-closeout-and-handoff` | `active` | `Verify, classify residue, and return control to version review.` | `task.script-editor-branching-event-task-chain-convergence.progression-contract-implementation` | `Closeout must not infer version closeout.` |
+| `task.script-editor-branching-event-task-chain-convergence.queue-closeout-and-handoff` | `done` | `Verified, classified residue, and routed the unique same-family continuation.` | `task.script-editor-branching-event-task-chain-convergence.progression-contract-implementation` | `Closed on 2026-07-15 with node-target branching residue routed to queue.script-editor-dialogue-node-target-branching-convergence.` |
 
 ### Task Definitions
 
@@ -182,7 +182,7 @@
 ##### Control Block
 
 - task_id: `task.script-editor-branching-event-task-chain-convergence.progression-contract-implementation`
-- state: `active`
+- state: `done`
 - task_kind: `execution`
 - scope:
   - `src/application/script-editor/dialogue-story-runtime-materializer.ts`
@@ -264,11 +264,15 @@
 - task_brief:
   - `Close or route the branching/event/task-chain convergence queue after verified implementation.`
 - task_outcome_summary:
-  - `Active after progression-contract-implementation verification passed.`
+  - `Done. The queue execution slice is verified and closed with same-family residue routed to queue.script-editor-dialogue-node-target-branching-convergence.`
 - Purpose:
   - `Keep richer narrative progression convergence explicit before scenario launch, playable/minigame binding, or final validation queues continue.`
 - Failure mode:
   - `Closing without progression evidence would leave branching/event/task-chain behavior unsupported or compatibility-only.`
+
+##### Progress Log
+
+- `2026-07-15`: `Closeout classified residue as same-family: the guard prevents silent loss, but actual nextNodeId/choiceTargetNodeId runtime branching still requires a node-target scene/cursor model before event/task chains can safely build on it. Routed the unique continuation to queue.script-editor-dialogue-node-target-branching-convergence; version closeout was not inferred.`
 
 ### Historical Handoff Note
 
@@ -278,3 +282,5 @@
   - `Dialogue/story runtime handoff convergence closed after verifying event-to-dialogue-scene runtime handoff; story-progress/dialogue-finished trigger lowering, branching choices, followUps, story-node relation lowering, runtime-scene import reconstruction, and broader event/task progression remained outside that slice.`
 - Recorded expected output:
   - `A bounded branching/event/task-chain implementation path or an explicit prerequisite routing decision.`
+- Recorded handoff at closure:
+  - `Fail-closed node progression diagnostics landed; real node-target branching remains same-family residue and is routed to queue.script-editor-dialogue-node-target-branching-convergence.`
