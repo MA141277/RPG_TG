@@ -23,7 +23,7 @@
 - next_effect: `execute-active-task`
 - sync_status: `success`
 - sync_scope: `branch-push`
-- sync_summary: `Continuation admitted after queue.script-editor-branching-event-task-chain-convergence routed same-family node-target branching residue.`
+- sync_summary: `Commit 9d0c050 pushed to origin/mod-first-dev after this dialogue node-target branching continuation was admitted.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`

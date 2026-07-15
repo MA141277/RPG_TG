@@ -23,7 +23,7 @@
 - next_effect: `promote-next-queue`
 - sync_status: `success`
 - sync_scope: `branch-push`
-- sync_summary: `Commit 85b2a46 pushed to origin/mod-first-dev after progression-contract-implementation landed and advanced the queue to closeout.`
+- sync_summary: `Commit 9d0c050 pushed to origin/mod-first-dev after this queue closeout and same-family dialogue node-target branching continuation admission were written.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
