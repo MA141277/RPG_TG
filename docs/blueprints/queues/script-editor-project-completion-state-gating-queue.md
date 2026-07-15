@@ -21,9 +21,9 @@
 - next_family_candidate: `none`
 - auto_continue_eligible: `false`
 - next_effect: `none`
-- sync_status: `failed`
+- sync_status: `success`
 - sync_scope: `baseline-push`
-- sync_summary: `Commit efa0f10 is local but push to origin/mod-first-dev failed because HTTPS connections to github.com were reset or unavailable after repeated retry attempts.`
+- sync_summary: `Commit ef3c333 was pushed to origin/mod-first-dev, carrying completion-state implementation, verification-backed task advancement, and the prior local baseline sync records.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
