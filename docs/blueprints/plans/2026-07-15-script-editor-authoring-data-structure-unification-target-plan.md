@@ -134,11 +134,12 @@
 
 - `queue.script-editor-dialogue-story-runtime-handoff-convergence`
 - Active task:
-  - `task.script-editor-dialogue-story-runtime-handoff-convergence.runtime-handoff-implementation`
+  - `task.script-editor-dialogue-story-runtime-handoff-convergence.queue-closeout-and-handoff`
 - Activation basis:
   - `queue.script-editor-dialogue-story-structure-convergence closed after the bounded materializer seam landed and verified.`
   - `Full dialogue/story runtime handoff, story progression state, and branch entry/exit semantics remain outside the structure slice and are now the next recorded recommendation.`
   - `The runtime handoff baseline selected editor event -> dialogue destination -> materialized runtime scene -> scene runtime handoff coverage as the first lawful implementation slice.`
+  - `The runtime handoff implementation has verified the selected slice; closeout now owns residue classification and return-to-version-review sync.`
 
 ### Version Boundary Record
 
@@ -249,3 +250,4 @@
 - `2026-07-15: queue.script-editor-dialogue-story-structure-convergence closed after verification; full dialogue/story runtime handoff/progression, branching choices, followUps, story-node relation lowering, and runtime-scene import reconstruction were routed as cross-family residue to version promotion review, with queue.script-editor-dialogue-story-runtime-handoff-convergence recommended next.`
 - `2026-07-15: admission review promoted queue.script-editor-dialogue-story-runtime-handoff-convergence as the single active queue because runtime handoff/progression is the next dialogue/story prerequisite after the materializer seam landed. The first live task is boundary-baseline-reconcile.`
 - `2026-07-15: queue.script-editor-dialogue-story-runtime-handoff-convergence completed boundary-baseline-reconcile after selecting editor event -> dialogue destination -> materialized runtime scene -> runStoryTriggerRuntime/runSceneFromEvent handoff coverage as the smallest lawful slice; the active task is now runtime-handoff-implementation.`
+- `2026-07-15: queue.script-editor-dialogue-story-runtime-handoff-convergence completed runtime-handoff-implementation after adding eventId to SceneRuntimeSession and verifying exported editor dialogue events enter materialized runtime scenes through runStoryTriggerRuntime; the active task is now queue-closeout-and-handoff.`

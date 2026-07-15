@@ -8,6 +8,7 @@ import type { RuntimeTaskInput } from "./runtime-result";
 
 export type SceneRuntimeSession = {
   sceneId: string;
+  eventId: string | null;
   currentNodeId: string | null;
 };
 

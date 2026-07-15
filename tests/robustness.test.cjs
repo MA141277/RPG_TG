@@ -4619,6 +4619,75 @@ test(
 );
 
 test(
+  "script editor exported dialogue event enters materialized runtime scene",
+  () => {
+    const {
+      exportScriptEditorProjectToScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    const {
+      runStoryTriggerRuntime,
+    } = require("../.test-dist/core/runtime/scene-runtime.js");
+    const {
+      getCurrentSceneAction,
+    } = require("../.test-dist/application/story/story-runtime.js");
+    const project = createExportableScriptEditorProjectDefinition();
+    project.textEntries = [{ id: "text.opening", text: "Opening line." }];
+    project.dialogues = [
+      {
+        id: "dialogue.opening",
+        title: "Opening",
+        nodes: [
+          {
+            id: "dialogue-node.opening",
+            nodeType: "dialogue",
+            speakerPersonId: "person.hero",
+            textId: "text.opening",
+          },
+        ],
+      },
+    ];
+    project.events = [
+      {
+        id: "event.opening",
+        title: "Opening Event",
+        triggerTiming: "city-enter",
+        relations: { cityIds: ["city.kulan"] },
+        destination: { family: "dialogue", targetId: "dialogue.opening" },
+      },
+    ];
+
+    const files = exportScriptEditorProjectToScenarioPackFiles(project);
+    const events = JSON.parse(files["events.json"]);
+    const scenes = JSON.parse(files["scenes.json"]);
+    const textEntries = JSON.parse(files["text-entries.json"]);
+    const result = runStoryTriggerRuntime({
+      timing: "city-enter",
+      state: createBaseState(),
+      characterDefinitions: JSON.parse(files["characters.json"]),
+      eventDefinitionsById: Object.fromEntries(
+        events.map((eventDefinition) => [eventDefinition.id, eventDefinition])
+      ),
+      sceneDefinitionsById: Object.fromEntries(
+        scenes.map((sceneDefinition) => [sceneDefinition.id, sceneDefinition])
+      ),
+      textEntriesById: textEntries,
+    });
+    const currentAction = getCurrentSceneAction(
+      result.state,
+      Object.fromEntries(
+        scenes.map((sceneDefinition) => [sceneDefinition.id, sceneDefinition])
+      )
+    );
+
+    assert.equal(result.session?.sceneId, "scene.dialogue.opening");
+    assert.equal(result.session?.eventId, "event.opening");
+    assert.equal(result.state.scene.activeEventId, "event.opening");
+    assert.equal(currentAction?.type, "dialogue");
+    assert.equal(textEntries[currentAction?.textId], "Opening line.");
+  }
+);
+
+test(
   "script editor runtime export validator rejects missing opening scenario profile fields",
   () => {
     const {

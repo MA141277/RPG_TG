@@ -9,7 +9,7 @@
 - governance_sync_source: `docs/blueprints/blueprint.md`
 - queue_status: `active`
 - queue_class: `required`
-- active_task: `task.script-editor-dialogue-story-runtime-handoff-convergence.runtime-handoff-implementation`
+- active_task: `task.script-editor-dialogue-story-runtime-handoff-convergence.queue-closeout-and-handoff`
 - next_task: `none`
 - closeout_status: `in-progress`
 - execution_closeout_status: `partial`
@@ -56,9 +56,9 @@
 
 - queue_goal: `Determine and implement the smallest dialogue/story runtime handoff slice after the shared materializer seam exists, without widening into full branching/task-chain behavior.`
 - task_count: `3`
-- completed_task_count: `1`
-- remaining_task_count: `2`
-- active_task_summary: `Implement the selected event-to-dialogue-scene runtime handoff slice: editor-authored events that target materialized dialogue scenes must be covered through runtime event trigger and scene handoff seams without widening into branching/story-progress ownership.`
+- completed_task_count: `2`
+- remaining_task_count: `1`
+- active_task_summary: `Close out the verified event-to-dialogue-scene runtime handoff slice, classify remaining dialogue/story residue, and return control to version review without inferring version closeout.`
 - task_briefs:
   - `task.script-editor-dialogue-story-runtime-handoff-convergence.boundary-baseline-reconcile: inventory runtime handoff seams and select the smallest lawful dialogue/story runtime handoff implementation slice.`
   - `task.script-editor-dialogue-story-runtime-handoff-convergence.runtime-handoff-implementation: implement the selected runtime handoff slice with tests.`
@@ -96,8 +96,8 @@
 | Task ID | State | Summary | Depends On | Notes |
 | --- | --- | --- | --- | --- |
 | `task.script-editor-dialogue-story-runtime-handoff-convergence.boundary-baseline-reconcile` | `done` | `Inventoried materializer, export, event runtime, scene runtime, and scene runner seams; selected the first event-to-dialogue-scene runtime handoff slice.` | `none` | `No production code changed during baseline.` |
-| `task.script-editor-dialogue-story-runtime-handoff-convergence.runtime-handoff-implementation` | `active` | `Implement the selected dialogue/story runtime handoff slice with tests.` | `task.script-editor-dialogue-story-runtime-handoff-convergence.boundary-baseline-reconcile` | `Selected slice is editor event -> dialogue destination -> materialized runtime scene -> runStoryTriggerRuntime/runSceneFromEvent handoff coverage.` |
-| `task.script-editor-dialogue-story-runtime-handoff-convergence.queue-closeout-and-handoff` | `pending` | `Verify, classify residue, and return control to version review.` | `task.script-editor-dialogue-story-runtime-handoff-convergence.runtime-handoff-implementation` | `Closeout must not infer version closeout.` |
+| `task.script-editor-dialogue-story-runtime-handoff-convergence.runtime-handoff-implementation` | `done` | `Implemented the selected dialogue/story runtime handoff slice with tests.` | `task.script-editor-dialogue-story-runtime-handoff-convergence.boundary-baseline-reconcile` | `Scene runtime sessions now expose eventId, and coverage proves editor event -> dialogue destination -> materialized scene -> runStoryTriggerRuntime handoff.` |
+| `task.script-editor-dialogue-story-runtime-handoff-convergence.queue-closeout-and-handoff` | `active` | `Verify, classify residue, and return control to version review.` | `task.script-editor-dialogue-story-runtime-handoff-convergence.runtime-handoff-implementation` | `Closeout must not infer version closeout.` |
 
 ### Task Definitions
 
@@ -175,7 +175,7 @@
 ##### Control Block
 
 - task_id: `task.script-editor-dialogue-story-runtime-handoff-convergence.runtime-handoff-implementation`
-- state: `active`
+- state: `done`
 - task_kind: `execution`
 - scope:
   - `src/application/script-editor/dialogue-story-runtime-materializer.ts`
@@ -212,18 +212,24 @@
 - task_brief:
   - `Implement the selected dialogue/story runtime handoff slice.`
 - task_outcome_summary:
-  - `Active. Implement the baseline-selected event-to-dialogue-scene runtime handoff coverage without widening into story-progress, branching, or scenario launch policy.`
+  - `Done. Added acceptance coverage for an editor-authored dialogue event exported into events/scenes/text-entries and run through runStoryTriggerRuntime, and extended SceneRuntimeSession with eventId so the runtime handoff receipt identifies both event and scene.`
 - Purpose:
   - `Make covered editor-authored narrative structures progress through runtime-owned seams.`
 - Failure mode:
   - `The queue lands another export-only patch while runtime progression ownership remains unresolved.`
+
+##### Progress Log
+
+- `2026-07-15`: `RED verification failed as expected because SceneRuntimeSession did not expose the active event id for an exported editor dialogue event handoff.`
+- `2026-07-15`: `Implemented the minimal runtime contract extension by adding eventId to SceneRuntimeSession and createSceneSession; no event selection, scenario launch policy, playable/minigame binding, or branching/story-progress behavior changed.`
+- `2026-07-15`: `Verification passed: targeted runtime handoff test, npm run typecheck, npm test, npm run build, npm run lint:blueprints, npm run lint:plans, npm run blueprint:governance:check, and git diff --check. Build retains existing Vite script/module, unresolved ui panel asset, and chunk-size warnings.`
 
 #### `task.script-editor-dialogue-story-runtime-handoff-convergence.queue-closeout-and-handoff`
 
 ##### Control Block
 
 - task_id: `task.script-editor-dialogue-story-runtime-handoff-convergence.queue-closeout-and-handoff`
-- state: `pending`
+- state: `active`
 - task_kind: `execution`
 - scope:
   - `docs/blueprints/project-progress.md`
@@ -253,7 +259,7 @@
 - task_brief:
   - `Close or route the dialogue/story runtime handoff convergence queue after verified implementation.`
 - task_outcome_summary:
-  - `Pending implementation.`
+  - `Active. Implementation verification passed; closeout must classify remaining story-progress, dialogue-finished, branching, followUps, story-node relation lowering, and import reconstruction residue before returning to version review.`
 - Purpose:
   - `Keep runtime handoff convergence explicit before scenario launch, branching/task-chain, or final validation queues continue.`
 - Failure mode:

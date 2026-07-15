@@ -10,6 +10,7 @@ export function createSceneSession(
 
   return {
     sceneId: state.scene.activeSceneId,
+    eventId: state.scene.activeEventId,
     currentNodeId: String(state.scene.cursor),
   };
 }
