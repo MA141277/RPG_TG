@@ -5,13 +5,13 @@
 - document_role: `version-governor`
 - version_id: `target.script-editor-authoring-data-structure-unification`
 - version_status: `open`
-- active_phase: `phase.promotion-review`
-- active_queue: `none`
-- decision_state: `promotion-review`
-- next_decision: `same-version-admission-or-version-closeout`
-- next_action: `return-to-promotion-review`
-- resume_gate: `open-promotion-review`
-- promotion_review_result: `none`
+- active_phase: `phase.active-execution`
+- active_queue: `queue.script-editor-event-structure-convergence`
+- decision_state: `active-execution`
+- next_decision: `queue-closeout-or-return-to-version-review`
+- next_action: `resume-active-queue`
+- resume_gate: `open-active-queue`
+- promotion_review_result: `admitted`
 - review_subject_id: `none`
 - review_subject_classification: `none`
 - proposed_queue_id: `none`
@@ -28,7 +28,7 @@
 - residue_candidate_family: `cross-family`
 - routing_basis: `queue.script-editor-event-effect-activation-convergence closed its bounded task/shared-rule explicit character numeric property mutation effect slice with verification. Remaining scene/choice legacy effect-applier migration and broader event effect activation require event/story structure convergence review instead of widening the closed settlement slice.`
 - next_lawful_queue_recommendation: `queue.script-editor-event-structure-convergence`
-- auto_admission_ready: `false`
+- auto_admission_ready: `true`
 - blocked_by: []
 - candidate_queue_ids:
   - `queue.script-editor-project-cache-save-export-preview`
@@ -88,6 +88,7 @@
 | `item.script-editor-character-authoring-surface-completion` | `queue-candidate` | `queue.script-editor-character-authoring-surface-completion` | `admitted + queue closed` | `only if fresh evidence proves the bounded creator-facing character controls regressed` | `Closed after mapping-driven base/profile/stat/skill controls, reference selectors, custom key editing, verification, and repository sync landed without blocking same-family residue.` |
 | `item.script-editor-runtime-property-mutation-and-status-convergence` | `queue-candidate` | `queue.script-editor-runtime-property-mutation-and-status-convergence` | `admitted + queue closed with cross-family residue` | `only if fresh evidence proves the generic character property mutation/status slice regressed` | `Closed after customPropertyPatch materialization/merge, generic numeric property mutation, house transition status transport, temple donation migration, and verification landed. Event/effect mutation ownership was routed as cross-family residue to queue.script-editor-event-effect-activation-convergence.` |
 | `item.script-editor-event-effect-activation-convergence` | `queue-candidate` | `queue.script-editor-event-effect-activation-convergence` | `admitted + queue closed with cross-family residue` | `only if fresh evidence proves the bounded task/shared-rule effect activation slice regressed` | `Closed after shared-rule export and task runtime settlement could apply explicit character numeric property mutation through CharacterStatus patches. Broader event/scene effect convergence was routed as cross-family residue to version promotion review.` |
+| `item.script-editor-event-structure-convergence` | `queue-candidate` | `queue.script-editor-event-structure-convergence` | `admitted + active` | `only if fresh evidence proves condition authoring/runtime evaluation or dialogue/story structure must precede event structure` | `Admitted from event-effect activation cross-family residue because event triggers, related references, conditions, effects, and activation shape are the next required review surface before broader event/scene effect convergence can proceed.` |
 | `item.script-editor-city-building-entry-and-npc-authoring-priority` | `queue-candidate` | `queue.script-editor-city-building-entry-and-npc-authoring-priority` | `candidate-recorded` | `when field/condition basics are sufficient for building/city entry and NPC assignment authoring` | `Covers priority authoring additions recorded in the source draft.` |
 | `item.script-editor-scenario-launch-policy-authoring` | `queue-candidate` | `queue.script-editor-scenario-launch-policy-authoring` | `candidate-recorded` | `when startup policy authoring is the smallest blocker to editor-exported packs launching without manual JSON patching` | `Owns character selection vs fixed startup, initial map/city/building/view, and entry event timing authoring.` |
 | `item.script-editor-playable-minigame-binding-convergence` | `queue-candidate` | `queue.script-editor-playable-minigame-binding-convergence` | `candidate-recorded` | `only after playable governance is loaded and the queue is admitted` | `Requires playable governance before shared playable runtime or house-hosted playable integration changes.` |
@@ -114,7 +115,7 @@
 | `queue.script-editor-dialogue-story-runtime-handoff-convergence` | `candidate` | `After structure convergence exposes runtime handoff residue.` | `Owns dialogue/story progression runtime handoff.` |
 | `queue.script-editor-condition-authoring-contract-freeze` | `candidate` | `Before event/story/city/building queues depend on typed condition authoring at runtime scale.` | `Owns condition definitions, dropdown selection, typed values, and validation.` |
 | `queue.script-editor-condition-runtime-evaluation-convergence` | `candidate` | `After the authoring contract exists and runtime evaluation remains the blocker.` | `Owns condition context, subjects, reference resolution, target-set evaluation, and diagnostics.` |
-| `queue.script-editor-event-structure-convergence` | `candidate` | `When condition and field contracts are stable enough to migrate event records.` | `Owns event triggers, related references, conditions, effects, and activation shape.` |
+| `queue.script-editor-event-structure-convergence` | `active` | `Admitted from event-effect activation cross-family residue after promotion review.` | `Owns event triggers, related references, conditions, effects, and activation shape.` |
 | `queue.script-editor-event-effect-activation-convergence` | `done` | `Already completed; do not reopen except by explicit governance record.` | `Closed its bounded task/shared-rule typed character property mutation effect slice with cross-family event/scene effect residue returned to promotion review.` |
 | `queue.script-editor-scenario-launch-policy-authoring` | `candidate` | `When launch policy authoring is the smallest blocker to runtime startup without manual JSON patching.` | `Owns shell selection vs fixed startup and initial map/city/building/view selection.` |
 | `queue.script-editor-playable-minigame-binding-convergence` | `candidate` | `Only after playable governance confirms the bounded playable integration surface.` | `Requires playable governance before any shared playable runtime or house-hosted playable behavior changes.` |
@@ -125,16 +126,16 @@
 
 ### Current Queue Activation
 
-- `none`
+- `queue.script-editor-event-structure-convergence`
 - Active task:
-  - `none`
+  - `task.script-editor-event-structure-convergence.boundary-baseline-reconcile`
 
 ### Version Boundary Record
 
 - `This version governs authoring/data-structure convergence after runtime-pack-unification closeout.`
 - `It must consume the closed runtime-pack export/import/startup truth as baseline evidence rather than reopening it as a compatibility patch surface.`
 - `It may supersede previously frozen script-editor structures only through explicit schema/migration/supersession records.`
-- `It has returned to promotion review after queue.script-editor-event-effect-activation-convergence closed with cross-family event/scene effect residue routed to queue.script-editor-event-structure-convergence review.`
+- `It now resumes from queue.script-editor-event-structure-convergence after promotion review admitted the cross-family event/scene effect residue from the closed event effect activation queue.`
 
 ### Queue Admission Startup Rules
 
@@ -215,3 +216,4 @@
 - `2026-07-15: queue.script-editor-event-effect-activation-convergence completed boundary-baseline-reconcile after selecting task/shared-rule explicit character numeric property mutation as the smallest lawful typed effect activation slice; the active task is now effect-activation-contract-implementation.`
 - `2026-07-15: queue.script-editor-event-effect-activation-convergence completed effect-activation-contract-implementation after shared-rule export and task runtime settlement could apply explicit character numeric property mutation through CharacterStatus patches; the active task is now queue-closeout-and-handoff.`
 - `2026-07-15: queue.script-editor-event-effect-activation-convergence closed after verification; remaining scene/choice legacy effect-applier migration and broader event effect activation were routed as cross-family residue to queue.script-editor-event-structure-convergence review, and the version returned to promotion review with no active queue.`
+- `2026-07-15: admission review then promoted queue.script-editor-event-structure-convergence as the single active queue because event triggers, related references, conditions, effects, and activation shape are the required review surface for the routed event/scene effect residue; the first live task is boundary-baseline-reconcile.`
