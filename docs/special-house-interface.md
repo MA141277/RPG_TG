@@ -575,6 +575,19 @@ type HouseModuleViewModel = {
 };
 ```
 
+### Primary Actor Roster Rule
+
+For any special house with `HouseDefinition.defaultCharacterId`, that character is the house primary actor.
+
+Rules:
+
+- `enter()` should default to primary-actor dialogue unless a higher-priority lifecycle state takes over, such as a meeting, story event, refusal, or playable restoration.
+- `selectViewModel()` must include the primary actor in `standbyRoster`.
+- the primary actor must be the first `standbyRoster` entry.
+- secondary fixed actors and city activity actors follow the primary actor.
+- ordinary house dialogue must not render the primary actor as a separate right-side owner card or right-side dialogue portrait.
+- meeting/council layouts may use dedicated seating, but they must not reintroduce generic owner-card special casing.
+
 The view should not:
 
 - read runtime variables directly

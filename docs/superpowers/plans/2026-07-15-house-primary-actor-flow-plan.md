@@ -10,12 +10,12 @@
 
 ## Execution State
 
-- Status: `waiting`
+- Status: `completed-but-open`
 - Last Updated: `2026-07-15`
-- Current Focus: `Plan created; waiting for execution approach selection.`
-- Next Step: `Choose subagent-driven or inline execution, then start Task 1 from this plan.`
-- Verification: `npm run lint:plans after plan creation`
-- Notes: `Do not mark closed until implementation verification, docs sync, project-progress sync, and push gates are satisfied.`
+- Current Focus: `Implementation complete; closeout gates remain.`
+- Next Step: `Sync project progress, prepare structured closeout, push, then mark closed only after push succeeds.`
+- Verification: `npm run typecheck; npm test; npm run lint:plans`
+- Notes: `Implementation finished; do not mark closed until project-progress sync and remote push succeed.`
 
 ## Progress Log
 
@@ -23,6 +23,10 @@
   - Summary: `Created the executable plan for the approved house primary actor flow design.`
   - Verification: `Pending npm run lint:plans`
   - Next: `Choose execution approach, then implement Task 1 with tests first.`
+- 2026-07-15
+  - Summary: `Implemented shared primary actor roster ordering, migrated temple and tavern presentation, removed ordinary right-side house owner portrait rendering, and updated shared house docs.`
+  - Verification: `npm run typecheck; npm test; npm run lint:plans`
+  - Next: `Perform structured closeout, synchronize project-progress, and push.`
 
 ---
 
@@ -111,7 +115,7 @@
 - Consumes: `HouseStandbyActorViewModel` from `src/domain/house-module.ts`.
 - Produces: `orderHouseStandbyRoster(input: { primaryCharacterId: string | null; actors: HouseStandbyActorViewModel[] }): HouseStandbyActorViewModel[]`.
 
-- [ ] **Step 1: Write the failing helper tests**
+- [x] **Step 1: Write the failing helper tests**
 
 Add this import near the other `.test-dist` imports in `tests/robustness.test.cjs`:
 
@@ -159,7 +163,7 @@ test("primary house actor roster helper deduplicates actors without losing the f
 });
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run:
 
@@ -172,7 +176,7 @@ Expected:
 
 - `npm run build:test` fails because `src/application/house/house-primary-actor-roster.ts` does not exist, or the focused node test fails because `orderHouseStandbyRoster` is not exported.
 
-- [ ] **Step 3: Implement the helper**
+- [x] **Step 3: Implement the helper**
 
 Create `src/application/house/house-primary-actor-roster.ts`:
 
@@ -214,7 +218,7 @@ export function orderHouseStandbyRoster(input: {
 }
 ```
 
-- [ ] **Step 4: Run the focused helper tests**
+- [x] **Step 4: Run the focused helper tests**
 
 Run:
 
@@ -228,7 +232,7 @@ Expected:
 - `npm run build:test` exits with code 0.
 - Both focused helper tests pass.
 
-- [ ] **Step 5: Commit Task 1**
+- [x] **Step 5: Commit Task 1**
 
 Run:
 
@@ -252,7 +256,7 @@ Expected:
 - Consumes: `orderHouseStandbyRoster({ primaryCharacterId, actors })` from Task 1.
 - Produces: temple and tavern `HouseModuleViewModel.standbyRoster` with `defaultCharacterId` first while greeting/open dialogue is active.
 
-- [ ] **Step 1: Write failing temple and tavern view-model tests**
+- [x] **Step 1: Write failing temple and tavern view-model tests**
 
 Add these tests to `tests/robustness.test.cjs`:
 
@@ -316,7 +320,7 @@ test("primary house actor appears first in tavern roster during greeting", () =>
 });
 ```
 
-- [ ] **Step 2: Run the focused tests to verify they fail**
+- [x] **Step 2: Run the focused tests to verify they fail**
 
 Run:
 
@@ -329,7 +333,7 @@ Expected:
 
 - Temple or tavern focused tests fail because the owner is missing from active dialogue roster or is not first.
 
-- [ ] **Step 3: Migrate tavern `selectViewModel()`**
+- [x] **Step 3: Migrate tavern `selectViewModel()`**
 
 In `src/application/house-modules/tavern/tavern-house-module.ts`, import the helper:
 
@@ -362,7 +366,7 @@ standbyRoster: orderHouseStandbyRoster({
 
 Keep the existing dialogue, action container, status card, overlay, and leave action behavior unchanged.
 
-- [ ] **Step 4: Migrate temple daily `standbyRoster` ordering**
+- [x] **Step 4: Migrate temple daily `standbyRoster` ordering**
 
 In `src/application/house-modules/temple-house/temple-house-house-module.ts`, import the helper:
 
@@ -430,7 +434,7 @@ Replace the existing inline `standbyRoster: standbyCharacterIds.map(...)` expres
 standbyRoster: orderedStandbyActors,
 ```
 
-- [ ] **Step 5: Run the focused view-model tests**
+- [x] **Step 5: Run the focused view-model tests**
 
 Run:
 
@@ -443,7 +447,7 @@ Expected:
 
 - Both focused tests pass.
 
-- [ ] **Step 6: Commit Task 2**
+- [x] **Step 6: Commit Task 2**
 
 Run:
 
@@ -467,7 +471,7 @@ Expected:
 - Consumes: Task 2 view models with primary actors in `standbyRoster`.
 - Produces: ordinary house markup without `c-grain-shop-dialogue__npc` or right-side idle owner markup for the temple daily owner.
 
-- [ ] **Step 1: Write failing renderer tests**
+- [x] **Step 1: Write failing renderer tests**
 
 Add this import near existing render imports in `tests/robustness.test.cjs`:
 
@@ -539,7 +543,7 @@ test("temple daily view keeps abbot in left roster instead of right owner slot",
 });
 ```
 
-- [ ] **Step 2: Run the focused renderer tests to verify they fail**
+- [x] **Step 2: Run the focused renderer tests to verify they fail**
 
 Run:
 
@@ -553,7 +557,7 @@ Expected:
 - The tavern renderer test fails because shared dialogue still emits right-side portrait markup.
 - The temple renderer test fails because idle mode still emits `c-grain-shop-idle-owner`.
 
-- [ ] **Step 3: Remove the ordinary right-side portrait from shared dialogue**
+- [x] **Step 3: Remove the ordinary right-side portrait from shared dialogue**
 
 In `src/ui/views/house/house-shared-view.ts`, update `renderHouseDialogue()` so the footer returns only text content for ordinary house dialogue:
 
@@ -598,7 +602,7 @@ export function renderHouseDialogue(
 
 If the exact Chinese default aria label must stay byte-for-byte compatible with the existing mojibake source, keep the existing `ariaLabel` fallback string and only remove the portrait block.
 
-- [ ] **Step 4: Remove temple idle owner rendering**
+- [x] **Step 4: Remove temple idle owner rendering**
 
 In `src/ui/views/house/temple-house-view.ts`, remove `renderHouseIdleOwner` from the import list and replace the owner-splitting block:
 
@@ -625,7 +629,7 @@ Keep the non-meeting roster rendering pointed at `viewModel.standbyRoster`:
 
 Remove the conditional block that calls `renderHouseIdleOwner(...)`.
 
-- [ ] **Step 5: Run focused renderer tests**
+- [x] **Step 5: Run focused renderer tests**
 
 Run:
 
@@ -638,7 +642,7 @@ Expected:
 
 - Both renderer tests pass.
 
-- [ ] **Step 6: Commit Task 3**
+- [x] **Step 6: Commit Task 3**
 
 Run:
 
@@ -662,7 +666,7 @@ Expected:
 - Consumes: implementation from Tasks 1-3.
 - Produces: updated shared house contract documentation, change log, and plan execution state.
 
-- [ ] **Step 1: Update the house interface contract**
+- [x] **Step 1: Update the house interface contract**
 
 In `docs/special-house-interface.md`, add this rule under `## View Model Contract` after the `HouseModuleViewModel` shape:
 
@@ -681,7 +685,7 @@ Rules:
 - meeting/council layouts may use dedicated seating, but they must not reintroduce generic owner-card special casing.
 ```
 
-- [ ] **Step 2: Update the change log**
+- [x] **Step 2: Update the change log**
 
 Add this entry at the top of `docs/change-log.md` under the current heading/list:
 
@@ -689,7 +693,7 @@ Add this entry at the top of `docs/change-log.md` under the current heading/list
 - House primary actors now follow a shared flow: houses with `defaultCharacterId` enter through primary-actor dialogue, keep that actor first in `standbyRoster`, and render ordinary house dialogue without a separate right-side owner portrait. Temple abbot and tavern boss behavior now use the same rule as other special houses.
 ```
 
-- [ ] **Step 3: Run focused verification**
+- [x] **Step 3: Run focused verification**
 
 Run:
 
@@ -703,7 +707,7 @@ Expected:
 - Build test succeeds.
 - All tests matching `primary house actor` pass.
 
-- [ ] **Step 4: Run full verification**
+- [x] **Step 4: Run full verification**
 
 Run:
 
@@ -717,7 +721,7 @@ Expected:
 
 - All commands exit with code 0.
 
-- [ ] **Step 5: Update this plan execution state**
+- [x] **Step 5: Update this plan execution state**
 
 Update the top of this file:
 
@@ -741,7 +745,7 @@ Append this progress log entry:
   - Next: `Perform structured closeout, synchronize project-progress, and push.`
 ```
 
-- [ ] **Step 6: Commit Task 4**
+- [x] **Step 6: Commit Task 4**
 
 Run:
 
@@ -756,22 +760,22 @@ Expected:
 
 ## Exit Check
 
-- [ ] Temple daily `standbyRoster[0]` is the temple `defaultCharacterId`.
-- [ ] Tavern greeting/open `standbyRoster[0]` is the tavern `defaultCharacterId`.
-- [ ] Ordinary house dialogue no longer emits a separate right-side portrait container.
-- [ ] Temple ordinary daily view no longer emits a right-side idle owner card.
-- [ ] `docs/special-house-interface.md` documents the primary actor roster rule.
-- [ ] `docs/change-log.md` records the shared flow change.
-- [ ] `src/main.ts` has no new house-specific business branch for this work.
+- [x] Temple daily `standbyRoster[0]` is the temple `defaultCharacterId`.
+- [x] Tavern greeting/open `standbyRoster[0]` is the tavern `defaultCharacterId`.
+- [x] Ordinary house dialogue no longer emits a separate right-side portrait container.
+- [x] Temple ordinary daily view no longer emits a right-side idle owner card.
+- [x] `docs/special-house-interface.md` documents the primary actor roster rule.
+- [x] `docs/change-log.md` records the shared flow change.
+- [x] `src/main.ts` has no new house-specific business branch for this work.
 - [ ] Project progress sync is updated if this child state changes.
-- [ ] Closeout block is added before the child is marked `closed`.
+- [x] Closeout block is added before the child is marked `closed`.
 
 ## Completion Checklist
 
-- [ ] Plan checkboxes updated
-- [ ] `Execution State` updated
-- [ ] `Progress Log` updated
-- [ ] Verification recorded
+- [x] Plan checkboxes updated
+- [x] `Execution State` updated
+- [x] `Progress Log` updated
+- [x] Verification recorded
 
 ## Child Closeout
 
@@ -788,4 +792,3 @@ Expected:
 - Push Status: `not-pushed`
 - Push Commit: `none`
 - Resume From: `Open docs/superpowers/project-progress.md, then execute this plan after the user chooses an execution approach.`
-
