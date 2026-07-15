@@ -9,7 +9,7 @@
 - governance_sync_source: `docs/blueprints/blueprint.md`
 - queue_status: `active`
 - queue_class: `required-continuation`
-- active_task: `task.script-editor-dialogue-node-target-branching-convergence.boundary-baseline-reconcile`
+- active_task: `task.script-editor-dialogue-node-target-branching-convergence.node-target-runtime-implementation`
 - next_task: `none`
 - closeout_status: `in-progress`
 - execution_closeout_status: `partial`
@@ -57,9 +57,9 @@
 
 - queue_goal: `Create the runtime node-target branching model needed before richer dialogue/event/task chains can safely lower from editor data.`
 - task_count: `3`
-- completed_task_count: `0`
-- remaining_task_count: `3`
-- active_task_summary: `Inventory dialogue node target references, runtime SceneDefinition/ChoiceOption target seams, and materializer/export/import behavior before selecting the smallest lawful runtime branching implementation slice.`
+- completed_task_count: `1`
+- remaining_task_count: `2`
+- active_task_summary: `Implement the selected scene-splitting node-target runtime model for dialogue nextNodeId and the bounded single-target choiceTargetNodeId subset.`
 - task_briefs:
   - `task.script-editor-dialogue-node-target-branching-convergence.boundary-baseline-reconcile: inventory node-target branching seams and select the smallest real runtime implementation slice.`
   - `task.script-editor-dialogue-node-target-branching-convergence.node-target-runtime-implementation: implement the selected node-target branching slice with tests.`
@@ -96,8 +96,8 @@
 
 | Task ID | State | Summary | Depends On | Notes |
 | --- | --- | --- | --- | --- |
-| `task.script-editor-dialogue-node-target-branching-convergence.boundary-baseline-reconcile` | `active` | `Inventory dialogue node target references and runtime branching seams before selecting the implementation slice.` | `none` | `Must not change production code before baseline records the chosen node-target model.` |
-| `task.script-editor-dialogue-node-target-branching-convergence.node-target-runtime-implementation` | `pending` | `Implement the selected node-target runtime branching slice with tests.` | `task.script-editor-dialogue-node-target-branching-convergence.boundary-baseline-reconcile` | `Implementation must remove the fail-closed blocker only for the supported node-target subset.` |
+| `task.script-editor-dialogue-node-target-branching-convergence.boundary-baseline-reconcile` | `done` | `Inventoried dialogue node target references and runtime branching seams, then selected scene splitting as the smallest real runtime model.` | `none` | `No production code changed during baseline.` |
+| `task.script-editor-dialogue-node-target-branching-convergence.node-target-runtime-implementation` | `active` | `Implement the selected node-target runtime branching slice with tests.` | `task.script-editor-dialogue-node-target-branching-convergence.boundary-baseline-reconcile` | `Selected slice: split dialogue nodes into stable runtime scenes, lower nextNodeId to jump targets, preserve implicit array-order continuation, and support bounded single-target choiceTargetNodeId as ChoiceOption.nextSceneId.` |
 | `task.script-editor-dialogue-node-target-branching-convergence.queue-closeout-and-handoff` | `pending` | `Verify, classify residue, and return control to version review.` | `task.script-editor-dialogue-node-target-branching-convergence.node-target-runtime-implementation` | `Closeout must not infer version closeout.` |
 
 ### Task Definitions
@@ -107,7 +107,7 @@
 ##### Control Block
 
 - task_id: `task.script-editor-dialogue-node-target-branching-convergence.boundary-baseline-reconcile`
-- state: `active`
+- state: `done`
 - task_kind: `execution`
 - scope:
   - `src/domain/script-editor-project.ts`
@@ -158,21 +158,30 @@
 - task_brief:
   - `Choose the real runtime target model for editor-authored dialogue node references before implementation.`
 - task_outcome_summary:
-  - `Active. Baseline must decide the smallest non-compatibility implementation slice for nextNodeId/choiceTargetNodeId.`
+  - `Done. Baseline selected scene splitting as the smallest non-compatibility node-target model: each editor dialogue node lowers to a stable runtime scene target, non-choice progression uses jump actions, and the bounded single-target choiceTargetNodeId subset lowers through ChoiceOption.nextSceneId.`
 - Purpose:
   - `Replace the temporary fail-closed blocker with a real runtime-owned branching path.`
 - Failure mode:
   - `Lowering node references by linear fallback or ad hoc export rewriting would preserve the original data-loss bug under a new shape.`
+
+##### Progress Log
+
+- `2026-07-15`: `Inspected ScriptEditorDialogueNodeRecord, story-dialogue-event authoring defaults/normalization, dialogue-story-runtime-materializer, ActionNode/SceneDefinition, scene-runner jump handling, ChoiceOption nextSceneId/nextEventId, choice-resolver, story-runtime choose/get current option seams, scene-runtime runStoryTriggerRuntime, and existing robustness tests.`
+- `2026-07-15`: `Inventory found the runtime already has the target primitives needed for a real first slice: ActionNode.jump can move to another scene, ChoiceOption.nextSceneId can move through resolveChoiceOption, and runSceneUntilPause/chooseStorySceneOption already reset scene cursor for target scenes. Editor nextNodeId/choiceTargetNodeId are node-local ids, so direct lowering to the current single scene would remain unsafe.`
+- `2026-07-15`: `Selected implementation slice: split each dialogue node into a stable runtime scene id while keeping the dialogue entry scene id as the first node scene; lower non-choice nodes to narration/dialogue plus a jump to explicit nextNodeId or implicit array-order next node; lower the bounded single-target choice node shape to one runtime choice option with nextSceneId from choiceTargetNodeId; fail closed for duplicate node ids, missing target node ids, choice nodes without a lowerable target/text, and richer multi-option/followUp/event/task chain shapes.`
 
 #### `task.script-editor-dialogue-node-target-branching-convergence.node-target-runtime-implementation`
 
 ##### Control Block
 
 - task_id: `task.script-editor-dialogue-node-target-branching-convergence.node-target-runtime-implementation`
-- state: `pending`
+- state: `active`
 - task_kind: `execution`
 - scope:
-  - `Scope will be finalized by boundary-baseline-reconcile.`
+  - `src/application/script-editor/dialogue-story-runtime-materializer.ts`
+  - `src/application/script-editor/runtime-pack-export.ts`
+  - `tests/robustness.test.cjs`
+  - `docs/blueprints/queues/script-editor-dialogue-node-target-branching-convergence-queue.md`
 - must_inspect:
   - `Boundary baseline evidence from task.script-editor-dialogue-node-target-branching-convergence.boundary-baseline-reconcile.`
 - must_not_change:
@@ -198,7 +207,7 @@
 - task_brief:
   - `Implement the selected node-target runtime branching slice.`
 - task_outcome_summary:
-  - `Pending baseline.`
+  - `Active. Implement the selected scene-splitting node-target runtime model without widening into followUps, multi-option choice authoring, event/task chains, playable/minigame, or scenario launch policy.`
 - Purpose:
   - `Make authored dialogue node target references runtime-consumable rather than export-only residue.`
 - Failure mode:
