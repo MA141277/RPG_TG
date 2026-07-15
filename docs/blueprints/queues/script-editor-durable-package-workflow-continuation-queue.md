@@ -23,7 +23,7 @@
 - next_effect: `return-to-version-review`
 - sync_status: `success`
 - sync_scope: `baseline-push`
-- sync_summary: `Commit f698c18 on mod-first-dev was pushed successfully to origin/mod-first-dev after boundary baseline reconcile completed and package skeleton/imported edit-in-place/runtime preview-from-disk implementation became the active task.`
+- sync_summary: `Commit 50a2f8e on mod-first-dev was pushed successfully to origin/mod-first-dev after durable package workflow implementation and no-residue queue closeout returned the version to promotion review.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
