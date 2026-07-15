@@ -138,7 +138,7 @@
 | `queue.script-editor-dialogue-node-target-branching-convergence` | `done` | `Already completed; do not reopen except by explicit governance record.` | `Closed after node-target scene splitting and bounded choice target lowering landed; broader event/task-chain progression returned to version review.` |
 | `queue.script-editor-event-task-chain-runtime-convergence` | `done` | `Already completed; do not reopen except by explicit governance record.` | `Closed after explicit event nextEventId export/runtime chaining landed; task-chain runtime handoff routed to queue.script-editor-task-chain-runtime-handoff-convergence.` |
 | `queue.script-editor-task-chain-runtime-handoff-convergence` | `done` | `Already completed; do not reopen except by explicit governance record.` | `Closed after event-level taskInputs handoff landed; scene runtime propagation routed to queue.script-editor-scene-runtime-task-input-propagation.` |
-| `queue.script-editor-scene-runtime-task-input-propagation` | `active` | `After event-level taskInputs handoff verified and SceneRuntimeResult.taskInputs remains empty.` | `Owns propagation of activated event taskInputs through scene runtime output. Active task is boundary-baseline-reconcile.` |
+| `queue.script-editor-scene-runtime-task-input-propagation` | `active` | `After event-level taskInputs handoff verified and SceneRuntimeResult.taskInputs remains empty.` | `Owns propagation of activated event taskInputs through scene runtime output. Active task is runtime-propagation-implementation after baseline selected SceneRuntimeInput.taskInputs passthrough.` |
 | `queue.script-editor-status-overlay-generalization-review` | `candidate-review` | `When non-character runtime mutation needs explicit save/status ownership.` | `Review queue; do not create non-character overlays for convenience.` |
 | `queue.script-editor-legacy-structure-supersession-review` | `candidate` | `Before deleting or invalidating previously frozen structures.` | `Records retained, migrated, adapter-supported, or retired structure dispositions.` |
 | `queue.script-editor-end-to-end-authoring-runtime-flow-validation` | `candidate-final` | `After required data/runtime/persistence queues provide enough coverage to prove version acceptance.` | `Final closeout validation queue.` |
@@ -147,19 +147,20 @@
 
 - `queue.script-editor-scene-runtime-task-input-propagation`
 - Active task:
-  - `task.script-editor-scene-runtime-task-input-propagation.boundary-baseline-reconcile`
+  - `task.script-editor-scene-runtime-task-input-propagation.runtime-propagation-implementation`
 - Activation basis:
   - `queue.script-editor-task-chain-runtime-handoff-convergence closed after editor event taskInputs lowered into runtime EventDefinition.taskInputs and EventRuntimeCandidate.taskInputs.`
   - `SceneRuntimeResult.taskInputs still returns an empty array from runSceneFromEvent/runStoryTriggerRuntime.`
   - `Closeout routed scene runtime taskInputs propagation as the unique same-family continuation.`
-  - `Execution resumes from the scene runtime task input propagation boundary baseline task.`
+  - `Boundary baseline selected SceneRuntimeInput.taskInputs passthrough as the smallest propagation slice.`
+  - `Execution resumes from the scene runtime task input propagation implementation task.`
 
 ### Version Boundary Record
 
 - `This version governs authoring/data-structure convergence after runtime-pack-unification closeout.`
 - `It must consume the closed runtime-pack export/import/startup truth as baseline evidence rather than reopening it as a compatibility patch surface.`
 - `It may supersede previously frozen script-editor structures only through explicit schema/migration/supersession records.`
-- `It has admitted queue.script-editor-scene-runtime-task-input-propagation after task-chain runtime handoff closeout; execution resumes from the scene runtime task input propagation boundary baseline task.`
+- `It has admitted queue.script-editor-scene-runtime-task-input-propagation after task-chain runtime handoff closeout; execution resumes from the scene runtime task input propagation implementation task after baseline selected SceneRuntimeInput.taskInputs passthrough.`
 
 ### Queue Admission Startup Rules
 
@@ -278,3 +279,4 @@
 - `2026-07-15: queue.script-editor-task-chain-runtime-handoff-convergence completed boundary-baseline-reconcile after selecting event-level taskInputs lowering as the smallest lawful handoff slice: editor event taskInputs lower into runtime EventDefinition.taskInputs, EventRuntimeCandidate exposes those inputs, and existing runtime dispatch/task runtime remains the only settlement path. The active task is now task-handoff-runtime-implementation.`
 - `2026-07-16: queue.script-editor-task-chain-runtime-handoff-convergence completed task-handoff-runtime-implementation after editor event taskInputs began exporting to EventDefinition.taskInputs, runtime import preserved those inputs, and EventRuntimeCandidate exposed them for RuntimeResult.taskInputs settlement. The active task is now queue-closeout-and-handoff.`
 - `2026-07-16: queue.script-editor-task-chain-runtime-handoff-convergence closed with same-family residue after verification; SceneRuntimeResult.taskInputs still returns empty arrays from runSceneFromEvent/runStoryTriggerRuntime, so queue.script-editor-scene-runtime-task-input-propagation was admitted as the active continuation with boundary-baseline-reconcile as the first task.`
+- `2026-07-16: queue.script-editor-scene-runtime-task-input-propagation completed boundary-baseline-reconcile after selecting SceneRuntimeInput.taskInputs passthrough as the smallest lawful propagation slice; the active task is now runtime-propagation-implementation.`
