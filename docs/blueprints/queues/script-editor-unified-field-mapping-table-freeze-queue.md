@@ -23,7 +23,7 @@
 - next_effect: `return-to-version-review`
 - sync_status: `success`
 - sync_scope: `baseline-push`
-- sync_summary: `Commit 23ccfdb was pushed to origin/mod-first-dev, carrying the bounded field mapping contract implementation and active-task promotion to closeout.`
+- sync_summary: `Commit 0c2896c was pushed to origin/mod-first-dev, carrying unified field mapping queue closeout and cross-family residue routing.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
