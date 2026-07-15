@@ -5,8 +5,8 @@
 - entry_id: `project-progress.rpg-tg`
 - active_blueprint: `blueprint.rpg-tg`
 - active_version: `target.script-editor-authoring-data-structure-unification`
-- has_active_queue: `false`
-- next_file: `docs/blueprints/plans/2026-07-15-script-editor-authoring-data-structure-unification-target-plan.md`
+- has_active_queue: `true`
+- next_file: `docs/blueprints/queues/script-editor-branching-event-task-chain-convergence-queue.md`
 - entry_action: `open-next-file`
 
 ## Human Context
@@ -29,15 +29,15 @@
 - Current Version Plan:
   - `docs/blueprints/plans/2026-07-15-script-editor-authoring-data-structure-unification-target-plan.md`
 - Current Active Queue:
-  - `none`
+  - `docs/blueprints/queues/script-editor-branching-event-task-chain-convergence-queue.md`
 
 ### Live Entry Guardrails
 
 - `This file only states the current resume entry and downstream pointer set.`
 - `Admission history, queue closeout history, and review narrative must stay in the version plan, queue docs, or docs/change-log.md rather than living here as competing current-state prose.`
 - `The pointed version is now the open successor version for script-editor authoring/data-structure unification.`
-- `The latest governance action closed queue.script-editor-dialogue-story-runtime-handoff-convergence after verified event-to-dialogue-scene runtime handoff coverage and routed richer branching/progression residue back to version review.`
-- `Resume from the active version plan promotion review; queue.script-editor-branching-event-task-chain-convergence is the recorded next recommendation, not yet admitted.`
+- `The latest governance action admitted queue.script-editor-branching-event-task-chain-convergence after dialogue/story runtime handoff closeout routed richer progression, branching, followUps, story-node relation lowering, import reconstruction, and broader event/task residue back to version review.`
+- `Resume from the active queue document and its boundary-baseline-reconcile task.`
 
 ### Historical References
 

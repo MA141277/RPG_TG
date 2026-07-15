@@ -5,13 +5,13 @@
 - document_role: `version-governor`
 - version_id: `target.script-editor-authoring-data-structure-unification`
 - version_status: `open`
-- active_phase: `phase.promotion-review`
-- active_queue: `none`
-- decision_state: `promotion-review`
-- next_decision: `same-version-admission-or-version-closeout`
-- next_action: `return-to-promotion-review`
-- resume_gate: `version-plan-review`
-- promotion_review_result: `pending`
+- active_phase: `phase.active-execution`
+- active_queue: `queue.script-editor-branching-event-task-chain-convergence`
+- decision_state: `active-execution`
+- next_decision: `queue-closeout-or-return-to-version-review`
+- next_action: `resume-active-queue`
+- resume_gate: `open-active-queue`
+- promotion_review_result: `admitted`
 - review_subject_id: `none`
 - review_subject_classification: `none`
 - proposed_queue_id: `none`
@@ -98,6 +98,7 @@
 | `item.script-editor-dialogue-story-runtime-handoff-convergence` | `queue-candidate` | `queue.script-editor-dialogue-story-runtime-handoff-convergence` | `admitted + queue closed with cross-family residue` | `only if fresh evidence proves the event-to-dialogue-scene handoff receipt regressed` | `Closed after verified editor event -> dialogue destination -> materialized scene -> runStoryTriggerRuntime coverage and SceneRuntimeSession eventId receipts; richer progression/branching residue was routed back to version review.` |
 | `item.script-editor-scenario-launch-policy-authoring` | `queue-candidate` | `queue.script-editor-scenario-launch-policy-authoring` | `candidate-recorded` | `when startup policy authoring is the smallest blocker to editor-exported packs launching without manual JSON patching` | `Owns character selection vs fixed startup, initial map/city/building/view, and entry event timing authoring.` |
 | `item.script-editor-playable-minigame-binding-convergence` | `queue-candidate` | `queue.script-editor-playable-minigame-binding-convergence` | `candidate-recorded` | `only after playable governance is loaded and the queue is admitted` | `Requires playable governance before shared playable runtime or house-hosted playable integration changes.` |
+| `item.script-editor-branching-event-task-chain-convergence` | `queue-candidate` | `queue.script-editor-branching-event-task-chain-convergence` | `admitted + active` | `only if fresh evidence proves scenario launch policy, playable governance, or schema supersession must precede baseline before any production code changes` | `Admitted after dialogue/story runtime handoff convergence closed and routed richer progression, branching, followUps, story-node relation lowering, import reconstruction, and broader event/task progression residue to version review; the first task is boundary-baseline-reconcile.` |
 | `item.script-editor-end-to-end-authoring-runtime-flow-validation` | `queue-candidate` | `queue.script-editor-end-to-end-authoring-runtime-flow-validation` | `candidate-recorded-final` | `after required data, runtime handoff, and persistence queues provide enough coverage to prove closeout` | `Final validation queue, not a first implementation slice.` |
 
 ### Queue Promotion Ledger
@@ -125,26 +126,27 @@
 | `queue.script-editor-event-effect-activation-convergence` | `done` | `Already completed; do not reopen except by explicit governance record.` | `Closed its bounded task/shared-rule typed character property mutation effect slice with cross-family event/scene effect residue returned to promotion review.` |
 | `queue.script-editor-scenario-launch-policy-authoring` | `candidate` | `When launch policy authoring is the smallest blocker to runtime startup without manual JSON patching.` | `Owns shell selection vs fixed startup and initial map/city/building/view selection.` |
 | `queue.script-editor-playable-minigame-binding-convergence` | `candidate` | `Only after playable governance confirms the bounded playable integration surface.` | `Requires playable governance before any shared playable runtime or house-hosted playable behavior changes.` |
-| `queue.script-editor-branching-event-task-chain-convergence` | `candidate` | `After basic dialogue/event/task structures exist and richer branching/task-chain residue is bounded.` | `Owns branching dialogue, event effect chains, long-running tasks, and save/restore progression.` |
+| `queue.script-editor-branching-event-task-chain-convergence` | `active` | `After basic dialogue/event/task structures exist and richer branching/task-chain residue is bounded.` | `Owns branching dialogue, event effect chains, long-running tasks, and save/restore progression. Active task is boundary-baseline-reconcile.` |
 | `queue.script-editor-status-overlay-generalization-review` | `candidate-review` | `When non-character runtime mutation needs explicit save/status ownership.` | `Review queue; do not create non-character overlays for convenience.` |
 | `queue.script-editor-legacy-structure-supersession-review` | `candidate` | `Before deleting or invalidating previously frozen structures.` | `Records retained, migrated, adapter-supported, or retired structure dispositions.` |
 | `queue.script-editor-end-to-end-authoring-runtime-flow-validation` | `candidate-final` | `After required data/runtime/persistence queues provide enough coverage to prove version acceptance.` | `Final closeout validation queue.` |
 
 ### Current Queue Activation
 
-- `none`
+- `queue.script-editor-branching-event-task-chain-convergence`
 - Active task:
-  - `none`
+  - `task.script-editor-branching-event-task-chain-convergence.boundary-baseline-reconcile`
 - Activation basis:
   - `queue.script-editor-dialogue-story-runtime-handoff-convergence closed after verified event-to-dialogue-scene runtime handoff coverage.`
-  - `Version promotion review must evaluate the recorded branching/event/task-chain recommendation before any new queue is admitted.`
+  - `The target spec marks branching dialogue choices, event effect chains, task stages, long-running task state, completion/failure conditions, rewards, and runtime progression handoff as required.`
+  - `Promotion review admitted the branching/event/task-chain convergence queue as the next required bounded continuation.`
 
 ### Version Boundary Record
 
 - `This version governs authoring/data-structure convergence after runtime-pack-unification closeout.`
 - `It must consume the closed runtime-pack export/import/startup truth as baseline evidence rather than reopening it as a compatibility patch surface.`
 - `It may supersede previously frozen script-editor structures only through explicit schema/migration/supersession records.`
-- `queue.script-editor-dialogue-story-runtime-handoff-convergence is closed; execution resumes from promotion review for the next lawful same-version queue or version closeout decision.`
+- `It has admitted queue.script-editor-branching-event-task-chain-convergence after dialogue/story runtime handoff closeout; execution resumes from the branching/event/task-chain boundary baseline task.`
 
 ### Queue Admission Startup Rules
 
@@ -250,3 +252,4 @@
 - `2026-07-15: queue.script-editor-dialogue-story-runtime-handoff-convergence completed boundary-baseline-reconcile after selecting editor event -> dialogue destination -> materialized runtime scene -> runStoryTriggerRuntime/runSceneFromEvent handoff coverage as the smallest lawful slice; the active task is now runtime-handoff-implementation.`
 - `2026-07-15: queue.script-editor-dialogue-story-runtime-handoff-convergence completed runtime-handoff-implementation after adding eventId to SceneRuntimeSession and verifying exported editor dialogue events enter materialized runtime scenes through runStoryTriggerRuntime; the active task is now queue-closeout-and-handoff.`
 - `2026-07-15: queue.script-editor-dialogue-story-runtime-handoff-convergence closed after verification; story-progress/dialogue-finished trigger lowering, branching choices, followUps, story-node relation lowering, runtime-scene import reconstruction, and broader event/task progression were routed as cross-family residue to promotion review, with queue.script-editor-branching-event-task-chain-convergence recommended next.`
+- `2026-07-15: admission review promoted queue.script-editor-branching-event-task-chain-convergence as the single active queue because richer progression/branching/event-task residue is now the next required bounded continuation after basic dialogue structures and event-to-scene runtime handoff verified. The first live task is boundary-baseline-reconcile.`
