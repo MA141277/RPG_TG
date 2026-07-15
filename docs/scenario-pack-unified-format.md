@@ -333,6 +333,20 @@ Long-term target:
 
 - asset references are data-driven like other pack fields
 
+### Campaign Map Hex Grid
+
+Campaign maps may define `campaignHexGridUrl` on their `maps.json` record. The value must be a pack-relative path to a JSON file using `format: "campaign-hex-grid-v1"`.
+
+The hex grid file is the campaign map semantic data source for per-hex gameplay fields:
+
+- `land`: whether the hex is passable land for the current land/water model.
+- `terrain`: coarse terrain category for later rules; newly generated grids initialize this to `平原`.
+- `environment`: local environment category for later rules; newly generated grids initialize this to `草地`.
+
+The file must also keep reproducibility metadata under `source`: the source raster layer, source image path, sampler method, UV-to-pixel formula, water material rule, and land rule. For the current Yuanmo campaign map, `tools/generate-campaign-hex-grid.mjs` samples the `map_ground_types` layer at each hex center and writes `assets/maps/yuanmo-campaign-hex-grid.json`.
+
+Runtime renderers must prefer `campaignHexGridUrl` over direct raster resampling for land/water semantics. Direct `map_ground_types` sampling is only a legacy fallback and a generation input; visual material layers can still use the original images for color and shader effects.
+
 ## Validation Rules
 
 Every pack should satisfy these checks:

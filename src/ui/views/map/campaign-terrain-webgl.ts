@@ -3,6 +3,7 @@ import type {
   GridCoordinate,
   HexTravelGrid,
 } from "../../../application/navigation/travel-to-coordinate";
+import type { CampaignHexGridDefinition } from "../../../domain/map";
 import actorFragmentShaderRaw from "./shaders/campaign-actor.frag.glsl?raw";
 import actorVertexShaderRaw from "./shaders/campaign-actor.vert.glsl?raw";
 import terrainFragmentShaderRaw from "./shaders/campaign-terrain.frag.glsl?raw";
@@ -13,6 +14,7 @@ type CampaignTerrainInput = {
   textureUrl: string;
   heightUrl: string;
   materialUrl: string;
+  campaignHexGridUrl: string | null;
   grassTextureUrl: string | null;
   sandTextureUrl: string | null;
   waterTextureUrl: string | null;
@@ -331,6 +333,8 @@ type CampaignMaterialSemanticModel = {
   cells: GridCoordinate[];
   landByCellKey: Map<string, boolean>;
 };
+
+type CampaignHexGridAsset = CampaignHexGridDefinition;
 
 type ShorelineChainTextureModel = {
   source: ImageData;
@@ -653,6 +657,10 @@ function readCampaignTerrainInput(canvas: HTMLCanvasElement): CampaignTerrainInp
     textureUrl,
     heightUrl,
     materialUrl,
+    campaignHexGridUrl:
+      renderMode === "terrain" || renderMode === "actor"
+        ? canvas.dataset.mapHexGridUrl ?? null
+        : null,
     grassTextureUrl:
       renderMode === "terrain" ? canvas.dataset.mapGrassTextureUrl ?? null : null,
     sandTextureUrl:
@@ -669,6 +677,7 @@ function getCampaignTerrainInputSignature(input: CampaignTerrainInput): string {
     input.textureUrl,
     input.heightUrl,
     input.materialUrl,
+    input.campaignHexGridUrl ?? "",
     input.grassTextureUrl ?? "",
     input.sandTextureUrl ?? "",
     input.waterTextureUrl ?? "",
@@ -765,6 +774,13 @@ async function initCampaignTerrainWebGl(
       return null;
     })
     : Promise.resolve(null);
+  const campaignHexGridPromise =
+    input.campaignHexGridUrl == null
+      ? Promise.resolve(null)
+      : loadJson<CampaignHexGridAsset>(input.campaignHexGridUrl).catch((error: unknown) => {
+        console.error("Failed to load campaign hex grid asset.", error);
+        return null;
+      });
   const waterTextureImagePromise =
     renderTerrain && input.waterTextureUrl != null
       ? loadImage(input.waterTextureUrl).catch((error: unknown) => {
@@ -795,6 +811,7 @@ async function initCampaignTerrainWebGl(
     sandTextureImage,
     actorAsset,
     cityDepthAsset,
+    campaignHexGrid,
   ] = await Promise.all([
     loadImage(input.textureUrl),
     loadImage(input.heightUrl),
@@ -804,14 +821,18 @@ async function initCampaignTerrainWebGl(
     sandTextureImagePromise,
     actorAssetPromise,
     cityDepthAssetPromise,
+    campaignHexGridPromise,
   ]);
   const baseHeightSamples = sampleHeightImage(heightImage, GRID_COLUMNS, GRID_ROWS);
   const materialLandMask = sampleMaterialLandMask(materialImage);
-  const materialSemanticModel = createCampaignMaterialSemanticModel(
-    materialLandMask.landMask,
-    materialLandMask.columns,
-    materialLandMask.rows
-  );
+  const materialSemanticModel =
+    campaignHexGrid == null
+      ? createCampaignMaterialSemanticModel(
+        materialLandMask.landMask,
+        materialLandMask.columns,
+        materialLandMask.rows
+      )
+      : createCampaignMaterialSemanticModelFromHexGrid(campaignHexGrid);
   const heightSamples = createSmoothTerrainHeightSamples(
     baseHeightSamples,
     GRID_COLUMNS,
@@ -1890,6 +1911,66 @@ function createCampaignMaterialSemanticModel(
     const value = isLand ? 255 : 0;
 
     landByCellKey.set(getHexCellKey(cell.x, cell.y), isLand);
+    pixels[pixelOffset] = value;
+    pixels[pixelOffset + 1] = value;
+    pixels[pixelOffset + 2] = value;
+    pixels[pixelOffset + 3] = 255;
+  }
+
+  return {
+    source: new ImageData(pixels, textureColumns, textureRows),
+    textureColumns,
+    textureRows,
+    minCellX,
+    minCellY,
+    cellColumns,
+    cellRows,
+    cells,
+    landByCellKey,
+  };
+}
+
+function createCampaignMaterialSemanticModelFromHexGrid(
+  campaignHexGrid: CampaignHexGridAsset
+): CampaignMaterialSemanticModel {
+  if (campaignHexGrid.format !== "campaign-hex-grid-v1") {
+    throw new Error(`Unsupported campaign hex grid format "${campaignHexGrid.format}".`);
+  }
+
+  const cells = campaignHexGrid.cells.map((cell) => ({ x: cell.x, y: cell.y }));
+  const minCellX =
+    cells.length > 0 ? Math.min(...cells.map((cell) => cell.x)) : campaignHexGrid.bounds.minX;
+  const maxCellX =
+    cells.length > 0 ? Math.max(...cells.map((cell) => cell.x)) : campaignHexGrid.bounds.maxX;
+  const minCellY =
+    cells.length > 0 ? Math.min(...cells.map((cell) => cell.y)) : campaignHexGrid.bounds.minY;
+  const maxCellY =
+    cells.length > 0 ? Math.max(...cells.map((cell) => cell.y)) : campaignHexGrid.bounds.maxY;
+  const cellColumns = Math.max(maxCellX - minCellX + 1, 1);
+  const cellRows = Math.max(maxCellY - minCellY + 1, 1);
+  const textureColumns = cellColumns;
+  const textureRows = cellRows;
+  const pixels = new Uint8ClampedArray(textureColumns * textureRows * 4);
+  const landByCellKey = new Map<string, boolean>();
+
+  for (const cell of campaignHexGrid.cells) {
+    const pixelX = cell.x - minCellX;
+    const pixelY = cell.y - minCellY;
+    const pixelOffset = (pixelY * textureColumns + pixelX) * 4;
+    const value = cell.land ? 255 : 0;
+
+    if (
+      pixelX < 0 ||
+      pixelX >= textureColumns ||
+      pixelY < 0 ||
+      pixelY >= textureRows ||
+      pixelOffset < 0 ||
+      pixelOffset + 3 >= pixels.length
+    ) {
+      continue;
+    }
+
+    landByCellKey.set(getHexCellKey(cell.x, cell.y), cell.land);
     pixels[pixelOffset] = value;
     pixels[pixelOffset + 1] = value;
     pixels[pixelOffset + 2] = value;

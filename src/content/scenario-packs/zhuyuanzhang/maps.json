@@ -7736,6 +7736,7 @@
       "resourceSummary": "wool:56; iron:55; dogs:40; sugar:38; silver:35; marble:30; fish:25; furs:24; amber:23; camels:23"
     },
     "primaryImageUrl": "./assets/maps/HD.png",
-    "regionOverlayImageUrl": "./assets/maps/yuanmo-map-regions.png"
+    "regionOverlayImageUrl": "./assets/maps/yuanmo-map-regions.png",
+    "campaignHexGridUrl": "./assets/maps/yuanmo-campaign-hex-grid.json"
   }
 ]

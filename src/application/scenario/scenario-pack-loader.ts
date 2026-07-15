@@ -314,6 +314,16 @@ function resolveImportedScenarioPackMapAssetUrls(
             assetUrlCache
           ),
         }),
+    ...(mapDefinition.campaignHexGridUrl == null
+      ? {}
+      : {
+          campaignHexGridUrl: resolveImportedScenarioPackAssetUrl(
+            mapDefinition.campaignHexGridUrl,
+            manifestDirectoryPath,
+            indexedFiles,
+            assetUrlCache
+          ),
+        }),
     ...(mapDefinition.layers == null
       ? {}
       : {

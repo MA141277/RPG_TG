@@ -136,6 +136,10 @@ export function resolveContentPackMapAssetUrls(
       manifestUrl,
       mapDefinition.regionOverlayImageUrl
     );
+    const campaignHexGridUrl = resolvePackRelativeUrl(
+      manifestUrl,
+      mapDefinition.campaignHexGridUrl
+    );
     const layers = mapDefinition.layers?.map((layerDefinition) => ({
       ...layerDefinition,
       imageUrl:
@@ -146,6 +150,7 @@ export function resolveContentPackMapAssetUrls(
       ...mapDefinition,
       ...(primaryImageUrl == null ? {} : { primaryImageUrl }),
       ...(regionOverlayImageUrl == null ? {} : { regionOverlayImageUrl }),
+      ...(campaignHexGridUrl == null ? {} : { campaignHexGridUrl }),
       ...(layers == null ? {} : { layers }),
     };
   });

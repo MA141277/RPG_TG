@@ -68,6 +68,7 @@ export type MapViewModel = {
   };
   primaryImageUrl: string | null;
   regionOverlayImageUrl: string | null;
+  campaignHexGridUrl: string | null;
   heightmapImageUrl: string | null;
   hexTextureAtlasImageUrl: string | null;
   materialTextureImageUrl: string | null;
@@ -166,6 +167,7 @@ export function createMapViewModel(input: {
     displaySize,
     primaryImageUrl: input.mapDefinition.primaryImageUrl ?? null,
     regionOverlayImageUrl: input.mapDefinition.regionOverlayImageUrl ?? null,
+    campaignHexGridUrl: input.mapDefinition.campaignHexGridUrl ?? null,
     heightmapImageUrl:
       input.mapDefinition.layers?.find((layer) => layer.id === "map_heights")
         ?.imageUrl ?? null,
@@ -490,6 +492,7 @@ function renderCampaignMapVisualLayer(
           data-map-texture-url="${model.hexTextureAtlasImageUrl}"
           data-map-height-url="${model.heightmapImageUrl}"
           data-map-material-url="${model.materialTextureImageUrl}"
+          ${model.campaignHexGridUrl == null ? "" : `data-map-hex-grid-url="${model.campaignHexGridUrl}"`}
           ${model.grassTextureImageUrl == null ? "" : `data-map-grass-texture-url="${model.grassTextureImageUrl}"`}
           ${model.sandTextureImageUrl == null ? "" : `data-map-sand-texture-url="${model.sandTextureImageUrl}"`}
           ${model.waterTextureImageUrl == null ? "" : `data-map-water-texture-url="${model.waterTextureImageUrl}"`}
@@ -507,6 +510,7 @@ function renderCampaignMapVisualLayer(
           data-map-texture-url="${model.hexTextureAtlasImageUrl}"
           data-map-height-url="${model.heightmapImageUrl}"
           data-map-material-url="${model.materialTextureImageUrl}"
+          ${model.campaignHexGridUrl == null ? "" : `data-map-hex-grid-url="${model.campaignHexGridUrl}"`}
           aria-hidden="true"
         ></canvas>
       `

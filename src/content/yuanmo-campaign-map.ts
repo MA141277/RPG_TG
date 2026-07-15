@@ -10,6 +10,7 @@ import map_water_noiseUrl from "../assets/yuanmo-map/yuanmo-water-noise.png";
 import map_fog_noiseUrl from "../assets/yuanmo-map/yuanmo-fog-noise.png";
 import map_grass_textureUrl from "../assets/yuanmo-map/campaign-grass-texture.png";
 import map_sand_textureUrl from "../assets/yuanmo-map/campaign-sand-texture.png";
+import map_hex_gridUrl from "./scenario-packs/zhuyuanzhang/assets/maps/yuanmo-campaign-hex-grid.json?url";
 import map_tietuUrl from "../../tietu.png";
 
 export const yuanmoCampaignMap: MapDefinition = {
@@ -21,6 +22,7 @@ export const yuanmoCampaignMap: MapDefinition = {
   coordinateSpace: { width: 509, height: 451 },
   displaySize: { width: 1484, height: 1060 },
   primaryImageUrl: map_HDUrl,
+  campaignHexGridUrl: map_hex_gridUrl,
   nodes: [
     {"id": "settlement.newguinea_province", "label": "美拉尼西亚人聚集地（Melanesia）", "x": 472, "y": 49, "kind": "settlement", "summary": "Region: 伊里安岛 | Owner: slave | Level: town | Type: town"},
     {"id": "settlement.ryukyu_province", "label": "首里城", "x": 416, "y": 269, "kind": "settlement", "summary": "Region: 琉球王国 | Owner: slave | Level: large_town | Type: town"},

@@ -2091,6 +2091,10 @@ test("zhuyuanzhang maps use relative pack asset urls instead of imageAssetId", (
     "./assets/maps/yuanmo-map-regions.png"
   );
   assert.equal(
+    yuanmoCampaignMap.campaignHexGridUrl,
+    "./assets/maps/yuanmo-campaign-hex-grid.json"
+  );
+  assert.equal(
     yuanmoCampaignMap.layers.every((layer) => typeof layer.imageUrl === "string"),
     true
   );
@@ -2132,6 +2136,7 @@ test("zhuyuanzhang maps use relative pack asset urls instead of imageAssetId", (
   [
     yuanmoCampaignMap.primaryImageUrl,
     yuanmoCampaignMap.regionOverlayImageUrl,
+    yuanmoCampaignMap.campaignHexGridUrl,
     ...yuanmoCampaignMap.layers.map((layer) => layer.imageUrl),
   ].forEach((relativeAssetUrl) => {
     const assetPath = path.join(
@@ -2145,6 +2150,26 @@ test("zhuyuanzhang maps use relative pack asset urls instead of imageAssetId", (
       `Expected zhuyuanzhang map asset ${relativeAssetUrl} to exist`
     );
   });
+  const campaignHexGrid = JSON.parse(
+    fs.readFileSync(
+      path.join(packRoot, "assets", "maps", "yuanmo-campaign-hex-grid.json"),
+      "utf8"
+    )
+  );
+
+  assert.equal(campaignHexGrid.format, "campaign-hex-grid-v1");
+  assert.equal(campaignHexGrid.mapId, "map.yuanmo_campaign");
+  assert.equal(campaignHexGrid.defaults.terrain, "平原");
+  assert.equal(campaignHexGrid.defaults.environment, "草地");
+  assert.equal(campaignHexGrid.source.sampler.method, "hex-center-nearest-pixel");
+  assert.equal(campaignHexGrid.source.sourceLayerId, "map_ground_types");
+  assert.equal(campaignHexGrid.counts.cells, campaignHexGrid.cells.length);
+  assert.equal(
+    campaignHexGrid.cells.every(
+      (cell) => cell.terrain === "平原" && cell.environment === "草地"
+    ),
+    true
+  );
 });
 
 test("content pack loader resolves zhuyuanzhang map asset urls", async () => {
@@ -2201,6 +2226,10 @@ test("content pack loader resolves zhuyuanzhang map asset urls", async () => {
     assert.equal(
       yuanmoCampaignMap.regionOverlayImageUrl,
       `${packBaseUrl}assets/maps/yuanmo-map-regions.png`
+    );
+    assert.equal(
+      yuanmoCampaignMap.campaignHexGridUrl,
+      `${packBaseUrl}assets/maps/yuanmo-campaign-hex-grid.json`
     );
     assert.equal(
       yuanmoCampaignMap.layers.every((layer) =>
@@ -2823,6 +2852,10 @@ test(
       assert.equal(
         yuanmoCampaignMap.regionOverlayImageUrl,
         `${packBaseUrl}assets/maps/yuanmo-map-regions.png`
+      );
+      assert.equal(
+        yuanmoCampaignMap.campaignHexGridUrl,
+        `${packBaseUrl}assets/maps/yuanmo-campaign-hex-grid.json`
       );
       assert.equal(
         yuanmoCampaignMap.layers.every((layer) =>

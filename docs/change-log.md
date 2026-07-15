@@ -2,6 +2,21 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-15 Campaign Hex Grid Data Asset
+
+### Added
+- 新增 `campaign-hex-grid-v1` 大地图 Hex 数据资产：`src/content/scenario-packs/zhuyuanzhang/assets/maps/yuanmo-campaign-hex-grid.json` 保存从 `map_ground_types` 采样得到的 8509 个 hex cell，并为每格写入 `land`、`terrain`、`environment`。
+- 新增 `tools/generate-campaign-hex-grid.mjs`，把从原图采样到 Hex cell 的来源图层、UV/像素公式、水体判定规则和 land 规则写入 JSON，后续可复现同一张 Hex 数据图并追加新的采样机制。
+- `MapDefinition` 新增 `campaignHexGridUrl`，content pack 和导入 scenario pack 的资产解析都会把该字段解析为可加载 URL。
+
+### Changed
+- 朱元璋 scenario pack 与内置元末地图都注册 `campaignHexGridUrl`；`map-view.ts` 会把该 URL 传给 terrain / actor canvas，`campaign-terrain-webgl.ts` 优先读取保存后的 Hex 数据图生成通行网格、点击通行检查、岸线链和 `uMaterialSemanticTexture`。
+- `terrain` 和 `environment` 当前统一初始化为“平原”和“草地”。`map_ground_types` 仍保留为生成器输入、旧地图回退和 shader 视觉参考，不再是存在 Hex 数据图时的运行时语义事实来源。
+
+### Impact
+- 后续给每个 hex 增加地形、环境、资源、道路、危险度等机制时，应扩展同一份 Hex 数据图或其生成器，而不是在 renderer 或 gameplay 代码中重新逐帧采样原图。
+- 文档同步更新了大地图语义来源边界：表现层材质图只影响视觉；陆水、寻路、点击和岸线语义优先来自 `campaignHexGridUrl` 指向的数据资产。
+
 ## 2026-07-14 Campaign Shoreline Chain Sampling
 
 ### Changed
