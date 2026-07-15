@@ -9,8 +9,8 @@
 - governance_sync_source: `docs/blueprints/blueprint.md`
 - queue_status: `active`
 - queue_class: `required`
-- active_task: `task.script-editor-city-building-structure-convergence.boundary-baseline-reconcile`
-- next_task: `task.script-editor-city-building-structure-convergence.structure-contract-implementation`
+- active_task: `task.script-editor-city-building-structure-convergence.structure-contract-implementation`
+- next_task: `task.script-editor-city-building-structure-convergence.queue-closeout-and-handoff`
 - closeout_status: `not-started`
 - execution_closeout_status: `partial`
 - topic_closure_status: `open-residue`
@@ -23,7 +23,7 @@
 - next_effect: `execute-active-task`
 - sync_status: `pending`
 - sync_scope: `branch-push`
-- sync_summary: `No repository sync has run yet for this queue admission.`
+- sync_summary: `No repository sync has run yet for the structure baseline task.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
@@ -57,9 +57,9 @@
 
 - queue_goal: `Determine and implement the smallest city/building structure convergence slice that makes editor city/building records runtime-consumable without relying on export-only projection as the final durable model.`
 - task_count: `3`
-- completed_task_count: `0`
-- remaining_task_count: `3`
-- active_task_summary: `Inventory current city/building authoring/runtime/export structures and select the smallest lawful structure convergence slice.`
+- completed_task_count: `1`
+- remaining_task_count: `2`
+- active_task_summary: `Implement the selected runtime-house-compatible building structure contract slice.`
 - task_briefs:
   - `task.script-editor-city-building-structure-convergence.boundary-baseline-reconcile: inventory city/building authoring records, runtime HouseDefinition/CityEntryDefinition consumption, import/export materialization, and placement-resolver boundaries before code changes.`
   - `task.script-editor-city-building-structure-convergence.structure-contract-implementation: implement the selected city/building structure convergence slice with tests.`
@@ -96,8 +96,8 @@
 
 | Task ID | State | Summary | Depends On | Notes |
 | --- | --- | --- | --- | --- |
-| `task.script-editor-city-building-structure-convergence.boundary-baseline-reconcile` | `active` | `Inventory city/building authoring/runtime/export seams and select the smallest structure convergence slice.` | `none` | `Production code must not change during baseline.` |
-| `task.script-editor-city-building-structure-convergence.structure-contract-implementation` | `pending` | `Implement the selected city/building structure convergence slice.` | `task.script-editor-city-building-structure-convergence.boundary-baseline-reconcile` | `Must be test-first and must not widen into placement resolver migration without baseline evidence.` |
+| `task.script-editor-city-building-structure-convergence.boundary-baseline-reconcile` | `done` | `Inventoried city/building authoring/runtime/export seams and selected runtime-house-compatible building structure contract hardening as the smallest implementation slice.` | `none` | `Production code was not changed during baseline.` |
+| `task.script-editor-city-building-structure-convergence.structure-contract-implementation` | `active` | `Implement the selected runtime-house-compatible building structure contract slice.` | `task.script-editor-city-building-structure-convergence.boundary-baseline-reconcile` | `Must be test-first and must not widen into placement resolver migration without baseline evidence.` |
 | `task.script-editor-city-building-structure-convergence.queue-closeout-and-handoff` | `pending` | `Verify, classify residue, and return control to version review.` | `task.script-editor-city-building-structure-convergence.structure-contract-implementation` | `Must not close the parent version without explicit version closeout confirmation.` |
 
 ### Task Definitions
@@ -107,7 +107,7 @@
 ##### Control Block
 
 - task_id: `task.script-editor-city-building-structure-convergence.boundary-baseline-reconcile`
-- state: `active`
+- state: `done`
 - task_kind: `execution`
 - scope:
   - `src/domain/script-editor-project.ts`
@@ -155,7 +155,7 @@
 - task_brief:
   - `Find the smallest city/building structure convergence slice that turns runtime-compatible fields into durable editor-owned data rather than export-only projection.`
 - task_outcome_summary:
-  - `none`
+  - `Done. Existing runtime import copies pack.houses into project.buildings and export now materializes runtime houses, but ScriptEditorBuildingRecord still does not explicitly own the HouseDefinition-compatible fields that runtime consumers require. The smallest lawful implementation slice is to harden the building authoring contract so buildings durably carry the runtime house fields needed by houses.json, while leaving city-local placement ids and resolver ownership for the placement-resolver queue.`
 - Purpose:
   - `Replace the remaining city/building structure shadow with a governed runtime-consumable authoring contract.`
 - Failure mode:
@@ -164,13 +164,18 @@
 ##### Progress Log
 
 - `2026-07-15`: `Queue admitted after priority city/building/NPC authoring materialization closed with no same-family residue; baseline must decide whether durable city/building structure convergence can proceed before placement resolver convergence.`
+- `2026-07-15`: `Baseline inspected ScriptEditorCityRecord/ScriptEditorBuildingRecord, runtime HouseDefinition and CityEntryDefinition contracts, city-building-authoring defaults/normalizers, runtime-pack import/export, the new city-building runtime materializer, active-game-content indexing, and existing robustness coverage.`
+- `2026-07-15`: `Inventory: runtime consumers index houses as HouseDefinition[] and cityEntries as CityEntryDefinition[]; runtime import currently stores pack.houses directly into project.buildings; ScriptEditorBuildingRecord only explicitly declares cityId/name/menu/access/entryBinding even though imported runtime house fields survive through the open entity record shape; export materialization fills type, characterIds, defaultCharacterId, backAction, activityLocationId, and event ids when serializing.`
+- `2026-07-15`: `Mismatch: the editor's durable building contract still treats runtime house fields as implicit unknown properties, so the just-landed materializer remains the source of truth for required house fields in new projects. This is structure drift, not placement resolver ownership.`
+- `2026-07-15`: `Selected smallest lawful slice: make ScriptEditorBuildingRecord explicitly runtime-house-compatible for the covered HouseDefinition fields, normalize/create default values in city-building-authoring, and update export/materializer tests to prove buildings durably own the house structure without changing city-local placement resolver behavior.`
+- `2026-07-15`: `Implementation plan for the next task: write failing tests for default/normalized building runtime house fields and exported houses preserving authored runtime house values; update src/domain/script-editor-project.ts and src/application/script-editor/city-building-authoring.ts; keep cityEntries/cityNpcPools/refusal materialization as bounded export support; verify with npm run typecheck, npm test, npm run build, npm run lint:blueprints, npm run lint:plans, npm run blueprint:governance:check, and git diff --check.`
 
 #### `task.script-editor-city-building-structure-convergence.structure-contract-implementation`
 
 ##### Control Block
 
 - task_id: `task.script-editor-city-building-structure-convergence.structure-contract-implementation`
-- state: `pending`
+- state: `active`
 - task_kind: `execution`
 - scope:
   - `Files identified by boundary-baseline-reconcile.`
@@ -207,6 +212,7 @@
 ##### Progress Log
 
 - `2026-07-15`: `Queued behind boundary-baseline-reconcile.`
+- `2026-07-15`: `Activated after baseline selected runtime-house-compatible building structure contract hardening as the smallest convergence slice.`
 
 #### `task.script-editor-city-building-structure-convergence.queue-closeout-and-handoff`
 

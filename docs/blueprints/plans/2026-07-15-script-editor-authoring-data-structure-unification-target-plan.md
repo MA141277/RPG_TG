@@ -131,7 +131,7 @@
 
 - `queue.script-editor-city-building-structure-convergence`
 - Active task:
-  - `task.script-editor-city-building-structure-convergence.boundary-baseline-reconcile`
+  - `task.script-editor-city-building-structure-convergence.structure-contract-implementation`
 - Activation basis:
   - `queue.script-editor-city-building-entry-and-npc-authoring-priority closed after bounded priority materialization export landed, but the target spec still requires durable city/building authoring/runtime structure convergence so export-only projection does not remain the final model.`
 
@@ -232,3 +232,4 @@
 - `2026-07-15: queue.script-editor-city-building-entry-and-npc-authoring-priority completed boundary-baseline-reconcile after selecting bounded city/building runtime-family materialization from existing authoring fields as the smallest lawful implementation slice; the active task is now priority-authoring-implementation.`
 - `2026-07-15: queue.script-editor-city-building-entry-and-npc-authoring-priority closed after runtime export materialized bounded houses, cityEntries, cityNpcPools, and houseAccessRefusalRules from existing building/person authoring fields when explicit runtime records are absent, preserved imported explicit runtime families, and passed verification. The version returned to promotion review with no active queue.`
 - `2026-07-15: admission review promoted queue.script-editor-city-building-structure-convergence as the single active queue because priority city/building gaps are now mapped and the target spec requires durable city/building authoring/runtime structure convergence before projection-only export materialization can be treated as final. The first live task is boundary-baseline-reconcile.`
+- `2026-07-15: queue.script-editor-city-building-structure-convergence completed boundary-baseline-reconcile after selecting runtime-house-compatible building structure contract hardening as the smallest lawful implementation slice; the active task is now structure-contract-implementation.`
