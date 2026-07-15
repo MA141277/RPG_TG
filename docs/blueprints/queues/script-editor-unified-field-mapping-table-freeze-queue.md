@@ -21,9 +21,9 @@
 - next_family_candidate: `none`
 - auto_continue_eligible: `false`
 - next_effect: `none`
-- sync_status: `pending`
-- sync_scope: `none`
-- sync_summary: `Queue admitted locally; repository sync has not run yet for this queue.`
+- sync_status: `failed`
+- sync_scope: `baseline-push`
+- sync_summary: `Commit ff369f7 was pushed to origin/mod-first-dev for queue admission, but the follow-up sync-record commit could not be pushed because HTTPS connections to github.com:443 timed out after repeated retry attempts.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
