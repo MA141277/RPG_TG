@@ -21,9 +21,9 @@
 - next_family_candidate: `none`
 - auto_continue_eligible: `false`
 - next_effect: `none`
-- sync_status: `success`
+- sync_status: `failed`
 - sync_scope: `branch-push`
-- sync_summary: `Commit 7294ba2 was pushed to origin/mod-first-dev, carrying the verified CharacterStatus runtime aggregation, save persistence, startup restore, city-begging covered settlement, tests, and implementation-task promotion to closeout.`
+- sync_summary: `Commit 7294ba2 is present on origin/mod-first-dev with the verified implementation. The follow-up sync-record commit ebfe9ac remains local because two fresh push attempts could not connect to github.com port 443; this repository-sync failure is not an execution blocker.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
