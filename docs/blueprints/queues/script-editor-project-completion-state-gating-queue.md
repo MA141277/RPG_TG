@@ -9,8 +9,8 @@
 - governance_sync_source: `docs/blueprints/blueprint.md`
 - queue_status: `active`
 - queue_class: `required-priority`
-- active_task: `task.script-editor-project-completion-state-gating.boundary-baseline-reconcile`
-- next_task: `task.script-editor-project-completion-state-gating.completion-state-implementation`
+- active_task: `task.script-editor-project-completion-state-gating.completion-state-implementation`
+- next_task: `task.script-editor-project-completion-state-gating.queue-closeout-and-handoff`
 - closeout_status: `in-progress`
 - execution_closeout_status: `partial`
 - topic_closure_status: `open-residue`
@@ -57,12 +57,12 @@
 
 - queue_goal: `Persist and enforce script-editor project completion state, with runtime export as the only completion-upgrade step.`
 - task_count: `3`
-- completed_task_count: `0`
-- remaining_task_count: `3`
-- active_task_summary: `Reconcile the existing project manifest/project definition/export/save/library surfaces before implementing completion-state gating.`
+- completed_task_count: `1`
+- remaining_task_count: `2`
+- active_task_summary: `Implement completion-state persistence and export-only completion upgrade with tests.`
 - task_briefs:
-  - `task.script-editor-project-completion-state-gating.boundary-baseline-reconcile: active baseline task to locate existing project metadata, save/export, library, and UI resume points.`
-  - `task.script-editor-project-completion-state-gating.completion-state-implementation: pending implementation task for completion-state persistence, export upgrade, and unfinished-project resume prompts/gates.`
+  - `task.script-editor-project-completion-state-gating.boundary-baseline-reconcile: completed after source evidence confirmed project definition/manifest/save/export/library currently lack completion-state truth.`
+  - `task.script-editor-project-completion-state-gating.completion-state-implementation: active implementation task for completion-state persistence, export upgrade, and unfinished-project resume prompts/gates.`
   - `task.script-editor-project-completion-state-gating.queue-closeout-and-handoff: pending closeout task to verify, classify residue, and return control to version review.`
 
 ### Operator Snapshot Contract
@@ -95,8 +95,8 @@
 
 | Task ID | State | Summary | Depends On | Notes |
 | --- | --- | --- | --- | --- |
-| `task.script-editor-project-completion-state-gating.boundary-baseline-reconcile` | `active` | `Reconcile current project metadata, library, save, export, and resume surfaces before completion-state implementation.` | `none` | `Must prove where completion state should live and where export is allowed to mark completion.` |
-| `task.script-editor-project-completion-state-gating.completion-state-implementation` | `pending` | `Implement project completion-state persistence and export-only completion upgrade with tests.` | `task.script-editor-project-completion-state-gating.boundary-baseline-reconcile` | `Must not widen into unrelated schema migrations.` |
+| `task.script-editor-project-completion-state-gating.boundary-baseline-reconcile` | `completed` | `Reconciled current project metadata, library, save, export, and resume surfaces before completion-state implementation.` | `none` | `Completed on 2026-07-15 after source evidence confirmed completion state should live in project definition/manifest truth, save/open must preserve it, runtime export is the only completion upgrade, and library/UI can mirror it from the project snapshot.` |
+| `task.script-editor-project-completion-state-gating.completion-state-implementation` | `active` | `Implement project completion-state persistence and export-only completion upgrade with tests.` | `task.script-editor-project-completion-state-gating.boundary-baseline-reconcile` | `Must not widen into unrelated schema migrations.` |
 | `task.script-editor-project-completion-state-gating.queue-closeout-and-handoff` | `pending` | `Verify completion-state gating, classify residue, and return control to version review.` | `task.script-editor-project-completion-state-gating.completion-state-implementation` | `Must run lint and relevant tests before queue closeout.` |
 
 ### Task Definitions
@@ -106,7 +106,7 @@
 ##### Control Block
 
 - task_id: `task.script-editor-project-completion-state-gating.boundary-baseline-reconcile`
-- state: `active`
+- state: `completed`
 - task_kind: `execution`
 - scope:
   - `src/domain/script-editor-project.ts`
@@ -144,18 +144,22 @@
 - task_brief:
   - `Reconcile the completion-state boundary before writing project metadata changes.`
 - task_outcome_summary:
-  - `Expected output is a source-backed implementation handoff for completion state storage and export-only completion upgrade.`
+  - `Completed with a source-backed implementation handoff: project completion state should be durable project truth serialized through project.json/project definition, save/open should preserve it without upgrading it, runtime export should be the only operation that marks completion, and project library/UI should mirror the project snapshot rather than invent a separate truth.`
 - Purpose:
   - `Prevent completion truth from becoming another UI-only or cache-only shadow.`
 - Failure mode:
   - `Marking completion during save/preview/import would make unfinished projects look deliverable and hide resume work.`
+
+##### Progress Log
+
+- `2026-07-15`: `Inspected src/domain/script-editor-project.ts, editor-project-save.ts, editor-project-loader.ts, project-workspace-library.ts, runtime-pack-export.ts, main-ui-flow.js, and robustness tests. Current project schema has no completion metadata, save writes only project manifest/split tables, export is the existing runtime package handoff, and project library stores the project snapshot. Implementation should add project-level completion metadata, preserve it on save/open, and upgrade it only through runtime export.`
 
 #### `task.script-editor-project-completion-state-gating.completion-state-implementation`
 
 ##### Control Block
 
 - task_id: `task.script-editor-project-completion-state-gating.completion-state-implementation`
-- state: `pending`
+- state: `active`
 - task_kind: `execution`
 - scope:
   - `src/domain/script-editor-project.ts`

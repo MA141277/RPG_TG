@@ -119,7 +119,7 @@
 
 - `queue.script-editor-project-completion-state-gating`
 - Active task:
-  - `task.script-editor-project-completion-state-gating.boundary-baseline-reconcile`
+  - `task.script-editor-project-completion-state-gating.completion-state-implementation`
 
 ### Version Boundary Record
 
