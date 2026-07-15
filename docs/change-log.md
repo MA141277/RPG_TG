@@ -5,6 +5,34 @@
 `docs/change-log.md` 的正式定位是“历史记录 + 人类可读摘要”。
 它不是当前 Blueprint / legacy superpowers 治理的 live execution truth，不作为 resume entry、promotion gate、closeout gate 或固定同步门。
 
+## 2026-07-15 Script Editor Authoring Data Structure Unification Version Activation
+
+### Changed
+- 新增 [docs/blueprints/specs/2026-07-15-script-editor-authoring-data-structure-unification-target.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/specs/2026-07-15-script-editor-authoring-data-structure-unification-target.md)，将既有 authoring/data-structure unification draft 正式提升为 `target.script-editor-authoring-data-structure-unification`。
+- 新增 [docs/blueprints/plans/2026-07-15-script-editor-authoring-data-structure-unification-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-15-script-editor-authoring-data-structure-unification-target-plan.md)，记录新 version 的候选队列组合，并把 `queue.script-editor-project-cache-save-export-preview` 设为首个 pending admission subject。
+- 更新 [docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md) 与 [docs/blueprints/blueprint.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/blueprint.md)，将 Blueprint 主链从已关闭的 runtime-pack-unification version 切换到新的 authoring/data-structure unification version。
+- 更新 [docs/blueprints/specs/2026-07-14-script-editor-authoring-data-structure-unification-draft.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/specs/2026-07-14-script-editor-authoring-data-structure-unification-draft.md)，把 draft 状态标记为已提升的历史来源，避免后续把草稿误当作 live truth。
+- 新增 [docs/blueprints/queues/script-editor-project-cache-save-export-preview-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-project-cache-save-export-preview-queue.md)，并将其提升为新 version 的首个 active queue，当前 active task 为 `task.script-editor-project-cache-save-export-preview.boundary-baseline-reconcile`。
+- 更新 [src/application/script-editor/project-workspace-library.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/project-workspace-library.ts)，让剧本编辑器项目库条目记录 package location 与 stale/valid 状态，并提供继续编辑 gating helper。
+- 更新 [src/ui/main-ui/main-ui-flow.js](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/main-ui/main-ui-flow.js)，让剧本编辑器导出 runtime 包前先把当前项目草稿写回已有项目目录 handle，避免导出内容和最近编辑状态脱节。
+- 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，新增项目库 location/stale validity 与导出前保存草稿的回归覆盖。
+- 关闭 `queue.script-editor-project-cache-save-export-preview` 的第一段 bounded slice，并将 create-at-save-path package skeleton、stale path probing、imported package edit-in-place、runtime preview-from-disk 等 same-family residue 路由为 `queue.script-editor-project-cache-save-export-preview-continuation` 候选。
+- 新增 [docs/blueprints/queues/script-editor-project-cache-save-export-preview-continuation-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-project-cache-save-export-preview-continuation-queue.md)，并将其作为 same-family continuation active queue 启动，当前 active task 为 `task.script-editor-project-cache-save-export-preview-continuation.boundary-baseline-reconcile`。
+
+### Impact
+- 当前 Blueprint 已进入新的 open successor version；首个 project-cache/save/export/preview 队列已关闭，continuation 队列已启动，下一步继续核对剩余 durable package workflow 边界。
+- 后续 script-editor authoring/data-structure 工作不再挂回已关闭的 `target.script-editor-runtime-pack-unification`。
+
+## 2026-07-15 Script Editor Runtime Pack Unification Version Closeout
+
+### Changed
+- 更新 [docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md)，将 `target.script-editor-runtime-pack-unification` 从 `open` 正式切换为 `done`，记录所有 10 个候选队列均已关闭、无 active task、无剩余 lawful same-version candidate，并写入 2026-07-15 的显式人工关闭确认。
+- 更新 [docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md) 与 [docs/blueprints/blueprint.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/blueprint.md)，保留最新关闭版本作为历史指针，并明确后续 fresh work 必须先进入 successor version 分类/开版，而不是继续向该已关闭版本追加队列。
+
+### Impact
+- `target.script-editor-runtime-pack-unification` 已正式关闭；在当前 Blueprint 下不再允许继续提升任何 same-version runtime-pack-unification queue。
+- 当前脚本编辑器 runtime-pack 统一成果已经沉淀为历史基线，后续相关工作必须通过新版本或显式治理重开记录推进。
+
 ## 2026-07-14 Script Editor Scenario Profile Startup Export
 
 ### Changed

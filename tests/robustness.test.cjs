@@ -2893,6 +2893,55 @@ test("script editor project library helpers support upsert find and remove", () 
   assert.equal(findScriptEditorProjectLibraryEntry(entries, "project.second"), null);
 });
 
+test("script editor project library records durable package location and stale validity", () => {
+  const {
+    canContinueScriptEditorProjectEntry,
+    createScriptEditorProjectLibraryEntry,
+    markScriptEditorProjectLibraryEntryStale,
+  } = require("../.test-dist/application/script-editor/project-workspace-library.js");
+  const project = createExportableScriptEditorProjectDefinition();
+
+  const entry = createScriptEditorProjectLibraryEntry(project, "opened", {
+    locationKind: "directory",
+    displayPath: "C:/Users/Administrator/Desktop/script-pack",
+    durable: true,
+  });
+
+  assert.equal(entry.packageLocation.locationKind, "directory");
+  assert.equal(entry.packageLocation.durable, true);
+  assert.equal(entry.validity.state, "valid");
+  assert.equal(canContinueScriptEditorProjectEntry(entry), true);
+
+  const staleEntry = markScriptEditorProjectLibraryEntryStale(
+    entry,
+    "Package path no longer contains project.json."
+  );
+
+  assert.equal(staleEntry.validity.state, "stale");
+  assert.match(staleEntry.validity.reason, /project\.json/);
+  assert.equal(canContinueScriptEditorProjectEntry(staleEntry), false);
+});
+
+test("script editor export persists the current project draft before runtime package export", () => {
+  const mainUiSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    "utf8"
+  );
+
+  assert.match(
+    mainUiSource,
+    /await this\.persistScriptEditorProjectDraftBeforeExport\(\)/
+  );
+  assert.match(
+    mainUiSource,
+    /async persistScriptEditorProjectDraftBeforeExport\(\)/
+  );
+  assert.match(
+    mainUiSource,
+    /exportScriptEditorProjectToScenarioPackFiles\(this\.scriptEditorProject\)/
+  );
+});
+
 test(
   "script editor runtime export emits a runtime-compatible scenario pack for the bounded direct-mapping slice",
   async () => {

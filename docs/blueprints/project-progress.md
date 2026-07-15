@@ -4,9 +4,9 @@
 
 - entry_id: `project-progress.rpg-tg`
 - active_blueprint: `blueprint.rpg-tg`
-- active_version: `target.script-editor-runtime-pack-unification`
-- has_active_queue: `false`
-- next_file: `docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md`
+- active_version: `target.script-editor-authoring-data-structure-unification`
+- has_active_queue: `true`
+- next_file: `docs/blueprints/queues/script-editor-project-cache-save-export-preview-continuation-queue.md`
 - entry_action: `open-next-file`
 
 ## Human Context
@@ -25,23 +25,27 @@
 - Current Blueprint:
   - `docs/blueprints/blueprint.md`
 - Current Version Spec:
-  - `docs/blueprints/specs/2026-07-14-script-editor-runtime-pack-unification-target.md`
+  - `docs/blueprints/specs/2026-07-15-script-editor-authoring-data-structure-unification-target.md`
 - Current Version Plan:
-  - `docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md`
+  - `docs/blueprints/plans/2026-07-15-script-editor-authoring-data-structure-unification-target-plan.md`
 - Current Active Queue:
-  - `none`
+  - `docs/blueprints/queues/script-editor-project-cache-save-export-preview-continuation-queue.md`
 
 ### Live Entry Guardrails
 
 - `This file only states the current resume entry and downstream pointer set.`
 - `Admission history, queue closeout history, and review narrative must stay in the version plan, queue docs, or docs/change-log.md rather than living here as competing current-state prose.`
-- `The pointed version is now the live successor runtime-pack-unification version and currently has no active queue after closing the scenarioProfile startup export convergence queue.`
-- `The latest governance action closed queue.script-editor-scenario-profile-startup-export-convergence after preserving scenarioProfile startup/runtime fields and verifying Zhu Yuanzhang JSON-import startup bootstraps the opening event.`
+- `The pointed version is now the open successor version for script-editor authoring/data-structure unification.`
+- `The latest governance action admitted queue.script-editor-project-cache-save-export-preview-continuation as the active same-family continuation after queue.script-editor-project-cache-save-export-preview closed with residue.`
+- `The current active task is task.script-editor-project-cache-save-export-preview-continuation.durable-package-workflow-implementation, which must implement durable package skeleton, stale cache, imported edit-in-place, and preview-from-disk behavior or record explicit blockers.`
 
 ### Historical References
 
 - `docs/change-log.md` stores the human-readable cross-session history.`
-- `docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md` stores the current runtime-pack-unification version's admission history, candidate record, promotion ledger, and current active queue admission truth.
+- `docs/blueprints/plans/2026-07-15-script-editor-authoring-data-structure-unification-target-plan.md` stores the current authoring/data-structure unification version's activation truth, candidate record, promotion ledger, and pending admission subject.
+- `docs/blueprints/queues/script-editor-project-cache-save-export-preview-queue.md` stores the closed first project cache/save/export/preview execution truth.
+- `docs/blueprints/queues/script-editor-project-cache-save-export-preview-continuation-queue.md` stores the active continuation execution truth for remaining durable package workflow semantics.
+- `docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md` stores the closed runtime-pack-unification version's admission history, candidate record, promotion ledger, and closeout truth.
 - `docs/blueprints/queues/script-editor-scenario-profile-startup-export-convergence-queue.md` stores the closed scenarioProfile startup export convergence queue truth.
 - `docs/blueprints/queues/script-editor-narrative-authoring-export-convergence-queue.md` stores the closed narrative authoring export convergence queue truth.
 - `docs/blueprints/queues/script-editor-non-activities-runtime-family-export-convergence-queue.md` stores the closed non-activities runtime-family export convergence queue truth.

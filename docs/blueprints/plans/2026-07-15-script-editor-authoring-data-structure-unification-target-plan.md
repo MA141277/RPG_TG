@@ -1,0 +1,186 @@
+# Script Editor Authoring Data Structure Unification Version Plan
+
+## Control Block
+
+- document_role: `version-governor`
+- version_id: `target.script-editor-authoring-data-structure-unification`
+- version_status: `open`
+- active_phase: `phase.active-execution`
+- active_queue: `queue.script-editor-project-cache-save-export-preview-continuation`
+- decision_state: `active-execution`
+- next_decision: `queue-closeout-or-return-to-version-review`
+- next_action: `resume-active-queue`
+- resume_gate: `open-active-queue`
+- promotion_review_result: `admit`
+- review_subject_id: `none`
+- review_subject_classification: `none`
+- proposed_queue_id: `none`
+- review_basis: `none`
+- admission_status: `none`
+- intake_status: `candidate-recorded`
+- intake_item_id: `item.script-editor-authoring-data-structure-unification-version-open`
+- intake_summary: `Promote the existing authoring/data-structure unification draft into the next open Blueprint version after runtime-pack-unification closeout.`
+- intake_result: `promoted-to-admission`
+- intake_feedback_mode: `fixed-receipt`
+- closure_review_subject: `queue.script-editor-project-cache-save-export-preview`
+- closure_review_status: `routed`
+- residue_candidate_id: `item.script-editor-project-cache-save-export-preview-residue-continuation`
+- residue_candidate_family: `same-family`
+- routing_basis: `queue.script-editor-project-cache-save-export-preview closed its bounded first slice with same-family residue that is still inside the package persistence/cache/save/export/preview topic surface and cannot be honestly absorbed by a broader data-schema queue.`
+- next_lawful_queue_recommendation: `queue.script-editor-project-cache-save-export-preview-continuation`
+- auto_admission_ready: `false`
+- blocked_by: []
+- candidate_queue_ids:
+  - `queue.script-editor-project-cache-save-export-preview`
+  - `queue.script-editor-project-cache-save-export-preview-continuation`
+  - `queue.script-editor-project-completion-state-gating`
+  - `queue.script-editor-unified-field-mapping-table-freeze`
+  - `queue.script-editor-character-definition-status-convergence`
+  - `queue.script-editor-character-authoring-surface-completion`
+  - `queue.script-editor-schema-reference-and-migration-freeze`
+  - `queue.script-editor-city-building-entry-and-npc-authoring-priority`
+  - `queue.script-editor-city-building-structure-convergence`
+  - `queue.script-editor-city-building-placement-resolver-convergence`
+  - `queue.script-editor-dialogue-story-structure-convergence`
+  - `queue.script-editor-dialogue-story-runtime-handoff-convergence`
+  - `queue.script-editor-condition-authoring-contract-freeze`
+  - `queue.script-editor-condition-runtime-evaluation-convergence`
+  - `queue.script-editor-event-structure-convergence`
+  - `queue.script-editor-event-effect-activation-convergence`
+  - `queue.script-editor-scenario-launch-policy-authoring`
+  - `queue.script-editor-playable-minigame-binding-convergence`
+  - `queue.script-editor-branching-event-task-chain-convergence`
+  - `queue.script-editor-status-overlay-generalization-review`
+  - `queue.script-editor-legacy-structure-supersession-review`
+  - `queue.script-editor-end-to-end-authoring-runtime-flow-validation`
+
+## Human Context
+
+### Activation Record
+
+- Scope approval:
+  - `The operator requested that current-version closeout documents be checked and the next version activated if those documents are already updated.`
+- Activation basis:
+  - `docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md records version_status=done, active_queue=none, and all recorded same-version queues as closed historical evidence.`
+  - `docs/blueprints/project-progress.md and docs/blueprints/blueprint.md already record that fresh work after runtime-pack-unification closeout must classify intake for a new successor version before queue admission.`
+  - `docs/blueprints/specs/2026-07-14-script-editor-authoring-data-structure-unification-draft.md already exists with proposed_version_id target.script-editor-authoring-data-structure-unification, parent_context target.script-editor-runtime-pack-unification, and the draft next step to formalize a target spec and version plan after closeout.`
+- Activation conclusion:
+  - `target.script-editor-authoring-data-structure-unification is now the open successor version.`
+  - `queue.script-editor-project-cache-save-export-preview closed its bounded first slice after landing package location/stale validity metadata and export-before-runtime-output draft persistence.`
+  - `queue.script-editor-project-cache-save-export-preview-continuation is now admitted as the active same-family continuation for remaining durable package skeleton/cache/preview semantics.`
+  - `Execution resumes from task.script-editor-project-cache-save-export-preview-continuation.boundary-baseline-reconcile inside the admitted queue document.`
+
+### Candidate Recovery Ledger
+
+| Candidate ID | Last Classification | Proposed Queue | Latest Disposition | Recheck Trigger | Notes |
+| --- | --- | --- | --- | --- | --- |
+| `item.script-editor-project-cache-save-export-preview` | `queue-candidate` | `queue.script-editor-project-cache-save-export-preview` | `admitted + queue closed` | `only if fresh evidence proves another prerequisite blocks package persistence boundaries` | `Admitted first because project cache/save/export/preview creates the editable package truth needed by later authoring/data convergence queues; now closed with same-family residue routed to the continuation candidate.` |
+| `item.script-editor-project-cache-save-export-preview-residue-continuation` | `queue-candidate` | `queue.script-editor-project-cache-save-export-preview-continuation` | `admitted + active` | `only if fresh evidence proves the residue can be merged into a smaller already-recorded queue without losing persistence semantics` | `Admitted from closed queue residue for create-at-save-path package skeleton creation, durable stale path probing, imported package edit-in-place, and runtime preview-from-disk semantics.` |
+| `item.script-editor-project-completion-state-gating` | `queue-candidate` | `queue.script-editor-project-completion-state-gating` | `candidate-recorded` | `after cache/save/export persistence is admitted or if completion gating can be safely merged` | `Project completion must be project-table truth and export is the only completion-upgrade step.` |
+| `item.script-editor-unified-field-mapping-table-freeze` | `queue-candidate` | `queue.script-editor-unified-field-mapping-table-freeze` | `candidate-recorded` | `when authoring controls need a shared field id/display/value-type contract` | `May be admitted before object-family UI convergence or as a first bounded slice inside the first object-family queue.` |
+| `item.script-editor-character-definition-status-convergence` | `queue-candidate` | `queue.script-editor-character-definition-status-convergence` | `candidate-recorded` | `after persistence boundaries are stable enough to migrate character data` | `Unifies CharacterDefinition, CharacterStatus overlays, selectors, and covered runtime consumers.` |
+| `item.script-editor-city-building-entry-and-npc-authoring-priority` | `queue-candidate` | `queue.script-editor-city-building-entry-and-npc-authoring-priority` | `candidate-recorded` | `when field/condition basics are sufficient for building/city entry and NPC assignment authoring` | `Covers priority authoring additions recorded in the source draft.` |
+| `item.script-editor-scenario-launch-policy-authoring` | `queue-candidate` | `queue.script-editor-scenario-launch-policy-authoring` | `candidate-recorded` | `when startup policy authoring is the smallest blocker to editor-exported packs launching without manual JSON patching` | `Owns character selection vs fixed startup, initial map/city/building/view, and entry event timing authoring.` |
+| `item.script-editor-playable-minigame-binding-convergence` | `queue-candidate` | `queue.script-editor-playable-minigame-binding-convergence` | `candidate-recorded` | `only after playable governance is loaded and the queue is admitted` | `Requires playable governance before shared playable runtime or house-hosted playable integration changes.` |
+| `item.script-editor-end-to-end-authoring-runtime-flow-validation` | `queue-candidate` | `queue.script-editor-end-to-end-authoring-runtime-flow-validation` | `candidate-recorded-final` | `after required data, runtime handoff, and persistence queues provide enough coverage to prove closeout` | `Final validation queue, not a first implementation slice.` |
+
+### Queue Promotion Ledger
+
+| Queue ID | Current Disposition | Promote When | Notes |
+| --- | --- | --- | --- |
+| `queue.script-editor-project-cache-save-export-preview` | `done` | `Already completed; do not reopen except by explicit governance record.` | `First admitted queue closed after package location/stale validity metadata and export-before-runtime-output draft persistence landed with verification.` |
+| `queue.script-editor-project-cache-save-export-preview-continuation` | `active` | `Already admitted.` | `Owns remaining durable package skeleton creation, stale path probing, imported package edit-in-place, and runtime preview-from-disk semantics.` |
+| `queue.script-editor-project-completion-state-gating` | `candidate` | `After or with cache/save/export persistence when completion state can be implemented without widening.` | `Completion state must live in the project-level JSON table and only export may mark a project complete.` |
+| `queue.script-editor-unified-field-mapping-table-freeze` | `candidate` | `Before broad object-family UI convergence or when field rendering/value validation becomes the blocker.` | `Provides field id, canonical key, labels, groups, value types, and ordering metadata.` |
+| `queue.script-editor-character-definition-status-convergence` | `candidate` | `After package persistence is stable enough to change character storage without creating dual durable truth.` | `Covers character definitions, optional status overlays, selectors/materializers, and runtime mutation ownership.` |
+| `queue.script-editor-character-authoring-surface-completion` | `candidate` | `If character UI/control work outgrows the character definition convergence queue.` | `Covers base/profile/stat/skill/custom maps plus dialogue/event/trade bindings.` |
+| `queue.script-editor-schema-reference-and-migration-freeze` | `candidate` | `Before retiring legacy structures or when multiple queues need one replacement reference.` | `Owns formal schema reference, legacy supersession, migration adapters, and schema versions.` |
+| `queue.script-editor-city-building-entry-and-npc-authoring-priority` | `candidate` | `When field/condition basics can support the priority city/building authoring additions.` | `Covers building dialogue binding, entry conditions, refusal text, city building selection, and NPC assignment.` |
+| `queue.script-editor-city-building-structure-convergence` | `candidate` | `After priority authoring gaps are mapped or if runtime city/building structure is the smaller blocker.` | `Unifies city/building authoring and runtime structures.` |
+| `queue.script-editor-city-building-placement-resolver-convergence` | `candidate` | `Before runtime views manually stitch city, building, placement, NPC, dialogue, and condition data.` | `Owns city-local placements and centralized resolver seams.` |
+| `queue.script-editor-dialogue-story-structure-convergence` | `candidate` | `When narrative records can move from authoring/export lowering into runtime-consumable structures.` | `Owns dialogue/story record shape and references.` |
+| `queue.script-editor-dialogue-story-runtime-handoff-convergence` | `candidate` | `After structure convergence exposes runtime handoff residue.` | `Owns dialogue/story progression runtime handoff.` |
+| `queue.script-editor-condition-authoring-contract-freeze` | `candidate` | `Before event/story/city/building queues depend on typed condition authoring at runtime scale.` | `Owns condition definitions, dropdown selection, typed values, and validation.` |
+| `queue.script-editor-condition-runtime-evaluation-convergence` | `candidate` | `After the authoring contract exists and runtime evaluation remains the blocker.` | `Owns condition context, subjects, reference resolution, target-set evaluation, and diagnostics.` |
+| `queue.script-editor-event-structure-convergence` | `candidate` | `When condition and field contracts are stable enough to migrate event records.` | `Owns event triggers, related references, conditions, effects, and activation shape.` |
+| `queue.script-editor-event-effect-activation-convergence` | `candidate` | `When event records can export but effects are not yet runtime-owned.` | `Owns typed effects, ordered chains, targets, receipts, and mutation ownership.` |
+| `queue.script-editor-scenario-launch-policy-authoring` | `candidate` | `When launch policy authoring is the smallest blocker to runtime startup without manual JSON patching.` | `Owns shell selection vs fixed startup and initial map/city/building/view selection.` |
+| `queue.script-editor-playable-minigame-binding-convergence` | `candidate` | `Only after playable governance confirms the bounded playable integration surface.` | `Requires playable governance before any shared playable runtime or house-hosted playable behavior changes.` |
+| `queue.script-editor-branching-event-task-chain-convergence` | `candidate` | `After basic dialogue/event/task structures exist and richer branching/task-chain residue is bounded.` | `Owns branching dialogue, event effect chains, long-running tasks, and save/restore progression.` |
+| `queue.script-editor-status-overlay-generalization-review` | `candidate-review` | `When non-character runtime mutation needs explicit save/status ownership.` | `Review queue; do not create non-character overlays for convenience.` |
+| `queue.script-editor-legacy-structure-supersession-review` | `candidate` | `Before deleting or invalidating previously frozen structures.` | `Records retained, migrated, adapter-supported, or retired structure dispositions.` |
+| `queue.script-editor-end-to-end-authoring-runtime-flow-validation` | `candidate-final` | `After required data/runtime/persistence queues provide enough coverage to prove version acceptance.` | `Final closeout validation queue.` |
+
+### Current Queue Activation
+
+- `queue.script-editor-project-cache-save-export-preview-continuation`
+- Active task:
+  - `task.script-editor-project-cache-save-export-preview-continuation.boundary-baseline-reconcile`
+
+### Version Boundary Record
+
+- `This version governs authoring/data-structure convergence after runtime-pack-unification closeout.`
+- `It must consume the closed runtime-pack export/import/startup truth as baseline evidence rather than reopening it as a compatibility patch surface.`
+- `It may supersede previously frozen script-editor structures only through explicit schema/migration/supersession records.`
+- `It now resumes from the admitted same-family project-cache/save/export/preview continuation queue and must not admit a second queue while that queue remains active.`
+
+### Queue Admission Startup Rules
+
+1. `Read project-progress -> blueprint -> version plan -> active queue before touching a fresh queue item.`
+2. `If active_queue = none and admission_status = pending, complete the pending admission review before implementation.`
+3. `If admission succeeds, create the admitted queue doc and expose queue_status=active plus one live active_task before code changes.`
+4. `If fresh evidence disproves the pending first queue basis, update this version plan with the narrower lawful admission subject instead of silently switching queues.`
+5. `Do not treat version activation as queue admission.`
+
+### Operator Intake Contract
+
+- Allowed operator intake:
+  - `新需求`
+  - `参考治理规范`
+- Internal-only Blueprint work:
+  - `read project-progress -> blueprint -> version plan -> active queue -> active task`
+  - `attempt active-queue absorption`
+  - `classify and route the intake`
+  - `record candidate truth or admission truth without asking the operator to fill internal fields`
+- Default operator output:
+
+```text
+处理结果：
+- 加入状态：成功 / 失败 / 成功，已加入
+- 加入类型：执行队列 / 候选队列 / 未加入
+- 加入队列：`具体队列ID` / `none`
+
+原因说明：
+- 用 2~4 句话说明为什么进入该队列，或者为什么没有成功加入。
+- 如果没有进入执行队列，要明确说明是因为当前已有 active queue，还是因为它当前只满足候选条件。
+
+当前执行情况：
+- 当前执行队列：`具体队列ID`
+- 当前任务：`具体 task ID`
+- 当前队列目标：一句话说明
+
+下一步：
+- 说明 Blueprint 接下来会如何处理
+- 人工操作：当前不需要 / 当前需要确认 xxx
+```
+
+- Default visibility rule:
+  - `默认不向人工暴露真值链细节、候选全集、Why Not The Others、Human Involvement Boundary、admission 内部字段或排序全过程，除非人工明确要求展开内部分析。`
+
+### Version Lifecycle Rules
+
+- `A current open version stays open until version closeout is explicitly confirmed and written into this version plan.`
+- `If active_queue = none, that does not close the version; it only returns the version to promotion-review or idle-open.`
+- `As long as version_status = open, additional same-version queues may still be admitted.`
+- `If no open version exists, version creation becomes the required next governance action before any queue admission or implementation can begin.`
+- `Queue closeout may auto-advance; version closeout must not be inferred from queue completion alone.`
+- `When version acceptance and closeout conditions are satisfied, ask exactly one human confirmation before changing version_status to done.`
+
+### Prior Promotion Record
+
+- `2026-07-15: target.script-editor-runtime-pack-unification closed after all ten recorded candidate queues were verified as done with no active_task remaining and no lawful same-version candidate queue left to admit.`
+- `2026-07-15: target.script-editor-authoring-data-structure-unification was activated as the open successor version from draft.script-editor-authoring-data-structure-unification after the operator requested successor activation if closeout docs were already updated.`
+- `2026-07-15: the successor version opens with no active queue and queue.script-editor-project-cache-save-export-preview recorded as the first pending admission subject.`
+- `2026-07-15: admission review then promoted queue.script-editor-project-cache-save-export-preview as the single active queue and exposed task.script-editor-project-cache-save-export-preview.boundary-baseline-reconcile as the live execution entry.`
+- `2026-07-15: queue.script-editor-project-cache-save-export-preview closed after the bounded first slice landed with verification, then routed same-family residue to queue.script-editor-project-cache-save-export-preview-continuation for version-level admission review.`
+- `2026-07-15: admission review then promoted queue.script-editor-project-cache-save-export-preview-continuation as the single active queue and exposed task.script-editor-project-cache-save-export-preview-continuation.boundary-baseline-reconcile as the live execution entry.`

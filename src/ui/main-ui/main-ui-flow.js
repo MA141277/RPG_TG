@@ -6030,6 +6030,7 @@ export class MainUiFlow {
 
     this.scriptEditorAuxiliaryPanelOpen = true;
     try {
+      await this.persistScriptEditorProjectDraftBeforeExport();
       const result = await writeTextFilesWithDirectoryPicker(
         exportScriptEditorProjectToScenarioPackFiles(this.scriptEditorProject),
         {
@@ -6055,6 +6056,24 @@ export class MainUiFlow {
     }
 
     this.render();
+  }
+
+  async persistScriptEditorProjectDraftBeforeExport() {
+    if (
+      this.scriptEditorProject == null ||
+      this.scriptEditorProjectDirectoryHandle == null
+    ) {
+      return;
+    }
+
+    await writeTextFilesWithDirectoryPicker(
+      serializeScriptEditorProjectToFiles(this.scriptEditorProject),
+      {
+        directoryHandle: this.scriptEditorProjectDirectoryHandle,
+        suggestedName: this.scriptEditorProject.id,
+        downloadPrefix: this.scriptEditorProject.id,
+      }
+    );
   }
 
   async handleScriptEditorProjectFileImport(files) {

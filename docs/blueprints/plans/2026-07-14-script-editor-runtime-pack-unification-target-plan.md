@@ -4,14 +4,14 @@
 
 - document_role: `version-governor`
 - version_id: `target.script-editor-runtime-pack-unification`
-- version_status: `open`
-- active_phase: `phase.promotion-review`
+- version_status: `done`
+- active_phase: `phase.version-closeout`
 - active_queue: `none`
-- decision_state: `promotion-review`
-- next_decision: `same-version-admission-or-version-closeout`
-- next_action: `classify-fresh-work`
-- resume_gate: `version-plan-review`
-- promotion_review_result: `none`
+- decision_state: `idle-open`
+- next_decision: `version-closeout`
+- next_action: `write-version-closeout`
+- resume_gate: `closed-version-record`
+- promotion_review_result: `closeout`
 - review_subject_id: `none`
 - review_subject_classification: `none`
 - proposed_queue_id: `none`
@@ -53,8 +53,18 @@
   - `Fresh repository evidence also proves that basePackId and active-content ownership remain incomplete at the final-contract layer: src/application/script-editor/runtime-pack-import.ts and src/application/script-editor/runtime-pack-export.ts currently treat basePackId largely as metadata passthrough, while src/content/pack-content-access.ts still directly imports builtin zhuyuanzhang scenario-pack files instead of routing all covered consumers through one active scenario-pack selector.`
   - `The current script-editor workspace and shell still surface compatibility residue counts as daily authoring/export truth through src/application/script-editor/workspace-shell.ts and src/ui/main-ui/main-ui-flow.js, which confirms that compatibility residue is not yet retired to migration-only duty.`
 - Admission conclusion:
-  - `target.script-editor-runtime-pack-unification is now the live open successor version, and queue.script-editor-runtime-family-authoring-convergence is the next admitted active queue because fresh evidence still shows editor-facing data ownership depends on long-lived authoring-only parallel families.`
-  - `Execution now resumes from task.script-editor-runtime-family-authoring-convergence.boundary-baseline-reconcile inside the admitted queue document.`
+  - `target.script-editor-runtime-pack-unification is now closed historical evidence after all recorded same-version runtime-pack-unification queues were admitted, executed, and closed.`
+  - `No active queue or lawful same-version candidate remains inside this version boundary after queue.script-editor-scenario-profile-startup-export-convergence closed and the later JSON-start launch-policy/map regressions were resolved on the already-landed runtime-pack-unification path.`
+- Current handoff:
+  - `No active queue remains on the current runtime-pack-unification version; all ten recorded bounded queues are now closed historical evidence.`
+  - `The current lawful step is version closeout, and the operator explicitly requested that Blueprint close this version if no candidate queue remained.`
+  - `Any further script-editor runtime-pack work must now start from a successor version rather than reopening a closed same-version runtime-pack-unification queue by convenience.`
+
+### Version Closeout Record
+
+- `Closeout judgement: closeout-ready acceptance evidence now exists because the script editor import/export path, runtime startup path, scenario-pack loader, base-pack/family governance records, fixed-pack consumer contract, compatibility-boundary records, and Zhu Yuanzhang JSON-import startup flow now share one formal scenario-pack runtime truth with no active queue remaining inside the admitted version boundary.`
+- `Closeout confirmation: explicit human confirmation to close target.script-editor-runtime-pack-unification was received on 2026-07-15 through the operator instruction to inspect candidates and close the current version if none remain; current governance review confirms all ten candidate queues are done and active_task is none in every recorded queue document.`
+- `Future routing: no additional same-version queue may be admitted after this closeout; later script-editor runtime-pack work must be classified under a new successor version or an explicitly reopened governance record rather than appended to this closed version.`
 
 ### Queue Promotion Ledger
 
@@ -333,9 +343,9 @@
 
 ### Version Lifecycle Rules
 
-- `A current open version stays open until version closeout is explicitly confirmed and written into this version plan.`
-- `If active_queue = none, that does not close the version; it only returns the version to promotion-review or idle-open.`
-- `As long as version_status = open, additional same-version queues may still be admitted.`
+- `This version is now closed historical evidence after explicit operator closeout confirmation and written closeout record.`
+- `If active_queue = none, that no longer reopens this version after closeout; it only confirms there is no live execution controller under this closed version.`
+- `As long as version_status = done, no additional same-version queues may be admitted without an explicit governance reopening record.`
 - `If no open version exists, version creation becomes the required next governance action before any queue admission or implementation can begin.`
 
 ### Prior Promotion Record
@@ -344,3 +354,4 @@
 - `2026-07-14: the operator explicitly requested successor-version activation if no PRD-alignment candidate queue remained, so target.script-editor-runtime-pack-unification is now opened as the live successor version.`
 - `2026-07-14: the successor version initially opened with a candidate-recorded queue portfolio only and no active queue, making admission review for queue.script-editor-runtime-family-contract-alignment the next lawful step at that point.`
 - `2026-07-14: admission review then promoted queue.script-editor-runtime-family-contract-alignment as the single active queue and exposed task.script-editor-runtime-family-contract-alignment.boundary-baseline-reconcile as the live execution entry.`
+- `2026-07-15: explicit operator closeout confirmation closed target.script-editor-runtime-pack-unification after all ten recorded candidate queues were verified as done with no active_task remaining and no lawful same-version candidate queue left to admit.`
