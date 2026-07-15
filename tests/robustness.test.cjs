@@ -5942,6 +5942,154 @@ test(
 );
 
 test(
+  "script editor runtime export materializes city building entry npc and refusal families from authoring fields",
+  () => {
+    const {
+      exportScriptEditorProjectToScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    const project = createExportableScriptEditorProjectDefinition();
+    project.people = [
+      {
+        id: "person.host",
+        name: "Market Host",
+        personType: "NPC",
+        cityId: "city.start",
+        houseId: "building.market",
+      },
+    ];
+    project.buildings = [
+      {
+        id: "building.market",
+        cityId: "city.start",
+        name: "Market",
+        access: {
+          state: "visible-disabled",
+          blockedMessage: "Market is closed.",
+          blockedSpeaker: "person.host",
+          guidance: "Return later.",
+        },
+        entryBinding: {
+          defaultPersonId: "person.host",
+          onEnterEventId: "event.enter.market",
+          onLeaveEventId: "event.leave.market",
+          returnTarget: "city",
+        },
+      },
+    ];
+
+    const files = exportScriptEditorProjectToScenarioPackFiles(project);
+    const houses = JSON.parse(files["houses.json"]);
+    const cityEntries = JSON.parse(files["city-entries.json"]);
+    const cityNpcPools = JSON.parse(files["city-npc-pools.json"]);
+    const refusalRules = JSON.parse(files["house-access-refusal-rules.json"]);
+
+    assert.deepEqual(houses[0].characterIds, ["person.host"]);
+    assert.equal(houses[0].defaultCharacterId, "person.host");
+    assert.equal(houses[0].onEnterEventId, "event.enter.market");
+    assert.equal(houses[0].onLeaveEventId, "event.leave.market");
+    assert.deepEqual(houses[0].backAction, { label: "返回", targetView: "city" });
+    assert.equal(houses[0].activityLocationId, "custom");
+    assert.equal(cityEntries[0].cityId, "city.start");
+    assert.equal(cityEntries[0].targetHouseId, "building.market");
+    assert.equal(cityEntries[0].name, "Market");
+    assert.equal(cityNpcPools[0].cityId, "city.start");
+    assert.deepEqual(cityNpcPools[0].residents[0], {
+      id: "person.host",
+      cityId: "city.start",
+      name: "Market Host",
+      title: "",
+      personality: "",
+      specialty: "",
+      favorability: 0,
+      activityWeight: { custom: 1 },
+      dialoguePool: [],
+      intelPool: [],
+    });
+    assert.equal(refusalRules[0].houseIds[0], "building.market");
+    assert.equal(refusalRules[0].speakerCharacterId, "person.host");
+    assert.equal(refusalRules[0].text, "Market is closed.");
+    assert.equal(refusalRules[0].confirmLabel, "Return later.");
+  }
+);
+
+test(
+  "script editor runtime export does not duplicate explicit city building runtime family records",
+  () => {
+    const {
+      exportScriptEditorProjectToScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    const project = createExportableScriptEditorProjectDefinition();
+    project.people = [
+      {
+        id: "person.host",
+        name: "Market Host",
+        personType: "NPC",
+        cityId: "city.start",
+        houseId: "building.market",
+      },
+    ];
+    project.buildings = [
+      {
+        id: "building.market",
+        cityId: "city.start",
+        name: "Market",
+        access: {
+          state: "visible-disabled",
+          blockedMessage: "Market is closed.",
+          blockedSpeaker: "person.host",
+          guidance: "Return later.",
+        },
+      },
+    ];
+    project.cityEntries = [
+      {
+        id: "city-entry.custom.market",
+        cityId: "city.start",
+        name: "Custom Market",
+        directoryType: "leader-residence",
+        targetHouseId: "building.market",
+        artworkId: "leader-residence",
+      },
+    ];
+    project.cityNpcPools = [
+      {
+        cityId: "city.start",
+        residents: [
+          {
+            id: "person.host",
+            cityId: "city.start",
+            name: "Imported Host",
+            title: "Imported",
+            personality: "",
+            specialty: "",
+            favorability: 10,
+            activityWeight: { custom: 1 },
+            dialoguePool: [],
+            intelPool: [],
+          },
+        ],
+      },
+    ];
+    project.houseAccessRefusalRules = [
+      {
+        id: "house-access-refusal.imported.market",
+        houseIds: ["building.market"],
+        speakerCharacterId: "person.host",
+        title: "Imported",
+        text: "Imported refusal.",
+        confirmLabel: "OK",
+      },
+    ];
+
+    const files = exportScriptEditorProjectToScenarioPackFiles(project);
+
+    assert.equal(JSON.parse(files["city-entries.json"]).length, 1);
+    assert.equal(JSON.parse(files["city-npc-pools.json"])[0].residents.length, 1);
+    assert.equal(JSON.parse(files["house-access-refusal-rules.json"]).length, 1);
+  }
+);
+
+test(
   "script editor story/dialogue/event queue exposes dedicated narrative tabs and bounded relation entrypoints",
   () => {
     const source = fs.readFileSync("src/ui/main-ui/main-ui-flow.js", "utf8");

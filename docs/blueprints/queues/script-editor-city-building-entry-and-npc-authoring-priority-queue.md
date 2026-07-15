@@ -7,23 +7,23 @@
 - blueprint_version: `2026.07`
 - governance_last_synced_at: `2026-07-15`
 - governance_sync_source: `docs/blueprints/blueprint.md`
-- queue_status: `active`
+- queue_status: `done`
 - queue_class: `required-priority`
-- active_task: `task.script-editor-city-building-entry-and-npc-authoring-priority.priority-authoring-implementation`
-- next_task: `task.script-editor-city-building-entry-and-npc-authoring-priority.queue-closeout-and-handoff`
-- closeout_status: `not-started`
-- execution_closeout_status: `partial`
-- topic_closure_status: `open-residue`
-- closure_basis: `none`
-- residue_remaining: `yes`
+- active_task: `none`
+- next_task: `none`
+- closeout_status: `done`
+- execution_closeout_status: `done`
+- topic_closure_status: `closed`
+- closure_basis: `The bounded priority city/building/NPC authoring slice landed with verification: runtime export now materializes HouseDefinition, CityEntryDefinition, CityNpcPoolDefinition, and HouseAccessRefusalRule records from existing building/person authoring fields when explicit runtime family records are absent, while preserving imported explicit runtime families. No same-family residue remains inside this queue's priority authoring surface.`
+- residue_remaining: `no`
 - residue_family: `none`
 - residue_routing_status: `none`
 - next_family_candidate: `none`
 - auto_continue_eligible: `false`
-- next_effect: `execute-active-task`
-- sync_status: `success`
+- next_effect: `return-to-version-review`
+- sync_status: `pending`
 - sync_scope: `branch-push`
-- sync_summary: `Queue admission commit 1399b8e was pushed successfully to origin/mod-first-dev.`
+- sync_summary: `Priority authoring implementation and closeout are pending repository sync.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
@@ -57,9 +57,9 @@
 
 - queue_goal: `Determine and implement the smallest priority city/building authoring slice that lets creators bind buildings, entry/access conditions, refusal text references, and NPC assignment without duplicating runtime structures.`
 - task_count: `3`
-- completed_task_count: `1`
-- remaining_task_count: `2`
-- active_task_summary: `Implement the selected materialization/export slice for priority city/building entry and NPC authoring.`
+- completed_task_count: `3`
+- remaining_task_count: `0`
+- active_task_summary: `Queue closed after the bounded priority city/building/NPC materialization export slice verified and returned control to version review.`
 - task_briefs:
   - `task.script-editor-city-building-entry-and-npc-authoring-priority.boundary-baseline-reconcile: inventory current city/building entry and NPC authoring/export/runtime seams and select the smallest lawful implementation slice.`
   - `task.script-editor-city-building-entry-and-npc-authoring-priority.priority-authoring-implementation: implement the selected priority authoring slice with tests.`
@@ -97,8 +97,8 @@
 | Task ID | State | Summary | Depends On | Notes |
 | --- | --- | --- | --- | --- |
 | `task.script-editor-city-building-entry-and-npc-authoring-priority.boundary-baseline-reconcile` | `done` | `Inventoried city/building entry and NPC authoring/export/runtime seams and selected materialized runtime family export as the smallest implementation slice.` | `none` | `Production code was not changed during baseline.` |
-| `task.script-editor-city-building-entry-and-npc-authoring-priority.priority-authoring-implementation` | `active` | `Implement the selected priority authoring slice.` | `task.script-editor-city-building-entry-and-npc-authoring-priority.boundary-baseline-reconcile` | `Must be test-first and must not widen into broad resolver migration without baseline evidence.` |
-| `task.script-editor-city-building-entry-and-npc-authoring-priority.queue-closeout-and-handoff` | `pending` | `Verify, classify residue, and return control to version review.` | `task.script-editor-city-building-entry-and-npc-authoring-priority.priority-authoring-implementation` | `Must not close the parent version without explicit version closeout confirmation.` |
+| `task.script-editor-city-building-entry-and-npc-authoring-priority.priority-authoring-implementation` | `done` | `Implemented bounded city/building/NPC runtime-family materialization during runtime export.` | `task.script-editor-city-building-entry-and-npc-authoring-priority.boundary-baseline-reconcile` | `Landed with test-first coverage and verification.` |
+| `task.script-editor-city-building-entry-and-npc-authoring-priority.queue-closeout-and-handoff` | `done` | `Verified, classified residue, and returned control to version review.` | `task.script-editor-city-building-entry-and-npc-authoring-priority.priority-authoring-implementation` | `Closed without version closeout.` |
 
 ### Task Definitions
 
@@ -172,7 +172,7 @@
 ##### Control Block
 
 - task_id: `task.script-editor-city-building-entry-and-npc-authoring-priority.priority-authoring-implementation`
-- state: `active`
+- state: `done`
 - task_kind: `execution`
 - scope:
   - `Files identified by boundary-baseline-reconcile.`
@@ -201,7 +201,7 @@
 - task_brief:
   - `Implement the selected priority city/building/NPC authoring slice.`
 - task_outcome_summary:
-  - `none`
+  - `Done. Runtime export now materializes the selected priority city/building/NPC runtime families from existing editor authoring fields, while explicit imported runtime family records remain authoritative and are not duplicated.`
 - Purpose:
   - `Give creators first-class controls for the highest-priority city/building entry and NPC fields.`
 - Failure mode:
@@ -211,13 +211,16 @@
 
 - `2026-07-15`: `Queued behind boundary-baseline-reconcile.`
 - `2026-07-15`: `Activated after baseline selected bounded city/building runtime-family materialization from existing authoring fields as the smallest priority slice.`
+- `2026-07-15`: `Added failing robustness tests proving empty runtime families are derived from authored building/person access and entry fields, and explicit cityEntries/cityNpcPools/houseAccessRefusalRules are not duplicated.`
+- `2026-07-15`: `Implemented src/application/script-editor/city-building-runtime-materializer.ts and wired runtime-pack-export to use materialized houses, cityEntries, cityNpcPools, and houseAccessRefusalRules for validation and serialization.`
+- `2026-07-15`: `Verification passed: npm run typecheck, npm test, npm run build, npm run lint:blueprints, npm run lint:plans, npm run blueprint:governance:check, and git diff --check. Build emitted only existing Vite resource/size warnings; git diff --check emitted only existing line-ending warnings.`
 
 #### `task.script-editor-city-building-entry-and-npc-authoring-priority.queue-closeout-and-handoff`
 
 ##### Control Block
 
 - task_id: `task.script-editor-city-building-entry-and-npc-authoring-priority.queue-closeout-and-handoff`
-- state: `pending`
+- state: `done`
 - task_kind: `execution`
 - scope:
   - `docs/blueprints/project-progress.md`
@@ -247,7 +250,7 @@
 - task_brief:
   - `Close or route the priority city/building/NPC authoring queue after verified implementation.`
 - task_outcome_summary:
-  - `none`
+  - `Done. Queue closed with no same-family priority authoring residue; broader city/building structure and placement resolver work remains governed by existing version-level candidate queues rather than this bounded priority slice.`
 - Purpose:
   - `Keep priority authoring additions explicit before broader city/building resolver convergence continues.`
 - Failure mode:
@@ -256,6 +259,7 @@
 ##### Progress Log
 
 - `2026-07-15`: `Queued behind priority-authoring-implementation.`
+- `2026-07-15`: `Closed after implementation verification. Same-family priority city/building entry/NPC materialization is complete for this slice; control returned to version review without closing the parent version.`
 
 ### Historical Handoff Note
 

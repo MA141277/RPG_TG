@@ -6,6 +6,7 @@ import {
   compileScriptEditorProjectTasks,
   type ScriptEditorSharedRuleDiagnostic,
 } from "./shared-rule-compiler";
+import { materializeScriptEditorCityBuildingRuntimeFamilies } from "./city-building-runtime-materializer";
 import { materializeScriptEditorPersonRuntimeCharacter } from "./person-authoring";
 import type {
   ScriptEditorDialogueRecord,
@@ -125,6 +126,8 @@ export function validateScriptEditorProjectForRuntimeExport(
   const scenarioProfile = extractScenarioProfile(project.storyPack, diagnostics);
   const exportedTextEntries = mapTextEntries(project.textEntries, diagnostics);
   const exportedCharacters = materializeRuntimeCharacters(project);
+  const cityBuildingRuntimeFamilies =
+    materializeScriptEditorCityBuildingRuntimeFamilies(project);
   const exportedScenes = lowerMinimalNarrativeScenes(project, diagnostics);
   const exportedEvents = extractRuntimeEvents(
     project,
@@ -158,8 +161,8 @@ export function validateScriptEditorProjectForRuntimeExport(
       maps: project.maps,
       characters: exportedCharacters,
       cities: project.cities,
-      houses: project.buildings,
-      cityEntries: project.cityEntries,
+      houses: cityBuildingRuntimeFamilies.houses,
+      cityEntries: cityBuildingRuntimeFamilies.cityEntries,
       events: exportedEvents,
       scenes: exportedScenes,
       activities: project.activities,
@@ -167,8 +170,9 @@ export function validateScriptEditorProjectForRuntimeExport(
       textEntries: exportedTextEntries,
       cards: project.cards,
       valuables: project.valuables,
-      cityNpcPools: project.cityNpcPools,
-      houseAccessRefusalRules: project.houseAccessRefusalRules,
+      cityNpcPools: cityBuildingRuntimeFamilies.cityNpcPools,
+      houseAccessRefusalRules:
+        cityBuildingRuntimeFamilies.houseAccessRefusalRules,
       houseModuleDefaults: project.houseModuleDefaults,
       cityPortraits: project.cityPortraits,
       historicalCharacters: project.historicalCharacters,
@@ -201,6 +205,8 @@ export function exportScriptEditorProjectToScenarioPackFiles(
   const scenarioProfile = extractScenarioProfile(project.storyPack, []);
   const exportedTextEntries = mapTextEntries(project.textEntries, []);
   const exportedCharacters = materializeRuntimeCharacters(project);
+  const cityBuildingRuntimeFamilies =
+    materializeScriptEditorCityBuildingRuntimeFamilies(project);
   const exportedScenes = lowerMinimalNarrativeScenes(project, []);
   const exportedEvents = extractRuntimeEvents(project, exportedScenes ?? [], []);
   const exportedTasks = compileScriptEditorProjectTasks(project, []);
@@ -243,10 +249,10 @@ export function exportScriptEditorProjectToScenarioPackFiles(
       project.cities
     ),
     [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.houses)]: stringifyJson(
-      project.buildings
+      cityBuildingRuntimeFamilies.houses
     ),
     [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.cityEntries)]: stringifyJson(
-      project.cityEntries
+      cityBuildingRuntimeFamilies.cityEntries
     ),
     [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.events)]: stringifyJson(
       exportedEvents
@@ -270,10 +276,10 @@ export function exportScriptEditorProjectToScenarioPackFiles(
       project.valuables
     ),
     [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.cityNpcPools)]: stringifyJson(
-      project.cityNpcPools
+      cityBuildingRuntimeFamilies.cityNpcPools
     ),
     [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.houseAccessRefusalRules)]: stringifyJson(
-      project.houseAccessRefusalRules
+      cityBuildingRuntimeFamilies.houseAccessRefusalRules
     ),
     [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.houseModuleDefaults)]: stringifyJson(
       project.houseModuleDefaults

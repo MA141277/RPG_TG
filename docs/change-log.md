@@ -2803,3 +2803,17 @@
 
 ### Impact
 - Later event/story/city/building queues can build on one typed condition authoring source instead of inventing per-family string parsing.
+
+## 2026-07-15 Script Editor City Building NPC Runtime Materialization
+
+### Added
+- Added a bounded script-editor city/building runtime materializer for export-time `houses`, `city-entries`, `city-npc-pools`, and `house-access-refusal-rules`.
+- Added coverage proving authored building entry binding, access refusal text, and NPC city/house assignment export into runtime families, while explicit imported runtime family records are not duplicated.
+
+### Changed
+- Runtime pack export now uses the materialized city/building/NPC families for validation and serialization when those runtime families are empty.
+- Imported explicit city/building runtime family records remain authoritative and are preserved for round-trip export.
+- Blueprint truth closes `queue.script-editor-city-building-entry-and-npc-authoring-priority` with no same-family residue and returns the open version to promotion review.
+
+### Impact
+- A simple editor-authored building with an assigned NPC and disabled/hidden access can export a runnable runtime pack without manual JSON edits for city entries, NPC pools, house roster fields, or refusal rules.
