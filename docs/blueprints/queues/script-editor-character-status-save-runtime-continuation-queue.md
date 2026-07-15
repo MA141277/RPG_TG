@@ -9,8 +9,8 @@
 - governance_sync_source: `docs/blueprints/blueprint.md`
 - queue_status: `active`
 - queue_class: `required`
-- active_task: `task.script-editor-character-status-save-runtime-continuation.boundary-baseline-reconcile`
-- next_task: `task.script-editor-character-status-save-runtime-continuation.save-runtime-overlay-implementation`
+- active_task: `task.script-editor-character-status-save-runtime-continuation.save-runtime-overlay-implementation`
+- next_task: `task.script-editor-character-status-save-runtime-continuation.queue-closeout-and-handoff`
 - closeout_status: `in-progress`
 - execution_closeout_status: `partial`
 - topic_closure_status: `open-residue`
@@ -57,9 +57,9 @@
 
 - queue_goal: `Connect CharacterStatus patch output to durable save state and startup restore through one bounded runtime-owned aggregation seam.`
 - task_count: `3`
-- completed_task_count: `0`
-- remaining_task_count: `3`
-- active_task_summary: `Reconcile save-envelope, AppState/CoreGameState, state-sync commit, startup restore, and covered mutation result seams before implementation.`
+- completed_task_count: `1`
+- remaining_task_count: `2`
+- active_task_summary: `Implement the reconciled AppState-owned CharacterStatus store, runtime commit aggregation, save-envelope persistence, and startup materialization path.`
 - task_briefs:
   - `task.script-editor-character-status-save-runtime-continuation.boundary-baseline-reconcile: identify the canonical status aggregation and restore seam.`
   - `task.script-editor-character-status-save-runtime-continuation.save-runtime-overlay-implementation: implement durable CharacterStatus save/restore for the bounded covered path with tests.`
@@ -96,8 +96,8 @@
 
 | Task ID | State | Summary | Depends On | Notes |
 | --- | --- | --- | --- | --- |
-| `task.script-editor-character-status-save-runtime-continuation.boundary-baseline-reconcile` | `active` | `Reconcile canonical save/status aggregation and restore seams before implementation.` | `none` | `Must choose the smallest runtime-owned path and avoid direct feature-specific writes in main.ts.` |
-| `task.script-editor-character-status-save-runtime-continuation.save-runtime-overlay-implementation` | `pending` | `Implement bounded CharacterStatus persistence, restore materialization, and covered status aggregation tests.` | `task.script-editor-character-status-save-runtime-continuation.boundary-baseline-reconcile` | `Must preserve no-status new-game behavior.` |
+| `task.script-editor-character-status-save-runtime-continuation.boundary-baseline-reconcile` | `done` | `Reconciled AppState ownership, runtime commit aggregation, save-envelope modState persistence, startup restore materialization, and the city-begging covered mutation path.` | `none` | `The bounded implementation does not require schema-reference-and-migration freeze or non-character status generalization.` |
+| `task.script-editor-character-status-save-runtime-continuation.save-runtime-overlay-implementation` | `active` | `Implement bounded CharacterStatus persistence, restore materialization, and covered status aggregation tests.` | `task.script-editor-character-status-save-runtime-continuation.boundary-baseline-reconcile` | `Must preserve no-status new-game behavior.` |
 | `task.script-editor-character-status-save-runtime-continuation.queue-closeout-and-handoff` | `pending` | `Verify the continuation, classify residue, and synchronize Blueprint truth.` | `task.script-editor-character-status-save-runtime-continuation.save-runtime-overlay-implementation` | `Must not close without save/restore evidence.` |
 
 ### Task Definitions
@@ -107,7 +107,7 @@
 ##### Control Block
 
 - task_id: `task.script-editor-character-status-save-runtime-continuation.boundary-baseline-reconcile`
-- state: `active`
+- state: `done`
 - task_kind: `execution`
 - scope:
   - `src/application/app-shell.ts`
@@ -155,7 +155,7 @@
 - task_brief:
   - `Find the canonical runtime/save seam for durable character status before writing code.`
 - task_outcome_summary:
-  - `Pending; expected output is a bounded save/restore implementation boundary.`
+  - `AppState.characterStatusById is the canonical runtime owner; RuntimeResult.characterStatusById is merged at commitRuntimeRequest; SaveEnvelope.modState.characterStatusById is the durable representation; startup restores the saved overlay after creating authored character definitions.`
 - Purpose:
   - `Prevent CharacterStatus from remaining a transient mutation receipt that disappears on save.`
 - Failure mode:
@@ -164,16 +164,33 @@
 ##### Progress Log
 
 - `2026-07-15`: `Continuation queue admitted automatically from the predecessor queue's unique same-family save/runtime residue.`
+- `2026-07-15`: `Boundary reconciliation found that SaveEnvelope and save migrations already preserve arbitrary modState, while readCurrentCoreGameStateForSave writes an empty modState and readBrowserSaveRecord discards the restored modState.`
+- `2026-07-15`: `The canonical runtime owner is AppState.characterStatusById. RuntimeResult may carry a CharacterStatusById patch, and commitRuntimeRequest is the single covered aggregation seam that merges patches without replacing authored content records.`
+- `2026-07-15`: `The durable representation is modState.characterStatusById. Browser startup data preserves modState, and startup materializes the saved overlay over freshly created authored CharacterDefinition records without mutating those source definitions.`
+- `2026-07-15`: `The first bounded producer is city-begging completion because it already traverses commitRuntimeRequest and combines covered gold and stamina mutations. Broad house/playable migration remains outside this queue.`
+- `2026-07-15`: `Test-first implementation plan: prove no-status commits create no records; prove city-begging completion aggregates gold and stamina status; prove browser save round-trips modState; prove startup restore materializes status while leaving authored definitions unchanged; then implement only the shared seams required by those tests.`
 
 #### `task.script-editor-character-status-save-runtime-continuation.save-runtime-overlay-implementation`
 
 ##### Control Block
 
 - task_id: `task.script-editor-character-status-save-runtime-continuation.save-runtime-overlay-implementation`
-- state: `pending`
+- state: `active`
 - task_kind: `execution`
 - scope:
-  - `Scope must be finalized by boundary-baseline-reconcile before code changes.`
+  - `src/application/app-shell.ts`
+  - `src/application/character/character-status.ts`
+  - `src/application/minigames/city-begging-minigame.ts`
+  - `src/application/playables/city-begging/city-begging-definition.ts`
+  - `src/application/startup/startup-session-coordinator.ts`
+  - `src/core/contracts/runtime-result.ts`
+  - `src/core/runtime/playable-runtime.ts`
+  - `src/core/runtime/interactive-runtime.ts`
+  - `src/core/runtime/state-sync-core-seam.ts`
+  - `src/core/runtime/state-sync-runtime.ts`
+  - `src/core/save/browser-save-record.ts`
+  - `src/main.ts`
+  - `tests/robustness.test.cjs`
 - must_inspect:
   - `Boundary baseline evidence from the active task.`
 - must_not_change:
@@ -200,7 +217,7 @@
 - task_brief:
   - `Implement durable CharacterStatus aggregation and restore through the canonical runtime/save seam.`
 - task_outcome_summary:
-  - `Pending until baseline reconciliation chooses the exact files and state owner.`
+  - `Active with the exact AppState/runtime commit/save/startup/city-begging implementation boundary frozen by the predecessor task.`
 - Purpose:
   - `Make covered runtime character mutations survive save and restore.`
 - Failure mode:
