@@ -9,7 +9,7 @@
 - governance_sync_source: `docs/blueprints/blueprint.md`
 - queue_status: `active`
 - queue_class: `required`
-- active_task: `task.script-editor-dialogue-story-structure-convergence.structure-contract-implementation`
+- active_task: `task.script-editor-dialogue-story-structure-convergence.queue-closeout-and-handoff`
 - next_task: `none`
 - closeout_status: `in-progress`
 - execution_closeout_status: `partial`
@@ -56,9 +56,9 @@
 
 - queue_goal: `Determine and implement the smallest dialogue/story structure convergence slice that turns editor-authored dialogue/story records into validated runtime-consumable narrative data without widening into full progression handoff.`
 - task_count: `3`
-- completed_task_count: `1`
-- remaining_task_count: `2`
-- active_task_summary: `Baseline selected a shared dialogue/story runtime materializer seam as the smallest implementation slice; implementation must extract runtime-consumable scene/text-entry assembly out of exporter-private lowering.`
+- completed_task_count: `2`
+- remaining_task_count: `1`
+- active_task_summary: `Implementation landed the shared dialogue/story runtime materializer seam with tests; closeout must classify richer branching/progression/import reconstruction residue.`
 - task_briefs:
   - `task.script-editor-dialogue-story-structure-convergence.boundary-baseline-reconcile: inventory dialogue/story authoring and runtime consumption seams, decide the smallest lawful structure slice, and record test-first implementation boundaries.`
   - `task.script-editor-dialogue-story-structure-convergence.structure-contract-implementation: implement the selected dialogue/story structure convergence slice with tests.`
@@ -96,8 +96,8 @@
 | Task ID | State | Summary | Depends On | Notes |
 | --- | --- | --- | --- | --- |
 | `task.script-editor-dialogue-story-structure-convergence.boundary-baseline-reconcile` | `done` | `Inventoried dialogue/story authoring, export lowering, import behavior, and runtime scene/text-entry consumption; selected a shared materializer seam as the smallest implementation slice.` | `none` | `Production code was not changed during baseline.` |
-| `task.script-editor-dialogue-story-structure-convergence.structure-contract-implementation` | `active` | `Implement the selected dialogue/story runtime materializer seam with tests.` | `task.script-editor-dialogue-story-structure-convergence.boundary-baseline-reconcile` | `Extract current exporter-private scene/text-entry assembly into a governed application seam.` |
-| `task.script-editor-dialogue-story-structure-convergence.queue-closeout-and-handoff` | `pending` | `Verify, classify residue, and return control to version review.` | `task.script-editor-dialogue-story-structure-convergence.structure-contract-implementation` | `Closeout must not infer version closeout.` |
+| `task.script-editor-dialogue-story-structure-convergence.structure-contract-implementation` | `done` | `Implemented the shared dialogue/story runtime materializer seam and rewired exporter consumption.` | `task.script-editor-dialogue-story-structure-convergence.boundary-baseline-reconcile` | `Landed with TDD coverage and verification.` |
+| `task.script-editor-dialogue-story-structure-convergence.queue-closeout-and-handoff` | `active` | `Verify, classify residue, and return control to version review.` | `task.script-editor-dialogue-story-structure-convergence.structure-contract-implementation` | `Closeout is active.` |
 
 ### Task Definitions
 
@@ -178,7 +178,7 @@
 ##### Control Block
 
 - task_id: `task.script-editor-dialogue-story-structure-convergence.structure-contract-implementation`
-- state: `active`
+- state: `done`
 - task_kind: `execution`
 - scope:
   - `src/application/script-editor/dialogue-story-runtime-materializer.ts`
@@ -215,18 +215,24 @@
 - task_brief:
   - `Implement the selected dialogue/story structure convergence slice.`
 - task_outcome_summary:
-  - `Active. Implement the baseline-selected shared materializer seam and keep exporter behavior equivalent for the covered minimal narrative slice.`
+  - `Done. Added src/application/script-editor/dialogue-story-runtime-materializer.ts as the shared materializer seam for editor dialogue/story runtime structure assembly, moved minimal dialogue/text-entry validation and SceneDefinition assembly out of runtime-pack-export.ts, and kept exporter behavior equivalent for the covered simple dialogue/narration slice. Tests cover the public materializer seam and existing startup-loadable narrative export behavior.`
 - Purpose:
   - `Make covered editor-authored narrative data runtime-consumable through governed structures.`
 - Failure mode:
   - `The queue lands only an export patch while leaving dialogue/story structure ownership unresolved.`
+
+##### Progress Log
+
+- `2026-07-15`: `Activated after baseline selected the shared dialogue/story runtime materializer seam as the smallest lawful structure slice.`
+- `2026-07-15`: `Added a failing robustness test for materializeScriptEditorDialogueStoryRuntime, implemented the materializer module, rewired runtime-pack-export.ts to consume it, and removed the exporter-private minimal narrative lowering helpers.`
+- `2026-07-15`: `Verification passed: target RED failed on missing module, target GREEN passed after implementation, npm run typecheck, npm test, npm run build, npm run lint:blueprints, npm run lint:plans, npm run blueprint:governance:check, and git diff --check. Build emitted only existing Vite resource/chunk warnings; git diff --check emitted only line-ending warnings.`
 
 #### `task.script-editor-dialogue-story-structure-convergence.queue-closeout-and-handoff`
 
 ##### Control Block
 
 - task_id: `task.script-editor-dialogue-story-structure-convergence.queue-closeout-and-handoff`
-- state: `pending`
+- state: `active`
 - task_kind: `execution`
 - scope:
   - `docs/blueprints/project-progress.md`
@@ -256,7 +262,7 @@
 - task_brief:
   - `Close or route the dialogue/story structure convergence queue after verified implementation.`
 - task_outcome_summary:
-  - `Pending implementation.`
+  - `Active. Implementation is verified; closeout must classify remaining branching, story progression, import reconstruction, and runtime handoff residue.`
 - Purpose:
   - `Keep dialogue/story structure convergence explicit before runtime handoff or branching/task-chain queues continue.`
 - Failure mode:

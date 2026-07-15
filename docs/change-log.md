@@ -11,9 +11,11 @@
 - 新增 [src/application/city/city-building-placement-resolver.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/city/city-building-placement-resolver.ts)，提供 `resolveCityBuildingPlacements`、`resolveCityBuildingView`、`canEnterCityBuilding` 和 `resolveCityBuildingNpcs`，让运行期/预览侧通过一个共享 seam 解析城市本地建筑入口、访问结果与 NPC 摘要。
 - 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，覆盖 placement derivation、缺失目标 house fail-closed、访问拒绝、NPC 摘要、单个 view 解析和缺失 placement 返回 `null`。
 - 新增 [docs/blueprints/queues/script-editor-dialogue-story-structure-convergence-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-dialogue-story-structure-convergence-queue.md)，作为后续 dialogue/story runtime-consumable structure 收敛的 active queue，当前任务为 `boundary-baseline-reconcile`。
+- 新增 [src/application/script-editor/dialogue-story-runtime-materializer.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/dialogue-story-runtime-materializer.ts)，把编辑器 dialogue/story/textEntries 到 runtime `SceneDefinition[]` 与 `textEntries` map 的最小 materialization 从 exporter 私有逻辑提升为共享 seam。
 
 ### Changed
 - resolver 当前以 `CityEntryDefinition.id` 作为 placement id，连接现有 `cityEntries`、`houses`、`cityNpcPools` 和 `houseAccessRefusalRules`，避免消费者继续分散手工拼接这些 runtime family。
+- [src/application/script-editor/runtime-pack-export.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/runtime-pack-export.ts) 现在复用 dialogue/story runtime materializer 生成 scenes/text-entries，继续对 choice、followUps、story-node relations、缺失 text 和重复 id fail closed。
 - 关闭 `queue.script-editor-city-building-placement-resolver-convergence`，将持久 placement schema migration、override layering、dialogue inheritance 和 broader consumer migration 分类为 cross-family residue，并把 version 返回 promotion review，推荐下一步筛选 `queue.script-editor-dialogue-story-structure-convergence`。
 
 ### Impact

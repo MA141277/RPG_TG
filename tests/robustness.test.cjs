@@ -3668,6 +3668,42 @@ test(
   }
 );
 
+test("script editor dialogue story materializer exposes runtime scenes and text entries", () => {
+  const {
+    materializeScriptEditorDialogueStoryRuntime,
+  } = require("../.test-dist/application/script-editor/dialogue-story-runtime-materializer.js");
+  const result = materializeScriptEditorDialogueStoryRuntime({
+    dialogues: [
+      {
+        id: "dialogue.opening",
+        title: "Opening Dialogue",
+        storyNodeId: "story-node.opening",
+        participantPersonIds: ["person.hero"],
+        nodes: [
+          {
+            id: "dialogue-node.1",
+            nodeType: "dialogue",
+            speakerPersonId: "person.hero",
+            textId: "text.opening",
+            nextNodeId: "",
+            choiceTargetNodeId: "",
+          },
+        ],
+        followUps: [],
+      },
+    ],
+    storyNodes: [{ id: "story-node.opening", title: "Opening Node" }],
+    scenes: [],
+    textEntries: [{ id: "text.opening", text: "Opening line." }],
+  });
+
+  assert.deepEqual(result.diagnostics, []);
+  assert.equal(result.textEntries?.["text.opening"], "Opening line.");
+  assert.equal(result.scenes?.[0]?.id, "scene.dialogue.opening");
+  assert.equal(result.scenes?.[0]?.actions?.[0]?.type, "dialogue");
+  assert.equal(result.scenes?.[0]?.actions?.[0]?.textId, "text.opening");
+});
+
 test(
   "script editor activities family round-trips through runtime pack import and export",
   async () => {
