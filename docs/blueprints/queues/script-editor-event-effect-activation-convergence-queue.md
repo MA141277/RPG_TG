@@ -23,7 +23,7 @@
 - next_effect: `none`
 - sync_status: `failed`
 - sync_scope: `branch-push`
-- sync_summary: `Local activation commit 20c4ffa was created, but three push attempts to origin/mod-first-dev failed or hung on GitHub port 443 connectivity. This sync failure is repository-local only and does not block queue execution.`
+- sync_summary: `Local activation/implementation/closeout commits 20c4ffa, a081795, 80b6465, and 99c0d9b were created, but repeated push attempts to origin/mod-first-dev failed on GitHub port 443 connectivity. This sync failure is repository-local only and does not block queue execution truth.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
