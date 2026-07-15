@@ -9,8 +9,8 @@
 - governance_sync_source: `docs/blueprints/blueprint.md`
 - queue_status: `active`
 - queue_class: `required`
-- active_task: `task.script-editor-legacy-structure-supersession-review.boundary-baseline-reconcile`
-- next_task: `task.script-editor-legacy-structure-supersession-review.supersession-disposition-review`
+- active_task: `task.script-editor-legacy-structure-supersession-review.supersession-disposition-review`
+- next_task: `task.script-editor-legacy-structure-supersession-review.queue-closeout-and-handoff`
 - closeout_status: `in-progress`
 - execution_closeout_status: `partial`
 - topic_closure_status: `open-residue`
@@ -56,9 +56,9 @@
 
 - queue_goal: `Review legacy script-editor structures and write explicit supersession dispositions before deletion, adapter removal, or final validation.`
 - task_count: `3`
-- completed_task_count: `0`
-- remaining_task_count: `3`
-- active_task_summary: `Inventory legacy structure references and select the smallest lawful supersession disposition slice.`
+- completed_task_count: `1`
+- remaining_task_count: `2`
+- active_task_summary: `Implement the selected minimal supersession disposition slice with tests.`
 - task_briefs:
   - `task.script-editor-legacy-structure-supersession-review.boundary-baseline-reconcile: inventory legacy structure references and decide the bounded disposition surface.`
   - `task.script-editor-legacy-structure-supersession-review.supersession-disposition-review: implement or document the selected retained/migrated/adapter-supported/retired dispositions with tests where code changes are required.`
@@ -95,8 +95,8 @@
 
 | Task ID | State | Summary | Depends On | Notes |
 | --- | --- | --- | --- | --- |
-| `task.script-editor-legacy-structure-supersession-review.boundary-baseline-reconcile` | `active` | `Inventory legacy structure references and select the smallest lawful disposition slice.` | `none` | `No deletion before baseline.` |
-| `task.script-editor-legacy-structure-supersession-review.supersession-disposition-review` | `pending` | `Record and implement selected retained/migrated/adapter-supported/retired dispositions.` | `task.script-editor-legacy-structure-supersession-review.boundary-baseline-reconcile` | `Tests required for any code behavior change.` |
+| `task.script-editor-legacy-structure-supersession-review.boundary-baseline-reconcile` | `done` | `Inventoried legacy structure references and selected minimal-workflow schema literal replacement plus retained adapter-supported compatibility/runtime event dispositions as the smallest lawful slice.` | `none` | `No deletion during baseline.` |
+| `task.script-editor-legacy-structure-supersession-review.supersession-disposition-review` | `active` | `Record and implement selected retained/migrated/adapter-supported/retired dispositions.` | `task.script-editor-legacy-structure-supersession-review.boundary-baseline-reconcile` | `Tests required for any code behavior change.` |
 | `task.script-editor-legacy-structure-supersession-review.queue-closeout-and-handoff` | `pending` | `Verify, classify residue, and return control to version review.` | `task.script-editor-legacy-structure-supersession-review.supersession-disposition-review` | `Does not infer version closeout from this queue.` |
 
 ### Task Definitions
@@ -106,7 +106,7 @@
 ##### Control Block
 
 - task_id: `task.script-editor-legacy-structure-supersession-review.boundary-baseline-reconcile`
-- state: `active`
+- state: `done`
 - task_kind: `decision-dispatch`
 - scope:
   - `src/domain/script-editor-project.ts`
@@ -146,7 +146,7 @@
 - task_brief:
   - `Inventory legacy script-editor structures before any supersession or deletion decision.`
 - task_outcome_summary:
-  - `Pending baseline.`
+  - `Completed after source scan found active legacy/supersession surfaces in storyPack.compatibilityImport, storyPack.runtimeEvents, compatibility residue UI summaries, imported runtime event summaries, and one remaining minimal-workflow schemaVersion/kind literal. The selected implementation slice is to replace the minimal-workflow schema/kind literals with centralized references and add tests that lock compatibilityImport/runtimeEvents as retained adapter-supported structures rather than deletable residue.`
 - Purpose:
   - `Prevent final validation or cleanup from silently depending on undocumented old-vs-new structure behavior.`
 - Failure mode:
@@ -157,16 +157,24 @@
 ##### Control Block
 
 - task_id: `task.script-editor-legacy-structure-supersession-review.supersession-disposition-review`
-- state: `pending`
+- state: `active`
 - task_kind: `execution`
 - scope:
-  - `to-be-selected-by-boundary-baseline`
+  - `src/application/script-editor/minimal-workflow.ts`
+  - `src/application/script-editor/runtime-pack-export.ts`
+  - `src/application/script-editor/runtime-pack-import.ts`
+  - `tests/robustness.test.cjs`
 - must_inspect:
-  - `task.script-editor-legacy-structure-supersession-review.boundary-baseline-reconcile output`
+  - `src/application/script-editor/minimal-workflow.ts`
+  - `src/application/script-editor/runtime-pack-export.ts`
+  - `src/application/script-editor/runtime-pack-import.ts`
+  - `tests/robustness.test.cjs`
 - must_not_change:
   - `Do not implement unselected broad cleanup.`
 - done_when:
-  - `Selected dispositions are recorded and implemented where needed.`
+  - `createDefaultScriptEditorProjectDefinition consumes centralized schema/kind references.`
+  - `compatibilityImport remains explicitly retained as adapter-supported unresolved-family residue that blocks export until resolved.`
+  - `storyPack.runtimeEvents remains explicitly retained as an adapter-supported runtime EventDefinition bridge with validation.`
 - verify_with:
   - `npm run typecheck`
   - `npm test`
@@ -182,7 +190,7 @@
 - task_brief:
   - `Record and implement the baseline-selected legacy structure dispositions.`
 - task_outcome_summary:
-  - `Pending baseline selection.`
+  - `Pending implementation.`
 - Purpose:
   - `Make old-vs-new structure ownership explicit before final validation.`
 - Failure mode:
@@ -249,3 +257,4 @@
 ### Progress Log
 
 - `2026-07-16`: `Promotion review admitted queue.script-editor-legacy-structure-supersession-review as the single active queue because schema reference closeout routed legacy deletion, supersession disposition, and concrete future-version migration adapters back to version review. The first live task is boundary-baseline-reconcile.`
+- `2026-07-16`: `Boundary baseline completed after scanning src/domain/script-editor-project.ts, src/application/script-editor, src/ui/main-ui/main-ui-flow.js, and tests/robustness.test.cjs for legacy/compatibility/residue/runtime adapter structures. Active surfaces are storyPack.compatibilityImport, storyPack.runtimeEvents, compatibility residue UI summaries, imported runtime event summaries, and one remaining minimal-workflow schemaVersion/kind literal. The smallest lawful implementation slice is to replace the minimal-workflow schema/kind literal with centralized references and test that compatibilityImport/runtimeEvents are retained adapter-supported structures rather than silently deletable residue.`
