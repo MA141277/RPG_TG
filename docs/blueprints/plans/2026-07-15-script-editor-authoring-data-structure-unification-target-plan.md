@@ -5,13 +5,13 @@
 - document_role: `version-governor`
 - version_id: `target.script-editor-authoring-data-structure-unification`
 - version_status: `open`
-- active_phase: `phase.promotion-review`
-- active_queue: `none`
-- decision_state: `promotion-review`
+- active_phase: `phase.execution`
+- active_queue: `queue.script-editor-playable-minigame-binding-convergence`
+- decision_state: `active-execution`
 - next_decision: `same-version-admission-or-version-closeout`
-- next_action: `return-to-promotion-review`
-- resume_gate: `no-active-queue`
-- promotion_review_result: `pending`
+- next_action: `resume-active-queue`
+- resume_gate: `active-queue`
+- promotion_review_result: `admitted`
 - review_subject_id: `none`
 - review_subject_classification: `none`
 - proposed_queue_id: `none`
@@ -26,8 +26,8 @@
 - closure_review_status: `routed`
 - residue_candidate_id: `none`
 - residue_candidate_family: `none`
-- routing_basis: `queue.script-editor-legacy-structure-supersession-review closed after the bounded supersession disposition slice landed and verified with no same-family residue. Remaining version candidates must be reviewed from the promotion ledger before final validation; playable/minigame binding remains the next required candidate but requires playable governance before admission.`
-- next_lawful_queue_recommendation: `queue.script-editor-playable-minigame-binding-convergence`
+- routing_basis: `queue.script-editor-playable-minigame-binding-convergence admitted after playable governance confirmed the bounded shared-contract playable integration surface.`
+- next_lawful_queue_recommendation: `none`
 - auto_admission_ready: `false`
 - blocked_by: []
 - candidate_queue_ids:
@@ -133,7 +133,7 @@
 | `queue.script-editor-event-structure-convergence` | `done` | `Already completed; do not reopen except by explicit governance record.` | `Closed at baseline with prerequisite condition authoring contract freeze residue returned to promotion review.` |
 | `queue.script-editor-event-effect-activation-convergence` | `done` | `Already completed; do not reopen except by explicit governance record.` | `Closed its bounded task/shared-rule typed character property mutation effect slice with cross-family event/scene effect residue returned to promotion review.` |
 | `queue.script-editor-scenario-launch-policy-authoring` | `done` | `Already completed; do not reopen except by explicit governance record.` | `Closed after storyPack.scenarioProfile entry event and launchPolicy authoring fields landed with verification and no same-family residue.` |
-| `queue.script-editor-playable-minigame-binding-convergence` | `candidate` | `Only after playable governance confirms the bounded playable integration surface.` | `Requires playable governance before any shared playable runtime or house-hosted playable behavior changes.` |
+| `queue.script-editor-playable-minigame-binding-convergence` | `active` | `Currently active; resume from the admitted queue document.` | `Playable governance classified this as shared playable contract work for editor-authored playable/minigame integration bindings; the first task is boundary-baseline-reconcile.` |
 | `queue.script-editor-branching-event-task-chain-convergence` | `done` | `Already completed; do not reopen except by explicit governance record.` | `Closed after the fail-closed node progression guard landed; real node-target branching routed to queue.script-editor-dialogue-node-target-branching-convergence.` |
 | `queue.script-editor-dialogue-node-target-branching-convergence` | `done` | `Already completed; do not reopen except by explicit governance record.` | `Closed after node-target scene splitting and bounded choice target lowering landed; broader event/task-chain progression returned to version review.` |
 | `queue.script-editor-event-task-chain-runtime-convergence` | `done` | `Already completed; do not reopen except by explicit governance record.` | `Closed after explicit event nextEventId export/runtime chaining landed; task-chain runtime handoff routed to queue.script-editor-task-chain-runtime-handoff-convergence.` |
@@ -145,20 +145,21 @@
 
 ### Current Queue Activation
 
-- `none`
+- `queue.script-editor-playable-minigame-binding-convergence`
 - Active task:
-  - `none`
-- Promotion-review basis:
+  - `task.script-editor-playable-minigame-binding-convergence.boundary-baseline-reconcile`
+- Admission basis:
   - `queue.script-editor-legacy-structure-supersession-review closed after verified legacy supersession disposition work landed.`
   - `No same-family legacy supersession residue remains inside that bounded queue surface.`
-  - `Execution returns to version promotion review; playable/minigame binding remains the next required candidate but requires playable governance before admission.`
+  - `Playable governance was loaded before admission and classified playable/minigame binding convergence as shared playable contract work, not a local-only patch.`
+  - `Execution resumes from the admitted queue document.`
 
 ### Version Boundary Record
 
 - `This version governs authoring/data-structure convergence after runtime-pack-unification closeout.`
 - `It must consume the closed runtime-pack export/import/startup truth as baseline evidence rather than reopening it as a compatibility patch surface.`
 - `It may supersede previously frozen script-editor structures only through explicit schema/migration/supersession records.`
-- `It closed queue.script-editor-legacy-structure-supersession-review after default project schema/kind literals were retired and adapter-supported legacy structures were dispositioned; execution resumes from version promotion review.`
+- `It closed queue.script-editor-legacy-structure-supersession-review after default project schema/kind literals were retired and adapter-supported legacy structures were dispositioned; execution now resumes from queue.script-editor-playable-minigame-binding-convergence.`
 
 ### Queue Admission Startup Rules
 
@@ -292,3 +293,4 @@
 - `2026-07-16: queue.script-editor-legacy-structure-supersession-review completed boundary-baseline-reconcile after selecting default project schema/kind literal retirement plus retained adapter-supported compatibilityImport/runtimeEvents dispositions as the smallest lawful slice; the active task became supersession-disposition-review.`
 - `2026-07-16: queue.script-editor-legacy-structure-supersession-review completed supersession-disposition-review after createDefaultScriptEditorProjectDefinition began consuming centralized schema/kind references and robustness coverage locked the disposition; the active task became queue-closeout-and-handoff.`
 - `2026-07-16: queue.script-editor-legacy-structure-supersession-review closed with no same-family residue after verification; the version returned to promotion review with queue.script-editor-playable-minigame-binding-convergence recommended next, subject to playable governance.`
+- `2026-07-16: promotion review admitted queue.script-editor-playable-minigame-binding-convergence as the single active queue after playable governance was loaded. The queue is classified as shared playable contract work for script-editor authored playable/minigame integration bindings over existing playable mechanics; the first live task is boundary-baseline-reconcile.`
