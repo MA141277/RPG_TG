@@ -23,7 +23,7 @@
 - next_effect: `none`
 - sync_status: `success`
 - sync_scope: `baseline-push`
-- sync_summary: `Commit c1e58c6 was pushed to origin/mod-first-dev, carrying unified field mapping baseline reconciliation and active-task promotion.`
+- sync_summary: `Commit 23ccfdb was pushed to origin/mod-first-dev, carrying the bounded field mapping contract implementation and active-task promotion to closeout.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
