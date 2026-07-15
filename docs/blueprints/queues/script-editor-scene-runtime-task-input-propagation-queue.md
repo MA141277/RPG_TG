@@ -21,9 +21,9 @@
 - next_family_candidate: `none`
 - auto_continue_eligible: `false`
 - next_effect: `return-to-version-review`
-- sync_status: `pending`
+- sync_status: `success`
 - sync_scope: `branch-push`
-- sync_summary: `Closeout docs prepared after implementation commit f8a132a was pushed to origin/mod-first-dev; closeout repository sync is pending.`
+- sync_summary: `Commit 80fdb34 pushed to origin/mod-first-dev after scene runtime task input propagation closed with no same-family residue.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
