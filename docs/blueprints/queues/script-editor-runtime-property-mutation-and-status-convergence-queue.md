@@ -244,6 +244,7 @@
 - `2026-07-15`: `Activated after baseline reconciliation proved the existing RuntimeResult/save/startup seams can carry the first character-property status slice without schema-reference migration or non-character overlays.`
 - `2026-07-15`: `Implemented the first TDD slice after observing failing tests for customPropertyPatch materialization and a missing runtime property mutation helper. Added CharacterDefinition.customProperties, CharacterStatus.customPropertyPatch, mutateCharacterNumericProperty, and a temple donation migration that returns characterStatusById through HouseModuleTransitionResult. Verification passed for npm run typecheck, npm test, and the targeted custom property / temple donation node --test slice.`
 - `2026-07-15`: `Remaining active work: add the representative shared event/effect mutation path or explicitly route it as residue before this implementation task can close.`
+- `2026-07-15`: `Follow-up inspection found core runtime effect settlement currently receives only RuntimeState, whose app partition does not contain characterDefinitions. A real event/effect mutation path therefore cannot honestly be completed as compiler-only lowering; the next implementation decision must either extend the runtime settlement input contract or route event/effect mutation ownership to the existing queue.script-editor-event-effect-activation-convergence candidate.`
 
 #### `task.script-editor-runtime-property-mutation-and-status-convergence.queue-closeout-and-handoff`
 
