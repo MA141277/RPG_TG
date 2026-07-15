@@ -23,7 +23,7 @@
 - next_effect: `none`
 - sync_status: `success`
 - sync_scope: `branch-push`
-- sync_summary: `Commit 3293156 was pushed to origin/mod-first-dev, recording the completed boundary reconciliation and promoting the save/runtime overlay implementation task.`
+- sync_summary: `Commit 7294ba2 was pushed to origin/mod-first-dev, carrying the verified CharacterStatus runtime aggregation, save persistence, startup restore, city-begging covered settlement, tests, and implementation-task promotion to closeout.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
