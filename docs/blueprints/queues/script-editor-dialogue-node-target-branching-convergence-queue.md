@@ -7,20 +7,20 @@
 - blueprint_version: `2026.07`
 - governance_last_synced_at: `2026-07-15`
 - governance_sync_source: `docs/blueprints/blueprint.md`
-- queue_status: `active`
+- queue_status: `done`
 - queue_class: `required-continuation`
-- active_task: `task.script-editor-dialogue-node-target-branching-convergence.queue-closeout-and-handoff`
+- active_task: `none`
 - next_task: `none`
-- closeout_status: `in-progress`
-- execution_closeout_status: `partial`
-- topic_closure_status: `open-residue`
-- closure_basis: `none`
+- closeout_status: `done`
+- execution_closeout_status: `done`
+- topic_closure_status: `closed`
+- closure_basis: `The bounded node-target branching model landed and passed verification: dialogue nodes now lower into stable runtime scenes, nextNodeId lowers through jump actions, implicit array-order continuation is preserved, bounded single-target choiceTargetNodeId lowers through ChoiceOption.nextSceneId, and missing node targets fail closed. No same-family node-target residue remains inside this queue's bounded surface.`
 - residue_remaining: `no`
 - residue_family: `none`
 - residue_routing_status: `none`
 - next_family_candidate: `none`
 - auto_continue_eligible: `false`
-- next_effect: `execute-active-task`
+- next_effect: `return-to-version-review`
 - sync_status: `success`
 - sync_scope: `branch-push`
 - sync_summary: `Commit f180189 pushed to origin/mod-first-dev after node-target-runtime-implementation landed and advanced this queue to closeout.`
@@ -57,9 +57,9 @@
 
 - queue_goal: `Create the runtime node-target branching model needed before richer dialogue/event/task chains can safely lower from editor data.`
 - task_count: `3`
-- completed_task_count: `2`
-- remaining_task_count: `1`
-- active_task_summary: `Verify, classify residue, record next-step truth, and return control to version review after scene-splitting node-target branching landed.`
+- completed_task_count: `3`
+- remaining_task_count: `0`
+- active_task_summary: `Queue closed; broader event/task-chain runtime progression remains cross-family residue for version review.`
 - task_briefs:
   - `task.script-editor-dialogue-node-target-branching-convergence.boundary-baseline-reconcile: inventory node-target branching seams and select the smallest real runtime implementation slice.`
   - `task.script-editor-dialogue-node-target-branching-convergence.node-target-runtime-implementation: implement the selected node-target branching slice with tests.`
@@ -98,7 +98,7 @@
 | --- | --- | --- | --- | --- |
 | `task.script-editor-dialogue-node-target-branching-convergence.boundary-baseline-reconcile` | `done` | `Inventoried dialogue node target references and runtime branching seams, then selected scene splitting as the smallest real runtime model.` | `none` | `No production code changed during baseline.` |
 | `task.script-editor-dialogue-node-target-branching-convergence.node-target-runtime-implementation` | `done` | `Implemented the selected node-target runtime branching slice with tests.` | `task.script-editor-dialogue-node-target-branching-convergence.boundary-baseline-reconcile` | `Dialogue nodes now lower into stable runtime scenes; nextNodeId uses jump targets, implicit array order is preserved, and bounded single-target choiceTargetNodeId lowers to ChoiceOption.nextSceneId.` |
-| `task.script-editor-dialogue-node-target-branching-convergence.queue-closeout-and-handoff` | `active` | `Verify, classify residue, and return control to version review.` | `task.script-editor-dialogue-node-target-branching-convergence.node-target-runtime-implementation` | `Closeout must not infer version closeout.` |
+| `task.script-editor-dialogue-node-target-branching-convergence.queue-closeout-and-handoff` | `done` | `Verified, classified residue, and returned control to version review.` | `task.script-editor-dialogue-node-target-branching-convergence.node-target-runtime-implementation` | `Closed on 2026-07-15 with broader event/task-chain progression routed as cross-family residue.` |
 
 ### Task Definitions
 
@@ -224,7 +224,7 @@
 ##### Control Block
 
 - task_id: `task.script-editor-dialogue-node-target-branching-convergence.queue-closeout-and-handoff`
-- state: `active`
+- state: `done`
 - task_kind: `execution`
 - scope:
   - `docs/blueprints/project-progress.md`
@@ -254,11 +254,15 @@
 - task_brief:
   - `Close or route the node-target branching queue after verified implementation.`
 - task_outcome_summary:
-  - `Active after node-target-runtime-implementation verification passed.`
+  - `Done. Node-target branching is verified and closed; broader event/task-chain runtime progression is routed as cross-family residue to version review.`
 - Purpose:
   - `Return control to version review only after node-target branching is either real, verified, or honestly routed.`
 - Failure mode:
   - `Closing without runtime progression evidence would leave the fail-closed blocker as the final behavior.`
+
+##### Progress Log
+
+- `2026-07-15`: `Closeout verification passed with npm run typecheck, npm test, npm run build, npm run lint:blueprints, npm run lint:plans, npm run blueprint:governance:check, and git diff --check with only LF to CRLF working-copy warnings. Classified no same-family residue for the bounded node-target surface. Broader event/task-chain runtime progression remains cross-family version residue because event/task chain lowering must build on the now-landed node-target model rather than belong to this queue's node-target implementation surface.`
 
 ### Historical Handoff Note
 
@@ -268,3 +272,5 @@
   - `The predecessor queue landed fail-closed diagnostics for non-empty nextNodeId and choiceTargetNodeId, then routed real node-target branching as same-family residue because runtime lacks a safe dialogue-node target scene/cursor model.`
 - Recorded expected output:
   - `A source-backed runtime node-target branching model or an explicit prerequisite routing decision.`
+- Recorded handoff at closure:
+  - `Node-target scene splitting and bounded choiceTargetNodeId progression landed; route broader event/task-chain runtime progression through version review.`
