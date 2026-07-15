@@ -11,10 +11,12 @@
 - 剧本编辑器 dialogue/story runtime materializer 现在会对非空 `nextNodeId` 和 `choiceTargetNodeId` fail closed，避免把尚未支持的节点推进/分支引用静默导出为线性 runtime scene。
 - 关闭 `queue.script-editor-branching-event-task-chain-convergence` 的 bounded guard slice，并将真实 node-target runtime branching 分类为 same-family residue。
 - 新增 `queue.script-editor-dialogue-node-target-branching-convergence` 作为 active continuation，先从 baseline reconcile 开始选择非兼容式的 runtime 节点目标模型。
+- dialogue node-target branching 的第一段真实 runtime 模型已落地：materializer 会把 dialogue nodes 拆成稳定 runtime scenes，用 `jump` 表达 `nextNodeId`，保留数组顺序的隐式下一节点，并把 bounded single-target `choiceTargetNodeId` 降为 `ChoiceOption.nextSceneId`。
 
 ### Impact
 - 当前导出不会再丢失已填写的节点推进意图；不支持的分支会明确阻止导出。
 - 下一步治理焦点收窄到 `nextNodeId/choiceTargetNodeId` 如何真实落到 runtime scene/cursor 目标，而不是直接扩大到完整 event/task 链。
+- 已支持的节点目标引用现在会生成可由现有 scene runner/choice resolver 执行的 runtime progression；缺失目标仍会 fail closed。
 
 ## 2026-07-15 Script Editor City Building Placement Resolver
 

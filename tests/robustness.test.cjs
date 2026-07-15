@@ -3704,7 +3704,7 @@ test("script editor dialogue story materializer exposes runtime scenes and text 
   assert.equal(result.scenes?.[0]?.actions?.[0]?.textId, "text.opening");
 });
 
-test("script editor dialogue story materializer rejects unsupported node progression references", () => {
+test("script editor dialogue story materializer lowers node progression targets into runtime scenes", () => {
   const {
     materializeScriptEditorDialogueStoryRuntime,
   } = require("../.test-dist/application/script-editor/dialogue-story-runtime-materializer.js");
@@ -3720,16 +3720,24 @@ test("script editor dialogue story materializer rejects unsupported node progres
             nodeType: "dialogue",
             speakerPersonId: "person.hero",
             textId: "text.opening",
-            nextNodeId: "dialogue-node.2",
+            nextNodeId: "dialogue-node.3",
             choiceTargetNodeId: "",
           },
           {
             id: "dialogue-node.2",
+            nodeType: "choice",
+            speakerPersonId: "",
+            textId: "text.choice",
+            nextNodeId: "",
+            choiceTargetNodeId: "dialogue-node.3",
+          },
+          {
+            id: "dialogue-node.3",
             nodeType: "narration",
             speakerPersonId: "",
             textId: "text.followup",
             nextNodeId: "",
-            choiceTargetNodeId: "dialogue-node.1",
+            choiceTargetNodeId: "",
           },
         ],
       },
@@ -3738,22 +3746,80 @@ test("script editor dialogue story materializer rejects unsupported node progres
     scenes: [],
     textEntries: [
       { id: "text.opening", text: "Opening line." },
+      { id: "text.choice", text: "Continue." },
       { id: "text.followup", text: "Follow-up line." },
     ],
   });
 
-  assert.equal(result.scenes, null);
-  assert.equal(result.textEntries, null);
+  assert.deepEqual(result.diagnostics, []);
+  assert.equal(result.textEntries?.["text.choice"], "Continue.");
   assert.deepEqual(
-    result.diagnostics.map((diagnostic) => diagnostic.fieldPath),
+    result.scenes?.map((scene) => scene.id),
     [
-      "project.dialogues[0].nodes[0].nextNodeId",
-      "project.dialogues[0].nodes[1].choiceTargetNodeId",
+      "scene.dialogue.branching",
+      "scene.dialogue.branching.dialogue-node.2",
+      "scene.dialogue.branching.dialogue-node.3",
     ]
   );
+  assert.deepEqual(result.scenes?.[0]?.actions, [
+    {
+      type: "dialogue",
+      characterId: "person.hero",
+      side: "center",
+      textId: "text.opening",
+    },
+    { type: "jump", nextSceneId: "scene.dialogue.branching.dialogue-node.3" },
+  ]);
+  assert.deepEqual(result.scenes?.[1]?.actions, [
+    {
+      type: "choice",
+      promptTextId: "text.choice",
+      options: [
+        {
+          id: "dialogue-node.2.choiceTarget",
+          labelTextId: "text.choice",
+          nextSceneId: "scene.dialogue.branching.dialogue-node.3",
+        },
+      ],
+    },
+  ]);
+});
+
+test("script editor dialogue story materializer rejects missing node progression targets", () => {
+  const {
+    materializeScriptEditorDialogueStoryRuntime,
+  } = require("../.test-dist/application/script-editor/dialogue-story-runtime-materializer.js");
+
+  const result = materializeScriptEditorDialogueStoryRuntime({
+    dialogues: [
+      {
+        id: "dialogue.branching",
+        title: "Branching",
+        nodes: [
+          {
+            id: "dialogue-node.1",
+            nodeType: "dialogue",
+            speakerPersonId: "person.hero",
+            textId: "text.opening",
+            nextNodeId: "dialogue-node.missing",
+            choiceTargetNodeId: "",
+          },
+        ],
+      },
+    ],
+    storyNodes: [],
+    scenes: [],
+    textEntries: [{ id: "text.opening", text: "Opening line." }],
+  });
+
+  assert.equal(result.scenes, null);
+  assert.equal(result.textEntries, null);
+  assert.deepEqual(result.diagnostics.map((diagnostic) => diagnostic.fieldPath), [
+    "project.dialogues[0].nodes[0].nextNodeId",
+  ]);
   assert.match(
     result.diagnostics.map((diagnostic) => diagnostic.message).join("\n"),
-    /node progression|runtime branching/i
+    /missing dialogue node target/i
   );
 });
 

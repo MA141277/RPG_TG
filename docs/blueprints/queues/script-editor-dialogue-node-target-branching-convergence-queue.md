@@ -9,7 +9,7 @@
 - governance_sync_source: `docs/blueprints/blueprint.md`
 - queue_status: `active`
 - queue_class: `required-continuation`
-- active_task: `task.script-editor-dialogue-node-target-branching-convergence.node-target-runtime-implementation`
+- active_task: `task.script-editor-dialogue-node-target-branching-convergence.queue-closeout-and-handoff`
 - next_task: `none`
 - closeout_status: `in-progress`
 - execution_closeout_status: `partial`
@@ -57,9 +57,9 @@
 
 - queue_goal: `Create the runtime node-target branching model needed before richer dialogue/event/task chains can safely lower from editor data.`
 - task_count: `3`
-- completed_task_count: `1`
-- remaining_task_count: `2`
-- active_task_summary: `Implement the selected scene-splitting node-target runtime model for dialogue nextNodeId and the bounded single-target choiceTargetNodeId subset.`
+- completed_task_count: `2`
+- remaining_task_count: `1`
+- active_task_summary: `Verify, classify residue, record next-step truth, and return control to version review after scene-splitting node-target branching landed.`
 - task_briefs:
   - `task.script-editor-dialogue-node-target-branching-convergence.boundary-baseline-reconcile: inventory node-target branching seams and select the smallest real runtime implementation slice.`
   - `task.script-editor-dialogue-node-target-branching-convergence.node-target-runtime-implementation: implement the selected node-target branching slice with tests.`
@@ -97,8 +97,8 @@
 | Task ID | State | Summary | Depends On | Notes |
 | --- | --- | --- | --- | --- |
 | `task.script-editor-dialogue-node-target-branching-convergence.boundary-baseline-reconcile` | `done` | `Inventoried dialogue node target references and runtime branching seams, then selected scene splitting as the smallest real runtime model.` | `none` | `No production code changed during baseline.` |
-| `task.script-editor-dialogue-node-target-branching-convergence.node-target-runtime-implementation` | `active` | `Implement the selected node-target runtime branching slice with tests.` | `task.script-editor-dialogue-node-target-branching-convergence.boundary-baseline-reconcile` | `Selected slice: split dialogue nodes into stable runtime scenes, lower nextNodeId to jump targets, preserve implicit array-order continuation, and support bounded single-target choiceTargetNodeId as ChoiceOption.nextSceneId.` |
-| `task.script-editor-dialogue-node-target-branching-convergence.queue-closeout-and-handoff` | `pending` | `Verify, classify residue, and return control to version review.` | `task.script-editor-dialogue-node-target-branching-convergence.node-target-runtime-implementation` | `Closeout must not infer version closeout.` |
+| `task.script-editor-dialogue-node-target-branching-convergence.node-target-runtime-implementation` | `done` | `Implemented the selected node-target runtime branching slice with tests.` | `task.script-editor-dialogue-node-target-branching-convergence.boundary-baseline-reconcile` | `Dialogue nodes now lower into stable runtime scenes; nextNodeId uses jump targets, implicit array order is preserved, and bounded single-target choiceTargetNodeId lowers to ChoiceOption.nextSceneId.` |
+| `task.script-editor-dialogue-node-target-branching-convergence.queue-closeout-and-handoff` | `active` | `Verify, classify residue, and return control to version review.` | `task.script-editor-dialogue-node-target-branching-convergence.node-target-runtime-implementation` | `Closeout must not infer version closeout.` |
 
 ### Task Definitions
 
@@ -175,7 +175,7 @@
 ##### Control Block
 
 - task_id: `task.script-editor-dialogue-node-target-branching-convergence.node-target-runtime-implementation`
-- state: `active`
+- state: `done`
 - task_kind: `execution`
 - scope:
   - `src/application/script-editor/dialogue-story-runtime-materializer.ts`
@@ -207,18 +207,24 @@
 - task_brief:
   - `Implement the selected node-target runtime branching slice.`
 - task_outcome_summary:
-  - `Active. Implement the selected scene-splitting node-target runtime model without widening into followUps, multi-option choice authoring, event/task chains, playable/minigame, or scenario launch policy.`
+  - `Done. The materializer now splits dialogue nodes into stable runtime scenes, lowers nextNodeId through jump actions, preserves implicit array-order continuation, and lowers the bounded single-target choiceTargetNodeId shape through ChoiceOption.nextSceneId.`
 - Purpose:
   - `Make authored dialogue node target references runtime-consumable rather than export-only residue.`
 - Failure mode:
   - `A compatibility adapter that only preserves fields without runtime progression would not satisfy this queue.`
+
+##### Progress Log
+
+- `2026-07-15`: `RED updated materializer coverage to require supported nextNodeId and single-target choiceTargetNodeId records to lower into runtime scenes/options, plus a missing target diagnostic for dangling references. The tests failed because the previous guard still emitted unsupported-lowering diagnostics.`
+- `2026-07-15`: `GREEN landed in src/application/script-editor/dialogue-story-runtime-materializer.ts by splitting dialogue nodes into stable SceneDefinition ids, keeping the dialogue entry id as the first node scene, adding jump actions for explicit or implicit next-node progression, and lowering the bounded choiceTargetNodeId shape to one ChoiceOption.nextSceneId. Missing node targets now emit missing-reference diagnostics.`
+- `2026-07-15`: `Verification passed: targeted node-target materializer/runtime export tests; npm run typecheck; npm test; npm run build; npm run lint:blueprints; npm run lint:plans; npm run blueprint:governance:check; git diff --check reported only LF to CRLF working-copy warnings. Build retained existing Vite warnings for battle demo type=module, unresolved UI panel image, and chunk size.`
 
 #### `task.script-editor-dialogue-node-target-branching-convergence.queue-closeout-and-handoff`
 
 ##### Control Block
 
 - task_id: `task.script-editor-dialogue-node-target-branching-convergence.queue-closeout-and-handoff`
-- state: `pending`
+- state: `active`
 - task_kind: `execution`
 - scope:
   - `docs/blueprints/project-progress.md`
@@ -248,7 +254,7 @@
 - task_brief:
   - `Close or route the node-target branching queue after verified implementation.`
 - task_outcome_summary:
-  - `Pending implementation.`
+  - `Active after node-target-runtime-implementation verification passed.`
 - Purpose:
   - `Return control to version review only after node-target branching is either real, verified, or honestly routed.`
 - Failure mode:
