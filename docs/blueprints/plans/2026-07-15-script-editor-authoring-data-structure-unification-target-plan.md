@@ -6,7 +6,7 @@
 - version_id: `target.script-editor-authoring-data-structure-unification`
 - version_status: `open`
 - active_phase: `phase.active-execution`
-- active_queue: `queue.script-editor-event-task-chain-runtime-convergence`
+- active_queue: `queue.script-editor-task-chain-runtime-handoff-convergence`
 - decision_state: `active-execution`
 - next_decision: `queue-closeout-or-return-to-version-review`
 - next_action: `resume-active-queue`
@@ -22,12 +22,12 @@
 - intake_summary: `none`
 - intake_result: `none`
 - intake_feedback_mode: `none`
-- closure_review_subject: `queue.script-editor-dialogue-node-target-branching-convergence`
+- closure_review_subject: `queue.script-editor-event-task-chain-runtime-convergence`
 - closure_review_status: `routed`
-- residue_candidate_id: `item.script-editor-event-task-chain-runtime-convergence`
-- residue_candidate_family: `cross-family`
-- routing_basis: `queue.script-editor-dialogue-node-target-branching-convergence closed after verified scene-splitting node-target runtime progression landed for nextNodeId and bounded single-target choiceTargetNodeId. Broader event/task-chain runtime progression, including event/task chain handoff beyond dialogue node targets, is outside that bounded node-target surface and needs version review.`
-- next_lawful_queue_recommendation: `queue.script-editor-event-task-chain-runtime-convergence`
+- residue_candidate_id: `item.script-editor-task-chain-runtime-handoff-convergence`
+- residue_candidate_family: `same-family`
+- routing_basis: `queue.script-editor-event-task-chain-runtime-convergence closed after verified editor nextEventId export/runtime chaining landed; task-chain runtime handoff remains same-family residue because editor-authored task start/progress/complete/fail still does not lower into unified RuntimeResult.taskInputs from event/scene chain data.`
+- next_lawful_queue_recommendation: `queue.script-editor-task-chain-runtime-handoff-convergence`
 - auto_admission_ready: `false`
 - blocked_by: []
 - candidate_queue_ids:
@@ -55,6 +55,7 @@
   - `queue.script-editor-branching-event-task-chain-convergence`
   - `queue.script-editor-dialogue-node-target-branching-convergence`
   - `queue.script-editor-event-task-chain-runtime-convergence`
+  - `queue.script-editor-task-chain-runtime-handoff-convergence`
   - `queue.script-editor-status-overlay-generalization-review`
   - `queue.script-editor-legacy-structure-supersession-review`
   - `queue.script-editor-end-to-end-authoring-runtime-flow-validation`
@@ -102,7 +103,8 @@
 | `item.script-editor-playable-minigame-binding-convergence` | `queue-candidate` | `queue.script-editor-playable-minigame-binding-convergence` | `candidate-recorded` | `only after playable governance is loaded and the queue is admitted` | `Requires playable governance before shared playable runtime or house-hosted playable integration changes.` |
 | `item.script-editor-branching-event-task-chain-convergence` | `queue-candidate` | `queue.script-editor-branching-event-task-chain-convergence` | `admitted + queue closed with same-family residue` | `only if fresh evidence proves the fail-closed node progression guard regressed` | `Closed after non-empty nextNodeId and choiceTargetNodeId began failing closed instead of silently linearizing; real node-target branching was routed as same-family residue to queue.script-editor-dialogue-node-target-branching-convergence.` |
 | `item.script-editor-dialogue-node-target-branching-convergence` | `queue-candidate` | `queue.script-editor-dialogue-node-target-branching-convergence` | `admitted + queue closed with cross-family residue` | `only if fresh evidence proves node-target scene splitting regressed` | `Closed after scene splitting, jump-based nextNodeId progression, implicit array-order continuation, bounded single-target choiceTargetNodeId lowering, and missing-target diagnostics landed. Broader event/task-chain progression was routed as cross-family residue to queue.script-editor-event-task-chain-runtime-convergence review.` |
-| `item.script-editor-event-task-chain-runtime-convergence` | `queue-candidate` | `queue.script-editor-event-task-chain-runtime-convergence` | `admitted + active` | `only if fresh evidence proves event-to-event runtime chain lowering regressed or must wait for another prerequisite` | `Admitted after node-target branching closeout. Baseline selected explicit editor nextEventId lowering into runtime EventDefinition.nextEventId as the first bounded chain slice; implementation is done and queue closeout is active.` |
+| `item.script-editor-event-task-chain-runtime-convergence` | `queue-candidate` | `queue.script-editor-event-task-chain-runtime-convergence` | `admitted + queue closed with same-family residue` | `only if fresh evidence proves event-to-event runtime chain lowering regressed` | `Closed after explicit editor nextEventId lowered into runtime EventDefinition.nextEventId and scene completion followed chained runtime events. Task-chain runtime handoff was routed as same-family residue to queue.script-editor-task-chain-runtime-handoff-convergence.` |
+| `item.script-editor-task-chain-runtime-handoff-convergence` | `queue-candidate` | `queue.script-editor-task-chain-runtime-handoff-convergence` | `admitted + active` | `only if fresh evidence proves a narrower prerequisite must precede task handoff` | `Admitted as the unique same-family continuation after event-chain runtime convergence proved unified taskInputs remains the next task-chain handoff blocker.` |
 | `item.script-editor-end-to-end-authoring-runtime-flow-validation` | `queue-candidate` | `queue.script-editor-end-to-end-authoring-runtime-flow-validation` | `candidate-recorded-final` | `after required data, runtime handoff, and persistence queues provide enough coverage to prove closeout` | `Final validation queue, not a first implementation slice.` |
 
 ### Queue Promotion Ledger
@@ -132,28 +134,29 @@
 | `queue.script-editor-playable-minigame-binding-convergence` | `candidate` | `Only after playable governance confirms the bounded playable integration surface.` | `Requires playable governance before any shared playable runtime or house-hosted playable behavior changes.` |
 | `queue.script-editor-branching-event-task-chain-convergence` | `done` | `Already completed; do not reopen except by explicit governance record.` | `Closed after the fail-closed node progression guard landed; real node-target branching routed to queue.script-editor-dialogue-node-target-branching-convergence.` |
 | `queue.script-editor-dialogue-node-target-branching-convergence` | `done` | `Already completed; do not reopen except by explicit governance record.` | `Closed after node-target scene splitting and bounded choice target lowering landed; broader event/task-chain progression returned to version review.` |
-| `queue.script-editor-event-task-chain-runtime-convergence` | `active` | `After node-target branching is verified and broader event/task-chain progression is the next smallest blocker.` | `Owns the event/task-chain runtime progression surface beyond dialogue node targets. Explicit event nextEventId export/runtime chaining is implemented; active task is queue-closeout-and-handoff.` |
+| `queue.script-editor-event-task-chain-runtime-convergence` | `done` | `Already completed; do not reopen except by explicit governance record.` | `Closed after explicit event nextEventId export/runtime chaining landed; task-chain runtime handoff routed to queue.script-editor-task-chain-runtime-handoff-convergence.` |
+| `queue.script-editor-task-chain-runtime-handoff-convergence` | `active` | `After event-chain runtime convergence verified and task handoff remains same-family residue.` | `Owns the next bounded path from editor-authored task progression data into RuntimeResult.taskInputs. Active task is boundary-baseline-reconcile.` |
 | `queue.script-editor-status-overlay-generalization-review` | `candidate-review` | `When non-character runtime mutation needs explicit save/status ownership.` | `Review queue; do not create non-character overlays for convenience.` |
 | `queue.script-editor-legacy-structure-supersession-review` | `candidate` | `Before deleting or invalidating previously frozen structures.` | `Records retained, migrated, adapter-supported, or retired structure dispositions.` |
 | `queue.script-editor-end-to-end-authoring-runtime-flow-validation` | `candidate-final` | `After required data/runtime/persistence queues provide enough coverage to prove version acceptance.` | `Final closeout validation queue.` |
 
 ### Current Queue Activation
 
-- `queue.script-editor-event-task-chain-runtime-convergence`
+- `queue.script-editor-task-chain-runtime-handoff-convergence`
 - Active task:
-  - `task.script-editor-event-task-chain-runtime-convergence.queue-closeout-and-handoff`
+  - `task.script-editor-task-chain-runtime-handoff-convergence.boundary-baseline-reconcile`
 - Activation basis:
-  - `queue.script-editor-dialogue-node-target-branching-convergence closed after verified node-target scene splitting and bounded choice target lowering.`
-  - `The target spec marks event effect chains, task stages, long-running task state, completion/failure conditions, rewards, and runtime progression handoff as required.`
-  - `Promotion review admitted the event/task-chain runtime convergence queue as the next required bounded continuation.`
-  - `The boundary baseline selected explicit editor nextEventId lowering into runtime EventDefinition.nextEventId as the first lawful implementation slice.`
+  - `queue.script-editor-event-task-chain-runtime-convergence closed after explicit editor nextEventId export/runtime chaining landed.`
+  - `The target spec marks task stages, long-running task state, completion/failure conditions, rewards, and runtime progression handoff as required.`
+  - `Closeout routed task-chain runtime handoff as the unique same-family continuation.`
+  - `Execution resumes from the task-chain runtime handoff boundary baseline task.`
 
 ### Version Boundary Record
 
 - `This version governs authoring/data-structure convergence after runtime-pack-unification closeout.`
 - `It must consume the closed runtime-pack export/import/startup truth as baseline evidence rather than reopening it as a compatibility patch surface.`
 - `It may supersede previously frozen script-editor structures only through explicit schema/migration/supersession records.`
-- `It has admitted queue.script-editor-event-task-chain-runtime-convergence after dialogue node-target branching closeout; execution resumes from the queue-closeout-and-handoff task after event-chain runtime implementation passed verification.`
+- `It has admitted queue.script-editor-task-chain-runtime-handoff-convergence after event-chain runtime convergence closeout; execution resumes from the task-chain boundary baseline task.`
 
 ### Queue Admission Startup Rules
 
@@ -268,3 +271,4 @@
 - `2026-07-15: queue.script-editor-dialogue-node-target-branching-convergence closed after verification with no same-family node-target residue; broader event/task-chain runtime progression was routed as cross-family residue to promotion review, with queue.script-editor-event-task-chain-runtime-convergence recommended next.`
 - `2026-07-15: admission review promoted queue.script-editor-event-task-chain-runtime-convergence as the single active queue because event-to-event runtime progression is the next bounded chain blocker after node-target dialogue branching. Boundary baseline selected explicit editor nextEventId lowering into runtime EventDefinition.nextEventId; the active task became event-chain-runtime-implementation.`
 - `2026-07-15: queue.script-editor-event-task-chain-runtime-convergence completed event-chain-runtime-implementation after editor-authored nextEventId began exporting to EventDefinition.nextEventId and scene completion began chaining into the next runtime event; the active task is now queue-closeout-and-handoff.`
+- `2026-07-15: queue.script-editor-event-task-chain-runtime-convergence closed with same-family residue after verification; editor-authored task start/progress/complete/fail still needs to enter the unified RuntimeResult.taskInputs seam, so queue.script-editor-task-chain-runtime-handoff-convergence was admitted as the active continuation with boundary-baseline-reconcile as the first task.`

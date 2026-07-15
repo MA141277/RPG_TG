@@ -6,7 +6,7 @@
 - active_blueprint: `blueprint.rpg-tg`
 - active_version: `target.script-editor-authoring-data-structure-unification`
 - has_active_queue: `true`
-- next_file: `docs/blueprints/queues/script-editor-event-task-chain-runtime-convergence-queue.md`
+- next_file: `docs/blueprints/queues/script-editor-task-chain-runtime-handoff-convergence-queue.md`
 - entry_action: `open-next-file`
 
 ## Human Context
@@ -29,15 +29,15 @@
 - Current Version Plan:
   - `docs/blueprints/plans/2026-07-15-script-editor-authoring-data-structure-unification-target-plan.md`
 - Current Active Queue:
-  - `docs/blueprints/queues/script-editor-event-task-chain-runtime-convergence-queue.md`
+  - `docs/blueprints/queues/script-editor-task-chain-runtime-handoff-convergence-queue.md`
 
 ### Live Entry Guardrails
 
 - `This file only states the current resume entry and downstream pointer set.`
 - `Admission history, queue closeout history, and review narrative must stay in the version plan, queue docs, or docs/change-log.md rather than living here as competing current-state prose.`
 - `The pointed version is now the open successor version for script-editor authoring/data-structure unification.`
-- `The latest governance action completed queue.script-editor-event-task-chain-runtime-convergence event-chain-runtime-implementation after editor-authored nextEventId began exporting and running as runtime EventDefinition.nextEventId chains.`
-- `Resume from the active queue document and its queue-closeout-and-handoff task.`
+- `The latest governance action closed queue.script-editor-event-task-chain-runtime-convergence with same-family task-chain runtime handoff residue after editor-authored nextEventId began exporting and running as runtime EventDefinition.nextEventId chains.`
+- `Resume from the active queue document and its boundary-baseline-reconcile task.`
 
 ### Historical References
 

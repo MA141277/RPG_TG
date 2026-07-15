@@ -7,23 +7,23 @@
 - blueprint_version: `2026.07`
 - governance_last_synced_at: `2026-07-15`
 - governance_sync_source: `docs/blueprints/blueprint.md`
-- queue_status: `active`
+- queue_status: `done`
 - queue_class: `required`
-- active_task: `task.script-editor-event-task-chain-runtime-convergence.queue-closeout-and-handoff`
+- active_task: `none`
 - next_task: `none`
-- closeout_status: `pending`
-- execution_closeout_status: `partial`
+- closeout_status: `done`
+- execution_closeout_status: `done`
 - topic_closure_status: `open-residue`
-- closure_basis: `none`
-- residue_remaining: `unknown`
-- residue_family: `none`
-- residue_routing_status: `none`
-- next_family_candidate: `none`
-- auto_continue_eligible: `false`
-- next_effect: `execute-active-task`
-- sync_status: `pending`
+- closure_basis: `The bounded event-chain runtime slice landed and passed verification: explicit editor nextEventId now lowers into runtime EventDefinition.nextEventId, missing next event targets fail closed, runtime import preserves nextEventId, and scene completion starts chained runtime events. Task-chain runtime handoff remains same-family residue because editor-authored task start/progress/complete/fail still does not lower into unified taskInputs from the event/scene chain.`
+- residue_remaining: `yes`
+- residue_family: `same-family`
+- residue_routing_status: `auto-routable`
+- next_family_candidate: `queue.script-editor-task-chain-runtime-handoff-convergence`
+- auto_continue_eligible: `true`
+- next_effect: `promote-next-queue`
+- sync_status: `success`
 - sync_scope: `branch-push`
-- sync_summary: `Commit 408d0f pushed to origin/mod-first-dev after queue admission and baseline selection; implementation sync is pending.`
+- sync_summary: `Commit 301da6d pushed to origin/mod-first-dev after event-chain-runtime-implementation landed and advanced this queue to closeout.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
@@ -57,9 +57,9 @@
 
 - queue_goal: `Create the next runtime-owned event/task-chain progression path beyond dialogue node targets without widening into full narrative/task rewrites.`
 - task_count: `3`
-- completed_task_count: `2`
-- remaining_task_count: `1`
-- active_task_summary: `Verify, classify residue, and return control to version review after event-chain runtime implementation landed.`
+- completed_task_count: `3`
+- remaining_task_count: `0`
+- active_task_summary: `Queue closed with same-family task-chain runtime handoff residue routed to queue.script-editor-task-chain-runtime-handoff-convergence.`
 - task_briefs:
   - `task.script-editor-event-task-chain-runtime-convergence.boundary-baseline-reconcile: inventory event/task-chain runtime seams and select the smallest lawful implementation slice.`
   - `task.script-editor-event-task-chain-runtime-convergence.event-chain-runtime-implementation: implement the selected event-chain runtime slice with tests.`
@@ -99,7 +99,7 @@
 | --- | --- | --- | --- | --- |
 | `task.script-editor-event-task-chain-runtime-convergence.boundary-baseline-reconcile` | `done` | `Inventoried event/task-chain runtime seams and selected explicit editor nextEventId lowering as the smallest runtime-owned chain slice.` | `none` | `No production code changed during baseline.` |
 | `task.script-editor-event-task-chain-runtime-convergence.event-chain-runtime-implementation` | `done` | `Implemented the selected event-chain runtime slice with tests.` | `task.script-editor-event-task-chain-runtime-convergence.boundary-baseline-reconcile` | `Editor nextEventId now exports to runtime EventDefinition.nextEventId; missing targets fail closed; scene completion follows next runtime events.` |
-| `task.script-editor-event-task-chain-runtime-convergence.queue-closeout-and-handoff` | `active` | `Verify, classify residue, and return control to version review.` | `task.script-editor-event-task-chain-runtime-convergence.event-chain-runtime-implementation` | `Do not infer version closeout from this queue.` |
+| `task.script-editor-event-task-chain-runtime-convergence.queue-closeout-and-handoff` | `done` | `Verified, classified residue, and routed the unique same-family continuation.` | `task.script-editor-event-task-chain-runtime-convergence.event-chain-runtime-implementation` | `Closed on 2026-07-15 with task-chain runtime handoff residue routed to queue.script-editor-task-chain-runtime-handoff-convergence.` |
 
 ### Task Definitions
 
@@ -234,7 +234,7 @@
 ##### Control Block
 
 - task_id: `task.script-editor-event-task-chain-runtime-convergence.queue-closeout-and-handoff`
-- state: `active`
+- state: `done`
 - task_kind: `execution`
 - scope:
   - `docs/blueprints/project-progress.md`
@@ -264,8 +264,12 @@
 - task_brief:
   - `Close or route the event/task-chain runtime convergence queue after verified implementation.`
 - task_outcome_summary:
-  - `Active after event-chain-runtime-implementation verification passed.`
+  - `Done. Event-chain runtime implementation is verified and closed with same-family task-chain runtime handoff residue routed to queue.script-editor-task-chain-runtime-handoff-convergence.`
 - Purpose:
   - `Return control to version review only after the bounded event-chain runtime slice is either real, verified, or honestly routed.`
 - Failure mode:
   - `Closing without runtime progression evidence would leave event-to-event chains unsupported or compatibility-only.`
+
+##### Progress Log
+
+- `2026-07-15`: `Closeout classified residue as same-family: event-to-event runtime chains now run, but editor-authored task start/progress/complete/fail still does not lower from event/scene chain data into the unified RuntimeResult.taskInputs settlement seam. Routed the unique continuation to queue.script-editor-task-chain-runtime-handoff-convergence; version closeout was not inferred.`
