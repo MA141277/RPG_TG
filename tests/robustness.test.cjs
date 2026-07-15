@@ -3826,6 +3826,64 @@ test("primary house actor roster helper deduplicates actors without losing the f
   );
 });
 
+test("primary house actor appears first in temple daily roster during greeting", () => {
+  const state = createInitialState({
+    cards: prototypeCards,
+    characters: prototypeCharacters,
+    houses: prototypeHouses,
+    cityEntries: prototypeCityEntries,
+    map: prototypeMap,
+  });
+  const entered = templeHouseHouseModule.enter({
+    gameState: state,
+    characterDefinitions: prototypeCharacters,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+  });
+  const viewModel = templeHouseHouseModule.selectViewModel({
+    gameState: entered.gameState,
+    characterDefinitions: entered.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: entered.sessionState,
+  });
+
+  assert.equal(viewModel.dialogue?.characterId, templeHouse.defaultCharacterId);
+  assert.equal(viewModel.standbyRoster[0]?.characterId, templeHouse.defaultCharacterId);
+  assert.ok(
+    viewModel.standbyRoster.some(
+      (actor) => actor.characterId === templeHouse.defaultCharacterId
+    )
+  );
+});
+
+test("primary house actor appears first in tavern roster during greeting", () => {
+  const state = createInitialState({
+    cards: prototypeCards,
+    characters: prototypeCharacters,
+    houses: prototypeHouses,
+    cityEntries: prototypeCityEntries,
+    map: prototypeMap,
+  });
+  const entered = tavernHouseModule.enter({
+    gameState: state,
+    characterDefinitions: prototypeCharacters,
+    houseDefinition: tavernHouse,
+    playerCharacterId,
+  });
+  const viewModel = tavernHouseModule.selectViewModel({
+    gameState: entered.gameState,
+    characterDefinitions: entered.characterDefinitions,
+    houseDefinition: tavernHouse,
+    playerCharacterId,
+    sessionState: entered.sessionState,
+  });
+
+  assert.equal(viewModel.dialogue?.characterId, tavernHouse.defaultCharacterId);
+  assert.equal(viewModel.standbyRoster[0]?.characterId, tavernHouse.defaultCharacterId);
+  assert.ok(viewModel.standbyRoster[0]?.actionId);
+});
+
 test("house enter and leave keep session wiring and interval side effects consistent", () => {
   const state = createBaseState();
   const enterResult = grainShopHouseModule.enter({

@@ -68,6 +68,7 @@ import {
   formatHouseActivityCostLine,
   getHouseWorkDurationDays,
 } from "../../house/house-activity-costs";
+import { orderHouseStandbyRoster } from "../../house/house-primary-actor-roster";
 import { HOUSE_MAP_AUTO_ADVANCE_DAY_INTERVAL_MS } from "../../house/map-auto-advance";
 import {
   createHousePlayableRuntimeState,
@@ -4420,6 +4421,55 @@ export const templeHouseHouseModule: HouseModuleDefinition<"temple-house"> = {
       sessionState.mode === "meeting"
         ? meetingParticipantIds
         : input.houseDefinition.characterIds;
+    const standbyActors = standbyCharacterIds.map((characterId) => {
+      const characterDefinition = input.characterDefinitions.find(
+        (candidateCharacter) => candidateCharacter.id === characterId
+      );
+      assertExists(
+        characterDefinition,
+        `Temple standby character not found for id "${characterId}".`
+      );
+      return {
+        characterId: characterDefinition.id,
+        name: characterDefinition.name,
+        ...(sessionState.mode === "daily" &&
+        characterDefinition.id === abbotCharacter.id
+          ? { actionId: "open-abbot-dialogue" }
+          : {}),
+        ...(sessionState.mode === "meeting" &&
+        characterDefinition.id === input.playerCharacterId
+          ? { isSelected: true }
+          : sessionState.mode === "meeting"
+            ? { isSelected: false }
+            : characterDefinition.id === dialogueSpeaker.id
+              ? { isSelected: true }
+              : {}),
+        ...(characterDefinition.id === abbotCharacter.id
+          ? {
+              avatarArtClassName: "c-temple-house-avatar-art--abbot",
+              portraitArtClassName: "c-temple-house-portrait-art--abbot",
+            }
+          : characterDefinition.id === input.playerCharacterId
+            ? {
+                avatarArtClassName: "c-temple-house-avatar-art--player",
+                portraitArtClassName: "c-temple-house-portrait-art--player",
+              }
+            : {
+                avatarArtClassName: "c-temple-house-avatar-art--senior-monk",
+                portraitArtClassName: "c-temple-house-portrait-art--senior-monk",
+              }),
+        ...(characterDefinition.title == null
+          ? {}
+          : { title: characterDefinition.title }),
+      };
+    });
+    const orderedStandbyActors =
+      sessionState.mode === "meeting"
+        ? standbyActors
+        : orderHouseStandbyRoster({
+            primaryCharacterId: input.houseDefinition.defaultCharacterId,
+            actors: standbyActors,
+          });
 
     return {
       moduleId: "temple-house",
@@ -4434,47 +4484,7 @@ export const templeHouseHouseModule: HouseModuleDefinition<"temple-house"> = {
             input.textEntriesById,
             "runtime.zhu_yuanzhang.temple.scene.daily.subtitle"
           ),
-      standbyRoster: standbyCharacterIds.map((characterId) => {
-          const characterDefinition = input.characterDefinitions.find(
-            (candidateCharacter) => candidateCharacter.id === characterId
-          );
-          assertExists(
-            characterDefinition,
-            `Temple standby character not found for id "${characterId}".`
-          );
-          return {
-            characterId: characterDefinition.id,
-            name: characterDefinition.name,
-            ...(sessionState.mode === "daily" &&
-            characterDefinition.id === abbotCharacter.id &&
-            sessionState.dialoguePhase === "idle"
-              ? { actionId: "open-abbot-dialogue" }
-              : {}),
-            ...(sessionState.mode === "meeting" &&
-            characterDefinition.id === input.playerCharacterId
-              ? { isSelected: true }
-              : sessionState.mode === "meeting"
-                ? { isSelected: false }
-                : {}),
-            ...(characterDefinition.id === abbotCharacter.id
-              ? {
-                  avatarArtClassName: "c-temple-house-avatar-art--abbot",
-                  portraitArtClassName: "c-temple-house-portrait-art--abbot",
-                }
-              : characterDefinition.id === input.playerCharacterId
-                ? {
-                    avatarArtClassName: "c-temple-house-avatar-art--player",
-                    portraitArtClassName: "c-temple-house-portrait-art--player",
-                  }
-                : {
-                    avatarArtClassName: "c-temple-house-avatar-art--senior-monk",
-                    portraitArtClassName: "c-temple-house-portrait-art--senior-monk",
-                  }),
-            ...(characterDefinition.title == null
-              ? {}
-              : { title: characterDefinition.title }),
-          };
-        }),
+      standbyRoster: orderedStandbyActors,
       dialogue:
         sessionState.dialoguePhase === "idle"
           ? null
