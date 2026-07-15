@@ -21,9 +21,9 @@
 - next_family_candidate: `none`
 - auto_continue_eligible: `false`
 - next_effect: `execute-active-task`
-- sync_status: `pending`
+- sync_status: `success`
 - sync_scope: `branch-push`
-- sync_summary: `Queue admitted locally; repository sync is pending after baseline or terminal queue state.`
+- sync_summary: `Commit 0f2a560 pushed to origin/mod-first-dev after branching/event/task-chain queue admission.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
