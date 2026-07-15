@@ -21,9 +21,9 @@
 - next_family_candidate: `none`
 - auto_continue_eligible: `false`
 - next_effect: `none`
-- sync_status: `failed`
+- sync_status: `success`
 - sync_scope: `branch-push`
-- sync_summary: `The first runtime property mutation/status implementation slice is committed locally, but push to origin/mod-first-dev failed three times because GitHub port 443 could not be reached or reset the connection.`
+- sync_summary: `The first runtime property mutation/status implementation slice was pushed to origin/mod-first-dev after retrying the transient GitHub port 443 connection failure.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
