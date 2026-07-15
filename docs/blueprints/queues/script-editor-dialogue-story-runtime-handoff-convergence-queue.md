@@ -9,7 +9,7 @@
 - governance_sync_source: `docs/blueprints/blueprint.md`
 - queue_status: `active`
 - queue_class: `required`
-- active_task: `task.script-editor-dialogue-story-runtime-handoff-convergence.boundary-baseline-reconcile`
+- active_task: `task.script-editor-dialogue-story-runtime-handoff-convergence.runtime-handoff-implementation`
 - next_task: `none`
 - closeout_status: `in-progress`
 - execution_closeout_status: `partial`
@@ -56,9 +56,9 @@
 
 - queue_goal: `Determine and implement the smallest dialogue/story runtime handoff slice after the shared materializer seam exists, without widening into full branching/task-chain behavior.`
 - task_count: `3`
-- completed_task_count: `0`
-- remaining_task_count: `3`
-- active_task_summary: `Baseline must inspect existing scene/event runtime seams, startup/event destination handling, the new materializer, and current editor-authored narrative export behavior before selecting the first implementation slice.`
+- completed_task_count: `1`
+- remaining_task_count: `2`
+- active_task_summary: `Implement the selected event-to-dialogue-scene runtime handoff slice: editor-authored events that target materialized dialogue scenes must be covered through runtime event trigger and scene handoff seams without widening into branching/story-progress ownership.`
 - task_briefs:
   - `task.script-editor-dialogue-story-runtime-handoff-convergence.boundary-baseline-reconcile: inventory runtime handoff seams and select the smallest lawful dialogue/story runtime handoff implementation slice.`
   - `task.script-editor-dialogue-story-runtime-handoff-convergence.runtime-handoff-implementation: implement the selected runtime handoff slice with tests.`
@@ -95,8 +95,8 @@
 
 | Task ID | State | Summary | Depends On | Notes |
 | --- | --- | --- | --- | --- |
-| `task.script-editor-dialogue-story-runtime-handoff-convergence.boundary-baseline-reconcile` | `active` | `Inventory runtime handoff seams and select the smallest lawful dialogue/story runtime handoff slice.` | `none` | `Production code must not change before baseline records the selected slice.` |
-| `task.script-editor-dialogue-story-runtime-handoff-convergence.runtime-handoff-implementation` | `pending` | `Implement the selected dialogue/story runtime handoff slice with tests.` | `task.script-editor-dialogue-story-runtime-handoff-convergence.boundary-baseline-reconcile` | `Implementation scope is determined by baseline only.` |
+| `task.script-editor-dialogue-story-runtime-handoff-convergence.boundary-baseline-reconcile` | `done` | `Inventoried materializer, export, event runtime, scene runtime, and scene runner seams; selected the first event-to-dialogue-scene runtime handoff slice.` | `none` | `No production code changed during baseline.` |
+| `task.script-editor-dialogue-story-runtime-handoff-convergence.runtime-handoff-implementation` | `active` | `Implement the selected dialogue/story runtime handoff slice with tests.` | `task.script-editor-dialogue-story-runtime-handoff-convergence.boundary-baseline-reconcile` | `Selected slice is editor event -> dialogue destination -> materialized runtime scene -> runStoryTriggerRuntime/runSceneFromEvent handoff coverage.` |
 | `task.script-editor-dialogue-story-runtime-handoff-convergence.queue-closeout-and-handoff` | `pending` | `Verify, classify residue, and return control to version review.` | `task.script-editor-dialogue-story-runtime-handoff-convergence.runtime-handoff-implementation` | `Closeout must not infer version closeout.` |
 
 ### Task Definitions
@@ -106,7 +106,7 @@
 ##### Control Block
 
 - task_id: `task.script-editor-dialogue-story-runtime-handoff-convergence.boundary-baseline-reconcile`
-- state: `active`
+- state: `done`
 - task_kind: `execution`
 - scope:
   - `src/application/script-editor/dialogue-story-runtime-materializer.ts`
@@ -157,7 +157,7 @@
 - task_brief:
   - `Find the smallest honest dialogue/story runtime handoff boundary after the shared materializer seam exists.`
 - task_outcome_summary:
-  - `Active. Baseline must decide whether the first lawful slice is event-to-dialogue-scene runtime activation, story progress state ownership, or a prerequisite routing decision.`
+  - `Done. Baseline selected event-to-dialogue-scene runtime handoff coverage as the smallest lawful slice; story-progress state, choices, followUps, and story-node relation progression remain outside this first task.`
 - Purpose:
   - `Prevent editor-authored narrative structures from stopping at export materialization without a governed runtime handoff path.`
 - Failure mode:
@@ -166,25 +166,37 @@
 ##### Progress Log
 
 - `2026-07-15`: `Queue admitted from version promotion review after dialogue/story structure convergence closed and routed runtime handoff/progression residue back to version review.`
+- `2026-07-15`: `Baseline inventory found that materializeScriptEditorDialogueStoryRuntime emits runtime SceneDefinition actions/textEntries for minimal dialogue records, runtime-pack export lowers only editor events whose destination targets a dialogue into EventDefinition.entrySceneId, runStoryTriggerRuntime delegates trigger selection to runStoryEventRuntime and then starts scenes through runSceneFromEvent, and scene-runner pauses/advances runtime narration/dialogue/choice actions through sceneDefinitionsById and textEntries.`
+- `2026-07-15`: `Mismatch recorded: exported editor narrative can produce scenes and dialogue-targeted events, but there is no focused acceptance coverage proving that an editor-authored event targeting a materialized dialogue scene actually enters the runtime scene handoff path; richer story-progress/dialogue-finished timings, choices, followUps, story-node relations, and import reconstruction remain unsupported or later-slice behavior.`
+- `2026-07-15`: `Selected implementation slice: add test-first coverage for editor event -> dialogue destination -> materialized scene -> runStoryTriggerRuntime/runSceneFromEvent handoff, including fail-closed diagnostics for unsupported trigger/progression shapes if fresh implementation evidence requires it; do not change scenario launch policy, playable/minigame bindings, broad branching task chains, or unrelated event/effect activation.`
 
 #### `task.script-editor-dialogue-story-runtime-handoff-convergence.runtime-handoff-implementation`
 
 ##### Control Block
 
 - task_id: `task.script-editor-dialogue-story-runtime-handoff-convergence.runtime-handoff-implementation`
-- state: `pending`
+- state: `active`
 - task_kind: `execution`
 - scope:
-  - `Files identified by boundary-baseline-reconcile.`
+  - `src/application/script-editor/dialogue-story-runtime-materializer.ts`
+  - `src/application/script-editor/runtime-pack-export.ts`
+  - `src/core/runtime/scene-runtime.ts`
+  - `src/core/runtime/event-runtime.ts`
+  - `src/application/scene/scene-runner.ts`
+  - `tests/robustness.test.cjs`
 - must_inspect:
-  - `Boundary baseline evidence from the active task.`
+  - `Boundary baseline evidence from task.script-editor-dialogue-story-runtime-handoff-convergence.boundary-baseline-reconcile.`
+  - `src/application/script-editor/runtime-pack-export.ts event destination lowering.`
+  - `src/core/runtime/scene-runtime.ts runStoryTriggerRuntime/runSceneFromEvent.`
+  - `tests/robustness.test.cjs existing script-editor event export and runtime trigger tests.`
 - must_not_change:
   - `scenario launch policy`
   - `playable/minigame bindings`
   - `unbounded branching task-chain behavior`
 - done_when:
-  - `The selected dialogue/story runtime handoff slice is implemented.`
-  - `Tests cover the selected runtime handoff behavior and fail-closed diagnostics for unsupported references or progression shapes.`
+  - `The selected event-to-dialogue-scene runtime handoff slice is implemented or proven already implemented by a failing-first test that passes only after the governed seam is exercised.`
+  - `Tests cover editor-authored event export, materialized dialogue scene presence, runtime trigger selection, runStoryTriggerRuntime scene activation, and scene-runner dialogue pause over exported text entries.`
+  - `Unsupported richer progression shapes remain fail-closed or explicitly routed as residue rather than silently treated as supported.`
 - verify_with:
   - `npm test`
   - `npm run typecheck`
@@ -200,7 +212,7 @@
 - task_brief:
   - `Implement the selected dialogue/story runtime handoff slice.`
 - task_outcome_summary:
-  - `Pending baseline.`
+  - `Active. Implement the baseline-selected event-to-dialogue-scene runtime handoff coverage without widening into story-progress, branching, or scenario launch policy.`
 - Purpose:
   - `Make covered editor-authored narrative structures progress through runtime-owned seams.`
 - Failure mode:
