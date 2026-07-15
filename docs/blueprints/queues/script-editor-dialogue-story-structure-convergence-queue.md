@@ -7,20 +7,20 @@
 - blueprint_version: `2026.07`
 - governance_last_synced_at: `2026-07-15`
 - governance_sync_source: `docs/blueprints/blueprint.md`
-- queue_status: `active`
+- queue_status: `done`
 - queue_class: `required`
-- active_task: `task.script-editor-dialogue-story-structure-convergence.queue-closeout-and-handoff`
+- active_task: `none`
 - next_task: `none`
-- closeout_status: `in-progress`
-- execution_closeout_status: `partial`
+- closeout_status: `done`
+- execution_closeout_status: `done`
 - topic_closure_status: `open-residue`
-- closure_basis: `none`
-- residue_remaining: `no`
-- residue_family: `none`
-- residue_routing_status: `none`
+- closure_basis: `The bounded dialogue/story structure slice landed with verification: editor narrative records now materialize through a shared runtime seam that produces SceneDefinition[] and textEntries maps, and runtime-pack export consumes that seam rather than owning private lowering logic. Richer branching choices, dialogue followUps, story-node relation lowering, import reconstruction from runtime scenes, and full runtime handoff/progression remain outside this slice and are routed back to version review.`
+- residue_remaining: `yes`
+- residue_family: `cross-family`
+- residue_routing_status: `needs-version-review`
 - next_family_candidate: `none`
 - auto_continue_eligible: `false`
-- next_effect: `execute-active-task`
+- next_effect: `return-to-version-review`
 - sync_status: `pending`
 - sync_scope: `branch-push`
 - sync_summary: `Queue admitted locally; repository sync is pending after baseline or terminal queue state.`
@@ -56,9 +56,9 @@
 
 - queue_goal: `Determine and implement the smallest dialogue/story structure convergence slice that turns editor-authored dialogue/story records into validated runtime-consumable narrative data without widening into full progression handoff.`
 - task_count: `3`
-- completed_task_count: `2`
-- remaining_task_count: `1`
-- active_task_summary: `Implementation landed the shared dialogue/story runtime materializer seam with tests; closeout must classify richer branching/progression/import reconstruction residue.`
+- completed_task_count: `3`
+- remaining_task_count: `0`
+- active_task_summary: `Queue closed after the shared materializer seam landed; runtime handoff/progression, branching/followUps, and import reconstruction residue returned to version review.`
 - task_briefs:
   - `task.script-editor-dialogue-story-structure-convergence.boundary-baseline-reconcile: inventory dialogue/story authoring and runtime consumption seams, decide the smallest lawful structure slice, and record test-first implementation boundaries.`
   - `task.script-editor-dialogue-story-structure-convergence.structure-contract-implementation: implement the selected dialogue/story structure convergence slice with tests.`
@@ -97,7 +97,7 @@
 | --- | --- | --- | --- | --- |
 | `task.script-editor-dialogue-story-structure-convergence.boundary-baseline-reconcile` | `done` | `Inventoried dialogue/story authoring, export lowering, import behavior, and runtime scene/text-entry consumption; selected a shared materializer seam as the smallest implementation slice.` | `none` | `Production code was not changed during baseline.` |
 | `task.script-editor-dialogue-story-structure-convergence.structure-contract-implementation` | `done` | `Implemented the shared dialogue/story runtime materializer seam and rewired exporter consumption.` | `task.script-editor-dialogue-story-structure-convergence.boundary-baseline-reconcile` | `Landed with TDD coverage and verification.` |
-| `task.script-editor-dialogue-story-structure-convergence.queue-closeout-and-handoff` | `active` | `Verify, classify residue, and return control to version review.` | `task.script-editor-dialogue-story-structure-convergence.structure-contract-implementation` | `Closeout is active.` |
+| `task.script-editor-dialogue-story-structure-convergence.queue-closeout-and-handoff` | `done` | `Verified the materializer slice, classified remaining runtime handoff/progression and richer narrative behavior as cross-family residue, and returned control to version review.` | `task.script-editor-dialogue-story-structure-convergence.structure-contract-implementation` | `Closeout complete; repository sync remains tracked by sync_status only.` |
 
 ### Task Definitions
 
@@ -232,7 +232,7 @@
 ##### Control Block
 
 - task_id: `task.script-editor-dialogue-story-structure-convergence.queue-closeout-and-handoff`
-- state: `active`
+- state: `done`
 - task_kind: `execution`
 - scope:
   - `docs/blueprints/project-progress.md`
@@ -262,11 +262,16 @@
 - task_brief:
   - `Close or route the dialogue/story structure convergence queue after verified implementation.`
 - task_outcome_summary:
-  - `Active. Implementation is verified; closeout must classify remaining branching, story progression, import reconstruction, and runtime handoff residue.`
+  - `Done. Implementation verification passed; richer branching choices, dialogue followUps, story-node relation lowering, import reconstruction from runtime scenes, and full dialogue/story runtime handoff/progression were classified as cross-family residue and returned to version review, with queue.script-editor-dialogue-story-runtime-handoff-convergence recommended next.`
 - Purpose:
   - `Keep dialogue/story structure convergence explicit before runtime handoff or branching/task-chain queues continue.`
 - Failure mode:
   - `Closing without structure evidence would leave narrative runtime behavior dependent on export-only lowering or legacy scenes.`
+
+##### Progress Log
+
+- `2026-07-15`: `Activated after structure-contract-implementation passed verification.`
+- `2026-07-15`: `Closeout recorded that the bounded materializer seam landed and verified, while full runtime handoff/progression, branching choices, followUps, story-node relation lowering, and runtime-scene import reconstruction remain outside this queue and must be routed by version review.`
 
 ### Historical Handoff Note
 

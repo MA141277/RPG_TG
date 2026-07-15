@@ -17,10 +17,12 @@
 - resolver 当前以 `CityEntryDefinition.id` 作为 placement id，连接现有 `cityEntries`、`houses`、`cityNpcPools` 和 `houseAccessRefusalRules`，避免消费者继续分散手工拼接这些 runtime family。
 - [src/application/script-editor/runtime-pack-export.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/runtime-pack-export.ts) 现在复用 dialogue/story runtime materializer 生成 scenes/text-entries，继续对 choice、followUps、story-node relations、缺失 text 和重复 id fail closed。
 - 关闭 `queue.script-editor-city-building-placement-resolver-convergence`，将持久 placement schema migration、override layering、dialogue inheritance 和 broader consumer migration 分类为 cross-family residue，并把 version 返回 promotion review，推荐下一步筛选 `queue.script-editor-dialogue-story-structure-convergence`。
+- 关闭 `queue.script-editor-dialogue-story-structure-convergence`，将 full runtime handoff/progression、branching choices、followUps、story-node relation lowering 和 runtime-scene import reconstruction 分类为 cross-family residue，并把 version 返回 promotion review，推荐下一步筛选 `queue.script-editor-dialogue-story-runtime-handoff-convergence`。
 
 ### Impact
 - 城市/建筑运行期视图现在有一个可复用的 placement resolver 基线；缺失 city entry 或 target house 时会 fail closed。
 - dialogue inheritance 和更完整的 placement schema 仍是后续队列治理项，不被隐藏在本次 bounded resolver slice 中。
+- 当前最小 narrative export 能继续通过共享 materializer 输出 runtime scenes/textEntries；完整剧情推进、分支和导入重建仍需后续队列处理。
 
 ## 2026-07-15 Script Editor Condition Runtime Evaluation Convergence
 
