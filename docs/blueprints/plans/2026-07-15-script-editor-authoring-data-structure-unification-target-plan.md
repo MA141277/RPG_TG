@@ -5,12 +5,12 @@
 - document_role: `version-governor`
 - version_id: `target.script-editor-authoring-data-structure-unification`
 - version_status: `open`
-- active_phase: `phase.active-execution`
-- active_queue: `queue.script-editor-condition-runtime-evaluation-convergence`
-- decision_state: `active-execution`
-- next_decision: `queue-closeout-or-return-to-version-review`
-- next_action: `resume-active-queue`
-- resume_gate: `active-queue`
+- active_phase: `phase.promotion-review`
+- active_queue: `none`
+- decision_state: `promotion-review`
+- next_decision: `same-version-admission-or-version-closeout`
+- next_action: `return-to-promotion-review`
+- resume_gate: `open-promotion-review`
 - promotion_review_result: `none`
 - review_subject_id: `none`
 - review_subject_classification: `none`
@@ -22,12 +22,12 @@
 - intake_summary: `none`
 - intake_result: `none`
 - intake_feedback_mode: `none`
-- closure_review_subject: `none`
-- closure_review_status: `none`
-- residue_candidate_id: `none`
-- residue_candidate_family: `none`
-- routing_basis: `none`
-- next_lawful_queue_recommendation: `none`
+- closure_review_subject: `queue.script-editor-condition-runtime-evaluation-convergence`
+- closure_review_status: `routed`
+- residue_candidate_id: `item.script-editor-city-building-entry-and-npc-authoring-priority`
+- residue_candidate_family: `cross-family`
+- routing_basis: `queue.script-editor-condition-runtime-evaluation-convergence closed after bounded editor event conditionGroups could export supported typed condition nodes into runtime EventConditionNode arrays and trigger selection could evaluate them. Broader city/building/story/scenario condition consumption remains family-specific residue; field and condition basics are now sufficient to review the priority city/building entry and NPC authoring candidate.`
+- next_lawful_queue_recommendation: `queue.script-editor-city-building-entry-and-npc-authoring-priority`
 - auto_admission_ready: `false`
 - blocked_by: []
 - candidate_queue_ids:
@@ -90,7 +90,7 @@
 | `item.script-editor-event-effect-activation-convergence` | `queue-candidate` | `queue.script-editor-event-effect-activation-convergence` | `admitted + queue closed with cross-family residue` | `only if fresh evidence proves the bounded task/shared-rule effect activation slice regressed` | `Closed after shared-rule export and task runtime settlement could apply explicit character numeric property mutation through CharacterStatus patches. Broader event/scene effect convergence was routed as cross-family residue to version promotion review.` |
 | `item.script-editor-event-structure-convergence` | `queue-candidate` | `queue.script-editor-event-structure-convergence` | `admitted + queue closed with cross-family prerequisite residue` | `only if fresh evidence proves the baseline prerequisite decision was wrong` | `Closed at baseline after proving runtime event structures and minimal dialogue-destination export already exist, but typed condition authoring must be frozen before expanding event condition lowering or non-dialogue destinations.` |
 | `item.script-editor-condition-authoring-contract-freeze` | `queue-candidate` | `queue.script-editor-condition-authoring-contract-freeze` | `admitted + queue closed with cross-family residue` | `only if fresh evidence proves typed condition authoring contract freeze regressed` | `Closed after freezing the editor-owned typed condition contract, adding condition type selection, preserving task shared-rule compatibility, and dropping legacy event free-text condition items.` |
-| `item.script-editor-condition-runtime-evaluation-convergence` | `queue-candidate` | `queue.script-editor-condition-runtime-evaluation-convergence` | `admitted + active` | `only if fresh evidence proves runtime evaluation convergence requires a narrower prerequisite` | `Admitted after condition authoring contract freeze routed runtime condition context, subjects, reference resolution, target-set evaluation, and diagnostics as the next typed-condition prerequisite.` |
+| `item.script-editor-condition-runtime-evaluation-convergence` | `queue-candidate` | `queue.script-editor-condition-runtime-evaluation-convergence` | `admitted + queue closed with cross-family residue` | `only if fresh evidence proves the bounded event condition runtime evaluation/export slice regressed` | `Closed after supported event condition groups export into runtime EventConditionNode arrays and trigger selection evaluates the exported conditions; broader city/building/story/scenario condition consumption was routed as cross-family residue.` |
 | `item.script-editor-city-building-entry-and-npc-authoring-priority` | `queue-candidate` | `queue.script-editor-city-building-entry-and-npc-authoring-priority` | `candidate-recorded` | `when field/condition basics are sufficient for building/city entry and NPC assignment authoring` | `Covers priority authoring additions recorded in the source draft.` |
 | `item.script-editor-scenario-launch-policy-authoring` | `queue-candidate` | `queue.script-editor-scenario-launch-policy-authoring` | `candidate-recorded` | `when startup policy authoring is the smallest blocker to editor-exported packs launching without manual JSON patching` | `Owns character selection vs fixed startup, initial map/city/building/view, and entry event timing authoring.` |
 | `item.script-editor-playable-minigame-binding-convergence` | `queue-candidate` | `queue.script-editor-playable-minigame-binding-convergence` | `candidate-recorded` | `only after playable governance is loaded and the queue is admitted` | `Requires playable governance before shared playable runtime or house-hosted playable integration changes.` |
@@ -110,13 +110,13 @@
 | `queue.script-editor-character-authoring-surface-completion` | `done` | `Already completed; do not reopen except by explicit governance record.` | `Closed after mapping-driven base/profile/stat/skill controls, reference selectors, custom key editing, verification, and repository sync landed.` |
 | `queue.script-editor-runtime-property-mutation-and-status-convergence` | `done` | `Already completed; do not reopen except by explicit governance record.` | `Closed its bounded generic character property mutation/status and temple donation slice with cross-family event/effect residue routed to queue.script-editor-event-effect-activation-convergence.` |
 | `queue.script-editor-schema-reference-and-migration-freeze` | `candidate` | `Before retiring legacy structures or when multiple queues need one replacement reference.` | `Owns formal schema reference, legacy supersession, migration adapters, and schema versions.` |
-| `queue.script-editor-city-building-entry-and-npc-authoring-priority` | `candidate` | `When field/condition basics can support the priority city/building authoring additions.` | `Covers building dialogue binding, entry conditions, refusal text, city building selection, and NPC assignment.` |
+| `queue.script-editor-city-building-entry-and-npc-authoring-priority` | `candidate-review` | `Now that field mapping and typed condition basics have landed, review as the next priority city/building authoring candidate.` | `Covers building dialogue binding, entry conditions, refusal text, city building selection, and NPC assignment.` |
 | `queue.script-editor-city-building-structure-convergence` | `candidate` | `After priority authoring gaps are mapped or if runtime city/building structure is the smaller blocker.` | `Unifies city/building authoring and runtime structures.` |
 | `queue.script-editor-city-building-placement-resolver-convergence` | `candidate` | `Before runtime views manually stitch city, building, placement, NPC, dialogue, and condition data.` | `Owns city-local placements and centralized resolver seams.` |
 | `queue.script-editor-dialogue-story-structure-convergence` | `candidate` | `When narrative records can move from authoring/export lowering into runtime-consumable structures.` | `Owns dialogue/story record shape and references.` |
 | `queue.script-editor-dialogue-story-runtime-handoff-convergence` | `candidate` | `After structure convergence exposes runtime handoff residue.` | `Owns dialogue/story progression runtime handoff.` |
 | `queue.script-editor-condition-authoring-contract-freeze` | `done` | `Already completed; do not reopen except by explicit governance record.` | `Closed after the typed authoring contract slice landed and routed runtime evaluation residue back to promotion review.` |
-| `queue.script-editor-condition-runtime-evaluation-convergence` | `active` | `After boundary-baseline-reconcile selects the smallest lawful runtime evaluation slice, continue through implementation and closeout.` | `Admitted after the authoring contract exists and runtime evaluation remains the blocker; owns condition context, subjects, reference resolution, target-set evaluation, and diagnostics.` |
+| `queue.script-editor-condition-runtime-evaluation-convergence` | `done` | `Already completed; do not reopen except by explicit governance record.` | `Closed after bounded event condition export/evaluation convergence landed with verification and routed broader condition consumption residue back to promotion review.` |
 | `queue.script-editor-event-structure-convergence` | `done` | `Already completed; do not reopen except by explicit governance record.` | `Closed at baseline with prerequisite condition authoring contract freeze residue returned to promotion review.` |
 | `queue.script-editor-event-effect-activation-convergence` | `done` | `Already completed; do not reopen except by explicit governance record.` | `Closed its bounded task/shared-rule typed character property mutation effect slice with cross-family event/scene effect residue returned to promotion review.` |
 | `queue.script-editor-scenario-launch-policy-authoring` | `candidate` | `When launch policy authoring is the smallest blocker to runtime startup without manual JSON patching.` | `Owns shell selection vs fixed startup and initial map/city/building/view selection.` |
@@ -128,18 +128,16 @@
 
 ### Current Queue Activation
 
-- `queue.script-editor-condition-runtime-evaluation-convergence`
+- `none`
 - Active task:
-  - `task.script-editor-condition-runtime-evaluation-convergence.boundary-baseline-reconcile`
-- Activation basis:
-  - `queue.script-editor-condition-authoring-contract-freeze closed after freezing the editor-owned typed condition authoring contract, dropping legacy event free-text condition items, and preserving task shared-rule condition compatibility. Runtime condition context/evaluation convergence remains the next typed-condition prerequisite before event/story/city/building runtime-scale condition use expands.`
+  - `none`
 
 ### Version Boundary Record
 
 - `This version governs authoring/data-structure convergence after runtime-pack-unification closeout.`
 - `It must consume the closed runtime-pack export/import/startup truth as baseline evidence rather than reopening it as a compatibility patch surface.`
 - `It may supersede previously frozen script-editor structures only through explicit schema/migration/supersession records.`
-- `It is actively executing queue.script-editor-condition-runtime-evaluation-convergence after queue.script-editor-condition-authoring-contract-freeze routed runtime condition evaluation convergence as the next typed-condition prerequisite.`
+- `It has returned to promotion review after queue.script-editor-condition-runtime-evaluation-convergence closed with broader city/building/story/scenario condition consumption routed as cross-family residue.`
 
 ### Queue Admission Startup Rules
 
@@ -224,4 +222,6 @@
 - `2026-07-15: queue.script-editor-event-structure-convergence closed at baseline without production changes after proving typed condition authoring must be frozen before event condition lowering or non-dialogue destinations expand; queue.script-editor-condition-authoring-contract-freeze is now the recommended promotion-review subject.`
 - `2026-07-15: admission review promoted queue.script-editor-condition-authoring-contract-freeze as the single active queue because typed condition authoring is the prerequisite for expanding event/story/city/building condition use beyond stringly or empty-condition records; the first live task is boundary-baseline-reconcile.`
 - `2026-07-15: queue.script-editor-condition-authoring-contract-freeze closed after freezing the editor-owned typed condition authoring contract, adding condition type selection, preserving task shared-rule compatibility, and rejecting legacy event free-text condition items; queue.script-editor-condition-runtime-evaluation-convergence is now the recommended promotion-review subject.`
-- `2026-07-15: admission review promoted queue.script-editor-condition-runtime-evaluation-convergence as the single active queue because runtime condition context/evaluation convergence is the next prerequisite before event/story/city/building runtime-scale condition use expands; the first live task is boundary-baseline-reconcile.`
+- `2026-07-15: admission review promoted queue.script-editor-condition-runtime-evaluation-convergence as the single active queue because runtime condition context/evaluation convergence is the next prerequisite before event/story/city/building runtime-scale condition use expands; the first live task was boundary-baseline-reconcile.`
+- `2026-07-15: queue.script-editor-condition-runtime-evaluation-convergence completed boundary-baseline-reconcile after selecting bounded event condition export lowering into runtime EventConditionNode arrays as the smallest lawful implementation slice; the active task is now runtime-evaluation-contract-implementation.`
+- `2026-07-15: queue.script-editor-condition-runtime-evaluation-convergence closed after supported event condition groups export into runtime EventConditionNode arrays, unsupported task-only condition nodes fail closed, and trigger selection evaluates the exported conditions; broader condition consumption was routed as cross-family residue with queue.script-editor-city-building-entry-and-npc-authoring-priority recommended next.`

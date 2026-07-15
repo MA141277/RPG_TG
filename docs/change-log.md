@@ -5,6 +5,18 @@
 `docs/change-log.md` 的正式定位是“历史记录 + 人类可读摘要”。
 它不是当前 Blueprint / legacy superpowers 治理的 live execution truth，不作为 resume entry、promotion gate、closeout gate 或固定同步门。
 
+## 2026-07-15 Script Editor Condition Runtime Evaluation Convergence
+
+### Changed
+- 更新 [src/application/script-editor/runtime-pack-export.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/runtime-pack-export.ts)，让剧本编辑器事件 `conditionGroups` 中支持的 typed condition nodes 导出为 runtime `EventConditionNode`，包括 group、flag、variable、event-fired、chapter、location、character-exists、character-available、character-in-city 和 mission-status。
+- 保持 task-only 条件节点（如 signal）在事件导出边界 fail closed，不会被静默当作通过条件。
+- 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，覆盖事件条件导出到 `events.json`、不支持条件诊断、以及导出的条件在 `selectTriggeredEvents` 中被 runtime evaluator 实际评估。
+- 关闭 `queue.script-editor-condition-runtime-evaluation-convergence`，将更宽的 city/building/story/scenario 条件消费分类为 cross-family residue，并把版本回收到 promotion review。
+
+### Impact
+- 剧本编辑器中为事件配置的基础 typed 条件不再在导出时被整体拒绝；导出的剧本包会携带可运行期评估的事件条件。
+- 不属于事件运行期条件的 task-only 节点仍然阻止导出，避免生成看似有效但运行时不会正确判断的剧本包。
+
 ## 2026-07-15 CharacterStatus Save And Runtime Continuation
 
 ### Changed

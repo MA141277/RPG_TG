@@ -7,23 +7,23 @@
 - blueprint_version: `2026.07`
 - governance_last_synced_at: `2026-07-15`
 - governance_sync_source: `docs/blueprints/blueprint.md`
-- queue_status: `active`
+- queue_status: `done`
 - queue_class: `required`
-- active_task: `task.script-editor-condition-runtime-evaluation-convergence.boundary-baseline-reconcile`
+- active_task: `none`
 - next_task: `none`
-- closeout_status: `not-started`
-- execution_closeout_status: `partial`
+- closeout_status: `done`
+- execution_closeout_status: `done`
 - topic_closure_status: `open-residue`
-- closure_basis: `none`
+- closure_basis: `The bounded runtime evaluation convergence slice landed with verification: editor event conditionGroups now export supported typed condition nodes into runtime EventConditionNode arrays, and task-only/invalid condition nodes fail closed with diagnostics. Broader city/building/story/scenario condition consumption remains cross-family residue for version promotion review.`
 - residue_remaining: `yes`
-- residue_family: `none`
-- residue_routing_status: `none`
+- residue_family: `cross-family`
+- residue_routing_status: `needs-version-review`
 - next_family_candidate: `none`
 - auto_continue_eligible: `false`
-- next_effect: `execute-active-task`
+- next_effect: `return-to-version-review`
 - sync_status: `pending`
 - sync_scope: `branch-push`
-- sync_summary: `Queue admitted locally; repository sync has not yet been attempted for this queue.`
+- sync_summary: `Local queue implementation and closeout are recorded; repository sync has not yet been attempted for the closeout commit.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
@@ -57,9 +57,9 @@
 
 - queue_goal: `Decide and implement the smallest typed condition runtime evaluation slice that can safely consume editor-authored condition nodes with explicit context, target/reference resolution, fail-closed diagnostics, and tests.`
 - task_count: `3`
-- completed_task_count: `0`
-- remaining_task_count: `3`
-- active_task_summary: `Baseline current editor condition nodes, export lowering, runtime condition evaluators, available context, and diagnostics before production changes.`
+- completed_task_count: `3`
+- remaining_task_count: `0`
+- active_task_summary: `Queue closed after the bounded event condition runtime export/evaluation slice verified; broader condition consumption residue returned to version review.`
 - task_briefs:
   - `task.script-editor-condition-runtime-evaluation-convergence.boundary-baseline-reconcile: inventory typed condition authoring output, runtime event/task condition evaluators, context availability, target/reference resolution, and select the smallest lawful runtime evaluation slice.`
   - `task.script-editor-condition-runtime-evaluation-convergence.runtime-evaluation-contract-implementation: implement the selected runtime evaluation contract slice with tests and fail-closed diagnostics.`
@@ -96,9 +96,9 @@
 
 | Task ID | State | Summary | Depends On | Notes |
 | --- | --- | --- | --- | --- |
-| `task.script-editor-condition-runtime-evaluation-convergence.boundary-baseline-reconcile` | `active` | `Inventory runtime condition evaluation boundaries and select the smallest lawful implementation slice.` | `none` | `Production code must not change before this baseline records its selected slice.` |
-| `task.script-editor-condition-runtime-evaluation-convergence.runtime-evaluation-contract-implementation` | `pending` | `Implement the selected runtime evaluation contract slice.` | `task.script-editor-condition-runtime-evaluation-convergence.boundary-baseline-reconcile` | `Must be test-first and fail closed for unsupported condition families.` |
-| `task.script-editor-condition-runtime-evaluation-convergence.queue-closeout-and-handoff` | `pending` | `Verify, classify residue, and return control to version review.` | `task.script-editor-condition-runtime-evaluation-convergence.runtime-evaluation-contract-implementation` | `Must not close the parent version without explicit version closeout confirmation.` |
+| `task.script-editor-condition-runtime-evaluation-convergence.boundary-baseline-reconcile` | `done` | `Inventoried runtime condition evaluation boundaries and selected event condition export lowering as the smallest lawful implementation slice.` | `none` | `Production code was not changed during baseline.` |
+| `task.script-editor-condition-runtime-evaluation-convergence.runtime-evaluation-contract-implementation` | `done` | `Implemented bounded event condition export lowering into runtime EventConditionNode arrays with fail-closed diagnostics.` | `task.script-editor-condition-runtime-evaluation-convergence.boundary-baseline-reconcile` | `Landed with test-first coverage and verification.` |
+| `task.script-editor-condition-runtime-evaluation-convergence.queue-closeout-and-handoff` | `done` | `Verified, classified residue, and returned control to version review.` | `task.script-editor-condition-runtime-evaluation-convergence.runtime-evaluation-contract-implementation` | `Closed without version closeout.` |
 
 ### Task Definitions
 
@@ -107,7 +107,7 @@
 ##### Control Block
 
 - task_id: `task.script-editor-condition-runtime-evaluation-convergence.boundary-baseline-reconcile`
-- state: `active`
+- state: `done`
 - task_kind: `execution`
 - scope:
   - `src/domain/script-editor-project.ts`
@@ -156,7 +156,7 @@
 - task_brief:
   - `Find the smallest honest runtime evaluation boundary for the newly frozen typed condition authoring contract.`
 - task_outcome_summary:
-  - `none`
+  - `Done. The editor-owned ScriptEditorConditionNode contract already overlaps the runtime EventConditionNode contract for group, flag, variable, event-fired, chapter, location, character-exists, character-available, character-in-city, and mission-status. Runtime evaluation already exists in src/application/events/condition-evaluator.ts and is called by trigger selection in src/application/events/trigger-evaluator.ts. The current blocker is script-editor runtime export: lowerEditorEventRecord rejects any non-empty editor event condition group and emits events with conditions: []. The smallest lawful slice is to add export lowering from editor event condition groups into runtime EventConditionNode arrays for the overlapping supported subset, keep task-only signal/task-status/elapsed-time and unknown types fail-closed with diagnostics, and cover passing/failing export behavior plus runtime evaluator selection behavior in tests.`
 - Purpose:
   - `Prevent later authoring/runtime queues from consuming typed condition records through undefined context, silent pass behavior, or hidden legacy compatibility parsing.`
 - Failure mode:
@@ -165,13 +165,17 @@
 ##### Progress Log
 
 - `2026-07-15`: `Queue admitted from promotion review after queue.script-editor-condition-authoring-contract-freeze routed runtime evaluation convergence as the next typed-condition prerequisite.`
+- `2026-07-15`: `Baseline inspected src/domain/script-editor-project.ts, src/domain/event.ts, src/application/events/condition-evaluator.ts, src/application/events/trigger-evaluator.ts, src/core/runtime/event-condition-evaluator.ts, src/application/script-editor/runtime-pack-export.ts, src/application/script-editor/shared-rule-compiler.ts, src/core/contracts/task-runtime.ts, and tests/robustness.test.cjs.`
+- `2026-07-15`: `Current inventory: editor condition nodes cover shared task-oriented nodes plus a bounded event-runtime subset; runtime EventConditionNode and evaluateEventConditionNode already support deterministic evaluation with explicit context; selectTriggeredEvents already evaluates eventDefinition.conditions; task shared-rule lowering remains a separate TaskCondition lowering path.`
+- `2026-07-15`: `Selected smallest lawful slice: add script-editor runtime export lowering for event conditionGroups into runtime EventConditionNode arrays for group/all/any/not, flag, variable, event-fired, chapter, location, character-exists, character-available, character-in-city, and mission-status. Continue to reject signal, task-status, elapsed-time, malformed group nodes, and unknown future condition families with unsupported-lowering/invalid-field diagnostics rather than silent pass behavior.`
+- `2026-07-15`: `Implementation plan for the next task: write failing robustness tests proving event condition groups export into events.json conditions, unsupported task-only condition nodes fail closed during runtime export, and trigger selection evaluates the exported conditions through the existing runtime evaluator; then update src/application/script-editor/runtime-pack-export.ts and tests only unless the test proves a narrower type helper is needed. Verification must include npm test, npm run typecheck, npm run lint:blueprints, npm run lint:plans, npm run blueprint:governance:check, and git diff --check.`
 
 #### `task.script-editor-condition-runtime-evaluation-convergence.runtime-evaluation-contract-implementation`
 
 ##### Control Block
 
 - task_id: `task.script-editor-condition-runtime-evaluation-convergence.runtime-evaluation-contract-implementation`
-- state: `pending`
+- state: `done`
 - task_kind: `execution`
 - scope:
   - `Files identified by boundary-baseline-reconcile.`
@@ -201,7 +205,7 @@
 - task_brief:
   - `Implement the typed condition runtime evaluation slice selected by baseline reconciliation.`
 - task_outcome_summary:
-  - `none`
+  - `Done. Runtime-pack export now lowers supported script-editor event conditionGroups into runtime EventConditionNode arrays for group/all/any/not, flag, variable, event-fired, chapter, location, character-exists, character-available, character-in-city, and mission-status. Unsupported task-only event condition nodes such as signal continue to fail closed with diagnostics. Tests prove events.json carries the lowered conditions and selectTriggeredEvents evaluates the exported condition nodes through the existing runtime evaluator.`
 - Purpose:
   - `Give editor-exported condition records deterministic runtime behavior for the bounded supported subset.`
 - Failure mode:
@@ -210,13 +214,16 @@
 ##### Progress Log
 
 - `2026-07-15`: `Queued behind boundary-baseline-reconcile.`
+- `2026-07-15`: `Activated after baseline selected bounded event condition export lowering as the smallest runtime evaluation convergence slice.`
+- `2026-07-15`: `Added failing tests for supported event condition export lowering, task-only condition fail-closed behavior, and trigger selection evaluation of exported conditions, then implemented the lowering in src/application/script-editor/runtime-pack-export.ts.`
+- `2026-07-15`: `Verification passed: targeted red/green tests, npm run typecheck, npm test, npm run build, npm run lint:blueprints, npm run lint:plans, npm run blueprint:governance:check, and git diff --check.`
 
 #### `task.script-editor-condition-runtime-evaluation-convergence.queue-closeout-and-handoff`
 
 ##### Control Block
 
 - task_id: `task.script-editor-condition-runtime-evaluation-convergence.queue-closeout-and-handoff`
-- state: `pending`
+- state: `done`
 - task_kind: `execution`
 - scope:
   - `docs/blueprints/project-progress.md`
@@ -246,7 +253,7 @@
 - task_brief:
   - `Close or route the condition runtime evaluation convergence queue after verified implementation.`
 - task_outcome_summary:
-  - `none`
+  - `Done. Queue closed with cross-family residue routed to version promotion review for broader city/building/story/scenario condition consumption.`
 - Purpose:
   - `Keep typed-condition runtime ownership explicit before event/story/city/building runtime-scale condition use expands.`
 - Failure mode:
@@ -255,12 +262,13 @@
 ##### Progress Log
 
 - `2026-07-15`: `Queued behind runtime-evaluation-contract-implementation.`
+- `2026-07-15`: `Closed after implementation verification. Same-family event condition export/evaluation coverage for the bounded supported subset is complete; broader condition consumers belong to later family-specific queues rather than this slice.`
 
 ### Historical Handoff Note
 
 - Task ID:
   - `task.script-editor-condition-runtime-evaluation-convergence.boundary-baseline-reconcile`
 - Recorded handoff at activation:
-  - `Queue is active and must start by reconciling typed condition authoring output with runtime evaluation context/reference ownership before code changes.`
+  - `Queue baseline selected bounded event condition export lowering as the first implementation slice.`
 - Recorded expected output:
-  - `A bounded typed condition runtime evaluation implementation path or an explicit prerequisite routing decision.`
+  - `Test-first implementation that exports supported editor event condition nodes into runtime EventConditionNode arrays and rejects unsupported task-only/unknown nodes with diagnostics.`

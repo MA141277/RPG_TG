@@ -9,6 +9,7 @@ import {
 import { materializeScriptEditorPersonRuntimeCharacter } from "./person-authoring";
 import type {
   ScriptEditorDialogueRecord,
+  ScriptEditorConditionNode,
   ScriptEditorEventRecord,
   ScriptEditorProjectDefinition,
   ScriptEditorStoryNodeRecord,
@@ -551,17 +552,12 @@ function lowerEditorEventToRuntimeEvent(
     return null;
   }
 
-  if (
-    (eventRecord.conditionGroups ?? []).some(
-      (conditionGroup) => conditionGroup.conditions.length > 0
-    )
-  ) {
-    diagnostics.push({
-      code: "unsupported-lowering",
-      fieldPath: `project.events[${eventIndex}].conditionGroups`,
-      message:
-        "Event condition group lowering is not supported in this minimal narrative export slice.",
-    });
+  const conditions = lowerEventConditionGroups(
+    eventRecord,
+    eventIndex,
+    diagnostics
+  );
+  if (conditions == null) {
     return null;
   }
 
@@ -583,9 +579,182 @@ function lowerEditorEventToRuntimeEvent(
       timing: triggerTiming,
       ...lowerEventTriggerScope(eventRecord, triggerTiming),
     },
-    conditions: [],
+    conditions,
     entrySceneId,
   };
+}
+
+function lowerEventConditionGroups(
+  eventRecord: ScriptEditorEventRecord,
+  eventIndex: number,
+  diagnostics: ScriptEditorRuntimeExportDiagnostic[]
+): EventDefinition["conditions"] | null {
+  const loweredConditions: EventDefinition["conditions"] = [];
+
+  for (const [groupIndex, conditionGroup] of (eventRecord.conditionGroups ?? []).entries()) {
+    if (conditionGroup.conditions.length === 0) {
+      continue;
+    }
+
+    const loweredGroup = lowerEventConditionNode(
+      {
+        type: "group",
+        operator: conditionGroup.operator,
+        conditions: conditionGroup.conditions,
+      },
+      `project.events[${eventIndex}].conditionGroups[${groupIndex}]`,
+      diagnostics
+    );
+    if (loweredGroup != null) {
+      loweredConditions.push(loweredGroup);
+    }
+  }
+
+  return diagnostics.length === 0 ? loweredConditions : null;
+}
+
+function lowerEventConditionNode(
+  conditionNode: ScriptEditorConditionNode,
+  fieldPath: string,
+  diagnostics: ScriptEditorRuntimeExportDiagnostic[]
+): EventDefinition["conditions"][number] | null {
+  if (conditionNode.type === "group") {
+    const loweredChildren = conditionNode.conditions.flatMap((childNode, index) => {
+      const loweredChild = lowerEventConditionNode(
+        childNode,
+        `${fieldPath}.conditions[${index}]`,
+        diagnostics
+      );
+      return loweredChild == null ? [] : [loweredChild];
+    });
+
+    if (loweredChildren.length !== conditionNode.conditions.length) {
+      return null;
+    }
+
+    return {
+      type: "group",
+      operator: conditionNode.operator,
+      conditions: loweredChildren,
+    };
+  }
+
+  switch (conditionNode.type) {
+    case "flag":
+      if (conditionNode.key.length === 0) {
+        pushInvalidEventConditionDiagnostic(
+          fieldPath,
+          "Flag event condition requires a non-empty key.",
+          diagnostics
+        );
+        return null;
+      }
+
+      return { ...conditionNode };
+    case "variable":
+      if (conditionNode.key.length === 0) {
+        pushInvalidEventConditionDiagnostic(
+          fieldPath,
+          "Variable event condition requires a non-empty key.",
+          diagnostics
+        );
+        return null;
+      }
+
+      return { ...conditionNode };
+    case "event-fired":
+      if (conditionNode.eventId.length === 0) {
+        pushInvalidEventConditionDiagnostic(
+          fieldPath,
+          "Event-fired condition requires a non-empty eventId.",
+          diagnostics
+        );
+        return null;
+      }
+
+      return { ...conditionNode };
+    case "chapter":
+      if (conditionNode.chapterId.length === 0) {
+        pushInvalidEventConditionDiagnostic(
+          fieldPath,
+          "Chapter condition requires a non-empty chapterId.",
+          diagnostics
+        );
+        return null;
+      }
+
+      return { ...conditionNode };
+    case "location":
+      if (
+        (conditionNode.cityId == null || conditionNode.cityId.length === 0) &&
+        (conditionNode.houseId == null || conditionNode.houseId.length === 0)
+      ) {
+        pushInvalidEventConditionDiagnostic(
+          fieldPath,
+          "Location condition requires cityId or houseId.",
+          diagnostics
+        );
+        return null;
+      }
+
+      return { ...conditionNode };
+    case "character-exists":
+    case "character-available":
+      if (conditionNode.characterId.length === 0) {
+        pushInvalidEventConditionDiagnostic(
+          fieldPath,
+          "Character condition requires a non-empty characterId.",
+          diagnostics
+        );
+        return null;
+      }
+
+      return { ...conditionNode };
+    case "character-in-city":
+      if (conditionNode.characterId.length === 0 || conditionNode.cityId.length === 0) {
+        pushInvalidEventConditionDiagnostic(
+          fieldPath,
+          "Character-in-city condition requires characterId and cityId.",
+          diagnostics
+        );
+        return null;
+      }
+
+      return { ...conditionNode };
+    case "mission-status":
+      if (conditionNode.missionId.length === 0) {
+        pushInvalidEventConditionDiagnostic(
+          fieldPath,
+          "Mission-status condition requires a non-empty missionId.",
+          diagnostics
+        );
+        return null;
+      }
+
+      return { ...conditionNode };
+    case "task-status":
+    case "signal":
+    case "elapsed-time":
+      diagnostics.push({
+        code: "unsupported-lowering",
+        fieldPath,
+        message:
+          `Event condition export does not support task-only condition type "${conditionNode.type}".`,
+      });
+      return null;
+  }
+}
+
+function pushInvalidEventConditionDiagnostic(
+  fieldPath: string,
+  message: string,
+  diagnostics: ScriptEditorRuntimeExportDiagnostic[]
+): void {
+  diagnostics.push({
+    code: "invalid-field",
+    fieldPath,
+    message,
+  });
 }
 
 function lowerEventTriggerTiming(

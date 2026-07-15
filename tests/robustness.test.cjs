@@ -4430,6 +4430,159 @@ test(
 );
 
 test(
+  "script editor runtime export lowers supported event condition groups into runtime conditions",
+  () => {
+    const {
+      exportScriptEditorProjectToScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    const project = createExportableScriptEditorProjectDefinition();
+    project.textEntries = [{ id: "text.opening", text: "Opening line." }];
+    project.dialogues = [{ id: "dialogue.opening", title: "Opening" }];
+    project.events = [
+      {
+        id: "event.opening",
+        title: "Opening Event",
+        triggerTiming: "city-enter",
+        relations: { cityIds: ["city.start"] },
+        destination: { family: "dialogue", targetId: "dialogue.opening" },
+        conditionGroups: [
+          {
+            id: "condition.opening",
+            operator: "all",
+            conditions: [
+              { type: "flag", key: "story.opening.enabled", expected: true },
+              { type: "variable", key: "story.progress", operator: ">=", value: 3 },
+              { type: "location", cityId: "city.start" },
+            ],
+          },
+        ],
+      },
+    ];
+
+    const files = exportScriptEditorProjectToScenarioPackFiles(project);
+    const events = JSON.parse(files["events.json"]);
+
+    assert.deepEqual(events[0].conditions, [
+      {
+        type: "group",
+        operator: "all",
+        conditions: [
+          { type: "flag", key: "story.opening.enabled", expected: true },
+          { type: "variable", key: "story.progress", operator: ">=", value: 3 },
+          { type: "location", cityId: "city.start" },
+        ],
+      },
+    ]);
+  }
+);
+
+test(
+  "script editor runtime export fails closed on task-only event condition nodes",
+  () => {
+    const {
+      exportScriptEditorProjectToScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    const project = createExportableScriptEditorProjectDefinition();
+    project.textEntries = [{ id: "text.opening", text: "Opening line." }];
+    project.dialogues = [{ id: "dialogue.opening", title: "Opening" }];
+    project.events = [
+      {
+        id: "event.opening",
+        title: "Opening Event",
+        destination: { family: "dialogue", targetId: "dialogue.opening" },
+        conditionGroups: [
+          {
+            id: "condition.opening",
+            operator: "all",
+            conditions: [{ type: "signal", signalType: "scene.reported" }],
+          },
+        ],
+      },
+    ];
+
+    assert.throws(
+      () => exportScriptEditorProjectToScenarioPackFiles(project),
+      /conditionGroups|signal|unsupported/i
+    );
+  }
+);
+
+test(
+  "runtime trigger selection evaluates exported script editor event conditions",
+  () => {
+    const {
+      exportScriptEditorProjectToScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    const {
+      selectTriggeredEvents,
+    } = require("../.test-dist/application/events/trigger-evaluator.js");
+    const project = createExportableScriptEditorProjectDefinition();
+    project.textEntries = [{ id: "text.opening", text: "Opening line." }];
+    project.dialogues = [{ id: "dialogue.opening", title: "Opening" }];
+    project.events = [
+      {
+        id: "event.opening",
+        title: "Opening Event",
+        triggerTiming: "city-enter",
+        relations: { cityIds: ["city.kulan"] },
+        destination: { family: "dialogue", targetId: "dialogue.opening" },
+        conditionGroups: [
+          {
+            id: "condition.opening",
+            operator: "all",
+            conditions: [
+              { type: "flag", key: "story.opening.enabled", expected: true },
+              { type: "variable", key: "story.progress", operator: ">=", value: 3 },
+            ],
+          },
+        ],
+      },
+    ];
+    const events = JSON.parse(
+      exportScriptEditorProjectToScenarioPackFiles(project)["events.json"]
+    );
+    const state = createBaseState();
+    state.runtime.flags["story.opening.enabled"] = true;
+    state.runtime.variables["story.progress"] = 2;
+    const context = {
+      hasEventFired: () => false,
+      getEventFiredCount: () => 0,
+      getMonthsSinceEvent: () => null,
+      isCharacterAvailable: () => true,
+      isCharacterInClan: () => false,
+      isCharacterInCity: () => false,
+      doesClanExist: () => false,
+      getClanRelation: () => null,
+      isCityOwnedByClan: () => false,
+      getMissionStatus: () => "inactive",
+      runCustomCondition: () => false,
+    };
+
+    assert.deepEqual(
+      selectTriggeredEvents(
+        state,
+        events,
+        { timing: "city-enter", cityId: "city.kulan" },
+        context
+      ),
+      []
+    );
+
+    state.runtime.variables["story.progress"] = 3;
+
+    assert.deepEqual(
+      selectTriggeredEvents(
+        state,
+        events,
+        { timing: "city-enter", cityId: "city.kulan" },
+        context
+      ).map((eventDefinition) => eventDefinition.id),
+      ["event.opening"]
+    );
+  }
+);
+
+test(
   "script editor runtime export validator rejects missing opening scenario profile fields",
   () => {
     const {
