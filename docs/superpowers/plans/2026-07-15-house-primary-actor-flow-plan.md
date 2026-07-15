@@ -14,7 +14,7 @@
 - Last Updated: `2026-07-15`
 - Current Focus: `Implementation complete; closeout gates remain.`
 - Next Step: `Sync project progress, prepare structured closeout, push, then mark closed only after push succeeds.`
-- Verification: `npm run typecheck; npm test; npm run lint:plans`
+- Verification: `npm run typecheck; npm test; npm run lint:plans; final whole-branch review passed after service-house and market identity fixes`
 - Notes: `Implementation finished; do not mark closed until project-progress sync and remote push succeed.`
 
 ## Progress Log
@@ -27,6 +27,10 @@
   - Summary: `Implemented shared primary actor roster ordering, migrated temple and tavern presentation, removed ordinary right-side house owner portrait rendering, and updated shared house docs.`
   - Verification: `npm run typecheck; npm test; npm run lint:plans`
   - Next: `Perform structured closeout, synchronize project-progress, and push.`
+- 2026-07-15
+  - Summary: `Addressed final review findings by keeping primary actors visible during active dialogue for grain shop, tea house, market house, and medicine house, then aligned market fixed-host identity so greeting dialogue, selected actor, roster action, and fixed-host actions all use the house default character id.`
+  - Verification: `npm run build:test; focused primary actor robustness tests; npm run typecheck; final fix review approved`
+  - Next: `Run final local verification, then leave the plan completed-but-open until project-progress sync and remote push are handled.`
 
 ---
 
@@ -54,6 +58,8 @@
 - Add regression tests proving temple and tavern expose the primary actor first in `standbyRoster`.
 - Migrate temple daily view-model assembly so the abbot stays in the left roster instead of being moved to `renderHouseIdleOwner()`.
 - Migrate tavern view-model assembly so the boss stays in the left roster during greeting and open dialogue.
+- Keep service-house primary actors visible in `standbyRoster` during active dialogue for grain shop, tea house, market house, and medicine house.
+- Align market house fixed-host runtime identity with `HouseDefinition.defaultCharacterId` where available.
 - Remove ordinary right-side house dialogue portrait rendering from the shared dialogue renderer while keeping speaker text metadata.
 - Update the house interface contract and change log.
 
