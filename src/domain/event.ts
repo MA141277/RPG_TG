@@ -1,3 +1,5 @@
+import type { RuntimeTaskInput } from "../core/contracts/runtime-result";
+
 export type EventId = string;
 export type ChapterId = string;
 type SceneId = string;
@@ -149,5 +151,6 @@ export type EventDefinition = {
   participants?: EventParticipant[];
   entrySceneId: SceneId;
   nextEventId?: EventId;
+  taskInputs?: RuntimeTaskInput[];
   tags?: string[];
 };

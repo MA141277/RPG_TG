@@ -9,8 +9,8 @@
 - governance_sync_source: `docs/blueprints/blueprint.md`
 - queue_status: `active`
 - queue_class: `required-continuation`
-- active_task: `task.script-editor-task-chain-runtime-handoff-convergence.task-handoff-runtime-implementation`
-- next_task: `task.script-editor-task-chain-runtime-handoff-convergence.queue-closeout-and-handoff`
+- active_task: `task.script-editor-task-chain-runtime-handoff-convergence.queue-closeout-and-handoff`
+- next_task: `none`
 - closeout_status: `pending`
 - execution_closeout_status: `partial`
 - topic_closure_status: `open-residue`
@@ -57,9 +57,9 @@
 
 - queue_goal: `Create the next runtime-owned task handoff path from editor-authored event/scene chain data into unified taskInputs settlement.`
 - task_count: `3`
-- completed_task_count: `1`
-- remaining_task_count: `2`
-- active_task_summary: `Implement the selected event-level taskInputs handoff slice with tests.`
+- completed_task_count: `2`
+- remaining_task_count: `1`
+- active_task_summary: `Verify, classify residue, and return control to version review after event-level taskInputs handoff landed.`
 - task_briefs:
   - `task.script-editor-task-chain-runtime-handoff-convergence.boundary-baseline-reconcile: inventory editor task-chain seams and select the smallest lawful runtime handoff slice.`
   - `task.script-editor-task-chain-runtime-handoff-convergence.task-handoff-runtime-implementation: implement the selected task handoff slice with tests.`
@@ -98,8 +98,8 @@
 | Task ID | State | Summary | Depends On | Notes |
 | --- | --- | --- | --- | --- |
 | `task.script-editor-task-chain-runtime-handoff-convergence.boundary-baseline-reconcile` | `done` | `Inventoried task-chain seams and selected event-level taskInputs handoff as the smallest runtime-owned slice.` | `none` | `No production code changed during baseline.` |
-| `task.script-editor-task-chain-runtime-handoff-convergence.task-handoff-runtime-implementation` | `active` | `Implement the selected event-level taskInputs handoff runtime slice with tests.` | `task.script-editor-task-chain-runtime-handoff-convergence.boundary-baseline-reconcile` | `Must use RuntimeResult.taskInputs; no parallel task update channel.` |
-| `task.script-editor-task-chain-runtime-handoff-convergence.queue-closeout-and-handoff` | `pending` | `Verify, classify residue, and return control to version review.` | `task.script-editor-task-chain-runtime-handoff-convergence.task-handoff-runtime-implementation` | `Do not infer version closeout from this queue.` |
+| `task.script-editor-task-chain-runtime-handoff-convergence.task-handoff-runtime-implementation` | `done` | `Implemented the selected event-level taskInputs handoff runtime slice with tests.` | `task.script-editor-task-chain-runtime-handoff-convergence.boundary-baseline-reconcile` | `Editor event taskInputs now lower into runtime EventDefinition.taskInputs, event runtime candidates expose them, and dispatch settles them through RuntimeResult.taskInputs.` |
+| `task.script-editor-task-chain-runtime-handoff-convergence.queue-closeout-and-handoff` | `active` | `Verify, classify residue, and return control to version review.` | `task.script-editor-task-chain-runtime-handoff-convergence.task-handoff-runtime-implementation` | `Do not infer version closeout from this queue.` |
 
 ### Task Definitions
 
@@ -175,7 +175,7 @@
 ##### Control Block
 
 - task_id: `task.script-editor-task-chain-runtime-handoff-convergence.task-handoff-runtime-implementation`
-- state: `active`
+- state: `done`
 - task_kind: `execution`
 - scope:
   - `src/domain/script-editor-project.ts`
@@ -232,18 +232,24 @@
 - task_brief:
   - `Implement the baseline-selected task handoff runtime slice.`
 - task_outcome_summary:
-  - `Active after boundary baseline selected event-level taskInputs lowering.`
+  - `Done. Event-level taskInputs now lower from editor events into runtime EventDefinition.taskInputs, imported runtime taskInputs are preserved on editor events, EventRuntimeCandidate exposes runtime taskInputs, and dispatchRuntimeRequest settles them through the existing task runtime.`
 - Purpose:
   - `Turn the selected editor-authored task progression event into canonical runtime taskInputs settlement.`
 - Failure mode:
   - `Adding a side-channel task mutation would make script-editor exports incompatible with the unified task runtime contract.`
+
+##### Progress Log
+
+- `2026-07-16`: `RED added for an editor event with taskInputs starting task.opening; it failed because exported events.json omitted event.opening.taskInputs. GREEN landed by adding ScriptEditorEventRecord/EventDefinition taskInputs, export lowering, runtime import preservation, and EventRuntimeCandidate taskInputs exposure.`
+- `2026-07-16`: `RED added for an editor event task action referencing missing task.missing; it failed because runtime export did not reject the missing task target. GREEN landed by validating start/complete/fail task action taskId references against project.quests.`
+- `2026-07-16`: `Verification passed: targeted event taskInputs settlement tests, npm run typecheck, npm test, npm run build, npm run lint:blueprints, npm run lint:plans, and npm run blueprint:governance:check. Build retained existing Vite warnings for battle demo type=module, unresolved UI panel image, and chunk size.`
 
 #### `task.script-editor-task-chain-runtime-handoff-convergence.queue-closeout-and-handoff`
 
 ##### Control Block
 
 - task_id: `task.script-editor-task-chain-runtime-handoff-convergence.queue-closeout-and-handoff`
-- state: `pending`
+- state: `active`
 - task_kind: `execution`
 - scope:
   - `docs/blueprints/project-progress.md`
@@ -280,7 +286,7 @@
 - task_brief:
   - `Verify, classify residue, and return control to version review.`
 - task_outcome_summary:
-  - `Pending implementation.`
+  - `Active after task-handoff-runtime-implementation verification passed.`
 - Purpose:
   - `Prevent the bounded task handoff implementation from being mistaken for full version completion.`
 - Failure mode:

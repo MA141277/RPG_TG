@@ -1,4 +1,5 @@
 import type { HouseDefinition } from "./house";
+import type { RuntimeTaskInput } from "../core/contracts/runtime-result";
 
 export const SCRIPT_EDITOR_PROJECT_KIND = "script-editor-project";
 export const SCRIPT_EDITOR_PROJECT_MANIFEST_FILE = "project.json";
@@ -386,6 +387,7 @@ export type ScriptEditorEventRecord = ScriptEditorEntityRecord & {
   triggerTiming?: ScriptEditorEventTriggerTiming;
   repeatable?: boolean;
   nextEventId?: string;
+  taskInputs?: RuntimeTaskInput[];
   conditionGroups?: ScriptEditorEventConditionGroup[];
   destination?: ScriptEditorEventDestination;
   relations?: ScriptEditorEventRelationRecord;

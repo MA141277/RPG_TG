@@ -4900,6 +4900,157 @@ test(
   }
 );
 
+test(
+  "script editor exported event taskInputs settle through runtime task state",
+  () => {
+    const {
+      exportScriptEditorProjectToScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    const {
+      runStoryEventRuntime,
+    } = require("../.test-dist/core/runtime/event-runtime.js");
+    const {
+      dispatchRuntimeRequest,
+    } = require("../.test-dist/core/runtime/runtime-dispatch.js");
+    const project = createExportableScriptEditorProjectDefinition();
+    project.textEntries = [{ id: "text.opening", text: "Opening line." }];
+    project.dialogues = [
+      {
+        id: "dialogue.opening",
+        title: "Opening",
+        nodes: [
+          {
+            id: "dialogue-node.opening",
+            nodeType: "dialogue",
+            speakerPersonId: "person.hero",
+            textId: "text.opening",
+          },
+        ],
+      },
+    ];
+    project.quests = [
+      {
+        id: "task.opening",
+        title: "Opening Task",
+        objectives: [{ id: "report", target: 1, signalType: "scene.reported" }],
+      },
+    ];
+    project.events = [
+      {
+        id: "event.opening",
+        title: "Opening Event",
+        triggerTiming: "city-enter",
+        relations: { cityIds: ["city.kulan"] },
+        destination: { family: "dialogue", targetId: "dialogue.opening" },
+        taskInputs: [
+          {
+            type: "start",
+            taskId: "task.opening",
+            occurredAt: "2026-07-15T00:00:00.000Z",
+            source: "script-editor:event.opening",
+          },
+        ],
+      },
+    ];
+
+    const files = exportScriptEditorProjectToScenarioPackFiles(project);
+    const events = JSON.parse(files["events.json"]);
+    const tasks = JSON.parse(files["tasks.json"]);
+    const eventDefinitionsById = Object.fromEntries(
+      events.map((eventDefinition) => [eventDefinition.id, eventDefinition])
+    );
+    const taskDefinitionsById = Object.fromEntries(
+      tasks.map((taskDefinition) => [taskDefinition.id, taskDefinition])
+    );
+
+    assert.deepEqual(eventDefinitionsById["event.opening"].taskInputs, [
+      {
+        type: "start",
+        taskId: "task.opening",
+        occurredAt: "2026-07-15T00:00:00.000Z",
+        source: "script-editor:event.opening",
+      },
+    ]);
+
+    const eventRuntimeResult = runStoryEventRuntime({
+      timing: "city-enter",
+      state: createBaseState(),
+      characterDefinitions: JSON.parse(files["characters.json"]),
+      eventDefinitionsById,
+    });
+    assert.deepEqual(eventRuntimeResult.candidate?.taskInputs, [
+      {
+        type: "start",
+        taskId: "task.opening",
+        occurredAt: "2026-07-15T00:00:00.000Z",
+        source: "script-editor:event.opening",
+      },
+    ]);
+
+    const settled = dispatchRuntimeRequest({
+      state: createRuntimeState(),
+      request: { family: "external", type: "external", eventId: "event.opening" },
+      context: {
+        router: {
+          route: ({ state }) => ({
+            state,
+            effects: [],
+            taskInputs: eventRuntimeResult.candidate?.taskInputs ?? [],
+          }),
+        },
+        taskDefinitionsById,
+      },
+    });
+
+    assert.equal(
+      settled.state.core.runtime.tasks.instancesByTaskId["task.opening"].status,
+      "active"
+    );
+  }
+);
+
+test("script editor runtime export rejects missing event taskInput task targets", () => {
+  const {
+    exportScriptEditorProjectToScenarioPackFiles,
+  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  const project = createExportableScriptEditorProjectDefinition();
+  project.textEntries = [{ id: "text.opening", text: "Opening line." }];
+  project.dialogues = [
+    {
+      id: "dialogue.opening",
+      title: "Opening",
+      nodes: [
+        {
+          id: "dialogue-node.opening",
+          nodeType: "dialogue",
+          speakerPersonId: "person.hero",
+          textId: "text.opening",
+        },
+      ],
+    },
+  ];
+  project.quests = [];
+  project.events = [
+    {
+      id: "event.opening",
+      title: "Opening Event",
+      destination: { family: "dialogue", targetId: "dialogue.opening" },
+      taskInputs: [
+        {
+          type: "start",
+          taskId: "task.missing",
+          occurredAt: "2026-07-15T00:00:00.000Z",
+        },
+      ],
+    },
+  ];
+
+  assert.throws(
+    () => exportScriptEditorProjectToScenarioPackFiles(project),
+    /taskInputs|task\.missing|missing task/i
+  );
+});
+
 test("script editor runtime export rejects missing nextEventId targets", () => {
   const {
     exportScriptEditorProjectToScenarioPackFiles,

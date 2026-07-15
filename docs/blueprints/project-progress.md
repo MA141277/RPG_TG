@@ -37,7 +37,7 @@
 - `Admission history, queue closeout history, and review narrative must stay in the version plan, queue docs, or docs/change-log.md rather than living here as competing current-state prose.`
 - `The pointed version is now the open successor version for script-editor authoring/data-structure unification.`
 - `The latest governance action closed queue.script-editor-event-task-chain-runtime-convergence with same-family task-chain runtime handoff residue after editor-authored nextEventId began exporting and running as runtime EventDefinition.nextEventId chains.`
-- `Resume from the active queue document and its task-handoff-runtime-implementation task.`
+- `Resume from the active queue document and its queue-closeout-and-handoff task.`
 
 ### Historical References
 

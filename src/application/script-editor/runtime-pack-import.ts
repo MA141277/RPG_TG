@@ -286,6 +286,7 @@ function mapImportedEvents(events: EventDefinition[]): ScriptEditorEventRecord[]
       repeatable:
         importedEvent.repeatable === true || eventDefinition.occurrence === "repeatable",
       nextEventId: eventDefinition.nextEventId ?? "",
+      taskInputs: eventDefinition.taskInputs ?? [],
       conditionGroups: [],
       destination: {
         family: "event",

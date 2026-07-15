@@ -18,6 +18,7 @@ import type {
 import type { ScenarioProfileDefinition } from "../../domain/scenario-profile";
 import type { SceneDefinition } from "../../domain/action";
 import type { EventDefinition, EventTriggerTiming } from "../../domain/event";
+import type { RuntimeTaskInput } from "../../core/contracts/runtime-result";
 
 export type ScriptEditorRuntimeExportDiagnostic = {
   code:
@@ -493,6 +494,11 @@ function lowerEditorEventsToRuntimeEvents(
       .map((eventRecord) => eventRecord.id)
       .filter((eventId): eventId is string => typeof eventId === "string" && eventId.length > 0)
   );
+  const sourceTaskIds = new Set(
+    project.quests
+      .map((questRecord) => questRecord.id)
+      .filter((taskId): taskId is string => typeof taskId === "string" && taskId.length > 0)
+  );
   const exportedEvents: EventDefinition[] = [];
   const eventIds = new Set<string>();
   for (const [index, eventRecord] of project.events.entries()) {
@@ -502,6 +508,7 @@ function lowerEditorEventsToRuntimeEvents(
       chapterId,
       sceneIds,
       sourceEventIds,
+      sourceTaskIds,
       diagnostics
     );
     if (exportedEvent == null) {
@@ -528,6 +535,7 @@ function lowerEditorEventToRuntimeEvent(
   chapterId: string,
   sceneIds: Set<string>,
   sourceEventIds: Set<string>,
+  sourceTaskIds: Set<string>,
   diagnostics: ScriptEditorRuntimeExportDiagnostic[]
 ): EventDefinition | null {
   if (typeof eventRecord.id !== "string" || eventRecord.id.length === 0) {
@@ -594,6 +602,16 @@ function lowerEditorEventToRuntimeEvent(
     return null;
   }
 
+  const taskInputs = lowerEventTaskInputs(
+    eventRecord,
+    eventIndex,
+    sourceTaskIds,
+    diagnostics
+  );
+  if (taskInputs === null) {
+    return null;
+  }
+
   return {
     id: eventRecord.id,
     chapterId,
@@ -606,7 +624,126 @@ function lowerEditorEventToRuntimeEvent(
     conditions,
     entrySceneId,
     ...(nextEventId.length === 0 ? {} : { nextEventId }),
+    ...(taskInputs.length === 0 ? {} : { taskInputs }),
   };
+}
+
+function lowerEventTaskInputs(
+  eventRecord: ScriptEditorEventRecord,
+  eventIndex: number,
+  sourceTaskIds: Set<string>,
+  diagnostics: ScriptEditorRuntimeExportDiagnostic[]
+): RuntimeTaskInput[] | null {
+  if (eventRecord.taskInputs == null) {
+    return [];
+  }
+
+  if (!Array.isArray(eventRecord.taskInputs)) {
+    diagnostics.push({
+      code: "invalid-field",
+      fieldPath: `project.events[${eventIndex}].taskInputs`,
+      message: "Event taskInputs must be an array when present.",
+    });
+    return null;
+  }
+
+  const loweredTaskInputs: RuntimeTaskInput[] = [];
+  for (const [taskInputIndex, taskInput] of eventRecord.taskInputs.entries()) {
+    const fieldPath = `project.events[${eventIndex}].taskInputs[${taskInputIndex}]`;
+    const loweredTaskInput = lowerEventTaskInput(
+      taskInput,
+      fieldPath,
+      sourceTaskIds,
+      diagnostics
+    );
+    if (loweredTaskInput == null) {
+      continue;
+    }
+    loweredTaskInputs.push(loweredTaskInput);
+  }
+
+  return diagnostics.length === 0 ? loweredTaskInputs : null;
+}
+
+function lowerEventTaskInput(
+  value: RuntimeTaskInput,
+  fieldPath: string,
+  sourceTaskIds: Set<string>,
+  diagnostics: ScriptEditorRuntimeExportDiagnostic[]
+): RuntimeTaskInput | null {
+  if (value == null || typeof value !== "object" || Array.isArray(value)) {
+    diagnostics.push({
+      code: "invalid-field",
+      fieldPath,
+      message: "Event task input must be an object.",
+    });
+    return null;
+  }
+
+  const taskInput = value as Record<string, unknown>;
+  if (typeof taskInput.type !== "string" || taskInput.type.length === 0) {
+    diagnostics.push({
+      code: "invalid-field",
+      fieldPath: `${fieldPath}.type`,
+      message: "Event task input requires a non-empty type.",
+    });
+    return null;
+  }
+
+  if (
+    taskInput.type === "start" ||
+    taskInput.type === "complete" ||
+    taskInput.type === "fail"
+  ) {
+    if (typeof taskInput.taskId !== "string" || taskInput.taskId.length === 0) {
+      diagnostics.push({
+        code: "invalid-field",
+        fieldPath: `${fieldPath}.taskId`,
+        message: "Event task action input requires a non-empty taskId.",
+      });
+      return null;
+    }
+
+    if (!sourceTaskIds.has(taskInput.taskId)) {
+      diagnostics.push({
+        code: "missing-reference",
+        fieldPath: `${fieldPath}.taskId`,
+        message: `Event task action references missing task "${taskInput.taskId}".`,
+      });
+      return null;
+    }
+
+    if (
+      typeof taskInput.occurredAt !== "string" ||
+      taskInput.occurredAt.length === 0
+    ) {
+      diagnostics.push({
+        code: "invalid-field",
+        fieldPath: `${fieldPath}.occurredAt`,
+        message: "Event task action input requires a non-empty occurredAt.",
+      });
+      return null;
+    }
+
+    return cloneJsonCompatibleValue(taskInput) as RuntimeTaskInput;
+  }
+
+  if (
+    typeof taskInput.source !== "string" ||
+    taskInput.source.length === 0 ||
+    typeof taskInput.occurredAt !== "string" ||
+    taskInput.occurredAt.length === 0
+  ) {
+    diagnostics.push({
+      code: "invalid-field",
+      fieldPath,
+      message:
+        "Event task signal input requires non-empty source and occurredAt fields.",
+    });
+    return null;
+  }
+
+  return cloneJsonCompatibleValue(taskInput) as RuntimeTaskInput;
 }
 
 function lowerEventNextEventId(
