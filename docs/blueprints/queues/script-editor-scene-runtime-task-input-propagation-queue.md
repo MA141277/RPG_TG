@@ -7,23 +7,23 @@
 - blueprint_version: `2026.07`
 - governance_last_synced_at: `2026-07-16`
 - governance_sync_source: `docs/blueprints/blueprint.md`
-- queue_status: `active`
+- queue_status: `done`
 - queue_class: `required-continuation`
-- active_task: `task.script-editor-scene-runtime-task-input-propagation.queue-closeout-and-handoff`
+- active_task: `none`
 - next_task: `none`
-- closeout_status: `pending`
-- execution_closeout_status: `partial`
-- topic_closure_status: `open-residue`
-- closure_basis: `none`
+- closeout_status: `done`
+- execution_closeout_status: `done`
+- topic_closure_status: `closed`
+- closure_basis: `The bounded scene runtime propagation slice landed and passed verification: activated event candidate taskInputs now pass through SceneRuntimeInput into runSceneFromEvent and return through SceneRuntimeResult.taskInputs for canonical RuntimeResult.taskInputs settlement. No same-family scene runtime taskInputs propagation residue remains inside this queue.`
 - residue_remaining: `no`
 - residue_family: `none`
 - residue_routing_status: `none`
 - next_family_candidate: `none`
 - auto_continue_eligible: `false`
-- next_effect: `execute-active-task`
-- sync_status: `success`
+- next_effect: `return-to-version-review`
+- sync_status: `pending`
 - sync_scope: `branch-push`
-- sync_summary: `Commit 38db83f pushed to origin/mod-first-dev after same-family scene runtime taskInputs propagation continuation admission.`
+- sync_summary: `Closeout docs prepared after implementation commit f8a132a was pushed to origin/mod-first-dev; closeout repository sync is pending.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
@@ -56,9 +56,9 @@
 
 - queue_goal: `Carry event runtime candidate taskInputs through scene runtime output for canonical task settlement.`
 - task_count: `3`
-- completed_task_count: `2`
-- remaining_task_count: `1`
-- active_task_summary: `Verify implementation closeout, classify residue, and return control to version review.`
+- completed_task_count: `3`
+- remaining_task_count: `0`
+- active_task_summary: `Queue closed after verified scene runtime taskInputs propagation with no same-family residue.`
 - task_briefs:
   - `task.script-editor-scene-runtime-task-input-propagation.boundary-baseline-reconcile: inventory scene runtime taskInputs propagation seams and select the smallest lawful implementation slice.`
   - `task.script-editor-scene-runtime-task-input-propagation.runtime-propagation-implementation: implement the selected propagation slice with tests.`
@@ -97,7 +97,7 @@
 | --- | --- | --- | --- | --- |
 | `task.script-editor-scene-runtime-task-input-propagation.boundary-baseline-reconcile` | `done` | `Inventoried scene runtime taskInputs propagation seams and selected SceneRuntimeInput.taskInputs passthrough as the smallest runtime-owned slice.` | `none` | `No production code changed during baseline.` |
 | `task.script-editor-scene-runtime-task-input-propagation.runtime-propagation-implementation` | `done` | `Implemented the selected SceneRuntimeInput taskInputs propagation slice with tests.` | `task.script-editor-scene-runtime-task-input-propagation.boundary-baseline-reconcile` | `RuntimeResult.taskInputs remains the only settlement channel.` |
-| `task.script-editor-scene-runtime-task-input-propagation.queue-closeout-and-handoff` | `active` | `Verify, classify residue, and return control to version review.` | `task.script-editor-scene-runtime-task-input-propagation.runtime-propagation-implementation` | `Do not infer version closeout from this queue.` |
+| `task.script-editor-scene-runtime-task-input-propagation.queue-closeout-and-handoff` | `done` | `Verified, classified no same-family residue, and returned control to version review.` | `task.script-editor-scene-runtime-task-input-propagation.runtime-propagation-implementation` | `Does not infer version closeout from this queue.` |
 
 ### Task Definitions
 
@@ -216,7 +216,7 @@
 ##### Control Block
 
 - task_id: `task.script-editor-scene-runtime-task-input-propagation.queue-closeout-and-handoff`
-- state: `pending`
+- state: `done`
 - task_kind: `execution`
 - scope:
   - `docs/blueprints/project-progress.md`
@@ -252,8 +252,13 @@
 - task_brief:
   - `Verify, classify residue, and return control to version review.`
 - task_outcome_summary:
-  - `Pending implementation.`
+  - `Done. Scene runtime taskInputs propagation is verified, no same-family residue remains in the bounded queue surface, and control returns to version review.`
 - Purpose:
   - `Prevent scene runtime propagation from being mistaken for full task-chain version completion.`
 - Failure mode:
   - `Closing without residue classification would hide remaining task-chain runtime blockers.`
+
+##### Progress Log
+
+- `2026-07-16`: `Closeout classified residue_remaining=no, residue_family=none, and topic_closure_status=closed because the queue's bounded surface was limited to activated event taskInputs propagation through SceneRuntimeResult.taskInputs.`
+- `2026-07-16`: `Version-level candidates such as scenario launch policy, playable/minigame binding, schema/reference migration, status overlay review, legacy supersession, and end-to-end validation remain version promotion-review subjects rather than same-family residue of this queue.`
