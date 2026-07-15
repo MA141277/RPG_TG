@@ -21,9 +21,9 @@
 - next_family_candidate: `none`
 - auto_continue_eligible: `false`
 - next_effect: `none`
-- sync_status: `pending`
+- sync_status: `success`
 - sync_scope: `branch-push`
-- sync_summary: `Admission and activation commit cb792d2 is pushed to origin/mod-first-dev; boundary baseline documentation is pending repository sync.`
+- sync_summary: `Admission and activation commit cb792d2 and boundary baseline commit d0a755a are pushed to origin/mod-first-dev; baseline sync is complete.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
