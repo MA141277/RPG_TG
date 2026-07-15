@@ -35,7 +35,7 @@
 
 - `This file only states the current resume entry and downstream pointer set.`
 - `Admission history, queue closeout history, and review narrative must stay in the version plan, queue docs, or docs/change-log.md rather than living here as competing current-state prose.`
-- `The pointed version is now the open successor version for script-editor authoring/data-structure unification.`
+- `The pointed version is now the closed script-editor authoring/data-structure unification record.`
 - `The latest governance action closed target.script-editor-authoring-data-structure-unification after final validation passed and explicit closeout continuation was received.`
 - `Resume from the closed version plan until a fresh version or intake review is created.`
 
