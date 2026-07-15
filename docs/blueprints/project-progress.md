@@ -37,7 +37,7 @@
 - `Admission history, queue closeout history, and review narrative must stay in the version plan, queue docs, or docs/change-log.md rather than living here as competing current-state prose.`
 - `The pointed version is now the open successor version for script-editor authoring/data-structure unification.`
 - `The latest governance action admitted queue.script-editor-city-building-placement-resolver-convergence after city/building structure convergence routed city-local placement/resolver residue back to version review.`
-- `Resume from the active queue document and its active boundary-baseline-reconcile task.`
+- `Resume from the active queue document and its active resolver-contract-implementation task.`
 
 ### Historical References
 

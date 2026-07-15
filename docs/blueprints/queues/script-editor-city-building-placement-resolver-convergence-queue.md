@@ -9,8 +9,8 @@
 - governance_sync_source: `docs/blueprints/blueprint.md`
 - queue_status: `active`
 - queue_class: `required`
-- active_task: `task.script-editor-city-building-placement-resolver-convergence.boundary-baseline-reconcile`
-- next_task: `none`
+- active_task: `task.script-editor-city-building-placement-resolver-convergence.resolver-contract-implementation`
+- next_task: `task.script-editor-city-building-placement-resolver-convergence.queue-closeout-and-handoff`
 - closeout_status: `open`
 - execution_closeout_status: `partial`
 - topic_closure_status: `open-residue`
@@ -57,9 +57,9 @@
 
 - queue_goal: `Determine and implement the smallest city/building placement resolver slice that gives runtime and preview code one governed way to resolve city-local building entries, NPC assignment, access/refusal data, and inherited building dialogue without duplicating lookup logic.`
 - task_count: `3`
-- completed_task_count: `0`
-- remaining_task_count: `3`
-- active_task_summary: `Baseline must inventory existing city/building placement, cityEntry, cityNpcPool, houseAccess, dialogue, and runtime view seams before any production code changes.`
+- completed_task_count: `1`
+- remaining_task_count: `2`
+- active_task_summary: `Baseline selected a bounded shared resolver API over existing runtime families; implementation should add tests and the resolver module without migrating persistent placement schema yet.`
 - task_briefs:
   - `task.script-editor-city-building-placement-resolver-convergence.boundary-baseline-reconcile: inventory city-local placement and resolver seams, decide the smallest lawful implementation slice, and record test-first implementation boundaries.`
   - `task.script-editor-city-building-placement-resolver-convergence.resolver-contract-implementation: implement the selected placement/resolver contract slice with tests.`
@@ -96,8 +96,8 @@
 
 | Task ID | State | Summary | Depends On | Notes |
 | --- | --- | --- | --- | --- |
-| `task.script-editor-city-building-placement-resolver-convergence.boundary-baseline-reconcile` | `active` | `Inventory city-local placement/resolver seams and select the smallest lawful implementation slice.` | `none` | `Production code must not change before baseline records the selected slice.` |
-| `task.script-editor-city-building-placement-resolver-convergence.resolver-contract-implementation` | `queued` | `Implement the placement/resolver contract slice selected by baseline reconciliation.` | `task.script-editor-city-building-placement-resolver-convergence.boundary-baseline-reconcile` | `Not started.` |
+| `task.script-editor-city-building-placement-resolver-convergence.boundary-baseline-reconcile` | `done` | `Inventoried city/building placement/runtime seams and selected a bounded shared resolver API over existing runtime families as the smallest implementation slice.` | `none` | `Production code was not changed during baseline.` |
+| `task.script-editor-city-building-placement-resolver-convergence.resolver-contract-implementation` | `active` | `Implement the placement/resolver contract slice selected by baseline reconciliation.` | `task.script-editor-city-building-placement-resolver-convergence.boundary-baseline-reconcile` | `Use test-first coverage for resolved placements, view data, access, and NPC summaries.` |
 | `task.script-editor-city-building-placement-resolver-convergence.queue-closeout-and-handoff` | `queued` | `Verify, classify residue, and return control to version review.` | `task.script-editor-city-building-placement-resolver-convergence.resolver-contract-implementation` | `Not started.` |
 
 ### Task Definitions
@@ -107,7 +107,7 @@
 ##### Control Block
 
 - task_id: `task.script-editor-city-building-placement-resolver-convergence.boundary-baseline-reconcile`
-- state: `active`
+- state: `done`
 - task_kind: `execution`
 - scope:
   - `src/domain/script-editor-project.ts`
@@ -162,7 +162,7 @@
 - task_brief:
   - `Find the smallest honest resolver boundary for city-local placements after building records became runtime-house-compatible.`
 - task_outcome_summary:
-  - `Pending. Baseline has not yet started.`
+  - `Done. Existing authoring and runtime records still lack a durable placement entity: ScriptEditorBuildingRecord owns runtime HouseDefinition fields and cityId, cityEntries point from cityId to targetHouseId, cityNpcPools are city-wide resident pools, and houseAccessRefusalRules target houses/modules. Runtime consumers manually stitch this data: city/house transitions pass HouseDefinition directly to selectHouseEntryAccess, city NPC selection filters city pools by houseDefinition.activityLocationId, and ActiveGameContent indexes the families independently. The smallest lawful slice is to introduce a shared city-building placement resolver over the existing runtime families, using cityEntry.id as the current placement id and resolving house, city entry, access result, and NPC summaries through one API. Persistent placement schema migration, placement label/description overrides, entryBindingOverride, dialogue inheritance, and textEntry-backed refusal ids remain residue for later slices after this resolver seam exists.`
 - Purpose:
   - `Prevent runtime and preview flows from manually stitching city/building/NPC/access/dialogue data from separate runtime families.`
 - Failure mode:
@@ -171,13 +171,18 @@
 ##### Progress Log
 
 - `2026-07-15`: `Queue admitted from version promotion review after city/building structure convergence closed and routed city-local placement ids, entry ownership, override layering, and centralized resolver seams as residue.`
+- `2026-07-15`: `Baseline inspected the successor draft placement rules, current target spec, previous city/building priority and structure queues, script-editor project/domain records, city-building authoring defaults, runtime import/export/materializer behavior, city NPC pool helpers, story-stage house access, city-house transition coordination, ActiveGameContent indexing, and current robustness tests.`
+- `2026-07-15`: `Inventory: reusable building data is currently represented by HouseDefinition-compatible building records; city-local entry data is represented by CityEntryDefinition records keyed by id and targetHouseId; NPC assignment exists as character/person houseId plus cityNpcPool residents and runtime location; access/refusal is evaluated from HouseDefinition plus HouseAccessRefusalRule arrays; no placement object currently owns overrides or resolver output.`
+- `2026-07-15`: `Mismatch: runtime and preview seams still receive separate house/cityEntry/cityNpcPool/refusal families and stitch them by houseId, cityId, and activityLocationId. This makes cityEntry.id the only stable current placement id, but no shared resolver owns that relationship or can fail closed when references are missing.`
+- `2026-07-15`: `Selected smallest lawful slice: create a shared city-building placement resolver module that derives placements from existing cityEntries and houses, exposes resolveCityBuildingPlacements, resolveCityBuildingView, canEnterCityBuilding, and resolveCityBuildingNpcs for the covered runtime/preview data, and fails closed for missing city entries or houses. Do not migrate persistent schema or implement overrides/dialogue inheritance in this task.`
+- `2026-07-15`: `Implementation plan for the next task: write failing robustness tests for placement list resolution by cityId, view resolution with placementId=cityEntry.id, access denial using existing houseAccessRefusalRules, NPC summaries using existing cityNpcPools/runtime state, and missing targetHouseId fail-closed behavior; then add src/application/city/city-building-placement-resolver.ts and keep existing materializer/import/export shapes unchanged. Verification must include npm run typecheck, npm test, npm run lint:blueprints, npm run lint:plans, npm run blueprint:governance:check, and git diff --check.`
 
 #### `task.script-editor-city-building-placement-resolver-convergence.resolver-contract-implementation`
 
 ##### Control Block
 
 - task_id: `task.script-editor-city-building-placement-resolver-convergence.resolver-contract-implementation`
-- state: `queued`
+- state: `active`
 - task_kind: `execution`
 - scope:
   - `Files identified by boundary-baseline-reconcile.`
@@ -206,7 +211,7 @@
 - task_brief:
   - `Implement the selected city/building placement resolver slice.`
 - task_outcome_summary:
-  - `Not started.`
+  - `Active. Baseline selected a bounded resolver API over existing runtime families.`
 - Purpose:
   - `Make covered city/building placement lookups runtime-consumable through one governed seam.`
 - Failure mode:
@@ -215,6 +220,7 @@
 ##### Progress Log
 
 - `2026-07-15`: `Queued behind boundary-baseline-reconcile.`
+- `2026-07-15`: `Activated after baseline selected a shared resolver seam over existing cityEntries/houses/cityNpcPools/houseAccessRefusalRules as the smallest lawful implementation slice.`
 
 #### `task.script-editor-city-building-placement-resolver-convergence.queue-closeout-and-handoff`
 
