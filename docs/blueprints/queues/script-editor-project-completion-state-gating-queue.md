@@ -23,7 +23,7 @@
 - next_effect: `return-to-version-review`
 - sync_status: `success`
 - sync_scope: `baseline-push`
-- sync_summary: `Commit ef3c333 was pushed to origin/mod-first-dev, carrying completion-state implementation, verification-backed task advancement, and the prior local baseline sync records.`
+- sync_summary: `Commit 110437b was pushed to origin/mod-first-dev, carrying completion-state gating queue closeout, no-residue routing, and return to version promotion review.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
