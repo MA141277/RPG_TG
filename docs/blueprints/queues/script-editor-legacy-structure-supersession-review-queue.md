@@ -7,15 +7,15 @@
 - blueprint_version: `2026.07`
 - governance_last_synced_at: `2026-07-16`
 - governance_sync_source: `docs/blueprints/blueprint.md`
-- queue_status: `active`
+- queue_status: `done`
 - queue_class: `required`
-- active_task: `task.script-editor-legacy-structure-supersession-review.queue-closeout-and-handoff`
+- active_task: `none`
 - next_task: `none`
-- closeout_status: `in-progress`
-- execution_closeout_status: `partial`
-- topic_closure_status: `open-residue`
-- closure_basis: `Queue admitted from version promotion review; no execution closeout has been performed yet.`
-- residue_remaining: `yes`
+- closeout_status: `done`
+- execution_closeout_status: `done`
+- topic_closure_status: `closed`
+- closure_basis: `The bounded legacy supersession review slice landed and passed verification: default project schema/kind literals now consume centralized references, compatibilityImport remains explicit adapter-supported unresolved-family residue that blocks export until resolved, and storyPack.runtimeEvents remains an explicit adapter-supported runtime EventDefinition bridge with validation. No same-family legacy supersession residue remains inside this bounded slice.`
+- residue_remaining: `no`
 - residue_family: `none`
 - residue_routing_status: `none`
 - next_family_candidate: `none`
@@ -23,7 +23,7 @@
 - next_effect: `none`
 - sync_status: `pending`
 - sync_scope: `branch-push`
-- sync_summary: `Queue admission and activation are not yet synchronized to origin/mod-first-dev.`
+- sync_summary: `Implementation commit 311dfae pushed to origin/mod-first-dev after the legacy supersession disposition slice landed and advanced this queue to closeout; closeout repository sync is pending.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
@@ -56,9 +56,9 @@
 
 - queue_goal: `Review legacy script-editor structures and write explicit supersession dispositions before deletion, adapter removal, or final validation.`
 - task_count: `3`
-- completed_task_count: `2`
-- remaining_task_count: `1`
-- active_task_summary: `Verify, classify residue, and return control to version review.`
+- completed_task_count: `3`
+- remaining_task_count: `0`
+- active_task_summary: `Queue closed after verified legacy supersession disposition with no same-family residue.`
 - task_briefs:
   - `task.script-editor-legacy-structure-supersession-review.boundary-baseline-reconcile: inventory legacy structure references and decide the bounded disposition surface.`
   - `task.script-editor-legacy-structure-supersession-review.supersession-disposition-review: implement or document the selected retained/migrated/adapter-supported/retired dispositions with tests where code changes are required.`
@@ -97,7 +97,7 @@
 | --- | --- | --- | --- | --- |
 | `task.script-editor-legacy-structure-supersession-review.boundary-baseline-reconcile` | `done` | `Inventoried legacy structure references and selected minimal-workflow schema literal replacement plus retained adapter-supported compatibility/runtime event dispositions as the smallest lawful slice.` | `none` | `No deletion during baseline.` |
 | `task.script-editor-legacy-structure-supersession-review.supersession-disposition-review` | `done` | `Replaced default project schema/kind literals with centralized references and locked the disposition with tests.` | `task.script-editor-legacy-structure-supersession-review.boundary-baseline-reconcile` | `CompatibilityImport and runtimeEvents remain retained adapter-supported structures.` |
-| `task.script-editor-legacy-structure-supersession-review.queue-closeout-and-handoff` | `active` | `Verify, classify residue, and return control to version review.` | `task.script-editor-legacy-structure-supersession-review.supersession-disposition-review` | `Does not infer version closeout from this queue.` |
+| `task.script-editor-legacy-structure-supersession-review.queue-closeout-and-handoff` | `done` | `Verified, classified no same-family residue, and returned control to version review.` | `task.script-editor-legacy-structure-supersession-review.supersession-disposition-review` | `Does not infer version closeout from this queue.` |
 
 ### Task Definitions
 
@@ -201,7 +201,7 @@
 ##### Control Block
 
 - task_id: `task.script-editor-legacy-structure-supersession-review.queue-closeout-and-handoff`
-- state: `active`
+- state: `done`
 - task_kind: `decision-dispatch`
 - scope:
   - `docs/blueprints/queues/script-editor-legacy-structure-supersession-review-queue.md`
@@ -231,7 +231,7 @@
 - task_brief:
   - `Close or route the legacy supersession queue after verified disposition work.`
 - task_outcome_summary:
-  - `Pending closeout.`
+  - `Completed after verification passed and no same-family legacy supersession residue remained inside the bounded slice.`
 - Purpose:
   - `Return control to version review without hiding legacy structure residue.`
 - Failure mode:
@@ -259,3 +259,4 @@
 - `2026-07-16`: `Promotion review admitted queue.script-editor-legacy-structure-supersession-review as the single active queue because schema reference closeout routed legacy deletion, supersession disposition, and concrete future-version migration adapters back to version review. The first live task is boundary-baseline-reconcile.`
 - `2026-07-16`: `Boundary baseline completed after scanning src/domain/script-editor-project.ts, src/application/script-editor, src/ui/main-ui/main-ui-flow.js, and tests/robustness.test.cjs for legacy/compatibility/residue/runtime adapter structures. Active surfaces are storyPack.compatibilityImport, storyPack.runtimeEvents, compatibility residue UI summaries, imported runtime event summaries, and one remaining minimal-workflow schemaVersion/kind literal. The smallest lawful implementation slice is to replace the minimal-workflow schema/kind literal with centralized references and test that compatibilityImport/runtimeEvents are retained adapter-supported structures rather than silently deletable residue.`
 - `2026-07-16`: `Supersession-disposition-review implementation completed with TDD. Added a failing robustness guard for default project schema/kind literals, then updated src/application/script-editor/minimal-workflow.ts to consume SCRIPT_EDITOR_PROJECT_SCHEMA_VERSION and SCRIPT_EDITOR_PROJECT_KIND. Verification passed after fixing type-only imports: targeted RED/GREEN test, npm run typecheck, npm test, npm run lint:blueprints, npm run lint:plans, npm run blueprint:governance:check, and git diff --check. The active task is now queue-closeout-and-handoff.`
+- `2026-07-16`: `Queue closeout completed after the verified legacy supersession disposition slice landed and was pushed in 311dfae. No same-family legacy supersession residue remains inside the bounded slice; execution returns to version promotion review.`
