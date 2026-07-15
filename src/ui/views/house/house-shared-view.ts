@@ -257,7 +257,6 @@ export function renderHouseDialogue(
   const clickable = viewModel.dialogue.advanceActionId != null;
   const footerClassName = options.footerClassName ?? "c-grain-shop-dialogue";
   const ariaLabel = options.ariaLabel ?? "对话";
-  const isNarration = viewModel.dialogue.mode === "narration";
 
   return `
     <footer class="${footerClassName}" aria-label="${ariaLabel}">
@@ -265,6 +264,12 @@ export function renderHouseDialogue(
         class="c-grain-shop-dialogue__text c-grain-shop-skin-card ${clickable ? "c-grain-shop-dialogue__text--clickable" : ""}"
         ${clickable ? `data-house-action="${viewModel.dialogue.advanceActionId}" role="button" tabindex="0"` : ""}
       >
+        ${
+          viewModel.dialogue.mode === "character" &&
+          viewModel.dialogue.speakerName != null
+            ? `<p class="c-grain-shop-dialogue__speaker">${viewModel.dialogue.speakerName}</p>`
+            : ""
+        }
         ${viewModel.dialogue.textLines
           .map((line) => `<p class="c-grain-shop-dialogue__line">${line}</p>`)
           .join("")}
@@ -274,24 +279,6 @@ export function renderHouseDialogue(
             : `<p class="c-grain-shop-dialogue__hint">${viewModel.dialogue.advanceHintText}</p>`
         }
       </div>
-      ${
-        isNarration
-          ? ""
-          : `
-            <div class="c-grain-shop-dialogue__npc">
-              <div class="c-grain-shop-portrait" aria-hidden="true">
-                ${
-                  viewModel.dialogue.portraitImageUrl == null
-                    ? `<span class="c-grain-shop-portrait__art ${viewModel.dialogue.portraitArtClassName ?? ""}"></span>`
-                    : `<img class="c-grain-shop-portrait__image" src="${viewModel.dialogue.portraitImageUrl}" alt="">`
-                }
-              </div>
-              <p class="c-grain-shop-portrait__name c-grain-shop-nameplate c-grain-shop-nameplate--small">
-                ${viewModel.dialogue.speakerName ?? ""}
-              </p>
-            </div>
-          `
-      }
     </footer>
   `;
 }

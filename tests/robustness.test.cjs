@@ -44,6 +44,9 @@ const {
   renderTempleHouseView,
 } = require("../.test-dist/ui/views/house/temple-house-view.js");
 const {
+  renderTavernHouseView,
+} = require("../.test-dist/ui/views/house/tavern-house-view.js");
+const {
   marketHouseHouseModule,
 } = require("../.test-dist/application/house-modules/market-house/market-house-house-module.js");
 const {
@@ -3931,6 +3934,64 @@ test("primary house actor appears first in tavern roster during greeting", () =>
   assert.equal(viewModel.dialogue?.characterId, tavernHouse.defaultCharacterId);
   assert.equal(viewModel.standbyRoster[0]?.characterId, tavernHouse.defaultCharacterId);
   assert.ok(viewModel.standbyRoster[0]?.actionId);
+});
+
+test("primary house actor dialogue does not render separate right-side portrait", () => {
+  const state = createInitialState({
+    cards: prototypeCards,
+    characters: prototypeCharacters,
+    houses: prototypeHouses,
+    cityEntries: prototypeCityEntries,
+    map: prototypeMap,
+  });
+  const entered = tavernHouseModule.enter({
+    gameState: state,
+    characterDefinitions: prototypeCharacters,
+    houseDefinition: tavernHouse,
+    playerCharacterId,
+  });
+  const viewModel = tavernHouseModule.selectViewModel({
+    gameState: entered.gameState,
+    characterDefinitions: entered.characterDefinitions,
+    houseDefinition: tavernHouse,
+    playerCharacterId,
+    sessionState: entered.sessionState,
+  });
+  const markup = renderTavernHouseView(viewModel);
+
+  assert.match(markup, /c-grain-shop-dialogue__text/u);
+  assert.doesNotMatch(markup, /c-grain-shop-dialogue__npc/u);
+  assert.doesNotMatch(markup, /c-grain-shop-portrait/u);
+});
+
+test("temple daily view keeps abbot in left roster instead of right owner slot", () => {
+  const state = createInitialState({
+    cards: prototypeCards,
+    characters: prototypeCharacters,
+    houses: prototypeHouses,
+    cityEntries: prototypeCityEntries,
+    map: prototypeMap,
+  });
+  const entered = templeHouseHouseModule.enter({
+    gameState: state,
+    characterDefinitions: prototypeCharacters,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+  });
+  const viewModel = templeHouseHouseModule.selectViewModel({
+    gameState: entered.gameState,
+    characterDefinitions: entered.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: {
+      ...entered.sessionState,
+      dialoguePhase: "idle",
+    },
+  });
+  const markup = renderTempleHouseView(viewModel);
+
+  assert.match(markup, /c-grain-shop-npc-idle/u);
+  assert.doesNotMatch(markup, /c-grain-shop-idle-owner/u);
 });
 
 test("house enter and leave keep session wiring and interval side effects consistent", () => {
