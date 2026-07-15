@@ -21,9 +21,9 @@
 - next_family_candidate: `none`
 - auto_continue_eligible: `false`
 - next_effect: `none`
-- sync_status: `pending`
-- sync_scope: `none`
-- sync_summary: `Character definition/status implementation has passed local verification; repository sync is pending for this terminal task state.`
+- sync_status: `success`
+- sync_scope: `branch-push`
+- sync_summary: `Commit ef47b84 was pushed to origin/mod-first-dev, carrying the bounded CharacterStatus materializer, script-editor character export materialization, covered mutation status patches, tests, and implementation-task documentation.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
