@@ -119,7 +119,7 @@
 
 - `queue.script-editor-project-completion-state-gating`
 - Active task:
-  - `task.script-editor-project-completion-state-gating.completion-state-implementation`
+  - `task.script-editor-project-completion-state-gating.queue-closeout-and-handoff`
 
 ### Version Boundary Record
 

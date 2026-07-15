@@ -319,6 +319,18 @@ export type ScriptEditorStoryPackRecord = {
   [key: string]: unknown;
 };
 
+export type ScriptEditorProjectCompletionState =
+  | {
+      state: "draft";
+      completedAt?: undefined;
+      completedBy?: undefined;
+    }
+  | {
+      state: "complete";
+      completedAt: string;
+      completedBy: "runtime-export";
+    };
+
 export type ScriptEditorTextEntryRecord = ScriptEditorEntityRecord & {
   text?: string;
 };
@@ -329,6 +341,7 @@ export type ScriptEditorProjectManifest = {
   id: string;
   title: string;
   description?: string;
+  completionState: ScriptEditorProjectCompletionState;
   files: Record<ScriptEditorProjectFileKey, string>;
 };
 
@@ -338,6 +351,7 @@ export type ScriptEditorProjectDefinition = {
   id: string;
   title: string;
   description?: string;
+  completionState: ScriptEditorProjectCompletionState;
   storyPack: ScriptEditorStoryPackRecord;
   maps: ScriptEditorEntityRecord[];
   people: ScriptEditorPersonRecord[];

@@ -14,6 +14,7 @@ import {
 import { loadScriptEditorProjectFromFiles } from "../../application/script-editor/editor-project-loader";
 import { loadScenarioPackFromFiles } from "../../application/scenario/scenario-pack-loader";
 import { serializeScriptEditorProjectToFiles } from "../../application/script-editor/editor-project-save";
+import { markScriptEditorProjectCompleteForExport } from "../../application/script-editor/project-completion-state";
 import {
   exportScriptEditorProjectToScenarioPackFiles,
   validateScriptEditorProjectForRuntimeExport,
@@ -6063,7 +6064,7 @@ export class MainUiFlow {
 
     this.scriptEditorAuxiliaryPanelOpen = true;
     try {
-      await this.persistScriptEditorProjectDraftBeforeExport();
+      await this.persistScriptEditorProjectDraft();
       const result = await writeTextFilesWithDirectoryPicker(
         exportScriptEditorProjectToScenarioPackFiles(this.scriptEditorProject),
         {
@@ -6073,6 +6074,9 @@ export class MainUiFlow {
         }
       );
       this.scriptEditorExportDirectoryHandle = result.directoryHandle ?? null;
+      const completedProject = markScriptEditorProjectCompleteForExport(this.scriptEditorProject);
+      this.commitScriptEditorProject(completedProject);
+      await this.persistScriptEditorProjectDraft();
       this.recordScriptEditorNotice({
         tone: "success",
         message:
@@ -6091,7 +6095,7 @@ export class MainUiFlow {
     this.render();
   }
 
-  async persistScriptEditorProjectDraftBeforeExport() {
+  async persistScriptEditorProjectDraft() {
     if (
       this.scriptEditorProject == null ||
       this.scriptEditorProjectDirectoryHandle == null
@@ -6109,12 +6113,18 @@ export class MainUiFlow {
     );
   }
 
+  async persistScriptEditorProjectDraftBeforeExport() {
+    await this.persistScriptEditorProjectDraft();
+  }
+
   async previewSavedScriptEditorProjectRuntime() {
     if (this.scriptEditorProject == null) {
       return;
     }
 
-    if (this.scriptEditorProjectDirectoryHandle == null) {
+    if (
+      this.scriptEditorProjectDirectoryHandle == null
+    ) {
       this.recordScriptEditorNotice({
         tone: "warning",
         message: "Save or open a project directory before runtime preview.",

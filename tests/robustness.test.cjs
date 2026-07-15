@@ -461,6 +461,7 @@ function createSampleScriptEditorProjectDefinition() {
     id: "project.test.script-editor",
     title: "Test Script Editor Project",
     description: "Bounded load save foundation test project.",
+    completionState: { state: "draft" },
     storyPack: {
       id: "story-pack.test.script-editor",
       title: "Test Story Pack",
@@ -2847,6 +2848,70 @@ test("script editor project save emits canonical split files", async () => {
   assert.equal(manifest.files.effectBundles, "./effect-bundles.json");
   assert.equal(savedStoryPack.id, project.storyPack.id);
   assert.equal(savedPeople[0]?.id, project.people[0]?.id);
+});
+
+test("script editor project completion state persists through project save and load", async () => {
+  const {
+    loadScriptEditorProjectFromFiles,
+  } = require("../.test-dist/application/script-editor/editor-project-loader.js");
+  const {
+    markScriptEditorProjectCompleteForExport,
+  } = require("../.test-dist/application/script-editor/project-completion-state.js");
+  const {
+    serializeScriptEditorProjectToFiles,
+  } = require("../.test-dist/application/script-editor/editor-project-save.js");
+  const project = createSampleScriptEditorProjectDefinition();
+
+  assert.equal(project.completionState.state, "draft");
+
+  const completedProject = markScriptEditorProjectCompleteForExport(project, {
+    completedAt: "2026-07-15T00:00:00.000Z",
+  });
+  const serializedFiles = serializeScriptEditorProjectToFiles(completedProject);
+  const manifest = JSON.parse(serializedFiles["project.json"]);
+  const loadedProject = await loadScriptEditorProjectFromFiles(
+    createImportedFilesFromSerializedJsonRecord(serializedFiles, "completed-project")
+  );
+
+  assert.deepEqual(manifest.completionState, {
+    state: "complete",
+    completedAt: "2026-07-15T00:00:00.000Z",
+    completedBy: "runtime-export",
+  });
+  assert.deepEqual(loadedProject.completionState, manifest.completionState);
+  assert.equal(project.completionState.state, "draft");
+});
+
+test("script editor runtime export is the only UI path that marks project completion", () => {
+  const mainUiSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    "utf8"
+  );
+
+  assert.match(mainUiSource, /markScriptEditorProjectCompleteForExport/);
+  assert.match(
+    mainUiSource,
+    /const completedProject = markScriptEditorProjectCompleteForExport\(this\.scriptEditorProject/
+  );
+  assert.match(
+    mainUiSource,
+    /this\.commitScriptEditorProject\(completedProject\)/
+  );
+  assert.match(
+    mainUiSource,
+    /await this\.persistScriptEditorProjectDraft\(\)/
+  );
+  const saveMethod = mainUiSource.slice(
+    mainUiSource.indexOf("async saveScriptEditorProject()"),
+    mainUiSource.indexOf("async createScriptEditorProjectAtSavePath()")
+  );
+  const previewMethod = mainUiSource.slice(
+    mainUiSource.indexOf("async previewSavedScriptEditorProjectRuntime()"),
+    mainUiSource.indexOf("async openScriptEditorProjectFromDirectory()")
+  );
+
+  assert.doesNotMatch(saveMethod, /markScriptEditorProjectCompleteForExport/);
+  assert.doesNotMatch(previewMethod, /markScriptEditorProjectCompleteForExport/);
 });
 
 test("script editor project library helpers support upsert find and remove", () => {

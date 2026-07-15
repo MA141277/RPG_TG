@@ -9,8 +9,8 @@
 - governance_sync_source: `docs/blueprints/blueprint.md`
 - queue_status: `active`
 - queue_class: `required-priority`
-- active_task: `task.script-editor-project-completion-state-gating.completion-state-implementation`
-- next_task: `task.script-editor-project-completion-state-gating.queue-closeout-and-handoff`
+- active_task: `task.script-editor-project-completion-state-gating.queue-closeout-and-handoff`
+- next_task: `return-to-version-review`
 - closeout_status: `in-progress`
 - execution_closeout_status: `partial`
 - topic_closure_status: `open-residue`
@@ -57,13 +57,13 @@
 
 - queue_goal: `Persist and enforce script-editor project completion state, with runtime export as the only completion-upgrade step.`
 - task_count: `3`
-- completed_task_count: `1`
-- remaining_task_count: `2`
-- active_task_summary: `Implement completion-state persistence and export-only completion upgrade with tests.`
+- completed_task_count: `2`
+- remaining_task_count: `1`
+- active_task_summary: `Verify completion-state gating, classify residue, and return control to version review.`
 - task_briefs:
   - `task.script-editor-project-completion-state-gating.boundary-baseline-reconcile: completed after source evidence confirmed project definition/manifest/save/export/library currently lack completion-state truth.`
-  - `task.script-editor-project-completion-state-gating.completion-state-implementation: active implementation task for completion-state persistence, export upgrade, and unfinished-project resume prompts/gates.`
-  - `task.script-editor-project-completion-state-gating.queue-closeout-and-handoff: pending closeout task to verify, classify residue, and return control to version review.`
+  - `task.script-editor-project-completion-state-gating.completion-state-implementation: completed after completion-state persistence, export upgrade, and draft-preservation tests landed.`
+  - `task.script-editor-project-completion-state-gating.queue-closeout-and-handoff: active closeout task to verify, classify residue, and return control to version review.`
 
 ### Operator Snapshot Contract
 
@@ -96,8 +96,8 @@
 | Task ID | State | Summary | Depends On | Notes |
 | --- | --- | --- | --- | --- |
 | `task.script-editor-project-completion-state-gating.boundary-baseline-reconcile` | `completed` | `Reconciled current project metadata, library, save, export, and resume surfaces before completion-state implementation.` | `none` | `Completed on 2026-07-15 after source evidence confirmed completion state should live in project definition/manifest truth, save/open must preserve it, runtime export is the only completion upgrade, and library/UI can mirror it from the project snapshot.` |
-| `task.script-editor-project-completion-state-gating.completion-state-implementation` | `active` | `Implement project completion-state persistence and export-only completion upgrade with tests.` | `task.script-editor-project-completion-state-gating.boundary-baseline-reconcile` | `Must not widen into unrelated schema migrations.` |
-| `task.script-editor-project-completion-state-gating.queue-closeout-and-handoff` | `pending` | `Verify completion-state gating, classify residue, and return control to version review.` | `task.script-editor-project-completion-state-gating.completion-state-implementation` | `Must run lint and relevant tests before queue closeout.` |
+| `task.script-editor-project-completion-state-gating.completion-state-implementation` | `completed` | `Implemented project completion-state persistence and export-only completion upgrade with tests.` | `task.script-editor-project-completion-state-gating.boundary-baseline-reconcile` | `Completed on 2026-07-15 after project definition/manifest truth, save/load preservation, runtime-pack import draft state, and UI runtime-export completion upgrade landed with verification.` |
+| `task.script-editor-project-completion-state-gating.queue-closeout-and-handoff` | `active` | `Verify completion-state gating, classify residue, and return control to version review.` | `task.script-editor-project-completion-state-gating.completion-state-implementation` | `Must run lint and relevant tests before queue closeout.` |
 
 ### Task Definitions
 
@@ -159,7 +159,7 @@
 ##### Control Block
 
 - task_id: `task.script-editor-project-completion-state-gating.completion-state-implementation`
-- state: `active`
+- state: `completed`
 - task_kind: `execution`
 - scope:
   - `src/domain/script-editor-project.ts`
@@ -193,18 +193,23 @@
 - task_brief:
   - `Implement completion-state persistence and export-only completion upgrade.`
 - task_outcome_summary:
-  - `Expected output is verified completion-state gating for script-editor projects.`
+  - `Project completion-state gating is implemented: project.json and project definitions persist draft/complete state, save/load and runtime-pack import preserve draft truth, and runtime export is the only UI path that marks a project complete after a successful package write.`
 - Purpose:
   - `Make project completion a durable project-table truth rather than an implied cache/UI state.`
 - Failure mode:
   - `Completion state can become misleading if save, preview, validation, or template import sets it implicitly.`
+
+##### Progress Log
+
+- `2026-07-15`: `Added ScriptEditorProjectCompletionState to project manifest/definition truth, normalized missing legacy completionState as draft on project load, serialized completionState through project.json, seeded new and runtime-imported editor projects as draft, and made UI runtime export mark the current project complete only after successful runtime package write before persisting the project draft again.`
+- `2026-07-15`: `Verified implementation with npm run build:test plus the targeted completion-state tests, npm run typecheck, npm run test, and npm run lint:blueprints.`
 
 #### `task.script-editor-project-completion-state-gating.queue-closeout-and-handoff`
 
 ##### Control Block
 
 - task_id: `task.script-editor-project-completion-state-gating.queue-closeout-and-handoff`
-- state: `pending`
+- state: `active`
 - task_kind: `execution`
 - scope:
   - `docs/blueprints/project-progress.md`

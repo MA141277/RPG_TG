@@ -18,6 +18,7 @@ export function serializeScriptEditorProjectToFiles(
       id: project.id,
       title: project.title,
       ...(project.description == null ? {} : { description: project.description }),
+      completionState: project.completionState,
       files: SCRIPT_EDITOR_PROJECT_CANONICAL_FILES,
     }),
   };

@@ -23,6 +23,7 @@ import {
   createDefaultScriptEditorEventRecord,
   createDefaultScriptEditorStoryNodeRecord,
 } from "./story-dialogue-event-authoring";
+import { createDraftScriptEditorProjectCompletionState } from "./project-completion-state";
 
 export const SCRIPT_EDITOR_MINIMAL_WORKFLOW_FAMILIES = [
   "storyPack",
@@ -66,6 +67,7 @@ export function createDefaultScriptEditorProjectDefinition(input?: {
     title,
     description:
       "A bounded project-first script editor workspace used to prove the first visible minimal workflow.",
+    completionState: createDraftScriptEditorProjectCompletionState(),
     storyPack: {
       id: `story-pack.${idBase}`,
       title,

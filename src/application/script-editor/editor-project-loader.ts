@@ -8,6 +8,7 @@ import {
   type ScriptEditorProjectManifest,
   type ScriptEditorStoryPackRecord,
 } from "../../domain/script-editor-project";
+import { normalizeScriptEditorProjectCompletionState } from "./project-completion-state";
 
 type ScriptEditorProjectImportFileEntry = {
   file: File;
@@ -53,7 +54,12 @@ export function parseScriptEditorProjectManifest(
     );
   }
 
-  return value as ScriptEditorProjectManifest;
+  return {
+    ...(value as ScriptEditorProjectManifest),
+    completionState: normalizeScriptEditorProjectCompletionState(
+      value.completionState
+    ),
+  };
 }
 
 export function parseScriptEditorProject(
@@ -112,7 +118,12 @@ export function parseScriptEditorProject(
     "script editor project effectBundles"
   );
 
-  return value as ScriptEditorProjectDefinition;
+  return {
+    ...(value as ScriptEditorProjectDefinition),
+    completionState: normalizeScriptEditorProjectCompletionState(
+      value.completionState
+    ),
+  };
 }
 
 function indexImportedFiles(
@@ -183,6 +194,7 @@ async function hydrateManifestFromFiles(
     id: manifest.id,
     title: manifest.title,
     ...(manifest.description == null ? {} : { description: manifest.description }),
+    completionState: manifest.completionState,
     ...hydratedFields,
   };
 }

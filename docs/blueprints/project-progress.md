@@ -37,7 +37,7 @@
 - `Admission history, queue closeout history, and review narrative must stay in the version plan, queue docs, or docs/change-log.md rather than living here as competing current-state prose.`
 - `The pointed version is now the open successor version for script-editor authoring/data-structure unification.`
 - `The latest governance action admitted queue.script-editor-project-completion-state-gating after durable package workflow closeout stabilized editable project package truth.`
-- `The current active task is task.script-editor-project-completion-state-gating.completion-state-implementation, which must add project completion-state persistence and export-only completion upgrade with tests.`
+- `The current active task is task.script-editor-project-completion-state-gating.queue-closeout-and-handoff, which must verify completion-state gating, classify residue, and return control to version review.`
 
 ### Historical References
 

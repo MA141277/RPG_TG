@@ -1,5 +1,6 @@
 import { parseScenarioPack } from "../scenario/scenario-pack-loader";
 import { parseScriptEditorProject } from "./editor-project-loader";
+import { createDraftScriptEditorProjectCompletionState } from "./project-completion-state";
 import {
   SCRIPT_EDITOR_PROJECT_MANIFEST_FILE,
   SCRIPT_EDITOR_PROJECT_KIND,
@@ -177,6 +178,7 @@ export function importScenarioPackToScriptEditorProject(
     id: pack.id,
     title: pack.title,
     ...(pack.description == null ? {} : { description: pack.description }),
+    completionState: createDraftScriptEditorProjectCompletionState(),
     storyPack: createStoryPackRecord(
       pack,
       rawPack,
