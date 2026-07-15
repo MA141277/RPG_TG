@@ -23,7 +23,7 @@
 - next_effect: `none`
 - sync_status: `success`
 - sync_scope: `branch-push`
-- sync_summary: `Commit 9707412 was pushed to origin/mod-first-dev, carrying continuation queue admission and the active boundary baseline task.`
+- sync_summary: `Commit 3293156 was pushed to origin/mod-first-dev, recording the completed boundary reconciliation and promoting the save/runtime overlay implementation task.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
