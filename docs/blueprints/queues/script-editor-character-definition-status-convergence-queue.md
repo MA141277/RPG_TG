@@ -21,9 +21,9 @@
 - next_family_candidate: `none`
 - auto_continue_eligible: `false`
 - next_effect: `none`
-- sync_status: `pending`
-- sync_scope: `none`
-- sync_summary: `Queue admitted locally; repository sync not yet recorded.`
+- sync_status: `failed`
+- sync_scope: `branch-push`
+- sync_summary: `Local commit 30d1522 records queue admission, but push to origin/mod-first-dev failed because the local environment could not connect to github.com:443. Execution truth remains active and unblocked.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
