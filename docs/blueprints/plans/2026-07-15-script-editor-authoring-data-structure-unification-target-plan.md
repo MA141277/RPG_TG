@@ -135,11 +135,12 @@
 
 - `queue.script-editor-branching-event-task-chain-convergence`
 - Active task:
-  - `task.script-editor-branching-event-task-chain-convergence.boundary-baseline-reconcile`
+  - `task.script-editor-branching-event-task-chain-convergence.progression-contract-implementation`
 - Activation basis:
   - `queue.script-editor-dialogue-story-runtime-handoff-convergence closed after verified event-to-dialogue-scene runtime handoff coverage.`
   - `The target spec marks branching dialogue choices, event effect chains, task stages, long-running task state, completion/failure conditions, rewards, and runtime progression handoff as required.`
   - `Promotion review admitted the branching/event/task-chain convergence queue as the next required bounded continuation.`
+  - `The boundary baseline selected fail-closed dialogue node progression guards as the first lawful implementation slice.`
 
 ### Version Boundary Record
 
@@ -253,3 +254,4 @@
 - `2026-07-15: queue.script-editor-dialogue-story-runtime-handoff-convergence completed runtime-handoff-implementation after adding eventId to SceneRuntimeSession and verifying exported editor dialogue events enter materialized runtime scenes through runStoryTriggerRuntime; the active task is now queue-closeout-and-handoff.`
 - `2026-07-15: queue.script-editor-dialogue-story-runtime-handoff-convergence closed after verification; story-progress/dialogue-finished trigger lowering, branching choices, followUps, story-node relation lowering, runtime-scene import reconstruction, and broader event/task progression were routed as cross-family residue to promotion review, with queue.script-editor-branching-event-task-chain-convergence recommended next.`
 - `2026-07-15: admission review promoted queue.script-editor-branching-event-task-chain-convergence as the single active queue because richer progression/branching/event-task residue is now the next required bounded continuation after basic dialogue structures and event-to-scene runtime handoff verified. The first live task is boundary-baseline-reconcile.`
+- `2026-07-15: queue.script-editor-branching-event-task-chain-convergence completed boundary-baseline-reconcile after selecting fail-closed diagnostics for unsupported dialogue node nextNodeId/choiceTargetNodeId progression references as the smallest lawful first slice; the active task is now progression-contract-implementation.`

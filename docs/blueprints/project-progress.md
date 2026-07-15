@@ -37,7 +37,7 @@
 - `Admission history, queue closeout history, and review narrative must stay in the version plan, queue docs, or docs/change-log.md rather than living here as competing current-state prose.`
 - `The pointed version is now the open successor version for script-editor authoring/data-structure unification.`
 - `The latest governance action admitted queue.script-editor-branching-event-task-chain-convergence after dialogue/story runtime handoff closeout routed richer progression, branching, followUps, story-node relation lowering, import reconstruction, and broader event/task residue back to version review.`
-- `Resume from the active queue document and its boundary-baseline-reconcile task.`
+- `Resume from the active queue document and its progression-contract-implementation task.`
 
 ### Historical References
 
