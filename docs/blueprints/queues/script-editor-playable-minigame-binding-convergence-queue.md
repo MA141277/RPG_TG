@@ -21,9 +21,9 @@
 - next_family_candidate: `none`
 - auto_continue_eligible: `false`
 - next_effect: `none`
-- sync_status: `pending`
+- sync_status: `success`
 - sync_scope: `branch-push`
-- sync_summary: `Queue admission and activation are pending repository sync.`
+- sync_summary: `Admission and activation commit cb792d2 is pushed to origin/mod-first-dev; queue activation sync is complete.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
