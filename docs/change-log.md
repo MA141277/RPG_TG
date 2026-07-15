@@ -5,6 +5,20 @@
 `docs/change-log.md` 的正式定位是“历史记录 + 人类可读摘要”。
 它不是当前 Blueprint / legacy superpowers 治理的 live execution truth，不作为 resume entry、promotion gate、closeout gate 或固定同步门。
 
+## 2026-07-15 Script Editor City Building Placement Resolver
+
+### Added
+- 新增 [src/application/city/city-building-placement-resolver.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/city/city-building-placement-resolver.ts)，提供 `resolveCityBuildingPlacements`、`resolveCityBuildingView`、`canEnterCityBuilding` 和 `resolveCityBuildingNpcs`，让运行期/预览侧通过一个共享 seam 解析城市本地建筑入口、访问结果与 NPC 摘要。
+- 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，覆盖 placement derivation、缺失目标 house fail-closed、访问拒绝、NPC 摘要、单个 view 解析和缺失 placement 返回 `null`。
+
+### Changed
+- resolver 当前以 `CityEntryDefinition.id` 作为 placement id，连接现有 `cityEntries`、`houses`、`cityNpcPools` 和 `houseAccessRefusalRules`，避免消费者继续分散手工拼接这些 runtime family。
+- 关闭 `queue.script-editor-city-building-placement-resolver-convergence`，将持久 placement schema migration、override layering、dialogue inheritance 和 broader consumer migration 分类为 cross-family residue，并把 version 返回 promotion review，推荐下一步筛选 `queue.script-editor-dialogue-story-structure-convergence`。
+
+### Impact
+- 城市/建筑运行期视图现在有一个可复用的 placement resolver 基线；缺失 city entry 或 target house 时会 fail closed。
+- dialogue inheritance 和更完整的 placement schema 仍是后续队列治理项，不被隐藏在本次 bounded resolver slice 中。
+
 ## 2026-07-15 Script Editor Condition Runtime Evaluation Convergence
 
 ### Changed

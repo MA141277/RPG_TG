@@ -7,23 +7,23 @@
 - blueprint_version: `2026.07`
 - governance_last_synced_at: `2026-07-15`
 - governance_sync_source: `docs/blueprints/blueprint.md`
-- queue_status: `active`
+- queue_status: `done`
 - queue_class: `required`
-- active_task: `task.script-editor-city-building-placement-resolver-convergence.queue-closeout-and-handoff`
+- active_task: `none`
 - next_task: `none`
-- closeout_status: `open`
-- execution_closeout_status: `partial`
+- closeout_status: `done`
+- execution_closeout_status: `done`
 - topic_closure_status: `open-residue`
-- closure_basis: `none`
-- residue_remaining: `no`
-- residue_family: `none`
-- residue_routing_status: `none`
+- closure_basis: `The bounded placement resolver slice landed with verification: runtime-facing code now has a shared resolver API that derives placement ids from cityEntry.id, joins city entries to houses, returns one placement view with access and NPC summaries, and fails closed for missing city entries or target houses. Persistent placement schema migration, override layering, dialogue inheritance, and broader consumer migration remain outside this slice and are routed back to version review.`
+- residue_remaining: `yes`
+- residue_family: `cross-family`
+- residue_routing_status: `needs-version-review`
 - next_family_candidate: `none`
 - auto_continue_eligible: `false`
-- next_effect: `execute-active-task`
+- next_effect: `return-to-version-review`
 - sync_status: `pending`
 - sync_scope: `branch-push`
-- sync_summary: `Queue admitted locally; repository sync is pending after baseline or terminal queue state.`
+- sync_summary: `Placement resolver implementation and closeout are pending repository sync.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
@@ -57,9 +57,9 @@
 
 - queue_goal: `Determine and implement the smallest city/building placement resolver slice that gives runtime and preview code one governed way to resolve city-local building entries, NPC assignment, access/refusal data, and inherited building dialogue without duplicating lookup logic.`
 - task_count: `3`
-- completed_task_count: `2`
-- remaining_task_count: `1`
-- active_task_summary: `Implementation landed the bounded shared resolver API with tests; closeout must classify remaining placement schema, override, dialogue, and consumer-migration residue.`
+- completed_task_count: `3`
+- remaining_task_count: `0`
+- active_task_summary: `Queue closed after bounded resolver API verification; persistent placement schema and richer override/dialogue/consumer migration residue returned to version review.`
 - task_briefs:
   - `task.script-editor-city-building-placement-resolver-convergence.boundary-baseline-reconcile: inventory city-local placement and resolver seams, decide the smallest lawful implementation slice, and record test-first implementation boundaries.`
   - `task.script-editor-city-building-placement-resolver-convergence.resolver-contract-implementation: implement the selected placement/resolver contract slice with tests.`
@@ -98,7 +98,7 @@
 | --- | --- | --- | --- | --- |
 | `task.script-editor-city-building-placement-resolver-convergence.boundary-baseline-reconcile` | `done` | `Inventoried city/building placement/runtime seams and selected a bounded shared resolver API over existing runtime families as the smallest implementation slice.` | `none` | `Production code was not changed during baseline.` |
 | `task.script-editor-city-building-placement-resolver-convergence.resolver-contract-implementation` | `done` | `Implemented the bounded shared placement resolver API over existing cityEntries, houses, cityNpcPools, and houseAccessRefusalRules.` | `task.script-editor-city-building-placement-resolver-convergence.boundary-baseline-reconcile` | `Landed with test-first coverage and verification.` |
-| `task.script-editor-city-building-placement-resolver-convergence.queue-closeout-and-handoff` | `active` | `Verify, classify residue, and return control to version review.` | `task.script-editor-city-building-placement-resolver-convergence.resolver-contract-implementation` | `Closeout is active.` |
+| `task.script-editor-city-building-placement-resolver-convergence.queue-closeout-and-handoff` | `done` | `Verified the implemented resolver slice, classified remaining placement/schema/dialogue/consumer migration as cross-family residue, and returned control to version review.` | `task.script-editor-city-building-placement-resolver-convergence.resolver-contract-implementation` | `Closeout complete; repository sync remains tracked by sync_status only.` |
 
 ### Task Definitions
 
@@ -229,7 +229,7 @@
 ##### Control Block
 
 - task_id: `task.script-editor-city-building-placement-resolver-convergence.queue-closeout-and-handoff`
-- state: `active`
+- state: `done`
 - task_kind: `execution`
 - scope:
   - `docs/blueprints/project-progress.md`
@@ -259,7 +259,7 @@
 - task_brief:
   - `Close or route the placement resolver convergence queue after verified implementation.`
 - task_outcome_summary:
-  - `Active. Implementation is verified; closeout must classify remaining resolver/placement residue.`
+  - `Done. Implementation verification passed; remaining durable placement schema migration, placement label/description overrides, entryBindingOverride, dialogue inheritance, and broader runtime/preview consumer migration were classified as cross-family residue and returned to version review.`
 - Purpose:
   - `Keep resolver convergence explicit before broader dialogue/story, scenario launch, or final validation queues continue.`
 - Failure mode:
@@ -269,6 +269,7 @@
 
 - `2026-07-15`: `Queued behind resolver-contract-implementation.`
 - `2026-07-15`: `Activated after resolver-contract-implementation passed verification.`
+- `2026-07-15`: `Closeout recorded that the bounded resolver API landed and verified, while persistent placement schema migration, richer override layering, dialogue inheritance, and broader consumer migration remain outside this queue and must be routed by version review.`
 
 ### Historical Handoff Note
 

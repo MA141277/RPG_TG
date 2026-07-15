@@ -5,13 +5,13 @@
 - document_role: `version-governor`
 - version_id: `target.script-editor-authoring-data-structure-unification`
 - version_status: `open`
-- active_phase: `phase.active-execution`
-- active_queue: `queue.script-editor-city-building-placement-resolver-convergence`
-- decision_state: `active-execution`
-- next_decision: `queue-closeout-or-return-to-version-review`
-- next_action: `resume-active-queue`
-- resume_gate: `open-active-queue`
-- promotion_review_result: `admitted`
+- active_phase: `phase.promotion-review`
+- active_queue: `none`
+- decision_state: `promotion-review`
+- next_decision: `same-version-admission-or-version-closeout`
+- next_action: `return-to-promotion-review`
+- resume_gate: `version-plan-review`
+- promotion_review_result: `pending`
 - review_subject_id: `none`
 - review_subject_classification: `none`
 - proposed_queue_id: `none`
@@ -24,11 +24,11 @@
 - intake_feedback_mode: `none`
 - closure_review_subject: `queue.script-editor-city-building-structure-convergence`
 - closure_review_status: `routed`
-- residue_candidate_id: `item.script-editor-city-building-placement-resolver-convergence`
+- residue_candidate_id: `item.script-editor-dialogue-story-structure-convergence`
 - residue_candidate_family: `cross-family`
-- routing_basis: `queue.script-editor-city-building-structure-convergence closed the covered building/house structure contract; city-local placement ids, entry ownership, override layering, and centralized resolver seams remain outside that slice.`
-- next_lawful_queue_recommendation: `queue.script-editor-city-building-placement-resolver-convergence`
-- auto_admission_ready: `true`
+- routing_basis: `queue.script-editor-city-building-placement-resolver-convergence closed after landing a bounded shared resolver over existing runtime families; remaining placement schema, override layering, dialogue inheritance, and broader consumer migration are cross-family residue, and dialogue inheritance depends first on runtime-consumable dialogue/story structures.`
+- next_lawful_queue_recommendation: `queue.script-editor-dialogue-story-structure-convergence`
+- auto_admission_ready: `false`
 - blocked_by: []
 - candidate_queue_ids:
   - `queue.script-editor-project-cache-save-export-preview`
@@ -93,7 +93,7 @@
 | `item.script-editor-condition-runtime-evaluation-convergence` | `queue-candidate` | `queue.script-editor-condition-runtime-evaluation-convergence` | `admitted + queue closed with cross-family residue` | `only if fresh evidence proves the bounded event condition runtime evaluation/export slice regressed` | `Closed after supported event condition groups export into runtime EventConditionNode arrays and trigger selection evaluates the exported conditions; broader city/building/story/scenario condition consumption was routed as cross-family residue.` |
 | `item.script-editor-city-building-entry-and-npc-authoring-priority` | `queue-candidate` | `queue.script-editor-city-building-entry-and-npc-authoring-priority` | `admitted + queue closed` | `only if fresh evidence proves the bounded priority materialization export regressed` | `Closed after runtime export materialized priority city/building entry, NPC pool, house binding, and access refusal runtime families from existing authoring fields while preserving explicit imported records.` |
 | `item.script-editor-city-building-structure-convergence` | `queue-candidate` | `queue.script-editor-city-building-structure-convergence` | `admitted + queue closed with cross-family residue` | `only if fresh evidence proves the runtime-house-compatible building contract regressed` | `Closed after ScriptEditorBuildingRecord explicitly owned covered HouseDefinition fields and runtime import normalized houses into the editor building contract. Placement/resolver residue was routed to version review.` |
-| `item.script-editor-city-building-placement-resolver-convergence` | `queue-candidate` | `queue.script-editor-city-building-placement-resolver-convergence` | `admitted + active` | `only if fresh evidence proves another prerequisite blocks baseline before any production code changes` | `Admitted after city/building structure convergence closed and routed city-local placement ids, entry ownership, override layering, and centralized resolver seams back to version review.` |
+| `item.script-editor-city-building-placement-resolver-convergence` | `queue-candidate` | `queue.script-editor-city-building-placement-resolver-convergence` | `admitted + queue closed with cross-family residue` | `only if fresh evidence proves the bounded resolver API regressed` | `Closed after landing the shared city-building placement resolver API over existing runtime families; persistent placement schema migration, override layering, dialogue inheritance, and broader consumer migration were routed back to version review.` |
 | `item.script-editor-scenario-launch-policy-authoring` | `queue-candidate` | `queue.script-editor-scenario-launch-policy-authoring` | `candidate-recorded` | `when startup policy authoring is the smallest blocker to editor-exported packs launching without manual JSON patching` | `Owns character selection vs fixed startup, initial map/city/building/view, and entry event timing authoring.` |
 | `item.script-editor-playable-minigame-binding-convergence` | `queue-candidate` | `queue.script-editor-playable-minigame-binding-convergence` | `candidate-recorded` | `only after playable governance is loaded and the queue is admitted` | `Requires playable governance before shared playable runtime or house-hosted playable integration changes.` |
 | `item.script-editor-end-to-end-authoring-runtime-flow-validation` | `queue-candidate` | `queue.script-editor-end-to-end-authoring-runtime-flow-validation` | `candidate-recorded-final` | `after required data, runtime handoff, and persistence queues provide enough coverage to prove closeout` | `Final validation queue, not a first implementation slice.` |
@@ -114,7 +114,7 @@
 | `queue.script-editor-schema-reference-and-migration-freeze` | `candidate` | `Before retiring legacy structures or when multiple queues need one replacement reference.` | `Owns formal schema reference, legacy supersession, migration adapters, and schema versions.` |
 | `queue.script-editor-city-building-entry-and-npc-authoring-priority` | `done` | `Already completed; do not reopen except by explicit governance record.` | `Closed after bounded runtime-family materialization export covered priority city/building entry, NPC pool, house binding, and access refusal output from existing authoring fields.` |
 | `queue.script-editor-city-building-structure-convergence` | `done` | `Already completed; do not reopen except by explicit governance record.` | `Closed after runtime-house-compatible building structure contract hardening landed; placement/resolver residue returned to version review.` |
-| `queue.script-editor-city-building-placement-resolver-convergence` | `active` | `Before runtime views manually stitch city, building, placement, NPC, dialogue, and condition data.` | `Owns city-local placements and centralized resolver seams. Active task is boundary-baseline-reconcile.` |
+| `queue.script-editor-city-building-placement-resolver-convergence` | `done` | `Already completed; do not reopen except by explicit governance record.` | `Closed after bounded shared resolver API verification; persistent placement schema, overrides, dialogue inheritance, and broader consumer migration remain cross-family residue.` |
 | `queue.script-editor-dialogue-story-structure-convergence` | `candidate` | `When narrative records can move from authoring/export lowering into runtime-consumable structures.` | `Owns dialogue/story record shape and references.` |
 | `queue.script-editor-dialogue-story-runtime-handoff-convergence` | `candidate` | `After structure convergence exposes runtime handoff residue.` | `Owns dialogue/story progression runtime handoff.` |
 | `queue.script-editor-condition-authoring-contract-freeze` | `done` | `Already completed; do not reopen except by explicit governance record.` | `Closed after the typed authoring contract slice landed and routed runtime evaluation residue back to promotion review.` |
@@ -128,21 +128,22 @@
 | `queue.script-editor-legacy-structure-supersession-review` | `candidate` | `Before deleting or invalidating previously frozen structures.` | `Records retained, migrated, adapter-supported, or retired structure dispositions.` |
 | `queue.script-editor-end-to-end-authoring-runtime-flow-validation` | `candidate-final` | `After required data/runtime/persistence queues provide enough coverage to prove version acceptance.` | `Final closeout validation queue.` |
 
-### Current Queue Activation
+### Current Promotion Review
 
-- `queue.script-editor-city-building-placement-resolver-convergence`
-- Active task:
-  - `task.script-editor-city-building-placement-resolver-convergence.queue-closeout-and-handoff`
-- Activation basis:
-  - `queue.script-editor-city-building-structure-convergence closed after runtime-house-compatible building contract hardening landed with verification; city-local placement/resolver residue was routed back to version review.`
-  - `queue.script-editor-city-building-placement-resolver-convergence is admitted because the target spec requires city-local placements, placement ids, override layering, NPC assignment ownership, access rules, dialogue inheritance, and centralized resolver seams before runtime views keep manually stitching the covered runtime families.`
+- Active queue:
+  - `none`
+- Review subject:
+  - `queue.script-editor-dialogue-story-structure-convergence`
+- Review basis:
+  - `queue.script-editor-city-building-placement-resolver-convergence closed after the bounded resolver API landed and verified.`
+  - `Remaining dialogue inheritance and broader resolver consumer migration cannot be completed honestly until dialogue/story records are runtime-consumable structures rather than authoring/export-only lowering residue.`
 
 ### Version Boundary Record
 
 - `This version governs authoring/data-structure convergence after runtime-pack-unification closeout.`
 - `It must consume the closed runtime-pack export/import/startup truth as baseline evidence rather than reopening it as a compatibility patch surface.`
 - `It may supersede previously frozen script-editor structures only through explicit schema/migration/supersession records.`
-- `It has admitted queue.script-editor-city-building-placement-resolver-convergence after closing runtime-house-compatible building structure hardening; execution resumes from the placement/resolver boundary baseline task.`
+- `It has closed queue.script-editor-city-building-placement-resolver-convergence after landing the bounded resolver API; execution has returned to promotion review with dialogue/story structure convergence recommended next.`
 
 ### Queue Admission Startup Rules
 
@@ -239,3 +240,4 @@
 - `2026-07-15: admission review promoted queue.script-editor-city-building-placement-resolver-convergence as the single active queue because city-local placements, entry ownership, override layering, NPC assignment ownership, and centralized resolver seams are the next required city/building convergence surface. The first live task is boundary-baseline-reconcile.`
 - `2026-07-15: queue.script-editor-city-building-placement-resolver-convergence completed boundary-baseline-reconcile after selecting a bounded shared resolver API over existing cityEntries, houses, cityNpcPools, and houseAccessRefusalRules as the smallest lawful implementation slice; the active task is now resolver-contract-implementation.`
 - `2026-07-15: queue.script-editor-city-building-placement-resolver-convergence completed resolver-contract-implementation after landing the shared city-building placement resolver API with access, NPC, view, and fail-closed coverage; the active task is now queue-closeout-and-handoff.`
+- `2026-07-15: queue.script-editor-city-building-placement-resolver-convergence closed after verification; persistent placement schema migration, richer override layering, dialogue inheritance, and broader runtime/preview consumer migration were routed as cross-family residue to version promotion review, with queue.script-editor-dialogue-story-structure-convergence recommended next.`
