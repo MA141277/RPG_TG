@@ -7,17 +7,17 @@
 - blueprint_version: `2026.07`
 - governance_last_synced_at: `2026-07-15`
 - governance_sync_source: `docs/blueprints/blueprint.md`
-- queue_status: `active`
+- queue_status: `done`
 - queue_class: `required`
-- active_task: `task.script-editor-event-structure-convergence.boundary-baseline-reconcile`
-- next_task: `task.script-editor-event-structure-convergence.event-structure-contract-implementation`
-- closeout_status: `not-started`
-- execution_closeout_status: `partial`
+- active_task: `none`
+- next_task: `none`
+- closeout_status: `done`
+- execution_closeout_status: `done`
 - topic_closure_status: `open-residue`
-- closure_basis: `none`
-- residue_remaining: `unknown`
-- residue_family: `none`
-- residue_routing_status: `none`
+- closure_basis: `Boundary baseline proved the first honest event structure implementation depends on freezing the editor condition authoring contract before expanding event condition lowering or non-dialogue destinations.`
+- residue_remaining: `yes`
+- residue_family: `cross-family`
+- residue_routing_status: `needs-version-review`
 - next_family_candidate: `none`
 - auto_continue_eligible: `false`
 - next_effect: `none`
@@ -58,9 +58,9 @@
 
 - queue_goal: `Define the smallest lawful event structure convergence slice and prove whether condition authoring/runtime evaluation or dialogue/story structure must precede event activation migration.`
 - task_count: `3`
-- completed_task_count: `0`
-- remaining_task_count: `3`
-- active_task_summary: `Reconcile current script-editor event authoring/export/runtime paths, event definitions, scene handoff, condition/effect prerequisites, and the smallest implementation boundary.`
+- completed_task_count: `2`
+- remaining_task_count: `1`
+- active_task_summary: `Queue closed at baseline after routing prerequisite condition authoring contract freeze back to version review.`
 - task_briefs:
   - `task.script-editor-event-structure-convergence.boundary-baseline-reconcile: inventory current event records, export blockers, runtime event contracts, and prerequisite queues.`
   - `task.script-editor-event-structure-convergence.event-structure-contract-implementation: implement the selected bounded event structure slice if baseline proves it is lawful.`
@@ -98,9 +98,9 @@
 
 | Task ID | State | Summary | Depends On | Notes |
 | --- | --- | --- | --- | --- |
-| `task.script-editor-event-structure-convergence.boundary-baseline-reconcile` | `active` | `Inventory current event authoring/export/runtime structures and decide whether this queue can own the first event structure slice.` | `none` | `Must stop if condition authoring/runtime evaluation or dialogue/story structure is the lawful prerequisite.` |
-| `task.script-editor-event-structure-convergence.event-structure-contract-implementation` | `queued` | `Implement the bounded event structure convergence slice selected by baseline reconciliation.` | `task.script-editor-event-structure-convergence.boundary-baseline-reconcile` | `Must not become a broad event/story/task-chain rewrite.` |
-| `task.script-editor-event-structure-convergence.queue-closeout-and-handoff` | `queued` | `Verify the queue, classify residue, and synchronize Blueprint truth.` | `task.script-editor-event-structure-convergence.event-structure-contract-implementation` | `Must not close without event structure verification or explicit prerequisite routing.`
+| `task.script-editor-event-structure-convergence.boundary-baseline-reconcile` | `done` | `Inventoried current event authoring/export/runtime structures and decided the first event structure implementation needs a prerequisite condition authoring contract freeze.` | `none` | `Stopped before production code because condition authoring/runtime shape is the lawful prerequisite.` |
+| `task.script-editor-event-structure-convergence.event-structure-contract-implementation` | `queued` | `Implement the bounded event structure convergence slice selected by baseline reconciliation.` | `task.script-editor-event-structure-convergence.boundary-baseline-reconcile` | `Not started; routed to prerequisite queue first.` |
+| `task.script-editor-event-structure-convergence.queue-closeout-and-handoff` | `done` | `Verified baseline, classified residue, and returned control to version review.` | `task.script-editor-event-structure-convergence.boundary-baseline-reconcile` | `Closed with cross-family prerequisite residue routed to condition authoring contract freeze review.`
 
 ### Task Definitions
 
@@ -109,7 +109,7 @@
 ##### Control Block
 
 - task_id: `task.script-editor-event-structure-convergence.boundary-baseline-reconcile`
-- state: `active`
+- state: `done`
 - task_kind: `execution`
 - scope:
   - `src/domain/event.ts`
@@ -158,7 +158,7 @@
 - task_brief:
   - `Find the smallest honest event structure boundary before changing runtime export or event activation.`
 - task_outcome_summary:
-  - `Pending baseline reconciliation.`
+  - `Done. Runtime already has EventDefinition, trigger evaluation, candidate selection, condition evaluation, activation, and scene handoff seams. Runtime-pack export already has a minimal editor-event lowering path, but it supports only dialogue destinations, manual/city-enter/building-enter triggers, and empty conditionGroups. Script-editor event conditionGroups remain stringly typed authoring records, while shared condition groups are task-oriented and do not yet define an event-facing condition authoring contract. Non-dialogue destinations depend on dialogue/story, city/building, or playable handoff queues.`
 - Purpose:
   - `Avoid exporting event records that appear supported while runtime still depends on private dialogue/scene lowering or unsupported condition/effect shapes.`
 - Failure mode:
@@ -167,6 +167,9 @@
 ##### Progress Log
 
 - `2026-07-15`: `Queue admitted from cross-family residue after queue.script-editor-event-effect-activation-convergence closed the task/shared-rule mutation effect slice and routed broader event/scene effect convergence to version review.`
+- `2026-07-15`: `Baseline inspected src/domain/event.ts, src/domain/action.ts, src/domain/script-editor-project.ts, src/application/events/event-runner.ts, src/application/events/trigger-evaluator.ts, src/core/runtime/event-runtime.ts, src/core/runtime/event-condition-evaluator.ts, src/core/runtime/event-activation.ts, src/core/runtime/scene-runtime.ts, src/application/scene/scene-runner.ts, src/application/scene/choice-resolver.ts, src/application/script-editor/runtime-pack-export.ts, src/application/script-editor/shared-rule-compiler.ts, and tests/robustness.test.cjs.`
+- `2026-07-15`: `Current inventory: EventDefinition already carries trigger, conditions, participants, entrySceneId, nextEventId, and tags; runStoryTriggerRuntime can select and start triggered events; runtime-pack export lowers minimal editor events only when destination targets a lowered dialogue scene and conditionGroups are empty.`
+- `2026-07-15`: `Stop decision: event structure implementation should not widen by inventing condition authoring rules in this queue. The next lawful prerequisite is queue.script-editor-condition-authoring-contract-freeze so event conditions can be typed before event structure migration expands beyond the existing empty-condition dialogue-destination slice.`
 
 #### `task.script-editor-event-structure-convergence.event-structure-contract-implementation`
 
@@ -202,7 +205,7 @@
 - task_brief:
   - `Implement the event structure slice selected by baseline reconciliation.`
 - task_outcome_summary:
-  - `Pending implementation.`
+  - `Not started. Baseline routed to prerequisite condition authoring contract freeze before event structure implementation.`
 - Purpose:
   - `Make covered editor-authored event structures runtime-consumable without private export-only shadows.`
 - Failure mode:
@@ -217,7 +220,7 @@
 ##### Control Block
 
 - task_id: `task.script-editor-event-structure-convergence.queue-closeout-and-handoff`
-- state: `queued`
+- state: `done`
 - task_kind: `execution`
 - scope:
   - `docs/blueprints/project-progress.md`
@@ -247,7 +250,7 @@
 - task_brief:
   - `Close or route the event structure convergence queue after verified implementation.`
 - task_outcome_summary:
-  - `Pending implementation and verification.`
+  - `Done. Baseline verification and residue classification completed; queue returned control to version review with cross-family prerequisite residue.`
 - Purpose:
   - `Keep event structure ownership explicit before condition runtime, dialogue/story handoff, branching event, or final validation queues continue.`
 - Failure mode:
@@ -256,6 +259,7 @@
 ##### Progress Log
 
 - `2026-07-15`: `Queued behind event-structure-contract-implementation.`
+- `2026-07-15`: `Closed after baseline without production changes because condition authoring contract freeze is the lawful prerequisite for expanding event condition lowering.`
 
 ### Historical Handoff Note
 
