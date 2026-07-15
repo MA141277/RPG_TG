@@ -21,9 +21,9 @@
 - next_family_candidate: `none`
 - auto_continue_eligible: `false`
 - next_effect: `none`
-- sync_status: `failed`
+- sync_status: `success`
 - sync_scope: `baseline-push`
-- sync_summary: `Commit ff369f7 was pushed to origin/mod-first-dev for queue admission, but the follow-up sync-record commit could not be pushed because HTTPS connections to github.com:443 timed out after repeated retry attempts.`
+- sync_summary: `Commit c1e58c6 was pushed to origin/mod-first-dev, carrying unified field mapping baseline reconciliation and active-task promotion.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
