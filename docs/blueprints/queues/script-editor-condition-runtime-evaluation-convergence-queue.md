@@ -21,9 +21,9 @@
 - next_family_candidate: `none`
 - auto_continue_eligible: `false`
 - next_effect: `return-to-version-review`
-- sync_status: `pending`
+- sync_status: `failed`
 - sync_scope: `branch-push`
-- sync_summary: `Local queue implementation and closeout are recorded; repository sync has not yet been attempted for the closeout commit.`
+- sync_summary: `Local activation, implementation, and closeout commits through d57b30c were created, but push to origin/mod-first-dev failed because the GitHub HTTPS connection closed abruptly during transfer.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
