@@ -21,9 +21,9 @@
 - next_family_candidate: `none`
 - auto_continue_eligible: `false`
 - next_effect: `none`
-- sync_status: `failed`
+- sync_status: `success`
 - sync_scope: `branch-push`
-- sync_summary: `Queue admission commit 3b6bbe4 is local, but three fresh push attempts failed because github.com port 443 was unreachable; this repository-sync failure is not an execution blocker.`
+- sync_summary: `Commit ac5a0d2 was pushed to origin/mod-first-dev, carrying queue admission and the active boundary baseline task.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
@@ -70,7 +70,7 @@
 
 - `The fixed operator receipt must source 褰撳墠鎵ц闃熷垪 from queue_id.`
 - `The fixed operator receipt must source 褰撳墠浠诲姟 from active_task.`
-- `The fixed operator receipt must source 褰撳墠闃熷垪鐩�?from queue_goal.`
+- `The fixed operator receipt must source 褰撳墠闃熷垪鐩爣 from queue_goal.`
 - `Queue Snapshot exists to support concise operator visibility without exposing Blueprint internal ranking or admission internals by default.`
 
 ### Closeout Judgement Rule
