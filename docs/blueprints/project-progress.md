@@ -36,13 +36,13 @@
 - `This file only states the current resume entry and downstream pointer set.`
 - `Admission history, queue closeout history, and review narrative must stay in the version plan, queue docs, or docs/change-log.md rather than living here as competing current-state prose.`
 - `The pointed version is now the open successor version for script-editor authoring/data-structure unification.`
-- `The latest governance action closed queue.script-editor-end-to-end-authoring-runtime-flow-validation after final validation passed.`
-- `Resume from the version plan for explicit closeout review; the version remains open until human closeout confirmation is recorded.`
+- `The latest governance action closed target.script-editor-authoring-data-structure-unification after final validation passed and explicit closeout continuation was received.`
+- `Resume from the closed version plan until a fresh version or intake review is created.`
 
 ### Historical References
 
 - `docs/change-log.md` stores the human-readable cross-session history.`
-- `docs/blueprints/plans/2026-07-15-script-editor-authoring-data-structure-unification-target-plan.md` stores the current authoring/data-structure unification version's activation truth, candidate record, promotion ledger, and pending admission subject.
+- `docs/blueprints/plans/2026-07-15-script-editor-authoring-data-structure-unification-target-plan.md` stores the closed authoring/data-structure unification version's activation truth, candidate record, promotion ledger, queue closeout history, and version closeout truth.
 - `docs/blueprints/queues/script-editor-project-cache-save-export-preview-queue.md` stores the closed first project cache/save/export/preview execution truth.
 - `docs/blueprints/queues/script-editor-project-cache-save-export-preview-continuation-queue.md` stores the closed continuation truth for durable save-location recording and stale continue gating.
 - `docs/blueprints/queues/script-editor-durable-package-workflow-continuation-queue.md` stores the closed continuation truth for package skeleton/imported edit-in-place/runtime preview-from-disk semantics.

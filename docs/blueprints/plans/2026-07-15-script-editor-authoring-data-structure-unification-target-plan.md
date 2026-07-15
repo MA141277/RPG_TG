@@ -4,14 +4,14 @@
 
 - document_role: `version-governor`
 - version_id: `target.script-editor-authoring-data-structure-unification`
-- version_status: `open`
-- active_phase: `phase.closeout-review`
+- version_status: `done`
+- active_phase: `phase.version-closeout`
 - active_queue: `none`
-- decision_state: `version-closeout-review`
+- decision_state: `idle-open`
 - next_decision: `version-closeout`
 - next_action: `write-version-closeout`
-- resume_gate: `version-closeout-review`
-- promotion_review_result: `none`
+- resume_gate: `closed-version-record`
+- promotion_review_result: `closeout`
 - review_subject_id: `none`
 - review_subject_classification: `none`
 - proposed_queue_id: `none`
@@ -26,7 +26,7 @@
 - closure_review_status: `routed`
 - residue_candidate_id: `none`
 - residue_candidate_family: `none`
-- routing_basis: `queue.script-editor-end-to-end-authoring-runtime-flow-validation closed after final validation passed with no blocking covered-path residue; the version is open and awaiting explicit human closeout confirmation.`
+- routing_basis: `queue.script-editor-end-to-end-authoring-runtime-flow-validation closed after final validation passed with no blocking covered-path residue; explicit human closeout confirmation then closed the version as done.`
 - next_lawful_queue_recommendation: `none`
 - auto_admission_ready: `false`
 - blocked_by: []
@@ -159,7 +159,9 @@
 - `This version governs authoring/data-structure convergence after runtime-pack-unification closeout.`
 - `It must consume the closed runtime-pack export/import/startup truth as baseline evidence rather than reopening it as a compatibility patch surface.`
 - `It may supersede previously frozen script-editor structures only through explicit schema/migration/supersession records.`
-- `It closed queue.script-editor-end-to-end-authoring-runtime-flow-validation after final validation passed; the version now awaits explicit human closeout confirmation and remains open until that confirmation is recorded.`
+- `It closed queue.script-editor-end-to-end-authoring-runtime-flow-validation after final validation passed and then closed the version after explicit closeout continuation.`
+- `Closeout confirmation: explicit human confirmation to continue Blueprint closeout was received after the required-final validation queue closed with no blocking residue, so target.script-editor-authoring-data-structure-unification is now done historical evidence.`
+- `Future routing: no same-version queue may be admitted after this closeout; fresh script-editor work must enter a new version or fresh intake review.`
 
 ### Queue Admission Startup Rules
 
@@ -299,3 +301,4 @@
 - `2026-07-16: queue.script-editor-playable-minigame-binding-convergence closed with no same-family residue after verification; the version returned to promotion review with queue.script-editor-end-to-end-authoring-runtime-flow-validation recommended next unless fresh evidence proves status-overlay generalization review must precede it.`
 - `2026-07-16: promotion review admitted queue.script-editor-end-to-end-authoring-runtime-flow-validation as the single active required-final queue because required data/runtime/persistence queues are closed and status-overlay generalization remains review-only without fresh prerequisite evidence. The first live task is validation-baseline-reconcile.`
 - `2026-07-16: queue.script-editor-end-to-end-authoring-runtime-flow-validation closed after final validation passed with no blocking residue inside the covered happy path. The version is now in explicit closeout review; version_status remains open until human closeout confirmation is recorded.`
+- `2026-07-16: explicit closeout continuation then closed target.script-editor-authoring-data-structure-unification as done after final validation passed, every recorded same-version queue was done or review-only without prerequisite evidence, active_queue was none, and no lawful same-version candidate queue remained to admit.`
