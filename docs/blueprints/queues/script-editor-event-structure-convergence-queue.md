@@ -21,9 +21,9 @@
 - next_family_candidate: `none`
 - auto_continue_eligible: `false`
 - next_effect: `none`
-- sync_status: `pending`
-- sync_scope: `none`
-- sync_summary: `No repository sync has run for this newly admitted queue yet.`
+- sync_status: `failed`
+- sync_scope: `branch-push`
+- sync_summary: `Local activation commit 6620ca2 was created, but three push attempts to origin/mod-first-dev failed on GitHub connectivity. This sync failure is repository-local only and does not block queue execution.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
