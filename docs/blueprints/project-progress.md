@@ -5,8 +5,8 @@
 - entry_id: `project-progress.rpg-tg`
 - active_blueprint: `blueprint.rpg-tg`
 - active_version: `target.script-editor-authoring-data-structure-unification`
-- has_active_queue: `true`
-- next_file: `docs/blueprints/queues/script-editor-schema-reference-and-migration-freeze-queue.md`
+- has_active_queue: `false`
+- next_file: `docs/blueprints/plans/2026-07-15-script-editor-authoring-data-structure-unification-target-plan.md`
 - entry_action: `open-next-file`
 
 ## Human Context
@@ -29,15 +29,15 @@
 - Current Version Plan:
   - `docs/blueprints/plans/2026-07-15-script-editor-authoring-data-structure-unification-target-plan.md`
 - Current Active Queue:
-  - `docs/blueprints/queues/script-editor-schema-reference-and-migration-freeze-queue.md`
+  - `none`
 
 ### Live Entry Guardrails
 
 - `This file only states the current resume entry and downstream pointer set.`
 - `Admission history, queue closeout history, and review narrative must stay in the version plan, queue docs, or docs/change-log.md rather than living here as competing current-state prose.`
 - `The pointed version is now the open successor version for script-editor authoring/data-structure unification.`
-- `The latest governance action admitted queue.script-editor-schema-reference-and-migration-freeze after scenario launch policy authoring closed with no same-family residue.`
-- `Resume from the active queue document and its queue-closeout-and-handoff task.`
+- `The latest governance action closed queue.script-editor-schema-reference-and-migration-freeze with cross-family legacy supersession residue routed back to version review.`
+- `Resume from the version plan promotion review because there is no active queue.`
 
 ### Historical References
 

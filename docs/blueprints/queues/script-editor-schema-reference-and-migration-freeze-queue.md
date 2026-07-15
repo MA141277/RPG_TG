@@ -7,23 +7,23 @@
 - blueprint_version: `2026.07`
 - governance_last_synced_at: `2026-07-16`
 - governance_sync_source: `docs/blueprints/blueprint.md`
-- queue_status: `active`
+- queue_status: `done`
 - queue_class: `required`
-- active_task: `task.script-editor-schema-reference-and-migration-freeze.queue-closeout-and-handoff`
+- active_task: `none`
 - next_task: `none`
-- closeout_status: `in-progress`
-- execution_closeout_status: `partial`
+- closeout_status: `done`
+- execution_closeout_status: `done`
 - topic_closure_status: `open-residue`
-- closure_basis: `Queue admitted from version promotion review; no execution closeout has been performed yet.`
+- closure_basis: `The bounded schema reference freeze slice landed and passed verification: script-editor project and runtime-pack schemaVersion 1 references are centralized, and project save/load plus runtime import/export consume them. Legacy structure deletion, supersession disposition, and any concrete non-v1 migration adapters remain outside this bounded queue and are routed to version review through the already recorded legacy-structure-supersession-review candidate.`
 - residue_remaining: `yes`
-- residue_family: `none`
-- residue_routing_status: `none`
-- next_family_candidate: `none`
+- residue_family: `cross-family`
+- residue_routing_status: `needs-version-review`
+- next_family_candidate: `queue.script-editor-legacy-structure-supersession-review`
 - auto_continue_eligible: `false`
 - next_effect: `none`
 - sync_status: `pending`
 - sync_scope: `branch-push`
-- sync_summary: `Queue admission and activation are not yet synchronized to origin/mod-first-dev.`
+- sync_summary: `Implementation commit ec95a75 pushed to origin/mod-first-dev after the schema reference slice landed and advanced this queue to closeout; closeout repository sync is pending.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
@@ -56,9 +56,9 @@
 
 - queue_goal: `Freeze the durable script-editor schema reference, migration adapter boundary, and versioning rules needed before legacy supersession and final validation.`
 - task_count: `3`
-- completed_task_count: `2`
-- remaining_task_count: `1`
-- active_task_summary: `Verify, classify residue, and return control to version review.`
+- completed_task_count: `3`
+- remaining_task_count: `0`
+- active_task_summary: `Queue closed after verified schema reference freeze with cross-family legacy supersession residue routed to version review.`
 - task_briefs:
   - `task.script-editor-schema-reference-and-migration-freeze.boundary-baseline-reconcile: inventory current schemaVersion, project definition, import/export/save migration, and legacy-shape references before implementation.`
   - `task.script-editor-schema-reference-and-migration-freeze.schema-reference-freeze: implement the selected schema reference and migration-boundary slice with tests.`
@@ -104,7 +104,7 @@
 | --- | --- | --- | --- | --- |
 | `task.script-editor-schema-reference-and-migration-freeze.boundary-baseline-reconcile` | `done` | `Inventoried schema/version/migration seams and selected centralized schema reference plus supported-version migration-boundary helpers as the smallest lawful freeze slice.` | `none` | `No production code changed during baseline.` |
 | `task.script-editor-schema-reference-and-migration-freeze.schema-reference-freeze` | `done` | `Centralized project/runtime pack schemaVersion references and made save/load/import/export consume them with coverage.` | `task.script-editor-schema-reference-and-migration-freeze.boundary-baseline-reconcile` | `Legacy deletion and compatibility-only masking stayed out of scope.` |
-| `task.script-editor-schema-reference-and-migration-freeze.queue-closeout-and-handoff` | `active` | `Verify, classify residue, and return control to version review.` | `task.script-editor-schema-reference-and-migration-freeze.schema-reference-freeze` | `Does not infer version closeout from this queue.` |
+| `task.script-editor-schema-reference-and-migration-freeze.queue-closeout-and-handoff` | `done` | `Verified, classified cross-family legacy supersession residue, and returned control to version review.` | `task.script-editor-schema-reference-and-migration-freeze.schema-reference-freeze` | `Does not infer version closeout from this queue.` |
 
 ### Task Definitions
 
@@ -218,7 +218,7 @@
 ##### Control Block
 
 - task_id: `task.script-editor-schema-reference-and-migration-freeze.queue-closeout-and-handoff`
-- state: `active`
+- state: `done`
 - task_kind: `decision-dispatch`
 - scope:
   - `docs/blueprints/queues/script-editor-schema-reference-and-migration-freeze-queue.md`
@@ -248,7 +248,7 @@
 - task_brief:
   - `Close or route the schema reference queue after verified implementation.`
 - task_outcome_summary:
-  - `Pending closeout.`
+  - `Completed after verification passed and cross-family legacy structure supersession residue was routed back to version review.`
 - Purpose:
   - `Return control to version review without hiding schema/migration residue.`
 - Failure mode:
@@ -276,3 +276,4 @@
 - `2026-07-16`: `Promotion review admitted queue.script-editor-schema-reference-and-migration-freeze as the single active queue because legacy supersession and final validation need an explicit schema and migration boundary first. The first live task is boundary-baseline-reconcile.`
 - `2026-07-16`: `Boundary baseline completed after inspecting src/domain/script-editor-project.ts, editor-project-loader/save, runtime-pack-import/export, field-mapping, and robustness tests. Current project and runtime pack schemaVersion values are all version 1 but are scattered across type definitions, parsers, serializers, import, and export. The selected smallest implementation slice is a centralized schema reference plus supported-version/migration-boundary helpers consumed by those seams; legacy structure deletion and playable/minigame bindings remain out of scope.`
 - `2026-07-16`: `Schema-reference-freeze implementation completed with TDD. Added centralized SCRIPT_EDITOR_PROJECT_SCHEMA_VERSION and SCRIPT_EDITOR_RUNTIME_PACK_SCHEMA_VERSION references, updated project loader/save and runtime pack import/export to consume them, and added robustness coverage proving project save/runtime export versions plus runtime import schema boundary consumption. Verification passed: targeted RED/GREEN test, npm run typecheck, npm test, npm run build, npm run lint:blueprints, npm run lint:plans, npm run blueprint:governance:check, and git diff --check. The active task is now queue-closeout-and-handoff.`
+- `2026-07-16`: `Queue closeout completed after the verified schema reference slice landed and was pushed in ec95a75. No same-family schema reference residue remains inside the bounded slice; legacy structure deletion, supersession disposition, and concrete future-version migration adapters are cross-family residue for version review, with queue.script-editor-legacy-structure-supersession-review as the next lawful candidate.`
