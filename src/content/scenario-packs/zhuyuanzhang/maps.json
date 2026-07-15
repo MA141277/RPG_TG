@@ -7696,6 +7696,14 @@
         "imageUrl": "./assets/maps/campaign-sand-texture.png"
       },
       {
+        "id": "map_rock_texture",
+        "label": "Campaign rock texture",
+        "width": 1254,
+        "height": 1254,
+        "description": "rock.png",
+        "imageUrl": "./assets/maps/campaign-rock-texture.png"
+      },
+      {
         "id": "map_water_noise",
         "label": "Water noise texture",
         "width": 512,
@@ -7737,6 +7745,7 @@
     },
     "primaryImageUrl": "./assets/maps/HD.png",
     "regionOverlayImageUrl": "./assets/maps/yuanmo-map-regions.png",
-    "campaignHexGridUrl": "./assets/maps/yuanmo-campaign-hex-grid.json"
+    "campaignHexGridUrl": "./assets/maps/yuanmo-campaign-hex-grid.json",
+    "campaignVegetationRulesUrl": "./assets/maps/yuanmo-campaign-vegetation-rules.json"
   }
 ]

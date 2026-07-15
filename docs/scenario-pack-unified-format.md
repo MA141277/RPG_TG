@@ -341,11 +341,34 @@ The hex grid file is the campaign map semantic data source for per-hex gameplay 
 
 - `land`: whether the hex is passable land for the current land/water model.
 - `terrain`: coarse terrain category for later rules; newly generated grids initialize this to `平原`.
-- `environment`: local environment category for later rules; newly generated grids initialize this to `草地`.
+- `environment`: local environment category for later rules; newly generated grids initialize this to `草地`, then optional samplers may overwrite selected cells, for example to `森林`.
 
 The file must also keep reproducibility metadata under `source`: the source raster layer, source image path, sampler method, UV-to-pixel formula, water material rule, and land rule. For the current Yuanmo campaign map, `tools/generate-campaign-hex-grid.mjs` samples the `map_ground_types` layer at each hex center and writes `assets/maps/yuanmo-campaign-hex-grid.json`.
 
 Runtime renderers must prefer `campaignHexGridUrl` over direct raster resampling for land/water semantics. Direct `map_ground_types` sampling is only a legacy fallback and a generation input; visual material layers can still use the original images for color and shader effects.
+
+Hex centers outside terrain UV `[0, 1]` must be treated as water / non-land, even if a nearest clamped source pixel would be land. This keeps the rendered map edge from leaking repeated edge terrain into visible border cells.
+
+If `source.environmentSampler` is present, it records extra environment extraction rules. The current supported sampler is `hex-multi-point-color-palette`: it samples several points inside the hex from a source raster layer, matches exact RGB colors against a palette, and writes the target `environment` only when the minimum hit count is reached. This is intended for stable, designer-reviewable extraction such as forest regions from `map_climates`, not for frame-by-frame runtime classification.
+
+### Campaign Map Vegetation Rules
+
+Campaign maps may define `campaignVegetationRulesUrl` on their `maps.json` record. The value must be a pack-relative path to a JSON file using `format: "campaign-vegetation-rules-v1"`.
+
+The vegetation rules file is a visual source of truth for expanding saved hex environments into renderer instances. It must not replace or mutate `campaignHexGridUrl`. The current Yuanmo forest rule uses:
+
+- `environment`: the hex `environment` value that triggers the rule, currently `森林`.
+- `variants`: mesh ids, pack-relative `meshUrl` values, and weights.
+- `density`: far, medium, and near instance count ranges; far density is the zoomed-out visual baseline and must not be omitted unless forests should disappear entirely.
+- `lod`: zoom thresholds and maximum visible instance cap. `mediumMinScale` and `nearMinScale` should be spaced far enough apart that density changes do not pop on adjacent zoom steps.
+- `placement`: inner/outer placement radius, scale range, base world scale, and lift.
+- `avoidance`: marker/player/path visual clearance radii and density multiplier near clearance points.
+- `shader`: ambient/directional strength applied on top of the terrain camera-light model. Vegetation should sit inside the campaign map's muted historic tone rather than using high key lighting. Vegetation is static in the world-map renderer; do not add wind motion unless the map style explicitly changes.
+- `shadow`: opacity, long-axis scale, width scale, camera-light length scale, and lift for the pure visual tree-ground projection. Runtime shadow geometry pins its near end to the tree trunk and rotates the long axis with the same camera-relative light direction as terrain shading; rules should not use fixed world `offsetX/Y` values.
+
+Vegetation mesh files use `format: "campaign-vegetation-mesh-v1"`. They contain baked vertex arrays: `positions`, `normals`, `colors`, and `indices`; colors are derived from OBJ/MTL material `Kd` values and may be tone-mapped by the conversion tool for world-map readability. Runtime renderers load these mesh JSON files and must not parse `.obj` or `.mtl` directly.
+
+Use `tools/convert-campaign-vegetation-obj.mjs` to convert selected source assets from `src/3dasset/obj` into pack vegetation meshes and a rules file. For imported scenario-pack directories, the loader resolves `campaignVegetationRulesUrl` and rewrites each rule `variant.meshUrl` to a loadable object URL, so rules can keep designer-friendly pack-relative paths.
 
 ## Validation Rules
 

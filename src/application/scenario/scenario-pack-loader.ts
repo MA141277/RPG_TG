@@ -269,7 +269,7 @@ async function hydrateScenarioPackManifestFromFiles(
   );
 
   const hydratedFields = Object.fromEntries(resolvedEntries);
-  const resolvedMaps = resolveImportedScenarioPackMapAssetUrls(
+  const resolvedMaps = await resolveImportedScenarioPackMapAssetUrls(
     hydratedFields.maps,
     manifestDirectoryPath,
     indexedFiles
@@ -285,59 +285,137 @@ async function hydrateScenarioPackManifestFromFiles(
   };
 }
 
-function resolveImportedScenarioPackMapAssetUrls(
+async function resolveImportedScenarioPackMapAssetUrls(
   maps: ScenarioPackDefinition["maps"],
   manifestDirectoryPath: string,
   indexedFiles: Record<string, ScenarioPackImportFileEntry>
 ) {
   const assetUrlCache: Record<string, string> = {};
 
-  return maps?.map((mapDefinition) => ({
-    ...mapDefinition,
-    ...(mapDefinition.primaryImageUrl == null
-      ? {}
-      : {
-          primaryImageUrl: resolveImportedScenarioPackAssetUrl(
-            mapDefinition.primaryImageUrl,
-            manifestDirectoryPath,
-            indexedFiles,
-            assetUrlCache
-          ),
-        }),
-    ...(mapDefinition.regionOverlayImageUrl == null
-      ? {}
-      : {
-          regionOverlayImageUrl: resolveImportedScenarioPackAssetUrl(
-            mapDefinition.regionOverlayImageUrl,
-            manifestDirectoryPath,
-            indexedFiles,
-            assetUrlCache
-          ),
-        }),
-    ...(mapDefinition.campaignHexGridUrl == null
-      ? {}
-      : {
-          campaignHexGridUrl: resolveImportedScenarioPackAssetUrl(
-            mapDefinition.campaignHexGridUrl,
-            manifestDirectoryPath,
-            indexedFiles,
-            assetUrlCache
-          ),
-        }),
-    ...(mapDefinition.layers == null
-      ? {}
-      : {
-          layers: mapDefinition.layers.map((layerDefinition) => ({
-            ...layerDefinition,
-            imageUrl: resolveImportedScenarioPackAssetUrl(
-              layerDefinition.imageUrl,
-              manifestDirectoryPath,
+  return maps == null
+    ? undefined
+    : Promise.all(
+        maps.map(async (mapDefinition) => ({
+          ...mapDefinition,
+          ...(mapDefinition.primaryImageUrl == null
+            ? {}
+            : {
+                primaryImageUrl: resolveImportedScenarioPackAssetUrl(
+                  mapDefinition.primaryImageUrl,
+                  manifestDirectoryPath,
+                  indexedFiles,
+                  assetUrlCache
+                ),
+              }),
+          ...(mapDefinition.regionOverlayImageUrl == null
+            ? {}
+            : {
+                regionOverlayImageUrl: resolveImportedScenarioPackAssetUrl(
+                  mapDefinition.regionOverlayImageUrl,
+                  manifestDirectoryPath,
+                  indexedFiles,
+                  assetUrlCache
+                ),
+              }),
+          ...(mapDefinition.campaignHexGridUrl == null
+            ? {}
+            : {
+                campaignHexGridUrl: resolveImportedScenarioPackAssetUrl(
+                  mapDefinition.campaignHexGridUrl,
+                  manifestDirectoryPath,
+                  indexedFiles,
+                  assetUrlCache
+                ),
+              }),
+          ...(mapDefinition.campaignVegetationRulesUrl == null
+            ? {}
+            : {
+                campaignVegetationRulesUrl:
+                  await resolveImportedScenarioPackVegetationRulesUrl(
+                    mapDefinition.campaignVegetationRulesUrl,
+                    manifestDirectoryPath,
+                    indexedFiles,
+                    assetUrlCache
+                  ),
+              }),
+          ...(mapDefinition.layers == null
+            ? {}
+            : {
+                layers: mapDefinition.layers.map((layerDefinition) => ({
+                  ...layerDefinition,
+                  imageUrl: resolveImportedScenarioPackAssetUrl(
+                    layerDefinition.imageUrl,
+                    manifestDirectoryPath,
+                    indexedFiles,
+                    assetUrlCache
+                  ),
+                })),
+              }),
+        }))
+      );
+}
+
+async function resolveImportedScenarioPackVegetationRulesUrl(
+  value: string,
+  manifestDirectoryPath: string,
+  indexedFiles: Record<string, ScenarioPackImportFileEntry>,
+  assetUrlCache: Record<string, string>
+): Promise<string> {
+  if (/^(https?:|file:|blob:|\/)/.test(value)) {
+    return value;
+  }
+
+  const importedFile = resolveScenarioPackImportedFileEntry(
+    indexedFiles,
+    manifestDirectoryPath,
+    value
+  );
+  const cacheKey = `${importedFile.relativePath}#resolved-vegetation`;
+  const cachedAssetUrl = assetUrlCache[cacheKey];
+  if (cachedAssetUrl != null) {
+    return cachedAssetUrl;
+  }
+
+  const rules = JSON.parse(await importedFile.file.text()) as {
+    format?: string;
+    variants?: Array<{ meshUrl?: string } & Record<string, unknown>>;
+  } & Record<string, unknown>;
+  if (
+    rules.format !== "campaign-vegetation-rules-v1" ||
+    !Array.isArray(rules.variants)
+  ) {
+    return resolveImportedScenarioPackAssetUrl(
+      value,
+      manifestDirectoryPath,
+      indexedFiles,
+      assetUrlCache
+    );
+  }
+
+  const rulesDirectoryPath = getScenarioPackImportDirectoryPath(
+    importedFile.relativePath
+  );
+  const resolvedRules = {
+    ...rules,
+    variants: rules.variants.map((variant) => ({
+      ...variant,
+      ...(typeof variant.meshUrl !== "string"
+        ? {}
+        : {
+            meshUrl: resolveImportedScenarioPackAssetUrl(
+              variant.meshUrl,
+              rulesDirectoryPath,
               indexedFiles,
               assetUrlCache
             ),
-          })),
-        }),
-  }));
+          }),
+    })),
+  };
+  const resolvedAssetUrl = URL.createObjectURL(
+    new Blob([JSON.stringify(resolvedRules)], { type: "application/json" })
+  );
+  assetUrlCache[cacheKey] = resolvedAssetUrl;
+  return resolvedAssetUrl;
 }
 
 function resolveImportedScenarioPackAssetUrl(

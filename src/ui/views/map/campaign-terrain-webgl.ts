@@ -3,11 +3,19 @@ import type {
   GridCoordinate,
   HexTravelGrid,
 } from "../../../application/navigation/travel-to-coordinate";
-import type { CampaignHexGridDefinition } from "../../../domain/map";
+import type {
+  CampaignHexGridDefinition,
+  CampaignVegetationMeshDefinition,
+  CampaignVegetationRulesDefinition,
+} from "../../../domain/map";
 import actorFragmentShaderRaw from "./shaders/campaign-actor.frag.glsl?raw";
 import actorVertexShaderRaw from "./shaders/campaign-actor.vert.glsl?raw";
 import terrainFragmentShaderRaw from "./shaders/campaign-terrain.frag.glsl?raw";
 import terrainVertexShaderRaw from "./shaders/campaign-terrain.vert.glsl?raw";
+import vegetationFragmentShaderRaw from "./shaders/campaign-vegetation.frag.glsl?raw";
+import vegetationShadowFragmentShaderRaw from "./shaders/campaign-vegetation-shadow.frag.glsl?raw";
+import vegetationShadowVertexShaderRaw from "./shaders/campaign-vegetation-shadow.vert.glsl?raw";
+import vegetationVertexShaderRaw from "./shaders/campaign-vegetation.vert.glsl?raw";
 
 type CampaignTerrainInput = {
   canvas: HTMLCanvasElement;
@@ -15,8 +23,10 @@ type CampaignTerrainInput = {
   heightUrl: string;
   materialUrl: string;
   campaignHexGridUrl: string | null;
+  campaignVegetationRulesUrl: string | null;
   grassTextureUrl: string | null;
   sandTextureUrl: string | null;
+  rockTextureUrl: string | null;
   waterTextureUrl: string | null;
   renderMode: "terrain" | "actor";
 };
@@ -34,6 +44,72 @@ type ActorMeshData = {
 type CityDepthMeshData = {
   vertices: Float32Array;
   indices: Uint32Array;
+};
+
+type VegetationMeshData = {
+  vertices: Float32Array;
+  indices: Uint32Array;
+  shadowVertices: Float32Array;
+  shadowIndices: Uint32Array;
+  instanceCount: number;
+};
+
+type VegetationMeshAsset = {
+  id: string;
+  positions: Float32Array;
+  normals: Float32Array;
+  colors: Float32Array;
+  indices: Uint32Array;
+  bounds: {
+    min: [number, number, number];
+    max: [number, number, number];
+  };
+};
+
+type CampaignVegetationRulesAsset = CampaignVegetationRulesDefinition & {
+  variants: Array<CampaignVegetationRulesDefinition["variants"][number] & {
+    meshUrl: string;
+  }>;
+};
+
+type CampaignVegetationAsset = {
+  rules: CampaignVegetationRulesAsset;
+  meshesById: Map<string, VegetationMeshAsset>;
+};
+
+type CampaignVegetationCell = {
+  x: number;
+  y: number;
+  u: number;
+  v: number;
+};
+
+type CampaignVegetationAvoidancePoint = {
+  u: number;
+  v: number;
+  radius: number;
+};
+
+type CampaignVegetationVisibleCell = {
+  cell: CampaignVegetationCell;
+  priority: number;
+  screenX: number;
+  screenY: number;
+  targetCount: number;
+};
+
+type CampaignVegetationCellAllocation = {
+  cell: CampaignVegetationCell;
+  count: number;
+};
+
+type CampaignVegetationInstance = {
+  mesh: VegetationMeshAsset;
+  u: number;
+  v: number;
+  rotation: number;
+  scale: number;
+  colorJitter: number;
 };
 
 type CityDepthMeshAsset = {
@@ -129,11 +205,12 @@ type Mat4 = Float32Array;
 const GRID_COLUMNS = 768;
 const GRID_ROWS = 680;
 const HEIGHT_SCALE = 0.0675;
+const CLOUD_REVEAL_REFERENCE_HEIGHT = 0.42;
 const TERRAIN_SCALE = 1.46;
 const CAMERA_TILT_TOP_DOWN_RADIANS = -0.36;
-const CAMERA_TILT_CLOSE_RADIANS = -0.96;
+const CAMERA_TILT_CLOSE_RADIANS = -0.99;
 const CAMERA_TILT_TOP_DOWN_SCALE = 8;
-const CAMERA_TILT_CLOSE_SCALE = 48;
+const CAMERA_TILT_CLOSE_SCALE = 80;
 const CAMERA_BASE_DISTANCE = 20;
 const CAMERA_OFFSET_UNIT = 0.0032;
 const CAMERA_REFERENCE_SCALE = 15;
@@ -152,12 +229,12 @@ const TERRAIN_GRID_LAND_OPACITY = 0.08;
 const TERRAIN_GRID_WATER_OPACITY = 0.015;
 const TERRAIN_NORMAL_SAMPLE_RADIUS_PIXELS = 5;
 const TERRAIN_NORMAL_RELIEF_SCALE = 3.4;
-const TERRAIN_DIRECTIONAL_LIGHT_STRENGTH = 0.30;
-const TERRAIN_BACK_SHADOW_STRENGTH = 0.20;
+const TERRAIN_DIRECTIONAL_LIGHT_STRENGTH = 0.18;
+const TERRAIN_BACK_SHADOW_STRENGTH = 0.32;
 const TERRAIN_STEEP_SHADOW_STRENGTH = 0;
 const TERRAIN_WATER_SHADOW_STRENGTH = 0.12;
-const TERRAIN_CAMERA_LIGHT_HEIGHT = 0.34;
-const TERRAIN_CAMERA_LIGHT_HORIZONTAL_PULL = 0.64;
+const TERRAIN_CAMERA_LIGHT_HEIGHT = 0.26;
+const TERRAIN_CAMERA_LIGHT_HORIZONTAL_PULL = 0.58;
 const TERRAIN_LAND_TEXTURE_TILING = 7.5;
 const SHORELINE_CHAIN_DIRECTIONS = [
   { x: 1, y: 0 },
@@ -214,8 +291,8 @@ const SMOOTH_TERRAIN_KERNEL = [
   { x: 0, y: 1, weight: 2 },
   { x: 1, y: 1, weight: 1 },
 ] as const;
-const GRASS_TEXTURE_DETAIL = 1.15;
-const GRASS_AMBIENT_LIGHT = 0.58;
+const GRASS_TEXTURE_DETAIL = 1.04;
+const GRASS_AMBIENT_LIGHT = 0.53;
 const CITY_DEPTH_MESH_WORLD_SCALE = 0.035;
 const CITY_DEPTH_MESH_HEIGHT_SCALE = 0.034;
 const CITY_DEPTH_MESH_BASE_LIFT = 0.0015;
@@ -226,6 +303,10 @@ const vertexShaderSource = terrainVertexShaderRaw;
 const fragmentShaderSource = terrainFragmentShaderRaw;
 const actorVertexShaderSource = actorVertexShaderRaw;
 const actorFragmentShaderSource = actorFragmentShaderRaw;
+const vegetationVertexShaderSource = vegetationVertexShaderRaw;
+const vegetationFragmentShaderSource = vegetationFragmentShaderRaw;
+const vegetationShadowVertexShaderSource = vegetationShadowVertexShaderRaw;
+const vegetationShadowFragmentShaderSource = vegetationShadowFragmentShaderRaw;
 export const DEFAULT_CAMPAIGN_CITY_DEPTH_MESH_TRANSFORM: CampaignCityDepthMeshTransform = {
   rotationDegrees: 0,
   pitchDegrees: 0,
@@ -243,11 +324,11 @@ export type CampaignTerrainStyle = {
 };
 
 export const DEFAULT_CAMPAIGN_TERRAIN_STYLE: CampaignTerrainStyle = {
-  saturation: 1,
-  brightness: 1,
-  brightnessOffset: 0,
-  shadeMin: 1,
-  shadeMax: 1,
+  saturation: 0.94,
+  brightness: 0.93,
+  brightnessOffset: -0.018,
+  shadeMin: 0.86,
+  shadeMax: 1.0,
 };
 const IDENTITY_QUATERNION: [number, number, number, number] = [0, 0, 0, 1];
 const IDENTITY_MATRIX_4 = new Float32Array([
@@ -517,6 +598,52 @@ export function projectCampaignTerrainUvToClientPoint(
   return projectCampaignTerrainUvToClientPointAtHeightAnchor(root, u, v, u, v);
 }
 
+export function projectCampaignTerrainUvToClientPointAtCloudRevealHeight(
+  root: ParentNode,
+  u: number,
+  v: number
+): CampaignTerrainClientPoint | null {
+  const terrainCanvas = root.querySelector<HTMLCanvasElement>("[data-campaign-map-terrain]");
+  if (terrainCanvas == null) {
+    return null;
+  }
+
+  const renderer = activeRenderers.get(terrainCanvas);
+  if (renderer == null) {
+    return null;
+  }
+
+  const rect = terrainCanvas.getBoundingClientRect();
+  if (rect.width <= 0 || rect.height <= 0) {
+    return null;
+  }
+
+  const matrix = createTerrainMatrix(
+    terrainCanvas.width / Math.max(terrainCanvas.height, 1)
+  );
+  const screenPoint = projectPoint(
+    matrix,
+    createTerrainWorldPoint(u, v, CLOUD_REVEAL_REFERENCE_HEIGHT)
+  );
+  const normalizedX = (screenPoint.x + 1) / 2;
+  const normalizedY = (1 - screenPoint.y) / 2;
+  const visible =
+    screenPoint.w > 0 &&
+    screenPoint.z >= -1 &&
+    screenPoint.z <= 1 &&
+    normalizedX >= 0 &&
+    normalizedX <= 1 &&
+    normalizedY >= 0 &&
+    normalizedY <= 1;
+
+  return {
+    clientX: rect.left + normalizedX * rect.width,
+    clientY: rect.top + normalizedY * rect.height,
+    visible,
+    w: screenPoint.w,
+  };
+}
+
 export function projectCampaignTerrainUvToClientPointAtHeightAnchor(
   root: ParentNode,
   u: number,
@@ -661,10 +788,16 @@ function readCampaignTerrainInput(canvas: HTMLCanvasElement): CampaignTerrainInp
       renderMode === "terrain" || renderMode === "actor"
         ? canvas.dataset.mapHexGridUrl ?? null
         : null,
+    campaignVegetationRulesUrl:
+      renderMode === "terrain"
+        ? canvas.dataset.mapVegetationRulesUrl ?? null
+        : null,
     grassTextureUrl:
       renderMode === "terrain" ? canvas.dataset.mapGrassTextureUrl ?? null : null,
     sandTextureUrl:
       renderMode === "terrain" ? canvas.dataset.mapSandTextureUrl ?? null : null,
+    rockTextureUrl:
+      renderMode === "terrain" ? canvas.dataset.mapRockTextureUrl ?? null : null,
     waterTextureUrl:
       renderMode === "terrain" ? canvas.dataset.mapWaterTextureUrl ?? null : null,
     renderMode,
@@ -678,8 +811,10 @@ function getCampaignTerrainInputSignature(input: CampaignTerrainInput): string {
     input.heightUrl,
     input.materialUrl,
     input.campaignHexGridUrl ?? "",
+    input.campaignVegetationRulesUrl ?? "",
     input.grassTextureUrl ?? "",
     input.sandTextureUrl ?? "",
+    input.rockTextureUrl ?? "",
     input.waterTextureUrl ?? "",
   ].join("|");
 }
@@ -781,6 +916,15 @@ async function initCampaignTerrainWebGl(
         console.error("Failed to load campaign hex grid asset.", error);
         return null;
       });
+  const vegetationAssetPromise =
+    renderTerrain && input.campaignVegetationRulesUrl != null
+      ? loadCampaignVegetationAsset(input.campaignVegetationRulesUrl).catch(
+        (error: unknown) => {
+          console.error("Failed to load campaign vegetation asset.", error);
+          return null;
+        }
+      )
+      : Promise.resolve(null);
   const waterTextureImagePromise =
     renderTerrain && input.waterTextureUrl != null
       ? loadImage(input.waterTextureUrl).catch((error: unknown) => {
@@ -802,6 +946,13 @@ async function initCampaignTerrainWebGl(
         return null;
       })
       : Promise.resolve(null);
+  const rockTextureImagePromise =
+    renderTerrain && input.rockTextureUrl != null
+      ? loadImage(input.rockTextureUrl).catch((error: unknown) => {
+        console.error("Failed to load campaign rock texture.", error);
+        return null;
+      })
+      : Promise.resolve(null);
   const [
     textureImage,
     heightImage,
@@ -809,9 +960,11 @@ async function initCampaignTerrainWebGl(
     waterTextureImage,
     grassTextureImage,
     sandTextureImage,
+    rockTextureImage,
     actorAsset,
     cityDepthAsset,
     campaignHexGrid,
+    vegetationAsset,
   ] = await Promise.all([
     loadImage(input.textureUrl),
     loadImage(input.heightUrl),
@@ -819,9 +972,11 @@ async function initCampaignTerrainWebGl(
     waterTextureImagePromise,
     grassTextureImagePromise,
     sandTextureImagePromise,
+    rockTextureImagePromise,
     actorAssetPromise,
     cityDepthAssetPromise,
     campaignHexGridPromise,
+    vegetationAssetPromise,
   ]);
   const baseHeightSamples = sampleHeightImage(heightImage, GRID_COLUMNS, GRID_ROWS);
   const materialLandMask = sampleMaterialLandMask(materialImage);
@@ -849,8 +1004,25 @@ async function initCampaignTerrainWebGl(
       SMOOTH_TERRAIN_MESH_STEP
     )
     : null;
+  const vegetationCells =
+    campaignHexGrid == null || vegetationAsset == null
+      ? []
+      : getCampaignVegetationCells(
+        campaignHexGrid,
+        vegetationAsset.rules.environment
+      );
   const program = createProgram(gl, vertexShaderSource, fragmentShaderSource);
   const actorProgram = createProgram(gl, actorVertexShaderSource, actorFragmentShaderSource);
+  const vegetationProgram = createProgram(
+    gl,
+    vegetationVertexShaderSource,
+    vegetationFragmentShaderSource
+  );
+  const vegetationShadowProgram = createProgram(
+    gl,
+    vegetationShadowVertexShaderSource,
+    vegetationShadowFragmentShaderSource
+  );
   const positionLocation = gl.getAttribLocation(program, "aPosition");
   const uvLocation = gl.getAttribLocation(program, "aUv");
   const normalLocation = gl.getAttribLocation(program, "aNormal");
@@ -893,6 +1065,7 @@ async function initCampaignTerrainWebGl(
   const waterTextureLocation = gl.getUniformLocation(program, "uWaterTexture");
   const grassTextureLocation = gl.getUniformLocation(program, "uGrassTexture");
   const sandTextureLocation = gl.getUniformLocation(program, "uSandTexture");
+  const rockTextureLocation = gl.getUniformLocation(program, "uRockTexture");
   const waterTextureEnabledLocation = gl.getUniformLocation(
     program,
     "uWaterTextureEnabled"
@@ -989,12 +1162,69 @@ async function initCampaignTerrainWebGl(
   const actorTextureLocation = gl.getUniformLocation(actorProgram, "uTexture");
   const actorTintLocation = gl.getUniformLocation(actorProgram, "uTint");
   const actorForceOpaqueAlphaLocation = gl.getUniformLocation(actorProgram, "uForceOpaqueAlpha");
+  const vegetationPositionLocation = gl.getAttribLocation(
+    vegetationProgram,
+    "aPosition"
+  );
+  const vegetationNormalLocation = gl.getAttribLocation(vegetationProgram, "aNormal");
+  const vegetationColorLocation = gl.getAttribLocation(vegetationProgram, "aColor");
+  const vegetationMatrixLocation = gl.getUniformLocation(vegetationProgram, "uMatrix");
+  const vegetationCameraTiltSinCosLocation = gl.getUniformLocation(
+    vegetationProgram,
+    "uTerrainCameraTiltSinCos"
+  );
+  const vegetationAmbientLocation = gl.getUniformLocation(vegetationProgram, "uAmbient");
+  const vegetationDirectionalLocation = gl.getUniformLocation(
+    vegetationProgram,
+    "uDirectional"
+  );
+  const vegetationViewportSizeLocation = gl.getUniformLocation(
+    vegetationProgram,
+    "uTerrainViewportSize"
+  );
+  const vegetationCameraLightHeightLocation = gl.getUniformLocation(
+    vegetationProgram,
+    "uTerrainCameraLightHeight"
+  );
+  const vegetationCameraLightHorizontalPullLocation = gl.getUniformLocation(
+    vegetationProgram,
+    "uTerrainCameraLightHorizontalPull"
+  );
+  const vegetationTerrainDirectionalLightStrengthLocation = gl.getUniformLocation(
+    vegetationProgram,
+    "uTerrainDirectionalLightStrength"
+  );
+  const vegetationTerrainBackShadowStrengthLocation = gl.getUniformLocation(
+    vegetationProgram,
+    "uTerrainBackShadowStrength"
+  );
+  const vegetationTerrainSteepShadowStrengthLocation = gl.getUniformLocation(
+    vegetationProgram,
+    "uTerrainSteepShadowStrength"
+  );
+  const vegetationShadowPositionLocation = gl.getAttribLocation(
+    vegetationShadowProgram,
+    "aPosition"
+  );
+  const vegetationShadowUvLocation = gl.getAttribLocation(vegetationShadowProgram, "aUv");
+  const vegetationShadowMatrixLocation = gl.getUniformLocation(
+    vegetationShadowProgram,
+    "uMatrix"
+  );
+  const vegetationShadowOpacityLocation = gl.getUniformLocation(
+    vegetationShadowProgram,
+    "uOpacity"
+  );
   const vertexBuffer = gl.createBuffer();
   const indexBuffer = gl.createBuffer();
   const actorVertexBuffer = gl.createBuffer();
   const actorIndexBuffer = gl.createBuffer();
   const cityDepthVertexBuffer = gl.createBuffer();
   const cityDepthIndexBuffer = gl.createBuffer();
+  const vegetationVertexBuffer = gl.createBuffer();
+  const vegetationIndexBuffer = gl.createBuffer();
+  const vegetationShadowVertexBuffer = gl.createBuffer();
+  const vegetationShadowIndexBuffer = gl.createBuffer();
   const texture = createTexture(gl, textureImage);
   const materialTexture = createTexture(gl, materialImage);
   const materialSemanticTexture = createTexture(
@@ -1012,6 +1242,7 @@ async function initCampaignTerrainWebGl(
   });
   const grassTexture = createTexture(gl, grassTextureImage ?? textureImage);
   const sandTexture = createTexture(gl, sandTextureImage ?? textureImage);
+  const rockTexture = createTexture(gl, rockTextureImage ?? textureImage);
   const waterTexture =
     waterTextureImage == null
       ? null
@@ -1048,6 +1279,7 @@ async function initCampaignTerrainWebGl(
     waterTextureLocation == null ? "uWaterTexture" : null,
     grassTextureLocation == null ? "uGrassTexture" : null,
     sandTextureLocation == null ? "uSandTexture" : null,
+    rockTextureLocation == null ? "uRockTexture" : null,
     waterTextureEnabledLocation == null ? "uWaterTextureEnabled" : null,
     timeSecondsLocation == null ? "uTimeSeconds" : null,
     grassAmbientLightLocation == null ? "uGrassAmbientLight" : null,
@@ -1089,12 +1321,41 @@ async function initCampaignTerrainWebGl(
     actorTextureLocation == null ? "actor.uTexture" : null,
     actorTintLocation == null ? "actor.uTint" : null,
     actorForceOpaqueAlphaLocation == null ? "actor.uForceOpaqueAlpha" : null,
+    vegetationPositionLocation < 0 ? "vegetation.aPosition" : null,
+    vegetationNormalLocation < 0 ? "vegetation.aNormal" : null,
+    vegetationColorLocation < 0 ? "vegetation.aColor" : null,
+    vegetationMatrixLocation == null ? "vegetation.uMatrix" : null,
+    vegetationCameraTiltSinCosLocation == null ? "vegetation.uTerrainCameraTiltSinCos" : null,
+    vegetationAmbientLocation == null ? "vegetation.uAmbient" : null,
+    vegetationDirectionalLocation == null ? "vegetation.uDirectional" : null,
+    vegetationViewportSizeLocation == null ? "vegetation.uTerrainViewportSize" : null,
+    vegetationCameraLightHeightLocation == null ? "vegetation.uTerrainCameraLightHeight" : null,
+    vegetationCameraLightHorizontalPullLocation == null
+      ? "vegetation.uTerrainCameraLightHorizontalPull"
+      : null,
+    vegetationTerrainDirectionalLightStrengthLocation == null
+      ? "vegetation.uTerrainDirectionalLightStrength"
+      : null,
+    vegetationTerrainBackShadowStrengthLocation == null
+      ? "vegetation.uTerrainBackShadowStrength"
+      : null,
+    vegetationTerrainSteepShadowStrengthLocation == null
+      ? "vegetation.uTerrainSteepShadowStrength"
+      : null,
+    vegetationShadowPositionLocation < 0 ? "vegetationShadow.aPosition" : null,
+    vegetationShadowUvLocation < 0 ? "vegetationShadow.aUv" : null,
+    vegetationShadowMatrixLocation == null ? "vegetationShadow.uMatrix" : null,
+    vegetationShadowOpacityLocation == null ? "vegetationShadow.uOpacity" : null,
     vertexBuffer == null ? "terrain.vertexBuffer" : null,
     indexBuffer == null ? "terrain.indexBuffer" : null,
     actorVertexBuffer == null ? "actor.vertexBuffer" : null,
     actorIndexBuffer == null ? "actor.indexBuffer" : null,
     cityDepthVertexBuffer == null ? "cityDepth.vertexBuffer" : null,
     cityDepthIndexBuffer == null ? "cityDepth.indexBuffer" : null,
+    vegetationVertexBuffer == null ? "vegetation.vertexBuffer" : null,
+    vegetationIndexBuffer == null ? "vegetation.indexBuffer" : null,
+    vegetationShadowVertexBuffer == null ? "vegetationShadow.vertexBuffer" : null,
+    vegetationShadowIndexBuffer == null ? "vegetationShadow.indexBuffer" : null,
   ].filter((resource): resource is string => resource != null);
   if (missingResources.length > 0) {
     throw new Error(
@@ -1146,11 +1407,15 @@ async function initCampaignTerrainWebGl(
   let projectedPointsNeedSync = true;
   let lastActorSignature = "";
   let lastCityDepthMeshSignature = "";
+  let lastVegetationMeshSignature = "";
   let lastCanvasWidth = 0;
   let lastCanvasHeight = 0;
+  let vegetationMesh: VegetationMeshData | null = null;
   const actorAnimationState = createActorAnimationPlaybackState();
   const animatesTerrainWater = renderTerrain && waterTexture != null;
   const animatesActorModel = shouldRenderActorInThisCanvas && actorAsset != null && actorTexture != null;
+  const animatesVegetation =
+    renderTerrain && vegetationAsset != null && vegetationCells.length > 0;
   let dynamicAnimationTimeoutId: number | null = null;
   const render = () => {
     if (isDisposed) {
@@ -1170,6 +1435,7 @@ async function initCampaignTerrainWebGl(
     gl.viewport(0, 0, input.canvas.width, input.canvas.height);
     gl.clearColor(renderTerrain ? 0.02 : 0, renderTerrain ? 0.04 : 0, renderTerrain ? 0.04 : 0, 0);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    const terrainCameraTilt = getCampaignTerrainCameraTiltRadians(currentCamera);
 
     if (renderTerrain && mesh != null) {
       gl.useProgram(program);
@@ -1191,11 +1457,14 @@ async function initCampaignTerrainWebGl(
       gl.bindTexture(gl.TEXTURE_2D, sandTexture);
       gl.uniform1i(sandTextureLocation, 4);
       gl.activeTexture(gl.TEXTURE5);
-      gl.bindTexture(gl.TEXTURE_2D, shorelineChainTexture);
-      gl.uniform1i(shorelineChainTextureLocation, 5);
+      gl.bindTexture(gl.TEXTURE_2D, rockTexture);
+      gl.uniform1i(rockTextureLocation, 5);
       gl.activeTexture(gl.TEXTURE6);
+      gl.bindTexture(gl.TEXTURE_2D, shorelineChainTexture);
+      gl.uniform1i(shorelineChainTextureLocation, 6);
+      gl.activeTexture(gl.TEXTURE7);
       gl.bindTexture(gl.TEXTURE_2D, materialSemanticTexture);
-      gl.uniform1i(materialSemanticTextureLocation, 6);
+      gl.uniform1i(materialSemanticTextureLocation, 7);
       gl.uniform2f(
         materialSemanticTextureSizeLocation,
         materialSemanticModel.textureColumns,
@@ -1211,7 +1480,6 @@ async function initCampaignTerrainWebGl(
       gl.uniform1f(waterTextureEnabledLocation, waterTexture == null ? 0 : 1);
       gl.uniform1f(timeSecondsLocation, performance.now() * 0.001);
       gl.uniform1f(heightScaleLocation, HEIGHT_SCALE);
-      const terrainCameraTilt = getCampaignTerrainCameraTiltRadians(currentCamera);
       gl.uniform2f(
         terrainCameraTiltSinCosLocation,
         Math.sin(terrainCameraTilt),
@@ -1317,6 +1585,156 @@ async function initCampaignTerrainWebGl(
         5 * Float32Array.BYTES_PER_ELEMENT
       );
       gl.drawElements(gl.TRIANGLES, mesh.indices.length, gl.UNSIGNED_INT, 0);
+    }
+
+    if (renderTerrain && vegetationAsset != null && vegetationCells.length > 0) {
+      const terrainMatrix = createTerrainMatrix(input.canvas.width / Math.max(input.canvas.height, 1));
+      const avoidancePoints = readCampaignVegetationAvoidancePoints(
+        input.canvas,
+        vegetationAsset.rules
+      );
+      const vegetationMeshSignature = getCampaignVegetationMeshSignature(
+        input.canvas,
+        currentCamera,
+        avoidancePoints
+      );
+      if (vegetationMesh == null || vegetationMeshSignature !== lastVegetationMeshSignature) {
+        vegetationMesh = createCampaignVegetationMesh({
+          cells: vegetationCells,
+          asset: vegetationAsset,
+          heights: heightSamples,
+          columns: GRID_COLUMNS,
+          rows: GRID_ROWS,
+          matrix: terrainMatrix,
+          canvasWidth: input.canvas.width,
+          canvasHeight: input.canvas.height,
+          avoidancePoints,
+        });
+        gl.bindBuffer(gl.ARRAY_BUFFER, vegetationVertexBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, vegetationMesh.vertices, gl.DYNAMIC_DRAW);
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, vegetationIndexBuffer);
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, vegetationMesh.indices, gl.DYNAMIC_DRAW);
+        gl.bindBuffer(gl.ARRAY_BUFFER, vegetationShadowVertexBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, vegetationMesh.shadowVertices, gl.DYNAMIC_DRAW);
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, vegetationShadowIndexBuffer);
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, vegetationMesh.shadowIndices, gl.DYNAMIC_DRAW);
+        lastVegetationMeshSignature = vegetationMeshSignature;
+      }
+
+      if (vegetationMesh.instanceCount > 0 && vegetationMesh.indices.length > 0) {
+        if (vegetationMesh.shadowIndices.length > 0) {
+          gl.useProgram(vegetationShadowProgram);
+          gl.bindBuffer(gl.ARRAY_BUFFER, vegetationShadowVertexBuffer);
+          gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, vegetationShadowIndexBuffer);
+          const shadowStride = 5 * Float32Array.BYTES_PER_ELEMENT;
+          gl.enableVertexAttribArray(vegetationShadowPositionLocation);
+          gl.vertexAttribPointer(
+            vegetationShadowPositionLocation,
+            3,
+            gl.FLOAT,
+            false,
+            shadowStride,
+            0
+          );
+          gl.enableVertexAttribArray(vegetationShadowUvLocation);
+          gl.vertexAttribPointer(
+            vegetationShadowUvLocation,
+            2,
+            gl.FLOAT,
+            false,
+            shadowStride,
+            3 * Float32Array.BYTES_PER_ELEMENT
+          );
+          gl.uniformMatrix4fv(vegetationShadowMatrixLocation, false, terrainMatrix);
+          gl.uniform1f(
+            vegetationShadowOpacityLocation,
+            vegetationAsset.rules.shadow.opacity
+          );
+          gl.enable(gl.BLEND);
+          gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+          gl.depthMask(false);
+          gl.drawElements(
+            gl.TRIANGLES,
+            vegetationMesh.shadowIndices.length,
+            gl.UNSIGNED_INT,
+            0
+          );
+          gl.depthMask(true);
+          gl.disable(gl.BLEND);
+        }
+
+        gl.useProgram(vegetationProgram);
+        gl.bindBuffer(gl.ARRAY_BUFFER, vegetationVertexBuffer);
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, vegetationIndexBuffer);
+        const vegetationStride = 9 * Float32Array.BYTES_PER_ELEMENT;
+        gl.enableVertexAttribArray(vegetationPositionLocation);
+        gl.vertexAttribPointer(
+          vegetationPositionLocation,
+          3,
+          gl.FLOAT,
+          false,
+          vegetationStride,
+          0
+        );
+        gl.enableVertexAttribArray(vegetationNormalLocation);
+        gl.vertexAttribPointer(
+          vegetationNormalLocation,
+          3,
+          gl.FLOAT,
+          false,
+          vegetationStride,
+          3 * Float32Array.BYTES_PER_ELEMENT
+        );
+        gl.enableVertexAttribArray(vegetationColorLocation);
+        gl.vertexAttribPointer(
+          vegetationColorLocation,
+          3,
+          gl.FLOAT,
+          false,
+          vegetationStride,
+          6 * Float32Array.BYTES_PER_ELEMENT
+        );
+        gl.uniformMatrix4fv(vegetationMatrixLocation, false, terrainMatrix);
+        gl.uniform2f(
+          vegetationCameraTiltSinCosLocation,
+          Math.sin(terrainCameraTilt),
+          Math.cos(terrainCameraTilt)
+        );
+        gl.uniform1f(vegetationAmbientLocation, vegetationAsset.rules.shader.ambient);
+        gl.uniform1f(
+          vegetationDirectionalLocation,
+          vegetationAsset.rules.shader.directional
+        );
+        gl.uniform2f(
+          vegetationViewportSizeLocation,
+          input.canvas.width,
+          input.canvas.height
+        );
+        gl.uniform1f(vegetationCameraLightHeightLocation, TERRAIN_CAMERA_LIGHT_HEIGHT);
+        gl.uniform1f(
+          vegetationCameraLightHorizontalPullLocation,
+          TERRAIN_CAMERA_LIGHT_HORIZONTAL_PULL
+        );
+        gl.uniform1f(
+          vegetationTerrainDirectionalLightStrengthLocation,
+          TERRAIN_DIRECTIONAL_LIGHT_STRENGTH
+        );
+        gl.uniform1f(
+          vegetationTerrainBackShadowStrengthLocation,
+          TERRAIN_BACK_SHADOW_STRENGTH
+        );
+        gl.uniform1f(
+          vegetationTerrainSteepShadowStrengthLocation,
+          TERRAIN_STEEP_SHADOW_STRENGTH
+        );
+        gl.disable(gl.BLEND);
+        gl.disable(gl.CULL_FACE);
+        gl.enable(gl.POLYGON_OFFSET_FILL);
+        gl.polygonOffset(-4, -8);
+        gl.depthMask(true);
+        gl.drawElements(gl.TRIANGLES, vegetationMesh.indices.length, gl.UNSIGNED_INT, 0);
+        gl.disable(gl.POLYGON_OFFSET_FILL);
+      }
     }
 
     if (renderTerrain && cityDepthAsset != null && cityDepthTexture != null) {
@@ -1464,7 +1882,7 @@ async function initCampaignTerrainWebGl(
       projectedPointsNeedSync = false;
     }
 
-    if (animatesTerrainWater || animatesActorModel) {
+    if (animatesTerrainWater || animatesActorModel || animatesVegetation) {
       scheduleDynamicAnimationRender();
     }
   };
@@ -1526,12 +1944,17 @@ async function initCampaignTerrainWebGl(
       gl.deleteBuffer(actorIndexBuffer);
       gl.deleteBuffer(cityDepthVertexBuffer);
       gl.deleteBuffer(cityDepthIndexBuffer);
+      gl.deleteBuffer(vegetationVertexBuffer);
+      gl.deleteBuffer(vegetationIndexBuffer);
+      gl.deleteBuffer(vegetationShadowVertexBuffer);
+      gl.deleteBuffer(vegetationShadowIndexBuffer);
       gl.deleteTexture(texture);
       gl.deleteTexture(materialTexture);
       gl.deleteTexture(materialSemanticTexture);
       gl.deleteTexture(shorelineChainTexture);
       gl.deleteTexture(grassTexture);
       gl.deleteTexture(sandTexture);
+      gl.deleteTexture(rockTexture);
       if (waterTexture != null) {
         gl.deleteTexture(waterTexture);
       }
@@ -1543,6 +1966,8 @@ async function initCampaignTerrainWebGl(
       }
       gl.deleteProgram(program);
       gl.deleteProgram(actorProgram);
+      gl.deleteProgram(vegetationProgram);
+      gl.deleteProgram(vegetationShadowProgram);
     },
   };
 }
@@ -1568,6 +1993,79 @@ async function loadJson<T>(url: string): Promise<T> {
   }
 
   return response.json() as Promise<T>;
+}
+
+async function loadCampaignVegetationAsset(
+  rulesUrl: string
+): Promise<CampaignVegetationAsset> {
+  const rules = await loadJson<CampaignVegetationRulesDefinition>(rulesUrl);
+  validateCampaignVegetationRules(rules);
+  const normalizedRules: CampaignVegetationRulesAsset = {
+    ...rules,
+    variants: rules.variants.map((variant) => ({
+      ...variant,
+      meshUrl: resolveAssetUrl(variant.meshUrl, rulesUrl),
+    })),
+  };
+  const meshes = await Promise.all(
+    normalizedRules.variants.map(async (variant) => [
+      variant.id,
+      await loadCampaignVegetationMeshAsset(variant.meshUrl),
+    ] as const)
+  );
+
+  return {
+    rules: normalizedRules,
+    meshesById: new Map(meshes),
+  };
+}
+
+async function loadCampaignVegetationMeshAsset(
+  meshUrl: string
+): Promise<VegetationMeshAsset> {
+  const mesh = await loadJson<CampaignVegetationMeshDefinition>(meshUrl);
+  validateCampaignVegetationMesh(mesh);
+
+  return {
+    id: mesh.id,
+    positions: new Float32Array(mesh.positions),
+    normals: new Float32Array(mesh.normals),
+    colors: new Float32Array(mesh.colors),
+    indices: new Uint32Array(mesh.indices),
+    bounds: mesh.bounds,
+  };
+}
+
+function resolveAssetUrl(value: string, baseUrl: string): string {
+  if (/^(https?:|file:|blob:|\/)/.test(value)) {
+    return value;
+  }
+  return new URL(value, baseUrl).href;
+}
+
+function validateCampaignVegetationRules(
+  rules: CampaignVegetationRulesDefinition
+): void {
+  if (rules.format !== "campaign-vegetation-rules-v1") {
+    throw new Error(`Unsupported campaign vegetation rules format "${rules.format}".`);
+  }
+  if (rules.environment === "" || rules.variants.length === 0) {
+    throw new Error("Campaign vegetation rules must declare an environment and variants.");
+  }
+}
+
+function validateCampaignVegetationMesh(mesh: CampaignVegetationMeshDefinition): void {
+  if (mesh.format !== "campaign-vegetation-mesh-v1") {
+    throw new Error(`Unsupported campaign vegetation mesh format "${mesh.format}".`);
+  }
+  if (
+    mesh.positions.length % 3 !== 0 ||
+    mesh.normals.length !== mesh.positions.length ||
+    mesh.colors.length !== mesh.positions.length ||
+    mesh.indices.length % 3 !== 0
+  ) {
+    throw new Error(`Campaign vegetation mesh "${mesh.id}" arrays are inconsistent.`);
+  }
 }
 
 async function loadCampaignActorAsset(
@@ -1912,8 +2410,8 @@ function createCampaignMaterialSemanticModel(
 
     landByCellKey.set(getHexCellKey(cell.x, cell.y), isLand);
     pixels[pixelOffset] = value;
-    pixels[pixelOffset + 1] = value;
-    pixels[pixelOffset + 2] = value;
+    pixels[pixelOffset + 1] = 0;
+    pixels[pixelOffset + 2] = 0;
     pixels[pixelOffset + 3] = 255;
   }
 
@@ -1958,6 +2456,7 @@ function createCampaignMaterialSemanticModelFromHexGrid(
     const pixelY = cell.y - minCellY;
     const pixelOffset = (pixelY * textureColumns + pixelX) * 4;
     const value = cell.land ? 255 : 0;
+    const mountainValue = cell.land && cell.terrain === "山脉" ? 255 : 0;
 
     if (
       pixelX < 0 ||
@@ -1972,8 +2471,8 @@ function createCampaignMaterialSemanticModelFromHexGrid(
 
     landByCellKey.set(getHexCellKey(cell.x, cell.y), cell.land);
     pixels[pixelOffset] = value;
-    pixels[pixelOffset + 1] = value;
-    pixels[pixelOffset + 2] = value;
+    pixels[pixelOffset + 1] = mountainValue;
+    pixels[pixelOffset + 2] = 0;
     pixels[pixelOffset + 3] = 255;
   }
 
@@ -1988,6 +2487,772 @@ function createCampaignMaterialSemanticModelFromHexGrid(
     cells,
     landByCellKey,
   };
+}
+
+function getCampaignVegetationCells(
+  campaignHexGrid: CampaignHexGridAsset,
+  environment: string
+): CampaignVegetationCell[] {
+  return campaignHexGrid.cells
+    .filter((cell) => cell.land && cell.environment === environment)
+    .map((cell) => {
+      const center = hexToPixel(cell.x, cell.y);
+
+      return {
+        x: cell.x,
+        y: cell.y,
+        u: hexPointToTerrainU(center.x),
+        v: hexPointToTerrainV(center.y),
+      };
+    });
+}
+
+function readCampaignVegetationAvoidancePoints(
+  canvas: HTMLCanvasElement,
+  rules: CampaignVegetationRulesAsset
+): CampaignVegetationAvoidancePoint[] {
+  const stage = canvas.closest<HTMLElement>("[data-campaign-map-transform]");
+  if (stage == null) {
+    return [];
+  }
+
+  const points: CampaignVegetationAvoidancePoint[] = [];
+  const appendPoint = (element: HTMLElement, radius: number) => {
+    const u = Number(element.dataset.mapHeightU);
+    const v = Number(element.dataset.mapHeightV);
+    if (!Number.isFinite(u) || !Number.isFinite(v)) {
+      return;
+    }
+
+    points.push({ u, v, radius });
+  };
+
+  stage
+    .querySelectorAll<HTMLElement>("[data-campaign-marker-id][data-map-height-u][data-map-height-v]")
+    .forEach((element) => {
+      appendPoint(element, rules.avoidance.markerRadius);
+    });
+  stage
+    .querySelectorAll<HTMLElement>("[data-campaign-player='true'][data-map-height-u][data-map-height-v]")
+    .forEach((element) => {
+      appendPoint(element, rules.avoidance.playerRadius);
+    });
+  stage
+    .querySelectorAll<HTMLElement>("[data-campaign-travel-path-point][data-map-height-u][data-map-height-v]")
+    .forEach((element) => {
+      appendPoint(element, rules.avoidance.pathRadius);
+    });
+
+  return points;
+}
+
+function getCampaignVegetationMeshSignature(
+  canvas: HTMLCanvasElement,
+  camera: CampaignTerrainCamera,
+  avoidancePoints: CampaignVegetationAvoidancePoint[]
+): string {
+  return [
+    canvas.width,
+    canvas.height,
+    camera.scale.toFixed(2),
+    camera.offsetX.toFixed(1),
+    camera.offsetY.toFixed(1),
+    avoidancePoints
+      .map((point) => `${point.u.toFixed(4)},${point.v.toFixed(4)},${point.radius.toFixed(2)}`)
+      .join(";"),
+  ].join("|");
+}
+
+function createCampaignVegetationMesh(input: {
+  cells: CampaignVegetationCell[];
+  asset: CampaignVegetationAsset;
+  heights: Float32Array;
+  columns: number;
+  rows: number;
+  matrix: Mat4;
+  canvasWidth: number;
+  canvasHeight: number;
+  avoidancePoints: CampaignVegetationAvoidancePoint[];
+}): VegetationMeshData {
+  const density = getCampaignVegetationDensity(currentCamera.scale, input.asset.rules);
+  const instances: CampaignVegetationInstance[] = [];
+  const maxInstances = Math.max(
+    Math.floor(input.asset.rules.lod.maxVisibleInstances),
+    0
+  );
+  const visibleCells = input.cells
+    .map((cell): CampaignVegetationVisibleCell | null => {
+      const visibility = getCampaignVegetationCellVisibility(
+        cell,
+        input.matrix,
+        input.heights,
+        input.columns,
+        input.rows
+      );
+      if (visibility == null) {
+        return null;
+      }
+      const targetCount = getCampaignVegetationCellTargetCount(
+        cell,
+        input.asset,
+        density,
+        input.avoidancePoints
+      );
+      if (targetCount <= 0) {
+        return null;
+      }
+
+      return {
+        cell,
+        priority: visibility.priority,
+        screenX: visibility.screenX,
+        screenY: visibility.screenY,
+        targetCount,
+      };
+    })
+    .filter((item): item is CampaignVegetationVisibleCell => item != null);
+  const allocations = createUniformCampaignVegetationCellAllocations(
+    visibleCells,
+    maxInstances
+  );
+
+  for (const allocation of allocations) {
+    if (instances.length >= maxInstances) {
+      break;
+    }
+
+    appendCampaignVegetationCellInstances(
+      instances,
+      allocation.cell,
+      input.asset,
+      input.avoidancePoints,
+      allocation.count,
+      maxInstances
+    );
+  }
+
+  return buildCampaignVegetationMeshFromInstances(
+    instances,
+    input.asset.rules,
+    input.heights,
+    input.columns,
+    input.rows,
+    input.matrix,
+    input.canvasWidth / Math.max(input.canvasHeight, 1)
+  );
+}
+
+function getCampaignVegetationDensity(
+  scale: number,
+  rules: CampaignVegetationRulesAsset
+): { min: number; max: number } {
+  if (scale >= rules.lod.nearMinScale) {
+    return rules.density.near;
+  }
+  if (scale >= rules.lod.mediumMinScale) {
+    return rules.density.medium;
+  }
+  return rules.density.far;
+}
+
+function getCampaignVegetationCellVisibility(
+  cell: CampaignVegetationCell,
+  matrix: Mat4,
+  heights: Float32Array,
+  columns: number,
+  rows: number
+): { priority: number; screenX: number; screenY: number } | null {
+  const height = sampleHeightAt(heights, columns, rows, cell.u, cell.v);
+  const screenPoint = projectPoint(matrix, createTerrainWorldPoint(cell.u, cell.v, height));
+  const isVisible =
+    screenPoint.w > 0 &&
+    screenPoint.z >= -1.35 &&
+    screenPoint.z <= 1.35 &&
+    screenPoint.x >= -1.55 &&
+    screenPoint.x <= 1.55 &&
+    screenPoint.y >= -1.55 &&
+    screenPoint.y <= 1.55;
+  if (!isVisible) {
+    return null;
+  }
+
+  return {
+    priority: Math.hypot(screenPoint.x, screenPoint.y),
+    screenX: screenPoint.x,
+    screenY: screenPoint.y,
+  };
+}
+
+function createUniformCampaignVegetationCellAllocations(
+  visibleCells: CampaignVegetationVisibleCell[],
+  maxInstances: number
+): CampaignVegetationCellAllocation[] {
+  const totalTargetCount = visibleCells.reduce(
+    (sum, item) => sum + item.targetCount,
+    0
+  );
+  const instanceBudget = Math.min(Math.max(Math.floor(maxInstances), 0), totalTargetCount);
+  if (instanceBudget <= 0) {
+    return [];
+  }
+
+  const bucketColumns = 12;
+  const bucketRows = 8;
+  const buckets = new Map<
+    string,
+    {
+      items: CampaignVegetationVisibleCell[];
+      targetCount: number;
+      budget: number;
+      remainder: number;
+      hash: number;
+    }
+  >();
+
+  for (const item of visibleCells) {
+    const bucketX = clamp(
+      Math.floor(((item.screenX + 1.55) / 3.1) * bucketColumns),
+      0,
+      bucketColumns - 1
+    );
+    const bucketY = clamp(
+      Math.floor(((item.screenY + 1.55) / 3.1) * bucketRows),
+      0,
+      bucketRows - 1
+    );
+    const bucketKey = `${bucketX},${bucketY}`;
+    const bucket =
+      buckets.get(bucketKey) ??
+      {
+        items: [],
+        targetCount: 0,
+        budget: 0,
+        remainder: 0,
+        hash: seededRandom01(bucketX, bucketY, 359),
+      };
+    bucket.items.push(item);
+    bucket.targetCount += item.targetCount;
+    buckets.set(bucketKey, bucket);
+  }
+
+  const bucketList = Array.from(buckets.values());
+  let assignedBudget = 0;
+  for (const bucket of bucketList) {
+    const rawBudget = (bucket.targetCount / totalTargetCount) * instanceBudget;
+    bucket.budget = Math.floor(rawBudget);
+    bucket.remainder = rawBudget - bucket.budget;
+    assignedBudget += bucket.budget;
+  }
+
+  if (instanceBudget >= bucketList.length) {
+    for (const bucket of bucketList) {
+      if (bucket.budget === 0) {
+        bucket.budget = 1;
+        assignedBudget += 1;
+      }
+    }
+  }
+
+  if (assignedBudget > instanceBudget) {
+    const overBudget = assignedBudget - instanceBudget;
+    bucketList
+      .filter((bucket) => bucket.budget > 1)
+      .sort((left, right) => left.remainder - right.remainder || left.hash - right.hash)
+      .slice(0, overBudget)
+      .forEach((bucket) => {
+        bucket.budget -= 1;
+      });
+  } else if (assignedBudget < instanceBudget) {
+    const remainingBudget = instanceBudget - assignedBudget;
+    bucketList
+      .sort((left, right) => right.remainder - left.remainder || left.hash - right.hash)
+      .slice(0, remainingBudget)
+      .forEach((bucket) => {
+        bucket.budget += 1;
+      });
+  }
+
+  return bucketList.flatMap((bucket) =>
+    createUniformCampaignVegetationBucketAllocations(bucket.items, bucket.budget)
+  );
+}
+
+function createUniformCampaignVegetationBucketAllocations(
+  cells: CampaignVegetationVisibleCell[],
+  budget: number
+): CampaignVegetationCellAllocation[] {
+  const safeBudget = Math.max(Math.floor(budget), 0);
+  if (safeBudget <= 0 || cells.length === 0) {
+    return [];
+  }
+
+  const sortedCells = [...cells].sort(
+    (left, right) =>
+      seededRandom01(left.cell.x, left.cell.y, 397) -
+        seededRandom01(right.cell.x, right.cell.y, 397) ||
+      left.priority - right.priority
+  );
+
+  if (safeBudget < sortedCells.length) {
+    return sortedCells.slice(0, safeBudget).map((item) => ({
+      cell: item.cell,
+      count: 1,
+    }));
+  }
+
+  const allocations = sortedCells.map((item) => ({
+    item,
+    count: 1,
+    remainder: 0,
+  }));
+  const extraBudget = safeBudget - sortedCells.length;
+  const totalExtraTarget = sortedCells.reduce(
+    (sum, item) => sum + Math.max(item.targetCount - 1, 0),
+    0
+  );
+  let assignedExtra = 0;
+
+  if (totalExtraTarget > 0 && extraBudget > 0) {
+    for (const allocation of allocations) {
+      const rawExtra =
+        (Math.max(allocation.item.targetCount - 1, 0) / totalExtraTarget) *
+        extraBudget;
+      const extra = Math.min(
+        Math.floor(rawExtra),
+        Math.max(allocation.item.targetCount - allocation.count, 0)
+      );
+      allocation.count += extra;
+      allocation.remainder = rawExtra - extra;
+      assignedExtra += extra;
+    }
+
+    const remainingExtra = extraBudget - assignedExtra;
+    allocations
+      .filter((allocation) => allocation.count < allocation.item.targetCount)
+      .sort(
+        (left, right) =>
+          right.remainder - left.remainder ||
+          seededRandom01(left.item.cell.x, left.item.cell.y, 421) -
+            seededRandom01(right.item.cell.x, right.item.cell.y, 421)
+      )
+      .slice(0, remainingExtra)
+      .forEach((allocation) => {
+        allocation.count += 1;
+      });
+  }
+
+  return allocations
+    .filter((allocation) => allocation.count > 0)
+    .map((allocation) => ({
+      cell: allocation.item.cell,
+      count: allocation.count,
+    }));
+}
+
+function getCampaignVegetationCellTargetCount(
+  cell: CampaignVegetationCell,
+  asset: CampaignVegetationAsset,
+  density: { min: number; max: number },
+  avoidancePoints: CampaignVegetationAvoidancePoint[]
+): number {
+  const rules = asset.rules;
+  const baseCount =
+    density.min +
+    Math.floor(
+      seededRandom01(cell.x, cell.y, 17) *
+        Math.max(density.max - density.min + 1, 1)
+    );
+  const cellCenter = hexToPixel(cell.x, cell.y);
+  const avoidanceMultiplier = getCampaignVegetationAvoidanceDensityMultiplier(
+    cellCenter,
+    avoidancePoints,
+    rules
+  );
+
+  return Math.max(0, Math.floor(baseCount * avoidanceMultiplier));
+}
+
+function appendCampaignVegetationCellInstances(
+  instances: CampaignVegetationInstance[],
+  cell: CampaignVegetationCell,
+  asset: CampaignVegetationAsset,
+  avoidancePoints: CampaignVegetationAvoidancePoint[],
+  targetCount: number,
+  maxInstances: number
+): void {
+  const rules = asset.rules;
+  const cellCenter = hexToPixel(cell.x, cell.y);
+  const maxAttempts = Math.max(targetCount * 4, targetCount + 6);
+  let acceptedCount = 0;
+
+  for (
+    let attemptIndex = 0;
+    attemptIndex < maxAttempts &&
+      acceptedCount < targetCount &&
+      instances.length < maxInstances;
+    attemptIndex += 1
+  ) {
+    const radiusRandom = seededRandom01(cell.x, cell.y, attemptIndex * 19 + 31);
+    const angleRandom = seededRandom01(cell.x, cell.y, attemptIndex * 23 + 47);
+    const radius =
+      rules.placement.innerRadius +
+      Math.sqrt(radiusRandom) *
+        Math.max(rules.placement.outerRadius - rules.placement.innerRadius, 0);
+    const angle = angleRandom * Math.PI * 2;
+    const point = {
+      x: cellCenter.x + Math.cos(angle) * radius,
+      y: cellCenter.y + Math.sin(angle) * radius,
+    };
+
+    if (isCampaignVegetationPointAvoided(point, avoidancePoints)) {
+      continue;
+    }
+
+    const variant = chooseCampaignVegetationVariant(
+      rules,
+      seededRandom01(cell.x, cell.y, attemptIndex * 29 + 61)
+    );
+    const mesh = asset.meshesById.get(variant.id);
+    if (mesh == null) {
+      continue;
+    }
+
+    instances.push({
+      mesh,
+      u: hexPointToTerrainU(point.x),
+      v: hexPointToTerrainV(point.y),
+      rotation: seededRandom01(cell.x, cell.y, attemptIndex * 31 + 73) * Math.PI * 2,
+      scale:
+        rules.placement.scaleMin +
+        seededRandom01(cell.x, cell.y, attemptIndex * 37 + 89) *
+          Math.max(rules.placement.scaleMax - rules.placement.scaleMin, 0),
+      colorJitter:
+        0.88 + seededRandom01(cell.x, cell.y, attemptIndex * 41 + 101) * 0.22,
+    });
+    acceptedCount += 1;
+  }
+}
+
+function getCampaignVegetationAvoidanceDensityMultiplier(
+  cellCenter: { x: number; y: number },
+  avoidancePoints: CampaignVegetationAvoidancePoint[],
+  rules: CampaignVegetationRulesAsset
+): number {
+  for (const avoidancePoint of avoidancePoints) {
+    const point = terrainUvToHexPoint(avoidancePoint.u, avoidancePoint.v);
+    if (getDistance(point, cellCenter) <= avoidancePoint.radius * 1.15) {
+      return clamp(rules.avoidance.densityMultiplierNearAvoidance, 0, 1);
+    }
+  }
+
+  return 1;
+}
+
+function isCampaignVegetationPointAvoided(
+  point: { x: number; y: number },
+  avoidancePoints: CampaignVegetationAvoidancePoint[]
+): boolean {
+  return avoidancePoints.some((avoidancePoint) => {
+    const avoidPoint = terrainUvToHexPoint(avoidancePoint.u, avoidancePoint.v);
+    return getDistance(point, avoidPoint) <= avoidancePoint.radius;
+  });
+}
+
+function chooseCampaignVegetationVariant(
+  rules: CampaignVegetationRulesAsset,
+  randomValue: number
+): CampaignVegetationRulesAsset["variants"][number] {
+  const totalWeight = rules.variants.reduce(
+    (sum, variant) => sum + Math.max(variant.weight, 0),
+    0
+  );
+  const fallbackVariant = rules.variants[0];
+  if (fallbackVariant == null) {
+    throw new Error("Campaign vegetation rules did not declare any variants.");
+  }
+  if (totalWeight <= 0) {
+    return fallbackVariant;
+  }
+
+  let cursor = randomValue * totalWeight;
+  for (const variant of rules.variants) {
+    cursor -= Math.max(variant.weight, 0);
+    if (cursor <= 0) {
+      return variant;
+    }
+  }
+
+  return rules.variants[rules.variants.length - 1] ?? fallbackVariant;
+}
+
+function buildCampaignVegetationMeshFromInstances(
+  instances: CampaignVegetationInstance[],
+  rules: CampaignVegetationRulesAsset,
+  heights: Float32Array,
+  columns: number,
+  rows: number,
+  matrix: Mat4,
+  viewportAspectRatio: number
+): VegetationMeshData {
+  const vertexCount = instances.reduce(
+    (sum, instance) => sum + instance.mesh.positions.length / 3,
+    0
+  );
+  const indexCount = instances.reduce(
+    (sum, instance) => sum + instance.mesh.indices.length,
+    0
+  );
+  const vertices = new Float32Array(vertexCount * 9);
+  const indices = new Uint32Array(indexCount);
+  const shadowVertices = new Float32Array(instances.length * 4 * 5);
+  const shadowIndices = new Uint32Array(instances.length * 6);
+  let vertexOffset = 0;
+  let indexOffset = 0;
+  let shadowVertexOffset = 0;
+  let shadowIndexOffset = 0;
+
+  for (const instance of instances) {
+    const height = sampleHeightAt(heights, columns, rows, instance.u, instance.v);
+    const center = createTerrainWorldPoint(instance.u, instance.v, height);
+    const rotationCos = Math.cos(instance.rotation);
+    const rotationSin = Math.sin(instance.rotation);
+    const worldScale = rules.placement.baseWorldScale * instance.scale;
+    const sourceVertexCount = instance.mesh.positions.length / 3;
+    for (let sourceVertexIndex = 0; sourceVertexIndex < sourceVertexCount; sourceVertexIndex += 1) {
+      const sourcePositionOffset = sourceVertexIndex * 3;
+      const outputOffset = (vertexOffset + sourceVertexIndex) * 9;
+      const localX = (instance.mesh.positions[sourcePositionOffset] ?? 0) * worldScale;
+      const localY = (instance.mesh.positions[sourcePositionOffset + 1] ?? 0) * worldScale;
+      const localZ = (instance.mesh.positions[sourcePositionOffset + 2] ?? 0) * worldScale;
+      const rotatedX = localX * rotationCos - localY * rotationSin;
+      const rotatedY = localX * rotationSin + localY * rotationCos;
+      const normalX = instance.mesh.normals[sourcePositionOffset] ?? 0;
+      const normalY = instance.mesh.normals[sourcePositionOffset + 1] ?? 0;
+      const normalZ = instance.mesh.normals[sourcePositionOffset + 2] ?? 1;
+      const rotatedNormal = normalizeVector3([
+        normalX * rotationCos - normalY * rotationSin,
+        normalX * rotationSin + normalY * rotationCos,
+        normalZ,
+      ]);
+      vertices[outputOffset] = center[0] + rotatedX;
+      vertices[outputOffset + 1] = center[1] + rotatedY;
+      vertices[outputOffset + 2] = center[2] + localZ + rules.placement.lift;
+      vertices[outputOffset + 3] = rotatedNormal[0];
+      vertices[outputOffset + 4] = rotatedNormal[1];
+      vertices[outputOffset + 5] = rotatedNormal[2];
+      vertices[outputOffset + 6] = clamp(
+        (instance.mesh.colors[sourcePositionOffset] ?? 1) * instance.colorJitter,
+        0,
+        1
+      );
+      vertices[outputOffset + 7] = clamp(
+        (instance.mesh.colors[sourcePositionOffset + 1] ?? 1) * instance.colorJitter,
+        0,
+        1
+      );
+      vertices[outputOffset + 8] = clamp(
+        (instance.mesh.colors[sourcePositionOffset + 2] ?? 1) * instance.colorJitter,
+        0,
+        1
+      );
+    }
+
+    for (let index = 0; index < instance.mesh.indices.length; index += 1) {
+      indices[indexOffset + index] =
+        vertexOffset + (instance.mesh.indices[index] ?? 0);
+    }
+    appendCampaignVegetationShadowGeometry(
+      shadowVertices,
+      shadowIndices,
+      shadowVertexOffset,
+      shadowIndexOffset,
+      center,
+      instance,
+      rules,
+      matrix,
+      viewportAspectRatio
+    );
+    vertexOffset += sourceVertexCount;
+    indexOffset += instance.mesh.indices.length;
+    shadowVertexOffset += 4;
+    shadowIndexOffset += 6;
+  }
+
+  return {
+    vertices,
+    indices,
+    shadowVertices,
+    shadowIndices,
+    instanceCount: instances.length,
+  };
+}
+
+function appendCampaignVegetationShadowGeometry(
+  vertices: Float32Array,
+  indices: Uint32Array,
+  vertexOffset: number,
+  indexOffset: number,
+  center: [number, number, number],
+  instance: CampaignVegetationInstance,
+  rules: CampaignVegetationRulesAsset,
+  matrix: Mat4,
+  viewportAspectRatio: number
+): void {
+  const worldScale = rules.placement.baseWorldScale * instance.scale;
+  const width = Math.max(
+    instance.mesh.bounds.max[0] - instance.mesh.bounds.min[0],
+    instance.mesh.bounds.max[1] - instance.mesh.bounds.min[1],
+    0.0001
+  ) * worldScale;
+  const height = Math.max(
+    instance.mesh.bounds.max[2] - instance.mesh.bounds.min[2],
+    0.0001
+  ) * worldScale;
+  const shadowLength =
+    Math.max(width, height * 0.58) *
+    rules.shadow.radiusScaleX *
+    (1 + clamp(rules.shadow.lightOffsetScale, 0, 0.72));
+  const shadowWidth = Math.max(width * 0.42, height * 0.12) * rules.shadow.radiusScaleY;
+  const shadowDirection = getCampaignVegetationShadowWorldDirection(
+    center,
+    matrix,
+    getCampaignVegetationTerrainShadowScreenDirection(center, matrix, viewportAspectRatio)
+  );
+  const perpendicular: [number, number] = [-shadowDirection[1], shadowDirection[0]];
+  const rootX = center[0];
+  const rootY = center[1];
+  const farX = rootX + shadowDirection[0] * shadowLength;
+  const farY = rootY + shadowDirection[1] * shadowLength;
+  const shadowZ = center[2] + rules.shadow.lift;
+  const corners: Array<{
+    x: number;
+    y: number;
+    u: number;
+    v: number;
+  }> = [
+    {
+      x: rootX - perpendicular[0] * shadowWidth * 0.22,
+      y: rootY - perpendicular[1] * shadowWidth * 0.22,
+      u: 0,
+      v: -1,
+    },
+    {
+      x: farX - perpendicular[0] * shadowWidth,
+      y: farY - perpendicular[1] * shadowWidth,
+      u: 1,
+      v: -1,
+    },
+    {
+      x: farX + perpendicular[0] * shadowWidth,
+      y: farY + perpendicular[1] * shadowWidth,
+      u: 1,
+      v: 1,
+    },
+    {
+      x: rootX + perpendicular[0] * shadowWidth * 0.22,
+      y: rootY + perpendicular[1] * shadowWidth * 0.22,
+      u: 0,
+      v: 1,
+    },
+  ];
+
+  for (let index = 0; index < corners.length; index += 1) {
+    const corner = corners[index] ?? { x: rootX, y: rootY, u: 0, v: 0 };
+    const offset = (vertexOffset + index) * 5;
+    vertices[offset] = corner.x;
+    vertices[offset + 1] = corner.y;
+    vertices[offset + 2] = shadowZ;
+    vertices[offset + 3] = corner.u;
+    vertices[offset + 4] = corner.v;
+  }
+
+  indices[indexOffset] = vertexOffset;
+  indices[indexOffset + 1] = vertexOffset + 1;
+  indices[indexOffset + 2] = vertexOffset + 2;
+  indices[indexOffset + 3] = vertexOffset;
+  indices[indexOffset + 4] = vertexOffset + 2;
+  indices[indexOffset + 5] = vertexOffset + 3;
+}
+
+function getCampaignVegetationTerrainShadowScreenDirection(
+  center: [number, number, number],
+  matrix: Mat4,
+  viewportAspectRatio: number
+): [number, number] {
+  const projectedCenter = projectPoint(matrix, center);
+  const centerToFragment: [number, number] = [
+    -projectedCenter.x * 0.5 * viewportAspectRatio,
+    -projectedCenter.y * 0.5,
+  ];
+  const vegetationShadowDirection = normalizeTuple2([
+    -centerToFragment[0],
+    -Math.max(Math.abs(centerToFragment[1]), TERRAIN_CAMERA_LIGHT_HEIGHT),
+  ]);
+  const verticallyFlippedShadowDirection: [number, number] = [
+    vegetationShadowDirection[0],
+    -vegetationShadowDirection[1],
+  ];
+
+  return verticallyFlippedShadowDirection;
+}
+
+function getCampaignVegetationShadowWorldDirection(
+  center: [number, number, number],
+  matrix: Mat4,
+  screenDirection: [number, number]
+): [number, number] {
+  const projectedCenter = projectPoint(matrix, center);
+  const normalizedScreenDirection = normalizeTuple2(screenDirection);
+  const sampleStep = 0.002;
+  const projectedWorldX = projectPoint(matrix, [
+    center[0] + sampleStep,
+    center[1],
+    center[2],
+  ]);
+  const projectedWorldY = projectPoint(matrix, [
+    center[0],
+    center[1] + sampleStep,
+    center[2],
+  ]);
+  const basisX: [number, number] = [
+    projectedWorldX.x - projectedCenter.x,
+    projectedWorldX.y - projectedCenter.y,
+  ];
+  const basisY: [number, number] = [
+    projectedWorldY.x - projectedCenter.x,
+    projectedWorldY.y - projectedCenter.y,
+  ];
+  const determinant = basisX[0] * basisY[1] - basisY[0] * basisX[1];
+  const worldDirection =
+    Math.abs(determinant) > 0.0000001
+      ? normalizeTuple2([
+          (normalizedScreenDirection[0] * basisY[1] -
+            basisY[0] * normalizedScreenDirection[1]) /
+            determinant,
+          (basisX[0] * normalizedScreenDirection[1] -
+            normalizedScreenDirection[0] * basisX[1]) /
+            determinant,
+        ])
+      : normalizedScreenDirection;
+  return worldDirection;
+}
+
+function normalizeTuple2(input: [number, number]): [number, number] {
+  const length = Math.hypot(input[0], input[1]) || 1;
+
+  return [input[0] / length, input[1] / length];
+}
+
+function seededRandom01(x: number, y: number, salt: number): number {
+  let hash = 2166136261;
+  hash ^= Math.imul(x | 0, 374761393);
+  hash = Math.imul(hash, 16777619);
+  hash ^= Math.imul(y | 0, 668265263);
+  hash = Math.imul(hash, 16777619);
+  hash ^= Math.imul(salt | 0, 2246822519);
+  hash = Math.imul(hash ^ (hash >>> 15), 2246822507);
+  hash = Math.imul(hash ^ (hash >>> 13), 3266489909);
+  return ((hash ^ (hash >>> 16)) >>> 0) / 4294967296;
 }
 
 function hexToPixel(x: number, y: number): { x: number; y: number } {

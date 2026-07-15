@@ -2,6 +2,63 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-15 Campaign Mountain Terrain Rock Material
+
+### Added
+- `campaign-hex-grid-v1` 生成器新增 `terrainSampler`：默认从 `map_ground_types` 进行 7 点多采样，匹配山地区域颜色后把陆地 hex 标记为 `terrain: "山脉"`，并把采样图层、颜色集合、命中阈值和 fallback terrain 写入 Hex 数据图，便于后续复现和扩展新的地形采样机制。
+- 元末 campaign 地图新增 `map_rock_texture` 图层，内置地图与朱元璋 scenario pack 都注册 `campaign-rock-texture.png` 作为山脉地表材质输入。
+
+### Changed
+- 重新生成 `yuanmo-campaign-hex-grid.json`：8509 个格中保留 4033 个陆地格，`terrain` 统计变为 6904 个“平原”和 1605 个“山脉”；`environment` 的森林/草地语义保持不变。
+- `uMaterialSemanticTexture` 的通道语义扩展为 R=land/water，G=mountain terrain mask，B 预留；terrain shader 读取 G 通道后在山脉格上混入岩石贴图，并用邻域采样与噪声软化山脉和普通地表之间的过渡。
+- `map-view.ts` 和 `campaign-terrain-webgl.ts` 会把 `map_rock_texture` 传入 terrain shader；缺少岩石图层时仍回退到现有陆地贴图，保证旧地图可以加载。
+- 山脉材质过渡改为“山脉格内部向内羽化”：当前 rounded Hex cell 不是 `terrain: "山脉"` 时岩石 mask 直接为 0；只有山脉格自身与非山脉邻格相接的边会向内侵蚀并露出普通地表，避免岩石贴图蔓延到其他地块。
+
+### Impact
+- 山脉贴图仍是纯视觉材质规则，不改变通行、寻路、点击、探索、云层 reveal、城市 marker 或森林造景密度。后续如果要让山脉影响移动、资源、视野或事件，应在 Hex 数据图的 `terrain` 语义上新增玩法规则，而不是让 shader 反向驱动 gameplay。
+
+## 2026-07-15 Campaign Vegetation Shadow Direction
+
+### Changed
+- 森林树身 shader 和树影几何改为复用 terrain shader 的相机光照输入，并把树这类实体的可投影方向限制在相机前向半平面：树身明暗继续使用 `centerToFragment`、`uTerrainCameraLightHeight` 和 `uTerrainCameraLightHorizontalPull`，树影用树根投影点计算同一受限方向的反方向并通过当前 terrain camera 矩阵反投到地图平面，避免投影围绕树 360 度旋转而与树身阴影脱节。
+- 修正树影屏幕方向换算的符号：shader 显式区分 `vegetationLightDirection` 和其反向的 `vegetationShadowDirection`，CPU 投影几何只消费后者，避免投影落在树的受光面前方。
+- 按当前视觉校准要求，只对树影透明层追加屏幕 Y 方向翻转；树身自阴影 shader、森林密度和 terrain 光照参数保持不变。
+- 森林实例上限裁剪从“按视口中心距离排序后用满即停”改为屏幕分桶均匀预算：`maxVisibleInstances` 仍控制总实例数，但最小缩放下会在所有可见森林区域一起降密度，避免某些区域整片不显示树。
+
+### Impact
+- 该调整只影响森林树木的视觉受光和贴地投影方向。森林来源、密度、LOD、通行、寻路、点击、探索、岸线和云层语义不变。
+
+## 2026-07-15 Campaign Cloud Reveal Plane Projection
+
+### Changed
+- 云洞 reveal mask 从地形高度锚点投影改为 terrain camera 下的固定云洞参考高度投影：`campaign-cloud-webgl.ts` 只用已探索 hex、当前相机和统一参考高度对齐云洞，不再采样 `map_heights` 或沿用旧地形高度起伏，避免已探索区内被高度/旧 hex 错落切出残云。
+- `campaign-terrain-webgl.ts` 新增 `projectCampaignTerrainUvToClientPointAtCloudRevealHeight()`，专供云层 mask 等不应贴地但也不应落在最低平面的视觉层使用；原 `projectCampaignTerrainUvToClientPointAtHeightAnchor()` 保留给玩家、marker、hover 描边等需要贴地高度的交互/表现层。
+
+### Impact
+- 该调整只影响云层 reveal mask 的视觉裁切。探索状态、点击屏蔽、寻路、可踏足 hex 悬浮描边、marker/player 贴地投影和地形高度渲染不变。
+
+## 2026-07-15 Campaign Forest Vegetation Rules
+
+### Added
+- 新增 `campaign-vegetation-rules-v1` 森林造景规则资产：`src/content/scenario-packs/zhuyuanzhang/assets/maps/yuanmo-campaign-vegetation-rules.json` 绑定 `environment: "森林"`，配置 PineTree 变体、远景 / 中景 / 近景三档密度、LOD 阈值、最大可见实例数、边缘留白、marker/player/path 视觉避让半径和 vegetation shader 参数。
+- 新增 `campaign-vegetation-mesh-v1` 顶点色植被 mesh 资产：`src/content/scenario-packs/zhuyuanzhang/assets/vegetation/pine-tree-1..5.json` 由 `src/3dasset/obj/PineTree_*.obj/.mtl` 离线转换得到，材质色来自 MTL `Kd` 并由转换工具提亮到世界地图可读范围，运行时不直接解析 OBJ/MTL。
+- 新增 `tools/convert-campaign-vegetation-obj.mjs`，用于把自然景观 OBJ+MTL 源素材转换为可加载 mesh JSON，并生成森林 vegetation rules JSON。
+- 新增 `campaign-vegetation.vert.glsl` / `campaign-vegetation.frag.glsl`，在现有 campaign terrain WebGL renderer 内绘制森林实例，支持顶点色、地形同向相机光照和 LOD 可见性/密度控制。
+- 新增 `campaign-vegetation-shadow.vert.glsl` / `campaign-vegetation-shadow.frag.glsl`，按 rules 的 `shadow` 参数为每棵树绘制纯视觉贴地投影，投影方向由当前相机光照方向派生。
+
+### Changed
+- `MapDefinition` 新增 `campaignVegetationRulesUrl`；content pack loader、scenario pack URL loader 和导入目录 loader 都会解析该字段。导入目录 loader 会把 rules 内部的 `variant.meshUrl` 改写为 blob URL，保持外置包可加载。
+- `map-view.ts` 会把 vegetation rules URL 写入 terrain canvas；`campaign-terrain-webgl.ts` 读取 Hex 数据图中的 `environment: "森林"`，按规则在视口内展开树实例，并按缩放 LOD 控制远景/中景/近景密度。
+- 按世界地图俯视尺度修正森林模型表现：默认模型源从 `CommonTree_*.obj` 改为更接近立体体块的 `PineTree_*.obj`，`baseWorldScale` 进一步降到 `0.00105`，vegetation pass 保持不透明绘制，并移除森林树木的随风摇摆通道，避免树冠在大地图上过大、过黑或像立牌。
+- 森林树体颜色和光照强度改为由 vegetation rules 的 `shader.ambient` / `shader.directional` 驱动，植被 shader 复用地形相机光照参数；renderer 会优先保留靠近视口中心的森林格，并用 polygon offset 与贴地 lift 降低俯角变化时地形 depth 裁掉树身下半部分的概率。
+- 森林 LOD 从“低于中景阈值清空”改为远景保底密度；中景阈值和近景阈值在 rules 中保持可调，避免缩放时两档密度过近。
+- 树影从固定世界偏移改为按当前相机光照方向计算的树干锚定长条投影：近端固定在树干位置，长轴随光照方向旋转，远端渐隐。
+- 植被片元 shader 改为双面受光修正，避免关闭背面剔除后树冠朝向镜头的一面因为背面法线被反向压暗。
+- Campaign terrain 历史色调层从重灰压暗改为保留原色的轻暖化与高光压制；默认地形亮度、饱和度和材质 shade 范围略微回提，避免地图失去自身地貌颜色。
+
+### Impact
+- 森林造景是纯视觉规则，不改变通行、寻路、点击、探索、事件或玩法数值。后续要调树种、密度、避让或材质可读性，应优先改 `campaign-vegetation-rules-v1` 或重新运行转换工具，而不是把内容参数硬编码进 renderer。
+
 ## 2026-07-15 Campaign Hex Grid Data Asset
 
 ### Added
@@ -12,6 +69,8 @@
 ### Changed
 - 朱元璋 scenario pack 与内置元末地图都注册 `campaignHexGridUrl`；`map-view.ts` 会把该 URL 传给 terrain / actor canvas，`campaign-terrain-webgl.ts` 优先读取保存后的 Hex 数据图生成通行网格、点击通行检查、岸线链和 `uMaterialSemanticTexture`。
 - `terrain` 和 `environment` 当前统一初始化为“平原”和“草地”。`map_ground_types` 仍保留为生成器输入、旧地图回退和 shader 视觉参考，不再是存在 Hex 数据图时的运行时语义事实来源。
+- 修复大地图左右边缘出现草地/沙地锯齿条的问题：生成器不再把地图 UV 外的 hex center clamp 到原图边缘后标成陆地，所有地图外 cell 都写成非陆地；terrain shader 也把地图外 cell 防御性视为水侧，避免边缘 rounded hex 落到 UV 外时被混成陆地材质。
+- Hex 数据生成器新增 `environmentSampler`：默认从 `map_climates` 按 7 点多采样匹配绿色色块，把命中阈值达标的陆地 cell 写成 `environment: "森林"`；本次元末 campaign 数据生成出 1056 个森林格，采样图层、颜色集合和命中阈值都写入 JSON 便于复现和后续调参。
 
 ### Impact
 - 后续给每个 hex 增加地形、环境、资源、道路、危险度等机制时，应扩展同一份 Hex 数据图或其生成器，而不是在 renderer 或 gameplay 代码中重新逐帧采样原图。

@@ -6,6 +6,7 @@ uniform sampler2D uShorelineChainTexture;
 uniform sampler2D uWaterTexture;
 uniform sampler2D uGrassTexture;
 uniform sampler2D uSandTexture;
+uniform sampler2D uRockTexture;
 uniform float uWaterTextureEnabled;
 uniform float uTimeSeconds;
 uniform float uGrassAmbientLight;
@@ -151,6 +152,21 @@ float getMaterialSemanticLandAtCell(vec2 cell) {
   return step(0.5, semanticLand) * semanticInside;
 }
 
+float getMaterialSemanticMountainAtCell(vec2 cell) {
+  vec2 cellIndex = cell - uMaterialSemanticBounds.xy;
+  vec2 semanticUv = (cellIndex + vec2(0.5)) /
+    max(uMaterialSemanticTextureSize, vec2(1.0));
+  float semanticInside = getMaterialSemanticInsideAmount(cell);
+  float semanticMountain = texture2D(
+    uMaterialSemanticTexture,
+    clamp(semanticUv, 0.0, 1.0)
+  ).g;
+
+  return step(0.5, semanticMountain) *
+    getMaterialSemanticLandAtCell(cell) *
+    semanticInside;
+}
+
 float getSemanticLandAmountAtCell(vec2 cell, float hexScale, float mapAspect) {
   return getMaterialSemanticLandAtCell(cell) *
     getMapUvInsideAmount(getHexCellUv(cell, hexScale, mapAspect));
@@ -160,8 +176,9 @@ float getSemanticWaterAmountAtCell(vec2 cell, float hexScale, float mapAspect) {
   float semanticInside = getMaterialSemanticInsideAmount(cell);
   float semanticLand = getMaterialSemanticLandAtCell(cell);
   float semanticWater = mix(1.0, 1.0 - semanticLand, semanticInside);
+  float mapInside = getMapUvInsideAmount(getHexCellUv(cell, hexScale, mapAspect));
 
-  return semanticWater * getMapUvInsideAmount(getHexCellUv(cell, hexScale, mapAspect));
+  return mix(1.0, semanticWater, mapInside);
 }
 
 float getSemanticWaterAmountAtUv(vec2 uv) {
@@ -852,6 +869,16 @@ vec3 boostLandTextureColor(vec3 color) {
   );
 }
 
+vec3 applyCampaignHistoricTone(vec3 color) {
+  float luma = dot(color, vec3(0.2126, 0.7152, 0.0722));
+  vec3 restoredColor = mix(vec3(luma), color, 1.06);
+  vec3 warmArchiveTint = vec3(0.94, 0.90, 0.82);
+  vec3 toned = mix(restoredColor, restoredColor * warmArchiveTint, 0.28);
+  float highlightGuard = smoothstep(0.66, 0.96, luma);
+
+  return clamp(mix(toned * 0.99, toned * 0.88, highlightGuard), 0.0, 1.0);
+}
+
 vec3 sampleGrassMaterial(vec2 uv) {
   return texture2D(uGrassTexture, fract(uv * uLandTextureTiling)).rgb;
 }
@@ -861,6 +888,92 @@ vec3 sampleSandMaterial(vec2 uv) {
     uSandTexture,
     fract(uv * uBeachTextureTiling + vec2(0.17, -0.09))
   ).rgb;
+}
+
+vec3 sampleRockMaterial(vec2 uv) {
+  vec2 coarseUv = uv * (uLandTextureTiling * 0.82) + vec2(0.07, -0.04);
+  vec2 detailUv = uv * (uLandTextureTiling * 1.93) + vec2(-0.21, 0.18);
+  vec3 coarse = texture2D(uRockTexture, fract(coarseUv)).rgb;
+  vec3 detail = texture2D(uRockTexture, fract(detailUv)).rgb;
+  vec3 rock = mix(coarse, detail, 0.28);
+  float luma = dot(rock, vec3(0.2126, 0.7152, 0.0722));
+  vec3 saturated = mix(vec3(luma), rock, 0.86);
+
+  return clamp(saturated * 0.82 + vec3(0.045, 0.044, 0.040), 0.0, 1.0);
+}
+
+float sampleMountainEdgeNoise(
+  vec2 point,
+  vec2 cell,
+  vec2 neighborOffset,
+  vec2 edgeCenter,
+  vec2 edgeTangent
+) {
+  float seed = hash(cell * 3.17 + neighborOffset * 11.9) * 41.0;
+  vec2 local = point - edgeCenter;
+  float along = dot(local, edgeTangent);
+  float across = dot(local, vec2(-edgeTangent.y, edgeTangent.x));
+  float broad = valueNoise(vec2(along * 1.75 + seed, across * 0.86 - seed));
+  float medium = valueNoise(vec2(along * 4.70 - seed * 0.27, across * 1.65 + seed * 0.19));
+  float fine = valueNoise(vec2(along * 11.60 + seed * 0.13, across * 3.70 - seed * 0.07));
+
+  return broad * 0.56 + medium * 0.32 + fine * 0.12;
+}
+
+float getLocalMountainEdgeInset(
+  vec2 point,
+  vec2 cell,
+  vec2 neighborOffset,
+  float currentMountain
+) {
+  float neighborMountain = getMaterialSemanticMountainAtCell(cell + neighborOffset);
+  float exposedEdge = currentMountain * (1.0 - neighborMountain);
+  if (exposedEdge < 0.5) {
+    return 1.0;
+  }
+
+  vec2 center = hexToPixel(cell);
+  vec2 neighborCenter = hexToPixel(cell + neighborOffset);
+  vec2 edgeNormal = normalize(neighborCenter - center);
+  vec2 edgeTangent = vec2(-edgeNormal.y, edgeNormal.x);
+  vec2 edgeCenter = (center + neighborCenter) * 0.5;
+  float edgeDepth = dot(point - edgeCenter, -edgeNormal);
+  float alongEdge = abs(dot(point - edgeCenter, edgeTangent));
+  float edgeNoise = sampleMountainEdgeNoise(point, cell, neighborOffset, edgeCenter, edgeTangent);
+  float endpointGuard = 1.0 - smoothstep(0.43, 0.64, alongEdge);
+  float raggedDepth = edgeDepth +
+    (edgeNoise - 0.5) * 0.34 +
+    (valueNoise(point * 7.20 + hash(cell + neighborOffset) * 19.0) - 0.5) * 0.10;
+  float insetWidth = mix(0.22, 0.46, edgeNoise);
+  float inset = smoothstep(0.04, insetWidth, raggedDepth);
+
+  return mix(1.0, inset, endpointGuard * exposedEdge);
+}
+
+float getMountainTerrainAmount(
+  vec2 point,
+  vec2 cell,
+  float hexScale,
+  float mapAspect,
+  float visualLandWater,
+  float sandMask
+) {
+  float currentMountain = getMaterialSemanticMountainAtCell(cell) *
+    getMapUvInsideAmount(getHexCellUv(cell, hexScale, mapAspect));
+  float edgeInset = 1.0;
+
+  edgeInset = min(edgeInset, getLocalMountainEdgeInset(point, cell, vec2(1.0, 0.0), currentMountain));
+  edgeInset = min(edgeInset, getLocalMountainEdgeInset(point, cell, vec2(-1.0, 0.0), currentMountain));
+  edgeInset = min(edgeInset, getLocalMountainEdgeInset(point, cell, vec2(0.0, 1.0), currentMountain));
+  edgeInset = min(edgeInset, getLocalMountainEdgeInset(point, cell, vec2(0.0, -1.0), currentMountain));
+  edgeInset = min(edgeInset, getLocalMountainEdgeInset(point, cell, vec2(1.0, -1.0), currentMountain));
+  edgeInset = min(edgeInset, getLocalMountainEdgeInset(point, cell, vec2(-1.0, 1.0), currentMountain));
+
+  return clamp(
+    currentMountain * edgeInset * (1.0 - visualLandWater) * (1.0 - sandMask * 0.86),
+    0.0,
+    1.0
+  );
 }
 
 float sampleLayeredWaterFlowNoise(vec2 uv, vec2 flow) {
@@ -1025,6 +1138,7 @@ void main() {
     0.0,
     1.0
   );
+  vec3 rockTexture = sampleRockMaterial(vUv);
   vec2 beachAmounts = getLandBeachAmounts(
     vUv,
     hexPoint,
@@ -1081,6 +1195,23 @@ void main() {
     clamp(fineSandTransition * 0.42 + sparseSandDust * 0.62, 0.0, 0.78)
   );
   vec3 landTexture = mix(sandyGrassTexture, sandTexture, sandMaterialMask);
+  float mountainAmount = getMountainTerrainAmount(
+    hexPoint,
+    hexCell,
+    hexScale,
+    mapAspect,
+    visualLandWater,
+    sandMaterialMask
+  );
+  float rockReliefNoise = valueNoise(hexPoint * 3.10 + hash(visualLandCell) * 11.0);
+  vec3 rockTint = mix(vec3(0.83, 0.87, 0.82), vec3(1.05, 1.02, 0.92), rockReliefNoise);
+  vec3 rockLandTexture = clamp(
+    mix(rockTexture * rockTint, terrainColor * 0.82, 0.12) *
+      mix(0.90, 1.08, beachShapeNoise),
+    0.0,
+    1.0
+  );
+  landTexture = mix(landTexture, rockLandTexture, mountainAmount);
   landTexture *= mix(0.95, 1.05, atlasDetailLuma);
   float landShade = mix(uLandTextureShadeRange.x, uLandTextureShadeRange.y, baseShade);
   vec3 landColor = landTexture * landShade * mix(0.96, 1.08, materialLuma);
@@ -1092,6 +1223,7 @@ void main() {
     nearSeaEdgeBand
   );
   vec3 color = clamp(mix(landColor, waterColor, boundaryWater) * terrainReliefShade, 0.0, 1.0);
+  color = applyCampaignHistoricTone(color);
 
   float border = getHexGridLine(hexPoint, hexCell);
   color = mix(

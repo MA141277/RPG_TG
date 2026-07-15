@@ -8,13 +8,30 @@ const DEFAULTS = {
   mapPath: "src/content/scenario-packs/zhuyuanzhang/maps.json",
   mapId: "map.yuanmo_campaign",
   sourceLayerId: "map_ground_types",
+  environmentSourceLayerId: "map_climates",
   outputPath: "src/content/scenario-packs/zhuyuanzhang/assets/maps/yuanmo-campaign-hex-grid.json",
   terrain: "平原",
+  mountainTerrain: "山脉",
+  mountainColors: "128,128,64;98,65,65",
+  mountainMinHits: 3,
   environment: "草地",
+  forestEnvironment: "森林",
+  forestColors: "0,166,81;57,181,74",
+  forestMinHits: 3,
 };
 
 const HEX_TERRAIN_SCALE = 138;
 const HEX_MAP_ASPECT = 1.1285;
+const ENVIRONMENT_SAMPLE_OFFSETS = [
+  { x: 0, y: 0 },
+  { x: -0.36, y: -0.22 },
+  { x: 0.36, y: -0.22 },
+  { x: -0.36, y: 0.22 },
+  { x: 0.36, y: 0.22 },
+  { x: 0, y: -0.42 },
+  { x: 0, y: 0.42 },
+];
+const TERRAIN_SAMPLE_OFFSETS = ENVIRONMENT_SAMPLE_OFFSETS;
 
 const options = parseArgs(process.argv.slice(2));
 const projectRoot = process.cwd();
@@ -33,24 +50,54 @@ if (sourceLayer == null) {
 
 const sourceImagePath = path.resolve(path.dirname(mapPath), sourceLayer.imageUrl);
 const png = PNG.sync.read(fs.readFileSync(sourceImagePath));
+const environmentSource =
+  options.environmentSourceLayerId === "none"
+    ? null
+    : loadEnvironmentSource(mapDefinition, mapPath, options.environmentSourceLayerId);
+const forestColors = parseColorPalette(options.forestColors);
+const mountainColors = parseColorPalette(options.mountainColors);
 const cells = getCampaignHexCells().map((cell) => {
   const center = campaignHexToPixel(cell);
   const u = campaignHexPointToTerrainU(center.x);
   const v = campaignHexPointToTerrainV(center.y);
+  const isInsideMap = u >= 0 && u <= 1 && v >= 0 && v <= 1;
   const pixelX = Math.min(Math.max(Math.round(u * (png.width - 1)), 0), png.width - 1);
   const pixelY = Math.min(Math.max(Math.round(v * (png.height - 1)), 0), png.height - 1);
   const offset = (pixelY * png.width + pixelX) * 4;
   const red = png.data[offset] ?? 0;
   const green = png.data[offset + 1] ?? red;
   const blue = png.data[offset + 2] ?? red;
-  const land = !isWaterMaterialColor(red, green, blue);
+  const land = isInsideMap && !isWaterMaterialColor(red, green, blue);
+  const terrain = land
+    ? sampleTerrain({
+      cellCenter: center,
+      source: {
+        image: png,
+      },
+      mountainColors,
+      fallbackTerrain: options.terrain,
+      mountainTerrain: options.mountainTerrain,
+      mountainMinHits: options.mountainMinHits,
+    })
+    : options.terrain;
+  const environment =
+    land && environmentSource != null
+      ? sampleEnvironment({
+        cellCenter: center,
+        source: environmentSource,
+        forestColors,
+        fallbackEnvironment: options.environment,
+        forestEnvironment: options.forestEnvironment,
+        forestMinHits: options.forestMinHits,
+      })
+      : options.environment;
 
   return {
     x: cell.x,
     y: cell.y,
     land,
-    terrain: options.terrain,
-    environment: options.environment,
+    terrain,
+    environment,
   };
 });
 const bounds = cells.reduce(
@@ -68,6 +115,14 @@ const bounds = cells.reduce(
   }
 );
 const landCells = cells.filter((cell) => cell.land).length;
+const terrainCounts = cells.reduce((counts, cell) => {
+  counts[cell.terrain] = (counts[cell.terrain] ?? 0) + 1;
+  return counts;
+}, {});
+const environmentCounts = cells.reduce((counts, cell) => {
+  counts[cell.environment] = (counts[cell.environment] ?? 0) + 1;
+  return counts;
+}, {});
 const output = {
   schemaVersion: 1,
   format: "campaign-hex-grid-v1",
@@ -95,16 +150,58 @@ const output = {
       terrainUvFormula:
         "u = x / (hexMapAspect * hexTerrainScale) + 0.5; v = y / hexTerrainScale + 0.5",
       pixelFormula:
-        "pixelX = round(u * (sourceWidth - 1)); pixelY = round(v * (sourceHeight - 1))",
+        "pixelX = clamp(round(u * (sourceWidth - 1)), 0, sourceWidth - 1); pixelY = clamp(round(v * (sourceHeight - 1)), 0, sourceHeight - 1)",
       waterMaterialRule: "red >= 56 && green < 31 && blue < 31",
-      landRule: "land = !waterMaterialRule",
+      landRule: "land = mapInside && !waterMaterialRule",
+      mapOutsideRule: "hex centers outside terrain UV [0, 1] are water / non-land",
     },
+    terrainSampler: {
+      method: "hex-multi-point-color-palette",
+      sourceLayerId: options.sourceLayerId,
+      sampleOffsets: TERRAIN_SAMPLE_OFFSETS,
+      matchRule:
+        "terrain = mountainTerrain when land && mountainColorHits >= mountainMinHits; otherwise fallbackTerrain",
+      fallbackTerrain: options.terrain,
+      matches: [
+        {
+          terrain: options.mountainTerrain,
+          colors: [...mountainColors].map(formatColor),
+          minHits: options.mountainMinHits,
+        },
+      ],
+    },
+    ...(environmentSource == null
+      ? {}
+      : {
+        environmentSampler: {
+          method: "hex-multi-point-color-palette",
+          sourceLayerId: options.environmentSourceLayerId,
+          sourceImage: {
+            path: path.relative(path.dirname(path.resolve(projectRoot, options.outputPath)), environmentSource.path).replaceAll("\\", "/"),
+            width: environmentSource.image.width,
+            height: environmentSource.image.height,
+          },
+          sampleOffsets: ENVIRONMENT_SAMPLE_OFFSETS,
+          matchRule:
+            "environment = forestEnvironment when land && forestColorHits >= forestMinHits; otherwise fallbackEnvironment",
+          fallbackEnvironment: options.environment,
+          matches: [
+            {
+              environment: options.forestEnvironment,
+              colors: [...forestColors].map(formatColor),
+              minHits: options.forestMinHits,
+            },
+          ],
+        },
+      }),
   },
   bounds,
   counts: {
     cells: cells.length,
     landCells,
     waterCells: cells.length - landCells,
+    terrains: terrainCounts,
+    environments: environmentCounts,
   },
   cells,
 };
@@ -132,12 +229,32 @@ function parseArgs(args) {
       parsed.mapId = value;
     } else if (key === "--sourceLayer") {
       parsed.sourceLayerId = value;
+    } else if (key === "--environmentSourceLayer") {
+      parsed.environmentSourceLayerId = value;
     } else if (key === "--out") {
       parsed.outputPath = value;
     } else if (key === "--terrain") {
       parsed.terrain = value;
+    } else if (key === "--mountainTerrain") {
+      parsed.mountainTerrain = value;
+    } else if (key === "--mountainColors") {
+      parsed.mountainColors = value;
+    } else if (key === "--mountainMinHits") {
+      parsed.mountainMinHits = Number.parseInt(value, 10);
+      if (!Number.isFinite(parsed.mountainMinHits) || parsed.mountainMinHits <= 0) {
+        throw new Error(`Invalid --mountainMinHits value "${value}".`);
+      }
     } else if (key === "--environment") {
       parsed.environment = value;
+    } else if (key === "--forestEnvironment") {
+      parsed.forestEnvironment = value;
+    } else if (key === "--forestColors") {
+      parsed.forestColors = value;
+    } else if (key === "--forestMinHits") {
+      parsed.forestMinHits = Number.parseInt(value, 10);
+      if (!Number.isFinite(parsed.forestMinHits) || parsed.forestMinHits <= 0) {
+        throw new Error(`Invalid --forestMinHits value "${value}".`);
+      }
     } else {
       throw new Error(`Unknown argument ${key}.`);
     }
@@ -146,6 +263,122 @@ function parseArgs(args) {
   }
 
   return parsed;
+}
+
+function sampleTerrain({
+  cellCenter,
+  source,
+  mountainColors,
+  fallbackTerrain,
+  mountainTerrain,
+  mountainMinHits,
+}) {
+  let mountainHits = 0;
+
+  for (const offset of TERRAIN_SAMPLE_OFFSETS) {
+    const u = campaignHexPointToTerrainU(cellCenter.x + offset.x);
+    const v = campaignHexPointToTerrainV(cellCenter.y + offset.y);
+    if (u < 0 || u > 1 || v < 0 || v > 1) {
+      continue;
+    }
+
+    const pixelX = Math.min(
+      Math.max(Math.round(u * (source.image.width - 1)), 0),
+      source.image.width - 1
+    );
+    const pixelY = Math.min(
+      Math.max(Math.round(v * (source.image.height - 1)), 0),
+      source.image.height - 1
+    );
+    const pixelOffset = (pixelY * source.image.width + pixelX) * 4;
+    const colorKey = getColorKey(
+      source.image.data[pixelOffset] ?? 0,
+      source.image.data[pixelOffset + 1] ?? 0,
+      source.image.data[pixelOffset + 2] ?? 0
+    );
+
+    if (mountainColors.has(colorKey)) {
+      mountainHits += 1;
+    }
+  }
+
+  return mountainHits >= mountainMinHits ? mountainTerrain : fallbackTerrain;
+}
+
+function loadEnvironmentSource(mapDefinition, mapPath, sourceLayerId) {
+  const sourceLayer = mapDefinition.layers?.find((layer) => layer.id === sourceLayerId);
+  if (sourceLayer == null) {
+    throw new Error(`Environment layer "${sourceLayerId}" was not found on map "${mapDefinition.id}".`);
+  }
+
+  const sourceImagePath = path.resolve(path.dirname(mapPath), sourceLayer.imageUrl);
+  return {
+    path: sourceImagePath,
+    image: PNG.sync.read(fs.readFileSync(sourceImagePath)),
+  };
+}
+
+function sampleEnvironment({
+  cellCenter,
+  source,
+  forestColors,
+  fallbackEnvironment,
+  forestEnvironment,
+  forestMinHits,
+}) {
+  let forestHits = 0;
+
+  for (const offset of ENVIRONMENT_SAMPLE_OFFSETS) {
+    const u = campaignHexPointToTerrainU(cellCenter.x + offset.x);
+    const v = campaignHexPointToTerrainV(cellCenter.y + offset.y);
+    if (u < 0 || u > 1 || v < 0 || v > 1) {
+      continue;
+    }
+
+    const pixelX = Math.min(
+      Math.max(Math.round(u * (source.image.width - 1)), 0),
+      source.image.width - 1
+    );
+    const pixelY = Math.min(
+      Math.max(Math.round(v * (source.image.height - 1)), 0),
+      source.image.height - 1
+    );
+    const pixelOffset = (pixelY * source.image.width + pixelX) * 4;
+    const colorKey = getColorKey(
+      source.image.data[pixelOffset] ?? 0,
+      source.image.data[pixelOffset + 1] ?? 0,
+      source.image.data[pixelOffset + 2] ?? 0
+    );
+
+    if (forestColors.has(colorKey)) {
+      forestHits += 1;
+    }
+  }
+
+  return forestHits >= forestMinHits ? forestEnvironment : fallbackEnvironment;
+}
+
+function parseColorPalette(value) {
+  const colors = new Set();
+  for (const colorText of value.split(";")) {
+    const channels = colorText.split(",").map((channel) => Number.parseInt(channel.trim(), 10));
+    if (
+      channels.length !== 3 ||
+      channels.some((channel) => !Number.isFinite(channel) || channel < 0 || channel > 255)
+    ) {
+      throw new Error(`Invalid RGB color "${colorText}". Expected "red,green,blue".`);
+    }
+    colors.add(getColorKey(channels[0], channels[1], channels[2]));
+  }
+  return colors;
+}
+
+function getColorKey(red, green, blue) {
+  return `${red},${green},${blue}`;
+}
+
+function formatColor(colorKey) {
+  return colorKey;
 }
 
 function getCampaignHexCells() {
@@ -218,15 +451,11 @@ function campaignPixelToRoundedHex(x, y) {
 }
 
 function campaignHexPointToTerrainU(x) {
-  return clamp(x / (HEX_MAP_ASPECT * HEX_TERRAIN_SCALE) + 0.5);
+  return x / (HEX_MAP_ASPECT * HEX_TERRAIN_SCALE) + 0.5;
 }
 
 function campaignHexPointToTerrainV(y) {
-  return clamp(y / HEX_TERRAIN_SCALE + 0.5);
-}
-
-function clamp(value) {
-  return Math.min(Math.max(value, 0), 1);
+  return y / HEX_TERRAIN_SCALE + 0.5;
 }
 
 function isWaterMaterialColor(red, green, blue) {

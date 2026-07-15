@@ -77,6 +77,36 @@ export type CampaignHexGridDefinition = {
       pixelFormula: string;
       waterMaterialRule: string;
       landRule: string;
+      mapOutsideRule?: string;
+    };
+    terrainSampler?: {
+      method: "hex-multi-point-color-palette";
+      sourceLayerId: string;
+      sampleOffsets: Array<{ x: number; y: number }>;
+      matchRule: string;
+      fallbackTerrain: CampaignHexTerrain;
+      matches: Array<{
+        terrain: CampaignHexTerrain;
+        colors: string[];
+        minHits: number;
+      }>;
+    };
+    environmentSampler?: {
+      method: "hex-multi-point-color-palette";
+      sourceLayerId: string;
+      sourceImage: {
+        path: string;
+        width: number;
+        height: number;
+      };
+      sampleOffsets: Array<{ x: number; y: number }>;
+      matchRule: string;
+      fallbackEnvironment: CampaignHexEnvironment;
+      matches: Array<{
+        environment: CampaignHexEnvironment;
+        colors: string[];
+        minHits: number;
+      }>;
     };
   };
   bounds: {
@@ -89,8 +119,81 @@ export type CampaignHexGridDefinition = {
     cells: number;
     landCells: number;
     waterCells: number;
+    terrains?: Record<CampaignHexTerrain, number>;
+    environments?: Record<CampaignHexEnvironment, number>;
   };
   cells: CampaignHexGridCell[];
+};
+
+export type CampaignVegetationMeshDefinition = {
+  schemaVersion: 1;
+  format: "campaign-vegetation-mesh-v1";
+  id: string;
+  label: string;
+  source: {
+    kind: "obj-mtl";
+    objPath: string;
+    mtlPath: string;
+    materialNames: string[];
+  };
+  origin: [number, number, number];
+  bounds: {
+    min: [number, number, number];
+    max: [number, number, number];
+  };
+  positions: number[];
+  normals: number[];
+  colors: number[];
+  indices: number[];
+};
+
+export type CampaignVegetationRulesDefinition = {
+  schemaVersion: 1;
+  format: "campaign-vegetation-rules-v1";
+  id: string;
+  environment: CampaignHexEnvironment;
+  profile: string;
+  seed: string;
+  variants: Array<{
+    id: string;
+    meshUrl: string;
+    weight: number;
+  }>;
+  density: {
+    far: { min: number; max: number };
+    medium: { min: number; max: number };
+    near: { min: number; max: number };
+  };
+  lod: {
+    mediumMinScale: number;
+    nearMinScale: number;
+    maxVisibleInstances: number;
+  };
+  placement: {
+    innerRadius: number;
+    outerRadius: number;
+    scaleMin: number;
+    scaleMax: number;
+    baseWorldScale: number;
+    lift: number;
+  };
+  avoidance: {
+    markerRadius: number;
+    playerRadius: number;
+    pathRadius: number;
+    densityMultiplierNearAvoidance: number;
+  };
+  shader: {
+    ambient: number;
+    directional: number;
+  };
+  shadow: {
+    opacity: number;
+    radiusScaleX: number;
+    radiusScaleY: number;
+    lightOffsetScale: number;
+    lift: number;
+  };
 };
 
 export type MapDefinition = {
@@ -110,6 +213,7 @@ export type MapDefinition = {
   primaryImageUrl?: string;
   regionOverlayImageUrl?: string;
   campaignHexGridUrl?: string;
+  campaignVegetationRulesUrl?: string;
   initialPlayerCoordinate?: {
     x: number;
     y: number;

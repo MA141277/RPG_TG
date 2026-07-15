@@ -1,0 +1,79 @@
+{
+  "schemaVersion": 1,
+  "format": "campaign-vegetation-rules-v1",
+  "id": "yuanmo-temperate-forest",
+  "environment": "森林",
+  "profile": "temperate-pine-tree",
+  "seed": "hex-cell-and-instance-v1",
+  "variants": [
+    {
+      "id": "pine-tree-1",
+      "meshUrl": "../vegetation/pine-tree-1.json",
+      "weight": 1
+    },
+    {
+      "id": "pine-tree-2",
+      "meshUrl": "../vegetation/pine-tree-2.json",
+      "weight": 1
+    },
+    {
+      "id": "pine-tree-3",
+      "meshUrl": "../vegetation/pine-tree-3.json",
+      "weight": 1
+    },
+    {
+      "id": "pine-tree-4",
+      "meshUrl": "../vegetation/pine-tree-4.json",
+      "weight": 1
+    },
+    {
+      "id": "pine-tree-5",
+      "meshUrl": "../vegetation/pine-tree-5.json",
+      "weight": 1
+    }
+  ],
+  "density": {
+    "far": {
+      "min": 2,
+      "max": 4
+    },
+    "medium": {
+      "min": 12,
+      "max": 24
+    },
+    "near": {
+      "min": 48,
+      "max": 64
+    }
+  },
+  "lod": {
+    "mediumMinScale": 22,
+    "nearMinScale": 80,
+    "maxVisibleInstances": 840
+  },
+  "placement": {
+    "innerRadius": 0.16,
+    "outerRadius": 0.78,
+    "scaleMin": 0.78,
+    "scaleMax": 1.12,
+    "baseWorldScale": 0.00105,
+    "lift": 0.00062
+  },
+  "avoidance": {
+    "markerRadius": 0.42,
+    "playerRadius": 0.34,
+    "pathRadius": 0.18,
+    "densityMultiplierNearAvoidance": 0.35
+  },
+  "shader": {
+    "ambient": 0.68,
+    "directional": 0.14
+  },
+  "shadow": {
+    "opacity": 0.56,
+    "radiusScaleX": 1.36,
+    "radiusScaleY": 0.82,
+    "lightOffsetScale": 0.34,
+    "lift": 0.00042
+  }
+}

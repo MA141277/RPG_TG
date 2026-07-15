@@ -10,7 +10,9 @@ import map_water_noiseUrl from "../assets/yuanmo-map/yuanmo-water-noise.png";
 import map_fog_noiseUrl from "../assets/yuanmo-map/yuanmo-fog-noise.png";
 import map_grass_textureUrl from "../assets/yuanmo-map/campaign-grass-texture.png";
 import map_sand_textureUrl from "../assets/yuanmo-map/campaign-sand-texture.png";
+import map_rock_textureUrl from "../assets/yuanmo-map/campaign-rock-texture.png";
 import map_hex_gridUrl from "./scenario-packs/zhuyuanzhang/assets/maps/yuanmo-campaign-hex-grid.json?url";
+import map_vegetation_rulesUrl from "./scenario-packs/zhuyuanzhang/assets/maps/yuanmo-campaign-vegetation-rules.json?url";
 import map_tietuUrl from "../../tietu.png";
 
 export const yuanmoCampaignMap: MapDefinition = {
@@ -23,6 +25,7 @@ export const yuanmoCampaignMap: MapDefinition = {
   displaySize: { width: 1484, height: 1060 },
   primaryImageUrl: map_HDUrl,
   campaignHexGridUrl: map_hex_gridUrl,
+  campaignVegetationRulesUrl: map_vegetation_rulesUrl,
   nodes: [
     {"id": "settlement.newguinea_province", "label": "美拉尼西亚人聚集地（Melanesia）", "x": 472, "y": 49, "kind": "settlement", "summary": "Region: 伊里安岛 | Owner: slave | Level: town | Type: town"},
     {"id": "settlement.ryukyu_province", "label": "首里城", "x": 416, "y": 269, "kind": "settlement", "summary": "Region: 琉球王国 | Owner: slave | Level: large_town | Type: town"},
@@ -984,6 +987,7 @@ export const yuanmoCampaignMap: MapDefinition = {
     {"id": "map_ground_types", "label": "Ground types", "width": 1019, "height": 903, "description": "map_ground_types.tga", "imageUrl": map_ground_typesUrl},
     {"id": "map_grass_texture", "label": "Campaign grass texture", "width": 1254, "height": 1254, "description": "grass.png", "imageUrl": map_grass_textureUrl},
     {"id": "map_sand_texture", "label": "Campaign sand texture", "width": 1254, "height": 1254, "description": "sand.png", "imageUrl": map_sand_textureUrl},
+    {"id": "map_rock_texture", "label": "Campaign rock texture", "width": 1254, "height": 1254, "description": "rock.png", "imageUrl": map_rock_textureUrl},
     {"id": "map_water_noise", "label": "Water noise texture", "width": 512, "height": 512, "description": "tileable ancient-map water ripple noise", "imageUrl": map_water_noiseUrl},
     {"id": "map_fog_noise", "label": "Fog noise texture", "width": 640, "height": 640, "description": "tileable campaign fog noise", "imageUrl": map_fog_noiseUrl},
     {"id": "map_trade_routes", "label": "Trade routes", "width": 509, "height": 451, "description": "map_trade_routes.tga", "imageUrl": map_trade_routesUrl},
