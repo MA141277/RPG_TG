@@ -4042,6 +4042,258 @@ test(
 );
 
 test(
+  "script editor exported pack activates runtime story task status and playable contributions end to end",
+  async () => {
+    const {
+      exportScriptEditorProjectToScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    const {
+      loadScenarioPackFromFiles,
+    } = require("../.test-dist/application/scenario/scenario-pack-loader.js");
+    const {
+      createEmptyModRuntimeState,
+      createLoadedModFromScenarioPack,
+      runModRuntime,
+    } = require("../.test-dist/core/mods/mod-runtime.js");
+    const {
+      configureDefaultPlayableRuntimeRegistriesFromActivatedMod,
+      createLaunchPlayableRequest,
+      resetDefaultPlayableRuntimeRegistries,
+      resolvePlayableLaunchRequest,
+    } = require("../.test-dist/core/runtime/playable-runtime.js");
+    const {
+      runStoryTriggerRuntime,
+    } = require("../.test-dist/core/runtime/scene-runtime.js");
+    const {
+      dispatchRuntimeRequest,
+    } = require("../.test-dist/core/runtime/runtime-dispatch.js");
+    const {
+      materializeCharacterDefinitions,
+    } = require("../.test-dist/application/character/character-status.js");
+
+    const project = createExportableScriptEditorProjectDefinition();
+    project.storyPack.scenarioProfile = {
+      ...project.storyPack.scenarioProfile,
+      launchPolicy: {
+        characterSelection: "fixed",
+        initialView: "city",
+        entryEventTiming: "immediate",
+      },
+      entryEventId: "event.opening",
+    };
+    project.textEntries = [{ id: "text.opening", text: "Opening line." }];
+    project.dialogues = [
+      {
+        id: "dialogue.opening",
+        title: "Opening",
+        nodes: [
+          {
+            id: "dialogue-node.opening",
+            nodeType: "dialogue",
+            speakerPersonId: "person.hero",
+            textId: "text.opening",
+          },
+        ],
+      },
+    ];
+    project.quests = [
+      {
+        id: "task.opening",
+        title: "Opening Task",
+        objectives: [{ id: "report", target: 1, signalType: "scene.reported" }],
+      },
+    ];
+    project.activities = [
+      {
+        id: "activity.training",
+        label: "Training",
+        handlerId: "generic.qte",
+      },
+    ];
+    project.events = [
+      {
+        id: "event.opening",
+        title: "Opening Event",
+        triggerTiming: "city-enter",
+        relations: { cityIds: ["city.kulan"] },
+        destination: { family: "dialogue", targetId: "dialogue.opening" },
+        conditionGroups: [
+          {
+            id: "condition.opening",
+            operator: "all",
+            conditions: [
+              { type: "flag", key: "story.opening.enabled", expected: true },
+              { type: "variable", key: "story.progress", operator: ">=", value: 3 },
+            ],
+          },
+        ],
+        taskInputs: [
+          {
+            type: "start",
+            taskId: "task.opening",
+            occurredAt: "2026-07-15T00:00:00.000Z",
+            source: "script-editor:event.opening",
+          },
+        ],
+      },
+    ];
+    project.minigames = [
+      {
+        id: "minigame.training.qte",
+        title: "Training QTE",
+        description: "Opening training playable binding.",
+        playableId: "activity-qte",
+        integrationId: "playable.activity-qte.scene.training",
+        ownerKind: "scene",
+        ownerId: "scene.dialogue.opening",
+        returnPolicy: "resume-owner",
+        triggerId: "trigger.playable.activity-qte.scene.training",
+        triggerSource: "event-destination",
+        triggerEvent: "event.opening",
+        launchPayload: [{ key: "difficulty", value: "easy" }],
+        outcomeRoutes: [
+          {
+            id: "outcome.success",
+            outcome: "success",
+            handoffPolicy: "resume-owner",
+            summary: "Training completed.",
+            effectHint: "",
+          },
+        ],
+      },
+    ];
+
+    const serializedFiles = exportScriptEditorProjectToScenarioPackFiles(project);
+    const exportedPack = await loadScenarioPackFromFiles(
+      createImportedFilesFromSerializedJsonRecord(
+        serializedFiles,
+        "exported-end-to-end-pack"
+      )
+    );
+    const loadedMod = createLoadedModFromScenarioPack({
+      source: {
+        kind: "file",
+        name: "Exported End To End Pack",
+        filePath: "exported-end-to-end-pack/pack.json",
+      },
+      scenarioPack: exportedPack,
+    });
+    const activationResult = await runModRuntime({
+      state: createEmptyModRuntimeState(),
+      request: {
+        type: "mod.activate-loaded",
+        requestId: "test:script-editor-end-to-end-exported-pack",
+        loadedMod,
+      },
+      context: { allowedCapabilities: [] },
+    });
+
+    assert.equal(activationResult.ok, true);
+    if (!activationResult.ok) {
+      return;
+    }
+
+    assert.deepEqual(activationResult.activatedMod.gameplayContributions.playables, [
+      "activity-qte",
+    ]);
+    assert.deepEqual(
+      activationResult.activatedMod.gameplayContributions.playableIntegrations,
+      ["playable.activity-qte.scene.training"]
+    );
+
+    configureDefaultPlayableRuntimeRegistriesFromActivatedMod(
+      activationResult.activatedMod
+    );
+    try {
+      const playableLaunch = resolvePlayableLaunchRequest({
+        request: createLaunchPlayableRequest("activity-qte", {
+          integrationId: "playable.activity-qte.scene.training",
+        }),
+      });
+      assert.equal(playableLaunch?.ok, true);
+      assert.equal(playableLaunch?.launch.integrationId, "playable.activity-qte.scene.training");
+    } finally {
+      resetDefaultPlayableRuntimeRegistries();
+    }
+
+    const state = createBaseState();
+    state.runtime.flags["story.opening.enabled"] = true;
+    state.runtime.variables["story.progress"] = 3;
+
+    const eventsById = Object.fromEntries(
+      exportedPack.events.map((eventDefinition) => [eventDefinition.id, eventDefinition])
+    );
+    const scenesById = Object.fromEntries(
+      exportedPack.scenes.map((sceneDefinition) => [sceneDefinition.id, sceneDefinition])
+    );
+    const storyResult = runStoryTriggerRuntime({
+      timing: "city-enter",
+      state,
+      characterDefinitions: exportedPack.characters,
+      eventDefinitionsById: eventsById,
+      sceneDefinitionsById: scenesById,
+      activityDefinitionsById: Object.fromEntries(
+        exportedPack.activities.map((activity) => [activity.id, activity])
+      ),
+      textEntriesById: exportedPack.textEntries,
+    });
+
+    assert.equal(storyResult.session?.eventId, "event.opening");
+    assert.equal(storyResult.session?.sceneId, "scene.dialogue.opening");
+    assert.deepEqual(storyResult.taskInputs, [
+      {
+        type: "start",
+        taskId: "task.opening",
+        occurredAt: "2026-07-15T00:00:00.000Z",
+        source: "script-editor:event.opening",
+      },
+    ]);
+
+    const settled = dispatchRuntimeRequest({
+      state: createRuntimeState(),
+      request: { family: "external", type: "external", eventId: "event.opening" },
+      context: {
+        router: {
+          route: ({ state: routedState }) => ({
+            state: routedState,
+            effects: [],
+            taskInputs: storyResult.taskInputs,
+          }),
+        },
+        taskDefinitionsById: Object.fromEntries(
+          exportedPack.tasks.map((taskDefinition) => [taskDefinition.id, taskDefinition])
+        ),
+      },
+    });
+
+    assert.equal(
+      settled.state.core.runtime.tasks.instancesByTaskId["task.opening"].status,
+      "active"
+    );
+
+    const saveEnvelope = {
+      selectedModId: exportedPack.id,
+      selectedCharacterId: "person.hero",
+      characterStatusById: {
+        "person.hero": {
+          statPatch: { gold: 250 },
+          stamina: 66,
+        },
+      },
+    };
+    const [restoredHero] = materializeCharacterDefinitions(
+      exportedPack.characters,
+      JSON.parse(JSON.stringify(saveEnvelope.characterStatusById))
+    );
+
+    assert.equal(saveEnvelope.selectedModId, exportedPack.id);
+    assert.equal(restoredHero.stats.gold, 250);
+    assert.equal(restoredHero.stamina, 66);
+    assert.equal(exportedPack.characters[0].stats.gold, 0);
+  }
+);
+
+test(
   "script editor preserves imported Zhu Yuanzhang runtime families through export",
   async () => {
     const {

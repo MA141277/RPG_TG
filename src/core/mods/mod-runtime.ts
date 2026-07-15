@@ -67,6 +67,10 @@ export function createLoadedModFromScenarioPack(input: {
       version: "1.0.0",
       title: input.scenarioPack.title,
       entryContentPackIds,
+      gameplayContributions: {
+        playables: collectPlayableIds(input.scenarioPack),
+        playableIntegrations: collectPlayableIntegrationIds(input.scenarioPack),
+      },
       defaultStart: {
         playerCharacterId: profile.playerCharacterId,
         mapId: profile.initialLocation.mapId,
@@ -80,6 +84,29 @@ export function createLoadedModFromScenarioPack(input: {
         ? input.scenarioPack
         : [input.baseContentPack, input.scenarioPack],
   });
+}
+
+function collectPlayableIds(scenarioPack: ScenarioPackDefinition): string[] {
+  return Array.isArray(scenarioPack.playables)
+    ? scenarioPack.playables.flatMap((playable) =>
+        typeof playable.id === "string" && playable.id.trim().length > 0
+          ? [playable.id]
+          : []
+      )
+    : [];
+}
+
+function collectPlayableIntegrationIds(
+  scenarioPack: ScenarioPackDefinition
+): string[] {
+  return Array.isArray(scenarioPack.playableIntegrations)
+    ? scenarioPack.playableIntegrations.flatMap((integration) =>
+        typeof integration.integrationId === "string" &&
+        integration.integrationId.trim().length > 0
+          ? [integration.integrationId]
+          : []
+      )
+    : [];
 }
 
 export async function runModRuntime(input: {
