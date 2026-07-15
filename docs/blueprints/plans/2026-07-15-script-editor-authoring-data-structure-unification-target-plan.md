@@ -5,13 +5,13 @@
 - document_role: `version-governor`
 - version_id: `target.script-editor-authoring-data-structure-unification`
 - version_status: `open`
-- active_phase: `phase.promotion-review`
-- active_queue: `none`
-- decision_state: `promotion-review`
-- next_decision: `same-version-admission-or-version-closeout`
-- next_action: `return-to-promotion-review`
-- resume_gate: `no-active-queue`
-- promotion_review_result: `pending`
+- active_phase: `phase.queue-execution`
+- active_queue: `queue.script-editor-legacy-structure-supersession-review`
+- decision_state: `active-execution`
+- next_decision: `queue-closeout-or-return-to-version-review`
+- next_action: `resume-active-queue`
+- resume_gate: `active-queue`
+- promotion_review_result: `admitted`
 - review_subject_id: `none`
 - review_subject_classification: `none`
 - proposed_queue_id: `none`
@@ -27,7 +27,7 @@
 - residue_candidate_id: `queue.script-editor-legacy-structure-supersession-review`
 - residue_candidate_family: `cross-family`
 - routing_basis: `queue.script-editor-schema-reference-and-migration-freeze closed after the centralized schemaVersion reference slice landed and verified; legacy deletion, supersession disposition, and concrete non-v1 migration adapters remain outside the bounded schema reference slice and are routed to version review through the existing legacy-structure-supersession-review candidate.`
-- next_lawful_queue_recommendation: `queue.script-editor-legacy-structure-supersession-review`
+- next_lawful_queue_recommendation: `none`
 - auto_admission_ready: `false`
 - blocked_by: []
 - candidate_queue_ids:
@@ -140,25 +140,25 @@
 | `queue.script-editor-task-chain-runtime-handoff-convergence` | `done` | `Already completed; do not reopen except by explicit governance record.` | `Closed after event-level taskInputs handoff landed; scene runtime propagation routed to queue.script-editor-scene-runtime-task-input-propagation.` |
 | `queue.script-editor-scene-runtime-task-input-propagation` | `done` | `Already completed; do not reopen except by explicit governance record.` | `Closed after activated event taskInputs began propagating through SceneRuntimeResult.taskInputs with no same-family residue.` |
 | `queue.script-editor-status-overlay-generalization-review` | `candidate-review` | `When non-character runtime mutation needs explicit save/status ownership.` | `Review queue; do not create non-character overlays for convenience.` |
-| `queue.script-editor-legacy-structure-supersession-review` | `candidate` | `Before deleting or invalidating previously frozen structures.` | `Records retained, migrated, adapter-supported, or retired structure dispositions.` |
+| `queue.script-editor-legacy-structure-supersession-review` | `active` | `Admitted after schema reference closeout routed legacy supersession residue back to version review.` | `Records retained, migrated, adapter-supported, or retired structure dispositions before final validation.` |
 | `queue.script-editor-end-to-end-authoring-runtime-flow-validation` | `candidate-final` | `After required data/runtime/persistence queues provide enough coverage to prove version acceptance.` | `Final closeout validation queue.` |
 
 ### Current Queue Activation
 
-- `none`
+- `queue.script-editor-legacy-structure-supersession-review`
 - Active task:
-  - `none`
+  - `task.script-editor-legacy-structure-supersession-review.boundary-baseline-reconcile`
 - Promotion-review basis:
   - `queue.script-editor-schema-reference-and-migration-freeze closed after verified centralized project/runtime pack schemaVersion references landed.`
   - `No same-family schema reference residue remains inside that bounded queue surface.`
-  - `Legacy structure deletion, supersession disposition, and concrete future-version migration adapters are cross-family residue for version review, with queue.script-editor-legacy-structure-supersession-review recommended next.`
+  - `Legacy structure deletion, supersession disposition, and concrete future-version migration adapters are now admitted for explicit review before final validation.`
 
 ### Version Boundary Record
 
 - `This version governs authoring/data-structure convergence after runtime-pack-unification closeout.`
 - `It must consume the closed runtime-pack export/import/startup truth as baseline evidence rather than reopening it as a compatibility patch surface.`
 - `It may supersede previously frozen script-editor structures only through explicit schema/migration/supersession records.`
-- `It closed queue.script-editor-schema-reference-and-migration-freeze after centralized project/runtime pack schemaVersion references landed; execution resumes from version promotion review.`
+- `It closed queue.script-editor-schema-reference-and-migration-freeze after centralized project/runtime pack schemaVersion references landed; execution now continues through queue.script-editor-legacy-structure-supersession-review.`
 
 ### Queue Admission Startup Rules
 
@@ -288,3 +288,4 @@
 - `2026-07-16: queue.script-editor-schema-reference-and-migration-freeze completed boundary-baseline-reconcile after selecting centralized project/runtime pack schemaVersion references and supported-version boundary consumption as the smallest lawful implementation slice; the active task became schema-reference-freeze.`
 - `2026-07-16: queue.script-editor-schema-reference-and-migration-freeze completed schema-reference-freeze after centralized schemaVersion references landed in the domain script-editor project boundary and project loader/save plus runtime import/export consumed them with robustness coverage; the active task became queue-closeout-and-handoff.`
 - `2026-07-16: queue.script-editor-schema-reference-and-migration-freeze closed with cross-family residue after verification; legacy structure deletion, supersession disposition, and concrete future-version migration adapters were routed to version review with queue.script-editor-legacy-structure-supersession-review recommended next.`
+- `2026-07-16: promotion review admitted queue.script-editor-legacy-structure-supersession-review as the single active queue because legacy structure dispositions must be explicit before deletion, adapter removal, or final validation. The first live task is boundary-baseline-reconcile.`
