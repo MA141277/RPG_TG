@@ -5,8 +5,8 @@
 - entry_id: `project-progress.rpg-tg`
 - active_blueprint: `blueprint.rpg-tg`
 - active_version: `target.script-editor-authoring-data-structure-unification`
-- has_active_queue: `true`
-- next_file: `docs/blueprints/queues/script-editor-end-to-end-authoring-runtime-flow-validation-queue.md`
+- has_active_queue: `false`
+- next_file: `docs/blueprints/plans/2026-07-15-script-editor-authoring-data-structure-unification-target-plan.md`
 - entry_action: `open-next-file`
 
 ## Human Context
@@ -29,15 +29,15 @@
 - Current Version Plan:
   - `docs/blueprints/plans/2026-07-15-script-editor-authoring-data-structure-unification-target-plan.md`
 - Current Active Queue:
-  - `docs/blueprints/queues/script-editor-end-to-end-authoring-runtime-flow-validation-queue.md`
+  - `none`
 
 ### Live Entry Guardrails
 
 - `This file only states the current resume entry and downstream pointer set.`
 - `Admission history, queue closeout history, and review narrative must stay in the version plan, queue docs, or docs/change-log.md rather than living here as competing current-state prose.`
 - `The pointed version is now the open successor version for script-editor authoring/data-structure unification.`
-- `The latest governance action admitted queue.script-editor-end-to-end-authoring-runtime-flow-validation as the required-final queue.`
-- `Resume from the active queue document and its validation-baseline-reconcile task.`
+- `The latest governance action closed queue.script-editor-end-to-end-authoring-runtime-flow-validation after final validation passed.`
+- `Resume from the version plan for explicit closeout review; the version remains open until human closeout confirmation is recorded.`
 
 ### Historical References
 

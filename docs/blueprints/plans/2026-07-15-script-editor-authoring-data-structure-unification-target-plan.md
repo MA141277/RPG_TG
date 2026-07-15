@@ -5,13 +5,13 @@
 - document_role: `version-governor`
 - version_id: `target.script-editor-authoring-data-structure-unification`
 - version_status: `open`
-- active_phase: `phase.execution`
-- active_queue: `queue.script-editor-end-to-end-authoring-runtime-flow-validation`
-- decision_state: `active-execution`
-- next_decision: `same-version-admission-or-version-closeout`
-- next_action: `resume-active-queue`
-- resume_gate: `active-queue`
-- promotion_review_result: `admitted`
+- active_phase: `phase.closeout-review`
+- active_queue: `none`
+- decision_state: `version-closeout-review`
+- next_decision: `version-closeout`
+- next_action: `write-version-closeout`
+- resume_gate: `version-closeout-review`
+- promotion_review_result: `none`
 - review_subject_id: `none`
 - review_subject_classification: `none`
 - proposed_queue_id: `none`
@@ -22,11 +22,11 @@
 - intake_summary: `none`
 - intake_result: `none`
 - intake_feedback_mode: `none`
-- closure_review_subject: `queue.script-editor-playable-minigame-binding-convergence`
+- closure_review_subject: `queue.script-editor-end-to-end-authoring-runtime-flow-validation`
 - closure_review_status: `routed`
 - residue_candidate_id: `none`
 - residue_candidate_family: `none`
-- routing_basis: `queue.script-editor-end-to-end-authoring-runtime-flow-validation admitted as the required-final queue after playable/minigame binding convergence closed and no fresh evidence proved status-overlay review must precede final validation.`
+- routing_basis: `queue.script-editor-end-to-end-authoring-runtime-flow-validation closed after final validation passed with no blocking covered-path residue; the version is open and awaiting explicit human closeout confirmation.`
 - next_lawful_queue_recommendation: `none`
 - auto_admission_ready: `false`
 - blocked_by: []
@@ -107,7 +107,7 @@
 | `item.script-editor-event-task-chain-runtime-convergence` | `queue-candidate` | `queue.script-editor-event-task-chain-runtime-convergence` | `admitted + queue closed with same-family residue` | `only if fresh evidence proves event-to-event runtime chain lowering regressed` | `Closed after explicit editor nextEventId lowered into runtime EventDefinition.nextEventId and scene completion followed chained runtime events. Task-chain runtime handoff was routed as same-family residue to queue.script-editor-task-chain-runtime-handoff-convergence.` |
 | `item.script-editor-task-chain-runtime-handoff-convergence` | `queue-candidate` | `queue.script-editor-task-chain-runtime-handoff-convergence` | `admitted + queue closed with same-family residue` | `only if fresh evidence proves event-level taskInputs lowering regressed` | `Closed after editor event taskInputs lowered into runtime EventDefinition.taskInputs, missing task action targets fail closed, runtime import preserves taskInputs, and EventRuntimeCandidate exposes them. Scene runtime taskInputs propagation was routed as same-family residue to queue.script-editor-scene-runtime-task-input-propagation.` |
 | `item.script-editor-scene-runtime-task-input-propagation` | `queue-candidate` | `queue.script-editor-scene-runtime-task-input-propagation` | `admitted + queue closed` | `only if fresh evidence proves the bounded scene runtime taskInputs propagation regressed` | `Closed after SceneRuntimeInput.taskInputs passthrough propagated activated event candidate taskInputs through SceneRuntimeResult.taskInputs with no same-family residue.` |
-| `item.script-editor-end-to-end-authoring-runtime-flow-validation` | `queue-candidate` | `queue.script-editor-end-to-end-authoring-runtime-flow-validation` | `admitted` | `currently active` | `Required-final validation queue admitted after required data/runtime/persistence queues closed and status-overlay review remained review-only without fresh prerequisite evidence.` |
+| `item.script-editor-end-to-end-authoring-runtime-flow-validation` | `queue-candidate` | `queue.script-editor-end-to-end-authoring-runtime-flow-validation` | `admitted + queue closed` | `only if fresh evidence proves final validation missed a blocking covered-path residue` | `Required-final validation queue closed after the representative editor-authored export/load/mod activation/story/task/playable/status proof passed with no blocking residue.` |
 
 ### Queue Promotion Ledger
 
@@ -141,25 +141,25 @@
 | `queue.script-editor-scene-runtime-task-input-propagation` | `done` | `Already completed; do not reopen except by explicit governance record.` | `Closed after activated event taskInputs began propagating through SceneRuntimeResult.taskInputs with no same-family residue.` |
 | `queue.script-editor-status-overlay-generalization-review` | `candidate-review` | `When non-character runtime mutation needs explicit save/status ownership.` | `Review queue; do not create non-character overlays for convenience.` |
 | `queue.script-editor-legacy-structure-supersession-review` | `done` | `Already completed; do not reopen except by explicit governance record.` | `Closed after default project schema/kind literals were retired and compatibilityImport/runtimeEvents were retained as explicit adapter-supported structures.` |
-| `queue.script-editor-end-to-end-authoring-runtime-flow-validation` | `active` | `Currently active; resume from the admitted queue document.` | `Required-final validation queue; the first task is validation-baseline-reconcile.` |
+| `queue.script-editor-end-to-end-authoring-runtime-flow-validation` | `done` | `Already completed; do not reopen except by explicit governance record.` | `Required-final validation queue closed after final validation passed and residue was classified as none inside the covered happy path.` |
 
 ### Current Queue Activation
 
-- `queue.script-editor-end-to-end-authoring-runtime-flow-validation`
+- `none`
 - Active task:
-  - `task.script-editor-end-to-end-authoring-runtime-flow-validation.validation-baseline-reconcile`
+  - `none`
 - Admission basis:
   - `queue.script-editor-playable-minigame-binding-convergence closed after verified runtime pack playable family materialization/import landed.`
   - `No same-family playable binding export/import residue remains inside that bounded queue surface.`
   - `queue.script-editor-status-overlay-generalization-review remains candidate-review because no fresh evidence currently proves it must precede final validation.`
-  - `Execution resumes from the admitted required-final queue document.`
+  - `No active queue remains; execution resumes from explicit version closeout review.`
 
 ### Version Boundary Record
 
 - `This version governs authoring/data-structure convergence after runtime-pack-unification closeout.`
 - `It must consume the closed runtime-pack export/import/startup truth as baseline evidence rather than reopening it as a compatibility patch surface.`
 - `It may supersede previously frozen script-editor structures only through explicit schema/migration/supersession records.`
-- `It closed queue.script-editor-playable-minigame-binding-convergence after editor minigame bindings began exporting as runtime playable family data and importing back into editor minigames; execution now resumes from queue.script-editor-end-to-end-authoring-runtime-flow-validation.`
+- `It closed queue.script-editor-end-to-end-authoring-runtime-flow-validation after final validation passed; the version now awaits explicit human closeout confirmation and remains open until that confirmation is recorded.`
 
 ### Queue Admission Startup Rules
 
@@ -298,3 +298,4 @@
 - `2026-07-16: queue.script-editor-playable-minigame-binding-convergence completed binding-contract-implementation after runtime pack export/import began preserving editor minigame bindings as playables/playableIntegrations with verification; the active task became queue-closeout-and-handoff.`
 - `2026-07-16: queue.script-editor-playable-minigame-binding-convergence closed with no same-family residue after verification; the version returned to promotion review with queue.script-editor-end-to-end-authoring-runtime-flow-validation recommended next unless fresh evidence proves status-overlay generalization review must precede it.`
 - `2026-07-16: promotion review admitted queue.script-editor-end-to-end-authoring-runtime-flow-validation as the single active required-final queue because required data/runtime/persistence queues are closed and status-overlay generalization remains review-only without fresh prerequisite evidence. The first live task is validation-baseline-reconcile.`
+- `2026-07-16: queue.script-editor-end-to-end-authoring-runtime-flow-validation closed after final validation passed with no blocking residue inside the covered happy path. The version is now in explicit closeout review; version_status remains open until human closeout confirmation is recorded.`
