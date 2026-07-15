@@ -115,7 +115,7 @@
 
 - `queue.script-editor-project-cache-save-export-preview-continuation`
 - Active task:
-  - `task.script-editor-project-cache-save-export-preview-continuation.boundary-baseline-reconcile`
+  - `task.script-editor-project-cache-save-export-preview-continuation.queue-closeout-and-handoff`
 
 ### Version Boundary Record
 
@@ -184,3 +184,4 @@
 - `2026-07-15: admission review then promoted queue.script-editor-project-cache-save-export-preview as the single active queue and exposed task.script-editor-project-cache-save-export-preview.boundary-baseline-reconcile as the live execution entry.`
 - `2026-07-15: queue.script-editor-project-cache-save-export-preview closed after the bounded first slice landed with verification, then routed same-family residue to queue.script-editor-project-cache-save-export-preview-continuation for version-level admission review.`
 - `2026-07-15: admission review then promoted queue.script-editor-project-cache-save-export-preview-continuation as the single active queue and exposed task.script-editor-project-cache-save-export-preview-continuation.boundary-baseline-reconcile as the live execution entry.`
+- `2026-07-15: queue.script-editor-project-cache-save-export-preview-continuation landed durable save-location recording and stale continue gating, then advanced to queue-closeout-and-handoff for residue classification.`
