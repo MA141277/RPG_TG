@@ -5,13 +5,13 @@
 - document_role: `version-governor`
 - version_id: `target.script-editor-authoring-data-structure-unification`
 - version_status: `open`
-- active_phase: `phase.promotion-review`
-- active_queue: `none`
-- decision_state: `promotion-review`
-- next_decision: `same-version-admission-or-version-closeout`
-- next_action: `return-to-promotion-review`
-- resume_gate: `no-active-queue`
-- promotion_review_result: `pending`
+- active_phase: `phase.queue-execution`
+- active_queue: `queue.script-editor-schema-reference-and-migration-freeze`
+- decision_state: `active-execution`
+- next_decision: `queue-closeout-or-return-to-version-review`
+- next_action: `resume-active-queue`
+- resume_gate: `active-queue`
+- promotion_review_result: `admitted`
 - review_subject_id: `none`
 - review_subject_classification: `none`
 - proposed_queue_id: `none`
@@ -26,7 +26,7 @@
 - closure_review_status: `routed`
 - residue_candidate_id: `none`
 - residue_candidate_family: `none`
-- routing_basis: `queue.script-editor-scenario-launch-policy-authoring closed after verified storyPack.scenarioProfile launch policy authoring fields preserved startup intent through the existing scenarioProfile runtime contract; no same-family launch policy authoring residue remains.`
+- routing_basis: `queue.script-editor-scenario-launch-policy-authoring closed after verified storyPack.scenarioProfile launch policy authoring fields preserved startup intent through the existing scenarioProfile runtime contract; no same-family launch policy authoring residue remains. Promotion review admitted queue.script-editor-schema-reference-and-migration-freeze before legacy supersession or final validation.`
 - next_lawful_queue_recommendation: `none`
 - auto_admission_ready: `false`
 - blocked_by: []
@@ -122,7 +122,7 @@
 | `queue.script-editor-character-status-save-runtime-continuation` | `done` | `Already completed; do not reopen except by explicit governance record.` | `Closed after canonical CharacterStatus save aggregation, save-envelope persistence, startup restore, and bounded runtime commit integration landed with verification.` |
 | `queue.script-editor-character-authoring-surface-completion` | `done` | `Already completed; do not reopen except by explicit governance record.` | `Closed after mapping-driven base/profile/stat/skill controls, reference selectors, custom key editing, verification, and repository sync landed.` |
 | `queue.script-editor-runtime-property-mutation-and-status-convergence` | `done` | `Already completed; do not reopen except by explicit governance record.` | `Closed its bounded generic character property mutation/status and temple donation slice with cross-family event/effect residue routed to queue.script-editor-event-effect-activation-convergence.` |
-| `queue.script-editor-schema-reference-and-migration-freeze` | `candidate` | `Before retiring legacy structures or when multiple queues need one replacement reference.` | `Owns formal schema reference, legacy supersession, migration adapters, and schema versions.` |
+| `queue.script-editor-schema-reference-and-migration-freeze` | `active` | `Admitted after scenario launch policy authoring closed with no same-family residue.` | `Owns formal schema reference, migration adapters, and schema versions before legacy supersession or final validation proceeds.` |
 | `queue.script-editor-city-building-entry-and-npc-authoring-priority` | `done` | `Already completed; do not reopen except by explicit governance record.` | `Closed after bounded runtime-family materialization export covered priority city/building entry, NPC pool, house binding, and access refusal output from existing authoring fields.` |
 | `queue.script-editor-city-building-structure-convergence` | `done` | `Already completed; do not reopen except by explicit governance record.` | `Closed after runtime-house-compatible building structure contract hardening landed; placement/resolver residue returned to version review.` |
 | `queue.script-editor-city-building-placement-resolver-convergence` | `done` | `Already completed; do not reopen except by explicit governance record.` | `Closed after bounded shared resolver API verification; persistent placement schema, overrides, dialogue inheritance, and broader consumer migration remain cross-family residue.` |
@@ -145,20 +145,20 @@
 
 ### Current Queue Activation
 
-- `none`
+- `queue.script-editor-schema-reference-and-migration-freeze`
 - Active task:
-  - `none`
+  - `task.script-editor-schema-reference-and-migration-freeze.boundary-baseline-reconcile`
 - Promotion-review basis:
   - `queue.script-editor-scenario-launch-policy-authoring closed after verified storyPack.scenarioProfile launch policy authoring fields preserved startup intent through the existing scenarioProfile runtime contract.`
   - `No same-family launch policy authoring residue remains inside that bounded queue surface.`
-  - `Execution returns to version promotion review to select the next lawful candidate queue or version closeout path.`
+  - `schema-reference-and-migration-freeze is the next lawful required candidate because legacy supersession and final validation need explicit schema reference and migration boundary truth before they can proceed.`
 
 ### Version Boundary Record
 
 - `This version governs authoring/data-structure convergence after runtime-pack-unification closeout.`
 - `It must consume the closed runtime-pack export/import/startup truth as baseline evidence rather than reopening it as a compatibility patch surface.`
 - `It may supersede previously frozen script-editor structures only through explicit schema/migration/supersession records.`
-- `It closed queue.script-editor-scenario-launch-policy-authoring after storyPack.scenarioProfile launch policy authoring fields landed and no same-family residue remained; execution resumes from version promotion review.`
+- `It closed queue.script-editor-scenario-launch-policy-authoring after storyPack.scenarioProfile launch policy authoring fields landed and no same-family residue remained; execution now continues through queue.script-editor-schema-reference-and-migration-freeze.`
 
 ### Queue Admission Startup Rules
 
@@ -284,3 +284,4 @@
 - `2026-07-16: queue.script-editor-scenario-launch-policy-authoring completed boundary-baseline-reconcile after selecting storyPack.scenarioProfile structured authoring for player character, initial location/view, launchPolicy, and entryEventId as the smallest lawful implementation slice; the active task is now launch-policy-contract-implementation.`
 - `2026-07-16: queue.script-editor-scenario-launch-policy-authoring completed launch-policy-contract-implementation after the script-editor project form exposed and wrote scenarioProfile.entryEventId plus launchPolicy.characterSelection, launchPolicy.initialView, and launchPolicy.entryEventTiming; the active task is now queue-closeout-and-handoff.`
 - `2026-07-16: queue.script-editor-scenario-launch-policy-authoring closed with no same-family residue after verification; the version returned to promotion review with no active queue.`
+- `2026-07-16: promotion review admitted queue.script-editor-schema-reference-and-migration-freeze as the single active queue because legacy supersession and final validation need explicit schema reference and migration boundary truth before they can proceed. The first live task is boundary-baseline-reconcile.`
