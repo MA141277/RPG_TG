@@ -9,8 +9,8 @@
 - governance_sync_source: `docs/blueprints/blueprint.md`
 - queue_status: `active`
 - queue_class: `required`
-- active_task: `task.script-editor-character-authoring-surface-completion.boundary-baseline-reconcile`
-- next_task: `task.script-editor-character-authoring-surface-completion.authoring-controls-implementation`
+- active_task: `task.script-editor-character-authoring-surface-completion.authoring-controls-implementation`
+- next_task: `task.script-editor-character-authoring-surface-completion.queue-closeout-and-handoff`
 - closeout_status: `in-progress`
 - execution_closeout_status: `partial`
 - topic_closure_status: `open-residue`
@@ -58,9 +58,9 @@
 
 - queue_goal: `Expose complete creator-facing controls for character base/profile/stat/skill/custom and bounded relation fields already supported by the character contract.`
 - task_count: `3`
-- completed_task_count: `0`
-- remaining_task_count: `3`
-- active_task_summary: `Reconcile current character editor UI, person-authoring helpers, field mapping, import/export, and existing tests before implementation.`
+- completed_task_count: `1`
+- remaining_task_count: `2`
+- active_task_summary: `Implement the bounded mapping-driven character field groups, reference selectors, and valid custom-attribute editing chosen by baseline reconciliation.`
 - task_briefs:
   - `task.script-editor-character-authoring-surface-completion.boundary-baseline-reconcile: identify the exact missing character controls and storage helpers already covered by the character contract.`
   - `task.script-editor-character-authoring-surface-completion.authoring-controls-implementation: implement the bounded creator-facing controls with tests.`
@@ -98,8 +98,8 @@
 
 | Task ID | State | Summary | Depends On | Notes |
 | --- | --- | --- | --- | --- |
-| `task.script-editor-character-authoring-surface-completion.boundary-baseline-reconcile` | `active` | `Reconcile current character editor UI, helper storage, field mapping, and import/export behavior before implementation.` | `none` | `Must freeze the bounded UI/control list before code changes.` |
-| `task.script-editor-character-authoring-surface-completion.authoring-controls-implementation` | `pending` | `Implement the selected character authoring controls and helper tests.` | `task.script-editor-character-authoring-surface-completion.boundary-baseline-reconcile` | `Must not edit live CharacterStatus save overlays.` |
+| `task.script-editor-character-authoring-surface-completion.boundary-baseline-reconcile` | `completed` | `Reconciled current character editor UI, helper storage, field mapping, and import/export behavior before implementation.` | `none` | `Completed after freezing a mapping-driven UI/control slice over the existing flat CharacterDefinition canonical keys.` |
+| `task.script-editor-character-authoring-surface-completion.authoring-controls-implementation` | `active` | `Implement the selected character authoring controls and helper tests.` | `task.script-editor-character-authoring-surface-completion.boundary-baseline-reconcile` | `Must not edit live CharacterStatus save overlays or migrate the persisted character schema.` |
 | `task.script-editor-character-authoring-surface-completion.queue-closeout-and-handoff` | `pending` | `Verify the queue, classify residue, and synchronize Blueprint truth.` | `task.script-editor-character-authoring-surface-completion.authoring-controls-implementation` | `Must not close without UI/storage/import-export evidence.` |
 
 ### Task Definitions
@@ -109,7 +109,7 @@
 ##### Control Block
 
 - task_id: `task.script-editor-character-authoring-surface-completion.boundary-baseline-reconcile`
-- state: `active`
+- state: `completed`
 - task_kind: `execution`
 - scope:
   - `src/application/script-editor/person-authoring.ts`
@@ -152,7 +152,7 @@
 - task_brief:
   - `Find the exact missing creator-facing character controls before editing UI or helpers.`
 - task_outcome_summary:
-  - `Pending; expected output is a bounded list of character controls and helper behavior to implement.`
+  - `The bounded implementation will use the existing field-definition contract to render base/profile/stat/skill/custom groups over the already-canonical flat CharacterDefinition keys, add missing typed/reference controls, and repair custom-attribute key editing without introducing the draft nested schema or touching CharacterStatus.`
 - Purpose:
   - `Prevent UI work from widening beyond the already-owned character data contract.`
 - Failure mode:
@@ -161,16 +161,25 @@
 ##### Progress Log
 
 - `2026-07-15`: `Queue admitted after durable CharacterStatus save/runtime persistence closed and version review selected creator-facing character control completion as the next lawful character-family candidate.`
+- `2026-07-15`: `Baseline inventory found the current profile tab already edits name, personType, title, occupation, cityId, houseId, portraitId, portraitVariantId, and biography; dialogueIds already use a project dialogue selector; eventIds and tradeBinding.entryId still use raw text; imported profile/stat/skill fields are flattened into one extendedAttributes card list; and the field-definition table is not consumed by the UI.`
+- `2026-07-15`: `The literal baseAttributes/profileMap/statMap/skillMap/customMap nesting remains only in the historical source draft. The closed character definition/status queue retained flat CharacterDefinition canonical keys, while the schema-reference-and-migration-freeze queue owns any later persisted-shape supersession. This queue therefore treats base/profile/stat/skill/custom as mapping-driven authoring groups rather than a new durable schema.`
+- `2026-07-15`: `Classified coverage: base/profile is partial; statMap and skillMap lack dedicated typed controls; customMap is incomplete because custom keys cannot be edited and empty keys never materialize; dialogueIds is covered; eventIds needs a project reference selector; tradeBinding.enabled is covered while entryId needs a bounded project reference selector. Runtime save CharacterStatus remains out of scope.`
+- `2026-07-15`: `Test-first implementation plan: expand the person field definitions to the actual CharacterDefinition profile/stat/skill canonical keys; add helper tests for typed mapped-field updates and valid custom key add/edit/delete behavior; add UI-source tests proving mapping-table consumption, grouped controls, event/city-entry selectors, and no CharacterStatus editor; then implement only src/application/script-editor/field-mapping.ts, person-authoring.ts, src/ui/main-ui/main-ui-flow.js, src/styles/script-editor.css, and tests/robustness.test.cjs. Import/export code should remain unchanged unless round-trip tests expose a bounded defect.`
 
 #### `task.script-editor-character-authoring-surface-completion.authoring-controls-implementation`
 
 ##### Control Block
 
 - task_id: `task.script-editor-character-authoring-surface-completion.authoring-controls-implementation`
-- state: `pending`
+- state: `active`
 - task_kind: `execution`
 - scope:
-  - `Scope must be finalized by boundary-baseline-reconcile before code changes.`
+  - `src/application/script-editor/field-mapping.ts`
+  - `src/application/script-editor/person-authoring.ts`
+  - `src/ui/main-ui/main-ui-flow.js`
+  - `src/styles/script-editor.css`
+  - `tests/robustness.test.cjs`
+  - `docs/blueprints/queues/script-editor-character-authoring-surface-completion-queue.md`
 - must_inspect:
   - `Boundary baseline evidence from the active task.`
 - must_not_change:
@@ -196,11 +205,15 @@
 - task_brief:
   - `Implement the bounded creator-facing character controls chosen by baseline reconciliation.`
 - task_outcome_summary:
-  - `Pending until the baseline task chooses exact controls and files.`
+  - `Pending implementation of the frozen mapping-driven character authoring controls and helper behavior.`
 - Purpose:
   - `Make the character contract actually editable from the script-editor workbench.`
 - Failure mode:
   - `Controls that only change transient UI state would not satisfy durable authoring completion.`
+
+##### Progress Log
+
+- `2026-07-15`: `Activated after boundary reconciliation froze the implementation boundary. The UI may group existing flat canonical keys as base/profile/stat/skill/custom, but must not introduce the draft nested character schema or expose live CharacterStatus editing.`
 
 #### `task.script-editor-character-authoring-surface-completion.queue-closeout-and-handoff`
 
