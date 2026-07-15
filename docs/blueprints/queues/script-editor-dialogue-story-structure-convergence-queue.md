@@ -21,9 +21,9 @@
 - next_family_candidate: `none`
 - auto_continue_eligible: `false`
 - next_effect: `return-to-version-review`
-- sync_status: `pending`
+- sync_status: `failed`
 - sync_scope: `branch-push`
-- sync_summary: `Queue admitted locally; repository sync is pending after baseline or terminal queue state.`
+- sync_summary: `Commits through 18c657e recorded dialogue/story materializer implementation and queue closeout locally, but branch push to origin/mod-first-dev failed because github.com:443 was unreachable.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
