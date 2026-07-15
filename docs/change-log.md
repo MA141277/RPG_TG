@@ -22,6 +22,8 @@
 - 更新 [src/application/script-editor/person-authoring.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/person-authoring.ts)、[src/application/script-editor/runtime-pack-import.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/runtime-pack-import.ts) 与 [src/application/script-editor/runtime-pack-export.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/runtime-pack-export.ts)，让剧本编辑器人物记录在导入/导出边界 materialize 为 runtime `CharacterDefinition`，最小人物也会导出完整 stats/skills/stamina/default functions 字段。
 - 更新 [src/application/player/player-stamina.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/player/player-stamina.ts) 与 [src/application/grain-shop/grain-shop-mutations.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/grain-shop/grain-shop-mutations.ts)，让体力、金钱和算术技能的共享 mutation 返回 `characterStatusById` patch，同时保留既有 materialized `characterDefinitions` 兼容输出。
 - 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，补入 runtime export 角色 shape、CharacterStatus overlay materialization、以及共享 mutation status patch 输出的回归覆盖。
+- 关闭 `queue.script-editor-character-definition-status-convergence` 的 bounded definition/materializer slice；fresh verification 为 typecheck 通过、512 tests 全绿、Blueprint/plan/governance checks 全通过。
+- 将尚未接入 canonical save state 与 startup restore 的 CharacterStatus 持久化问题分类为 same-family residue，并新增 [docs/blueprints/queues/script-editor-character-status-save-runtime-continuation-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-character-status-save-runtime-continuation-queue.md) 作为唯一 active continuation。
 
 ### Impact
 - 后续 authoring/data convergence 队列可以依赖项目级 `draft/complete` truth，而不需要从缓存、UI 状态或 runtime 包存在性推断项目是否完成。
@@ -29,6 +31,7 @@
 - 后续角色、城市/建筑、叙事、事件和条件队列会先消费共享字段映射契约，而不是继续在各面板里复制字段标签、类型和排序。
 - 当前字段映射实现仍是 bounded representative slice；全量城市/建筑/叙事/小游戏 UI 迁移保留给后续对象族队列。
 - 当前 Blueprint 已进入角色定义/状态收敛队列；已落地第一段 CharacterDefinition/CharacterStatus selector/materializer 与 mutation patch 输出，后续 closeout 会分类仍未迁移的 broad runtime consumer 和完整角色 UI residue。
+- 当前 active queue 已切换到 CharacterStatus save/runtime continuation；下一步先确定 `modState`、state-sync commit、SaveEnvelope 和 startup restore 的唯一状态归属，再进行 TDD 实现。
 
 ## 2026-07-15 Script Editor Authoring Data Structure Unification Version Activation
 

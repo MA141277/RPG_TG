@@ -6,7 +6,7 @@
 - active_blueprint: `blueprint.rpg-tg`
 - active_version: `target.script-editor-authoring-data-structure-unification`
 - has_active_queue: `true`
-- next_file: `docs/blueprints/queues/script-editor-character-definition-status-convergence-queue.md`
+- next_file: `docs/blueprints/queues/script-editor-character-status-save-runtime-continuation-queue.md`
 - entry_action: `open-next-file`
 
 ## Human Context
@@ -29,15 +29,15 @@
 - Current Version Plan:
   - `docs/blueprints/plans/2026-07-15-script-editor-authoring-data-structure-unification-target-plan.md`
 - Current Active Queue:
-  - `docs/blueprints/queues/script-editor-character-definition-status-convergence-queue.md`
+  - `docs/blueprints/queues/script-editor-character-status-save-runtime-continuation-queue.md`
 
 ### Live Entry Guardrails
 
 - `This file only states the current resume entry and downstream pointer set.`
 - `Admission history, queue closeout history, and review narrative must stay in the version plan, queue docs, or docs/change-log.md rather than living here as competing current-state prose.`
 - `The pointed version is now the open successor version for script-editor authoring/data-structure unification.`
-- `The latest governance action admitted queue.script-editor-character-definition-status-convergence after queue.script-editor-unified-field-mapping-table-freeze closed and routed field-mapping consumption to later object-family queues.`
-- `Resume from the active queue document and its live baseline reconciliation task.`
+- `The latest governance action closed queue.script-editor-character-definition-status-convergence with same-family save/runtime residue and admitted queue.script-editor-character-status-save-runtime-continuation.`
+- `Resume from the active continuation queue and its boundary baseline reconciliation task.`
 
 ### Historical References
 
@@ -48,7 +48,8 @@
 - `docs/blueprints/queues/script-editor-durable-package-workflow-continuation-queue.md` stores the closed continuation truth for package skeleton/imported edit-in-place/runtime preview-from-disk semantics.
 - `docs/blueprints/queues/script-editor-project-completion-state-gating-queue.md` stores the closed completion-state gating truth.
 - `docs/blueprints/queues/script-editor-unified-field-mapping-table-freeze-queue.md` stores the closed unified field mapping table freeze truth.
-- `docs/blueprints/queues/script-editor-character-definition-status-convergence-queue.md` stores the active character definition/status convergence execution truth.
+- `docs/blueprints/queues/script-editor-character-definition-status-convergence-queue.md` stores the closed character definition/status convergence execution truth.
+- `docs/blueprints/queues/script-editor-character-status-save-runtime-continuation-queue.md` stores the active durable CharacterStatus save/runtime continuation truth.
 - `docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md` stores the closed runtime-pack-unification version's admission history, candidate record, promotion ledger, and closeout truth.
 - `docs/blueprints/queues/script-editor-scenario-profile-startup-export-convergence-queue.md` stores the closed scenarioProfile startup export convergence queue truth.
 - `docs/blueprints/queues/script-editor-narrative-authoring-export-convergence-queue.md` stores the closed narrative authoring export convergence queue truth.
