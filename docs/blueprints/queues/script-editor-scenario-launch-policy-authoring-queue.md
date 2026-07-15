@@ -7,23 +7,23 @@
 - blueprint_version: `2026.07`
 - governance_last_synced_at: `2026-07-16`
 - governance_sync_source: `docs/blueprints/blueprint.md`
-- queue_status: `active`
+- queue_status: `done`
 - queue_class: `required-priority`
-- active_task: `task.script-editor-scenario-launch-policy-authoring.queue-closeout-and-handoff`
+- active_task: `none`
 - next_task: `none`
-- closeout_status: `in-progress`
-- execution_closeout_status: `partial`
-- topic_closure_status: `open-residue`
-- closure_basis: `none`
+- closeout_status: `done`
+- execution_closeout_status: `done`
+- topic_closure_status: `closed`
+- closure_basis: `The bounded scenario launch policy authoring slice landed and passed verification: the script-editor project form now exposes and writes scenarioProfile.entryEventId plus launchPolicy.characterSelection, launchPolicy.initialView, and launchPolicy.entryEventTiming, while existing export/import/startup paths keep scenarioProfile as the single runtime contract. Pack-local characters continue to define the shell selection range, so no same-family launch policy authoring residue remains inside this queue surface.`
 - residue_remaining: `no`
 - residue_family: `none`
 - residue_routing_status: `none`
 - next_family_candidate: `none`
 - auto_continue_eligible: `false`
-- next_effect: `execute-active-task`
+- next_effect: `return-to-version-review`
 - sync_status: `pending`
 - sync_scope: `branch-push`
-- sync_summary: `Queue admitted after scene runtime task input propagation closeout commit 80fdb34 was pushed; queue admission repository sync is pending.`
+- sync_summary: `Implementation commit 91889c4 pushed to origin/mod-first-dev after launch policy authoring fields landed and advanced this queue to closeout; closeout repository sync is pending.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
@@ -57,9 +57,9 @@
 
 - queue_goal: `Author and preserve startup launch policy fields required for editor-exported packs to enter the intended character-selection or map/city startup path.`
 - task_count: `3`
-- completed_task_count: `2`
-- remaining_task_count: `1`
-- active_task_summary: `Verify implementation closeout, classify residue, and return control to version review.`
+- completed_task_count: `3`
+- remaining_task_count: `0`
+- active_task_summary: `Queue closed after verified scenario launch policy authoring with no same-family residue.`
 - task_briefs:
   - `task.script-editor-scenario-launch-policy-authoring.boundary-baseline-reconcile: inventory launch policy seams and select the smallest implementation slice.`
   - `task.script-editor-scenario-launch-policy-authoring.launch-policy-contract-implementation: implement the selected launch policy authoring/export/runtime slice with tests.`
@@ -105,7 +105,7 @@
 | --- | --- | --- | --- | --- |
 | `task.script-editor-scenario-launch-policy-authoring.boundary-baseline-reconcile` | `done` | `Inventoried launch policy seams and selected storyPack.scenarioProfile structured authoring as the smallest lawful slice.` | `none` | `No production code changed during baseline.` |
 | `task.script-editor-scenario-launch-policy-authoring.launch-policy-contract-implementation` | `done` | `Implemented the selected storyPack.scenarioProfile launch policy authoring slice with tests.` | `task.script-editor-scenario-launch-policy-authoring.boundary-baseline-reconcile` | `scenarioProfile remains the startup contract.` |
-| `task.script-editor-scenario-launch-policy-authoring.queue-closeout-and-handoff` | `active` | `Verify, classify residue, and return control to version review.` | `task.script-editor-scenario-launch-policy-authoring.launch-policy-contract-implementation` | `Do not infer version closeout from this queue.` |
+| `task.script-editor-scenario-launch-policy-authoring.queue-closeout-and-handoff` | `done` | `Verified, classified no same-family residue, and returned control to version review.` | `task.script-editor-scenario-launch-policy-authoring.launch-policy-contract-implementation` | `Does not infer version closeout from this queue.` |
 
 ### Task Definitions
 
@@ -239,7 +239,7 @@
 ##### Control Block
 
 - task_id: `task.script-editor-scenario-launch-policy-authoring.queue-closeout-and-handoff`
-- state: `active`
+- state: `done`
 - task_kind: `execution`
 - scope:
   - `docs/blueprints/project-progress.md`
@@ -275,8 +275,13 @@
 - task_brief:
   - `Verify, classify residue, and return control to version review.`
 - task_outcome_summary:
-  - `Active after launch policy authoring implementation landed; full closeout verification and residue classification remain.`
+  - `Done. Scenario launch policy authoring is verified and closed with no same-family residue; control returns to version review.`
 - Purpose:
   - `Prevent launch policy authoring from being mistaken for full version completion.`
 - Failure mode:
   - `Closing without residue classification would hide remaining startup or validation blockers.`
+
+##### Progress Log
+
+- `2026-07-16`: `Closeout classified residue_remaining=no, residue_family=none, and topic_closure_status=closed because the queue's bounded surface now exposes the covered scenarioProfile launch policy fields and existing pack-local characters provide the shell selection range consumed by startup.`
+- `2026-07-16`: `Version-level candidates such as playable/minigame binding, schema/reference migration, status overlay review, legacy supersession, and end-to-end validation remain promotion-review subjects rather than same-family residue of this queue.`

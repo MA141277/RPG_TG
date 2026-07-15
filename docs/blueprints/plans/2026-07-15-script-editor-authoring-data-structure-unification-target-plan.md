@@ -5,13 +5,13 @@
 - document_role: `version-governor`
 - version_id: `target.script-editor-authoring-data-structure-unification`
 - version_status: `open`
-- active_phase: `phase.active-execution`
-- active_queue: `queue.script-editor-scenario-launch-policy-authoring`
-- decision_state: `active-execution`
-- next_decision: `queue-closeout-or-return-to-version-review`
-- next_action: `resume-active-queue`
-- resume_gate: `open-active-queue`
-- promotion_review_result: `admitted`
+- active_phase: `phase.promotion-review`
+- active_queue: `none`
+- decision_state: `promotion-review`
+- next_decision: `same-version-admission-or-version-closeout`
+- next_action: `return-to-promotion-review`
+- resume_gate: `no-active-queue`
+- promotion_review_result: `pending`
 - review_subject_id: `none`
 - review_subject_classification: `none`
 - proposed_queue_id: `none`
@@ -22,12 +22,12 @@
 - intake_summary: `none`
 - intake_result: `none`
 - intake_feedback_mode: `none`
-- closure_review_subject: `queue.script-editor-scene-runtime-task-input-propagation`
+- closure_review_subject: `queue.script-editor-scenario-launch-policy-authoring`
 - closure_review_status: `routed`
 - residue_candidate_id: `none`
 - residue_candidate_family: `none`
-- routing_basis: `queue.script-editor-scene-runtime-task-input-propagation closed after verified SceneRuntimeInput.taskInputs passthrough propagated activated event candidate taskInputs through SceneRuntimeResult.taskInputs; no same-family scene runtime taskInputs propagation residue remains.`
-- next_lawful_queue_recommendation: `queue.script-editor-scenario-launch-policy-authoring`
+- routing_basis: `queue.script-editor-scenario-launch-policy-authoring closed after verified storyPack.scenarioProfile launch policy authoring fields preserved startup intent through the existing scenarioProfile runtime contract; no same-family launch policy authoring residue remains.`
+- next_lawful_queue_recommendation: `none`
 - auto_admission_ready: `false`
 - blocked_by: []
 - candidate_queue_ids:
@@ -100,7 +100,7 @@
 | `item.script-editor-city-building-placement-resolver-convergence` | `queue-candidate` | `queue.script-editor-city-building-placement-resolver-convergence` | `admitted + queue closed with cross-family residue` | `only if fresh evidence proves the bounded resolver API regressed` | `Closed after landing the shared city-building placement resolver API over existing runtime families; persistent placement schema migration, override layering, dialogue inheritance, and broader consumer migration were routed back to version review.` |
 | `item.script-editor-dialogue-story-structure-convergence` | `queue-candidate` | `queue.script-editor-dialogue-story-structure-convergence` | `admitted + queue closed with cross-family residue` | `only if fresh evidence proves the bounded materializer seam regressed` | `Closed after landing the shared materializer seam for minimal dialogue/story runtime scene/text-entry assembly; runtime handoff/progression, branching/followUps, story-node relation lowering, and import reconstruction residue were routed back to version review.` |
 | `item.script-editor-dialogue-story-runtime-handoff-convergence` | `queue-candidate` | `queue.script-editor-dialogue-story-runtime-handoff-convergence` | `admitted + queue closed with cross-family residue` | `only if fresh evidence proves the event-to-dialogue-scene handoff receipt regressed` | `Closed after verified editor event -> dialogue destination -> materialized scene -> runStoryTriggerRuntime coverage and SceneRuntimeSession eventId receipts; richer progression/branching residue was routed back to version review.` |
-| `item.script-editor-scenario-launch-policy-authoring` | `queue-candidate` | `queue.script-editor-scenario-launch-policy-authoring` | `admitted + active` | `only if fresh evidence proves a narrower prerequisite must precede launch policy authoring` | `Admitted after scene runtime task input propagation closed; owns character selection vs fixed startup, initial map/city/building/view, selectable character range, and entry event timing authoring.` |
+| `item.script-editor-scenario-launch-policy-authoring` | `queue-candidate` | `queue.script-editor-scenario-launch-policy-authoring` | `admitted + queue closed` | `only if fresh evidence proves the bounded launch policy authoring slice regressed` | `Closed after storyPack.scenarioProfile entry event and launchPolicy authoring fields landed with verification and no same-family residue.` |
 | `item.script-editor-playable-minigame-binding-convergence` | `queue-candidate` | `queue.script-editor-playable-minigame-binding-convergence` | `candidate-recorded` | `only after playable governance is loaded and the queue is admitted` | `Requires playable governance before shared playable runtime or house-hosted playable integration changes.` |
 | `item.script-editor-branching-event-task-chain-convergence` | `queue-candidate` | `queue.script-editor-branching-event-task-chain-convergence` | `admitted + queue closed with same-family residue` | `only if fresh evidence proves the fail-closed node progression guard regressed` | `Closed after non-empty nextNodeId and choiceTargetNodeId began failing closed instead of silently linearizing; real node-target branching was routed as same-family residue to queue.script-editor-dialogue-node-target-branching-convergence.` |
 | `item.script-editor-dialogue-node-target-branching-convergence` | `queue-candidate` | `queue.script-editor-dialogue-node-target-branching-convergence` | `admitted + queue closed with cross-family residue` | `only if fresh evidence proves node-target scene splitting regressed` | `Closed after scene splitting, jump-based nextNodeId progression, implicit array-order continuation, bounded single-target choiceTargetNodeId lowering, and missing-target diagnostics landed. Broader event/task-chain progression was routed as cross-family residue to queue.script-editor-event-task-chain-runtime-convergence review.` |
@@ -132,7 +132,7 @@
 | `queue.script-editor-condition-runtime-evaluation-convergence` | `done` | `Already completed; do not reopen except by explicit governance record.` | `Closed after bounded event condition export/evaluation convergence landed with verification and routed broader condition consumption residue back to promotion review.` |
 | `queue.script-editor-event-structure-convergence` | `done` | `Already completed; do not reopen except by explicit governance record.` | `Closed at baseline with prerequisite condition authoring contract freeze residue returned to promotion review.` |
 | `queue.script-editor-event-effect-activation-convergence` | `done` | `Already completed; do not reopen except by explicit governance record.` | `Closed its bounded task/shared-rule typed character property mutation effect slice with cross-family event/scene effect residue returned to promotion review.` |
-| `queue.script-editor-scenario-launch-policy-authoring` | `active` | `After scene runtime taskInputs propagation closed with no same-family residue.` | `Owns shell selection vs fixed startup, selectable character range, initial map/city/building/view, and entry event timing authoring. Implementation landed; active task is queue-closeout-and-handoff.` |
+| `queue.script-editor-scenario-launch-policy-authoring` | `done` | `Already completed; do not reopen except by explicit governance record.` | `Closed after storyPack.scenarioProfile entry event and launchPolicy authoring fields landed with verification and no same-family residue.` |
 | `queue.script-editor-playable-minigame-binding-convergence` | `candidate` | `Only after playable governance confirms the bounded playable integration surface.` | `Requires playable governance before any shared playable runtime or house-hosted playable behavior changes.` |
 | `queue.script-editor-branching-event-task-chain-convergence` | `done` | `Already completed; do not reopen except by explicit governance record.` | `Closed after the fail-closed node progression guard landed; real node-target branching routed to queue.script-editor-dialogue-node-target-branching-convergence.` |
 | `queue.script-editor-dialogue-node-target-branching-convergence` | `done` | `Already completed; do not reopen except by explicit governance record.` | `Closed after node-target scene splitting and bounded choice target lowering landed; broader event/task-chain progression returned to version review.` |
@@ -145,23 +145,20 @@
 
 ### Current Queue Activation
 
-- `queue.script-editor-scenario-launch-policy-authoring`
+- `none`
 - Active task:
-  - `task.script-editor-scenario-launch-policy-authoring.queue-closeout-and-handoff`
-- Activation basis:
-  - `queue.script-editor-scene-runtime-task-input-propagation closed after verified SceneRuntimeInput.taskInputs passthrough propagated activated event candidate taskInputs through SceneRuntimeResult.taskInputs.`
-  - `No same-family scene runtime taskInputs propagation residue remained inside that bounded queue surface.`
-  - `Scenario launch policy authoring is now admitted as the smallest recorded required-priority blocker to editor-exported packs launching without manual JSON patching.`
-  - `Boundary baseline selected storyPack.scenarioProfile structured authoring as the smallest lawful slice.`
-  - `Launch policy authoring implementation exposed scenarioProfile.entryEventId and launchPolicy.* project fields in the script-editor form.`
-  - `Execution resumes from queue-closeout-and-handoff inside the admitted queue document.`
+  - `none`
+- Promotion-review basis:
+  - `queue.script-editor-scenario-launch-policy-authoring closed after verified storyPack.scenarioProfile launch policy authoring fields preserved startup intent through the existing scenarioProfile runtime contract.`
+  - `No same-family launch policy authoring residue remains inside that bounded queue surface.`
+  - `Execution returns to version promotion review to select the next lawful candidate queue or version closeout path.`
 
 ### Version Boundary Record
 
 - `This version governs authoring/data-structure convergence after runtime-pack-unification closeout.`
 - `It must consume the closed runtime-pack export/import/startup truth as baseline evidence rather than reopening it as a compatibility patch surface.`
 - `It may supersede previously frozen script-editor structures only through explicit schema/migration/supersession records.`
-- `It closed queue.script-editor-scene-runtime-task-input-propagation after SceneRuntimeInput.taskInputs passthrough landed and no same-family residue remained; execution resumes from admitted queue.script-editor-scenario-launch-policy-authoring closeout after launch policy authoring fields landed.`
+- `It closed queue.script-editor-scenario-launch-policy-authoring after storyPack.scenarioProfile launch policy authoring fields landed and no same-family residue remained; execution resumes from version promotion review.`
 
 ### Queue Admission Startup Rules
 
@@ -286,3 +283,4 @@
 - `2026-07-16: promotion review admitted queue.script-editor-scenario-launch-policy-authoring as the single active queue because scenario launch policy authoring is the smallest recorded required-priority blocker to editor-exported packs launching without manual JSON patching; the first live task is boundary-baseline-reconcile.`
 - `2026-07-16: queue.script-editor-scenario-launch-policy-authoring completed boundary-baseline-reconcile after selecting storyPack.scenarioProfile structured authoring for player character, initial location/view, launchPolicy, and entryEventId as the smallest lawful implementation slice; the active task is now launch-policy-contract-implementation.`
 - `2026-07-16: queue.script-editor-scenario-launch-policy-authoring completed launch-policy-contract-implementation after the script-editor project form exposed and wrote scenarioProfile.entryEventId plus launchPolicy.characterSelection, launchPolicy.initialView, and launchPolicy.entryEventTiming; the active task is now queue-closeout-and-handoff.`
+- `2026-07-16: queue.script-editor-scenario-launch-policy-authoring closed with no same-family residue after verification; the version returned to promotion review with no active queue.`
