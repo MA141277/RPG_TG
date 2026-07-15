@@ -524,10 +524,10 @@ function renderMeetingRoster(viewModel: HouseModuleViewModel): string {
 }
 
 export function renderTempleHouseView(viewModel: HouseModuleViewModel): string {
-  const isIdle = viewModel.dialogue == null;
-  const isMeeting = !isIdle && viewModel.standbyRoster.some(
-    (actor) => actor.isSelected != null
-  );
+  const isMeeting =
+    viewModel.standbyRoster.length > 0 &&
+    viewModel.standbyRoster.every((actor) => actor.isSelected != null) &&
+    viewModel.standbyRoster.some((actor) => actor.isSelected === true);
   return `
     <section class="view-house-grain-shop view-house-temple" data-house-module="${viewModel.moduleId}">
       ${renderHouseActionContainer(viewModel)}

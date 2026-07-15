@@ -3964,7 +3964,7 @@ test("primary house actor dialogue does not render separate right-side portrait"
   assert.doesNotMatch(markup, /c-grain-shop-portrait/u);
 });
 
-test("temple daily view keeps abbot in left roster instead of right owner slot", () => {
+test("temple daily view keeps abbot in left roster instead of meeting layout", () => {
   const state = createInitialState({
     cards: prototypeCards,
     characters: prototypeCharacters,
@@ -3985,12 +3985,13 @@ test("temple daily view keeps abbot in left roster instead of right owner slot",
     playerCharacterId,
     sessionState: {
       ...entered.sessionState,
-      dialoguePhase: "idle",
+      dialoguePhase: "open",
     },
   });
   const markup = renderTempleHouseView(viewModel);
 
   assert.match(markup, /c-grain-shop-npc-idle/u);
+  assert.doesNotMatch(markup, /c-keep-house-meeting/u);
   assert.doesNotMatch(markup, /c-grain-shop-idle-owner/u);
 });
 
