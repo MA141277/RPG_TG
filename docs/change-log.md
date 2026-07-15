@@ -5,6 +5,19 @@
 `docs/change-log.md` 的正式定位是“历史记录 + 人类可读摘要”。
 它不是当前 Blueprint / legacy superpowers 治理的 live execution truth，不作为 resume entry、promotion gate、closeout gate 或固定同步门。
 
+## 2026-07-15 Script Editor Project Completion State Gating
+
+### Changed
+- 更新 [src/domain/script-editor-project.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/domain/script-editor-project.ts)、[src/application/script-editor/editor-project-save.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/editor-project-save.ts)、[src/application/script-editor/editor-project-loader.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/editor-project-loader.ts) 和 [src/application/script-editor/project-completion-state.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/project-completion-state.ts)，将剧本编辑器项目完成状态沉淀为项目定义与 `project.json` manifest 的 durable truth。
+- 更新 [src/application/script-editor/minimal-workflow.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/minimal-workflow.ts) 与 [src/application/script-editor/runtime-pack-import.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/runtime-pack-import.ts)，让新建项目和从 runtime pack 导入的编辑器项目都以 `draft` 状态进入编辑流。
+- 更新 [src/ui/main-ui/main-ui-flow.js](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/main-ui/main-ui-flow.js)，让“导出剧本包”成为唯一会把项目标记为 `complete` 的 UI 路径，并且只在 runtime package 成功写出后再回写项目草稿；保存、打开、导入和运行预览都不隐式标记完成。
+- 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，补入 completion state 保存/加载持久化和 export-only 完成标记的回归覆盖。
+- 关闭 `queue.script-editor-project-completion-state-gating`，记录该队列无 same-family residue，并将 `target.script-editor-authoring-data-structure-unification` 返回 promotion review。
+
+### Impact
+- 后续 authoring/data convergence 队列可以依赖项目级 `draft/complete` truth，而不需要从缓存、UI 状态或 runtime 包存在性推断项目是否完成。
+- 未完成项目保持可继续编辑的草稿语义；只有成功导出的 runtime 剧本包会把项目推进到完成状态。
+
 ## 2026-07-15 Script Editor Authoring Data Structure Unification Version Activation
 
 ### Changed
