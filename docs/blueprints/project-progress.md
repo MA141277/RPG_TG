@@ -37,7 +37,7 @@
 - `Admission history, queue closeout history, and review narrative must stay in the version plan, queue docs, or docs/change-log.md rather than living here as competing current-state prose.`
 - `The pointed version is now the open successor version for script-editor authoring/data-structure unification.`
 - `The latest governance action admitted queue.script-editor-event-effect-activation-convergence from the cross-family residue routed by queue.script-editor-runtime-property-mutation-and-status-convergence.`
-- `Resume from the active event effect activation convergence queue and its boundary baseline reconciliation task.`
+- `Resume from the active event effect activation convergence queue and its effect activation contract implementation task.`
 
 ### Historical References
 

@@ -127,7 +127,7 @@
 
 - `queue.script-editor-event-effect-activation-convergence`
 - Active task:
-  - `task.script-editor-event-effect-activation-convergence.boundary-baseline-reconcile`
+  - `task.script-editor-event-effect-activation-convergence.effect-activation-contract-implementation`
 
 ### Version Boundary Record
 
@@ -212,3 +212,4 @@
 - `2026-07-15: queue.script-editor-runtime-property-mutation-and-status-convergence completed boundary-baseline-reconcile after proving the existing RuntimeResult/save/startup seams can carry the first custom character-property status slice; the active task is now runtime-property-contract-implementation.`
 - `2026-07-15: queue.script-editor-runtime-property-mutation-and-status-convergence closed after the generic character property mutation/status and temple donation slice landed with verification; event/effect mutation ownership was routed as cross-family residue to queue.script-editor-event-effect-activation-convergence, and the version returned to promotion review with no active queue.`
 - `2026-07-15: admission review then promoted queue.script-editor-event-effect-activation-convergence as the single active queue because the routed residue requires typed effect target resolution, receipts, and runtime mutation ownership before the current version can close.`
+- `2026-07-15: queue.script-editor-event-effect-activation-convergence completed boundary-baseline-reconcile after selecting task/shared-rule explicit character numeric property mutation as the smallest lawful typed effect activation slice; the active task is now effect-activation-contract-implementation.`

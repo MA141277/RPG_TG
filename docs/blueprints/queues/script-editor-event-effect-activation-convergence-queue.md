@@ -9,8 +9,8 @@
 - governance_sync_source: `docs/blueprints/blueprint.md`
 - queue_status: `active`
 - queue_class: `required`
-- active_task: `task.script-editor-event-effect-activation-convergence.boundary-baseline-reconcile`
-- next_task: `task.script-editor-event-effect-activation-convergence.effect-activation-contract-implementation`
+- active_task: `task.script-editor-event-effect-activation-convergence.effect-activation-contract-implementation`
+- next_task: `task.script-editor-event-effect-activation-convergence.queue-closeout-and-handoff`
 - closeout_status: `not-started`
 - execution_closeout_status: `partial`
 - topic_closure_status: `open-residue`
@@ -60,9 +60,9 @@
 
 - queue_goal: `Define the bounded effect activation contract and prove whether runtime property mutation can be invoked from typed effects without widening into unrelated event/condition/schema queues.`
 - task_count: `3`
-- completed_task_count: `0`
-- remaining_task_count: `3`
-- active_task_summary: `Reconcile current shared effect records, runtime settlement inputs, event/task effect producers, and target-resolution prerequisites before implementation.`
+- completed_task_count: `1`
+- remaining_task_count: `2`
+- active_task_summary: `Implement the selected task/shared-rule typed character property mutation effect through runtime settlement ownership.`
 - task_briefs:
   - `task.script-editor-event-effect-activation-convergence.boundary-baseline-reconcile: identify the smallest lawful effect activation slice and prerequisite queues.`
   - `task.script-editor-event-effect-activation-convergence.effect-activation-contract-implementation: implement the selected typed effect activation slice with tests.`
@@ -100,8 +100,8 @@
 
 | Task ID | State | Summary | Depends On | Notes |
 | --- | --- | --- | --- | --- |
-| `task.script-editor-event-effect-activation-convergence.boundary-baseline-reconcile` | `active` | `Reconcile current effect record shapes, settlement input ownership, target resolution needs, and prerequisite queue ordering.` | `none` | `Must stop if event structure or condition authoring must precede effect activation.` |
-| `task.script-editor-event-effect-activation-convergence.effect-activation-contract-implementation` | `queued` | `Implement the bounded typed effect activation slice chosen by baseline reconciliation.` | `task.script-editor-event-effect-activation-convergence.boundary-baseline-reconcile` | `Must not become a broad event system rewrite.` |
+| `task.script-editor-event-effect-activation-convergence.boundary-baseline-reconcile` | `done` | `Reconciled current effect record shapes, settlement input ownership, target resolution needs, and prerequisite queue ordering.` | `none` | `Selected task/shared-rule character property mutation as the smallest lawful effect activation slice.` |
+| `task.script-editor-event-effect-activation-convergence.effect-activation-contract-implementation` | `active` | `Implement the bounded typed effect activation slice chosen by baseline reconciliation.` | `task.script-editor-event-effect-activation-convergence.boundary-baseline-reconcile` | `Must not become a broad event system rewrite.` |
 | `task.script-editor-event-effect-activation-convergence.queue-closeout-and-handoff` | `queued` | `Verify the queue, classify residue, and synchronize Blueprint truth.` | `task.script-editor-event-effect-activation-convergence.effect-activation-contract-implementation` | `Must not close without typed effect activation verification or explicit residue routing.` |
 
 ### Task Definitions
@@ -160,7 +160,7 @@
 - task_brief:
   - `Find the smallest honest typed effect activation boundary before changing runtime settlement.`
 - task_outcome_summary:
-  - `Pending baseline reconciliation.`
+  - `Done. Current core effect settlement can apply setFlag, setVariable, and advanceTime only. changeMoney is declared in the core Effect contract but unsupported by settlement. Shared-rule task authoring exports setFlag, setVariable, and advanceTime only; unsupported shared effects fail closed. Task runtime is the current runtime-owned effect producer that already flows through settleRuntimeEffects. Scene/choice effects still use the older application/domain effect applier and are not the selected implementation surface for this slice.`
 - Purpose:
   - `Avoid compiler-only effect lowering that creates unsupported runtime effects or bypasses canonical mutation ownership.`
 - Failure mode:
@@ -169,16 +169,27 @@
 ##### Progress Log
 
 - `2026-07-15`: `Queue admitted from cross-family residue after queue.script-editor-runtime-property-mutation-and-status-convergence proved generic property mutation/status support but routed event/effect mutation ownership here.`
+- `2026-07-15`: `Baseline inspected src/core/contracts/effect.ts, effect-settlement.ts, runtime-result.ts, runtime-state.ts, runtime-settlement.ts, runtime-dispatch.ts, task-runtime.ts, application/script-editor/shared-rule-compiler.ts, application/scene effect paths, application/effects/effect-applier.ts, application/runtime/main-runtime-orchestrator.ts, application/character/runtime-property-mutation.ts, and tests/robustness.test.cjs.`
+- `2026-07-15`: `Current inventory: core Effect supports setFlag, setVariable, changeMoney, and advanceTime; settleRuntimeEffects supports setFlag, setVariable, and advanceTime; changeMoney is currently unsupported; shared-rule lowering supports setFlag, setVariable, and advanceTime and fails closed on unknown shared effect types; task runtime emits effects from onStart/onProgress/onComplete/onFail and runtime-dispatch settles them through core runtime settlement; scene/choice effects use the legacy domain action effect-applier and directly mutate GameState/CharacterDefinition structures.`
+- `2026-07-15`: `Exact settlement blocker: EffectSettlementInput carries RuntimeState plus effects only. RuntimeState.app deliberately excludes characterDefinitions and characterStatusById, so settleRuntimeEffects cannot call mutateCharacterNumericProperty or emit durable CharacterStatus patches without extending the settlement contract/result. RuntimeResult already has optional characterDefinitions and characterStatusById, so the implementation can propagate settlement outputs without introducing a new durable owner.`
+- `2026-07-15`: `Selected smallest lawful slice: add one typed core/shared-rule effect for explicit character numeric property mutation, settle it through mutateCharacterNumericProperty when characterDefinitions are supplied, emit characterStatusById through RuntimeResult, and keep missing context or invalid targets fail-closed with unsupportedEffects/warnings. This does not require event structure convergence or condition authoring contract first because shared-rule task effects are already exported and task runtime already reaches core effect settlement.`
+- `2026-07-15`: `Implementation plan for the next task: write failing robustness tests for shared-rule export of the new effect, settlement fail-closed behavior without character context, settlement success with CharacterStatus output, and dispatchRuntimeRequest propagation from task onCompleteEffects; then update src/core/contracts/effect.ts, src/core/contracts/effect-settlement.ts, src/core/runtime/runtime-settlement.ts, src/core/runtime/runtime-dispatch.ts, and src/application/script-editor/shared-rule-compiler.ts only if tests prove the selected slice.`
 
 #### `task.script-editor-event-effect-activation-convergence.effect-activation-contract-implementation`
 
 ##### Control Block
 
 - task_id: `task.script-editor-event-effect-activation-convergence.effect-activation-contract-implementation`
-- state: `queued`
+- state: `active`
 - task_kind: `execution`
 - scope:
-  - `Files identified by boundary-baseline-reconcile.`
+  - `src/core/contracts/effect.ts`
+  - `src/core/contracts/effect-settlement.ts`
+  - `src/core/contracts/runtime-result.ts`
+  - `src/core/runtime/runtime-settlement.ts`
+  - `src/core/runtime/runtime-dispatch.ts`
+  - `src/application/script-editor/shared-rule-compiler.ts`
+  - `tests/robustness.test.cjs`
 - must_inspect:
   - `Boundary baseline evidence from the active task.`
 - must_not_change:
@@ -204,7 +215,7 @@
 - task_brief:
   - `Implement the typed effect activation slice selected by baseline reconciliation.`
 - task_outcome_summary:
-  - `Pending implementation.`
+  - `Active. Implement the selected task/shared-rule explicit character numeric property mutation effect through core runtime settlement.`
 - Purpose:
   - `Make authored effects executable through runtime-owned mutation paths.`
 - Failure mode:
@@ -213,6 +224,7 @@
 ##### Progress Log
 
 - `2026-07-15`: `Queued behind boundary-baseline-reconcile.`
+- `2026-07-15`: `Activated after baseline selected the task/shared-rule explicit character numeric property mutation effect as the smallest lawful typed effect activation slice.`
 
 #### `task.script-editor-event-effect-activation-convergence.queue-closeout-and-handoff`
 
