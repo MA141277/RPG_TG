@@ -5,13 +5,13 @@
 - document_role: `version-governor`
 - version_id: `target.script-editor-authoring-data-structure-unification`
 - version_status: `open`
-- active_phase: `phase.execution`
-- active_queue: `queue.script-editor-playable-minigame-binding-convergence`
-- decision_state: `active-execution`
+- active_phase: `phase.promotion-review`
+- active_queue: `none`
+- decision_state: `promotion-review`
 - next_decision: `same-version-admission-or-version-closeout`
-- next_action: `resume-active-queue`
-- resume_gate: `active-queue`
-- promotion_review_result: `admitted`
+- next_action: `return-to-promotion-review`
+- resume_gate: `no-active-queue`
+- promotion_review_result: `pending`
 - review_subject_id: `none`
 - review_subject_classification: `none`
 - proposed_queue_id: `none`
@@ -22,12 +22,12 @@
 - intake_summary: `none`
 - intake_result: `none`
 - intake_feedback_mode: `none`
-- closure_review_subject: `queue.script-editor-legacy-structure-supersession-review`
+- closure_review_subject: `queue.script-editor-playable-minigame-binding-convergence`
 - closure_review_status: `routed`
 - residue_candidate_id: `none`
 - residue_candidate_family: `none`
-- routing_basis: `queue.script-editor-playable-minigame-binding-convergence admitted after playable governance confirmed the bounded shared-contract playable integration surface.`
-- next_lawful_queue_recommendation: `none`
+- routing_basis: `queue.script-editor-playable-minigame-binding-convergence closed after verified runtime pack playable family materialization/import landed with no same-family residue. Final end-to-end authoring/runtime validation is the next lawful candidate unless fresh evidence proves status-overlay generalization review must precede it.`
+- next_lawful_queue_recommendation: `queue.script-editor-end-to-end-authoring-runtime-flow-validation`
 - auto_admission_ready: `false`
 - blocked_by: []
 - candidate_queue_ids:
@@ -101,7 +101,7 @@
 | `item.script-editor-dialogue-story-structure-convergence` | `queue-candidate` | `queue.script-editor-dialogue-story-structure-convergence` | `admitted + queue closed with cross-family residue` | `only if fresh evidence proves the bounded materializer seam regressed` | `Closed after landing the shared materializer seam for minimal dialogue/story runtime scene/text-entry assembly; runtime handoff/progression, branching/followUps, story-node relation lowering, and import reconstruction residue were routed back to version review.` |
 | `item.script-editor-dialogue-story-runtime-handoff-convergence` | `queue-candidate` | `queue.script-editor-dialogue-story-runtime-handoff-convergence` | `admitted + queue closed with cross-family residue` | `only if fresh evidence proves the event-to-dialogue-scene handoff receipt regressed` | `Closed after verified editor event -> dialogue destination -> materialized scene -> runStoryTriggerRuntime coverage and SceneRuntimeSession eventId receipts; richer progression/branching residue was routed back to version review.` |
 | `item.script-editor-scenario-launch-policy-authoring` | `queue-candidate` | `queue.script-editor-scenario-launch-policy-authoring` | `admitted + queue closed` | `only if fresh evidence proves the bounded launch policy authoring slice regressed` | `Closed after storyPack.scenarioProfile entry event and launchPolicy authoring fields landed with verification and no same-family residue.` |
-| `item.script-editor-playable-minigame-binding-convergence` | `queue-candidate` | `queue.script-editor-playable-minigame-binding-convergence` | `candidate-recorded` | `only after playable governance is loaded and the queue is admitted` | `Requires playable governance before shared playable runtime or house-hosted playable integration changes.` |
+| `item.script-editor-playable-minigame-binding-convergence` | `queue-candidate` | `queue.script-editor-playable-minigame-binding-convergence` | `admitted + queue closed` | `only if fresh evidence proves the runtime pack playable binding export/import slice regressed` | `Closed after editor minigame bindings began exporting as runtime playables/playableIntegrations and importing back into editor minigames without playable lifecycle ownership changes.` |
 | `item.script-editor-branching-event-task-chain-convergence` | `queue-candidate` | `queue.script-editor-branching-event-task-chain-convergence` | `admitted + queue closed with same-family residue` | `only if fresh evidence proves the fail-closed node progression guard regressed` | `Closed after non-empty nextNodeId and choiceTargetNodeId began failing closed instead of silently linearizing; real node-target branching was routed as same-family residue to queue.script-editor-dialogue-node-target-branching-convergence.` |
 | `item.script-editor-dialogue-node-target-branching-convergence` | `queue-candidate` | `queue.script-editor-dialogue-node-target-branching-convergence` | `admitted + queue closed with cross-family residue` | `only if fresh evidence proves node-target scene splitting regressed` | `Closed after scene splitting, jump-based nextNodeId progression, implicit array-order continuation, bounded single-target choiceTargetNodeId lowering, and missing-target diagnostics landed. Broader event/task-chain progression was routed as cross-family residue to queue.script-editor-event-task-chain-runtime-convergence review.` |
 | `item.script-editor-event-task-chain-runtime-convergence` | `queue-candidate` | `queue.script-editor-event-task-chain-runtime-convergence` | `admitted + queue closed with same-family residue` | `only if fresh evidence proves event-to-event runtime chain lowering regressed` | `Closed after explicit editor nextEventId lowered into runtime EventDefinition.nextEventId and scene completion followed chained runtime events. Task-chain runtime handoff was routed as same-family residue to queue.script-editor-task-chain-runtime-handoff-convergence.` |
@@ -133,7 +133,7 @@
 | `queue.script-editor-event-structure-convergence` | `done` | `Already completed; do not reopen except by explicit governance record.` | `Closed at baseline with prerequisite condition authoring contract freeze residue returned to promotion review.` |
 | `queue.script-editor-event-effect-activation-convergence` | `done` | `Already completed; do not reopen except by explicit governance record.` | `Closed its bounded task/shared-rule typed character property mutation effect slice with cross-family event/scene effect residue returned to promotion review.` |
 | `queue.script-editor-scenario-launch-policy-authoring` | `done` | `Already completed; do not reopen except by explicit governance record.` | `Closed after storyPack.scenarioProfile entry event and launchPolicy authoring fields landed with verification and no same-family residue.` |
-| `queue.script-editor-playable-minigame-binding-convergence` | `active` | `Currently active; resume from the admitted queue document.` | `Runtime pack playable family materialization/import landed and verified; the active task is queue-closeout-and-handoff.` |
+| `queue.script-editor-playable-minigame-binding-convergence` | `done` | `Already completed; do not reopen except by explicit governance record.` | `Closed after runtime pack playable family materialization/import landed and verified with no same-family residue.` |
 | `queue.script-editor-branching-event-task-chain-convergence` | `done` | `Already completed; do not reopen except by explicit governance record.` | `Closed after the fail-closed node progression guard landed; real node-target branching routed to queue.script-editor-dialogue-node-target-branching-convergence.` |
 | `queue.script-editor-dialogue-node-target-branching-convergence` | `done` | `Already completed; do not reopen except by explicit governance record.` | `Closed after node-target scene splitting and bounded choice target lowering landed; broader event/task-chain progression returned to version review.` |
 | `queue.script-editor-event-task-chain-runtime-convergence` | `done` | `Already completed; do not reopen except by explicit governance record.` | `Closed after explicit event nextEventId export/runtime chaining landed; task-chain runtime handoff routed to queue.script-editor-task-chain-runtime-handoff-convergence.` |
@@ -145,21 +145,20 @@
 
 ### Current Queue Activation
 
-- `queue.script-editor-playable-minigame-binding-convergence`
+- `none`
 - Active task:
-  - `task.script-editor-playable-minigame-binding-convergence.queue-closeout-and-handoff`
-- Admission basis:
-  - `queue.script-editor-legacy-structure-supersession-review closed after verified legacy supersession disposition work landed.`
-  - `No same-family legacy supersession residue remains inside that bounded queue surface.`
-  - `Playable governance was loaded before admission and classified playable/minigame binding convergence as shared playable contract work, not a local-only patch.`
-  - `Execution resumes from the admitted queue document.`
+  - `none`
+- Promotion-review basis:
+  - `queue.script-editor-playable-minigame-binding-convergence closed after verified runtime pack playable family materialization/import landed.`
+  - `No same-family playable binding export/import residue remains inside that bounded queue surface.`
+  - `Execution returns to version promotion review; final end-to-end authoring/runtime flow validation is recommended next unless fresh evidence proves status-overlay review is required first.`
 
 ### Version Boundary Record
 
 - `This version governs authoring/data-structure convergence after runtime-pack-unification closeout.`
 - `It must consume the closed runtime-pack export/import/startup truth as baseline evidence rather than reopening it as a compatibility patch surface.`
 - `It may supersede previously frozen script-editor structures only through explicit schema/migration/supersession records.`
-- `It closed queue.script-editor-legacy-structure-supersession-review after default project schema/kind literals were retired and adapter-supported legacy structures were dispositioned; execution now resumes from queue.script-editor-playable-minigame-binding-convergence.`
+- `It closed queue.script-editor-playable-minigame-binding-convergence after editor minigame bindings began exporting as runtime playable family data and importing back into editor minigames; execution resumes from version promotion review.`
 
 ### Queue Admission Startup Rules
 
@@ -296,3 +295,4 @@
 - `2026-07-16: promotion review admitted queue.script-editor-playable-minigame-binding-convergence as the single active queue after playable governance was loaded. The queue is classified as shared playable contract work for script-editor authored playable/minigame integration bindings over existing playable mechanics; the first live task is boundary-baseline-reconcile.`
 - `2026-07-16: queue.script-editor-playable-minigame-binding-convergence completed boundary-baseline-reconcile after selecting runtime pack playable family materialization/import as the smallest lawful slice; the active task became binding-contract-implementation.`
 - `2026-07-16: queue.script-editor-playable-minigame-binding-convergence completed binding-contract-implementation after runtime pack export/import began preserving editor minigame bindings as playables/playableIntegrations with verification; the active task became queue-closeout-and-handoff.`
+- `2026-07-16: queue.script-editor-playable-minigame-binding-convergence closed with no same-family residue after verification; the version returned to promotion review with queue.script-editor-end-to-end-authoring-runtime-flow-validation recommended next unless fresh evidence proves status-overlay generalization review must precede it.`
