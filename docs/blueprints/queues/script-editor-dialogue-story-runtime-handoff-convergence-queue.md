@@ -21,9 +21,9 @@
 - next_family_candidate: `none`
 - auto_continue_eligible: `false`
 - next_effect: `return-to-version-review`
-- sync_status: `pending`
+- sync_status: `success`
 - sync_scope: `branch-push`
-- sync_summary: `Queue closeout recorded locally; repository sync is pending.`
+- sync_summary: `Commits through 0bf52b9 pushed to origin/mod-first-dev after dialogue/story runtime handoff queue closeout.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
