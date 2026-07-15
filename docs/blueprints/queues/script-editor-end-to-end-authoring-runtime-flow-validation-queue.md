@@ -21,9 +21,9 @@
 - next_family_candidate: `none`
 - auto_continue_eligible: `false`
 - next_effect: `return-to-version-closeout-review`
-- sync_status: `pending`
+- sync_status: `success`
 - sync_scope: `branch-push`
-- sync_summary: `Queue closeout and version handoff are pending repository sync.`
+- sync_summary: `Queue closeout and version handoff landed in commit 29a20e2b and pushed to origin/mod-first-dev.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
