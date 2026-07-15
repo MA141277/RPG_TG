@@ -132,7 +132,7 @@
 
 - `queue.script-editor-city-building-placement-resolver-convergence`
 - Active task:
-  - `task.script-editor-city-building-placement-resolver-convergence.resolver-contract-implementation`
+  - `task.script-editor-city-building-placement-resolver-convergence.queue-closeout-and-handoff`
 - Activation basis:
   - `queue.script-editor-city-building-structure-convergence closed after runtime-house-compatible building contract hardening landed with verification; city-local placement/resolver residue was routed back to version review.`
   - `queue.script-editor-city-building-placement-resolver-convergence is admitted because the target spec requires city-local placements, placement ids, override layering, NPC assignment ownership, access rules, dialogue inheritance, and centralized resolver seams before runtime views keep manually stitching the covered runtime families.`
@@ -238,3 +238,4 @@
 - `2026-07-15: queue.script-editor-city-building-structure-convergence closed after ScriptEditorBuildingRecord explicitly owned covered HouseDefinition fields, city-building authoring defaults/normalizers produced runtime-house-compatible records, and runtime pack import normalized houses into that editor contract. City-local placement/resolver residue was routed to version review with queue.script-editor-city-building-placement-resolver-convergence as the next candidate subject.`
 - `2026-07-15: admission review promoted queue.script-editor-city-building-placement-resolver-convergence as the single active queue because city-local placements, entry ownership, override layering, NPC assignment ownership, and centralized resolver seams are the next required city/building convergence surface. The first live task is boundary-baseline-reconcile.`
 - `2026-07-15: queue.script-editor-city-building-placement-resolver-convergence completed boundary-baseline-reconcile after selecting a bounded shared resolver API over existing cityEntries, houses, cityNpcPools, and houseAccessRefusalRules as the smallest lawful implementation slice; the active task is now resolver-contract-implementation.`
+- `2026-07-15: queue.script-editor-city-building-placement-resolver-convergence completed resolver-contract-implementation after landing the shared city-building placement resolver API with access, NPC, view, and fail-closed coverage; the active task is now queue-closeout-and-handoff.`

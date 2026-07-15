@@ -6137,6 +6137,191 @@ test(
 );
 
 test(
+  "city building placement resolver derives placements from city entries and fails closed for missing houses",
+  () => {
+    const {
+      resolveCityBuildingPlacements,
+    } = require("../.test-dist/application/city/city-building-placement-resolver.js");
+    const placements = resolveCityBuildingPlacements({
+      cityId: "city.start",
+      cityEntries: [
+        {
+          id: "city-entry.market",
+          cityId: "city.start",
+          name: "Market Entry",
+          targetHouseId: "house.market",
+        },
+        {
+          id: "city-entry.missing",
+          cityId: "city.start",
+          name: "Missing Entry",
+          targetHouseId: "house.missing",
+        },
+        {
+          id: "city-entry.other",
+          cityId: "city.other",
+          name: "Other Entry",
+          targetHouseId: "house.other",
+        },
+      ],
+      houses: [
+        {
+          id: "house.market",
+          cityId: "city.start",
+          name: "Market",
+          type: "merchant",
+          characterIds: [],
+          defaultCharacterId: null,
+          activityLocationId: "market",
+          backAction: { label: "返回", targetView: "city" },
+        },
+      ],
+    });
+
+    assert.deepEqual(
+      placements.map((placement) => ({
+        placementId: placement.placementId,
+        cityId: placement.cityId,
+        houseId: placement.houseId,
+        label: placement.label,
+      })),
+      [
+        {
+          placementId: "city-entry.market",
+          cityId: "city.start",
+          houseId: "house.market",
+          label: "Market Entry",
+        },
+      ]
+    );
+  }
+);
+
+test(
+  "city building placement resolver returns access and npc view data through one placement id",
+  () => {
+    const {
+      canEnterCityBuilding,
+      resolveCityBuildingNpcs,
+      resolveCityBuildingView,
+    } = require("../.test-dist/application/city/city-building-placement-resolver.js");
+    const baseState = createBaseState();
+    const state = {
+      ...baseState,
+      player: { characterId: "char.player" },
+      runtime: {
+        ...baseState.runtime,
+        flags: {},
+        cityNpcPools: {
+          "city.start": {
+            cityId: "city.start",
+            lastRefreshedOn: "1356-01-01",
+            residents: {
+              "npc.host": {
+                npcId: "npc.host",
+                favorability: 15,
+                currentLocationId: "market",
+              },
+            },
+          },
+        },
+      },
+      world: {
+        ...baseState.world,
+        currentCityId: "city.start",
+      },
+    };
+    const sharedInput = {
+      state,
+      characterDefinitions: [{ id: "char.player", name: "Player" }],
+      cityEntries: [
+        {
+          id: "city-entry.market",
+          cityId: "city.start",
+          name: "Market Entry",
+          targetHouseId: "house.market",
+        },
+      ],
+      houses: [
+        {
+          id: "house.market",
+          cityId: "city.start",
+          name: "Market",
+          type: "merchant",
+          characterIds: ["npc.host"],
+          defaultCharacterId: "npc.host",
+          activityLocationId: "market",
+          backAction: { label: "返回", targetView: "city" },
+        },
+      ],
+      cityNpcPools: [
+        {
+          cityId: "city.start",
+          residents: [
+            {
+              id: "npc.host",
+              cityId: "city.start",
+              name: "Market Host",
+              title: "Shopkeeper",
+              personality: "",
+              specialty: "",
+              favorability: 15,
+              activityWeight: { market: 1 },
+              dialoguePool: [],
+              intelPool: [],
+            },
+          ],
+        },
+      ],
+      houseAccessRefusalRules: [
+        {
+          id: "refusal.market.closed",
+          houseIds: ["house.market"],
+          speakerCharacterId: "npc.host",
+          title: "Market",
+          text: "Market is closed.",
+          confirmLabel: "Return",
+        },
+      ],
+    };
+
+    assert.deepEqual(resolveCityBuildingNpcs({
+      ...sharedInput,
+      placementId: "city-entry.market",
+    }), [
+      { id: "npc.host", name: "Market Host", title: "Shopkeeper" },
+    ]);
+    assert.deepEqual(canEnterCityBuilding({
+      ...sharedInput,
+      placementId: "city-entry.market",
+    }), {
+      canEnter: false,
+      refusal: {
+        ruleId: "refusal.market.closed",
+        speakerCharacterId: "npc.host",
+        title: "Market",
+        text: "Market is closed.",
+        confirmLabel: "Return",
+      },
+    });
+    assert.equal(
+      resolveCityBuildingView({
+        ...sharedInput,
+        placementId: "city-entry.market",
+      }).placementId,
+      "city-entry.market"
+    );
+    assert.equal(
+      resolveCityBuildingView({
+        ...sharedInput,
+        placementId: "city-entry.missing",
+      }),
+      null
+    );
+  }
+);
+
+test(
   "script editor story/dialogue/event queue exposes dedicated narrative tabs and bounded relation entrypoints",
   () => {
     const source = fs.readFileSync("src/ui/main-ui/main-ui-flow.js", "utf8");
