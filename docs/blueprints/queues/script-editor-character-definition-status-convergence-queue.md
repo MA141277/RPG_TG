@@ -9,8 +9,8 @@
 - governance_sync_source: `docs/blueprints/blueprint.md`
 - queue_status: `active`
 - queue_class: `required`
-- active_task: `task.script-editor-character-definition-status-convergence.boundary-baseline-reconcile`
-- next_task: `task.script-editor-character-definition-status-convergence.character-definition-status-contract-implementation`
+- active_task: `task.script-editor-character-definition-status-convergence.character-definition-status-contract-implementation`
+- next_task: `task.script-editor-character-definition-status-convergence.queue-closeout-and-handoff`
 - closeout_status: `in-progress`
 - execution_closeout_status: `partial`
 - topic_closure_status: `open-residue`
@@ -57,11 +57,11 @@
 
 - queue_goal: `Unify authored character definitions, runtime character views, and save-time CharacterStatus overlays without creating a second durable character truth.`
 - task_count: `3`
-- completed_task_count: `0`
-- remaining_task_count: `3`
-- active_task_summary: `Reconcile existing character authoring, runtime character definitions, save/status structures, and consumer seams before choosing the bounded implementation slice.`
+- completed_task_count: `1`
+- remaining_task_count: `2`
+- active_task_summary: `Implement the bounded CharacterDefinition/CharacterStatus selector/materializer and migration-helper slice chosen by baseline reconciliation.`
 - task_briefs:
-  - `task.script-editor-character-definition-status-convergence.boundary-baseline-reconcile: identify current character schemas, old-shape adapters, save/status ownership, and covered consumer seams.`
+  - `task.script-editor-character-definition-status-convergence.boundary-baseline-reconcile: completed after current character schemas, old-shape adapters, save/status ownership, and direct mutation seams were reconciled.`
   - `task.script-editor-character-definition-status-convergence.character-definition-status-contract-implementation: implement the bounded CharacterDefinition/CharacterStatus selector or materializer slice with tests.`
   - `task.script-editor-character-definition-status-convergence.queue-closeout-and-handoff: verify the bounded slice, classify residue, and return control to version review.`
 
@@ -97,8 +97,8 @@
 
 | Task ID | State | Summary | Depends On | Notes |
 | --- | --- | --- | --- | --- |
-| `task.script-editor-character-definition-status-convergence.boundary-baseline-reconcile` | `active` | `Reconcile current character authoring, runtime definitions, save/status structures, selectors, materializers, and direct runtime consumers before implementation.` | `none` | `Must produce a source-backed smallest bounded implementation slice before code changes.` |
-| `task.script-editor-character-definition-status-convergence.character-definition-status-contract-implementation` | `pending` | `Implement the bounded CharacterDefinition/CharacterStatus contract slice and tests chosen by baseline reconciliation.` | `task.script-editor-character-definition-status-convergence.boundary-baseline-reconcile` | `Must not widen into unrelated object-family migrations.` |
+| `task.script-editor-character-definition-status-convergence.boundary-baseline-reconcile` | `completed` | `Reconciled current character authoring, runtime definitions, save/status structures, selectors, materializers, and direct runtime consumers before implementation.` | `none` | `Completed on 2026-07-15 after source evidence identified the smallest lawful implementation slice.` |
+| `task.script-editor-character-definition-status-convergence.character-definition-status-contract-implementation` | `active` | `Implement the bounded CharacterDefinition/CharacterStatus contract slice and tests chosen by baseline reconciliation.` | `task.script-editor-character-definition-status-convergence.boundary-baseline-reconcile` | `Must not widen into unrelated object-family migrations.` |
 | `task.script-editor-character-definition-status-convergence.queue-closeout-and-handoff` | `pending` | `Verify, classify residue, update queue/version/project-progress truth, and route the next lawful queue.` | `task.script-editor-character-definition-status-convergence.character-definition-status-contract-implementation` | `Must run governance checks before repository sync record is marked success.` |
 
 ### Task Definitions
@@ -108,7 +108,7 @@
 ##### Control Block
 
 - task_id: `task.script-editor-character-definition-status-convergence.boundary-baseline-reconcile`
-- state: `active`
+- state: `completed`
 - task_kind: `execution`
 - scope:
   - `src/domain/character.ts`
@@ -155,7 +155,7 @@
 - task_brief:
   - `Reconcile character data ownership before changing the runtime or editor character contract.`
 - task_outcome_summary:
-  - `Pending; expected output is a source-backed implementation boundary for the first CharacterDefinition/CharacterStatus convergence slice.`
+  - `Completed with a bounded implementation boundary: add a character definition/status selector-materializer contract, materialize editor people into runtime CharacterDefinition shape for import/export, and cover a small set of shared mutation helpers without migrating every direct runtime consumer.`
 - Purpose:
   - `Prevent the version from creating parallel authoring-only and runtime-only character truths while migrating character data.`
 - Failure mode:
@@ -164,16 +164,27 @@
 ##### Progress Log
 
 - `2026-07-15`: `Queue admitted from version promotion review after the field mapping contract freeze closed and routed field-mapping consumption to later object-family queues. Baseline reconciliation is now the active task.`
+- `2026-07-15`: `Inspected target/draft specs, src/domain/character.ts, src/domain/script-editor-project.ts, src/application/script-editor/person-authoring.ts, runtime-pack import/export, field-mapping, SaveEnvelope/CoreGameState, AppState/startup wiring, effect-applier, grain-shop mutations, and existing robustness tests. Current durable editor people records are imported from pack.characters and exported back to characters.json mostly unchanged; person-authoring stores runtime-only leaves such as stats, skills, stamina, age, birthYear, and clanId through extendedAttributes; runtime CharacterDefinition still requires fixed stats/skills/stamina fields; no CharacterStatus or characterStatusById save overlay exists yet; runtime mutations currently clone and mutate CharacterDefinition arrays directly.`
+- `2026-07-15`: `Chose the smallest lawful implementation slice: create a shared CharacterStatus overlay contract plus selector/materializer helpers, use it to prove absence-of-status and empty-status behavior, stat/skill/stamina patch overlays, and legacy/editor people materialization into runtime CharacterDefinition shape. First covered mutation ownership should start with reusable helpers used by effect-applier, player-stamina, and grain-shop style stat/skill/stamina changes; broad house/playable consumer migration and full character authoring UI completion remain out of this task unless the implementation stays bounded.`
 
 #### `task.script-editor-character-definition-status-convergence.character-definition-status-contract-implementation`
 
 ##### Control Block
 
 - task_id: `task.script-editor-character-definition-status-convergence.character-definition-status-contract-implementation`
-- state: `pending`
+- state: `active`
 - task_kind: `execution`
 - scope:
-  - `Scope must be finalized by boundary-baseline-reconcile before code changes.`
+  - `src/domain/character.ts`
+  - `src/application/character`
+  - `src/application/script-editor/person-authoring.ts`
+  - `src/application/script-editor/runtime-pack-export.ts`
+  - `src/application/script-editor/runtime-pack-import.ts`
+  - `src/application/effects/effect-applier.ts`
+  - `src/application/player/player-stamina.ts`
+  - `src/application/grain-shop/grain-shop-mutations.ts`
+  - `tests/robustness.test.cjs`
+  - `docs/blueprints/queues/script-editor-character-definition-status-convergence-queue.md`
 - must_inspect:
   - `Boundary baseline evidence from the active task.`
 - must_not_change:
@@ -181,10 +192,11 @@
   - `broad visual redesign`
   - `gameplay formula changes unrelated to selector/materializer consumption`
 - done_when:
-  - `The bounded implementation chosen by baseline reconciliation is landed with tests.`
-  - `New games can load character definitions without requiring status objects for unchanged characters.`
-  - `Save restore can apply CharacterStatus patches over authored definitions for the covered paths.`
-  - `Covered runtime mutations write status patches rather than mutating authored definitions.`
+  - `A CharacterStatus overlay type and shared selector/materializer helpers exist for covered stat, skill, stamina, and profile patch fields.`
+  - `New games can materialize character views without any status object and with an empty status object.`
+  - `Covered save/restore-style status patches overlay authored definitions for stat, skill, and stamina fields without mutating the input definition.`
+  - `Script-editor imported people can be normalized/materialized into runtime CharacterDefinition shape for characters.json validation/export instead of relying on ad hoc extendedAttributes only.`
+  - `Covered shared runtime mutations use the status-aware helper seam or explicitly record why migration must continue in a later same-family task.`
 - verify_with:
   - `npm run typecheck`
   - `npm run test`
@@ -200,7 +212,7 @@
 - task_brief:
   - `Implement the bounded character definition/status convergence slice chosen by baseline reconciliation.`
 - task_outcome_summary:
-  - `Pending until the baseline task records the exact implementation boundary.`
+  - `Active; implement the first selector/materializer and mutation-helper slice chosen by baseline reconciliation.`
 - Purpose:
   - `Move character reads and runtime mutations toward explicit definition plus status-overlay ownership.`
 - Failure mode:
