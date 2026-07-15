@@ -9,7 +9,7 @@
 - governance_sync_source: `docs/blueprints/blueprint.md`
 - queue_status: `active`
 - queue_class: `required`
-- active_task: `task.script-editor-branching-event-task-chain-convergence.progression-contract-implementation`
+- active_task: `task.script-editor-branching-event-task-chain-convergence.queue-closeout-and-handoff`
 - next_task: `none`
 - closeout_status: `in-progress`
 - execution_closeout_status: `partial`
@@ -57,9 +57,9 @@
 
 - queue_goal: `Determine and implement the smallest branching/event/task-chain convergence slice after basic dialogue structures and runtime handoff are verified.`
 - task_count: `3`
-- completed_task_count: `1`
-- remaining_task_count: `2`
-- active_task_summary: `Implement the selected fail-closed dialogue node progression guard so authored nextNodeId/choiceTargetNodeId branching intent cannot be silently exported as linear runtime dialogue before node-target scene splitting exists.`
+- completed_task_count: `2`
+- remaining_task_count: `1`
+- active_task_summary: `Verify, classify residue, record next-step truth, and return control to version review after the fail-closed dialogue node progression guard landed.`
 - task_briefs:
   - `task.script-editor-branching-event-task-chain-convergence.boundary-baseline-reconcile: inventory branching/event/task-chain seams and select the smallest lawful progression implementation slice.`
   - `task.script-editor-branching-event-task-chain-convergence.progression-contract-implementation: implement the selected branching/event/task-chain slice with tests.`
@@ -98,8 +98,8 @@
 | Task ID | State | Summary | Depends On | Notes |
 | --- | --- | --- | --- | --- |
 | `task.script-editor-branching-event-task-chain-convergence.boundary-baseline-reconcile` | `done` | `Inventoried branching dialogue, event progression, task-chain seams, and selected fail-closed dialogue node progression guards as the smallest lawful first slice.` | `none` | `No production code changed during baseline.` |
-| `task.script-editor-branching-event-task-chain-convergence.progression-contract-implementation` | `active` | `Implement the selected branching/event/task-chain progression slice with tests.` | `task.script-editor-branching-event-task-chain-convergence.boundary-baseline-reconcile` | `Selected slice is fail-closed diagnostics for unsupported dialogue nextNodeId/choiceTargetNodeId progression references before runtime node-target scene splitting exists.` |
-| `task.script-editor-branching-event-task-chain-convergence.queue-closeout-and-handoff` | `pending` | `Verify, classify residue, and return control to version review.` | `task.script-editor-branching-event-task-chain-convergence.progression-contract-implementation` | `Closeout must not infer version closeout.` |
+| `task.script-editor-branching-event-task-chain-convergence.progression-contract-implementation` | `done` | `Implemented the selected fail-closed dialogue node progression guard with tests.` | `task.script-editor-branching-event-task-chain-convergence.boundary-baseline-reconcile` | `Non-empty nextNodeId and choiceTargetNodeId now emit unsupported-lowering diagnostics instead of being silently flattened into linear runtime scenes.` |
+| `task.script-editor-branching-event-task-chain-convergence.queue-closeout-and-handoff` | `active` | `Verify, classify residue, and return control to version review.` | `task.script-editor-branching-event-task-chain-convergence.progression-contract-implementation` | `Closeout must not infer version closeout.` |
 
 ### Task Definitions
 
@@ -217,18 +217,24 @@
 - task_brief:
   - `Implement the selected branching/event/task-chain progression slice.`
 - task_outcome_summary:
-  - `Active. Implement fail-closed diagnostics for unsupported dialogue node progression references without widening into full branching or task-chain support.`
+  - `Done. The materializer now fails closed on non-empty dialogue nextNodeId and choiceTargetNodeId references, preventing unsupported node-local branching/progression intent from being exported as linear runtime scenes.`
 - Purpose:
   - `Make one bounded richer narrative progression path runtime-owned and verified.`
 - Failure mode:
   - `The queue lands another export-only patch while runtime progression ownership remains unresolved.`
+
+##### Progress Log
+
+- `2026-07-15`: `RED added for materializeScriptEditorDialogueStoryRuntime with non-empty nextNodeId and choiceTargetNodeId; it failed because the materializer emitted a linear scene and silently ignored authored node progression references.`
+- `2026-07-15`: `GREEN landed in src/application/script-editor/dialogue-story-runtime-materializer.ts by emitting unsupported-lowering diagnostics for non-empty nextNodeId and choiceTargetNodeId while preserving existing choice/followUps fail-closed behavior and leaving full branching, followUps, event/task chains, playable/minigame, and scenario launch policy out of scope.`
+- `2026-07-15`: `Verification passed: npm test -- --test-name-pattern "script editor dialogue story materializer rejects unsupported node progression references"; npm run typecheck; npm test; npm run build; npm run lint:blueprints; npm run lint:plans; npm run blueprint:governance:check; git diff --check reported only LF to CRLF working-copy warnings.`
 
 #### `task.script-editor-branching-event-task-chain-convergence.queue-closeout-and-handoff`
 
 ##### Control Block
 
 - task_id: `task.script-editor-branching-event-task-chain-convergence.queue-closeout-and-handoff`
-- state: `pending`
+- state: `active`
 - task_kind: `execution`
 - scope:
   - `docs/blueprints/project-progress.md`
@@ -258,7 +264,7 @@
 - task_brief:
   - `Close or route the branching/event/task-chain convergence queue after verified implementation.`
 - task_outcome_summary:
-  - `Pending implementation.`
+  - `Active after progression-contract-implementation verification passed.`
 - Purpose:
   - `Keep richer narrative progression convergence explicit before scenario launch, playable/minigame binding, or final validation queues continue.`
 - Failure mode:

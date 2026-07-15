@@ -3704,6 +3704,59 @@ test("script editor dialogue story materializer exposes runtime scenes and text 
   assert.equal(result.scenes?.[0]?.actions?.[0]?.textId, "text.opening");
 });
 
+test("script editor dialogue story materializer rejects unsupported node progression references", () => {
+  const {
+    materializeScriptEditorDialogueStoryRuntime,
+  } = require("../.test-dist/application/script-editor/dialogue-story-runtime-materializer.js");
+
+  const result = materializeScriptEditorDialogueStoryRuntime({
+    dialogues: [
+      {
+        id: "dialogue.branching",
+        title: "Branching",
+        nodes: [
+          {
+            id: "dialogue-node.1",
+            nodeType: "dialogue",
+            speakerPersonId: "person.hero",
+            textId: "text.opening",
+            nextNodeId: "dialogue-node.2",
+            choiceTargetNodeId: "",
+          },
+          {
+            id: "dialogue-node.2",
+            nodeType: "narration",
+            speakerPersonId: "",
+            textId: "text.followup",
+            nextNodeId: "",
+            choiceTargetNodeId: "dialogue-node.1",
+          },
+        ],
+      },
+    ],
+    storyNodes: [],
+    scenes: [],
+    textEntries: [
+      { id: "text.opening", text: "Opening line." },
+      { id: "text.followup", text: "Follow-up line." },
+    ],
+  });
+
+  assert.equal(result.scenes, null);
+  assert.equal(result.textEntries, null);
+  assert.deepEqual(
+    result.diagnostics.map((diagnostic) => diagnostic.fieldPath),
+    [
+      "project.dialogues[0].nodes[0].nextNodeId",
+      "project.dialogues[0].nodes[1].choiceTargetNodeId",
+    ]
+  );
+  assert.match(
+    result.diagnostics.map((diagnostic) => diagnostic.message).join("\n"),
+    /node progression|runtime branching/i
+  );
+});
+
 test(
   "script editor activities family round-trips through runtime pack import and export",
   async () => {

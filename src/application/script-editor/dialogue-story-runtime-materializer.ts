@@ -1,6 +1,7 @@
 import type { ActionNode, SceneDefinition } from "../../domain/action";
 import type {
   ScriptEditorDialogueRecord,
+  ScriptEditorDialogueNodeRecord,
   ScriptEditorProjectDefinition,
   ScriptEditorStoryNodeRecord,
   ScriptEditorTextEntryRecord,
@@ -169,6 +170,13 @@ function lowerDialogueToScene(
   const actions: ActionNode[] = [];
   const nodes = dialogue.nodes ?? [];
   for (const [nodeIndex, node] of nodes.entries()) {
+    appendUnsupportedNodeProgressionDiagnostics(
+      dialogueIndex,
+      nodeIndex,
+      node,
+      diagnostics
+    );
+
     if (node.nodeType === "choice") {
       diagnostics.push({
         code: "unsupported-lowering",
@@ -241,6 +249,34 @@ function lowerDialogueToScene(
     name: dialogue.title || dialogue.id,
     actions,
   };
+}
+
+function appendUnsupportedNodeProgressionDiagnostics(
+  dialogueIndex: number,
+  nodeIndex: number,
+  node: ScriptEditorDialogueNodeRecord,
+  diagnostics: ScriptEditorDialogueStoryMaterializerDiagnostic[]
+): void {
+  if (typeof node.nextNodeId === "string" && node.nextNodeId.length > 0) {
+    diagnostics.push({
+      code: "unsupported-lowering",
+      fieldPath: `project.dialogues[${dialogueIndex}].nodes[${nodeIndex}].nextNodeId`,
+      message:
+        "Dialogue node progression references require runtime branching support before export.",
+    });
+  }
+
+  if (
+    typeof node.choiceTargetNodeId === "string" &&
+    node.choiceTargetNodeId.length > 0
+  ) {
+    diagnostics.push({
+      code: "unsupported-lowering",
+      fieldPath: `project.dialogues[${dialogueIndex}].nodes[${nodeIndex}].choiceTargetNodeId`,
+      message:
+        "Dialogue node choice target references require runtime branching support before export.",
+    });
+  }
 }
 
 function firstParticipantOrHero(dialogue: ScriptEditorDialogueRecord): string {
