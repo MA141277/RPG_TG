@@ -688,6 +688,7 @@ export class MainUiFlow {
       const storyPack = this.scriptEditorProject.storyPack;
       const scenarioProfile = storyPack.scenarioProfile ?? {};
       const initialLocation = scenarioProfile.initialLocation ?? {};
+      const launchPolicy = scenarioProfile.launchPolicy ?? {};
       const exportDiagnostics = validateScriptEditorProjectForRuntimeExport(
         this.scriptEditorProject
       );
@@ -731,6 +732,10 @@ export class MainUiFlow {
             ${this.renderScriptEditorField("storyPack.description", "剧本包说明", storyPack.description ?? "")}
             ${this.renderScriptEditorField("scenarioProfile.title", "开场场景标题", scenarioProfile.title ?? "")}
             ${this.renderScriptEditorField("scenarioProfile.initialLocation.view", "初始视图", initialLocation.view ?? "")}
+            ${this.renderScriptEditorField("scenarioProfile.entryEventId", "入口事件 ID", scenarioProfile.entryEventId ?? "")}
+            ${this.renderScriptEditorField("scenarioProfile.launchPolicy.characterSelection", "角色选择策略", launchPolicy.characterSelection ?? "")}
+            ${this.renderScriptEditorField("scenarioProfile.launchPolicy.initialView", "开局视图", launchPolicy.initialView ?? "")}
+            ${this.renderScriptEditorField("scenarioProfile.launchPolicy.entryEventTiming", "入口事件时机", launchPolicy.entryEventTiming ?? "")}
           </div>
           ${this.renderScriptEditorSystemDetails(
             "高级设置与系统信息",
@@ -5447,6 +5452,9 @@ export class MainUiFlow {
       initialLocation: {
         ...(this.scriptEditorProject.storyPack.scenarioProfile?.initialLocation ?? {}),
       },
+      launchPolicy: {
+        ...(this.scriptEditorProject.storyPack.scenarioProfile?.launchPolicy ?? {}),
+      },
     };
 
     let nextProject = this.scriptEditorProject;
@@ -5568,6 +5576,53 @@ export class MainUiFlow {
             initialLocation: {
               ...scenarioProfile.initialLocation,
               view: normalizedValue,
+            },
+          },
+        });
+        break;
+      case "scenarioProfile.entryEventId":
+        nextProject = updateScriptEditorWorkflowStoryPack(nextProject, {
+          ...nextProject.storyPack,
+          scenarioProfile: {
+            ...scenarioProfile,
+            entryEventId: normalizedValue.length === 0 ? undefined : normalizedValue,
+          },
+        });
+        break;
+      case "scenarioProfile.launchPolicy.characterSelection":
+        nextProject = updateScriptEditorWorkflowStoryPack(nextProject, {
+          ...nextProject.storyPack,
+          scenarioProfile: {
+            ...scenarioProfile,
+            launchPolicy: {
+              ...scenarioProfile.launchPolicy,
+              characterSelection:
+                normalizedValue.length === 0 ? undefined : normalizedValue,
+            },
+          },
+        });
+        break;
+      case "scenarioProfile.launchPolicy.initialView":
+        nextProject = updateScriptEditorWorkflowStoryPack(nextProject, {
+          ...nextProject.storyPack,
+          scenarioProfile: {
+            ...scenarioProfile,
+            launchPolicy: {
+              ...scenarioProfile.launchPolicy,
+              initialView: normalizedValue.length === 0 ? undefined : normalizedValue,
+            },
+          },
+        });
+        break;
+      case "scenarioProfile.launchPolicy.entryEventTiming":
+        nextProject = updateScriptEditorWorkflowStoryPack(nextProject, {
+          ...nextProject.storyPack,
+          scenarioProfile: {
+            ...scenarioProfile,
+            launchPolicy: {
+              ...scenarioProfile.launchPolicy,
+              entryEventTiming:
+                normalizedValue.length === 0 ? undefined : normalizedValue,
             },
           },
         });

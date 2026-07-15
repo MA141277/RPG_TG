@@ -9,8 +9,8 @@
 - governance_sync_source: `docs/blueprints/blueprint.md`
 - queue_status: `active`
 - queue_class: `required-priority`
-- active_task: `task.script-editor-scenario-launch-policy-authoring.launch-policy-contract-implementation`
-- next_task: `task.script-editor-scenario-launch-policy-authoring.queue-closeout-and-handoff`
+- active_task: `task.script-editor-scenario-launch-policy-authoring.queue-closeout-and-handoff`
+- next_task: `none`
 - closeout_status: `in-progress`
 - execution_closeout_status: `partial`
 - topic_closure_status: `open-residue`
@@ -57,9 +57,9 @@
 
 - queue_goal: `Author and preserve startup launch policy fields required for editor-exported packs to enter the intended character-selection or map/city startup path.`
 - task_count: `3`
-- completed_task_count: `1`
-- remaining_task_count: `2`
-- active_task_summary: `Implement the selected storyPack.scenarioProfile launch policy authoring slice with tests.`
+- completed_task_count: `2`
+- remaining_task_count: `1`
+- active_task_summary: `Verify implementation closeout, classify residue, and return control to version review.`
 - task_briefs:
   - `task.script-editor-scenario-launch-policy-authoring.boundary-baseline-reconcile: inventory launch policy seams and select the smallest implementation slice.`
   - `task.script-editor-scenario-launch-policy-authoring.launch-policy-contract-implementation: implement the selected launch policy authoring/export/runtime slice with tests.`
@@ -104,8 +104,8 @@
 | Task ID | State | Summary | Depends On | Notes |
 | --- | --- | --- | --- | --- |
 | `task.script-editor-scenario-launch-policy-authoring.boundary-baseline-reconcile` | `done` | `Inventoried launch policy seams and selected storyPack.scenarioProfile structured authoring as the smallest lawful slice.` | `none` | `No production code changed during baseline.` |
-| `task.script-editor-scenario-launch-policy-authoring.launch-policy-contract-implementation` | `active` | `Implement the selected storyPack.scenarioProfile launch policy authoring slice with tests.` | `task.script-editor-scenario-launch-policy-authoring.boundary-baseline-reconcile` | `Must keep scenarioProfile as the startup contract.` |
-| `task.script-editor-scenario-launch-policy-authoring.queue-closeout-and-handoff` | `pending` | `Verify, classify residue, and return control to version review.` | `task.script-editor-scenario-launch-policy-authoring.launch-policy-contract-implementation` | `Do not infer version closeout from this queue.` |
+| `task.script-editor-scenario-launch-policy-authoring.launch-policy-contract-implementation` | `done` | `Implemented the selected storyPack.scenarioProfile launch policy authoring slice with tests.` | `task.script-editor-scenario-launch-policy-authoring.boundary-baseline-reconcile` | `scenarioProfile remains the startup contract.` |
+| `task.script-editor-scenario-launch-policy-authoring.queue-closeout-and-handoff` | `active` | `Verify, classify residue, and return control to version review.` | `task.script-editor-scenario-launch-policy-authoring.launch-policy-contract-implementation` | `Do not infer version closeout from this queue.` |
 
 ### Task Definitions
 
@@ -175,7 +175,7 @@
 ##### Control Block
 
 - task_id: `task.script-editor-scenario-launch-policy-authoring.launch-policy-contract-implementation`
-- state: `active`
+- state: `done`
 - task_kind: `execution`
 - scope:
   - `src/domain/script-editor-project.ts`
@@ -222,18 +222,24 @@
 - task_brief:
   - `Implement the baseline-selected launch policy slice.`
 - task_outcome_summary:
-  - `Pending baseline.`
+  - `Done. The script-editor project form now exposes and writes scenarioProfile.entryEventId plus launchPolicy.characterSelection, launchPolicy.initialView, and launchPolicy.entryEventTiming while existing export/import/startup tests keep scenarioProfile as the runtime contract.`
 - Purpose:
   - `Make the editor-authored startup contract runtime-consumable without manual JSON patching.`
 - Failure mode:
   - `Hardcoding startup behavior in main.ts would hide missing authoring data instead of fixing the exported pack contract.`
+
+##### Progress Log
+
+- `2026-07-16`: `RED target test added for script editor project form launch policy fields; it failed because main-ui-flow.js did not render or handle scenarioProfile.entryEventId and scenarioProfile.launchPolicy.* project fields.`
+- `2026-07-16`: `GREEN implementation added storyPack project form fields for entryEventId, launchPolicy.characterSelection, launchPolicy.initialView, and launchPolicy.entryEventTiming, plus applyScriptEditorProjectField branches that write them through updateScriptEditorWorkflowStoryPack without bypassing scenarioProfile.`
+- `2026-07-16`: `Verification passed: target project form field test, existing scenario launch policy export/import/startup tests, npm run typecheck, npm test, npm run build, npm run lint:blueprints, npm run lint:plans, npm run blueprint:governance:check, and git diff --check. Build retained existing Vite warnings for the battle demo non-module script, unresolved ../../ui/yuansu/1_021_medium_blank_panel_1.0.png, and chunk size.`
 
 #### `task.script-editor-scenario-launch-policy-authoring.queue-closeout-and-handoff`
 
 ##### Control Block
 
 - task_id: `task.script-editor-scenario-launch-policy-authoring.queue-closeout-and-handoff`
-- state: `pending`
+- state: `active`
 - task_kind: `execution`
 - scope:
   - `docs/blueprints/project-progress.md`
@@ -269,7 +275,7 @@
 - task_brief:
   - `Verify, classify residue, and return control to version review.`
 - task_outcome_summary:
-  - `Pending implementation.`
+  - `Active after launch policy authoring implementation landed; full closeout verification and residue classification remain.`
 - Purpose:
   - `Prevent launch policy authoring from being mistaken for full version completion.`
 - Failure mode:

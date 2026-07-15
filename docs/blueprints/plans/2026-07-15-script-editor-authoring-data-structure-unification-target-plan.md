@@ -132,7 +132,7 @@
 | `queue.script-editor-condition-runtime-evaluation-convergence` | `done` | `Already completed; do not reopen except by explicit governance record.` | `Closed after bounded event condition export/evaluation convergence landed with verification and routed broader condition consumption residue back to promotion review.` |
 | `queue.script-editor-event-structure-convergence` | `done` | `Already completed; do not reopen except by explicit governance record.` | `Closed at baseline with prerequisite condition authoring contract freeze residue returned to promotion review.` |
 | `queue.script-editor-event-effect-activation-convergence` | `done` | `Already completed; do not reopen except by explicit governance record.` | `Closed its bounded task/shared-rule typed character property mutation effect slice with cross-family event/scene effect residue returned to promotion review.` |
-| `queue.script-editor-scenario-launch-policy-authoring` | `active` | `After scene runtime taskInputs propagation closed with no same-family residue.` | `Owns shell selection vs fixed startup, selectable character range, initial map/city/building/view, and entry event timing authoring. Active task is launch-policy-contract-implementation after baseline selected storyPack.scenarioProfile structured authoring.` |
+| `queue.script-editor-scenario-launch-policy-authoring` | `active` | `After scene runtime taskInputs propagation closed with no same-family residue.` | `Owns shell selection vs fixed startup, selectable character range, initial map/city/building/view, and entry event timing authoring. Implementation landed; active task is queue-closeout-and-handoff.` |
 | `queue.script-editor-playable-minigame-binding-convergence` | `candidate` | `Only after playable governance confirms the bounded playable integration surface.` | `Requires playable governance before any shared playable runtime or house-hosted playable behavior changes.` |
 | `queue.script-editor-branching-event-task-chain-convergence` | `done` | `Already completed; do not reopen except by explicit governance record.` | `Closed after the fail-closed node progression guard landed; real node-target branching routed to queue.script-editor-dialogue-node-target-branching-convergence.` |
 | `queue.script-editor-dialogue-node-target-branching-convergence` | `done` | `Already completed; do not reopen except by explicit governance record.` | `Closed after node-target scene splitting and bounded choice target lowering landed; broader event/task-chain progression returned to version review.` |
@@ -147,20 +147,21 @@
 
 - `queue.script-editor-scenario-launch-policy-authoring`
 - Active task:
-  - `task.script-editor-scenario-launch-policy-authoring.launch-policy-contract-implementation`
+  - `task.script-editor-scenario-launch-policy-authoring.queue-closeout-and-handoff`
 - Activation basis:
   - `queue.script-editor-scene-runtime-task-input-propagation closed after verified SceneRuntimeInput.taskInputs passthrough propagated activated event candidate taskInputs through SceneRuntimeResult.taskInputs.`
   - `No same-family scene runtime taskInputs propagation residue remained inside that bounded queue surface.`
   - `Scenario launch policy authoring is now admitted as the smallest recorded required-priority blocker to editor-exported packs launching without manual JSON patching.`
   - `Boundary baseline selected storyPack.scenarioProfile structured authoring as the smallest lawful slice.`
-  - `Execution resumes from launch-policy-contract-implementation inside the admitted queue document.`
+  - `Launch policy authoring implementation exposed scenarioProfile.entryEventId and launchPolicy.* project fields in the script-editor form.`
+  - `Execution resumes from queue-closeout-and-handoff inside the admitted queue document.`
 
 ### Version Boundary Record
 
 - `This version governs authoring/data-structure convergence after runtime-pack-unification closeout.`
 - `It must consume the closed runtime-pack export/import/startup truth as baseline evidence rather than reopening it as a compatibility patch surface.`
 - `It may supersede previously frozen script-editor structures only through explicit schema/migration/supersession records.`
-- `It closed queue.script-editor-scene-runtime-task-input-propagation after SceneRuntimeInput.taskInputs passthrough landed and no same-family residue remained; execution resumes from admitted queue.script-editor-scenario-launch-policy-authoring implementation after boundary baseline selected storyPack.scenarioProfile structured authoring.`
+- `It closed queue.script-editor-scene-runtime-task-input-propagation after SceneRuntimeInput.taskInputs passthrough landed and no same-family residue remained; execution resumes from admitted queue.script-editor-scenario-launch-policy-authoring closeout after launch policy authoring fields landed.`
 
 ### Queue Admission Startup Rules
 
@@ -284,3 +285,4 @@
 - `2026-07-16: queue.script-editor-scene-runtime-task-input-propagation closed with no same-family residue after verification; the version returned to promotion review with no active queue.`
 - `2026-07-16: promotion review admitted queue.script-editor-scenario-launch-policy-authoring as the single active queue because scenario launch policy authoring is the smallest recorded required-priority blocker to editor-exported packs launching without manual JSON patching; the first live task is boundary-baseline-reconcile.`
 - `2026-07-16: queue.script-editor-scenario-launch-policy-authoring completed boundary-baseline-reconcile after selecting storyPack.scenarioProfile structured authoring for player character, initial location/view, launchPolicy, and entryEventId as the smallest lawful implementation slice; the active task is now launch-policy-contract-implementation.`
+- `2026-07-16: queue.script-editor-scenario-launch-policy-authoring completed launch-policy-contract-implementation after the script-editor project form exposed and wrote scenarioProfile.entryEventId plus launchPolicy.characterSelection, launchPolicy.initialView, and launchPolicy.entryEventTiming; the active task is now queue-closeout-and-handoff.`

@@ -4421,6 +4421,23 @@ test(
   }
 );
 
+test("script editor project form exposes scenario launch policy fields", () => {
+  const mainUiSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    "utf8"
+  );
+
+  for (const field of [
+    "scenarioProfile.entryEventId",
+    "scenarioProfile.launchPolicy.characterSelection",
+    "scenarioProfile.launchPolicy.initialView",
+    "scenarioProfile.launchPolicy.entryEventTiming",
+  ]) {
+    assert.match(mainUiSource, new RegExp(`renderScriptEditorField\\("${field}"`));
+    assert.match(mainUiSource, new RegExp(`case "${field}"`));
+  }
+});
+
 test(
   "script editor runtime export fails closed on deferred authoring families",
   () => {

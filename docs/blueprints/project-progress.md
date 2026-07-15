@@ -37,7 +37,7 @@
 - `Admission history, queue closeout history, and review narrative must stay in the version plan, queue docs, or docs/change-log.md rather than living here as competing current-state prose.`
 - `The pointed version is now the open successor version for script-editor authoring/data-structure unification.`
 - `The latest governance action admitted queue.script-editor-scenario-launch-policy-authoring after scene runtime task input propagation closed with no same-family residue.`
-- `Resume from the active queue document and its launch-policy-contract-implementation task.`
+- `Resume from the active queue document and its queue-closeout-and-handoff task.`
 
 ### Historical References
 
