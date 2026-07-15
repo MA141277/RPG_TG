@@ -21,9 +21,9 @@
 - next_family_candidate: `queue.script-editor-character-status-save-runtime-continuation`
 - auto_continue_eligible: `true`
 - next_effect: `promote-next-queue`
-- sync_status: `pending`
-- sync_scope: `none`
-- sync_summary: `Queue closeout and same-family continuation routing are written locally; repository sync is pending.`
+- sync_status: `success`
+- sync_scope: `branch-push`
+- sync_summary: `Commit 9707412 was pushed to origin/mod-first-dev, carrying queue closeout, same-family residue routing, and continuation admission.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`

@@ -21,9 +21,9 @@
 - next_family_candidate: `none`
 - auto_continue_eligible: `false`
 - next_effect: `none`
-- sync_status: `pending`
-- sync_scope: `none`
-- sync_summary: `Continuation queue admitted locally; repository sync is pending.`
+- sync_status: `success`
+- sync_scope: `branch-push`
+- sync_summary: `Commit 9707412 was pushed to origin/mod-first-dev, carrying continuation queue admission and the active boundary baseline task.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
