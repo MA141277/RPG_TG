@@ -1,18 +1,19 @@
-# Script Editor Authoring Data Structure Unification Bug List
+# Script Editor Authoring Data Structure Unification Observation Ledger
 
 ## Document Control
 
-- document_id: `target.script-editor-authoring-data-structure-unification-buglist`
-- belongs_to_version: `target.script-editor-authoring-data-structure-unification`
-- document_role: `version-problem-ledger`
+- document_id: `script-editor-authoring-data-structure-unification-observation-ledger`
+- related_version: `target.script-editor-authoring-data-structure-unification`
+- document_role: `non-scheduling-observation-ledger`
 - created_at: `2026-07-15`
-- active_truth_owner: `docs/blueprints/plans/2026-07-15-script-editor-authoring-data-structure-unification-target-plan.md`
+- active_truth_owner: `none`
 - scheduling_effect: `none`
 
 ## Usage Rules
 
 - This document records source-backed problems discovered while the version remains open.
 - An entry in this document is not queue admission or implementation authorization.
+- Entries must not be promoted into candidate queues or execution queues unless the user explicitly requests that promotion.
 - Candidate and execution truth remains owned by the current version plan.
 - New findings should record observable behavior, current implementation evidence, governance coverage, and acceptance requirements.
 - Closing an entry requires verified runtime behavior, persistence coverage, and synchronization with the owning queue or version records.
