@@ -21,9 +21,9 @@
 - next_family_candidate: `none`
 - auto_continue_eligible: `false`
 - next_effect: `none`
-- sync_status: `failed`
+- sync_status: `success`
 - sync_scope: `branch-push`
-- sync_summary: `Local commit 30d1522 records queue admission, but push to origin/mod-first-dev failed because the local environment could not connect to github.com:443. Execution truth remains active and unblocked.`
+- sync_summary: `Commits 30d1522, 1245eb9, and 23ba515 were pushed to origin/mod-first-dev, carrying queue admission, the transient sync-failure record, and boundary baseline closeout.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
