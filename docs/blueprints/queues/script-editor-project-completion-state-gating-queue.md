@@ -21,9 +21,9 @@
 - next_family_candidate: `none`
 - auto_continue_eligible: `false`
 - next_effect: `none`
-- sync_status: `success`
+- sync_status: `failed`
 - sync_scope: `baseline-push`
-- sync_summary: `Commit bd96b37 on mod-first-dev was pushed successfully to origin/mod-first-dev after completion-state baseline reconcile completed and implementation became the active task.`
+- sync_summary: `Commit efa0f10 is local but push to origin/mod-first-dev failed because HTTPS connections to github.com were reset or unavailable after repeated retry attempts.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
