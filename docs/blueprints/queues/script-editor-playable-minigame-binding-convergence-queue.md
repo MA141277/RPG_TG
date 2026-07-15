@@ -9,8 +9,8 @@
 - governance_sync_source: `docs/blueprints/blueprint.md`
 - queue_status: `active`
 - queue_class: `required`
-- active_task: `task.script-editor-playable-minigame-binding-convergence.boundary-baseline-reconcile`
-- next_task: `task.script-editor-playable-minigame-binding-convergence.binding-contract-implementation`
+- active_task: `task.script-editor-playable-minigame-binding-convergence.binding-contract-implementation`
+- next_task: `task.script-editor-playable-minigame-binding-convergence.queue-closeout-and-handoff`
 - closeout_status: `in-progress`
 - execution_closeout_status: `partial`
 - topic_closure_status: `blocked`
@@ -21,9 +21,9 @@
 - next_family_candidate: `none`
 - auto_continue_eligible: `false`
 - next_effect: `none`
-- sync_status: `success`
+- sync_status: `pending`
 - sync_scope: `branch-push`
-- sync_summary: `Admission and activation commit cb792d2 is pushed to origin/mod-first-dev; queue activation sync is complete.`
+- sync_summary: `Admission and activation commit cb792d2 is pushed to origin/mod-first-dev; boundary baseline documentation is pending repository sync.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
@@ -73,9 +73,9 @@
 
 - queue_goal: `Converge editor-authored playable/minigame binding records with shared playable integration runtime contracts while preserving existing playable lifecycle ownership.`
 - task_count: `3`
-- completed_task_count: `0`
-- remaining_task_count: `3`
-- active_task_summary: `Baseline the current script-editor minigame binding authoring/export/import/runtime seams and choose the smallest lawful implementation slice.`
+- completed_task_count: `1`
+- remaining_task_count: `2`
+- active_task_summary: `Implement the baseline-selected runtime pack playable family materialization/import slice.`
 - task_briefs:
   - `task.script-editor-playable-minigame-binding-convergence.boundary-baseline-reconcile: inspect current binding structures, shared playable contracts, import/export/runtime seams, and select the bounded implementation slice.`
   - `task.script-editor-playable-minigame-binding-convergence.binding-contract-implementation: implement the selected binding convergence slice with tests, without changing playable lifecycle ownership.`
@@ -114,8 +114,8 @@
 
 | Task ID | State | Summary | Depends On | Notes |
 | --- | --- | --- | --- | --- |
-| `task.script-editor-playable-minigame-binding-convergence.boundary-baseline-reconcile` | `active` | `Inspect current editor minigame/playable binding structures and shared playable integration seams, then select the smallest lawful implementation slice.` | `none` | `No production code changes during baseline unless required to unblock documentation lint.` |
-| `task.script-editor-playable-minigame-binding-convergence.binding-contract-implementation` | `pending` | `Implement the selected script-editor playable binding convergence slice with TDD.` | `task.script-editor-playable-minigame-binding-convergence.boundary-baseline-reconcile` | `Must not add new playable family or main.ts playable-specific branches.` |
+| `task.script-editor-playable-minigame-binding-convergence.boundary-baseline-reconcile` | `done` | `Inspected current editor minigame/playable binding structures and selected runtime pack playable family materialization/import as the smallest lawful implementation slice.` | `none` | `No production code changed during baseline.` |
+| `task.script-editor-playable-minigame-binding-convergence.binding-contract-implementation` | `active` | `Implement the selected script-editor playable binding convergence slice with TDD.` | `task.script-editor-playable-minigame-binding-convergence.boundary-baseline-reconcile` | `Must not add new playable family or main.ts playable-specific branches.` |
 | `task.script-editor-playable-minigame-binding-convergence.queue-closeout-and-handoff` | `pending` | `Verify, classify residue, and return control to version review.` | `task.script-editor-playable-minigame-binding-convergence.binding-contract-implementation` | `Does not infer version closeout.` |
 
 ### Task Definitions
@@ -125,7 +125,7 @@
 ##### Control Block
 
 - task_id: `task.script-editor-playable-minigame-binding-convergence.boundary-baseline-reconcile`
-- state: `active`
+- state: `done`
 - task_kind: `decision-dispatch`
 - scope:
   - `src/domain/script-editor-project.ts`
@@ -177,7 +177,7 @@
 - task_brief:
   - `Baseline playable/minigame binding convergence before implementation.`
 - task_outcome_summary:
-  - `Pending.`
+  - `Completed after inspecting script-editor minigame authoring helpers, project schema, runtime pack export/import, scenario pack loader, shared playable runtime contracts, registry seams, and existing tests. The smallest lawful implementation slice is to materialize existing ScriptEditorMinigameRecord data into runtime pack playables/playableIntegrations files, update scenario pack parse/hydration/import to preserve those families, and add fail-closed coverage for missing trigger/owner/outcome fields without changing playable runtime lifecycle ownership.`
 - Purpose:
   - `Prevent editor-authored playable bindings from being exported or launched through ad hoc guessing instead of shared playable integration contracts.`
 - Failure mode:
@@ -188,20 +188,32 @@
 ##### Control Block
 
 - task_id: `task.script-editor-playable-minigame-binding-convergence.binding-contract-implementation`
-- state: `pending`
+- state: `active`
 - task_kind: `execution`
 - scope:
-  - `TBD by boundary-baseline-reconcile`
+  - `src/domain/scenario-pack.ts`
+  - `src/application/scenario/scenario-pack-loader.ts`
+  - `src/application/script-editor/runtime-pack-export.ts`
+  - `src/application/script-editor/runtime-pack-import.ts`
+  - `src/domain/script-editor-project.ts`
+  - `tests/robustness.test.cjs`
 - must_inspect:
   - `task.script-editor-playable-minigame-binding-convergence.boundary-baseline-reconcile output`
+  - `src/domain/scenario-pack.ts`
+  - `src/application/scenario/scenario-pack-loader.ts`
+  - `src/application/script-editor/runtime-pack-export.ts`
+  - `src/application/script-editor/runtime-pack-import.ts`
+  - `src/domain/script-editor-project.ts`
+  - `tests/robustness.test.cjs`
 - must_not_change:
   - `Do not widen beyond the baseline-selected implementation slice.`
   - `Do not add a new playable family.`
   - `Do not add playable-specific business branches in src/main.ts.`
 - done_when:
-  - `The baseline-selected convergence slice lands with tests.`
-  - `Editor-authored playable/minigame binding data follows shared playable integration contract semantics for the covered path.`
-  - `Invalid or incomplete trigger/owner/outcome configuration fails closed where the playable spec requires it.`
+  - `Runtime pack export no longer fails solely because project.minigames contains valid records.`
+  - `Exported pack manifests and files include playables and playableIntegrations records materialized from ScriptEditorMinigameRecord data for the covered path.`
+  - `Scenario pack loader and script-editor runtime import preserve playables/playableIntegrations families without compatibility residue for valid records.`
+  - `Invalid or incomplete playable trigger, owner, integration, or outcome configuration fails closed where the playable spec requires it.`
 - verify_with:
   - `npm run typecheck`
   - `npm test`
@@ -284,3 +296,4 @@
 ### Progress Log
 
 - `2026-07-16`: `Promotion review admitted queue.script-editor-playable-minigame-binding-convergence as the single active queue after playable governance was loaded. The work is classified as shared playable contract change for script-editor authored playable/minigame integration bindings over existing playable mechanics; the first live task is boundary-baseline-reconcile.`
+- `2026-07-16`: `Boundary baseline completed after inspecting the current ScriptEditorMinigameRecord schema, minigame-binding authoring helper, runtime-pack export/import seams, scenario-pack loader, shared playable runtime contracts, builtin playable registries, and robustness coverage. Existing authoring already records playableId, integrationId, ownerKind, ownerId, returnPolicy, triggerId, triggerEvent, launchPayload, and outcomeRoutes, but runtime export still defers project.minigames, runtime pack manifests have no playables/playableIntegrations files, and script-editor runtime import drops runtime playable families. The selected smallest lawful implementation slice is runtime pack playable family materialization/import with fail-closed validation for required trigger/owner/outcome contract data, without changing playable runtime lifecycle ownership or adding src/main.ts playable-specific branches.`

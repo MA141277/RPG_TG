@@ -37,7 +37,7 @@
 - `Admission history, queue closeout history, and review narrative must stay in the version plan, queue docs, or docs/change-log.md rather than living here as competing current-state prose.`
 - `The pointed version is now the open successor version for script-editor authoring/data-structure unification.`
 - `The latest governance action admitted queue.script-editor-playable-minigame-binding-convergence after playable governance classified it as shared playable contract work.`
-- `Resume from the active queue document and its boundary-baseline-reconcile task.`
+- `Resume from the active queue document and its binding-contract-implementation task.`
 
 ### Historical References
 
