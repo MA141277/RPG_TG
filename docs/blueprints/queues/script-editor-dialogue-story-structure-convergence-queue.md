@@ -9,7 +9,7 @@
 - governance_sync_source: `docs/blueprints/blueprint.md`
 - queue_status: `active`
 - queue_class: `required`
-- active_task: `task.script-editor-dialogue-story-structure-convergence.boundary-baseline-reconcile`
+- active_task: `task.script-editor-dialogue-story-structure-convergence.structure-contract-implementation`
 - next_task: `none`
 - closeout_status: `in-progress`
 - execution_closeout_status: `partial`
@@ -56,9 +56,9 @@
 
 - queue_goal: `Determine and implement the smallest dialogue/story structure convergence slice that turns editor-authored dialogue/story records into validated runtime-consumable narrative data without widening into full progression handoff.`
 - task_count: `3`
-- completed_task_count: `0`
-- remaining_task_count: `3`
-- active_task_summary: `Baseline must inspect current dialogue/story authoring, export, runtime scene/text-entry consumption, and prior export-unification residue before selecting the first implementation slice.`
+- completed_task_count: `1`
+- remaining_task_count: `2`
+- active_task_summary: `Baseline selected a shared dialogue/story runtime materializer seam as the smallest implementation slice; implementation must extract runtime-consumable scene/text-entry assembly out of exporter-private lowering.`
 - task_briefs:
   - `task.script-editor-dialogue-story-structure-convergence.boundary-baseline-reconcile: inventory dialogue/story authoring and runtime consumption seams, decide the smallest lawful structure slice, and record test-first implementation boundaries.`
   - `task.script-editor-dialogue-story-structure-convergence.structure-contract-implementation: implement the selected dialogue/story structure convergence slice with tests.`
@@ -95,8 +95,8 @@
 
 | Task ID | State | Summary | Depends On | Notes |
 | --- | --- | --- | --- | --- |
-| `task.script-editor-dialogue-story-structure-convergence.boundary-baseline-reconcile` | `active` | `Inventory dialogue/story authoring and runtime seams and select the smallest lawful structure convergence slice.` | `none` | `Production code must not change before baseline records the selected slice.` |
-| `task.script-editor-dialogue-story-structure-convergence.structure-contract-implementation` | `pending` | `Implement the selected dialogue/story structure convergence slice with tests.` | `task.script-editor-dialogue-story-structure-convergence.boundary-baseline-reconcile` | `Implementation scope is determined by baseline only.` |
+| `task.script-editor-dialogue-story-structure-convergence.boundary-baseline-reconcile` | `done` | `Inventoried dialogue/story authoring, export lowering, import behavior, and runtime scene/text-entry consumption; selected a shared materializer seam as the smallest implementation slice.` | `none` | `Production code was not changed during baseline.` |
+| `task.script-editor-dialogue-story-structure-convergence.structure-contract-implementation` | `active` | `Implement the selected dialogue/story runtime materializer seam with tests.` | `task.script-editor-dialogue-story-structure-convergence.boundary-baseline-reconcile` | `Extract current exporter-private scene/text-entry assembly into a governed application seam.` |
 | `task.script-editor-dialogue-story-structure-convergence.queue-closeout-and-handoff` | `pending` | `Verify, classify residue, and return control to version review.` | `task.script-editor-dialogue-story-structure-convergence.structure-contract-implementation` | `Closeout must not infer version closeout.` |
 
 ### Task Definitions
@@ -106,7 +106,7 @@
 ##### Control Block
 
 - task_id: `task.script-editor-dialogue-story-structure-convergence.boundary-baseline-reconcile`
-- state: `active`
+- state: `done`
 - task_kind: `execution`
 - scope:
   - `src/domain/script-editor-project.ts`
@@ -159,7 +159,7 @@
 - task_brief:
   - `Find the smallest honest dialogue/story structure boundary before changing production code.`
 - task_outcome_summary:
-  - `Active. Baseline must decide whether the first lawful slice is schema/runtime-family structure, export lowering into scenes/textEntries, or a prerequisite routing decision.`
+  - `Done. Existing authoring records already define dialogue nodes, story nodes, participants, followUps, and text entries; runtime consumes SceneDefinition actions and textEntriesById; exporter currently contains private lowerMinimalNarrativeScenes/mapTextEntries logic that can lower only simple dialogue/narration nodes and fail closed on story-node relations, choices, and followUps; runtime-pack import preserves runtime scenes and textEntries but reconstructs no editor dialogues/storyNodes. The smallest lawful structure slice is to extract a shared dialogue/story runtime materializer seam that validates editor narrative records and produces runtime SceneDefinition[] plus textEntries map for export/runtime preview, without implementing branching, full story progression, scenario launch policy, or runtime handoff.`
 - Purpose:
   - `Prevent editor-authored narrative data from staying authoring-only while runtime consumers depend on scenes and textEntries.`
 - Failure mode:
@@ -168,18 +168,31 @@
 ##### Progress Log
 
 - `2026-07-15`: `Queue admitted from version promotion review after placement resolver closeout routed dialogue inheritance and broader resolver consumer migration back to version review.`
+- `2026-07-15`: `Baseline inspected current authoring types/helpers, runtime-pack export/import, prior export-unification and narrative lowering queues, runtime SceneDefinition/textEntries consumption, and robustness coverage.`
+- `2026-07-15`: `Inventory: editor dialogue records own title, storyNodeId, participantPersonIds, nodes, and followUps; story nodes own chapter/summary/progress mode and related ids; textEntries own id/text; runtime scene consumption uses SceneDefinition actions plus textEntriesById from domain/action.ts and scene runtime seams.`
+- `2026-07-15`: `Mismatch: dialogue/story authoring is still not a reusable runtime-consumable structure seam; exporter-private lowering assembles scenes/textEntries directly, import preserves runtime scenes/textEntries but loses editor dialogue/story structures, and richer choices/followUps/story-node relations remain fail-closed.`
+- `2026-07-15`: `Selected smallest lawful slice: add a shared script-editor dialogue/story runtime materializer module that owns text-entry mapping and minimal dialogue-to-SceneDefinition materialization, reuse it from runtime-pack export, and cover missing text, duplicate ids, missing storyNodeId, choices, followUps, and scene id collisions in tests. Do not implement full progression runtime handoff, scenario launch policy, or branching task-chain behavior.`
 
 #### `task.script-editor-dialogue-story-structure-convergence.structure-contract-implementation`
 
 ##### Control Block
 
 - task_id: `task.script-editor-dialogue-story-structure-convergence.structure-contract-implementation`
-- state: `pending`
+- state: `active`
 - task_kind: `execution`
 - scope:
-  - `Files identified by boundary-baseline-reconcile.`
+  - `src/application/script-editor/dialogue-story-runtime-materializer.ts`
+  - `src/application/script-editor/runtime-pack-export.ts`
+  - `src/domain/script-editor-project.ts`
+  - `src/domain/action.ts`
+  - `tests/robustness.test.cjs`
+  - `tsconfig.test.json`
 - must_inspect:
   - `Boundary baseline evidence from the active task.`
+  - `src/application/script-editor/runtime-pack-export.ts`
+  - `src/domain/script-editor-project.ts`
+  - `src/domain/action.ts`
+  - `tests/robustness.test.cjs`
 - must_not_change:
   - `scenario launch policy`
   - `playable/minigame bindings`
@@ -202,7 +215,7 @@
 - task_brief:
   - `Implement the selected dialogue/story structure convergence slice.`
 - task_outcome_summary:
-  - `Pending baseline.`
+  - `Active. Implement the baseline-selected shared materializer seam and keep exporter behavior equivalent for the covered minimal narrative slice.`
 - Purpose:
   - `Make covered editor-authored narrative data runtime-consumable through governed structures.`
 - Failure mode:

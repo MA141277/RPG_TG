@@ -133,7 +133,7 @@
 
 - `queue.script-editor-dialogue-story-structure-convergence`
 - Active task:
-  - `task.script-editor-dialogue-story-structure-convergence.boundary-baseline-reconcile`
+  - `task.script-editor-dialogue-story-structure-convergence.structure-contract-implementation`
 - Activation basis:
   - `queue.script-editor-city-building-placement-resolver-convergence closed after the bounded resolver API landed and verified.`
   - `Dialogue inheritance and broader resolver consumer migration cannot be completed honestly until dialogue/story records are runtime-consumable structures rather than authoring/export-only lowering residue.`
@@ -242,3 +242,4 @@
 - `2026-07-15: queue.script-editor-city-building-placement-resolver-convergence completed resolver-contract-implementation after landing the shared city-building placement resolver API with access, NPC, view, and fail-closed coverage; the active task is now queue-closeout-and-handoff.`
 - `2026-07-15: queue.script-editor-city-building-placement-resolver-convergence closed after verification; persistent placement schema migration, richer override layering, dialogue inheritance, and broader runtime/preview consumer migration were routed as cross-family residue to version promotion review, with queue.script-editor-dialogue-story-structure-convergence recommended next.`
 - `2026-07-15: admission review promoted queue.script-editor-dialogue-story-structure-convergence as the single active queue because dialogue/story structures are the next prerequisite for runtime-consumable narrative data and later dialogue inheritance/runtime handoff work. The first live task is boundary-baseline-reconcile.`
+- `2026-07-15: queue.script-editor-dialogue-story-structure-convergence completed boundary-baseline-reconcile after selecting a shared dialogue/story runtime materializer seam over existing editor narrative records, runtime SceneDefinition actions, and textEntries as the smallest lawful structure slice; the active task is now structure-contract-implementation.`
