@@ -7,23 +7,23 @@
 - blueprint_version: `2026.07`
 - governance_last_synced_at: `2026-07-15`
 - governance_sync_source: `docs/blueprints/blueprint.md`
-- queue_status: `active`
+- queue_status: `done`
 - queue_class: `required`
-- active_task: `task.script-editor-dialogue-story-runtime-handoff-convergence.queue-closeout-and-handoff`
+- active_task: `none`
 - next_task: `none`
-- closeout_status: `in-progress`
-- execution_closeout_status: `partial`
+- closeout_status: `done`
+- execution_closeout_status: `done`
 - topic_closure_status: `open-residue`
-- closure_basis: `none`
-- residue_remaining: `no`
-- residue_family: `none`
-- residue_routing_status: `none`
+- closure_basis: `The bounded runtime handoff slice landed with verification: exported editor dialogue events now have acceptance coverage from event destination lowering through materialized runtime scenes and runStoryTriggerRuntime, and SceneRuntimeSession receipts expose both sceneId and eventId for the active handoff. Story-progress/dialogue-finished triggers, branching choices, followUps, story-node relation lowering, runtime-scene import reconstruction, and broader event/task progression remain outside this slice and are routed back to version review.`
+- residue_remaining: `yes`
+- residue_family: `cross-family`
+- residue_routing_status: `needs-version-review`
 - next_family_candidate: `none`
 - auto_continue_eligible: `false`
-- next_effect: `execute-active-task`
+- next_effect: `return-to-version-review`
 - sync_status: `pending`
 - sync_scope: `branch-push`
-- sync_summary: `Queue admitted locally; repository sync is pending after baseline or terminal queue state.`
+- sync_summary: `Queue closeout recorded locally; repository sync is pending.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
@@ -56,9 +56,9 @@
 
 - queue_goal: `Determine and implement the smallest dialogue/story runtime handoff slice after the shared materializer seam exists, without widening into full branching/task-chain behavior.`
 - task_count: `3`
-- completed_task_count: `2`
-- remaining_task_count: `1`
-- active_task_summary: `Close out the verified event-to-dialogue-scene runtime handoff slice, classify remaining dialogue/story residue, and return control to version review without inferring version closeout.`
+- completed_task_count: `3`
+- remaining_task_count: `0`
+- active_task_summary: `Queue closed after verified event-to-dialogue-scene runtime handoff coverage; richer progression, branching, followUps, story-node relation lowering, and import reconstruction residue returned to version review.`
 - task_briefs:
   - `task.script-editor-dialogue-story-runtime-handoff-convergence.boundary-baseline-reconcile: inventory runtime handoff seams and select the smallest lawful dialogue/story runtime handoff implementation slice.`
   - `task.script-editor-dialogue-story-runtime-handoff-convergence.runtime-handoff-implementation: implement the selected runtime handoff slice with tests.`
@@ -97,7 +97,7 @@
 | --- | --- | --- | --- | --- |
 | `task.script-editor-dialogue-story-runtime-handoff-convergence.boundary-baseline-reconcile` | `done` | `Inventoried materializer, export, event runtime, scene runtime, and scene runner seams; selected the first event-to-dialogue-scene runtime handoff slice.` | `none` | `No production code changed during baseline.` |
 | `task.script-editor-dialogue-story-runtime-handoff-convergence.runtime-handoff-implementation` | `done` | `Implemented the selected dialogue/story runtime handoff slice with tests.` | `task.script-editor-dialogue-story-runtime-handoff-convergence.boundary-baseline-reconcile` | `Scene runtime sessions now expose eventId, and coverage proves editor event -> dialogue destination -> materialized scene -> runStoryTriggerRuntime handoff.` |
-| `task.script-editor-dialogue-story-runtime-handoff-convergence.queue-closeout-and-handoff` | `active` | `Verify, classify residue, and return control to version review.` | `task.script-editor-dialogue-story-runtime-handoff-convergence.runtime-handoff-implementation` | `Closeout must not infer version closeout.` |
+| `task.script-editor-dialogue-story-runtime-handoff-convergence.queue-closeout-and-handoff` | `done` | `Verified, classified residue, and returned control to version review.` | `task.script-editor-dialogue-story-runtime-handoff-convergence.runtime-handoff-implementation` | `Closeout complete; repository sync remains tracked by sync_status only.` |
 
 ### Task Definitions
 
@@ -229,7 +229,7 @@
 ##### Control Block
 
 - task_id: `task.script-editor-dialogue-story-runtime-handoff-convergence.queue-closeout-and-handoff`
-- state: `active`
+- state: `done`
 - task_kind: `execution`
 - scope:
   - `docs/blueprints/project-progress.md`
@@ -259,11 +259,16 @@
 - task_brief:
   - `Close or route the dialogue/story runtime handoff convergence queue after verified implementation.`
 - task_outcome_summary:
-  - `Active. Implementation verification passed; closeout must classify remaining story-progress, dialogue-finished, branching, followUps, story-node relation lowering, and import reconstruction residue before returning to version review.`
+  - `Done. Verified implementation passed; remaining story-progress, dialogue-finished, branching choices, followUps, story-node relation lowering, runtime-scene import reconstruction, and broader event/task progression were classified as cross-family residue and returned to version review.`
 - Purpose:
   - `Keep runtime handoff convergence explicit before scenario launch, branching/task-chain, or final validation queues continue.`
 - Failure mode:
   - `Closing without handoff evidence would leave narrative runtime progression dependent on indirect event/scene behavior.`
+
+##### Progress Log
+
+- `2026-07-15`: `Activated after runtime-handoff-implementation passed verification.`
+- `2026-07-15`: `Closeout recorded that the bounded event-to-dialogue-scene runtime handoff slice landed and verified, while story-progress/dialogue-finished trigger lowering, branching choices, followUps, story-node relation lowering, runtime-scene import reconstruction, and broader event/task progression remain outside this queue and must be routed by version review.`
 
 ### Historical Handoff Note
 
