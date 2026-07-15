@@ -37,7 +37,7 @@
 - `Admission history, queue closeout history, and review narrative must stay in the version plan, queue docs, or docs/change-log.md rather than living here as competing current-state prose.`
 - `The pointed version is now the open successor version for script-editor authoring/data-structure unification.`
 - `The latest governance action admitted queue.script-editor-unified-field-mapping-table-freeze after completion-state gating closeout returned the version to promotion review.`
-- `The current active task is task.script-editor-unified-field-mapping-table-freeze.field-mapping-contract-freeze, which must add the bounded field-definition contract, validation helpers, and representative tests without migrating every object family.`
+- `The current active task is task.script-editor-unified-field-mapping-table-freeze.queue-closeout-and-handoff, which must verify the field mapping contract slice, classify residue, and return control to version review.`
 
 ### Historical References
 

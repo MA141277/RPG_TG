@@ -119,7 +119,7 @@
 
 - `queue.script-editor-unified-field-mapping-table-freeze`
 - Active task:
-  - `task.script-editor-unified-field-mapping-table-freeze.field-mapping-contract-freeze`
+  - `task.script-editor-unified-field-mapping-table-freeze.queue-closeout-and-handoff`
 
 ### Version Boundary Record
 

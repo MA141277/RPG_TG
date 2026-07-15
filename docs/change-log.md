@@ -14,11 +14,14 @@
 - 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，补入 completion state 保存/加载持久化和 export-only 完成标记的回归覆盖。
 - 关闭 `queue.script-editor-project-completion-state-gating`，记录该队列无 same-family residue，并将 `target.script-editor-authoring-data-structure-unification` 返回 promotion review。
 - 新增 [docs/blueprints/queues/script-editor-unified-field-mapping-table-freeze-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-unified-field-mapping-table-freeze-queue.md)，并将其作为新的 active queue 启动，当前 active task 为 `task.script-editor-unified-field-mapping-table-freeze.boundary-baseline-reconcile`。
+- 新增 [src/application/script-editor/field-mapping.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/field-mapping.ts)，冻结第一段共享字段定义契约：字段 id、canonical key、label、group、valueType、order、editability/runtime mutability 预留、默认值、enum options 与 reference family。
+- 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，补入人物字段代表切片测试，覆盖 base string、profile text/reference、stat number、skill number、enum、boolean、reference-list 与 key-value-list custom 字段，并验证重复 id、缺失 metadata、非法 valueType 和非法 order 会 fail closed。
 
 ### Impact
 - 后续 authoring/data convergence 队列可以依赖项目级 `draft/complete` truth，而不需要从缓存、UI 状态或 runtime 包存在性推断项目是否完成。
 - 未完成项目保持可继续编辑的草稿语义；只有成功导出的 runtime 剧本包会把项目推进到完成状态。
 - 后续角色、城市/建筑、叙事、事件和条件队列会先消费共享字段映射契约，而不是继续在各面板里复制字段标签、类型和排序。
+- 当前字段映射实现仍是 bounded representative slice；全量城市/建筑/叙事/小游戏 UI 迁移保留给后续对象族队列。
 
 ## 2026-07-15 Script Editor Authoring Data Structure Unification Version Activation
 

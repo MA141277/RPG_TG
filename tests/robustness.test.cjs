@@ -4654,6 +4654,77 @@ test("script editor person authoring helpers normalize trade and relation entry 
   assert.deepEqual(normalized.dialogueIds, ["dialogue.hero.open"]);
 });
 
+test("script editor field mapping contract exposes representative person field definitions", () => {
+  const {
+    listScriptEditorPersonFieldDefinitions,
+    validateScriptEditorFieldDefinitions,
+  } = require("../.test-dist/application/script-editor/field-mapping.js");
+
+  const definitions = listScriptEditorPersonFieldDefinitions();
+  const definitionById = new Map(
+    definitions.map((definition) => [definition.id, definition])
+  );
+
+  assert.equal(definitionById.get("person.name")?.canonicalKey, "name");
+  assert.equal(definitionById.get("person.name")?.valueType, "string");
+  assert.equal(definitionById.get("person.biography")?.group, "profile");
+  assert.deepEqual(
+    definitionById.get("person.personType")?.enumOptions?.map((option) => option.value),
+    ["角色", "NPC"]
+  );
+  assert.equal(definitionById.get("person.stats.leadership")?.valueType, "number");
+  assert.equal(definitionById.get("person.skills.strategy")?.valueType, "number");
+  assert.equal(definitionById.get("person.tradeBinding.enabled")?.valueType, "boolean");
+  assert.equal(definitionById.get("person.dialogueIds")?.valueType, "reference-list");
+  assert.equal(definitionById.get("person.dialogueIds")?.referenceFamily, "dialogues");
+  assert.equal(definitionById.get("person.extendedAttributes")?.valueType, "key-value-list");
+  assert.deepEqual(validateScriptEditorFieldDefinitions(definitions), []);
+});
+
+test("script editor field mapping validation rejects duplicate ids and invalid metadata", () => {
+  const {
+    validateScriptEditorFieldDefinitions,
+  } = require("../.test-dist/application/script-editor/field-mapping.js");
+
+  const diagnostics = validateScriptEditorFieldDefinitions([
+    {
+      id: "person.name",
+      canonicalKey: "name",
+      label: "Name",
+      group: "base",
+      valueType: "string",
+      order: 1,
+    },
+    {
+      id: "person.name",
+      canonicalKey: "duplicateName",
+      label: "Duplicate Name",
+      group: "base",
+      valueType: "string",
+      order: 2,
+    },
+    {
+      id: "person.bad",
+      canonicalKey: "",
+      label: "",
+      group: "base",
+      valueType: "unsupported",
+      order: Number.NaN,
+    },
+  ]);
+
+  assert.deepEqual(
+    diagnostics.map((diagnostic) => diagnostic.code),
+    [
+      "duplicate-field-id",
+      "missing-canonical-key",
+      "missing-label",
+      "invalid-value-type",
+      "invalid-order",
+    ]
+  );
+});
+
 test("script editor person authoring helpers absorb imported runtime attributes into editable extended attributes", () => {
   const {
     appendScriptEditorPersonAttribute,

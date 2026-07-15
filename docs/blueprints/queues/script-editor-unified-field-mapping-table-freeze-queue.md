@@ -9,8 +9,8 @@
 - governance_sync_source: `docs/blueprints/blueprint.md`
 - queue_status: `active`
 - queue_class: `required`
-- active_task: `task.script-editor-unified-field-mapping-table-freeze.field-mapping-contract-freeze`
-- next_task: `task.script-editor-unified-field-mapping-table-freeze.queue-closeout-and-handoff`
+- active_task: `task.script-editor-unified-field-mapping-table-freeze.queue-closeout-and-handoff`
+- next_task: `return-to-version-review`
 - closeout_status: `in-progress`
 - execution_closeout_status: `partial`
 - topic_closure_status: `open-residue`
@@ -57,13 +57,13 @@
 
 - queue_goal: `Freeze a reusable field mapping table contract for script-editor authoring controls, labels, value types, validation hints, editability, runtime mutability, and ordering.`
 - task_count: `3`
-- completed_task_count: `1`
-- remaining_task_count: `2`
-- active_task_summary: `Add the bounded field-definition contract, validation helpers, and representative tests without migrating every object family.`
+- completed_task_count: `2`
+- remaining_task_count: `1`
+- active_task_summary: `Verify the field mapping contract slice, classify residue, and return control to version review.`
 - task_briefs:
   - `task.script-editor-unified-field-mapping-table-freeze.boundary-baseline-reconcile: completed after current authoring field lists, label maps, enum constants, validation diagnostics, and helper seams were identified.`
-  - `task.script-editor-unified-field-mapping-table-freeze.field-mapping-contract-freeze: active task to add the bounded field-definition contract, validation helpers, and representative tests without migrating every object family.`
-  - `task.script-editor-unified-field-mapping-table-freeze.queue-closeout-and-handoff: verify, classify residue, and return control to version review.`
+  - `task.script-editor-unified-field-mapping-table-freeze.field-mapping-contract-freeze: completed after the bounded field-definition contract, validation helpers, and representative person-field tests landed.`
+  - `task.script-editor-unified-field-mapping-table-freeze.queue-closeout-and-handoff: active task to verify the field mapping contract slice, classify residue, and return control to version review.`
 
 ### Operator Snapshot Contract
 
@@ -97,8 +97,8 @@
 | Task ID | State | Summary | Depends On | Notes |
 | --- | --- | --- | --- | --- |
 | `task.script-editor-unified-field-mapping-table-freeze.boundary-baseline-reconcile` | `completed` | `Reconciled current field rendering, label, validation, and helper surfaces before freezing the shared field-definition contract.` | `none` | `Completed on 2026-07-15 after source evidence showed field metadata is split across workspace shell family labels/diagnostic targets/preview summaries, person imported-attribute labels and value parsing, object-family enum constants, update helpers, and validation diagnostics.` |
-| `task.script-editor-unified-field-mapping-table-freeze.field-mapping-contract-freeze` | `active` | `Implement the bounded field mapping table contract and representative validation tests.` | `task.script-editor-unified-field-mapping-table-freeze.boundary-baseline-reconcile` | `Must not widen into full object-family migration.` |
-| `task.script-editor-unified-field-mapping-table-freeze.queue-closeout-and-handoff` | `pending` | `Verify the field mapping contract slice, classify residue, and return control to version review.` | `task.script-editor-unified-field-mapping-table-freeze.field-mapping-contract-freeze` | `Must run lint and relevant tests before queue closeout.` |
+| `task.script-editor-unified-field-mapping-table-freeze.field-mapping-contract-freeze` | `completed` | `Implemented the bounded field mapping table contract and representative validation tests.` | `task.script-editor-unified-field-mapping-table-freeze.boundary-baseline-reconcile` | `Completed on 2026-07-15 after the shared field-definition contract, person-field representative slice, duplicate/invalid metadata diagnostics, typecheck, full tests, and Blueprint lint passed.` |
+| `task.script-editor-unified-field-mapping-table-freeze.queue-closeout-and-handoff` | `active` | `Verify the field mapping contract slice, classify residue, and return control to version review.` | `task.script-editor-unified-field-mapping-table-freeze.field-mapping-contract-freeze` | `Must run lint and relevant tests before queue closeout.` |
 
 ### Task Definitions
 
@@ -163,7 +163,7 @@
 ##### Control Block
 
 - task_id: `task.script-editor-unified-field-mapping-table-freeze.field-mapping-contract-freeze`
-- state: `active`
+- state: `completed`
 - task_kind: `execution`
 - scope:
   - `src/application/script-editor`
@@ -195,18 +195,23 @@
 - task_brief:
   - `Freeze the bounded shared field mapping contract and representative validation coverage.`
 - task_outcome_summary:
-  - `Expected output is a reusable field-definition contract that later authoring queues can consume without duplicating field metadata.`
+  - `A reusable field-definition contract now exists for the bounded person-field representative slice, with validation for duplicate ids, required metadata, supported value types, and finite ordering.`
 - Purpose:
   - `Give later character, city/building, dialogue/story, event, and condition queues one source of truth for field metadata.`
 - Failure mode:
   - `If the contract is too broad, it becomes a hidden full migration; if too narrow, later queues will keep hardcoding field metadata.`
+
+##### Progress Log
+
+- `2026-07-15`: `Added src/application/script-editor/field-mapping.ts with ScriptEditorFieldDefinition, supported value types, representative person field definitions, and validateScriptEditorFieldDefinitions diagnostics. The representative slice covers base string, profile text/reference, stat number, skill number, enum, boolean, reference-list, and key-value-list custom fields without migrating every object family.`
+- `2026-07-15`: `Verified with npm run build:test plus the targeted field mapping tests, npm run typecheck, npm run test, and npm run lint:blueprints.`
 
 #### `task.script-editor-unified-field-mapping-table-freeze.queue-closeout-and-handoff`
 
 ##### Control Block
 
 - task_id: `task.script-editor-unified-field-mapping-table-freeze.queue-closeout-and-handoff`
-- state: `pending`
+- state: `active`
 - task_kind: `execution`
 - scope:
   - `docs/blueprints/project-progress.md`
