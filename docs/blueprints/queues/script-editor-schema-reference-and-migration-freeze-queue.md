@@ -21,9 +21,9 @@
 - next_family_candidate: `queue.script-editor-legacy-structure-supersession-review`
 - auto_continue_eligible: `false`
 - next_effect: `none`
-- sync_status: `pending`
+- sync_status: `success`
 - sync_scope: `branch-push`
-- sync_summary: `Implementation commit ec95a75 pushed to origin/mod-first-dev after the schema reference slice landed and advanced this queue to closeout; closeout repository sync is pending.`
+- sync_summary: `Implementation commit ec95a75 and closeout commit 89aae65c were pushed to origin/mod-first-dev; queue closeout repository sync is complete.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
