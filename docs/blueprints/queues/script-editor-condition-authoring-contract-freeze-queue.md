@@ -23,7 +23,7 @@
 - next_effect: `return-to-version-review`
 - sync_status: `failed`
 - sync_scope: `branch-push`
-- sync_summary: `Local activation commit 7e133dd was created, but two push attempts to origin/mod-first-dev failed because github.com:443 could not be reached.`
+- sync_summary: `Local activation, baseline, implementation, and closeout commits through 60d7296 were created, but push attempts to origin/mod-first-dev failed because the github.com HTTPS connection could not be established or was reset.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
