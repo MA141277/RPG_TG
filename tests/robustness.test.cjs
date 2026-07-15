@@ -4041,7 +4041,7 @@ test("primary house actor appears first in medicine house roster during greeting
   assert.equal(viewModel.standbyRoster[0]?.characterId, medicineHouse.defaultCharacterId);
 });
 
-test("primary house actor dialogue does not render separate right-side portrait", () => {
+test("primary house actor dialogue renders speaker portrait on the dialogue box", () => {
   const state = createInitialState({
     cards: prototypeCards,
     characters: prototypeCharacters,
@@ -4062,11 +4062,24 @@ test("primary house actor dialogue does not render separate right-side portrait"
     playerCharacterId,
     sessionState: entered.sessionState,
   });
-  const markup = renderTavernHouseView(viewModel);
+  const markup = renderTavernHouseView({
+    ...viewModel,
+    dialogue:
+      viewModel.dialogue == null
+        ? null
+        : {
+            ...viewModel.dialogue,
+            portraitImageUrl: "/assets/test-tavern-boss.png",
+          },
+  });
 
   assert.match(markup, /c-grain-shop-dialogue__text/u);
-  assert.doesNotMatch(markup, /c-grain-shop-dialogue__npc/u);
-  assert.doesNotMatch(markup, /c-grain-shop-portrait/u);
+  assert.match(markup, /c-grain-shop-dialogue__npc/u);
+  assert.match(markup, /c-grain-shop-portrait/u);
+  assert.match(markup, /c-grain-shop-portrait__image/u);
+  assert.match(markup, /\/assets\/test-tavern-boss\.png/u);
+  assert.match(markup, new RegExp(viewModel.dialogue?.speakerName ?? tavernHouse.defaultCharacterId));
+  assert.doesNotMatch(markup, /c-grain-shop-idle-owner/u);
 });
 
 test("temple daily view keeps abbot in left roster instead of meeting layout", () => {

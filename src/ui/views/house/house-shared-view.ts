@@ -279,6 +279,24 @@ export function renderHouseDialogue(
             : `<p class="c-grain-shop-dialogue__hint">${viewModel.dialogue.advanceHintText}</p>`
         }
       </div>
+      ${
+        viewModel.dialogue.mode === "character"
+          ? `
+            <div class="c-grain-shop-dialogue__npc">
+              <div class="c-grain-shop-portrait" aria-hidden="true">
+                ${
+                  viewModel.dialogue.portraitImageUrl == null
+                    ? `<span class="c-grain-shop-portrait__art ${viewModel.dialogue.portraitArtClassName ?? ""}"></span>`
+                    : `<img class="c-grain-shop-portrait__image" src="${viewModel.dialogue.portraitImageUrl}" alt="">`
+                }
+              </div>
+              <p class="c-grain-shop-portrait__name c-grain-shop-nameplate c-grain-shop-nameplate--small">
+                ${viewModel.dialogue.speakerName ?? ""}
+              </p>
+            </div>
+          `
+          : ""
+      }
     </footer>
   `;
 }

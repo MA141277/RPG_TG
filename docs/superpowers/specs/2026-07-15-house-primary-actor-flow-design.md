@@ -4,7 +4,7 @@
 
 Define a shared house interaction rule for primary house actors.
 
-For every special house with `HouseDefinition.defaultCharacterId`, entering the house should begin with that primary actor's dialogue, and the primary actor should appear as the first actor in the left-side house roster. The primary actor must not be rendered as a separate right-side owner card or as a special right-side house portrait in ordinary house dialogue.
+For every special house with `HouseDefinition.defaultCharacterId`, entering the house should begin with that primary actor's dialogue, and the primary actor should appear as the first actor in the left-side house roster. The primary actor must not be rendered as a separate right-side owner card or nonstandard owner-only portrait. Ordinary character dialogue should still render the current speaker portrait on the dialogue box, matching the scene dialogue pattern.
 
 This applies to examples such as the temple abbot and tavern boss, and should also cover other service or owner-like houses that have a stable `defaultCharacterId`.
 
@@ -22,8 +22,8 @@ Current mismatches:
 
 - Temple and tavern enter flows already create greeting dialogue, but their UI treatment is inconsistent.
 - Temple currently removes the abbot from the left-side roster in normal idle mode and renders that actor through `renderHouseIdleOwner()` on the right.
-- Tavern currently shows the boss in the left-side roster only when idle, while active dialogue still renders a right-side portrait.
-- Shared `renderHouseDialogue()` renders a dialogue NPC portrait on the right for ordinary character dialogue.
+- Tavern currently shows the boss in the left-side roster only when idle, while active dialogue relies on a portrait path that is not clearly distinguished from the owner-card special case.
+- Shared `renderHouseDialogue()` must render the current speaker portrait as dialogue UI, not as a separate house owner surface.
 - Other house modules may build rosters in module-specific ways, so primary actor ordering is not guaranteed by a shared rule.
 
 ## 3. House Contract Rule
@@ -36,7 +36,7 @@ For special houses with `defaultCharacterId`:
 4. The primary actor should be the first `standbyRoster` entry.
 5. Secondary fixed actors and city activity actors should follow the primary actor.
 6. The primary actor may be marked selected while speaking, but must not be removed from the roster just because dialogue is active.
-7. Ordinary house dialogue should not render a separate right-side primary actor portrait.
+7. Ordinary house dialogue should render the active speaker portrait through the same dialogue-box portrait pattern used by scene dialogue.
 8. Meeting or council views may keep dedicated seating layouts, but they still should not reintroduce a generic right-side owner card.
 
 Houses without `defaultCharacterId` should continue to render their available roster without inventing a primary actor.
@@ -70,10 +70,10 @@ Rendering changes should:
 - stop using `renderHouseIdleOwner()` for primary house actors;
 - render temple daily actors through `renderHouseStandbyRoster()` with the abbot first;
 - render tavern actors through `renderHouseStandbyRoster()` with the boss first even during dialogue;
-- update ordinary shared dialogue rendering so character dialogue can show speaker name and text without a separate right-side portrait;
+- update ordinary shared dialogue rendering so character dialogue shows the current speaker portrait on the dialogue box without reintroducing a separate owner card;
 - preserve specialized overlays and minigame/table UI.
 
-The dialogue view may keep `speakerName`, `characterId`, and text lines. It should not depend on `position: "right"` for normal house scenes.
+The dialogue view may keep `speakerName`, `characterId`, portrait metadata, and text lines. It should not depend on `position: "right"` for normal house scenes.
 
 ## 6. Scope
 
@@ -103,7 +103,7 @@ Target flow:
 2. Generic house runtime resolves `HouseDefinition` and `moduleId`.
 3. The module `enter()` creates a typed session state with primary actor dialogue when appropriate.
 4. The module `selectViewModel()` resolves actors and orders `standbyRoster` with `defaultCharacterId` first.
-5. The house renderer draws the left roster and dialogue text from the view model.
+5. The house renderer draws the left roster, dialogue text, and dialogue-box speaker portrait from the view model.
 6. User actions dispatch back through the existing generic house runtime.
 
 No direct house-specific branch is required in `src/main.ts`.
@@ -123,7 +123,7 @@ Implementation should include focused verification that:
 - temple daily `standbyRoster[0]` is the abbot when the temple has `defaultCharacterId`;
 - tavern `standbyRoster[0]` is the tavern boss while greeting/open dialogue is active;
 - the temple renderer no longer calls `renderHouseIdleOwner()` for ordinary daily mode;
-- ordinary house dialogue markup no longer includes a separate right-side primary actor portrait;
+- ordinary house dialogue markup includes the current speaker portrait as dialogue UI and does not include a separate owner card;
 - `src/main.ts` gains no new house-specific business branch for this rule.
 
 Full verification should include:
@@ -138,4 +138,3 @@ Because this changes shared house view-model and rendering expectations, impleme
 
 - `docs/special-house-interface.md`
 - `docs/change-log.md`
-

@@ -2,7 +2,7 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
-- House primary actors now follow a shared flow: houses with `defaultCharacterId` enter through primary-actor dialogue, keep that actor first in `standbyRoster`, and render ordinary house dialogue without a separate right-side owner portrait. Temple abbot and tavern boss behavior now use the same rule as other special houses.
+- House primary actors now follow a shared flow: houses with `defaultCharacterId` enter through primary-actor dialogue, keep that actor first in `standbyRoster`, avoid separate owner-only portrait cards, and render ordinary character dialogue with the shared dialogue-box speaker portrait. Temple abbot and tavern boss behavior now use the same rule as other special houses.
 
 ## 2026-07-13 Generic Activity Pachinko Board
 

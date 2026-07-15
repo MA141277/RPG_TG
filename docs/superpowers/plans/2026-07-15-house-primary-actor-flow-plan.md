@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to execute this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Make every special house with `HouseDefinition.defaultCharacterId` enter with primary-actor dialogue and render that actor first in the left-side roster instead of as a right-side owner or portrait.
+**Goal:** Make every special house with `HouseDefinition.defaultCharacterId` enter with primary-actor dialogue, render that actor first in the left-side roster, and show the active speaker portrait through the standard dialogue box instead of an owner-only card.
 
-**Architecture:** Keep house behavior inside the existing `moduleId` registry lifecycle. Add one shared roster-ordering helper for application view-model assembly, migrate covered modules to use it, and simplify ordinary house dialogue rendering so actor identity is expressed through the roster plus speaker metadata rather than a separate right-side portrait.
+**Architecture:** Keep house behavior inside the existing `moduleId` registry lifecycle. Add one shared roster-ordering helper for application view-model assembly, migrate covered modules to use it, and keep ordinary house dialogue rendering driven by speaker metadata plus the shared dialogue-box portrait pattern rather than a separate owner surface.
 
 **Tech Stack:** TypeScript, Vite, Node test runner, CommonJS compiled test output under `.test-dist`, existing `npm run build:test`, `npm run typecheck`, `npm test`, and `npm run lint:plans`.
 
@@ -12,9 +12,9 @@
 
 - Status: `completed-but-open`
 - Last Updated: `2026-07-15`
-- Current Focus: `Implementation complete; closeout gates remain.`
+- Current Focus: `Dialogue-box speaker portrait correction complete; closeout gates remain.`
 - Next Step: `Sync project progress, prepare structured closeout, push, then mark closed only after push succeeds.`
-- Verification: `npm run typecheck; npm test; npm run lint:plans; final whole-branch review passed after service-house and market identity fixes`
+- Verification: `npm run typecheck; npm test; npm run lint:plans; focused dialogue portrait test passed`
 - Notes: `Implementation finished; do not mark closed until project-progress sync and remote push succeed.`
 
 ## Progress Log
@@ -31,6 +31,10 @@
   - Summary: `Addressed final review findings by keeping primary actors visible during active dialogue for grain shop, tea house, market house, and medicine house, then aligned market fixed-host identity so greeting dialogue, selected actor, roster action, and fixed-host actions all use the house default character id.`
   - Verification: `npm run build:test; focused primary actor robustness tests; npm run typecheck; final fix review approved`
   - Next: `Run final local verification, then leave the plan completed-but-open until project-progress sync and remote push are handled.`
+- 2026-07-15
+  - Summary: `Clarified that the removed right-side portrait was the old owner-only special surface, then restored the standard dialogue-box speaker portrait for ordinary house character dialogue.`
+  - Verification: `npm run build:test; node --test tests/robustness.test.cjs --test-name-pattern "primary house actor dialogue renders speaker portrait"; npm run typecheck; npm test; npm run lint:plans`
+  - Next: `Commit this correction, then leave the plan completed-but-open until project-progress sync and remote push are handled.`
 
 ---
 
@@ -60,7 +64,7 @@
 - Migrate tavern view-model assembly so the boss stays in the left roster during greeting and open dialogue.
 - Keep service-house primary actors visible in `standbyRoster` during active dialogue for grain shop, tea house, market house, and medicine house.
 - Align market house fixed-host runtime identity with `HouseDefinition.defaultCharacterId` where available.
-- Remove ordinary right-side house dialogue portrait rendering from the shared dialogue renderer while keeping speaker text metadata.
+- Remove ordinary owner-only house portrait rendering while keeping standard dialogue-box speaker portraits driven by `HouseDialogueViewModel`.
 - Update the house interface contract and change log.
 
 ### Still Out Of Scope
@@ -82,9 +86,9 @@
 - `src/ui/views/house/temple-house-view.ts`
   - Stop moving the abbot to `renderHouseIdleOwner()` in ordinary daily mode.
 - `src/ui/views/house/house-shared-view.ts`
-  - Remove ordinary right-side dialogue portrait markup while preserving speaker name and dialogue text.
+  - Render ordinary character dialogue with the shared dialogue-box speaker portrait while avoiding owner-only card markup.
 - `tests/robustness.test.cjs`
-  - Add focused assertions for temple/tavern primary actor roster ordering and shared dialogue markup.
+  - Add focused assertions for temple/tavern primary actor roster ordering and shared dialogue speaker portrait markup.
 - `docs/special-house-interface.md`
   - Document the primary actor roster and dialogue rule.
 - `docs/change-log.md`
@@ -764,11 +768,72 @@ Expected:
 
 - Commit succeeds and contains docs plus this plan update only.
 
+## Task 5: Dialogue-Box Speaker Portrait Correction
+
+**Files:**
+- Modify: `src/ui/views/house/house-shared-view.ts`
+- Modify: `tests/robustness.test.cjs`
+- Modify: `docs/special-house-interface.md`
+- Modify: `docs/change-log.md`
+- Modify: `docs/superpowers/specs/2026-07-15-house-primary-actor-flow-design.md`
+- Modify: `docs/superpowers/plans/2026-07-15-house-primary-actor-flow-plan.md`
+
+**Interfaces:**
+- Consumes: `HouseDialogueViewModel.mode`, `speakerName`, `portraitImageUrl`, and `portraitArtClassName`.
+- Produces: shared house character dialogue markup with `c-grain-shop-dialogue__npc` and `c-grain-shop-portrait` as the standard dialogue-box speaker portrait, while keeping `c-grain-shop-idle-owner` out of ordinary dialogue.
+
+- [x] **Step 1: Write the failing dialogue portrait test**
+
+Updated `tests/robustness.test.cjs` so `primary house actor dialogue renders speaker portrait on the dialogue box` expects:
+
+```js
+assert.match(markup, /c-grain-shop-dialogue__npc/u);
+assert.match(markup, /c-grain-shop-portrait/u);
+assert.match(markup, /c-grain-shop-portrait__image/u);
+assert.doesNotMatch(markup, /c-grain-shop-idle-owner/u);
+```
+
+- [x] **Step 2: Run the focused test to verify it fails**
+
+Run:
+
+```bash
+npm run build:test
+node --test tests/robustness.test.cjs --test-name-pattern "primary house actor dialogue renders speaker portrait"
+```
+
+Observed:
+
+- The focused test failed because the rendered tavern house markup did not contain `c-grain-shop-dialogue__npc`.
+
+- [x] **Step 3: Restore the standard speaker portrait in shared dialogue**
+
+Updated `renderHouseDialogue()` in `src/ui/views/house/house-shared-view.ts` to render the active character speaker portrait from `HouseDialogueViewModel` after the text box, matching the scene dialogue structure.
+
+- [x] **Step 4: Run the focused test to verify it passes**
+
+Run:
+
+```bash
+npm run build:test
+node --test tests/robustness.test.cjs --test-name-pattern "primary house actor dialogue renders speaker portrait"
+```
+
+Observed:
+
+- `npm run build:test` exited with code 0.
+- The focused test passed.
+
+- [x] **Step 5: Update shared contract docs**
+
+Updated the spec, interface contract, change log, and this plan so the rule distinguishes owner-only portrait cards from standard dialogue-box speaker portraits.
+
 ## Exit Check
 
 - [x] Temple daily `standbyRoster[0]` is the temple `defaultCharacterId`.
 - [x] Tavern greeting/open `standbyRoster[0]` is the tavern `defaultCharacterId`.
-- [x] Ordinary house dialogue no longer emits a separate right-side portrait container.
+- [x] Ordinary house dialogue emits the standard dialogue-box speaker portrait.
+- [x] Ordinary house dialogue does not emit a separate owner-only portrait card.
 - [x] Temple ordinary daily view no longer emits a right-side idle owner card.
 - [x] `docs/special-house-interface.md` documents the primary actor roster rule.
 - [x] `docs/change-log.md` records the shared flow change.

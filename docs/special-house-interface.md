@@ -585,7 +585,8 @@ Rules:
 - `selectViewModel()` must include the primary actor in `standbyRoster`.
 - the primary actor must be the first `standbyRoster` entry.
 - secondary fixed actors and city activity actors follow the primary actor.
-- ordinary house dialogue must not render the primary actor as a separate right-side owner card or right-side dialogue portrait.
+- ordinary house dialogue must not render the primary actor as a separate right-side owner card or nonstandard owner-only portrait.
+- ordinary character dialogue must render the active speaker portrait through the shared dialogue-box portrait pattern when portrait metadata is available.
 - meeting/council layouts may use dedicated seating, but they must not reintroduce generic owner-card special casing.
 
 The view should not:
