@@ -18,9 +18,11 @@
 - 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，新增项目库 location/stale validity 与导出前保存草稿的回归覆盖。
 - 关闭 `queue.script-editor-project-cache-save-export-preview` 的第一段 bounded slice，并将 create-at-save-path package skeleton、stale path probing、imported package edit-in-place、runtime preview-from-disk 等 same-family residue 路由为 `queue.script-editor-project-cache-save-export-preview-continuation` 候选。
 - 新增 [docs/blueprints/queues/script-editor-project-cache-save-export-preview-continuation-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-project-cache-save-export-preview-continuation-queue.md)，并将其作为 same-family continuation active queue 启动，当前 active task 为 `task.script-editor-project-cache-save-export-preview-continuation.boundary-baseline-reconcile`。
+- 关闭 `queue.script-editor-project-cache-save-export-preview-continuation` 的 bounded continuation slice，记录 durable save-location 与 stale continue gating 已落地，剩余 create-at-save-path package skeleton、imported package edit-in-place、runtime preview-from-disk 仍属于 same-family residue。
+- 新增 [docs/blueprints/queues/script-editor-durable-package-workflow-continuation-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-durable-package-workflow-continuation-queue.md)，并将其作为新的 active queue 启动，当前 active task 为 `task.script-editor-durable-package-workflow-continuation.boundary-baseline-reconcile`。
 
 ### Impact
-- 当前 Blueprint 已进入新的 open successor version；首个 project-cache/save/export/preview 队列已关闭，continuation 队列已启动，下一步继续核对剩余 durable package workflow 边界。
+- 当前 Blueprint 已进入新的 open successor version；前两个 project package persistence 队列已关闭，durable package workflow continuation 队列已启动，下一步继续核对 package skeleton、imported edit-in-place 与 runtime preview-from-disk 边界。
 - 后续 script-editor authoring/data-structure 工作不再挂回已关闭的 `target.script-editor-runtime-pack-unification`。
 
 ## 2026-07-15 Script Editor Runtime Pack Unification Version Closeout

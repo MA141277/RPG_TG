@@ -7,23 +7,23 @@
 - blueprint_version: `2026.07`
 - governance_last_synced_at: `2026-07-15`
 - governance_sync_source: `docs/blueprints/blueprint.md`
-- queue_status: `active`
+- queue_status: `done`
 - queue_class: `required-priority`
-- active_task: `task.script-editor-project-cache-save-export-preview-continuation.queue-closeout-and-handoff`
-- next_task: `return-to-version-review`
-- closeout_status: `in-progress`
-- execution_closeout_status: `partial`
+- active_task: `none`
+- next_task: `none`
+- closeout_status: `done`
+- execution_closeout_status: `done`
 - topic_closure_status: `open-residue`
-- closure_basis: `The queue has just been admitted from same-family residue left by the first project-cache/save/export/preview queue.`
+- closure_basis: `The continuation implementation slice landed durable save-location recording and stale continue gating, and verification passed for the covered UI/workspace behavior. Same-family residue still remains for create-at-save-path package skeleton creation, imported package edit-in-place, and runtime preview-from-disk semantics, so topic closure stays open-residue.`
 - residue_remaining: `yes`
-- residue_family: `none`
-- residue_routing_status: `none`
-- next_family_candidate: `none`
-- auto_continue_eligible: `false`
-- next_effect: `none`
-- sync_status: `success`
-- sync_scope: `baseline-push`
-- sync_summary: `Local commits 7ff88cf and 4559577 were pushed to origin/mod-first-dev on 2026-07-15 after the continuation implementation slice and Blueprint closeout handoff update verified successfully.`
+- residue_family: `same-family`
+- residue_routing_status: `auto-routable`
+- next_family_candidate: `queue.script-editor-durable-package-workflow-continuation`
+- auto_continue_eligible: `true`
+- next_effect: `return-to-version-review`
+- sync_status: `pending`
+- sync_scope: `none`
+- sync_summary: `Queue closeout and same-family continuation routing truth is written locally; repository sync for this governance closeout batch has not yet been recorded.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
@@ -56,13 +56,13 @@
 
 - queue_goal: `Finish durable package skeleton, stale cache, imported edit-in-place, and preview-from-disk semantics for the script-editor package persistence boundary.`
 - task_count: `3`
-- completed_task_count: `2`
-- remaining_task_count: `1`
-- active_task_summary: `Verify the continuation slice, classify residue, and return control to version review.`
+- completed_task_count: `3`
+- remaining_task_count: `0`
+- active_task_summary: `The bounded continuation slice is complete; same-family residue has been routed to queue.script-editor-durable-package-workflow-continuation.`
 - task_briefs:
   - `task.script-editor-project-cache-save-export-preview-continuation.boundary-baseline-reconcile: completed after evidence confirmed the predecessor queue landed packageLocation/validity metadata and export-before-output persistence while UI state still relies on transient directory handles and an in-memory library.`
   - `task.script-editor-project-cache-save-export-preview-continuation.durable-package-workflow-implementation: completed after landing durable save-location recording and stale continue gating for project library entries; broader create-at-save-path, imported edit-in-place, and runtime preview-from-disk semantics remain to be classified at closeout.`
-  - `task.script-editor-project-cache-save-export-preview-continuation.queue-closeout-and-handoff: verify the continuation slice, classify residue, and return control to version review.`
+  - `task.script-editor-project-cache-save-export-preview-continuation.queue-closeout-and-handoff: completed after verification, closeout judgement, and same-family residue routing to queue.script-editor-durable-package-workflow-continuation.`
 
 ### Operator Snapshot Contract
 
@@ -119,7 +119,7 @@
 | --- | --- | --- | --- | --- |
 | `task.script-editor-project-cache-save-export-preview-continuation.boundary-baseline-reconcile` | `completed` | `Inspected the first queue's landed helpers and confirmed the smallest continuation implementation boundary.` | `none` | `Completed on 2026-07-15 after evidence confirmed packageLocation/validity metadata and export-before-output persistence are landed, while durable skeleton, stale probing, imported edit-in-place, and preview-from-disk remain unimplemented.` |
 | `task.script-editor-project-cache-save-export-preview-continuation.durable-package-workflow-implementation` | `completed` | `Landed durable save-location recording and stale continue gating for project library entries.` | `task.script-editor-project-cache-save-export-preview-continuation.boundary-baseline-reconcile` | `Completed on 2026-07-15 with targeted regression coverage; create-at-save-path skeleton, imported edit-in-place, and runtime preview-from-disk remain for closeout classification.` |
-| `task.script-editor-project-cache-save-export-preview-continuation.queue-closeout-and-handoff` | `active` | `Verify the continuation slice, classify residue, and return control to version review.` | `task.script-editor-project-cache-save-export-preview-continuation.durable-package-workflow-implementation` | `Must run lint and relevant tests before queue closeout.` |
+| `task.script-editor-project-cache-save-export-preview-continuation.queue-closeout-and-handoff` | `completed` | `Verified the continuation slice, classified same-family residue, and returned control to version review for automatic same-family continuation admission.` | `task.script-editor-project-cache-save-export-preview-continuation.durable-package-workflow-implementation` | `Completed on 2026-07-15 after npm run test, npm run typecheck, npm run lint:blueprints, npm run lint:plans, and Blueprint governance check passed; full npm run lint and lint:css remain blocked by pre-existing repository-wide lint baselines unrelated to this queue closeout.` |
 
 ### Task Definitions
 
@@ -217,7 +217,7 @@
 ##### Control Block
 
 - task_id: `task.script-editor-project-cache-save-export-preview-continuation.queue-closeout-and-handoff`
-- state: `active`
+- state: `completed`
 - task_kind: `execution`
 - scope:
   - `docs/blueprints/project-progress.md`
@@ -250,7 +250,7 @@
 - task_brief:
   - `Close the continuation only after remaining package workflow semantics are verified or honestly routed.`
 - task_outcome_summary:
-  - `Expected output is a clean handoff back to version review with the package persistence topic either closed or explicitly routed.`
+  - `Completed with same-family package workflow residue routed to queue.script-editor-durable-package-workflow-continuation.`
 - Purpose:
   - `Prevent hidden same-family persistence gaps from leaking into later schema queues.`
 - Failure mode:
@@ -259,11 +259,11 @@
 ### Historical Handoff Note
 
 - Task ID:
-  - `none`
+  - `task.script-editor-project-cache-save-export-preview-continuation.queue-closeout-and-handoff`
 - Recorded handoff at closure:
-  - `none yet`
+  - `Return to target.script-editor-authoring-data-structure-unification version review with queue.script-editor-durable-package-workflow-continuation as the unique same-family continuation for remaining package skeleton/imported edit-in-place/runtime preview-from-disk semantics.`
 - Recorded expected output:
-  - `Durable package workflow semantics are implemented or explicitly routed as platform-governed residue.`
+  - `Durable save-location recording and stale continue gating are landed; remaining package workflow semantics are no longer hidden and are governed by the next active continuation queue.`
 
 ### Historical Candidate Notes
 

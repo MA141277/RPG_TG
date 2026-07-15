@@ -6,7 +6,7 @@
 - active_blueprint: `blueprint.rpg-tg`
 - active_version: `target.script-editor-authoring-data-structure-unification`
 - has_active_queue: `true`
-- next_file: `docs/blueprints/queues/script-editor-project-cache-save-export-preview-continuation-queue.md`
+- next_file: `docs/blueprints/queues/script-editor-durable-package-workflow-continuation-queue.md`
 - entry_action: `open-next-file`
 
 ## Human Context
@@ -29,22 +29,23 @@
 - Current Version Plan:
   - `docs/blueprints/plans/2026-07-15-script-editor-authoring-data-structure-unification-target-plan.md`
 - Current Active Queue:
-  - `docs/blueprints/queues/script-editor-project-cache-save-export-preview-continuation-queue.md`
+  - `docs/blueprints/queues/script-editor-durable-package-workflow-continuation-queue.md`
 
 ### Live Entry Guardrails
 
 - `This file only states the current resume entry and downstream pointer set.`
 - `Admission history, queue closeout history, and review narrative must stay in the version plan, queue docs, or docs/change-log.md rather than living here as competing current-state prose.`
 - `The pointed version is now the open successor version for script-editor authoring/data-structure unification.`
-- `The latest governance action admitted queue.script-editor-project-cache-save-export-preview-continuation as the active same-family continuation after queue.script-editor-project-cache-save-export-preview closed with residue.`
-- `The current active task is task.script-editor-project-cache-save-export-preview-continuation.queue-closeout-and-handoff, which must verify the continuation slice, classify remaining package workflow residue, and return control to version review.`
+- `The latest governance action closed queue.script-editor-project-cache-save-export-preview-continuation after durable save-location recording and stale continue gating landed, then admitted queue.script-editor-durable-package-workflow-continuation as the active same-family continuation.`
+- `The current active task is task.script-editor-durable-package-workflow-continuation.boundary-baseline-reconcile, which must verify the remaining package skeleton/imported edit-in-place/runtime preview-from-disk boundary before implementation.`
 
 ### Historical References
 
 - `docs/change-log.md` stores the human-readable cross-session history.`
 - `docs/blueprints/plans/2026-07-15-script-editor-authoring-data-structure-unification-target-plan.md` stores the current authoring/data-structure unification version's activation truth, candidate record, promotion ledger, and pending admission subject.
 - `docs/blueprints/queues/script-editor-project-cache-save-export-preview-queue.md` stores the closed first project cache/save/export/preview execution truth.
-- `docs/blueprints/queues/script-editor-project-cache-save-export-preview-continuation-queue.md` stores the active continuation execution truth for remaining durable package workflow semantics.
+- `docs/blueprints/queues/script-editor-project-cache-save-export-preview-continuation-queue.md` stores the closed continuation truth for durable save-location recording and stale continue gating.
+- `docs/blueprints/queues/script-editor-durable-package-workflow-continuation-queue.md` stores the active same-family continuation truth for remaining package skeleton/imported edit-in-place/runtime preview-from-disk semantics.
 - `docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md` stores the closed runtime-pack-unification version's admission history, candidate record, promotion ledger, and closeout truth.
 - `docs/blueprints/queues/script-editor-scenario-profile-startup-export-convergence-queue.md` stores the closed scenarioProfile startup export convergence queue truth.
 - `docs/blueprints/queues/script-editor-narrative-authoring-export-convergence-queue.md` stores the closed narrative authoring export convergence queue truth.
