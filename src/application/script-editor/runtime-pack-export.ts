@@ -488,6 +488,11 @@ function lowerEditorEventsToRuntimeEvents(
   }
 
   const sceneIds = new Set(exportedScenes.map((scene) => scene.id));
+  const sourceEventIds = new Set(
+    project.events
+      .map((eventRecord) => eventRecord.id)
+      .filter((eventId): eventId is string => typeof eventId === "string" && eventId.length > 0)
+  );
   const exportedEvents: EventDefinition[] = [];
   const eventIds = new Set<string>();
   for (const [index, eventRecord] of project.events.entries()) {
@@ -496,6 +501,7 @@ function lowerEditorEventsToRuntimeEvents(
       index,
       chapterId,
       sceneIds,
+      sourceEventIds,
       diagnostics
     );
     if (exportedEvent == null) {
@@ -521,6 +527,7 @@ function lowerEditorEventToRuntimeEvent(
   eventIndex: number,
   chapterId: string,
   sceneIds: Set<string>,
+  sourceEventIds: Set<string>,
   diagnostics: ScriptEditorRuntimeExportDiagnostic[]
 ): EventDefinition | null {
   if (typeof eventRecord.id !== "string" || eventRecord.id.length === 0) {
@@ -577,6 +584,16 @@ function lowerEditorEventToRuntimeEvent(
     return null;
   }
 
+  const nextEventId = lowerEventNextEventId(
+    eventRecord,
+    eventIndex,
+    sourceEventIds,
+    diagnostics
+  );
+  if (nextEventId === null) {
+    return null;
+  }
+
   return {
     id: eventRecord.id,
     chapterId,
@@ -588,7 +605,33 @@ function lowerEditorEventToRuntimeEvent(
     },
     conditions,
     entrySceneId,
+    ...(nextEventId.length === 0 ? {} : { nextEventId }),
   };
+}
+
+function lowerEventNextEventId(
+  eventRecord: ScriptEditorEventRecord,
+  eventIndex: number,
+  sourceEventIds: Set<string>,
+  diagnostics: ScriptEditorRuntimeExportDiagnostic[]
+): string | null {
+  const nextEventId =
+    typeof eventRecord.nextEventId === "string" ? eventRecord.nextEventId.trim() : "";
+  if (nextEventId.length === 0) {
+    return "";
+  }
+
+  if (!sourceEventIds.has(nextEventId)) {
+    diagnostics.push({
+      code: "missing-reference",
+      fieldPath: `project.events[${eventIndex}].nextEventId`,
+      message:
+        `Event "${eventRecord.id}" references missing next event "${nextEventId}".`,
+    });
+    return null;
+  }
+
+  return nextEventId;
 }
 
 function lowerEventConditionGroups(

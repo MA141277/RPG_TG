@@ -32,12 +32,12 @@ export function runSceneUntilPause(
   while (nextState.scene.activeSceneId != null) {
     const activeScene = context.sceneDefinitionsById[nextState.scene.activeSceneId];
     if (activeScene == null) {
-      return finishScene(nextState, nextCharacterDefinitions);
+      return finishScene(nextState, nextCharacterDefinitions, context);
     }
 
     const currentAction = activeScene.actions[nextState.scene.cursor] ?? null;
     if (currentAction == null) {
-      return finishScene(nextState, nextCharacterDefinitions);
+      return finishScene(nextState, nextCharacterDefinitions, context);
     }
 
     if (
@@ -137,7 +137,7 @@ export function runSceneUntilPause(
     nextState = incrementSceneCursor(nextState);
   }
 
-  return finishScene(nextState, nextCharacterDefinitions);
+  return finishScene(nextState, nextCharacterDefinitions, context);
 }
 
 export function advanceScene(
@@ -159,8 +159,19 @@ function incrementSceneCursor(state: GameState): GameState {
 
 function finishScene(
   state: GameState,
-  characterDefinitions: CharacterDefinition[]
+  characterDefinitions: CharacterDefinition[],
+  context: SceneRunnerContext
 ): SceneStepResult {
+  const nextEventId =
+    state.scene.activeEventId == null
+      ? undefined
+      : context.eventDefinitionsById[state.scene.activeEventId]?.nextEventId;
+  const nextEvent =
+    nextEventId == null ? undefined : context.eventDefinitionsById[nextEventId];
+  if (nextEvent != null) {
+    return runSceneUntilPause(startEvent(state, nextEvent), context);
+  }
+
   return {
     state: {
       ...state,

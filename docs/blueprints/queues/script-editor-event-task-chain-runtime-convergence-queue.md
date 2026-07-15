@@ -9,8 +9,8 @@
 - governance_sync_source: `docs/blueprints/blueprint.md`
 - queue_status: `active`
 - queue_class: `required`
-- active_task: `task.script-editor-event-task-chain-runtime-convergence.event-chain-runtime-implementation`
-- next_task: `task.script-editor-event-task-chain-runtime-convergence.queue-closeout-and-handoff`
+- active_task: `task.script-editor-event-task-chain-runtime-convergence.queue-closeout-and-handoff`
+- next_task: `none`
 - closeout_status: `pending`
 - execution_closeout_status: `partial`
 - topic_closure_status: `open-residue`
@@ -23,7 +23,7 @@
 - next_effect: `execute-active-task`
 - sync_status: `pending`
 - sync_scope: `branch-push`
-- sync_summary: `Pending repository sync after queue admission and baseline selection.`
+- sync_summary: `Commit 408d0f pushed to origin/mod-first-dev after queue admission and baseline selection; implementation sync is pending.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
@@ -57,9 +57,9 @@
 
 - queue_goal: `Create the next runtime-owned event/task-chain progression path beyond dialogue node targets without widening into full narrative/task rewrites.`
 - task_count: `3`
-- completed_task_count: `1`
-- remaining_task_count: `2`
-- active_task_summary: `Implement the selected event-to-event runtime chain slice with tests.`
+- completed_task_count: `2`
+- remaining_task_count: `1`
+- active_task_summary: `Verify, classify residue, and return control to version review after event-chain runtime implementation landed.`
 - task_briefs:
   - `task.script-editor-event-task-chain-runtime-convergence.boundary-baseline-reconcile: inventory event/task-chain runtime seams and select the smallest lawful implementation slice.`
   - `task.script-editor-event-task-chain-runtime-convergence.event-chain-runtime-implementation: implement the selected event-chain runtime slice with tests.`
@@ -84,7 +84,7 @@
 
 - `queue.script-editor-dialogue-node-target-branching-convergence closed after dialogue nodes began lowering into stable runtime scenes and bounded choiceTargetNodeId references began lowering through ChoiceOption.nextSceneId.`
 - `Runtime already has EventDefinition.nextEventId, ChoiceOption.nextEventId, event activation/history, unified RuntimeResult.taskInputs settlement, and TaskDefinition/TaskRuntimeState seams.`
-- `Runtime export currently only supports editor events whose destination targets a dialogue; editor event destination family "event" is still unsupported even though runtime EventDefinition already has the nextEventId target field.`
+- `Runtime export previously supported only editor event entry destinations that target a dialogue; explicit editor nextEventId is now the selected event-chain field so the entry destination is not overloaded.`
 - `The first task must prove the smallest lawful next slice before production code changes.`
 
 ### Repository Sync Record Rule
@@ -97,9 +97,9 @@
 
 | Task ID | State | Summary | Depends On | Notes |
 | --- | --- | --- | --- | --- |
-| `task.script-editor-event-task-chain-runtime-convergence.boundary-baseline-reconcile` | `done` | `Inventoried event/task-chain runtime seams and selected event-destination-to-EventDefinition.nextEventId lowering as the smallest runtime-owned chain slice.` | `none` | `No production code changed during baseline.` |
-| `task.script-editor-event-task-chain-runtime-convergence.event-chain-runtime-implementation` | `active` | `Implement the selected event-chain runtime slice with tests.` | `task.script-editor-event-task-chain-runtime-convergence.boundary-baseline-reconcile` | `Bounded to editor event destination family "event" lowering through runtime nextEventId and validation diagnostics.` |
-| `task.script-editor-event-task-chain-runtime-convergence.queue-closeout-and-handoff` | `pending` | `Verify, classify residue, and return control to version review.` | `task.script-editor-event-task-chain-runtime-convergence.event-chain-runtime-implementation` | `Do not infer version closeout from this queue.` |
+| `task.script-editor-event-task-chain-runtime-convergence.boundary-baseline-reconcile` | `done` | `Inventoried event/task-chain runtime seams and selected explicit editor nextEventId lowering as the smallest runtime-owned chain slice.` | `none` | `No production code changed during baseline.` |
+| `task.script-editor-event-task-chain-runtime-convergence.event-chain-runtime-implementation` | `done` | `Implemented the selected event-chain runtime slice with tests.` | `task.script-editor-event-task-chain-runtime-convergence.boundary-baseline-reconcile` | `Editor nextEventId now exports to runtime EventDefinition.nextEventId; missing targets fail closed; scene completion follows next runtime events.` |
+| `task.script-editor-event-task-chain-runtime-convergence.queue-closeout-and-handoff` | `active` | `Verify, classify residue, and return control to version review.` | `task.script-editor-event-task-chain-runtime-convergence.event-chain-runtime-implementation` | `Do not infer version closeout from this queue.` |
 
 ### Task Definitions
 
@@ -158,7 +158,7 @@
 - task_brief:
   - `Find the smallest honest runtime-owned event/task-chain progression boundary after node-target dialogue branching exists.`
 - task_outcome_summary:
-  - `Done. Baseline selected editor event destination family "event" lowering into runtime EventDefinition.nextEventId as the smallest lawful slice: runtime already owns event entry scenes, event history, nextEventId fields, and task settlement seams, while export still rejects editor events that target another event.`
+  - `Done. Baseline selected explicit editor nextEventId lowering into runtime EventDefinition.nextEventId as the smallest lawful slice: runtime already owns event entry scenes, event history, nextEventId fields, and task settlement seams, while overloading destination would lose the current event entry scene.`
 - Purpose:
   - `Move beyond dialogue-only handoff by making one event-chain target runtime-owned before attempting broader task-chain or story-node relation lowering.`
 - Failure mode:
@@ -167,16 +167,16 @@
 ##### Progress Log
 
 - `2026-07-15`: `Queue admitted from version promotion review after node-target branching closeout routed broader event/task-chain runtime progression back to review.`
-- `2026-07-15`: `Baseline inventory found ScriptEditorEventDestination already supports family "event", runtime EventDefinition already has nextEventId, ChoiceOption already has nextEventId, event-runtime/startEvent already records active event and event history, and runtime-dispatch already has one canonical taskInputs settlement seam over TaskDefinition/TaskRuntimeState.`
-- `2026-07-15`: `Mismatch recorded: runtime-pack export lowerEditorEventToRuntimeEvent currently rejects every editor event whose destination is not family "dialogue"; imported runtime EventDefinition.nextEventId is currently mapped back as destination family "event", so re-export of imported event chains cannot be final until editor event destinations can lower to nextEventId.`
-- `2026-07-15`: `Selected implementation slice: add test-first support for editor event destination family "event" by lowering targetId into EventDefinition.nextEventId while preserving the event's dialogue entry scene requirement for the current event. Missing target events must fail closed; city/building/minigame destinations, task condition runtime expansion, story-node relation lowering, playable/minigame handoff, and scenario launch policy remain out of scope.`
+- `2026-07-15`: `Baseline inventory found ScriptEditorEventDestination already supports entry targets, runtime EventDefinition already has nextEventId, ChoiceOption already has nextEventId, event-runtime/startEvent already records active event and event history, and runtime-dispatch already has one canonical taskInputs settlement seam over TaskDefinition/TaskRuntimeState.`
+- `2026-07-15`: `Mismatch recorded: runtime-pack export lowerEditorEventToRuntimeEvent previously had no explicit editor event-chain field, while using destination family "event" would overwrite the current event's required entry dialogue/scene destination.`
+- `2026-07-15`: `Selected implementation slice: add test-first support for explicit editor nextEventId by lowering it into EventDefinition.nextEventId while preserving destination as the current event entry. Missing target events must fail closed; city/building/minigame destinations, task condition runtime expansion, story-node relation lowering, playable/minigame handoff, and scenario launch policy remain out of scope.`
 
 #### `task.script-editor-event-task-chain-runtime-convergence.event-chain-runtime-implementation`
 
 ##### Control Block
 
 - task_id: `task.script-editor-event-task-chain-runtime-convergence.event-chain-runtime-implementation`
-- state: `active`
+- state: `done`
 - task_kind: `execution`
 - scope:
   - `src/application/script-editor/runtime-pack-export.ts`
@@ -194,7 +194,7 @@
   - `unbounded task-chain runtime rewrite`
   - `city/building/minigame event destinations`
 - done_when:
-  - `Editor event destination family "event" lowers to runtime EventDefinition.nextEventId with tests.`
+  - `Explicit editor nextEventId lowers to runtime EventDefinition.nextEventId with tests.`
   - `Referenced target events are validated and missing target event ids fail closed with diagnostics.`
   - `Existing dialogue destination event export and runtime handoff tests remain passing.`
   - `Task-chain, story-node relation, city/building/minigame destination, and playable/minigame residue remain explicitly out of scope unless fresh evidence proves this slice cannot stand alone.`
@@ -217,18 +217,24 @@
 - task_brief:
   - `Implement the selected event-chain runtime slice.`
 - task_outcome_summary:
-  - `Active.`
+  - `Done. Explicit editor nextEventId now lowers into runtime EventDefinition.nextEventId, missing next events fail closed, runtime import preserves nextEventId, and scene completion starts the chained next event.`
 - Purpose:
   - `Make editor-authored event-to-event progression survive runtime export as a real EventDefinition.nextEventId chain.`
 - Failure mode:
   - `A compatibility adapter that only preserves imported fields without runtime nextEventId output would not satisfy this queue.`
+
+##### Progress Log
+
+- `2026-07-15`: `RED added for an exported editor event with destination dialogue.opening and nextEventId event.followup; it failed because events.json omitted EventDefinition.nextEventId.`
+- `2026-07-15`: `GREEN landed by adding ScriptEditorEventRecord.nextEventId normalization/import preservation/export lowering, validating missing next event targets, and making scene completion follow the active event's EventDefinition.nextEventId into the next runtime event.`
+- `2026-07-15`: `Verification passed: targeted nextEventId chain test, targeted missing nextEventId diagnostic test, npm run typecheck, npm test, npm run build, npm run lint:blueprints, npm run lint:plans, and npm run blueprint:governance:check. Build retained existing Vite warnings for battle demo type=module, unresolved UI panel image, and chunk size.`
 
 #### `task.script-editor-event-task-chain-runtime-convergence.queue-closeout-and-handoff`
 
 ##### Control Block
 
 - task_id: `task.script-editor-event-task-chain-runtime-convergence.queue-closeout-and-handoff`
-- state: `pending`
+- state: `active`
 - task_kind: `execution`
 - scope:
   - `docs/blueprints/project-progress.md`
@@ -258,7 +264,7 @@
 - task_brief:
   - `Close or route the event/task-chain runtime convergence queue after verified implementation.`
 - task_outcome_summary:
-  - `Pending.`
+  - `Active after event-chain-runtime-implementation verification passed.`
 - Purpose:
   - `Return control to version review only after the bounded event-chain runtime slice is either real, verified, or honestly routed.`
 - Failure mode:

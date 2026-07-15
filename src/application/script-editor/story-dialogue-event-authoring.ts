@@ -107,6 +107,7 @@ export function createDefaultScriptEditorEventRecord(index: number): ScriptEdito
     description: "",
     triggerTiming: "manual",
     repeatable: false,
+    nextEventId: "",
     conditionGroups: [createDefaultConditionGroup(0)],
     destination: {
       family: "dialogue",
@@ -162,6 +163,7 @@ export function normalizeScriptEditorEventRecord(
     description: normalizeOptionalString(record.description),
     triggerTiming: normalizeEventTriggerTiming(record.triggerTiming),
     repeatable: record.repeatable === true,
+    nextEventId: normalizeOptionalString(record.nextEventId),
     conditionGroups: (record.conditionGroups ?? []).map(normalizeConditionGroup),
     destination: normalizeEventDestination(record.destination),
     relations: {

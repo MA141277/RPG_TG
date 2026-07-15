@@ -285,6 +285,7 @@ function mapImportedEvents(events: EventDefinition[]): ScriptEditorEventRecord[]
         importedEvent.triggerTiming ?? mapImportedEventTriggerTiming(eventDefinition.trigger?.timing),
       repeatable:
         importedEvent.repeatable === true || eventDefinition.occurrence === "repeatable",
+      nextEventId: eventDefinition.nextEventId ?? "",
       conditionGroups: [],
       destination: {
         family: "event",

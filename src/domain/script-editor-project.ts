@@ -385,6 +385,7 @@ export type ScriptEditorEventRecord = ScriptEditorEntityRecord & {
   description?: string;
   triggerTiming?: ScriptEditorEventTriggerTiming;
   repeatable?: boolean;
+  nextEventId?: string;
   conditionGroups?: ScriptEditorEventConditionGroup[];
   destination?: ScriptEditorEventDestination;
   relations?: ScriptEditorEventRelationRecord;

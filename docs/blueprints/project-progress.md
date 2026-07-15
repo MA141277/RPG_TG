@@ -36,8 +36,8 @@
 - `This file only states the current resume entry and downstream pointer set.`
 - `Admission history, queue closeout history, and review narrative must stay in the version plan, queue docs, or docs/change-log.md rather than living here as competing current-state prose.`
 - `The pointed version is now the open successor version for script-editor authoring/data-structure unification.`
-- `The latest governance action admitted queue.script-editor-event-task-chain-runtime-convergence after node-target branching closeout; its boundary baseline selected editor event destination family "event" lowering into runtime EventDefinition.nextEventId.`
-- `Resume from the active queue document and its event-chain-runtime-implementation task.`
+- `The latest governance action completed queue.script-editor-event-task-chain-runtime-convergence event-chain-runtime-implementation after editor-authored nextEventId began exporting and running as runtime EventDefinition.nextEventId chains.`
+- `Resume from the active queue document and its queue-closeout-and-handoff task.`
 
 ### Historical References
 

@@ -981,6 +981,22 @@ function collectLinkedValidationIssues(
     }
 
     if (
+      eventRecord.nextEventId != null &&
+      eventRecord.nextEventId.length > 0 &&
+      !hasRecord(project, "events", eventRecord.nextEventId)
+    ) {
+      addMissingReferenceIssue({
+        id: `linked.events.next-event.${eventRecord.id}`,
+        severity: "blocked",
+        title: "Missing next event",
+        message: `Event ${eventRecord.id} references missing next event ${eventRecord.nextEventId}.`,
+        targetFamily: "events",
+        targetEntityId: eventRecord.id,
+        targetTab: "destination",
+      });
+    }
+
+    if (
       eventRecord.relations?.storyNodeId != null &&
       eventRecord.relations.storyNodeId.length > 0 &&
       !hasRecord(project, "storyNodes", eventRecord.relations.storyNodeId)
