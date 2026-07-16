@@ -4,9 +4,9 @@
 
 - blueprint_id: `blueprint.rpg-tg`
 - blueprint_version: `2026.07`
-- active_version: `target.city-building-definition-location-access-convergence`
-- active_version_plan: `docs/blueprints/plans/2026-07-16-city-building-definition-location-access-convergence-target-plan.md`
-- active_version_spec: `docs/blueprints/specs/2026-07-16-city-building-definition-location-access-convergence-target.md`
+- active_version: `target.script-editor-event-binding-runtime-replacement`
+- active_version_plan: `docs/blueprints/plans/2026-07-16-script-editor-event-binding-runtime-replacement-target-plan.md`
+- active_version_spec: `docs/blueprints/specs/2026-07-16-script-editor-event-binding-runtime-replacement-target.md`
 - classification_rules_ref: `docs/blueprints/classification-rule-layer-spec.md`
 - execution_mode: `single-active-task`
 - allow_parallel: `false`
@@ -22,6 +22,7 @@
 
 | Version ID | Spec | Plan | Notes |
 | --- | --- | --- | --- |
+| `target.script-editor-event-binding-runtime-replacement` | `docs/blueprints/specs/2026-07-16-script-editor-event-binding-runtime-replacement-target.md` | `docs/blueprints/plans/2026-07-16-script-editor-event-binding-runtime-replacement-target-plan.md` | `Open successor created on 2026-07-16 from docs/script-editor-event-trigger-binding-design.md; it governs the events.json/event-bindings.json split, script-editor double-table UI/import/export, built-in zhuyuanzhang event-binding migration, EventBindingRuntime cutover with sub-runtime handoff compatibility, and old event runtime retirement.` |
 | `target.city-building-definition-location-access-convergence` | `docs/blueprints/specs/2026-07-16-city-building-definition-location-access-convergence-target.md` | `docs/blueprints/plans/2026-07-16-city-building-definition-location-access-convergence-target-plan.md` | `Closed on 2026-07-16 after explicit human closeout confirmation; city/building definition restructure, LocationAccessRuntime convergence, HouseRuntime adapter, status save/runtime, custom attribute authoring, export/import validation, map compatibility, city-mounted building/NPC authoring/export/runtime, and zhuyuanzhang template direct-load queues are now historical evidence with no remaining lawful same-version candidate queue.` |
 | `target.script-editor-authoring-data-structure-unification` | `docs/blueprints/specs/2026-07-15-script-editor-authoring-data-structure-unification-target.md` | `docs/blueprints/plans/2026-07-15-script-editor-authoring-data-structure-unification-target-plan.md` | `Closed on 2026-07-16 after explicit closeout continuation; package persistence, completion gating, field mapping, character/city/building/dialogue/story/event authoring data, typed conditions, launch policy, playable/minigame bindings, legacy supersession, and final end-to-end authoring/runtime validation queues are now historical evidence with no active same-version queue.` |
 | `target.script-editor-runtime-pack-unification` | `docs/blueprints/specs/2026-07-14-script-editor-runtime-pack-unification-target.md` | `docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md` | `Closed on 2026-07-15 after explicit human closeout confirmation; the runtime-family contract, authoring convergence, runtime-pack export, base-pack inheritance, fixed-pack consumer, compatibility-boundary, activities, non-activities runtime-family, narrative export, and scenarioProfile startup export queues are now all historical evidence with no remaining lawful same-version candidate queue.` |

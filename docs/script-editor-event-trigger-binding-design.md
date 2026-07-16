@@ -55,17 +55,20 @@ type EventBinding = {
   conditions?: EventBindingConditionGroup;
   priority?: number;
   enabled?: boolean;
+  meta?: Record<string, unknown>;
 };
 
 type EventBindingOwner = {
   family: EventBindingOwnerFamily;
   id?: string;
+  extra?: Record<string, unknown>;
 };
 
 type EventBindingTrigger = {
   timing: string;
   action: string;
   payloadSchemaId?: string;
+  extra?: Record<string, unknown>;
 };
 ```
 
@@ -79,6 +82,40 @@ type EventBindingTrigger = {
 - `storyNode`
 - `time`
 - `menuEntry`
+
+### 绑定字段分层与扩展性
+
+`EventBinding` 不应把未来所有业务字段一次性堆进固定结构。绑定字段需要像人物扩展属性一样分层：
+
+1. 核心必选字段
+   - `id`
+   - `eventId`
+   - `owner.family`
+   - `trigger.timing`
+   - `trigger.action`
+   - `enabled`
+   - `priority`
+
+2. 可注册扩展字段
+   - `owner.id`
+   - `owner.extra`
+   - `trigger.payloadSchemaId`
+   - `trigger.extra`
+   - `conditions`
+   - `payload` 中可被 resolver 读取的字段
+
+3. 编辑器草稿扩展字段
+   - `meta`
+   - 未注册的 `extra` 字段
+   - 暂未能 lowering 到 runtime 的 UI 草稿字段
+
+扩展规则：
+
+- `owner.family`、`trigger.timing`、`trigger.action` 是可注册枚举，不是无限自由文本。
+- UI 默认只展示注册表中已知字段。
+- 未注册字段可以在编辑器草稿中保留，但导出可运行包时必须 fail closed 或明确 lowering 到已注册字段。
+- runtime 只能消费注册表、payload schema 与 resolver 明确支持的字段。
+- 新增事件入口能力时，优先注册 owner family、trigger timing/action、payload schema、字段 resolver，而不是修改事件本体结构。
 
 ## 下拉选择与条件表达式导出
 
@@ -1041,6 +1078,7 @@ runtime action 发生
 - 启动事件本体定义的入口场景、效果或 action 流。
 - 写入 eventHistory。
 - 产出调试报告，供编辑器模拟器和运行时日志使用。
+- 与 scene、task、house、navigation、playable、location-access 等子 runtime 通过 `TriggerContext`、payload/resolver 和既有 runtime-result handoff 边界适配。
 
 新运行时不应负责：
 
@@ -1049,6 +1087,87 @@ runtime action 发生
 - 写死某个业务字段的读取逻辑。
 - 解析旧 `events[].trigger/conditions` 作为长期路径。
 - 在事件本体里查找触发条件。
+- 接管 house、scene、task、playable、navigation、location-access 等子 runtime 的生命周期或内部状态机。
+
+### 子 runtime 适配边界
+
+`EventBindingRuntime` 必须作为事件触发选择器与激活器，而不是新的总控 runtime。
+
+适配原则：
+
+- 各子 runtime 保持自己的生命周期、状态机和结算边界。
+- 子 runtime 只在关键动作发生时发出标准 `TriggerContext`。
+- `EventBindingRuntime` 不直接读取子 runtime 私有状态；需要读取的字段必须通过 payload、字段 resolver、active-content 或既有 runtime-result contract 暴露。
+- `EventBindingRuntime` 可以返回事件激活、scene/task/effect handoff 数据，但不得把这些子 runtime 的执行细节内联到事件触发选择逻辑里。
+- 涉及子 runtime 边界的队列 closeout 必须记录：边界是否仍由原子 runtime 拥有，以及使用了哪个 `TriggerContext` payload、resolver 或 handoff contract。
+
+### 编辑器双表读取与 UI 呈现
+
+剧本编辑器读取剧本包时，必须同时读取 `events.json` 与 `event-bindings.json`，并把两者作为两个独立表展示。
+
+编辑器加载要求：
+
+- `events.json` 只作为事件本体表读取。
+- `event-bindings.json` 只作为触发入口表读取。
+- `pack.json.files` 必须同时声明 `events` 与 `eventBindings`。
+- 导入时不得把绑定信息回写进事件本体作为长期数据源。
+
+UI 呈现要求：
+
+- 事件列表与事件详情展示事件本体内容。
+- 绑定列表与绑定详情展示 owner、trigger、conditions、priority、enabled。
+- 事件详情应能跳转查看引用它的绑定。
+- 绑定详情应能跳转回对应事件。
+- 新包优先按双表渲染；旧包仅作为迁移输入，不作为日常编辑主路径。
+
+### 内置剧本包迁移时机
+
+内置 `zhuyuanzhang` 剧本包也必须迁移到双表结构。
+
+迁移顺序建议：
+
+1. 先让编辑器与 loader 支持双表读取与展示。
+2. 再为内置 `zhuyuanzhang` 包补齐 `event-bindings.json`。
+3. 然后切换 runtime 到新事件系统。
+4. 最后删除旧事件系统与旧字段。
+
+不建议把内置包迁移延后到旧事件系统移除之后；否则 runtime 切换后内置包会失去可运行性。
+
+### 实施顺序与受控回补
+
+新事件运行时替换旧系统时，必须按依赖顺序推进：
+
+1. 定义 `EventBinding` contract、`eventBindings` pack 字段、loader 读取。
+2. 剧本编辑器项目模型增加 `eventBindings`，UI 能显示事件本体与事件绑定。
+3. 执行字段缺口复查。
+4. 导出器输出双表：`events.json` 不含 `trigger/conditions`，`event-bindings.json` 包含触发入口。
+5. 迁移内置 `zhuyuanzhang` 包到双表结构。
+6. 新增 `EventBindingRuntime`，让业务系统发出 `TriggerContext`。
+7. 切主 runtime 调用到新 runtime。
+8. 验证内置包和编辑器导出包都能触发事件。
+9. 删除旧 `events[].trigger/conditions`、旧 evaluator、旧兼容 shim。
+10. 加 guard 测试，禁止旧路径回流。
+
+第 9 步只能在第 8 步验证通过后执行。
+
+第 1 步与第 2 步之间允许一次受控回补：
+
+```text
+1 contract/loader baseline
+2 editor UI integration
+2a field gap review
+2b controlled contract backfill if required
+1 re-verify contract/loader
+3 export double-table
+```
+
+字段缺口复查规则：
+
+- 如果字段属于运行时触发必需语义，回补到第 1 步的 shared/runtime contract。
+- 如果字段只属于编辑器展示、筛选、草稿备注，放入 editor-only 字段，不进入 runtime contract。
+- 如果字段属于将来能力但当前 runtime 不支持，放入 draft/residue，导出时 fail closed。
+- 回补后必须重新验证 contract 与 loader。
+- 第 3 步之后不允许继续随意新增 runtime 字段；确需新增时必须开新的 contract revision。
 
 各业务系统只需要在关键动作发生时发出标准上下文。例如：
 
