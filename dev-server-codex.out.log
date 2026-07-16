@@ -1,129 +1,37 @@
 
 > rpg-tg@0.1.0 dev
-> vite --host 0.0.0.0 --port 5173
+> vite --host 0.0.0.0 --port 5173 --host 0.0.0.0 --port 5173
 
 
-  VITE v7.3.3  ready in 290 ms
+  [32m[1mVITE[22m v7.3.3[39m  [2mready in [0m[1m231[22m[2m[0m ms[22m
 
-  ➜  Local:   http://localhost:5173/
-  ➜  Network: http://100.64.164.2:5173/
-  ➜  Network: http://192.168.1.25:5173/
-10:37:33 [vite] (client) page reload src/content/base-game-content-pack.ts
-10:37:33 [vite] (client) page reload src/content/base-game-content-pack.ts
-10:51:36 [vite] (client) page reload src/content/base-game-content-pack.ts
-10:52:12 [vite] (client) page reload .worktrees/blueprint-governance-spec/HD2DEG/Alexia_extract/index.html
-10:52:12 [vite] (client) page reload .worktrees/blueprint-governance-spec/HD2DEG/ai-world-item-generator-demo.html
-10:52:12 [vite] (client) page reload .worktrees/blueprint-governance-spec/HD2DEG/Alexia_single.html
-10:52:12 [vite] (client) page reload .worktrees/blueprint-governance-spec/HD2DEG/depth-ortho-building-debug.html
-10:52:12 [vite] (client) page reload .worktrees/blueprint-governance-spec/HD2DEG/mud/doom.html
-10:52:12 [vite] (client) page reload .worktrees/blueprint-governance-spec/HD2DEG/mud/index.html
-10:52:12 [vite] (client) page reload .worktrees/blueprint-governance-spec/HD2DEG/mud/threeview-voxel-demo.html
-10:52:12 [vite] (client) page reload .worktrees/blueprint-governance-spec/HD2DEG/pixel-workflow.html
-10:52:13 [vite] (client) page reload .worktrees/blueprint-governance-spec/HD2DEG/settlement-patterns.html
-10:52:13 [vite] (client) page reload .worktrees/blueprint-governance-spec/HD2DEG/tilemap-editor.html
-10:52:13 [vite] (client) page reload .worktrees/blueprint-governance-spec/index.html
-10:52:13 [vite] (client) page reload .worktrees/blueprint-governance-spec/prototypes/city-depth-mesh/index.html
-10:52:13 [vite] (client) page reload .worktrees/blueprint-governance-spec/prototypes/battle-demo/index.html
-10:52:13 [vite] (client) page reload .worktrees/blueprint-governance-spec/prototypes/city-threeview-depth-mesh/index.html
-10:52:13 [vite] (client) page reload .worktrees/blueprint-governance-spec/prototypes/faxian-depth-mesh/index.html
-10:52:13 [vite] (client) page reload .worktrees/blueprint-governance-spec/prototypes/faxian-leg-spine/index.html
-10:52:13 [vite] (client) page reload .worktrees/blueprint-governance-spec/prototypes/faxian-depth-gaussian/index.html
-10:52:13 [vite] (client) page reload .worktrees/blueprint-governance-spec/prototypes/faxian-normal/index.html
-10:52:13 [vite] (client) page reload .worktrees/blueprint-governance-spec/prototypes/point-assembly-event-editor.html
-10:52:13 [vite] (client) page reload .worktrees/blueprint-governance-spec/prototypes/grass-depth-mesh/index.html
-10:52:13 [vite] (client) page reload .worktrees/blueprint-governance-spec/prototypes/grass-normal-mesh/index.html
-10:52:13 [vite] (client) page reload .worktrees/blueprint-governance-spec/prototypes/house-liangpu/index.html
-10:52:13 [vite] (client) page reload .worktrees/blueprint-governance-spec/prototypes/obj-mesh-decimator/index.html
-10:52:14 [vite] (client) page reload .worktrees/blueprint-governance-spec/tools/spine-node-timeline-editor-archer.html
-10:52:14 [vite] (client) page reload .worktrees/blueprint-governance-spec/tools/spine-node-timeline-editor.html
-10:52:14 [vite] (client) page reload .worktrees/blueprint-governance-spec/tools/terra-observer-replica.html
-10:52:14 [vite] (client) page reload .worktrees/blueprint-governance-spec/tools/vercengetorix-cas-page.html
-10:52:14 [vite] changed tsconfig file detected: C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/blueprint-governance-spec/tsconfig.json - Clearing cache and forcing full-reload to ensure TypeScript is compiled with updated config values.
-10:59:18 [vite] (client) page reload src/content/base-game-content-pack.ts
-10:59:18 [vite] (client) page reload src/content/base-game-content-pack.ts
-13:26:34 [vite] (client) page reload src/main.ts
-13:27:41 [vite] (client) page reload src/main.ts
-13:28:02 [vite] (client) page reload src/main.ts
-13:28:18 [vite] (client) page reload src/main.ts
-13:29:01 [vite] (client) page reload src/main.ts
-13:31:43 [vite] (client) page reload src/application/startup/prototype-startup-app-state.ts
-13:32:11 [vite] (client) page reload src/main.ts
-13:32:46 [vite] (client) page reload src/main.ts
-13:41:07 [vite] (client) page reload src/application/startup/prototype-startup-app-state.ts
-13:41:07 [vite] (client) page reload src/main.ts
-13:46:49 [vite] (client) page reload src/application/startup/prototype-startup-app-state.ts
-13:47:29 [vite] (client) page reload src/main.ts
-13:48:11 [vite] (client) page reload src/main.ts
-13:48:35 [vite] (client) page reload src/main.ts
-13:49:14 [vite] (client) page reload src/main.ts
-14:01:49 [vite] (client) page reload src/main.ts
-14:01:49 [vite] (client) page reload src/main.ts
-14:01:49 [vite] (client) page reload src/application/startup/prototype-startup-app-state.ts
-17:17:09 [vite] (client) page reload src/application/runtime/city-view-transition.ts
-19:11:07 [vite] (client) page reload .worktrees/blueprint-dev-merge/HD2DEG/ai-world-item-generator-demo.html
-19:11:07 [vite] (client) page reload .worktrees/blueprint-dev-merge/HD2DEG/Alexia_single.html
-19:11:07 [vite] (client) page reload .worktrees/blueprint-dev-merge/HD2DEG/Alexia_extract/index.html
-19:11:08 [vite] (client) page reload .worktrees/blueprint-dev-merge/HD2DEG/depth-ortho-building-debug.html
-19:11:08 [vite] (client) page reload .worktrees/blueprint-dev-merge/HD2DEG/pixel-workflow.html
-19:11:08 [vite] (client) page reload .worktrees/blueprint-dev-merge/HD2DEG/settlement-patterns.html
-19:11:08 [vite] (client) page reload .worktrees/blueprint-dev-merge/HD2DEG/tilemap-editor.html
-19:11:08 [vite] (client) page reload .worktrees/blueprint-dev-merge/HD2DEG/mud/doom.html
-19:11:08 [vite] (client) page reload .worktrees/blueprint-dev-merge/HD2DEG/mud/index.html
-19:11:08 [vite] (client) page reload .worktrees/blueprint-dev-merge/HD2DEG/mud/threeview-voxel-demo.html
-19:11:08 [vite] (client) page reload .worktrees/blueprint-workflow-refactor/HD2DEG/ai-world-item-generator-demo.html
-19:11:08 [vite] (client) page reload .worktrees/blueprint-workflow-refactor/HD2DEG/Alexia_single.html
-19:11:08 [vite] (client) page reload .worktrees/blueprint-workflow-refactor/HD2DEG/depth-ortho-building-debug.html
-19:11:08 [vite] (client) page reload .worktrees/blueprint-workflow-refactor/HD2DEG/pixel-workflow.html
-19:11:08 [vite] (client) page reload .worktrees/blueprint-workflow-refactor/HD2DEG/settlement-patterns.html
-19:11:08 [vite] (client) page reload .worktrees/blueprint-workflow-refactor/HD2DEG/tilemap-editor.html
-19:11:08 [vite] (client) page reload .worktrees/blueprint-workflow-refactor/HD2DEG/Alexia_extract/index.html
-19:11:08 [vite] (client) page reload .worktrees/blueprint-workflow-refactor/HD2DEG/mud/doom.html
-19:11:08 [vite] (client) page reload .worktrees/blueprint-workflow-refactor/HD2DEG/mud/index.html
-19:11:08 [vite] (client) page reload .worktrees/blueprint-workflow-refactor/HD2DEG/mud/threeview-voxel-demo.html
-19:11:08 [vite] (client) page reload .worktrees/blueprint-dev-merge/prototypes/battle-demo/index.html
-19:11:08 [vite] (client) page reload .worktrees/blueprint-dev-merge/prototypes/faxian-leg-spine/index.html
-19:11:08 [vite] (client) page reload .worktrees/blueprint-dev-merge/prototypes/faxian-normal/index.html
-19:11:08 [vite] (client) page reload .worktrees/blueprint-dev-merge/prototypes/house-liangpu/index.html
-19:11:08 [vite] (client) page reload .worktrees/blueprint-dev-merge/index.html
-19:11:09 [vite] changed tsconfig file detected: C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/blueprint-dev-merge/tsconfig.json - Clearing cache and forcing full-reload to ensure TypeScript is compiled with updated config values.
-19:11:09 [vite] changed tsconfig file detected: C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/blueprint-workflow-refactor/tsconfig.json - Clearing cache and forcing full-reload to ensure TypeScript is compiled with updated config values.
-19:11:09 [vite] (client) page reload .worktrees/blueprint-dev-merge/tools/spine-node-timeline-editor.html
-19:11:09 [vite] (client) page reload .worktrees/blueprint-dev-merge/tools/terra-observer-replica.html
-19:11:09 [vite] (client) page reload .worktrees/blueprint-dev-merge/tools/vercengetorix-cas-page.html
-19:11:09 [vite] (client) page reload .worktrees/blueprint-workflow-refactor/index.html
-19:11:09 [vite] (client) page reload .worktrees/blueprint-workflow-refactor/prototypes/point-assembly-event-editor.html
-19:11:09 [vite] (client) page reload .worktrees/blueprint-workflow-refactor/prototypes/city-depth-mesh/index.html
-19:11:09 [vite] (client) page reload .worktrees/blueprint-workflow-refactor/prototypes/battle-demo/index.html
-19:11:09 [vite] (client) page reload .worktrees/blueprint-workflow-refactor/prototypes/city-threeview-depth-mesh/index.html
-19:11:09 [vite] (client) page reload .worktrees/blueprint-workflow-refactor/prototypes/faxian-depth-gaussian/index.html
-19:11:09 [vite] (client) page reload .worktrees/blueprint-workflow-refactor/prototypes/faxian-depth-mesh/index.html
-19:11:09 [vite] (client) page reload .worktrees/blueprint-workflow-refactor/prototypes/faxian-leg-spine/index.html
-19:11:09 [vite] (client) page reload .worktrees/blueprint-workflow-refactor/prototypes/grass-normal-mesh/index.html
-19:11:09 [vite] (client) page reload .worktrees/blueprint-workflow-refactor/prototypes/faxian-normal/index.html
-19:11:09 [vite] (client) page reload .worktrees/blueprint-workflow-refactor/prototypes/house-liangpu/index.html
-19:11:09 [vite] (client) page reload .worktrees/blueprint-workflow-refactor/prototypes/grass-depth-mesh/index.html
-19:11:09 [vite] (client) page reload .worktrees/blueprint-workflow-refactor/prototypes/obj-mesh-decimator/index.html
-19:11:09 [vite] (client) page reload .worktrees/blueprint-workflow-refactor/tools/spine-node-timeline-editor-archer.html
-19:11:09 [vite] (client) page reload .worktrees/blueprint-workflow-refactor/tools/spine-node-timeline-editor.html
-19:11:09 [vite] (client) page reload .worktrees/blueprint-workflow-refactor/tools/terra-observer-replica.html
-19:11:09 [vite] (client) page reload .worktrees/blueprint-workflow-refactor/tools/vercengetorix-cas-page.html
-19:19:03 [vite] (client) page reload src/ui/app-render.ts
-19:19:52 [vite] (client) page reload src/main.ts
-19:20:13 [vite] (client) page reload src/ui/views/character/character-detail-view.ts
-19:20:34 [vite] (client) page reload src/ui/views/character/character-detail-view.ts
-19:50:46 [vite] (client) page reload src/ui/tools/live-layout-bindings.js
-19:51:02 [vite] (client) page reload src/ui/main-ui/main-ui-flow.js
-19:51:45 [vite] (client) page reload src/application/layout-editor/layout-editor-target-registry.ts
-19:51:53 [vite] (client) page reload src/application/layout-editor/layout-editor-target-registry.ts
-20:07:24 [vite] (client) page reload src/domain/ui-layout.ts
-20:07:39 [vite] (client) page reload src/application/layout-editor/layout-editor-bootstrap.ts
-20:07:51 [vite] (client) page reload src/application/layout-editor/layout-editor-bootstrap.ts
-20:08:11 [vite] (client) page reload src/application/startup/prototype-startup-app-state.ts
-20:08:30 [vite] (client) page reload src/main.ts
-20:09:45 [vite] (client) page reload src/main.ts
-20:10:09 [vite] (client) hmr update /src/styles/app.css
-20:10:41 [vite] (client) page reload src/application/layout-editor/layout-editor-actions.ts
-20:10:41 [vite] (client) page reload src/application/layout-editor/layout-editor-coordinator.ts
-20:10:41 [vite] (client) page reload src/application/layout-editor/layout-editor-target-registry.ts
-20:10:41 [vite] (client) page reload src/ui/tools/layout-editor-view.ts
-20:10:41 [vite] (client) page reload src/styles/layout-editor.css
+  [32m➜[39m  [1mLocal[22m:   [36mhttp://localhost:[1m5173[22m/[39m
+  [32m➜[39m  [1mNetwork[22m: [36mhttp://192.168.1.22:[1m5173[22m/[39m
+[2m20:11:54[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/script-editor/workspace-shell.ts[22m
+[2m20:12:52[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/script-editor/workspace-shell.ts[22m
+[2m20:17:02[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/script-editor/script-editor-workspace-view.ts[22m
+[2m20:17:31[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/main-ui/main-ui-flow.js[22m
+[2m20:21:10[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/script-editor/workspace-shell.ts[22m
+[2m20:21:35[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/script-editor/script-editor-workspace-view.ts[22m
+[2m20:21:51[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/main-ui/main-ui-flow.js[22m
+[2m20:26:05[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/script-editor/script-editor-workspace-view.ts[22m
+[2m20:26:45[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
+[2m20:30:17[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/script-editor/script-editor-workspace-view.ts[22m
+[2m20:30:46[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
+[2m20:31:40[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
+[2m20:42:31[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/main-ui/main-ui-flow.js[22m
+[2m20:42:54[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
+[2m20:47:45[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/main-ui/main-ui-flow.js[22m
+[2m20:51:35[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/main-ui/main-ui-flow.js[22m
+[2m20:52:10[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/main-ui/main-ui-flow.js[22m
+[2m20:56:26[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/main-ui/main-ui-flow.js[22m
+[2m20:58:39[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/main-ui/main-ui-flow.js[22m
+[2m20:59:59[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
+[2m21:02:34[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/script-editor/script-editor-workspace-view.ts[22m
+[2m21:04:11[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/main-ui/main-ui-flow.js[22m
+[2m21:10:16[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/main-ui/main-ui-flow.js[22m
+[2m21:11:34[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
+[2m21:12:20[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
+[2m21:17:55[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/main-ui/main-ui-flow.js[22m
+[2m21:19:09[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/script-editor/script-editor-workspace-view.ts[22m
+[2m21:20:31[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
