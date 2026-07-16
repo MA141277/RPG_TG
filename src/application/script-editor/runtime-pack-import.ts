@@ -304,6 +304,9 @@ function createStoryPackRecord(
     ...(Array.isArray(rawPack.events)
       ? { runtimeEvents: cloneJsonCompatibleValue(rawPack.events) }
       : {}),
+    ...(Array.isArray(rawPack.eventBindings)
+      ? { runtimeEventBindings: cloneJsonCompatibleValue(rawPack.eventBindings) }
+      : {}),
     ...(compatibilityImportResidue == null
       ? {}
       : { compatibilityImport: compatibilityImportResidue }),

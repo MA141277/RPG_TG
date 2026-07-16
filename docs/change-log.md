@@ -5,6 +5,22 @@
 `docs/change-log.md` 的正式定位是“历史记录 + 人类可读摘要”。
 它不是当前 Blueprint / legacy superpowers 治理的 live execution truth，不作为 resume entry、promotion gate、closeout gate 或固定同步门。
 
+## 2026-07-16 Script Editor Zhuyuanzhang Event Binding Pack Migration
+
+### Added
+- 新增 [src/content/scenario-packs/zhuyuanzhang/event-bindings.json](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree-5/src/content/scenario-packs/zhuyuanzhang/event-bindings.json)，承载朱元璋内置包五条事件的触发入口、条件、priority 和启用状态。
+- 扩展 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree-5/tests/robustness.test.cjs)，覆盖内置朱元璋包双表迁移和默认 runtime content 暴露内置 event bindings。
+
+### Changed
+- 更新 [src/content/scenario-packs/zhuyuanzhang/pack.json](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree-5/src/content/scenario-packs/zhuyuanzhang/pack.json)，新增 `files.eventBindings`。
+- 更新 [src/content/scenario-packs/zhuyuanzhang/events.json](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree-5/src/content/scenario-packs/zhuyuanzhang/events.json)，事件体不再保存 `trigger` 和 `conditions`。
+- 更新 [src/application/content/content-pack-loader.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree-5/src/application/content/content-pack-loader.ts) 和 [src/content/pack-content-access.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree-5/src/content/pack-content-access.ts)，让 manifest 水合和默认包访问层读取 `eventBindings`。
+- 更新 [src/application/script-editor/runtime-pack-import.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree-5/src/application/script-editor/runtime-pack-import.ts) 和 [src/application/script-editor/runtime-pack-export.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree-5/src/application/script-editor/runtime-pack-export.ts)，导入的 runtime `eventBindings` 会作为 runtime family 原样保留并随导出写回。
+
+### Impact
+- 内置朱元璋默认内容现在与脚本编辑器导出的 runtime pack 一样具备 `events.json` + `event-bindings.json` 双表输入形状。
+- 本批次未实现 EventBindingRuntime，也未删除旧 `selectTriggeredEvents` / trigger evaluator 路径；这些仍由后续 runtime convergence 和 old-runtime retirement 队列处理。
+
 ## 2026-07-16 Script Editor Event Binding Export Convergence
 
 ### Added

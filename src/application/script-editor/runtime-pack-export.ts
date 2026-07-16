@@ -20,7 +20,12 @@ import type {
 import { SCRIPT_EDITOR_RUNTIME_PACK_SCHEMA_VERSION } from "../../domain/script-editor-project";
 import type { ScenarioProfileDefinition } from "../../domain/scenario-profile";
 import type { SceneDefinition } from "../../domain/action";
-import type { EventDefinition, EventTrigger, EventTriggerTiming } from "../../domain/event";
+import type {
+  EventBinding,
+  EventDefinition,
+  EventTrigger,
+  EventTriggerTiming,
+} from "../../domain/event";
 import type { RuntimeTaskInput } from "../../core/contracts/runtime-result";
 import type {
   PlayableDefinition,
@@ -142,7 +147,7 @@ export function validateScriptEditorProjectForRuntimeExport(
     exportedScenes ?? [],
     diagnostics
   );
-  const exportedEventBindings = lowerRuntimeEventBindings(project, diagnostics);
+  const exportedEventBindings = extractRuntimeEventBindings(project, diagnostics);
   const sharedRuleDiagnostics: ScriptEditorSharedRuleDiagnostic[] = [];
   const exportedTasks = compileScriptEditorProjectTasks(project, sharedRuleDiagnostics);
   appendSharedRuleDiagnostics(sharedRuleDiagnostics, diagnostics);
@@ -261,7 +266,7 @@ export function exportScriptEditorProjectToScenarioPackFiles(
     materializeScriptEditorCityBuildingRuntimeFamilies(project);
   const exportedScenes = narrativeRuntime.scenes;
   const exportedEvents = extractRuntimeEvents(project, exportedScenes ?? [], []);
-  const exportedEventBindings = lowerRuntimeEventBindings(project, []);
+  const exportedEventBindings = extractRuntimeEventBindings(project, []);
   const exportedTasks = compileScriptEditorProjectTasks(project, []);
   const playableRuntimeFamilies = materializeScriptEditorPlayableRuntimeFamilies(
     project,
@@ -917,6 +922,40 @@ function lowerRuntimeEventBindings(
   return diagnostics.length === 0 ? loweredBindings : null;
 }
 
+function extractRuntimeEventBindings(
+  project: ScriptEditorProjectDefinition,
+  diagnostics: ScriptEditorRuntimeExportDiagnostic[]
+): unknown[] | null {
+  const runtimeEventBindings = project.storyPack["runtimeEventBindings"];
+  if (runtimeEventBindings == null) {
+    return lowerRuntimeEventBindings(project, diagnostics);
+  }
+
+  if (!Array.isArray(runtimeEventBindings)) {
+    diagnostics.push({
+      code: "invalid-field",
+      fieldPath: "project.storyPack.runtimeEventBindings",
+      message: "storyPack.runtimeEventBindings must be an array when present.",
+    });
+    return null;
+  }
+
+  const invalidIndex = runtimeEventBindings.findIndex(
+    (eventBinding) => !isRuntimeEventBinding(eventBinding)
+  );
+  if (invalidIndex >= 0) {
+    diagnostics.push({
+      code: "invalid-field",
+      fieldPath: `project.storyPack.runtimeEventBindings[${invalidIndex}]`,
+      message:
+        "storyPack.runtimeEventBindings entries must keep the runtime EventBinding shape.",
+    });
+    return null;
+  }
+
+  return cloneJsonCompatibleValue(runtimeEventBindings) as EventBinding[];
+}
+
 function lowerRuntimeEventBinding(
   binding: ScriptEditorEventBindingRecord,
   fieldPath: string,
@@ -1370,21 +1409,74 @@ function isRuntimeEventDefinition(value: unknown): value is EventDefinition {
 
   const eventDefinition = value as Record<string, unknown>;
   const trigger = eventDefinition.trigger;
-  return (
-    typeof eventDefinition.id === "string" &&
-    typeof eventDefinition.chapterId === "string" &&
-    typeof eventDefinition.name === "string" &&
-    typeof eventDefinition.entrySceneId === "string" &&
-    (eventDefinition.occurrence === "once" ||
+  if (
+    typeof eventDefinition.id !== "string" ||
+    typeof eventDefinition.chapterId !== "string" ||
+    typeof eventDefinition.name !== "string" ||
+    typeof eventDefinition.entrySceneId !== "string" ||
+    !(
+      eventDefinition.occurrence === "once" ||
       eventDefinition.occurrence === "repeatable" ||
-      eventDefinition.occurrence === "once-per-chapter") &&
-    Array.isArray(eventDefinition.conditions) &&
-    (eventDefinition.participants == null ||
-      Array.isArray(eventDefinition.participants)) &&
+      eventDefinition.occurrence === "once-per-chapter"
+    ) ||
+    (eventDefinition.conditions != null &&
+      !Array.isArray(eventDefinition.conditions)) ||
+    (eventDefinition.participants != null &&
+      !Array.isArray(eventDefinition.participants))
+  ) {
+    return false;
+  }
+
+  return (
+    trigger == null ||
+    (typeof trigger === "object" &&
+      !Array.isArray(trigger) &&
+      typeof (trigger as Record<string, unknown>).timing === "string")
+  );
+}
+
+function isRuntimeEventBinding(value: unknown): value is EventBinding {
+  if (value == null || typeof value !== "object" || Array.isArray(value)) {
+    return false;
+  }
+
+  const eventBinding = value as Record<string, unknown>;
+  const owner = eventBinding.owner;
+  const trigger = eventBinding.trigger;
+  return (
+    typeof eventBinding.id === "string" &&
+    typeof eventBinding.eventId === "string" &&
+    owner != null &&
+    typeof owner === "object" &&
+    !Array.isArray(owner) &&
+    typeof (owner as Record<string, unknown>).family === "string" &&
+    ((owner as Record<string, unknown>).id == null ||
+      typeof (owner as Record<string, unknown>).id === "string") &&
     trigger != null &&
     typeof trigger === "object" &&
     !Array.isArray(trigger) &&
-    typeof (trigger as Record<string, unknown>).timing === "string"
+    typeof (trigger as Record<string, unknown>).timing === "string" &&
+    typeof (trigger as Record<string, unknown>).action === "string" &&
+    (eventBinding.conditions == null ||
+      isRuntimeEventBindingConditionGroup(eventBinding.conditions)) &&
+    (eventBinding.priority == null ||
+      typeof eventBinding.priority === "number") &&
+    (eventBinding.enabled == null ||
+      typeof eventBinding.enabled === "boolean")
+  );
+}
+
+function isRuntimeEventBindingConditionGroup(value: unknown): boolean {
+  if (value == null || typeof value !== "object" || Array.isArray(value)) {
+    return false;
+  }
+
+  const group = value as Record<string, unknown>;
+  return (
+    (group.operator === "all" ||
+      group.operator === "any" ||
+      group.operator === "not") &&
+    Array.isArray(group.conditions)
   );
 }
 

@@ -1618,6 +1618,7 @@ test("zhuyuanzhang scenario pack manifest follows canonical split-table shape", 
   assert.equal(packManifest.kind, "scenario-pack");
   assert.equal(typeof packManifest.files.scenarioProfile, "string");
   assert.equal(typeof packManifest.files.events, "string");
+  assert.equal(typeof packManifest.files.eventBindings, "string");
   assert.equal(typeof packManifest.files.scenes, "string");
   assert.equal(typeof packManifest.files.textEntries, "string");
   assert.equal(typeof packManifest.files.activities, "string");
@@ -1625,6 +1626,7 @@ test("zhuyuanzhang scenario pack manifest follows canonical split-table shape", 
   [
     packManifest.files.scenarioProfile,
     packManifest.files.events,
+    packManifest.files.eventBindings,
     packManifest.files.scenes,
     packManifest.files.textEntries,
     packManifest.files.activities,
@@ -1634,6 +1636,49 @@ test("zhuyuanzhang scenario pack manifest follows canonical split-table shape", 
       true,
       `Expected zhuyuanzhang pack file ${fileName} to exist`
     );
+  });
+});
+
+test("zhuyuanzhang scenario pack migrates event triggers to event bindings", () => {
+  const packRoot = path.join(
+    process.cwd(),
+    "src",
+    "content",
+    "scenario-packs",
+    "zhuyuanzhang"
+  );
+  const events = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "events.json"), "utf8")
+  );
+  const eventBindings = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "event-bindings.json"), "utf8")
+  );
+
+  assert.equal(events.length, 5);
+  assert.equal(eventBindings.length, 5);
+  assert.equal(events.every((eventRecord) => !Object.hasOwn(eventRecord, "trigger")), true);
+  assert.equal(events.every((eventRecord) => !Object.hasOwn(eventRecord, "conditions")), true);
+  assert.deepEqual(
+    eventBindings.map((binding) => binding.eventId),
+    events.map((eventRecord) => eventRecord.id)
+  );
+  assert.deepEqual(eventBindings[0], {
+    id: "binding.story.zhu_yuanzhang.ordination.house-enter",
+    eventId: "event.story.zhu_yuanzhang.ordination",
+    owner: { family: "building", id: "house.kulan.temple" },
+    trigger: { timing: "after", action: "building-enter" },
+    conditions: {
+      operator: "all",
+      conditions: [
+        {
+          type: "flag",
+          key: "flag.story.zhu_yuanzhang.ordination.completed",
+          expected: false,
+        },
+      ],
+    },
+    priority: 200,
+    enabled: true,
   });
 });
 
@@ -4937,12 +4982,13 @@ test(
     assert.equal(
       exportedPack.events.every(
         (eventDefinition) =>
-          eventDefinition.trigger != null &&
-          typeof eventDefinition.trigger.timing === "string" &&
+          !Object.hasOwn(eventDefinition, "trigger") &&
+          !Object.hasOwn(eventDefinition, "conditions") &&
           typeof eventDefinition.entrySceneId === "string"
       ),
       true
     );
+    assert.deepEqual(exportedPack.eventBindings, sourcePack.eventBindings);
     assert.deepEqual(
       normalizeMapAssetUrlsForComparison(exportedPack.maps),
       normalizeMapAssetUrlsForComparison(sourcePack.maps)
@@ -9769,6 +9815,32 @@ test("default runtime content loads from the shared base content pack path", asy
   assert.equal(
     defaultRuntimeContent.textEntriesById["runtime.test.default-content"],
     "default runtime content"
+  );
+});
+
+test("default runtime content exposes zhuyuanzhang event bindings", async () => {
+  const defaultRuntimeContentModulePath = require.resolve(
+    "../.test-dist/application/content/default-runtime-content.js"
+  );
+  delete require.cache[defaultRuntimeContentModulePath];
+
+  const {
+    defaultRuntimeContent,
+    loadDefaultRuntimeContent,
+  } = require(defaultRuntimeContentModulePath);
+  const {
+    createBaseGameContentPack,
+  } = require("../.test-dist/content/base-game-content-pack.js");
+
+  await loadDefaultRuntimeContent(() => createBaseGameContentPack());
+
+  assert.equal(
+    defaultRuntimeContent.eventBindings.some(
+      (binding) =>
+        binding.id ===
+        "binding.story.zhu_yuanzhang.ordination.house-enter"
+    ),
+    true
   );
 });
 

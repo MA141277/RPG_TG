@@ -1,0 +1,121 @@
+[
+  {
+    "id": "binding.story.zhu_yuanzhang.ordination.house-enter",
+    "eventId": "event.story.zhu_yuanzhang.ordination",
+    "owner": { "family": "building", "id": "house.kulan.temple" },
+    "trigger": { "timing": "after", "action": "building-enter" },
+    "conditions": {
+      "operator": "all",
+      "conditions": [
+        {
+          "type": "flag",
+          "key": "flag.story.zhu_yuanzhang.ordination.completed",
+          "expected": false
+        }
+      ]
+    },
+    "priority": 200,
+    "enabled": true
+  },
+  {
+    "id": "binding.story.zhu_yuanzhang.first_temple_review.manual",
+    "eventId": "event.story.zhu_yuanzhang.first_temple_review",
+    "owner": { "family": "story", "id": "chapter.zhu-yuanzhang-rise" },
+    "trigger": { "timing": "after", "action": "story-progress" },
+    "conditions": {
+      "operator": "all",
+      "conditions": [
+        {
+          "type": "flag",
+          "key": "flag.story.zhu_yuanzhang.ordination.completed",
+          "expected": true
+        },
+        {
+          "type": "flag",
+          "key": "flag.story.zhu_yuanzhang.first_temple_review.completed",
+          "expected": false
+        }
+      ]
+    },
+    "priority": 190,
+    "enabled": true
+  },
+  {
+    "id": "binding.story.zhu_yuanzhang.unlock_begging.indoor-screen-shown",
+    "eventId": "event.story.zhu_yuanzhang.unlock_begging",
+    "owner": { "family": "building", "id": "house.kulan.temple" },
+    "trigger": { "timing": "after", "action": "indoor-screen-shown" },
+    "conditions": {
+      "operator": "all",
+      "conditions": [
+        {
+          "type": "flag",
+          "key": "flag.story.zhu_yuanzhang.temple_work_unlocked",
+          "expected": true
+        },
+        {
+          "type": "flag",
+          "key": "flag.story.zhu_yuanzhang.begging_unlocked",
+          "expected": false
+        },
+        {
+          "type": "variable",
+          "key": "var.story.zhu_yuanzhang.temple_contribution",
+          "operator": ">=",
+          "value": 30
+        }
+      ]
+    },
+    "priority": 170,
+    "enabled": true
+  },
+  {
+    "id": "binding.story.zhu_yuanzhang.runing_broadcast.city-enter",
+    "eventId": "event.story.zhu_yuanzhang.runing_broadcast",
+    "owner": { "family": "city", "id": "city.runing" },
+    "trigger": { "timing": "after", "action": "city-enter" },
+    "conditions": {
+      "operator": "all",
+      "conditions": [
+        {
+          "type": "flag",
+          "key": "flag.story.zhu_yuanzhang.begging_unlocked",
+          "expected": true
+        },
+        {
+          "type": "variable",
+          "key": "var.story.zhu_yuanzhang.stage",
+          "operator": "==",
+          "value": "huangjue-begging-journey"
+        }
+      ]
+    },
+    "priority": 160,
+    "enabled": true
+  },
+  {
+    "id": "binding.story.zhu_yuanzhang.haozhou_return_encounter.city-enter",
+    "eventId": "event.story.zhu_yuanzhang.haozhou_return_encounter",
+    "owner": { "family": "city", "id": "city.kulan" },
+    "trigger": { "timing": "after", "action": "city-enter" },
+    "conditions": {
+      "operator": "all",
+      "conditions": [
+        {
+          "type": "variable",
+          "key": "var.story.zhu_yuanzhang.stage",
+          "operator": "==",
+          "value": "huangjue-begging-journey"
+        },
+        {
+          "type": "variable",
+          "key": "var.story.zhu_yuanzhang.temple_week",
+          "operator": "==",
+          "value": 4
+        }
+      ]
+    },
+    "priority": 155,
+    "enabled": true
+  }
+]
