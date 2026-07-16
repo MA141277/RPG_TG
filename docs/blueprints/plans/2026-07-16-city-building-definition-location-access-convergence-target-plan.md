@@ -4,14 +4,14 @@
 
 - document_role: `version-governor`
 - version_id: `target.city-building-definition-location-access-convergence`
-- version_status: `open`
-- active_phase: `phase.promotion-review`
+- version_status: `done`
+- active_phase: `phase.version-closeout`
 - active_queue: `none`
-- decision_state: `promotion-review`
+- decision_state: `idle-open`
 - next_decision: `version-closeout`
-- next_action: `return-to-promotion-review`
-- resume_gate: `promotion-review`
-- promotion_review_result: `none`
+- next_action: `write-version-closeout`
+- resume_gate: `closed-version-record`
+- promotion_review_result: `closeout`
 - review_subject_id: `none`
 - review_subject_classification: `none`
 - proposed_queue_id: `none`
@@ -26,7 +26,7 @@
 - closure_review_status: `routed`
 - residue_candidate_id: `none`
 - residue_candidate_family: `none`
-- routing_basis: `queue.script-editor-zhuyuanzhang-template-direct-load closed after the script editor 使用模板 entrypoint was wired to load /scenario-packs/zhuyuanzhang/pack.json directly through the existing compatibility import path, with focused and full verification passing. No remaining same-version candidate queue is recorded; version closeout still requires explicit human confirmation.`
+- routing_basis: `queue.script-editor-zhuyuanzhang-template-direct-load closed after the script editor 使用模板 entrypoint was wired to load /scenario-packs/zhuyuanzhang/pack.json directly through the existing compatibility import path, with focused and full verification passing. Explicit operator closeout confirmation then closed the version as done because no remaining same-version candidate queue is recorded.`
 - next_lawful_queue_recommendation: `none`
 - auto_admission_ready: `false`
 - blocked_by: []
@@ -70,14 +70,20 @@
   - `The admitted queue doc exists and exposes active queue truth before code implementation starts.`
   - `Implementation must resume from docs/blueprints/queues/script-editor-city-building-definition-restructure-queue.md.`
 
+### Version Closeout Record
+
+- `Closeout judgement: closeout-ready acceptance evidence exists because every recorded same-version candidate queue is done, active_queue is none, active_task is none, and next_lawful_queue_recommendation is none.`
+- `Closeout confirmation: explicit human confirmation to close target.city-building-definition-location-access-convergence was received on 2026-07-16 through the operator instruction to close the current version, update related documents, then push/merge to the remote development bus.`
+- `Closure basis: the version delivered the governed city/building definition restructure, LocationAccessRuntime condition expression runtime/editor convergence, HouseRuntime adapter boundary, city/building status save/runtime convergence, custom attribute authoring, export/import validation, map city-list compatibility preservation, city-mounted building/NPC authoring and export/runtime convergence, and direct built-in zhuyuanzhang template loading.`
+- `Future routing: no additional same-version queue may be admitted after this closeout without an explicit governance reopening record. Any further city/building or LocationAccessRuntime work must be classified under a successor version or explicit reopen decision.`
+
 ### Version Lifecycle Rules
 
-- `A current open version stays open until version closeout is explicitly confirmed and written into this version plan.`
-- `If active_queue = none, that does not close the version; it only returns the version to promotion-review or idle-open.`
-- `As long as version_status = open, additional same-version queues may still be admitted.`
+- `This version is now closed historical evidence after explicit operator closeout confirmation and written closeout record.`
+- `If active_queue = none, that no longer reopens this version after closeout; it only confirms there is no live execution controller under this closed version.`
+- `As long as version_status = done, no additional same-version queues may be admitted without an explicit governance reopening record.`
 - `If no open version exists, version creation becomes the required next governance action before any queue admission or implementation can begin.`
-- `Queue closeout may auto-advance; version closeout must not be inferred from queue completion alone.`
-- `When version acceptance and closeout conditions are satisfied, ask exactly one human confirmation before changing version_status to done.`
+- `Queue closeout may auto-advance; this version closeout was not inferred from queue completion alone and is recorded from explicit operator confirmation.`
 
 ### Queue Admission Startup Rules
 
@@ -262,4 +268,4 @@
 - `2026-07-16: Operator requested adding queue.location-access-runtime-convergence back into the candidate set because the corresponding city/building entry-condition business line was not complete. The candidate must verify conditionExpression data-shape coverage, editor settings, export lowering, runtime load structure, and end-to-end run-through acceptance before the queue can be closed again.`
 - `2026-07-16: queue.script-editor-city-building-mount-npc-authoring closed after the bounded city-owned mounting authoring slice landed and verified. Version review now owns the same-family export/runtime convergence residue without inferring version closeout.`
 - `2026-07-16: Fresh operator intake recorded queue.script-editor-zhuyuanzhang-template-direct-load as a deferred same-version candidate because the script editor 使用模板 button should directly load the built-in zhuyuanzhang scenario pack rather than invoking folder selection/import.`
-- `2026-07-16: queue.script-editor-zhuyuanzhang-template-direct-load closed after the 使用模板 entrypoint loaded the built-in zhuyuanzhang scenario pack directly from the published manifest URL and no further recorded same-version candidate queue remained. Version closeout still requires explicit human confirmation.`
+- `2026-07-16: queue.script-editor-zhuyuanzhang-template-direct-load closed after the 使用模板 entrypoint loaded the built-in zhuyuanzhang scenario pack directly from the published manifest URL and no further recorded same-version candidate queue remained. Explicit operator confirmation then closed target.city-building-definition-location-access-convergence as done.`

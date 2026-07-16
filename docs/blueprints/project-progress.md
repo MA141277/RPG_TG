@@ -37,9 +37,9 @@
 
 - `This file only states the current resume entry and downstream pointer set.`
 - `Admission history, queue closeout history, and review narrative must stay in the version plan, queue docs, or docs/change-log.md rather than living here as competing current-state prose.`
-- `The pointed version is now the open city/building definition and LocationAccessRuntime convergence record.`
-- `The latest governance action closed queue.script-editor-zhuyuanzhang-template-direct-load after direct built-in zhuyuanzhang template loading passed focused and full verification.`
-- `Resume from the version plan promotion review; no active queue is currently admitted.`
+- `The pointed version is now the closed city/building definition and LocationAccessRuntime convergence record.`
+- `The latest governance action closed target.city-building-definition-location-access-convergence after explicit operator confirmation and after all recorded same-version queues were done.`
+- `No active queue is currently admitted; the next governed work requires successor-version creation or an explicit version reopen record before queue admission.`
 
 ### Historical References
 
