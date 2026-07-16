@@ -84,6 +84,20 @@ export function adaptHouseRosterToNpcPool(input: {
   };
 }
 
+export function selectHouseNpcSpecialActions(input: {
+  actors: HouseStandbyActorViewModel[];
+  targetCharacterId: string | null;
+}): NpcInteractionOptionViewModel[] {
+  if (input.targetCharacterId == null) {
+    return [];
+  }
+
+  return (
+    input.actors.find((actor) => actor.characterId === input.targetCharacterId)
+      ?.interactionActions ?? []
+  );
+}
+
 export function isNpcInteractionBlocked(input: {
   overlayView: string | null;
   modalState: unknown | null;

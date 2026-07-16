@@ -234,6 +234,8 @@ export function renderHouseStandbyRoster(
             <button
               type="button"
               class="c-grain-shop-npc-idle__button${selectedClass}"
+              data-npc-target="${actor.characterId}"
+              data-npc-context-type="house"
               ${actor.actionId == null ? "" : `data-house-action="${actor.actionId}"`}
               aria-label="与 ${actor.name} 交谈"
             >

@@ -188,10 +188,6 @@ function createActionContainer(
         label: "问候",
       },
       {
-        id: ACTION_GIFT,
-        label: "送礼",
-      },
-      {
         id: ACTION_LEARN,
         label: "学习",
         disabled: teachableSkillKeys.length === 0,
@@ -366,6 +362,7 @@ export const leaderResidenceHouseModule: HouseModuleDefinition<"leader-residence
       input.characterDefinitions,
       sessionState.selectedCharacterId
     );
+    const teachableSkillKeys = getLeaderResidenceSkillKeys(visitedCharacter);
 
     return {
       moduleId: "leader-residence",
@@ -384,6 +381,15 @@ export const leaderResidenceHouseModule: HouseModuleDefinition<"leader-residence
                   visitedCharacter.title ?? visitedCharacter.occupation,
               }),
           isSelected: true,
+          interactionActions: [
+            {
+              id: ACTION_LEARN,
+              label: "学习",
+              kind: "special",
+              disabled: teachableSkillKeys.length === 0,
+              tone: "accent",
+            },
+          ],
         },
       ],
       dialogue: {

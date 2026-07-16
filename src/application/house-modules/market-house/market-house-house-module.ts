@@ -1484,6 +1484,21 @@ export const marketHouseHouseModule: HouseModuleDefinition<"market-house"> = {
         title: actor.title,
         actionId: `${SELECT_ACTOR_ACTION_PREFIX}${actor.id}`,
         isSelected: actor.id === selectedActor?.id,
+        interactionActions: [
+          { id: "investigate-market", label: "调查", kind: "special" },
+          {
+            id: "buy-goods",
+            label: "买入",
+            kind: "special",
+            disabled: !actor.isFixedHost,
+          },
+          {
+            id: "sell-goods",
+            label: "卖出",
+            kind: "special",
+            disabled: !actor.isFixedHost,
+          },
+        ],
       })),
     });
 
@@ -1518,7 +1533,6 @@ export const marketHouseHouseModule: HouseModuleDefinition<"market-house"> = {
                     ] satisfies HouseActionViewModel[])
                   : []),
                 { id: "investigate-market", label: "调查行情" },
-                { id: "small-talk", label: "闲谈", tone: "accent" },
                 { id: "dismiss-dialogue", label: "关闭" },
               ],
             },

@@ -56,6 +56,12 @@ const {
   teaHouseHouseModule,
 } = require("../.test-dist/application/house-modules/tea-house/tea-house-house-module.js");
 const {
+  renderTeaHouseHouseView,
+} = require("../.test-dist/ui/views/house/tea-house-house-view.js");
+const {
+  renderMedicineHouseHouseView,
+} = require("../.test-dist/ui/views/house/medicine-house-house-view.js");
+const {
   resolveCompoundingGrade,
 } = require("../.test-dist/application/medicine-house/compounding-minigame.js");
 const {
@@ -113,6 +119,7 @@ const {
   adaptHouseRosterToNpcPool,
   createNpcInteractionSession,
   isNpcInteractionBlocked,
+  selectHouseNpcSpecialActions,
   selectNpcInteractionMenu,
 } = require("../.test-dist/application/npc-interaction/npc-interaction.js");
 const {
@@ -4003,6 +4010,93 @@ test("global NPC interaction adapts house standby roster into reusable NPC pool"
   assert.equal(pool.actors[0].characterId, "char.merchant");
   assert.equal(pool.actors[0].name, "行商");
   assert.equal(pool.actors[0].disabled, false);
+});
+
+test("global NPC interaction selects house actor special actions for the target", () => {
+  const actions = selectHouseNpcSpecialActions({
+    targetCharacterId: "char.tea",
+    actors: [
+      {
+        characterId: "char.tea",
+        name: "茶博士",
+        interactionActions: [
+          { id: "order-tea", label: "请茶", kind: "special" },
+          { id: "ask-intel", label: "打听", kind: "special" },
+        ],
+      },
+      {
+        characterId: "char.other",
+        name: "客人",
+        interactionActions: [
+          { id: "other-action", label: "旁事", kind: "special" },
+        ],
+      },
+    ],
+  });
+
+  assert.deepEqual(
+    actions.map((action) => action.id),
+    ["order-tea", "ask-intel"]
+  );
+});
+
+test("global NPC interaction house roster exposes generic NPC target buttons", () => {
+  const enterResult = teaHouseHouseModule.enter({
+    gameState: createBaseState(),
+    characterDefinitions: prototypeCharacters,
+    houseDefinition: teaHouse,
+    playerCharacterId,
+  });
+  const viewModel = teaHouseHouseModule.selectViewModel({
+    gameState: enterResult.gameState,
+    characterDefinitions: enterResult.characterDefinitions,
+    houseDefinition: teaHouse,
+    playerCharacterId,
+    sessionState: enterResult.sessionState,
+  });
+  const html = renderTeaHouseHouseView(viewModel);
+
+  assert.match(html, /data-npc-target=/);
+  assert.match(html, /data-npc-context-type="house"/);
+});
+
+test("global NPC interaction removes visible idle small-talk labels from tea and medicine menus", () => {
+  const teaEnter = teaHouseHouseModule.enter({
+    gameState: createBaseState(),
+    characterDefinitions: prototypeCharacters,
+    houseDefinition: teaHouse,
+    playerCharacterId,
+  });
+  const teaView = teaHouseHouseModule.selectViewModel({
+    gameState: teaEnter.gameState,
+    characterDefinitions: teaEnter.characterDefinitions,
+    houseDefinition: teaHouse,
+    playerCharacterId,
+    sessionState: { ...teaEnter.sessionState, dialoguePhase: "idle" },
+  });
+
+  const medicineEnter = medicineHouseHouseModule.enter({
+    gameState: createBaseState(),
+    characterDefinitions: prototypeCharacters,
+    houseDefinition: medicineHouse,
+    playerCharacterId,
+  });
+  const medicineView = medicineHouseHouseModule.selectViewModel({
+    gameState: medicineEnter.gameState,
+    characterDefinitions: medicineEnter.characterDefinitions,
+    houseDefinition: medicineHouse,
+    playerCharacterId,
+    sessionState: { ...medicineEnter.sessionState, dialoguePhase: "idle" },
+  });
+
+  assert.equal(
+    JSON.stringify(teaView.actionContainer?.actions ?? []).includes("闂茶皥"),
+    false
+  );
+  assert.equal(
+    JSON.stringify(medicineView.actionContainer?.actions ?? []).includes("闂茶皥"),
+    false
+  );
 });
 
 test("global NPC interaction renderer emits generic menu actions", () => {

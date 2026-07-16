@@ -27,7 +27,10 @@ import type { ValuableItemDefinition } from "../domain/valuable-item";
 import { assertExists } from "../shared/assert";
 import { renderConfirmModal } from "./components/modal/confirm-modal";
 import { renderNpcInteractionMenu } from "./components/npc-interaction/npc-interaction-menu";
-import { selectNpcInteractionMenu } from "../application/npc-interaction/npc-interaction";
+import {
+  selectHouseNpcSpecialActions,
+  selectNpcInteractionMenu,
+} from "../application/npc-interaction/npc-interaction";
 import {
   createGlobalPlayerPanelModel,
   renderGlobalPlayerPanel,
@@ -247,6 +250,16 @@ function renderModal(
 
 function renderNpcInteractionOverlay(input: AppRenderInput): string {
   const session = input.appState.gameState.ui.npcInteractionSession;
+  const stage = input.presenterOutput.stage;
+  const specialActions =
+    session?.context.type === "house" &&
+    stage.type === "house" &&
+    stage.moduleViewModel != null
+      ? selectHouseNpcSpecialActions({
+          actors: stage.moduleViewModel.standbyRoster,
+          targetCharacterId: session.targetCharacterId,
+        })
+      : [];
   const targetName =
     session == null
       ? null
@@ -259,7 +272,7 @@ function renderNpcInteractionOverlay(input: AppRenderInput): string {
     selectNpcInteractionMenu({
       session,
       targetName,
-      specialActions: [],
+      specialActions,
       giftDisabled: true,
     })
   );

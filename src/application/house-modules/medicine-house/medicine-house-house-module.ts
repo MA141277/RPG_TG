@@ -1041,6 +1041,21 @@ export const medicineHouseHouseModule: HouseModuleDefinition<"medicine-house"> =
                 name: npc.name,
                 ...(npc.title == null ? {} : { title: npc.title }),
                 actionId: "open-npc-dialogue",
+                interactionActions: [
+                  {
+                    id: "heal",
+                    label: "疗伤",
+                    kind: "special",
+                    disabled: playerCharacter.stats.gold < medicineHouseHealService.cost,
+                  },
+                  { id: "open-buy", label: "买药", kind: "special" },
+                  {
+                    id: "start-compounding",
+                    label: "配药",
+                    kind: "special",
+                    tone: "accent",
+                  },
+                ],
               },
             ],
     });
@@ -1075,7 +1090,7 @@ export const medicineHouseHouseModule: HouseModuleDefinition<"medicine-house"> =
           ? {
               title: "药铺操作",
               actions: [
-                { id: "talk", label: "闲谈" },
+                { id: "talk", label: "谈话" },
                 {
                   id: "heal",
                   label: "疗伤",
