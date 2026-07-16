@@ -13,9 +13,15 @@
 - `uMaterialSemanticTexture` 的通道语义扩展为 R=land/water，G=mountain terrain mask，B 预留；terrain shader 读取 G 通道后在山脉格上混入岩石贴图，并用邻域采样与噪声软化山脉和普通地表之间的过渡。
 - `map-view.ts` 和 `campaign-terrain-webgl.ts` 会把 `map_rock_texture` 传入 terrain shader；缺少岩石图层时仍回退到现有陆地贴图，保证旧地图可以加载。
 - 山脉材质过渡改为“山脉格内部向内羽化”：当前 rounded Hex cell 不是 `terrain: "山脉"` 时岩石 mask 直接为 0；只有山脉格自身与非山脉邻格相接的边会向内侵蚀并露出普通地表，避免岩石贴图蔓延到其他地块。
+- 山脉真实高度从 fragment shader 假效果升级为 CPU 派生高度场：`campaign-terrain-webgl.ts` 先从 `map_heights` 生成通用参考高度，再只在 `terrain: "山脉"` 格内覆盖生成山体高度；相邻山脉格按整体连续处理，内部邻接边不压低，整片山脉外边界向内压低以降低边缘高点概率。
+- 山脉高度生成从“连续噪声抬高地表”细化为采样点级山体 relief：每个山脉 Hex 内部会按本地坐标生成多控制点主脊、支脊和碎岩噪声，`map_heights` 原始采样值直接作为山体基准高度，避免退化成每格一个随机高度或一个孤立峰值。
+- 移除上一版山脉专用高度对比度拉伸：局部噪声只在原始高度上追加有限细节，并用原始高度加少量余量作为上限，避免把不同原始高度的山脉重新映射到过度拉开的高度段。
+- terrain mesh 采样步长从 3 降到 2，法线采样半径同步收窄，让单个山脉 Hex 内的多个高度采样点能被真实几何和光照读出来，而不是被低密度三角面合并成粗糙山包。
+- 山脉形状改为参考文明式连续山体：CPU 高度场只负责主脊、支脊和沟壑 relief，并移除按单个 Hex 边缘衰减的 body mask，避免相邻山脉格被切成独立山包；terrain shader 回到既有 `getLocalMountainEdgeInset` 岩石边缘过渡，不再另做山脚或材质 body mask。当前只处理形状，不加入雪线/积雪贴图。
+- 最终 `heightSamples` 统一驱动 terrain mesh、重建法线、城市/玩家/marker/森林贴地高度和投影同步；非山脉格不执行山脉专用规则，只通过通用高度连续性与相邻高度自然衔接。
 
 ### Impact
-- 山脉贴图仍是纯视觉材质规则，不改变通行、寻路、点击、探索、云层 reveal、城市 marker 或森林造景密度。后续如果要让山脉影响移动、资源、视野或事件，应在 Hex 数据图的 `terrain` 语义上新增玩法规则，而不是让 shader 反向驱动 gameplay。
+- 山脉真实起伏和岩石贴图仍是 renderer 内视觉规则，不改变通行、寻路、点击、探索、云层 reveal 或森林造景密度。后续如果要让山脉影响移动、资源、视野或事件，应在 Hex 数据图的 `terrain` 语义上新增玩法规则，而不是让 shader 或派生高度反向驱动 gameplay。
 
 ## 2026-07-15 Campaign Vegetation Shadow Direction
 

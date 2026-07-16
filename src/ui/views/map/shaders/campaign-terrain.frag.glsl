@@ -970,7 +970,10 @@ float getMountainTerrainAmount(
   edgeInset = min(edgeInset, getLocalMountainEdgeInset(point, cell, vec2(-1.0, 1.0), currentMountain));
 
   return clamp(
-    currentMountain * edgeInset * (1.0 - visualLandWater) * (1.0 - sandMask * 0.86),
+    currentMountain *
+      edgeInset *
+      (1.0 - visualLandWater) *
+      (1.0 - sandMask * 0.86),
     0.0,
     1.0
   );

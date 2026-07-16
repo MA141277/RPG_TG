@@ -2482,6 +2482,29 @@ test("campaign terrain WebGL shader uses separate shared animated water texture 
     assert.equal(fs.existsSync(path.join(shaderRoot, shaderFileName)), true);
   });
   assert.match(rendererSource, /waterTextureUrl: string \| null/);
+  assert.match(rendererSource, /mountainByCellKey: Map<string, boolean>/);
+  assert.match(rendererSource, /createCampaignMountainHeightSamples/);
+  assert.match(rendererSource, /getMountainBoundaryHeightFactor/);
+  assert.match(rendererSource, /isMountainHexCell/);
+  assert.match(rendererSource, /createMountainHeightAtPoint/);
+  assert.match(rendererSource, /createMountainCellRelief/);
+  assert.match(rendererSource, /createMountainCellSpineRelief/);
+  assert.match(rendererSource, /createMountainCellSpurRelief/);
+  assert.match(rendererSource, /createMountainCellBodyAmount/);
+  assert.match(rendererSource, /getHexLocalMountainFrame/);
+  assert.match(rendererSource, /getMountainHeightSourceAmount/);
+  assert.doesNotMatch(rendererSource, /MOUNTAIN_HEIGHT_SOURCE_MIN/);
+  assert.doesNotMatch(rendererSource, /MOUNTAIN_HEIGHT_SOURCE_MAX/);
+  assert.match(rendererSource, /createEllipticMountainPeak/);
+  assert.match(rendererSource, /createSmoothBand/);
+  assert.match(rendererSource, /valueNoise2d/);
+  assert.match(rendererSource, /smoothMountainContinuityHeightPass/);
+  assert.match(rendererSource, /referenceHeightSamples = createSmoothTerrainHeightSamples/);
+  assert.match(rendererSource, /heightSamples = createCampaignMountainHeightSamples/);
+  assert.match(
+    rendererSource,
+    /createSmoothTerrainMesh\(\s*heightSamples,\s*GRID_COLUMNS,\s*GRID_ROWS/s
+  );
   assert.match(rendererSource, /campaign-terrain\.frag\.glsl\?raw/);
   assert.match(rendererSource, /const fragmentShaderSource = terrainFragmentShaderRaw/);
   assert.doesNotMatch(rendererSource, /uniform sampler2D uWaterTexture/);
@@ -2516,7 +2539,8 @@ test("campaign terrain WebGL shader uses separate shared animated water texture 
   assert.match(terrainFragmentSource, /getLocalMountainEdgeInset/);
   assert.match(terrainFragmentSource, /sampleRockMaterial/);
   assert.match(terrainFragmentSource, /semanticMountain/);
-  assert.match(terrainFragmentSource, /currentMountain \* edgeInset/);
+  assert.match(terrainFragmentSource, /currentMountain \*\s*edgeInset/s);
+  assert.doesNotMatch(terrainFragmentSource, /mountainBody/);
   assert.doesNotMatch(terrainFragmentSource, /sampleSoftMountainDisk/);
   assert.match(terrainFragmentSource, /sampleShorelineChainData/);
   assert.match(terrainFragmentSource, /getLocalShorelineBoundaryData/);
