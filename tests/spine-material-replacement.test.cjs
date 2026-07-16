@@ -30,6 +30,7 @@ function loadMaterialReplacementFns(unitType = "swordsman") {
     throw new Error("Missing baseMaterialReplacementSpecs constant");
   }
   const baseMaterialReplacementSpecs = new Function(`return ${specsMatch[1]};`)();
+  const spearmanStyleBody = extractFunctionBody("function isSpearmanStyleUnit(unitType = state.currentUnitType)");
   const specsBody = extractFunctionBody("function materialReplacementSpecsForUnit(unitType = state.currentUnitType)");
   const matchBody = extractFunctionBody("function matchMaterialInputComponents(inputImageData, inputComponents, slots)");
   const normalizeMatchBody = extractFunctionBody(
@@ -37,11 +38,16 @@ function loadMaterialReplacementFns(unitType = "swordsman") {
   );
   const state = { currentUnitType: unitType };
   const materialReplacementOptions = { padding: 2 };
+  const isSpearmanStyleUnit = new Function(
+    "state",
+    `return function isSpearmanStyleUnit(unitType = state.currentUnitType) {${spearmanStyleBody}};`,
+  )(state);
   const materialReplacementSpecsForUnit = new Function(
     "state",
     "baseMaterialReplacementSpecs",
+    "isSpearmanStyleUnit",
     `return function materialReplacementSpecsForUnit(unitType = state.currentUnitType) {${specsBody}};`,
-  )(state, baseMaterialReplacementSpecs);
+  )(state, baseMaterialReplacementSpecs, isSpearmanStyleUnit);
   const matchMaterialInputComponents = new Function(
     `return function matchMaterialInputComponents(inputImageData, inputComponents, slots) {${matchBody}};`,
   )();
@@ -54,13 +60,27 @@ function loadMaterialReplacementFns(unitType = "swordsman") {
 }
 
 test("Spine editor defines unit-aware material replacement specs", () => {
+  assert.match(source, /function isSpearmanStyleUnit\(unitType = state\.currentUnitType\) \{/);
+  assert.match(source, /return \["spearman", "musketeer"\]\.includes\(unitType\);/);
   assert.match(source, /function materialReplacementSpecsForUnit\(unitType = state\.currentUnitType\) \{/);
-  assert.match(source, /unitType === "spearman"/);
+  assert.match(source, /if \(isSpearmanStyleUnit\(unitType\)\) \{/);
 });
 
 test("spearman material replacement preserves the raw weapon component size", () => {
   const { materialReplacementSpecsForUnit, normalizeMatchedMaterialPiece } = loadMaterialReplacementFns("spearman");
   const swordSlot = materialReplacementSpecsForUnit("spearman").find((slot) => slot.id === "sword");
+  const extracted = { width: 80, height: 980 };
+
+  const normalized = normalizeMatchedMaterialPiece(extracted, swordSlot, 2);
+
+  assert.equal(swordSlot.preserveComponentBounds, true);
+  assert.equal(swordSlot.preserveExtractedSize, true);
+  assert.equal(normalized, extracted);
+});
+
+test("musketeer material replacement preserves the raw weapon component size like spearman", () => {
+  const { materialReplacementSpecsForUnit, normalizeMatchedMaterialPiece } = loadMaterialReplacementFns("musketeer");
+  const swordSlot = materialReplacementSpecsForUnit("musketeer").find((slot) => slot.id === "sword");
   const extracted = { width: 80, height: 980 };
 
   const normalized = normalizeMatchedMaterialPiece(extracted, swordSlot, 2);

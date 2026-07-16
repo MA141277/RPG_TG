@@ -31,6 +31,44 @@ test("spearman material replacement installs the dedicated fist rig after standa
   assert.match(source, /await installSpearmanFistRigFromMaterial\(inputImageData,\s*inputComponents,\s*matches\);/);
 });
 
+test("musketeer reuses the spearman fist rig installer during material replacement", () => {
+  const source = loadEditorSource();
+  assert.match(source, /state\.currentUnitType !== "spearman" && state\.currentUnitType !== "musketeer"/);
+});
+
+test("musketeer reuses the existing project fist image instead of recutting one from the material sheet", () => {
+  const source = loadEditorSource();
+  assert.match(source, /function resolvePreferredSpearmanFistImage\(unitType = state\.currentUnitType\)/);
+  assert.match(source, /if \(unitType !== "musketeer"\) return null;/);
+  assert.match(source, /const existing = state\.customImages\?\.\[spearmanFistCustomImageId\];/);
+  assert.match(source, /const preferredFistImage = resolvePreferredSpearmanFistImage\(\);/);
+  assert.match(source, /if \(preferredFistImage\?\.src\) \{/);
+
+  const body = extractFunctionBody(source, "function resolvePreferredSpearmanFistImage(unitType = state.currentUnitType)");
+  const resolvePreferredSpearmanFistImage = new Function(
+    "state",
+    "spearmanFistCustomImageId",
+    `return function resolvePreferredSpearmanFistImage(unitType = state.currentUnitType) {${body}};`,
+  )(
+    {
+      currentUnitType: "musketeer",
+      customImages: {
+        "custom:spearman-fist-image": {
+          name: "spearman-fist.png",
+          src: "data:image/png;base64,test",
+        },
+      },
+    },
+    "custom:spearman-fist-image",
+  );
+
+  assert.deepEqual(resolvePreferredSpearmanFistImage(), {
+    name: "spearman-fist.png",
+    src: "data:image/png;base64,test",
+  });
+  assert.equal(resolvePreferredSpearmanFistImage("spearman"), null);
+});
+
 test("material component detection can lower the pixel threshold so small spearman fist pieces remain discoverable", () => {
   const source = loadEditorSource();
   const body = extractFunctionBody(

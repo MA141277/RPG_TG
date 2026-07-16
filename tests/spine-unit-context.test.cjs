@@ -34,6 +34,9 @@ function maybeExtractFunctionBody(signature) {
 
 function loadUnitContextFns(overrides = {}) {
   const getSpineUnitConfigBody = extractFunctionBody("function getSpineUnitConfig(unitType)");
+  const spineUnitRuntimeProjectUrlBody = maybeExtractFunctionBody(
+    "function spineUnitRuntimeProjectUrl(unitType = state.currentUnitType)",
+  );
   const confirmSpineUnitSwitchBody = maybeExtractFunctionBody(
     "function confirmSpineUnitSwitch(currentUnitType, nextUnitType)",
   );
@@ -50,6 +53,18 @@ function loadUnitContextFns(overrides = {}) {
       projectUrl: "/src/faxian/leg/spearman/project.json",
       featureGroups: ["swordsman"],
     },
+    musketeer: {
+      label: "Musketeer",
+      projectUrl: "/src/faxian/leg/musketeer/project.json",
+      featureGroups: ["swordsman"],
+    },
+    cavalry: {
+      label: "Cavalry",
+      projectUrl: "/src/faxian/leg/cavalry/project.json",
+      runtimeProjectUrl: "/src/faxian/leg/swordsman/project.json",
+      runtimeAssetUnitType: "swordsman",
+      featureGroups: [],
+    },
     archer: {
       label: "Archer",
       projectUrl: "/src/faxian/leg/archer/project.json",
@@ -62,6 +77,13 @@ function loadUnitContextFns(overrides = {}) {
     "SPINE_UNIT_CONFIGS",
     `return function getSpineUnitConfig(unitType) {${getSpineUnitConfigBody}};`,
   )(configs);
+  const spineUnitRuntimeProjectUrl = spineUnitRuntimeProjectUrlBody
+    ? new Function(
+        "getSpineUnitConfig",
+        "state",
+        `return function spineUnitRuntimeProjectUrl(unitType = state.currentUnitType) {${spineUnitRuntimeProjectUrlBody}};`,
+      )(getSpineUnitConfig, state)
+    : (unitType = state.currentUnitType) => getSpineUnitConfig(unitType).runtimeProjectUrl || getSpineUnitConfig(unitType).projectUrl;
   const confirmSpineUnitSwitch = confirmSpineUnitSwitchBody
     ? new Function(
         "getSpineUnitConfig",
@@ -82,9 +104,11 @@ function loadUnitContextFns(overrides = {}) {
   const switchSpineUnitContext = new Function(
     "SPINE_UNIT_CONFIGS",
     "getSpineUnitConfig",
+    "spineUnitRuntimeProjectUrl",
     "confirmSpineUnitSwitch",
     "resetSpineUnitSelect",
     "loadProjectJsonFile",
+    "refreshCurrentUnitAssetImages",
     "applyProjectData",
     "renderSpineUnitFeatureGroups",
     "renderAll",
@@ -94,19 +118,21 @@ function loadUnitContextFns(overrides = {}) {
   )(
     configs,
     getSpineUnitConfig,
+    spineUnitRuntimeProjectUrl,
     confirmSpineUnitSwitch,
     resetSpineUnitSelect,
     overrides.loadProjectJsonFile || (async () => null),
+    overrides.refreshCurrentUnitAssetImages || (async () => {}),
     overrides.applyProjectData || (() => {}),
     overrides.renderSpineUnitFeatureGroups || (() => {}),
     overrides.renderAll || (() => {}),
     overrides.toast || (() => {}),
     state,
   );
-  return { getSpineUnitConfig, confirmSpineUnitSwitch, resetSpineUnitSelect, switchSpineUnitContext };
+  return { getSpineUnitConfig, spineUnitRuntimeProjectUrl, confirmSpineUnitSwitch, resetSpineUnitSelect, switchSpineUnitContext };
 }
 
-test("Spine editor defines a unit registry for swordsman, spearman, and archer", () => {
+test("Spine editor defines a unit registry for swordsman, spearman, musketeer, and archer", () => {
   assert.match(source, /const SPINE_UNIT_CONFIGS = \{/);
   assert.match(
     source,
@@ -115,6 +141,10 @@ test("Spine editor defines a unit registry for swordsman, spearman, and archer",
   assert.match(
     source,
     /spearman:\s*\{[\s\S]*projectUrl:\s*"\/src\/faxian\/leg\/spearman\/project\.json"/,
+  );
+  assert.match(
+    source,
+    /musketeer:\s*\{[\s\S]*projectUrl:\s*"\/src\/faxian\/leg\/musketeer\/project\.json"/,
   );
   assert.match(
     source,
@@ -131,6 +161,15 @@ test("Spine editor exposes a registry-driven unit select control with current tr
   assert.match(source, /currentUnitType:\s*"swordsman"/);
 });
 
+test("Spine editor source does not contain known mojibake labels for title, unit labels, or default project name", () => {
+  assert.doesNotMatch(source, /Spine 鑺傜偣鏃堕棿杞寸紪杈戝櫒/);
+  assert.doesNotMatch(source, /鍓戝\+/);
+  assert.doesNotMatch(source, /鏋叺/);
+  assert.doesNotMatch(source, /楠戝叺/);
+  assert.doesNotMatch(source, /寮撳叺/);
+  assert.doesNotMatch(source, /榛樿/);
+});
+
 test("Spine editor keeps the picker source aligned to active in-game troop assets", () => {
   assert.doesNotMatch(source, /enabled:\s*false/);
   assert.doesNotMatch(source, /\(unconfigured\)/);
@@ -138,13 +177,21 @@ test("Spine editor keeps the picker source aligned to active in-game troop asset
   assert.match(source, /featureGroups:\s*\["archer"\]/);
   assert.match(source, /imageBaseUrl:\s*"\/src\/faxian\/leg\/swordsman\/"/);
   assert.match(source, /imageBaseUrl:\s*"\/src\/faxian\/leg\/spearman\/"/);
+  assert.match(source, /imageBaseUrl:\s*"\/src\/faxian\/leg\/musketeer\/"/);
   assert.match(source, /imageBaseUrl:\s*"\/src\/faxian\/leg\/archer\/"/);
   assert.match(source, /materialForegroundImageKeys:\s*\["newSword"\]/);
   assert.match(source, /materialForegroundNormalizeOptions:\s*\{[\s\S]*newSword:\s*\{[\s\S]*removeDarkGuideLine:\s*true/);
 });
 
+test("Spine editor allows cavalry to borrow swordsman runtime project and assets before a dedicated model is ready", () => {
+  assert.match(source, /cavalry:\s*\{[\s\S]*runtimeProjectUrl:\s*"\/src\/faxian\/leg\/swordsman\/project\.json"/);
+  assert.match(source, /cavalry:\s*\{[\s\S]*runtimeAssetUnitType:\s*"swordsman"/);
+});
+
 test("Spine editor resolves default unit images from the current unit asset folder", () => {
   assert.match(source, /function spineUnitImageBasePath\(unitType = state\.currentUnitType\) \{/);
+  assert.match(source, /const runtimeAssetUnitType = config\.runtimeAssetUnitType;/);
+  assert.match(source, /const runtimeConfig = runtimeAssetUnitType \? getSpineUnitConfig\(runtimeAssetUnitType\) : null;/);
   assert.match(source, /function spineUnitImageSources\(unitType = state\.currentUnitType\) \{/);
   assert.match(source, /newHead:\s*`\$\{basePath\}head\.png`/);
   assert.match(source, /newTorso:\s*`\$\{basePath\}torso\.png`/);
@@ -180,7 +227,9 @@ test("Spine editor syncs the select value from currentUnitType", () => {
 
 test("Spine editor switches unit context only after a project load succeeds", () => {
   assert.match(source, /async function switchSpineUnitContext\(unitType\)/);
-  assert.match(source, /const project = await loadProjectJsonFile\(config\.projectUrl\)/);
+  assert.match(source, /function spineUnitRuntimeProjectUrl\(unitType = state\.currentUnitType\) \{/);
+  assert.match(source, /const projectUrl = spineUnitRuntimeProjectUrl\(unitType\);/);
+  assert.match(source, /const project = await loadProjectJsonFile\(projectUrl\)/);
   assert.match(source, /refreshCurrentUnitAssetImages\(unitType\);/);
   assert.match(source, /if \(!project\) \{[\s\S]*return false;[\s\S]*\}/);
   assert.match(source, /state\.currentUnitType = unitType;/);
@@ -188,8 +237,8 @@ test("Spine editor switches unit context only after a project load succeeds", ()
 
 test("Spine editor loads the current in-game unit project on startup", () => {
   assert.match(source, /async function loadInitialSpineUnitProject\(\) \{/);
-  assert.match(source, /const config = getSpineUnitConfig\(state\.currentUnitType\);/);
-  assert.match(source, /const project = await loadProjectJsonFile\(config\.projectUrl\);/);
+  assert.match(source, /const projectUrl = spineUnitRuntimeProjectUrl\(state\.currentUnitType\);/);
+  assert.match(source, /const project = await loadProjectJsonFile\(projectUrl\);/);
   assert.match(source, /await refreshCurrentUnitAssetImages\(state\.currentUnitType\);/);
   assert.match(source, /applyProjectData\(project,\s*\{\s*unitType:\s*state\.currentUnitType\s*\}\);/);
   assert.match(source, /loadInitialSpineUnitProject\(\);/);
@@ -282,6 +331,32 @@ test("Spine editor resets the picker value when a target project fails to load",
   assert.equal(state.currentUnitType, "swordsman");
 });
 
+test("Spine editor switches into cavalry while loading the swordsman runtime project as a temporary fallback", async () => {
+  const state = { currentUnitType: "swordsman" };
+  const select = { value: "cavalry" };
+  const loadCalls = [];
+  let appliedUnitType = null;
+  const { switchSpineUnitContext } = loadUnitContextFns({
+    state,
+    el: { unitTypeSelect: select },
+    confirmSwitch: () => true,
+    loadProjectJsonFile: async (projectUrl) => {
+      loadCalls.push(projectUrl);
+      return { format: "spine-node-timeline-editor" };
+    },
+    applyProjectData: (_, options = {}) => {
+      appliedUnitType = options.unitType || null;
+    },
+  });
+
+  const result = await switchSpineUnitContext("cavalry");
+  assert.equal(result, true);
+  assert.deepEqual(loadCalls, ["/src/faxian/leg/swordsman/project.json"]);
+  assert.equal(appliedUnitType, "cavalry");
+  assert.equal(state.currentUnitType, "cavalry");
+  assert.equal(select.value, "cavalry");
+});
+
 test("Spine editor refuses runtime switches to disabled units without confirming or loading", async () => {
   let confirmCalls = 0;
   let loadCalls = 0;
@@ -342,7 +417,7 @@ test("Spine editor gates swordsman-like and archer feature groups by unit contex
 
 test("Spine editor renders unit-specific group visibility from currentUnitType", () => {
   assert.match(source, /function renderSpineUnitFeatureGroups\(\) \{/);
-  assert.match(source, /el\.swordsmanFeatureGroup\.hidden = !\["swordsman",\s*"spearman"\]\.includes\(state\.currentUnitType\);/);
+  assert.match(source, /el\.swordsmanFeatureGroup\.hidden = !\["swordsman",\s*"spearman",\s*"musketeer"\]\.includes\(state\.currentUnitType\);/);
   assert.match(source, /el\.archerFeatureGroup\.hidden = state\.currentUnitType !== "archer";/);
 });
 
@@ -350,7 +425,7 @@ test("Spine editor gates binding-panel rig controls by unit context", () => {
   assert.match(source, /function renderSpineUnitBindingControls\(\) \{/);
   assert.match(source, /el\.createBowRigBtn\.hidden = state\.currentUnitType !== "archer";/);
   assert.match(source, /el\.createArrowRigBtn\.hidden = state\.currentUnitType !== "archer";/);
-  assert.match(source, /el\.createSlashFxRigBtn\.hidden = !\["swordsman",\s*"spearman"\]\.includes\(state\.currentUnitType\);/);
+  assert.match(source, /el\.createSlashFxRigBtn\.hidden = !\["swordsman",\s*"spearman",\s*"musketeer"\]\.includes\(state\.currentUnitType\);/);
 });
 
 test("Spine editor defaults project saving to the current unit project file", () => {
@@ -362,7 +437,9 @@ test("Spine editor defaults project saving to the current unit project file", ()
 test("Spine editor exposes slash effect labels through a unit-aware context helper", () => {
   assert.match(source, /function slashEffectContext\(\) \{/);
   assert.match(source, /state\.currentUnitType === "spearman"/);
+  assert.match(source, /state\.currentUnitType === "musketeer"/);
   assert.match(source, /label:\s*"戳刺特效"/);
+  assert.match(source, /label:\s*"开火特效"/);
   assert.match(source, /label:\s*"刀光"/);
 });
 
@@ -373,4 +450,19 @@ test("Spine editor rewrites slash effect button labels for spearman context", ()
   assert.match(source, /`\$\{fxContext\.actionPrefix\}显示\$\{fxContext\.label\}`/);
   assert.match(source, /`\$\{fxContext\.actionPrefix\}隐藏\$\{fxContext\.label\}`/);
   assert.match(source, /el\.createSlashFxRigBtn\.textContent = `创建\$\{slashEffectContext\(\)\.label\}骨骼`;/);
+});
+
+test("Spine editor keeps core dynamic control labels in Chinese", () => {
+  assert.match(source, /el\.arrowParentSelect\.innerHTML = '<option value="">无临时父节点<\/option>';/);
+  assert.match(source, /el\.slashFxParentSelect\.innerHTML = '<option value="">无临时父节点<\/option>';/);
+  assert.match(source, /bowButton\.textContent = "创建弓骨骼";/);
+  assert.match(source, /arrowButton\.textContent = "创建箭矢骨骼";/);
+  assert.match(source, /button\.textContent = "删除动作";/);
+  assert.match(source, /button\.textContent = "复制关键帧";/);
+  assert.match(source, /button\.textContent = "粘贴关键帧";/);
+  assert.match(source, /el\.playBtn\.textContent = state\.playing \? "暂停" : "播放";/);
+  assert.match(source, /el\.viewToggleBtn\.textContent = state\.renderMode === "texture" \? "骨骼视图" : "贴图视图";/);
+  assert.match(source, /el\.skeletonOverlayBtn\.textContent = state\.showSkeletonOverlay \? "隐藏骨架" : "显示骨架";/);
+  assert.match(source, /el\.keyMoveModeBtn\.textContent = state\.keyMoveMode === "all" \? "整帧移动" : "单个移动";/);
+  assert.match(source, /el\.bindingModeBtn\.textContent = binding \? "返回动画" : "绑定管理";/);
 });
