@@ -617,11 +617,13 @@
           <button id="threeQuarterSampleBtn" type="button" hidden>70度侧身</button>
           <button id="viewToggleBtn" type="button">骨骼视图</button>
           <button id="skeletonOverlayBtn" type="button">显示骨骼</button>
+          <button id="specialAnchorToggleBtn" type="button">显示轮廓锚点</button>
           <button id="nodeModeBtn" class="mode-button active" type="button">节点移动</button>
           <button id="boneModeBtn" class="mode-button" type="button">骨骼移动</button>
           <button id="stretchModeBtn" class="mode-button" type="button">骨骼伸缩</button>
           <input id="fileInput" class="file-input" type="file" accept=".json,application/json" />
           <input id="materialInput" class="file-input" type="file" accept="image/png,image/jpeg,image/webp" />
+          <input id="attachmentVariantFileInput" class="file-input" type="file" accept="image/png,image/jpeg,image/webp" />
         </div>
       </header>
 
@@ -719,6 +721,7 @@
                 <div class="button-row three">
                   <button id="attachmentVariantAddBtn" type="button">加入贴图库</button>
                   <button id="attachmentVariantImportBtn" type="button">导入所选贴图</button>
+                  <button id="attachmentVariantBrowseBtn" type="button">现场选择导入</button>
                   <button id="attachmentVariantDefaultBtn" type="button">设为默认</button>
                   <button id="attachmentVariantRemoveBtn" type="button">移出贴图库</button>
                 </div>
@@ -983,6 +986,7 @@
             <div class="button-row">
               <button id="captureBindPoseBtn" type="button">当前姿势设为绑定</button>
               <button id="resetToBindPoseBtn" type="button">回到绑定姿势</button>
+              <button id="autoBindUnboundBonesBtn" type="button">自动绑定未绑骨骼</button>
             </div>
           </section>
           <section class="panel-section">
@@ -1074,7 +1078,7 @@
           materialForegroundImageKeys: [],
           materialForegroundNormalizeOptions: {},
           enabled: true,
-          featureGroups: [],
+          featureGroups: ["swordsman"],
         },
         archer: {
           label: "\u5f13\u5175",
@@ -1111,6 +1115,7 @@
         bindingDragMode: "node",
         renderMode: "texture",
         showSkeletonOverlay: false,
+        showSpecialAnchorBones: false,
         keyframeSource: "previous",
         keyMoveMode: "single",
         keyframeClipboard: null,
@@ -1320,6 +1325,7 @@
         attachmentLegAssetSelect: document.getElementById("attachmentLegAssetSelect"),
         attachmentVariantAddBtn: document.getElementById("attachmentVariantAddBtn"),
         attachmentVariantImportBtn: document.getElementById("attachmentVariantImportBtn"),
+        attachmentVariantBrowseBtn: document.getElementById("attachmentVariantBrowseBtn"),
         attachmentVariantDefaultBtn: document.getElementById("attachmentVariantDefaultBtn"),
         attachmentVariantRemoveBtn: document.getElementById("attachmentVariantRemoveBtn"),
         attachmentImageKeySelect: document.getElementById("attachmentImageKeySelect"),
@@ -1361,10 +1367,12 @@
         createBowRigBtn: document.getElementById("createBowRigBtn"),
         createArrowRigBtn: document.getElementById("createArrowRigBtn"),
         createSlashFxRigBtn: document.getElementById("createSlashFxRigBtn"),
+        attachmentVariantFileInput: document.getElementById("attachmentVariantFileInput"),
         addBoneFromNodeBtn: document.getElementById("addBoneFromNodeBtn"),
         addFreeBoneBtn: document.getElementById("addFreeBoneBtn"),
         captureBindPoseBtn: document.getElementById("captureBindPoseBtn"),
         resetToBindPoseBtn: document.getElementById("resetToBindPoseBtn"),
+        autoBindUnboundBonesBtn: document.getElementById("autoBindUnboundBonesBtn"),
         pieceXInput: document.getElementById("pieceXInput"),
         pieceYInput: document.getElementById("pieceYInput"),
         pieceScaleInput: document.getElementById("pieceScaleInput"),
@@ -1388,6 +1396,7 @@
         archerFeatureGroup: document.getElementById("archerFeatureGroup"),
         viewToggleBtn: document.getElementById("viewToggleBtn"),
         skeletonOverlayBtn: document.getElementById("skeletonOverlayBtn"),
+        specialAnchorToggleBtn: document.getElementById("specialAnchorToggleBtn"),
         newProjectBtn: document.getElementById("newProjectBtn"),
         nodeModeBtn: document.getElementById("nodeModeBtn"),
         boneModeBtn: document.getElementById("boneModeBtn"),
@@ -2987,7 +2996,6 @@
           };
         };
         const neckHeadPixels = [];
-        const bodyPixels = [];
         const diagonalThreshold = Math.round(Math.max(1, Math.min(safeWidth - 1, safeHeight - 1) * 0.27));
         component.pixelIndices.forEach((sourceIndex) => {
           const x = sourceIndex % safeImageWidth;
@@ -2997,18 +3005,16 @@
           const isNeckHeadRegion = localX - localY >= diagonalThreshold;
           if (isNeckHeadRegion) {
             neckHeadPixels.push(sourceIndex);
-          } else {
-            bodyPixels.push(sourceIndex);
           }
         });
-        if (neckHeadPixels.length < 32 || bodyPixels.length < 32) {
+        if (neckHeadPixels.length < 32) {
           return {
             body: component,
             neckHead: null,
           };
         }
         return {
-          body: buildComponent(bodyPixels),
+          body: component,
           neckHead: buildComponent(neckHeadPixels),
         };
       }
@@ -3180,6 +3186,8 @@
               width: image.width,
               alpha: 1,
               layer,
+              meshCols: 6,
+              meshRows: 18,
               fullSkin: true,
               skinBoneIds,
               restPart: {
@@ -3214,17 +3222,51 @@
         const horseNeck2 = addBone("\u9a6c\u8116\u5b50 2", horseNeck1.id, componentPoint(parts.horseBody, 0.81, 0.36), componentPoint(parts.horseBody, 0.82, 0.22), "#8b6a45", "cavalry-horse-neck");
         const horseHead1 = addBone("\u9a6c\u5934 1", horseNeck2.id, componentPoint(parts.horseBody, 0.82, 0.22), componentPoint(parts.horseBody, 0.97, 0.29), "#8b6a45", "cavalry-horse-head");
         horseBody1LeftAnchor.visible = false;
-        addPiece("\u9a6c\u8eab", "cavalry-horse-piece", horseBodyImageId, horseBodyComponent, 30, [
+        const addHorseContourAnchor = (name, parentNode, startNx, startNy, endNx, endNy) => {
+          const anchor = addBone(
+            name,
+            parentNode.id,
+            componentPoint(parts.horseBody, startNx, startNy),
+            componentPoint(parts.horseBody, endNx, endNy),
+            "#8b6a45",
+            "cavalry-horse-head-anchor",
+          );
+          anchor.visible = false;
+          anchor.preserveParentOffset = true;
+          return anchor;
+        };
+        const horseHeadContourBones = [
+          addHorseContourAnchor("\u9a6c\u5934\u8f6e\u5ed3 1", horseNeck1, 0.70, 0.44, 0.75, 0.39),
+          addHorseContourAnchor("\u9a6c\u5934\u8f6e\u5ed3 2", horseNeck1, 0.73, 0.52, 0.79, 0.46),
+          addHorseContourAnchor("\u9a6c\u5934\u8f6e\u5ed3 3", horseNeck2, 0.79, 0.31, 0.83, 0.23),
+          addHorseContourAnchor("\u9a6c\u5934\u8f6e\u5ed3 4", horseHead1, 0.84, 0.19, 0.89, 0.18),
+          addHorseContourAnchor("\u9a6c\u5934\u8f6e\u5ed3 5", horseHead1, 0.87, 0.34, 0.92, 0.37),
+          addHorseContourAnchor("\u9a6c\u5934\u8f6e\u5ed3 6", horseHead1, 0.91, 0.24, 0.97, 0.22),
+          addHorseContourAnchor("\u9a6c\u5934\u8f6e\u5ed3 7", horseHead1, 0.91, 0.33, 0.97, 0.31),
+        ];
+        const sharedHorseHeadSkinBoneIds = [
           horseBody1.id,
           horseBody2.id,
           horseBody3.id,
-        ]);
+          horseNeck1.id,
+          horseNeck2.id,
+          horseHead1.id,
+          ...horseHeadContourBones.map((bone) => bone.id),
+        ];
+        const horseBodyPiece = addPiece("\u9a6c\u8eab", "cavalry-horse-piece", horseBodyImageId, horseBodyComponent, 30, sharedHorseHeadSkinBoneIds);
+        horseBodyPiece.attachment.meshCols = 6;
+        horseBodyPiece.attachment.meshRows = 18;
         if (horseNeckHeadImageId && horseNeckHeadComponent) {
-          addPiece("\u9a6c\u8116\u5b50\u5230\u9a6c\u5934", "cavalry-horse-neck-piece", horseNeckHeadImageId, horseNeckHeadComponent, 35, [
-            horseNeck1.id,
-            horseNeck2.id,
-            horseHead1.id,
-          ]);
+          const horseNeckHeadPiece = addPiece(
+            "\u9a6c\u8116\u5b50\u5230\u9a6c\u5934",
+            "cavalry-horse-neck-piece",
+            horseNeckHeadImageId,
+            horseNeckHeadComponent,
+            85,
+            sharedHorseHeadSkinBoneIds,
+          );
+          horseNeckHeadPiece.attachment.meshCols = 5;
+          horseNeckHeadPiece.attachment.meshRows = 14;
         }
 
         const horseBody2CenterMount = addBone("\u9a6c\u8eab 2 \u4e2d\u5fc3\u8282\u70b9", horseBody2.id, componentPoint(parts.horseBody, 0.43, 0.595), componentPoint(parts.horseBody, 0.4301, 0.595), "#8b6a45", "cavalry-horse-mount");
@@ -3671,6 +3713,16 @@
         return true;
       }
 
+      function isSpecialAnchorNode(node) {
+        return node?.role === "cavalry-horse-head-anchor";
+      }
+
+      function isCanvasVisibleNode(node, frame = state.currentFrame) {
+        if (!isNodeVisibleAtFrame(node, frame)) return false;
+        if (isSpecialAnchorNode(node) && !state.showSpecialAnchorBones) return false;
+        return true;
+      }
+
       function lerp(a, b, t) {
         return a + (b - a) * t;
       }
@@ -3950,7 +4002,7 @@
       }
 
       function drawBone(node, active) {
-        if (!isNodeVisibleAtFrame(node)) return;
+        if (!isCanvasVisibleNode(node)) return;
         const pose = worldPose(node);
         const end = endPoint(pose);
         const bowTag = bowDebugLabel(node);
@@ -4014,23 +4066,28 @@
         const attachment = node.attachment;
         const alpha = effectiveAttachmentAlpha(node);
         if (alpha <= 0.001) return;
+        const freezeToBindPose = isBindingMode() && state.bindingDragMode === "node";
         if (node.role === "bow-string" && attachment.segments && attachment.chainTo) {
-          drawBowStringAttachment(node, attachment, alpha);
+          drawBowStringAttachment(node, attachment, alpha, freezeToBindPose);
           return;
         }
         const image = warriorImages[getAttachmentImageForFrame(node)];
         if (!image?.complete) return;
-        const pose = worldPose(node);
+        const pose = freezeToBindPose ? restWorldPose(node) : worldPose(node);
         if (attachment.fullSkin) {
           if (isBindingMode() && attachment.restPart) {
-            drawRestPartImage(image, resolveRestPartTransform(attachment.restPart, false), alpha);
+            if (freezeToBindPose) {
+              drawRestPartImage(image, resolveRestPartTransform(attachment.restPart, false), alpha);
+            } else {
+              drawFullSkinAttachment(attachment, image, alpha, true);
+            }
             return;
           }
-          drawFullSkinAttachment(attachment, image, alpha);
+          drawFullSkinAttachment(attachment, image, alpha, !freezeToBindPose);
           return;
         }
         if (attachment.segments && attachment.chainTo) {
-          drawSegmentedAttachment(node, attachment, image, alpha);
+          drawSegmentedAttachment(node, attachment, image, alpha, !freezeToBindPose);
           return;
         }
         if (attachment.image === "head") {
@@ -4042,7 +4099,7 @@
         if (attachment.chainTo) {
           const chainNode = state.nodes.find((item) => item.id === attachment.chainTo);
           if (!chainNode) return;
-          end = endPoint(worldPose(chainNode));
+          end = endPoint(freezeToBindPose ? restWorldPose(chainNode) : worldPose(chainNode));
         }
         if (attachment.reverse) {
           const nextStart = end;
@@ -4103,12 +4160,12 @@
           });
       }
 
-      function drawSegmentedAttachment(node, attachment, image, alpha = attachment.alpha) {
+      function drawSegmentedAttachment(node, attachment, image, alpha = attachment.alpha, useCurrentPose = true) {
         const chainNode = state.nodes.find((item) => item.id === attachment.chainTo);
         if (!chainNode) return;
         const lowerAttachment = { ...attachment, ...(attachment.lower || {}) };
-        const upperPose = worldPose(node);
-        const lowerPose = worldPose(chainNode);
+        const upperPose = useCurrentPose ? worldPose(node) : restWorldPose(node);
+        const lowerPose = useCurrentPose ? worldPose(chainNode) : restWorldPose(chainNode);
         const shoulder = { x: upperPose.worldX, y: upperPose.worldY };
         const elbow = { x: lowerPose.worldX, y: lowerPose.worldY };
         const hand = endPoint(lowerPose);
@@ -4147,12 +4204,12 @@
         ], alpha);
       }
 
-      function drawBowStringAttachment(node, attachment, alpha = attachment.alpha) {
+      function drawBowStringAttachment(node, attachment, alpha = attachment.alpha, freezeToBindPose = false) {
         const chainNode = state.nodes.find((item) => item.id === attachment.chainTo);
         if (!chainNode) return;
         const lowerAttachment = { ...attachment, ...(attachment.lower || {}) };
-        const upperPose = worldPose(node);
-        const lowerPose = worldPose(chainNode);
+        const upperPose = freezeToBindPose ? restWorldPose(node) : worldPose(node);
+        const lowerPose = freezeToBindPose ? restWorldPose(chainNode) : worldPose(chainNode);
         const start = { x: upperPose.worldX, y: upperPose.worldY };
         const middle = { x: lowerPose.worldX, y: lowerPose.worldY };
         const end = endPoint(lowerPose);
@@ -4259,13 +4316,13 @@
         };
       }
 
-      function drawFullSkinAttachment(attachment, image, alpha = attachment.alpha) {
+      function drawFullSkinAttachment(attachment, image, alpha = attachment.alpha, useCurrentPose = true) {
         const restPart = resolveRestPartTransform(attachment.restPart, false);
         const segments = (attachment.skinBoneIds || [])
           .map((nodeId) => state.nodes.find((item) => item.id === nodeId))
           .filter(Boolean)
           .map((boneNode) => {
-            const pose = worldPose(boneNode);
+            const pose = useCurrentPose ? worldPose(boneNode) : restWorldPose(boneNode);
             const rest = restWorldPose(boneNode);
             return {
               restStart: { x: rest.worldX, y: rest.worldY },
@@ -4280,8 +4337,8 @@
           return;
         }
 
-        const cols = restPart.partId === "torso" ? 5 : 4;
-        const rows = Math.max(6, segments.length * 5);
+        const cols = Math.max(3, Math.round(Number(attachment.meshCols) || (restPart.partId === "torso" ? 5 : 4)));
+        const rows = Math.max(6, Math.round(Number(attachment.meshRows) || segments.length * 5));
         const source = [];
         const dest = [];
         for (let row = 0; row <= rows; row += 1) {
@@ -5061,7 +5118,7 @@
         const effectiveParentId = effectiveParentIdForNode(node);
         if (!effectiveParentId) return;
         const parent = cachedNodeById(effectiveParentId);
-        if (!parent || !isNodeVisibleAtFrame(node) || !isNodeVisibleAtFrame(parent)) return;
+        if (!parent || !isCanvasVisibleNode(node) || !isCanvasVisibleNode(parent)) return;
         const parentEnd = endPoint(worldPose(parent));
         const pose = worldPose(node);
         const linkPoint = isTempParentBoundArrowCarrier(node)
@@ -5124,7 +5181,7 @@
       }
 
       function isSlashFxUnit(unitType = state.currentUnitType) {
-        return ["swordsman", "spearman", "musketeer"].includes(unitType);
+        return ["swordsman", "spearman", "musketeer", "cavalry"].includes(unitType);
       }
 
       function slashEffectContext() {
@@ -5175,7 +5232,7 @@
 
       function renderSpineUnitFeatureGroups() {
         if (el.swordsmanFeatureGroup) {
-          el.swordsmanFeatureGroup.hidden = !["swordsman", "spearman", "musketeer"].includes(state.currentUnitType);
+          el.swordsmanFeatureGroup.hidden = !isSlashFxUnit();
         }
         if (el.archerFeatureGroup) {
           el.archerFeatureGroup.hidden = state.currentUnitType !== "archer";
@@ -5220,7 +5277,7 @@
           el.createArrowRigBtn.hidden = state.currentUnitType !== "archer";
         }
         if (el.createSlashFxRigBtn) {
-          el.createSlashFxRigBtn.hidden = !["swordsman", "spearman", "musketeer"].includes(state.currentUnitType);
+          el.createSlashFxRigBtn.hidden = !isSlashFxUnit();
         }
       }
 
@@ -5278,20 +5335,25 @@
         });
       }
 
-      function readFileAsDataUrl(file) {
-        return new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(String(reader.result || ""));
-          reader.onerror = () => reject(new Error(`Cannot read ${file.name}`));
-          reader.readAsDataURL(file);
-        });
+      function resolveProjectImageSource(src, unitType = state.currentUnitType) {
+        const value = String(src || "").trim();
+        if (!value) return "";
+        if (value.startsWith(legAssetPrefix)) {
+          return legAssetUrl(value.slice(legAssetPrefix.length), unitType);
+        }
+        return value;
       }
 
-      function registerCustomImage(id, name, src) {
+      function registerCustomImage(id, name, src, options = {}) {
         state.customImages[id] = { name: String(name || id), src: String(src || "") };
+        if (options.image instanceof HTMLImageElement) {
+          options.image.onload = drawStage;
+          warriorImages[id] = options.image;
+          return;
+        }
         const image = new Image();
         image.onload = drawStage;
-        image.src = src;
+        image.src = resolveProjectImageSource(src, options.unitType || state.currentUnitType);
         warriorImages[id] = image;
       }
 
@@ -5829,6 +5891,98 @@
         piece.attachment.skinBoneIds = [...ids];
       }
 
+      function boundSkinBoneIdsExcludingPiece(pieceId = null) {
+        const ids = new Set();
+        pieceNodes().forEach((piece) => {
+          if (!piece?.attachment?.fullSkin) return;
+          if (pieceId && piece.id === pieceId) return;
+          (piece.attachment.skinBoneIds || []).forEach((boneId) => {
+            if (boneId) ids.add(String(boneId));
+          });
+        });
+        return ids;
+      }
+
+      function cross2d(a, b, c) {
+        return (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
+      }
+
+      function onSegment(a, b, point) {
+        return (
+          point.x >= Math.min(a.x, b.x) - 0.001 &&
+          point.x <= Math.max(a.x, b.x) + 0.001 &&
+          point.y >= Math.min(a.y, b.y) - 0.001 &&
+          point.y <= Math.max(a.y, b.y) + 0.001
+        );
+      }
+
+      function lineSegmentsIntersect(a1, a2, b1, b2) {
+        const d1 = cross2d(a1, a2, b1);
+        const d2 = cross2d(a1, a2, b2);
+        const d3 = cross2d(b1, b2, a1);
+        const d4 = cross2d(b1, b2, a2);
+        if (((d1 > 0 && d2 < 0) || (d1 < 0 && d2 > 0)) && ((d3 > 0 && d4 < 0) || (d3 < 0 && d4 > 0))) {
+          return true;
+        }
+        if (Math.abs(d1) <= 0.001 && onSegment(a1, a2, b1)) return true;
+        if (Math.abs(d2) <= 0.001 && onSegment(a1, a2, b2)) return true;
+        if (Math.abs(d3) <= 0.001 && onSegment(b1, b2, a1)) return true;
+        if (Math.abs(d4) <= 0.001 && onSegment(b1, b2, a2)) return true;
+        return false;
+      }
+
+      function pieceContainsBoneBindPose(piece, node) {
+        const polygon = pieceCorners(piece);
+        if (!polygon?.length || !node || node.attachment) return false;
+        const pose = restWorldPose(node);
+        const start = { x: pose.worldX, y: pose.worldY };
+        const end = endPoint(pose);
+        const middle = { x: (start.x + end.x) * 0.5, y: (start.y + end.y) * 0.5 };
+        if (pointInPolygon(start, polygon) || pointInPolygon(end, polygon) || pointInPolygon(middle, polygon)) {
+          return true;
+        }
+        for (let index = 0; index < polygon.length; index += 1) {
+          const next = polygon[(index + 1) % polygon.length];
+          if (lineSegmentsIntersect(start, end, polygon[index], next)) {
+            return true;
+          }
+        }
+        return false;
+      }
+
+      function autoBindableBoneIdsForSelectedPiece(piece = selectedPieceNode()) {
+        if (!piece?.attachment?.fullSkin) return [];
+        const currentIds = new Set((piece.attachment.skinBoneIds || []).map((id) => String(id)));
+        const boundElsewhereIds = boundSkinBoneIdsExcludingPiece(piece.id);
+        return state.nodes
+          .filter((node) => node && !node.attachment && !isTransformLockedNode(node) && node.visible !== false)
+          .filter((node) => !currentIds.has(node.id) && !boundElsewhereIds.has(node.id))
+          .filter((node) => pieceContainsBoneBindPose(piece, node))
+          .map((node) => node.id);
+      }
+
+      function autoBindUnboundBonesToSelectedPiece() {
+        if (!isBindingMode()) {
+          toast("请先进入绑定管理。");
+          return;
+        }
+        const piece = selectedPieceNode();
+        if (!piece?.attachment?.fullSkin) {
+          toast("请先选择一个可蒙皮的贴图。");
+          return;
+        }
+        const candidateIds = autoBindableBoneIdsForSelectedPiece(piece);
+        if (!candidateIds.length) {
+          toast("当前贴图范围内没有可自动绑定的未绑骨骼。");
+          return;
+        }
+        const ids = new Set(piece.attachment.skinBoneIds || []);
+        candidateIds.forEach((boneId) => ids.add(boneId));
+        piece.attachment.skinBoneIds = [...ids];
+        renderAll();
+        toast(`已自动绑定 ${candidateIds.length} 根未绑骨骼。`);
+      }
+
       function pieceTransform(piece) {
         const attachment = piece?.attachment;
         if (!attachment) return null;
@@ -5910,6 +6064,7 @@
           el.attachmentLegAssetSelect,
           el.attachmentVariantAddBtn,
           el.attachmentVariantImportBtn,
+          el.attachmentVariantBrowseBtn,
           el.attachmentVariantDefaultBtn,
           el.attachmentVariantRemoveBtn,
           el.attachmentImageKeySelect,
@@ -6494,6 +6649,10 @@
         el.viewToggleBtn.textContent = state.renderMode === "texture" ? "骨骼视图" : "贴图视图";
         el.skeletonOverlayBtn.textContent = state.showSkeletonOverlay ? "隐藏骨架" : "显示骨架";
         el.skeletonOverlayBtn.classList.toggle("active", state.showSkeletonOverlay);
+        if (el.specialAnchorToggleBtn) {
+          el.specialAnchorToggleBtn.textContent = state.showSpecialAnchorBones ? "隐藏轮廓锚点" : "显示轮廓锚点";
+          el.specialAnchorToggleBtn.classList.toggle("active", state.showSpecialAnchorBones);
+        }
         el.nodeModeBtn.classList.toggle("active", state.editMode === "node");
         el.boneModeBtn.classList.toggle("active", state.editMode === "bone");
         el.stretchModeBtn.classList.toggle("active", state.editMode === "stretch");
@@ -6510,6 +6669,16 @@
         el.bindingModeBtn.classList.toggle("active", binding);
         el.addBoneFromNodeBtn.classList.toggle("active", state.bindingBoneTool === "from-node");
         el.addFreeBoneBtn.classList.toggle("active", state.bindingBoneTool === "free");
+        if (el.autoBindUnboundBonesBtn) {
+          const piece = selectedPieceNode();
+          const availableCount = binding && piece?.attachment?.fullSkin
+            ? autoBindableBoneIdsForSelectedPiece(piece).length
+            : 0;
+          el.autoBindUnboundBonesBtn.disabled = !binding || !piece?.attachment?.fullSkin;
+          el.autoBindUnboundBonesBtn.textContent = availableCount > 0
+            ? `自动绑定未绑骨骼 (${availableCount})`
+            : "自动绑定未绑骨骼";
+        }
         el.keyframeBtn.disabled = binding || !selectedNode();
         el.keySourcePrevBtn.disabled = binding;
         el.keySourceNextBtn.disabled = binding;
@@ -6786,6 +6955,8 @@
             ? Math.max(0, Math.min(1, Number(attachment.alpha)))
             : 1,
           layer: Number(attachment.layer) || 0,
+          meshCols: Math.max(3, Math.round(Number(attachment.meshCols) || 4)),
+          meshRows: Math.max(6, Math.round(Number(attachment.meshRows) || 12)),
           anchorX: Number.isFinite(Number(attachment.anchorX)) ? Number(attachment.anchorX) : 0.5,
           lengthScale: Math.max(0.1, Number(attachment.lengthScale) || 1),
           reverse: Boolean(attachment.reverse),
@@ -7241,6 +7412,16 @@
         if (!filename) return;
         const imageKey = registerLegAssetImage(filename);
         addAttachmentVariant(imageKey);
+      }
+
+      async function importAttachmentVariantFromFile(file) {
+        const node = attachmentEditNode();
+        if (!node?.attachment || isTransformLockedNode(node) || !file) return;
+        const image = await loadFileImage(file);
+        const cleanName = normalizeLegAssetFilename(file.name);
+        const customImageId = `${customImagePrefix}attachment-variant-${uid("image")}`;
+        registerCustomImage(customImageId, file.name, `${legAssetPrefix}${cleanName}`, { image });
+        addAttachmentVariant(customImageId);
       }
 
       function setAttachmentDefaultImage(image) {
@@ -7923,13 +8104,14 @@
         if (bindingPieceMode) {
           const selectedPieceHit = hitTestSelectedPiece(point);
           if (selectedPieceHit) return selectedPieceHit;
+          return null;
         }
         const allowJointHits = !bindingMode || bindingNodeMode;
         const allowBoneHits = !bindingMode || bindingBoneMode;
         if (allowJointHits || allowBoneHits) {
           const nodes = sortedNodes().reverse();
           for (const node of nodes) {
-            if (!isNodeVisibleAtFrame(node)) continue;
+            if (!isCanvasVisibleNode(node)) continue;
             const pose = worldPose(node);
             const end = endPoint(pose);
             const boneLength = distance({ x: pose.worldX, y: pose.worldY }, end);
@@ -7950,10 +8132,6 @@
               return { type: "bone", node };
             }
           }
-        }
-        if (bindingPieceMode) {
-          const pieceHit = hitTestPiece(point);
-          if (pieceHit) return pieceHit;
         }
         if (bindingMode && !bindingBoneMode) return null;
         return null;
@@ -8019,7 +8197,7 @@
 
       function hitTestStretchNode(point, node) {
         const handleRadius = screenLengthToWorld(14);
-        if (!isNodeVisibleAtFrame(node)) return null;
+        if (!isCanvasVisibleNode(node)) return null;
         const pose = worldPose(node);
         const end = endPoint(pose);
         if (distance(point, end) <= handleRadius) {
@@ -8034,7 +8212,10 @@
       function firstChildOf(parentId) {
         return (
           sortedNodes().find(
-            (node) => effectiveParentIdForNode(node) === parentId && participatesInGenericJointSolver(node),
+            (node) =>
+              effectiveParentIdForNode(node) === parentId &&
+              participatesInGenericJointSolver(node) &&
+              isCanvasVisibleNode(node),
           ) || null
         );
       }
@@ -10836,10 +11017,10 @@
       }
 
       async function createArrowRigFromFile(file) {
-        const [image, src] = await Promise.all([loadFileImage(file), readFileAsDataUrl(file)]);
+        const image = await loadFileImage(file);
+        const cleanName = normalizeLegAssetFilename(file.name);
         const customImageId = `${customImagePrefix}arrow-${uid("image")}`;
-        registerCustomImage(customImageId, file.name, src);
-        warriorImages[customImageId] = image;
+        registerCustomImage(customImageId, file.name, `${legAssetPrefix}${cleanName}`, { image });
         const imageWidth = Math.max(1, image.naturalWidth || image.width || 1);
         const imageHeight = Math.max(1, image.naturalHeight || image.height || 1);
         const baseName = String(file.name || "arrow")
@@ -10919,10 +11100,10 @@
 
       async function createSlashFxRigFromFile(file) {
         const fxContext = slashEffectContext();
-        const [image, src] = await Promise.all([loadFileImage(file), readFileAsDataUrl(file)]);
+        const image = await loadFileImage(file);
+        const cleanName = normalizeLegAssetFilename(file.name);
         const customImageId = `${customImagePrefix}slash-fx-${uid("image")}`;
-        registerCustomImage(customImageId, file.name, src);
-        warriorImages[customImageId] = image;
+        registerCustomImage(customImageId, file.name, `${legAssetPrefix}${cleanName}`, { image });
         const imageWidth = Math.max(1, image.naturalWidth || image.width || 1);
         const imageHeight = Math.max(1, image.naturalHeight || image.height || 1);
         const baseName = String(file.name || "slash_fx")
@@ -11275,6 +11456,9 @@
         el.addFreeBoneBtn.addEventListener("click", () => setBindingBoneTool("free"));
         el.captureBindPoseBtn.addEventListener("click", captureBindPoseFromCurrentPose);
         el.resetToBindPoseBtn.addEventListener("click", resetNodesToBindPose);
+        if (el.autoBindUnboundBonesBtn) {
+          el.autoBindUnboundBonesBtn.addEventListener("click", autoBindUnboundBonesToSelectedPiece);
+        }
         el.addPieceBtn.addEventListener("click", async () => {
           try {
             await addPieceFromLegAssetInput();
@@ -11305,6 +11489,12 @@
           state.showSkeletonOverlay = !state.showSkeletonOverlay;
           renderAll();
         });
+        if (el.specialAnchorToggleBtn) {
+          el.specialAnchorToggleBtn.addEventListener("click", () => {
+            state.showSpecialAnchorBones = !state.showSpecialAnchorBones;
+            renderAll();
+          });
+        }
         el.newProjectBtn.addEventListener("click", resetProject);
         el.nodeModeBtn.addEventListener("click", () => {
           state.editMode = "node";
@@ -11417,6 +11607,20 @@
             await importAttachmentVariantFromLegAssetInput();
           } catch (error) {
             toast(error.message || "贴图导入失败");
+          }
+        });
+        el.attachmentVariantBrowseBtn?.addEventListener("click", () => {
+          el.attachmentVariantFileInput?.click();
+        });
+        el.attachmentVariantFileInput?.addEventListener("change", async () => {
+          const file = el.attachmentVariantFileInput.files?.[0];
+          if (!file) return;
+          try {
+            await importAttachmentVariantFromFile(file);
+          } catch (error) {
+            toast(error.message || "贴图导入失败");
+          } finally {
+            el.attachmentVariantFileInput.value = "";
           }
         });
         el.attachmentVariantDefaultBtn?.addEventListener("click", () => {
@@ -11760,8 +11964,44 @@
         renderAll();
       }
 
+      function captureFullSkinWorldSnapshots() {
+        return state.nodes
+          .filter((node) => node?.attachment?.fullSkin && node.attachment.restPart)
+          .map((node) => {
+            const resolved = resolveRestPartTransform(node.attachment.restPart, false);
+            if (!resolved) return null;
+            return {
+              nodeId: node.id,
+              x: Number(resolved.x) || 0,
+              y: Number(resolved.y) || 0,
+              rotation: Number(resolved.rotation) || 0,
+            };
+          })
+          .filter(Boolean);
+      }
+
+      function restoreFullSkinWorldSnapshots(snapshots) {
+        if (!Array.isArray(snapshots) || !snapshots.length) return;
+        snapshots.forEach((snapshot) => {
+          const node = state.nodes.find((item) => item.id === snapshot.nodeId);
+          const restPart = node?.attachment?.restPart;
+          if (!restPart) return;
+          node.attachment.restPart = setResolvedRestPartTransform(
+            restPart,
+            {
+              x: snapshot.x,
+              y: snapshot.y,
+              rotation: snapshot.rotation,
+            },
+            false,
+          );
+        });
+      }
+
       function persistTouchedNodes() {
         if (!drag?.touched) return;
+        const preserveFullSkinWorld =
+          isBindingMode() && state.bindingDragMode === "node" ? captureFullSkinWorldSnapshots() : null;
         const touchedNodes = state.nodes.filter((node) => drag.touched?.has(node.id));
         touchedNodes.forEach((node) => {
           if (isBindingMode()) {
@@ -11771,6 +12011,7 @@
             upsertKeyframe(node);
           }
         });
+        if (preserveFullSkinWorld) restoreFullSkinWorldSnapshots(preserveFullSkinWorld);
         snapshotAllBowRigsAtCurrentFrame();
       }
 

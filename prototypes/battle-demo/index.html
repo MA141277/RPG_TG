@@ -5034,7 +5034,7 @@
         renderOffsetX: -16,
         renderOffsetXBySide: {
           player: -110,
-          enemy: 75,
+          enemy: 85,
         },
         renderOffsetYBySide: {
           player: -30,
@@ -5044,11 +5044,76 @@
         stationaryAttack: false,
         attackImpactRatio: 0.5,
       },
+      cavalry: {
+        cacheKey: 'cavalry',
+        projectUrl: '/src/faxian/leg/cavalry/project.json',
+        imageBaseUrl: '../../src/faxian/leg/cavalry/',
+        attackActionNames: ['劈砍'],
+        moveActionIds: [],
+        moveActionNames: ['冲刺'],
+        materialForegroundImageKeys: [],
+        materialForegroundNormalizeOptions: {},
+        renderScaleMultiplier: 1.8,
+        renderOffsetX: -16,
+        renderOffsetXBySide: {
+          player: -110,
+          enemy: 85,
+        },
+        renderOffsetYBySide: {
+          player: -98,
+          enemy: -98,
+        },
+        renderOffsetY: 0,
+        stationaryAttack: false,
+        attackImpactRatio: 0.5,
+        attackImpactFrame: 30,
+        attackEffectFrame: 30,
+        landingScatterRadius: 0,
+        landingBackOffsetXBySide: {
+          player: -140,
+          enemy: 140,
+        },
+      },
+      musketeer: {
+        cacheKey: 'musketeer',
+        projectUrl: '/src/faxian/leg/musketeer/project.json',
+        imageBaseUrl: '../../src/faxian/leg/musketeer/',
+        attackActionNames: ['开火'],
+        moveActionIds: [],
+        moveActionNames: [],
+        materialForegroundImageKeys: ['newSword'],
+        materialForegroundNormalizeOptions: {
+          newSword: {
+            removeDarkGuideLine: true,
+          },
+        },
+        renderScaleMultiplier: 1.2,
+        renderOffsetX: -16,
+        renderOffsetXBySide: {
+          player: -100,
+          enemy: 115,
+        },
+        renderOffsetYBySide: {
+          player: -30,
+          enemy: -30,
+        },
+        renderOffsetY: 0,
+        stationaryAttack: true,
+        attackImpactRatio: 0.5,
+        attackImpactFrame: 30,
+        attackEffectFrame: 30,
+      },
     };
 
     function getBattleSpineTroopAsset(troopType) {
+      if (troopType === 'cavalry') {
+        return BATTLE_SPINE_TROOP_ASSETS.cavalry;
+      }
       if (troopType === 'spear') {
         return BATTLE_SPINE_TROOP_ASSETS.spearman;
+      }
+      if (troopType === 'gunpowder' || troopType === 'musketeer') {
+        return BATTLE_SPINE_TROOP_ASSETS.musketeer;
       }
       return troopType === 'archer'
         ? BATTLE_SPINE_TROOP_ASSETS.archer
@@ -5095,6 +5160,31 @@
     }
 
     function getBattleMeleeAttackPlan(troopType, renderer, randomValue = Math.random()) {
+      if (troopType === 'cavalry') {
+        const cavalryMoveActionId =
+          renderer?.moveAction?.id ||
+          renderer?.findActionByName?.('冲刺')?.id ||
+          'move';
+        const cavalryAttackActionId =
+          renderer?.attackAction?.id ||
+          renderer?.findActionByName?.('劈砍')?.id ||
+          'attack';
+        return {
+          variant: 'dash_slash',
+          moveAction: cavalryMoveActionId,
+          moveDurationMs: renderer.getActionDurationMs(cavalryMoveActionId),
+          moveStartFrame: null,
+          moveEndFrame: null,
+          moveArcHeight: 0,
+          attackAction: cavalryAttackActionId,
+          attackDurationMs: renderer.getActionDurationMs(cavalryAttackActionId),
+          attackMoveStartFrame: null,
+          attackMoveEndFrame: null,
+          impactFrame: 30,
+          effectFrame: 30,
+          returnsToSource: false,
+        };
+      }
       if (troopType === 'spear') {
         return {
           variant: 'jump_thrust',
@@ -5230,19 +5320,62 @@
       bottom: 108,
     });
 
-    function getBattleSpineCanvasMetrics() {
+    const BATTLE_SPINE_OVERSCAN_BY_TROOP = Object.freeze({
+      musketeer: Object.freeze({
+        enemy: Object.freeze({
+          left: 220,
+          right: 260,
+        }),
+        player: Object.freeze({
+          left: 80,
+          right: 120,
+        }),
+      }),
+      gunpowder: Object.freeze({
+        enemy: Object.freeze({
+          left: 220,
+          right: 260,
+        }),
+        player: Object.freeze({
+          left: 80,
+          right: 120,
+        }),
+      }),
+      cavalry: Object.freeze({
+        enemy: Object.freeze({
+          left: 240,
+          right: 260,
+          top: 24,
+          bottom: 36,
+        }),
+        player: Object.freeze({
+          left: 180,
+          right: 220,
+          top: 24,
+          bottom: 36,
+        }),
+      }),
+    });
+
+    function getBattleSpineCanvasMetrics(canvas = null) {
+      const troopType = String(canvas?.dataset?.troopType || '').trim();
+      const side = String(canvas?.dataset?.side || '').trim();
+      const troopOverscan =
+        (troopType && BATTLE_SPINE_OVERSCAN_BY_TROOP[troopType]?.[side]) ||
+        (troopType && BATTLE_SPINE_OVERSCAN_BY_TROOP[troopType]) ||
+        null;
       return {
         logicalWidth: BATTLE_SPINE_LOGICAL_BOX.width,
         logicalHeight: BATTLE_SPINE_LOGICAL_BOX.height,
-        bleedLeft: BATTLE_SPINE_OVERSCAN.left,
-        bleedRight: BATTLE_SPINE_OVERSCAN.right,
-        bleedTop: BATTLE_SPINE_OVERSCAN.top,
-        bleedBottom: BATTLE_SPINE_OVERSCAN.bottom,
+        bleedLeft: BATTLE_SPINE_OVERSCAN.left + Math.max(0, Number(troopOverscan?.left) || 0),
+        bleedRight: BATTLE_SPINE_OVERSCAN.right + Math.max(0, Number(troopOverscan?.right) || 0),
+        bleedTop: BATTLE_SPINE_OVERSCAN.top + Math.max(0, Number(troopOverscan?.top) || 0),
+        bleedBottom: BATTLE_SPINE_OVERSCAN.bottom + Math.max(0, Number(troopOverscan?.bottom) || 0),
       };
     }
 
     function configureBattleSpineCanvasMetrics(canvas) {
-      const metrics = getBattleSpineCanvasMetrics();
+      const metrics = getBattleSpineCanvasMetrics(canvas);
       if (!canvas) {
         return metrics;
       }
@@ -5380,8 +5513,12 @@
           this.idleAction;
         this.attackAction =
           this.findPreferredAction(
-            [...(config.attackActionIds || []), project.selectedActionId].filter(Boolean),
+            config.attackActionIds || [],
             config.attackActionNames || []
+          ) ||
+          this.findPreferredAction(
+            [project.selectedActionId].filter(Boolean),
+            []
           ) ||
           this.actions.find(action => action.name === '挥砍') ||
           this.actions.find(
@@ -5455,6 +5592,13 @@
 
       static resolveImageSource(src, baseHref = window.location.href) {
         if (typeof src !== 'string' || !src.trim()) return null;
+        if (src.startsWith('leg:')) {
+          try {
+            return new URL(src.slice(4), baseHref).href;
+          } catch (_error) {
+            return src.slice(4);
+          }
+        }
         if (/^(data:|blob:|https?:|file:)/i.test(src)) return src;
         try {
           return new URL(src, baseHref).href;
@@ -6004,6 +6148,41 @@
         return this.projectTimelineKeyCache.get(normalizedNodeId);
       }
 
+      attachmentImageVariants(attachmentView = {}) {
+        const imageVariants = Array.isArray(attachmentView?.imageVariants) ? attachmentView.imageVariants : [];
+        const images = [attachmentView?.image, ...imageVariants]
+          .map((value) => String(value || '').trim())
+          .filter(Boolean);
+        return [...new Set(images)];
+      }
+
+      attachmentImageKeys(node, action) {
+        return this.getSortedTimelineKeys(action, node?.id).filter(
+          (item) => typeof item?.attachmentImage === 'string' && item.attachmentImage,
+        );
+      }
+
+      getAttachmentImageForFrame(node, action, frame) {
+        const attachment = node?.attachment;
+        if (!attachment) return '';
+        const frameState = this.beginRenderFrame(action, frame);
+        const cacheKey = node?.id != null ? String(node.id) : '';
+        if (cacheKey && frameState.attachmentImageByNode?.has(cacheKey)) {
+          return frameState.attachmentImageByNode.get(cacheKey);
+        }
+        const defaultImage = String(attachment.image || '');
+        const variants = this.attachmentImageVariants(attachment);
+        const keys = this.attachmentImageKeys(node, action)
+          .filter((item) => item.frame <= frame)
+          .sort((a, b) => a.frame - b.frame);
+        const replacement = keys.length ? String(keys[keys.length - 1].attachmentImage || '') : '';
+        const imageKey = replacement && (!variants.length || variants.includes(replacement)) ? replacement : defaultImage;
+        if (cacheKey) {
+          frameState.attachmentImageByNode.set(cacheKey, imageKey);
+        }
+        return imageKey;
+      }
+
       beginRenderFrame(action, frame) {
         const frameKey = Math.round((Number(frame) || 0) * 1000) / 1000;
         const actionKey = action?.id != null
@@ -6027,6 +6206,7 @@
           effectiveParentByNode: new Map(),
           visibilityByNode: new Map(),
           attachmentAlphaByNode: new Map(),
+          attachmentImageByNode: new Map(),
           attachmentSegmentsByNode: new Map(),
           bowRigByControlNode: new Map(),
           renderableAttachmentNodes: null,
@@ -6251,10 +6431,11 @@
         return best ? { x: best.x, y: best.y } : null;
       }
 
-      slashFxGripLocalForPiece(piece) {
+      slashFxGripLocalForPiece(piece, action = null, frame = 0) {
         const attachment = piece?.attachment;
         const restPart = attachment?.restPart;
-        const image = this.images[attachment?.image];
+        const imageKey = this.getAttachmentImageForFrame(piece, action, frame);
+        const image = this.images[imageKey];
         const width = Math.max(1, image?.naturalWidth || image?.width || 0);
         const height = Math.max(1, image?.naturalHeight || image?.height || 0);
         if (!restPart || !width || !height) return null;
@@ -6921,7 +7102,8 @@
         const attachment = node.attachment;
         const alpha = this.effectiveAttachmentAlphaForNode(node, action, frame);
         if (alpha <= 0.001) return;
-        const image = imageMap[attachment.image];
+        const imageKey = this.getAttachmentImageForFrame(node, action, frame);
+        const image = imageMap[imageKey] || imageMap[attachment.image];
         const restPart = this.resolveRestPartTransform(attachment.restPart);
         if (!image?.complete || !attachment.fullSkin || !restPart) return;
         const segments = this.attachmentSegments(node, attachment, action, frame);
@@ -7086,7 +7268,7 @@
               }
             }
             if (!world && this.isTempParentBoundSlashFxCarrier(node, action, frame)) {
-              const gripLocal = this.slashFxGripLocalForPiece(this.slashFxPieceForNode(node));
+              const gripLocal = this.slashFxGripLocalForPiece(this.slashFxPieceForNode(node), action, frame);
               if (gripLocal) {
                 const gripRad = (worldRotation * Math.PI) / 180;
                 const gripOffsetX =
@@ -7741,7 +7923,9 @@
         ? getBattleMeleeAttackPlan(troopType, renderer)
         : null;
       const attackActionId = infantryAttackPlan?.attackAction || 'attack';
-      const attackPeakFrame = infantryAttackPlan?.impactFrame ?? (troopType === 'archer' ? 49 : 14);
+      const attackPeakFrame = infantryAttackPlan?.impactFrame
+        ?? troopAsset.attackImpactFrame
+        ?? (troopType === 'archer' ? 49 : 14);
 
       const sourceFrame = sourceSlot?.querySelector('.formation-spine-frame');
       const targetFrame = targetSlot?.querySelector('.formation-spine-frame');
@@ -7787,7 +7971,7 @@
           {
             moveStartFrame: infantryAttackPlan.moveStartFrame,
             moveEndFrame: infantryAttackPlan.moveEndFrame,
-            arcHeight: getBattleJumpArcHeight(from, to),
+            arcHeight: infantryAttackPlan?.moveArcHeight ?? getBattleJumpArcHeight(from, to),
           }
         );
       } else if (!troopAsset.stationaryAttack && !infantryAttackPlan && troopType !== 'archer') {
@@ -7805,7 +7989,9 @@
           }
         );
       }
-      const attackWhiteFlashStartFrame = infantryAttackPlan?.effectFrame ?? Math.max(0, attackPeakFrame - 1);
+      const attackWhiteFlashStartFrame = infantryAttackPlan?.effectFrame
+        ?? troopAsset.attackEffectFrame
+        ?? Math.max(0, attackPeakFrame - 1);
       const attackFrom = infantryAttackPlan?.variant === 'jump_chop'
         ? from
         : (troopAsset.stationaryAttack ? from : to);
@@ -8669,6 +8855,9 @@
     }
 
     function getBattleRandomLandingOffset(radius = 20) {
+      if (!(radius > 0)) {
+        return { x: 0, y: 0 };
+      }
       const angle = Math.random() * Math.PI * 2;
       const distance = Math.sqrt(Math.random()) * radius;
       const candidate = {
@@ -8686,8 +8875,13 @@
       if (troopAsset?.stationaryAttack) {
         return { x: targetAnchor.x, y: targetAnchor.y };
       }
-      const landingScatter = getBattleRandomLandingOffset(20);
-      const landingBackOffsetX = proxySide === 'enemy' ? 120 : -120;
+      const scatterRadius = troopAsset?.landingScatterRadius != null
+        ? Math.max(0, Number(troopAsset.landingScatterRadius) || 0)
+        : 20;
+      const landingScatter = getBattleRandomLandingOffset(scatterRadius);
+      const landingBackOffsetX = troopAsset?.landingBackOffsetXBySide
+        ? Number(troopAsset.landingBackOffsetXBySide[proxySide]) || 0
+        : (proxySide === 'enemy' ? 120 : -120);
       return {
         x: targetAnchor.x + landingScatter.x + landingBackOffsetX,
         y: targetAnchor.y + landingScatter.y,

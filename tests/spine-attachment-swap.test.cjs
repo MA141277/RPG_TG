@@ -37,6 +37,9 @@ function loadAttachmentSwapFns() {
   const importAttachmentVariantFromLegAssetInputBody = extractFunctionBody(
     "async function importAttachmentVariantFromLegAssetInput()",
   );
+  const importAttachmentVariantFromFileBody = extractFunctionBody(
+    "async function importAttachmentVariantFromFile(file)",
+  );
 
   const selectedAttachmentView = (attachment) => attachment;
   const normalizeSegmentAttachment = (value) => value || null;
@@ -99,12 +102,37 @@ function loadAttachmentSwapFns() {
       calls.added.push(image);
     },
   );
+  const importAttachmentVariantFromFile = new Function(
+    "attachmentEditNode",
+    "isTransformLockedNode",
+    "loadFileImage",
+    "readFileAsDataUrl",
+    "customImagePrefix",
+    "uid",
+    "registerCustomImage",
+    "addAttachmentVariant",
+    `return async function importAttachmentVariantFromFile(file) {${importAttachmentVariantFromFileBody}};`,
+  )(
+    () => ({ attachment: { image: "slash_small", imageVariants: ["slash_small"] } }),
+    () => false,
+    async () => ({ width: 128, naturalWidth: 128 }),
+    async () => "data:image/png;base64,abc",
+    "custom:",
+    () => "image-001",
+    (id, name, src) => {
+      calls.customRegistered = { id, name, src };
+    },
+    (image) => {
+      calls.added.push(image);
+    },
+  );
   return {
     normalizeAttachment,
     normalizeTimelineMap,
     attachmentImageVariants,
     getAttachmentImageForFrame,
     importAttachmentVariantFromLegAssetInput,
+    importAttachmentVariantFromFile,
     state,
     calls,
   };
@@ -116,6 +144,8 @@ test("Spine editor defines attachment image variant helpers and timeline swap co
   assert.match(source, /id="attachmentVariantSelect"/);
   assert.match(source, /id="attachmentLegAssetSelect"/);
   assert.match(source, /id="attachmentVariantImportBtn"/);
+  assert.match(source, /id="attachmentVariantBrowseBtn"/);
+  assert.match(source, /id="attachmentVariantFileInput"/);
   assert.match(source, /id="attachmentImageKeySelect"/);
   assert.match(source, /贴图替换|璐村浘鏇挎崲/);
 });
@@ -170,4 +200,17 @@ test("attachment variant import registers a leg asset path and adds it to the cu
 
   assert.deepEqual(calls.registered, ["effects/slash_big.png"]);
   assert.deepEqual(calls.added, ["leg:effects/slash_big.png"]);
+});
+
+test("attachment variant file import registers a custom image and adds it to the current node library", async () => {
+  const { importAttachmentVariantFromFile, calls } = loadAttachmentSwapFns();
+
+  await importAttachmentVariantFromFile({ name: "slash_big.png" });
+
+  assert.deepEqual(calls.customRegistered, {
+    id: "custom:attachment-variant-image-001",
+    name: "slash_big.png",
+    src: "data:image/png;base64,abc",
+  });
+  assert.deepEqual(calls.added, ["custom:attachment-variant-image-001"]);
 });

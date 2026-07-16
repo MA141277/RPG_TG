@@ -2,6 +2,20 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-16 Spine External Image Persistence
+
+### Added
+- 新增 `scripts/externalize-spine-custom-images.mjs` 与 `npm run spine:externalize-custom-images`，用于把各兵种 `project.json` 中内嵌的 Spine `customImages` base64 图片批量落盘到对应兵种目录，并改写为 `leg:` 外部引用。
+- 新增回归测试 `tests/spine-project-external-images.test.cjs`，锁定仓库内已提交的 Spine 项目不再把 `customImages` 持久化为 `data:` URL，并要求 `leg:` 引用的图片文件真实存在。
+
+### Changed
+- `prototypes/battle-demo/index.html` 现已支持从 Spine 项目的 `customImages.src = "leg:..."` 读取外部图片，确保游戏战斗运行时可以直接消费外部化后的 Spine 资源。
+- `src/faxian/leg/` 下现有各兵种 `project.json` 已迁移为外部图片持久化，不再把已提交资源内嵌为 base64。
+
+### Impact
+- Spine 项目 JSON 体积显著下降，加载与解析开销同步减小。
+- 游戏运行时与仓库内已提交素材现在共用同一套外部图片读取约定，后续兵种迭代不需要再在 JSON 内重复携带图片字节。
+
 ## 2026-07-06 Fail-Closed Progress-Driven Governance Spec
 
 ### Added
