@@ -5,6 +5,22 @@
 `docs/change-log.md` 的正式定位是“历史记录 + 人类可读摘要”。
 它不是当前 Blueprint / legacy superpowers 治理的 live execution truth，不作为 resume entry、promotion gate、closeout gate 或固定同步门。
 
+## 2026-07-16 Script Editor Event Binding Contract Loader
+
+### Added
+- 扩展 [src/domain/event.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree-5/src/domain/event.ts)，新增 `EventBinding`、`EventBindingOwner`、`EventBindingTrigger`、`EventBindingConditionGroup` 和 `TriggerContext` contract。
+- 扩展 [src/domain/content-pack.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree-5/src/domain/content-pack.ts)，为 content pack 新增可选 `eventBindings` 表。
+- 扩展 [src/application/content/active-game-content.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree-5/src/application/content/active-game-content.ts)，将 `eventBindings` 纳入 active content、by-id 索引、merge/normalize 和 story content context。
+
+### Changed
+- 更新 [src/application/scenario/scenario-pack-loader.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree-5/src/application/scenario/scenario-pack-loader.ts)，允许 `pack.json.files.eventBindings` 通过 manifest hydration 进入 scenario pack，并对 `eventBindings` 执行数组校验。
+- 更新 [src/application/content/default-runtime-content.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree-5/src/application/content/default-runtime-content.ts) 和 [src/content/pack-content-access.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree-5/src/content/pack-content-access.ts)，为默认运行时内容暴露 `eventBindings` 存储面。
+- 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree-5/tests/robustness.test.cjs)，覆盖 event-bindings.json fail-closed 校验、active content 索引和默认 runtime content 加载。
+
+### Impact
+- 后续脚本编辑器 UI、导出、朱元璋包迁移和 EventBindingRuntime 队列现在有可读取的 `event-bindings.json` contract/loader 基线。
+- 旧 `EventDefinition.trigger`、`EventDefinition.conditions` 和 `selectTriggeredEvents` 仍保留为生产运行时依赖，等待后续 runtime convergence 与 retirement 队列处理。
+
 ## 2026-07-16 Script Editor Zhuyuanzhang Template Direct Load
 
 ### Changed

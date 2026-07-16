@@ -3014,6 +3014,82 @@ test(
   }
 );
 
+test("scenario pack loader rejects non-array event bindings files", async () => {
+  const {
+    loadScenarioPackFromFiles,
+  } = require("../.test-dist/application/scenario/scenario-pack-loader.js");
+  const importedFiles = createImportedFilesFromSerializedJsonRecord(
+    {
+      "pack.json": JSON.stringify({
+        schemaVersion: 1,
+        kind: "scenario-pack",
+        id: "scenario-pack.test.event-bindings",
+        title: "Event Bindings Pack",
+        files: {
+          scenarioProfile: "./scenario-profile.json",
+          characters: "./characters.json",
+          events: "./events.json",
+          eventBindings: "./event-bindings.json",
+          scenes: "./scenes.json",
+        },
+      }),
+      "scenario-profile.json": JSON.stringify({
+        id: "scenario.test.event-bindings",
+        title: "Event Bindings Pack",
+        playerCharacterId: "char.test",
+        chapterId: "chapter.test",
+        initialLocation: {
+          mapId: "map.test",
+          cityId: "city.test",
+          houseId: null,
+          view: "scene",
+        },
+      }),
+      "characters.json": JSON.stringify([{ id: "char.test", name: "Test" }]),
+      "events.json": JSON.stringify([]),
+      "event-bindings.json": JSON.stringify({ id: "binding.invalid" }),
+      "scenes.json": JSON.stringify([]),
+    },
+    "event-bindings-pack"
+  );
+
+  await assert.rejects(
+    () => loadScenarioPackFromFiles(importedFiles),
+    /scenario eventBindings must be an array/
+  );
+});
+
+test("active game content indexes event bindings by id", () => {
+  const {
+    createActiveGameContent,
+  } = require("../.test-dist/application/content/active-game-content.js");
+
+  const content = createActiveGameContent({
+    schemaVersion: 1,
+    id: "content-pack.test.event-bindings",
+    title: "Event Bindings Content",
+    characters: [],
+    events: [],
+    eventBindings: [
+      {
+        id: "binding.test.city-enter",
+        eventId: "event.test.city-enter",
+        owner: { family: "city", id: "city.test" },
+        trigger: { timing: "after", action: "city-enter" },
+        priority: 10,
+        enabled: true,
+      },
+    ],
+    scenes: [],
+  });
+
+  assert.equal(content.eventBindings[0]?.id, "binding.test.city-enter");
+  assert.equal(
+    content.eventBindingsById["binding.test.city-enter"]?.eventId,
+    "event.test.city-enter"
+  );
+});
+
 test(
   "script editor project loader can hydrate a manifest-driven imported project directory",
   async () => {
@@ -9555,6 +9631,14 @@ test("default runtime content loads from the shared base content pack path", asy
         candidateNpcIds: [],
       },
     ],
+    eventBindings: [
+      {
+        id: "binding.test.runtime-default",
+        eventId: "event.test.runtime-default",
+        owner: { family: "city", id: "city.test.runtime-default" },
+        trigger: { timing: "after", action: "city-enter" },
+      },
+    ],
     houseModuleDefaults: {
       "home-house": {
         intro: "default-runtime-home",
@@ -9581,6 +9665,12 @@ test("default runtime content loads from the shared base content pack path", asy
   assert.equal(
     defaultRuntimeContent.cityNpcPools.some(
       (pool) => pool.cityId === "city.test.runtime-default"
+    ),
+    true
+  );
+  assert.equal(
+    defaultRuntimeContent.eventBindings.some(
+      (binding) => binding.id === "binding.test.runtime-default"
     ),
     true
   );

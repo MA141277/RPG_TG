@@ -33,6 +33,59 @@ export type EventTrigger = {
   priority?: number;
 };
 
+export type EventBindingOwner = {
+  family: string;
+  id?: string;
+  extra?: Record<string, unknown>;
+};
+
+export type EventBindingTrigger = {
+  timing: string;
+  action: string;
+  payloadSchemaId?: string;
+  extra?: Record<string, unknown>;
+};
+
+export type EventBindingConditionGroup = {
+  operator: "all" | "any" | "not";
+  conditions: EventBindingConditionNode[];
+};
+
+export type EventBindingConditionNode =
+  | EventBindingConditionGroup
+  | {
+      type: string;
+      field?: string;
+      operator?: string;
+      value?: unknown;
+      resolverId?: string;
+      extra?: Record<string, unknown>;
+    };
+
+export type EventBinding = {
+  id: string;
+  eventId: EventId;
+  owner: EventBindingOwner;
+  trigger: EventBindingTrigger;
+  conditions?: EventBindingConditionGroup;
+  priority?: number;
+  enabled?: boolean;
+  meta?: Record<string, unknown>;
+};
+
+export type TriggerContext = {
+  timing: string;
+  action: string;
+  owner: {
+    family: string;
+    id?: string;
+  };
+  actorCharacterId?: string;
+  currentCityId?: string;
+  currentHouseId?: string;
+  payload?: Record<string, unknown>;
+};
+
 export type EventCondition =
   | {
       type: "flag";

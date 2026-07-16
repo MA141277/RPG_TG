@@ -5,7 +5,7 @@ import type { CharacterDefinition } from "./character";
 import type { CityDefinition } from "./city";
 import type { CityEntryDefinition } from "./city-entry";
 import type { CityNpcPoolDefinition } from "./city-npc";
-import type { EventDefinition } from "./event";
+import type { EventBinding, EventDefinition } from "./event";
 import type {
   HistoricalCharacterRecord,
   HistoricalCityRoster,
@@ -37,6 +37,7 @@ export type ContentPackDefinition = {
   cityEntries?: CityEntryDefinition[];
   characters?: CharacterDefinition[];
   events?: EventDefinition[];
+  eventBindings?: EventBinding[];
   scenes?: SceneDefinition[];
   tasks?: TaskDefinition[];
   playables?: PlayableDefinition[];

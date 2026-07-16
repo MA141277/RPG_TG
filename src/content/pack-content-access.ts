@@ -23,6 +23,7 @@ export const defaultPackActivities = unwrapJsonModule<unknown[]>(
 export const defaultPackEventDefinitions = unwrapJsonModule<unknown[]>(
   defaultZhuyuanzhangEventsModule
 );
+export const defaultPackEventBindings: unknown[] = [];
 export const defaultPackSceneDefinitions = unwrapJsonModule<unknown[]>(
   defaultZhuyuanzhangScenesModule
 );

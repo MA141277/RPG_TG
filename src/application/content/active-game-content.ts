@@ -7,7 +7,7 @@ import type { CityEntryDefinition } from "../../domain/city-entry";
 import type { CityNpcPoolDefinition, CityNpcPoolRuntimeState } from "../../domain/city-npc";
 import type { ContentPackDefinition } from "../../domain/content-pack";
 import type { ModActivationResult } from "../../core/contracts/mod-runtime";
-import type { EventDefinition } from "../../domain/event";
+import type { EventBinding, EventDefinition } from "../../domain/event";
 import type {
   HistoricalCharacterRecord,
   HistoricalCityRoster,
@@ -49,6 +49,8 @@ export type ActiveGameContent = {
   characterNameById: Record<string, string>;
   eventDefinitions: EventDefinition[];
   eventDefinitionsById: Record<string, EventDefinition>;
+  eventBindings: EventBinding[];
+  eventBindingsById: Record<string, EventBinding>;
   sceneDefinitions: SceneDefinition[];
   sceneDefinitionsById: Record<string, SceneDefinition>;
   taskDefinitions: TaskDefinition[];
@@ -94,6 +96,7 @@ export type ActiveGameContentContext = {
   taskDefinitionsById: Record<string, TaskDefinition>;
   storyContent: {
     eventDefinitionsById: Record<string, EventDefinition>;
+    eventBindingsById: Record<string, EventBinding>;
     sceneDefinitionsById: Record<string, SceneDefinition>;
     activityDefinitionsById: Record<string, ActivityDefinition>;
     textEntriesById: Record<string, string>;
@@ -115,6 +118,7 @@ export function createActiveGameContent(
   const cityEntries = resolvedPack.cityEntries ?? [];
   const characters = resolvedPack.characters ?? [];
   const eventDefinitions = resolvedPack.events ?? [];
+  const eventBindings = resolvedPack.eventBindings ?? [];
   const sceneDefinitions = resolvedPack.scenes ?? [];
   const taskDefinitions = resolvedPack.tasks ?? [];
   const activityDefinitions = resolvedPack.activities ?? [];
@@ -163,6 +167,10 @@ export function createActiveGameContent(
     eventDefinitions,
     eventDefinitionsById: Object.fromEntries(
       eventDefinitions.map((eventDefinition) => [eventDefinition.id, eventDefinition])
+    ),
+    eventBindings,
+    eventBindingsById: Object.fromEntries(
+      eventBindings.map((eventBinding) => [eventBinding.id, eventBinding])
     ),
     sceneDefinitions,
     sceneDefinitionsById: Object.fromEntries(
@@ -231,6 +239,7 @@ export function createActiveGameContentContext(
     taskDefinitionsById: gameContent.taskDefinitionsById,
     storyContent: {
       eventDefinitionsById: gameContent.eventDefinitionsById,
+      eventBindingsById: gameContent.eventBindingsById,
       sceneDefinitionsById: gameContent.sceneDefinitionsById,
       activityDefinitionsById: gameContent.activityDefinitionsById,
       textEntriesById: gameContent.textEntriesById,
@@ -278,6 +287,7 @@ export function mergeContentPacks(
     cityEntries: [...(overridePack.cityEntries ?? [])],
     characters: mergeById(basePack.characters ?? [], overridePack.characters ?? []),
     events: mergeById(basePack.events ?? [], overridePack.events ?? []),
+    eventBindings: mergeById(basePack.eventBindings ?? [], overridePack.eventBindings ?? []),
     scenes: mergeById(basePack.scenes ?? [], overridePack.scenes ?? []),
     tasks: mergeById(basePack.tasks ?? [], overridePack.tasks ?? []),
     activities: mergeById(basePack.activities ?? [], overridePack.activities ?? []),
@@ -326,6 +336,7 @@ function normalizeContentPack(pack: ContentPackDefinition): ContentPackDefinitio
     cityEntries: pack.cityEntries ?? [],
     characters: pack.characters ?? [],
     events: pack.events ?? [],
+    eventBindings: pack.eventBindings ?? [],
     scenes: pack.scenes ?? [],
     tasks: pack.tasks ?? [],
     activities: pack.activities ?? [],

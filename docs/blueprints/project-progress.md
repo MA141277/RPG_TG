@@ -39,12 +39,13 @@
 - `Admission history, queue closeout history, and review narrative must stay in the version plan, queue docs, or docs/change-log.md rather than living here as competing current-state prose.`
 - `The pointed version is now the open script-editor event binding runtime replacement record.`
 - `The latest governance action created target.script-editor-event-binding-runtime-replacement from docs/script-editor-event-trigger-binding-design.md after the previous city/building version had already closed.`
-- `No active queue is currently admitted; the next governed work is queue admission review from the open version plan.`
+- `queue.script-editor-event-binding-contract-loader is closed with same-family authoring UI residue routed to the current version plan.`
 
 ### Historical References
 
 - `docs/change-log.md` stores code and behavior change history only; it is not a default Blueprint search target or governance resume source.`
 - `docs/blueprints/plans/2026-07-16-script-editor-event-binding-runtime-replacement-target-plan.md` stores the open event-binding runtime replacement version's candidate record, admission truth, routing truth, and future closeout truth.
+- `docs/blueprints/queues/script-editor-event-binding-contract-loader-queue.md` stores the active contract/loader queue truth for EventBinding contracts, eventBindings manifest hydration, and registered extension-field boundaries.
 - `docs/blueprints/specs/2026-07-16-script-editor-event-binding-runtime-replacement-target.md` stores the target contract for events.json/event-bindings.json split, editor double-table support, built-in zhuyuanzhang migration, EventBindingRuntime cutover with sub-runtime handoff compatibility, and old event runtime retirement.
 - `docs/blueprints/plans/2026-07-16-city-building-definition-location-access-convergence-target-plan.md` stores the closed city/building definition and LocationAccessRuntime convergence version's candidate record, admission truth, routing truth, and closeout truth.
 - `docs/blueprints/queues/script-editor-city-building-definition-restructure-queue.md` stores the closed city/building definition restructure queue truth.

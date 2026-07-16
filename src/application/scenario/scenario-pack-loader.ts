@@ -113,6 +113,9 @@ export function parseScenarioPack(value: unknown): ScenarioPackDefinition {
     assertArray(value.cityEntries, "scenario city entries");
   }
   assertArray(value.events, "scenario events");
+  if (value.eventBindings != null) {
+    assertArray(value.eventBindings, "scenario eventBindings");
+  }
   assertArray(value.scenes, "scenario scenes");
   if (value.tasks != null) {
     assertArray(value.tasks, "scenario tasks");
@@ -183,6 +186,7 @@ type ScenarioPackManifestFiles = {
   maps?: string;
   cityEntries?: string;
   textEntries?: string;
+  eventBindings?: string;
   activities?: string;
   cards?: string;
   valuables?: string;
