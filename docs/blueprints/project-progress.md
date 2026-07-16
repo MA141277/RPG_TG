@@ -38,7 +38,7 @@
 - `This file only states the current resume entry and downstream pointer set.`
 - `Admission history, queue closeout history, and review narrative must stay in the version plan, queue docs, or docs/change-log.md rather than living here as competing current-state prose.`
 - `The pointed version is now the open city/building definition and LocationAccessRuntime convergence record.`
-- `The latest governance action closed the reopened queue.location-access-runtime-convergence business-line completion check after the script-editor access condition setting, export/runtime preservation, and end-to-end verification passed.`
+- `The latest governance action closed queue.script-editor-zhuyuanzhang-template-direct-load after direct built-in zhuyuanzhang template loading passed focused and full verification.`
 - `Resume from the version plan promotion review; no active queue is currently admitted.`
 
 ### Historical References
@@ -54,6 +54,7 @@
 - `docs/blueprints/queues/map-city-list-compatibility-preservation-queue.md` stores the closed map city-list compatibility preservation queue truth.
 - `docs/blueprints/queues/script-editor-city-building-mount-npc-authoring-queue.md` stores the closed city-side building/NPC mounting authoring queue truth.
 - `docs/blueprints/queues/script-editor-city-building-mount-export-runtime-convergence-queue.md` stores the closed city-mounted building/NPC export/runtime convergence queue truth.
+- `docs/blueprints/queues/script-editor-zhuyuanzhang-template-direct-load-queue.md` stores the closed built-in zhuyuanzhang template direct-load queue truth.
 - `docs/blueprints/plans/2026-07-15-script-editor-authoring-data-structure-unification-target-plan.md` stores the closed authoring/data-structure unification version's activation truth, candidate record, promotion ledger, queue closeout history, and version closeout truth.
 - `docs/blueprints/queues/script-editor-project-cache-save-export-preview-queue.md` stores the closed first project cache/save/export/preview execution truth.
 - `docs/blueprints/queues/script-editor-project-cache-save-export-preview-continuation-queue.md` stores the closed continuation truth for durable save-location recording and stale continue gating.

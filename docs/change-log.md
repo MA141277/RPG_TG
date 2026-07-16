@@ -5,6 +5,17 @@
 `docs/change-log.md` 的正式定位是“历史记录 + 人类可读摘要”。
 它不是当前 Blueprint / legacy superpowers 治理的 live execution truth，不作为 resume entry、promotion gate、closeout gate 或固定同步门。
 
+## 2026-07-16 Script Editor Zhuyuanzhang Template Direct Load
+
+### Changed
+- 更新 [src/application/script-editor/runtime-pack-import.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree/src/application/script-editor/runtime-pack-import.ts)，新增 `loadScriptEditorProjectFromScenarioPackUrl`，复用已存在的 scenario pack URL manifest loader 和 script editor compatibility import。
+- 更新 [src/ui/main-ui/main-ui-flow.js](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree/src/ui/main-ui/main-ui-flow.js)，脚本编辑器“使用模板”按钮现在直接加载 `/scenario-packs/zhuyuanzhang/pack.json`，不再打开文件/目录选择入口。
+- 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree/tests/robustness.test.cjs)，覆盖 UI direct-load wiring 和内置朱元璋发布 manifest URL 导入。
+
+### Impact
+- 创作者可以一键从内置朱元璋模板进入脚本编辑器工作台，不需要手动选择内置包目录。
+- 该批次未新增模板目录、模板选择器或多模板管理流程。
+
 ## 2026-07-16 LocationAccessRuntime Reopen Completion
 
 ### Changed

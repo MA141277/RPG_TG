@@ -6305,6 +6305,66 @@ test("script editor landing labels opening an existing project as opening a draf
   assert.doesNotMatch(mainUiSource, />\s*返回主菜单\s*<\/button>/);
 });
 
+test("script editor template action directly loads the built-in zhuyuanzhang pack", () => {
+  const mainUiSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    "utf8"
+  );
+
+  assert.match(
+    mainUiSource,
+    /DEFAULT_SCRIPT_EDITOR_TEMPLATE_SCENARIO_PACK_URL\s*=\s*"\/scenario-packs\/zhuyuanzhang\/pack\.json"/
+  );
+  assert.match(
+    mainUiSource,
+    /loadScriptEditorProjectFromScenarioPackUrl\(\s*DEFAULT_SCRIPT_EDITOR_TEMPLATE_SCENARIO_PACK_URL\s*\)/
+  );
+  assert.doesNotMatch(
+    mainUiSource,
+    /action === "import-pack"[\s\S]{0,240}\.querySelector\("\[data-script-editor-pack-file\]"\)/
+  );
+});
+
+test("script editor imports built-in zhuyuanzhang template from the published manifest url", async () => {
+  const {
+    loadScriptEditorProjectFromScenarioPackUrl,
+  } = require("../.test-dist/application/script-editor/runtime-pack-import.js");
+
+  const packRoot = path.join(
+    process.cwd(),
+    "src/content/scenario-packs/zhuyuanzhang"
+  );
+  const previousFetch = global.fetch;
+  const previousWindow = global.window;
+  global.window = { location: { href: "https://example.test/editor/" } };
+  global.fetch = async (url) => {
+    const parsed = new URL(String(url), "https://example.test");
+    const relativePath = parsed.pathname.replace(
+      /^\/scenario-packs\/zhuyuanzhang\/?/,
+      ""
+    );
+    const filePath = path.join(packRoot, relativePath || "pack.json");
+    if (!fs.existsSync(filePath)) {
+      return new Response("missing", { status: 404 });
+    }
+    return new Response(fs.readFileSync(filePath), { status: 200 });
+  };
+
+  try {
+    const project = await loadScriptEditorProjectFromScenarioPackUrl(
+      "/scenario-packs/zhuyuanzhang/pack.json"
+    );
+
+    assert.equal(project.id, "scenario-pack.zhu_yuanzhang.monk_opening");
+    assert.equal(project.storyPack.scenarioProfile.playerCharacterId, "char.player");
+    assert.ok(project.people.length > 0);
+    assert.ok(project.cities.length > 0);
+  } finally {
+    global.fetch = previousFetch;
+    global.window = previousWindow;
+  }
+});
+
 test("script editor landing help action is styled as a circular question button", () => {
   const scriptEditorStyles = fs.readFileSync(
     path.join(process.cwd(), "src/styles/script-editor.css"),

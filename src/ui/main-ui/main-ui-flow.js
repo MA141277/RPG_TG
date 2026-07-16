@@ -19,7 +19,7 @@ import {
   exportScriptEditorProjectToScenarioPackFiles,
   validateScriptEditorProjectForRuntimeExport,
 } from "../../application/script-editor/runtime-pack-export";
-import { loadScriptEditorProjectFromScenarioPackFiles } from "../../application/script-editor/runtime-pack-import";
+import { loadScriptEditorProjectFromScenarioPackUrl } from "../../application/script-editor/runtime-pack-import";
 import {
   canContinueScriptEditorProjectEntry,
   createScriptEditorProjectLibraryEntry,
@@ -163,6 +163,8 @@ const characterCardLayoutBindings = Array.from({ length: 8 }, (_, index) => ({
   offsetComponentId: "character-grid",
   elements: characterCardLayoutElements,
 }));
+
+const DEFAULT_SCRIPT_EDITOR_TEMPLATE_SCENARIO_PACK_URL = "/scenario-packs/zhuyuanzhang/pack.json";
 
 const characterSelectLayoutBindings = [
   { componentId: "character-layout", selector: ".c-main-ui-character-layout" },
@@ -3643,15 +3645,6 @@ export class MainUiFlow {
         multiple
         hidden
       >
-      <input
-        type="file"
-        accept="application/json,.json"
-        data-script-editor-pack-file
-        webkitdirectory
-        directory
-        multiple
-        hidden
-      >
     `;
   }
 
@@ -4118,17 +4111,6 @@ export class MainUiFlow {
       }
 
       await this.handleScriptEditorProjectFileImport(files);
-      return;
-    }
-
-    if (target.matches("[data-script-editor-pack-file]")) {
-      const files = Array.from(target.files ?? []);
-      target.value = "";
-      if (files.length === 0) {
-        return;
-      }
-
-      await this.handleScriptEditorPackImport(files);
       return;
     }
 
@@ -4863,9 +4845,7 @@ export class MainUiFlow {
     }
 
     if (action === "import-pack") {
-      this.overlayRoot
-        .querySelector("[data-script-editor-pack-file]")
-        ?.click();
+      await this.handleScriptEditorTemplateImport();
       return;
     }
 
@@ -6929,11 +6909,13 @@ export class MainUiFlow {
     }
   }
 
-  async handleScriptEditorPackImport(files) {
+  async handleScriptEditorTemplateImport() {
     try {
       this.scriptEditorProjectSource = "imported";
       this.commitScriptEditorProject(
-        await loadScriptEditorProjectFromScenarioPackFiles(files)
+        await loadScriptEditorProjectFromScenarioPackUrl(
+          DEFAULT_SCRIPT_EDITOR_TEMPLATE_SCENARIO_PACK_URL
+        )
       );
       this.resetScriptEditorRecordListPages();
       this.resetScriptEditorRecordSearch();

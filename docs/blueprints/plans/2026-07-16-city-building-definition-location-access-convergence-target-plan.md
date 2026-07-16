@@ -8,7 +8,7 @@
 - active_phase: `phase.promotion-review`
 - active_queue: `none`
 - decision_state: `promotion-review`
-- next_decision: `same-version-admission-or-version-closeout`
+- next_decision: `version-closeout`
 - next_action: `return-to-promotion-review`
 - resume_gate: `promotion-review`
 - promotion_review_result: `none`
@@ -22,12 +22,12 @@
 - intake_summary: `none`
 - intake_result: `none`
 - intake_feedback_mode: `none`
-- closure_review_subject: `queue.location-access-runtime-convergence`
+- closure_review_subject: `queue.script-editor-zhuyuanzhang-template-direct-load`
 - closure_review_status: `routed`
 - residue_candidate_id: `none`
 - residue_candidate_family: `none`
-- routing_basis: `queue.location-access-runtime-convergence reopened business-line completion check closed after script-editor access conditionExpression editing, location-access export/runtime preservation, city/building runtime entry guards, and imported cityNpcPools resident activityWeight preservation passed verification.`
-- next_lawful_queue_recommendation: `queue.script-editor-zhuyuanzhang-template-direct-load`
+- routing_basis: `queue.script-editor-zhuyuanzhang-template-direct-load closed after the script editor 使用模板 entrypoint was wired to load /scenario-packs/zhuyuanzhang/pack.json directly through the existing compatibility import path, with focused and full verification passing. No remaining same-version candidate queue is recorded; version closeout still requires explicit human confirmation.`
+- next_lawful_queue_recommendation: `none`
 - auto_admission_ready: `false`
 - blocked_by: []
 - candidate_queue_ids:
@@ -104,7 +104,7 @@
 | `item.map-city-list-compatibility-preservation` | `queue-candidate` | `queue.map-city-list-compatibility-preservation` | `admitted` | `only if map marker breakage becomes a first-order blocker earlier in the version` | `Required-final compatibility proof that existing map city marker data remains on MapDefinition/cityCoordinatesById while map clicks route through LocationAccessRuntime.` |
 | `item.script-editor-city-building-mount-npc-authoring` | `queue-candidate` | `queue.script-editor-city-building-mount-npc-authoring` | `admitted + queue reclosed after regression fix` | `only if fresh evidence proves the city-side mounting authoring surface regressed again` | `Closed after the city authoring surface gained city-owned mountedBuildings data and dropdown controls for mounted buildings, mounted NPCs, and per-building primary NPC selection; reopened once for the operator-reported add-NPC no-op regression and reclosed after preserving editable NPC rows plus adding mounted-building deletion coverage.` |
 | `item.script-editor-city-building-mount-export-runtime-convergence` | `queue-candidate` | `queue.script-editor-city-building-mount-export-runtime-convergence` | `admitted + queue closed` | `only if fresh evidence proves mountedBuildings export/runtime lowering regressed` | `Closed after export lowered city-mounted buildings and mounted NPCs into runtime cities, houses, city-entries, and city-npc-pools, replacing stale imported template relationship tables when mountedBuildings exists.` |
-| `item.script-editor-zhuyuanzhang-template-direct-load` | `queue-candidate` | `queue.script-editor-zhuyuanzhang-template-direct-load` | `deferred candidate` | `after the active queue returns to version review, unless template entrypoint failure becomes a first-order blocker for current city/building authoring validation` | `Requirement: the script editor 使用模板 button must directly load the built-in zhuyuanzhang scenario pack instead of opening a folder picker or requiring user-selected files, so creators can start from the bundled template without directory import friction.` |
+| `item.script-editor-zhuyuanzhang-template-direct-load` | `queue-candidate` | `queue.script-editor-zhuyuanzhang-template-direct-load` | `admitted + queue closed` | `only if fresh evidence proves the script editor template entrypoint direct-load behavior regressed` | `Closed after the script editor 使用模板 button directly loads the built-in zhuyuanzhang scenario pack from /scenario-packs/zhuyuanzhang/pack.json without opening a folder picker or requiring user-selected files.` |
 
 ### Queue Promotion Ledger
 
@@ -119,7 +119,7 @@
 | `queue.map-city-list-compatibility-preservation` | `done` | `Already completed; do not reopen except by explicit governance record.` | `Proved map nodes and coordinates remain map-owned while city entry uses LocationAccessRuntime.` |
 | `queue.script-editor-city-building-mount-npc-authoring` | `done` | `Already completed; do not reopen except by explicit governance record or fresh regression evidence.` | `Closed after dropdown-based city -> buildings -> NPC mounting and per-building primary NPC selection landed in the city authoring surface; reclosed after fixing the add-NPC editing row regression and covering mounted-building deletion.` |
 | `queue.script-editor-city-building-mount-export-runtime-convergence` | `done` | `Already completed; do not reopen except by explicit governance record or fresh regression evidence.` | `Converts the script editor's authored city/building/NPC mounting data into runtime city, building, city-entry, city-NPC, house character/default-character structures and validates exported packs load correctly.` |
-| `queue.script-editor-zhuyuanzhang-template-direct-load` | `candidate` | `Promote after the active queue returns to version review, unless 使用模板 blocking prevents required authoring validation from using a bundled baseline.` | `Changes the script editor 使用模板 entrypoint from folder-picker import to direct loading of the built-in zhuyuanzhang scenario pack.` |
+| `queue.script-editor-zhuyuanzhang-template-direct-load` | `done` | `Already completed; do not reopen except by explicit governance record or fresh regression evidence.` | `Changed the script editor 使用模板 entrypoint from folder-picker import to direct loading of the built-in zhuyuanzhang scenario pack.` |
 
 ### Closure Routing Record
 
@@ -262,3 +262,4 @@
 - `2026-07-16: Operator requested adding queue.location-access-runtime-convergence back into the candidate set because the corresponding city/building entry-condition business line was not complete. The candidate must verify conditionExpression data-shape coverage, editor settings, export lowering, runtime load structure, and end-to-end run-through acceptance before the queue can be closed again.`
 - `2026-07-16: queue.script-editor-city-building-mount-npc-authoring closed after the bounded city-owned mounting authoring slice landed and verified. Version review now owns the same-family export/runtime convergence residue without inferring version closeout.`
 - `2026-07-16: Fresh operator intake recorded queue.script-editor-zhuyuanzhang-template-direct-load as a deferred same-version candidate because the script editor 使用模板 button should directly load the built-in zhuyuanzhang scenario pack rather than invoking folder selection/import.`
+- `2026-07-16: queue.script-editor-zhuyuanzhang-template-direct-load closed after the 使用模板 entrypoint loaded the built-in zhuyuanzhang scenario pack directly from the published manifest URL and no further recorded same-version candidate queue remained. Version closeout still requires explicit human confirmation.`

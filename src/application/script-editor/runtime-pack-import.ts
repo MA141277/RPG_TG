@@ -1,4 +1,7 @@
-import { parseScenarioPack } from "../scenario/scenario-pack-loader";
+import {
+  loadScenarioPackFromUrl,
+  parseScenarioPack,
+} from "../scenario/scenario-pack-loader";
 import { parseScriptEditorProject } from "./editor-project-loader";
 import {
   normalizeScriptEditorBuildingRecord,
@@ -163,6 +166,14 @@ export async function loadScriptEditorProjectFromScenarioPackFiles(
       manifestFileEntry.relativePath,
       indexedFiles
     )
+  );
+}
+
+export async function loadScriptEditorProjectFromScenarioPackUrl(
+  url: string
+): Promise<ScriptEditorProjectDefinition> {
+  return importScenarioPackToScriptEditorProject(
+    await loadScenarioPackFromUrl(url)
   );
 }
 
