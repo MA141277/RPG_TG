@@ -21,6 +21,10 @@ const allowedVersionNextDecisions = new Set([
   "version-closeout",
   "resolve-blocker",
 ]);
+const allowedPostQueueCloseoutPausePolicies = new Set([
+  "auto-continue",
+  "pause-when-explicitly-requested",
+]);
 const allowedAdmissionStatuses = new Set([
   "none",
   "pending",
@@ -115,6 +119,16 @@ export function lintBlueprintDocs(repoRoot = process.cwd()) {
     failures,
     repoRoot
   );
+  lintWorkflowEvidenceContract(
+    path.join(blueprintsRoot, "blueprint-workflow-spec.md"),
+    failures,
+    repoRoot
+  );
+  lintWorkflowGitSyncContract(
+    path.join(blueprintsRoot, "blueprint-workflow-spec.md"),
+    failures,
+    repoRoot
+  );
   lintTemplate(
     path.join(blueprintsRoot, "templates", "project-progress-template.md"),
     failures,
@@ -150,6 +164,7 @@ export function lintBlueprintDocs(repoRoot = process.cwd()) {
     failures,
     repoRoot
   );
+  lintEvidenceBoundTemplates(blueprintsRoot, failures, repoRoot);
   lintReadableQueueOperatorSnapshotContract(
     path.join(blueprintsRoot, "templates", "execution-queue-template.md"),
     failures,
@@ -407,6 +422,134 @@ function lintWorkflowIntakeContract(filePath, failures, repoRoot) {
   ]);
 }
 
+function lintWorkflowEvidenceContract(filePath, failures, repoRoot) {
+  if (!fs.existsSync(filePath)) {
+    return;
+  }
+
+  const text = readFileOrFail(filePath, failures, repoRoot);
+  if (text == null) {
+    return;
+  }
+
+  const relativePath = relative(repoRoot, filePath);
+  requirePatterns(text, relativePath, failures, [
+    [/^## 8\.5 Evidence-Bound Version Creation$/m, "workflow spec must define evidence-bound version creation"],
+    [/^## 8\.6 Acceptance Matrix Rules$/m, "workflow spec must define acceptance matrix rules"],
+    [/^## 8\.7 Candidate Evidence Matrix Rules$/m, "workflow spec must define candidate evidence matrix rules"],
+    [/^## 8\.8 Evidence Lock Before Queue Activation$/m, "workflow spec must define evidence lock before queue activation"],
+    [/^## 8\.9 Queue Claim Boundary$/m, "workflow spec must define queue claim boundaries"],
+    [/^## 8\.10 Final Acceptance Coverage Review$/m, "workflow spec must define final acceptance coverage review"],
+  ]);
+}
+
+function lintWorkflowGitSyncContract(filePath, failures, repoRoot) {
+  if (!fs.existsSync(filePath)) {
+    return;
+  }
+
+  const text = readFileOrFail(filePath, failures, repoRoot);
+  if (text == null) {
+    return;
+  }
+
+  const relativePath = relative(repoRoot, filePath);
+  requirePatterns(text, relativePath, failures, [
+    [/Every completed execution queue should form its own local `branch-commit`/u, "workflow spec must require a local commit for each completed execution queue"],
+    [/Once a push is started, no later Blueprint scheduling action may continue until the push returns success or failure/u, "workflow spec must require waiting for push results before continuing Blueprint scheduling"],
+    [/Push is not bound to every queue; multiple queue commits may be pushed in one later batch/u, "workflow spec must allow batched push after multiple queue commits"],
+    [/Resume truth comes from the written governance docs, not branch memory or remote push status/u, "workflow spec must keep Blueprint resume independent from remote push status"],
+    [/^### 11\.2\.1 Post-Queue Closeout Pause Policy$/m, "workflow spec must define post-queue closeout pause policy"],
+    [/post_queue_closeout_pause_policy = auto-continue/u, "workflow spec must define auto-continue as the default post-queue pause policy"],
+    [/pause-when-explicitly-requested/u, "workflow spec must define explicit pause mode"],
+    [/Restarted queue handling is still candidate handling until admission is legal/u, "workflow spec must keep restarted queues in candidate handling until lawful admission"],
+    [/restarted queue may become active only after the current active queue closes/u, "workflow spec must prevent restarted queues from preempting active queues"],
+    [/^### 11\.6 Candidate Backlog Refresh Before Version Review$/m, "workflow spec must define candidate backlog refresh before version review"],
+    [/candidate_backlog_refresh_status/u, "workflow spec must define candidate backlog refresh status"],
+    [/A `fresh` refresh with an empty candidate snapshot is the only lawful basis/u, "workflow spec must require fresh empty candidate snapshot before saying none"],
+    [/must not require the operator to paste a queue doc/u, "workflow spec must require agents to refresh named queue docs without operator paste"],
+  ]);
+}
+
+function lintEvidenceBoundTemplates(blueprintsRoot, failures, repoRoot) {
+  const targetSpecTemplatePath = path.join(
+    blueprintsRoot,
+    "templates",
+    "target-spec-template.md"
+  );
+  const targetPlanTemplatePath = path.join(
+    blueprintsRoot,
+    "templates",
+    "target-plan-template.md"
+  );
+  const executionQueueTemplatePath = path.join(
+    blueprintsRoot,
+    "templates",
+    "execution-queue-template.md"
+  );
+
+  if (fs.existsSync(targetSpecTemplatePath)) {
+    const text = readFileOrFail(targetSpecTemplatePath, failures, repoRoot);
+    if (text != null) {
+      const relativePath = relative(repoRoot, targetSpecTemplatePath);
+      requirePatterns(text, relativePath, failures, [
+        [/^### Version Draft Summary$/m, "target spec template must include a Version Draft Summary section"],
+        [/^### Evidence Draft Review$/m, "target spec template must include an Evidence Draft Review section"],
+        [/^### Draft Requirement Coverage$/m, "target spec template must include Draft Requirement Coverage"],
+        [/^### Acceptance Matrix$/m, "target spec template must include an Acceptance Matrix"],
+        [/^### Final Acceptance Coverage Contract$/m, "target spec template must include a Final Acceptance Coverage Contract"],
+      ]);
+    }
+  }
+
+  if (fs.existsSync(targetPlanTemplatePath)) {
+    const text = readFileOrFail(targetPlanTemplatePath, failures, repoRoot);
+    if (text != null) {
+      const relativePath = relative(repoRoot, targetPlanTemplatePath);
+      requirePatterns(text, relativePath, failures, [
+        [/^### Evidence Draft Summary$/m, "target plan template must include an Evidence Draft Summary"],
+        [/^### Evidence Lock Rule$/m, "target plan template must include an Evidence Lock Rule"],
+        [/^### Candidate Evidence Matrix$/m, "target plan template must include a Candidate Evidence Matrix"],
+        [/^### Acceptance Coverage Ledger$/m, "target plan template must include an Acceptance Coverage Ledger"],
+        [/Implementation Anchors/u, "target plan template candidate ledger must include implementation anchors"],
+        [/Can Claim/u, "target plan template candidate ledger must include claim scope"],
+        [/Cannot Claim/u, "target plan template candidate ledger must include non-claim scope"],
+        [/Every completed execution queue should have its own local commit/u, "target plan template must require one local commit per completed queue"],
+        [/Once push starts, wait for its success or failure result/u, "target plan template must require waiting for push results"],
+        [/Push is optional per queue and may be batched/u, "target plan template must allow batched push"],
+        [/post_queue_closeout_pause_policy/u, "target plan template must include post-queue closeout pause policy"],
+        [/^### Post-Queue Closeout Pause Policy$/m, "target plan template must include a Post-Queue Closeout Pause Policy section"],
+        [/If post_queue_closeout_pause_policy=auto-continue and the next legal step is unique/u, "target plan template must prevent default continuation prompts under auto-continue"],
+        [/If a restarted queue requires document updates/u, "target plan template must route restarted queues through candidate updates"],
+        [/A restarted queue must not stop, replace, preempt, or immediately become the current active execution queue/u, "target plan template must prevent restarted queues from preempting active queues"],
+        [/^### Candidate Backlog Refresh Rule$/m, "target plan template must include a Candidate Backlog Refresh Rule section"],
+        [/candidate_backlog_refresh_status/u, "target plan template must include candidate backlog refresh status"],
+        [/candidate_backlog_snapshot/u, "target plan template must include candidate backlog snapshot"],
+        [/Do not answer no candidate queues remain unless candidate_backlog_refresh_status=fresh/u, "target plan template must block no-candidate answers until refresh is fresh"],
+        [/Do not require the operator to paste a queue doc/u, "target plan template must require named queue docs to be refreshed without operator paste"],
+      ]);
+    }
+  }
+
+  if (fs.existsSync(executionQueueTemplatePath)) {
+    const text = readFileOrFail(executionQueueTemplatePath, failures, repoRoot);
+    if (text != null) {
+      const relativePath = relative(repoRoot, executionQueueTemplatePath);
+      requirePatterns(text, relativePath, failures, [
+        [/^### Evidence Lock$/m, "execution queue template must include an Evidence Lock section"],
+        [/^### Claim Boundary$/m, "execution queue template must include a Claim Boundary section"],
+        [/^#### Can Claim$/m, "execution queue template must include Can Claim"],
+        [/^#### Cannot Claim$/m, "execution queue template must include Cannot Claim"],
+        [/^#### Implementation Anchors$/m, "execution queue template must include Implementation Anchors"],
+        [/task\.replace-me\.evidence-anchor-reconcile/u, "execution queue template must include evidence-anchor-reconcile as the first task"],
+        [/Every completed execution queue should produce one local commit/u, "execution queue template must require one local commit per completed queue"],
+        [/Once push starts, wait for its success or failure result/u, "execution queue template must require waiting for push results"],
+        [/Push is optional per queue and may be batched/u, "execution queue template must allow batched push"],
+      ]);
+    }
+  }
+}
+
 function lintTargetPlanOperatorContract(filePath, failures, repoRoot) {
   if (!fs.existsSync(filePath)) {
     return;
@@ -525,6 +668,23 @@ function lintTargetPlan(filePath, failures, repoRoot, label) {
   if (!isTemplate && nextDecision != null && !allowedVersionNextDecisions.has(nextDecision)) {
     failures.push(
       `${relativePath}: ${label} next_decision "${nextDecision}" is not an allowed enum value`
+    );
+  }
+
+  const postQueueCloseoutPausePolicy = requireFieldValue(
+    text,
+    "post_queue_closeout_pause_policy",
+    relativePath,
+    failures,
+    `${relativePath}: ${label} missing Control Block field "post_queue_closeout_pause_policy"`
+  );
+  if (
+    !isTemplate &&
+    postQueueCloseoutPausePolicy != null &&
+    !allowedPostQueueCloseoutPausePolicies.has(postQueueCloseoutPausePolicy)
+  ) {
+    failures.push(
+      `${relativePath}: ${label} post_queue_closeout_pause_policy "${postQueueCloseoutPausePolicy}" is not an allowed enum value`
     );
   }
 

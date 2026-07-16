@@ -135,10 +135,14 @@ The version plan is the only live governor for:
 - `active_phase`
 - `active_queue`
 - `candidate_queue_ids`
+- `candidate_backlog_refresh_status`
+- `candidate_backlog_snapshot`
+- `candidate_backlog_scan_sources`
 - `decision_state`
 - `next_decision`
 - `next_action`
 - `resume_gate`
+- `post_queue_closeout_pause_policy`
 - `promotion_review_result`
 - `review_subject_id`
 - `review_subject_classification`
@@ -157,6 +161,9 @@ The version plan is the only live governor for:
 - `routing_basis`
 - `next_lawful_queue_recommendation`
 - `auto_admission_ready`
+- `candidate_backlog_refresh_status`
+- `candidate_backlog_snapshot`
+- `candidate_backlog_scan_sources`
 - queue promotion / hold / reopen / closeout conclusions
 - version-level closeout decision
 
@@ -223,6 +230,7 @@ The following fields must be structured whenever they are needed:
 - `entry_action`
 - `next_action`
 - `resume_gate`
+- `post_queue_closeout_pause_policy`
 - `closeout_status`
 - `next_effect`
 - `promotion_review_result`
@@ -238,6 +246,9 @@ The following fields must be structured whenever they are needed:
 - `routing_basis`
 - `next_lawful_queue_recommendation`
 - `auto_admission_ready`
+- `candidate_backlog_refresh_status`
+- `candidate_backlog_snapshot`
+- `candidate_backlog_scan_sources`
 - `execution_closeout_status`
 - `topic_closure_status`
 - `closure_basis`
@@ -375,6 +386,15 @@ Only re-open a full recheck when new material evidence:
 - proves the item can now be absorbed by the current active queue
 - proves the item no longer belongs to the current version
 
+Restarted queue handling is still candidate handling until admission is legal.
+
+Hard rules:
+
+1. if a restarted queue or restarted queue-worthy item requires document updates, write those updates into the version plan candidate ledgers first
+2. after those document updates, place the restarted queue into the candidate queue set rather than the execution queue
+3. restarting a queue must not stop, replace, or preempt the current active execution queue
+4. the restarted queue may become active only after the current active queue closes and version-level admission review lawfully promotes it
+
 ### 7.4 Required write order for admission
 
 When a `queue-candidate` is admitted, write truth in this order before implementation:
@@ -426,8 +446,9 @@ Rules:
 
 1. if an active queue already exists, a fresh item must first be tested for absorption into that queue
 2. if the item cannot be absorbed, it may be classified and recorded as a candidate, but it must not be activated as a second queue
-3. the version plan must not keep a live admission review subject while another queue remains active
-4. the agent must wait for current queue closeout and return to version-level review before activating a new queue
+3. if a restarted queue or re-opened queue item cannot be absorbed, it must also be recorded as a candidate for later rather than promoted directly to execution
+4. the version plan must not keep a live admission review subject while another queue remains active
+5. the agent must wait for current queue closeout and return to version-level review before activating a new queue
 
 When an active queue exists, the fixed operator receipt must still explain whether the fresh item was absorbed or converged into a candidate queue, and it must include the current queue snapshot needed for operator visibility.
 
@@ -494,6 +515,161 @@ This record may live in a ledger table or equivalent structured section, but it 
 - recheck trigger
 
 The purpose is to allow later sessions to resume from existing admission evidence instead of repeating a from-scratch audit.
+
+## 8.5 Evidence-Bound Version Creation
+
+New versions must be created from a lightweight operator draft plus AI-generated evidence, not from a prose target directly.
+
+Operator-facing drafting instructions live in:
+
+- `docs/blueprints/version-authoring-guide.md`
+
+The operator-owned input is a `Version Draft`. It should contain only:
+
+- one goal statement
+- required outcomes
+- explicit non-goals
+- compatibility paths that must be preserved
+- legacy structures or behaviors that must be replaced
+- reference material such as memos, PRDs, bugs, prior queues, or optional code paths
+
+The AI-owned expansion is a `Version Evidence Draft`. Before writing a formal version spec or version plan, the agent must generate and present a concise evidence summary for operator review.
+
+The evidence draft must include:
+
+- draft requirement coverage
+- acceptance matrix
+- candidate queue evidence matrix
+- implementation anchors
+- legacy paths to replace
+- compatibility paths to preserve
+- queue claim boundaries
+- first queue recommendation
+- high-risk drift points
+
+The operator reviews intent and boundary only. The operator does not need to audit every Control Block field, task command, or markdown detail.
+
+Allowed operator responses:
+
+- `confirm`
+- `adjust-goal`
+- `adjust-queues`
+- `adjust-first-queue`
+- equivalent plain-language instructions
+
+Formal version specs and plans must be generated only from a reviewed evidence draft. If the operator supplies only a broad version idea, the agent must create the evidence draft first and must not admit or implement a queue from the broad idea directly.
+
+## 8.6 Acceptance Matrix Rules
+
+Every formal version spec must expose an acceptance matrix in addition to prose acceptance criteria.
+
+Each acceptance item must have:
+
+- `acceptance_id`
+- requirement summary
+- primary owner queue
+- proof type
+- expected implementation anchor
+- closeout blocker rule
+
+Rules:
+
+1. Every required outcome from the Version Draft must map to at least one acceptance item.
+2. Every compatibility-preserve item must map to at least one compatibility acceptance.
+3. Every must-replace item must map to at least one replacement or migration acceptance.
+4. Every acceptance item must have exactly one primary owner queue.
+5. Supporting queues may be named, but they must not replace the primary owner.
+6. Final validation queues must not be the primary owner for normal implementation acceptance; they prove coverage after owner queues land.
+7. A version cannot close while a required acceptance is uncovered, unowned, or only prose-claimed.
+
+## 8.7 Candidate Evidence Matrix Rules
+
+Every candidate queue in a version plan must carry enough evidence to prevent document-only queue generation.
+
+For each candidate queue, the version plan must record:
+
+- candidate id
+- proposed queue id
+- acceptance refs
+- source document refs
+- implementation anchor refs
+- legacy paths to replace
+- compatibility paths to preserve
+- can-claim acceptance refs
+- cannot-claim acceptance refs
+- reject or split conditions
+
+Rules:
+
+1. A candidate queue with no implementation anchor is not executable. It may only be recorded as `uncertain-needs-review` or converted into an evidence-gathering queue.
+2. A candidate queue must not be admitted if its acceptance refs are missing or conflict with another queue's primary ownership.
+3. A queue that only proves a seam, adapter, fail-closed guard, or materializer must not claim broader version acceptance unless the acceptance matrix explicitly makes that seam the acceptance.
+4. Candidate recovery must resume from the evidence matrix when it exists; do not restart broad audits without new material evidence.
+
+## 8.8 Evidence Lock Before Queue Activation
+
+Before any candidate queue becomes active, the agent must perform an Evidence Lock review.
+
+Evidence Lock records:
+
+- `evidence_lock_status`: `pending | locked | blocked`
+- `implementation_anchor_status`: `confirmed | missing | conflicting`
+- `prerequisite_status`: `ready | needs-prior-queue | split-required`
+- `acceptance_claim_scope`
+- `acceptance_not_claimed`
+- `must_inspect`
+- `must_modify`
+- `must_replace`
+- `must_preserve`
+- `minimum_verification`
+
+Rules:
+
+1. The Evidence Lock may be a dedicated pre-activation review in the version plan or the first task of an already-started queue.
+2. If implementation anchors are missing, the queue must not proceed into feature implementation.
+3. If prerequisites are missing, the queue must return to version review or split the prerequisite queue.
+4. If the queue can only close a smaller slice than its name implies, the claim boundary must be narrowed before implementation starts.
+5. Existing active queues may be repaired by adding an `evidence-anchor-reconcile` task before further implementation.
+
+## 8.9 Queue Claim Boundary
+
+Every active execution queue must state what it can and cannot claim.
+
+Required queue sections:
+
+- `Can Claim`
+- `Cannot Claim`
+- `Legacy Paths To Replace`
+- `Compatibility Paths To Preserve`
+- `Implementation Anchors`
+- `Verification Coverage`
+
+Rules:
+
+1. `Can Claim` may list only acceptance ids owned by the queue.
+2. `Cannot Claim` must list related version acceptance that remains outside the queue.
+3. Queue closeout can close only the acceptance ids listed in `Can Claim`.
+4. If implementation lands only a seam or guard, closeout must say so and route remaining acceptance through residue.
+5. Queue residue classification must compare landed behavior against the claim boundary, not the queue title.
+
+## 8.10 Final Acceptance Coverage Review
+
+Final validation is an acceptance coverage review, not a substitute for owner-queue implementation.
+
+A required-final queue must produce or update an acceptance coverage table:
+
+- acceptance id
+- owner queue
+- proof artifact or test
+- status: `covered | accepted-residue | blocked | uncovered`
+- residue or blocker
+
+Rules:
+
+1. Representative happy-path validation is useful but insufficient by itself.
+2. Version closeout requires every required acceptance to be `covered` or explicitly `accepted-residue`.
+3. `accepted-residue` must name why the residue no longer blocks the version boundary.
+4. If final validation discovers an implementation gap, the gap must route to the owning queue family or a new admitted queue; final validation must not silently absorb broad implementation work.
 
 ## 9. Version State Model
 
@@ -666,6 +842,7 @@ If all are true:
 - the active task is complete
 - verification passed
 - no blocker remains
+- the current version plan has `post_queue_closeout_pause_policy = auto-continue`
 - the next legal execution point is unique
 
 then the agent must automatically continue into:
@@ -674,6 +851,8 @@ then the agent must automatically continue into:
 - queue gate re-evaluation
 - queue closeout judgement
 - same-family residue routing or version review handoff
+- next queue admission when uniquely lawful
+- next active queue startup when uniquely lawful
 
 It is illegal to stop at:
 
@@ -684,6 +863,69 @@ It is illegal to stop at:
 - `要不要同步文档`
 
 when those are already the only legal next step.
+
+### 11.2.1 Post-Queue Closeout Pause Policy
+
+The version plan owns post-queue pause behavior through:
+
+- `post_queue_closeout_pause_policy`
+
+Allowed values:
+
+- `auto-continue`
+- `pause-when-explicitly-requested`
+
+Default:
+
+- `auto-continue`
+
+When `post_queue_closeout_pause_policy = auto-continue`:
+
+1. Queue completion must not create a default pause or default `是否继续` question.
+2. If queue completion, verification, governance sync, and repository sync record are complete, and the next legal action is unique, the agent must automatically continue.
+3. Automatic continuation includes queue closeout, version review, same-family residue routing, next queue admission, and next active queue startup when each step is uniquely lawful.
+4. The agent may ask the operator only when multiple mutually exclusive legal branches exist, a real blocker exists, or version closeout would change `version_status` from `open` to `done`.
+
+When the operator explicitly requests queue-completion pauses, the agent must write the request into version-plan truth by setting:
+
+- `post_queue_closeout_pause_policy = pause-when-explicitly-requested`
+
+Equivalent operator requests include:
+
+- `这个队列完成后停下来`
+- `完成当前执行批次后先不要继续`
+- `后续每个队列完成后都先问我`
+- `开启队列完成暂停模式`
+
+When `post_queue_closeout_pause_policy = pause-when-explicitly-requested`:
+
+1. The agent must still complete the current queue's implementation, verification, closeout, governance sync, and repository sync record.
+2. The agent must not pause before the legal execution batch is complete.
+3. The pause point may occur only after a legal execution queue or batch is fully complete.
+4. The pause report must include:
+   - completed queue
+   - completion result
+   - verification result
+   - repository sync result
+   - next lawful queue or next lawful action
+   - a concise question asking whether to continue
+
+The operator may explicitly restore automatic continuation with requests such as:
+
+- `恢复自动继续`
+- `之后不需要每个队列完成都问我`
+- `关闭队列完成暂停模式`
+
+The agent must then write:
+
+- `post_queue_closeout_pause_policy = auto-continue`
+
+This policy does not change:
+
+1. the mandatory human confirmation before `version_status` changes from `open` to `done`
+2. blocker handling
+3. human choice when multiple mutually exclusive legal branches exist
+4. the rule that a unique next step must not prompt the operator when pause policy is `auto-continue`
 
 ### 11.3 Queue closeout judgement
 
@@ -728,19 +970,67 @@ Queue closeout sync order is fixed:
 5. project-progress
 6. optional `docs/change-log.md` update only when code, runtime, compatibility, shared interface, or user-visible behavior changed
 
-### 11.6 Task after-state repository sync
+### 11.6 Candidate Backlog Refresh Before Version Review
+
+After an execution queue closes, Blueprint must refresh candidate truth before it answers whether more same-version candidate queues exist.
+
+The refresh order is fixed:
+
+1. `project-progress`
+2. `blueprint`
+3. current version plan
+4. version plan `candidate_queue_ids`
+5. `Candidate Recovery Ledger`
+6. `Queue Promotion Ledger`
+7. relevant queue docs named by the current version plan
+8. `docs/change-log.md` only when the structured governance docs are insufficient or explicitly cite it
+
+The version plan should record the refresh result in:
+
+- `candidate_backlog_refresh_status`
+- `candidate_backlog_snapshot`
+- `candidate_backlog_scan_sources`
+
+Allowed refresh statuses:
+
+- `not-run`
+- `fresh`
+- `stale`
+- `blocked`
+
+Hard rules:
+
+1. The agent must not answer `no candidate queues remain`, `none`, or equivalent prose until the candidate backlog refresh is `fresh`.
+2. A `fresh` refresh with an empty candidate snapshot is the only lawful basis for saying no candidate queues remain.
+3. If any candidate queue appears in `candidate_queue_ids`, `Candidate Recovery Ledger`, `Queue Promotion Ledger`, or cited queue docs, the agent must list it or explain why it is not eligible yet.
+4. If the candidate truth is stale, missing, or internally inconsistent, the next action is refresh or reconcile; it is not a prose answer that no candidates exist.
+5. The agent must not require the operator to paste a queue doc before performing this refresh when the doc path is already named by governance truth.
+
+### 11.7 Task And Queue Repository Sync
 
 After a task reaches a terminal execution state:
 
 1. write the task after-state first
 2. write queue truth and any required version truth second
 3. record the local repository sync state third
-4. defer commit, push, and baseline merge until the bounded Blueprint task or tightly related task group reaches closeout, unless remote collaboration or an explicit queue/version contract requires earlier sync
+4. defer push and baseline merge until explicitly requested, collaboration needs remote visibility, or a queue/version contract requires remote sync
 5. continue Blueprint scheduling after the local-record step or any attempted repository sync returns a result
+
+After a queue reaches queue closeout:
+
+1. create one local `branch-commit` for that completed execution queue before activating the next queue or continuing version-level promotion review
+2. use a commit message with a typed subject plus a `Summary:` body containing real content bullets
+3. record the local commit result in the queue-local sync record
+4. keep push optional; do not require one push per queue
+5. if push is deferred, record that the queue has a local commit and remote sync is pending or not requested
+6. a completed queue-local `branch-commit` is not a pause boundary by itself
+7. after repository sync is recorded, continue to the next lawful Blueprint scheduling action unless `post_queue_closeout_pause_policy = pause-when-explicitly-requested`, a blocker exists, multiple mutually exclusive legal branches exist, or version closeout confirmation is required
 
 Repository sync success or failure must not rewrite the already-recorded execution conclusion.
 
-Remote sync failure must not block queue closeout, version review handoff, same-family continuation routing, or next lawful queue activation when the execution truth and required governance truth are otherwise complete. It only records that remote repository synchronization did not complete.
+If a `git push` or other remote sync is started, the agent must wait until the push command returns a clear success or failure result before continuing any Blueprint scheduling, admission, queue activation, closeout routing, or version review work.
+
+Remote sync success or failure must not block queue closeout, version review handoff, same-family continuation routing, or next lawful queue activation when the execution truth and required governance truth are otherwise complete. It only records the remote repository synchronization result as historical sync fact.
 
 ## 12. Human Confirmation Constraint
 
@@ -893,24 +1183,28 @@ Rules:
 3. All work happens on a working branch.
 4. Repository sync levels are:
    - `local-record`: write local docs/code and queue-local sync state without creating a commit
-   - `branch-commit`: create one semantic commit for a completed bounded task or tightly related task group
+   - `branch-commit`: create one semantic local commit for one completed execution queue
+   - `branch-push`: push the working branch without baseline merge
    - `remote-sync`: push the working branch and, only when explicitly required, merge/push the baseline
-5. The default Blueprint governance/documentation refinement path is `local-record` during execution, `branch-commit` at task closeout, and `remote-sync` only when requested, when collaboration needs remote visibility, or when a queue/version closeout contract explicitly requires it.
-6. Terminal task after-state does not by itself require immediate commit, push, baseline merge, or baseline push.
-7. Avoid process-only commits for minor field synchronization unless that synchronization is the bounded task itself.
-8. Every git commit, including merge commits, must carry its own structured content summary in the commit message body.
-9. Commit / push / merge are non-governing: they must not change task state, queue state, version state, or version scheduling truth.
-10. Local hook or CI enforcement must reject commit messages that omit the required summary block.
-11. Repository sync failure is recorded only as repository sync result in the queue-local sync record.
-12. Repository sync failure must not be rewritten as queue blocker, target blocker, queue_status change, version_status change, decision_state change, repository/global verification failure, or decision_required.
-13. Repository sync failure must not block task closeout, queue closeout, version review handoff, same-family continuation routing, or next lawful queue activation.
-14. If repository sync fails, Blueprint scheduling still continues from the written governance docs rather than waiting for success.
-15. Ask the user only when baseline selection is ambiguous or when merge-conflict handling has multiple mutually exclusive legal resolutions that current version truth cannot decide.
-16. Resume truth comes from the written governance docs, not branch memory.
-17. A merge conflict is part of repository sync, not execution-state governance.
-18. A merge conflict must not rewrite the already-recorded task, queue, or target conclusion.
-19. If current version truth uniquely decides the merge direction, resolve it without asking.
-20. Record merge-conflict outcome only in the queue-local sync record rather than elevating it into version live truth.
+5. Every completed execution queue should form its own local `branch-commit` before later Blueprint scheduling continues.
+6. The default Blueprint governance/documentation refinement path is `local-record` during execution, `branch-commit` at queue closeout, and deferred push unless remote visibility is requested or required.
+7. Push is not bound to every queue; multiple queue commits may be pushed in one later batch.
+8. Once a push is started, no later Blueprint scheduling action may continue until the push returns success or failure.
+9. Terminal task after-state does not by itself require immediate commit, push, baseline merge, or baseline push.
+10. Avoid process-only commits for minor field synchronization unless that synchronization is the bounded queue or task itself.
+11. Every git commit, including merge commits, must carry its own structured content summary in the commit message body.
+12. Commit / push / merge are non-governing: they must not change task state, queue state, version state, or version scheduling truth.
+13. Local hook or CI enforcement must reject commit messages that omit the required summary block.
+14. Repository sync failure is recorded only as repository sync result in the queue-local sync record.
+15. Repository sync failure must not be rewritten as queue blocker, target blocker, queue_status change, version_status change, decision_state change, repository/global verification failure, or decision_required.
+16. Repository sync failure must not block task closeout, queue closeout, version review handoff, same-family continuation routing, or next lawful queue activation.
+17. After a returned push result is recorded, Blueprint scheduling continues from written governance docs whether the push succeeded or failed.
+18. Ask the user only when baseline selection is ambiguous or when merge-conflict handling has multiple mutually exclusive legal resolutions that current version truth cannot decide.
+19. Resume truth comes from the written governance docs, not branch memory or remote push status.
+20. A merge conflict is part of repository sync, not execution-state governance.
+21. A merge conflict must not rewrite the already-recorded task, queue, or target conclusion.
+22. If current version truth uniquely decides the merge direction, resolve it without asking.
+23. Record merge-conflict outcome only in the queue-local sync record rather than elevating it into version live truth.
 
 ## 18. Drift-Prone Field Reduction
 

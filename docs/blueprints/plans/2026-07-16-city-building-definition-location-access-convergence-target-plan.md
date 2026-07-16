@@ -11,6 +11,7 @@
 - next_decision: `version-closeout`
 - next_action: `write-version-closeout`
 - resume_gate: `closed-version-record`
+- post_queue_closeout_pause_policy: `auto-continue`
 - promotion_review_result: `closeout`
 - review_subject_id: `none`
 - review_subject_classification: `none`
@@ -84,6 +85,17 @@
 - `As long as version_status = done, no additional same-version queues may be admitted without an explicit governance reopening record.`
 - `If no open version exists, version creation becomes the required next governance action before any queue admission or implementation can begin.`
 - `Queue closeout may auto-advance; this version closeout was not inferred from queue completion alone and is recorded from explicit operator confirmation.`
+
+### Post-Queue Closeout Pause Policy
+
+- `post_queue_closeout_pause_policy = auto-continue is the current default for this version.`
+- `When the policy is auto-continue, completing a queue must not create a default "whether to continue" question.`
+- `If the next legal action is unique after queue closeout, continue automatically through closeout, version review, same-family residue routing, next queue admission, or next active queue startup.`
+- `If the operator explicitly requests queue-completion pauses, write post_queue_closeout_pause_policy = pause-when-explicitly-requested in this version plan.`
+- `When pause-when-explicitly-requested is active, pause only after queue closeout, verification, governance sync, and repository sync record are complete.`
+- `At a configured pause point, report the completed queue, verification result, sync result, next legal action or queue, and ask whether to continue.`
+- `The operator may return to auto-continue with an explicit request such as "恢复自动继续" or "关闭队列完成暂停模式".`
+- `This policy does not remove required human confirmation for version_status open -> done, real blockers, or genuinely multiple mutually exclusive legal branches.`
 
 ### Queue Admission Startup Rules
 

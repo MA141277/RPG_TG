@@ -9,8 +9,8 @@
 - governance_sync_source: `docs/blueprints/blueprint.md`
 - queue_status: `active | blocked | done | dropped`
 - queue_class: `required`
-- active_task: `task.replace-me | none`
-- next_task: `task.replace-me-next | none`
+- active_task: `task.replace-me.evidence-anchor-reconcile | none`
+- next_task: `task.replace-me | none`
 - closeout_status: `in-progress | done | blocked`
 - execution_closeout_status: `done | partial | blocked`
 - topic_closure_status: `closed | open-residue | blocked`
@@ -42,6 +42,49 @@
   - `Replace with out-of-scope area 1.`
   - `Replace with out-of-scope area 2.`
 
+### Evidence Lock
+
+- evidence_lock_status: `pending | locked | blocked`
+- implementation_anchor_status: `confirmed | missing | conflicting`
+- prerequisite_status: `ready | needs-prior-queue | split-required`
+- acceptance_claim_scope:
+  - `ACC-REPLACE-001`
+- acceptance_not_claimed:
+  - `ACC-REPLACE-002`
+- minimum_verification:
+  - `Replace with command or proof required before implementation/closeout.`
+
+### Claim Boundary
+
+#### Can Claim
+
+- `ACC-REPLACE-001: Replace with the acceptance this queue may close.`
+
+#### Cannot Claim
+
+- `ACC-REPLACE-002: Replace with related acceptance that remains outside this queue.`
+
+#### Legacy Paths To Replace
+
+- `Replace with old field, file, behavior, or mechanism this queue owns replacing.`
+
+#### Compatibility Paths To Preserve
+
+- `Replace with compatibility behavior or path that must remain valid.`
+
+#### Implementation Anchors
+
+- Must inspect:
+  - `src/or/tests/path`
+- Must modify:
+  - `src/or/tests/path`
+- Must preserve:
+  - `src/or/tests/path-or-behavior`
+
+#### Verification Coverage
+
+- `Replace with proof or test that demonstrates the claimed acceptance.`
+
 ### Parent Version
 
 - Version spec:
@@ -52,11 +95,12 @@
 ### Queue Snapshot
 
 - queue_goal: `Replace with the bounded queue goal in one sentence.`
-- task_count: `1`
+- task_count: `2`
 - completed_task_count: `0`
-- remaining_task_count: `1`
-- active_task_summary: `Replace with the current active-task summary.`
+- remaining_task_count: `2`
+- active_task_summary: `Confirm evidence lock, implementation anchors, claim boundary, and minimum verification before feature implementation.`
 - task_briefs:
+  - `task.replace-me.evidence-anchor-reconcile: Confirm evidence lock before implementation.`
   - `task.replace-me: Replace with a one-line task brief.`
 
 ### Operator Snapshot Contract
@@ -86,11 +130,14 @@
 
 - `After a task reaches any terminal after-state and the required docs are updated, record local repository sync state.`
 - `The queue-local sync record stores only repository sync result; it does not change task, queue, or version truth.`
-- `Default Blueprint governance/documentation refinement uses local-record during execution and branch-commit at task closeout.`
+- `Default Blueprint governance/documentation refinement uses local-record during execution and one branch-commit at queue closeout.`
+- `Every completed execution queue should produce one local commit with a typed subject and Summary body before later Blueprint scheduling continues.`
+- `Push is optional per queue and may be batched after multiple queue commits.`
 - `Push and baseline merge are remote-sync actions; run them only when requested, when collaboration requires remote visibility, or when a queue/version closeout contract explicitly requires them.`
+- `Once push starts, wait for its success or failure result before continuing queue activation, promotion review, or version scheduling.`
 - `A blocked queue still allows local-record, branch-commit, and remote-sync; repository sync is not forbidden just because execution is blocked.`
 - `sync failure must not be copied into blocked_by, queue closeout gates, version closeout gates, or version scheduling truth.`
-- `remote-sync failure must not block queue closeout, version review handoff, same-family continuation routing, or next lawful queue activation.`
+- `remote-sync failure must not block queue closeout, version review handoff, same-family continuation routing, or next lawful queue activation after the failure result is recorded.`
 
 ### Activation Order
 
@@ -108,9 +155,52 @@
 
 | Task ID | State | Summary | Depends On | Notes |
 | --- | --- | --- | --- | --- |
-| `task.replace-me` | `active` | `Replace with task summary.` | `none` | `Replace with task note.` |
+| `task.replace-me.evidence-anchor-reconcile` | `active` | `Confirm evidence lock, implementation anchors, claim boundary, and minimum verification before feature implementation.` | `none` | `This task may block or split the queue if anchors are missing or conflicting.` |
+| `task.replace-me` | `queued` | `Replace with task summary.` | `task.replace-me.evidence-anchor-reconcile` | `Replace with task note.` |
 
 ### Task Definitions
+
+#### `task.replace-me.evidence-anchor-reconcile`
+
+##### Control Block
+
+- task_id: `task.replace-me.evidence-anchor-reconcile`
+- state: `active`
+- task_kind: `decision-dispatch`
+- scope:
+  - `docs/blueprints/specs/...`
+  - `docs/blueprints/plans/...`
+  - `src/or/tests/path`
+- must_inspect:
+  - `version acceptance matrix`
+  - `candidate evidence matrix`
+  - `implementation anchors`
+- must_not_change:
+  - `Do not implement feature code before evidence_lock_status is locked.`
+  - `Do not widen queue scope to close acceptance outside Can Claim.`
+- done_when:
+  - `Evidence Lock is locked or the queue is blocked with a concrete reason.`
+  - `Can Claim and Cannot Claim list acceptance ids from the version acceptance matrix.`
+  - `Must inspect, must modify, must replace, must preserve, and minimum verification are recorded.`
+- verify_with:
+  - `npm run lint:blueprints`
+- if_blocked:
+  - `Return to version review or split a prerequisite queue.`
+- promote_next_if_done: `task.replace-me`
+- stop_if:
+  - `implementation_anchor_status is missing or conflicting`
+  - `prerequisite_status is needs-prior-queue or split-required`
+
+##### Human Context
+
+- task_brief:
+  - `Lock the queue evidence before implementation.`
+- task_outcome_summary:
+  - `Replace with evidence-lock result after completion.`
+- Purpose:
+  - `Prevent queue execution from drifting away from version acceptance and implementation anchors.`
+- Failure mode:
+  - `The queue starts implementing from its title rather than from acceptance ownership and source evidence.`
 
 #### `task.replace-me`
 
@@ -125,6 +215,12 @@
 - must_inspect:
   - `file-a`
   - `file-b`
+- must_modify:
+  - `file-a`
+- must_replace:
+  - `legacy field or behavior`
+- must_preserve:
+  - `compatibility path or behavior`
 - must_not_change:
   - `Replace with forbidden change 1.`
   - `Replace with forbidden change 2.`

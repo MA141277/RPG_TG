@@ -12,6 +12,36 @@
 
 - `Replace with the version goal.`
 
+### Version Draft Summary
+
+- Goal:
+  - `Replace with the one-sentence operator draft goal.`
+- Required outcomes:
+  - `Replace with required outcome 1.`
+  - `Replace with required outcome 2.`
+- Explicit non-goals:
+  - `Replace with non-goal 1.`
+  - `Replace with non-goal 2.`
+- Must preserve:
+  - `Replace with compatibility path or behavior to preserve.`
+- Must replace:
+  - `Replace with legacy structure or behavior to replace.`
+- Reference material:
+  - `Replace with memo, PRD, bug, prior queue, or code reference.`
+
+### Evidence Draft Review
+
+- evidence_draft_status: `reviewed | pending`
+- reviewed_by_operator: `yes | no`
+- review_summary:
+  - `Replace with the short operator-reviewed summary of target coverage, queue split, high-risk drift points, and first queue recommendation.`
+
+### Draft Requirement Coverage
+
+| Draft Requirement | Acceptance IDs | Status |
+| --- | --- | --- |
+| `Replace with draft requirement.` | `ACC-REPLACE-001` | `covered | unmapped` |
+
 ### Scope
 
 - `Replace with in-scope item 1.`
@@ -28,10 +58,22 @@
 | --- | --- | --- | --- |
 | `queue.replace-me` | `required` | `required evidence family` | `Replace with the contract admission rule.` |
 
+### Acceptance Matrix
+
+| Acceptance ID | Requirement | Primary Owner Queue | Proof Type | Expected Implementation Anchor | Closeout Blocker |
+| --- | --- | --- | --- | --- | --- |
+| `ACC-REPLACE-001` | `Replace with a testable requirement.` | `queue.replace-me` | `unit | integration | source-removal | coverage-review` | `src/or/tests/path` | `Replace with what blocks closeout if this remains uncovered.` |
+
 ### Acceptance Criteria
 
 - `Replace with acceptance criterion 1.`
 - `Replace with acceptance criterion 2.`
+
+### Final Acceptance Coverage Contract
+
+- `Final validation must review the Acceptance Matrix rather than only running a representative happy path.`
+- `Every required acceptance must be covered, blocked, or explicitly accepted as non-blocking residue before version closeout.`
+- `Final validation must not become the primary owner for implementation acceptance unless the acceptance is itself a validation-only requirement.`
 
 ### Version Closeout Contract
 

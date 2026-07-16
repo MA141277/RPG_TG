@@ -11,6 +11,7 @@
 - next_decision: `queue-admission-review | queue-closeout-or-return-to-version-review | same-version-admission-or-version-closeout | version-closeout | resolve-blocker`
 - next_action: `classify-fresh-work | write-admission-review | activate-admitted-queue | resume-active-queue | auto-reconcile-active-task | write-queue-closeout | return-to-promotion-review | write-version-closeout | resolve-blocker`
 - resume_gate: `open-active-queue | promotion-review | idle-open | blocked`
+- post_queue_closeout_pause_policy: `auto-continue | pause-when-explicitly-requested`
 - promotion_review_result: `admit | reject | defer | block | none`
 - review_subject_id: `item.replace-me | none`
 - review_subject_classification: `queue-candidate | current-target-item | uncertain-needs-review | future-target-candidate | none`
@@ -32,6 +33,17 @@
 - blocked_by: []
 - candidate_queue_ids:
   - `queue.replace-me`
+- candidate_backlog_refresh_status: `not-run | fresh | stale | blocked`
+- candidate_backlog_snapshot:
+  - `queue.replace-me | none`
+- candidate_backlog_scan_sources:
+  - `project-progress`
+  - `blueprint`
+  - `current version plan`
+  - `candidate_queue_ids`
+  - `Candidate Recovery Ledger`
+  - `Queue Promotion Ledger`
+  - `named queue docs`
 
 ## Human Context
 
@@ -50,6 +62,25 @@
   - `Version plan admission fields must be written before implementation starts.`
   - `The admitted queue doc must exist before code implementation starts.`
 
+### Evidence Draft Summary
+
+- evidence_draft_status: `reviewed | pending`
+- acceptance_matrix_ref: `docs/blueprints/specs/...#acceptance-matrix`
+- operator_review_scope:
+  - `The operator reviews target intent, boundaries, queue split, high-risk drift points, and first queue recommendation only.`
+- high_risk_drift_points:
+  - `Replace with drift risk 1.`
+  - `Replace with drift risk 2.`
+- first_queue_recommendation:
+  - queue_id: `queue.replace-me`
+  - basis: `Replace with why this queue should start first.`
+
+### Evidence Lock Rule
+
+- `Before a candidate queue becomes active, record evidence_lock_status, implementation_anchor_status, prerequisite_status, acceptance_claim_scope, acceptance_not_claimed, must_inspect, must_modify, must_replace, must_preserve, and minimum_verification.`
+- `If a queue is already active before this evidence exists, add an evidence-anchor-reconcile task before further implementation.`
+- `If implementation anchors are missing or conflicting, block activation or split the prerequisite queue instead of starting feature implementation.`
+
 ### Version Lifecycle Rules
 
 - `A current open version stays open until version closeout is explicitly confirmed and written into this version plan.`
@@ -58,6 +89,17 @@
 - `If no open version exists, version creation becomes the required next governance action before any queue admission or implementation can begin.`
 - `Queue closeout may auto-advance; version closeout must not be inferred from queue completion alone.`
 - `When version acceptance and closeout conditions are satisfied, ask exactly one human confirmation before changing version_status to done.`
+
+### Post-Queue Closeout Pause Policy
+
+- `post_queue_closeout_pause_policy = auto-continue is the default.`
+- `When the policy is auto-continue, completing a queue must not create a default "whether to continue" question.`
+- `If the next legal action is unique after queue closeout, continue automatically through closeout, version review, same-family residue routing, next queue admission, or next active queue startup.`
+- `When an operator explicitly requests queue-completion pauses, write post_queue_closeout_pause_policy = pause-when-explicitly-requested in this version plan.`
+- `When pause-when-explicitly-requested is active, pause only after queue closeout, verification, governance sync, and repository sync record are complete.`
+- `At a configured pause point, report the completed queue, verification result, sync result, next legal action or queue, and ask whether to continue.`
+- `The operator may return to auto-continue with an explicit request such as "恢复自动继续" or "关闭队列完成暂停模式".`
+- `This policy does not remove required human confirmation for version_status open -> done, real blockers, or genuinely multiple mutually exclusive legal branches.`
 
 ### Queue Admission Startup Rules
 
@@ -73,15 +115,37 @@
 
 ### Candidate Recovery Ledger
 
-| Candidate ID | Last Classification | Proposed Queue | Latest Disposition | Recheck Trigger | Notes |
-| --- | --- | --- | --- | --- | --- |
-| `item.replace-me` | `queue-candidate` | `queue.replace-me` | `deferred` | `only if new evidence invalidates the old basis or changes queue absorption` | `Use this ledger to resume admission from existing evidence rather than restarting from scratch.` |
+| Candidate ID | Last Classification | Proposed Queue | Latest Disposition | Recheck Trigger | Acceptance Refs | Implementation Anchors | Can Claim | Cannot Claim | Notes |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `item.replace-me` | `queue-candidate` | `queue.replace-me` | `deferred` | `only if new evidence invalidates the old basis or changes queue absorption` | `ACC-REPLACE-001` | `src/or/tests/path` | `ACC-REPLACE-001` | `ACC-REPLACE-002` | `Use this ledger to resume admission from existing evidence rather than restarting from scratch.` |
 
 ### Queue Promotion Ledger
 
 | Queue ID | Current Disposition | Promote When | Notes |
 | --- | --- | --- | --- |
 | `queue.replace-me` | `candidate` | `Replace with promotion trigger.` | `Replace with the current note.` |
+
+### Candidate Backlog Refresh Rule
+
+- `After an execution queue closes, refresh candidate truth before answering whether more same-version candidate queues exist.`
+- `Read project-progress -> blueprint -> current version plan -> candidate_queue_ids -> Candidate Recovery Ledger -> Queue Promotion Ledger -> named queue docs.`
+- `Use docs/change-log.md only when structured governance docs are insufficient or explicitly cite it.`
+- `Record the result in candidate_backlog_refresh_status, candidate_backlog_snapshot, and candidate_backlog_scan_sources.`
+- `Do not answer no candidate queues remain unless candidate_backlog_refresh_status=fresh and candidate_backlog_snapshot is empty.`
+- `If candidate truth is stale, missing, or inconsistent, refresh or reconcile it instead of giving a prose none answer.`
+- `Do not require the operator to paste a queue doc when governance truth already names the doc path.`
+
+### Candidate Evidence Matrix
+
+| Queue ID | Source Docs | Acceptance Refs | Implementation Anchors | Legacy Paths To Replace | Compatibility Paths To Preserve | Reject Or Split If |
+| --- | --- | --- | --- | --- | --- | --- |
+| `queue.replace-me` | `docs/...` | `ACC-REPLACE-001` | `src/or/tests/path` | `legacy/path/or/field` | `compatibility/path/or/behavior` | `Replace with condition that blocks admission or requires a split.` |
+
+### Acceptance Coverage Ledger
+
+| Acceptance ID | Primary Owner Queue | Proof Artifact | Status | Residue Or Blocker |
+| --- | --- | --- | --- | --- |
+| `ACC-REPLACE-001` | `queue.replace-me` | `test-or-source-reference` | `uncovered | covered | accepted-residue | blocked` | `none` |
 
 ### Closure Routing Record
 
@@ -116,6 +180,8 @@ Allowed `next_action` values:
 - `If a queue-candidate is already recorded in the version plan or candidate recovery ledger, resume from that record by default.`
 - `Only restart a full re-audit when new material evidence invalidates the prior classification or review basis.`
 - `Do not use prose-only memory as the recovery source when structured admission truth already exists.`
+- `If a restarted queue requires document updates, write those updates first, then keep the restarted queue in the candidate queue set until lawful admission is possible.`
+- `A restarted queue must not stop, replace, preempt, or immediately become the current active execution queue while another active queue exists.`
 
 ### Evidence Search Priority
 
@@ -136,6 +202,7 @@ Allowed `next_action` values:
 
 - `When execution_mode=single-active-task and allow_parallel=false, an active queue blocks live admission review for a second queue.`
 - `If a fresh item cannot be absorbed by the current active queue, record it as a candidate for later rather than activating a second queue.`
+- `If a restarted queue cannot be absorbed by the current active queue, record it as a candidate for later rather than activating it immediately.`
 - `Return to version-level review only after the current active queue closes.`
 - `If an active queue exists and intake or questioning depends on that queue state, expose a queue snapshot before asking the operator to choose.`
 
@@ -184,8 +251,10 @@ Allowed `next_action` values:
 6. `Scan residue.`
 7. `If queue closeout leaves residue, absorb same-family or cross-family routing truth here before repository sync begins.`
 8. `Record local repository sync state after the docs are updated.`
-9. `Defer commit, push, and baseline merge until the bounded task or tightly related task group reaches closeout, unless remote collaboration or an explicit queue/version contract requires earlier sync.`
-10. `If the next legal step is unique, continue directly into closeout, same-family routing, or version review once the local-record step or any attempted repository sync returns a result.`
+9. `At queue closeout, create one local branch-commit for the completed execution queue before activating the next queue or continuing version-level promotion review.`
+10. `Defer push and baseline merge unless remote collaboration or an explicit queue/version contract requires remote sync.`
+11. `If a push is started, wait for the push result before any later Blueprint scheduling action continues.`
+12. `If the next legal step is unique, continue directly into closeout, same-family routing, or version review after the local queue commit is recorded and any attempted push has returned success or failure.`
 11. `Update docs/change-log.md only when code, runtime, compatibility, shared interface, or user-visible behavior changed.`
 
 ### Human Confirmation Constraint
@@ -193,6 +262,8 @@ Allowed `next_action` values:
 - `At most one human-confirmation question may be asked per task.`
 - `If docs/code can decide, do not ask.`
 - `If only one legal branch exists, do not ask.`
+- `If post_queue_closeout_pause_policy=auto-continue and the next legal step is unique, do not ask whether to continue after queue closeout.`
+- `If post_queue_closeout_pause_policy=pause-when-explicitly-requested, pause only after the legal execution batch is complete and synchronized.`
 - `Scope approval does not replace admission.`
 - `Do not ask whether to perform closeout, promotion review, or doc sync when they are already the unique next legal step.`
 - `Do not ask which queue should come next when same-family residue routing is already uniquely supported by current closeout truth.`
@@ -208,9 +279,12 @@ Allowed `next_action` values:
 - `push / merge must not become a queue closeout gate.`
 - `push / merge must not become a version closeout gate.`
 - `Task execution conclusions are written first; repository sync state is recorded second.`
-- `Default Blueprint governance/documentation refinement uses local-record during execution and branch-commit at task closeout.`
+- `Default Blueprint governance/documentation refinement uses local-record during execution and one branch-commit at queue closeout.`
+- `Every completed execution queue should have its own local commit before later Blueprint scheduling continues.`
+- `Push is optional per queue and may be batched after multiple queue commits.`
 - `remote-sync runs only when requested, when collaboration requires remote visibility, or when a queue/version closeout contract explicitly requires it.`
-- `Avoid process-only commits for minor field synchronization unless that synchronization is the bounded task itself.`
+- `Once push starts, wait for its success or failure result before continuing queue activation, promotion review, or version scheduling.`
+- `Avoid process-only commits for minor field synchronization unless that synchronization is the bounded queue or task itself.`
 - `A failed sync attempt is recorded only as repository sync result in the queue-local sync record.`
 - `Remote sync failure must not block task closeout, queue closeout, version review handoff, same-family continuation routing, or next lawful queue activation.`
 - `A merge conflict is a repository sync event; it must not rewrite the already-recorded task, queue, or version conclusion.`
@@ -220,9 +294,10 @@ Allowed `next_action` values:
 ### Repository Sync Levels
 
 1. `local-record: write local docs/code and queue-local sync state without creating a commit.`
-2. `branch-commit: draft the commit message as <type>: <brief title> plus a Summary: block with real bullets, run commit-message validation, and create one semantic commit for the completed bounded task or task group.`
-3. `remote-sync: push the working branch and, only when explicitly required, merge/push the baseline.`
-4. `Resume from the written Blueprint truth after local-record or any attempted sync returns success or failure; failed remote-sync is not a closeout or admission blocker.`
+2. `branch-commit: draft the commit message as <type>: <brief title> plus a Summary: block with real bullets, run commit-message validation, and create one semantic local commit for the completed execution queue.`
+3. `branch-push: push the working branch after one or more queue commits; wait for the push result before continuing.`
+4. `remote-sync: push the working branch and, only when explicitly required, merge/push the baseline; wait for the remote-sync result before continuing.`
+5. `Resume from the written Blueprint truth after local-record, queue branch-commit, or any attempted push returns success or failure; failed remote-sync is not a closeout or admission blocker.`
 
 ### Prior Promotion Record
 
