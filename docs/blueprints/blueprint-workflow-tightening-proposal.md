@@ -256,6 +256,72 @@ Version closeout requires:
 
 Version closeout must be explicit. It must not be inferred from the final queue closing.
 
+### 10. Add An Execution Self-Review Gate
+
+Before an agent may mark an implementation task, queue closeout, admission review, or version closeout review as complete, it must run an explicit self-review against the version source of truth, controlling design source, and current code evidence.
+
+This gate is required even when all tests pass. It is a workflow control for preventing queue-local narrowing, wrong-worktree edits, fail-closed overclaiming, and newly discovered blockers from being silently absorbed into prose.
+
+Required checks:
+
+1. Design alignment:
+   - Which design or spec document controls this work?
+   - Does the implemented behavior match that document, not only the queue-local title?
+   - If the implementation intentionally differs, where is the deviation recorded?
+
+2. Version acceptance alignment:
+   - Which version-level acceptance requirement is this queue claiming to satisfy?
+   - Is the queue result only a partial slice of that requirement?
+   - If partial, what blocker or follow-up queue remains?
+
+3. Queue-local narrowing:
+   - Did the queue scope become narrower during implementation?
+   - If yes, is the narrowed scope still enough for the version requirement?
+   - If not, record a same-version blocker before closeout.
+
+4. Fail-closed classification:
+   - Did this queue implement runnable capability, or only add fail-closed guards?
+   - Fail-closed guards must not be counted as feature completion unless the version requirement is explicitly to reject unsupported input.
+
+5. Worktree and branch correctness:
+   - Record `pwd`.
+   - Record `git branch --show-current`.
+   - Confirm the path and branch match the active queue's intended worktree.
+   - If not, stop before editing or closeout.
+
+6. New blocker detection:
+   - Did implementation or evidence review reveal missing UI, runtime, export, import, migration, or validation work?
+   - If yes, record it as a blocker or candidate in the version plan before queue closeout.
+
+7. Source guard:
+   - Search for old paths or forbidden surfaces relevant to the queue.
+   - If old code remains, classify it as deleted, guarded test-only residue, migration-only residue, editor-only residue, or still-production behavior.
+   - Still-production behavior cannot be ignored during closeout.
+
+At each pause point, the agent must include a short self-review block:
+
+```text
+Self-review gate:
+- Design alignment:
+- Version acceptance alignment:
+- Queue-local narrowing:
+- Fail-closed classification:
+- Worktree/branch:
+- New blockers:
+- Source guard:
+```
+
+The agent must pause instead of continuing when:
+
+- The active worktree or branch is not the intended one.
+- A queue-local result is narrower than the version requirement and no blocker is recorded.
+- A fail-closed guard is being treated as runnable feature completion.
+- A design document says the UI or runtime ownership belongs somewhere else.
+- New same-version blocker evidence appears during implementation.
+- Version closeout is being attempted with unresolved blockers.
+
+Passing tests do not override these stop conditions.
+
 ## Template Changes
 
 ### Version Plan Template
