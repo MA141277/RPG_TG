@@ -116,6 +116,11 @@ const {
   selectNpcInteractionMenu,
 } = require("../.test-dist/application/npc-interaction/npc-interaction.js");
 const {
+  closeGlobalOverlay,
+  openCharacterDetail,
+  openPlayerDetail,
+} = require("../.test-dist/application/app-actions.js");
+const {
   equipValuableItem,
   getVisibleOwnedCards,
   getVisibleValuables,
@@ -3931,6 +3936,53 @@ test("global NPC interaction blocks roster clicks while overlays or dialogue own
     }),
     true
   );
+});
+
+test("global NPC interaction character detail can target a non-player NPC", () => {
+  const baseAppState = createRuntimeState(createBaseState()).app;
+  const opened = openCharacterDetail(
+    { ...baseAppState, gameState: createBaseState() },
+    "char.market_merchant"
+  );
+
+  assert.equal(opened.gameState.ui.overlayView, "detail");
+  assert.equal(opened.gameState.ui.detailCharacterId, "char.market_merchant");
+});
+
+test("player detail clears the NPC detail target and uses the pinned player fallback", () => {
+  const baseAppState = {
+    ...createRuntimeState(createBaseState()).app,
+    gameState: {
+      ...createBaseState(),
+      ui: {
+        ...createBaseState().ui,
+        overlayView: "detail",
+        detailCharacterId: "char.market_merchant",
+      },
+    },
+  };
+  const opened = openPlayerDetail(baseAppState);
+
+  assert.equal(opened.gameState.ui.overlayView, "detail");
+  assert.equal(opened.gameState.ui.detailCharacterId, null);
+});
+
+test("closing global overlay clears the arbitrary character detail target", () => {
+  const baseAppState = {
+    ...createRuntimeState(createBaseState()).app,
+    gameState: {
+      ...createBaseState(),
+      ui: {
+        ...createBaseState().ui,
+        overlayView: "detail",
+        detailCharacterId: "char.market_merchant",
+      },
+    },
+  };
+  const closed = closeGlobalOverlay(baseAppState);
+
+  assert.equal(closed.gameState.ui.overlayView, null);
+  assert.equal(closed.gameState.ui.detailCharacterId, null);
 });
 
 test("global NPC interaction adapts house standby roster into reusable NPC pool", () => {

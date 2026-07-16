@@ -81,6 +81,22 @@ function getPlayerCharacter(
   return playerCharacter;
 }
 
+function getDetailCharacter(
+  appState: AppState,
+  playerCharacter: CharacterDefinition
+): CharacterDefinition {
+  const detailCharacterId = appState.gameState.ui.detailCharacterId;
+  if (detailCharacterId == null) {
+    return playerCharacter;
+  }
+
+  return (
+    appState.characterDefinitions.find(
+      (characterDefinition) => characterDefinition.id === detailCharacterId
+    ) ?? playerCharacter
+  );
+}
+
 function resolveEquippedItemName(
   appState: AppState,
   category: ValuableItemDefinition["category"]
@@ -155,9 +171,10 @@ function renderOverlay(input: AppRenderInput, playerCharacter: CharacterDefiniti
   const overlayView = input.presenterOutput.overlay.overlayView;
 
   if (overlayView === "detail") {
+    const detailCharacter = getDetailCharacter(input.appState, playerCharacter);
     return renderCharacterDetailView(
-      playerCharacter,
-      buildCharacterDetailOptions(input, playerCharacter)
+      detailCharacter,
+      buildCharacterDetailOptions(input, detailCharacter)
     );
   }
 

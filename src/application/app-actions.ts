@@ -35,6 +35,51 @@ export function updateOverlayView(
   };
 }
 
+export function openPlayerDetail(appState: AppState): AppState {
+  return {
+    ...appState,
+    gameState: {
+      ...appState.gameState,
+      ui: {
+        ...appState.gameState.ui,
+        overlayView: "detail",
+        detailCharacterId: null,
+      },
+    },
+  };
+}
+
+export function openCharacterDetail(
+  appState: AppState,
+  characterId: string
+): AppState {
+  return {
+    ...appState,
+    gameState: {
+      ...appState.gameState,
+      ui: {
+        ...appState.gameState.ui,
+        overlayView: "detail",
+        detailCharacterId: characterId,
+      },
+    },
+  };
+}
+
+export function closeGlobalOverlay(appState: AppState): AppState {
+  return {
+    ...appState,
+    gameState: {
+      ...appState.gameState,
+      ui: {
+        ...appState.gameState.ui,
+        overlayView: null,
+        detailCharacterId: null,
+      },
+    },
+  };
+}
+
 export function openCityDirectory(
   appState: AppState,
   input: {

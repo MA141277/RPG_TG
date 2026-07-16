@@ -19,9 +19,12 @@ import {
 import {
   closeCityMenu,
   closeCityDirectory,
+  closeGlobalOverlay,
   equipValuable,
+  openCharacterDetail,
   openCityMenu,
   openCityDirectory,
+  openPlayerDetail,
   selectCard,
   selectValuable,
   setCardFilter,
@@ -3985,7 +3988,7 @@ appElement.addEventListener("click", (event) => {
     "[data-action='close-overlay'], [data-action='close-character-detail']"
   );
   if (closeOverlayButton != null) {
-    appState = updateOverlayView(appState, null);
+    appState = closeGlobalOverlay(appState);
     renderApp();
     return;
   }
@@ -3994,8 +3997,20 @@ appElement.addEventListener("click", (event) => {
     "[data-action='open-player-detail']"
   );
   if (playerCardButton != null) {
-    appState = updateOverlayView(appState, "detail");
+    appState = openPlayerDetail(appState);
     renderApp();
+    return;
+  }
+
+  const npcProfileButton = targetElement.closest<HTMLElement>(
+    "[data-npc-action='profile'][data-character-id]"
+  );
+  if (npcProfileButton != null) {
+    const characterId = npcProfileButton.dataset.characterId;
+    if (characterId != null && characterId.length > 0) {
+      appState = openCharacterDetail(appState, characterId);
+      renderApp();
+    }
     return;
   }
 
