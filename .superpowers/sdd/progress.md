@@ -6,3 +6,4 @@
 - Task 3: complete (commits 88810ea6..e2af8ea8, review clean after escaping fix).
 - Task 4: complete (commits 47e34913..a02bf9f1, review clean after roster context/session cleanup fix).
 - Task 5: complete (commits 51db1a05..6dc83668, review clean).
+- Task 6: complete (commits 75ef1ef8..022dc855, review clean).
