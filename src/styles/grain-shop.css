@@ -271,6 +271,40 @@
   text-shadow: 0 1px 0 rgb(255 248 228 / 52%);
 }
 
+.c-dialogue-typewriter-line {
+  white-space: pre-wrap;
+}
+
+.c-dialogue-typewriter__char {
+  opacity: 0;
+  animation: dialogue-typewriter-char 1ms step-end forwards;
+}
+
+.c-dialogue-typewriter-hint {
+  opacity: 0;
+  animation: dialogue-typewriter-hint 160ms ease forwards;
+}
+
+@keyframes dialogue-typewriter-char {
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes dialogue-typewriter-hint {
+  to {
+    opacity: 0.86;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .c-dialogue-typewriter__char,
+  .c-dialogue-typewriter-hint {
+    opacity: 1;
+    animation: none;
+  }
+}
+
 .c-grain-shop-dialogue__text--clickable {
   cursor: pointer;
   transition: background var(--duration-fast) ease;
@@ -1553,13 +1587,461 @@
   border-image-repeat: stretch;
 }
 
+/* stylelint-disable no-descending-specificity -- assessment popups intentionally override older house modal skins in one scoped block. */
+.c-grain-shop-overlay[data-house-alert-variant="assessment-popup"],
+.c-grain-shop-overlay[data-house-alert-variant="contribution-settlement"],
+.c-grain-shop-overlay[data-house-overlay-variant="assessment-popup"],
+.c-grain-shop-overlay[data-house-overlay-variant="temple-task-confirm"],
+.c-grain-shop-overlay[data-house-overlay-variant="temple-utility-popup"] {
+  display: grid;
+  place-items: center;
+  padding: 48px;
+  background: rgb(15 9 5 / 58%);
+}
+
+.c-grain-shop-modal.c-assessment-popup {
+  --assessment-popup-field-width: 256px;
+  --assessment-popup-content-side: 22px;
+  --assessment-popup-width: calc(
+    var(--assessment-popup-field-width) +
+    (var(--assessment-popup-content-side) * 2)
+  );
+  --assessment-popup-actions-width: var(--assessment-popup-field-width);
+  --assessment-popup-max-width: calc(100vw - 96px);
+  --assessment-popup-side-border: 96px;
+  --assessment-popup-top-border: 64px;
+  --assessment-popup-bottom-border: 28px;
+  --nine-slice-seam-fill: #ead9a5;
+  --nine-slice-top: var(--assessment-popup-top-border);
+  --nine-slice-right: var(--assessment-popup-side-border);
+  --nine-slice-bottom: var(--assessment-popup-bottom-border);
+  --nine-slice-left: var(--assessment-popup-side-border);
+
+  position: relative;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  width: min(var(--assessment-popup-width), var(--assessment-popup-max-width));
+  max-height: calc(100vh - 96px);
+  border: 0;
+  border-image: none;
+  padding: 68px 0 30px;
+  background: transparent;
+  isolation: isolate;
+  overflow: visible;
+  transform: none;
+}
+
+.c-grain-shop-modal.c-assessment-popup::before {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-style: solid;
+  border-color: transparent;
+  border-width:
+    var(--assessment-popup-top-border)
+    var(--assessment-popup-side-border)
+    var(--assessment-popup-bottom-border);
+  border-image-source: url("../../ui/yuansu/评定/generated/20260709-205114_popup-slice-anti-seam.png");
+  border-image-slice: 64 96 28 96 fill;
+  border-image-width:
+    var(--assessment-popup-top-border)
+    var(--assessment-popup-side-border)
+    var(--assessment-popup-bottom-border)
+    var(--assessment-popup-side-border);
+  border-image-repeat: stretch;
+  content: "";
+  pointer-events: none;
+}
+
+.c-grain-shop-modal.c-assessment-popup > * {
+  position: relative;
+  z-index: 1;
+}
+
+.c-grain-shop-modal.c-assessment-popup--wide,
+.c-grain-shop-modal.c-house-contribution-settlement.c-assessment-popup--wide {
+  --assessment-popup-field-width: 304px;
+  --assessment-popup-content-side: 26px;
+}
+
+.c-grain-shop-modal.c-house-temple-task-confirm {
+  --assessment-popup-field-width: 284px;
+  --assessment-popup-content-side: 24px;
+}
+
+.c-grain-shop-modal.c-house-temple-utility-popup {
+  --assessment-popup-field-width: 256px;
+  --assessment-popup-content-side: 22px;
+}
+
+.c-grain-shop-modal.c-assessment-popup.c-house-contribution-settlement .c-grain-shop-modal__title {
+  position: absolute;
+  z-index: 3;
+  top: 9px;
+  left: 30px;
+  right: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 34px;
+  min-height: 0;
+  margin: 0;
+  padding: 0 24px;
+  color: #f6dfae;
+  font-size: clamp(0.98rem, 1.08vw, 1.16rem);
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0;
+  text-align: center;
+  text-shadow: 0 1px 1px rgb(52 14 8 / 72%);
+  pointer-events: none;
+  background: none;
+}
+
+.c-grain-shop-modal.c-assessment-popup.c-house-contribution-settlement .c-grain-shop-modal__body {
+  position: relative;
+  flex: 0 1 auto;
+  display: grid;
+  gap: 5px;
+  width: min(
+    var(--assessment-popup-field-width),
+    calc(100% - (var(--assessment-popup-content-side) * 2))
+  );
+  max-width: calc(100vw - 160px);
+  max-height: min(48vh, 390px);
+  margin: 0 auto;
+  padding: 0 0 2px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+:where(.c-grain-shop-modal.c-assessment-popup.c-house-contribution-settlement) .c-grain-shop-modal__body + .c-grain-shop-modal__body {
+  margin-top: 5px;
+}
+
+:where(.c-grain-shop-modal.c-assessment-popup.c-house-contribution-settlement) .c-grain-shop-modal__body p,
+.c-grain-shop-modal.c-house-temple-utility-popup .c-grain-shop-trade__field {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 44px;
+  border-width: 9px 12px;
+  border-image-width: 9px 12px;
+  padding-right: 4px;
+  padding-left: 4px;
+  line-height: 1.45;
+  overflow-wrap: break-word;
+  word-break: normal;
+  text-wrap: pretty;
+
+  --nine-slice-top: 9px;
+  --nine-slice-right: 12px;
+  --nine-slice-bottom: 9px;
+  --nine-slice-left: 12px;
+}
+
+.c-grain-shop-modal.c-assessment-popup .c-grain-shop-modal__actions {
+  position: relative;
+  left: auto;
+  box-sizing: border-box;
+  flex: 0 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  width: var(--assessment-popup-actions-width);
+  max-width: 100%;
+  margin-right: auto;
+  margin-left: auto;
+  margin-top: 8px;
+  padding: 0 0 4px;
+  overflow: visible;
+  transform: none;
+}
+
+.c-grain-shop-modal.c-assessment-popup .c-grain-shop-modal__actions .c-grain-shop-button {
+  box-sizing: border-box;
+  width: 108px;
+  flex: 0 0 auto;
+  min-width: 108px;
+  max-width: 108px;
+  height: 38px;
+  padding: 0 8px;
+  white-space: nowrap;
+}
+
+.c-grain-shop-modal.c-house-temple-task-confirm .c-grain-shop-modal__actions .c-grain-shop-button {
+  width: 112px;
+  min-width: 112px;
+  max-width: 112px;
+}
+
+.c-grain-shop-modal.c-assessment-popup.c-house-contribution-settlement .c-grain-shop-modal__actions .c-grain-shop-button--paper,
+.c-grain-shop-modal.c-house-temple-task-confirm .c-grain-shop-modal__actions .c-grain-shop-button--paper,
+.c-grain-shop-modal.c-house-temple-utility-popup .c-grain-shop-modal__actions .c-grain-shop-button--paper,
+.c-house-temple-confirm-popup .c-grain-shop-modal__actions--split .c-grain-shop-button--paper {
+  border-width: 12px 30px;
+  border-image-source: url("../../ui/yuansu/评定/generated/temple-yellow-button-anti-seam.png");
+  border-image-slice: 26 64 fill;
+  border-image-width: 12px 30px;
+  border-image-repeat: stretch;
+  color: #5b351d;
+  text-shadow: 0 1px 0 rgb(255 232 172 / 42%);
+
+  --nine-slice-top: 12px;
+  --nine-slice-right: 30px;
+  --nine-slice-bottom: 12px;
+  --nine-slice-left: 30px;
+  --nine-slice-seam-fill: #b48a43;
+}
+
+.c-grain-shop-modal.c-assessment-popup.c-house-contribution-settlement .c-grain-shop-modal__actions .c-grain-shop-button--gold,
+.c-grain-shop-modal.c-house-temple-task-confirm .c-grain-shop-modal__actions .c-grain-shop-button--gold,
+.c-grain-shop-modal.c-house-temple-utility-popup .c-grain-shop-modal__actions .c-grain-shop-button--gold {
+  border-width: 10px 18px;
+  border-image-source: url("../../ui/yuansu/评定/generated/20260709-205123_button-clean-anti-seam.png");
+  border-image-slice: 10 18 fill;
+  border-image-width: 10px 18px;
+  border-image-repeat: stretch;
+  color: #f7e6ba;
+  text-shadow: 0 1px 1px rgb(57 16 8 / 66%);
+
+  --nine-slice-top: 10px;
+  --nine-slice-right: 18px;
+  --nine-slice-bottom: 10px;
+  --nine-slice-left: 18px;
+  --nine-slice-seam-fill: #783021;
+}
+/* stylelint-enable no-descending-specificity */
+
+/* stylelint-disable no-descending-specificity -- ordinary trade popups intentionally override older modal and control skins in one shared block. */
+.c-grain-shop-modal.c-house-trade-popup {
+  --house-trade-content-width: 420px;
+  --house-trade-content-side: 30px;
+  --house-trade-popup-width: calc(
+    var(--house-trade-content-width) +
+    (var(--house-trade-content-side) * 2)
+  );
+  --house-trade-popup-max-height: calc(100vh - 96px);
+  --house-trade-popup-side-border: 96px;
+  --house-trade-popup-top-border: 64px;
+  --house-trade-popup-bottom-border: 28px;
+  --nine-slice-seam-fill: #ead9a5;
+
+  position: relative;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  width: min(var(--house-trade-popup-width), calc(100vw - 48px));
+  max-width: calc(100vw - 48px);
+  max-height: var(--house-trade-popup-max-height);
+  border: 0;
+  border-image: none;
+  padding: 72px 0 34px;
+  color: #54321b;
+  background: transparent;
+  box-shadow: none;
+  isolation: isolate;
+  overflow: visible;
+}
+
+.c-grain-shop-overlay[data-house-overlay="market-trade"] .c-house-trade-popup {
+  --house-trade-content-width: 460px;
+  --house-trade-content-side: 32px;
+}
+
+.c-grain-shop-modal.c-house-trade-popup::before {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-style: solid;
+  border-color: transparent;
+  border-width:
+    var(--house-trade-popup-top-border)
+    var(--house-trade-popup-side-border)
+    var(--house-trade-popup-bottom-border);
+  border-image-source: url("../../ui/yuansu/评定/generated/20260709-205114_popup-slice-anti-seam.png");
+  border-image-slice: 64 96 28 96 fill;
+  border-image-width:
+    var(--house-trade-popup-top-border)
+    var(--house-trade-popup-side-border)
+    var(--house-trade-popup-bottom-border)
+    var(--house-trade-popup-side-border);
+  border-image-repeat: stretch;
+  content: "";
+  pointer-events: none;
+}
+
+.c-grain-shop-modal.c-house-trade-popup > * {
+  position: relative;
+  z-index: 1;
+}
+
+.c-house-trade-popup .c-grain-shop-modal__title {
+  position: absolute;
+  z-index: 2;
+  top: 10px;
+  left: 48px;
+  right: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  height: 34px;
+  min-height: 0;
+  margin: 0;
+  padding: 0 20px;
+  color: #f6dfae;
+  font-size: clamp(1rem, 1.12vw, 1.18rem);
+  line-height: 1;
+  letter-spacing: 0;
+  text-align: center;
+  text-shadow: 0 1px 1px rgb(52 14 8 / 72%);
+  background: none;
+  pointer-events: none;
+}
+
+.c-house-trade-popup .c-grain-shop-modal__body,
+.c-house-trade-popup .c-house-trade-popup__body {
+  display: grid;
+  gap: 10px;
+  width: min(
+    var(--house-trade-content-width),
+    calc(100% - (var(--house-trade-content-side) * 2))
+  );
+  min-width: 0;
+  margin: 0 auto 12px;
+  line-height: 1.45;
+}
+
+.c-house-trade-popup .c-house-trade-popup__body--market {
+  grid-template-columns: minmax(250px, 1fr) minmax(180px, 0.8fr);
+  align-items: stretch;
+}
+
+.c-house-trade-popup .c-grain-shop-trade__price,
+.c-house-trade-popup .c-grain-shop-trade__label,
+.c-house-trade-popup .c-grain-shop-trade__quantity,
+.c-house-trade-popup .c-grain-shop-trade__total,
+.c-house-trade-popup .c-grain-shop-modal__actions {
+  width: min(
+    var(--house-trade-content-width),
+    calc(100% - (var(--house-trade-content-side) * 2))
+  );
+  margin-right: auto;
+  margin-left: auto;
+}
+
+.c-house-trade-popup .c-grain-shop-trade__price,
+.c-house-trade-popup .c-grain-shop-trade__total {
+  color: #5a371d;
+  font-family: var(--font-title);
+  font-size: 1rem;
+  text-align: center;
+}
+
+.c-house-trade-popup .c-grain-shop-trade__label {
+  margin-bottom: 6px;
+  color: #674327;
+  font-family: var(--font-title);
+  text-align: center;
+}
+
+.c-house-trade-popup .c-grain-shop-trade__quantity {
+  justify-content: center;
+  margin-bottom: 10px;
+}
+
+.c-house-trade-popup .c-grain-shop-trade__input {
+  box-sizing: border-box;
+  min-width: 0;
+  max-width: 180px;
+  height: 46px;
+  padding: 4px 10px;
+  color: #4b2d19;
+  font-family: var(--font-title);
+  border: 1px solid rgb(130 86 42 / 34%);
+  background: rgb(255 246 218 / 88%);
+}
+
+.c-house-trade-popup .c-grain-shop-qty-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  line-height: 1;
+}
+
+.c-house-trade-popup .c-grain-shop-modal__actions {
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 4px;
+  padding-bottom: 2px;
+}
+
+.c-house-trade-popup .c-grain-shop-modal__actions .c-grain-shop-button {
+  box-sizing: border-box;
+  min-width: 112px;
+  height: 40px;
+  padding: 0 12px;
+  white-space: nowrap;
+}
+
+.c-house-trade-popup .c-grain-shop-button--paper {
+  border-width: 12px 30px;
+  border-image-source: url("../../ui/yuansu/评定/generated/temple-yellow-button-anti-seam.png");
+  border-image-slice: 26 64 fill;
+  border-image-width: 12px 30px;
+  border-image-repeat: stretch;
+  color: #5b351d;
+  text-shadow: 0 1px 0 rgb(255 232 172 / 42%);
+}
+
+.c-house-trade-popup .c-grain-shop-button--gold {
+  border-width: 10px 18px;
+  border-image-source: url("../../ui/yuansu/评定/generated/20260709-205123_button-clean-anti-seam.png");
+  border-image-slice: 10 18 fill;
+  border-image-width: 10px 18px;
+  border-image-repeat: stretch;
+  color: #f7e6ba;
+  text-shadow: 0 1px 1px rgb(57 16 8 / 66%);
+}
+
 .c-market-house-trade-list {
+  box-sizing: border-box;
   display: grid;
   gap: var(--space-2);
   max-height: 220px;
-  padding: 14px;
-  margin-bottom: var(--space-4);
+  min-width: 0;
+  margin-bottom: 0;
+  padding: 12px;
   overflow-y: auto;
+  border: 1px solid rgb(104 76 44 / 28%);
+  border-radius: 4px;
+  background: rgb(221 208 164 / 78%);
+  box-shadow:
+    inset 0 1px 0 rgb(255 248 220 / 32%),
+    inset 0 -1px 0 rgb(92 66 38 / 18%);
+  scrollbar-color: #92765a rgb(229 212 166 / 72%);
+  scrollbar-width: thin;
+}
+
+.c-market-house-trade-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.c-market-house-trade-list::-webkit-scrollbar-track {
+  background: rgb(229 212 166 / 72%);
+}
+
+.c-market-house-trade-list::-webkit-scrollbar-thumb {
+  border: 2px solid rgb(229 212 166 / 72%);
+  border-radius: 999px;
+  background: #92765a;
 }
 
 .c-market-house-trade-row {
@@ -1576,6 +2058,38 @@
   background: transparent;
   color: inherit;
   cursor: pointer;
+}
+
+.c-house-trade-popup .c-grain-shop-ledger {
+  min-width: 0;
+  margin-bottom: 0;
+  padding: 16px 18px;
+  text-align: left;
+}
+
+.c-house-trade-popup .c-market-house-trade-row,
+.c-house-trade-popup .c-grain-shop-ledger,
+.c-house-trade-popup .c-grain-shop-trade__price,
+.c-house-trade-popup .c-grain-shop-trade__total,
+.c-house-trade-popup .c-grain-shop-price-hint,
+.c-house-trade-popup .c-medicine-house-buy__item {
+  box-sizing: border-box;
+  border-style: solid;
+  border-color: transparent;
+  border-width: 9px 12px;
+  border-image-source: url("../../ui/yuansu/评定/generated/20260709-205119_item-slice-anti-seam.png");
+  border-image-slice: 10 18 fill;
+  border-image-width: 9px 12px;
+  border-image-repeat: stretch;
+  background: #c9bd87;
+  background-clip: padding-box;
+}
+
+.c-house-trade-popup .c-grain-shop-trade__price,
+.c-house-trade-popup .c-grain-shop-trade__total,
+.c-house-trade-popup .c-grain-shop-price-hint {
+  min-height: 40px;
+  padding: 4px 6px;
 }
 
 .c-market-house-trade-row.is-selected {
@@ -1726,6 +2240,66 @@
   font-size: 0.85rem;
   opacity: 0.8;
 }
+
+.c-medicine-house-buy__list {
+  display: grid;
+  gap: 10px;
+  width: min(
+    var(--house-trade-content-width),
+    calc(100% - (var(--house-trade-content-side) * 2))
+  );
+  min-width: 0;
+  max-height: min(44vh, 320px);
+  margin: 0 auto 14px;
+  overflow-y: auto;
+  scrollbar-color: #92765a rgb(229 212 166 / 72%);
+  scrollbar-width: thin;
+}
+
+.c-medicine-house-buy__list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.c-medicine-house-buy__list::-webkit-scrollbar-track {
+  background: rgb(229 212 166 / 72%);
+}
+
+.c-medicine-house-buy__list::-webkit-scrollbar-thumb {
+  border: 2px solid rgb(229 212 166 / 72%);
+  border-radius: 999px;
+  background: #92765a;
+}
+
+.c-medicine-house-buy__item,
+.c-tavern-gamble__choice {
+  box-sizing: border-box;
+  display: grid;
+  gap: 4px;
+  justify-items: center;
+  width: 100%;
+  min-height: 54px;
+  padding: 4px 16px;
+  text-align: center;
+}
+
+.c-medicine-house-buy__item.is-selected,
+.c-tavern-gamble__choice:hover,
+.c-tavern-gamble__choice:focus-visible {
+  filter: brightness(1.06);
+}
+
+.c-medicine-house-buy__name,
+.c-tavern-gamble__choice strong {
+  font-family: var(--font-title);
+  font-size: 1rem;
+}
+
+.c-medicine-house-buy__meta,
+.c-tavern-gamble__choice span {
+  font-size: 0.86rem;
+  opacity: 0.82;
+}
+/* stylelint-enable no-descending-specificity */
 
 .view-house-medicine-house {
   --grain-shop-scene-bg: url("../../ui/background/huichuntang.png");

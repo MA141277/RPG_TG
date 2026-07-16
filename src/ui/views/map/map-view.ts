@@ -24,7 +24,18 @@ import {
 import redTurbanMarkerUrl from "../../../assets/yuanmo-map/chuang-swordsman-marker.png";
 import cityDepthMeshAssetUrl from "../../../3dasset/city_hun/city-hun-campaign-lowpoly.json?url";
 import cityDepthTextureUrl from "../../../3dasset/city_hun/texture_pbr_20250901.png?url";
+import yuanmoHexBuildingUrl from "../../../../ui/yuansu/20260715-120754.png?url";
 
+const YUANMO_HEX_BUILDING = {
+  mapId: "map.yuanmo_campaign",
+  nodeId: "settlement.fenyang_province",
+  cityId: "city.kulan",
+  x: 336.6,
+  y: 318.6,
+  travelX: 334,
+  travelY: 318,
+  label: "濠州",
+} as const;
 
 type CityMarker = {
   id: string;
@@ -52,6 +63,7 @@ type CampaignMarker = {
 
 export type MapViewModel = {
   mode: "grid" | "campaign";
+  mapId: string;
   mapName: string;
   size: number;
   playerCoordinate: GridCoordinate;
@@ -142,6 +154,7 @@ export function createMapViewModel(input: {
 
   return {
     mode,
+    mapId: input.mapDefinition.id,
     mapName: input.mapDefinition.name,
     size: input.mapDefinition.size ?? 5,
     playerCoordinate: input.playerCoordinate,
@@ -351,6 +364,46 @@ function renderHistoricalCharacters(
   return `<span class="c-campaign-marker__characters">${characterGroups}${notes}</span>`;
 }
 
+function renderCampaignHexBuilding(model: MapViewModel): string {
+  if (model.mapId !== YUANMO_HEX_BUILDING.mapId) {
+    return "";
+  }
+
+  const left = (YUANMO_HEX_BUILDING.x / model.coordinateSpace.width) * 100;
+  const bottom = (YUANMO_HEX_BUILDING.y / model.coordinateSpace.height) * 100;
+  const heightU = YUANMO_HEX_BUILDING.x / model.coordinateSpace.width;
+  const heightV = 1 - YUANMO_HEX_BUILDING.y / model.coordinateSpace.height;
+
+  return `
+    <span
+      class="c-campaign-hex-building"
+      style="--hex-building-left:${left.toFixed(3)}%; --hex-building-bottom:${bottom.toFixed(3)}%;"
+      data-terrain-projected-point="true"
+      data-map-height-u="${heightU.toFixed(5)}"
+      data-map-height-v="${heightV.toFixed(5)}"
+      aria-label="${escapeHtml(YUANMO_HEX_BUILDING.label)}"
+    >
+      <img
+        class="c-campaign-hex-building__image"
+        src="${yuanmoHexBuildingUrl}"
+        alt=""
+        aria-hidden="true"
+      >
+      <button
+        type="button"
+        class="c-campaign-hex-building__hotspot"
+        data-map-node-id="${YUANMO_HEX_BUILDING.nodeId}"
+        data-map-node-name="${escapeHtml(YUANMO_HEX_BUILDING.label)}"
+        data-map-x="${YUANMO_HEX_BUILDING.travelX}"
+        data-map-y="${YUANMO_HEX_BUILDING.travelY}"
+        data-city-id="${YUANMO_HEX_BUILDING.cityId}"
+        title="${escapeHtml(YUANMO_HEX_BUILDING.label)} (${YUANMO_HEX_BUILDING.travelX}, ${YUANMO_HEX_BUILDING.travelY})"
+        aria-label="进入${escapeHtml(YUANMO_HEX_BUILDING.label)}"
+      ></button>
+    </span>
+  `;
+}
+
 function renderCampaignMarkers(model: MapViewModel): string {
   return model.campaignMarkers
     .map((marker) => {
@@ -538,6 +591,7 @@ function renderCampaignMapVisualLayer(
       ${
         options.includeInteractivePoints
           ? `
+            ${renderCampaignHexBuilding(model)}
             ${renderCampaignMarkers(model)}
             ${actorCanvasMarkup}
             <span

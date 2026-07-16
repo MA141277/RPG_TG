@@ -1,7 +1,6 @@
 import {
   createCityCultureViewModel,
   createCityManagementViewModel,
-  isPlayerMonkIdentity,
   type CityMenuState,
 } from "../../../application/city-menu/city-menu";
 import type { CharacterDefinition } from "../../../domain/character";
@@ -12,32 +11,20 @@ import type {
 } from "../../../domain/city-entry";
 import type { CitySceneMapping } from "../../../domain/city-scene-mapping";
 import type { HouseDefinition } from "../../../domain/house";
-import cityBackgroundVideoUrl from "../../../../ui/background/city.mp4?url";
+import haozhouCityBackgroundUrl from "../../../../ui/background/upload_1784207698799091496 (1).png?url";
+import cityDiamondMapTextureUrl from "../../../../ui/yuansu/菱形格子/20260716-111958.png?url";
 
-function getHouseArtworkClass(houseDefinition: HouseDefinition): string {
-  switch (houseDefinition.moduleId) {
-    case "home-house":
-      return "c-kulan-house-card--home-house";
-    case "medicine-house":
-      return "c-kulan-house-card--medicine-house";
-    case "tea-house":
-      return "c-kulan-house-card--tea-house";
-    case "temple-house":
-      return "c-kulan-house-card--temple-house";
-    case "keep-house":
-      return "c-kulan-house-card--keep";
-    case "market-house":
-      return "c-kulan-house-card--market";
-    case "grain-shop":
-      return "c-kulan-house-card--grain-shop";
-    case "tavern":
-      return "c-kulan-house-card--inn";
-    case "leader-residence":
-      return "c-kulan-house-card--leader-residence";
-    default:
-      return "c-kulan-house-card--fallback";
-  }
-}
+type IsoTileType = "stone" | "road" | "grass" | "water" | "courtyard";
+
+type IsoTile = {
+  x: number;
+  y: number;
+  type: IsoTileType;
+};
+
+const CITY_ISO_TILE_WIDTH = 56;
+const CITY_ISO_TILE_HEIGHT = CITY_ISO_TILE_WIDTH / 2;
+const CITY_ISO_MAP_SIZE = 20;
 
 function renderCityChoiceSkin(): string {
   return `
@@ -130,16 +117,55 @@ function renderCityDirectory(
   `;
 }
 
-function renderCityMenuButtons(playerCharacter: CharacterDefinition): string {
-  const baseButtons = [
+function renderCityLocationSubnav(input: {
+  visibleHouseDefinitions: HouseDefinition[];
+  cityEntries: CityEntryDefinition[];
+}): string {
+  const cityEntryButtons = input.cityEntries.map(
+    (cityEntry) => `
+      <button
+        type="button"
+        class="c-city-menu__subnav-button"
+        data-city-entry-id="${cityEntry.id}"
+        data-city-location-entry-ref="${cityEntry.id}"
+      >
+        ${cityEntry.name}
+      </button>
+    `
+  );
+  const houseButtons = input.visibleHouseDefinitions.map(
+    (houseDefinition) => `
+      <button
+        type="button"
+        class="c-city-menu__subnav-button"
+        data-house-id="${houseDefinition.id}"
+        data-city-location-house-ref="${houseDefinition.id}"
+      >
+        ${houseDefinition.name}
+      </button>
+    `
+  );
+
+  return `
+    <div class="c-city-menu__subnav" aria-label="地点列表">
+      ${[...cityEntryButtons, ...houseButtons].join("")}
+    </div>
+  `;
+}
+
+function renderCityMenuButtons(input: {
+  houseDefinitions: HouseDefinition[];
+  cityEntries: CityEntryDefinition[];
+}): string {
+  const buttons = [
     { id: "culture", label: "风土人情" },
     { id: "intel", label: "情报" },
-    { id: "locations", label: "地点" },
     { id: "management", label: "管理" },
+    { id: "locations", label: "地点" },
   ];
-  const buttons = isPlayerMonkIdentity(playerCharacter)
-    ? [...baseButtons, { id: "begging", label: "化缘" }]
-    : baseButtons;
+  const visibleHouseDefinitions = input.houseDefinitions.filter(
+    (houseDefinition) => houseDefinition.moduleId !== "leader-residence"
+  );
 
   return `
     <div class="c-city-menu" aria-label="城市功能菜单">
@@ -148,12 +174,28 @@ function renderCityMenuButtons(playerCharacter: CharacterDefinition): string {
           (button) => `
             <button
               type="button"
-              class="c-city-menu__button${button.id === "begging" ? " c-city-menu__button--special" : ""}"
-              data-city-menu-open="${button.id}"
+              class="c-city-menu__button${
+                button.id === "locations"
+                  ? " c-city-menu__button--active"
+                  : ""
+              }"
+              ${
+                button.id === "locations"
+                  ? 'aria-expanded="true"'
+                  : `data-city-menu-open="${button.id}"`
+              }
             >
               ${renderCityMenuButtonSkin()}
               <span class="c-city-menu__button-label">${button.label}</span>
             </button>
+            ${
+              button.id === "locations"
+                ? renderCityLocationSubnav({
+                    visibleHouseDefinitions,
+                    cityEntries: input.cityEntries,
+                  })
+                : ""
+            }
           `
         )
         .join("")}
@@ -161,64 +203,109 @@ function renderCityMenuButtons(playerCharacter: CharacterDefinition): string {
   `;
 }
 
-function renderLocationsDeckView(input: {
-  cityDefinition: CityDefinition;
-  houseDefinitions: HouseDefinition[];
-  cityEntries: CityEntryDefinition[];
-}): string {
-  const visibleHouseDefinitions = input.houseDefinitions.filter(
-    (houseDefinition) => houseDefinition.moduleId !== "leader-residence"
-  );
+function createCitySceneTiles(): IsoTile[] {
+  const tiles: IsoTile[] = [];
+  const last = CITY_ISO_MAP_SIZE - 1;
+  const moatMin = 2;
+  const moatMax = CITY_ISO_MAP_SIZE - 3;
+  const innerMin = 4;
+  const innerMax = CITY_ISO_MAP_SIZE - 5;
+  const centerA = Math.floor(CITY_ISO_MAP_SIZE / 2) - 1;
+  const centerB = Math.floor(CITY_ISO_MAP_SIZE / 2);
 
+  for (let y = 0; y < CITY_ISO_MAP_SIZE; y += 1) {
+    for (let x = 0; x < CITY_ISO_MAP_SIZE; x += 1) {
+      const isEdge = x === 0 || y === 0 || x === last || y === last;
+      const isMoat =
+        ((x === moatMin || x === moatMax) && y >= moatMin && y <= moatMax) ||
+        ((y === moatMin || y === moatMax) && x >= moatMin && x <= moatMax);
+      const isRoad =
+        x === centerA || x === centerB || y === centerA || y === centerB;
+      const isInnerCity =
+        x >= innerMin && x <= innerMax && y >= innerMin && y <= innerMax;
+      const isNorthwestCourtyard =
+        x >= innerMin + 2 && x <= centerA - 2 && y >= innerMin + 2 && y <= centerA - 2;
+      const isNortheastCourtyard =
+        x >= centerB + 2 && x <= innerMax - 2 && y >= innerMin + 2 && y <= centerA - 2;
+      const isSouthwestCourtyard =
+        x >= innerMin + 2 && x <= centerA - 2 && y >= centerB + 2 && y <= innerMax - 2;
+      const isSoutheastCourtyard =
+        x >= centerB + 2 && x <= innerMax - 2 && y >= centerB + 2 && y <= innerMax - 2;
+      const isCourtyard =
+        isInnerCity &&
+        (isNorthwestCourtyard ||
+          isNortheastCourtyard ||
+          isSouthwestCourtyard ||
+          isSoutheastCourtyard);
+      const type: IsoTileType = isMoat
+        ? "water"
+        : isEdge
+          ? "grass"
+          : isRoad
+            ? "road"
+            : isCourtyard
+              ? "courtyard"
+              : "stone";
+
+      tiles.push({ x, y, type });
+    }
+  }
+
+  return tiles;
+}
+
+function getIsoScreenPosition(tile: IsoTile): { x: number; y: number } {
+  const rawX = (tile.x - tile.y) * (CITY_ISO_TILE_WIDTH / 2);
+  const rawY = (tile.x + tile.y) * (CITY_ISO_TILE_HEIGHT / 2);
+  const centerY =
+    ((CITY_ISO_MAP_SIZE - 1) * CITY_ISO_TILE_HEIGHT) / 2;
+
+  return {
+    x: rawX,
+    y: rawY - centerY,
+  };
+}
+
+function renderCityIsometricMap(): string {
+  return createCitySceneTiles()
+    .map((tile) => {
+      const screenPosition = getIsoScreenPosition(tile);
+
+      return `
+        <span
+          class="c-city-isometric-tile c-city-isometric-tile--${tile.type}"
+          style="--iso-x:${tile.x}; --iso-y:${tile.y}; --screen-x:${screenPosition.x}px; --screen-y:${screenPosition.y}px; --iso-tile-width:${CITY_ISO_TILE_WIDTH}px; --iso-tile-height:${CITY_ISO_TILE_HEIGHT}px; z-index:${tile.x + tile.y};"
+          aria-hidden="true"
+        ></span>
+      `;
+    })
+    .join("");
+}
+
+function renderCityMapScene(cityDefinition: CityDefinition): string {
   return `
-    <div class="c-city-locations-view" role="dialog" aria-modal="true" aria-label="${input.cityDefinition.name}地点">
-      <div class="c-city-locations-view__backdrop" data-action="close-city-menu"></div>
-      <div class="c-city-locations-view__chrome">
-        <div class="c-city-locations-view__header">
-          <button type="button" class="c-city-locations-view__close" data-action="close-city-menu">
-            返回菜单
-          </button>
-        </div>
-        <div class="c-city-locations-view__deck" aria-label="城内地点卡片">
-          ${input.cityEntries
-            .map(
-              (cityEntry) => `
-                <button
-                  type="button"
-                  class="c-kulan-house-card c-kulan-house-card--leader-residence"
-                  data-city-entry-id="${cityEntry.id}"
-                  aria-label="打开${cityEntry.name}"
-                >
-                  <span class="c-kulan-house-card__art" aria-hidden="true"></span>
-                </button>
-              `
-            )
-            .join("")}
-          ${visibleHouseDefinitions
-            .map(
-              (houseDefinition) => `
-                <button
-                  type="button"
-                  class="c-kulan-house-card ${getHouseArtworkClass(houseDefinition)}"
-                  data-house-id="${houseDefinition.id}"
-                  aria-label="进入${houseDefinition.name}"
-                >
-                  <span class="c-kulan-house-card__art" aria-hidden="true"></span>
-                </button>
-              `
-            )
-            .join("")}
-        </div>
-        <button
-          type="button"
-          class="c-city-locations-view__return-action"
-          data-action="close-city-menu"
+    <div class="c-city-map-scene" aria-label="${cityDefinition.name}等距城镇地图">
+      <div class="c-city-map-scene__ambient" aria-hidden="true"></div>
+      <div class="c-city-isometric-map" aria-label="${cityDefinition.name}等距城镇地图">
+        <div
+          class="c-city-isometric-map__grid"
+          style="--iso-map-width:${CITY_ISO_MAP_SIZE * CITY_ISO_TILE_WIDTH}px; --iso-map-height:${CITY_ISO_MAP_SIZE * CITY_ISO_TILE_HEIGHT}px;"
         >
-          返回
-        </button>
+          ${renderCityIsometricMap()}
+          <img
+            class="c-city-isometric-map__texture"
+            src="${cityDiamondMapTextureUrl}"
+            alt=""
+            aria-hidden="true"
+          />
+        </div>
       </div>
     </div>
   `;
+}
+
+function renderLocationsDeckView(): string {
+  return "";
 }
 
 function renderCityMenuPanel(input: {
@@ -238,7 +325,7 @@ function renderCityMenuPanel(input: {
   let bodyMarkup = "";
 
   if (input.cityMenuState.panelId === "locations") {
-    return renderLocationsDeckView(input);
+    return renderLocationsDeckView();
   }
 
   switch (input.cityMenuState.panelId) {
@@ -333,11 +420,15 @@ function renderCityMenuPanel(input: {
             <p class="c-city-directory__eyebrow">${eyebrow}</p>
             <h2 class="c-city-directory__title">${title}</h2>
           </div>
-          <button type="button" class="c-city-directory__close" data-action="close-city-menu">
+        </div>
+        <div class="c-city-menu-panel__body">
+          ${bodyMarkup}
+        </div>
+        <div class="c-city-menu-panel__actions">
+          <button type="button" class="c-city-directory__close c-city-menu-panel__close" data-action="close-city-menu">
             关闭
           </button>
         </div>
-        ${bodyMarkup}
       </div>
     </div>
   `;
@@ -374,23 +465,18 @@ export function renderCityView(
   return `
     <section class="view-city view-city--kulan">
       <div class="c-kulan-city">
-        <video
-          class="c-kulan-city__background-video"
-          autoplay
-          muted
-          loop
-          playsinline
-          aria-hidden="true"
-        >
-          <source src="${cityBackgroundVideoUrl}" type="video/mp4" />
-        </video>
+        <img class="c-kulan-city__background-image" src="${haozhouCityBackgroundUrl}" alt="" aria-hidden="true" />
         <div class="c-kulan-city__body">
           <div class="c-kulan-city__stage">
+            ${renderCityMapScene(cityDefinition)}
             <button type="button" class="c-kulan-city__leave-action" data-action="leave-city">
               返回地图
             </button>
             ${city3dButton}
-            ${renderCityMenuButtons(playerCharacter)}
+            ${renderCityMenuButtons({
+              houseDefinitions,
+              cityEntries,
+            })}
           </div>
         </div>
         ${renderCityMenuPanel({

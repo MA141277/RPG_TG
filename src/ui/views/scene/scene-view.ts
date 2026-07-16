@@ -9,6 +9,10 @@ import {
   resolveActionNodeText,
   resolveChoiceOptionText,
 } from "../../../application/content/text-resolution";
+import {
+  renderDialogueTypewriterHint,
+  renderDialogueTypewriterLines,
+} from "../../dialogue-typewriter";
 import { resolveCharacterPortraitImageUrl } from "../../portrait-assets";
 
 type SceneViewInput = {
@@ -63,6 +67,7 @@ function renderSceneDialogueCard(
   } = {}
 ): string {
   const clickable = options.advanceActionId != null;
+  const typewriterLines = renderDialogueTypewriterLines(paragraphs);
 
   return `
     <footer class="c-grain-shop-dialogue c-scene-dialogue" aria-label="剧情对话">
@@ -70,12 +75,13 @@ function renderSceneDialogueCard(
         class="c-grain-shop-dialogue__text c-grain-shop-skin-card ${clickable ? "c-grain-shop-dialogue__text--clickable" : ""}"
         ${clickable ? `data-scene-action="${options.advanceActionId}" role="button" tabindex="0"` : ""}
       >
-        ${paragraphs
-          .map((paragraph) => `<p class="c-grain-shop-dialogue__line">${paragraph}</p>`)
-          .join("")}
+        ${typewriterLines.markup}
         ${
           clickable
-            ? '<p class="c-grain-shop-dialogue__hint">点击继续</p>'
+            ? renderDialogueTypewriterHint(
+                "点击继续",
+                typewriterLines.totalDurationMs
+              )
             : ""
         }
       </div>

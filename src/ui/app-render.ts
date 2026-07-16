@@ -8,6 +8,10 @@ import {
   resolveCharacterAvatarImageUrl,
   resolveCharacterPortraitImageUrl,
 } from "./portrait-assets";
+import {
+  renderDialogueTypewriterHint,
+  renderDialogueTypewriterLines,
+} from "./dialogue-typewriter";
 import type { GridCoordinate } from "../application/navigation/travel-to-coordinate";
 import { getRevealedCampaignHexKeys } from "../application/map/campaign-map-exploration";
 import type { CardDefinition } from "../domain/card";
@@ -262,6 +266,7 @@ function renderLocationDialogue(
     ) ?? null;
   const portraitImageUrl =
     speaker == null ? null : resolveCharacterPortraitImageUrl(speaker);
+  const typewriterLines = renderDialogueTypewriterLines(dialogueState.textLines);
 
   return `
     <footer class="c-grain-shop-dialogue c-scene-dialogue c-location-dialogue" aria-label="地点对话">
@@ -271,10 +276,11 @@ function renderLocationDialogue(
         role="button"
         tabindex="0"
       >
-        ${dialogueState.textLines
-          .map((line) => `<p class="c-grain-shop-dialogue__line">${line}</p>`)
-          .join("")}
-        <p class="c-grain-shop-dialogue__hint">${dialogueState.advanceHintText}</p>
+        ${typewriterLines.markup}
+        ${renderDialogueTypewriterHint(
+          dialogueState.advanceHintText,
+          typewriterLines.totalDurationMs
+        )}
       </div>
       <div class="c-grain-shop-dialogue__npc">
         <div class="c-grain-shop-portrait" aria-hidden="true">
