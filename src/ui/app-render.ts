@@ -26,6 +26,8 @@ import type { MapDefinition } from "../domain/map";
 import type { ValuableItemDefinition } from "../domain/valuable-item";
 import { assertExists } from "../shared/assert";
 import { renderConfirmModal } from "./components/modal/confirm-modal";
+import { renderNpcInteractionMenu } from "./components/npc-interaction/npc-interaction-menu";
+import { selectNpcInteractionMenu } from "../application/npc-interaction/npc-interaction";
 import {
   createGlobalPlayerPanelModel,
   renderGlobalPlayerPanel,
@@ -241,6 +243,26 @@ function renderModal(
     portraitLabel: cityPortraits[modalState.cityId] ?? modalState.cityName,
     portraitImageUrl: null,
   });
+}
+
+function renderNpcInteractionOverlay(input: AppRenderInput): string {
+  const session = input.appState.gameState.ui.npcInteractionSession;
+  const targetName =
+    session == null
+      ? null
+      : input.appState.characterDefinitions.find(
+          (characterDefinition) =>
+            characterDefinition.id === session.targetCharacterId
+        )?.name ?? null;
+
+  return renderNpcInteractionMenu(
+    selectNpcInteractionMenu({
+      session,
+      targetName,
+      specialActions: [],
+      giftDisabled: true,
+    })
+  );
 }
 
 function resolveMapEntryVisualKind(
@@ -549,6 +571,7 @@ export function renderApp(input: AppRenderInput): string {
               input.mapDefinition,
               input.cityDefinitions ?? []
             )}
+            ${renderNpcInteractionOverlay(input)}
             ${renderCityBeggingMiniGameOverlay(input.appState.beggingMiniGameState)}
             ${renderOverlay(input, playerCharacter)}
             ${renderLayoutEditor(input.appState)}

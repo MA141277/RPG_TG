@@ -20,10 +20,13 @@ import {
   closeCityMenu,
   closeCityDirectory,
   closeGlobalOverlay,
+  closeNpcInteraction,
+  chooseNpcDefaultTalk,
   equipValuable,
   openCharacterDetail,
   openCityMenu,
   openCityDirectory,
+  openNpcInteraction,
   openPlayerDetail,
   selectCard,
   selectValuable,
@@ -185,8 +188,12 @@ import type { CityEntryDefinition } from "./domain/city-entry";
 import type { CityNpcPoolDefinition } from "./domain/city-npc";
 import type { EventDefinition } from "./domain/event";
 import type { HouseDefinition } from "./domain/house";
-import type { HouseModuleTransitionResult } from "./domain/house-module";
+import type {
+  HouseModuleId,
+  HouseModuleTransitionResult,
+} from "./domain/house-module";
 import type { MapDefinition } from "./domain/map";
+import type { NpcInteractionContext } from "./domain/npc-interaction";
 import type {
   ScenarioPackDefinition,
   ScenarioPackSummary,
@@ -3923,6 +3930,40 @@ window.addEventListener("message", (event) => {
   handleBattleDemoResultMessage(event.data);
 });
 
+function parseNpcInteractionContext(
+  rawContext: string
+): NpcInteractionContext | null {
+  try {
+    const value: unknown = JSON.parse(rawContext);
+    if (value == null || typeof value !== "object") {
+      return null;
+    }
+
+    const candidate = value as Record<string, unknown>;
+    if (
+      candidate.type === "house" &&
+      typeof candidate.houseId === "string" &&
+      (candidate.moduleId == null || typeof candidate.moduleId === "string")
+    ) {
+      const context: NpcInteractionContext = {
+        type: "house",
+        houseId: candidate.houseId,
+      };
+      if (candidate.moduleId != null) {
+        return {
+          ...context,
+          moduleId: candidate.moduleId as HouseModuleId,
+        };
+      }
+      return context;
+    }
+  } catch {
+    return null;
+  }
+
+  return null;
+}
+
 appElement.addEventListener("click", (event) => {
   if (shouldSuppressNextClickAfterMapDrag) {
     shouldSuppressNextClickAfterMapDrag = false;
@@ -4002,16 +4043,48 @@ appElement.addEventListener("click", (event) => {
     return;
   }
 
-  const npcProfileButton = targetElement.closest<HTMLElement>(
-    "[data-npc-action='profile'][data-character-id]"
+  const npcTargetButton = targetElement.closest<HTMLElement>(
+    "[data-npc-target][data-npc-context]"
   );
-  if (npcProfileButton != null) {
-    const characterId = npcProfileButton.dataset.characterId;
-    if (characterId != null && characterId.length > 0) {
-      appState = openCharacterDetail(appState, characterId);
-      renderApp();
+  if (npcTargetButton != null) {
+    const characterId = npcTargetButton.dataset.npcTarget;
+    const rawContext = npcTargetButton.dataset.npcContext;
+    if (characterId != null && rawContext != null) {
+      const context = parseNpcInteractionContext(rawContext);
+      if (context != null) {
+        appState = openNpcInteraction(appState, context, characterId);
+        renderApp();
+      }
     }
     return;
+  }
+
+  const npcActionButton = targetElement.closest<HTMLElement>("[data-npc-action]");
+  if (npcActionButton != null) {
+    const npcAction = npcActionButton.dataset.npcAction;
+    if (npcAction === "close") {
+      appState = closeNpcInteraction(appState);
+      renderApp();
+      return;
+    }
+
+    if (npcAction === "profile") {
+      const characterId = npcActionButton.dataset.characterId;
+      if (characterId != null && characterId.length > 0) {
+        appState = openCharacterDetail(appState, characterId);
+        renderApp();
+      }
+      return;
+    }
+
+    if (npcAction === "talk") {
+      const characterId = npcActionButton.dataset.characterId;
+      if (characterId != null && characterId.length > 0) {
+        appState = chooseNpcDefaultTalk(appState, characterId);
+        renderApp();
+      }
+      return;
+    }
   }
 
   const openCardsButton = targetElement.closest<HTMLElement>(

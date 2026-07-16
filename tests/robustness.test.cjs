@@ -4005,6 +4005,65 @@ test("global NPC interaction adapts house standby roster into reusable NPC pool"
   assert.equal(pool.actors[0].disabled, false);
 });
 
+test("global NPC interaction renderer emits generic menu actions", () => {
+  const {
+    renderNpcInteractionMenu,
+  } = require("../.test-dist/ui/components/npc-interaction/npc-interaction-menu.js");
+  const menu = {
+    type: "npc-interaction-menu",
+    context: { type: "house", houseId: "house.tea", moduleId: "tea-house" },
+    targetCharacterId: "char.tea",
+    targetName: "茶博士",
+    options: [
+      { id: "tea:ask-intel", label: "打听", kind: "special" },
+      { id: "npc-interaction:profile", label: "角色情报", kind: "profile" },
+      { id: "npc-interaction:talk", label: "谈话", kind: "talk" },
+      {
+        id: "npc-interaction:gift",
+        label: "送礼",
+        kind: "gift",
+        disabled: true,
+      },
+    ],
+  };
+  const html = renderNpcInteractionMenu(menu);
+
+  assert.match(html, /data-npc-menu="interaction"/);
+  assert.match(html, /data-npc-action="special"/);
+  assert.match(html, /data-house-action="tea:ask-intel"/);
+  assert.match(html, /data-npc-action="profile"/);
+  assert.match(html, /data-character-id="char\.tea"/);
+  assert.match(html, /disabled/);
+});
+
+test("global NPC default talk opens dialogue without mutating runtime state", () => {
+  const {
+    chooseNpcDefaultTalk,
+    openNpcInteraction,
+  } = require("../.test-dist/application/app-actions.js");
+  const baseGameState = createBaseState();
+  const baseAppState = {
+    ...createRuntimeState(baseGameState).app,
+    gameState: baseGameState,
+  };
+  const opened = openNpcInteraction(
+    baseAppState,
+    { type: "house", houseId: "house.tea", moduleId: "tea-house" },
+    "char.tea"
+  );
+  const talked = chooseNpcDefaultTalk(opened, "char.tea");
+
+  assert.equal(talked.gameState.ui.npcInteractionSession?.mode, "dialogue");
+  assert.deepEqual(
+    talked.gameState.runtime.variables,
+    baseGameState.runtime.variables
+  );
+  assert.deepEqual(
+    talked.gameState.runtime.flags,
+    baseGameState.runtime.flags
+  );
+});
+
 test("primary house actor appears first in temple daily roster during greeting", () => {
   const state = createInitialState({
     cards: prototypeCards,
