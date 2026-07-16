@@ -1,5 +1,4 @@
 precision mediump float;
-uniform sampler2D uTexture;
 uniform sampler2D uMaterialTexture;
 uniform sampler2D uMaterialSemanticTexture;
 uniform sampler2D uShorelineChainTexture;
@@ -1135,8 +1134,6 @@ void main() {
   vec3 visualLandCellData = getVisualLandCellData(hexPoint, hexCell, water, hexScale, mapAspect);
   vec2 visualLandCell = visualLandCellData.xy;
   vec2 visualLandUv = getHexCellUv(visualLandCell, hexScale, mapAspect);
-  vec2 visualLandAtlasUv = getHexAtlasUv(hexPoint, visualLandCell);
-  vec4 base = texture2D(uTexture, visualLandAtlasUv);
   vec3 landMaterial = texture2D(uMaterialTexture, clamp(visualLandUv, 0.0, 1.0)).rgb;
   float visualLandWater = getSemanticWaterAmountAtCell(visualLandCell, hexScale, mapAspect);
   vec2 nearSeaBoundaryFlow = vec2(uTimeSeconds * 0.026, -uTimeSeconds * 0.010);
@@ -1230,7 +1227,6 @@ void main() {
     0.0,
     1.0
   );
-  float atlasDetailLuma = dot(base.rgb, vec3(0.2126, 0.7152, 0.0722));
   vec3 dryGrassColor = mix(vec3(0.58, 0.60, 0.22), vec3(0.84, 0.72, 0.30), beachShapeNoise);
   vec3 erodedGrassTexture = mix(
     grassTexture,
@@ -1275,7 +1271,6 @@ void main() {
     1.0
   );
   landTexture = mix(landTexture, snowLandTexture, snowAmount);
-  landTexture *= mix(0.95, 1.05, atlasDetailLuma);
   float landShade = mix(uLandTextureShadeRange.x, uLandTextureShadeRange.y, baseShade);
   vec3 landColor = landTexture * landShade * mix(0.96, 1.08, materialLuma);
   vec3 waterColor = getAnimatedWaterColor(

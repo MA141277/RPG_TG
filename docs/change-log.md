@@ -2,6 +2,15 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-16 Campaign Terrain Atlas Luma Removal
+
+### Changed
+- `campaign-terrain.frag.glsl` 移除原始地表 atlas 的亮度采样和 `atlasDetailLuma` 乘法，terrain 最终明暗不再继承旧底图自带的阴影/高光痕迹。
+- `campaign-terrain-webgl.ts` 同步移除 terrain program 的 `uTexture` uniform 校验和绑定；原始地图纹理仍可作为水体贴图缺失时的 fallback 资源，但不再输入陆地表面明暗链路。
+
+### Impact
+- 该调整只改变 campaign terrain 的视觉着色来源，不改变 Hex 数据图、最终 `heightSamples`、通行、寻路、点击、探索、云洞、山脉/森林语义或材质纹理资产。
+
 ## 2026-07-16 Campaign Mountain Shape Base/Delta Split
 
 ### Changed

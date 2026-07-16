@@ -1103,7 +1103,6 @@ async function initCampaignTerrainWebGl(
     program,
     "uTerrainCameraTiltSinCos"
   );
-  const textureLocation = gl.getUniformLocation(program, "uTexture");
   const materialTextureLocation = gl.getUniformLocation(program, "uMaterialTexture");
   const materialSemanticTextureLocation = gl.getUniformLocation(
     program,
@@ -1342,7 +1341,6 @@ async function initCampaignTerrainWebGl(
     matrixLocation == null ? "uMatrix" : null,
     heightScaleLocation == null ? "uHeightScale" : null,
     terrainCameraTiltSinCosLocation == null ? "uTerrainCameraTiltSinCos" : null,
-    textureLocation == null ? "uTexture" : null,
     materialTextureLocation == null ? "uMaterialTexture" : null,
     materialSemanticTextureLocation == null ? "uMaterialSemanticTexture" : null,
     materialSemanticTextureSizeLocation == null ? "uMaterialSemanticTextureSize" : null,
@@ -1519,9 +1517,6 @@ async function initCampaignTerrainWebGl(
       gl.useProgram(program);
       gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
       gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
-      gl.activeTexture(gl.TEXTURE0);
-      gl.bindTexture(gl.TEXTURE_2D, texture);
-      gl.uniform1i(textureLocation, 0);
       gl.activeTexture(gl.TEXTURE1);
       gl.bindTexture(gl.TEXTURE_2D, materialTexture);
       gl.uniform1i(materialTextureLocation, 1);
