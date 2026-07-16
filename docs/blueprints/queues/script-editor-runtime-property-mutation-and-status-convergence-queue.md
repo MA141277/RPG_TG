@@ -52,7 +52,7 @@
 - Version plan:
   - `docs/blueprints/plans/2026-07-15-script-editor-authoring-data-structure-unification-target-plan.md`
 - Problem ledger:
-  - `docs/blueprints/script-editor-authoring-data-structure-unification-observation-ledger.md`
+  - `docs/blueprints/version-memo.md`
 - Related design reference:
   - `docs/script-editor-city-building-custom-properties.md`
 - Predecessor queues:
@@ -132,7 +132,7 @@
   - `tests/robustness.test.cjs`
   - `docs/blueprints/queues/script-editor-runtime-property-mutation-and-status-convergence-queue.md`
 - must_inspect:
-  - `docs/blueprints/script-editor-authoring-data-structure-unification-observation-ledger.md`
+  - `docs/blueprints/version-memo.md`
   - `docs/script-editor-city-building-custom-properties.md`
   - `src/domain/character.ts`
   - `src/domain/character-status.ts`
@@ -158,7 +158,7 @@
   - `A test-first implementation plan names exact files, helper APIs, validation rules, and representative consumers for the next task.`
 - verify_with:
   - `npm run lint:blueprints`
-  - `rg -n "extendedAttributes|characterStatusById|statPatch|skillPatch|gold|money|mutatePlayerGold|donation|temple|effect|RuntimeResult|modState" src tests docs/blueprints/script-editor-authoring-data-structure-unification-observation-ledger.md`
+  - `rg -n "extendedAttributes|characterStatusById|statPatch|skillPatch|gold|money|mutatePlayerGold|donation|temple|effect|RuntimeResult|modState" src tests docs/blueprints/version-memo.md`
 - if_blocked:
   - `Record the blocker and return to version review if schema-reference-and-migration-freeze must precede this queue.`
 - promote_next_if_done: `task.script-editor-runtime-property-mutation-and-status-convergence.runtime-property-contract-implementation`
@@ -260,7 +260,7 @@
   - `docs/blueprints/blueprint.md`
   - `docs/blueprints/plans/2026-07-15-script-editor-authoring-data-structure-unification-target-plan.md`
   - `docs/blueprints/queues/script-editor-runtime-property-mutation-and-status-convergence-queue.md`
-  - `docs/blueprints/script-editor-authoring-data-structure-unification-observation-ledger.md`
+  - `docs/blueprints/version-memo.md`
   - `docs/change-log.md`
 - must_inspect:
   - `Current queue, version plan, Blueprint, project-progress, and BUG-001 truth.`

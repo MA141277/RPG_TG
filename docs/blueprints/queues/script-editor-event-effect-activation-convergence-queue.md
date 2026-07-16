@@ -54,7 +54,7 @@
 - Residue source:
   - `docs/blueprints/queues/script-editor-runtime-property-mutation-and-status-convergence-queue.md`
 - Problem ledger:
-  - `docs/blueprints/script-editor-authoring-data-structure-unification-observation-ledger.md`
+  - `docs/blueprints/version-memo.md`
 
 ### Queue Snapshot
 
@@ -241,7 +241,7 @@
   - `docs/blueprints/blueprint.md`
   - `docs/blueprints/plans/2026-07-15-script-editor-authoring-data-structure-unification-target-plan.md`
   - `docs/blueprints/queues/script-editor-event-effect-activation-convergence-queue.md`
-  - `docs/blueprints/script-editor-authoring-data-structure-unification-observation-ledger.md`
+  - `docs/blueprints/version-memo.md`
   - `docs/change-log.md`
 - must_inspect:
   - `Current queue, version plan, Blueprint, project-progress, and BUG-001 truth.`

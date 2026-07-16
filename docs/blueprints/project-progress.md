@@ -54,7 +54,8 @@
 - `docs/blueprints/queues/script-editor-runtime-property-mutation-and-status-convergence-queue.md` stores the closed runtime property mutation and status convergence truth.
 - `docs/blueprints/queues/script-editor-event-effect-activation-convergence-queue.md` stores the closed event effect activation convergence truth.
 - `docs/blueprints/queues/script-editor-event-structure-convergence-queue.md` stores the closed event structure convergence baseline truth.
-- `docs/blueprints/script-editor-authoring-data-structure-unification-observation-ledger.md` stores the current version's non-scheduling observation ledger.
+- `docs/blueprints/queues/script-editor-branching-event-task-chain-convergence-queue.md` stores the closed fail-closed node progression guard truth and same-family continuation routing.
+- `docs/blueprints/version-memo.md` stores the current version's non-scheduling memo.
 - `docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md` stores the closed runtime-pack-unification version's admission history, candidate record, promotion ledger, and closeout truth.
 - `docs/blueprints/queues/script-editor-scenario-profile-startup-export-convergence-queue.md` stores the closed scenarioProfile startup export convergence queue truth.
 - `docs/blueprints/queues/script-editor-narrative-authoring-export-convergence-queue.md` stores the closed narrative authoring export convergence queue truth.
