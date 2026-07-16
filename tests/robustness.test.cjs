@@ -14198,6 +14198,23 @@ test("child 34 removes only the obsolete interactive launch helper while keeping
   assert.doesNotMatch(mainSource, /interactive\.story-battle\.action/);
 });
 
+test("global NPC interaction does not add concrete house business branches to main", () => {
+  const mainSource = fs.readFileSync(
+    path.join(process.cwd(), "src", "main.ts"),
+    "utf8"
+  );
+
+  assert.doesNotMatch(
+    mainSource,
+    /isTeaHouse|isMarketHouse|isMedicineHouse|isTavern|isLeaderResidence/
+  );
+  assert.doesNotMatch(mainSource, /moduleId\s*===\s*["']tea-house["']/);
+  assert.doesNotMatch(mainSource, /moduleId\s*===\s*["']market-house["']/);
+  assert.doesNotMatch(mainSource, /moduleId\s*===\s*["']medicine-house["']/);
+  assert.doesNotMatch(mainSource, /moduleId\s*===\s*["']tavern["']/);
+  assert.match(mainSource, /data-npc-action/);
+});
+
 test("campaign coordinate travel builds a multi-step adjacent hex path", () => {
   const coordinateSpace = { width: 509, height: 451 };
   const currentCoordinate = { x: 334, y: 318 };

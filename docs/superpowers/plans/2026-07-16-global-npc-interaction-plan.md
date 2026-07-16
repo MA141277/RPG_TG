@@ -10,12 +10,12 @@
 
 ## Execution State
 
-- Status: `running`
+- Status: `completed-but-open`
 - Last Updated: `2026-07-16`
-- Current Focus: `Task 5 completed and reviewed; preparing Task 6 final verification.`
-- Next Step: `Start Task 6: Final Verification And Main Boundary Guard.`
-- Verification: `npm run lint:plans passed for 59 files; npm test passed for 306 tests`
-- Notes: `Do not mark this plan closed without structured closeout, project-progress sync, and remote push success.`
+- Current Focus: `Implementation complete; closeout, project-progress sync, and push remain.`
+- Next Step: `Prepare structured child closeout after remote push succeeds.`
+- Verification: `npm run typecheck; npm test; npm run build; npm run lint:plans`
+- Notes: `Do not mark closed until project-progress sync and push success are recorded.`
 
 ## Progress Log
 
@@ -47,6 +47,10 @@
   - Summary: `Completed Task 5 gift empty state and documentation; task review approved with no findings.`
   - Verification: `Implementer reported focused global NPC/gift/detail tests, npm run lint:plans, npm run typecheck, and git diff --check passed; reviewer approved diff 51db1a05..6dc83668.`
   - Next: `Start Task 6 final verification and main boundary guard.`
+- 2026-07-16
+  - Summary: `Completed Phase 1 global NPC interaction implementation.`
+  - Verification: `npm run typecheck; npm test; npm run build; npm run lint:plans`
+  - Next: `Sync project-progress, push, and add structured closeout.`
 
 ---
 
@@ -1397,7 +1401,7 @@ git commit -m "docs: document npc interaction contract"
 **Interfaces:**
 - Produces: final evidence that generic handlers do not introduce concrete house/NPC branches.
 
-- [ ] **Step 1: Add boundary regression test**
+- [x] **Step 1: Add boundary regression test**
 
 Append to `tests/robustness.test.cjs`:
 
@@ -1417,7 +1421,7 @@ test("global NPC interaction does not add concrete house business branches to ma
 });
 ```
 
-- [ ] **Step 2: Run full verification**
+- [x] **Step 2: Run full verification**
 
 Run:
 
@@ -1435,7 +1439,7 @@ Expected:
 - `npm run build` exits `0`.
 - `npm run lint:plans` exits `0`.
 
-- [ ] **Step 3: Update plan execution state**
+- [x] **Step 3: Update plan execution state**
 
 Update this plan:
 
@@ -1459,7 +1463,7 @@ Append progress log:
   - Next: `Sync project-progress, push, and add structured closeout.`
 ```
 
-- [ ] **Step 4: Commit Task 6**
+- [x] **Step 4: Commit Task 6**
 
 Run:
 
