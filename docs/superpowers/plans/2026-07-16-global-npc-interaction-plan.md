@@ -12,8 +12,8 @@
 
 - Status: `running`
 - Last Updated: `2026-07-16`
-- Current Focus: `Task 1 completed and reviewed; preparing Task 2 character detail targeting.`
-- Next Step: `Start Task 2: Character Detail Targeting For Any NPC.`
+- Current Focus: `Task 2 completed and reviewed; preparing Task 3 global NPC menu rendering.`
+- Next Step: `Start Task 3: Global NPC Menu Renderer And Action Handling.`
 - Verification: `npm run lint:plans passed for 59 files; npm test passed for 306 tests`
 - Notes: `Do not mark this plan closed without structured closeout, project-progress sync, and remote push success.`
 
@@ -31,6 +31,10 @@
   - Summary: `Completed Task 1 domain types and pure NPC interaction selectors; task review approved with no findings.`
   - Verification: `Implementer reported npm test passed for 309 tests and npm run typecheck passed; reviewer approved diff 0dbab8cd..bd3ad85b.`
   - Next: `Start Task 2 character detail targeting.`
+- 2026-07-16
+  - Summary: `Completed Task 2 character detail targeting; task review approved with one Minor scope-hygiene note about an SDD report artifact.`
+  - Verification: `Implementer reported npm run typecheck and npm test passed; reviewer approved diff 3ad1f1d8..387de08a.`
+  - Next: `Start Task 3 global NPC menu renderer and action handling.`
 
 ---
 
@@ -472,7 +476,7 @@ git commit -m "feat: add npc interaction contract"
 - Produces: `openCharacterDetail(appState, characterId): AppState`.
 - Produces: `closeGlobalOverlay(appState): AppState`.
 
-- [ ] **Step 1: Write failing tests for detail target actions**
+- [x] **Step 1: Write failing tests for detail target actions**
 
 Add imports:
 
@@ -535,7 +539,7 @@ test("closing global overlay clears the arbitrary character detail target", () =
 });
 ```
 
-- [ ] **Step 2: Run tests and verify they fail**
+- [x] **Step 2: Run tests and verify they fail**
 
 Run:
 
@@ -548,7 +552,7 @@ Expected:
 
 - Failure reports missing `openCharacterDetail`, `openPlayerDetail`, or `closeGlobalOverlay`.
 
-- [ ] **Step 3: Implement detail action helpers**
+- [x] **Step 3: Implement detail action helpers**
 
 Modify `src/application/app-actions.ts`:
 
@@ -601,7 +605,7 @@ export function closeGlobalOverlay(appState: AppState): AppState {
 
 Keep `updateOverlayView()` for existing callers, but switch player-detail and close-overlay handlers to these explicit helpers.
 
-- [ ] **Step 4: Render selected detail character**
+- [x] **Step 4: Render selected detail character**
 
 Modify `src/ui/app-render.ts`:
 
@@ -635,7 +639,7 @@ Use it in `renderOverlay()`:
   }
 ```
 
-- [ ] **Step 5: Update generic main handlers**
+- [x] **Step 5: Update generic main handlers**
 
 Modify imports in `src/main.ts` from `src/application/app-actions.ts` to include:
 
@@ -672,7 +676,7 @@ Add a generic NPC detail handler:
 
 This handler is generic and must not inspect house ids, module ids, or NPC ids.
 
-- [ ] **Step 6: Run focused tests**
+- [x] **Step 6: Run focused tests**
 
 Run:
 
@@ -685,7 +689,7 @@ Expected:
 
 - Focused tests pass.
 
-- [ ] **Step 7: Commit Task 2**
+- [x] **Step 7: Commit Task 2**
 
 Run:
 
