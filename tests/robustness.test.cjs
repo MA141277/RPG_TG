@@ -4036,6 +4036,48 @@ test("global NPC interaction renderer emits generic menu actions", () => {
   assert.match(html, /disabled/);
 });
 
+test("global NPC interaction renderer escapes menu text and attributes", () => {
+  const {
+    renderNpcInteractionMenu,
+  } = require("../.test-dist/ui/components/npc-interaction/npc-interaction-menu.js");
+  const menu = {
+    type: "npc-interaction-menu",
+    context: { type: "house", houseId: "house.tea", moduleId: "tea-house" },
+    targetCharacterId: 'char."tea<&',
+    targetName: '茶"博士<&',
+    options: [
+      {
+        id: 'tea:"ask<&',
+        label: '打听 "</button><script>&',
+        kind: "special",
+      },
+      {
+        id: "npc-interaction:profile",
+        label: '角色情报 "<img>&',
+        kind: 'profile" data-broken="<&',
+      },
+    ],
+  };
+  const html = renderNpcInteractionMenu(menu);
+
+  assert.match(html, /aria-label="茶&quot;博士&lt;&amp;"/);
+  assert.match(html, />\s*茶&quot;博士&lt;&amp;\s*</);
+  assert.match(html, /data-house-action="tea:&quot;ask&lt;&amp;"/);
+  assert.match(
+    html,
+    /data-npc-action="profile&quot; data-broken=&quot;&lt;&amp;"/
+  );
+  assert.match(html, /data-character-id="char\.&quot;tea&lt;&amp;"/);
+  assert.match(html, /打听 &quot;&lt;\/button&gt;&lt;script&gt;&amp;/);
+  assert.match(html, /角色情报 &quot;&lt;img&gt;&amp;/);
+  assert.doesNotMatch(html, /aria-label="茶"博士</);
+  assert.doesNotMatch(html, /data-house-action="tea:"ask/);
+  assert.doesNotMatch(html, / data-broken="/);
+  assert.doesNotMatch(html, /data-character-id="char\."tea/);
+  assert.doesNotMatch(html, /<\/button><script>/);
+  assert.doesNotMatch(html, /<img>/);
+});
+
 test("global NPC default talk opens dialogue without mutating runtime state", () => {
   const {
     chooseNpcDefaultTalk,
