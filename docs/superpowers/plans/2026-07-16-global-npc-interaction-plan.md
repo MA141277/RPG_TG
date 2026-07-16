@@ -12,8 +12,8 @@
 
 - Status: `running`
 - Last Updated: `2026-07-16`
-- Current Focus: `Task 3 completed and reviewed; preparing Task 4 house roster integration.`
-- Next Step: `Start Task 4: House Roster Integration And Special Action Delegation.`
+- Current Focus: `Task 4 completed and reviewed; preparing Task 5 gift empty state and documentation.`
+- Next Step: `Start Task 5: Gift Empty State And Documentation.`
 - Verification: `npm run lint:plans passed for 59 files; npm test passed for 306 tests`
 - Notes: `Do not mark this plan closed without structured closeout, project-progress sync, and remote push success.`
 
@@ -39,6 +39,10 @@
   - Summary: `Completed Task 3 global NPC menu renderer and action handling; fixed reviewer-found HTML escaping risk and passed re-review.`
   - Verification: `Implementer reported npm test and npm run typecheck passed; fix reported focused escaping test and npm run typecheck passed; reviewer approved diff 88810ea6..e2af8ea8.`
   - Next: `Start Task 4 house roster integration and special action delegation.`
+- 2026-07-16
+  - Summary: `Completed Task 4 house roster integration and special action delegation; fixed reviewer-found roster context wiring and NPC session cleanup issues.`
+  - Verification: `Implementer reported npm test and npm run typecheck passed; fix reported focused global NPC tests and npm run typecheck passed; reviewer approved diff 47e34913..a02bf9f1.`
+  - Next: `Start Task 5 gift empty state and documentation.`
 
 ---
 
@@ -1051,7 +1055,7 @@ git commit -m "feat: render npc interaction menu"
 - Produces: house roster buttons with generic `data-npc-target` attributes.
 - Produces: special menu actions that continue to dispatch existing `data-house-action` ids.
 
-- [ ] **Step 1: Write failing house integration tests**
+- [x] **Step 1: Write failing house integration tests**
 
 Append tests:
 
@@ -1116,7 +1120,7 @@ test("global NPC interaction removes visible idle small-talk labels from tea and
 });
 ```
 
-- [ ] **Step 2: Run tests and verify they fail**
+- [x] **Step 2: Run tests and verify they fail**
 
 Run:
 
@@ -1130,7 +1134,7 @@ Expected:
 - The roster markup assertion fails because house roster buttons still use only `data-house-action`.
 - The label assertion fails until visible `闲谈` labels are removed.
 
-- [ ] **Step 3: Add interaction actions to house actor view model**
+- [x] **Step 3: Add interaction actions to house actor view model**
 
 Modify `src/domain/house-module.ts`:
 
@@ -1146,7 +1150,7 @@ Add to `HouseStandbyActorViewModel`:
   interactionActions?: NpcInteractionOptionViewModel[];
 ```
 
-- [ ] **Step 4: Render house roster as global NPC targets**
+- [x] **Step 4: Render house roster as global NPC targets**
 
 Modify `src/ui/views/house/house-shared-view.ts` inside `renderHouseStandbyRoster()`:
 
@@ -1158,7 +1162,7 @@ Modify `src/ui/views/house/house-shared-view.ts` inside `renderHouseStandbyRoste
 
 Keep `data-house-action` for compatibility during this phase. If a blocking state disables the actor, add `disabled` from the adapted NPC pool in `app-render.ts` rather than making the house renderer infer state.
 
-- [ ] **Step 5: Select special actions from the active actor**
+- [x] **Step 5: Select special actions from the active actor**
 
 Add to `src/application/npc-interaction/npc-interaction.ts`:
 
@@ -1180,7 +1184,7 @@ export function selectHouseNpcSpecialActions(input: {
 
 Use this in `src/ui/app-render.ts` when `stage.type === "house"` and `stage.moduleViewModel != null` to pass `specialActions` into `selectNpcInteractionMenu()`.
 
-- [ ] **Step 6: Migrate visible basic labels**
+- [x] **Step 6: Migrate visible basic labels**
 
 Modify these action labels:
 
@@ -1194,7 +1198,7 @@ Modify these action labels:
 
 For `market-house`, keep the reducer case for `"small-talk"` if needed for compatibility, but do not expose a visible `闲谈` or `small-talk` special label. If market talk remains visible in the menu, expose it through the global default `谈话`.
 
-- [ ] **Step 7: Add context special actions to module actors**
+- [x] **Step 7: Add context special actions to module actors**
 
 For tea house actor view models, add:
 
@@ -1236,7 +1240,7 @@ interactionActions: [
 
 Do not expose leader residence direct `ACTION_GIFT` in `interactionActions`.
 
-- [ ] **Step 8: Clear NPC session on house transitions**
+- [x] **Step 8: Clear NPC session on house transitions**
 
 Modify `src/application/house/house-runtime.ts` in `enterHouseById()`, `leaveCurrentHouse()`, and `applyMapAutoAdvanceCompletion()` UI patches:
 
@@ -1244,7 +1248,7 @@ Modify `src/application/house/house-runtime.ts` in `enterHouseById()`, `leaveCur
           npcInteractionSession: null,
 ```
 
-- [ ] **Step 9: Run focused house integration tests**
+- [x] **Step 9: Run focused house integration tests**
 
 Run:
 
@@ -1259,7 +1263,7 @@ Expected:
 - Visible label test passes.
 - Selector tests from Task 1 and renderer tests from Task 3 still pass.
 
-- [ ] **Step 10: Commit Task 4**
+- [x] **Step 10: Commit Task 4**
 
 Run:
 
