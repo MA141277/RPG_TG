@@ -12,8 +12,8 @@
 
 - Status: `running`
 - Last Updated: `2026-07-16`
-- Current Focus: `Task 2 completed and reviewed; preparing Task 3 global NPC menu rendering.`
-- Next Step: `Start Task 3: Global NPC Menu Renderer And Action Handling.`
+- Current Focus: `Task 3 completed and reviewed; preparing Task 4 house roster integration.`
+- Next Step: `Start Task 4: House Roster Integration And Special Action Delegation.`
 - Verification: `npm run lint:plans passed for 59 files; npm test passed for 306 tests`
 - Notes: `Do not mark this plan closed without structured closeout, project-progress sync, and remote push success.`
 
@@ -35,6 +35,10 @@
   - Summary: `Completed Task 2 character detail targeting; task review approved with one Minor scope-hygiene note about an SDD report artifact.`
   - Verification: `Implementer reported npm run typecheck and npm test passed; reviewer approved diff 3ad1f1d8..387de08a.`
   - Next: `Start Task 3 global NPC menu renderer and action handling.`
+- 2026-07-16
+  - Summary: `Completed Task 3 global NPC menu renderer and action handling; fixed reviewer-found HTML escaping risk and passed re-review.`
+  - Verification: `Implementer reported npm test and npm run typecheck passed; fix reported focused escaping test and npm run typecheck passed; reviewer approved diff 88810ea6..e2af8ea8.`
+  - Next: `Start Task 4 house roster integration and special action delegation.`
 
 ---
 
@@ -716,7 +720,7 @@ git commit -m "feat: target character detail overlays"
 - Produces: `closeNpcInteraction(appState): AppState`.
 - Produces: `chooseNpcDefaultTalk(appState, targetCharacterId): AppState`.
 
-- [ ] **Step 1: Write failing renderer and state tests**
+- [x] **Step 1: Write failing renderer and state tests**
 
 Append tests:
 
@@ -770,7 +774,7 @@ test("global NPC default talk opens dialogue without mutating runtime state", ()
 });
 ```
 
-- [ ] **Step 2: Run tests and verify they fail**
+- [x] **Step 2: Run tests and verify they fail**
 
 Run:
 
@@ -783,7 +787,7 @@ Expected:
 
 - Failure reports missing renderer or app action exports.
 
-- [ ] **Step 3: Implement menu renderer**
+- [x] **Step 3: Implement menu renderer**
 
 Create `src/ui/components/npc-interaction/npc-interaction-menu.ts`:
 
@@ -841,7 +845,7 @@ export function renderNpcInteractionMenu(
 }
 ```
 
-- [ ] **Step 4: Implement app action helpers**
+- [x] **Step 4: Implement app action helpers**
 
 Add to `src/application/app-actions.ts`:
 
@@ -909,7 +913,7 @@ export function chooseNpcDefaultTalk(
 }
 ```
 
-- [ ] **Step 5: Render the global menu**
+- [x] **Step 5: Render the global menu**
 
 In `src/ui/app-render.ts`, import:
 
@@ -949,7 +953,7 @@ Render it after `renderModal(...)` and before global full-screen overlays:
             ${renderNpcInteractionOverlay(input)}
 ```
 
-- [ ] **Step 6: Add generic main handlers**
+- [x] **Step 6: Add generic main handlers**
 
 In `src/main.ts`, import:
 
@@ -1006,7 +1010,7 @@ Add generic handlers:
 
 If using JSON in a data attribute creates escaping issues, replace `data-npc-context` with explicit `data-npc-context-type`, `data-house-id`, and `data-house-module-id`.
 
-- [ ] **Step 7: Run focused tests**
+- [x] **Step 7: Run focused tests**
 
 Run:
 
@@ -1019,7 +1023,7 @@ Expected:
 
 - Focused tests pass.
 
-- [ ] **Step 8: Commit Task 3**
+- [x] **Step 8: Commit Task 3**
 
 Run:
 
