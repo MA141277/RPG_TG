@@ -1,6 +1,9 @@
 import { parseScenarioPack } from "../scenario/scenario-pack-loader";
 import { parseScriptEditorProject } from "./editor-project-loader";
-import { normalizeScriptEditorBuildingRecord } from "./city-building-authoring";
+import {
+  normalizeScriptEditorBuildingRecord,
+  normalizeScriptEditorCityRecord,
+} from "./city-building-authoring";
 import { normalizeScriptEditorPersonRecord } from "./person-authoring";
 import { createDraftScriptEditorProjectCompletionState } from "./project-completion-state";
 import {
@@ -201,7 +204,9 @@ export function importScenarioPackToScriptEditorProject(
     people: (pack.characters ?? []).map((character) =>
       normalizeScriptEditorPersonRecord(character as Record<string, unknown>)
     ),
-    cities: pack.cities ?? [],
+    cities: (pack.cities ?? []).map((city) =>
+      normalizeScriptEditorCityRecord(city)
+    ),
     buildings: (pack.houses ?? []).map((house) =>
       normalizeScriptEditorBuildingRecord(house)
     ),

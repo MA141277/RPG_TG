@@ -5,6 +5,18 @@
 `docs/change-log.md` 的正式定位是“历史记录 + 人类可读摘要”。
 它不是当前 Blueprint / legacy superpowers 治理的 live execution truth，不作为 resume entry、promotion gate、closeout gate 或固定同步门。
 
+## 2026-07-16 Script Editor City Building Definition Contract
+
+### Changed
+- 更新 [src/domain/script-editor-project.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/domain/script-editor-project.ts)、[src/application/script-editor/city-building-authoring.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/city-building-authoring.ts) 和 [src/ui/main-ui/main-ui-flow.js](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/main-ui/main-ui-flow.js)，让剧本编辑器城市/建筑作者态记录使用 `baseAttributes`、`profileMap`、`extendedAttributes` 与 `access.conditionExpression`，不再在新契约面暴露 `access.state` 或 visible/disabled/hidden 下拉。
+- 更新 [src/application/script-editor/city-building-runtime-materializer.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/city-building-runtime-materializer.ts)、[src/application/script-editor/runtime-pack-export.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/runtime-pack-export.ts) 和 [src/application/script-editor/runtime-pack-import.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/runtime-pack-import.ts)，将新城市/建筑定义兼容 materialize 为现有 runtime `CityDefinition`、`HouseDefinition`、city entries、NPC pools 和 refusal rules。
+- 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，覆盖无 visibility state 的新定义契约、旧 visible-disabled/hidden 输入吸收到 literal-false conditionExpression、城市属性导出到 runtime cities，以及现有 HouseRuntime 兼容字段导出。
+- 关闭 `queue.script-editor-city-building-definition-restructure`，将运行时 `conditionExpression` 评估和城市/建筑进入前拦截分类为 same-family residue，并路由到 `queue.location-access-runtime-convergence`。
+
+### Impact
+- 后续 LocationAccessRuntime、HouseRuntime adapter、状态 overlay、导入导出校验和地图兼容队列可以依赖最小城市/建筑定义边界。
+- 当前批次只塑形访问条件数据，不执行表达式求值，也不迁移地图坐标所有权或 HouseRuntime 执行所有权。
+
 ## 2026-07-15 Script Editor Dialogue Node Progression Guard
 
 ### Changed

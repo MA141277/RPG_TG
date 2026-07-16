@@ -1,4 +1,5 @@
 import type { CityEntryDefinition } from "../../domain/city-entry";
+import type { CityDefinition } from "../../domain/city";
 import type {
   CityNpcDefinition,
   CityNpcPoolDefinition,
@@ -10,14 +11,17 @@ import type {
 import type {
   ScriptEditorAccessRule,
   ScriptEditorBuildingRecord,
+  ScriptEditorCityRecord,
   ScriptEditorPersonRecord,
   ScriptEditorProjectDefinition,
   ScriptEditorRuntimeRecord,
 } from "../../domain/script-editor-project";
 import { normalizeScriptEditorBuildingRecord } from "./city-building-authoring";
+import { normalizeScriptEditorCityRecord } from "./city-building-authoring";
 import { normalizeScriptEditorPersonRecord } from "./person-authoring";
 
 export type ScriptEditorCityBuildingRuntimeFamilies = {
+  cities: CityDefinition[];
   houses: HouseDefinition[];
   cityEntries: CityEntryDefinition[];
   cityNpcPools: CityNpcPoolDefinition[];
@@ -30,11 +34,15 @@ export function materializeScriptEditorCityBuildingRuntimeFamilies(
   const buildings = project.buildings.map((building) =>
     normalizeScriptEditorBuildingRecord(building)
   );
+  const cities = project.cities.map((city) =>
+    normalizeScriptEditorCityRecord(city)
+  );
   const people = project.people.map((person) =>
     normalizeScriptEditorPersonRecord(person)
   );
 
   return {
+    cities: materializeCities(cities, buildings),
     houses: materializeHouses(buildings, people),
     cityEntries: materializeCityEntries(project.cityEntries, buildings),
     cityNpcPools: materializeCityNpcPools(project.cityNpcPools, people),
@@ -45,42 +53,94 @@ export function materializeScriptEditorCityBuildingRuntimeFamilies(
   };
 }
 
+function materializeCities(
+  cities: readonly ScriptEditorCityRecord[],
+  buildings: readonly ScriptEditorBuildingRecord[]
+): CityDefinition[] {
+  return cities.map((city) => {
+    const baseAttributes = city.baseAttributes ?? {};
+    const security =
+      typeof baseAttributes.security === "number"
+        ? clampNumber(baseAttributes.security, 0, 100)
+        : 100;
+    return {
+      id: city.id,
+      name: city.name,
+      regionId: readString(city.regionId) || "region.default",
+      mapNodeId: readString(city.mapNodeId) || city.id,
+      houseIds:
+        city.houseIds != null && city.houseIds.length > 0
+          ? readStringArray(city.houseIds)
+          : buildings
+              .filter((building) => building.cityId === city.id)
+              .map((building) => building.id),
+      neighbourCityIds: readStringArray(city.neighbourCityIds),
+      travelCost:
+        typeof city.travelCost === "number" && Number.isFinite(city.travelCost)
+          ? city.travelCost
+          : 1,
+      tags: readStringArray(city.profileMap?.tags),
+      prosperity:
+        typeof baseAttributes.prosperity === "number"
+          ? baseAttributes.prosperity
+          : 50,
+      danger: 100 - security,
+      specialDemand: readStringArray(
+        city.extendedAttributes
+          ?.filter((entry) => entry.key === "specialDemand")
+          .flatMap((entry) => entry.value)
+      ),
+    };
+  });
+}
+
 function materializeHouses(
   buildings: readonly ScriptEditorBuildingRecord[],
   people: readonly ScriptEditorPersonRecord[]
 ): HouseDefinition[] {
   return buildings.map((building) => {
+    const baseAttributes = building.baseAttributes ?? {
+      houseType: "custom",
+      characterIds: [],
+      defaultCharacterId: null,
+    };
     const assignedPersonIds = uniqueStrings([
-      ...readStringArray(building.characterIds),
+      ...readStringArray(baseAttributes.characterIds),
       ...people
         .filter((person) => person.houseId === building.id)
         .map((person) => person.id),
     ]);
     const defaultPersonId = firstNonEmptyString(
       building.entryBinding?.defaultPersonId,
-      readString(building.defaultCharacterId),
+      readString(baseAttributes.defaultCharacterId),
       assignedPersonIds[0] ?? ""
     );
     const onEnterEventId = firstNonEmptyString(
       building.entryBinding?.onEnterEventId,
-      readString(building.onEnterEventId)
+      readString(building.eventBindings?.onEnterEventId)
     );
     const onLeaveEventId = firstNonEmptyString(
       building.entryBinding?.onLeaveEventId,
-      readString(building.onLeaveEventId)
+      readString(building.eventBindings?.onLeaveEventId)
     );
     const backAction = readBackAction(building.backAction);
 
     return {
-      ...building,
-      type: readHouseType(building.type),
+      id: building.id,
+      cityId: building.cityId,
+      name: building.name,
+      type: readHouseType(baseAttributes.houseType),
       characterIds: assignedPersonIds,
       defaultCharacterId: defaultPersonId.length > 0 ? defaultPersonId : null,
       ...(onEnterEventId.length === 0 ? {} : { onEnterEventId }),
       ...(onLeaveEventId.length === 0 ? {} : { onLeaveEventId }),
       backAction,
-      moduleId: building.moduleId ?? null,
-      activityLocationId: readActivityLocationId(building.activityLocationId),
+      visibleStoryStages: readStringArray(baseAttributes.visibleStoryStages),
+      enterableStoryStages: readStringArray(baseAttributes.enterableStoryStages),
+      requiresPlayerCurrentCityMatch:
+        baseAttributes.requiresPlayerCurrentCityMatch === true,
+      moduleId: baseAttributes.moduleId ?? null,
+      activityLocationId: readActivityLocationId(baseAttributes.activityLocationId),
     };
   });
 }
@@ -188,7 +248,8 @@ function materializeHouseAccessRefusalRules(
     const access = building.access;
     if (
       access == null ||
-      access.state === "visible-enabled" ||
+      !isAlwaysBlockedAccess(access) ||
+      access.blockedMessage == null ||
       access.blockedMessage.length === 0 ||
       explicitHouseIds.has(building.id)
     ) {
@@ -209,11 +270,25 @@ function materializeHouseAccessRefusalRule(
     id: `house-access-refusal.${slugifyIdSegment(building.id)}`,
     houseIds: [building.id],
     speakerCharacterId:
-      access.blockedSpeaker.length > 0 ? access.blockedSpeaker : "player",
+      access.blockedSpeakerId != null && access.blockedSpeakerId.length > 0
+        ? access.blockedSpeakerId
+        : "player",
     title: building.name,
-    text: access.blockedMessage,
-    confirmLabel: access.guidance.length > 0 ? access.guidance : "返回",
+    text: access.blockedMessage ?? "",
+    confirmLabel:
+      access.guidance != null && access.guidance.length > 0
+        ? access.guidance
+        : "返回",
   };
+}
+
+function isAlwaysBlockedAccess(access: ScriptEditorAccessRule): boolean {
+  return access.conditionExpression?.type === "literal" &&
+    access.conditionExpression.value === false;
+}
+
+function clampNumber(value: number, min: number, max: number): number {
+  return Math.min(Math.max(value, min), max);
 }
 
 function readBackAction(value: unknown): HouseDefinition["backAction"] {

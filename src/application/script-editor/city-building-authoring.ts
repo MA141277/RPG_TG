@@ -1,45 +1,35 @@
 import type {
+  LocationAccessConditionExpression,
   ScriptEditorAccessRule,
-  ScriptEditorAccessState,
   ScriptEditorBuildingEntryBinding,
   ScriptEditorBuildingRecord,
   ScriptEditorCityRecord,
+  ScriptEditorCustomAttributeEntry,
   ScriptEditorMenuEntry,
   ScriptEditorMenuTargetFamily,
 } from "../../domain/script-editor-project";
 import type { HouseDefinition } from "../../domain/house";
 
 export const SCRIPT_EDITOR_CITY_DEFAULT_MENU_FAMILIES = [
-  "风土人情",
-  "情报",
-  "地点",
-  "管理",
+  "overview",
+  "intel",
+  "locations",
+  "management",
 ] as const;
 
 export const SCRIPT_EDITOR_BUILDING_DEFAULT_MENU_FAMILIES = [
-  "对话",
-  "交易",
-  "工作",
-  "休息",
-  "情报",
-  "小游戏",
-  "管理",
-  "离开",
-] as const;
-
-export const SCRIPT_EDITOR_ACCESS_STATES: readonly ScriptEditorAccessState[] = [
-  "visible-enabled",
-  "visible-disabled",
-  "hidden",
+  "dialogue",
+  "trade",
+  "work",
+  "rest",
+  "intel",
+  "minigame",
+  "management",
+  "leave",
 ] as const;
 
 function createDefaultAccessRule(): ScriptEditorAccessRule {
-  return {
-    state: "visible-enabled",
-    blockedMessage: "",
-    blockedSpeaker: "",
-    guidance: "",
-  };
+  return {};
 }
 
 function createDefaultMenuEntry(idBase: string, menuFamily: string): ScriptEditorMenuEntry {
@@ -73,12 +63,17 @@ function createDefaultBackAction(): HouseDefinition["backAction"] {
 
 export function createDefaultScriptEditorCityRecord(index: number): ScriptEditorCityRecord {
   const suffix = index + 1;
+  const id = `city.new.${suffix}`;
+  const name = `New City ${suffix}`;
   return {
-    id: `city.new.${suffix}`,
-    name: `新城市 ${suffix}`,
+    id,
+    name,
+    baseAttributes: {},
+    profileMap: { displayName: name, description: "", tags: [] },
+    extendedAttributes: [],
     description: "",
     menuEntries: SCRIPT_EDITOR_CITY_DEFAULT_MENU_FAMILIES.map((family) =>
-      createDefaultMenuEntry(`city.new.${suffix}.menu`, family)
+      createDefaultMenuEntry(`${id}.menu`, family)
     ),
     access: createDefaultAccessRule(),
   };
@@ -89,18 +84,24 @@ export function createDefaultScriptEditorBuildingRecord(
   cityId = "city.start"
 ): ScriptEditorBuildingRecord {
   const suffix = index + 1;
+  const id = `building.new.${suffix}`;
+  const name = `New Building ${suffix}`;
   return {
-    id: `building.new.${suffix}`,
+    id,
     cityId,
-    name: `新建筑 ${suffix}`,
-    type: "custom",
-    characterIds: [],
-    defaultCharacterId: null,
-    activityLocationId: "custom",
+    name,
+    baseAttributes: {
+      houseType: "custom",
+      characterIds: [],
+      defaultCharacterId: null,
+      activityLocationId: "custom",
+    },
+    profileMap: { displayName: name, description: "", tags: [] },
+    extendedAttributes: [],
     backAction: createDefaultBackAction(),
     description: "",
     menuEntries: SCRIPT_EDITOR_BUILDING_DEFAULT_MENU_FAMILIES.map((family) =>
-      createDefaultMenuEntry(`building.new.${suffix}.menu`, family)
+      createDefaultMenuEntry(`${id}.menu`, family)
     ),
     access: createDefaultAccessRule(),
     entryBinding: createDefaultBuildingEntryBinding(),
@@ -110,9 +111,22 @@ export function createDefaultScriptEditorBuildingRecord(
 export function normalizeScriptEditorCityRecord(
   city: Partial<ScriptEditorCityRecord> & { id: string }
 ): ScriptEditorCityRecord {
+  const rawCity = city as Partial<ScriptEditorCityRecord> & Record<string, unknown>;
   return {
-    ...city,
+    id: city.id,
     name: normalizeString(city.name, city.id),
+    ...(normalizeOptionalString(rawCity.regionId).length === 0
+      ? {}
+      : { regionId: normalizeOptionalString(rawCity.regionId) }),
+    ...(normalizeOptionalString(rawCity.mapNodeId).length === 0
+      ? {}
+      : { mapNodeId: normalizeOptionalString(rawCity.mapNodeId) }),
+    houseIds: normalizeStringArray(rawCity.houseIds),
+    neighbourCityIds: normalizeStringArray(rawCity.neighbourCityIds),
+    ...(typeof rawCity.travelCost === "number" ? { travelCost: rawCity.travelCost } : {}),
+    baseAttributes: normalizeCityBaseAttributes(city.baseAttributes),
+    profileMap: normalizeProfileMap(city.profileMap, city.description),
+    extendedAttributes: normalizeCustomAttributes(city.extendedAttributes),
     description: normalizeOptionalString(city.description),
     menuEntries: normalizeMenuEntries(city.menuEntries, `${city.id}.menu`),
     access: normalizeAccessRule(city.access),
@@ -122,32 +136,22 @@ export function normalizeScriptEditorCityRecord(
 export function normalizeScriptEditorBuildingRecord(
   building: Partial<ScriptEditorBuildingRecord> & { id: string }
 ): ScriptEditorBuildingRecord {
+  const rawBuilding = building as Partial<ScriptEditorBuildingRecord> &
+    Record<string, unknown>;
+  const eventBindings = normalizeEventBindings(rawBuilding);
   return {
-    ...building,
+    id: building.id,
     cityId: normalizeString(building.cityId, "city.start"),
     name: normalizeString(building.name, building.id),
-    type: normalizeHouseType(building.type),
-    characterIds: normalizeStringArray(building.characterIds),
-    defaultCharacterId: normalizeNullableString(building.defaultCharacterId),
-    activityLocationId: normalizeActivityLocationId(building.activityLocationId),
-    backAction: normalizeBackAction(building.backAction),
+    baseAttributes: normalizeBuildingBaseAttributes(rawBuilding),
+    profileMap: normalizeProfileMap(building.profileMap, building.description),
+    extendedAttributes: normalizeCustomAttributes(building.extendedAttributes),
     description: normalizeOptionalString(building.description),
     menuEntries: normalizeMenuEntries(building.menuEntries, `${building.id}.menu`),
     access: normalizeAccessRule(building.access),
     entryBinding: normalizeBuildingEntryBinding(building.entryBinding),
-    ...(normalizeHouseModuleId(building.moduleId) == null
-      ? {}
-      : { moduleId: normalizeHouseModuleId(building.moduleId) }),
-    ...(normalizeOptionalString(building.onEnterEventId).length === 0
-      ? {}
-      : { onEnterEventId: normalizeOptionalString(building.onEnterEventId) }),
-    ...(normalizeOptionalString(building.onLeaveEventId).length === 0
-      ? {}
-      : { onLeaveEventId: normalizeOptionalString(building.onLeaveEventId) }),
-    visibleStoryStages: normalizeStringArray(building.visibleStoryStages),
-    enterableStoryStages: normalizeStringArray(building.enterableStoryStages),
-    requiresPlayerCurrentCityMatch:
-      building.requiresPlayerCurrentCityMatch === true,
+    ...(eventBindings == null ? {} : { eventBindings }),
+    backAction: normalizeBackAction(building.backAction),
   };
 }
 
@@ -157,9 +161,9 @@ export function updateScriptEditorCityField(
   value: string
 ): ScriptEditorCityRecord {
   if (field === "description") {
-    return { ...city, description: value };
+    return normalizeScriptEditorCityRecord({ ...city, description: value });
   }
-  return { ...city, [field]: value.trim() };
+  return normalizeScriptEditorCityRecord({ ...city, [field]: value.trim() });
 }
 
 export function updateScriptEditorBuildingField(
@@ -168,9 +172,9 @@ export function updateScriptEditorBuildingField(
   value: string
 ): ScriptEditorBuildingRecord {
   if (field === "description") {
-    return { ...building, description: value };
+    return normalizeScriptEditorBuildingRecord({ ...building, description: value });
   }
-  return { ...building, [field]: value.trim() };
+  return normalizeScriptEditorBuildingRecord({ ...building, [field]: value.trim() });
 }
 
 export function appendScriptEditorMenuEntry<
@@ -181,7 +185,7 @@ export function appendScriptEditorMenuEntry<
     ...record,
     menuEntries: [
       ...(record.menuEntries ?? []),
-      createDefaultMenuEntry(`${record.id}.menu`, `新入口 ${nextIndex}`),
+      createDefaultMenuEntry(`${record.id}.menu`, `entry-${nextIndex}`),
     ],
   };
 }
@@ -249,15 +253,29 @@ export function updateScriptEditorAccessField<
   TRecord extends ScriptEditorCityRecord | ScriptEditorBuildingRecord,
 >(
   record: TRecord,
-  field: keyof ScriptEditorAccessRule,
+  field: keyof ScriptEditorAccessRule | "state" | "blockedSpeaker",
   value: string
 ): TRecord {
+  const access = normalizeAccessRule(record.access);
+  if (field === "state") {
+    return {
+      ...record,
+      access: {
+        ...access,
+        ...(value === "visible-disabled" || value === "hidden"
+          ? { conditionExpression: { type: "literal", value: false } as const }
+          : {}),
+      },
+    };
+  }
+  if (field === "conditionExpression") {
+    return record;
+  }
   return {
     ...record,
     access: {
-      ...normalizeAccessRule(record.access),
-      [field]:
-        field === "state" ? normalizeAccessState(value) : value,
+      ...access,
+      [field === "blockedSpeaker" ? "blockedSpeakerId" : field]: value,
     },
   };
 }
@@ -277,12 +295,26 @@ export function updateScriptEditorBuildingEntryBindingField(
 }
 
 function normalizeAccessRule(access?: ScriptEditorAccessRule): ScriptEditorAccessRule {
+  const rawAccess = access as (ScriptEditorAccessRule & Record<string, unknown>) | undefined;
+  const conditionExpression =
+    normalizeLocationAccessConditionExpression(rawAccess?.conditionExpression) ??
+    normalizeLegacyAccessCondition(rawAccess?.state);
   return {
-    state: normalizeAccessState(access?.state),
-    blockedMessage: normalizeOptionalString(access?.blockedMessage),
-    blockedSpeaker: normalizeOptionalString(access?.blockedSpeaker),
-    guidance: normalizeOptionalString(access?.guidance),
+    ...(conditionExpression == null ? {} : { conditionExpression }),
+    ...pickOptionalString("blockedReason", rawAccess?.blockedReason),
+    ...pickOptionalString("blockedMessage", rawAccess?.blockedMessage),
+    ...pickOptionalString("blockedSpeakerId", rawAccess?.blockedSpeakerId ?? rawAccess?.blockedSpeaker),
+    ...pickOptionalString("guidance", rawAccess?.guidance),
+    ...pickOptionalString("refusalEventId", rawAccess?.refusalEventId),
   };
+}
+
+function normalizeLegacyAccessCondition(
+  value: unknown
+): LocationAccessConditionExpression | undefined {
+  return value === "visible-disabled" || value === "hidden"
+    ? { type: "literal", value: false }
+    : undefined;
 }
 
 function normalizeMenuEntries(
@@ -291,8 +323,8 @@ function normalizeMenuEntries(
 ): ScriptEditorMenuEntry[] {
   return (entries ?? []).map((entry, index) => ({
     id: normalizeString(entry.id, `${idBase}.${index + 1}`),
-    label: normalizeString(entry.label, `入口 ${index + 1}`),
-    menuFamily: normalizeString(entry.menuFamily, "管理"),
+    label: normalizeString(entry.label, `Entry ${index + 1}`),
+    menuFamily: normalizeString(entry.menuFamily, "management"),
     targetFamily: normalizeMenuTargetFamily(entry.targetFamily),
     targetId: normalizeOptionalString(entry.targetId),
     isVisible: entry.isVisible !== false,
@@ -310,6 +342,140 @@ function normalizeBuildingEntryBinding(
     onLeaveEventId: normalizeOptionalString(binding?.onLeaveEventId),
     returnTarget: normalizeString(binding?.returnTarget, "city"),
   };
+}
+
+function normalizeCityBaseAttributes(
+  value: ScriptEditorCityRecord["baseAttributes"]
+): NonNullable<ScriptEditorCityRecord["baseAttributes"]> {
+  return {
+    ...pickOptionalString("ownerFactionId", value?.ownerFactionId),
+    ...(typeof value?.prosperity === "number" ? { prosperity: value.prosperity } : {}),
+    ...(typeof value?.security === "number" ? { security: value.security } : {}),
+    ...(typeof value?.population === "number" ? { population: value.population } : {}),
+  };
+}
+
+function normalizeBuildingBaseAttributes(
+  building: Partial<ScriptEditorBuildingRecord> & Record<string, unknown>
+): NonNullable<ScriptEditorBuildingRecord["baseAttributes"]> {
+  const base = (building.baseAttributes ?? {}) as Partial<
+    NonNullable<ScriptEditorBuildingRecord["baseAttributes"]>
+  >;
+  return {
+    houseType: normalizeHouseType(base.houseType ?? building.type),
+    activityLocationId: normalizeActivityLocationId(
+      base.activityLocationId ?? building.activityLocationId
+    ),
+    ...pickHouseModuleId(base.moduleId ?? building.moduleId),
+    characterIds: normalizeStringArray(base.characterIds ?? building.characterIds),
+    defaultCharacterId: normalizeNullableString(
+      base.defaultCharacterId ?? building.defaultCharacterId
+    ),
+    ...(typeof base.level === "number" ? { level: base.level } : {}),
+    ...(typeof base.damaged === "boolean" ? { damaged: base.damaged } : {}),
+    ...(typeof base.outputMultiplier === "number"
+      ? { outputMultiplier: base.outputMultiplier }
+      : {}),
+    visibleStoryStages: normalizeStringArray(
+      base.visibleStoryStages ?? building.visibleStoryStages
+    ),
+    enterableStoryStages: normalizeStringArray(
+      base.enterableStoryStages ?? building.enterableStoryStages
+    ),
+    requiresPlayerCurrentCityMatch:
+      base.requiresPlayerCurrentCityMatch === true ||
+      building.requiresPlayerCurrentCityMatch === true,
+  };
+}
+
+function normalizeProfileMap<T extends { displayName?: string; description?: string; tags?: string[] }>(
+  value: T | undefined,
+  legacyDescription?: string
+): T {
+  return {
+    ...pickOptionalString("displayName", value?.displayName),
+    description:
+      normalizeOptionalString(value?.description).length > 0
+        ? normalizeOptionalString(value?.description)
+        : normalizeOptionalString(legacyDescription),
+    tags: normalizeStringArray(value?.tags),
+  } as T;
+}
+
+function normalizeCustomAttributes(
+  entries: readonly ScriptEditorCustomAttributeEntry[] | undefined
+): ScriptEditorCustomAttributeEntry[] {
+  return (entries ?? [])
+    .map((entry) => ({
+      key: normalizeOptionalString(entry.key),
+      ...pickOptionalString("label", entry.label),
+      value: normalizeCustomAttributeValue(entry.value),
+    }))
+    .filter((entry) => entry.key.length > 0);
+}
+
+function normalizeCustomAttributeValue(
+  value: ScriptEditorCustomAttributeEntry["value"]
+): ScriptEditorCustomAttributeEntry["value"] {
+  if (
+    value == null ||
+    typeof value === "string" ||
+    typeof value === "number" ||
+    typeof value === "boolean"
+  ) {
+    return value;
+  }
+  return Array.isArray(value)
+    ? value.filter((entry): entry is string => typeof entry === "string")
+    : null;
+}
+
+function normalizeEventBindings(
+  building: Partial<ScriptEditorBuildingRecord> & Record<string, unknown>
+): ScriptEditorBuildingRecord["eventBindings"] | undefined {
+  const eventBindings = building.eventBindings ?? {};
+  const onEnterEventId = normalizeOptionalString(
+    eventBindings.onEnterEventId ?? building.onEnterEventId
+  );
+  const onLeaveEventId = normalizeOptionalString(
+    eventBindings.onLeaveEventId ?? building.onLeaveEventId
+  );
+  return onEnterEventId.length === 0 && onLeaveEventId.length === 0
+    ? undefined
+    : {
+        ...(onEnterEventId.length === 0 ? {} : { onEnterEventId }),
+        ...(onLeaveEventId.length === 0 ? {} : { onLeaveEventId }),
+      };
+}
+
+function normalizeLocationAccessConditionExpression(
+  value: unknown
+): LocationAccessConditionExpression | undefined {
+  if (value == null || typeof value !== "object" || Array.isArray(value)) {
+    return undefined;
+  }
+  const expression = value as Record<string, unknown>;
+  if (expression.type === "literal" && typeof expression.value === "boolean") {
+    return { type: "literal", value: expression.value };
+  }
+  return value as LocationAccessConditionExpression;
+}
+
+function readBackAction(value: unknown): HouseDefinition["backAction"] | undefined {
+  if (value != null && typeof value === "object" && !Array.isArray(value)) {
+    const record = value as Record<string, unknown>;
+    if (record.targetView === "city") {
+      return {
+        label: normalizeString(record.label, "返回"),
+        targetView: "city",
+      };
+    }
+  }
+  return undefined;
+}
+
+function normalizeBackAction(value: unknown): HouseDefinition["backAction"] {
+  return readBackAction(value) ?? createDefaultBackAction();
 }
 
 function normalizeHouseType(value: unknown): HouseDefinition["type"] {
@@ -364,17 +530,12 @@ function normalizeHouseModuleId(value: unknown): HouseDefinition["moduleId"] {
   }
 }
 
-function normalizeBackAction(value: unknown): HouseDefinition["backAction"] {
-  if (value != null && typeof value === "object" && !Array.isArray(value)) {
-    const record = value as Record<string, unknown>;
-    if (record.targetView === "city") {
-      return {
-        label: normalizeString(record.label, "返回"),
-        targetView: "city",
-      };
-    }
-  }
-  return createDefaultBackAction();
+function pickHouseModuleId(value: unknown): Pick<
+  NonNullable<ScriptEditorBuildingRecord["baseAttributes"]>,
+  "moduleId"
+> {
+  const moduleId = normalizeHouseModuleId(value);
+  return moduleId == null ? {} : { moduleId };
 }
 
 function normalizeStringArray(value: unknown): string[] {
@@ -389,12 +550,6 @@ function normalizeStringArray(value: unknown): string[] {
 function normalizeNullableString(value: unknown): string | null {
   const normalized = normalizeOptionalString(value).trim();
   return normalized.length > 0 ? normalized : null;
-}
-
-function normalizeAccessState(value?: string): ScriptEditorAccessState {
-  return SCRIPT_EDITOR_ACCESS_STATES.includes(value as ScriptEditorAccessState)
-    ? (value as ScriptEditorAccessState)
-    : "visible-enabled";
 }
 
 function normalizeMenuTargetFamily(value?: string): ScriptEditorMenuTargetFamily {
@@ -415,10 +570,20 @@ function normalizeOptionalString(value: unknown): string {
   return typeof value === "string" ? value : "";
 }
 
+function pickOptionalString<TKey extends string>(
+  key: TKey,
+  value: unknown
+): Partial<Record<TKey, string>> {
+  const normalized = normalizeOptionalString(value);
+  return normalized.length === 0 ? {} : { [key]: normalized } as Partial<Record<TKey, string>>;
+}
+
 function slugifyMenuFamily(value: string): string {
-  return value
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9\u4e00-\u9fa5]+/g, "-")
-    .replace(/^-+|-+$/g, "") || "menu";
+  return (
+    value
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9\u4e00-\u9fa5]+/g, "-")
+      .replace(/^-+|-+$/g, "") || "menu"
+  );
 }

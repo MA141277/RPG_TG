@@ -162,7 +162,7 @@ export function validateScriptEditorProjectForRuntimeExport(
       scenarioProfile,
       maps: project.maps,
       characters: exportedCharacters,
-      cities: project.cities,
+      cities: cityBuildingRuntimeFamilies.cities,
       houses: cityBuildingRuntimeFamilies.houses,
       cityEntries: cityBuildingRuntimeFamilies.cityEntries,
       events: exportedEvents,
@@ -255,7 +255,7 @@ export function exportScriptEditorProjectToScenarioPackFiles(
       exportedCharacters
     ),
     [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.cities)]: stringifyJson(
-      project.cities
+      cityBuildingRuntimeFamilies.cities
     ),
     [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.houses)]: stringifyJson(
       cityBuildingRuntimeFamilies.houses

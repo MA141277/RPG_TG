@@ -6885,6 +6885,9 @@ test(
     assert.match(source, /remove-location-menu-entry/);
     assert.match(source, /data-script-editor-location-access-field/);
     assert.match(source, /data-script-editor-building-entry-field/);
+    assert.doesNotMatch(source, /SCRIPT_EDITOR_ACCESS_STATES/);
+    assert.doesNotMatch(source, /visible-enabled|visible-disabled/);
+    assert.match(source, /conditionExpression/);
     assert.match(cssSource, /\.c-script-editor-location-editor/);
     assert.match(cssSource, /\.c-script-editor-location-menu__item/);
   }
@@ -6935,7 +6938,11 @@ test(
     assert.equal(city.menuEntries[0].targetFamily, "dialogue");
     assert.equal(city.menuEntries[0].targetId, "dialogue.city.kulan");
     assert.equal(city.menuEntries[0].isEnabled, false);
-    assert.equal(city.access.state, "visible-disabled");
+    assert.equal("state" in city.access, false);
+    assert.deepEqual(city.access.conditionExpression, {
+      type: "literal",
+      value: false,
+    });
     assert.equal(city.access.blockedMessage, "暂未开放");
     assert.equal(normalizedCity.entryBinding.defaultPersonId, "person.host");
     assert.equal(normalizedCity.entryBinding.onEnterEventId, "event.enter.market");
@@ -6952,10 +6959,12 @@ test(
     } = require("../.test-dist/application/script-editor/city-building-authoring.js");
 
     const defaultBuilding = createDefaultScriptEditorBuildingRecord(0, "city.kulan");
-    assert.equal(defaultBuilding.type, "custom");
-    assert.deepEqual(defaultBuilding.characterIds, []);
-    assert.equal(defaultBuilding.defaultCharacterId, null);
-    assert.equal(defaultBuilding.activityLocationId, "custom");
+    assert.equal(defaultBuilding.baseAttributes.houseType, "custom");
+    assert.deepEqual(defaultBuilding.baseAttributes.characterIds, []);
+    assert.equal(defaultBuilding.baseAttributes.defaultCharacterId, null);
+    assert.equal(defaultBuilding.baseAttributes.activityLocationId, "custom");
+    assert.equal("type" in defaultBuilding, false);
+    assert.equal("characterIds" in defaultBuilding, false);
     assert.deepEqual(defaultBuilding.backAction, {
       label: "返回",
       targetView: "city",
@@ -6974,19 +6983,180 @@ test(
       onLeaveEventId: "event.leave.market",
     });
 
-    assert.equal(normalizedBuilding.type, "merchant");
-    assert.deepEqual(normalizedBuilding.characterIds, [
+    assert.equal(normalizedBuilding.baseAttributes.houseType, "merchant");
+    assert.deepEqual(normalizedBuilding.baseAttributes.characterIds, [
       "person.host",
       "person.guest",
     ]);
-    assert.equal(normalizedBuilding.defaultCharacterId, "person.host");
-    assert.equal(normalizedBuilding.activityLocationId, "market");
+    assert.equal(normalizedBuilding.baseAttributes.defaultCharacterId, "person.host");
+    assert.equal(normalizedBuilding.baseAttributes.activityLocationId, "market");
+    assert.equal("type" in normalizedBuilding, false);
+    assert.equal("characterIds" in normalizedBuilding, false);
     assert.deepEqual(normalizedBuilding.backAction, {
       label: "回城",
       targetView: "city",
     });
-    assert.equal(normalizedBuilding.onEnterEventId, "event.enter.market");
-    assert.equal(normalizedBuilding.onLeaveEventId, "event.leave.market");
+    assert.equal(normalizedBuilding.eventBindings?.onEnterEventId, "event.enter.market");
+    assert.equal(normalizedBuilding.eventBindings?.onLeaveEventId, "event.leave.market");
+  }
+);
+
+test(
+  "script editor city/building definition contract removes visibility access state",
+  () => {
+    const {
+      normalizeScriptEditorBuildingRecord,
+      normalizeScriptEditorCityRecord,
+    } = require("../.test-dist/application/script-editor/city-building-authoring.js");
+
+    const city = normalizeScriptEditorCityRecord({
+      id: "city.start",
+      name: "Start City",
+      mapNodeId: "node.start",
+      baseAttributes: {
+        ownerFactionId: "faction.ming",
+        prosperity: 72,
+        security: 45,
+        population: 12000,
+      },
+      profileMap: {
+        displayName: "Start",
+        description: "A governed city definition.",
+        tags: ["river-port"],
+      },
+      extendedAttributes: [{ key: "tradeRank", label: "Trade Rank", value: 3 }],
+      access: {
+        conditionExpression: { type: "literal", value: false },
+        blockedMessage: "City closed.",
+        blockedSpeakerId: "player",
+        guidance: "Return later.",
+      },
+    });
+    const building = normalizeScriptEditorBuildingRecord({
+      id: "building.market",
+      cityId: "city.start",
+      name: "Market",
+      baseAttributes: {
+        houseType: "merchant",
+        activityLocationId: "market",
+        moduleId: "market-house",
+        characterIds: ["person.host", ""],
+        defaultCharacterId: "person.host",
+        level: 2,
+        damaged: false,
+        outputMultiplier: 1.5,
+        visibleStoryStages: ["stage.open"],
+        enterableStoryStages: ["stage.open"],
+        requiresPlayerCurrentCityMatch: true,
+      },
+      profileMap: {
+        displayName: "Central Market",
+        description: "A governed building definition.",
+        tags: ["trade"],
+      },
+      extendedAttributes: [{ key: "taxRate", value: 5 }],
+      access: {
+        conditionExpression: { type: "literal", value: true },
+        blockedMessage: "",
+      },
+    });
+
+    assert.equal("state" in city.access, false);
+    assert.deepEqual(city.access.conditionExpression, {
+      type: "literal",
+      value: false,
+    });
+    assert.equal(city.baseAttributes.prosperity, 72);
+    assert.equal(city.profileMap.displayName, "Start");
+    assert.equal(city.extendedAttributes[0].key, "tradeRank");
+    assert.equal("type" in building, false);
+    assert.equal(building.baseAttributes.houseType, "merchant");
+    assert.deepEqual(building.baseAttributes.characterIds, ["person.host"]);
+    assert.equal(building.baseAttributes.moduleId, "market-house");
+    assert.equal(building.profileMap.displayName, "Central Market");
+    assert.equal(building.extendedAttributes[0].key, "taxRate");
+  }
+);
+
+test(
+  "script editor runtime export materializes new city building definition records without leaking visibility state",
+  () => {
+    const {
+      exportScriptEditorProjectToScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    const project = createExportableScriptEditorProjectDefinition();
+    project.cities = [
+      {
+        id: "city.start",
+        name: "Start City",
+        regionId: "region.test",
+        mapNodeId: "node.start",
+        neighbourCityIds: [],
+        travelCost: 1,
+        baseAttributes: {
+          ownerFactionId: "faction.ming",
+          prosperity: 72,
+          security: 45,
+          population: 12000,
+        },
+        profileMap: {
+          displayName: "Start",
+          description: "A governed city definition.",
+          tags: ["river-port"],
+        },
+        extendedAttributes: [{ key: "tradeRank", value: 3 }],
+        access: {
+          conditionExpression: { type: "literal", value: true },
+        },
+      },
+    ];
+    project.buildings = [
+      {
+        id: "building.market",
+        cityId: "city.start",
+        name: "Market",
+        baseAttributes: {
+          houseType: "merchant",
+          activityLocationId: "market",
+          moduleId: "market-house",
+          characterIds: ["person.host"],
+          defaultCharacterId: "person.host",
+        },
+        profileMap: {
+          displayName: "Central Market",
+          description: "A governed building definition.",
+          tags: ["trade"],
+        },
+        extendedAttributes: [{ key: "taxRate", value: 5 }],
+        access: {
+          conditionExpression: { type: "literal", value: false },
+          blockedMessage: "Market is closed.",
+          blockedSpeakerId: "person.host",
+          guidance: "Return later.",
+        },
+      },
+    ];
+
+    const files = exportScriptEditorProjectToScenarioPackFiles(project);
+    const cities = JSON.parse(files["cities.json"]);
+    const houses = JSON.parse(files["houses.json"]);
+    const cityEntries = JSON.parse(files["city-entries.json"]);
+    const refusalRules = JSON.parse(files["house-access-refusal-rules.json"]);
+
+    assert.equal(cities[0].id, "city.start");
+    assert.equal(cities[0].name, "Start City");
+    assert.equal(cities[0].mapNodeId, "node.start");
+    assert.equal(cities[0].prosperity, 72);
+    assert.equal(cities[0].danger, 55);
+    assert.equal(cities[0].tags.includes("river-port"), true);
+    assert.equal(JSON.stringify(cities).includes("visible-disabled"), false);
+    assert.equal(JSON.stringify(houses).includes("visible-disabled"), false);
+    assert.equal(houses[0].type, "merchant");
+    assert.equal(houses[0].moduleId, "market-house");
+    assert.deepEqual(houses[0].characterIds, ["person.host"]);
+    assert.equal(cityEntries[0].targetHouseId, "building.market");
+    assert.equal(refusalRules[0].speakerCharacterId, "person.host");
+    assert.equal(refusalRules[0].text, "Market is closed.");
   }
 );
 

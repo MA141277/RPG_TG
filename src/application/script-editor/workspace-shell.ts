@@ -718,7 +718,7 @@ function describeSelectionLinkPreview(
       family === "cities"
         ? project.cities.find((record) => record.id === entityId)
         : project.buildings.find((record) => record.id === entityId);
-    return `菜单入口 ${(location?.menuEntries ?? []).length} 条，访问状态 ${location?.access?.state ?? "visible-enabled"}。`;
+    return `菜单入口 ${(location?.menuEntries ?? []).length} 条，访问状态 ${location?.access?.conditionExpression == null ? "default-allow" : "configured"}。`;
   }
 
   if (family === "dialogues") {

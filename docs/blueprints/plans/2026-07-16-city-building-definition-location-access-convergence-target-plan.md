@@ -5,13 +5,13 @@
 - document_role: `version-governor`
 - version_id: `target.city-building-definition-location-access-convergence`
 - version_status: `open`
-- active_phase: `phase.version-open`
-- active_queue: `none`
-- decision_state: `idle-open`
-- next_decision: `queue-admission-review`
-- next_action: `classify-fresh-work`
-- resume_gate: `idle-open`
-- promotion_review_result: `none`
+- active_phase: `phase.queue-active`
+- active_queue: `queue.location-access-runtime-convergence`
+- decision_state: `active-execution`
+- next_decision: `queue-closeout-or-return-to-version-review`
+- next_action: `resume-active-queue`
+- resume_gate: `active-queue`
+- promotion_review_result: `admitted`
 - review_subject_id: `none`
 - review_subject_classification: `none`
 - proposed_queue_id: `none`
@@ -22,12 +22,12 @@
 - intake_summary: `none`
 - intake_result: `none`
 - intake_feedback_mode: `none`
-- closure_review_subject: `none`
-- closure_review_status: `none`
-- residue_candidate_id: `none`
-- residue_candidate_family: `none`
-- routing_basis: `none`
-- next_lawful_queue_recommendation: `none`
+- closure_review_subject: `queue.script-editor-city-building-definition-restructure`
+- closure_review_status: `routed`
+- residue_candidate_id: `queue.location-access-runtime-convergence`
+- residue_candidate_family: `same-family`
+- routing_basis: `queue.script-editor-city-building-definition-restructure closed its verified bounded no-visibility definition slice with same-family residue because conditionExpression data now exists but runtime evaluation and before-mutation city/building entry enforcement do not.`
+- next_lawful_queue_recommendation: `queue.location-access-runtime-convergence`
 - auto_admission_ready: `false`
 - blocked_by: []
 - candidate_queue_ids:
@@ -61,10 +61,11 @@
 - Scope approval:
   - `Approved scope: city/building definition restructuring, LocationAccessRuntime expression evaluation, HouseRuntime deprivileging, city/building runtime status overlays, script-editor authoring changes, export/import validation, and map city-list compatibility preservation.`
 - Admission basis:
-  - `none`
+  - `queue.script-editor-city-building-definition-restructure is admitted as the first required-priority execution queue because the version plan already records it as the preferred first queue and all later editor, export, adapter, status, and map-compatibility work depends on the no-visibility city/building definition boundary.`
 - Required truth sync:
-  - `Version plan admission fields must be written before implementation starts.`
-  - `The admitted queue doc must exist before code implementation starts.`
+  - `Version plan admission fields were written before queue activation.`
+  - `The admitted queue doc exists and exposes active queue truth before code implementation starts.`
+  - `Implementation must resume from docs/blueprints/queues/script-editor-city-building-definition-restructure-queue.md.`
 
 ### Version Lifecycle Rules
 
@@ -91,8 +92,8 @@
 
 | Candidate ID | Last Classification | Proposed Queue | Latest Disposition | Recheck Trigger | Notes |
 | --- | --- | --- | --- | --- | --- |
-| `item.script-editor-city-building-definition-restructure` | `queue-candidate` | `queue.script-editor-city-building-definition-restructure` | `candidate-recorded` | `only if fresh code evidence proves access runtime must precede data shape work` | `Required-priority first structure slice for base/profile/extended city/building definitions, no visibility field, and current map compatibility preservation.` |
-| `item.location-access-runtime-convergence` | `queue-candidate` | `queue.location-access-runtime-convergence` | `candidate-recorded` | `only if fresh evidence proves the runtime access seam can be absorbed into definition restructure without widening it` | `Required-priority runtime slice for conditionExpression evaluation and city/building entry-before-mutation enforcement.` |
+| `item.script-editor-city-building-definition-restructure` | `queue-candidate` | `queue.script-editor-city-building-definition-restructure` | `admitted + queue closed` | `only if fresh code evidence proves the bounded definition contract regressed` | `Closed after the base/profile/extended city/building definition slice, no-visibility access shape, runtime compatibility materialization, and current map id/name preservation landed with verification.` |
+| `item.location-access-runtime-convergence` | `queue-candidate` | `queue.location-access-runtime-convergence` | `admitted` | `only if fresh evidence proves the runtime access seam can be absorbed into another active queue without widening it` | `Required-priority runtime slice for conditionExpression evaluation and city/building entry-before-mutation enforcement.` |
 | `item.script-editor-building-house-runtime-adapter` | `queue-candidate` | `queue.script-editor-building-house-runtime-adapter` | `candidate-recorded` | `only if fresh evidence proves HouseRuntime adapter work must be part of the initial data-shape migration` | `Required adapter slice to keep HouseRuntime as post-entry interaction runner while BuildingDefinition becomes the primary building model.` |
 | `item.city-building-status-save-runtime-convergence` | `queue-candidate` | `queue.city-building-status-save-runtime-convergence` | `candidate-recorded` | `only if fresh evidence proves status overlays are required before any access-expression evaluation can land` | `Required save/runtime slice for final-value CityRuntimeStatus and BuildingRuntimeStatus overlays.` |
 | `item.script-editor-city-building-custom-attribute-authoring` | `queue-candidate` | `queue.script-editor-city-building-custom-attribute-authoring` | `candidate-recorded` | `only if fresh evidence proves custom attributes can be safely deferred without blocking expression authoring` | `Required editor-facing slice for governed city/building extended attributes over field definitions.` |
@@ -103,8 +104,8 @@
 
 | Queue ID | Current Disposition | Promote When | Notes |
 | --- | --- | --- | --- |
-| `queue.script-editor-city-building-definition-restructure` | `candidate` | `Promote first unless fresh implementation evidence proves LocationAccessRuntime must be introduced over current records before definition restructuring.` | `This is the preferred first queue because all later editor, export, adapter, and status work needs the new no-visibility city/building definition boundary.` |
-| `queue.location-access-runtime-convergence` | `candidate` | `Promote after the minimum definition contract exists, or first if access-before-navigation is proven to be the smaller prerequisite.` | `Must evaluate script-editor-authored conditionExpression values and guard map city clicks plus city building clicks before state mutation.` |
+| `queue.script-editor-city-building-definition-restructure` | `done` | `Already completed; do not reopen except by explicit governance record.` | `Closed after all later editor, export, adapter, and status work received the new no-visibility city/building definition boundary.` |
+| `queue.location-access-runtime-convergence` | `active` | `Currently active; resume from docs/blueprints/queues/location-access-runtime-convergence-queue.md.` | `Must evaluate script-editor-authored conditionExpression values and guard map city clicks plus city building clicks before state mutation.` |
 | `queue.script-editor-building-house-runtime-adapter` | `candidate` | `Promote after BuildingDefinition and LocationAccessRuntime boundaries are stable enough to adapt HouseRuntime without re-growing building data ownership inside house modules.` | `Keeps HouseRuntime but demotes it to the post-entry interaction/session/module runner.` |
 | `queue.city-building-status-save-runtime-convergence` | `candidate` | `Promote when runtime access expressions or gameplay mutations need current city/building values beyond authored defaults.` | `Status overlays store final current values, not deltas, and must live beside CharacterStatus in save/modState.` |
 | `queue.script-editor-city-building-custom-attribute-authoring` | `candidate` | `Promote once base definition shape exists and creator-authored expression/custom-field UI needs governed field definitions.` | `Covers city/building extendedAttributes and field-definition-driven controls.` |
@@ -232,3 +233,5 @@
 ### Prior Promotion Record
 
 - `2026-07-16: target.city-building-definition-location-access-convergence was created as the open successor after the previous script-editor authoring/data-structure unification version closed. No queue has been admitted yet; the next legal step is fresh queue admission review from this version plan.`
+- `2026-07-16: queue.script-editor-city-building-definition-restructure closed its verified bounded no-visibility definition contract slice and routed the unique same-family continuation to queue.location-access-runtime-convergence.`
+- `2026-07-16: queue.location-access-runtime-convergence was auto-admitted from the definition restructure closeout routing record; baseline reconciliation is the active task.`

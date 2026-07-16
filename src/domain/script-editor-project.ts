@@ -109,16 +109,64 @@ export type ScriptEditorMenuEntry = {
   disabledHint: string;
 };
 
-export type ScriptEditorAccessState =
-  | "visible-enabled"
-  | "visible-disabled"
-  | "hidden";
+export type ScriptEditorCustomAttributeValue =
+  | string
+  | number
+  | boolean
+  | string[]
+  | null;
+
+export type ScriptEditorCustomAttributeEntry = {
+  key: string;
+  label?: string | undefined;
+  value: ScriptEditorCustomAttributeValue;
+};
+
+export type LocationAccessConditionSubject =
+  | "targetCity"
+  | "targetBuilding"
+  | "player"
+  | "world"
+  | "story";
+
+export type LocationAccessValueRef =
+  | {
+      type: "field";
+      subject: LocationAccessConditionSubject;
+      fieldId: string;
+    }
+  | {
+      type: "literal";
+      value: unknown;
+    };
+
+export type LocationAccessConditionExpression =
+  | { type: "literal"; value: boolean }
+  | {
+      type: "compare";
+      left: LocationAccessValueRef;
+      operator:
+        | "equals"
+        | "not-equals"
+        | "greater-than"
+        | "greater-than-or-equal"
+        | "less-than"
+        | "less-than-or-equal"
+        | "includes"
+        | "exists";
+      right?: LocationAccessValueRef;
+    }
+  | { type: "all"; conditions: LocationAccessConditionExpression[] }
+  | { type: "any"; conditions: LocationAccessConditionExpression[] }
+  | { type: "not"; condition: LocationAccessConditionExpression };
 
 export type ScriptEditorAccessRule = {
-  state: ScriptEditorAccessState;
-  blockedMessage: string;
-  blockedSpeaker: string;
-  guidance: string;
+  conditionExpression?: LocationAccessConditionExpression | undefined;
+  blockedReason?: string | undefined;
+  blockedMessage?: string | undefined;
+  blockedSpeakerId?: string | "player" | undefined;
+  guidance?: string | undefined;
+  refusalEventId?: string | undefined;
 };
 
 export type ScriptEditorBuildingEntryBinding = {
@@ -147,6 +195,23 @@ export type ScriptEditorPersonRecord = ScriptEditorEntityRecord & {
 
 export type ScriptEditorCityRecord = ScriptEditorEntityRecord & {
   name: string;
+  regionId?: string;
+  mapNodeId?: string;
+  houseIds?: string[];
+  neighbourCityIds?: string[];
+  travelCost?: number;
+  baseAttributes?: {
+    ownerFactionId?: string;
+    prosperity?: number;
+    security?: number;
+    population?: number;
+  };
+  profileMap?: {
+    displayName?: string;
+    description?: string;
+    tags?: string[];
+  };
+  extendedAttributes?: ScriptEditorCustomAttributeEntry[];
   description?: string;
   menuEntries?: ScriptEditorMenuEntry[];
   access?: ScriptEditorAccessRule;
@@ -155,21 +220,34 @@ export type ScriptEditorCityRecord = ScriptEditorEntityRecord & {
 export type ScriptEditorBuildingRecord = ScriptEditorEntityRecord & {
   cityId: string;
   name: string;
-  type: HouseDefinition["type"];
-  characterIds: string[];
-  defaultCharacterId: string | null;
-  activityLocationId: HouseDefinition["activityLocationId"];
-  backAction: HouseDefinition["backAction"];
+  baseAttributes?: {
+    houseType: HouseDefinition["type"];
+    activityLocationId?: HouseDefinition["activityLocationId"];
+    moduleId?: HouseDefinition["moduleId"];
+    characterIds: string[];
+    defaultCharacterId: string | null;
+    level?: number;
+    damaged?: boolean;
+    outputMultiplier?: number;
+    visibleStoryStages?: string[];
+    enterableStoryStages?: string[];
+    requiresPlayerCurrentCityMatch?: boolean;
+  };
+  profileMap?: {
+    displayName?: string;
+    description?: string;
+    tags?: string[];
+  };
+  extendedAttributes?: ScriptEditorCustomAttributeEntry[];
   description?: string;
   menuEntries?: ScriptEditorMenuEntry[];
   access?: ScriptEditorAccessRule;
   entryBinding?: ScriptEditorBuildingEntryBinding;
-  moduleId?: HouseDefinition["moduleId"];
-  onEnterEventId?: string;
-  onLeaveEventId?: string;
-  visibleStoryStages?: string[];
-  enterableStoryStages?: string[];
-  requiresPlayerCurrentCityMatch?: boolean;
+  eventBindings?: {
+    onEnterEventId?: string;
+    onLeaveEventId?: string;
+  };
+  backAction?: HouseDefinition["backAction"];
 };
 
 export type ScriptEditorStoryProgressMode =

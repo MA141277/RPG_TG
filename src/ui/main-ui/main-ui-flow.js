@@ -32,7 +32,6 @@ import {
   normalizeScriptEditorBuildingRecord,
   normalizeScriptEditorCityRecord,
   removeScriptEditorMenuEntry,
-  SCRIPT_EDITOR_ACCESS_STATES,
   toggleScriptEditorMenuEntryFlag,
   updateScriptEditorAccessField,
   updateScriptEditorBuildingEntryBindingField,
@@ -2103,11 +2102,13 @@ export class MainUiFlow {
 
   renderScriptEditorLocationAccessPanel(location) {
     const access = location.access ?? {
-      state: "visible-enabled",
+      conditionExpression: null,
       blockedMessage: "",
-      blockedSpeaker: "",
+      blockedSpeakerId: "",
       guidance: "",
     };
+    const accessConditionState =
+      access.conditionExpression == null ? "default-allow" : "configured";
     return `
       <section class="c-script-editor-location-panel" aria-label="进入态分栏">
         <p class="c-script-editor-editor-card__hint">
@@ -2116,13 +2117,7 @@ export class MainUiFlow {
         <div class="c-script-editor-form-grid">
           <label class="c-script-editor-form-field">
             <span>进入态</span>
-            <select class="c-script-editor-form-field__input" data-script-editor-location-access-field="state">
-              ${SCRIPT_EDITOR_ACCESS_STATES.map(
-                (state) => `
-                  <option value="${state}" ${access.state === state ? "selected" : ""}>${state}</option>
-                `
-              ).join("")}
-            </select>
+            <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(accessConditionState)}" data-script-editor-location-access-condition="conditionExpression" readonly />
           </label>
           <label class="c-script-editor-form-field">
             <span>拒绝提示</span>
@@ -2130,7 +2125,7 @@ export class MainUiFlow {
           </label>
           <label class="c-script-editor-form-field">
             <span>反馈角色</span>
-            <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(access.blockedSpeaker)}" data-script-editor-location-access-field="blockedSpeaker" />
+            <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(access.blockedSpeakerId ?? "")}" data-script-editor-location-access-field="blockedSpeaker" />
           </label>
           <label class="c-script-editor-form-field c-script-editor-form-field--wide">
             <span>引导说明</span>
@@ -4283,7 +4278,6 @@ export class MainUiFlow {
     if (target.matches("[data-script-editor-location-access-field]")) {
       const field = target.dataset.scriptEditorLocationAccessField;
       if (
-        field === "state" ||
         field === "blockedMessage" ||
         field === "blockedSpeaker" ||
         field === "guidance"
