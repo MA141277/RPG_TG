@@ -1,77 +1,92 @@
-# Task 2 Report: Character Detail Targeting For Any NPC
+# Task 2 Report: Temple And Tavern View Models
 
-## Implementation
+## Status
 
-- Added `openPlayerDetail(appState)`, `openCharacterDetail(appState, characterId)`, and `closeGlobalOverlay(appState)` in `src/application/app-actions.ts`.
-- Kept `updateOverlayView()` for existing cards and valuables callers.
-- Updated the global click handler in `src/main.ts` so:
-  - close overlay actions call `closeGlobalOverlay()` and clear `ui.detailCharacterId`;
-  - player detail actions call `openPlayerDetail()` and clear `ui.detailCharacterId`;
-  - generic NPC profile buttons with `[data-npc-action='profile'][data-character-id]` call `openCharacterDetail()`.
-- Updated `src/ui/app-render.ts` detail overlay rendering to resolve `gameState.ui.detailCharacterId` against `appState.characterDefinitions`, falling back to the pinned/player detail character when no arbitrary target exists or the target cannot be found.
-- Did not migrate house rosters and did not add NPC menu rendering.
-- Did not modify player base stats, money, skills, inventory, or NPC persistent state.
+DONE
 
-## TDD RED Evidence
+## Scope
 
-Command:
+Modified only the Task 2 implementation files:
 
-```powershell
-npm run build:test; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }; node --test tests/robustness.test.cjs --test-name-pattern "character detail"
-```
-
-Result: failed as expected after adding tests before production code.
-
-Expected failures:
-
-- `global NPC interaction character detail can target a non-player NPC`
-  - `TypeError: openCharacterDetail is not a function`
-- `player detail clears the NPC detail target and uses the pinned player fallback`
-  - `TypeError: openPlayerDetail is not a function`
-- `closing global overlay clears the arbitrary character detail target`
-  - `TypeError: closeGlobalOverlay is not a function`
-
-## GREEN / Verification
-
-Focused command:
-
-```powershell
-npm run build:test; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }; node --test tests/robustness.test.cjs --test-name-pattern "character detail"
-```
-
-Result: passed. The command ran `tests/robustness.test.cjs` with 311 tests passing, 0 failing.
-
-Additional commands:
-
-```powershell
-npm run typecheck
-```
-
-Result: passed, exit 0.
-
-```powershell
-npm test
-```
-
-Result: passed, 312 tests passing, 0 failing.
-
-## Modified Files
-
-- `src/application/app-actions.ts`
-- `src/ui/app-render.ts`
-- `src/main.ts`
+- `src/application/house-modules/temple-house/temple-house-house-module.ts`
+- `src/application/house-modules/tavern/tavern-house-module.ts`
 - `tests/robustness.test.cjs`
-- `.superpowers/sdd/task-2-report.md`
 
-## Self-Review Findings
+The report file was created as requested and was not included in the original Task 2 implementation commit.
 
-- `src/main.ts` changes are generic UI event handling only; no house id, module id, or NPC id business checks were added.
-- `closeGlobalOverlay()` only clears global overlay state and arbitrary detail target. It does not clear `npcInteractionSession`.
-- Player detail opening clears `detailCharacterId`, preserving the existing player fallback path.
-- Detail rendering reuses the existing character detail view and only changes the selected character input.
-- `src/domain/global-ui.ts` already contained `GlobalUIState.detailCharacterId`, so no interface edit was required.
+## TDD Evidence
 
-## Questions Or Risks
+Added the requested failing tests to `tests/robustness.test.cjs`:
 
-- The focused test examples from the brief were usable as-is with the current `AppState`/`createRuntimeState` factories; no behavior adaptation was needed.
-- The new generic NPC profile click handler is in the existing `appElement` delegated click listener rather than a separate `document.body` listener, matching the current event structure while preserving the same selector and behavior.
+- `primary house actor appears first in temple daily roster during greeting`
+- `primary house actor appears first in tavern roster during greeting`
+
+Red run:
+
+```bash
+npm run build:test
+node --test tests/robustness.test.cjs --test-name-pattern "primary house actor appears first"
+```
+
+Result: build succeeded; focused test run failed as expected on Tavern because the greeting roster was empty and `viewModel.standbyRoster[0]?.characterId` was `undefined` instead of `char.kulan_innkeeper`.
+
+Green run:
+
+```bash
+npm run build:test
+node --test tests/robustness.test.cjs --test-name-pattern "primary house actor appears first"
+```
+
+Result: build succeeded; focused test run passed with 298 passing tests and 0 failures under the name pattern.
+
+## Implementation Notes
+
+Tavern `selectViewModel()` now imports and uses `orderHouseStandbyRoster()`, creates a stable boss actor from `defaultCharacterId ?? tavernBossProfile.actorId`, and returns that actor in `standbyRoster` during greeting/open dialogue as well as idle.
+
+Temple `selectViewModel()` now builds the standby actor list before returning, preserves meeting participant order, and applies `orderHouseStandbyRoster()` for non-meeting daily view models so the default abbot actor is first.
+
+No `main.ts` house-specific branch was added, no application HTML strings were introduced, and no persistent gameplay state was changed.
+
+## Commit
+
+Created commit:
+
+- `6a0900ee feat: keep house primary actors in roster`
+
+## Concerns
+
+None.
+
+## Reviewer Fix: Temple Meeting Primary Actor
+
+Reviewer finding addressed:
+
+- Temple meeting view models omitted the abbot/default primary actor because `getTempleMeetingParticipantIds()` filtered the abbot out and meeting mode bypassed `orderHouseStandbyRoster()`.
+
+Test coverage added:
+
+- `primary house actor appears first in temple meeting roster with player still selected`
+
+Red run:
+
+```bash
+npm run build:test
+node --test tests/robustness.test.cjs --test-name-pattern "primary house actor"
+```
+
+Result: build succeeded; focused test run failed as expected because the meeting roster started with `char.player` instead of `char.kulan_temple_abbot`.
+
+Fix:
+
+- Temple meeting participant ids now include the abbot/default primary actor.
+- Temple `selectViewModel()` now applies `orderHouseStandbyRoster()` to meeting and daily rosters.
+- The existing meeting player selected state remains on the player actor, and non-primary meeting participants remain in the roster.
+
+Green run:
+
+```bash
+npm run build:test
+node --test tests/robustness.test.cjs --test-name-pattern "primary house actor"
+```
+
+Result: build succeeded; focused test run passed with 299 passing tests and 0 failures under the name pattern.
