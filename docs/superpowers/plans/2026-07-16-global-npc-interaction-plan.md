@@ -12,9 +12,9 @@
 
 - Status: `completed-but-open`
 - Last Updated: `2026-07-16`
-- Current Focus: `Implementation complete; closeout, project-progress sync, and push remain.`
+- Current Focus: `Implementation and final review fixes complete; closeout, project-progress sync, and push remain.`
 - Next Step: `Prepare structured child closeout after remote push succeeds.`
-- Verification: `npm run typecheck; npm test; npm run build; npm run lint:plans`
+- Verification: `npm run typecheck; npm test; npm run build; npm run lint:plans passed on 2026-07-16`
 - Notes: `Do not mark closed until project-progress sync and push success are recorded.`
 
 ## Progress Log
@@ -50,6 +50,10 @@
 - 2026-07-16
   - Summary: `Completed Phase 1 global NPC interaction implementation.`
   - Verification: `npm run typecheck; npm test; npm run build; npm run lint:plans`
+  - Next: `Sync project-progress, push, and add structured closeout.`
+- 2026-07-16
+  - Summary: `Completed final whole-branch review fixes for default talk dialogue, blocked NPC pool input, legacy visible talk entries, tavern special actions, and leader residence gift safety.`
+  - Verification: `npm run typecheck passed; npm test passed for 327 tests; npm run build passed with existing Vite warnings; npm run lint:plans passed for 59 files.`
   - Next: `Sync project-progress, push, and add structured closeout.`
 
 ---

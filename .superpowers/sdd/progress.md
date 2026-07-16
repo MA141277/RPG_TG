@@ -7,3 +7,4 @@
 - Task 4: complete (commits 47e34913..a02bf9f1, review clean after roster context/session cleanup fix).
 - Task 5: complete (commits 51db1a05..6dc83668, review clean).
 - Task 6: complete (commits 75ef1ef8..022dc855, review clean).
+- Final review: complete (commit e296cda4, review clean; local verification passed: npm run typecheck, npm test, npm run build, npm run lint:plans).
