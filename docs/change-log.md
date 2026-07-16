@@ -5,6 +5,18 @@
 `docs/change-log.md` 的正式定位是“历史记录 + 人类可读摘要”。
 它不是当前 Blueprint / legacy superpowers 治理的 live execution truth，不作为 resume entry、promotion gate、closeout gate 或固定同步门。
 
+## 2026-07-16 EventBindingRuntime Selector Baseline
+
+### Added
+- 新增 [src/core/runtime/event-binding-runtime.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree-5/src/core/runtime/event-binding-runtime.ts)，提供 `runEventBindingRuntime`，从 `EventBinding` 行和 `TriggerContext` 中选择候选事件。
+- 扩展 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree-5/tests/robustness.test.cjs)，覆盖 triggerless event body 通过 event binding 被选择、激活并写入 `eventHistory`。
+
+### Changed
+- EventBindingRuntime baseline 复用现有 `activateEvent` 和 `startEvent` handoff，不接管 scene/task/house/navigation/playable/location-access 子 runtime 生命周期。
+
+### Impact
+- 双表事件输入现在有了独立 runtime selector baseline；旧 `selectTriggeredEvents` 路径仍保留，等待后续 TriggerContext adapter cutover 和 old-runtime retirement 队列处理。
+
 ## 2026-07-16 Script Editor Zhuyuanzhang Event Binding Pack Migration
 
 ### Added

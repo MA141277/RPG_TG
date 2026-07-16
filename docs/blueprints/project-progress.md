@@ -7,7 +7,7 @@
 - active_version: `target.script-editor-event-binding-runtime-replacement`
 - has_active_queue: `true`
 - active_queue: `queue.event-binding-runtime-convergence`
-- active_task: `task.event-binding-runtime-convergence.runtime-selector-baseline`
+- active_task: `task.event-binding-runtime-convergence.trigger-context-adapter-cutover`
 - next_file: `docs/blueprints/queues/event-binding-runtime-convergence-queue.md`
 - entry_action: `open-next-file`
 
@@ -39,7 +39,7 @@
 - `Admission history, queue closeout history, and review narrative must stay in the version plan, queue docs, or docs/change-log.md rather than living here as competing current-state prose.`
 - `The pointed version is now the open script-editor event binding runtime replacement record.`
 - `The latest governance action created target.script-editor-event-binding-runtime-replacement from docs/script-editor-event-trigger-binding-design.md after the previous city/building version had already closed.`
-- `queue.event-binding-runtime-convergence is active; resume from its runtime-selector-baseline task.`
+- `queue.event-binding-runtime-convergence is active; resume from its trigger-context-adapter-cutover task.`
 
 ### Historical References
 

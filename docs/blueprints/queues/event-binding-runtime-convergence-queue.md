@@ -9,12 +9,12 @@
 - governance_sync_source: `docs/blueprints/blueprint.md`
 - queue_status: `active`
 - queue_class: `required`
-- active_task: `task.event-binding-runtime-convergence.runtime-selector-baseline`
-- next_task: `task.event-binding-runtime-convergence.trigger-context-adapter-cutover`
+- active_task: `task.event-binding-runtime-convergence.trigger-context-adapter-cutover`
+- next_task: `task.event-binding-runtime-convergence.queue-closeout-and-handoff`
 - closeout_status: `in-progress`
 - execution_closeout_status: `partial`
 - topic_closure_status: `open-residue`
-- closure_basis: `Evidence lock is complete; EventBindingRuntime selector baseline remains active for the bounded runtime replacement slice.`
+- closure_basis: `EventBindingRuntime selector baseline is complete; TriggerContext adapter cutover remains active for covered story trigger paths.`
 - residue_remaining: `yes`
 - residue_family: `same-family`
 - residue_routing_status: `needs-version-review`
@@ -83,9 +83,9 @@
 
 - queue_goal: `Cut runtime event trigger selection to EventBindingRuntime without deleting old trigger scanning yet.`
 - task_count: `4`
-- completed_task_count: `1`
-- remaining_task_count: `3`
-- active_task_summary: `Add EventBindingRuntime selection, condition, occurrence, priority, and activation coverage test-first.`
+- completed_task_count: `2`
+- remaining_task_count: `2`
+- active_task_summary: `Route covered story trigger call sites through TriggerContext without taking over sub-runtime lifecycles.`
 - task_briefs:
   - `task.event-binding-runtime-convergence.evidence-anchor-reconcile: Confirm existing trigger paths, active-content eventBindings access, and sub-runtime handoff boundaries before implementation.`
   - `task.event-binding-runtime-convergence.runtime-selector-baseline: Add EventBindingRuntime selection, condition, occurrence, priority, and activation coverage test-first.`
@@ -108,8 +108,8 @@
 | Task ID | State | Summary | Depends On | Notes |
 | --- | --- | --- | --- | --- |
 | `task.event-binding-runtime-convergence.evidence-anchor-reconcile` | `done` | `Confirmed existing trigger paths, active-content eventBindings access, and sub-runtime handoff boundaries before implementation.` | `none` | `Completed on 2026-07-16 after source evidence locked the selector baseline slice.` |
-| `task.event-binding-runtime-convergence.runtime-selector-baseline` | `active` | `Add EventBindingRuntime selection, condition, occurrence, priority, and activation coverage test-first.` | `task.event-binding-runtime-convergence.evidence-anchor-reconcile` | `Keep old trigger evaluator available for compatibility until retirement queue.` |
-| `task.event-binding-runtime-convergence.trigger-context-adapter-cutover` | `queued` | `Route covered story trigger call sites through TriggerContext without taking over sub-runtime lifecycles.` | `task.event-binding-runtime-convergence.runtime-selector-baseline` | `Record payload/resolver/handoff boundary used by each touched sub-runtime.` |
+| `task.event-binding-runtime-convergence.runtime-selector-baseline` | `done` | `Added EventBindingRuntime selection, condition, occurrence, priority, and activation coverage test-first.` | `task.event-binding-runtime-convergence.evidence-anchor-reconcile` | `Completed on 2026-07-16; old trigger evaluator remains available for compatibility until retirement queue.` |
+| `task.event-binding-runtime-convergence.trigger-context-adapter-cutover` | `active` | `Route covered story trigger call sites through TriggerContext without taking over sub-runtime lifecycles.` | `task.event-binding-runtime-convergence.runtime-selector-baseline` | `Record payload/resolver/handoff boundary used by each touched sub-runtime.` |
 | `task.event-binding-runtime-convergence.queue-closeout-and-handoff` | `queued` | `Verify built-in/exported pack trigger behavior and route old-runtime retirement residue.` | `task.event-binding-runtime-convergence.trigger-context-adapter-cutover` | `Old-runtime retirement remains blocked until this queue verifies replacement behavior.` |
 
 ### Task Definitions
@@ -172,7 +172,7 @@
 ##### Control Block
 
 - task_id: `task.event-binding-runtime-convergence.runtime-selector-baseline`
-- state: `active`
+- state: `done`
 - task_kind: `execution`
 - scope:
   - `src/domain/event.ts`
@@ -210,18 +210,24 @@
 - task_brief:
   - `Build the EventBindingRuntime selector baseline test-first.`
 - task_outcome_summary:
-  - `Pending.`
+  - `Done. Added EventBindingRuntime baseline with TriggerContext owner/timing/action matching, enabled filtering, basic flag/variable/event-history condition evaluation, occurrence checks, priority/stable-id selection, activation handoff, and startEvent-backed eventHistory writes.`
 - Purpose:
   - `Create the new double-table runtime selector before cutting call sites over.`
 - Failure mode:
   - `Mutating old events.json trigger fields or deleting compatibility paths before replacement verification.`
+
+##### Progress Log
+
+- `2026-07-16`: `RED verification passed: event binding runtime selects matching binding and starts the triggerless event failed because core/runtime/event-binding-runtime.js did not exist.`
+- `2026-07-16`: `Added src/core/runtime/event-binding-runtime.ts with runEventBindingRuntime, selector candidate output, EventBinding condition evaluation, occurrence filtering, activateEvent handoff, and startEvent eventHistory writes.`
+- `2026-07-16`: `GREEN verification passed for node --test --test-name-pattern "event binding runtime" tests/robustness.test.cjs; npm run typecheck and npm run lint:blueprints also passed.`
 
 #### `task.event-binding-runtime-convergence.trigger-context-adapter-cutover`
 
 ##### Control Block
 
 - task_id: `task.event-binding-runtime-convergence.trigger-context-adapter-cutover`
-- state: `queued`
+- state: `active`
 - task_kind: `execution`
 - scope:
   - `src/application/story/story-runtime.ts`

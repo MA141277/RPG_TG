@@ -5813,6 +5813,83 @@ test(
 );
 
 test(
+  "event binding runtime selects matching binding and starts the triggerless event",
+  () => {
+    const {
+      runEventBindingRuntime,
+    } = require("../.test-dist/core/runtime/event-binding-runtime.js");
+    const state = createBaseState();
+    state.world.currentCityId = "city.kulan";
+    state.runtime.flags["story.opening.enabled"] = true;
+    const eventDefinitionsById = {
+      "event.opening.low": {
+        id: "event.opening.low",
+        chapterId: "chapter.prototype",
+        name: "Opening Low",
+        occurrence: "once",
+        entrySceneId: "scene.opening.low",
+      },
+      "event.opening.high": {
+        id: "event.opening.high",
+        chapterId: "chapter.prototype",
+        name: "Opening High",
+        occurrence: "once",
+        entrySceneId: "scene.opening.high",
+      },
+    };
+    const eventBindings = [
+      {
+        id: "binding.opening.low.city-enter",
+        eventId: "event.opening.low",
+        owner: { family: "city", id: "city.kulan" },
+        trigger: { timing: "after", action: "city-enter" },
+        priority: 10,
+        enabled: true,
+      },
+      {
+        id: "binding.opening.high.city-enter",
+        eventId: "event.opening.high",
+        owner: { family: "city", id: "city.kulan" },
+        trigger: { timing: "after", action: "city-enter" },
+        conditions: {
+          operator: "all",
+          conditions: [
+            {
+              type: "flag",
+              key: "story.opening.enabled",
+              expected: true,
+            },
+          ],
+        },
+        priority: 200,
+        enabled: true,
+      },
+    ];
+
+    const result = runEventBindingRuntime({
+      state,
+      eventDefinitionsById,
+      eventBindings,
+      triggerContext: {
+        owner: { family: "city", id: "city.kulan" },
+        timing: "after",
+        action: "city-enter",
+        currentCityId: "city.kulan",
+      },
+    });
+
+    assert.equal(result.activation?.activeEventId, "event.opening.high");
+    assert.equal(result.candidate?.bindingId, "binding.opening.high.city-enter");
+    assert.equal(result.state.scene.activeEventId, "event.opening.high");
+    assert.equal(result.state.scene.activeSceneId, "scene.opening.high");
+    assert.equal(
+      result.state.runtime.eventHistory["event.opening.high"]?.firedCount,
+      1
+    );
+  }
+);
+
+test(
   "runtime trigger selection ignores triggerless exported script editor event bodies",
   () => {
     const {
