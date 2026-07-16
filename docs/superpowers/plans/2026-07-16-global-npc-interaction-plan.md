@@ -12,8 +12,8 @@
 
 - Status: `running`
 - Last Updated: `2026-07-16`
-- Current Focus: `Task 4 completed and reviewed; preparing Task 5 gift empty state and documentation.`
-- Next Step: `Start Task 5: Gift Empty State And Documentation.`
+- Current Focus: `Task 5 completed and reviewed; preparing Task 6 final verification.`
+- Next Step: `Start Task 6: Final Verification And Main Boundary Guard.`
 - Verification: `npm run lint:plans passed for 59 files; npm test passed for 306 tests`
 - Notes: `Do not mark this plan closed without structured closeout, project-progress sync, and remote push success.`
 
@@ -43,6 +43,10 @@
   - Summary: `Completed Task 4 house roster integration and special action delegation; fixed reviewer-found roster context wiring and NPC session cleanup issues.`
   - Verification: `Implementer reported npm test and npm run typecheck passed; fix reported focused global NPC tests and npm run typecheck passed; reviewer approved diff 47e34913..a02bf9f1.`
   - Next: `Start Task 5 gift empty state and documentation.`
+- 2026-07-16
+  - Summary: `Completed Task 5 gift empty state and documentation; task review approved with no findings.`
+  - Verification: `Implementer reported focused global NPC/gift/detail tests, npm run lint:plans, npm run typecheck, and git diff --check passed; reviewer approved diff 51db1a05..6dc83668.`
+  - Next: `Start Task 6 final verification and main boundary guard.`
 
 ---
 
@@ -1285,7 +1289,7 @@ git commit -m "feat: route house rosters through npc interaction"
 - Consumes: `NPC_INTERACTION_DEFAULT_OPTION_IDS.gift`.
 - Produces: disabled or empty-state gift menu behavior with no persistent mutation.
 
-- [ ] **Step 1: Write failing gift safety test**
+- [x] **Step 1: Write failing gift safety test**
 
 Append:
 
@@ -1308,7 +1312,7 @@ test("global NPC gift default is safe when no giftable items exist", () => {
 });
 ```
 
-- [ ] **Step 2: Run test and verify it fails if gift disabled state is missing**
+- [x] **Step 2: Run test and verify it fails if gift disabled state is missing**
 
 Run:
 
@@ -1321,7 +1325,7 @@ Expected:
 
 - The test fails if the gift option is enabled without a giftable inventory path.
 
-- [ ] **Step 3: Keep Phase 1 gift disabled by selector input**
+- [x] **Step 3: Keep Phase 1 gift disabled by selector input**
 
 Ensure all Phase 1 calls to `selectNpcInteractionMenu()` pass:
 
@@ -1331,7 +1335,7 @@ giftDisabled: true,
 
 Do not mutate inventory or favorability from the gift option in Phase 1.
 
-- [ ] **Step 4: Update house contract docs**
+- [x] **Step 4: Update house contract docs**
 
 Add this section to `docs/special-house-interface.md` under `View Model Contract`:
 
@@ -1349,7 +1353,7 @@ The shared menu owns default actions:
 House modules may contribute special actions for the selected actor, but the generic NPC shell must not understand house-specific business rules. Special actions dispatch back through the owning house module lifecycle. Default `谈话` replaces visible `闲谈` labels as the baseline conversation behavior. Default `送礼` must use shared inventory and must not mutate relationship or inventory until an item is selected and confirmed.
 ```
 
-- [ ] **Step 5: Update change log**
+- [x] **Step 5: Update change log**
 
 Add near the top of `docs/change-log.md`:
 
@@ -1361,7 +1365,7 @@ Add near the top of `docs/change-log.md`:
 - Existing visible `闲谈` entry points are normalized toward the default `谈话` action; Phase 1 keeps `送礼` safe until shared gift inventory settlement is implemented.
 ```
 
-- [ ] **Step 6: Run focused tests**
+- [x] **Step 6: Run focused tests**
 
 Run:
 
@@ -1374,7 +1378,7 @@ Expected:
 
 - Focused tests pass.
 
-- [ ] **Step 7: Commit Task 5**
+- [x] **Step 7: Commit Task 5**
 
 Run:
 
