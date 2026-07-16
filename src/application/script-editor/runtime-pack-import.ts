@@ -388,9 +388,7 @@ function buildImportedEventDescription(
   return summaryParts.join(" ");
 }
 
-function mapImportedEventTriggerTiming(
-  timing?: EventDefinition["trigger"]["timing"]
-): ScriptEditorEventTriggerTiming {
+function mapImportedEventTriggerTiming(timing?: string): ScriptEditorEventTriggerTiming {
   switch (timing) {
     case "city-enter":
       return "city-enter";

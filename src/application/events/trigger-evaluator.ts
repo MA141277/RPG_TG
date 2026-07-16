@@ -22,13 +22,13 @@ export function selectTriggeredEvents(
   context: TriggerEvaluatorContext
 ): EventDefinition[] {
   return eventDefinitions
-    .filter((eventDefinition) => eventDefinition.trigger.timing === input.timing)
+    .filter((eventDefinition) => eventDefinition.trigger?.timing === input.timing)
     .filter((eventDefinition) => matchesTriggerScope(eventDefinition, input))
     .filter((eventDefinition) =>
       isOccurrenceAvailable(state, eventDefinition)
     )
     .filter((eventDefinition) =>
-      eventDefinition.conditions.every((conditionNode) =>
+      (eventDefinition.conditions ?? []).every((conditionNode) =>
         evaluateEventConditionNode(state, conditionNode, context)
       )
     )
@@ -37,7 +37,7 @@ export function selectTriggeredEvents(
     )
     .sort(
       (leftEvent, rightEvent) =>
-        (rightEvent.trigger.priority ?? 0) - (leftEvent.trigger.priority ?? 0)
+        (rightEvent.trigger?.priority ?? 0) - (leftEvent.trigger?.priority ?? 0)
     );
 }
 
@@ -45,7 +45,7 @@ function matchesTriggerScope(
   eventDefinition: EventDefinition,
   input: TriggerEvaluationInput
 ): boolean {
-  const triggerScope = eventDefinition.trigger.scope;
+  const triggerScope = eventDefinition.trigger?.scope;
 
   if (triggerScope == null) {
     return true;

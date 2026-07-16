@@ -107,7 +107,7 @@ function toEventRuntimeCandidate(
 ): EventRuntimeCandidate {
   return {
     eventId: eventDefinition.id,
-    priority: eventDefinition.trigger.priority ?? 0,
+    priority: eventDefinition.trigger?.priority ?? 0,
     sceneId: eventDefinition.entrySceneId,
     taskInputs: eventDefinition.taskInputs ?? [],
   };

@@ -5,6 +5,21 @@
 `docs/change-log.md` 的正式定位是“历史记录 + 人类可读摘要”。
 它不是当前 Blueprint / legacy superpowers 治理的 live execution truth，不作为 resume entry、promotion gate、closeout gate 或固定同步门。
 
+## 2026-07-16 Script Editor Event Binding Export Convergence
+
+### Added
+- 扩展 [src/application/script-editor/runtime-pack-export.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree-5/src/application/script-editor/runtime-pack-export.ts)，runtime-pack 导出现在写出 `pack.json.files.eventBindings` 和 `event-bindings.json`。
+- 新增 event binding export 校验：unsupported owner family、trigger timing/action、payload schema 和 binding conditions 在 runnable export 阶段 fail closed。
+
+### Changed
+- 更新 [src/domain/event.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree-5/src/domain/event.ts)，将 `EventDefinition.trigger` 和 `EventDefinition.conditions` 改为过渡期可选字段，使 `events.json` 可以作为纯事件体表导出。
+- 更新 [src/application/events/trigger-evaluator.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree-5/src/application/events/trigger-evaluator.ts) 和 [src/core/runtime/event-runtime.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree-5/src/core/runtime/event-runtime.ts)，旧 trigger selector 会跳过无 `trigger` 的事件体，并在 priority 读取上兼容 triggerless event body。
+- 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree-5/tests/robustness.test.cjs)，将 script-editor runtime export 断言切到双表边界：`events.json` 不含 trigger/conditions，`event-bindings.json` 承载触发入口，旧 selector 不消费 triggerless export。
+
+### Impact
+- 脚本编辑器导出的 runtime pack 已具备后续 EventBindingRuntime 所需的双表输入形状。
+- 本批次未迁移内置朱元璋包、未实现 EventBindingRuntime，也未删除旧 runtime trigger/evaluator 路径。
+
 ## 2026-07-16 Script Editor Event Binding Authoring UI
 
 ### Added

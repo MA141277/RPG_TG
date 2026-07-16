@@ -11,6 +11,7 @@ import { materializeScriptEditorDialogueStoryRuntime } from "./dialogue-story-ru
 import { materializeScriptEditorPersonRuntimeCharacter } from "./person-authoring";
 import type {
   ScriptEditorConditionNode,
+  ScriptEditorEventBindingRecord,
   ScriptEditorEventRecord,
   ScriptEditorProjectDefinition,
   ScriptEditorRuntimePackSchemaVersion,
@@ -19,7 +20,7 @@ import type {
 import { SCRIPT_EDITOR_RUNTIME_PACK_SCHEMA_VERSION } from "../../domain/script-editor-project";
 import type { ScenarioProfileDefinition } from "../../domain/scenario-profile";
 import type { SceneDefinition } from "../../domain/action";
-import type { EventDefinition, EventTriggerTiming } from "../../domain/event";
+import type { EventDefinition, EventTrigger, EventTriggerTiming } from "../../domain/event";
 import type { RuntimeTaskInput } from "../../core/contracts/runtime-result";
 import type {
   PlayableDefinition,
@@ -52,6 +53,7 @@ type RuntimePackManifestFiles = {
   houses: string;
   cityEntries: string;
   events: string;
+  eventBindings: string;
   scenes: string;
   activities: string;
   playables: string;
@@ -93,6 +95,7 @@ const RUNTIME_PACK_CANONICAL_FILES: RuntimePackManifestFiles = {
   houses: "./houses.json",
   cityEntries: "./city-entries.json",
   events: "./events.json",
+  eventBindings: "./event-bindings.json",
   scenes: "./scenes.json",
   activities: "./activities.json",
   playables: "./playables.json",
@@ -139,6 +142,7 @@ export function validateScriptEditorProjectForRuntimeExport(
     exportedScenes ?? [],
     diagnostics
   );
+  const exportedEventBindings = lowerRuntimeEventBindings(project, diagnostics);
   const sharedRuleDiagnostics: ScriptEditorSharedRuleDiagnostic[] = [];
   const exportedTasks = compileScriptEditorProjectTasks(project, sharedRuleDiagnostics);
   appendSharedRuleDiagnostics(sharedRuleDiagnostics, diagnostics);
@@ -149,6 +153,7 @@ export function validateScriptEditorProjectForRuntimeExport(
     exportedTextEntries == null ||
     exportedScenes == null ||
     exportedEvents == null ||
+    exportedEventBindings == null ||
     exportedTasks == null
   ) {
     return diagnostics;
@@ -169,6 +174,7 @@ export function validateScriptEditorProjectForRuntimeExport(
       houses: cityBuildingRuntimeFamilies.houses,
       cityEntries: cityBuildingRuntimeFamilies.cityEntries,
       events: exportedEvents,
+      eventBindings: exportedEventBindings,
       scenes: exportedScenes,
       activities: project.activities,
       playables: playableRuntimeFamilies.playables,
@@ -255,6 +261,7 @@ export function exportScriptEditorProjectToScenarioPackFiles(
     materializeScriptEditorCityBuildingRuntimeFamilies(project);
   const exportedScenes = narrativeRuntime.scenes;
   const exportedEvents = extractRuntimeEvents(project, exportedScenes ?? [], []);
+  const exportedEventBindings = lowerRuntimeEventBindings(project, []);
   const exportedTasks = compileScriptEditorProjectTasks(project, []);
   const playableRuntimeFamilies = materializeScriptEditorPlayableRuntimeFamilies(
     project,
@@ -265,6 +272,7 @@ export function exportScriptEditorProjectToScenarioPackFiles(
     exportedTextEntries == null ||
     exportedScenes == null ||
     exportedEvents == null ||
+    exportedEventBindings == null ||
     exportedTasks == null
   ) {
     throw new Error(
@@ -306,6 +314,9 @@ export function exportScriptEditorProjectToScenarioPackFiles(
     ),
     [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.events)]: stringifyJson(
       exportedEvents
+    ),
+    [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.eventBindings)]: stringifyJson(
+      exportedEventBindings
     ),
     [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.scenes)]: stringifyJson(
       exportedScenes
@@ -852,24 +863,6 @@ function lowerEditorEventToRuntimeEvent(
     return null;
   }
 
-  const conditions = lowerEventConditionGroups(
-    eventRecord,
-    eventIndex,
-    diagnostics
-  );
-  if (conditions == null) {
-    return null;
-  }
-
-  const triggerTiming = lowerEventTriggerTiming(
-    eventRecord,
-    eventIndex,
-    diagnostics
-  );
-  if (triggerTiming == null) {
-    return null;
-  }
-
   const nextEventId = lowerEventNextEventId(
     eventRecord,
     eventIndex,
@@ -895,15 +888,123 @@ function lowerEditorEventToRuntimeEvent(
     chapterId,
     name: eventRecord.title || eventRecord.id,
     occurrence: eventRecord.repeatable === true ? "repeatable" : "once",
-    trigger: {
-      timing: triggerTiming,
-      ...lowerEventTriggerScope(eventRecord, triggerTiming),
-    },
-    conditions,
     entrySceneId,
     ...(nextEventId.length === 0 ? {} : { nextEventId }),
     ...(taskInputs.length === 0 ? {} : { taskInputs }),
   };
+}
+
+function lowerRuntimeEventBindings(
+  project: ScriptEditorProjectDefinition,
+  diagnostics: ScriptEditorRuntimeExportDiagnostic[]
+): ScriptEditorEventBindingRecord[] | null {
+  const eventIds = new Set(project.events.map((eventRecord) => eventRecord.id));
+  const loweredBindings: ScriptEditorEventBindingRecord[] = [];
+
+  for (const [bindingIndex, binding] of project.eventBindings.entries()) {
+    const fieldPath = `project.eventBindings[${bindingIndex}]`;
+    const loweredBinding = lowerRuntimeEventBinding(
+      binding,
+      fieldPath,
+      eventIds,
+      diagnostics
+    );
+    if (loweredBinding != null) {
+      loweredBindings.push(loweredBinding);
+    }
+  }
+
+  return diagnostics.length === 0 ? loweredBindings : null;
+}
+
+function lowerRuntimeEventBinding(
+  binding: ScriptEditorEventBindingRecord,
+  fieldPath: string,
+  eventIds: Set<string>,
+  diagnostics: ScriptEditorRuntimeExportDiagnostic[]
+): ScriptEditorEventBindingRecord | null {
+  if (!eventIds.has(binding.eventId)) {
+    diagnostics.push({
+      code: "missing-reference",
+      fieldPath: `${fieldPath}.eventId`,
+      message: `Event binding references missing event "${binding.eventId}".`,
+    });
+    return null;
+  }
+
+  if (!isSupportedEventBindingOwnerFamily(binding.owner.family)) {
+    diagnostics.push({
+      code: "unsupported-lowering",
+      fieldPath: `${fieldPath}.owner.family`,
+      message: `Event binding owner family "${binding.owner.family}" is not supported by runtime export.`,
+    });
+    return null;
+  }
+
+  if (!isSupportedEventBindingTrigger(binding.trigger)) {
+    diagnostics.push({
+      code: "unsupported-lowering",
+      fieldPath: `${fieldPath}.trigger`,
+      message:
+        `Event binding trigger "${binding.trigger.timing}:${binding.trigger.action}" is not supported by runtime export.`,
+    });
+    return null;
+  }
+
+  if (binding.conditions != null) {
+    diagnostics.push({
+      code: "unsupported-lowering",
+      fieldPath: `${fieldPath}.conditions`,
+      message:
+        "Event binding conditions require a later resolver-backed lowering step.",
+    });
+    return null;
+  }
+
+  if (binding.trigger.payloadSchemaId != null) {
+    diagnostics.push({
+      code: "unsupported-lowering",
+      fieldPath: `${fieldPath}.trigger.payloadSchemaId`,
+      message:
+        "Event binding payload schemas require a later registered payload lowering step.",
+    });
+    return null;
+  }
+
+  return {
+    id: binding.id,
+    eventId: binding.eventId,
+    owner: {
+      family: binding.owner.family,
+      ...(binding.owner.id == null || binding.owner.id.length === 0
+        ? {}
+        : { id: binding.owner.id }),
+    },
+    trigger: {
+      timing: binding.trigger.timing,
+      action: binding.trigger.action,
+    },
+    ...(typeof binding.priority === "number" ? { priority: binding.priority } : {}),
+    ...(binding.enabled == null ? {} : { enabled: binding.enabled }),
+  };
+}
+
+function isSupportedEventBindingOwnerFamily(value: string): boolean {
+  return ["story", "city", "building", "dialogue", "menu", "minigame"].includes(value);
+}
+
+function isSupportedEventBindingTrigger(trigger: ScriptEditorEventBindingRecord["trigger"]): boolean {
+  return (
+    trigger.timing === "after" &&
+    [
+      "story-progress",
+      "city-enter",
+      "building-enter",
+      "dialogue-finished",
+      "menu-select",
+      "minigame-finished",
+    ].includes(trigger.action)
+  );
 }
 
 function lowerEventTaskInputs(
@@ -1054,7 +1155,7 @@ function lowerEventConditionGroups(
   eventIndex: number,
   diagnostics: ScriptEditorRuntimeExportDiagnostic[]
 ): EventDefinition["conditions"] | null {
-  const loweredConditions: EventDefinition["conditions"] = [];
+  const loweredConditions: NonNullable<EventDefinition["conditions"]> = [];
 
   for (const [groupIndex, conditionGroup] of (eventRecord.conditionGroups ?? []).entries()) {
     if (conditionGroup.conditions.length === 0) {
@@ -1082,7 +1183,7 @@ function lowerEventConditionNode(
   conditionNode: ScriptEditorConditionNode,
   fieldPath: string,
   diagnostics: ScriptEditorRuntimeExportDiagnostic[]
-): EventDefinition["conditions"][number] | null {
+): NonNullable<EventDefinition["conditions"]>[number] | null {
   if (conditionNode.type === "group") {
     const loweredChildren = conditionNode.conditions.flatMap((childNode, index) => {
       const loweredChild = lowerEventConditionNode(
@@ -1248,7 +1349,7 @@ function lowerEventTriggerTiming(
 function lowerEventTriggerScope(
   eventRecord: ScriptEditorEventRecord,
   timing: EventTriggerTiming
-): Pick<EventDefinition["trigger"], "scope"> {
+): Pick<EventTrigger, "scope"> {
   if (timing === "city-enter") {
     const cityId = eventRecord.relations?.cityIds?.find((id) => id.length > 0);
     return cityId == null ? {} : { scope: { cityId } };

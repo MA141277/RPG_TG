@@ -199,8 +199,8 @@ export type EventDefinition = {
   chapterId: ChapterId;
   name: string;
   occurrence: EventOccurrence;
-  trigger: EventTrigger;
-  conditions: EventConditionNode[];
+  trigger?: EventTrigger;
+  conditions?: EventConditionNode[];
   participants?: EventParticipant[];
   entrySceneId: SceneId;
   nextEventId?: EventId;

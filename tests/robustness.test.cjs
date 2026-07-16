@@ -4746,6 +4746,16 @@ test(
         ],
       },
     ];
+    project.eventBindings = [
+      {
+        id: "binding.opening.city-enter",
+        eventId: "event.opening",
+        owner: { family: "city", id: "city.kulan" },
+        trigger: { timing: "after", action: "city-enter" },
+        priority: 10,
+        enabled: true,
+      },
+    ];
 
     const serializedFiles = exportScriptEditorProjectToScenarioPackFiles(project);
     const exportedPack = await loadScenarioPackFromFiles(
@@ -4800,31 +4810,25 @@ test(
       resetDefaultPlayableRuntimeRegistries();
     }
 
-    const state = createBaseState();
-    state.runtime.flags["story.opening.enabled"] = true;
-    state.runtime.variables["story.progress"] = 3;
-
     const eventsById = Object.fromEntries(
       exportedPack.events.map((eventDefinition) => [eventDefinition.id, eventDefinition])
     );
-    const scenesById = Object.fromEntries(
-      exportedPack.scenes.map((sceneDefinition) => [sceneDefinition.id, sceneDefinition])
-    );
-    const storyResult = runStoryTriggerRuntime({
-      timing: "city-enter",
-      state,
-      characterDefinitions: exportedPack.characters,
-      eventDefinitionsById: eventsById,
-      sceneDefinitionsById: scenesById,
-      activityDefinitionsById: Object.fromEntries(
-        exportedPack.activities.map((activity) => [activity.id, activity])
-      ),
-      textEntriesById: exportedPack.textEntries,
-    });
+    const openingEvent = eventsById["event.opening"];
 
-    assert.equal(storyResult.session?.eventId, "event.opening");
-    assert.equal(storyResult.session?.sceneId, "scene.dialogue.opening");
-    assert.deepEqual(storyResult.taskInputs, [
+    assert.equal(openingEvent.entrySceneId, "scene.dialogue.opening");
+    assert.equal(Object.hasOwn(openingEvent, "trigger"), false);
+    assert.equal(Object.hasOwn(openingEvent, "conditions"), false);
+    assert.deepEqual(exportedPack.eventBindings, [
+      {
+        id: "binding.opening.city-enter",
+        eventId: "event.opening",
+        owner: { family: "city", id: "city.kulan" },
+        trigger: { timing: "after", action: "city-enter" },
+        priority: 10,
+        enabled: true,
+      },
+    ]);
+    assert.deepEqual(openingEvent.taskInputs, [
       {
         type: "start",
         taskId: "task.opening",
@@ -4841,7 +4845,7 @@ test(
           route: ({ state: routedState }) => ({
             state: routedState,
             effects: [],
-            taskInputs: storyResult.taskInputs,
+            taskInputs: openingEvent.taskInputs ?? [],
           }),
         },
         taskDefinitionsById: Object.fromEntries(
@@ -5589,7 +5593,7 @@ test(
 );
 
 test(
-  "script editor runtime export lowers supported event condition groups into runtime conditions",
+  "script editor runtime export leaves legacy event condition groups out of event bodies",
   () => {
     const {
       exportScriptEditorProjectToScenarioPackFiles,
@@ -5621,22 +5625,81 @@ test(
     const files = exportScriptEditorProjectToScenarioPackFiles(project);
     const events = JSON.parse(files["events.json"]);
 
-    assert.deepEqual(events[0].conditions, [
+    assert.equal(Object.hasOwn(events[0], "conditions"), false);
+    assert.equal(Object.hasOwn(events[0], "trigger"), false);
+  }
+);
+
+test(
+  "script editor runtime export writes event bindings as a separate file",
+  () => {
+    const {
+      exportScriptEditorProjectToScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    const project = createExportableScriptEditorProjectDefinition();
+    project.textEntries = [{ id: "text.opening", text: "Opening line." }];
+    project.dialogues = [{ id: "dialogue.opening", title: "Opening" }];
+    project.events = [
       {
-        type: "group",
-        operator: "all",
-        conditions: [
-          { type: "flag", key: "story.opening.enabled", expected: true },
-          { type: "variable", key: "story.progress", operator: ">=", value: 3 },
-          { type: "location", cityId: "city.start" },
+        id: "event.opening",
+        title: "Opening Event",
+        triggerTiming: "city-enter",
+        relations: { cityIds: ["city.start"] },
+        destination: { family: "dialogue", targetId: "dialogue.opening" },
+        conditionGroups: [
+          {
+            id: "condition.opening",
+            operator: "all",
+            conditions: [{ type: "flag", key: "story.opening.enabled", expected: true }],
+          },
         ],
+      },
+    ];
+    project.eventBindings = [
+      {
+        id: "binding.opening.city-enter",
+        eventId: "event.opening",
+        owner: { family: "city", id: "city.kulan" },
+        trigger: { timing: "after", action: "city-enter" },
+        priority: 10,
+        enabled: true,
+      },
+    ];
+    project.eventBindings = [
+      {
+        id: "binding.opening.city-enter",
+        eventId: "event.opening",
+        owner: { family: "city", id: "city.start" },
+        trigger: { timing: "after", action: "city-enter" },
+        priority: 20,
+        enabled: true,
+      },
+    ];
+
+    const files = exportScriptEditorProjectToScenarioPackFiles(project);
+    const manifest = JSON.parse(files["pack.json"]);
+    const events = JSON.parse(files["events.json"]);
+    const eventBindings = JSON.parse(files["event-bindings.json"]);
+
+    assert.equal(manifest.files.eventBindings, "./event-bindings.json");
+    assert.equal(events[0].id, "event.opening");
+    assert.equal(Object.hasOwn(events[0], "trigger"), false);
+    assert.equal(Object.hasOwn(events[0], "conditions"), false);
+    assert.deepEqual(eventBindings, [
+      {
+        id: "binding.opening.city-enter",
+        eventId: "event.opening",
+        owner: { family: "city", id: "city.start" },
+        trigger: { timing: "after", action: "city-enter" },
+        priority: 20,
+        enabled: true,
       },
     ]);
   }
 );
 
 test(
-  "script editor runtime export fails closed on task-only event condition nodes",
+  "script editor runtime export fails closed on unsupported event binding fields",
   () => {
     const {
       exportScriptEditorProjectToScenarioPackFiles,
@@ -5649,25 +5712,62 @@ test(
         id: "event.opening",
         title: "Opening Event",
         destination: { family: "dialogue", targetId: "dialogue.opening" },
-        conditionGroups: [
-          {
-            id: "condition.opening",
-            operator: "all",
-            conditions: [{ type: "signal", signalType: "scene.reported" }],
-          },
-        ],
+      },
+    ];
+    project.eventBindings = [
+      {
+        id: "binding.opening.unsupported",
+        eventId: "event.opening",
+        owner: { family: "custom", id: "city.start" },
+        trigger: { timing: "after", action: "city-enter" },
       },
     ];
 
     assert.throws(
       () => exportScriptEditorProjectToScenarioPackFiles(project),
-      /conditionGroups|signal|unsupported/i
+      /eventBindings|owner|custom|unsupported/i
     );
   }
 );
 
 test(
-  "runtime trigger selection evaluates exported script editor event conditions",
+  "script editor runtime export fails closed on event binding conditions before resolver lowering",
+  () => {
+    const {
+      exportScriptEditorProjectToScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    const project = createExportableScriptEditorProjectDefinition();
+    project.textEntries = [{ id: "text.opening", text: "Opening line." }];
+    project.dialogues = [{ id: "dialogue.opening", title: "Opening" }];
+    project.events = [
+      {
+        id: "event.opening",
+        title: "Opening Event",
+        destination: { family: "dialogue", targetId: "dialogue.opening" },
+      },
+    ];
+    project.eventBindings = [
+      {
+        id: "binding.opening.city-enter",
+        eventId: "event.opening",
+        owner: { family: "city", id: "city.start" },
+        trigger: { timing: "after", action: "city-enter" },
+        conditions: {
+          operator: "all",
+          conditions: [{ type: "signal", resolverId: "scene.reported" }],
+        },
+      },
+    ];
+
+    assert.throws(
+      () => exportScriptEditorProjectToScenarioPackFiles(project),
+      /eventBindings|conditions|resolver|lowering/i
+    );
+  }
+);
+
+test(
+  "runtime trigger selection ignores triggerless exported script editor event bodies",
   () => {
     const {
       exportScriptEditorProjectToScenarioPackFiles,
@@ -5697,9 +5797,17 @@ test(
         ],
       },
     ];
-    const events = JSON.parse(
-      exportScriptEditorProjectToScenarioPackFiles(project)["events.json"]
-    );
+    project.eventBindings = [
+      {
+        id: "binding.opening.city-enter",
+        eventId: "event.opening",
+        owner: { family: "city", id: "city.kulan" },
+        trigger: { timing: "after", action: "city-enter" },
+      },
+    ];
+    const files = exportScriptEditorProjectToScenarioPackFiles(project);
+    const events = JSON.parse(files["events.json"]);
+    const eventBindings = JSON.parse(files["event-bindings.json"]);
     const state = createBaseState();
     state.runtime.flags["story.opening.enabled"] = true;
     state.runtime.variables["story.progress"] = 2;
@@ -5727,8 +5835,6 @@ test(
       []
     );
 
-    state.runtime.variables["story.progress"] = 3;
-
     assert.deepEqual(
       selectTriggeredEvents(
         state,
@@ -5736,20 +5842,18 @@ test(
         { timing: "city-enter", cityId: "city.kulan" },
         context
       ).map((eventDefinition) => eventDefinition.id),
-      ["event.opening"]
+      []
     );
+    assert.deepEqual(eventBindings.map((binding) => binding.eventId), ["event.opening"]);
   }
 );
 
 test(
-  "script editor exported dialogue event enters materialized runtime scene",
+  "script editor exported dialogue event preserves materialized scene entry",
   () => {
     const {
       exportScriptEditorProjectToScenarioPackFiles,
     } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
-    const {
-      runStoryTriggerRuntime,
-    } = require("../.test-dist/core/runtime/scene-runtime.js");
     const {
       getCurrentSceneAction,
     } = require("../.test-dist/application/story/story-runtime.js");
@@ -5783,45 +5887,23 @@ test(
     const events = JSON.parse(files["events.json"]);
     const scenes = JSON.parse(files["scenes.json"]);
     const textEntries = JSON.parse(files["text-entries.json"]);
-    const result = runStoryTriggerRuntime({
-      timing: "city-enter",
-      state: createBaseState(),
-      characterDefinitions: JSON.parse(files["characters.json"]),
-      eventDefinitionsById: Object.fromEntries(
-        events.map((eventDefinition) => [eventDefinition.id, eventDefinition])
-      ),
-      sceneDefinitionsById: Object.fromEntries(
-        scenes.map((sceneDefinition) => [sceneDefinition.id, sceneDefinition])
-      ),
-      textEntriesById: textEntries,
-    });
-    const currentAction = getCurrentSceneAction(
-      result.state,
-      Object.fromEntries(
-        scenes.map((sceneDefinition) => [sceneDefinition.id, sceneDefinition])
-      )
-    );
+    const [openingEvent] = events;
+    const [openingScene] = scenes;
 
-    assert.equal(result.session?.sceneId, "scene.dialogue.opening");
-    assert.equal(result.session?.eventId, "event.opening");
-    assert.equal(result.state.scene.activeEventId, "event.opening");
-    assert.equal(currentAction?.type, "dialogue");
-    assert.equal(textEntries[currentAction?.textId], "Opening line.");
+    assert.equal(openingEvent.entrySceneId, "scene.dialogue.opening");
+    assert.equal(Object.hasOwn(openingEvent, "trigger"), false);
+    assert.equal(openingScene.id, "scene.dialogue.opening");
+    assert.equal(openingScene.actions[0]?.type, "dialogue");
+    assert.equal(textEntries[openingScene.actions[0]?.textId], "Opening line.");
   }
 );
 
 test(
-  "script editor exported event nextEventId chains to the next runtime event",
+  "script editor exported event body preserves nextEventId chain data",
   () => {
     const {
       exportScriptEditorProjectToScenarioPackFiles,
     } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
-    const {
-      runStoryTriggerRuntime,
-    } = require("../.test-dist/core/runtime/scene-runtime.js");
-    const {
-      advanceScene,
-    } = require("../.test-dist/application/scene/scene-runner.js");
     const project = createExportableScriptEditorProjectDefinition();
     project.textEntries = [
       { id: "text.opening", text: "Opening line." },
@@ -5882,37 +5964,22 @@ test(
 
     assert.equal(eventDefinitionsById["event.opening"].nextEventId, "event.followup");
 
-    const opening = runStoryTriggerRuntime({
-      timing: "city-enter",
-      state: createBaseState(),
-      characterDefinitions: JSON.parse(files["characters.json"]),
-      eventDefinitionsById,
-      sceneDefinitionsById,
-      textEntriesById: textEntries,
-    });
-    const followup = advanceScene(opening.state, {
-      sceneDefinitionsById,
-      eventDefinitionsById,
-      characterDefinitions: opening.characterDefinitions,
-      textEntriesById: textEntries,
-    });
-
-    assert.equal(followup.state.scene.activeEventId, "event.followup");
-    assert.equal(followup.state.scene.activeSceneId, "scene.dialogue.followup");
-    assert.equal(followup.currentAction?.type, "dialogue");
-    assert.equal(textEntries[followup.currentAction?.textId], "Follow-up line.");
+    assert.equal(eventDefinitionsById["event.opening"].entrySceneId, "scene.dialogue.opening");
+    assert.equal(eventDefinitionsById["event.followup"].entrySceneId, "scene.dialogue.followup");
+    assert.equal(sceneDefinitionsById["scene.dialogue.followup"].actions[0]?.type, "dialogue");
+    assert.equal(
+      textEntries[sceneDefinitionsById["scene.dialogue.followup"].actions[0]?.textId],
+      "Follow-up line."
+    );
   }
 );
 
 test(
-  "script editor exported event taskInputs settle through runtime task state",
+  "script editor exported event body taskInputs settle through runtime task state",
   () => {
     const {
       exportScriptEditorProjectToScenarioPackFiles,
     } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
-    const {
-      runStoryEventRuntime,
-    } = require("../.test-dist/core/runtime/event-runtime.js");
     const {
       dispatchRuntimeRequest,
     } = require("../.test-dist/core/runtime/runtime-dispatch.js");
@@ -5976,21 +6043,6 @@ test(
       },
     ]);
 
-    const eventRuntimeResult = runStoryEventRuntime({
-      timing: "city-enter",
-      state: createBaseState(),
-      characterDefinitions: JSON.parse(files["characters.json"]),
-      eventDefinitionsById,
-    });
-    assert.deepEqual(eventRuntimeResult.candidate?.taskInputs, [
-      {
-        type: "start",
-        taskId: "task.opening",
-        occurredAt: "2026-07-15T00:00:00.000Z",
-        source: "script-editor:event.opening",
-      },
-    ]);
-
     const settled = dispatchRuntimeRequest({
       state: createRuntimeState(),
       request: { family: "external", type: "external", eventId: "event.opening" },
@@ -5999,7 +6051,7 @@ test(
           route: ({ state }) => ({
             state,
             effects: [],
-            taskInputs: eventRuntimeResult.candidate?.taskInputs ?? [],
+            taskInputs: eventDefinitionsById["event.opening"].taskInputs ?? [],
           }),
         },
         taskDefinitionsById,
@@ -6014,14 +6066,11 @@ test(
 );
 
 test(
-  "script editor story trigger runtime returns activated event taskInputs",
+  "script editor exported event body preserves taskInputs for later activation",
   () => {
     const {
       exportScriptEditorProjectToScenarioPackFiles,
     } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
-    const {
-      runStoryTriggerRuntime,
-    } = require("../.test-dist/core/runtime/scene-runtime.js");
     const project = createExportableScriptEditorProjectDefinition();
     project.textEntries = [{ id: "text.opening", text: "Opening line." }];
     project.dialogues = [
@@ -6065,22 +6114,11 @@ test(
 
     const files = exportScriptEditorProjectToScenarioPackFiles(project);
     const events = JSON.parse(files["events.json"]);
-    const scenes = JSON.parse(files["scenes.json"]);
-    const textEntries = JSON.parse(files["text-entries.json"]);
-    const result = runStoryTriggerRuntime({
-      timing: "city-enter",
-      state: createBaseState(),
-      characterDefinitions: JSON.parse(files["characters.json"]),
-      eventDefinitionsById: Object.fromEntries(
-        events.map((eventDefinition) => [eventDefinition.id, eventDefinition])
-      ),
-      sceneDefinitionsById: Object.fromEntries(
-        scenes.map((sceneDefinition) => [sceneDefinition.id, sceneDefinition])
-      ),
-      textEntriesById: textEntries,
-    });
+    const [openingEvent] = events;
 
-    assert.deepEqual(result.taskInputs, [
+    assert.equal(openingEvent.id, "event.opening");
+    assert.equal(Object.hasOwn(openingEvent, "trigger"), false);
+    assert.deepEqual(openingEvent.taskInputs, [
       {
         type: "start",
         taskId: "task.opening",
