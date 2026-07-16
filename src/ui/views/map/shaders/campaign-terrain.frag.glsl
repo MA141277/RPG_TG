@@ -7,6 +7,7 @@ uniform sampler2D uWaterTexture;
 uniform sampler2D uGrassTexture;
 uniform sampler2D uSandTexture;
 uniform sampler2D uRockTexture;
+uniform sampler2D uSnowTexture;
 uniform float uWaterTextureEnabled;
 uniform float uTimeSeconds;
 uniform float uGrassAmbientLight;
@@ -25,6 +26,8 @@ uniform float uTerrainCameraLightHorizontalPull;
 uniform vec3 uLandTextureColorAdjust;
 uniform vec2 uLandTextureShadeRange;
 uniform float uLandTextureTiling;
+uniform float uSnowHeightStart;
+uniform float uSnowHeightFull;
 uniform float uBeachTextureTiling;
 uniform float uBeachBlendStrength;
 uniform float uBeachInnerRadius;
@@ -902,6 +905,48 @@ vec3 sampleRockMaterial(vec2 uv) {
   return clamp(saturated * 0.82 + vec3(0.045, 0.044, 0.040), 0.0, 1.0);
 }
 
+vec3 sampleSnowMaterial(vec2 uv) {
+  vec2 coarseUv = uv * (uLandTextureTiling * 0.74) + vec2(-0.09, 0.13);
+  vec2 detailUv = uv * (uLandTextureTiling * 1.68) + vec2(0.19, -0.17);
+  vec3 coarse = texture2D(uSnowTexture, fract(coarseUv)).rgb;
+  vec3 detail = texture2D(uSnowTexture, fract(detailUv)).rgb;
+  vec3 snow = mix(coarse, detail, 0.34);
+  float luma = dot(snow, vec3(0.2126, 0.7152, 0.0722));
+  vec3 coldGrain = mix(vec3(0.72, 0.78, 0.82), vec3(1.0, 0.99, 0.94), luma);
+
+  return clamp(mix(coldGrain, snow, 0.36) * 0.94 + vec3(0.030), 0.0, 1.0);
+}
+
+float getMountainSnowAmount(
+  float mountainAmount,
+  vec2 point,
+  vec2 cell,
+  float height,
+  vec3 normal
+) {
+  float seed = hash(cell * 5.31 + vec2(0.37, -0.19)) * 31.0;
+  float broad = valueNoise(point * 2.10 + seed);
+  float streak = valueNoise(vec2(point.x * 1.15 + point.y * 0.34, point.y * 4.75) + seed);
+  float fine = valueNoise(point * 12.80 - seed * 0.17);
+  float snowLineNoise = (broad - 0.5) * 0.040 + (streak - 0.5) * 0.028;
+  float altitude = smoothstep(
+    uSnowHeightStart,
+    uSnowHeightFull,
+    height + snowLineNoise
+  );
+  float upperSurface = smoothstep(0.18, 0.70, normal.z);
+  float tornEdge = smoothstep(0.30, 0.78, broad * 0.50 + streak * 0.35 + fine * 0.15);
+
+  return clamp(
+    mountainAmount *
+      altitude *
+      mix(0.42, 1.00, upperSurface) *
+      mix(0.74, 1.08, tornEdge),
+    0.0,
+    1.0
+  );
+}
+
 float sampleMountainEdgeNoise(
   vec2 point,
   vec2 cell,
@@ -1215,6 +1260,21 @@ void main() {
     1.0
   );
   landTexture = mix(landTexture, rockLandTexture, mountainAmount);
+  float snowAmount = getMountainSnowAmount(
+    mountainAmount,
+    hexPoint,
+    hexCell,
+    vHeight,
+    terrainNormal
+  );
+  vec3 snowTexture = sampleSnowMaterial(vUv);
+  vec3 snowLandTexture = clamp(
+    mix(snowTexture, rockLandTexture * vec3(0.84, 0.88, 0.90), 0.12) *
+      mix(0.94, 1.05, rockReliefNoise),
+    0.0,
+    1.0
+  );
+  landTexture = mix(landTexture, snowLandTexture, snowAmount);
   landTexture *= mix(0.95, 1.05, atlasDetailLuma);
   float landShade = mix(uLandTextureShadeRange.x, uLandTextureShadeRange.y, baseShade);
   vec3 landColor = landTexture * landShade * mix(0.96, 1.08, materialLuma);

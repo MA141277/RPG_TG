@@ -8,6 +8,7 @@ const DEFAULTS = {
   mapPath: "src/content/scenario-packs/zhuyuanzhang/maps.json",
   mapId: "map.yuanmo_campaign",
   sourceLayerId: "map_ground_types",
+  heightSourceLayerId: "map_heights",
   environmentSourceLayerId: "map_climates",
   outputPath: "src/content/scenario-packs/zhuyuanzhang/assets/maps/yuanmo-campaign-hex-grid.json",
   terrain: "平原",
@@ -54,6 +55,10 @@ const environmentSource =
   options.environmentSourceLayerId === "none"
     ? null
     : loadEnvironmentSource(mapDefinition, mapPath, options.environmentSourceLayerId);
+const heightSource =
+  options.heightSourceLayerId === "none"
+    ? null
+    : loadRasterSource(mapDefinition, mapPath, options.heightSourceLayerId);
 const forestColors = parseColorPalette(options.forestColors);
 const mountainColors = parseColorPalette(options.mountainColors);
 const cells = getCampaignHexCells().map((cell) => {
@@ -91,11 +96,19 @@ const cells = getCampaignHexCells().map((cell) => {
         forestMinHits: options.forestMinHits,
       })
       : options.environment;
+  const referenceHeight =
+    land && heightSource != null
+      ? sampleReferenceHeight({
+        cellCenter: center,
+        source: heightSource,
+      })
+      : 0;
 
   return {
     x: cell.x,
     y: cell.y,
     land,
+    referenceHeight,
     terrain,
     environment,
   };
@@ -170,6 +183,22 @@ const output = {
         },
       ],
     },
+    ...(heightSource == null
+      ? {}
+      : {
+        heightSampler: {
+          method: "hex-multi-point-height-average",
+          sourceLayerId: options.heightSourceLayerId,
+          sourceImage: {
+            path: path.relative(path.dirname(path.resolve(projectRoot, options.outputPath)), heightSource.path).replaceAll("\\", "/"),
+            width: heightSource.image.width,
+            height: heightSource.image.height,
+          },
+          sampleOffsets: TERRAIN_SAMPLE_OFFSETS,
+          colorFormula: "luminance",
+          fallbackHeight: 0,
+        },
+      }),
     ...(environmentSource == null
       ? {}
       : {
@@ -229,6 +258,8 @@ function parseArgs(args) {
       parsed.mapId = value;
     } else if (key === "--sourceLayer") {
       parsed.sourceLayerId = value;
+    } else if (key === "--heightSourceLayer") {
+      parsed.heightSourceLayerId = value;
     } else if (key === "--environmentSourceLayer") {
       parsed.environmentSourceLayerId = value;
     } else if (key === "--out") {
@@ -305,10 +336,10 @@ function sampleTerrain({
   return mountainHits >= mountainMinHits ? mountainTerrain : fallbackTerrain;
 }
 
-function loadEnvironmentSource(mapDefinition, mapPath, sourceLayerId) {
+function loadRasterSource(mapDefinition, mapPath, sourceLayerId) {
   const sourceLayer = mapDefinition.layers?.find((layer) => layer.id === sourceLayerId);
   if (sourceLayer == null) {
-    throw new Error(`Environment layer "${sourceLayerId}" was not found on map "${mapDefinition.id}".`);
+    throw new Error(`Layer "${sourceLayerId}" was not found on map "${mapDefinition.id}".`);
   }
 
   const sourceImagePath = path.resolve(path.dirname(mapPath), sourceLayer.imageUrl);
@@ -316,6 +347,41 @@ function loadEnvironmentSource(mapDefinition, mapPath, sourceLayerId) {
     path: sourceImagePath,
     image: PNG.sync.read(fs.readFileSync(sourceImagePath)),
   };
+}
+
+function loadEnvironmentSource(mapDefinition, mapPath, sourceLayerId) {
+  return loadRasterSource(mapDefinition, mapPath, sourceLayerId);
+}
+
+function sampleReferenceHeight({ cellCenter, source }) {
+  let heightSum = 0;
+  let sampleCount = 0;
+
+  for (const offset of TERRAIN_SAMPLE_OFFSETS) {
+    const u = campaignHexPointToTerrainU(cellCenter.x + offset.x);
+    const v = campaignHexPointToTerrainV(cellCenter.y + offset.y);
+    if (u < 0 || u > 1 || v < 0 || v > 1) {
+      continue;
+    }
+
+    const pixelX = Math.min(
+      Math.max(Math.round(u * (source.image.width - 1)), 0),
+      source.image.width - 1
+    );
+    const pixelY = Math.min(
+      Math.max(Math.round(v * (source.image.height - 1)), 0),
+      source.image.height - 1
+    );
+    const pixelOffset = (pixelY * source.image.width + pixelX) * 4;
+    heightSum += getHeightFromHeightmapColor(
+      source.image.data[pixelOffset] ?? 0,
+      source.image.data[pixelOffset + 1] ?? 0,
+      source.image.data[pixelOffset + 2] ?? 0
+    );
+    sampleCount += 1;
+  }
+
+  return sampleCount > 0 ? Number((heightSum / sampleCount).toFixed(6)) : 0;
 }
 
 function sampleEnvironment({
@@ -460,4 +526,17 @@ function campaignHexPointToTerrainV(y) {
 
 function isWaterMaterialColor(red, green, blue) {
   return red >= 56 && green < 31 && blue < 31;
+}
+
+function getHeightFromHeightmapColor(red, green, blue) {
+  if (isWaterHeightColor(red, green, blue)) {
+    return 0;
+  }
+
+  const luminance = (red * 0.2126 + green * 0.7152 + blue * 0.0722) / 255;
+  return Math.max(0, Math.min(luminance, 1));
+}
+
+function isWaterHeightColor(red, green, blue) {
+  return red < 12 && green < 12 && blue < 12;
 }

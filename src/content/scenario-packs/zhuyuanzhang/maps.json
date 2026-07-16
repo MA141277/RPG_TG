@@ -7704,6 +7704,14 @@
         "imageUrl": "./assets/maps/campaign-rock-texture.png"
       },
       {
+        "id": "map_snow_texture",
+        "label": "Campaign snow texture",
+        "width": 768,
+        "height": 768,
+        "description": "snow.png",
+        "imageUrl": "./assets/maps/campaign-snow-texture.png"
+      },
+      {
         "id": "map_water_noise",
         "label": "Water noise texture",
         "width": 512,

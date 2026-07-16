@@ -2,6 +2,57 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-16 Campaign Hex Reference Height Source
+
+### Changed
+- `campaign-hex-grid-v1` 的 cell 新增 `referenceHeight` 字段，生成器通过 `heightSampler` 在生成 Hex JSON 时从 `map_heights` 多点采样并固化每个格子的参考高度；世界地图原图采样到此结束。
+- `campaign-terrain-webgl.ts` 在存在 `campaignHexGridUrl` 时不再把 `map_heights` 采样成覆盖整张地图的运行时高度场，而是从 Hex `referenceHeight` 展开临时渲染高度 samples，再在 `terrain: "山脉"` 格内生成程序化山体。
+- 山脉和非山脉的高度生成、森林海拔裁剪、城市/玩家/marker 投影仍共享最终 `heightSamples`，但这些 samples 是 Hex 数据图派生的 renderer 临时几何输入，不是原始世界地图高度事实。
+
+### Impact
+- 运行时 campaign 地形高度的权威输入从原始 `map_heights` 图片切换为已保存 Hex 数据图；旧地图缺少 `campaignHexGridUrl` 时仍保留直接采样 `map_heights` 的回退路径。
+
+## 2026-07-16 Campaign Mountain Eroded fBm Relief
+
+### Changed
+- `campaign-terrain-webgl.ts` 的山体高度细节改为梯度衰减 fBm：每个 octave 会读取局部噪声梯度，坡度越大的区域后续高频噪声权重越低，用近似侵蚀的方式削弱陡坡上的碎刺和针状峰。
+- 山脉主脊从单段 `max()` 峰值改为多控制段连续累积，并降低碎岩/支脊高度贡献；接近高度上限的山顶会经过软压顶处理，减少尖顶像穿模一样顶出的效果。
+- 山脉主体 relief 改为世界空间连续山脊场：多个方向的拉伸 ridged fBm 共同生成主脊、次脊和切沟，单格本地 relief 只保留少量局部变化，避免每个 Hex 生成一个独立鼓包。
+- terrain mesh 采样步长从 2 调整为 1，法线采样半径同步收窄，降低陡坡和雪顶处的三角分面感，让山脊细节能被几何和光照读出来。
+
+### Impact
+- 该调整只改变山脉 renderer 派生高度形状，不改变 Hex `terrain: "山脉"`、岩石/雪顶语义、通行、寻路、点击、探索、云洞或森林生成规则。
+
+## 2026-07-16 Campaign Non-Mountain Height Flattening
+
+### Changed
+- `campaign-terrain-webgl.ts` 在基础高度平滑和山脉高度生成之间新增非山脉陆地格平整化：按每个 Hex 的平均高度削弱格内起伏，并只在同一 Hex 内做小范围平滑，减少平原、草地、森林等非山地区域继承旧 `map_heights` 后出现的尖锐高低点。
+- 山脉格继续走既有山体 relief、岩石和雪顶规则；非山脉平整化不会改写 Hex `terrain` / `environment`，也不影响通行、寻路、点击、探索、云洞或森林语义。
+
+### Impact
+- 该调整只改变 terrain renderer 派生的最终视觉高度场，让非山地地块更平整；森林贴地高度、城市/玩家/marker 投影和地形法线会随最终 `heightSamples` 一起读取平整化后的结果。
+
+## 2026-07-16 Campaign Mountain Snow Caps
+
+### Added
+- 元末 campaign 地图新增 `map_snow_texture` 纯表现图层，内置地图和朱元璋 scenario pack 都注册 `campaign-snow-texture.png` 作为山脉雪顶材质输入。
+- `campaign-terrain-webgl.ts` 新增雪贴图加载、canvas 数据传递和 `uSnowHeightStart` / `uSnowHeightFull` uniforms，用于在 shader 中控制雪线起点和完全积雪高度。
+
+### Changed
+- `campaign-terrain.frag.glsl` 在既有山脉岩石材质之后追加雪顶层：雪只在 `terrain: "山脉"` 对应的 `mountainAmount` 内出现，并同时受 fragment 高度、坡面朝上程度和破碎噪声控制，形成类似文明的高处山顶积雪。
+
+### Impact
+- 雪顶是纯视觉材质层，不改变 Hex `terrain`、CPU 山体高度、通行、寻路、点击、探索、云洞、森林生成或山脚岩石过渡规则。
+
+## 2026-07-16 Campaign Vegetation Altitude Limit
+
+### Changed
+- `campaign-vegetation-rules-v1` 新增可选 `altitude.maxTerrainHeight` 视觉规则，元末森林规则当前由该字段配置海拔裁剪阈值；`tools/convert-campaign-vegetation-obj.mjs` 的默认 rules 输出同步写入该字段，避免重新转换自然景观素材时丢失海拔限制。
+- `campaign-terrain-webgl.ts` 在森林格中心可见性筛选和格内候选树点生成时，使用最终派生的 `heightSamples` 判断海拔是否超过 rules 上限；超过上限的森林视觉实例不再生成，全图适用，且被高度裁掉的候选树会消耗该格目标生成名额，不再重新抽点补生成。
+
+### Impact
+- 该限制只影响森林格上的植物视觉实例，不改写 Hex 数据图中的 `environment: "森林"`，也不改变通行、寻路、点击、探索、事件或山脉材质/高度规则。
+
 ## 2026-07-15 Campaign Mountain Terrain Rock Material
 
 ### Added

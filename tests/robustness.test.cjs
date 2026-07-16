@@ -2181,6 +2181,8 @@ test("zhuyuanzhang maps use relative pack asset urls instead of imageAssetId", (
   assert.equal(campaignHexGrid.source.terrainSampler.method, "hex-multi-point-color-palette");
   assert.equal(campaignHexGrid.source.terrainSampler.sourceLayerId, "map_ground_types");
   assert.equal(campaignHexGrid.source.terrainSampler.fallbackTerrain, "平原");
+  assert.equal(campaignHexGrid.source.heightSampler.method, "hex-multi-point-height-average");
+  assert.equal(campaignHexGrid.source.heightSampler.sourceLayerId, "map_heights");
   assert.deepEqual(
     campaignHexGrid.source.terrainSampler.matches.map((match) => match.terrain),
     ["山脉"]
@@ -2194,6 +2196,19 @@ test("zhuyuanzhang maps use relative pack asset urls instead of imageAssetId", (
   assert.equal(campaignHexGrid.counts.environments["草地"] > 0, true);
   assert.equal(
     campaignHexGrid.cells.every((cell) => ["平原", "山脉"].includes(cell.terrain)),
+    true
+  );
+  assert.equal(
+    campaignHexGrid.cells.every(
+      (cell) =>
+        typeof cell.referenceHeight === "number" &&
+        cell.referenceHeight >= 0 &&
+        cell.referenceHeight <= 1
+    ),
+    true
+  );
+  assert.equal(
+    campaignHexGrid.cells.every((cell) => cell.land || cell.referenceHeight === 0),
     true
   );
   assert.equal(
@@ -2245,6 +2260,9 @@ test("zhuyuanzhang maps use relative pack asset urls instead of imageAssetId", (
   assert.equal(typeof vegetationRules.lod.mediumMinScale, "number");
   assert.equal(typeof vegetationRules.lod.nearMinScale, "number");
   assert.equal(vegetationRules.lod.mediumMinScale < vegetationRules.lod.nearMinScale, true);
+  assert.equal(typeof vegetationRules.altitude.maxTerrainHeight, "number");
+  assert.equal(vegetationRules.altitude.maxTerrainHeight > 0, true);
+  assert.equal(vegetationRules.altitude.maxTerrainHeight < 1, true);
   assert.equal(vegetationRules.profile, "temperate-pine-tree");
   assert.equal(vegetationRules.placement.baseWorldScale, 0.00105);
   assert.equal(vegetationRules.placement.lift, 0.00062);
@@ -2377,6 +2395,11 @@ test("content pack loader resolves zhuyuanzhang map asset urls", async () => {
         ?.imageUrl,
       `${packBaseUrl}assets/maps/campaign-rock-texture.png`
     );
+    assert.equal(
+      yuanmoCampaignMap.layers.find((layer) => layer.id === "map_snow_texture")
+        ?.imageUrl,
+      `${packBaseUrl}assets/maps/campaign-snow-texture.png`
+    );
   } finally {
     global.fetch = originalFetch;
   }
@@ -2436,6 +2459,24 @@ test("built-in yuanmo campaign map declares shared rock texture layer", () => {
   assert.equal(fs.existsSync(assetPath), true);
 });
 
+test("built-in yuanmo campaign map declares shared snow texture layer", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src", "content", "yuanmo-campaign-map.ts"),
+    "utf8"
+  );
+  const assetPath = path.join(
+    process.cwd(),
+    "src",
+    "assets",
+    "yuanmo-map",
+    "campaign-snow-texture.png"
+  );
+
+  assert.match(source, /campaign-snow-texture\.png/);
+  assert.match(source, /"id": "map_snow_texture"/);
+  assert.equal(fs.existsSync(assetPath), true);
+});
+
 test("campaign terrain WebGL shader uses separate shared animated water texture files", () => {
   const rendererSource = fs.readFileSync(
     path.join(
@@ -2482,8 +2523,11 @@ test("campaign terrain WebGL shader uses separate shared animated water texture 
     assert.equal(fs.existsSync(path.join(shaderRoot, shaderFileName)), true);
   });
   assert.match(rendererSource, /waterTextureUrl: string \| null/);
+  assert.match(rendererSource, /snowTextureUrl: string \| null/);
   assert.match(rendererSource, /mountainByCellKey: Map<string, boolean>/);
   assert.match(rendererSource, /createCampaignMountainHeightSamples/);
+  assert.match(rendererSource, /createNonMountainFlattenedHeightSamples/);
+  assert.match(rendererSource, /NON_MOUNTAIN_HEIGHT_FLATTEN_STRENGTH/);
   assert.match(rendererSource, /getMountainBoundaryHeightFactor/);
   assert.match(rendererSource, /isMountainHexCell/);
   assert.match(rendererSource, /createMountainHeightAtPoint/);
@@ -2493,14 +2537,37 @@ test("campaign terrain WebGL shader uses separate shared animated water texture 
   assert.match(rendererSource, /createMountainCellBodyAmount/);
   assert.match(rendererSource, /getHexLocalMountainFrame/);
   assert.match(rendererSource, /getMountainHeightSourceAmount/);
+  assert.match(rendererSource, /sampleMountainErodedFbm/);
+  assert.match(rendererSource, /createMountainRangeReliefAtPoint/);
+  assert.match(rendererSource, /sampleOrientedMountainRangeRidge/);
+  assert.match(rendererSource, /MOUNTAIN_HEIGHT_RANGE_RIDGE_STRENGTH/);
+  assert.match(rendererSource, /const SMOOTH_TERRAIN_MESH_STEP = 1/);
+  assert.match(rendererSource, /sampleValueNoiseWithGradient/);
+  assert.match(rendererSource, /createMountainRidgeAmount/);
+  assert.match(rendererSource, /roundMountainSummitHeight/);
+  assert.match(rendererSource, /MOUNTAIN_HEIGHT_ERODED_FBM_GRADIENT_DAMPING/);
+  assert.match(rendererSource, /MOUNTAIN_HEIGHT_SUMMIT_ROUNDING_STRENGTH/);
   assert.doesNotMatch(rendererSource, /MOUNTAIN_HEIGHT_SOURCE_MIN/);
   assert.doesNotMatch(rendererSource, /MOUNTAIN_HEIGHT_SOURCE_MAX/);
   assert.match(rendererSource, /createEllipticMountainPeak/);
   assert.match(rendererSource, /createSmoothBand/);
   assert.match(rendererSource, /valueNoise2d/);
   assert.match(rendererSource, /smoothMountainContinuityHeightPass/);
-  assert.match(rendererSource, /referenceHeightSamples = createSmoothTerrainHeightSamples/);
+  assert.match(rendererSource, /createCampaignHexReferenceHeightSamples/);
+  assert.match(rendererSource, /referenceHeightByCellKey/);
+  assert.match(
+    rendererSource,
+    /campaignHexGrid == null\s*\?\s*createSmoothTerrainHeightSamples/s
+  );
+  assert.match(
+    rendererSource,
+    /nonMountainHeightSamples = createNonMountainFlattenedHeightSamples/
+  );
   assert.match(rendererSource, /heightSamples = createCampaignMountainHeightSamples/);
+  assert.match(
+    rendererSource,
+    /createCampaignMountainHeightSamples\(\s*nonMountainHeightSamples,/s
+  );
   assert.match(
     rendererSource,
     /createSmoothTerrainMesh\(\s*heightSamples,\s*GRID_COLUMNS,\s*GRID_ROWS/s
@@ -2510,6 +2577,9 @@ test("campaign terrain WebGL shader uses separate shared animated water texture 
   assert.doesNotMatch(rendererSource, /uniform sampler2D uWaterTexture/);
   assert.match(terrainFragmentSource, /uniform sampler2D uWaterTexture/);
   assert.match(terrainFragmentSource, /uniform sampler2D uRockTexture/);
+  assert.match(terrainFragmentSource, /uniform sampler2D uSnowTexture/);
+  assert.match(terrainFragmentSource, /uniform float uSnowHeightStart/);
+  assert.match(terrainFragmentSource, /uniform float uSnowHeightFull/);
   assert.match(terrainFragmentSource, /uniform float uTimeSeconds/);
   assert.doesNotMatch(terrainFragmentSource, /getHexBoundaryDistance/);
   assert.doesNotMatch(terrainFragmentSource, /getShoreBands/);
@@ -2538,6 +2608,11 @@ test("campaign terrain WebGL shader uses separate shared animated water texture 
   assert.match(terrainFragmentSource, /getMountainTerrainAmount/);
   assert.match(terrainFragmentSource, /getLocalMountainEdgeInset/);
   assert.match(terrainFragmentSource, /sampleRockMaterial/);
+  assert.match(terrainFragmentSource, /sampleSnowMaterial/);
+  assert.match(terrainFragmentSource, /getMountainSnowAmount/);
+  assert.match(terrainFragmentSource, /mountainAmount \*/);
+  assert.match(rendererSource, /TERRAIN_SNOW_HEIGHT_START/);
+  assert.match(rendererSource, /mapSnowTextureUrl/);
   assert.match(terrainFragmentSource, /semanticMountain/);
   assert.match(terrainFragmentSource, /currentMountain \*\s*edgeInset/s);
   assert.doesNotMatch(terrainFragmentSource, /mountainBody/);
@@ -2729,6 +2804,10 @@ test("campaign terrain WebGL shader uses separate shared animated water texture 
   assert.match(rendererSource, /getCampaignVegetationShadowWorldDirection/);
   assert.match(rendererSource, /rules\.density\.far/);
   assert.match(rendererSource, /lightOffsetScale/);
+  assert.match(rendererSource, /isCampaignVegetationHeightAllowed/);
+  assert.match(rendererSource, /rules\.altitude\?\.maxTerrainHeight/);
+  assert.match(rendererSource, /sampleHeightAt\(heights, columns, rows, u, v\)/);
+  assert.match(rendererSource, /resolvedCount \+= 1;\s*continue;/);
   assert.match(rendererSource, /createUniformCampaignVegetationCellAllocations/);
   assert.match(rendererSource, /createUniformCampaignVegetationBucketAllocations/);
   assert.match(rendererSource, /bucketColumns = 12/);

@@ -42,6 +42,7 @@ export type CampaignHexGridCell = {
   x: number;
   y: number;
   land: boolean;
+  referenceHeight: number;
   terrain: CampaignHexTerrain;
   environment: CampaignHexEnvironment;
 };
@@ -90,6 +91,18 @@ export type CampaignHexGridDefinition = {
         colors: string[];
         minHits: number;
       }>;
+    };
+    heightSampler?: {
+      method: "hex-multi-point-height-average";
+      sourceLayerId: string;
+      sourceImage: {
+        path: string;
+        width: number;
+        height: number;
+      };
+      sampleOffsets: Array<{ x: number; y: number }>;
+      colorFormula: "luminance";
+      fallbackHeight: number;
     };
     environmentSampler?: {
       method: "hex-multi-point-color-palette";
@@ -168,6 +181,9 @@ export type CampaignVegetationRulesDefinition = {
     mediumMinScale: number;
     nearMinScale: number;
     maxVisibleInstances: number;
+  };
+  altitude?: {
+    maxTerrainHeight: number;
   };
   placement: {
     innerRadius: number;

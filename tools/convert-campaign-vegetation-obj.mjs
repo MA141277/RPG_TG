@@ -69,6 +69,9 @@ const rules = {
     nearMinScale: 46,
     maxVisibleInstances: 840,
   },
+  altitude: {
+    maxTerrainHeight: 0.2,
+  },
   placement: {
     innerRadius: 0.16,
     outerRadius: 0.78,
