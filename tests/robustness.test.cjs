@@ -109,6 +109,13 @@ const {
   orderHouseStandbyRoster,
 } = require("../.test-dist/application/house/house-primary-actor-roster.js");
 const {
+  NPC_INTERACTION_DEFAULT_OPTION_IDS,
+  adaptHouseRosterToNpcPool,
+  createNpcInteractionSession,
+  isNpcInteractionBlocked,
+  selectNpcInteractionMenu,
+} = require("../.test-dist/application/npc-interaction/npc-interaction.js");
+const {
   equipValuableItem,
   getVisibleOwnedCards,
   getVisibleValuables,
@@ -3827,6 +3834,123 @@ test("primary house actor roster helper deduplicates actors without losing the f
     roster.map((actor) => actor.name),
     ["Owner", "Guest"]
   );
+});
+
+test("global NPC interaction menu keeps special actions above default actions", () => {
+  const context = { type: "house", houseId: "house.test", moduleId: "tea-house" };
+  const session = createNpcInteractionSession(context, "char.tea");
+  const menu = selectNpcInteractionMenu({
+    session,
+    targetName: "茶博士",
+    specialActions: [
+      { id: "tea:ask-intel", label: "打听", kind: "special" },
+      { id: "tea:debate", label: "舌战", kind: "special", tone: "accent" },
+    ],
+  });
+
+  assert.equal(menu.type, "npc-interaction-menu");
+  assert.deepEqual(
+    menu.options.map((option) => option.id),
+    [
+      "tea:ask-intel",
+      "tea:debate",
+      NPC_INTERACTION_DEFAULT_OPTION_IDS.profile,
+      NPC_INTERACTION_DEFAULT_OPTION_IDS.talk,
+      NPC_INTERACTION_DEFAULT_OPTION_IDS.gift,
+    ]
+  );
+  assert.deepEqual(
+    menu.options.slice(-3).map((option) => option.label),
+    ["角色情报", "谈话", "送礼"]
+  );
+});
+
+test("global NPC interaction blocks roster clicks while overlays or dialogue own input", () => {
+  assert.equal(
+    isNpcInteractionBlocked({
+      overlayView: null,
+      modalState: null,
+      locationDialogueState: null,
+      hasHouseOverlay: false,
+      hasActiveDialogueAdvance: false,
+    }),
+    false
+  );
+  assert.equal(
+    isNpcInteractionBlocked({
+      overlayView: "detail",
+      modalState: null,
+      locationDialogueState: null,
+      hasHouseOverlay: false,
+      hasActiveDialogueAdvance: false,
+    }),
+    true
+  );
+  assert.equal(
+    isNpcInteractionBlocked({
+      overlayView: null,
+      modalState: { type: "enter-city-confirm", cityId: "city.kulan", cityName: "库兰" },
+      locationDialogueState: null,
+      hasHouseOverlay: false,
+      hasActiveDialogueAdvance: false,
+    }),
+    true
+  );
+  assert.equal(
+    isNpcInteractionBlocked({
+      overlayView: null,
+      modalState: null,
+      locationDialogueState: {
+        type: "house-access-refusal",
+        speakerCharacterId: "char.guard",
+        textLines: ["暂不可入。"],
+        advanceHintText: "点击继续",
+      },
+      hasHouseOverlay: false,
+      hasActiveDialogueAdvance: false,
+    }),
+    true
+  );
+  assert.equal(
+    isNpcInteractionBlocked({
+      overlayView: null,
+      modalState: null,
+      locationDialogueState: null,
+      hasHouseOverlay: true,
+      hasActiveDialogueAdvance: false,
+    }),
+    true
+  );
+  assert.equal(
+    isNpcInteractionBlocked({
+      overlayView: null,
+      modalState: null,
+      locationDialogueState: null,
+      hasHouseOverlay: false,
+      hasActiveDialogueAdvance: true,
+    }),
+    true
+  );
+});
+
+test("global NPC interaction adapts house standby roster into reusable NPC pool", () => {
+  const pool = adaptHouseRosterToNpcPool({
+    context: { type: "house", houseId: "house.market", moduleId: "market-house" },
+    actors: [
+      {
+        characterId: "char.merchant",
+        name: "行商",
+        title: "货栈商人",
+        actionId: "select-market-actor:char.merchant",
+      },
+    ],
+    disabled: false,
+  });
+
+  assert.equal(pool.context.type, "house");
+  assert.equal(pool.actors[0].characterId, "char.merchant");
+  assert.equal(pool.actors[0].name, "行商");
+  assert.equal(pool.actors[0].disabled, false);
 });
 
 test("primary house actor appears first in temple daily roster during greeting", () => {
