@@ -1,8 +1,14 @@
 import type { ChoiceOption, SceneDefinition } from "../../domain/action";
 import type { ActivityDefinition } from "../../domain/activity";
 import type { CharacterDefinition } from "../../domain/character";
-import type { EventDefinition, EventTriggerTiming } from "../../domain/event";
+import type {
+  EventBinding,
+  EventDefinition,
+  EventTriggerTiming,
+  TriggerContext,
+} from "../../domain/event";
 import type { GameState } from "../../domain/game-state";
+import { runEventBindingRuntime } from "../../core/runtime/event-binding-runtime";
 import { startEvent } from "../events/event-runner";
 import {
   selectTriggeredEvents,
@@ -13,6 +19,7 @@ import { advanceScene, runSceneUntilPause } from "../scene/scene-runner";
 
 type StoryContent = {
   eventDefinitionsById: Record<string, EventDefinition>;
+  eventBindingsById?: Record<string, EventBinding> | undefined;
   sceneDefinitionsById: Record<string, SceneDefinition>;
   activityDefinitionsById?: Record<string, ActivityDefinition> | undefined;
   textEntriesById?: Record<string, string> | undefined;
@@ -114,6 +121,28 @@ export function triggerStoryEvents(
   content: StoryContent,
   input: TriggerEvaluationInput
 ): StoryRuntimeResult {
+  const eventBindings = Object.values(content.eventBindingsById ?? {});
+  if (eventBindings.length > 0) {
+    const bindingResult = runEventBindingRuntime({
+      state: runtime.state,
+      eventDefinitionsById: content.eventDefinitionsById,
+      eventBindings,
+      triggerContext: buildTriggerContext(input, runtime.state),
+    });
+
+    if (bindingResult.activation == null) {
+      return runtime;
+    }
+
+    return syncStoryScene(
+      {
+        state: bindingResult.state,
+        characterDefinitions: runtime.characterDefinitions,
+      },
+      content
+    );
+  }
+
   const triggeredEvents = selectTriggeredEvents(
     runtime.state,
     Object.values(content.eventDefinitionsById),
@@ -132,6 +161,54 @@ export function triggerStoryEvents(
     },
     content
   );
+}
+
+function buildTriggerContext(
+  input: TriggerEvaluationInput,
+  state: GameState
+): TriggerContext {
+  if (input.timing === "city-enter") {
+    const currentCityId = input.cityId ?? state.world.currentCityId;
+    const currentHouseId = state.world.currentHouseId;
+    return {
+      owner: {
+        family: "city",
+        ...(currentCityId == null ? {} : { id: currentCityId }),
+      },
+      timing: "after",
+      action: "city-enter",
+      currentCityId,
+      ...(currentHouseId == null ? {} : { currentHouseId }),
+    };
+  }
+
+  if (input.timing === "house-enter" || input.timing === "indoor-screen-shown") {
+    const currentCityId = input.cityId ?? state.world.currentCityId;
+    const currentHouseId = input.houseId ?? state.world.currentHouseId;
+    return {
+      owner: {
+        family: "building",
+        ...(currentHouseId == null ? {} : { id: currentHouseId }),
+      },
+      timing: "after",
+      action:
+        input.timing === "house-enter"
+          ? "building-enter"
+          : "indoor-screen-shown",
+      currentCityId,
+      ...(currentHouseId == null ? {} : { currentHouseId }),
+    };
+  }
+
+  const currentCityId = input.cityId ?? state.world.currentCityId;
+  const currentHouseId = input.houseId ?? state.world.currentHouseId;
+  return {
+    owner: { family: "story", id: state.calendar.chapterId },
+    timing: "after",
+    action: input.timing,
+    currentCityId,
+    ...(currentHouseId == null ? {} : { currentHouseId }),
+  };
 }
 
 export function advanceStorySceneStep(

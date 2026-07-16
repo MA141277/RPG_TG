@@ -5,10 +5,10 @@
 - entry_id: `project-progress.rpg-tg`
 - active_blueprint: `blueprint.rpg-tg`
 - active_version: `target.script-editor-event-binding-runtime-replacement`
-- has_active_queue: `true`
-- active_queue: `queue.event-binding-runtime-convergence`
-- active_task: `task.event-binding-runtime-convergence.trigger-context-adapter-cutover`
-- next_file: `docs/blueprints/queues/event-binding-runtime-convergence-queue.md`
+- has_active_queue: `false`
+- active_queue: `none`
+- active_task: `none`
+- next_file: `docs/blueprints/plans/2026-07-16-script-editor-event-binding-runtime-replacement-target-plan.md`
 - entry_action: `open-next-file`
 
 ## Human Context
@@ -39,7 +39,7 @@
 - `Admission history, queue closeout history, and review narrative must stay in the version plan, queue docs, or docs/change-log.md rather than living here as competing current-state prose.`
 - `The pointed version is now the open script-editor event binding runtime replacement record.`
 - `The latest governance action created target.script-editor-event-binding-runtime-replacement from docs/script-editor-event-trigger-binding-design.md after the previous city/building version had already closed.`
-- `queue.event-binding-runtime-convergence is active; resume from its trigger-context-adapter-cutover task.`
+- `queue.event-binding-runtime-convergence is closed; resume from the version plan promotion review, where queue.old-event-runtime-retirement is the next same-family continuation candidate.`
 
 ### Historical References
 

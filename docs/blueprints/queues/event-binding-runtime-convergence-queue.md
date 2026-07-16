@@ -7,23 +7,23 @@
 - blueprint_version: `2026.07`
 - governance_last_synced_at: `2026-07-16`
 - governance_sync_source: `docs/blueprints/blueprint.md`
-- queue_status: `active`
+- queue_status: `done`
 - queue_class: `required`
-- active_task: `task.event-binding-runtime-convergence.trigger-context-adapter-cutover`
-- next_task: `task.event-binding-runtime-convergence.queue-closeout-and-handoff`
-- closeout_status: `in-progress`
-- execution_closeout_status: `partial`
+- active_task: `none`
+- next_task: `none`
+- closeout_status: `done`
+- execution_closeout_status: `done`
 - topic_closure_status: `open-residue`
-- closure_basis: `EventBindingRuntime selector baseline is complete; TriggerContext adapter cutover remains active for covered story trigger paths.`
+- closure_basis: `EventBindingRuntime selector baseline and TriggerContext story adapter cutover landed and passed focused handoff tests, typecheck, Blueprint lint, and full npm test.`
 - residue_remaining: `yes`
 - residue_family: `same-family`
-- residue_routing_status: `needs-version-review`
+- residue_routing_status: `auto-routable`
 - next_family_candidate: `queue.old-event-runtime-retirement`
 - auto_continue_eligible: `true`
 - next_effect: `none`
 - sync_status: `success`
 - sync_scope: `local-record`
-- sync_summary: `Queue admission truth recorded locally; no push attempted.`
+- sync_summary: `Queue closeout truth recorded locally; branch commit is the repository sync boundary for this queue closeout.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
@@ -83,9 +83,9 @@
 
 - queue_goal: `Cut runtime event trigger selection to EventBindingRuntime without deleting old trigger scanning yet.`
 - task_count: `4`
-- completed_task_count: `2`
-- remaining_task_count: `2`
-- active_task_summary: `Route covered story trigger call sites through TriggerContext without taking over sub-runtime lifecycles.`
+- completed_task_count: `4`
+- remaining_task_count: `0`
+- active_task_summary: `None; queue is closed with same-family residue routed to old-event-runtime-retirement.`
 - task_briefs:
   - `task.event-binding-runtime-convergence.evidence-anchor-reconcile: Confirm existing trigger paths, active-content eventBindings access, and sub-runtime handoff boundaries before implementation.`
   - `task.event-binding-runtime-convergence.runtime-selector-baseline: Add EventBindingRuntime selection, condition, occurrence, priority, and activation coverage test-first.`
@@ -109,8 +109,8 @@
 | --- | --- | --- | --- | --- |
 | `task.event-binding-runtime-convergence.evidence-anchor-reconcile` | `done` | `Confirmed existing trigger paths, active-content eventBindings access, and sub-runtime handoff boundaries before implementation.` | `none` | `Completed on 2026-07-16 after source evidence locked the selector baseline slice.` |
 | `task.event-binding-runtime-convergence.runtime-selector-baseline` | `done` | `Added EventBindingRuntime selection, condition, occurrence, priority, and activation coverage test-first.` | `task.event-binding-runtime-convergence.evidence-anchor-reconcile` | `Completed on 2026-07-16; old trigger evaluator remains available for compatibility until retirement queue.` |
-| `task.event-binding-runtime-convergence.trigger-context-adapter-cutover` | `active` | `Route covered story trigger call sites through TriggerContext without taking over sub-runtime lifecycles.` | `task.event-binding-runtime-convergence.runtime-selector-baseline` | `Record payload/resolver/handoff boundary used by each touched sub-runtime.` |
-| `task.event-binding-runtime-convergence.queue-closeout-and-handoff` | `queued` | `Verify built-in/exported pack trigger behavior and route old-runtime retirement residue.` | `task.event-binding-runtime-convergence.trigger-context-adapter-cutover` | `Old-runtime retirement remains blocked until this queue verifies replacement behavior.` |
+| `task.event-binding-runtime-convergence.trigger-context-adapter-cutover` | `done` | `Routed covered story trigger call sites through TriggerContext without taking over sub-runtime lifecycles.` | `task.event-binding-runtime-convergence.runtime-selector-baseline` | `Completed on 2026-07-16; story runtime emits TriggerContext and preserves scene/eventHistory handoff through EventBindingRuntime/startEvent.` |
+| `task.event-binding-runtime-convergence.queue-closeout-and-handoff` | `done` | `Verified built-in/exported pack trigger behavior and routed old-runtime retirement residue.` | `task.event-binding-runtime-convergence.trigger-context-adapter-cutover` | `Old-runtime retirement is now next-auto-routable; old paths are not deleted in this queue.` |
 
 ### Task Definitions
 
@@ -227,7 +227,7 @@
 ##### Control Block
 
 - task_id: `task.event-binding-runtime-convergence.trigger-context-adapter-cutover`
-- state: `active`
+- state: `done`
 - task_kind: `execution`
 - scope:
   - `src/application/story/story-runtime.ts`
@@ -264,18 +264,24 @@
 - task_brief:
   - `Cut covered trigger call sites to TriggerContext-backed EventBindingRuntime.`
 - task_outcome_summary:
-  - `Pending.`
+  - `Done. triggerStoryEvents now uses EventBindingRuntime when story content exposes eventBindingsById, builds TriggerContext for city/building/story trigger timings, and preserves old selectTriggeredEvents fallback when no binding table is present.`
 - Purpose:
   - `Prove built-in double-table content can trigger through the new selector without deleting old compatibility paths.`
 - Failure mode:
   - `Treating EventBindingRuntime as the owner of house, navigation, playable, scene, or task settlement.`
+
+##### Progress Log
+
+- `2026-07-16`: `RED verification passed: event binding runtime routes story triggers through TriggerContext bindings failed because triggerStoryEvents ignored eventBindingsById and returned no active event for a triggerless event body.`
+- `2026-07-16`: `Updated story-runtime to build TriggerContext for city-enter, house-enter, indoor-screen-shown, and story fallback timings, route binding-backed content through runEventBindingRuntime, and preserve old selectTriggeredEvents fallback for content without bindings.`
+- `2026-07-16`: `GREEN verification passed for node --test --test-name-pattern "event binding runtime|city-enter story handoff|indoor-screen-shown story handoff" tests/robustness.test.cjs; npm run typecheck, npm run lint:blueprints, and full npm test also passed.`
 
 #### `task.event-binding-runtime-convergence.queue-closeout-and-handoff`
 
 ##### Control Block
 
 - task_id: `task.event-binding-runtime-convergence.queue-closeout-and-handoff`
-- state: `queued`
+- state: `done`
 - task_kind: `decision-dispatch`
 - scope:
   - `docs/blueprints/plans/2026-07-16-script-editor-event-binding-runtime-replacement-target-plan.md`
@@ -315,8 +321,14 @@
 - task_brief:
   - `Close or route the queue after EventBindingRuntime verification.`
 - task_outcome_summary:
-  - `Pending.`
+  - `Done. EventBindingRuntime replacement behavior is verified for selector baseline and story TriggerContext adapter cutover; old trigger scanning remains explicit same-family residue for queue.old-event-runtime-retirement.`
 - Purpose:
   - `Route old-runtime retirement only after replacement behavior is verified.`
 - Failure mode:
   - `Deleting old trigger scanning before built-in/exported pack replacement behavior is proven.`
+
+##### Progress Log
+
+- `2026-07-16`: `Queue closeout recorded after focused EventBindingRuntime/story handoff tests, npm run typecheck, npm run lint:blueprints, and full npm test passed.`
+- `2026-07-16`: `Sub-runtime boundary record: story runtime emits TriggerContext and receives EventBindingRuntime state/activation output; scene advancement and eventHistory writes remain owned by existing syncStoryScene/startEvent paths; house/navigation/playable/location-access lifecycle ownership was not moved.`
+- `2026-07-16`: `Residue classification: old selectTriggeredEvents, old EventDefinition.trigger/conditions scanning, and compatibility guards remain same-family retirement work.`

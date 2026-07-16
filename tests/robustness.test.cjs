@@ -5890,6 +5890,67 @@ test(
 );
 
 test(
+  "event binding runtime routes story triggers through TriggerContext bindings",
+  () => {
+    const {
+      triggerStoryEvents,
+    } = require("../.test-dist/application/story/story-runtime.js");
+    const state = createBaseState();
+    state.world.currentCityId = "city.kulan";
+    const eventDefinition = {
+      id: "event.story.binding.city",
+      chapterId: "chapter.prototype",
+      name: "Binding City",
+      occurrence: "once",
+      entrySceneId: "scene.story.binding.city",
+    };
+    const sceneDefinition = {
+      id: "scene.story.binding.city",
+      name: "Binding City Scene",
+      actions: [
+        {
+          type: "narration",
+          text: "Binding fired.",
+        },
+      ],
+    };
+
+    const result = triggerStoryEvents(
+      {
+        state,
+        characterDefinitions: prototypeCharacters,
+      },
+      {
+        eventDefinitionsById: {
+          [eventDefinition.id]: eventDefinition,
+        },
+        eventBindingsById: {
+          "binding.story.binding.city-enter": {
+            id: "binding.story.binding.city-enter",
+            eventId: eventDefinition.id,
+            owner: { family: "city", id: "city.kulan" },
+            trigger: { timing: "after", action: "city-enter" },
+            priority: 100,
+            enabled: true,
+          },
+        },
+        sceneDefinitionsById: {
+          [sceneDefinition.id]: sceneDefinition,
+        },
+      },
+      { timing: "city-enter", cityId: "city.kulan" }
+    );
+
+    assert.equal(result.state.scene.activeEventId, eventDefinition.id);
+    assert.equal(result.state.scene.activeSceneId, sceneDefinition.id);
+    assert.equal(
+      result.state.runtime.eventHistory[eventDefinition.id]?.firedCount,
+      1
+    );
+  }
+);
+
+test(
   "runtime trigger selection ignores triggerless exported script editor event bodies",
   () => {
     const {

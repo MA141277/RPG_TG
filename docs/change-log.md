@@ -13,9 +13,10 @@
 
 ### Changed
 - EventBindingRuntime baseline 复用现有 `activateEvent` 和 `startEvent` handoff，不接管 scene/task/house/navigation/playable/location-access 子 runtime 生命周期。
+- 更新 [src/application/story/story-runtime.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree-5/src/application/story/story-runtime.ts)，当 story content 暴露 `eventBindingsById` 时通过 `TriggerContext` 调用 EventBindingRuntime；没有绑定表时保留旧 `selectTriggeredEvents` 兼容路径。
 
 ### Impact
-- 双表事件输入现在有了独立 runtime selector baseline；旧 `selectTriggeredEvents` 路径仍保留，等待后续 TriggerContext adapter cutover 和 old-runtime retirement 队列处理。
+- 双表事件输入现在有了独立 runtime selector baseline 和 story trigger adapter；旧 `selectTriggeredEvents` 路径仍保留，等待后续 old-runtime retirement 队列处理。
 
 ## 2026-07-16 Script Editor Zhuyuanzhang Event Binding Pack Migration
 
