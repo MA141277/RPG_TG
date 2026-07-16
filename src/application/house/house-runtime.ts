@@ -88,6 +88,7 @@ export function createHouseRuntime(dependencies: HouseRuntimeDependencies) {
         ui: {
           ...nextGameState.ui,
           houseSession,
+          npcInteractionSession: null,
         },
       },
       characterDefinitions: result.characterDefinitions,

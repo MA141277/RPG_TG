@@ -159,6 +159,7 @@ export function createHouseRuntimeBridge(
         ui: {
           ...nextGameState.ui,
           houseSession,
+          npcInteractionSession: null,
         },
       },
       characterDefinitions: result.characterDefinitions,
@@ -315,6 +316,7 @@ export function createHouseRuntimeBridge(
           currentView: "house",
           overlayView: null,
           houseSession: null,
+          npcInteractionSession: null,
         },
       },
     });
@@ -420,6 +422,7 @@ export function createHouseRuntimeBridge(
           currentView: "city",
           overlayView: null,
           houseSession: null,
+          npcInteractionSession: null,
         },
       },
     });
@@ -450,6 +453,7 @@ export function createHouseRuntimeBridge(
           currentView: "house",
           overlayView: null,
           houseSession: completion.houseSession,
+          npcInteractionSession: null,
         },
       },
     });

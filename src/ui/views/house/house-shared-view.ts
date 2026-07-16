@@ -38,6 +38,14 @@ type CharacterCardOptions = {
   cardLevel?: HouseCharacterCardLevel;
 };
 
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
 function normalizeCardLevel(
   level: HouseStandbyActorViewModel["cardLevel"]
 ): HouseCharacterCardLevel {
@@ -229,15 +237,31 @@ export function renderHouseStandbyRoster(
           const selectedClass =
             options.includeSelectedState && actor.isSelected ? " is-selected" : "";
           const secondaryText = options.renderSecondaryText?.(actor) ?? "";
+          const npcContext = JSON.stringify({
+            type: "house",
+            houseId: viewModel.houseId,
+            moduleId: viewModel.moduleId,
+          });
+          const targetCharacterId = escapeHtml(actor.characterId);
+          const houseId = escapeHtml(viewModel.houseId);
+          const moduleId = escapeHtml(viewModel.moduleId);
+          const actionAttribute =
+            actor.actionId == null
+              ? ""
+              : `data-house-action="${escapeHtml(actor.actionId)}"`;
+          const ariaLabel = escapeHtml(`与 ${actor.name} 交谈`);
 
           return `
             <button
               type="button"
               class="c-grain-shop-npc-idle__button${selectedClass}"
-              data-npc-target="${actor.characterId}"
+              data-npc-target="${targetCharacterId}"
+              data-npc-context="${escapeHtml(npcContext)}"
               data-npc-context-type="house"
-              ${actor.actionId == null ? "" : `data-house-action="${actor.actionId}"`}
-              aria-label="与 ${actor.name} 交谈"
+              data-house-id="${houseId}"
+              data-house-module-id="${moduleId}"
+              ${actionAttribute}
+              aria-label="${ariaLabel}"
             >
               ${renderHouseCharacterCard(actor, { secondaryText })}
             </button>

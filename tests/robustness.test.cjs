@@ -4057,7 +4057,23 @@ test("global NPC interaction house roster exposes generic NPC target buttons", (
   const html = renderTeaHouseHouseView(viewModel);
 
   assert.match(html, /data-npc-target=/);
+  assert.match(html, /data-npc-context=/);
   assert.match(html, /data-npc-context-type="house"/);
+  assert.match(html, new RegExp(`data-house-id="${teaHouse.id}"`));
+  assert.match(html, /data-house-module-id="tea-house"/);
+
+  const rawContext = html.match(/data-npc-context="([^"]+)"/)?.[1];
+  assert.ok(rawContext, "Expected roster button to expose data-npc-context.");
+  const decodedContext = rawContext
+    .replace(/&quot;/g, '"')
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&amp;/g, "&");
+  assert.deepEqual(JSON.parse(decodedContext), {
+    type: "house",
+    houseId: teaHouse.id,
+    moduleId: "tea-house",
+  });
 });
 
 test("global NPC interaction removes visible idle small-talk labels from tea and medicine menus", () => {
@@ -4170,6 +4186,102 @@ test("global NPC interaction renderer escapes menu text and attributes", () => {
   assert.doesNotMatch(html, /data-character-id="char\."tea/);
   assert.doesNotMatch(html, /<\/button><script>/);
   assert.doesNotMatch(html, /<img>/);
+});
+
+test("global NPC interaction house roster escapes dynamic target and context attributes", () => {
+  const {
+    renderHouseStandbyRoster,
+  } = require("../.test-dist/ui/views/house/house-shared-view.js");
+  const html = renderHouseStandbyRoster({
+    moduleId: 'tea-house" data-broken="<&',
+    houseId: 'house."tea<&',
+    sceneTitle: "test",
+    standbyRoster: [
+      {
+        characterId: 'char."tea<&',
+        name: '茶"博士<&',
+        title: '掌柜"<&',
+        actionId: 'open:"<&',
+      },
+    ],
+    dialogue: null,
+    actionContainer: null,
+    statusCard: null,
+    overlay: null,
+    leaveAction: { id: "leave-house", label: "离开" },
+  });
+
+  assert.match(html, /data-npc-target="char\.&quot;tea&lt;&amp;"/);
+  assert.match(html, /data-house-id="house\.&quot;tea&lt;&amp;"/);
+  assert.match(
+    html,
+    /data-house-module-id="tea-house&quot; data-broken=&quot;&lt;&amp;"/
+  );
+  assert.match(html, /data-house-action="open:&quot;&lt;&amp;"/);
+  assert.match(html, /data-npc-context="\{&quot;type&quot;:&quot;house&quot;/);
+  assert.doesNotMatch(html, /data-npc-target="char\."tea/);
+  assert.doesNotMatch(html, /data-house-id="house\."tea/);
+  assert.doesNotMatch(html, / data-broken="/);
+  assert.doesNotMatch(html, /data-house-action="open:"/);
+});
+
+test("global NPC interaction house special action dispatch clears the active NPC session", () => {
+  const {
+    createHouseRuntimeBridge,
+    dispatchHouseRuntimeRequest,
+  } = require("../.test-dist/core/runtime/house-runtime.js");
+  const baseState = createBaseState();
+  const enterResult = teaHouseHouseModule.enter({
+    gameState: baseState,
+    characterDefinitions: prototypeCharacters,
+    houseDefinition: teaHouse,
+    playerCharacterId,
+  });
+  let appState = {
+    ...createRuntimeState(baseState).app,
+    gameState: {
+      ...enterResult.gameState,
+      world: {
+        ...enterResult.gameState.world,
+        currentHouseId: teaHouse.id,
+      },
+      ui: {
+        ...enterResult.gameState.ui,
+        currentView: "house",
+        houseSession: {
+          moduleId: "tea-house",
+          state: enterResult.sessionState,
+        },
+        npcInteractionSession: createNpcInteractionSession(
+          { type: "house", houseId: teaHouse.id, moduleId: "tea-house" },
+          teaHouse.defaultCharacterId
+        ),
+      },
+    },
+    characterDefinitions: enterResult.characterDefinitions,
+  };
+  const runtime = createHouseRuntimeBridge({
+    getAppState: () => appState,
+    setAppState: (nextAppState) => {
+      appState = nextAppState;
+    },
+    renderApp: () => {},
+    startMapAutoAdvance: () => {},
+    stopMapAutoAdvance: () => {},
+    houseDefinitions: prototypeHouses,
+    playerCharacterId,
+    eventDefinitionsById: {},
+    sceneDefinitionsById: {},
+    syncCouncilPriorityAfterGameStateChange: () => false,
+  });
+
+  dispatchHouseRuntimeRequest(runtime, {
+    type: "action",
+    actionId: "inquire",
+  });
+
+  assert.equal(appState.gameState.ui.npcInteractionSession, null);
+  assert.equal(appState.gameState.ui.houseSession?.moduleId, "tea-house");
 });
 
 test("global NPC default talk opens dialogue without mutating runtime state", () => {
