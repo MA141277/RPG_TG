@@ -2544,6 +2544,16 @@ export class MainUiFlow {
                       ${this.renderScriptEditorEventTabButton("conditions", "条件")}
                       ${this.renderScriptEditorEventTabButton("destination", "去向")}
                       ${this.renderScriptEditorEventTabButton("relations", "关联对象")}
+                      <button
+                        type="button"
+                        class="c-main-ui-json-text-button c-script-editor-narrative-editor__tab ${this.scriptEditorEventTab === "bindings" ? "is-active" : ""}"
+                        data-script-editor-action="select-event-tab"
+                        data-script-editor-event-tab="bindings"
+                        role="tab"
+                        aria-selected="${this.scriptEditorEventTab === "bindings" ? "true" : "false"}"
+                      >
+                        Bindings
+                      </button>
                       ${this.renderScriptEditorEventTabButton("preview", "预览与校验")}
                     </div>
                   </template>
@@ -3075,6 +3085,38 @@ export class MainUiFlow {
       `;
     }
 
+    if (this.scriptEditorEventTab === "bindings") {
+      const eventBindings = (this.scriptEditorProject?.eventBindings ?? []).filter(
+        (binding) => binding.eventId === eventRecord.id
+      );
+
+      return `
+        <section class="c-script-editor-narrative-panel" aria-label="Event binding navigation panel">
+          <div class="c-script-editor-narrative-panel__header">
+            <div>
+              <p class="c-script-editor-editor-card__eyebrow">Event bindings</p>
+              <h3 class="c-script-editor-editor-card__title">Project-level trigger bindings</h3>
+            </div>
+          </div>
+          <div class="c-script-editor-narrative-list">
+            ${
+              eventBindings.length === 0
+                ? `<p class="c-script-editor-editor-card__hint">No project-level bindings target this event.</p>`
+                : eventBindings
+                    .map(
+                      (binding) => `
+                        <article class="c-script-editor-narrative-item" data-script-editor-event-binding-id="${escapeHtml(binding.id)}">
+                          ${this.renderScriptEditorEventBindingSummary(binding)}
+                        </article>
+                      `
+                    )
+                    .join("")
+            }
+          </div>
+        </section>
+      `;
+    }
+
     if (this.scriptEditorEventTab === "preview") {
       return `
         <section class="c-script-editor-narrative-panel" aria-label="事件预览与校验分栏">
@@ -3137,6 +3179,33 @@ export class MainUiFlow {
           `
         )}
       </section>
+    `;
+  }
+
+  renderScriptEditorEventBindingSummary(binding) {
+    const ownerFamily =
+      typeof binding.owner?.family === "string" ? binding.owner.family : "unknown";
+    const ownerId = typeof binding.owner?.id === "string" ? binding.owner.id : "";
+    const triggerTiming =
+      typeof binding.trigger?.timing === "string" ? binding.trigger.timing : "unknown";
+    const triggerAction =
+      typeof binding.trigger?.action === "string" ? binding.trigger.action : "unknown";
+    const priority =
+      typeof binding.priority === "number" && Number.isFinite(binding.priority)
+        ? binding.priority
+        : 0;
+    const enabled = binding.enabled !== false ? "enabled" : "disabled";
+
+    return `
+      <div class="c-script-editor-narrative-panel__header">
+        <div>
+          <p class="c-script-editor-editor-card__eyebrow">${escapeHtml(enabled)} / priority ${priority}</p>
+          <h3 class="c-script-editor-editor-card__title">${escapeHtml(binding.id)}</h3>
+        </div>
+      </div>
+      <p class="c-script-editor-editor-card__hint">
+        ${escapeHtml(ownerFamily)}:${escapeHtml(ownerId)} -> ${escapeHtml(triggerTiming)} ${escapeHtml(triggerAction)}
+      </p>
     `;
   }
 
@@ -5479,7 +5548,7 @@ export class MainUiFlow {
       return;
     }
 
-    if (!["basics", "conditions", "destination", "relations", "preview"].includes(tab)) {
+    if (!["basics", "conditions", "destination", "relations", "bindings", "preview"].includes(tab)) {
       return;
     }
 

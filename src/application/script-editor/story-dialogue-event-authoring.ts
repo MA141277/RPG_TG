@@ -10,6 +10,7 @@ import type {
   ScriptEditorConditionNode,
   ScriptEditorEventDestination,
   ScriptEditorEventDestinationFamily,
+  ScriptEditorEventBindingRecord,
   ScriptEditorEventRecord,
   ScriptEditorEventTriggerTiming,
   ScriptEditorStoryNodeRecord,
@@ -126,6 +127,26 @@ export function createDefaultScriptEditorEventRecord(index: number): ScriptEdito
   };
 }
 
+export function createDefaultScriptEditorEventBindingRecord(
+  index: number
+): ScriptEditorEventBindingRecord {
+  const suffix = index + 1;
+  return {
+    id: `event-binding.new.${suffix}`,
+    eventId: "",
+    owner: {
+      family: "manual",
+      id: "",
+    },
+    trigger: {
+      timing: "manual",
+      action: "manual",
+    },
+    priority: 0,
+    enabled: true,
+  };
+}
+
 export function normalizeScriptEditorStoryNodeRecord(
   record: Partial<ScriptEditorStoryNodeRecord> & { id: string }
 ): ScriptEditorStoryNodeRecord {
@@ -176,6 +197,35 @@ export function normalizeScriptEditorEventRecord(
       previewNotes: normalizeOptionalString(record.previewSummary?.previewNotes),
       validationNotes: normalizeOptionalString(record.previewSummary?.validationNotes),
     },
+  };
+}
+
+export function normalizeScriptEditorEventBindingRecord(
+  record: Partial<ScriptEditorEventBindingRecord> & { id: string }
+): ScriptEditorEventBindingRecord {
+  const payloadSchemaId = normalizeOptionalTrimmedString(
+    record.trigger?.payloadSchemaId
+  );
+  return {
+    ...record,
+    id: normalizeString(record.id, "event-binding.unknown"),
+    eventId: normalizeOptionalTrimmedString(record.eventId),
+    owner: {
+      ...(record.owner ?? {}),
+      family: normalizeString(record.owner?.family, "manual"),
+      id: normalizeOptionalTrimmedString(record.owner?.id),
+    },
+    trigger: {
+      ...(record.trigger ?? {}),
+      timing: normalizeString(record.trigger?.timing, "manual"),
+      action: normalizeString(record.trigger?.action, "manual"),
+      ...(payloadSchemaId.length === 0 ? {} : { payloadSchemaId }),
+    },
+    priority:
+      typeof record.priority === "number" && Number.isFinite(record.priority)
+        ? record.priority
+        : 0,
+    enabled: record.enabled !== false,
   };
 }
 
@@ -864,6 +914,10 @@ function normalizeString(value: unknown, fallback: string): string {
 
 function normalizeOptionalString(value: unknown): string {
   return typeof value === "string" ? value : "";
+}
+
+function normalizeOptionalTrimmedString(value: unknown): string {
+  return typeof value === "string" ? value.trim() : "";
 }
 
 function normalizeStringArray(value: readonly string[] | undefined): string[] {

@@ -473,6 +473,7 @@ function createSampleScriptEditorProjectDefinition() {
     buildings: [{ id: "building.home", cityId: "city.start", name: "Home" }],
     cityEntries: [],
     events: [{ id: "event.opening", title: "Opening Event" }],
+    eventBindings: [],
     scenes: [],
     quests: [{ id: "quest.first", title: "First Quest" }],
     activities: [{ id: "activity.opening", label: "Opening Activity", handlerId: "generic.qte" }],
@@ -609,6 +610,7 @@ function writeScriptEditorProjectFixture(outputRoot) {
         buildings: "./buildings.json",
         cityEntries: "./city-entries.json",
         events: "./events.json",
+        eventBindings: "./event-bindings.json",
         scenes: "./scenes.json",
         quests: "./quests.json",
         activities: "./activities.json",
@@ -636,6 +638,7 @@ function writeScriptEditorProjectFixture(outputRoot) {
     "buildings.json": fixture.buildings,
     "city-entries.json": fixture.cityEntries,
     "events.json": fixture.events,
+    "event-bindings.json": fixture.eventBindings,
     "scenes.json": fixture.scenes,
     "quests.json": fixture.quests,
     "activities.json": fixture.activities,
@@ -3117,20 +3120,42 @@ test(
 
 test("script editor project save emits canonical split files", async () => {
   const {
+    loadScriptEditorProjectFromFiles,
+  } = require("../.test-dist/application/script-editor/editor-project-loader.js");
+  const {
     serializeScriptEditorProjectToFiles,
   } = require("../.test-dist/application/script-editor/editor-project-save.js");
-  const project = createSampleScriptEditorProjectDefinition();
+  const project = {
+    ...createSampleScriptEditorProjectDefinition(),
+    eventBindings: [
+      {
+        id: "binding.opening.city-enter",
+        eventId: "event.opening",
+        owner: { family: "city", id: "city.start" },
+        trigger: { timing: "after", action: "city-enter" },
+        priority: 20,
+        enabled: true,
+      },
+    ],
+  };
 
   const serializedFiles = serializeScriptEditorProjectToFiles(project);
   const manifest = JSON.parse(serializedFiles["project.json"]);
   const savedStoryPack = JSON.parse(serializedFiles["story-pack.json"]);
   const savedPeople = JSON.parse(serializedFiles["people.json"]);
+  const savedEventBindings = JSON.parse(serializedFiles["event-bindings.json"]);
+  const loadedProject = await loadScriptEditorProjectFromFiles(
+    createImportedFilesFromSerializedJsonRecord(serializedFiles, "script-editor-project")
+  );
 
   assert.equal(manifest.kind, "script-editor-project");
   assert.equal(manifest.files.storyPack, "./story-pack.json");
+  assert.equal(manifest.files.eventBindings, "./event-bindings.json");
   assert.equal(manifest.files.effectBundles, "./effect-bundles.json");
   assert.equal(savedStoryPack.id, project.storyPack.id);
   assert.equal(savedPeople[0]?.id, project.people[0]?.id);
+  assert.equal(savedEventBindings[0]?.id, "binding.opening.city-enter");
+  assert.equal(loadedProject.eventBindings[0]?.eventId, "event.opening");
 });
 
 test("script editor schema reference drives project save and runtime export versions", () => {
@@ -9189,12 +9214,24 @@ test(
   }
 );
 
+test("script editor event editor exposes event binding navigation", () => {
+  const source = fs.readFileSync("src/ui/main-ui/main-ui-flow.js", "utf8");
+
+  assert.match(source, /renderScriptEditorEventBindingSummary/);
+  assert.match(source, /data-script-editor-event-tab="bindings"/);
+  assert.match(source, /scriptEditorProject\?\.eventBindings/);
+  assert.match(source, /binding\.eventId === eventRecord\.id/);
+  assert.match(source, /data-script-editor-event-binding-id/);
+});
+
 test("script editor story/dialogue/event authoring helpers normalize bounded narrative fields", () => {
   const {
     createDefaultScriptEditorDialogueRecord,
+    createDefaultScriptEditorEventBindingRecord,
     createDefaultScriptEditorEventRecord,
     createDefaultScriptEditorStoryNodeRecord,
     normalizeScriptEditorDialogueRecord,
+    normalizeScriptEditorEventBindingRecord,
     normalizeScriptEditorEventRecord,
     normalizeScriptEditorStoryNodeRecord,
     appendScriptEditorDialogueFollowUp,
@@ -9289,6 +9326,14 @@ test("script editor story/dialogue/event authoring helpers normalize bounded nar
     "Preview the event branch."
   );
   const normalizedEvent = normalizeScriptEditorEventRecord(eventRecord);
+  const eventBinding = normalizeScriptEditorEventBindingRecord({
+    ...createDefaultScriptEditorEventBindingRecord(0),
+    eventId: " event.opening ",
+    owner: { family: "city", id: " city.start " },
+    trigger: { timing: " after ", action: " city-enter " },
+    priority: Number.NaN,
+    enabled: false,
+  });
 
   assert.equal(normalizedStoryNode.progressMode, "block");
   assert.deepEqual(normalizedStoryNode.relatedDialogueIds, ["dialogue.hero.open"]);
@@ -9311,6 +9356,12 @@ test("script editor story/dialogue/event authoring helpers normalize bounded nar
   assert.equal(normalizedEvent.relations.storyNodeId, "story-node.hero");
   assert.deepEqual(normalizedEvent.relations.personIds, ["person.hero"]);
   assert.equal(normalizedEvent.previewSummary.previewNotes, "Preview the event branch.");
+  assert.equal(eventBinding.id, "event-binding.new.1");
+  assert.equal(eventBinding.eventId, "event.opening");
+  assert.deepEqual(eventBinding.owner, { family: "city", id: "city.start" });
+  assert.deepEqual(eventBinding.trigger, { timing: "after", action: "city-enter" });
+  assert.equal(eventBinding.priority, 0);
+  assert.equal(eventBinding.enabled, false);
 });
 
 test("script editor event condition normalization drops legacy free-text condition items", () => {

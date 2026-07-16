@@ -135,6 +135,7 @@ export function createDefaultScriptEditorProjectDefinition(input?: {
         },
       },
     ],
+    eventBindings: [],
     scenes: [],
     quests: [],
     activities: [],

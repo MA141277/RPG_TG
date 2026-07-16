@@ -241,6 +241,7 @@ export function importScenarioPackToScriptEditorProject(
     ),
     cityEntries: pack.cityEntries ?? [],
     events: mapImportedEvents(pack.events ?? []),
+    eventBindings: [],
     scenes: pack.scenes ?? [],
     quests: pack.tasks ?? [],
     activities: pack.activities ?? [],

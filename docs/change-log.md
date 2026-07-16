@@ -5,6 +5,22 @@
 `docs/change-log.md` 的正式定位是“历史记录 + 人类可读摘要”。
 它不是当前 Blueprint / legacy superpowers 治理的 live execution truth，不作为 resume entry、promotion gate、closeout gate 或固定同步门。
 
+## 2026-07-16 Script Editor Event Binding Authoring UI
+
+### Added
+- 扩展 [src/domain/script-editor-project.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree-5/src/domain/script-editor-project.ts)，新增项目级 `ScriptEditorEventBindingRecord` 和 canonical `event-bindings.json` 分文件。
+- 扩展 [src/application/script-editor/story-dialogue-event-authoring.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree-5/src/application/script-editor/story-dialogue-event-authoring.ts)，新增 event binding 默认记录和归一化 helper。
+- 在 [src/ui/main-ui/main-ui-flow.js](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree-5/src/ui/main-ui/main-ui-flow.js) 的事件编辑器中新增 Bindings 页签，显示指向当前事件的项目级 event binding 记录。
+
+### Changed
+- 更新 [src/application/script-editor/editor-project-loader.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree-5/src/application/script-editor/editor-project-loader.ts) 和 [src/application/script-editor/editor-project-save.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree-5/src/application/script-editor/editor-project-save.ts)，保存项目时输出 `event-bindings.json`，导入旧项目缺少该文件时归一化为空数组。
+- 更新 [src/application/script-editor/minimal-workflow.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree-5/src/application/script-editor/minimal-workflow.ts) 和 [src/application/script-editor/runtime-pack-import.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree-5/src/application/script-editor/runtime-pack-import.ts)，为默认项目和旧 runtime-pack 导入投影补齐空 `eventBindings`。
+- 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree-5/tests/robustness.test.cjs)，覆盖 script-editor project event-bindings.json 保存/导入、事件编辑器绑定导航和作者 helper 归一化。
+
+### Impact
+- 脚本编辑器项目现在能在作者侧保存和查看独立 event binding 表，为后续 runtime-pack export convergence 队列提供数据入口。
+- 本批次未改变 runtime-pack 导出语义、未迁移内置朱元璋包、未启用 EventBindingRuntime，也未删除旧 `EventDefinition.trigger` / `conditions` / `selectTriggeredEvents` 运行时路径。
+
 ## 2026-07-16 Script Editor Event Binding Contract Loader
 
 ### Added

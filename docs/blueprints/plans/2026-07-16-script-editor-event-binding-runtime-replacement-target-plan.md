@@ -5,30 +5,30 @@
 - document_role: `version-governor`
 - version_id: `target.script-editor-event-binding-runtime-replacement`
 - version_status: `open`
-- active_phase: `phase.version-admission-review`
+- active_phase: `phase.version-review`
 - active_queue: `none`
-- decision_state: `idle-open`
-- next_decision: `queue-admission-review`
+- decision_state: `promotion-review`
+- next_decision: `same-version-admission-or-version-closeout`
 - next_action: `write-admission-review`
 - resume_gate: `open-version-record`
 - post_queue_closeout_pause_policy: `auto-continue`
 - promotion_review_result: `none`
-- review_subject_id: `item.script-editor-event-binding-authoring-ui`
-- review_subject_classification: `queue-candidate`
-- proposed_queue_id: `queue.script-editor-event-binding-authoring-ui`
-- review_basis: `Unique same-family continuation after the contract/loader queue closed: editor model/UI integration is the next required-priority queue now that EventBinding contracts, eventBindings loader hydration, and active-content storage exist.`
-- admission_status: `pending`
+- review_subject_id: `none`
+- review_subject_classification: `none`
+- proposed_queue_id: `none`
+- review_basis: `none`
+- admission_status: `none`
 - intake_status: `none`
 - intake_item_id: `none`
 - intake_summary: `none`
 - intake_result: `none`
 - intake_feedback_mode: `none`
-- closure_review_subject: `queue.script-editor-event-binding-contract-loader`
+- closure_review_subject: `queue.script-editor-event-binding-authoring-ui`
 - closure_review_status: `routed`
-- residue_candidate_id: `item.script-editor-event-binding-authoring-ui`
+- residue_candidate_id: `item.script-editor-event-binding-export-convergence`
 - residue_candidate_family: `same-family`
-- routing_basis: `Contract/loader baseline landed and verified; the next implementation-order item is authoring UI/model support for separate event body and event binding tables.`
-- next_lawful_queue_recommendation: `queue.script-editor-event-binding-authoring-ui`
+- routing_basis: `Authoring UI/model baseline landed and verified; the next implementation-order item is runtime-pack export convergence for separate events.json and event-bindings.json output.`
+- next_lawful_queue_recommendation: `queue.script-editor-event-binding-export-convergence`
 - auto_admission_ready: `false`
 - blocked_by: []
 - candidate_queue_ids:
@@ -74,8 +74,8 @@
 | Candidate ID | Last Classification | Proposed Queue | Latest Disposition | Recheck Trigger | Notes |
 | --- | --- | --- | --- | --- | --- |
 | `item.script-editor-event-binding-contract-loader` | `queue-candidate` | `queue.script-editor-event-binding-contract-loader` | `admitted` | `close active queue before rechecking later candidates` | `Admitted on 2026-07-16 after source evidence confirmed EventDefinition still owns trigger/conditions, pack manifests require files.events but not files.eventBindings, runtime export writes event trigger data into events.json, and selectTriggeredEvents still scans events[].trigger/conditions.` |
-| `item.script-editor-event-binding-authoring-ui` | `queue-candidate` | `queue.script-editor-event-binding-authoring-ui` | `pending-admission` | `current review subject after contract/loader baseline closed` | `Adds script-editor eventBindings project data and UI display/navigation for event bodies and event bindings; owns the one allowed controlled contract backfill review.` |
-| `item.script-editor-event-binding-export-convergence` | `queue-candidate` | `queue.script-editor-event-binding-export-convergence` | `candidate` | `after editor model/UI can represent both event tables` | `Exports events.json without trigger/conditions and event-bindings.json with trigger entries, failing closed on unsupported fields or conditions.` |
+| `item.script-editor-event-binding-authoring-ui` | `queue-candidate` | `queue.script-editor-event-binding-authoring-ui` | `closed` | `none` | `Closed on 2026-07-16 after project-level eventBindings save/load, authoring helpers, and selected-event binding UI visibility landed and verified.` |
+| `item.script-editor-event-binding-export-convergence` | `queue-candidate` | `queue.script-editor-event-binding-export-convergence` | `next-auto-routable` | `admit after authoring-ui branch commit` | `Exports events.json without trigger/conditions and event-bindings.json with trigger entries, failing closed on unsupported fields or conditions.` |
 | `item.zhuyuanzhang-event-binding-pack-migration` | `queue-candidate` | `queue.zhuyuanzhang-event-binding-pack-migration` | `candidate` | `before runtime cutover or whenever built-in pack verification becomes the blocker` | `Migrates the built-in zhuyuanzhang pack to double-table event data so default content remains runnable after cutover.` |
 | `item.event-binding-runtime-convergence` | `queue-candidate` | `queue.event-binding-runtime-convergence` | `candidate` | `after at least one double-table pack loads and export validation proves runtime input shape` | `Implements EventBindingRuntime, TriggerContext call sites, resolver-backed condition evaluation, deterministic selection, activation, occurrence, eventHistory, debug reports, and sub-runtime handoff compatibility.` |
 | `item.old-event-runtime-retirement` | `queue-candidate` | `queue.old-event-runtime-retirement` | `candidate` | `only after EventBindingRuntime verification passes for built-in and exported packs` | `Deletes old events[].trigger/conditions scanning, old evaluator paths, and compatibility shims; adds regression guards.` |
@@ -85,8 +85,8 @@
 | Queue ID | Current Disposition | Promote When | Notes |
 | --- | --- | --- | --- |
 | `queue.script-editor-event-binding-contract-loader` | `done-open-residue` | `Closed after implementation and verification on 2026-07-16.` | `EventBinding contracts, eventBindings manifest hydration, active-content storage, and default runtime content exposure landed; EventDefinition.trigger, EventDefinition.conditions, and selectTriggeredEvents remain production runtime dependencies for later queues.` |
-| `queue.script-editor-event-binding-authoring-ui` | `candidate` | `After contract/loader baseline closes.` | `May route one controlled backfill if UI proves a runtime-required field gap.` |
-| `queue.script-editor-event-binding-export-convergence` | `candidate` | `After editor data can represent both tables and field-gap review is resolved.` | `Creates runnable pack output and fail-closed validation for binding fields.` |
+| `queue.script-editor-event-binding-authoring-ui` | `done-open-residue` | `Closed after implementation and verification on 2026-07-16.` | `Script-editor project data now represents event bodies and project-level eventBindings separately; runtime export/import semantics remain old-shape.` |
+| `queue.script-editor-event-binding-export-convergence` | `next-auto-routable` | `After authoring UI/model baseline branch commit is recorded.` | `Creates runnable pack output and fail-closed validation for binding fields.` |
 | `queue.zhuyuanzhang-event-binding-pack-migration` | `candidate` | `Before EventBindingRuntime cutover or when built-in pack verification blocks runtime replacement.` | `Cannot be deferred until old runtime deletion.` |
 | `queue.event-binding-runtime-convergence` | `candidate` | `After double-table pack loading/export validation exists.` | `Cuts runtime trigger dispatch to EventBindingRuntime through TriggerContext while preserving scene/task/house/navigation/playable/location-access sub-runtime ownership through runtime-result handoff seams.` |
 | `queue.old-event-runtime-retirement` | `candidate` | `After new runtime verification proves built-in and editor-exported packs trigger correctly.` | `Required-final cleanup and guard queue.` |
@@ -190,3 +190,5 @@ The old runtime retirement queue cannot be admitted until step 7 is recorded as 
 - `2026-07-16`: `Created target.script-editor-event-binding-runtime-replacement as the successor version after the operator requested a Blueprint-governed version from the event trigger binding design. The version starts idle-open with queue.script-editor-event-binding-contract-loader as the next lawful queue recommendation and no active queue admitted yet.`
 - `2026-07-16`: `Admitted queue.script-editor-event-binding-contract-loader as the first active queue. Baseline evidence confirmed the current code still lacks EventBinding domain contracts, eventBindings manifest hydration, and event-bindings.json active-content loading, while old events[].trigger/conditions export and selectTriggeredEvents runtime scanning remain production dependencies.`
 - `2026-07-16`: `Closed queue.script-editor-event-binding-contract-loader after focused tests, typecheck, and Blueprint lint passed. Same-family residue is uniquely routed to queue.script-editor-event-binding-authoring-ui because editor model/UI support is the next required-priority step after the readable eventBindings contract and loader baseline.`
+- `2026-07-16`: `Admitted queue.script-editor-event-binding-authoring-ui as the active queue. Baseline evidence confirmed script-editor project files do not include eventBindings, parse/save still require only events.json for event authoring, and the event editor still displays triggerTiming/conditionGroups on the event body surface.`
+- `2026-07-16`: `Closed queue.script-editor-event-binding-authoring-ui after focused project save/load, selected-event binding UI navigation, authoring-helper, typecheck, Blueprint lint, and full npm test verification. Same-family residue is uniquely routed to queue.script-editor-event-binding-export-convergence because runtime-pack export still needs to emit runnable event-bindings.json and strip trigger/condition data from events.json.`
