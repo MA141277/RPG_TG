@@ -60,7 +60,7 @@ export function selectNpcInteractionMenu(input: {
         id: NPC_INTERACTION_DEFAULT_OPTION_IDS.gift,
         label: "送礼",
         kind: "gift",
-        ...(input.giftDisabled === true ? { disabled: true } : {}),
+        ...(input.giftDisabled !== false ? { disabled: true } : {}),
       },
     ],
   };

@@ -3877,6 +3877,42 @@ test("global NPC interaction menu keeps special actions above default actions", 
   );
 });
 
+test("global NPC gift default is safe when no giftable items exist", () => {
+  const session = createNpcInteractionSession(
+    { type: "house", houseId: "house.test", moduleId: "leader-residence" },
+    "char.leader"
+  );
+  const menu = selectNpcInteractionMenu({
+    session,
+    targetName: "将领",
+    specialActions: [],
+    giftDisabled: true,
+  });
+  const gift = menu.options.find(
+    (option) => option.id === NPC_INTERACTION_DEFAULT_OPTION_IDS.gift
+  );
+
+  assert.equal(gift.label, "送礼");
+  assert.equal(gift.disabled, true);
+});
+
+test("global NPC gift default fails closed without an enabled gift inventory path", () => {
+  const session = createNpcInteractionSession(
+    { type: "house", houseId: "house.test", moduleId: "leader-residence" },
+    "char.leader"
+  );
+  const menu = selectNpcInteractionMenu({
+    session,
+    targetName: "将领",
+    specialActions: [],
+  });
+  const gift = menu.options.find(
+    (option) => option.id === NPC_INTERACTION_DEFAULT_OPTION_IDS.gift
+  );
+
+  assert.equal(gift.disabled, true);
+});
+
 test("global NPC interaction blocks roster clicks while overlays or dialogue own input", () => {
   assert.equal(
     isNpcInteractionBlocked({
