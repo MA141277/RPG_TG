@@ -22,7 +22,7 @@
 - auto_continue_eligible: `true | false`
 - next_effect: `promote-next-queue | return-to-version-review | block-version | none`
 - sync_status: `pending | success | failed`
-- sync_scope: `branch-push | baseline-merge | baseline-push | none`
+- sync_scope: `local-record | branch-commit | branch-push | baseline-merge | baseline-push | remote-sync | none`
 - sync_summary: `Replace with the latest repository sync result.`
 - blocked_by: []
 - allowed_item_classifications:
@@ -84,10 +84,13 @@
 
 ### Repository Sync Record Rule
 
-- `After a task reaches any terminal after-state and the required docs are updated, run one minimum repository sync batch.`
+- `After a task reaches any terminal after-state and the required docs are updated, record local repository sync state.`
 - `The queue-local sync record stores only repository sync result; it does not change task, queue, or version truth.`
-- `A blocked queue still allows commit, push, and merge; repository sync is not forbidden just because execution is blocked.`
+- `Default Blueprint governance/documentation refinement uses local-record during execution and branch-commit at task closeout.`
+- `Push and baseline merge are remote-sync actions; run them only when requested, when collaboration requires remote visibility, or when a queue/version closeout contract explicitly requires them.`
+- `A blocked queue still allows local-record, branch-commit, and remote-sync; repository sync is not forbidden just because execution is blocked.`
 - `sync failure must not be copied into blocked_by, queue closeout gates, version closeout gates, or version scheduling truth.`
+- `remote-sync failure must not block queue closeout, version review handoff, same-family continuation routing, or next lawful queue activation.`
 
 ### Activation Order
 

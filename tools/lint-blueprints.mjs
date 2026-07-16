@@ -66,7 +66,15 @@ const allowedResidueRoutingStatuses = new Set([
 ]);
 const allowedBooleanStrings = new Set(["true", "false"]);
 const allowedSyncStatuses = new Set(["pending", "success", "failed"]);
-const allowedSyncScopes = new Set(["branch-push", "baseline-merge", "baseline-push", "none"]);
+const allowedSyncScopes = new Set([
+  "local-record",
+  "branch-commit",
+  "branch-push",
+  "baseline-merge",
+  "baseline-push",
+  "remote-sync",
+  "none",
+]);
 const closureRoutingFields = [
   "closure_review_subject",
   "closure_review_status",
@@ -1320,7 +1328,7 @@ function rejectQueueLocalSyncFields(text, relativePath, failures, label) {
 }
 
 function isRepositorySyncMirror(entry) {
-  return /(repository sync|merge conflict|branch push|baseline merge|baseline push|\bgit\b|\bcommit\b|\bpush\b|\bmerge\b)/i.test(
+  return /(repository sync|sync failure|sync failed|repository sync failed|merge conflict|branch push|baseline merge|baseline push|\bgit\b|\bcommit\b|\bpush\b|\bmerge\b)/i.test(
     entry
   );
 }

@@ -143,6 +143,6 @@ For work tracked under `docs/superpowers/plans/`:
    - `Execution State`
    - `Progress Log`
 5. Do not mark a child plan `closed` if required verification has not passed.
-6. Do not mark a child or task `closed` unless structured closeout, project-progress sync, next-step sync, and remote push success are all recorded.
+6. Do not mark a child or task `closed` unless structured closeout, project-progress sync, next-step sync, and repository sync result are all recorded. Remote push failure must be recorded as sync result, but must not block child/task closeout or the next lawful queue/child handoff.
 7. Do not leave a `blocked` plan without recording the blocker in `Progress Log`.
 8. When creating or materially restructuring a plan, run `npm run lint:plans`.

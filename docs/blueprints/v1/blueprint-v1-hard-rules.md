@@ -27,6 +27,7 @@
 - `push / merge success must not become a queue closeout gate.`
 - `push / merge success must not become a target closeout gate.`
 - `push / merge failure must not change queue_status, closeout_status, decision_state, next_decision, or next_action.`
+- `push / merge failure must not block queue closeout, target review handoff, same-family continuation routing, or next lawful queue activation when execution truth and governance truth are otherwise complete.`
 - `A merge conflict is a repository sync event, not a Blueprint execution-state event.`
 - `A merge conflict must not rewrite the task conclusion that was already recorded.`
 - `A queue that is already done must not reopen to active because repository sync failed.`

@@ -73,7 +73,7 @@ Child closeout is invalid unless all of these are true:
 - project progress document is updated
 - next child plan is already rechecked and updated, or `Next Child` is `none`
 - structured closeout block exists
-- remote push succeeded
+- repository sync result is recorded as `success` or `failed`
 
 Without these conditions, a child may only be:
 
@@ -83,6 +83,8 @@ Without these conditions, a child may only be:
 - `completed-but-open`
 
 It may not be `closed`.
+
+Remote push failure must be recorded, but it must not by itself block child closeout or the next lawful handoff when the structured closeout, project progress update, and next child state are otherwise synchronized.
 
 ## Repository Commit Message Rule
 

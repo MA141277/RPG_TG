@@ -24,7 +24,7 @@ This spec applies to:
 - queue docs under `docs/blueprints/queues/`
 - templates under `docs/blueprints/templates/`
 - `tools/lint-blueprints.mjs`
-- `docs/change-log.md` when Blueprint work is historically recorded there
+- `docs/change-log.md` only when code, runtime, data compatibility, shared interface, or user-visible behavior changes are recorded there
 
 Old `docs/superpowers/**` workflow docs remain historical or legacy-only reference.
 
@@ -46,6 +46,23 @@ Rules:
 6. `docs/change-log.md`, old `docs/superpowers/**`, closed queues, and prose history must not be used to infer current execution truth.
 7. If `active_queue = none`, resume from the version plan's `resume_gate`.
 8. AI must not invent placeholder queues or placeholder tasks.
+
+## 3.1 Evidence Search Priority
+
+Use different search sources for different truth questions.
+
+Rules:
+
+1. For execution truth, routing, admission, closeout, queue status, task status, and next action, read only the canonical resume chain first:
+   - `project-progress`
+   - `blueprint`
+   - active version plan
+   - active queue
+   - active task
+2. For implementation truth, existing mechanisms, interfaces, call flows, data shapes, and actual runtime behavior, search `src/` and `tests/` first.
+3. For historical explanation, use the compact record in the current active governance docs first.
+4. Open closed queues, old plans, `docs/superpowers/**`, or `docs/change-log.md` only when the current active docs explicitly cite them or when code evidence is insufficient and the file is being used as historical evidence only.
+5. Do not use `docs/change-log.md` as a default search target for Blueprint routing, admission, closeout, scheduling, or implementation truth.
 
 ## 4. Single-Writer Truth Model
 
@@ -168,13 +185,23 @@ The queue doc is the only live governor for:
 
 ### 4.6 `docs/change-log.md`
 
-`docs/change-log.md` is a historical record and human-readable summary only.
+`docs/change-log.md` is a code and behavior change log only.
 
 It may record:
 
-- historical change summaries
-- promotion / closeout summaries
-- human-facing explanation
+- production code behavior changes
+- runtime, save, export, import, schema, or data compatibility changes
+- user-visible editor or gameplay changes
+- shared interface or migration strategy changes that affect implementation consumers
+
+It must not record by default:
+
+- Blueprint queue promotion
+- Blueprint queue or version closeout narration
+- plan / queue field synchronization
+- repository sync status
+- governance-only template wording changes
+- historical summaries already owned by version plans, queue docs, or commit messages
 
 It must not act as:
 
@@ -239,6 +266,8 @@ Historical sections must be explicitly marked with historical or archival wordin
 - `Progress Log`
 
 These sections are allowed only when they summarize already-recorded work and do not impersonate current executable control.
+
+Active version plans and active queue docs should keep historical sections compact. Long promotion chains, detailed per-task history, and superseded sync narration should be summarized in the active file and left in the owning closed queue docs or commit history for full evidence.
 
 Historical sections must not use instruction-like labels such as:
 
@@ -697,7 +726,7 @@ Queue closeout sync order is fixed:
 3. version spec if affected
 4. blueprint if affected
 5. project-progress
-6. optional `docs/change-log.md` mirror update
+6. optional `docs/change-log.md` update only when code, runtime, compatibility, shared interface, or user-visible behavior changed
 
 ### 11.6 Task after-state repository sync
 
@@ -705,10 +734,13 @@ After a task reaches a terminal execution state:
 
 1. write the task after-state first
 2. write queue truth and any required version truth second
-3. trigger one minimum repository sync batch third
-4. continue Blueprint scheduling after the sync attempt returns a result
+3. record the local repository sync state third
+4. defer commit, push, and baseline merge until the bounded Blueprint task or tightly related task group reaches closeout, unless remote collaboration or an explicit queue/version contract requires earlier sync
+5. continue Blueprint scheduling after the local-record step or any attempted repository sync returns a result
 
 Repository sync success or failure must not rewrite the already-recorded execution conclusion.
+
+Remote sync failure must not block queue closeout, version review handoff, same-family continuation routing, or next lawful queue activation when the execution truth and required governance truth are otherwise complete. It only records that remote repository synchronization did not complete.
 
 ## 12. Human Confirmation Constraint
 
@@ -839,7 +871,7 @@ Until stronger automation exists, these are still hard workflow rules, not optio
 
 ## 16. Session Execution Principle
 
-Blueprint workflow corrections must be performed directly through the session by editing the authoritative docs and syncing `docs/change-log.md`.
+Blueprint workflow corrections must be performed directly through the session by editing the authoritative docs. Do not update `docs/change-log.md` for governance-only workflow corrections unless the same task also changes code, runtime behavior, compatibility, shared interfaces, or user-visible behavior.
 
 Do not require the user to manually paste updated workflow prose into `docs/blueprints/blueprint-workflow-spec.md`.
 
@@ -859,19 +891,26 @@ Rules:
 1. `mod-first` is the main integration branch.
 2. `mod-first-dev` is the development trunk.
 3. All work happens on a working branch.
-4. The minimum repository sync batch is commit, push current branch, merge into baseline, and push baseline after each terminal task after-state once the required docs are updated.
-5. Every git commit, including merge commits, must carry its own structured content summary in the commit message body.
-6. Commit / push / merge are non-governing: they must not change task state, queue state, version state, or version scheduling truth.
-7. Local hook or CI enforcement must reject commit messages that omit the required summary block.
-8. Repository sync failure is recorded only as repository sync result in the queue-local sync record.
-9. Repository sync failure must not be rewritten as queue blocker, target blocker, repository/global verification failure, or decision_required.
-10. If repository sync fails, Blueprint scheduling still continues from the written governance docs rather than waiting for success.
-11. Ask the user only when baseline selection is ambiguous or when merge-conflict handling has multiple mutually exclusive legal resolutions that current version truth cannot decide.
-12. Resume truth comes from the written governance docs, not branch memory.
-13. A merge conflict is part of repository sync, not execution-state governance.
-14. A merge conflict must not rewrite the already-recorded task, queue, or target conclusion.
-15. If current version truth uniquely decides the merge direction, resolve it without asking.
-16. Record merge-conflict outcome only in the queue-local sync record rather than elevating it into version live truth.
+4. Repository sync levels are:
+   - `local-record`: write local docs/code and queue-local sync state without creating a commit
+   - `branch-commit`: create one semantic commit for a completed bounded task or tightly related task group
+   - `remote-sync`: push the working branch and, only when explicitly required, merge/push the baseline
+5. The default Blueprint governance/documentation refinement path is `local-record` during execution, `branch-commit` at task closeout, and `remote-sync` only when requested, when collaboration needs remote visibility, or when a queue/version closeout contract explicitly requires it.
+6. Terminal task after-state does not by itself require immediate commit, push, baseline merge, or baseline push.
+7. Avoid process-only commits for minor field synchronization unless that synchronization is the bounded task itself.
+8. Every git commit, including merge commits, must carry its own structured content summary in the commit message body.
+9. Commit / push / merge are non-governing: they must not change task state, queue state, version state, or version scheduling truth.
+10. Local hook or CI enforcement must reject commit messages that omit the required summary block.
+11. Repository sync failure is recorded only as repository sync result in the queue-local sync record.
+12. Repository sync failure must not be rewritten as queue blocker, target blocker, queue_status change, version_status change, decision_state change, repository/global verification failure, or decision_required.
+13. Repository sync failure must not block task closeout, queue closeout, version review handoff, same-family continuation routing, or next lawful queue activation.
+14. If repository sync fails, Blueprint scheduling still continues from the written governance docs rather than waiting for success.
+15. Ask the user only when baseline selection is ambiguous or when merge-conflict handling has multiple mutually exclusive legal resolutions that current version truth cannot decide.
+16. Resume truth comes from the written governance docs, not branch memory.
+17. A merge conflict is part of repository sync, not execution-state governance.
+18. A merge conflict must not rewrite the already-recorded task, queue, or target conclusion.
+19. If current version truth uniquely decides the merge direction, resolve it without asking.
+20. Record merge-conflict outcome only in the queue-local sync record rather than elevating it into version live truth.
 
 ## 18. Drift-Prone Field Reduction
 
@@ -896,7 +935,7 @@ Blueprint governance migrations must apply changes in this order:
 3. clean current live docs
 4. update current automated enforcement where static checks are possible
 5. run consistency checks
-6. sync `docs/change-log.md`
+6. update `docs/change-log.md` only if the migration includes code, runtime, compatibility, shared interface, or user-visible behavior changes
 7. report the corrected model, sealed loopholes, and remaining governance debt
 
 ## 20. Success Condition

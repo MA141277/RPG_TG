@@ -67,9 +67,9 @@
 
 ### Operator Snapshot Contract
 
-- `The fixed operator receipt must source 褰撳墠鎵ц闃熷垪 from queue_id.`
-- `The fixed operator receipt must source 褰撳墠浠诲姟 from active_task.`
-- `The fixed operator receipt must source 褰撳墠闃熷垪鐩爣 from queue_goal.`
+- `The fixed operator receipt must source 当前执行队列 from queue_id.`
+- `The fixed operator receipt must source 当前任务 from active_task.`
+- `The fixed operator receipt must source 当前队列目标 from queue_goal.`
 - `Queue Snapshot exists to support concise operator visibility without exposing Blueprint internal ranking or admission internals by default.`
 
 ### Closeout Judgement Rule
@@ -88,9 +88,12 @@
 
 ### Repository Sync Record Rule
 
-- `After a task reaches any terminal after-state and the required docs are updated, run one minimum repository sync batch.`
+- `After a task reaches any terminal after-state and the required docs are updated, record local repository sync state.`
 - `The queue-local sync record stores only repository sync result; it does not change task, queue, or version truth.`
+- `Default Blueprint governance/documentation refinement uses local-record during execution and branch-commit at task closeout.`
+- `Push and baseline merge are remote-sync actions; run them only when requested, when collaboration requires remote visibility, or when a queue/version closeout contract explicitly requires them.`
 - `sync failure must not be copied into blocked_by, queue closeout gates, version closeout gates, or version scheduling truth.`
+- `remote-sync failure must not block queue closeout, version review handoff, same-family continuation routing, or next lawful queue activation.`
 
 ### Task Ledger
 

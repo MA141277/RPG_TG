@@ -38,7 +38,7 @@ New governance model for legacy `docs/superpowers/**` work:
 
 - one project progress document is the only resume truth source
 - one child plan is the only executable implementation document
-- closeout is valid only when structure, sync, and push are complete
+- closeout is valid when structure, project sync, and repository sync result recording are complete
 
 ## 3. Canonical Artifacts
 
@@ -121,7 +121,7 @@ The new model explicitly forbids these states:
 - saying “wait for recheck” without saying who rechecks and from which document to continue
 - marking a child complete while the project progress document is not updated
 - saying the next child should start before its plan is updated
-- handing work off before remote push succeeds
+- handing work off before repository sync result is recorded
 - allowing two documents to both look like the current resume entry
 
 If any of these states exist, the current child or task must not be marked `closed`.
@@ -185,7 +185,7 @@ A child closeout is valid only when all of these are true:
 3. the project progress document is updated
 4. the next child plan is already rechecked and updated, or `Next Child` is explicitly `none`
 5. a structured child closeout block is written
-6. the remote push succeeded
+6. repository sync result is recorded as `success` or `failed`
 
 If any item is missing:
 
@@ -211,12 +211,14 @@ Required shape:
 - Next Required Action: `update-plan-and-recheck`
 - Next Entry Document: `docs/superpowers/project-progress.md`
 - Next Owner Document: `docs/superpowers/plans/<child-34-plan>.md`
-- Push Status: `success`
-- Push Commit: `commit-sha`
+- Push Status: `success | failed`
+- Push Commit: `commit-sha | none`
 - Resume From: `Open docs/superpowers/project-progress.md, then update the Child 34 plan.`
 ```
 
 `Push Commit` must reference a commit whose message satisfies the repository commit-message rule: typed subject, blank line, and `Summary:` bullets.
+
+If `Push Status` is `failed`, `Push Commit` may be `none`, but the failed sync result must be recorded in the child plan progress log or an equivalent sync summary field. Remote push failure alone must not invalidate closeout or block the next lawful handoff.
 
 If no next child exists:
 
@@ -240,12 +242,14 @@ A next child may start only when all of these are true:
 - the prior child has a valid structured closeout
 - the project progress document is synchronized
 - the next child plan has already been updated
-- remote push status is `success`
+- repository sync result is recorded as `success` or `failed`
 
 If any of these are missing:
 
 - the next child must remain `waiting`
 - no implementation may start from that child plan
+
+Remote push failure alone does not block next child admission or implementation start once the prior closeout, project progress document, and next child plan are otherwise synchronized.
 
 ## 11. Task Closeout Hard Gates
 
@@ -257,7 +261,7 @@ A task may be marked `closed` only when:
 - the task state is synchronized into the project progress document
 - the next task is explicit, or `none`
 - the required structured task closeout block exists
-- remote push succeeded
+- repository sync result is recorded as `success` or `failed`
 
 Required shape:
 
@@ -273,12 +277,14 @@ Required shape:
 - Next Required Action: `update-first-child-plan`
 - Next Entry Document: `docs/superpowers/project-progress.md`
 - Next Owner Document: `docs/superpowers/plans/<first-child-plan>.md`
-- Push Status: `success`
-- Push Commit: `commit-sha`
+- Push Status: `success | failed`
+- Push Commit: `commit-sha | none`
 - Resume From: `Open docs/superpowers/project-progress.md.`
 ```
 
 `Push Commit` must reference a commit whose message satisfies the repository commit-message rule: typed subject, blank line, and `Summary:` bullets.
+
+If `Push Status` is `failed`, `Push Commit` may be `none`, but the failed sync result must be recorded in the task plan progress log or an equivalent sync summary field. Remote push failure alone must not invalidate task closeout.
 
 If the task has no successor:
 
@@ -332,7 +338,7 @@ The repository should enforce this model through:
 Minimum enforcement intent:
 
 - a child marked `closed` without a structured closeout block is invalid
-- a child marked `closed` without push success is invalid
+- a child marked `closed` without a recorded repository sync result is invalid
 - a repository state with no unique `Next Child` / `Next Required Action` / `Next Entry Document` is invalid
 
 ## 16. Recommended Implementation Order

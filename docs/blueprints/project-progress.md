@@ -41,7 +41,7 @@
 
 ### Historical References
 
-- `docs/change-log.md` stores the human-readable cross-session history.`
+- `docs/change-log.md` stores code and behavior change history only; it is not a default Blueprint search target or governance resume source.`
 - `docs/blueprints/plans/2026-07-15-script-editor-authoring-data-structure-unification-target-plan.md` stores the closed authoring/data-structure unification version's activation truth, candidate record, promotion ledger, queue closeout history, and version closeout truth.
 - `docs/blueprints/queues/script-editor-project-cache-save-export-preview-queue.md` stores the closed first project cache/save/export/preview execution truth.
 - `docs/blueprints/queues/script-editor-project-cache-save-export-preview-continuation-queue.md` stores the closed continuation truth for durable save-location recording and stale continue gating.

@@ -107,7 +107,7 @@ The following states are forbidden:
 - saying “wait for recheck” without saying who rechecks and from which document to continue
 - marking a child complete while the project progress document is stale
 - saying a next child should start before its plan is updated
-- handing work off before remote push succeeds
+- handing work off before repository sync result is recorded
 - allowing two documents to both look like the current resume entry
 
 If any of these states exist, the current child or task must not be marked `closed`.
@@ -165,7 +165,7 @@ Meaning:
 - `blocked`
   - cannot continue; blocker must be recorded in `Progress Log`
 - `completed-but-open`
-  - work is done but closeout is incomplete
+  - work is done but structured closeout or project-progress sync is incomplete
 - `closed`
   - all closeout gates have passed
 
@@ -175,7 +175,7 @@ Rules:
 - `Verification` must summarize the latest known validation state
 - `Last Updated` must use `YYYY-MM-DD`
 - `closed` may be used only when all child closeout hard gates pass
-- `completed-but-open` must be used when the work is finished but sync / push / structured closeout is still incomplete
+- `completed-but-open` must be used when the work is finished but structured closeout or project-progress sync is still incomplete
 
 Legacy note:
 
@@ -218,12 +218,14 @@ A child may be marked `closed` only when all of these are true:
 3. the project progress document is updated
 4. the next child plan is already rechecked and updated, or `Next Child` is explicitly `none`
 5. a structured `## Child Closeout` block exists
-6. remote push succeeded
+6. repository sync result is recorded as `success` or `failed`
 
 If any item is missing:
 
 - the child must remain `running`, `blocked`, or `completed-but-open`
 - the child must not be marked `closed`
+
+Remote push failure must be recorded in the closeout block and project progress sync fields, but it must not by itself prevent child closeout or the next lawful child handoff when the structured closeout and project-progress sync are otherwise complete.
 
 ## 10. Standard Child Closeout Block
 
@@ -242,12 +244,14 @@ Every child closeout must include this structure:
 - Next Required Action: `update-plan-and-recheck`
 - Next Entry Document: `docs/superpowers/project-progress.md`
 - Next Owner Document: `docs/superpowers/plans/<child-34-plan>.md`
-- Push Status: `success`
-- Push Commit: `commit-sha`
+- Push Status: `success | failed`
+- Push Commit: `commit-sha | none`
 - Resume From: `Open docs/superpowers/project-progress.md, then update the Child 34 plan.`
 ```
 
 `Push Commit` must reference a commit whose message satisfies the repository commit-message rule: typed subject, blank line, and `Summary:` bullets.
+
+If `Push Status` is `failed`, `Push Commit` may be `none`, but the closeout must record the failed sync result in the latest `Progress Log` entry or an equivalent sync summary field.
 
 If there is no next child:
 
@@ -272,7 +276,7 @@ A task may be marked `closed` only when:
 - the project progress document is synchronized
 - the next task is explicit, or `none`
 - a structured `## Task Closeout` block exists
-- remote push succeeded
+- repository sync result is recorded as `success` or `failed`
 
 Required shape:
 
@@ -288,12 +292,14 @@ Required shape:
 - Next Required Action: `update-first-child-plan`
 - Next Entry Document: `docs/superpowers/project-progress.md`
 - Next Owner Document: `docs/superpowers/plans/<first-child-plan>.md`
-- Push Status: `success`
-- Push Commit: `commit-sha`
+- Push Status: `success | failed`
+- Push Commit: `commit-sha | none`
 - Resume From: `Open docs/superpowers/project-progress.md.`
 ```
 
 `Push Commit` must reference a commit whose message satisfies the repository commit-message rule: typed subject, blank line, and `Summary:` bullets.
+
+If `Push Status` is `failed`, `Push Commit` may be `none`, but the task closeout must record the failed sync result in the latest `Progress Log` entry or an equivalent sync summary field.
 
 ## 12. Required Project Progress Fields
 
@@ -330,12 +336,14 @@ A next child may start only when all of these are true:
 - the prior child has a valid structured closeout
 - the project progress document is synchronized
 - the next child plan has already been updated
-- remote push status is `success`
+- repository sync result is recorded as `success` or `failed`
 
 If any of these are missing:
 
 - the next child must remain `waiting`
 - no implementation may start from that child
+
+Remote push failure alone does not block next-child admission or implementation start once the prior closeout, project progress document, and next child plan are otherwise synchronized.
 
 ## 14. Verification Gates
 

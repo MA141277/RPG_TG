@@ -171,6 +171,13 @@
 4. `If fresh evidence disproves the pending first queue basis, update this version plan with the narrower lawful admission subject instead of silently switching queues.`
 5. `Do not treat version activation as queue admission.`
 
+### Evidence Search Priority
+
+- `For execution truth, routing, admission, closeout, task status, and next action, read project-progress -> blueprint -> this version plan -> active queue -> active task first.`
+- `For implementation truth, existing mechanisms, interfaces, call flows, data shapes, and actual runtime behavior, search src/ and tests/ first.`
+- `For historical explanation, use this plan's compact records first; open closed queues, old plans, docs/superpowers/**, or docs/change-log.md only when explicitly cited or when code evidence is insufficient.`
+- `Do not use docs/change-log.md as the default search target for Blueprint routing, admission, closeout, scheduling, or implementation truth.`
+
 ### Operator Intake Contract
 
 - Allowed operator intake:

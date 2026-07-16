@@ -117,6 +117,13 @@ Allowed `next_action` values:
 - `Only restart a full re-audit when new material evidence invalidates the prior classification or review basis.`
 - `Do not use prose-only memory as the recovery source when structured admission truth already exists.`
 
+### Evidence Search Priority
+
+- `For execution truth, routing, admission, closeout, task status, and next action, read project-progress -> blueprint -> version plan -> active queue -> active task first.`
+- `For implementation truth, existing mechanisms, interfaces, call flows, data shapes, and actual runtime behavior, search src/ and tests/ first.`
+- `For historical explanation, use compact active governance records first; open closed queues, old plans, docs/superpowers/**, or docs/change-log.md only when explicitly cited or when code evidence is insufficient.`
+- `Do not use docs/change-log.md as the default search target for Blueprint routing, admission, closeout, scheduling, or implementation truth.`
+
 ### Closure Judgement And Residue Routing Rule
 
 - `Queue execution closeout is not equivalent to true topic closure.`
@@ -176,9 +183,10 @@ Allowed `next_action` values:
 5. `Scan governance owners.`
 6. `Scan residue.`
 7. `If queue closeout leaves residue, absorb same-family or cross-family routing truth here before repository sync begins.`
-8. `Trigger one minimum repository sync batch after the docs are updated.`
-9. `If the next legal step is unique, continue directly into closeout, same-family routing, or version review once the sync attempt returns a result.`
-10. `Optionally mirror the result into change-log.`
+8. `Record local repository sync state after the docs are updated.`
+9. `Defer commit, push, and baseline merge until the bounded task or tightly related task group reaches closeout, unless remote collaboration or an explicit queue/version contract requires earlier sync.`
+10. `If the next legal step is unique, continue directly into closeout, same-family routing, or version review once the local-record step or any attempted repository sync returns a result.`
+11. `Update docs/change-log.md only when code, runtime, compatibility, shared interface, or user-visible behavior changed.`
 
 ### Human Confirmation Constraint
 
@@ -199,22 +207,23 @@ Allowed `next_action` values:
 - `commit / push / merge must not change queue truth, version truth, candidate truth, or transition truth.`
 - `push / merge must not become a queue closeout gate.`
 - `push / merge must not become a version closeout gate.`
-- `Task execution conclusions are written first; repository sync runs second.`
+- `Task execution conclusions are written first; repository sync state is recorded second.`
+- `Default Blueprint governance/documentation refinement uses local-record during execution and branch-commit at task closeout.`
+- `remote-sync runs only when requested, when collaboration requires remote visibility, or when a queue/version closeout contract explicitly requires it.`
+- `Avoid process-only commits for minor field synchronization unless that synchronization is the bounded task itself.`
 - `A failed sync attempt is recorded only as repository sync result in the queue-local sync record.`
+- `Remote sync failure must not block task closeout, queue closeout, version review handoff, same-family continuation routing, or next lawful queue activation.`
 - `A merge conflict is a repository sync event; it must not rewrite the already-recorded task, queue, or version conclusion.`
 - `If current version truth uniquely decides the merge conflict direction, resolve it without asking.`
 - `Version scheduling must not read sync_status, sync_scope, or sync_summary as live truth.`
 
-### Minimum Repository Sync Batch
+### Repository Sync Levels
 
-1. `Draft the commit message as <type>: <brief title> plus a Summary: block with real bullets.`
-2. `Run commit-message validation before commit.`
-3. `Commit the working branch.`
-4. `Push the working branch.`
-5. `Merge into the latest baseline branch.`
-6. `Push the baseline branch.`
-7. `Resume from the written Blueprint truth after the sync attempt returns success or failure.`
+1. `local-record: write local docs/code and queue-local sync state without creating a commit.`
+2. `branch-commit: draft the commit message as <type>: <brief title> plus a Summary: block with real bullets, run commit-message validation, and create one semantic commit for the completed bounded task or task group.`
+3. `remote-sync: push the working branch and, only when explicitly required, merge/push the baseline.`
+4. `Resume from the written Blueprint truth after local-record or any attempted sync returns success or failure; failed remote-sync is not a closeout or admission blocker.`
 
 ### Prior Promotion Record
 
-- `Replace with a short historical promotion record when needed.`
+- `Keep this section short in active plans. Summarize long promotion chains here and leave full evidence in closed queue docs or commit history.`

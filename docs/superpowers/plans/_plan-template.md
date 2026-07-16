@@ -132,8 +132,8 @@ Expected:
 - Next Required Action: `Replace when closing.`
 - Next Entry Document: `docs/superpowers/project-progress.md`
 - Next Owner Document: `Replace when closing.`
-- Push Status: `success/failure/not-pushed`
+- Push Status: `success/failed`
 - Push Commit: `commit-sha-or-none`
 - Resume From: `Replace when closing.`
 
-`Push Commit` must point to a commit message that uses `<type>: <brief title>` plus a `Summary:` section with at least one bullet.
+`Push Commit` must point to a commit message that uses `<type>: <brief title>` plus a `Summary:` section with at least one bullet when push succeeds. If push fails, use `none`, record the failed sync result in `Progress Log`, and continue the next lawful handoff from the written governance truth.
