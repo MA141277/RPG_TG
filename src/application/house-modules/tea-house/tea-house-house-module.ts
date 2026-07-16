@@ -1230,6 +1230,21 @@ export const teaHouseHouseModule: HouseModuleDefinition<"tea-house"> = {
             ? "open-npc-dialogue"
             : `${SELECT_ACTOR_ACTION_PREFIX}${actor.id}`,
         isSelected: selectedActor?.id === actor.id,
+        interactionActions: [
+          {
+            id: "serve-tea",
+            label: "请茶",
+            kind: "special",
+            disabled: playerCharacter.stats.gold < teaHouseTeaCost,
+          },
+          { id: "inquire", label: "打听", kind: "special" },
+          {
+            id: "start-debate",
+            label: "舌战",
+            kind: "special",
+            tone: "accent",
+          },
+        ],
       })),
     });
 
@@ -1260,7 +1275,6 @@ export const teaHouseHouseModule: HouseModuleDefinition<"tea-house"> = {
           : {
               title: `${selectedActor.name} / ${selectedActor.specialty}`,
               actions: [
-                { id: "talk", label: "闲谈" },
                 {
                   id: "serve-tea",
                   label: "请喝茶",

@@ -575,6 +575,20 @@ type HouseModuleViewModel = {
 };
 ```
 
+### Shared NPC Interaction Rule
+
+Any actor exposed in a normal house NPC pool should be eligible for the shared NPC interaction menu when no blocking dialogue, modal, overlay, minigame, or message window is active.
+
+The shared menu owns default actions:
+
+- `角色情报`
+- `谈话`
+- `送礼`
+
+House modules may contribute special actions for the selected actor, and those special actions must render above the default actions. The generic NPC shell must not understand house-specific business rules. Special actions dispatch back through the owning house module lifecycle.
+
+Default `谈话` replaces visible `闲谈` labels as the baseline conversation behavior. Default `送礼` must use shared inventory and must not mutate relationship or inventory until an item is selected and confirmed. Until shared gift inventory settlement exists, `送礼` must stay disabled or render an empty state that performs no persistent mutation.
+
 ### Primary Actor Roster Rule
 
 For any special house with `HouseDefinition.defaultCharacterId`, that character is the house primary actor.

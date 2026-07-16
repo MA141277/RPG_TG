@@ -2,6 +2,12 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-16 Global NPC Interaction Contract
+
+- Added the Phase 1 global NPC interaction contract for house roster actors: NPC clicks open a structured menu with context special actions above the default `角色情报 / 谈话 / 送礼` actions.
+- Character detail can now target an arbitrary NPC through global UI state instead of always rendering the player.
+- Existing visible `闲谈` entry points are normalized toward the default `谈话` action; Phase 1 keeps `送礼` safe until shared gift inventory settlement is implemented.
+
 - House primary actors now follow a shared flow: houses with `defaultCharacterId` enter through primary-actor dialogue, keep that actor first in `standbyRoster`, avoid separate owner-only portrait cards, and render ordinary character dialogue with the shared dialogue-box speaker portrait. Temple abbot and tavern boss behavior now use the same rule as other special houses.
 
 ## 2026-07-13 Generic Activity Pachinko Board

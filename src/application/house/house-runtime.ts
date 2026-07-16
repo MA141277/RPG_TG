@@ -88,6 +88,7 @@ export function createHouseRuntime(dependencies: HouseRuntimeDependencies) {
         ui: {
           ...nextGameState.ui,
           houseSession,
+          npcInteractionSession: null,
         },
       },
       characterDefinitions: result.characterDefinitions,
@@ -253,6 +254,7 @@ export function createHouseRuntime(dependencies: HouseRuntimeDependencies) {
           currentView: "house",
           overlayView: null,
           houseSession: null,
+          npcInteractionSession: null,
         },
       },
     });
@@ -354,6 +356,7 @@ export function createHouseRuntime(dependencies: HouseRuntimeDependencies) {
           currentView: "city",
           overlayView: null,
           houseSession: null,
+          npcInteractionSession: null,
         },
       },
     });
@@ -384,6 +387,7 @@ export function createHouseRuntime(dependencies: HouseRuntimeDependencies) {
           currentView: "house",
           overlayView: null,
           houseSession: completion.houseSession,
+          npcInteractionSession: null,
         },
       },
     });

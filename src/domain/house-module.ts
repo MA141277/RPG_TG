@@ -20,6 +20,7 @@ import type { MedicineHouseSessionState } from "./house-modules/medicine-house-s
 import type { TempleHouseSessionState } from "./house-modules/temple-house-session";
 import type { TeaHouseSessionState } from "./house-modules/tea-house-session";
 import type { TavernSessionState } from "./house-modules/tavern-session";
+import type { NpcInteractionOptionViewModel } from "./npc-interaction";
 
 export type HouseModuleId =
   | "home-house"
@@ -130,11 +131,13 @@ export type HouseStandbyActorViewModel = {
   title?: string;
   actionId?: string;
   isSelected?: boolean;
+  disabled?: boolean;
   cardLevel?: HouseCharacterCardLevel;
   avatarImageUrl?: string | null;
   portraitImageUrl?: string | null;
   avatarArtClassName?: string;
   portraitArtClassName?: string;
+  interactionActions?: NpcInteractionOptionViewModel[];
 };
 
 export type HouseDialogueViewModel = {

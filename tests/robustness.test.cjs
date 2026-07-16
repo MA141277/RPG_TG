@@ -56,6 +56,12 @@ const {
   teaHouseHouseModule,
 } = require("../.test-dist/application/house-modules/tea-house/tea-house-house-module.js");
 const {
+  renderTeaHouseHouseView,
+} = require("../.test-dist/ui/views/house/tea-house-house-view.js");
+const {
+  renderMedicineHouseHouseView,
+} = require("../.test-dist/ui/views/house/medicine-house-house-view.js");
+const {
   resolveCompoundingGrade,
 } = require("../.test-dist/application/medicine-house/compounding-minigame.js");
 const {
@@ -108,6 +114,19 @@ const {
 const {
   orderHouseStandbyRoster,
 } = require("../.test-dist/application/house/house-primary-actor-roster.js");
+const {
+  NPC_INTERACTION_DEFAULT_OPTION_IDS,
+  adaptHouseRosterToNpcPool,
+  createNpcInteractionSession,
+  isNpcInteractionBlocked,
+  selectHouseNpcSpecialActions,
+  selectNpcInteractionMenu,
+} = require("../.test-dist/application/npc-interaction/npc-interaction.js");
+const {
+  closeGlobalOverlay,
+  openCharacterDetail,
+  openPlayerDetail,
+} = require("../.test-dist/application/app-actions.js");
 const {
   equipValuableItem,
   getVisibleOwnedCards,
@@ -3757,7 +3776,7 @@ test("leader residence interaction flow updates relation and learning skill", ()
     sessionState: greetingResult.sessionState,
     request: { type: "action", actionId: "leader-residence:gift" },
   });
-  assert.equal(giftResult.gameState.runtime.variables[relationKey], 3);
+  assert.equal(giftResult.gameState.runtime.variables[relationKey], 1);
   assert.equal(giftResult.sessionState?.overlay?.type, "alert");
 
   const learnResult = leaderResidenceHouseModule.dispatch({
@@ -3827,6 +3846,639 @@ test("primary house actor roster helper deduplicates actors without losing the f
     roster.map((actor) => actor.name),
     ["Owner", "Guest"]
   );
+});
+
+test("global NPC interaction menu keeps special actions above default actions", () => {
+  const context = { type: "house", houseId: "house.test", moduleId: "tea-house" };
+  const session = createNpcInteractionSession(context, "char.tea");
+  const menu = selectNpcInteractionMenu({
+    session,
+    targetName: "茶博士",
+    specialActions: [
+      { id: "tea:ask-intel", label: "打听", kind: "special" },
+      { id: "tea:debate", label: "舌战", kind: "special", tone: "accent" },
+    ],
+  });
+
+  assert.equal(menu.type, "npc-interaction-menu");
+  assert.deepEqual(
+    menu.options.map((option) => option.id),
+    [
+      "tea:ask-intel",
+      "tea:debate",
+      NPC_INTERACTION_DEFAULT_OPTION_IDS.profile,
+      NPC_INTERACTION_DEFAULT_OPTION_IDS.talk,
+      NPC_INTERACTION_DEFAULT_OPTION_IDS.gift,
+    ]
+  );
+  assert.deepEqual(
+    menu.options.slice(-3).map((option) => option.label),
+    ["角色情报", "谈话", "送礼"]
+  );
+});
+
+test("global NPC gift default is safe when no giftable items exist", () => {
+  const session = createNpcInteractionSession(
+    { type: "house", houseId: "house.test", moduleId: "leader-residence" },
+    "char.leader"
+  );
+  const menu = selectNpcInteractionMenu({
+    session,
+    targetName: "将领",
+    specialActions: [],
+    giftDisabled: true,
+  });
+  const gift = menu.options.find(
+    (option) => option.id === NPC_INTERACTION_DEFAULT_OPTION_IDS.gift
+  );
+
+  assert.equal(gift.label, "送礼");
+  assert.equal(gift.disabled, true);
+});
+
+test("global NPC gift default fails closed without an enabled gift inventory path", () => {
+  const session = createNpcInteractionSession(
+    { type: "house", houseId: "house.test", moduleId: "leader-residence" },
+    "char.leader"
+  );
+  const menu = selectNpcInteractionMenu({
+    session,
+    targetName: "将领",
+    specialActions: [],
+  });
+  const gift = menu.options.find(
+    (option) => option.id === NPC_INTERACTION_DEFAULT_OPTION_IDS.gift
+  );
+
+  assert.equal(gift.disabled, true);
+});
+
+test("global NPC interaction blocks roster clicks while overlays or dialogue own input", () => {
+  assert.equal(
+    isNpcInteractionBlocked({
+      overlayView: null,
+      modalState: null,
+      locationDialogueState: null,
+      hasHouseOverlay: false,
+      hasActiveDialogueAdvance: false,
+    }),
+    false
+  );
+  assert.equal(
+    isNpcInteractionBlocked({
+      overlayView: "detail",
+      modalState: null,
+      locationDialogueState: null,
+      hasHouseOverlay: false,
+      hasActiveDialogueAdvance: false,
+    }),
+    true
+  );
+  assert.equal(
+    isNpcInteractionBlocked({
+      overlayView: null,
+      modalState: { type: "enter-city-confirm", cityId: "city.kulan", cityName: "库兰" },
+      locationDialogueState: null,
+      hasHouseOverlay: false,
+      hasActiveDialogueAdvance: false,
+    }),
+    true
+  );
+  assert.equal(
+    isNpcInteractionBlocked({
+      overlayView: null,
+      modalState: null,
+      locationDialogueState: {
+        type: "house-access-refusal",
+        speakerCharacterId: "char.guard",
+        textLines: ["暂不可入。"],
+        advanceHintText: "点击继续",
+      },
+      hasHouseOverlay: false,
+      hasActiveDialogueAdvance: false,
+    }),
+    true
+  );
+  assert.equal(
+    isNpcInteractionBlocked({
+      overlayView: null,
+      modalState: null,
+      locationDialogueState: null,
+      hasHouseOverlay: true,
+      hasActiveDialogueAdvance: false,
+    }),
+    true
+  );
+  assert.equal(
+    isNpcInteractionBlocked({
+      overlayView: null,
+      modalState: null,
+      locationDialogueState: null,
+      hasHouseOverlay: false,
+      hasActiveDialogueAdvance: true,
+    }),
+    true
+  );
+});
+
+test("global NPC interaction character detail can target a non-player NPC", () => {
+  const baseAppState = createRuntimeState(createBaseState()).app;
+  const opened = openCharacterDetail(
+    { ...baseAppState, gameState: createBaseState() },
+    "char.market_merchant"
+  );
+
+  assert.equal(opened.gameState.ui.overlayView, "detail");
+  assert.equal(opened.gameState.ui.detailCharacterId, "char.market_merchant");
+});
+
+test("player detail clears the NPC detail target and uses the pinned player fallback", () => {
+  const baseAppState = {
+    ...createRuntimeState(createBaseState()).app,
+    gameState: {
+      ...createBaseState(),
+      ui: {
+        ...createBaseState().ui,
+        overlayView: "detail",
+        detailCharacterId: "char.market_merchant",
+      },
+    },
+  };
+  const opened = openPlayerDetail(baseAppState);
+
+  assert.equal(opened.gameState.ui.overlayView, "detail");
+  assert.equal(opened.gameState.ui.detailCharacterId, null);
+});
+
+test("closing global overlay clears the arbitrary character detail target", () => {
+  const baseAppState = {
+    ...createRuntimeState(createBaseState()).app,
+    gameState: {
+      ...createBaseState(),
+      ui: {
+        ...createBaseState().ui,
+        overlayView: "detail",
+        detailCharacterId: "char.market_merchant",
+      },
+    },
+  };
+  const closed = closeGlobalOverlay(baseAppState);
+
+  assert.equal(closed.gameState.ui.overlayView, null);
+  assert.equal(closed.gameState.ui.detailCharacterId, null);
+});
+
+test("global NPC interaction adapts house standby roster into reusable NPC pool", () => {
+  const pool = adaptHouseRosterToNpcPool({
+    context: { type: "house", houseId: "house.market", moduleId: "market-house" },
+    actors: [
+      {
+        characterId: "char.merchant",
+        name: "行商",
+        title: "货栈商人",
+        actionId: "select-market-actor:char.merchant",
+      },
+    ],
+    disabled: false,
+  });
+
+  assert.equal(pool.context.type, "house");
+  assert.equal(pool.actors[0].characterId, "char.merchant");
+  assert.equal(pool.actors[0].name, "行商");
+  assert.equal(pool.actors[0].disabled, false);
+});
+
+test("global NPC interaction selects house actor special actions for the target", () => {
+  const actions = selectHouseNpcSpecialActions({
+    targetCharacterId: "char.tea",
+    actors: [
+      {
+        characterId: "char.tea",
+        name: "茶博士",
+        interactionActions: [
+          { id: "order-tea", label: "请茶", kind: "special" },
+          { id: "ask-intel", label: "打听", kind: "special" },
+        ],
+      },
+      {
+        characterId: "char.other",
+        name: "客人",
+        interactionActions: [
+          { id: "other-action", label: "旁事", kind: "special" },
+        ],
+      },
+    ],
+  });
+
+  assert.deepEqual(
+    actions.map((action) => action.id),
+    ["order-tea", "ask-intel"]
+  );
+});
+
+test("global NPC interaction house roster exposes generic NPC target buttons", () => {
+  const enterResult = teaHouseHouseModule.enter({
+    gameState: createBaseState(),
+    characterDefinitions: prototypeCharacters,
+    houseDefinition: teaHouse,
+    playerCharacterId,
+  });
+  const viewModel = teaHouseHouseModule.selectViewModel({
+    gameState: enterResult.gameState,
+    characterDefinitions: enterResult.characterDefinitions,
+    houseDefinition: teaHouse,
+    playerCharacterId,
+    sessionState: enterResult.sessionState,
+  });
+  const html = renderTeaHouseHouseView(viewModel);
+
+  assert.match(html, /data-npc-target=/);
+  assert.match(html, /data-npc-context=/);
+  assert.match(html, /data-npc-context-type="house"/);
+  assert.match(html, new RegExp(`data-house-id="${teaHouse.id}"`));
+  assert.match(html, /data-house-module-id="tea-house"/);
+
+  const rawContext = html.match(/data-npc-context="([^"]+)"/)?.[1];
+  assert.ok(rawContext, "Expected roster button to expose data-npc-context.");
+  const decodedContext = rawContext
+    .replace(/&quot;/g, '"')
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&amp;/g, "&");
+  assert.deepEqual(JSON.parse(decodedContext), {
+    type: "house",
+    houseId: teaHouse.id,
+    moduleId: "tea-house",
+  });
+});
+
+test("global NPC interaction house roster disables NPC targets when input is blocked", () => {
+  const {
+    renderHouseStandbyRoster,
+  } = require("../.test-dist/ui/views/house/house-shared-view.js");
+  const html = renderHouseStandbyRoster({
+    moduleId: "tea-house",
+    houseId: "house.tea",
+    sceneTitle: "test",
+    standbyRoster: [
+      {
+        characterId: "char.tea",
+        name: "茶博士",
+        title: "掌柜",
+        actionId: "open-boss-dialogue",
+        disabled: true,
+      },
+    ],
+    dialogue: null,
+    actionContainer: null,
+    statusCard: null,
+    overlay: null,
+    leaveAction: { id: "leave-house", label: "离开" },
+  });
+
+  assert.match(html, /disabled/);
+  assert.doesNotMatch(html, /data-npc-target="char\.tea"/);
+  assert.doesNotMatch(html, /data-house-action="open-boss-dialogue"/);
+});
+
+test("global NPC interaction removes visible idle small-talk labels from tea and medicine menus", () => {
+  const teaEnter = teaHouseHouseModule.enter({
+    gameState: createBaseState(),
+    characterDefinitions: prototypeCharacters,
+    houseDefinition: teaHouse,
+    playerCharacterId,
+  });
+  const teaView = teaHouseHouseModule.selectViewModel({
+    gameState: teaEnter.gameState,
+    characterDefinitions: teaEnter.characterDefinitions,
+    houseDefinition: teaHouse,
+    playerCharacterId,
+    sessionState: { ...teaEnter.sessionState, dialoguePhase: "open" },
+  });
+
+  const medicineEnter = medicineHouseHouseModule.enter({
+    gameState: createBaseState(),
+    characterDefinitions: prototypeCharacters,
+    houseDefinition: medicineHouse,
+    playerCharacterId,
+  });
+  const medicineView = medicineHouseHouseModule.selectViewModel({
+    gameState: medicineEnter.gameState,
+    characterDefinitions: medicineEnter.characterDefinitions,
+    houseDefinition: medicineHouse,
+    playerCharacterId,
+    sessionState: { ...medicineEnter.sessionState, dialoguePhase: "open" },
+  });
+
+  assert.equal(
+    JSON.stringify(teaView.actionContainer?.actions ?? []).includes("闂茶皥"),
+    false
+  );
+  assert.equal(
+    JSON.stringify(medicineView.actionContainer?.actions ?? []).includes("闂茶皥"),
+    false
+  );
+  assert.equal(
+    (teaView.actionContainer?.actions ?? []).some(
+      (action) => action.id === "talk" || action.label === "谈话"
+    ),
+    false
+  );
+  assert.equal(
+    (medicineView.actionContainer?.actions ?? []).some(
+      (action) => action.id === "talk" || action.label === "谈话"
+    ),
+    false
+  );
+});
+
+test("global NPC interaction renderer emits generic menu actions", () => {
+  const {
+    renderNpcInteractionMenu,
+  } = require("../.test-dist/ui/components/npc-interaction/npc-interaction-menu.js");
+  const menu = {
+    type: "npc-interaction-menu",
+    context: { type: "house", houseId: "house.tea", moduleId: "tea-house" },
+    targetCharacterId: "char.tea",
+    targetName: "茶博士",
+    options: [
+      { id: "tea:ask-intel", label: "打听", kind: "special" },
+      { id: "npc-interaction:profile", label: "角色情报", kind: "profile" },
+      { id: "npc-interaction:talk", label: "谈话", kind: "talk" },
+      {
+        id: "npc-interaction:gift",
+        label: "送礼",
+        kind: "gift",
+        disabled: true,
+      },
+    ],
+  };
+  const html = renderNpcInteractionMenu(menu);
+
+  assert.match(html, /data-npc-menu="interaction"/);
+  assert.match(html, /data-npc-action="special"/);
+  assert.match(html, /data-house-action="tea:ask-intel"/);
+  assert.match(html, /data-npc-action="profile"/);
+  assert.match(html, /data-character-id="char\.tea"/);
+  assert.match(html, /disabled/);
+});
+
+test("global NPC default talk renders visible dialogue and close clears the session", () => {
+  const {
+    chooseNpcDefaultTalk,
+    closeNpcInteraction,
+    openNpcInteraction,
+  } = require("../.test-dist/application/app-actions.js");
+  const {
+    renderNpcInteractionDialogue,
+  } = require("../.test-dist/ui/components/npc-interaction/npc-interaction-menu.js");
+  const baseGameState = createBaseState();
+  const baseAppState = {
+    ...createRuntimeState(baseGameState).app,
+    gameState: baseGameState,
+  };
+  const opened = openNpcInteraction(
+    baseAppState,
+    { type: "house", houseId: "house.tea", moduleId: "tea-house" },
+    "char.tea"
+  );
+  const talked = chooseNpcDefaultTalk(opened, "char.tea");
+  const html = renderNpcInteractionDialogue({
+    session: talked.gameState.ui.npcInteractionSession,
+    targetName: "茶博士",
+  });
+  const closed = closeNpcInteraction(talked);
+
+  assert.match(html, /data-npc-dialogue="default-talk"/);
+  assert.match(html, /茶博士/);
+  assert.match(html, /谈话/);
+  assert.match(html, /data-npc-action="close"/);
+  assert.match(html, /data-npc-action="continue"/);
+  assert.equal(closed.gameState.ui.npcInteractionSession, null);
+});
+
+test("global NPC interaction main has a generic blocked open guard", () => {
+  const mainSource = fs.readFileSync(
+    path.join(process.cwd(), "src", "main.ts"),
+    "utf8"
+  );
+  const npcTargetBlock =
+    mainSource.match(
+      /const npcTargetButton = targetElement\.closest[\s\S]*?const npcActionButton =/
+    )?.[0] ?? "";
+
+  assert.match(npcTargetBlock, /isNpcInteractionBlocked/);
+  assert.match(npcTargetBlock, /selectNpcInteractionBlockState/);
+  assert.doesNotMatch(npcTargetBlock, /tea-house|medicine-house|market-house|tavern|leader-residence/);
+});
+
+test("global NPC interaction renderer escapes menu text and attributes", () => {
+  const {
+    renderNpcInteractionMenu,
+  } = require("../.test-dist/ui/components/npc-interaction/npc-interaction-menu.js");
+  const menu = {
+    type: "npc-interaction-menu",
+    context: { type: "house", houseId: "house.tea", moduleId: "tea-house" },
+    targetCharacterId: 'char."tea<&',
+    targetName: '茶"博士<&',
+    options: [
+      {
+        id: 'tea:"ask<&',
+        label: '打听 "</button><script>&',
+        kind: "special",
+      },
+      {
+        id: "npc-interaction:profile",
+        label: '角色情报 "<img>&',
+        kind: 'profile" data-broken="<&',
+      },
+    ],
+  };
+  const html = renderNpcInteractionMenu(menu);
+
+  assert.match(html, /aria-label="茶&quot;博士&lt;&amp;"/);
+  assert.match(html, />\s*茶&quot;博士&lt;&amp;\s*</);
+  assert.match(html, /data-house-action="tea:&quot;ask&lt;&amp;"/);
+  assert.match(
+    html,
+    /data-npc-action="profile&quot; data-broken=&quot;&lt;&amp;"/
+  );
+  assert.match(html, /data-character-id="char\.&quot;tea&lt;&amp;"/);
+  assert.match(html, /打听 &quot;&lt;\/button&gt;&lt;script&gt;&amp;/);
+  assert.match(html, /角色情报 &quot;&lt;img&gt;&amp;/);
+  assert.doesNotMatch(html, /aria-label="茶"博士</);
+  assert.doesNotMatch(html, /data-house-action="tea:"ask/);
+  assert.doesNotMatch(html, / data-broken="/);
+  assert.doesNotMatch(html, /data-character-id="char\."tea/);
+  assert.doesNotMatch(html, /<\/button><script>/);
+  assert.doesNotMatch(html, /<img>/);
+});
+
+test("global NPC interaction house roster escapes dynamic target and context attributes", () => {
+  const {
+    renderHouseStandbyRoster,
+  } = require("../.test-dist/ui/views/house/house-shared-view.js");
+  const html = renderHouseStandbyRoster({
+    moduleId: 'tea-house" data-broken="<&',
+    houseId: 'house."tea<&',
+    sceneTitle: "test",
+    standbyRoster: [
+      {
+        characterId: 'char."tea<&',
+        name: '茶"博士<&',
+        title: '掌柜"<&',
+        actionId: 'open:"<&',
+      },
+    ],
+    dialogue: null,
+    actionContainer: null,
+    statusCard: null,
+    overlay: null,
+    leaveAction: { id: "leave-house", label: "离开" },
+  });
+
+  assert.match(html, /data-npc-target="char\.&quot;tea&lt;&amp;"/);
+  assert.match(html, /data-house-id="house\.&quot;tea&lt;&amp;"/);
+  assert.match(
+    html,
+    /data-house-module-id="tea-house&quot; data-broken=&quot;&lt;&amp;"/
+  );
+  assert.match(html, /data-house-action="open:&quot;&lt;&amp;"/);
+  assert.match(html, /data-npc-context="\{&quot;type&quot;:&quot;house&quot;/);
+  assert.doesNotMatch(html, /data-npc-target="char\."tea/);
+  assert.doesNotMatch(html, /data-house-id="house\."tea/);
+  assert.doesNotMatch(html, / data-broken="/);
+  assert.doesNotMatch(html, /data-house-action="open:"/);
+});
+
+test("global NPC interaction house special action dispatch clears the active NPC session", () => {
+  const {
+    createHouseRuntimeBridge,
+    dispatchHouseRuntimeRequest,
+  } = require("../.test-dist/core/runtime/house-runtime.js");
+  const baseState = createBaseState();
+  const enterResult = teaHouseHouseModule.enter({
+    gameState: baseState,
+    characterDefinitions: prototypeCharacters,
+    houseDefinition: teaHouse,
+    playerCharacterId,
+  });
+  let appState = {
+    ...createRuntimeState(baseState).app,
+    gameState: {
+      ...enterResult.gameState,
+      world: {
+        ...enterResult.gameState.world,
+        currentHouseId: teaHouse.id,
+      },
+      ui: {
+        ...enterResult.gameState.ui,
+        currentView: "house",
+        houseSession: {
+          moduleId: "tea-house",
+          state: enterResult.sessionState,
+        },
+        npcInteractionSession: createNpcInteractionSession(
+          { type: "house", houseId: teaHouse.id, moduleId: "tea-house" },
+          teaHouse.defaultCharacterId
+        ),
+      },
+    },
+    characterDefinitions: enterResult.characterDefinitions,
+  };
+  const runtime = createHouseRuntimeBridge({
+    getAppState: () => appState,
+    setAppState: (nextAppState) => {
+      appState = nextAppState;
+    },
+    renderApp: () => {},
+    startMapAutoAdvance: () => {},
+    stopMapAutoAdvance: () => {},
+    houseDefinitions: prototypeHouses,
+    playerCharacterId,
+    eventDefinitionsById: {},
+    sceneDefinitionsById: {},
+    syncCouncilPriorityAfterGameStateChange: () => false,
+  });
+
+  dispatchHouseRuntimeRequest(runtime, {
+    type: "action",
+    actionId: "inquire",
+  });
+
+  assert.equal(appState.gameState.ui.npcInteractionSession, null);
+  assert.equal(appState.gameState.ui.houseSession?.moduleId, "tea-house");
+});
+
+test("global NPC default talk opens dialogue without mutating runtime state", () => {
+  const {
+    chooseNpcDefaultTalk,
+    openNpcInteraction,
+  } = require("../.test-dist/application/app-actions.js");
+  const baseGameState = createBaseState();
+  const baseAppState = {
+    ...createRuntimeState(baseGameState).app,
+    gameState: baseGameState,
+  };
+  const opened = openNpcInteraction(
+    baseAppState,
+    { type: "house", houseId: "house.tea", moduleId: "tea-house" },
+    "char.tea"
+  );
+  const talked = chooseNpcDefaultTalk(opened, "char.tea");
+
+  assert.equal(talked.gameState.ui.npcInteractionSession?.mode, "dialogue");
+  assert.deepEqual(
+    talked.gameState.runtime.variables,
+    baseGameState.runtime.variables
+  );
+  assert.deepEqual(
+    talked.gameState.runtime.flags,
+    baseGameState.runtime.flags
+  );
+});
+
+test("global NPC interaction tavern actor contributes service special actions above defaults", () => {
+  const enterResult = tavernHouseModule.enter({
+    gameState: createBaseState(),
+    characterDefinitions: prototypeCharacters,
+    houseDefinition: tavernHouse,
+    playerCharacterId,
+  });
+  const openResult = tavernHouseModule.dispatch({
+    gameState: enterResult.gameState,
+    characterDefinitions: enterResult.characterDefinitions,
+    houseDefinition: tavernHouse,
+    playerCharacterId,
+    sessionState: enterResult.sessionState,
+    request: { type: "action", actionId: "advance-greeting" },
+  });
+  const viewModel = tavernHouseModule.selectViewModel({
+    gameState: openResult.gameState,
+    characterDefinitions: openResult.characterDefinitions,
+    houseDefinition: tavernHouse,
+    playerCharacterId,
+    sessionState: openResult.sessionState,
+  });
+  const actor = viewModel.standbyRoster[0];
+  const menu = selectNpcInteractionMenu({
+    session: createNpcInteractionSession(
+      { type: "house", houseId: tavernHouse.id, moduleId: "tavern" },
+      actor.characterId
+    ),
+    targetName: actor.name,
+    specialActions: actor.interactionActions,
+  });
+
+  assert.deepEqual(
+    menu.options.slice(0, 3).map((option) => option.id),
+    ["open-work", "order-drink", "open-gamble"]
+  );
+  assert.deepEqual(
+    menu.options.slice(0, 3).map((option) => option.label),
+    ["工作", "喝酒", "赌博"]
+  );
+  assert.equal(menu.options[3].id, NPC_INTERACTION_DEFAULT_OPTION_IDS.profile);
 });
 
 test("primary house actor appears first in temple daily roster during greeting", () => {
@@ -8979,7 +9631,11 @@ test("medicine house greeting flow opens actions after advance", () => {
     sessionState: openResult.sessionState,
   });
 
-  assert.equal(viewModel.actionContainer?.actions.length, 5);
+  assert.equal(viewModel.actionContainer?.actions.length, 4);
+  assert.equal(
+    viewModel.actionContainer?.actions.some((action) => action.id === "talk"),
+    false
+  );
 });
 
 test("medicine house heal and buy update fatigue inventory and gold", () => {
@@ -10690,7 +11346,7 @@ test("child 14 activity qte result close routes through interactive runtime exit
     "utf8"
   );
   const closeActivityResultBlock = source.match(
-    /function closeCurrentActivityResult\(\)[\s\S]*?\n}\n/
+    /function closeCurrentActivityResult\(\)(?:: void)? \{[\s\S]*?\r?\n}\r?\n/
   )?.[0] ?? "";
 
   assert.doesNotMatch(source, /clearActivityResult/);
@@ -10882,7 +11538,7 @@ test("interactive covered main write-back paths use shared runtime commit helper
     "utf8"
   );
   const onBeggingGameCompleteBlock = source.match(
-    /function onBeggingGameComplete[\s\S]*?\n}\n/
+    /function onBeggingGameComplete[\s\S]*?\r?\n}\r?\n/
   )?.[0] ?? "";
   const syncCityBeggingMiniGamePointerBlock = source.match(
     /function syncCityBeggingMiniGamePointer\(clientX: number\): void \{[\s\S]*?\r?\n}\r?\n\r?\nfunction tickCityBeggingMiniGame/
@@ -11822,7 +12478,7 @@ test("save restore re-activates selected mod through mod runtime", () => {
 test("child 22 restore path can reload imported mod sources after a fresh page load", () => {
   const source = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
   const restoreBlock = source.match(
-    /async function restoreModFromSave\([\s\S]*?\n}\n/
+    /async function restoreModFromSave\([\s\S]*?\r?\n}\r?\n/
   )?.[0] ?? "";
 
   assert.match(source, /selectedModSource/);
@@ -11840,7 +12496,7 @@ test("child 22 restore path can reload imported mod sources after a fresh page l
 test("child 22 continue path does not overwrite a restored mod by re-entering builtin startup", () => {
   const source = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
   const continueBlock = source.match(
-    /function startContinueGameWithLoading\(selectedCharacter: CharacterDefinition\): void \{[\s\S]*?\n}\n/
+    /function startContinueGameWithLoading\(selectedCharacter: CharacterDefinition\): void \{[\s\S]*?\r?\n}\r?\n/
   )?.[0] ?? "";
 
   assert.match(continueBlock, /loadSaveData\(\)/);
@@ -13677,6 +14333,23 @@ test("child 34 removes only the obsolete interactive launch helper while keeping
   assert.match(mainSource, /interactive\.city-begging\.complete/);
   assert.match(mainSource, /interactive\.activity-qte\.tick/);
   assert.doesNotMatch(mainSource, /interactive\.story-battle\.action/);
+});
+
+test("global NPC interaction does not add concrete house business branches to main", () => {
+  const mainSource = fs.readFileSync(
+    path.join(process.cwd(), "src", "main.ts"),
+    "utf8"
+  );
+
+  assert.doesNotMatch(
+    mainSource,
+    /isTeaHouse|isMarketHouse|isMedicineHouse|isTavern|isLeaderResidence/
+  );
+  assert.doesNotMatch(mainSource, /moduleId\s*===\s*["']tea-house["']/);
+  assert.doesNotMatch(mainSource, /moduleId\s*===\s*["']market-house["']/);
+  assert.doesNotMatch(mainSource, /moduleId\s*===\s*["']medicine-house["']/);
+  assert.doesNotMatch(mainSource, /moduleId\s*===\s*["']tavern["']/);
+  assert.match(mainSource, /data-npc-action/);
 });
 
 test("campaign coordinate travel builds a multi-step adjacent hex path", () => {

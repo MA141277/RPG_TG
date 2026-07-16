@@ -27,6 +27,16 @@ import type { ValuableItemDefinition } from "../domain/valuable-item";
 import { assertExists } from "../shared/assert";
 import { renderConfirmModal } from "./components/modal/confirm-modal";
 import {
+  renderNpcInteractionDialogue,
+  renderNpcInteractionMenu,
+} from "./components/npc-interaction/npc-interaction-menu";
+import {
+  isNpcInteractionBlocked,
+  selectNpcInteractionBlockState,
+  selectHouseNpcSpecialActions,
+  selectNpcInteractionMenu,
+} from "../application/npc-interaction/npc-interaction";
+import {
   createGlobalPlayerPanelModel,
   renderGlobalPlayerPanel,
 } from "./panels/global-player-panel";
@@ -79,6 +89,22 @@ function getPlayerCharacter(
     `Player character not found for id "${playerCharacterId}".`
   );
   return playerCharacter;
+}
+
+function getDetailCharacter(
+  appState: AppState,
+  playerCharacter: CharacterDefinition
+): CharacterDefinition {
+  const detailCharacterId = appState.gameState.ui.detailCharacterId;
+  if (detailCharacterId == null) {
+    return playerCharacter;
+  }
+
+  return (
+    appState.characterDefinitions.find(
+      (characterDefinition) => characterDefinition.id === detailCharacterId
+    ) ?? playerCharacter
+  );
 }
 
 function resolveEquippedItemName(
@@ -155,9 +181,10 @@ function renderOverlay(input: AppRenderInput, playerCharacter: CharacterDefiniti
   const overlayView = input.presenterOutput.overlay.overlayView;
 
   if (overlayView === "detail") {
+    const detailCharacter = getDetailCharacter(input.appState, playerCharacter);
     return renderCharacterDetailView(
-      playerCharacter,
-      buildCharacterDetailOptions(input, playerCharacter)
+      detailCharacter,
+      buildCharacterDetailOptions(input, detailCharacter)
     );
   }
 
@@ -224,6 +251,53 @@ function renderModal(
     portraitLabel: cityPortraits[modalState.cityId] ?? modalState.cityName,
     portraitImageUrl: null,
   });
+}
+
+function renderNpcInteractionOverlay(input: AppRenderInput): string {
+  const session = input.appState.gameState.ui.npcInteractionSession;
+  const stage = input.presenterOutput.stage;
+  const specialActions =
+    session?.context.type === "house" &&
+    stage.type === "house" &&
+    stage.moduleViewModel != null
+      ? selectHouseNpcSpecialActions({
+          actors: stage.moduleViewModel.standbyRoster,
+          targetCharacterId: session.targetCharacterId,
+        })
+      : [];
+  const targetName =
+    session == null
+      ? null
+      : input.appState.characterDefinitions.find(
+          (characterDefinition) =>
+            characterDefinition.id === session.targetCharacterId
+        )?.name ?? null;
+
+  return renderNpcInteractionMenu(
+    selectNpcInteractionMenu({
+      session,
+      targetName,
+      specialActions,
+      giftDisabled: true,
+    })
+  ) + renderNpcInteractionDialogue({ session, targetName });
+}
+
+function applyHouseNpcInteractionBlockedState(
+  viewModel: HouseModuleViewModel,
+  blocked: boolean
+): HouseModuleViewModel {
+  if (!blocked) {
+    return viewModel;
+  }
+
+  return {
+    ...viewModel,
+    standbyRoster: viewModel.standbyRoster.map((actor) => ({
+      ...actor,
+      disabled: true,
+    })),
+  };
 }
 
 function resolveMapEntryVisualKind(
@@ -422,9 +496,24 @@ function renderStage(
 
   if (stage.type === "house") {
     if (stage.moduleViewModel != null) {
+      const npcInteractionBlocked = isNpcInteractionBlocked(
+        selectNpcInteractionBlockState({
+          overlayView: input.presenterOutput.overlay.overlayView,
+          modalState: input.presenterOutput.overlay.modalState,
+          locationDialogueState:
+            input.presenterOutput.overlay.locationDialogueState,
+          houseOverlay: stage.moduleViewModel.overlay,
+          houseDialogue: stage.moduleViewModel.dialogue,
+          beggingMiniGameState: input.appState.beggingMiniGameState,
+          activitySession: input.appState.gameState.runtime.activitySession,
+        })
+      );
       return renderHouseModuleView(
         withResolvedHousePortraits(
-          stage.moduleViewModel,
+          applyHouseNpcInteractionBlockedState(
+            stage.moduleViewModel,
+            npcInteractionBlocked
+          ),
           input.appState.characterDefinitions
         )
       );
@@ -532,6 +621,7 @@ export function renderApp(input: AppRenderInput): string {
               input.mapDefinition,
               input.cityDefinitions ?? []
             )}
+            ${renderNpcInteractionOverlay(input)}
             ${renderCityBeggingMiniGameOverlay(input.appState.beggingMiniGameState)}
             ${renderOverlay(input, playerCharacter)}
             ${renderLayoutEditor(input.appState)}

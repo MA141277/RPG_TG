@@ -10,12 +10,12 @@
 
 ## Execution State
 
-- Status: `waiting`
+- Status: `completed-but-open`
 - Last Updated: `2026-07-16`
-- Current Focus: `Plan authored for Phase 1 global NPC interaction; implementation has not started.`
-- Next Step: `Choose Subagent-Driven or Inline Execution, then mark this plan running and start Task 1.`
-- Verification: `npm run lint:plans passed for 59 files`
-- Notes: `Do not mark this plan closed without structured closeout, project-progress sync, and remote push success.`
+- Current Focus: `Implementation and final review fixes complete; closeout, project-progress sync, and push remain.`
+- Next Step: `Prepare structured child closeout after remote push succeeds.`
+- Verification: `npm run typecheck; npm test; npm run build; npm run lint:plans passed on 2026-07-16`
+- Notes: `Do not mark closed until project-progress sync and push success are recorded.`
 
 ## Progress Log
 
@@ -23,6 +23,38 @@
   - Summary: `Created the Phase 1 implementation plan for global NPC interaction.`
   - Verification: `npm run lint:plans passed for 59 files`
   - Next: `Choose an execution mode, then mark this plan running and start Task 1.`
+- 2026-07-16
+  - Summary: `Repaired four pre-existing robustness structural guards so Windows CRLF line endings and current TypeScript function return annotations do not make the baseline suite fail before NPC work starts.`
+  - Verification: `npm test passed for 306 tests`
+  - Next: `Start Task 1 with subagent-driven development.`
+- 2026-07-16
+  - Summary: `Completed Task 1 domain types and pure NPC interaction selectors; task review approved with no findings.`
+  - Verification: `Implementer reported npm test passed for 309 tests and npm run typecheck passed; reviewer approved diff 0dbab8cd..bd3ad85b.`
+  - Next: `Start Task 2 character detail targeting.`
+- 2026-07-16
+  - Summary: `Completed Task 2 character detail targeting; task review approved with one Minor scope-hygiene note about an SDD report artifact.`
+  - Verification: `Implementer reported npm run typecheck and npm test passed; reviewer approved diff 3ad1f1d8..387de08a.`
+  - Next: `Start Task 3 global NPC menu renderer and action handling.`
+- 2026-07-16
+  - Summary: `Completed Task 3 global NPC menu renderer and action handling; fixed reviewer-found HTML escaping risk and passed re-review.`
+  - Verification: `Implementer reported npm test and npm run typecheck passed; fix reported focused escaping test and npm run typecheck passed; reviewer approved diff 88810ea6..e2af8ea8.`
+  - Next: `Start Task 4 house roster integration and special action delegation.`
+- 2026-07-16
+  - Summary: `Completed Task 4 house roster integration and special action delegation; fixed reviewer-found roster context wiring and NPC session cleanup issues.`
+  - Verification: `Implementer reported npm test and npm run typecheck passed; fix reported focused global NPC tests and npm run typecheck passed; reviewer approved diff 47e34913..a02bf9f1.`
+  - Next: `Start Task 5 gift empty state and documentation.`
+- 2026-07-16
+  - Summary: `Completed Task 5 gift empty state and documentation; task review approved with no findings.`
+  - Verification: `Implementer reported focused global NPC/gift/detail tests, npm run lint:plans, npm run typecheck, and git diff --check passed; reviewer approved diff 51db1a05..6dc83668.`
+  - Next: `Start Task 6 final verification and main boundary guard.`
+- 2026-07-16
+  - Summary: `Completed Phase 1 global NPC interaction implementation.`
+  - Verification: `npm run typecheck; npm test; npm run build; npm run lint:plans`
+  - Next: `Sync project-progress, push, and add structured closeout.`
+- 2026-07-16
+  - Summary: `Completed final whole-branch review fixes for default talk dialogue, blocked NPC pool input, legacy visible talk entries, tavern special actions, and leader residence gift safety.`
+  - Verification: `npm run typecheck passed; npm test passed for 327 tests; npm run build passed with existing Vite warnings; npm run lint:plans passed for 59 files.`
+  - Next: `Sync project-progress, push, and add structured closeout.`
 
 ---
 
@@ -157,7 +189,7 @@
 - Produces: `adaptHouseRosterToNpcPool(input): NpcPoolViewModel`.
 - Produces: `isNpcInteractionBlocked(input): boolean`.
 
-- [ ] **Step 1: Write failing selector tests**
+- [x] **Step 1: Write failing selector tests**
 
 Append these imports near the top of `tests/robustness.test.cjs` after existing house imports:
 
@@ -228,7 +260,7 @@ test("global NPC interaction adapts house standby roster into reusable NPC pool"
 });
 ```
 
-- [ ] **Step 2: Run the tests and verify they fail**
+- [x] **Step 2: Run the tests and verify they fail**
 
 Run:
 
@@ -242,7 +274,7 @@ Expected:
 - `npm run build:test` fails because `src/application/npc-interaction/npc-interaction.ts` does not exist, or
 - the focused node test fails with `Cannot find module '../.test-dist/application/npc-interaction/npc-interaction.js'`.
 
-- [ ] **Step 3: Add domain types**
+- [x] **Step 3: Add domain types**
 
 Create `src/domain/npc-interaction.ts`:
 
@@ -318,7 +350,7 @@ Modify `src/application/state/create-initial-state.ts` inside `ui`:
       npcInteractionSession: null,
 ```
 
-- [ ] **Step 4: Add pure selector implementation**
+- [x] **Step 4: Add pure selector implementation**
 
 Create `src/application/npc-interaction/npc-interaction.ts`:
 
@@ -426,7 +458,7 @@ export function isNpcInteractionBlocked(input: {
 }
 ```
 
-- [ ] **Step 5: Run focused tests**
+- [x] **Step 5: Run focused tests**
 
 Run:
 
@@ -440,7 +472,7 @@ Expected:
 - `npm run build:test` exits `0`.
 - Focused test output reports the three new `global NPC interaction` tests as passing.
 
-- [ ] **Step 6: Commit Task 1**
+- [x] **Step 6: Commit Task 1**
 
 Run:
 
@@ -464,7 +496,7 @@ git commit -m "feat: add npc interaction contract"
 - Produces: `openCharacterDetail(appState, characterId): AppState`.
 - Produces: `closeGlobalOverlay(appState): AppState`.
 
-- [ ] **Step 1: Write failing tests for detail target actions**
+- [x] **Step 1: Write failing tests for detail target actions**
 
 Add imports:
 
@@ -527,7 +559,7 @@ test("closing global overlay clears the arbitrary character detail target", () =
 });
 ```
 
-- [ ] **Step 2: Run tests and verify they fail**
+- [x] **Step 2: Run tests and verify they fail**
 
 Run:
 
@@ -540,7 +572,7 @@ Expected:
 
 - Failure reports missing `openCharacterDetail`, `openPlayerDetail`, or `closeGlobalOverlay`.
 
-- [ ] **Step 3: Implement detail action helpers**
+- [x] **Step 3: Implement detail action helpers**
 
 Modify `src/application/app-actions.ts`:
 
@@ -593,7 +625,7 @@ export function closeGlobalOverlay(appState: AppState): AppState {
 
 Keep `updateOverlayView()` for existing callers, but switch player-detail and close-overlay handlers to these explicit helpers.
 
-- [ ] **Step 4: Render selected detail character**
+- [x] **Step 4: Render selected detail character**
 
 Modify `src/ui/app-render.ts`:
 
@@ -627,7 +659,7 @@ Use it in `renderOverlay()`:
   }
 ```
 
-- [ ] **Step 5: Update generic main handlers**
+- [x] **Step 5: Update generic main handlers**
 
 Modify imports in `src/main.ts` from `src/application/app-actions.ts` to include:
 
@@ -664,7 +696,7 @@ Add a generic NPC detail handler:
 
 This handler is generic and must not inspect house ids, module ids, or NPC ids.
 
-- [ ] **Step 6: Run focused tests**
+- [x] **Step 6: Run focused tests**
 
 Run:
 
@@ -677,7 +709,7 @@ Expected:
 
 - Focused tests pass.
 
-- [ ] **Step 7: Commit Task 2**
+- [x] **Step 7: Commit Task 2**
 
 Run:
 
@@ -704,7 +736,7 @@ git commit -m "feat: target character detail overlays"
 - Produces: `closeNpcInteraction(appState): AppState`.
 - Produces: `chooseNpcDefaultTalk(appState, targetCharacterId): AppState`.
 
-- [ ] **Step 1: Write failing renderer and state tests**
+- [x] **Step 1: Write failing renderer and state tests**
 
 Append tests:
 
@@ -758,7 +790,7 @@ test("global NPC default talk opens dialogue without mutating runtime state", ()
 });
 ```
 
-- [ ] **Step 2: Run tests and verify they fail**
+- [x] **Step 2: Run tests and verify they fail**
 
 Run:
 
@@ -771,7 +803,7 @@ Expected:
 
 - Failure reports missing renderer or app action exports.
 
-- [ ] **Step 3: Implement menu renderer**
+- [x] **Step 3: Implement menu renderer**
 
 Create `src/ui/components/npc-interaction/npc-interaction-menu.ts`:
 
@@ -829,7 +861,7 @@ export function renderNpcInteractionMenu(
 }
 ```
 
-- [ ] **Step 4: Implement app action helpers**
+- [x] **Step 4: Implement app action helpers**
 
 Add to `src/application/app-actions.ts`:
 
@@ -897,7 +929,7 @@ export function chooseNpcDefaultTalk(
 }
 ```
 
-- [ ] **Step 5: Render the global menu**
+- [x] **Step 5: Render the global menu**
 
 In `src/ui/app-render.ts`, import:
 
@@ -937,7 +969,7 @@ Render it after `renderModal(...)` and before global full-screen overlays:
             ${renderNpcInteractionOverlay(input)}
 ```
 
-- [ ] **Step 6: Add generic main handlers**
+- [x] **Step 6: Add generic main handlers**
 
 In `src/main.ts`, import:
 
@@ -994,7 +1026,7 @@ Add generic handlers:
 
 If using JSON in a data attribute creates escaping issues, replace `data-npc-context` with explicit `data-npc-context-type`, `data-house-id`, and `data-house-module-id`.
 
-- [ ] **Step 7: Run focused tests**
+- [x] **Step 7: Run focused tests**
 
 Run:
 
@@ -1007,7 +1039,7 @@ Expected:
 
 - Focused tests pass.
 
-- [ ] **Step 8: Commit Task 3**
+- [x] **Step 8: Commit Task 3**
 
 Run:
 
@@ -1035,7 +1067,7 @@ git commit -m "feat: render npc interaction menu"
 - Produces: house roster buttons with generic `data-npc-target` attributes.
 - Produces: special menu actions that continue to dispatch existing `data-house-action` ids.
 
-- [ ] **Step 1: Write failing house integration tests**
+- [x] **Step 1: Write failing house integration tests**
 
 Append tests:
 
@@ -1100,7 +1132,7 @@ test("global NPC interaction removes visible idle small-talk labels from tea and
 });
 ```
 
-- [ ] **Step 2: Run tests and verify they fail**
+- [x] **Step 2: Run tests and verify they fail**
 
 Run:
 
@@ -1114,7 +1146,7 @@ Expected:
 - The roster markup assertion fails because house roster buttons still use only `data-house-action`.
 - The label assertion fails until visible `闲谈` labels are removed.
 
-- [ ] **Step 3: Add interaction actions to house actor view model**
+- [x] **Step 3: Add interaction actions to house actor view model**
 
 Modify `src/domain/house-module.ts`:
 
@@ -1130,7 +1162,7 @@ Add to `HouseStandbyActorViewModel`:
   interactionActions?: NpcInteractionOptionViewModel[];
 ```
 
-- [ ] **Step 4: Render house roster as global NPC targets**
+- [x] **Step 4: Render house roster as global NPC targets**
 
 Modify `src/ui/views/house/house-shared-view.ts` inside `renderHouseStandbyRoster()`:
 
@@ -1142,7 +1174,7 @@ Modify `src/ui/views/house/house-shared-view.ts` inside `renderHouseStandbyRoste
 
 Keep `data-house-action` for compatibility during this phase. If a blocking state disables the actor, add `disabled` from the adapted NPC pool in `app-render.ts` rather than making the house renderer infer state.
 
-- [ ] **Step 5: Select special actions from the active actor**
+- [x] **Step 5: Select special actions from the active actor**
 
 Add to `src/application/npc-interaction/npc-interaction.ts`:
 
@@ -1164,7 +1196,7 @@ export function selectHouseNpcSpecialActions(input: {
 
 Use this in `src/ui/app-render.ts` when `stage.type === "house"` and `stage.moduleViewModel != null` to pass `specialActions` into `selectNpcInteractionMenu()`.
 
-- [ ] **Step 6: Migrate visible basic labels**
+- [x] **Step 6: Migrate visible basic labels**
 
 Modify these action labels:
 
@@ -1178,7 +1210,7 @@ Modify these action labels:
 
 For `market-house`, keep the reducer case for `"small-talk"` if needed for compatibility, but do not expose a visible `闲谈` or `small-talk` special label. If market talk remains visible in the menu, expose it through the global default `谈话`.
 
-- [ ] **Step 7: Add context special actions to module actors**
+- [x] **Step 7: Add context special actions to module actors**
 
 For tea house actor view models, add:
 
@@ -1220,7 +1252,7 @@ interactionActions: [
 
 Do not expose leader residence direct `ACTION_GIFT` in `interactionActions`.
 
-- [ ] **Step 8: Clear NPC session on house transitions**
+- [x] **Step 8: Clear NPC session on house transitions**
 
 Modify `src/application/house/house-runtime.ts` in `enterHouseById()`, `leaveCurrentHouse()`, and `applyMapAutoAdvanceCompletion()` UI patches:
 
@@ -1228,7 +1260,7 @@ Modify `src/application/house/house-runtime.ts` in `enterHouseById()`, `leaveCur
           npcInteractionSession: null,
 ```
 
-- [ ] **Step 9: Run focused house integration tests**
+- [x] **Step 9: Run focused house integration tests**
 
 Run:
 
@@ -1243,7 +1275,7 @@ Expected:
 - Visible label test passes.
 - Selector tests from Task 1 and renderer tests from Task 3 still pass.
 
-- [ ] **Step 10: Commit Task 4**
+- [x] **Step 10: Commit Task 4**
 
 Run:
 
@@ -1265,7 +1297,7 @@ git commit -m "feat: route house rosters through npc interaction"
 - Consumes: `NPC_INTERACTION_DEFAULT_OPTION_IDS.gift`.
 - Produces: disabled or empty-state gift menu behavior with no persistent mutation.
 
-- [ ] **Step 1: Write failing gift safety test**
+- [x] **Step 1: Write failing gift safety test**
 
 Append:
 
@@ -1288,7 +1320,7 @@ test("global NPC gift default is safe when no giftable items exist", () => {
 });
 ```
 
-- [ ] **Step 2: Run test and verify it fails if gift disabled state is missing**
+- [x] **Step 2: Run test and verify it fails if gift disabled state is missing**
 
 Run:
 
@@ -1301,7 +1333,7 @@ Expected:
 
 - The test fails if the gift option is enabled without a giftable inventory path.
 
-- [ ] **Step 3: Keep Phase 1 gift disabled by selector input**
+- [x] **Step 3: Keep Phase 1 gift disabled by selector input**
 
 Ensure all Phase 1 calls to `selectNpcInteractionMenu()` pass:
 
@@ -1311,7 +1343,7 @@ giftDisabled: true,
 
 Do not mutate inventory or favorability from the gift option in Phase 1.
 
-- [ ] **Step 4: Update house contract docs**
+- [x] **Step 4: Update house contract docs**
 
 Add this section to `docs/special-house-interface.md` under `View Model Contract`:
 
@@ -1329,7 +1361,7 @@ The shared menu owns default actions:
 House modules may contribute special actions for the selected actor, but the generic NPC shell must not understand house-specific business rules. Special actions dispatch back through the owning house module lifecycle. Default `谈话` replaces visible `闲谈` labels as the baseline conversation behavior. Default `送礼` must use shared inventory and must not mutate relationship or inventory until an item is selected and confirmed.
 ```
 
-- [ ] **Step 5: Update change log**
+- [x] **Step 5: Update change log**
 
 Add near the top of `docs/change-log.md`:
 
@@ -1341,7 +1373,7 @@ Add near the top of `docs/change-log.md`:
 - Existing visible `闲谈` entry points are normalized toward the default `谈话` action; Phase 1 keeps `送礼` safe until shared gift inventory settlement is implemented.
 ```
 
-- [ ] **Step 6: Run focused tests**
+- [x] **Step 6: Run focused tests**
 
 Run:
 
@@ -1354,7 +1386,7 @@ Expected:
 
 - Focused tests pass.
 
-- [ ] **Step 7: Commit Task 5**
+- [x] **Step 7: Commit Task 5**
 
 Run:
 
@@ -1373,7 +1405,7 @@ git commit -m "docs: document npc interaction contract"
 **Interfaces:**
 - Produces: final evidence that generic handlers do not introduce concrete house/NPC branches.
 
-- [ ] **Step 1: Add boundary regression test**
+- [x] **Step 1: Add boundary regression test**
 
 Append to `tests/robustness.test.cjs`:
 
@@ -1393,7 +1425,7 @@ test("global NPC interaction does not add concrete house business branches to ma
 });
 ```
 
-- [ ] **Step 2: Run full verification**
+- [x] **Step 2: Run full verification**
 
 Run:
 
@@ -1411,7 +1443,7 @@ Expected:
 - `npm run build` exits `0`.
 - `npm run lint:plans` exits `0`.
 
-- [ ] **Step 3: Update plan execution state**
+- [x] **Step 3: Update plan execution state**
 
 Update this plan:
 
@@ -1435,7 +1467,7 @@ Append progress log:
   - Next: `Sync project-progress, push, and add structured closeout.`
 ```
 
-- [ ] **Step 4: Commit Task 6**
+- [x] **Step 4: Commit Task 6**
 
 Run:
 

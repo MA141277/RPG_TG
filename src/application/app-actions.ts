@@ -10,6 +10,11 @@ import type {
   ValuableLibrarySortKey,
 } from "../domain/global-ui";
 import type { ValuableItemId } from "../domain/valuable-item";
+import type { NpcInteractionContext } from "../domain/npc-interaction";
+import {
+  closeNpcInteractionSession,
+  createNpcInteractionSession,
+} from "./npc-interaction/npc-interaction";
 import {
   equipValuableItem,
   getVisibleOwnedCards,
@@ -30,6 +35,108 @@ export function updateOverlayView(
       ui: {
         ...appState.gameState.ui,
         overlayView,
+      },
+    },
+  };
+}
+
+export function openPlayerDetail(appState: AppState): AppState {
+  return {
+    ...appState,
+    gameState: {
+      ...appState.gameState,
+      ui: {
+        ...appState.gameState.ui,
+        overlayView: "detail",
+        detailCharacterId: null,
+      },
+    },
+  };
+}
+
+export function openCharacterDetail(
+  appState: AppState,
+  characterId: string
+): AppState {
+  return {
+    ...appState,
+    gameState: {
+      ...appState.gameState,
+      ui: {
+        ...appState.gameState.ui,
+        overlayView: "detail",
+        detailCharacterId: characterId,
+      },
+    },
+  };
+}
+
+export function closeGlobalOverlay(appState: AppState): AppState {
+  return {
+    ...appState,
+    gameState: {
+      ...appState.gameState,
+      ui: {
+        ...appState.gameState.ui,
+        overlayView: null,
+        detailCharacterId: null,
+      },
+    },
+  };
+}
+
+export function openNpcInteraction(
+  appState: AppState,
+  context: NpcInteractionContext,
+  targetCharacterId: string
+): AppState {
+  return {
+    ...appState,
+    gameState: {
+      ...appState.gameState,
+      ui: {
+        ...appState.gameState.ui,
+        npcInteractionSession: createNpcInteractionSession(
+          context,
+          targetCharacterId
+        ),
+      },
+    },
+  };
+}
+
+export function closeNpcInteraction(appState: AppState): AppState {
+  return {
+    ...appState,
+    gameState: {
+      ...appState.gameState,
+      ui: {
+        ...appState.gameState.ui,
+        npcInteractionSession: closeNpcInteractionSession(),
+      },
+    },
+  };
+}
+
+export function chooseNpcDefaultTalk(
+  appState: AppState,
+  targetCharacterId: string
+): AppState {
+  const session = appState.gameState.ui.npcInteractionSession;
+  if (session == null || session.targetCharacterId !== targetCharacterId) {
+    return appState;
+  }
+
+  return {
+    ...appState,
+    gameState: {
+      ...appState.gameState,
+      ui: {
+        ...appState.gameState.ui,
+        npcInteractionSession: {
+          ...session,
+          mode: "dialogue",
+        },
       },
     },
   };

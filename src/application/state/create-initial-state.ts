@@ -69,6 +69,7 @@ export function createInitialState(input: InitialStateInput): GameState {
     ui: {
       visiblePanels: ["player-card", "main-mission", "notifications"],
       pinnedCharacterId: input.pinnedCharacterId,
+      detailCharacterId: null,
       activeMissionId: null,
       reviewDateText: input.reviewDateText,
       mainHouseMissionText: input.mainHouseMissionText,
@@ -78,6 +79,7 @@ export function createInitialState(input: InitialStateInput): GameState {
       valuableLibrarySortKey: "name",
       valuableLibrarySortDirection: "asc",
       houseSession: null,
+      npcInteractionSession: null,
       currentView: input.currentView ?? "map",
     },
     missions: {
