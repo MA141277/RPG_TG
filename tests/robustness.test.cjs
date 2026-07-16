@@ -2528,19 +2528,22 @@ test("campaign terrain WebGL shader uses separate shared animated water texture 
   assert.match(rendererSource, /createCampaignMountainHeightSamples/);
   assert.match(rendererSource, /createNonMountainFlattenedHeightSamples/);
   assert.match(rendererSource, /NON_MOUNTAIN_HEIGHT_FLATTEN_STRENGTH/);
+  assert.match(rendererSource, /createMountainFloorHeightSamples/);
+  assert.match(rendererSource, /MOUNTAIN_FLOOR_DIFFUSION_PASSES/);
   assert.match(rendererSource, /getMountainBoundaryHeightFactor/);
   assert.match(rendererSource, /isMountainHexCell/);
   assert.match(rendererSource, /createMountainHeightAtPoint/);
-  assert.match(rendererSource, /createMountainCellRelief/);
-  assert.match(rendererSource, /createMountainCellSpineRelief/);
-  assert.match(rendererSource, /createMountainCellSpurRelief/);
-  assert.match(rendererSource, /createMountainCellBodyAmount/);
+  assert.match(rendererSource, /terrainBaseAmount \+/);
+  assert.match(rendererSource, /mountainDeltaScale/);
+  assert.match(rendererSource, /sampleMountainPeakFieldAtPoint/);
+  assert.match(rendererSource, /createMountainPeakCenter/);
   assert.match(rendererSource, /getHexLocalMountainFrame/);
   assert.match(rendererSource, /getMountainHeightSourceAmount/);
   assert.match(rendererSource, /sampleMountainErodedFbm/);
   assert.match(rendererSource, /createMountainRangeReliefAtPoint/);
   assert.match(rendererSource, /sampleOrientedMountainRangeRidge/);
-  assert.match(rendererSource, /MOUNTAIN_HEIGHT_RANGE_RIDGE_STRENGTH/);
+  assert.match(rendererSource, /MOUNTAIN_HEIGHT_DELTA_REFERENCE_SCALE/);
+  assert.match(rendererSource, /MOUNTAIN_HEIGHT_PEAK_FIELD_SPACING/);
   assert.match(rendererSource, /const SMOOTH_TERRAIN_MESH_STEP = 1/);
   assert.match(rendererSource, /sampleValueNoiseWithGradient/);
   assert.match(rendererSource, /createMountainRidgeAmount/);
@@ -2549,7 +2552,10 @@ test("campaign terrain WebGL shader uses separate shared animated water texture 
   assert.match(rendererSource, /MOUNTAIN_HEIGHT_SUMMIT_ROUNDING_STRENGTH/);
   assert.doesNotMatch(rendererSource, /MOUNTAIN_HEIGHT_SOURCE_MIN/);
   assert.doesNotMatch(rendererSource, /MOUNTAIN_HEIGHT_SOURCE_MAX/);
-  assert.match(rendererSource, /createEllipticMountainPeak/);
+  assert.doesNotMatch(rendererSource, /createMountainCellRelief/);
+  assert.doesNotMatch(rendererSource, /createMountainCellSpineRelief/);
+  assert.doesNotMatch(rendererSource, /createMountainCellSpurRelief/);
+  assert.doesNotMatch(rendererSource, /createMountainCellBodyAmount/);
   assert.match(rendererSource, /createSmoothBand/);
   assert.match(rendererSource, /valueNoise2d/);
   assert.match(rendererSource, /smoothMountainContinuityHeightPass/);
@@ -2563,10 +2569,18 @@ test("campaign terrain WebGL shader uses separate shared animated water texture 
     rendererSource,
     /nonMountainHeightSamples = createNonMountainFlattenedHeightSamples/
   );
+  assert.match(
+    rendererSource,
+    /mountainFloorHeightSamples = createMountainFloorHeightSamples/
+  );
   assert.match(rendererSource, /heightSamples = createCampaignMountainHeightSamples/);
   assert.match(
     rendererSource,
-    /createCampaignMountainHeightSamples\(\s*nonMountainHeightSamples,/s
+    /createCampaignMountainHeightSamples\(\s*mountainFloorHeightSamples,\s*baseHeightSamples,/s
+  );
+  assert.doesNotMatch(
+    rendererSource,
+    /referenceHeight \+ \(mountainHeight - referenceHeight\)/
   );
   assert.match(
     rendererSource,

@@ -2,6 +2,16 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-16 Campaign Mountain Shape Base/Delta Split
+
+### Changed
+- `campaign-terrain-webgl.ts` 将山体高度生成拆成“山地底面”和“山体增量”：先从非山地陆地高度向山脉格扩散并平滑出 `mountainFloorHeightSamples`，再用 Hex `referenceHeight` 调节山体增量强度和高度上限。
+- 山脉主形状从单 Hex 本地 relief 改为世界空间连续峰场：多个不与六边形对齐的长轴峰体生成连续山体/山脊，山脉格只负责裁剪允许出现山体的区域。
+- 旧的 `createMountainCellRelief` 主路径移除，避免相邻山脉格退回“每个 Hex 一个鼓包”的结构；山脉外边缘仍使用既有边界高度因子压低。
+
+### Impact
+- 该调整只改变 CPU 派生 `heightSamples` 的山体几何形状，不改 shader 雪线、岩石/雪顶材质、通行、寻路、点击、探索、云洞或森林语义。
+
 ## 2026-07-16 Campaign Hex Reference Height Source
 
 ### Changed

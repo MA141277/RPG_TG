@@ -230,17 +230,16 @@ const NON_MOUNTAIN_HEIGHT_FLATTEN_STRENGTH = 0.82;
 const NON_MOUNTAIN_HEIGHT_EDGE_FADE_START = 0.30;
 const NON_MOUNTAIN_HEIGHT_EDGE_FADE_END = 0.50;
 const NON_MOUNTAIN_HEIGHT_SMOOTH_STRENGTH = 0.34;
-const MOUNTAIN_HEIGHT_RIDGE_STRENGTH = 0.078;
-const MOUNTAIN_HEIGHT_CRAG_STRENGTH = 0.018;
-const MOUNTAIN_HEIGHT_RANGE_MASS_STRENGTH = 0.17;
-const MOUNTAIN_HEIGHT_RANGE_RIDGE_STRENGTH = 0.20;
-const MOUNTAIN_HEIGHT_RANGE_SECONDARY_RIDGE_STRENGTH = 0.092;
-const MOUNTAIN_HEIGHT_RANGE_VALLEY_STRENGTH = 0.070;
-const MOUNTAIN_HEIGHT_RANGE_DETAIL_STRENGTH = 0.044;
-const MOUNTAIN_HEIGHT_CELL_MASS_STRENGTH = 0.022;
-const MOUNTAIN_HEIGHT_CELL_RIDGE_STRENGTH = 0.041;
-const MOUNTAIN_HEIGHT_CELL_SPUR_STRENGTH = 0.028;
-const MOUNTAIN_HEIGHT_CELL_CRAG_STRENGTH = 0.006;
+const MOUNTAIN_FLOOR_DIFFUSION_PASSES = 48;
+const MOUNTAIN_FLOOR_SMOOTH_PASSES = 4;
+const MOUNTAIN_HEIGHT_DELTA_MIN = 0.070;
+const MOUNTAIN_HEIGHT_DELTA_REFERENCE_SCALE = 0.28;
+const MOUNTAIN_HEIGHT_BODY_STRENGTH = 0.46;
+const MOUNTAIN_HEIGHT_PEAK_STRENGTH = 0.52;
+const MOUNTAIN_HEIGHT_RIDGE_STRENGTH = 0.32;
+const MOUNTAIN_HEIGHT_VALLEY_STRENGTH = 0.22;
+const MOUNTAIN_HEIGHT_DETAIL_STRENGTH = 0.090;
+const MOUNTAIN_HEIGHT_PEAK_FIELD_SPACING = 1.9;
 const MOUNTAIN_HEIGHT_EDGE_INSET_MIN = 0.18;
 const MOUNTAIN_HEIGHT_EDGE_INSET_MAX = 0.56;
 const MOUNTAIN_HEIGHT_CONTINUITY_BLEND = 0.36;
@@ -1055,8 +1054,14 @@ async function initCampaignTerrainWebGl(
     GRID_ROWS,
     materialSemanticModel
   );
-  const heightSamples = createCampaignMountainHeightSamples(
+  const mountainFloorHeightSamples = createMountainFloorHeightSamples(
     nonMountainHeightSamples,
+    GRID_COLUMNS,
+    GRID_ROWS,
+    materialSemanticModel
+  );
+  const heightSamples = createCampaignMountainHeightSamples(
+    mountainFloorHeightSamples,
     baseHeightSamples,
     GRID_COLUMNS,
     GRID_ROWS,
@@ -4866,14 +4871,270 @@ function smoothNonMountainFlattenedHeightSamples(
   return smoothedHeights;
 }
 
-function createCampaignMountainHeightSamples(
-  referenceHeights: Float32Array,
-  baseHeights: Float32Array,
+function createMountainFloorHeightSamples(
+  heights: Float32Array,
   columns: number,
   rows: number,
   materialSemanticModel: CampaignMaterialSemanticModel
 ): Float32Array {
-  const mountainHeights = new Float32Array(referenceHeights);
+  let floorHeights: Float32Array<ArrayBufferLike> = new Float32Array(heights);
+  let seededSamples = createMountainFloorSeedMask(
+    heights,
+    columns,
+    rows,
+    materialSemanticModel
+  );
+  const fallbackFloorHeight = createMountainFloorFallbackHeight(
+    heights,
+    seededSamples
+  );
+
+  for (let pass = 0; pass < MOUNTAIN_FLOOR_DIFFUSION_PASSES; pass += 1) {
+    const nextHeights: Float32Array<ArrayBufferLike> = new Float32Array(floorHeights);
+    const nextSeededSamples = new Uint8Array(seededSamples);
+    let filledAnySample = false;
+
+    for (let y = 0; y < rows; y += 1) {
+      const v = y / Math.max(rows - 1, 1);
+      for (let x = 0; x < columns; x += 1) {
+        const u = x / Math.max(columns - 1, 1);
+        const point = terrainUvToHexPoint(u, v);
+        const cell = pixelToRoundedHex(point.x, point.y);
+        if (!isMountainHexCell(materialSemanticModel, cell)) {
+          continue;
+        }
+
+        const index = y * columns + x;
+        if (seededSamples[index] === 1) {
+          continue;
+        }
+
+        const neighborHeight = sampleSeededNeighborHeight(
+          floorHeights,
+          seededSamples,
+          columns,
+          rows,
+          x,
+          y
+        );
+        if (neighborHeight == null) {
+          continue;
+        }
+
+        nextHeights[index] = neighborHeight;
+        nextSeededSamples[index] = 1;
+        filledAnySample = true;
+      }
+    }
+
+    floorHeights = nextHeights;
+    seededSamples = nextSeededSamples;
+    if (!filledAnySample) {
+      break;
+    }
+  }
+
+  fillUnseededMountainFloorSamples(
+    floorHeights,
+    seededSamples,
+    fallbackFloorHeight,
+    columns,
+    rows,
+    materialSemanticModel
+  );
+
+  for (let pass = 0; pass < MOUNTAIN_FLOOR_SMOOTH_PASSES; pass += 1) {
+    floorHeights = smoothMountainFloorHeightSamples(
+      floorHeights,
+      columns,
+      rows,
+      materialSemanticModel
+    );
+  }
+
+  return floorHeights;
+}
+
+function createMountainFloorFallbackHeight(
+  heights: Float32Array,
+  seededSamples: Uint8Array
+): number {
+  let seededHeightSum = 0;
+  let seededCount = 0;
+  let fallbackHeightSum = 0;
+  let fallbackCount = 0;
+
+  for (let index = 0; index < heights.length; index += 1) {
+    const height = heights[index] ?? 0;
+    if (!Number.isFinite(height)) {
+      continue;
+    }
+
+    fallbackHeightSum += height;
+    fallbackCount += 1;
+    if (seededSamples[index] === 1) {
+      seededHeightSum += height;
+      seededCount += 1;
+    }
+  }
+
+  if (seededCount > 0) {
+    return seededHeightSum / seededCount;
+  }
+
+  return fallbackCount > 0 ? fallbackHeightSum / fallbackCount : 0;
+}
+
+function fillUnseededMountainFloorSamples(
+  heights: Float32Array,
+  seededSamples: Uint8Array,
+  fallbackFloorHeight: number,
+  columns: number,
+  rows: number,
+  materialSemanticModel: CampaignMaterialSemanticModel
+): void {
+  for (let y = 0; y < rows; y += 1) {
+    const v = y / Math.max(rows - 1, 1);
+    for (let x = 0; x < columns; x += 1) {
+      const u = x / Math.max(columns - 1, 1);
+      const point = terrainUvToHexPoint(u, v);
+      const cell = pixelToRoundedHex(point.x, point.y);
+      if (!isMountainHexCell(materialSemanticModel, cell)) {
+        continue;
+      }
+
+      const index = y * columns + x;
+      if (seededSamples[index] === 1) {
+        continue;
+      }
+
+      heights[index] = fallbackFloorHeight;
+      seededSamples[index] = 1;
+    }
+  }
+}
+
+function createMountainFloorSeedMask(
+  heights: Float32Array,
+  columns: number,
+  rows: number,
+  materialSemanticModel: CampaignMaterialSemanticModel
+): Uint8Array {
+  const seededSamples = new Uint8Array(columns * rows);
+
+  for (let y = 0; y < rows; y += 1) {
+    const v = y / Math.max(rows - 1, 1);
+    for (let x = 0; x < columns; x += 1) {
+      const u = x / Math.max(columns - 1, 1);
+      const point = terrainUvToHexPoint(u, v);
+      const cell = pixelToRoundedHex(point.x, point.y);
+      const index = y * columns + x;
+
+      if (!isLandTerrainSample(materialSemanticModel, u, v)) {
+        seededSamples[index] = 0;
+        continue;
+      }
+
+      if (isMountainHexCell(materialSemanticModel, cell)) {
+        seededSamples[index] = 0;
+        continue;
+      }
+
+      seededSamples[index] = Number.isFinite(heights[index]) ? 1 : 0;
+    }
+  }
+
+  return seededSamples;
+}
+
+function sampleSeededNeighborHeight(
+  heights: Float32Array,
+  seededSamples: Uint8Array,
+  columns: number,
+  rows: number,
+  x: number,
+  y: number
+): number | null {
+  const maxX = Math.max(columns - 1, 0);
+  const maxY = Math.max(rows - 1, 0);
+  let heightSum = 0;
+  let heightWeight = 0;
+
+  for (const sample of SMOOTH_TERRAIN_KERNEL) {
+    const sampleX = clamp(x + sample.x, 0, maxX);
+    const sampleY = clamp(y + sample.y, 0, maxY);
+    const sampleIndex = sampleY * columns + sampleX;
+    if (seededSamples[sampleIndex] !== 1) {
+      continue;
+    }
+
+    heightSum += (heights[sampleIndex] ?? 0) * sample.weight;
+    heightWeight += sample.weight;
+  }
+
+  return heightWeight > 0 ? heightSum / heightWeight : null;
+}
+
+function smoothMountainFloorHeightSamples(
+  heights: Float32Array,
+  columns: number,
+  rows: number,
+  materialSemanticModel: CampaignMaterialSemanticModel
+): Float32Array {
+  const smoothedHeights = new Float32Array(heights);
+  const maxX = Math.max(columns - 1, 0);
+  const maxY = Math.max(rows - 1, 0);
+
+  for (let y = 0; y < rows; y += 1) {
+    const v = y / Math.max(rows - 1, 1);
+    for (let x = 0; x < columns; x += 1) {
+      const u = x / Math.max(columns - 1, 1);
+      const point = terrainUvToHexPoint(u, v);
+      const cell = pixelToRoundedHex(point.x, point.y);
+      if (!isMountainHexCell(materialSemanticModel, cell)) {
+        continue;
+      }
+
+      const outputIndex = y * columns + x;
+      const centerHeight = heights[outputIndex] ?? 0;
+      let heightSum = 0;
+      let landWeight = 0;
+      for (const sample of SMOOTH_TERRAIN_KERNEL) {
+        const sampleX = clamp(x + sample.x, 0, maxX);
+        const sampleY = clamp(y + sample.y, 0, maxY);
+        const sampleU = sampleX / Math.max(columns - 1, 1);
+        const sampleV = sampleY / Math.max(rows - 1, 1);
+        if (!isLandTerrainSample(materialSemanticModel, sampleU, sampleV)) {
+          continue;
+        }
+
+        heightSum += (heights[sampleY * columns + sampleX] ?? centerHeight) *
+          sample.weight;
+        landWeight += sample.weight;
+      }
+
+      if (landWeight <= 0) {
+        continue;
+      }
+
+      smoothedHeights[outputIndex] =
+        centerHeight +
+        (heightSum / landWeight - centerHeight) *
+          MOUNTAIN_HEIGHT_CONTINUITY_BLEND;
+    }
+  }
+
+  return smoothedHeights;
+}
+
+function createCampaignMountainHeightSamples(
+  terrainBaseHeights: Float32Array,
+  referenceHeights: Float32Array,
+  columns: number,
+  rows: number,
+  materialSemanticModel: CampaignMaterialSemanticModel
+): Float32Array {
+  const mountainHeights = new Float32Array(terrainBaseHeights);
 
   for (let y = 0; y < rows; y += 1) {
     const v = y / Math.max(rows - 1, 1);
@@ -4891,9 +5152,8 @@ function createCampaignMountainHeightSamples(
         continue;
       }
 
-      const referenceHeight = referenceHeights[index] ?? 0;
-      const baseHeight = baseHeights[index] ?? referenceHeight;
-      const sourceHeight = baseHeight;
+      const terrainBaseHeight = terrainBaseHeights[index] ?? 0;
+      const referenceHeight = referenceHeights[index] ?? terrainBaseHeight;
       const boundaryFactor = getMountainBoundaryHeightFactor(
         materialSemanticModel,
         point,
@@ -4901,19 +5161,18 @@ function createCampaignMountainHeightSamples(
       );
       const mountainHeight = createMountainHeightAtPoint(
         point,
-        cell,
-        sourceHeight,
+        terrainBaseHeight,
+        referenceHeight,
         boundaryFactor
       );
 
-      mountainHeights[index] =
-        referenceHeight + (mountainHeight - referenceHeight) * boundaryFactor;
+      mountainHeights[index] = mountainHeight;
     }
   }
 
   return smoothMountainContinuityHeightPass(
     mountainHeights,
-    referenceHeights,
+    terrainBaseHeights,
     columns,
     rows,
     materialSemanticModel
@@ -4922,7 +5181,7 @@ function createCampaignMountainHeightSamples(
 
 function smoothMountainContinuityHeightPass(
   heights: Float32Array,
-  referenceHeights: Float32Array,
+  terrainBaseHeights: Float32Array,
   columns: number,
   rows: number,
   materialSemanticModel: CampaignMaterialSemanticModel
@@ -4962,11 +5221,11 @@ function smoothMountainContinuityHeightPass(
       }
 
       const centerHeight = heights[outputIndex] ?? 0;
-      const referenceHeight = referenceHeights[outputIndex] ?? centerHeight;
+      const terrainBaseHeight = terrainBaseHeights[outputIndex] ?? centerHeight;
       const smoothHeight = heightSum / landWeight;
       const continuityHeight =
         centerHeight + (smoothHeight - centerHeight) * MOUNTAIN_HEIGHT_CONTINUITY_BLEND;
-      smoothedHeights[outputIndex] = Math.max(referenceHeight, continuityHeight);
+      smoothedHeights[outputIndex] = Math.max(terrainBaseHeight, continuityHeight);
     }
   }
 
@@ -4975,170 +5234,86 @@ function smoothMountainContinuityHeightPass(
 
 function createMountainHeightAtPoint(
   point: { x: number; y: number },
-  cell: GridCoordinate,
-  sourceHeight: number,
+  terrainBaseHeight: number,
+  referenceHeight: number,
   boundaryFactor: number
 ): number {
-  const broadFbm = sampleMountainErodedFbm(
-    point.x * 0.48 + 19.3,
-    point.y * 0.48 - 7.4,
-    5
-  );
-  const ridgeFbm = sampleMountainErodedFbm(
-    point.x * 0.92 - 3.8,
-    point.y * 0.76 + 15.1,
-    5
-  );
-  const crossRidgeFbm = sampleMountainErodedFbm(
-    point.x * 0.68 + point.y * 0.18,
-    point.y * 0.96 - 11.2,
-    4
-  );
-  const cragFbm = sampleMountainErodedFbm(
-    point.x * 2.65 + 31.7,
-    point.y * 2.65 - 24.6,
-    4
-  );
-  const ridge = createMountainRidgeAmount(ridgeFbm.value, 1.38);
-  const crossRidge = createMountainRidgeAmount(crossRidgeFbm.value, 1.82);
-  const crag =
-    Math.pow(cragFbm.value, 2.35) *
-    (1 - clamp(cragFbm.erosionAmount * 0.55, 0, 0.55));
-  const sourceAmount = getMountainHeightSourceAmount(sourceHeight);
-  const referenceBase = sourceAmount;
-  const reliefScale = 0.14 + sourceAmount * 0.54;
+  const terrainBaseAmount = getMountainHeightSourceAmount(terrainBaseHeight);
+  const referenceAmount = getMountainHeightSourceAmount(referenceHeight);
+  const rangeRelief = createMountainRangeReliefAtPoint(point, referenceAmount);
+  const mountainDeltaScale =
+    MOUNTAIN_HEIGHT_DELTA_MIN +
+    referenceAmount * MOUNTAIN_HEIGHT_DELTA_REFERENCE_SCALE;
   const heightCap = clamp(
-    sourceAmount + 0.055 + sourceAmount * 0.22,
-    sourceAmount,
+    terrainBaseAmount + mountainDeltaScale * 1.08,
+    terrainBaseAmount,
     0.94
   );
-  const areaJitter =
-    (valueNoise2d(point.x * 0.18 + 5.2, point.y * 0.18 - 9.8) - 0.5) *
-    (0.010 + sourceAmount * 0.030);
-  const broadRelief =
-    (broadFbm.value - 0.5) *
-    (0.020 + sourceAmount * 0.060) *
-    (1 - clamp(broadFbm.erosionAmount * 0.35, 0, 0.35));
-  const ridgeErosionDamping =
-    1 -
-    clamp(Math.max(ridgeFbm.erosionAmount, crossRidgeFbm.erosionAmount) * 0.34, 0, 0.34);
-  const rangeRelief = createMountainRangeReliefAtPoint(
-    point,
-    sourceAmount,
-    boundaryFactor
-  );
-  const cellRelief = createMountainCellRelief(
-    point,
-    cell,
-    sourceHeight,
-    sourceAmount,
-    boundaryFactor
+  const boundaryAmount = Math.pow(clamp(boundaryFactor, 0, 1), 1.18);
+  const normalizedRelief = clamp(
+    rangeRelief.body * MOUNTAIN_HEIGHT_BODY_STRENGTH +
+      rangeRelief.peak * MOUNTAIN_HEIGHT_PEAK_STRENGTH +
+      rangeRelief.ridge * MOUNTAIN_HEIGHT_RIDGE_STRENGTH -
+      rangeRelief.valley * MOUNTAIN_HEIGHT_VALLEY_STRENGTH +
+      rangeRelief.detail *
+        MOUNTAIN_HEIGHT_DETAIL_STRENGTH *
+        (0.72 + referenceAmount * 0.28),
+    0,
+    1
   );
   const mountainHeight =
-    referenceBase +
-    broadRelief +
-    areaJitter +
-    rangeRelief * reliefScale +
-    Math.max(ridge, crossRidge * 0.74) * MOUNTAIN_HEIGHT_RIDGE_STRENGTH *
-      (0.42 + boundaryFactor * 0.58) *
-      ridgeErosionDamping *
-      reliefScale +
-    crag * MOUNTAIN_HEIGHT_CRAG_STRENGTH * boundaryFactor * reliefScale +
-    cellRelief * reliefScale;
+    terrainBaseAmount +
+    mountainDeltaScale * normalizedRelief * boundaryAmount;
 
   return roundMountainSummitHeight(
-    clamp(mountainHeight, 0, heightCap),
-    sourceAmount,
+    clamp(mountainHeight, terrainBaseAmount, heightCap),
+    terrainBaseAmount,
     heightCap
   );
-}
-
-function createMountainCellRelief(
-  point: { x: number; y: number },
-  cell: GridCoordinate,
-  sourceHeight: number,
-  sourceAmount: number,
-  boundaryFactor: number
-): number {
-  const frame = getHexLocalMountainFrame(point, cell);
-  const angle = seededRandom01(cell.x, cell.y, 3109) * Math.PI;
-  const angleCos = Math.cos(angle);
-  const angleSin = Math.sin(angle);
-  const localX = frame.x * angleCos - frame.y * angleSin;
-  const localY = frame.x * angleSin + frame.y * angleCos;
-  const spine = createMountainCellSpineRelief(localX, localY, cell);
-  const spurs = createMountainCellSpurRelief(localX, localY, cell);
-  const bodyAmount = createMountainCellBodyAmount(
-    localX,
-    localY,
-    spine,
-    spurs
-  );
-  const cragFbm = sampleMountainErodedFbm(
-    point.x * 3.6 + cell.x * 0.37,
-    point.y * 3.6 - cell.y * 0.41,
-    4
-  );
-  const flakeFbm = sampleMountainErodedFbm(
-    point.x * 5.9 - cell.y * 0.23,
-    point.y * 5.4 + cell.x * 0.29,
-    3
-  );
-  const interiorFactor = bodyAmount;
-  const cellStrength = (0.24 + sourceAmount * 0.92 + clamp(sourceHeight, 0, 1) * 0.16) *
-    (0.38 + boundaryFactor * 0.62) *
-    interiorFactor;
-  const mass = bodyAmount * (0.34 + spine * 0.66);
-  const localErosionDamping =
-    1 -
-    clamp(Math.max(cragFbm.erosionAmount, flakeFbm.erosionAmount) * 0.48, 0, 0.48);
-  const brokenRidge = spine * (0.74 + cragFbm.value * 0.20) * localErosionDamping;
-  const crag =
-    Math.pow(Math.max(cragFbm.value, flakeFbm.value * 0.82), 2.45) *
-    localErosionDamping;
-
-  return (
-    mass * MOUNTAIN_HEIGHT_CELL_MASS_STRENGTH +
-    brokenRidge * MOUNTAIN_HEIGHT_CELL_RIDGE_STRENGTH +
-    spurs * MOUNTAIN_HEIGHT_CELL_SPUR_STRENGTH +
-    crag * MOUNTAIN_HEIGHT_CELL_CRAG_STRENGTH
-  ) * cellStrength;
 }
 
 function getMountainHeightSourceAmount(sourceHeight: number): number {
   return clamp(sourceHeight, 0, 1);
 }
 
+type MountainRangeReliefSample = {
+  body: number;
+  peak: number;
+  ridge: number;
+  valley: number;
+  detail: number;
+};
+
 function createMountainRangeReliefAtPoint(
   point: { x: number; y: number },
-  sourceAmount: number,
-  boundaryFactor: number
-): number {
+  referenceAmount: number
+): MountainRangeReliefSample {
   const warpX = sampleMountainErodedFbm(point.x * 0.20 + 13.2, point.y * 0.20 - 4.1, 4);
   const warpY = sampleMountainErodedFbm(point.x * 0.18 - 8.4, point.y * 0.18 + 21.6, 4);
   const warpedPoint = {
-    x: point.x + (warpX.value - 0.5) * 0.80,
-    y: point.y + (warpY.value - 0.5) * 0.80,
+    x: point.x + (warpX.value - 0.5) * 0.62,
+    y: point.y + (warpY.value - 0.5) * 0.62,
   };
+  const peakField = sampleMountainPeakFieldAtPoint(warpedPoint);
   const primary = sampleOrientedMountainRangeRidge(
     warpedPoint,
     -0.54,
-    0.18,
-    1.58,
+    0.12,
+    0.92,
     0
   );
   const secondary = sampleOrientedMountainRangeRidge(
     warpedPoint,
     0.72,
-    0.22,
-    1.34,
+    0.15,
+    0.82,
     37.3
   );
   const cross = sampleOrientedMountainRangeRidge(
     warpedPoint,
     1.18,
-    0.34,
-    1.92,
+    0.22,
+    1.28,
     -19.7
   );
   const valley = sampleOrientedMountainRangeRidge(
@@ -5153,27 +5328,116 @@ function createMountainRangeReliefAtPoint(
     warpedPoint.y * 2.25 - 16.4,
     4
   );
-  const ridgeAmount = Math.max(primary.ridge, secondary.ridge * 0.72);
-  const secondaryAmount = Math.max(cross.ridge * 0.68, secondary.ridge * 0.42);
-  const broadMass = smoothstepRange(
+  const ridgeAmount = Math.max(
+    peakField.ridge,
+    primary.ridge * 0.74,
+    secondary.ridge * 0.66,
+    cross.ridge * 0.42
+  );
+  const broadRangeMass = smoothstepRange(
     0.22,
     0.72,
     ridgeAmount * 0.72 +
-      secondaryAmount * 0.40 +
+      Math.max(cross.ridge, secondary.ridge) * 0.34 +
       (warpX.value + warpY.value) * 0.16
+  );
+  const body = clamp(
+    peakField.body * 0.82 +
+      broadRangeMass * 0.34 +
+      peakField.peak * 0.18,
+    0,
+    1
   );
   const erodedDetail =
     (detailFbm.value - 0.5) *
-    (1 - clamp(detailFbm.erosionAmount * 0.52, 0, 0.52));
-  const exposedAmount = 0.36 + boundaryFactor * 0.64;
+    (1 - clamp(detailFbm.erosionAmount * 0.52, 0, 0.52)) *
+    (0.64 + referenceAmount * 0.36);
 
-  return (
-    broadMass * MOUNTAIN_HEIGHT_RANGE_MASS_STRENGTH +
-    ridgeAmount * MOUNTAIN_HEIGHT_RANGE_RIDGE_STRENGTH +
-    secondaryAmount * MOUNTAIN_HEIGHT_RANGE_SECONDARY_RIDGE_STRENGTH -
-    valley.ridge * MOUNTAIN_HEIGHT_RANGE_VALLEY_STRENGTH +
-    erodedDetail * MOUNTAIN_HEIGHT_RANGE_DETAIL_STRENGTH * (0.64 + sourceAmount * 0.36)
-  ) * exposedAmount;
+  return {
+    body,
+    peak: peakField.peak,
+    ridge: ridgeAmount,
+    valley: valley.ridge * body,
+    detail: erodedDetail,
+  };
+}
+
+type MountainPeakFieldSample = {
+  body: number;
+  peak: number;
+  ridge: number;
+};
+
+function sampleMountainPeakFieldAtPoint(
+  point: { x: number; y: number }
+): MountainPeakFieldSample {
+  const spacing = MOUNTAIN_HEIGHT_PEAK_FIELD_SPACING;
+  const gridX = Math.floor(point.x / spacing);
+  const gridY = Math.floor(point.y / spacing);
+  let body = 0;
+  let peak = 0;
+  let ridge = 0;
+
+  for (let yOffset = -2; yOffset <= 2; yOffset += 1) {
+    for (let xOffset = -2; xOffset <= 2; xOffset += 1) {
+      const peakCellX = gridX + xOffset;
+      const peakCellY = gridY + yOffset;
+      const center = createMountainPeakCenter(peakCellX, peakCellY, spacing);
+      const dx = point.x - center.x;
+      const dy = point.y - center.y;
+      const angleCos = Math.cos(center.angle);
+      const angleSin = Math.sin(center.angle);
+      const axis = dx * angleCos - dy * angleSin;
+      const cross = dx * angleSin + dy * angleCos;
+      const distance = Math.hypot(
+        axis / center.longRadius,
+        cross / center.shortRadius
+      );
+      const cone = Math.pow(clamp(1 - distance, 0, 1), 1.42) * center.amplitude;
+      const shoulder = Math.pow(clamp(1 - distance * 0.58, 0, 1), 2.05) *
+        center.amplitude *
+        0.42;
+      const ridgeBand =
+        createSmoothBand(cross, center.shortRadius * 0.22, center.shortRadius * 0.48) *
+        createSmoothBand(axis, center.longRadius * 0.76, center.longRadius * 0.38) *
+        center.amplitude;
+
+      body = clamp(body + cone * 0.72 + shoulder * 0.34, 0, 1.35);
+      peak = Math.max(peak, cone);
+      ridge = Math.max(ridge, ridgeBand);
+    }
+  }
+
+  return {
+    body: smoothstepRange(0.08, 0.92, body),
+    peak: clamp(peak, 0, 1),
+    ridge: clamp(ridge, 0, 1),
+  };
+}
+
+function createMountainPeakCenter(
+  cellX: number,
+  cellY: number,
+  spacing: number
+): {
+  x: number;
+  y: number;
+  angle: number;
+  longRadius: number;
+  shortRadius: number;
+  amplitude: number;
+} {
+  const jitterX = hash2d(cellX * 3 + 11, cellY * 5 - 17) - 0.5;
+  const jitterY = hash2d(cellX * 7 - 23, cellY * 2 + 31) - 0.5;
+
+  return {
+    x: (cellX + 0.5 + jitterX * 0.82) * spacing,
+    y: (cellY + 0.5 + jitterY * 0.82) * spacing,
+    angle: hash2d(cellX * 13 + 3, cellY * 17 - 9) * Math.PI,
+    longRadius: spacing * (0.74 + hash2d(cellX * 19 - 5, cellY * 23 + 7) * 0.62),
+    shortRadius: spacing * (0.24 + hash2d(cellX * 29 + 1, cellY * 31 - 3) * 0.24),
+    amplitude: 0.72 + hash2d(cellX * 37 - 13, cellY * 41 + 19) * 0.34,
+  };
 }
 
 function sampleOrientedMountainRangeRidge(
@@ -5289,82 +5553,6 @@ function roundMountainSummitHeight(
   return sourceAmount + roundedHeight * heightRange;
 }
 
-function createMountainCellBodyAmount(
-  localX: number,
-  localY: number,
-  spine: number,
-  spurs: number
-): number {
-  const centralMass =
-    createSmoothBand(localX, 0.58, 0.24) *
-    createSmoothBand(localY, 0.34, 0.22);
-  const ridgeBody = clamp(spine * 0.78 + spurs * 0.42 + centralMass * 0.32, 0, 1.15);
-
-  return smoothstepRange(0.08, 0.52, ridgeBody);
-}
-
-function createMountainCellSpineRelief(
-  localX: number,
-  localY: number,
-  cell: GridCoordinate
-): number {
-  const phase = seededRandom01(cell.x, cell.y, 3491) * Math.PI * 2;
-  const bend = (seededRandom01(cell.x, cell.y, 3911) - 0.5) * 0.18;
-  let ridge = 0;
-  let mass = 0;
-
-  for (let index = 0; index < 6; index += 1) {
-    const amount = index / 5;
-    const controlX = -0.62 + amount * 1.24;
-    const jitterX = (seededRandom01(cell.x, cell.y, 4201 + index * 17) - 0.5) * 0.10;
-    const controlY =
-      Math.sin(amount * Math.PI * 1.35 + phase) * 0.12 +
-      (amount - 0.5) * bend +
-      (seededRandom01(cell.x, cell.y, 4507 + index * 23) - 0.5) * 0.10;
-    const width = 0.16 + seededRandom01(cell.x, cell.y, 4813 + index * 29) * 0.055;
-    const segment = createEllipticMountainPeak(
-      localX - controlX - jitterX,
-      localY - controlY,
-      0.23,
-      width
-    );
-    const ridgeCore = Math.pow(segment, 0.84);
-    const amplitude = 0.72 + seededRandom01(cell.x, cell.y, 5101 + index * 31) * 0.42;
-
-    ridge += ridgeCore * amplitude;
-    mass += segment * amplitude;
-  }
-
-  return clamp(clamp(ridge / 2.45, 0, 1.05) * 0.70 + clamp(mass / 4.2, 0, 1) * 0.34, 0, 1.12);
-}
-
-function createMountainCellSpurRelief(
-  localX: number,
-  localY: number,
-  cell: GridCoordinate
-): number {
-  let spur = 0;
-
-  for (let index = 0; index < 4; index += 1) {
-    const anchorAmount = (index + 0.5) / 4;
-    const anchorX = -0.50 + anchorAmount * 1.0;
-    const side = index % 2 === 0 ? -1 : 1;
-    const anchorY =
-      side * (0.10 + seededRandom01(cell.x, cell.y, 5903 + index * 19) * 0.11);
-    const diagonal =
-      (localY - anchorY) * side -
-      Math.abs(localX - anchorX) *
-        (0.48 + seededRandom01(cell.x, cell.y, 6121 + index * 37) * 0.24);
-    const width = 0.075 + seededRandom01(cell.x, cell.y, 6427 + index * 41) * 0.045;
-    const length = createSmoothBand(localX - anchorX, 0.34, 0.20);
-    const ridge = createSmoothBand(diagonal, width, 0.11) * length;
-
-    spur = Math.max(spur, ridge);
-  }
-
-  return spur;
-}
-
 function getHexLocalMountainFrame(
   point: { x: number; y: number },
   cell: GridCoordinate
@@ -5381,19 +5569,6 @@ function getHexLocalMountainFrame(
     y: localY,
     hexRadius: Math.max(Math.abs(axialX), Math.abs(axialY), Math.abs(axialZ)),
   };
-}
-
-function createEllipticMountainPeak(
-  x: number,
-  y: number,
-  radiusX: number,
-  radiusY: number
-): number {
-  const distance =
-    (x * x) / Math.max(radiusX * radiusX, 0.000001) +
-    (y * y) / Math.max(radiusY * radiusY, 0.000001);
-
-  return Math.exp(-distance * 1.35);
 }
 
 function createSmoothBand(value: number, radius: number, feather: number): number {
