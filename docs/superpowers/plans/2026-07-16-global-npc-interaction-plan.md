@@ -12,8 +12,8 @@
 
 - Status: `running`
 - Last Updated: `2026-07-16`
-- Current Focus: `Baseline robustness tests repaired for Windows CRLF structural matching; preparing Task 1 execution.`
-- Next Step: `Start Task 1: Domain Types And Pure NPC Interaction Selectors.`
+- Current Focus: `Task 1 completed and reviewed; preparing Task 2 character detail targeting.`
+- Next Step: `Start Task 2: Character Detail Targeting For Any NPC.`
 - Verification: `npm run lint:plans passed for 59 files; npm test passed for 306 tests`
 - Notes: `Do not mark this plan closed without structured closeout, project-progress sync, and remote push success.`
 
@@ -27,6 +27,10 @@
   - Summary: `Repaired four pre-existing robustness structural guards so Windows CRLF line endings and current TypeScript function return annotations do not make the baseline suite fail before NPC work starts.`
   - Verification: `npm test passed for 306 tests`
   - Next: `Start Task 1 with subagent-driven development.`
+- 2026-07-16
+  - Summary: `Completed Task 1 domain types and pure NPC interaction selectors; task review approved with no findings.`
+  - Verification: `Implementer reported npm test passed for 309 tests and npm run typecheck passed; reviewer approved diff 0dbab8cd..bd3ad85b.`
+  - Next: `Start Task 2 character detail targeting.`
 
 ---
 
@@ -161,7 +165,7 @@
 - Produces: `adaptHouseRosterToNpcPool(input): NpcPoolViewModel`.
 - Produces: `isNpcInteractionBlocked(input): boolean`.
 
-- [ ] **Step 1: Write failing selector tests**
+- [x] **Step 1: Write failing selector tests**
 
 Append these imports near the top of `tests/robustness.test.cjs` after existing house imports:
 
@@ -232,7 +236,7 @@ test("global NPC interaction adapts house standby roster into reusable NPC pool"
 });
 ```
 
-- [ ] **Step 2: Run the tests and verify they fail**
+- [x] **Step 2: Run the tests and verify they fail**
 
 Run:
 
@@ -246,7 +250,7 @@ Expected:
 - `npm run build:test` fails because `src/application/npc-interaction/npc-interaction.ts` does not exist, or
 - the focused node test fails with `Cannot find module '../.test-dist/application/npc-interaction/npc-interaction.js'`.
 
-- [ ] **Step 3: Add domain types**
+- [x] **Step 3: Add domain types**
 
 Create `src/domain/npc-interaction.ts`:
 
@@ -322,7 +326,7 @@ Modify `src/application/state/create-initial-state.ts` inside `ui`:
       npcInteractionSession: null,
 ```
 
-- [ ] **Step 4: Add pure selector implementation**
+- [x] **Step 4: Add pure selector implementation**
 
 Create `src/application/npc-interaction/npc-interaction.ts`:
 
@@ -430,7 +434,7 @@ export function isNpcInteractionBlocked(input: {
 }
 ```
 
-- [ ] **Step 5: Run focused tests**
+- [x] **Step 5: Run focused tests**
 
 Run:
 
@@ -444,7 +448,7 @@ Expected:
 - `npm run build:test` exits `0`.
 - Focused test output reports the three new `global NPC interaction` tests as passing.
 
-- [ ] **Step 6: Commit Task 1**
+- [x] **Step 6: Commit Task 1**
 
 Run:
 
