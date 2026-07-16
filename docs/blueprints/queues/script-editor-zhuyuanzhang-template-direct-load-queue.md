@@ -22,8 +22,8 @@
 - auto_continue_eligible: `false`
 - next_effect: `return-to-version-review`
 - sync_status: `success`
-- sync_scope: `local-record`
-- sync_summary: `Queue truth recorded locally after focused URL/template tests, typecheck, full tests, Blueprint lint, and governance check passed; branch commit/push not yet attempted for this queue.`
+- sync_scope: `baseline-push`
+- sync_summary: `Queue truth committed on codex/mod-first-dev-20260716-sync-worktree, pushed to origin/codex/mod-first-dev-20260716-sync-worktree, and fast-forward pushed to origin/mod-first-dev after focused URL/template tests, typecheck, full tests, Blueprint lint, and governance check passed.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
