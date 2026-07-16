@@ -5,11 +5,11 @@
 - document_role: `version-governor`
 - version_id: `target.script-editor-event-binding-runtime-replacement`
 - version_status: `open`
-- active_phase: `phase.promotion-review`
-- active_queue: `none`
-- decision_state: `promotion-review`
-- next_decision: `same-version-admission-or-version-closeout`
-- next_action: `write-admission-review`
+- active_phase: `phase.active-queue-execution`
+- active_queue: `queue.event-binding-runtime-convergence`
+- decision_state: `active-execution`
+- next_decision: `queue-closeout-or-return-to-version-review`
+- next_action: `resume-active-queue`
 - resume_gate: `open-version-record`
 - post_queue_closeout_pause_policy: `auto-continue`
 - promotion_review_result: `none`
@@ -77,7 +77,7 @@
 | `item.script-editor-event-binding-authoring-ui` | `queue-candidate` | `queue.script-editor-event-binding-authoring-ui` | `closed` | `none` | `Closed on 2026-07-16 after project-level eventBindings save/load, authoring helpers, and selected-event binding UI visibility landed and verified.` |
 | `item.script-editor-event-binding-export-convergence` | `queue-candidate` | `queue.script-editor-event-binding-export-convergence` | `closed` | `none` | `Closed on 2026-07-16 after runtime-pack export wrote triggerless events.json plus event-bindings.json and fail-closed unsupported binding validation landed and verified.` |
 | `item.zhuyuanzhang-event-binding-pack-migration` | `queue-candidate` | `queue.zhuyuanzhang-event-binding-pack-migration` | `closed` | `none` | `Closed on 2026-07-16 after the built-in zhuyuanzhang pack gained event-bindings.json, triggerless events.json, default content exposure, and focused/typecheck/Blueprint verification.` |
-| `item.event-binding-runtime-convergence` | `queue-candidate` | `queue.event-binding-runtime-convergence` | `next-auto-routable` | `admit after queue.zhuyuanzhang-event-binding-pack-migration closeout` | `Implements EventBindingRuntime, TriggerContext call sites, resolver-backed condition evaluation, deterministic selection, activation, occurrence, eventHistory, debug reports, and sub-runtime handoff compatibility.` |
+| `item.event-binding-runtime-convergence` | `queue-candidate` | `queue.event-binding-runtime-convergence` | `admitted` | `close active queue before old runtime retirement` | `Admitted on 2026-07-16 after built-in and exported double-table inputs were verified; implements EventBindingRuntime, TriggerContext call sites, resolver-backed condition evaluation, deterministic selection, activation, occurrence, eventHistory, debug reports, and sub-runtime handoff compatibility.` |
 | `item.old-event-runtime-retirement` | `queue-candidate` | `queue.old-event-runtime-retirement` | `candidate` | `only after EventBindingRuntime verification passes for built-in and exported packs` | `Deletes old events[].trigger/conditions scanning, old evaluator paths, and compatibility shims; adds regression guards.` |
 
 ### Queue Promotion Ledger
@@ -88,7 +88,7 @@
 | `queue.script-editor-event-binding-authoring-ui` | `done-open-residue` | `Closed after implementation and verification on 2026-07-16.` | `Script-editor project data now represents event bodies and project-level eventBindings separately; runtime export/import semantics remain old-shape.` |
 | `queue.script-editor-event-binding-export-convergence` | `done-open-residue` | `Closed after implementation and verification on 2026-07-16.` | `Runtime-pack export now emits triggerless events.json plus event-bindings.json for supported bindings; built-in packs and runtime dispatch remain later work.` |
 | `queue.zhuyuanzhang-event-binding-pack-migration` | `done-open-residue` | `Closed after implementation and verification on 2026-07-16.` | `Built-in zhuyuanzhang default content now exposes event-bindings.json and triggerless event bodies; EventBindingRuntime and old runtime retirement remain later queues.` |
-| `queue.event-binding-runtime-convergence` | `next-auto-routable` | `After built-in zhuyuanzhang double-table pack migration closed.` | `Cuts runtime trigger dispatch to EventBindingRuntime through TriggerContext while preserving scene/task/house/navigation/playable/location-access sub-runtime ownership through runtime-result handoff seams.` |
+| `queue.event-binding-runtime-convergence` | `active` | `Admitted after built-in zhuyuanzhang double-table pack migration closed.` | `Cuts runtime trigger dispatch to EventBindingRuntime through TriggerContext while preserving scene/task/house/navigation/playable/location-access sub-runtime ownership through runtime-result handoff seams.` |
 | `queue.old-event-runtime-retirement` | `candidate` | `After new runtime verification proves built-in and editor-exported packs trigger correctly.` | `Required-final cleanup and guard queue.` |
 
 ### Implementation Order Guard
@@ -196,3 +196,4 @@ The old runtime retirement queue cannot be admitted until step 7 is recorded as 
 - `2026-07-16`: `Closed queue.script-editor-event-binding-export-convergence after focused export tests, typecheck, Blueprint lint, and full npm test passed. Same-family residue is uniquely routed to queue.zhuyuanzhang-event-binding-pack-migration because the built-in zhuyuanzhang pack must include event-bindings.json before EventBindingRuntime cutover.`
 - `2026-07-16`: `Admitted queue.zhuyuanzhang-event-binding-pack-migration as the active queue. Baseline evidence confirmed zhuyuanzhang pack.json does not name eventBindings, events.json still stores trigger/conditions on event bodies, and defaultPackEventBindings is still an empty array.`
 - `2026-07-16`: `Closed queue.zhuyuanzhang-event-binding-pack-migration after focused migration tests, typecheck, Blueprint lint, and full npm test passed. Same-family residue is uniquely routed to queue.event-binding-runtime-convergence because built-in and exported double-table inputs now exist while EventBindingRuntime and old trigger scanning retirement remain unresolved.`
+- `2026-07-16`: `Admitted queue.event-binding-runtime-convergence as the active queue. Baseline evidence confirmed old selectTriggeredEvents, runEventRuntime, and triggerStoryEvents still consume events[].trigger/conditions while active content now exposes eventBindings.`

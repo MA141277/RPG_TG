@@ -5,10 +5,10 @@
 - entry_id: `project-progress.rpg-tg`
 - active_blueprint: `blueprint.rpg-tg`
 - active_version: `target.script-editor-event-binding-runtime-replacement`
-- has_active_queue: `false`
-- active_queue: `none`
-- active_task: `none`
-- next_file: `docs/blueprints/plans/2026-07-16-script-editor-event-binding-runtime-replacement-target-plan.md`
+- has_active_queue: `true`
+- active_queue: `queue.event-binding-runtime-convergence`
+- active_task: `task.event-binding-runtime-convergence.evidence-anchor-reconcile`
+- next_file: `docs/blueprints/queues/event-binding-runtime-convergence-queue.md`
 - entry_action: `open-next-file`
 
 ## Human Context
@@ -39,7 +39,7 @@
 - `Admission history, queue closeout history, and review narrative must stay in the version plan, queue docs, or docs/change-log.md rather than living here as competing current-state prose.`
 - `The pointed version is now the open script-editor event binding runtime replacement record.`
 - `The latest governance action created target.script-editor-event-binding-runtime-replacement from docs/script-editor-event-trigger-binding-design.md after the previous city/building version had already closed.`
-- `queue.zhuyuanzhang-event-binding-pack-migration is closed; resume from the version plan promotion review, where queue.event-binding-runtime-convergence is the next same-family continuation candidate.`
+- `queue.event-binding-runtime-convergence is admitted as the active queue; resume from its evidence-anchor-reconcile task.`
 
 ### Historical References
 
@@ -49,6 +49,7 @@
 - `docs/blueprints/queues/script-editor-event-binding-authoring-ui-queue.md` stores the closed script-editor authoring UI/model queue truth for project-level eventBindings and double-table visibility.
 - `docs/blueprints/queues/script-editor-event-binding-export-convergence-queue.md` stores the active script-editor event binding export convergence queue truth for runtime-pack events.json/event-bindings.json split export.
 - `docs/blueprints/queues/zhuyuanzhang-event-binding-pack-migration-queue.md` stores the active built-in zhuyuanzhang event binding pack migration queue truth.
+- `docs/blueprints/queues/event-binding-runtime-convergence-queue.md` stores the active EventBindingRuntime convergence queue truth.
 - `docs/blueprints/specs/2026-07-16-script-editor-event-binding-runtime-replacement-target.md` stores the target contract for events.json/event-bindings.json split, editor double-table support, built-in zhuyuanzhang migration, EventBindingRuntime cutover with sub-runtime handoff compatibility, and old event runtime retirement.
 - `docs/blueprints/plans/2026-07-16-city-building-definition-location-access-convergence-target-plan.md` stores the closed city/building definition and LocationAccessRuntime convergence version's candidate record, admission truth, routing truth, and closeout truth.
 - `docs/blueprints/queues/script-editor-city-building-definition-restructure-queue.md` stores the closed city/building definition restructure queue truth.
