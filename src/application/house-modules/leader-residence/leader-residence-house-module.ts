@@ -292,16 +292,14 @@ export const leaderResidenceHouseModule: HouseModuleDefinition<"leader-residence
     if (input.request.actionId === ACTION_GIFT) {
       return createTransitionResult(input, {
         sessionState: createAlertState(
-          {
-            ...sessionState,
-            dialogueLines: ["（收下礼物）神色明显和缓。"],
-          },
-          "送礼",
-          [`你向 ${visitedCharacter.name} 奉上一份薄礼。`, "关系上升 2 点。"],
-          "success"
+          sessionState,
+          "\u9001\u793c",
+          [
+            `${visitedCharacter.name} \u6682\u672a\u5f00\u653e\u76f4\u63a5\u6536\u793c\u3002`,
+            "\u9001\u793c\u5c06\u5728\u5171\u4eab\u7269\u54c1\u9009\u62e9\u4e0e\u786e\u8ba4\u6d41\u7a0b\u5b8c\u6210\u540e\u7ed3\u7b97\u3002",
+          ],
+          "warning"
         ),
-        gameState: updateRelationValue(input.gameState, visitedCharacter.id, 2),
-        timeAdvanceCost: 1,
       });
     }
 

@@ -26,8 +26,13 @@ import type { MapDefinition } from "../domain/map";
 import type { ValuableItemDefinition } from "../domain/valuable-item";
 import { assertExists } from "../shared/assert";
 import { renderConfirmModal } from "./components/modal/confirm-modal";
-import { renderNpcInteractionMenu } from "./components/npc-interaction/npc-interaction-menu";
 import {
+  renderNpcInteractionDialogue,
+  renderNpcInteractionMenu,
+} from "./components/npc-interaction/npc-interaction-menu";
+import {
+  isNpcInteractionBlocked,
+  selectNpcInteractionBlockState,
   selectHouseNpcSpecialActions,
   selectNpcInteractionMenu,
 } from "../application/npc-interaction/npc-interaction";
@@ -275,7 +280,24 @@ function renderNpcInteractionOverlay(input: AppRenderInput): string {
       specialActions,
       giftDisabled: true,
     })
-  );
+  ) + renderNpcInteractionDialogue({ session, targetName });
+}
+
+function applyHouseNpcInteractionBlockedState(
+  viewModel: HouseModuleViewModel,
+  blocked: boolean
+): HouseModuleViewModel {
+  if (!blocked) {
+    return viewModel;
+  }
+
+  return {
+    ...viewModel,
+    standbyRoster: viewModel.standbyRoster.map((actor) => ({
+      ...actor,
+      disabled: true,
+    })),
+  };
 }
 
 function resolveMapEntryVisualKind(
@@ -474,9 +496,24 @@ function renderStage(
 
   if (stage.type === "house") {
     if (stage.moduleViewModel != null) {
+      const npcInteractionBlocked = isNpcInteractionBlocked(
+        selectNpcInteractionBlockState({
+          overlayView: input.presenterOutput.overlay.overlayView,
+          modalState: input.presenterOutput.overlay.modalState,
+          locationDialogueState:
+            input.presenterOutput.overlay.locationDialogueState,
+          houseOverlay: stage.moduleViewModel.overlay,
+          houseDialogue: stage.moduleViewModel.dialogue,
+          beggingMiniGameState: input.appState.beggingMiniGameState,
+          activitySession: input.appState.gameState.runtime.activitySession,
+        })
+      );
       return renderHouseModuleView(
         withResolvedHousePortraits(
-          stage.moduleViewModel,
+          applyHouseNpcInteractionBlockedState(
+            stage.moduleViewModel,
+            npcInteractionBlocked
+          ),
           input.appState.characterDefinitions
         )
       );

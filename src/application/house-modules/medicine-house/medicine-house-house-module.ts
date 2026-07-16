@@ -1090,7 +1090,6 @@ export const medicineHouseHouseModule: HouseModuleDefinition<"medicine-house"> =
           ? {
               title: "药铺操作",
               actions: [
-                { id: "talk", label: "谈话" },
                 {
                   id: "heal",
                   label: "疗伤",

@@ -131,6 +131,7 @@ export type HouseStandbyActorViewModel = {
   title?: string;
   actionId?: string;
   isSelected?: boolean;
+  disabled?: boolean;
   cardLevel?: HouseCharacterCardLevel;
   avatarImageUrl?: string | null;
   portraitImageUrl?: string | null;

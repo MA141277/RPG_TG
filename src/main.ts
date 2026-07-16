@@ -94,6 +94,10 @@ import {
   type ActiveGameContentContext,
 } from "./application/content/active-game-content";
 import {
+  isNpcInteractionBlocked,
+  selectNpcInteractionBlockState,
+} from "./application/npc-interaction/npc-interaction";
+import {
   resolveTextEntry,
   resolveTextTemplateEntry,
 } from "./application/content/text-resolution";
@@ -4049,9 +4053,16 @@ appElement.addEventListener("click", (event) => {
   if (npcTargetButton != null) {
     const characterId = npcTargetButton.dataset.npcTarget;
     const rawContext = npcTargetButton.dataset.npcContext;
+    const blockState = selectNpcInteractionBlockState({
+      overlayView: appState.gameState.ui.overlayView,
+      modalState: appState.modalState,
+      locationDialogueState: appState.locationDialogueState,
+      beggingMiniGameState: appState.beggingMiniGameState,
+      activitySession: appState.gameState.runtime.activitySession,
+    });
     if (characterId != null && rawContext != null) {
       const context = parseNpcInteractionContext(rawContext);
-      if (context != null) {
+      if (context != null && !isNpcInteractionBlocked(blockState)) {
         appState = openNpcInteraction(appState, context, characterId);
         renderApp();
       }
@@ -4063,6 +4074,12 @@ appElement.addEventListener("click", (event) => {
   if (npcActionButton != null) {
     const npcAction = npcActionButton.dataset.npcAction;
     if (npcAction === "close") {
+      appState = closeNpcInteraction(appState);
+      renderApp();
+      return;
+    }
+
+    if (npcAction === "continue") {
       appState = closeNpcInteraction(appState);
       renderApp();
       return;

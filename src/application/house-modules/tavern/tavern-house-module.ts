@@ -2092,6 +2092,29 @@ export const tavernHouseModule: HouseModuleDefinition<"tavern"> = {
       title: tavernBossProfile.title,
       actionId: "open-boss-dialogue",
       isSelected: !isIdle,
+      interactionActions: [
+        {
+          id: "open-work",
+          label: "工作",
+          kind: "special" as const,
+          disabled:
+            lists.availableOffers.length === 0 &&
+            lists.acceptedOffers.length === 0,
+        },
+        {
+          id: "order-drink",
+          label: "喝酒",
+          kind: "special" as const,
+          disabled: playerCharacter.stats.gold < tavernDrinkPrice,
+        },
+        {
+          id: "open-gamble",
+          label: "赌博",
+          kind: "special" as const,
+          tone: "accent" as const,
+          disabled: playerCharacter.stats.gold < tavernWagerStep,
+        },
+      ],
     };
 
     return {

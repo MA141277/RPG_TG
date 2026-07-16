@@ -1275,7 +1275,6 @@ export const teaHouseHouseModule: HouseModuleDefinition<"tea-house"> = {
           : {
               title: `${selectedActor.name} / ${selectedActor.specialty}`,
               actions: [
-                { id: "talk", label: "谈话" },
                 {
                   id: "serve-tea",
                   label: "请喝茶",

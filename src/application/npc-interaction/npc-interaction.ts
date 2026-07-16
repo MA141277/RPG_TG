@@ -8,6 +8,14 @@ import type {
   NpcPoolViewModel,
 } from "../../domain/npc-interaction";
 
+export type NpcInteractionBlockState = {
+  overlayView: string | null;
+  modalState: unknown | null;
+  locationDialogueState: unknown | null;
+  hasHouseOverlay: boolean;
+  hasActiveDialogueAdvance: boolean;
+};
+
 export const NPC_INTERACTION_DEFAULT_OPTION_IDS = {
   profile: "npc-interaction:profile",
   talk: "npc-interaction:talk",
@@ -79,7 +87,7 @@ export function adaptHouseRosterToNpcPool(input: {
       ...(actor.title == null ? {} : { title: actor.title }),
       ...(actor.avatarImageUrl == null ? {} : { avatarImageUrl: actor.avatarImageUrl }),
       ...(actor.isSelected == null ? {} : { isSelected: actor.isSelected }),
-      disabled: input.disabled || actor.actionId == null,
+      disabled: input.disabled || actor.disabled === true || actor.actionId == null,
     })),
   };
 }
@@ -98,13 +106,30 @@ export function selectHouseNpcSpecialActions(input: {
   );
 }
 
-export function isNpcInteractionBlocked(input: {
+export function selectNpcInteractionBlockState(input: {
   overlayView: string | null;
   modalState: unknown | null;
   locationDialogueState: unknown | null;
-  hasHouseOverlay: boolean;
-  hasActiveDialogueAdvance: boolean;
-}): boolean {
+  houseOverlay?: unknown | null;
+  houseDialogue?: unknown | null;
+  beggingMiniGameState?: unknown | null;
+  activitySession?: unknown | null;
+  messageState?: unknown | null;
+}): NpcInteractionBlockState {
+  return {
+    overlayView: input.overlayView,
+    modalState: input.modalState,
+    locationDialogueState: input.locationDialogueState,
+    hasHouseOverlay:
+      input.houseOverlay != null ||
+      input.beggingMiniGameState != null ||
+      input.activitySession != null ||
+      input.messageState != null,
+    hasActiveDialogueAdvance: input.houseDialogue != null,
+  };
+}
+
+export function isNpcInteractionBlocked(input: NpcInteractionBlockState): boolean {
   return (
     input.overlayView != null ||
     input.modalState != null ||

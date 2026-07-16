@@ -245,8 +245,9 @@ export function renderHouseStandbyRoster(
           const targetCharacterId = escapeHtml(actor.characterId);
           const houseId = escapeHtml(viewModel.houseId);
           const moduleId = escapeHtml(viewModel.moduleId);
+          const isDisabled = actor.disabled === true;
           const actionAttribute =
-            actor.actionId == null
+            actor.actionId == null || isDisabled
               ? ""
               : `data-house-action="${escapeHtml(actor.actionId)}"`;
           const ariaLabel = escapeHtml(`与 ${actor.name} 交谈`);
@@ -255,12 +256,13 @@ export function renderHouseStandbyRoster(
             <button
               type="button"
               class="c-grain-shop-npc-idle__button${selectedClass}"
-              data-npc-target="${targetCharacterId}"
-              data-npc-context="${escapeHtml(npcContext)}"
+              ${isDisabled ? "" : `data-npc-target="${targetCharacterId}"`}
+              ${isDisabled ? "" : `data-npc-context="${escapeHtml(npcContext)}"`}
               data-npc-context-type="house"
               data-house-id="${houseId}"
               data-house-module-id="${moduleId}"
               ${actionAttribute}
+              ${isDisabled ? "disabled" : ""}
               aria-label="${ariaLabel}"
             >
               ${renderHouseCharacterCard(actor, { secondaryText })}
