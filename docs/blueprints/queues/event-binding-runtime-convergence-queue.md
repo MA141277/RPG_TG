@@ -9,12 +9,12 @@
 - governance_sync_source: `docs/blueprints/blueprint.md`
 - queue_status: `active`
 - queue_class: `required`
-- active_task: `task.event-binding-runtime-convergence.evidence-anchor-reconcile`
-- next_task: `task.event-binding-runtime-convergence.runtime-selector-baseline`
+- active_task: `task.event-binding-runtime-convergence.runtime-selector-baseline`
+- next_task: `task.event-binding-runtime-convergence.trigger-context-adapter-cutover`
 - closeout_status: `in-progress`
 - execution_closeout_status: `partial`
 - topic_closure_status: `open-residue`
-- closure_basis: `Queue admitted after built-in and exported double-table event inputs were verified; EventBindingRuntime evidence lock is active.`
+- closure_basis: `Evidence lock is complete; EventBindingRuntime selector baseline remains active for the bounded runtime replacement slice.`
 - residue_remaining: `yes`
 - residue_family: `same-family`
 - residue_routing_status: `needs-version-review`
@@ -45,8 +45,8 @@
 
 ### Evidence Lock
 
-- evidence_lock_status: `in-progress`
-- implementation_anchor_status: `collecting`
+- evidence_lock_status: `locked`
+- implementation_anchor_status: `confirmed`
 - prerequisite_status: `ready`
 - acceptance_claim_scope:
   - `ACC-EVENT-BINDING-RUNTIME-001`
@@ -83,9 +83,9 @@
 
 - queue_goal: `Cut runtime event trigger selection to EventBindingRuntime without deleting old trigger scanning yet.`
 - task_count: `4`
-- completed_task_count: `0`
-- remaining_task_count: `4`
-- active_task_summary: `Lock EventBindingRuntime source evidence and choose the minimum selector/activation slice.`
+- completed_task_count: `1`
+- remaining_task_count: `3`
+- active_task_summary: `Add EventBindingRuntime selection, condition, occurrence, priority, and activation coverage test-first.`
 - task_briefs:
   - `task.event-binding-runtime-convergence.evidence-anchor-reconcile: Confirm existing trigger paths, active-content eventBindings access, and sub-runtime handoff boundaries before implementation.`
   - `task.event-binding-runtime-convergence.runtime-selector-baseline: Add EventBindingRuntime selection, condition, occurrence, priority, and activation coverage test-first.`
@@ -107,8 +107,8 @@
 
 | Task ID | State | Summary | Depends On | Notes |
 | --- | --- | --- | --- | --- |
-| `task.event-binding-runtime-convergence.evidence-anchor-reconcile` | `active` | `Confirm existing trigger paths, active-content eventBindings access, and sub-runtime handoff boundaries before implementation.` | `none` | `Do not write feature code before evidence_lock_status is locked.` |
-| `task.event-binding-runtime-convergence.runtime-selector-baseline` | `queued` | `Add EventBindingRuntime selection, condition, occurrence, priority, and activation coverage test-first.` | `task.event-binding-runtime-convergence.evidence-anchor-reconcile` | `Keep old trigger evaluator available for compatibility until retirement queue.` |
+| `task.event-binding-runtime-convergence.evidence-anchor-reconcile` | `done` | `Confirmed existing trigger paths, active-content eventBindings access, and sub-runtime handoff boundaries before implementation.` | `none` | `Completed on 2026-07-16 after source evidence locked the selector baseline slice.` |
+| `task.event-binding-runtime-convergence.runtime-selector-baseline` | `active` | `Add EventBindingRuntime selection, condition, occurrence, priority, and activation coverage test-first.` | `task.event-binding-runtime-convergence.evidence-anchor-reconcile` | `Keep old trigger evaluator available for compatibility until retirement queue.` |
 | `task.event-binding-runtime-convergence.trigger-context-adapter-cutover` | `queued` | `Route covered story trigger call sites through TriggerContext without taking over sub-runtime lifecycles.` | `task.event-binding-runtime-convergence.runtime-selector-baseline` | `Record payload/resolver/handoff boundary used by each touched sub-runtime.` |
 | `task.event-binding-runtime-convergence.queue-closeout-and-handoff` | `queued` | `Verify built-in/exported pack trigger behavior and route old-runtime retirement residue.` | `task.event-binding-runtime-convergence.trigger-context-adapter-cutover` | `Old-runtime retirement remains blocked until this queue verifies replacement behavior.` |
 
@@ -119,7 +119,7 @@
 ##### Control Block
 
 - task_id: `task.event-binding-runtime-convergence.evidence-anchor-reconcile`
-- state: `active`
+- state: `done`
 - task_kind: `decision-dispatch`
 - scope:
   - `src/domain/event.ts`
@@ -155,7 +155,7 @@
 - task_brief:
   - `Lock EventBindingRuntime source evidence before implementation.`
 - task_outcome_summary:
-  - `Pending.`
+  - `Done. Evidence confirms active content exposes eventBindings/eventBindingsById; old selectTriggeredEvents and runEventRuntime still consume events[].trigger/conditions; startEvent remains the eventHistory write path; activateEvent remains the candidate handoff seam.`
 - Purpose:
   - `Prevent the runtime cutover from widening into old-runtime deletion or sub-runtime ownership changes.`
 - Failure mode:
@@ -165,13 +165,14 @@
 
 - `2026-07-16`: `Queue admitted after zhuyuanzhang event binding pack migration closed and active content exposed eventBindings.`
 - `2026-07-16`: `Initial evidence found selectTriggeredEvents and runEventRuntime still read events[].trigger/conditions, while EventBinding and TriggerContext contracts already exist in src/domain/event.ts.`
+- `2026-07-16`: `Locked implementation slice: add EventBindingRuntime selector/activation baseline against EventBinding rows, reuse startEvent for eventHistory writes, preserve activateEvent candidate handoff, and leave old trigger evaluator deletion to the retirement queue.`
 
 #### `task.event-binding-runtime-convergence.runtime-selector-baseline`
 
 ##### Control Block
 
 - task_id: `task.event-binding-runtime-convergence.runtime-selector-baseline`
-- state: `queued`
+- state: `active`
 - task_kind: `execution`
 - scope:
   - `src/domain/event.ts`
