@@ -42,6 +42,9 @@ export type HouseDefinition = {
   requiresPlayerCurrentCityMatch?: boolean;
   activityLocationId?: CityNpcActivityLocationId | null;
   moduleId?: HouseModuleId | null;
+  level?: number;
+  damaged?: boolean;
+  outputMultiplier?: number;
   onEnterEventId?: EventId;
   onLeaveEventId?: EventId;
   backAction: {

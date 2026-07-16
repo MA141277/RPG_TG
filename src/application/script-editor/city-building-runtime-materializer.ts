@@ -1,6 +1,10 @@
 import type { CityEntryDefinition } from "../../domain/city-entry";
 import type { CityDefinition } from "../../domain/city";
 import type {
+  LocationAccessDefinition,
+  LocationAccessTargetFamily,
+} from "../../domain/location-access";
+import type {
   CityNpcDefinition,
   CityNpcPoolDefinition,
 } from "../../domain/city-npc";
@@ -26,6 +30,7 @@ export type ScriptEditorCityBuildingRuntimeFamilies = {
   cityEntries: CityEntryDefinition[];
   cityNpcPools: CityNpcPoolDefinition[];
   houseAccessRefusalRules: HouseAccessRefusalRule[];
+  locationAccess: LocationAccessDefinition[];
 };
 
 export function materializeScriptEditorCityBuildingRuntimeFamilies(
@@ -43,13 +48,14 @@ export function materializeScriptEditorCityBuildingRuntimeFamilies(
 
   return {
     cities: materializeCities(cities, buildings),
-    houses: materializeHouses(buildings, people),
-    cityEntries: materializeCityEntries(project.cityEntries, buildings),
-    cityNpcPools: materializeCityNpcPools(project.cityNpcPools, people),
+    houses: materializeHouses(buildings, people, cities),
+    cityEntries: materializeCityEntries(project.cityEntries, cities, buildings),
+    cityNpcPools: materializeCityNpcPools(project.cityNpcPools, people, cities),
     houseAccessRefusalRules: materializeHouseAccessRefusalRules(
       project.houseAccessRefusalRules,
       buildings
     ),
+    locationAccess: materializeLocationAccess(cities, buildings),
   };
 }
 
@@ -69,7 +75,11 @@ function materializeCities(
       regionId: readString(city.regionId) || "region.default",
       mapNodeId: readString(city.mapNodeId) || city.id,
       houseIds:
-        city.houseIds != null && city.houseIds.length > 0
+        city.mountedBuildings != null && city.mountedBuildings.length > 0
+          ? readStringArray(
+              city.mountedBuildings.map((mountedBuilding) => mountedBuilding.buildingId)
+            )
+          : city.houseIds != null && city.houseIds.length > 0
           ? readStringArray(city.houseIds)
           : buildings
               .filter((building) => building.cityId === city.id)
@@ -96,9 +106,12 @@ function materializeCities(
 
 function materializeHouses(
   buildings: readonly ScriptEditorBuildingRecord[],
-  people: readonly ScriptEditorPersonRecord[]
+  people: readonly ScriptEditorPersonRecord[],
+  cities: readonly ScriptEditorCityRecord[]
 ): HouseDefinition[] {
+  const mountedBuildingById = indexMountedBuildings(cities);
   return buildings.map((building) => {
+    const mountedBuilding = mountedBuildingById.get(building.id);
     const baseAttributes = building.baseAttributes ?? {
       houseType: "custom",
       characterIds: [],
@@ -109,8 +122,10 @@ function materializeHouses(
       ...people
         .filter((person) => person.houseId === building.id)
         .map((person) => person.id),
+      ...(mountedBuilding?.npcIds ?? []),
     ]);
     const defaultPersonId = firstNonEmptyString(
+      mountedBuilding?.primaryNpcId,
       building.entryBinding?.defaultPersonId,
       readString(baseAttributes.defaultCharacterId),
       assignedPersonIds[0] ?? ""
@@ -127,7 +142,7 @@ function materializeHouses(
 
     return {
       id: building.id,
-      cityId: building.cityId,
+      cityId: mountedBuilding?.cityId ?? building.cityId,
       name: building.name,
       type: readHouseType(baseAttributes.houseType),
       characterIds: assignedPersonIds,
@@ -147,40 +162,35 @@ function materializeHouses(
 
 function materializeCityEntries(
   explicitEntries: readonly ScriptEditorRuntimeRecord[],
+  cities: readonly ScriptEditorCityRecord[],
   buildings: readonly ScriptEditorBuildingRecord[]
 ): CityEntryDefinition[] {
+  const mountedEntries = materializeMountedCityEntries(
+    explicitEntries,
+    cities,
+    buildings
+  );
+  if (mountedEntries.length > 0) {
+    return mountedEntries;
+  }
+
   if (explicitEntries.length > 0) {
     return [...explicitEntries] as CityEntryDefinition[];
   }
 
-  const entries = [...explicitEntries] as CityEntryDefinition[];
-  const explicitHouseIds = new Set(
-    explicitEntries
-      .map((entry) => readString(entry.targetHouseId))
-      .filter((targetHouseId) => targetHouseId.length > 0)
-  );
-
-  for (const building of buildings) {
-    if (explicitHouseIds.has(building.id)) {
-      continue;
-    }
-    entries.push({
-      id: `city-entry.${slugifyIdSegment(building.id)}`,
-      cityId: building.cityId,
-      name: building.name,
-      directoryType: "leader-residence",
-      targetHouseId: building.id,
-      artworkId: "leader-residence",
-    });
-  }
-
-  return entries;
+  return [];
 }
 
 function materializeCityNpcPools(
   explicitPools: readonly Record<string, unknown>[],
-  people: readonly ScriptEditorPersonRecord[]
+  people: readonly ScriptEditorPersonRecord[],
+  cities: readonly ScriptEditorCityRecord[]
 ): CityNpcPoolDefinition[] {
+  const mountedPools = materializeMountedCityNpcPools(cities, people, explicitPools);
+  if (mountedPools.length > 0) {
+    return mountedPools;
+  }
+
   if (explicitPools.length > 0) {
     return [...explicitPools] as CityNpcPoolDefinition[];
   }
@@ -282,6 +292,212 @@ function materializeHouseAccessRefusalRule(
   };
 }
 
+function materializeMountedCityEntries(
+  explicitEntries: readonly ScriptEditorRuntimeRecord[],
+  cities: readonly ScriptEditorCityRecord[],
+  buildings: readonly ScriptEditorBuildingRecord[]
+): CityEntryDefinition[] {
+  const buildingById = new Map(buildings.map((building) => [building.id, building]));
+  const entries: CityEntryDefinition[] = [];
+
+  for (const city of cities) {
+    for (const mountedBuilding of city.mountedBuildings ?? []) {
+      const building = buildingById.get(mountedBuilding.buildingId);
+      if (building == null) {
+        continue;
+      }
+      const explicitEntry = explicitEntries.find(
+        (entry) =>
+          readString(entry.cityId) === city.id &&
+          readString(entry.targetHouseId) === building.id
+      );
+      entries.push({
+        id:
+          readString(explicitEntry?.id) ||
+          `city-entry.${slugifyIdSegment(city.id)}.${slugifyIdSegment(building.id)}`,
+        cityId: city.id,
+        name: building.name,
+        directoryType: getCityEntryDirectoryType(building),
+        targetHouseId: building.id,
+        artworkId: getCityEntryArtworkId(building),
+      });
+    }
+  }
+
+  return entries;
+}
+
+function getCityEntryDirectoryType(
+  building: ScriptEditorBuildingRecord
+): CityEntryDefinition["directoryType"] {
+  const moduleId = building.baseAttributes?.moduleId;
+  return moduleId === "leader-residence" ? "leader-residence" : "building";
+}
+
+function getCityEntryArtworkId(
+  building: ScriptEditorBuildingRecord
+): CityEntryDefinition["artworkId"] {
+  const moduleId = building.baseAttributes?.moduleId;
+  if (moduleId != null && moduleId.length > 0) {
+    return moduleId;
+  }
+
+  switch (readHouseType(building.baseAttributes?.houseType)) {
+    case "merchant":
+      return "market-house";
+    case "inn":
+      return "tavern";
+    case "tea-house":
+      return "tea-house";
+    case "temple":
+      return "temple-house";
+    case "medicine-house":
+      return "medicine-house";
+    case "residence":
+      return "home-house";
+    case "castle":
+      return "keep-house";
+    case "dojo":
+      return "dojo";
+    case "custom":
+    default:
+      return "building";
+  }
+}
+
+function materializeMountedCityNpcPools(
+  cities: readonly ScriptEditorCityRecord[],
+  people: readonly ScriptEditorPersonRecord[],
+  explicitPools: readonly Record<string, unknown>[]
+): CityNpcPoolDefinition[] {
+  const personById = new Map(people.map((person) => [person.id, person]));
+  const explicitResidentByCityAndId = indexExplicitCityNpcResidents(explicitPools);
+  const pools: CityNpcPoolDefinition[] = [];
+
+  for (const city of cities) {
+    const npcIds = uniqueStrings(
+      (city.mountedBuildings ?? []).flatMap((mountedBuilding) => mountedBuilding.npcIds)
+    );
+    if (npcIds.length === 0) {
+      continue;
+    }
+
+    pools.push({
+      cityId: city.id,
+      residents: npcIds.flatMap((npcId) => {
+        const person = personById.get(npcId);
+        if (person == null) {
+          return [];
+        }
+        return [
+          explicitResidentByCityAndId.get(`${city.id}\u0000${npcId}`) ??
+            materializeCityNpcResident({ ...person, cityId: city.id }),
+        ];
+      }),
+    });
+  }
+
+  return pools.filter((pool) => pool.residents.length > 0);
+}
+
+function indexExplicitCityNpcResidents(
+  explicitPools: readonly Record<string, unknown>[]
+): Map<string, CityNpcDefinition> {
+  const residentByCityAndId = new Map<string, CityNpcDefinition>();
+
+  for (const pool of explicitPools) {
+    const cityId = readString(pool.cityId);
+    if (!Array.isArray(pool.residents)) {
+      continue;
+    }
+    for (const resident of pool.residents) {
+      if (resident == null || typeof resident !== "object" || Array.isArray(resident)) {
+        continue;
+      }
+      const residentRecord = resident as CityNpcDefinition & Record<string, unknown>;
+      const id = readString(residentRecord.id);
+      if (cityId.length === 0 || id.length === 0) {
+        continue;
+      }
+      residentByCityAndId.set(`${cityId}\u0000${id}`, {
+        ...residentRecord,
+        id,
+        cityId,
+      });
+    }
+  }
+
+  return residentByCityAndId;
+}
+
+function indexMountedBuildings(
+  cities: readonly ScriptEditorCityRecord[]
+): Map<string, { cityId: string; npcIds: string[]; primaryNpcId: string | null }> {
+  const mountedBuildingById = new Map<
+    string,
+    { cityId: string; npcIds: string[]; primaryNpcId: string | null }
+  >();
+
+  for (const city of cities) {
+    for (const mountedBuilding of city.mountedBuildings ?? []) {
+      if (mountedBuilding.buildingId.length === 0) {
+        continue;
+      }
+      mountedBuildingById.set(mountedBuilding.buildingId, {
+        cityId: city.id,
+        npcIds: readStringArray(mountedBuilding.npcIds),
+        primaryNpcId: mountedBuilding.primaryNpcId,
+      });
+    }
+  }
+
+  return mountedBuildingById;
+}
+
+function materializeLocationAccess(
+  cities: readonly ScriptEditorCityRecord[],
+  buildings: readonly ScriptEditorBuildingRecord[]
+): LocationAccessDefinition[] {
+  return [
+    ...cities.flatMap((city) =>
+      materializeLocationAccessDefinition("city", city.id, city.name, city.access)
+    ),
+    ...buildings.flatMap((building) =>
+      materializeLocationAccessDefinition(
+        "building",
+        building.id,
+        building.name,
+        building.access
+      )
+    ),
+  ];
+}
+
+function materializeLocationAccessDefinition(
+  targetFamily: LocationAccessTargetFamily,
+  targetId: string,
+  _targetName: string,
+  access: ScriptEditorAccessRule | undefined
+): LocationAccessDefinition[] {
+  if (access?.conditionExpression == null) {
+    return [];
+  }
+
+  return [
+    {
+      id: `location-access.${targetFamily}.${slugifyIdSegment(targetId)}`,
+      targetFamily,
+      targetId,
+      conditionExpression: access.conditionExpression,
+      ...pickOptionalString("blockedReason", access.blockedReason),
+      ...pickOptionalString("blockedMessage", access.blockedMessage),
+      ...pickOptionalString("blockedSpeakerId", access.blockedSpeakerId),
+      ...pickOptionalString("guidance", access.guidance),
+      ...pickOptionalString("refusalEventId", access.refusalEventId),
+    },
+  ];
+}
+
 function isAlwaysBlockedAccess(access: ScriptEditorAccessRule): boolean {
   return access.conditionExpression?.type === "literal" &&
     access.conditionExpression.value === false;
@@ -339,6 +555,14 @@ function readActivityLocationId(
 
 function readString(value: unknown): string {
   return typeof value === "string" ? value.trim() : "";
+}
+
+function pickOptionalString<K extends string>(
+  key: K,
+  value: unknown
+): Partial<Record<K, string>> {
+  const text = readString(value);
+  return text.length === 0 ? {} : { [key]: text } as Partial<Record<K, string>>;
 }
 
 function readStringArray(value: unknown): string[] {

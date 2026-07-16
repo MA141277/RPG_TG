@@ -9,6 +9,14 @@ import {
   mergeCharacterStatusMaps,
   type CharacterStatusById,
 } from "../../domain/character-status";
+import {
+  mergeBuildingStatusMaps,
+  type BuildingStatusById,
+} from "../../domain/building-status";
+import {
+  mergeCityStatusMaps,
+  type CityStatusById,
+} from "../../domain/city-status";
 import { syncAppState as rebuildAppStateBridge } from "./state-sync-app-bridge";
 import { hydrateFromSave as hydrateCanonicalRuntimeState } from "./state-sync-hydration";
 import { normalizeRuntimeState } from "./state-sync-normalization";
@@ -26,6 +34,8 @@ export type RuntimeAppStateInput = {
   modalState: LegacyBridgeRuntimeState["app"]["modalState"];
   characterDefinitions?: unknown;
   characterStatusById?: CharacterStatusById;
+  cityStatusById?: CityStatusById;
+  buildingStatusById?: BuildingStatusById;
 };
 
 function createRuntimeStateFromAppState(
@@ -50,7 +60,9 @@ function applyRuntimeStateToAppState<TAppState extends RuntimeAppStateInput>(
   state: TAppState,
   runtimeState: LegacyBridgeRuntimeState,
   characterDefinitions?: unknown,
-  characterStatusPatchById?: CharacterStatusById
+  characterStatusPatchById?: CharacterStatusById,
+  cityStatusPatchById?: CityStatusById,
+  buildingStatusPatchById?: BuildingStatusById
 ): TAppState {
   const characterStatusById =
     characterStatusPatchById == null
@@ -58,6 +70,17 @@ function applyRuntimeStateToAppState<TAppState extends RuntimeAppStateInput>(
       : mergeCharacterStatusMaps(
           state.characterStatusById ?? {},
           characterStatusPatchById
+        );
+  const cityStatusById =
+    cityStatusPatchById == null
+      ? state.cityStatusById
+      : mergeCityStatusMaps(state.cityStatusById ?? {}, cityStatusPatchById);
+  const buildingStatusById =
+    buildingStatusPatchById == null
+      ? state.buildingStatusById
+      : mergeBuildingStatusMaps(
+          state.buildingStatusById ?? {},
+          buildingStatusPatchById
         );
 
   return {
@@ -76,6 +99,8 @@ function applyRuntimeStateToAppState<TAppState extends RuntimeAppStateInput>(
     ...(characterStatusById == null
       ? {}
       : { characterStatusById }),
+    ...(cityStatusById == null ? {} : { cityStatusById }),
+    ...(buildingStatusById == null ? {} : { buildingStatusById }),
   } as TAppState;
 }
 

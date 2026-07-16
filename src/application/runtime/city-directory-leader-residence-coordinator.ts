@@ -28,7 +28,11 @@ export function createCityDirectoryLeaderResidenceCoordinator(
       cityEntryId,
       appState.gameState.world.currentCityId
     );
-    if (cityEntry?.directoryType !== "leader-residence") {
+    if (cityEntry == null) {
+      return;
+    }
+    if (cityEntry.directoryType !== "leader-residence") {
+      enterHouseFromCity(cityEntry.targetHouseId);
       return;
     }
 

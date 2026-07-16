@@ -5,6 +5,125 @@
 `docs/change-log.md` 的正式定位是“历史记录 + 人类可读摘要”。
 它不是当前 Blueprint / legacy superpowers 治理的 live execution truth，不作为 resume entry、promotion gate、closeout gate 或固定同步门。
 
+## 2026-07-16 LocationAccessRuntime Reopen Completion
+
+### Changed
+- 更新 [src/application/script-editor/city-building-authoring.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree/src/application/script-editor/city-building-authoring.ts) 和 [src/ui/main-ui/main-ui-flow.js](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree/src/ui/main-ui/main-ui-flow.js)，城市/建筑 access 面板现在可用 JSON 编辑 `conditionExpression`，不再只是只读显示 configured/default。
+- 更新 [src/application/script-editor/runtime-pack-import.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree/src/application/script-editor/runtime-pack-import.ts) 和 [src/application/script-editor/city-building-runtime-materializer.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree/src/application/script-editor/city-building-runtime-materializer.ts)，导入 city NPC residents 到 people 时断开嵌套对象共享，并在 mounted city NPC pool 导出时优先保留显式 resident payload。
+- 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree/tests/robustness.test.cjs)，覆盖 script-editor access `conditionExpression` JSON 写入。
+
+### Impact
+- LocationAccessRuntime 的 city/building conditionExpression 现在具备作者侧设置入口，并继续通过 `location-access.json` 导出、加载和运行时入口守卫。
+- 导入再导出朱元璋 runtime pack 时，`city-npc-pools.json` 的 resident `activityWeight` 不再被 person normalization 间接清空。
+
+## 2026-07-16 City Entry Runtime Override Merge Fix
+
+### Changed
+- 更新 [src/application/content/active-game-content.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree/src/application/content/active-game-content.ts)，让 override scenario pack 提供某个 `cityId` 的 `cityEntries` 时按城市替换基础包同城入口，而不是只按 entry `id` 合并。
+- 更新 [src/main.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree/src/main.ts)、[src/application/presenter/stage-presenters.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree/src/application/presenter/stage-presenters.ts) 和 [src/ui/views/city/city-view.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree/src/ui/views/city/city-view.ts)，城市地点/建筑列表只从当前城市 `cityEntries.targetHouseId` 反查建筑，不再从 `city.houseIds` 或 `data-house-id` 旧入口直进建筑。
+- 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree/tests/robustness.test.cjs)，覆盖 exported scenario pack 激活时不会继续保留同城市默认/template city entries。
+
+### Impact
+- 剧本编辑器导出的 `city-entries.json` 覆盖后，运行时 active content 不再把基础包同城默认地点混回城市地点列表。
+- 城市建筑入口协议统一为 `city-entries.json` 生成的 `data-city-entry-id`，避免旧的 house-id 直达入口绕过新流程。
+
+## 2026-07-16 Script Editor City Building Mount NPC Authoring
+
+### Added
+- 扩展 [src/domain/script-editor-project.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree/src/domain/script-editor-project.ts)，为 `ScriptEditorCityRecord` 新增 city-owned `mountedBuildings` 作者数据结构。
+- 扩展 [src/application/script-editor/city-building-authoring.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree/src/application/script-editor/city-building-authoring.ts)，新增挂载建筑、挂载 NPC、primary NPC 的归一化和编辑 helper。
+- 在 [src/ui/main-ui/main-ui-flow.js](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree/src/ui/main-ui/main-ui-flow.js) 的城市 profile 面板新增挂载建筑与人物编辑区，支持通过下拉选择建筑、挂载 NPC，并从已挂载 NPC 中选择主 NPC。
+- 新增 [tests/city-building-mount-authoring.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree/tests/city-building-mount-authoring.test.cjs)，覆盖 city-owned mounted building/NPC/primary NPC 作者数据和 UI 控件入口。
+
+### Changed
+- 更新 [package.json](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree/package.json)，将新的 mount authoring 测试纳入默认 `npm test`。
+
+### Impact
+- 创作者可以在城市详情页维护“城市 -> 挂载建筑 -> 挂载 NPC -> 主 NPC”的作者数据，不再需要手写 raw JSON。
+- 本批次未实现 runtime-pack export/runtime loading conversion；该工作作为 same-family residue 路由到 `queue.script-editor-city-building-mount-export-runtime-convergence`。
+
+## 2026-07-16 Map City List Compatibility Preservation
+
+### Added
+- 新增 [src/application/map/map-city-marker-view-model.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/map/map-city-marker-view-model.ts)，提供可测试的 `createMapCityMarkers`，明确城市 marker 的 id/name 来自 `CityDefinition`，坐标来自 map-owned `cityCoordinatesById`。
+
+### Changed
+- 更新 [src/ui/views/map/map-view.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/views/map/map-view.ts)，复用 `createMapCityMarkers` 生成地图城市 marker，不迁移 map coordinate ownership。
+- 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，覆盖 map marker 坐标来源，并补强 enter-city confirm 通过 shared runtime dispatch 携带 `activeContentContext.locationAccess` 的 source proof。
+- 更新 [tsconfig.test.json](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tsconfig.test.json)，将 `src/application/map/**/*.ts` 纳入测试构建，以便地图 application helper 可被行为测试直接验证。
+
+### Impact
+- 地图城市列表兼容性获得明确测试保护：城市坐标仍由 map nodes / `cityCoordinatesById` 路径拥有，城市进入仍通过 LocationAccessRuntime 边界检查。
+- 本批次未迁移坐标所有权，未新增城市经营、税收、征服、生产或建筑升级玩法循环。
+
+## 2026-07-16 Script Editor City Building Custom Attribute Authoring
+
+### Added
+- 为 [src/application/script-editor/city-building-authoring.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/city-building-authoring.ts) 新增城市/建筑 `extendedAttributes` 的 append、update、remove helper。
+- 在 [src/ui/main-ui/main-ui-flow.js](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/main-ui/main-ui-flow.js) 的城市/建筑 profile 面板新增自定义属性编辑区，支持新增、删除和编辑 key/label/value。
+
+### Changed
+- 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，覆盖城市/建筑自定义属性 helper、UI/action/input 绑定，以及现有项目 save/load 对自定义属性的保留。
+
+### Impact
+- 创作者可以在城市和建筑详情页编辑自定义属性，不再只能通过 raw JSON 修改 `extendedAttributes`。
+- 本批次未扩大到广泛 runtime-pack export/import validation、条件表达式作者 UI、地图坐标迁移或城市经营/建筑升级玩法。
+
+## 2026-07-16 Script Editor City Building Export Import Validation
+
+### Changed
+- 更新 [src/application/script-editor/runtime-pack-export.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/runtime-pack-export.ts)，当城市/建筑 `extendedAttributes` 包含当前 runtime `CityDefinition` / `HouseDefinition` 无法承载的普通自定义属性时，runtime export validation 改为 fail closed，而不是静默丢弃。
+- 保留城市 `specialDemand` 作为已知投影属性继续导出到 runtime city `specialDemand`。
+- 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，覆盖 unsupported city/building custom attributes 的诊断与导出失败行为。
+
+### Impact
+- 城市/建筑自定义属性在 runtime-pack 边界不再静默丢失；后续若要真正保留普通 custom attributes，需要先扩展 runtime contract 或建立明确的兼容承载策略。
+
+## 2026-07-16 City Building Status Save Runtime Convergence
+
+### Added
+- 新增 [src/domain/city-status.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/domain/city-status.ts) 和 [src/domain/building-status.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/domain/building-status.ts)，为城市与建筑当前值提供与 CharacterStatus 同构的 materialize/merge 状态 overlay。
+
+### Changed
+- 扩展 [src/application/app-shell.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/app-shell.ts)、[src/core/contracts/runtime-result.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/core/contracts/runtime-result.ts)、[src/core/runtime/state-sync-core-seam.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/core/runtime/state-sync-core-seam.ts) 和 [src/core/runtime/state-sync-runtime.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/core/runtime/state-sync-runtime.ts)，让 `cityStatusById` 与 `buildingStatusById` 通过共享 runtime commit 合并到 AppState。
+- 更新 [src/application/startup/startup-session-coordinator.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/startup/startup-session-coordinator.ts) 和 [src/main.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/main.ts)，将非空城市/建筑状态 map 保存到 `SaveEnvelope.modState` 并在启动恢复时回填 AppState。
+- 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，覆盖城市/建筑 status materializer 不突变 authored definitions、runtime commit 合并、startup restore 和 main 保存入口。
+
+### Impact
+- 城市繁荣/危险/需求和建筑运行期等级/损坏/产出倍率等当前值可以通过状态 overlay 持久化，不需要修改 authored `CityDefinition` / `HouseDefinition`。
+- 本批次未实现 custom-attribute authoring 控件、广泛导入导出校验、地图坐标迁移或城市经营/建筑升级玩法循环。
+
+## 2026-07-16 Building To HouseRuntime Adapter
+
+### Added
+- 新增 [src/application/city/city-building-house-runtime-adapter.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/city/city-building-house-runtime-adapter.ts)，复用 city-building placement/access 解析结果，把已允许进入的建筑入口转换为 resolved `HouseRuntimeEntry`。
+- 扩展 [src/core/contracts/house-runtime.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/core/contracts/house-runtime.ts)，新增 `HouseRuntimeEntry` 与 `enter-resolved` 请求，用于让 HouseRuntime 消费已解析的建筑入口。
+
+### Changed
+- 更新 [src/core/runtime/house-runtime.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/core/runtime/house-runtime.ts)，新增 `enterResolvedHouseThroughRuntime`，并缓存 resolved house definition 以支持后续 dispatch/leave；旧的 `enterHouseThroughRuntime(houseId)` 兼容路径保持可用。
+- 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，覆盖 city-building adapter 输出 resolved runtime entry，以及 HouseRuntime 在没有全局 `houseDefinitions` 查表时仍能通过 resolved entry enter + dispatch。
+- 关闭 `queue.script-editor-building-house-runtime-adapter`，将 city/building runtime status/save 收敛分类为 same-family residue，并路由到 `queue.city-building-status-save-runtime-convergence`。
+
+### Impact
+- HouseRuntime 可以作为 post-entry interaction/session/module runner 消费由城市建筑边界解析出的 entry，不再要求所有入口都由 HouseRuntime 从裸 house id 重新承担主解析责任。
+- 本批次未执行 city/building status overlay、custom-attribute authoring、广泛导入导出校验或地图坐标迁移。
+
+## 2026-07-16 LocationAccessRuntime Convergence
+
+### Added
+- 新增 [src/domain/location-access.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/domain/location-access.ts) 和 [src/application/location-access/location-access-runtime.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/location-access/location-access-runtime.ts)，定义运行期 `LocationAccessDefinition` / `LocationAccessResult` 并提供纯 evaluator，支持 literal、compare、all、any、not 访问条件。
+- 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，覆盖运行包导出 `location-access.json`、访问条件求值、building entry 前置拦截，以及 city enter 在 `currentCityId` mutation 前被拦截。
+
+### Changed
+- 更新 runtime pack 导出/导入、scenario pack loader、ContentPack 和 ActiveGameContent，使 script-editor city/building `access.conditionExpression` 作为独立 `locationAccess` runtime family 保留和激活。
+- 更新 [src/application/city/city-building-placement-resolver.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/city/city-building-placement-resolver.ts) 和 [src/core/runtime/navigation-runtime.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/core/runtime/navigation-runtime.ts)，在 building entry 和 city enter 的已覆盖路径中先执行 LocationAccessRuntime，再进入既有 house/story/refusal flow 或 `enterCity` mutation。
+- 关闭 `queue.location-access-runtime-convergence`，将后续 HouseRuntime post-entry adapter 收敛分类为 same-family residue，并路由到 `queue.script-editor-building-house-runtime-adapter`。
+
+### Impact
+- 城市和建筑访问条件不再只停留在作者态；运行包和 active content 可以消费同一套 location access family。
+- 已覆盖的城市进入和建筑进入路径会在状态切换前 fail closed，避免先修改 `currentCityId` 或进入 house flow 后才发现不可进入。
+- 本批次未执行 HouseRuntime 降权、city/building status overlay、地图坐标迁移或广泛导入导出校验。
+
 ## 2026-07-16 Script Editor City Building Definition Contract
 
 ### Changed
@@ -2805,6 +2924,18 @@
 ### Impact
 - The repository now has one explicit controller for accepted-history, accepted-framework-baseline, and accepted-compatibility residue instead of leaving those items spread across old queue closeout notes.
 - Later Phase 4 handoff decisions such as `queue.first-party-mod-acceptance` or `queue.final-acceptance-closeout` must now pass through the active residue queue instead of being promoted directly from implicit closeout caveats.
+
+## 2026-07-16 Script Editor City Mounted NPC Row Regression
+
+### Fixed
+- The city profile's mounted-building editor now makes the 新增 NPC button add the first available unmounted NPC id, keeping the new row visible and immediately editable instead of letting city-detail normalization remove an empty placeholder.
+- Added focused coverage for deleting a mounted building entry from city-owned `mountedBuildings` data.
+- Scenario-pack export now lowers city-owned `mountedBuildings` into runtime `cities.json`, `houses.json`, `city-entries.json`, and `city-npc-pools.json` instead of keeping imported template relationship tables authoritative when mounted building data exists.
+
+### Impact
+- Creators can add an NPC under a city-mounted building and then select the NPC from the dropdown in the same editing flow.
+- Exported packs now load the authored city-mounted building and mounted NPC relationships at runtime, including city entries and house NPC/default NPC fields.
+- The reopened city building/NPC mounting authoring queue and its export/runtime convergence follow-up are both recorded as reclosed.
 
 ## 2026-07-14 Script Editor Person Attribute Page Stability
 

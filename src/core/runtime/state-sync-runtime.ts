@@ -45,7 +45,9 @@ export function commitRuntimeRequest<
       input.state,
       runtimeResult.state,
       runtimeResult.characterDefinitions,
-      runtimeResult.characterStatusById
+      runtimeResult.characterStatusById,
+      runtimeResult.cityStatusById,
+      runtimeResult.buildingStatusById
     ),
     runtimeResult,
   };

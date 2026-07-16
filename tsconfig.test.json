@@ -22,6 +22,7 @@
     "src/application/house-modules/**/*.ts",
     "src/application/inventory/**/*.ts",
     "src/application/leader-residence/**/*.ts",
+    "src/application/map/**/*.ts",
     "src/application/medicine-house/**/*.ts",
     "src/application/minigames/**/*.ts",
     "src/application/navigation/**/*.ts",

@@ -5,10 +5,10 @@
 - entry_id: `project-progress.rpg-tg`
 - active_blueprint: `blueprint.rpg-tg`
 - active_version: `target.city-building-definition-location-access-convergence`
-- has_active_queue: `true`
-- active_queue: `queue.location-access-runtime-convergence`
-- active_task: `task.location-access-runtime-convergence.boundary-baseline-reconcile`
-- next_file: `docs/blueprints/queues/location-access-runtime-convergence-queue.md`
+- has_active_queue: `false`
+- active_queue: `none`
+- active_task: `none`
+- next_file: `docs/blueprints/plans/2026-07-16-city-building-definition-location-access-convergence-target-plan.md`
 - entry_action: `open-next-file`
 
 ## Human Context
@@ -31,22 +31,29 @@
 - Current Version Plan:
   - `docs/blueprints/plans/2026-07-16-city-building-definition-location-access-convergence-target-plan.md`
 - Current Active Queue:
-  - `docs/blueprints/queues/location-access-runtime-convergence-queue.md`
+  - `none`
 
 ### Live Entry Guardrails
 
 - `This file only states the current resume entry and downstream pointer set.`
 - `Admission history, queue closeout history, and review narrative must stay in the version plan, queue docs, or docs/change-log.md rather than living here as competing current-state prose.`
 - `The pointed version is now the open city/building definition and LocationAccessRuntime convergence record.`
-- `The latest governance action auto-admitted queue.location-access-runtime-convergence from the closed definition restructure queue's same-family residue.`
-- `Resume from the active queue doc until the queue closes or a new governance decision is recorded.`
+- `The latest governance action closed the reopened queue.location-access-runtime-convergence business-line completion check after the script-editor access condition setting, export/runtime preservation, and end-to-end verification passed.`
+- `Resume from the version plan promotion review; no active queue is currently admitted.`
 
 ### Historical References
 
 - `docs/change-log.md` stores code and behavior change history only; it is not a default Blueprint search target or governance resume source.`
 - `docs/blueprints/plans/2026-07-16-city-building-definition-location-access-convergence-target-plan.md` stores the open city/building definition and LocationAccessRuntime convergence version's candidate record, admission truth, routing truth, and future closeout truth.
 - `docs/blueprints/queues/script-editor-city-building-definition-restructure-queue.md` stores the closed city/building definition restructure queue truth.
-- `docs/blueprints/queues/location-access-runtime-convergence-queue.md` stores the active LocationAccessRuntime convergence queue truth.
+- `docs/blueprints/queues/location-access-runtime-convergence-queue.md` stores the closed LocationAccessRuntime convergence queue truth.
+- `docs/blueprints/queues/script-editor-building-house-runtime-adapter-queue.md` stores the closed Building-to-HouseRuntime adapter queue truth.
+- `docs/blueprints/queues/city-building-status-save-runtime-convergence-queue.md` stores the closed city/building status save/runtime queue truth.
+- `docs/blueprints/queues/script-editor-city-building-custom-attribute-authoring-queue.md` stores the closed city/building custom-attribute authoring queue truth.
+- `docs/blueprints/queues/script-editor-city-building-export-import-validation-queue.md` stores the closed city/building export/import validation queue truth.
+- `docs/blueprints/queues/map-city-list-compatibility-preservation-queue.md` stores the closed map city-list compatibility preservation queue truth.
+- `docs/blueprints/queues/script-editor-city-building-mount-npc-authoring-queue.md` stores the closed city-side building/NPC mounting authoring queue truth.
+- `docs/blueprints/queues/script-editor-city-building-mount-export-runtime-convergence-queue.md` stores the closed city-mounted building/NPC export/runtime convergence queue truth.
 - `docs/blueprints/plans/2026-07-15-script-editor-authoring-data-structure-unification-target-plan.md` stores the closed authoring/data-structure unification version's activation truth, candidate record, promotion ledger, queue closeout history, and version closeout truth.
 - `docs/blueprints/queues/script-editor-project-cache-save-export-preview-queue.md` stores the closed first project cache/save/export/preview execution truth.
 - `docs/blueprints/queues/script-editor-project-cache-save-export-preview-continuation-queue.md` stores the closed continuation truth for durable save-location recording and stale continue gating.

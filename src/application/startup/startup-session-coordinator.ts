@@ -13,6 +13,8 @@ import {
   materializeCharacterDefinitions,
   type CharacterStatusById,
 } from "../../domain/character-status";
+import type { BuildingStatusById } from "../../domain/building-status";
+import type { CityStatusById } from "../../domain/city-status";
 import type {
   ScenarioPackDefinition,
   ScenarioPackSummary,
@@ -206,6 +208,8 @@ async function createRestoreStartupSession(
   }
 
   const characterStatusById = readSavedCharacterStatusById(saveData);
+  const cityStatusById = readSavedCityStatusById(saveData);
+  const buildingStatusById = readSavedBuildingStatusById(saveData);
   const activatedContentSource = readActivatedContentSource(activationResult);
   if (isScenarioPackSource(activatedContentSource)) {
     const playerCharacterId =
@@ -224,7 +228,11 @@ async function createRestoreStartupSession(
           ),
         readScenarioStartupStoryBootstrap(activatedContentSource),
         deps,
-        characterStatusById
+        createStartupStatusMaps({
+          characterStatusById,
+          cityStatusById,
+          buildingStatusById,
+        })
       ),
     });
   }
@@ -242,7 +250,11 @@ async function createRestoreStartupSession(
         ),
       readBuiltinStartupStoryBootstrap("haozhou-return-encounter"),
       deps,
-      characterStatusById
+      createStartupStatusMaps({
+        characterStatusById,
+        cityStatusById,
+        buildingStatusById,
+      })
     ),
   });
 }
@@ -316,7 +328,11 @@ function createStartupAppStateBuilder(
   createBaseAppState: () => AppState,
   bootstrap: StartupStoryBootstrap | null,
   deps: StartupSessionCoordinatorDeps,
-  characterStatusById?: CharacterStatusById
+  statusMaps: {
+    characterStatusById?: CharacterStatusById;
+    cityStatusById?: CityStatusById;
+    buildingStatusById?: BuildingStatusById;
+  } = {}
 ): () => AppState {
   return () => {
     const appState = deps.bootstrapStartupStoryAppState({
@@ -324,8 +340,14 @@ function createStartupAppStateBuilder(
       bootstrap,
     });
 
+    const { characterStatusById, cityStatusById, buildingStatusById } =
+      statusMaps;
     if (characterStatusById == null) {
-      return appState;
+      return {
+        ...appState,
+        ...(cityStatusById == null ? {} : { cityStatusById }),
+        ...(buildingStatusById == null ? {} : { buildingStatusById }),
+      };
     }
 
     return {
@@ -335,6 +357,8 @@ function createStartupAppStateBuilder(
         characterStatusById
       ),
       characterStatusById,
+      ...(cityStatusById == null ? {} : { cityStatusById }),
+      ...(buildingStatusById == null ? {} : { buildingStatusById }),
     };
   };
 }
@@ -346,6 +370,46 @@ function readSavedCharacterStatusById(
   return value != null && typeof value === "object"
     ? (value as CharacterStatusById)
     : undefined;
+}
+
+function readSavedCityStatusById(
+  saveData: StartupSaveData
+): CityStatusById | undefined {
+  const value = saveData?.modState?.cityStatusById;
+  return value != null && typeof value === "object"
+    ? (value as CityStatusById)
+    : undefined;
+}
+
+function readSavedBuildingStatusById(
+  saveData: StartupSaveData
+): BuildingStatusById | undefined {
+  const value = saveData?.modState?.buildingStatusById;
+  return value != null && typeof value === "object"
+    ? (value as BuildingStatusById)
+    : undefined;
+}
+
+function createStartupStatusMaps(input: {
+  characterStatusById?: CharacterStatusById | undefined;
+  cityStatusById?: CityStatusById | undefined;
+  buildingStatusById?: BuildingStatusById | undefined;
+}): {
+  characterStatusById?: CharacterStatusById;
+  cityStatusById?: CityStatusById;
+  buildingStatusById?: BuildingStatusById;
+} {
+  return {
+    ...(input.characterStatusById == null
+      ? {}
+      : { characterStatusById: input.characterStatusById }),
+    ...(input.cityStatusById == null
+      ? {}
+      : { cityStatusById: input.cityStatusById }),
+    ...(input.buildingStatusById == null
+      ? {}
+      : { buildingStatusById: input.buildingStatusById }),
+  };
 }
 
 function readBuiltinStartupStoryBootstrap(

@@ -1072,6 +1072,153 @@ test("active game content indexes merged task definitions by id", () => {
   );
 });
 
+test("active game content uses override pack city entries without inheriting base entries", () => {
+  const content = createActiveGameContent(
+    {
+      schemaVersion: 1,
+      id: "pack.base.city-entries",
+      title: "Base City Entries",
+      textEntries: {},
+      scenes: [],
+      events: [],
+      characters: [],
+      cities: [],
+      houses: [],
+      maps: [],
+      cityEntries: [
+        {
+          id: "city-entry.prior.city-a",
+          cityId: "city.test-a",
+          name: "Prior City A Entry",
+          directoryType: "leader-residence",
+          targetHouseId: "house.prior.city-a",
+          artworkId: "leader-residence",
+        },
+        {
+          id: "city-entry.prior.city-b",
+          cityId: "city.test-b",
+          name: "Prior City B Entry",
+          directoryType: "leader-residence",
+          targetHouseId: "house.prior.city-b",
+          artworkId: "leader-residence",
+        },
+      ],
+      activities: [],
+      cards: [],
+      valuables: [],
+    },
+    {
+      schemaVersion: 1,
+      id: "pack.override.city-entries",
+      title: "Override City Entries",
+      textEntries: {},
+      scenes: [],
+      events: [],
+      characters: [],
+      cities: [],
+      houses: [],
+      maps: [],
+      cityEntries: [
+        {
+          id: "city-entry.override.city-a.market",
+          cityId: "city.test-a",
+          name: "Override City A Market",
+          directoryType: "leader-residence",
+          targetHouseId: "house.override.market",
+          artworkId: "leader-residence",
+        },
+      ],
+      activities: [],
+      cards: [],
+      valuables: [],
+    }
+  );
+
+  assert.deepEqual(
+    content.cityEntries.map((entryDefinition) => entryDefinition.id),
+    ["city-entry.override.city-a.market"]
+  );
+});
+
+test("active game content clears prior city entries when override pack supplies a city with no entries", () => {
+  const content = createActiveGameContent(
+    {
+      schemaVersion: 1,
+      id: "pack.base.city-entries.clear",
+      title: "Base City Entries Clear",
+      textEntries: {},
+      scenes: [],
+      events: [],
+      characters: [],
+      cities: [
+        {
+          id: "city.test-clear",
+          name: "Base City",
+          regionId: "region.test",
+          mapNodeId: "node.test-clear",
+          houseIds: ["house.base.leader"],
+          neighbourCityIds: [],
+          travelCost: 1,
+          tags: [],
+          prosperity: 50,
+          danger: 0,
+          specialDemand: [],
+        },
+      ],
+      houses: [],
+      maps: [],
+      cityEntries: [
+        {
+          id: "city-entry.base.leader",
+          cityId: "city.test-clear",
+          name: "将领府邸",
+          directoryType: "leader-residence",
+          targetHouseId: "house.base.leader",
+          artworkId: "leader-residence",
+        },
+      ],
+      activities: [],
+      cards: [],
+      valuables: [],
+    },
+    {
+      schemaVersion: 1,
+      id: "pack.override.city-entries.clear",
+      title: "Override City Entries Clear",
+      textEntries: {},
+      scenes: [],
+      events: [],
+      characters: [],
+      cities: [
+        {
+          id: "city.test-clear",
+          name: "Override Empty City",
+          regionId: "region.test",
+          mapNodeId: "node.test-clear",
+          houseIds: [],
+          neighbourCityIds: [],
+          travelCost: 1,
+          tags: [],
+          prosperity: 50,
+          danger: 0,
+          specialDemand: [],
+        },
+      ],
+      houses: [],
+      maps: [],
+      cityEntries: [],
+      activities: [],
+      cards: [],
+      valuables: [],
+    }
+  );
+
+  assert.deepEqual(
+    content.cityEntries.filter((entryDefinition) => entryDefinition.cityId === "city.test-clear"),
+    []
+  );
+});
+
 test("active game content merges module-keyed house defaults by module id", () => {
   const content = createActiveGameContent(
     {
@@ -1992,6 +2139,66 @@ test("zhuyuanzhang pack-local city and access tables contain kulan content", () 
   assert.equal(
     cityEntries.some((entry) => entry.id === "city-entry.kulan.leader-residence"),
     true
+  );
+  assert.deepEqual(
+    cityEntries
+      .filter((entry) => entry.cityId === "city.kulan")
+      .map((entry) => ({
+        name: entry.name,
+        directoryType: entry.directoryType,
+        targetHouseId: entry.targetHouseId,
+        artworkId: entry.artworkId,
+      })),
+    [
+      {
+        name: "将领府邸",
+        directoryType: "leader-residence",
+        targetHouseId: "house.kulan.leader_residence",
+        artworkId: "leader-residence",
+      },
+      {
+        name: "皇觉寺",
+        directoryType: "building",
+        targetHouseId: "house.kulan.temple",
+        artworkId: "temple-house",
+      },
+      {
+        name: "帅府",
+        directoryType: "building",
+        targetHouseId: "house.kulan.keep",
+        artworkId: "keep-house",
+      },
+      {
+        name: "茶馆",
+        directoryType: "building",
+        targetHouseId: "house.kulan.tea_house",
+        artworkId: "tea-house",
+      },
+      {
+        name: "货栈",
+        directoryType: "building",
+        targetHouseId: "house.kulan.market",
+        artworkId: "market-house",
+      },
+      {
+        name: "粮铺",
+        directoryType: "building",
+        targetHouseId: "house.kulan.grain_shop",
+        artworkId: "grain-shop",
+      },
+      {
+        name: "药铺",
+        directoryType: "building",
+        targetHouseId: "house.kulan.medicine_house",
+        artworkId: "medicine-house",
+      },
+      {
+        name: "客栈",
+        directoryType: "building",
+        targetHouseId: "house.kulan.inn",
+        artworkId: "tavern",
+      },
+    ]
   );
   assert.equal(
     cityNpcPools.some((pool) => pool.cityId === "city.kulan" && pool.residents.length > 0),
@@ -3294,6 +3501,108 @@ test("character status materializer overlays custom property patches without mut
   });
 });
 
+test("city and building status materializers overlay current values without mutating definitions", () => {
+  const {
+    materializeCityDefinition,
+    mergeCityStatusById,
+  } = require("../.test-dist/domain/city-status.js");
+  const {
+    materializeBuildingDefinition,
+    mergeBuildingStatusById,
+  } = require("../.test-dist/domain/building-status.js");
+  const authoredCity = {
+    id: "city.status.test",
+    name: "Status City",
+    regionId: "region.test",
+    mapNodeId: "map-node.status",
+    houseIds: ["house.status.test"],
+    neighbourCityIds: [],
+    travelCost: 1,
+    tags: ["trade"],
+    prosperity: 45,
+    danger: 20,
+    specialDemand: ["rice"],
+  };
+  const authoredBuilding = {
+    id: "house.status.test",
+    cityId: authoredCity.id,
+    name: "Status House",
+    type: "custom",
+    characterIds: ["char.owner"],
+    defaultCharacterId: "char.owner",
+    moduleId: "custom.module",
+    activityLocationId: "market",
+    backAction: { label: "Back", targetView: "city" },
+  };
+
+  const cityStatusById = mergeCityStatusById({}, authoredCity.id, {
+    valuePatch: {
+      prosperity: 72,
+      danger: 8,
+      specialDemand: ["salt"],
+    },
+  });
+  const buildingStatusById = mergeBuildingStatusById({}, authoredBuilding.id, {
+    profilePatch: {
+      name: "Runtime House",
+      defaultCharacterId: null,
+    },
+    runtimePatch: {
+      level: 3,
+      damaged: true,
+      outputMultiplier: 1.25,
+    },
+  });
+
+  const materializedCity = materializeCityDefinition(
+    authoredCity,
+    cityStatusById[authoredCity.id]
+  );
+  const materializedBuilding = materializeBuildingDefinition(
+    authoredBuilding,
+    buildingStatusById[authoredBuilding.id]
+  );
+
+  assert.deepEqual(materializedCity, {
+    ...authoredCity,
+    prosperity: 72,
+    danger: 8,
+    specialDemand: ["salt"],
+  });
+  assert.deepEqual(materializedBuilding, {
+    ...authoredBuilding,
+    name: "Runtime House",
+    defaultCharacterId: null,
+    level: 3,
+    damaged: true,
+    outputMultiplier: 1.25,
+  });
+  assert.deepEqual(authoredCity, {
+    id: "city.status.test",
+    name: "Status City",
+    regionId: "region.test",
+    mapNodeId: "map-node.status",
+    houseIds: ["house.status.test"],
+    neighbourCityIds: [],
+    travelCost: 1,
+    tags: ["trade"],
+    prosperity: 45,
+    danger: 20,
+    specialDemand: ["rice"],
+  });
+  assert.deepEqual(authoredBuilding, {
+    id: "house.status.test",
+    cityId: authoredCity.id,
+    name: "Status House",
+    type: "custom",
+    characterIds: ["char.owner"],
+    defaultCharacterId: "char.owner",
+    moduleId: "custom.module",
+    activityLocationId: "market",
+    backAction: { label: "Back", targetView: "city" },
+  });
+});
+
 test("runtime property mutation applies numeric custom properties through CharacterStatus patches", () => {
   const {
     mutateCharacterNumericProperty,
@@ -3445,6 +3754,80 @@ test("runtime commit merges CharacterStatus patches into the AppState-owned stat
       stamina: 65,
     }
   );
+});
+
+test("runtime commit merges city and building status patches into the AppState-owned status stores", () => {
+  const {
+    commitRuntimeRequest,
+  } = require("../.test-dist/core/runtime/state-sync-runtime.js");
+  const state = {
+    gameState: createBaseState(),
+    characterDefinitions: prototypeCharacters,
+    cityStatusById: {
+      "city.kulan": {
+        valuePatch: { prosperity: 40 },
+      },
+    },
+    buildingStatusById: {
+      "house.kulan.market": {
+        runtimePatch: { level: 1 },
+      },
+    },
+    playerCoordinate: { x: 0, y: 0 },
+    campaignActorState: { facingDegrees: 0, isMoving: false },
+    campaignTravelState: null,
+    modalState: null,
+    locationDialogueState: null,
+    beggingMiniGameState: null,
+    cityMenuState: null,
+    cityDirectoryState: null,
+    autoAdvanceState: null,
+    uiLayouts: {},
+  };
+
+  const result = commitRuntimeRequest({
+    state,
+    request: {
+      family: "action",
+      type: "action",
+      actionId: "test.city-building-status",
+    },
+    context: {
+      router: {
+        route: ({ state: runtimeState }) => ({
+          state: runtimeState,
+          effects: [],
+          cityStatusById: {
+            "city.kulan": {
+              valuePatch: { danger: 12 },
+            },
+          },
+          buildingStatusById: {
+            "house.kulan.market": {
+              profilePatch: { name: "Runtime Market" },
+              runtimePatch: { damaged: true },
+            },
+          },
+        }),
+      },
+    },
+  });
+
+  assert.deepEqual(result.state.cityStatusById["city.kulan"], {
+    valuePatch: {
+      prosperity: 40,
+      danger: 12,
+    },
+  });
+  assert.deepEqual(result.state.buildingStatusById["house.kulan.market"], {
+    profilePatch: {
+      name: "Runtime Market",
+    },
+    runtimePatch: {
+      level: 1,
+      damaged: true,
+    },
+  });
 });
 
 test("runtime commit does not create CharacterStatus records when no patch is emitted", () => {
@@ -3674,6 +4057,106 @@ test("startup restore materializes saved CharacterStatus without mutating author
   });
   assert.equal(authoredCharacter.stats.gold, 120);
   assert.equal(authoredCharacter.stamina, 80);
+});
+
+test("startup restore preserves saved city and building status maps on AppState", async () => {
+  const {
+    runStartupSessionCoordinator,
+  } = require("../.test-dist/application/startup/startup-session-coordinator.js");
+  const authoredCharacter = {
+    ...prototypeCharacters[0],
+    id: "char.status.location-restore",
+  };
+  const createAuthoredAppState = () => ({
+    gameState: createBaseState(),
+    characterDefinitions: [authoredCharacter],
+    playerCoordinate: { x: 0, y: 0 },
+    campaignActorState: { facingDegrees: 0, isMoving: false },
+    campaignTravelState: null,
+    modalState: null,
+    locationDialogueState: null,
+    beggingMiniGameState: null,
+    cityMenuState: null,
+    cityDirectoryState: null,
+    autoAdvanceState: null,
+    uiLayouts: {},
+  });
+  const activationResult = {
+    ok: true,
+    activatedMod: {
+      normalizedContentSources: [],
+    },
+  };
+
+  const result = await runStartupSessionCoordinator(
+    {
+      type: "restore",
+      selectedCharacter: authoredCharacter,
+      saveData: {
+        selectedCharacterId: authoredCharacter.id,
+        selectedModId: "builtin.default",
+        selectedModSource: {
+          kind: "builtin",
+          modId: "builtin.default",
+        },
+        modState: {
+          cityStatusById: {
+            "city.kulan": {
+              valuePatch: {
+                prosperity: 88,
+                danger: 9,
+              },
+            },
+          },
+          buildingStatusById: {
+            "house.kulan.market": {
+              runtimePatch: {
+                level: 2,
+                damaged: false,
+              },
+            },
+          },
+        },
+      },
+    },
+    {
+      activateBuiltinDefaultMod: async () => activationResult,
+      restoreModFromSave: async () => activationResult,
+      activateScenarioPackMod: async () => activationResult,
+      createPrototypeAppState: createAuthoredAppState,
+      createHaozhouReturnEncounterAppState: (appState) => appState,
+      createScenarioPackAppState: createAuthoredAppState,
+      createStartupContentContext: () => ({
+        packId: "builtin.default",
+        storyContent: {
+          eventDefinitionsById: {},
+          sceneDefinitionsById: {},
+          activityDefinitionsById: {},
+          textEntriesById: {},
+        },
+      }),
+      bootstrapStartupStoryAppState: ({ appState }) => appState,
+    }
+  );
+
+  assert.equal(result.ok, true);
+  const restoredAppState = result.session.createAppState();
+  assert.deepEqual(restoredAppState.cityStatusById, {
+    "city.kulan": {
+      valuePatch: {
+        prosperity: 88,
+        danger: 9,
+      },
+    },
+  });
+  assert.deepEqual(restoredAppState.buildingStatusById, {
+    "house.kulan.market": {
+      runtimePatch: {
+        level: 2,
+        damaged: false,
+      },
+    },
+  });
 });
 
 test(
@@ -6913,6 +7396,16 @@ test(
     city = updateScriptEditorMenuEntryField(city, 0, "targetId", "dialogue.city.kulan");
     city = toggleScriptEditorMenuEntryFlag(city, 0, "isEnabled", false);
     city = updateScriptEditorAccessField(city, "state", "visible-disabled");
+    city = updateScriptEditorAccessField(
+      city,
+      "conditionExpression",
+      JSON.stringify({
+        type: "compare",
+        left: { type: "field", subject: "world", fieldId: "chapterId" },
+        operator: "equals",
+        right: { type: "literal", value: "chapter.open" },
+      })
+    );
     city = updateScriptEditorAccessField(city, "blockedMessage", "暂未开放");
 
     let building = createDefaultScriptEditorBuildingRecord(0, "city.kulan");
@@ -6940,13 +7433,112 @@ test(
     assert.equal(city.menuEntries[0].isEnabled, false);
     assert.equal("state" in city.access, false);
     assert.deepEqual(city.access.conditionExpression, {
-      type: "literal",
-      value: false,
+      type: "compare",
+      left: { type: "field", subject: "world", fieldId: "chapterId" },
+      operator: "equals",
+      right: { type: "literal", value: "chapter.open" },
     });
     assert.equal(city.access.blockedMessage, "暂未开放");
     assert.equal(normalizedCity.entryBinding.defaultPersonId, "person.host");
     assert.equal(normalizedCity.entryBinding.onEnterEventId, "event.enter.market");
     assert.equal(normalizedCity.cityId, "city.kulan");
+  }
+);
+
+test(
+  "script editor city/building custom attribute helpers edit bounded extendedAttributes entries",
+  () => {
+    const {
+      appendScriptEditorLocationAttribute,
+      createDefaultScriptEditorBuildingRecord,
+      createDefaultScriptEditorCityRecord,
+      removeScriptEditorLocationAttribute,
+      updateScriptEditorLocationAttribute,
+    } = require("../.test-dist/application/script-editor/city-building-authoring.js");
+
+    let city = createDefaultScriptEditorCityRecord(0);
+    city = appendScriptEditorLocationAttribute(city);
+    city = updateScriptEditorLocationAttribute(city, 0, "key", "tradeRank");
+    city = updateScriptEditorLocationAttribute(city, 0, "label", "Trade Rank");
+    city = updateScriptEditorLocationAttribute(city, 0, "value", "3");
+
+    assert.deepEqual(city.extendedAttributes, [
+      { key: "tradeRank", label: "Trade Rank", value: "3" },
+    ]);
+
+    let building = createDefaultScriptEditorBuildingRecord(0, "city.start");
+    building = appendScriptEditorLocationAttribute(building);
+    building = updateScriptEditorLocationAttribute(building, 0, "key", "taxRate");
+    building = updateScriptEditorLocationAttribute(building, 0, "value", "5");
+    building = appendScriptEditorLocationAttribute(building);
+    building = updateScriptEditorLocationAttribute(building, 1, "key", "emptySlot");
+    building = removeScriptEditorLocationAttribute(building, 0);
+
+    assert.deepEqual(building.extendedAttributes, [
+      { key: "emptySlot", value: "" },
+    ]);
+  }
+);
+
+test(
+  "script editor city/building profile UI exposes custom attribute controls and routes edits",
+  () => {
+    const mainUiSource = fs.readFileSync(
+      path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+      "utf8"
+    );
+
+    assert.match(mainUiSource, /renderScriptEditorLocationCustomAttributes\(location\)/);
+    assert.match(mainUiSource, /data-script-editor-action="add-location-attribute"/);
+    assert.match(mainUiSource, /data-script-editor-action="remove-location-attribute"/);
+    assert.match(mainUiSource, /data-script-editor-location-attribute-field="key"/);
+    assert.match(mainUiSource, /data-script-editor-location-attribute-field="label"/);
+    assert.match(mainUiSource, /data-script-editor-location-attribute-field="value"/);
+    assert.match(mainUiSource, /location\.extendedAttributes \?\? \[\]/);
+    assert.match(mainUiSource, /addScriptEditorLocationAttribute\(\)/);
+    assert.match(mainUiSource, /removeScriptEditorLocationAttribute\(locationAttributeIndex\)/);
+    assert.match(mainUiSource, /applyScriptEditorLocationAttributeField\(index, field, target\.value\)/);
+  }
+);
+
+test(
+  "script editor project save and load preserve city/building custom attributes",
+  async () => {
+    const {
+      createDefaultScriptEditorProjectDefinition,
+    } = require("../.test-dist/application/script-editor/minimal-workflow.js");
+    const {
+      serializeScriptEditorProjectToFiles,
+    } = require("../.test-dist/application/script-editor/editor-project-save.js");
+    const {
+      loadScriptEditorProjectFromFiles,
+    } = require("../.test-dist/application/script-editor/editor-project-loader.js");
+
+    const project = createDefaultScriptEditorProjectDefinition({
+      idBase: "city-building-custom-attributes",
+      title: "City Building Custom Attributes",
+    });
+    project.cities[0].extendedAttributes = [
+      { key: "tradeRank", label: "Trade Rank", value: "3" },
+    ];
+    project.buildings[0].extendedAttributes = [
+      { key: "taxRate", label: "Tax Rate", value: "5" },
+    ];
+
+    const serializedFiles = serializeScriptEditorProjectToFiles(project);
+    const loadedProject = await loadScriptEditorProjectFromFiles(
+      createImportedFilesFromSerializedJsonRecord(
+        serializedFiles,
+        "city-building-custom-attributes"
+      )
+    );
+
+    assert.deepEqual(loadedProject.cities[0].extendedAttributes, [
+      { key: "tradeRank", label: "Trade Rank", value: "3" },
+    ]);
+    assert.deepEqual(loadedProject.buildings[0].extendedAttributes, [
+      { key: "taxRate", label: "Tax Rate", value: "5" },
+    ]);
   }
 );
 
@@ -7104,10 +7696,17 @@ test(
           description: "A governed city definition.",
           tags: ["river-port"],
         },
-        extendedAttributes: [{ key: "tradeRank", value: 3 }],
+        extendedAttributes: [{ key: "specialDemand", value: ["salt"] }],
         access: {
           conditionExpression: { type: "literal", value: true },
         },
+        mountedBuildings: [
+          {
+            buildingId: "building.market",
+            npcIds: [],
+            primaryNpcId: null,
+          },
+        ],
       },
     ];
     project.buildings = [
@@ -7127,7 +7726,7 @@ test(
           description: "A governed building definition.",
           tags: ["trade"],
         },
-        extendedAttributes: [{ key: "taxRate", value: 5 }],
+        extendedAttributes: [],
         access: {
           conditionExpression: { type: "literal", value: false },
           blockedMessage: "Market is closed.",
@@ -7148,6 +7747,7 @@ test(
     assert.equal(cities[0].mapNodeId, "node.start");
     assert.equal(cities[0].prosperity, 72);
     assert.equal(cities[0].danger, 55);
+    assert.deepEqual(cities[0].specialDemand, ["salt"]);
     assert.equal(cities[0].tags.includes("river-port"), true);
     assert.equal(JSON.stringify(cities).includes("visible-disabled"), false);
     assert.equal(JSON.stringify(houses).includes("visible-disabled"), false);
@@ -7159,6 +7759,214 @@ test(
     assert.equal(refusalRules[0].text, "Market is closed.");
   }
 );
+
+test(
+  "script editor runtime export fails closed on unsupported city building custom attributes",
+  () => {
+    const {
+      exportScriptEditorProjectToScenarioPackFiles,
+      validateScriptEditorProjectForRuntimeExport,
+    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    const project = createExportableScriptEditorProjectDefinition();
+    project.cities = [
+      {
+        id: "city.start",
+        name: "Start City",
+        extendedAttributes: [
+          { key: "tradeRank", label: "Trade Rank", value: "3" },
+          { key: "specialDemand", value: ["salt"] },
+        ],
+      },
+    ];
+    project.buildings = [
+      {
+        id: "building.market",
+        cityId: "city.start",
+        name: "Market",
+        extendedAttributes: [{ key: "taxRate", label: "Tax Rate", value: "5" }],
+      },
+    ];
+
+    const diagnostics = validateScriptEditorProjectForRuntimeExport(project);
+
+    assert.deepEqual(
+      diagnostics.map((diagnostic) => ({
+        code: diagnostic.code,
+        fieldPath: diagnostic.fieldPath,
+      })),
+      [
+        {
+          code: "unsupported-lowering",
+          fieldPath: "project.cities[0].extendedAttributes[0]",
+        },
+        {
+          code: "unsupported-lowering",
+          fieldPath: "project.buildings[0].extendedAttributes[0]",
+        },
+      ]
+    );
+    assert.throws(
+      () => exportScriptEditorProjectToScenarioPackFiles(project),
+      /city custom attribute|building custom attribute|tradeRank|taxRate/i
+    );
+  }
+);
+
+test(
+  "script editor runtime export preserves city and building access conditions as a runtime family",
+  () => {
+    const {
+      exportScriptEditorProjectToScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    const project = createExportableScriptEditorProjectDefinition();
+    project.cities = [
+      {
+        id: "city.blocked",
+        name: "Blocked City",
+        mapNodeId: "node.blocked",
+        access: {
+          conditionExpression: {
+            type: "compare",
+            left: { type: "field", subject: "world", fieldId: "chapterId" },
+            operator: "equals",
+            right: { type: "literal", value: "chapter.open" },
+          },
+          blockedMessage: "City is not open.",
+          blockedSpeakerId: "player",
+          guidance: "Return later.",
+        },
+      },
+    ];
+    project.buildings = [
+      {
+        id: "building.market",
+        cityId: "city.blocked",
+        name: "Market",
+        access: {
+          conditionExpression: { type: "literal", value: false },
+          blockedMessage: "Market is closed.",
+          blockedSpeakerId: "person.host",
+          guidance: "Leave",
+        },
+      },
+    ];
+
+    const files = exportScriptEditorProjectToScenarioPackFiles(project);
+    const manifest = JSON.parse(files["pack.json"]);
+    const locationAccess = JSON.parse(files["location-access.json"]);
+
+    assert.equal(manifest.files.locationAccess, "./location-access.json");
+    assert.deepEqual(
+      locationAccess.map((entry) => ({
+        targetFamily: entry.targetFamily,
+        targetId: entry.targetId,
+        conditionExpression: entry.conditionExpression,
+        blockedMessage: entry.blockedMessage,
+        blockedSpeakerId: entry.blockedSpeakerId,
+        guidance: entry.guidance,
+      })),
+      [
+        {
+          targetFamily: "city",
+          targetId: "city.blocked",
+          conditionExpression: {
+            type: "compare",
+            left: { type: "field", subject: "world", fieldId: "chapterId" },
+            operator: "equals",
+            right: { type: "literal", value: "chapter.open" },
+          },
+          blockedMessage: "City is not open.",
+          blockedSpeakerId: "player",
+          guidance: "Return later.",
+        },
+        {
+          targetFamily: "building",
+          targetId: "building.market",
+          conditionExpression: { type: "literal", value: false },
+          blockedMessage: "Market is closed.",
+          blockedSpeakerId: "person.host",
+          guidance: "Leave",
+        },
+      ]
+    );
+  }
+);
+
+test("location access runtime evaluates literal and compare conditions", () => {
+  const {
+    evaluateLocationAccess,
+  } = require("../.test-dist/application/location-access/location-access-runtime.js");
+  const baseState = createBaseState();
+  const state = {
+    ...baseState,
+    calendar: { ...baseState.calendar, chapterId: "chapter.closed" },
+  };
+
+  assert.deepEqual(
+    evaluateLocationAccess({
+      state,
+      targetFamily: "city",
+      targetId: "city.blocked",
+      targetCity: {
+        id: "city.blocked",
+        name: "Blocked City",
+        regionId: "region.test",
+        mapNodeId: "node.blocked",
+        houseIds: [],
+        neighbourCityIds: [],
+        travelCost: 1,
+        tags: ["frontier"],
+        prosperity: 50,
+        danger: 20,
+        specialDemand: [],
+      },
+      locationAccessDefinitions: [
+        {
+          id: "location-access.city.blocked",
+          targetFamily: "city",
+          targetId: "city.blocked",
+          conditionExpression: {
+            type: "compare",
+            left: { type: "field", subject: "world", fieldId: "chapterId" },
+            operator: "equals",
+            right: { type: "literal", value: "chapter.open" },
+          },
+          blockedMessage: "City is not open.",
+          blockedSpeakerId: "player",
+          guidance: "Return later.",
+        },
+      ],
+    }),
+    {
+      canEnter: false,
+      refusal: {
+        ruleId: "location-access.city.blocked",
+        speakerCharacterId: "char.player",
+        title: "Blocked City",
+        text: "City is not open.",
+        confirmLabel: "Return later.",
+      },
+    }
+  );
+
+  assert.equal(
+    evaluateLocationAccess({
+      state,
+      targetFamily: "building",
+      targetId: "building.market",
+      targetBuilding: { id: "building.market", cityId: "city.blocked", name: "Market" },
+      locationAccessDefinitions: [
+        {
+          id: "location-access.building.market",
+          targetFamily: "building",
+          targetId: "building.market",
+          conditionExpression: { type: "literal", value: true },
+        },
+      ],
+    }).canEnter,
+    true
+  );
+});
 
 test(
   "script editor runtime export materializes city building entry npc and refusal families from authoring fields",
@@ -7174,6 +7982,19 @@ test(
         personType: "NPC",
         cityId: "city.start",
         houseId: "building.market",
+      },
+    ];
+    project.cities = [
+      {
+        id: "city.start",
+        name: "Start City",
+        mountedBuildings: [
+          {
+            buildingId: "building.market",
+            npcIds: ["person.host"],
+            primaryNpcId: "person.host",
+          },
+        ],
       },
     ];
     project.buildings = [
@@ -7232,6 +8053,382 @@ test(
 );
 
 test(
+  "script editor runtime export materializes city mounted buildings and npcs over imported runtime tables",
+  () => {
+    const {
+      exportScriptEditorProjectToScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    const project = createExportableScriptEditorProjectDefinition();
+    project.cities = [
+      {
+        id: "city.start",
+        name: "Start City",
+        mountedBuildings: [
+          {
+            buildingId: "building.market",
+            npcIds: ["person.host", "person.guard"],
+            primaryNpcId: "person.host",
+          },
+        ],
+      },
+    ];
+    project.buildings = [
+      {
+        id: "building.market",
+        cityId: "city.imported",
+        name: "Mounted Market",
+        baseAttributes: {
+          houseType: "merchant",
+          moduleId: "market-house",
+          activityLocationId: "market",
+        },
+      },
+    ];
+    project.people = [
+      {
+        id: "person.host",
+        name: "Mounted Host",
+        personType: "NPC",
+      },
+      {
+        id: "person.guard",
+        name: "Mounted Guard",
+        personType: "NPC",
+      },
+    ];
+    project.cityEntries = [
+      {
+        id: "city-entry.imported.old",
+        cityId: "city.imported",
+        name: "Imported Old Entry",
+        directoryType: "leader-residence",
+        targetHouseId: "building.imported",
+        artworkId: "leader-residence",
+      },
+    ];
+    project.cityNpcPools = [
+      {
+        cityId: "city.imported",
+        residents: [
+          {
+            id: "person.imported",
+            cityId: "city.imported",
+            name: "Imported NPC",
+            title: "",
+            personality: "",
+            specialty: "",
+            favorability: 0,
+            activityWeight: { custom: 1 },
+            dialoguePool: [],
+            intelPool: [],
+          },
+        ],
+      },
+    ];
+
+    const files = exportScriptEditorProjectToScenarioPackFiles(project);
+    const cities = JSON.parse(files["cities.json"]);
+    const houses = JSON.parse(files["houses.json"]);
+    const cityEntries = JSON.parse(files["city-entries.json"]);
+    const cityNpcPools = JSON.parse(files["city-npc-pools.json"]);
+
+    assert.deepEqual(cities[0].houseIds, ["building.market"]);
+    assert.equal(houses[0].cityId, "city.start");
+    assert.deepEqual(houses[0].characterIds, ["person.host", "person.guard"]);
+    assert.equal(houses[0].defaultCharacterId, "person.host");
+    assert.deepEqual(
+      cityEntries.map((entry) => ({
+        cityId: entry.cityId,
+        directoryType: entry.directoryType,
+        artworkId: entry.artworkId,
+        targetHouseId: entry.targetHouseId,
+        name: entry.name,
+      })),
+      [
+        {
+          cityId: "city.start",
+          directoryType: "building",
+          artworkId: "market-house",
+          targetHouseId: "building.market",
+          name: "Mounted Market",
+        },
+      ]
+    );
+    assert.deepEqual(
+      cityNpcPools.map((pool) => ({
+        cityId: pool.cityId,
+        residents: pool.residents.map((resident) => resident.id),
+      })),
+      [{ cityId: "city.start", residents: ["person.host", "person.guard"] }]
+    );
+  }
+);
+
+test("city entry export preserves mounted building type and artwork instead of leader residence defaults", () => {
+  const {
+    exportScriptEditorProjectToScenarioPackFiles,
+  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  const project = createExportableScriptEditorProjectDefinition();
+  project.cities = [
+    {
+      id: "city.kulan",
+      name: "Kulan",
+      mountedBuildings: [
+        { buildingId: "house.kulan.temple", npcIds: [], primaryNpcId: null },
+        { buildingId: "house.kulan.tea_house", npcIds: [], primaryNpcId: null },
+      ],
+    },
+  ];
+  project.buildings = [
+    {
+      id: "house.kulan.temple",
+      cityId: "city.kulan",
+      name: "皇觉寺",
+      baseAttributes: {
+        houseType: "temple",
+        moduleId: "temple-house",
+        activityLocationId: "temple",
+      },
+    },
+    {
+      id: "house.kulan.tea_house",
+      cityId: "city.kulan",
+      name: "茶馆",
+      baseAttributes: {
+        houseType: "tea-house",
+        moduleId: "tea-house",
+        activityLocationId: "tea-house",
+      },
+    },
+  ];
+
+  const files = exportScriptEditorProjectToScenarioPackFiles(project);
+  const cityEntries = JSON.parse(files["city-entries.json"]);
+
+  assert.deepEqual(
+    cityEntries.map((entry) => ({
+      name: entry.name,
+      directoryType: entry.directoryType,
+      artworkId: entry.artworkId,
+      targetHouseId: entry.targetHouseId,
+    })),
+    [
+      {
+        name: "皇觉寺",
+        directoryType: "building",
+        artworkId: "temple-house",
+        targetHouseId: "house.kulan.temple",
+      },
+      {
+        name: "茶馆",
+        directoryType: "building",
+        artworkId: "tea-house",
+        targetHouseId: "house.kulan.tea_house",
+      },
+    ]
+  );
+});
+
+test("city entry export rewrites stale imported leader residence metadata for mounted buildings", () => {
+  const {
+    exportScriptEditorProjectToScenarioPackFiles,
+  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  const project = createExportableScriptEditorProjectDefinition();
+  project.cities = [
+    {
+      id: "city.kulan",
+      name: "Kulan",
+      mountedBuildings: [
+        { buildingId: "house.kulan.temple", npcIds: [], primaryNpcId: null },
+        { buildingId: "house.kulan.tea_house", npcIds: [], primaryNpcId: null },
+      ],
+    },
+  ];
+  project.buildings = [
+    {
+      id: "house.kulan.temple",
+      cityId: "city.kulan",
+      name: "皇觉寺",
+      baseAttributes: {
+        houseType: "temple",
+        moduleId: "temple-house",
+        activityLocationId: "temple",
+      },
+    },
+    {
+      id: "house.kulan.tea_house",
+      cityId: "city.kulan",
+      name: "茶馆",
+      baseAttributes: {
+        houseType: "tea-house",
+        moduleId: "tea-house",
+        activityLocationId: "tea-house",
+      },
+    },
+  ];
+  project.cityEntries = [
+    {
+      id: "city-entry.city.kulan.house.kulan.temple",
+      cityId: "city.kulan",
+      name: "将领府邸",
+      directoryType: "leader-residence",
+      targetHouseId: "house.kulan.temple",
+      artworkId: "leader-residence",
+    },
+    {
+      id: "city-entry.city.kulan.house.kulan.tea_house",
+      cityId: "city.kulan",
+      name: "将领府邸",
+      directoryType: "leader-residence",
+      targetHouseId: "house.kulan.tea_house",
+      artworkId: "leader-residence",
+    },
+  ];
+
+  const files = exportScriptEditorProjectToScenarioPackFiles(project);
+  const cityEntries = JSON.parse(files["city-entries.json"]);
+
+  assert.deepEqual(
+    cityEntries.map((entry) => ({
+      id: entry.id,
+      name: entry.name,
+      directoryType: entry.directoryType,
+      artworkId: entry.artworkId,
+      targetHouseId: entry.targetHouseId,
+    })),
+    [
+      {
+        id: "city-entry.city.kulan.house.kulan.temple",
+        name: "皇觉寺",
+        directoryType: "building",
+        artworkId: "temple-house",
+        targetHouseId: "house.kulan.temple",
+      },
+      {
+        id: "city-entry.city.kulan.house.kulan.tea_house",
+        name: "茶馆",
+        directoryType: "building",
+        artworkId: "tea-house",
+        targetHouseId: "house.kulan.tea_house",
+      },
+    ]
+  );
+});
+
+test("script editor runtime export does not invent city entries for unmounted buildings", () => {
+  const {
+    exportScriptEditorProjectToScenarioPackFiles,
+  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  const project = createExportableScriptEditorProjectDefinition();
+  project.cities = [{ id: "city.empty", name: "Empty City" }];
+  project.buildings = [
+    {
+      id: "house.empty.market",
+      cityId: "city.empty",
+      name: "Unconfigured Market",
+      baseAttributes: {
+        houseType: "merchant",
+        moduleId: "market-house",
+        activityLocationId: "market",
+      },
+    },
+  ];
+
+  const files = exportScriptEditorProjectToScenarioPackFiles(project);
+
+  assert.deepEqual(JSON.parse(files["city-entries.json"]), []);
+});
+
+test("script editor runtime pack import restores mounted city buildings from city entries", () => {
+  const {
+    importScenarioPackToScriptEditorProject,
+  } = require("../.test-dist/application/script-editor/runtime-pack-import.js");
+  const importedProject = importScenarioPackToScriptEditorProject({
+    schemaVersion: 1,
+    id: "scenario.imported",
+    title: "Imported Scenario",
+    scenarioProfile: {
+      id: "scenario-profile.imported",
+      playerCharacterId: "person.player",
+      chapterId: "chapter.imported",
+      initialLocation: {
+        mapId: "map.imported",
+        cityId: "city.kulan",
+        houseId: null,
+        view: "city",
+      },
+    },
+    characters: [
+      { id: "person.host", name: "Host", personType: "NPC" },
+      { id: "person.guard", name: "Guard", personType: "NPC" },
+    ],
+    cities: [{ id: "city.kulan", name: "Kulan" }],
+    houses: [
+      {
+        id: "house.kulan.temple",
+        cityId: "city.kulan",
+        name: "皇觉寺",
+        type: "temple",
+        characterIds: ["person.host", "person.guard"],
+        defaultCharacterId: "person.host",
+        activityLocationId: "temple",
+      },
+    ],
+    cityEntries: [
+      {
+        id: "city-entry.kulan.temple",
+        cityId: "city.kulan",
+        name: "皇觉寺",
+        directoryType: "building",
+        targetHouseId: "house.kulan.temple",
+        artworkId: "temple-house",
+      },
+    ],
+    cityNpcPools: [
+      {
+        cityId: "city.kulan",
+        residents: [
+          {
+            id: "person.host",
+            cityId: "city.kulan",
+            name: "Host",
+            title: "",
+            personality: "",
+            specialty: "",
+            favorability: 0,
+            activityWeight: { custom: 1 },
+            dialoguePool: [],
+            intelPool: [],
+          },
+          {
+            id: "person.guard",
+            cityId: "city.kulan",
+            name: "Guard",
+            title: "",
+            personality: "",
+            specialty: "",
+            favorability: 0,
+            activityWeight: { custom: 1 },
+            dialoguePool: [],
+            intelPool: [],
+          },
+        ],
+      },
+    ],
+    events: [],
+    scenes: [],
+  });
+
+  assert.deepEqual(importedProject.cities[0].mountedBuildings, [
+    {
+      buildingId: "house.kulan.temple",
+      npcIds: ["person.host", "person.guard"],
+      primaryNpcId: "person.host",
+    },
+  ]);
+});
+
+test(
   "script editor runtime export does not duplicate explicit city building runtime family records",
   () => {
     const {
@@ -7245,6 +8442,19 @@ test(
         personType: "NPC",
         cityId: "city.start",
         houseId: "building.market",
+      },
+    ];
+    project.cities = [
+      {
+        id: "city.start",
+        name: "Start City",
+        mountedBuildings: [
+          {
+            buildingId: "building.market",
+            npcIds: ["person.host"],
+            primaryNpcId: "person.host",
+          },
+        ],
       },
     ];
     project.buildings = [
@@ -7492,6 +8702,240 @@ test(
     );
   }
 );
+
+test("city building placement resolver applies location access before house entry", () => {
+  const {
+    canEnterCityBuilding,
+    resolveCityBuildingView,
+  } = require("../.test-dist/application/city/city-building-placement-resolver.js");
+  const baseState = createBaseState();
+  const state = {
+    ...baseState,
+    player: { characterId: "char.player" },
+    world: { ...baseState.world, currentCityId: "city.start" },
+  };
+  const sharedInput = {
+    state,
+    characterDefinitions: [{ id: "char.player", name: "Player" }],
+    cityEntries: [
+      {
+        id: "city-entry.market",
+        cityId: "city.start",
+        name: "Market Entry",
+        targetHouseId: "house.market",
+      },
+    ],
+    houses: [
+      {
+        id: "house.market",
+        cityId: "city.start",
+        name: "Market",
+        type: "merchant",
+        characterIds: [],
+        defaultCharacterId: null,
+        activityLocationId: "market",
+        backAction: { label: "返回", targetView: "city" },
+      },
+    ],
+    cityNpcPools: [],
+    houseAccessRefusalRules: [],
+    locationAccessDefinitions: [
+      {
+        id: "location-access.building.market",
+        targetFamily: "building",
+        targetId: "house.market",
+        conditionExpression: { type: "literal", value: false },
+        blockedMessage: "Market is closed.",
+        blockedSpeakerId: "player",
+        guidance: "Return later.",
+      },
+    ],
+    placementId: "city-entry.market",
+  };
+
+  assert.deepEqual(canEnterCityBuilding(sharedInput), {
+    canEnter: false,
+    refusal: {
+      ruleId: "location-access.building.market",
+      speakerCharacterId: "char.player",
+      title: "Market",
+      text: "Market is closed.",
+      confirmLabel: "Return later.",
+    },
+  });
+  assert.equal(resolveCityBuildingView(sharedInput).access.canEnter, false);
+});
+
+test("city building house runtime adapter resolves an allowed placement into a house runtime entry", () => {
+  const {
+    resolveCityBuildingHouseRuntimeEntry,
+  } = require("../.test-dist/application/city/city-building-house-runtime-adapter.js");
+  const baseState = createBaseState();
+  const entryResult = resolveCityBuildingHouseRuntimeEntry({
+    state: {
+      ...baseState,
+      player: { characterId: "char.player" },
+      world: { ...baseState.world, currentCityId: grainShopHouse.cityId },
+    },
+    characterDefinitions: [{ id: "char.player", name: "Player" }],
+    cityEntries: [
+      {
+        id: "city-entry.grain-shop",
+        cityId: grainShopHouse.cityId,
+        name: "Grain Shop Entry",
+        targetHouseId: grainShopHouse.id,
+      },
+    ],
+    houses: [grainShopHouse],
+    cityNpcPools: [],
+    houseAccessRefusalRules: [],
+    locationAccessDefinitions: [],
+    placementId: "city-entry.grain-shop",
+  });
+
+  assert.equal(entryResult.canEnter, true);
+  assert.equal(entryResult.entry.placementId, "city-entry.grain-shop");
+  assert.equal(entryResult.entry.source, "city-building-placement");
+  assert.equal(entryResult.entry.houseId, grainShopHouse.id);
+  assert.equal(entryResult.entry.houseDefinition.moduleId, "grain-shop");
+});
+
+test("house runtime enters and dispatches through a resolved city building entry", () => {
+  const {
+    resolveCityBuildingHouseRuntimeEntry,
+  } = require("../.test-dist/application/city/city-building-house-runtime-adapter.js");
+  const {
+    createHouseRuntimeBridge,
+    dispatchHouseRuntimeRequest,
+    enterResolvedHouseThroughRuntime,
+  } = require("../.test-dist/core/runtime/house-runtime.js");
+  const baseState = createBaseState();
+  let appState = {
+    gameState: {
+      ...baseState,
+      world: {
+        ...baseState.world,
+        currentCityId: grainShopHouse.cityId,
+        currentHouseId: null,
+      },
+      ui: {
+        ...baseState.ui,
+        currentView: "city",
+        overlayView: null,
+        houseSession: null,
+      },
+    },
+    characterDefinitions: prototypeCharacters,
+    playerCoordinate: { x: 0, y: 0 },
+    campaignActorState: {
+      facingDegrees: 0,
+      isMoving: false,
+    },
+    campaignTravelState: null,
+    modalState: null,
+    locationDialogueState: null,
+    beggingMiniGameState: null,
+    cityMenuState: null,
+    cityDirectoryState: null,
+    autoAdvanceState: null,
+    uiLayouts: {},
+    layoutEditor: {},
+  };
+  const entryResult = resolveCityBuildingHouseRuntimeEntry({
+    state: appState.gameState,
+    characterDefinitions: appState.characterDefinitions,
+    cityEntries: [
+      {
+        id: "city-entry.grain-shop",
+        cityId: grainShopHouse.cityId,
+        name: "Grain Shop Entry",
+        targetHouseId: grainShopHouse.id,
+      },
+    ],
+    houses: [grainShopHouse],
+    cityNpcPools: [],
+    houseAccessRefusalRules: [],
+    locationAccessDefinitions: [],
+    placementId: "city-entry.grain-shop",
+  });
+  const runtime = createHouseRuntimeBridge({
+    getAppState: () => appState,
+    setAppState: (nextAppState) => {
+      appState = nextAppState;
+    },
+    renderApp: () => {},
+    startMapAutoAdvance: () => {},
+    stopMapAutoAdvance: () => {},
+    houseDefinitions: [],
+    playerCharacterId,
+    eventDefinitionsById: {},
+    sceneDefinitionsById: {},
+    syncCouncilPriorityAfterGameStateChange: () => false,
+  });
+
+  assert.equal(entryResult.canEnter, true);
+  enterResolvedHouseThroughRuntime(runtime, entryResult.entry);
+  dispatchHouseRuntimeRequest(runtime, {
+    type: "action",
+    actionId: "advance-greeting",
+  });
+
+  assert.equal(appState.gameState.world.currentHouseId, grainShopHouse.id);
+  assert.equal(appState.gameState.ui.currentView, "house");
+  assert.equal(appState.gameState.ui.houseSession?.moduleId, "grain-shop");
+  assert.equal(appState.gameState.ui.houseSession?.state?.dialoguePhase, "open");
+});
+
+test("city location deck uses only city entry buttons for building entry", () => {
+  const cityViewSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/views/city/city-view.ts"),
+    "utf8"
+  );
+  const renderLocationsDeckViewBlock = cityViewSource.match(
+    /function renderLocationsDeckView\([\s\S]*?\r?\n}\r?\n\r?\nfunction renderCityMenuPanel/
+  )?.[0] ?? "";
+
+  assert.match(renderLocationsDeckViewBlock, /data-city-entry-id=/);
+  assert.match(renderLocationsDeckViewBlock, /getCityEntryArtworkClass\(cityEntry\)/);
+  assert.doesNotMatch(renderLocationsDeckViewBlock, /data-house-id=/);
+  assert.doesNotMatch(renderLocationsDeckViewBlock, /visibleHouseDefinitions/);
+});
+
+test("city entry artwork class comes from city entry artwork id", () => {
+  const cityViewSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/views/city/city-view.ts"),
+    "utf8"
+  );
+
+  assert.match(cityViewSource, /function getCityEntryArtworkClass/);
+  assert.match(cityViewSource, /cityEntry\.artworkId/);
+  assert.match(cityViewSource, /c-kulan-house-card--tea-house/);
+  assert.match(cityViewSource, /c-kulan-house-card--temple-house/);
+});
+
+test("city click handling no longer exposes direct house-id entry protocol", () => {
+  const mainSource = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
+  const appClickCoordinatorSource = fs.readFileSync(
+    path.join(process.cwd(), "src/application/ui/app-click-coordinator.ts"),
+    "utf8"
+  );
+
+  assert.doesNotMatch(mainSource, /\[data-house-id\]/);
+  assert.doesNotMatch(appClickCoordinatorSource, /\[data-house-id\]/);
+});
+
+test("non directory city entries enter the target building directly", () => {
+  const coordinatorSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/application/runtime/city-directory-leader-residence-coordinator.ts"
+    ),
+    "utf8"
+  );
+
+  assert.match(coordinatorSource, /cityEntry\.directoryType !== "leader-residence"/);
+  assert.match(coordinatorSource, /enterHouseFromCity\(cityEntry\.targetHouseId\)/);
+});
 
 test(
   "script editor story/dialogue/event queue exposes dedicated narrative tabs and bounded relation entrypoints",
@@ -15820,6 +17264,21 @@ test("save-envelope-cutover main.ts no longer leaves loadSaveData as a placehold
   );
 });
 
+test("main save state includes city and building status maps in modState", () => {
+  const mainSource = fs.readFileSync(
+    path.join(process.cwd(), "src/main.ts"),
+    "utf8"
+  );
+  const saveStateBlock = mainSource.match(
+    /function readCurrentCoreGameStateForSave\(\)[\s\S]*?\n\}/
+  )?.[0] ?? "";
+
+  assert.match(saveStateBlock, /cityStatusById/);
+  assert.match(saveStateBlock, /buildingStatusById/);
+  assert.match(saveStateBlock, /appState\.cityStatusById/);
+  assert.match(saveStateBlock, /appState\.buildingStatusById/);
+});
+
 test("child 29 main.ts primary startup no longer depends on legacy startup adapters", () => {
   const mainSource = fs.readFileSync(
     path.join(process.cwd(), "src/main.ts"),
@@ -16204,6 +17663,14 @@ test("child 15 covered enter-city path routes through shared runtime dispatch in
   assert.doesNotMatch(handleModalConfirmBlock, /runNavigationRuntime\(/);
   assert.match(handleModalConfirmBlock, /commitRuntimeRequest\(/);
   assert.match(handleModalConfirmBlock, /createEnterCityRequest\(/);
+  assert.match(
+    handleModalConfirmBlock,
+    /cityDefinitionsById:\s*activeContentContext\.cityDefinitionById/
+  );
+  assert.match(
+    handleModalConfirmBlock,
+    /locationAccessDefinitions:\s*activeContentContext\.locationAccess/
+  );
   assert.match(
     handleModalConfirmBlock,
     /handleFollowUp:\s*\(\{\s*state,\s*followUp\s*\}\)\s*=>[\s\S]*navigationTimeFollowUp\.applyOutcome\(\{\s*state,\s*outcome:\s*followUp\s*\}\)/
@@ -18397,6 +19864,111 @@ test("child 25 navigation runtime emits explicit entered-city follow-up outcome"
   });
 });
 
+test("location access runtime blocks enter-city before current city mutation", () => {
+  const {
+    createEnterCityRequest,
+    runNavigationRuntime,
+  } = require("../.test-dist/core/runtime/navigation-runtime.js");
+  const baseState = createBaseState();
+  const result = runNavigationRuntime({
+    state: {
+      ...baseState,
+      player: { characterId: "char.player" },
+      world: { ...baseState.world, currentCityId: "city.start" },
+    },
+    request: createEnterCityRequest("city.blocked"),
+    cityDefinitionsById: {
+      "city.blocked": {
+        id: "city.blocked",
+        name: "Blocked City",
+        regionId: "region.test",
+        mapNodeId: "node.blocked",
+        houseIds: [],
+        neighbourCityIds: [],
+        travelCost: 1,
+        tags: [],
+        prosperity: 50,
+        danger: 10,
+        specialDemand: [],
+      },
+    },
+    locationAccessDefinitions: [
+      {
+        id: "location-access.city.blocked",
+        targetFamily: "city",
+        targetId: "city.blocked",
+        conditionExpression: { type: "literal", value: false },
+        blockedMessage: "City is not open.",
+        blockedSpeakerId: "player",
+        guidance: "Return later.",
+      },
+    ],
+  });
+
+  assert.equal(result.state.world.currentCityId, "city.start");
+  assert.equal(result.navigation, null);
+  assert.equal(result.followUp, undefined);
+  assert.deepEqual(result.access, {
+    canEnter: false,
+    refusal: {
+      ruleId: "location-access.city.blocked",
+      speakerCharacterId: "char.player",
+      title: "Blocked City",
+      text: "City is not open.",
+      confirmLabel: "Return later.",
+    },
+  });
+});
+
+test("map city markers use active city definitions with map-owned coordinates", () => {
+  const {
+    createMapCityMarkers,
+  } = require("../.test-dist/application/map/map-city-marker-view-model.js");
+
+  const markers = createMapCityMarkers({
+    cityDefinitions: [
+      {
+        id: "city.map-owned",
+        name: "Map Owned City",
+        regionId: "region.test",
+        mapNodeId: "node.map-owned",
+        houseIds: [],
+        neighbourCityIds: [],
+        tags: [],
+        prosperity: 10,
+        danger: 0,
+        specialDemand: [],
+        x: 999,
+        y: 888,
+      },
+      {
+        id: "city.without-coordinate",
+        name: "No Coordinate City",
+        regionId: "region.test",
+        mapNodeId: "node.missing",
+        houseIds: [],
+        neighbourCityIds: [],
+        tags: [],
+        prosperity: 10,
+        danger: 0,
+        specialDemand: [],
+      },
+    ],
+    cityCoordinatesById: {
+      "city.map-owned": { x: 12, y: 34 },
+    },
+  });
+
+  assert.deepEqual(markers, [
+    {
+      id: "city.map-owned",
+      name: "Map Owned City",
+      x: 12,
+      y: 34,
+    },
+  ]);
+});
+
 test("child 25 time runtime emits explicit council-threshold outcome when day-start crosses the council date", () => {
   const {
     createDayStartRequest,
@@ -18909,10 +20481,6 @@ test("shell thinning main.ts no longer inlines covered city-directory and leader
   const cityDirectoryCharacterBlock = mainSource.match(
     /const cityDirectoryCharacterButton = targetElement\.closest<HTMLElement>\([\s\S]*?\r?\n\s*const activityActionButton/
   )?.[0] ?? "";
-  const houseButtonBlock = mainSource.match(
-    /const houseButton = targetElement\.closest<HTMLElement>\("\[data-house-id\]"\);[\s\S]*?\r?\n\s*const cancelCampaignTravelButton/
-  )?.[0] ?? "";
-
   assert.match(
     mainSource,
     /city-directory-leader-residence-coordinator|createCityDirectoryLeaderResidenceCoordinator/
@@ -18930,8 +20498,8 @@ test("shell thinning main.ts no longer inlines covered city-directory and leader
     /LEADER_RESIDENCE_VARIABLE_KEYS\.pendingCharacterId|enterHouseThroughRuntime\(houseRuntime, targetHouseId\)/
   );
   assert.doesNotMatch(
-    houseButtonBlock,
-    /enterHouseThroughRuntime\(houseRuntime, houseId\)/
+    mainSource,
+    /\[data-house-id\]/
   );
 });
 
@@ -18969,7 +20537,7 @@ test("main shell render-trigger ownerization introduces a city directory leader 
     mainSource,
     /cityDirectoryLeaderResidenceCoordinator\.handleCityDirectoryCharacterSelection\(selectedCharacterId\)/
   );
-  assert.match(
+  assert.doesNotMatch(
     mainSource,
     /cityDirectoryLeaderResidenceCoordinator\.enterHouseFromCity\(houseId\)/
   );

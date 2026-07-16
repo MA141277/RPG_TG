@@ -5,13 +5,13 @@
 - document_role: `version-governor`
 - version_id: `target.city-building-definition-location-access-convergence`
 - version_status: `open`
-- active_phase: `phase.queue-active`
-- active_queue: `queue.location-access-runtime-convergence`
-- decision_state: `active-execution`
-- next_decision: `queue-closeout-or-return-to-version-review`
-- next_action: `resume-active-queue`
-- resume_gate: `active-queue`
-- promotion_review_result: `admitted`
+- active_phase: `phase.promotion-review`
+- active_queue: `none`
+- decision_state: `promotion-review`
+- next_decision: `same-version-admission-or-version-closeout`
+- next_action: `return-to-promotion-review`
+- resume_gate: `promotion-review`
+- promotion_review_result: `none`
 - review_subject_id: `none`
 - review_subject_classification: `none`
 - proposed_queue_id: `none`
@@ -22,12 +22,12 @@
 - intake_summary: `none`
 - intake_result: `none`
 - intake_feedback_mode: `none`
-- closure_review_subject: `queue.script-editor-city-building-definition-restructure`
+- closure_review_subject: `queue.location-access-runtime-convergence`
 - closure_review_status: `routed`
-- residue_candidate_id: `queue.location-access-runtime-convergence`
-- residue_candidate_family: `same-family`
-- routing_basis: `queue.script-editor-city-building-definition-restructure closed its verified bounded no-visibility definition slice with same-family residue because conditionExpression data now exists but runtime evaluation and before-mutation city/building entry enforcement do not.`
-- next_lawful_queue_recommendation: `queue.location-access-runtime-convergence`
+- residue_candidate_id: `none`
+- residue_candidate_family: `none`
+- routing_basis: `queue.location-access-runtime-convergence reopened business-line completion check closed after script-editor access conditionExpression editing, location-access export/runtime preservation, city/building runtime entry guards, and imported cityNpcPools resident activityWeight preservation passed verification.`
+- next_lawful_queue_recommendation: `queue.script-editor-zhuyuanzhang-template-direct-load`
 - auto_admission_ready: `false`
 - blocked_by: []
 - candidate_queue_ids:
@@ -38,6 +38,9 @@
   - `queue.script-editor-city-building-custom-attribute-authoring`
   - `queue.script-editor-city-building-export-import-validation`
   - `queue.map-city-list-compatibility-preservation`
+  - `queue.script-editor-city-building-mount-npc-authoring`
+  - `queue.script-editor-city-building-mount-export-runtime-convergence`
+  - `queue.script-editor-zhuyuanzhang-template-direct-load`
 
 ## Human Context
 
@@ -93,24 +96,30 @@
 | Candidate ID | Last Classification | Proposed Queue | Latest Disposition | Recheck Trigger | Notes |
 | --- | --- | --- | --- | --- | --- |
 | `item.script-editor-city-building-definition-restructure` | `queue-candidate` | `queue.script-editor-city-building-definition-restructure` | `admitted + queue closed` | `only if fresh code evidence proves the bounded definition contract regressed` | `Closed after the base/profile/extended city/building definition slice, no-visibility access shape, runtime compatibility materialization, and current map id/name preservation landed with verification.` |
-| `item.location-access-runtime-convergence` | `queue-candidate` | `queue.location-access-runtime-convergence` | `admitted` | `only if fresh evidence proves the runtime access seam can be absorbed into another active queue without widening it` | `Required-priority runtime slice for conditionExpression evaluation and city/building entry-before-mutation enforcement.` |
-| `item.script-editor-building-house-runtime-adapter` | `queue-candidate` | `queue.script-editor-building-house-runtime-adapter` | `candidate-recorded` | `only if fresh evidence proves HouseRuntime adapter work must be part of the initial data-shape migration` | `Required adapter slice to keep HouseRuntime as post-entry interaction runner while BuildingDefinition becomes the primary building model.` |
-| `item.city-building-status-save-runtime-convergence` | `queue-candidate` | `queue.city-building-status-save-runtime-convergence` | `candidate-recorded` | `only if fresh evidence proves status overlays are required before any access-expression evaluation can land` | `Required save/runtime slice for final-value CityRuntimeStatus and BuildingRuntimeStatus overlays.` |
-| `item.script-editor-city-building-custom-attribute-authoring` | `queue-candidate` | `queue.script-editor-city-building-custom-attribute-authoring` | `candidate-recorded` | `only if fresh evidence proves custom attributes can be safely deferred without blocking expression authoring` | `Required editor-facing slice for governed city/building extended attributes over field definitions.` |
-| `item.script-editor-city-building-export-import-validation` | `queue-candidate` | `queue.script-editor-city-building-export-import-validation` | `candidate-recorded` | `only if fresh evidence proves export/import validation must split into smaller schema and runtime-pack queues` | `Required pack-boundary slice for preserving or failing closed on new city/building definitions and access expressions.` |
-| `item.map-city-list-compatibility-preservation` | `queue-candidate` | `queue.map-city-list-compatibility-preservation` | `candidate-recorded` | `only if map marker breakage becomes a first-order blocker earlier in the version` | `Required-final compatibility proof that existing map city marker data remains on MapDefinition/cityCoordinatesById while map clicks route through LocationAccessRuntime.` |
+| `item.location-access-runtime-convergence` | `queue-candidate` | `queue.location-access-runtime-convergence` | `reopened + queue closed` | `only if fresh code evidence proves conditionExpression authoring/export/runtime regressed` | `Closed after the reopened business line verified city/building conditionExpression data-shape coverage, added a script-editor JSON condition setting, preserved location-access export/runtime structures, kept city/building runtime entry guards covered, and restored imported cityNpcPools resident activityWeight preservation needed for end-to-end round-trip acceptance.` |
+| `item.script-editor-building-house-runtime-adapter` | `queue-candidate` | `queue.script-editor-building-house-runtime-adapter` | `admitted + queue closed` | `only if fresh evidence proves the resolved entry adapter regressed` | `Closed after HouseRuntime accepted resolved city-building entries while preserving legacy house-id helpers.` |
+| `item.city-building-status-save-runtime-convergence` | `queue-candidate` | `queue.city-building-status-save-runtime-convergence` | `admitted + queue closed` | `only if fresh evidence proves the status/save runtime boundary regressed` | `Closed after AppState-owned final-value city/building status maps, runtime commit merge, save modState persistence, and startup restore landed with verification.` |
+| `item.script-editor-city-building-custom-attribute-authoring` | `queue-candidate` | `queue.script-editor-city-building-custom-attribute-authoring` | `admitted + queue closed` | `only if fresh evidence proves custom attributes regressed` | `Closed after governed city/building extendedAttributes helper/UI/save-load authoring landed with verification.` |
+| `item.script-editor-city-building-export-import-validation` | `queue-candidate` | `queue.script-editor-city-building-export-import-validation` | `admitted + queue closed` | `only if fresh evidence proves export/import validation regressed` | `Closed after unsupported city/building custom attributes fail closed at runtime export instead of being silently dropped.` |
+| `item.map-city-list-compatibility-preservation` | `queue-candidate` | `queue.map-city-list-compatibility-preservation` | `admitted` | `only if map marker breakage becomes a first-order blocker earlier in the version` | `Required-final compatibility proof that existing map city marker data remains on MapDefinition/cityCoordinatesById while map clicks route through LocationAccessRuntime.` |
+| `item.script-editor-city-building-mount-npc-authoring` | `queue-candidate` | `queue.script-editor-city-building-mount-npc-authoring` | `admitted + queue reclosed after regression fix` | `only if fresh evidence proves the city-side mounting authoring surface regressed again` | `Closed after the city authoring surface gained city-owned mountedBuildings data and dropdown controls for mounted buildings, mounted NPCs, and per-building primary NPC selection; reopened once for the operator-reported add-NPC no-op regression and reclosed after preserving editable NPC rows plus adding mounted-building deletion coverage.` |
+| `item.script-editor-city-building-mount-export-runtime-convergence` | `queue-candidate` | `queue.script-editor-city-building-mount-export-runtime-convergence` | `admitted + queue closed` | `only if fresh evidence proves mountedBuildings export/runtime lowering regressed` | `Closed after export lowered city-mounted buildings and mounted NPCs into runtime cities, houses, city-entries, and city-npc-pools, replacing stale imported template relationship tables when mountedBuildings exists.` |
+| `item.script-editor-zhuyuanzhang-template-direct-load` | `queue-candidate` | `queue.script-editor-zhuyuanzhang-template-direct-load` | `deferred candidate` | `after the active queue returns to version review, unless template entrypoint failure becomes a first-order blocker for current city/building authoring validation` | `Requirement: the script editor 使用模板 button must directly load the built-in zhuyuanzhang scenario pack instead of opening a folder picker or requiring user-selected files, so creators can start from the bundled template without directory import friction.` |
 
 ### Queue Promotion Ledger
 
 | Queue ID | Current Disposition | Promote When | Notes |
 | --- | --- | --- | --- |
 | `queue.script-editor-city-building-definition-restructure` | `done` | `Already completed; do not reopen except by explicit governance record.` | `Closed after all later editor, export, adapter, and status work received the new no-visibility city/building definition boundary.` |
-| `queue.location-access-runtime-convergence` | `active` | `Currently active; resume from docs/blueprints/queues/location-access-runtime-convergence-queue.md.` | `Must evaluate script-editor-authored conditionExpression values and guard map city clicks plus city building clicks before state mutation.` |
-| `queue.script-editor-building-house-runtime-adapter` | `candidate` | `Promote after BuildingDefinition and LocationAccessRuntime boundaries are stable enough to adapt HouseRuntime without re-growing building data ownership inside house modules.` | `Keeps HouseRuntime but demotes it to the post-entry interaction/session/module runner.` |
-| `queue.city-building-status-save-runtime-convergence` | `candidate` | `Promote when runtime access expressions or gameplay mutations need current city/building values beyond authored defaults.` | `Status overlays store final current values, not deltas, and must live beside CharacterStatus in save/modState.` |
-| `queue.script-editor-city-building-custom-attribute-authoring` | `candidate` | `Promote once base definition shape exists and creator-authored expression/custom-field UI needs governed field definitions.` | `Covers city/building extendedAttributes and field-definition-driven controls.` |
-| `queue.script-editor-city-building-export-import-validation` | `candidate` | `Promote once the data shape and access runtime contracts are ready to freeze the runtime-pack boundary.` | `Must fail closed for invalid references, invalid expressions, missing fields, and incompatible legacy structures.` |
-| `queue.map-city-list-compatibility-preservation` | `candidate` | `Promote as final validation unless map marker or city click routing breaks earlier.` | `Proves map nodes and coordinates remain map-owned while city entry uses LocationAccessRuntime.` |
+| `queue.location-access-runtime-convergence` | `done` | `Already completed; do not reopen except by explicit governance record or fresh regression evidence.` | `Reopened business-line check closed after conditionExpression authoring, export/runtime structures, and end-to-end city/building entry acceptance verified.` |
+| `queue.script-editor-building-house-runtime-adapter` | `done` | `Already completed; do not reopen except by explicit governance record.` | `Closed after HouseRuntime accepted resolved city-building entries while preserving legacy house-id helpers and post-entry module lifecycle behavior.` |
+| `queue.city-building-status-save-runtime-convergence` | `done` | `Already completed; do not reopen except by explicit governance record.` | `Closed after status overlays stored final current values beside CharacterStatus in save/modState and runtime commit merge.` |
+| `queue.script-editor-city-building-custom-attribute-authoring` | `done` | `Already completed; do not reopen except by explicit governance record.` | `Closed after city/building extendedAttributes helper/UI/save-load authoring landed with verification.` |
+| `queue.script-editor-city-building-export-import-validation` | `done` | `Already completed; do not reopen except by explicit governance record.` | `Closed after unsupported city/building custom attributes fail closed at runtime export instead of being silently dropped.` |
+| `queue.map-city-list-compatibility-preservation` | `done` | `Already completed; do not reopen except by explicit governance record.` | `Proved map nodes and coordinates remain map-owned while city entry uses LocationAccessRuntime.` |
+| `queue.script-editor-city-building-mount-npc-authoring` | `done` | `Already completed; do not reopen except by explicit governance record or fresh regression evidence.` | `Closed after dropdown-based city -> buildings -> NPC mounting and per-building primary NPC selection landed in the city authoring surface; reclosed after fixing the add-NPC editing row regression and covering mounted-building deletion.` |
+| `queue.script-editor-city-building-mount-export-runtime-convergence` | `done` | `Already completed; do not reopen except by explicit governance record or fresh regression evidence.` | `Converts the script editor's authored city/building/NPC mounting data into runtime city, building, city-entry, city-NPC, house character/default-character structures and validates exported packs load correctly.` |
+| `queue.script-editor-zhuyuanzhang-template-direct-load` | `candidate` | `Promote after the active queue returns to version review, unless 使用模板 blocking prevents required authoring validation from using a bundled baseline.` | `Changes the script editor 使用模板 entrypoint from folder-picker import to direct loading of the built-in zhuyuanzhang scenario pack.` |
 
 ### Closure Routing Record
 
@@ -232,6 +241,24 @@
 
 ### Prior Promotion Record
 
+- `2026-07-16: Operator regression evidence reopened queue.script-editor-city-building-mount-npc-authoring because 新增 NPC had no effect and 删除挂载建筑 was reported ineffective in the workbench. The queue reclosed after the add-NPC edit helper stopped running full persistence normalization on the blank selectable row and focused mounted-building deletion coverage passed.`
+- `2026-07-16: Operator reported exported packs still used imported template city-entries.json instead of authored city-mounted buildings. queue.script-editor-city-building-mount-export-runtime-convergence was admitted from the recorded same-family residue and closed after mountedBuildings lowered into runtime city houseIds, houses, city-entries, and city-npc-pools.`
 - `2026-07-16: target.city-building-definition-location-access-convergence was created as the open successor after the previous script-editor authoring/data-structure unification version closed. No queue has been admitted yet; the next legal step is fresh queue admission review from this version plan.`
 - `2026-07-16: queue.script-editor-city-building-definition-restructure closed its verified bounded no-visibility definition contract slice and routed the unique same-family continuation to queue.location-access-runtime-convergence.`
 - `2026-07-16: queue.location-access-runtime-convergence was auto-admitted from the definition restructure closeout routing record; baseline reconciliation is the active task.`
+- `2026-07-16: queue.location-access-runtime-convergence closed its verified bounded runtime access slice and routed the unique same-family continuation to queue.script-editor-building-house-runtime-adapter.`
+- `2026-07-16: queue.script-editor-building-house-runtime-adapter was auto-admitted from the LocationAccessRuntime closeout routing record; baseline reconciliation is the active task.`
+- `2026-07-16: queue.script-editor-building-house-runtime-adapter closed its verified bounded resolved-entry adapter slice and routed the unique same-family continuation to queue.city-building-status-save-runtime-convergence.`
+- `2026-07-16: queue.city-building-status-save-runtime-convergence was auto-admitted from the HouseRuntime adapter closeout routing record; baseline reconciliation is the active task.`
+- `2026-07-16: queue.city-building-status-save-runtime-convergence closed its verified bounded AppState-owned city/building status save/runtime slice and returned the version to promotion review with queue.script-editor-city-building-custom-attribute-authoring as the next same-family candidate recommendation.`
+- `2026-07-16: queue.script-editor-city-building-custom-attribute-authoring was admitted from the status/save closeout routing record; baseline reconciliation is the active task.`
+- `2026-07-16: queue.script-editor-city-building-custom-attribute-authoring closed its verified bounded helper/UI/save-load authoring slice and routed the unique same-family continuation to queue.script-editor-city-building-export-import-validation.`
+- `2026-07-16: queue.script-editor-city-building-export-import-validation was auto-admitted from the custom-attribute authoring closeout routing record; baseline reconciliation is the active task.`
+- `2026-07-16: queue.script-editor-city-building-export-import-validation closed its verified bounded runtime export validation slice and routed the unique same-family continuation to queue.map-city-list-compatibility-preservation.`
+- `2026-07-16: queue.map-city-list-compatibility-preservation was auto-admitted from the export/import validation closeout routing record; baseline reconciliation is the active task.`
+- `2026-07-16: Fresh operator intake recorded queue.script-editor-city-building-mount-npc-authoring as a deferred same-version candidate because the requested city-side building/NPC mounting authoring surface is in target scope but cannot be absorbed into the active map city-list compatibility queue without widening it.`
+- `2026-07-16: Fresh operator intake recorded queue.script-editor-city-building-mount-export-runtime-convergence as a deferred follow-up candidate after queue.script-editor-city-building-mount-npc-authoring, requiring exported scenario packs to lower the script editor city, mounted-building, building-NPC, and primary-NPC authoring data into canonical runtime city/building structures that load correctly.`
+- `2026-07-16: queue.map-city-list-compatibility-preservation closed with no blocking map compatibility residue; version review promoted queue.script-editor-city-building-mount-npc-authoring as the next active same-version queue before the export/runtime convergence follow-up.`
+- `2026-07-16: Operator requested adding queue.location-access-runtime-convergence back into the candidate set because the corresponding city/building entry-condition business line was not complete. The candidate must verify conditionExpression data-shape coverage, editor settings, export lowering, runtime load structure, and end-to-end run-through acceptance before the queue can be closed again.`
+- `2026-07-16: queue.script-editor-city-building-mount-npc-authoring closed after the bounded city-owned mounting authoring slice landed and verified. Version review now owns the same-family export/runtime convergence residue without inferring version closeout.`
+- `2026-07-16: Fresh operator intake recorded queue.script-editor-zhuyuanzhang-template-direct-load as a deferred same-version candidate because the script editor 使用模板 button should directly load the built-in zhuyuanzhang scenario pack rather than invoking folder selection/import.`

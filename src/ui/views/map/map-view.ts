@@ -21,17 +21,14 @@ import {
   getCampaignHexCellKey,
   getCampaignHexDisc,
 } from "../../../domain/campaign-hex";
+import {
+  createMapCityMarkers,
+  type MapCityMarker,
+} from "../../../application/map/map-city-marker-view-model";
 import redTurbanMarkerUrl from "../../../assets/yuanmo-map/chuang-swordsman-marker.png";
 import cityDepthMeshAssetUrl from "../../../3dasset/city_hun/city-hun-campaign-lowpoly.json?url";
 import cityDepthTextureUrl from "../../../3dasset/city_hun/texture_pbr_20250901.png?url";
 
-
-type CityMarker = {
-  id: string;
-  name: string;
-  x: number;
-  y: number;
-};
 
 type CampaignMarker = {
   id: string;
@@ -57,7 +54,7 @@ export type MapViewModel = {
   playerCoordinate: GridCoordinate;
   playerFacingDegrees: number;
   playerIsMoving: boolean;
-  cityMarkers: CityMarker[];
+  cityMarkers: MapCityMarker[];
   coordinateSpace: {
     width: number;
     height: number;
@@ -145,21 +142,10 @@ export function createMapViewModel(input: {
     playerCoordinate: input.playerCoordinate,
     playerFacingDegrees: input.playerFacingDegrees ?? 0,
     playerIsMoving: input.playerIsMoving ?? false,
-    cityMarkers: input.cityDefinitions
-      .map((cityDefinition) => {
-        const coordinate = input.cityCoordinatesById[cityDefinition.id];
-        if (coordinate == null) {
-          return null;
-        }
-
-        return {
-          id: cityDefinition.id,
-          name: cityDefinition.name,
-          x: coordinate.x,
-          y: coordinate.y,
-        };
-      })
-      .filter((cityMarker): cityMarker is CityMarker => cityMarker != null),
+    cityMarkers: createMapCityMarkers({
+      cityDefinitions: input.cityDefinitions,
+      cityCoordinatesById: input.cityCoordinatesById,
+    }),
     coordinateSpace,
     displaySize,
     primaryImageUrl: input.mapDefinition.primaryImageUrl ?? null,

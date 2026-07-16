@@ -28,15 +28,25 @@ import {
   upsertScriptEditorProjectLibraryEntry,
 } from "../../application/script-editor/project-workspace-library";
 import {
+  appendScriptEditorCityMountedBuilding,
+  appendScriptEditorCityMountedBuildingNpc,
+  appendScriptEditorLocationAttribute,
   appendScriptEditorMenuEntry,
   normalizeScriptEditorBuildingRecord,
   normalizeScriptEditorCityRecord,
+  removeScriptEditorCityMountedBuilding,
+  removeScriptEditorCityMountedBuildingNpc,
+  removeScriptEditorLocationAttribute,
   removeScriptEditorMenuEntry,
   toggleScriptEditorMenuEntryFlag,
   updateScriptEditorAccessField,
   updateScriptEditorBuildingEntryBindingField,
   updateScriptEditorBuildingField,
+  updateScriptEditorCityMountedBuilding,
+  updateScriptEditorCityMountedBuildingNpc,
+  updateScriptEditorCityMountedBuildingPrimaryNpc,
   updateScriptEditorCityField,
+  updateScriptEditorLocationAttribute,
   updateScriptEditorMenuEntryField,
 } from "../../application/script-editor/city-building-authoring";
 import {
@@ -2018,6 +2028,179 @@ export class MainUiFlow {
             </div>
           `
         )}
+        ${isCityFamily ? this.renderScriptEditorCityMountedBuildingsPanel(location) : ""}
+        ${this.renderScriptEditorLocationCustomAttributes(location)}
+      </section>
+    `;
+  }
+
+  renderScriptEditorCityMountedBuildingsPanel(city) {
+    const mountedBuildings = city.mountedBuildings ?? [];
+    const buildingOptions = (this.scriptEditorProject?.buildings ?? []).map((building) =>
+      normalizeScriptEditorBuildingRecord(building)
+    );
+    const npcOptions = (this.scriptEditorProject?.people ?? [])
+      .map((person) => normalizeScriptEditorPersonRecord(person))
+      .filter((person) => person.personType !== "角色");
+    const renderBuildingOptions = (selectedBuildingId) => `
+      <option value="">未选择建筑</option>
+      ${buildingOptions
+        .map(
+          (building) => `
+            <option value="${escapeHtml(building.id)}" ${building.id === selectedBuildingId ? "selected" : ""}>
+              ${escapeHtml(building.name)} (${escapeHtml(building.id)})
+            </option>
+          `
+        )
+        .join("")}
+    `;
+    const renderNpcOptions = (selectedNpcId, allowEmpty = true, allowedNpcIds = null) => `
+      ${allowEmpty ? `<option value="">未选择人物</option>` : ""}
+      ${npcOptions
+        .filter((person) => allowedNpcIds == null || allowedNpcIds.includes(person.id))
+        .map(
+          (person) => `
+            <option value="${escapeHtml(person.id)}" ${person.id === selectedNpcId ? "selected" : ""}>
+              ${escapeHtml(person.name)} (${escapeHtml(person.id)})
+            </option>
+          `
+        )
+        .join("")}
+    `;
+
+    return `
+      <section class="c-script-editor-location-attributes" aria-label="城市挂载建筑与人物">
+        <header class="c-script-editor-location-menu__header">
+          <div>
+            <h3 class="c-script-editor-editor-card__title">挂载建筑与人物</h3>
+          </div>
+          <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="add-city-mounted-building">
+            新增挂载建筑
+          </button>
+        </header>
+        <div class="c-script-editor-location-menu__list">
+          ${mountedBuildings
+            .map(
+              (entry, buildingIndex) => `
+                <article class="c-script-editor-location-menu__item">
+                  <div class="c-script-editor-form-grid">
+                    <label class="c-script-editor-form-field">
+                      <span>挂载建筑</span>
+                      <select
+                        class="c-script-editor-form-field__input"
+                        data-script-editor-city-mounted-building
+                        data-script-editor-city-mounted-building-index="${buildingIndex}"
+                      >
+                        ${renderBuildingOptions(entry.buildingId)}
+                      </select>
+                    </label>
+                    <label class="c-script-editor-form-field">
+                      <span>主 NPC</span>
+                      <select
+                        class="c-script-editor-form-field__input"
+                        data-script-editor-city-primary-npc
+                        data-script-editor-city-mounted-building-index="${buildingIndex}"
+                      >
+                        ${renderNpcOptions(entry.primaryNpcId ?? "", true, entry.npcIds)}
+                      </select>
+                    </label>
+                  </div>
+                  <div class="c-script-editor-location-menu__list">
+                    ${entry.npcIds
+                      .map(
+                        (npcId, npcIndex) => `
+                          <div class="c-script-editor-form-grid">
+                            <label class="c-script-editor-form-field">
+                              <span>挂载 NPC</span>
+                              <select
+                                class="c-script-editor-form-field__input"
+                                data-script-editor-city-mounted-building-npc
+                                data-script-editor-city-mounted-building-index="${buildingIndex}"
+                                data-script-editor-city-mounted-building-npc-index="${npcIndex}"
+                              >
+                                ${renderNpcOptions(npcId)}
+                              </select>
+                            </label>
+                            <button
+                              type="button"
+                              class="c-main-ui-json-text-button"
+                              data-script-editor-action="remove-city-mounted-building-npc"
+                              data-script-editor-city-mounted-building-index="${buildingIndex}"
+                              data-script-editor-city-mounted-building-npc-index="${npcIndex}"
+                            >
+                              删除 NPC
+                            </button>
+                          </div>
+                        `
+                      )
+                      .join("")}
+                  </div>
+                  <div class="c-script-editor-location-menu__toggles">
+                    <button
+                      type="button"
+                      class="c-main-ui-json-text-button"
+                      data-script-editor-action="add-city-mounted-building-npc"
+                      data-script-editor-city-mounted-building-index="${buildingIndex}"
+                    >
+                      新增 NPC
+                    </button>
+                    <button
+                      type="button"
+                      class="c-main-ui-json-text-button"
+                      data-script-editor-action="remove-city-mounted-building"
+                      data-script-editor-city-mounted-building-index="${buildingIndex}"
+                    >
+                      删除挂载建筑
+                    </button>
+                  </div>
+                </article>
+              `
+            )
+            .join("")}
+        </div>
+      </section>
+    `;
+  }
+
+  renderScriptEditorLocationCustomAttributes(location) {
+    const entries = location.extendedAttributes ?? [];
+    return `
+      <section class="c-script-editor-location-attributes" aria-label="自定义属性">
+        <header class="c-script-editor-location-menu__header">
+          <div>
+            <h3 class="c-script-editor-editor-card__title">自定义属性</h3>
+          </div>
+          <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="add-location-attribute">
+            新增属性
+          </button>
+        </header>
+        <div class="c-script-editor-location-menu__list">
+          ${entries
+            .map(
+              (entry, index) => `
+                <article class="c-script-editor-location-menu__item">
+                  <div class="c-script-editor-form-grid">
+                    <label class="c-script-editor-form-field">
+                      <span>属性键</span>
+                      <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(entry.key)}" data-script-editor-location-attribute-field="key" data-script-editor-location-attribute-index="${index}" />
+                    </label>
+                    <label class="c-script-editor-form-field">
+                      <span>属性名</span>
+                      <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(entry.label ?? "")}" data-script-editor-location-attribute-field="label" data-script-editor-location-attribute-index="${index}" />
+                    </label>
+                    <label class="c-script-editor-form-field c-script-editor-form-field--wide">
+                      <span>属性值</span>
+                      <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(entry.value)}" data-script-editor-location-attribute-field="value" data-script-editor-location-attribute-index="${index}" />
+                    </label>
+                  </div>
+                  <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="remove-location-attribute" data-script-editor-location-attribute-index="${index}">
+                    删除属性
+                  </button>
+                </article>
+              `
+            )
+            .join("")}
+        </div>
       </section>
     `;
   }
@@ -2107,8 +2290,10 @@ export class MainUiFlow {
       blockedSpeakerId: "",
       guidance: "",
     };
-    const accessConditionState =
-      access.conditionExpression == null ? "default-allow" : "configured";
+    const accessConditionJson =
+      access.conditionExpression == null
+        ? ""
+        : JSON.stringify(access.conditionExpression, null, 2);
     return `
       <section class="c-script-editor-location-panel" aria-label="进入态分栏">
         <p class="c-script-editor-editor-card__hint">
@@ -2117,7 +2302,7 @@ export class MainUiFlow {
         <div class="c-script-editor-form-grid">
           <label class="c-script-editor-form-field">
             <span>进入态</span>
-            <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(accessConditionState)}" data-script-editor-location-access-condition="conditionExpression" readonly />
+            <textarea class="c-script-editor-record-editor__textarea c-script-editor-record-editor__textarea--compact" data-script-editor-location-access-field="conditionExpression" spellcheck="false">${escapeHtml(accessConditionJson)}</textarea>
           </label>
           <label class="c-script-editor-form-field">
             <span>拒绝提示</span>
@@ -4238,6 +4423,55 @@ export class MainUiFlow {
       return;
     }
 
+    if (target.matches("[data-script-editor-city-mounted-building]")) {
+      const index = Number.parseInt(
+        target.dataset.scriptEditorCityMountedBuildingIndex ?? "-1",
+        10
+      );
+      if (Number.isInteger(index) && index >= 0) {
+        this.applyScriptEditorCityMountedBuilding(index, target.value);
+      }
+      return;
+    }
+
+    if (target.matches("[data-script-editor-city-mounted-building-npc]")) {
+      const buildingIndex = Number.parseInt(
+        target.dataset.scriptEditorCityMountedBuildingIndex ?? "-1",
+        10
+      );
+      const npcIndex = Number.parseInt(
+        target.dataset.scriptEditorCityMountedBuildingNpcIndex ?? "-1",
+        10
+      );
+      if (
+        Number.isInteger(buildingIndex) &&
+        buildingIndex >= 0 &&
+        Number.isInteger(npcIndex) &&
+        npcIndex >= 0
+      ) {
+        this.applyScriptEditorCityMountedBuildingNpc(
+          buildingIndex,
+          npcIndex,
+          target.value
+        );
+      }
+      return;
+    }
+
+    if (target.matches("[data-script-editor-city-primary-npc]")) {
+      const buildingIndex = Number.parseInt(
+        target.dataset.scriptEditorCityMountedBuildingIndex ?? "-1",
+        10
+      );
+      if (Number.isInteger(buildingIndex) && buildingIndex >= 0) {
+        this.applyScriptEditorCityMountedBuildingPrimaryNpc(
+          buildingIndex,
+          target.value
+        );
+      }
+      return;
+    }
+
     if (target.matches("[data-script-editor-location-menu-field]")) {
       const field = target.dataset.scriptEditorLocationMenuField;
       const index = Number.parseInt(
@@ -4252,6 +4486,22 @@ export class MainUiFlow {
         index >= 0
       ) {
         this.applyScriptEditorLocationMenuField(index, field, target.value);
+      }
+      return;
+    }
+
+    if (target.matches("[data-script-editor-location-attribute-field]")) {
+      const field = target.dataset.scriptEditorLocationAttributeField;
+      const index = Number.parseInt(
+        target.dataset.scriptEditorLocationAttributeIndex ?? "-1",
+        10
+      );
+      if (
+        (field === "key" || field === "label" || field === "value") &&
+        Number.isInteger(index) &&
+        index >= 0
+      ) {
+        this.applyScriptEditorLocationAttributeField(index, field, target.value);
       }
       return;
     }
@@ -4280,7 +4530,8 @@ export class MainUiFlow {
       if (
         field === "blockedMessage" ||
         field === "blockedSpeaker" ||
-        field === "guidance"
+        field === "guidance" ||
+        field === "conditionExpression"
       ) {
         this.applyScriptEditorLocationAccessField(field, target.value);
       }
@@ -4799,6 +5050,72 @@ export class MainUiFlow {
     if (action === "remove-location-menu-entry") {
       if (Number.isInteger(locationMenuIndex) && locationMenuIndex >= 0) {
         this.removeScriptEditorLocationMenuEntry(locationMenuIndex);
+      }
+      return;
+    }
+
+    if (action === "add-location-attribute") {
+      this.addScriptEditorLocationAttribute();
+      return;
+    }
+
+    if (action === "remove-location-attribute") {
+      const locationAttributeIndex = Number.parseInt(
+        actionElement?.dataset.scriptEditorLocationAttributeIndex ?? "-1",
+        10
+      );
+      if (Number.isInteger(locationAttributeIndex) && locationAttributeIndex >= 0) {
+        this.removeScriptEditorLocationAttribute(locationAttributeIndex);
+      }
+      return;
+    }
+
+    if (action === "add-city-mounted-building") {
+      this.addScriptEditorCityMountedBuilding();
+      return;
+    }
+
+    if (action === "remove-city-mounted-building") {
+      const mountedBuildingIndex = Number.parseInt(
+        actionElement?.dataset.scriptEditorCityMountedBuildingIndex ?? "-1",
+        10
+      );
+      if (Number.isInteger(mountedBuildingIndex) && mountedBuildingIndex >= 0) {
+        this.removeScriptEditorCityMountedBuilding(mountedBuildingIndex);
+      }
+      return;
+    }
+
+    if (action === "add-city-mounted-building-npc") {
+      const mountedBuildingIndex = Number.parseInt(
+        actionElement?.dataset.scriptEditorCityMountedBuildingIndex ?? "-1",
+        10
+      );
+      if (Number.isInteger(mountedBuildingIndex) && mountedBuildingIndex >= 0) {
+        this.addScriptEditorCityMountedBuildingNpc(mountedBuildingIndex);
+      }
+      return;
+    }
+
+    if (action === "remove-city-mounted-building-npc") {
+      const mountedBuildingIndex = Number.parseInt(
+        actionElement?.dataset.scriptEditorCityMountedBuildingIndex ?? "-1",
+        10
+      );
+      const mountedNpcIndex = Number.parseInt(
+        actionElement?.dataset.scriptEditorCityMountedBuildingNpcIndex ?? "-1",
+        10
+      );
+      if (
+        Number.isInteger(mountedBuildingIndex) &&
+        mountedBuildingIndex >= 0 &&
+        Number.isInteger(mountedNpcIndex) &&
+        mountedNpcIndex >= 0
+      ) {
+        this.removeScriptEditorCityMountedBuildingNpc(
+          mountedBuildingIndex,
+          mountedNpcIndex
+        );
       }
       return;
     }
@@ -6176,6 +6493,156 @@ export class MainUiFlow {
 
     this.replaceSelectedScriptEditorLocation(
       toggleScriptEditorMenuEntryFlag(location, index, field, checked)
+    );
+  }
+
+  addScriptEditorLocationAttribute() {
+    const location = this.getSelectedScriptEditorLocation();
+    if (location == null) {
+      return;
+    }
+
+    this.replaceSelectedScriptEditorLocation(
+      appendScriptEditorLocationAttribute(location)
+    );
+  }
+
+  removeScriptEditorLocationAttribute(index) {
+    const location = this.getSelectedScriptEditorLocation();
+    if (location == null) {
+      return;
+    }
+
+    this.replaceSelectedScriptEditorLocation(
+      removeScriptEditorLocationAttribute(location, index)
+    );
+  }
+
+  applyScriptEditorLocationAttributeField(index, field, value) {
+    const location = this.getSelectedScriptEditorLocation();
+    if (location == null) {
+      return;
+    }
+
+    this.replaceSelectedScriptEditorLocation(
+      updateScriptEditorLocationAttribute(location, index, field, value)
+    );
+  }
+
+  addScriptEditorCityMountedBuilding() {
+    if (this.scriptEditorSelection.family !== "cities") {
+      return;
+    }
+
+    const city = this.getSelectedScriptEditorLocation();
+    if (city == null) {
+      return;
+    }
+
+    this.replaceSelectedScriptEditorLocation(
+      appendScriptEditorCityMountedBuilding(city)
+    );
+  }
+
+  removeScriptEditorCityMountedBuilding(index) {
+    if (this.scriptEditorSelection.family !== "cities") {
+      return;
+    }
+
+    const city = this.getSelectedScriptEditorLocation();
+    if (city == null) {
+      return;
+    }
+
+    this.replaceSelectedScriptEditorLocation(
+      removeScriptEditorCityMountedBuilding(city, index)
+    );
+  }
+
+  applyScriptEditorCityMountedBuilding(index, buildingId) {
+    if (this.scriptEditorSelection.family !== "cities") {
+      return;
+    }
+
+    const city = this.getSelectedScriptEditorLocation();
+    if (city == null) {
+      return;
+    }
+
+    this.replaceSelectedScriptEditorLocation(
+      updateScriptEditorCityMountedBuilding(city, index, buildingId)
+    );
+  }
+
+  addScriptEditorCityMountedBuildingNpc(buildingIndex) {
+    if (this.scriptEditorSelection.family !== "cities") {
+      return;
+    }
+
+    const city = this.getSelectedScriptEditorLocation();
+    if (city == null) {
+      return;
+    }
+    const nextNpcId = this.findNextScriptEditorCityMountedNpcId(city, buildingIndex);
+
+    this.replaceSelectedScriptEditorLocation(
+      appendScriptEditorCityMountedBuildingNpc(city, buildingIndex, nextNpcId)
+    );
+  }
+
+  findNextScriptEditorCityMountedNpcId(city, buildingIndex) {
+    const mountedBuilding = city.mountedBuildings?.[buildingIndex] ?? null;
+    const selectedNpcIds = new Set(mountedBuilding?.npcIds ?? []);
+    return (
+      (this.scriptEditorProject?.people ?? [])
+        .map((person) => normalizeScriptEditorPersonRecord(person))
+        .find((person) => person.personType !== "角色" && !selectedNpcIds.has(person.id))
+        ?.id ?? ""
+    );
+  }
+
+  removeScriptEditorCityMountedBuildingNpc(buildingIndex, npcIndex) {
+    if (this.scriptEditorSelection.family !== "cities") {
+      return;
+    }
+
+    const city = this.getSelectedScriptEditorLocation();
+    if (city == null) {
+      return;
+    }
+
+    this.replaceSelectedScriptEditorLocation(
+      removeScriptEditorCityMountedBuildingNpc(city, buildingIndex, npcIndex)
+    );
+  }
+
+  applyScriptEditorCityMountedBuildingNpc(buildingIndex, npcIndex, npcId) {
+    if (this.scriptEditorSelection.family !== "cities") {
+      return;
+    }
+
+    const city = this.getSelectedScriptEditorLocation();
+    if (city == null) {
+      return;
+    }
+
+    this.replaceSelectedScriptEditorLocation(
+      updateScriptEditorCityMountedBuildingNpc(city, buildingIndex, npcIndex, npcId)
+    );
+  }
+
+  applyScriptEditorCityMountedBuildingPrimaryNpc(buildingIndex, npcId) {
+    if (this.scriptEditorSelection.family !== "cities") {
+      return;
+    }
+
+    const city = this.getSelectedScriptEditorLocation();
+    if (city == null) {
+      return;
+    }
+
+    this.replaceSelectedScriptEditorLocation(
+      updateScriptEditorCityMountedBuildingPrimaryNpc(city, buildingIndex, npcId)
     );
   }
 

@@ -13,6 +13,7 @@ import type {
   HistoricalCityRoster,
 } from "../../domain/historical-character";
 import type { HouseAccessRefusalRule, HouseDefinition } from "../../domain/house";
+import type { LocationAccessDefinition } from "../../domain/location-access";
 import type { MapDefinition, MapNode } from "../../domain/map";
 import type { GridCoordinate } from "../navigation/travel-to-coordinate";
 import type { TaskDefinition } from "../../core/contracts/task-runtime";
@@ -58,6 +59,7 @@ export type ActiveGameContent = {
   valuables: ValuableItemDefinition[];
   cityNpcPools: CityNpcPoolDefinition[];
   houseAccessRefusalRules: HouseAccessRefusalRule[];
+  locationAccess: LocationAccessDefinition[];
   houseModuleDefaults: HouseModuleDefaults;
   cityPortraits: Record<string, string>;
   historicalCharacterIdByCharacterId: Record<string, string>;
@@ -77,6 +79,7 @@ export type ActiveGameContentContext = {
   cityEntries: CityEntryDefinition[];
   cards: CardDefinition[];
   cityNpcPools: CityNpcPoolDefinition[];
+  locationAccess: LocationAccessDefinition[];
   houseModuleDefaults: HouseModuleDefaults;
   historicalCharacters: HistoricalCharacterRecord[];
   historicalCityRosters: HistoricalCityRoster[];
@@ -119,6 +122,7 @@ export function createActiveGameContent(
   const valuables = resolvedPack.valuables ?? [];
   const cityNpcPools = resolvedPack.cityNpcPools ?? [];
   const houseAccessRefusalRules = resolvedPack.houseAccessRefusalRules ?? [];
+  const locationAccess = resolvedPack.locationAccess ?? [];
   const historicalCharacters = resolvedPack.historicalCharacters ?? [];
   const historicalCityRosters = resolvedPack.historicalCityRosters ?? [];
   const characterManager = createCharacterManager(characters);
@@ -176,6 +180,7 @@ export function createActiveGameContent(
     valuables,
     cityNpcPools,
     houseAccessRefusalRules,
+    locationAccess,
     houseModuleDefaults: mergeHouseModuleDefaults(
       undefined,
       resolvedPack.houseModuleDefaults
@@ -207,6 +212,7 @@ export function createActiveGameContentContext(
     cityEntries: gameContent.cityEntries,
     cards: gameContent.cards,
     cityNpcPools: gameContent.cityNpcPools,
+    locationAccess: gameContent.locationAccess,
     houseModuleDefaults: gameContent.houseModuleDefaults,
     historicalCharacters: gameContent.historicalCharacters,
     historicalCityRosters: gameContent.historicalCityRosters,
@@ -269,7 +275,7 @@ export function mergeContentPacks(
     maps: mergeById(basePack.maps ?? [], overridePack.maps ?? []),
     cities: mergeById(basePack.cities ?? [], overridePack.cities ?? []),
     houses: mergeById(basePack.houses ?? [], overridePack.houses ?? []),
-    cityEntries: mergeById(basePack.cityEntries ?? [], overridePack.cityEntries ?? []),
+    cityEntries: [...(overridePack.cityEntries ?? [])],
     characters: mergeById(basePack.characters ?? [], overridePack.characters ?? []),
     events: mergeById(basePack.events ?? [], overridePack.events ?? []),
     scenes: mergeById(basePack.scenes ?? [], overridePack.scenes ?? []),
@@ -281,6 +287,10 @@ export function mergeContentPacks(
     houseAccessRefusalRules: mergeById(
       basePack.houseAccessRefusalRules ?? [],
       overridePack.houseAccessRefusalRules ?? []
+    ),
+    locationAccess: mergeById(
+      basePack.locationAccess ?? [],
+      overridePack.locationAccess ?? []
     ),
     houseModuleDefaults: mergeHouseModuleDefaults(
       basePack.houseModuleDefaults,
@@ -323,6 +333,7 @@ function normalizeContentPack(pack: ContentPackDefinition): ContentPackDefinitio
     valuables: pack.valuables ?? [],
     cityNpcPools: pack.cityNpcPools ?? [],
     houseAccessRefusalRules: pack.houseAccessRefusalRules ?? [],
+    locationAccess: pack.locationAccess ?? [],
     houseModuleDefaults: mergeHouseModuleDefaults(undefined, pack.houseModuleDefaults),
     cityPortraits: pack.cityPortraits ?? {},
     historicalCharacterIdByCharacterId: pack.historicalCharacterIdByCharacterId ?? {},

@@ -139,6 +139,9 @@ export function parseScenarioPack(value: unknown): ScenarioPackDefinition {
   if (value.houseAccessRefusalRules != null) {
     assertArray(value.houseAccessRefusalRules, "scenario house access refusal rules");
   }
+  if (value.locationAccess != null) {
+    assertArray(value.locationAccess, "scenario location access");
+  }
   if (value.houseModuleDefaults != null) {
     assertHouseModuleDefaults(
       value.houseModuleDefaults,
@@ -185,6 +188,7 @@ type ScenarioPackManifestFiles = {
   valuables?: string;
   cityNpcPools?: string;
   houseAccessRefusalRules?: string;
+  locationAccess?: string;
   houseModuleDefaults?: string;
   historicalCharacters?: string;
   historicalCityRosters?: string;

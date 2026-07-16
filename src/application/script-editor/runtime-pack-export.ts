@@ -62,6 +62,7 @@ type RuntimePackManifestFiles = {
   valuables: string;
   cityNpcPools: string;
   houseAccessRefusalRules: string;
+  locationAccess: string;
   houseModuleDefaults: string;
   cityPortraits: string;
   historicalCharacters: string;
@@ -102,6 +103,7 @@ const RUNTIME_PACK_CANONICAL_FILES: RuntimePackManifestFiles = {
   valuables: "./valuables.json",
   cityNpcPools: "./city-npc-pools.json",
   houseAccessRefusalRules: "./house-access-refusal-rules.json",
+  locationAccess: "./location-access.json",
   houseModuleDefaults: "./house-module-defaults.json",
   cityPortraits: "./city-portraits.json",
   historicalCharacters: "./historical-characters.json",
@@ -130,6 +132,7 @@ export function validateScriptEditorProjectForRuntimeExport(
   const exportedCharacters = materializeRuntimeCharacters(project);
   const cityBuildingRuntimeFamilies =
     materializeScriptEditorCityBuildingRuntimeFamilies(project);
+  appendCityBuildingCustomAttributeDiagnostics(project, diagnostics);
   const exportedScenes = narrativeRuntime.scenes;
   const exportedEvents = extractRuntimeEvents(
     project,
@@ -177,6 +180,7 @@ export function validateScriptEditorProjectForRuntimeExport(
       cityNpcPools: cityBuildingRuntimeFamilies.cityNpcPools,
       houseAccessRefusalRules:
         cityBuildingRuntimeFamilies.houseAccessRefusalRules,
+      locationAccess: cityBuildingRuntimeFamilies.locationAccess,
       houseModuleDefaults: project.houseModuleDefaults,
       cityPortraits: project.cityPortraits,
       historicalCharacters: project.historicalCharacters,
@@ -195,6 +199,43 @@ export function validateScriptEditorProjectForRuntimeExport(
   }
 
   return diagnostics;
+}
+
+function appendCityBuildingCustomAttributeDiagnostics(
+  project: ScriptEditorProjectDefinition,
+  diagnostics: ScriptEditorRuntimeExportDiagnostic[]
+): void {
+  project.cities.forEach((city, cityIndex) => {
+    (city.extendedAttributes ?? []).forEach((entry, attributeIndex) => {
+      const key = typeof entry.key === "string" ? entry.key.trim() : "";
+      if (key.length === 0 || key === "specialDemand") {
+        return;
+      }
+
+      diagnostics.push({
+        code: "unsupported-lowering",
+        fieldPath: `project.cities[${cityIndex}].extendedAttributes[${attributeIndex}]`,
+        message:
+          `City custom attribute "${key}" cannot be exported to the current runtime CityDefinition contract.`,
+      });
+    });
+  });
+
+  project.buildings.forEach((building, buildingIndex) => {
+    (building.extendedAttributes ?? []).forEach((entry, attributeIndex) => {
+      const key = typeof entry.key === "string" ? entry.key.trim() : "";
+      if (key.length === 0) {
+        return;
+      }
+
+      diagnostics.push({
+        code: "unsupported-lowering",
+        fieldPath: `project.buildings[${buildingIndex}].extendedAttributes[${attributeIndex}]`,
+        message:
+          `Building custom attribute "${key}" cannot be exported to the current runtime HouseDefinition contract.`,
+      });
+    });
+  });
 }
 
 export function exportScriptEditorProjectToScenarioPackFiles(
@@ -295,6 +336,9 @@ export function exportScriptEditorProjectToScenarioPackFiles(
     ),
     [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.houseAccessRefusalRules)]: stringifyJson(
       cityBuildingRuntimeFamilies.houseAccessRefusalRules
+    ),
+    [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.locationAccess)]: stringifyJson(
+      cityBuildingRuntimeFamilies.locationAccess
     ),
     [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.houseModuleDefaults)]: stringifyJson(
       project.houseModuleDefaults

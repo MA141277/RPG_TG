@@ -4,6 +4,8 @@ import type { RuntimeState } from "./runtime-state";
 import type { TaskAction, TaskSignal } from "./task-runtime";
 import type { CharacterDefinition } from "../../domain/character";
 import type { CharacterStatusById } from "../../domain/character-status";
+import type { BuildingStatusById } from "../../domain/building-status";
+import type { CityStatusById } from "../../domain/city-status";
 
 export type RuntimeTaskSignal =
   | TaskSignal
@@ -39,6 +41,8 @@ export type RuntimeResult = {
   effects: Effect[];
   characterDefinitions?: CharacterDefinition[];
   characterStatusById?: CharacterStatusById;
+  cityStatusById?: CityStatusById;
+  buildingStatusById?: BuildingStatusById;
   navigation?: NavigationTarget | null;
   scene?:
     | {

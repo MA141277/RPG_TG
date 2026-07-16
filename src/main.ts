@@ -672,14 +672,16 @@ function getCurrentCityUiContext(): {
     return null;
   }
 
-  const cityHouseIds = new Set(cityDefinition.houseIds);
+  const cityEntries = activeContentContext.cityEntries.filter(
+    (cityEntry) =>
+      cityEntry.cityId === cityDefinition.id &&
+      isCityEntryVisibleForStoryStage(appState.gameState, cityEntry)
+  );
+  const cityEntryHouseIds = new Set(
+    cityEntries.map((cityEntry) => cityEntry.targetHouseId)
+  );
   const activeCityHouseDefinitions = activeContentContext.houses.filter((houseDefinition) => {
-    if (
-      !(
-        houseDefinition.cityId === cityDefinition.id ||
-        cityHouseIds.has(houseDefinition.id)
-      )
-    ) {
+    if (!cityEntryHouseIds.has(houseDefinition.id)) {
       return false;
     }
 
@@ -689,11 +691,6 @@ function getCurrentCityUiContext(): {
       houseDefinition
     );
   });
-  const cityEntries = activeContentContext.cityEntries.filter(
-    (cityEntry) =>
-      cityEntry.cityId === cityDefinition.id &&
-      isCityEntryVisibleForStoryStage(appState.gameState, cityEntry)
-  );
   const cityNpcPoolDefinition =
     activeContentContext.cityNpcPools.find(
       (poolDefinition) => poolDefinition.cityId === cityDefinition.id
@@ -1416,6 +1413,26 @@ function readCurrentCoreGameStateForSave() {
   const modRuntimeState = entryShellBootstrapState.getModRuntimeState();
   const activeModId = modRuntimeState.activeModId ?? builtinDefaultModId;
   const activeLoadedMod = modRuntimeState.availableModsById[activeModId] ?? null;
+  const modState: Record<string, unknown> = {};
+
+  if (
+    appState.characterStatusById != null &&
+    Object.keys(appState.characterStatusById).length > 0
+  ) {
+    modState.characterStatusById = appState.characterStatusById;
+  }
+  if (
+    appState.cityStatusById != null &&
+    Object.keys(appState.cityStatusById).length > 0
+  ) {
+    modState.cityStatusById = appState.cityStatusById;
+  }
+  if (
+    appState.buildingStatusById != null &&
+    Object.keys(appState.buildingStatusById).length > 0
+  ) {
+    modState.buildingStatusById = appState.buildingStatusById;
+  }
 
   return {
     engine: {
@@ -1434,13 +1451,7 @@ function readCurrentCoreGameStateForSave() {
         .filter((instance) => instance.status === "active")
         .map((instance) => instance.taskId),
     },
-    modState:
-      appState.characterStatusById == null ||
-      Object.keys(appState.characterStatusById).length === 0
-        ? {}
-        : {
-            characterStatusById: appState.characterStatusById,
-          },
+    modState,
   };
 }
 
@@ -2758,13 +2769,6 @@ appElement.addEventListener("click", (event) => {
     return;
   }
 
-  const houseButton = targetElement.closest<HTMLElement>("[data-house-id]");
-  if (houseButton != null) {
-    const houseId = houseButton.dataset.houseId;
-    cityDirectoryLeaderResidenceCoordinator.enterHouseFromCity(houseId);
-    return;
-  }
-
   const cancelCampaignTravelButton = targetElement.closest<HTMLElement>(
     "[data-action='cancel-campaign-travel']"
   );
@@ -2907,7 +2911,13 @@ function handleModalConfirm() {
     request: createEnterCityRequest(appState.modalState.cityId),
     context: createRuntimeCommitContext({
       router: {
-        route: ({ state, request }) => routeNavigationRuntime({ state, request }),
+        route: ({ state, request }) =>
+          routeNavigationRuntime({
+            state,
+            request,
+            cityDefinitionsById: activeContentContext.cityDefinitionById,
+            locationAccessDefinitions: activeContentContext.locationAccess,
+          }),
       },
       followUp: {
         handleFollowUp: ({ state, followUp }) =>

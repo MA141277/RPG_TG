@@ -66,15 +66,17 @@ export function createStagePresenterOutput(
   }
 
   if (currentView === "city") {
-    const cityHouseIds = new Set(activeCityDefinition.houseIds);
+    const activeCityEntries = input.cityEntries.filter(
+      (cityEntry) =>
+        cityEntry.cityId === activeCityDefinition.id &&
+        isCityEntryVisibleForStoryStage(input.appState.gameState, cityEntry)
+    );
+    const cityEntryHouseIds = new Set(
+      activeCityEntries.map((cityEntry) => cityEntry.targetHouseId)
+    );
     const activeCityHouseDefinitions = input.houseDefinitions.filter(
       (houseDefinition) => {
-        if (
-          !(
-            houseDefinition.cityId === activeCityDefinition.id ||
-            cityHouseIds.has(houseDefinition.id)
-          )
-        ) {
+        if (!cityEntryHouseIds.has(houseDefinition.id)) {
           return false;
         }
 
@@ -84,11 +86,6 @@ export function createStagePresenterOutput(
           houseDefinition
         );
       }
-    );
-    const activeCityEntries = input.cityEntries.filter(
-      (cityEntry) =>
-        cityEntry.cityId === activeCityDefinition.id &&
-        isCityEntryVisibleForStoryStage(input.appState.gameState, cityEntry)
     );
 
     return {

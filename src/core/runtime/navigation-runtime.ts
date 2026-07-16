@@ -1,8 +1,14 @@
 import { enterCity } from "../../application/navigation/enter-city";
 import { enterHouse } from "../../application/navigation/enter-house";
+import { evaluateLocationAccess } from "../../application/location-access/location-access-runtime";
+import type { CityDefinition } from "../../domain/city";
 import type { EventDefinition } from "../../domain/event";
 import type { GameState } from "../../domain/game-state";
 import type { HouseDefinition } from "../../domain/house";
+import type {
+  LocationAccessDefinition,
+  LocationAccessResult,
+} from "../../domain/location-access";
 import type { NavigationTarget } from "../contracts/navigation";
 import type { RuntimeRequest } from "../contracts/runtime-request";
 import type {
@@ -15,6 +21,7 @@ type NavigationRuntimeResult = {
   state: GameState;
   navigation: NavigationTarget | null;
   followUp?: RuntimeFollowUpOutcome | null;
+  access?: LocationAccessResult;
 };
 
 export function createEnterCityRequest(cityId: string): RuntimeRequest {
@@ -39,6 +46,8 @@ export function runNavigationRuntime(input: {
   state: GameState;
   request: RuntimeRequest;
   houseDefinition?: HouseDefinition | null;
+  cityDefinitionsById?: Record<string, CityDefinition>;
+  locationAccessDefinitions?: readonly LocationAccessDefinition[];
   eventDefinitionsById?: Record<string, EventDefinition>;
 }): NavigationRuntimeResult {
   if (input.request.type !== "external") {
@@ -54,6 +63,21 @@ export function runNavigationRuntime(input: {
       return {
         state: input.state,
         navigation: null,
+      };
+    }
+
+    const access = evaluateLocationAccess({
+      state: input.state,
+      targetFamily: "city",
+      targetId: cityId,
+      targetCity: input.cityDefinitionsById?.[cityId] ?? null,
+      locationAccessDefinitions: input.locationAccessDefinitions ?? [],
+    });
+    if (!access.canEnter) {
+      return {
+        state: input.state,
+        navigation: null,
+        access,
       };
     }
 
@@ -95,6 +119,8 @@ export function routeNavigationRuntime(input: {
   state: RuntimeState;
   request: RuntimeRequest;
   houseDefinition?: HouseDefinition | null;
+  cityDefinitionsById?: Record<string, CityDefinition>;
+  locationAccessDefinitions?: readonly LocationAccessDefinition[];
   eventDefinitionsById?: Record<string, EventDefinition>;
 }): RuntimeResult {
   const result = runNavigationRuntime({
@@ -103,6 +129,12 @@ export function routeNavigationRuntime(input: {
     ...(input.houseDefinition === undefined
       ? {}
       : { houseDefinition: input.houseDefinition }),
+    ...(input.cityDefinitionsById === undefined
+      ? {}
+      : { cityDefinitionsById: input.cityDefinitionsById }),
+    ...(input.locationAccessDefinitions === undefined
+      ? {}
+      : { locationAccessDefinitions: input.locationAccessDefinitions }),
     ...(input.eventDefinitionsById === undefined
       ? {}
       : { eventDefinitionsById: input.eventDefinitionsById }),

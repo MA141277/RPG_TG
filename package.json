@@ -24,7 +24,7 @@
     "spine:replace-pieces": "node tools/replace-faxian-spine-pieces.mjs",
     "serve:prod": "node scripts/serve-static.mjs",
     "build:test": "tsc -p tsconfig.test.json && node -e \"require('node:fs').writeFileSync('.test-dist/package.json', '{\\\"type\\\":\\\"commonjs\\\"}')\"",
-    "test": "npm run build:test && node --test tests/robustness.test.cjs tests/hardcoded-scenario-pack-boundary.test.cjs tests/blueprint-governance-lint.test.cjs tests/blueprint-version-governance.test.cjs tests/build-test-regression.test.cjs tests/commit-message-governance.test.cjs",
+    "test": "npm run build:test && node --test tests/robustness.test.cjs tests/city-building-mount-authoring.test.cjs tests/hardcoded-scenario-pack-boundary.test.cjs tests/blueprint-governance-lint.test.cjs tests/blueprint-version-governance.test.cjs tests/build-test-regression.test.cjs tests/commit-message-governance.test.cjs",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "blueprint:governance:check": "node tools/blueprint-version-governance.mjs check",
     "blueprint:governance:sync": "node tools/blueprint-version-governance.mjs sync",

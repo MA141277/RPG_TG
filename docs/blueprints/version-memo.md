@@ -20,6 +20,90 @@
 
 ## Open Problems
 
+### MEMO-008: Event Trigger Dispatch And Person Event Bindings Need Separate Condition Ownership
+
+- status: `open`
+- severity: `medium`
+- classification: `current-version-event-authoring-gap`
+- owning_queue: `none`
+- admission_status: `not-admitted`
+- latest_disposition: `recorded-only`
+- affected_families:
+  - `script editor event authoring`
+  - `event trigger dispatch`
+  - `person event binding`
+  - `condition authoring`
+  - `runtime event execution`
+
+#### Required Behavior
+
+- Add or converge an event trigger dispatch function that owns when and how event triggers are evaluated and dispatched at runtime.
+- Person-bound events must support trigger conditions on the binding relationship.
+- The event definition itself should define only the event identity, event content, and deep event behavior/content.
+- Event definitions must not own trigger conditions directly.
+- Trigger conditions belong to the trigger/binding layer, such as a person-event binding, location trigger, menu trigger, or other runtime dispatch owner.
+- Runtime dispatch should evaluate the binding/trigger condition before executing the referenced event.
+- Script editor authoring should make this separation visible: event content is edited in the event module, while trigger conditions are edited where the event is bound or dispatched.
+
+#### Acceptance Criteria
+
+- Event records remain condition-free content definitions.
+- Person-event bindings can configure a trigger condition.
+- Runtime person-event dispatch evaluates the binding condition before running the event.
+- The event trigger dispatch mechanism can route eligible triggers to event execution without duplicating condition logic inside event definitions.
+- Save/export/import preserves person-event binding conditions separately from event content.
+- Importing existing packs with event trigger conditions displays those conditions on the binding/trigger surface, not inside the event definition body.
+
+#### Suggested Candidate Queue
+
+- proposed_queue_id: `queue.script-editor-event-trigger-dispatch-and-binding-condition-convergence`
+- proposed_class: `candidate`
+- proposed_goal: `Separate event content from trigger ownership by adding condition-bearing event dispatch/binding surfaces, including person-bound event trigger conditions.`
+- admission_note: `Recorded only. This entry must not become an active or candidate queue unless explicitly promoted through the current version plan.`
+
+### MEMO-007: Script Editor City And Building Entry State Should Become Condition Authoring
+
+- status: `open`
+- severity: `medium`
+- classification: `current-version-runtime-authoring-gap`
+- owning_queue: `none`
+- admission_status: `not-admitted`
+- latest_disposition: `recorded-only`
+- affected_families:
+  - `script editor city authoring`
+  - `script editor building authoring`
+  - `location access rules`
+  - `LocationAccessRuntime`
+  - `scenario pack import`
+  - `runtime export`
+
+#### Required Behavior
+
+- In the script editor city module, rename the creator-facing `进入态` concept to `条件`.
+- In the script editor building module, rename the creator-facing `进入态` concept to `条件`.
+- The city/building `条件` surface must allow creators to configure the entry condition expression directly.
+- Runtime entry checks must execute those configured condition expressions through `LocationAccessRuntime`.
+- City and building entry eligibility should use the same runtime condition-expression path rather than feature-specific UI flags or scattered navigation checks.
+- Importing an existing scenario pack must read the pack's existing city/building judgment or access expressions and display them in the script editor's `条件` configuration surface.
+- Exported scenario packs must preserve the configured condition expressions in the runtime structure required by `LocationAccessRuntime`.
+
+#### Acceptance Criteria
+
+- City authoring shows `条件`, not `进入态`, for entry eligibility configuration.
+- Building authoring shows `条件`, not `进入态`, for entry eligibility configuration.
+- The `条件` UI can configure the condition expression used for entry.
+- Runtime city entry evaluates the exported city condition through `LocationAccessRuntime`.
+- Runtime building entry evaluates the exported building condition through `LocationAccessRuntime`.
+- Imported scenario packs with existing access/judgment expressions reopen in the editor with equivalent `条件` configuration visible.
+- Save/export/import round trip preserves the configured city/building condition expressions.
+
+#### Suggested Candidate Queue
+
+- proposed_queue_id: `queue.script-editor-location-condition-authoring-convergence`
+- proposed_class: `candidate`
+- proposed_goal: `Rename city/building entry-state authoring to condition authoring, make condition expressions configurable, and wire import/export/runtime execution through LocationAccessRuntime.`
+- admission_note: `Recorded only. This entry must not become an active or candidate queue unless explicitly promoted through the current version plan.`
+
 ### MEMO-006: Location Access Runtime Should Govern City And Building Entry Eligibility
 
 - status: `open`

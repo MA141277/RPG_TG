@@ -28,6 +28,7 @@ import {
 } from "../registry/house-module-registry";
 import type {
   HouseRuntimeRequest,
+  HouseRuntimeEntry,
   HouseRuntimeSessionRequest,
 } from "../contracts/house-runtime";
 import type { RuntimeInteractiveSignal } from "../contracts/runtime-result";
@@ -76,18 +77,27 @@ export function createHouseRuntimeBridge(
   dependencies: HouseRuntimeDependencies
 ): HouseRuntimeBridge {
   const intervalHandles: Record<string, number> = {};
+  const resolvedHouseDefinitionsById = new Map<string, HouseDefinition>();
   const houseModuleRegistry =
     dependencies.houseModuleRegistry ?? builtinHouseModuleRegistry;
 
-  function getActiveHouseDefinition(): HouseDefinition | null {
-    const appState = dependencies.getAppState();
-
+  function getHouseDefinitionById(houseId: string): HouseDefinition | null {
     return (
       dependencies.houseDefinitions.find(
-        (houseDefinition) =>
-          houseDefinition.id === appState.gameState.world.currentHouseId
-      ) ?? null
+        (houseDefinition) => houseDefinition.id === houseId
+      ) ??
+      resolvedHouseDefinitionsById.get(houseId) ??
+      null
     );
+  }
+
+  function getActiveHouseDefinition(): HouseDefinition | null {
+    const appState = dependencies.getAppState();
+    if (appState.gameState.world.currentHouseId == null) {
+      return null;
+    }
+
+    return getHouseDefinitionById(appState.gameState.world.currentHouseId);
   }
 
   function getIndoorScreenStoryContent(): IndoorScreenStoryFollowUpContent {
@@ -296,10 +306,27 @@ export function createHouseRuntimeBridge(
       render?: boolean;
     }
   ): void {
-    const houseDefinition = dependencies.houseDefinitions.find(
-      (candidateHouse) => candidateHouse.id === houseId
-    );
+    const houseDefinition = getHouseDefinitionById(houseId);
     assertExists(houseDefinition, `House not found for id "${houseId}".`);
+
+    enterHouseRuntimeEntry(
+      {
+        source: "house-id",
+        houseId,
+        houseDefinition,
+      },
+      options
+    );
+  }
+
+  function enterHouseRuntimeEntry(
+    entry: HouseRuntimeEntry,
+    options?: {
+      render?: boolean;
+    }
+  ): void {
+    const houseDefinition = entry.houseDefinition;
+    resolvedHouseDefinitionsById.set(entry.houseId, houseDefinition);
 
     clearAllHouseIntervals();
 
@@ -309,8 +336,8 @@ export function createHouseRuntimeBridge(
       gameState: {
         ...appState.gameState,
         world: {
-          ...appState.gameState.world,
-          currentHouseId: houseId,
+        ...appState.gameState.world,
+          currentHouseId: entry.houseId,
         },
         ui: {
           ...appState.gameState.ui,
@@ -465,6 +492,11 @@ export function createHouseRuntimeBridge(
       return;
     }
 
+    if (request.type === "enter-resolved") {
+      enterHouseRuntimeEntry(request.entry);
+      return;
+    }
+
     if (request.type === "leave") {
       leaveCurrentHouse();
       return;
@@ -500,6 +532,16 @@ export function enterHouseThroughRuntime(
   runtime.dispatch({
     type: "enter",
     houseId,
+  });
+}
+
+export function enterResolvedHouseThroughRuntime(
+  runtime: HouseRuntimeBridge,
+  entry: HouseRuntimeEntry
+): void {
+  runtime.dispatch({
+    type: "enter-resolved",
+    entry,
   });
 }
 

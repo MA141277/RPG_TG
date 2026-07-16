@@ -3,6 +3,7 @@ import type {
   ScriptEditorAccessRule,
   ScriptEditorBuildingEntryBinding,
   ScriptEditorBuildingRecord,
+  ScriptEditorCityMountedBuilding,
   ScriptEditorCityRecord,
   ScriptEditorCustomAttributeEntry,
   ScriptEditorMenuEntry,
@@ -71,6 +72,7 @@ export function createDefaultScriptEditorCityRecord(index: number): ScriptEditor
     baseAttributes: {},
     profileMap: { displayName: name, description: "", tags: [] },
     extendedAttributes: [],
+    mountedBuildings: [],
     description: "",
     menuEntries: SCRIPT_EDITOR_CITY_DEFAULT_MENU_FAMILIES.map((family) =>
       createDefaultMenuEntry(`${id}.menu`, family)
@@ -122,6 +124,7 @@ export function normalizeScriptEditorCityRecord(
       ? {}
       : { mapNodeId: normalizeOptionalString(rawCity.mapNodeId) }),
     houseIds: normalizeStringArray(rawCity.houseIds),
+    mountedBuildings: normalizeCityMountedBuildings(rawCity.mountedBuildings),
     neighbourCityIds: normalizeStringArray(rawCity.neighbourCityIds),
     ...(typeof rawCity.travelCost === "number" ? { travelCost: rawCity.travelCost } : {}),
     baseAttributes: normalizeCityBaseAttributes(city.baseAttributes),
@@ -166,6 +169,110 @@ export function updateScriptEditorCityField(
   return normalizeScriptEditorCityRecord({ ...city, [field]: value.trim() });
 }
 
+export function appendScriptEditorCityMountedBuilding(
+  city: ScriptEditorCityRecord
+): ScriptEditorCityRecord {
+  return {
+    ...city,
+    mountedBuildings: [
+      ...(city.mountedBuildings ?? []),
+      { buildingId: "", npcIds: [], primaryNpcId: null },
+    ],
+  };
+}
+
+export function removeScriptEditorCityMountedBuilding(
+  city: ScriptEditorCityRecord,
+  index: number
+): ScriptEditorCityRecord {
+  return {
+    ...city,
+    mountedBuildings: (city.mountedBuildings ?? []).filter(
+      (_, itemIndex) => itemIndex !== index
+    ),
+  };
+}
+
+export function updateScriptEditorCityMountedBuilding(
+  city: ScriptEditorCityRecord,
+  index: number,
+  buildingId: string
+): ScriptEditorCityRecord {
+  return {
+    ...city,
+    mountedBuildings: (city.mountedBuildings ?? []).map((entry, itemIndex) =>
+      itemIndex === index ? { ...entry, buildingId } : entry
+    ),
+  };
+}
+
+export function appendScriptEditorCityMountedBuildingNpc(
+  city: ScriptEditorCityRecord,
+  buildingIndex: number,
+  npcId = ""
+): ScriptEditorCityRecord {
+  return {
+    ...city,
+    mountedBuildings: (city.mountedBuildings ?? []).map((entry, itemIndex) =>
+      itemIndex === buildingIndex
+        ? { ...entry, npcIds: [...entry.npcIds, npcId] }
+        : entry
+    ),
+  };
+}
+
+export function removeScriptEditorCityMountedBuildingNpc(
+  city: ScriptEditorCityRecord,
+  buildingIndex: number,
+  npcIndex: number
+): ScriptEditorCityRecord {
+  return {
+    ...city,
+    mountedBuildings: (city.mountedBuildings ?? []).map((entry, itemIndex) =>
+      itemIndex === buildingIndex
+        ? {
+            ...entry,
+            npcIds: entry.npcIds.filter((_, entryNpcIndex) => entryNpcIndex !== npcIndex),
+          }
+        : entry
+    ),
+  };
+}
+
+export function updateScriptEditorCityMountedBuildingNpc(
+  city: ScriptEditorCityRecord,
+  buildingIndex: number,
+  npcIndex: number,
+  npcId: string
+): ScriptEditorCityRecord {
+  return {
+    ...city,
+    mountedBuildings: (city.mountedBuildings ?? []).map((entry, itemIndex) =>
+      itemIndex === buildingIndex
+        ? {
+            ...entry,
+            npcIds: entry.npcIds.map((entryNpcId, entryNpcIndex) =>
+              entryNpcIndex === npcIndex ? npcId : entryNpcId
+            ),
+          }
+        : entry
+    ),
+  };
+}
+
+export function updateScriptEditorCityMountedBuildingPrimaryNpc(
+  city: ScriptEditorCityRecord,
+  buildingIndex: number,
+  primaryNpcId: string
+): ScriptEditorCityRecord {
+  return {
+    ...city,
+    mountedBuildings: (city.mountedBuildings ?? []).map((entry, itemIndex) =>
+      itemIndex === buildingIndex ? { ...entry, primaryNpcId } : entry
+    ),
+  };
+}
+
 export function updateScriptEditorBuildingField(
   building: ScriptEditorBuildingRecord,
   field: "id" | "cityId" | "name" | "description",
@@ -175,6 +282,47 @@ export function updateScriptEditorBuildingField(
     return normalizeScriptEditorBuildingRecord({ ...building, description: value });
   }
   return normalizeScriptEditorBuildingRecord({ ...building, [field]: value.trim() });
+}
+
+export function appendScriptEditorLocationAttribute<
+  TRecord extends ScriptEditorCityRecord | ScriptEditorBuildingRecord,
+>(record: TRecord): TRecord {
+  return {
+    ...record,
+    extendedAttributes: [
+      ...normalizeEditableCustomAttributes(record.extendedAttributes),
+      { key: "", label: "", value: "" },
+    ],
+  };
+}
+
+export function removeScriptEditorLocationAttribute<
+  TRecord extends ScriptEditorCityRecord | ScriptEditorBuildingRecord,
+>(record: TRecord, index: number): TRecord {
+  return {
+    ...record,
+    extendedAttributes: normalizeEditableCustomAttributes(
+      record.extendedAttributes
+    ).filter((_, entryIndex) => entryIndex !== index),
+  };
+}
+
+export function updateScriptEditorLocationAttribute<
+  TRecord extends ScriptEditorCityRecord | ScriptEditorBuildingRecord,
+>(
+  record: TRecord,
+  index: number,
+  field: keyof ScriptEditorCustomAttributeEntry | "key",
+  value: string
+): TRecord {
+  return {
+    ...record,
+    extendedAttributes: normalizeEditableCustomAttributes(
+      record.extendedAttributes
+    ).map((entry, entryIndex) =>
+      entryIndex === index ? { ...entry, [field]: value } : entry
+    ),
+  };
 }
 
 export function appendScriptEditorMenuEntry<
@@ -269,7 +417,14 @@ export function updateScriptEditorAccessField<
     };
   }
   if (field === "conditionExpression") {
-    return record;
+    const conditionExpression = parseLocationAccessConditionExpression(value);
+    return {
+      ...record,
+      access: {
+        ...access,
+        ...(conditionExpression == null ? {} : { conditionExpression }),
+      },
+    };
   }
   return {
     ...record,
@@ -292,6 +447,25 @@ export function updateScriptEditorBuildingEntryBindingField(
       [field]: value.trim(),
     },
   };
+}
+
+function normalizeCityMountedBuildings(value: unknown): ScriptEditorCityMountedBuilding[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value.map((entry) => {
+    const rawEntry = entry as Partial<ScriptEditorCityMountedBuilding> &
+      Record<string, unknown>;
+    const npcIds = normalizeStringArray(rawEntry.npcIds);
+    const primaryNpcId = normalizeNullableString(rawEntry.primaryNpcId);
+    return {
+      buildingId: normalizeOptionalString(rawEntry.buildingId).trim(),
+      npcIds,
+      primaryNpcId:
+        primaryNpcId != null && npcIds.includes(primaryNpcId) ? primaryNpcId : null,
+    };
+  });
 }
 
 function normalizeAccessRule(access?: ScriptEditorAccessRule): ScriptEditorAccessRule {
@@ -414,6 +588,16 @@ function normalizeCustomAttributes(
     .filter((entry) => entry.key.length > 0);
 }
 
+function normalizeEditableCustomAttributes(
+  entries: readonly ScriptEditorCustomAttributeEntry[] | undefined
+): ScriptEditorCustomAttributeEntry[] {
+  return (entries ?? []).map((entry) => ({
+    key: normalizeOptionalString(entry.key),
+    ...pickOptionalString("label", entry.label),
+    value: normalizeCustomAttributeValue(entry.value),
+  }));
+}
+
 function normalizeCustomAttributeValue(
   value: ScriptEditorCustomAttributeEntry["value"]
 ): ScriptEditorCustomAttributeEntry["value"] {
@@ -459,6 +643,20 @@ function normalizeLocationAccessConditionExpression(
     return { type: "literal", value: expression.value };
   }
   return value as LocationAccessConditionExpression;
+}
+
+function parseLocationAccessConditionExpression(
+  value: string
+): LocationAccessConditionExpression | undefined {
+  const trimmedValue = value.trim();
+  if (trimmedValue.length === 0) {
+    return undefined;
+  }
+  try {
+    return normalizeLocationAccessConditionExpression(JSON.parse(trimmedValue));
+  } catch {
+    return undefined;
+  }
 }
 
 function readBackAction(value: unknown): HouseDefinition["backAction"] | undefined {

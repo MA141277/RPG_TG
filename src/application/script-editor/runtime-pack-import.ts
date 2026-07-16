@@ -11,6 +11,7 @@ import {
   SCRIPT_EDITOR_PROJECT_KIND,
   SCRIPT_EDITOR_PROJECT_SCHEMA_VERSION,
   SCRIPT_EDITOR_RUNTIME_PACK_SCHEMA_VERSION,
+  type ScriptEditorAccessRule,
   type ScriptEditorEntityRecord,
   type ScriptEditorEventRecord,
   type ScriptEditorEventTriggerTiming,
@@ -26,6 +27,7 @@ import {
   type ScriptEditorTextEntryRecord,
 } from "../../domain/script-editor-project";
 import type { EventDefinition } from "../../domain/event";
+import type { LocationAccessDefinition } from "../../domain/location-access";
 import type { PlayableIntegrationDefinition } from "../../core/contracts/playable-runtime";
 
 export type ScriptEditorCompatibilityImportDiagnostic = {
@@ -66,6 +68,7 @@ type RuntimePackManifestFiles = {
   valuables?: string;
   cityNpcPools?: string;
   houseAccessRefusalRules?: string;
+  locationAccess?: string;
   houseModuleDefaults?: string;
   historicalCharacters?: string;
   historicalCityRosters?: string;
@@ -188,6 +191,17 @@ export function importScenarioPackToScriptEditorProject(
   const pack = parseScenarioPack(value);
   const diagnostics = validateScenarioPackForScriptEditorImport(pack);
   const rawPack = pack as Record<string, unknown>;
+  const importedLocationAccess = readLocationAccessFamily(rawPack);
+  const cityNpcPools = readArrayFamily(rawPack, "cityNpcPools");
+  const importedPeople = collectImportedPeople(pack.characters ?? [], cityNpcPools);
+  const importedCities = (pack.cities ?? []).map((city) =>
+    applyImportedMountedBuildings(
+      applyImportedLocationAccess(city, "city", importedLocationAccess),
+      pack.cityEntries ?? [],
+      pack.houses ?? [],
+      cityNpcPools
+    )
+  );
   const project = {
     schemaVersion: SCRIPT_EDITOR_PROJECT_SCHEMA_VERSION,
     kind: SCRIPT_EDITOR_PROJECT_KIND,
@@ -201,14 +215,18 @@ export function importScenarioPackToScriptEditorProject(
       collectCompatibilityImportResidue(rawPack, diagnostics)
     ),
     maps: readEntityArrayFamily(rawPack, "maps"),
-    people: (pack.characters ?? []).map((character) =>
+    people: importedPeople.map((character) =>
       normalizeScriptEditorPersonRecord(character as Record<string, unknown>)
     ),
-    cities: (pack.cities ?? []).map((city) =>
-      normalizeScriptEditorCityRecord(city)
+    cities: importedCities.map((city) =>
+      normalizeScriptEditorCityRecord(
+        city
+      )
     ),
     buildings: (pack.houses ?? []).map((house) =>
-      normalizeScriptEditorBuildingRecord(house)
+      normalizeScriptEditorBuildingRecord(
+        applyImportedLocationAccess(house, "building", importedLocationAccess)
+      )
     ),
     cityEntries: pack.cityEntries ?? [],
     events: mapImportedEvents(pack.events ?? []),
@@ -217,7 +235,7 @@ export function importScenarioPackToScriptEditorProject(
     activities: pack.activities ?? [],
     cards: pack.cards ?? [],
     valuables: pack.valuables ?? [],
-    cityNpcPools: readArrayFamily(rawPack, "cityNpcPools"),
+    cityNpcPools,
     houseAccessRefusalRules: pack.houseAccessRefusalRules ?? [],
     houseModuleDefaults: cloneObjectRecord(pack.houseModuleDefaults),
     cityPortraits: cloneStringRecord(pack.cityPortraits),
@@ -504,6 +522,170 @@ function readEntityArrayFamily(
   familyKey: string
 ): ScriptEditorEntityRecord[] {
   return readArrayFamily(rawPack, familyKey) as ScriptEditorEntityRecord[];
+}
+
+function collectImportedPeople(
+  characters: readonly Record<string, unknown>[],
+  cityNpcPools: readonly Record<string, unknown>[]
+): Record<string, unknown>[] {
+  const importedPeople = [...characters];
+  const importedPersonIds = new Set(
+    importedPeople.map((person) => readString(person.id)).filter((id) => id.length > 0)
+  );
+
+  for (const pool of cityNpcPools) {
+    const fallbackCityId = readString(pool.cityId);
+    if (!Array.isArray(pool.residents)) {
+      continue;
+    }
+
+    for (const resident of pool.residents) {
+      if (resident == null || typeof resident !== "object" || Array.isArray(resident)) {
+        continue;
+      }
+
+      const residentRecord = resident as Record<string, unknown>;
+      const id = readString(residentRecord.id);
+      if (id.length === 0 || importedPersonIds.has(id)) {
+        continue;
+      }
+
+      importedPeople.push({
+        ...(cloneJsonCompatibleValue(residentRecord) as Record<string, unknown>),
+        id,
+        personType: "NPC",
+        role: readString(residentRecord.role) || "support",
+        cityId: readString(residentRecord.cityId) || fallbackCityId,
+      });
+      importedPersonIds.add(id);
+    }
+  }
+
+  return importedPeople;
+}
+
+function readLocationAccessFamily(
+  rawPack: Record<string, unknown>
+): LocationAccessDefinition[] {
+  const value = rawPack.locationAccess;
+  return Array.isArray(value)
+    ? (cloneJsonCompatibleValue(value) as LocationAccessDefinition[])
+    : [];
+}
+
+function applyImportedLocationAccess<T extends { id: string }>(
+  record: T,
+  targetFamily: LocationAccessDefinition["targetFamily"],
+  locationAccessDefinitions: readonly LocationAccessDefinition[]
+): T & { access?: ScriptEditorAccessRule } {
+  const accessDefinition = locationAccessDefinitions.find(
+    (definition) =>
+      definition.targetFamily === targetFamily &&
+      definition.targetId === record.id
+  );
+  if (accessDefinition == null) {
+    return record;
+  }
+
+  return {
+    ...record,
+    access: {
+      conditionExpression: accessDefinition.conditionExpression,
+      ...(accessDefinition.blockedReason == null
+        ? {}
+        : { blockedReason: accessDefinition.blockedReason }),
+      ...(accessDefinition.blockedMessage == null
+        ? {}
+        : { blockedMessage: accessDefinition.blockedMessage }),
+      ...(accessDefinition.blockedSpeakerId == null
+        ? {}
+        : { blockedSpeakerId: accessDefinition.blockedSpeakerId }),
+      ...(accessDefinition.guidance == null
+        ? {}
+        : { guidance: accessDefinition.guidance }),
+      ...(accessDefinition.refusalEventId == null
+        ? {}
+        : { refusalEventId: accessDefinition.refusalEventId }),
+    },
+  };
+}
+
+function applyImportedMountedBuildings<T extends { id: string }>(
+  city: T,
+  cityEntries: readonly Record<string, unknown>[],
+  houses: readonly Record<string, unknown>[],
+  cityNpcPools: readonly Record<string, unknown>[]
+): T & { mountedBuildings?: { buildingId: string; npcIds: string[]; primaryNpcId: string | null }[] } {
+  const mountedBuildings = cityEntries.flatMap((entry) => {
+    if (readString(entry.cityId) !== city.id) {
+      return [];
+    }
+    const buildingId = readString(entry.targetHouseId);
+    if (buildingId.length === 0) {
+      return [];
+    }
+    const house = houses.find((candidate) => readString(candidate.id) === buildingId);
+    if (house == null) {
+      return [];
+    }
+    return [
+      {
+        buildingId,
+        npcIds: readImportedMountedNpcIds(city.id, house, cityNpcPools),
+        primaryNpcId: readImportedPrimaryNpcId(house),
+      },
+    ];
+  });
+
+  if (mountedBuildings.length === 0) {
+    return city;
+  }
+
+  return {
+    ...city,
+    mountedBuildings,
+  };
+}
+
+function readImportedMountedNpcIds(
+  cityId: string,
+  house: Record<string, unknown>,
+  cityNpcPools: readonly Record<string, unknown>[]
+): string[] {
+  const houseCharacterIds = readStringArray(house.characterIds);
+  if (houseCharacterIds.length === 0) {
+    return [];
+  }
+  const cityPool = cityNpcPools.find((pool) => readString(pool.cityId) === cityId);
+  if (cityPool == null || !Array.isArray(cityPool.residents)) {
+    return houseCharacterIds;
+  }
+  const residentIds = new Set(
+    cityPool.residents.flatMap((resident) =>
+      resident != null && typeof resident === "object" && !Array.isArray(resident)
+        ? [readString((resident as Record<string, unknown>).id)]
+        : []
+    )
+  );
+  return houseCharacterIds.filter((characterId) => residentIds.has(characterId));
+}
+
+function readImportedPrimaryNpcId(house: Record<string, unknown>): string | null {
+  const defaultCharacterId = readString(house.defaultCharacterId);
+  return defaultCharacterId.length > 0 ? defaultCharacterId : null;
+}
+
+function readString(value: unknown): string {
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function readStringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+  return value
+    .map((entry) => readString(entry))
+    .filter((entry) => entry.length > 0);
 }
 
 async function hydrateScenarioPackManifestFromFiles(

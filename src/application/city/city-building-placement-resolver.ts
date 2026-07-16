@@ -6,6 +6,8 @@ import type {
   HouseAccessRefusalRule,
   HouseDefinition,
 } from "../../domain/house";
+import type { LocationAccessDefinition } from "../../domain/location-access";
+import { evaluateLocationAccess } from "../location-access/location-access-runtime";
 import {
   selectCityNpcSummariesForHouse,
   type HouseCityNpcSummary,
@@ -40,6 +42,7 @@ export type CityBuildingPlacementRuntimeInput =
     characterDefinitions: readonly CharacterDefinition[];
     cityNpcPools: readonly CityNpcPoolDefinition[];
     houseAccessRefusalRules: readonly HouseAccessRefusalRule[];
+    locationAccessDefinitions?: readonly LocationAccessDefinition[];
     placementId: string;
   };
 
@@ -72,12 +75,7 @@ export function resolveCityBuildingView(
 
   return {
     ...placement,
-    access: selectHouseEntryAccess(
-      input.state,
-      [...input.characterDefinitions],
-      placement.house,
-      [...input.houseAccessRefusalRules]
-    ),
+    access: resolveCityBuildingEntryAccess(input, placement),
     npcs: selectCityNpcSummariesForHouse(
       input.state,
       placement.house,
@@ -92,6 +90,24 @@ export function canEnterCityBuilding(
   const placement = resolvePlacementById(input);
   if (placement == null) {
     return { canEnter: false, refusal: null };
+  }
+
+  return resolveCityBuildingEntryAccess(input, placement);
+}
+
+function resolveCityBuildingEntryAccess(
+  input: CityBuildingPlacementRuntimeInput,
+  placement: CityBuildingPlacement
+): HouseEntryAccessResult {
+  const locationAccess = evaluateLocationAccess({
+    state: input.state,
+    targetFamily: "building",
+    targetId: placement.house.id,
+    targetBuilding: placement.house,
+    locationAccessDefinitions: input.locationAccessDefinitions ?? [],
+  });
+  if (!locationAccess.canEnter) {
+    return locationAccess;
   }
 
   return selectHouseEntryAccess(

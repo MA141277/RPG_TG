@@ -1,4 +1,9 @@
 import type { HouseDefinition } from "./house";
+import type {
+  LocationAccessConditionExpression,
+  LocationAccessConditionSubject,
+  LocationAccessValueRef,
+} from "./location-access";
 import type { RuntimeTaskInput } from "../core/contracts/runtime-result";
 
 export const SCRIPT_EDITOR_PROJECT_KIND = "script-editor-project";
@@ -122,43 +127,11 @@ export type ScriptEditorCustomAttributeEntry = {
   value: ScriptEditorCustomAttributeValue;
 };
 
-export type LocationAccessConditionSubject =
-  | "targetCity"
-  | "targetBuilding"
-  | "player"
-  | "world"
-  | "story";
-
-export type LocationAccessValueRef =
-  | {
-      type: "field";
-      subject: LocationAccessConditionSubject;
-      fieldId: string;
-    }
-  | {
-      type: "literal";
-      value: unknown;
-    };
-
-export type LocationAccessConditionExpression =
-  | { type: "literal"; value: boolean }
-  | {
-      type: "compare";
-      left: LocationAccessValueRef;
-      operator:
-        | "equals"
-        | "not-equals"
-        | "greater-than"
-        | "greater-than-or-equal"
-        | "less-than"
-        | "less-than-or-equal"
-        | "includes"
-        | "exists";
-      right?: LocationAccessValueRef;
-    }
-  | { type: "all"; conditions: LocationAccessConditionExpression[] }
-  | { type: "any"; conditions: LocationAccessConditionExpression[] }
-  | { type: "not"; condition: LocationAccessConditionExpression };
+export type {
+  LocationAccessConditionExpression,
+  LocationAccessConditionSubject,
+  LocationAccessValueRef,
+};
 
 export type ScriptEditorAccessRule = {
   conditionExpression?: LocationAccessConditionExpression | undefined;
@@ -198,6 +171,7 @@ export type ScriptEditorCityRecord = ScriptEditorEntityRecord & {
   regionId?: string;
   mapNodeId?: string;
   houseIds?: string[];
+  mountedBuildings?: ScriptEditorCityMountedBuilding[];
   neighbourCityIds?: string[];
   travelCost?: number;
   baseAttributes?: {
@@ -215,6 +189,12 @@ export type ScriptEditorCityRecord = ScriptEditorEntityRecord & {
   description?: string;
   menuEntries?: ScriptEditorMenuEntry[];
   access?: ScriptEditorAccessRule;
+};
+
+export type ScriptEditorCityMountedBuilding = {
+  buildingId: string;
+  npcIds: string[];
+  primaryNpcId: string | null;
 };
 
 export type ScriptEditorBuildingRecord = ScriptEditorEntityRecord & {

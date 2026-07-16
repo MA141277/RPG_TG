@@ -1,7 +1,9 @@
 import type { CharacterDefinition } from "../domain/character";
 import type { CharacterStatusById } from "../domain/character-status";
+import type { BuildingStatusById } from "../domain/building-status";
 import type { CityBeggingMiniGameState } from "../domain/city-begging-minigame";
 import type { CityEntryDirectoryType, CityEntryOption } from "../domain/city-entry";
+import type { CityStatusById } from "../domain/city-status";
 import type {
   HouseMapAutoAdvanceCompletion,
   MapAutoAdvanceSnapshot,
@@ -47,6 +49,8 @@ export type AppState = {
   gameState: ReturnType<typeof createInitialState>;
   characterDefinitions: CharacterDefinition[];
   characterStatusById?: CharacterStatusById;
+  cityStatusById?: CityStatusById;
+  buildingStatusById?: BuildingStatusById;
   playerCoordinate: GridCoordinate;
   campaignActorState: {
     facingDegrees: number;
