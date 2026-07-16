@@ -134,7 +134,7 @@ export type ScriptEditorWorkspaceExportTarget = {
 };
 
 const FAMILY_LABELS: Record<string, string> = {
-  storyPack: "项目",
+  storyPack: "剧本导出",
   people: "人物",
   cities: "城市",
   buildings: "建筑",
@@ -156,31 +156,28 @@ const TREE_GROUPS: Array<{
 }> = [
   {
     id: "project",
-    label: "项目骨架",
-    families: [
-      "storyPack",
-      "people",
-      "cities",
-      "buildings",
-      "events",
-      "quests",
-      "activities",
-    ],
+    label: "项目",
+    families: ["storyPack"],
+  },
+  {
+    id: "world",
+    label: "世界",
+    families: ["people", "cities", "buildings"],
+  },
+  {
+    id: "narrative",
+    label: "剧情与文本",
+    families: ["storyNodes", "dialogues", "events"],
+  },
+  {
+    id: "gameplay",
+    label: "玩法",
+    families: ["minigames"],
   },
   {
     id: "library",
     label: "资料库",
     families: ["textEntries"],
-  },
-  {
-    id: "narrative",
-    label: "叙事骨架",
-    families: ["dialogues", "minigames", "storyNodes"],
-  },
-  {
-    id: "rules",
-    label: "规则与交接",
-    families: ["conditionGroups", "effectBundles"],
   },
 ];
 
@@ -304,7 +301,7 @@ function createToolbarActions(
     },
     {
       id: "validate",
-      label: "校验结构",
+      label: "校验",
       status: exportDiagnostics.length === 0 ? "ready" : "attention",
       description:
         exportDiagnostics.length === 0
@@ -322,7 +319,7 @@ function createToolbarActions(
     },
     {
       id: "export",
-      label: "导出剧本包",
+      label: "导入导出",
       status: exportDiagnostics.length === 0 ? "ready" : "blocked",
       description:
         exportDiagnostics.length === 0

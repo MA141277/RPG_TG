@@ -712,6 +712,15 @@ export class MainUiFlow {
               <p class="c-script-editor-editor-card__eyebrow">项目总览</p>
               <h2 class="c-script-editor-editor-card__title">项目根信息</h2>
             </div>
+            <div class="c-script-editor-editor-card__actions">
+              <button
+                type="button"
+                class="c-main-ui-json-text-button c-main-ui-json-text-button--accent"
+                data-script-editor-action="save"
+              >
+                导出
+              </button>
+            </div>
           </header>
           <!-- SCRIPT_EDITOR_INSPECTOR_SLOT -->
           <div class="c-script-editor-shell__cards c-script-editor-editor-card__overview">
@@ -887,22 +896,6 @@ export class MainUiFlow {
 
     return `
       <div class="c-script-editor-editor-card">
-        <header class="c-script-editor-editor-card__header">
-          <div>
-            <h2 class="c-script-editor-editor-card__title">文本</h2>
-          </div>
-          <div class="c-script-editor-editor-card__actions">
-            <button
-              type="button"
-              class="c-main-ui-json-text-button c-main-ui-json-text-button--accent"
-              data-script-editor-action="apply-text-entry-text"
-              ${selectedRecord == null ? "disabled" : ""}
-            >
-              应用文本
-            </button>
-          </div>
-        </header>
-
         <div class="c-script-editor-record-layout">
           ${this.renderScriptEditorPaginatedRecordList({
             family: "textEntries",
@@ -935,6 +928,20 @@ export class MainUiFlow {
             `,
           })}
           <div class="c-script-editor-record-editor">
+            <!-- SCRIPT_EDITOR_INSPECTOR_SLOT -->
+            <!-- SCRIPT_EDITOR_INSPECTOR_SUPPRESS_TEXT -->
+            <template data-script-editor-inspector-header-slot>
+              <div class="c-script-editor-editor-card__actions c-script-editor-editor-card__actions--end">
+                <button
+                  type="button"
+                  class="c-main-ui-json-text-button c-main-ui-json-text-button--accent"
+                  data-script-editor-action="apply-text-entry-text"
+                  ${selectedRecord == null ? "disabled" : ""}
+                >
+                  应用文本
+                </button>
+              </div>
+            </template>
             <textarea
               class="c-script-editor-record-editor__textarea"
               data-script-editor-text-entry-text
@@ -1097,18 +1104,20 @@ export class MainUiFlow {
           type="button"
           class="c-main-ui-json-text-button c-script-editor-record-pagination__button"
           data-script-editor-action="record-page-prev"
+          aria-label="上一页"
           ${currentPage <= 1 ? "disabled" : ""}
         >
-          上一页
+          ‹
         </button>
         <span class="c-script-editor-record-pagination__status">第 ${currentPage} / ${totalPages} 页</span>
         <button
           type="button"
           class="c-main-ui-json-text-button c-script-editor-record-pagination__button"
           data-script-editor-action="record-page-next"
+          aria-label="下一页"
           ${currentPage >= totalPages ? "disabled" : ""}
         >
-          下一页
+          ›
         </button>
       </nav>
     `;
@@ -1194,6 +1203,7 @@ export class MainUiFlow {
           })}
           <div class="c-script-editor-person-editor">
             <!-- SCRIPT_EDITOR_INSPECTOR_SLOT -->
+            <!-- SCRIPT_EDITOR_INSPECTOR_SUPPRESS_TEXT -->
             ${
               person == null
                 ? `
@@ -1202,7 +1212,6 @@ export class MainUiFlow {
                   </p>
                 `
                 : `
-                  <!-- SCRIPT_EDITOR_INSPECTOR_SUPPRESS_TEXT -->
                   <template data-script-editor-inspector-header-slot>
                     ${this.renderScriptEditorPersonTabList()}
                   </template>
@@ -1888,13 +1897,6 @@ export class MainUiFlow {
 
     return `
       <div class="c-script-editor-editor-card">
-        <header class="c-script-editor-editor-card__header">
-          <div>
-            <p class="c-script-editor-editor-card__eyebrow">${isCityFamily ? "城市作者面" : "建筑作者面"}</p>
-            <h2 class="c-script-editor-editor-card__title">${isCityFamily ? "城市详情" : "建筑详情"}</h2>
-          </div>
-        </header>
-
         <div class="c-script-editor-record-layout c-script-editor-record-layout--location">
           ${this.renderScriptEditorPaginatedRecordList({
             family,
@@ -1927,13 +1929,14 @@ export class MainUiFlow {
                   data-script-editor-record-id="${escapeHtml(record.id)}"
                 >
                   <strong>${escapeHtml(normalizedRecord.name)}</strong>
-                  <span>${escapeHtml(this.describeScriptEditorLocationListSummary(family, normalizedRecord))}</span>
+                  <span class="c-script-editor-record-list__summary ${isCityFamily ? "is-hidden" : ""}">${escapeHtml(this.describeScriptEditorLocationListSummary(family, normalizedRecord))}</span>
                 </button>
               `;
             },
           })}
           <div class="c-script-editor-location-editor">
             <!-- SCRIPT_EDITOR_INSPECTOR_SLOT -->
+            <!-- SCRIPT_EDITOR_INSPECTOR_SUPPRESS_TEXT -->
             ${
               location == null
                 ? `
@@ -1942,16 +1945,18 @@ export class MainUiFlow {
                   </p>
                 `
                 : `
-                  <div class="c-script-editor-location-editor__tabs" role="tablist" aria-label="${isCityFamily ? "城市详情分栏" : "建筑详情分栏"}">
-                    ${this.renderScriptEditorLocationTabButton("profile", "基础")}
-                    ${this.renderScriptEditorLocationTabButton("menus", "菜单")}
-                    ${this.renderScriptEditorLocationTabButton("access", "进入态")}
-                    ${
-                      isCityFamily
-                        ? ""
-                        : this.renderScriptEditorLocationTabButton("entry", "入口")
-                    }
-                  </div>
+                  <template data-script-editor-inspector-header-slot>
+                    <div class="c-script-editor-location-editor__tabs" role="tablist" aria-label="${isCityFamily ? "城市详情分栏" : "建筑详情分栏"}">
+                      ${this.renderScriptEditorLocationTabButton("profile", "基础")}
+                      ${this.renderScriptEditorLocationTabButton("menus", "菜单")}
+                      ${this.renderScriptEditorLocationTabButton("access", "进入态")}
+                      ${
+                        isCityFamily
+                          ? ""
+                          : this.renderScriptEditorLocationTabButton("entry", "入口")
+                      }
+                    </div>
+                  </template>
                   ${this.renderScriptEditorLocationTabPanel(family, location)}
                 `
             }
@@ -2363,13 +2368,6 @@ export class MainUiFlow {
 
     return `
       <div class="c-script-editor-editor-card">
-        <header class="c-script-editor-editor-card__header">
-          <div>
-            <p class="c-script-editor-editor-card__eyebrow">剧情作者面</p>
-            <h2 class="c-script-editor-editor-card__title">剧情详情</h2>
-          </div>
-        </header>
-
         <div class="c-script-editor-record-layout c-script-editor-record-layout--narrative">
           ${this.renderScriptEditorPaginatedRecordList({
             family: "storyNodes",
@@ -2407,15 +2405,18 @@ export class MainUiFlow {
           })}
           <div class="c-script-editor-narrative-editor">
             <!-- SCRIPT_EDITOR_INSPECTOR_SLOT -->
+            <!-- SCRIPT_EDITOR_INSPECTOR_SUPPRESS_TEXT -->
             ${
               storyNode == null
                 ? `<p class="c-script-editor-editor-card__hint">请选择一个剧情后继续编辑。剧情负责组织人物、对话与事件的归属关系，不在这里承担底层执行逻辑。</p>`
                 : `
-                  <div class="c-script-editor-narrative-editor__tabs" role="tablist" aria-label="剧情详情分栏">
-                    ${this.renderScriptEditorNarrativeTabButton("profile", "基础")}
-                    ${this.renderScriptEditorNarrativeTabButton("links", "关联")}
-                    ${this.renderScriptEditorNarrativeTabButton("summary", "摘要")}
-                  </div>
+                  <template data-script-editor-inspector-header-slot>
+                    <div class="c-script-editor-narrative-editor__tabs" role="tablist" aria-label="剧情详情分栏">
+                      ${this.renderScriptEditorNarrativeTabButton("profile", "基础")}
+                      ${this.renderScriptEditorNarrativeTabButton("links", "关联")}
+                      ${this.renderScriptEditorNarrativeTabButton("summary", "摘要")}
+                    </div>
+                  </template>
                   ${this.renderScriptEditorStoryNodeTabPanel(storyNode)}
                 `
             }
@@ -2431,13 +2432,6 @@ export class MainUiFlow {
 
     return `
       <div class="c-script-editor-editor-card">
-        <header class="c-script-editor-editor-card__header">
-          <div>
-            <p class="c-script-editor-editor-card__eyebrow">对话作者面</p>
-            <h2 class="c-script-editor-editor-card__title">对话详情</h2>
-          </div>
-        </header>
-
         <div class="c-script-editor-record-layout c-script-editor-record-layout--narrative">
           ${this.renderScriptEditorPaginatedRecordList({
             family: "dialogues",
@@ -2475,15 +2469,18 @@ export class MainUiFlow {
           })}
           <div class="c-script-editor-narrative-editor">
             <!-- SCRIPT_EDITOR_INSPECTOR_SLOT -->
+            <!-- SCRIPT_EDITOR_INSPECTOR_SUPPRESS_TEXT -->
             ${
               dialogue == null
                 ? `<p class="c-script-editor-editor-card__hint">请选择一个对话后继续编辑。当前作者面只负责演出结构、参与人物和后续动作入口，不在这里落 minigame 或 runtime 机制。</p>`
                 : `
-                  <div class="c-script-editor-narrative-editor__tabs" role="tablist" aria-label="对话详情分栏">
-                    ${this.renderScriptEditorNarrativeTabButton("profile", "基础")}
-                    ${this.renderScriptEditorNarrativeTabButton("nodes", "节点")}
-                    ${this.renderScriptEditorNarrativeTabButton("summary", "预览")}
-                  </div>
+                  <template data-script-editor-inspector-header-slot>
+                    <div class="c-script-editor-narrative-editor__tabs" role="tablist" aria-label="对话详情分栏">
+                      ${this.renderScriptEditorNarrativeTabButton("profile", "基础")}
+                      ${this.renderScriptEditorNarrativeTabButton("nodes", "节点")}
+                      ${this.renderScriptEditorNarrativeTabButton("summary", "预览")}
+                    </div>
+                  </template>
                   ${this.renderScriptEditorDialogueTabPanel(dialogue)}
                 `
             }
@@ -2499,13 +2496,6 @@ export class MainUiFlow {
 
     return `
       <div class="c-script-editor-editor-card">
-        <header class="c-script-editor-editor-card__header">
-          <div>
-            <p class="c-script-editor-editor-card__eyebrow">事件作者面</p>
-            <h2 class="c-script-editor-editor-card__title">事件详情</h2>
-          </div>
-        </header>
-
         <div class="c-script-editor-record-layout c-script-editor-record-layout--narrative">
           ${this.renderScriptEditorPaginatedRecordList({
             family: "events",
@@ -2543,17 +2533,20 @@ export class MainUiFlow {
           })}
           <div class="c-script-editor-narrative-editor">
             <!-- SCRIPT_EDITOR_INSPECTOR_SLOT -->
+            <!-- SCRIPT_EDITOR_INSPECTOR_SUPPRESS_TEXT -->
             ${
               eventRecord == null
                 ? `<p class="c-script-editor-editor-card__hint">请选择一个事件后继续编辑。事件页会收口为稳定区块，而不是散乱大表单或分步向导。</p>`
                 : `
-                  <div class="c-script-editor-narrative-editor__tabs" role="tablist" aria-label="事件详情分栏">
-                    ${this.renderScriptEditorEventTabButton("basics", "基础信息")}
-                    ${this.renderScriptEditorEventTabButton("conditions", "条件")}
-                    ${this.renderScriptEditorEventTabButton("destination", "去向")}
-                    ${this.renderScriptEditorEventTabButton("relations", "关联对象")}
-                    ${this.renderScriptEditorEventTabButton("preview", "预览与校验")}
-                  </div>
+                  <template data-script-editor-inspector-header-slot>
+                    <div class="c-script-editor-narrative-editor__tabs" role="tablist" aria-label="事件详情分栏">
+                      ${this.renderScriptEditorEventTabButton("basics", "基础信息")}
+                      ${this.renderScriptEditorEventTabButton("conditions", "条件")}
+                      ${this.renderScriptEditorEventTabButton("destination", "去向")}
+                      ${this.renderScriptEditorEventTabButton("relations", "关联对象")}
+                      ${this.renderScriptEditorEventTabButton("preview", "预览与校验")}
+                    </div>
+                  </template>
                   ${this.renderScriptEditorEventTabPanel(eventRecord)}
                 `
             }
@@ -2569,13 +2562,6 @@ export class MainUiFlow {
 
     return `
       <div class="c-script-editor-editor-card">
-        <header class="c-script-editor-editor-card__header">
-          <div>
-            <p class="c-script-editor-editor-card__eyebrow">玩法绑定作者面</p>
-            <h2 class="c-script-editor-editor-card__title">Minigame Binding</h2>
-          </div>
-        </header>
-
         <div class="c-script-editor-record-layout c-script-editor-record-layout--narrative">
           ${this.renderScriptEditorPaginatedRecordList({
             family: "minigames",
@@ -2613,16 +2599,19 @@ export class MainUiFlow {
           })}
           <div class="c-script-editor-minigame-editor">
             <!-- SCRIPT_EDITOR_INSPECTOR_SLOT -->
+            <!-- SCRIPT_EDITOR_INSPECTOR_SUPPRESS_TEXT -->
             ${
               minigame == null
                 ? `<p class="c-script-editor-editor-card__hint">请选择一个玩法绑定后继续编辑。当前作者面只负责 binding、trigger 和 settlement 配置，不在这里落 playable runtime 机制。</p>`
                 : `
-                  <div class="c-script-editor-minigame-editor__tabs" role="tablist" aria-label="玩法绑定详情分栏">
-                    ${this.renderScriptEditorMinigameTabButton("basics", "基础信息")}
-                    ${this.renderScriptEditorMinigameTabButton("launch", "触发与调用")}
-                    ${this.renderScriptEditorMinigameTabButton("settlement", "结算与返回")}
-                    ${this.renderScriptEditorMinigameTabButton("references", "引用关系")}
-                  </div>
+                  <template data-script-editor-inspector-header-slot>
+                    <div class="c-script-editor-minigame-editor__tabs" role="tablist" aria-label="玩法绑定详情分栏">
+                      ${this.renderScriptEditorMinigameTabButton("basics", "基础信息")}
+                      ${this.renderScriptEditorMinigameTabButton("launch", "触发与调用")}
+                      ${this.renderScriptEditorMinigameTabButton("settlement", "结算与返回")}
+                      ${this.renderScriptEditorMinigameTabButton("references", "引用关系")}
+                    </div>
+                  </template>
                   ${this.renderScriptEditorMinigameTabPanel(minigame)}
                 `
             }

@@ -6250,6 +6250,51 @@ test("script editor workspace shell builds a reusable object-tree scaffold", () 
   assert.match(workspace.inspector.cards[0]?.body ?? "", /Hero|勇者|player/i);
 });
 
+test("script editor workspace groups creator navigation by project top bar, world, narrative, and gameplay", () => {
+  const {
+    createScriptEditorWorkspaceShellViewModel,
+  } = require("../.test-dist/application/script-editor/workspace-shell.js");
+  const project = createSampleScriptEditorProjectDefinition();
+
+  const workspace = createScriptEditorWorkspaceShellViewModel({ project });
+
+  assert.deepEqual(
+    workspace.objectTreeGroups.map((group) => ({
+      label: group.label,
+      families: group.nodes.map((node) => node.family),
+    })),
+    [
+      {
+        label: "项目",
+        families: ["storyPack"],
+      },
+      {
+        label: "世界",
+        families: ["people", "cities", "buildings"],
+      },
+      {
+        label: "剧情与文本",
+        families: ["storyNodes", "dialogues", "events"],
+      },
+      {
+        label: "玩法",
+        families: ["minigames"],
+      },
+      {
+        label: "资料库",
+        families: ["textEntries"],
+      },
+    ]
+  );
+  assert.equal(
+    workspace.objectTreeGroups.some((group) =>
+      group.nodes.some((node) => node.family === "textEntries")
+    ),
+    true
+  );
+  assert.equal(workspace.objectTreeGroups[0]?.nodes[0]?.label, "剧本导出");
+});
+
 test("script editor PRD workspace shell exposes a Chinese-first project overview", () => {
   const {
     createScriptEditorWorkspaceShellViewModel,
@@ -6272,17 +6317,38 @@ test("script editor PRD workspace shell exposes a Chinese-first project overview
   );
 });
 
-test("script editor workspace renders a visible save project action", () => {
+test("script editor workspace keeps export controls out of the top toolbar and exposes project export on the far right", () => {
   const workspaceViewSource = fs.readFileSync(
     path.join(process.cwd(), "src/ui/views/script-editor/script-editor-workspace-view.ts"),
     "utf8"
   );
+  const mainUiSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    "utf8"
+  );
+  const scriptEditorCssSource = fs.readFileSync(
+    path.join(process.cwd(), "src/styles/script-editor.css"),
+    "utf8"
+  );
 
-  assert.doesNotMatch(
+  assert.match(
     workspaceViewSource,
     /\.filter\(\(action\) => action\.id !== "save"\)/
   );
-  assert.match(workspaceViewSource, /data-script-editor-action="\$\{escapeHtml\(action\.id\)\}"/);
+  assert.match(
+    workspaceViewSource,
+    /\.filter\(\(action\) => action\.id !== "validate" && action\.id !== "export"\)/
+  );
+  assert.match(
+    workspaceViewSource,
+    /\$\{renderToolbarButtons\(model\)\}[\s\S]*\$\{projectNode == null \? "" : renderProjectEntryButton\(projectNode\)\}/
+  );
+  assert.doesNotMatch(workspaceViewSource, /c-script-editor-shell__toolbar--tabs/);
+  assert.match(
+    mainUiSource,
+    /项目根信息[\s\S]*data-script-editor-action="save"[\s\S]*导出/
+  );
+  assert.doesNotMatch(mainUiSource, /data-script-editor-action="save"[\s\S]{0,80}保存项目/);
 });
 
 test("script editor landing labels opening an existing project as opening a draft", () => {
@@ -6471,7 +6537,7 @@ test("script editor PRD workspace view retires English shell chrome copy", () =>
     "utf8"
   );
 
-  assert.match(workspaceViewSource, /Script Editor Workbench Wireframe/);
+  assert.doesNotMatch(workspaceViewSource, /Script Editor Workbench Wireframe/);
   assert.match(workspaceViewSource, /返回列表/);
   assert.match(workspaceViewSource, /c-script-editor-shell__editor-stage/);
   assert.match(workspaceViewSource, /c-script-editor-tree-group/);
@@ -6594,6 +6660,9 @@ test("script editor person authoring queue exposes dedicated person detail tabs 
     /data-script-editor-person-field="biography"[\s\S]*?renderScriptEditorPersonSummaryAttributes\(person\)/
   );
   assert.match(scriptEditorCssSource, /c-script-editor-person-editor__tabs/);
+  assert.match(scriptEditorCssSource, /c-script-editor-person-editor__tabs[\s\S]*border-bottom/);
+  assert.match(scriptEditorCssSource, /c-script-editor-person-editor__tab[\s\S]*border-radius:\s*10px 10px 0 0/);
+  assert.match(scriptEditorCssSource, /c-script-editor-person-editor__tab\.is-active[\s\S]*border-bottom-color/);
   assert.match(scriptEditorCssSource, /c-script-editor-shell__inspector-header/);
   assert.match(scriptEditorCssSource, /c-script-editor-record-list__search/);
   assert.match(scriptEditorCssSource, /c-script-editor-person-attributes/);
@@ -6681,9 +6750,18 @@ test("script editor text entry authoring hides ids from creators and clamps list
   assert.match(mainUiSource, /family === "textEntries"[\s\S]*?renderScriptEditorTextEntryEditor\(records, selectedRecord\)/);
   assert.match(textEntryEditorSource, /data-script-editor-action="apply-text-entry-text"/);
   assert.match(textEntryEditorSource, /data-script-editor-text-entry-text/);
+  assert.match(textEntryEditorSource, /SCRIPT_EDITOR_INSPECTOR_SLOT/);
+  assert.match(textEntryEditorSource, /SCRIPT_EDITOR_INSPECTOR_SUPPRESS_TEXT/);
+  assert.match(textEntryEditorSource, /data-script-editor-inspector-header-slot/);
+  assert.match(textEntryEditorSource, /c-script-editor-editor-card__actions--end/);
+  assert.match(scriptEditorCssSource, /\.c-script-editor-editor-card__actions--end[\s\S]*justify-content:\s*flex-end/);
   assert.match(textEntryEditorSource, /placeholder="请输入文本内容"/);
   assert.match(textEntryEditorSource, /c-script-editor-record-list__item--text-entry/);
   assert.match(textEntryEditorSource, /c-script-editor-record-list__title--clamp-2/);
+  assert.doesNotMatch(
+    textEntryEditorSource,
+    /c-script-editor-editor-card__title">文本/
+  );
   assert.doesNotMatch(
     textEntryEditorSource,
     /data-script-editor-record-json/
@@ -6770,9 +6848,14 @@ test("script editor visual alignment queue paginates secondary record lists at s
   assert.match(mainUiSource, /renderScriptEditorPaginatedRecordList/);
   assert.match(mainUiSource, /data-script-editor-action="record-page-prev"/);
   assert.match(mainUiSource, /data-script-editor-action="record-page-next"/);
+  assert.match(mainUiSource, /aria-label="上一页"[\s\S]*‹/);
+  assert.match(mainUiSource, /aria-label="下一页"[\s\S]*›/);
   assert.match(mainUiSource, /changeScriptEditorRecordListPage\(delta\)/);
   assert.match(scriptEditorCssSource, /c-script-editor-record-pagination/);
   assert.match(scriptEditorCssSource, /c-script-editor-record-pagination__status/);
+  assert.match(scriptEditorCssSource, /c-script-editor-record-list[\s\S]*min-height:\s*580px/);
+  assert.match(scriptEditorCssSource, /c-script-editor-record-pagination[\s\S]*margin-top:\s*auto/);
+  assert.match(scriptEditorCssSource, /c-script-editor-record-pagination__status[\s\S]*white-space:\s*nowrap/);
 });
 
 test("script editor visual alignment queue separates sidebar secondary list and editor stage with borders", () => {
@@ -7418,8 +7501,7 @@ test(
     const source = fs.readFileSync("src/ui/main-ui/main-ui-flow.js", "utf8");
     const cssSource = fs.readFileSync("src/styles/script-editor.css", "utf8");
 
-    assert.match(source, /城市作者面|建筑作者面/);
-    assert.match(source, /城市详情|建筑详情/);
+    assert.doesNotMatch(source, /城市作者面|建筑作者面/);
     assert.match(source, /基础/);
     assert.match(source, /菜单/);
     assert.match(source, /进入态/);
@@ -7428,11 +7510,15 @@ test(
     assert.match(source, /remove-location-menu-entry/);
     assert.match(source, /data-script-editor-location-access-field/);
     assert.match(source, /data-script-editor-building-entry-field/);
+    assert.match(source, /c-script-editor-record-list__summary/);
+    assert.match(source, /SCRIPT_EDITOR_INSPECTOR_SUPPRESS_TEXT/);
+    assert.match(source, /data-script-editor-inspector-header-slot/);
     assert.doesNotMatch(source, /SCRIPT_EDITOR_ACCESS_STATES/);
     assert.doesNotMatch(source, /visible-enabled|visible-disabled/);
     assert.match(source, /conditionExpression/);
     assert.match(cssSource, /\.c-script-editor-location-editor/);
     assert.match(cssSource, /\.c-script-editor-location-menu__item/);
+    assert.match(cssSource, /\.c-script-editor-record-list__summary\.is-hidden/);
   }
 );
 
@@ -9003,12 +9089,12 @@ test(
     const source = fs.readFileSync("src/ui/main-ui/main-ui-flow.js", "utf8");
     const cssSource = fs.readFileSync("src/styles/script-editor.css", "utf8");
 
-    assert.match(source, /剧情作者面|Story Nodes/);
-    assert.match(source, /对话作者面|Dialogues/);
-    assert.match(source, /事件作者面|Events/);
+    assert.doesNotMatch(source, /剧情作者面|对话作者面|事件作者面/);
     assert.match(source, /基础信息|条件|去向|关联对象|预览与校验/);
     assert.match(source, /data-script-editor-action="select-narrative-tab"/);
     assert.match(source, /data-script-editor-action="select-event-tab"/);
+    assert.match(source, /SCRIPT_EDITOR_INSPECTOR_SUPPRESS_TEXT/);
+    assert.match(source, /data-script-editor-inspector-header-slot/);
     assert.match(source, /"add-dialogue-node"/);
     assert.match(source, /"add-dialogue-follow-up"/);
     assert.doesNotMatch(
@@ -9193,9 +9279,11 @@ test(
       "utf8"
     );
 
-    assert.match(source, /玩法绑定作者面|Minigame Binding/);
+    assert.doesNotMatch(source, /玩法绑定作者面|Minigame Binding/);
     assert.match(source, /基础信息|触发与调用|结算与返回|引用关系/);
     assert.match(source, /data-script-editor-action="select-minigame-tab"/);
+    assert.match(source, /SCRIPT_EDITOR_INSPECTOR_SUPPRESS_TEXT/);
+    assert.match(source, /data-script-editor-inspector-header-slot/);
     assert.match(source, /"add-minigame-launch-payload-entry"/);
     assert.match(source, /"add-minigame-outcome-route"/);
     assert.match(source, /data-script-editor-minigame-field=/);

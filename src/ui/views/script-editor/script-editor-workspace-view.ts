@@ -33,9 +33,6 @@ export function renderScriptEditorWorkspaceView(
   return `
     <section class="c-script-editor-shell">
       <header class="c-script-editor-shell__header">
-        <div>
-          <p class="c-script-editor-shell__workbench-title">Script Editor Workbench Wireframe</p>
-        </div>
         <div class="c-script-editor-shell__project-strip">
           <div class="c-script-editor-shell__project-pill">
             <strong>当前项目：${escapeHtml(model.title)}</strong>
@@ -49,8 +46,8 @@ export function renderScriptEditorWorkspaceView(
             >
               返回列表
             </button>
-            ${projectNode == null ? "" : renderProjectEntryButton(projectNode)}
             ${renderToolbarButtons(model)}
+            ${projectNode == null ? "" : renderProjectEntryButton(projectNode)}
           </div>
         </div>
       </header>
@@ -100,6 +97,8 @@ function splitWorkspaceTreeGroups(groups: ScriptEditorWorkspaceTreeGroup[]): {
 
 function renderToolbarButtons(model: ScriptEditorWorkspaceViewModel): string {
   return model.toolbarActions
+    .filter((action) => action.id !== "save")
+    .filter((action) => action.id !== "validate" && action.id !== "export")
     .map((action) => {
       const modifierClass =
         action.id === "export"
@@ -190,6 +189,10 @@ function renderInspector(
     options.hideHeaderText || inspector.description.trim().length === 0
       ? ""
       : `<p class="c-script-editor-shell__inspector-description">${escapeHtml(inspector.description)}</p>`;
+
+  if (options.compact && options.hideHeaderText && headerSlotMarkup.length === 0) {
+    return "";
+  }
 
   return `
     <section class="c-script-editor-shell__inspector${compactClass}">
