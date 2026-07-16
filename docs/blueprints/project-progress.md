@@ -4,9 +4,9 @@
 
 - entry_id: `project-progress.rpg-tg`
 - active_blueprint: `blueprint.rpg-tg`
-- active_version: `target.script-editor-authoring-data-structure-unification`
+- active_version: `target.city-building-definition-location-access-convergence`
 - has_active_queue: `false`
-- next_file: `docs/blueprints/plans/2026-07-15-script-editor-authoring-data-structure-unification-target-plan.md`
+- next_file: `docs/blueprints/plans/2026-07-16-city-building-definition-location-access-convergence-target-plan.md`
 - entry_action: `open-next-file`
 
 ## Human Context
@@ -25,9 +25,9 @@
 - Current Blueprint:
   - `docs/blueprints/blueprint.md`
 - Current Version Spec:
-  - `docs/blueprints/specs/2026-07-15-script-editor-authoring-data-structure-unification-target.md`
+  - `docs/blueprints/specs/2026-07-16-city-building-definition-location-access-convergence-target.md`
 - Current Version Plan:
-  - `docs/blueprints/plans/2026-07-15-script-editor-authoring-data-structure-unification-target-plan.md`
+  - `docs/blueprints/plans/2026-07-16-city-building-definition-location-access-convergence-target-plan.md`
 - Current Active Queue:
   - `none`
 
@@ -35,13 +35,14 @@
 
 - `This file only states the current resume entry and downstream pointer set.`
 - `Admission history, queue closeout history, and review narrative must stay in the version plan, queue docs, or docs/change-log.md rather than living here as competing current-state prose.`
-- `The pointed version is now the closed script-editor authoring/data-structure unification record.`
-- `The latest governance action closed target.script-editor-authoring-data-structure-unification after final validation passed and explicit closeout continuation was received.`
-- `Resume from the closed version plan until a fresh version or intake review is created.`
+- `The pointed version is now the open city/building definition and LocationAccessRuntime convergence record.`
+- `The latest governance action created target.city-building-definition-location-access-convergence as the open successor after target.script-editor-authoring-data-structure-unification closed.`
+- `Resume from the open version plan until a queue is admitted or a new governance decision is recorded.`
 
 ### Historical References
 
 - `docs/change-log.md` stores code and behavior change history only; it is not a default Blueprint search target or governance resume source.`
+- `docs/blueprints/plans/2026-07-16-city-building-definition-location-access-convergence-target-plan.md` stores the open city/building definition and LocationAccessRuntime convergence version's candidate record, admission truth, routing truth, and future closeout truth.
 - `docs/blueprints/plans/2026-07-15-script-editor-authoring-data-structure-unification-target-plan.md` stores the closed authoring/data-structure unification version's activation truth, candidate record, promotion ledger, queue closeout history, and version closeout truth.
 - `docs/blueprints/queues/script-editor-project-cache-save-export-preview-queue.md` stores the closed first project cache/save/export/preview execution truth.
 - `docs/blueprints/queues/script-editor-project-cache-save-export-preview-continuation-queue.md` stores the closed continuation truth for durable save-location recording and stale continue gating.
