@@ -10,11 +10,11 @@
 
 ## Execution State
 
-- Status: `waiting`
+- Status: `running`
 - Last Updated: `2026-07-16`
-- Current Focus: `Plan authored for Phase 1 global NPC interaction; implementation has not started.`
-- Next Step: `Choose Subagent-Driven or Inline Execution, then mark this plan running and start Task 1.`
-- Verification: `npm run lint:plans passed for 59 files`
+- Current Focus: `Baseline robustness tests repaired for Windows CRLF structural matching; preparing Task 1 execution.`
+- Next Step: `Start Task 1: Domain Types And Pure NPC Interaction Selectors.`
+- Verification: `npm run lint:plans passed for 59 files; npm test passed for 306 tests`
 - Notes: `Do not mark this plan closed without structured closeout, project-progress sync, and remote push success.`
 
 ## Progress Log
@@ -23,6 +23,10 @@
   - Summary: `Created the Phase 1 implementation plan for global NPC interaction.`
   - Verification: `npm run lint:plans passed for 59 files`
   - Next: `Choose an execution mode, then mark this plan running and start Task 1.`
+- 2026-07-16
+  - Summary: `Repaired four pre-existing robustness structural guards so Windows CRLF line endings and current TypeScript function return annotations do not make the baseline suite fail before NPC work starts.`
+  - Verification: `npm test passed for 306 tests`
+  - Next: `Start Task 1 with subagent-driven development.`
 
 ---
 

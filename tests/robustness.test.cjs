@@ -10690,7 +10690,7 @@ test("child 14 activity qte result close routes through interactive runtime exit
     "utf8"
   );
   const closeActivityResultBlock = source.match(
-    /function closeCurrentActivityResult\(\)[\s\S]*?\n}\n/
+    /function closeCurrentActivityResult\(\)(?:: void)? \{[\s\S]*?\r?\n}\r?\n/
   )?.[0] ?? "";
 
   assert.doesNotMatch(source, /clearActivityResult/);
@@ -10882,7 +10882,7 @@ test("interactive covered main write-back paths use shared runtime commit helper
     "utf8"
   );
   const onBeggingGameCompleteBlock = source.match(
-    /function onBeggingGameComplete[\s\S]*?\n}\n/
+    /function onBeggingGameComplete[\s\S]*?\r?\n}\r?\n/
   )?.[0] ?? "";
   const syncCityBeggingMiniGamePointerBlock = source.match(
     /function syncCityBeggingMiniGamePointer\(clientX: number\): void \{[\s\S]*?\r?\n}\r?\n\r?\nfunction tickCityBeggingMiniGame/
@@ -11822,7 +11822,7 @@ test("save restore re-activates selected mod through mod runtime", () => {
 test("child 22 restore path can reload imported mod sources after a fresh page load", () => {
   const source = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
   const restoreBlock = source.match(
-    /async function restoreModFromSave\([\s\S]*?\n}\n/
+    /async function restoreModFromSave\([\s\S]*?\r?\n}\r?\n/
   )?.[0] ?? "";
 
   assert.match(source, /selectedModSource/);
@@ -11840,7 +11840,7 @@ test("child 22 restore path can reload imported mod sources after a fresh page l
 test("child 22 continue path does not overwrite a restored mod by re-entering builtin startup", () => {
   const source = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
   const continueBlock = source.match(
-    /function startContinueGameWithLoading\(selectedCharacter: CharacterDefinition\): void \{[\s\S]*?\n}\n/
+    /function startContinueGameWithLoading\(selectedCharacter: CharacterDefinition\): void \{[\s\S]*?\r?\n}\r?\n/
   )?.[0] ?? "";
 
   assert.match(continueBlock, /loadSaveData\(\)/);
