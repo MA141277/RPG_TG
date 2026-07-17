@@ -12,7 +12,8 @@ import type {
 import type { CitySceneMapping } from "../../../domain/city-scene-mapping";
 import type { HouseDefinition } from "../../../domain/house";
 import haozhouCityBackgroundUrl from "../../../../ui/background/upload_1784207698799091496 (1).png?url";
-import cityDiamondMapTextureUrl from "../../../../ui/yuansu/菱形格子/20260716-111958.png?url";
+import cityDiamondBaseTextureUrl from "../../../../ui/yuansu/菱形格子/20260716-111958.png?url";
+import cityDiamondForegroundWallUrl from "../../../../ui/yuansu/菱形格子/20260716-141239.png?url";
 
 type IsoTileType = "stone" | "road" | "grass" | "water" | "courtyard";
 
@@ -286,19 +287,18 @@ function renderCityMapScene(cityDefinition: CityDefinition): string {
   return `
     <div class="c-city-map-scene" aria-label="${cityDefinition.name}等距城镇地图">
       <div class="c-city-map-scene__ambient" aria-hidden="true"></div>
-      <div class="c-city-isometric-map" aria-label="${cityDefinition.name}等距城镇地图">
-        <div
-          class="c-city-isometric-map__grid"
-          style="--iso-map-width:${CITY_ISO_MAP_SIZE * CITY_ISO_TILE_WIDTH}px; --iso-map-height:${CITY_ISO_MAP_SIZE * CITY_ISO_TILE_HEIGHT}px;"
-        >
-          ${renderCityIsometricMap()}
-          <img
-            class="c-city-isometric-map__texture"
-            src="${cityDiamondMapTextureUrl}"
-            alt=""
-            aria-hidden="true"
-          />
-        </div>
+      <div class="c-city-map-stage" aria-hidden="true">
+        <img
+          class="c-city-map-stage__base"
+          src="${cityDiamondBaseTextureUrl}"
+          alt=""
+        />
+        <div class="c-city-map-stage__buildings"></div>
+        <img
+          class="c-city-map-stage__foreground-wall"
+          src="${cityDiamondForegroundWallUrl}"
+          alt=""
+        />
       </div>
     </div>
   `;
