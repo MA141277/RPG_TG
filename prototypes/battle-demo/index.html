@@ -1205,7 +1205,7 @@
     .formation-side.enemy { right: clamp(92px, 12vw, 190px); }
     .formation-side h2 {
       position: absolute;
-      top: -82px;
+      top: -162px;
       left: 0;
       right: 0;
       font-size: 0.78rem;
@@ -2766,6 +2766,35 @@
       'rear-center': '后中',
       'rear-right': '后右',
     };
+    const FORMATION_SLOT_ROW_NAMES = ['front', 'middle', 'rear'];
+    const FORMATION_SLOT_COL_NAMES = ['left', 'center', 'right'];
+
+    function getFormationSlotIndices(slotKey) {
+      const [rowName = 'front', colName = 'center'] = String(slotKey).split('-');
+      return {
+        row: Math.max(0, FORMATION_SLOT_ROW_NAMES.indexOf(rowName)),
+        col: Math.max(0, FORMATION_SLOT_COL_NAMES.indexOf(colName)),
+      };
+    }
+
+    function buildFormationSlotKey(row, col) {
+      return `${FORMATION_SLOT_ROW_NAMES[row] || 'front'}-${FORMATION_SLOT_COL_NAMES[col] || 'center'}`;
+    }
+
+    function rotateFormationPanelSlotKey(slotKey, side = 'player') {
+      const { row, col } = getFormationSlotIndices(slotKey);
+      if (side === 'player') {
+        return buildFormationSlotKey(2 - col, row);
+      }
+      if (side === 'enemy') {
+        return buildFormationSlotKey(col, 2 - row);
+      }
+      return buildFormationSlotKey(row, col);
+    }
+
+    function getFormationPanelDisplaySlotKeys(side = 'player') {
+      return FORMATION_SLOT_KEYS.map((slotKey) => rotateFormationPanelSlotKey(slotKey, side));
+    }
     const FORMATION_TEMPLATES = {
       vanguard: {
         label: '先锋',
@@ -4150,7 +4179,8 @@
       `;
 
       const occupiedSlots = new Map((unit.formationMembers || []).map(member => [member.slotKey, member]));
-      grid.innerHTML = FORMATION_SLOT_KEYS.map(slotKey => {
+      const displaySlotKeys = getFormationPanelDisplaySlotKeys(unit.side);
+      grid.innerHTML = displaySlotKeys.map(slotKey => {
         const member = occupiedSlots.get(slotKey);
         if (!member) {
           return `<div class="unit-formation-cell empty"><div>${escapeHtml(FORMATION_SLOT_LABELS[slotKey])}</div><div>空位</div></div>`;
@@ -4938,9 +4968,10 @@
     const BATTLE_PLAYER_FRONT_X = 70;
     const BATTLE_ENEMY_FRONT_X = 30;
     const BATTLE_RANK_HORIZONTAL_STEP = 33;
+    const BATTLE_VERTICAL_FILE_SPACING_MULTIPLIER = 1.95;
     const BATTLE_FILE_DIAGONAL_STEP = {
       x: 11,
-      y: 14,
+      y: 14 * BATTLE_VERTICAL_FILE_SPACING_MULTIPLIER,
     };
 
     function getBattleSlotPosition(slotKey, mirrorCols = false) {
@@ -4976,15 +5007,15 @@
         moveActionNames: ['跳跃'],
         materialForegroundImageKeys: [],
         materialForegroundNormalizeOptions: {},
-        renderScaleMultiplier: 1,
+        renderScaleMultiplier: 0.84,
         renderOffsetX: -16,
         renderOffsetXBySide: {
           player: -120,
-          enemy: 85,
+          enemy: 93,
         },
         renderOffsetYBySide: {
-          player: -30,
-          enemy: -30,
+          player: -20,
+          enemy: -20,
         },
         renderOffsetY: 0,
         stationaryAttack: false,
@@ -5003,15 +5034,15 @@
             removeDarkGuideLine: true,
           },
         },
-        renderScaleMultiplier: 1.84,
+        renderScaleMultiplier: 1.5456,
         renderOffsetX: -34,
         renderOffsetXBySide: {
           player: -150,
           enemy: 68,
         },
         renderOffsetYBySide: {
-          player: 57,
-          enemy: 57,
+          player: 47,
+          enemy: 47,
         },
         renderOffsetY: 80,
         stationaryAttack: true,
@@ -5030,15 +5061,15 @@
             removeDarkGuideLine: true,
           },
         },
-        renderScaleMultiplier: 1.2,
+        renderScaleMultiplier: 1.086624,
         renderOffsetX: -16,
         renderOffsetXBySide: {
           player: -110,
-          enemy: 85,
+          enemy: 95,
         },
         renderOffsetYBySide: {
-          player: -30,
-          enemy: -30,
+          player: -25,
+          enemy: -25,
         },
         renderOffsetY: 0,
         stationaryAttack: false,
@@ -5053,15 +5084,15 @@
         moveActionNames: ['冲刺'],
         materialForegroundImageKeys: [],
         materialForegroundNormalizeOptions: {},
-        renderScaleMultiplier: 1.8,
+        renderScaleMultiplier: 1.512,
         renderOffsetX: -16,
         renderOffsetXBySide: {
           player: -110,
           enemy: 85,
         },
         renderOffsetYBySide: {
-          player: -98,
-          enemy: -98,
+          player: -53,
+          enemy: -53,
         },
         renderOffsetY: 0,
         stationaryAttack: false,
@@ -5087,15 +5118,15 @@
             removeDarkGuideLine: true,
           },
         },
-        renderScaleMultiplier: 1.2,
+        renderScaleMultiplier: 0.9408,
         renderOffsetX: -16,
         renderOffsetXBySide: {
           player: -100,
-          enemy: 115,
+          enemy: 95,
         },
         renderOffsetYBySide: {
-          player: -30,
-          enemy: -30,
+          player: -15,
+          enemy: -15,
         },
         renderOffsetY: 0,
         stationaryAttack: true,
@@ -5264,7 +5295,7 @@
         src: '../../ui/battle/战斗/archer_airbreak_effect_v2.png',
         width: 260,
         spawnForwardOffsetX: 18,
-        spawnOffsetY: 0,
+        spawnOffsetY: 10,
         fadeInFrames: 3,
         holdFrames: 3,
         fadeOutFrames: 8,
@@ -5467,6 +5498,23 @@
       seamFillOffsets.forEach(([offsetX, offsetY]) => {
         whiteFlashCtx.drawImage(whiteFlashSourceCanvas, offsetX, offsetY);
       });
+    }
+
+    function clearBattleSpineCanvasLayers(canvas) {
+      if (!(canvas instanceof HTMLCanvasElement)) return;
+      [canvas, canvas.__battleWhiteFlashOverlayCanvas, canvas.__battleWhiteFlashSourceCanvas].forEach((layer) => {
+        if (!(layer instanceof HTMLCanvasElement)) return;
+        const ctx = layer.getContext('2d');
+        if (!ctx) return;
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.clearRect(0, 0, layer.width, layer.height);
+      });
+      delete canvas.__battleSpineRenderer;
+      delete canvas.__battleLastRenderActionId;
+      delete canvas.__battleLastRenderElapsedMs;
+      delete canvas.__battleLastRenderSide;
+      delete canvas.__battleLastRenderLoop;
+      delete canvas.__battleLastIdleActionFrameBucket;
     }
 
     class BattleSpineRenderer {
@@ -7108,8 +7156,16 @@
         if (!image?.complete || !attachment.fullSkin || !restPart) return;
         const segments = this.attachmentSegments(node, attachment, action, frame);
         if (!segments.length) return;
-        const cols = this.lowDetail ? 3 : attachment.restPart.partId === 'torso' ? 5 : 4;
-        const rows = this.lowDetail ? Math.max(4, segments.length * 3) : Math.max(6, segments.length * 5);
+        const defaultCols = this.lowDetail ? 3 : attachment.restPart.partId === 'torso' ? 5 : 4;
+        const defaultRows = this.lowDetail ? Math.max(4, segments.length * 3) : Math.max(6, segments.length * 5);
+        const authoredMeshCols = Math.round(Number(attachment.meshCols));
+        const authoredMeshRows = Math.round(Number(attachment.meshRows));
+        const cols = authoredMeshCols > 0
+          ? Math.max(3, Math.min(defaultCols, authoredMeshCols))
+          : defaultCols;
+        const rows = authoredMeshRows > 0
+          ? Math.max(4, Math.min(defaultRows, authoredMeshRows))
+          : defaultRows;
         const source = this.getAttachmentSourceGrid(image, cols, rows);
         const dest = [];
         for (let row = 0; row <= rows; row += 1) {
@@ -7490,8 +7546,10 @@
         const overlay = document.getElementById('formation-battle');
         if (overlay?.classList.contains('hidden')) return;
         const now = performance.now();
-        if (now - battleSpineLastIdleRender < 83) return;
-        battleSpineLastIdleRender = now;
+        const allowThrottledIdleRender = now - battleSpineLastIdleRender >= 83;
+        if (allowThrottledIdleRender) {
+          battleSpineLastIdleRender = now;
+        }
         for (const entry of getBattleSpineCanvasEntries()) {
           if (
             entry.slot.classList.contains('empty') ||
@@ -7500,21 +7558,41 @@
           ) {
             continue;
           }
+          if (entry.canvas.dataset.freezeIdleFrame === 'true' && entry.canvas.__battleFrozenFrameRendered === true) {
+            continue;
+          }
           const rect = entry.canvas.getBoundingClientRect();
           if (rect.width <= 0 || rect.height <= 0) continue;
           const troopType = entry.canvas.dataset.troopType || 'infantry';
+          if (troopType !== 'cavalry' && !allowThrottledIdleRender) {
+            continue;
+          }
           getBattleSpineRenderer(troopType).then(renderer => {
             if (!renderer) return;
+            const freezeIdleFrame = entry.canvas.dataset.freezeIdleFrame === 'true';
+            const actionId = entry.canvas.dataset.action || 'idle';
+            const elapsedMs = freezeIdleFrame ? 0 : now + Number(entry.canvas.dataset.phase || 0);
+            if (troopType === 'cavalry' && !freezeIdleFrame) {
+              const frameCount = Math.max(1, renderer.getActionFrameCount(actionId));
+              const actionFrameBucket = Math.floor((elapsedMs / 1000) * Math.max(1, renderer.fps || 60)) % (frameCount + 1);
+              if (entry.canvas.__battleLastIdleActionFrameBucket === actionFrameBucket) {
+                return;
+              }
+              entry.canvas.__battleLastIdleActionFrameBucket = actionFrameBucket;
+            }
             renderer.render(
               entry.canvas,
-              entry.canvas.dataset.action || 'idle',
-              now + Number(entry.canvas.dataset.phase || 0),
+              actionId,
+              elapsedMs,
               { side: entry.canvas.dataset.side || '' }
             );
+            if (freezeIdleFrame) {
+              entry.canvas.__battleFrozenFrameRendered = true;
+            }
           });
         }
       };
-      battleSpineIdleRaf = window.setInterval(tick, 100);
+      battleSpineIdleRaf = window.setInterval(tick, 16);
       tick();
     }
 
@@ -7741,6 +7819,7 @@
         lossText: slotState.loss > 0 ? `-${slotState.loss}` : '',
       };
       const previous = entry.__battleLastCommittedState;
+      const troopTypeChanged = previous && previous.troopType !== nextState.troopType;
       if (
         previous &&
         previous.isEmpty === nextState.isEmpty &&
@@ -7764,9 +7843,14 @@
       entry.slot.classList.toggle('targeted', nextState.isTarget);
       entry.slot.dataset.troopType = nextState.troopType;
       entry.canvas.dataset.action = nextState.action;
+      entry.canvas.dataset.freezeIdleFrame = nextState.isFallen ? 'true' : 'false';
       entry.canvas.dataset.troopType = nextState.troopType;
       entry.canvas.dataset.side = nextState.side;
+      entry.canvas.__battleFrozenFrameRendered = false;
       configureBattleSpineCanvasMetrics(entry.canvas);
+      if (troopTypeChanged) {
+        clearBattleSpineCanvasLayers(entry.canvas);
+      }
       entry.memberName.textContent = nextState.memberName;
       entry.memberHpFill.style.width = nextState.hpWidth;
       entry.memberLoss.hidden = nextState.lossHidden;
@@ -7859,13 +7943,13 @@
       };
     }
 
-    function createBattleSpineProxyFromSlot(sourceSlot, box, boxRect, proxySide, troopType) {
+    function createBattleSpineProxyFromSlot(sourceSlot, layer, layerRect, proxySide, troopType, stackOrder = 1000) {
       const proxyAnchor = document.createElement('div');
-      const anchorPosition = getBattleSlotAnchorPosition(sourceSlot, boxRect);
+      const anchorPosition = getBattleSlotAnchorPosition(sourceSlot, layerRect);
       proxyAnchor.className = 'battle-spine-proxy-anchor';
       proxyAnchor.style.setProperty('--battle-proxy-x', `${anchorPosition.x}px`);
       proxyAnchor.style.setProperty('--battle-proxy-y', `${anchorPosition.y}px`);
-      proxyAnchor.style.zIndex = sourceSlot.style.zIndex;
+      proxyAnchor.style.zIndex = String(stackOrder);
 
       const proxySlot = sourceSlot.cloneNode(true);
       proxySlot.classList.add('battle-spine-proxy-slot', proxySide);
@@ -7894,7 +7978,7 @@
 
       proxySlot.dataset.proxySourceSlot = sourceSlot.dataset.slot || '';
       proxyAnchor.appendChild(proxySlot);
-      box.appendChild(proxyAnchor);
+      layer.appendChild(proxyAnchor);
 
       return {
         anchor: proxyAnchor,
@@ -7930,16 +8014,33 @@
       const sourceFrame = sourceSlot?.querySelector('.formation-spine-frame');
       const targetFrame = targetSlot?.querySelector('.formation-spine-frame');
       const box = document.querySelector('.formation-battle-box');
-      if (!sourceCanvas || !sourceFrame || !targetFrame || !box) {
+      if (!sourceCanvas || !sourceFrame || !targetFrame || !sourceGrid || !box) {
         await sleep(380);
         onImpact?.();
         return;
       }
 
-      const boxRect = box.getBoundingClientRect();
+      const layerRect = box.getBoundingClientRect();
       const sourceUnit = getBattleTimelineUnit(report, step.sourceSide);
       const proxySide = sourceUnit.side === 'enemy' ? 'enemy' : 'player';
-      const proxyView = createBattleSpineProxyFromSlot(sourceSlot, box, boxRect, proxySide, troopType);
+      const sourceSlotZ = Number(sourceSlot.style.zIndex || 0);
+      const targetSlotZ = Number(targetSlot?.style.zIndex || 0);
+      const elevateProxyLayer = !troopAsset.stationaryAttack;
+      const proxyLayer = elevateProxyLayer ? box : sourceGrid;
+      const proxyLayerRect = elevateProxyLayer
+        ? layerRect
+        : sourceGrid.getBoundingClientRect();
+      const proxyStackOrder = elevateProxyLayer
+        ? 1000 + Math.max(sourceSlotZ, targetSlotZ) + 1
+        : sourceSlotZ;
+      const proxyView = createBattleSpineProxyFromSlot(
+        sourceSlot,
+        proxyLayer,
+        proxyLayerRect,
+        proxySide,
+        troopType,
+        proxyStackOrder,
+      );
       if (!proxyView) {
         await sleep(380);
         onImpact?.();
@@ -7949,8 +8050,8 @@
       const motionElement = proxyView.anchor;
       const initialLeft = proxyView.position.x;
       const initialTop = proxyView.position.y;
-      const targetAnchor = getBattleSlotAnchorPosition(targetSlot, boxRect);
-      const sourceAnchor = getBattleSlotAnchorPosition(sourceSlot, boxRect);
+      const targetAnchor = getBattleSlotAnchorPosition(targetSlot, layerRect);
+      const sourceAnchor = getBattleSlotAnchorPosition(sourceSlot, layerRect);
 
       sourceSlot.classList.add('is-proxying');
       proxyView.slot.classList.add('striker');

@@ -684,6 +684,58 @@
               </div>
             </div>
           </section>
+          <section class="panel-section bind-only">
+            <div class="panel-title">单物块去白边</div>
+            <div class="bind-note">只对当前选中的物块生效，会生成一张新的清理后贴图并只替换这个物块的引用。</div>
+            <div class="form-grid">
+              <div class="field checkbox-field full">
+                <label for="imageCleanupEnabledInput">
+                  <input id="imageCleanupEnabledInput" type="checkbox" checked />
+                  导入图片时自动去背和去白边
+                </label>
+              </div>
+              <div class="field">
+                <label for="imageCleanupBackgroundModeSelect">背景色</label>
+                <select id="imageCleanupBackgroundModeSelect">
+                  <option value="white">白色</option>
+                  <option value="magenta">品红</option>
+                  <option value="custom">自定义</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="imageCleanupToleranceInput">容差</label>
+                <input id="imageCleanupToleranceInput" type="number" min="0" max="255" step="1" value="28" />
+              </div>
+              <div class="field full">
+                <label for="imageCleanupCustomColorInput">自定义取样色</label>
+                <input id="imageCleanupCustomColorInput" type="color" value="#ffffff" />
+              </div>
+              <div class="field checkbox-field">
+                <label for="imageCleanupEdgeRepairInput">
+                  <input id="imageCleanupEdgeRepairInput" type="checkbox" checked />
+                  B 去白边修色
+                </label>
+              </div>
+              <div class="field checkbox-field">
+                <label for="imageCleanupShrinkInput">
+                  <input id="imageCleanupShrinkInput" type="checkbox" checked />
+                  C 边缘收缩抗毛刺
+                </label>
+              </div>
+              <div class="field checkbox-field">
+                <label for="imageCleanupSupersampleInput">
+                  <input id="imageCleanupSupersampleInput" type="checkbox" checked />
+                  D 超采样抗锯齿
+                </label>
+              </div>
+              <div class="field checkbox-field">
+                <label for="imageCleanupCurveInput">
+                  <input id="imageCleanupCurveInput" type="checkbox" />
+                  E 曲线重建边缘
+                </label>
+              </div>
+            </div>
+          </section>
         </aside>
 
         <section class="stage-wrap">
@@ -984,6 +1036,9 @@
               </div>
             </div>
             <div class="button-row">
+              <button id="cleanSelectedPieceImageBtn" type="button">清理当前物块贴图</button>
+            </div>
+            <div class="button-row">
               <button id="captureBindPoseBtn" type="button">当前姿势设为绑定</button>
               <button id="resetToBindPoseBtn" type="button">回到绑定姿势</button>
               <button id="autoBindUnboundBonesBtn" type="button">自动绑定未绑骨骼</button>
@@ -1073,8 +1128,6 @@
           label: "\u9a91\u5175",
           projectUrl: "/src/faxian/leg/cavalry/project.json",
           imageBaseUrl: "/src/faxian/leg/cavalry/",
-          runtimeProjectUrl: "/src/faxian/leg/swordsman/project.json",
-          runtimeAssetUnitType: "swordsman",
           materialForegroundImageKeys: [],
           materialForegroundNormalizeOptions: {},
           enabled: true,
@@ -1127,6 +1180,16 @@
         slashFxParentTracks: {},
         slashFxActionHiddenMap: {},
         customImages: {},
+        imageCleanup: {
+          enabled: true,
+          backgroundMode: "white",
+          tolerance: 28,
+          customColor: "#ffffff",
+          edgeRepair: true,
+          alphaShrink: true,
+          supersample: true,
+          curveRebuild: false,
+        },
         stageView: {
           zoom: 1,
           x: 0,
@@ -1377,6 +1440,7 @@
         pieceYInput: document.getElementById("pieceYInput"),
         pieceScaleInput: document.getElementById("pieceScaleInput"),
         pieceRotationInput: document.getElementById("pieceRotationInput"),
+        cleanSelectedPieceImageBtn: document.getElementById("cleanSelectedPieceImageBtn"),
         jsonPreview: document.getElementById("jsonPreview"),
         copyJsonBtn: document.getElementById("copyJsonBtn"),
         applyJsonBtn: document.getElementById("applyJsonBtn"),
@@ -1390,6 +1454,14 @@
         newVersionSampleBtn: document.getElementById("newVersionSampleBtn"),
         replaceMaterialBtn: document.getElementById("replaceMaterialBtn"),
         materialInput: document.getElementById("materialInput"),
+        imageCleanupEnabledInput: document.getElementById("imageCleanupEnabledInput"),
+        imageCleanupBackgroundModeSelect: document.getElementById("imageCleanupBackgroundModeSelect"),
+        imageCleanupToleranceInput: document.getElementById("imageCleanupToleranceInput"),
+        imageCleanupCustomColorInput: document.getElementById("imageCleanupCustomColorInput"),
+        imageCleanupEdgeRepairInput: document.getElementById("imageCleanupEdgeRepairInput"),
+        imageCleanupShrinkInput: document.getElementById("imageCleanupShrinkInput"),
+        imageCleanupSupersampleInput: document.getElementById("imageCleanupSupersampleInput"),
+        imageCleanupCurveInput: document.getElementById("imageCleanupCurveInput"),
         idleAnimationBtn: document.getElementById("idleAnimationBtn"),
         threeQuarterSampleBtn: document.getElementById("threeQuarterSampleBtn"),
         swordsmanFeatureGroup: document.getElementById("swordsmanFeatureGroup"),
@@ -1442,6 +1514,38 @@
         minPixels: 1000,
         padding: 2,
       };
+
+      function renderImageCleanupControls() {
+        const enabled = el.imageCleanupEnabledInput?.checked !== false;
+        const customMode = (el.imageCleanupBackgroundModeSelect?.value || "white") === "custom";
+        [
+          el.imageCleanupBackgroundModeSelect,
+          el.imageCleanupToleranceInput,
+          el.imageCleanupEdgeRepairInput,
+          el.imageCleanupShrinkInput,
+          el.imageCleanupSupersampleInput,
+          el.imageCleanupCurveInput,
+        ].forEach((input) => {
+          if (input) input.disabled = !enabled;
+        });
+        if (el.imageCleanupCustomColorInput) {
+          el.imageCleanupCustomColorInput.disabled = !enabled || !customMode;
+        }
+      }
+
+      function syncImageCleanupStateFromInputs() {
+        state.imageCleanup = normalizedImageCleanupOptions({
+          enabled: el.imageCleanupEnabledInput?.checked !== false,
+          backgroundMode: el.imageCleanupBackgroundModeSelect?.value || "white",
+          tolerance: Number(el.imageCleanupToleranceInput?.value),
+          customColor: el.imageCleanupCustomColorInput?.value || "#ffffff",
+          edgeRepair: el.imageCleanupEdgeRepairInput?.checked !== false,
+          alphaShrink: el.imageCleanupShrinkInput?.checked !== false,
+          supersample: el.imageCleanupSupersampleInput?.checked !== false,
+          curveRebuild: el.imageCleanupCurveInput?.checked === true,
+        });
+        renderImageCleanupControls();
+      }
 
       function isSpearmanStyleUnit(unitType = state.currentUnitType) {
         return ["spearman", "musketeer"].includes(unitType);
@@ -1601,7 +1705,172 @@
         return canvas.toDataURL("image/png");
       }
 
-      function averageOpaqueColorFromImageData(imageData) {
+      function cloneImageData(imageData) {
+        return new ImageData(new Uint8ClampedArray(imageData.data), imageData.width, imageData.height);
+      }
+
+      function hexToRgbColor(hex) {
+        const normalized = String(hex || "").trim().replace(/^#/, "");
+        if (!/^[0-9a-f]{6}$/i.test(normalized)) return null;
+        return [
+          parseInt(normalized.slice(0, 2), 16),
+          parseInt(normalized.slice(2, 4), 16),
+          parseInt(normalized.slice(4, 6), 16),
+        ];
+      }
+
+      function resolveImageCleanupBackgroundColor(options = state.imageCleanup) {
+        const mode = String(options?.backgroundMode || "white");
+        if (mode === "magenta") return [128, 0, 128];
+        if (mode === "custom") return hexToRgbColor(options?.customColor) || [255, 255, 255];
+        return [255, 255, 255];
+      }
+
+      function normalizedImageCleanupOptions(overrides = {}) {
+        const source = {
+          ...(state.imageCleanup || {}),
+          ...(overrides || {}),
+        };
+        return {
+          enabled: source.enabled !== false,
+          backgroundMode: ["white", "magenta", "custom"].includes(source.backgroundMode)
+            ? source.backgroundMode
+            : "white",
+          tolerance: Math.max(0, Math.min(255, Math.round(Number(source.tolerance) || 0))),
+          customColor: /^#[0-9a-f]{6}$/i.test(String(source.customColor || ""))
+            ? String(source.customColor)
+            : "#ffffff",
+          edgeRepair: source.edgeRepair !== false,
+          alphaShrink: source.alphaShrink !== false,
+          supersample: source.supersample !== false,
+          curveRebuild: source.curveRebuild === true,
+        };
+      }
+
+      function colorDistanceToBackground(r, g, b, backgroundColor) {
+        const dr = r - backgroundColor[0];
+        const dg = g - backgroundColor[1];
+        const db = b - backgroundColor[2];
+        return Math.sqrt(dr * dr + dg * dg + db * db);
+      }
+
+      function backgroundMatchesCleanupColor(r, g, b, backgroundColor, tolerance, mode = "custom") {
+        if (mode === "white") {
+          const threshold = 255 - tolerance;
+          return r >= threshold && g >= threshold && b >= threshold;
+        }
+        return (
+          Math.abs(r - backgroundColor[0]) <= tolerance &&
+          Math.abs(g - backgroundColor[1]) <= tolerance &&
+          Math.abs(b - backgroundColor[2]) <= tolerance
+        );
+      }
+
+      function fourNeighborIndices(index, width, height) {
+        const neighbors = [];
+        const x = index % width;
+        const y = Math.floor(index / width);
+        if (x > 0) neighbors.push(index - 1);
+        if (x < width - 1) neighbors.push(index + 1);
+        if (y > 0) neighbors.push(index - width);
+        if (y < height - 1) neighbors.push(index + width);
+        return neighbors;
+      }
+
+      function clearImageDataPixel(imageData, index) {
+        const offset = index * 4;
+        imageData.data[offset] = 0;
+        imageData.data[offset + 1] = 0;
+        imageData.data[offset + 2] = 0;
+        imageData.data[offset + 3] = 0;
+      }
+
+      function floodRemoveCornerConnectedBackground(sourceImageData, options = {}) {
+        const imageData = cloneImageData(sourceImageData);
+        const { width, height, data } = imageData;
+        const count = width * height;
+        const config = normalizedImageCleanupOptions(options);
+        const backgroundColor = resolveImageCleanupBackgroundColor(config);
+        const visited = new Uint8Array(count);
+        const queue = [];
+        let cursor = 0;
+
+        function matches(index) {
+          const offset = index * 4;
+          const alpha = data[offset + 3];
+          if (alpha < 8) return true;
+          return backgroundMatchesCleanupColor(
+            data[offset],
+            data[offset + 1],
+            data[offset + 2],
+            backgroundColor,
+            config.tolerance,
+            config.backgroundMode,
+          );
+        }
+
+        function push(index) {
+          if (visited[index] || !matches(index)) return;
+          visited[index] = 1;
+          queue.push(index);
+        }
+
+        push(0);
+        push(width - 1);
+        push((height - 1) * width);
+        push(height * width - 1);
+
+        while (cursor < queue.length) {
+          const index = queue[cursor++];
+          clearImageDataPixel(imageData, index);
+          fourNeighborIndices(index, width, height).forEach(push);
+        }
+        return imageData;
+      }
+
+      function detectOpaqueComponentsFromImageData(imageData, minPixels = 1, alphaThreshold = 16) {
+        const { width, height } = imageData;
+        const mask = createOpaqueMask(imageData, alphaThreshold);
+        const seen = new Uint8Array(mask.length);
+        const components = [];
+        for (let index = 0; index < mask.length; index += 1) {
+          if (!mask[index] || seen[index]) continue;
+          const pixels = [index];
+          seen[index] = 1;
+          let minX = width;
+          let minY = height;
+          let maxX = 0;
+          let maxY = 0;
+          for (let cursor = 0; cursor < pixels.length; cursor += 1) {
+            const current = pixels[cursor];
+            const x = current % width;
+            const y = Math.floor(current / width);
+            minX = Math.min(minX, x);
+            minY = Math.min(minY, y);
+            maxX = Math.max(maxX, x);
+            maxY = Math.max(maxY, y);
+            fourNeighborIndices(current, width, height).forEach((neighbor) => {
+              if (!mask[neighbor] || seen[neighbor]) return;
+              seen[neighbor] = 1;
+              pixels.push(neighbor);
+            });
+          }
+          if (pixels.length < minPixels) continue;
+          components.push({
+            pixels,
+            minX,
+            minY,
+            maxX,
+            maxY,
+            width: maxX - minX + 1,
+            height: maxY - minY + 1,
+            count: pixels.length,
+          });
+        }
+        return components;
+      }
+
+      function averageOpaqueRgbFromImageData(imageData) {
         let r = 0;
         let g = 0;
         let b = 0;
@@ -1615,9 +1884,279 @@
           b += imageData.data[index * 4 + 2] * a;
           weight += a;
         }
-        if (weight <= 0) return "#d8d0bf";
-        const toHex = (value) => Math.max(0, Math.min(255, Math.round(value / weight))).toString(16).padStart(2, "0");
+        if (weight <= 0) return [216, 208, 191];
+        return [
+          Math.max(0, Math.min(255, Math.round(r / weight))),
+          Math.max(0, Math.min(255, Math.round(g / weight))),
+          Math.max(0, Math.min(255, Math.round(b / weight))),
+        ];
+      }
+
+      function averageOpaqueColorFromImageData(imageData) {
+        const [r, g, b] = averageOpaqueRgbFromImageData(imageData);
+        const toHex = (value) => value.toString(16).padStart(2, "0");
         return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+      }
+
+      function countTransparentNeighbors(mask, index, width, height) {
+        return fourNeighborIndices(index, width, height).reduce((count, neighbor) => count + (mask[neighbor] ? 0 : 1), 0);
+      }
+
+      function sampleNearestCleanOpaqueColor(
+        imageData,
+        mask,
+        x,
+        y,
+        backgroundColor,
+        tolerance,
+        mode = "custom",
+        maxRadius = 8,
+      ) {
+        const { width, height, data } = imageData;
+        for (let radius = 1; radius <= maxRadius; radius += 1) {
+          let r = 0;
+          let g = 0;
+          let b = 0;
+          let weight = 0;
+          const minY = Math.max(0, y - radius);
+          const maxY = Math.min(height - 1, y + radius);
+          const minX = Math.max(0, x - radius);
+          const maxX = Math.min(width - 1, x + radius);
+          for (let py = minY; py <= maxY; py += 1) {
+            for (let px = minX; px <= maxX; px += 1) {
+              if (Math.abs(px - x) !== radius && Math.abs(py - y) !== radius) continue;
+              const index = py * width + px;
+              if (!mask[index]) continue;
+              if (countTransparentNeighbors(mask, index, width, height) > 1) continue;
+              const offset = index * 4;
+              const alpha = data[offset + 3];
+              if (alpha < 48) continue;
+              const cr = data[offset];
+              const cg = data[offset + 1];
+              const cb = data[offset + 2];
+              if (backgroundMatchesCleanupColor(cr, cg, cb, backgroundColor, tolerance, mode)) continue;
+              const currentWeight = (alpha / 255) / (1 + Math.hypot(px - x, py - y));
+              r += cr * currentWeight;
+              g += cg * currentWeight;
+              b += cb * currentWeight;
+              weight += currentWeight;
+            }
+          }
+          if (weight > 0) {
+            return [
+              Math.max(0, Math.min(255, Math.round(r / weight))),
+              Math.max(0, Math.min(255, Math.round(g / weight))),
+              Math.max(0, Math.min(255, Math.round(b / weight))),
+            ];
+          }
+        }
+        return null;
+      }
+
+      function pushColorAwayFromBackground(color, backgroundColor, fallbackColor) {
+        return [0, 1, 2].map((channel) => {
+          const base = color[channel];
+          const delta = base - backgroundColor[channel];
+          if (Math.abs(delta) > 2) {
+            return Math.max(0, Math.min(255, Math.round(base + delta * 0.85)));
+          }
+          return Math.max(0, Math.min(255, Math.round(base * 0.2 + fallbackColor[channel] * 0.8)));
+        });
+      }
+
+      function repairTransparentEdgeBleed(sourceImageData, options = {}) {
+        const config = normalizedImageCleanupOptions(options);
+        const backgroundColor = resolveImageCleanupBackgroundColor(config);
+        const imageData = cloneImageData(sourceImageData);
+        const source = cloneImageData(sourceImageData);
+        const mask = createOpaqueMask(source, 8);
+        const fallbackColor = averageOpaqueRgbFromImageData(source);
+        const { width, height } = source;
+        for (let index = 0; index < mask.length; index += 1) {
+          if (!mask[index] || !countTransparentNeighbors(mask, index, width, height)) continue;
+          const offset = index * 4;
+          const alpha = source.data[offset + 3];
+          if (alpha < 8) continue;
+          const color = [source.data[offset], source.data[offset + 1], source.data[offset + 2]];
+          const polluted =
+            backgroundMatchesCleanupColor(
+              color[0],
+              color[1],
+              color[2],
+              backgroundColor,
+              Math.round(config.tolerance * 1.3),
+              config.backgroundMode,
+            ) ||
+            (alpha < 220 &&
+              colorDistanceToBackground(color[0], color[1], color[2], backgroundColor) <= config.tolerance * 2.4);
+          if (!polluted) continue;
+          const x = index % width;
+          const y = Math.floor(index / width);
+          const sampled =
+            sampleNearestCleanOpaqueColor(
+              source,
+              mask,
+              x,
+              y,
+              backgroundColor,
+              config.tolerance,
+              config.backgroundMode,
+            ) || pushColorAwayFromBackground(color, backgroundColor, fallbackColor);
+          imageData.data[offset] = Math.round(color[0] * 0.18 + sampled[0] * 0.82);
+          imageData.data[offset + 1] = Math.round(color[1] * 0.18 + sampled[1] * 0.82);
+          imageData.data[offset + 2] = Math.round(color[2] * 0.18 + sampled[2] * 0.82);
+        }
+        return imageData;
+      }
+
+      function shrinkAndSmoothAlphaEdge(sourceImageData) {
+        const imageData = cloneImageData(sourceImageData);
+        const source = sourceImageData.data;
+        const mask = createOpaqueMask(sourceImageData, 8);
+        const { width, height } = sourceImageData;
+        for (let index = 0; index < mask.length; index += 1) {
+          if (!mask[index]) continue;
+          const transparentNeighbors = countTransparentNeighbors(mask, index, width, height);
+          if (!transparentNeighbors) continue;
+          const x = index % width;
+          const y = Math.floor(index / width);
+          let alphaSum = 0;
+          let sampleCount = 0;
+          for (let py = Math.max(0, y - 1); py <= Math.min(height - 1, y + 1); py += 1) {
+            for (let px = Math.max(0, x - 1); px <= Math.min(width - 1, x + 1); px += 1) {
+              alphaSum += source[(py * width + px) * 4 + 3];
+              sampleCount += 1;
+            }
+          }
+          const currentAlpha = source[index * 4 + 3];
+          const averageAlpha = alphaSum / Math.max(1, sampleCount);
+          const targetAlpha = Math.max(0, Math.min(currentAlpha, averageAlpha * (0.88 - transparentNeighbors * 0.06)));
+          imageData.data[index * 4 + 3] = targetAlpha < 6
+            ? 0
+            : Math.round(currentAlpha * 0.55 + targetAlpha * 0.45);
+        }
+        return imageData;
+      }
+
+      function supersampleAlphaEdge(sourceImageData) {
+        const imageData = cloneImageData(sourceImageData);
+        const source = sourceImageData.data;
+        const mask = createOpaqueMask(sourceImageData, 8);
+        const { width, height } = sourceImageData;
+        for (let index = 0; index < mask.length; index += 1) {
+          if (!mask[index]) continue;
+          const transparentNeighbors = countTransparentNeighbors(mask, index, width, height);
+          if (!transparentNeighbors) continue;
+          const x = index % width;
+          const y = Math.floor(index / width);
+          let coverage = 0;
+          let sampleCount = 0;
+          for (let py = Math.max(0, y - 1); py <= Math.min(height - 1, y + 1); py += 1) {
+            for (let px = Math.max(0, x - 1); px <= Math.min(width - 1, x + 1); px += 1) {
+              coverage += source[(py * width + px) * 4 + 3] / 255;
+              sampleCount += 1;
+            }
+          }
+          const currentAlpha = source[index * 4 + 3];
+          const resampledAlpha = Math.round((coverage / Math.max(1, sampleCount)) * 255);
+          imageData.data[index * 4 + 3] = Math.max(
+            0,
+            Math.min(255, Math.round(currentAlpha * 0.4 + resampledAlpha * 0.6)),
+          );
+        }
+        return imageData;
+      }
+
+      function erodeMask(mask, width, height, steps = 1) {
+        let current = mask.slice();
+        for (let step = 0; step < steps; step += 1) {
+          const next = current.slice();
+          for (let index = 0; index < current.length; index += 1) {
+            if (!current[index]) continue;
+            const neighbors = fourNeighborIndices(index, width, height);
+            if (neighbors.length < 4 || neighbors.some((neighbor) => !current[neighbor])) {
+              next[index] = 0;
+            }
+          }
+          current = next;
+        }
+        return current;
+      }
+
+      function rebuildCurveEdges(sourceImageData, options = {}) {
+        const config = normalizedImageCleanupOptions(options);
+        const backgroundColor = resolveImageCleanupBackgroundColor(config);
+        const oldMask = createOpaqueMask(sourceImageData, 16);
+        const closedMask = erodeMask(
+          dilateMask(oldMask, sourceImageData.width, sourceImageData.height, 1),
+          sourceImageData.width,
+          sourceImageData.height,
+          1,
+        );
+        const rebuiltMask = dilateMask(
+          erodeMask(closedMask, sourceImageData.width, sourceImageData.height, 1),
+          sourceImageData.width,
+          sourceImageData.height,
+          1,
+        );
+        const output = cloneImageData(sourceImageData);
+        const fallbackColor = averageOpaqueRgbFromImageData(sourceImageData);
+        for (let index = 0; index < rebuiltMask.length; index += 1) {
+          if (!rebuiltMask[index]) {
+            clearImageDataPixel(output, index);
+            continue;
+          }
+          if (oldMask[index]) continue;
+          const x = index % sourceImageData.width;
+          const y = Math.floor(index / sourceImageData.width);
+          const sampled =
+            sampleNearestCleanOpaqueColor(
+              sourceImageData,
+              oldMask,
+              x,
+              y,
+              backgroundColor,
+              config.tolerance,
+              config.backgroundMode,
+            ) || fallbackColor;
+          const offset = index * 4;
+          output.data[offset] = sampled[0];
+          output.data[offset + 1] = sampled[1];
+          output.data[offset + 2] = sampled[2];
+          output.data[offset + 3] = 220;
+        }
+        return supersampleAlphaEdge(shrinkAndSmoothAlphaEdge(output));
+      }
+
+      function preprocessImportedImageData(sourceImageData, options = {}) {
+        const config = normalizedImageCleanupOptions(options);
+        let imageData = cloneImageData(sourceImageData);
+        if (config.enabled) {
+          imageData = floodRemoveCornerConnectedBackground(imageData, config);
+          if (config.edgeRepair) imageData = repairTransparentEdgeBleed(imageData, config);
+          if (config.alphaShrink) imageData = shrinkAndSmoothAlphaEdge(imageData, config);
+          if (config.supersample) imageData = supersampleAlphaEdge(imageData, config);
+          if (config.curveRebuild) imageData = rebuildCurveEdges(imageData, config);
+        }
+        for (let index = 0; index < imageData.width * imageData.height; index += 1) {
+          if (imageData.data[index * 4 + 3] < 6) {
+            clearImageDataPixel(imageData, index);
+          }
+        }
+        return {
+          imageData,
+          components: detectOpaqueComponentsFromImageData(imageData, 1, 16),
+        };
+      }
+
+      async function loadProcessedFileImage(file, options = {}) {
+        const image = await loadFileImage(file);
+        const processed = preprocessImportedImageData(imageToImageData(image), options);
+        return {
+          image: await imageDataToImage(processed.imageData),
+          imageData: processed.imageData,
+          components: processed.components,
+        };
       }
 
       function imageDataOffset(imageData, x, y) {
@@ -5387,11 +5926,11 @@
           .join("/")}`;
       }
 
-      function restoreCustomImages(customImages) {
+      function restoreCustomImages(customImages, unitType = state.currentUnitType) {
         state.customImages = {};
         Object.entries(customImages || {}).forEach(([id, item]) => {
           if (!id.startsWith(customImagePrefix) || !item?.src) return;
-          registerCustomImage(id, item.name || id, item.src);
+          registerCustomImage(id, item.name || id, item.src, { unitType });
         });
       }
 
@@ -6411,6 +6950,9 @@
         if (el.createSlashFxRigBtn) {
           el.createSlashFxRigBtn.disabled = !isSlashFxUnit();
         }
+        if (el.cleanSelectedPieceImageBtn) {
+          el.cleanSelectedPieceImageBtn.disabled = !piece?.attachment;
+        }
         renderSlashFxContextLabels();
         [el.pieceXInput, el.pieceYInput, el.pieceScaleInput, el.pieceRotationInput].forEach((input) => {
           input.disabled = !piece || pieceLocked;
@@ -6744,7 +7286,7 @@
         state.slashFxVisibilityTracks = cloneSlashFxVisibilityTracks(data.slashFxVisibilityTracks);
         state.slashFxParentTracks = cloneSlashFxParentTracks(data.slashFxParentTracks);
         state.slashFxActionHiddenMap = cloneSlashFxActionHiddenMap(data.slashFxActionHiddenMap);
-        restoreCustomImages(data.customImages);
+        restoreCustomImages(data.customImages, options.unitType || state.currentUnitType);
         state.nodes = data.nodes.map((node) => ({
           id: String(node.id || uid("node")),
           name: String(node.name || "node"),
@@ -7422,6 +7964,59 @@
         const customImageId = `${customImagePrefix}attachment-variant-${uid("image")}`;
         registerCustomImage(customImageId, file.name, `${legAssetPrefix}${cleanName}`, { image });
         addAttachmentVariant(customImageId);
+      }
+
+      function replacePieceImageReferences(piece, fromImage, toImage) {
+        if (!piece?.attachment || !fromImage || !toImage) return;
+        const nextVariants = [
+          toImage,
+          ...attachmentImageVariants(piece.attachment).map((image) => (image === fromImage ? toImage : image)),
+        ].filter(Boolean);
+        piece.attachment = normalizeAttachment({
+          ...piece.attachment,
+          image: piece.attachment.image === fromImage ? toImage : piece.attachment.image,
+          imageVariants: [...new Set(nextVariants)],
+        });
+        attachmentImageKeys(piece).forEach((keyframe) => {
+          if (keyframe.attachmentImage === fromImage) {
+            keyframe.attachmentImage = toImage;
+          }
+        });
+      }
+
+      async function cleanupSelectedPieceImage() {
+        if (!isBindingMode()) {
+          toast("请先进入绑定管理。");
+          return;
+        }
+        const piece = selectedPieceNode();
+        if (!piece?.attachment) {
+          toast("请先选择一个物块。");
+          return;
+        }
+        const imageKey = getAttachmentImageForFrame(piece);
+        const sourceImage = warriorImages[imageKey];
+        if (!sourceImage?.complete) {
+          toast("当前物块贴图还没加载完成。");
+          return;
+        }
+        const processed = preprocessImportedImageData(imageToImageData(sourceImage), state.imageCleanup);
+        if (!processed.components.length) {
+          toast("清理后没有保留任何可见像素。");
+          return;
+        }
+        const outputImage = await imageDataToImage(processed.imageData);
+        const customImageId = `${customImagePrefix}piece-cleanup-${uid("image")}`;
+        const baseName = String(piece.name || imageKey || "piece").trim().replace(/\s+/g, "_") || "piece";
+        registerCustomImage(
+          customImageId,
+          `${baseName}-clean.png`,
+          imageDataToDataUrl(processed.imageData),
+          { image: outputImage },
+        );
+        replacePieceImageReferences(piece, imageKey, customImageId);
+        renderAll();
+        toast(`已清理当前物块贴图：${baseName}`);
       }
 
       function setAttachmentDefaultImage(image) {
@@ -11443,6 +12038,22 @@
             }
           });
         }
+        [
+          el.imageCleanupEnabledInput,
+          el.imageCleanupBackgroundModeSelect,
+          el.imageCleanupToleranceInput,
+          el.imageCleanupCustomColorInput,
+          el.imageCleanupEdgeRepairInput,
+          el.imageCleanupShrinkInput,
+          el.imageCleanupSupersampleInput,
+          el.imageCleanupCurveInput,
+        ]
+          .filter(Boolean)
+          .forEach((input) => {
+            input.addEventListener("change", syncImageCleanupStateFromInputs);
+            input.addEventListener("input", syncImageCleanupStateFromInputs);
+          });
+        syncImageCleanupStateFromInputs();
         el.replaceMaterialBtn.addEventListener("click", () => el.materialInput.click());
         el.materialInput.addEventListener("change", () => applyMaterialReplacement(el.materialInput.files[0]));
         el.idleAnimationBtn.addEventListener("click", applyIdleAnimation);
@@ -11479,6 +12090,13 @@
         el.pieceRotationInput.addEventListener("input", () =>
           setPieceTransformPatch({ rotation: Number(el.pieceRotationInput.value) || 0 }),
         );
+        el.cleanSelectedPieceImageBtn?.addEventListener("click", async () => {
+          try {
+            await cleanupSelectedPieceImage();
+          } catch (error) {
+            toast(error instanceof Error ? error.message : String(error));
+          }
+        });
         el.slashSampleBtn.addEventListener("click", loadSideSlashSample);
         el.threeQuarterSampleBtn.addEventListener("click", loadThreeQuarterSample);
         el.viewToggleBtn.addEventListener("click", () => {

@@ -54,7 +54,7 @@ test("battle Spine asset registry resolves cavalry movement by action name and l
   assert.deepEqual(BATTLE_SPINE_TROOP_ASSETS.cavalry.attackActionNames, ["\u5288\u780d"]);
   assert.deepEqual(BATTLE_SPINE_TROOP_ASSETS.cavalry.moveActionIds, []);
   assert.deepEqual(BATTLE_SPINE_TROOP_ASSETS.cavalry.moveActionNames, ["\u51b2\u523a"]);
-  assert.equal(BATTLE_SPINE_TROOP_ASSETS.cavalry.renderScaleMultiplier, 1.8);
+  assert.equal(BATTLE_SPINE_TROOP_ASSETS.cavalry.renderScaleMultiplier, 1.512);
   assert.deepEqual(BATTLE_SPINE_TROOP_ASSETS.cavalry.renderOffsetYBySide, {
     player: -98,
     enemy: -98,
@@ -113,6 +113,42 @@ test("battle renderer resolves attack actions from explicit attack names before 
     source,
     /this\.findPreferredAction\(\s*config\.attackActionIds \|\| \[\],\s*config\.attackActionNames \|\| \[\]\s*\)\s*\|\|\s*this\.findPreferredAction\(\s*\[project\.selectedActionId\]\.filter\(Boolean\),\s*\[\]\s*\)/,
   );
+});
+
+test("battle formation slot clears stale canvas layers before the first frame of a different troop type", () => {
+  const source = fs.readFileSync("prototypes/battle-demo/index.html", "utf8");
+  assert.match(source, /function clearBattleSpineCanvasLayers\(canvas\) \{/);
+  assert.match(source, /const troopTypeChanged = previous && previous\.troopType !== nextState\.troopType;/);
+  assert.match(source, /if \(troopTypeChanged\) \{\s*clearBattleSpineCanvasLayers\(entry\.canvas\);\s*\}/);
+});
+
+test("battle idle loop keeps cavalry unthrottled while preserving the slower idle gate for other troop types", () => {
+  const source = fs.readFileSync("prototypes/battle-demo/index.html", "utf8");
+  assert.match(source, /const allowThrottledIdleRender = now - battleSpineLastIdleRender >= 83;/);
+  assert.match(source, /if \(troopType !== 'cavalry' && !allowThrottledIdleRender\) \{\s*continue;\s*\}/);
+  assert.match(source, /battleSpineIdleRaf = window\.setInterval\(tick, 16\);/);
+  assert.match(source, /const actionId = entry\.canvas\.dataset\.action \|\| 'idle';/);
+  assert.match(source, /if \(troopType === 'cavalry' && !freezeIdleFrame\) \{/);
+  assert.match(source, /entry\.canvas\.__battleLastIdleActionFrameBucket === actionFrameBucket/);
+});
+
+test("battle renderer caps mesh density by authored attachment mesh settings instead of always using the generic segment-based grid", () => {
+  const source = fs.readFileSync("prototypes/battle-demo/index.html", "utf8");
+  assert.match(source, /const defaultCols = this\.lowDetail \? 3 : attachment\.restPart\.partId === 'torso' \? 5 : 4;/);
+  assert.match(source, /const defaultRows = this\.lowDetail \? Math\.max\(4, segments\.length \* 3\) : Math\.max\(6, segments\.length \* 5\);/);
+  assert.match(source, /const authoredMeshCols = Math\.round\(Number\(attachment\.meshCols\)\);/);
+  assert.match(source, /const authoredMeshRows = Math\.round\(Number\(attachment\.meshRows\)\);/);
+  assert.match(source, /const cols = authoredMeshCols > 0[\s\S]*Math\.max\(3, Math\.min\(defaultCols, authoredMeshCols\)\)/);
+  assert.match(source, /const rows = authoredMeshRows > 0[\s\S]*Math\.max\(4, Math\.min\(defaultRows, authoredMeshRows\)\)/);
+});
+
+test("battle formation layout uses the restored baseline vertical slot spacing and panel size", () => {
+  const source = fs.readFileSync("prototypes/battle-demo/index.html", "utf8");
+  assert.match(source, /const BATTLE_FORMATION_BASELINE_Y = 88;/);
+  assert.match(source, /const BATTLE_VERTICAL_FILE_SPACING_MULTIPLIER = 1\.95;/);
+  assert.match(source, /y:\s*14 \* BATTLE_VERTICAL_FILE_SPACING_MULTIPLIER,/);
+  assert.match(source, /const y = BATTLE_FORMATION_BASELINE_Y - formationFile \* BATTLE_FILE_DIAGONAL_STEP\.y;/);
+  assert.match(source, /\.formation-side \{[\s\S]*bottom: 197px;[\s\S]*height: min\(390px, 48vh\);[\s\S]*min-height: 320px;/);
 });
 
 test("battle cavalry slash fx custom image references resolve to real files in the cavalry asset folder", () => {
