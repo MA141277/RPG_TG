@@ -5202,6 +5202,115 @@ test(
   }
 );
 
+test("script editor runtime export ignores obsolete storyPack.runtimeEvents bridge", () => {
+  const {
+    exportScriptEditorProjectToScenarioPackFiles,
+  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  const project = createExportableScriptEditorProjectDefinition();
+  project.textEntries = [{ id: "text.opening", text: "Opening line." }];
+  project.dialogues = [{ id: "dialogue.opening", title: "Opening" }];
+  project.events = [
+    {
+      id: "event.opening",
+      title: "Opening Event",
+      destination: { family: "dialogue", targetId: "dialogue.opening" },
+    },
+  ];
+  project.eventBindings = [
+    {
+      id: "binding.opening.city-enter",
+      eventId: "event.opening",
+      owner: { family: "city", id: "city.kulan" },
+      trigger: { timing: "after", action: "city-enter" },
+      enabled: true,
+    },
+  ];
+  project.storyPack.runtimeEvents = [
+    {
+      id: "event.obsolete.bridge",
+      chapterId: "chapter.obsolete",
+      name: "Obsolete Bridge",
+      occurrence: "once",
+      trigger: { timing: "city-enter" },
+      conditions: [],
+      entrySceneId: "scene.obsolete.bridge",
+    },
+  ];
+  project.storyPack.runtimeEventBindings = [
+    {
+      id: "binding.obsolete.bridge",
+      eventId: "event.obsolete.bridge",
+      owner: { family: "city", id: "city.obsolete" },
+      trigger: { timing: "after", action: "city-enter" },
+    },
+  ];
+
+  const files = exportScriptEditorProjectToScenarioPackFiles(project);
+  const events = JSON.parse(files["events.json"]);
+  const eventBindings = JSON.parse(files["event-bindings.json"]);
+
+  assert.deepEqual(events.map((eventDefinition) => eventDefinition.id), [
+    "event.opening",
+  ]);
+  assert.equal(Object.hasOwn(events[0], "trigger"), false);
+  assert.equal(Object.hasOwn(events[0], "conditions"), false);
+  assert.deepEqual(eventBindings.map((binding) => binding.id), [
+    "binding.opening.city-enter",
+  ]);
+});
+
+test("script editor runtime-pack import does not persist storyPack.runtimeEvents side channel", () => {
+  const {
+    importScenarioPackToScriptEditorProject,
+  } = require("../.test-dist/application/script-editor/runtime-pack-import.js");
+  const importedProject = importScenarioPackToScriptEditorProject({
+    schemaVersion: 1,
+    id: "scenario.no-runtime-events-bridge",
+    title: "No Runtime Events Bridge",
+    scenarioProfile: {
+      id: "scenario-profile.no-runtime-events-bridge",
+      playerCharacterId: "person.player",
+      chapterId: "chapter.no-runtime-events-bridge",
+      initialLocation: {
+        mapId: "map.imported",
+        cityId: "city.kulan",
+        houseId: null,
+        view: "city",
+      },
+    },
+    characters: [],
+    cities: [{ id: "city.kulan", name: "Kulan" }],
+    houses: [],
+    events: [
+      {
+        id: "event.imported",
+        name: "Imported Event",
+        chapterId: "chapter.no-runtime-events-bridge",
+        occurrence: "once",
+        entrySceneId: "scene.imported",
+      },
+    ],
+    eventBindings: [
+      {
+        id: "binding.imported.city-enter",
+        eventId: "event.imported",
+        owner: { family: "city", id: "city.kulan" },
+        trigger: { timing: "after", action: "city-enter" },
+      },
+    ],
+    scenes: [{ id: "scene.imported", actions: [] }],
+  });
+
+  assert.equal(Object.hasOwn(importedProject.storyPack, "runtimeEvents"), false);
+  assert.equal(Object.hasOwn(importedProject.storyPack, "runtimeEventBindings"), false);
+  assert.deepEqual(importedProject.events.map((eventRecord) => eventRecord.id), [
+    "event.imported",
+  ]);
+  assert.deepEqual(importedProject.eventBindings.map((binding) => binding.id), [
+    "binding.imported.city-enter",
+  ]);
+});
+
 test(
   "script editor preserves imported Zhu Yuanzhang runtime families through export",
   async () => {
@@ -6268,6 +6377,41 @@ test(
     assert.equal(result.candidate?.bindingId, "binding.opening.city-enter");
   }
 );
+
+test("script editor runtime export omits empty event binding condition groups", () => {
+  const {
+    exportScriptEditorProjectToScenarioPackFiles,
+  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  const project = createExportableScriptEditorProjectDefinition();
+  project.textEntries = [{ id: "text.opening", text: "Opening line." }];
+  project.dialogues = [{ id: "dialogue.opening", title: "Opening" }];
+  project.events = [
+    {
+      id: "event.opening",
+      title: "Opening Event",
+      destination: { family: "dialogue", targetId: "dialogue.opening" },
+    },
+  ];
+  project.eventBindings = [
+    {
+      id: "binding.opening.city-enter",
+      eventId: "event.opening",
+      owner: { family: "city", id: "city.start" },
+      trigger: { timing: "after", action: "city-enter" },
+      conditions: {
+        operator: "all",
+        conditions: [],
+      },
+      priority: 20,
+      enabled: true,
+    },
+  ];
+
+  const files = exportScriptEditorProjectToScenarioPackFiles(project);
+  const eventBindings = JSON.parse(files["event-bindings.json"]);
+
+  assert.equal(Object.hasOwn(eventBindings[0], "conditions"), false);
+});
 
 test(
   "script editor runtime export fails closed on unsupported event binding fields",
@@ -10601,6 +10745,25 @@ test("script editor event binding conditions authoring preserves flag and variab
     ],
   });
   assert.equal(Object.hasOwn(eventDefinition, "conditions"), false);
+});
+
+test("script editor event binding condition removal clears empty condition groups", () => {
+  const {
+    appendScriptEditorEventBindingConditionItem,
+    createDefaultScriptEditorEventBindingRecord,
+    removeScriptEditorEventBindingConditionItem,
+    updateScriptEditorEventBindingConditionItemField,
+    updateScriptEditorEventBindingConditionOperator,
+  } = require("../.test-dist/application/script-editor/story-dialogue-event-authoring.js");
+
+  let binding = createDefaultScriptEditorEventBindingRecord(0);
+  binding = updateScriptEditorEventBindingConditionOperator(binding, "all");
+  binding = appendScriptEditorEventBindingConditionItem(binding, "flag");
+  binding = updateScriptEditorEventBindingConditionItemField(binding, 0, "field", "story.ready");
+  binding = updateScriptEditorEventBindingConditionItemField(binding, 0, "value", "true");
+  binding = removeScriptEditorEventBindingConditionItem(binding, 0);
+
+  assert.equal(Object.hasOwn(binding, "conditions"), false);
 });
 
 test("script editor event binding condition editor exposes localized cascading registry controls", () => {

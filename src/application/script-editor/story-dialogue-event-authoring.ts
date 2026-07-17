@@ -344,6 +344,13 @@ export function normalizeScriptEditorEventRecord(
     ...record,
     title: normalizeString(record.title, record.id),
     description: normalizeOptionalString(record.description),
+    chapterId: normalizeOptionalString(record.chapterId),
+    occurrence: normalizeEventOccurrence(record.occurrence),
+    entrySceneId: normalizeOptionalString(record.entrySceneId),
+    participants: Array.isArray(record.participants)
+      ? record.participants
+      : [],
+    tags: normalizeStringArray(record.tags),
     triggerTiming: normalizeEventTriggerTiming(record.triggerTiming),
     repeatable: record.repeatable === true,
     nextEventId: normalizeOptionalString(record.nextEventId),
@@ -362,6 +369,10 @@ export function normalizeScriptEditorEventRecord(
   };
 }
 
+function normalizeEventOccurrence(value: unknown): NonNullable<ScriptEditorEventRecord["occurrence"]> {
+  return value === "repeatable" || value === "once-per-chapter" ? value : "once";
+}
+
 export function normalizeScriptEditorEventBindingRecord(
   record: Partial<ScriptEditorEventBindingRecord> & { id: string }
 ): ScriptEditorEventBindingRecord {
@@ -369,8 +380,11 @@ export function normalizeScriptEditorEventBindingRecord(
     record.trigger?.payloadSchemaId
   );
   const conditions = normalizeEventBindingConditions(record.conditions);
+  const normalizedConditions =
+    conditions == null || conditions.conditions.length === 0 ? null : conditions;
+  const { conditions: _ignoredConditions, ...recordWithoutConditions } = record;
   return {
-    ...record,
+    ...recordWithoutConditions,
     id: normalizeString(record.id, "event-binding.unknown"),
     eventId: normalizeOptionalTrimmedString(record.eventId),
     owner: {
@@ -389,7 +403,7 @@ export function normalizeScriptEditorEventBindingRecord(
         ? record.priority
         : 0,
     enabled: record.enabled !== false,
-    ...(conditions == null ? {} : { conditions }),
+    ...(normalizedConditions == null ? {} : { conditions: normalizedConditions }),
   };
 }
 
@@ -475,12 +489,20 @@ export function removeScriptEditorEventBindingConditionItem(
   index: number
 ): ScriptEditorEventBindingRecord {
   const conditions = ensureEventBindingConditions(record);
+  const nextConditions = conditions.conditions.filter(
+    (_, itemIndex) => itemIndex !== index
+  );
+  const { conditions: _ignoredConditions, ...recordWithoutConditions } = record;
   return {
-    ...record,
-    conditions: {
-      ...conditions,
-      conditions: conditions.conditions.filter((_, itemIndex) => itemIndex !== index),
-    },
+    ...recordWithoutConditions,
+    ...(nextConditions.length === 0
+      ? {}
+      : {
+          conditions: {
+            ...conditions,
+            conditions: nextConditions,
+          },
+        }),
   };
 }
 
@@ -1042,15 +1064,20 @@ function normalizeEventBindingConditionItem(
   }
 
   const valueType = normalizeEventBindingConditionValueType(item.valueType);
+  const field =
+    typeof item.field === "string" && item.field.trim().length > 0
+      ? item.field
+      : item.key;
+  const rawValue = Object.hasOwn(item, "value") ? item.value : item.expected;
   return omitEmptyEventBindingConditionItemFields({
     type: item.type,
     sourceFamily: normalizeEventBindingConditionSourceFamily(item.sourceFamily),
-    field: normalizeOptionalTrimmedString(item.field),
+    field: normalizeOptionalTrimmedString(field),
     operator: normalizeEventBindingConditionOperator(item.operator),
     value:
       item.type === "flag"
-        ? item.value === true || item.value === "true"
-        : normalizeEventBindingConditionValue(item.value, valueType),
+        ? rawValue === true || rawValue === "true"
+        : normalizeEventBindingConditionValue(rawValue, valueType),
     valueType: item.type === "flag" || item.type === "variable" ? undefined : valueType,
     resolverId: normalizeOptionalTrimmedString(item.resolverId),
   });

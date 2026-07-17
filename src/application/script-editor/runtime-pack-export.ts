@@ -728,21 +728,7 @@ function extractRuntimeEvents(
   exportedScenes: SceneDefinition[],
   diagnostics: ScriptEditorRuntimeExportDiagnostic[]
 ): EventDefinition[] | null {
-  const runtimeEvents = project.storyPack.runtimeEvents;
-  if (runtimeEvents == null) {
-    return lowerEditorEventsToRuntimeEvents(project, exportedScenes, diagnostics);
-  }
-
-  if (!Array.isArray(runtimeEvents)) {
-    diagnostics.push({
-      code: "invalid-field",
-      fieldPath: "project.storyPack.runtimeEvents",
-      message: "storyPack.runtimeEvents must be an array when present.",
-    });
-    return null;
-  }
-
-  return cloneJsonCompatibleValue(runtimeEvents) as EventDefinition[];
+  return lowerEditorEventsToRuntimeEvents(project, exportedScenes, diagnostics);
 }
 
 function lowerEditorEventsToRuntimeEvents(
@@ -825,29 +811,17 @@ function lowerEditorEventToRuntimeEvent(
     return null;
   }
 
-  const destination = eventRecord.destination;
-  if (
-    destination == null ||
-    destination.family !== "dialogue" ||
-    typeof destination.targetId !== "string" ||
-    destination.targetId.length === 0
-  ) {
-    diagnostics.push({
-      code: "unsupported-lowering",
-      fieldPath: `project.events[${eventIndex}].destination`,
-      message:
-        "Event export currently supports only editor events whose destination targets a dialogue.",
-    });
+  const entrySceneId = resolveEventEntrySceneId(eventRecord, eventIndex, diagnostics);
+  if (entrySceneId == null) {
     return null;
   }
 
-  const entrySceneId = `scene.${destination.targetId}`;
   if (!sceneIds.has(entrySceneId)) {
     diagnostics.push({
       code: "missing-reference",
-      fieldPath: `project.events[${eventIndex}].destination.targetId`,
+      fieldPath: `project.events[${eventIndex}].entrySceneId`,
       message:
-        `Event "${eventRecord.id}" targets dialogue "${destination.targetId}", but lowered scene "${entrySceneId}" is missing.`,
+        `Event "${eventRecord.id}" references missing entry scene "${entrySceneId}".`,
     });
     return null;
   }
@@ -874,13 +848,56 @@ function lowerEditorEventToRuntimeEvent(
 
   return {
     id: eventRecord.id,
-    chapterId,
+    chapterId:
+      typeof eventRecord.chapterId === "string" && eventRecord.chapterId.length > 0
+        ? eventRecord.chapterId
+        : chapterId,
     name: eventRecord.title || eventRecord.id,
-    occurrence: eventRecord.repeatable === true ? "repeatable" : "once",
+    occurrence:
+      eventRecord.occurrence === "repeatable" ||
+      eventRecord.occurrence === "once-per-chapter"
+        ? eventRecord.occurrence
+        : eventRecord.repeatable === true
+          ? "repeatable"
+          : "once",
+    ...(Array.isArray(eventRecord.participants) && eventRecord.participants.length > 0
+      ? { participants: eventRecord.participants }
+      : {}),
     entrySceneId,
     ...(nextEventId.length === 0 ? {} : { nextEventId }),
     ...(taskInputs.length === 0 ? {} : { taskInputs }),
+    ...(Array.isArray(eventRecord.tags) && eventRecord.tags.length > 0
+      ? { tags: eventRecord.tags }
+      : {}),
   };
+}
+
+function resolveEventEntrySceneId(
+  eventRecord: ScriptEditorEventRecord,
+  eventIndex: number,
+  diagnostics: ScriptEditorRuntimeExportDiagnostic[]
+): string | null {
+  if (typeof eventRecord.entrySceneId === "string" && eventRecord.entrySceneId.length > 0) {
+    return eventRecord.entrySceneId;
+  }
+
+  const destination = eventRecord.destination;
+  if (
+    destination == null ||
+    destination.family !== "dialogue" ||
+    typeof destination.targetId !== "string" ||
+    destination.targetId.length === 0
+  ) {
+    diagnostics.push({
+      code: "unsupported-lowering",
+      fieldPath: `project.events[${eventIndex}].destination`,
+      message:
+        "Event export currently supports only editor events whose destination targets a dialogue or imported event bodies with entrySceneId.",
+    });
+    return null;
+  }
+
+  return `scene.${destination.targetId}`;
 }
 
 function lowerRuntimeEventBindings(
@@ -910,34 +927,7 @@ function extractRuntimeEventBindings(
   project: ScriptEditorProjectDefinition,
   diagnostics: ScriptEditorRuntimeExportDiagnostic[]
 ): unknown[] | null {
-  const runtimeEventBindings = project.storyPack["runtimeEventBindings"];
-  if (runtimeEventBindings == null) {
-    return lowerRuntimeEventBindings(project, diagnostics);
-  }
-
-  if (!Array.isArray(runtimeEventBindings)) {
-    diagnostics.push({
-      code: "invalid-field",
-      fieldPath: "project.storyPack.runtimeEventBindings",
-      message: "storyPack.runtimeEventBindings must be an array when present.",
-    });
-    return null;
-  }
-
-  const invalidIndex = runtimeEventBindings.findIndex(
-    (eventBinding) => !isRuntimeEventBinding(eventBinding)
-  );
-  if (invalidIndex >= 0) {
-    diagnostics.push({
-      code: "invalid-field",
-      fieldPath: `project.storyPack.runtimeEventBindings[${invalidIndex}]`,
-      message:
-        "storyPack.runtimeEventBindings entries must keep the runtime EventBinding shape.",
-    });
-    return null;
-  }
-
-  return cloneJsonCompatibleValue(runtimeEventBindings) as EventBinding[];
+  return lowerRuntimeEventBindings(project, diagnostics);
 }
 
 function lowerRuntimeEventBinding(
@@ -1062,6 +1052,10 @@ function lowerEventBindingConditions(
     }
   }
 
+  if (loweredConditions.length === 0) {
+    return undefined;
+  }
+
   return diagnostics.length === 0
     ? {
         operator,
@@ -1108,7 +1102,10 @@ function lowerEventBindingFlagCondition(
   diagnostics: ScriptEditorRuntimeExportDiagnostic[]
 ): NonNullable<EventBinding["conditions"]>["conditions"][number] | null {
   const key = readEventBindingConditionField(condition, fieldPath, diagnostics);
-  const operator = readEventBindingConditionOperator(condition, fieldPath, diagnostics);
+  const operator =
+    typeof condition.operator === "string"
+      ? readEventBindingConditionOperator(condition, fieldPath, diagnostics)
+      : "==";
   if (key == null || operator == null) {
     return null;
   }
@@ -1122,7 +1119,9 @@ function lowerEventBindingFlagCondition(
     return null;
   }
 
-  const value = condition.value;
+  const value = Object.hasOwn(condition, "value")
+    ? condition.value
+    : condition.expected;
   if (typeof value !== "boolean") {
     diagnostics.push({
       code: "invalid-field",
@@ -1163,7 +1162,8 @@ function readEventBindingConditionField(
   fieldPath: string,
   diagnostics: ScriptEditorRuntimeExportDiagnostic[]
 ): string | null {
-  if (typeof condition.field !== "string" || condition.field.length === 0) {
+  const field = typeof condition.field === "string" ? condition.field : condition.key;
+  if (typeof field !== "string" || field.length === 0) {
     diagnostics.push({
       code: "missing-field",
       fieldPath: `${fieldPath}.field`,
@@ -1172,7 +1172,7 @@ function readEventBindingConditionField(
     return null;
   }
 
-  return condition.field;
+  return field;
 }
 
 function readEventBindingConditionOperator(
@@ -1357,51 +1357,6 @@ function lowerEventNextEventId(
   }
 
   return nextEventId;
-}
-
-function isRuntimeEventBinding(value: unknown): value is EventBinding {
-  if (value == null || typeof value !== "object" || Array.isArray(value)) {
-    return false;
-  }
-
-  const eventBinding = value as Record<string, unknown>;
-  const owner = eventBinding.owner;
-  const trigger = eventBinding.trigger;
-  return (
-    typeof eventBinding.id === "string" &&
-    typeof eventBinding.eventId === "string" &&
-    owner != null &&
-    typeof owner === "object" &&
-    !Array.isArray(owner) &&
-    typeof (owner as Record<string, unknown>).family === "string" &&
-    ((owner as Record<string, unknown>).id == null ||
-      typeof (owner as Record<string, unknown>).id === "string") &&
-    trigger != null &&
-    typeof trigger === "object" &&
-    !Array.isArray(trigger) &&
-    typeof (trigger as Record<string, unknown>).timing === "string" &&
-    typeof (trigger as Record<string, unknown>).action === "string" &&
-    (eventBinding.conditions == null ||
-      isRuntimeEventBindingConditionGroup(eventBinding.conditions)) &&
-    (eventBinding.priority == null ||
-      typeof eventBinding.priority === "number") &&
-    (eventBinding.enabled == null ||
-      typeof eventBinding.enabled === "boolean")
-  );
-}
-
-function isRuntimeEventBindingConditionGroup(value: unknown): boolean {
-  if (value == null || typeof value !== "object" || Array.isArray(value)) {
-    return false;
-  }
-
-  const group = value as Record<string, unknown>;
-  return (
-    (group.operator === "all" ||
-      group.operator === "any" ||
-      group.operator === "not") &&
-    Array.isArray(group.conditions)
-  );
 }
 
 function isCalendarDate(value: unknown): value is ScenarioProfileDefinition["initialCalendar"] {

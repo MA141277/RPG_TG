@@ -1,4 +1,5 @@
 import type { HouseDefinition } from "./house";
+import type { EventOccurrence, EventParticipant } from "./event";
 import type {
   LocationAccessConditionExpression,
   LocationAccessConditionSubject,
@@ -449,6 +450,11 @@ export type ScriptEditorActivityRecord = ScriptEditorEntityRecord & {
 export type ScriptEditorEventRecord = ScriptEditorEntityRecord & {
   title: string;
   description?: string;
+  chapterId?: string;
+  occurrence?: EventOccurrence;
+  entrySceneId?: string;
+  participants?: EventParticipant[];
+  tags?: string[];
   triggerTiming?: ScriptEditorEventTriggerTiming;
   repeatable?: boolean;
   nextEventId?: string;

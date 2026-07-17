@@ -304,12 +304,6 @@ function createStoryPackRecord(
     rawPack.tags.every((tag) => typeof tag === "string")
       ? { tags: [...rawPack.tags] as string[] }
       : {}),
-    ...(Array.isArray(rawPack.events)
-      ? { runtimeEvents: cloneJsonCompatibleValue(rawPack.events) }
-      : {}),
-    ...(Array.isArray(rawPack.eventBindings)
-      ? { runtimeEventBindings: cloneJsonCompatibleValue(rawPack.eventBindings) }
-      : {}),
     ...(compatibilityImportResidue == null
       ? {}
       : { compatibilityImport: compatibilityImportResidue }),
@@ -329,6 +323,11 @@ function mapImportedEvents(events: EventDefinition[]): ScriptEditorEventRecord[]
       id: eventDefinition.id,
       title: normalizeImportedEventTitle(eventDefinition),
       description: buildImportedEventDescription(importedEvent),
+      chapterId: eventDefinition.chapterId,
+      occurrence: eventDefinition.occurrence,
+      entrySceneId: eventDefinition.entrySceneId,
+      participants: eventDefinition.participants ?? [],
+      tags: eventDefinition.tags ?? [],
       triggerTiming: importedEvent.triggerTiming ?? "manual",
       repeatable:
         importedEvent.repeatable === true || eventDefinition.occurrence === "repeatable",
