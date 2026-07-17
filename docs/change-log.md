@@ -2,6 +2,20 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-16 Spine External Image Persistence
+
+### Added
+- 新增 `scripts/externalize-spine-custom-images.mjs` 与 `npm run spine:externalize-custom-images`，用于把各兵种 `project.json` 中内嵌的 Spine `customImages` base64 图片批量落盘到对应兵种目录，并改写为 `leg:` 外部引用。
+- 新增回归测试 `tests/spine-project-external-images.test.cjs`，锁定仓库内已提交的 Spine 项目不再把 `customImages` 持久化为 `data:` URL，并要求 `leg:` 引用的图片文件真实存在。
+
+### Changed
+- `prototypes/battle-demo/index.html` 现已支持从 Spine 项目的 `customImages.src = "leg:..."` 读取外部图片，确保游戏战斗运行时可以直接消费外部化后的 Spine 资源。
+- `src/faxian/leg/` 下现有各兵种 `project.json` 已迁移为外部图片持久化，不再把已提交资源内嵌为 base64。
+
+### Impact
+- Spine 项目 JSON 体积显著下降，加载与解析开销同步减小。
+- 游戏运行时与仓库内已提交素材现在共用同一套外部图片读取约定，后续兵种迭代不需要再在 JSON 内重复携带图片字节。
+
 ## 2026-07-16 Global NPC Interaction Contract
 
 - Added the Phase 1 global NPC interaction contract for house roster actors: NPC clicks open a structured menu with context special actions above the default `角色情报 / 谈话 / 送礼` actions.
@@ -258,7 +272,6 @@
 - 后续缺少专属 handler 的场景活动会进入新的棋盘落子小游戏，而不是默认停点 QTE。
 - 寺庙工作现在和场景 fallback 共享同一个玩法机制；以后改 `generic.qte` / `activity-qte` 的棋盘规则时，场景 fallback 和寺庙工作会一起受益。
 - 酒馆等其他 house-local `qte-bar` overlay 尚未替换，后续若要替换应继续通过 shared playable handoff 迁移。
-
 ## 2026-07-06 Fail-Closed Progress-Driven Governance Spec
 
 ### Added

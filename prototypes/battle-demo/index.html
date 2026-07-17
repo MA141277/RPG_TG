@@ -1260,11 +1260,6 @@
       filter: none;
       will-change: translate;
     }
-    .formation-slot.hit-white-flash .formation-spine-canvas {
-      filter: brightness(0) saturate(0) invert(1);
-      opacity: var(--hit-white-opacity);
-      will-change: opacity, filter;
-    }
     .formation-spine-frame.hit-model-shake {
       animation: battleModelHitShake 180ms ease-out;
     }
@@ -1303,6 +1298,30 @@
       width: calc(100% + var(--spine-bleed-left) + var(--spine-bleed-right));
       height: calc(100% + var(--spine-bleed-top) + var(--spine-bleed-bottom));
       pointer-events: none;
+    }
+    .formation-spine-white-flash-canvas {
+      position: absolute;
+      z-index: 2;
+      display: block;
+      left: calc(var(--spine-bleed-left) * -1);
+      top: calc(var(--spine-bleed-top) * -1);
+      width: calc(100% + var(--spine-bleed-left) + var(--spine-bleed-right));
+      height: calc(100% + var(--spine-bleed-top) + var(--spine-bleed-bottom));
+      pointer-events: none;
+      opacity: var(--hit-white-opacity, 0);
+      will-change: opacity;
+    }
+    .formation-spine-white-flash-source-canvas {
+      position: absolute;
+      z-index: 0;
+      display: block;
+      left: calc(var(--spine-bleed-left) * -1);
+      top: calc(var(--spine-bleed-top) * -1);
+      width: calc(100% + var(--spine-bleed-left) + var(--spine-bleed-right));
+      height: calc(100% + var(--spine-bleed-top) + var(--spine-bleed-bottom));
+      pointer-events: none;
+      opacity: 0;
+      visibility: hidden;
     }
     .formation-side.enemy .formation-spine-frame {
       transform: scaleX(-1);
@@ -3570,6 +3589,54 @@
         : null;
     }
 
+    function pickRandomFormationMemberIndex(poolLength, randomValue = Math.random()) {
+      if (!Number.isFinite(poolLength) || poolLength <= 0) return -1;
+      const clamped = Math.max(0, Math.min(0.999999, Number(randomValue) || 0));
+      return Math.floor(clamped * poolLength);
+    }
+
+    function buildScheduledFormationSideStrikes(sourceUnit, targetUnit, options = {}) {
+      const {
+        distance = 1,
+        sourceSide = 'attacker',
+        targetSide = 'defender',
+        label = '',
+        random = Math.random,
+      } = options;
+      const readyPool = sortFormationMembersForBattleOrder(getBattleReadyMembers(sourceUnit, distance)).filter((member) => {
+        if (!member || member.soldiers <= 0) return false;
+        if (member.status === 'stunned') return false;
+        return !(distance > 1 && member.range < distance);
+      });
+      const strikes = [];
+      let launchAtMs = 0;
+
+      while (readyPool.length) {
+        const nextIndex = pickRandomFormationMemberIndex(readyPool.length, random());
+        const member = readyPool.splice(nextIndex, 1)[0];
+        if (!member) continue;
+        const previewTarget = chooseFormationTarget(sourceUnit, member, targetUnit);
+        const nextDelayMs = readyPool.length ? randInt(200, 400) : null;
+        strikes.push({
+          type: 'strike',
+          className: 'pending',
+          text: `${label}${TROOP_TYPES[member.troopType]?.label || member.troopType || ''}发起攻击`,
+          sourceSide,
+          targetSide,
+          sourceSlotKey: member.slotKey,
+          targetSlotKey: previewTarget?.slotKey || null,
+          sourceTroopType: member.troopType,
+          targetTroopType: previewTarget?.troopType || null,
+          launchAtMs,
+          nextDelayMs,
+          member,
+        });
+        launchAtMs += nextDelayMs || 0;
+      }
+
+      return strikes;
+    }
+
     function getMemberTypeAdv(attackerMember, defenderMember) {
       if (attackerMember.troopType === 'cavalry' && defenderMember.range > 1) {
         return 1.5;
@@ -4568,20 +4635,26 @@
       }
 
             function runSideRound(sourceUnit, targetUnit, label, isCounter, sourceSide, targetSide) {
-        const readyMembers = sortFormationMembersForBattleOrder(getBattleReadyMembers(sourceUnit, distance));
+        const scheduledStrikes = buildScheduledFormationSideStrikes(sourceUnit, targetUnit, {
+          distance,
+          sourceSide,
+          targetSide,
+          label,
+        });
         let strikeCount = 0;
-        if (!readyMembers.length) {
+        if (!scheduledStrikes.length) {
           pushBattleStep({ type: 'entry', text: `${label}无成员能够出手` });
           return;
         }
-        for (const member of readyMembers) {
+        for (const scheduledStrike of scheduledStrikes) {
           if (sourceUnit.soldiers <= 0 || targetUnit.soldiers <= 0) return;
+          const member = scheduledStrike.member;
+          if (!member) continue;
           if (member.soldiers <= 0 || member.status === 'stunned') continue;
           if (distance > 1 && member.range < distance) continue;
           const targetMember = chooseFormationTarget(sourceUnit, member, targetUnit);
           if (!targetMember) continue;
           strikeCount += 1;
-          const delayMs = randInt(0, BATTLE_RANDOM_ATTACK_DELAY_MAX_MS);
           const hitRate = 0.76 * getMoraleTier(sourceUnit.morale).hit;
           if (Math.random() > hitRate) {
             pushBattleStep({
@@ -4596,7 +4669,9 @@
               targetTroopType: targetMember.troopType,
               hit: false,
               damage: 0,
-              delayMs,
+              delayMs: scheduledStrike.nextDelayMs || 0,
+              launchAtMs: scheduledStrike.launchAtMs,
+              nextDelayMs: scheduledStrike.nextDelayMs,
             });
             continue;
           }
@@ -4618,7 +4693,9 @@
             typeAdv: result.typeAdv,
             hit: true,
             damage: actualDamage,
-            delayMs,
+            delayMs: scheduledStrike.nextDelayMs || 0,
+            launchAtMs: scheduledStrike.launchAtMs,
+            nextDelayMs: scheduledStrike.nextDelayMs,
           });
         }
 
@@ -4957,7 +5034,7 @@
         renderOffsetX: -16,
         renderOffsetXBySide: {
           player: -110,
-          enemy: 75,
+          enemy: 85,
         },
         renderOffsetYBySide: {
           player: -30,
@@ -4967,11 +5044,76 @@
         stationaryAttack: false,
         attackImpactRatio: 0.5,
       },
+      cavalry: {
+        cacheKey: 'cavalry',
+        projectUrl: '/src/faxian/leg/cavalry/project.json',
+        imageBaseUrl: '../../src/faxian/leg/cavalry/',
+        attackActionNames: ['劈砍'],
+        moveActionIds: [],
+        moveActionNames: ['冲刺'],
+        materialForegroundImageKeys: [],
+        materialForegroundNormalizeOptions: {},
+        renderScaleMultiplier: 1.8,
+        renderOffsetX: -16,
+        renderOffsetXBySide: {
+          player: -110,
+          enemy: 85,
+        },
+        renderOffsetYBySide: {
+          player: -98,
+          enemy: -98,
+        },
+        renderOffsetY: 0,
+        stationaryAttack: false,
+        attackImpactRatio: 0.5,
+        attackImpactFrame: 30,
+        attackEffectFrame: 30,
+        landingScatterRadius: 0,
+        landingBackOffsetXBySide: {
+          player: -140,
+          enemy: 140,
+        },
+      },
+      musketeer: {
+        cacheKey: 'musketeer',
+        projectUrl: '/src/faxian/leg/musketeer/project.json',
+        imageBaseUrl: '../../src/faxian/leg/musketeer/',
+        attackActionNames: ['开火'],
+        moveActionIds: [],
+        moveActionNames: [],
+        materialForegroundImageKeys: ['newSword'],
+        materialForegroundNormalizeOptions: {
+          newSword: {
+            removeDarkGuideLine: true,
+          },
+        },
+        renderScaleMultiplier: 1.2,
+        renderOffsetX: -16,
+        renderOffsetXBySide: {
+          player: -100,
+          enemy: 115,
+        },
+        renderOffsetYBySide: {
+          player: -30,
+          enemy: -30,
+        },
+        renderOffsetY: 0,
+        stationaryAttack: true,
+        attackImpactRatio: 0.5,
+        attackImpactFrame: 30,
+        attackEffectFrame: 30,
+      },
     };
 
     function getBattleSpineTroopAsset(troopType) {
+      if (troopType === 'cavalry') {
+        return BATTLE_SPINE_TROOP_ASSETS.cavalry;
+      }
       if (troopType === 'spear') {
         return BATTLE_SPINE_TROOP_ASSETS.spearman;
+      }
+      if (troopType === 'gunpowder' || troopType === 'musketeer') {
+        return BATTLE_SPINE_TROOP_ASSETS.musketeer;
       }
       return troopType === 'archer'
         ? BATTLE_SPINE_TROOP_ASSETS.archer
@@ -5018,6 +5160,31 @@
     }
 
     function getBattleMeleeAttackPlan(troopType, renderer, randomValue = Math.random()) {
+      if (troopType === 'cavalry') {
+        const cavalryMoveActionId =
+          renderer?.moveAction?.id ||
+          renderer?.findActionByName?.('冲刺')?.id ||
+          'move';
+        const cavalryAttackActionId =
+          renderer?.attackAction?.id ||
+          renderer?.findActionByName?.('劈砍')?.id ||
+          'attack';
+        return {
+          variant: 'dash_slash',
+          moveAction: cavalryMoveActionId,
+          moveDurationMs: renderer.getActionDurationMs(cavalryMoveActionId),
+          moveStartFrame: null,
+          moveEndFrame: null,
+          moveArcHeight: 0,
+          attackAction: cavalryAttackActionId,
+          attackDurationMs: renderer.getActionDurationMs(cavalryAttackActionId),
+          attackMoveStartFrame: null,
+          attackMoveEndFrame: null,
+          impactFrame: 30,
+          effectFrame: 30,
+          returnsToSource: false,
+        };
+      }
       if (troopType === 'spear') {
         return {
           variant: 'jump_thrust',
@@ -5153,19 +5320,62 @@
       bottom: 108,
     });
 
-    function getBattleSpineCanvasMetrics() {
+    const BATTLE_SPINE_OVERSCAN_BY_TROOP = Object.freeze({
+      musketeer: Object.freeze({
+        enemy: Object.freeze({
+          left: 220,
+          right: 260,
+        }),
+        player: Object.freeze({
+          left: 80,
+          right: 120,
+        }),
+      }),
+      gunpowder: Object.freeze({
+        enemy: Object.freeze({
+          left: 220,
+          right: 260,
+        }),
+        player: Object.freeze({
+          left: 80,
+          right: 120,
+        }),
+      }),
+      cavalry: Object.freeze({
+        enemy: Object.freeze({
+          left: 240,
+          right: 260,
+          top: 24,
+          bottom: 36,
+        }),
+        player: Object.freeze({
+          left: 180,
+          right: 220,
+          top: 24,
+          bottom: 36,
+        }),
+      }),
+    });
+
+    function getBattleSpineCanvasMetrics(canvas = null) {
+      const troopType = String(canvas?.dataset?.troopType || '').trim();
+      const side = String(canvas?.dataset?.side || '').trim();
+      const troopOverscan =
+        (troopType && BATTLE_SPINE_OVERSCAN_BY_TROOP[troopType]?.[side]) ||
+        (troopType && BATTLE_SPINE_OVERSCAN_BY_TROOP[troopType]) ||
+        null;
       return {
         logicalWidth: BATTLE_SPINE_LOGICAL_BOX.width,
         logicalHeight: BATTLE_SPINE_LOGICAL_BOX.height,
-        bleedLeft: BATTLE_SPINE_OVERSCAN.left,
-        bleedRight: BATTLE_SPINE_OVERSCAN.right,
-        bleedTop: BATTLE_SPINE_OVERSCAN.top,
-        bleedBottom: BATTLE_SPINE_OVERSCAN.bottom,
+        bleedLeft: BATTLE_SPINE_OVERSCAN.left + Math.max(0, Number(troopOverscan?.left) || 0),
+        bleedRight: BATTLE_SPINE_OVERSCAN.right + Math.max(0, Number(troopOverscan?.right) || 0),
+        bleedTop: BATTLE_SPINE_OVERSCAN.top + Math.max(0, Number(troopOverscan?.top) || 0),
+        bleedBottom: BATTLE_SPINE_OVERSCAN.bottom + Math.max(0, Number(troopOverscan?.bottom) || 0),
       };
     }
 
     function configureBattleSpineCanvasMetrics(canvas) {
-      const metrics = getBattleSpineCanvasMetrics();
+      const metrics = getBattleSpineCanvasMetrics(canvas);
       if (!canvas) {
         return metrics;
       }
@@ -5181,6 +5391,28 @@
       const actualHeight = metrics.logicalHeight + metrics.bleedTop + metrics.bleedBottom;
       canvas.style.width = `${actualWidth}px`;
       canvas.style.height = `${actualHeight}px`;
+      const whiteFlashCanvas = canvas.__battleWhiteFlashOverlayCanvas;
+      if (whiteFlashCanvas instanceof HTMLCanvasElement) {
+        whiteFlashCanvas.dataset.logicalWidth = canvas.dataset.logicalWidth;
+        whiteFlashCanvas.dataset.logicalHeight = canvas.dataset.logicalHeight;
+        whiteFlashCanvas.dataset.bleedLeft = canvas.dataset.bleedLeft;
+        whiteFlashCanvas.dataset.bleedRight = canvas.dataset.bleedRight;
+        whiteFlashCanvas.dataset.bleedTop = canvas.dataset.bleedTop;
+        whiteFlashCanvas.dataset.bleedBottom = canvas.dataset.bleedBottom;
+        whiteFlashCanvas.style.width = `${actualWidth}px`;
+        whiteFlashCanvas.style.height = `${actualHeight}px`;
+      }
+      const whiteFlashSourceCanvas = canvas.__battleWhiteFlashSourceCanvas;
+      if (whiteFlashSourceCanvas instanceof HTMLCanvasElement) {
+        whiteFlashSourceCanvas.dataset.logicalWidth = canvas.dataset.logicalWidth;
+        whiteFlashSourceCanvas.dataset.logicalHeight = canvas.dataset.logicalHeight;
+        whiteFlashSourceCanvas.dataset.bleedLeft = canvas.dataset.bleedLeft;
+        whiteFlashSourceCanvas.dataset.bleedRight = canvas.dataset.bleedRight;
+        whiteFlashSourceCanvas.dataset.bleedTop = canvas.dataset.bleedTop;
+        whiteFlashSourceCanvas.dataset.bleedBottom = canvas.dataset.bleedBottom;
+        whiteFlashSourceCanvas.style.width = `${actualWidth}px`;
+        whiteFlashSourceCanvas.style.height = `${actualHeight}px`;
+      }
 
       const frame = canvas.closest('.formation-spine-frame');
       if (frame) {
@@ -5193,12 +5425,57 @@
       return metrics;
     }
 
+    function syncBattleWhiteFlashOverlayCanvas(canvas) {
+      if (!(canvas instanceof HTMLCanvasElement)) return;
+      const whiteFlashCanvas = canvas.__battleWhiteFlashOverlayCanvas;
+      if (!(whiteFlashCanvas instanceof HTMLCanvasElement)) return;
+      const whiteFlashSourceCanvas = canvas.__battleWhiteFlashSourceCanvas;
+      if (!(whiteFlashSourceCanvas instanceof HTMLCanvasElement)) return;
+      const renderer = canvas.__battleSpineRenderer;
+      if (!renderer?.render) return;
+      if (whiteFlashCanvas.width !== canvas.width) {
+        whiteFlashCanvas.width = canvas.width;
+      }
+      if (whiteFlashCanvas.height !== canvas.height) {
+        whiteFlashCanvas.height = canvas.height;
+      }
+      if (whiteFlashSourceCanvas.width !== canvas.width) {
+        whiteFlashSourceCanvas.width = canvas.width;
+      }
+      if (whiteFlashSourceCanvas.height !== canvas.height) {
+        whiteFlashSourceCanvas.height = canvas.height;
+      }
+      const side = canvas.__battleLastRenderSide || canvas.dataset.side || '';
+      whiteFlashSourceCanvas.dataset.side = side;
+      renderer.render(whiteFlashSourceCanvas, canvas.__battleLastRenderActionId || canvas.dataset.action || 'idle', canvas.__battleLastRenderElapsedMs || 0, {
+        loop: canvas.__battleLastRenderLoop,
+        side,
+        imageSet: 'whiteSilhouette',
+      });
+      whiteFlashCanvas.dataset.side = side;
+      const whiteFlashCtx = whiteFlashCanvas.getContext('2d');
+      if (!whiteFlashCtx) return;
+      whiteFlashCtx.setTransform(1, 0, 0, 1, 0, 0);
+      whiteFlashCtx.clearRect(0, 0, whiteFlashCanvas.width, whiteFlashCanvas.height);
+      const seamFillOffsets = [
+        [0, 0],
+        [-0.6, 0],
+        [0.6, 0],
+        [0, -0.6],
+        [0, 0.6],
+      ];
+      seamFillOffsets.forEach(([offsetX, offsetY]) => {
+        whiteFlashCtx.drawImage(whiteFlashSourceCanvas, offsetX, offsetY);
+      });
+    }
+
     class BattleSpineRenderer {
-      constructor(project, images, config = {}) {
+      constructor(project, images, config = {}, whiteFlashImages = null) {
         this.project = project;
         this.nodes = project.nodes || [];
         this.actions = project.actions || [];
         this.images = images;
+        this.whiteFlashImages = whiteFlashImages || images;
         this.config = config;
         this.fps = Number(config.fps) || 36;
         this.nodeById = new Map();
@@ -5236,8 +5513,12 @@
           this.idleAction;
         this.attackAction =
           this.findPreferredAction(
-            [...(config.attackActionIds || []), project.selectedActionId].filter(Boolean),
+            config.attackActionIds || [],
             config.attackActionNames || []
+          ) ||
+          this.findPreferredAction(
+            [project.selectedActionId].filter(Boolean),
+            []
           ) ||
           this.actions.find(action => action.name === '挥砍') ||
           this.actions.find(
@@ -5293,11 +5574,31 @@
             console.warn('Failed to normalize material foreground image for battle renderer', key, error);
           }
         }));
-        return new BattleSpineRenderer(project, images, config);
+        const whiteFlashImages = {};
+        await Promise.all(Object.entries(images).map(async ([key, image]) => {
+          if (!image?.complete) {
+            whiteFlashImages[key] = image;
+            return;
+          }
+          try {
+            whiteFlashImages[key] = await BattleSpineRenderer.createWhiteSilhouetteImage(image);
+          } catch (error) {
+            console.warn('Failed to create white silhouette image for battle renderer', key, error);
+            whiteFlashImages[key] = image;
+          }
+        }));
+        return new BattleSpineRenderer(project, images, config, whiteFlashImages);
       }
 
       static resolveImageSource(src, baseHref = window.location.href) {
         if (typeof src !== 'string' || !src.trim()) return null;
+        if (src.startsWith('leg:')) {
+          try {
+            return new URL(src.slice(4), baseHref).href;
+          } catch (_error) {
+            return src.slice(4);
+          }
+        }
         if (/^(data:|blob:|https?:|file:)/i.test(src)) return src;
         try {
           return new URL(src, baseHref).href;
@@ -5326,6 +5627,22 @@
           image.onerror = () => reject(new Error('Failed to create image from image data.'));
           image.src = canvas.toDataURL('image/png');
         });
+      }
+
+      static createWhiteSilhouetteImage(image, options = {}) {
+        const alphaThreshold = Number.isFinite(Number(options.alphaThreshold))
+          ? Number(options.alphaThreshold)
+          : 8;
+        const imageData = BattleSpineRenderer.imageToImageData(image);
+        const pixels = imageData.data;
+        for (let offset = 0; offset < pixels.length; offset += 4) {
+          const alpha = pixels[offset + 3] > alphaThreshold ? 255 : 0;
+          pixels[offset] = 255;
+          pixels[offset + 1] = 255;
+          pixels[offset + 2] = 255;
+          pixels[offset + 3] = alpha;
+        }
+        return BattleSpineRenderer.imageDataToImage(imageData);
       }
 
       static materialColorDistance(background, r, g, b) {
@@ -5831,6 +6148,41 @@
         return this.projectTimelineKeyCache.get(normalizedNodeId);
       }
 
+      attachmentImageVariants(attachmentView = {}) {
+        const imageVariants = Array.isArray(attachmentView?.imageVariants) ? attachmentView.imageVariants : [];
+        const images = [attachmentView?.image, ...imageVariants]
+          .map((value) => String(value || '').trim())
+          .filter(Boolean);
+        return [...new Set(images)];
+      }
+
+      attachmentImageKeys(node, action) {
+        return this.getSortedTimelineKeys(action, node?.id).filter(
+          (item) => typeof item?.attachmentImage === 'string' && item.attachmentImage,
+        );
+      }
+
+      getAttachmentImageForFrame(node, action, frame) {
+        const attachment = node?.attachment;
+        if (!attachment) return '';
+        const frameState = this.beginRenderFrame(action, frame);
+        const cacheKey = node?.id != null ? String(node.id) : '';
+        if (cacheKey && frameState.attachmentImageByNode?.has(cacheKey)) {
+          return frameState.attachmentImageByNode.get(cacheKey);
+        }
+        const defaultImage = String(attachment.image || '');
+        const variants = this.attachmentImageVariants(attachment);
+        const keys = this.attachmentImageKeys(node, action)
+          .filter((item) => item.frame <= frame)
+          .sort((a, b) => a.frame - b.frame);
+        const replacement = keys.length ? String(keys[keys.length - 1].attachmentImage || '') : '';
+        const imageKey = replacement && (!variants.length || variants.includes(replacement)) ? replacement : defaultImage;
+        if (cacheKey) {
+          frameState.attachmentImageByNode.set(cacheKey, imageKey);
+        }
+        return imageKey;
+      }
+
       beginRenderFrame(action, frame) {
         const frameKey = Math.round((Number(frame) || 0) * 1000) / 1000;
         const actionKey = action?.id != null
@@ -5854,6 +6206,7 @@
           effectiveParentByNode: new Map(),
           visibilityByNode: new Map(),
           attachmentAlphaByNode: new Map(),
+          attachmentImageByNode: new Map(),
           attachmentSegmentsByNode: new Map(),
           bowRigByControlNode: new Map(),
           renderableAttachmentNodes: null,
@@ -6078,10 +6431,11 @@
         return best ? { x: best.x, y: best.y } : null;
       }
 
-      slashFxGripLocalForPiece(piece) {
+      slashFxGripLocalForPiece(piece, action = null, frame = 0) {
         const attachment = piece?.attachment;
         const restPart = attachment?.restPart;
-        const image = this.images[attachment?.image];
+        const imageKey = this.getAttachmentImageForFrame(piece, action, frame);
+        const image = this.images[imageKey];
         const width = Math.max(1, image?.naturalWidth || image?.width || 0);
         const height = Math.max(1, image?.naturalHeight || image?.height || 0);
         if (!restPart || !width || !height) return null;
@@ -6725,24 +7079,31 @@
         const duration = Math.max(1, action?.duration ?? this.project.duration ?? 29);
         const rawFrame = (elapsedMs / 1000) * this.fps;
         const frame = options.loop === false ? Math.min(duration, rawFrame) : rawFrame % (duration + 1);
+        const imageMap = options.imageSet === 'whiteSilhouette' ? this.whiteFlashImages : this.images;
+        canvas.__battleSpineRenderer = this;
+        canvas.__battleLastRenderActionId = actionId;
+        canvas.__battleLastRenderElapsedMs = elapsedMs;
+        canvas.__battleLastRenderSide = options.side || canvas.dataset.side || '';
+        canvas.__battleLastRenderLoop = options.loop;
         this.beginRenderFrame(action, frame);
         ctx.save();
         ctx.translate(placement.translateX, placement.translateY);
         ctx.scale(placement.scale, placement.scale);
-        this.drawCharacter(ctx, action, frame);
+        this.drawCharacter(ctx, action, frame, imageMap);
         ctx.restore();
       }
 
-      drawCharacter(ctx, action, frame) {
+      drawCharacter(ctx, action, frame, imageMap = this.images) {
         this.getRenderableAttachmentNodes(action, frame)
-          .forEach(node => this.drawAttachment(ctx, node, action, frame));
+          .forEach(node => this.drawAttachment(ctx, node, action, frame, imageMap));
       }
 
-      drawAttachment(ctx, node, action, frame) {
+      drawAttachment(ctx, node, action, frame, imageMap = this.images) {
         const attachment = node.attachment;
         const alpha = this.effectiveAttachmentAlphaForNode(node, action, frame);
         if (alpha <= 0.001) return;
-        const image = this.images[attachment.image];
+        const imageKey = this.getAttachmentImageForFrame(node, action, frame);
+        const image = imageMap[imageKey] || imageMap[attachment.image];
         const restPart = this.resolveRestPartTransform(attachment.restPart);
         if (!image?.complete || !attachment.fullSkin || !restPart) return;
         const segments = this.attachmentSegments(node, attachment, action, frame);
@@ -6907,7 +7268,7 @@
               }
             }
             if (!world && this.isTempParentBoundSlashFxCarrier(node, action, frame)) {
-              const gripLocal = this.slashFxGripLocalForPiece(this.slashFxPieceForNode(node));
+              const gripLocal = this.slashFxGripLocalForPiece(this.slashFxPieceForNode(node), action, frame);
               if (gripLocal) {
                 const gripRad = (worldRotation * Math.PI) / 180;
                 const gripOffsetX =
@@ -7199,7 +7560,17 @@
       canvas.dataset.action = 'idle';
       canvas.dataset.phase = String((pos.row * 137 + pos.col * 83) % 1000);
       canvas.setAttribute('aria-hidden', 'true');
+      const whiteFlashCanvas = document.createElement('canvas');
+      whiteFlashCanvas.className = 'formation-spine-white-flash-canvas';
+      whiteFlashCanvas.setAttribute('aria-hidden', 'true');
+      const whiteFlashSourceCanvas = document.createElement('canvas');
+      whiteFlashSourceCanvas.className = 'formation-spine-white-flash-source-canvas';
+      whiteFlashSourceCanvas.setAttribute('aria-hidden', 'true');
+      canvas.__battleWhiteFlashOverlayCanvas = whiteFlashCanvas;
+      canvas.__battleWhiteFlashSourceCanvas = whiteFlashSourceCanvas;
       frame.appendChild(canvas);
+      frame.appendChild(whiteFlashSourceCanvas);
+      frame.appendChild(whiteFlashCanvas);
       configureBattleSpineCanvasMetrics(canvas);
 
       const slotName = document.createElement('div');
@@ -7229,6 +7600,7 @@
         slot,
         frame,
         canvas,
+        whiteFlashCanvas,
         memberName,
         memberHpFill,
         memberLoss,
@@ -7551,7 +7923,9 @@
         ? getBattleMeleeAttackPlan(troopType, renderer)
         : null;
       const attackActionId = infantryAttackPlan?.attackAction || 'attack';
-      const attackPeakFrame = infantryAttackPlan?.impactFrame ?? (troopType === 'archer' ? 49 : 14);
+      const attackPeakFrame = infantryAttackPlan?.impactFrame
+        ?? troopAsset.attackImpactFrame
+        ?? (troopType === 'archer' ? 49 : 14);
 
       const sourceFrame = sourceSlot?.querySelector('.formation-spine-frame');
       const targetFrame = targetSlot?.querySelector('.formation-spine-frame');
@@ -7597,7 +7971,7 @@
           {
             moveStartFrame: infantryAttackPlan.moveStartFrame,
             moveEndFrame: infantryAttackPlan.moveEndFrame,
-            arcHeight: getBattleJumpArcHeight(from, to),
+            arcHeight: infantryAttackPlan?.moveArcHeight ?? getBattleJumpArcHeight(from, to),
           }
         );
       } else if (!troopAsset.stationaryAttack && !infantryAttackPlan && troopType !== 'archer') {
@@ -7615,13 +7989,16 @@
           }
         );
       }
-      const attackWhiteFlashStartFrame = infantryAttackPlan?.effectFrame ?? Math.max(0, attackPeakFrame - 1);
+      const attackWhiteFlashStartFrame = infantryAttackPlan?.effectFrame
+        ?? troopAsset.attackEffectFrame
+        ?? Math.max(0, attackPeakFrame - 1);
       const attackFrom = infantryAttackPlan?.variant === 'jump_chop'
         ? from
         : (troopAsset.stationaryAttack ? from : to);
       const attackTo = infantryAttackPlan?.variant === 'jump_chop'
         ? to
         : attackFrom;
+      const targetCanvas = targetSlot?.querySelector('.formation-spine-canvas');
       await animateBattleSpineProxy(
         proxy,
         renderer,
@@ -7661,7 +8038,10 @@
           },
           effectFrame: step.hit ? attackWhiteFlashStartFrame : null,
           onEffect: step.hit
-            ? info => queueBattleWhiteFlash(targetSlot, info?.peakAt, info?.frameDurationMs)
+            ? info => {
+                syncBattleWhiteFlashOverlayCanvas(targetCanvas);
+                queueBattleWhiteFlash(targetSlot, info?.peakAt, info?.frameDurationMs);
+              }
             : null,
         }
       );
@@ -8485,6 +8865,9 @@
     }
 
     function getBattleRandomLandingOffset(radius = 20) {
+      if (!(radius > 0)) {
+        return { x: 0, y: 0 };
+      }
       const angle = Math.random() * Math.PI * 2;
       const distance = Math.sqrt(Math.random()) * radius;
       const candidate = {
@@ -8502,8 +8885,13 @@
       if (troopAsset?.stationaryAttack) {
         return { x: targetAnchor.x, y: targetAnchor.y };
       }
-      const landingScatter = getBattleRandomLandingOffset(20);
-      const landingBackOffsetX = proxySide === 'enemy' ? 120 : -120;
+      const scatterRadius = troopAsset?.landingScatterRadius != null
+        ? Math.max(0, Number(troopAsset.landingScatterRadius) || 0)
+        : 20;
+      const landingScatter = getBattleRandomLandingOffset(scatterRadius);
+      const landingBackOffsetX = troopAsset?.landingBackOffsetXBySide
+        ? Number(troopAsset.landingBackOffsetXBySide[proxySide]) || 0
+        : (proxySide === 'enemy' ? 120 : -120);
       return {
         x: targetAnchor.x + landingScatter.x + landingBackOffsetX,
         y: targetAnchor.y + landingScatter.y,
@@ -8606,6 +8994,9 @@
       if (!(slot instanceof HTMLElement)) return;
       const peakTime = Number(peakAt);
       const frameMs = Math.max(16, Number(frameDurationMs) || 16);
+      const fadeInMs = frameMs * 2;
+      const holdMs = frameMs * 4;
+      const fadeOutMs = frameMs * 2;
       if (!Number.isFinite(peakTime)) return;
       const events = Array.isArray(slot.__battleWhiteFlashEvents) ? slot.__battleWhiteFlashEvents : [];
       const lastEvent = events.length ? events[events.length - 1] : null;
@@ -8613,23 +9004,32 @@
       if (lastEvent) {
         const peakDeltaMs = peakTime - lastEvent.peakAt;
         if (Math.abs(peakDeltaMs) < frameMs * 0.35) {
-          lastEvent.startAt = Math.min(lastEvent.startAt, peakTime - frameMs);
+          lastEvent.startAt = Math.min(lastEvent.startAt, peakTime - fadeInMs);
           lastEvent.peakAt = Math.max(lastEvent.peakAt, peakTime);
-          lastEvent.endAt = lastEvent.peakAt + frameMs * 2;
+          lastEvent.holdEndAt = Math.max(lastEvent.holdEndAt || lastEvent.peakAt, lastEvent.peakAt + holdMs);
+          lastEvent.endAt = lastEvent.holdEndAt + fadeOutMs;
           lastEvent.startIntensity = 0;
           slot.__battleWhiteFlashEvents = events;
           battleWhiteFlashActiveSlots.add(slot);
           if (!battleWhiteFlashActiveRaf) battleWhiteFlashActiveRaf = window.requestAnimationFrame(updateBattleWhiteFlashState);
           return;
         }
-        if (peakDeltaMs > 0 && peakDeltaMs < frameMs * 2) {
-          const junctionAt = lastEvent.peakAt + peakDeltaMs / 2;
-          const startIntensity = Math.max(0, 1 - (peakDeltaMs / (frameMs * 2)));
+        if (peakDeltaMs > 0 && peakDeltaMs < holdMs + fadeOutMs) {
+          const lastHoldEndAt = lastEvent.holdEndAt || lastEvent.peakAt;
+          const junctionAt = Math.max(lastHoldEndAt, peakTime - fadeInMs);
+          let startIntensity = 0;
+          if (junctionAt <= lastHoldEndAt) {
+            startIntensity = 1;
+          } else {
+            startIntensity = Math.max(0, 1 - ((junctionAt - lastHoldEndAt) / fadeOutMs));
+          }
           lastEvent.endAt = junctionAt;
+          lastEvent.holdEndAt = Math.min(lastHoldEndAt, junctionAt);
           events.push({
             startAt: junctionAt,
             peakAt: peakTime,
-            endAt: peakTime + frameMs * 2,
+            holdEndAt: peakTime + holdMs,
+            endAt: peakTime + holdMs + fadeOutMs,
             startIntensity,
           });
           slot.__battleWhiteFlashEvents = events;
@@ -8642,7 +9042,8 @@
             events.push({
         startAt: peakTime - frameMs * 2,
         peakAt: peakTime,
-        endAt: peakTime + frameMs * 2,
+        holdEndAt: peakTime + frameMs * 4,
+        endAt: peakTime + frameMs * 6,
         startIntensity: 0,
       });
       slot.__battleWhiteFlashEvents = events;
@@ -8668,13 +9069,15 @@
           intensity = 0;
         } else if (now <= activeEvent.peakAt) {
           intensity = activeEvent.startIntensity + (1 - activeEvent.startIntensity) * Math.max(0, Math.min(1, (now - activeEvent.startAt) / Math.max(1, activeEvent.peakAt - activeEvent.startAt)));
+        } else if (now <= activeEvent.holdEndAt) {
+          intensity = 1;
         } else {
-          intensity = Math.max(0, Math.min(1, 1 - ((now - activeEvent.peakAt) / Math.max(1, activeEvent.endAt - activeEvent.peakAt))));
+          intensity = Math.max(0, Math.min(1, 1 - ((now - activeEvent.holdEndAt) / Math.max(1, activeEvent.endAt - activeEvent.holdEndAt))));
         }
 
         slot.__battleWhiteFlashEvents = events;
         slot.classList.add('hit-white-flash');
-        slot.style.setProperty('--hit-white-opacity', String(intensity * 0.68));
+        slot.style.setProperty('--hit-white-opacity', String(intensity));
       });
       if (battleWhiteFlashActiveSlots.size) {
         battleWhiteFlashActiveRaf = window.requestAnimationFrame(updateBattleWhiteFlashState);
@@ -8812,48 +9215,54 @@
       };
     }
 
-        async function playFormationStrikeBatch(report, steps, state) {
+    async function playSingleFormationStrike(report, step, state, batchActiveState) {
+      renderBattleAnimationState(report, state.attackerSnapshot, state.defenderSnapshot, batchActiveState);
+      let impactApplied = false;
+              const applyImpact = () => {
+        if (impactApplied) return;
+        impactApplied = true;
+        const nextState = applyBattleAnimationStrike(state, step);
+        state.attackerSnapshot = nextState.attackerSnapshot;
+        state.defenderSnapshot = nextState.defenderSnapshot;
+        renderBattleAnimationState(
+          report,
+          state.attackerSnapshot,
+          state.defenderSnapshot,
+          batchActiveState
+        );
+        const targetGrid = document.getElementById(getBattleVisualGridId(report, step.targetSide));
+        const targetSlot = targetGrid?.querySelector(`.formation-slot[data-slot="${step.targetSlotKey}"]`);
+        if (step.hit && step.damage > 0) {
+          showBattleDamagePopup(targetSlot, step.damage);
+        } else if (!step.hit) {
+          showBattleDamagePopup(targetSlot, 'MISS');
+        }
+        appendBattleEvent(step);
+      };
+      await playBattleSpineStrike(report, step, applyImpact);
+      applyImpact();
+    }
+
+    async function playScheduledFormationSideBlock(report, strikes, state) {
       clearBattleModelShakeState();
       clearBattleTimedImageEffects();
       battleRecentLandingOffsets.length = 0;
-      const batchActiveState = buildBattleBatchActiveState(steps);
+      const ordered = strikes
+        .slice()
+        .sort((a, b) => (Number(a.launchAtMs) || 0) - (Number(b.launchAtMs) || 0));
+      const batchActiveState = buildBattleBatchActiveState(ordered);
       renderBattleAnimationState(report, state.attackerSnapshot, state.defenderSnapshot, batchActiveState);
-      const tasks = steps.map(step => (async () => {
-        let stepDelayMs = Number(step.delayMs) || 0;
-        if ((step.delayFrames || 0) > 0) {
-          const renderer = await getBattleSpineRenderer(step.sourceTroopType || 'infantry');
-          const frameMs = 1000 / Math.max(1, renderer?.fps || 60);
-          stepDelayMs = step.delayFrames * frameMs;
-        }
-        if (stepDelayMs > 0) await sleep(stepDelayMs);
-        renderBattleAnimationState(report, state.attackerSnapshot, state.defenderSnapshot, batchActiveState);
-        let impactApplied = false;
-                const applyImpact = () => {
-          if (impactApplied) return;
-          impactApplied = true;
-          const nextState = applyBattleAnimationStrike(state, step);
-          state.attackerSnapshot = nextState.attackerSnapshot;
-          state.defenderSnapshot = nextState.defenderSnapshot;
-          renderBattleAnimationState(
-            report,
-            state.attackerSnapshot,
-            state.defenderSnapshot,
-            batchActiveState
-          );
-          const targetGrid = document.getElementById(getBattleVisualGridId(report, step.targetSide));
-          const targetSlot = targetGrid?.querySelector(`.formation-slot[data-slot="${step.targetSlotKey}"]`);
-          if (step.hit && step.damage > 0) {
-            showBattleDamagePopup(targetSlot, step.damage);
-          } else if (!step.hit) {
-            showBattleDamagePopup(targetSlot, 'MISS');
-          }
-          appendBattleEvent(step);
-        };
-        await playBattleSpineStrike(report, step, applyImpact);
-        applyImpact();
-      })());
-      await Promise.all(tasks);
-      const lastStep = steps[steps.length - 1];
+      const running = [];
+      let previousLaunchAtMs = 0;
+      for (const step of ordered) {
+        const launchAtMs = Math.max(0, Number(step.launchAtMs) || 0);
+        const waitMs = Math.max(0, launchAtMs - previousLaunchAtMs);
+        previousLaunchAtMs = launchAtMs;
+        if (waitMs > 0) await sleep(waitMs);
+        running.push(playSingleFormationStrike(report, step, state, batchActiveState));
+      }
+      await Promise.all(running);
+      const lastStep = ordered[ordered.length - 1];
       renderBattleAnimationState(
         report,
         state.attackerSnapshot,
@@ -8868,6 +9277,27 @@
           : {}
       );
       await sleep(60);
+    }
+
+    async function playFormationStrikeBatch(report, steps, state) {
+      let launchAtMs = 0;
+      const normalizedSteps = steps.map((step, index) => {
+        const normalized = {
+          ...step,
+          launchAtMs: Number.isFinite(Number(step.launchAtMs)) ? Number(step.launchAtMs) : launchAtMs,
+        };
+        if (!Number.isFinite(Number(step.launchAtMs))) {
+          let stepDelayMs = Number(step.delayMs) || 0;
+          if ((step.delayFrames || 0) > 0) {
+            stepDelayMs = step.delayFrames * (1000 / 36);
+          }
+          if (index < steps.length - 1) {
+            launchAtMs += stepDelayMs;
+          }
+        }
+        return normalized;
+      });
+      return playScheduledFormationSideBlock(report, normalizedSteps, state);
     }
 
     async function playFormationBattleTimeline(report) {
@@ -8897,7 +9327,7 @@
           index++;
         }
         const state = { attackerSnapshot, defenderSnapshot };
-        await playFormationStrikeBatch(report, strikeBatch, state);
+        await playScheduledFormationSideBlock(report, strikeBatch, state);
         attackerSnapshot = state.attackerSnapshot;
         defenderSnapshot = state.defenderSnapshot;
       }

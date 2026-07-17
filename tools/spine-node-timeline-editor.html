@@ -617,11 +617,13 @@
           <button id="threeQuarterSampleBtn" type="button" hidden>70度侧身</button>
           <button id="viewToggleBtn" type="button">骨骼视图</button>
           <button id="skeletonOverlayBtn" type="button">显示骨骼</button>
+          <button id="specialAnchorToggleBtn" type="button">显示轮廓锚点</button>
           <button id="nodeModeBtn" class="mode-button active" type="button">节点移动</button>
           <button id="boneModeBtn" class="mode-button" type="button">骨骼移动</button>
           <button id="stretchModeBtn" class="mode-button" type="button">骨骼伸缩</button>
           <input id="fileInput" class="file-input" type="file" accept=".json,application/json" />
           <input id="materialInput" class="file-input" type="file" accept="image/png,image/jpeg,image/webp" />
+          <input id="attachmentVariantFileInput" class="file-input" type="file" accept="image/png,image/jpeg,image/webp" />
         </div>
       </header>
 
@@ -631,6 +633,12 @@
             <div class="panel-title">
               <span>动作列表</span>
               <button id="newActionBtn" type="button">新建</button>
+            </div>
+            <div class="button-row bind-only">
+              <button id="bindingNodeModeBtn" class="mode-button active" type="button">节点移动</button>
+              <button id="bindingPieceModeBtn" class="mode-button" type="button">移动贴图</button>
+              <button id="bindingBoneModeBtn" class="mode-button active" type="button">移动骨骼</button>
+              <button id="bindingStretchModeBtn" class="mode-button" type="button">骨骼伸缩</button>
             </div>
             <div class="field">
               <label for="actionNameInput">动作名</label>
@@ -696,6 +704,37 @@
               <div class="field full">
                 <label for="parentSelect">父节点</label>
                 <select id="parentSelect"></select>
+              </div>
+              <div id="independentBoneRow" class="field full bind-only" hidden>
+                <label for="independentBoneSelect">独立骨骼</label>
+                <select id="independentBoneSelect"></select>
+              </div>
+              <div class="field full">
+                <label for="attachmentVariantSelect">贴图库</label>
+                <select id="attachmentVariantSelect"></select>
+              </div>
+              <div class="field full">
+                <label for="attachmentLegAssetSelect">leg 贴图选择</label>
+                <select id="attachmentLegAssetSelect"></select>
+              </div>
+              <div class="field full">
+                <div class="button-row three">
+                  <button id="attachmentVariantAddBtn" type="button">加入贴图库</button>
+                  <button id="attachmentVariantImportBtn" type="button">导入所选贴图</button>
+                  <button id="attachmentVariantBrowseBtn" type="button">现场选择导入</button>
+                  <button id="attachmentVariantDefaultBtn" type="button">设为默认</button>
+                  <button id="attachmentVariantRemoveBtn" type="button">移出贴图库</button>
+                </div>
+              </div>
+              <div class="field full">
+                <label for="attachmentImageKeySelect">贴图替换</label>
+                <select id="attachmentImageKeySelect"></select>
+              </div>
+              <div class="field full">
+                <div class="button-row">
+                  <button id="attachmentImageKeySetBtn" type="button">写入替换帧</button>
+                  <button id="attachmentImageKeyDeleteBtn" class="danger" type="button">删除替换帧</button>
+                </div>
               </div>
               <div class="field">
                 <label for="xInput">X</label>
@@ -947,6 +986,7 @@
             <div class="button-row">
               <button id="captureBindPoseBtn" type="button">当前姿势设为绑定</button>
               <button id="resetToBindPoseBtn" type="button">回到绑定姿势</button>
+              <button id="autoBindUnboundBonesBtn" type="button">自动绑定未绑骨骼</button>
             </div>
           </section>
           <section class="panel-section">
@@ -991,12 +1031,19 @@
 
     <script src="../prototypes/faxian-leg-spine/user-layout.generated.js"></script>
     <script src="./spine-new-recovered-project.generated.js"></script>
+    <script type="module">
+      const legAssetModules = import.meta.glob("/src/faxian/leg/**/*.{png,jpg,jpeg,webp}");
+      window.__SPINE_LEG_ASSET_OPTIONS = Object.keys(legAssetModules)
+        .map((path) => path.replace(/^\/src\/faxian\/leg\//, ""))
+        .sort((a, b) => a.localeCompare(b, "zh-Hans-CN"));
+      window.dispatchEvent(new CustomEvent("spine-leg-asset-options-ready"));
+    </script>
     <script>
       const frameWidth = 20;
       const rowHeight = 30;
       const SPINE_UNIT_CONFIGS = {
         swordsman: {
-          label: "剑士",
+          label: "\u5251\u58eb",
           projectUrl: "/src/faxian/leg/swordsman/project.json",
           imageBaseUrl: "/src/faxian/leg/swordsman/",
           materialForegroundImageKeys: [],
@@ -1005,7 +1052,7 @@
           featureGroups: ["swordsman"],
         },
         spearman: {
-          label: "枪兵",
+          label: "\u67aa\u5175",
           projectUrl: "/src/faxian/leg/spearman/project.json",
           imageBaseUrl: "/src/faxian/leg/spearman/",
           materialForegroundImageKeys: [],
@@ -1013,17 +1060,28 @@
           enabled: true,
           featureGroups: ["swordsman"],
         },
-        cavalry: {
-          label: "楠戝叺",
-          projectUrl: "/src/faxian/leg/cavalry/project.json",
-          imageBaseUrl: "/src/faxian/leg/cavalry/",
+        musketeer: {
+          label: "\u706b\u67aa\u5175",
+          projectUrl: "/src/faxian/leg/musketeer/project.json",
+          imageBaseUrl: "/src/faxian/leg/musketeer/",
           materialForegroundImageKeys: [],
           materialForegroundNormalizeOptions: {},
           enabled: true,
-          featureGroups: [],
+          featureGroups: ["swordsman"],
+        },
+        cavalry: {
+          label: "\u9a91\u5175",
+          projectUrl: "/src/faxian/leg/cavalry/project.json",
+          imageBaseUrl: "/src/faxian/leg/cavalry/",
+          runtimeProjectUrl: "/src/faxian/leg/swordsman/project.json",
+          runtimeAssetUnitType: "swordsman",
+          materialForegroundImageKeys: [],
+          materialForegroundNormalizeOptions: {},
+          enabled: true,
+          featureGroups: ["swordsman"],
         },
         archer: {
-          label: "弓兵",
+          label: "\u5f13\u5175",
           projectUrl: "/src/faxian/leg/archer/project.json",
           imageBaseUrl: "/src/faxian/leg/archer/",
           materialForegroundImageKeys: ["newSword"],
@@ -1038,10 +1096,11 @@
       };
       SPINE_UNIT_CONFIGS.swordsman.label = "\u5251\u58eb";
       SPINE_UNIT_CONFIGS.spearman.label = "\u67aa\u5175";
+      SPINE_UNIT_CONFIGS.musketeer.label = "\u706b\u67aa\u5175";
       SPINE_UNIT_CONFIGS.cavalry.label = "\u9a91\u5175";
       SPINE_UNIT_CONFIGS.archer.label = "\u5f13\u5175";
       const state = {
-        name: "默认",
+        name: "\u9ed8\u8ba4",
         fps: 36,
         duration: 95,
         currentFrame: 0,
@@ -1053,8 +1112,10 @@
         pendingFreeBoneStart: null,
         workspaceMode: "animation",
         editMode: "node",
+        bindingDragMode: "node",
         renderMode: "texture",
         showSkeletonOverlay: false,
+        showSpecialAnchorBones: false,
         keyframeSource: "previous",
         keyMoveMode: "single",
         keyframeClipboard: null,
@@ -1250,6 +1311,8 @@
         trackLabels: document.getElementById("trackLabels"),
         nodeNameInput: document.getElementById("nodeNameInput"),
         parentSelect: document.getElementById("parentSelect"),
+        independentBoneRow: document.getElementById("independentBoneRow"),
+        independentBoneSelect: document.getElementById("independentBoneSelect"),
         xInput: document.getElementById("xInput"),
         yInput: document.getElementById("yInput"),
         rotationInput: document.getElementById("rotationInput"),
@@ -1258,6 +1321,16 @@
         scaleYInput: document.getElementById("scaleYInput"),
         colorInput: document.getElementById("colorInput"),
         attachmentImageSelect: document.getElementById("attachmentImageSelect"),
+        attachmentVariantSelect: document.getElementById("attachmentVariantSelect"),
+        attachmentLegAssetSelect: document.getElementById("attachmentLegAssetSelect"),
+        attachmentVariantAddBtn: document.getElementById("attachmentVariantAddBtn"),
+        attachmentVariantImportBtn: document.getElementById("attachmentVariantImportBtn"),
+        attachmentVariantBrowseBtn: document.getElementById("attachmentVariantBrowseBtn"),
+        attachmentVariantDefaultBtn: document.getElementById("attachmentVariantDefaultBtn"),
+        attachmentVariantRemoveBtn: document.getElementById("attachmentVariantRemoveBtn"),
+        attachmentImageKeySelect: document.getElementById("attachmentImageKeySelect"),
+        attachmentImageKeySetBtn: document.getElementById("attachmentImageKeySetBtn"),
+        attachmentImageKeyDeleteBtn: document.getElementById("attachmentImageKeyDeleteBtn"),
         attachmentOffsetXInput: document.getElementById("attachmentOffsetXInput"),
         attachmentOffsetYInput: document.getElementById("attachmentOffsetYInput"),
         attachmentWidthInput: document.getElementById("attachmentWidthInput"),
@@ -1294,10 +1367,12 @@
         createBowRigBtn: document.getElementById("createBowRigBtn"),
         createArrowRigBtn: document.getElementById("createArrowRigBtn"),
         createSlashFxRigBtn: document.getElementById("createSlashFxRigBtn"),
+        attachmentVariantFileInput: document.getElementById("attachmentVariantFileInput"),
         addBoneFromNodeBtn: document.getElementById("addBoneFromNodeBtn"),
         addFreeBoneBtn: document.getElementById("addFreeBoneBtn"),
         captureBindPoseBtn: document.getElementById("captureBindPoseBtn"),
         resetToBindPoseBtn: document.getElementById("resetToBindPoseBtn"),
+        autoBindUnboundBonesBtn: document.getElementById("autoBindUnboundBonesBtn"),
         pieceXInput: document.getElementById("pieceXInput"),
         pieceYInput: document.getElementById("pieceYInput"),
         pieceScaleInput: document.getElementById("pieceScaleInput"),
@@ -1321,10 +1396,15 @@
         archerFeatureGroup: document.getElementById("archerFeatureGroup"),
         viewToggleBtn: document.getElementById("viewToggleBtn"),
         skeletonOverlayBtn: document.getElementById("skeletonOverlayBtn"),
+        specialAnchorToggleBtn: document.getElementById("specialAnchorToggleBtn"),
         newProjectBtn: document.getElementById("newProjectBtn"),
         nodeModeBtn: document.getElementById("nodeModeBtn"),
         boneModeBtn: document.getElementById("boneModeBtn"),
         stretchModeBtn: document.getElementById("stretchModeBtn"),
+        bindingNodeModeBtn: document.getElementById("bindingNodeModeBtn"),
+        bindingPieceModeBtn: document.getElementById("bindingPieceModeBtn"),
+        bindingBoneModeBtn: document.getElementById("bindingBoneModeBtn"),
+        bindingStretchModeBtn: document.getElementById("bindingStretchModeBtn"),
         toast: document.getElementById("toast"),
       };
 
@@ -1344,6 +1424,9 @@
       const spearmanFistPieceRole = "spearman-fist-piece";
       const legAssetPrefix = "leg:";
       const rootLegAssetBasePath = "/src/faxian/leg/";
+      window.addEventListener("spine-leg-asset-options-ready", () => {
+        if (typeof renderAll === "function") renderAll();
+      });
       const materialReferencePath = `${rootLegAssetBasePath}%E7%B4%A0%E6%9D%90.png`;
       const baseMaterialReplacementSpecs = [
         { id: "head", imageKey: "newHead", targetWidth: 283, targetHeight: 265 },
@@ -1360,9 +1443,13 @@
         padding: 2,
       };
 
+      function isSpearmanStyleUnit(unitType = state.currentUnitType) {
+        return ["spearman", "musketeer"].includes(unitType);
+      }
+
       function materialReplacementSpecsForUnit(unitType = state.currentUnitType) {
         const specs = baseMaterialReplacementSpecs.map((spec) => ({ ...spec }));
-        if (unitType === "spearman") {
+        if (isSpearmanStyleUnit(unitType)) {
           return specs.map((spec) =>
             spec.id === "sword"
               ? {
@@ -1390,7 +1477,14 @@
 
       function spineUnitImageBasePath(unitType = state.currentUnitType) {
         const config = getSpineUnitConfig(unitType);
-        return config.imageBaseUrl || rootLegAssetBasePath;
+        const runtimeAssetUnitType = config.runtimeAssetUnitType;
+        const runtimeConfig = runtimeAssetUnitType ? getSpineUnitConfig(runtimeAssetUnitType) : null;
+        return runtimeConfig?.imageBaseUrl || config.imageBaseUrl || rootLegAssetBasePath;
+      }
+
+      function spineUnitRuntimeProjectUrl(unitType = state.currentUnitType) {
+        const config = getSpineUnitConfig(unitType);
+        return config.runtimeProjectUrl || config.projectUrl;
       }
 
       function spineUnitImageSources(unitType = state.currentUnitType) {
@@ -2085,6 +2179,7 @@
               height: maxY - minY + 1,
               cx: (minX + maxX + 1) / 2,
               cy: (minY + maxY + 1) / 2,
+              pixelIndices: stack.slice(),
             });
           }
         }
@@ -2182,6 +2277,21 @@
         const maxX = Math.min(sourceImageData.width - 1, component.maxX + padding);
         const maxY = Math.min(sourceImageData.height - 1, component.maxY + padding);
         const output = new ImageData(maxX - minX + 1, maxY - minY + 1);
+        if (Array.isArray(component?.pixelIndices) && component.pixelIndices.length) {
+          for (const sourceIndex of component.pixelIndices) {
+            const x = sourceIndex % sourceImageData.width;
+            const y = Math.floor(sourceIndex / sourceImageData.width);
+            if (x < minX || x > maxX || y < minY || y > maxY) continue;
+            const outputIndex = (y - minY) * output.width + (x - minX);
+            const sourceOffset = sourceIndex * 4;
+            const outputOffset = outputIndex * 4;
+            output.data[outputOffset] = sourceImageData.data[sourceOffset];
+            output.data[outputOffset + 1] = sourceImageData.data[sourceOffset + 1];
+            output.data[outputOffset + 2] = sourceImageData.data[sourceOffset + 2];
+            output.data[outputOffset + 3] = sourceImageData.data[sourceOffset + 3];
+          }
+          return output;
+        }
         const foreground = createMaterialForegroundMask(sourceImageData);
         for (let y = minY; y <= maxY; y += 1) {
           for (let x = minX; x <= maxX; x += 1) {
@@ -2256,13 +2366,23 @@
         return best;
       }
 
+      function resolvePreferredSpearmanFistImage(unitType = state.currentUnitType) {
+        if (unitType !== "musketeer") return null;
+        const existing = state.customImages?.[spearmanFistCustomImageId];
+        if (!existing?.src) return null;
+        return {
+          name: existing.name || "spearman-fist.png",
+          src: existing.src,
+        };
+      }
+
       function findSpearmanTorsoSixNode() {
         const exact = state.nodes.find(
           (node) =>
             node &&
             node.role === "torso" &&
             !node.attachment &&
-            String(node.name || "").trim() === "躯干 6",
+            String(node.name || "").trim() === "\u8eaf\u5e72 6",
         );
         if (exact) return exact;
         return (
@@ -2402,7 +2522,7 @@
 
       function classifyCavalryComponents(inputImageData, components) {
         if (!inputImageData || !Array.isArray(components) || components.length < 8) {
-          throw new Error("骑兵素材识别失败：组件数量不足");
+          throw new Error("\u9a91\u5175\u7d20\u6750\u8bc6\u522b\u5931\u8d25\uff1a\u7ec4\u4ef6\u6570\u91cf\u4e0d\u8db3");
         }
         const horseBody = components.reduce((best, component) => (!best || component.minY < best.minY ? component : best), null);
         const remaining = components.filter((component) => component !== horseBody);
@@ -2415,13 +2535,13 @@
                 component.height / Math.max(1, component.width) > 3,
             )
             .sort((a, b) => b.maxX - a.maxX || b.height - a.height)[0] || null;
-        if (!soldierWeapon) throw new Error("骑兵素材识别失败：未找到武器组件");
+        if (!soldierWeapon) throw new Error("\u9a91\u5175\u7d20\u6750\u8bc6\u522b\u5931\u8d25\uff1a\u672a\u627e\u5230\u6b66\u5668\u7ec4\u4ef6");
 
         const soldierTorso =
           lowerHalf
             .filter((component) => component !== soldierWeapon)
             .sort((a, b) => b.pixels - a.pixels)[0] || null;
-        if (!soldierTorso) throw new Error("骑兵素材识别失败：未找到士兵躯壳组件");
+        if (!soldierTorso) throw new Error("\u9a91\u5175\u7d20\u6750\u8bc6\u522b\u5931\u8d25\uff1a\u672a\u627e\u5230\u58eb\u5175\u8eaf\u58f3\u7ec4\u4ef6");
 
         const soldierRightLeg =
           lowerHalf
@@ -2433,7 +2553,7 @@
                 component.minY > soldierTorso.cy,
             )
             .sort((a, b) => b.maxY - a.maxY || b.pixels - a.pixels)[0] || null;
-        if (!soldierRightLeg) throw new Error("骑兵素材识别失败：未找到士兵右腿组件");
+        if (!soldierRightLeg) throw new Error("\u9a91\u5175\u7d20\u6750\u8bc6\u522b\u5931\u8d25\uff1a\u672a\u627e\u5230\u58eb\u5175\u53f3\u817f\u7ec4\u4ef6");
 
         const soldierRightArm =
           remaining
@@ -2447,7 +2567,7 @@
                 component.cy < soldierTorso.cy,
             )
             .sort((a, b) => b.pixels - a.pixels)[0] || null;
-        if (!soldierRightArm) throw new Error("骑兵素材识别失败：未找到士兵右臂组件");
+        if (!soldierRightArm) throw new Error("\u9a91\u5175\u7d20\u6750\u8bc6\u522b\u5931\u8d25\uff1a\u672a\u627e\u5230\u58eb\u5175\u53f3\u81c2\u7ec4\u4ef6");
 
         const horseLegs = remaining
           .filter(
@@ -2459,7 +2579,7 @@
           )
           .sort((a, b) => a.cx - b.cx);
         if (horseLegs.length !== 4) {
-          throw new Error(`骑兵素材识别失败：马腿组件数量异常（${horseLegs.length}）`);
+          throw new Error(`\u9a91\u5175\u7d20\u6750\u8bc6\u522b\u5931\u8d25\uff1a\u9a6c\u817f\u7ec4\u4ef6\u6570\u91cf\u5f02\u5e38\uff08${horseLegs.length}\uff09`);
         }
 
         return {
@@ -2492,10 +2612,459 @@
         };
       }
 
+      function snapGeneratedChildrenToParentsPreserveDirection(nodes) {
+        if (!Array.isArray(nodes) || !nodes.length) return nodes;
+        const nodeById = new Map(nodes.map((node) => [node.id, node]));
+        const worldCache = new Map();
+        const attachmentLocalCache = new Map();
+
+        const computeWorldPose = (node, seen = new Set()) => {
+          if (!node?.id) return null;
+          if (worldCache.has(node.id)) return worldCache.get(node.id);
+        const local = {
+          x: Number(node.x) || 0,
+          y: Number(node.y) || 0,
+          rotation: Number(node.rotation) || 0,
+          length: Math.max(4, Number(node.length) || 80),
+          scaleX: Math.max(0.05, Number(node.scaleX) || 1),
+          scaleY: Math.max(0.05, Number(node.scaleY) || 1),
+          };
+          if (seen.has(node.id) || !node.parentId) {
+            const rootPose = {
+              ...local,
+              worldX: local.x,
+              worldY: local.y,
+              worldRotation: local.rotation,
+              worldScaleX: local.scaleX,
+              worldScaleY: local.scaleY,
+            };
+            worldCache.set(node.id, rootPose);
+            return rootPose;
+          }
+          seen.add(node.id);
+          const parent = nodeById.get(node.parentId);
+          const parentPose = parent ? computeWorldPose(parent, seen) : null;
+        if (!parentPose) {
+            const fallbackPose = {
+              ...local,
+              worldX: local.x,
+              worldY: local.y,
+              worldRotation: local.rotation,
+              worldScaleX: local.scaleX,
+              worldScaleY: local.scaleY,
+            };
+            worldCache.set(node.id, fallbackPose);
+            return fallbackPose;
+          }
+          const parentRad = (parentPose.worldRotation * Math.PI) / 180;
+          const anchor = {
+            x: parentPose.worldX + Math.cos(parentRad) * parentPose.length * parentPose.worldScaleX,
+            y: parentPose.worldY + Math.sin(parentRad) * parentPose.length * parentPose.worldScaleY,
+          };
+          const px = local.x * parentPose.worldScaleX;
+          const py = local.y * parentPose.worldScaleY;
+          const pose = {
+            ...local,
+            worldX: anchor.x + px * Math.cos(parentRad) - py * Math.sin(parentRad),
+            worldY: anchor.y + px * Math.sin(parentRad) + py * Math.cos(parentRad),
+            worldRotation: parentPose.worldRotation + local.rotation,
+            worldScaleX: parentPose.worldScaleX * local.scaleX,
+            worldScaleY: parentPose.worldScaleY * local.scaleY,
+          };
+          worldCache.set(node.id, pose);
+          return pose;
+        };
+
+        const endPointForPose = (pose) => {
+          const rad = (pose.worldRotation * Math.PI) / 180;
+          return {
+          x: pose.worldX + Math.cos(rad) * pose.length * pose.worldScaleX,
+          y: pose.worldY + Math.sin(rad) * pose.length * pose.worldScaleY,
+          };
+        };
+
+        const resolveRestPartWorld = (restPart) => {
+          if (!restPart) return null;
+          const parentBoneId = restPart.parentBoneId ? String(restPart.parentBoneId) : null;
+        if (!parentBoneId) {
+            return {
+              x: Number(restPart.x) || 0,
+              y: Number(restPart.y) || 0,
+              rotation: Number(restPart.rotation) || 0,
+            };
+          }
+          const parentNode = nodeById.get(parentBoneId);
+          const parentPose = parentNode ? computeWorldPose(parentNode) : null;
+        if (!parentPose) {
+            return {
+              x: Number(restPart.x) || 0,
+              y: Number(restPart.y) || 0,
+              rotation: Number(restPart.rotation) || 0,
+            };
+          }
+          const anchor = endPointForPose(parentPose);
+          const rad = (parentPose.worldRotation * Math.PI) / 180;
+          const localX = Number(restPart.x) || 0;
+          const localY = Number(restPart.y) || 0;
+          return {
+            x: anchor.x + localX * Math.cos(rad) - localY * Math.sin(rad),
+            y: anchor.y + localX * Math.sin(rad) + localY * Math.cos(rad),
+            rotation: (Number(restPart.rotation) || 0) + parentPose.worldRotation,
+          };
+        };
+
+        const localFromWorldByParentPose = (parentPose, world) => {
+          const anchor = endPointForPose(parentPose);
+          const dx = (Number(world?.x) || 0) - anchor.x;
+          const dy = (Number(world?.y) || 0) - anchor.y;
+        const rad = (-parentPose.worldRotation * Math.PI) / 180;
+          return {
+          x: (dx * Math.cos(rad) - dy * Math.sin(rad)) / (parentPose.worldScaleX || 1),
+          y: (dx * Math.sin(rad) + dy * Math.cos(rad)) / (parentPose.worldScaleY || 1),
+            rotation: (Number(world?.rotation) || 0) - parentPose.worldRotation,
+          };
+        };
+
+        nodes.forEach((node) => computeWorldPose(node));
+        nodes.forEach((node) => {
+        const attachment = node?.attachment;
+          const restPart = attachment?.restPart;
+          const skinBoneIds = Array.isArray(attachment?.skinBoneIds) ? attachment.skinBoneIds : [];
+          const targetParentBoneId = restPart?.parentBoneId || skinBoneIds[0] || null;
+          if (!attachment?.fullSkin || !restPart || !targetParentBoneId) return;
+          const parentNode = nodeById.get(String(targetParentBoneId));
+          const parentPose = parentNode ? computeWorldPose(parentNode) : null;
+          const restWorld = resolveRestPartWorld(restPart);
+          if (!parentPose || !restWorld) return;
+          attachmentLocalCache.set(node.id, {
+            parentBoneId: String(targetParentBoneId),
+            local: localFromWorldByParentPose(parentPose, restWorld),
+          });
+        });
+        nodes.forEach((node) => {
+          if (!node?.parentId) {
+            node.bindPose = normalizeBindPose(node.bindPose || node);
+            return;
+          }
+          if (node.preserveParentOffset) {
+            node.bindPose = normalizeBindPose({
+              ...(node.bindPose || node),
+          x: Number(node.x) || 0,
+          y: Number(node.y) || 0,
+          rotation: Number(node.rotation) || 0,
+              length: node.length,
+              scaleX: node.scaleX,
+              scaleY: node.scaleY,
+            });
+            return;
+          }
+          const pose = worldCache.get(node.id);
+          const parentPose = worldCache.get(node.parentId);
+          if (!pose || !parentPose) return;
+            node.x = 0;
+            node.y = 0;
+          node.rotation = pose.worldRotation - parentPose.worldRotation;
+          node.scaleX = (pose.worldScaleX || 1) / (parentPose.worldScaleX || 1);
+          node.scaleY = (pose.worldScaleY || 1) / (parentPose.worldScaleY || 1);
+          node.bindPose = normalizeBindPose({
+            ...(node.bindPose || node),
+            x: node.x,
+            y: node.y,
+            rotation: node.rotation,
+            length: node.length,
+            scaleX: node.scaleX,
+            scaleY: node.scaleY,
+          });
+        });
+        worldCache.clear();
+        nodes.forEach((node) => computeWorldPose(node));
+        nodes.forEach((node) => {
+        const attachment = node?.attachment;
+          const restPart = attachment?.restPart;
+          const snapshot = attachmentLocalCache.get(node.id);
+          if (!attachment?.fullSkin || !restPart || !snapshot) return;
+          const parentNode = nodeById.get(snapshot.parentBoneId);
+          const parentPose = parentNode ? computeWorldPose(parentNode) : null;
+          if (!parentPose) return;
+          restPart.parentBoneId = snapshot.parentBoneId;
+          restPart.x = snapshot.local.x;
+          restPart.y = snapshot.local.y;
+          restPart.rotation = snapshot.local.rotation;
+        });
+        return nodes;
+      }
+
       function componentPoint(component, nx, ny) {
         return {
           x: component.minX + component.width * nx,
           y: component.minY + component.height * ny,
+        };
+      }
+
+      function computeImportedFullSkinScale(width, height, worldScale) {
+        const currentMax = Math.max(1, Number(width) || 1, Number(height) || 1);
+        const safeWorldScale = Math.max(0.001, Number(worldScale) || 1);
+        const displayedMax = currentMax * safeWorldScale;
+        const targetMax = Math.max(192, Math.min(768, Math.round(displayedMax * 3)));
+        if (currentMax <= targetMax) {
+          return {
+            scaled: false,
+            imageScale: 1,
+            renderScaleMultiplier: 1,
+            targetWidth: Math.max(1, Math.round(width)),
+            targetHeight: Math.max(1, Math.round(height)),
+          };
+        }
+        const imageScale = targetMax / currentMax;
+        return {
+          scaled: true,
+          imageScale,
+          renderScaleMultiplier: 1 / imageScale,
+          targetWidth: Math.max(1, Math.round(width * imageScale)),
+          targetHeight: Math.max(1, Math.round(height * imageScale)),
+        };
+      }
+
+      function resizeImageData(imageData, targetWidth, targetHeight) {
+        if (!imageData) return imageData;
+        const nextWidth = Math.max(1, Math.round(targetWidth));
+        const nextHeight = Math.max(1, Math.round(targetHeight));
+        if (imageData.width === nextWidth && imageData.height === nextHeight) return imageData;
+
+        const sourceCanvas = document.createElement("canvas");
+        sourceCanvas.width = imageData.width;
+        sourceCanvas.height = imageData.height;
+        const sourceCtx = sourceCanvas.getContext("2d");
+        sourceCtx.putImageData(imageData, 0, 0);
+
+        const outputCanvas = document.createElement("canvas");
+        outputCanvas.width = nextWidth;
+        outputCanvas.height = nextHeight;
+        const outputCtx = outputCanvas.getContext("2d");
+        outputCtx.imageSmoothingEnabled = true;
+        outputCtx.imageSmoothingQuality = "high";
+        outputCtx.drawImage(sourceCanvas, 0, 0, nextWidth, nextHeight);
+        return outputCtx.getImageData(0, 0, nextWidth, nextHeight);
+      }
+
+      function optimizeCavalryFullSkinImage(imageData, worldScale) {
+        const scale = computeImportedFullSkinScale(imageData.width, imageData.height, worldScale);
+        if (!scale.scaled) {
+          return {
+            imageData,
+            renderScaleMultiplier: 1,
+          };
+        }
+        return {
+          imageData: resizeImageData(imageData, scale.targetWidth, scale.targetHeight),
+          renderScaleMultiplier: scale.renderScaleMultiplier,
+        };
+      }
+
+      function scaleGeneratedCavalryHorse(nodes, factor = 1.5) {
+        if (!Array.isArray(nodes) || !Number.isFinite(Number(factor)) || Number(factor) === 1) return nodes;
+        const scale = Number(factor);
+        const horseNodeIds = new Set(
+          nodes.filter((node) => String(node?.role || "").startsWith("cavalry-horse")).map((node) => node.id),
+        );
+        nodes.forEach((node) => {
+          if (!node) return;
+          const isHorseNode = horseNodeIds.has(node.id);
+          const followsHorseParent = !isHorseNode && horseNodeIds.has(node.parentId) && !node.attachment;
+          if (isHorseNode || followsHorseParent) {
+            if (node.parentId) {
+              node.x = (Number(node.x) || 0) * scale;
+              node.y = (Number(node.y) || 0) * scale;
+            }
+            if (isHorseNode) {
+              node.length = Math.max(4, (Number(node.length) || 0) * scale);
+            }
+            if (node.bindPose) {
+              if (node.parentId) {
+                node.bindPose.x = (Number(node.bindPose.x) || 0) * scale;
+                node.bindPose.y = (Number(node.bindPose.y) || 0) * scale;
+              }
+              if (isHorseNode) {
+                node.bindPose.length = Math.max(4, (Number(node.bindPose.length) || 0) * scale);
+              }
+            }
+          }
+          if (!isHorseNode || !node.attachment?.fullSkin || !node.attachment.restPart) return;
+          const restPart = node.attachment.restPart;
+          if (horseNodeIds.has(restPart.parentBoneId)) {
+            restPart.x = (Number(restPart.x) || 0) * scale;
+            restPart.y = (Number(restPart.y) || 0) * scale;
+          }
+          restPart.scale = Math.max(0.001, (Number(restPart.scale) || 1) * scale);
+        });
+        return nodes;
+      }
+
+      function alignGeneratedCavalryFrontLegs(horseLegPieces, horseLegUpperBones, horseLegComponents, transform) {
+        if (!Array.isArray(horseLegPieces) || !Array.isArray(horseLegUpperBones) || !Array.isArray(horseLegComponents)) {
+          return;
+        }
+        if (horseLegPieces.length < 4 || horseLegUpperBones.length < 4 || horseLegComponents.length < 4) {
+          return;
+        }
+        const referenceBottom = Math.max(
+          Number(horseLegComponents[0]?.maxY) || 0,
+          Number(horseLegComponents[1]?.maxY) || 0,
+        );
+        const worldScale = Number(transform?.scale) || 1;
+        [2, 3].forEach((index) => {
+          const component = horseLegComponents[index];
+          const piece = horseLegPieces[index];
+          const upper = horseLegUpperBones[index];
+          if (!component || !piece || !upper) return;
+          const deltaPixels = referenceBottom - (Number(component.maxY) || 0);
+          if (deltaPixels <= 0) return;
+          const deltaWorld = deltaPixels * worldScale;
+          piece.y = (Number(piece.y) || 0) + deltaWorld;
+          if (piece.bindPose) {
+            piece.bindPose.y = (Number(piece.bindPose.y) || 0) + deltaWorld;
+          }
+          if (piece.attachment?.restPart) {
+            piece.attachment.restPart.y = (Number(piece.attachment.restPart.y) || 0) + deltaWorld;
+          }
+          upper.length = Math.max(4, (Number(upper.length) || 0) + deltaWorld);
+          if (upper.bindPose) {
+            upper.bindPose.length = Math.max(4, (Number(upper.bindPose.length) || 0) + deltaWorld);
+          }
+        });
+      }
+
+      function adjustGeneratedCavalryRearLegTwo(horseLegPieces, horseLegUpperBones, factor = 0.8) {
+        if (!Array.isArray(horseLegPieces) || !Array.isArray(horseLegUpperBones)) return;
+        if (horseLegPieces.length < 2 || horseLegUpperBones.length < 2) return;
+        const piece = horseLegPieces[1];
+        const upper = horseLegUpperBones[1];
+        if (!piece || !upper) return;
+        const nextFactor = Number(factor);
+        if (!Number.isFinite(nextFactor) || nextFactor <= 0 || nextFactor >= 1) return;
+        const currentLength = Number(upper.length) || 0;
+        const nextLength = Math.max(4, currentLength * nextFactor);
+        const delta = currentLength - nextLength;
+        upper.length = nextLength;
+        if (upper.bindPose) {
+          upper.bindPose.length = nextLength;
+        }
+        piece.y = (Number(piece.y) || 0) - delta;
+        if (piece.bindPose) {
+          piece.bindPose.y = (Number(piece.bindPose.y) || 0) - delta;
+        }
+        if (piece.attachment?.restPart) {
+          piece.attachment.restPart.y = (Number(piece.attachment.restPart.y) || 0) - delta;
+        }
+      }
+
+      function splitCavalryHorseBodyComponent(component, imageWidth) {
+        if (!component || !Array.isArray(component.pixelIndices) || component.pixelIndices.length < 2) {
+          return {
+            body: component,
+            neckHead: null,
+          };
+        }
+        const safeImageWidth = Math.max(1, Number(imageWidth) || 1);
+        const safeWidth = Math.max(1, Number(component.width) || (Number(component.maxX) - Number(component.minX) + 1) || 1);
+        const safeHeight = Math.max(1, Number(component.height) || (Number(component.maxY) - Number(component.minY) + 1) || 1);
+        const buildComponent = (pixelIndices) => {
+          if (!Array.isArray(pixelIndices) || !pixelIndices.length) return null;
+          let minX = Number.POSITIVE_INFINITY;
+          let minY = Number.POSITIVE_INFINITY;
+          let maxX = Number.NEGATIVE_INFINITY;
+          let maxY = Number.NEGATIVE_INFINITY;
+          pixelIndices.forEach((sourceIndex) => {
+            const x = sourceIndex % safeImageWidth;
+            const y = Math.floor(sourceIndex / safeImageWidth);
+            minX = Math.min(minX, x);
+            minY = Math.min(minY, y);
+            maxX = Math.max(maxX, x);
+            maxY = Math.max(maxY, y);
+          });
+          return {
+            pixels: pixelIndices.length,
+            minX,
+            minY,
+            maxX,
+            maxY,
+            width: maxX - minX + 1,
+            height: maxY - minY + 1,
+              cx: (minX + maxX + 1) / 2,
+              cy: (minY + maxY + 1) / 2,
+            pixelIndices: pixelIndices.slice(),
+          };
+        };
+        const neckHeadPixels = [];
+        const diagonalThreshold = Math.round(Math.max(1, Math.min(safeWidth - 1, safeHeight - 1) * 0.27));
+        component.pixelIndices.forEach((sourceIndex) => {
+          const x = sourceIndex % safeImageWidth;
+          const y = Math.floor(sourceIndex / safeImageWidth);
+          const localX = x - component.minX;
+          const localY = y - component.minY;
+          const isNeckHeadRegion = localX - localY >= diagonalThreshold;
+          if (isNeckHeadRegion) {
+            neckHeadPixels.push(sourceIndex);
+          }
+        });
+        if (neckHeadPixels.length < 32) {
+          return {
+            body: component,
+            neckHead: null,
+          };
+        }
+        return {
+          body: component,
+          neckHead: buildComponent(neckHeadPixels),
+        };
+      }
+
+      function buildGeneratedSoldierUpperBodyFromMaterial({
+        addBone,
+        addPiece,
+        registerComponentImage,
+        parts,
+        transform,
+        mountParentId,
+      }) {
+        const soldierTorsoImageId = registerComponentImage("soldier-torso", parts.soldierTorso);
+        const soldierRightArmImageId = registerComponentImage("soldier-right-arm", parts.soldierRightArm);
+
+        const soldierSpine1 = addBone("\u58eb\u5175\u810a\u690e 1", mountParentId, componentPoint(parts.soldierTorso, 0.46, 0.77), componentPoint(parts.soldierTorso, 0.49, 0.23), "#556e8a", "cavalry-soldier-spine");
+        const soldierSpine2 = addBone("\u58eb\u5175\u810a\u690e 2", soldierSpine1.id, componentPoint(parts.soldierTorso, 0.47, 0.59), componentPoint(parts.soldierTorso, 0.5027, 0.3117), "#556e8a", "cavalry-soldier-spine");
+        const soldierSpine3 = addBone("\u58eb\u5175\u810a\u690e 3", soldierSpine2.id, componentPoint(parts.soldierTorso, 0.49, 0.42), componentPoint(parts.soldierTorso, 0.525, 0.168), "#556e8a", "cavalry-soldier-spine");
+        const soldierRightShoulder = addBone("\u58eb\u5175\u53f3\u80a9", soldierSpine2.id, componentPoint(parts.soldierTorso, 0.36, 0.25), componentPoint(parts.soldierTorso, 0.08, 0.21), "#556e8a", "cavalry-soldier-shoulder");
+        const soldierLeftShoulder = addBone("\u58eb\u5175\u5de6\u80a9", soldierSpine2.id, componentPoint(parts.soldierTorso, 0.62, 0.25), componentPoint(parts.soldierTorso, 0.90, 0.21), "#556e8a", "cavalry-soldier-shoulder");
+
+        const soldierTorsoPiece = addPiece("\u58eb\u5175\u8eaf\u58f3", "cavalry-soldier-torso-piece", soldierTorsoImageId, parts.soldierTorso, 80, [
+          soldierSpine1.id,
+          soldierSpine2.id,
+          soldierSpine3.id,
+          soldierRightShoulder.id,
+          soldierLeftShoulder.id,
+        ]);
+        const soldierTorsoLift = parts.soldierTorso.height * transform.scale * 0.36;
+        soldierTorsoPiece.y -= soldierTorsoLift;
+        soldierTorsoPiece.bindPose.y -= soldierTorsoLift;
+        soldierTorsoPiece.attachment.restPart.y -= soldierTorsoLift;
+
+        const soldierRightArm1 = addBone("\u58eb\u5175\u53f3\u81c2 1", soldierRightShoulder.id, componentPoint(parts.soldierRightArm, 0.82, 0.08), componentPoint(parts.soldierRightArm, 0.58, 0.48), "#556e8a", "cavalry-soldier-right-arm");
+        const soldierRightArm2 = addBone("\u58eb\u5175\u53f3\u81c2 2", soldierRightArm1.id, componentPoint(parts.soldierRightArm, 0.58, 0.48), componentPoint(parts.soldierRightArm, 0.49, 0.96), "#556e8a", "cavalry-soldier-right-arm");
+        const soldierRightArmPiece = addPiece("\u58eb\u5175\u53f3\u81c2", "cavalry-soldier-right-arm-piece", soldierRightArmImageId, parts.soldierRightArm, 90, [
+          soldierRightArm1.id,
+          soldierRightArm2.id,
+        ]);
+
+        return {
+          soldierSpine1,
+          soldierSpine2,
+          soldierSpine3,
+          soldierRightShoulder,
+          soldierLeftShoulder,
+          soldierTorsoPiece,
+          soldierRightArm1,
+          soldierRightArm2,
+          soldierRightArmPiece,
         };
       }
 
@@ -2521,12 +3090,17 @@
 
         const registerComponentImage = (name, component) => {
           const imageData = extractMaterialPiece(inputImageData, component, padding);
+          const optimized = optimizeCavalryFullSkinImage(imageData, transform.scale);
           const imageId = `${customImagePrefix}cavalry-${name}-${nextId("img")}`;
           customImages[imageId] = {
             name: `${fileName.replace(/\.[^.]+$/, "")}-${name}.png`,
-            src: imageDataToDataUrl(imageData),
+            src: imageDataToDataUrl(optimized.imageData),
           };
-          imageMeta.set(imageId, { width: imageData.width, height: imageData.height });
+          imageMeta.set(imageId, {
+            width: optimized.imageData.width,
+            height: optimized.imageData.height,
+            renderScaleMultiplier: optimized.renderScaleMultiplier,
+          });
           return imageId;
         };
 
@@ -2612,13 +3186,15 @@
               width: image.width,
               alpha: 1,
               layer,
+              meshCols: 6,
+              meshRows: 18,
               fullSkin: true,
               skinBoneIds,
               restPart: {
                 partId: id,
                 x: topLeft.x,
                 y: topLeft.y,
-                scale: transform.scale,
+                scale: transform.scale * (image.renderScaleMultiplier || 1),
                 rotation: 0,
                 parentBoneId: null,
                 anchorX: 0,
@@ -2631,75 +3207,118 @@
           return node;
         };
 
-        const horseBodyImageId = registerComponentImage("horse-body", parts.horseBody);
+        const { body: horseBodyComponent, neckHead: horseNeckHeadComponent } = splitCavalryHorseBodyComponent(parts.horseBody, inputImageData.width);
+        const horseBodyImageId = registerComponentImage("horse-body", horseBodyComponent);
+        const horseNeckHeadImageId = horseNeckHeadComponent ? registerComponentImage("horse-neck-head", horseNeckHeadComponent) : null;
         const horseLegImageIds = parts.horseLegs.map((component, index) => registerComponentImage(`horse-leg-${index + 1}`, component));
-        const soldierTorsoImageId = registerComponentImage("soldier-torso", parts.soldierTorso);
-        const soldierRightArmImageId = registerComponentImage("soldier-right-arm", parts.soldierRightArm);
         const soldierRightLegImageId = registerComponentImage("soldier-right-leg", parts.soldierRightLeg);
         const soldierWeaponImageId = registerComponentImage("soldier-weapon", parts.soldierWeapon);
 
-        const horseBody1 = addBone("马身 1", null, componentPoint(parts.horseBody, 0.18, 0.62), componentPoint(parts.horseBody, 0.38, 0.60), "#8b6a45", "cavalry-horse-body");
-        const horseBody2 = addBone("马身 2", horseBody1.id, componentPoint(parts.horseBody, 0.38, 0.60), componentPoint(parts.horseBody, 0.58, 0.58), "#8b6a45", "cavalry-horse-body");
-        const horseBody3 = addBone("马身 3", horseBody2.id, componentPoint(parts.horseBody, 0.58, 0.58), componentPoint(parts.horseBody, 0.72, 0.50), "#8b6a45", "cavalry-horse-body");
-        const horseNeck1 = addBone("马脖子 1", horseBody3.id, componentPoint(parts.horseBody, 0.72, 0.50), componentPoint(parts.horseBody, 0.82, 0.38), "#8b6a45", "cavalry-horse-neck");
-        const horseNeck2 = addBone("马脖子 2", horseNeck1.id, componentPoint(parts.horseBody, 0.82, 0.38), componentPoint(parts.horseBody, 0.90, 0.26), "#8b6a45", "cavalry-horse-neck");
-        const horseHead1 = addBone("马头 1", horseNeck2.id, componentPoint(parts.horseBody, 0.90, 0.26), componentPoint(parts.horseBody, 0.97, 0.18), "#8b6a45", "cavalry-horse-head");
+        const horseBody1LeftAnchor = addBone("\u9a6c\u8eab 1 \u5de6\u951a\u70b9", null, componentPoint(parts.horseBody, 0.16, 0.62), componentPoint(parts.horseBody, 0.18, 0.62), "#8b6a45", "cavalry-horse-anchor");
+        const horseBody1 = addBone("\u9a6c\u8eab 1", horseBody1LeftAnchor.id, componentPoint(parts.horseBody, 0.18, 0.62), componentPoint(parts.horseBody, 0.28, 0.61), "#8b6a45", "cavalry-horse-body");
+        const horseBody2 = addBone("\u9a6c\u8eab 2", horseBody1.id, componentPoint(parts.horseBody, 0.28, 0.61), componentPoint(parts.horseBody, 0.58, 0.58), "#8b6a45", "cavalry-horse-body");
+        const horseBody3 = addBone("\u9a6c\u8eab 3", horseBody2.id, componentPoint(parts.horseBody, 0.58, 0.58), componentPoint(parts.horseBody, 0.65, 0.54), "#8b6a45", "cavalry-horse-body");
+        const horseNeck1 = addBone("\u9a6c\u8116\u5b50 1", horseBody3.id, componentPoint(parts.horseBody, 0.65, 0.54), componentPoint(parts.horseBody, 0.81, 0.36), "#8b6a45", "cavalry-horse-neck");
+        const horseNeck2 = addBone("\u9a6c\u8116\u5b50 2", horseNeck1.id, componentPoint(parts.horseBody, 0.81, 0.36), componentPoint(parts.horseBody, 0.82, 0.22), "#8b6a45", "cavalry-horse-neck");
+        const horseHead1 = addBone("\u9a6c\u5934 1", horseNeck2.id, componentPoint(parts.horseBody, 0.82, 0.22), componentPoint(parts.horseBody, 0.97, 0.29), "#8b6a45", "cavalry-horse-head");
+        horseBody1LeftAnchor.visible = false;
+        const addHorseContourAnchor = (name, parentNode, startNx, startNy, endNx, endNy) => {
+          const anchor = addBone(
+            name,
+            parentNode.id,
+            componentPoint(parts.horseBody, startNx, startNy),
+            componentPoint(parts.horseBody, endNx, endNy),
+            "#8b6a45",
+            "cavalry-horse-head-anchor",
+          );
+          anchor.visible = false;
+          anchor.preserveParentOffset = true;
+          return anchor;
+        };
+        const horseHeadContourBones = [
+          addHorseContourAnchor("\u9a6c\u5934\u8f6e\u5ed3 1", horseNeck1, 0.70, 0.44, 0.75, 0.39),
+          addHorseContourAnchor("\u9a6c\u5934\u8f6e\u5ed3 2", horseNeck1, 0.73, 0.52, 0.79, 0.46),
+          addHorseContourAnchor("\u9a6c\u5934\u8f6e\u5ed3 3", horseNeck2, 0.79, 0.31, 0.83, 0.23),
+          addHorseContourAnchor("\u9a6c\u5934\u8f6e\u5ed3 4", horseHead1, 0.84, 0.19, 0.89, 0.18),
+          addHorseContourAnchor("\u9a6c\u5934\u8f6e\u5ed3 5", horseHead1, 0.87, 0.34, 0.92, 0.37),
+          addHorseContourAnchor("\u9a6c\u5934\u8f6e\u5ed3 6", horseHead1, 0.91, 0.24, 0.97, 0.22),
+          addHorseContourAnchor("\u9a6c\u5934\u8f6e\u5ed3 7", horseHead1, 0.91, 0.33, 0.97, 0.31),
+        ];
+        const sharedHorseHeadSkinBoneIds = [
+          horseBody1.id,
+          horseBody2.id,
+          horseBody3.id,
+          horseNeck1.id,
+          horseNeck2.id,
+          horseHead1.id,
+          ...horseHeadContourBones.map((bone) => bone.id),
+        ];
+        const horseBodyPiece = addPiece("\u9a6c\u8eab", "cavalry-horse-piece", horseBodyImageId, horseBodyComponent, 30, sharedHorseHeadSkinBoneIds);
+        horseBodyPiece.attachment.meshCols = 6;
+        horseBodyPiece.attachment.meshRows = 18;
+        if (horseNeckHeadImageId && horseNeckHeadComponent) {
+          const horseNeckHeadPiece = addPiece(
+            "\u9a6c\u8116\u5b50\u5230\u9a6c\u5934",
+            "cavalry-horse-neck-piece",
+            horseNeckHeadImageId,
+            horseNeckHeadComponent,
+            85,
+            sharedHorseHeadSkinBoneIds,
+          );
+          horseNeckHeadPiece.attachment.meshCols = 5;
+          horseNeckHeadPiece.attachment.meshRows = 14;
+        }
 
-        const horseBodyBones = [horseBody1, horseBody2, horseBody3, horseNeck1, horseNeck2, horseHead1];
-        addPiece("马身", "cavalry-horse-piece", horseBodyImageId, parts.horseBody, 30, horseBodyBones.map((bone) => bone.id));
-
-        const horseLegRoots = [horseBody1.id, horseBody1.id, horseBody3.id, horseBody3.id];
+        const horseBody2CenterMount = addBone("\u9a6c\u8eab 2 \u4e2d\u5fc3\u8282\u70b9", horseBody2.id, componentPoint(parts.horseBody, 0.43, 0.595), componentPoint(parts.horseBody, 0.4301, 0.595), "#8b6a45", "cavalry-horse-mount");
+        horseBody2CenterMount.preserveParentOffset = true;
+        const horseLegRoots = [horseBody1LeftAnchor.id, horseBody1.id, horseBody2.id, horseBody3.id];
+        const horseLegUpperBones = [];
         const horseLegPieces = parts.horseLegs.map((component, index) => {
           const bend = index < 2 ? -1 : 1;
-          const upper = addBone(`马腿 ${index + 1}-大腿`, horseLegRoots[index], componentPoint(component, 0.5, 0.04), componentPoint(component, 0.5 + bend * 0.08, 0.42), "#7c6040", "cavalry-horse-leg");
-          const lower = addBone(`马腿 ${index + 1}-小腿`, upper.id, componentPoint(component, 0.5 + bend * 0.08, 0.42), componentPoint(component, 0.5 + bend * 0.04, 0.78), "#7c6040", "cavalry-horse-leg");
-          const hoof = addBone(`马腿 ${index + 1}-马蹄`, lower.id, componentPoint(component, 0.5 + bend * 0.04, 0.78), componentPoint(component, 0.5, 0.98), "#7c6040", "cavalry-horse-hoof");
+          const upper = addBone(`\u9a6c\u817f ${index + 1}-\u5927\u817f`, horseLegRoots[index], componentPoint(component, 0.5, 0.04), componentPoint(component, 0.5 + bend * 0.08, 0.42), "#7c6040", "cavalry-horse-leg");
+          horseLegUpperBones.push(upper);
+          const lower = addBone(`\u9a6c\u817f ${index + 1}-\u5c0f\u817f`, upper.id, componentPoint(component, 0.5 + bend * 0.08, 0.42), componentPoint(component, 0.5 + bend * 0.04, 0.78), "#7c6040", "cavalry-horse-leg");
+          const hoof = addBone(`\u9a6c\u817f ${index + 1}-\u9a6c\u8e44`, lower.id, componentPoint(component, 0.5 + bend * 0.04, 0.78), componentPoint(component, 0.5, 0.98), "#7c6040", "cavalry-horse-hoof");
           const layer = parts.horseFarLegIndices.includes(index) ? 20 : 40;
-          return addPiece(`马腿 ${index + 1}`, "cavalry-horse-leg-piece", horseLegImageIds[index], component, layer, [
+          return addPiece(`\u9a6c\u817f ${index + 1}`, "cavalry-horse-leg-piece", horseLegImageIds[index], component, layer, [
             upper.id,
             lower.id,
             hoof.id,
           ]);
         });
+        alignGeneratedCavalryFrontLegs(horseLegPieces, horseLegUpperBones, parts.horseLegs, transform);
+        adjustGeneratedCavalryRearLegTwo(horseLegPieces, horseLegUpperBones, 0.8);
+        const soldierUpperBody = buildGeneratedSoldierUpperBodyFromMaterial({
+          addBone,
+          addPiece,
+          registerComponentImage,
+          parts,
+          transform,
+          mountParentId: horseBody2CenterMount.id,
+        });
+        const { soldierSpine1, soldierRightArm2 } = soldierUpperBody;
 
-        const soldierSpine1 = addBone("士兵脊椎 1", horseBody2.id, componentPoint(parts.soldierTorso, 0.46, 0.77), componentPoint(parts.soldierTorso, 0.47, 0.59), "#556e8a", "cavalry-soldier-spine");
-        const soldierSpine2 = addBone("士兵脊椎 2", soldierSpine1.id, componentPoint(parts.soldierTorso, 0.47, 0.59), componentPoint(parts.soldierTorso, 0.49, 0.42), "#556e8a", "cavalry-soldier-spine");
-        const soldierSpine3 = addBone("士兵脊椎 3", soldierSpine2.id, componentPoint(parts.soldierTorso, 0.49, 0.42), componentPoint(parts.soldierTorso, 0.52, 0.24), "#556e8a", "cavalry-soldier-spine");
-        const soldierSpine4 = addBone("士兵脊椎 4", soldierSpine3.id, componentPoint(parts.soldierTorso, 0.52, 0.24), componentPoint(parts.soldierTorso, 0.54, 0.06), "#556e8a", "cavalry-soldier-spine");
-        const soldierRightShoulder = addBone("士兵右肩", soldierSpine2.id, componentPoint(parts.soldierTorso, 0.36, 0.25), componentPoint(parts.soldierTorso, 0.22, 0.23), "#556e8a", "cavalry-soldier-shoulder");
-        const soldierLeftShoulder = addBone("士兵左肩", soldierSpine2.id, componentPoint(parts.soldierTorso, 0.62, 0.25), componentPoint(parts.soldierTorso, 0.76, 0.23), "#556e8a", "cavalry-soldier-shoulder");
-
-        addPiece("士兵躯壳", "cavalry-soldier-torso-piece", soldierTorsoImageId, parts.soldierTorso, 80, [
-          soldierSpine1.id,
-          soldierSpine2.id,
-          soldierSpine3.id,
-          soldierSpine4.id,
-          soldierRightShoulder.id,
-          soldierLeftShoulder.id,
-        ]);
-
-        const soldierRightArm1 = addBone("士兵右臂 1", soldierRightShoulder.id, componentPoint(parts.soldierRightArm, 0.82, 0.08), componentPoint(parts.soldierRightArm, 0.58, 0.48), "#556e8a", "cavalry-soldier-right-arm");
-        const soldierRightArm2 = addBone("士兵右臂 2", soldierRightArm1.id, componentPoint(parts.soldierRightArm, 0.58, 0.48), componentPoint(parts.soldierRightArm, 0.49, 0.96), "#556e8a", "cavalry-soldier-right-arm");
-        addPiece("士兵右臂", "cavalry-soldier-right-arm-piece", soldierRightArmImageId, parts.soldierRightArm, 90, [
-          soldierRightArm1.id,
-          soldierRightArm2.id,
-        ]);
-
-        const soldierRightLeg1 = addBone("士兵右腿 1", soldierSpine1.id, componentPoint(parts.soldierRightLeg, 0.82, 0.12), componentPoint(parts.soldierRightLeg, 0.56, 0.47), "#556e8a", "cavalry-soldier-right-leg");
-        const soldierRightLeg2 = addBone("士兵右腿 2", soldierRightLeg1.id, componentPoint(parts.soldierRightLeg, 0.56, 0.47), componentPoint(parts.soldierRightLeg, 0.46, 0.82), "#556e8a", "cavalry-soldier-right-leg");
-        const soldierRightLeg3 = addBone("士兵右腿 3", soldierRightLeg2.id, componentPoint(parts.soldierRightLeg, 0.46, 0.82), componentPoint(parts.soldierRightLeg, 0.75, 0.96), "#556e8a", "cavalry-soldier-right-foot");
-        addPiece("士兵右腿", "cavalry-soldier-right-leg-piece", soldierRightLegImageId, parts.soldierRightLeg, 70, [
+        const soldierRightLeg1 = addBone("\u58eb\u5175\u53f3\u817f 1", soldierSpine1.id, componentPoint(parts.soldierRightLeg, 0.82, 0.12), componentPoint(parts.soldierRightLeg, 0.30, 0.82), "#556e8a", "cavalry-soldier-right-leg");
+        const soldierRightLeg2 = addBone("\u58eb\u5175\u53f3\u817f 2", soldierRightLeg1.id, componentPoint(parts.soldierRightLeg, 0.56, 0.47), componentPoint(parts.soldierRightLeg, 0.46, 0.82), "#556e8a", "cavalry-soldier-right-leg");
+        const soldierRightLeg3 = addBone("\u58eb\u5175\u53f3\u817f 3", soldierRightLeg2.id, componentPoint(parts.soldierRightLeg, 0.46, 0.82), componentPoint(parts.soldierRightLeg, 0.75, 0.96), "#556e8a", "cavalry-soldier-right-foot");
+        const soldierRightLegPiece = addPiece("\u58eb\u5175\u53f3\u817f", "cavalry-soldier-right-leg-piece", soldierRightLegImageId, parts.soldierRightLeg, 70, [
           soldierRightLeg1.id,
           soldierRightLeg2.id,
           soldierRightLeg3.id,
         ]);
-
-        addPiece("士兵武器", "cavalry-soldier-weapon-piece", soldierWeaponImageId, parts.soldierWeapon, 95, [
-          soldierRightArm2.id,
+        const soldierRightLeg1ExtraDrop = parts.soldierRightLeg.height * transform.scale * 0.35;
+        soldierRightLegPiece.y += soldierRightLeg1ExtraDrop;
+        soldierRightLegPiece.bindPose.y += soldierRightLeg1ExtraDrop;
+        soldierRightLegPiece.attachment.restPart.y += soldierRightLeg1ExtraDrop;
+        const soldierWeaponBone = addBone("\u58eb\u5175\u6b66\u5668", soldierRightArm2.id, componentPoint(parts.soldierWeapon, 0.55, 0.08), componentPoint(parts.soldierWeapon, 0.42, 0.96), "#f5c84b", "sword");
+        addPiece("\u58eb\u5175\u6b66\u5668", "cavalry-soldier-weapon-piece", soldierWeaponImageId, parts.soldierWeapon, 95, [
+          soldierWeaponBone.id,
         ]);
+        snapGeneratedChildrenToParentsPreserveDirection(nodes);
+        scaleGeneratedCavalryHorse(nodes, 1.5);
 
         return {
-          name: "骑兵",
+          name: "cavalry",
           fps: 36,
           duration: 95,
           selectedActionId: null,
@@ -2711,7 +3330,7 @@
       }
 
       async function installSpearmanFistRigFromMaterial(inputImageData, inputComponents, matches) {
-        if (state.currentUnitType !== "spearman") return false;
+        if (state.currentUnitType !== "spearman" && state.currentUnitType !== "musketeer") return false;
         const fistCandidateComponents = detectMaterialComponents(
           inputImageData,
           Math.max(12, Math.min(180, Math.round(materialReplacementOptions.minPixels * 0.08))),
@@ -2756,16 +3375,25 @@
         if (!fistCenterWorld) return false;
         const torsoPose = worldPose(torsoSixNode);
         const fistEndWorld = { x: fistCenterWorld.x + 16, y: fistCenterWorld.y };
-        const fistImageData = extractMaterialPiece(inputImageData, fistComponent, materialReplacementOptions.padding);
-        registerCustomImage(
-          spearmanFistCustomImageId,
-          "spearman-fist.png",
-          imageDataToDataUrl(fistImageData),
-        );
-        warriorImages[spearmanFistCustomImageId] = await imageDataToImage(fistImageData);
+        const preferredFistImage = resolvePreferredSpearmanFistImage();
+        if (preferredFistImage?.src) {
+          registerCustomImage(
+            spearmanFistCustomImageId,
+            preferredFistImage.name,
+            preferredFistImage.src,
+          );
+        } else {
+          const fistImageData = extractMaterialPiece(inputImageData, fistComponent, materialReplacementOptions.padding);
+          registerCustomImage(
+            spearmanFistCustomImageId,
+            "spearman-fist.png",
+            imageDataToDataUrl(fistImageData),
+          );
+          warriorImages[spearmanFistCustomImageId] = await imageDataToImage(fistImageData);
+        }
 
         const fistBone = createBindingBone(
-          "拳头",
+          "spearman_fist",
           fistCenterWorld,
           fistEndWorld,
           "#d4907a",
@@ -2797,7 +3425,7 @@
           parentBoneId: fistBone.id,
         };
         const fistPiece = createGeneratedPieceNode(
-          "拳头",
+          "spearman_fist",
           spearmanFistCustomImageId,
           fistRestPart,
           (attachmentOwnerNode?.attachment?.layer ??
@@ -2816,7 +3444,7 @@
       async function applyMaterialReplacement(file) {
         if (!file) return;
         el.replaceMaterialBtn.disabled = true;
-        toast("正在识别素材图...");
+        toast("Analyzing material and replacing...");
         try {
           if (state.currentUnitType === "cavalry") {
             const inputImage = await loadFileImage(file);
@@ -2824,7 +3452,7 @@
             const project = buildCavalryProjectFromMaterial(inputImageData, file.name);
             applyProjectData(project, { unitType: "cavalry" });
             drawStage();
-            toast("已从骑兵拆分图自动创建全新骨架");
+            toast("Built cavalry rig and replaced material.");
             return;
           }
           const [referenceImage, inputImage] = await Promise.all([
@@ -2844,7 +3472,7 @@
           }
           await installSpearmanFistRigFromMaterial(inputImageData, inputComponents, matches);
           drawStage();
-          toast(`已替换新版关键帧贴图：${matches.length} 个部件`);
+          toast(`Material replacement completed: ${matches.length} components matched.`);
         } catch (error) {
           toast(error instanceof Error ? error.message : String(error));
         } finally {
@@ -2872,6 +3500,9 @@
           scaleX: patch.scaleX ?? base.scaleX,
           scaleY: patch.scaleY ?? base.scaleY,
           visible: patch.visible ?? base.visible !== false,
+          ...(typeof patch.attachmentImage === "string" && patch.attachmentImage.trim()
+            ? { attachmentImage: patch.attachmentImage.trim() }
+            : {}),
         };
       }
 
@@ -2890,6 +3521,28 @@
 
       function selectedNode() {
         return state.nodes.find((node) => node.id === state.selectedNodeId) || state.nodes[0];
+      }
+
+      function independentEditableBones() {
+        return state.nodes.filter(
+          (node) => node && !node.attachment && !node.parentId && !isTransformLockedNode(node),
+        );
+      }
+
+      function renderIndependentBonePicker() {
+        if (!el.independentBoneRow || !el.independentBoneSelect) return;
+        const binding = isBindingMode();
+        const bones = binding ? independentEditableBones() : [];
+        el.independentBoneRow.hidden = !binding || !bones.length;
+        el.independentBoneSelect.innerHTML = "";
+        el.independentBoneSelect.disabled = !binding || !bones.length;
+        bones.forEach((bone) => {
+          const option = document.createElement("option");
+          option.value = bone.id;
+          option.textContent = bone.name;
+          option.selected = bone.id === selectedNode()?.id;
+          el.independentBoneSelect.appendChild(option);
+        });
       }
 
       function attachmentEditNode(node = selectedNode()) {
@@ -2916,6 +3569,48 @@
           : context.owner.attachment;
       }
 
+      function attachmentImageVariants(attachmentView = selectedAttachmentView()) {
+        if (!attachmentView) return [];
+        const seen = new Set();
+        const result = [];
+        [attachmentView.image, ...(Array.isArray(attachmentView.imageVariants) ? attachmentView.imageVariants : [])]
+          .map((value) => String(value || "").trim())
+          .filter(Boolean)
+          .forEach((value) => {
+            if (seen.has(value)) return;
+            seen.add(value);
+            result.push(value);
+          });
+        return result;
+      }
+
+      function availableLegAssetOptions() {
+        const options = Array.isArray(window.__SPINE_LEG_ASSET_OPTIONS) ? window.__SPINE_LEG_ASSET_OPTIONS : [];
+        return [...new Set(options.map((value) => String(value || "").trim()).filter(Boolean))];
+      }
+
+      function attachmentImageKeys(node) {
+        return (state.timelines[node?.id] || []).filter((item) => typeof item.attachmentImage === "string" && item.attachmentImage);
+      }
+
+      function attachmentImageKeyAtFrame(node, frame = state.currentFrame) {
+        const currentFrame = Math.round(frame);
+        return attachmentImageKeys(node).find((item) => item.frame === currentFrame) || null;
+      }
+
+      function getAttachmentImageForFrame(node, frame = state.currentFrame) {
+        const attachment = node?.attachment;
+        if (!attachment) return "";
+        const defaultImage = String(attachment.image || "");
+        const variants = attachmentImageVariants(attachment);
+        const keys = attachmentImageKeys(node)
+          .filter((item) => item.frame <= frame)
+          .sort((a, b) => a.frame - b.frame);
+        const replacement = keys.length ? String(keys[keys.length - 1].attachmentImage || "") : "";
+        if (replacement && (!variants.length || variants.includes(replacement))) return replacement;
+        return defaultImage;
+      }
+
       function clampFrame(frame) {
         return Math.max(0, Math.min(state.duration, Math.round(frame)));
       }
@@ -2935,6 +3630,12 @@
           .filter((node) => !result.some((item) => item.id === node.id))
           .forEach((node) => result.push({ ...node, depth: 0 }));
         return result;
+      }
+
+      function sortedNodeRefs() {
+        return sortedNodes()
+          .map((node) => cachedNodeById(node.id))
+          .filter(Boolean);
       }
 
       function isBindingMode() {
@@ -3009,6 +3710,16 @@
           if (node.id === state.selectedNodeId || slashFxPiece.id === state.selectedPieceNodeId) return true;
           return slashFxAlphaAtFrame(slashFxPiece, frame) > 0.001;
         }
+        return true;
+      }
+
+      function isSpecialAnchorNode(node) {
+        return node?.role === "cavalry-horse-head-anchor";
+      }
+
+      function isCanvasVisibleNode(node, frame = state.currentFrame) {
+        if (!isNodeVisibleAtFrame(node, frame)) return false;
+        if (isSpecialAnchorNode(node) && !state.showSpecialAnchorBones) return false;
         return true;
       }
 
@@ -3291,7 +4002,7 @@
       }
 
       function drawBone(node, active) {
-        if (!isNodeVisibleAtFrame(node)) return;
+        if (!isCanvasVisibleNode(node)) return;
         const pose = worldPose(node);
         const end = endPoint(pose);
         const bowTag = bowDebugLabel(node);
@@ -3355,23 +4066,28 @@
         const attachment = node.attachment;
         const alpha = effectiveAttachmentAlpha(node);
         if (alpha <= 0.001) return;
+        const freezeToBindPose = isBindingMode() && state.bindingDragMode === "node";
         if (node.role === "bow-string" && attachment.segments && attachment.chainTo) {
-          drawBowStringAttachment(node, attachment, alpha);
+          drawBowStringAttachment(node, attachment, alpha, freezeToBindPose);
           return;
         }
-        const image = warriorImages[attachment.image];
+        const image = warriorImages[getAttachmentImageForFrame(node)];
         if (!image?.complete) return;
-        const pose = worldPose(node);
+        const pose = freezeToBindPose ? restWorldPose(node) : worldPose(node);
         if (attachment.fullSkin) {
           if (isBindingMode() && attachment.restPart) {
-            drawRestPartImage(image, resolveRestPartTransform(attachment.restPart, false), alpha);
+            if (freezeToBindPose) {
+              drawRestPartImage(image, resolveRestPartTransform(attachment.restPart, false), alpha);
+            } else {
+              drawFullSkinAttachment(attachment, image, alpha, true);
+            }
             return;
           }
-          drawFullSkinAttachment(attachment, image, alpha);
+          drawFullSkinAttachment(attachment, image, alpha, !freezeToBindPose);
           return;
         }
         if (attachment.segments && attachment.chainTo) {
-          drawSegmentedAttachment(node, attachment, image, alpha);
+          drawSegmentedAttachment(node, attachment, image, alpha, !freezeToBindPose);
           return;
         }
         if (attachment.image === "head") {
@@ -3383,7 +4099,7 @@
         if (attachment.chainTo) {
           const chainNode = state.nodes.find((item) => item.id === attachment.chainTo);
           if (!chainNode) return;
-          end = endPoint(worldPose(chainNode));
+          end = endPoint(freezeToBindPose ? restWorldPose(chainNode) : worldPose(chainNode));
         }
         if (attachment.reverse) {
           const nextStart = end;
@@ -3444,12 +4160,12 @@
           });
       }
 
-      function drawSegmentedAttachment(node, attachment, image, alpha = attachment.alpha) {
+      function drawSegmentedAttachment(node, attachment, image, alpha = attachment.alpha, useCurrentPose = true) {
         const chainNode = state.nodes.find((item) => item.id === attachment.chainTo);
         if (!chainNode) return;
         const lowerAttachment = { ...attachment, ...(attachment.lower || {}) };
-        const upperPose = worldPose(node);
-        const lowerPose = worldPose(chainNode);
+        const upperPose = useCurrentPose ? worldPose(node) : restWorldPose(node);
+        const lowerPose = useCurrentPose ? worldPose(chainNode) : restWorldPose(chainNode);
         const shoulder = { x: upperPose.worldX, y: upperPose.worldY };
         const elbow = { x: lowerPose.worldX, y: lowerPose.worldY };
         const hand = endPoint(lowerPose);
@@ -3488,12 +4204,12 @@
         ], alpha);
       }
 
-      function drawBowStringAttachment(node, attachment, alpha = attachment.alpha) {
+      function drawBowStringAttachment(node, attachment, alpha = attachment.alpha, freezeToBindPose = false) {
         const chainNode = state.nodes.find((item) => item.id === attachment.chainTo);
         if (!chainNode) return;
         const lowerAttachment = { ...attachment, ...(attachment.lower || {}) };
-        const upperPose = worldPose(node);
-        const lowerPose = worldPose(chainNode);
+        const upperPose = freezeToBindPose ? restWorldPose(node) : worldPose(node);
+        const lowerPose = freezeToBindPose ? restWorldPose(chainNode) : worldPose(chainNode);
         const start = { x: upperPose.worldX, y: upperPose.worldY };
         const middle = { x: lowerPose.worldX, y: lowerPose.worldY };
         const end = endPoint(lowerPose);
@@ -3600,13 +4316,13 @@
         };
       }
 
-      function drawFullSkinAttachment(attachment, image, alpha = attachment.alpha) {
+      function drawFullSkinAttachment(attachment, image, alpha = attachment.alpha, useCurrentPose = true) {
         const restPart = resolveRestPartTransform(attachment.restPart, false);
         const segments = (attachment.skinBoneIds || [])
           .map((nodeId) => state.nodes.find((item) => item.id === nodeId))
           .filter(Boolean)
           .map((boneNode) => {
-            const pose = worldPose(boneNode);
+            const pose = useCurrentPose ? worldPose(boneNode) : restWorldPose(boneNode);
             const rest = restWorldPose(boneNode);
             return {
               restStart: { x: rest.worldX, y: rest.worldY },
@@ -3621,8 +4337,8 @@
           return;
         }
 
-        const cols = restPart.partId === "torso" ? 5 : 4;
-        const rows = Math.max(6, segments.length * 5);
+        const cols = Math.max(3, Math.round(Number(attachment.meshCols) || (restPart.partId === "torso" ? 5 : 4)));
+        const rows = Math.max(6, Math.round(Number(attachment.meshRows) || segments.length * 5));
         const source = [];
         const dest = [];
         for (let row = 0; row <= rows; row += 1) {
@@ -4356,7 +5072,7 @@
 
       function pieceCorners(piece) {
         const attachment = piece?.attachment;
-        const image = attachment ? warriorImages[attachment.image] : null;
+        const image = attachment ? warriorImages[getAttachmentImageForFrame(piece)] : null;
         if (!attachment || !image?.complete) return null;
         if (attachment.fullSkin && attachment.restPart) {
           const restPart = resolveRestPartTransform(attachment.restPart, false);
@@ -4402,7 +5118,7 @@
         const effectiveParentId = effectiveParentIdForNode(node);
         if (!effectiveParentId) return;
         const parent = cachedNodeById(effectiveParentId);
-        if (!parent || !isNodeVisibleAtFrame(node) || !isNodeVisibleAtFrame(parent)) return;
+        if (!parent || !isCanvasVisibleNode(node) || !isCanvasVisibleNode(parent)) return;
         const parentEnd = endPoint(worldPose(parent));
         const pose = worldPose(node);
         const linkPoint = isTempParentBoundArrowCarrier(node)
@@ -4465,13 +5181,19 @@
       }
 
       function isSlashFxUnit(unitType = state.currentUnitType) {
-        return ["swordsman", "spearman"].includes(unitType);
+        return ["swordsman", "spearman", "musketeer", "cavalry"].includes(unitType);
       }
 
       function slashEffectContext() {
         if (state.currentUnitType === "spearman") {
           return {
             label: "戳刺特效",
+            actionPrefix: "本动作",
+          };
+        }
+        if (state.currentUnitType === "musketeer") {
+          return {
+            label: "开火特效",
             actionPrefix: "本动作",
           };
         }
@@ -4510,7 +5232,7 @@
 
       function renderSpineUnitFeatureGroups() {
         if (el.swordsmanFeatureGroup) {
-          el.swordsmanFeatureGroup.hidden = !["swordsman", "spearman"].includes(state.currentUnitType);
+          el.swordsmanFeatureGroup.hidden = !isSlashFxUnit();
         }
         if (el.archerFeatureGroup) {
           el.archerFeatureGroup.hidden = state.currentUnitType !== "archer";
@@ -4555,7 +5277,7 @@
           el.createArrowRigBtn.hidden = state.currentUnitType !== "archer";
         }
         if (el.createSlashFxRigBtn) {
-          el.createSlashFxRigBtn.hidden = !["swordsman", "spearman"].includes(state.currentUnitType);
+          el.createSlashFxRigBtn.hidden = !isSlashFxUnit();
         }
       }
 
@@ -4571,7 +5293,7 @@
 
       function renderActionList() {
         if (!state.actions.length) {
-          state.actions = [createActionSnapshot("当前动作")];
+          state.actions = [createActionSnapshot("idle")];
           state.selectedActionId = state.actions[0].id;
         }
         const selected = selectedAction();
@@ -4584,7 +5306,7 @@
           button.dataset.id = action.id;
           button.innerHTML = `
             <span class="node-name">${escapeHtml(action.name)}</span>
-            <span class="action-meta">${action.duration + 1}帧</span>
+            <span class="action-meta">${action.duration + 1} frames</span>
           `;
           button.addEventListener("click", () => selectAction(action.id));
           el.actionList.appendChild(button);
@@ -4600,7 +5322,7 @@
           button.type = "button";
           button.dataset.id = node.id;
           button.innerHTML = `
-            <span class="node-depth">${"·".repeat(node.depth)}</span>
+            <span class="node-depth">${"  ".repeat(node.depth)}</span>
             <span class="node-name">${escapeHtml(node.name)}${hiddenTag}</span>
             <span class="node-color" style="background:${node.color}"></span>
           `;
@@ -4613,20 +5335,25 @@
         });
       }
 
-      function readFileAsDataUrl(file) {
-        return new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(String(reader.result || ""));
-          reader.onerror = () => reject(new Error(`Cannot read ${file.name}`));
-          reader.readAsDataURL(file);
-        });
+      function resolveProjectImageSource(src, unitType = state.currentUnitType) {
+        const value = String(src || "").trim();
+        if (!value) return "";
+        if (value.startsWith(legAssetPrefix)) {
+          return legAssetUrl(value.slice(legAssetPrefix.length), unitType);
+        }
+        return value;
       }
 
-      function registerCustomImage(id, name, src) {
+      function registerCustomImage(id, name, src, options = {}) {
         state.customImages[id] = { name: String(name || id), src: String(src || "") };
+        if (options.image instanceof HTMLImageElement) {
+          options.image.onload = drawStage;
+          warriorImages[id] = options.image;
+          return;
+        }
         const image = new Image();
         image.onload = drawStage;
-        image.src = src;
+        image.src = resolveProjectImageSource(src, options.unitType || state.currentUnitType);
         warriorImages[id] = image;
       }
 
@@ -4642,12 +5369,12 @@
           .trim()
           .replace(/\\/g, "/")
           .replace(/^\/+/, "");
-        if (!cleanName) throw new Error("请输入 src/faxian/leg 下的图片文件名");
+        if (!cleanName) throw new Error("Enter a file name under src/faxian/leg");
         if (cleanName.includes("..") || cleanName.includes(":")) {
-          throw new Error("只能读取 src/faxian/leg 目录内的图片");
+          throw new Error("Image path cannot escape src/faxian/leg");
         }
         if (!/\.(png|jpe?g|webp)$/i.test(cleanName)) {
-          throw new Error("图片文件必须是 png、jpg、jpeg 或 webp");
+          throw new Error("Only png, jpg, jpeg and webp are supported");
         }
         return cleanName;
       }
@@ -4695,7 +5422,7 @@
 
       function pieceLabel(node) {
         const image = node.attachment?.image || "image";
-        return `${node.name || node.id} · ${image}`;
+        return `${node.name || node.id} / ${image}`;
       }
 
       function selectPiece(nodeId) {
@@ -5164,6 +5891,98 @@
         piece.attachment.skinBoneIds = [...ids];
       }
 
+      function boundSkinBoneIdsExcludingPiece(pieceId = null) {
+        const ids = new Set();
+        pieceNodes().forEach((piece) => {
+          if (!piece?.attachment?.fullSkin) return;
+          if (pieceId && piece.id === pieceId) return;
+          (piece.attachment.skinBoneIds || []).forEach((boneId) => {
+            if (boneId) ids.add(String(boneId));
+          });
+        });
+        return ids;
+      }
+
+      function cross2d(a, b, c) {
+        return (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
+      }
+
+      function onSegment(a, b, point) {
+        return (
+          point.x >= Math.min(a.x, b.x) - 0.001 &&
+          point.x <= Math.max(a.x, b.x) + 0.001 &&
+          point.y >= Math.min(a.y, b.y) - 0.001 &&
+          point.y <= Math.max(a.y, b.y) + 0.001
+        );
+      }
+
+      function lineSegmentsIntersect(a1, a2, b1, b2) {
+        const d1 = cross2d(a1, a2, b1);
+        const d2 = cross2d(a1, a2, b2);
+        const d3 = cross2d(b1, b2, a1);
+        const d4 = cross2d(b1, b2, a2);
+        if (((d1 > 0 && d2 < 0) || (d1 < 0 && d2 > 0)) && ((d3 > 0 && d4 < 0) || (d3 < 0 && d4 > 0))) {
+          return true;
+        }
+        if (Math.abs(d1) <= 0.001 && onSegment(a1, a2, b1)) return true;
+        if (Math.abs(d2) <= 0.001 && onSegment(a1, a2, b2)) return true;
+        if (Math.abs(d3) <= 0.001 && onSegment(b1, b2, a1)) return true;
+        if (Math.abs(d4) <= 0.001 && onSegment(b1, b2, a2)) return true;
+        return false;
+      }
+
+      function pieceContainsBoneBindPose(piece, node) {
+        const polygon = pieceCorners(piece);
+        if (!polygon?.length || !node || node.attachment) return false;
+        const pose = restWorldPose(node);
+        const start = { x: pose.worldX, y: pose.worldY };
+        const end = endPoint(pose);
+        const middle = { x: (start.x + end.x) * 0.5, y: (start.y + end.y) * 0.5 };
+        if (pointInPolygon(start, polygon) || pointInPolygon(end, polygon) || pointInPolygon(middle, polygon)) {
+          return true;
+        }
+        for (let index = 0; index < polygon.length; index += 1) {
+          const next = polygon[(index + 1) % polygon.length];
+          if (lineSegmentsIntersect(start, end, polygon[index], next)) {
+            return true;
+          }
+        }
+        return false;
+      }
+
+      function autoBindableBoneIdsForSelectedPiece(piece = selectedPieceNode()) {
+        if (!piece?.attachment?.fullSkin) return [];
+        const currentIds = new Set((piece.attachment.skinBoneIds || []).map((id) => String(id)));
+        const boundElsewhereIds = boundSkinBoneIdsExcludingPiece(piece.id);
+        return state.nodes
+          .filter((node) => node && !node.attachment && !isTransformLockedNode(node) && node.visible !== false)
+          .filter((node) => !currentIds.has(node.id) && !boundElsewhereIds.has(node.id))
+          .filter((node) => pieceContainsBoneBindPose(piece, node))
+          .map((node) => node.id);
+      }
+
+      function autoBindUnboundBonesToSelectedPiece() {
+        if (!isBindingMode()) {
+          toast("请先进入绑定管理。");
+          return;
+        }
+        const piece = selectedPieceNode();
+        if (!piece?.attachment?.fullSkin) {
+          toast("请先选择一个可蒙皮的贴图。");
+          return;
+        }
+        const candidateIds = autoBindableBoneIdsForSelectedPiece(piece);
+        if (!candidateIds.length) {
+          toast("当前贴图范围内没有可自动绑定的未绑骨骼。");
+          return;
+        }
+        const ids = new Set(piece.attachment.skinBoneIds || []);
+        candidateIds.forEach((boneId) => ids.add(boneId));
+        piece.attachment.skinBoneIds = [...ids];
+        renderAll();
+        toast(`已自动绑定 ${candidateIds.length} 根未绑骨骼。`);
+      }
+
       function pieceTransform(piece) {
         const attachment = piece?.attachment;
         if (!attachment) return null;
@@ -5176,7 +5995,7 @@
             rotation: restPart.rotation || 0,
           };
         }
-        const image = warriorImages[attachment.image];
+        const image = warriorImages[getAttachmentImageForFrame(piece)];
         const naturalWidth = Math.max(1, image?.naturalWidth || image?.width || attachment.width || 48);
         return {
           x: attachment.offsetX || 0,
@@ -5211,7 +6030,7 @@
             false,
           );
         } else {
-          const image = warriorImages[piece.attachment.image];
+          const image = warriorImages[getAttachmentImageForFrame(piece)];
           const naturalWidth = Math.max(1, image?.naturalWidth || image?.width || piece.attachment.width || 48);
           piece.attachment = normalizeAttachment({
             ...piece.attachment,
@@ -5229,6 +6048,7 @@
         const node = selectedNode();
         const disabled = !node;
         const transformLocked = isTransformLockedNode(node);
+        renderIndependentBonePicker();
         [
           el.nodeNameInput,
           el.parentSelect,
@@ -5240,6 +6060,16 @@
           el.scaleYInput,
           el.colorInput,
           el.attachmentImageSelect,
+          el.attachmentVariantSelect,
+          el.attachmentLegAssetSelect,
+          el.attachmentVariantAddBtn,
+          el.attachmentVariantImportBtn,
+          el.attachmentVariantBrowseBtn,
+          el.attachmentVariantDefaultBtn,
+          el.attachmentVariantRemoveBtn,
+          el.attachmentImageKeySelect,
+          el.attachmentImageKeySetBtn,
+          el.attachmentImageKeyDeleteBtn,
           el.keyframeBtn,
           el.deleteNodeBtn,
         ].forEach((input) => {
@@ -5301,7 +6131,7 @@
           el.arrowUnbindParentBtn.disabled = !arrowPiece || isBindingMode() || !arrowParentAtFrame(arrowPiece);
         }
 
-        el.parentSelect.innerHTML = '<option value="">无</option>';
+        el.parentSelect.innerHTML = '<option value=""></option>';
         const slashFxPiece = selectedSlashFxPiece();
         const fxContext = slashEffectContext();
         if (el.slashFxVisibilityRow) el.slashFxVisibilityRow.hidden = !slashFxPiece || isBindingMode();
@@ -5402,10 +6232,87 @@
           ...springInputs,
           ...hemInputs,
         ];
+        const variants = attachmentImageVariants(attachment);
+        const legAssetOptions = availableLegAssetOptions();
+        const selectedLegAssetValue = el.attachmentLegAssetSelect?.value || "";
+        const attachmentSwapKey = attachmentImageKeyAtFrame(context.owner, state.currentFrame);
         el.attachmentImageSelect.value = attachment?.image || "";
         attachmentInputs.forEach((input) => {
           input.disabled = !attachment || transformLocked;
         });
+        if (el.attachmentVariantSelect) {
+          el.attachmentVariantSelect.innerHTML = "";
+          variants.forEach((image) => {
+            const option = document.createElement("option");
+            option.value = image;
+            option.textContent = image;
+            option.selected = image === (el.attachmentVariantSelect.value || attachment?.image || "");
+            el.attachmentVariantSelect.appendChild(option);
+          });
+          if (!variants.length) {
+            const option = document.createElement("option");
+            option.value = "";
+            option.textContent = "无可用贴图";
+            el.attachmentVariantSelect.appendChild(option);
+          }
+          el.attachmentVariantSelect.value = variants.includes(el.attachmentVariantSelect.value)
+            ? el.attachmentVariantSelect.value
+            : attachment?.image || variants[0] || "";
+          el.attachmentVariantSelect.disabled = !attachment || transformLocked;
+        }
+        if (el.attachmentLegAssetSelect) {
+          el.attachmentLegAssetSelect.innerHTML = "";
+          legAssetOptions.forEach((imagePath) => {
+            const option = document.createElement("option");
+            option.value = imagePath;
+            option.textContent = imagePath;
+            option.selected = imagePath === selectedLegAssetValue;
+            el.attachmentLegAssetSelect.appendChild(option);
+          });
+          if (!legAssetOptions.length) {
+            const option = document.createElement("option");
+            option.value = "";
+            option.textContent = "无可用 leg 贴图";
+            el.attachmentLegAssetSelect.appendChild(option);
+          }
+          el.attachmentLegAssetSelect.value = legAssetOptions.includes(selectedLegAssetValue)
+            ? selectedLegAssetValue
+            : legAssetOptions[0] || "";
+          el.attachmentLegAssetSelect.disabled = !attachment || transformLocked || !legAssetOptions.length;
+        }
+        if (el.attachmentVariantAddBtn) el.attachmentVariantAddBtn.disabled = !attachment || transformLocked;
+        if (el.attachmentVariantImportBtn) {
+          el.attachmentVariantImportBtn.disabled = !attachment || transformLocked || !legAssetOptions.length;
+        }
+        if (el.attachmentVariantDefaultBtn) {
+          el.attachmentVariantDefaultBtn.disabled = !attachment || transformLocked || !variants.length;
+        }
+        if (el.attachmentVariantRemoveBtn) {
+          el.attachmentVariantRemoveBtn.disabled = !attachment || transformLocked || variants.length <= 1;
+        }
+        if (el.attachmentImageKeySelect) {
+          el.attachmentImageKeySelect.innerHTML = "";
+          variants.forEach((image) => {
+            const option = document.createElement("option");
+            option.value = image;
+            option.textContent = image;
+            option.selected = image === (attachmentSwapKey?.attachmentImage || getAttachmentImageForFrame(context.owner));
+            el.attachmentImageKeySelect.appendChild(option);
+          });
+          if (!variants.length) {
+            const option = document.createElement("option");
+            option.value = "";
+            option.textContent = "无可用贴图";
+            el.attachmentImageKeySelect.appendChild(option);
+          }
+          el.attachmentImageKeySelect.disabled = !attachment || isBindingMode() || !variants.length;
+        }
+        if (el.attachmentImageKeySetBtn) {
+          el.attachmentImageKeySetBtn.disabled = !attachment || isBindingMode() || !variants.length;
+        }
+        if (el.attachmentImageKeyDeleteBtn) {
+          el.attachmentImageKeyDeleteBtn.disabled = !attachment || isBindingMode() || !attachmentSwapKey;
+        }
         scarfInputs.forEach((input) => {
           input.disabled = !attachment || transformLocked || attachment.image !== "head";
         });
@@ -5473,7 +6380,7 @@
           slashFxButton.id = "createSlashFxRigBtn";
           slashFxButton.type = "button";
           slashFxButton.className = "primary";
-          slashFxButton.textContent = `创建${slashEffectContext().label}骨骼`;
+          slashFxButton.textContent = `Create ${slashEffectContext().label} rig`;
           row.appendChild(slashFxButton);
           const anchor = el.bindingPanel.querySelector(".form-grid");
           if (anchor) {
@@ -5521,7 +6428,7 @@
           button.id = "deleteActionBtn";
           button.type = "button";
           button.className = "danger";
-          button.textContent = "删动作";
+          button.textContent = "删除动作";
           actionRow.appendChild(button);
           actionRow.classList.add("three");
           el.deleteActionBtn = button;
@@ -5531,7 +6438,7 @@
           const button = document.createElement("button");
           button.id = "copyKeyframeBtn";
           button.type = "button";
-          button.textContent = "复制帧";
+          button.textContent = "复制关键帧";
           transport.appendChild(button);
           el.copyKeyframeBtn = button;
         }
@@ -5539,7 +6446,7 @@
           const button = document.createElement("button");
           button.id = "pasteKeyframeBtn";
           button.type = "button";
-          button.textContent = "粘贴帧";
+          button.textContent = "粘贴关键帧";
           transport.appendChild(button);
           el.pasteKeyframeBtn = button;
         }
@@ -5596,16 +6503,27 @@
         renderAll();
       }
 
+      function timelineRows() {
+        return sortedNodes().flatMap((node) => {
+          const nodeRow = { kind: "pose", node };
+          if (!node.attachment) return [nodeRow];
+          return [nodeRow, { kind: "attachment-image", node }];
+        });
+      }
+
       function renderTimeline() {
-        const rows = sortedNodes();
+        const rows = timelineRows();
         const width = (state.duration + 1) * frameWidth;
         el.tracks.style.width = `${width}px`;
         el.tracks.style.height = `${(rows.length + 1) * rowHeight}px`;
-        el.trackLabels.innerHTML = '<div class="track-label">帧 / 节点</div>';
-        rows.forEach((node) => {
+        el.trackLabels.innerHTML = '<div class="track-label">Node / Frame</div>';
+        rows.forEach((entry) => {
           const label = document.createElement("div");
           label.className = "track-label";
-          label.textContent = `${"  ".repeat(node.depth)}${node.name}`;
+          label.textContent =
+            entry.kind === "attachment-image"
+              ? `${"  ".repeat((entry.node.depth || 0) + 1)}贴图替换`
+              : `${"  ".repeat(entry.node.depth || 0)}${entry.node.name}`;
           el.trackLabels.appendChild(label);
         });
 
@@ -5630,37 +6548,57 @@
           }
         }
 
-        rows.forEach((node, index) => {
+        rows.forEach((entry, index) => {
+          const node = entry.node;
           const row = document.createElement("div");
           row.className = "track-row";
           row.style.width = `${width}px`;
           row.dataset.nodeId = node.id;
+          row.dataset.kind = entry.kind;
           row.style.height = `${rowHeight}px`;
           row.addEventListener("pointerdown", (event) => {
             if (event.target !== row) return;
             const frame = frameFromPointer(event, el.tracksViewport);
             state.currentFrame = clampFrame(frame);
             state.selectedNodeId = node.id;
-            state.selectedKey = null;
+            state.selectedKey =
+              entry.kind === "attachment-image" ? { nodeId: node.id, frame: state.currentFrame, channel: "attachmentImage" } : null;
             renderAll();
           });
 
-          (state.timelines[node.id] || []).forEach((keyframe) => {
+          const keyframes =
+            entry.kind === "attachment-image"
+              ? attachmentImageKeys(node)
+              : state.timelines[node.id] || [];
+          keyframes.forEach((keyframe) => {
             const marker = document.createElement("div");
             marker.className =
               "key" +
               (state.selectedKey &&
               state.selectedKey.nodeId === node.id &&
-              state.selectedKey.frame === keyframe.frame
+              state.selectedKey.frame === keyframe.frame &&
+              ((entry.kind === "attachment-image" && state.selectedKey.channel === "attachmentImage") ||
+                (entry.kind !== "attachment-image" && state.selectedKey.channel !== "attachmentImage"))
                 ? " active"
                 : "");
             marker.style.left = `${keyframe.frame * frameWidth}px`;
-            marker.title = `${node.name} @ 第 ${keyframe.frame + 1} 帧`;
+            marker.title =
+              entry.kind === "attachment-image"
+                ? `${node.name} 贴图替换 @ Frame ${keyframe.frame + 1}: ${keyframe.attachmentImage}`
+                : `${node.name} @ Frame ${keyframe.frame + 1}`;
             marker.addEventListener("pointerdown", (event) => {
               event.preventDefault();
               event.stopPropagation();
               state.selectedNodeId = node.id;
-              state.selectedKey = { nodeId: node.id, frame: keyframe.frame };
+              state.selectedKey =
+                entry.kind === "attachment-image"
+                  ? { nodeId: node.id, frame: keyframe.frame, channel: "attachmentImage" }
+                  : { nodeId: node.id, frame: keyframe.frame };
+              if (entry.kind === "attachment-image") {
+                state.currentFrame = keyframe.frame;
+                renderAll();
+                return;
+              }
               drag = {
                 type: "key",
                 nodeId: node.id,
@@ -5696,20 +6634,32 @@
 
       function renderStatus() {
         const binding = isBindingMode();
+        const bindingNodeModeActive = binding && state.bindingDragMode === "node";
+        const bindingPieceModeActive = binding && state.bindingDragMode === "piece";
+        const bindingBoneModeActive = binding && state.bindingDragMode === "bone";
+        const bindingStretchModeActive = binding && state.bindingDragMode === "stretch";
         el.app.classList.toggle("binding-mode", binding);
         el.frameInput.max = state.duration + 1;
         el.frameInput.value = Math.round(state.currentFrame) + 1;
         el.fpsInput.value = state.fps;
         el.durationInput.value = state.duration + 1;
         renderTimeStatus();
-        el.timeStatus.textContent = `第 ${Math.round(state.currentFrame) + 1} 帧 / ${state.duration + 1}，${state.fps} FPS，${(state.currentFrame / state.fps).toFixed(2)} 秒`;
+        renderTimeStatus();
         el.playBtn.textContent = state.playing ? "暂停" : "播放";
         el.viewToggleBtn.textContent = state.renderMode === "texture" ? "骨骼视图" : "贴图视图";
-        el.skeletonOverlayBtn.textContent = state.showSkeletonOverlay ? "隐藏骨骼" : "显示骨骼";
+        el.skeletonOverlayBtn.textContent = state.showSkeletonOverlay ? "隐藏骨架" : "显示骨架";
         el.skeletonOverlayBtn.classList.toggle("active", state.showSkeletonOverlay);
+        if (el.specialAnchorToggleBtn) {
+          el.specialAnchorToggleBtn.textContent = state.showSpecialAnchorBones ? "隐藏轮廓锚点" : "显示轮廓锚点";
+          el.specialAnchorToggleBtn.classList.toggle("active", state.showSpecialAnchorBones);
+        }
         el.nodeModeBtn.classList.toggle("active", state.editMode === "node");
         el.boneModeBtn.classList.toggle("active", state.editMode === "bone");
         el.stretchModeBtn.classList.toggle("active", state.editMode === "stretch");
+        if (el.bindingNodeModeBtn) el.bindingNodeModeBtn.classList.toggle("active", bindingNodeModeActive);
+        if (el.bindingPieceModeBtn) el.bindingPieceModeBtn.classList.toggle("active", bindingPieceModeActive);
+        if (el.bindingBoneModeBtn) el.bindingBoneModeBtn.classList.toggle("active", bindingBoneModeActive);
+        if (el.bindingStretchModeBtn) el.bindingStretchModeBtn.classList.toggle("active", bindingStretchModeActive);
         el.keySourcePrevBtn.classList.toggle("active", state.keyframeSource === "previous");
         el.keySourceNextBtn.classList.toggle("active", state.keyframeSource === "next");
         el.keySourceStartBtn.classList.toggle("active", state.keyframeSource === "start");
@@ -5719,6 +6669,16 @@
         el.bindingModeBtn.classList.toggle("active", binding);
         el.addBoneFromNodeBtn.classList.toggle("active", state.bindingBoneTool === "from-node");
         el.addFreeBoneBtn.classList.toggle("active", state.bindingBoneTool === "free");
+        if (el.autoBindUnboundBonesBtn) {
+          const piece = selectedPieceNode();
+          const availableCount = binding && piece?.attachment?.fullSkin
+            ? autoBindableBoneIdsForSelectedPiece(piece).length
+            : 0;
+          el.autoBindUnboundBonesBtn.disabled = !binding || !piece?.attachment?.fullSkin;
+          el.autoBindUnboundBonesBtn.textContent = availableCount > 0
+            ? `自动绑定未绑骨骼 (${availableCount})`
+            : "自动绑定未绑骨骼";
+        }
         el.keyframeBtn.disabled = binding || !selectedNode();
         el.keySourcePrevBtn.disabled = binding;
         el.keySourceNextBtn.disabled = binding;
@@ -5738,7 +6698,7 @@
         return {
           format: "spine-node-timeline-editor",
           version: 1,
-          name: state.name || "未命名",
+          name: state.name || "new_action",
           fps: state.fps,
           duration: state.duration,
           customImages: Object.keys(state.customImages || {}).length ? state.customImages : undefined,
@@ -5766,9 +6726,9 @@
 
       function applyProjectData(data, options = {}) {
         if (!data || !Array.isArray(data.nodes) || typeof data.timelines !== "object") {
-          throw new Error("JSON 缺少 nodes 或 timelines");
+          throw new Error("JSON must contain nodes and timelines");
         }
-        state.name = String(data.name || "未命名");
+        state.name = String(data.name || "new_action");
         state.fps = Math.max(1, Number(data.fps) || 24);
         state.duration = Math.max(0, Number.isFinite(Number(data.duration)) ? Number(data.duration) : 95);
         state.currentFrame = 0;
@@ -5806,7 +6766,7 @@
         restoreLegAssetImages(options.unitType || state.currentUnitType);
         state.timelines = normalizeTimelineMap(data.timelines, state.duration);
         state.actions = normalizeActions(data.actions);
-        if (!state.actions.length) state.actions = [createActionSnapshot(state.name || "当前动作")];
+        if (!state.actions.length) state.actions = [createActionSnapshot(state.name || "idle")];
         migrateLegacySwordAttachments();
         hydrateBowRigSerializedKeys();
         state.selectedActionId =
@@ -5874,7 +6834,7 @@
         if (!attachment) return false;
         const attachmentIsSword = attachment.image === "newSword" || attachment.restPart?.partId === "sword";
         if (!attachmentIsSword) return false;
-        return node.role !== "sword" && !/sword|weapon|刀|剑|武器/i.test(`${node.id} ${node.name}`);
+        return node.role !== "sword" && !/sword|weapon|\u5200|\u5251|\u6b66\u5668/i.test(`${node.id} ${node.name}`);
       }
 
       function cloneTimelineKeys(keys) {
@@ -5922,7 +6882,7 @@
             );
             return {
               id: String(action.id || uid("action")),
-              name: String(action.name || `动作 ${index + 1}`),
+              name: String(action.name || `Action ${index + 1}`),
               duration,
               timelines: normalizeTimelineMap(action.timelines || {}, duration),
               arrowVisibilityTracks: cloneArrowVisibilityTracks(action.arrowVisibilityTracks, duration),
@@ -5967,6 +6927,9 @@
                 ? { bowControlBaseY: Number(item.bowControlBaseY) }
                 : {}),
               ...(Number.isFinite(Number(item.bowPull)) ? { bowPull: Number(item.bowPull) } : {}),
+              ...(typeof item.attachmentImage === "string" && item.attachmentImage.trim()
+                ? { attachmentImage: String(item.attachmentImage).trim() }
+                : {}),
             }))
             .sort((a, b) => a.frame - b.frame);
         });
@@ -5979,14 +6942,21 @@
 
       function normalizeAttachment(attachment) {
         if (!attachment || typeof attachment !== "object") return null;
+        const normalizedImage = String(attachment.image || "");
         return {
-          image: String(attachment.image || ""),
+          image: normalizedImage,
+          imageVariants: attachmentImageVariants({
+            image: normalizedImage,
+            imageVariants: Array.isArray(attachment.imageVariants) ? attachment.imageVariants : [],
+          }),
           chainTo: attachment.chainTo ? String(attachment.chainTo) : null,
           width: Math.max(1, Number(attachment.width) || 48),
           alpha: Number.isFinite(Number(attachment.alpha))
             ? Math.max(0, Math.min(1, Number(attachment.alpha)))
             : 1,
           layer: Number(attachment.layer) || 0,
+          meshCols: Math.max(3, Math.round(Number(attachment.meshCols) || 4)),
+          meshRows: Math.max(6, Math.round(Number(attachment.meshRows) || 12)),
           anchorX: Number.isFinite(Number(attachment.anchorX)) ? Number(attachment.anchorX) : 0.5,
           lengthScale: Math.max(0.1, Number(attachment.lengthScale) || 1),
           reverse: Boolean(attachment.reverse),
@@ -6380,7 +7350,7 @@
             const sharedPatch = {};
             const lowerPatch = {};
             Object.entries(patch).forEach(([key, value]) => {
-              if (["image", "chainTo", "segments", "layer"].includes(key)) sharedPatch[key] = value;
+              if (["image", "imageVariants", "chainTo", "segments", "layer"].includes(key)) sharedPatch[key] = value;
               else if (
                 ["width", "alpha", "anchorX", "rotationOffset", "offsetX", "offsetY"].includes(key)
               ) {
@@ -6413,9 +7383,121 @@
         renderAll();
       }
 
+      function setAttachmentImageVariants(nextVariants) {
+        const node = attachmentEditNode();
+        if (!node?.attachment) return;
+        const normalized = attachmentImageVariants({
+          image: node.attachment.image,
+          imageVariants: nextVariants,
+        });
+        node.attachment = normalizeAttachment({
+          ...node.attachment,
+          imageVariants: normalized,
+        });
+        renderAll();
+      }
+
+      function addAttachmentVariant(image) {
+        const node = attachmentEditNode();
+        if (!node?.attachment || isTransformLockedNode(node)) return;
+        const nextImage = String(image || "").trim();
+        if (!nextImage) return;
+        setAttachmentImageVariants([...attachmentImageVariants(node.attachment), nextImage]);
+      }
+
+      async function importAttachmentVariantFromLegAssetInput() {
+        const node = attachmentEditNode();
+        if (!node?.attachment || isTransformLockedNode(node)) return;
+        const filename = String(el.attachmentLegAssetSelect?.value || "").trim();
+        if (!filename) return;
+        const imageKey = registerLegAssetImage(filename);
+        addAttachmentVariant(imageKey);
+      }
+
+      async function importAttachmentVariantFromFile(file) {
+        const node = attachmentEditNode();
+        if (!node?.attachment || isTransformLockedNode(node) || !file) return;
+        const image = await loadFileImage(file);
+        const cleanName = normalizeLegAssetFilename(file.name);
+        const customImageId = `${customImagePrefix}attachment-variant-${uid("image")}`;
+        registerCustomImage(customImageId, file.name, `${legAssetPrefix}${cleanName}`, { image });
+        addAttachmentVariant(customImageId);
+      }
+
+      function setAttachmentDefaultImage(image) {
+        const node = attachmentEditNode();
+        if (!node?.attachment || isTransformLockedNode(node)) return;
+        const nextImage = String(image || "").trim();
+        if (!nextImage) return;
+        node.attachment = normalizeAttachment({
+          ...node.attachment,
+          image: nextImage,
+          imageVariants: [nextImage, ...attachmentImageVariants(node.attachment)],
+        });
+        renderAll();
+      }
+
+      function removeAttachmentVariant(image) {
+        const node = attachmentEditNode();
+        if (!node?.attachment || isTransformLockedNode(node)) return;
+        const nextImage = String(image || "").trim();
+        const variants = attachmentImageVariants(node.attachment).filter((value) => value !== nextImage);
+        if (!variants.length) return;
+        const nextDefault = node.attachment.image === nextImage ? variants[0] : node.attachment.image;
+        node.attachment = normalizeAttachment({
+          ...node.attachment,
+          image: nextDefault,
+          imageVariants: variants,
+        });
+        const keys = state.timelines[node.id] || [];
+        state.timelines[node.id] = keys.map((item) =>
+          item.attachmentImage === nextImage ? { ...item, attachmentImage: nextDefault } : item,
+        );
+        renderAll();
+      }
+
+      function setAttachmentImageKeyAtCurrentFrame(image = el.attachmentImageKeySelect?.value) {
+        const node = attachmentEditNode();
+        if (!node?.attachment || isBindingMode()) return;
+        const nextImage = String(image || "").trim();
+        if (!nextImage) return;
+        const variants = attachmentImageVariants(node.attachment);
+        if (variants.length && !variants.includes(nextImage)) return;
+        const keys = state.timelines[node.id] || [];
+        const existing = keys.find((item) => item.frame === state.currentFrame);
+        if (existing) existing.attachmentImage = nextImage;
+        else keys.push({ ...sourceSnapshotNode(node), frame: state.currentFrame, attachmentImage: nextImage });
+        keys.sort((a, b) => a.frame - b.frame);
+        state.timelines[node.id] = keys;
+        state.selectedKey = { nodeId: node.id, frame: state.currentFrame, channel: "attachmentImage" };
+        renderAll();
+      }
+
+      function deleteAttachmentImageKeyAtCurrentFrame() {
+        const node = attachmentEditNode();
+        if (!node?.attachment) return;
+        const keys = state.timelines[node.id] || [];
+        let changed = false;
+        state.timelines[node.id] = keys.flatMap((item) => {
+          if (item.frame !== state.currentFrame || !item.attachmentImage) return [item];
+          changed = true;
+          const next = { ...item };
+          delete next.attachmentImage;
+          const hasPoseData =
+            ["x", "y", "rotation", "length", "scaleX", "scaleY", "visible"].some((key) => key in next) ||
+            BowRigController.hasSerializedPose(next);
+          return hasPoseData ? [next] : [];
+        });
+        if (changed && state.selectedKey?.channel === "attachmentImage" && state.selectedKey?.nodeId === node.id) {
+          state.selectedKey = null;
+        }
+        renderAll();
+      }
+
       function createDefaultAttachment(image = "body") {
         return {
           image,
+          imageVariants: image ? [image] : [],
           chainTo: null,
           width: image === "head" ? 56 : 48,
           alpha: 1,
@@ -6490,7 +7572,7 @@
         upsertKeyframe(node, sourceSnapshotNode(node));
         snapshotAllBowRigsAtCurrentFrame();
         state.selectedKey = { nodeId: node.id, frame: state.currentFrame };
-        toast(`已记录 ${node.name} 第 ${state.currentFrame + 1} 帧`);
+        toast(`Recorded ${node.name} at frame ${state.currentFrame + 1}`);
         renderAll();
       }
 
@@ -6509,7 +7591,17 @@
           state.selectedKey = { nodeId: node.id, frame: state.currentFrame };
         }
         const keys = state.timelines[state.selectedKey.nodeId] || [];
-        const next = keys.filter((item) => item.frame !== state.selectedKey.frame);
+        const next = keys.flatMap((item) => {
+          if (item.frame !== state.selectedKey.frame) return [item];
+          if (state.selectedKey.channel !== "attachmentImage") return [];
+          if (!item.attachmentImage) return [item];
+          const cloned = { ...item };
+          delete cloned.attachmentImage;
+          const hasPoseData =
+            ["x", "y", "rotation", "length", "scaleX", "scaleY", "visible"].some((key) => key in cloned) ||
+            BowRigController.hasSerializedPose(cloned);
+          return hasPoseData ? [cloned] : [];
+        });
         state.timelines[state.selectedKey.nodeId] = next;
         state.selectedKey = null;
         renderAll();
@@ -6526,18 +7618,18 @@
         });
         state.selectedKey = null;
         renderAll();
-        toast(deleted ? `已删除第 ${frame + 1} 帧的 ${deleted} 个关键帧` : `第 ${frame + 1} 帧没有关键帧`);
+        toast(deleted ? `Deleted ${deleted} keyframes at frame ${frame + 1}` : `No keyframes at frame ${frame + 1}`);
       }
 
       function setSelectedArrowVisibilityAtCurrentFrame(visible) {
         if (isBindingMode()) {
-          toast("箭矢显隐关键帧只能在动画模式下使用");
+          toast("Arrow visibility can only be edited in animation mode.");
           return;
         }
         const piece = selectedArrowPiece();
         const nodes = arrowRigNodesForPiece(piece);
         if (!nodes.length) {
-          toast("请先选中箭矢骨骼");
+          toast("Create an arrow rig first.");
           return;
         }
         const track = normalizeArrowVisibilityTrack([
@@ -6551,22 +7643,22 @@
         state.selectedPieceNodeId = piece?.id || null;
         state.selectedKey = null;
         renderAll();
-        toast(`箭矢将从第 ${state.currentFrame + 1} 帧${visible ? "出现" : "消失"}`);
+        toast(`Arrow ${visible ? "shown" : "hidden"} at frame ${state.currentFrame + 1}`);
       }
 
       function setSelectedArrowParentAtCurrentFrame(parentId) {
         if (isBindingMode()) {
-          toast("箭矢父节点事件只能在动画模式下使用");
+          toast("Arrow temp parent can only be edited in animation mode.");
           return;
         }
         const piece = selectedArrowPiece();
         const bone = arrowCarrierBoneForPiece(piece);
         if (!piece || !bone) {
-          toast("请先选中箭矢骨骼");
+          toast("Create an arrow rig first.");
           return;
         }
         if (parentId && parentId === bone.id) {
-          toast("箭矢不能绑定到自身");
+          toast("Arrow temp parent cannot bind to itself.");
           return;
         }
         const currentTrack = normalizeArrowParentTrack(state.arrowParentTracks?.[piece.id]);
@@ -6583,8 +7675,8 @@
         renderAll();
         toast(
           parentId
-            ? `箭矢将从第 ${state.currentFrame + 1} 帧开始绑定父节点`
-            : `箭矢将从第 ${state.currentFrame + 1} 帧开始解绑父节点`,
+            ? `Arrow temp parent bound at frame ${state.currentFrame + 1}`
+            : `Arrow temp parent cleared at frame ${state.currentFrame + 1}`,
         );
       }
 
@@ -6610,13 +7702,13 @@
       function setSelectedSlashFxVisibilityAtCurrentFrame(visible) {
         const fxContext = slashEffectContext();
         if (isBindingMode()) {
-          toast(`${fxContext.label}显隐关键帧只能在动画模式下使用`);
+          toast(`${fxContext.label} visibility can only be edited in animation mode.`);
           return;
         }
         const piece = selectedSlashFxPiece();
         const nodes = slashFxRigNodesForPiece(piece);
         if (!nodes.length) {
-          toast(`请先选中${fxContext.label}骨骼`);
+          toast(`Create ${fxContext.label} first.`);
           return;
         }
         let nextTrack = [...(state.slashFxVisibilityTracks?.[piece.id] || []).filter((item) => item.frame !== state.currentFrame)];
@@ -6644,7 +7736,7 @@
         state.selectedPieceNodeId = piece?.id || null;
         state.selectedKey = null;
         renderAll();
-        toast(`${fxContext.label}将从第 ${state.currentFrame + 1} 帧${visible ? "出现" : "消失"}`);
+        toast(`${fxContext.label} ${visible ? "shown" : "hidden"} at frame ${state.currentFrame + 1}`);
       }
 
       function resetSelectedSlashFxVisibilityForCurrentAction() {
@@ -6670,13 +7762,13 @@
       function toggleSelectedSlashFxHiddenForAction() {
         const fxContext = slashEffectContext();
         if (isBindingMode()) {
-          toast(`${fxContext.label}动作显隐开关只能在动画模式下使用`);
+          toast(`${fxContext.label} action visibility can only be edited in animation mode.`);
           return;
         }
         const piece = selectedSlashFxPiece();
         const nodes = slashFxRigNodesForPiece(piece);
         if (!nodes.length || !piece) {
-          toast(`请先选中${fxContext.label}骨骼`);
+          toast(`Create ${fxContext.label} first.`);
           return;
         }
         const nextHidden = !isSlashFxHiddenForCurrentAction(piece);
@@ -6689,23 +7781,23 @@
         state.selectedPieceNodeId = piece.id;
         state.selectedKey = null;
         renderAll();
-        toast(nextHidden ? `当前动作已隐藏${fxContext.label}` : `当前动作已恢复${fxContext.label}显示`);
+        toast(nextHidden ? `${fxContext.label} hidden for this action.` : `${fxContext.label} shown for this action.`);
       }
 
       function setSelectedSlashFxParentAtCurrentFrame(parentId) {
         const fxContext = slashEffectContext();
         if (isBindingMode()) {
-          toast(`${fxContext.label}父节点事件只能在动画模式下使用`);
+          toast(`${fxContext.label} temp parent can only be edited in animation mode.`);
           return;
         }
         const piece = selectedSlashFxPiece();
         const bone = slashFxCarrierBoneForPiece(piece);
         if (!piece || !bone) {
-          toast(`请先选中${fxContext.label}骨骼`);
+          toast(`Create ${fxContext.label} first.`);
           return;
         }
         if (parentId && parentId === bone.id) {
-          toast(`${fxContext.label}不能绑定到自身`);
+          toast(`${fxContext.label} temp parent cannot bind to itself.`);
           return;
         }
         const currentTrack = normalizeSlashFxParentTrack(state.slashFxParentTracks?.[piece.id]);
@@ -6722,8 +7814,8 @@
         renderAll();
         toast(
           parentId
-            ? `${fxContext.label}将从第 ${state.currentFrame + 1} 帧开始绑定父节点`
-            : `${fxContext.label}将从第 ${state.currentFrame + 1} 帧开始解绑父节点`,
+            ? `${fxContext.label} temp parent bound at frame ${state.currentFrame + 1}`
+            : `${fxContext.label} temp parent cleared at frame ${state.currentFrame + 1}`,
         );
       }
 
@@ -6757,7 +7849,7 @@
       function createActionSnapshot(name, id = uid("action")) {
         return {
           id,
-          name: String(name || "未命名动作"),
+          name: String(name || "new_action"),
           duration: state.duration,
           timelines: cloneTimelines(state.timelines),
           arrowVisibilityTracks: cloneArrowVisibilityTracks(state.arrowVisibilityTracks, state.duration),
@@ -6786,8 +7878,8 @@
       }
 
       function newAction() {
-        const suggested = `动作 ${state.actions.length + 1}`;
-        const name = window.prompt("新动作名称", suggested);
+        const suggested = `Action ${state.actions.length + 1}`;
+        const name = window.prompt("Enter action name", suggested);
         if (name === null) return;
         const action = {
           id: uid("action"),
@@ -6802,17 +7894,17 @@
         };
         state.actions.push(action);
         selectAction(action.id);
-        toast(`已新建动作：${action.name}`);
+        toast(`Duplicated action: ${action.name}`);
       }
 
       async function saveCurrentAction() {
         let action = selectedAction();
         if (!action) {
-          action = createActionSnapshot(el.actionNameInput.value || "当前动作");
+          action = createActionSnapshot(el.actionNameInput.value || "new_action");
           state.actions.push(action);
           state.selectedActionId = action.id;
         }
-        action.name = el.actionNameInput.value.trim() || action.name || "未命名动作";
+        action.name = el.actionNameInput.value.trim() || action.name || "new_action";
         action.duration = state.duration;
         action.timelines = cloneTimelines(state.timelines);
         action.arrowVisibilityTracks = cloneArrowVisibilityTracks(state.arrowVisibilityTracks, action.duration);
@@ -6910,7 +8002,7 @@
         hydrateBowRigTimelineMap(state.timelines);
         syncCurrentActionFromTimeline();
         renderAll();
-        toast(`已切换动作：${action.name}`);
+        toast(`Switched to action: ${action.name}`);
       }
 
       function frameFromPointer(event, container) {
@@ -7002,34 +8094,46 @@
       function hitTest(point) {
         const jointRadius = screenLengthToWorld(12);
         const boneRadius = screenLengthToWorld(8);
+        const bindingMode = isBindingMode();
+        const bindingNodeMode = bindingMode && state.bindingDragMode === "node";
+        const bindingPieceMode = bindingMode && state.bindingDragMode === "piece";
+        const bindingBoneMode = bindingMode && state.bindingDragMode === "bone";
+        const bindingStretchMode = bindingMode && state.bindingDragMode === "stretch";
+        if (bindingStretchMode) return hitTestStretch(point);
         if (state.editMode === "stretch") return hitTestStretch(point);
-        if (isBindingMode()) {
+        if (bindingPieceMode) {
           const selectedPieceHit = hitTestSelectedPiece(point);
           if (selectedPieceHit) return selectedPieceHit;
+          return null;
         }
-        const nodes = sortedNodes().reverse();
-        for (const node of nodes) {
-          if (!isNodeVisibleAtFrame(node)) continue;
-          const pose = worldPose(node);
-          const end = endPoint(pose);
-          if (distance(point, end) <= jointRadius) {
-            const childAtJoint = firstChildOf(node.id);
-            if (childAtJoint) {
-              return { type: "origin", node: childAtJoint, jointId: endJointId(node) };
+        const allowJointHits = !bindingMode || bindingNodeMode;
+        const allowBoneHits = !bindingMode || bindingBoneMode;
+        if (allowJointHits || allowBoneHits) {
+          const nodes = sortedNodes().reverse();
+          for (const node of nodes) {
+            if (!isCanvasVisibleNode(node)) continue;
+            const pose = worldPose(node);
+            const end = endPoint(pose);
+            const boneLength = distance({ x: pose.worldX, y: pose.worldY }, end);
+            const effectiveJointRadius = bindingMode
+              ? Math.min(jointRadius, Math.max(screenLengthToWorld(4), boneLength * 0.35))
+              : jointRadius;
+            if (allowJointHits && distance(point, end) <= effectiveJointRadius) {
+              const childAtJoint = firstChildOf(node.id);
+              if (childAtJoint) {
+                return { type: "origin", node: childAtJoint, jointId: endJointId(node) };
+              }
+              return { type: "end", node, jointId: endJointId(node) };
             }
-            return { type: "end", node, jointId: endJointId(node) };
-          }
-          if (distance(point, { x: pose.worldX, y: pose.worldY }) <= jointRadius) {
-            return { type: "origin", node, jointId: startJointId(node) };
-          }
-          if (pointSegmentDistance(point, { x: pose.worldX, y: pose.worldY }, end) <= boneRadius) {
-            return { type: "bone", node };
+            if (allowJointHits && distance(point, { x: pose.worldX, y: pose.worldY }) <= effectiveJointRadius) {
+              return { type: "origin", node, jointId: startJointId(node) };
+            }
+            if (allowBoneHits && pointSegmentDistance(point, { x: pose.worldX, y: pose.worldY }, end) <= boneRadius) {
+              return { type: "bone", node };
+            }
           }
         }
-        if (isBindingMode()) {
-          const pieceHit = hitTestPiece(point);
-          if (pieceHit) return pieceHit;
-        }
+        if (bindingMode && !bindingBoneMode) return null;
         return null;
       }
 
@@ -7093,7 +8197,7 @@
 
       function hitTestStretchNode(point, node) {
         const handleRadius = screenLengthToWorld(14);
-        if (!isNodeVisibleAtFrame(node)) return null;
+        if (!isCanvasVisibleNode(node)) return null;
         const pose = worldPose(node);
         const end = endPoint(pose);
         if (distance(point, end) <= handleRadius) {
@@ -7108,7 +8212,10 @@
       function firstChildOf(parentId) {
         return (
           sortedNodes().find(
-            (node) => effectiveParentIdForNode(node) === parentId && participatesInGenericJointSolver(node),
+            (node) =>
+              effectiveParentIdForNode(node) === parentId &&
+              participatesInGenericJointSolver(node) &&
+              isCanvasVisibleNode(node),
           ) || null
         );
       }
@@ -7224,7 +8331,7 @@
       }
 
       function applySolvedJointPositions(positions) {
-        sortedNodes().forEach((node) => {
+        sortedNodeRefs().forEach((node) => {
           if (!participatesInGenericJointSolver(node)) return;
           const start = positions[startJointId(node)];
           const end = positions[endJointId(node)];
@@ -7232,6 +8339,10 @@
           if (!node.parentId) {
             node.x = start.x;
             node.y = start.y;
+          } else if (isBindingMode()) {
+            const local = localFromWorld(node, start);
+            node.x = local.x;
+            node.y = local.y;
           } else {
             node.x = 0;
             node.y = 0;
@@ -7271,6 +8382,44 @@
         });
         syncKeyAtCurrentFrame(node);
         drag?.touched?.add(node.id);
+      }
+
+      function rotateBoneEndpointPreserveLength(node, startWorld, targetWorld) {
+        if (!node || !startWorld || !targetWorld) return;
+        const parent = node.parentId ? state.nodes.find((item) => item.id === node.parentId) : null;
+        const parentPose = parent ? worldPose(parent) : null;
+        const parentRotation = parentPose?.worldRotation || 0;
+        const dx = targetWorld.x - startWorld.x;
+        const dy = targetWorld.y - startWorld.y;
+        if (Math.hypot(dx, dy) <= 0.001) return;
+        node.rotation = (Math.atan2(dy, dx) * 180) / Math.PI - parentRotation;
+        poseOverrides.set(node.id, {
+          x: node.x,
+          y: node.y,
+          rotation: node.rotation,
+          length: node.length,
+          scaleX: node.scaleX,
+          scaleY: node.scaleY,
+        });
+        syncKeyAtCurrentFrame(node);
+        drag?.touched?.add(node.id);
+      }
+
+      function handleBindingJointDrag(node, dragType, point) {
+        if (!isBindingMode() || !node || node.parentId) return false;
+        if (dragType === "origin") {
+          moveBoneRigid(
+            node,
+            { x: point.x - drag.start.x, y: point.y - drag.start.y },
+            drag.startWorldOrigin,
+          );
+          return true;
+        }
+        if (dragType === "end") {
+          rotateBoneEndpointPreserveLength(node, drag.startWorldOrigin, point);
+          return true;
+        }
+        return false;
       }
 
       function detachBoneFromParentPreserveWorld(node) {
@@ -7450,16 +8599,16 @@
             }),
           });
           const result = await response.json().catch(() => ({}));
-          if (!response.ok) throw new Error(result.error || "保存失败");
+          if (!response.ok) throw new Error(result.error || "Save failed");
           renderJsonPreview();
-          toast(`已保存到 ${result.path || "JSON 文件"}`);
+          toast(`Saved to ${result.path || "JSON file"}`);
         } catch (error) {
-          toast(error.message || "保存 JSON 文件失败");
+          toast(error.message || "Saving JSON failed");
         }
       }
 
       function resetProject() {
-        state.name = "默认";
+        state.name = "default";
         state.fps = 24;
         state.duration = 95;
         state.currentFrame = 0;
@@ -7491,7 +8640,7 @@
           },
         ];
         state.timelines = { root: [key("root", 0)] };
-        state.actions = [createActionSnapshot("默认")];
+        state.actions = [createActionSnapshot("default")];
         state.selectedActionId = state.actions[0].id;
         renderAll();
       }
@@ -7505,12 +8654,12 @@
         });
         const action = selectedAction();
         if (action) {
-          action.name = el.actionNameInput.value.trim() || action.name || "待机";
+          action.name = el.actionNameInput.value.trim() || action.name || "idle";
           action.duration = state.duration;
           action.timelines = cloneTimelines(state.timelines);
         }
         renderAll();
-        toast("已生成 48 帧待机循环");
+        toast("Generated a 48-frame idle loop.");
       }
 
       function buildIdleTimelineForNode(node, duration = 47) {
@@ -7569,12 +8718,12 @@
       function idleRole(node) {
         if (node.role) return node.role;
         const name = String(node.name || "").toLowerCase();
-        if (name.includes("head") || name.includes("头")) return "head";
-        if (name.includes("torso") || name.includes("身") || name.includes("躯")) return "torso";
-        if (name.includes("rightarm") || name.includes("右臂")) return "rightArm";
-        if (name.includes("leftarm") || name.includes("左臂")) return "leftArm";
-        if (name.includes("rightleg") || name.includes("右腿")) return "rightLeg";
-        if (name.includes("leftleg") || name.includes("左腿")) return "leftLeg";
+        if (name.includes("head") || name.includes("\u5934")) return "head";
+        if (name.includes("torso") || name.includes("\u8eaf\u5e72") || name.includes("\u810a\u690e")) return "torso";
+        if (name.includes("rightarm") || name.includes("\u53f3\u81c2")) return "rightArm";
+        if (name.includes("leftarm") || name.includes("\u5de6\u81c2")) return "leftArm";
+        if (name.includes("rightleg") || name.includes("\u53f3\u817f")) return "rightLeg";
+        if (name.includes("leftleg") || name.includes("\u5de6\u817f")) return "leftLeg";
         return "";
       }
 
@@ -7664,7 +8813,7 @@
 
       function jumpRole(node) {
         const name = String(node.name || "");
-        if (node.role === "torso" && /躯干\s*[56]/.test(name)) return "leftArm";
+        if (node.role === "torso" && /\u8eaf\u5e72\s*[56]/.test(name)) return "leftArm";
         return idleRole(node);
       }
 
@@ -7700,7 +8849,8 @@
           resetSpineUnitSelect();
           return false;
         }
-        const project = await loadProjectJsonFile(config.projectUrl);
+        const projectUrl = spineUnitRuntimeProjectUrl(unitType);
+        const project = await loadProjectJsonFile(projectUrl);
         if (!project) {
           resetSpineUnitSelect();
           toast(`Failed to load ${config.label} project.`);
@@ -7716,8 +8866,8 @@
       }
 
       async function loadInitialSpineUnitProject() {
-        const config = getSpineUnitConfig(state.currentUnitType);
-        const project = await loadProjectJsonFile(config.projectUrl);
+        const projectUrl = spineUnitRuntimeProjectUrl(state.currentUnitType);
+        const project = await loadProjectJsonFile(projectUrl);
         await refreshCurrentUnitAssetImages(state.currentUnitType);
         if (project) {
           applyProjectData(project, { unitType: state.currentUnitType });
@@ -7742,23 +8892,23 @@
         if (savedProject) {
           applyProjectData(savedProject);
           renderAll();
-          toast("已载入 JSON 文件中的新版动作");
+          toast("Loaded new-version action data from JSON.");
           return;
         }
         if (window.RECOVERED_SPINE_PROJECT) {
           applyProjectData(window.RECOVERED_SPINE_PROJECT);
           renderAll();
-          toast("已载入恢复版新版动作");
+          toast("Loaded recovered new-version action data.");
           return;
         }
         const layout = window.FAXIAN_USER_SPINE_LAYOUT;
         if (!layout?.bones?.length || !layout?.parts?.length) {
-          toast("未找到新版骨骼数据");
+          toast("New-version skeleton data not found.");
           return;
         }
         applyProjectData(buildNewVersionProject(layout));
         renderAll();
-        toast("已载入新版");
+        toast("Loaded new-version sample.");
       }
 
       function buildNewVersionProject(layout) {
@@ -7874,7 +9024,7 @@
         return {
           format: "spine-node-timeline-editor",
           version: 1,
-          name: "新版",
+          name: "new_version",
           fps: 36,
           duration: 47,
           nodes,
@@ -7883,13 +9033,13 @@
           actions: [
             {
               id: "idle",
-              name: "待机",
+              name: "idle",
               duration: 47,
               timelines: idleTimelines,
             },
             {
               id: "jump",
-              name: "跳跃",
+              name: "jump",
               duration: 47,
               timelines: jumpTimelines,
             },
@@ -8383,7 +9533,7 @@
           },
         });
         renderAll();
-        toast("已载入侧面行走人形");
+        toast("Loaded side-walk sample.");
       }
 
       function loadSideSlashSample() {
@@ -8455,7 +9605,7 @@
           }),
         };
         renderAll();
-        toast("已载入侧身劈砍动作");
+        toast("Loaded side-slash sample.");
       }
 
       function loadThreeQuarterSample() {
@@ -8794,7 +9944,7 @@
           },
         });
         renderAll();
-        toast("已载入 70 度侧身骨骼");
+        toast("Loaded 70-degree side skeleton sample.");
       }
 
       function setWorkspaceMode(mode) {
@@ -8810,7 +9960,7 @@
           if (!selectedPieceNode()) state.selectedPieceNodeId = pieceNodes()[0]?.id || null;
         }
         renderAll();
-        toast(isBindingMode() ? "已进入绑定管理：拖拽和属性修改会写入 bindPose" : "已返回动画时间轴");
+        toast(isBindingMode() ? "Entered binding mode: drag and property edits write into bindPose." : "Returned to animation timeline.");
       }
 
       function selectedWeaponNode() {
@@ -8825,7 +9975,7 @@
           node.role === "sword" ||
           node.role === "weapon" ||
           node.attachment?.image === "newSword" ||
-          /sword|weapon|刀|剑|武器/i.test(`${node.id} ${node.name}`)
+          /sword|weapon|\u5200|\u5251|\u6b66\u5668/i.test(`${node.id} ${node.name}`)
         );
       }
 
@@ -8860,7 +10010,7 @@
         state.timelines[id] = [];
         state.selectedNodeId = id;
         renderAll();
-        toast("已添加武器骨骼，可继续拖拽或调整长度位置");
+        toast("Weapon bone added. You can continue dragging it or adjusting length and position.");
       }
 
       function addRootBone() {
@@ -8885,7 +10035,7 @@
         state.selectedNodeId = id;
         state.selectedKey = null;
         renderAll();
-        toast("已添加独立骨骼");
+        toast("Independent bone added.");
       }
 
       function setBindingBoneTool(tool) {
@@ -8895,10 +10045,10 @@
         renderStatus();
         toast(
           state.bindingBoneTool === "from-node"
-            ? "从节点添加：先选中一个骨骼节点，再在画布点终点"
+            ? "From-node add: select a parent bone first, then click an end point on canvas"
             : state.bindingBoneTool === "free"
-              ? "自由添加：在画布依次点击起点和终点"
-              : "已退出骨骼添加",
+              ? "Free add: click a start point and then an end point on canvas"
+              : "Bone add tool exited",
         );
       }
 
@@ -8906,13 +10056,13 @@
         if (!isBindingMode() || !state.bindingBoneTool) return false;
         const piece = selectedPieceNode();
         if (!piece) {
-          toast("先在物块列表选择一个物块");
+          toast("Select a piece in the piece list first.");
           return true;
         }
         if (state.bindingBoneTool === "from-node") {
           const parent = selectedNode();
           if (!parent) {
-            toast("先选择一个作为起点的骨骼节点");
+            toast("Select a bone node as the start point first.");
             return true;
           }
           createBoneFromParent(parent, point);
@@ -8922,7 +10072,7 @@
         }
         if (!state.pendingFreeBoneStart) {
           state.pendingFreeBoneStart = point;
-          toast("已确定自由骨骼起点，再点击终点");
+          toast("Free-bone start point locked. Click an end point next.");
           renderStatus();
           drawStage();
           return true;
@@ -8956,7 +10106,7 @@
         state.timelines[id] = [];
         bindBoneToSelectedPiece(id);
         state.selectedNodeId = id;
-        toast("已从节点创建绑定骨骼");
+        toast("Created a bound bone from the selected node.");
       }
 
       function createFreeBone(startWorld, endWorld) {
@@ -8978,7 +10128,7 @@
         state.timelines[id] = [];
         bindBoneToSelectedPiece(id);
         state.selectedNodeId = id;
-        toast("已自由创建绑定骨骼");
+        toast("Created a free bound bone.");
       }
 
       function addPieceFromImage(image, name = image) {
@@ -9024,11 +10174,11 @@
         state.selectedPieceNodeId = id;
         state.selectedNodeId = id;
         renderAll();
-        toast("已添加物块，可拖动或用右侧数值缩放旋转");
+        toast("Piece added. You can drag it or use the right-side inputs to scale and rotate it.");
       }
 
       async function addPieceFromLegAssetInput() {
-        const filename = window.prompt("输入 src/faxian/leg 下的图片文件名，例如 sword.png 或 weapons/sword2.png");
+        const filename = window.prompt("Enter an image path under src/faxian/leg, for example sword.png or weapons/sword2.png");
         if (filename === null) return;
         const cleanName = normalizeLegAssetFilename(filename);
         const imageId = `${legAssetPrefix}${cleanName}`;
@@ -9839,7 +10989,7 @@
           state.selectedKey = null;
           dynamicScarves.clear();
           renderAll();
-          toast("已创建弓骨骼");
+          toast("Bow rig created.");
         } catch (error) {
           toast(error instanceof Error ? error.message : String(error));
         }
@@ -9867,10 +11017,10 @@
       }
 
       async function createArrowRigFromFile(file) {
-        const [image, src] = await Promise.all([loadFileImage(file), readFileAsDataUrl(file)]);
+        const image = await loadFileImage(file);
+        const cleanName = normalizeLegAssetFilename(file.name);
         const customImageId = `${customImagePrefix}arrow-${uid("image")}`;
-        registerCustomImage(customImageId, file.name, src);
-        warriorImages[customImageId] = image;
+        registerCustomImage(customImageId, file.name, `${legAssetPrefix}${cleanName}`, { image });
         const imageWidth = Math.max(1, image.naturalWidth || image.width || 1);
         const imageHeight = Math.max(1, image.naturalHeight || image.height || 1);
         const baseName = String(file.name || "arrow")
@@ -9924,7 +11074,7 @@
         state.selectedKey = null;
         dynamicScarves.clear();
         renderAll();
-        toast("已创建箭矢骨骼");
+        toast("Arrow rig created.");
       }
 
       function promptSlashFxRigImageFile() {
@@ -9950,10 +11100,10 @@
 
       async function createSlashFxRigFromFile(file) {
         const fxContext = slashEffectContext();
-        const [image, src] = await Promise.all([loadFileImage(file), readFileAsDataUrl(file)]);
+        const image = await loadFileImage(file);
+        const cleanName = normalizeLegAssetFilename(file.name);
         const customImageId = `${customImagePrefix}slash-fx-${uid("image")}`;
-        registerCustomImage(customImageId, file.name, src);
-        warriorImages[customImageId] = image;
+        registerCustomImage(customImageId, file.name, `${legAssetPrefix}${cleanName}`, { image });
         const imageWidth = Math.max(1, image.naturalWidth || image.width || 1);
         const imageHeight = Math.max(1, image.naturalHeight || image.height || 1);
         const baseName = String(file.name || "slash_fx")
@@ -10007,7 +11157,7 @@
         state.selectedKey = null;
         dynamicScarves.clear();
         renderAll();
-        toast(`已创建${fxContext.label}骨骼`);
+        toast(`Created ${fxContext.label}.`);
       }
 
       function deleteSelectedPiece() {
@@ -10029,7 +11179,7 @@
         state.selectedPieceNodeId = null;
         dynamicScarves.clear();
         renderAll();
-        toast("已删除物块，骨骼保留");
+        toast("Piece deleted. Bones were kept.");
       }
 
       function applyWeaponImage() {
@@ -10046,7 +11196,7 @@
         state.selectedNodeId = node.id;
         dynamicScarves.clear();
         renderAll();
-        toast(`已更换武器贴图：${image}`);
+        toast(`Weapon texture replaced: ${image}`);
       }
 
       function captureBindPoseFromCurrentPose() {
@@ -10056,7 +11206,7 @@
         });
         poseOverrides.clear();
         renderAll();
-        toast("已将当前姿势保存为绑定姿势");
+        toast("Current pose saved as bind pose.");
       }
 
       function resetNodesToBindPose() {
@@ -10066,7 +11216,7 @@
         });
         poseOverrides.clear();
         renderAll();
-        toast("已回到绑定姿势");
+        toast("Reset to bind pose.");
       }
 
       function bindEvents() {
@@ -10105,7 +11255,7 @@
           const arrowPiece = arrowPieceForNode(node);
           const slashFxPiece = slashFxPieceForNode(node);
           if (state.nodes.length === 1) {
-            toast("至少保留一个节点");
+            toast("Keep at least one node.");
             return;
           }
           state.nodes.forEach((item) => {
@@ -10151,7 +11301,7 @@
           el.arrowBindParentBtn.addEventListener("click", () => {
             const parentId = el.arrowParentSelect?.value || null;
             if (!parentId) {
-              toast("请先选择箭矢临时父节点");
+              toast("Select an arrow temp parent first.");
               return;
             }
             setSelectedArrowParentAtCurrentFrame(parentId);
@@ -10172,7 +11322,7 @@
           el.slashFxBindParentBtn.addEventListener("click", () => {
             const parentId = el.slashFxParentSelect?.value || null;
             if (!parentId) {
-              toast("请先选择刀光临时父节点");
+              toast("Select an effect temp parent first.");
               return;
             }
             setSelectedSlashFxParentAtCurrentFrame(parentId);
@@ -10197,14 +11347,14 @@
         });
         el.snapAllBtn.addEventListener("click", () => {
           state.nodes.forEach((node) => addKeyframe(node));
-          toast(`已记录全部节点第 ${state.currentFrame + 1} 帧`);
+          toast(`Recorded all nodes at frame ${state.currentFrame + 1}`);
         });
         el.deleteKeyBtn.addEventListener("click", deleteSelectedKey);
         el.deleteFrameKeysBtn.addEventListener("click", deleteCurrentFrameKeys);
         el.keyMoveModeBtn.addEventListener("click", () => {
           state.keyMoveMode = state.keyMoveMode === "all" ? "single" : "all";
           renderStatus();
-          toast(state.keyMoveMode === "all" ? "整帧移动：拖一个关键帧会带动同帧全部关键帧" : "单个移动：只移动被拖动的关键帧");
+          toast(state.keyMoveMode === "all" ? "Whole-frame move: dragging one keyframe moves all keyframes in the same frame." : "Single move: only the dragged keyframe moves.");
         });
 
         el.playBtn.addEventListener("click", () => {
@@ -10261,24 +11411,24 @@
           try {
             applyProjectData(JSON.parse(await file.text()));
             renderAll();
-            toast("JSON 已导入");
+            toast("JSON imported.");
           } catch (error) {
-            toast(error.message || "导入失败");
-          } finally {
+            toast(error.message || "Import failed");
+
             el.fileInput.value = "";
           }
         });
         el.copyJsonBtn.addEventListener("click", async () => {
           await navigator.clipboard.writeText(el.jsonPreview.value);
-          toast("JSON 已复制");
+          toast("JSON copied.");
         });
         el.applyJsonBtn.addEventListener("click", () => {
           try {
             applyProjectData(JSON.parse(el.jsonPreview.value));
             renderAll();
-            toast("JSON 文本已应用");
+            toast("JSON text applied.");
           } catch (error) {
-            toast(error.message || "JSON 解析失败");
+            toast(error.message || "JSON parse failed");
           }
         });
         el.saveJsonFileBtn.addEventListener("click", saveProjectJsonFile);
@@ -10306,11 +11456,14 @@
         el.addFreeBoneBtn.addEventListener("click", () => setBindingBoneTool("free"));
         el.captureBindPoseBtn.addEventListener("click", captureBindPoseFromCurrentPose);
         el.resetToBindPoseBtn.addEventListener("click", resetNodesToBindPose);
+        if (el.autoBindUnboundBonesBtn) {
+          el.autoBindUnboundBonesBtn.addEventListener("click", autoBindUnboundBonesToSelectedPiece);
+        }
         el.addPieceBtn.addEventListener("click", async () => {
           try {
             await addPieceFromLegAssetInput();
           } catch (error) {
-            toast(error.message || "添加物块失败");
+            toast(error.message || "Adding piece failed");
           }
         });
         el.deletePieceBtn.addEventListener("click", deleteSelectedPiece);
@@ -10336,22 +11489,56 @@
           state.showSkeletonOverlay = !state.showSkeletonOverlay;
           renderAll();
         });
+        if (el.specialAnchorToggleBtn) {
+          el.specialAnchorToggleBtn.addEventListener("click", () => {
+            state.showSpecialAnchorBones = !state.showSpecialAnchorBones;
+            renderAll();
+          });
+        }
         el.newProjectBtn.addEventListener("click", resetProject);
         el.nodeModeBtn.addEventListener("click", () => {
           state.editMode = "node";
           renderStatus();
-          toast("节点移动：拖圆点关节，骨骼保持长度并递归传导");
+          toast("Node move: drag joint circles. Bone lengths are preserved and children propagate recursively.");
         });
         el.boneModeBtn.addEventListener("click", () => {
           state.editMode = "bone";
           renderStatus();
-          toast("骨骼移动：只在拖骨骼线段中间时生效，圆点仍按节点拖动");
+          toast("Bone move: only works when dragging the middle of a bone segment. Joint circles still drag nodes.");
         });
         el.stretchModeBtn.addEventListener("click", () => {
           state.editMode = "stretch";
           renderStatus();
-          toast("骨骼伸缩：拖动一个端点，另一个端点固定，自动旋转并改变长度");
+          toast("Bone stretch: drag one endpoint, keep the other fixed, then rotate and change length automatically.");
         });
+        if (el.bindingNodeModeBtn) {
+          el.bindingNodeModeBtn.addEventListener("click", () => {
+            state.bindingDragMode = "node";
+            renderStatus();
+            toast("Binding mode: node dragging now matches animation-mode joint manipulation.");
+          });
+        }
+        if (el.bindingPieceModeBtn) {
+          el.bindingPieceModeBtn.addEventListener("click", () => {
+            state.bindingDragMode = "piece";
+            renderStatus();
+            toast("Binding mode: only piece dragging is enabled.");
+          });
+        }
+        if (el.bindingBoneModeBtn) {
+          el.bindingBoneModeBtn.addEventListener("click", () => {
+            state.bindingDragMode = "bone";
+            renderStatus();
+            toast("Binding mode: only bone dragging is enabled.");
+          });
+        }
+        if (el.bindingStretchModeBtn) {
+          el.bindingStretchModeBtn.addEventListener("click", () => {
+            state.bindingDragMode = "stretch";
+            renderStatus();
+            toast("Binding mode: only bone stretching is enabled.");
+          });
+        }
       }
 
       function bindPropertyInputs() {
@@ -10361,6 +11548,14 @@
         el.parentSelect.addEventListener("change", () =>
           setNodePatch({ parentId: el.parentSelect.value || null }),
         );
+        if (el.independentBoneSelect) {
+          el.independentBoneSelect.addEventListener("change", () => {
+            if (!el.independentBoneSelect.value) return;
+            state.selectedNodeId = el.independentBoneSelect.value;
+            state.selectedKey = null;
+            renderAll();
+          });
+        }
         el.xInput.addEventListener("change", () => setNodePatch({ x: Number(el.xInput.value) || 0 }));
         el.yInput.addEventListener("change", () => setNodePatch({ y: Number(el.yInput.value) || 0 }));
         el.rotationInput.addEventListener("change", () =>
@@ -10396,7 +11591,49 @@
             setAttachmentPatch(null);
             return;
           }
-          setAttachmentPatch({ ...createDefaultAttachment(image), ...(attachmentEditNode()?.attachment || {}), image });
+          const currentAttachment = attachmentEditNode()?.attachment || {};
+          setAttachmentPatch({
+            ...createDefaultAttachment(image),
+            ...currentAttachment,
+            image,
+            imageVariants: [image, ...attachmentImageVariants(currentAttachment)],
+          });
+        });
+        el.attachmentVariantAddBtn?.addEventListener("click", () => {
+          addAttachmentVariant(el.attachmentImageSelect.value);
+        });
+        el.attachmentVariantImportBtn?.addEventListener("click", async () => {
+          try {
+            await importAttachmentVariantFromLegAssetInput();
+          } catch (error) {
+            toast(error.message || "贴图导入失败");
+          }
+        });
+        el.attachmentVariantBrowseBtn?.addEventListener("click", () => {
+          el.attachmentVariantFileInput?.click();
+        });
+        el.attachmentVariantFileInput?.addEventListener("change", async () => {
+          const file = el.attachmentVariantFileInput.files?.[0];
+          if (!file) return;
+          try {
+            await importAttachmentVariantFromFile(file);
+          } catch (error) {
+            toast(error.message || "贴图导入失败");
+          } finally {
+            el.attachmentVariantFileInput.value = "";
+          }
+        });
+        el.attachmentVariantDefaultBtn?.addEventListener("click", () => {
+          setAttachmentDefaultImage(el.attachmentVariantSelect.value);
+        });
+        el.attachmentVariantRemoveBtn?.addEventListener("click", () => {
+          removeAttachmentVariant(el.attachmentVariantSelect.value);
+        });
+        el.attachmentImageKeySetBtn?.addEventListener("click", () => {
+          setAttachmentImageKeyAtCurrentFrame(el.attachmentImageKeySelect.value);
+        });
+        el.attachmentImageKeyDeleteBtn?.addEventListener("click", () => {
+          deleteAttachmentImageKeyAtCurrentFrame();
         });
         el.attachmentOffsetXInput.addEventListener("change", () =>
           setAttachmentPatch({ offsetX: Number(el.attachmentOffsetXInput.value) || 0 }),
@@ -10623,6 +11860,10 @@
             return;
           }
           if (drag.type === "origin") {
+            if (handleBindingJointDrag(node, drag.type, point)) {
+              renderDragFrame();
+              return;
+            }
             solveGenericJointDrag(drag.jointId, point);
           }
           if (drag.type === "bone" || drag.type === "arrow-piece-bone" || drag.type === "slash-fx-piece-bone") {
@@ -10645,6 +11886,10 @@
             stretchBoneEndpoint(node, drag.type, point);
           }
           if (drag.type === "end") {
+            if (handleBindingJointDrag(node, drag.type, point)) {
+              renderDragFrame();
+              return;
+            }
             solveGenericJointDrag(drag.jointId, point);
           }
           renderDragFrame();
@@ -10704,13 +11949,13 @@
           if (pieceDrag) {
             state.selectedPieceNodeId = activeNode.id;
             state.selectedKey = null;
-            toast("已调整物块，骨骼绑定位置未改变");
+            toast("Piece adjusted. Bone binding position was not changed.");
           } else if (isBindingMode()) {
             state.selectedKey = null;
-            toast(`已更新 ${drag.touched?.size || 1} 个节点的绑定姿势`);
+            toast(`Updated bind pose for ${drag.touched?.size || 1} nodes.`);
           } else {
             state.selectedKey = { nodeId: activeNode.id, frame: state.currentFrame };
-            toast(`已记录 ${drag.touched?.size || 1} 个节点第 ${state.currentFrame + 1} 帧`);
+            toast(`Recorded ${drag.touched?.size || 1} nodes at frame ${state.currentFrame + 1}.`);
           }
         }
         drag = null;
@@ -10719,8 +11964,44 @@
         renderAll();
       }
 
+      function captureFullSkinWorldSnapshots() {
+        return state.nodes
+          .filter((node) => node?.attachment?.fullSkin && node.attachment.restPart)
+          .map((node) => {
+            const resolved = resolveRestPartTransform(node.attachment.restPart, false);
+            if (!resolved) return null;
+            return {
+              nodeId: node.id,
+              x: Number(resolved.x) || 0,
+              y: Number(resolved.y) || 0,
+              rotation: Number(resolved.rotation) || 0,
+            };
+          })
+          .filter(Boolean);
+      }
+
+      function restoreFullSkinWorldSnapshots(snapshots) {
+        if (!Array.isArray(snapshots) || !snapshots.length) return;
+        snapshots.forEach((snapshot) => {
+          const node = state.nodes.find((item) => item.id === snapshot.nodeId);
+          const restPart = node?.attachment?.restPart;
+          if (!restPart) return;
+          node.attachment.restPart = setResolvedRestPartTransform(
+            restPart,
+            {
+              x: snapshot.x,
+              y: snapshot.y,
+              rotation: snapshot.rotation,
+            },
+            false,
+          );
+        });
+      }
+
       function persistTouchedNodes() {
         if (!drag?.touched) return;
+        const preserveFullSkinWorld =
+          isBindingMode() && state.bindingDragMode === "node" ? captureFullSkinWorldSnapshots() : null;
         const touchedNodes = state.nodes.filter((node) => drag.touched?.has(node.id));
         touchedNodes.forEach((node) => {
           if (isBindingMode()) {
@@ -10730,6 +12011,7 @@
             upsertKeyframe(node);
           }
         });
+        if (preserveFullSkinWorld) restoreFullSkinWorldSnapshots(preserveFullSkinWorld);
         snapshotAllBowRigsAtCurrentFrame();
       }
 
@@ -10775,7 +12057,7 @@
         if (state.currentFrame > state.duration) state.currentFrame = 0;
         state.currentFrame = Math.round(state.currentFrame * 100) / 100;
         el.frameInput.value = Math.round(state.currentFrame) + 1;
-        el.timeStatus.textContent = `第 ${Math.round(state.currentFrame) + 1} 帧 / ${state.duration + 1}，${state.fps} FPS，${(state.currentFrame / state.fps).toFixed(2)} 秒`;
+        renderTimeStatus();
         renderPlaybackFrame();
         rafId = requestAnimationFrame(tick);
       }

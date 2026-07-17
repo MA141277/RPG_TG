@@ -72,7 +72,7 @@ test("battle Spine asset registry defines a dedicated spearman entry with weapon
     renderOffsetX: -16,
     renderOffsetXBySide: {
       player: -110,
-      enemy: 75,
+      enemy: 85,
     },
     renderOffsetYBySide: {
       player: -30,
