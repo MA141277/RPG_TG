@@ -1937,7 +1937,6 @@ function getTempleRootActions(
   if (!isMonkStoryStage(gameState)) {
     return [
       { id: OPEN_TEMPLE_REST_MENU_ACTION_ID, label: "休息", tone: "accent" },
-      { id: "ask-fortune", label: "测运势", tone: "accent" },
       { id: "open-donate", label: "捐香火" },
       ...(dialoguePhase === "idle"
         ? []
@@ -1962,7 +1961,6 @@ function getTempleRootActions(
       disabled: currentWorkPlan == null,
     },
     { id: OPEN_TEMPLE_REST_MENU_ACTION_ID, label: "休息" },
-    { id: "ask-fortune", label: "测运势" },
     { id: "open-donate", label: "捐香火" },
     ...(dialoguePhase === "idle"
       ? []
@@ -4436,6 +4434,20 @@ export const templeHouseHouseModule: HouseModuleDefinition<"temple-house"> = {
         ...(sessionState.mode === "daily" &&
         characterDefinition.id === abbotCharacter.id
           ? { actionId: "open-abbot-dialogue" }
+          : {}),
+        ...(characterDefinition.id === abbotCharacter.id
+          ? {
+              interactionActions: getTempleRootActions(
+                nextState,
+                currentWorkPlan,
+                sessionState.dialoguePhase
+              )
+                .filter((action) => action.id !== "dismiss-dialogue")
+                .map((action) => ({
+                  ...action,
+                  kind: "special" as const,
+                })),
+            }
           : {}),
         ...(sessionState.mode === "meeting" &&
         characterDefinition.id === input.playerCharacterId

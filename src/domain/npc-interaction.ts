@@ -38,6 +38,30 @@ export type NpcInteractionOptionViewModel = {
   tone?: "default" | "accent";
 };
 
+export const NPC_INTERACTION_DEFAULT_OPTION_IDS = {
+  profile: "npc-interaction:profile",
+  talk: "npc-interaction:talk",
+  gift: "npc-interaction:gift",
+} as const;
+
+export const NPC_INTERACTION_DEFAULT_OPTIONS: readonly NpcInteractionOptionViewModel[] = [
+  {
+    id: NPC_INTERACTION_DEFAULT_OPTION_IDS.profile,
+    label: "角色情报",
+    kind: "profile",
+  },
+  {
+    id: NPC_INTERACTION_DEFAULT_OPTION_IDS.talk,
+    label: "谈话",
+    kind: "talk",
+  },
+  {
+    id: NPC_INTERACTION_DEFAULT_OPTION_IDS.gift,
+    label: "送礼",
+    kind: "gift",
+  },
+] as const;
+
 export type NpcInteractionMenuViewModel = {
   type: "npc-interaction-menu";
   context: NpcInteractionContext;

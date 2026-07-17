@@ -5,6 +5,7 @@ import {
   renderHouseDialogue,
   renderHouseCharacterCard,
   renderHouseLeaveButton,
+  renderHouseNpcTargetAttributes,
   renderHouseStandbyRoster,
   renderHouseStatusCard,
 } from "./house-shared-view";
@@ -36,12 +37,16 @@ function renderMeetingRoster(viewModel: HouseModuleViewModel): string {
               : `<span class="c-house-character-card__title">${actor.title}</span>`;
 
           return `
-            <article class="c-keep-house-seat${actor.isSelected ? " is-selected" : ""}">
+            <button
+              type="button"
+              class="c-keep-house-seat${actor.isSelected ? " is-selected" : ""}"
+              ${renderHouseNpcTargetAttributes(viewModel, actor)}
+            >
               ${renderHouseCharacterCard(actor, {
                 className: "c-keep-house-seat__card",
                 secondaryText,
               })}
-            </article>
+            </button>
           `;
         })
         .join("")}

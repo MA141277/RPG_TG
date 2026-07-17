@@ -1,5 +1,6 @@
 import type { AppState } from "../app-shell";
 import { uiLayoutComponentBaseSizeById } from "../../domain/ui-layout";
+import type { BattleUiEditorVariableName } from "../../domain/battle-ui-editor";
 import type {
   LayoutBackgroundAssetOption,
   LayoutEditorTargetId,
@@ -131,6 +132,23 @@ export function setLayoutEditorBackgroundAssetQuery(
     layoutEditor: {
       ...appState.layoutEditor,
       backgroundAssetQuery: query,
+    },
+  };
+}
+
+export function setLayoutEditorBattleUiValue(
+  appState: AppState,
+  name: BattleUiEditorVariableName,
+  value: string
+): AppState {
+  return {
+    ...appState,
+    layoutEditor: {
+      ...appState.layoutEditor,
+      battleUiValues: {
+        ...appState.layoutEditor.battleUiValues,
+        [name]: value,
+      },
     },
   };
 }

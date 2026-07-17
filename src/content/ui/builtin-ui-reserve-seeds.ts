@@ -460,4 +460,9 @@ export const builtinUiReserveScreensById: Record<
       ),
     ],
   },
+  "battle-ui-screen": {
+    id: "battle-ui-screen",
+    canvas: { width: 1600, height: 900 },
+    components: [],
+  },
 };

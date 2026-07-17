@@ -29,6 +29,11 @@ export const layoutEditorTargets: LayoutEditorTargetDefinition[] = [
     label: "人物通用界面",
     mode: "live",
   },
+  {
+    id: "battle-ui-screen",
+    label: "战斗界面调整",
+    mode: "live",
+  },
 ];
 
 export const layoutEditorTargetById: Record<

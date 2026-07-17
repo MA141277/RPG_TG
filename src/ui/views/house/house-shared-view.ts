@@ -1,9 +1,11 @@
 import type {
+  HouseActionViewModel,
   HouseCharacterCardLevel,
   HouseModuleViewModel,
   HouseOverlayViewModel,
   HouseStandbyActorViewModel,
 } from "../../../domain/house-module";
+import { NPC_INTERACTION_DEFAULT_OPTIONS } from "../../../domain/npc-interaction";
 
 type StandbyRosterOptions = {
   asideClassName?: string;
@@ -50,6 +52,47 @@ function normalizeCardLevel(
   level: HouseStandbyActorViewModel["cardLevel"]
 ): HouseCharacterCardLevel {
   return level == null ? 1 : level;
+}
+
+function isDismissHouseAction(action: HouseActionViewModel): boolean {
+  const normalizedId = action.id.toLowerCase();
+
+  return (
+    normalizedId === "dismiss-dialogue" ||
+    normalizedId === "close" ||
+    normalizedId.endsWith(":close") ||
+    action.label === "关闭" ||
+    action.label.includes("退下") ||
+    action.label.includes("离开")
+  );
+}
+
+function renderHouseActionButton(action: HouseActionViewModel): string {
+  return `
+    <button
+      type="button"
+      class="c-button c-grain-shop-button ${action.tone === "accent" ? "c-grain-shop-button--gold" : "c-grain-shop-button--paper"}"
+      data-house-action="${escapeHtml(action.id)}"
+      ${action.disabled ? "disabled" : ""}
+    >
+      ${escapeHtml(action.label)}
+    </button>
+  `;
+}
+
+function shouldAppendDefaultNpcActions(
+  actions: HouseActionViewModel[],
+  targetActor: HouseStandbyActorViewModel | null
+): boolean {
+  if (targetActor?.interactionActions == null) {
+    return false;
+  }
+
+  const targetActionIds = new Set(
+    targetActor.interactionActions.map((action) => action.id)
+  );
+
+  return actions.some((action) => targetActionIds.has(action.id));
 }
 
 export function renderHouseCharacterCard(
@@ -194,26 +237,54 @@ export function renderHouseActionContainer(
     return "";
   }
 
+  const targetActor =
+    viewModel.standbyRoster.find((actor) => actor.isSelected === true) ??
+    viewModel.standbyRoster[0] ??
+    null;
+  const targetCharacterId =
+    targetActor == null ? null : escapeHtml(targetActor.characterId);
+  const primaryHouseActions = viewModel.actionContainer.actions.filter(
+    (action) => !isDismissHouseAction(action)
+  );
+  const dismissHouseActions = viewModel.actionContainer.actions.filter(
+    isDismissHouseAction
+  );
+  const appendDefaultNpcActions = shouldAppendDefaultNpcActions(
+    viewModel.actionContainer.actions,
+    targetActor
+  );
+  const defaultNpcActions =
+    targetCharacterId == null || !appendDefaultNpcActions
+      ? ""
+      : NPC_INTERACTION_DEFAULT_OPTIONS.map((option) => {
+          const buttonTone =
+            option.tone === "accent"
+              ? "c-grain-shop-button--gold"
+              : "c-grain-shop-button--paper";
+          const disabled = option.kind === "gift" || option.disabled === true;
+
+          return `
+            <button
+              type="button"
+              class="c-button c-grain-shop-button ${buttonTone}"
+              data-npc-action="${escapeHtml(option.kind)}"
+              data-character-id="${targetCharacterId}"
+              ${disabled ? "disabled" : ""}
+            >
+              ${escapeHtml(option.label)}
+            </button>
+          `;
+        }).join("");
+
   return `
     <div class="c-grain-shop-center c-grain-shop-center--open">
       <nav
         class="c-grain-shop-actions"
         aria-label="${viewModel.actionContainer.title ?? "房屋操作"}"
       >
-        ${viewModel.actionContainer.actions
-          .map(
-            (action) => `
-              <button
-                type="button"
-                class="c-button c-grain-shop-button ${action.tone === "accent" ? "c-grain-shop-button--gold" : "c-grain-shop-button--paper"}"
-                data-house-action="${action.id}"
-                ${action.disabled ? "disabled" : ""}
-              >
-                ${action.label}
-              </button>
-            `
-          )
-          .join("")}
+        ${primaryHouseActions.map(renderHouseActionButton).join("")}
+        ${defaultNpcActions}
+        ${dismissHouseActions.map(renderHouseActionButton).join("")}
       </nav>
     </div>
   `;
@@ -237,32 +308,14 @@ export function renderHouseStandbyRoster(
           const selectedClass =
             options.includeSelectedState && actor.isSelected ? " is-selected" : "";
           const secondaryText = options.renderSecondaryText?.(actor) ?? "";
-          const npcContext = JSON.stringify({
-            type: "house",
-            houseId: viewModel.houseId,
-            moduleId: viewModel.moduleId,
-          });
-          const targetCharacterId = escapeHtml(actor.characterId);
-          const houseId = escapeHtml(viewModel.houseId);
-          const moduleId = escapeHtml(viewModel.moduleId);
-          const isDisabled = actor.disabled === true;
-          const actionAttribute =
-            actor.actionId == null || isDisabled
-              ? ""
-              : `data-house-action="${escapeHtml(actor.actionId)}"`;
+          const targetAttributes = renderHouseNpcTargetAttributes(viewModel, actor);
           const ariaLabel = escapeHtml(`与 ${actor.name} 交谈`);
 
           return `
             <button
               type="button"
               class="c-grain-shop-npc-idle__button${selectedClass}"
-              ${isDisabled ? "" : `data-npc-target="${targetCharacterId}"`}
-              ${isDisabled ? "" : `data-npc-context="${escapeHtml(npcContext)}"`}
-              data-npc-context-type="house"
-              data-house-id="${houseId}"
-              data-house-module-id="${moduleId}"
-              ${actionAttribute}
-              ${isDisabled ? "disabled" : ""}
+              ${targetAttributes}
               aria-label="${ariaLabel}"
             >
               ${renderHouseCharacterCard(actor, { secondaryText })}
@@ -271,6 +324,37 @@ export function renderHouseStandbyRoster(
         })
         .join("")}
     </aside>
+  `;
+}
+
+export function renderHouseNpcTargetAttributes(
+  viewModel: HouseModuleViewModel,
+  actor: HouseStandbyActorViewModel
+): string {
+  const houseId = escapeHtml(viewModel.houseId);
+  const moduleId = escapeHtml(viewModel.moduleId);
+
+  if (actor.disabled === true) {
+    return `
+      data-npc-context-type="house"
+      data-house-id="${houseId}"
+      data-house-module-id="${moduleId}"
+      disabled
+    `;
+  }
+
+  const npcContext = JSON.stringify({
+    type: "house",
+    houseId: viewModel.houseId,
+    moduleId: viewModel.moduleId,
+  });
+
+  return `
+    data-npc-target="${escapeHtml(actor.characterId)}"
+    data-npc-context="${escapeHtml(npcContext)}"
+    data-npc-context-type="house"
+    data-house-id="${houseId}"
+    data-house-module-id="${moduleId}"
   `;
 }
 

@@ -140,6 +140,26 @@
         justify-content: flex-end;
       }
 
+      .unit-toolbar {
+        align-items: center;
+      }
+
+      .unit-toolbar label {
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .unit-toolbar select {
+        width: auto;
+        min-width: 160px;
+      }
+
+      .toolbar-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
       .toolbar button {
         padding: 0 10px;
       }
@@ -579,6 +599,10 @@
             <span>骨骼节点 · 关键帧 · 插值播放 · JSON 工程导入导出</span>
           </div>
         </div>
+        <div id="unitContextToolbar" class="toolbar unit-toolbar">
+          <label for="unitTypeSelect">兵种</label>
+          <select id="unitTypeSelect"></select>
+        </div>
         <div class="toolbar">
           <button id="newProjectBtn" type="button">新建</button>
           <button id="importBtn" type="button">导入 JSON</button>
@@ -836,6 +860,45 @@
               <button id="keySourceNextBtn" class="mode-button" type="button">下一关键帧</button>
               <button id="keySourceStartBtn" class="mode-button" type="button">起始帧</button>
             </div>
+            <div id="archerFeatureGroup" hidden>
+            <div id="arrowVisibilityRow" class="button-row" hidden>
+              <button id="arrowShowBtn" type="button">箭矢出现</button>
+              <button id="arrowHideBtn" type="button">箭矢消失</button>
+              <button id="arrowResetActionVisibilityBtn" type="button">重置本动作</button>
+            </div>
+            <div id="arrowParentRow" class="form-grid" hidden>
+              <div class="field full">
+                <label for="arrowParentSelect">箭矢临时父节点</label>
+                <select id="arrowParentSelect"></select>
+              </div>
+              <div class="field full">
+                <div class="button-row">
+                  <button id="arrowBindParentBtn" type="button">绑定箭矢父节点</button>
+                  <button id="arrowUnbindParentBtn" type="button">解绑箭矢父节点</button>
+                </div>
+              </div>
+            </div>
+            </div>
+            <div id="swordsmanFeatureGroup" hidden>
+            <div id="slashFxVisibilityRow" class="button-row" hidden>
+              <button id="slashFxShowBtn" type="button">刀光出现</button>
+              <button id="slashFxHideBtn" type="button">刀光消失</button>
+              <button id="slashFxActionVisibilityBtn" type="button">本动作隐藏刀光</button>
+              <button id="slashFxResetActionVisibilityBtn" type="button">重置本动作</button>
+            </div>
+            <div id="slashFxParentRow" class="form-grid" hidden>
+              <div class="field full">
+                <label for="slashFxParentSelect">刀光临时父节点</label>
+                <select id="slashFxParentSelect"></select>
+              </div>
+              <div class="field full">
+                <div class="button-row">
+                  <button id="slashFxBindParentBtn" type="button">绑定刀光父节点</button>
+                  <button id="slashFxUnbindParentBtn" type="button">解绑刀光父节点</button>
+                </div>
+              </div>
+            </div>
+            </div>
           </section>
           <section id="bindingPanel" class="panel-section bind-only">
             <div class="panel-title">绑定管理</div>
@@ -931,11 +994,58 @@
     <script>
       const frameWidth = 20;
       const rowHeight = 30;
+      const SPINE_UNIT_CONFIGS = {
+        swordsman: {
+          label: "剑士",
+          projectUrl: "/src/faxian/leg/swordsman/project.json",
+          imageBaseUrl: "/src/faxian/leg/swordsman/",
+          materialForegroundImageKeys: [],
+          materialForegroundNormalizeOptions: {},
+          enabled: true,
+          featureGroups: ["swordsman"],
+        },
+        spearman: {
+          label: "枪兵",
+          projectUrl: "/src/faxian/leg/spearman/project.json",
+          imageBaseUrl: "/src/faxian/leg/spearman/",
+          materialForegroundImageKeys: [],
+          materialForegroundNormalizeOptions: {},
+          enabled: true,
+          featureGroups: ["swordsman"],
+        },
+        cavalry: {
+          label: "楠戝叺",
+          projectUrl: "/src/faxian/leg/cavalry/project.json",
+          imageBaseUrl: "/src/faxian/leg/cavalry/",
+          materialForegroundImageKeys: [],
+          materialForegroundNormalizeOptions: {},
+          enabled: true,
+          featureGroups: [],
+        },
+        archer: {
+          label: "弓兵",
+          projectUrl: "/src/faxian/leg/archer/project.json",
+          imageBaseUrl: "/src/faxian/leg/archer/",
+          materialForegroundImageKeys: ["newSword"],
+          materialForegroundNormalizeOptions: {
+            newSword: {
+              removeDarkGuideLine: true,
+            },
+          },
+          enabled: true,
+          featureGroups: ["archer"],
+        },
+      };
+      SPINE_UNIT_CONFIGS.swordsman.label = "\u5251\u58eb";
+      SPINE_UNIT_CONFIGS.spearman.label = "\u67aa\u5175";
+      SPINE_UNIT_CONFIGS.cavalry.label = "\u9a91\u5175";
+      SPINE_UNIT_CONFIGS.archer.label = "\u5f13\u5175";
       const state = {
         name: "默认",
-        fps: 24,
+        fps: 36,
         duration: 95,
         currentFrame: 0,
+        currentUnitType: "swordsman",
         selectedNodeId: "root",
         selectedKey: null,
         selectedPieceNodeId: null,
@@ -950,7 +1060,18 @@
         keyframeClipboard: null,
         actions: [],
         selectedActionId: null,
+        arrowVisibilityTracks: {},
+        arrowParentTracks: {},
+        slashFxVisibilityTracks: {},
+        slashFxParentTracks: {},
+        slashFxActionHiddenMap: {},
         customImages: {},
+        stageView: {
+          zoom: 1,
+          x: 0,
+          y: 0,
+        },
+        stagePointerWorld: null,
         playing: false,
         nodes: [
           {
@@ -1015,9 +1136,68 @@
         },
       };
 
+      const runtimeCache = {
+        pieceNodes: null,
+        nodeById: null,
+        arrowPieceByCarrierId: null,
+        slashFxPieceByCarrierId: null,
+        normalizedArrowVisibilityTracks: new WeakMap(),
+        normalizedArrowParentTracks: new WeakMap(),
+        normalizedSlashFxVisibilityTracks: new WeakMap(),
+        normalizedSlashFxParentTracks: new WeakMap(),
+      };
+
+      function resetRuntimeCaches() {
+        runtimeCache.pieceNodes = null;
+        runtimeCache.nodeById = null;
+        runtimeCache.arrowPieceByCarrierId = null;
+        runtimeCache.slashFxPieceByCarrierId = null;
+      }
+
+      function cachedNodeById(nodeId) {
+        if (!nodeId) return null;
+        if (!runtimeCache.nodeById) {
+          runtimeCache.nodeById = new Map(state.nodes.map((node) => [node.id, node]));
+        }
+        return runtimeCache.nodeById.get(nodeId) || null;
+      }
+
+      function cachedPieceNodes() {
+        if (!runtimeCache.pieceNodes) {
+          runtimeCache.pieceNodes = state.nodes.filter((node) => node.attachment);
+        }
+        return runtimeCache.pieceNodes;
+      }
+
+      function ensureRigPieceCaches() {
+        if (runtimeCache.arrowPieceByCarrierId && runtimeCache.slashFxPieceByCarrierId) return;
+        runtimeCache.arrowPieceByCarrierId = new Map();
+        runtimeCache.slashFxPieceByCarrierId = new Map();
+        cachedPieceNodes().forEach((piece) => {
+          if (piece.role === "arrow-piece") {
+            const carrier = arrowCarrierBoneForPiece(piece);
+            if (carrier) runtimeCache.arrowPieceByCarrierId.set(carrier.id, piece);
+          }
+          if (piece.role === "slash-fx-piece") {
+            const carrier = slashFxCarrierBoneForPiece(piece);
+            if (carrier) runtimeCache.slashFxPieceByCarrierId.set(carrier.id, piece);
+          }
+        });
+      }
+
+      function cachedNormalizedTrack(track, duration, cache, normalizeFn) {
+        if (!Array.isArray(track)) return [];
+        const cached = cache.get(track);
+        if (cached && cached.duration === duration) return cached.value;
+        const value = normalizeFn(track, duration);
+        cache.set(track, { duration, value });
+        return value;
+      }
+
       const el = {
         app: document.querySelector(".app"),
         stage: document.getElementById("stage"),
+        unitTypeSelect: document.getElementById("unitTypeSelect"),
         actionList: document.getElementById("actionList"),
         actionNameInput: document.getElementById("actionNameInput"),
         newActionBtn: document.getElementById("newActionBtn"),
@@ -1034,6 +1214,23 @@
         keySourcePrevBtn: document.getElementById("keySourcePrevBtn"),
         keySourceNextBtn: document.getElementById("keySourceNextBtn"),
         keySourceStartBtn: document.getElementById("keySourceStartBtn"),
+        arrowVisibilityRow: document.getElementById("arrowVisibilityRow"),
+        arrowShowBtn: document.getElementById("arrowShowBtn"),
+        arrowHideBtn: document.getElementById("arrowHideBtn"),
+        arrowResetActionVisibilityBtn: document.getElementById("arrowResetActionVisibilityBtn"),
+        arrowParentRow: document.getElementById("arrowParentRow"),
+        arrowParentSelect: document.getElementById("arrowParentSelect"),
+        arrowBindParentBtn: document.getElementById("arrowBindParentBtn"),
+        arrowUnbindParentBtn: document.getElementById("arrowUnbindParentBtn"),
+        slashFxVisibilityRow: document.getElementById("slashFxVisibilityRow"),
+        slashFxShowBtn: document.getElementById("slashFxShowBtn"),
+        slashFxHideBtn: document.getElementById("slashFxHideBtn"),
+        slashFxResetActionVisibilityBtn: document.getElementById("slashFxResetActionVisibilityBtn"),
+        slashFxActionVisibilityBtn: document.getElementById("slashFxActionVisibilityBtn"),
+        slashFxParentRow: document.getElementById("slashFxParentRow"),
+        slashFxParentSelect: document.getElementById("slashFxParentSelect"),
+        slashFxBindParentBtn: document.getElementById("slashFxBindParentBtn"),
+        slashFxUnbindParentBtn: document.getElementById("slashFxUnbindParentBtn"),
         deleteKeyBtn: document.getElementById("deleteKeyBtn"),
         deleteFrameKeysBtn: document.getElementById("deleteFrameKeysBtn"),
         copyKeyframeBtn: document.getElementById("copyKeyframeBtn"),
@@ -1047,6 +1244,7 @@
         fpsInput: document.getElementById("fpsInput"),
         durationInput: document.getElementById("durationInput"),
         timeStatus: document.getElementById("timeStatus"),
+        stageWorldStatus: document.getElementById("stageWorldStatus"),
         tracks: document.getElementById("tracks"),
         tracksViewport: document.getElementById("tracksViewport"),
         trackLabels: document.getElementById("trackLabels"),
@@ -1094,6 +1292,8 @@
         addRootBoneBtn: document.getElementById("addRootBoneBtn"),
         applyWeaponImageBtn: document.getElementById("applyWeaponImageBtn"),
         createBowRigBtn: document.getElementById("createBowRigBtn"),
+        createArrowRigBtn: document.getElementById("createArrowRigBtn"),
+        createSlashFxRigBtn: document.getElementById("createSlashFxRigBtn"),
         addBoneFromNodeBtn: document.getElementById("addBoneFromNodeBtn"),
         addFreeBoneBtn: document.getElementById("addFreeBoneBtn"),
         captureBindPoseBtn: document.getElementById("captureBindPoseBtn"),
@@ -1117,6 +1317,8 @@
         materialInput: document.getElementById("materialInput"),
         idleAnimationBtn: document.getElementById("idleAnimationBtn"),
         threeQuarterSampleBtn: document.getElementById("threeQuarterSampleBtn"),
+        swordsmanFeatureGroup: document.getElementById("swordsmanFeatureGroup"),
+        archerFeatureGroup: document.getElementById("archerFeatureGroup"),
         viewToggleBtn: document.getElementById("viewToggleBtn"),
         skeletonOverlayBtn: document.getElementById("skeletonOverlayBtn"),
         newProjectBtn: document.getElementById("newProjectBtn"),
@@ -1137,10 +1339,13 @@
       const dynamicScarves = new Map();
       const warriorImages = loadWarriorImages();
       const customImagePrefix = "custom:";
+      const spearmanFistCustomImageId = `${customImagePrefix}spearman-fist-image`;
+      const spearmanFistBoneRole = "spearman-fist-bone";
+      const spearmanFistPieceRole = "spearman-fist-piece";
       const legAssetPrefix = "leg:";
-      const legAssetBasePath = "/src/faxian/leg/";
-      const materialReferencePath = "/src/faxian/leg/%E7%B4%A0%E6%9D%90.png";
-      const materialReplacementSpecs = [
+      const rootLegAssetBasePath = "/src/faxian/leg/";
+      const materialReferencePath = `${rootLegAssetBasePath}%E7%B4%A0%E6%9D%90.png`;
+      const baseMaterialReplacementSpecs = [
         { id: "head", imageKey: "newHead", targetWidth: 283, targetHeight: 265 },
         { id: "torso", imageKey: "newTorso", targetWidth: 345, targetHeight: 609 },
         { id: "rightArm", imageKey: "newRightArm", targetWidth: 217, targetHeight: 488 },
@@ -1155,20 +1360,24 @@
         padding: 2,
       };
 
+      function materialReplacementSpecsForUnit(unitType = state.currentUnitType) {
+        const specs = baseMaterialReplacementSpecs.map((spec) => ({ ...spec }));
+        if (unitType === "spearman") {
+          return specs.map((spec) =>
+            spec.id === "sword"
+              ? {
+                  ...spec,
+                  preserveComponentBounds: true,
+                  preserveExtractedSize: true,
+                }
+              : spec,
+          );
+        }
+        return specs;
+      }
+
       function loadWarriorImages() {
-        const sources = {
-          arm: "/ui/spine/warrior/arm_right.png",
-          body: "/ui/spine/warrior/body.png",
-          head: "/ui/spine/warrior/head.png",
-          leg: "/ui/spine/warrior/leg.png",
-          newHead: "/src/faxian/leg/head.png",
-          newTorso: "/src/faxian/leg/torso.png",
-          newLeftArm: "/src/faxian/leg/leftarm.png",
-          newRightArm: "/src/faxian/leg/rightarm.png",
-          newLeftLeg: "/src/faxian/leg/leftleg.png",
-          newRightLeg: "/src/faxian/leg/rightleg%20(1).png",
-          newSword: "/src/faxian/leg/sword.png",
-        };
+        const sources = spineUnitImageSources();
         return Object.fromEntries(
           Object.entries(sources).map(([id, src]) => {
             const image = new Image();
@@ -1177,6 +1386,75 @@
             return [id, image];
           }),
         );
+      }
+
+      function spineUnitImageBasePath(unitType = state.currentUnitType) {
+        const config = getSpineUnitConfig(unitType);
+        return config.imageBaseUrl || rootLegAssetBasePath;
+      }
+
+      function spineUnitImageSources(unitType = state.currentUnitType) {
+        const basePath = spineUnitImageBasePath(unitType);
+        return {
+          arm: "/ui/spine/warrior/arm_right.png",
+          body: "/ui/spine/warrior/body.png",
+          head: "/ui/spine/warrior/head.png",
+          leg: "/ui/spine/warrior/leg.png",
+          newHead: `${basePath}head.png`,
+          newTorso: `${basePath}torso.png`,
+          newLeftArm: `${basePath}leftarm.png`,
+          newRightArm: `${basePath}rightarm.png`,
+          newLeftLeg: `${basePath}leftleg.png`,
+          newRightLeg: `${basePath}rightleg%20(1).png`,
+          newSword: `${basePath}sword.png`,
+        };
+      }
+
+      function setWarriorImageSource(id, src) {
+        const image = warriorImages[id] || new Image();
+        image.onload = drawStage;
+        image.src = src;
+        warriorImages[id] = image;
+        return image;
+      }
+
+      async function refreshCurrentUnitAssetImages(unitType = state.currentUnitType) {
+        const config = getSpineUnitConfig(unitType);
+        const sources = spineUnitImageSources(unitType);
+        const images = {};
+        await Promise.all(
+          Object.entries(sources).map(
+            ([key, src]) =>
+              new Promise((resolve) => {
+                const image = new Image();
+                image.onload = () => resolve();
+                image.onerror = () => resolve();
+                image.src = src;
+                images[key] = image;
+              }),
+          ),
+        );
+        const materialKeys = config.materialForegroundImageKeys || [];
+        await Promise.all(
+          materialKeys.map(async (key) => {
+            const image = images[key];
+            if (!image?.complete) return;
+            try {
+              images[key] = await normalizeForegroundImage(image, config.materialForegroundNormalizeOptions?.[key] || {});
+            } catch (error) {
+              console.warn("Failed to normalize material foreground image for editor", key, error);
+            }
+          }),
+        );
+        Object.entries(images).forEach(([id, image]) => {
+          warriorImages[id] = image;
+          image.onload = drawStage;
+        });
+        Object.keys(warriorImages)
+          .filter((id) => id.startsWith(legAssetPrefix))
+          .forEach((id) => {
+            setWarriorImageSource(id, legAssetUrl(id.slice(legAssetPrefix.length), unitType));
+          });
       }
 
       function loadImage(src) {
@@ -1664,7 +1942,101 @@
         return foreground;
       }
 
-      function detectMaterialComponents(imageData) {
+      function removeDarkGuideLine(imageData, options = {}) {
+        const { width, height, data } = imageData;
+        const count = width * height;
+        const visited = new Uint8Array(count);
+        const alphaThreshold = Number.isFinite(Number(options.guideAlphaThreshold))
+          ? Number(options.guideAlphaThreshold)
+          : 28;
+        const darkThreshold = Number.isFinite(Number(options.guideDarkThreshold))
+          ? Number(options.guideDarkThreshold)
+          : 52;
+        const maxComponentWidth = Number.isFinite(Number(options.guideMaxWidth))
+          ? Number(options.guideMaxWidth)
+          : Math.max(12, Math.round(width * 0.18));
+        const maxComponentX = Number.isFinite(Number(options.guideMaxX))
+          ? Number(options.guideMaxX)
+          : Math.max(18, Math.round(width * 0.24));
+        const minComponentHeight = Number.isFinite(Number(options.guideMinHeight))
+          ? Number(options.guideMinHeight)
+          : Math.max(48, Math.round(height * 0.35));
+
+        function isDarkGuidePixel(index) {
+          const offset = index * 4;
+          const alpha = data[offset + 3];
+          if (alpha < alphaThreshold) return false;
+          const r = data[offset];
+          const g = data[offset + 1];
+          const b = data[offset + 2];
+          return Math.max(r, g, b) <= darkThreshold;
+        }
+
+        for (let index = 0; index < count; index += 1) {
+          if (visited[index] || !isDarkGuidePixel(index)) continue;
+          const queue = [index];
+          const component = [];
+          visited[index] = 1;
+          let minX = width;
+          let maxX = 0;
+          let minY = height;
+          let maxY = 0;
+
+          for (let cursor = 0; cursor < queue.length; cursor += 1) {
+            const current = queue[cursor];
+            component.push(current);
+            const x = current % width;
+            const y = Math.floor(current / width);
+            minX = Math.min(minX, x);
+            maxX = Math.max(maxX, x);
+            minY = Math.min(minY, y);
+            maxY = Math.max(maxY, y);
+
+            const neighbors = [];
+            if (x > 0) neighbors.push(current - 1);
+            if (x < width - 1) neighbors.push(current + 1);
+            if (y > 0) neighbors.push(current - width);
+            if (y < height - 1) neighbors.push(current + width);
+            neighbors.forEach((neighbor) => {
+              if (visited[neighbor] || !isDarkGuidePixel(neighbor)) return;
+              visited[neighbor] = 1;
+              queue.push(neighbor);
+            });
+          }
+
+          const componentWidth = maxX - minX + 1;
+          const componentHeight = maxY - minY + 1;
+          const isGuideLine =
+            componentWidth <= maxComponentWidth &&
+            minX <= maxComponentX &&
+            componentHeight >= minComponentHeight;
+
+          if (!isGuideLine) continue;
+          component.forEach((pixelIndex) => {
+            data[pixelIndex * 4 + 3] = 0;
+          });
+        }
+      }
+
+      async function normalizeForegroundImage(image, options = {}) {
+        const imageData = imageToImageData(image);
+        const foreground = createMaterialForegroundMask(imageData);
+        const output = new ImageData(imageData.width, imageData.height);
+        for (let index = 0; index < foreground.length; index += 1) {
+          if (!foreground[index]) continue;
+          const offset = index * 4;
+          output.data[offset] = imageData.data[offset];
+          output.data[offset + 1] = imageData.data[offset + 1];
+          output.data[offset + 2] = imageData.data[offset + 2];
+          output.data[offset + 3] = imageData.data[offset + 3];
+        }
+        if (options.removeDarkGuideLine) {
+          removeDarkGuideLine(output, options);
+        }
+        return imageDataToImage(output);
+      }
+
+      function detectMaterialComponents(imageData, minPixels = materialReplacementOptions.minPixels) {
         const { width, height } = imageData;
         const foreground = createMaterialForegroundMask(imageData);
         const seen = new Uint8Array(width * height);
@@ -1702,7 +2074,7 @@
             }
           }
 
-          if (pixels >= materialReplacementOptions.minPixels) {
+          if (pixels >= minPixels) {
             components.push({
               pixels,
               minX,
@@ -1722,7 +2094,7 @@
       function matchMaterialReferenceSlots(referenceImageData, referenceComponents) {
         const slots = [];
         const used = new Set();
-        for (const spec of materialReplacementSpecs) {
+        for (const spec of materialReplacementSpecsForUnit()) {
           let best = null;
           let bestScore = Number.POSITIVE_INFINITY;
           for (const component of referenceComponents) {
@@ -1793,10 +2165,12 @@
           const tooFar =
             Math.abs(best.cx - expected.cx) > expected.width * 0.9 ||
             Math.abs(best.cy - expected.cy) > expected.height * 0.9;
+          const preserveComponentBounds = slot.preserveComponentBounds === true;
+          const shouldFallbackToSlot = !preserveComponentBounds && (tooWide || tooTall || tooFar);
           matches.push({
             slot,
-            component: tooWide || tooTall || tooFar ? expected : best,
-            mode: tooWide || tooTall || tooFar ? "slot" : "component",
+            component: shouldFallbackToSlot ? expected : best,
+            mode: shouldFallbackToSlot ? "slot" : "component",
           });
         }
         return matches;
@@ -1848,11 +2222,611 @@
         return output;
       }
 
+      function normalizeMatchedMaterialPiece(pieceImageData, slot, padding = materialReplacementOptions.padding) {
+        if (slot?.preserveExtractedSize) return pieceImageData;
+        return normalizeMaterialPiece(pieceImageData, slot.targetWidth, slot.targetHeight, padding);
+      }
+
+      function detectSpearmanFistComponent(inputImageData, inputComponents, matches = []) {
+        if (!inputImageData || !Array.isArray(inputComponents) || !inputComponents.length) return null;
+        const occupied = new Set(matches.map((match) => match?.component).filter(Boolean));
+        const minWidth = Math.max(28, Math.round(inputImageData.width * 0.035));
+        const maxWidth = Math.max(minWidth, Math.round(inputImageData.width * 0.22));
+        const minHeight = Math.max(28, Math.round(inputImageData.height * 0.035));
+        const maxHeight = Math.max(minHeight, Math.round(inputImageData.height * 0.2));
+        let best = null;
+        let bestScore = Number.POSITIVE_INFINITY;
+        for (const component of inputComponents) {
+          if (!component || occupied.has(component)) continue;
+          if (component.cx <= inputImageData.width * 0.68 || component.cy <= inputImageData.height * 0.52) continue;
+          if (component.width < minWidth || component.width > maxWidth) continue;
+          if (component.height < minHeight || component.height > maxHeight) continue;
+          const normalizedWidth = component.width / inputImageData.width;
+          const normalizedHeight = component.height / inputImageData.height;
+          const score =
+            (1 - component.cx / inputImageData.width) * 2.2 +
+            (1 - component.cy / inputImageData.height) * 1.8 +
+            normalizedWidth * 3 +
+            normalizedHeight * 3;
+          if (score < bestScore) {
+            best = component;
+            bestScore = score;
+          }
+        }
+        return best;
+      }
+
+      function findSpearmanTorsoSixNode() {
+        const exact = state.nodes.find(
+          (node) =>
+            node &&
+            node.role === "torso" &&
+            !node.attachment &&
+            String(node.name || "").trim() === "躯干 6",
+        );
+        if (exact) return exact;
+        return (
+          state.nodes.find(
+            (node) =>
+              node &&
+              node.role === "torso" &&
+              !node.attachment &&
+              /6\s*$/.test(String(node.name || "").trim()),
+          ) || null
+        );
+      }
+
+      function findAttachmentAncestorByImage(node, imageKey) {
+        let current = node || null;
+        while (current) {
+          if (current.attachment?.image === imageKey) return current;
+          current = current.parentId ? state.nodes.find((item) => item.id === current.parentId) || null : null;
+        }
+        return null;
+      }
+
+      function findNearestAttachmentAncestor(node) {
+        let current = node || null;
+        while (current) {
+          if (current.attachment) return current;
+          current = current.parentId ? state.nodes.find((item) => item.id === current.parentId) || null : null;
+        }
+        return null;
+      }
+
+      function clearSpearmanFistRig() {
+        const removedIds = new Set();
+        state.nodes = state.nodes.filter((node) => {
+          const shouldRemove = [spearmanFistBoneRole, spearmanFistPieceRole].includes(node?.role);
+          if (shouldRemove) removedIds.add(node.id);
+          return !shouldRemove;
+        });
+        if (!removedIds.size) return;
+        removedIds.forEach((nodeId) => {
+          delete state.timelines[nodeId];
+        });
+        state.nodes.forEach((node) => {
+          if (!node.attachment?.skinBoneIds?.length) return;
+          node.attachment = normalizeAttachment({
+            ...node.attachment,
+            skinBoneIds: node.attachment.skinBoneIds.filter((boneId) => !removedIds.has(boneId)),
+          });
+        });
+        if (state.selectedNodeId && removedIds.has(state.selectedNodeId)) state.selectedNodeId = null;
+        if (state.selectedPieceNodeId && removedIds.has(state.selectedPieceNodeId)) state.selectedPieceNodeId = null;
+        if (state.selectedKey && removedIds.has(state.selectedKey.nodeId)) state.selectedKey = null;
+        resetRuntimeCaches();
+      }
+
+      function projectSourcePointIntoNormalizedSlot(sourceRect, slot, x, y, padding = materialReplacementOptions.padding) {
+        if (!sourceRect || !slot) return null;
+        const paddedWidth = Math.max(1, sourceRect.width + padding * 2);
+        const paddedHeight = Math.max(1, sourceRect.height + padding * 2);
+        const normalizedX = (x - (sourceRect.minX - padding)) / paddedWidth;
+        const normalizedY = (y - (sourceRect.minY - padding)) / paddedHeight;
+        return {
+          x: Math.max(0, Math.min(1, normalizedX)) * slot.targetWidth,
+          y: Math.max(0, Math.min(1, normalizedY)) * slot.targetHeight,
+        };
+      }
+
+      function estimateMaterialToWorldTransform(matches) {
+        const samples = (matches || [])
+          .map((match) => {
+            const piece = state.nodes.find((node) => node.attachment?.image === match?.slot?.imageKey);
+            if (!piece || !match?.component) return null;
+            const center = pieceCenter(piece);
+            return {
+              sourceX: Number(match.component.cx),
+              sourceY: Number(match.component.cy),
+              worldX: Number(center.x),
+              worldY: Number(center.y),
+            };
+          })
+          .filter(
+            (sample) =>
+              sample &&
+              Number.isFinite(sample.sourceX) &&
+              Number.isFinite(sample.sourceY) &&
+              Number.isFinite(sample.worldX) &&
+              Number.isFinite(sample.worldY),
+          );
+        if (samples.length < 2) return null;
+
+        const fitAxis = (sourceKey, targetKey) => {
+          const count = samples.length;
+          let sumSource = 0;
+          let sumTarget = 0;
+          let sumSourceTarget = 0;
+          let sumSourceSquared = 0;
+          samples.forEach((sample) => {
+            const source = sample[sourceKey];
+            const target = sample[targetKey];
+            sumSource += source;
+            sumTarget += target;
+            sumSourceTarget += source * target;
+            sumSourceSquared += source * source;
+          });
+          const denominator = count * sumSourceSquared - sumSource * sumSource;
+          if (Math.abs(denominator) < 0.00001) return null;
+          const scale = (count * sumSourceTarget - sumSource * sumTarget) / denominator;
+          const offset = (sumTarget - scale * sumSource) / count;
+          return { scale, offset };
+        };
+
+        const xAxis = fitAxis("sourceX", "worldX");
+        const yAxis = fitAxis("sourceY", "worldY");
+        if (!xAxis || !yAxis) return null;
+        const transform = (sourceX, sourceY) => ({
+          x: xAxis.scale * sourceX + xAxis.offset,
+          y: yAxis.scale * sourceY + yAxis.offset,
+        });
+        transform.scaleX = xAxis.scale;
+        transform.scaleY = yAxis.scale;
+        return transform;
+      }
+
+      function identifyCavalryFarLegIndices(horseLegs) {
+        if (!Array.isArray(horseLegs) || horseLegs.length !== 4) return [];
+        const far = [];
+        const rearPair = horseLegs.slice(0, 2);
+        const frontPair = horseLegs.slice(2, 4);
+        if (rearPair.length === 2) {
+          far.push(rearPair[0].width <= rearPair[1].width ? 0 : 1);
+        }
+        if (frontPair.length === 2) {
+          far.push(frontPair[0].width <= frontPair[1].width ? 2 : 3);
+        }
+        return far;
+      }
+
+      function classifyCavalryComponents(inputImageData, components) {
+        if (!inputImageData || !Array.isArray(components) || components.length < 8) {
+          throw new Error("骑兵素材识别失败：组件数量不足");
+        }
+        const horseBody = components.reduce((best, component) => (!best || component.minY < best.minY ? component : best), null);
+        const remaining = components.filter((component) => component !== horseBody);
+        const lowerHalf = remaining.filter((component) => component.cy > inputImageData.height * 0.45);
+        const soldierWeapon =
+          lowerHalf
+            .filter(
+              (component) =>
+                component.cx > inputImageData.width * 0.72 &&
+                component.height / Math.max(1, component.width) > 3,
+            )
+            .sort((a, b) => b.maxX - a.maxX || b.height - a.height)[0] || null;
+        if (!soldierWeapon) throw new Error("骑兵素材识别失败：未找到武器组件");
+
+        const soldierTorso =
+          lowerHalf
+            .filter((component) => component !== soldierWeapon)
+            .sort((a, b) => b.pixels - a.pixels)[0] || null;
+        if (!soldierTorso) throw new Error("骑兵素材识别失败：未找到士兵躯壳组件");
+
+        const soldierRightLeg =
+          lowerHalf
+            .filter(
+              (component) =>
+                component !== soldierWeapon &&
+                component !== soldierTorso &&
+                component.cx < soldierTorso.cx &&
+                component.minY > soldierTorso.cy,
+            )
+            .sort((a, b) => b.maxY - a.maxY || b.pixels - a.pixels)[0] || null;
+        if (!soldierRightLeg) throw new Error("骑兵素材识别失败：未找到士兵右腿组件");
+
+        const soldierRightArm =
+          remaining
+            .filter(
+              (component) =>
+                component !== soldierWeapon &&
+                component !== soldierTorso &&
+                component !== soldierRightLeg &&
+                component.cx < soldierTorso.cx &&
+                component.cy > horseBody.maxY &&
+                component.cy < soldierTorso.cy,
+            )
+            .sort((a, b) => b.pixels - a.pixels)[0] || null;
+        if (!soldierRightArm) throw new Error("骑兵素材识别失败：未找到士兵右臂组件");
+
+        const horseLegs = remaining
+          .filter(
+            (component) =>
+              component !== soldierWeapon &&
+              component !== soldierTorso &&
+              component !== soldierRightLeg &&
+              component !== soldierRightArm,
+          )
+          .sort((a, b) => a.cx - b.cx);
+        if (horseLegs.length !== 4) {
+          throw new Error(`骑兵素材识别失败：马腿组件数量异常（${horseLegs.length}）`);
+        }
+
+        return {
+          horseBody,
+          horseLegs,
+          horseFarLegIndices: identifyCavalryFarLegIndices(horseLegs),
+          soldierTorso,
+          soldierRightArm,
+          soldierRightLeg,
+          soldierWeapon,
+        };
+      }
+
+      function createCavalryImageToWorldTransform(imageWidth, imageHeight) {
+        const maxWidth = 760;
+        const maxHeight = 620;
+        const scale = Math.min(maxWidth / Math.max(1, imageWidth), maxHeight / Math.max(1, imageHeight));
+        const offsetX = 420 - (imageWidth * scale) / 2;
+        const offsetY = 24;
+        return {
+          scale,
+          offsetX,
+          offsetY,
+          toWorld(x, y) {
+            return {
+              x: offsetX + x * scale,
+              y: offsetY + y * scale,
+            };
+          },
+        };
+      }
+
+      function componentPoint(component, nx, ny) {
+        return {
+          x: component.minX + component.width * nx,
+          y: component.minY + component.height * ny,
+        };
+      }
+
+      function buildCavalryProjectFromMaterial(inputImageData, fileName = "cavalry.png") {
+        const padding = materialReplacementOptions.padding;
+        const components = detectMaterialComponents(inputImageData, 500);
+        const parts = classifyCavalryComponents(inputImageData, components);
+        const transform = createCavalryImageToWorldTransform(inputImageData.width, inputImageData.height);
+        const nodes = [];
+        const timelines = {};
+        const customImages = {};
+        const imageMeta = new Map();
+        const worldInfo = new Map();
+        let nodeCounter = 0;
+
+        const nextId = (prefix) => `${prefix}-${String(nodeCounter += 1).padStart(3, "0")}`;
+        const componentTopLeftWorld = (component) =>
+          transform.toWorld(Math.max(0, component.minX - padding), Math.max(0, component.minY - padding));
+
+        const addTimeline = (id) => {
+          timelines[id] = [];
+        };
+
+        const registerComponentImage = (name, component) => {
+          const imageData = extractMaterialPiece(inputImageData, component, padding);
+          const imageId = `${customImagePrefix}cavalry-${name}-${nextId("img")}`;
+          customImages[imageId] = {
+            name: `${fileName.replace(/\.[^.]+$/, "")}-${name}.png`,
+            src: imageDataToDataUrl(imageData),
+          };
+          imageMeta.set(imageId, { width: imageData.width, height: imageData.height });
+          return imageId;
+        };
+
+        const addBone = (name, parentId, startSource, endSource, color, role) => {
+          const id = nextId("bone");
+          const startWorld = transform.toWorld(startSource.x, startSource.y);
+          const endWorld = transform.toWorld(endSource.x, endSource.y);
+          const worldRotation = (Math.atan2(endWorld.y - startWorld.y, endWorld.x - startWorld.x) * 180) / Math.PI;
+          let localX = startWorld.x;
+          let localY = startWorld.y;
+          let rotation = worldRotation;
+          if (parentId) {
+            const parent = worldInfo.get(parentId);
+            const anchor = parent.end;
+            const dx = startWorld.x - anchor.x;
+            const dy = startWorld.y - anchor.y;
+            const rad = (-parent.rotation * Math.PI) / 180;
+            localX = dx * Math.cos(rad) - dy * Math.sin(rad);
+            localY = dx * Math.sin(rad) + dy * Math.cos(rad);
+            rotation = worldRotation - parent.rotation;
+          }
+          const length = Math.max(4, Math.hypot(endWorld.x - startWorld.x, endWorld.y - startWorld.y));
+          const node = {
+            id,
+            name,
+            parentId,
+            x: localX,
+            y: localY,
+            rotation,
+            length,
+            scaleX: 1,
+            scaleY: 1,
+            color,
+            visible: true,
+            role,
+            bindPose: {
+              x: localX,
+              y: localY,
+              rotation,
+              length,
+              scaleX: 1,
+              scaleY: 1,
+            },
+            attachment: null,
+          };
+          nodes.push(node);
+          addTimeline(id);
+          worldInfo.set(id, {
+            start: startWorld,
+            end: endWorld,
+            rotation: worldRotation,
+          });
+          return node;
+        };
+
+        const addPiece = (name, role, imageId, component, layer, skinBoneIds) => {
+          const id = nextId("piece");
+          const image = imageMeta.get(imageId);
+          const topLeft = componentTopLeftWorld(component);
+          const node = {
+            id,
+            name,
+            parentId: null,
+            x: topLeft.x,
+            y: topLeft.y,
+            rotation: 0,
+            length: 4,
+            scaleX: 1,
+            scaleY: 1,
+            color: "#8bd17c",
+            visible: true,
+            role,
+            bindPose: {
+              x: topLeft.x,
+              y: topLeft.y,
+              rotation: 0,
+              length: 4,
+              scaleX: 1,
+              scaleY: 1,
+            },
+            attachment: normalizeAttachment({
+              image: imageId,
+              width: image.width,
+              alpha: 1,
+              layer,
+              fullSkin: true,
+              skinBoneIds,
+              restPart: {
+                partId: id,
+                x: topLeft.x,
+                y: topLeft.y,
+                scale: transform.scale,
+                rotation: 0,
+                parentBoneId: null,
+                anchorX: 0,
+                anchorY: 0,
+              },
+            }),
+          };
+          nodes.push(node);
+          addTimeline(id);
+          return node;
+        };
+
+        const horseBodyImageId = registerComponentImage("horse-body", parts.horseBody);
+        const horseLegImageIds = parts.horseLegs.map((component, index) => registerComponentImage(`horse-leg-${index + 1}`, component));
+        const soldierTorsoImageId = registerComponentImage("soldier-torso", parts.soldierTorso);
+        const soldierRightArmImageId = registerComponentImage("soldier-right-arm", parts.soldierRightArm);
+        const soldierRightLegImageId = registerComponentImage("soldier-right-leg", parts.soldierRightLeg);
+        const soldierWeaponImageId = registerComponentImage("soldier-weapon", parts.soldierWeapon);
+
+        const horseBody1 = addBone("马身 1", null, componentPoint(parts.horseBody, 0.18, 0.62), componentPoint(parts.horseBody, 0.38, 0.60), "#8b6a45", "cavalry-horse-body");
+        const horseBody2 = addBone("马身 2", horseBody1.id, componentPoint(parts.horseBody, 0.38, 0.60), componentPoint(parts.horseBody, 0.58, 0.58), "#8b6a45", "cavalry-horse-body");
+        const horseBody3 = addBone("马身 3", horseBody2.id, componentPoint(parts.horseBody, 0.58, 0.58), componentPoint(parts.horseBody, 0.72, 0.50), "#8b6a45", "cavalry-horse-body");
+        const horseNeck1 = addBone("马脖子 1", horseBody3.id, componentPoint(parts.horseBody, 0.72, 0.50), componentPoint(parts.horseBody, 0.82, 0.38), "#8b6a45", "cavalry-horse-neck");
+        const horseNeck2 = addBone("马脖子 2", horseNeck1.id, componentPoint(parts.horseBody, 0.82, 0.38), componentPoint(parts.horseBody, 0.90, 0.26), "#8b6a45", "cavalry-horse-neck");
+        const horseHead1 = addBone("马头 1", horseNeck2.id, componentPoint(parts.horseBody, 0.90, 0.26), componentPoint(parts.horseBody, 0.97, 0.18), "#8b6a45", "cavalry-horse-head");
+
+        const horseBodyBones = [horseBody1, horseBody2, horseBody3, horseNeck1, horseNeck2, horseHead1];
+        addPiece("马身", "cavalry-horse-piece", horseBodyImageId, parts.horseBody, 30, horseBodyBones.map((bone) => bone.id));
+
+        const horseLegRoots = [horseBody1.id, horseBody1.id, horseBody3.id, horseBody3.id];
+        const horseLegPieces = parts.horseLegs.map((component, index) => {
+          const bend = index < 2 ? -1 : 1;
+          const upper = addBone(`马腿 ${index + 1}-大腿`, horseLegRoots[index], componentPoint(component, 0.5, 0.04), componentPoint(component, 0.5 + bend * 0.08, 0.42), "#7c6040", "cavalry-horse-leg");
+          const lower = addBone(`马腿 ${index + 1}-小腿`, upper.id, componentPoint(component, 0.5 + bend * 0.08, 0.42), componentPoint(component, 0.5 + bend * 0.04, 0.78), "#7c6040", "cavalry-horse-leg");
+          const hoof = addBone(`马腿 ${index + 1}-马蹄`, lower.id, componentPoint(component, 0.5 + bend * 0.04, 0.78), componentPoint(component, 0.5, 0.98), "#7c6040", "cavalry-horse-hoof");
+          const layer = parts.horseFarLegIndices.includes(index) ? 20 : 40;
+          return addPiece(`马腿 ${index + 1}`, "cavalry-horse-leg-piece", horseLegImageIds[index], component, layer, [
+            upper.id,
+            lower.id,
+            hoof.id,
+          ]);
+        });
+
+        const soldierSpine1 = addBone("士兵脊椎 1", horseBody2.id, componentPoint(parts.soldierTorso, 0.46, 0.77), componentPoint(parts.soldierTorso, 0.47, 0.59), "#556e8a", "cavalry-soldier-spine");
+        const soldierSpine2 = addBone("士兵脊椎 2", soldierSpine1.id, componentPoint(parts.soldierTorso, 0.47, 0.59), componentPoint(parts.soldierTorso, 0.49, 0.42), "#556e8a", "cavalry-soldier-spine");
+        const soldierSpine3 = addBone("士兵脊椎 3", soldierSpine2.id, componentPoint(parts.soldierTorso, 0.49, 0.42), componentPoint(parts.soldierTorso, 0.52, 0.24), "#556e8a", "cavalry-soldier-spine");
+        const soldierSpine4 = addBone("士兵脊椎 4", soldierSpine3.id, componentPoint(parts.soldierTorso, 0.52, 0.24), componentPoint(parts.soldierTorso, 0.54, 0.06), "#556e8a", "cavalry-soldier-spine");
+        const soldierRightShoulder = addBone("士兵右肩", soldierSpine2.id, componentPoint(parts.soldierTorso, 0.36, 0.25), componentPoint(parts.soldierTorso, 0.22, 0.23), "#556e8a", "cavalry-soldier-shoulder");
+        const soldierLeftShoulder = addBone("士兵左肩", soldierSpine2.id, componentPoint(parts.soldierTorso, 0.62, 0.25), componentPoint(parts.soldierTorso, 0.76, 0.23), "#556e8a", "cavalry-soldier-shoulder");
+
+        addPiece("士兵躯壳", "cavalry-soldier-torso-piece", soldierTorsoImageId, parts.soldierTorso, 80, [
+          soldierSpine1.id,
+          soldierSpine2.id,
+          soldierSpine3.id,
+          soldierSpine4.id,
+          soldierRightShoulder.id,
+          soldierLeftShoulder.id,
+        ]);
+
+        const soldierRightArm1 = addBone("士兵右臂 1", soldierRightShoulder.id, componentPoint(parts.soldierRightArm, 0.82, 0.08), componentPoint(parts.soldierRightArm, 0.58, 0.48), "#556e8a", "cavalry-soldier-right-arm");
+        const soldierRightArm2 = addBone("士兵右臂 2", soldierRightArm1.id, componentPoint(parts.soldierRightArm, 0.58, 0.48), componentPoint(parts.soldierRightArm, 0.49, 0.96), "#556e8a", "cavalry-soldier-right-arm");
+        addPiece("士兵右臂", "cavalry-soldier-right-arm-piece", soldierRightArmImageId, parts.soldierRightArm, 90, [
+          soldierRightArm1.id,
+          soldierRightArm2.id,
+        ]);
+
+        const soldierRightLeg1 = addBone("士兵右腿 1", soldierSpine1.id, componentPoint(parts.soldierRightLeg, 0.82, 0.12), componentPoint(parts.soldierRightLeg, 0.56, 0.47), "#556e8a", "cavalry-soldier-right-leg");
+        const soldierRightLeg2 = addBone("士兵右腿 2", soldierRightLeg1.id, componentPoint(parts.soldierRightLeg, 0.56, 0.47), componentPoint(parts.soldierRightLeg, 0.46, 0.82), "#556e8a", "cavalry-soldier-right-leg");
+        const soldierRightLeg3 = addBone("士兵右腿 3", soldierRightLeg2.id, componentPoint(parts.soldierRightLeg, 0.46, 0.82), componentPoint(parts.soldierRightLeg, 0.75, 0.96), "#556e8a", "cavalry-soldier-right-foot");
+        addPiece("士兵右腿", "cavalry-soldier-right-leg-piece", soldierRightLegImageId, parts.soldierRightLeg, 70, [
+          soldierRightLeg1.id,
+          soldierRightLeg2.id,
+          soldierRightLeg3.id,
+        ]);
+
+        addPiece("士兵武器", "cavalry-soldier-weapon-piece", soldierWeaponImageId, parts.soldierWeapon, 95, [
+          soldierRightArm2.id,
+        ]);
+
+        return {
+          name: "骑兵",
+          fps: 36,
+          duration: 95,
+          selectedActionId: null,
+          nodes,
+          timelines,
+          actions: [],
+          customImages,
+        };
+      }
+
+      async function installSpearmanFistRigFromMaterial(inputImageData, inputComponents, matches) {
+        if (state.currentUnitType !== "spearman") return false;
+        const fistCandidateComponents = detectMaterialComponents(
+          inputImageData,
+          Math.max(12, Math.min(180, Math.round(materialReplacementOptions.minPixels * 0.08))),
+        );
+        const fistComponent = detectSpearmanFistComponent(inputImageData, fistCandidateComponents, matches);
+        clearSpearmanFistRig();
+        if (!fistComponent) return false;
+        const torsoSixNode = findSpearmanTorsoSixNode();
+        const attachmentOwnerNode = torsoSixNode ? findNearestAttachmentAncestor(torsoSixNode) : null;
+        const attachmentOwnerMatch = matches.find(
+          (match) => match?.slot?.imageKey && match.slot.imageKey === attachmentOwnerNode?.attachment?.image,
+        );
+        const attachmentOwnerRestPart =
+          attachmentOwnerNode?.attachment?.fullSkin && attachmentOwnerNode.attachment.restPart
+            ? resolveRestPartTransform(attachmentOwnerNode.attachment.restPart, false) ||
+              attachmentOwnerNode.attachment.restPart
+            : null;
+        const ownerPixel = attachmentOwnerMatch
+          ? projectSourcePointIntoNormalizedSlot(
+              attachmentOwnerMatch.component,
+              attachmentOwnerMatch.slot,
+              fistComponent.cx,
+              fistComponent.cy,
+            )
+          : null;
+        const materialToWorld = estimateMaterialToWorldTransform(matches);
+        if (!torsoSixNode) return false;
+        const fistCenterWorld =
+          attachmentOwnerMatch && attachmentOwnerRestPart && ownerPixel
+            ? imagePixelToRestWorld(
+                attachmentOwnerRestPart,
+                {
+                  width: attachmentOwnerMatch.slot.targetWidth,
+                  height: attachmentOwnerMatch.slot.targetHeight,
+                },
+                ownerPixel.x,
+                ownerPixel.y,
+              )
+            : materialToWorld
+              ? materialToWorld(fistComponent.cx, fistComponent.cy)
+              : null;
+        if (!fistCenterWorld) return false;
+        const torsoPose = worldPose(torsoSixNode);
+        const fistEndWorld = { x: fistCenterWorld.x + 16, y: fistCenterWorld.y };
+        const fistImageData = extractMaterialPiece(inputImageData, fistComponent, materialReplacementOptions.padding);
+        registerCustomImage(
+          spearmanFistCustomImageId,
+          "spearman-fist.png",
+          imageDataToDataUrl(fistImageData),
+        );
+        warriorImages[spearmanFistCustomImageId] = await imageDataToImage(fistImageData);
+
+        const fistBone = createBindingBone(
+          "拳头",
+          fistCenterWorld,
+          fistEndWorld,
+          "#d4907a",
+          spearmanFistBoneRole,
+          torsoSixNode,
+          torsoPose,
+        );
+        fistBone.lockedTransform = true;
+        fistBone.bindPose = {
+          ...fistBone.bindPose,
+          x: fistBone.x,
+          y: fistBone.y,
+          rotation: fistBone.rotation,
+          length: fistBone.length,
+        };
+
+        const fistWorldScale =
+          (Math.abs(materialToWorld.scaleX || 0) + Math.abs(materialToWorld.scaleY || 0)) / 2 || 1;
+        const fistRestPart = {
+          x: 0,
+          y: 0,
+          scale:
+            attachmentOwnerRestPart?.scale && attachmentOwnerMatch
+              ? Math.max(0.001, attachmentOwnerRestPart.scale)
+              : Math.max(0.001, fistWorldScale),
+          rotation: 0,
+          anchorX: 0.5,
+          anchorY: 0.5,
+          parentBoneId: fistBone.id,
+        };
+        const fistPiece = createGeneratedPieceNode(
+          "拳头",
+          spearmanFistCustomImageId,
+          fistRestPart,
+          (attachmentOwnerNode?.attachment?.layer ??
+            Math.max(...state.nodes.map((node) => node.attachment?.layer || 0), 0)) + 1,
+          [fistBone.id],
+        );
+        fistPiece.role = spearmanFistPieceRole;
+        fistPiece.lockedTransform = true;
+        state.nodes.push(fistBone, fistPiece);
+        state.timelines[fistBone.id] = [];
+        state.timelines[fistPiece.id] = [];
+        resetRuntimeCaches();
+        return true;
+      }
+
       async function applyMaterialReplacement(file) {
         if (!file) return;
         el.replaceMaterialBtn.disabled = true;
         toast("正在识别素材图...");
         try {
+          if (state.currentUnitType === "cavalry") {
+            const inputImage = await loadFileImage(file);
+            const inputImageData = imageToImageData(inputImage);
+            const project = buildCavalryProjectFromMaterial(inputImageData, file.name);
+            applyProjectData(project, { unitType: "cavalry" });
+            drawStage();
+            toast("已从骑兵拆分图自动创建全新骨架");
+            return;
+          }
           const [referenceImage, inputImage] = await Promise.all([
             loadImage(materialReferencePath),
             loadFileImage(file),
@@ -1865,14 +2839,10 @@
           const matches = matchMaterialInputComponents(inputImageData, inputComponents, slots);
           for (const match of matches) {
             const extracted = extractMaterialPiece(inputImageData, match.component, materialReplacementOptions.padding);
-            const normalized = normalizeMaterialPiece(
-              extracted,
-              match.slot.targetWidth,
-              match.slot.targetHeight,
-              materialReplacementOptions.padding,
-            );
+            const normalized = normalizeMatchedMaterialPiece(extracted, match.slot, materialReplacementOptions.padding);
             warriorImages[match.slot.imageKey] = await imageDataToImage(normalized);
           }
+          await installSpearmanFistRigFromMaterial(inputImageData, inputComponents, matches);
           drawStage();
           toast(`已替换新版关键帧贴图：${matches.length} 个部件`);
         } catch (error) {
@@ -1901,6 +2871,7 @@
           length: patch.length ?? base.length,
           scaleX: patch.scaleX ?? base.scaleX,
           scaleY: patch.scaleY ?? base.scaleY,
+          visible: patch.visible ?? base.visible !== false,
         };
       }
 
@@ -1972,16 +2943,22 @@
 
       function getLocalPose(node, frame = state.currentFrame) {
         const override = ignorePoseOverrides ? null : poseOverrides.get(node.id);
-        if (override) return { ...node, ...override };
+        if (override) return BowRigController.enrichPose(node, { ...node, ...override });
         if (isBindingMode()) return getRestLocalPose(node);
         const keys = [...(state.timelines[node.id] || [])].sort((a, b) => a.frame - b.frame);
-        if (keys.length === 0) return { ...node };
+        if (keys.length === 0) return BowRigController.enrichPose(node, { ...node });
         const exact = keys.find((item) => item.frame === frame);
-        if (exact) return { ...node, ...exact };
-        if (keys.length === 1) return { ...node, ...keys[0] };
+        if (exact) return BowRigController.enrichPose(node, { ...node, ...exact });
+        if (keys.length === 1) return BowRigController.enrichPose(node, { ...node, ...keys[0] });
         const before = [...keys].reverse().find((item) => item.frame < frame);
         const after = keys.find((item) => item.frame > frame);
-        if (!before) return { ...node, ...keys[0] };
+        if (!before) {
+          return BowRigController.enrichPose(node, {
+            ...node,
+            ...keys[0],
+            visible: node.visible !== false,
+          });
+        }
         if (!after) {
           const start = keys.find((item) => item.frame === 0) || keys[0];
           const loopEndFrame = state.duration + 1;
@@ -1989,12 +2966,23 @@
           const t = Math.max(0, Math.min(1, (frame - before.frame) / span));
           return interpolateLocalPose(node, before, start, t);
         }
+        const arrowPiece = arrowPieceForNode(node);
+        const slashFxPiece = slashFxPieceForNode(node);
+        const parentChange =
+          arrowParentChangeBetweenFrames(arrowPiece, before.frame, after.frame) ||
+          slashFxParentChangeBetweenFrames(slashFxPiece, before.frame, after.frame);
+        if (parentChange) {
+          if (frame < parentChange.frame) {
+            return BowRigController.enrichPose(node, { ...node, ...before });
+          }
+          return BowRigController.enrichPose(node, { ...node, ...after });
+        }
         const t = (frame - before.frame) / (after.frame - before.frame);
         return interpolateLocalPose(node, before, after, t);
       }
 
       function interpolateLocalPose(node, before, after, t) {
-        return {
+        return BowRigController.interpolatePose(node, before, after, t, {
           ...node,
           x: lerp(before.x, after.x, t),
           y: lerp(before.y, after.y, t),
@@ -2002,7 +2990,26 @@
           length: lerp(before.length, after.length, t),
           scaleX: lerp(before.scaleX, after.scaleX, t),
           scaleY: lerp(before.scaleY, after.scaleY, t),
-        };
+          visible:
+            typeof before?.visible === "boolean"
+              ? before.visible
+              : typeof after?.visible === "boolean"
+                ? after.visible
+                : node.visible !== false,
+        });
+      }
+
+      function isNodeVisibleAtFrame(node, frame = state.currentFrame) {
+        if (!node) return false;
+        if (isBindingMode()) return true;
+        const arrowPiece = arrowPieceForNode(node);
+        if (arrowPiece) return arrowVisibilityAtFrame(arrowPiece, frame);
+        const slashFxPiece = slashFxPieceForNode(node);
+        if (slashFxPiece) {
+          if (node.id === state.selectedNodeId || slashFxPiece.id === state.selectedPieceNodeId) return true;
+          return slashFxAlphaAtFrame(slashFxPiece, frame) > 0.001;
+        }
+        return true;
       }
 
       function lerp(a, b, t) {
@@ -2019,7 +3026,8 @@
         if (seen.has(node.id)) return getLocalPose(node, frame);
         seen.add(node.id);
         const local = getLocalPose(node, frame);
-        if (!node.parentId) {
+        const effectiveParentId = effectiveParentIdForNode(node, frame);
+        if (!effectiveParentId) {
           return {
             ...local,
             worldX: local.x,
@@ -2029,7 +3037,7 @@
             worldScaleY: local.scaleY,
           };
         }
-        const parent = state.nodes.find((item) => item.id === node.parentId);
+        const parent = cachedNodeById(effectiveParentId);
         if (!parent) {
           return {
             ...local,
@@ -2042,6 +3050,45 @@
         }
         const p = worldPose(parent, frame, seen);
         const anchor = endPoint(p);
+        const worldRotation = p.worldRotation + local.rotation;
+        const worldScaleX = p.worldScaleX * local.scaleX;
+        const worldScaleY = p.worldScaleY * local.scaleY;
+        if (isTempParentBoundArrowCarrier(node, frame)) {
+          const gripLocal = arrowGripLocalForPiece(arrowPieceForNode(node));
+          if (gripLocal) {
+            const gripRad = (worldRotation * Math.PI) / 180;
+            const gripOffsetX =
+              gripLocal.x * worldScaleX * Math.cos(gripRad) - gripLocal.y * worldScaleY * Math.sin(gripRad);
+            const gripOffsetY =
+              gripLocal.x * worldScaleX * Math.sin(gripRad) + gripLocal.y * worldScaleY * Math.cos(gripRad);
+            return {
+              ...local,
+              worldX: anchor.x - gripOffsetX,
+              worldY: anchor.y - gripOffsetY,
+              worldRotation,
+              worldScaleX,
+              worldScaleY,
+            };
+          }
+        }
+        if (isTempParentBoundSlashFxCarrier(node, frame)) {
+          const gripLocal = slashFxGripLocalForPiece(slashFxPieceForNode(node));
+          if (gripLocal) {
+            const gripRad = (worldRotation * Math.PI) / 180;
+            const gripOffsetX =
+              gripLocal.x * worldScaleX * Math.cos(gripRad) - gripLocal.y * worldScaleY * Math.sin(gripRad);
+            const gripOffsetY =
+              gripLocal.x * worldScaleX * Math.sin(gripRad) + gripLocal.y * worldScaleY * Math.cos(gripRad);
+            return {
+              ...local,
+              worldX: anchor.x - gripOffsetX,
+              worldY: anchor.y - gripOffsetY,
+              worldRotation,
+              worldScaleX,
+              worldScaleY,
+            };
+          }
+        }
         const rad = (p.worldRotation * Math.PI) / 180;
         const px = local.x * p.worldScaleX;
         const py = local.y * p.worldScaleY;
@@ -2051,17 +3098,42 @@
           ...local,
           worldX: anchor.x + rotatedX,
           worldY: anchor.y + rotatedY,
-          worldRotation: p.worldRotation + local.rotation,
-          worldScaleX: p.worldScaleX * local.scaleX,
-          worldScaleY: p.worldScaleY * local.scaleY,
+          worldRotation,
+          worldScaleX,
+          worldScaleY,
         };
       }
 
       function getRestLocalPose(node) {
+        if (!node) {
+          return {
+            x: 0,
+            y: 0,
+            rotation: 0,
+            length: 80,
+            scaleX: 1,
+            scaleY: 1,
+          };
+        }
         return { ...node, ...(node.bindPose || {}) };
       }
 
       function restWorldPose(node, seen = new Set()) {
+        if (!node) {
+          return {
+            x: 0,
+            y: 0,
+            rotation: 0,
+            length: 80,
+            scaleX: 1,
+            scaleY: 1,
+            worldX: 0,
+            worldY: 0,
+            worldRotation: 0,
+            worldScaleX: 1,
+            worldScaleY: 1,
+          };
+        }
         if (seen.has(node.id)) return getRestLocalPose(node);
         seen.add(node.id);
         const local = getRestLocalPose(node);
@@ -2075,7 +3147,7 @@
             worldScaleY: local.scaleY,
           };
         }
-        const parent = state.nodes.find((item) => item.id === node.parentId);
+        const parent = cachedNodeById(node.parentId);
         if (!parent) {
           return {
             ...local,
@@ -2121,9 +3193,13 @@
       }
 
       function drawStage() {
+        resetRuntimeCaches();
         const rect = el.stage.getBoundingClientRect();
         ctx.clearRect(0, 0, rect.width, rect.height);
+        ctx.save();
+        applyStageViewTransform();
         drawAxes(rect);
+        drawWorldOriginMarker();
         const nodes = sortedNodes();
         drawPreviousKeyGhost(nodes);
         if (state.renderMode === "texture") {
@@ -2140,6 +3216,29 @@
           drawSelectedPieceBinding(nodes);
         }
         drawBindingToolPreview();
+        ctx.restore();
+      }
+
+      function drawWorldOriginMarker() {
+        const markerRadius = screenLengthToWorld(8);
+        const markerHalf = screenLengthToWorld(18);
+        ctx.save();
+        ctx.strokeStyle = "#7ee787";
+        ctx.fillStyle = "#7ee787";
+        ctx.lineWidth = screenLengthToWorld(2);
+        ctx.beginPath();
+        ctx.moveTo(-markerHalf, 0);
+        ctx.lineTo(markerHalf, 0);
+        ctx.moveTo(0, -markerHalf);
+        ctx.lineTo(0, markerHalf);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(0, 0, markerRadius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "#dff7e7";
+        ctx.font = `${screenLengthToWorld(13)}px sans-serif`;
+        ctx.fillText("Origin (0 px, 0 px)", screenLengthToWorld(14), -screenLengthToWorld(10));
+        ctx.restore();
       }
 
       function drawPreviousKeyGhost(nodes) {
@@ -2177,25 +3276,30 @@
       }
 
       function drawAxes(rect) {
+        const topLeft = worldFromScreen({ x: 0, y: 0 });
+        const bottomRight = worldFromScreen({ x: rect.width, y: rect.height });
         ctx.save();
         ctx.strokeStyle = "#ffffff10";
-        ctx.lineWidth = 1;
+        ctx.lineWidth = 1 / Math.max(0.01, state.stageView?.zoom || 1);
         ctx.beginPath();
-        ctx.moveTo(0, rect.height / 2);
-        ctx.lineTo(rect.width, rect.height / 2);
-        ctx.moveTo(rect.width / 2, 0);
-        ctx.lineTo(rect.width / 2, rect.height);
+        ctx.moveTo(topLeft.x, 0);
+        ctx.lineTo(bottomRight.x, 0);
+        ctx.moveTo(0, topLeft.y);
+        ctx.lineTo(0, bottomRight.y);
         ctx.stroke();
         ctx.restore();
       }
 
       function drawBone(node, active) {
+        if (!isNodeVisibleAtFrame(node)) return;
         const pose = worldPose(node);
         const end = endPoint(pose);
+        const bowTag = bowDebugLabel(node);
         ctx.save();
         ctx.lineCap = "round";
         ctx.lineJoin = "round";
         ctx.strokeStyle = node.color;
+        if (node.role?.startsWith("bow-string")) ctx.setLineDash([8, 6]);
         ctx.lineWidth = active ? 9 : 6;
         setDrawAlpha(active ? 1 : 0.78);
         ctx.beginPath();
@@ -2219,27 +3323,40 @@
 
         ctx.fillStyle = "#eef2f5";
         ctx.font = "12px sans-serif";
-        ctx.fillText(node.name, pose.worldX + 10, pose.worldY - 8);
+        ctx.fillText(bowTag ? `${node.name} [${bowTag}]` : node.name, pose.worldX + 10, pose.worldY - 8);
         ctx.restore();
       }
 
+      function bowDebugLabel(node) {
+        if (!node?.role) return "";
+        if (node.role === "bow-center") return "center";
+        if (node.role === "bow-upper") return "body-upper";
+        if (node.role === "bow-lower") return "body-lower";
+        if (node.role === "bow-string-upper") return "string-upper";
+        if (node.role === "bow-string-lower") return "string-lower";
+        if (node.role === "bow-string-control") return "string-control";
+        return "";
+      }
+
       function drawWarriorTextures() {
-        const texturedNodes = state.nodes.filter((node) => node.attachment);
+        const texturedNodes = state.nodes.filter((node) => node.attachment && isNodeVisibleAtFrame(node));
         if (texturedNodes.length === 0) return;
         texturedNodes
           .slice()
           .sort((a, b) => {
             const layerDiff = (a.attachment.layer || 0) - (b.attachment.layer || 0);
             if (layerDiff) return layerDiff;
-            return (a.attachment.alpha || 1) - (b.attachment.alpha || 1);
+            return effectiveAttachmentAlpha(a) - effectiveAttachmentAlpha(b);
           })
           .forEach((node) => drawAttachment(node));
       }
 
       function drawAttachment(node) {
         const attachment = node.attachment;
+        const alpha = effectiveAttachmentAlpha(node);
+        if (alpha <= 0.001) return;
         if (node.role === "bow-string" && attachment.segments && attachment.chainTo) {
-          drawBowStringAttachment(node, attachment);
+          drawBowStringAttachment(node, attachment, alpha);
           return;
         }
         const image = warriorImages[attachment.image];
@@ -2247,18 +3364,18 @@
         const pose = worldPose(node);
         if (attachment.fullSkin) {
           if (isBindingMode() && attachment.restPart) {
-            drawRestPartImage(image, resolveRestPartTransform(attachment.restPart, false), attachment.alpha);
+            drawRestPartImage(image, resolveRestPartTransform(attachment.restPart, false), alpha);
             return;
           }
-          drawFullSkinAttachment(attachment, image);
+          drawFullSkinAttachment(attachment, image, alpha);
           return;
         }
         if (attachment.segments && attachment.chainTo) {
-          drawSegmentedAttachment(node, attachment, image);
+          drawSegmentedAttachment(node, attachment, image, alpha);
           return;
         }
         if (attachment.image === "head") {
-          drawHeadAttachment(node, attachment, image);
+          drawHeadAttachment(node, attachment, image, alpha);
           return;
         }
         let start = { x: pose.worldX, y: pose.worldY };
@@ -2284,7 +3401,7 @@
           end,
           attachment.width,
           length,
-          attachment.alpha,
+          alpha,
           attachment.anchorX,
           attachment.rotationOffset,
           attachment.offsetX,
@@ -2327,7 +3444,7 @@
           });
       }
 
-      function drawSegmentedAttachment(node, attachment, image) {
+      function drawSegmentedAttachment(node, attachment, image, alpha = attachment.alpha) {
         const chainNode = state.nodes.find((item) => item.id === attachment.chainTo);
         if (!chainNode) return;
         const lowerAttachment = { ...attachment, ...(attachment.lower || {}) };
@@ -2368,10 +3485,10 @@
             start: elbow,
             end: hand,
           },
-        ], attachment.alpha);
+        ], alpha);
       }
 
-      function drawBowStringAttachment(node, attachment) {
+      function drawBowStringAttachment(node, attachment, alpha = attachment.alpha) {
         const chainNode = state.nodes.find((item) => item.id === attachment.chainTo);
         if (!chainNode) return;
         const lowerAttachment = { ...attachment, ...(attachment.lower || {}) };
@@ -2381,8 +3498,8 @@
         const middle = { x: lowerPose.worldX, y: lowerPose.worldY };
         const end = endPoint(lowerPose);
         const color = attachment.lineColor || node.color || "#d8d0bf";
-        drawBowStringSegment(start, middle, attachment.width, attachment.alpha, color);
-        drawBowStringSegment(middle, end, lowerAttachment.width || attachment.width, attachment.alpha, color);
+        drawBowStringSegment(start, middle, attachment.width, alpha, color);
+        drawBowStringSegment(middle, end, lowerAttachment.width || attachment.width, alpha, color);
       }
 
       function drawBowStringSegment(start, end, width, alpha, color) {
@@ -2483,7 +3600,7 @@
         };
       }
 
-      function drawFullSkinAttachment(attachment, image) {
+      function drawFullSkinAttachment(attachment, image, alpha = attachment.alpha) {
         const restPart = resolveRestPartTransform(attachment.restPart, false);
         const segments = (attachment.skinBoneIds || [])
           .map((nodeId) => state.nodes.find((item) => item.id === nodeId))
@@ -2500,7 +3617,7 @@
           });
         if (!restPart) return;
         if (segments.length === 0) {
-          drawRestPartImage(image, restPart, attachment.alpha);
+          drawRestPartImage(image, restPart, alpha);
           return;
         }
 
@@ -2529,7 +3646,7 @@
           source.push(sourceRow);
           dest.push(destRow);
         }
-        drawTexturedMesh(image, source, dest, attachment.alpha);
+        drawTexturedMesh(image, source, dest, alpha);
       }
 
       function drawRestPartImage(image, restPart, alpha = 1) {
@@ -2657,7 +3774,7 @@
         return a.x * b.x + a.y * b.y;
       }
 
-      function drawHeadAttachment(node, attachment, image) {
+      function drawHeadAttachment(node, attachment, image, alpha = attachment.alpha) {
         const pose = worldPose(node);
         const center = {
           x: pose.worldX + attachment.offsetX,
@@ -2692,7 +3809,7 @@
           });
         }
         ctx.save();
-        setDrawAlpha(attachment.alpha);
+        setDrawAlpha(alpha);
         ctx.translate(center.x, center.y);
         ctx.rotate(headAngle);
         if (attachment.scarfEnabled) {
@@ -2713,14 +3830,14 @@
         ctx.restore();
       }
 
-      function drawSpringScarf(node, attachment, image, center, angle, layout) {
+      function drawSpringScarf(node, attachment, image, center, angle, layout, alpha = attachment.alpha) {
         const mesh = buildScarfMesh(center, angle, layout);
         const points = solveGravityMesh(`scarf:${node.id}`, mesh.dest, {
           stiffness: layout.stiffness,
           damping: layout.damping,
           gravity: layout.gravity,
         });
-        drawTexturedMesh(image, mesh.source, points, attachment.alpha);
+        drawTexturedMesh(image, mesh.source, points, alpha);
       }
 
       function solveSpringScarf(nodeId, center, angle, layout) {
@@ -3128,7 +4245,7 @@
 
       function drawTextureHandles(nodes) {
         const selected = state.nodes.find((node) => node.id === state.selectedNodeId);
-        if (!selected) return;
+        if (!selected || !isNodeVisibleAtFrame(selected)) return;
         const pose = worldPose(selected);
         const end = endPoint(pose);
         ctx.save();
@@ -3282,12 +4399,16 @@
       }
 
       function drawParentLink(node) {
-        if (!node.parentId) return;
-        const parent = state.nodes.find((item) => item.id === node.parentId);
-        if (!parent) return;
+        const effectiveParentId = effectiveParentIdForNode(node);
+        if (!effectiveParentId) return;
+        const parent = cachedNodeById(effectiveParentId);
+        if (!parent || !isNodeVisibleAtFrame(node) || !isNodeVisibleAtFrame(parent)) return;
         const parentEnd = endPoint(worldPose(parent));
         const pose = worldPose(node);
-        const gap = Math.hypot(parentEnd.x - pose.worldX, parentEnd.y - pose.worldY);
+        const linkPoint = isTempParentBoundArrowCarrier(node)
+          ? arrowGripWorldPointForNode(node) || { x: pose.worldX, y: pose.worldY }
+          : { x: pose.worldX, y: pose.worldY };
+        const gap = Math.hypot(parentEnd.x - linkPoint.x, parentEnd.y - linkPoint.y);
         if (gap < 0.5) return;
         ctx.save();
         ctx.strokeStyle = "#ffffff55";
@@ -3295,7 +4416,7 @@
         ctx.setLineDash([5, 5]);
         ctx.beginPath();
         ctx.moveTo(parentEnd.x, parentEnd.y);
-        ctx.lineTo(pose.worldX, pose.worldY);
+        ctx.lineTo(linkPoint.x, linkPoint.y);
         ctx.stroke();
         ctx.restore();
       }
@@ -3308,9 +4429,104 @@
         ctx.globalAlpha = Math.max(0, Math.min(1, alpha * drawAlphaMultiplier));
       }
 
+      function getSpineUnitConfig(unitType) {
+        return SPINE_UNIT_CONFIGS[unitType] || SPINE_UNIT_CONFIGS.swordsman;
+      }
+
+      function renderSpineUnitOptions() {
+        if (!el.unitTypeSelect) return;
+        el.unitTypeSelect.innerHTML = "";
+        Object.entries(SPINE_UNIT_CONFIGS).forEach(([unitType, config]) => {
+          const option = document.createElement("option");
+          option.value = unitType;
+          option.textContent = config.label;
+          option.disabled = config.enabled === false;
+          el.unitTypeSelect.appendChild(option);
+        });
+      }
+
+      function syncSpineUnitSelectValue() {
+        if (!el.unitTypeSelect) return;
+        el.unitTypeSelect.value = state.currentUnitType;
+      }
+
+      function confirmSpineUnitSwitch(currentUnitType, nextUnitType) {
+        if (currentUnitType === nextUnitType) return true;
+        const currentConfig = getSpineUnitConfig(currentUnitType);
+        const nextConfig = getSpineUnitConfig(nextUnitType);
+        return window.confirm(
+          `Switch from ${currentConfig.label} to ${nextConfig.label}? Unsaved in-memory changes will be replaced.`,
+        );
+      }
+
+      function resetSpineUnitSelect() {
+        if (!el.unitTypeSelect) return;
+        el.unitTypeSelect.value = state.currentUnitType;
+      }
+
+      function isSlashFxUnit(unitType = state.currentUnitType) {
+        return ["swordsman", "spearman"].includes(unitType);
+      }
+
+      function slashEffectContext() {
+        if (state.currentUnitType === "spearman") {
+          return {
+            label: "戳刺特效",
+            actionPrefix: "本动作",
+          };
+        }
+        return {
+          label: "刀光",
+          actionPrefix: "本动作",
+        };
+      }
+
+      function renderSlashFxContextLabels() {
+        const fxContext = slashEffectContext();
+        if (el.slashFxShowBtn) el.slashFxShowBtn.textContent = `${fxContext.label}出现`;
+        if (el.slashFxHideBtn) el.slashFxHideBtn.textContent = `${fxContext.label}消失`;
+        if (el.slashFxResetActionVisibilityBtn) el.slashFxResetActionVisibilityBtn.textContent = "重置本动作";
+        const hiddenForAction = selectedSlashFxPiece()
+          ? isSlashFxHiddenForCurrentAction(selectedSlashFxPiece())
+          : false;
+        if (el.slashFxActionVisibilityBtn) {
+          el.slashFxActionVisibilityBtn.textContent = hiddenForAction
+            ? `${fxContext.actionPrefix}显示${fxContext.label}`
+            : `${fxContext.actionPrefix}隐藏${fxContext.label}`;
+        }
+        const slashFxParentLabel = el.slashFxParentRow?.querySelector('label[for="slashFxParentSelect"]');
+        if (slashFxParentLabel) slashFxParentLabel.textContent = `${fxContext.label}临时父节点`;
+        if (el.slashFxBindParentBtn) el.slashFxBindParentBtn.textContent = `绑定${fxContext.label}父节点`;
+        if (el.slashFxUnbindParentBtn) el.slashFxUnbindParentBtn.textContent = `解绑${fxContext.label}父节点`;
+        if (el.createSlashFxRigBtn) {
+          el.createSlashFxRigBtn.textContent = `创建${slashEffectContext().label}骨骼`;
+        }
+      }
+
+      function renderSpineUnitContextControls() {
+        renderSpineUnitOptions();
+        syncSpineUnitSelectValue();
+      }
+
+      function renderSpineUnitFeatureGroups() {
+        if (el.swordsmanFeatureGroup) {
+          el.swordsmanFeatureGroup.hidden = !["swordsman", "spearman"].includes(state.currentUnitType);
+        }
+        if (el.archerFeatureGroup) {
+          el.archerFeatureGroup.hidden = state.currentUnitType !== "archer";
+        }
+        renderSlashFxContextLabels();
+      }
+
       function renderAll() {
+        resetRuntimeCaches();
+        if (!drag || drag.type === "key" || !drag.hasMoved) {
+          poseOverrides.clear();
+        }
         syncAllBowRigs();
         syncCurrentActionFromTimeline();
+        renderSpineUnitContextControls();
+        renderSpineUnitFeatureGroups();
         renderActionList();
         renderNodeList();
         renderPieceList();
@@ -3318,7 +4534,38 @@
         renderBindingPanel();
         renderTimeline();
         renderStatus();
+        renderStageWorldStatus();
         renderJsonPreview();
+        drawStage();
+      }
+
+      function renderDragFrame() {
+        resetRuntimeCaches();
+        syncAllBowRigs();
+        renderStatus();
+        renderStageWorldStatus();
+        drawStage();
+      }
+
+      function renderSpineUnitBindingControls() {
+        if (el.createBowRigBtn) {
+          el.createBowRigBtn.hidden = state.currentUnitType !== "archer";
+        }
+        if (el.createArrowRigBtn) {
+          el.createArrowRigBtn.hidden = state.currentUnitType !== "archer";
+        }
+        if (el.createSlashFxRigBtn) {
+          el.createSlashFxRigBtn.hidden = !["swordsman", "spearman"].includes(state.currentUnitType);
+        }
+      }
+
+      function renderPlaybackFrame() {
+        resetRuntimeCaches();
+        poseOverrides.clear();
+        syncAllBowRigs();
+        renderTimeline();
+        renderStatus();
+        renderStageWorldStatus();
         drawStage();
       }
 
@@ -3347,13 +4594,14 @@
       function renderNodeList() {
         el.nodeList.innerHTML = "";
         sortedNodes().forEach((node) => {
+          const hiddenTag = isNodeVisibleAtFrame(node) ? "" : ' <span class="node-hidden">(hidden)</span>';
           const button = document.createElement("button");
           button.className = `node-item${node.id === state.selectedNodeId ? " active" : ""}`;
           button.type = "button";
           button.dataset.id = node.id;
           button.innerHTML = `
             <span class="node-depth">${"·".repeat(node.depth)}</span>
-            <span class="node-name">${escapeHtml(node.name)}</span>
+            <span class="node-name">${escapeHtml(node.name)}${hiddenTag}</span>
             <span class="node-color" style="background:${node.color}"></span>
           `;
           button.addEventListener("click", () => {
@@ -3382,14 +4630,10 @@
         warriorImages[id] = image;
       }
 
-      function registerLegAssetImage(filename) {
+      function registerLegAssetImage(filename, unitType = state.currentUnitType) {
         const cleanName = normalizeLegAssetFilename(filename);
         const id = `${legAssetPrefix}${cleanName}`;
-        if (warriorImages[id]) return id;
-        const image = new Image();
-        image.onload = drawStage;
-        image.src = legAssetUrl(cleanName);
-        warriorImages[id] = image;
+        setWarriorImageSource(id, legAssetUrl(cleanName, unitType));
         return id;
       }
 
@@ -3408,8 +4652,9 @@
         return cleanName;
       }
 
-      function legAssetUrl(filename) {
-        return `${legAssetBasePath}${filename
+      function legAssetUrl(filename, unitType = state.currentUnitType) {
+        const basePath = spineUnitImageBasePath(unitType);
+        return `${basePath}${filename
           .split("/")
           .map((part) => encodeURIComponent(part))
           .join("/")}`;
@@ -3445,7 +4690,7 @@
       }
 
       function pieceNodes() {
-        return state.nodes.filter((node) => node.attachment);
+        return cachedPieceNodes();
       }
 
       function pieceLabel(node) {
@@ -3464,6 +4709,441 @@
 
       function selectedPieceNode() {
         return state.nodes.find((node) => node.id === state.selectedPieceNodeId && node.attachment) || null;
+      }
+
+      function isTransformLockedNode(node) {
+        return Boolean(node?.lockedTransform);
+      }
+
+      function isPieceTransformLocked(node) {
+        if (!node?.attachment) return isTransformLockedNode(node);
+        if (node.role === spearmanFistPieceRole) return false;
+        return Boolean(node?.lockedTransform);
+      }
+
+      function isArrowPieceNode(node) {
+        return Boolean(node?.attachment && node.role === "arrow-piece");
+      }
+
+      function isSlashFxPieceNode(node) {
+        return Boolean(node?.attachment && node.role === "slash-fx-piece");
+      }
+
+      function arrowCarrierBoneForPiece(piece) {
+        const parentBoneId = piece?.attachment?.restPart?.parentBoneId
+          ? String(piece.attachment.restPart.parentBoneId)
+          : null;
+        if (parentBoneId) {
+          const node = cachedNodeById(parentBoneId);
+          return node && !node.attachment ? node : null;
+        }
+        const skinBoneId = piece?.attachment?.skinBoneIds?.[0] ? String(piece.attachment.skinBoneIds[0]) : null;
+        if (skinBoneId) {
+          const node = cachedNodeById(skinBoneId);
+          return node && !node.attachment ? node : null;
+        }
+        return null;
+      }
+
+      function proxyHitForArrowPieceBody(piece) {
+        if (piece?.role !== "arrow-piece") return null;
+        const carrier = arrowCarrierBoneForPiece(piece);
+        if (!carrier) return null;
+        return { type: "arrow-piece-bone", node: carrier, piece };
+      }
+
+      function arrowPieceForNode(node) {
+        if (isArrowPieceNode(node)) return node;
+        if (!node || node.attachment) return null;
+        ensureRigPieceCaches();
+        return runtimeCache.arrowPieceByCarrierId.get(node.id) || null;
+      }
+
+      function selectedArrowPiece() {
+        return arrowPieceForNode(selectedPieceNode()) || arrowPieceForNode(selectedNode()) || null;
+      }
+
+      function slashFxCarrierBoneForPiece(piece) {
+        const parentBoneId = piece?.attachment?.restPart?.parentBoneId
+          ? String(piece.attachment.restPart.parentBoneId)
+          : null;
+        if (parentBoneId) {
+          const node = cachedNodeById(parentBoneId);
+          return node && !node.attachment ? node : null;
+        }
+        const skinBoneId = piece?.attachment?.skinBoneIds?.[0] ? String(piece.attachment.skinBoneIds[0]) : null;
+        if (skinBoneId) {
+          const node = cachedNodeById(skinBoneId);
+          return node && !node.attachment ? node : null;
+        }
+        return null;
+      }
+
+      function proxyHitForSlashFxPieceBody(piece) {
+        if (piece?.role !== "slash-fx-piece") return null;
+        const carrier = slashFxCarrierBoneForPiece(piece);
+        if (!carrier) return null;
+        return { type: "slash-fx-piece-bone", node: carrier, piece };
+      }
+
+      function slashFxPieceForNode(node) {
+        if (isSlashFxPieceNode(node)) return node;
+        if (!node || node.attachment) return null;
+        ensureRigPieceCaches();
+        return runtimeCache.slashFxPieceByCarrierId.get(node.id) || null;
+      }
+
+      function selectedSlashFxPiece() {
+        return slashFxPieceForNode(selectedPieceNode()) || slashFxPieceForNode(selectedNode()) || null;
+      }
+
+      function slashFxRigNodesForPiece(piece) {
+        const bone = slashFxCarrierBoneForPiece(piece);
+        return [bone, piece].filter(Boolean);
+      }
+
+      function slashFxCarrierBone() {
+        const piece = selectedSlashFxPiece();
+        return piece ? slashFxCarrierBoneForPiece(piece) : null;
+      }
+
+      function arrowRigNodesForPiece(piece) {
+        const bone = arrowCarrierBoneForPiece(piece);
+        return [bone, piece].filter(Boolean);
+      }
+
+      function arrowCarrierBone() {
+        const piece = selectedArrowPiece();
+        return piece ? arrowCarrierBoneForPiece(piece) : null;
+      }
+
+      function arrowGripLocalForPiece(piece) {
+        const attachment = piece?.attachment;
+        const restPart = attachment?.restPart;
+        const image = warriorImages[attachment?.image];
+        const width = Math.max(1, image?.naturalWidth || image?.width || 0);
+        const height = Math.max(1, image?.naturalHeight || image?.height || 0);
+        if (!restPart || !width || !height) return null;
+        const candidates =
+          width >= height
+            ? [
+                { x: 0, y: height * 0.5 },
+                { x: width, y: height * 0.5 },
+              ]
+            : [
+                { x: width * 0.5, y: 0 },
+                { x: width * 0.5, y: height },
+              ];
+        let best = null;
+        candidates.forEach((candidate) => {
+          const local = imagePixelToRestWorld(restPart, { width, height }, candidate.x, candidate.y);
+          const distance = Math.hypot(local.x, local.y);
+          if (!best || distance < best.distance) best = { x: local.x, y: local.y, distance };
+        });
+        return best ? { x: best.x, y: best.y } : null;
+      }
+
+      function slashFxGripLocalForPiece(piece) {
+        const attachment = piece?.attachment;
+        const restPart = attachment?.restPart;
+        const image = warriorImages[attachment?.image];
+        const width = Math.max(1, image?.naturalWidth || image?.width || 0);
+        const height = Math.max(1, image?.naturalHeight || image?.height || 0);
+        if (!restPart || !width || !height) return null;
+        const candidates =
+          width >= height
+            ? [
+                { x: 0, y: height * 0.5 },
+                { x: width, y: height * 0.5 },
+              ]
+            : [
+                { x: width * 0.5, y: 0 },
+                { x: width * 0.5, y: height },
+              ];
+        let best = null;
+        candidates.forEach((candidate) => {
+          const local = imagePixelToRestWorld(restPart, { width, height }, candidate.x, candidate.y);
+          const distance = Math.hypot(local.x, local.y);
+          if (!best || distance < best.distance) best = { x: local.x, y: local.y, distance };
+        });
+        return best ? { x: best.x, y: best.y } : null;
+      }
+
+      function arrowGripWorldPointForNode(node, frame = state.currentFrame) {
+        const pose = worldPose(node, frame);
+        if (!pose) return null;
+        const gripLocal = arrowGripLocalForPiece(arrowPieceForNode(node));
+        if (!gripLocal) return { x: pose.worldX, y: pose.worldY };
+        const rad = (pose.worldRotation * Math.PI) / 180;
+        return {
+          x: pose.worldX + gripLocal.x * pose.worldScaleX * Math.cos(rad) - gripLocal.y * pose.worldScaleY * Math.sin(rad),
+          y: pose.worldY + gripLocal.x * pose.worldScaleX * Math.sin(rad) + gripLocal.y * pose.worldScaleY * Math.cos(rad),
+        };
+      }
+
+      function slashFxGripWorldPointForNode(node, frame = state.currentFrame) {
+        const pose = worldPose(node, frame);
+        if (!pose) return null;
+        const gripLocal = slashFxGripLocalForPiece(slashFxPieceForNode(node));
+        if (!gripLocal) return { x: pose.worldX, y: pose.worldY };
+        const rad = (pose.worldRotation * Math.PI) / 180;
+        return {
+          x: pose.worldX + gripLocal.x * pose.worldScaleX * Math.cos(rad) - gripLocal.y * pose.worldScaleY * Math.sin(rad),
+          y: pose.worldY + gripLocal.x * pose.worldScaleX * Math.sin(rad) + gripLocal.y * pose.worldScaleY * Math.cos(rad),
+        };
+      }
+
+      function normalizeArrowVisibilityTrack(track, duration = state.duration) {
+        if (!Array.isArray(track)) return [];
+        return track
+          .map((item) => ({
+            frame: clampFrameToDuration(item.frame, duration),
+            visible: Boolean(item.visible),
+          }))
+          .sort((a, b) => a.frame - b.frame)
+          .filter((item, index, array) => index === array.findIndex((entry) => entry.frame === item.frame));
+      }
+
+      function cloneArrowVisibilityTracks(tracks, duration = state.duration) {
+        return Object.fromEntries(
+          Object.entries(tracks || {}).map(([pieceId, track]) => [pieceId, normalizeArrowVisibilityTrack(track, duration)]),
+        );
+      }
+
+      function arrowVisibilityTrackForPiece(piece) {
+        return cachedNormalizedTrack(
+          state.arrowVisibilityTracks?.[piece?.id],
+          state.duration,
+          runtimeCache.normalizedArrowVisibilityTracks,
+          normalizeArrowVisibilityTrack,
+        );
+      }
+
+      function normalizeArrowParentTrack(track, duration = state.duration) {
+        if (!Array.isArray(track)) return [];
+        const byFrame = new Map();
+        track.forEach((item) => {
+          byFrame.set(clampFrameToDuration(item.frame, duration), {
+            frame: clampFrameToDuration(item.frame, duration),
+            parentId: item.parentId ? String(item.parentId) : null,
+          });
+        });
+        return [...byFrame.values()].sort((a, b) => a.frame - b.frame);
+      }
+
+      function cloneArrowParentTracks(tracks, duration = state.duration) {
+        return Object.fromEntries(
+          Object.entries(tracks || {}).map(([pieceId, track]) => [pieceId, normalizeArrowParentTrack(track, duration)]),
+        );
+      }
+
+      function arrowParentTrackForPiece(piece) {
+        return cachedNormalizedTrack(
+          state.arrowParentTracks?.[piece?.id],
+          state.duration,
+          runtimeCache.normalizedArrowParentTracks,
+          normalizeArrowParentTrack,
+        );
+      }
+
+      function normalizeSlashFxVisibilityTrack(track, duration = state.duration) {
+        if (!Array.isArray(track)) return [];
+        return track
+          .map((item) => ({
+            frame: clampFrameToDuration(item.frame, duration),
+            visible: Boolean(item.visible),
+          }))
+          .sort((a, b) => a.frame - b.frame)
+          .filter((item, index, array) => index === array.findIndex((entry) => entry.frame === item.frame));
+      }
+
+      function cloneSlashFxVisibilityTracks(tracks, duration = state.duration) {
+        return Object.fromEntries(
+          Object.entries(tracks || {}).map(([pieceId, track]) => [pieceId, normalizeSlashFxVisibilityTrack(track, duration)]),
+        );
+      }
+
+      function slashFxVisibilityTrackForPiece(piece) {
+        return cachedNormalizedTrack(
+          state.slashFxVisibilityTracks?.[piece?.id],
+          state.duration,
+          runtimeCache.normalizedSlashFxVisibilityTracks,
+          normalizeSlashFxVisibilityTrack,
+        );
+      }
+
+      function normalizeSlashFxParentTrack(track, duration = state.duration) {
+        if (!Array.isArray(track)) return [];
+        const byFrame = new Map();
+        track.forEach((item) => {
+          const frame = clampFrameToDuration(item.frame, duration);
+          byFrame.set(frame, {
+            frame,
+            parentId: item.parentId ? String(item.parentId) : null,
+          });
+        });
+        return [...byFrame.values()].sort((a, b) => a.frame - b.frame);
+      }
+
+      function cloneSlashFxParentTracks(tracks, duration = state.duration) {
+        return Object.fromEntries(
+          Object.entries(tracks || {}).map(([pieceId, track]) => [pieceId, normalizeSlashFxParentTrack(track, duration)]),
+        );
+      }
+
+      function cloneSlashFxActionHiddenMap(map) {
+        return Object.fromEntries(
+          Object.entries(map || {}).filter(([pieceId, hidden]) => pieceId && hidden === true).map(([pieceId]) => [pieceId, true]),
+        );
+      }
+
+      function slashFxParentTrackForPiece(piece) {
+        return cachedNormalizedTrack(
+          state.slashFxParentTracks?.[piece?.id],
+          state.duration,
+          runtimeCache.normalizedSlashFxParentTracks,
+          normalizeSlashFxParentTrack,
+        );
+      }
+
+      function isSlashFxHiddenForCurrentAction(piece) {
+        return Boolean(piece?.id && state.slashFxActionHiddenMap?.[piece.id]);
+      }
+
+      function lastTrackEntryAtOrBefore(track, frame) {
+        for (let index = track.length - 1; index >= 0; index -= 1) {
+          if (track[index].frame <= frame) return track[index];
+        }
+        return null;
+      }
+
+      function firstTrackEntryAfter(track, frame) {
+        for (let index = 0; index < track.length; index += 1) {
+          if (track[index].frame > frame) return track[index];
+        }
+        return null;
+      }
+
+      function legacyArrowVisibilityTrackForPiece(piece) {
+        const [bone] = arrowRigNodesForPiece(piece);
+        const pieceTrack = normalizeArrowVisibilityTrack(
+          (state.timelines[piece?.id] || []).filter((item) => typeof item.visible === "boolean"),
+        );
+        if (pieceTrack.length) return pieceTrack;
+        return normalizeArrowVisibilityTrack(
+          (state.timelines[bone?.id] || []).filter((item) => typeof item.visible === "boolean"),
+        );
+      }
+
+      function arrowVisibilityAtFrame(piece, frame = state.currentFrame) {
+        if (!piece) return true;
+        const track = arrowVisibilityTrackForPiece(piece);
+        const effectiveTrack = track.length ? track : legacyArrowVisibilityTrackForPiece(piece);
+        if (!effectiveTrack.length) return true;
+        const previous = lastTrackEntryAtOrBefore(effectiveTrack, frame);
+        if (previous) return previous.visible;
+        return !effectiveTrack[0].visible;
+      }
+
+      function arrowParentAtFrame(piece, frame = state.currentFrame) {
+        if (!piece) return null;
+        const track = arrowParentTrackForPiece(piece);
+        const previous = lastTrackEntryAtOrBefore(track, frame);
+        return previous?.parentId || null;
+      }
+
+      function arrowParentChangeBetweenFrames(piece, startFrame, endFrame) {
+        if (!piece) return null;
+        return arrowParentTrackForPiece(piece).find((item) => item.frame > startFrame && item.frame <= endFrame) || null;
+      }
+
+      function slashFxVisibilityAtFrame(piece, frame = state.currentFrame) {
+        if (!piece) return false;
+        if (isSlashFxHiddenForCurrentAction(piece)) return false;
+        const track = slashFxVisibilityTrackForPiece(piece);
+        if (!track.length) return false;
+        const previous = lastTrackEntryAtOrBefore(track, frame);
+        return previous ? previous.visible : false;
+      }
+
+      function slashFxAlphaAtFrame(piece, frame = state.currentFrame) {
+        if (!piece) return 0;
+        if (isSlashFxHiddenForCurrentAction(piece)) return 0;
+        const track = slashFxVisibilityTrackForPiece(piece);
+        if (!track.length) return 0;
+        const appearFadeFrames = 2;
+        const disappearFadeFrames = 5;
+        const previous = lastTrackEntryAtOrBefore(track, frame);
+        const entryBeforePrevious =
+          previous ? lastTrackEntryAtOrBefore(track, Math.max(-1, previous.frame - 1)) : null;
+        if (previous && !previous.visible && entryBeforePrevious?.visible && frame <= previous.frame + disappearFadeFrames) {
+          const fadeT = Math.max(0, Math.min(1, (frame - previous.frame) / disappearFadeFrames));
+          return 1 - fadeT;
+        }
+        const next = firstTrackEntryAfter(track, frame);
+        if (next && next.visible && frame >= next.frame - appearFadeFrames) {
+          const fadeT = Math.max(0, Math.min(1, (frame - (next.frame - appearFadeFrames)) / appearFadeFrames));
+          return fadeT;
+        }
+        return slashFxVisibilityAtFrame(piece, frame) ? 1 : 0;
+      }
+
+      function slashFxParentAtFrame(piece, frame = state.currentFrame) {
+        if (!piece) return null;
+        const track = slashFxParentTrackForPiece(piece);
+        const previous = lastTrackEntryAtOrBefore(track, frame);
+        return previous?.parentId || null;
+      }
+
+      function slashFxParentChangeBetweenFrames(piece, startFrame, endFrame) {
+        if (!piece) return null;
+        return (
+          slashFxParentTrackForPiece(piece).find((item) => item.frame > startFrame && item.frame <= endFrame) || null
+        );
+      }
+
+      function effectiveParentIdForNode(node, frame = state.currentFrame) {
+        if (!node) return null;
+        if (node.attachment) return node.parentId || null;
+        const arrowPiece = arrowPieceForNode(node);
+        if (arrowPiece) return arrowParentAtFrame(arrowPiece, frame);
+        const slashFxPiece = slashFxPieceForNode(node);
+        if (slashFxPiece) return slashFxParentAtFrame(slashFxPiece, frame);
+        return node.parentId || null;
+      }
+
+      function isTempParentBoundArrowCarrier(node, frame = state.currentFrame) {
+        if (!node || node.attachment) return false;
+        const arrowPiece = arrowPieceForNode(node);
+        if (!arrowPiece) return false;
+        return Boolean(arrowParentAtFrame(arrowPiece, frame));
+      }
+
+      function isTempParentBoundSlashFxCarrier(node, frame = state.currentFrame) {
+        if (!node || node.attachment) return false;
+        const slashFxPiece = slashFxPieceForNode(node);
+        if (!slashFxPiece) return false;
+        return Boolean(slashFxParentAtFrame(slashFxPiece, frame));
+      }
+
+      function participatesInGenericJointSolver(node, frame = state.currentFrame) {
+        if (isBowRigNode(node)) return false;
+        if (node?.lockedTransform) return false;
+        return !isTempParentBoundArrowCarrier(node, frame) && !isTempParentBoundSlashFxCarrier(node, frame);
+      }
+
+      function effectiveAttachmentAlpha(node, frame = state.currentFrame) {
+        const baseAlpha = Math.max(0, Math.min(1, Number(node?.attachment?.alpha ?? 1)));
+        const slashFxPiece = slashFxPieceForNode(node);
+        if (slashFxPiece) {
+          if (isBindingMode()) return baseAlpha;
+          const slashFxAlpha = slashFxAlphaAtFrame(slashFxPiece, frame);
+          if (node.id === state.selectedNodeId || slashFxPiece.id === state.selectedPieceNodeId) {
+            return Math.max(baseAlpha * slashFxAlpha, Math.min(baseAlpha, 0.35));
+          }
+          return baseAlpha * slashFxAlpha;
+        }
+        return baseAlpha;
       }
 
       function boundBoneIdsForPiece(piece) {
@@ -3509,6 +5189,7 @@
       function setPieceTransformPatch(patch, shouldRender = true) {
         const piece = selectedPieceNode();
         if (!piece?.attachment) return;
+        if (isPieceTransformLocked(piece)) return;
         if (piece.attachment.fullSkin) {
           piece.attachment.restPart = setResolvedRestPartTransform(
             piece.attachment.restPart || {
@@ -3547,6 +5228,7 @@
       function renderProperties() {
         const node = selectedNode();
         const disabled = !node;
+        const transformLocked = isTransformLockedNode(node);
         [
           el.nodeNameInput,
           el.parentSelect,
@@ -3564,20 +5246,109 @@
           input.disabled = disabled;
         });
         if (!node) return;
-        const pose = isBindingMode() ? getRestLocalPose(node) : node;
+        const pose = isBindingMode() ? getRestLocalPose(node) : getLocalPose(node);
         const bowNodes = bowRigNodesForNode(node);
         const bowRig = bowNodes?.control ? ensureBowRigModel(bowNodes.control)?.rig : null;
         el.nodeNameInput.value = node.name;
         el.xInput.value = round(pose.x);
         el.yInput.value = round(pose.y);
-        el.rotationInput.value = round(bowRig?.angle ?? pose.rotation);
+        el.rotationInput.value = round(bowRig?.groupRotation ?? bowRig?.angle ?? pose.rotation);
         el.lengthInput.value = round(pose.length);
         el.scaleXInput.value = round(pose.scaleX, 2);
         el.scaleYInput.value = round(pose.scaleY, 2);
         el.colorInput.value = node.color;
+        [el.parentSelect, el.xInput, el.yInput, el.rotationInput, el.lengthInput, el.scaleXInput, el.scaleYInput].forEach(
+          (input) => {
+            if (input) input.disabled = disabled || transformLocked;
+          },
+        );
+        if (el.attachmentImageSelect) {
+          el.attachmentImageSelect.disabled = disabled || transformLocked;
+        }
         renderAttachmentProperties(node);
+        const arrowPiece = selectedArrowPiece();
+        if (el.arrowVisibilityRow) el.arrowVisibilityRow.hidden = !arrowPiece || isBindingMode();
+        if (el.arrowShowBtn) el.arrowShowBtn.disabled = !arrowPiece || isBindingMode();
+        if (el.arrowHideBtn) el.arrowHideBtn.disabled = !arrowPiece || isBindingMode();
+        if (el.arrowResetActionVisibilityBtn) el.arrowResetActionVisibilityBtn.disabled = !arrowPiece || isBindingMode();
+        const carrier = arrowPiece ? arrowCarrierBoneForPiece(arrowPiece) : null;
+        if (el.arrowParentRow) el.arrowParentRow.hidden = !arrowPiece || isBindingMode();
+        if (el.arrowParentSelect) {
+          el.arrowParentSelect.innerHTML = '<option value="">无临时父节点</option>';
+          if (arrowPiece && carrier) {
+            const effectiveParentId = arrowParentAtFrame(arrowPiece);
+            sortedNodes()
+              .filter(
+                (item) =>
+                  !item.attachment &&
+                  item.id !== carrier.id &&
+                  !isDescendant(item.id, carrier.id),
+              )
+              .forEach((item) => {
+                const option = document.createElement("option");
+                option.value = item.id;
+                option.textContent = `${"  ".repeat(item.depth)}${item.name}`;
+                option.selected = item.id === effectiveParentId;
+                el.arrowParentSelect.appendChild(option);
+              });
+          }
+          el.arrowParentSelect.disabled = !arrowPiece || isBindingMode();
+        }
+        if (el.arrowBindParentBtn) {
+          el.arrowBindParentBtn.disabled = !arrowPiece || isBindingMode();
+        }
+        if (el.arrowUnbindParentBtn) {
+          el.arrowUnbindParentBtn.disabled = !arrowPiece || isBindingMode() || !arrowParentAtFrame(arrowPiece);
+        }
 
         el.parentSelect.innerHTML = '<option value="">无</option>';
+        const slashFxPiece = selectedSlashFxPiece();
+        const fxContext = slashEffectContext();
+        if (el.slashFxVisibilityRow) el.slashFxVisibilityRow.hidden = !slashFxPiece || isBindingMode();
+        if (el.slashFxShowBtn) el.slashFxShowBtn.disabled = !slashFxPiece || isBindingMode();
+        if (el.slashFxHideBtn) el.slashFxHideBtn.disabled = !slashFxPiece || isBindingMode();
+        if (el.slashFxResetActionVisibilityBtn) {
+          el.slashFxResetActionVisibilityBtn.disabled = !slashFxPiece || isBindingMode();
+        }
+        if (el.slashFxActionVisibilityBtn) {
+          const hiddenForAction = slashFxPiece ? isSlashFxHiddenForCurrentAction(slashFxPiece) : false;
+          el.slashFxActionVisibilityBtn.disabled = !slashFxPiece || isBindingMode();
+          el.slashFxActionVisibilityBtn.textContent = hiddenForAction
+            ? `${fxContext.actionPrefix}显示${fxContext.label}`
+            : `${fxContext.actionPrefix}隐藏${fxContext.label}`;
+          el.slashFxActionVisibilityBtn.classList.toggle("active", hiddenForAction);
+        }
+        const slashFxCarrier = slashFxPiece ? slashFxCarrierBoneForPiece(slashFxPiece) : null;
+        if (el.slashFxParentRow) el.slashFxParentRow.hidden = !slashFxPiece || isBindingMode();
+        if (el.slashFxParentSelect) {
+          el.slashFxParentSelect.innerHTML = '<option value="">无临时父节点</option>';
+          if (slashFxPiece && slashFxCarrier) {
+            const effectiveParentId = slashFxParentAtFrame(slashFxPiece);
+            sortedNodes()
+              .filter(
+                (item) =>
+                  !item.attachment &&
+                  item.id !== slashFxCarrier.id &&
+                  !isDescendant(item.id, slashFxCarrier.id),
+              )
+              .forEach((item) => {
+                const option = document.createElement("option");
+                option.value = item.id;
+                option.textContent = `${"  ".repeat(item.depth)}${item.name}`;
+                option.selected = item.id === effectiveParentId;
+                el.slashFxParentSelect.appendChild(option);
+              });
+          }
+          el.slashFxParentSelect.disabled = !slashFxPiece || isBindingMode();
+        }
+        if (el.slashFxBindParentBtn) {
+          el.slashFxBindParentBtn.disabled = !slashFxPiece || isBindingMode();
+        }
+        if (el.slashFxUnbindParentBtn) {
+          el.slashFxUnbindParentBtn.disabled =
+            !slashFxPiece || isBindingMode() || !slashFxParentAtFrame(slashFxPiece);
+        }
+
         sortedNodes()
           .filter((item) => item.id !== node.id && !isDescendant(item.id, node.id))
           .forEach((item) => {
@@ -3592,6 +5363,9 @@
       function renderAttachmentProperties(node) {
         const context = attachmentEditContext(node);
         const attachment = selectedAttachmentView(node);
+        const transformLocked = context.owner?.attachment
+          ? isPieceTransformLocked(context.owner)
+          : isTransformLockedNode(context.owner);
         const scarfInputs = [
           el.attachmentScarfEnabledInput,
           el.attachmentScarfSplitInput,
@@ -3630,16 +5404,16 @@
         ];
         el.attachmentImageSelect.value = attachment?.image || "";
         attachmentInputs.forEach((input) => {
-          input.disabled = !attachment;
+          input.disabled = !attachment || transformLocked;
         });
         scarfInputs.forEach((input) => {
-          input.disabled = !attachment || attachment.image !== "head";
+          input.disabled = !attachment || transformLocked || attachment.image !== "head";
         });
         springInputs.forEach((input) => {
-          input.disabled = !attachment || !["head", "body"].includes(attachment.image);
+          input.disabled = !attachment || transformLocked || !["head", "body"].includes(attachment.image);
         });
         hemInputs.forEach((input) => {
-          input.disabled = !attachment || attachment.image !== "body";
+          input.disabled = !attachment || transformLocked || attachment.image !== "body";
         });
         el.attachmentOffsetXInput.value = round(attachment?.offsetX || 0);
         el.attachmentOffsetYInput.value = round(attachment?.offsetY || 0);
@@ -3674,26 +5448,42 @@
             return state.nodes.indexOf(a) - state.nodes.indexOf(b);
           });
         const selectedIndex = pieces.findIndex((item) => item.id === context.owner?.id);
-        if (el.layerUpBtn) el.layerUpBtn.disabled = !attachment || selectedIndex >= pieces.length - 1;
-        if (el.layerDownBtn) el.layerDownBtn.disabled = !attachment || selectedIndex <= 0;
+        if (el.layerUpBtn) el.layerUpBtn.disabled = !attachment || transformLocked || selectedIndex >= pieces.length - 1;
+        if (el.layerDownBtn) el.layerDownBtn.disabled = !attachment || transformLocked || selectedIndex <= 0;
       }
 
       function renderBindingPanel() {
         if (!el.weaponImageSelect) return;
-        if (!el.createBowRigBtn && el.bindingPanel) {
+        if ((!el.createBowRigBtn || !el.createArrowRigBtn || !el.createSlashFxRigBtn) && el.bindingPanel) {
           const row = document.createElement("div");
           row.className = "button-row";
-          const button = document.createElement("button");
-          button.id = "createBowRigBtn";
-          button.type = "button";
-          button.className = "primary";
-          button.textContent = "Create Bow Rig";
-          row.appendChild(button);
+          const bowButton = document.createElement("button");
+          bowButton.id = "createBowRigBtn";
+          bowButton.type = "button";
+          bowButton.className = "primary";
+          bowButton.textContent = "创建弓骨骼";
+          row.appendChild(bowButton);
+          const arrowButton = document.createElement("button");
+          arrowButton.id = "createArrowRigBtn";
+          arrowButton.type = "button";
+          arrowButton.className = "primary";
+          arrowButton.textContent = "创建箭矢骨骼";
+          row.appendChild(arrowButton);
+          const slashFxButton = document.createElement("button");
+          slashFxButton.id = "createSlashFxRigBtn";
+          slashFxButton.type = "button";
+          slashFxButton.className = "primary";
+          slashFxButton.textContent = `创建${slashEffectContext().label}骨骼`;
+          row.appendChild(slashFxButton);
           const anchor = el.bindingPanel.querySelector(".form-grid");
           if (anchor) {
             el.bindingPanel.insertBefore(row, anchor);
-            el.createBowRigBtn = button;
+            el.createBowRigBtn = bowButton;
+            el.createArrowRigBtn = arrowButton;
+            el.createSlashFxRigBtn = slashFxButton;
             el.createBowRigBtn.addEventListener("click", createBowRigFromSelectedPiece);
+            el.createArrowRigBtn.addEventListener("click", promptArrowRigImageFile);
+            el.createSlashFxRigBtn.addEventListener("click", promptSlashFxRigImageFile);
           }
         }
         const weapon = selectedWeaponNode();
@@ -3703,11 +5493,20 @@
           : "newSword";
         const piece = selectedPieceNode();
         const transform = piece ? pieceTransform(piece) : null;
+        const pieceLocked = isPieceTransformLocked(piece);
+        renderSpineUnitBindingControls();
         if (el.createBowRigBtn) {
-          el.createBowRigBtn.disabled = !piece?.attachment?.image;
+          el.createBowRigBtn.disabled = state.currentUnitType !== "archer" || !piece?.attachment?.image;
         }
+        if (el.createArrowRigBtn) {
+          el.createArrowRigBtn.disabled = state.currentUnitType !== "archer";
+        }
+        if (el.createSlashFxRigBtn) {
+          el.createSlashFxRigBtn.disabled = !isSlashFxUnit();
+        }
+        renderSlashFxContextLabels();
         [el.pieceXInput, el.pieceYInput, el.pieceScaleInput, el.pieceRotationInput].forEach((input) => {
-          input.disabled = !piece;
+          input.disabled = !piece || pieceLocked;
         });
         el.pieceXInput.value = round(transform?.x || 0);
         el.pieceYInput.value = round(transform?.y || 0);
@@ -3887,6 +5686,14 @@
         el.tracks.appendChild(playhead);
       }
 
+      function renderTimeStatus() {
+        const mouse = state.stagePointerWorld ? formatWorldPoint(state.stagePointerWorld) : "(out of stage)";
+        el.timeStatus.textContent =
+          `Frame ${Math.round(state.currentFrame) + 1} / ${state.duration + 1}, ` +
+          `${state.fps} FPS, ${(state.currentFrame / state.fps).toFixed(2)} s, ` +
+          `Origin ${formatWorldPoint({ x: 0, y: 0 })}, Mouse ${mouse}`;
+      }
+
       function renderStatus() {
         const binding = isBindingMode();
         el.app.classList.toggle("binding-mode", binding);
@@ -3894,6 +5701,7 @@
         el.frameInput.value = Math.round(state.currentFrame) + 1;
         el.fpsInput.value = state.fps;
         el.durationInput.value = state.duration + 1;
+        renderTimeStatus();
         el.timeStatus.textContent = `第 ${Math.round(state.currentFrame) + 1} 帧 / ${state.duration + 1}，${state.fps} FPS，${(state.currentFrame / state.fps).toFixed(2)} 秒`;
         el.playBtn.textContent = state.playing ? "暂停" : "播放";
         el.viewToggleBtn.textContent = state.renderMode === "texture" ? "骨骼视图" : "贴图视图";
@@ -3918,6 +5726,7 @@
         if (el.copyKeyframeBtn) el.copyKeyframeBtn.disabled = binding || !selectedNode();
         if (el.pasteKeyframeBtn) el.pasteKeyframeBtn.disabled = binding || !state.keyframeClipboard;
         if (el.deleteActionBtn) el.deleteActionBtn.disabled = state.actions.length <= 1;
+        renderTimeStatus();
       }
 
       function renderJsonPreview() {
@@ -3935,17 +5744,27 @@
           customImages: Object.keys(state.customImages || {}).length ? state.customImages : undefined,
           nodes: state.nodes,
           timelines: state.timelines,
+          arrowVisibilityTracks: cloneArrowVisibilityTracks(state.arrowVisibilityTracks),
+          arrowParentTracks: cloneArrowParentTracks(state.arrowParentTracks),
+          slashFxVisibilityTracks: cloneSlashFxVisibilityTracks(state.slashFxVisibilityTracks),
+          slashFxParentTracks: cloneSlashFxParentTracks(state.slashFxParentTracks),
+          slashFxActionHiddenMap: cloneSlashFxActionHiddenMap(state.slashFxActionHiddenMap),
           selectedActionId: state.selectedActionId,
           actions: state.actions.map((action) => ({
             id: action.id,
             name: action.name,
             duration: action.duration,
             timelines: cloneTimelines(action.timelines),
+            arrowVisibilityTracks: cloneArrowVisibilityTracks(action.arrowVisibilityTracks, action.duration),
+            arrowParentTracks: cloneArrowParentTracks(action.arrowParentTracks, action.duration),
+            slashFxVisibilityTracks: cloneSlashFxVisibilityTracks(action.slashFxVisibilityTracks, action.duration),
+            slashFxParentTracks: cloneSlashFxParentTracks(action.slashFxParentTracks, action.duration),
+            slashFxActionHiddenMap: cloneSlashFxActionHiddenMap(action.slashFxActionHiddenMap),
           })),
         };
       }
 
-      function applyProjectData(data) {
+      function applyProjectData(data, options = {}) {
         if (!data || !Array.isArray(data.nodes) || typeof data.timelines !== "object") {
           throw new Error("JSON 缺少 nodes 或 timelines");
         }
@@ -3960,6 +5779,11 @@
         state.pendingFreeBoneStart = null;
         state.playing = false;
         dynamicScarves.clear();
+        state.arrowVisibilityTracks = cloneArrowVisibilityTracks(data.arrowVisibilityTracks);
+        state.arrowParentTracks = cloneArrowParentTracks(data.arrowParentTracks);
+        state.slashFxVisibilityTracks = cloneSlashFxVisibilityTracks(data.slashFxVisibilityTracks);
+        state.slashFxParentTracks = cloneSlashFxParentTracks(data.slashFxParentTracks);
+        state.slashFxActionHiddenMap = cloneSlashFxActionHiddenMap(data.slashFxActionHiddenMap);
         restoreCustomImages(data.customImages);
         state.nodes = data.nodes.map((node) => ({
           id: String(node.id || uid("node")),
@@ -3972,18 +5796,32 @@
           scaleX: Math.max(0.05, Number(node.scaleX) || 1),
           scaleY: Math.max(0.05, Number(node.scaleY) || 1),
           color: /^#[0-9a-f]{6}$/i.test(node.color) ? node.color : "#35b6b4",
+          visible: node.visible !== false,
+          lockedTransform: node.lockedTransform === true,
           role: String(node.role || node.partId || ""),
           bowRig: normalizeBowRig(node.bowRig),
           bindPose: normalizeBindPose(node.bindPose || node),
           attachment: normalizeAttachment(node.attachment),
         }));
-        restoreLegAssetImages();
+        restoreLegAssetImages(options.unitType || state.currentUnitType);
         state.timelines = normalizeTimelineMap(data.timelines, state.duration);
         state.actions = normalizeActions(data.actions);
         if (!state.actions.length) state.actions = [createActionSnapshot(state.name || "当前动作")];
         migrateLegacySwordAttachments();
+        hydrateBowRigSerializedKeys();
         state.selectedActionId =
           state.actions.find((action) => action.id === data.selectedActionId)?.id || state.actions[0]?.id || null;
+        const activeAction = state.actions.find((action) => action.id === state.selectedActionId) || null;
+        if (activeAction) {
+          state.duration = Math.max(0, Number(activeAction.duration) || 0);
+          state.timelines = cloneTimelines(activeAction.timelines);
+          state.arrowVisibilityTracks = cloneArrowVisibilityTracks(activeAction.arrowVisibilityTracks);
+          state.arrowParentTracks = cloneArrowParentTracks(activeAction.arrowParentTracks);
+          state.slashFxVisibilityTracks = cloneSlashFxVisibilityTracks(activeAction.slashFxVisibilityTracks);
+          state.slashFxParentTracks = cloneSlashFxParentTracks(activeAction.slashFxParentTracks);
+          state.slashFxActionHiddenMap = cloneSlashFxActionHiddenMap(activeAction.slashFxActionHiddenMap);
+          hydrateBowRigTimelineMap(state.timelines);
+        }
       }
 
       function migrateLegacySwordAttachments() {
@@ -4024,10 +5862,10 @@
         });
       }
 
-      function restoreLegAssetImages() {
+      function restoreLegAssetImages(unitType = state.currentUnitType) {
         state.nodes.forEach((node) => {
           const image = node.attachment?.image;
-          if (image?.startsWith(legAssetPrefix)) registerLegAssetImage(image.slice(legAssetPrefix.length));
+          if (image?.startsWith(legAssetPrefix)) registerLegAssetImage(image.slice(legAssetPrefix.length), unitType);
         });
       }
 
@@ -4041,6 +5879,36 @@
 
       function cloneTimelineKeys(keys) {
         return Array.isArray(keys) ? keys.map((keyframe) => ({ ...keyframe })) : [];
+      }
+
+      function hydrateBowRigTimelineMap(timelineMap) {
+        if (!timelineMap || typeof timelineMap !== "object") return timelineMap;
+        state.nodes
+          .filter((node) => isBowStringControlNode(node))
+          .forEach((node) => {
+            const keys = timelineMap[node.id];
+            if (!Array.isArray(keys) || !keys.length) return;
+            timelineMap[node.id] = keys.map((keyframe) => {
+              if (BowRigController.hasSerializedPose(keyframe)) return { ...keyframe };
+              return BowRigController.snapshot(node, { ...node, ...keyframe }, keyframe.frame);
+            });
+          });
+        return timelineMap;
+      }
+
+      function hydrateBowRigSerializedKeys() {
+        hydrateBowRigTimelineMap(state.timelines);
+        state.actions.forEach((action) => hydrateBowRigTimelineMap(action.timelines));
+      }
+
+      function snapshotAllBowRigsAtCurrentFrame() {
+        if (isBindingMode()) return;
+        state.nodes
+          .filter((node) => isBowStringControlNode(node))
+          .forEach((node) => {
+            const pose = BowRigController.enrichPose(node, getLocalPose(node, state.currentFrame));
+            upsertKeyframe(node, BowRigController.snapshot(node, pose, state.currentFrame));
+          });
       }
 
       function normalizeActions(actions) {
@@ -4057,6 +5925,11 @@
               name: String(action.name || `动作 ${index + 1}`),
               duration,
               timelines: normalizeTimelineMap(action.timelines || {}, duration),
+              arrowVisibilityTracks: cloneArrowVisibilityTracks(action.arrowVisibilityTracks, duration),
+              arrowParentTracks: cloneArrowParentTracks(action.arrowParentTracks, duration),
+              slashFxVisibilityTracks: cloneSlashFxVisibilityTracks(action.slashFxVisibilityTracks, duration),
+              slashFxParentTracks: cloneSlashFxParentTracks(action.slashFxParentTracks, duration),
+              slashFxActionHiddenMap: cloneSlashFxActionHiddenMap(action.slashFxActionHiddenMap),
             };
           })
           .filter(Boolean);
@@ -4076,6 +5949,24 @@
               length: Math.max(4, Number(item.length) || 80),
               scaleX: Math.max(0.05, Number(item.scaleX) || 1),
               scaleY: Math.max(0.05, Number(item.scaleY) || 1),
+              visible: item.visible !== false,
+              ...(Number.isFinite(Number(item.bowGroupRotation))
+                ? { bowGroupRotation: Number(item.bowGroupRotation) }
+                : {}),
+              ...(Number.isFinite(Number(item.bowAngle)) ? { bowAngle: Number(item.bowAngle) } : {}),
+              ...(Number.isFinite(Number(item.bowUpperLength))
+                ? { bowUpperLength: Math.max(4, Number(item.bowUpperLength)) }
+                : {}),
+              ...(Number.isFinite(Number(item.bowLowerLength))
+                ? { bowLowerLength: Math.max(4, Number(item.bowLowerLength)) }
+                : {}),
+              ...(Number.isFinite(Number(item.bowControlBaseX))
+                ? { bowControlBaseX: Number(item.bowControlBaseX) }
+                : {}),
+              ...(Number.isFinite(Number(item.bowControlBaseY))
+                ? { bowControlBaseY: Number(item.bowControlBaseY) }
+                : {}),
+              ...(Number.isFinite(Number(item.bowPull)) ? { bowPull: Number(item.bowPull) } : {}),
             }))
             .sort((a, b) => a.frame - b.frame);
         });
@@ -4153,6 +6044,11 @@
 
       function normalizeBowRig(bowRig) {
         if (!bowRig || typeof bowRig !== "object") return null;
+        const groupRotation = Number.isFinite(Number(bowRig.groupRotation))
+          ? Number(bowRig.groupRotation)
+          : Number.isFinite(Number(bowRig.angle))
+            ? Number(bowRig.angle)
+            : null;
         return {
           type: String(bowRig.type || ""),
           centerId: bowRig.centerId ? String(bowRig.centerId) : null,
@@ -4163,13 +6059,123 @@
           stringId: bowRig.stringId ? String(bowRig.stringId) : null,
           maxPull: Math.max(1, Number(bowRig.maxPull) || 60),
           bodyInfluence: Math.max(0, Number(bowRig.bodyInfluence) || 0.5),
-          angle: Number.isFinite(Number(bowRig.angle)) ? Number(bowRig.angle) : null,
+          groupRotation,
+          angle: groupRotation,
           upperLength: Math.max(4, Number(bowRig.upperLength) || 4),
           lowerLength: Math.max(4, Number(bowRig.lowerLength) || 4),
           controlBaseX: Number.isFinite(Number(bowRig.controlBaseX)) ? Number(bowRig.controlBaseX) : null,
           controlBaseY: Number.isFinite(Number(bowRig.controlBaseY)) ? Number(bowRig.controlBaseY) : null,
           pull: Number.isFinite(Number(bowRig.pull)) ? Number(bowRig.pull) : 0,
         };
+      }
+
+      class BowRigController {
+        static hasSerializedPose(pose) {
+          return [
+            "bowGroupRotation",
+            "bowAngle",
+            "bowUpperLength",
+            "bowLowerLength",
+            "bowControlBaseX",
+            "bowControlBaseY",
+            "bowPull",
+          ].some((key) => pose && Object.prototype.hasOwnProperty.call(pose, key));
+        }
+
+        static enrichPose(node, pose) {
+          if (!isBowStringControlNode(node)) return pose;
+          const rig = this.rigFromPose(node, pose);
+          if (!rig) return pose;
+          return {
+            ...pose,
+            bowPoseSerialized: this.hasSerializedPose(pose),
+            bowGroupRotation: rig.groupRotation,
+            bowAngle: rig.angle,
+            bowUpperLength: rig.upperLength,
+            bowLowerLength: rig.lowerLength,
+            bowControlBaseX: rig.controlBaseX,
+            bowControlBaseY: rig.controlBaseY,
+            bowPull: rig.pull,
+          };
+        }
+
+        static rigFromPose(node, pose) {
+          if (!isBowStringControlNode(node)) return normalizeBowRig(node?.bowRig);
+          const base = normalizeBowRig(node?.bowRig);
+          if (!base) return null;
+          const groupRotation =
+            pose?.bowGroupRotation ??
+            pose?.bowRig?.groupRotation ??
+            pose?.bowAngle ??
+            pose?.bowRig?.angle ??
+            base.groupRotation ??
+            base.angle;
+          return normalizeBowRig({
+            ...base,
+            groupRotation,
+            angle: groupRotation,
+            upperLength: pose?.bowUpperLength ?? pose?.bowRig?.upperLength ?? base.upperLength,
+            lowerLength: pose?.bowLowerLength ?? pose?.bowRig?.lowerLength ?? base.lowerLength,
+            controlBaseX: pose?.bowControlBaseX ?? pose?.bowRig?.controlBaseX ?? base.controlBaseX,
+            controlBaseY: pose?.bowControlBaseY ?? pose?.bowRig?.controlBaseY ?? base.controlBaseY,
+            pull: pose?.bowPull ?? pose?.bowRig?.pull ?? base.pull,
+          });
+        }
+
+        static snapshot(node, source, frame = state.currentFrame) {
+          const snap = {
+            frame,
+            x: source.x,
+            y: source.y,
+            rotation: source.rotation,
+            length: source.length,
+            scaleX: source.scaleX,
+            scaleY: source.scaleY,
+            visible: source.visible !== false,
+          };
+          const rig = this.rigFromPose(node, source);
+          if (!rig) return snap;
+          return {
+            ...snap,
+            bowGroupRotation: rig.groupRotation,
+            bowAngle: rig.angle,
+            bowUpperLength: rig.upperLength,
+            bowLowerLength: rig.lowerLength,
+            bowControlBaseX: rig.controlBaseX,
+            bowControlBaseY: rig.controlBaseY,
+            bowPull: rig.pull,
+          };
+        }
+
+        static interpolatePose(node, before, after, t, basePose) {
+          if (!isBowStringControlNode(node)) return basePose;
+          const from = this.enrichPose(node, before || {});
+          const to = this.enrichPose(node, after || before || {});
+          return {
+            ...basePose,
+            bowPoseSerialized: Boolean(from.bowPoseSerialized || to.bowPoseSerialized),
+            bowGroupRotation: lerpAngle(
+              Number(from.bowGroupRotation ?? from.bowAngle) || 0,
+              Number(to.bowGroupRotation ?? to.bowAngle) || 0,
+              t,
+            ),
+            bowAngle: lerpAngle(
+              Number(from.bowGroupRotation ?? from.bowAngle) || 0,
+              Number(to.bowGroupRotation ?? to.bowAngle) || 0,
+              t,
+            ),
+            bowUpperLength: lerp(Number(from.bowUpperLength) || 4, Number(to.bowUpperLength) || 4, t),
+            bowLowerLength: lerp(Number(from.bowLowerLength) || 4, Number(to.bowLowerLength) || 4, t),
+            bowControlBaseX: lerp(Number(from.bowControlBaseX) || 0, Number(to.bowControlBaseX) || 0, t),
+            bowControlBaseY: lerp(Number(from.bowControlBaseY) || 0, Number(to.bowControlBaseY) || 0, t),
+            bowPull: lerp(Number(from.bowPull) || 0, Number(to.bowPull) || 0, t),
+          };
+        }
+
+        static persistKeyframe(node) {
+          if (isBindingMode() || !node) return;
+          upsertKeyframe(node, this.snapshot(node, { ...node }));
+        }
       }
 
       function normalizeSpringLength(attachment) {
@@ -4301,14 +6307,25 @@
       function setNodePatch(patch, shouldRender = true) {
         const node = selectedNode();
         if (!node) return;
+        if (patch && isTransformLockedNode(node)) {
+          const filteredPatch = { ...patch };
+          ["x", "y", "rotation", "length", "scaleX", "scaleY", "parentId"].forEach((key) => {
+            delete filteredPatch[key];
+          });
+          if (!Object.keys(filteredPatch).length) return;
+          patch = filteredPatch;
+        }
         if (patch && Object.prototype.hasOwnProperty.call(patch, "rotation") && isBowRigNode(node)) {
           const nodes = bowRigNodesForNode(node);
           if (nodes?.control) {
             const model = ensureBowRigModel(nodes.control);
             if (model) {
-              model.rig.angle = Number(patch.rotation) || 0;
+              model.rig.groupRotation = Number(patch.rotation) || 0;
+              model.rig.angle = model.rig.groupRotation;
               nodes.control.bowRig = normalizeBowRig(model.rig);
               syncBowRigFromModel(nodes.control);
+              BowRigController.persistKeyframe(nodes.control);
+              state.selectedKey = { nodeId: nodes.control.id, frame: state.currentFrame };
               const remainingPatch = { ...patch };
               delete remainingPatch.rotation;
               if (!Object.keys(remainingPatch).length) {
@@ -4344,7 +6361,9 @@
           }
         } else {
           Object.assign(node, patch);
-          syncKeyAtCurrentFrame(node);
+          upsertKeyframe(node, snapshotNode(node));
+          state.selectedKey = { nodeId: node.id, frame: state.currentFrame };
+          snapshotAllBowRigsAtCurrentFrame();
         }
         if (shouldRender) renderAll();
       }
@@ -4352,6 +6371,7 @@
       function setAttachmentPatch(patch) {
         const { owner: node, lower } = attachmentEditContext();
         if (!node) return;
+        if (isTransformLockedNode(node)) return;
         if (patch === null) {
           if (lower && node.attachment) node.attachment.lower = null;
           else node.attachment = null;
@@ -4434,27 +6454,23 @@
 
       function snapshotNode(node) {
         const override = poseOverrides.get(node.id);
-        const source = override ? { ...node, ...override } : node;
-        return {
-          frame: state.currentFrame,
-          x: source.x,
-          y: source.y,
-          rotation: source.rotation,
-          length: source.length,
-          scaleX: source.scaleX,
-          scaleY: source.scaleY,
-        };
+        const source = override ? { ...node, ...override } : { ...node };
+        if (!isBindingMode()) {
+          source.visible = getLocalPose(node, state.currentFrame).visible !== false;
+        }
+        return BowRigController.snapshot(node, source, state.currentFrame);
       }
 
       function copyPoseAtFrame(source, frame = state.currentFrame) {
+        const node = source?.id ? state.nodes.find((item) => item.id === source.id) || source : source;
+        return BowRigController.snapshot(node, source, frame);
+      }
+
+      function visibilitySnapshotAtCurrentFrame(node, visible) {
         return {
-          frame,
-          x: source.x,
-          y: source.y,
-          rotation: source.rotation,
-          length: source.length,
-          scaleX: source.scaleX,
-          scaleY: source.scaleY,
+          ...copyPoseAtFrame(getLocalPose(node, state.currentFrame), state.currentFrame),
+          frame: state.currentFrame,
+          visible,
         };
       }
 
@@ -4466,12 +6482,13 @@
         const next = keys.find((item) => item.frame > state.currentFrame) || start;
         const source =
           state.keyframeSource === "next" ? next : state.keyframeSource === "start" ? start : previous;
-        return copyPoseAtFrame(source);
+        return copyPoseAtFrame({ ...node, ...source });
       }
 
       function addKeyframe(node = selectedNode()) {
         if (!node) return;
         upsertKeyframe(node, sourceSnapshotNode(node));
+        snapshotAllBowRigsAtCurrentFrame();
         state.selectedKey = { nodeId: node.id, frame: state.currentFrame };
         toast(`已记录 ${node.name} 第 ${state.currentFrame + 1} 帧`);
         renderAll();
@@ -4512,6 +6529,204 @@
         toast(deleted ? `已删除第 ${frame + 1} 帧的 ${deleted} 个关键帧` : `第 ${frame + 1} 帧没有关键帧`);
       }
 
+      function setSelectedArrowVisibilityAtCurrentFrame(visible) {
+        if (isBindingMode()) {
+          toast("箭矢显隐关键帧只能在动画模式下使用");
+          return;
+        }
+        const piece = selectedArrowPiece();
+        const nodes = arrowRigNodesForPiece(piece);
+        if (!nodes.length) {
+          toast("请先选中箭矢骨骼");
+          return;
+        }
+        const track = normalizeArrowVisibilityTrack([
+          ...(state.arrowVisibilityTracks?.[piece.id] || legacyArrowVisibilityTrackForPiece(piece)).filter(
+            (item) => item.frame !== state.currentFrame,
+          ),
+          { frame: state.currentFrame, visible },
+        ]);
+        state.arrowVisibilityTracks[piece.id] = track;
+        state.selectedNodeId = nodes[0].id;
+        state.selectedPieceNodeId = piece?.id || null;
+        state.selectedKey = null;
+        renderAll();
+        toast(`箭矢将从第 ${state.currentFrame + 1} 帧${visible ? "出现" : "消失"}`);
+      }
+
+      function setSelectedArrowParentAtCurrentFrame(parentId) {
+        if (isBindingMode()) {
+          toast("箭矢父节点事件只能在动画模式下使用");
+          return;
+        }
+        const piece = selectedArrowPiece();
+        const bone = arrowCarrierBoneForPiece(piece);
+        if (!piece || !bone) {
+          toast("请先选中箭矢骨骼");
+          return;
+        }
+        if (parentId && parentId === bone.id) {
+          toast("箭矢不能绑定到自身");
+          return;
+        }
+        const currentTrack = normalizeArrowParentTrack(state.arrowParentTracks?.[piece.id]);
+        const previousParentId = arrowParentAtFrame(piece, state.currentFrame);
+        const nextFrame = currentTrack.find((item) => item.frame > state.currentFrame)?.frame ?? Infinity;
+        convertNodeKeysToParentContext(bone, previousParentId, parentId, state.currentFrame, nextFrame);
+        state.arrowParentTracks[piece.id] = normalizeArrowParentTrack([
+          ...currentTrack.filter((item) => item.frame !== state.currentFrame),
+          { frame: state.currentFrame, parentId: parentId || null },
+        ]);
+        state.selectedNodeId = bone.id;
+        state.selectedPieceNodeId = piece.id;
+        state.selectedKey = { nodeId: bone.id, frame: state.currentFrame };
+        renderAll();
+        toast(
+          parentId
+            ? `箭矢将从第 ${state.currentFrame + 1} 帧开始绑定父节点`
+            : `箭矢将从第 ${state.currentFrame + 1} 帧开始解绑父节点`,
+        );
+      }
+
+      function resetSelectedArrowVisibilityForCurrentAction() {
+        if (isBindingMode()) {
+          toast("Arrow visibility reset is only available in animation mode.");
+          return;
+        }
+        const piece = selectedArrowPiece();
+        const nodes = arrowRigNodesForPiece(piece);
+        if (!piece || !nodes.length) {
+          toast("Select an arrow rig first.");
+          return;
+        }
+        state.arrowVisibilityTracks[piece.id] = normalizeArrowVisibilityTrack([{ frame: 0, visible: true }]);
+        state.selectedNodeId = nodes[0].id;
+        state.selectedPieceNodeId = piece.id;
+        state.selectedKey = null;
+        renderAll();
+        toast("Reset arrow visibility for the current action.");
+      }
+
+      function setSelectedSlashFxVisibilityAtCurrentFrame(visible) {
+        const fxContext = slashEffectContext();
+        if (isBindingMode()) {
+          toast(`${fxContext.label}显隐关键帧只能在动画模式下使用`);
+          return;
+        }
+        const piece = selectedSlashFxPiece();
+        const nodes = slashFxRigNodesForPiece(piece);
+        if (!nodes.length) {
+          toast(`请先选中${fxContext.label}骨骼`);
+          return;
+        }
+        let nextTrack = [...(state.slashFxVisibilityTracks?.[piece.id] || []).filter((item) => item.frame !== state.currentFrame)];
+        if (visible && state.currentFrame > 0) {
+          const hasHiddenBefore = nextTrack.some((item) => item.frame < state.currentFrame && item.visible === false);
+          if (!hasHiddenBefore) {
+            let rewroteBaseline = false;
+            nextTrack = nextTrack.map((item) => {
+              if (item.frame === 0) {
+                rewroteBaseline = true;
+                return { frame: 0, visible: false };
+              }
+              return item;
+            });
+            if (!rewroteBaseline) {
+              nextTrack.push({ frame: 0, visible: false });
+            }
+          }
+        }
+        state.slashFxVisibilityTracks[piece.id] = normalizeSlashFxVisibilityTrack([
+          ...nextTrack,
+          { frame: state.currentFrame, visible },
+        ]);
+        state.selectedNodeId = nodes[0].id;
+        state.selectedPieceNodeId = piece?.id || null;
+        state.selectedKey = null;
+        renderAll();
+        toast(`${fxContext.label}将从第 ${state.currentFrame + 1} 帧${visible ? "出现" : "消失"}`);
+      }
+
+      function resetSelectedSlashFxVisibilityForCurrentAction() {
+        if (isBindingMode()) {
+          toast("Slash FX visibility reset is only available in animation mode.");
+          return;
+        }
+        const piece = selectedSlashFxPiece();
+        const nodes = slashFxRigNodesForPiece(piece);
+        if (!piece || !nodes.length) {
+          toast("Select a slash FX rig first.");
+          return;
+        }
+        state.slashFxVisibilityTracks[piece.id] = normalizeSlashFxVisibilityTrack([{ frame: 0, visible: false }]);
+        delete state.slashFxActionHiddenMap[piece.id];
+        state.selectedNodeId = nodes[0].id;
+        state.selectedPieceNodeId = piece.id;
+        state.selectedKey = null;
+        renderAll();
+        toast("Reset slash FX visibility for the current action.");
+      }
+
+      function toggleSelectedSlashFxHiddenForAction() {
+        const fxContext = slashEffectContext();
+        if (isBindingMode()) {
+          toast(`${fxContext.label}动作显隐开关只能在动画模式下使用`);
+          return;
+        }
+        const piece = selectedSlashFxPiece();
+        const nodes = slashFxRigNodesForPiece(piece);
+        if (!nodes.length || !piece) {
+          toast(`请先选中${fxContext.label}骨骼`);
+          return;
+        }
+        const nextHidden = !isSlashFxHiddenForCurrentAction(piece);
+        if (nextHidden) {
+          state.slashFxActionHiddenMap[piece.id] = true;
+        } else {
+          delete state.slashFxActionHiddenMap[piece.id];
+        }
+        state.selectedNodeId = nodes[0].id;
+        state.selectedPieceNodeId = piece.id;
+        state.selectedKey = null;
+        renderAll();
+        toast(nextHidden ? `当前动作已隐藏${fxContext.label}` : `当前动作已恢复${fxContext.label}显示`);
+      }
+
+      function setSelectedSlashFxParentAtCurrentFrame(parentId) {
+        const fxContext = slashEffectContext();
+        if (isBindingMode()) {
+          toast(`${fxContext.label}父节点事件只能在动画模式下使用`);
+          return;
+        }
+        const piece = selectedSlashFxPiece();
+        const bone = slashFxCarrierBoneForPiece(piece);
+        if (!piece || !bone) {
+          toast(`请先选中${fxContext.label}骨骼`);
+          return;
+        }
+        if (parentId && parentId === bone.id) {
+          toast(`${fxContext.label}不能绑定到自身`);
+          return;
+        }
+        const currentTrack = normalizeSlashFxParentTrack(state.slashFxParentTracks?.[piece.id]);
+        const previousParentId = slashFxParentAtFrame(piece, state.currentFrame);
+        const nextFrame = currentTrack.find((item) => item.frame > state.currentFrame)?.frame ?? Infinity;
+        convertNodeKeysToParentContext(bone, previousParentId, parentId, state.currentFrame, nextFrame);
+        state.slashFxParentTracks[piece.id] = normalizeSlashFxParentTrack([
+          ...currentTrack.filter((item) => item.frame !== state.currentFrame),
+          { frame: state.currentFrame, parentId: parentId || null },
+        ]);
+        state.selectedNodeId = bone.id;
+        state.selectedPieceNodeId = piece.id;
+        state.selectedKey = { nodeId: bone.id, frame: state.currentFrame };
+        renderAll();
+        toast(
+          parentId
+            ? `${fxContext.label}将从第 ${state.currentFrame + 1} 帧开始绑定父节点`
+            : `${fxContext.label}将从第 ${state.currentFrame + 1} 帧开始解绑父节点`,
+        );
+      }
+
       function keyDragEntries(nodeId, keyframe, mode = state.keyMoveMode) {
         const sourceFrame = keyframe.frame;
         if (mode !== "all") return [{ nodeId, keyframe, sourceFrame }];
@@ -4532,6 +6747,11 @@
         if (!action) return;
         action.duration = state.duration;
         action.timelines = cloneTimelines(state.timelines);
+        action.arrowVisibilityTracks = cloneArrowVisibilityTracks(state.arrowVisibilityTracks, action.duration);
+        action.arrowParentTracks = cloneArrowParentTracks(state.arrowParentTracks, action.duration);
+        action.slashFxVisibilityTracks = cloneSlashFxVisibilityTracks(state.slashFxVisibilityTracks, action.duration);
+        action.slashFxParentTracks = cloneSlashFxParentTracks(state.slashFxParentTracks, action.duration);
+        action.slashFxActionHiddenMap = cloneSlashFxActionHiddenMap(state.slashFxActionHiddenMap);
       }
 
       function createActionSnapshot(name, id = uid("action")) {
@@ -4540,6 +6760,11 @@
           name: String(name || "未命名动作"),
           duration: state.duration,
           timelines: cloneTimelines(state.timelines),
+          arrowVisibilityTracks: cloneArrowVisibilityTracks(state.arrowVisibilityTracks, state.duration),
+          arrowParentTracks: cloneArrowParentTracks(state.arrowParentTracks, state.duration),
+          slashFxVisibilityTracks: cloneSlashFxVisibilityTracks(state.slashFxVisibilityTracks, state.duration),
+          slashFxParentTracks: cloneSlashFxParentTracks(state.slashFxParentTracks, state.duration),
+          slashFxActionHiddenMap: cloneSlashFxActionHiddenMap(state.slashFxActionHiddenMap),
         };
       }
 
@@ -4569,6 +6794,11 @@
           name: String(name || suggested),
           duration: state.duration,
           timelines: currentPoseTimelines(),
+          arrowVisibilityTracks: cloneArrowVisibilityTracks(state.arrowVisibilityTracks, state.duration),
+          arrowParentTracks: cloneArrowParentTracks(state.arrowParentTracks, state.duration),
+          slashFxVisibilityTracks: cloneSlashFxVisibilityTracks(state.slashFxVisibilityTracks, state.duration),
+          slashFxParentTracks: cloneSlashFxParentTracks(state.slashFxParentTracks, state.duration),
+          slashFxActionHiddenMap: cloneSlashFxActionHiddenMap(state.slashFxActionHiddenMap),
         };
         state.actions.push(action);
         selectAction(action.id);
@@ -4585,6 +6815,11 @@
         action.name = el.actionNameInput.value.trim() || action.name || "未命名动作";
         action.duration = state.duration;
         action.timelines = cloneTimelines(state.timelines);
+        action.arrowVisibilityTracks = cloneArrowVisibilityTracks(state.arrowVisibilityTracks, action.duration);
+        action.arrowParentTracks = cloneArrowParentTracks(state.arrowParentTracks, action.duration);
+        action.slashFxVisibilityTracks = cloneSlashFxVisibilityTracks(state.slashFxVisibilityTracks, action.duration);
+        action.slashFxParentTracks = cloneSlashFxParentTracks(state.slashFxParentTracks, action.duration);
+        action.slashFxActionHiddenMap = cloneSlashFxActionHiddenMap(state.slashFxActionHiddenMap);
         renderAll();
         await saveProjectJsonFile({ suggestedPath: defaultProjectSavePath() });
       }
@@ -4608,8 +6843,15 @@
         state.currentFrame = 0;
         state.selectedKey = null;
         state.playing = false;
+        poseOverrides.clear();
         dynamicScarves.clear();
         state.timelines = cloneTimelines(nextAction.timelines);
+        state.arrowVisibilityTracks = cloneArrowVisibilityTracks(nextAction.arrowVisibilityTracks);
+        state.arrowParentTracks = cloneArrowParentTracks(nextAction.arrowParentTracks);
+        state.slashFxVisibilityTracks = cloneSlashFxVisibilityTracks(nextAction.slashFxVisibilityTracks);
+        state.slashFxParentTracks = cloneSlashFxParentTracks(nextAction.slashFxParentTracks);
+        state.slashFxActionHiddenMap = cloneSlashFxActionHiddenMap(nextAction.slashFxActionHiddenMap);
+        hydrateBowRigTimelineMap(state.timelines);
         syncCurrentActionFromTimeline();
         renderAll();
         toast(`Deleted action: ${removed?.name || ""}`);
@@ -4657,8 +6899,15 @@
         state.currentFrame = 0;
         state.selectedKey = null;
         state.playing = false;
+        poseOverrides.clear();
         dynamicScarves.clear();
         state.timelines = cloneTimelines(action.timelines);
+        state.arrowVisibilityTracks = cloneArrowVisibilityTracks(action.arrowVisibilityTracks);
+        state.arrowParentTracks = cloneArrowParentTracks(action.arrowParentTracks);
+        state.slashFxVisibilityTracks = cloneSlashFxVisibilityTracks(action.slashFxVisibilityTracks);
+        state.slashFxParentTracks = cloneSlashFxParentTracks(action.slashFxParentTracks);
+        state.slashFxActionHiddenMap = cloneSlashFxActionHiddenMap(action.slashFxActionHiddenMap);
+        hydrateBowRigTimelineMap(state.timelines);
         syncCurrentActionFromTimeline();
         renderAll();
         toast(`已切换动作：${action.name}`);
@@ -4670,7 +6919,7 @@
         return Math.round(x / frameWidth);
       }
 
-      function canvasPoint(event) {
+      function stageScreenPoint(event) {
         const rect = el.stage.getBoundingClientRect();
         return {
           x: event.clientX - rect.left,
@@ -4678,7 +6927,81 @@
         };
       }
 
+      function worldFromScreen(point) {
+        const view = state.stageView || { zoom: 1, x: 0, y: 0 };
+        return {
+          x: (point.x - view.x) / view.zoom,
+          y: (point.y - view.y) / view.zoom,
+        };
+      }
+
+      function screenFromWorld(point) {
+        const view = state.stageView || { zoom: 1, x: 0, y: 0 };
+        return {
+          x: point.x * view.zoom + view.x,
+          y: point.y * view.zoom + view.y,
+        };
+      }
+
+      function canvasPoint(event) {
+        return worldFromScreen(stageScreenPoint(event));
+      }
+
+      function screenLengthToWorld(length) {
+        return length / Math.max(0.01, state.stageView?.zoom || 1);
+      }
+
+      function formatWorldValue(value) {
+        return `${round(Number(value) || 0, 1)} px`;
+      }
+
+      function formatWorldPoint(point) {
+        if (!point) return "(-, -)";
+        return `(${formatWorldValue(point.x)}, ${formatWorldValue(point.y)})`;
+      }
+
+      function formatStageViewOffset() {
+        return `(${formatWorldValue(state.stageView?.x || 0)}, ${formatWorldValue(state.stageView?.y || 0)})`;
+      }
+
+      function updateStagePointerWorld(point) {
+        state.stagePointerWorld = point ? { x: point.x, y: point.y } : null;
+        renderStageWorldStatus();
+        renderTimeStatus();
+      }
+
+      function clampStageZoom(zoom) {
+        return Math.max(0.2, Math.min(8, zoom));
+      }
+
+      function zoomStageAtScreenPoint(screenPoint, nextZoom) {
+        const before = worldFromScreen(screenPoint);
+        const zoom = clampStageZoom(nextZoom);
+        state.stageView.zoom = zoom;
+        state.stageView.x = screenPoint.x - before.x * zoom;
+        state.stageView.y = screenPoint.y - before.y * zoom;
+      }
+
+      function applyStageViewTransform() {
+        const view = state.stageView || { zoom: 1, x: 0, y: 0 };
+        ctx.translate(view.x, view.y);
+        ctx.scale(view.zoom, view.zoom);
+      }
+
+      function renderStageWorldStatus() {
+        if (!el.stageWorldStatus) return;
+        const mouse = state.stagePointerWorld ? formatWorldPoint(state.stagePointerWorld) : "(out of stage)";
+        el.stageWorldStatus.textContent = [
+          `Origin: ${formatWorldPoint({ x: 0, y: 0 })}`,
+          `Mouse: ${mouse}`,
+          `View Zoom: ${round(state.stageView?.zoom || 1, 2)}x`,
+          `View Offset: ${formatStageViewOffset()}`,
+        ].join("\n");
+      }
+
       function hitTest(point) {
+        const jointRadius = screenLengthToWorld(12);
+        const boneRadius = screenLengthToWorld(8);
         if (state.editMode === "stretch") return hitTestStretch(point);
         if (isBindingMode()) {
           const selectedPieceHit = hitTestSelectedPiece(point);
@@ -4686,19 +7009,20 @@
         }
         const nodes = sortedNodes().reverse();
         for (const node of nodes) {
+          if (!isNodeVisibleAtFrame(node)) continue;
           const pose = worldPose(node);
           const end = endPoint(pose);
-          if (distance(point, end) <= 12) {
+          if (distance(point, end) <= jointRadius) {
             const childAtJoint = firstChildOf(node.id);
             if (childAtJoint) {
               return { type: "origin", node: childAtJoint, jointId: endJointId(node) };
             }
             return { type: "end", node, jointId: endJointId(node) };
           }
-          if (distance(point, { x: pose.worldX, y: pose.worldY }) <= 12) {
+          if (distance(point, { x: pose.worldX, y: pose.worldY }) <= jointRadius) {
             return { type: "origin", node, jointId: startJointId(node) };
           }
-          if (pointSegmentDistance(point, { x: pose.worldX, y: pose.worldY }, end) <= 8) {
+          if (pointSegmentDistance(point, { x: pose.worldX, y: pose.worldY }, end) <= boneRadius) {
             return { type: "bone", node };
           }
         }
@@ -4710,25 +7034,31 @@
       }
 
       function hitTestSelectedPiece(point) {
+        const handleRadius = screenLengthToWorld(12);
         const piece = selectedPieceNode();
-        if (!piece) return null;
+        if (!piece || !isNodeVisibleAtFrame(piece)) return null;
         const handles = pieceHandlePoints(piece);
-        if (distance(point, handles.rotate) <= 12) return { type: "piece-rotate", node: piece };
+        if (distance(point, handles.rotate) <= handleRadius) return { type: "piece-rotate", node: piece };
         for (const corner of handles.corners) {
-          if (distance(point, corner) <= 12) return { type: "piece-scale", node: piece };
+          if (distance(point, corner) <= handleRadius) return { type: "piece-scale", node: piece };
         }
         const corners = pieceCorners(piece);
-        if (corners && pointInPolygon(point, corners)) return { type: "piece", node: piece };
+        if (corners && pointInPolygon(point, corners)) {
+          return proxyHitForArrowPieceBody(piece) || proxyHitForSlashFxPieceBody(piece) || { type: "piece", node: piece };
+        }
         return null;
       }
 
       function hitTestPiece(point) {
         const pieces = pieceNodes()
+          .filter((piece) => isNodeVisibleAtFrame(piece))
           .slice()
           .sort((a, b) => (b.attachment?.layer || 0) - (a.attachment?.layer || 0));
         for (const piece of pieces) {
           const corners = pieceCorners(piece);
-          if (corners && pointInPolygon(point, corners)) return { type: "piece", node: piece };
+          if (corners && pointInPolygon(point, corners)) {
+            return proxyHitForArrowPieceBody(piece) || proxyHitForSlashFxPieceBody(piece) || { type: "piece", node: piece };
+          }
         }
         return null;
       }
@@ -4762,23 +7092,30 @@
       }
 
       function hitTestStretchNode(point, node) {
+        const handleRadius = screenLengthToWorld(14);
+        if (!isNodeVisibleAtFrame(node)) return null;
         const pose = worldPose(node);
         const end = endPoint(pose);
-        if (distance(point, end) <= 14) {
+        if (distance(point, end) <= handleRadius) {
           return { type: "stretch-end", node, jointId: endJointId(node) };
         }
-        if (distance(point, { x: pose.worldX, y: pose.worldY }) <= 14) {
+        if (distance(point, { x: pose.worldX, y: pose.worldY }) <= handleRadius) {
           return { type: "stretch-origin", node, jointId: startJointId(node) };
         }
         return null;
       }
 
       function firstChildOf(parentId) {
-        return sortedNodes().find((node) => node.parentId === parentId) || null;
+        return (
+          sortedNodes().find(
+            (node) => effectiveParentIdForNode(node) === parentId && participatesInGenericJointSolver(node),
+          ) || null
+        );
       }
 
       function startJointId(node) {
-        return node.parentId ? endJointId({ id: node.parentId }) : `base:${node.id}`;
+        const effectiveParentId = effectiveParentIdForNode(node);
+        return effectiveParentId ? endJointId({ id: effectiveParentId }) : `base:${node.id}`;
       }
 
       function endJointId(node) {
@@ -4802,8 +7139,9 @@
       }
 
       function localFromWorld(node, world) {
-        if (!node.parentId) return world;
-        const parent = state.nodes.find((item) => item.id === node.parentId);
+        const effectiveParentId = effectiveParentIdForNode(node);
+        if (!effectiveParentId) return world;
+        const parent = state.nodes.find((item) => item.id === effectiveParentId);
         if (!parent) return world;
         const p = worldPose(parent);
         const anchor = endPoint(p);
@@ -4835,7 +7173,7 @@
       function solveGenericJointDrag(jointId, targetWorld) {
         const positions = captureJointPositions();
         positions[jointId] = { x: targetWorld.x, y: targetWorld.y };
-        const edges = state.nodes.map((node) => ({
+        const edges = state.nodes.filter((node) => participatesInGenericJointSolver(node)).map((node) => ({
           node,
           startId: startJointId(node),
           endId: endJointId(node),
@@ -4877,6 +7215,7 @@
       function captureJointPositions() {
         const positions = {};
         sortedNodes().forEach((node) => {
+          if (!participatesInGenericJointSolver(node)) return;
           const pose = worldPose(node);
           positions[startJointId(node)] = { x: pose.worldX, y: pose.worldY };
           positions[endJointId(node)] = endPoint(pose);
@@ -4886,6 +7225,7 @@
 
       function applySolvedJointPositions(positions) {
         sortedNodes().forEach((node) => {
+          if (!participatesInGenericJointSolver(node)) return;
           const start = positions[startJointId(node)];
           const end = positions[endJointId(node)];
           if (!start || !end) return;
@@ -5038,7 +7378,8 @@
       function defaultProjectSavePath() {
         const action = selectedAction();
         const baseName = sanitizeProjectFileSegment(action?.name || state.name || "spine-project");
-        return `src/faxian/leg/${baseName}.json`;
+        const config = getSpineUnitConfig(state.currentUnitType);
+        return config.projectUrl || `src/faxian/leg/${baseName}.json`;
       }
 
       function defaultProjectSaveFilename(suggestedPath = defaultProjectSavePath()) {
@@ -5128,6 +7469,11 @@
         state.bindingBoneTool = null;
         state.pendingFreeBoneStart = null;
         state.customImages = {};
+        state.arrowVisibilityTracks = {};
+        state.arrowParentTracks = {};
+        state.slashFxVisibilityTracks = {};
+        state.slashFxParentTracks = {};
+        state.slashFxActionHiddenMap = {};
         state.playing = false;
         state.nodes = [
           {
@@ -5339,7 +7685,59 @@
         }
       }
 
+      async function switchSpineUnitContext(unitType) {
+        unitType = SPINE_UNIT_CONFIGS[unitType] ? unitType : "swordsman";
+        const config = getSpineUnitConfig(unitType);
+        if (unitType === state.currentUnitType) {
+          resetSpineUnitSelect();
+          return true;
+        }
+        if (config.enabled === false) {
+          resetSpineUnitSelect();
+          return false;
+        }
+        if (!confirmSpineUnitSwitch(state.currentUnitType, unitType)) {
+          resetSpineUnitSelect();
+          return false;
+        }
+        const project = await loadProjectJsonFile(config.projectUrl);
+        if (!project) {
+          resetSpineUnitSelect();
+          toast(`Failed to load ${config.label} project.`);
+          return false;
+        }
+        await refreshCurrentUnitAssetImages(unitType);
+        applyProjectData(project, { unitType });
+        state.currentUnitType = unitType;
+        renderSpineUnitFeatureGroups();
+        renderAll();
+        resetSpineUnitSelect();
+        return true;
+      }
+
+      async function loadInitialSpineUnitProject() {
+        const config = getSpineUnitConfig(state.currentUnitType);
+        const project = await loadProjectJsonFile(config.projectUrl);
+        await refreshCurrentUnitAssetImages(state.currentUnitType);
+        if (project) {
+          applyProjectData(project, { unitType: state.currentUnitType });
+        }
+        renderAll();
+      }
+
       async function loadNewVersionSample() {
+        const preferredProjectUrls = [
+          "/src/faxian/leg/swordsman/project.json",
+          "/src/faxian/leg/new-version-spine-project.json",
+        ];
+        for (const projectUrl of preferredProjectUrls) {
+          const savedProject = await loadProjectJsonFile(projectUrl);
+          if (!savedProject) continue;
+          applyProjectData(savedProject);
+          renderAll();
+          toast(`Loaded ${projectUrl.split("/").pop() || "project.json"}`);
+          return;
+        }
         const savedProject = await loadProjectJsonFile("/src/faxian/leg/new-version-spine-project.json");
         if (savedProject) {
           applyProjectData(savedProject);
@@ -5477,7 +7875,7 @@
           format: "spine-node-timeline-editor",
           version: 1,
           name: "新版",
-          fps: 24,
+          fps: 36,
           duration: 47,
           nodes,
           timelines: jumpTimelines,
@@ -5529,7 +7927,7 @@
           suffix += 1;
         }
         const start = toStage({ x: swordPart.x, y: swordPart.y });
-        const spec = materialReplacementSpecs.find((item) => item.id === "sword");
+        const spec = materialReplacementSpecsForUnit().find((item) => item.id === "sword");
         const length = Math.max(24, (spec?.targetHeight || 240) * (Number(swordPart.scale) || 1) * 0.26);
         const worldRotation = (Number(swordPart.rotation) || 0) + 90;
         const rightArmNodes = nodes.filter((node) => node.role === "rightArm");
@@ -5581,7 +7979,7 @@
 
       function loadSample() {
         applyProjectData({
-          fps: 24,
+          fps: 36,
           duration: 96,
           nodes: [
             {
@@ -5684,7 +8082,7 @@
             scaleY: 1,
           }));
         applyProjectData({
-          fps: 24,
+          fps: 36,
           duration: 48,
           nodes: [
             {
@@ -6074,7 +8472,7 @@
           scaleY: 1,
         });
         applyProjectData({
-          fps: 24,
+          fps: 36,
           duration: 48,
           nodes: [
             {
@@ -6675,6 +9073,92 @@
         };
       }
 
+      function worldPoseFromParentContext(localPose, parentId, frame) {
+        const anchoredLocal = parentId ? { ...localPose, x: 0, y: 0 } : localPose;
+        if (!parentId) {
+          return {
+            ...anchoredLocal,
+            worldX: anchoredLocal.x,
+            worldY: anchoredLocal.y,
+            worldRotation: anchoredLocal.rotation,
+            worldScaleX: anchoredLocal.scaleX,
+            worldScaleY: anchoredLocal.scaleY,
+          };
+        }
+        const parent = state.nodes.find((node) => node.id === parentId);
+        if (!parent) {
+          return {
+            ...anchoredLocal,
+            worldX: anchoredLocal.x,
+            worldY: anchoredLocal.y,
+            worldRotation: anchoredLocal.rotation,
+            worldScaleX: anchoredLocal.scaleX,
+            worldScaleY: anchoredLocal.scaleY,
+          };
+        }
+        const parentPose = worldPose(parent, frame);
+        const worldPoint = worldFromLocalByParentPose(parentPose, anchoredLocal);
+        return {
+          ...anchoredLocal,
+          worldX: worldPoint.x,
+          worldY: worldPoint.y,
+          worldRotation: parentPose.worldRotation + anchoredLocal.rotation,
+          worldScaleX: parentPose.worldScaleX * anchoredLocal.scaleX,
+          worldScaleY: parentPose.worldScaleY * anchoredLocal.scaleY,
+        };
+      }
+
+      function localPoseForParentContext(worldPoseLike, parentId, frame) {
+        if (!parentId) {
+          return {
+            x: worldPoseLike.worldX,
+            y: worldPoseLike.worldY,
+            rotation: worldPoseLike.worldRotation,
+            length: worldPoseLike.length,
+            scaleX: worldPoseLike.worldScaleX,
+            scaleY: worldPoseLike.worldScaleY,
+          };
+        }
+        const parent = state.nodes.find((node) => node.id === parentId);
+        if (!parent) {
+          return {
+            x: worldPoseLike.worldX,
+            y: worldPoseLike.worldY,
+            rotation: worldPoseLike.worldRotation,
+            length: worldPoseLike.length,
+            scaleX: worldPoseLike.worldScaleX,
+            scaleY: worldPoseLike.worldScaleY,
+          };
+        }
+        const parentPose = worldPose(parent, frame);
+        const localPoint = localFromWorldByParentPose(parentPose, {
+          x: worldPoseLike.worldX,
+          y: worldPoseLike.worldY,
+        });
+        return {
+          x: 0,
+          y: 0,
+          rotation: worldPoseLike.worldRotation - parentPose.worldRotation,
+          length: worldPoseLike.length,
+          scaleX: worldPoseLike.worldScaleX / (parentPose.worldScaleX || 1),
+          scaleY: worldPoseLike.worldScaleY / (parentPose.worldScaleY || 1),
+        };
+      }
+
+      function convertNodeKeysToParentContext(node, fromParentId, toParentId, frameStart, frameEndExclusive = Infinity) {
+        const keys = state.timelines[node.id] || [];
+        if (!keys.some((item) => item.frame === frameStart)) {
+          upsertKeyframe(node, copyPoseAtFrame(getLocalPose(node, frameStart), frameStart));
+        }
+        (state.timelines[node.id] || []).forEach((keyframe) => {
+          if (keyframe.frame < frameStart || keyframe.frame >= frameEndExclusive) return;
+          const worldPoseLike = worldPoseFromParentContext(keyframe, fromParentId, keyframe.frame);
+          const localPose = localPoseForParentContext(worldPoseLike, toParentId, keyframe.frame);
+          Object.assign(keyframe, localPose);
+        });
+      }
+
+
       function poseFromNodeAndParent(node, parentPose = null) {
         if (!parentPose) {
           return {
@@ -6798,6 +9282,10 @@
       }
 
       function applyNodePose(node, patch, persist = true) {
+        if (!persist) {
+          setNodePoseTransient(node, patch);
+          return;
+        }
         Object.assign(node, patch);
         poseOverrides.set(node.id, {
           x: node.x,
@@ -6855,7 +9343,15 @@
           state.nodes.find((item) => item.id === rig.stringLowerId) ||
           state.nodes.find((item) => item.id === rig.stringId);
         if (!center || !upper || !lower || !stringUpper || !stringLower) return null;
-        return { rig, center, upper, lower, stringUpper, stringLower };
+        return {
+          rig,
+          center,
+          upper,
+          lower,
+          stringUpper,
+          stringLower,
+          control: isBowStringControlNode(node) ? node : null,
+        };
       }
 
       function bowRigNodesForNode(node) {
@@ -6909,14 +9405,13 @@
       }
 
       function setNodePoseTransient(node, patch) {
-        Object.assign(node, patch);
         poseOverrides.set(node.id, {
-          x: node.x,
-          y: node.y,
-          rotation: node.rotation,
-          length: node.length,
-          scaleX: node.scaleX,
-          scaleY: node.scaleY,
+          x: patch.x ?? node.x,
+          y: patch.y ?? node.y,
+          rotation: patch.rotation ?? node.rotation,
+          length: patch.length ?? node.length,
+          scaleX: patch.scaleX ?? node.scaleX,
+          scaleY: patch.scaleY ?? node.scaleY,
         });
       }
 
@@ -6952,15 +9447,35 @@
       function ensureBowRigModel(controlNode) {
         const nodes = bowRigNodes(controlNode);
         if (!nodes) return null;
-        const { rig, center, upper, lower, control } = nodes;
+        const { center, upper, lower, control } = nodes;
+        const controlLocal = BowRigController.enrichPose(
+          control,
+          isBindingMode() ? getRestLocalPose(control) : getLocalPose(control),
+        );
+        const rig =
+          (controlLocal?.bowPoseSerialized
+            ? BowRigController.rigFromPose(control, controlLocal)
+            : normalizeBowRig({
+                ...nodes.rig,
+                groupRotation: null,
+                angle: null,
+                upperLength: null,
+                lowerLength: null,
+                controlBaseX: null,
+                controlBaseY: null,
+                pull: 0,
+              })) || nodes.rig;
+        if (!rig) return null;
         const centerWorld = endPoint(worldPose(center));
         const upperTip = endPoint(worldPose(upper));
         const lowerTip = endPoint(worldPose(lower));
         const controlPose = worldPose(control);
         const controlPoint = { x: controlPose.worldX, y: controlPose.worldY };
-        if (!Number.isFinite(Number(rig.angle))) {
-          rig.angle = (Math.atan2(upperTip.y - centerWorld.y, upperTip.x - centerWorld.x) * 180) / Math.PI;
+        if (!Number.isFinite(Number(rig.groupRotation))) {
+          rig.groupRotation =
+            (Math.atan2(upperTip.y - centerWorld.y, upperTip.x - centerWorld.x) * 180) / Math.PI;
         }
+        rig.angle = rig.groupRotation;
         if (!Number.isFinite(Number(rig.upperLength)) || rig.upperLength <= 4) {
           rig.upperLength = Math.max(4, distance(centerWorld, upperTip));
         }
@@ -6968,13 +9483,13 @@
           rig.lowerLength = Math.max(4, distance(centerWorld, lowerTip));
         }
         if (!Number.isFinite(Number(rig.controlBaseX)) || !Number.isFinite(Number(rig.controlBaseY))) {
-          const local = bowWorldToLocal(centerWorld, rig.angle, controlPoint);
+          const local = bowWorldToLocal(centerWorld, rig.groupRotation, controlPoint);
           rig.controlBaseX = local.x;
           rig.controlBaseY = local.y;
         }
         if (!Number.isFinite(Number(rig.pull))) rig.pull = 0;
         controlNode.bowRig = normalizeBowRig(rig);
-        return { ...nodes, rig: controlNode.bowRig };
+        return { ...nodes, rig: controlNode.bowRig, control };
       }
 
       function syncBowRigFromModel(controlNode) {
@@ -6983,9 +9498,9 @@
         const { rig, center, upper, lower, stringUpper, stringLower, control } = nodes;
         const centerWorld = bowCenterWorld(nodes);
         const bend = (rig.pull || 0) * rig.bodyInfluence;
-        const upperTip = bowLocalToWorld(centerWorld, rig.angle, { x: bend, y: rig.upperLength });
-        const lowerTip = bowLocalToWorld(centerWorld, rig.angle, { x: bend, y: -rig.lowerLength });
-        const controlPoint = bowLocalToWorld(centerWorld, rig.angle, {
+        const upperTip = bowLocalToWorld(centerWorld, rig.groupRotation, { x: bend, y: rig.upperLength });
+        const lowerTip = bowLocalToWorld(centerWorld, rig.groupRotation, { x: bend, y: -rig.lowerLength });
+        const controlPoint = bowLocalToWorld(centerWorld, rig.groupRotation, {
           x: (rig.controlBaseX || 0) + (rig.pull || 0),
           y: rig.controlBaseY || 0,
         });
@@ -7010,7 +9525,9 @@
           y: worldPose(nodes.center).worldY,
         };
         moveBoneRigid(nodes.center, deltaWorld, centerOrigin);
+        if (!isBindingMode()) upsertKeyframe(nodes.center, snapshotNode(nodes.center));
         syncBowRigFromModel(nodes.control);
+        BowRigController.persistKeyframe(nodes.control);
         return true;
       }
 
@@ -7087,9 +9604,13 @@
         const model = ensureBowRigModel(nodes.control);
         if (!model) return false;
         const centerWorld = bowCenterWorld(model);
-        model.rig.angle = (Math.atan2(targetWorld.y - centerWorld.y, targetWorld.x - centerWorld.x) * 180) / Math.PI;
+        model.rig.groupRotation =
+          (Math.atan2(targetWorld.y - centerWorld.y, targetWorld.x - centerWorld.x) * 180) / Math.PI;
+        model.rig.angle = model.rig.groupRotation;
         nodes.control.bowRig = normalizeBowRig(model.rig);
-        return syncBowRigFromModel(nodes.control);
+        const moved = syncBowRigFromModel(nodes.control);
+        BowRigController.persistKeyframe(nodes.control);
+        return moved;
       }
 
       function handleBowRigDrag(node, dragType, point) {
@@ -7101,7 +9622,7 @@
             const model = ensureBowRigModel(nodes.control);
             if (!model) return false;
             const centerWorld = bowCenterWorld(model);
-            const controlLocal = bowWorldToLocal(centerWorld, model.rig.angle, point);
+            const controlLocal = bowWorldToLocal(centerWorld, model.rig.groupRotation, point);
             model.rig.controlBaseX = controlLocal.x;
             model.rig.controlBaseY = controlLocal.y;
             model.rig.pull = 0;
@@ -7136,18 +9657,20 @@
         const nodes = ensureBowRigModel(node);
         if (!nodes) return false;
         const centerWorld = bowCenterWorld(nodes);
-        const baseWorld = bowLocalToWorld(centerWorld, nodes.rig.angle, {
+        const baseWorld = bowLocalToWorld(centerWorld, nodes.rig.groupRotation, {
           x: nodes.rig.controlBaseX || 0,
           y: nodes.rig.controlBaseY || 0,
         });
-        const pullAxis = bowAxes(nodes.rig.angle).pull;
+        const pullAxis = bowAxes(nodes.rig.groupRotation).pull;
         const projected = dotVector(
           { x: targetWorld.x - baseWorld.x, y: targetWorld.y - baseWorld.y },
           pullAxis,
         );
         nodes.rig.pull = Math.max(-nodes.rig.maxPull, Math.min(nodes.rig.maxPull, projected));
         node.bowRig = normalizeBowRig(nodes.rig);
-        return syncBowRigFromModel(node);
+        const moved = syncBowRigFromModel(node);
+        BowRigController.persistKeyframe(node);
+        return moved;
       }
 
       function createBowRigFromSelectedPiece() {
@@ -7263,11 +9786,21 @@
             lowerId: lowerBone.id,
             stringUpperId: stringUpperBone.id,
             stringLowerId: stringLowerBone.id,
+            groupRotation:
+              (Math.atan2(upperTip.y - centerPoint.y, upperTip.x - centerPoint.x) * 180) / Math.PI,
             angle: (Math.atan2(upperTip.y - centerPoint.y, upperTip.x - centerPoint.x) * 180) / Math.PI,
             upperLength: Math.max(4, distance(centerPoint, upperTip)),
             lowerLength: Math.max(4, distance(centerPoint, lowerTip)),
-            controlBaseX: bowWorldToLocal(centerPoint, (Math.atan2(upperTip.y - centerPoint.y, upperTip.x - centerPoint.x) * 180) / Math.PI, stringCenter).x,
-            controlBaseY: bowWorldToLocal(centerPoint, (Math.atan2(upperTip.y - centerPoint.y, upperTip.x - centerPoint.x) * 180) / Math.PI, stringCenter).y,
+            controlBaseX: bowWorldToLocal(
+              centerPoint,
+              (Math.atan2(upperTip.y - centerPoint.y, upperTip.x - centerPoint.x) * 180) / Math.PI,
+              stringCenter,
+            ).x,
+            controlBaseY: bowWorldToLocal(
+              centerPoint,
+              (Math.atan2(upperTip.y - centerPoint.y, upperTip.x - centerPoint.x) * 180) / Math.PI,
+              stringCenter,
+            ).y,
             pull: 0,
             maxPull: Math.max(24, split.bodyStats.height * restPart.scale * 1.15),
             bodyInfluence: 0.5,
@@ -7278,7 +9811,7 @@
           state.timelines[lowerBone.id] = [];
           state.timelines[stringUpperBone.id] = [];
           state.timelines[stringLowerBone.id] = [];
-          state.timelines[stringControl.id] = [];
+          state.timelines[stringControl.id] = [snapshotNode(stringControl)];
 
           piece.name = `${baseName}_rig`;
           piece.role = "bow-rig";
@@ -7306,15 +9839,185 @@
           state.selectedKey = null;
           dynamicScarves.clear();
           renderAll();
-          toast("Bow rig created");
+          toast("已创建弓骨骼");
         } catch (error) {
           toast(error instanceof Error ? error.message : String(error));
         }
       }
 
+      function promptArrowRigImageFile() {
+        if (!isBindingMode()) setWorkspaceMode("binding");
+        const input = document.createElement("input");
+        input.type = "file";
+        input.accept = "image/png,image/jpeg,image/webp";
+        input.addEventListener(
+          "change",
+          async () => {
+            const file = input.files?.[0];
+            if (!file) return;
+            try {
+              await createArrowRigFromFile(file);
+            } catch (error) {
+              toast(error instanceof Error ? error.message : String(error));
+            }
+          },
+          { once: true },
+        );
+        input.click();
+      }
+
+      async function createArrowRigFromFile(file) {
+        const [image, src] = await Promise.all([loadFileImage(file), readFileAsDataUrl(file)]);
+        const customImageId = `${customImagePrefix}arrow-${uid("image")}`;
+        registerCustomImage(customImageId, file.name, src);
+        warriorImages[customImageId] = image;
+        const imageWidth = Math.max(1, image.naturalWidth || image.width || 1);
+        const imageHeight = Math.max(1, image.naturalHeight || image.height || 1);
+        const baseName = String(file.name || "arrow")
+          .replace(/\.[^.]+$/, "")
+          .trim()
+          .replace(/\s+/g, "_") || "arrow";
+        const scale = Math.min(1, 140 / Math.max(imageWidth, imageHeight));
+        const horizontal = imageWidth >= imageHeight;
+        const boneLength = Math.max(12, (horizontal ? imageWidth : imageHeight) * scale);
+        const center = { x: 420, y: 330 };
+        const halfLength = boneLength * 0.5;
+        const startWorld = horizontal
+          ? { x: center.x - halfLength, y: center.y }
+          : { x: center.x, y: center.y - halfLength };
+        const endWorld = horizontal
+          ? { x: center.x + halfLength, y: center.y }
+          : { x: center.x, y: center.y + halfLength };
+        const arrowBone = createBindingBone(
+          `${baseName}_arrow_bone`,
+          startWorld,
+          endWorld,
+          "#d8d2bd",
+          "arrow",
+          null,
+          null,
+        );
+        const arrowPiece = createGeneratedPieceNode(
+          `${baseName}_arrow`,
+          customImageId,
+          {
+            x: -boneLength * 0.5,
+            y: 0,
+            scale,
+            rotation: 0,
+            anchorX: 0.5,
+            anchorY: 0.5,
+            parentBoneId: arrowBone.id,
+          },
+          24 + pieceNodes().length,
+          [arrowBone.id],
+        );
+        arrowPiece.role = "arrow-piece";
+        arrowBone.bindPose = normalizeBindPose(arrowBone);
+        state.nodes.push(arrowBone, arrowPiece);
+        state.timelines[arrowBone.id] = [];
+        state.timelines[arrowPiece.id] = [];
+        state.arrowVisibilityTracks[arrowPiece.id] = [];
+        state.arrowParentTracks[arrowPiece.id] = [];
+        state.selectedPieceNodeId = arrowPiece.id;
+        state.selectedNodeId = arrowBone.id;
+        state.selectedKey = null;
+        dynamicScarves.clear();
+        renderAll();
+        toast("已创建箭矢骨骼");
+      }
+
+      function promptSlashFxRigImageFile() {
+        if (!isBindingMode()) setWorkspaceMode("binding");
+        const input = document.createElement("input");
+        input.type = "file";
+        input.accept = "image/png,image/jpeg,image/webp";
+        input.addEventListener(
+          "change",
+          async () => {
+            const file = input.files?.[0];
+            if (!file) return;
+            try {
+              await createSlashFxRigFromFile(file);
+            } catch (error) {
+              toast(error instanceof Error ? error.message : String(error));
+            }
+          },
+          { once: true },
+        );
+        input.click();
+      }
+
+      async function createSlashFxRigFromFile(file) {
+        const fxContext = slashEffectContext();
+        const [image, src] = await Promise.all([loadFileImage(file), readFileAsDataUrl(file)]);
+        const customImageId = `${customImagePrefix}slash-fx-${uid("image")}`;
+        registerCustomImage(customImageId, file.name, src);
+        warriorImages[customImageId] = image;
+        const imageWidth = Math.max(1, image.naturalWidth || image.width || 1);
+        const imageHeight = Math.max(1, image.naturalHeight || image.height || 1);
+        const baseName = String(file.name || "slash_fx")
+          .replace(/\.[^.]+$/, "")
+          .trim()
+          .replace(/\s+/g, "_") || "slash_fx";
+        const scale = Math.min(1.3, 180 / Math.max(imageWidth, imageHeight));
+        const horizontal = imageWidth >= imageHeight;
+        const boneLength = Math.max(12, (horizontal ? imageWidth : imageHeight) * scale);
+        const center = { x: 420, y: 330 };
+        const halfLength = boneLength * 0.5;
+        const startWorld = horizontal
+          ? { x: center.x - halfLength, y: center.y }
+          : { x: center.x, y: center.y - halfLength };
+        const endWorld = horizontal
+          ? { x: center.x + halfLength, y: center.y }
+          : { x: center.x, y: center.y + halfLength };
+        const slashFxBone = createBindingBone(
+          `${baseName}_slash_fx_bone`,
+          startWorld,
+          endWorld,
+          "#f0efe7",
+          "slash-fx",
+          null,
+          null,
+        );
+        const slashFxPiece = createGeneratedPieceNode(
+          `${baseName}_slash_fx`,
+          customImageId,
+          {
+            x: -boneLength * 0.5,
+            y: 0,
+            scale,
+            rotation: 0,
+            anchorX: 0.5,
+            anchorY: 0.5,
+            parentBoneId: slashFxBone.id,
+          },
+          24 + pieceNodes().length,
+          [slashFxBone.id],
+        );
+        slashFxPiece.role = "slash-fx-piece";
+        slashFxBone.bindPose = normalizeBindPose(slashFxBone);
+        state.nodes.push(slashFxBone, slashFxPiece);
+        state.timelines[slashFxBone.id] = [];
+        state.timelines[slashFxPiece.id] = [];
+        state.slashFxVisibilityTracks[slashFxPiece.id] = [];
+        state.slashFxParentTracks[slashFxPiece.id] = [];
+        state.selectedPieceNodeId = slashFxPiece.id;
+        state.selectedNodeId = slashFxBone.id;
+        state.selectedKey = null;
+        dynamicScarves.clear();
+        renderAll();
+        toast(`已创建${fxContext.label}骨骼`);
+      }
+
       function deleteSelectedPiece() {
         const piece = selectedPieceNode();
         if (!piece) return;
+        if (piece.role === "arrow-piece") delete state.arrowVisibilityTracks[piece.id];
+        if (piece.role === "arrow-piece") delete state.arrowParentTracks[piece.id];
+        if (piece.role === "slash-fx-piece") delete state.slashFxVisibilityTracks[piece.id];
+        if (piece.role === "slash-fx-piece") delete state.slashFxParentTracks[piece.id];
+        if (piece.role === "slash-fx-piece") delete state.slashFxActionHiddenMap[piece.id];
         if (piece.role === "piece" && !boundBoneIdsForPiece(piece).length) {
           state.nodes = state.nodes.filter((node) => node.id !== piece.id);
           delete state.timelines[piece.id];
@@ -7399,6 +10102,8 @@
         el.deleteNodeBtn.addEventListener("click", () => {
           const node = selectedNode();
           if (!node) return;
+          const arrowPiece = arrowPieceForNode(node);
+          const slashFxPiece = slashFxPieceForNode(node);
           if (state.nodes.length === 1) {
             toast("至少保留一个节点");
             return;
@@ -7413,6 +10118,11 @@
               item.attachment.skinBoneIds = item.attachment.skinBoneIds.filter((id) => id !== node.id);
             }
           });
+          if (arrowPiece?.id) delete state.arrowParentTracks[arrowPiece.id];
+          if (arrowPiece?.id) delete state.arrowVisibilityTracks[arrowPiece.id];
+          if (slashFxPiece?.id) delete state.slashFxParentTracks[slashFxPiece.id];
+          if (slashFxPiece?.id) delete state.slashFxVisibilityTracks[slashFxPiece.id];
+          if (slashFxPiece?.id) delete state.slashFxActionHiddenMap[slashFxPiece.id];
           if (state.selectedPieceNodeId === node.id) state.selectedPieceNodeId = null;
           state.selectedNodeId = state.nodes[0]?.id || null;
           state.selectedKey = null;
@@ -7432,6 +10142,45 @@
           renderAll();
         });
         el.keyframeBtn.addEventListener("click", () => addKeyframe());
+        if (el.arrowShowBtn) el.arrowShowBtn.addEventListener("click", () => setSelectedArrowVisibilityAtCurrentFrame(true));
+        if (el.arrowHideBtn) el.arrowHideBtn.addEventListener("click", () => setSelectedArrowVisibilityAtCurrentFrame(false));
+        if (el.arrowResetActionVisibilityBtn) {
+          el.arrowResetActionVisibilityBtn.addEventListener("click", resetSelectedArrowVisibilityForCurrentAction);
+        }
+        if (el.arrowBindParentBtn) {
+          el.arrowBindParentBtn.addEventListener("click", () => {
+            const parentId = el.arrowParentSelect?.value || null;
+            if (!parentId) {
+              toast("请先选择箭矢临时父节点");
+              return;
+            }
+            setSelectedArrowParentAtCurrentFrame(parentId);
+          });
+        }
+        if (el.arrowUnbindParentBtn) {
+          el.arrowUnbindParentBtn.addEventListener("click", () => setSelectedArrowParentAtCurrentFrame(null));
+        }
+        if (el.slashFxShowBtn) el.slashFxShowBtn.addEventListener("click", () => setSelectedSlashFxVisibilityAtCurrentFrame(true));
+        if (el.slashFxHideBtn) el.slashFxHideBtn.addEventListener("click", () => setSelectedSlashFxVisibilityAtCurrentFrame(false));
+        if (el.slashFxResetActionVisibilityBtn) {
+          el.slashFxResetActionVisibilityBtn.addEventListener("click", resetSelectedSlashFxVisibilityForCurrentAction);
+        }
+        if (el.slashFxActionVisibilityBtn) {
+          el.slashFxActionVisibilityBtn.addEventListener("click", toggleSelectedSlashFxHiddenForAction);
+        }
+        if (el.slashFxBindParentBtn) {
+          el.slashFxBindParentBtn.addEventListener("click", () => {
+            const parentId = el.slashFxParentSelect?.value || null;
+            if (!parentId) {
+              toast("请先选择刀光临时父节点");
+              return;
+            }
+            setSelectedSlashFxParentAtCurrentFrame(parentId);
+          });
+        }
+        if (el.slashFxUnbindParentBtn) {
+          el.slashFxUnbindParentBtn.addEventListener("click", () => setSelectedSlashFxParentAtCurrentFrame(null));
+        }
         if (el.copyKeyframeBtn) el.copyKeyframeBtn.addEventListener("click", copyCurrentFrameKeyframes);
         if (el.pasteKeyframeBtn) el.pasteKeyframeBtn.addEventListener("click", pasteCopiedKeyframes);
         el.keySourcePrevBtn.addEventListener("click", () => {
@@ -7536,6 +10285,14 @@
         el.sampleBtn.addEventListener("click", loadSample);
         el.walkSampleBtn.addEventListener("click", loadSideWalkSample);
         el.newVersionSampleBtn.addEventListener("click", loadNewVersionSample);
+        if (el.unitTypeSelect) {
+          el.unitTypeSelect.addEventListener("change", async () => {
+            const switched = await switchSpineUnitContext(el.unitTypeSelect.value);
+            if (!switched) {
+              syncSpineUnitSelectValue();
+            }
+          });
+        }
         el.replaceMaterialBtn.addEventListener("click", () => el.materialInput.click());
         el.materialInput.addEventListener("change", () => applyMaterialReplacement(el.materialInput.files[0]));
         el.idleAnimationBtn.addEventListener("click", applyIdleAnimation);
@@ -7745,22 +10502,43 @@
       }
 
       function bindCanvas() {
+        el.stage.style.cursor = "grab";
         const startDrag = (event) => {
           if (event.type === "mousedown" && window.PointerEvent) return;
           if (drag && drag.type !== "key") return;
+          if (event.button !== undefined && event.button !== 0) return;
+          const screenPoint = stageScreenPoint(event);
           const point = canvasPoint(event);
+          updateStagePointerWorld(point);
           if (handleBindingBoneToolClick(point)) {
             event.preventDefault();
             return;
           }
           const hit = hitTest(point);
-          if (!hit) return;
+          if (!hit) {
+            event.preventDefault();
+            drag = {
+              type: "viewport-pan",
+              start: point,
+              startScreen: screenPoint,
+              startStageView: { ...state.stageView },
+              hasMoved: false,
+            };
+            if (event.pointerId !== undefined && el.stage.setPointerCapture) {
+              el.stage.setPointerCapture(event.pointerId);
+            }
+            el.stage.style.cursor = "grabbing";
+            return;
+          }
           event.preventDefault();
           poseOverrides.clear();
+          if (hit.piece?.id) {
+            state.selectedPieceNodeId = hit.piece.id;
+          }
           if (hit.type === "piece" || hit.type === "piece-scale" || hit.type === "piece-rotate") {
             state.selectedPieceNodeId = hit.node.id;
           }
-          if (isBindingMode() && hit.type === "bone" && !isBowRigNode(hit.node)) {
+          if (isBindingMode() && hit.type === "bone" && !isBowRigNode(hit.node) && !isTransformLockedNode(hit.node)) {
             detachBoneFromParentPreserveWorld(hit.node);
           }
           state.selectedNodeId = hit.node.id;
@@ -7774,6 +10552,7 @@
             nodeId: hit.node.id,
             jointId: hit.jointId,
             start: point,
+            startScreen: screenPoint,
             hasMoved: false,
             startWorldOrigin: { x: pose.worldX, y: pose.worldY },
             startWorldEnd: { x: end.x, y: end.y },
@@ -7794,32 +10573,59 @@
 
         const moveDrag = (event) => {
           if (event.type === "mousemove" && window.PointerEvent) return;
+          const screenPoint = stageScreenPoint(event);
           const point = canvasPoint(event);
+          updateStagePointerWorld(point);
           if (!drag) {
-            el.stage.style.cursor = hitTest(point) ? "grab" : "default";
+            el.stage.style.cursor = hitTest(point) ? "grab" : "grab";
             return;
           }
           event.preventDefault();
+          if (drag.type === "viewport-pan") {
+            const deltaX = screenPoint.x - drag.startScreen.x;
+            const deltaY = screenPoint.y - drag.startScreen.y;
+            if (!drag.hasMoved && Math.hypot(deltaX, deltaY) < 3) {
+              return;
+            }
+            drag.hasMoved = true;
+            state.stageView.x = drag.startStageView.x + deltaX;
+            state.stageView.y = drag.startStageView.y + deltaY;
+            el.stage.style.cursor = "grabbing";
+            renderDragFrame();
+            return;
+          }
           const node = state.nodes.find((item) => item.id === drag.nodeId);
           if (!node) return;
-          const moveDistance = distance(point, drag.start);
+          if (
+            ((["piece", "piece-scale", "piece-rotate"].includes(drag.type) && isPieceTransformLocked(node)) ||
+              ([
+                "origin",
+                "bone",
+                "end",
+                "stretch-origin",
+                "stretch-end",
+                "arrow-piece-bone",
+                "slash-fx-piece-bone",
+              ].includes(drag.type) &&
+                isTransformLockedNode(node)))
+          ) {
+            renderDragFrame();
+            return;
+          }
+          const moveDistance = Math.hypot(screenPoint.x - drag.startScreen.x, screenPoint.y - drag.startScreen.y);
           if (!drag.hasMoved && moveDistance < 3) {
             return;
           }
           drag.hasMoved = true;
           if (isBowRigNode(node) && ["origin", "bone", "end"].includes(drag.type)) {
             handleBowRigDrag(node, drag.type, point);
-            renderProperties();
-            renderTimeline();
-            renderStatus();
-            renderJsonPreview();
-            drawStage();
+            renderDragFrame();
             return;
           }
           if (drag.type === "origin") {
             solveGenericJointDrag(drag.jointId, point);
           }
-          if (drag.type === "bone") {
+          if (drag.type === "bone" || drag.type === "arrow-piece-bone" || drag.type === "slash-fx-piece-bone") {
             moveBoneRigid(
               node,
               { x: point.x - drag.start.x, y: point.y - drag.start.y },
@@ -7841,11 +10647,7 @@
           if (drag.type === "end") {
             solveGenericJointDrag(drag.jointId, point);
           }
-          renderProperties();
-          renderTimeline();
-          renderStatus();
-          renderJsonPreview();
-          drawStage();
+          renderDragFrame();
         };
 
         const endDrag = (event) => {
@@ -7856,19 +10658,42 @@
           }
         };
 
+        const handleWheel = (event) => {
+          event.preventDefault();
+          const screenPoint = stageScreenPoint(event);
+          updateStagePointerWorld(worldFromScreen(screenPoint));
+          const zoomFactor = Math.exp(-event.deltaY * 0.0015);
+          zoomStageAtScreenPoint(screenPoint, state.stageView.zoom * zoomFactor);
+          renderDragFrame();
+        };
+
+        const handlePointerLeave = () => {
+          if (drag?.type === "viewport-pan") return;
+          updateStagePointerWorld(null);
+        };
+
         el.stage.addEventListener("pointerdown", startDrag);
         el.stage.addEventListener("pointermove", moveDrag);
         el.stage.addEventListener("pointerup", endDrag);
+        el.stage.addEventListener("pointerleave", handlePointerLeave);
         el.stage.addEventListener("mousedown", startDrag);
+        el.stage.addEventListener("wheel", handleWheel, { passive: false });
         window.addEventListener("mousemove", moveDrag);
         window.addEventListener("mouseup", endDrag);
       }
 
       function commitActiveDrag() {
         if (!drag || drag.type === "key") return;
+        if (drag.type === "viewport-pan") {
+          drag = null;
+          el.stage.style.cursor = "grab";
+          renderAll();
+          return;
+        }
         if (!drag.hasMoved) {
           drag = null;
           poseOverrides.clear();
+          el.stage.style.cursor = "grab";
           renderAll();
           return;
         }
@@ -7890,6 +10715,7 @@
         }
         drag = null;
         poseOverrides.clear();
+        el.stage.style.cursor = "grab";
         renderAll();
       }
 
@@ -7904,6 +10730,7 @@
             upsertKeyframe(node);
           }
         });
+        snapshotAllBowRigsAtCurrentFrame();
       }
 
       function bindTimelineDrag() {
@@ -7949,8 +10776,7 @@
         state.currentFrame = Math.round(state.currentFrame * 100) / 100;
         el.frameInput.value = Math.round(state.currentFrame) + 1;
         el.timeStatus.textContent = `第 ${Math.round(state.currentFrame) + 1} 帧 / ${state.duration + 1}，${state.fps} FPS，${(state.currentFrame / state.fps).toFixed(2)} 秒`;
-        drawStage();
-        renderTimeline();
+        renderPlaybackFrame();
         rafId = requestAnimationFrame(tick);
       }
 
@@ -7962,7 +10788,7 @@
       } else if (params.get("sample") === "walk") {
         loadSideWalkSample();
       } else {
-        renderAll();
+        loadInitialSpineUnitProject();
       }
     </script>
   </body>

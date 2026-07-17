@@ -4,6 +4,7 @@ import {
   getLayoutEditorTarget,
   layoutEditorTargets,
 } from "../../application/layout-editor/layout-editor-target-registry";
+import { battleUiEditorVariableDefinitions } from "../../domain/battle-ui-editor";
 import { uiLayoutComponentBaseSizeById } from "../../domain/ui-layout";
 import type {
   LayoutBackgroundAssetOption,
@@ -116,6 +117,68 @@ function renderComponentList(appState: AppState): string {
           .join("")}
       </div>
     </div>
+  `;
+}
+
+function renderBattleUiEditorSection(appState: AppState): string {
+  const sectionEntries = new Map<string, typeof battleUiEditorVariableDefinitions>();
+  for (const definition of battleUiEditorVariableDefinitions) {
+    const currentSection = sectionEntries.get(definition.section) ?? [];
+    currentSection.push(definition);
+    sectionEntries.set(definition.section, currentSection);
+  }
+
+  return `
+    <aside class="c-layout-editor__sidebar">
+      ${renderTargetList(appState)}
+      <div class="c-layout-editor__section">
+        <h3 class="c-layout-editor__section-title">战斗 UI 变量</h3>
+        <div class="c-layout-editor__stack">
+          <p>这些值会同步到战斗 iframe 里的 CSS 变量。</p>
+          <p>输入可以写 <code>px</code> / <code>%</code> / <code>vw</code> / <code>vh</code> / <code>rem</code> / <code>calc(...)</code>。</p>
+        </div>
+      </div>
+      <div class="c-layout-editor__section c-layout-editor__section-actions">
+        <button
+          type="button"
+          class="c-button c-button--ghost c-layout-editor__action-button"
+          data-action="copy-layout-params"
+        >
+          复制战斗 UI 参数
+        </button>
+      </div>
+      ${Array.from(sectionEntries.entries())
+        .map(
+          ([section, definitions]) => `
+            <div class="c-layout-editor__section">
+              <h3 class="c-layout-editor__section-title">${escapeHtml(section)}</h3>
+              <div class="c-layout-editor__stack">
+                ${definitions
+                  .map((definition) => {
+                    const value =
+                      appState.layoutEditor.battleUiValues[definition.name] ??
+                      definition.defaultValue;
+                    return `
+                      <label class="c-layout-editor__field">
+                        <span>${escapeHtml(definition.label)}</span>
+                        <input
+                          type="text"
+                          value="${escapeHtml(value)}"
+                          data-battle-ui-var="${escapeHtml(definition.name)}"
+                        />
+                        <small>${escapeHtml(definition.name)} | ${escapeHtml(
+                          definition.description
+                        )}</small>
+                      </label>
+                    `;
+                  })
+                  .join("")}
+              </div>
+            </div>
+          `
+        )
+        .join("")}
+    </aside>
   `;
 }
 
@@ -299,6 +362,10 @@ function renderElementList(
 }
 
 function renderInspector(appState: AppState): string {
+  if (appState.layoutEditor.selectedTargetId === "battle-ui-screen") {
+    return renderBattleUiEditorSection(appState);
+  }
+
   const layout = getLayoutForEditor(appState);
   const component =
     layout.components.find(

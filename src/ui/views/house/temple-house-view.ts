@@ -12,6 +12,7 @@ import {
   renderHouseDialogue,
   renderHouseCharacterCard,
   renderHouseLeaveButton,
+  renderHouseNpcTargetAttributes,
   renderHouseQuantityConfirmOverlay,
   renderHouseStandbyRoster,
 } from "./house-shared-view";
@@ -510,12 +511,16 @@ function renderMeetingRoster(viewModel: HouseModuleViewModel): string {
               : `<span class="c-house-character-card__title">${actor.title}</span>`;
 
           return `
-            <article class="c-keep-house-seat c-temple-house-seat${actor.isSelected ? " is-selected" : ""}">
+            <button
+              type="button"
+              class="c-keep-house-seat c-temple-house-seat${actor.isSelected ? " is-selected" : ""}"
+              ${renderHouseNpcTargetAttributes(viewModel, actor)}
+            >
               ${renderHouseCharacterCard(actor, {
                 className: "c-keep-house-seat__card",
                 secondaryText,
               })}
-            </article>
+            </button>
           `;
         })
         .join("")}

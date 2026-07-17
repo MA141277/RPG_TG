@@ -33,6 +33,14 @@
   align-items: center;
   gap: 0.85rem;
   min-width: 0;
+  padding: 0;
+  color: inherit;
+  font: inherit;
+  text-align: inherit;
+  background: transparent;
+  border: 0;
+  pointer-events: auto;
+  cursor: pointer;
 }
 
 .view-house-temple .c-keep-house-seat__card {

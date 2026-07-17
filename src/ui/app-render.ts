@@ -265,22 +265,62 @@ function renderNpcInteractionOverlay(input: AppRenderInput): string {
           targetCharacterId: session.targetCharacterId,
         })
       : [];
-  const targetName =
+  const targetHouseActor =
+    session?.context.type === "house" &&
+    stage.type === "house" &&
+    stage.moduleViewModel != null
+      ? stage.moduleViewModel.standbyRoster.find(
+          (actor) => actor.characterId === session.targetCharacterId
+        ) ?? null
+      : null;
+  const targetCharacterDefinition =
     session == null
       ? null
       : input.appState.characterDefinitions.find(
           (characterDefinition) =>
             characterDefinition.id === session.targetCharacterId
-        )?.name ?? null;
+        ) ?? null;
+  const targetName =
+    session == null
+      ? null
+      : targetHouseActor?.name ?? targetCharacterDefinition?.name ?? null;
+  const targetPortraitImageUrl =
+    targetHouseActor?.portraitImageUrl ??
+    (targetCharacterDefinition == null
+      ? null
+      : resolveCharacterPortraitImageUrl(targetCharacterDefinition));
+  const targetPortraitArtClassName = targetHouseActor?.portraitArtClassName ?? null;
+  const menu = selectNpcInteractionMenu({
+    session,
+    targetName,
+    specialActions,
+    giftDisabled: true,
+  });
 
-  return renderNpcInteractionMenu(
-    selectNpcInteractionMenu({
+  if (menu != null) {
+    window.console.info(
+      `[RPG_TG_DEBUG][npc-interaction-menu] ${JSON.stringify({
+        targetCharacterId: menu.targetCharacterId,
+        targetName: menu.targetName,
+        options: menu.options.map((option) => ({
+          id: option.id,
+          label: option.label,
+          kind: option.kind,
+          disabled: option.disabled === true,
+        })),
+      })}`
+    );
+  }
+
+  return (
+    renderNpcInteractionMenu(menu) +
+    renderNpcInteractionDialogue({
       session,
       targetName,
-      specialActions,
-      giftDisabled: true,
+      portraitImageUrl: targetPortraitImageUrl,
+      portraitArtClassName: targetPortraitArtClassName,
     })
-  ) + renderNpcInteractionDialogue({ session, targetName });
+  );
 }
 
 function applyHouseNpcInteractionBlockedState(

@@ -1,13 +1,14 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
+import { fileURLToPath } from 'node:url';
 import { PNG } from 'pngjs';
 
 const ROOT = process.cwd();
 const DEFAULT_DIR = path.join(ROOT, 'src', 'faxian', 'leg');
 const DEFAULT_REFERENCE = path.join(DEFAULT_DIR, '\u7d20\u6750.png');
 
-const PARTS = [
+const BASE_PARTS = [
   { id: 'head', label: 'head', file: 'head.png', targetWidth: 283, targetHeight: 265 },
   { id: 'torso', label: 'torso', file: 'torso.png', targetWidth: 345, targetHeight: 609 },
   { id: 'rightArm', label: 'rightArm', file: 'rightarm.png', targetWidth: 217, targetHeight: 488 },
@@ -36,6 +37,7 @@ function parseArgs(argv) {
     input: '',
     reference: DEFAULT_REFERENCE,
     outDir: DEFAULT_DIR,
+    unit: 'swordsman',
     write: false,
     backup: true,
   };
@@ -50,6 +52,8 @@ function parseArgs(argv) {
       args.reference = path.resolve(argv[++i] || '');
     } else if (value === '--out-dir') {
       args.outDir = path.resolve(argv[++i] || '');
+    } else if (value === '--unit') {
+      args.unit = String(argv[++i] || '').trim() || 'swordsman';
     } else if (!args.input) {
       args.input = path.resolve(value);
     } else {
@@ -58,10 +62,26 @@ function parseArgs(argv) {
   }
 
   if (!args.input) {
-    throw new Error('Usage: node tools/replace-faxian-spine-pieces.mjs <input.png> [--write] [--out-dir <dir>] [--reference <\\u7d20\\u6750.png>]');
+    throw new Error('Usage: node tools/replace-faxian-spine-pieces.mjs <input.png> [--write] [--out-dir <dir>] [--reference <\\u7d20\\u6750.png>] [--unit <swordsman|spearman>]');
   }
 
   return args;
+}
+
+export function partsForUnit(unitType = 'swordsman') {
+  const parts = BASE_PARTS.map((part) => ({ ...part }));
+  if (unitType === 'spearman') {
+    return parts.map((part) =>
+      part.id === 'sword'
+        ? {
+            ...part,
+            preserveComponentBounds: true,
+            preserveExtractedSize: true,
+          }
+        : part,
+    );
+  }
+  return parts;
 }
 
 function readPng(filePath) {
@@ -240,11 +260,11 @@ function detectComponents(png) {
   return components.sort((a, b) => b.pixels - a.pixels);
 }
 
-function matchReferenceSlots(referencePng, referenceComponents) {
+function matchReferenceSlots(referencePng, referenceComponents, unitType = 'swordsman') {
   const slots = [];
   const used = new Set();
 
-  for (const part of PARTS) {
+  for (const part of partsForUnit(unitType)) {
     let best = null;
     let bestScore = Number.POSITIVE_INFINITY;
 
@@ -282,7 +302,7 @@ function matchReferenceSlots(referencePng, referenceComponents) {
   return slots;
 }
 
-function matchInputComponents(inputPng, inputComponents, slots) {
+export function matchInputComponents(inputPng, inputComponents, slots) {
   const matches = [];
   const scaleX = inputPng.width / slots[0].referenceImageSize.width;
   const scaleY = inputPng.height / slots[0].referenceImageSize.height;
@@ -328,7 +348,7 @@ function matchInputComponents(inputPng, inputComponents, slots) {
     const tooFar =
       Math.abs(best.cx - expected.cx) > expected.width * 0.9 ||
       Math.abs(best.cy - expected.cy) > expected.height * 0.9;
-    const useExpectedSlot = tooWide || tooTall || tooFar;
+    const useExpectedSlot = !(slot.preserveComponentBounds === true) && (tooWide || tooTall || tooFar);
 
     matches.push({
       slot,
@@ -403,23 +423,29 @@ function backupFile(filePath) {
   fs.copyFileSync(filePath, `${filePath}.bak-${stamp}`);
 }
 
-function main() {
+export function normalizeMatchedPiece(piece, slot, padding = OPTIONS.padding) {
+  if (slot?.preserveExtractedSize) return piece;
+  return normalizePieceSize(piece, slot.targetWidth, slot.targetHeight, padding);
+}
+
+function run() {
   const args = parseArgs(process.argv.slice(2));
   const inputPng = readPng(args.input);
   const referencePng = readPng(args.reference);
   const referenceComponents = detectComponents(referencePng);
   const inputComponents = detectComponents(inputPng);
 
-  const slots = matchReferenceSlots(referencePng, referenceComponents);
+  const slots = matchReferenceSlots(referencePng, referenceComponents, args.unit);
   const matches = matchInputComponents(inputPng, inputComponents, slots);
 
   log(`Reference components: ${referenceComponents.length}`);
   log(`Input components: ${inputComponents.length}`);
+  log(`Unit: ${args.unit}`);
   log(args.write ? `Writing pieces to ${args.outDir}` : 'Dry run only. Add --write to replace files.');
 
   for (const { slot, component, mode, score } of matches) {
     const extracted = extractTransparentPiece(inputPng, component, OPTIONS.padding);
-    const output = normalizePieceSize(extracted, slot.targetWidth, slot.targetHeight, OPTIONS.padding);
+    const output = normalizeMatchedPiece(extracted, slot, OPTIONS.padding);
     const outputPath = path.join(args.outDir, slot.file);
     const message = `${slot.label.padEnd(8)} -> ${slot.file.padEnd(18)} mode=${mode.padEnd(9)} bbox=${component.minX},${component.minY},${component.width}x${component.height} extracted=${extracted.width}x${extracted.height} output=${output.width}x${output.height} score=${score.toFixed(3)}`;
 
@@ -432,9 +458,14 @@ function main() {
   }
 }
 
-try {
-  main();
-} catch (error) {
-  logError(error instanceof Error ? error.message : String(error));
-  process.exitCode = 1;
+const isEntrypoint =
+  process.argv[1] && path.resolve(process.argv[1]) === path.resolve(fileURLToPath(import.meta.url));
+
+if (isEntrypoint) {
+  try {
+    run();
+  } catch (error) {
+    logError(error instanceof Error ? error.message : String(error));
+    process.exitCode = 1;
+  }
 }

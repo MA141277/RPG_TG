@@ -7,6 +7,9 @@ import type {
   NpcInteractionSession,
   NpcPoolViewModel,
 } from "../../domain/npc-interaction";
+import { NPC_INTERACTION_DEFAULT_OPTIONS } from "../../domain/npc-interaction";
+
+export { NPC_INTERACTION_DEFAULT_OPTION_IDS } from "../../domain/npc-interaction";
 
 export type NpcInteractionBlockState = {
   overlayView: string | null;
@@ -15,12 +18,6 @@ export type NpcInteractionBlockState = {
   hasHouseOverlay: boolean;
   hasActiveDialogueAdvance: boolean;
 };
-
-export const NPC_INTERACTION_DEFAULT_OPTION_IDS = {
-  profile: "npc-interaction:profile",
-  talk: "npc-interaction:talk",
-  gift: "npc-interaction:gift",
-} as const;
 
 export function createNpcInteractionSession(
   context: NpcInteractionContext,
@@ -54,22 +51,12 @@ export function selectNpcInteractionMenu(input: {
     targetName: input.targetName,
     options: [
       ...(input.specialActions ?? []),
-      {
-        id: NPC_INTERACTION_DEFAULT_OPTION_IDS.profile,
-        label: "角色情报",
-        kind: "profile",
-      },
-      {
-        id: NPC_INTERACTION_DEFAULT_OPTION_IDS.talk,
-        label: "谈话",
-        kind: "talk",
-      },
-      {
-        id: NPC_INTERACTION_DEFAULT_OPTION_IDS.gift,
-        label: "送礼",
-        kind: "gift",
-        ...(input.giftDisabled !== false ? { disabled: true } : {}),
-      },
+      ...NPC_INTERACTION_DEFAULT_OPTIONS.map((option) => ({
+        ...option,
+        ...(option.kind === "gift" && input.giftDisabled !== false
+          ? { disabled: true }
+          : {}),
+      })),
     ],
   };
 }
@@ -87,7 +74,7 @@ export function adaptHouseRosterToNpcPool(input: {
       ...(actor.title == null ? {} : { title: actor.title }),
       ...(actor.avatarImageUrl == null ? {} : { avatarImageUrl: actor.avatarImageUrl }),
       ...(actor.isSelected == null ? {} : { isSelected: actor.isSelected }),
-      disabled: input.disabled || actor.disabled === true || actor.actionId == null,
+      disabled: input.disabled || actor.disabled === true,
     })),
   };
 }

@@ -8,6 +8,7 @@ import {
   setLayoutEditorBackgroundAssetQuery,
   setLayoutEditorBackgroundMode,
   setLayoutEditorBackgroundSlice,
+  setLayoutEditorBattleUiValue,
   setLayoutEditorComponentRectField,
   setLayoutEditorElementRectField,
   toggleLayoutEditor,
@@ -129,12 +130,19 @@ import {
 import { createBaseGameContentPack } from "./content/base-game-content-pack";
 import { getZhuYuanzhangCitySceneMappingByCityId } from "./content/city-scene-mappings";
 import {
+  createDefaultBattleUiScreenLayout,
   createDefaultCharacterDetailScreenLayout,
   createDefaultCharacterSelectScreenLayout,
   createDefaultGlobalHudLayout,
   createDefaultStartScreenLayout,
   globalHudBackgroundOptions,
 } from "./content/layout-editor-presets";
+import {
+  battleUiEditorVariableDefinitions,
+  createDefaultBattleUiEditorValues,
+  type BattleUiEditorValues,
+  type BattleUiEditorVariableName,
+} from "./domain/battle-ui-editor";
 import { builtInScenarioPacks } from "./content/scenario-packs/scenario-pack-catalog";
 import {
   createEmptyModRuntimeState,
@@ -474,6 +482,57 @@ const selectableCharacters = selectableCharacterIds.map((characterId) => {
 
 let currentPlayerCharacterId = defaultPlayerCharacterId;
 
+const BATTLE_UI_EDITOR_STORAGE_KEY = "rpg_tg_battle_ui_values_v1";
+
+function loadPersistedBattleUiEditorValues(): Partial<BattleUiEditorValues> {
+  try {
+    const raw = window.localStorage.getItem(BATTLE_UI_EDITOR_STORAGE_KEY);
+    if (raw == null) {
+      return {};
+    }
+    const parsed = JSON.parse(raw) as Record<string, unknown>;
+    const entries = battleUiEditorVariableDefinitions.flatMap((definition) => {
+      const value = parsed[definition.name];
+      return typeof value === "string" ? [[definition.name, value] as const] : [];
+    });
+    return Object.fromEntries(entries) as Partial<BattleUiEditorValues>;
+  } catch {
+    return {};
+  }
+}
+
+function persistBattleUiEditorValues(values: BattleUiEditorValues): void {
+  try {
+    window.localStorage.setItem(
+      BATTLE_UI_EDITOR_STORAGE_KEY,
+      JSON.stringify(values)
+    );
+  } catch {
+    // Best-effort editor persistence; live defaults still apply.
+  }
+}
+
+function applyPersistedBattleUiEditorValues(nextState: AppState): AppState {
+  const mergedValues: BattleUiEditorValues = {
+    ...nextState.layoutEditor.battleUiValues,
+  };
+  const persistedValues = loadPersistedBattleUiEditorValues();
+  for (const definition of battleUiEditorVariableDefinitions) {
+    const value = persistedValues[definition.name];
+    if (typeof value === "string") {
+      mergedValues[definition.name] = value;
+    }
+  }
+  persistBattleUiEditorValues(mergedValues);
+  return {
+    ...nextState,
+    layoutEditor: {
+      ...nextState.layoutEditor,
+      battleUiValues: mergedValues,
+    },
+  };
+}
+
 function createRuntimeCommitContext(input: {
   router: RuntimeRouter;
   followUp?: RuntimeFollowUpContext;
@@ -485,7 +544,9 @@ function createRuntimeCommitContext(input: {
   };
 }
 
-let appState: AppState = createPrototypeAppState(currentPlayerCharacterId);
+let appState: AppState = applyPersistedBattleUiEditorValues(
+  createPrototypeAppState(currentPlayerCharacterId)
+);
 let campaignMapDebugState: CampaignMapDebugState = {
   ...INITIAL_CAMPAIGN_MAP_DEBUG_STATE,
 };
@@ -698,6 +759,7 @@ function createPrototypeAppState(playerCharacterId: string): AppState {
       "start-screen": createDefaultStartScreenLayout(),
       "character-select-screen": createDefaultCharacterSelectScreenLayout(),
       "character-detail-screen": createDefaultCharacterDetailScreenLayout(),
+      "battle-ui-screen": createDefaultBattleUiScreenLayout(),
     },
     layoutEditor: {
       isOpen: false,
@@ -705,6 +767,7 @@ function createPrototypeAppState(playerCharacterId: string): AppState {
       selectedComponentId: "status-board",
       selectedElementId: null,
       backgroundAssetQuery: "",
+      battleUiValues: createDefaultBattleUiEditorValues(),
     },
   };
   nextAppState = {
@@ -2455,6 +2518,7 @@ function createScenarioPackAppState(
       "start-screen": createDefaultStartScreenLayout(),
       "character-select-screen": createDefaultCharacterSelectScreenLayout(),
       "character-detail-screen": createDefaultCharacterDetailScreenLayout(),
+      "battle-ui-screen": createDefaultBattleUiScreenLayout(),
     },
     layoutEditor: {
       isOpen: false,
@@ -2462,6 +2526,7 @@ function createScenarioPackAppState(
       selectedComponentId: "status-board",
       selectedElementId: null,
       backgroundAssetQuery: "",
+      battleUiValues: createDefaultBattleUiEditorValues(),
     },
   };
 
@@ -2868,6 +2933,44 @@ function getSelectedLayout(): UiLayout {
   return appState.uiLayouts[appState.layoutEditor.selectedTargetId];
 }
 
+function getBattleUiEditorPayload(): Record<string, string> {
+  return { ...appState.layoutEditor.battleUiValues };
+}
+
+function postBattleUiEditorConfigToFrame(
+  frame: HTMLIFrameElement | null | undefined
+): void {
+  if (frame?.contentWindow == null) {
+    return;
+  }
+
+  frame.contentWindow.postMessage(
+    {
+      type: "rpg-tg:battle-ui-config",
+      variables: getBattleUiEditorPayload(),
+    },
+    window.location.origin
+  );
+}
+
+function syncEmbeddedBattleUiEditor(): void {
+  const battleFrame =
+    appRoot.querySelector<HTMLIFrameElement>(".c-story-battle__demo-frame");
+  if (battleFrame == null) {
+    return;
+  }
+
+  battleFrame.addEventListener(
+    "load",
+    () => {
+      postBattleUiEditorConfigToFrame(battleFrame);
+    },
+    { once: true }
+  );
+
+  postBattleUiEditorConfigToFrame(battleFrame);
+}
+
 function renderActiveSurface(): void {
   if (uiOverlayElement == null) {
     renderApp();
@@ -2879,15 +2982,22 @@ function renderActiveSurface(): void {
   }
 
   mainUiFlow.render();
+  syncEmbeddedBattleUiEditor();
 }
 
 async function copyCurrentLayoutParams(): Promise<void> {
-  const payload = {
-    targetId: appState.layoutEditor.selectedTargetId,
-    selectedComponentId: appState.layoutEditor.selectedComponentId,
-    selectedElementId: appState.layoutEditor.selectedElementId,
-    layout: getSelectedLayout(),
-  };
+  const payload =
+    appState.layoutEditor.selectedTargetId === "battle-ui-screen"
+      ? {
+          targetId: appState.layoutEditor.selectedTargetId,
+          variables: getBattleUiEditorPayload(),
+        }
+      : {
+          targetId: appState.layoutEditor.selectedTargetId,
+          selectedComponentId: appState.layoutEditor.selectedComponentId,
+          selectedElementId: appState.layoutEditor.selectedElementId,
+          layout: getSelectedLayout(),
+        };
   await navigator.clipboard.writeText(`${JSON.stringify(payload, null, 2)}\n`);
 }
 
@@ -2899,6 +3009,21 @@ function handleLayoutEditorInput(targetElement: EventTarget | null): boolean {
     )
   ) {
     return false;
+  }
+
+  if (
+    targetElement instanceof HTMLInputElement &&
+    targetElement.dataset.battleUiVar != null
+  ) {
+    appState = setLayoutEditorBattleUiValue(
+      appState,
+      targetElement.dataset.battleUiVar as BattleUiEditorVariableName,
+      targetElement.value
+    );
+    persistBattleUiEditorValues(appState.layoutEditor.battleUiValues);
+    syncEmbeddedBattleUiEditor();
+    renderActiveSurface();
+    return true;
   }
 
   if (
@@ -3040,10 +3165,12 @@ function handleLayoutEditorClick(targetElement: EventTarget | null): boolean {
       targetId === "global-hud" ||
       targetId === "start-screen" ||
       targetId === "character-select-screen" ||
-      targetId === "character-detail-screen"
+      targetId === "character-detail-screen" ||
+      targetId === "battle-ui-screen"
     ) {
       appState = selectLayoutEditorTarget(appState, targetId as LayoutEditorTargetId);
       renderActiveSurface();
+      syncEmbeddedBattleUiEditor();
     }
     return true;
   }
@@ -4060,11 +4187,29 @@ appElement.addEventListener("click", (event) => {
       beggingMiniGameState: appState.beggingMiniGameState,
       activitySession: appState.gameState.runtime.activitySession,
     });
+    debugNpcInteraction("npc-target:hit", {
+      characterId,
+      rawContext,
+      blockState,
+      targetTag: targetElement.tagName,
+      targetClassName: targetElement.className,
+      buttonClassName: npcTargetButton.className,
+    });
     if (characterId != null && rawContext != null) {
       const context = parseNpcInteractionContext(rawContext);
       if (context != null && !isNpcInteractionBlocked(blockState)) {
         appState = openNpcInteraction(appState, context, characterId);
+        debugNpcInteraction("npc-target:opened", {
+          characterId,
+          context,
+        });
         renderApp();
+      } else {
+        debugNpcInteraction("npc-target:blocked", {
+          characterId,
+          context,
+          isBlocked: isNpcInteractionBlocked(blockState),
+        });
       }
     }
     return;
@@ -4594,6 +4739,10 @@ appElement.addEventListener("click", (event) => {
   }
 
   if (appState.autoAdvanceState != null) {
+    debugCampaignMapClick("blocked:auto-advance", {
+      targetTag: targetElement.tagName,
+      targetClassName: targetElement.className,
+    });
     return;
   }
 
@@ -4601,7 +4750,23 @@ appElement.addEventListener("click", (event) => {
   if (mapCell != null && appState.gameState.ui.currentView === "map") {
     const xValue = Number(mapCell.dataset.mapX);
     const yValue = Number(mapCell.dataset.mapY);
+    debugCampaignMapClick("map-cell:hit", {
+      targetTag: targetElement.tagName,
+      targetClassName: targetElement.className,
+      mapCellTag: mapCell.tagName,
+      mapCellClassName: mapCell.className,
+      x: xValue,
+      y: yValue,
+      cityId: mapCell.dataset.cityId || null,
+      markerId: mapCell.dataset.campaignMarkerId || null,
+      nodeId: mapCell.dataset.mapNodeId || null,
+      revealedAttribute: mapCell.dataset.mapNodeRevealed ?? null,
+    });
     if (!isCurrentCampaignCoordinateRevealed({ x: xValue, y: yValue })) {
+      debugCampaignMapClick("map-cell:blocked-unrevealed", {
+        x: xValue,
+        y: yValue,
+      });
       return;
     }
     const cityId = mapCell.dataset.cityId || null;
@@ -4619,6 +4784,13 @@ appElement.addEventListener("click", (event) => {
 
   const campaignMap = targetElement.closest<HTMLElement>("[data-campaign-map-viewport]");
   if (campaignMap != null && appState.gameState.ui.currentView === "map") {
+    debugCampaignMapClick("viewport:hit", {
+      targetTag: targetElement.tagName,
+      targetClassName: targetElement.className,
+      clientX: event.clientX,
+      clientY: event.clientY,
+      ...describeNearestCampaignMarker(campaignMap, event.clientX, event.clientY),
+    });
     const clickTarget = resolveCampaignTerrainUvFromClientPosition(
       campaignMap,
       event.clientX,
@@ -4626,6 +4798,10 @@ appElement.addEventListener("click", (event) => {
     );
     const coordinateSpace = getCurrentMapDefinition()?.coordinateSpace;
     if (clickTarget == null || coordinateSpace == null) {
+      debugCampaignMapClick("viewport:blocked-no-uv-or-coordinate-space", {
+        hasClickTarget: clickTarget != null,
+        hasCoordinateSpace: coordinateSpace != null,
+      });
       return;
     }
     const targetCoordinate = {
@@ -4633,14 +4809,26 @@ appElement.addEventListener("click", (event) => {
       y: (1 - clickTarget.v) * coordinateSpace.height,
     };
     if (!isCurrentCampaignCoordinateRevealed(targetCoordinate)) {
+      debugCampaignMapClick("viewport:blocked-unrevealed", {
+        clickTarget,
+        targetCoordinate,
+      });
       return;
     }
     if (
       isCampaignTerrainUvPassable(campaignMap, clickTarget.u, clickTarget.v) !== true
     ) {
+      debugCampaignMapClick("viewport:blocked-impassable", {
+        clickTarget,
+        targetCoordinate,
+      });
       return;
     }
 
+    debugCampaignMapClick("viewport:start-travel", {
+      clickTarget,
+      targetCoordinate,
+    });
     startCampaignTravel(
       targetCoordinate,
       null,
@@ -4796,16 +4984,125 @@ function cancelCampaignTravel(): void {
   renderApp();
 }
 
+function debugCampaignMapClick(
+  eventName: string,
+  details: Record<string, unknown> = {}
+): void {
+  const payload = {
+    event: eventName,
+    view: appState.gameState.ui.currentView,
+    autoAdvance: appState.autoAdvanceState != null,
+    modalType: appState.modalState?.type ?? null,
+    overlayView: appState.gameState.ui.overlayView,
+    ...details,
+  };
+  window.console.info(
+    `[RPG_TG_DEBUG][campaign-map-click] ${JSON.stringify(payload)}`
+  );
+}
+
+function debugNpcInteraction(
+  eventName: string,
+  details: Record<string, unknown> = {}
+): void {
+  const payload = {
+    event: eventName,
+    view: appState.gameState.ui.currentView,
+    modalType: appState.modalState?.type ?? null,
+    overlayView: appState.gameState.ui.overlayView,
+    activeNpcSession: appState.gameState.ui.npcInteractionSession,
+    ...details,
+  };
+  window.console.info(
+    `[RPG_TG_DEBUG][npc-interaction] ${JSON.stringify(payload)}`
+  );
+}
+
+function describeNearestCampaignMarker(
+  campaignMap: HTMLElement,
+  clientX: number,
+  clientY: number
+): Record<string, unknown> {
+  const markers = Array.from(
+    campaignMap.querySelectorAll<HTMLElement>(".c-campaign-marker")
+  );
+  const measuredMarkers = markers.map((marker) => {
+    const rect = marker.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    return {
+      marker,
+      markerId: marker.dataset.campaignMarkerId ?? null,
+      cityId: marker.dataset.cityId || null,
+      nodeId: marker.dataset.mapNodeId ?? null,
+      ready: marker.hasAttribute("data-terrain-projection-ready"),
+      hidden: marker.hidden,
+      disabled: marker.hasAttribute("disabled"),
+      pointerEvents: window.getComputedStyle(marker).pointerEvents,
+      rect: {
+        left: Math.round(rect.left),
+        top: Math.round(rect.top),
+        width: Math.round(rect.width),
+        height: Math.round(rect.height),
+      },
+      distance: Math.hypot(centerX - clientX, centerY - clientY),
+    };
+  });
+  measuredMarkers.sort((left, right) => left.distance - right.distance);
+  const nearest = measuredMarkers[0] ?? null;
+
+  return {
+    markerCount: markers.length,
+    markerReadyCount: markers.filter((marker) =>
+      marker.hasAttribute("data-terrain-projection-ready")
+    ).length,
+    markerVisibleCount: markers.filter((marker) => !marker.hidden).length,
+    nearestMarker:
+      nearest == null
+        ? null
+        : {
+            markerId: nearest.markerId,
+            cityId: nearest.cityId,
+            nodeId: nearest.nodeId,
+            ready: nearest.ready,
+            hidden: nearest.hidden,
+            disabled: nearest.disabled,
+            pointerEvents: nearest.pointerEvents,
+            rect: nearest.rect,
+            distance: Math.round(nearest.distance),
+          },
+  };
+}
+
 function startCampaignTravel(
   targetCoordinate: GridCoordinate,
   cityId: string | null,
   cityName: string | null
 ): void {
+  debugCampaignMapClick("startCampaignTravel:requested", {
+    targetCoordinate,
+    cityId,
+    cityName,
+    playerCoordinate: appState.playerCoordinate,
+  });
   const travelPath = createCampaignTravelPath(targetCoordinate);
   if (travelPath == null) {
+    debugCampaignMapClick("startCampaignTravel:no-path", {
+      targetCoordinate,
+      cityId,
+      cityName,
+      playerCoordinate: appState.playerCoordinate,
+    });
     return;
   }
   const nextCoordinate = getLastTravelPathCoordinate(travelPath);
+  debugCampaignMapClick("startCampaignTravel:path-created", {
+    targetCoordinate,
+    nextCoordinate,
+    cityId,
+    cityName,
+    pathLength: travelPath.length,
+  });
   const reachedCityDefinition =
     cityId == null ? null : activeContentContext.cityDefinitionById[cityId] ?? null;
   const pendingEnterCityState =
@@ -5455,6 +5752,7 @@ function renderAppFrame(
   syncCampaignTerrainWebGl(appRoot);
   syncCampaignCloudWebGl(appRoot);
   syncCityBeggingMiniGameOverlay(appRoot, appState.beggingMiniGameState);
+  syncEmbeddedBattleUiEditor();
 }
 
 function restoreCampaignMapScaleInputFocus(
