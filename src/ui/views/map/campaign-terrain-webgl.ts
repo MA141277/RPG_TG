@@ -2000,6 +2000,7 @@ function syncProjectedPoints(input: {
       continue;
     }
     const perspectiveScale = Math.min(Math.max(1 / Math.max(screenPoint.w, 0.45), 0.58), 1.42);
+    const cameraScale = Math.max(currentCamera.scale, 0.1) / CAMERA_REFERENCE_SCALE;
     const depthLayer = Math.round((1 - screenPoint.y) * 100);
     point.style.setProperty(
       "--terrain-point-offset-x",
@@ -2013,6 +2014,7 @@ function syncProjectedPoints(input: {
     point.style.setProperty("--terrain-point-top", "auto");
     point.style.setProperty("--terrain-point-bottom", `${bottom.toFixed(3)}%`);
     point.style.setProperty("--terrain-point-perspective-scale", perspectiveScale.toFixed(3));
+    point.style.setProperty("--terrain-point-camera-scale", cameraScale.toFixed(3));
     if (
       point.classList.contains("c-campaign-marker") ||
       point.classList.contains("c-campaign-player")

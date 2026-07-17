@@ -12,7 +12,7 @@ function renderRestDaysOverlay(
 ): string {
   return `
     <div class="c-grain-shop-overlay" data-house-overlay="rest-days">
-      <div class="c-grain-shop-modal c-grain-shop-modal--trade c-grain-shop-skin-panel" role="dialog" aria-modal="true">
+      <div class="c-grain-shop-modal c-grain-shop-modal--trade c-grain-shop-skin-panel c-house-trade-popup" role="dialog" aria-modal="true">
         <h3 class="c-grain-shop-modal__title c-grain-shop-nameplate">${overlay.title}</h3>
         <div class="c-grain-shop-modal__body">
           ${overlay.paragraphs.map((paragraph) => `<p>${paragraph}</p>`).join("")}

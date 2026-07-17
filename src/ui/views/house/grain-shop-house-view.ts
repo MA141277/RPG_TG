@@ -14,7 +14,7 @@ function renderTradeOverlay(
 ): string {
   return `
     <div class="c-grain-shop-overlay" data-house-overlay="trade">
-      <div class="c-grain-shop-modal c-grain-shop-modal--trade c-grain-shop-skin-panel" role="dialog" aria-modal="true">
+      <div class="c-grain-shop-modal c-grain-shop-modal--trade c-grain-shop-skin-panel c-house-trade-popup" role="dialog" aria-modal="true">
         <h3 class="c-grain-shop-modal__title c-grain-shop-nameplate">${overlay.title}</h3>
         <p class="c-grain-shop-trade__price">当前粮价：1 石 = ${overlay.grainPrice} 文</p>
         <label class="c-grain-shop-trade__label" for="${overlay.quantityFieldId}">数量（石）</label>

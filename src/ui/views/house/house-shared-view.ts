@@ -6,6 +6,10 @@ import type {
   HouseStandbyActorViewModel,
 } from "../../../domain/house-module";
 import { NPC_INTERACTION_DEFAULT_OPTIONS } from "../../../domain/npc-interaction";
+import {
+  renderDialogueTypewriterHint,
+  renderDialogueTypewriterLines,
+} from "../../dialogue-typewriter";
 
 type StandbyRosterOptions = {
   asideClassName?: string;
@@ -46,6 +50,20 @@ function escapeHtml(value: string): string {
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
+}
+
+function getAssessmentPopupClassName(
+  fieldCount: number,
+  extraClassName = ""
+): string {
+  const classNames = [
+    "c-assessment-popup",
+    "c-house-contribution-settlement",
+    ...(fieldCount >= 4 ? ["c-assessment-popup--wide"] : []),
+    ...extraClassName.trim().split(/\s+/u).filter(Boolean),
+  ];
+
+  return ` ${[...new Set(classNames)].join(" ")}`;
 }
 
 function normalizeCardLevel(
@@ -131,20 +149,15 @@ export function renderHouseAlertOverlay(
     overlay.title.includes("贡献") &&
     overlay.paragraphs.length > 0 &&
     overlay.paragraphs.every((paragraph) => paragraph.includes("贡献"));
-  const usesContributionSettlementSkin =
-    isContributionSettlement ||
-    overlay.title === "本轮差事已定" ||
-    overlay.title === "寺务已定";
   const isAssessmentTaskPopup =
     overlay.title === "本轮差事已定" || overlay.title === "寺务已定";
-  const overlayVariantAttribute = usesContributionSettlementSkin
-    ? ' data-house-alert-variant="contribution-settlement"'
-    : (options.overlayAttribute ?? "");
+  const overlayVariantAttribute =
+    options.overlayAttribute ?? ' data-house-alert-variant="assessment-popup"';
   const modalClassName = `c-grain-shop-modal c-grain-shop-skin-panel${
-    usesContributionSettlementSkin ? " c-house-contribution-settlement" : ""
+    getAssessmentPopupClassName(overlay.paragraphs.length, options.modalClassName)
   }${isContributionSettlement ? " c-house-contribution-popup" : ""}${
     isAssessmentTaskPopup ? " c-house-assessment-task-popup" : ""
-  }${options.modalClassName ?? ""}`;
+  }`;
 
   return `
     <div class="c-grain-shop-overlay" data-house-overlay="alert"${overlayVariantAttribute}>
@@ -170,9 +183,13 @@ export function renderHouseAlertOverlay(
 export function renderHouseConfirmOverlay(
   overlay: Extract<HouseOverlayViewModel, { type: "confirm" }>
 ): string {
+  const modalClassName = `c-grain-shop-modal c-grain-shop-skin-panel${getAssessmentPopupClassName(
+    overlay.paragraphs.length
+  )}`;
+
   return `
-    <div class="c-grain-shop-overlay" data-house-overlay="confirm">
-      <div class="c-grain-shop-modal c-grain-shop-skin-panel" role="dialog" aria-modal="true">
+    <div class="c-grain-shop-overlay" data-house-overlay="confirm" data-house-overlay-variant="assessment-popup">
+      <div class="${modalClassName}" role="dialog" aria-modal="true">
         <h3 class="c-grain-shop-modal__title c-grain-shop-nameplate">${overlay.title}</h3>
         <div class="c-grain-shop-modal__body">
           ${overlay.paragraphs.map((paragraph) => `<p>${paragraph}</p>`).join("")}
@@ -194,9 +211,16 @@ export function renderHouseQuantityConfirmOverlay(
   overlay: Extract<HouseOverlayViewModel, { type: "quantity-confirm" }>,
   options: OverlaySkinOptions = {}
 ): string {
+  const modalClassName = `c-grain-shop-modal c-grain-shop-skin-panel${getAssessmentPopupClassName(
+    overlay.paragraphs.length + 4,
+    options.modalClassName
+  )}`;
+  const overlayVariantAttribute =
+    options.overlayAttribute ?? ' data-house-overlay-variant="assessment-popup"';
+
   return `
-    <div class="c-grain-shop-overlay" data-house-overlay="quantity-confirm"${options.overlayAttribute ?? ""}>
-      <div class="c-grain-shop-modal c-grain-shop-skin-panel${options.modalClassName ?? ""}" role="dialog" aria-modal="true">
+    <div class="c-grain-shop-overlay" data-house-overlay="quantity-confirm"${overlayVariantAttribute}>
+      <div class="${modalClassName}" role="dialog" aria-modal="true">
         <h3 class="c-grain-shop-modal__title c-grain-shop-nameplate">${overlay.title}</h3>
         <div class="c-grain-shop-modal__body">
           ${overlay.paragraphs.map((paragraph) => `<p>${paragraph}</p>`).join("")}
@@ -369,6 +393,7 @@ export function renderHouseDialogue(
   const clickable = viewModel.dialogue.advanceActionId != null;
   const footerClassName = options.footerClassName ?? "c-grain-shop-dialogue";
   const ariaLabel = options.ariaLabel ?? "对话";
+  const typewriterLines = renderDialogueTypewriterLines(viewModel.dialogue.textLines);
 
   return `
     <footer class="${footerClassName}" aria-label="${ariaLabel}">
@@ -382,13 +407,14 @@ export function renderHouseDialogue(
             ? `<p class="c-grain-shop-dialogue__speaker">${viewModel.dialogue.speakerName}</p>`
             : ""
         }
-        ${viewModel.dialogue.textLines
-          .map((line) => `<p class="c-grain-shop-dialogue__line">${line}</p>`)
-          .join("")}
+        ${typewriterLines.markup}
         ${
           viewModel.dialogue.advanceHintText == null
             ? ""
-            : `<p class="c-grain-shop-dialogue__hint">${viewModel.dialogue.advanceHintText}</p>`
+            : renderDialogueTypewriterHint(
+                viewModel.dialogue.advanceHintText,
+                typewriterLines.totalDurationMs
+              )
         }
       </div>
       ${

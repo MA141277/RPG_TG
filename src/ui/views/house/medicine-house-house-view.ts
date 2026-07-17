@@ -229,7 +229,7 @@ function renderBuyOverlay(
 ): string {
   return `
     <div class="c-grain-shop-overlay" data-house-overlay="medicine-buy">
-      <div class="c-grain-shop-modal c-grain-shop-skin-panel" role="dialog" aria-modal="true">
+      <div class="c-grain-shop-modal c-grain-shop-modal--trade c-grain-shop-skin-panel c-house-trade-popup" role="dialog" aria-modal="true">
         <h3 class="c-grain-shop-modal__title c-grain-shop-nameplate">${overlay.title}</h3>
         <div class="c-medicine-house-buy__list">
           ${overlay.items

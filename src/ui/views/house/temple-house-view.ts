@@ -20,21 +20,42 @@ import {
 const templePopupOverlayAttribute =
   ' data-house-overlay-variant="temple-utility-popup"';
 const templePopupModalClassName =
-  " c-house-contribution-settlement c-house-temple-utility-popup";
+  " c-assessment-popup c-house-contribution-settlement c-house-temple-utility-popup";
 
 function renderConfirmOverlay(
   overlay: Extract<HouseOverlayViewModel, { type: "confirm" }>
 ): string {
+  const hasQuickCompleteAction = overlay.quickCompleteActionId != null;
   const isTempleTaskConfirm =
-    overlay.confirmLabel === "现在开始" && overlay.cancelLabel === "稍后再领";
+    hasQuickCompleteAction ||
+    (overlay.confirmLabel === "现在开始" && overlay.cancelLabel === "稍后再领");
   const overlayVariantAttribute = isTempleTaskConfirm
     ? ' data-house-overlay-variant="temple-task-confirm"'
     : templePopupOverlayAttribute;
   const modalClassName = `c-grain-shop-modal c-grain-shop-skin-panel${
     isTempleTaskConfirm
-      ? " c-house-contribution-settlement c-house-temple-task-confirm"
+      ? " c-assessment-popup c-house-contribution-settlement c-house-temple-task-confirm"
       : `${templePopupModalClassName} c-house-temple-confirm-popup`
   }`;
+  const quickCompleteAction =
+    overlay.quickCompleteActionId == null
+      ? ""
+      : `
+          <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--paper" data-house-action="${overlay.quickCompleteActionId}">
+            ${overlay.quickCompleteLabel ?? "快捷完成"}
+          </button>
+        `;
+  const actionsMarkup = `
+        <div class="c-grain-shop-modal__actions c-grain-shop-modal__actions--split">
+          <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--paper" data-house-action="${overlay.cancelActionId}">
+            ${overlay.cancelLabel}
+          </button>
+          ${quickCompleteAction}
+          <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--gold" data-house-action="${overlay.confirmActionId}">
+            ${overlay.confirmLabel}
+          </button>
+        </div>
+      `;
   const workDescription =
     overlay.workDescriptionLines == null
       ? ""
@@ -79,23 +100,7 @@ function renderConfirmOverlay(
         ${relatedAbilities}
         ${costs}
         ${bestScoreSummary}
-        <div class="c-grain-shop-modal__actions c-grain-shop-modal__actions--split">
-          <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--paper" data-house-action="${overlay.cancelActionId}">
-            ${overlay.cancelLabel}
-          </button>
-          ${
-            overlay.quickCompleteActionId == null
-              ? ""
-              : `
-                <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--paper" data-house-action="${overlay.quickCompleteActionId}">
-                  ${overlay.quickCompleteLabel ?? "快速完成"}
-                </button>
-              `
-          }
-          <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--gold" data-house-action="${overlay.confirmActionId}">
-            ${overlay.confirmLabel}
-          </button>
-        </div>
+        ${actionsMarkup}
       </div>
     </div>
   `;

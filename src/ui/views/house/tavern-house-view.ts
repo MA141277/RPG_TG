@@ -2,41 +2,19 @@
 import {
   renderHouseActionContainer,
   renderHouseAlertOverlay,
+  renderHouseConfirmOverlay,
   renderHouseDialogue,
   renderHouseLeaveButton,
   renderHouseStandbyRoster,
   renderHouseStatusCard,
 } from "./house-shared-view";
 
-function renderConfirmOverlay(
-  overlay: Extract<HouseOverlayViewModel, { type: "confirm" }>
-): string {
-  return `
-    <div class="c-grain-shop-overlay" data-house-overlay="confirm">
-      <div class="c-grain-shop-modal c-grain-shop-skin-panel" role="dialog" aria-modal="true">
-        <h3 class="c-grain-shop-modal__title c-grain-shop-nameplate">${overlay.title}</h3>
-        <div class="c-grain-shop-modal__body">
-          ${overlay.paragraphs.map((paragraph) => `<p>${paragraph}</p>`).join("")}
-        </div>
-        <div class="c-grain-shop-modal__actions c-grain-shop-modal__actions--split">
-          <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--paper" data-house-action="${overlay.cancelActionId}">
-            ${overlay.cancelLabel}
-          </button>
-          <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--gold" data-house-action="${overlay.confirmActionId}">
-            ${overlay.confirmLabel}
-          </button>
-        </div>
-      </div>
-    </div>
-  `;
-}
-
 function renderGambleChoiceOverlay(
   overlay: Extract<HouseOverlayViewModel, { type: "gamble-choice" }>
 ): string {
   return `
     <div class="c-grain-shop-overlay" data-house-overlay="gamble-choice">
-      <div class="c-grain-shop-modal c-grain-shop-modal--trade c-grain-shop-skin-panel" role="dialog" aria-modal="true">
+      <div class="c-grain-shop-modal c-grain-shop-modal--trade c-grain-shop-skin-panel c-house-trade-popup" role="dialog" aria-modal="true">
         <h3 class="c-grain-shop-modal__title c-grain-shop-nameplate">${overlay.title}</h3>
         <div class="c-grain-shop-modal__body">
           ${overlay.options
@@ -65,7 +43,7 @@ function renderGambleOverlay(
 ): string {
   return `
     <div class="c-grain-shop-overlay" data-house-overlay="gamble">
-      <div class="c-grain-shop-modal c-grain-shop-modal--trade c-grain-shop-skin-panel" role="dialog" aria-modal="true">
+      <div class="c-grain-shop-modal c-grain-shop-modal--trade c-grain-shop-skin-panel c-house-trade-popup" role="dialog" aria-modal="true">
         <h3 class="c-grain-shop-modal__title c-grain-shop-nameplate">${overlay.title}</h3>
         <p class="c-grain-shop-trade__price">选择本次赌本</p>
         ${overlay.variantLabel == null ? "" : `<p class="c-grain-shop-trade__price">${overlay.variantLabel} / 选择本次赌本</p>`}
@@ -433,7 +411,7 @@ function renderOverlay(overlay: HouseOverlayViewModel | null): string {
     case "alert":
       return renderHouseAlertOverlay(overlay);
     case "confirm":
-      return renderConfirmOverlay(overlay);
+      return renderHouseConfirmOverlay(overlay);
     case "gamble-choice":
       return renderGambleChoiceOverlay(overlay);
     case "gamble":

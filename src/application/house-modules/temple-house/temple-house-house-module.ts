@@ -829,7 +829,7 @@ function createTempleWorkConfirmDetails(
       ? {}
       : {
           quickCompleteActionId: `${QUICK_COMPLETE_TEMPLE_TASK_ACTION_PREFIX}${taskDefinition.id}`,
-          quickCompleteLabel: `以 ${quickCompleteScore} 分快速完成`,
+          quickCompleteLabel: "快捷完成",
         }),
   };
 }
