@@ -3,35 +3,8 @@
   "format": "campaign-vegetation-rules-v1",
   "id": "yuanmo-temperate-forest",
   "environment": "森林",
-  "profile": "temperate-pine-tree",
+  "profile": "temperate-willow-grass",
   "seed": "hex-cell-and-instance-v1",
-  "variants": [
-    {
-      "id": "pine-tree-1",
-      "meshUrl": "../vegetation/pine-tree-1.json",
-      "weight": 1
-    },
-    {
-      "id": "pine-tree-2",
-      "meshUrl": "../vegetation/pine-tree-2.json",
-      "weight": 1
-    },
-    {
-      "id": "pine-tree-3",
-      "meshUrl": "../vegetation/pine-tree-3.json",
-      "weight": 1
-    },
-    {
-      "id": "pine-tree-4",
-      "meshUrl": "../vegetation/pine-tree-4.json",
-      "weight": 1
-    },
-    {
-      "id": "pine-tree-5",
-      "meshUrl": "../vegetation/pine-tree-5.json",
-      "weight": 1
-    }
-  ],
   "density": {
     "far": {
       "min": 2,
@@ -78,5 +51,89 @@
     "radiusScaleY": 0.82,
     "lightOffsetScale": 0.34,
     "lift": 0.00042
-  }
+  },
+  "variants": [
+    {
+      "id": "willow-1",
+      "meshUrl": "../vegetation/willow-1.json",
+      "weight": 3,
+      "placement": {
+        "baseWorldScale": 0.00095
+      }
+    },
+    {
+      "id": "willow-2",
+      "meshUrl": "../vegetation/willow-2.json",
+      "weight": 3,
+      "placement": {
+        "baseWorldScale": 0.00095
+      }
+    },
+    {
+      "id": "willow-3",
+      "meshUrl": "../vegetation/willow-3.json",
+      "weight": 3,
+      "placement": {
+        "baseWorldScale": 0.00095
+      }
+    },
+    {
+      "id": "willow-4",
+      "meshUrl": "../vegetation/willow-4.json",
+      "weight": 3,
+      "placement": {
+        "baseWorldScale": 0.00095
+      }
+    },
+    {
+      "id": "willow-5",
+      "meshUrl": "../vegetation/willow-5.json",
+      "weight": 3,
+      "placement": {
+        "baseWorldScale": 0.00095
+      }
+    },
+    {
+      "id": "grass",
+      "meshUrl": "../vegetation/grass.json",
+      "weight": 1,
+      "placement": {
+        "scaleMin": 0.65,
+        "scaleMax": 1.55,
+        "baseWorldScale": 0.00042,
+        "lift": 0.00022
+      },
+      "shadow": {
+        "enabled": false
+      }
+    },
+    {
+      "id": "grass-2",
+      "meshUrl": "../vegetation/grass-2.json",
+      "weight": 1,
+      "placement": {
+        "scaleMin": 0.65,
+        "scaleMax": 1.55,
+        "baseWorldScale": 0.00042,
+        "lift": 0.00022
+      },
+      "shadow": {
+        "enabled": false
+      }
+    },
+    {
+      "id": "grass-short",
+      "meshUrl": "../vegetation/grass-short.json",
+      "weight": 1,
+      "placement": {
+        "scaleMin": 0.65,
+        "scaleMax": 1.55,
+        "baseWorldScale": 0.00042,
+        "lift": 0.00022
+      },
+      "shadow": {
+        "enabled": false
+      }
+    }
+  ]
 }

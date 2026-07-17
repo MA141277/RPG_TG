@@ -2,6 +2,20 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-17 Campaign Vegetation Willow Grass Mix
+
+### Added
+- `campaign-vegetation-rules-v1` 的 `variants` 支持可选 `placement` 覆盖和 `shadow.enabled`，允许同一森林规则混合树木与低矮地被；未声明覆盖的旧规则继续使用全局 `placement` / `shadow` 参数。
+- 新增 `willow-1..5.json`、`grass.json`、`grass-2.json`、`grass-short.json` 植被 mesh 资产，均由 `src/3dasset/obj` 中对应 OBJ/MTL 源素材转换得到。
+
+### Changed
+- 元末森林规则 profile 改为 `temperate-willow-grass`，variants 从 PineTree 替换为 Willow 为主、Grass 点缀；柳树保留树影，草丛使用独立缩放/lift 并关闭树影。
+- `tools/convert-campaign-vegetation-obj.mjs` 默认转换源改为 `Willow_1..5,Grass,Grass_2,Grass_Short`，重新生成规则时会保留既有密度、LOD、海拔裁剪、避让、shader 和全局树影调参，只替换 profile 与 variants。
+- 移除未再被运行时规则引用的 `pine-tree-1..5.json` 资产。
+
+### Impact
+- 该调整只改变森林格的视觉植被资产和纯表现规则，不改变 Hex `environment: "森林"`、通行、寻路、点击、探索、云洞、海拔裁剪或森林实例预算/均匀裁剪机制。
+
 ## 2026-07-16 Campaign Terrain Atlas Luma Removal
 
 ### Changed

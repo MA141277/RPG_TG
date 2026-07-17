@@ -106,6 +106,7 @@ type CampaignVegetationCellAllocation = {
 
 type CampaignVegetationInstance = {
   mesh: VegetationMeshAsset;
+  variant: CampaignVegetationRulesAsset["variants"][number];
   u: number;
   v: number;
   rotation: number;
@@ -3047,16 +3048,18 @@ function appendCampaignVegetationCellInstances(
     if (mesh == null) {
       continue;
     }
+    const placement = getCampaignVegetationVariantPlacement(rules, variant);
 
     instances.push({
       mesh,
+      variant,
       u,
       v,
       rotation: seededRandom01(cell.x, cell.y, attemptIndex * 31 + 73) * Math.PI * 2,
       scale:
-        rules.placement.scaleMin +
+        placement.scaleMin +
         seededRandom01(cell.x, cell.y, attemptIndex * 37 + 89) *
-          Math.max(rules.placement.scaleMax - rules.placement.scaleMin, 0),
+          Math.max(placement.scaleMax - placement.scaleMin, 0),
       colorJitter:
         0.88 + seededRandom01(cell.x, cell.y, attemptIndex * 41 + 101) * 0.22,
     });
@@ -3132,6 +3135,22 @@ function chooseCampaignVegetationVariant(
   return rules.variants[rules.variants.length - 1] ?? fallbackVariant;
 }
 
+function getCampaignVegetationVariantPlacement(
+  rules: CampaignVegetationRulesAsset,
+  variant: CampaignVegetationRulesAsset["variants"][number]
+): CampaignVegetationRulesAsset["placement"] {
+  return {
+    ...rules.placement,
+    ...variant.placement,
+  };
+}
+
+function isCampaignVegetationVariantShadowEnabled(
+  variant: CampaignVegetationRulesAsset["variants"][number]
+): boolean {
+  return variant.shadow?.enabled ?? true;
+}
+
 function buildCampaignVegetationMeshFromInstances(
   instances: CampaignVegetationInstance[],
   rules: CampaignVegetationRulesAsset,
@@ -3163,7 +3182,8 @@ function buildCampaignVegetationMeshFromInstances(
     const center = createTerrainWorldPoint(instance.u, instance.v, height);
     const rotationCos = Math.cos(instance.rotation);
     const rotationSin = Math.sin(instance.rotation);
-    const worldScale = rules.placement.baseWorldScale * instance.scale;
+    const placement = getCampaignVegetationVariantPlacement(rules, instance.variant);
+    const worldScale = placement.baseWorldScale * instance.scale;
     const sourceVertexCount = instance.mesh.positions.length / 3;
     for (let sourceVertexIndex = 0; sourceVertexIndex < sourceVertexCount; sourceVertexIndex += 1) {
       const sourcePositionOffset = sourceVertexIndex * 3;
@@ -3183,7 +3203,7 @@ function buildCampaignVegetationMeshFromInstances(
       ]);
       vertices[outputOffset] = center[0] + rotatedX;
       vertices[outputOffset + 1] = center[1] + rotatedY;
-      vertices[outputOffset + 2] = center[2] + localZ + rules.placement.lift;
+      vertices[outputOffset + 2] = center[2] + localZ + placement.lift;
       vertices[outputOffset + 3] = rotatedNormal[0];
       vertices[outputOffset + 4] = rotatedNormal[1];
       vertices[outputOffset + 5] = rotatedNormal[2];
@@ -3208,28 +3228,30 @@ function buildCampaignVegetationMeshFromInstances(
       indices[indexOffset + index] =
         vertexOffset + (instance.mesh.indices[index] ?? 0);
     }
-    appendCampaignVegetationShadowGeometry(
-      shadowVertices,
-      shadowIndices,
-      shadowVertexOffset,
-      shadowIndexOffset,
-      center,
-      instance,
-      rules,
-      matrix,
-      viewportAspectRatio
-    );
+    if (isCampaignVegetationVariantShadowEnabled(instance.variant)) {
+      appendCampaignVegetationShadowGeometry(
+        shadowVertices,
+        shadowIndices,
+        shadowVertexOffset,
+        shadowIndexOffset,
+        center,
+        instance,
+        rules,
+        matrix,
+        viewportAspectRatio
+      );
+      shadowVertexOffset += 4;
+      shadowIndexOffset += 6;
+    }
     vertexOffset += sourceVertexCount;
     indexOffset += instance.mesh.indices.length;
-    shadowVertexOffset += 4;
-    shadowIndexOffset += 6;
   }
 
   return {
     vertices,
     indices,
-    shadowVertices,
-    shadowIndices,
+    shadowVertices: shadowVertices.subarray(0, shadowVertexOffset * 5),
+    shadowIndices: shadowIndices.subarray(0, shadowIndexOffset),
     instanceCount: instances.length,
   };
 }
@@ -3245,7 +3267,8 @@ function appendCampaignVegetationShadowGeometry(
   matrix: Mat4,
   viewportAspectRatio: number
 ): void {
-  const worldScale = rules.placement.baseWorldScale * instance.scale;
+  const placement = getCampaignVegetationVariantPlacement(rules, instance.variant);
+  const worldScale = placement.baseWorldScale * instance.scale;
   const width = Math.max(
     instance.mesh.bounds.max[0] - instance.mesh.bounds.min[0],
     instance.mesh.bounds.max[1] - instance.mesh.bounds.min[1],
