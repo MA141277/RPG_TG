@@ -142,34 +142,6 @@ export const sampleEvent: EventDefinition = {
   chapterId: "chapter.rising_sun",
   name: "评定间请命事件",
   occurrence: "once",
-  trigger: {
-    timing: "house-enter",
-    scope: {
-      houseId: "house.gifu.castle",
-    },
-    priority: 100,
-  },
-  conditions: [
-    {
-      type: "chapter",
-      chapterId: "chapter.rising_sun",
-    },
-    {
-      type: "event-fired",
-      eventId: "event.gifu.council_001",
-      expected: false,
-    },
-    {
-      type: "character-available",
-      characterId: "char.oda_nobunaga",
-      expected: true,
-    },
-    {
-      type: "character-available",
-      characterId: "char.kinoshita_tokichiro",
-      expected: true,
-    },
-  ],
   participants: [
     {
       role: "primary",

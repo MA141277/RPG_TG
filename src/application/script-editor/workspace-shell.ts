@@ -314,12 +314,12 @@ function createToolbarActions(
       status: exportDiagnostics.length === 0 ? "ready" : "blocked",
       description:
         exportDiagnostics.length === 0
-          ? "保存当前草稿后，从项目目录重新读取并启动运行时预览。"
+          ? "使用当前编辑器内存数据生成运行包并启动运行时预览。"
           : exportDiagnostics[0]?.message ?? "存在尚未处理的运行预览阻塞。",
     },
     {
       id: "export",
-      label: "导入导出",
+      label: "导出运行时剧本包",
       status: exportDiagnostics.length === 0 ? "ready" : "blocked",
       description:
         exportDiagnostics.length === 0
@@ -1527,6 +1527,7 @@ function resolveAuthoringTargetFamily(
   family:
     | "dialogue"
     | "event"
+    | "person"
     | "city"
     | "building"
     | "minigame"
@@ -1534,6 +1535,8 @@ function resolveAuthoringTargetFamily(
     | "info"
 ): Exclude<ScriptEditorProjectFileKey, "storyPack"> | null {
   switch (family) {
+    case "person":
+      return "people";
     case "dialogue":
       return "dialogues";
     case "event":

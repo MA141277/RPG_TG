@@ -1,4 +1,5 @@
 import type { HouseDefinition } from "./house";
+import type { EventOccurrence, EventParticipant } from "./event";
 import type {
   LocationAccessConditionExpression,
   LocationAccessConditionSubject,
@@ -24,6 +25,7 @@ export const SCRIPT_EDITOR_PROJECT_FILE_KEYS = [
   "buildings",
   "cityEntries",
   "events",
+  "eventBindings",
   "scenes",
   "quests",
   "activities",
@@ -58,6 +60,7 @@ export const SCRIPT_EDITOR_PROJECT_CANONICAL_FILES: Record<
   buildings: "./buildings.json",
   cityEntries: "./city-entries.json",
   events: "./events.json",
+  eventBindings: "./event-bindings.json",
   scenes: "./scenes.json",
   quests: "./quests.json",
   activities: "./activities.json",
@@ -373,8 +376,6 @@ export type ScriptEditorEventConditionGroup = ScriptEditorConditionGroup;
 export type ScriptEditorEventDestinationFamily =
   | "dialogue"
   | "event"
-  | "city"
-  | "building"
   | "minigame";
 
 export type ScriptEditorEventDestination = {
@@ -449,6 +450,11 @@ export type ScriptEditorActivityRecord = ScriptEditorEntityRecord & {
 export type ScriptEditorEventRecord = ScriptEditorEntityRecord & {
   title: string;
   description?: string;
+  chapterId?: string;
+  occurrence?: EventOccurrence;
+  entrySceneId?: string;
+  participants?: EventParticipant[];
+  tags?: string[];
   triggerTiming?: ScriptEditorEventTriggerTiming;
   repeatable?: boolean;
   nextEventId?: string;
@@ -457,6 +463,25 @@ export type ScriptEditorEventRecord = ScriptEditorEntityRecord & {
   destination?: ScriptEditorEventDestination;
   relations?: ScriptEditorEventRelationRecord;
   previewSummary?: ScriptEditorEventPreviewSummary;
+};
+
+export type ScriptEditorEventBindingRecord = ScriptEditorEntityRecord & {
+  eventId: string;
+  owner: {
+    family: string;
+    id?: string;
+    [key: string]: unknown;
+  };
+  trigger: {
+    timing: string;
+    action: string;
+    payloadSchemaId?: string;
+    [key: string]: unknown;
+  };
+  conditions?: unknown;
+  priority?: number;
+  enabled?: boolean;
+  meta?: Record<string, unknown>;
 };
 
 export type ScriptEditorStoryPackRecord = {
@@ -506,6 +531,7 @@ export type ScriptEditorProjectDefinition = {
   buildings: ScriptEditorBuildingRecord[];
   cityEntries: ScriptEditorEntityRecord[];
   events: ScriptEditorEventRecord[];
+  eventBindings: ScriptEditorEventBindingRecord[];
   scenes: ScriptEditorEntityRecord[];
   quests: ScriptEditorEntityRecord[];
   activities: ScriptEditorActivityRecord[];

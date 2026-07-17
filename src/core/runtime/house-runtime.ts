@@ -6,6 +6,7 @@ import {
 import { HOUSE_ACTIVITY_SEGMENTS_PER_DAY } from "../../application/house/house-activity-costs";
 import { triggerStoryEvents } from "../../application/story/story-runtime";
 import type { ActivityDefinition } from "../../domain/activity";
+import type { EventBinding } from "../../domain/event";
 import type { EventDefinition } from "../../domain/event";
 import type { GameState } from "../../domain/game-state";
 import type { HouseDefinition } from "../../domain/house";
@@ -52,6 +53,7 @@ export type HouseRuntimeDependencies = {
   houseDefinitions: HouseDefinition[];
   playerCharacterId: string;
   eventDefinitionsById: Record<string, EventDefinition>;
+  eventBindingsById?: Record<string, EventBinding> | undefined;
   sceneDefinitionsById: Record<string, SceneDefinition>;
   activityDefinitionsById?: Record<string, ActivityDefinition> | undefined;
   textEntriesById?: Record<string, string> | undefined;
@@ -103,6 +105,9 @@ export function createHouseRuntimeBridge(
   function getIndoorScreenStoryContent(): IndoorScreenStoryFollowUpContent {
     return {
       eventDefinitionsById: dependencies.eventDefinitionsById,
+      ...(dependencies.eventBindingsById == null
+        ? {}
+        : { eventBindingsById: dependencies.eventBindingsById }),
       sceneDefinitionsById: dependencies.sceneDefinitionsById,
       ...(dependencies.activityDefinitionsById == null
         ? {}

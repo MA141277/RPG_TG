@@ -9,6 +9,7 @@ const CONTENT_PACK_FILE_KEYS = [
   "cityEntries",
   "characters",
   "events",
+  "eventBindings",
   "scenes",
   "tasks",
   "textEntries",

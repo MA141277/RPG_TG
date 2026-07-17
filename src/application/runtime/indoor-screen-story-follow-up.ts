@@ -2,11 +2,12 @@ import type { AppState } from "../app-shell";
 import type { ActivityDefinition } from "../../domain/activity";
 import type { SceneDefinition } from "../../domain/action";
 import type { CharacterDefinition } from "../../domain/character";
-import type { EventDefinition } from "../../domain/event";
+import type { EventBinding, EventDefinition } from "../../domain/event";
 import { runStoryTriggerRuntime } from "../../core/runtime/scene-runtime";
 
 export type IndoorScreenStoryFollowUpContent = {
   eventDefinitionsById: Record<string, EventDefinition>;
+  eventBindingsById?: Record<string, EventBinding>;
   sceneDefinitionsById: Record<string, SceneDefinition>;
   activityDefinitionsById?: Record<string, ActivityDefinition>;
   textEntriesById?: Record<string, string>;
@@ -30,6 +31,9 @@ export function applyIndoorScreenStoryFollowUp(input: {
     state: appState.gameState,
     characterDefinitions: appState.characterDefinitions,
     eventDefinitionsById: content.eventDefinitionsById,
+    ...(content.eventBindingsById == null
+      ? {}
+      : { eventBindingsById: content.eventBindingsById }),
     sceneDefinitionsById: content.sceneDefinitionsById,
     ...(content.activityDefinitionsById == null
       ? {}

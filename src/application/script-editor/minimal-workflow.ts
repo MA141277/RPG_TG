@@ -5,6 +5,7 @@ import {
   type ScriptEditorCityRecord,
   type ScriptEditorDialogueRecord,
   type ScriptEditorEntityRecord,
+  type ScriptEditorEventBindingRecord,
   type ScriptEditorEventRecord,
   type ScriptEditorMinigameRecord,
   type ScriptEditorPersonRecord,
@@ -22,6 +23,7 @@ import { createDefaultScriptEditorPersonRecord } from "./person-authoring";
 import { createDefaultScriptEditorMinigameRecord } from "./minigame-binding-authoring";
 import {
   createDefaultScriptEditorDialogueRecord,
+  createDefaultScriptEditorEventBindingRecord,
   createDefaultScriptEditorEventRecord,
   createDefaultScriptEditorStoryNodeRecord,
 } from "./story-dialogue-event-authoring";
@@ -37,6 +39,7 @@ export const SCRIPT_EDITOR_MINIMAL_WORKFLOW_FAMILIES = [
   "textEntries",
   "storyNodes",
   "events",
+  "eventBindings",
 ] as const;
 
 export type ScriptEditorMinimalWorkflowFamily =
@@ -135,6 +138,7 @@ export function createDefaultScriptEditorProjectDefinition(input?: {
         },
       },
     ],
+    eventBindings: [],
     scenes: [],
     quests: [],
     activities: [],
@@ -196,6 +200,7 @@ export function listScriptEditorWorkflowFamilyRecords(
   | ScriptEditorMinigameRecord[]
   | ScriptEditorStoryNodeRecord[]
   | ScriptEditorEventRecord[]
+  | ScriptEditorEventBindingRecord[]
   | ScriptEditorEntityRecord[]
   | ScriptEditorTextEntryRecord[] {
   switch (family) {
@@ -215,6 +220,8 @@ export function listScriptEditorWorkflowFamilyRecords(
       return project.storyNodes;
     case "events":
       return project.events;
+    case "eventBindings":
+      return project.eventBindings;
   }
 }
 
@@ -229,6 +236,7 @@ export function createScriptEditorWorkflowRecordDraft(
   | ScriptEditorMinigameRecord
   | ScriptEditorStoryNodeRecord
   | ScriptEditorEventRecord
+  | ScriptEditorEventBindingRecord
   | ScriptEditorEntityRecord
   | ScriptEditorTextEntryRecord {
   const suffix = index + 1;
@@ -253,6 +261,8 @@ export function createScriptEditorWorkflowRecordDraft(
       return createDefaultScriptEditorStoryNodeRecord(index) as ScriptEditorStoryNodeRecord;
     case "events":
       return createDefaultScriptEditorEventRecord(index) as ScriptEditorEventRecord;
+    case "eventBindings":
+      return createDefaultScriptEditorEventBindingRecord(index) as ScriptEditorEventBindingRecord;
   }
 }
 
@@ -267,6 +277,7 @@ export function upsertScriptEditorWorkflowRecord(
     | ScriptEditorMinigameRecord
     | ScriptEditorStoryNodeRecord
     | ScriptEditorEventRecord
+    | ScriptEditorEventBindingRecord
     | ScriptEditorEntityRecord
     | ScriptEditorTextEntryRecord
 ): ScriptEditorProjectDefinition {
@@ -306,6 +317,7 @@ function replaceProjectFamily(
     | ScriptEditorDialogueRecord[]
     | ScriptEditorStoryNodeRecord[]
     | ScriptEditorEventRecord[]
+    | ScriptEditorEventBindingRecord[]
     | ScriptEditorEntityRecord[]
     | ScriptEditorTextEntryRecord[]
 ): ScriptEditorProjectDefinition {
@@ -326,6 +338,11 @@ function replaceProjectFamily(
       return { ...project, storyNodes: nextRecords as ScriptEditorStoryNodeRecord[] };
     case "events":
       return { ...project, events: nextRecords as ScriptEditorEventRecord[] };
+    case "eventBindings":
+      return {
+        ...project,
+        eventBindings: nextRecords as ScriptEditorEventBindingRecord[],
+      };
   }
 }
 
