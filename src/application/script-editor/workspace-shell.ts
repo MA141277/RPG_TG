@@ -295,9 +295,9 @@ function createToolbarActions(
   return [
     {
       id: "save",
-      label: "保存项目",
+      label: "保存草稿",
       status: "ready",
-      description: "复用当前的 manifest 分文件持久化接缝保存作者态项目。",
+      description: "将当前编辑草稿写回项目包文件。",
     },
     {
       id: "validate",
@@ -319,11 +319,11 @@ function createToolbarActions(
     },
     {
       id: "export",
-      label: "导入导出",
+      label: "导出剧本",
       status: exportDiagnostics.length === 0 ? "ready" : "blocked",
       description:
         exportDiagnostics.length === 0
-          ? "当前项目满足受限 runtime-pack 导出前提，可以进入导出交付。"
+          ? "将当前草稿导出为可运行剧本包。"
           : exportDiagnostics[0]?.message ?? "存在尚未处理的导出阻塞。",
     },
   ];

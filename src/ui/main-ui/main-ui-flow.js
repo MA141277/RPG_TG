@@ -715,10 +715,17 @@ export class MainUiFlow {
             <div class="c-script-editor-editor-card__actions">
               <button
                 type="button"
-                class="c-main-ui-json-text-button c-main-ui-json-text-button--accent"
+                class="c-main-ui-json-text-button"
                 data-script-editor-action="save"
               >
-                导出
+                保存草稿
+              </button>
+              <button
+                type="button"
+                class="c-main-ui-json-text-button c-main-ui-json-text-button--accent"
+                data-script-editor-action="export"
+              >
+                导出剧本
               </button>
             </div>
           </header>

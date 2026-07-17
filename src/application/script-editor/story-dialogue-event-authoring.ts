@@ -157,6 +157,10 @@ export function normalizeScriptEditorDialogueRecord(
 export function normalizeScriptEditorEventRecord(
   record: Partial<ScriptEditorEventRecord> & { id: string }
 ): ScriptEditorEventRecord {
+  const conditionGroups = (record.conditionGroups ?? [])
+    .map(normalizeConditionGroup)
+    .filter((group) => group.conditions.length > 0);
+
   return {
     ...record,
     title: normalizeString(record.title, record.id),
@@ -164,7 +168,7 @@ export function normalizeScriptEditorEventRecord(
     triggerTiming: normalizeEventTriggerTiming(record.triggerTiming),
     repeatable: record.repeatable === true,
     nextEventId: normalizeOptionalString(record.nextEventId),
-    conditionGroups: (record.conditionGroups ?? []).map(normalizeConditionGroup),
+    conditionGroups,
     destination: normalizeEventDestination(record.destination),
     relations: {
       storyNodeId: normalizeOptionalString(record.relations?.storyNodeId),
@@ -474,16 +478,31 @@ export function removeScriptEditorEventConditionItem(
   groupIndex: number,
   itemIndex: number
 ): ScriptEditorEventRecord {
+  const conditionGroups = (record.conditionGroups ?? []).flatMap(
+    (group, currentGroupIndex) => {
+      if (currentGroupIndex !== groupIndex) {
+        return [group];
+      }
+
+      const conditions = group.conditions.filter(
+        (_, currentItemIndex) => currentItemIndex !== itemIndex
+      );
+      if (conditions.length === 0) {
+        return [];
+      }
+
+      return [
+        {
+          ...group,
+          conditions,
+        },
+      ];
+    }
+  );
+
   return {
     ...record,
-    conditionGroups: (record.conditionGroups ?? []).map((group, currentGroupIndex) =>
-      currentGroupIndex === groupIndex
-        ? {
-            ...group,
-            conditions: group.conditions.filter((_, currentItemIndex) => currentItemIndex !== itemIndex),
-          }
-        : group
-    ),
+    conditionGroups,
   };
 }
 

@@ -322,6 +322,60 @@ The agent must pause instead of continuing when:
 
 Passing tests do not override these stop conditions.
 
+### 11. Add A Runtime And Browser Acceptance Gate
+
+When a queue changes user-facing UI, import/export behavior, runtime trigger flow, or editor-authored runtime data, automated source checks are not sufficient. The queue or version closeout must include an acceptance gate that proves the behavior works through the real interaction path.
+
+This gate is required before version closeout and before a queue may claim UI or runtime completion.
+
+Required checks:
+
+1. UI interaction acceptance:
+   - If a UI tab, button, selector, modal, panel, or form is added, tests must prove it is reachable through the real interaction path.
+   - Source-string tests may be used as guards, but they do not replace interaction tests.
+   - A tab is not complete merely because its button exists; the selector handler and rendered panel must both work.
+
+2. Browser flow acceptance:
+   - For browser-hosted UI, run a browser-controlled flow against the local dev server when practical.
+   - Prefer Codex in-app browser / Browser Use for local web-app acceptance so the session controls the page directly and can observe visible state changes.
+   - The flow must click through the affected surface and verify that the visible UI state changes after interaction.
+   - For editor features, the flow should cover create, edit, save, and export when those behaviors are in scope.
+   - If Browser Use is unavailable or impractical, record why and name the automated evidence that replaces it.
+
+3. Runtime effectiveness acceptance:
+   - If authored data is meant to affect runtime behavior, tests must prove the exported or loaded data is consumed by the runtime.
+   - Saving or exporting configuration is not enough.
+   - The test must verify an observable runtime result, such as selected candidate, scene handoff, event history, state mutation, or visible gameplay transition.
+
+4. Selector and form acceptance:
+   - If the design requires dropdowns, search selectors, cascading fields, or registry-backed choices, tests must verify the control type and option source.
+   - A text input is not acceptable when the design requires a selector.
+   - UI labels must be verified when localization or author-facing terminology is part of the requirement.
+
+5. Fail-closed acceptance:
+   - If unsupported paths fail closed, tests must verify both the supported runnable path and the unsupported rejected path.
+   - Fail-closed coverage does not prove runtime support for the rejected capability.
+
+At each affected closeout or version closeout review, the agent must include a short acceptance block:
+
+```text
+Runtime/browser acceptance gate:
+- UI interaction path:
+- Browser flow:
+- Runtime observable result:
+- Selector/form checks:
+- Fail-closed checks:
+- Gaps or blockers:
+```
+
+The agent must pause instead of continuing when:
+
+- A UI element exists in source but cannot be clicked or reached in the browser.
+- A tab button exists but its panel does not render after selection.
+- A selector required by design is implemented as a free text input.
+- Authored or exported runtime data is not proven to affect runtime behavior.
+- Browser flow or runtime acceptance is skipped without recording why and what automated evidence replaces it.
+
 ## Template Changes
 
 ### Version Plan Template
@@ -386,6 +440,8 @@ Search for risk terms in closeout prose:
 - `advanced`
 
 If present, require matching matrix or ledger entries.
+
+For queues that claim UI completion or runtime completion, lint or closeout review should require a `Runtime/browser acceptance gate` block or an explicit recorded waiver.
 
 ## Rollout Plan
 

@@ -9223,8 +9223,9 @@ test("script editor story/dialogue/event authoring helpers normalize bounded nar
   assert.equal(normalizedDialogue.followUps[0].targetId, "building.teahouse");
   assert.equal(normalizedEvent.triggerTiming, "story-progress");
   assert.equal(normalizedEvent.repeatable, true);
-  assert.equal(normalizedEvent.conditionGroups[1].operator, "any");
-  assert.deepEqual(normalizedEvent.conditionGroups[1].conditions[0], {
+  assert.equal(normalizedEvent.conditionGroups.length, 1);
+  assert.equal(normalizedEvent.conditionGroups[0].operator, "any");
+  assert.deepEqual(normalizedEvent.conditionGroups[0].conditions[0], {
     type: "variable",
     key: "story.progress",
     operator: ">=",
@@ -9237,10 +9238,14 @@ test("script editor story/dialogue/event authoring helpers normalize bounded nar
   assert.equal(normalizedEvent.previewSummary.previewNotes, "Preview the event branch.");
 });
 
-test("script editor event condition normalization drops legacy free-text condition items", () => {
+test("script editor event condition normalization removes empty condition groups", () => {
   const {
+    removeScriptEditorEventConditionItem,
     normalizeScriptEditorEventRecord,
   } = require("../.test-dist/application/script-editor/story-dialogue-event-authoring.js");
+  const {
+    exportScriptEditorProjectToScenarioPackFiles,
+  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
 
   const normalizedEvent = normalizeScriptEditorEventRecord({
     id: "event.legacy-condition",
@@ -9261,12 +9266,233 @@ test("script editor event condition normalization drops legacy free-text conditi
     ],
   });
 
-  assert.equal(normalizedEvent.conditionGroups[0].operator, "all");
-  assert.deepEqual(normalizedEvent.conditionGroups[0].conditions, []);
-  assert.equal(
-    Object.hasOwn(normalizedEvent.conditionGroups[0], "items"),
-    false
+  assert.deepEqual(normalizedEvent.conditionGroups, []);
+
+  let removableEvent = {
+    id: "event.removable-condition",
+    title: "Removable Condition",
+    triggerTiming: "city-enter",
+    destination: { family: "dialogue", targetId: "dialogue.opening" },
+    conditionGroups: [
+      {
+        id: "condition-group.active",
+        operator: "all",
+        conditions: [
+          {
+            type: "flag",
+            key: "story.opening.enabled",
+            expected: true,
+          },
+        ],
+      },
+    ],
+  };
+
+  removableEvent = removeScriptEditorEventConditionItem(removableEvent, 0, 0);
+  assert.deepEqual(removableEvent.conditionGroups, []);
+
+  const project = createExportableScriptEditorProjectDefinition();
+  project.textEntries = [{ id: "text.opening", text: "Opening line." }];
+  project.dialogues = [{ id: "dialogue.opening", title: "Opening" }];
+  project.events = [removableEvent];
+
+  const files = exportScriptEditorProjectToScenarioPackFiles(project);
+  const exportedEvents = JSON.parse(files["events.json"]);
+  assert.deepEqual(exportedEvents[0].conditions, []);
+});
+
+test("script editor event deletion removes all cross-record event references", () => {
+  const {
+    createDefaultScriptEditorProjectDefinition,
+    removeScriptEditorWorkflowRecord,
+  } = require("../.test-dist/application/script-editor/minimal-workflow.js");
+
+  const project = createDefaultScriptEditorProjectDefinition({
+    idBase: "event-delete-cascade",
+    title: "Event Delete Cascade",
+  });
+  const deletedEventId = "event.delete.me";
+  const keepEventId = "event.keep.me";
+
+  project.storyPack.entryEventId = deletedEventId;
+  project.storyPack.runtimeEvents = [
+    {
+      id: deletedEventId,
+      chapterId: "chapter.event-delete-cascade",
+      name: "Delete Me Runtime",
+      occurrence: "once",
+      trigger: { timing: "manual" },
+      conditions: [
+        {
+          type: "event-fired",
+          eventId: deletedEventId,
+          expected: true,
+        },
+      ],
+      entrySceneId: "scene.delete",
+    },
+    {
+      id: keepEventId,
+      chapterId: "chapter.event-delete-cascade",
+      name: "Keep Me Runtime",
+      occurrence: "repeatable",
+      trigger: { timing: "manual" },
+      conditions: [
+        {
+          type: "group",
+          operator: "all",
+          conditions: [
+            {
+              type: "event-fired-count",
+              eventId: deletedEventId,
+              operator: ">=",
+              value: 1,
+            },
+          ],
+        },
+      ],
+      entrySceneId: "scene.keep",
+      nextEventId: deletedEventId,
+    },
+  ];
+
+  project.people[0].eventIds = [deletedEventId, keepEventId];
+  project.cities[0].menuEntries = [
+    {
+      id: "city.start.menu.event",
+      label: "City Event",
+      menuFamily: "overview",
+      targetFamily: "event",
+      targetId: deletedEventId,
+      isVisible: true,
+      isEnabled: true,
+      disabledHint: "",
+    },
+    {
+      id: "city.start.menu.dialogue",
+      label: "City Dialogue",
+      menuFamily: "overview",
+      targetFamily: "dialogue",
+      targetId: "dialogue.opening",
+      isVisible: true,
+      isEnabled: true,
+      disabledHint: "",
+    },
+  ];
+  project.buildings[0].menuEntries = [
+    {
+      id: "building.home.menu.event",
+      label: "Building Event",
+      menuFamily: "dialogue",
+      targetFamily: "event",
+      targetId: deletedEventId,
+      isVisible: true,
+      isEnabled: true,
+      disabledHint: "",
+    },
+  ];
+  project.buildings[0].entryBinding = {
+    defaultPersonId: "person.hero",
+    onEnterEventId: deletedEventId,
+    onLeaveEventId: keepEventId,
+    returnTarget: "city",
+  };
+  project.buildings[0].eventBindings = {
+    onEnterEventId: deletedEventId,
+    onLeaveEventId: deletedEventId,
+  };
+  project.events = [
+    {
+      ...project.events[0],
+      id: keepEventId,
+      nextEventId: deletedEventId,
+      destination: { family: "event", targetId: deletedEventId },
+      conditionGroups: [
+        {
+          id: "condition-group.delete",
+          operator: "all",
+          conditions: [
+            {
+              type: "event-fired",
+              eventId: deletedEventId,
+              expected: true,
+            },
+          ],
+        },
+        {
+          id: "condition-group.keep",
+          operator: "any",
+          conditions: [
+            {
+              type: "event-fired",
+              eventId: deletedEventId,
+              expected: true,
+            },
+            {
+              type: "flag",
+              key: "story.keep",
+              expected: true,
+            },
+          ],
+        },
+      ],
+    },
+    {
+      ...project.events[0],
+      id: deletedEventId,
+      title: "Delete Me",
+      destination: { family: "dialogue", targetId: "dialogue.opening" },
+      nextEventId: "",
+      conditionGroups: [],
+    },
+  ];
+
+  const nextProject = removeScriptEditorWorkflowRecord(
+    project,
+    "events",
+    deletedEventId
   );
+
+  assert.equal(nextProject.events.some((event) => event.id === deletedEventId), false);
+  assert.equal(nextProject.storyPack.entryEventId, undefined);
+  assert.deepEqual(nextProject.storyPack.runtimeEvents, [
+    {
+      id: keepEventId,
+      chapterId: "chapter.event-delete-cascade",
+      name: "Keep Me Runtime",
+      occurrence: "repeatable",
+      trigger: { timing: "manual" },
+      conditions: [],
+      entrySceneId: "scene.keep",
+    },
+  ]);
+  assert.deepEqual(nextProject.people[0].eventIds, [keepEventId]);
+  assert.deepEqual(nextProject.cities[0].menuEntries, [
+    {
+      id: "city.start.menu.dialogue",
+      label: "City Dialogue",
+      menuFamily: "overview",
+      targetFamily: "dialogue",
+      targetId: "dialogue.opening",
+      isVisible: true,
+      isEnabled: true,
+      disabledHint: "",
+    },
+  ]);
+  assert.deepEqual(nextProject.buildings[0].menuEntries, []);
+  assert.equal(nextProject.buildings[0].entryBinding.onEnterEventId, "");
+  assert.equal(nextProject.buildings[0].entryBinding.onLeaveEventId, keepEventId);
+  assert.equal(nextProject.buildings[0].eventBindings?.onEnterEventId, "");
+  assert.equal(nextProject.buildings[0].eventBindings?.onLeaveEventId, "");
+
+  const {
+    exportScriptEditorProjectToScenarioPackFiles,
+  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  const exportedEvents = JSON.parse(
+    exportScriptEditorProjectToScenarioPackFiles(nextProject)["events.json"]
+  );
+  assert.equal(exportedEvents.some((event) => event.id === deletedEventId), false);
+  assert.equal(exportedEvents.some((event) => event.nextEventId === deletedEventId), false);
 });
 
 test(
