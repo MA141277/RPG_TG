@@ -51,6 +51,170 @@ export const SCRIPT_EDITOR_EVENT_CONDITION_GROUP_MODES: readonly ScriptEditorEve
   "not",
 ] as const;
 
+export type ScriptEditorEventBindingConditionType =
+  | "flag"
+  | "variable"
+  | "expression"
+  | "custom"
+  | "binding-context";
+
+export type ScriptEditorEventBindingConditionSourceFamily =
+  | "flag"
+  | "variable"
+  | "person"
+  | "city"
+  | "building"
+  | "payload"
+  | "binding-context"
+  | "resolver"
+  | "custom";
+
+export type ScriptEditorEventBindingConditionValueType =
+  | "boolean"
+  | "number"
+  | "string"
+  | "enum"
+  | "json";
+
+export type ScriptEditorEventBindingConditionOperator =
+  | ScriptEditorConditionComparisonOperator
+  | "contains";
+
+export type ScriptEditorEventBindingConditionFieldOption = {
+  sourceFamily: ScriptEditorEventBindingConditionSourceFamily;
+  path: string;
+  label: string;
+  valueType: ScriptEditorEventBindingConditionValueType;
+  resolverId?: string;
+  enumOptions?: readonly {
+    value: string;
+    label: string;
+  }[];
+};
+
+const SCRIPT_EDITOR_EVENT_BINDING_CONDITION_FIELD_OPTIONS: readonly ScriptEditorEventBindingConditionFieldOption[] = [
+  {
+    sourceFamily: "flag",
+    path: "story.ready",
+    label: "剧情就绪标记",
+    valueType: "boolean",
+  },
+  {
+    sourceFamily: "flag",
+    path: "event.completed",
+    label: "事件完成标记",
+    valueType: "boolean",
+  },
+  {
+    sourceFamily: "variable",
+    path: "story.progress",
+    label: "剧情进度",
+    valueType: "number",
+  },
+  {
+    sourceFamily: "variable",
+    path: "player.reputation",
+    label: "主角声望",
+    valueType: "number",
+  },
+  {
+    sourceFamily: "person",
+    path: "person.base.force",
+    label: "人物武力",
+    valueType: "number",
+  },
+  {
+    sourceFamily: "person",
+    path: "person.base.intelligence",
+    label: "人物智谋",
+    valueType: "number",
+  },
+  {
+    sourceFamily: "person",
+    path: "person.base.politics",
+    label: "人物政务",
+    valueType: "number",
+  },
+  {
+    sourceFamily: "person",
+    path: "person.custom.*",
+    label: "人物自定义属性",
+    valueType: "string",
+  },
+  {
+    sourceFamily: "city",
+    path: "city.base.prosperity",
+    label: "城市繁荣",
+    valueType: "number",
+  },
+  {
+    sourceFamily: "city",
+    path: "city.custom.*",
+    label: "城市自定义属性",
+    valueType: "string",
+  },
+  {
+    sourceFamily: "building",
+    path: "building.base.cityId",
+    label: "建筑所属城市",
+    valueType: "string",
+  },
+  {
+    sourceFamily: "building",
+    path: "building.custom.*",
+    label: "建筑自定义属性",
+    valueType: "string",
+  },
+  {
+    sourceFamily: "payload",
+    path: "payload.*",
+    label: "触发载荷字段",
+    valueType: "string",
+  },
+  {
+    sourceFamily: "binding-context",
+    path: "trigger.action",
+    label: "触发动作",
+    valueType: "enum",
+    resolverId: "script-editor.trigger-action",
+    enumOptions: [
+      { value: "story-progress", label: "剧情推进" },
+      { value: "city-enter", label: "进入城市" },
+      { value: "building-enter", label: "进入建筑" },
+      { value: "indoor-screen-shown", label: "进入室内界面" },
+      { value: "dialogue-finished", label: "对话结束" },
+      { value: "menu-select", label: "菜单选择" },
+      { value: "minigame-settled", label: "小游戏结算" },
+      { value: "custom", label: "自定义触发" },
+    ],
+  },
+  {
+    sourceFamily: "binding-context",
+    path: "owner.family",
+    label: "绑定对象类型",
+    valueType: "enum",
+    resolverId: "script-editor.owner-family",
+    enumOptions: [
+      { value: "person", label: "人物" },
+      { value: "city", label: "城市" },
+      { value: "building", label: "建筑" },
+      { value: "dialogue", label: "对话" },
+      { value: "minigame", label: "小游戏" },
+      { value: "story", label: "剧情节点" },
+    ],
+  },
+  {
+    sourceFamily: "binding-context",
+    path: "owner.id",
+    label: "绑定对象 ID",
+    valueType: "string",
+  },
+] as const;
+
+export function listScriptEditorEventBindingConditionFieldOptions(): readonly ScriptEditorEventBindingConditionFieldOption[] {
+  return SCRIPT_EDITOR_EVENT_BINDING_CONDITION_FIELD_OPTIONS;
+}
+
 export const SCRIPT_EDITOR_CONDITION_NODE_TYPES = [
   "flag",
   "variable",
@@ -69,8 +233,6 @@ export const SCRIPT_EDITOR_CONDITION_NODE_TYPES = [
 export const SCRIPT_EDITOR_EVENT_DESTINATION_FAMILIES: readonly ScriptEditorEventDestinationFamily[] = [
   "dialogue",
   "event",
-  "city",
-  "building",
   "minigame",
 ] as const;
 
@@ -206,6 +368,7 @@ export function normalizeScriptEditorEventBindingRecord(
   const payloadSchemaId = normalizeOptionalTrimmedString(
     record.trigger?.payloadSchemaId
   );
+  const conditions = normalizeEventBindingConditions(record.conditions);
   return {
     ...record,
     id: normalizeString(record.id, "event-binding.unknown"),
@@ -226,6 +389,127 @@ export function normalizeScriptEditorEventBindingRecord(
         ? record.priority
         : 0,
     enabled: record.enabled !== false,
+    ...(conditions == null ? {} : { conditions }),
+  };
+}
+
+export function updateScriptEditorEventBindingField(
+  record: ScriptEditorEventBindingRecord,
+  field: "eventId" | "priority" | "enabled",
+  value: string | boolean
+): ScriptEditorEventBindingRecord {
+  if (field === "priority") {
+    const priority = typeof value === "number" ? value : Number(String(value).trim());
+    return {
+      ...record,
+      priority: Number.isFinite(priority) ? priority : 0,
+    };
+  }
+  if (field === "enabled") {
+    return { ...record, enabled: value === true };
+  }
+  return { ...record, eventId: String(value).trim() };
+}
+
+export function updateScriptEditorEventBindingOwnerField(
+  record: ScriptEditorEventBindingRecord,
+  field: "family" | "id",
+  value: string
+): ScriptEditorEventBindingRecord {
+  return {
+    ...record,
+    owner: {
+      ...record.owner,
+      [field]: value.trim(),
+    },
+  };
+}
+
+export function updateScriptEditorEventBindingTriggerField(
+  record: ScriptEditorEventBindingRecord,
+  field: "timing" | "action",
+  value: string
+): ScriptEditorEventBindingRecord {
+  return {
+    ...record,
+    trigger: {
+      ...record.trigger,
+      [field]: value.trim(),
+    },
+  };
+}
+
+export function updateScriptEditorEventBindingConditionOperator(
+  record: ScriptEditorEventBindingRecord,
+  value: string
+): ScriptEditorEventBindingRecord {
+  const conditions = ensureEventBindingConditions(record);
+  return {
+    ...record,
+    conditions: {
+      ...conditions,
+      operator: normalizeConditionGroupMode(value),
+    },
+  };
+}
+
+export function appendScriptEditorEventBindingConditionItem(
+  record: ScriptEditorEventBindingRecord,
+  type: ScriptEditorEventBindingConditionType = "flag"
+): ScriptEditorEventBindingRecord {
+  const conditions = ensureEventBindingConditions(record);
+  return {
+    ...record,
+    conditions: {
+      ...conditions,
+      conditions: [
+        ...conditions.conditions,
+        createDefaultEventBindingConditionItem(type),
+      ],
+    },
+  };
+}
+
+export function removeScriptEditorEventBindingConditionItem(
+  record: ScriptEditorEventBindingRecord,
+  index: number
+): ScriptEditorEventBindingRecord {
+  const conditions = ensureEventBindingConditions(record);
+  return {
+    ...record,
+    conditions: {
+      ...conditions,
+      conditions: conditions.conditions.filter((_, itemIndex) => itemIndex !== index),
+    },
+  };
+}
+
+export function updateScriptEditorEventBindingConditionItemField(
+  record: ScriptEditorEventBindingRecord,
+  index: number,
+  field:
+    | "type"
+    | "sourceFamily"
+    | "field"
+    | "operator"
+    | "value"
+    | "valueType"
+    | "resolverId"
+    | "handlerId"
+    | "payload",
+  value: string
+): ScriptEditorEventBindingRecord {
+  const conditions = ensureEventBindingConditions(record);
+  return {
+    ...record,
+    conditions: {
+      ...conditions,
+      conditions: conditions.conditions.map((condition, itemIndex) =>
+        itemIndex === index
+          ? updateEventBindingConditionItemField(condition, field, value)
+          : condition
+      ),
+    },
   };
 }
 
@@ -415,14 +699,14 @@ export function removeScriptEditorDialogueFollowUp(
 
 export function updateScriptEditorEventField(
   record: ScriptEditorEventRecord,
-  field: "id" | "title" | "description" | "triggerTiming",
+  field: "id" | "title" | "description",
   value: string
 ): ScriptEditorEventRecord {
   if (field === "description") {
     return { ...record, description: value };
   }
-  if (field === "triggerTiming") {
-    return { ...record, triggerTiming: normalizeEventTriggerTiming(value) };
+  if (field !== "id" && field !== "title") {
+    return record;
   }
   return { ...record, [field]: value.trim() };
 }
@@ -542,14 +826,25 @@ export function updateScriptEditorEventDestinationField(
   field: keyof ScriptEditorEventDestination,
   value: string
 ): ScriptEditorEventRecord {
+  const currentDestination = normalizeEventDestination(record.destination);
+  if (field === "family") {
+    const nextFamily = normalizeEventDestinationFamily(value);
+    return {
+      ...record,
+      destination: {
+        ...currentDestination,
+        family: nextFamily,
+        targetId:
+          currentDestination.family === nextFamily ? currentDestination.targetId : "",
+      },
+    };
+  }
+
   return {
     ...record,
     destination: {
-      ...normalizeEventDestination(record.destination),
-      [field]:
-        field === "family"
-          ? normalizeEventDestinationFamily(value)
-          : value.trim(),
+      ...currentDestination,
+      [field]: value.trim(),
     },
   };
 }
@@ -677,6 +972,249 @@ function normalizeConditionGroup(group: Partial<ScriptEditorEventConditionGroup>
       .map(normalizeConditionNode)
       .filter((condition): condition is ScriptEditorConditionNode => condition != null),
   };
+}
+
+type ScriptEditorEventBindingConditionGroup = {
+  operator: ScriptEditorEventConditionGroupMode;
+  conditions: ScriptEditorEventBindingConditionItem[];
+};
+
+type ScriptEditorEventBindingConditionItem = {
+  type: ScriptEditorEventBindingConditionType;
+  sourceFamily?: ScriptEditorEventBindingConditionSourceFamily | undefined;
+  field?: string | undefined;
+  operator?: ScriptEditorEventBindingConditionOperator | undefined;
+  value?: boolean | number | string | undefined;
+  valueType?: ScriptEditorEventBindingConditionValueType | undefined;
+  resolverId?: string | undefined;
+  handlerId?: string | undefined;
+  payload?: string | undefined;
+};
+
+function ensureEventBindingConditions(
+  record: ScriptEditorEventBindingRecord
+): ScriptEditorEventBindingConditionGroup {
+  return normalizeEventBindingConditions(record.conditions) ?? {
+    operator: "all",
+    conditions: [],
+  };
+}
+
+function normalizeEventBindingConditions(
+  value: unknown
+): ScriptEditorEventBindingConditionGroup | null {
+  if (value == null || typeof value !== "object" || Array.isArray(value)) {
+    return null;
+  }
+
+  const group = value as Record<string, unknown>;
+  return {
+    operator: normalizeConditionGroupMode(
+      typeof group.operator === "string" ? group.operator : undefined
+    ),
+    conditions: (Array.isArray(group.conditions) ? group.conditions : [])
+      .map(normalizeEventBindingConditionItem)
+      .filter(
+        (condition): condition is ScriptEditorEventBindingConditionItem =>
+          condition != null
+      ),
+  };
+}
+
+function normalizeEventBindingConditionItem(
+  value: unknown
+): ScriptEditorEventBindingConditionItem | null {
+  if (value == null || typeof value !== "object" || Array.isArray(value)) {
+    return null;
+  }
+
+  const item = value as Record<string, unknown>;
+  if (!isEventBindingConditionType(item.type)) {
+    return null;
+  }
+
+  if (item.type === "custom") {
+    return omitEmptyEventBindingConditionItemFields({
+      type: "custom",
+      handlerId: normalizeOptionalTrimmedString(item.handlerId),
+      payload: normalizeOptionalString(item.payload),
+    });
+  }
+
+  const valueType = normalizeEventBindingConditionValueType(item.valueType);
+  return omitEmptyEventBindingConditionItemFields({
+    type: item.type,
+    sourceFamily: normalizeEventBindingConditionSourceFamily(item.sourceFamily),
+    field: normalizeOptionalTrimmedString(item.field),
+    operator: normalizeEventBindingConditionOperator(item.operator),
+    value:
+      item.type === "flag"
+        ? item.value === true || item.value === "true"
+        : normalizeEventBindingConditionValue(item.value, valueType),
+    valueType: item.type === "flag" || item.type === "variable" ? undefined : valueType,
+    resolverId: normalizeOptionalTrimmedString(item.resolverId),
+  });
+}
+
+function createDefaultEventBindingConditionItem(
+  type: ScriptEditorEventBindingConditionType
+): ScriptEditorEventBindingConditionItem {
+  if (type === "variable") {
+    return { type: "variable", field: "", operator: "==", value: "" };
+  }
+  if (type === "expression") {
+    return {
+      type: "expression",
+      sourceFamily: "variable",
+      field: "story.progress",
+      operator: "==",
+      value: "",
+      valueType: "number",
+    };
+  }
+  if (type === "custom") {
+    return { type: "custom", handlerId: "", payload: "" };
+  }
+  if (type === "binding-context") {
+    return {
+      type: "binding-context",
+      sourceFamily: "binding-context",
+      field: "trigger.action",
+      operator: "==",
+      value: "",
+      valueType: "enum",
+      resolverId: "script-editor.trigger-action",
+    };
+  }
+  return { type: "flag", field: "", operator: "==", value: true };
+}
+
+function updateEventBindingConditionItemField(
+  item: ScriptEditorEventBindingConditionItem,
+  field:
+    | "type"
+    | "sourceFamily"
+    | "field"
+    | "operator"
+    | "value"
+    | "valueType"
+    | "resolverId"
+    | "handlerId"
+    | "payload",
+  value: string
+): ScriptEditorEventBindingConditionItem {
+  const normalizedValue = value.trim();
+  if (field === "type") {
+    return createDefaultEventBindingConditionItem(
+      isEventBindingConditionType(normalizedValue) ? normalizedValue : "flag"
+    );
+  }
+  if (field === "sourceFamily") {
+    return {
+      ...item,
+      sourceFamily: normalizeEventBindingConditionSourceFamily(normalizedValue),
+    };
+  }
+  if (field === "field") {
+    return { ...item, field: normalizedValue };
+  }
+  if (field === "operator") {
+    return { ...item, operator: normalizeEventBindingConditionOperator(normalizedValue) };
+  }
+  if (field === "valueType") {
+    return {
+      ...item,
+      valueType: normalizeEventBindingConditionValueType(normalizedValue),
+    };
+  }
+  if (field === "resolverId") {
+    return { ...item, resolverId: normalizedValue };
+  }
+  if (field === "handlerId") {
+    return { ...item, handlerId: normalizedValue };
+  }
+  if (field === "payload") {
+    return { ...item, payload: value };
+  }
+  if (item.type === "flag") {
+    return { ...item, value: normalizedValue !== "false" };
+  }
+  return {
+    ...item,
+    value: normalizeEventBindingConditionValue(normalizedValue, item.valueType),
+  };
+}
+
+function isEventBindingConditionType(
+  value: unknown
+): value is ScriptEditorEventBindingConditionType {
+  return (
+    value === "flag" ||
+    value === "variable" ||
+    value === "expression" ||
+    value === "custom" ||
+    value === "binding-context"
+  );
+}
+
+function normalizeEventBindingConditionSourceFamily(
+  value: unknown
+): ScriptEditorEventBindingConditionSourceFamily | undefined {
+  return (
+    value === "flag" ||
+    value === "variable" ||
+    value === "person" ||
+    value === "city" ||
+    value === "building" ||
+    value === "payload" ||
+    value === "binding-context" ||
+    value === "resolver" ||
+    value === "custom"
+  )
+    ? value
+    : undefined;
+}
+
+function normalizeEventBindingConditionValueType(
+  value: unknown
+): ScriptEditorEventBindingConditionValueType {
+  return (
+    value === "boolean" ||
+    value === "number" ||
+    value === "string" ||
+    value === "enum" ||
+    value === "json"
+  )
+    ? value
+    : "string";
+}
+
+function normalizeEventBindingConditionOperator(
+  value: unknown
+): ScriptEditorEventBindingConditionOperator {
+  return value === "contains" ? "contains" : normalizeComparisonOperator(value);
+}
+
+function normalizeEventBindingConditionValue(
+  value: unknown,
+  valueType?: ScriptEditorEventBindingConditionValueType
+): boolean | number | string {
+  if (valueType === "boolean") {
+    return value === true || value === "true";
+  }
+  if (valueType === "number") {
+    const numericValue = typeof value === "number" ? value : Number(String(value).trim());
+    return Number.isFinite(numericValue) ? numericValue : 0;
+  }
+  return normalizeConditionValue(value);
+}
+
+function omitEmptyEventBindingConditionItemFields(
+  item: ScriptEditorEventBindingConditionItem
+): ScriptEditorEventBindingConditionItem {
+  return Object.fromEntries(
+    Object.entries(item).filter(([, value]) => value !== undefined && value !== "")
+  ) as ScriptEditorEventBindingConditionItem;
 }
 
 function updateConditionNodeField(

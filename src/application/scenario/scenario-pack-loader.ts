@@ -32,6 +32,23 @@ export async function loadScenarioPackFromFiles(
   const manifestFileEntry = selectScenarioPackManifestFileEntry(indexedFiles);
 
   if (manifestFileEntry == null) {
+    const scriptEditorProjectManifestEntry =
+      selectScriptEditorProjectManifestFileEntry(indexedFiles);
+    if (scriptEditorProjectManifestEntry != null) {
+      const rawProjectManifest = JSON.parse(
+        await scriptEditorProjectManifestEntry.file.text()
+      );
+      if (
+        typeof rawProjectManifest === "object" &&
+        rawProjectManifest != null &&
+        (rawProjectManifest as { kind?: unknown }).kind === "script-editor-project"
+      ) {
+        throw new Error(
+          "导入的是 Script Editor 项目包（project.json kind=script-editor-project），不是 JSON 开局需要的运行时剧本包。请在剧本编辑器中打开项目，或先导出运行时剧本包再用于 JSON 开局；JSON 开局目录必须包含 pack.json。"
+        );
+      }
+    }
+
     if (files.length === 1) {
       const [singleFile] = files;
       if (singleFile == null) {
@@ -257,6 +274,20 @@ function selectScenarioPackManifestFileEntry(
   return manifestEntries[0] ?? null;
 }
 
+function selectScriptEditorProjectManifestFileEntry(
+  indexedFiles: Record<string, ScenarioPackImportFileEntry>
+): ScenarioPackImportFileEntry | null {
+  const projectEntries = Object.values(indexedFiles).filter((entry) =>
+    entry.relativePath.endsWith("/project.json") || entry.relativePath === "project.json"
+  );
+
+  if (projectEntries.length === 0) {
+    return null;
+  }
+
+  return projectEntries[0] ?? null;
+}
+
 async function hydrateScenarioPackManifest(
   manifest: ScenarioPackManifest,
   manifestUrl: string
@@ -333,13 +364,16 @@ function resolveImportedScenarioPackMapAssetUrls(
 ) {
   const assetUrlCache: Record<string, string> = {};
 
-  return maps?.map((mapDefinition) => ({
+  return maps?.map((mapDefinition, mapIndex) => ({
     ...mapDefinition,
     ...(mapDefinition.primaryImageUrl == null
       ? {}
       : {
           primaryImageUrl: resolveImportedScenarioPackAssetUrl(
-            mapDefinition.primaryImageUrl,
+            readImportedScenarioPackAssetPath(
+              mapDefinition.primaryImageUrl,
+              `scenario maps[${mapIndex}].primaryImageUrl`
+            ),
             manifestDirectoryPath,
             indexedFiles,
             assetUrlCache
@@ -349,7 +383,10 @@ function resolveImportedScenarioPackMapAssetUrls(
       ? {}
       : {
           regionOverlayImageUrl: resolveImportedScenarioPackAssetUrl(
-            mapDefinition.regionOverlayImageUrl,
+            readImportedScenarioPackAssetPath(
+              mapDefinition.regionOverlayImageUrl,
+              `scenario maps[${mapIndex}].regionOverlayImageUrl`
+            ),
             manifestDirectoryPath,
             indexedFiles,
             assetUrlCache
@@ -358,10 +395,13 @@ function resolveImportedScenarioPackMapAssetUrls(
     ...(mapDefinition.layers == null
       ? {}
       : {
-          layers: mapDefinition.layers.map((layerDefinition) => ({
+          layers: mapDefinition.layers.map((layerDefinition, layerIndex) => ({
             ...layerDefinition,
             imageUrl: resolveImportedScenarioPackAssetUrl(
-              layerDefinition.imageUrl,
+              readImportedScenarioPackAssetPath(
+                layerDefinition.imageUrl,
+                `scenario maps[${mapIndex}].layers[${layerIndex}].imageUrl`
+              ),
               manifestDirectoryPath,
               indexedFiles,
               assetUrlCache
@@ -369,6 +409,14 @@ function resolveImportedScenarioPackMapAssetUrls(
           })),
         }),
   }));
+}
+
+function readImportedScenarioPackAssetPath(value: unknown, label: string): string {
+  if (typeof value !== "string" || value.length === 0) {
+    throw new Error(`${label} must be a non-empty string.`);
+  }
+
+  return value;
 }
 
 function resolveImportedScenarioPackAssetUrl(

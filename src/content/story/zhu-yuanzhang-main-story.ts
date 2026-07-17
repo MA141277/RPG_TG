@@ -90,20 +90,6 @@ export const zhuYuanzhangMainStoryEvents: EventDefinition[] = [
     chapterId: zhuYuanzhangMainStoryArc.chapterId,
     name: "皇觉寺剃度",
     occurrence: "once",
-    trigger: {
-      timing: "house-enter",
-      scope: {
-        houseId: "house.kulan.temple",
-      },
-      priority: 200,
-    },
-    conditions: [
-      {
-        type: "flag",
-        key: ZHU_YUANZHANG_STORY_FLAG_KEYS.ordinationCompleted,
-        expected: false,
-      },
-    ],
     entrySceneId: "scene.story.zhu_yuanzhang.ordination",
     tags: ["main-story", "temple-opening", "fictionalized-bridge"],
   },
@@ -112,22 +98,6 @@ export const zhuYuanzhangMainStoryEvents: EventDefinition[] = [
     chapterId: zhuYuanzhangMainStoryArc.chapterId,
     name: "皇觉寺首轮评定",
     occurrence: "once-per-chapter",
-    trigger: {
-      timing: "manual",
-      priority: 190,
-    },
-    conditions: [
-      {
-        type: "flag",
-        key: ZHU_YUANZHANG_STORY_FLAG_KEYS.ordinationCompleted,
-        expected: true,
-      },
-      {
-        type: "flag",
-        key: ZHU_YUANZHANG_STORY_FLAG_KEYS.firstTempleReviewCompleted,
-        expected: false,
-      },
-    ],
     entrySceneId: "scene.story.zhu_yuanzhang.first_temple_review",
     tags: ["main-story", "temple-review"],
   },
@@ -136,31 +106,6 @@ export const zhuYuanzhangMainStoryEvents: EventDefinition[] = [
     chapterId: zhuYuanzhangMainStoryArc.chapterId,
     name: "方丈准其外出化缘",
     occurrence: "once",
-    trigger: {
-      timing: "indoor-screen-shown",
-      scope: {
-        houseId: "house.kulan.temple",
-      },
-      priority: 170,
-    },
-    conditions: [
-      {
-        type: "flag",
-        key: ZHU_YUANZHANG_STORY_FLAG_KEYS.templeWorkUnlocked,
-        expected: true,
-      },
-      {
-        type: "flag",
-        key: ZHU_YUANZHANG_STORY_FLAG_KEYS.beggingUnlocked,
-        expected: false,
-      },
-      {
-        type: "variable",
-        key: ZHU_YUANZHANG_STORY_VARIABLE_KEYS.templeContribution,
-        operator: ">=",
-        value: 30,
-      },
-    ],
     entrySceneId: "scene.story.zhu_yuanzhang.unlock_begging",
     tags: ["main-story", "unlock", "temple-loop"],
   },
@@ -169,26 +114,6 @@ export const zhuYuanzhangMainStoryEvents: EventDefinition[] = [
     chapterId: zhuYuanzhangMainStoryArc.chapterId,
     name: "颍州街头风声",
     occurrence: "once",
-    trigger: {
-      timing: "city-enter",
-      scope: {
-        cityId: "city.runing",
-      },
-      priority: 160,
-    },
-    conditions: [
-      {
-        type: "flag",
-        key: ZHU_YUANZHANG_STORY_FLAG_KEYS.beggingUnlocked,
-        expected: true,
-      },
-      {
-        type: "variable",
-        key: ZHU_YUANZHANG_STORY_VARIABLE_KEYS.stage,
-        operator: "==",
-        value: ZHU_YUANZHANG_STORY_STAGES.huangjueBeggingJourney,
-      },
-    ],
     entrySceneId: "scene.story.zhu_yuanzhang.runing_broadcast",
     tags: ["main-story", "city-enter", "foreshadowing"],
   },
@@ -197,27 +122,6 @@ export const zhuYuanzhangMainStoryEvents: EventDefinition[] = [
     chapterId: zhuYuanzhangMainStoryArc.chapterId,
     name: "归濠州遇盗与入郭",
     occurrence: "once",
-    trigger: {
-      timing: "city-enter",
-      scope: {
-        cityId: "city.kulan",
-      },
-      priority: 155,
-    },
-    conditions: [
-      {
-        type: "variable",
-        key: ZHU_YUANZHANG_STORY_VARIABLE_KEYS.stage,
-        operator: "==",
-        value: ZHU_YUANZHANG_STORY_STAGES.huangjueBeggingJourney,
-      },
-      {
-        type: "variable",
-        key: ZHU_YUANZHANG_STORY_VARIABLE_KEYS.templeWeek,
-        operator: "==",
-        value: 4,
-      },
-    ],
     entrySceneId: "scene.story.zhu_yuanzhang.haozhou_return_encounter",
     tags: ["main-story", "city-enter", "battle-hook", "join-guo-zixing"],
   },

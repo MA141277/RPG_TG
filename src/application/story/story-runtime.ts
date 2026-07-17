@@ -4,18 +4,32 @@ import type { CharacterDefinition } from "../../domain/character";
 import type {
   EventBinding,
   EventDefinition,
-  EventTriggerTiming,
   TriggerContext,
 } from "../../domain/event";
 import type { GameState } from "../../domain/game-state";
 import { runEventBindingRuntime } from "../../core/runtime/event-binding-runtime";
 import { startEvent } from "../events/event-runner";
-import {
-  selectTriggeredEvents,
-  type TriggerEvaluationInput,
-} from "../events/trigger-evaluator";
 import { resolveChoiceOption } from "../scene/choice-resolver";
 import { advanceScene, runSceneUntilPause } from "../scene/scene-runner";
+
+export type StoryTriggerTiming =
+  | "manual"
+  | "game-start"
+  | "date-change"
+  | "turn-end"
+  | "travel-complete"
+  | "city-enter"
+  | "house-enter"
+  | "indoor-screen-shown"
+  | "talk"
+  | "custom";
+
+export type StoryTriggerInput = {
+  timing: StoryTriggerTiming;
+  cityId?: string;
+  houseId?: string;
+  characterId?: string;
+};
 
 type StoryContent = {
   eventDefinitionsById: Record<string, EventDefinition>;
@@ -31,53 +45,6 @@ type StoryRuntimeContext = {
 };
 
 type StoryRuntimeResult = StoryRuntimeContext;
-
-function createScopedTriggerContext(
-  state: GameState,
-  characterDefinitions: CharacterDefinition[]
-) {
-  return {
-    isCharacterAvailable: (characterId: string) =>
-      characterDefinitions.some(
-        (characterDefinition) => characterDefinition.id === characterId
-      ),
-    isCharacterInClan: (characterId: string, clanId: string) =>
-      characterDefinitions.some(
-        (characterDefinition) =>
-          characterDefinition.id === characterId &&
-          characterDefinition.clanId === clanId
-      ),
-    isCharacterInCity: (characterId: string, cityId: string) =>
-      characterDefinitions.some(
-        (characterDefinition) =>
-          characterDefinition.id === characterId &&
-          characterDefinition.cityId === cityId
-      ),
-    doesClanExist: (clanId: string) =>
-      characterDefinitions.some(
-        (characterDefinition) => characterDefinition.clanId === clanId
-      ),
-    getClanRelation: () => null,
-    isCityOwnedByClan: () => false,
-    hasEventFired: (eventId: string) =>
-      (state.runtime.eventHistory[eventId]?.firedCount ?? 0) > 0,
-    getEventFiredCount: (eventId: string) =>
-      state.runtime.eventHistory[eventId]?.firedCount ?? 0,
-    getMonthsSinceEvent: () => null,
-    getMissionStatus: (missionId: string) => {
-      if (state.missions.activeMissionId === missionId) {
-        return "active";
-      }
-
-      if (state.missions.completedMissionIds.includes(missionId)) {
-        return "completed";
-      }
-
-      return "inactive";
-    },
-    runCustomCondition: () => false,
-  };
-}
 
 export function syncStoryScene(
   runtime: StoryRuntimeContext,
@@ -119,44 +86,23 @@ export function startStoryEventById(
 export function triggerStoryEvents(
   runtime: StoryRuntimeContext,
   content: StoryContent,
-  input: TriggerEvaluationInput
+  input: StoryTriggerInput
 ): StoryRuntimeResult {
   const eventBindings = Object.values(content.eventBindingsById ?? {});
-  if (eventBindings.length > 0) {
-    const bindingResult = runEventBindingRuntime({
-      state: runtime.state,
-      eventDefinitionsById: content.eventDefinitionsById,
-      eventBindings,
-      triggerContext: buildTriggerContext(input, runtime.state),
-    });
+  const bindingResult = runEventBindingRuntime({
+    state: runtime.state,
+    eventDefinitionsById: content.eventDefinitionsById,
+    eventBindings,
+    triggerContext: buildTriggerContext(input, runtime.state),
+  });
 
-    if (bindingResult.activation == null) {
-      return runtime;
-    }
-
-    return syncStoryScene(
-      {
-        state: bindingResult.state,
-        characterDefinitions: runtime.characterDefinitions,
-      },
-      content
-    );
-  }
-
-  const triggeredEvents = selectTriggeredEvents(
-    runtime.state,
-    Object.values(content.eventDefinitionsById),
-    input,
-    createScopedTriggerContext(runtime.state, runtime.characterDefinitions)
-  );
-  const targetEvent = triggeredEvents[0];
-  if (targetEvent == null) {
+  if (bindingResult.activation == null) {
     return runtime;
   }
 
   return syncStoryScene(
     {
-      state: startEvent(runtime.state, targetEvent),
+      state: bindingResult.state,
       characterDefinitions: runtime.characterDefinitions,
     },
     content
@@ -164,7 +110,7 @@ export function triggerStoryEvents(
 }
 
 function buildTriggerContext(
-  input: TriggerEvaluationInput,
+  input: StoryTriggerInput,
   state: GameState
 ): TriggerContext {
   if (input.timing === "city-enter") {
@@ -274,9 +220,9 @@ export function getCurrentChoiceOptions(
 }
 
 export function buildStoryTriggerInput(
-  timing: EventTriggerTiming,
+  timing: StoryTriggerTiming,
   state: GameState
-): TriggerEvaluationInput {
+): StoryTriggerInput {
   return {
     timing,
     cityId: state.world.currentCityId,

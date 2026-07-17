@@ -23,6 +23,18 @@
   height: 100%;
 }
 
+.c-main-ui-screen--runtime-preview {
+  pointer-events: none;
+}
+
+.c-runtime-preview-exit {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 1;
+  pointer-events: auto;
+}
+
 .c-main-ui-sr-only {
   position: absolute;
   width: 1px;

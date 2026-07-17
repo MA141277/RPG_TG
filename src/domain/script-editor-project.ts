@@ -375,8 +375,6 @@ export type ScriptEditorEventConditionGroup = ScriptEditorConditionGroup;
 export type ScriptEditorEventDestinationFamily =
   | "dialogue"
   | "event"
-  | "city"
-  | "building"
   | "minigame";
 
 export type ScriptEditorEventDestination = {

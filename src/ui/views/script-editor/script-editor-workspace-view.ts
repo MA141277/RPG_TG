@@ -98,7 +98,7 @@ function splitWorkspaceTreeGroups(groups: ScriptEditorWorkspaceTreeGroup[]): {
 function renderToolbarButtons(model: ScriptEditorWorkspaceViewModel): string {
   return model.toolbarActions
     .filter((action) => action.id !== "save")
-    .filter((action) => action.id !== "validate" && action.id !== "export")
+    .filter((action) => action.id !== "validate")
     .map((action) => {
       const modifierClass =
         action.id === "export"

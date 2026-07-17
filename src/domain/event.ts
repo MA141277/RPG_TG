@@ -9,30 +9,6 @@ type HouseId = string;
 
 export type EventOccurrence = "once" | "repeatable" | "once-per-chapter";
 
-export type EventTriggerTiming =
-  | "manual"
-  | "game-start"
-  | "date-change"
-  | "turn-end"
-  | "travel-complete"
-  | "city-enter"
-  | "house-enter"
-  | "indoor-screen-shown"
-  | "talk"
-  | "custom";
-
-export type EventTriggerScope = {
-  cityId?: CityId;
-  houseId?: HouseId;
-  characterId?: CharacterId;
-};
-
-export type EventTrigger = {
-  timing: EventTriggerTiming;
-  scope?: EventTriggerScope;
-  priority?: number;
-};
-
 export type EventBindingOwner = {
   family: string;
   id?: string;
@@ -199,8 +175,6 @@ export type EventDefinition = {
   chapterId: ChapterId;
   name: string;
   occurrence: EventOccurrence;
-  trigger?: EventTrigger;
-  conditions?: EventConditionNode[];
   participants?: EventParticipant[];
   entrySceneId: SceneId;
   nextEventId?: EventId;

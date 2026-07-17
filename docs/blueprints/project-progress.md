@@ -4,11 +4,11 @@
 
 - entry_id: `project-progress.rpg-tg`
 - active_blueprint: `blueprint.rpg-tg`
-- active_version: `target.script-editor-event-binding-runtime-replacement`
-- has_active_queue: `true`
-- active_queue: `queue.old-event-runtime-retirement`
-- active_task: `task.old-event-runtime-retirement.evidence-anchor-reconcile`
-- next_file: `docs/blueprints/queues/old-event-runtime-retirement-queue.md`
+- active_version: `target.script-editor-event-binding-post-closeout-fixups`
+- has_active_queue: `false`
+- active_queue: `none`
+- active_task: `none`
+- next_file: `docs/blueprints/plans/2026-07-17-script-editor-event-binding-post-closeout-fixups-target-plan.md`
 - entry_action: `open-next-file`
 
 ## Human Context
@@ -27,19 +27,30 @@
 - Current Blueprint:
   - `docs/blueprints/blueprint.md`
 - Current Version Spec:
-  - `docs/blueprints/specs/2026-07-16-script-editor-event-binding-runtime-replacement-target.md`
+  - `docs/blueprints/specs/2026-07-17-script-editor-event-binding-post-closeout-fixups-target.md`
 - Current Version Plan:
-  - `docs/blueprints/plans/2026-07-16-script-editor-event-binding-runtime-replacement-target-plan.md`
+  - `docs/blueprints/plans/2026-07-17-script-editor-event-binding-post-closeout-fixups-target-plan.md`
 - Current Active Queue:
-  - `docs/blueprints/queues/zhuyuanzhang-event-binding-pack-migration-queue.md`
+  - `none`
 
 ### Live Entry Guardrails
 
 - `This file only states the current resume entry and downstream pointer set.`
 - `Admission history, queue closeout history, and review narrative must stay in the version plan, queue docs, or docs/change-log.md rather than living here as competing current-state prose.`
-- `The pointed version is now the open script-editor event binding runtime replacement record.`
+- `The pointed version is now the open post-closeout fixup version for submit/merge blockers discovered after the script-editor event binding runtime replacement version closed.`
+- `target.script-editor-event-binding-runtime-replacement remains done and must not be reopened for these fixups.`
+- `queue.script-editor-event-destination-selector-completion is closed after guard review and queue closeout/handoff.`
+- `queue.script-editor-event-destination-selector-family-coverage-correction is closed after guard review and queue closeout/handoff.`
+- `queue.script-editor-event-destination-content-entry-family-correction is closed after guard review and queue closeout/handoff.`
+- `queue.script-editor-runtime-preview-from-memory is closed after guard review and queue closeout/handoff.`
 - `The latest governance action created target.script-editor-event-binding-runtime-replacement from docs/script-editor-event-trigger-binding-design.md after the previous city/building version had already closed.`
-- `queue.old-event-runtime-retirement is admitted as the active queue; resume from its evidence-anchor-reconcile task.`
+- `queue.old-event-runtime-retirement is complete; the operator then explicitly confirmed admission of queue.script-editor-event-binding-authoring-ui-completion.`
+- `queue.event-binding-condition-export-lowering is closed after basic flag/variable EventBinding.conditions export lowering landed.`
+- `queue.event-binding-trigger-context-entrypoint-completion is closed after TriggerContext entrypoint audit and export fail-closed guards landed.`
+- `queue.script-editor-event-binding-owner-local-authoring-surfaces is closed after guard review and queue closeout.`
+- `queue.script-editor-event-binding-condition-editor-completion is closed after final guard review, queue closeout/handoff, and the owner-local events tab selector closeout regression fix.`
+- `queue.script-editor-event-body-trigger-field-retirement is closed after guard review and queue closeout/handoff.`
+- `The destination content-entry family correction queue is done. Runtime preview-from-memory is done. The fixup version remains open with no active queue; do not enter version closeout, commit, push, merge, or admit another queue unless explicitly requested.`
 
 ### Historical References
 
@@ -51,6 +62,15 @@
 - `docs/blueprints/queues/zhuyuanzhang-event-binding-pack-migration-queue.md` stores the active built-in zhuyuanzhang event binding pack migration queue truth.
 - `docs/blueprints/queues/event-binding-runtime-convergence-queue.md` stores the active EventBindingRuntime convergence queue truth.
 - `docs/blueprints/queues/old-event-runtime-retirement-queue.md` stores the active old event runtime retirement queue truth.
+- `docs/blueprints/queues/script-editor-event-binding-authoring-ui-completion-queue.md` stores the required same-version candidate truth for full event binding authoring UI completion before version closeout.
+- `docs/blueprints/queues/event-binding-condition-export-lowering-queue.md` stores the active condition export lowering queue truth for supported basic flag/variable EventBinding.conditions export.
+- `docs/blueprints/queues/event-binding-trigger-context-entrypoint-completion-queue.md` stores the active TriggerContext entrypoint completion queue truth for supported EventBinding trigger action runtime entrypoints and fail-closed guards.
+- `docs/blueprints/queues/script-editor-event-binding-owner-local-authoring-surfaces-queue.md` stores the active owner-local authoring surfaces queue truth for correcting event detail, dedicated event-bindings, and owner-local binding edit ownership.
+- `docs/blueprints/queues/script-editor-event-body-trigger-field-retirement-queue.md` stores the active event-body triggerTiming retirement queue truth.
+- `docs/blueprints/plans/2026-07-17-script-editor-event-binding-post-closeout-fixups-target-plan.md` stores the open post-closeout fixup version truth for destination selector completion and runtime preview from memory.
+- `docs/blueprints/queues/script-editor-event-destination-selector-completion-queue.md` stores the active destination selector completion queue truth.
+- `docs/blueprints/queues/script-editor-runtime-preview-from-memory-queue.md` stores the active runtime preview-from-memory queue truth.
+- `docs/blueprints/queues/script-editor-event-destination-content-entry-family-correction-queue.md` stores the active destination content-entry family correction queue truth.
 - `docs/blueprints/specs/2026-07-16-script-editor-event-binding-runtime-replacement-target.md` stores the target contract for events.json/event-bindings.json split, editor double-table support, built-in zhuyuanzhang migration, EventBindingRuntime cutover with sub-runtime handoff compatibility, and old event runtime retirement.
 - `docs/blueprints/plans/2026-07-16-city-building-definition-location-access-convergence-target-plan.md` stores the closed city/building definition and LocationAccessRuntime convergence version's candidate record, admission truth, routing truth, and closeout truth.
 - `docs/blueprints/queues/script-editor-city-building-definition-restructure-queue.md` stores the closed city/building definition restructure queue truth.
