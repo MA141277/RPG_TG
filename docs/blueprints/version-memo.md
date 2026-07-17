@@ -18,6 +18,135 @@
 - New findings should record observable behavior, current implementation evidence, governance coverage, and acceptance requirements.
 - Closing an entry requires verified runtime behavior, persistence coverage, and synchronization with the owning queue or version records.
 
+## Event Binding Test And Authoring Notes
+
+### Purpose
+
+- This section records operator-facing test and authoring steps for the event binding runtime replacement version.
+- These notes are non-scheduling guidance only. They do not admit queues, close queues, or close the version.
+- Use these steps during queue closeout review and version closeout review when validating that event binding authoring works through the real UI path and that exported bindings affect runtime behavior.
+
+### Browser UI Test Steps
+
+1. Start the dev server from the active event-binding worktree.
+2. Open the app in Codex in-app browser / Browser Use, for example `http://localhost:5173/` or the currently assigned local port.
+3. Enter the Script Editor.
+4. Create or open a test project that contains at least one event and at least one owner object.
+5. Visit each owner detail page and click the `事件` tab:
+   - `人物`
+   - `城市`
+   - `建筑`
+   - `对话`
+   - `小游戏`
+   - `剧情节点`
+6. Confirm each `事件` tab actually switches the visible panel, not only that the tab button exists.
+7. Confirm each owner-local `事件` tab shows the event binding authoring surface.
+8. Visit the event detail page and confirm:
+   - there is no `条件` tab on the event body page;
+   - event body condition editing is not reachable;
+   - binding references are read-only reverse references or jump links, not direct trigger/condition editors.
+
+### How To Bind An Event
+
+1. Open an owner detail page, such as a city or building.
+2. Click the `事件` tab.
+3. Click `新增事件绑定` / `Add Binding`.
+4. In `绑定事件`, choose an event from the selector.
+   - The selector must be driven by `project.events`.
+   - The visible option should show the event title plus `eventId`.
+   - The stored value remains the stable `eventId`.
+   - A free text input is not acceptable as the primary authoring path.
+5. In `触发时机` / `触发动作`, choose from the owner-family trigger selector.
+   - The selector must be based on the supported trigger options for the current owner family.
+   - Authors should not hand-write trigger action strings in the primary path.
+6. Configure `启用` and `优先级` as needed.
+7. Save the project.
+8. Export the runtime pack and confirm the binding is written to `event-bindings.json`, not to `events.json`.
+
+### Owner-Local And Dedicated Binding Surface Rules
+
+- The owner-local `事件` tab and the dedicated `eventBindings` management surface must not expose the same controls in the same way.
+- In an owner-local `事件` tab, the binding owner is the current object and must stay locked:
+  - `绑定对象类型` / `owner.family` must not be editable there.
+  - `绑定对象 ID` / `owner.id` must not be editable there.
+  - Editing trigger fields must not change `owner.family` or `owner.id`.
+  - A binding card must not disappear from the current owner-local list after changing trigger timing or trigger action.
+- In the dedicated first-class `eventBindings` management surface, `绑定对象类型` and `绑定对象 ID` may remain editable because that surface owns global binding management.
+- Do not confuse owner fields with trigger fields:
+  - `绑定对象类型` means `owner.family`.
+  - `绑定对象 ID` means `owner.id`.
+  - `触发时机` means `trigger.timing`.
+  - `触发动作` means `trigger.action`.
+  - `绑定事件` means `eventId`.
+- Locking the owner in an owner-local tab must only hide or lock `owner.family` and `owner.id`.
+- Locking the owner must not hide:
+  - `绑定事件`;
+  - `触发时机`;
+  - `触发动作`;
+  - condition editor controls.
+- `触发时机` and `触发动作` must remain Chinese-labelled selectors in owner-local tabs, using the current owner family as the option source.
+- The dedicated binding surface should be used when the creator needs to move a binding between owners.
+
+### How To Configure Conditions
+
+1. Open a binding editor from a dedicated event binding surface or an owner-local `事件` tab.
+2. In `组合关系`, choose a Chinese-labelled option:
+   - `满足全部`
+   - `满足任一`
+   - `全部不满足`
+3. Add a condition item.
+4. Choose a Chinese-labelled condition type, such as:
+   - `标记条件`
+   - `变量条件`
+   - `表达式条件`
+   - `自定义条件`
+   - `触发上下文条件`
+5. Choose `字段来源` and then choose a `字段` from the registry-backed selector.
+6. The field registry should include relevant authoring fields when available:
+   - person base fields, such as force / intelligence / politics;
+   - person custom / extended attributes;
+   - city base fields;
+   - city custom / extended attributes;
+   - building base fields;
+   - building custom / extended attributes;
+   - payload and binding-context fields.
+7. Choose `判断方式`.
+   - Available operators should be constrained by the selected field `valueType`.
+8. Enter or select `目标值`.
+   - Boolean, enum, number, and text values should use appropriate controls.
+9. Basic `flag` / `variable` conditions may export to runnable runtime shape when supported.
+10. Advanced `expression` / `custom` / `binding-context` conditions may be saved as authoring data, but unsupported runtime/export paths must fail closed with diagnostics rather than silently becoming runnable.
+
+### Runtime Effectiveness Test Steps
+
+1. Create a Script Editor test project with:
+   - an event body with an entry scene;
+   - an event binding that references that event;
+   - supported owner, trigger timing, and trigger action;
+   - basic conditions, such as flag and variable conditions.
+2. Export the project to a runtime pack.
+3. Confirm:
+   - `events.json` contains triggerless event bodies;
+   - `event-bindings.json` contains the binding and its lowered runnable basic conditions.
+4. Load the exported pack through the scenario loader.
+5. Trigger a supported `TriggerContext`, such as a covered `city-enter` or other verified runnable entrypoint.
+6. Confirm an observable runtime result:
+   - EventBindingRuntime selects the binding;
+   - the event starts;
+   - `activeEventId`, `activeSceneId`, scene handoff, event history, or visible gameplay state changes.
+7. Also verify fail-closed paths:
+   - unsupported owner/action combinations do not export as runnable bindings;
+   - unsupported advanced conditions fail closed;
+   - fail-closed behavior is not counted as runtime support for the rejected capability.
+
+### Acceptance Notes
+
+- Source-string checks are useful guards, but they do not replace real UI interaction checks.
+- A tab button is not complete unless clicking it switches to the expected panel.
+- A selector required by design is not complete if implemented as a free text input.
+- Saving or exporting binding data is not enough; runtime completion requires an observable runtime result.
+- Browser runtime proof may be recorded as inconclusive only with a reason and equivalent automated runtime evidence.
+
 ## Open Problems
 
 ### MEMO-008: Event Trigger Dispatch And Person Event Bindings Need Separate Condition Ownership
@@ -60,6 +189,46 @@
 - proposed_class: `candidate`
 - proposed_goal: `Separate event content from trigger ownership by adding condition-bearing event dispatch/binding surfaces, including person-bound event trigger conditions.`
 - admission_note: `Recorded only. This entry must not become an active or candidate queue unless explicitly promoted through the current version plan.`
+
+### MEMO-009: Event Detail Pages Still Own Event-Body Condition Editing And Need Binding-Local Surfaces
+
+- status: `open`
+- severity: `medium`
+- classification: `current-version-authoring-scope-gap`
+- owning_queue: `none`
+- admission_status: `not-admitted`
+- latest_disposition: `recorded-only`
+- affected_families:
+  - `script editor event authoring`
+  - `event binding authoring`
+  - `owner-local binding surfaces`
+  - `condition ownership`
+  - `Blueprint review`
+
+#### Required Behavior
+
+- Event detail pages must edit event content only.
+- Event detail pages must not directly edit trigger timing, condition groups, binding trigger fields, or binding conditions.
+- Event detail pages may show read-only reverse references and jump links for bindings that reference the event.
+- Person, city, building, dialogue, minigame, and story-node detail pages must provide local event-binding entry points.
+- A dedicated first-class event-binding authoring surface must continue to own `project.eventBindings`.
+- EventDefinition must not regain conditions ownership.
+
+#### Acceptance Criteria
+
+- Event-body condition editing entry points are removed or hidden from the event detail page.
+- Event detail pages show only read-only binding reverse references and navigation.
+- Event binding create/delete/edit flows exist on dedicated event-binding or owner-local surfaces.
+- Local entry points write into `project.eventBindings`.
+- EventDefinition remains condition-free.
+- EventBinding.conditions continues to be the only editable condition owner.
+
+#### Suggested Candidate Queue
+
+- proposed_queue_id: `queue.script-editor-event-binding-owner-local-authoring-surfaces`
+- proposed_class: `candidate`
+- proposed_goal: `Move binding ownership out of event detail pages into dedicated event-binding and owner-local authoring surfaces while keeping event details read-only for reverse references.`
+- admission_note: `Recorded only. This entry must not become an active or candidate queue until the current trigger-context queue is closed and the owner-local split is re-reviewed against the design doc.`
 
 ### MEMO-007: Script Editor City And Building Entry State Should Become Condition Authoring
 

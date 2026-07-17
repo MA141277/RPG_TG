@@ -10,7 +10,7 @@ import {
 import type { ActivityDefinition } from "../../domain/activity";
 import type { SceneDefinition } from "../../domain/action";
 import type { CharacterDefinition } from "../../domain/character";
-import type { EventDefinition } from "../../domain/event";
+import type { EventBinding, EventDefinition } from "../../domain/event";
 import type { GameState } from "../../domain/game-state";
 import type { HouseDefinition } from "../../domain/house";
 import type { HouseModuleTransitionResult } from "../../domain/house-module";
@@ -20,6 +20,7 @@ import { runStoryTriggerRuntime } from "../../core/runtime/scene-runtime";
 
 export type NavigationTimeFollowUpStoryContent = {
   eventDefinitionsById: Record<string, EventDefinition>;
+  eventBindingsById?: Record<string, EventBinding>;
   sceneDefinitionsById: Record<string, SceneDefinition>;
   activityDefinitionsById?: Record<string, ActivityDefinition>;
   textEntriesById?: Record<string, string>;
@@ -56,6 +57,9 @@ export function createNavigationTimeFollowUpBridge(
           state: input.state.core,
           characterDefinitions: dependencies.getCharacterDefinitions(),
           eventDefinitionsById: storyContent.eventDefinitionsById,
+          ...(storyContent.eventBindingsById == null
+            ? {}
+            : { eventBindingsById: storyContent.eventBindingsById }),
           sceneDefinitionsById: storyContent.sceneDefinitionsById,
           ...(storyContent.activityDefinitionsById == null
             ? {}

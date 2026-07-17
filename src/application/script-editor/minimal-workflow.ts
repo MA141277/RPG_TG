@@ -8,6 +8,7 @@ import {
   type ScriptEditorDialogueRecord,
   type ScriptEditorEntityRecord,
   type ScriptEditorEventConditionGroup,
+  type ScriptEditorEventBindingRecord,
   type ScriptEditorEventRecord,
   type ScriptEditorMinigameRecord,
   type ScriptEditorMenuEntry,
@@ -18,7 +19,6 @@ import {
   type ScriptEditorStoryPackRecord,
   type ScriptEditorTextEntryRecord,
 } from "../../domain/script-editor-project";
-import type { EventConditionNode, EventDefinition } from "../../domain/event";
 import {
   createDefaultScriptEditorBuildingRecord,
   createDefaultScriptEditorCityRecord,
@@ -27,6 +27,7 @@ import { createDefaultScriptEditorPersonRecord } from "./person-authoring";
 import { createDefaultScriptEditorMinigameRecord } from "./minigame-binding-authoring";
 import {
   createDefaultScriptEditorDialogueRecord,
+  createDefaultScriptEditorEventBindingRecord,
   createDefaultScriptEditorEventRecord,
   createDefaultScriptEditorStoryNodeRecord,
 } from "./story-dialogue-event-authoring";
@@ -42,6 +43,7 @@ export const SCRIPT_EDITOR_MINIMAL_WORKFLOW_FAMILIES = [
   "textEntries",
   "storyNodes",
   "events",
+  "eventBindings",
 ] as const;
 
 export type ScriptEditorMinimalWorkflowFamily =
@@ -140,6 +142,7 @@ export function createDefaultScriptEditorProjectDefinition(input?: {
         },
       },
     ],
+    eventBindings: [],
     scenes: [],
     quests: [],
     activities: [],
@@ -201,6 +204,7 @@ export function listScriptEditorWorkflowFamilyRecords(
   | ScriptEditorMinigameRecord[]
   | ScriptEditorStoryNodeRecord[]
   | ScriptEditorEventRecord[]
+  | ScriptEditorEventBindingRecord[]
   | ScriptEditorEntityRecord[]
   | ScriptEditorTextEntryRecord[] {
   switch (family) {
@@ -220,6 +224,8 @@ export function listScriptEditorWorkflowFamilyRecords(
       return project.storyNodes;
     case "events":
       return project.events;
+    case "eventBindings":
+      return project.eventBindings;
   }
 }
 
@@ -234,6 +240,7 @@ export function createScriptEditorWorkflowRecordDraft(
   | ScriptEditorMinigameRecord
   | ScriptEditorStoryNodeRecord
   | ScriptEditorEventRecord
+  | ScriptEditorEventBindingRecord
   | ScriptEditorEntityRecord
   | ScriptEditorTextEntryRecord {
   const suffix = index + 1;
@@ -258,6 +265,8 @@ export function createScriptEditorWorkflowRecordDraft(
       return createDefaultScriptEditorStoryNodeRecord(index) as ScriptEditorStoryNodeRecord;
     case "events":
       return createDefaultScriptEditorEventRecord(index) as ScriptEditorEventRecord;
+    case "eventBindings":
+      return createDefaultScriptEditorEventBindingRecord(index) as ScriptEditorEventBindingRecord;
   }
 }
 
@@ -272,6 +281,7 @@ export function upsertScriptEditorWorkflowRecord(
     | ScriptEditorMinigameRecord
     | ScriptEditorStoryNodeRecord
     | ScriptEditorEventRecord
+    | ScriptEditorEventBindingRecord
     | ScriptEditorEntityRecord
     | ScriptEditorTextEntryRecord
 ): ScriptEditorProjectDefinition {
@@ -315,6 +325,7 @@ function replaceProjectFamily(
     | ScriptEditorDialogueRecord[]
     | ScriptEditorStoryNodeRecord[]
     | ScriptEditorEventRecord[]
+    | ScriptEditorEventBindingRecord[]
     | ScriptEditorEntityRecord[]
     | ScriptEditorTextEntryRecord[]
 ): ScriptEditorProjectDefinition {
@@ -335,6 +346,11 @@ function replaceProjectFamily(
       return { ...project, storyNodes: nextRecords as ScriptEditorStoryNodeRecord[] };
     case "events":
       return { ...project, events: nextRecords as ScriptEditorEventRecord[] };
+    case "eventBindings":
+      return {
+        ...project,
+        eventBindings: nextRecords as ScriptEditorEventBindingRecord[],
+      };
   }
 }
 
@@ -487,21 +503,6 @@ function removeEventReferencesFromStoryPack(
     changed = true;
   }
 
-  if (Array.isArray(storyPack.runtimeEvents)) {
-    const nextRuntimeEvents = removeEventReferencesFromRuntimeEvents(
-      storyPack.runtimeEvents as EventDefinition[],
-      removedEventId
-    );
-    if (nextRuntimeEvents !== storyPack.runtimeEvents) {
-      if (nextRuntimeEvents.length === 0) {
-        delete nextStoryPack.runtimeEvents;
-      } else {
-        nextStoryPack.runtimeEvents = nextRuntimeEvents;
-      }
-      changed = true;
-    }
-  }
-
   return changed ? nextStoryPack : storyPack;
 }
 
@@ -645,111 +646,6 @@ function removeEventReferencesFromConditionNode(
     ...node,
     conditions: nextConditions,
   };
-}
-
-function removeEventReferencesFromRuntimeEvents(
-  runtimeEvents: EventDefinition[],
-  removedEventId: string
-): EventDefinition[] {
-  let changed = false;
-  const nextEvents: EventDefinition[] = [];
-
-  for (const eventDefinition of runtimeEvents) {
-    const prunedEvent = removeEventReferencesFromRuntimeEvent(eventDefinition, removedEventId);
-    if (prunedEvent == null) {
-      changed = true;
-      continue;
-    }
-    if (prunedEvent !== eventDefinition) {
-      changed = true;
-    }
-    nextEvents.push(prunedEvent);
-  }
-
-  return changed ? nextEvents : runtimeEvents;
-}
-
-function removeEventReferencesFromRuntimeEvent(
-  eventDefinition: EventDefinition,
-  removedEventId: string
-): EventDefinition | null {
-  if (eventDefinition.id === removedEventId) {
-    return null;
-  }
-
-  const nextEventDefinition: EventDefinition = { ...eventDefinition };
-  let changed = false;
-
-  if (eventDefinition.nextEventId === removedEventId) {
-    delete nextEventDefinition.nextEventId;
-    changed = true;
-  }
-
-  const nextConditions = removeEventReferencesFromRuntimeConditionNodes(
-    eventDefinition.conditions,
-    removedEventId
-  );
-  if (nextConditions !== eventDefinition.conditions) {
-    nextEventDefinition.conditions = nextConditions;
-    changed = true;
-  }
-
-  return changed ? nextEventDefinition : eventDefinition;
-}
-
-function removeEventReferencesFromRuntimeConditionNodes(
-  nodes: EventConditionNode[],
-  removedEventId: string
-): EventConditionNode[] {
-  let changed = false;
-  const nextNodes: EventConditionNode[] = [];
-
-  for (const node of nodes) {
-    const prunedNode = removeEventReferencesFromRuntimeConditionNode(node, removedEventId);
-    if (prunedNode == null) {
-      changed = true;
-      continue;
-    }
-    if (prunedNode !== node) {
-      changed = true;
-    }
-    nextNodes.push(prunedNode);
-  }
-
-  return changed ? nextNodes : nodes;
-}
-
-function removeEventReferencesFromRuntimeConditionNode(
-  node: EventConditionNode,
-  removedEventId: string
-): EventConditionNode | null {
-  if (node.type === "group") {
-    const nextConditions = removeEventReferencesFromRuntimeConditionNodes(
-      node.conditions,
-      removedEventId
-    );
-    if (nextConditions.length === 0) {
-      return null;
-    }
-    if (nextConditions === node.conditions) {
-      return node;
-    }
-    return {
-      ...node,
-      conditions: nextConditions,
-    };
-  }
-
-  if (
-    (node.type === "event-fired" ||
-      node.type === "event-fired-count" ||
-      node.type === "months-since-event") &&
-    node.eventId === removedEventId
-  ) {
-    return null;
-  }
-
-  return node;
 }
 
 export function getScriptEditorWorkflowVisibleFamilies(): readonly ScriptEditorProjectFileKey[] {

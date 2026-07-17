@@ -3,7 +3,7 @@ import type { ActiveGameContentContext } from "../content/active-game-content";
 import type { ActivityDefinition } from "../../domain/activity";
 import type { SceneDefinition } from "../../domain/action";
 import type { CharacterDefinition } from "../../domain/character";
-import type { EventDefinition, EventTriggerTiming } from "../../domain/event";
+import type { EventBinding, EventDefinition } from "../../domain/event";
 import type { GameState } from "../../domain/game-state";
 import type { StartupSessionBootstrap } from "../startup/startup-session-coordinator";
 import { applyIndoorScreenStoryFollowUp } from "./indoor-screen-story-follow-up";
@@ -11,6 +11,7 @@ import {
   advanceStorySceneStep,
   chooseStorySceneOption,
   getCurrentChoiceOptions,
+  type StoryTriggerTiming,
 } from "../story/story-runtime";
 import { runStoryTriggerRuntime } from "../../core/runtime/scene-runtime";
 
@@ -28,7 +29,7 @@ export type MainRuntimeOrchestratorRequest =
     }
   | {
       type: "trigger-story-events";
-      timing: EventTriggerTiming;
+      timing: StoryTriggerTiming;
       state: GameState;
       characterDefinitions: CharacterDefinition[];
     };
@@ -48,6 +49,7 @@ export type MainRuntimeOrchestratorDependencies = {
   setPlayerCharacterId(playerCharacterId: string): void;
   getStoryContent(): {
     eventDefinitionsById: Record<string, EventDefinition>;
+    eventBindingsById?: Record<string, EventBinding>;
     sceneDefinitionsById: Record<string, SceneDefinition>;
     activityDefinitionsById?: Record<string, ActivityDefinition>;
     textEntriesById?: Record<string, string>;
@@ -76,7 +78,7 @@ export function createMainRuntimeOrchestrator(
   }
 
   function runStoryTiming(
-    timing: EventTriggerTiming,
+    timing: StoryTriggerTiming,
     state: GameState,
     characterDefinitions: CharacterDefinition[]
   ): StoryTimingResult {
@@ -86,6 +88,9 @@ export function createMainRuntimeOrchestrator(
       state,
       characterDefinitions,
       eventDefinitionsById: storyContent.eventDefinitionsById,
+      ...(storyContent.eventBindingsById == null
+        ? {}
+        : { eventBindingsById: storyContent.eventBindingsById }),
       sceneDefinitionsById: storyContent.sceneDefinitionsById,
       ...(storyContent.activityDefinitionsById == null
         ? {}

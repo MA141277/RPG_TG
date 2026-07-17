@@ -155,6 +155,7 @@ function createGovernanceFixture(options = {}) {
         : (useVersionTerms ? "queue-closeout-or-return-to-version-review" : "queue-closeout-or-return-to-target-review")}\``,
       `- next_action: \`${activeQueueId === "none" ? "classify-fresh-work" : "resume-active-queue"}\``,
       `- resume_gate: \`${activeQueueId === "none" ? "idle-open" : "open-active-queue"}\``,
+      "- post_queue_closeout_pause_policy: `auto-continue`",
       "- promotion_review_result: `none`",
       "- review_subject_id: `none`",
       "- review_subject_classification: `none`",

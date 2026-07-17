@@ -1212,21 +1212,41 @@ test("workflow spec exposes the version-first resume chain and state model", () 
 
 test("live version plan exposes version-first control fields and lifecycle wording", () => {
   const { activeVersion, targetPlan } = readLiveVersionPlan();
+  const projectProgress = fs.readFileSync(
+    path.join(projectRoot, "docs", "blueprints", "project-progress.md"),
+    "utf8"
+  );
 
   assert.match(targetPlan, /^- document_role: `version-governor`$/m);
   assert.match(
     targetPlan,
     new RegExp(`^- version_id: \`${activeVersion.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\`$`, "m")
   );
-  assert.match(targetPlan, /^- version_status: `open`$/m);
+  const versionStatusMatch = targetPlan.match(/^- version_status: `([^`]+)`$/m);
+  assert.ok(versionStatusMatch, "live version plan must expose version_status");
   assert.match(targetPlan, /^- active_queue: `[^`]+`$/m);
-  assert.match(
-    targetPlan,
-    /^- decision_state: `(idle-open|promotion-review|active-execution|blocked)`$/m
-  );
   assert.match(targetPlan, /^- next_decision: `[^`]+`$/m);
   assert.match(targetPlan, /^- next_action: `[^`]+`$/m);
   assert.match(targetPlan, /^- resume_gate: `[^`]+`$/m);
+  if (versionStatusMatch[1] === "open") {
+    assert.match(
+      targetPlan,
+      /^- decision_state: `(idle-open|promotion-review|active-execution|blocked)`$/m
+    );
+  } else if (versionStatusMatch[1] === "done") {
+    assert.match(targetPlan, /^- active_queue: `none`$/m);
+    assert.match(targetPlan, /^- decision_state: `closed`$/m);
+    assert.match(targetPlan, /^- resume_gate: `closed-version-record`$/m);
+    assert.match(projectProgress, /^- active_version: `[^`]+`$/m);
+    assert.match(projectProgress, /^- has_active_queue: `false`$/m);
+    assert.match(projectProgress, /^- active_queue: `none`$/m);
+    assert.match(projectProgress, /^- active_task: `none`$/m);
+    assert.match(projectProgress, /^- entry_action: `stop`$/m);
+    assert.match(targetPlan, /Final version closeout completed/);
+    assert.match(targetPlan, /no next same-version action/);
+  } else {
+    assert.fail(`unexpected live version_status: ${versionStatusMatch[1]}`);
+  }
   assert.match(targetPlan, /^### Version Lifecycle Rules$/m);
   assert.match(targetPlan, /^### Queue Admission Startup Rules$/m);
   assert.doesNotMatch(targetPlan, /^- target_id:/m);

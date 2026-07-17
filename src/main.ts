@@ -101,8 +101,6 @@ import {
   routeTimeRuntime,
 } from "./core/runtime/time-runtime";
 import {
-} from "./core/runtime/event-runtime";
-import {
   createPrototypeCharactersForStoryStage,
 } from "./content/prototype-world";
 import { getZhuYuanzhangCitySceneMappingByCityId } from "./content/city-scene-mappings";
@@ -1018,6 +1016,7 @@ function createHouseRuntimeInstance(): HouseRuntimeBridge {
     houseDefinitions: activeContentContext.houses,
     playerCharacterId: currentPlayerCharacterId,
     eventDefinitionsById: activeContentContext.storyContent.eventDefinitionsById,
+    eventBindingsById: activeContentContext.storyContent.eventBindingsById,
     sceneDefinitionsById: activeContentContext.storyContent.sceneDefinitionsById,
     activityDefinitionsById:
       activeContentContext.storyContent.activityDefinitionsById,

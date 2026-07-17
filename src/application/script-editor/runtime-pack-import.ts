@@ -8,6 +8,9 @@ import {
   normalizeScriptEditorCityRecord,
 } from "./city-building-authoring";
 import { normalizeScriptEditorPersonRecord } from "./person-authoring";
+import {
+  normalizeScriptEditorEventBindingRecord,
+} from "./story-dialogue-event-authoring";
 import { createDraftScriptEditorProjectCompletionState } from "./project-completion-state";
 import {
   SCRIPT_EDITOR_PROJECT_MANIFEST_FILE,
@@ -241,6 +244,7 @@ export function importScenarioPackToScriptEditorProject(
     ),
     cityEntries: pack.cityEntries ?? [],
     events: mapImportedEvents(pack.events ?? []),
+    eventBindings: mapImportedEventBindings(rawPack),
     scenes: pack.scenes ?? [],
     quests: pack.tasks ?? [],
     activities: pack.activities ?? [],
@@ -300,9 +304,6 @@ function createStoryPackRecord(
     rawPack.tags.every((tag) => typeof tag === "string")
       ? { tags: [...rawPack.tags] as string[] }
       : {}),
-    ...(Array.isArray(rawPack.events)
-      ? { runtimeEvents: cloneJsonCompatibleValue(rawPack.events) }
-      : {}),
     ...(compatibilityImportResidue == null
       ? {}
       : { compatibilityImport: compatibilityImportResidue }),
@@ -317,17 +318,17 @@ function mapImportedEvents(events: EventDefinition[]): ScriptEditorEventRecord[]
       triggerTiming?: ScriptEditorEventTriggerTiming;
       repeatable?: boolean;
     };
-    const triggerScope = eventDefinition.trigger?.scope;
-    const importedConditions = Array.isArray(eventDefinition.conditions)
-      ? eventDefinition.conditions
-      : [];
 
     return {
       id: eventDefinition.id,
       title: normalizeImportedEventTitle(eventDefinition),
       description: buildImportedEventDescription(importedEvent),
-      triggerTiming:
-        importedEvent.triggerTiming ?? mapImportedEventTriggerTiming(eventDefinition.trigger?.timing),
+      chapterId: eventDefinition.chapterId,
+      occurrence: eventDefinition.occurrence,
+      entrySceneId: eventDefinition.entrySceneId,
+      participants: eventDefinition.participants ?? [],
+      tags: eventDefinition.tags ?? [],
+      triggerTiming: importedEvent.triggerTiming ?? "manual",
       repeatable:
         importedEvent.repeatable === true || eventDefinition.occurrence === "repeatable",
       nextEventId: eventDefinition.nextEventId ?? "",
@@ -340,21 +341,36 @@ function mapImportedEvents(events: EventDefinition[]): ScriptEditorEventRecord[]
       relations: {
         storyNodeId: "",
         personIds: (eventDefinition.participants ?? []).map((participant) => participant.characterId),
-        cityIds: triggerScope?.cityId != null ? [triggerScope.cityId] : [],
-        buildingIds: triggerScope?.houseId != null ? [triggerScope.houseId] : [],
+        cityIds: [],
+        buildingIds: [],
       },
       previewSummary: {
         previewNotes:
           typeof eventDefinition.entrySceneId === "string" && eventDefinition.entrySceneId.length > 0
             ? `Imported runtime entry scene: ${eventDefinition.entrySceneId}`
             : "",
-        validationNotes:
-          importedConditions.length > 0
-            ? `Original runtime event carries ${importedConditions.length} condition nodes that still require bounded translation.`
-            : "",
+        validationNotes: "",
       },
     };
   });
+}
+
+function mapImportedEventBindings(
+  rawPack: Record<string, unknown>
+): ScriptEditorProjectDefinition["eventBindings"] {
+  if (!Array.isArray(rawPack.eventBindings)) {
+    return [];
+  }
+
+  return rawPack.eventBindings
+    .filter(
+      (binding): binding is Record<string, unknown> =>
+        binding != null &&
+        typeof binding === "object" &&
+        !Array.isArray(binding) &&
+        typeof binding.id === "string"
+    )
+    .map((binding) => normalizeScriptEditorEventBindingRecord(binding as never));
 }
 
 function normalizeImportedEventTitle(eventDefinition: EventDefinition): string {
@@ -385,19 +401,6 @@ function buildImportedEventDescription(
     summaryParts.push(`Next event ${eventDefinition.nextEventId}.`);
   }
   return summaryParts.join(" ");
-}
-
-function mapImportedEventTriggerTiming(
-  timing?: EventDefinition["trigger"]["timing"]
-): ScriptEditorEventTriggerTiming {
-  switch (timing) {
-    case "city-enter":
-      return "city-enter";
-    case "house-enter":
-      return "building-enter";
-    default:
-      return "manual";
-  }
 }
 
 function mapTextEntries(

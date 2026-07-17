@@ -2,6 +2,7 @@ import type { ActivityDefinition } from "../../domain/activity";
 import type { CityDefinition } from "../../domain/city";
 import type { CityNpcPoolDefinition } from "../../domain/city-npc";
 import type { ContentPackDefinition } from "../../domain/content-pack";
+import type { EventBinding } from "../../domain/event";
 import type { HouseDefinition } from "../../domain/house";
 import {
   mergeHouseModuleDefaults,
@@ -12,6 +13,7 @@ export type DefaultRuntimeContent = {
   activityDefinitions: ActivityDefinition[];
   cities: CityDefinition[];
   houses: HouseDefinition[];
+  eventBindings: EventBinding[];
   cityNpcPools: CityNpcPoolDefinition[];
   houseModuleDefaults: HouseModuleDefaults;
   textEntriesById: Record<string, string>;
@@ -21,6 +23,7 @@ export const defaultRuntimeContent: DefaultRuntimeContent = {
   activityDefinitions: [],
   cities: [],
   houses: [],
+  eventBindings: [],
   cityNpcPools: [],
   houseModuleDefaults: {},
   textEntriesById: {},
@@ -36,6 +39,7 @@ export async function loadDefaultRuntimeContent(
       replaceArrayContents(defaultRuntimeContent.activityDefinitions, pack.activities ?? []);
       replaceArrayContents(defaultRuntimeContent.cities, pack.cities ?? []);
       replaceArrayContents(defaultRuntimeContent.houses, pack.houses ?? []);
+      replaceArrayContents(defaultRuntimeContent.eventBindings, pack.eventBindings ?? []);
       replaceArrayContents(defaultRuntimeContent.cityNpcPools, pack.cityNpcPools ?? []);
       replaceHouseModuleDefaults(
         defaultRuntimeContent.houseModuleDefaults,

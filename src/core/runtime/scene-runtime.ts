@@ -1,14 +1,17 @@
 import type { ActivityDefinition } from "../../domain/activity";
 import type { CharacterDefinition } from "../../domain/character";
-import type { EventDefinition, EventTriggerTiming } from "../../domain/event";
+import type { EventBinding, EventDefinition } from "../../domain/event";
 import type { GameState } from "../../domain/game-state";
 import type { SceneDefinition } from "../../domain/action";
 import { runSceneUntilPause } from "../../application/scene/scene-runner";
+import {
+  triggerStoryEvents,
+  type StoryTriggerTiming,
+} from "../../application/story/story-runtime";
 import type {
   SceneRuntimeInput,
   SceneRuntimeResult,
 } from "../contracts/scene-runtime";
-import { runStoryEventRuntime } from "./event-runtime";
 import { createSceneSession } from "./scene-session";
 
 export function runSceneFromEvent(input: SceneRuntimeInput): SceneRuntimeResult {
@@ -30,10 +33,11 @@ export function runSceneFromEvent(input: SceneRuntimeInput): SceneRuntimeResult 
 }
 
 export function runStoryTriggerRuntime(input: {
-  timing: EventTriggerTiming;
+  timing: StoryTriggerTiming;
   state: GameState;
   characterDefinitions: CharacterDefinition[];
   eventDefinitionsById: Record<string, EventDefinition>;
+  eventBindingsById?: Record<string, EventBinding>;
   sceneDefinitionsById: Record<string, SceneDefinition>;
   activityDefinitionsById?: Record<string, ActivityDefinition>;
   textEntriesById?: Record<string, string>;
@@ -44,30 +48,43 @@ export function runStoryTriggerRuntime(input: {
   taskInputs: SceneRuntimeResult["taskInputs"];
   effects: SceneRuntimeResult["effects"];
 } {
-  const eventRuntimeResult = runStoryEventRuntime({
-    timing: input.timing,
-    state: input.state,
-    characterDefinitions: input.characterDefinitions,
-    eventDefinitionsById: input.eventDefinitionsById,
-  });
+  const storyResult = triggerStoryEvents(
+    {
+      state: input.state,
+      characterDefinitions: input.characterDefinitions,
+    },
+    {
+      eventDefinitionsById: input.eventDefinitionsById,
+      eventBindingsById: input.eventBindingsById,
+      sceneDefinitionsById: input.sceneDefinitionsById,
+      activityDefinitionsById: input.activityDefinitionsById,
+      textEntriesById: input.textEntriesById,
+    },
+    {
+      timing: input.timing,
+      cityId: input.state.world.currentCityId,
+      ...(input.state.world.currentHouseId == null
+        ? {}
+        : { houseId: input.state.world.currentHouseId }),
+    }
+  );
 
-  if (eventRuntimeResult.activation?.sceneId == null) {
+  const activeEventId = storyResult.state.scene.activeEventId;
+  if (activeEventId == null) {
     return {
-      state: eventRuntimeResult.state,
-      characterDefinitions: eventRuntimeResult.characterDefinitions,
+      state: storyResult.state,
+      characterDefinitions: storyResult.characterDefinitions,
       session: null,
       taskInputs: [],
       effects: [],
     };
   }
 
-  return runSceneFromEvent({
-    state: eventRuntimeResult.state,
-    characterDefinitions: eventRuntimeResult.characterDefinitions,
-    sceneDefinitionsById: input.sceneDefinitionsById,
-    eventDefinitionsById: input.eventDefinitionsById,
-    activityDefinitionsById: input.activityDefinitionsById,
-    textEntriesById: input.textEntriesById,
-    taskInputs: eventRuntimeResult.candidate?.taskInputs ?? [],
-  });
+  return {
+    state: storyResult.state,
+    characterDefinitions: storyResult.characterDefinitions,
+    session: createSceneSession(storyResult.state),
+    taskInputs: input.eventDefinitionsById[activeEventId]?.taskInputs ?? [],
+    effects: [],
+  };
 }

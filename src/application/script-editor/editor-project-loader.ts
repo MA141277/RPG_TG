@@ -11,6 +11,10 @@ import {
 } from "../../domain/script-editor-project";
 import { normalizeScriptEditorProjectCompletionState } from "./project-completion-state";
 
+const OPTIONAL_SCRIPT_EDITOR_PROJECT_FILE_KEYS = new Set<ScriptEditorProjectFileKey>([
+  "eventBindings",
+]);
+
 type ScriptEditorProjectImportFileEntry = {
   file: File;
   relativePath: string;
@@ -51,6 +55,12 @@ export function parseScriptEditorProjectManifest(
   assertObject(value.files, "script editor project files");
 
   for (const fileKey of SCRIPT_EDITOR_PROJECT_FILE_KEYS) {
+    if (
+      OPTIONAL_SCRIPT_EDITOR_PROJECT_FILE_KEYS.has(fileKey) &&
+      value.files[fileKey] == null
+    ) {
+      continue;
+    }
     assertString(
       value.files[fileKey],
       `script editor project files.${fileKey}`
@@ -86,6 +96,10 @@ export function parseScriptEditorProject(
   assertEntityRecordArray(value.buildings, "script editor project buildings");
   assertEntityRecordArray(value.cityEntries, "script editor project cityEntries");
   assertEntityRecordArray(value.events, "script editor project events");
+  assertEntityRecordArray(
+    value.eventBindings ?? [],
+    "script editor project eventBindings"
+  );
   assertEntityRecordArray(value.scenes, "script editor project scenes");
   assertEntityRecordArray(value.quests, "script editor project quests");
   assertEntityRecordArray(value.activities, "script editor project activities");
@@ -128,6 +142,7 @@ export function parseScriptEditorProject(
     completionState: normalizeScriptEditorProjectCompletionState(
       value.completionState
     ),
+    eventBindings: (value.eventBindings ?? []) as ScriptEditorProjectDefinition["eventBindings"],
   };
 }
 
@@ -183,10 +198,17 @@ async function hydrateManifestFromFiles(
   const manifestDirectoryPath = getImportDirectoryPath(manifestFilePath);
   const resolvedEntries = await Promise.all(
     SCRIPT_EDITOR_PROJECT_FILE_KEYS.map(async (fileKey) => {
+      const manifestFilePath = manifest.files[fileKey];
+      if (
+        manifestFilePath == null &&
+        OPTIONAL_SCRIPT_EDITOR_PROJECT_FILE_KEYS.has(fileKey)
+      ) {
+        return [fileKey, []] as const;
+      }
       const importedFile = resolveImportedFileEntry(
         indexedFiles,
         manifestDirectoryPath,
-        manifest.files[fileKey]
+        manifestFilePath
       );
       return [fileKey, JSON.parse(await importedFile.file.text())] as const;
     })
