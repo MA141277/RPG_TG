@@ -80,11 +80,15 @@ export type MapViewModel = {
   };
   primaryImageUrl: string | null;
   regionOverlayImageUrl: string | null;
+  campaignHexGridUrl: string | null;
+  campaignVegetationRulesUrl: string | null;
   heightmapImageUrl: string | null;
   hexTextureAtlasImageUrl: string | null;
   materialTextureImageUrl: string | null;
   grassTextureImageUrl: string | null;
   sandTextureImageUrl: string | null;
+  rockTextureImageUrl: string | null;
+  snowTextureImageUrl: string | null;
   waterTextureImageUrl: string | null;
   cloudNoiseTextureImageUrl: string | null;
   revealedHexKeys: string[];
@@ -179,6 +183,9 @@ export function createMapViewModel(input: {
     displaySize,
     primaryImageUrl: input.mapDefinition.primaryImageUrl ?? null,
     regionOverlayImageUrl: input.mapDefinition.regionOverlayImageUrl ?? null,
+    campaignHexGridUrl: input.mapDefinition.campaignHexGridUrl ?? null,
+    campaignVegetationRulesUrl:
+      input.mapDefinition.campaignVegetationRulesUrl ?? null,
     heightmapImageUrl:
       input.mapDefinition.layers?.find((layer) => layer.id === "map_heights")
         ?.imageUrl ?? null,
@@ -198,6 +205,12 @@ export function createMapViewModel(input: {
         ?.imageUrl ?? null,
     sandTextureImageUrl:
       input.mapDefinition.layers?.find((layer) => layer.id === "map_sand_texture")
+        ?.imageUrl ?? null,
+    rockTextureImageUrl:
+      input.mapDefinition.layers?.find((layer) => layer.id === "map_rock_texture")
+        ?.imageUrl ?? null,
+    snowTextureImageUrl:
+      input.mapDefinition.layers?.find((layer) => layer.id === "map_snow_texture")
         ?.imageUrl ?? null,
     waterTextureImageUrl:
       input.mapDefinition.layers?.find((layer) => layer.id === "map_water_noise")
@@ -543,8 +556,12 @@ function renderCampaignMapVisualLayer(
           data-map-texture-url="${model.hexTextureAtlasImageUrl}"
           data-map-height-url="${model.heightmapImageUrl}"
           data-map-material-url="${model.materialTextureImageUrl}"
+          ${model.campaignHexGridUrl == null ? "" : `data-map-hex-grid-url="${model.campaignHexGridUrl}"`}
+          ${model.campaignVegetationRulesUrl == null ? "" : `data-map-vegetation-rules-url="${model.campaignVegetationRulesUrl}"`}
           ${model.grassTextureImageUrl == null ? "" : `data-map-grass-texture-url="${model.grassTextureImageUrl}"`}
           ${model.sandTextureImageUrl == null ? "" : `data-map-sand-texture-url="${model.sandTextureImageUrl}"`}
+          ${model.rockTextureImageUrl == null ? "" : `data-map-rock-texture-url="${model.rockTextureImageUrl}"`}
+          ${model.snowTextureImageUrl == null ? "" : `data-map-snow-texture-url="${model.snowTextureImageUrl}"`}
           ${model.waterTextureImageUrl == null ? "" : `data-map-water-texture-url="${model.waterTextureImageUrl}"`}
           ${cityDepthMeshAttributes}
           aria-label="${model.mapName} terrain"
@@ -560,6 +577,7 @@ function renderCampaignMapVisualLayer(
           data-map-texture-url="${model.hexTextureAtlasImageUrl}"
           data-map-height-url="${model.heightmapImageUrl}"
           data-map-material-url="${model.materialTextureImageUrl}"
+          ${model.campaignHexGridUrl == null ? "" : `data-map-hex-grid-url="${model.campaignHexGridUrl}"`}
           aria-hidden="true"
         ></canvas>
       `

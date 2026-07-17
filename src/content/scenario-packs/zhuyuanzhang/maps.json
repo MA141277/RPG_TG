@@ -7696,6 +7696,22 @@
         "imageUrl": "./assets/maps/campaign-sand-texture.png"
       },
       {
+        "id": "map_rock_texture",
+        "label": "Campaign rock texture",
+        "width": 1254,
+        "height": 1254,
+        "description": "rock.png",
+        "imageUrl": "./assets/maps/campaign-rock-texture.png"
+      },
+      {
+        "id": "map_snow_texture",
+        "label": "Campaign snow texture",
+        "width": 768,
+        "height": 768,
+        "description": "snow.png",
+        "imageUrl": "./assets/maps/campaign-snow-texture.png"
+      },
+      {
         "id": "map_water_noise",
         "label": "Water noise texture",
         "width": 512,
@@ -7736,6 +7752,8 @@
       "resourceSummary": "wool:56; iron:55; dogs:40; sugar:38; silver:35; marble:30; fish:25; furs:24; amber:23; camels:23"
     },
     "primaryImageUrl": "./assets/maps/HD.png",
-    "regionOverlayImageUrl": "./assets/maps/yuanmo-map-regions.png"
+    "regionOverlayImageUrl": "./assets/maps/yuanmo-map-regions.png",
+    "campaignHexGridUrl": "./assets/maps/yuanmo-campaign-hex-grid.json",
+    "campaignVegetationRulesUrl": "./assets/maps/yuanmo-campaign-vegetation-rules.json"
   }
 ]

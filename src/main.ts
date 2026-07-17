@@ -244,6 +244,7 @@ import {
   DEFAULT_CAMPAIGN_CITY_DEPTH_MESH_TRANSFORM,
   DEFAULT_CAMPAIGN_TERRAIN_STYLE,
   createCampaignTerrainCameraCenteredOnCoordinate,
+  getCampaignTerrainCameraTiltRadiansForScale,
   getCampaignTerrainTravelGrid,
   isCampaignTerrainUvPassable,
   projectCampaignTerrainUvToClientPointAtHeightAnchor,
@@ -261,8 +262,9 @@ const GAME_VIEWPORT_WIDTH = 1600;
 const GAME_VIEWPORT_HEIGHT = 900;
 const MAP_DEBUG_MIN_SCALE = 0.5;
 const MAP_DEBUG_MAX_SCALE = Number.POSITIVE_INFINITY;
-const MAP_DEBUG_SCALE_STEP_RATIO = 1.08;
+const MAP_DEBUG_SCALE_STEP_RATIO = 1.3;
 const INITIAL_MAP_DEBUG_ANIMATION_DURATION_MS = 250;
+const CAMPAIGN_MAP_ZOOM_ANIMATION_DURATION_MS = 220;
 const LOADING_SCREEN_SIMULATION_DURATION_MS = 350;
 const CAMPAIGN_TRAVEL_SPEED_SCALE = 0.6;
 const CAMPAIGN_TRAVEL_MS_PER_MAP_UNIT = 55 / CAMPAIGN_TRAVEL_SPEED_SCALE;
@@ -295,6 +297,13 @@ type CampaignMapDebugState = {
   scale: number;
   offsetX: number;
   offsetY: number;
+};
+
+type CampaignMapZoomAnimationState = {
+  frameId: number | null;
+  startedAtMs: number | null;
+  from: CampaignMapDebugState;
+  to: CampaignMapDebugState;
 };
 
 type BackgroundMusicMode = "opening" | "in-game";
@@ -563,6 +572,7 @@ let hasAppliedInitialCampaignMapDebug = false;
 let hasStartedInitialCampaignMapDebugAnimation = false;
 let initialCampaignMapDebugAnimationFrame: number | null = null;
 let initialCampaignMapDebugAnimationStartTime: number | null = null;
+let campaignMapZoomAnimationState: CampaignMapZoomAnimationState | null = null;
 let activeMapIntroOverlay: HTMLElement | null = null;
 let activeBackgroundMusicMode: BackgroundMusicMode | null = null;
 let campaignMapScaleDraftValue: string | null = null;
@@ -2747,6 +2757,7 @@ function resetMainGameRuntime(): void {
 
   initialCampaignMapDebugAnimationFrame = null;
   initialCampaignMapDebugAnimationStartTime = null;
+  cancelCampaignMapZoomAnimation();
   hasAppliedInitialCampaignMapDebug = false;
   hasStartedInitialCampaignMapDebugAnimation = false;
   campaignMapDebugState = {
@@ -3783,6 +3794,7 @@ appElement.addEventListener("pointerdown", (event) => {
     return;
   }
 
+  cancelCampaignMapZoomAnimation();
   campaignMapDragState = {
     pointerId: event.pointerId,
     startClientX: event.clientX,
@@ -5226,6 +5238,8 @@ function hideCampaignHoverHexOutline(): void {
   polygonElement?.setAttribute("points", "");
 }
 
+const CAMPAIGN_HOVER_HEX_EDGE_SEGMENTS = 5;
+
 function updateCampaignHoverHexOutline(event: PointerEvent): void {
   if (
     appState.gameState.ui.currentView !== "map" ||
@@ -5316,14 +5330,19 @@ function updateCampaignHoverHexOutline(event: PointerEvent): void {
     coordinateSpace,
     radiusScale: 1.015,
   });
+  const hoverHexOutlineCoordinates = createTerrainFollowingHexOutlineCoordinates(
+    hoverHexPolygon
+  );
   const points: string[] = [];
-  for (const cornerCoordinate of hoverHexPolygon) {
+  for (const outlineCoordinate of hoverHexOutlineCoordinates) {
+    const outlineU = outlineCoordinate.x / coordinateSpace.width;
+    const outlineV = 1 - outlineCoordinate.y / coordinateSpace.height;
     const projectedPoint = projectCampaignTerrainUvToClientPointAtHeightAnchor(
       campaignMap,
-      cornerCoordinate.x / coordinateSpace.width,
-      1 - cornerCoordinate.y / coordinateSpace.height,
-      hoverCenterU,
-      hoverCenterV
+      outlineU,
+      outlineV,
+      outlineU,
+      outlineV
     );
     if (projectedPoint == null) {
       hideCampaignHoverHexOutline();
@@ -5341,6 +5360,30 @@ function updateCampaignHoverHexOutline(event: PointerEvent): void {
   );
   polygonElement.setAttribute("points", points.join(" "));
   hoverOutline.removeAttribute("hidden");
+}
+
+function createTerrainFollowingHexOutlineCoordinates(
+  polygon: GridCoordinate[]
+): GridCoordinate[] {
+  const outlineCoordinates: GridCoordinate[] = [];
+
+  for (let cornerIndex = 0; cornerIndex < polygon.length; cornerIndex += 1) {
+    const from = polygon[cornerIndex];
+    const to = polygon[(cornerIndex + 1) % polygon.length];
+    if (from == null || to == null) {
+      continue;
+    }
+
+    for (let segmentIndex = 0; segmentIndex < CAMPAIGN_HOVER_HEX_EDGE_SEGMENTS; segmentIndex += 1) {
+      const amount = segmentIndex / CAMPAIGN_HOVER_HEX_EDGE_SEGMENTS;
+      outlineCoordinates.push({
+        x: from.x + (to.x - from.x) * amount,
+        y: from.y + (to.y - from.y) * amount,
+      });
+    }
+  }
+
+  return outlineCoordinates;
 }
 
 function getLastTravelPathCoordinate(path: GridCoordinate[]): GridCoordinate {
@@ -5864,6 +5907,7 @@ function handleCampaignMapDebugAction(action: string | undefined): void {
   }
 
   if (action === "reset") {
+    cancelCampaignMapZoomAnimation();
     setCampaignMapDebugState(campaignMapDebugHomeState);
     return;
   }
@@ -6287,6 +6331,10 @@ function syncMapIntroOverlay(): void {
 }
 
 function zoomCampaignMapAtScreenCenter(nextScale: number): void {
+  startCampaignMapZoomAnimation(createCampaignMapZoomTargetState(nextScale));
+}
+
+function createCampaignMapZoomTargetState(nextScale: number): CampaignMapDebugState {
   const clampedScale = clamp(
     nextScale,
     MAP_DEBUG_MIN_SCALE,
@@ -6294,12 +6342,87 @@ function zoomCampaignMapAtScreenCenter(nextScale: number): void {
   );
   const currentScale = Math.max(campaignMapDebugState.scale, 0.0001);
   const scaleRatio = clampedScale / currentScale;
+  const currentTiltCos = Math.cos(
+    getCampaignTerrainCameraTiltRadiansForScale(currentScale)
+  );
+  const nextTiltCos = Math.cos(
+    getCampaignTerrainCameraTiltRadiansForScale(clampedScale)
+  );
+  const safeCurrentTiltCos =
+    Math.abs(currentTiltCos) < 0.0001 ? 1 : currentTiltCos;
 
-  setCampaignMapDebugState({
+  return {
     scale: clampedScale,
     offsetX: campaignMapDebugState.offsetX * scaleRatio,
-    offsetY: campaignMapDebugState.offsetY * scaleRatio,
-  });
+    offsetY:
+      campaignMapDebugState.offsetY *
+      scaleRatio *
+      (nextTiltCos / safeCurrentTiltCos),
+  };
+}
+
+function startCampaignMapZoomAnimation(targetState: CampaignMapDebugState): void {
+  cancelCampaignMapZoomAnimation();
+
+  campaignMapZoomAnimationState = {
+    frameId: null,
+    startedAtMs: null,
+    from: { ...campaignMapDebugState },
+    to: targetState,
+  };
+
+  const animate = (timestamp: number) => {
+    if (campaignMapZoomAnimationState == null) {
+      return;
+    }
+    if (campaignMapZoomAnimationState.startedAtMs == null) {
+      campaignMapZoomAnimationState.startedAtMs = timestamp;
+    }
+
+    const elapsedMs = timestamp - campaignMapZoomAnimationState.startedAtMs;
+    const progress = clamp(
+      elapsedMs / CAMPAIGN_MAP_ZOOM_ANIMATION_DURATION_MS,
+      0,
+      1
+    );
+    const easedProgress = easeOutCubic(progress);
+    setCampaignMapDebugState(
+      interpolateCampaignMapState(
+        campaignMapZoomAnimationState.from,
+        campaignMapZoomAnimationState.to,
+        easedProgress
+      )
+    );
+
+    if (progress < 1) {
+      campaignMapZoomAnimationState.frameId = window.requestAnimationFrame(animate);
+      return;
+    }
+
+    setCampaignMapDebugState(campaignMapZoomAnimationState.to);
+    campaignMapZoomAnimationState = null;
+  };
+
+  campaignMapZoomAnimationState.frameId = window.requestAnimationFrame(animate);
+}
+
+function cancelCampaignMapZoomAnimation(): void {
+  if (campaignMapZoomAnimationState?.frameId != null) {
+    window.cancelAnimationFrame(campaignMapZoomAnimationState.frameId);
+  }
+  campaignMapZoomAnimationState = null;
+}
+
+function interpolateCampaignMapState(
+  from: CampaignMapDebugState,
+  to: CampaignMapDebugState,
+  progress: number
+): CampaignMapDebugState {
+  return {
+    scale: from.scale + (to.scale - from.scale) * progress,
+    offsetX: from.offsetX + (to.offsetX - from.offsetX) * progress,
+    offsetY: from.offsetY + (to.offsetY - from.offsetY) * progress,
+  };
 }
 
 function setCampaignMapDebugState(nextState: CampaignMapDebugState): void {
@@ -6459,6 +6582,12 @@ function endCampaignMapDrag(event: PointerEvent): void {
   if (shouldUpdateHoverOutline) {
     updateCampaignHoverHexOutline(event);
   }
+}
+
+function easeOutCubic(value: number): number {
+  const clampedValue = clamp(value, 0, 1);
+
+  return 1 - (1 - clampedValue) ** 3;
 }
 
 function clamp(value: number, min: number, max: number): number {

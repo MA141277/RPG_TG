@@ -1,6 +1,5 @@
 import fallbackCloudNoiseTextureUrl from "../../../assets/yuanmo-map/yuanmo-fog-noise.png?url";
 import {
-  hexToCoordinate,
   hexToCoordinatePolygon,
   type CoordinateSpace,
   type HexCoordinate,
@@ -8,7 +7,7 @@ import {
 import {
   getCampaignTerrainMapCoupledCamera,
   getCampaignTerrainProjectionSignature,
-  projectCampaignTerrainUvToClientPointAtHeightAnchor,
+  projectCampaignTerrainUvToClientPointAtCloudRevealHeight,
 } from "./campaign-terrain-webgl";
 import cloudFragmentShaderRaw from "./shaders/campaign-cloud.frag.glsl?raw";
 import cloudVertexShaderRaw from "./shaders/campaign-cloud.vert.glsl?raw";
@@ -637,10 +636,6 @@ function buildRevealMaskPolygons(input: {
 }): RevealMaskPolygon[] {
   const polygons: RevealMaskPolygon[] = [];
   for (const hex of input.descriptor.revealedHexes) {
-    const heightAnchorCoordinate = hexToCoordinate(
-      hex,
-      input.descriptor.coordinateSpace
-    );
     const polygon = hexToCoordinatePolygon({
       hex,
       coordinateSpace: input.descriptor.coordinateSpace,
@@ -653,7 +648,6 @@ function buildRevealMaskPolygons(input: {
           projectionRoot: input.projectionRoot,
           descriptor: input.descriptor,
           coordinate: point,
-          heightAnchorCoordinate,
         })
       )
       .filter((point): point is RevealMaskPoint => point != null);
@@ -814,25 +808,15 @@ function projectCoordinateToRevealMaskPoint(input: {
   projectionRoot: ParentNode;
   descriptor: CloudRevealMaskDescriptor;
   coordinate: { x: number; y: number };
-  heightAnchorCoordinate: { x: number; y: number };
 }): { x: number; y: number } | null {
   const u =
     input.coordinate.x / Math.max(input.descriptor.coordinateSpace.width, 1);
   const v =
     1 - input.coordinate.y / Math.max(input.descriptor.coordinateSpace.height, 1);
-  const heightU =
-    input.heightAnchorCoordinate.x /
-    Math.max(input.descriptor.coordinateSpace.width, 1);
-  const heightV =
-    1 -
-    input.heightAnchorCoordinate.y /
-      Math.max(input.descriptor.coordinateSpace.height, 1);
-  const projectedPoint = projectCampaignTerrainUvToClientPointAtHeightAnchor(
+  const projectedPoint = projectCampaignTerrainUvToClientPointAtCloudRevealHeight(
     input.projectionRoot,
     u,
-    v,
-    heightU,
-    heightV
+    v
   );
   if (projectedPoint == null || !Number.isFinite(projectedPoint.clientX)) {
     return null;

@@ -854,6 +854,10 @@
   display: none;
 }
 
+.c-campaign-map__cloud.is-disabled {
+  display: none;
+}
+
 .c-campaign-map__hover-hex {
   position: absolute;
   inset: 0;

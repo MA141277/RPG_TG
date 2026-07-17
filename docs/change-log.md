@@ -40,7 +40,234 @@
 ### Impact
 - 默认活动 fallback 与寺庙工作共用同一套弹珠机制；得分仍通过统一 activity result 写回，并由寺庙模块按原有贡献、体力和时间规则结算。
 - 同一玩法的不同工作入口会分别保存最高分，例如抄经和扫地互不覆盖，快速完成不降低历史最高分。
+## 2026-07-16 Campaign Terrain Atlas Luma Removal
 
+### Changed
+- `campaign-terrain.frag.glsl` 移除原始地表 atlas 的亮度采样和 `atlasDetailLuma` 乘法，terrain 最终明暗不再继承旧底图自带的阴影/高光痕迹。
+- `campaign-terrain-webgl.ts` 同步移除 terrain program 的 `uTexture` uniform 校验和绑定；原始地图纹理仍可作为水体贴图缺失时的 fallback 资源，但不再输入陆地表面明暗链路。
+
+### Impact
+- 该调整只改变 campaign terrain 的视觉着色来源，不改变 Hex 数据图、最终 `heightSamples`、通行、寻路、点击、探索、云洞、山脉/森林语义或材质纹理资产。
+
+## 2026-07-16 Campaign Mountain Shape Base/Delta Split
+
+### Changed
+- `campaign-terrain-webgl.ts` 将山体高度生成拆成“山地底面”和“山体增量”：先从非山地陆地高度向山脉格扩散并平滑出 `mountainFloorHeightSamples`，再用 Hex `referenceHeight` 调节山体增量强度和高度上限。
+- 山脉主形状从单 Hex 本地 relief 改为世界空间连续峰场：多个不与六边形对齐的长轴峰体生成连续山体/山脊，山脉格只负责裁剪允许出现山体的区域。
+- 旧的 `createMountainCellRelief` 主路径移除，避免相邻山脉格退回“每个 Hex 一个鼓包”的结构；山脉外边缘仍使用既有边界高度因子压低。
+
+### Impact
+- 该调整只改变 CPU 派生 `heightSamples` 的山体几何形状，不改 shader 雪线、岩石/雪顶材质、通行、寻路、点击、探索、云洞或森林语义。
+
+## 2026-07-16 Campaign Hex Reference Height Source
+
+### Changed
+- `campaign-hex-grid-v1` 的 cell 新增 `referenceHeight` 字段，生成器通过 `heightSampler` 在生成 Hex JSON 时从 `map_heights` 多点采样并固化每个格子的参考高度；世界地图原图采样到此结束。
+- `campaign-terrain-webgl.ts` 在存在 `campaignHexGridUrl` 时不再把 `map_heights` 采样成覆盖整张地图的运行时高度场，而是从 Hex `referenceHeight` 展开临时渲染高度 samples，再在 `terrain: "山脉"` 格内生成程序化山体。
+- 山脉和非山脉的高度生成、森林海拔裁剪、城市/玩家/marker 投影仍共享最终 `heightSamples`，但这些 samples 是 Hex 数据图派生的 renderer 临时几何输入，不是原始世界地图高度事实。
+
+### Impact
+- 运行时 campaign 地形高度的权威输入从原始 `map_heights` 图片切换为已保存 Hex 数据图；旧地图缺少 `campaignHexGridUrl` 时仍保留直接采样 `map_heights` 的回退路径。
+
+## 2026-07-16 Campaign Mountain Eroded fBm Relief
+
+### Changed
+- `campaign-terrain-webgl.ts` 的山体高度细节改为梯度衰减 fBm：每个 octave 会读取局部噪声梯度，坡度越大的区域后续高频噪声权重越低，用近似侵蚀的方式削弱陡坡上的碎刺和针状峰。
+- 山脉主脊从单段 `max()` 峰值改为多控制段连续累积，并降低碎岩/支脊高度贡献；接近高度上限的山顶会经过软压顶处理，减少尖顶像穿模一样顶出的效果。
+- 山脉主体 relief 改为世界空间连续山脊场：多个方向的拉伸 ridged fBm 共同生成主脊、次脊和切沟，单格本地 relief 只保留少量局部变化，避免每个 Hex 生成一个独立鼓包。
+- terrain mesh 采样步长从 2 调整为 1，法线采样半径同步收窄，降低陡坡和雪顶处的三角分面感，让山脊细节能被几何和光照读出来。
+
+### Impact
+- 该调整只改变山脉 renderer 派生高度形状，不改变 Hex `terrain: "山脉"`、岩石/雪顶语义、通行、寻路、点击、探索、云洞或森林生成规则。
+
+## 2026-07-16 Campaign Non-Mountain Height Flattening
+
+### Changed
+- `campaign-terrain-webgl.ts` 在基础高度平滑和山脉高度生成之间新增非山脉陆地格平整化：按每个 Hex 的平均高度削弱格内起伏，并只在同一 Hex 内做小范围平滑，减少平原、草地、森林等非山地区域继承旧 `map_heights` 后出现的尖锐高低点。
+- 山脉格继续走既有山体 relief、岩石和雪顶规则；非山脉平整化不会改写 Hex `terrain` / `environment`，也不影响通行、寻路、点击、探索、云洞或森林语义。
+
+### Impact
+- 该调整只改变 terrain renderer 派生的最终视觉高度场，让非山地地块更平整；森林贴地高度、城市/玩家/marker 投影和地形法线会随最终 `heightSamples` 一起读取平整化后的结果。
+
+## 2026-07-16 Campaign Mountain Snow Caps
+
+### Added
+- 元末 campaign 地图新增 `map_snow_texture` 纯表现图层，内置地图和朱元璋 scenario pack 都注册 `campaign-snow-texture.png` 作为山脉雪顶材质输入。
+- `campaign-terrain-webgl.ts` 新增雪贴图加载、canvas 数据传递和 `uSnowHeightStart` / `uSnowHeightFull` uniforms，用于在 shader 中控制雪线起点和完全积雪高度。
+
+### Changed
+- `campaign-terrain.frag.glsl` 在既有山脉岩石材质之后追加雪顶层：雪只在 `terrain: "山脉"` 对应的 `mountainAmount` 内出现，并同时受 fragment 高度、坡面朝上程度和破碎噪声控制，形成类似文明的高处山顶积雪。
+
+### Impact
+- 雪顶是纯视觉材质层，不改变 Hex `terrain`、CPU 山体高度、通行、寻路、点击、探索、云洞、森林生成或山脚岩石过渡规则。
+
+## 2026-07-16 Campaign Vegetation Altitude Limit
+
+### Changed
+- `campaign-vegetation-rules-v1` 新增可选 `altitude.maxTerrainHeight` 视觉规则，元末森林规则当前由该字段配置海拔裁剪阈值；`tools/convert-campaign-vegetation-obj.mjs` 的默认 rules 输出同步写入该字段，避免重新转换自然景观素材时丢失海拔限制。
+- `campaign-terrain-webgl.ts` 在森林格中心可见性筛选和格内候选树点生成时，使用最终派生的 `heightSamples` 判断海拔是否超过 rules 上限；超过上限的森林视觉实例不再生成，全图适用，且被高度裁掉的候选树会消耗该格目标生成名额，不再重新抽点补生成。
+
+### Impact
+- 该限制只影响森林格上的植物视觉实例，不改写 Hex 数据图中的 `environment: "森林"`，也不改变通行、寻路、点击、探索、事件或山脉材质/高度规则。
+
+## 2026-07-15 Campaign Mountain Terrain Rock Material
+
+### Added
+- `campaign-hex-grid-v1` 生成器新增 `terrainSampler`：默认从 `map_ground_types` 进行 7 点多采样，匹配山地区域颜色后把陆地 hex 标记为 `terrain: "山脉"`，并把采样图层、颜色集合、命中阈值和 fallback terrain 写入 Hex 数据图，便于后续复现和扩展新的地形采样机制。
+- 元末 campaign 地图新增 `map_rock_texture` 图层，内置地图与朱元璋 scenario pack 都注册 `campaign-rock-texture.png` 作为山脉地表材质输入。
+
+### Changed
+- 重新生成 `yuanmo-campaign-hex-grid.json`：8509 个格中保留 4033 个陆地格，`terrain` 统计变为 6904 个“平原”和 1605 个“山脉”；`environment` 的森林/草地语义保持不变。
+- `uMaterialSemanticTexture` 的通道语义扩展为 R=land/water，G=mountain terrain mask，B 预留；terrain shader 读取 G 通道后在山脉格上混入岩石贴图，并用邻域采样与噪声软化山脉和普通地表之间的过渡。
+- `map-view.ts` 和 `campaign-terrain-webgl.ts` 会把 `map_rock_texture` 传入 terrain shader；缺少岩石图层时仍回退到现有陆地贴图，保证旧地图可以加载。
+- 山脉材质过渡改为“山脉格内部向内羽化”：当前 rounded Hex cell 不是 `terrain: "山脉"` 时岩石 mask 直接为 0；只有山脉格自身与非山脉邻格相接的边会向内侵蚀并露出普通地表，避免岩石贴图蔓延到其他地块。
+- 山脉真实高度从 fragment shader 假效果升级为 CPU 派生高度场：`campaign-terrain-webgl.ts` 先从 `map_heights` 生成通用参考高度，再只在 `terrain: "山脉"` 格内覆盖生成山体高度；相邻山脉格按整体连续处理，内部邻接边不压低，整片山脉外边界向内压低以降低边缘高点概率。
+- 山脉高度生成从“连续噪声抬高地表”细化为采样点级山体 relief：每个山脉 Hex 内部会按本地坐标生成多控制点主脊、支脊和碎岩噪声，`map_heights` 原始采样值直接作为山体基准高度，避免退化成每格一个随机高度或一个孤立峰值。
+- 移除上一版山脉专用高度对比度拉伸：局部噪声只在原始高度上追加有限细节，并用原始高度加少量余量作为上限，避免把不同原始高度的山脉重新映射到过度拉开的高度段。
+- terrain mesh 采样步长从 3 降到 2，法线采样半径同步收窄，让单个山脉 Hex 内的多个高度采样点能被真实几何和光照读出来，而不是被低密度三角面合并成粗糙山包。
+- 山脉形状改为参考文明式连续山体：CPU 高度场只负责主脊、支脊和沟壑 relief，并移除按单个 Hex 边缘衰减的 body mask，避免相邻山脉格被切成独立山包；terrain shader 回到既有 `getLocalMountainEdgeInset` 岩石边缘过渡，不再另做山脚或材质 body mask。当前只处理形状，不加入雪线/积雪贴图。
+- 最终 `heightSamples` 统一驱动 terrain mesh、重建法线、城市/玩家/marker/森林贴地高度和投影同步；非山脉格不执行山脉专用规则，只通过通用高度连续性与相邻高度自然衔接。
+
+### Impact
+- 山脉真实起伏和岩石贴图仍是 renderer 内视觉规则，不改变通行、寻路、点击、探索、云层 reveal 或森林造景密度。后续如果要让山脉影响移动、资源、视野或事件，应在 Hex 数据图的 `terrain` 语义上新增玩法规则，而不是让 shader 或派生高度反向驱动 gameplay。
+
+## 2026-07-15 Campaign Vegetation Shadow Direction
+
+### Changed
+- 森林树身 shader 和树影几何改为复用 terrain shader 的相机光照输入，并把树这类实体的可投影方向限制在相机前向半平面：树身明暗继续使用 `centerToFragment`、`uTerrainCameraLightHeight` 和 `uTerrainCameraLightHorizontalPull`，树影用树根投影点计算同一受限方向的反方向并通过当前 terrain camera 矩阵反投到地图平面，避免投影围绕树 360 度旋转而与树身阴影脱节。
+- 修正树影屏幕方向换算的符号：shader 显式区分 `vegetationLightDirection` 和其反向的 `vegetationShadowDirection`，CPU 投影几何只消费后者，避免投影落在树的受光面前方。
+- 按当前视觉校准要求，只对树影透明层追加屏幕 Y 方向翻转；树身自阴影 shader、森林密度和 terrain 光照参数保持不变。
+- 森林实例上限裁剪从“按视口中心距离排序后用满即停”改为屏幕分桶均匀预算：`maxVisibleInstances` 仍控制总实例数，但最小缩放下会在所有可见森林区域一起降密度，避免某些区域整片不显示树。
+
+### Impact
+- 该调整只影响森林树木的视觉受光和贴地投影方向。森林来源、密度、LOD、通行、寻路、点击、探索、岸线和云层语义不变。
+
+## 2026-07-15 Campaign Cloud Reveal Plane Projection
+
+### Changed
+- 云洞 reveal mask 从地形高度锚点投影改为 terrain camera 下的固定云洞参考高度投影：`campaign-cloud-webgl.ts` 只用已探索 hex、当前相机和统一参考高度对齐云洞，不再采样 `map_heights` 或沿用旧地形高度起伏，避免已探索区内被高度/旧 hex 错落切出残云。
+- `campaign-terrain-webgl.ts` 新增 `projectCampaignTerrainUvToClientPointAtCloudRevealHeight()`，专供云层 mask 等不应贴地但也不应落在最低平面的视觉层使用；原 `projectCampaignTerrainUvToClientPointAtHeightAnchor()` 保留给玩家、marker、hover 描边等需要贴地高度的交互/表现层。
+
+### Impact
+- 该调整只影响云层 reveal mask 的视觉裁切。探索状态、点击屏蔽、寻路、可踏足 hex 悬浮描边、marker/player 贴地投影和地形高度渲染不变。
+
+## 2026-07-15 Campaign Forest Vegetation Rules
+
+### Added
+- 新增 `campaign-vegetation-rules-v1` 森林造景规则资产：`src/content/scenario-packs/zhuyuanzhang/assets/maps/yuanmo-campaign-vegetation-rules.json` 绑定 `environment: "森林"`，配置 PineTree 变体、远景 / 中景 / 近景三档密度、LOD 阈值、最大可见实例数、边缘留白、marker/player/path 视觉避让半径和 vegetation shader 参数。
+- 新增 `campaign-vegetation-mesh-v1` 顶点色植被 mesh 资产：`src/content/scenario-packs/zhuyuanzhang/assets/vegetation/pine-tree-1..5.json` 由 `src/3dasset/obj/PineTree_*.obj/.mtl` 离线转换得到，材质色来自 MTL `Kd` 并由转换工具提亮到世界地图可读范围，运行时不直接解析 OBJ/MTL。
+- 新增 `tools/convert-campaign-vegetation-obj.mjs`，用于把自然景观 OBJ+MTL 源素材转换为可加载 mesh JSON，并生成森林 vegetation rules JSON。
+- 新增 `campaign-vegetation.vert.glsl` / `campaign-vegetation.frag.glsl`，在现有 campaign terrain WebGL renderer 内绘制森林实例，支持顶点色、地形同向相机光照和 LOD 可见性/密度控制。
+- 新增 `campaign-vegetation-shadow.vert.glsl` / `campaign-vegetation-shadow.frag.glsl`，按 rules 的 `shadow` 参数为每棵树绘制纯视觉贴地投影，投影方向由当前相机光照方向派生。
+
+### Changed
+- `MapDefinition` 新增 `campaignVegetationRulesUrl`；content pack loader、scenario pack URL loader 和导入目录 loader 都会解析该字段。导入目录 loader 会把 rules 内部的 `variant.meshUrl` 改写为 blob URL，保持外置包可加载。
+- `map-view.ts` 会把 vegetation rules URL 写入 terrain canvas；`campaign-terrain-webgl.ts` 读取 Hex 数据图中的 `environment: "森林"`，按规则在视口内展开树实例，并按缩放 LOD 控制远景/中景/近景密度。
+- 按世界地图俯视尺度修正森林模型表现：默认模型源从 `CommonTree_*.obj` 改为更接近立体体块的 `PineTree_*.obj`，`baseWorldScale` 进一步降到 `0.00105`，vegetation pass 保持不透明绘制，并移除森林树木的随风摇摆通道，避免树冠在大地图上过大、过黑或像立牌。
+- 森林树体颜色和光照强度改为由 vegetation rules 的 `shader.ambient` / `shader.directional` 驱动，植被 shader 复用地形相机光照参数；renderer 会优先保留靠近视口中心的森林格，并用 polygon offset 与贴地 lift 降低俯角变化时地形 depth 裁掉树身下半部分的概率。
+- 森林 LOD 从“低于中景阈值清空”改为远景保底密度；中景阈值和近景阈值在 rules 中保持可调，避免缩放时两档密度过近。
+- 树影从固定世界偏移改为按当前相机光照方向计算的树干锚定长条投影：近端固定在树干位置，长轴随光照方向旋转，远端渐隐。
+- 植被片元 shader 改为双面受光修正，避免关闭背面剔除后树冠朝向镜头的一面因为背面法线被反向压暗。
+- Campaign terrain 历史色调层从重灰压暗改为保留原色的轻暖化与高光压制；默认地形亮度、饱和度和材质 shade 范围略微回提，避免地图失去自身地貌颜色。
+
+### Impact
+- 森林造景是纯视觉规则，不改变通行、寻路、点击、探索、事件或玩法数值。后续要调树种、密度、避让或材质可读性，应优先改 `campaign-vegetation-rules-v1` 或重新运行转换工具，而不是把内容参数硬编码进 renderer。
+
+## 2026-07-15 Campaign Hex Grid Data Asset
+
+### Added
+- 新增 `campaign-hex-grid-v1` 大地图 Hex 数据资产：`src/content/scenario-packs/zhuyuanzhang/assets/maps/yuanmo-campaign-hex-grid.json` 保存从 `map_ground_types` 采样得到的 8509 个 hex cell，并为每格写入 `land`、`terrain`、`environment`。
+- 新增 `tools/generate-campaign-hex-grid.mjs`，把从原图采样到 Hex cell 的来源图层、UV/像素公式、水体判定规则和 land 规则写入 JSON，后续可复现同一张 Hex 数据图并追加新的采样机制。
+- `MapDefinition` 新增 `campaignHexGridUrl`，content pack 和导入 scenario pack 的资产解析都会把该字段解析为可加载 URL。
+
+### Changed
+- 朱元璋 scenario pack 与内置元末地图都注册 `campaignHexGridUrl`；`map-view.ts` 会把该 URL 传给 terrain / actor canvas，`campaign-terrain-webgl.ts` 优先读取保存后的 Hex 数据图生成通行网格、点击通行检查、岸线链和 `uMaterialSemanticTexture`。
+- `terrain` 和 `environment` 当前统一初始化为“平原”和“草地”。`map_ground_types` 仍保留为生成器输入、旧地图回退和 shader 视觉参考，不再是存在 Hex 数据图时的运行时语义事实来源。
+- 修复大地图左右边缘出现草地/沙地锯齿条的问题：生成器不再把地图 UV 外的 hex center clamp 到原图边缘后标成陆地，所有地图外 cell 都写成非陆地；terrain shader 也把地图外 cell 防御性视为水侧，避免边缘 rounded hex 落到 UV 外时被混成陆地材质。
+- Hex 数据生成器新增 `environmentSampler`：默认从 `map_climates` 按 7 点多采样匹配绿色色块，把命中阈值达标的陆地 cell 写成 `environment: "森林"`；本次元末 campaign 数据生成出 1056 个森林格，采样图层、颜色集合和命中阈值都写入 JSON 便于复现和后续调参。
+
+### Impact
+- 后续给每个 hex 增加地形、环境、资源、道路、危险度等机制时，应扩展同一份 Hex 数据图或其生成器，而不是在 renderer 或 gameplay 代码中重新逐帧采样原图。
+- 文档同步更新了大地图语义来源边界：表现层材质图只影响视觉；陆水、寻路、点击和岸线语义优先来自 `campaignHexGridUrl` 指向的数据资产。
+
+## 2026-07-14 Campaign Shoreline Chain Sampling
+
+### Changed
+- 大地图 terrain renderer 新增 `uMaterialSemanticTexture`：`campaign-terrain-webgl.ts` 从 `map_ground_types` 生成一次 Hex cell land/water 语义模型，并以“一格 Hex 一个 texel”的 NEAREST 语义纹理传入 shader；通行网格、点击检查、岸线链提取和 terrain shader 的水陆判断都消费同一份 Hex 语义模型。
+- 大地图岸线形变改为从当前 Hex 通行语义提取陆水相邻边，并在 CPU 侧组装连续 shoreline chain 元数据；renderer 只把每条边的链上里程、链长度和稳定 seed 传给 terrain shader，不再按单条边各自 hash 出独立岸线。
+- Terrain shader 的岸线层改为先把像素投影到当前 Hex 共享边，再沿 shoreline chain 的连续里程采样波浪和侵蚀噪声，让相邻边共享同一条连续波形；输出结果改为水陆分界 mask，直接决定当前像素走水侧还是陆侧材质。
+- 岸线默认调参提高 `shorelineWaveFrequency` 与 `shorelineErosionFrequency`，并提高 chain 里程到波峰数量的换算密度；该调整只增加单位岸线长度内的起伏频率，不增加岸线整体内外推幅度。
+- Terrain shader 新增视觉陆地来源 cell 选择：当岸线扰动把陆地推出原本 Hex 边界进入相邻水 Hex 时，推出区域的陆地材质、沙滩权重、砂粒随机种子和 atlas 细节改为继承相邻来源陆地 Hex，避免新增陆地区域与原陆地颜色脱节。
+
+### Impact
+- 岸线 chain 的来源是 `map_ground_types` 派生出的 Hex 陆水相邻关系，不是原图像素 mask，也不是独立贴图语义；shader 也必须先把当前像素归入 rounded Hex cell，再读取同一份 Hex 语义纹理判断水陆。
+- 原始 `uMaterialTexture` 仍可用于 terrain shader 的地貌颜色参考，并保留浅水区、深水变化和水面内部噪声等旧视觉采样路径；但最终“当前像素属于水侧还是陆侧”的判定不得再读它，避免 WebGL LINEAR 过滤在水陆边界插值出与 CPU 通行网格不一致的结果。
+- 水体 shader 保持层次分工：近岸区是贴当前岸线的窄水侧 tint，跟随 Hex semantic 派生出的当前水陆边界；浅水区是更宽的水体内部层，继续保留旧的 `uMaterialTexture` 距陆采样和 `map_water_noise` 动态效果，但浅水区最终水侧 coverage 改为读取当前岸线的 `boundaryWater`，避免旧 `map_ground_types` 采样把当前已经属于水侧的像素裁掉。岸线不再作为额外假水覆盖层绘制，也不改通行、寻路、点击或探索。
+
+## 2026-07-13 Campaign Shoreline Visual Erosion
+
+### Added
+- 大地图 terrain shader 新增按单条邻水 hex 共享边计算的岸线视觉形变 mask：陆地靠水边会以低频波浪和高频侵蚀噪声打散原本笔直的六边形水陆分界，并在多条邻水边交汇处做圆角化软并集。
+- `window.rpgTerrainBeach(...)` 调参表新增 `shorelineVisualWaterStrength`、`shorelineEdgeWidth`、`shorelineWaveStrength`、`shorelineWaveFrequency`、`shorelineErosionStrength`、`shorelineErosionFrequency` 和 `shorelineCornerRoundness`，用于调水陆边界形变强度、沿岸粗细、波浪尺度、侵蚀细节和角点圆化。
+
+### Changed
+- 岸线形变噪声从高频直接切割改为平滑 fBm 采样：大尺度波浪负责整体岸线起伏，低强度细节噪声只做边缘侵蚀，减少岸边锯齿和毛刺感。
+
+### Impact
+- 该效果只影响 terrain shader 的最终颜色混合：不改变 `map_ground_types`、寻路、点击、探索、云洞、hover 描边、建筑 marker 或地名投影；水格/陆格 gameplay 语义仍由原始地图数据决定。
+
+## 2026-07-13 Campaign Map Zoom Camera
+
+### Changed
+- 大地图 terrain camera 的俯角改为由当前缩放 scale 派生：缩小时逐步接近俯视，放大时逐步降低视角形成更贴近地表的观察效果；terrain 投影、shader 法线光照和云层相机耦合继续读取同一份相机参数。
+- 地图滚轮、缩放按钮和缩放输入改为带缓动的相机状态动画；缩放目标 offset 会补偿俯角变化带来的纵向平移比例差异，减少缩放变角时的画面漂移。
+- 地图单步缩放倍率从 `1.08` 调整为 `1.16`，提高鼠标滚轮和缩放按钮的响应幅度。
+
+### Impact
+- 该变更只影响大地图表现层 camera。六边形 gameplay 网格、寻路、点击、探索、通行性、云洞语义和地图数据结构不随当前视角变化。
+
+## 2026-07-13 Campaign Terrain Grass And Beach Materials
+
+### Added
+- 大地图 terrain renderer 新增独立草地/沙地材质输入：`yuanmo-campaign-map.ts` 与朱元璋 scenario pack 的 `maps.json` 都注册 `map_grass_texture` 与 `map_sand_texture` layer，`map-view.ts` 将其传入 terrain canvas，`campaign-terrain-webgl.ts` 作为 WebGL sampler 绑定给 terrain shader。
+- Terrain shader 使用新草地贴图作为陆地主材质；靠近水体的陆地按 `map_ground_types` 邻域采样生成沙滩混合权重，并用噪声打散边界，将沙地材质叠加到陆地边缘形成海岸/湖岸过渡。
+- 沙滩混合从全图最近水体距离改为相邻 hex 共享边的局部沙滩带：只在当前陆地格与相邻水格的边缘生成沙滩，并拆成靠水沉积核心与向内陆羽化的侵蚀边缘；侵蚀噪声沿共享边方向采样，避免变成等宽描边或把内陆湖之间连成长带。
+- 沙滩材质增加独立高频砂粒层：砂粒只调制局部沙滩边缘和沙地颜色，沙滩带宽度同步加宽，避免视觉上退化成平滑描边。
+- 沙滩主混合改为邻水边向陆地延伸的宽沙滩带：取消整格替换，沙滩主体用接近材质切换的方式显示亮黄色沙子贴图，只有外缘保留窄过渡和轻微砂粒粗糙度，避免像半透明覆盖在草地上。
+- 沙滩边缘进一步拆分为沙地核心、沙地外缘和草地干化侵蚀带：相邻水边的沙滩贡献从硬 `max()` 改为柔性并集，草地侧先被干草色与砂粒噪声侵蚀再进入沙地材质，减少相邻沙滩交汇处的硬尖角和纯描边感。
+- 草地侧侵蚀过渡改为真实细沙过渡：在干化草地上用独立高频砂粒 mask 混入沙地贴图；沙滩权重拆成主沙地核心与细沙连接两个通道，主沙地核心按较短的胶囊形共享边生成圆角，细沙连接只参与草地侵蚀过渡，不再把相邻边衔接层抬成亮黄色尖角，也不使用会跨格串联的局部水邻近场。
+- 沙滩沿岸宽度改为运行时可调参数：terrain renderer 默认放大主沙滩与外侧细沙侵蚀带，并新增 `window.rpgTerrainBeach(...)` 控制台命令，可直接调整 `innerRadius`、`outerRadius` 等 shader uniform 后重绘地图。
+- Terrain renderer 增加输入签名：当 terrain canvas 保活但底图、高度图、材质图、草地、沙地或水纹 URL 发生变化时，会 dispose 旧 WebGL renderer 并重新加载贴图，避免地图重绘后仍显示旧材质。
+
+### Impact
+- 沙滩只影响地形视觉材质：水体/陆地通行性、寻路、点击、探索、云洞和地图数据结构仍继续读取原有 `map_ground_types` 与 navigation 网格，不因草地/沙地贴图改变。
+
+## 2026-07-10 Campaign Smooth Terrain Heightfield
+
+### Changed
+- 大地图 terrain renderer 从按 hex 量化的平顶台阶 mesh 改为连续高度场 mesh：`campaign-terrain-webgl.ts` 使用原始 `map_heights` 生成平滑后的视觉高度，并用规则 UV 网格连接顶点，不再为相邻 hex 高差生成竖直墙面。
+- 地形投影、玩家 actor、建筑深度 mesh、marker 和云洞高度锚点统一读取平滑后的视觉高度；双线性高度采样替代最近点高度采样，减少贴地对象随格子高度跳变的问题。
+- Terrain shader 新增地形 normal 传入，用平滑高度产生轻量坡面明暗；默认 hex 格线强度降为淡格线，并将平滑 pass、mesh step、格线强度和坡面明暗作为集中常量保留在 terrain renderer 顶部。
+- 可踏足 hover hex 描边改为沿六边形边缘多段采样，并让每个采样点按自身地形高度投影，避免连续地形上仍显示为悬浮平面六边形。
+- Terrain shader 的坡面明暗拆成方向光、背光侧阴影和陡坡暗部三层，并通过更宽的高度采样半径计算法线；水体只继承弱阴影，避免海面被压黑。
+- Terrain shader 文件改为完整独立 GLSL：`campaign-terrain-webgl.ts` 不再通过 TS 占位符拼接 shader 源码，地形高度缩放、格线强度、坡面阴影等参数改为 WebGL uniforms 传入。
+- 修正坡面阴影不可见的问题：relief 阴影不再混入会被 `shadeMin/shadeMax` 默认值抵消的地形调参 shade，而是作为独立地形光照层叠加到最终地表颜色。
+- 地形坡面方向光改为以当前网页视口中心为光源中心：terrain shader 直接使用 `gl_FragCoord` 与 framebuffer 尺寸计算视口中心光照，地图拖动/缩放时地形从该屏幕空间光源下经过，避免光源固定在地图世界坐标上。
+- 地形视口光源降低默认高度，并将 terrain normal 旋转到当前摄像机/屏幕空间后再参与光照计算，避免屏幕空间光源和地图世界 normal 混用导致光照看起来不与地图平行。
+- 大地图 terrain camera 的平移从摄像机/屏幕平面改为地表平面：矩阵顺序调整为先在地图平面应用 pan，再进入 tilt 和投影，避免拖动地图时出现摄像机平移层与地形层不平行、地图角度像在变化的问题。
+- 地形摄像机拉远并收窄 FOV，确保倾斜后的真实 `map_heights` 地形面完整位于 camera/near plane 前方，避免地图下方因为摄像机过近而被裁剪；连续地形 mesh 仍只覆盖真实地图数据范围，不再做边界延展。
+- 云层 renderer 的相机耦合改为读取 terrain 提供的 map-coupled camera offset，和地表平面 pan 的纵向校正保持一致；同时让 outer puff 后叠层在已开启云洞核心区随 `cloudMask` 衰减到 0，减少摄像机移动到已探索区域上方时的额外遮挡。
+
+### Impact
+- 六边形仍然是 gameplay 网格：水域/陆地通行性、点击屏蔽、探索状态和寻路继续只消费 `map_ground_types` 与 navigation 通行网格，不因视觉高度平滑而改变。
+
+## 2026-07-10 Campaign Cloud Debug Toggle
+
+### Added
+- 新增浏览器控制台调试命令 `rpgCloud(false)` / `rpgCloud(true)` / `rpgCloud("toggle")` / `rpgCloud("status")`，用于运行时关闭、打开或查询大地图云雾 shader overlay。
+
+### Impact
+- 关闭云层时会 dispose 当前 `campaign-cloud-webgl.ts` renderer、停止云层动画帧并隐藏 `data-campaign-map-cloud` canvas；开启时重新同步当前页面云层 canvas。该开关只影响视觉云雾 renderer，不改变探索、寻路、通行、点击或地图 gameplay 状态。
 ## 2026-07-09 Three.js Renderer Boundary
 
 ### Added
