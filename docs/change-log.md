@@ -2,6 +2,17 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-17 Campaign Shoreline Distance Field Sampling
+
+### Changed
+- `campaign-terrain-webgl.ts` 将岸线视觉采样从 shader 内逐 Hex 六方向 edge probe 改为 CPU 侧 `ShorelineDistanceTextureModel`：renderer 仍从 Hex 陆水相邻关系组装 shoreline chain edge、chain mileage 和稳定 seed，但会把结果栅格化为 terrain 网格分辨率的 signed-distance texture，再传给 terrain shader 做双线性采样。
+- `campaign-terrain.frag.glsl` 删除旧 `uShorelineChainTexture` 视觉采样路径，改为通过 `uShorelineDistanceTexture` 派生 `boundaryWater`、近岸水色和沙滩/草地过渡；沙滩不再另走一套六方向胶囊边采样，避免水陆分界、近岸 tint 和沙滩边界互相错位。
+- 岸线侵蚀统一按陆地方向向内偏移，低频 chain 噪声负责连续岸线起伏，高频噪声只做细微侵蚀；`window.rpgTerrainBeach(...)` 保持可用，影响岸线形状的参数变化时会在下一次渲染前重建并上传距离场。
+- 距离场栅格化现在被硬性限制在每条 shoreline edge 相邻的陆/水两格内；shader 只在岸线零交叉窄带内使用距离场改写视觉边界，允许曲线跨过原 Hex 边界进入相邻水格以避免硬截断，但禁止单条边的法线场影响第三格或扩散成全图三角水/沙伪影。
+
+### Impact
+- 该调整只改变 campaign terrain 的岸线视觉采样和材质混合，不改变 Hex 数据图、通行、寻路、点击、探索、云洞、山脉/森林语义、最终高度场或水体内部动态噪声。
+
 ## 2026-07-17 Campaign Vegetation Willow Grass Mix
 
 ### Added

@@ -263,6 +263,8 @@ const TERRAIN_CAMERA_LIGHT_HORIZONTAL_PULL = 0.58;
 const TERRAIN_LAND_TEXTURE_TILING = 7.5;
 const TERRAIN_SNOW_HEIGHT_START = 0.38;
 const TERRAIN_SNOW_HEIGHT_FULL = 0.42;
+const SHORELINE_DISTANCE_TEXTURE_DISTANCE_RANGE = 4.25;
+const SHORELINE_DISTANCE_TEXTURE_MIN_REACH = 1.2;
 const SHORELINE_CHAIN_DIRECTIONS = [
   { x: 1, y: 0 },
   { x: -1, y: 0 },
@@ -446,15 +448,12 @@ type CampaignMaterialSemanticModel = {
 
 type CampaignHexGridAsset = CampaignHexGridDefinition;
 
-type ShorelineChainTextureModel = {
+type ShorelineDistanceTextureModel = {
   source: ImageData;
   textureColumns: number;
   textureRows: number;
-  minCellX: number;
-  minCellY: number;
-  cellColumns: number;
-  cellRows: number;
-  maxMileage: number;
+  distanceRange: number;
+  signature: string;
 };
 
 type ShorelineChainEdge = {
@@ -463,6 +462,8 @@ type ShorelineChainEdge = {
   waterCell: GridCoordinate;
   landDirectionIndex: number;
   waterDirectionIndex: number;
+  normalToWater: { x: number; y: number };
+  tangent: { x: number; y: number };
   start: { x: number; y: number };
   end: { x: number; y: number };
   startKey: string;
@@ -1117,21 +1118,13 @@ async function initCampaignTerrainWebGl(
     program,
     "uMaterialSemanticBounds"
   );
-  const shorelineChainTextureLocation = gl.getUniformLocation(
+  const shorelineDistanceTextureLocation = gl.getUniformLocation(
     program,
-    "uShorelineChainTexture"
+    "uShorelineDistanceTexture"
   );
-  const shorelineChainTextureSizeLocation = gl.getUniformLocation(
+  const shorelineDistanceRangeLocation = gl.getUniformLocation(
     program,
-    "uShorelineChainTextureSize"
-  );
-  const shorelineChainBoundsLocation = gl.getUniformLocation(
-    program,
-    "uShorelineChainBounds"
-  );
-  const shorelineChainMaxMileageLocation = gl.getUniformLocation(
-    program,
-    "uShorelineChainMaxMileage"
+    "uShorelineDistanceRange"
   );
   const waterTextureLocation = gl.getUniformLocation(program, "uWaterTexture");
   const grassTextureLocation = gl.getUniformLocation(program, "uGrassTexture");
@@ -1208,22 +1201,6 @@ async function initCampaignTerrainWebGl(
     "uShorelineVisualWaterStrength"
   );
   const shorelineEdgeWidthLocation = gl.getUniformLocation(program, "uShorelineEdgeWidth");
-  const shorelineWaveStrengthLocation = gl.getUniformLocation(
-    program,
-    "uShorelineWaveStrength"
-  );
-  const shorelineWaveFrequencyLocation = gl.getUniformLocation(
-    program,
-    "uShorelineWaveFrequency"
-  );
-  const shorelineErosionStrengthLocation = gl.getUniformLocation(
-    program,
-    "uShorelineErosionStrength"
-  );
-  const shorelineErosionFrequencyLocation = gl.getUniformLocation(
-    program,
-    "uShorelineErosionFrequency"
-  );
   const shorelineCornerRoundnessLocation = gl.getUniformLocation(
     program,
     "uShorelineCornerRoundness"
@@ -1309,10 +1286,13 @@ async function initCampaignTerrainWebGl(
       magFilter: gl.NEAREST,
     }
   );
-  const shorelineChainTextureModel = createShorelineChainTextureModel(materialSemanticModel);
-  const shorelineChainTexture = createTexture(gl, shorelineChainTextureModel.source, {
-    minFilter: gl.NEAREST,
-    magFilter: gl.NEAREST,
+  let shorelineDistanceTextureModel = createShorelineDistanceTextureModel(
+    materialSemanticModel,
+    terrainBeachTuning
+  );
+  const shorelineDistanceTexture = createTexture(gl, shorelineDistanceTextureModel.source, {
+    minFilter: gl.LINEAR,
+    magFilter: gl.LINEAR,
   });
   const grassTexture = createTexture(gl, grassTextureImage ?? textureImage);
   const sandTexture = createTexture(gl, sandTextureImage ?? textureImage);
@@ -1346,10 +1326,8 @@ async function initCampaignTerrainWebGl(
     materialSemanticTextureLocation == null ? "uMaterialSemanticTexture" : null,
     materialSemanticTextureSizeLocation == null ? "uMaterialSemanticTextureSize" : null,
     materialSemanticBoundsLocation == null ? "uMaterialSemanticBounds" : null,
-    shorelineChainTextureLocation == null ? "uShorelineChainTexture" : null,
-    shorelineChainTextureSizeLocation == null ? "uShorelineChainTextureSize" : null,
-    shorelineChainBoundsLocation == null ? "uShorelineChainBounds" : null,
-    shorelineChainMaxMileageLocation == null ? "uShorelineChainMaxMileage" : null,
+    shorelineDistanceTextureLocation == null ? "uShorelineDistanceTexture" : null,
+    shorelineDistanceRangeLocation == null ? "uShorelineDistanceRange" : null,
     waterTextureLocation == null ? "uWaterTexture" : null,
     grassTextureLocation == null ? "uGrassTexture" : null,
     sandTextureLocation == null ? "uSandTexture" : null,
@@ -1385,10 +1363,6 @@ async function initCampaignTerrainWebGl(
     beachFineNoiseStrengthLocation == null ? "uBeachFineNoiseStrength" : null,
     shorelineVisualWaterStrengthLocation == null ? "uShorelineVisualWaterStrength" : null,
     shorelineEdgeWidthLocation == null ? "uShorelineEdgeWidth" : null,
-    shorelineWaveStrengthLocation == null ? "uShorelineWaveStrength" : null,
-    shorelineWaveFrequencyLocation == null ? "uShorelineWaveFrequency" : null,
-    shorelineErosionStrengthLocation == null ? "uShorelineErosionStrength" : null,
-    shorelineErosionFrequencyLocation == null ? "uShorelineErosionFrequency" : null,
     shorelineCornerRoundnessLocation == null ? "uShorelineCornerRoundness" : null,
     actorPositionLocation < 0 ? "actor.aPosition" : null,
     actorNormalLocation < 0 ? "actor.aNormal" : null,
@@ -1536,9 +1510,18 @@ async function initCampaignTerrainWebGl(
       gl.activeTexture(gl.TEXTURE6);
       gl.bindTexture(gl.TEXTURE_2D, snowTexture);
       gl.uniform1i(snowTextureLocation, 6);
+      const nextShorelineDistanceTextureSignature =
+        getShorelineDistanceTextureSignature(terrainBeachTuning);
+      if (shorelineDistanceTextureModel.signature !== nextShorelineDistanceTextureSignature) {
+        shorelineDistanceTextureModel = createShorelineDistanceTextureModel(
+          materialSemanticModel,
+          terrainBeachTuning
+        );
+        updateTextureImage(gl, shorelineDistanceTexture, shorelineDistanceTextureModel.source);
+      }
       gl.activeTexture(gl.TEXTURE7);
-      gl.bindTexture(gl.TEXTURE_2D, shorelineChainTexture);
-      gl.uniform1i(shorelineChainTextureLocation, 7);
+      gl.bindTexture(gl.TEXTURE_2D, shorelineDistanceTexture);
+      gl.uniform1i(shorelineDistanceTextureLocation, 7);
       gl.activeTexture(gl.TEXTURE8);
       gl.bindTexture(gl.TEXTURE_2D, materialSemanticTexture);
       gl.uniform1i(materialSemanticTextureLocation, 8);
@@ -1612,30 +1595,11 @@ async function initCampaignTerrainWebGl(
         terrainBeachTuning.shorelineVisualWaterStrength
       );
       gl.uniform1f(shorelineEdgeWidthLocation, terrainBeachTuning.shorelineEdgeWidth);
-      gl.uniform1f(shorelineWaveStrengthLocation, terrainBeachTuning.shorelineWaveStrength);
-      gl.uniform1f(shorelineWaveFrequencyLocation, terrainBeachTuning.shorelineWaveFrequency);
-      gl.uniform1f(
-        shorelineErosionStrengthLocation,
-        terrainBeachTuning.shorelineErosionStrength
-      );
-      gl.uniform1f(
-        shorelineErosionFrequencyLocation,
-        terrainBeachTuning.shorelineErosionFrequency
-      );
       gl.uniform1f(shorelineCornerRoundnessLocation, terrainBeachTuning.shorelineCornerRoundness);
-      gl.uniform2f(
-        shorelineChainTextureSizeLocation,
-        shorelineChainTextureModel.textureColumns,
-        shorelineChainTextureModel.textureRows
+      gl.uniform1f(
+        shorelineDistanceRangeLocation,
+        shorelineDistanceTextureModel.distanceRange
       );
-      gl.uniform4f(
-        shorelineChainBoundsLocation,
-        shorelineChainTextureModel.minCellX,
-        shorelineChainTextureModel.minCellY,
-        shorelineChainTextureModel.cellColumns,
-        shorelineChainTextureModel.cellRows
-      );
-      gl.uniform1f(shorelineChainMaxMileageLocation, shorelineChainTextureModel.maxMileage);
       gl.uniformMatrix4fv(
         matrixLocation,
         false,
@@ -2030,7 +1994,7 @@ async function initCampaignTerrainWebGl(
       gl.deleteTexture(texture);
       gl.deleteTexture(materialTexture);
       gl.deleteTexture(materialSemanticTexture);
-      gl.deleteTexture(shorelineChainTexture);
+      gl.deleteTexture(shorelineDistanceTexture);
       gl.deleteTexture(grassTexture);
       gl.deleteTexture(sandTexture);
       gl.deleteTexture(rockTexture);
@@ -3573,21 +3537,79 @@ function sampleLandMaskAt(
   return materialLandMask[y * columns + x] ?? 0;
 }
 
-function createShorelineChainTextureModel(
-  materialSemanticModel: CampaignMaterialSemanticModel
-): ShorelineChainTextureModel {
-  const cells = materialSemanticModel.cells;
-  const minCellX = materialSemanticModel.minCellX;
-  const minCellY = materialSemanticModel.minCellY;
-  const cellColumns = materialSemanticModel.cellColumns;
-  const cellRows = materialSemanticModel.cellRows;
-  const directionsPerCell = SHORELINE_CHAIN_DIRECTIONS.length;
-  const textureColumns = Math.max(cellColumns * directionsPerCell, 1);
-  const textureRows = cellRows;
+function createShorelineDistanceTextureModel(
+  materialSemanticModel: CampaignMaterialSemanticModel,
+  tuning: CampaignTerrainBeachTuning
+): ShorelineDistanceTextureModel {
+  const textureColumns = GRID_COLUMNS;
+  const textureRows = GRID_ROWS;
+  const distanceRange = SHORELINE_DISTANCE_TEXTURE_DISTANCE_RANGE;
   const pixels = new Uint8ClampedArray(textureColumns * textureRows * 4);
+  const bestAbsDistanceByPixel = new Float32Array(textureColumns * textureRows);
+  const signedDistanceByPixel = new Float32Array(textureColumns * textureRows);
+  const edges = createShorelineChainEdges(materialSemanticModel);
+  const maxReach = Math.min(
+    distanceRange,
+    Math.max(
+      SHORELINE_DISTANCE_TEXTURE_MIN_REACH,
+      tuning.outerRadius * 1.35,
+      tuning.shorelineEdgeWidth * 2.65 + tuning.shorelineWaveStrength * 1.45,
+      tuning.shorelineErosionStrength * 3.20 + 0.82
+    )
+  );
+
+  bestAbsDistanceByPixel.fill(Number.POSITIVE_INFINITY);
+  signedDistanceByPixel.fill(0);
+
+  for (const edge of edges) {
+    rasterizeShorelineDistanceEdge({
+      edge,
+      tuning,
+      maxReach,
+      textureColumns,
+      textureRows,
+      bestAbsDistanceByPixel,
+      signedDistanceByPixel,
+    });
+  }
+
+  for (let index = 0; index < signedDistanceByPixel.length; index += 1) {
+    if (!Number.isFinite(bestAbsDistanceByPixel[index])) {
+      pixels[index * 4] = 128;
+      pixels[index * 4 + 1] = 0;
+      pixels[index * 4 + 2] = 0;
+      pixels[index * 4 + 3] = 0;
+      continue;
+    }
+
+    const packedDistance = packNormalizedUint16(
+      signedDistanceToShorelineDistanceTextureValue(
+        signedDistanceByPixel[index] ?? 0,
+        distanceRange
+      )
+    );
+    const offset = index * 4;
+    pixels[offset] = packedDistance.high;
+    pixels[offset + 1] = packedDistance.low;
+    pixels[offset + 2] = 0;
+    pixels[offset + 3] = 255;
+  }
+
+  return {
+    source: new ImageData(pixels, textureColumns, textureRows),
+    textureColumns,
+    textureRows,
+    distanceRange,
+    signature: getShorelineDistanceTextureSignature(tuning),
+  };
+}
+
+function createShorelineChainEdges(
+  materialSemanticModel: CampaignMaterialSemanticModel
+): ShorelineChainEdge[] {
+  const cells = materialSemanticModel.cells;
   const cellKeys = new Set(cells.map((cell) => getHexCellKey(cell.x, cell.y)));
   const landByCellKey = materialSemanticModel.landByCellKey;
-
   const edges: ShorelineChainEdge[] = [];
   const endpointToEdgeIds = new Map<string, number[]>();
 
@@ -3632,6 +3654,8 @@ function createShorelineChainTextureModel(
         landDirectionIndex,
         waterDirectionIndex:
           SHORELINE_CHAIN_OPPOSITE_DIRECTION_INDEXES[landDirectionIndex] ?? 0,
+        normalToWater,
+        tangent,
         start,
         end,
         startKey: getShorelineEndpointKey(start),
@@ -3647,44 +3671,171 @@ function createShorelineChainTextureModel(
     });
   }
 
-  const maxMileage = Math.max(
-    assignShorelineChainMetadata(edges, endpointToEdgeIds),
-    1
+  assignShorelineChainMetadata(edges, endpointToEdgeIds);
+
+  return edges;
+}
+
+function rasterizeShorelineDistanceEdge(input: {
+  edge: ShorelineChainEdge;
+  tuning: CampaignTerrainBeachTuning;
+  maxReach: number;
+  textureColumns: number;
+  textureRows: number;
+  bestAbsDistanceByPixel: Float32Array;
+  signedDistanceByPixel: Float32Array;
+}): void {
+  const edgeLength = Math.max(getDistance(input.edge.start, input.edge.end), 0.000001);
+  const minX = Math.min(input.edge.start.x, input.edge.end.x) - input.maxReach;
+  const maxX = Math.max(input.edge.start.x, input.edge.end.x) + input.maxReach;
+  const minY = Math.min(input.edge.start.y, input.edge.end.y) - input.maxReach;
+  const maxY = Math.max(input.edge.start.y, input.edge.end.y) + input.maxReach;
+  const minPixelX = Math.max(
+    Math.floor(hexPointToTerrainU(minX) * Math.max(input.textureColumns - 1, 0)),
+    0
+  );
+  const maxPixelX = Math.min(
+    Math.ceil(hexPointToTerrainU(maxX) * Math.max(input.textureColumns - 1, 0)),
+    input.textureColumns - 1
+  );
+  const minPixelY = Math.max(
+    Math.floor(hexPointToTerrainV(minY) * Math.max(input.textureRows - 1, 0)),
+    0
+  );
+  const maxPixelY = Math.min(
+    Math.ceil(hexPointToTerrainV(maxY) * Math.max(input.textureRows - 1, 0)),
+    input.textureRows - 1
   );
 
-  for (const edge of edges) {
-    writeShorelineChainEdgeMetadata(
-      pixels,
-      textureColumns,
-      minCellX,
-      minCellY,
-      edge.landCell,
-      edge.landDirectionIndex,
-      edge,
-      maxMileage
-    );
-    writeShorelineChainEdgeMetadata(
-      pixels,
-      textureColumns,
-      minCellX,
-      minCellY,
-      edge.waterCell,
-      edge.waterDirectionIndex,
-      edge,
-      maxMileage
-    );
-  }
+  for (let pixelY = minPixelY; pixelY <= maxPixelY; pixelY += 1) {
+    const v = input.textureRows <= 1 ? 0 : pixelY / (input.textureRows - 1);
+    for (let pixelX = minPixelX; pixelX <= maxPixelX; pixelX += 1) {
+      const u = input.textureColumns <= 1 ? 0 : pixelX / (input.textureColumns - 1);
+      const point = terrainUvToHexPoint(u, v);
+      const pointCell = pixelToRoundedHex(point.x, point.y);
+      if (
+        !(
+          pointCell.x === input.edge.landCell.x &&
+          pointCell.y === input.edge.landCell.y
+        ) &&
+        !(
+          pointCell.x === input.edge.waterCell.x &&
+          pointCell.y === input.edge.waterCell.y
+        )
+      ) {
+        continue;
+      }
 
-  return {
-    source: new ImageData(pixels, textureColumns, textureRows),
-    textureColumns,
-    textureRows,
-    minCellX,
-    minCellY,
-    cellColumns,
-    cellRows,
-    maxMileage,
-  };
+      const localX = point.x - input.edge.start.x;
+      const localY = point.y - input.edge.start.y;
+      const along = localX * input.edge.tangent.x + localY * input.edge.tangent.y;
+      const clampedAlong = clamp(along, 0, edgeLength);
+      const closest = {
+        x: input.edge.start.x + input.edge.tangent.x * clampedAlong,
+        y: input.edge.start.y + input.edge.tangent.y * clampedAlong,
+      };
+      const normalDistance =
+        (point.x - closest.x) * input.edge.normalToWater.x +
+        (point.y - closest.y) * input.edge.normalToWater.y;
+      const endpointDistance = Math.max(Math.abs(along - edgeLength * 0.5) - edgeLength * 0.5, 0);
+      const capsuleDistance = Math.hypot(
+        endpointDistance * (1.18 - input.tuning.shorelineCornerRoundness * 0.42),
+        normalDistance
+      );
+      if (capsuleDistance > input.maxReach) {
+        continue;
+      }
+
+      const chainMileage =
+        input.edge.chainStartMileage +
+        (input.edge.reverseInChain ? edgeLength - clampedAlong : clampedAlong);
+      const inwardErosion = sampleShorelineInwardErosion(
+        chainMileage,
+        input.edge.chainLength,
+        input.edge.chainSeed,
+        normalDistance,
+        input.tuning
+      );
+      const signedDistance = normalDistance + inwardErosion;
+      const absDistance = Math.abs(signedDistance);
+      const pixelIndex = pixelY * input.textureColumns + pixelX;
+      const blendWeight = 1 - smoothstepRange(input.maxReach * 0.68, input.maxReach, capsuleDistance);
+      const weightedAbsDistance = absDistance / Math.max(blendWeight, 0.0001);
+
+      if (
+        weightedAbsDistance <
+        (input.bestAbsDistanceByPixel[pixelIndex] ?? Number.POSITIVE_INFINITY)
+      ) {
+        input.bestAbsDistanceByPixel[pixelIndex] = weightedAbsDistance;
+        input.signedDistanceByPixel[pixelIndex] = signedDistance;
+      }
+    }
+  }
+}
+
+function sampleShorelineInwardErosion(
+  chainMileage: number,
+  chainLength: number,
+  chainSeed: number,
+  normalDistance: number,
+  tuning: CampaignTerrainBeachTuning
+): number {
+  const safeLength = Math.max(chainLength, 1);
+  const progress = fract(chainMileage / safeLength);
+  const seed = chainSeed * 0.037;
+  const broadCycles = Math.max(2, Math.round(safeLength * tuning.shorelineWaveFrequency * 0.115));
+  const mediumCycles = Math.max(
+    broadCycles + 2,
+    Math.round(safeLength * tuning.shorelineWaveFrequency * 0.260)
+  );
+  const angle = progress * Math.PI * 2;
+  const periodicX = Math.cos(angle);
+  const periodicY = Math.sin(angle);
+  const warp =
+    shorelineFbm2d(periodicX * 2.1 + seed * 7.1, periodicY * 2.1 - seed * 4.3) - 0.5;
+  const broad =
+    Math.sin((progress * broadCycles + seed + warp * 0.18) * Math.PI * 2) * 0.5 + 0.5;
+  const medium =
+    Math.sin((progress * mediumCycles - seed * 0.73 + warp * 0.12) * Math.PI * 2) * 0.5 + 0.5;
+  const erosion =
+    shorelineFbm2d(
+      chainMileage * tuning.shorelineErosionFrequency * 0.28 + seed * 17.0,
+      normalDistance * 1.35 + seed * 29.0
+    );
+  const broadInset = broad * tuning.shorelineWaveStrength * 0.62;
+  const mediumInset = medium * tuning.shorelineWaveStrength * 0.18;
+  const fineInset = erosion * tuning.shorelineErosionStrength * 0.52;
+
+  return Math.max(broadInset + mediumInset + fineInset, 0);
+}
+
+function shorelineFbm2d(x: number, y: number): number {
+  const first = valueNoise2d(x, y);
+  const second = valueNoise2d(x * 2.03 + 11.7, y * 2.03 - 4.2);
+  const third = valueNoise2d(x * 4.11 - 8.1, y * 4.11 + 19.4);
+
+  return first * 0.56 + second * 0.30 + third * 0.14;
+}
+
+function signedDistanceToShorelineDistanceTextureValue(
+  signedDistance: number,
+  distanceRange: number
+): number {
+  return clamp(signedDistance / (distanceRange * 2) + 0.5, 0, 1);
+}
+
+function getShorelineDistanceTextureSignature(tuning: CampaignTerrainBeachTuning): string {
+  return [
+    GRID_COLUMNS,
+    GRID_ROWS,
+    tuning.outerRadius.toFixed(4),
+    tuning.shorelineEdgeWidth.toFixed(4),
+    tuning.shorelineWaveStrength.toFixed(4),
+    tuning.shorelineWaveFrequency.toFixed(4),
+    tuning.shorelineErosionStrength.toFixed(4),
+    tuning.shorelineErosionFrequency.toFixed(4),
+    tuning.shorelineCornerRoundness.toFixed(4),
+  ].join("|");
 }
 
 function assignShorelineChainMetadata(
@@ -3875,31 +4026,6 @@ function addShorelineEndpointEdge(
   const edgeIds = endpointToEdgeIds.get(endpointKey) ?? [];
   edgeIds.push(edgeId);
   endpointToEdgeIds.set(endpointKey, edgeIds);
-}
-
-function writeShorelineChainEdgeMetadata(
-  pixels: Uint8ClampedArray,
-  textureColumns: number,
-  minCellX: number,
-  minCellY: number,
-  cell: GridCoordinate,
-  directionIndex: number,
-  edge: ShorelineChainEdge,
-  maxMileage: number
-): void {
-  const pixelX = (cell.x - minCellX) * SHORELINE_CHAIN_DIRECTIONS.length + directionIndex;
-  const pixelY = cell.y - minCellY;
-  const offset = (pixelY * textureColumns + pixelX) * 4;
-  if (pixelX < 0 || pixelX >= textureColumns || offset < 0 || offset + 3 >= pixels.length) {
-    return;
-  }
-
-  const packedMileage = packNormalizedUint16(edge.chainStartMileage / maxMileage);
-  const encodedSeedAndDirection = (edge.reverseInChain ? 128 : 0) + edge.chainSeed;
-  pixels[offset] = packedMileage.high;
-  pixels[offset + 1] = packedMileage.low;
-  pixels[offset + 2] = Math.round(clamp(edge.chainLength / maxMileage, 0, 1) * 255);
-  pixels[offset + 3] = encodedSeedAndDirection;
 }
 
 function packNormalizedUint16(value: number): { high: number; low: number } {
@@ -6055,6 +6181,16 @@ function createTexture(
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, options?.magFilter ?? gl.LINEAR);
 
   return texture;
+}
+
+function updateTextureImage(
+  gl: WebGLRenderingContext,
+  texture: WebGLTexture,
+  image: TexImageSource
+): void {
+  gl.bindTexture(gl.TEXTURE_2D, texture);
+  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
 }
 
 function resizeCanvasToDisplaySize(canvas: HTMLCanvasElement): void {
