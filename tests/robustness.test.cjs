@@ -7653,6 +7653,10 @@ test("script editor project overview startup controls use project-backed selecto
   assert.match(mainUiSource, /renderScriptEditorStartupSelect\("houseId"/);
   assert.match(mainUiSource, /renderScriptEditorStartupSelect\("sceneId"/);
   assert.match(mainUiSource, /renderScriptEditorStartupSelect\("playerCharacterId"/);
+  assert.match(
+    mainUiSource,
+    /initialView:\s*\[\s*"scenarioProfile\.launchPolicy\.initialView",\s*"scenarioProfile\.initialLocation\.view",?\s*\]/
+  );
   assert.match(mainUiSource, /this\.scriptEditorProject\.cities\.map/);
   assert.match(mainUiSource, /this\.scriptEditorProject\.buildings\.map/);
   assert.match(mainUiSource, /this\.scriptEditorProject\.scenes\.map/);

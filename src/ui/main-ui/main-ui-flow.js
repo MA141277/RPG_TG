@@ -4696,15 +4696,21 @@ export class MainUiFlow {
     if (target.matches("[data-script-editor-startup-field]")) {
       const startupField = target.dataset.scriptEditorStartupField;
       const startupFieldToProjectField = {
-        initialView: "scenarioProfile.launchPolicy.initialView",
+        initialView: [
+          "scenarioProfile.launchPolicy.initialView",
+          "scenarioProfile.initialLocation.view",
+        ],
         characterSelection: "scenarioProfile.launchPolicy.characterSelection",
         playerCharacterId: "scenarioProfile.playerCharacterId",
         cityId: "scenarioProfile.initialLocation.cityId",
         houseId: "scenarioProfile.initialLocation.houseId",
         sceneId: "scenarioProfile.initialLocation.sceneId",
       };
-      const field = startupFieldToProjectField[startupField];
-      if (field != null) {
+      const fields = startupFieldToProjectField[startupField];
+      for (const field of Array.isArray(fields) ? fields : [fields]) {
+        if (field == null) {
+          continue;
+        }
         this.applyScriptEditorProjectField(field, target.value);
       }
       return;

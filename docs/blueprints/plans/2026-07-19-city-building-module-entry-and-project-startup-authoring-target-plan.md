@@ -124,7 +124,7 @@
 
 | Queue ID | Current Disposition | Promote When | Notes |
 | --- | --- | --- | --- |
-| `queue.city-building-module-entry-and-project-startup-authoring` | `active` | `project-info-authoring is the active task.` | `Evidence-anchor reconcile confirmed implementation anchors and no prerequisite split.` |
+| `queue.city-building-module-entry-and-project-startup-authoring` | `active` | `city-building-module-entry is the active task.` | `Evidence-anchor reconcile and project-info-authoring are complete; next work is city/building module entry extraction/formalization.` |
 
 ### Candidate Evidence Matrix
 
@@ -146,3 +146,4 @@
 
 - `2026-07-19`: `Created target.city-building-module-entry-and-project-startup-authoring as a successor version after pushing prior event-runtime/city-context work to origin/mod-first-dev. Admitted queue.city-building-module-entry-and-project-startup-authoring as the active queue from the operator-approved draft. Active task is evidence-anchor reconcile; no business implementation has started.`
 - `2026-07-19`: `Completed task.city-building-module-entry-and-project-startup-authoring.evidence-anchor-reconcile. Source review confirmed Script Editor already has a project overview surface and scenarioProfile launchPolicy/initialLocation fields, but creator UI still exposes startup values mainly as text/system fields rather than 项目信息 selectors. ScenarioProfile supports characterSelection shell/fixed, initialView, playerCharacterId, mapId, cityId, houseId, and view; ViewName uses house for the runtime building view. Default role sourcing should filter ScriptEditorPersonRecord.personType == 角色. Normal start, JSON import, and runtime preview all route through scenario pack export/load/startup seams, while runtime preview uses current in-memory project export. Evidence found no prerequisite split before project-info-authoring; active task is now project-info-authoring.`
+- `2026-07-19`: `Completed task.city-building-module-entry-and-project-startup-authoring.project-info-authoring. RED covered the 项目信息 toolbar entry, project-backed startup selectors, default role filtering from personType == 角色, and the initialView selector writing both launchPolicy.initialView and initialLocation.view for runtime export compatibility. GREEN added the 项目信息 action, selector-backed project overview startup controls, and multi-field startup mapping. Verification passed: focused robustness test, npm run typecheck, npm run lint:blueprints, and npm test. Active task is now city-building-module-entry.`
