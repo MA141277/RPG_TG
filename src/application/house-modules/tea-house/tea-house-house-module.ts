@@ -52,7 +52,7 @@ import {
   formatHouseActivityCostLine,
   getHouseMinigameDurationDays,
 } from "../../house/house-activity-costs";
-import { getInsufficientDaysForTimedActivity } from "../../time/council-priority";
+import { defaultReviewCyclePolicy } from "../../review/review-cycle-provider";
 import {
   getTeaHouseCityNpcPools,
   getTeaHouseTextEntries,
@@ -834,7 +834,7 @@ function handleActorAction(
     const durationDays = getHouseMinigameDurationDays(
       Math.max(1, playerCharacter.skills?.rhetoric ?? 1)
     );
-    const remainingDays = getInsufficientDaysForTimedActivity(
+    const remainingDays = defaultReviewCyclePolicy.getInsufficientDaysForTimedActivity(
       input.gameState,
       durationDays
     );
@@ -1044,7 +1044,7 @@ function handleActorAction(
       const durationDays = getHouseMinigameDurationDays(
         Math.max(1, playerCharacter.skills?.rhetoric ?? 1)
       );
-      const remainingDays = getInsufficientDaysForTimedActivity(
+      const remainingDays = defaultReviewCyclePolicy.getInsufficientDaysForTimedActivity(
         input.gameState,
         durationDays
       );

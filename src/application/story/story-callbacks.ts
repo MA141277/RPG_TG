@@ -11,7 +11,7 @@ import {
   launchStoryBattlePlayable,
 } from "../playables/story-battle/story-battle-definition";
 import { resolveTextEntry } from "../content/text-resolution";
-import { applyReviewCycleSchedule } from "../review/review-cycle";
+import { defaultReviewCyclePolicy } from "../review/review-cycle-provider";
 
 type StoryCallbackPayload = Record<string, unknown> | undefined;
 
@@ -84,7 +84,7 @@ function runJoinGuoZixingCampCallback(
   runtime: StoryCallbackRuntime
 ): StoryCallbackRuntime {
   const nextCouncilDate = addDaysToCalendarDate(runtime.state.calendar, 60);
-  const reviewSyncedState = applyReviewCycleSchedule(runtime.state, {
+  const reviewSyncedState = defaultReviewCyclePolicy.applySchedule(runtime.state, {
     scheduledDate: nextCouncilDate,
     missionText: getStoryCallbackText(
       runtime,

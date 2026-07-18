@@ -130,6 +130,7 @@ export function parseScenarioPack(value: unknown): ScenarioPackDefinition {
     assertArray(value.cityEntries, "scenario city entries");
   }
   assertArray(value.events, "scenario events");
+  assertRuntimeEventsDoNotUseRetiredTriggerFields(value.events);
   if (value.eventBindings != null) {
     assertArray(value.eventBindings, "scenario eventBindings");
   }
@@ -188,6 +189,20 @@ export function parseScenarioPack(value: unknown): ScenarioPackDefinition {
   }
 
   return value as ScenarioPackDefinition;
+}
+
+function assertRuntimeEventsDoNotUseRetiredTriggerFields(events: unknown[]): void {
+  events.forEach((eventDefinition, index) => {
+    assertObject(eventDefinition, `scenario events[${index}]`);
+    if (
+      Object.hasOwn(eventDefinition, "trigger") ||
+      Object.hasOwn(eventDefinition, "conditions")
+    ) {
+      throw new Error(
+        `scenario events[${index}] event body trigger/conditions are retired; use event-bindings.json for runtime trigger configuration.`
+      );
+    }
+  });
 }
 
 type ScenarioPackManifestFiles = {

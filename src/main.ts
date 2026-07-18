@@ -62,9 +62,9 @@ import {
   type GridCoordinate,
 } from "./application/navigation/travel-to-coordinate";
 import {
-  isCampaignMapCoordinateRevealed,
-  revealCampaignMapAroundCoordinate,
-} from "./application/navigation/campaign-map-exploration";
+  getRevealedCampaignHexKeys,
+  revealCampaignMapHexesForCoordinate,
+} from "./application/map/campaign-map-exploration";
 import { createInitialState } from "./application/state/create-initial-state";
 import {
   type ActiveGameContentContext,
@@ -1777,7 +1777,9 @@ function createScenarioPackAppState(
   };
   const playerCoordinate =
     profile.initialPlayerCoordinate ??
-    activeContentContext.cityCoordinatesById[profile.initialLocation.cityId] ??
+    activeContentContext.mapLocationProvider.getCityLocation(
+      profile.initialLocation.cityId
+    ) ??
     scenarioMapDefinition.initialPlayerCoordinate ??
     { x: 0, y: 0 };
 
@@ -1839,6 +1841,14 @@ function createScenarioPackAppState(
     cityDirectoryState: null,
     autoAdvanceState: null,
     ...createDefaultUiLayoutAppState(),
+  };
+  nextAppState = {
+    ...nextAppState,
+    gameState: revealCampaignMapHexesForCoordinate(
+      nextAppState.gameState,
+      scenarioMapDefinition,
+      playerCoordinate
+    ),
   };
 
   nextAppState = {
@@ -3172,32 +3182,25 @@ function ensureCurrentCampaignMapCoordinateRevealed(): void {
     return;
   }
 
-  const coordinateSpace =
-    currentMapDefinition.coordinateSpace ?? {
-      width: currentMapDefinition.size ?? 1,
-      height: currentMapDefinition.size ?? 1,
-    };
-
-  if (
-    isCampaignMapCoordinateRevealed({
-      state: appState.gameState,
-      mapId: currentMapDefinition.id,
-      coordinate: appState.playerCoordinate,
-      coordinateSpace,
-    })
-  ) {
+  const currentHexKeys = getRevealedCampaignHexKeys(
+    appState.gameState,
+    currentMapDefinition.id
+  );
+  const nextGameState = revealCampaignMapHexesForCoordinate(
+    appState.gameState,
+    currentMapDefinition,
+    appState.playerCoordinate
+  );
+  if (nextGameState === appState.gameState || currentHexKeys.length === getRevealedCampaignHexKeys(
+    nextGameState,
+    currentMapDefinition.id
+  ).length) {
     return;
   }
 
   appState = {
     ...appState,
-    gameState: revealCampaignMapAroundCoordinate({
-      state: appState.gameState,
-      mapId: currentMapDefinition.id,
-      coordinate: appState.playerCoordinate,
-      coordinateSpace,
-      animateNewHexes: false,
-    }),
+    gameState: nextGameState,
   };
 }
 

@@ -5,14 +5,14 @@
 - document_role: `version-governor`
 - version_id: `target.map-review-provider-boundary-extraction`
 - version_status: `open`
-- active_phase: `phase.queue-execution`
-- active_queue: `queue.map-review-provider-boundary-extraction-and-acceptance`
-- decision_state: `active-execution`
-- next_decision: `queue-closeout-or-return-to-version-review`
-- next_action: `resume-active-queue`
-- resume_gate: `open-active-queue`
+- active_phase: `phase.promotion-review`
+- active_queue: `none`
+- decision_state: `promotion-review`
+- next_decision: `same-version-admission-or-version-closeout`
+- next_action: `return-to-promotion-review`
+- resume_gate: `promotion-review`
 - post_queue_closeout_pause_policy: `auto-continue`
-- promotion_review_result: `none`
+- promotion_review_result: `queue-closeout-complete`
 - review_subject_id: `none`
 - review_subject_classification: `none`
 - proposed_queue_id: `none`
@@ -33,9 +33,11 @@
 - blocked_by: []
 - candidate_queue_ids:
   - `queue.map-review-provider-boundary-extraction-and-acceptance`
+  - `queue.script-editor-event-runtime-production-hardening-and-liu-bang-pack-migration`
 - candidate_backlog_refresh_status: `fresh`
 - candidate_backlog_snapshot:
   - `queue.map-review-provider-boundary-extraction-and-acceptance`
+  - `queue.script-editor-event-runtime-production-hardening-and-liu-bang-pack-migration`
 - candidate_backlog_scan_sources:
   - `project-progress`
   - `blueprint`
@@ -57,7 +59,7 @@
 - Activation conclusion:
   - `target.map-review-provider-boundary-extraction is the active version.`
   - `queue.map-review-provider-boundary-extraction-and-acceptance is admitted as the single active queue.`
-  - `Evidence-anchor reconcile is done; current task is interface-and-adapter.`
+  - `Evidence-anchor reconcile, interface/provider adapter setup, consumer cutover/removal inventory, residue-removal, and acceptance-and-guard are done. The version is open with no active queue and is awaiting same-version admission review or version closeout review.`
 
 ### Version Lifecycle Rules
 
@@ -119,6 +121,7 @@
 | Queue ID | Source Docs | Acceptance Refs | Implementation Anchors | Legacy Paths To Replace | Compatibility Paths To Preserve | Reject Or Split If |
 | --- | --- | --- | --- | --- | --- | --- |
 | `queue.map-review-provider-boundary-extraction-and-acceptance` | `docs/blueprints/version-memo.md MEMO-010; operator design discussion` | `ACC-MAP-REVIEW-PROVIDER-001..005` | `src/ui/views/map/map-view.ts; src/application/map/**; src/application/content/active-game-content.ts; src/application/navigation/campaign-map-exploration.ts; src/application/review/**; src/application/time/**; src/application/runtime/navigation-time-follow-up.ts; src/application/house-modules/**; tests/**` | `map UI direct CityDefinition/cityCoordinatesById marker assembly; scattered review lifecycle truth in house/time/navigation direct paths where provider policy should own it` | `house-specific review presentation copy; map exploration/fog behavior; city entry behavior; normal start, JSON import, and Script Editor preview entrypoints` | `evidence-anchor reconcile proves a prerequisite content-pack/schema queue is needed before provider cutover.` |
+| `queue.script-editor-event-runtime-production-hardening-and-liu-bang-pack-migration` | `operator event-runtime cleanup draft; source audit on 2026-07-18; docs/script-editor-event-trigger-binding-design.md; target.script-editor-event-binding-runtime-replacement closeout evidence` | `ACC-EVENT-RUNTIME-PRODUCTION-001..006` | `src/core/runtime/event-binding-runtime.ts; src/application/story/story-runtime.ts; src/application/events/condition-evaluator.ts; src/domain/event.ts; src/domain/script-editor-project.ts; src/application/script-editor/story-dialogue-event-authoring.ts; src/application/script-editor/runtime-pack-export.ts; src/application/scenario/scenario-pack-loader.ts; src/content/scenario-packs/liu-bang-pei-county-opening/**; src/ui/main-ui/main-ui-flow.js; tests/**; browser/manual Script Editor flow` | `old EventDefinition trigger/conditions residues; unused old event condition evaluator; script-editor event-body triggerTiming/conditionGroups daily authoring residue; built-in Liu Bang events.json trigger/conditions; loader acceptance of old event-body trigger/conditions` | `EventBindingRuntime semantics; event-bindings.json as trigger source; Script Editor owner-local event binding authoring for person/city/building/dialogue/minigame/story-node; supported runtime entrypoints and fail-closed unsupported paths; Liu Bang scenario gameplay after migration` | `This must not be absorbed into the map/review provider-boundary queue; if admitted before this version closes, it widens the current target and should be routed to a successor/fixup event-runtime hardening version instead.` |
 
 ### Acceptance Coverage Ledger
 
@@ -129,8 +132,20 @@
 | `ACC-MAP-REVIEW-PROVIDER-003` | `queue.map-review-provider-boundary-extraction-and-acceptance` | `pending` | `uncovered` | `none` |
 | `ACC-MAP-REVIEW-PROVIDER-004` | `queue.map-review-provider-boundary-extraction-and-acceptance` | `pending` | `uncovered` | `none` |
 | `ACC-MAP-REVIEW-PROVIDER-005` | `queue.map-review-provider-boundary-extraction-and-acceptance` | `pending` | `uncovered` | `none` |
+| `ACC-EVENT-RUNTIME-PRODUCTION-001` | `queue.script-editor-event-runtime-production-hardening-and-liu-bang-pack-migration` | `pending` | `candidate-uncovered` | `Source cleanup: production source no longer contains old selectTriggeredEvents/trigger-evaluator/storyPack.runtimeEvents paths, old condition-evaluator dead code is removed or explicitly reclassified, EventDefinition remains triggerless/conditionless, and events.json remains content-only.` |
+| `ACC-EVENT-RUNTIME-PRODUCTION-002` | `queue.script-editor-event-runtime-production-hardening-and-liu-bang-pack-migration` | `pending` | `candidate-uncovered` | `Script Editor simulated-human authoring: person/city/building/dialogue/minigame/story-node owner-local event tabs can each create bindings, select event/trigger controls, configure conditions, survive trigger edits, save, and export event-bindings.json rather than events.json.` |
+| `ACC-EVENT-RUNTIME-PRODUCTION-003` | `queue.script-editor-event-runtime-production-hardening-and-liu-bang-pack-migration` | `pending` | `candidate-uncovered` | `Runtime effectiveness: every runtime entrypoint claimed as supported by this queue has automated proof from Script Editor authoring through export, loader, TriggerContext, EventBindingRuntime, active event/scene handoff, and eventHistory; browser proof must distinguish UI success from actual runtime trigger proof.` |
+| `ACC-EVENT-RUNTIME-PRODUCTION-004` | `queue.script-editor-event-runtime-production-hardening-and-liu-bang-pack-migration` | `pending` | `candidate-uncovered` | `Fail-closed boundary: unsupported owner/trigger/advanced condition paths are not counted as runtime support and either fail export/load with diagnostics or remain visibly non-runnable.` |
+| `ACC-EVENT-RUNTIME-PRODUCTION-005` | `queue.script-editor-event-runtime-production-hardening-and-liu-bang-pack-migration` | `pending` | `candidate-uncovered` | `Liu Bang pack migration: liu-bang-pei-county-opening removes events.json trigger/conditions, adds event-bindings.json when a trigger is needed, declares eventBindings in pack.json, loads through runtime content, and remains playable through simulated-human normal/JSON flow.` |
+| `ACC-EVENT-RUNTIME-PRODUCTION-006` | `queue.script-editor-event-runtime-production-hardening-and-liu-bang-pack-migration` | `pending` | `candidate-uncovered` | `Full real-flow acceptance: at least one browser-backed Script Editor flow configures entering a city to open a dialogue, runs through the unified game entry flow, enters the city, and observes the dialogue/event trigger result; Liu Bang-specific flow must also be manually or browser simulated after migration.` |
 
 ### Progress Log
 
 - `2026-07-18`: `Created target.map-review-provider-boundary-extraction after closing the Script Editor post-closeout fixup version. Admitted queue.map-review-provider-boundary-extraction-and-acceptance as the single active queue from MEMO-010 and the operator-approved four-step boundary extraction design. No business code implementation has started; the first active task is evidence-anchor reconcile.`
 - `2026-07-18`: `Completed task.map-review-provider-boundary-extraction-and-acceptance.evidence-anchor-reconcile. Source review confirmed map-view still directly depends on CityDefinition and cityCoordinatesById, active-game-content still assembles cityCoordinatesById from city.mapNodeId and map nodes, review-cycle exists as a shared seam while council-priority, council-attendance, navigation-time-follow-up, and house modules remain active consumers, and tests already contain normal start / JSON import / runtime preview anchors. No prerequisite split is required before Step 1; active task is now interface-and-adapter.`
+- `2026-07-18`: `Completed task.map-review-provider-boundary-extraction-and-acceptance.interface-and-adapter. Added map location provider and review cycle policy adapters with tests proving marker-ready city location output and shared review schedule policy behavior without moving house presentation copy. Active queue advances to consumer-cutover-and-inventory; removal inventory and consumer migration have not started.`
+- `2026-07-18`: `Completed task.map-review-provider-boundary-extraction-and-acceptance.consumer-cutover-and-inventory. Map rendering now consumes MapLocationProvider outputs, map stage output no longer carries CityDefinition[] for rendering, runtime review follow-up/coordinator paths consume defaultReviewCyclePolicy, and docs/refactor/map-review-boundary-removal-inventory.md records remaining direct paths. Active queue advances to residue-removal.`
+- `2026-07-18`: `Completed task.map-review-provider-boundary-extraction-and-acceptance.residue-removal. Startup coordinate fallback now uses mapLocationProvider.getCityLocation, house/story review consumers route schedule/countdown/insufficient-time reads and writes through defaultReviewCyclePolicy, low-level council-date primitives are classified as provider internals or core threshold primitives, and source guards cover the removed direct paths. Active queue advances to acceptance-and-guard.`
+- `2026-07-18`: `Completed task.map-review-provider-boundary-extraction-and-acceptance.acceptance-and-guard and queue closeout/handoff. Source guards now cover provider-backed map startup/rendering, ReviewCyclePolicy consumer routing, and normal JSON / Script Editor preview entrypoint seams; full verification passed with npm run typecheck, npm run lint:blueprints, and npm test. Active queue is now none; version remains open pending separate closeout review.`
+- `2026-07-18`: `Recorded queue.script-editor-event-runtime-production-hardening-and-liu-bang-pack-migration as a candidate queue from the operator's event-runtime production hardening draft. Classification is queue-candidate/future-target-candidate relative to the current map/review provider-boundary version: the work is required for event-runtime production cleanup and Liu Bang pack migration, but it must not be absorbed into the closed map/review queue or into the closed target.script-editor-event-binding-runtime-replacement. Acceptance requires source cleanup, Script Editor simulated-human authoring across person/city/building/dialogue/minigame/story-node owner-local event tabs, runtime effectiveness proof through EventBindingRuntime, fail-closed unsupported paths, Liu Bang pack format migration, and browser-backed playable validation. No admission, implementation, version closeout, commit, push, or merge was performed.`
+- `2026-07-18`: `Routed queue.script-editor-event-runtime-production-hardening-and-liu-bang-pack-migration to successor target.script-editor-event-runtime-production-hardening after the operator requested Blueprint continuation. The map/review version was not expanded and remains open with no active queue; project-progress and blueprint now point to the successor event-runtime hardening version.`

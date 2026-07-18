@@ -28,6 +28,7 @@
     "src/application/navigation/**/*.ts",
     "src/application/player/**/*.ts",
     "src/application/playables/**/*.ts",
+    "src/application/review/**/*.ts",
     "src/application/runtime/**/*.ts",
     "src/application/scenario/**/*.ts",
     "src/application/scene/**/*.ts",

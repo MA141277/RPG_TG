@@ -9,6 +9,7 @@
     "cities": "cities.json",
     "characters": "characters.json",
     "events": "events.json",
+    "eventBindings": "event-bindings.json",
     "scenes": "scenes.json",
     "textEntries": "text-entries.json",
     "activities": "activities.json"

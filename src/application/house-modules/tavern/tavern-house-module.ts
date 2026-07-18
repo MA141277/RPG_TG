@@ -77,7 +77,7 @@ import {
   formatHouseActivityCostLine,
   getHouseWorkDurationDays,
 } from "../../house/house-activity-costs";
-import { getInsufficientDaysForTimedActivity } from "../../time/council-priority";
+import { defaultReviewCyclePolicy } from "../../review/review-cycle-provider";
 import { getTavernTextEntries } from "./tavern-active-content";
 import { getTavernHouseContentDefaults } from "./tavern-house-content-defaults";
 import { createInitialTavernSessionState } from "./tavern-session-state";
@@ -596,7 +596,7 @@ function beginAcceptedWorkOffer(
     input.playerCharacterId
   );
   const durationDays = getHouseWorkDurationDays();
-  const remainingDays = getInsufficientDaysForTimedActivity(
+  const remainingDays = defaultReviewCyclePolicy.getInsufficientDaysForTimedActivity(
     input.gameState,
     durationDays
   );
@@ -839,7 +839,7 @@ function handleWorkAction(
     }
 
     const durationDays = getHouseWorkDurationDays();
-    const remainingDays = getInsufficientDaysForTimedActivity(
+    const remainingDays = defaultReviewCyclePolicy.getInsufficientDaysForTimedActivity(
       input.gameState,
       durationDays
     );

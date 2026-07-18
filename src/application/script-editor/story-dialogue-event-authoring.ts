@@ -5,9 +5,7 @@ import type {
   ScriptEditorDialogueNodeType,
   ScriptEditorDialogueRecord,
   ScriptEditorConditionComparisonOperator,
-  ScriptEditorEventConditionGroup,
-  ScriptEditorEventConditionGroupMode,
-  ScriptEditorConditionNode,
+  ScriptEditorConditionGroupOperator,
   ScriptEditorEventDestination,
   ScriptEditorEventDestinationFamily,
   ScriptEditorEventBindingRecord,
@@ -45,7 +43,7 @@ export const SCRIPT_EDITOR_EVENT_TRIGGER_TIMINGS: readonly ScriptEditorEventTrig
   "story-progress",
 ] as const;
 
-export const SCRIPT_EDITOR_EVENT_CONDITION_GROUP_MODES: readonly ScriptEditorEventConditionGroupMode[] = [
+export const SCRIPT_EDITOR_EVENT_BINDING_CONDITION_GROUP_OPERATORS: readonly ScriptEditorConditionGroupOperator[] = [
   "all",
   "any",
   "not",
@@ -271,7 +269,6 @@ export function createDefaultScriptEditorEventRecord(index: number): ScriptEdito
     triggerTiming: "manual",
     repeatable: false,
     nextEventId: "",
-    conditionGroups: [createDefaultConditionGroup(0)],
     destination: {
       family: "dialogue",
       targetId: "",
@@ -340,10 +337,6 @@ export function normalizeScriptEditorDialogueRecord(
 export function normalizeScriptEditorEventRecord(
   record: Partial<ScriptEditorEventRecord> & { id: string }
 ): ScriptEditorEventRecord {
-  const conditionGroups = (record.conditionGroups ?? [])
-    .map(normalizeConditionGroup)
-    .filter((group) => group.conditions.length > 0);
-
   return {
     ...record,
     title: normalizeString(record.title, record.id),
@@ -358,7 +351,6 @@ export function normalizeScriptEditorEventRecord(
     triggerTiming: normalizeEventTriggerTiming(record.triggerTiming),
     repeatable: record.repeatable === true,
     nextEventId: normalizeOptionalString(record.nextEventId),
-    conditionGroups,
     destination: normalizeEventDestination(record.destination),
     relations: {
       storyNodeId: normalizeOptionalString(record.relations?.storyNodeId),
@@ -747,121 +739,6 @@ export function toggleScriptEditorEventRepeatable(
   };
 }
 
-export function appendScriptEditorEventConditionGroup(
-  record: ScriptEditorEventRecord
-): ScriptEditorEventRecord {
-  return {
-    ...record,
-    conditionGroups: [
-      ...(record.conditionGroups ?? []),
-      createDefaultConditionGroup(record.conditionGroups?.length ?? 0),
-    ],
-  };
-}
-
-export function updateScriptEditorEventConditionGroupMode(
-  record: ScriptEditorEventRecord,
-  index: number,
-  value: string
-): ScriptEditorEventRecord {
-  return {
-    ...record,
-    conditionGroups: (record.conditionGroups ?? []).map((group, groupIndex) =>
-      groupIndex === index
-        ? { ...group, operator: normalizeConditionGroupMode(value) }
-        : group
-    ),
-  };
-}
-
-export function removeScriptEditorEventConditionGroup(
-  record: ScriptEditorEventRecord,
-  index: number
-): ScriptEditorEventRecord {
-  return {
-    ...record,
-    conditionGroups: (record.conditionGroups ?? []).filter((_, groupIndex) => groupIndex !== index),
-  };
-}
-
-export function appendScriptEditorEventConditionItem(
-  record: ScriptEditorEventRecord,
-  groupIndex: number
-): ScriptEditorEventRecord {
-  return {
-    ...record,
-    conditionGroups: (record.conditionGroups ?? []).map((group, currentGroupIndex) =>
-      currentGroupIndex === groupIndex
-        ? {
-            ...group,
-            conditions: [
-              ...group.conditions,
-              createDefaultConditionItem(group.conditions.length),
-            ],
-          }
-        : group
-    ),
-  };
-}
-
-export function updateScriptEditorEventConditionItemField(
-  record: ScriptEditorEventRecord,
-  groupIndex: number,
-  itemIndex: number,
-  field: string,
-  value: string
-): ScriptEditorEventRecord {
-  return {
-    ...record,
-    conditionGroups: (record.conditionGroups ?? []).map((group, currentGroupIndex) => {
-      if (currentGroupIndex !== groupIndex) {
-        return group;
-      }
-      return {
-        ...group,
-        conditions: group.conditions.map((item, currentItemIndex) =>
-          currentItemIndex === itemIndex
-            ? updateConditionNodeField(item, field, value)
-            : item
-        ),
-      };
-    }),
-  };
-}
-
-export function removeScriptEditorEventConditionItem(
-  record: ScriptEditorEventRecord,
-  groupIndex: number,
-  itemIndex: number
-): ScriptEditorEventRecord {
-  const conditionGroups = (record.conditionGroups ?? []).flatMap(
-    (group, currentGroupIndex) => {
-      if (currentGroupIndex !== groupIndex) {
-        return [group];
-      }
-
-      const conditions = group.conditions.filter(
-        (_, currentItemIndex) => currentItemIndex !== itemIndex
-      );
-      if (conditions.length === 0) {
-        return [];
-      }
-
-      return [
-        {
-          ...group,
-          conditions,
-        },
-      ];
-    }
-  );
-
-  return {
-    ...record,
-    conditionGroups,
-  };
-}
-
 export function updateScriptEditorEventDestinationField(
   record: ScriptEditorEventRecord,
   field: keyof ScriptEditorEventDestination,
@@ -971,22 +848,6 @@ function createDefaultDialogueNode(index: number): ScriptEditorDialogueNodeRecor
   };
 }
 
-function createDefaultConditionGroup(index: number): ScriptEditorEventConditionGroup {
-  return {
-    id: `condition-group.${index + 1}`,
-    operator: "all",
-    conditions: [],
-  };
-}
-
-function createDefaultConditionItem(_index: number): ScriptEditorConditionNode {
-  return {
-    type: "flag",
-    key: "",
-    expected: true,
-  };
-}
-
 function normalizeDialogueNodeRecord(node: ScriptEditorDialogueNodeRecord): ScriptEditorDialogueNodeRecord {
   return {
     id: normalizeString(node.id, "dialogue-node"),
@@ -1005,18 +866,8 @@ function normalizeDialogueFollowUp(followUp: ScriptEditorDialogueFollowUp): Scri
   };
 }
 
-function normalizeConditionGroup(group: Partial<ScriptEditorEventConditionGroup> & { id?: string }): ScriptEditorEventConditionGroup {
-  return {
-    id: normalizeString(group.id, "condition-group"),
-    operator: normalizeConditionGroupMode(group.operator),
-    conditions: (Array.isArray(group.conditions) ? group.conditions : [])
-      .map(normalizeConditionNode)
-      .filter((condition): condition is ScriptEditorConditionNode => condition != null),
-  };
-}
-
 type ScriptEditorEventBindingConditionGroup = {
-  operator: ScriptEditorEventConditionGroupMode;
+  operator: ScriptEditorConditionGroupOperator;
   conditions: ScriptEditorEventBindingConditionItem[];
 };
 
@@ -1263,153 +1114,6 @@ function omitEmptyEventBindingConditionItemFields(
   ) as ScriptEditorEventBindingConditionItem;
 }
 
-function updateConditionNodeField(
-  node: ScriptEditorConditionNode,
-  field: string,
-  value: string
-): ScriptEditorConditionNode {
-  const normalizedValue = value.trim();
-  if (field === "type") {
-    return createDefaultConditionNodeForType(normalizedValue);
-  }
-
-  if (node.type === "flag") {
-    if (field === "key") {
-      return { ...node, key: normalizedValue };
-    }
-    if (field === "expected") {
-      return { ...node, expected: normalizedValue !== "false" };
-    }
-    return node;
-  }
-
-  if (node.type === "variable") {
-    if (field === "key") {
-      return { ...node, key: normalizedValue };
-    }
-    if (field === "operator") {
-      return { ...node, operator: normalizeComparisonOperator(normalizedValue) };
-    }
-    if (field === "value") {
-      return { ...node, value: normalizeConditionValue(normalizedValue) };
-    }
-    return node;
-  }
-
-  if (node.type === "task-status" && field === "taskId") {
-    return { ...node, taskId: normalizedValue };
-  }
-
-  if (node.type === "signal" && field === "signalType") {
-    return { ...node, signalType: normalizedValue };
-  }
-
-  if (node.type === "elapsed-time") {
-    if (field === "since") {
-      return { ...node, since: normalizedValue };
-    }
-    if (field === "atLeastDays") {
-      return { ...node, atLeastDays: Number(normalizedValue) || 0 };
-    }
-  }
-
-  return node;
-}
-
-function createDefaultConditionNodeForType(type: string): ScriptEditorConditionNode {
-  switch (type) {
-    case "variable":
-      return { type: "variable", key: "", operator: "==", value: "" };
-    case "task-status":
-      return { type: "task-status", taskId: "", status: "completed" };
-    case "signal":
-      return { type: "signal", signalType: "" };
-    case "elapsed-time":
-      return { type: "elapsed-time", since: "", atLeastDays: 0 };
-    case "event-fired":
-      return { type: "event-fired", eventId: "", expected: true };
-    case "chapter":
-      return { type: "chapter", chapterId: "" };
-    case "location":
-      return { type: "location", cityId: "" };
-    case "character-exists":
-      return { type: "character-exists", characterId: "", expected: true };
-    case "character-available":
-      return { type: "character-available", characterId: "", expected: true };
-    case "character-in-city":
-      return { type: "character-in-city", characterId: "", cityId: "" };
-    case "mission-status":
-      return { type: "mission-status", missionId: "", status: "completed" };
-    case "flag":
-    default:
-      return { type: "flag", key: "", expected: true };
-  }
-}
-
-function normalizeConditionNode(value: unknown): ScriptEditorConditionNode | null {
-  if (value == null || typeof value !== "object" || Array.isArray(value)) {
-    return null;
-  }
-
-  const node = value as Record<string, unknown>;
-  if (node.type === "group") {
-    return {
-      type: "group",
-      operator: normalizeConditionGroupMode(node.operator as string | undefined),
-      conditions: (Array.isArray(node.conditions) ? node.conditions : [])
-        .map(normalizeConditionNode)
-        .filter((condition): condition is ScriptEditorConditionNode => condition != null),
-    };
-  }
-
-  if (node.type === "flag") {
-    return {
-      type: "flag",
-      key: normalizeOptionalString(node.key),
-      expected: node.expected !== false,
-    };
-  }
-
-  if (node.type === "variable") {
-    return {
-      type: "variable",
-      key: normalizeOptionalString(node.key),
-      operator: normalizeComparisonOperator(node.operator),
-      value: normalizeConditionValue(node.value),
-    };
-  }
-
-  if (node.type === "task-status") {
-    return {
-      type: "task-status",
-      taskId: normalizeOptionalString(node.taskId),
-      status: normalizeTaskStatus(node.status),
-    };
-  }
-
-  if (node.type === "signal") {
-    return { type: "signal", signalType: normalizeOptionalString(node.signalType) };
-  }
-
-  if (node.type === "elapsed-time") {
-    return {
-      type: "elapsed-time",
-      since: normalizeOptionalString(node.since),
-      atLeastDays: typeof node.atLeastDays === "number" ? node.atLeastDays : 0,
-    };
-  }
-
-  if (node.type === "event-fired") {
-    return {
-      type: "event-fired",
-      eventId: normalizeOptionalString(node.eventId),
-      expected: node.expected === false ? false : true,
-    };
-  }
-
-  return null;
-}
-
 function normalizeEventDestination(destination?: ScriptEditorEventDestination): ScriptEditorEventDestination {
   return {
     family: normalizeEventDestinationFamily(destination?.family),
@@ -1445,11 +1149,11 @@ function normalizeEventTriggerTiming(value?: string): ScriptEditorEventTriggerTi
     : "manual";
 }
 
-function normalizeConditionGroupMode(value?: string): ScriptEditorEventConditionGroupMode {
-  return SCRIPT_EDITOR_EVENT_CONDITION_GROUP_MODES.includes(
-    value as ScriptEditorEventConditionGroupMode
+function normalizeConditionGroupMode(value?: string): ScriptEditorConditionGroupOperator {
+  return SCRIPT_EDITOR_EVENT_BINDING_CONDITION_GROUP_OPERATORS.includes(
+    value as ScriptEditorConditionGroupOperator
   )
-    ? (value as ScriptEditorEventConditionGroupMode)
+    ? (value as ScriptEditorConditionGroupOperator)
     : "all";
 }
 
@@ -1472,12 +1176,6 @@ function normalizeConditionValue(value: unknown): string | number {
   }
   const numericValue = Number(trimmed);
   return Number.isFinite(numericValue) ? numericValue : trimmed;
-}
-
-function normalizeTaskStatus(value: unknown): "inactive" | "active" | "completed" | "failed" {
-  return ["inactive", "active", "completed", "failed"].includes(String(value))
-    ? (value as "inactive" | "active" | "completed" | "failed")
-    : "completed";
 }
 
 function normalizeEventDestinationFamily(value?: string): ScriptEditorEventDestinationFamily {

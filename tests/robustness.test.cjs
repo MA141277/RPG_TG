@@ -901,6 +901,65 @@ test("review cycle helper derives countdown from canonical schedule even when le
   assert.equal(getReviewCycleStatusText(state), "距离评定 5 天");
 });
 
+test("review cycle provider exposes shared schedule policy without house presentation copy", () => {
+  const {
+    createReviewCyclePolicy,
+  } = require("../.test-dist/application/review/review-cycle-provider.js");
+  const providerSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src",
+      "application",
+      "review",
+      "review-cycle-provider.ts"
+    ),
+    "utf8"
+  );
+
+  const policy = createReviewCyclePolicy();
+  const state = withCouncilInDays(createBaseState(), 5);
+
+  assert.equal(policy.getCountdown(state), 5);
+  assert.equal(policy.getStatusText(state), "距离评定 5 天");
+  assert.equal(policy.hasReachedReviewDate(state), false);
+  assert.equal(policy.getInsufficientDaysForTimedActivity(state, 7), 5);
+  assert.doesNotMatch(providerSource, /runtime\.zhu_yuanzhang|keep\.review|temple\.review/);
+});
+
+test("map review boundary residue cleanup routes review consumers through provider policy", () => {
+  const directReviewConsumerPaths = [
+    "src/application/house-modules/home-house/home-house-house-module.ts",
+    "src/application/house-modules/keep-house/keep-house-house-module.ts",
+    "src/application/house-modules/temple-house/temple-house-house-module.ts",
+    "src/application/house-modules/grain-shop/grain-shop-house-module.ts",
+    "src/application/house-modules/tea-house/tea-house-house-module.ts",
+    "src/application/house-modules/tavern/tavern-house-module.ts",
+    "src/application/house-modules/medicine-house/medicine-house-house-module.ts",
+    "src/application/story/story-callbacks.ts",
+    "src/application/story-battle/story-battle-runtime.ts",
+  ];
+
+  for (const relativePath of directReviewConsumerPaths) {
+    const source = fs.readFileSync(path.join(process.cwd(), relativePath), "utf8");
+
+    assert.match(
+      source,
+      /defaultReviewCyclePolicy/,
+      `${relativePath} should consume the review lifecycle through ReviewCyclePolicy`
+    );
+    assert.doesNotMatch(
+      source,
+      /from ["'](?:\.\.\/)*\.\.\/time\/council-priority["']/,
+      `${relativePath} should not import council-priority directly`
+    );
+    assert.doesNotMatch(
+      source,
+      /from ["'](?:\.\.\/)*\.\.\/review\/review-cycle["']/,
+      `${relativePath} should not import review-cycle directly`
+    );
+  }
+});
+
 test("home house enter refreshes stale review mirrors from canonical review cycle", () => {
   const state = {
     ...createBaseState(),
@@ -3167,6 +3226,91 @@ test("scenario pack loader rejects non-array event bindings files", async () => 
   );
 });
 
+test("scenario pack loader rejects old event-body trigger and conditions fields", async () => {
+  const {
+    loadScenarioPackFromFiles,
+  } = require("../.test-dist/application/scenario/scenario-pack-loader.js");
+  const importedFiles = createImportedFilesFromSerializedJsonRecord(
+    {
+      "pack.json": JSON.stringify({
+        schemaVersion: 1,
+        kind: "scenario-pack",
+        id: "scenario-pack.old-event-body-fields",
+        title: "Old Event Body Fields",
+        files: {
+          scenarioProfile: "./scenario-profile.json",
+          characters: "./characters.json",
+          events: "./events.json",
+          scenes: "./scenes.json",
+        },
+      }),
+      "scenario-profile.json": JSON.stringify({
+        id: "scenario.old-event-body-fields",
+        title: "Old Event Body Fields",
+        playerCharacterId: "char.test",
+        chapterId: "chapter.test",
+        initialLocation: {
+          mapId: "map.test",
+          cityId: "city.test",
+          houseId: null,
+          view: "scene",
+        },
+      }),
+      "characters.json": JSON.stringify([{ id: "char.test", name: "Test" }]),
+      "events.json": JSON.stringify([
+        {
+          id: "event.old",
+          chapterId: "chapter.test",
+          name: "Old Event",
+          occurrence: "once",
+          trigger: { timing: "manual" },
+          conditions: [],
+          entrySceneId: "scene.old",
+        },
+      ]),
+      "scenes.json": JSON.stringify([{ id: "scene.old", actions: [] }]),
+    },
+    "old-event-body-fields-pack"
+  );
+
+  await assert.rejects(
+    () => loadScenarioPackFromFiles(importedFiles),
+    /event body trigger\/conditions are retired; use event-bindings\.json/
+  );
+});
+
+test("built-in Liu Bang pack uses event-bindings instead of event-body trigger fields", async () => {
+  const {
+    loadScenarioPackFromFiles,
+  } = require("../.test-dist/application/scenario/scenario-pack-loader.js");
+  const liuBangPackRoot = path.join(
+    process.cwd(),
+    "src/content/scenario-packs/liu-bang-pei-county-opening"
+  );
+  const packManifest = JSON.parse(
+    fs.readFileSync(path.join(liuBangPackRoot, "pack.json"), "utf8")
+  );
+  const events = JSON.parse(
+    fs.readFileSync(path.join(liuBangPackRoot, "events.json"), "utf8")
+  );
+
+  assert.equal(packManifest.files.eventBindings, "event-bindings.json");
+  for (const eventDefinition of events) {
+    assert.equal(Object.hasOwn(eventDefinition, "trigger"), false);
+    assert.equal(Object.hasOwn(eventDefinition, "conditions"), false);
+  }
+
+  const scenarioPack = await loadScenarioPackFromFiles(
+    createScenarioPackFilesFromDirectory(liuBangPackRoot, "liu-bang")
+  );
+
+  assert.ok(
+    scenarioPack.eventBindings?.some(
+      (binding) => binding.eventId === "event.story.liu_bang.pei_county_opening"
+    )
+  );
+});
+
 test("scenario pack loader reports script editor project packages with a creator-facing error", async () => {
   const {
     loadScenarioPackFromFiles,
@@ -3485,7 +3629,6 @@ test("script editor runtime export does not write project package files before e
     path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
     "utf8"
   );
-  const mainSource = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
   const workspaceShellSource = fs.readFileSync(
     path.join(process.cwd(), "src/application/script-editor/workspace-shell.ts"),
     "utf8"
@@ -3693,6 +3836,10 @@ test("script editor runtime preview keeps failures in the editor and exposes exi
   assert.match(mainUiSource, /scriptEditorSelection/);
   assert.match(mainUiSource, /scriptEditorEventTab/);
   assert.match(mainUiSource, /scriptEditorScrollTop/);
+  assert.match(
+    mainUiStyles,
+    /\.c-main-ui-overlay:has\(\.c-main-ui-screen--runtime-preview\)\s*{[^}]*pointer-events:\s*none/s
+  );
   assert.match(mainUiStyles, /\.c-main-ui-screen--runtime-preview/);
   assert.match(mainUiStyles, /pointer-events:\s*none/);
   assert.match(mainUiStyles, /\.c-runtime-preview-exit/);
@@ -6797,6 +6944,24 @@ test(
     );
   }
 );
+
+test("old event condition evaluator residue is removed from production source", () => {
+  const conditionEvaluatorPath = path.join(
+    process.cwd(),
+    "src",
+    "application",
+    "events",
+    "condition-evaluator.ts"
+  );
+  const eventDomainSource = fs.readFileSync(
+    path.join(process.cwd(), "src", "domain", "event.ts"),
+    "utf8"
+  );
+
+  assert.equal(fs.existsSync(conditionEvaluatorPath), false);
+  assert.doesNotMatch(eventDomainSource, /export type EventCondition\b/);
+  assert.doesNotMatch(eventDomainSource, /export type EventConditionNode\b/);
+});
 
 test(
   "script editor exported dialogue event preserves materialized scene entry",
@@ -10491,6 +10656,34 @@ test("script editor event body retires triggerTiming while preserving binding tr
   assert.equal(updatedEvent.triggerTiming, eventRecord.triggerTiming);
 });
 
+test("script editor event body conditionGroups residue is removed while preserving binding conditions", () => {
+  const uiSource = fs.readFileSync("src/ui/main-ui/main-ui-flow.js", "utf8");
+  const domainSource = fs.readFileSync("src/domain/script-editor-project.ts", "utf8");
+  const authoringSource = fs.readFileSync(
+    "src/application/script-editor/story-dialogue-event-authoring.ts",
+    "utf8"
+  );
+  const minimalWorkflowSource = fs.readFileSync(
+    "src/application/script-editor/minimal-workflow.ts",
+    "utf8"
+  );
+
+  assert.doesNotMatch(domainSource, /ScriptEditorEventRecord[\s\S]*conditionGroups\?/);
+  assert.doesNotMatch(authoringSource, /appendScriptEditorEventConditionGroup/);
+  assert.doesNotMatch(authoringSource, /updateScriptEditorEventConditionGroupMode/);
+  assert.doesNotMatch(authoringSource, /removeScriptEditorEventConditionGroup/);
+  assert.doesNotMatch(authoringSource, /appendScriptEditorEventConditionItem/);
+  assert.doesNotMatch(authoringSource, /updateScriptEditorEventConditionItemField/);
+  assert.doesNotMatch(authoringSource, /removeScriptEditorEventConditionItem/);
+  assert.doesNotMatch(minimalWorkflowSource, /eventRecord\.conditionGroups/);
+  assert.doesNotMatch(uiSource, /eventRecord\.conditionGroups/);
+  assert.doesNotMatch(uiSource, /SCRIPT_EDITOR_EVENT_CONDITION_GROUP_MODES/);
+  assert.match(authoringSource, /SCRIPT_EDITOR_EVENT_BINDING_CONDITION_GROUP_OPERATORS/);
+  assert.match(uiSource, /SCRIPT_EDITOR_EVENT_BINDING_CONDITION_GROUP_OPERATORS/);
+  assert.match(authoringSource, /updateScriptEditorEventBindingConditionOperator/);
+  assert.match(uiSource, /data-script-editor-event-binding-condition-operator/);
+});
+
 test("script editor event binding condition field registry covers owner attributes and custom fields", () => {
   const {
     listScriptEditorEventBindingConditionFieldOptions,
@@ -10547,8 +10740,6 @@ test("script editor story/dialogue/event authoring helpers normalize bounded nar
     appendScriptEditorDialogueFollowUp,
     appendScriptEditorDialogueNode,
     appendScriptEditorDialogueParticipant,
-    appendScriptEditorEventConditionGroup,
-    appendScriptEditorEventConditionItem,
     appendScriptEditorEventRelationEntry,
     appendScriptEditorStoryNodeRelation,
     toggleScriptEditorEventRepeatable,
@@ -10556,8 +10747,6 @@ test("script editor story/dialogue/event authoring helpers normalize bounded nar
     updateScriptEditorDialogueFollowUpField,
     updateScriptEditorDialogueNodeField,
     updateScriptEditorDialogueParticipant,
-    updateScriptEditorEventConditionGroupMode,
-    updateScriptEditorEventConditionItemField,
     updateScriptEditorEventDestinationField,
     updateScriptEditorEventField,
     updateScriptEditorEventPreviewSummaryField,
@@ -10592,26 +10781,6 @@ test("script editor story/dialogue/event authoring helpers normalize bounded nar
   let eventRecord = createDefaultScriptEditorEventRecord(0);
   eventRecord = updateScriptEditorEventField(eventRecord, "title", "Opening Event");
   eventRecord = toggleScriptEditorEventRepeatable(eventRecord, true);
-  assert.deepEqual(eventRecord.conditionGroups[0].conditions, []);
-  eventRecord = appendScriptEditorEventConditionGroup(eventRecord);
-  eventRecord = updateScriptEditorEventConditionGroupMode(eventRecord, 1, "any");
-  eventRecord = appendScriptEditorEventConditionItem(eventRecord, 1);
-  eventRecord = updateScriptEditorEventConditionItemField(
-    eventRecord,
-    1,
-    0,
-    "type",
-    "variable"
-  );
-  eventRecord = updateScriptEditorEventConditionItemField(eventRecord, 1, 0, "key", "story.progress");
-  eventRecord = updateScriptEditorEventConditionItemField(eventRecord, 1, 0, "operator", ">=");
-  eventRecord = updateScriptEditorEventConditionItemField(
-    eventRecord,
-    1,
-    0,
-    "value",
-    "3"
-  );
   eventRecord = updateScriptEditorEventDestinationField(eventRecord, "family", "event");
   eventRecord = updateScriptEditorEventDestinationField(
     eventRecord,
@@ -10655,14 +10824,7 @@ test("script editor story/dialogue/event authoring helpers normalize bounded nar
   assert.equal(normalizedEvent.title, "Opening Event");
   assert.equal(normalizedEvent.triggerTiming, "manual");
   assert.equal(normalizedEvent.repeatable, true);
-  assert.equal(normalizedEvent.conditionGroups.length, 1);
-  assert.equal(normalizedEvent.conditionGroups[0].operator, "any");
-  assert.deepEqual(normalizedEvent.conditionGroups[0].conditions[0], {
-    type: "variable",
-    key: "story.progress",
-    operator: ">=",
-    value: 3,
-  });
+  assert.equal(Object.hasOwn(normalizedEvent, "conditionGroups"), false);
   assert.equal(normalizedEvent.destination.family, "event");
   assert.equal(normalizedEvent.destination.targetId, "event.follow-up");
   assert.equal(normalizedEvent.relations.storyNodeId, "story-node.hero");
@@ -10937,69 +11099,6 @@ test("script editor event binding condition authoring registry preserves advance
   });
 });
 
-test("script editor event condition normalization removes empty condition groups", () => {
-  const {
-    removeScriptEditorEventConditionItem,
-    normalizeScriptEditorEventRecord,
-  } = require("../.test-dist/application/script-editor/story-dialogue-event-authoring.js");
-  const {
-    exportScriptEditorProjectToScenarioPackFiles,
-  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
-
-  const normalizedEvent = normalizeScriptEditorEventRecord({
-    id: "event.legacy-condition",
-    title: "Legacy Condition",
-    conditionGroups: [
-      {
-        id: "condition-group.legacy",
-        mode: "all",
-        items: [
-          {
-            id: "condition-item.legacy",
-            conditionType: "story-node",
-            operator: "==",
-            value: "story-node.hero",
-          },
-        ],
-      },
-    ],
-  });
-
-  assert.deepEqual(normalizedEvent.conditionGroups, []);
-
-  let removableEvent = {
-    id: "event.removable-condition",
-    title: "Removable Condition",
-    triggerTiming: "city-enter",
-    destination: { family: "dialogue", targetId: "dialogue.opening" },
-    conditionGroups: [
-      {
-        id: "condition-group.active",
-        operator: "all",
-        conditions: [
-          {
-            type: "flag",
-            key: "story.opening.enabled",
-            expected: true,
-          },
-        ],
-      },
-    ],
-  };
-
-  removableEvent = removeScriptEditorEventConditionItem(removableEvent, 0, 0);
-  assert.deepEqual(removableEvent.conditionGroups, []);
-
-  const project = createExportableScriptEditorProjectDefinition();
-  project.textEntries = [{ id: "text.opening", text: "Opening line." }];
-  project.dialogues = [{ id: "dialogue.opening", title: "Opening" }];
-  project.events = [removableEvent];
-
-  const files = exportScriptEditorProjectToScenarioPackFiles(project);
-  const exportedEvents = JSON.parse(files["events.json"]);
-  assert.equal(Object.hasOwn(exportedEvents[0], "conditions"), false);
-});
-
 test("script editor event deletion removes all cross-record event references", () => {
   const {
     createDefaultScriptEditorProjectDefinition,
@@ -11066,35 +11165,6 @@ test("script editor event deletion removes all cross-record event references", (
       id: keepEventId,
       nextEventId: deletedEventId,
       destination: { family: "dialogue", targetId: "dialogue.opening" },
-      conditionGroups: [
-        {
-          id: "condition-group.delete",
-          operator: "all",
-          conditions: [
-            {
-              type: "event-fired",
-              eventId: deletedEventId,
-              expected: true,
-            },
-          ],
-        },
-        {
-          id: "condition-group.keep",
-          operator: "any",
-          conditions: [
-            {
-              type: "event-fired",
-              eventId: deletedEventId,
-              expected: true,
-            },
-            {
-              type: "flag",
-              key: "story.keep",
-              expected: true,
-            },
-          ],
-        },
-      ],
     },
     {
       ...project.events[0],
@@ -11102,7 +11172,6 @@ test("script editor event deletion removes all cross-record event references", (
       title: "Delete Me",
       destination: { family: "dialogue", targetId: "dialogue.opening" },
       nextEventId: "",
-      conditionGroups: [],
     },
   ];
 
@@ -22043,6 +22112,180 @@ test("map city markers use active city definitions with map-owned coordinates", 
       y: 34,
     },
   ]);
+});
+
+test("map location provider adapter exposes marker-ready city locations", () => {
+  const {
+    createMapLocationProvider,
+  } = require("../.test-dist/application/map/map-location-provider.js");
+
+  const provider = createMapLocationProvider({
+    cityDefinitions: [
+      {
+        id: "city.visible",
+        name: "Visible City",
+        regionId: "region.test",
+        mapNodeId: "node.visible",
+        houseIds: [],
+        neighbourCityIds: [],
+      },
+      {
+        id: "city.missing-coordinate",
+        name: "Missing Coordinate",
+        regionId: "region.test",
+        mapNodeId: "node.missing",
+        houseIds: [],
+        neighbourCityIds: [],
+      },
+    ],
+    cityCoordinatesById: {
+      "city.visible": { x: 7, y: 9 },
+    },
+  });
+
+  assert.deepEqual(provider.listCityLocationMarkers(), [
+    {
+      id: "city.visible",
+      name: "Visible City",
+      x: 7,
+      y: 9,
+    },
+  ]);
+  assert.deepEqual(provider.getCityLocation("city.visible"), {
+    id: "city.visible",
+    name: "Visible City",
+    x: 7,
+    y: 9,
+  });
+  assert.equal(provider.getCityLocation("city.missing-coordinate"), null);
+});
+
+test("map rendering path consumes provider-backed city locations", () => {
+  const mapViewSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/views/map/map-view.ts"),
+    "utf8"
+  );
+  const appRenderSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/app-render.ts"),
+    "utf8"
+  );
+  const presenterOutputSource = fs.readFileSync(
+    path.join(process.cwd(), "src/application/presenter/presenter-output.ts"),
+    "utf8"
+  );
+  const mainSource = fs.readFileSync(
+    path.join(process.cwd(), "src/main.ts"),
+    "utf8"
+  );
+
+  assert.match(mapViewSource, /mapLocationProvider/);
+  assert.doesNotMatch(mapViewSource, /CityDefinition/);
+  assert.doesNotMatch(mapViewSource, /createMapCityMarkers/);
+  assert.doesNotMatch(mapViewSource, /cityCoordinatesById/);
+  assert.match(appRenderSource, /mapLocationProvider:\s*input\.mapLocationProvider/);
+  assert.doesNotMatch(presenterOutputSource, /\{ type: "map"; cityDefinitions: CityDefinition\[] \}/);
+  assert.match(mainSource, /mapLocationProvider\.getCityLocation/);
+  assert.doesNotMatch(
+    mainSource,
+    /cityCoordinatesById\[profile\.initialLocation\.cityId\]/
+  );
+});
+
+test("campaign map visibility uses the canonical map exploration state only", () => {
+  const mapViewSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/views/map/map-view.ts"),
+    "utf8"
+  );
+  const appRenderSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/app-render.ts"),
+    "utf8"
+  );
+  const createInitialStateSource = fs.readFileSync(
+    path.join(process.cwd(), "src/application/state/create-initial-state.ts"),
+    "utf8"
+  );
+  const gameStateSource = fs.readFileSync(
+    path.join(process.cwd(), "src/domain/game-state.ts"),
+    "utf8"
+  );
+
+  assert.match(mapViewSource, /new Set\(input\.revealedHexKeys \?\? \[\]\)/);
+  assert.match(mapViewSource, /revealedHexKeys:\s*cloudClearHexKeys/);
+  assert.doesNotMatch(mapViewSource, /MapExplorationState/);
+  assert.doesNotMatch(mapViewSource, /mapExplorationState/);
+  assert.doesNotMatch(appRenderSource, /mapExplorationByMapId/);
+  assert.doesNotMatch(createInitialStateSource, /mapExplorationByMapId/);
+  assert.doesNotMatch(gameStateSource, /mapExplorationByMapId/);
+  assert.equal(
+    fs.existsSync(
+      path.join(process.cwd(), "src/application/navigation/campaign-map-exploration.ts")
+    ),
+    false
+  );
+});
+
+test("scenario pack startup reveals the initial map coordinate through the canonical map module", () => {
+  const mainSource = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
+  const createScenarioPackAppStateBlock = mainSource.match(
+    /function createScenarioPackAppState\([\s\S]*?\r?\n}\r?\n\r?\nfunction mergeCharacterDefinitions/
+  )?.[0] ?? "";
+
+  assert.match(
+    mainSource,
+    /from "\.\/application\/map\/campaign-map-exploration"/
+  );
+  assert.match(
+    createScenarioPackAppStateBlock,
+    /revealCampaignMapHexesForCoordinate\(\s*nextAppState\.gameState,\s*scenarioMapDefinition,\s*playerCoordinate\s*\)/
+  );
+  assert.doesNotMatch(
+    mainSource,
+    /from "\.\/application\/navigation\/campaign-map-exploration"/
+  );
+});
+
+test("map review provider acceptance keeps normal json and preview entrypoints on shared module seams", () => {
+  const mainSource = fs.readFileSync(
+    path.join(process.cwd(), "src/main.ts"),
+    "utf8"
+  );
+  const startupCoordinatorSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/application/startup/startup-session-coordinator.ts"
+    ),
+    "utf8"
+  );
+  const mainUiSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    "utf8"
+  );
+  const inventorySource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "docs/refactor/map-review-boundary-removal-inventory.md"
+    ),
+    "utf8"
+  );
+
+  assert.match(
+    startupCoordinatorSource,
+    /deps\.createScenarioPackAppState\(scenarioPack,\s*playerCharacterId\)/
+  );
+  assert.match(mainSource, /function createScenarioPackAppState\(/);
+  assert.match(mainSource, /mapLocationProvider\.getCityLocation/);
+  assert.match(
+    mainUiSource,
+    /exportScriptEditorProjectToScenarioPackFiles\(this\.scriptEditorProject\)/
+  );
+  assert.match(
+    mainUiSource,
+    /loadScenarioPackFromFiles\(\s*createTextImportFilesFromRecord\(serializedPackFiles\)/
+  );
+  assert.match(mainUiSource, /onStartLoadedScenarioPack\(scenarioPack\)/);
+  assert.match(inventorySource, /residue-removal-completed/);
+  assert.match(inventorySource, /defaultReviewCyclePolicy/);
+  assert.match(inventorySource, /mapLocationProvider\.getCityLocation/);
 });
 
 test("child 25 time runtime emits explicit council-threshold outcome when day-start crosses the council date", () => {

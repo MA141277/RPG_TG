@@ -149,6 +149,60 @@
 
 ## Open Problems
 
+### MEMO-011: Entry Shell UI Module Extraction
+
+- status: `open`
+- severity: `medium`
+- classification: `future-target-candidate`
+- proposed_queue: `queue.entry-shell-ui-module-extraction`
+- owning_queue: `none`
+- admission_status: `not-admitted`
+- latest_disposition: `recorded-only`
+- affected_families:
+  - `entry shell`
+  - `main menu`
+  - `json scenario start`
+  - `script editor entry`
+  - `character selection entry`
+
+#### Current Evidence
+
+- `src/ui/main-ui/main-ui-flow.js` currently renders and routes the pre-game entry UI directly through `renderMainMenu`, JSON start selection, Script Editor entry screens, and related `data-main-ui-action` / `data-script-editor-action` handlers.
+- `src/main.ts` starts the entry UI by calling `mainUiFlow.showMainMenu()`, so the first extraction boundary can stay inside UI/view composition without changing runtime startup semantics.
+- The entry UI is not the same boundary as in-game map, city, building, dialogue, review/council, or Script Editor workspace internals.
+
+#### Proposed Scope
+
+- Extract an Entry Shell module for startup/pre-game UI:
+  - main menu;
+  - JSON scenario start selection;
+  - Script Editor entry screens;
+  - character-selection entry presentation and action contract where it belongs to the startup flow.
+- Add a narrow contract module, such as `entry-shell-contract`, for screen ids, action ids, and view model data.
+- Add a render module, such as `entry-shell-view`, that owns markup for entry-shell screens.
+- Keep `MainUiFlow` responsible for state, persistence, file picker calls, startup callbacks, and invoking existing handlers.
+- Do not change game runtime startup/load semantics.
+- Do not extract in-game map/city/review/Script Editor workspace behavior into this queue.
+
+#### Acceptance Criteria
+
+- Entry Shell render code is no longer embedded in `main-ui-flow.js`.
+- `MainUiFlow` delegates startup/pre-game screen rendering to the Entry Shell module through a typed or documented view model contract.
+- Existing visible behavior is preserved:
+  - start game;
+  - continue game;
+  - JSON start;
+  - Script Editor entry;
+  - character-selection entry flow.
+- Tests cover the extracted module contract and ensure main menu action ids remain stable.
+- A browser/manual check confirms the startup UI still renders and routes to each entry flow.
+
+#### Routing Notes
+
+- This is not part of `target.script-editor-event-runtime-production-hardening`.
+- Do not admit while an unrelated active queue is open.
+- Promote after the current active queue closes, either as a successor UI modularization version or as part of a broader shell/UI modularization version.
+
 ### MEMO-008: Event Trigger Dispatch And Person Event Bindings Need Separate Condition Ownership
 
 - status: `open`

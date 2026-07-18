@@ -93,7 +93,6 @@ export function createInitialState(input: InitialStateInput): GameState {
       playableSession: null,
       cityNpcPools: {},
       cityMarkets: {},
-      mapExplorationByMapId: {},
       activitySession: null,
       mapExploration: createInitialCampaignMapExplorationState(),
       eventHistory: {},

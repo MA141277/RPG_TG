@@ -53,7 +53,7 @@ import {
   runPlayableRuntime,
 } from "../../playables/house-playable-runtime-bridge";
 import { getMedicineCompoundingTimeAdvanceCost } from "../../playables/medicine-compounding/medicine-compounding-definition";
-import { getInsufficientDaysForTimedActivity } from "../../time/council-priority";
+import { defaultReviewCyclePolicy } from "../../review/review-cycle-provider";
 import { getMedicineHouseTextEntries } from "./medicine-house-active-content";
 import { createInitialMedicineHouseSessionState } from "./medicine-house-session-state";
 
@@ -667,7 +667,7 @@ function handleAction(
 
       const medicineSkill = getPlayerMedicineSkill(playerCharacter);
       const durationDays = getHouseMinigameDurationDays(medicineSkill);
-      const remainingDays = getInsufficientDaysForTimedActivity(
+      const remainingDays = defaultReviewCyclePolicy.getInsufficientDaysForTimedActivity(
         input.gameState,
         durationDays
       );
@@ -691,7 +691,7 @@ function handleAction(
     case CONFIRM_START_COMPOUNDING_ACTION_ID: {
       const medicineSkill = getPlayerMedicineSkill(playerCharacter);
       const durationDays = getHouseMinigameDurationDays(medicineSkill);
-      const remainingDays = getInsufficientDaysForTimedActivity(
+      const remainingDays = defaultReviewCyclePolicy.getInsufficientDaysForTimedActivity(
         input.gameState,
         durationDays
       );

@@ -16,6 +16,10 @@ import type { HouseAccessRefusalRule, HouseDefinition } from "../../domain/house
 import type { LocationAccessDefinition } from "../../domain/location-access";
 import type { MapDefinition, MapNode } from "../../domain/map";
 import type { GridCoordinate } from "../navigation/travel-to-coordinate";
+import {
+  createMapLocationProvider,
+  type MapLocationProvider,
+} from "../map/map-location-provider";
 import type { TaskDefinition } from "../../core/contracts/task-runtime";
 import type { ScenarioPackDefinition } from "../../domain/scenario-pack";
 import type { ValuableItemDefinition } from "../../domain/valuable-item";
@@ -89,6 +93,7 @@ export type ActiveGameContentContext = {
   cityPortraits: Record<string, string>;
   textEntriesById: Record<string, string>;
   cityCoordinatesById: Record<string, GridCoordinate>;
+  mapLocationProvider: MapLocationProvider;
   cityNameById: Record<string, string>;
   houseNameById: Record<string, string>;
   characterNameById: Record<string, string>;
@@ -207,6 +212,10 @@ export function createActiveGameContentContext(
   overridePack?: ContentPackDefinition
 ): ActiveGameContentContext {
   const gameContent = createActiveGameContent(basePack, overridePack);
+  const cityCoordinatesById = createCityCoordinatesById(
+    gameContent.cities,
+    gameContent.mapNodesById
+  );
 
   return {
     packId: gameContent.packId,
@@ -228,10 +237,11 @@ export function createActiveGameContentContext(
       gameContent.historicalCharacterIdByCharacterId,
     cityPortraits: gameContent.cityPortraits,
     textEntriesById: gameContent.textEntriesById,
-    cityCoordinatesById: createCityCoordinatesById(
-      gameContent.cities,
-      gameContent.mapNodesById
-    ),
+    cityCoordinatesById,
+    mapLocationProvider: createMapLocationProvider({
+      cityDefinitions: gameContent.cities,
+      cityCoordinatesById,
+    }),
     cityNameById: createCityNameById(gameContent.cities),
     houseNameById: createHouseNameById(gameContent.houses),
     characterNameById: gameContent.characterNameById,

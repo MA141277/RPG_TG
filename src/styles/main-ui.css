@@ -17,6 +17,10 @@
   pointer-events: none;
 }
 
+.c-main-ui-overlay:has(.c-main-ui-screen--runtime-preview) {
+  pointer-events: none;
+}
+
 .c-main-ui-screen {
   position: relative;
   width: 100%;

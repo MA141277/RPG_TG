@@ -62,7 +62,7 @@ export function createStagePresenterOutput(
     input.citySceneMappingsByCityId?.[activeCityDefinition.id] ?? null;
 
   if (currentView === "map") {
-    return { type: "map", cityDefinitions };
+    return { type: "map" };
   }
 
   if (currentView === "city") {

@@ -99,7 +99,7 @@ import {
   removeScriptEditorStoryNodeRelation,
   SCRIPT_EDITOR_DIALOGUE_FOLLOWUP_FAMILIES,
   SCRIPT_EDITOR_DIALOGUE_NODE_TYPES,
-  SCRIPT_EDITOR_EVENT_CONDITION_GROUP_MODES,
+  SCRIPT_EDITOR_EVENT_BINDING_CONDITION_GROUP_OPERATORS,
   SCRIPT_EDITOR_EVENT_DESTINATION_FAMILIES,
   SCRIPT_EDITOR_EVENT_TRIGGER_TIMINGS,
   SCRIPT_EDITOR_STORY_PROGRESS_MODES,
@@ -3256,7 +3256,6 @@ export class MainUiFlow {
             </label>
           </div>
           <div class="c-script-editor-shell__cards">
-            ${this.renderScriptEditorOverviewCard("条件组", `当前有 ${eventRecord.conditionGroups?.length ?? 0} 组条件。`, "neutral")}
             ${this.renderScriptEditorOverviewCard("去向", `当前去向 ${eventRecord.destination?.family ?? "未设置"}:${eventRecord.destination?.targetId ?? "未设置"}`, "neutral")}
             ${this.renderScriptEditorOverviewCard("关联对象", `人物 ${eventRecord.relations?.personIds?.length ?? 0} / 城市 ${eventRecord.relations?.cityIds?.length ?? 0} / 建筑 ${eventRecord.relations?.buildingIds?.length ?? 0}`, "neutral")}
           </div>
@@ -3722,7 +3721,7 @@ export class MainUiFlow {
         <label class="c-script-editor-form-field">
           <span>条件组合</span>
           <select class="c-script-editor-form-field__input" data-script-editor-event-binding-id="${escapeHtml(normalizedBinding.id)}" data-script-editor-event-binding-condition-operator>
-            ${SCRIPT_EDITOR_EVENT_CONDITION_GROUP_MODES.map(
+            ${SCRIPT_EDITOR_EVENT_BINDING_CONDITION_GROUP_OPERATORS.map(
               (operator) => `<option value="${operator}" ${conditions.operator === operator ? "selected" : ""}>${SCRIPT_EDITOR_EVENT_BINDING_CONDITION_OPERATOR_LABELS[operator] ?? operator}</option>`
             ).join("")}
           </select>

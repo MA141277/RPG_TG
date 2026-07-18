@@ -4,11 +4,11 @@
 
 - entry_id: `project-progress.rpg-tg`
 - active_blueprint: `blueprint.rpg-tg`
-- active_version: `target.map-review-provider-boundary-extraction`
+- active_version: `target.script-editor-event-runtime-production-hardening`
 - has_active_queue: `true`
-- active_queue: `queue.map-review-provider-boundary-extraction-and-acceptance`
-- active_task: `task.map-review-provider-boundary-extraction-and-acceptance.interface-and-adapter`
-- next_file: `docs/blueprints/queues/map-review-provider-boundary-extraction-and-acceptance-queue.md`
+- active_queue: `queue.script-editor-event-runtime-production-hardening-and-liu-bang-pack-migration`
+- active_task: `task.script-editor-event-runtime-production-hardening-and-liu-bang-pack-migration.queue-closeout-and-handoff`
+- next_file: `docs/blueprints/queues/script-editor-event-runtime-production-hardening-and-liu-bang-pack-migration-queue.md`
 - entry_action: `open-next-file`
 
 ## Human Context
@@ -27,19 +27,21 @@
 - Current Blueprint:
   - `docs/blueprints/blueprint.md`
 - Current Version Spec:
-  - `docs/blueprints/specs/2026-07-18-map-review-provider-boundary-extraction-target.md`
+  - `docs/blueprints/specs/2026-07-18-script-editor-event-runtime-production-hardening-target.md`
 - Current Version Plan:
-  - `docs/blueprints/plans/2026-07-18-map-review-provider-boundary-extraction-target-plan.md`
+  - `docs/blueprints/plans/2026-07-18-script-editor-event-runtime-production-hardening-target-plan.md`
 - Current Active Queue:
-  - `docs/blueprints/queues/map-review-provider-boundary-extraction-and-acceptance-queue.md`
+  - `docs/blueprints/queues/script-editor-event-runtime-production-hardening-and-liu-bang-pack-migration-queue.md`
 
 ### Live Entry Guardrails
 
 - `This file only states the current resume entry and downstream pointer set.`
 - `Admission history, queue closeout history, and review narrative must stay in the version plan, queue docs, or docs/change-log.md rather than living here as competing current-state prose.`
-- `The pointed version is now the open map/review provider-boundary extraction version created after the Script Editor post-closeout fixup version closed.`
+- `The pointed version is now the open script-editor event-runtime production hardening version created after the map/review provider-boundary queue closed and the operator promoted the event-runtime cleanup draft.`
+- `target.script-editor-event-runtime-production-hardening is open with active queue.script-editor-event-runtime-production-hardening-and-liu-bang-pack-migration at queue closeout/handoff after implementation passed automated verification; simulated-human Script Editor/runtime acceptance and guard review remain pending.`
+- `target.map-review-provider-boundary-extraction remains open with no active queue after its single queue closed; it was not reopened or modified as the active execution target for event-runtime hardening.`
 - `target.script-editor-event-binding-post-closeout-fixups is closed and must not be reopened for map/review modularization work.`
-- `queue.map-review-provider-boundary-extraction-and-acceptance is active; evidence-anchor reconcile is done and the current implementation task is interface-and-adapter.`
+- `queue.map-review-provider-boundary-extraction-and-acceptance is closed after residue-removal and acceptance-and-guard passed. target.map-review-provider-boundary-extraction remains open with no active queue and awaits same-version admission review or version closeout review.`
 - `target.script-editor-event-binding-runtime-replacement remains done and must not be reopened for these fixups.`
 - `queue.script-editor-event-destination-selector-completion is closed after guard review and queue closeout/handoff.`
 - `queue.script-editor-event-destination-selector-family-coverage-correction is closed after guard review and queue closeout/handoff.`

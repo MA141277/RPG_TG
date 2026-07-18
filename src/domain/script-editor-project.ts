@@ -369,10 +369,6 @@ export type ScriptEditorConditionGroup = {
   conditions: ScriptEditorConditionNode[];
 };
 
-export type ScriptEditorEventConditionGroupMode = ScriptEditorConditionGroupOperator;
-
-export type ScriptEditorEventConditionGroup = ScriptEditorConditionGroup;
-
 export type ScriptEditorEventDestinationFamily =
   | "dialogue"
   | "event"
@@ -459,7 +455,6 @@ export type ScriptEditorEventRecord = ScriptEditorEntityRecord & {
   repeatable?: boolean;
   nextEventId?: string;
   taskInputs?: RuntimeTaskInput[];
-  conditionGroups?: ScriptEditorEventConditionGroup[];
   destination?: ScriptEditorEventDestination;
   relations?: ScriptEditorEventRelationRecord;
   previewSummary?: ScriptEditorEventPreviewSummary;

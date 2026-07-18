@@ -106,7 +106,7 @@ export function createAppRenderCoordinator(
       cityEntries: activeContentContext.cityEntries,
       cardDefinitions: activeContentContext.cards,
       cityNpcPoolDefinitions: activeContentContext.cityNpcPools,
-      cityCoordinatesById: activeContentContext.cityCoordinatesById,
+      mapLocationProvider: activeContentContext.mapLocationProvider,
       cityNameById: activeContentContext.cityNameById,
       houseNameById: activeContentContext.houseNameById,
       characterNameById: activeContentContext.characterNameById,

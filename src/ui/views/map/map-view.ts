@@ -3,15 +3,17 @@
   getHexKey,
   type GridCoordinate,
 } from "../../../application/navigation/travel-to-coordinate";
-import type { CityDefinition } from "../../../domain/city";
 import { campaignUnitAssets } from "../../../content/yuanmo-strat-unit-assets";
+import type {
+  MapCityLocation,
+  MapLocationProvider,
+} from "../../../application/map/map-location-provider";
 import type {
   HistoricalCharacterRecord,
   HistoricalCityRoster,
 } from "../../../domain/historical-character";
 import type {
   MapDefinition,
-  MapExplorationState,
   MapLayer,
   MapNode,
   MapStats,
@@ -21,10 +23,6 @@ import {
   getCampaignHexCellKey,
   getCampaignHexDisc,
 } from "../../../domain/campaign-hex";
-import {
-  createMapCityMarkers,
-  type MapCityMarker,
-} from "../../../application/map/map-city-marker-view-model";
 import redTurbanMarkerUrl from "../../../assets/yuanmo-map/chuang-swordsman-marker.png";
 import cityDepthMeshAssetUrl from "../../../3dasset/city_hun/city-hun-campaign-lowpoly.json?url";
 import cityDepthTextureUrl from "../../../3dasset/city_hun/texture_pbr_20250901.png?url";
@@ -54,7 +52,7 @@ export type MapViewModel = {
   playerCoordinate: GridCoordinate;
   playerFacingDegrees: number;
   playerIsMoving: boolean;
-  cityMarkers: MapCityMarker[];
+  cityMarkers: MapCityLocation[];
   coordinateSpace: {
     width: number;
     height: number;
@@ -89,11 +87,9 @@ export function createMapViewModel(input: {
   playerFacingDegrees?: number;
   playerIsMoving?: boolean;
   revealedHexKeys?: string[];
-  cityDefinitions: CityDefinition[];
-  cityCoordinatesById: Record<string, GridCoordinate>;
+  mapLocationProvider: MapLocationProvider;
   historicalCharacters?: HistoricalCharacterRecord[];
   historicalCityRosters?: HistoricalCityRoster[];
-  mapExplorationState?: MapExplorationState | null;
 }): MapViewModel {
   const mode = input.mapDefinition.mode ?? "grid";
   const coordinateSpace = input.mapDefinition.coordinateSpace ?? {
@@ -125,15 +121,7 @@ export function createMapViewModel(input: {
   const historicalRosterByCityNodeId = Object.fromEntries(
     (input.historicalCityRosters ?? []).map((roster) => [roster.cityNodeId, roster])
   );
-  const cityIdByMapNodeId = Object.fromEntries(
-    input.cityDefinitions
-      .filter((cityDefinition) => cityDefinition.mapNodeId != null)
-      .map((cityDefinition) => [
-        cityDefinition.mapNodeId as string,
-        cityDefinition.id,
-      ])
-  );
-  const revealedHexKeySet = new Set(input.mapExplorationState?.revealedHexKeys ?? []);
+  const revealedHexKeySet = new Set(input.revealedHexKeys ?? []);
 
   return {
     mode,
@@ -142,10 +130,7 @@ export function createMapViewModel(input: {
     playerCoordinate: input.playerCoordinate,
     playerFacingDegrees: input.playerFacingDegrees ?? 0,
     playerIsMoving: input.playerIsMoving ?? false,
-    cityMarkers: createMapCityMarkers({
-      cityDefinitions: input.cityDefinitions,
-      cityCoordinatesById: input.cityCoordinatesById,
-    }),
+    cityMarkers: input.mapLocationProvider.listCityLocationMarkers(),
     coordinateSpace,
     displaySize,
     primaryImageUrl: input.mapDefinition.primaryImageUrl ?? null,
@@ -170,9 +155,7 @@ export function createMapViewModel(input: {
     cloudNoiseTextureImageUrl:
       input.mapDefinition.layers?.find((layer) => layer.id === "map_fog_noise")
         ?.imageUrl ?? null,
-    revealedHexKeys: Array.from(
-      new Set(input.mapExplorationState?.revealedHexKeys ?? [])
-    ).sort(),
+    revealedHexKeys: cloudClearHexKeys,
     cityDepthMeshAssetUrl,
     cityDepthTextureUrl,
     cityDepthMeshCoordinate: input.mapDefinition.initialPlayerCoordinate ?? null,
@@ -191,7 +174,9 @@ export function createMapViewModel(input: {
           id: nodeId,
           cityId:
             node.cityId ??
-            (node.id == null ? null : cityIdByMapNodeId[node.id] ?? null),
+            (node.id == null
+              ? null
+              : input.mapLocationProvider.getCityIdByMapNodeId(node.id)),
           name: node.label ?? node.cityId ?? `Node ${index + 1}`,
           x: node.x,
           y: node.y,

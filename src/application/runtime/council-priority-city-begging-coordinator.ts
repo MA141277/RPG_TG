@@ -9,7 +9,7 @@ import {
   ACTIVITY_COMPLETION_STAMINA_COST,
   canAffordActivityCost,
 } from "../player/player-stamina";
-import { getInsufficientDaysForTimedActivity } from "../time/council-priority";
+import { defaultReviewCyclePolicy } from "../review/review-cycle-provider";
 import type { CharacterDefinition } from "../../domain/character";
 import type { CityBeggingGameCompletionResult } from "../../domain/city-begging-minigame";
 import type { HouseDefinition } from "../../domain/house";
@@ -239,7 +239,7 @@ export function createCouncilPriorityCityBeggingCoordinator(
       return;
     }
 
-    const remainingDays = getInsufficientDaysForTimedActivity(
+    const remainingDays = defaultReviewCyclePolicy.getInsufficientDaysForTimedActivity(
       appState.gameState,
       CITY_BEGGING_DURATION_DAYS
     );

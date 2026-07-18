@@ -4,9 +4,9 @@
 
 - blueprint_id: `blueprint.rpg-tg`
 - blueprint_version: `2026.07`
-- active_version: `target.map-review-provider-boundary-extraction`
-- active_version_plan: `docs/blueprints/plans/2026-07-18-map-review-provider-boundary-extraction-target-plan.md`
-- active_version_spec: `docs/blueprints/specs/2026-07-18-map-review-provider-boundary-extraction-target.md`
+- active_version: `target.script-editor-event-runtime-production-hardening`
+- active_version_plan: `docs/blueprints/plans/2026-07-18-script-editor-event-runtime-production-hardening-target-plan.md`
+- active_version_spec: `docs/blueprints/specs/2026-07-18-script-editor-event-runtime-production-hardening-target.md`
 - classification_rules_ref: `docs/blueprints/classification-rule-layer-spec.md`
 - execution_mode: `single-active-task`
 - allow_parallel: `false`
@@ -22,6 +22,7 @@
 
 | Version ID | Spec | Plan | Notes |
 | --- | --- | --- | --- |
+| `target.script-editor-event-runtime-production-hardening` | `docs/blueprints/specs/2026-07-18-script-editor-event-runtime-production-hardening-target.md` | `docs/blueprints/plans/2026-07-18-script-editor-event-runtime-production-hardening-target-plan.md` | `Open successor event-runtime hardening version created on 2026-07-18 from the operator's production-readiness draft after source audit found old event-system residues and Liu Bang pack trigger/conditions data. It admits queue.script-editor-event-runtime-production-hardening-and-liu-bang-pack-migration to clean/guard old event residues, migrate Liu Bang to event-bindings.json, and prove Script Editor simulated-human authoring plus runtime triggering.` |
 | `target.map-review-provider-boundary-extraction` | `docs/blueprints/specs/2026-07-18-map-review-provider-boundary-extraction-target.md` | `docs/blueprints/plans/2026-07-18-map-review-provider-boundary-extraction-target-plan.md` | `Open successor modularization version created on 2026-07-18 from MEMO-010 and operator-approved map/review boundary design. It admits queue.map-review-provider-boundary-extraction-and-acceptance to extract provider-backed map and in-game review module boundaries, inventory and remove old direct paths, and verify complete behavior across normal start, JSON import, and Script Editor runtime preview.` |
 | `target.script-editor-event-binding-post-closeout-fixups` | `docs/blueprints/specs/2026-07-17-script-editor-event-binding-post-closeout-fixups-target.md` | `docs/blueprints/plans/2026-07-17-script-editor-event-binding-post-closeout-fixups-target-plan.md` | `Closed on 2026-07-18 after destination selector completion, destination content-entry correction, runtime preview-from-memory, save/export confusion fix, and final version closeout were recorded. Broader map/review provider-boundary work is routed to target.map-review-provider-boundary-extraction rather than this Script Editor fixup version.` |
 | `target.script-editor-event-binding-runtime-replacement` | `docs/blueprints/specs/2026-07-16-script-editor-event-binding-runtime-replacement-target.md` | `docs/blueprints/plans/2026-07-16-script-editor-event-binding-runtime-replacement-target-plan.md` | `Closed on 2026-07-17 after explicit final closeout confirmation; the events.json/event-bindings.json split, script-editor double-table UI/import/export, built-in zhuyuanzhang event-binding migration, EventBindingRuntime cutover with sub-runtime handoff compatibility, old event runtime retirement, owner-local event binding authoring, condition editor completion, condition export lowering, TriggerContext entrypoint fail-closed guards, and event-body triggerTiming retirement are now historical evidence with no remaining lawful same-version candidate queue.` |

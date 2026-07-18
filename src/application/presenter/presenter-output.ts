@@ -12,7 +12,7 @@ import type { HouseDefinition } from "../../domain/house";
 import type { HouseModuleViewModel } from "../../domain/house-module";
 
 export type AppPresenterStageOutput =
-  | { type: "map"; cityDefinitions: CityDefinition[] }
+  | { type: "map" }
   | {
       type: "city";
       activeCityDefinition: CityDefinition;
@@ -53,4 +53,3 @@ export type AppPresenterOutput = {
   overlay: AppPresenterOverlayOutput;
   sceneDefinitionsById?: Record<string, SceneDefinition>;
 };
-

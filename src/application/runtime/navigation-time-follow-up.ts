@@ -3,10 +3,7 @@ import {
   resolveTextEntry,
   resolveTextTemplateEntry,
 } from "../content/text-resolution";
-import {
-  getCouncilPriorityHouseModuleId,
-  hasReachedCouncilDate,
-} from "../time/council-priority";
+import { defaultReviewCyclePolicy } from "../review/review-cycle-provider";
 import type { ActivityDefinition } from "../../domain/activity";
 import type { SceneDefinition } from "../../domain/action";
 import type { CharacterDefinition } from "../../domain/character";
@@ -112,8 +109,8 @@ export function applyCouncilPriorityFollowUp(input: {
 }): NavigationTimeFollowUpResult {
   if (
     input.previousGameState != null &&
-    (hasReachedCouncilDate(input.previousGameState) ||
-      !hasReachedCouncilDate(input.state.core))
+    (defaultReviewCyclePolicy.hasReachedReviewDate(input.previousGameState) ||
+      !defaultReviewCyclePolicy.hasReachedReviewDate(input.state.core))
   ) {
     return {
       handled: false,
@@ -159,7 +156,7 @@ function getCouncilPriorityHouseDefinition(
   gameState: GameState,
   houseDefinitions: HouseDefinition[]
 ): HouseDefinition | null {
-  const priorityModuleId = getCouncilPriorityHouseModuleId(gameState);
+  const priorityModuleId = defaultReviewCyclePolicy.getPriorityHouseModuleId(gameState);
   const currentCityId = gameState.world.currentCityId;
 
   return (

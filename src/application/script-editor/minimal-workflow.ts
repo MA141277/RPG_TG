@@ -3,11 +3,9 @@ import {
   SCRIPT_EDITOR_PROJECT_SCHEMA_VERSION,
   type ScriptEditorBuildingRecord,
   type ScriptEditorCityRecord,
-  type ScriptEditorConditionNode,
   type ScriptEditorDialogueFollowUp,
   type ScriptEditorDialogueRecord,
   type ScriptEditorEntityRecord,
-  type ScriptEditorEventConditionGroup,
   type ScriptEditorEventBindingRecord,
   type ScriptEditorEventRecord,
   type ScriptEditorMinigameRecord,
@@ -450,14 +448,9 @@ function removeEventReferencesFromScriptEditorProject(
         eventRecord.destination.targetId === removedEventId
           ? { ...eventRecord.destination, targetId: "" }
           : eventRecord.destination;
-      const nextConditionGroups = removeEventReferencesFromConditionGroups(
-        eventRecord.conditionGroups,
-        removedEventId
-      );
       if (
         nextNextEventId === eventRecord.nextEventId &&
-        nextDestination === eventRecord.destination &&
-        nextConditionGroups === eventRecord.conditionGroups
+        nextDestination === eventRecord.destination
       ) {
         return eventRecord;
       }
@@ -467,12 +460,6 @@ function removeEventReferencesFromScriptEditorProject(
       }
       if (nextDestination !== eventRecord.destination && nextDestination != null) {
         nextEventRecord.destination = nextDestination;
-      }
-      if (
-        nextConditionGroups !== eventRecord.conditionGroups &&
-        nextConditionGroups != null
-      ) {
-        nextEventRecord.conditionGroups = nextConditionGroups;
       }
       return nextEventRecord;
     }),
@@ -570,82 +557,6 @@ function removeBuildingEventBindingReferences(
   return nextBinding as
     | ScriptEditorBuildingRecord["entryBinding"]
     | ScriptEditorBuildingRecord["eventBindings"];
-}
-
-function removeEventReferencesFromConditionGroups(
-  conditionGroups: ScriptEditorEventConditionGroup[] | undefined,
-  removedEventId: string
-): ScriptEditorEventConditionGroup[] | undefined {
-  if (conditionGroups == null) {
-    return conditionGroups;
-  }
-
-  let changed = false;
-  const nextGroups: ScriptEditorEventConditionGroup[] = [];
-  for (const group of conditionGroups) {
-    const nextConditions = removeEventReferencesFromConditionNodes(
-      group.conditions,
-      removedEventId
-    );
-    if (nextConditions.length === 0) {
-      changed = true;
-      continue;
-    }
-    if (nextConditions === group.conditions) {
-      nextGroups.push(group);
-      continue;
-    }
-    changed = true;
-    nextGroups.push({
-      ...group,
-      conditions: nextConditions,
-    });
-  }
-  return changed ? nextGroups : conditionGroups;
-}
-
-function removeEventReferencesFromConditionNodes(
-  nodes: ScriptEditorConditionNode[],
-  removedEventId: string
-): ScriptEditorConditionNode[] {
-  let changed = false;
-  const nextNodes: ScriptEditorConditionNode[] = [];
-  for (const node of nodes) {
-    const prunedNode = removeEventReferencesFromConditionNode(node, removedEventId);
-    if (prunedNode == null) {
-      changed = true;
-      continue;
-    }
-    if (prunedNode !== node) {
-      changed = true;
-    }
-    nextNodes.push(prunedNode);
-  }
-  return changed ? nextNodes : nodes;
-}
-
-function removeEventReferencesFromConditionNode(
-  node: ScriptEditorConditionNode,
-  removedEventId: string
-): ScriptEditorConditionNode | null {
-  if (node.type === "event-fired") {
-    return node.eventId === removedEventId ? null : node;
-  }
-  if (node.type !== "group") {
-    return node;
-  }
-
-  const nextConditions = removeEventReferencesFromConditionNodes(node.conditions, removedEventId);
-  if (nextConditions.length === 0) {
-    return null;
-  }
-  if (nextConditions === node.conditions) {
-    return node;
-  }
-  return {
-    ...node,
-    conditions: nextConditions,
-  };
 }
 
 export function getScriptEditorWorkflowVisibleFamilies(): readonly ScriptEditorProjectFileKey[] {

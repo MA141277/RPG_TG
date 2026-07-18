@@ -25,20 +25,13 @@ import type {
   HomeHouseOverlayState,
   HomeHouseSessionState,
 } from "../../../domain/house-modules/home-house-session";
-import {
-  getCouncilPriorityHouseModuleId,
-  hasReachedCouncilDate,
-} from "../../time/council-priority";
 import { advanceGameStateOneDay } from "../../time/time-progression";
 import { HOUSE_MAP_AUTO_ADVANCE_DAY_INTERVAL_MS } from "../../house/map-auto-advance";
 import {
   resolveTextEntry,
   resolveTextTemplateEntry,
 } from "../../content/text-resolution";
-import {
-  getReviewCycleStatusText,
-  syncReviewCycleCompatibilityMirrors,
-} from "../../review/review-cycle";
+import { defaultReviewCyclePolicy } from "../../review/review-cycle-provider";
 import { assertExists } from "../../../shared/assert";
 import {
   getHomeHouseContentDefaults,
@@ -202,7 +195,7 @@ function getCouncilLateChoiceParagraphs(
   state: GameState,
   textEntriesById?: Record<string, string>
 ): string[] {
-  if (getCouncilPriorityHouseModuleId(state) === "temple-house") {
+  if (defaultReviewCyclePolicy.getPriorityHouseModuleId(state) === "temple-house") {
     return [
       resolveHomeText(
         textEntriesById,
@@ -239,7 +232,8 @@ function ensureHomeRuntimeState(
   gameState: GameState,
   playerCharacter: CharacterDefinition
 ): GameState {
-  const reviewSyncedState = syncReviewCycleCompatibilityMirrors(gameState);
+  const reviewSyncedState =
+    defaultReviewCyclePolicy.syncCompatibilityMirrors(gameState);
   const spouseNpcIdVariable = gameState.runtime.variables[HOME_HOUSE_VARIABLE_KEYS.spouseNpcId];
   const spouseSupportActionsVariable =
     gameState.runtime.variables[HOME_HOUSE_VARIABLE_KEYS.spouseSupportActions];
@@ -355,7 +349,7 @@ function advanceRestOneDay(
   };
   const nextCharacterDefinitions = replaceCharacter(characterDefinitions, nextPlayerCharacter);
   const advancedState = advanceCalendarOneDay(ensuredState);
-  const stateWithRest = syncReviewCycleCompatibilityMirrors({
+  const stateWithRest = defaultReviewCyclePolicy.syncCompatibilityMirrors({
     ...advancedState,
     world: {
       ...advancedState.world,
@@ -413,7 +407,7 @@ function runRestPlan(
       };
     }
 
-    if (hasReachedCouncilDate(nextState)) {
+    if (defaultReviewCyclePolicy.hasReachedReviewDate(nextState)) {
       return {
         state: nextState,
         characterDefinitions: nextCharacterDefinitions,
@@ -437,7 +431,7 @@ function runRestPlan(
     recoveredFatigue += dailyResult.recoveredFatigue;
     daysRested += 1;
 
-    if (hasReachedCouncilDate(nextState)) {
+    if (defaultReviewCyclePolicy.hasReachedReviewDate(nextState)) {
       return {
         state: nextState,
         characterDefinitions: nextCharacterDefinitions,
@@ -797,7 +791,7 @@ function handleAction(
       ensuredState,
       input.characterDefinitions,
       input.playerCharacterId,
-      (state) => !hasReachedCouncilDate(state)
+      (state) => !defaultReviewCyclePolicy.hasReachedReviewDate(state)
     );
 
     return createHomeRestAutoAdvanceResult(
@@ -1049,7 +1043,7 @@ export const homeHouseHouseModule: HouseModuleDefinition<"home-house"> = {
           { label: "金钱", value: `${playerCharacter.stats.gold} 文` },
           {
             label: "评定",
-            value: getReviewCycleStatusText(ensuredState),
+            value: defaultReviewCyclePolicy.getStatusText(ensuredState),
           },
           { label: "宅邸等级", value: `${persistentState.growth.homeLevel}` },
           {

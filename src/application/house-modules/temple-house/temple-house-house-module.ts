@@ -75,10 +75,6 @@ import {
   resolveLateCouncilAttendance,
 } from "../../time/council-attendance";
 import {
-  getInsufficientDaysForTimedActivity,
-  hasReachedCouncilDate,
-} from "../../time/council-priority";
-import {
   advanceGameStateOneDay,
   formatCouncilStatusText,
 } from "../../time/time-progression";
@@ -86,11 +82,7 @@ import {
   resolveTextEntry,
   resolveTextTemplateEntry,
 } from "../../content/text-resolution";
-import {
-  applyReviewCycleSchedule,
-  getReviewCycleCountdown,
-  syncReviewCycleCompatibilityMirrors,
-} from "../../review/review-cycle";
+import { defaultReviewCyclePolicy } from "../../review/review-cycle-provider";
 import {
   getDefaultTempleTaskActivityDefinitions,
   isTempleTaskActivityDefinition,
@@ -945,7 +937,7 @@ function runTempleRestPlan(
     daysRested < TEMPLE_REST_MAX_DAYS &&
     shouldContinue(nextState, nextCharacters, daysRested)
   ) {
-    if (hasReachedCouncilDate(nextState)) {
+    if (defaultReviewCyclePolicy.hasReachedReviewDate(nextState)) {
       return {
         state: nextState,
         characterDefinitions: nextCharacters,
@@ -970,7 +962,7 @@ function runTempleRestPlan(
     daysRested += 1;
     totalRecovered += result.recovered;
 
-    if (hasReachedCouncilDate(nextState)) {
+    if (defaultReviewCyclePolicy.hasReachedReviewDate(nextState)) {
       return {
         state: nextState,
         characterDefinitions: nextCharacters,
@@ -1186,7 +1178,8 @@ function ensureTempleRuntimeState(gameState: GameState): GameState {
     nextFlags[ZHU_YUANZHANG_STORY_FLAG_KEYS.beggingUnlocked] = false;
   }
 
-  const reviewSyncedState = syncReviewCycleCompatibilityMirrors(syncedState);
+  const reviewSyncedState =
+    defaultReviewCyclePolicy.syncCompatibilityMirrors(syncedState);
   return {
     ...reviewSyncedState,
     runtime: {
@@ -1329,7 +1322,10 @@ function shouldRouteTempleActivityToCouncil(
     return null;
   }
 
-  return getInsufficientDaysForTimedActivity(gameState, durationDays);
+  return defaultReviewCyclePolicy.getInsufficientDaysForTimedActivity(
+    gameState,
+    durationDays
+  );
 }
 
 function createTempleInsufficientTimeResult(
@@ -1383,7 +1379,7 @@ function shouldBlockTempleLeave(gameState: GameState): boolean {
       gameState,
       ZHU_YUANZHANG_STORY_FLAG_KEYS.firstTempleWorkLockCompleted
     ) &&
-    getReviewCycleCountdown(gameState) > 0;
+    defaultReviewCyclePolicy.getCountdown(gameState) > 0;
 
   return (
     isMonkStoryStage(gameState) &&
@@ -1402,7 +1398,7 @@ function completeFirstTempleWorkLockIfReviewArrived(gameState: GameState): GameS
       gameState,
       ZHU_YUANZHANG_STORY_FLAG_KEYS.firstTempleWorkLockCompleted
     ) ||
-    getReviewCycleCountdown(gameState) > 0
+    defaultReviewCyclePolicy.getCountdown(gameState) > 0
   ) {
     return gameState;
   }
@@ -1952,7 +1948,7 @@ function submitReviewWorkPlan(
           nextWorkPlan,
           input.textEntriesById
         );
-  const reviewSyncedState = applyReviewCycleSchedule(input.gameState, {
+  const reviewSyncedState = defaultReviewCyclePolicy.applySchedule(input.gameState, {
     scheduledDate: addDaysToDate(getCurrentDate(input.gameState), 30),
     missionText: reviewMissionText,
   });
@@ -2078,7 +2074,7 @@ function assignTempleTask(
     input.textEntriesById
   );
 
-  const reviewSyncedState = applyReviewCycleSchedule(input.gameState, {
+  const reviewSyncedState = defaultReviewCyclePolicy.applySchedule(input.gameState, {
     scheduledDate: addDaysToDate(getCurrentDate(input.gameState), 30),
     missionText: taskDefinition.title,
   });
@@ -3066,7 +3062,7 @@ function handleAction(
         }
 
         if (actionId === TEMPLE_REST_UNTIL_COUNCIL_ACTION_ID) {
-          return !hasReachedCouncilDate(state);
+          return !defaultReviewCyclePolicy.hasReachedReviewDate(state);
         }
 
         const nextPlayerCharacter = getPlayerCharacter(
@@ -3903,7 +3899,7 @@ export const templeHouseHouseModule: HouseModuleDefinition<"temple-house"> = {
     const selectedWorkPlan = readTempleWorkPlan(nextState);
     const shouldStartMeeting =
       isMonkStoryStage(nextState) &&
-      getReviewCycleCountdown(nextState) <= 0;
+      defaultReviewCyclePolicy.getCountdown(nextState) <= 0;
 
     const sessionState = shouldStartMeeting
       ? createInitialTempleHouseSessionState(
@@ -4010,7 +4006,7 @@ export const templeHouseHouseModule: HouseModuleDefinition<"temple-house"> = {
       TEMPLE_HOUSE_VARIABLE_KEYS.donationTotal,
       0
     );
-    const countdown = getReviewCycleCountdown(nextState);
+    const countdown = defaultReviewCyclePolicy.getCountdown(nextState);
     const contribution = getTempleContribution(nextState);
     const templeWeek = getTempleWeek(nextState);
     const currentWorkPlan =

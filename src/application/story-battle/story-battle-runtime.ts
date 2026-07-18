@@ -5,7 +5,7 @@ import type {
   StoryBattleUnit,
 } from "../../domain/story-battle";
 import { resolveTextEntry } from "../content/text-resolution";
-import { applyReviewCycleSchedule } from "../review/review-cycle";
+import { defaultReviewCyclePolicy } from "../review/review-cycle-provider";
 
 export type StoryBattleActionResult = {
   state: GameState;
@@ -281,7 +281,7 @@ export function dispatchStoryBattleAction(
     session.phase === "embedded-running"
   ) {
     const completion = session.completion;
-    const reviewSyncedState = applyReviewCycleSchedule(state, {
+    const reviewSyncedState = defaultReviewCyclePolicy.applySchedule(state, {
       scheduledDate: state.calendar,
       missionText:
         completion.mainMissionText ??
@@ -406,7 +406,7 @@ export function dispatchStoryBattleAction(
 
   if (actionId === "finish" && session.phase === "victory") {
     const completion = session.completion;
-    const reviewSyncedState = applyReviewCycleSchedule(state, {
+    const reviewSyncedState = defaultReviewCyclePolicy.applySchedule(state, {
       scheduledDate: state.calendar,
       missionText:
         completion.mainMissionText ??

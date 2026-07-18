@@ -8,8 +8,8 @@ import {
   resolveCharacterAvatarImageUrl,
   resolveCharacterPortraitImageUrl,
 } from "./portrait-assets";
-import type { GridCoordinate } from "../application/navigation/travel-to-coordinate";
 import { getRevealedCampaignHexKeys } from "../application/map/campaign-map-exploration";
+import type { MapLocationProvider } from "../application/map/map-location-provider";
 import type { CardDefinition } from "../domain/card";
 import type { CharacterDefinition } from "../domain/character";
 import type { CityDefinition } from "../domain/city";
@@ -56,7 +56,7 @@ export type AppRenderInput = {
   cityEntries: CityEntryDefinition[];
   cardDefinitions: CardDefinition[];
   cityNpcPoolDefinitions: CityNpcPoolDefinition[];
-  cityCoordinatesById: Record<string, GridCoordinate>;
+  mapLocationProvider: MapLocationProvider;
   cityNameById: Record<string, string>;
   houseNameById: Record<string, string>;
   characterNameById: Record<string, string>;
@@ -405,18 +405,13 @@ function renderStage(
         input.appState.gameState,
         input.mapDefinition.id
       ),
-      cityDefinitions: stage.cityDefinitions,
-      cityCoordinatesById: input.cityCoordinatesById,
+      mapLocationProvider: input.mapLocationProvider,
       ...(input.historicalCharacters == null
         ? {}
         : { historicalCharacters: input.historicalCharacters }),
       ...(input.historicalCityRosters == null
         ? {}
         : { historicalCityRosters: input.historicalCityRosters }),
-      mapExplorationState:
-        input.appState.gameState.runtime.mapExplorationByMapId[
-          input.mapDefinition.id
-        ] ?? null,
     };
     const mapViewModel = createMapViewModel(mapViewModelInput);
 

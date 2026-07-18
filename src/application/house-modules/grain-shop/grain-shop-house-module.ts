@@ -27,7 +27,7 @@ import {
   formatHouseActivityCostLine,
   getHouseMinigameDurationDays,
 } from "../../house/house-activity-costs";
-import { getInsufficientDaysForTimedActivity } from "../../time/council-priority";
+import { defaultReviewCyclePolicy } from "../../review/review-cycle-provider";
 import {
   ACTIVITY_COMPLETION_STAMINA_COST,
   canAffordActivityCost,
@@ -489,7 +489,7 @@ function startAccountingMinigame(
   const durationDays = getHouseMinigameDurationDays(
     getPlayerArithmeticSkill(playerCharacter)
   );
-  const remainingDays = getInsufficientDaysForTimedActivity(
+  const remainingDays = defaultReviewCyclePolicy.getInsufficientDaysForTimedActivity(
     input.gameState,
     durationDays
   );
@@ -668,7 +668,7 @@ function handleAction(
       const durationDays = getHouseMinigameDurationDays(
         getPlayerArithmeticSkill(playerCharacter)
       );
-      const remainingDays = getInsufficientDaysForTimedActivity(
+      const remainingDays = defaultReviewCyclePolicy.getInsufficientDaysForTimedActivity(
         input.gameState,
         durationDays
       );

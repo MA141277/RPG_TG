@@ -7,23 +7,23 @@
 - blueprint_version: `2026.07`
 - governance_last_synced_at: `2026-07-18`
 - governance_sync_source: `docs/blueprints/plans/2026-07-18-map-review-provider-boundary-extraction-target-plan.md`
-- queue_status: `active`
+- queue_status: `done`
 - queue_class: `required`
-- active_task: `task.map-review-provider-boundary-extraction-and-acceptance.interface-and-adapter`
-- next_task: `task.map-review-provider-boundary-extraction-and-acceptance.consumer-cutover-and-inventory`
-- closeout_status: `in-progress`
-- execution_closeout_status: `partial`
-- topic_closure_status: `open-residue`
-- closure_basis: `Queue newly admitted; implementation has not started.`
-- residue_remaining: `yes`
+- active_task: `none`
+- next_task: `none`
+- closeout_status: `done`
+- execution_closeout_status: `done`
+- topic_closure_status: `closed`
+- closure_basis: `guard-reviewed-and-verified`
+- residue_remaining: `none`
 - residue_family: `none`
 - residue_routing_status: `none`
 - next_family_candidate: `none`
 - auto_continue_eligible: `false`
-- next_effect: `none`
-- sync_status: `pending`
+- next_effect: `return-to-version-review`
+- sync_status: `success`
 - sync_scope: `local-record`
-- sync_summary: `Queue admitted locally and evidence-anchor reconcile completed; no business code implementation has started.`
+- sync_summary: `Queue closed after residue removal and acceptance guards passed for provider-backed map locations, review policy consumers, and normal JSON/Script Editor preview entrypoint boundaries.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
@@ -130,9 +130,9 @@
 
 - queue_goal: `Extract map and review dependencies behind provider-backed module boundaries and prove complete behavior across all supported entrypoints.`
 - task_count: `5`
-- completed_task_count: `1`
-- remaining_task_count: `4`
-- active_task_summary: `Define provider interfaces and adapters without changing runtime behavior.`
+- completed_task_count: `5`
+- remaining_task_count: `0`
+- active_task_summary: `none`
 - task_briefs:
   - `task.map-review-provider-boundary-extraction-and-acceptance.evidence-anchor-reconcile: lock anchors and confirm no prerequisite split is needed.`
   - `task.map-review-provider-boundary-extraction-and-acceptance.interface-and-adapter: define provider interfaces and adapters without behavior change.`
@@ -145,10 +145,10 @@
 | Task ID | State | Summary | Depends On | Notes |
 | --- | --- | --- | --- | --- |
 | `task.map-review-provider-boundary-extraction-and-acceptance.evidence-anchor-reconcile` | `done` | `Confirm evidence lock, implementation anchors, claim boundary, and verification before implementation.` | `none` | `Completed after source review confirmed map and review anchors are present and no prerequisite split is required before Step 1.` |
-| `task.map-review-provider-boundary-extraction-and-acceptance.interface-and-adapter` | `active` | `Define map/review provider interfaces and adapters without changing behavior.` | `task.map-review-provider-boundary-extraction-and-acceptance.evidence-anchor-reconcile` | `Step 1.` |
-| `task.map-review-provider-boundary-extraction-and-acceptance.consumer-cutover-and-inventory` | `queued` | `Cut consumers to provider outputs and write removal inventory.` | `task.map-review-provider-boundary-extraction-and-acceptance.interface-and-adapter` | `Step 2.` |
-| `task.map-review-provider-boundary-extraction-and-acceptance.residue-removal` | `queued` | `Remove old direct paths only as listed in the inventory.` | `task.map-review-provider-boundary-extraction-and-acceptance.consumer-cutover-and-inventory` | `Step 3.` |
-| `task.map-review-provider-boundary-extraction-and-acceptance.acceptance-and-guard` | `queued` | `Run source guards, simulated human acceptance, entrypoint consistency, and completeness review.` | `task.map-review-provider-boundary-extraction-and-acceptance.residue-removal` | `Step 4.` |
+| `task.map-review-provider-boundary-extraction-and-acceptance.interface-and-adapter` | `done` | `Define map/review provider interfaces and adapters without changing behavior.` | `task.map-review-provider-boundary-extraction-and-acceptance.evidence-anchor-reconcile` | `Step 1 completed with map location provider and review cycle policy adapters.` |
+| `task.map-review-provider-boundary-extraction-and-acceptance.consumer-cutover-and-inventory` | `done` | `Cut consumers to provider outputs and write removal inventory.` | `task.map-review-provider-boundary-extraction-and-acceptance.interface-and-adapter` | `Step 2 completed with map rendering provider cutover, runtime review policy seam cutover, and docs/refactor/map-review-boundary-removal-inventory.md.` |
+| `task.map-review-provider-boundary-extraction-and-acceptance.residue-removal` | `done` | `Remove old direct paths only as listed in the inventory.` | `task.map-review-provider-boundary-extraction-and-acceptance.consumer-cutover-and-inventory` | `Step 3 completed with provider-backed startup coordinate lookup and house/story review consumers cut to ReviewCyclePolicy.` |
+| `task.map-review-provider-boundary-extraction-and-acceptance.acceptance-and-guard` | `done` | `Run source guards, simulated human acceptance, entrypoint consistency, and completeness review.` | `task.map-review-provider-boundary-extraction-and-acceptance.residue-removal` | `Step 4 completed with source guards and full verification.` |
 
 ### Task Definitions
 
@@ -235,7 +235,7 @@
 - task_brief:
   - `Define provider interfaces and adapters without behavior change.`
 - task_outcome_summary:
-  - `pending`
+  - `Implemented src/application/map/map-location-provider.ts and src/application/review/review-cycle-provider.ts. Active content context now exposes a mapLocationProvider adapter while existing map and review runtime behavior stays unchanged. Tests cover marker-ready city locations and review policy behavior without house presentation copy.`
 
 #### `task.map-review-provider-boundary-extraction-and-acceptance.consumer-cutover-and-inventory`
 
@@ -281,14 +281,14 @@
 - task_brief:
   - `Cut consumers to provider outputs and write removal inventory.`
 - task_outcome_summary:
-  - `pending`
+  - `Map rendering now consumes provider-backed city locations through MapLocationProvider, the map stage no longer carries city definitions for rendering, runtime review follow-up/coordinator paths use defaultReviewCyclePolicy, and docs/refactor/map-review-boundary-removal-inventory.md records remaining direct map/review paths for Step 3.`
 
 #### `task.map-review-provider-boundary-extraction-and-acceptance.residue-removal`
 
 ##### Control Block
 
 - task_id: `task.map-review-provider-boundary-extraction-and-acceptance.residue-removal`
-- state: `queued`
+- state: `done`
 - task_kind: `execution`
 - scope:
   - `docs/refactor/map-review-boundary-removal-inventory.md`
@@ -319,14 +319,14 @@
 - task_brief:
   - `Remove old direct paths only as listed in the inventory.`
 - task_outcome_summary:
-  - `pending`
+  - `Completed after startup coordinate fallback moved to mapLocationProvider.getCityLocation, house/story review consumers moved to defaultReviewCyclePolicy, low-level council-date primitives were classified as provider internals or low-level core thresholds, and source guards were added.`
 
 #### `task.map-review-provider-boundary-extraction-and-acceptance.acceptance-and-guard`
 
 ##### Control Block
 
 - task_id: `task.map-review-provider-boundary-extraction-and-acceptance.acceptance-and-guard`
-- state: `queued`
+- state: `done`
 - task_kind: `execution`
 - scope:
   - `tests/**`
@@ -360,4 +360,4 @@
 - task_brief:
   - `Run source guards, simulated human acceptance, entrypoint consistency, and completeness review.`
 - task_outcome_summary:
-  - `pending`
+  - `Completed after source guards proved removed direct paths stay removed or classified, provider-backed startup/map paths are used across normal JSON and Script Editor preview entrypoints, house/story review consumers use ReviewCyclePolicy, and full verification passed.`

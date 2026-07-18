@@ -1,0 +1,16 @@
+[
+  {
+    "id": "binding.story.liu_bang.pei_county_opening.story-progress",
+    "eventId": "event.story.liu_bang.pei_county_opening",
+    "owner": {
+      "family": "story",
+      "id": "chapter.chu_han_rising"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "story-progress"
+    },
+    "priority": 200,
+    "enabled": true
+  }
+]
