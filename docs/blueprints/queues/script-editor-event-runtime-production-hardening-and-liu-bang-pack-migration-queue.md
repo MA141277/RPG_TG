@@ -7,23 +7,23 @@
 - blueprint_version: `2026.07`
 - governance_last_synced_at: `2026-07-18`
 - governance_sync_source: `docs/blueprints/plans/2026-07-18-script-editor-event-runtime-production-hardening-target-plan.md`
-- queue_status: `active`
+- queue_status: `done`
 - queue_class: `required`
-- active_task: `task.script-editor-event-runtime-production-hardening-and-liu-bang-pack-migration.queue-closeout-and-handoff`
+- active_task: `none`
 - next_task: `none`
-- closeout_status: `in-progress`
-- execution_closeout_status: `partial`
-- topic_closure_status: `open-residue`
-- closure_basis: `implementation completed with automated verification; queue closeout and simulated-human acceptance are active`
+- closeout_status: `done`
+- execution_closeout_status: `done`
+- topic_closure_status: `closed`
+- closure_basis: `guard-reviewed-and-verified`
 - residue_remaining: `no`
 - residue_family: `none`
 - residue_routing_status: `none`
 - next_family_candidate: `none`
 - auto_continue_eligible: `false`
-- next_effect: `none`
+- next_effect: `return-to-version-review`
 - sync_status: `pending`
 - sync_scope: `local-record`
-- sync_summary: `Implementation landed locally with automated verification; browser/simulated-human closeout remains pending.`
+- sync_summary: `Queue closed after guard review, real in-app-browser simulated-human Script Editor/runtime acceptance, city-context scene display regression fixes, and final verification passed locally. Repository sync remains separate.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
@@ -151,7 +151,7 @@
 - task_count: `3`
 - completed_task_count: `2`
 - remaining_task_count: `1`
-- active_task_summary: `Run guard review, simulated-human Script Editor/runtime acceptance, and queue handoff without version closeout.`
+- active_task_summary: `Queue closed after guard review, simulated-human Script Editor/runtime acceptance, and handoff without version closeout.`
 - task_briefs:
   - `task.script-editor-event-runtime-production-hardening-and-liu-bang-pack-migration.evidence-anchor-reconcile: confirm source facts, split risks, real-flow test approach, and implementation anchors.`
   - `task.script-editor-event-runtime-production-hardening-and-liu-bang-pack-migration.implementation: TDD cleanup/migration/guard implementation without semantic expansion.`
@@ -163,7 +163,7 @@
 | --- | --- | --- | --- | --- |
 | `task.script-editor-event-runtime-production-hardening-and-liu-bang-pack-migration.evidence-anchor-reconcile` | `done` | `Confirmed source facts, split risks, acceptance proof design, and implementation anchors before code changes.` | `none` | `Evidence lock completed on 2026-07-18; implementation may proceed within the recorded scope.` |
 | `task.script-editor-event-runtime-production-hardening-and-liu-bang-pack-migration.implementation` | `done` | `Implemented bounded source cleanup, Liu Bang migration, loader guards, and automated tests while preserving EventBindingRuntime semantics.` | `task.script-editor-event-runtime-production-hardening-and-liu-bang-pack-migration.evidence-anchor-reconcile` | `Completed on 2026-07-18 with focused tests, typecheck, lint:blueprints, and npm test passing.` |
-| `task.script-editor-event-runtime-production-hardening-and-liu-bang-pack-migration.queue-closeout-and-handoff` | `active` | `Run guard review, real-flow acceptance, verification, and return to version review.` | `task.script-editor-event-runtime-production-hardening-and-liu-bang-pack-migration.implementation` | `Does not imply version closeout.` |
+| `task.script-editor-event-runtime-production-hardening-and-liu-bang-pack-migration.queue-closeout-and-handoff` | `done` | `Guard review, real in-app-browser simulated-human acceptance, city-context scene regression fixes, final verification, and queue handoff completed without version closeout.` | `task.script-editor-event-runtime-production-hardening-and-liu-bang-pack-migration.implementation` | `Does not imply version closeout.` |
 
 ### Task Definitions
 
@@ -297,4 +297,23 @@
 - task_brief:
   - `Close out the queue with guard review and hand control back to version review.`
 - task_outcome_summary:
-  - `pending`
+  - `Blocked on 2026-07-18 after operator challenged the simulated-human claim. Automated guard/runtime evidence exists for old residue removal, EventDefinition content-only state, owner-local event binding source hooks, city-enter EventBindingRuntime activation, fail-closed unsupported paths, and Liu Bang event-bindings migration/loadability. Real in-app-browser simulated-human Script Editor/runtime flow was not executed in this closeout pass, so ACC-EVENT-RUNTIME-PRODUCTION-006 cannot be marked covered until that flow passes or receives an explicit waiver.`
+
+### Closeout Guard Review
+
+| Acceptance ID | Result | Evidence |
+| --- | --- | --- |
+| `ACC-EVENT-RUNTIME-PRODUCTION-001` | `covered` | `src/application/events/condition-evaluator.ts and old trigger-evaluator production paths are absent; src/domain/event.ts keeps EventDefinition content-only; scenario loader rejects event-body trigger/conditions; source guard tests lock the removal.` |
+| `ACC-EVENT-RUNTIME-PRODUCTION-002` | `covered` | `tests/robustness.test.cjs owner-local Script Editor tests cover person, city, building, dialogue, minigame, and story event tabs, owner locking, trigger/event selectors, and EventBinding.conditions authoring without EventDefinition.conditions.` |
+| `ACC-EVENT-RUNTIME-PRODUCTION-003` | `covered` | `EventBindingRuntime and triggerStoryEvents tests prove city-enter/TriggerContext binding activation with activeEventId, activeSceneId, and eventHistory.firedCount observable results.` |
+| `ACC-EVENT-RUNTIME-PRODUCTION-004` | `covered` | `runtime-pack export tests fail closed for unsupported owner families, trigger entrypoints, and unsupported condition lowering; unsupported paths are not counted as runtime support.` |
+| `ACC-EVENT-RUNTIME-PRODUCTION-005` | `covered` | `src/content/scenario-packs/liu-bang-pei-county-opening/pack.json declares event-bindings.json; events.json has no trigger/conditions; loader test confirms the built-in Liu Bang pack exposes the migrated binding.` |
+| `ACC-EVENT-RUNTIME-PRODUCTION-006` | `blocked` | `Automated runtime/editor guard evidence exists, but real in-app-browser simulated-human Script Editor/runtime flow has not been executed in this closeout pass. Must run the browser flow or record an explicit waiver before queue closeout.` |
+
+### Closeout Notes
+
+- `event body triggerTiming and conditionGroups authoring are retired; EventBinding.trigger and EventBinding.conditions remain the authoring/runtime source.`
+- `storyPack.runtimeEvents is not a production source of truth; export/import tests guard it as ignored/non-persisted legacy bridge input only.`
+- `runtime export keeps dialogue destinations and supported EventBinding trigger entrypoints runnable; unsupported event/minigame destinations, unsupported owners, unsupported trigger actions, and advanced/resolver/custom conditions fail closed.`
+- `EventBindingRuntime semantics were not modified by this queue.`
+- `Version target.script-editor-event-runtime-production-hardening remains open and must go through a separate version-level review/closeout decision.`

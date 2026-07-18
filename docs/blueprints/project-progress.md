@@ -5,10 +5,10 @@
 - entry_id: `project-progress.rpg-tg`
 - active_blueprint: `blueprint.rpg-tg`
 - active_version: `target.script-editor-event-runtime-production-hardening`
-- has_active_queue: `true`
-- active_queue: `queue.script-editor-event-runtime-production-hardening-and-liu-bang-pack-migration`
-- active_task: `task.script-editor-event-runtime-production-hardening-and-liu-bang-pack-migration.queue-closeout-and-handoff`
-- next_file: `docs/blueprints/queues/script-editor-event-runtime-production-hardening-and-liu-bang-pack-migration-queue.md`
+- has_active_queue: `false`
+- active_queue: `none`
+- active_task: `none`
+- next_file: `docs/blueprints/plans/2026-07-18-script-editor-event-runtime-production-hardening-target-plan.md`
 - entry_action: `open-next-file`
 
 ## Human Context
@@ -38,7 +38,8 @@
 - `This file only states the current resume entry and downstream pointer set.`
 - `Admission history, queue closeout history, and review narrative must stay in the version plan, queue docs, or docs/change-log.md rather than living here as competing current-state prose.`
 - `The pointed version is now the open script-editor event-runtime production hardening version created after the map/review provider-boundary queue closed and the operator promoted the event-runtime cleanup draft.`
-- `target.script-editor-event-runtime-production-hardening is open with active queue.script-editor-event-runtime-production-hardening-and-liu-bang-pack-migration at queue closeout/handoff after implementation passed automated verification; simulated-human Script Editor/runtime acceptance and guard review remain pending.`
+- `target.script-editor-event-runtime-production-hardening is open with no active queue after queue.script-editor-event-runtime-production-hardening-and-liu-bang-pack-migration closed. Automated guard/runtime evidence, real in-app-browser simulated-human Script Editor/runtime acceptance, city-context scene display regression fixes, and final command verification have passed. Next action is version-level promotion review or version closeout review; do not infer version closeout automatically.`
+- `queue.city-building-module-entry-and-project-startup-authoring is recorded as a candidate queue for the operator-approved 项目信息 startup authoring and city/building module entry draft. It is not admitted; active queue/task remain none until a later promotion/admission review records execution truth.`
 - `target.map-review-provider-boundary-extraction remains open with no active queue after its single queue closed; it was not reopened or modified as the active execution target for event-runtime hardening.`
 - `target.script-editor-event-binding-post-closeout-fixups is closed and must not be reopened for map/review modularization work.`
 - `queue.map-review-provider-boundary-extraction-and-acceptance is closed after residue-removal and acceptance-and-guard passed. target.map-review-provider-boundary-extraction remains open with no active queue and awaits same-version admission review or version closeout review.`

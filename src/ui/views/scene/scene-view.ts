@@ -17,6 +17,7 @@ type SceneViewInput = {
   activitySession: ActiveActivitySession;
   characterDefinitions: CharacterDefinition[];
   choiceOptions: ChoiceOption[];
+  underlayMarkup?: string;
   textEntriesById?: Record<string, string>;
 };
 
@@ -325,7 +326,8 @@ export function renderSceneView(input: SceneViewInput): string {
 
   if (action.type === "narration") {
     return `
-      <section class="view-house-grain-shop view-house-temple view-scene" data-scene-view="narration">
+      <section class="view-scene" data-scene-view="narration">
+        ${input.underlayMarkup ?? ""}
         ${renderSceneDialogueCard([action.text ?? ""], {
           advanceActionId: "advance",
           narration: true,
@@ -344,7 +346,8 @@ export function renderSceneView(input: SceneViewInput): string {
       speaker == null ? null : resolveCharacterPortraitImageUrl(speaker);
 
     return `
-      <section class="view-house-grain-shop view-house-temple view-scene" data-scene-view="dialogue">
+      <section class="view-scene" data-scene-view="dialogue">
+        ${input.underlayMarkup ?? ""}
         ${renderSceneDialogueCard([action.text ?? ""], {
           advanceActionId: "advance",
           speakerName:
@@ -366,7 +369,8 @@ export function renderSceneView(input: SceneViewInput): string {
 
   if (action.type === "choice") {
     return `
-      <section class="view-house-grain-shop view-house-temple view-scene" data-scene-view="choice">
+      <section class="view-scene" data-scene-view="choice">
+        ${input.underlayMarkup ?? ""}
         ${renderSceneDialogueCard([action.prompt ?? "你要如何回应？"], {
           narration: true,
         })}
@@ -377,7 +381,8 @@ export function renderSceneView(input: SceneViewInput): string {
   }
 
   return `
-    <section class="view-house-grain-shop view-house-temple view-scene" data-scene-view="transition">
+    <section class="view-scene" data-scene-view="transition">
+      ${input.underlayMarkup ?? ""}
       ${renderSceneDialogueCard(["场景推进中。"], {
         advanceActionId: "advance",
         narration: true,

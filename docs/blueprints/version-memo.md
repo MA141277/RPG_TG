@@ -149,6 +149,43 @@
 
 ## Open Problems
 
+### MEMO-012: Script Editor City And Building Background Authoring
+
+- status: `open`
+- severity: `medium`
+- classification: `future-target-candidate`
+- proposed_queue: `queue.script-editor-city-building-background-authoring`
+- owning_queue: `none`
+- admission_status: `not-admitted`
+- latest_disposition: `recorded-only`
+- affected_families:
+  - `script editor city authoring`
+  - `script editor building authoring`
+  - `runtime city presentation`
+  - `runtime building presentation`
+  - `scenario pack assets`
+
+#### Requested Capability
+
+- The Script Editor city authoring surface needs a creator-facing control for assigning a city background.
+- The Script Editor building authoring surface needs a creator-facing control for assigning a building background.
+- Background choices should be saved as project/runtime data, not hardcoded per current built-in screen.
+
+#### Scope Notes
+
+- City and building background authoring should use project-owned asset references or an equivalent stable runtime asset id.
+- Runtime rendering should consume the configured background through the same data path used by exported scenario packs.
+- Missing or invalid background asset references should fail closed or fall back only through an explicitly documented default policy.
+- This memo does not admit implementation and must not be mixed into an unrelated active queue without promotion/admission review.
+
+#### Acceptance Notes
+
+- In Script Editor, a creator can configure a background for a city and a building through visible authoring controls.
+- Saving/reopening the Script Editor project preserves the selected background references.
+- Runtime export includes the configured background references in the appropriate data files.
+- Normal start, JSON runtime pack import, and Script Editor runtime preview all render the configured city/building backgrounds.
+- Automated tests and simulated-human UI checks cover both city and building configuration paths.
+
 ### MEMO-011: Entry Shell UI Module Extraction
 
 - status: `open`

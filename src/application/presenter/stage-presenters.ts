@@ -148,6 +148,40 @@ export function createStagePresenterOutput(
   }
 
   if (currentView === "scene") {
+    const cityUnderlay =
+      input.appState.gameState.world.currentCityId != null &&
+      input.appState.gameState.world.currentHouseId == null
+        ? (() => {
+            const activeCityEntries = input.cityEntries.filter(
+              (cityEntry) =>
+                cityEntry.cityId === activeCityDefinition.id &&
+                isCityEntryVisibleForStoryStage(
+                  input.appState.gameState,
+                  cityEntry
+                )
+            );
+            const cityEntryHouseIds = new Set(
+              activeCityEntries.map((cityEntry) => cityEntry.targetHouseId)
+            );
+            const activeCityHouseDefinitions = input.houseDefinitions.filter(
+              (houseDefinition) =>
+                cityEntryHouseIds.has(houseDefinition.id) &&
+                isHouseVisibleForStoryStage(
+                  input.appState.gameState,
+                  input.appState.characterDefinitions,
+                  houseDefinition
+                )
+            );
+
+            return {
+              activeCityDefinition,
+              activeCityHouseDefinitions,
+              activeCityEntries,
+              citySceneMapping,
+            };
+          })()
+        : undefined;
+
     return {
       type: "scene",
       currentSceneAction: getCurrentSceneAction(
@@ -158,6 +192,7 @@ export function createStagePresenterOutput(
         input.appState.gameState,
         input.sceneDefinitionsById ?? {}
       ),
+      ...(cityUnderlay == null ? {} : { cityUnderlay }),
     };
   }
 

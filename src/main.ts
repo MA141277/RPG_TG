@@ -556,6 +556,7 @@ const mainRuntimeOrchestrator = createMainRuntimeOrchestrator({
   },
   getStoryContent: () => ({
     eventDefinitionsById: activeContentContext.storyContent.eventDefinitionsById,
+    eventBindingsById: activeContentContext.storyContent.eventBindingsById,
     sceneDefinitionsById: activeContentContext.storyContent.sceneDefinitionsById,
     activityDefinitionsById:
       activeContentContext.storyContent.activityDefinitionsById,
@@ -594,6 +595,7 @@ const navigationTimeFollowUp = createNavigationTimeFollowUpBridge({
   getHouseDefinitions: () => activeContentContext.houses,
   getStoryContent: () => ({
     eventDefinitionsById: activeContentContext.storyContent.eventDefinitionsById,
+    eventBindingsById: activeContentContext.storyContent.eventBindingsById,
     sceneDefinitionsById: activeContentContext.storyContent.sceneDefinitionsById,
     activityDefinitionsById:
       activeContentContext.storyContent.activityDefinitionsById,

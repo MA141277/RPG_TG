@@ -1368,6 +1368,43 @@ test("scene view resolves narration dialogue and choice text through text ids", 
   );
 });
 
+test("scene view does not inherit concrete house background classes", () => {
+  const sceneViewSource = fs.readFileSync(
+    path.join(process.cwd(), "src", "ui", "views", "scene", "scene-view.ts"),
+    "utf8"
+  );
+
+  assert.match(sceneViewSource, /data-scene-view="dialogue"/);
+  assert.match(sceneViewSource, /\bview-scene\b/);
+  assert.doesNotMatch(
+    sceneViewSource,
+    /<section class="[^"]*\bview-house-(?:temple|grain-shop)\b[^"]*" data-scene-view=/
+  );
+});
+
+test("city-context scene rendering keeps the full city view behind event dialogue", () => {
+  const appRenderSource = fs.readFileSync(
+    path.join(process.cwd(), "src", "ui", "app-render.ts"),
+    "utf8"
+  );
+  const cityViewSource = fs.readFileSync(
+    path.join(process.cwd(), "src", "ui", "views", "city", "city-view.ts"),
+    "utf8"
+  );
+  const sceneViewSource = fs.readFileSync(
+    path.join(process.cwd(), "src", "ui", "views", "scene", "scene-view.ts"),
+    "utf8"
+  );
+
+  assert.doesNotMatch(cityViewSource, /renderCitySceneBackdrop/);
+  assert.match(appRenderSource, /function renderCitySceneUnderlay/);
+  assert.match(appRenderSource, /renderCityView\(/);
+  assert.match(appRenderSource, /underlayMarkup:/);
+  assert.match(appRenderSource, /view-scene__underlay/);
+  assert.match(sceneViewSource, /underlayMarkup\?: string/);
+  assert.match(sceneViewSource, /\$\{input\.underlayMarkup \?\? ""\}/);
+});
+
 test("shared dialog component module defines canonical dialog result attrs", () => {
   const sharedDialogPath = path.join(
     process.cwd(),
@@ -22355,6 +22392,21 @@ test("child 25 narrow follow-up contract stays outside main.ts and main-runtime-
   assert.doesNotMatch(
     orchestratorSource,
     /navigation\.entered-city|time\.advanced|time\.council-threshold-crossed/
+  );
+});
+
+test("main navigation follow-up passes event bindings into city-enter story runtime", () => {
+  const mainSource = fs.readFileSync(
+    path.join(process.cwd(), "src", "main.ts"),
+    "utf8"
+  );
+  const navigationFollowUpInit =
+    mainSource.match(/const navigationTimeFollowUp = createNavigationTimeFollowUpBridge\(\{[\s\S]*?\n\}\);/)?.[0] ?? "";
+
+  assert.match(navigationFollowUpInit, /getStoryContent:\s*\(\)\s*=>\s*\(\{/);
+  assert.match(
+    navigationFollowUpInit,
+    /eventBindingsById:\s*activeContentContext\.storyContent\.eventBindingsById/
   );
 });
 

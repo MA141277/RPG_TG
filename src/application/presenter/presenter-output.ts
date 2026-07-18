@@ -35,6 +35,12 @@ export type AppPresenterStageOutput =
       type: "scene";
       currentSceneAction: ActionNode | null;
       currentSceneChoiceOptions: ChoiceOption[];
+      cityUnderlay?: {
+        activeCityDefinition: CityDefinition;
+        activeCityHouseDefinitions: HouseDefinition[];
+        activeCityEntries: CityEntryDefinition[];
+        citySceneMapping: CitySceneMapping | null;
+      };
     }
   | { type: "battle" }
   | { type: "empty" };

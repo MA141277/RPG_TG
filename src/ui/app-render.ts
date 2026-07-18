@@ -389,6 +389,28 @@ function renderCampaignTravelBanner(
   `;
 }
 
+function renderCitySceneUnderlay(
+  cityUnderlay: NonNullable<
+    Extract<AppPresenterOutput["stage"], { type: "scene" }>["cityUnderlay"]
+  >,
+  input: AppRenderInput,
+  playerCharacter: CharacterDefinition
+): string {
+  return `
+    <div class="view-scene__underlay" aria-hidden="true">
+      ${renderCityView(
+        cityUnderlay.activeCityDefinition,
+        playerCharacter,
+        cityUnderlay.activeCityHouseDefinitions,
+        cityUnderlay.activeCityEntries,
+        input.appState.cityMenuState,
+        input.appState.cityDirectoryState,
+        cityUnderlay.citySceneMapping
+      )}
+    </div>
+  `;
+}
+
 function renderStage(
   input: AppRenderInput,
   playerCharacter: CharacterDefinition
@@ -489,11 +511,19 @@ function renderStage(
   }
 
   if (stage.type === "scene") {
+    const sceneUnderlayMarkup =
+      stage.cityUnderlay == null
+        ? undefined
+        : renderCitySceneUnderlay(stage.cityUnderlay, input, playerCharacter);
+
     return renderSceneView({
       currentAction: stage.currentSceneAction,
       activitySession: input.appState.gameState.runtime.activitySession,
       characterDefinitions: input.appState.characterDefinitions,
       choiceOptions: stage.currentSceneChoiceOptions,
+      ...(sceneUnderlayMarkup == null
+        ? {}
+        : { underlayMarkup: sceneUnderlayMarkup }),
       ...(input.textEntriesById == null
         ? {}
         : { textEntriesById: input.textEntriesById }),

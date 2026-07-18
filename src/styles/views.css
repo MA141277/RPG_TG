@@ -17,3 +17,34 @@
     linear-gradient(rgb(0 0 0 / 28%), rgb(0 0 0 / 28%)),
     linear-gradient(180deg, rgb(0 0 0 / 100%), rgb(0 0 0 / 100%));
 }
+
+.view-scene {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr;
+  min-height: 100%;
+  color: #2f2319;
+  overflow: hidden;
+  isolation: isolate;
+  background:
+    radial-gradient(circle at 50% 24%, rgb(244 231 195 / 18%), transparent 36%),
+    linear-gradient(180deg, rgb(18 25 26), rgb(7 10 12));
+}
+
+.view-scene > * {
+  position: relative;
+  z-index: 1;
+}
+
+.view-scene__underlay {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  min-height: 100%;
+  pointer-events: none;
+}
+
+.view-scene__underlay > .view-city {
+  min-height: 100%;
+}
