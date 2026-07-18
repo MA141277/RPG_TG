@@ -1398,7 +1398,7 @@ test("city-context scene rendering keeps the full city view behind event dialogu
 
   assert.doesNotMatch(cityViewSource, /renderCitySceneBackdrop/);
   assert.match(appRenderSource, /function renderCitySceneUnderlay/);
-  assert.match(appRenderSource, /renderCityView\(/);
+  assert.match(appRenderSource, /renderCityModuleView/);
   assert.match(appRenderSource, /underlayMarkup:/);
   assert.match(appRenderSource, /view-scene__underlay/);
   assert.match(sceneViewSource, /underlayMarkup\?: string/);
@@ -7711,6 +7711,49 @@ test("script editor workspace labels save and runtime export actions without mix
   );
   assert.match(mainUiSource, /if \(action === "export"\) \{\s*await this\.exportScriptEditorProject\(\);/);
   assert.match(mainUiSource, /if \(action === "save"\) \{\s*await this\.saveScriptEditorProject\(\);/);
+});
+
+test("city and building stage presenters route through separate module entry seams", () => {
+  const stagePresenterSource = fs.readFileSync(
+    path.join(process.cwd(), "src/application/presenter/stage-presenters.ts"),
+    "utf8"
+  );
+  const appRenderSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/app-render.ts"),
+    "utf8"
+  );
+  const cityModuleEntrySource = fs.readFileSync(
+    path.join(process.cwd(), "src/application/city/city-module-entry.ts"),
+    "utf8"
+  );
+  const buildingModuleEntrySource = fs.readFileSync(
+    path.join(process.cwd(), "src/application/building/building-module-entry.ts"),
+    "utf8"
+  );
+  const cityModuleViewSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/views/city/city-module-view.ts"),
+    "utf8"
+  );
+  const buildingModuleViewSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/views/building/building-module-view.ts"),
+    "utf8"
+  );
+
+  assert.match(stagePresenterSource, /selectCityModuleStage/);
+  assert.match(stagePresenterSource, /selectBuildingModuleStage/);
+  assert.match(appRenderSource, /renderCityModuleView/);
+  assert.match(appRenderSource, /renderBuildingModuleView/);
+  assert.match(cityModuleEntrySource, /export function selectCityModuleStage/);
+  assert.match(cityModuleEntrySource, /isCityEntryVisibleForStoryStage/);
+  assert.match(cityModuleEntrySource, /isHouseVisibleForStoryStage/);
+  assert.match(buildingModuleEntrySource, /export function selectBuildingModuleStage/);
+  assert.match(buildingModuleEntrySource, /houseModuleRegistry\.getModule/);
+  assert.match(buildingModuleEntrySource, /selectCityNpcSummariesForHouse/);
+  assert.match(cityModuleViewSource, /export function renderCityModuleView/);
+  assert.match(cityModuleViewSource, /renderCityView/);
+  assert.match(buildingModuleViewSource, /export function renderBuildingModuleView/);
+  assert.match(buildingModuleViewSource, /renderHouseModuleView/);
+  assert.match(buildingModuleViewSource, /createHouseViewModel/);
 });
 
 test("script editor landing labels opening an existing project as opening a draft", () => {

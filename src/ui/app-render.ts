@@ -5,7 +5,6 @@ import type {
 } from "../application/app-shell";
 import type { AppPresenterOutput } from "../application/presenter/presenter-output";
 import {
-  resolveCharacterAvatarImageUrl,
   resolveCharacterPortraitImageUrl,
 } from "./portrait-assets";
 import { getRevealedCampaignHexKeys } from "../application/map/campaign-map-exploration";
@@ -17,7 +16,6 @@ import type { CityEntryDefinition } from "../domain/city-entry";
 import type { CityNpcPoolDefinition } from "../domain/city-npc";
 import type { CitySceneMapping } from "../domain/city-scene-mapping";
 import type { HouseDefinition } from "../domain/house";
-import type { HouseModuleViewModel } from "../domain/house-module";
 import type {
   HistoricalCharacterRecord,
   HistoricalCityRoster,
@@ -28,6 +26,7 @@ import { assertExists } from "../shared/assert";
 import { renderSharedDialog } from "./components/dialog/shared-dialog";
 import { renderConfirmModal } from "./components/modal/confirm-modal";
 import type { CharacterManager } from "../application/character/character-manager";
+import { renderBuildingModuleView } from "./views/building/building-module-view";
 import {
   createGlobalPlayerPanelModel,
   renderGlobalPlayerPanel,
@@ -35,10 +34,8 @@ import {
 import { renderCharacterDetailView } from "./views/character/character-detail-view";
 import { renderCardLibraryView } from "./views/cards/card-library-view";
 import { renderCity3dView } from "./views/city/city-3d-view";
-import { renderCityView } from "./views/city/city-view";
+import { renderCityModuleView } from "./views/city/city-module-view";
 import { renderCityBeggingMiniGameOverlay } from "./views/minigames/city-begging-minigame-view";
-import { createHouseViewModel } from "./views/house/house-view";
-import { renderHouseModuleView } from "./views/house/house-module-view-registry";
 import { createMapViewModel, renderMapView } from "./views/map/map-view";
 import { renderSceneView } from "./views/scene/scene-view";
 import { renderStoryBattleView } from "./views/battle/story-battle-view";
@@ -314,52 +311,6 @@ function renderLocationDialogue(
   */
 }
 
-function withResolvedHousePortraits(
-  viewModel: HouseModuleViewModel,
-  characterDefinitions: CharacterDefinition[]
-): HouseModuleViewModel {
-  const characterById = new Map(
-    characterDefinitions.map((characterDefinition) => [
-      characterDefinition.id,
-      characterDefinition,
-    ])
-  );
-  const dialogueCharacter =
-    viewModel.dialogue?.characterId == null
-      ? null
-      : characterById.get(viewModel.dialogue.characterId) ?? null;
-
-  return {
-    ...viewModel,
-    standbyRoster: viewModel.standbyRoster.map((actor) => {
-      const characterDefinition = characterById.get(actor.characterId);
-      if (characterDefinition == null) {
-        return actor;
-      }
-
-      return {
-        ...actor,
-        avatarImageUrl:
-          actor.avatarImageUrl ?? resolveCharacterAvatarImageUrl(characterDefinition),
-        portraitImageUrl:
-          actor.portraitImageUrl ??
-          resolveCharacterPortraitImageUrl(characterDefinition),
-      };
-    }),
-    dialogue:
-      viewModel.dialogue == null
-        ? null
-        : {
-            ...viewModel.dialogue,
-            portraitImageUrl:
-              viewModel.dialogue.portraitImageUrl ??
-              (dialogueCharacter == null
-                ? null
-                : resolveCharacterPortraitImageUrl(dialogueCharacter)),
-          },
-  };
-}
-
 function renderCampaignTravelBanner(
   campaignTravelState: AppState["campaignTravelState"]
 ): string {
@@ -398,15 +349,19 @@ function renderCitySceneUnderlay(
 ): string {
   return `
     <div class="view-scene__underlay" aria-hidden="true">
-      ${renderCityView(
-        cityUnderlay.activeCityDefinition,
+      ${renderCityModuleView({
+        stage: {
+          type: "city",
+          activeCityDefinition: cityUnderlay.activeCityDefinition,
+          activeCityHouseDefinitions: cityUnderlay.activeCityHouseDefinitions,
+          activeCityEntries: cityUnderlay.activeCityEntries,
+          citySceneMapping: cityUnderlay.citySceneMapping,
+        },
         playerCharacter,
-        cityUnderlay.activeCityHouseDefinitions,
-        cityUnderlay.activeCityEntries,
-        input.appState.cityMenuState,
-        input.appState.cityDirectoryState,
-        cityUnderlay.citySceneMapping
-      )}
+        cityMenuState: input.appState.cityMenuState,
+        cityDirectoryState: input.appState.cityDirectoryState,
+        citySceneMapping: cityUnderlay.citySceneMapping,
+      })}
     </div>
   `;
 }
@@ -441,15 +396,13 @@ function renderStage(
   }
 
   if (stage.type === "city") {
-    return renderCityView(
-      stage.activeCityDefinition,
+    return renderCityModuleView({
+      stage,
       playerCharacter,
-      stage.activeCityHouseDefinitions,
-      stage.activeCityEntries,
-      input.appState.cityMenuState,
-      input.appState.cityDirectoryState,
-      stage.citySceneMapping
-    );
+      cityMenuState: input.appState.cityMenuState,
+      cityDirectoryState: input.appState.cityDirectoryState,
+      citySceneMapping: stage.citySceneMapping,
+    });
   }
 
   if (stage.type === "city-3d") {
@@ -460,54 +413,11 @@ function renderStage(
   }
 
   if (stage.type === "house") {
-    if (stage.moduleViewModel != null) {
-      return renderHouseModuleView(
-        withResolvedHousePortraits(
-          stage.moduleViewModel,
-          input.appState.characterDefinitions
-        )
-      );
-    }
-
-    const houseViewModel = createHouseViewModel(
-      stage.activeHouse,
-      input.characterManager,
-      stage.cityNpcSummaries
-    );
-
-    return `
-      <section class="view-house">
-        <div class="c-stage-header">
-          <div>
-            <p class="c-stage-header__eyebrow">屋敷</p>
-            <h1 class="c-stage-header__title">${houseViewModel.title}</h1>
-          </div>
-          <button class="c-button c-button--ghost" data-action="leave-house">${houseViewModel.backButtonLabel}</button>
-        </div>
-        <div class="c-house-interior">
-          <div class="c-house-interior__hero c-panel">
-            <strong class="c-house-interior__hero-name">
-              ${houseViewModel.defaultCharacterId == null ? "无人接待" : "默认角色已展开"}
-            </strong>
-            <p class="c-house-interior__hero-text">
-              这里是 ${houseViewModel.title}。后续可以在这里接入角色功能、事件入口和小游戏。
-            </p>
-          </div>
-          <div class="c-house-roster">
-            ${houseViewModel.characterSummaries
-              .map(
-                (characterSummary) => `
-                  <article class="c-roster-card c-panel">
-                    <span class="c-roster-card__title">${characterSummary.title ?? "在场人物"}</span>
-                    <strong class="c-roster-card__name">${characterSummary.name}</strong>
-                  </article>
-                `
-              )
-              .join("")}
-          </div>
-        </div>
-      </section>
-    `;
+    return renderBuildingModuleView({
+      stage,
+      characterDefinitions: input.appState.characterDefinitions,
+      characterManager: input.characterManager,
+    });
   }
 
   if (stage.type === "scene") {

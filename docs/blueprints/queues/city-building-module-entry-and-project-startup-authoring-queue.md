@@ -9,8 +9,8 @@
 - governance_sync_source: `docs/blueprints/plans/2026-07-19-city-building-module-entry-and-project-startup-authoring-target-plan.md`
 - queue_status: `active`
 - queue_class: `future-target-candidate`
-- active_task: `task.city-building-module-entry-and-project-startup-authoring.city-building-module-entry`
-- next_task: `task.city-building-module-entry-and-project-startup-authoring.runtime-startup-convergence`
+- active_task: `task.city-building-module-entry-and-project-startup-authoring.runtime-startup-convergence`
+- next_task: `task.city-building-module-entry-and-project-startup-authoring.acceptance-and-guard`
 - admission_status: `admitted`
 - closeout_status: `not-started`
 - execution_closeout_status: `blocked`
@@ -71,9 +71,9 @@
 
 - queue_goal: `Add 项目信息 startup authoring and converge city/building runtime entry behavior behind separate reusable modules without requiring a fixed startup chain.`
 - task_count: `5`
-- completed_task_count: `2`
-- remaining_task_count: `3`
-- active_task_summary: `Formalize separate CityModule and BuildingModule entry/render/context boundaries without forcing a fixed startup chain.`
+- completed_task_count: `3`
+- remaining_task_count: `2`
+- active_task_summary: `Route normal start, JSON import, and Script Editor runtime preview through shared startup/module contracts.`
 - task_briefs:
   - `task.city-building-module-entry-and-project-startup-authoring.evidence-anchor-reconcile: inspect source facts, split risks, current startup fields, and implementation anchors before business changes.`
   - `task.city-building-module-entry-and-project-startup-authoring.project-info-authoring: TDD 项目信息 top-bar entry and project overview startup controls.`
@@ -87,8 +87,8 @@
 | --- | --- | --- | --- | --- |
 | `task.city-building-module-entry-and-project-startup-authoring.evidence-anchor-reconcile` | `done` | `Confirmed existing project overview, scenarioProfile startup fields, city/building runtime entry paths, map provider boundary, and tests before implementation.` | `none` | `No prerequisite split required before project-info-authoring.` |
 | `task.city-building-module-entry-and-project-startup-authoring.project-info-authoring` | `done` | `Added 项目信息 top-bar entry and project overview startup controls for start view, concrete target, role selection policy, and single default role.` | `task.city-building-module-entry-and-project-startup-authoring.evidence-anchor-reconcile` | `Verification passed on 2026-07-19.` |
-| `task.city-building-module-entry-and-project-startup-authoring.city-building-module-entry` | `active` | `Extract or formalize separate CityModule and BuildingModule entry/render/context contracts without forcing a map/city/building chain.` | `task.city-building-module-entry-and-project-startup-authoring.project-info-authoring` | `Must preserve existing city/building content and relations.` |
-| `task.city-building-module-entry-and-project-startup-authoring.runtime-startup-convergence` | `pending` | `Route normal start, JSON import, and Script Editor runtime preview through the same startup/module contracts.` | `task.city-building-module-entry-and-project-startup-authoring.city-building-module-entry` | `Must cover direct city/building/scene starts with and without character selection.` |
+| `task.city-building-module-entry-and-project-startup-authoring.city-building-module-entry` | `done` | `Extracted/formalized separate CityModule and BuildingModule entry/render/context contracts without forcing a map/city/building chain.` | `task.city-building-module-entry-and-project-startup-authoring.project-info-authoring` | `Verification passed on 2026-07-19.` |
+| `task.city-building-module-entry-and-project-startup-authoring.runtime-startup-convergence` | `active` | `Route normal start, JSON import, and Script Editor runtime preview through the same startup/module contracts.` | `task.city-building-module-entry-and-project-startup-authoring.city-building-module-entry` | `Must cover direct city/building/scene starts with and without character selection.` |
 | `task.city-building-module-entry-and-project-startup-authoring.acceptance-and-guard` | `pending` | `Run source guards and simulated-human acceptance proving the modules and startup controls work completely across supported entrypoints.` | `task.city-building-module-entry-and-project-startup-authoring.runtime-startup-convergence` | `Must record any unsupported path as a waiver, not success.` |
 
 ### Task Definitions
@@ -179,7 +179,7 @@
 ##### Control Block
 
 - task_id: `task.city-building-module-entry-and-project-startup-authoring.city-building-module-entry`
-- state: `active`
+- state: `done`
 - task_kind: `execution`
 - scope:
   - `city runtime/presenter/view modules`
@@ -208,14 +208,14 @@
 - task_brief:
   - `Formalize separate CityModule and BuildingModule entry/render/context boundaries.`
 - task_outcome_summary:
-  - `pending`
+  - `Completed on 2026-07-19. RED required separate city and building entry/render seams. GREEN added application/city/city-module-entry.ts, application/building/building-module-entry.ts, ui/views/city/city-module-view.ts, and ui/views/building/building-module-view.ts, then routed stage-presenters and app-render through them while preserving existing city, city-underlay, and house-module behavior. Verification passed: focused robustness tests, npm run typecheck, npm run lint:blueprints, and npm test.`
 
 #### `task.city-building-module-entry-and-project-startup-authoring.runtime-startup-convergence`
 
 ##### Control Block
 
 - task_id: `task.city-building-module-entry-and-project-startup-authoring.runtime-startup-convergence`
-- state: `pending`
+- state: `active`
 - task_kind: `execution`
 - scope:
   - `startup coordinator`

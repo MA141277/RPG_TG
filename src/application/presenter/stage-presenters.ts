@@ -1,12 +1,12 @@
-import { selectCityNpcSummariesForHouse } from "../city-npcs/select-city-npcs-for-house";
+import { selectBuildingModuleStage } from "../building/building-module-entry";
+import {
+  selectCityModuleStage,
+  selectCityModuleUnderlay,
+} from "../city/city-module-entry";
 import {
   getCurrentChoiceOptions,
   getCurrentSceneAction,
 } from "../story/story-runtime";
-import {
-  isCityEntryVisibleForStoryStage,
-  isHouseVisibleForStoryStage,
-} from "../story/story-stage-access";
 import type { AppState } from "../app-shell";
 import type { SceneDefinition } from "../../domain/action";
 import type { CityDefinition } from "../../domain/city";
@@ -14,10 +14,7 @@ import type { CityEntryDefinition } from "../../domain/city-entry";
 import type { CityNpcPoolDefinition } from "../../domain/city-npc";
 import type { CitySceneMapping } from "../../domain/city-scene-mapping";
 import type { HouseDefinition } from "../../domain/house";
-import {
-  builtinHouseModuleRegistry,
-  type HouseModuleRegistry,
-} from "../house-modules/house-module-registry";
+import type { HouseModuleRegistry } from "../house-modules/house-module-registry";
 import type { AppPresenterStageOutput } from "./presenter-output";
 
 export type StagePresenterInput = {
@@ -34,23 +31,9 @@ export type StagePresenterInput = {
   houseModuleRegistry?: HouseModuleRegistry;
 };
 
-function selectActiveHouseDefinition(
-  appState: AppState,
-  houseDefinitions: HouseDefinition[]
-): HouseDefinition | null {
-  return (
-    houseDefinitions.find(
-      (houseDefinition) =>
-        houseDefinition.id === appState.gameState.world.currentHouseId
-    ) ?? null
-  );
-}
-
 export function createStagePresenterOutput(
   input: StagePresenterInput
 ): AppPresenterStageOutput {
-  const houseModuleRegistry =
-    input.houseModuleRegistry ?? builtinHouseModuleRegistry;
   const currentView = input.appState.gameState.ui.currentView;
   const cityDefinitions = input.cityDefinitions ?? [input.cityDefinition];
   const activeCityDefinition =
@@ -66,35 +49,13 @@ export function createStagePresenterOutput(
   }
 
   if (currentView === "city") {
-    const activeCityEntries = input.cityEntries.filter(
-      (cityEntry) =>
-        cityEntry.cityId === activeCityDefinition.id &&
-        isCityEntryVisibleForStoryStage(input.appState.gameState, cityEntry)
-    );
-    const cityEntryHouseIds = new Set(
-      activeCityEntries.map((cityEntry) => cityEntry.targetHouseId)
-    );
-    const activeCityHouseDefinitions = input.houseDefinitions.filter(
-      (houseDefinition) => {
-        if (!cityEntryHouseIds.has(houseDefinition.id)) {
-          return false;
-        }
-
-        return isHouseVisibleForStoryStage(
-          input.appState.gameState,
-          input.appState.characterDefinitions,
-          houseDefinition
-        );
-      }
-    );
-
-    return {
-      type: "city",
+    return selectCityModuleStage({
+      appState: input.appState,
       activeCityDefinition,
-      activeCityHouseDefinitions,
-      activeCityEntries,
+      houseDefinitions: input.houseDefinitions,
+      cityEntries: input.cityEntries,
       citySceneMapping,
-    };
+    });
   }
 
   if (currentView === "city-3d") {
@@ -106,80 +67,27 @@ export function createStagePresenterOutput(
   }
 
   if (currentView === "house") {
-    const activeHouse = selectActiveHouseDefinition(
-      input.appState,
-      input.houseDefinitions
-    );
-
-    if (activeHouse == null) {
-      return { type: "empty" };
-    }
-
-    if (activeHouse.moduleId != null) {
-      const houseModule = houseModuleRegistry.getModule(activeHouse.moduleId);
-      return {
-        type: "house",
-        activeHouse,
-        moduleViewModel:
-          houseModule == null
-            ? null
-            : houseModule.selectViewModel({
-          gameState: input.appState.gameState,
-          characterDefinitions: input.appState.characterDefinitions,
-          houseDefinition: activeHouse,
-          playerCharacterId: input.playerCharacterId,
-          sessionState: input.appState.gameState.ui.houseSession?.state ?? null,
-          textEntriesById: input.textEntriesById,
-        }),
-        cityNpcSummaries: [],
-      };
-    }
-
-    return {
-      type: "house",
-      activeHouse,
-      moduleViewModel: null,
-      cityNpcSummaries: selectCityNpcSummariesForHouse(
-        input.appState.gameState,
-        activeHouse,
-        input.cityNpcPoolDefinitions
-      ),
-    };
+    return selectBuildingModuleStage({
+      appState: input.appState,
+      houseDefinitions: input.houseDefinitions,
+      cityNpcPoolDefinitions: input.cityNpcPoolDefinitions,
+      playerCharacterId: input.playerCharacterId,
+      textEntriesById: input.textEntriesById,
+      houseModuleRegistry: input.houseModuleRegistry,
+    });
   }
 
   if (currentView === "scene") {
     const cityUnderlay =
       input.appState.gameState.world.currentCityId != null &&
       input.appState.gameState.world.currentHouseId == null
-        ? (() => {
-            const activeCityEntries = input.cityEntries.filter(
-              (cityEntry) =>
-                cityEntry.cityId === activeCityDefinition.id &&
-                isCityEntryVisibleForStoryStage(
-                  input.appState.gameState,
-                  cityEntry
-                )
-            );
-            const cityEntryHouseIds = new Set(
-              activeCityEntries.map((cityEntry) => cityEntry.targetHouseId)
-            );
-            const activeCityHouseDefinitions = input.houseDefinitions.filter(
-              (houseDefinition) =>
-                cityEntryHouseIds.has(houseDefinition.id) &&
-                isHouseVisibleForStoryStage(
-                  input.appState.gameState,
-                  input.appState.characterDefinitions,
-                  houseDefinition
-                )
-            );
-
-            return {
-              activeCityDefinition,
-              activeCityHouseDefinitions,
-              activeCityEntries,
-              citySceneMapping,
-            };
-          })()
+        ? selectCityModuleUnderlay({
+            appState: input.appState,
+            activeCityDefinition,
+            houseDefinitions: input.houseDefinitions,
+            cityEntries: input.cityEntries,
+            citySceneMapping,
+          })
         : undefined;
 
     return {
