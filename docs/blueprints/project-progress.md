@@ -5,10 +5,10 @@
 - entry_id: `project-progress.rpg-tg`
 - active_blueprint: `blueprint.rpg-tg`
 - active_version: `target.city-building-module-entry-and-project-startup-authoring`
-- has_active_queue: `true`
-- active_queue: `queue.city-building-module-entry-and-project-startup-authoring`
-- active_task: `task.city-building-module-entry-and-project-startup-authoring.acceptance-and-guard`
-- next_file: `docs/blueprints/queues/city-building-module-entry-and-project-startup-authoring-queue.md`
+- has_active_queue: `false`
+- active_queue: `none`
+- active_task: `none`
+- next_file: `docs/blueprints/plans/2026-07-19-city-building-module-entry-and-project-startup-authoring-target-plan.md`
 - entry_action: `open-next-file`
 
 ## Human Context
@@ -38,7 +38,7 @@
 - `This file only states the current resume entry and downstream pointer set.`
 - `Admission history, queue closeout history, and review narrative must stay in the version plan, queue docs, or docs/change-log.md rather than living here as competing current-state prose.`
 - `The pointed version is now the open city/building module entry and project startup authoring successor version created after the operator approved the 项目信息 startup authoring and city/building module draft.`
-- `target.city-building-module-entry-and-project-startup-authoring is open with active queue queue.city-building-module-entry-and-project-startup-authoring. Active task is acceptance-and-guard; evidence-anchor reconcile, project-info-authoring, city-building-module-entry, and runtime-startup-convergence are complete.`
+- `target.city-building-module-entry-and-project-startup-authoring is open with no active queue. Evidence-anchor reconcile, project-info-authoring, city-building-module-entry, runtime-startup-convergence, and acceptance-and-guard are complete.`
 - `queue.city-building-module-entry-and-project-startup-authoring has been admitted under the successor version after the prior event-runtime/city-context work was pushed to origin/mod-first-dev.`
 - `target.map-review-provider-boundary-extraction remains open with no active queue after its single queue closed; it was not reopened or modified as the active execution target for event-runtime hardening.`
 - `target.script-editor-event-binding-post-closeout-fixups is closed and must not be reopened for map/review modularization work.`

@@ -7,24 +7,24 @@
 - blueprint_version: `2026.07`
 - governance_last_synced_at: `2026-07-19`
 - governance_sync_source: `docs/blueprints/plans/2026-07-19-city-building-module-entry-and-project-startup-authoring-target-plan.md`
-- queue_status: `active`
+- queue_status: `done`
 - queue_class: `future-target-candidate`
-- active_task: `task.city-building-module-entry-and-project-startup-authoring.acceptance-and-guard`
+- active_task: `none`
 - next_task: `none`
 - admission_status: `admitted`
-- closeout_status: `not-started`
-- execution_closeout_status: `blocked`
-- topic_closure_status: `blocked`
-- closure_basis: `none`
-- residue_remaining: `unknown`
-- residue_family: `cross-family`
-- residue_routing_status: `needs-version-review`
+- closeout_status: `done`
+- execution_closeout_status: `done`
+- topic_closure_status: `closed`
+- closure_basis: `guard-reviewed-and-verified`
+- residue_remaining: `none`
+- residue_family: `none`
+- residue_routing_status: `none`
 - next_family_candidate: `none`
 - auto_continue_eligible: `false`
 - next_effect: `return-to-version-review`
-- sync_status: `pending`
+- sync_status: `success`
 - sync_scope: `local-record`
-- sync_summary: `Queue admitted locally as the active queue under target.city-building-module-entry-and-project-startup-authoring. Repository sync remains separate.`
+- sync_summary: `Queue closed after runtime startup convergence and acceptance guards passed for project overview startup authoring, direct map/city/building/scene startup resolution, and Script Editor runtime preview from memory.`
 - blocked_by: []
 - allowed_item_classifications:
   - `queue-candidate`
