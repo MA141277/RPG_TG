@@ -186,6 +186,53 @@
 - Normal start, JSON runtime pack import, and Script Editor runtime preview all render the configured city/building backgrounds.
 - Automated tests and simulated-human UI checks cover both city and building configuration paths.
 
+### MEMO-013: Script Editor City/Building Enter-State And List/Search Unification
+
+- status: `open`
+- severity: `high`
+- classification: `future-target-candidate`
+- proposed_queue: `queue.script-editor-city-building-enter-state-and-list-selector-unification`
+- owning_queue: `none`
+- admission_status: `not-admitted`
+- latest_disposition: `recorded-only`
+- affected_families:
+  - `script editor city authoring`
+  - `script editor building authoring`
+  - `script editor project overview`
+  - `location access runtime`
+  - `runtime preview`
+  - `record list / selector UX`
+
+#### Requested Capability
+
+- City and building detail pages need a full `进入态` tab that creators can actually edit.
+- `基础` must carry `默认背景`.
+- `进入态` must carry editable `进入条件`, `可进入目标`, `提示文案`, and `拒绝提示`.
+- Enter conditions should cover task conditions, event conditions, person stat / attribute conditions, and the existing city / building / player / world / story condition sources.
+- The editor should reuse the existing `locationAccess` runtime meaning instead of inventing a parallel gate schema.
+- Runtime preview mode should show a green border around the game area, but only while preview is active.
+- The secondary list surfaces for city, building, story node, dialogue, event, playable, and text should match the person list shell: search, add, delete, list, and pagination.
+- Detail-page internal selectors should use the same interaction language as the list surfaces, including consistent search / option presentation where selection is required.
+
+#### Scope Notes
+
+- `locationAccess` should stay the gate layer for `conditionExpression`, `blockedMessage`, `blockedSpeakerId`, `guidance`, `blockedReason`, and optional `refusalEventId`.
+- Default background belongs in base information, not in the gate layer.
+- The list/search shell and the detail-page selector shell are related, but they should be treated as shared UI infrastructure rather than one-off per-entity hacks.
+- This draft is broad enough that it may need to be split into smaller candidate queues before admission.
+
+#### Acceptance Notes
+
+- City and building `进入态` tabs switch visibly and expose editable controls.
+- Default background saves and participates in runtime behavior.
+- Enter conditions block or allow entry at runtime through `locationAccess`.
+- Preview mode shows the green frame and normal runtime does not.
+- City, building, story node, dialogue, event, playable, and text all expose search / add / delete / list / pagination in their secondary surfaces.
+- Detail-page internal selectors reuse the same UX language and do not feel like a separate ad hoc control style.
+- Simulated-human tests must record every failure, run every case, and rerun from the start after fixes until the entire chain passes without skipping any case.
+- Normal start, JSON runtime pack import, and Script Editor runtime preview must all preserve the same entry and list/selector behavior.
+
+
 ### MEMO-011: Entry Shell UI Module Extraction
 
 - status: `open`
