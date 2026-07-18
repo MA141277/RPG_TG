@@ -9,8 +9,8 @@
 - governance_sync_source: `docs/blueprints/plans/2026-07-19-city-building-module-entry-and-project-startup-authoring-target-plan.md`
 - queue_status: `active`
 - queue_class: `future-target-candidate`
-- active_task: `task.city-building-module-entry-and-project-startup-authoring.runtime-startup-convergence`
-- next_task: `task.city-building-module-entry-and-project-startup-authoring.acceptance-and-guard`
+- active_task: `task.city-building-module-entry-and-project-startup-authoring.acceptance-and-guard`
+- next_task: `none`
 - admission_status: `admitted`
 - closeout_status: `not-started`
 - execution_closeout_status: `blocked`
@@ -71,9 +71,9 @@
 
 - queue_goal: `Add 项目信息 startup authoring and converge city/building runtime entry behavior behind separate reusable modules without requiring a fixed startup chain.`
 - task_count: `5`
-- completed_task_count: `3`
-- remaining_task_count: `2`
-- active_task_summary: `Route normal start, JSON import, and Script Editor runtime preview through shared startup/module contracts.`
+- completed_task_count: `4`
+- remaining_task_count: `1`
+- active_task_summary: `Run source guards and simulated-human acceptance proving the modules and startup controls work completely across supported entrypoints.`
 - task_briefs:
   - `task.city-building-module-entry-and-project-startup-authoring.evidence-anchor-reconcile: inspect source facts, split risks, current startup fields, and implementation anchors before business changes.`
   - `task.city-building-module-entry-and-project-startup-authoring.project-info-authoring: TDD 项目信息 top-bar entry and project overview startup controls.`
@@ -88,8 +88,8 @@
 | `task.city-building-module-entry-and-project-startup-authoring.evidence-anchor-reconcile` | `done` | `Confirmed existing project overview, scenarioProfile startup fields, city/building runtime entry paths, map provider boundary, and tests before implementation.` | `none` | `No prerequisite split required before project-info-authoring.` |
 | `task.city-building-module-entry-and-project-startup-authoring.project-info-authoring` | `done` | `Added 项目信息 top-bar entry and project overview startup controls for start view, concrete target, role selection policy, and single default role.` | `task.city-building-module-entry-and-project-startup-authoring.evidence-anchor-reconcile` | `Verification passed on 2026-07-19.` |
 | `task.city-building-module-entry-and-project-startup-authoring.city-building-module-entry` | `done` | `Extracted/formalized separate CityModule and BuildingModule entry/render/context contracts without forcing a map/city/building chain.` | `task.city-building-module-entry-and-project-startup-authoring.project-info-authoring` | `Verification passed on 2026-07-19.` |
-| `task.city-building-module-entry-and-project-startup-authoring.runtime-startup-convergence` | `active` | `Route normal start, JSON import, and Script Editor runtime preview through the same startup/module contracts.` | `task.city-building-module-entry-and-project-startup-authoring.city-building-module-entry` | `Must cover direct city/building/scene starts with and without character selection.` |
-| `task.city-building-module-entry-and-project-startup-authoring.acceptance-and-guard` | `pending` | `Run source guards and simulated-human acceptance proving the modules and startup controls work completely across supported entrypoints.` | `task.city-building-module-entry-and-project-startup-authoring.runtime-startup-convergence` | `Must record any unsupported path as a waiver, not success.` |
+| `task.city-building-module-entry-and-project-startup-authoring.runtime-startup-convergence` | `done` | `Route normal start, JSON import, and Script Editor runtime preview through the same startup/module contracts.` | `task.city-building-module-entry-and-project-startup-authoring.city-building-module-entry` | `Completed with direct startup target resolution for map/city/house/scene and sceneId export/load preservation.` |
+| `task.city-building-module-entry-and-project-startup-authoring.acceptance-and-guard` | `active` | `Run source guards and simulated-human acceptance proving the modules and startup controls work completely across supported entrypoints.` | `task.city-building-module-entry-and-project-startup-authoring.runtime-startup-convergence` | `Must record any unsupported path as a waiver, not success.` |
 
 ### Task Definitions
 
@@ -215,7 +215,7 @@
 ##### Control Block
 
 - task_id: `task.city-building-module-entry-and-project-startup-authoring.runtime-startup-convergence`
-- state: `active`
+- state: `done`
 - task_kind: `execution`
 - scope:
   - `startup coordinator`
@@ -244,7 +244,7 @@
 - task_brief:
   - `Route normal start, JSON import, and Script Editor runtime preview through shared startup/module contracts.`
 - task_outcome_summary:
-  - `pending`
+  - `Completed on 2026-07-19. RED covered scenario profile export/loader preservation for concrete scene startup targets and shared startup target resolution for direct map, city, house, and scene starts. GREEN added application/startup/scenario-startup-target.ts, preserved optional initialLocation.sceneId through runtime export and scenario loader validation, and routed main.ts scenario app-state creation through the shared resolver so direct house starts keep houseId and direct scene starts set activeSceneId. Verification passed: focused tests, npm run typecheck, npm run lint:blueprints, and npm test. Active task is now acceptance-and-guard.`
 
 #### `task.city-building-module-entry-and-project-startup-authoring.acceptance-and-guard`
 

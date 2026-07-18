@@ -91,6 +91,7 @@ import {
   type StartupStoryBootstrap,
 } from "./application/startup/startup-story-bootstrap";
 import { createPrototypeStartupAppStateBuilder } from "./application/startup/prototype-startup-app-state";
+import { resolveScenarioStartupTarget } from "./application/startup/scenario-startup-target";
 import {
   createEnterCityRequest,
   routeNavigationRuntime,
@@ -1784,13 +1785,14 @@ function createScenarioPackAppState(
     ) ??
     scenarioMapDefinition.initialPlayerCoordinate ??
     { x: 0, y: 0 };
+  const startupTarget = resolveScenarioStartupTarget(profile);
 
   let nextAppState: AppState = {
     gameState: ensureCityNpcPoolsForCurrentDay(
       createInitialState({
-        currentMapId: profile.initialLocation.mapId,
-        currentCityId: profile.initialLocation.cityId,
-        currentHouseId: profile.initialLocation.houseId,
+        currentMapId: startupTarget.currentMapId,
+        currentCityId: startupTarget.currentCityId,
+        currentHouseId: startupTarget.currentHouseId,
         playerCharacterId,
         chapterId: profile.chapterId,
         year: calendar.year,
@@ -1821,8 +1823,8 @@ function createScenarioPackAppState(
               )?.id ?? null,
           },
         },
-        currentView:
-          profile.launchPolicy?.initialView ?? profile.initialLocation.view,
+        activeSceneId: startupTarget.activeSceneId,
+        currentView: startupTarget.currentView,
       }),
       activeContentContext.cityNpcPools
     ),

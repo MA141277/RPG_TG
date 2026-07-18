@@ -6052,6 +6052,124 @@ test(
   }
 );
 
+test("scenario profile export and loader preserve concrete scene startup targets", async () => {
+  const {
+    exportScriptEditorProjectToScenarioPackFiles,
+  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  const {
+    loadScriptEditorProjectFromScenarioPackFiles,
+  } = require("../.test-dist/application/script-editor/runtime-pack-import.js");
+  const {
+    loadScenarioPackFromFiles,
+  } = require("../.test-dist/application/scenario/scenario-pack-loader.js");
+
+  const sourceFiles = createScenarioPackFilesFromDirectory(
+    path.join(__dirname, "../src/content/scenario-packs/zhuyuanzhang"),
+    "zhuyuanzhang"
+  );
+  const importedProject = await loadScriptEditorProjectFromScenarioPackFiles(sourceFiles);
+  importedProject.storyPack.scenarioProfile.launchPolicy = {
+    ...(importedProject.storyPack.scenarioProfile.launchPolicy ?? {}),
+    characterSelection: "fixed",
+    initialView: "scene",
+  };
+  importedProject.storyPack.scenarioProfile.initialLocation = {
+    ...importedProject.storyPack.scenarioProfile.initialLocation,
+    view: "scene",
+    sceneId: "scene.story.zhu_yuanzhang.ordination",
+  };
+
+  const serializedFiles = exportScriptEditorProjectToScenarioPackFiles(importedProject);
+  const exportedProfile = JSON.parse(serializedFiles["scenario-profile.json"]);
+  const exportedPack = await loadScenarioPackFromFiles(
+    createImportedFilesFromSerializedJsonRecord(
+      serializedFiles,
+      "exported-zhuyuanzhang-scene-start"
+    )
+  );
+
+  assert.equal(
+    exportedProfile.initialLocation.sceneId,
+    "scene.story.zhu_yuanzhang.ordination"
+  );
+  assert.equal(
+    exportedPack.scenarioProfile.initialLocation.sceneId,
+    "scene.story.zhu_yuanzhang.ordination"
+  );
+});
+
+test("scenario startup target resolves direct map city house and scene starts", () => {
+  const {
+    resolveScenarioStartupTarget,
+  } = require("../.test-dist/application/startup/scenario-startup-target.js");
+  const baseProfile = {
+    id: "scenario.startup-target",
+    title: "Startup Target",
+    playerCharacterId,
+    chapterId: "chapter.prototype",
+    initialLocation: {
+      mapId: prototypeMap.id,
+      cityId: "city.kulan",
+      houseId: "house.kulan_temple",
+      sceneId: "scene.direct.start",
+      view: "map",
+    },
+  };
+
+  assert.deepEqual(
+    resolveScenarioStartupTarget({
+      ...baseProfile,
+      launchPolicy: { characterSelection: "fixed", initialView: "map" },
+    }),
+    {
+      currentMapId: prototypeMap.id,
+      currentCityId: "city.kulan",
+      currentHouseId: null,
+      currentView: "map",
+      activeSceneId: null,
+    }
+  );
+  assert.deepEqual(
+    resolveScenarioStartupTarget({
+      ...baseProfile,
+      launchPolicy: { characterSelection: "fixed", initialView: "city" },
+    }),
+    {
+      currentMapId: prototypeMap.id,
+      currentCityId: "city.kulan",
+      currentHouseId: null,
+      currentView: "city",
+      activeSceneId: null,
+    }
+  );
+  assert.deepEqual(
+    resolveScenarioStartupTarget({
+      ...baseProfile,
+      launchPolicy: { characterSelection: "fixed", initialView: "house" },
+    }),
+    {
+      currentMapId: prototypeMap.id,
+      currentCityId: "city.kulan",
+      currentHouseId: "house.kulan_temple",
+      currentView: "house",
+      activeSceneId: null,
+    }
+  );
+  assert.deepEqual(
+    resolveScenarioStartupTarget({
+      ...baseProfile,
+      launchPolicy: { characterSelection: "fixed", initialView: "scene" },
+    }),
+    {
+      currentMapId: prototypeMap.id,
+      currentCityId: "city.kulan",
+      currentHouseId: null,
+      currentView: "scene",
+      activeSceneId: "scene.direct.start",
+    }
+  );
+});
+
 test("script editor project form exposes scenario launch policy fields", () => {
   const mainUiSource = fs.readFileSync(
     path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),

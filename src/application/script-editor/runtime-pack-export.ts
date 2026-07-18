@@ -673,6 +673,11 @@ function extractScenarioProfile(
     "project.storyPack.scenarioProfile.initialLocation.houseId",
     diagnostics
   );
+  const sceneId =
+    typeof initialLocation?.sceneId === "string" &&
+    initialLocation.sceneId.length > 0
+      ? initialLocation.sceneId
+      : undefined;
 
   return {
     ...cloneScenarioProfileRuntimeFields(scenarioProfile),
@@ -687,6 +692,7 @@ function extractScenarioProfile(
       mapId,
       cityId,
       houseId,
+      ...(sceneId == null ? {} : { sceneId }),
       view: view as ScenarioProfileDefinition["initialLocation"]["view"],
     },
   };

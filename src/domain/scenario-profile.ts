@@ -1,6 +1,7 @@
 import type { CharacterId } from "./character";
 import type { CityId } from "./city";
 import type { ChapterId, EventId } from "./event";
+import type { SceneId } from "./action";
 import type { ViewName, CalendarDate, GameState } from "./game-state";
 import type { HouseId } from "./house";
 import type { MapId } from "./map";
@@ -26,6 +27,7 @@ export type ScenarioProfileDefinition = {
     mapId: MapId;
     cityId: CityId;
     houseId: HouseId | null;
+    sceneId?: SceneId;
     view: ViewName;
   };
   initialPlayerCoordinate?: {

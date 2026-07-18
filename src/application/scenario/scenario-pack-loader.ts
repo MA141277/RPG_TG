@@ -98,6 +98,10 @@ export function parseScenarioPack(value: unknown): ScenarioPackDefinition {
   ) {
     throw new Error("scenario initialLocation.houseId must be string or null.");
   }
+  assertOptionalString(
+    value.scenarioProfile.initialLocation.sceneId,
+    "scenario initialLocation.sceneId"
+  );
   assertString(value.scenarioProfile.initialLocation.view, "scenario initialLocation.view");
   if (value.scenarioProfile.launchPolicy != null) {
     assertObject(value.scenarioProfile.launchPolicy, "scenario launchPolicy");
