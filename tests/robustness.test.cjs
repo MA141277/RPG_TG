@@ -6060,13 +6060,15 @@ test("script editor project form exposes scenario launch policy fields", () => {
 
   for (const field of [
     "scenarioProfile.entryEventId",
-    "scenarioProfile.launchPolicy.characterSelection",
-    "scenarioProfile.launchPolicy.initialView",
     "scenarioProfile.launchPolicy.entryEventTiming",
   ]) {
     assert.match(mainUiSource, new RegExp(`renderScriptEditorField\\("${field}"`));
     assert.match(mainUiSource, new RegExp(`case "${field}"`));
   }
+  assert.match(mainUiSource, /renderScriptEditorStartupSelect\("characterSelection"/);
+  assert.match(mainUiSource, /renderScriptEditorStartupSelect\("initialView"/);
+  assert.match(mainUiSource, /characterSelection:\s*normalizedValue/);
+  assert.match(mainUiSource, /initialView:\s*normalizedValue/);
 });
 
 test("script editor event destination authoring uses localized content-entry family and target selectors", () => {
@@ -7605,6 +7607,67 @@ test("script editor PRD workspace shell exposes a Chinese-first project overview
   assert.deepEqual(
     workspace.inspector.cards.map((card) => card.title),
     ["项目状态", "创作进度", "风险与阻塞", "下一步建议"]
+  );
+});
+
+test("script editor workspace toolbar exposes project info as the overview entry", () => {
+  const {
+    createScriptEditorWorkspaceShellViewModel,
+  } = require("../.test-dist/application/script-editor/workspace-shell.js");
+  const project = createExportableScriptEditorProjectDefinition();
+
+  const workspace = createScriptEditorWorkspaceShellViewModel({
+    project,
+    selection: {
+      family: "cities",
+      entityId: project.cities[0]?.id ?? null,
+    },
+  });
+  const toolbarActionIds = workspace.toolbarActions.map((action) => action.id);
+
+  assert.equal(toolbarActionIds[0], "project-info");
+  assert.equal(toolbarActionIds.includes("preview-runtime"), true);
+  assert.equal(toolbarActionIds.includes("export"), true);
+  assert.equal(workspace.toolbarActions[0]?.label, "项目信息");
+
+  const mainUiSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    "utf8"
+  );
+  assert.match(mainUiSource, /if \(action === "project-info"\)/);
+  assert.match(
+    mainUiSource,
+    /family:\s*"storyPack"[\s\S]*entityId:\s*null/
+  );
+});
+
+test("script editor project overview startup controls use project-backed selectors", () => {
+  const mainUiSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    "utf8"
+  );
+
+  assert.match(mainUiSource, /data-script-editor-startup-field/);
+  assert.match(mainUiSource, /renderScriptEditorStartupSelect\("initialView"/);
+  assert.match(mainUiSource, /renderScriptEditorStartupSelect\("cityId"/);
+  assert.match(mainUiSource, /renderScriptEditorStartupSelect\("houseId"/);
+  assert.match(mainUiSource, /renderScriptEditorStartupSelect\("sceneId"/);
+  assert.match(mainUiSource, /renderScriptEditorStartupSelect\("playerCharacterId"/);
+  assert.match(mainUiSource, /this\.scriptEditorProject\.cities\.map/);
+  assert.match(mainUiSource, /this\.scriptEditorProject\.buildings\.map/);
+  assert.match(mainUiSource, /this\.scriptEditorProject\.scenes\.map/);
+  assert.match(mainUiSource, /person\.personType === "角色"/);
+  assert.doesNotMatch(
+    mainUiSource,
+    /renderScriptEditorField\("scenarioProfile\.launchPolicy\.initialView"/
+  );
+  assert.doesNotMatch(
+    mainUiSource,
+    /renderScriptEditorField\("scenarioProfile\.initialLocation\.cityId"/
+  );
+  assert.doesNotMatch(
+    mainUiSource,
+    /renderScriptEditorField\("scenarioProfile\.initialLocation\.houseId"/
   );
 });
 

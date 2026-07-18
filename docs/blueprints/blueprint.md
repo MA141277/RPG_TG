@@ -4,9 +4,9 @@
 
 - blueprint_id: `blueprint.rpg-tg`
 - blueprint_version: `2026.07`
-- active_version: `target.script-editor-event-runtime-production-hardening`
-- active_version_plan: `docs/blueprints/plans/2026-07-18-script-editor-event-runtime-production-hardening-target-plan.md`
-- active_version_spec: `docs/blueprints/specs/2026-07-18-script-editor-event-runtime-production-hardening-target.md`
+- active_version: `target.city-building-module-entry-and-project-startup-authoring`
+- active_version_plan: `docs/blueprints/plans/2026-07-19-city-building-module-entry-and-project-startup-authoring-target-plan.md`
+- active_version_spec: `docs/blueprints/specs/2026-07-19-city-building-module-entry-and-project-startup-authoring-target.md`
 - classification_rules_ref: `docs/blueprints/classification-rule-layer-spec.md`
 - execution_mode: `single-active-task`
 - allow_parallel: `false`
@@ -22,6 +22,7 @@
 
 | Version ID | Spec | Plan | Notes |
 | --- | --- | --- | --- |
+| `target.city-building-module-entry-and-project-startup-authoring` | `docs/blueprints/specs/2026-07-19-city-building-module-entry-and-project-startup-authoring-target.md` | `docs/blueprints/plans/2026-07-19-city-building-module-entry-and-project-startup-authoring-target-plan.md` | `Open successor startup/module version created on 2026-07-19 from the operator-approved 项目信息 startup authoring and city/building module entry draft. It admits queue.city-building-module-entry-and-project-startup-authoring to add project overview startup controls, converge flexible startup paths, extract separate city/building module entry seams, and prove behavior through simulated-human acceptance.` |
 | `target.script-editor-event-runtime-production-hardening` | `docs/blueprints/specs/2026-07-18-script-editor-event-runtime-production-hardening-target.md` | `docs/blueprints/plans/2026-07-18-script-editor-event-runtime-production-hardening-target-plan.md` | `Open successor event-runtime hardening version created on 2026-07-18 from the operator's production-readiness draft after source audit found old event-system residues and Liu Bang pack trigger/conditions data. It admits queue.script-editor-event-runtime-production-hardening-and-liu-bang-pack-migration to clean/guard old event residues, migrate Liu Bang to event-bindings.json, and prove Script Editor simulated-human authoring plus runtime triggering.` |
 | `target.map-review-provider-boundary-extraction` | `docs/blueprints/specs/2026-07-18-map-review-provider-boundary-extraction-target.md` | `docs/blueprints/plans/2026-07-18-map-review-provider-boundary-extraction-target-plan.md` | `Open successor modularization version created on 2026-07-18 from MEMO-010 and operator-approved map/review boundary design. It admits queue.map-review-provider-boundary-extraction-and-acceptance to extract provider-backed map and in-game review module boundaries, inventory and remove old direct paths, and verify complete behavior across normal start, JSON import, and Script Editor runtime preview.` |
 | `target.script-editor-event-binding-post-closeout-fixups` | `docs/blueprints/specs/2026-07-17-script-editor-event-binding-post-closeout-fixups-target.md` | `docs/blueprints/plans/2026-07-17-script-editor-event-binding-post-closeout-fixups-target-plan.md` | `Closed on 2026-07-18 after destination selector completion, destination content-entry correction, runtime preview-from-memory, save/export confusion fix, and final version closeout were recorded. Broader map/review provider-boundary work is routed to target.map-review-provider-boundary-extraction rather than this Script Editor fixup version.` |

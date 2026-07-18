@@ -47,7 +47,7 @@ export type ScriptEditorWorkspaceNavigationItem = {
 };
 
 export type ScriptEditorWorkspaceToolbarAction = {
-  id: "save" | "validate" | "preview-runtime" | "export";
+  id: "project-info" | "save" | "validate" | "preview-runtime" | "export";
   label: string;
   status: "ready" | "attention" | "blocked";
   description: string;
@@ -289,6 +289,12 @@ function createToolbarActions(
   exportDiagnostics: ScriptEditorRuntimeExportDiagnostic[]
 ): ScriptEditorWorkspaceToolbarAction[] {
   return [
+    {
+      id: "project-info",
+      label: "项目信息",
+      status: "ready",
+      description: "返回项目总览并配置开局视图、角色选择策略和默认角色。",
+    },
     {
       id: "save",
       label: "保存项目",

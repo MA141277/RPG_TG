@@ -3,16 +3,16 @@
 ## Control Block
 
 - queue_id: `queue.city-building-module-entry-and-project-startup-authoring`
-- belongs_to_version: `target.script-editor-event-runtime-production-hardening`
+- belongs_to_version: `target.city-building-module-entry-and-project-startup-authoring`
 - blueprint_version: `2026.07`
 - governance_last_synced_at: `2026-07-19`
-- governance_sync_source: `docs/blueprints/plans/2026-07-18-script-editor-event-runtime-production-hardening-target-plan.md`
-- queue_status: `blocked`
+- governance_sync_source: `docs/blueprints/plans/2026-07-19-city-building-module-entry-and-project-startup-authoring-target-plan.md`
+- queue_status: `active`
 - queue_class: `future-target-candidate`
-- active_task: `none`
-- next_task: `none`
-- admission_status: `not-admitted`
-- closeout_status: `none`
+- active_task: `task.city-building-module-entry-and-project-startup-authoring.project-info-authoring`
+- next_task: `task.city-building-module-entry-and-project-startup-authoring.city-building-module-entry`
+- admission_status: `admitted`
+- closeout_status: `not-started`
 - execution_closeout_status: `blocked`
 - topic_closure_status: `blocked`
 - closure_basis: `none`
@@ -24,9 +24,8 @@
 - next_effect: `return-to-version-review`
 - sync_status: `pending`
 - sync_scope: `local-record`
-- sync_summary: `Candidate queue recorded from the operator-approved city/building module and 项目信息 startup configuration draft. It is not admitted and must not start implementation until promotion/admission review records active queue truth.`
-- blocked_by:
-  - `admission-review`
+- sync_summary: `Queue admitted locally as the active queue under target.city-building-module-entry-and-project-startup-authoring. Repository sync remains separate.`
+- blocked_by: []
 - allowed_item_classifications:
   - `queue-candidate`
   - `future-target-candidate`
@@ -45,10 +44,10 @@
   - `Only 项目信息 is a top-bar entry; 开局视图, 角色选择策略, 默认角色, and concrete target selectors live inside 项目信息 / 项目总览.`
   - `默认角色 is single-select and comes from people records whose authoring type is 角色.`
 - Classification:
-  - `queue-candidate/future-target-candidate relative to the active event-runtime production-hardening version.`
-  - `The scope may belong to a successor startup/module version or to the open map/review modularization version after admission review.`
+  - `admitted required queue under target.city-building-module-entry-and-project-startup-authoring.`
+  - `The scope was promoted from the prior event-runtime hardening candidate record into this successor startup/module version.`
 - Forbidden expansions:
-  - `Do not implement from this candidate record alone.`
+  - `Do not implement before evidence-anchor reconcile completes.`
   - `Do not reopen closed event-binding replacement or post-closeout fixup versions.`
   - `Do not change EventBindingRuntime semantics.`
   - `Do not remove city/building/event relation authoring while extracting runtime entry modules.`
@@ -68,15 +67,217 @@
 - `Building runtime behavior is exposed through a BuildingModule entry contract.`
 - `Normal start, JSON runtime pack import, and Script Editor runtime preview use the same startup/module contracts.`
 
-### Proposed Queue Task Split
+### Queue Snapshot
+
+- queue_goal: `Add 项目信息 startup authoring and converge city/building runtime entry behavior behind separate reusable modules without requiring a fixed startup chain.`
+- task_count: `5`
+- completed_task_count: `1`
+- remaining_task_count: `4`
+- active_task_summary: `Implement project-info top-bar entry and project overview startup authoring controls using TDD.`
+- task_briefs:
+  - `task.city-building-module-entry-and-project-startup-authoring.evidence-anchor-reconcile: inspect source facts, split risks, current startup fields, and implementation anchors before business changes.`
+  - `task.city-building-module-entry-and-project-startup-authoring.project-info-authoring: TDD 项目信息 top-bar entry and project overview startup controls.`
+  - `task.city-building-module-entry-and-project-startup-authoring.city-building-module-entry: formalize separate CityModule and BuildingModule entry/render/context boundaries.`
+  - `task.city-building-module-entry-and-project-startup-authoring.runtime-startup-convergence: route normal start, JSON import, and Script Editor runtime preview through shared startup/module contracts.`
+  - `task.city-building-module-entry-and-project-startup-authoring.acceptance-and-guard: source guards and simulated-human acceptance across supported entrypoints.`
+
+### Task Ledger
 
 | Task ID | State | Summary | Depends On | Notes |
 | --- | --- | --- | --- | --- |
-| `task.city-building-module-entry-and-project-startup-authoring.evidence-anchor-reconcile` | `candidate` | `Inspect existing project overview, scenarioProfile startup fields, city/building runtime entry paths, map provider boundary, and tests before admission/implementation.` | `admission-review` | `Must confirm current field names for role/person type and scene data source.` |
-| `task.city-building-module-entry-and-project-startup-authoring.project-info-authoring` | `candidate` | `Add 项目信息 top-bar entry and project overview startup controls for start view, concrete target, role selection policy, and single default role.` | `evidence-anchor-reconcile` | `TDD required before UI implementation.` |
-| `task.city-building-module-entry-and-project-startup-authoring.city-building-module-entry` | `candidate` | `Extract or formalize separate CityModule and BuildingModule entry/render/context contracts without forcing a map/city/building chain.` | `project-info-authoring` | `Must preserve existing city/building content and relations.` |
-| `task.city-building-module-entry-and-project-startup-authoring.runtime-startup-convergence` | `candidate` | `Route normal start, JSON import, and Script Editor runtime preview through the same startup/module contracts.` | `city-building-module-entry` | `Must cover direct city/building/scene starts with and without character selection.` |
-| `task.city-building-module-entry-and-project-startup-authoring.acceptance-and-guard` | `candidate` | `Run source guards and simulated-human acceptance proving the modules and startup controls work completely across supported entrypoints.` | `runtime-startup-convergence` | `Must record any unsupported path as a waiver, not success.` |
+| `task.city-building-module-entry-and-project-startup-authoring.evidence-anchor-reconcile` | `done` | `Confirmed existing project overview, scenarioProfile startup fields, city/building runtime entry paths, map provider boundary, and tests before implementation.` | `none` | `No prerequisite split required before project-info-authoring.` |
+| `task.city-building-module-entry-and-project-startup-authoring.project-info-authoring` | `pending` | `Add 项目信息 top-bar entry and project overview startup controls for start view, concrete target, role selection policy, and single default role.` | `task.city-building-module-entry-and-project-startup-authoring.evidence-anchor-reconcile` | `TDD required before UI implementation.` |
+| `task.city-building-module-entry-and-project-startup-authoring.city-building-module-entry` | `pending` | `Extract or formalize separate CityModule and BuildingModule entry/render/context contracts without forcing a map/city/building chain.` | `task.city-building-module-entry-and-project-startup-authoring.project-info-authoring` | `Must preserve existing city/building content and relations.` |
+| `task.city-building-module-entry-and-project-startup-authoring.runtime-startup-convergence` | `pending` | `Route normal start, JSON import, and Script Editor runtime preview through the same startup/module contracts.` | `task.city-building-module-entry-and-project-startup-authoring.city-building-module-entry` | `Must cover direct city/building/scene starts with and without character selection.` |
+| `task.city-building-module-entry-and-project-startup-authoring.acceptance-and-guard` | `pending` | `Run source guards and simulated-human acceptance proving the modules and startup controls work completely across supported entrypoints.` | `task.city-building-module-entry-and-project-startup-authoring.runtime-startup-convergence` | `Must record any unsupported path as a waiver, not success.` |
+
+### Task Definitions
+
+#### `task.city-building-module-entry-and-project-startup-authoring.evidence-anchor-reconcile`
+
+##### Control Block
+
+- task_id: `task.city-building-module-entry-and-project-startup-authoring.evidence-anchor-reconcile`
+- state: `done`
+- task_kind: `decision-dispatch`
+- scope:
+  - `docs/blueprints/specs/2026-07-19-city-building-module-entry-and-project-startup-authoring-target.md`
+  - `docs/blueprints/plans/2026-07-19-city-building-module-entry-and-project-startup-authoring-target-plan.md`
+  - `src/application/script-editor/workspace-shell.ts`
+  - `src/domain/script-editor-project.ts`
+  - `src/application/script-editor/runtime-pack-export.ts`
+  - `src/application/scenario/scenario-pack-loader.ts`
+  - `startup coordinator and runtime entry modules`
+  - `city runtime/presenter/view modules`
+  - `building runtime/presenter/view modules`
+  - `tests/**`
+- must_inspect:
+  - `current 项目总览 and Script Editor navigation structure`
+  - `existing scenarioProfile launchPolicy and initialLocation fields`
+  - `role/person authoring type field names and default character persistence`
+  - `normal start, JSON import, and runtime preview startup seams`
+  - `city and building entry/render/context ownership`
+  - `existing simulated-human/browser test anchors`
+- must_not_change:
+  - `Do not implement business code during evidence-anchor reconcile.`
+  - `Do not change EventBindingRuntime semantics.`
+  - `Do not remove city/building/person relation authoring.`
+- done_when:
+  - `Evidence lock is recorded or the queue records a split/blocker.`
+  - `Implementation anchors and TDD approach are confirmed.`
+  - `Supported startup paths and unsupported/waived paths are listed.`
+- verify_with:
+  - `npm run lint:blueprints`
+- if_blocked:
+  - `Return to version review or split prerequisite queue.`
+- promote_next_if_done: `task.city-building-module-entry-and-project-startup-authoring.project-info-authoring`
+
+##### Human Context
+
+- task_brief:
+  - `Lock startup authoring and city/building module evidence before implementation.`
+- task_outcome_summary:
+  - `Completed on 2026-07-19. Source review confirmed Script Editor already has a project overview surface and scenarioProfile launchPolicy/initialLocation fields, but creator UI still exposes startup values mainly as text/system fields rather than project-info selectors. ScenarioProfile supports characterSelection shell/fixed, initialView, playerCharacterId, mapId, cityId, houseId, and view; ViewName uses house for the runtime building view. Default role sourcing should filter ScriptEditorPersonRecord.personType == 角色. Normal start, JSON import, and runtime preview all route through scenario pack export/load/startup seams. Runtime preview uses current in-memory project export. No prerequisite split is required before project-info-authoring.`
+
+#### `task.city-building-module-entry-and-project-startup-authoring.project-info-authoring`
+
+##### Control Block
+
+- task_id: `task.city-building-module-entry-and-project-startup-authoring.project-info-authoring`
+- state: `active`
+- task_kind: `execution`
+- scope:
+  - `src/application/script-editor/workspace-shell.ts`
+  - `src/domain/script-editor-project.ts`
+  - `src/application/script-editor/runtime-pack-export.ts`
+  - `tests/**`
+- must_inspect:
+  - `evidence-anchor reconcile outcome`
+  - `current project overview and navigation actions`
+- must_modify:
+  - `tests/**`
+  - `Script Editor project overview/navigation files proven necessary by evidence-anchor reconcile`
+- must_preserve:
+  - `existing project package save/load semantics`
+  - `city/building/person relation authoring`
+- verify_with:
+  - `focused tests`
+  - `npm run typecheck`
+  - `npm run lint:blueprints`
+  - `npm test`
+- promote_next_if_done: `task.city-building-module-entry-and-project-startup-authoring.city-building-module-entry`
+
+##### Human Context
+
+- task_brief:
+  - `Implement 项目信息 top-bar entry and project overview startup authoring controls using TDD.`
+- task_outcome_summary:
+  - `pending`
+
+#### `task.city-building-module-entry-and-project-startup-authoring.city-building-module-entry`
+
+##### Control Block
+
+- task_id: `task.city-building-module-entry-and-project-startup-authoring.city-building-module-entry`
+- state: `pending`
+- task_kind: `execution`
+- scope:
+  - `city runtime/presenter/view modules`
+  - `building runtime/presenter/view modules`
+  - `startup routing seams`
+  - `tests/**`
+- must_inspect:
+  - `evidence-anchor reconcile outcome`
+  - `existing city and building entry/render/context ownership`
+- must_modify:
+  - `tests/**`
+  - `city/building runtime module files proven necessary by evidence-anchor reconcile`
+- must_preserve:
+  - `map provider contract`
+  - `review provider contract`
+  - `EventBindingRuntime semantics`
+- verify_with:
+  - `focused tests`
+  - `npm run typecheck`
+  - `npm run lint:blueprints`
+  - `npm test`
+- promote_next_if_done: `task.city-building-module-entry-and-project-startup-authoring.runtime-startup-convergence`
+
+##### Human Context
+
+- task_brief:
+  - `Formalize separate CityModule and BuildingModule entry/render/context boundaries.`
+- task_outcome_summary:
+  - `pending`
+
+#### `task.city-building-module-entry-and-project-startup-authoring.runtime-startup-convergence`
+
+##### Control Block
+
+- task_id: `task.city-building-module-entry-and-project-startup-authoring.runtime-startup-convergence`
+- state: `pending`
+- task_kind: `execution`
+- scope:
+  - `startup coordinator`
+  - `scenario loader`
+  - `Script Editor runtime preview path`
+  - `normal start and JSON import paths`
+  - `tests/**`
+- must_inspect:
+  - `evidence-anchor reconcile outcome`
+  - `implemented project startup controls and module entry seams`
+- must_modify:
+  - `tests/**`
+  - `startup/runtime entry files proven necessary by prior tasks`
+- must_preserve:
+  - `same runtime pack loader semantics across entrypoints`
+  - `existing supported map/city/building/scene behavior`
+- verify_with:
+  - `focused tests`
+  - `npm run typecheck`
+  - `npm run lint:blueprints`
+  - `npm test`
+- promote_next_if_done: `task.city-building-module-entry-and-project-startup-authoring.acceptance-and-guard`
+
+##### Human Context
+
+- task_brief:
+  - `Route normal start, JSON import, and Script Editor runtime preview through shared startup/module contracts.`
+- task_outcome_summary:
+  - `pending`
+
+#### `task.city-building-module-entry-and-project-startup-authoring.acceptance-and-guard`
+
+##### Control Block
+
+- task_id: `task.city-building-module-entry-and-project-startup-authoring.acceptance-and-guard`
+- state: `pending`
+- task_kind: `decision-dispatch`
+- scope:
+  - `docs/blueprints/queues/city-building-module-entry-and-project-startup-authoring-queue.md`
+  - `tests/**`
+  - `browser/simulated-human acceptance evidence`
+- must_inspect:
+  - `all ACC-CITY-BUILDING-STARTUP acceptance ids`
+  - `source guard results`
+  - `normal start, JSON import, and Script Editor runtime preview behavior`
+- must_not_change:
+  - `Do not enter version closeout from queue closeout.`
+  - `Do not claim unsupported entrypoints as runtime support.`
+- done_when:
+  - `Guard review classifies each acceptance id as covered, blocked, or waived with reason.`
+  - `Queue state is synchronized to done or blocked.`
+- verify_with:
+  - `npm run lint:blueprints`
+- if_blocked:
+  - `Record the blocker and return to version review.`
+
+##### Human Context
+
+- task_brief:
+  - `Close out the queue with source guards, simulated-human acceptance, and handoff.`
+- task_outcome_summary:
+  - `pending`
 
 ### Acceptance Requirements
 

@@ -798,6 +798,26 @@ export class MainUiFlow {
       const scenarioProfile = storyPack.scenarioProfile ?? {};
       const initialLocation = scenarioProfile.initialLocation ?? {};
       const launchPolicy = scenarioProfile.launchPolicy ?? {};
+      const createRecordOption = (record) => ({
+        value: record.id,
+        label: `${record.title ?? record.name ?? record.label ?? record.id} (${record.id})`,
+      });
+      const initialViewOptions = [
+        { value: "map", label: "地图" },
+        { value: "city", label: "城市" },
+        { value: "house", label: "建筑" },
+        { value: "scene", label: "场景" },
+      ];
+      const characterSelectionOptions = [
+        { value: "shell", label: "开局时选择角色" },
+        { value: "fixed", label: "使用默认角色直接开始" },
+      ];
+      const defaultRoleOptions = this.scriptEditorProject.people
+        .filter((person) => person.personType === "角色")
+        .map(createRecordOption);
+      const cityOptions = this.scriptEditorProject.cities.map(createRecordOption);
+      const buildingOptions = this.scriptEditorProject.buildings.map(createRecordOption);
+      const sceneOptions = this.scriptEditorProject.scenes.map(createRecordOption);
       const exportDiagnostics = validateScriptEditorProjectForRuntimeExport(
         this.scriptEditorProject
       );
@@ -849,10 +869,13 @@ export class MainUiFlow {
             ${this.renderScriptEditorField("storyPack.title", "剧本包标题", storyPack.title)}
             ${this.renderScriptEditorField("storyPack.description", "剧本包说明", storyPack.description ?? "")}
             ${this.renderScriptEditorField("scenarioProfile.title", "开场场景标题", scenarioProfile.title ?? "")}
-            ${this.renderScriptEditorField("scenarioProfile.initialLocation.view", "初始视图", initialLocation.view ?? "")}
+            ${this.renderScriptEditorStartupSelect("initialView", "开局视图", initialViewOptions, launchPolicy.initialView ?? initialLocation.view ?? "", "未设置开局视图")}
+            ${this.renderScriptEditorStartupSelect("cityId", "开局城市", cityOptions, initialLocation.cityId ?? "", "未设置开局城市")}
+            ${this.renderScriptEditorStartupSelect("houseId", "开局建筑", buildingOptions, initialLocation.houseId ?? "", "未设置开局建筑")}
+            ${this.renderScriptEditorStartupSelect("sceneId", "开局场景", sceneOptions, initialLocation.sceneId ?? "", "未设置开局场景")}
             ${this.renderScriptEditorField("scenarioProfile.entryEventId", "入口事件 ID", scenarioProfile.entryEventId ?? "")}
-            ${this.renderScriptEditorField("scenarioProfile.launchPolicy.characterSelection", "角色选择策略", launchPolicy.characterSelection ?? "")}
-            ${this.renderScriptEditorField("scenarioProfile.launchPolicy.initialView", "开局视图", launchPolicy.initialView ?? "")}
+            ${this.renderScriptEditorStartupSelect("characterSelection", "角色选择策略", characterSelectionOptions, launchPolicy.characterSelection ?? "", "未设置角色选择策略")}
+            ${this.renderScriptEditorStartupSelect("playerCharacterId", "默认角色", defaultRoleOptions, scenarioProfile.playerCharacterId ?? "", "未设置默认角色")}
             ${this.renderScriptEditorField("scenarioProfile.launchPolicy.entryEventTiming", "入口事件时机", launchPolicy.entryEventTiming ?? "")}
           </div>
           ${this.renderScriptEditorSystemDetails(
@@ -863,11 +886,8 @@ export class MainUiFlow {
                 ${this.renderScriptEditorField("project.id", "项目 ID", this.scriptEditorProject.id)}
                 ${this.renderScriptEditorField("storyPack.id", "剧本包 ID", storyPack.id)}
                 ${this.renderScriptEditorField("scenarioProfile.id", "开场场景 ID", scenarioProfile.id ?? "")}
-                ${this.renderScriptEditorField("scenarioProfile.playerCharacterId", "默认主角 ID", scenarioProfile.playerCharacterId ?? "")}
                 ${this.renderScriptEditorField("scenarioProfile.chapterId", "章节 ID", scenarioProfile.chapterId ?? "")}
                 ${this.renderScriptEditorField("scenarioProfile.initialLocation.mapId", "初始地图 ID", initialLocation.mapId ?? "")}
-                ${this.renderScriptEditorField("scenarioProfile.initialLocation.cityId", "初始城市 ID", initialLocation.cityId ?? "")}
-                ${this.renderScriptEditorField("scenarioProfile.initialLocation.houseId", "初始建筑 ID", initialLocation.houseId ?? "")}
               </div>
             `
           )}
@@ -3998,6 +4018,20 @@ export class MainUiFlow {
     `;
   }
 
+  renderScriptEditorStartupSelect(field, label, options, selectedValue, emptyLabel) {
+    return `
+      <label class="c-script-editor-form-field">
+        <span>${escapeHtml(label)}</span>
+        <select
+          class="c-script-editor-form-field__input"
+          data-script-editor-startup-field="${escapeHtml(field)}"
+        >
+          ${this.renderScriptEditorSelectOptions(options, selectedValue, emptyLabel)}
+        </select>
+      </label>
+    `;
+  }
+
   renderScriptEditorSystemDetails(title, hint, body) {
     return `
       <details class="c-script-editor-system-details">
@@ -4656,6 +4690,24 @@ export class MainUiFlow {
       if (field != null) {
         this.applyScriptEditorProjectField(field, target.value);
       }
+      return;
+    }
+
+    if (target.matches("[data-script-editor-startup-field]")) {
+      const startupField = target.dataset.scriptEditorStartupField;
+      const startupFieldToProjectField = {
+        initialView: "scenarioProfile.launchPolicy.initialView",
+        characterSelection: "scenarioProfile.launchPolicy.characterSelection",
+        playerCharacterId: "scenarioProfile.playerCharacterId",
+        cityId: "scenarioProfile.initialLocation.cityId",
+        houseId: "scenarioProfile.initialLocation.houseId",
+        sceneId: "scenarioProfile.initialLocation.sceneId",
+      };
+      const field = startupFieldToProjectField[startupField];
+      if (field != null) {
+        this.applyScriptEditorProjectField(field, target.value);
+      }
+      return;
     }
 
     if (target.matches("[data-script-editor-person-field]")) {
@@ -5479,6 +5531,15 @@ export class MainUiFlow {
 
     if (action === "back-to-menu") {
       this.showMainMenu();
+      return;
+    }
+
+    if (action === "project-info") {
+      this.scriptEditorSelection = {
+        family: "storyPack",
+        entityId: null,
+      };
+      this.render();
       return;
     }
 
@@ -6455,6 +6516,18 @@ export class MainUiFlow {
             initialLocation: {
               ...scenarioProfile.initialLocation,
               houseId: normalizedValue.length === 0 ? null : normalizedValue,
+            },
+          },
+        });
+        break;
+      case "scenarioProfile.initialLocation.sceneId":
+        nextProject = updateScriptEditorWorkflowStoryPack(nextProject, {
+          ...nextProject.storyPack,
+          scenarioProfile: {
+            ...scenarioProfile,
+            initialLocation: {
+              ...scenarioProfile.initialLocation,
+              sceneId: normalizedValue.length === 0 ? undefined : normalizedValue,
             },
           },
         });
