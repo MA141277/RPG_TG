@@ -609,6 +609,7 @@ const mainUiFlow = new MainUiFlow({
   onStartGame: startMainGameWithLoading,
   onContinueGame: startContinueGameWithLoading,
   onStartScenarioPack: startScenarioPackWithLoading,
+  onStartLoadedScenarioPack: startLoadedScenarioPackWithLoading,
   onImportScenarioPackFiles: startScenarioPackFilesWithLoading,
   loadSaveData,
   getAppState: () => appState,
@@ -1488,8 +1489,22 @@ const startupSessionCoordinatorDeps = {
 };
 
 type PendingScenarioStartupRequest =
-  | { type: "scenario-summary"; scenarioPack: ScenarioPackSummary }
-  | { type: "scenario-files"; files: File[] };
+  | {
+      type: "scenario-summary";
+      scenarioPack: ScenarioPackSummary;
+      previewSession?: true;
+    }
+  | {
+      type: "scenario-files";
+      files: File[];
+      previewSession?: true;
+    }
+  | {
+      type: "scenario-pack";
+      scenarioPack: ScenarioPackDefinition;
+      source: ModSourceDescriptor;
+      previewSession?: true;
+    };
 
 let pendingScenarioStartupRequest: PendingScenarioStartupRequest | null = null;
 
@@ -1531,6 +1546,10 @@ function startMainGameWithLoading(
     void runScenarioPackStartupRequestWithLoading({
       ...request,
       selectedCharacter,
+    }).then((didStart) => {
+      if (didStart && request.previewSession === true) {
+        mainUiFlow.setScreen("runtime-preview");
+      }
     });
     return;
   }
@@ -1559,20 +1578,22 @@ function runScenarioPackStartupRequestWithLoading(
         source: ModSourceDescriptor;
         selectedCharacter?: CharacterDefinition;
       }
-): Promise<void> {
+): Promise<boolean> {
+  let didStart = true;
   return shellBootLifecycleCoordinator.startScenarioPackRequest({
     request,
     handleError: (error) => {
+      didStart = false;
       console.error("JSON scenario startup failed", error);
       setGameVisibility(false);
       mainUiFlow.showMainMenu();
       window.alert(
         error instanceof Error
-        ? `JSON 开局读取失败：${error.message}`
-        : "JSON 开局读取失败。"
+          ? `JSON 开局读取失败：${error.message}`
+          : "JSON 开局读取失败。"
       );
     },
-  });
+  }).then(() => didStart);
 }
 
 async function startScenarioPackWithLoading(
@@ -1580,7 +1601,7 @@ async function startScenarioPackWithLoading(
 ): Promise<void> {
   try {
     const loadedScenarioPack = await loadScenarioPackFromUrl(scenarioPack.url);
-    if (await prepareScenarioPackCharacterSelection(
+    const shouldDefer = await prepareScenarioPackCharacterSelection(
       loadedScenarioPack,
       {
         kind: "url",
@@ -1591,11 +1612,12 @@ async function startScenarioPackWithLoading(
         type: "scenario-summary",
         scenarioPack,
       }
-    )) {
+    );
+    if (shouldDefer) {
       return;
     }
 
-    return runScenarioPackStartupRequestWithLoading({
+    const didStart = await runScenarioPackStartupRequestWithLoading({
       type: "scenario-pack",
       scenarioPack: loadedScenarioPack,
       source: {
@@ -1604,6 +1626,9 @@ async function startScenarioPackWithLoading(
         url: scenarioPack.url,
       },
     });
+    if (!didStart) {
+      throw new Error("Scenario pack startup failed.");
+    }
   } catch (error) {
     window.alert(
       error instanceof Error
@@ -1623,7 +1648,7 @@ async function startScenarioPackFilesWithLoading(
 
   try {
     const loadedScenarioPack = await loadScenarioPackFromFiles(files);
-    if (await prepareScenarioPackCharacterSelection(
+    const shouldDefer = await prepareScenarioPackCharacterSelection(
       loadedScenarioPack,
       {
         kind: "file",
@@ -1634,11 +1659,12 @@ async function startScenarioPackFilesWithLoading(
         type: "scenario-files",
         files,
       }
-    )) {
+    );
+    if (shouldDefer) {
       return;
     }
 
-    return runScenarioPackStartupRequestWithLoading({
+    const didStart = await runScenarioPackStartupRequestWithLoading({
       type: "scenario-pack",
       scenarioPack: loadedScenarioPack,
       source: {
@@ -1647,6 +1673,9 @@ async function startScenarioPackFilesWithLoading(
         filePath: importLabel,
       },
     });
+    if (!didStart) {
+      throw new Error("Scenario pack startup failed.");
+    }
   } catch (error) {
     window.alert(
       error instanceof Error
@@ -1654,6 +1683,41 @@ async function startScenarioPackFilesWithLoading(
         : `JSON 开局读取失败（${importLabel}）。`
     );
   }
+}
+
+async function startLoadedScenarioPackWithLoading(
+  scenarioPack: ScenarioPackDefinition
+): Promise<"started" | "deferred" | "failed"> {
+  const source = {
+    kind: "file" as const,
+    name: scenarioPack.title,
+    filePath: `preview:${scenarioPack.id}`,
+  };
+
+  const shouldDefer = await prepareScenarioPackCharacterSelection(
+    scenarioPack,
+    source,
+    {
+      type: "scenario-pack",
+      scenarioPack,
+      source,
+      previewSession: true,
+    }
+  );
+  if (shouldDefer) {
+    return "deferred";
+  }
+
+  const didStart = await runScenarioPackStartupRequestWithLoading({
+    type: "scenario-pack",
+    scenarioPack,
+    source,
+  });
+  if (!didStart) {
+    return "failed";
+  }
+
+  return "started";
 }
 
 async function prepareScenarioPackCharacterSelection(
@@ -1682,7 +1746,6 @@ async function prepareScenarioPackCharacterSelection(
   mainUiFlow.showCharacterSelect();
   return true;
 }
-
 function mergeById<T extends { id: string }>(base: T[], next: T[]): T[] {
   if (next.length === 0) {
     return base;

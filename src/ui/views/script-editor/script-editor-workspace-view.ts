@@ -9,7 +9,7 @@ export function renderScriptEditorWorkspaceView(
   model: ScriptEditorWorkspaceViewModel,
   editorMarkup = ""
 ): string {
-  const { projectNode, sidebarGroups } = splitWorkspaceTreeGroups(model.objectTreeGroups);
+  const sidebarGroups = splitWorkspaceTreeGroups(model.objectTreeGroups);
   const embeddedInspector = editorMarkup.includes("<!-- SCRIPT_EDITOR_INSPECTOR_SLOT -->");
   const inspectorHeaderSlot = extractTemplateSlot(
     editorMarkup,
@@ -33,22 +33,15 @@ export function renderScriptEditorWorkspaceView(
   return `
     <section class="c-script-editor-shell">
       <header class="c-script-editor-shell__header">
-        <div class="c-script-editor-shell__project-strip">
-          <div class="c-script-editor-shell__project-pill">
-            <strong>当前项目：${escapeHtml(model.title)}</strong>
-            <span>${escapeHtml(model.subtitle)}</span>
-          </div>
-          <div class="c-script-editor-shell__toolbar">
-            <button
-              type="button"
-              class="c-script-editor-shell__toolbar-button c-script-editor-shell__toolbar-button--ghost"
-              data-script-editor-action="back-to-landing"
-            >
-              返回列表
-            </button>
-            ${renderToolbarButtons(model)}
-            ${projectNode == null ? "" : renderProjectEntryButton(projectNode)}
-          </div>
+        <div class="c-script-editor-shell__toolbar">
+          <button
+            type="button"
+            class="c-script-editor-shell__toolbar-button c-script-editor-shell__toolbar-button--ghost"
+            data-script-editor-action="back-to-landing"
+          >
+            返回列表
+          </button>
+          ${renderToolbarButtons(model)}
         </div>
       </header>
 
@@ -67,20 +60,14 @@ export function renderScriptEditorWorkspaceView(
   `;
 }
 
-function splitWorkspaceTreeGroups(groups: ScriptEditorWorkspaceTreeGroup[]): {
-  projectNode: ScriptEditorWorkspaceTreeNode | null;
-  sidebarGroups: ScriptEditorWorkspaceTreeGroup[];
-} {
-  let projectNode: ScriptEditorWorkspaceTreeNode | null = null;
-
-  const sidebarGroups = groups
+function splitWorkspaceTreeGroups(
+  groups: ScriptEditorWorkspaceTreeGroup[]
+): ScriptEditorWorkspaceTreeGroup[] {
+  return groups
     .map((group) => {
       const nodes = group.nodes.filter((node) => {
         if (node.family !== "storyPack") {
           return true;
-        }
-        if (projectNode == null) {
-          projectNode = node;
         }
         return false;
       });
@@ -91,8 +78,6 @@ function splitWorkspaceTreeGroups(groups: ScriptEditorWorkspaceTreeGroup[]): {
       };
     })
     .filter((group) => group.nodes.length > 0);
-
-  return { projectNode, sidebarGroups };
 }
 
 function renderToolbarButtons(model: ScriptEditorWorkspaceViewModel): string {
@@ -118,25 +103,6 @@ function renderToolbarButtons(model: ScriptEditorWorkspaceViewModel): string {
       `;
     })
     .join("");
-}
-
-function renderProjectEntryButton(node: ScriptEditorWorkspaceTreeNode): string {
-  const selectedClass = node.isSelected ? " c-script-editor-shell__toolbar-button--selected" : "";
-  const warningClass =
-    node.tone === "warning" ? " c-script-editor-shell__toolbar-button--warning" : "";
-  const entityIdAttribute =
-    node.entityId == null ? "" : ` data-script-editor-entity-id="${escapeHtml(node.entityId)}"`;
-
-  return `
-    <button
-      type="button"
-      class="c-script-editor-shell__toolbar-button c-script-editor-shell__toolbar-button--ghost${selectedClass}${warningClass}"
-      data-script-editor-family="${escapeHtml(node.family)}"${entityIdAttribute}
-    >
-      <strong>${escapeHtml(node.label)}</strong>
-      <span>${escapeHtml(String(node.itemCount))}</span>
-    </button>
-  `;
 }
 
 function renderTreeGroup(group: ScriptEditorWorkspaceTreeGroup): string {

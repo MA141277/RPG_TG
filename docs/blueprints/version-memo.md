@@ -725,3 +725,198 @@ Out of scope:
 - Temple donation regression test.
 - End-to-end browser or equivalent integration test for refresh and continue behavior.
 - Repository search evidence showing the covered temple path no longer directly writes the configured currency field.
+
+### MEMO-010: Map And In-Game Review Need Provider-Backed Module Boundaries
+
+- status: `open`
+- severity: `medium`
+- classification: `future-target-candidate`
+- owning_queue: `none`
+- admission_status: `not-admitted`
+- latest_disposition: `recorded-only`
+- affected_families:
+  - `campaign map`
+  - `city marker and city information`
+  - `navigation`
+  - `in-game review / council flow`
+  - `house review consumers`
+  - `normal start`
+  - `JSON runtime pack import`
+  - `Script Editor runtime preview`
+
+#### Required Behavior
+
+- Map rendering must not own city coordinates, city domain records, city details, historical roster lookup, or entry rules.
+- Map rendering should consume provider-backed location markers through a public interface.
+- City coordinates and city information should be produced by a map-location provider or adapter outside the map view.
+- Review / council flow should follow the same boundary: the review mechanism consumes provider or policy output instead of scattering review lifecycle truth across house, time, navigation, and shell paths.
+- Existing map and review functionality must remain complete after modularization, not narrowed to the smallest current happy path.
+- Every supported game entrypoint must use the same module contracts:
+  - normal start;
+  - JSON runtime pack import;
+  - Script Editor runtime preview.
+
+#### Current Implementation Evidence
+
+- `src/ui/views/map/map-view.ts` currently receives map content plus city definitions, city-coordinate lookup, historical characters, historical city rosters, and map exploration state.
+- `src/application/content/active-game-content.ts` currently derives `cityCoordinatesById` from `city.mapNodeId -> map.nodes`.
+- `src/application/map/map-city-marker-view-model.ts` currently converts `CityDefinition` plus `cityCoordinatesById` into map markers.
+- `src/application/navigation/campaign-map-exploration.ts` owns map fog / reveal state and is already a candidate seam for map exploration state.
+- `src/application/review/review-cycle.ts` already exists as a shared review-cycle seam for schedule and compatibility mirrors.
+- `src/application/time/council-priority.ts`, `src/application/time/council-attendance.ts`, `src/application/runtime/navigation-time-follow-up.ts`, and house modules still participate in host selection, arrival reminders, lateness, blocking, and review presentation.
+
+#### Suggested Candidate Queue
+
+- proposed_queue_id: `queue.map-review-provider-boundary-extraction-and-acceptance`
+- proposed_class: `future-target-candidate`
+- proposed_goal: `Extract map location data and in-game review lifecycle dependencies behind provider-backed module interfaces, migrate consumers, inventory removable residue, remove old direct paths, and verify complete behavior across normal start, JSON import, and Script Editor runtime preview.`
+- admission_note: `Recorded only. This must not become an active queue under the current Script Editor post-closeout fixup version unless a later version-plan promotion review explicitly admits it. It is expected to belong to a later modularization or runtime-boundary version.`
+
+#### Proposed Queue Task Split
+
+1. `task.map-review-provider-boundary-extraction.interface-and-adapter`
+   - Define map provider interfaces such as `MapLocationMarker` and `MapLocationProvider`.
+   - Move `city.mapNodeId -> map.nodes -> marker` assembly behind an adapter.
+   - Define review provider or policy interfaces for schedule, host, lateness, participants, and completion output.
+   - Do not change runtime behavior in this first slice.
+
+2. `task.map-review-provider-boundary-extraction.consumer-cutover-and-inventory`
+   - Migrate map UI to consume provider markers rather than `CityDefinition` / `cityCoordinatesById` directly.
+   - Keep map click handling as marker or coordinate events; outer navigation owns city entry.
+   - Migrate review consumers to the shared provider or policy where behavior is already covered.
+   - Create `docs/refactor/map-review-boundary-removal-inventory.md`.
+   - The inventory must list remaining direct dependencies, their current role, whether Step 3 removes them, and any waiver.
+
+3. `task.map-review-provider-boundary-extraction.residue-removal`
+   - Remove only the old direct paths listed in the Step 2 inventory.
+   - Remove direct map UI dependency on city domain records and city-coordinate lookup.
+   - Remove duplicated review lifecycle truth from house/local branches where the provider-backed path already covers behavior.
+   - Do not remove house-local review presentation copy or UI that belongs to the host.
+
+4. `task.map-review-provider-boundary-extraction.acceptance-and-guard`
+   - Run source guards proving old direct paths were removed or explicitly waived.
+   - Add human-simulation tests for map marker visibility, city information, city entry, review due flow, review completion, and next-cycle update.
+   - Add external-integration tests proving another provider or test pack can feed map markers and review policy without Zhu Yuanzhang-only hardcoding.
+   - Add completeness review to detect over-narrowing: the feature must not pass only by shrinking map/review behavior to the minimum current path.
+   - Verify normal start, JSON runtime pack import, and Script Editor runtime preview all use the same map and review module contracts.
+
+#### Step 2 Removal Inventory Requirements
+
+- The inventory must be written before Step 3 starts.
+- It must include at least:
+  - map view direct use of `CityDefinition`;
+  - `cityCoordinatesById` exposure to map rendering;
+  - shell code that directly combines clicked map cells with city names;
+  - review host selection / priority residue;
+  - lateness and insufficient-time residue;
+  - review arrival reminder residue;
+  - house-local review lifecycle truth residue;
+  - compatibility mirrors that cannot yet be removed.
+- Step 3 may only remove items listed in the inventory unless a later queue admission expands scope.
+
+#### Completeness Review Requirements
+
+- The acceptance queue must reject a result that merely narrows the feature until tests pass.
+- Map completeness must cover:
+  - map open;
+  - marker visibility;
+  - city information display;
+  - city click / entry;
+  - exploration or fog behavior where supported.
+- Review completeness must cover:
+  - countdown / review date display;
+  - time advancement to review due;
+  - arrival reminder or equivalent review handoff;
+  - host entry;
+  - lateness / insufficient-time behavior where covered;
+  - completion and next review cycle update.
+- Entry-point consistency must cover:
+  - normal start;
+  - JSON runtime pack import;
+  - Script Editor runtime preview.
+- Any unsupported entrypoint or data source must be recorded as a waiver, not counted as success.
+
+#### Non-Goals
+
+- Do not merge map and review into one runtime mechanism.
+- Do not move house-specific review copy into the shared review module.
+- Do not invent a new gameplay loop while extracting the boundary.
+- Do not make `main.ts` regain map or review business ownership.
+- Do not change EventBindingRuntime semantics as part of this queue.
+- Do not treat a Zhu Yuanzhang-only path as proof of general provider-backed support.
+
+#### Acceptance Criteria
+
+- Map rendering consumes provider-backed markers and no longer directly owns city domain data assembly.
+- City marker data, city names, coordinates, and city detail summaries come from an adapter/provider.
+- Review lifecycle truth is accessed through shared review provider/policy seams rather than house-local duplicated truth.
+- House modules remain presentation/consumer owners for their review variant but do not own the shared review cycle truth.
+- The Step 2 removal inventory exists and Step 3 cleanup follows it.
+- Source guards prove removed direct paths do not return.
+- Simulated human flow proves map and review work in gameplay.
+- External integration tests prove both modules can be used outside the default built-in path.
+- Normal start, JSON import, and Script Editor runtime preview all preserve map and review behavior through the new module contracts.
+
+#### Verification Evidence Required For Closure
+
+- `npm run typecheck`
+- `npm run lint:blueprints`
+- `npm test`
+- Source search guards for removed map/review direct paths.
+- Automated simulated-human flow covering map entry and review flow.
+- Entry-point tests for normal start, JSON import, and Script Editor runtime preview.
+- Removal-inventory closeout showing every listed residue removed, preserved by design, or waived with reason.
+
+## 2026-07-18 Script Editor Runtime Preview Layout Edit Mode Memo
+
+### Suggested Version
+
+- target_id: `target.script-editor-runtime-preview-layout-edit-mode`
+- purpose: `Implement Script Editor preview edit mode without mixing it into closed event-binding/runtime-preview fixup work.`
+
+### Pasteable Admission Prompt
+
+```text
+按蓝图规范创建并实现新 version，不要混入旧 closeout：
+
+target.script-editor-runtime-preview-layout-edit-mode
+
+目标：
+实现剧本编辑器“预览编辑模式”。
+
+已确认设计：
+1. 剧本编辑器点击【运行预览】后，先进入普通运行预览。
+2. 普通预览右上角显示【编辑布局】和【退出预览】。
+3. 点击【编辑布局】后进入布局编辑态。
+4. 编辑态下：
+   - 点击界面元素选中。
+   - 长按元素后可以拖动位置。
+   - 属性面板可调整位置、尺寸、层级、锚点、缩放策略、引用资源。
+5. 保存粒度是整个项目/剧本包的所有可编辑界面，不是当前画面。
+6. 所有运行时可见界面都要纳入 editable surface registry。
+7. 资源替换支持：
+   - 从项目资产库选择。
+   - 本地导入资源到资产库后选择。
+8. layout JSON 只保存稳定资源引用，例如 assetId，不保存文件内容。
+9. 导出 runtime scenario pack 时生成 ui-layouts.json，并由 pack.json.files 引用。
+10. runtime 正式 loader 消费 ui-layouts，不走临时预览专用路径。
+11. layout 引用缺失资源时导出 fail closed。
+12. 不改 EventBindingRuntime 语义。
+
+建议队列：
+1. queue.script-editor-preview-layout-edit-mode-admission
+2. queue.runtime-editable-surface-registry
+3. queue.script-editor-layout-asset-library
+4. queue.script-editor-preview-layout-editor-ui
+5. queue.runtime-pack-ui-layout-export-loader
+
+先做 admission / evidence reconcile，再进入 implementation。
+```
+
+### Design Notes
+
+- Entry flow is two-stage: `运行预览` starts normal runtime preview first; `编辑布局` explicitly enables editing.
+- Edit mode uses click-to-select and long-press-to-drag to avoid accidental movement during normal runtime interaction.
+- The saved artifact is a project-level layout collection covering all editable runtime screens.
+- Resource replacement uses the project asset library as the primary path, with local import as an asset-library intake path.
+- Runtime/export support must be real scenario-pack support, not a preview-only side channel.

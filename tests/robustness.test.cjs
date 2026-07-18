@@ -3485,6 +3485,7 @@ test("script editor runtime export does not write project package files before e
     path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
     "utf8"
   );
+  const mainSource = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
   const workspaceShellSource = fs.readFileSync(
     path.join(process.cwd(), "src/application/script-editor/workspace-shell.ts"),
     "utf8"
@@ -3507,7 +3508,7 @@ test("script editor runtime export does not write project package files before e
   assert.doesNotMatch(exportMethod, /serializeScriptEditorProjectToFiles/);
   assert.match(saveMethod, /serializeScriptEditorProjectToFiles\(this\.scriptEditorProject\)/);
   assert.doesNotMatch(saveMethod, /exportScriptEditorProjectToScenarioPackFiles/);
-  assert.match(workspaceShellSource, /label:\s*"导出运行时剧本包"/);
+  assert.match(workspaceShellSource, /label:\s*"剧本导出"/);
   assert.doesNotMatch(workspaceShellSource, /label:\s*"导入导出"/);
 });
 
@@ -3607,6 +3608,7 @@ test("script editor runtime preview launches from current in-memory project data
     path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
     "utf8"
   );
+  const mainSource = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
   const workspaceShellSource = fs.readFileSync(
     path.join(process.cwd(), "src/application/script-editor/workspace-shell.ts"),
     "utf8"
@@ -3633,7 +3635,17 @@ test("script editor runtime preview launches from current in-memory project data
     previewMethod,
     /loadScenarioPackFromFiles\(\s*createTextImportFilesFromRecord\(serializedPackFiles\)/
   );
-  assert.match(previewMethod, /await this\.onStartScenarioPack\?\.\(scenarioPack\)/);
+  assert.match(
+    previewMethod,
+    /const startResult = await this\.onStartLoadedScenarioPack\(scenarioPack\);/
+  );
+  assert.match(previewMethod, /if \(startResult === "started"\)/);
+  assert.match(previewMethod, /this\.setScreen\("runtime-preview"\)/);
+  assert.doesNotMatch(
+    previewMethod,
+    /await this\.onStartLoadedScenarioPack\(scenarioPack\);\s*this\.setScreen\("runtime-preview"\);/
+  );
+  assert.doesNotMatch(previewMethod, /onStartScenarioPack/);
   assert.match(previewMethod, /this\.scriptEditorRuntimePreviewSession/);
   assert.match(previewMethod, /captureScriptEditorRuntimePreviewReturnContext\(\)/);
   assert.doesNotMatch(previewMethod, /scriptEditorProjectDirectoryHandle/);
@@ -3641,6 +3653,18 @@ test("script editor runtime preview launches from current in-memory project data
   assert.doesNotMatch(previewMethod, /loadScriptEditorProjectFromFiles/);
   assert.doesNotMatch(previewMethod, /markScriptEditorProjectCompleteForExport/);
   assert.doesNotMatch(previewMethod, /persistScriptEditorProjectDraftBeforeExport/);
+  assert.match(mainSource, /onStartLoadedScenarioPack:\s*startLoadedScenarioPackWithLoading/);
+  assert.match(mainSource, /async function startLoadedScenarioPackWithLoading\(\s*scenarioPack:\s*ScenarioPackDefinition\s*\)/);
+  assert.match(mainSource, /filePath:\s*`preview:\$\{scenarioPack\.id\}`/);
+  const loadedPreviewHelper = mainSource.slice(
+    mainSource.indexOf("async function startLoadedScenarioPackWithLoading("),
+    mainSource.indexOf("async function prepareScenarioPackCharacterSelection(")
+  );
+  assert.match(loadedPreviewHelper, /runScenarioPackStartupRequestWithLoading\(\{\s*type:\s*"scenario-pack"/);
+  assert.match(
+    mainSource,
+    /async function startLoadedScenarioPackWithLoading\([\s\S]*prepareScenarioPackCharacterSelection\([\s\S]*previewSession:\s*true/
+  );
 });
 
 test("script editor runtime preview keeps failures in the editor and exposes exit preview return context", () => {
@@ -3661,7 +3685,8 @@ test("script editor runtime preview keeps failures in the editor and exposes exi
   assert.match(previewMethod, /recordScriptEditorNotice\(\{\s*tone: "warning"/);
   assert.match(previewMethod, /this\.setScreen\("script-editor-workspace"\)/);
   assert.match(mainUiSource, /renderRuntimePreviewOverlay\(\)/);
-  assert.match(mainUiSource, /data-action="exit-runtime-preview"/);
+  assert.match(mainUiSource, /data-script-editor-action="exit-runtime-preview"/);
+  assert.doesNotMatch(mainUiSource, /data-action="exit-runtime-preview"/);
   assert.match(mainUiSource, />\s*退出预览\s*</);
   assert.match(mainUiSource, /exitScriptEditorRuntimePreview\(\)/);
   assert.match(mainUiSource, /restoreScriptEditorRuntimePreviewReturnContext/);
@@ -7404,10 +7429,8 @@ test("script editor workspace labels save and runtime export actions without mix
     /\.filter\(\(action\) => action\.id !== "validate"\)/
   );
   assert.match(workspaceViewSource, /action\.id === "export"/);
-  assert.match(
-    workspaceViewSource,
-    /\$\{renderToolbarButtons\(model\)\}[\s\S]*\$\{projectNode == null \? "" : renderProjectEntryButton\(projectNode\)\}/
-  );
+  assert.match(workspaceViewSource, /\$\{renderToolbarButtons\(model\)\}/);
+  assert.doesNotMatch(workspaceViewSource, /renderProjectEntryButton/);
   assert.doesNotMatch(workspaceViewSource, /c-script-editor-shell__toolbar--tabs/);
   assert.match(
     mainUiSource,
@@ -7542,7 +7565,7 @@ test("script editor workspace shell surfaces export blockers and compatibility r
   const workspace = createScriptEditorWorkspaceShellViewModel({ project });
 
   assert.equal(workspace.toolbarActions.find((action) => action.id === "export")?.status, "blocked");
-  assert.deepEqual(workspace.badges.map((badge) => badge.label), [`当前项目：${project.title}`]);
+  assert.deepEqual(workspace.badges, []);
   assert.equal(workspace.handoffSummary.blockedCount > 0, true);
   assert.equal(
     workspace.objectTreeGroups.some((group) =>
@@ -7555,6 +7578,23 @@ test("script editor workspace shell surfaces export blockers and compatibility r
     riskCard?.body ?? "",
     /unresolved|fail closed|阻塞/i
   );
+});
+
+test("script editor workspace view omits the top project pill text block", () => {
+  const workspaceViewSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/views/script-editor/script-editor-workspace-view.ts"),
+    "utf8"
+  );
+  const workspaceStyleSource = fs.readFileSync(
+    path.join(process.cwd(), "src/styles/script-editor.css"),
+    "utf8"
+  );
+  assert.doesNotMatch(workspaceViewSource, /c-script-editor-shell__project-pill/);
+  assert.doesNotMatch(workspaceViewSource, /c-script-editor-shell__project-strip/);
+  assert.doesNotMatch(workspaceViewSource, /当前项目：/);
+  assert.doesNotMatch(workspaceViewSource, /renderProjectEntryButton/);
+  assert.doesNotMatch(workspaceStyleSource, /c-script-editor-shell__project-pill/);
+  assert.doesNotMatch(workspaceStyleSource, /c-script-editor-shell__project-strip/);
 });
 
 test("script editor preview queue exposes a unified auxiliary panel with linked issue routing", () => {
@@ -7612,8 +7652,8 @@ test("script editor PRD workspace view retires English shell chrome copy", () =>
   assert.match(workspaceViewSource, /c-script-editor-shell__editor-stage/);
   assert.match(workspaceViewSource, /c-script-editor-tree-group/);
   assert.match(workspaceViewSource, /c-script-editor-shell__inspector/);
-  assert.match(workspaceViewSource, /renderProjectEntryButton/);
-  assert.match(workspaceViewSource, /c-script-editor-shell__toolbar-button--selected/);
+  assert.doesNotMatch(workspaceViewSource, /renderProjectEntryButton/);
+  assert.doesNotMatch(workspaceViewSource, /c-script-editor-shell__toolbar-button--selected/);
   assert.match(workspaceViewSource, /splitWorkspaceTreeGroups/);
   assert.doesNotMatch(workspaceViewSource, /预览与校验辅助区/);
   assert.doesNotMatch(workspaceViewSource, /校验与导出摘要/);

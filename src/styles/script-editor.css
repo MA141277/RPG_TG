@@ -70,29 +70,6 @@
   gap: 12px;
 }
 
-.c-script-editor-shell__project-strip {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 12px;
-  align-items: center;
-  padding: 10px 14px;
-  border: 1px solid rgba(198, 160, 113, 0.72);
-  border-radius: 18px;
-  background: rgba(246, 234, 214, 0.78);
-}
-
-.c-script-editor-shell__project-pill {
-  display: grid;
-  gap: 8px;
-  min-width: 0;
-  color: #4c3420;
-  font-size: 13px;
-}
-
-.c-script-editor-shell__project-pill strong {
-  font-weight: 700;
-}
-
 .c-script-editor-shell__project-meta {
   display: flex;
   flex-wrap: wrap;

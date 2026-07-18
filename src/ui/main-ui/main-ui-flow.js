@@ -373,6 +373,7 @@ export class MainUiFlow {
     this.onStartGame = options.onStartGame;
     this.onContinueGame = options.onContinueGame;
     this.onStartScenarioPack = options.onStartScenarioPack;
+    this.onStartLoadedScenarioPack = options.onStartLoadedScenarioPack;
     this.onImportScenarioPackFiles = options.onImportScenarioPackFiles;
     this.loadSaveData = options.loadSaveData;
     this.getAppState = options.getAppState;
@@ -781,7 +782,7 @@ export class MainUiFlow {
   renderRuntimePreviewOverlay() {
     return `
       <section class="c-main-ui-screen c-main-ui-screen--runtime-preview" aria-label="运行预览">
-        <button class="c-runtime-preview-exit" type="button" data-action="exit-runtime-preview">
+        <button class="c-runtime-preview-exit" type="button" data-script-editor-action="exit-runtime-preview">
           退出预览        </button>
       </section>
     `;
@@ -7504,8 +7505,17 @@ export class MainUiFlow {
         returnContext,
         startedAt: Date.now(),
       };
-      await this.onStartScenarioPack?.(scenarioPack);
-      this.setScreen("runtime-preview");
+      if (this.onStartLoadedScenarioPack == null) {
+        throw new Error("Runtime preview startup is unavailable.");
+      }
+      const startResult = await this.onStartLoadedScenarioPack(scenarioPack);
+      if (startResult === "started") {
+        this.setScreen("runtime-preview");
+        return;
+      }
+      if (startResult === "failed") {
+        throw new Error("Runtime preview startup failed.");
+      }
     } catch (error) {
       this.scriptEditorRuntimePreviewSession = null;
       this.restoreScriptEditorRuntimePreviewReturnContext(returnContext);

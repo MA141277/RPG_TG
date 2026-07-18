@@ -4,13 +4,13 @@
 
 - document_role: `version-governor`
 - version_id: `target.script-editor-event-binding-post-closeout-fixups`
-- version_status: `open`
-- active_phase: `phase.version-review-pending`
+- version_status: `done`
+- active_phase: `phase.version-closed`
 - active_queue: `none`
-- decision_state: `idle-open`
-- next_decision: `version-closeout`
-- next_action: `write-version-closeout`
-- resume_gate: `no-active-queue`
+- decision_state: `closed`
+- next_decision: `none`
+- next_action: `no-next-action`
+- resume_gate: `closed`
 - post_queue_closeout_pause_policy: `pause-when-explicitly-requested`
 - promotion_review_result: `queue-closeout-complete`
 - review_subject_id: `none`
@@ -163,3 +163,4 @@
 - `2026-07-17`: `Restored queue.script-editor-runtime-preview-from-memory after resume/admission reconcile. Preconditions confirmed: queue.script-editor-event-destination-content-entry-family-correction is done, the previous blocker is resolved, active queue/task were none, and the runtime preview implementation scope remains valid. Implementation is now the active task; no version closeout, commit, push, merge, or additional queue admission was attempted.`
 - `2026-07-17`: `Completed queue.script-editor-runtime-preview-from-memory implementation and paused before queue closeout. RED tests failed on preview-runtime still requiring saved-directory semantics, reading project files through directory handles, lacking preview session/exit-preview UI, and missing return-context restoration. GREEN implementation now exports directly from this.scriptEditorProject, loads through loadScenarioPackFromFiles(createTextImportFilesFromRecord(serializedPackFiles)), starts through onStartScenarioPack, blocks export/load failures in the Script Editor with a warning notice, records Script Editor screen/selection/tab/scroll context, renders a preview-only "退出预览" control, and restores the prior workspace context on exit. Verification passed: focused runtime preview tests, npm run typecheck, npm run lint:blueprints, and npm test (613/613). Queue closeout and browser guard remain pending; no version closeout, commit, push, merge, or additional queue admission was attempted.`
 - `2026-07-17`: `Closed queue.script-editor-runtime-preview-from-memory after guard review and Blueprint handoff without entering version closeout, committing, pushing, merging, or admitting another queue. Guard review confirmed preview-runtime uses current this.scriptEditorProject data through the official export/load/startup path, does not require scriptEditorProjectDirectoryHandle, does not read project files from disk, does not call markScriptEditorProjectCompleteForExport, blocks export/load failure in the editor with warning notice, shows the preview-only "退出预览" control, and restores the prior Script Editor workspace/selection/tab/context on exit. The same guard included the save/export confusion fix: "保存项目" remains the project-save action using serializeScriptEditorProjectToFiles and project.json, runtime export remains exportScriptEditorProjectToScenarioPackFiles and pack.json, and JSON startup now reports a friendly Script Editor project-package error when project.json kind=script-editor-project is imported without pack.json. Verification passed: npm run lint:blueprints.`
+- `2026-07-18`: `Final closeout recorded for target.script-editor-event-binding-post-closeout-fixups. All required queues are done, active queue/task remain none, destination selector and runtime preview acceptance are covered, and no same-version blocker remains. The map/review provider-boundary candidate recorded in MEMO-010 is routed to successor target.map-review-provider-boundary-extraction because it is broader modularization/runtime-boundary work, not a Script Editor event-binding fixup. Next action for this closed version is none.`

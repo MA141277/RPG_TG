@@ -271,15 +271,11 @@ function createBadges(
   exportDiagnostics: ScriptEditorRuntimeExportDiagnostic[],
   compatibilityResidueCount: number
 ): ScriptEditorWorkspaceBadge[] {
+  void project;
   void exportDiagnostics;
   void compatibilityResidueCount;
 
-  return [
-    {
-      label: `当前项目：${project.title}`,
-      tone: "neutral",
-    },
-  ];
+  return [];
 }
 
 function createNavigationItems(
@@ -319,7 +315,7 @@ function createToolbarActions(
     },
     {
       id: "export",
-      label: "导出运行时剧本包",
+      label: "剧本导出",
       status: exportDiagnostics.length === 0 ? "ready" : "blocked",
       description:
         exportDiagnostics.length === 0
