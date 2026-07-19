@@ -21,9 +21,9 @@
 - next_family_candidate: `none`
 - auto_continue_eligible: `false`
 - next_effect: `none`
-- sync_status: `pending`
-- sync_scope: `local-record`
-- sync_summary: `Implementation and closeout records are local; repository sync is pending.`
+- sync_status: `success`
+- sync_scope: `branch-push`
+- sync_summary: `Committed and pushed to origin/mod-first-dev as 180ba5ea.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`

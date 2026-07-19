@@ -21,9 +21,9 @@
 - next_family_candidate: `none`
 - auto_continue_eligible: `false`
 - next_effect: `return-to-version-review`
-- sync_status: `pending`
-- sync_scope: `local-record`
-- sync_summary: `Implementation completed locally with focused test, typecheck, blueprint lint, browser simulated-human verification, and full npm test passing; queue closeout/handoff is complete and control returns to version review.`
+- sync_status: `success`
+- sync_scope: `branch-push`
+- sync_summary: `Committed and pushed to origin/mod-first-dev as 180ba5ea.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
