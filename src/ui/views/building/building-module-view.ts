@@ -2,6 +2,7 @@ import type { CharacterDefinition } from "../../../domain/character";
 import type { CharacterManager } from "../../../application/character/character-manager";
 import type { BuildingModuleStage } from "../../../application/building/building-module-entry";
 import { resolveCharacterAvatarImageUrl, resolveCharacterPortraitImageUrl } from "../../portrait-assets";
+import { resolveLocationBackgroundImageUrl } from "../../location-backgrounds";
 import { createHouseViewModel } from "../house/house-view";
 import { renderHouseModuleView } from "../house/house-module-view-registry";
 import type { HouseModuleViewModel } from "../../../domain/house-module";
@@ -74,9 +75,16 @@ export function renderBuildingModuleView(input: {
     input.characterManager,
     input.stage.cityNpcSummaries
   );
+  const backgroundImageUrl = resolveLocationBackgroundImageUrl(
+    input.stage.activeHouse.backgroundId
+  );
+  const backgroundStyle =
+    backgroundImageUrl == null
+      ? ""
+      : `background-image:url('${backgroundImageUrl}')`;
 
   return `
-    <section class="view-house">
+    <section class="view-house" style="${backgroundStyle}">
       <div class="c-stage-header">
         <div>
           <p class="c-stage-header__eyebrow">灞嬫暦</p>

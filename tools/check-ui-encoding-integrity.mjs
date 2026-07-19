@@ -7,8 +7,6 @@ const defaultChecks = [
   {
     file: "src/ui/main-ui/main-ui-flow.js",
     requiredText: [
-      "剧本编辑",
-      "剧本编辑器入口",
       "项目总览",
       "新增人物",
       "新增城市",
@@ -19,6 +17,17 @@ const defaultChecks = [
       "新增玩法绑定",
       "运行预览",
       "保存项目",
+    ],
+  },
+  {
+    file: "src/ui/entry-shell/entry-shell-view.js",
+    requiredText: [
+      "剧本编辑",
+      "剧本编辑器入口",
+      "新建剧本",
+      "打开草稿",
+      "使用模板",
+      "JSON 开局",
     ],
   },
   {

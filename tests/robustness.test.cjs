@@ -7875,10 +7875,12 @@ test("city and building stage presenters route through separate module entry sea
 });
 
 test("script editor landing labels opening an existing project as opening a draft", () => {
-  const mainUiSource = fs.readFileSync(
-    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
-    "utf8"
-  );
+  const mainUiSource = [
+    "src/ui/main-ui/main-ui-flow.js",
+    "src/ui/entry-shell/entry-shell-view.js",
+  ]
+    .map((filePath) => fs.readFileSync(path.join(process.cwd(), filePath), "utf8"))
+    .join("\n");
 
   assert.match(mainUiSource, /新建剧本/);
   assert.match(mainUiSource, /打开草稿/);
@@ -9370,6 +9372,25 @@ test(
     assert.equal(importedProject.buildings[0].backgroundId, "zizhai");
   }
 );
+
+test("city and building runtime views consume configured background ids", () => {
+  const cityViewSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/views/city/city-view.ts"),
+    "utf8"
+  );
+  const buildingViewSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/views/building/building-module-view.ts"),
+    "utf8"
+  );
+
+  assert.match(cityViewSource, /resolveLocationBackgroundImageUrl/);
+  assert.match(cityViewSource, /cityDefinition\.backgroundId/);
+  assert.match(cityViewSource, /renderCityBackground\(cityDefinition\)/);
+  assert.match(cityViewSource, /class="c-kulan-city__background-image"/);
+  assert.match(buildingViewSource, /resolveLocationBackgroundImageUrl/);
+  assert.match(buildingViewSource, /input\.stage\.activeHouse\.backgroundId/);
+  assert.match(buildingViewSource, /style="\$\{backgroundStyle\}"/);
+});
 
 test(
   "script editor city/building custom attribute helpers edit bounded extendedAttributes entries",
@@ -24602,6 +24623,47 @@ test("entry shell bootstrap state ownerization moves startup activation bootstra
   assert.doesNotMatch(
     bootstrapSource,
     /async function activateBuiltinDefaultMod\([\s\S]*createLoadedModFromManifest\(/
+  );
+});
+
+test("entry shell ui extraction delegates pre-game rendering out of MainUiFlow", () => {
+  const mainUiFlowSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    "utf8"
+  );
+  const entryShellViewPath = path.join(
+    process.cwd(),
+    "src/ui/entry-shell/entry-shell-view.js"
+  );
+
+  assert.ok(fs.existsSync(entryShellViewPath));
+  const entryShellViewSource = fs.readFileSync(entryShellViewPath, "utf8");
+
+  assert.match(entryShellViewSource, /export function renderEntryShellMainMenu/);
+  assert.match(entryShellViewSource, /export function renderEntryShellScenarioSelect/);
+  assert.match(entryShellViewSource, /export function renderEntryShellScriptEditorLanding/);
+  assert.match(entryShellViewSource, /export function renderEntryShellCharacterSelect/);
+  assert.match(entryShellViewSource, /data-main-ui-action="open-character-select"/);
+  assert.match(entryShellViewSource, /data-main-ui-action="open-json-scenario-select"/);
+  assert.match(entryShellViewSource, /data-main-ui-action="open-script-editor"/);
+  assert.match(entryShellViewSource, /data-main-ui-action="start-adventure"/);
+  assert.match(entryShellViewSource, /data-script-editor-action="new-project"/);
+
+  assert.match(mainUiFlowSource, /renderEntryShellMainMenu\(/);
+  assert.match(mainUiFlowSource, /renderEntryShellScenarioSelect\(/);
+  assert.match(mainUiFlowSource, /renderEntryShellScriptEditorLanding\(/);
+  assert.match(mainUiFlowSource, /renderEntryShellCharacterSelect\(/);
+  assert.doesNotMatch(
+    mainUiFlowSource,
+    /<section class="c-main-ui-screen c-main-ui-screen--main-menu"/
+  );
+  assert.doesNotMatch(
+    mainUiFlowSource,
+    /<section class="c-main-ui-screen c-main-ui-screen--scenario-select"/
+  );
+  assert.doesNotMatch(
+    mainUiFlowSource,
+    /<section class="c-main-ui-screen c-main-ui-screen--character-select"/
   );
 });
 

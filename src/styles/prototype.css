@@ -1749,14 +1749,24 @@
     linear-gradient(180deg, #6f8fad 0%, #8197a9 38%, #6b6651 39%, #58452f 100%);
 }
 
-.c-kulan-city__background-video {
+.c-kulan-city__background-video,
+.c-kulan-city__background-image {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
+  pointer-events: none;
+}
+
+.c-kulan-city__background-video {
   object-fit: cover;
   object-position: center center;
-  pointer-events: none;
+}
+
+.c-kulan-city__background-image {
+  background-position: center center;
+  background-size: cover;
+  background-repeat: no-repeat;
 }
 
 .c-kulan-city::after {

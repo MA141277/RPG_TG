@@ -247,9 +247,9 @@
 - severity: `medium`
 - classification: `future-target-candidate`
 - proposed_queue: `queue.entry-shell-ui-module-extraction`
-- owning_queue: `none`
-- admission_status: `not-admitted`
-- latest_disposition: `recorded-only`
+- owning_queue: `queue.entry-shell-ui-module-extraction`
+- admission_status: `admitted`
+- latest_disposition: `admitted-to-successor-version`
 - affected_families:
   - `entry shell`
   - `main menu`
@@ -293,7 +293,7 @@
 
 - This is not part of `target.script-editor-event-runtime-production-hardening`.
 - Do not admit while an unrelated active queue is open.
-- Promote after the current active queue closes, either as a successor UI modularization version or as part of a broader shell/UI modularization version.
+- Promoted on 2026-07-19 into successor version `target.entry-shell-ui-module-extraction` and active queue `queue.entry-shell-ui-module-extraction`.
 
 ### MEMO-008: Event Trigger Dispatch And Person Event Bindings Need Separate Condition Ownership
 

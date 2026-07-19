@@ -1,6 +1,12 @@
 import { applyStaticLayoutBindings } from "../tools/live-layout-bindings";
 import { mountOpeningBackgroundAnimation } from "./opening-background-animation";
-import { resolveCharacterAvatarImageUrl } from "../portrait-assets";
+import {
+  renderEntryShellCharacterSelect,
+  renderEntryShellMainMenu,
+  renderEntryShellScenarioPackCard,
+  renderEntryShellScenarioSelect,
+  renderEntryShellScriptEditorLanding,
+} from "../entry-shell/entry-shell-view";
 import {
   BUILDING_DEFAULT_BACKGROUND_OPTIONS,
   CITY_DEFAULT_BACKGROUND_OPTIONS,
@@ -604,177 +610,38 @@ export class MainUiFlow {
   }
 
   renderMainMenu() {
-    return `
-      <section class="c-main-ui-screen c-main-ui-screen--main-menu" aria-label="主菜单">
-        <canvas class="c-main-ui-opening-background-canvas" aria-hidden="true"></canvas>
-        <div class="c-main-ui-main-menu">
-          <div class="c-main-ui-main-menu__content">
-            <p class="c-main-ui-main-menu__subtitle">洪武前夜 / 群雄并起</p>
-            <div class="c-main-ui-main-menu__actions">
-          <button
-            type="button"
-                class="c-main-ui-image-button c-main-ui-image-button--start"
-            data-main-ui-action="open-character-select"
-                aria-label="开始游戏"
-          >
-                <span class="c-main-ui-sr-only">开始游戏</span>
-          </button>
-          <button
-            type="button"
-                class="c-main-ui-image-button c-main-ui-image-button--continue"
-            data-main-ui-action="continue-game"
-                aria-label="继续游戏"
-          >
-                <span class="c-main-ui-sr-only">继续游戏</span>
-          </button>
-          <button
-            type="button"
-            class="c-main-ui-json-button"
-            data-main-ui-action="open-json-scenario-select"
-          >
-            JSON 开局
-          </button>
-          <button
-            type="button"
-            class="c-main-ui-json-button c-main-ui-json-button--script-editor"
-            data-main-ui-action="open-script-editor"
-          >
-            剧本编辑
-          </button>
-            </div>
-          </div>
-        </div>
-      </section>
-    `;
+    return renderEntryShellMainMenu();
   }
 
   renderScenarioSelect() {
-    return `
-      <section class="c-main-ui-screen c-main-ui-screen--scenario-select" aria-label="JSON 开局选择">
-        <div class="c-main-ui-scenario-panel">
-          <header class="c-main-ui-scenario-panel__header">
-            <p class="c-main-ui-character-detail__eyebrow">模块开局</p>
-            <h2 class="c-main-ui-scenario-panel__title">读取 JSON 开局</h2>
-          </header>
-
-          <div class="c-main-ui-scenario-list">
-            ${this.scenarioPacks.map((scenarioPack) => this.renderScenarioPackCard(scenarioPack)).join("")}
-          </div>
-
-          <div class="c-main-ui-scenario-panel__footer">
-            <button type="button" class="c-main-ui-page-button" data-main-ui-action="back-to-menu" aria-label="返回主菜单"></button>
-            <button type="button" class="c-main-ui-json-text-button" data-main-ui-action="import-scenario-file">
-              导入 JSON
-            </button>
-            <input class="c-main-ui-scenario-file-input" type="file" accept="application/json,.json" data-main-ui-scenario-file webkitdirectory directory multiple hidden>
-          </div>
-        </div>
-      </section>
-    `;
+    return renderEntryShellScenarioSelect({
+      scenarioPacks: this.scenarioPacks,
+    });
   }
 
   renderScenarioPackCard(scenarioPack) {
-    return `
-      <article class="c-main-ui-scenario-card">
-        <div>
-          <h3 class="c-main-ui-scenario-card__title">${escapeHtml(scenarioPack.title)}</h3>
-          <p class="c-main-ui-scenario-card__description">${escapeHtml(scenarioPack.description ?? "")}</p>
-        </div>
-        <button
-          type="button"
-          class="c-main-ui-json-text-button c-main-ui-json-text-button--accent"
-          data-main-ui-action="start-scenario-pack"
-          data-scenario-pack-id="${escapeHtml(scenarioPack.id)}"
-        >
-          读取
-        </button>
-      </article>
-    `;
+    return renderEntryShellScenarioPackCard(scenarioPack);
   }
 
   renderLegacyScriptEditorLanding() {
     const hasSession = this.scriptEditorProject != null;
 
-    return `
-      <section class="c-main-ui-screen c-main-ui-screen--script-editor-flow" aria-label="剧本编辑器入口">
-        <div class="c-script-editor-landing">
-          ${this.renderScriptEditorNotice()}
-
-          <div class="c-script-editor-landing__actions">
-            <button type="button" class="c-main-ui-json-text-button c-main-ui-json-text-button--accent" data-script-editor-action="new-project">
-              新建剧本
-            </button>
-            <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="open-project">
-              打开草稿
-            </button>
-            <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="import-pack">
-              使用模板
-            </button>
-            ${
-              hasSession
-                ? `
-                  <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="continue-session">
-                    继续当前项目
-                  </button>
-                `
-                : ""
-            }
-            <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="back-to-menu">
-              返回
-            </button>
-            <button
-              type="button"
-              class="c-script-editor-landing__help-button"
-              aria-label="帮助"
-              title="帮助"
-            >
-              ?
-            </button>
-          </div>
-
-          ${this.renderScriptEditorFileInputs()}
-        </div>
-      </section>
-    `;
+    return renderEntryShellScriptEditorLanding({
+      hasSession,
+      noticeMarkup: this.renderScriptEditorNotice(),
+      fileInputsMarkup: this.renderScriptEditorFileInputs(),
+    });
   }
 
   renderScriptEditorLanding() {
     const projectLibraryEntries = this.getScriptEditorProjectLibraryEntries();
 
-    return `
-      <section class="c-main-ui-screen c-main-ui-screen--script-editor-flow" aria-label="剧本编辑器入口">
-        <div class="c-script-editor-landing">
-          ${this.renderScriptEditorNotice()}
-
-          <div class="c-script-editor-landing__actions">
-            <button type="button" class="c-main-ui-json-text-button c-main-ui-json-text-button--accent" data-script-editor-action="new-project">
-              新建剧本
-            </button>
-            <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="open-project">
-              打开草稿
-            </button>
-            <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="import-pack">
-              使用模板
-            </button>
-            <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="back-to-menu">
-              返回
-            </button>
-            <button
-              type="button"
-              class="c-script-editor-landing__help-button"
-              aria-label="帮助"
-              title="帮助"
-            >
-              ?
-            </button>
-          </div>
-
-          ${this.renderScriptEditorProjectLibrary(projectLibraryEntries)}
-
-          ${this.renderScriptEditorFileInputs()}
-        </div>
-      </section>
-    `;
+    return renderEntryShellScriptEditorLanding({
+      hasSession: false,
+      noticeMarkup: this.renderScriptEditorNotice(),
+      projectLibraryMarkup: this.renderScriptEditorProjectLibrary(projectLibraryEntries),
+      fileInputsMarkup: this.renderScriptEditorFileInputs(),
+    });
   }
 
   renderScriptEditorWorkspace() {
@@ -4605,75 +4472,12 @@ export class MainUiFlow {
   renderCharacterSelect() {
     const selectedCharacter = this.getSelectedCharacter();
 
-    return `
-      <section class="c-main-ui-screen c-main-ui-screen--character-select" aria-label="角色选择">
-        <canvas class="c-main-ui-ink-particle-canvas" aria-hidden="true"></canvas>
-        <div class="c-main-ui-character-layout">
-          <aside class="c-main-ui-character-layout__hero">
-            <div class="c-main-ui-character-layout__hero-inner">
-              <div class="c-main-ui-character-layout__era" aria-hidden="true"></div>
-              <p class="c-main-ui-character-layout__poem">
-                大明开国人物传<br />
-                选定出战人物后，<br />
-                便从这卷风云中启程。
-              </p>
-            </div>
-          </aside>
-
-          <div class="c-main-ui-character-book">
-            <div class="c-main-ui-character-book__tabs" aria-hidden="true">
-              <span class="c-main-ui-book-tab c-main-ui-book-tab--characters is-active">人物</span>
-              <span class="c-main-ui-book-tab c-main-ui-book-tab--roster">群雄</span>
-              <span class="c-main-ui-book-tab c-main-ui-book-tab--ministers">名录</span>
-            </div>
-
-            <div class="c-main-ui-character-book__content">
-              <div class="c-main-ui-character-grid" role="list">
-                ${this.renderCharacterShelf()}
-              </div>
-              ${this.renderCharacterDetail(selectedCharacter, this.previousCharacterDetail)}
-            </div>
-
-            <div class="c-main-ui-character-book__footer">
-              <button
-                type="button"
-                class="c-main-ui-page-button"
-                data-main-ui-action="back-to-menu"
-                aria-label="返回主菜单"
-              ></button>
-
-              <div class="c-main-ui-book-pagination" aria-hidden="true">
-                <span class="c-main-ui-book-pagination__ornament"></span>
-                <span>第 1 页 / 共 1 页</span>
-                <span class="c-main-ui-book-pagination__ornament"></span>
-              </div>
-
-              <button
-                type="button"
-                class="c-main-ui-page-turn-button c-main-ui-page-turn-button--previous"
-                aria-label="上一页"
-              ></button>
-
-              <button
-                type="button"
-                class="c-main-ui-image-button c-main-ui-image-button--choose"
-                data-main-ui-action="start-adventure"
-                aria-label="开始冒险"
-                ${selectedCharacter == null ? "disabled" : ""}
-              >
-                <span class="c-main-ui-sr-only">开始冒险</span>
-              </button>
-
-              <button
-                type="button"
-                class="c-main-ui-page-turn-button c-main-ui-page-turn-button--next"
-                aria-label="下一页"
-              ></button>
-            </div>
-          </div>
-        </div>
-      </section>
-    `;
+    return renderEntryShellCharacterSelect({
+      characters: this.characters,
+      selectedCharacter,
+      selectedCharacterId: this.selectedCharacterId,
+      previousCharacter: this.previousCharacterDetail,
+    });
   }
 
   renderCharacterShelf() {

@@ -5,14 +5,14 @@
 - document_role: `version-governor`
 - version_id: `target.city-building-module-entry-and-project-startup-authoring`
 - version_status: `open`
-- active_phase: `phase.execution`
-- active_queue: `queue.script-editor-city-building-background-authoring`
-- decision_state: `active-execution`
-- next_decision: `queue-closeout-or-return-to-version-review`
-- next_action: `resume-active-queue`
-- resume_gate: `open-active-queue`
+- active_phase: `phase.promotion-review`
+- active_queue: `none`
+- decision_state: `promotion-review`
+- next_decision: `same-version-admission-or-version-closeout`
+- next_action: `return-to-promotion-review`
+- resume_gate: `promotion-review`
 - post_queue_closeout_pause_policy: `auto-continue`
-- promotion_review_result: `none`
+- promotion_review_result: `queue-closeout-complete`
 - review_subject_id: `none`
 - review_subject_classification: `none`
 - proposed_queue_id: `none`
@@ -73,8 +73,8 @@
   - `queue.script-editor-city-building-enter-state-and-preview-boundary is closed after queue closeout/handoff.`
   - `queue.script-editor-city-building-secondary-list-and-selector-ux-unification is closed after queue closeout/handoff.`
   - `queue.script-editor-ui-encoding-integrity-guard is closed after queue closeout/handoff.`
-  - `queue.script-editor-city-building-background-authoring is active after promotion/admission review from MEMO-012.`
-  - `The version remains open and must not enter version closeout until this active queue is closed and a later explicit closeout review is requested.`
+  - `queue.script-editor-city-building-background-authoring is closed after queue closeout/handoff.`
+  - `The version remains open and must not enter version closeout until a later explicit closeout review is requested.`
 
 ### Version Lifecycle Rules
 
@@ -134,7 +134,7 @@
 | `item.script-editor-city-building-enter-state-and-preview-boundary` | `future-target-candidate` | `queue.script-editor-city-building-enter-state-and-preview-boundary` | `recorded-only` | `if later evidence shows enter-state authoring and runtime preview framing should split further` | `ACC-CITY-BUILDING-ENTER-STATE-001..005` | `src/ui/main-ui/main-ui-flow.js; src/ui/views/script-editor/**; src/application/script-editor/**; src/application/location-access/**; src/application/city/**; src/application/building/**; tests/**; browser simulated-human flow` | `city/building enter-state editing; base info default background; locationAccess-backed gate editing; preview-only green frame` | `secondary list/search/add/delete/pagination shells; detail-page selector normalization` | `Split from MEMO-013 after the broad draft proved too wide for one lawful queue boundary.` |
 | `item.script-editor-city-building-secondary-list-and-selector-ux-unification` | `future-target-candidate` | `queue.script-editor-city-building-secondary-list-and-selector-ux-unification` | `admitted` | `evidence-anchor reconcile proves the queue must split into list-shell and selector queues before implementation` | `ACC-CITY-BUILDING-ENTER-STATE-006..008` | `src/ui/main-ui/main-ui-flow.js; src/ui/views/script-editor/**; src/application/script-editor/**; tests/**; browser simulated-human flow` | `city/building/story/dialogue/event/playable/text secondary list/search/add/delete/list/pagination shells; detail-page selector UX normalization` | `enter-state authoring; locationAccess gate editing; preview-only frame` | `Admitted on 2026-07-19 after queue.script-editor-city-building-enter-state-and-preview-boundary closed and the version still had pending ACC-006..008 coverage.` |
 | `item.script-editor-ui-encoding-integrity-guard` | `future-target-candidate` | `queue.script-editor-ui-encoding-integrity-guard` | `admitted` | `evidence-anchor reconcile proves the queue must split before implementation or the guard requires a repo-wide charset migration` | `ACC-ENCODING-GUARD-001..005` | `src/ui/main-ui/main-ui-flow.js; src/ui/views/script-editor/script-editor-workspace-view.ts; tests/robustness.test.cjs; browser simulated-human flow` | `ACC-ENCODING-GUARD-001..005` | `repo-wide feature redesign; unrelated gameplay/runtime work` | `Admitted on 2026-07-19 after queue.script-editor-city-building-secondary-list-and-selector-ux-unification closed; first task is evidence-anchor-reconcile.` |
-| `item.script-editor-city-building-background-authoring` | `future-target-candidate` | `queue.script-editor-city-building-background-authoring` | `admitted` | `evidence-anchor reconcile proves this must split into asset-library and background-consumption queues before implementation` | `ACC-CITY-BUILDING-BACKGROUND-001..005` | `src/ui/main-ui/main-ui-flow.js; src/application/script-editor/**; src/domain/script-editor-project.ts; src/ui/views/city/**; src/ui/views/building/**; tests/**; browser simulated-human flow` | `city/building background authoring, save/load, runtime export/import, and runtime consumption` | `preview layout edit mode; full asset library; unrelated gameplay/runtime work` | `Admitted on 2026-07-19 from MEMO-012 after all prior current-version queues closed.` |
+| `item.script-editor-city-building-background-authoring` | `future-target-candidate` | `queue.script-editor-city-building-background-authoring` | `done` | `closed` | `ACC-CITY-BUILDING-BACKGROUND-001..005` | `src/ui/main-ui/main-ui-flow.js; src/application/script-editor/**; src/domain/script-editor-project.ts; src/ui/views/city/**; src/ui/views/building/**; tests/**; browser simulated-human flow` | `city/building background authoring, save/load, runtime export/import, and runtime consumption` | `preview layout edit mode; full asset library; unrelated gameplay/runtime work` | `Closed on 2026-07-19 after source guard, automated verification, and browser simulated-human evidence for city/building background controls.` |
 
 ### Queue Promotion Ledger
 
@@ -144,7 +144,7 @@
 | `queue.script-editor-city-building-enter-state-and-preview-boundary` | `done` | `closed` | `Closed on 2026-07-19 after source guard, automated verification, and partial simulated-human browser proof. Runtime preview green-frame browser proof is recorded as inconclusive rather than claimed.` |
 | `queue.script-editor-city-building-secondary-list-and-selector-ux-unification` | `done` | `closed` | `Closed on 2026-07-19 after guard review, automated verification, and bounded browser simulated-human evidence.` |
 | `queue.script-editor-ui-encoding-integrity-guard` | `done` | `closed` | `Closed on 2026-07-19 after bounded source guard implementation, automated verification, and browser smoke evidence for main menu and Script Editor landing Chinese rendering.` |
-| `queue.script-editor-city-building-background-authoring` | `active` | `evidence-anchor-reconcile is complete` | `Admitted on 2026-07-19 from MEMO-012. Keeps city/building background authoring, persistence, runtime export/import, and runtime consumption together as one bounded active queue.` |
+| `queue.script-editor-city-building-background-authoring` | `done` | `closed` | `Closed on 2026-07-19 after source guard, automated verification, and browser simulated-human evidence for city/building background controls.` |
 
 ### Candidate Evidence Matrix
 
@@ -173,11 +173,11 @@
 | `ACC-CITY-BUILDING-ENTER-STATE-006` | `queue.script-editor-city-building-secondary-list-and-selector-ux-unification` | `source guard + focused tests + browser all-family list evidence` | `covered` | `none recorded` |
 | `ACC-CITY-BUILDING-ENTER-STATE-007` | `queue.script-editor-city-building-secondary-list-and-selector-ux-unification` | `source guard + focused tests + browser selector evidence` | `covered` | `none recorded` |
 | `ACC-CITY-BUILDING-ENTER-STATE-008` | `queue.script-editor-city-building-secondary-list-and-selector-ux-unification` | `browser simulated-human run recorded failed add/search step, fix, and rerun; keyboard-control clearing remained automation-inconclusive` | `covered-with-browser-control-caveat` | `browser keypress clear of search input did not mutate the input value in automation; add-record search reset and selector/list flows were verified` |
-| `ACC-CITY-BUILDING-BACKGROUND-001` | `queue.script-editor-city-building-background-authoring` | `pending` | `pending` | `city and building background controls not yet evidence-locked` |
-| `ACC-CITY-BUILDING-BACKGROUND-002` | `queue.script-editor-city-building-background-authoring` | `pending` | `pending` | `project save/load preservation not yet evidence-locked` |
-| `ACC-CITY-BUILDING-BACKGROUND-003` | `queue.script-editor-city-building-background-authoring` | `pending` | `pending` | `runtime export/import preservation not yet evidence-locked` |
-| `ACC-CITY-BUILDING-BACKGROUND-004` | `queue.script-editor-city-building-background-authoring` | `pending` | `pending` | `normal/json/preview runtime background rendering not yet evidence-locked` |
-| `ACC-CITY-BUILDING-BACKGROUND-005` | `queue.script-editor-city-building-background-authoring` | `pending` | `pending` | `simulated-human Script Editor coverage not yet evidence-locked` |
+| `ACC-CITY-BUILDING-BACKGROUND-001` | `queue.script-editor-city-building-background-authoring` | `source guard + focused tests + browser city/building background control evidence` | `covered` | `none recorded` |
+| `ACC-CITY-BUILDING-BACKGROUND-002` | `queue.script-editor-city-building-background-authoring` | `save/load focused tests` | `covered` | `none recorded` |
+| `ACC-CITY-BUILDING-BACKGROUND-003` | `queue.script-editor-city-building-background-authoring` | `runtime export/import focused tests` | `covered` | `none recorded` |
+| `ACC-CITY-BUILDING-BACKGROUND-004` | `queue.script-editor-city-building-background-authoring` | `runtime-view source guard + focused tests` | `covered` | `none recorded` |
+| `ACC-CITY-BUILDING-BACKGROUND-005` | `queue.script-editor-city-building-background-authoring` | `browser simulated-human template workspace check for city/building default background selects and building selection change` | `covered` | `none recorded` |
 
 ### Progress Log
 
@@ -201,3 +201,6 @@
 - `2026-07-19`: `Completed task.script-editor-ui-encoding-integrity-guard.implementation. RED failed on the missing check-ui-encoding-integrity tool. GREEN added npm run lint:encoding, a bounded critical-source encoding guard, and robustness tests that pass the current critical Chinese UI surfaces while rejecting a generated mojibake fixture. Verification passed: npm run lint:encoding, focused tests, npm run typecheck, npm run lint:blueprints, and npm test. Browser smoke confirmed the main menu and Script Editor landing page render Chinese without mojibake; full workspace browser traversal remains for queue closeout evidence if available. Active task is now queue-closeout-and-handoff.`
 - `2026-07-19`: `Completed task.script-editor-ui-encoding-integrity-guard.queue-closeout-and-handoff. Guard review passed for bounded source coverage, mojibake rejection, package script exposure, runtime semantics preservation, and Blueprint sync. Browser smoke confirmed main menu and Script Editor landing page Chinese rendering without mojibake; workspace labels remain protected by source guard coverage. The queue is closed, active_queue is none, and the version remains open for same-version promotion/admission review rather than version closeout.`
 - `2026-07-19`: `Promotion/admission review admitted queue.script-editor-city-building-background-authoring from MEMO-012 as the new active queue after all prior current-version queues closed. The first active task is evidence-anchor-reconcile; implementation has not started.`
+- `2026-07-19`: `Completed task.script-editor-city-building-background-authoring.evidence-anchor-reconcile. Existing source and tests already cover Script Editor backgroundId controls, city/building normalization, runtime materialization, runtime export, and runtime import. The remaining implementation gap is runtime consumption: city-view.ts still uses a fixed city.mp4 background, and building-module-view.ts fallback rendering does not consume HouseDefinition.backgroundId. Active task is now implementation.`
+- `2026-07-19`: `Completed task.script-editor-city-building-background-authoring.implementation. RED focused source guard failed because runtime city/building views did not consume configured background ids. GREEN routes city-view through resolveLocationBackgroundImageUrl(cityDefinition.backgroundId), keeps the existing city.mp4 fallback when no background is configured, routes fallback building view through resolveLocationBackgroundImageUrl(input.stage.activeHouse.backgroundId), and adds CSS for the configured city background layer. Verification passed: focused test, npm run typecheck, npm run lint:blueprints, and npm test. Active task is now queue-closeout-and-handoff.`
+- `2026-07-19`: `Completed task.script-editor-city-building-background-authoring.queue-closeout-and-handoff. Guard review passed for creator-facing city/building default background controls, project save/load preservation, runtime export/import preservation, runtime rendering consumption, default fallback preservation, and EventBindingRuntime/LocationAccessRuntime semantics preservation. Browser simulated-human evidence verified the built-in Script Editor template workspace, city default-background select options, building default-background select options, and changing a building background to zizhai without saving. The queue is closed, active_queue is none, and the version remains open for same-version promotion/admission review rather than version closeout.`

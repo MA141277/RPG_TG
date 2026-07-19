@@ -7,14 +7,14 @@
 - blueprint_version: `2026.07`
 - governance_last_synced_at: `2026-07-19`
 - governance_sync_source: `docs/blueprints/plans/2026-07-19-city-building-module-entry-and-project-startup-authoring-target-plan.md`
-- queue_status: `active`
+- queue_status: `done`
 - queue_class: `future-target-candidate`
-- active_task: `task.script-editor-city-building-background-authoring.evidence-anchor-reconcile`
-- next_task: `task.script-editor-city-building-background-authoring.implementation`
-- closeout_status: `not-started`
-- execution_closeout_status: `partial`
-- topic_closure_status: `open-residue`
-- closure_basis: `none`
+- active_task: `none`
+- next_task: `none`
+- closeout_status: `done`
+- execution_closeout_status: `done`
+- topic_closure_status: `closed`
+- closure_basis: `bounded source guard, automated verification, and browser simulated-human evidence for Script Editor background controls`
 - residue_remaining: `no`
 - residue_family: `none`
 - residue_routing_status: `none`
@@ -23,7 +23,7 @@
 - next_effect: `none`
 - sync_status: `pending`
 - sync_scope: `local-record`
-- sync_summary: `Queue admitted locally from MEMO-012 after all prior current-version queues closed; implementation has not started.`
+- sync_summary: `Implementation and closeout records are local; repository sync is pending.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
@@ -46,8 +46,8 @@
 
 ### Evidence Lock
 
-- evidence_lock_status: `pending`
-- implementation_anchor_status: `pending`
+- evidence_lock_status: `locked`
+- implementation_anchor_status: `locked`
 - prerequisite_status: `ready`
 - acceptance_claim_scope:
   - `ACC-CITY-BUILDING-BACKGROUND-001`
@@ -132,9 +132,9 @@
 
 - queue_goal: `Add bounded city/building background authoring and runtime consumption through existing project/runtime pack paths.`
 - task_count: `3`
-- completed_task_count: `0`
-- remaining_task_count: `3`
-- active_task_summary: `Confirm current background data paths and the smallest lawful authoring/runtime slice before implementation.`
+- completed_task_count: `3`
+- remaining_task_count: `0`
+- active_task_summary: `none`
 - task_briefs:
   - `task.script-editor-city-building-background-authoring.evidence-anchor-reconcile: Confirm existing background fields, export/import behavior, and runtime consumption gaps.`
   - `task.script-editor-city-building-background-authoring.implementation: Implement bounded background authoring and runtime consumption test-first.`
@@ -150,9 +150,9 @@
 
 | Task ID | State | Summary | Depends On | Notes |
 | --- | --- | --- | --- | --- |
-| `task.script-editor-city-building-background-authoring.evidence-anchor-reconcile` | `active` | `Confirm existing background fields, export/import behavior, and runtime consumption gaps.` | `none` | `Active after admission. Must lock evidence before implementation.` |
-| `task.script-editor-city-building-background-authoring.implementation` | `pending` | `Implement bounded background authoring and runtime consumption test-first.` | `task.script-editor-city-building-background-authoring.evidence-anchor-reconcile` | `Requires RED tests before production changes.` |
-| `task.script-editor-city-building-background-authoring.queue-closeout-and-handoff` | `pending` | `Verify the queue and return to version review without version closeout.` | `task.script-editor-city-building-background-authoring.implementation` | `Requires browser simulated-human evidence or a recorded inconclusive reason with equivalent automated coverage.` |
+| `task.script-editor-city-building-background-authoring.evidence-anchor-reconcile` | `done` | `Confirm existing background fields, export/import behavior, and runtime consumption gaps.` | `none` | `Locked on 2026-07-19. Script Editor already exposes backgroundId controls and save/export/import tests, but city/building runtime views do not consume configured backgroundId values.` |
+| `task.script-editor-city-building-background-authoring.implementation` | `done` | `Implement bounded background authoring and runtime consumption test-first.` | `task.script-editor-city-building-background-authoring.evidence-anchor-reconcile` | `Completed on 2026-07-19. RED focused test failed on missing runtime consumption; GREEN routes city and fallback building views through configured background ids while preserving default fallback behavior.` |
+| `task.script-editor-city-building-background-authoring.queue-closeout-and-handoff` | `done` | `Verify the queue and return to version review without version closeout.` | `task.script-editor-city-building-background-authoring.implementation` | `Completed on 2026-07-19. Guard review passed for background authoring controls, save/load, runtime export/import, runtime view consumption, default fallback preservation, and runtime semantics preservation. Browser simulated-human evidence verified city and building default background selects and a building background selection change.` |
 
 ### Task Definitions
 
@@ -161,7 +161,7 @@
 ##### Control Block
 
 - task_id: `task.script-editor-city-building-background-authoring.evidence-anchor-reconcile`
-- state: `active`
+- state: `done`
 - task_kind: `decision-dispatch`
 - scope:
   - `src/ui/main-ui/main-ui-flow.js`
@@ -192,14 +192,14 @@
 - task_brief:
   - `Confirm the background authoring and runtime data path before implementation.`
 - task_outcome_summary:
-  - `queued`
+  - `Evidence confirms existing city/building backgroundId authoring controls, normalization, materialization, runtime export, and runtime import coverage. The remaining gap is runtime rendering: city-view.ts still uses a fixed city.mp4 background, and building-module-view.ts fallback rendering does not consume HouseDefinition.backgroundId.`
 
 #### `task.script-editor-city-building-background-authoring.implementation`
 
 ##### Control Block
 
 - task_id: `task.script-editor-city-building-background-authoring.implementation`
-- state: `pending`
+- state: `done`
 - task_kind: `execution`
 - scope:
   - `src/ui/main-ui/main-ui-flow.js`
@@ -241,14 +241,14 @@
 - task_brief:
   - `Implement bounded city/building background authoring and runtime consumption test-first.`
 - task_outcome_summary:
-  - `queued`
+  - `RED added a runtime-view source guard for configured city/building background id consumption and failed before implementation because city-view.ts did not use resolveLocationBackgroundImageUrl. GREEN added configured city background rendering with the existing city.mp4 fallback, routed the fallback building view through HouseDefinition.backgroundId, and added CSS coverage for the configured city background layer. Verification passed: focused test, npm run typecheck, npm run lint:blueprints, and npm test.`
 
 #### `task.script-editor-city-building-background-authoring.queue-closeout-and-handoff`
 
 ##### Control Block
 
 - task_id: `task.script-editor-city-building-background-authoring.queue-closeout-and-handoff`
-- state: `pending`
+- state: `done`
 - task_kind: `decision-dispatch`
 - scope:
   - `docs/blueprints/queues/script-editor-city-building-background-authoring-queue.md`
@@ -277,4 +277,4 @@
 - task_brief:
   - `Verify the background authoring slice and return to version review without automatic version closeout.`
 - task_outcome_summary:
-  - `queued`
+  - `Queue closed after source guard, automated verification, and browser simulated-human evidence. Browser evidence verified the built-in Script Editor template workspace, city default-background select options, building default-background select options, and selecting building background value zizhai without saving to disk. The closeout does not enter version closeout.`
