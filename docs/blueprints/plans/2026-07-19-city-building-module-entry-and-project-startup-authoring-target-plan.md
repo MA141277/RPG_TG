@@ -6,11 +6,11 @@
 - version_id: `target.city-building-module-entry-and-project-startup-authoring`
 - version_status: `open`
 - active_phase: `phase.execution`
-- active_queue: `queue.script-editor-city-building-secondary-list-and-selector-ux-unification`
-- decision_state: `active-execution`
-- next_decision: `queue-closeout-or-return-to-version-review`
-- next_action: `resume-active-queue`
-- resume_gate: `open-active-queue`
+- active_queue: `none`
+- decision_state: `idle-open`
+- next_decision: `same-version-admission-or-version-closeout`
+- next_action: `return-to-promotion-review`
+- resume_gate: `version-review`
 - post_queue_closeout_pause_policy: `auto-continue`
 - promotion_review_result: `none`
 - review_subject_id: `none`
@@ -69,8 +69,8 @@
 - Activation conclusion:
   - `target.city-building-module-entry-and-project-startup-authoring is the active version.`
   - `queue.script-editor-city-building-enter-state-and-preview-boundary is closed after queue closeout/handoff.`
-  - `queue.script-editor-city-building-secondary-list-and-selector-ux-unification is admitted as the active queue.`
-  - `The active task is task.script-editor-city-building-secondary-list-and-selector-ux-unification.queue-closeout-and-handoff after implementation finished; queue closeout has not been executed yet.`
+  - `queue.script-editor-city-building-secondary-list-and-selector-ux-unification is closed after queue closeout/handoff.`
+  - `The version remains open with active_queue none for same-version promotion/admission review.`
 
 ### Version Lifecycle Rules
 
@@ -137,7 +137,7 @@
 | --- | --- | --- | --- |
 | `queue.city-building-module-entry-and-project-startup-authoring` | `done` | `acceptance-and-guard is complete.` | `Evidence-anchor reconcile, project-info-authoring, city-building-module-entry, runtime-startup-convergence, and acceptance-and-guard are complete; the queue is closed and the version remains open for later candidate review.` |
 | `queue.script-editor-city-building-enter-state-and-preview-boundary` | `done` | `closed` | `Closed on 2026-07-19 after source guard, automated verification, and partial simulated-human browser proof. Runtime preview green-frame browser proof is recorded as inconclusive rather than claimed.` |
-| `queue.script-editor-city-building-secondary-list-and-selector-ux-unification` | `active` | `queue-closeout-and-handoff completes` | `Implementation completed on 2026-07-19; active task is queue-closeout-and-handoff and version closeout remains separate.` |
+| `queue.script-editor-city-building-secondary-list-and-selector-ux-unification` | `done` | `closed` | `Closed on 2026-07-19 after guard review, automated verification, and bounded browser simulated-human evidence.` |
 | `queue.script-editor-ui-encoding-integrity-guard` | `recorded-only` | `version review confirms the source-encoding guard and mojibake-prevention slice is still a lawful same-version candidate` | `Keeps critical UI source-text integrity checks, browser smoke coverage, and encoding-corruption failure guards together as one bounded candidate.` |
 
 ### Candidate Evidence Matrix
@@ -163,9 +163,9 @@
 | `ACC-CITY-BUILDING-ENTER-STATE-003` | `queue.script-editor-city-building-enter-state-and-preview-boundary` | `source guard + condition picker browser proof + export tests` | `covered` | `none recorded` |
 | `ACC-CITY-BUILDING-ENTER-STATE-004` | `queue.script-editor-city-building-enter-state-and-preview-boundary` | `source guard + automated style/source tests` | `covered-with-browser-proof-inconclusive` | `runtime preview green-frame browser proof was not claimed because browser automation stale-tab recovery did not complete` |
 | `ACC-CITY-BUILDING-ENTER-STATE-005` | `queue.script-editor-city-building-enter-state-and-preview-boundary` | `source guard + runtime preview source-path tests` | `covered-with-browser-proof-inconclusive` | `full normal/json/preview simulated-human green-frame run remains a later acceptance concern if required` |
-| `ACC-CITY-BUILDING-ENTER-STATE-006` | `queue.script-editor-city-building-secondary-list-and-selector-ux-unification` | `pending` | `pending` | `none recorded` |
-| `ACC-CITY-BUILDING-ENTER-STATE-007` | `queue.script-editor-city-building-secondary-list-and-selector-ux-unification` | `pending` | `pending` | `none recorded` |
-| `ACC-CITY-BUILDING-ENTER-STATE-008` | `queue.script-editor-city-building-secondary-list-and-selector-ux-unification` | `pending` | `pending` | `none recorded` |
+| `ACC-CITY-BUILDING-ENTER-STATE-006` | `queue.script-editor-city-building-secondary-list-and-selector-ux-unification` | `source guard + focused tests + browser all-family list evidence` | `covered` | `none recorded` |
+| `ACC-CITY-BUILDING-ENTER-STATE-007` | `queue.script-editor-city-building-secondary-list-and-selector-ux-unification` | `source guard + focused tests + browser selector evidence` | `covered` | `none recorded` |
+| `ACC-CITY-BUILDING-ENTER-STATE-008` | `queue.script-editor-city-building-secondary-list-and-selector-ux-unification` | `browser simulated-human run recorded failed add/search step, fix, and rerun; keyboard-control clearing remained automation-inconclusive` | `covered-with-browser-control-caveat` | `browser keypress clear of search input did not mutate the input value in automation; add-record search reset and selector/list flows were verified` |
 
 ### Progress Log
 
@@ -183,3 +183,4 @@
 - `2026-07-19`: `Promotion/admission review admitted queue.script-editor-city-building-secondary-list-and-selector-ux-unification as the new active queue because ACC-CITY-BUILDING-ENTER-STATE-006..008 remain pending after the enter-state queue closed. The first active task is evidence-anchor-reconcile; implementation has not started.`
 - `2026-07-19`: `Completed task.script-editor-city-building-secondary-list-and-selector-ux-unification.evidence-anchor-reconcile. Source review found people already has search/add/delete/list/pagination; city, building, story node, dialogue, event, minigame, and text have add/delete/list/pagination but lack the people-style search control. Detail selectors also remain inconsistent where project-backed selectors should replace ad hoc ids. The active task is now implementation.`
 - `2026-07-19`: `Completed task.script-editor-city-building-secondary-list-and-selector-ux-unification.implementation. RED covered all-family secondary search controls, project-backed selector replacement, and the browser-discovered add-record/search interaction. GREEN added shared search/filtering, project-backed selects for city/building/menu entry selectors, targetId stale clearing, and add-record search reset. Verification passed: focused tests, npm run typecheck, npm run lint:blueprints, and npm test. Browser simulated-human evidence covered all eight secondary family surfaces and selector replacement checks; browser keyboard-control search clearing remained inconclusive because automation key events did not change the focused input value. Active task is now queue-closeout-and-handoff.`
+- `2026-07-19`: `Completed task.script-editor-city-building-secondary-list-and-selector-ux-unification.queue-closeout-and-handoff. Guard review passed for all-family secondary search controls, project-backed selector replacement, add-record search reset, stale menu target clearing, and runtime semantics preservation. The queue is closed, active_queue is none, and the version remains open for same-version promotion/admission review rather than version closeout.`

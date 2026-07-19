@@ -7,23 +7,23 @@
 - blueprint_version: `2026.07`
 - governance_last_synced_at: `2026-07-19`
 - governance_sync_source: `docs/blueprints/plans/2026-07-19-city-building-module-entry-and-project-startup-authoring-target-plan.md`
-- queue_status: `active`
+- queue_status: `done`
 - queue_class: `future-target-candidate`
-- active_task: `task.script-editor-city-building-secondary-list-and-selector-ux-unification.queue-closeout-and-handoff`
+- active_task: `none`
 - next_task: `none`
-- closeout_status: `not-started`
-- execution_closeout_status: `partial`
-- topic_closure_status: `open-residue`
-- closure_basis: `none`
+- closeout_status: `done`
+- execution_closeout_status: `done`
+- topic_closure_status: `closed`
+- closure_basis: `source guard, automated verification, and bounded browser simulated-human evidence`
 - residue_remaining: `no`
 - residue_family: `none`
 - residue_routing_status: `none`
 - next_family_candidate: `none`
 - auto_continue_eligible: `false`
 - next_effect: `none`
-- sync_status: `pending`
+- sync_status: `success`
 - sync_scope: `local-record`
-- sync_summary: `Implementation completed locally for secondary list search and project-backed selector UX; no implementation commit has been created for this queue.`
+- sync_summary: `Implementation commit 6b4c8c75 was pushed to origin/mod-first-dev before queue closeout; closeout record is local pending repository sync.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
@@ -128,9 +128,9 @@
 
 - queue_goal: `Unify Script Editor secondary list/search/add/delete/pagination shells and detail-page selector UX across the remaining authoring families.`
 - task_count: `3`
-- completed_task_count: `2`
-- remaining_task_count: `1`
-- active_task_summary: `Verify the secondary list and selector UX queue and return to version review without version closeout.`
+- completed_task_count: `3`
+- remaining_task_count: `0`
+- active_task_summary: `none`
 - task_briefs:
   - `task.script-editor-city-building-secondary-list-and-selector-ux-unification.evidence-anchor-reconcile: Confirm current secondary list and selector UX drift before implementation.`
   - `task.script-editor-city-building-secondary-list-and-selector-ux-unification.implementation: Implement shared secondary list/search/add/delete/pagination and selector UX normalization test-first.`
@@ -148,7 +148,7 @@
 | --- | --- | --- | --- | --- |
 | `task.script-editor-city-building-secondary-list-and-selector-ux-unification.evidence-anchor-reconcile` | `done` | `Confirm current secondary list and selector UX drift before implementation.` | `none` | `Completed on 2026-07-19. Source review found people already has search/add/delete/list/pagination; city, building, story node, dialogue, event, minigame, and text have add/delete/list/pagination but lack the people-style search control. Detail selectors also remain inconsistent: examples include building cityId text entry, location menu targetId text entry, and building entry event id text entry where project-backed selectors should be used.` |
 | `task.script-editor-city-building-secondary-list-and-selector-ux-unification.implementation` | `done` | `Implement shared secondary list/search/add/delete/pagination and selector UX normalization test-first.` | `task.script-editor-city-building-secondary-list-and-selector-ux-unification.evidence-anchor-reconcile` | `Completed on 2026-07-19. RED covered all-family secondary search controls, project-backed selector replacement, and clearing current search before adding a record. GREEN added shared search rendering/filtering, project-backed city/menu/building-entry selects, stale menu target clearing, and add-record search reset.` |
-| `task.script-editor-city-building-secondary-list-and-selector-ux-unification.queue-closeout-and-handoff` | `active` | `Verify the queue and return to version review without version closeout.` | `task.script-editor-city-building-secondary-list-and-selector-ux-unification.implementation` | `Active. Requires queue closeout guard and final Blueprint sync; browser evidence is recorded in the implementation outcome.` |
+| `task.script-editor-city-building-secondary-list-and-selector-ux-unification.queue-closeout-and-handoff` | `done` | `Verify the queue and return to version review without version closeout.` | `task.script-editor-city-building-secondary-list-and-selector-ux-unification.implementation` | `Completed on 2026-07-19. Guard review passed for all-family search controls, project-backed selector replacement, add-record search reset, stale menu target clearing, runtime semantics preservation, and Blueprint sync. The queue is closed and the version remains open for the next lawful promotion/admission review.` |
 
 ### Task Definitions
 
@@ -257,7 +257,7 @@
 ##### Control Block
 
 - task_id: `task.script-editor-city-building-secondary-list-and-selector-ux-unification.queue-closeout-and-handoff`
-- state: `pending`
+- state: `done`
 - task_kind: `decision-dispatch`
 - scope:
   - `docs/blueprints/queues/script-editor-city-building-secondary-list-and-selector-ux-unification-queue.md`
@@ -286,7 +286,7 @@
 - task_brief:
   - `Verify the secondary list/selector UX slice and return to version review without automatic version closeout.`
 - task_outcome_summary:
-  - `queued`
+  - `Done. Guard review confirmed people/cities/buildings/storyNodes/dialogues/events/minigames/textEntries expose secondary search controls; add/delete/list/pagination remain present; add-record clears current-family search so new drafts are not hidden by stale filters; building cityId, location menu targetId, and building entry default person/enter event/leave event use select controls backed by project records; menu targetId clears when targetFamily changes and the existing id is stale; EventBindingRuntime and runtime export/load/startup semantics were not changed. Verification passed: npm run lint:blueprints and prior same-state npm test. The queue is closed and returns to the open version for later promotion/admission review.`
 - Purpose:
   - `Prevent closeout from claiming complete authoring coverage without every declared browser test case.`
 - Failure mode:
