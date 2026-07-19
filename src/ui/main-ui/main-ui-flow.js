@@ -375,6 +375,16 @@ const characterSelectLayoutBindings = [
 
 const SCRIPT_EDITOR_SECONDARY_LIST_PAGE_SIZE = 6;
 const SCRIPT_EDITOR_PERSON_ATTRIBUTE_PAGE_SIZE = 10;
+const SCRIPT_EDITOR_RECORD_SEARCH_FAMILY_ATTRIBUTES = {
+  people: 'data-script-editor-record-search-family="people"',
+  cities: 'data-script-editor-record-search-family="cities"',
+  buildings: 'data-script-editor-record-search-family="buildings"',
+  storyNodes: 'data-script-editor-record-search-family="storyNodes"',
+  dialogues: 'data-script-editor-record-search-family="dialogues"',
+  events: 'data-script-editor-record-search-family="events"',
+  minigames: 'data-script-editor-record-search-family="minigames"',
+  textEntries: 'data-script-editor-record-search-family="textEntries"',
+};
 
 export class MainUiFlow {
   constructor(options) {
@@ -1029,16 +1039,18 @@ export class MainUiFlow {
 
   renderScriptEditorTextEntryEditor(records, selectedRecord) {
     const selectedText = typeof selectedRecord?.text === "string" ? selectedRecord.text : "";
+    const filteredRecords = this.filterScriptEditorRecords("textEntries", records);
 
     return `
       <div class="c-script-editor-editor-card">
         <div class="c-script-editor-record-layout">
           ${this.renderScriptEditorPaginatedRecordList({
             family: "textEntries",
-            records,
+            records: filteredRecords,
             ariaLabel: "文本列表",
             toolbar: `
               <div class="c-script-editor-record-list__toolbar">
+                ${this.renderScriptEditorRecordListSearch("textEntries", "搜索文本", "按文本标题、内容或 ID 搜索")}
                 <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="add-record">
                   新增
                 </button>
@@ -1105,6 +1117,13 @@ export class MainUiFlow {
   resetScriptEditorRecordSearch() {
     this.scriptEditorRecordSearch = {
       people: "",
+      cities: "",
+      buildings: "",
+      storyNodes: "",
+      dialogues: "",
+      events: "",
+      minigames: "",
+      textEntries: "",
     };
   }
 
@@ -1198,7 +1217,40 @@ export class MainUiFlow {
       });
     }
 
-    return records;
+    return records.filter((record) => {
+      const candidateText = [
+        record?.id,
+        record?.name,
+        record?.title,
+        record?.text,
+        record?.description,
+        record?.summary,
+        this.getScriptEditorRecordLabel(record),
+      ]
+        .filter((value) => typeof value === "string" && value.trim().length > 0)
+        .join(" ")
+        .toLowerCase();
+      return candidateText.includes(searchValue);
+    });
+  }
+
+  renderScriptEditorRecordListSearch(family, label, placeholder) {
+    const familyAttribute =
+      SCRIPT_EDITOR_RECORD_SEARCH_FAMILY_ATTRIBUTES[family] ??
+      `data-script-editor-record-search-family="${escapeHtml(family)}"`;
+
+    return `
+      <label class="c-script-editor-record-list__search">
+        <span>${escapeHtml(label)}</span>
+        <input
+          class="c-script-editor-form-field__input"
+          type="search"
+          value="${escapeHtml(this.getScriptEditorRecordSearchValue(family))}"
+          placeholder="${escapeHtml(placeholder)}"
+          ${familyAttribute}
+        />
+      </label>
+    `;
   }
 
   getScriptEditorPaginatedRecordListState(family, records) {
@@ -1300,16 +1352,7 @@ export class MainUiFlow {
             modifierClass: "c-script-editor-record-list--people",
             toolbar: `
               <div class="c-script-editor-record-list__toolbar">
-                <label class="c-script-editor-record-list__search">
-                  <span>搜索人物</span>
-                  <input
-                    class="c-script-editor-form-field__input"
-                    type="search"
-                    value="${escapeHtml(this.getScriptEditorRecordSearchValue("people"))}"
-                    placeholder="按人物名、身份 / 职位搜索"
-                    data-script-editor-record-search-family="people"
-                  />
-                </label>
+                ${this.renderScriptEditorRecordListSearch("people", "搜索人物", "按人物名、身份 / 职位搜索")}
                 <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="add-record">
                   新增人物
                 </button>
@@ -1572,6 +1615,28 @@ export class MainUiFlow {
         `
       ),
     ].join("");
+  }
+
+  getScriptEditorProjectRecordOptions(family) {
+    if (this.scriptEditorProject == null) {
+      return [];
+    }
+
+    const records = listScriptEditorWorkflowFamilyRecords(this.scriptEditorProject, family);
+    return records.map((record) => ({
+      value: record.id,
+      label: `${this.getScriptEditorRecordLabel(record)} (${record.id})`,
+    }));
+  }
+
+  getScriptEditorLocationMenuTargetOptions(targetFamily) {
+    const familyByTargetFamily = {
+      dialogue: "dialogues",
+      event: "events",
+      minigame: "minigames",
+    };
+    const family = familyByTargetFamily[targetFamily] ?? "";
+    return family.length === 0 ? [] : this.getScriptEditorProjectRecordOptions(family);
   }
 
   getScriptEditorPersonCityOptions() {
@@ -2028,6 +2093,7 @@ export class MainUiFlow {
 
   renderScriptEditorLocationEditor(family, records, selectedRecord) {
     const isCityFamily = family === "cities";
+    const filteredRecords = this.filterScriptEditorRecords(family, records);
     const location = selectedRecord == null
       ? null
       : isCityFamily
@@ -2039,11 +2105,16 @@ export class MainUiFlow {
         <div class="c-script-editor-record-layout c-script-editor-record-layout--location">
           ${this.renderScriptEditorPaginatedRecordList({
             family,
-            records,
+            records: filteredRecords,
             ariaLabel: isCityFamily ? "城市列表" : "建筑列表",
             modifierClass: "c-script-editor-record-list--location",
             toolbar: `
               <div class="c-script-editor-record-list__toolbar">
+                ${this.renderScriptEditorRecordListSearch(
+                  family,
+                  isCityFamily ? "搜索城市" : "搜索建筑",
+                  isCityFamily ? "按城市名称或 ID 搜索" : "按建筑名称或 ID 搜索"
+                )}
                 <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="add-record">
                   ${isCityFamily ? "新增城市" : "新增建筑"}
                 </button>
@@ -2190,8 +2261,14 @@ export class MainUiFlow {
                   ? ""
                   : `
                     <label class="c-script-editor-form-field">
-                      <span>所属城市 ID</span>
-                      <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(location.cityId ?? "")}" data-script-editor-location-field="cityId" />
+                      <span>所属城市</span>
+                      <select class="c-script-editor-form-field__input" data-script-editor-location-field="cityId">
+                        ${this.renderScriptEditorSelectOptions(
+                          this.getScriptEditorProjectRecordOptions("cities"),
+                          location.cityId ?? "",
+                          "未选择所属城市"
+                        )}
+                      </select>
                     </label>
                   `
               }
@@ -2422,8 +2499,14 @@ export class MainUiFlow {
                       </select>
                     </label>
                     <label class="c-script-editor-form-field">
-                      <span>绑定目标 ID</span>
-                      <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(entry.targetId)}" data-script-editor-location-menu-field="targetId" data-script-editor-location-menu-index="${index}" />
+                      <span>绑定目标</span>
+                      <select class="c-script-editor-form-field__input" data-script-editor-location-menu-field="targetId" data-script-editor-location-menu-index="${index}">
+                        ${this.renderScriptEditorSelectOptions(
+                          this.getScriptEditorLocationMenuTargetOptions(entry.targetFamily),
+                          entry.targetId,
+                          "未选择绑定目标"
+                        )}
+                      </select>
                     </label>
                     <label class="c-script-editor-form-field c-script-editor-form-field--wide">
                       <span>不可用提示</span>
@@ -2610,6 +2693,8 @@ export class MainUiFlow {
       onLeaveEventId: "",
       returnTarget: "city",
     };
+    const eventOptions = this.getScriptEditorProjectRecordOptions("events");
+    const personOptions = this.getScriptEditorProjectRecordOptions("people");
     return `
       <section class="c-script-editor-location-panel" aria-label="建筑入口分栏">
         <p class="c-script-editor-editor-card__hint">
@@ -2617,16 +2702,22 @@ export class MainUiFlow {
         </p>
         <div class="c-script-editor-form-grid">
           <label class="c-script-editor-form-field">
-            <span>默认落点人物 ID</span>
-            <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(entryBinding.defaultPersonId)}" data-script-editor-building-entry-field="defaultPersonId" />
+            <span>默认落点人物</span>
+            <select class="c-script-editor-form-field__input" data-script-editor-building-entry-field="defaultPersonId">
+              ${this.renderScriptEditorSelectOptions(personOptions, entryBinding.defaultPersonId, "未选择默认落点人物")}
+            </select>
           </label>
           <label class="c-script-editor-form-field">
-            <span>进入建筑事件 ID</span>
-            <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(entryBinding.onEnterEventId)}" data-script-editor-building-entry-field="onEnterEventId" />
+            <span>进入建筑事件</span>
+            <select class="c-script-editor-form-field__input" data-script-editor-building-entry-field="onEnterEventId">
+              ${this.renderScriptEditorSelectOptions(eventOptions, entryBinding.onEnterEventId, "未选择进入建筑事件")}
+            </select>
           </label>
           <label class="c-script-editor-form-field">
-            <span>离开建筑事件 ID</span>
-            <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(entryBinding.onLeaveEventId)}" data-script-editor-building-entry-field="onLeaveEventId" />
+            <span>离开建筑事件</span>
+            <select class="c-script-editor-form-field__input" data-script-editor-building-entry-field="onLeaveEventId">
+              ${this.renderScriptEditorSelectOptions(eventOptions, entryBinding.onLeaveEventId, "未选择离开建筑事件")}
+            </select>
           </label>
           <label class="c-script-editor-form-field">
             <span>返回目标层级</span>
@@ -2640,17 +2731,19 @@ export class MainUiFlow {
   renderScriptEditorStoryNodeEditor(records, selectedRecord) {
     const storyNode =
       selectedRecord == null ? null : normalizeScriptEditorStoryNodeRecord(selectedRecord);
+    const filteredRecords = this.filterScriptEditorRecords("storyNodes", records);
 
     return `
       <div class="c-script-editor-editor-card">
         <div class="c-script-editor-record-layout c-script-editor-record-layout--narrative">
           ${this.renderScriptEditorPaginatedRecordList({
             family: "storyNodes",
-            records,
+            records: filteredRecords,
             ariaLabel: "剧情列表",
             modifierClass: "c-script-editor-record-list--narrative",
             toolbar: `
               <div class="c-script-editor-record-list__toolbar">
+                ${this.renderScriptEditorRecordListSearch("storyNodes", "搜索剧情", "按剧情标题或 ID 搜索")}
                 <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="add-record">
                   新增剧情
                 </button>
@@ -2705,17 +2798,19 @@ export class MainUiFlow {
   renderScriptEditorDialogueEditor(records, selectedRecord) {
     const dialogue =
       selectedRecord == null ? null : normalizeScriptEditorDialogueRecord(selectedRecord);
+    const filteredRecords = this.filterScriptEditorRecords("dialogues", records);
 
     return `
       <div class="c-script-editor-editor-card">
         <div class="c-script-editor-record-layout c-script-editor-record-layout--narrative">
           ${this.renderScriptEditorPaginatedRecordList({
             family: "dialogues",
-            records,
+            records: filteredRecords,
             ariaLabel: "对话列表",
             modifierClass: "c-script-editor-record-list--narrative",
             toolbar: `
               <div class="c-script-editor-record-list__toolbar">
+                ${this.renderScriptEditorRecordListSearch("dialogues", "搜索对话", "按对话标题或 ID 搜索")}
                 <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="add-record">
                   新增对话
                 </button>
@@ -2770,17 +2865,19 @@ export class MainUiFlow {
   renderScriptEditorEventEditor(records, selectedRecord) {
     const eventRecord =
       selectedRecord == null ? null : normalizeScriptEditorEventRecord(selectedRecord);
+    const filteredRecords = this.filterScriptEditorRecords("events", records);
 
     return `
       <div class="c-script-editor-editor-card">
         <div class="c-script-editor-record-layout c-script-editor-record-layout--narrative">
           ${this.renderScriptEditorPaginatedRecordList({
             family: "events",
-            records,
+            records: filteredRecords,
             ariaLabel: "事件列表",
             modifierClass: "c-script-editor-record-list--narrative",
             toolbar: `
               <div class="c-script-editor-record-list__toolbar">
+                ${this.renderScriptEditorRecordListSearch("events", "搜索事件", "按事件标题或 ID 搜索")}
                 <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="add-record">
                   新增事件
                 </button>
@@ -2845,17 +2942,19 @@ export class MainUiFlow {
   renderScriptEditorMinigameEditor(records, selectedRecord) {
     const minigame =
       selectedRecord == null ? null : normalizeScriptEditorMinigameRecord(selectedRecord);
+    const filteredRecords = this.filterScriptEditorRecords("minigames", records);
 
     return `
       <div class="c-script-editor-editor-card">
         <div class="c-script-editor-record-layout c-script-editor-record-layout--narrative">
           ${this.renderScriptEditorPaginatedRecordList({
             family: "minigames",
-            records,
+            records: filteredRecords,
             ariaLabel: "玩法绑定列表",
             modifierClass: "c-script-editor-record-list--narrative",
             toolbar: `
               <div class="c-script-editor-record-list__toolbar">
+                ${this.renderScriptEditorRecordListSearch("minigames", "搜索玩法", "按玩法标题或 ID 搜索")}
                 <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="add-record">
                   新增玩法绑定
                 </button>
@@ -6450,6 +6549,10 @@ export class MainUiFlow {
     }
 
     const family = this.scriptEditorSelection.family;
+    this.scriptEditorRecordSearch = {
+      ...this.scriptEditorRecordSearch,
+      [family]: "",
+    };
     const draft = createScriptEditorWorkflowRecordDraft(
       family,
       listScriptEditorWorkflowFamilyRecords(this.scriptEditorProject, family).length
@@ -7428,6 +7531,25 @@ export class MainUiFlow {
   applyScriptEditorLocationMenuField(index, field, value) {
     const location = this.getSelectedScriptEditorLocation();
     if (location == null) {
+      return;
+    }
+
+    if (field === "targetFamily") {
+      const nextLocation = updateScriptEditorMenuEntryField(location, index, field, value);
+      const nextEntry = nextLocation.menuEntries?.[index] ?? null;
+      const targetOptions = this.getScriptEditorLocationMenuTargetOptions(value);
+      if (
+        nextEntry != null &&
+        nextEntry.targetId.length > 0 &&
+        !targetOptions.some((option) => option.value === nextEntry.targetId)
+      ) {
+        this.replaceSelectedScriptEditorLocation(
+          updateScriptEditorMenuEntryField(nextLocation, index, "targetId", "")
+        );
+        return;
+      }
+
+      this.replaceSelectedScriptEditorLocation(nextLocation);
       return;
     }
 

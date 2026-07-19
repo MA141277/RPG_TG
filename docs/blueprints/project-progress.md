@@ -6,7 +6,7 @@
 - active_blueprint: `blueprint.rpg-tg`
 - active_version: `target.city-building-module-entry-and-project-startup-authoring`
 - has_active_queue: `true`
-- next_file: `docs/blueprints/queues/script-editor-city-building-enter-state-and-preview-boundary-queue.md`
+- next_file: `docs/blueprints/queues/script-editor-city-building-secondary-list-and-selector-ux-unification-queue.md`
 - entry_action: `open-next-file`
 
 ## Human Context
@@ -29,15 +29,16 @@
 - Current Version Plan:
   - `docs/blueprints/plans/2026-07-19-city-building-module-entry-and-project-startup-authoring-target-plan.md`
 - Current Active Queue:
-  - `docs/blueprints/queues/script-editor-city-building-enter-state-and-preview-boundary-queue.md`
+  - `docs/blueprints/queues/script-editor-city-building-secondary-list-and-selector-ux-unification-queue.md`
 
 ### Live Entry Guardrails
 
 - `This file only states the current resume entry and downstream pointer set.`
 - `Admission history, queue closeout history, and review narrative must stay in the version plan, queue docs, or docs/change-log.md rather than living here as competing current-state prose.`
 - `The pointed version is now the open city/building module entry and project startup authoring successor version created after the operator approved the 项目信息 startup authoring and city/building module draft.`
-- `target.city-building-module-entry-and-project-startup-authoring is open with active queue queue.script-editor-city-building-enter-state-and-preview-boundary. Project-info-authoring, city-building-module-entry, runtime-startup-convergence, and acceptance-and-guard are complete.`
-- `queue.script-editor-city-building-enter-state-and-preview-boundary has been admitted under the successor version after MEMO-013 was split from the broad city/building enter-state and list/search draft.`
+- `target.city-building-module-entry-and-project-startup-authoring is open with active queue queue.script-editor-city-building-secondary-list-and-selector-ux-unification. Project-info-authoring, city-building-module-entry, runtime-startup-convergence, acceptance-and-guard, and queue.script-editor-city-building-enter-state-and-preview-boundary are complete.`
+- `queue.script-editor-city-building-enter-state-and-preview-boundary is closed after source guard, automated verification, and partial simulated-human browser proof; runtime preview green-frame browser proof remains recorded as inconclusive rather than claimed.`
+- `queue.script-editor-city-building-secondary-list-and-selector-ux-unification is active under the successor version for ACC-CITY-BUILDING-ENTER-STATE-006..008; evidence-anchor-reconcile and implementation are complete, and active task is queue-closeout-and-handoff.`
 - `target.map-review-provider-boundary-extraction remains open with no active queue after its single queue closed; it was not reopened or modified as the active execution target for event-runtime hardening.`
 - `target.script-editor-event-binding-post-closeout-fixups is closed and must not be reopened for map/review modularization work.`
 - `queue.map-review-provider-boundary-extraction-and-acceptance is closed after residue-removal and acceptance-and-guard passed. target.map-review-provider-boundary-extraction remains open with no active queue and awaits same-version admission review or version closeout review.`

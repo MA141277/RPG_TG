@@ -7,23 +7,23 @@
 - blueprint_version: `2026.07`
 - governance_last_synced_at: `2026-07-19`
 - governance_sync_source: `docs/blueprints/plans/2026-07-19-city-building-module-entry-and-project-startup-authoring-target-plan.md`
-- queue_status: `active`
+- queue_status: `done`
 - queue_class: `future-target-candidate`
-- active_task: `task.script-editor-city-building-enter-state-and-preview-boundary.queue-closeout-and-handoff`
+- active_task: `none`
 - next_task: `version-promotion-review`
-- closeout_status: `in-progress`
-- execution_closeout_status: `partial`
-- topic_closure_status: `open-residue`
-- closure_basis: `none`
+- closeout_status: `done`
+- execution_closeout_status: `done`
+- topic_closure_status: `closed`
+- closure_basis: `Source guard, automated verification, and partial simulated-human browser proof cover the bounded enter-state slice; runtime preview green-frame browser proof remains recorded as inconclusive rather than claimed.`
 - residue_remaining: `no`
 - residue_family: `none`
 - residue_routing_status: `none`
-- next_family_candidate: `none`
+- next_family_candidate: `queue.script-editor-city-building-secondary-list-and-selector-ux-unification`
 - auto_continue_eligible: `false`
 - next_effect: `none`
 - sync_status: `pending`
-- sync_scope: `none`
-- sync_summary: `Queue activated from the version-plan admission record; local sync has not yet been recorded.`
+- sync_scope: `local-record`
+- sync_summary: `Implementation commit d96a676e was pushed to origin/mod-first-dev before queue closeout; closeout documentation is local and awaits the next repository sync.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
@@ -135,9 +135,9 @@
 
 - queue_goal: `Own city/building enter-state authoring, default background, locationAccess-backed gate editing, and the preview-only green frame.`
 - task_count: `3`
-- completed_task_count: `2`
-- remaining_task_count: `1`
-- active_task_summary: `Verify guard evidence and route version-level review without automatic version closeout.`
+- completed_task_count: `3`
+- remaining_task_count: `0`
+- active_task_summary: `No active task remains; the bounded enter-state and preview-boundary queue is closed and returns control to version review.`
 - task_briefs:
   - `task.script-editor-city-building-enter-state-and-preview-boundary.evidence-anchor-reconcile: Confirm the enter-state and preview boundary evidence before implementation.`
   - `task.script-editor-city-building-enter-state-and-preview-boundary.implementation: Implement enter-state authoring, default background, locationAccess gates, and the preview frame.`
@@ -155,7 +155,7 @@
 | --- | --- | --- | --- | --- |
 | `task.script-editor-city-building-enter-state-and-preview-boundary.evidence-anchor-reconcile` | `done` | `Confirm enter-state evidence, implementation anchors, acceptance boundary, and minimum verification before code changes.` | `none` | `Source evidence locked the bounded enter-state slice and showed the preview-only boundary is still lawful.` |
 | `task.script-editor-city-building-enter-state-and-preview-boundary.implementation` | `done` | `Implement enter-state authoring, default background, locationAccess gates, and preview-only frame test-first.` | `task.script-editor-city-building-enter-state-and-preview-boundary.evidence-anchor-reconcile` | `RED covered the location access picker contract and empty condition export; GREEN added the dedicated registry, text-backed refusal prompt id, empty condition collapse, runtime refusal text resolution, and picker UI. Verification passed: focused tests, npm run typecheck, npm run lint:blueprints, npm test, and npm run build. Browser proof entered the Script Editor template workspace; deeper city-tab and preview-frame clickthrough remains for closeout guard.` |
-| `task.script-editor-city-building-enter-state-and-preview-boundary.queue-closeout-and-handoff` | `active` | `Verify the bounded slice and return to version review without automatic version closeout.` | `task.script-editor-city-building-enter-state-and-preview-boundary.implementation` | `Keep runtime preview-from-memory or secondary list normalization as separate follow-up truth.` |
+| `task.script-editor-city-building-enter-state-and-preview-boundary.queue-closeout-and-handoff` | `done` | `Verify the bounded slice and return to version review without automatic version closeout.` | `task.script-editor-city-building-enter-state-and-preview-boundary.implementation` | `Completed on 2026-07-19. Guard review passed for source and automated checks. Browser proof reached the Script Editor template workspace and verified city/building 进入条件 authoring controls; runtime preview green-frame browser proof is recorded as inconclusive due stale browser automation session rather than claimed. Secondary list normalization remains a separate candidate.` |
 
 ### Task Definitions
 
@@ -274,7 +274,7 @@
 ##### Control Block
 
 - task_id: `task.script-editor-city-building-enter-state-and-preview-boundary.queue-closeout-and-handoff`
-- state: `active`
+- state: `done`
 - task_kind: `decision-dispatch`
 - scope:
   - `docs/blueprints/queues/script-editor-city-building-enter-state-and-preview-boundary-queue.md`
@@ -303,7 +303,7 @@
 - task_brief:
   - `Verify the bounded enter-state slice and return to version review without automatic version closeout.`
 - task_outcome_summary:
-  - `queued`
+  - `Done. Source guard confirmed city/building 进入条件 tab wiring, text-backed refusal prompt selection, dedicated location-access condition picker controls, empty-condition collapse coverage, runtime preview source path, and preview-only frame markup/styles while preserving EventBindingRuntime semantics. Simulated-human browser proof verified Script Editor template load plus city and building 进入条件 surfaces; runtime preview green-frame browser proof remains inconclusive and is not claimed. Queue returns to version review without version closeout.`
 - Purpose:
   - `Keep the enter-state and preview boundary separated from the later shared list/selector UX queue.`
 - Failure mode:

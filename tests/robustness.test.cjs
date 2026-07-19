@@ -8398,6 +8398,73 @@ test("script editor visual alignment queue paginates secondary record lists at s
   assert.match(scriptEditorCssSource, /c-script-editor-record-pagination__status[\s\S]*white-space:\s*nowrap/);
 });
 
+test("script editor secondary list UX queue exposes search controls for all authoring secondary lists", () => {
+  const mainUiSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    "utf8"
+  );
+
+  for (const family of [
+    "people",
+    "cities",
+    "buildings",
+    "storyNodes",
+    "dialogues",
+    "events",
+    "minigames",
+    "textEntries",
+  ]) {
+    assert.match(
+      mainUiSource,
+      new RegExp(`data-script-editor-record-search-family="${family}"`)
+    );
+  }
+});
+
+test("script editor secondary list UX queue clears current search when adding a record", () => {
+  const mainUiSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    "utf8"
+  );
+
+  assert.match(
+    mainUiSource,
+    /this\.scriptEditorRecordSearch\s*=\s*\{\s*\.\.\.this\.scriptEditorRecordSearch,\s*\[family\]:\s*""[\s\S]*?upsertScriptEditorWorkflowRecord/
+  );
+});
+
+test("script editor selector UX queue replaces project-backed location id text fields with selects", () => {
+  const mainUiSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    "utf8"
+  );
+
+  assert.doesNotMatch(
+    mainUiSource,
+    /type="text"[^>]+data-script-editor-location-field="cityId"/
+  );
+  assert.match(
+    mainUiSource,
+    /<select[^>]+data-script-editor-location-field="cityId"/
+  );
+  assert.doesNotMatch(
+    mainUiSource,
+    /type="text"[^>]+data-script-editor-location-menu-field="targetId"/
+  );
+  assert.match(
+    mainUiSource,
+    /<select[^>]+data-script-editor-location-menu-field="targetId"/
+  );
+  assert.doesNotMatch(
+    mainUiSource,
+    /type="text"[^>]+data-script-editor-building-entry-field="onEnterEventId"/
+  );
+  assert.match(
+    mainUiSource,
+    /<select[^>]+data-script-editor-building-entry-field="onEnterEventId"/
+  );
+});
+
 test("script editor visual alignment queue separates sidebar secondary list and editor stage with borders", () => {
   const scriptEditorCssSource = fs.readFileSync(
     path.join(process.cwd(), "src/styles/script-editor.css"),
