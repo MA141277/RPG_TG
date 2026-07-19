@@ -3,7 +3,6 @@ dist/
 .test-dist/
 .runtime/
 .worktrees/
-dev-server-codex.log
 
 # Local build/package outputs
 release/
@@ -29,7 +28,3 @@ HD2DEG/building/*/normal-top.png
 # Local prototype/export scratch assets
 prototypes/assets/
 tools/noesis-plugins-official/
-dev-server-codex.out.log
-dev-server-codex.out.log
-dev-server-codex.out.log
-dev-server-codex.out.log

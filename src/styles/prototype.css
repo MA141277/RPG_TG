@@ -2287,7 +2287,7 @@
 .view-character-detail {
   position: absolute;
   inset: 0;
-  z-index: calc(var(--z-scene-overlay) + 1);
+  z-index: calc(var(--z-scene-overlay) + 9);
   overflow: hidden;
   display: grid;
   place-items: center;

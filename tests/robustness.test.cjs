@@ -5050,6 +5050,32 @@ test("global NPC interaction main has a generic blocked open guard", () => {
   assert.doesNotMatch(npcTargetBlock, /tea-house|medicine-house|market-house|tavern|leader-residence/);
 });
 
+test("global NPC interaction profile detail renders above NPC choices", () => {
+  const prototypeCss = fs.readFileSync(
+    path.join(process.cwd(), "src", "styles", "prototype.css"),
+    "utf8"
+  );
+  const npcInteractionCss = fs.readFileSync(
+    path.join(process.cwd(), "src", "styles", "npc-interaction.css"),
+    "utf8"
+  );
+  const detailZIndex =
+    prototypeCss.match(
+      /\.view-character-detail\s*\{[\s\S]*?z-index:\s*calc\(var\(--z-scene-overlay\)\s*\+\s*(\d+)\)/
+    )?.[1] ?? null;
+  const npcChoiceZIndex =
+    npcInteractionCss.match(
+      /\.c-npc-interaction-overlay\s*\{[\s\S]*?z-index:\s*calc\(var\(--z-scene-overlay\)\s*\+\s*(\d+)\)/
+    )?.[1] ?? null;
+
+  assert.notEqual(detailZIndex, null);
+  assert.notEqual(npcChoiceZIndex, null);
+  assert.ok(
+    Number(detailZIndex) > Number(npcChoiceZIndex),
+    "Character detail overlay must stack above the NPC choice overlay opened by 角色情报."
+  );
+});
+
 test("global NPC interaction renderer escapes menu text and attributes", () => {
   const {
     renderNpcInteractionMenu,
