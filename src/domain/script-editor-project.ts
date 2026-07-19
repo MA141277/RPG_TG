@@ -140,6 +140,7 @@ export type ScriptEditorAccessRule = {
   conditionExpression?: LocationAccessConditionExpression | undefined;
   blockedReason?: string | undefined;
   blockedMessage?: string | undefined;
+  blockedMessageTextEntryId?: string | undefined;
   blockedSpeakerId?: string | "player" | undefined;
   guidance?: string | undefined;
   refusalEventId?: string | undefined;
@@ -173,6 +174,7 @@ export type ScriptEditorCityRecord = ScriptEditorEntityRecord & {
   name: string;
   regionId?: string;
   mapNodeId?: string;
+  backgroundId?: string;
   houseIds?: string[];
   mountedBuildings?: ScriptEditorCityMountedBuilding[];
   neighbourCityIds?: string[];
@@ -203,6 +205,7 @@ export type ScriptEditorCityMountedBuilding = {
 export type ScriptEditorBuildingRecord = ScriptEditorEntityRecord & {
   cityId: string;
   name: string;
+  backgroundId?: string;
   baseAttributes?: {
     houseType: HouseDefinition["type"];
     activityLocationId?: HouseDefinition["activityLocationId"];

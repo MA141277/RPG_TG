@@ -9036,19 +9036,29 @@ test("script editor person attribute rerenders preserve the horizontal card scro
 });
 
 test(
-  "script editor city/building queue exposes dedicated city and building detail tabs and menu access entrypoints",
+  "script editor city/building queue exposes dedicated city and building detail tabs, base background, and gate entrypoints",
   () => {
     const source = fs.readFileSync("src/ui/main-ui/main-ui-flow.js", "utf8");
     const cssSource = fs.readFileSync("src/styles/script-editor.css", "utf8");
+    const mainUiStyles = fs.readFileSync("src/styles/main-ui.css", "utf8");
 
     assert.doesNotMatch(source, /城市作者面|建筑作者面/);
     assert.match(source, /基础/);
     assert.match(source, /菜单/);
-    assert.match(source, /进入态/);
+    assert.match(source, /进入条件/);
     assert.match(source, /入口/);
+    assert.match(source, /默认背景/);
     assert.match(source, /add-location-menu-entry/);
     assert.match(source, /remove-location-menu-entry/);
     assert.match(source, /data-script-editor-location-access-field/);
+    assert.match(source, /data-script-editor-location-field="backgroundId"/);
+    assert.match(
+      source,
+      /field === "description" \|\|\s+field === "cityId" \|\|\s+field === "backgroundId"/
+    );
+    assert.match(source, /data-script-editor-location-access-field="refusalEventId"/);
+    assert.match(source, /data-script-editor-location-access-field="blockedMessageTextEntryId"/);
+    assert.match(source, /data-script-editor-location-access-condition-action/);
     assert.match(source, /data-script-editor-building-entry-field/);
     assert.match(source, /c-script-editor-record-list__summary/);
     assert.match(source, /SCRIPT_EDITOR_INSPECTOR_SUPPRESS_TEXT/);
@@ -9059,6 +9069,122 @@ test(
     assert.match(cssSource, /\.c-script-editor-location-editor/);
     assert.match(cssSource, /\.c-script-editor-location-menu__item/);
     assert.match(cssSource, /\.c-script-editor-record-list__summary\.is-hidden/);
+    assert.match(mainUiStyles, /\.c-main-ui-runtime-preview-frame/);
+  }
+);
+
+test(
+  "script editor city/building access condition editor exposes runtime-backed picker contract",
+  () => {
+    const source = fs.readFileSync("src/ui/main-ui/main-ui-flow.js", "utf8");
+    const {
+      listScriptEditorLocationAccessConditionFieldOptions,
+    } = require("../.test-dist/application/script-editor/location-access-authoring.js");
+
+    assert.match(
+      source,
+      /renderScriptEditorLocationTabButton\("access", "进入条件"\)/
+    );
+    assert.doesNotMatch(
+      source,
+      /renderScriptEditorLocationTabButton\("access", "进入态"\)/
+    );
+    assert.doesNotMatch(source, />拒绝原因</);
+    assert.doesNotMatch(source, />引导说明</);
+    assert.doesNotMatch(source, />反馈角色</);
+    assert.doesNotMatch(
+      source,
+      /data-script-editor-location-access-field="conditionExpression"[\s\S]*?<textarea/
+    );
+    assert.match(
+      source,
+      /data-script-editor-location-access-field="blockedMessageTextEntryId"/
+    );
+    assert.match(source, /this\.scriptEditorProject\?\.textEntries/);
+    assert.match(source, /data-script-editor-location-access-condition-action/);
+
+    const options = listScriptEditorLocationAccessConditionFieldOptions();
+    assert.deepEqual(
+      [...new Set(options.map((option) => option.family))].sort(),
+      ["player", "targetBuilding", "targetCity", "world"]
+    );
+    assert.equal(options.some((option) => option.family === "payload"), false);
+    assert.equal(options.some((option) => option.family === "resolver"), false);
+    assert.equal(options.some((option) => option.family === "custom"), false);
+    assert.equal(options.some((option) => option.family === "binding-context"), false);
+    assert.equal(
+      options.some(
+        (option) => option.family === "targetCity" && option.fieldId === "prosperity"
+      ),
+      true
+    );
+    assert.equal(
+      options.some(
+        (option) => option.family === "targetBuilding" && option.fieldId === "level"
+      ),
+      true
+    );
+  }
+);
+
+test(
+  "script editor city/building access conditions collapse empty groups and resolve refusal prompt text",
+  () => {
+    const {
+      normalizeScriptEditorCityRecord,
+    } = require("../.test-dist/application/script-editor/city-building-authoring.js");
+    const {
+      exportScriptEditorProjectToScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    const project = createExportableScriptEditorProjectDefinition();
+
+    const normalizedCity = normalizeScriptEditorCityRecord({
+      id: "city.open",
+      name: "Open City",
+      access: {
+        conditionExpression: { type: "all", conditions: [] },
+      },
+    });
+    assert.equal("conditionExpression" in (normalizedCity.access ?? {}), false);
+
+    project.textEntries = [
+      {
+        id: "text.refusal.city",
+        title: "City Refusal",
+        text: "暂时无法进入此城。",
+      },
+    ];
+    project.cities = [
+      {
+        id: "city.open",
+        name: "Open City",
+        access: {
+          conditionExpression: { type: "all", conditions: [] },
+          blockedMessageTextEntryId: "text.refusal.city",
+        },
+      },
+      {
+        id: "city.closed",
+        name: "Closed City",
+        access: {
+          conditionExpression: { type: "literal", value: false },
+          blockedMessageTextEntryId: "text.refusal.city",
+        },
+      },
+    ];
+    project.buildings = [];
+
+    const files = exportScriptEditorProjectToScenarioPackFiles(project);
+    const locationAccess = JSON.parse(files["location-access.json"]);
+
+    assert.equal(
+      locationAccess.some((entry) => entry.targetId === "city.open"),
+      false
+    );
+    assert.equal(locationAccess.length, 1);
+    assert.equal(locationAccess[0].targetId, "city.closed");
+    assert.equal(locationAccess[0].blockedMessage, "暂时无法进入此城。");
+    assert.equal("blockedMessageTextEntryId" in locationAccess[0], false);
   }
 );
 
@@ -9071,6 +9197,7 @@ test(
       normalizeScriptEditorBuildingRecord,
       updateScriptEditorAccessField,
       updateScriptEditorBuildingEntryBindingField,
+      updateScriptEditorBuildingField,
       updateScriptEditorCityField,
       updateScriptEditorMenuEntryField,
       toggleScriptEditorMenuEntryFlag,
@@ -9093,6 +9220,7 @@ test(
       })
     );
     city = updateScriptEditorAccessField(city, "blockedMessage", "暂未开放");
+    city = updateScriptEditorCityField(city, "backgroundId", "chengzhen");
 
     let building = createDefaultScriptEditorBuildingRecord(0, "city.kulan");
     building = updateScriptEditorBuildingEntryBindingField(
@@ -9105,6 +9233,12 @@ test(
       "onEnterEventId",
       "event.enter.market"
     );
+    building = updateScriptEditorBuildingEntryBindingField(
+      building,
+      "returnTarget",
+      "city"
+    );
+    building = updateScriptEditorBuildingField(building, "backgroundId", "zizhai");
 
     const normalizedCity = normalizeScriptEditorBuildingRecord({
       ...building,
@@ -9125,9 +9259,48 @@ test(
       right: { type: "literal", value: "chapter.open" },
     });
     assert.equal(city.access.blockedMessage, "暂未开放");
+    assert.equal(city.backgroundId, "chengzhen");
     assert.equal(normalizedCity.entryBinding.defaultPersonId, "person.host");
     assert.equal(normalizedCity.entryBinding.onEnterEventId, "event.enter.market");
     assert.equal(normalizedCity.cityId, "city.kulan");
+    assert.equal(normalizedCity.backgroundId, "zizhai");
+  }
+);
+
+test(
+  "script editor city/building default background persists through runtime export and import",
+  async () => {
+    const {
+      createDefaultScriptEditorProjectDefinition,
+    } = require("../.test-dist/application/script-editor/minimal-workflow.js");
+    const {
+      exportScriptEditorProjectToScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    const {
+      loadScriptEditorProjectFromScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-import.js");
+
+    const project = createDefaultScriptEditorProjectDefinition();
+    project.cities[0] = {
+      ...project.cities[0],
+      backgroundId: "chengzhen",
+    };
+    project.buildings[0] = {
+      ...project.buildings[0],
+      backgroundId: "zizhai",
+    };
+
+    const files = exportScriptEditorProjectToScenarioPackFiles(project);
+    const cities = JSON.parse(files["cities.json"]);
+    const houses = JSON.parse(files["houses.json"]);
+    assert.equal(cities[0].backgroundId, "chengzhen");
+    assert.equal(houses[0].backgroundId, "zizhai");
+
+    const importedProject = await loadScriptEditorProjectFromScenarioPackFiles(
+      createImportedFilesFromSerializedJsonRecord(files, "backgrounds")
+    );
+    assert.equal(importedProject.cities[0].backgroundId, "chengzhen");
+    assert.equal(importedProject.buildings[0].backgroundId, "zizhai");
   }
 );
 

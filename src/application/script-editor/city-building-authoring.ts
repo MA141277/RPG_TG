@@ -10,6 +10,12 @@ import type {
   ScriptEditorMenuTargetFamily,
 } from "../../domain/script-editor-project";
 import type { HouseDefinition } from "../../domain/house";
+import {
+  appendScriptEditorLocationAccessCondition,
+  normalizeScriptEditorLocationAccessConditionExpression,
+  removeScriptEditorLocationAccessCondition,
+  updateScriptEditorLocationAccessConditionField,
+} from "./location-access-authoring";
 
 export const SCRIPT_EDITOR_CITY_DEFAULT_MENU_FAMILIES = [
   "overview",
@@ -117,6 +123,7 @@ export function normalizeScriptEditorCityRecord(
   return {
     id: city.id,
     name: normalizeString(city.name, city.id),
+    backgroundId: normalizeOptionalString(rawCity.backgroundId),
     ...(normalizeOptionalString(rawCity.regionId).length === 0
       ? {}
       : { regionId: normalizeOptionalString(rawCity.regionId) }),
@@ -146,6 +153,7 @@ export function normalizeScriptEditorBuildingRecord(
     id: building.id,
     cityId: normalizeString(building.cityId, "city.start"),
     name: normalizeString(building.name, building.id),
+    backgroundId: normalizeOptionalString(rawBuilding.backgroundId),
     baseAttributes: normalizeBuildingBaseAttributes(rawBuilding),
     profileMap: normalizeProfileMap(building.profileMap, building.description),
     extendedAttributes: normalizeCustomAttributes(building.extendedAttributes),
@@ -160,7 +168,7 @@ export function normalizeScriptEditorBuildingRecord(
 
 export function updateScriptEditorCityField(
   city: ScriptEditorCityRecord,
-  field: "id" | "name" | "description",
+  field: "id" | "name" | "description" | "backgroundId",
   value: string
 ): ScriptEditorCityRecord {
   if (field === "description") {
@@ -275,7 +283,7 @@ export function updateScriptEditorCityMountedBuildingPrimaryNpc(
 
 export function updateScriptEditorBuildingField(
   building: ScriptEditorBuildingRecord,
-  field: "id" | "cityId" | "name" | "description",
+  field: "id" | "cityId" | "name" | "description" | "backgroundId",
   value: string
 ): ScriptEditorBuildingRecord {
   if (field === "description") {
@@ -421,7 +429,7 @@ export function updateScriptEditorAccessField<
     return {
       ...record,
       access: {
-        ...access,
+        ...omitAccessField(access, "conditionExpression"),
         ...(conditionExpression == null ? {} : { conditionExpression }),
       },
     };
@@ -431,6 +439,62 @@ export function updateScriptEditorAccessField<
     access: {
       ...access,
       [field === "blockedSpeaker" ? "blockedSpeakerId" : field]: value,
+    },
+  };
+}
+
+export function appendScriptEditorAccessCondition<
+  TRecord extends ScriptEditorCityRecord | ScriptEditorBuildingRecord,
+>(record: TRecord): TRecord {
+  const access = normalizeAccessRule(record.access);
+  return {
+    ...record,
+    access: {
+      ...access,
+      conditionExpression: appendScriptEditorLocationAccessCondition(
+        access.conditionExpression
+      ),
+    },
+  };
+}
+
+export function removeScriptEditorAccessCondition<
+  TRecord extends ScriptEditorCityRecord | ScriptEditorBuildingRecord,
+>(record: TRecord, index: number): TRecord {
+  const access = normalizeAccessRule(record.access);
+  const conditionExpression = removeScriptEditorLocationAccessCondition(
+    access.conditionExpression,
+    index
+  );
+  return {
+    ...record,
+    access: {
+      ...omitAccessField(access, "conditionExpression"),
+      ...(conditionExpression == null ? {} : { conditionExpression }),
+    },
+  };
+}
+
+export function updateScriptEditorAccessConditionField<
+  TRecord extends ScriptEditorCityRecord | ScriptEditorBuildingRecord,
+>(
+  record: TRecord,
+  index: number,
+  field: "sourceField" | "operator" | "literalValue",
+  value: string
+): TRecord {
+  const access = normalizeAccessRule(record.access);
+  const conditionExpression = updateScriptEditorLocationAccessConditionField(
+    access.conditionExpression,
+    index,
+    field,
+    value
+  );
+  return {
+    ...record,
+    access: {
+      ...omitAccessField(access, "conditionExpression"),
+      ...(conditionExpression == null ? {} : { conditionExpression }),
     },
   };
 }
@@ -477,6 +541,10 @@ function normalizeAccessRule(access?: ScriptEditorAccessRule): ScriptEditorAcces
     ...(conditionExpression == null ? {} : { conditionExpression }),
     ...pickOptionalString("blockedReason", rawAccess?.blockedReason),
     ...pickOptionalString("blockedMessage", rawAccess?.blockedMessage),
+    ...pickOptionalString(
+      "blockedMessageTextEntryId",
+      rawAccess?.blockedMessageTextEntryId
+    ),
     ...pickOptionalString("blockedSpeakerId", rawAccess?.blockedSpeakerId ?? rawAccess?.blockedSpeaker),
     ...pickOptionalString("guidance", rawAccess?.guidance),
     ...pickOptionalString("refusalEventId", rawAccess?.refusalEventId),
@@ -635,14 +703,7 @@ function normalizeEventBindings(
 function normalizeLocationAccessConditionExpression(
   value: unknown
 ): LocationAccessConditionExpression | undefined {
-  if (value == null || typeof value !== "object" || Array.isArray(value)) {
-    return undefined;
-  }
-  const expression = value as Record<string, unknown>;
-  if (expression.type === "literal" && typeof expression.value === "boolean") {
-    return { type: "literal", value: expression.value };
-  }
-  return value as LocationAccessConditionExpression;
+  return normalizeScriptEditorLocationAccessConditionExpression(value);
 }
 
 function parseLocationAccessConditionExpression(
@@ -657,6 +718,15 @@ function parseLocationAccessConditionExpression(
   } catch {
     return undefined;
   }
+}
+
+function omitAccessField<K extends keyof ScriptEditorAccessRule>(
+  access: ScriptEditorAccessRule,
+  field: K
+): Omit<ScriptEditorAccessRule, K> {
+  const nextAccess = { ...access };
+  delete nextAccess[field];
+  return nextAccess;
 }
 
 function readBackAction(value: unknown): HouseDefinition["backAction"] | undefined {

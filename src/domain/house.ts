@@ -25,6 +25,7 @@ export type HouseDefinition = {
   id: HouseId;
   cityId: string;
   name: string;
+  backgroundId?: string;
   type:
     | "castle"
     | "merchant"

@@ -191,7 +191,7 @@
 - status: `open`
 - severity: `high`
 - classification: `future-target-candidate`
-- proposed_queue: `queue.script-editor-city-building-enter-state-and-list-selector-unification`
+- proposed_queue: `queue.script-editor-city-building-enter-state-and-preview-boundary`
 - owning_queue: `none`
 - admission_status: `not-admitted`
 - latest_disposition: `recorded-only`
@@ -231,6 +231,14 @@
 - Detail-page internal selectors reuse the same UX language and do not feel like a separate ad hoc control style.
 - Simulated-human tests must record every failure, run every case, and rerun from the start after fixes until the entire chain passes without skipping any case.
 - Normal start, JSON runtime pack import, and Script Editor runtime preview must all preserve the same entry and list/selector behavior.
+
+#### Split Outcome
+
+- `queue.script-editor-city-building-enter-state-and-preview-boundary`
+  - Owns city/building enter-state editing, default background, locationAccess-backed gate editing, and the preview-only green border.
+- `queue.script-editor-city-building-secondary-list-and-selector-ux-unification`
+  - Owns shared secondary list/search/add/delete/pagination shells and detail-page selector UX normalization.
+- The original broad draft remains recorded here as the source memo, but the candidate work should now be reasoned about through the two narrower queues above.
 
 
 ### MEMO-011: Entry Shell UI Module Extraction

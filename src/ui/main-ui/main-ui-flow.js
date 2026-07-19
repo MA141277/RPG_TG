@@ -2,6 +2,10 @@ import { applyStaticLayoutBindings } from "../tools/live-layout-bindings";
 import { mountOpeningBackgroundAnimation } from "./opening-background-animation";
 import { resolveCharacterAvatarImageUrl } from "../portrait-assets";
 import {
+  BUILDING_DEFAULT_BACKGROUND_OPTIONS,
+  CITY_DEFAULT_BACKGROUND_OPTIONS,
+} from "../location-backgrounds";
+import {
   createDefaultScriptEditorProjectDefinition,
   createScriptEditorWorkflowRecordDraft,
   getScriptEditorWorkflowVisibleFamilies,
@@ -30,15 +34,18 @@ import {
 import {
   appendScriptEditorCityMountedBuilding,
   appendScriptEditorCityMountedBuildingNpc,
+  appendScriptEditorAccessCondition,
   appendScriptEditorLocationAttribute,
   appendScriptEditorMenuEntry,
   normalizeScriptEditorBuildingRecord,
   normalizeScriptEditorCityRecord,
+  removeScriptEditorAccessCondition,
   removeScriptEditorCityMountedBuilding,
   removeScriptEditorCityMountedBuildingNpc,
   removeScriptEditorLocationAttribute,
   removeScriptEditorMenuEntry,
   toggleScriptEditorMenuEntryFlag,
+  updateScriptEditorAccessConditionField,
   updateScriptEditorAccessField,
   updateScriptEditorBuildingEntryBindingField,
   updateScriptEditorBuildingField,
@@ -49,6 +56,10 @@ import {
   updateScriptEditorLocationAttribute,
   updateScriptEditorMenuEntryField,
 } from "../../application/script-editor/city-building-authoring";
+import {
+  listScriptEditorLocationAccessConditionFieldOptions,
+  readEditableScriptEditorLocationAccessConditions,
+} from "../../application/script-editor/location-access-authoring";
 import {
   appendScriptEditorPersonAttribute,
   appendScriptEditorPersonRelation,
@@ -588,7 +599,7 @@ export class MainUiFlow {
         <canvas class="c-main-ui-opening-background-canvas" aria-hidden="true"></canvas>
         <div class="c-main-ui-main-menu">
           <div class="c-main-ui-main-menu__content">
-            <p class="c-main-ui-main-menu__subtitle">洪武前夜 · 群雄并起</p>
+            <p class="c-main-ui-main-menu__subtitle">洪武前夜 / 群雄并起</p>
             <div class="c-main-ui-main-menu__actions">
           <button
             type="button"
@@ -618,7 +629,8 @@ export class MainUiFlow {
             class="c-main-ui-json-button c-main-ui-json-button--script-editor"
             data-main-ui-action="open-script-editor"
           >
-            剧本编辑器          </button>
+            剧本编辑
+          </button>
             </div>
           </div>
         </div>
@@ -631,7 +643,7 @@ export class MainUiFlow {
       <section class="c-main-ui-screen c-main-ui-screen--scenario-select" aria-label="JSON 开局选择">
         <div class="c-main-ui-scenario-panel">
           <header class="c-main-ui-scenario-panel__header">
-            <p class="c-main-ui-character-detail__eyebrow">模组开局</p>
+            <p class="c-main-ui-character-detail__eyebrow">模块开局</p>
             <h2 class="c-main-ui-scenario-panel__title">读取 JSON 开局</h2>
           </header>
 
@@ -782,8 +794,10 @@ export class MainUiFlow {
   renderRuntimePreviewOverlay() {
     return `
       <section class="c-main-ui-screen c-main-ui-screen--runtime-preview" aria-label="运行预览">
+        <div class="c-main-ui-runtime-preview-frame" aria-hidden="true"></div>
         <button class="c-runtime-preview-exit" type="button" data-script-editor-action="exit-runtime-preview">
-          退出预览        </button>
+          退出预览
+        </button>
       </section>
     `;
   }
@@ -810,7 +824,7 @@ export class MainUiFlow {
       ];
       const characterSelectionOptions = [
         { value: "shell", label: "开局时选择角色" },
-        { value: "fixed", label: "使用默认角色直接开始" },
+        { value: "fixed", label: "使用默认角色直接开局" },
       ];
       const defaultRoleOptions = this.scriptEditorProject.people
         .filter((person) => person.personType === "角色")
@@ -963,7 +977,8 @@ export class MainUiFlow {
           isDeferredFamily
             ? `
               <p class="c-script-editor-editor-card__hint">
-                剧情节点当前仍是受边界约束的占位作者面。可以继续编辑，但在后续队列补齐编译路径前，运行时导出仍会保持失败关闭。              </p>
+                剧情节点当前仍是受边界约束的占位作者面。可以继续编辑，但在后续队列补齐编译路径前，运行时导出仍会保持失败关闭。
+              </p>
             `
             : ""
         }
@@ -1291,7 +1306,7 @@ export class MainUiFlow {
                     class="c-script-editor-form-field__input"
                     type="search"
                     value="${escapeHtml(this.getScriptEditorRecordSearchValue("people"))}"
-                    placeholder="按人物名称/ 身份 / 职位搜索"
+                    placeholder="按人物名、身份 / 职位搜索"
                     data-script-editor-record-search-family="people"
                   />
                 </label>
@@ -1329,7 +1344,8 @@ export class MainUiFlow {
               person == null
                 ? `
                   <p class="c-script-editor-editor-card__hint">
-                    请选择一个人物后继续编辑。人物作者面负责统一人物资料、关系入口和能力绑定，不在这里展开正式对话或事件页。                  </p>
+                    请选择一个人物后继续编辑。人物作者面负责统一人物资料、关系入口和能力绑定，不在这里展开正式对话或事件页。
+                  </p>
                 `
                 : `
                   <template data-script-editor-inspector-header-slot>
@@ -1386,7 +1402,8 @@ export class MainUiFlow {
             <h3 class="c-script-editor-editor-card__title">自定义属性</h3>
           </div>
           <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="add-person-attribute">
-            新增属性          </button>
+            新增属性
+          </button>
         </header>
         <div class="c-script-editor-person-summary__list">
           ${visibleEntries
@@ -1422,7 +1439,7 @@ export class MainUiFlow {
                     class="c-script-editor-form-field__input"
                     type="text"
                     value="${escapeHtml(entry.value)}"
-                    placeholder="属性名"
+                    placeholder="属性值"
                     data-script-editor-person-attribute-field="value"
                     data-script-editor-person-attribute-index="${index}"
                   />
@@ -1506,7 +1523,8 @@ export class MainUiFlow {
           data-script-editor-action="person-attribute-page-prev"
           ${currentPage <= 1 ? "disabled" : ""}
         >
-          上一页        </button>
+          ‹
+        </button>
         <span class="c-script-editor-record-pagination__status">第 ${currentPage} / ${totalPages} 页</span>
         <button
           type="button"
@@ -1514,7 +1532,8 @@ export class MainUiFlow {
           data-script-editor-action="person-attribute-page-next"
           ${currentPage >= totalPages ? "disabled" : ""}
         >
-          下一页        </button>
+          ›
+        </button>
       </nav>
     `;
   }
@@ -1600,7 +1619,7 @@ export class MainUiFlow {
 
         optionsByValue.set(portraitId, {
           value: portraitId,
-          label: `${portraitId} · ${record.name}`,
+          label: `${portraitId} / ${record.name}`,
         });
       });
 
@@ -1679,7 +1698,8 @@ export class MainUiFlow {
       return `
         <section class="c-script-editor-person-panel" aria-label="交易分栏">
           <p class="c-script-editor-editor-card__hint">
-            交易分栏只声明人物是否具备交易能力以及绑定哪个入口，不负责商店库存或价格体系。          </p>
+            交易分栏只声明人物是否具备交易能力以及绑定哪个入口，不负责商店库存或价格体系。
+          </p>
           <label class="c-script-editor-person-editor__toggle">
             <input
               type="checkbox"
@@ -1838,7 +1858,7 @@ export class MainUiFlow {
             ${this.renderScriptEditorSelectOptions(
               definition.enumOptions ?? [],
               value,
-              `未设置{definition.label}`
+              `未设置${definition.label}`
             )}
           </select>
         </label>
@@ -1860,7 +1880,7 @@ export class MainUiFlow {
         <label class="c-script-editor-form-field">
           <span>${escapeHtml(definition.label)}</span>
           <select class="c-script-editor-form-field__input" ${dataAttribute}>
-            ${this.renderScriptEditorSelectOptions(options, value, `未设置{definition.label}`)}
+            ${this.renderScriptEditorSelectOptions(options, value, `未设置${definition.label}`)}
           </select>
         </label>
       `;
@@ -2060,7 +2080,7 @@ export class MainUiFlow {
               location == null
                 ? `
                   <p class="c-script-editor-editor-card__hint">
-                    请选择一个 ${isCityFamily ? "城市" : "建筑"}后继续编辑。该作者面只负责容器、菜单、进入态与入口挂接，不在这里展开正式剧情、对话或事件编辑页。
+                    请选择一个${isCityFamily ? "城市" : "建筑"}后继续编辑。该作者面只负责容器、菜单、进入态与入口挂接，不在这里展开正式剧情、对话或事件编辑项。
                   </p>
                 `
                 : `
@@ -2068,7 +2088,7 @@ export class MainUiFlow {
                     <div class="c-script-editor-location-editor__tabs" role="tablist" aria-label="${isCityFamily ? "城市详情分栏" : "建筑详情分栏"}">
                       ${this.renderScriptEditorLocationTabButton("profile", "基础")}
                       ${this.renderScriptEditorLocationTabButton("menus", "菜单")}
-                      ${this.renderScriptEditorLocationTabButton("access", "进入态")}
+                      ${this.renderScriptEditorLocationTabButton("access", "进入条件")}
                       ${this.renderScriptEditorLocationTabButton("events", "事件")}
                       ${
                         isCityFamily
@@ -2125,12 +2145,29 @@ export class MainUiFlow {
 
   renderScriptEditorLocationProfilePanel(family, location) {
     const isCityFamily = family === "cities";
+    const backgroundOptions = isCityFamily
+      ? CITY_DEFAULT_BACKGROUND_OPTIONS
+      : BUILDING_DEFAULT_BACKGROUND_OPTIONS;
     return `
       <section class="c-script-editor-location-panel" aria-label="${isCityFamily ? "城市基础分栏" : "建筑基础分栏"}">
         <div class="c-script-editor-form-grid">
           <label class="c-script-editor-form-field">
             <span>${isCityFamily ? "城市名称" : "建筑名称"}</span>
             <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(location.name ?? "")}" data-script-editor-location-field="name" />
+          </label>
+          <label class="c-script-editor-form-field">
+            <span>默认背景</span>
+            <select class="c-script-editor-form-field__input" data-script-editor-location-field="backgroundId">
+              ${backgroundOptions
+                .map(
+                  (option) => `
+                    <option value="${escapeHtml(option.value)}" ${option.value === (location.backgroundId ?? "") ? "selected" : ""}>
+                      ${escapeHtml(option.label)}
+                    </option>
+                  `
+                )
+                .join("")}
+            </select>
           </label>
           <label class="c-script-editor-form-field c-script-editor-form-field--wide">
             <span>${isCityFamily ? "城市说明" : "建筑说明"}</span>
@@ -2166,7 +2203,6 @@ export class MainUiFlow {
       </section>
     `;
   }
-
   renderScriptEditorCityMountedBuildingsPanel(city) {
     const mountedBuildings = city.mountedBuildings ?? [];
     const buildingOptions = (this.scriptEditorProject?.buildings ?? []).map((building) =>
@@ -2228,7 +2264,7 @@ export class MainUiFlow {
                       </select>
                     </label>
                     <label class="c-script-editor-form-field">
-                      <span>?NPC</span>
+                      <span>主 NPC</span>
                       <select
                         class="c-script-editor-form-field__input"
                         data-script-editor-city-primary-npc
@@ -2304,7 +2340,8 @@ export class MainUiFlow {
             <h3 class="c-script-editor-editor-card__title">自定义属性</h3>
           </div>
           <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="add-location-attribute">
-            新增属性          </button>
+            新增属性
+          </button>
         </header>
         <div class="c-script-editor-location-menu__list">
           ${entries
@@ -2321,12 +2358,13 @@ export class MainUiFlow {
                       <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(entry.label ?? "")}" data-script-editor-location-attribute-field="label" data-script-editor-location-attribute-index="${index}" />
                     </label>
                     <label class="c-script-editor-form-field c-script-editor-form-field--wide">
-                      <span>属性名</span>
+                      <span>属性值</span>
                       <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(entry.value)}" data-script-editor-location-attribute-field="value" data-script-editor-location-attribute-index="${index}" />
                     </label>
                   </div>
                   <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="remove-location-attribute" data-script-editor-location-attribute-index="${index}">
-                    删除属性                  </button>
+                    删除属性
+                  </button>
                 </article>
               `
             )
@@ -2344,13 +2382,15 @@ export class MainUiFlow {
         <div class="c-script-editor-location-menu__header">
           <div>
             <p class="c-script-editor-editor-card__eyebrow">${isCityFamily ? "城市菜单" : "建筑菜单"}</p>
-            <h3 class="c-script-editor-editor-card__title">${isCityFamily ? "入口绑定型菜单族" : "功能菜单与入口挂接"}</h3>
+            <h3 class="c-script-editor-editor-card__title">${isCityFamily ? "入口绑定型菜单族" : "功能菜单与入口挂载"}</h3>
           </div>
           <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="add-location-menu-entry">
-            新增菜单项          </button>
+            新增菜单项
+          </button>
         </div>
         <p class="c-script-editor-editor-card__hint">
-          菜单项只配置入口名称、所属功能族、绑定目标与可用状态，不在这里展开完整业务逻辑。        </p>
+          菜单项只配置入口名称、所属功能族、绑定目标与可用状态，不在这里展开完整业务逻辑。
+        </p>
         <div class="c-script-editor-location-menu__list">
           ${entries
             .map(
@@ -2358,7 +2398,7 @@ export class MainUiFlow {
                 <article class="c-script-editor-location-menu__item">
                   <div class="c-script-editor-form-grid">
                     <label class="c-script-editor-form-field">
-                      <span>菜单项 ID</span>
+                      <span>菜单 ID</span>
                       <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(entry.id)}" data-script-editor-location-menu-field="id" data-script-editor-location-menu-index="${index}" />
                     </label>
                     <label class="c-script-editor-form-field">
@@ -2400,7 +2440,8 @@ export class MainUiFlow {
                       <span>可用</span>
                     </label>
                     <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="remove-location-menu-entry" data-script-editor-location-menu-index="${index}">
-                      删除菜单项                    </button>
+                      删除菜单项
+                    </button>
                   </div>
                 </article>
               `
@@ -2414,37 +2455,151 @@ export class MainUiFlow {
   renderScriptEditorLocationAccessPanel(location) {
     const access = location.access ?? {
       conditionExpression: null,
-      blockedMessage: "",
-      blockedSpeakerId: "",
-      guidance: "",
+      blockedMessageTextEntryId: "",
+      refusalEventId: "",
     };
-    const accessConditionJson =
-      access.conditionExpression == null
-        ? ""
-        : JSON.stringify(access.conditionExpression, null, 2);
+    const eventOptions = (this.scriptEditorProject?.events ?? []).map((event) => ({
+      value: event.id,
+      label: `${event.title ?? event.name ?? event.id} (${event.id})`,
+    }));
+    const textOptions = (this.scriptEditorProject?.textEntries ?? []).map((entry) => ({
+      value: entry.id,
+      label: `${entry.title ?? entry.name ?? entry.text ?? entry.id} (${entry.id})`,
+    }));
     return `
       <section class="c-script-editor-location-panel" aria-label="进入态分栏">
         <p class="c-script-editor-editor-card__hint">
-          这里配置对象是可进入、可见但暂不可进入，还是当前阶段完全隐藏，并补齐被拦下时的反馈文案。        </p>
+          这里配置对象是可进入、可见但暂不可进入，还是当前阶段完全隐藏，并补齐被拒绝时的反馈文案。
+        </p>
         <div class="c-script-editor-form-grid">
           <label class="c-script-editor-form-field">
-            <span>进入态</span>
-            <textarea class="c-script-editor-record-editor__textarea c-script-editor-record-editor__textarea--compact" data-script-editor-location-access-field="conditionExpression" spellcheck="false">${escapeHtml(accessConditionJson)}</textarea>
+            <span>进入条件</span>
+            ${this.renderScriptEditorLocationAccessConditionEditor(access.conditionExpression)}
           </label>
           <label class="c-script-editor-form-field">
             <span>拒绝提示</span>
-            <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(access.blockedMessage)}" data-script-editor-location-access-field="blockedMessage" />
+            <select class="c-script-editor-form-field__input" data-script-editor-location-access-field="blockedMessageTextEntryId">
+              <option value="">不显示拒绝提示</option>
+              ${textOptions
+                .map(
+                  (entry) => `
+                    <option value="${escapeHtml(entry.value)}" ${entry.value === (access.blockedMessageTextEntryId ?? "") ? "selected" : ""}>
+                      ${escapeHtml(entry.label)}
+                    </option>
+                  `
+                )
+                .join("")}
+            </select>
           </label>
           <label class="c-script-editor-form-field">
-            <span>反馈角色</span>
-            <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(access.blockedSpeakerId ?? "")}" data-script-editor-location-access-field="blockedSpeaker" />
-          </label>
-          <label class="c-script-editor-form-field c-script-editor-form-field--wide">
-            <span>引导说明</span>
-            <textarea class="c-script-editor-record-editor__textarea c-script-editor-record-editor__textarea--compact" data-script-editor-location-access-field="guidance" spellcheck="false">${escapeHtml(access.guidance)}</textarea>
+            <span>拒绝事件</span>
+            <select class="c-script-editor-form-field__input" data-script-editor-location-access-field="refusalEventId">
+              <option value="">未选择拒绝事件</option>
+              ${eventOptions
+                .map(
+                  (event) => `
+                    <option value="${escapeHtml(event.value)}" ${event.value === (access.refusalEventId ?? "") ? "selected" : ""}>
+                      ${escapeHtml(event.label)}
+                    </option>
+                  `
+                )
+                .join("")}
+            </select>
           </label>
         </div>
       </section>
+    `;
+  }
+
+  renderScriptEditorLocationAccessConditionEditor(conditionExpression) {
+    const conditions = readEditableScriptEditorLocationAccessConditions(
+      conditionExpression
+    );
+    const conditionRows =
+      conditions.length === 0
+        ? `<p class="c-script-editor-editor-card__hint">未设置条件，运行时默认允许进入。</p>`
+        : conditions
+            .map((condition, index) =>
+              this.renderScriptEditorLocationAccessConditionRow(condition, index)
+            )
+            .join("");
+    return `
+      <div class="c-script-editor-location-access-condition">
+        <div class="c-script-editor-location-access-condition__rows">
+          ${conditionRows}
+        </div>
+        <div class="c-script-editor-record-editor__actions">
+          <button type="button" class="c-script-editor-record-editor__action" data-script-editor-action="add-location-access-condition" data-script-editor-location-access-condition-action="add">添加条件</button>
+          <button type="button" class="c-script-editor-record-editor__action" data-script-editor-action="clear-location-access-conditions" data-script-editor-location-access-condition-action="clear">清空条件</button>
+        </div>
+      </div>
+    `;
+  }
+
+  renderScriptEditorLocationAccessConditionRow(condition, index) {
+    const options = listScriptEditorLocationAccessConditionFieldOptions();
+    const compareCondition =
+      condition.type === "compare"
+        ? condition
+        : {
+            type: "compare",
+            left: { type: "field", subject: "world", fieldId: "chapterId" },
+            operator: "equals",
+            right: { type: "literal", value: "" },
+          };
+    const selectedField =
+      compareCondition.left?.type === "field"
+        ? `${compareCondition.left.subject}:${compareCondition.left.fieldId}`
+        : "world:chapterId";
+    const selectedOption =
+      options.find((option) => `${option.family}:${option.fieldId}` === selectedField) ??
+      options[0];
+    const literalValue =
+      compareCondition.right?.type === "literal" && compareCondition.right.value != null
+        ? String(compareCondition.right.value)
+        : "";
+    const valueControl =
+      selectedOption.valueType === "boolean"
+        ? `<select class="c-script-editor-form-field__input" data-script-editor-location-access-condition-index="${index}" data-script-editor-location-access-condition-field="literalValue">
+            <option value="true" ${literalValue === "true" ? "selected" : ""}>是</option>
+            <option value="false" ${literalValue === "false" ? "selected" : ""}>否</option>
+          </select>`
+        : `<input class="c-script-editor-form-field__input" type="${selectedOption.valueType === "number" ? "number" : "text"}" value="${escapeHtml(literalValue)}" data-script-editor-location-access-condition-index="${index}" data-script-editor-location-access-condition-field="literalValue" />`;
+    return `
+      <div class="c-script-editor-location-access-condition__row">
+        <select class="c-script-editor-form-field__input" data-script-editor-location-access-condition-index="${index}" data-script-editor-location-access-condition-field="sourceField">
+          ${options
+            .map((option) => {
+              const optionValue = `${option.family}:${option.fieldId}`;
+              return `
+                <option value="${escapeHtml(optionValue)}" ${optionValue === selectedField ? "selected" : ""}>
+                  ${escapeHtml(option.label)}
+                </option>
+              `;
+            })
+            .join("")}
+        </select>
+        <select class="c-script-editor-form-field__input" data-script-editor-location-access-condition-index="${index}" data-script-editor-location-access-condition-field="operator">
+          ${[
+            ["equals", "等于"],
+            ["not-equals", "不等于"],
+            ["greater-than", "大于"],
+            ["greater-than-or-equal", "大于等于"],
+            ["less-than", "小于"],
+            ["less-than-or-equal", "小于等于"],
+            ["includes", "包含"],
+            ["exists", "存在"],
+          ]
+            .map(
+              ([value, label]) => `
+                <option value="${value}" ${value === compareCondition.operator ? "selected" : ""}>${label}</option>
+              `
+            )
+            .join("")}
+        </select>
+        ${valueControl}
+        <button type="button" class="c-script-editor-record-editor__action" data-script-editor-action="remove-location-access-condition" data-script-editor-location-access-condition-action="remove" data-script-editor-location-access-condition-index="${index}">移除</button>
+      </div>
     `;
   }
 
@@ -2458,7 +2613,7 @@ export class MainUiFlow {
     return `
       <section class="c-script-editor-location-panel" aria-label="建筑入口分栏">
         <p class="c-script-editor-editor-card__hint">
-          建筑入口挂接只声明默认落点和进入/离开事件引用，不在这里展开正式事件编辑页。
+          建筑入口挂接只声明默认落点和进入/离开事件引用，不在这里展开正式事件编辑项。
         </p>
         <div class="c-script-editor-form-grid">
           <label class="c-script-editor-form-field">
@@ -2593,7 +2748,7 @@ export class MainUiFlow {
             <!-- SCRIPT_EDITOR_INSPECTOR_SUPPRESS_TEXT -->
             ${
               dialogue == null
-                ? `<p class="c-script-editor-editor-card__hint">请选择一个对话后继续编辑。当前作者面只负责演出结构、参与人物和后续动作入口，不在这里落 minigame ?runtime 机制。</p>`
+                ? `<p class="c-script-editor-editor-card__hint">请选择一个对话后继续编辑。当前作者面只负责演出结构、参与人物和后续动作入口，不在这里落 minigame / runtime 机制。</p>`
                 : `
                   <template data-script-editor-inspector-header-slot>
                     <div class="c-script-editor-narrative-editor__tabs" role="tablist" aria-label="对话详情分栏">
@@ -2733,12 +2888,12 @@ export class MainUiFlow {
             <!-- SCRIPT_EDITOR_INSPECTOR_SUPPRESS_TEXT -->
             ${
               minigame == null
-                ? `<p class="c-script-editor-editor-card__hint">请选择一个玩法绑定后继续编辑。当前作者面只负责 binding、trigger 和settlement 配置，不在这里落 playable runtime 机制。</p>`
+                ? `<p class="c-script-editor-editor-card__hint">请选择一个玩法绑定后继续编辑。当前作者面只负责 binding、trigger 和 settlement 配置，不在这里落 playable runtime 机制。</p>`
                 : `
                   <template data-script-editor-inspector-header-slot>
                     <div class="c-script-editor-minigame-editor__tabs" role="tablist" aria-label="玩法绑定详情分栏">
                       ${this.renderScriptEditorMinigameTabButton("basics", "基础信息")}
-                      ${this.renderScriptEditorMinigameTabButton("launch", "触发与调用")}
+                      ${this.renderScriptEditorMinigameTabButton("launch", "触发与调度")}
                       ${this.renderScriptEditorMinigameTabButton("settlement", "结算与返回")}
                       ${this.renderScriptEditorMinigameTabButton("references", "引用关系")}
                       ${this.renderScriptEditorMinigameTabButton("events", "事件")}
@@ -2817,7 +2972,8 @@ export class MainUiFlow {
       return `
         <section class="c-script-editor-narrative-panel" aria-label="剧情摘要分栏">
           <p class="c-script-editor-editor-card__hint">
-            当前剧情属于章节 ${escapeHtml(storyNode.chapterId ?? "未设置")}，推进策略为 ${escapeHtml(storyNode.progressMode ?? "block")}。这里先收口为组织摘要，后续预览链路由更后面的队列承接。          </p>
+            当前剧情属于章节 ${escapeHtml(storyNode.chapterId ?? "未设置")}，推进策略为 ${escapeHtml(storyNode.progressMode ?? "block")}。这里先收口为组织摘要，后续预览链路由后续队列承接。
+          </p>
           <div class="c-script-editor-shell__cards">
             ${this.renderScriptEditorOverviewCard("人物归属", `已关联 ${storyNode.relatedPersonIds?.length ?? 0} 个人物。`, "neutral")}
             ${this.renderScriptEditorOverviewCard("对话归属", `已关联 ${storyNode.relatedDialogueIds?.length ?? 0} 段对话。`, "neutral")}
@@ -2995,11 +3151,12 @@ export class MainUiFlow {
       return `
         <section class="c-script-editor-narrative-panel" aria-label="对话预览分栏">
           <p class="c-script-editor-editor-card__hint">
-            这里先提供 bounded 摘要预览：节点数 ${dialogue.nodes?.length ?? 0}，参与人物 ${dialogue.participantPersonIds?.length ?? 0}，后续动作 ${dialogue.followUps?.length ?? 0}。真正演出预览与跳转校验由后续更深的预览队列承接。          </p>
+            这里先提供 bounded 摘要预览：节点数 ${dialogue.nodes?.length ?? 0}，参与人物 ${dialogue.participantPersonIds?.length ?? 0}，后续动作 ${dialogue.followUps?.length ?? 0}。真正演出预览与跳转校验由后续更深的预览队列承接。
+          </p>
           <div class="c-script-editor-shell__cards">
-            ${this.renderScriptEditorOverviewCard("节点顺序", `当前有 ${dialogue.nodes?.length ?? 0} 个节点。`, "neutral")}
-            ${this.renderScriptEditorOverviewCard("人物参与", `当前有 ${dialogue.participantPersonIds?.length ?? 0} 个参与人物。`, "neutral")}
-            ${this.renderScriptEditorOverviewCard("后续动作", `当前有 ${dialogue.followUps?.length ?? 0} 条去向。`, "neutral")}
+            ${this.renderScriptEditorOverviewCard("节点顺序", `当前 ${dialogue.nodes?.length ?? 0} 个节点。`, "neutral")}
+            ${this.renderScriptEditorOverviewCard("人物参与", `当前 ${dialogue.participantPersonIds?.length ?? 0} 个参与人物。`, "neutral")}
+            ${this.renderScriptEditorOverviewCard("后续动作", `当前 ${dialogue.followUps?.length ?? 0} 条去向。`, "neutral")}
           </div>
         </section>
       `;
@@ -3082,7 +3239,7 @@ export class MainUiFlow {
       value: entry.id,
       label:
         typeof entry.text === "string" && entry.text.length > 0
-          ? `${entry.id} · ${entry.text.slice(0, 32)}`
+          ? `${entry.id} / ${entry.text.slice(0, 32)}`
           : entry.id,
     }));
   }
@@ -3127,7 +3284,6 @@ export class MainUiFlow {
       label: labelsByFamily[family] ?? family,
     }));
   }
-
   createScriptEditorEventDestinationTargetOptions(family) {
     const project = this.scriptEditorProject ?? {
       people: [],
@@ -3353,7 +3509,7 @@ export class MainUiFlow {
         minigame.playableId
       );
       return `
-        <section class="c-script-editor-minigame-panel" aria-label="玩法绑定触发与调用分栏">
+        <section class="c-script-editor-minigame-panel" aria-label="玩法绑定触发与调度分栏">
           <div class="c-script-editor-form-grid">
             <label class="c-script-editor-form-field">
               <span>玩法原型</span>
@@ -3515,7 +3671,7 @@ export class MainUiFlow {
           </div>
           <div class="c-script-editor-minigame-list">
             ${references.length === 0
-              ? `<p class="c-script-editor-editor-card__hint">当前还没有 dialogue、event 和 location menu 指向这个玩法绑定。</p>`
+              ? `<p class="c-script-editor-editor-card__hint">当前还没有 dialogue、event 或 location menu 指向这个玩法绑定。</p>`
               : references
                   .map(
                     (reference) => `
@@ -3941,7 +4097,7 @@ export class MainUiFlow {
         )
       )
       .map((dialogue) => ({
-        label: `Dialogue · ${dialogue.title || dialogue.id}`,
+        label: `Dialogue / ${dialogue.title || dialogue.id}`,
         summary: `${dialogue.id} follow-up -> ${minigameId}`,
       }));
 
@@ -3952,7 +4108,7 @@ export class MainUiFlow {
           eventRecord.destination?.targetId === minigameId
       )
       .map((eventRecord) => ({
-        label: `Event · ${eventRecord.title || eventRecord.id}`,
+        label: `Event / ${eventRecord.title || eventRecord.id}`,
         summary: `${eventRecord.id} destination -> ${minigameId}`,
       }));
 
@@ -3964,7 +4120,7 @@ export class MainUiFlow {
               entry.targetFamily === "minigame" && entry.targetId === minigameId
           )
           .map((entry) => ({
-            label: `Location Menu · ${location.name || location.id}`,
+            label: `Location Menu / ${location.name || location.id}`,
             summary: `${location.id}:${entry.id} -> ${minigameId}`,
           }))
       );
@@ -4082,7 +4238,7 @@ export class MainUiFlow {
       [person.personType, person.title, person.occupation]
         .filter((value) => typeof value === "string" && value.trim().length > 0)
         .slice(0, 2)
-        .join(" · ") || "待补人物设定"
+        .join(" / ") || "待补人物设定"
     );
   }
 
@@ -4105,19 +4261,19 @@ export class MainUiFlow {
     return (
       [storyNode.chapterId, storyNode.progressMode]
         .filter((value) => typeof value === "string" && value.trim().length > 0)
-        .join(" · ") || "待补剧情组织信息"
+        .join(" / ") || "待补剧情组织信息"
     );
   }
 
   describeScriptEditorDialogueListSummary(dialogue) {
-    return `参与人物 ${dialogue.participantPersonIds?.length ?? 0} · 节点 ${dialogue.nodes?.length ?? 0}`;
+    return `参与人物 ${dialogue.participantPersonIds?.length ?? 0} / 节点 ${dialogue.nodes?.length ?? 0}`;
   }
 
   describeScriptEditorEventListSummary(eventRecord) {
     return (
       [eventRecord.destination?.family, eventRecord.destination?.targetId]
         .filter((value) => typeof value === "string" && value.trim().length > 0)
-        .join(" · ") || "待补事件去向"
+        .join(" / ") || "待补事件去向"
     );
   }
 
@@ -4125,7 +4281,7 @@ export class MainUiFlow {
     return (
       [minigame.playableId, minigame.triggerSource]
         .filter((value) => typeof value === "string" && value.trim().length > 0)
-        .join(" · ") || "待补玩法绑定信息"
+        .join(" / ") || "待补玩法绑定信息"
     );
   }
 
@@ -4154,7 +4310,7 @@ export class MainUiFlow {
     }
 
     return `
-      <section class="c-script-editor-shell__notice-rail" aria-label="操作记录">
+        <section class="c-script-editor-shell__notice-rail" aria-label="操作记录">
         <header class="c-script-editor-shell__notice-header">
           <p class="c-script-editor-shell__handoff-eyebrow">操作记录</p>
           <span>按最近操作时间排序</span>
@@ -4232,21 +4388,23 @@ export class MainUiFlow {
               <h2 class="c-script-editor-editor-card__title">当前还没有可继续的项目</h2>
             </div>
             <p class="c-script-editor-landing__description">
-              这一阶段将项目选择与当前项目编辑拆开处理。先创建、打开或导入项目，再进入工作台继续编辑。            </p>
+              这一阶段将项目选择与当前项目编辑拆开处理。先创建、打开或导入项目，再进入工作台继续编辑。
+            </p>
           </header>
         </section>
       `;
     }
 
     return `
-      <section class="c-script-editor-project-library" aria-label="项目选择与管理">
+        <section class="c-script-editor-project-library" aria-label="项目选择与管理">
         <header class="c-script-editor-project-library__header">
           <div>
             <p class="c-script-editor-landing__eyebrow">项目选择与管理</p>
             <h2 class="c-script-editor-editor-card__title">从项目列表继续进入工作台</h2>
           </div>
           <p class="c-script-editor-landing__description">
-            这里仅负责选择、继续编辑和删除项目，不在入口页展开对象族编辑，保持与当前蓝图队列一致。          </p>
+            这里只负责选择、继续编辑和删除项目，不在入口页展开对象族编辑，保持与当前蓝图队列一致。
+          </p>
         </header>
         <div class="c-script-editor-project-library__grid">
           ${projectLibraryEntries
@@ -4358,15 +4516,16 @@ export class MainUiFlow {
               <p class="c-main-ui-character-layout__poem">
                 大明开国人物传<br />
                 选定出战人物后，<br />
-                便从这卷风云中启程。              </p>
+                便从这卷风云中启程。
+              </p>
             </div>
           </aside>
 
           <div class="c-main-ui-character-book">
             <div class="c-main-ui-character-book__tabs" aria-hidden="true">
-              <span class="c-main-ui-book-tab c-main-ui-book-tab--characters is-active">人物卷</span>
-              <span class="c-main-ui-book-tab c-main-ui-book-tab--roster">群雄录</span>
-              <span class="c-main-ui-book-tab c-main-ui-book-tab--ministers">名臣谱</span>
+              <span class="c-main-ui-book-tab c-main-ui-book-tab--characters is-active">人物</span>
+              <span class="c-main-ui-book-tab c-main-ui-book-tab--roster">群雄</span>
+              <span class="c-main-ui-book-tab c-main-ui-book-tab--ministers">名录</span>
             </div>
 
             <div class="c-main-ui-character-book__content">
@@ -4462,7 +4621,7 @@ export class MainUiFlow {
           <p class="c-main-ui-character-card__meta">${escapeHtml(subtitle)}</p>
           <h2 class="c-main-ui-character-card__name">${escapeHtml(character.name)}</h2>
           <p class="c-main-ui-character-card__bio">
-            ${escapeHtml(character.biography ?? "简介待补充。")}
+            ${escapeHtml(character.biography ?? "简介待补充")}
           </p>
         </div>
       </button>
@@ -4491,7 +4650,7 @@ export class MainUiFlow {
         <div class="c-main-ui-character-detail__paper">
           <div class="c-main-ui-character-detail__header">
             <div>
-              <p class="c-main-ui-character-detail__eyebrow">人物详情 · 当前已选</p>
+              <p class="c-main-ui-character-detail__eyebrow">人物详情 / 当前已选</p>
               <h2 class="c-main-ui-character-detail__name">${renderCharacterDetailTransitionText(
                 character.name,
                 previousCharacter?.name
@@ -4520,7 +4679,7 @@ export class MainUiFlow {
             <h3 class="c-main-ui-character-detail__section-title">人物简介</h3>
             <p class="c-main-ui-character-detail__bio">
               ${renderCharacterDetailTransitionText(
-                character.biography ?? "人物介绍待补充。",
+                character.biography ?? "人物介绍待补充",
                 previousCharacter?.biography ?? "",
                 { block: true }
               )}
@@ -5039,7 +5198,8 @@ export class MainUiFlow {
         field === "id" ||
         field === "name" ||
         field === "description" ||
-        field === "cityId"
+        field === "cityId" ||
+        field === "backgroundId"
       ) {
         this.applyScriptEditorLocationField(field, target.value);
       }
@@ -5151,16 +5311,35 @@ export class MainUiFlow {
     if (target.matches("[data-script-editor-location-access-field]")) {
       const field = target.dataset.scriptEditorLocationAccessField;
       if (
-        field === "blockedMessage" ||
-        field === "blockedSpeaker" ||
-        field === "guidance" ||
+        field === "blockedMessageTextEntryId" ||
+        field === "refusalEventId" ||
         field === "conditionExpression"
       ) {
         this.applyScriptEditorLocationAccessField(field, target.value);
       }
       return;
     }
-
+    if (target.matches("[data-script-editor-location-access-condition-field]")) {
+      const index = Number.parseInt(
+        target.dataset.scriptEditorLocationAccessConditionIndex ?? "-1",
+        10
+      );
+      const field = target.dataset.scriptEditorLocationAccessConditionField;
+      if (
+        Number.isInteger(index) &&
+        index >= 0 &&
+        (field === "sourceField" ||
+          field === "operator" ||
+          field === "literalValue")
+      ) {
+        this.applyScriptEditorLocationAccessConditionField(
+          index,
+          field,
+          target.value
+        );
+      }
+      return;
+    }
     if (target.matches("[data-script-editor-building-entry-field]")) {
       const field = target.dataset.scriptEditorBuildingEntryField;
       if (
@@ -5187,6 +5366,25 @@ export class MainUiFlow {
       const family = target.dataset.scriptEditorRecordSearchFamily;
       if (family != null) {
         this.setScriptEditorRecordSearchValue(family, target.value);
+      }
+    }
+
+    if (target.matches("[data-script-editor-location-access-condition-field]")) {
+      const index = Number.parseInt(
+        target.dataset.scriptEditorLocationAccessConditionIndex ?? "-1",
+        10
+      );
+      const field = target.dataset.scriptEditorLocationAccessConditionField;
+      if (
+        Number.isInteger(index) &&
+        index >= 0 &&
+        field === "literalValue"
+      ) {
+        this.applyScriptEditorLocationAccessConditionField(
+          index,
+          field,
+          target.value
+        );
       }
     }
   }
@@ -5411,6 +5609,10 @@ export class MainUiFlow {
     const locationTab = actionElement?.dataset.scriptEditorLocationTab ?? null;
     const locationMenuIndex = Number.parseInt(
       actionElement?.dataset.scriptEditorLocationMenuIndex ?? "-1",
+      10
+    );
+    const locationAccessConditionIndex = Number.parseInt(
+      actionElement?.dataset.scriptEditorLocationAccessConditionIndex ?? "-1",
       10
     );
     const narrativeTab = actionElement?.dataset.scriptEditorNarrativeTab ?? null;
@@ -5684,6 +5886,26 @@ export class MainUiFlow {
     if (action === "remove-location-menu-entry") {
       if (Number.isInteger(locationMenuIndex) && locationMenuIndex >= 0) {
         this.removeScriptEditorLocationMenuEntry(locationMenuIndex);
+      }
+      return;
+    }
+
+    if (action === "add-location-access-condition") {
+      this.addScriptEditorLocationAccessCondition();
+      return;
+    }
+
+    if (action === "clear-location-access-conditions") {
+      this.clearScriptEditorLocationAccessConditions();
+      return;
+    }
+
+    if (action === "remove-location-access-condition") {
+      if (
+        Number.isInteger(locationAccessConditionIndex) &&
+        locationAccessConditionIndex >= 0
+      ) {
+        this.removeScriptEditorLocationAccessCondition(locationAccessConditionIndex);
       }
       return;
     }
@@ -6341,7 +6563,7 @@ export class MainUiFlow {
       this.syncScriptEditorRecordListPageToRecord(family, parsed.id, nextRecords);
       this.recordScriptEditorNotice({
         tone: "success",
-        message: `已将 JSON 修改应用到 ${this.getScriptEditorFamilyLabel(family)}?${parsed.id}。`,
+        message: `已将 JSON 修改应用到${this.getScriptEditorFamilyLabel(family)}：${parsed.id}。`,
       });
     } catch (error) {
       this.recordScriptEditorNotice({
@@ -7183,9 +7405,11 @@ export class MainUiFlow {
     }
 
     if (this.scriptEditorSelection.family === "cities") {
-      this.replaceSelectedScriptEditorLocation(
-        updateScriptEditorCityField(location, field === "cityId" ? "name" : field, value)
-      );
+      if (field === "id" || field === "name" || field === "description" || field === "backgroundId") {
+        this.replaceSelectedScriptEditorLocation(
+          updateScriptEditorCityField(location, field, value)
+        );
+      }
       return;
     }
 
@@ -7193,14 +7417,14 @@ export class MainUiFlow {
       field === "id" ||
       field === "cityId" ||
       field === "name" ||
-      field === "description"
+      field === "description" ||
+      field === "backgroundId"
     ) {
       this.replaceSelectedScriptEditorLocation(
         updateScriptEditorBuildingField(location, field, value)
       );
     }
   }
-
   applyScriptEditorLocationMenuField(index, field, value) {
     const location = this.getSelectedScriptEditorLocation();
     if (location == null) {
@@ -7381,6 +7605,50 @@ export class MainUiFlow {
 
     this.replaceSelectedScriptEditorLocation(
       updateScriptEditorAccessField(location, field, value)
+    );
+  }
+
+  addScriptEditorLocationAccessCondition() {
+    const location = this.getSelectedScriptEditorLocation();
+    if (location == null) {
+      return;
+    }
+
+    this.replaceSelectedScriptEditorLocation(
+      appendScriptEditorAccessCondition(location)
+    );
+  }
+
+  removeScriptEditorLocationAccessCondition(index) {
+    const location = this.getSelectedScriptEditorLocation();
+    if (location == null) {
+      return;
+    }
+
+    this.replaceSelectedScriptEditorLocation(
+      removeScriptEditorAccessCondition(location, index)
+    );
+  }
+
+  clearScriptEditorLocationAccessConditions() {
+    const location = this.getSelectedScriptEditorLocation();
+    if (location == null) {
+      return;
+    }
+
+    this.replaceSelectedScriptEditorLocation(
+      updateScriptEditorAccessField(location, "conditionExpression", "")
+    );
+  }
+
+  applyScriptEditorLocationAccessConditionField(index, field, value) {
+    const location = this.getSelectedScriptEditorLocation();
+    if (location == null) {
+      return;
+    }
+
+    this.replaceSelectedScriptEditorLocation(
+      updateScriptEditorAccessConditionField(location, index, field, value)
     );
   }
 

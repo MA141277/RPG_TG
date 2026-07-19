@@ -19,6 +19,7 @@ import type {
   ScriptEditorPersonRecord,
   ScriptEditorProjectDefinition,
   ScriptEditorRuntimeRecord,
+  ScriptEditorTextEntryRecord,
 } from "../../domain/script-editor-project";
 import { normalizeScriptEditorBuildingRecord } from "./city-building-authoring";
 import { normalizeScriptEditorCityRecord } from "./city-building-authoring";
@@ -55,7 +56,7 @@ export function materializeScriptEditorCityBuildingRuntimeFamilies(
       project.houseAccessRefusalRules,
       buildings
     ),
-    locationAccess: materializeLocationAccess(cities, buildings),
+    locationAccess: materializeLocationAccess(cities, buildings, project.textEntries),
   };
 }
 
@@ -72,6 +73,7 @@ function materializeCities(
     return {
       id: city.id,
       name: city.name,
+      backgroundId: readString(city.backgroundId),
       regionId: readString(city.regionId) || "region.default",
       mapNodeId: readString(city.mapNodeId) || city.id,
       houseIds:
@@ -144,6 +146,7 @@ function materializeHouses(
       id: building.id,
       cityId: mountedBuilding?.cityId ?? building.cityId,
       name: building.name,
+      backgroundId: readString(building.backgroundId),
       type: readHouseType(baseAttributes.houseType),
       characterIds: assignedPersonIds,
       defaultCharacterId: defaultPersonId.length > 0 ? defaultPersonId : null,
@@ -456,18 +459,26 @@ function indexMountedBuildings(
 
 function materializeLocationAccess(
   cities: readonly ScriptEditorCityRecord[],
-  buildings: readonly ScriptEditorBuildingRecord[]
+  buildings: readonly ScriptEditorBuildingRecord[],
+  textEntries: readonly ScriptEditorTextEntryRecord[]
 ): LocationAccessDefinition[] {
   return [
     ...cities.flatMap((city) =>
-      materializeLocationAccessDefinition("city", city.id, city.name, city.access)
+      materializeLocationAccessDefinition(
+        "city",
+        city.id,
+        city.name,
+        city.access,
+        textEntries
+      )
     ),
     ...buildings.flatMap((building) =>
       materializeLocationAccessDefinition(
         "building",
         building.id,
         building.name,
-        building.access
+        building.access,
+        textEntries
       )
     ),
   ];
@@ -477,11 +488,13 @@ function materializeLocationAccessDefinition(
   targetFamily: LocationAccessTargetFamily,
   targetId: string,
   _targetName: string,
-  access: ScriptEditorAccessRule | undefined
+  access: ScriptEditorAccessRule | undefined,
+  textEntries: readonly ScriptEditorTextEntryRecord[]
 ): LocationAccessDefinition[] {
   if (access?.conditionExpression == null) {
     return [];
   }
+  const blockedMessage = resolveAccessBlockedMessage(access, textEntries);
 
   return [
     {
@@ -490,12 +503,32 @@ function materializeLocationAccessDefinition(
       targetId,
       conditionExpression: access.conditionExpression,
       ...pickOptionalString("blockedReason", access.blockedReason),
-      ...pickOptionalString("blockedMessage", access.blockedMessage),
+      ...pickOptionalString("blockedMessage", blockedMessage),
       ...pickOptionalString("blockedSpeakerId", access.blockedSpeakerId),
       ...pickOptionalString("guidance", access.guidance),
       ...pickOptionalString("refusalEventId", access.refusalEventId),
     },
   ];
+}
+
+function resolveAccessBlockedMessage(
+  access: ScriptEditorAccessRule,
+  textEntries: readonly ScriptEditorTextEntryRecord[]
+): string | undefined {
+  const textEntryId = access.blockedMessageTextEntryId?.trim() ?? "";
+  if (textEntryId.length > 0) {
+    const textEntry = textEntries.find((entry) => entry.id === textEntryId);
+    if (textEntry?.text != null && textEntry.text.length > 0) {
+      return textEntry.text;
+    }
+    const rawTextEntry = textEntry as
+      | (ScriptEditorTextEntryRecord & { body?: unknown; title?: unknown })
+      | undefined;
+    if (typeof rawTextEntry?.body === "string" && rawTextEntry.body.length > 0) {
+      return rawTextEntry.body;
+    }
+  }
+  return access.blockedMessage;
 }
 
 function isAlwaysBlockedAccess(access: ScriptEditorAccessRule): boolean {

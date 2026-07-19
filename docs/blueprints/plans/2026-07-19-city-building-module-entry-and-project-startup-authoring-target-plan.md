@@ -5,24 +5,24 @@
 - document_role: `version-governor`
 - version_id: `target.city-building-module-entry-and-project-startup-authoring`
 - version_status: `open`
-- active_phase: `phase.promotion-review`
-- active_queue: `none`
-- decision_state: `promotion-review`
-- next_decision: `same-version-admission-or-version-closeout`
-- next_action: `return-to-promotion-review`
-- resume_gate: `promotion-review`
+- active_phase: `phase.execution`
+- active_queue: `queue.script-editor-city-building-enter-state-and-preview-boundary`
+- decision_state: `active-execution`
+- next_decision: `queue-closeout-or-return-to-version-review`
+- next_action: `resume-active-queue`
+- resume_gate: `open-active-queue`
 - post_queue_closeout_pause_policy: `auto-continue`
-- promotion_review_result: `queue-closeout-complete`
+- promotion_review_result: `none`
 - review_subject_id: `none`
 - review_subject_classification: `none`
 - proposed_queue_id: `none`
 - review_basis: `none`
 - admission_status: `none`
-- intake_status: `candidate-recorded`
-- intake_item_id: `item.city-building-module-entry-and-project-startup-authoring`
-- intake_summary: `Promote Script Editor 项目信息 startup controls and separate CityModule/BuildingModule entry boundaries into an admitted queue.`
-- intake_result: `promoted-to-admission`
-- intake_feedback_mode: `fixed-receipt`
+- intake_status: `none`
+- intake_item_id: `none`
+- intake_summary: `none`
+- intake_result: `none`
+- intake_feedback_mode: `none`
 - closure_review_subject: `none`
 - closure_review_status: `none`
 - residue_candidate_id: `none`
@@ -33,11 +33,15 @@
 - blocked_by: []
 - candidate_queue_ids:
   - `queue.city-building-module-entry-and-project-startup-authoring`
-  - `queue.script-editor-city-building-enter-state-and-list-selector-unification`
+  - `queue.script-editor-city-building-enter-state-and-preview-boundary`
+  - `queue.script-editor-city-building-secondary-list-and-selector-ux-unification`
+  - `queue.script-editor-ui-encoding-integrity-guard`
 - candidate_backlog_refresh_status: `fresh`
 - candidate_backlog_snapshot:
   - `queue.city-building-module-entry-and-project-startup-authoring`
-  - `queue.script-editor-city-building-enter-state-and-list-selector-unification`
+  - `queue.script-editor-city-building-enter-state-and-preview-boundary`
+  - `queue.script-editor-city-building-secondary-list-and-selector-ux-unification`
+  - `queue.script-editor-ui-encoding-integrity-guard`
 - candidate_backlog_scan_sources:
   - `project-progress`
   - `blueprint`
@@ -64,8 +68,8 @@
   - `The current event-runtime hardening version has no active queue and the candidate is broader than event-runtime cleanup, so it is promoted into this successor version rather than being absorbed into the old queue.`
 - Activation conclusion:
   - `target.city-building-module-entry-and-project-startup-authoring is the active version.`
-  - `queue.city-building-module-entry-and-project-startup-authoring is admitted as the active queue.`
-  - `The active task is project-info-authoring; business implementation has not started in that task.`
+  - `queue.script-editor-city-building-enter-state-and-preview-boundary is admitted as the active queue.`
+  - `The active task is task.script-editor-city-building-enter-state-and-preview-boundary.queue-closeout-and-handoff after implementation finished; queue closeout has not been executed yet.`
 
 ### Version Lifecycle Rules
 
@@ -122,21 +126,27 @@
 | Candidate ID | Last Classification | Proposed Queue | Latest Disposition | Recheck Trigger | Acceptance Refs | Implementation Anchors | Can Claim | Cannot Claim | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | `item.city-building-module-entry-and-project-startup-authoring` | `queue-candidate` | `queue.city-building-module-entry-and-project-startup-authoring` | `admitted` | `evidence-anchor reconcile proves the queue must split before implementation` | `ACC-CITY-BUILDING-STARTUP-001..005` | `src/application/script-editor/workspace-shell.ts; src/domain/script-editor-project.ts; src/application/script-editor/runtime-pack-export.ts; src/application/scenario/scenario-pack-loader.ts; startup coordinator; city runtime/presenter/view modules; building runtime/presenter/view modules; tests/**; browser simulated-human flow` | `ACC-CITY-BUILDING-STARTUP-001..005` | `none` | `Admitted on 2026-07-19 after the operator approved the requirement draft and asked to continue by Blueprint rules.` |
-| `item.script-editor-city-building-enter-state-and-list-selector-unification` | `future-target-candidate` | `queue.script-editor-city-building-enter-state-and-list-selector-unification` | `recorded-only` | `if later evidence shows the enter-state surface must split from shared list/selector UX` | `ACC-CITY-BUILDING-ENTER-STATE-001..008` | `src/ui/main-ui/main-ui-flow.js; src/ui/views/script-editor/**; src/application/script-editor/**; src/application/location-access/**; src/application/city/**; src/application/building/**; tests/**; browser simulated-human flow` | `city/building enter-state editing; locationAccess-backed gate editing; preview-only green frame; shared list/search/add/delete/pagination shell; selector UX normalization` | `a narrowed preview-only or selector-only slice; any claim that city/building enter-state, list/search, and selector UX are all already fully admitted` | `Recorded from MEMO-013 as a broad future target candidate that may need to be split before admission.` |
+| `item.script-editor-city-building-enter-state-and-preview-boundary` | `future-target-candidate` | `queue.script-editor-city-building-enter-state-and-preview-boundary` | `recorded-only` | `if later evidence shows enter-state authoring and runtime preview framing should split further` | `ACC-CITY-BUILDING-ENTER-STATE-001..005` | `src/ui/main-ui/main-ui-flow.js; src/ui/views/script-editor/**; src/application/script-editor/**; src/application/location-access/**; src/application/city/**; src/application/building/**; tests/**; browser simulated-human flow` | `city/building enter-state editing; base info default background; locationAccess-backed gate editing; preview-only green frame` | `secondary list/search/add/delete/pagination shells; detail-page selector normalization` | `Split from MEMO-013 after the broad draft proved too wide for one lawful queue boundary.` |
+| `item.script-editor-city-building-secondary-list-and-selector-ux-unification` | `future-target-candidate` | `queue.script-editor-city-building-secondary-list-and-selector-ux-unification` | `recorded-only` | `if later evidence shows list/search shells and selector normalization should split further` | `ACC-CITY-BUILDING-ENTER-STATE-006..008` | `src/ui/main-ui/main-ui-flow.js; src/ui/views/script-editor/**; src/application/script-editor/**; tests/**; browser simulated-human flow` | `city/building/story/dialogue/event/playable/text secondary list/search/add/delete/list/pagination shells; detail-page selector UX normalization` | `enter-state authoring; locationAccess gate editing; preview-only frame` | `Split from MEMO-013 after the broad draft proved too wide for one lawful queue boundary.` |
+| `item.script-editor-ui-encoding-integrity-guard` | `future-target-candidate` | `queue.script-editor-ui-encoding-integrity-guard` | `recorded-only` | `if critical script-editor or main-ui source files again show mojibake, invalid JS syntax from encoding damage, or browser smoke finds Chinese UI text corruption` | `ACC-ENCODING-GUARD-001..005` | `src/ui/main-ui/main-ui-flow.js; src/ui/views/script-editor/script-editor-workspace-view.ts; tests/robustness.test.cjs; browser simulated-human flow` | `ACC-ENCODING-GUARD-001..005` | `repo-wide feature redesign; unrelated gameplay/runtime work` | `Recorded from the operator's requirement to prevent future encoding corruption in critical Script Editor/UI sources and to require real browser evidence for Chinese UI surfaces.` |
 
 ### Queue Promotion Ledger
 
 | Queue ID | Current Disposition | Promote When | Notes |
 | --- | --- | --- | --- |
-| `queue.city-building-module-entry-and-project-startup-authoring` | `active` | `acceptance-and-guard is the active task.` | `Evidence-anchor reconcile, project-info-authoring, city-building-module-entry, and runtime-startup-convergence are complete; next work is source guard and simulated-human acceptance.` |
-| `queue.script-editor-city-building-enter-state-and-list-selector-unification` | `future-target-candidate` | `version review confirms the broad draft should be split or admitted as the next lawful same-version queue` | `The draft spans enter-state authoring, locationAccess gate editing, preview-only framing, and cross-family selector/list UX; keep it recorded-only until the queue boundary is narrowed or explicitly admitted.` |
+| `queue.city-building-module-entry-and-project-startup-authoring` | `done` | `acceptance-and-guard is complete.` | `Evidence-anchor reconcile, project-info-authoring, city-building-module-entry, runtime-startup-convergence, and acceptance-and-guard are complete; the queue is closed and the version remains open for later candidate review.` |
+| `queue.script-editor-city-building-enter-state-and-preview-boundary` | `future-target-candidate` | `version review confirms the enter-state and preview-boundary slice is still a lawful same-version candidate` | `Keeps enter-state authoring, base background, locationAccess gates, and runtime preview framing together as one narrower candidate.` |
+| `queue.script-editor-city-building-secondary-list-and-selector-ux-unification` | `future-target-candidate` | `version review confirms the secondary list and selector UX slice is still a lawful same-version candidate` | `Keeps shared list/search/add/delete/pagination shells and detail-page selector normalization together as one narrower candidate.` |
+| `queue.script-editor-ui-encoding-integrity-guard` | `recorded-only` | `version review confirms the source-encoding guard and mojibake-prevention slice is still a lawful same-version candidate` | `Keeps critical UI source-text integrity checks, browser smoke coverage, and encoding-corruption failure guards together as one bounded candidate.` |
 
 ### Candidate Evidence Matrix
 
 | Queue ID | Source Docs | Acceptance Refs | Implementation Anchors | Legacy Paths To Replace | Compatibility Paths To Preserve | Reject Or Split If |
 | --- | --- | --- | --- | --- | --- | --- |
 | `queue.city-building-module-entry-and-project-startup-authoring` | `operator-approved draft on 2026-07-19; prior city/building definition convergence; map/review provider-boundary closeout evidence` | `ACC-CITY-BUILDING-STARTUP-001..005` | `src/application/script-editor/workspace-shell.ts; src/domain/script-editor-project.ts; src/application/script-editor/runtime-pack-export.ts; src/application/scenario/scenario-pack-loader.ts; startup coordinator; city runtime/presenter/view modules; building runtime/presenter/view modules; tests/**; browser simulated-human flow` | `fixed startup assumptions; project overview without top-bar return; direct city/building startup shortcuts; one-off main.ts branches if found` | `EventBindingRuntime semantics; map provider contract; review provider contract; city/building relations; existing city/building content and mounted building behavior` | `Evidence shows startup authoring, city module extraction, and building module extraction must be split into separate queues before implementation.` |
-| `queue.script-editor-city-building-enter-state-and-list-selector-unification` | `MEMO-013 on 2026-07-19; city/building enter-state and selector/list UX draft` | `ACC-CITY-BUILDING-ENTER-STATE-001..008` | `src/ui/main-ui/main-ui-flow.js; src/ui/views/script-editor/**; src/application/script-editor/**; src/application/location-access/**; src/application/city/**; src/application/building/**; tests/**; browser simulated-human flow` | `hardcoded enter-state tabs without editable controls; default-background text fields without structured base-info support; locationAccess gate authoring without aligned runtime meaning; preview-only framing without a runtime boundary; fragmented list/search/add/delete/pagination shells; ad hoc selector UX on detail pages` | `CityModule/BuildingModule entry contracts; scenario-pack export/load/startup semantics; EventBindingRuntime semantics; existing city/building relations; existing map/review provider contracts` | `Split if the preview-only framing, enter-state authoring, and list/selector UX prove too broad for one lawful queue boundary.` |
+| `queue.script-editor-city-building-enter-state-and-preview-boundary` | `MEMO-013 on 2026-07-19; split from broad city/building enter-state and list/search draft` | `ACC-CITY-BUILDING-ENTER-STATE-001..005` | `src/ui/main-ui/main-ui-flow.js; src/ui/views/script-editor/**; src/application/script-editor/**; src/application/location-access/**; src/application/city/**; src/application/building/**; tests/**; browser simulated-human flow` | `hardcoded enter-state tabs without editable controls; default-background text fields without structured base-info support; locationAccess gate authoring without aligned runtime meaning; preview-only framing without a runtime boundary` | `CityModule/BuildingModule entry contracts; scenario-pack export/load/startup semantics; EventBindingRuntime semantics; existing city/building relations; existing map/review provider contracts` | `Split if preview-only framing proves narrower than enter-state authoring or if list/selector UX must be handled separately.` |
+| `queue.script-editor-city-building-secondary-list-and-selector-ux-unification` | `MEMO-013 on 2026-07-19; split from broad city/building enter-state and list/search draft` | `ACC-CITY-BUILDING-ENTER-STATE-006..008` | `src/ui/main-ui/main-ui-flow.js; src/ui/views/script-editor/**; src/application/script-editor/**; tests/**; browser simulated-human flow` | `fragmented list/search/add/delete/pagination shells; ad hoc selector UX on detail pages` | `city/building enter-state authoring; locationAccess gate authoring; preview-only runtime frame` | `Split if selector UX still needs a different boundary from the secondary list shells.` |
+| `queue.script-editor-ui-encoding-integrity-guard` | `operator draft on 2026-07-19; observed mojibake and encoding-corruption fallout in critical Script Editor and main UI source files` | `ACC-ENCODING-GUARD-001..005` | `src/ui/main-ui/main-ui-flow.js; src/ui/views/script-editor/script-editor-workspace-view.ts; tests/robustness.test.cjs; browser simulated-human flow` | `mojibake-corrupted UI strings; encoding-breakable write paths; test suites that only pass logic without checking rendered Chinese text` | `normal Chinese UI rendering; Script Editor navigation; existing robustness tests; existing browser smoke paths` | `Split if the guard must widen into a repo-wide charset migration or a separate editor encoding tool.` |
 
 ### Acceptance Coverage Ledger
 
@@ -147,20 +157,24 @@
 | `ACC-CITY-BUILDING-STARTUP-003` | `queue.city-building-module-entry-and-project-startup-authoring` | `pending` | `pending` | `none recorded` |
 | `ACC-CITY-BUILDING-STARTUP-004` | `queue.city-building-module-entry-and-project-startup-authoring` | `pending` | `pending` | `none recorded` |
 | `ACC-CITY-BUILDING-STARTUP-005` | `queue.city-building-module-entry-and-project-startup-authoring` | `pending` | `pending` | `none recorded` |
-| `ACC-CITY-BUILDING-ENTER-STATE-001` | `queue.script-editor-city-building-enter-state-and-list-selector-unification` | `pending` | `pending` | `none recorded` |
-| `ACC-CITY-BUILDING-ENTER-STATE-002` | `queue.script-editor-city-building-enter-state-and-list-selector-unification` | `pending` | `pending` | `none recorded` |
-| `ACC-CITY-BUILDING-ENTER-STATE-003` | `queue.script-editor-city-building-enter-state-and-list-selector-unification` | `pending` | `pending` | `none recorded` |
-| `ACC-CITY-BUILDING-ENTER-STATE-004` | `queue.script-editor-city-building-enter-state-and-list-selector-unification` | `pending` | `pending` | `none recorded` |
-| `ACC-CITY-BUILDING-ENTER-STATE-005` | `queue.script-editor-city-building-enter-state-and-list-selector-unification` | `pending` | `pending` | `none recorded` |
-| `ACC-CITY-BUILDING-ENTER-STATE-006` | `queue.script-editor-city-building-enter-state-and-list-selector-unification` | `pending` | `pending` | `none recorded` |
-| `ACC-CITY-BUILDING-ENTER-STATE-007` | `queue.script-editor-city-building-enter-state-and-list-selector-unification` | `pending` | `pending` | `none recorded` |
-| `ACC-CITY-BUILDING-ENTER-STATE-008` | `queue.script-editor-city-building-enter-state-and-list-selector-unification` | `pending` | `pending` | `none recorded` |
+| `ACC-CITY-BUILDING-ENTER-STATE-001` | `queue.script-editor-city-building-enter-state-and-preview-boundary` | `pending` | `pending` | `none recorded` |
+| `ACC-CITY-BUILDING-ENTER-STATE-002` | `queue.script-editor-city-building-enter-state-and-preview-boundary` | `pending` | `pending` | `none recorded` |
+| `ACC-CITY-BUILDING-ENTER-STATE-003` | `queue.script-editor-city-building-enter-state-and-preview-boundary` | `pending` | `pending` | `none recorded` |
+| `ACC-CITY-BUILDING-ENTER-STATE-004` | `queue.script-editor-city-building-enter-state-and-preview-boundary` | `pending` | `pending` | `none recorded` |
+| `ACC-CITY-BUILDING-ENTER-STATE-005` | `queue.script-editor-city-building-enter-state-and-preview-boundary` | `pending` | `pending` | `none recorded` |
+| `ACC-CITY-BUILDING-ENTER-STATE-006` | `queue.script-editor-city-building-secondary-list-and-selector-ux-unification` | `pending` | `pending` | `none recorded` |
+| `ACC-CITY-BUILDING-ENTER-STATE-007` | `queue.script-editor-city-building-secondary-list-and-selector-ux-unification` | `pending` | `pending` | `none recorded` |
+| `ACC-CITY-BUILDING-ENTER-STATE-008` | `queue.script-editor-city-building-secondary-list-and-selector-ux-unification` | `pending` | `pending` | `none recorded` |
 
 ### Progress Log
 
-- `2026-07-19`: `Created target.city-building-module-entry-and-project-startup-authoring as a successor version after pushing prior event-runtime/city-context work to origin/mod-first-dev. Admitted queue.city-building-module-entry-and-project-startup-authoring as the active queue from the operator-approved draft. Active task is evidence-anchor reconcile; no business implementation has started.`
+- `2026-07-19`: `Created target.city-building-module-entry-and-project-startup-authoring as a successor version after pushing prior event-runtime/city-context work to origin/mod-first-dev. The active queue is now queue.script-editor-city-building-enter-state-and-preview-boundary from the operator-approved split draft, the evidence lock has been recorded, and the active task is implementation.`
 - `2026-07-19`: `Completed task.city-building-module-entry-and-project-startup-authoring.evidence-anchor-reconcile. Source review confirmed Script Editor already has a project overview surface and scenarioProfile launchPolicy/initialLocation fields, but creator UI still exposes startup values mainly as text/system fields rather than 项目信息 selectors. ScenarioProfile supports characterSelection shell/fixed, initialView, playerCharacterId, mapId, cityId, houseId, and view; ViewName uses house for the runtime building view. Default role sourcing should filter ScriptEditorPersonRecord.personType == 角色. Normal start, JSON import, and runtime preview all route through scenario pack export/load/startup seams, while runtime preview uses current in-memory project export. Evidence found no prerequisite split before project-info-authoring; active task is now project-info-authoring.`
 - `2026-07-19`: `Completed task.city-building-module-entry-and-project-startup-authoring.project-info-authoring. RED covered the 项目信息 toolbar entry, project-backed startup selectors, default role filtering from personType == 角色, and the initialView selector writing both launchPolicy.initialView and initialLocation.view for runtime export compatibility. GREEN added the 项目信息 action, selector-backed project overview startup controls, and multi-field startup mapping. Verification passed: focused robustness test, npm run typecheck, npm run lint:blueprints, and npm test. Active task is now city-building-module-entry.`
 - `2026-07-19`: `Completed task.city-building-module-entry-and-project-startup-authoring.city-building-module-entry. RED required separate city and building entry/render seams. GREEN added application/city/city-module-entry.ts, application/building/building-module-entry.ts, ui/views/city/city-module-view.ts, and ui/views/building/building-module-view.ts, then routed stage-presenters and app-render through them while preserving existing city, city-underlay, and house-module behavior. Verification passed: focused robustness tests, npm run typecheck, npm run lint:blueprints, and npm test. Active task is now runtime-startup-convergence.`
 - `2026-07-19`: `Completed task.city-building-module-entry-and-project-startup-authoring.runtime-startup-convergence. RED covered scenario profile export/loader preservation for concrete scene startup targets and shared startup target resolution for direct map, city, house, and scene starts. GREEN added application/startup/scenario-startup-target.ts, preserved optional initialLocation.sceneId through runtime export and scenario loader validation, and routed main.ts scenario app-state creation through the shared resolver. Verification passed: focused tests, npm run typecheck, npm run lint:blueprints, and npm test. Active task is now acceptance-and-guard.`
+- `2026-07-19`: `Completed task.city-building-module-entry-and-project-startup-authoring.acceptance-and-guard and synchronized queue closeout. Source guards and simulated-human acceptance passed for the supported startup controls and module entry seams, the queue is done, and the version remains open for later candidate review rather than version closeout.`
 - `2026-07-19`: `Recorded MEMO-013 as the future-target candidate queue.script-editor-city-building-enter-state-and-list-selector-unification. The draft spans city/building enter-state authoring, locationAccess-backed gate editing, preview-only runtime framing, and shared list/selector UX across several editor families, so it remains recorded-only until the boundary is narrowed or explicitly admitted.`
+- `2026-07-19`: `Split MEMO-013 into two narrower future-target candidates: queue.script-editor-city-building-enter-state-and-preview-boundary and queue.script-editor-city-building-secondary-list-and-selector-ux-unification. The first keeps enter-state authoring, default background, locationAccess-backed gates, and preview framing together; the second keeps the shared secondary list and selector UX normalization together.`
+- `2026-07-19`: `Recorded queue.script-editor-ui-encoding-integrity-guard as a new future-target candidate from the operator's draft about preventing future mojibake/encoding corruption in Script Editor and main UI sources. The candidate is recorded-only for now; later admission would need source-text integrity guards and browser smoke proof around rendered Chinese UI surfaces.`
+- `2026-07-19`: `Completed task.script-editor-city-building-enter-state-and-preview-boundary.implementation. RED covered the location access picker contract and empty condition export. GREEN added a dedicated location-access authoring registry, text-backed refusal prompt selection, empty condition collapse, runtime blockedMessage resolution, the 进入条件 tab label, and picker add/remove/clear controls while preserving EventBindingRuntime semantics. Verification passed: focused tests, npm run typecheck, npm run lint:blueprints, npm test, and npm run build. Browser proof entered the Script Editor template workspace; explicit city/building tab and preview green-frame clickthrough remains for the active queue-closeout guard.`
