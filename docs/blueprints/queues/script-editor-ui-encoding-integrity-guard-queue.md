@@ -7,23 +7,23 @@
 - blueprint_version: `2026.07`
 - governance_last_synced_at: `2026-07-19`
 - governance_sync_source: `docs/blueprints/plans/2026-07-19-city-building-module-entry-and-project-startup-authoring-target-plan.md`
-- queue_status: `active`
+- queue_status: `done`
 - queue_class: `future-target-candidate`
-- active_task: `task.script-editor-ui-encoding-integrity-guard.queue-closeout-and-handoff`
-- next_task: `version-promotion-review`
-- closeout_status: `pending`
+- active_task: `none`
+- next_task: `none`
+- closeout_status: `done`
 - execution_closeout_status: `done`
-- topic_closure_status: `open-residue`
-- closure_basis: `none`
+- topic_closure_status: `closed`
+- closure_basis: `bounded source guard, automated verification, and browser smoke evidence`
 - residue_remaining: `no`
 - residue_family: `none`
 - residue_routing_status: `none`
 - next_family_candidate: `none`
 - auto_continue_eligible: `false`
 - next_effect: `none`
-- sync_status: `pending`
+- sync_status: `success`
 - sync_scope: `local-record`
-- sync_summary: `Encoding guard implementation is local and verified; repository sync is pending queue closeout.`
+- sync_summary: `Implementation commit 36c51a17 was pushed to origin/mod-first-dev before queue closeout; closeout record is local pending repository sync.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
@@ -126,7 +126,7 @@
 - task_count: `3`
 - completed_task_count: `2`
 - remaining_task_count: `1`
-- active_task_summary: `Close out the bounded encoding guard queue and return to version review without version closeout.`
+- active_task_summary: `none`
 - task_briefs:
   - `task.script-editor-ui-encoding-integrity-guard.evidence-anchor-reconcile: Confirm current encoding-risk surfaces, existing coverage, and bounded guard approach.`
   - `task.script-editor-ui-encoding-integrity-guard.implementation: Implement source/browser encoding guards test-first without widening into unrelated UI/runtime work.`
@@ -144,7 +144,7 @@
 | --- | --- | --- | --- | --- |
 | `task.script-editor-ui-encoding-integrity-guard.evidence-anchor-reconcile` | `done` | `Confirm current encoding-risk surfaces, existing coverage, and bounded guard approach.` | `none` | `Locked on 2026-07-19. Critical source surfaces are valid now, but there is no dedicated bounded encoding/mojibake guard or browser Chinese-render smoke proof.` |
 | `task.script-editor-ui-encoding-integrity-guard.implementation` | `done` | `Implement source/browser encoding guards test-first without widening into unrelated UI/runtime work.` | `task.script-editor-ui-encoding-integrity-guard.evidence-anchor-reconcile` | `RED failed on missing tools/check-ui-encoding-integrity.mjs. GREEN added lint:encoding, the bounded guard tool, and robustness tests for clean source and mojibake rejection.` |
-| `task.script-editor-ui-encoding-integrity-guard.queue-closeout-and-handoff` | `active` | `Verify the queue and return to version review without version closeout.` | `task.script-editor-ui-encoding-integrity-guard.implementation` | `Automated verification passed. Browser smoke confirmed main menu and Script Editor landing Chinese text render without mojibake; workspace rendered-source coverage is automated, and full workspace browser traversal remains closeout evidence to record if available.` |
+| `task.script-editor-ui-encoding-integrity-guard.queue-closeout-and-handoff` | `done` | `Verify the queue and return to version review without version closeout.` | `task.script-editor-ui-encoding-integrity-guard.implementation` | `Completed on 2026-07-19. Guard review passed for bounded critical source coverage, mojibake fixture rejection, package script exposure, runtime semantics preservation, and Blueprint sync. Browser smoke confirmed main menu and Script Editor landing Chinese text render without mojibake; workspace Chinese labels are covered by the source guard. The queue is closed and the version remains open for same-version promotion/admission review.` |
 
 ### Task Definitions
 
@@ -252,7 +252,7 @@
 ##### Control Block
 
 - task_id: `task.script-editor-ui-encoding-integrity-guard.queue-closeout-and-handoff`
-- state: `active`
+- state: `done`
 - task_kind: `decision-dispatch`
 - scope:
   - `docs/blueprints/queues/script-editor-ui-encoding-integrity-guard-queue.md`
@@ -281,7 +281,7 @@
 - task_brief:
   - `Verify the encoding guard slice and return to version review without automatic version closeout.`
 - task_outcome_summary:
-  - `queued`
+  - `Queue closed after automated guard review and browser smoke evidence. The closeout does not enter version closeout.`
 - Purpose:
   - `Avoid claiming encoding safety without both source and browser evidence.`
 - Failure mode:

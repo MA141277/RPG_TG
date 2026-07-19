@@ -6,11 +6,11 @@
 - version_id: `target.city-building-module-entry-and-project-startup-authoring`
 - version_status: `open`
 - active_phase: `phase.execution`
-- active_queue: `queue.script-editor-ui-encoding-integrity-guard`
-- decision_state: `active-execution`
-- next_decision: `queue-closeout-or-return-to-version-review`
-- next_action: `resume-active-queue`
-- resume_gate: `open-active-queue`
+- active_queue: `none`
+- decision_state: `idle-open`
+- next_decision: `same-version-admission-or-version-closeout`
+- next_action: `return-to-promotion-review`
+- resume_gate: `version-review`
 - post_queue_closeout_pause_policy: `auto-continue`
 - promotion_review_result: `none`
 - review_subject_id: `none`
@@ -70,8 +70,8 @@
   - `target.city-building-module-entry-and-project-startup-authoring is the active version.`
   - `queue.script-editor-city-building-enter-state-and-preview-boundary is closed after queue closeout/handoff.`
   - `queue.script-editor-city-building-secondary-list-and-selector-ux-unification is closed after queue closeout/handoff.`
-  - `queue.script-editor-ui-encoding-integrity-guard is active after same-version promotion/admission review.`
-  - `The version remains open and must not enter version closeout until this active queue is closed and a later explicit closeout review is requested.`
+  - `queue.script-editor-ui-encoding-integrity-guard is closed after queue closeout/handoff.`
+  - `The version remains open with active_queue none for same-version promotion/admission review or later explicit version closeout review.`
 
 ### Version Lifecycle Rules
 
@@ -139,7 +139,7 @@
 | `queue.city-building-module-entry-and-project-startup-authoring` | `done` | `acceptance-and-guard is complete.` | `Evidence-anchor reconcile, project-info-authoring, city-building-module-entry, runtime-startup-convergence, and acceptance-and-guard are complete; the queue is closed and the version remains open for later candidate review.` |
 | `queue.script-editor-city-building-enter-state-and-preview-boundary` | `done` | `closed` | `Closed on 2026-07-19 after source guard, automated verification, and partial simulated-human browser proof. Runtime preview green-frame browser proof is recorded as inconclusive rather than claimed.` |
 | `queue.script-editor-city-building-secondary-list-and-selector-ux-unification` | `done` | `closed` | `Closed on 2026-07-19 after guard review, automated verification, and bounded browser simulated-human evidence.` |
-| `queue.script-editor-ui-encoding-integrity-guard` | `active` | `evidence-anchor-reconcile is complete` | `Admitted on 2026-07-19. Keeps critical UI source-text integrity checks, browser smoke coverage, and encoding-corruption failure guards together as one bounded active queue.` |
+| `queue.script-editor-ui-encoding-integrity-guard` | `done` | `closed` | `Closed on 2026-07-19 after bounded source guard implementation, automated verification, and browser smoke evidence for main menu and Script Editor landing Chinese rendering.` |
 
 ### Candidate Evidence Matrix
 
@@ -188,3 +188,4 @@
 - `2026-07-19`: `Promotion/admission review admitted queue.script-editor-ui-encoding-integrity-guard as the new active queue after queue.script-editor-city-building-secondary-list-and-selector-ux-unification closed. The first active task is evidence-anchor-reconcile; implementation has not started.`
 - `2026-07-19`: `Completed task.script-editor-ui-encoding-integrity-guard.evidence-anchor-reconcile. Source review confirmed src/ui/main-ui/main-ui-flow.js is syntactically valid, the locked critical source files do not contain typical mojibake markers, and existing robustness tests assert some Chinese Script Editor labels. Evidence also found no dedicated bounded source/browser encoding guard yet, so the active task is now implementation.`
 - `2026-07-19`: `Completed task.script-editor-ui-encoding-integrity-guard.implementation. RED failed on the missing check-ui-encoding-integrity tool. GREEN added npm run lint:encoding, a bounded critical-source encoding guard, and robustness tests that pass the current critical Chinese UI surfaces while rejecting a generated mojibake fixture. Verification passed: npm run lint:encoding, focused tests, npm run typecheck, npm run lint:blueprints, and npm test. Browser smoke confirmed the main menu and Script Editor landing page render Chinese without mojibake; full workspace browser traversal remains for queue closeout evidence if available. Active task is now queue-closeout-and-handoff.`
+- `2026-07-19`: `Completed task.script-editor-ui-encoding-integrity-guard.queue-closeout-and-handoff. Guard review passed for bounded source coverage, mojibake rejection, package script exposure, runtime semantics preservation, and Blueprint sync. Browser smoke confirmed main menu and Script Editor landing page Chinese rendering without mojibake; workspace labels remain protected by source guard coverage. The queue is closed, active_queue is none, and the version remains open for same-version promotion/admission review rather than version closeout.`
