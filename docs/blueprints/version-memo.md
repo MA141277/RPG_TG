@@ -151,13 +151,13 @@
 
 ### MEMO-012: Script Editor City And Building Background Authoring
 
-- status: `open`
+- status: `closed`
 - severity: `medium`
 - classification: `future-target-candidate`
 - proposed_queue: `queue.script-editor-city-building-background-authoring`
-- owning_queue: `none`
-- admission_status: `not-admitted`
-- latest_disposition: `recorded-only`
+- owning_queue: `queue.script-editor-city-building-background-authoring`
+- admission_status: `admitted-and-closed`
+- latest_disposition: `closed-with-city-building-background-authoring-queue`
 - affected_families:
   - `script editor city authoring`
   - `script editor building authoring`
@@ -243,13 +243,13 @@
 
 ### MEMO-011: Entry Shell UI Module Extraction
 
-- status: `open`
+- status: `closed`
 - severity: `medium`
 - classification: `future-target-candidate`
 - proposed_queue: `queue.entry-shell-ui-module-extraction`
 - owning_queue: `queue.entry-shell-ui-module-extraction`
-- admission_status: `admitted`
-- latest_disposition: `admitted-to-successor-version`
+- admission_status: `admitted-and-closed`
+- latest_disposition: `closed-with-successor-version`
 - affected_families:
   - `entry shell`
   - `main menu`
@@ -293,7 +293,7 @@
 
 - This is not part of `target.script-editor-event-runtime-production-hardening`.
 - Do not admit while an unrelated active queue is open.
-- Promoted on 2026-07-19 into successor version `target.entry-shell-ui-module-extraction` and active queue `queue.entry-shell-ui-module-extraction`.
+- Promoted on 2026-07-19 into successor version `target.entry-shell-ui-module-extraction` and active queue `queue.entry-shell-ui-module-extraction`; closed after that queue completed and version closeout was recorded.
 
 ### MEMO-008: Event Trigger Dispatch And Person Event Bindings Need Separate Condition Ownership
 

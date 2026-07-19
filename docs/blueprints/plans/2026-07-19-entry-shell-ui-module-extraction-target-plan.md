@@ -4,14 +4,14 @@
 
 - document_role: `version-governor`
 - version_id: `target.entry-shell-ui-module-extraction`
-- version_status: `open`
-- active_phase: `phase.promotion-review`
+- version_status: `done`
+- active_phase: `phase.version-closed`
 - active_queue: `none`
-- decision_state: `promotion-review`
-- next_decision: `same-version-admission-or-version-closeout`
-- next_action: `return-to-promotion-review`
-- resume_gate: `promotion-review`
-- post_queue_closeout_pause_policy: `auto-continue`
+- decision_state: `closed`
+- next_decision: `version-closeout`
+- next_action: `write-version-closeout`
+- resume_gate: `closed-version-record`
+- post_queue_closeout_pause_policy: `pause-when-explicitly-requested`
 - promotion_review_result: `queue-closeout-complete`
 - review_subject_id: `none`
 - review_subject_classification: `none`
@@ -23,19 +23,18 @@
 - intake_summary: `none`
 - intake_result: `none`
 - intake_feedback_mode: `none`
-- closure_review_subject: `none`
-- closure_review_status: `none`
+- closure_review_subject: `target.entry-shell-ui-module-extraction`
+- closure_review_status: `routed`
 - residue_candidate_id: `none`
 - residue_candidate_family: `none`
-- routing_basis: `none`
+- routing_basis: `final-closeout-no-residue`
 - next_lawful_queue_recommendation: `none`
 - auto_admission_ready: `false`
 - blocked_by: []
 - candidate_queue_ids:
   - `queue.entry-shell-ui-module-extraction`
 - candidate_backlog_refresh_status: `fresh`
-- candidate_backlog_snapshot:
-  - `queue.entry-shell-ui-module-extraction`
+- candidate_backlog_snapshot: []
 - candidate_backlog_scan_sources:
   - `project-progress`
   - `blueprint`
@@ -59,9 +58,9 @@
 - Admission basis:
   - `MEMO-011 is broader than the city/building startup/background version and was explicitly noted as a candidate to promote after the current active queue closes.`
 - Activation conclusion:
-  - `target.entry-shell-ui-module-extraction is the active version.`
-  - `queue.entry-shell-ui-module-extraction is active after promotion/admission review from MEMO-011.`
-  - `The first active task is evidence-anchor-reconcile; implementation has not started.`
+  - `target.entry-shell-ui-module-extraction is closed after the single admitted queue completed.`
+  - `queue.entry-shell-ui-module-extraction is done after promotion/admission review from MEMO-011.`
+  - `No active task remains.`
 
 ### Version Lifecycle Rules
 
@@ -148,3 +147,4 @@
 - `2026-07-19`: `Completed task.entry-shell-ui-module-extraction.implementation. RED focused test failed before the Entry Shell module existed. GREEN added src/ui/entry-shell/entry-shell-view.js and delegated main menu, JSON scenario select, Script Editor landing/entry, scenario pack cards, and character selection rendering from MainUiFlow while preserving MainUiFlow state, handlers, persistence, file picker, and startup callback ownership. Verification passed: focused robustness test, npm run typecheck, npm run lint:blueprints, npm test. Active task is now queue-closeout-and-handoff.`
 - `2026-07-19`: `Completed task.entry-shell-ui-module-extraction.queue-closeout-and-handoff. Guard review confirmed bounded startup/pre-game Entry Shell render ownership moved to src/ui/entry-shell/entry-shell-view.js, MainUiFlow remains the state/handler/persistence/file-picker/startup-callback owner, runtime startup/load semantics were not changed, and EventBindingRuntime semantics were not changed. Browser simulated-human evidence verified the main menu, JSON 开局 scenario selection, Script Editor landing entry, and 开始游戏 -> character selection entry surfaces on localhost:5173. Verification passed: npm run lint:blueprints. The version remains open and returns to promotion review; no version closeout was entered.`
 - `2026-07-19`: `Repository sync recorded after commit 180ba5ea was pushed to origin/mod-first-dev. No active queue remains; the version remains open at promotion review and version closeout still requires explicit operator request.`
+- `2026-07-19`: `Final version closeout completed after operator requested Blueprint continuation. Closeout review found no remaining same-version candidate beyond queue.entry-shell-ui-module-extraction, which is already done and pushed. The version is now done with active_queue=none, active_task=none, no next same-version action, and no EventBindingRuntime or runtime startup/load semantic changes.`

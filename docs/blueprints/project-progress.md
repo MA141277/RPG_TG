@@ -29,14 +29,14 @@
 - Current Version Plan:
   - `docs/blueprints/plans/2026-07-19-entry-shell-ui-module-extraction-target-plan.md`
 - Current Active Queue:
-  - `docs/blueprints/queues/entry-shell-ui-module-extraction-queue.md`
+  - `none`
 
 ### Live Entry Guardrails
 
 - `This file only states the current resume entry and downstream pointer set.`
 - `Admission history, queue closeout history, and review narrative must stay in the version plan, queue docs, or docs/change-log.md rather than living here as competing current-state prose.`
-- `The pointed version is now the open Entry Shell UI module extraction successor version created from MEMO-011 after the city/building background queue closed.`
-- `target.entry-shell-ui-module-extraction is open with no active queue after queue.entry-shell-ui-module-extraction closed. The version has returned to promotion review; do not enter version closeout unless explicitly requested.`
+- `The pointed version is now the closed Entry Shell UI module extraction successor version created from MEMO-011 after the city/building background queue closed.`
+- `target.entry-shell-ui-module-extraction is done with no active queue after queue.entry-shell-ui-module-extraction closed and final version closeout was recorded.`
 - `target.city-building-module-entry-and-project-startup-authoring is open with no active queue. Project-info-authoring, city-building-module-entry, runtime-startup-convergence, acceptance-and-guard, queue.script-editor-city-building-enter-state-and-preview-boundary, queue.script-editor-city-building-secondary-list-and-selector-ux-unification, queue.script-editor-ui-encoding-integrity-guard, and queue.script-editor-city-building-background-authoring are complete.`
 - `queue.script-editor-city-building-enter-state-and-preview-boundary is closed after source guard, automated verification, and partial simulated-human browser proof; runtime preview green-frame browser proof remains recorded as inconclusive rather than claimed.`
 - `queue.script-editor-city-building-secondary-list-and-selector-ux-unification is closed after guard review, automated verification, and bounded browser simulated-human evidence. The version remains open for same-version promotion/admission review rather than version closeout.`
