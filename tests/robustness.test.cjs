@@ -26136,6 +26136,51 @@ test("dev browser validation resources avoid mojibake paths and watcher profile 
   assert.match(viteConfigSource, /server:\s*\{[\s\S]*watch:\s*\{[\s\S]*ignored:[\s\S]*\.codex-temp/);
 });
 
+test("script editor ui encoding integrity guard accepts current critical chinese surfaces", () => {
+  const { spawnSync } = require("node:child_process");
+  const packageJson = JSON.parse(
+    fs.readFileSync(path.join(process.cwd(), "package.json"), "utf8")
+  );
+  const result = spawnSync(
+    process.execPath,
+    [path.join(process.cwd(), "tools", "check-ui-encoding-integrity.mjs")],
+    { encoding: "utf8" }
+  );
+
+  assert.equal(packageJson.scripts["lint:encoding"], "node tools/check-ui-encoding-integrity.mjs");
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.stdout, /UI encoding integrity check passed/i);
+});
+
+test("script editor ui encoding integrity guard rejects mojibake source text", () => {
+  const { spawnSync } = require("node:child_process");
+  const os = require("node:os");
+  const outputRoot = fs.mkdtempSync(
+    path.join(os.tmpdir(), "rpg-tg-ui-encoding-")
+  );
+  const corruptSourcePath = path.join(outputRoot, "corrupt-ui.js");
+  fs.writeFileSync(
+    corruptSourcePath,
+    'export const label = "å‰§æœ¬ç¼–è¾‘";\n',
+    "utf8"
+  );
+
+  const result = spawnSync(
+    process.execPath,
+    [
+      path.join(process.cwd(), "tools", "check-ui-encoding-integrity.mjs"),
+      "--file",
+      corruptSourcePath,
+      "--require",
+      "剧本编辑",
+    ],
+    { encoding: "utf8" }
+  );
+
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /mojibake|missing required text/i);
+});
+
 test("layout editor live surface retirement removes editor mount from app-render", () => {
   const source = fs.readFileSync(
     path.join(process.cwd(), "src/ui/app-render.ts"),

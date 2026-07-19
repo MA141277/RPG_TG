@@ -29,6 +29,7 @@
     "blueprint:governance:check": "node tools/blueprint-version-governance.mjs check",
     "blueprint:governance:sync": "node tools/blueprint-version-governance.mjs sync",
     "lint:blueprints": "node tools/lint-blueprints.mjs",
+    "lint:encoding": "node tools/check-ui-encoding-integrity.mjs",
     "lint:commit-msg": "node tools/validate-commit-message.mjs",
     "lint:plans": "node tools/lint-superpowers-plans.mjs",
     "lint:ts": "eslint .",

@@ -6,11 +6,11 @@
 - version_id: `target.city-building-module-entry-and-project-startup-authoring`
 - version_status: `open`
 - active_phase: `phase.execution`
-- active_queue: `none`
-- decision_state: `idle-open`
-- next_decision: `same-version-admission-or-version-closeout`
-- next_action: `return-to-promotion-review`
-- resume_gate: `version-review`
+- active_queue: `queue.script-editor-ui-encoding-integrity-guard`
+- decision_state: `active-execution`
+- next_decision: `queue-closeout-or-return-to-version-review`
+- next_action: `resume-active-queue`
+- resume_gate: `open-active-queue`
 - post_queue_closeout_pause_policy: `auto-continue`
 - promotion_review_result: `none`
 - review_subject_id: `none`
@@ -70,7 +70,8 @@
   - `target.city-building-module-entry-and-project-startup-authoring is the active version.`
   - `queue.script-editor-city-building-enter-state-and-preview-boundary is closed after queue closeout/handoff.`
   - `queue.script-editor-city-building-secondary-list-and-selector-ux-unification is closed after queue closeout/handoff.`
-  - `The version remains open with active_queue none for same-version promotion/admission review.`
+  - `queue.script-editor-ui-encoding-integrity-guard is active after same-version promotion/admission review.`
+  - `The version remains open and must not enter version closeout until this active queue is closed and a later explicit closeout review is requested.`
 
 ### Version Lifecycle Rules
 
@@ -129,7 +130,7 @@
 | `item.city-building-module-entry-and-project-startup-authoring` | `queue-candidate` | `queue.city-building-module-entry-and-project-startup-authoring` | `admitted` | `evidence-anchor reconcile proves the queue must split before implementation` | `ACC-CITY-BUILDING-STARTUP-001..005` | `src/application/script-editor/workspace-shell.ts; src/domain/script-editor-project.ts; src/application/script-editor/runtime-pack-export.ts; src/application/scenario/scenario-pack-loader.ts; startup coordinator; city runtime/presenter/view modules; building runtime/presenter/view modules; tests/**; browser simulated-human flow` | `ACC-CITY-BUILDING-STARTUP-001..005` | `none` | `Admitted on 2026-07-19 after the operator approved the requirement draft and asked to continue by Blueprint rules.` |
 | `item.script-editor-city-building-enter-state-and-preview-boundary` | `future-target-candidate` | `queue.script-editor-city-building-enter-state-and-preview-boundary` | `recorded-only` | `if later evidence shows enter-state authoring and runtime preview framing should split further` | `ACC-CITY-BUILDING-ENTER-STATE-001..005` | `src/ui/main-ui/main-ui-flow.js; src/ui/views/script-editor/**; src/application/script-editor/**; src/application/location-access/**; src/application/city/**; src/application/building/**; tests/**; browser simulated-human flow` | `city/building enter-state editing; base info default background; locationAccess-backed gate editing; preview-only green frame` | `secondary list/search/add/delete/pagination shells; detail-page selector normalization` | `Split from MEMO-013 after the broad draft proved too wide for one lawful queue boundary.` |
 | `item.script-editor-city-building-secondary-list-and-selector-ux-unification` | `future-target-candidate` | `queue.script-editor-city-building-secondary-list-and-selector-ux-unification` | `admitted` | `evidence-anchor reconcile proves the queue must split into list-shell and selector queues before implementation` | `ACC-CITY-BUILDING-ENTER-STATE-006..008` | `src/ui/main-ui/main-ui-flow.js; src/ui/views/script-editor/**; src/application/script-editor/**; tests/**; browser simulated-human flow` | `city/building/story/dialogue/event/playable/text secondary list/search/add/delete/list/pagination shells; detail-page selector UX normalization` | `enter-state authoring; locationAccess gate editing; preview-only frame` | `Admitted on 2026-07-19 after queue.script-editor-city-building-enter-state-and-preview-boundary closed and the version still had pending ACC-006..008 coverage.` |
-| `item.script-editor-ui-encoding-integrity-guard` | `future-target-candidate` | `queue.script-editor-ui-encoding-integrity-guard` | `recorded-only` | `if critical script-editor or main-ui source files again show mojibake, invalid JS syntax from encoding damage, or browser smoke finds Chinese UI text corruption` | `ACC-ENCODING-GUARD-001..005` | `src/ui/main-ui/main-ui-flow.js; src/ui/views/script-editor/script-editor-workspace-view.ts; tests/robustness.test.cjs; browser simulated-human flow` | `ACC-ENCODING-GUARD-001..005` | `repo-wide feature redesign; unrelated gameplay/runtime work` | `Recorded from the operator's requirement to prevent future encoding corruption in critical Script Editor/UI sources and to require real browser evidence for Chinese UI surfaces.` |
+| `item.script-editor-ui-encoding-integrity-guard` | `future-target-candidate` | `queue.script-editor-ui-encoding-integrity-guard` | `admitted` | `evidence-anchor reconcile proves the queue must split before implementation or the guard requires a repo-wide charset migration` | `ACC-ENCODING-GUARD-001..005` | `src/ui/main-ui/main-ui-flow.js; src/ui/views/script-editor/script-editor-workspace-view.ts; tests/robustness.test.cjs; browser simulated-human flow` | `ACC-ENCODING-GUARD-001..005` | `repo-wide feature redesign; unrelated gameplay/runtime work` | `Admitted on 2026-07-19 after queue.script-editor-city-building-secondary-list-and-selector-ux-unification closed; first task is evidence-anchor-reconcile.` |
 
 ### Queue Promotion Ledger
 
@@ -138,7 +139,7 @@
 | `queue.city-building-module-entry-and-project-startup-authoring` | `done` | `acceptance-and-guard is complete.` | `Evidence-anchor reconcile, project-info-authoring, city-building-module-entry, runtime-startup-convergence, and acceptance-and-guard are complete; the queue is closed and the version remains open for later candidate review.` |
 | `queue.script-editor-city-building-enter-state-and-preview-boundary` | `done` | `closed` | `Closed on 2026-07-19 after source guard, automated verification, and partial simulated-human browser proof. Runtime preview green-frame browser proof is recorded as inconclusive rather than claimed.` |
 | `queue.script-editor-city-building-secondary-list-and-selector-ux-unification` | `done` | `closed` | `Closed on 2026-07-19 after guard review, automated verification, and bounded browser simulated-human evidence.` |
-| `queue.script-editor-ui-encoding-integrity-guard` | `recorded-only` | `version review confirms the source-encoding guard and mojibake-prevention slice is still a lawful same-version candidate` | `Keeps critical UI source-text integrity checks, browser smoke coverage, and encoding-corruption failure guards together as one bounded candidate.` |
+| `queue.script-editor-ui-encoding-integrity-guard` | `active` | `evidence-anchor-reconcile is complete` | `Admitted on 2026-07-19. Keeps critical UI source-text integrity checks, browser smoke coverage, and encoding-corruption failure guards together as one bounded active queue.` |
 
 ### Candidate Evidence Matrix
 
@@ -184,3 +185,6 @@
 - `2026-07-19`: `Completed task.script-editor-city-building-secondary-list-and-selector-ux-unification.evidence-anchor-reconcile. Source review found people already has search/add/delete/list/pagination; city, building, story node, dialogue, event, minigame, and text have add/delete/list/pagination but lack the people-style search control. Detail selectors also remain inconsistent where project-backed selectors should replace ad hoc ids. The active task is now implementation.`
 - `2026-07-19`: `Completed task.script-editor-city-building-secondary-list-and-selector-ux-unification.implementation. RED covered all-family secondary search controls, project-backed selector replacement, and the browser-discovered add-record/search interaction. GREEN added shared search/filtering, project-backed selects for city/building/menu entry selectors, targetId stale clearing, and add-record search reset. Verification passed: focused tests, npm run typecheck, npm run lint:blueprints, and npm test. Browser simulated-human evidence covered all eight secondary family surfaces and selector replacement checks; browser keyboard-control search clearing remained inconclusive because automation key events did not change the focused input value. Active task is now queue-closeout-and-handoff.`
 - `2026-07-19`: `Completed task.script-editor-city-building-secondary-list-and-selector-ux-unification.queue-closeout-and-handoff. Guard review passed for all-family secondary search controls, project-backed selector replacement, add-record search reset, stale menu target clearing, and runtime semantics preservation. The queue is closed, active_queue is none, and the version remains open for same-version promotion/admission review rather than version closeout.`
+- `2026-07-19`: `Promotion/admission review admitted queue.script-editor-ui-encoding-integrity-guard as the new active queue after queue.script-editor-city-building-secondary-list-and-selector-ux-unification closed. The first active task is evidence-anchor-reconcile; implementation has not started.`
+- `2026-07-19`: `Completed task.script-editor-ui-encoding-integrity-guard.evidence-anchor-reconcile. Source review confirmed src/ui/main-ui/main-ui-flow.js is syntactically valid, the locked critical source files do not contain typical mojibake markers, and existing robustness tests assert some Chinese Script Editor labels. Evidence also found no dedicated bounded source/browser encoding guard yet, so the active task is now implementation.`
+- `2026-07-19`: `Completed task.script-editor-ui-encoding-integrity-guard.implementation. RED failed on the missing check-ui-encoding-integrity tool. GREEN added npm run lint:encoding, a bounded critical-source encoding guard, and robustness tests that pass the current critical Chinese UI surfaces while rejecting a generated mojibake fixture. Verification passed: npm run lint:encoding, focused tests, npm run typecheck, npm run lint:blueprints, and npm test. Browser smoke confirmed the main menu and Script Editor landing page render Chinese without mojibake; full workspace browser traversal remains for queue closeout evidence if available. Active task is now queue-closeout-and-handoff.`
