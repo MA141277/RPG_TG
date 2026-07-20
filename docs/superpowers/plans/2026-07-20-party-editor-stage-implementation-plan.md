@@ -23,10 +23,10 @@
 
 - Status: `running`
 - Last Updated: `2026-07-20`
-- Current Focus: `Task 4: wire main actions and battle shared formation preview.`
-- Next Step: `Extend the targeted tests for main.ts and battle integration, then thread the shared formation preview through battle and add click handlers.`
-- Verification: `Task 3 targeted verification passed: node --test tests/party-editor-ui-source.test.cjs`
-- Notes: `The targeted Node test still requires sandbox escalation because the test runner hits spawn EPERM inside the default sandbox.`
+- Current Focus: `Record the remaining repository-level verification blockers after Task 4 implementation and targeted checks.`
+- Next Step: `Decide whether to address the pre-existing typecheck and robustness failures in a follow-up batch or hand off with blockers recorded.`
+- Verification: `Task 4 targeted verification passed: node --test tests/party-editor-stage-state.test.cjs tests/party-editor-ui-source.test.cjs`
+- Notes: `The targeted Node test and Vite build still require sandbox escalation because the runner hits spawn EPERM inside the default sandbox. Repository-wide verification remains blocked by existing src/main.ts:433 and src/main.ts:438 type errors plus an existing robustness suite failure.`
 
 ## Progress Log
 
@@ -46,6 +46,10 @@
   - Summary: `Completed Task 3 by rendering the map-only party-editor entry, adding the new party-editor views, and hiding the global HUD on the new stage.`
   - Verification: `node --test tests/party-editor-ui-source.test.cjs`
   - Next: `Start Task 4 and wire main.ts plus the battle shared formation preview.`
+- 2026-07-20
+  - Summary: `Completed Task 4 by wiring map enter/party-editor exit actions in main.ts, threading battle through the shared formation-stage view model, and updating the repository test entry to include the new suites.`
+  - Verification: `node --test tests/party-editor-stage-state.test.cjs tests/party-editor-ui-source.test.cjs`; `pnpm run build`; `pnpm run test` (new suites passed, existing robustness suite still failed); `pnpm run typecheck` (blocked by existing src/main.ts:433 and src/main.ts:438 errors)`
+  - Next: `Record the repository-level blockers and decide whether to absorb them into this branch or handle them as separate cleanup work.`
 
 ---
 
@@ -793,7 +797,7 @@ git commit -m "feat: render party editor stage ui"
   - `renderStoryBattleView(session: ActiveStoryBattleSession, options?: { formationPreview: BattleFormationPreviewViewModel | null }): string`
   - main-thread handlers for `open-party-editor` and `close-party-editor`
 
-- [ ] **Step 1: Extend both tests with battle and action-wiring assertions**
+- [x] **Step 1: Extend both tests with battle and action-wiring assertions**
 
 ```js
 test("battle view consumes the shared formation preview entry point", () => {
@@ -817,7 +821,7 @@ Run: `npm run build:test && node --test tests/party-editor-stage-state.test.cjs 
 
 Expected: `FAIL` because `renderStoryBattleView` does not yet receive formation preview input and `main.ts` does not yet handle the new actions.
 
-- [ ] **Step 3: Thread the shared formation preview into battle and wire main actions**
+- [x] **Step 3: Thread the shared formation preview into battle and wire main actions**
 
 ```ts
 // src/ui/views/battle/story-battle-view.ts
@@ -897,7 +901,7 @@ if (target.closest("[data-action='close-party-editor']")) {
 }
 ```
 
-- [ ] **Step 4: Include the new tests in repository test execution**
+- [x] **Step 4: Include the new tests in repository test execution**
 
 ```json
 // package.json
@@ -908,7 +912,7 @@ if (target.closest("[data-action='close-party-editor']")) {
 }
 ```
 
-- [ ] **Step 5: Run full verification**
+- [x] **Step 5: Run full verification**
 
 Run:
 
@@ -933,19 +937,19 @@ git commit -m "feat: wire party editor stage and battle preview"
 
 ## Exit Check
 
-- [ ] `party-editor exists as a formal stage.`
-- [ ] `map stage exposes the 部队 entry button and no other stage does.`
-- [ ] `party-editor renders the required visual layout.`
-- [ ] `退出 is the only working button on the page.`
-- [ ] `party-editor and battle consume one shared formation-stage data entry point.`
-- [ ] `placeholder data is owned by application/domain seams, not embedded inside render-only views.`
+- [x] `party-editor exists as a formal stage.`
+- [x] `map stage exposes the 部队 entry button and no other stage does.`
+- [x] `party-editor renders the required visual layout.`
+- [x] `退出 is the only working button on the page.`
+- [x] `party-editor and battle consume one shared formation-stage data entry point.`
+- [x] `placeholder data is owned by application/domain seams, not embedded inside render-only views.`
 - [ ] `npm run typecheck`
 - [ ] `npm test`
-- [ ] `npm run build`
+- [x] `npm run build`
 
 ## Completion Checklist
 
-- [ ] Plan checkboxes updated
-- [ ] `Execution State` updated
-- [ ] `Progress Log` updated
-- [ ] Verification recorded
+- [x] Plan checkboxes updated
+- [x] `Execution State` updated
+- [x] `Progress Log` updated
+- [x] Verification recorded

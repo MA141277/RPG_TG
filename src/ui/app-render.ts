@@ -25,6 +25,7 @@ import type { MapDefinition } from "../domain/map";
 import type { ValuableItemDefinition } from "../domain/valuable-item";
 import { createDemoFormationStageState } from "../application/formation/formation-stage";
 import {
+  createBattleFormationPreviewViewModel,
   createPartyEditorStageViewModel,
 } from "../application/formation/formation-stage-view-model";
 import { assertExists } from "../shared/assert";
@@ -453,7 +454,10 @@ function renderStage(
   }
 
   if (stage.type === "battle") {
-    return renderStoryBattleView(input.appState.gameState.storyBattle);
+    const formationState = createDemoFormationStageState();
+    return renderStoryBattleView(input.appState.gameState.storyBattle, {
+      formationPreview: createBattleFormationPreviewViewModel(formationState),
+    });
   }
 
   return "";

@@ -404,8 +404,12 @@ test("spine editor exposes single-piece cleanup controls in binding mode and app
   assert.match(source, /id="imageCleanupToleranceInput"/);
   assert.match(source, /id="imageCleanupCustomColorInput"/);
   assert.match(source, /id="cleanSelectedPieceImageBtn"/);
+  assert.match(source, /function normalizeImageCleanupMetadata\(cleanup = null\)/);
   assert.match(source, /function cleanupSelectedPieceImage\(\)/);
   assert.match(source, /const processed = preprocessImportedImageData\(imageToImageData\(sourceImage\), state\.imageCleanup\);/);
+  assert.match(source, /cleanup:\s*\{\s*sourceImageKey:\s*imageKey,/);
+  assert.match(source, /sourceSrc:\s*sourceCustomImage\?\.src \|\| ""/);
+  assert.match(source, /registerCustomImage\(id,\s*item\.name \|\| id,\s*item\.src,\s*\{\s*unitType,\s*cleanup:\s*item\.cleanup\s*\}\);/);
   assert.match(source, /replacePieceImageReferences\(piece,\s*imageKey,\s*customImageId\);/);
   assert.match(source, /function preprocessImportedImageData\(sourceImageData,\s*options = \{\}\)/);
 });

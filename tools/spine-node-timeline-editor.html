@@ -1747,6 +1747,17 @@
         };
       }
 
+      function normalizeImageCleanupMetadata(cleanup = null) {
+        if (!cleanup || typeof cleanup !== "object") return undefined;
+        const sourceImageKey = String(cleanup.sourceImageKey || cleanup.sourceImage || "").trim();
+        const sourceSrc = String(cleanup.sourceSrc || cleanup.sourceImageSrc || "").trim();
+        return {
+          sourceImageKey,
+          sourceSrc,
+          options: normalizedImageCleanupOptions(cleanup.options || cleanup),
+        };
+      }
+
       function colorDistanceToBackground(r, g, b, backgroundColor) {
         const dr = r - backgroundColor[0];
         const dg = g - backgroundColor[1];
@@ -5884,7 +5895,12 @@
       }
 
       function registerCustomImage(id, name, src, options = {}) {
-        state.customImages[id] = { name: String(name || id), src: String(src || "") };
+        const cleanup = normalizeImageCleanupMetadata(options.cleanup);
+        state.customImages[id] = {
+          name: String(name || id),
+          src: String(src || ""),
+          ...(cleanup ? { cleanup } : {}),
+        };
         if (options.image instanceof HTMLImageElement) {
           options.image.onload = drawStage;
           warriorImages[id] = options.image;
@@ -5930,7 +5946,7 @@
         state.customImages = {};
         Object.entries(customImages || {}).forEach(([id, item]) => {
           if (!id.startsWith(customImagePrefix) || !item?.src) return;
-          registerCustomImage(id, item.name || id, item.src, { unitType });
+          registerCustomImage(id, item.name || id, item.src, { unitType, cleanup: item.cleanup });
         });
       }
 
@@ -8008,11 +8024,19 @@
         const outputImage = await imageDataToImage(processed.imageData);
         const customImageId = `${customImagePrefix}piece-cleanup-${uid("image")}`;
         const baseName = String(piece.name || imageKey || "piece").trim().replace(/\s+/g, "_") || "piece";
+        const sourceCustomImage = state.customImages?.[imageKey];
         registerCustomImage(
           customImageId,
           `${baseName}-clean.png`,
           imageDataToDataUrl(processed.imageData),
-          { image: outputImage },
+          {
+            image: outputImage,
+            cleanup: {
+              sourceImageKey: imageKey,
+              sourceSrc: sourceCustomImage?.src || "",
+              options: state.imageCleanup,
+            },
+          },
         );
         replacePieceImageReferences(piece, imageKey, customImageId);
         renderAll();

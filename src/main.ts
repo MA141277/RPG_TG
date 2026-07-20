@@ -18,11 +18,13 @@ import {
   updateLayoutEditorElementSize,
 } from "./application/layout-editor/layout-editor-actions";
 import {
+  closePartyEditor,
   closeCityMenu,
   closeCityDirectory,
   equipValuable,
   openCityMenu,
   openCityDirectory,
+  openPartyEditor,
   selectCard,
   selectValuable,
   setCardFilter,
@@ -3554,6 +3556,24 @@ appElement.addEventListener("click", (event) => {
   );
   if (closeOverlayButton != null) {
     appState = updateOverlayView(appState, null);
+    renderApp();
+    return;
+  }
+
+  const openPartyEditorButton = targetElement.closest<HTMLElement>(
+    "[data-action='open-party-editor']"
+  );
+  if (openPartyEditorButton != null) {
+    appState = openPartyEditor(appState);
+    renderApp();
+    return;
+  }
+
+  const closePartyEditorButton = targetElement.closest<HTMLElement>(
+    "[data-action='close-party-editor']"
+  );
+  if (closePartyEditorButton != null) {
+    appState = closePartyEditor(appState);
     renderApp();
     return;
   }

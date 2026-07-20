@@ -5611,6 +5611,34 @@
           image.src = src;
           images[key] = image;
         })));
+        await Promise.all(Object.entries(project.customImages || {}).map(async ([key, item]) => {
+          if (!item?.cleanup) return;
+          const currentSrc = String(item?.src || '').trim();
+          const sourceKey = String(item?.cleanup?.sourceImageKey || item?.cleanup?.sourceImage || '').trim();
+          const sourceProjectItem =
+            sourceKey && project?.customImages && typeof project.customImages === 'object'
+              ? project.customImages[sourceKey]
+              : null;
+          const sourceSrc = String(
+            item?.cleanup?.sourceSrc ||
+            item?.cleanup?.sourceImageSrc ||
+            sourceProjectItem?.src ||
+            '',
+          ).trim();
+          // Match the editor: if the project already stores a baked cleaned image in item.src,
+          // use it as authoritative instead of running cleanup again at runtime.
+          if (currentSrc && sourceSrc && currentSrc !== sourceSrc) return;
+          try {
+            const sourceImage = await BattleSpineRenderer.resolveCleanupSourceImage(images, imageSources, key, item);
+            if (!sourceImage?.complete) return;
+            images[key] = await BattleSpineRenderer.applySavedImageCleanup(
+              sourceImage,
+              item.cleanup?.options || item.cleanup,
+            );
+          } catch (error) {
+            console.warn('Failed to apply saved image cleanup for battle renderer', key, error);
+          }
+        }));
         const materialKeys = new Set(config.materialForegroundImageKeys || []);
         const materialNormalizeOptions = config.materialForegroundNormalizeOptions || {};
         await Promise.all([...materialKeys].map(async (key) => {
@@ -5675,6 +5703,439 @@
           image.onerror = () => reject(new Error('Failed to create image from image data.'));
           image.src = canvas.toDataURL('image/png');
         });
+      }
+
+      static loadImageSource(src, baseHref = window.location.href) {
+        const resolved = BattleSpineRenderer.resolveImageSource(src, baseHref);
+        if (!resolved) return Promise.resolve(null);
+        return new Promise((resolve) => {
+          const image = new Image();
+          image.onload = () => resolve(image);
+          image.onerror = () => resolve(null);
+          image.src = resolved;
+        });
+      }
+
+      static cloneImageData(imageData) {
+        return new ImageData(new Uint8ClampedArray(imageData.data), imageData.width, imageData.height);
+      }
+
+      static hexToRgbColor(hex) {
+        const normalized = String(hex || '').trim();
+        if (!/^#[0-9a-f]{6}$/i.test(normalized)) return null;
+        return [
+          parseInt(normalized.slice(1, 3), 16),
+          parseInt(normalized.slice(3, 5), 16),
+          parseInt(normalized.slice(5, 7), 16),
+        ];
+      }
+
+      static normalizedImageCleanupOptions(overrides = {}) {
+        const source = { ...(overrides || {}) };
+        return {
+          enabled: source.enabled !== false,
+          backgroundMode: ['white', 'magenta', 'custom'].includes(source.backgroundMode)
+            ? source.backgroundMode
+            : 'white',
+          tolerance: Math.max(0, Math.min(255, Math.round(Number(source.tolerance) || 0))),
+          customColor: /^#[0-9a-f]{6}$/i.test(String(source.customColor || ''))
+            ? String(source.customColor)
+            : '#ffffff',
+          edgeRepair: source.edgeRepair !== false,
+          alphaShrink: source.alphaShrink !== false,
+          supersample: source.supersample !== false,
+          curveRebuild: source.curveRebuild === true,
+        };
+      }
+
+      static resolveImageCleanupBackgroundColor(options = {}) {
+        const mode = String(options?.backgroundMode || 'white');
+        if (mode === 'magenta') return [128, 0, 128];
+        if (mode === 'custom') return BattleSpineRenderer.hexToRgbColor(options?.customColor) || [255, 255, 255];
+        return [255, 255, 255];
+      }
+
+      static colorDistanceToBackground(r, g, b, backgroundColor) {
+        const dr = r - backgroundColor[0];
+        const dg = g - backgroundColor[1];
+        const db = b - backgroundColor[2];
+        return Math.sqrt(dr * dr + dg * dg + db * db);
+      }
+
+      static backgroundMatchesCleanupColor(r, g, b, backgroundColor, tolerance, mode = 'custom') {
+        if (mode === 'white') {
+          const threshold = 255 - tolerance;
+          return r >= threshold && g >= threshold && b >= threshold;
+        }
+        return (
+          Math.abs(r - backgroundColor[0]) <= tolerance &&
+          Math.abs(g - backgroundColor[1]) <= tolerance &&
+          Math.abs(b - backgroundColor[2]) <= tolerance
+        );
+      }
+
+      static fourNeighborIndices(index, width, height) {
+        const neighbors = [];
+        const x = index % width;
+        const y = Math.floor(index / width);
+        if (x > 0) neighbors.push(index - 1);
+        if (x < width - 1) neighbors.push(index + 1);
+        if (y > 0) neighbors.push(index - width);
+        if (y < height - 1) neighbors.push(index + width);
+        return neighbors;
+      }
+
+      static clearImageDataPixel(imageData, index) {
+        const offset = index * 4;
+        imageData.data[offset] = 0;
+        imageData.data[offset + 1] = 0;
+        imageData.data[offset + 2] = 0;
+        imageData.data[offset + 3] = 0;
+      }
+
+      static createOpaqueMask(imageData, alphaThreshold = 16) {
+        const mask = new Uint8Array(imageData.width * imageData.height);
+        for (let index = 0; index < mask.length; index += 1) {
+          mask[index] = imageData.data[index * 4 + 3] >= alphaThreshold ? 1 : 0;
+        }
+        return mask;
+      }
+
+      static averageOpaqueRgbFromImageData(imageData) {
+        let totalR = 0;
+        let totalG = 0;
+        let totalB = 0;
+        let count = 0;
+        for (let index = 0; index < imageData.width * imageData.height; index += 1) {
+          const offset = index * 4;
+          if (imageData.data[offset + 3] < 16) continue;
+          totalR += imageData.data[offset];
+          totalG += imageData.data[offset + 1];
+          totalB += imageData.data[offset + 2];
+          count += 1;
+        }
+        if (!count) return [128, 128, 128];
+        return [
+          Math.round(totalR / count),
+          Math.round(totalG / count),
+          Math.round(totalB / count),
+        ];
+      }
+
+      static countTransparentNeighbors(mask, index, width, height) {
+        let count = 0;
+        BattleSpineRenderer.fourNeighborIndices(index, width, height).forEach((neighbor) => {
+          if (!mask[neighbor]) count += 1;
+        });
+        return count;
+      }
+
+      static sampleNearestCleanOpaqueColor(imageData, mask, x, y, backgroundColor, tolerance, mode = 'custom', maxRadius = 8) {
+        const { width, height, data } = imageData;
+        for (let radius = 1; radius <= maxRadius; radius += 1) {
+          for (let py = Math.max(0, y - radius); py <= Math.min(height - 1, y + radius); py += 1) {
+            for (let px = Math.max(0, x - radius); px <= Math.min(width - 1, x + radius); px += 1) {
+              if (Math.abs(px - x) !== radius && Math.abs(py - y) !== radius) continue;
+              const index = py * width + px;
+              const offset = index * 4;
+              if (!mask[index] || data[offset + 3] < 16) continue;
+              if (BattleSpineRenderer.countTransparentNeighbors(mask, index, width, height) > 0) continue;
+              const r = data[offset];
+              const g = data[offset + 1];
+              const b = data[offset + 2];
+              if (BattleSpineRenderer.backgroundMatchesCleanupColor(r, g, b, backgroundColor, tolerance, mode)) continue;
+              return [r, g, b];
+            }
+          }
+        }
+        return null;
+      }
+
+      static pushColorAwayFromBackground(color, backgroundColor, fallbackColor) {
+        const base = Array.isArray(color) ? color : fallbackColor;
+        return [0, 1, 2].map((channel) => {
+          const delta = base[channel] - backgroundColor[channel];
+          if (Math.abs(delta) >= 26) return base[channel];
+          const direction = delta >= 0 ? 1 : -1;
+          return Math.max(0, Math.min(255, base[channel] + direction * 48));
+        });
+      }
+
+      static floodRemoveCornerConnectedBackground(sourceImageData, options = {}) {
+        const config = BattleSpineRenderer.normalizedImageCleanupOptions(options);
+        const imageData = BattleSpineRenderer.cloneImageData(sourceImageData);
+        if (!config.enabled) {
+          return {
+            imageData,
+            backgroundColor: BattleSpineRenderer.resolveImageCleanupBackgroundColor(config),
+            options: config,
+          };
+        }
+        const { width, height, data } = imageData;
+        const backgroundColor = BattleSpineRenderer.resolveImageCleanupBackgroundColor(config);
+        const queue = [];
+        const visited = new Uint8Array(width * height);
+        const pushIfMatch = (index) => {
+          if (visited[index]) return;
+          const offset = index * 4;
+          if (
+            !BattleSpineRenderer.backgroundMatchesCleanupColor(
+              data[offset],
+              data[offset + 1],
+              data[offset + 2],
+              backgroundColor,
+              config.tolerance,
+              config.backgroundMode,
+            )
+          ) {
+            return;
+          }
+          visited[index] = 1;
+          queue.push(index);
+        };
+        [0, width - 1, (height - 1) * width, height * width - 1].forEach((seed) => {
+          if (seed >= 0 && seed < visited.length) pushIfMatch(seed);
+        });
+        for (let cursor = 0; cursor < queue.length; cursor += 1) {
+          const index = queue[cursor];
+          BattleSpineRenderer.clearImageDataPixel(imageData, index);
+          BattleSpineRenderer.fourNeighborIndices(index, width, height).forEach(pushIfMatch);
+        }
+        return { imageData, backgroundColor, options: config };
+      }
+
+      static detectOpaqueComponentsFromImageData(imageData, minPixels = 1, alphaThreshold = 16) {
+        const { width, height } = imageData;
+        const mask = BattleSpineRenderer.createOpaqueMask(imageData, alphaThreshold);
+        const visited = new Uint8Array(mask.length);
+        const components = [];
+        for (let index = 0; index < mask.length; index += 1) {
+          if (!mask[index] || visited[index]) continue;
+          const pixels = [index];
+          visited[index] = 1;
+          for (let cursor = 0; cursor < pixels.length; cursor += 1) {
+            const current = pixels[cursor];
+            BattleSpineRenderer.fourNeighborIndices(current, width, height).forEach((neighbor) => {
+              if (!mask[neighbor] || visited[neighbor]) return;
+              visited[neighbor] = 1;
+              pixels.push(neighbor);
+            });
+          }
+          if (pixels.length < minPixels) {
+            pixels.forEach((pixelIndex) => BattleSpineRenderer.clearImageDataPixel(imageData, pixelIndex));
+            continue;
+          }
+          components.push({ pixels, count: pixels.length });
+        }
+        return components;
+      }
+
+      static repairTransparentEdgeBleed(sourceImageData, options = {}) {
+        const config = BattleSpineRenderer.normalizedImageCleanupOptions(options);
+        const backgroundColor = BattleSpineRenderer.resolveImageCleanupBackgroundColor(config);
+        const imageData = BattleSpineRenderer.cloneImageData(sourceImageData);
+        const source = BattleSpineRenderer.cloneImageData(sourceImageData);
+        const mask = BattleSpineRenderer.createOpaqueMask(source, 8);
+        const fallbackColor = BattleSpineRenderer.averageOpaqueRgbFromImageData(source);
+        const { width, height } = source;
+        for (let index = 0; index < mask.length; index += 1) {
+          if (!mask[index] || !BattleSpineRenderer.countTransparentNeighbors(mask, index, width, height)) continue;
+          const offset = index * 4;
+          const alpha = source.data[offset + 3];
+          if (alpha < 8) continue;
+          const color = [source.data[offset], source.data[offset + 1], source.data[offset + 2]];
+          const polluted =
+            BattleSpineRenderer.backgroundMatchesCleanupColor(
+              color[0],
+              color[1],
+              color[2],
+              backgroundColor,
+              Math.round(config.tolerance * 1.3),
+              config.backgroundMode,
+            ) ||
+            (alpha < 220 &&
+              BattleSpineRenderer.colorDistanceToBackground(
+                color[0],
+                color[1],
+                color[2],
+                backgroundColor,
+              ) <= config.tolerance * 2.4);
+          if (!polluted) continue;
+          const x = index % width;
+          const y = Math.floor(index / width);
+          const sampled =
+            BattleSpineRenderer.sampleNearestCleanOpaqueColor(
+              source,
+              mask,
+              x,
+              y,
+              backgroundColor,
+              config.tolerance,
+              config.backgroundMode,
+            ) || BattleSpineRenderer.pushColorAwayFromBackground(color, backgroundColor, fallbackColor);
+          imageData.data[offset] = Math.round(color[0] * 0.18 + sampled[0] * 0.82);
+          imageData.data[offset + 1] = Math.round(color[1] * 0.18 + sampled[1] * 0.82);
+          imageData.data[offset + 2] = Math.round(color[2] * 0.18 + sampled[2] * 0.82);
+        }
+        return imageData;
+      }
+
+      static shrinkAndSmoothAlphaEdge(sourceImageData) {
+        const imageData = BattleSpineRenderer.cloneImageData(sourceImageData);
+        const source = sourceImageData.data;
+        const mask = BattleSpineRenderer.createOpaqueMask(sourceImageData, 8);
+        const { width, height } = sourceImageData;
+        for (let index = 0; index < mask.length; index += 1) {
+          if (!mask[index]) continue;
+          const transparentNeighbors = BattleSpineRenderer.countTransparentNeighbors(mask, index, width, height);
+          if (!transparentNeighbors) continue;
+          const x = index % width;
+          const y = Math.floor(index / width);
+          let alphaSum = 0;
+          let sampleCount = 0;
+          for (let py = Math.max(0, y - 1); py <= Math.min(height - 1, y + 1); py += 1) {
+            for (let px = Math.max(0, x - 1); px <= Math.min(width - 1, x + 1); px += 1) {
+              alphaSum += source[(py * width + px) * 4 + 3];
+              sampleCount += 1;
+            }
+          }
+          const currentAlpha = source[index * 4 + 3];
+          const averageAlpha = alphaSum / Math.max(1, sampleCount);
+          const targetAlpha = Math.max(0, Math.min(currentAlpha, averageAlpha * (0.88 - transparentNeighbors * 0.06)));
+          imageData.data[index * 4 + 3] = targetAlpha < 6
+            ? 0
+            : Math.round(currentAlpha * 0.55 + targetAlpha * 0.45);
+        }
+        return imageData;
+      }
+
+      static supersampleAlphaEdge(sourceImageData) {
+        const imageData = BattleSpineRenderer.cloneImageData(sourceImageData);
+        const source = sourceImageData.data;
+        const mask = BattleSpineRenderer.createOpaqueMask(sourceImageData, 8);
+        const { width, height } = sourceImageData;
+        for (let index = 0; index < mask.length; index += 1) {
+          if (!mask[index]) continue;
+          const transparentNeighbors = BattleSpineRenderer.countTransparentNeighbors(mask, index, width, height);
+          if (!transparentNeighbors) continue;
+          const x = index % width;
+          const y = Math.floor(index / width);
+          let coverage = 0;
+          let sampleCount = 0;
+          for (let py = Math.max(0, y - 1); py <= Math.min(height - 1, y + 1); py += 1) {
+            for (let px = Math.max(0, x - 1); px <= Math.min(width - 1, x + 1); px += 1) {
+              coverage += source[(py * width + px) * 4 + 3] / 255;
+              sampleCount += 1;
+            }
+          }
+          const currentAlpha = source[index * 4 + 3];
+          const resampledAlpha = Math.round((coverage / Math.max(1, sampleCount)) * 255);
+          imageData.data[index * 4 + 3] = Math.max(
+            0,
+            Math.min(255, Math.round(currentAlpha * 0.4 + resampledAlpha * 0.6)),
+          );
+        }
+        return imageData;
+      }
+
+      static erodeMask(mask, width, height, steps = 1) {
+        let current = mask.slice();
+        for (let step = 0; step < steps; step += 1) {
+          const next = current.slice();
+          for (let index = 0; index < current.length; index += 1) {
+            if (!current[index]) continue;
+            if (BattleSpineRenderer.countTransparentNeighbors(current, index, width, height) > 0) {
+              next[index] = 0;
+            }
+          }
+          current = next;
+        }
+        return current;
+      }
+
+      static rebuildCurveEdges(sourceImageData, options = {}) {
+        const config = BattleSpineRenderer.normalizedImageCleanupOptions(options);
+        const backgroundColor = BattleSpineRenderer.resolveImageCleanupBackgroundColor(config);
+        const oldMask = BattleSpineRenderer.createOpaqueMask(sourceImageData, 16);
+        const closedMask = BattleSpineRenderer.erodeMask(
+          BattleSpineRenderer.dilateMask(oldMask, sourceImageData.width, sourceImageData.height, 1),
+          sourceImageData.width,
+          sourceImageData.height,
+          1,
+        );
+        const rebuiltMask = BattleSpineRenderer.dilateMask(
+          BattleSpineRenderer.erodeMask(closedMask, sourceImageData.width, sourceImageData.height, 1),
+          sourceImageData.width,
+          sourceImageData.height,
+          1,
+        );
+        const output = BattleSpineRenderer.cloneImageData(sourceImageData);
+        const fallbackColor = BattleSpineRenderer.averageOpaqueRgbFromImageData(sourceImageData);
+        for (let index = 0; index < rebuiltMask.length; index += 1) {
+          if (!rebuiltMask[index]) {
+            BattleSpineRenderer.clearImageDataPixel(output, index);
+            continue;
+          }
+          if (oldMask[index]) continue;
+          const x = index % sourceImageData.width;
+          const y = Math.floor(index / sourceImageData.width);
+          const sampled =
+            BattleSpineRenderer.sampleNearestCleanOpaqueColor(
+              sourceImageData,
+              oldMask,
+              x,
+              y,
+              backgroundColor,
+              config.tolerance,
+              config.backgroundMode,
+            ) || fallbackColor;
+          const offset = index * 4;
+          output.data[offset] = sampled[0];
+          output.data[offset + 1] = sampled[1];
+          output.data[offset + 2] = sampled[2];
+          output.data[offset + 3] = 220;
+        }
+        return BattleSpineRenderer.supersampleAlphaEdge(
+          BattleSpineRenderer.shrinkAndSmoothAlphaEdge(output),
+        );
+      }
+
+      static preprocessImportedImageData(sourceImageData, options = {}) {
+        const config = BattleSpineRenderer.normalizedImageCleanupOptions(options);
+        let imageData = BattleSpineRenderer.cloneImageData(sourceImageData);
+        if (config.enabled) {
+          imageData = BattleSpineRenderer.floodRemoveCornerConnectedBackground(imageData, config).imageData;
+          if (config.edgeRepair) imageData = BattleSpineRenderer.repairTransparentEdgeBleed(imageData, config);
+          if (config.alphaShrink) imageData = BattleSpineRenderer.shrinkAndSmoothAlphaEdge(imageData);
+          if (config.supersample) imageData = BattleSpineRenderer.supersampleAlphaEdge(imageData);
+          if (config.curveRebuild) imageData = BattleSpineRenderer.rebuildCurveEdges(imageData, config);
+        }
+        for (let index = 0; index < imageData.width * imageData.height; index += 1) {
+          if (imageData.data[index * 4 + 3] < 6) {
+            BattleSpineRenderer.clearImageDataPixel(imageData, index);
+          }
+        }
+        return {
+          imageData,
+          components: BattleSpineRenderer.detectOpaqueComponentsFromImageData(imageData, 1, 16),
+        };
+      }
+
+      static async applySavedImageCleanup(image, options = {}) {
+        const processed = BattleSpineRenderer.preprocessImportedImageData(
+          BattleSpineRenderer.imageToImageData(image),
+          options,
+        );
+        return BattleSpineRenderer.imageDataToImage(processed.imageData);
+      }
+
+      static async resolveCleanupSourceImage(images, imageSources, key, item) {
+        const sourceKey = String(item?.cleanup?.sourceImageKey || item?.cleanup?.sourceImage || '').trim();
+        if (sourceKey && sourceKey !== key && images[sourceKey]) return images[sourceKey];
+        if (sourceKey && imageSources[sourceKey] && images[sourceKey]) return images[sourceKey];
+        const sourceSrc = String(item?.cleanup?.sourceSrc || item?.cleanup?.sourceImageSrc || '').trim();
+        if (sourceSrc) return BattleSpineRenderer.loadImageSource(sourceSrc);
+        return images[key];
       }
 
       static createWhiteSilhouetteImage(image, options = {}) {
@@ -7161,10 +7622,10 @@
         const authoredMeshCols = Math.round(Number(attachment.meshCols));
         const authoredMeshRows = Math.round(Number(attachment.meshRows));
         const cols = authoredMeshCols > 0
-          ? Math.max(3, Math.min(defaultCols, authoredMeshCols))
+          ? Math.max(3, authoredMeshCols)
           : defaultCols;
         const rows = authoredMeshRows > 0
-          ? Math.max(4, Math.min(defaultRows, authoredMeshRows))
+          ? Math.max(6, authoredMeshRows)
           : defaultRows;
         const source = this.getAttachmentSourceGrid(image, cols, rows);
         const dest = [];
@@ -7538,6 +7999,14 @@
         );
       }
       return battleSpineRendererPromises.get(asset.cacheKey);
+    }
+
+    function clearBattleSpineRendererCache(cacheKey = null) {
+      if (!cacheKey) {
+        battleSpineRendererPromises.clear();
+        return;
+      }
+      battleSpineRendererPromises.delete(String(cacheKey));
     }
 
     function startBattleSpineIdleLoop() {
@@ -9431,6 +9900,7 @@
 
     function showFormationBattleOverlay(report) {
       stopBattleSpineIdleLoop();
+      clearBattleSpineRendererCache();
       clearBattleFormationProxyState();
       ensureBattleFormationViews();
       if (activeBattleOverlayResolve) {
@@ -9455,6 +9925,7 @@
 
     function closeFormationBattleOverlay() {
       stopBattleSpineIdleLoop();
+      clearBattleSpineRendererCache();
       clearBattleFormationProxyState();
       document.getElementById('formation-battle').classList.add('hidden');
       if (activeBattleOverlayResolve) {

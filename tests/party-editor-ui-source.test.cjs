@@ -20,3 +20,26 @@ test("party-editor view renders the requested layout and only exit is interactiv
   assert.match(stateSource, /队伍编辑|朱重八本队|解散队伍/);
   assert.match(stateSource, /close-party-editor/);
 });
+
+test("battle view consumes the shared formation preview entry point", () => {
+  const source = fs.readFileSync("src/ui/app-render.ts", "utf8");
+  const battleViewSource = fs.readFileSync("src/ui/views/battle/story-battle-view.ts", "utf8");
+  assert.match(source, /createBattleFormationPreviewViewModel\(formationState\)/);
+  assert.match(
+    source,
+    /renderStoryBattleView\(input\.appState\.gameState\.storyBattle,\s*\{\s*formationPreview:/
+  );
+  assert.match(
+    battleViewSource,
+    /options: \{ formationPreview\?: BattleFormationPreviewViewModel \| null \} = \{\}/
+  );
+  assert.match(battleViewSource, /renderFormationPreviewGrid\(options\.formationPreview\.slots/);
+});
+
+test("main wires the map entry and exit actions", () => {
+  const source = fs.readFileSync("src/main.ts", "utf8");
+  assert.match(source, /\[data-action='open-party-editor'\]/);
+  assert.match(source, /appState = openPartyEditor\(appState\);/);
+  assert.match(source, /\[data-action='close-party-editor'\]/);
+  assert.match(source, /appState = closePartyEditor\(appState\);/);
+});
