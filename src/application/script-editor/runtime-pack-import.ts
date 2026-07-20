@@ -18,6 +18,7 @@ import {
   SCRIPT_EDITOR_PROJECT_SCHEMA_VERSION,
   SCRIPT_EDITOR_RUNTIME_PACK_SCHEMA_VERSION,
   type ScriptEditorAccessRule,
+  type ScriptEditorBuildingArrangementRecord,
   type ScriptEditorEntityRecord,
   type ScriptEditorEventRecord,
   type ScriptEditorEventTriggerTiming,
@@ -64,8 +65,10 @@ type RuntimePackManifestFiles = {
   tasks?: string;
   playables?: string;
   playableIntegrations?: string;
+  flowDefinitions?: string;
   cities?: string;
   houses?: string;
+  buildingArrangements?: string;
   maps?: string;
   cityEntries?: string;
   textEntries?: string;
@@ -208,12 +211,7 @@ export function importScenarioPackToScriptEditorProject(
   const cityNpcPools = readArrayFamily(rawPack, "cityNpcPools");
   const importedPeople = collectImportedPeople(pack.characters ?? [], cityNpcPools);
   const importedCities = (pack.cities ?? []).map((city) =>
-    applyImportedMountedBuildings(
-      applyImportedLocationAccess(city, "city", importedLocationAccess),
-      pack.cityEntries ?? [],
-      pack.houses ?? [],
-      cityNpcPools
-    )
+    applyImportedLocationAccess(city, "city", importedLocationAccess)
   );
   const project = {
     schemaVersion: SCRIPT_EDITOR_PROJECT_SCHEMA_VERSION,
@@ -241,6 +239,7 @@ export function importScenarioPackToScriptEditorProject(
         applyImportedLocationAccess(house, "building", importedLocationAccess)
       )
     ),
+    buildingArrangements: readBuildingArrangementsFamily(rawPack),
     cityEntries: pack.cityEntries ?? [],
     events: mapImportedEvents(pack.events ?? []),
     eventBindings: mapImportedEventBindings(rawPack),
@@ -259,6 +258,7 @@ export function importScenarioPackToScriptEditorProject(
     ),
     dialogues: [],
     minigames: mapImportedPlayableIntegrations(rawPack),
+    flows: readFlowDefinitionsFamily(rawPack),
     storyNodes: [],
     textEntries: mapTextEntries(pack.textEntries),
     conditionGroups: [],
@@ -325,6 +325,7 @@ function mapImportedEvents(events: EventDefinition[]): ScriptEditorEventRecord[]
       occurrence: eventDefinition.occurrence,
       entrySceneId: eventDefinition.entrySceneId,
       participants: eventDefinition.participants ?? [],
+      actions: eventDefinition.actions ?? [],
       tags: eventDefinition.tags ?? [],
       triggerTiming: importedEvent.triggerTiming ?? "manual",
       repeatable:
@@ -536,6 +537,24 @@ function readEntityArrayFamily(
   return readArrayFamily(rawPack, familyKey) as ScriptEditorEntityRecord[];
 }
 
+function readFlowDefinitionsFamily(
+  rawPack: Record<string, unknown>
+): ScriptEditorProjectDefinition["flows"] {
+  const value = rawPack.flowDefinitions;
+  return Array.isArray(value)
+    ? (cloneJsonCompatibleValue(value) as ScriptEditorProjectDefinition["flows"])
+    : [];
+}
+
+function readBuildingArrangementsFamily(
+  rawPack: Record<string, unknown>
+): ScriptEditorBuildingArrangementRecord[] {
+  return readArrayFamily(
+    rawPack,
+    "buildingArrangements"
+  ) as ScriptEditorBuildingArrangementRecord[];
+}
+
 function collectImportedPeople(
   characters: readonly Record<string, unknown>[],
   cityNpcPools: readonly Record<string, unknown>[]
@@ -620,71 +639,6 @@ function applyImportedLocationAccess<T extends { id: string }>(
         : { guidance: accessDefinition.guidance }),
     },
   };
-}
-
-function applyImportedMountedBuildings<T extends { id: string }>(
-  city: T,
-  cityEntries: readonly Record<string, unknown>[],
-  houses: readonly Record<string, unknown>[],
-  cityNpcPools: readonly Record<string, unknown>[]
-): T & { mountedBuildings?: { buildingId: string; npcIds: string[]; primaryNpcId: string | null }[] } {
-  const mountedBuildings = cityEntries.flatMap((entry) => {
-    if (readString(entry.cityId) !== city.id) {
-      return [];
-    }
-    const buildingId = readString(entry.targetHouseId);
-    if (buildingId.length === 0) {
-      return [];
-    }
-    const house = houses.find((candidate) => readString(candidate.id) === buildingId);
-    if (house == null) {
-      return [];
-    }
-    return [
-      {
-        buildingId,
-        npcIds: readImportedMountedNpcIds(city.id, house, cityNpcPools),
-        primaryNpcId: readImportedPrimaryNpcId(house),
-      },
-    ];
-  });
-
-  if (mountedBuildings.length === 0) {
-    return city;
-  }
-
-  return {
-    ...city,
-    mountedBuildings,
-  };
-}
-
-function readImportedMountedNpcIds(
-  cityId: string,
-  house: Record<string, unknown>,
-  cityNpcPools: readonly Record<string, unknown>[]
-): string[] {
-  const houseCharacterIds = readStringArray(house.characterIds);
-  if (houseCharacterIds.length === 0) {
-    return [];
-  }
-  const cityPool = cityNpcPools.find((pool) => readString(pool.cityId) === cityId);
-  if (cityPool == null || !Array.isArray(cityPool.residents)) {
-    return houseCharacterIds;
-  }
-  const residentIds = new Set(
-    cityPool.residents.flatMap((resident) =>
-      resident != null && typeof resident === "object" && !Array.isArray(resident)
-        ? [readString((resident as Record<string, unknown>).id)]
-        : []
-    )
-  );
-  return houseCharacterIds.filter((characterId) => residentIds.has(characterId));
-}
-
-function readImportedPrimaryNpcId(house: Record<string, unknown>): string | null {
-  const defaultCharacterId = readString(house.defaultCharacterId);
-  return defaultCharacterId.length > 0 ? defaultCharacterId : null;
 }
 
 function readString(value: unknown): string {

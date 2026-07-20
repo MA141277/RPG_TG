@@ -3,6 +3,8 @@ import {
   SCRIPT_EDITOR_PROJECT_KIND,
   SCRIPT_EDITOR_PROJECT_MANIFEST_FILE,
   SCRIPT_EDITOR_PROJECT_SCHEMA_VERSION,
+  type ScriptEditorBuildingArrangementRecord,
+  type ScriptEditorBuildingContainerRecord,
   type ScriptEditorEntityRecord,
   type ScriptEditorProjectDefinition,
   type ScriptEditorProjectFileKey,
@@ -12,7 +14,9 @@ import {
 import { normalizeScriptEditorProjectCompletionState } from "./project-completion-state";
 
 const OPTIONAL_SCRIPT_EDITOR_PROJECT_FILE_KEYS = new Set<ScriptEditorProjectFileKey>([
+  "buildingArrangements",
   "eventBindings",
+  "flows",
 ]);
 
 type ScriptEditorProjectImportFileEntry = {
@@ -94,6 +98,10 @@ export function parseScriptEditorProject(
   assertEntityRecordArray(value.people, "script editor project people");
   assertEntityRecordArray(value.cities, "script editor project cities");
   assertEntityRecordArray(value.buildings, "script editor project buildings");
+  assertBuildingArrangementRecordArray(
+    value.buildingArrangements ?? [],
+    "script editor project buildingArrangements"
+  );
   assertEntityRecordArray(value.cityEntries, "script editor project cityEntries");
   assertEntityRecordArray(value.events, "script editor project events");
   assertEntityRecordArray(
@@ -122,6 +130,7 @@ export function parseScriptEditorProject(
   );
   assertEntityRecordArray(value.dialogues, "script editor project dialogues");
   assertEntityRecordArray(value.minigames, "script editor project minigames");
+  assertFlowRecordArray(value.flows ?? [], "script editor project flows");
   assertEntityRecordArray(value.storyNodes, "script editor project storyNodes");
   assertEntityRecordArray(value.textEntries, "script editor project textEntries");
   assertEntityRecordArray(
@@ -138,9 +147,14 @@ export function parseScriptEditorProject(
     completionState: normalizeScriptEditorProjectCompletionState(
       value.completionState
     ),
+    buildingArrangements:
+      (value.buildingArrangements ?? []) as ScriptEditorProjectDefinition["buildingArrangements"],
     eventBindings: (value.eventBindings ?? []) as ScriptEditorProjectDefinition["eventBindings"],
+    flows: (value.flows ?? []) as ScriptEditorProjectDefinition["flows"],
   };
 }
+
+export const validateScriptEditorProjectDefinition = parseScriptEditorProject;
 
 function indexImportedFiles(
   files: readonly File[]
@@ -289,6 +303,114 @@ function assertObjectRecordArray(
   });
 }
 
+function assertBuildingArrangementRecordArray(
+  value: unknown,
+  label: string
+): asserts value is ScriptEditorBuildingArrangementRecord[] {
+  assertArray(value, label);
+  value.forEach((entry, index) => {
+    const entryLabel = `${label}[${index}]`;
+    assertObject(entry, entryLabel);
+    assertString(entry.id, `${entryLabel}.id`);
+    assertString(entry.cityId, `${entryLabel}.cityId`);
+    assertString(entry.buildingId, `${entryLabel}.buildingId`);
+    assertOptionalString(entry.displayName, `${entryLabel}.displayName`);
+    assertOptionalString(entry.description, `${entryLabel}.description`);
+    assertOptionalString(entry.backgroundId, `${entryLabel}.backgroundId`);
+    assertStringArray(entry.mountedNpcIds, `${entryLabel}.mountedNpcIds`);
+    assertNullableString(entry.primaryNpcId, `${entryLabel}.primaryNpcId`);
+    assertBuildingContainerRecordArray(entry.containers, `${entryLabel}.containers`);
+    assertOptionalObject(entry.visibleRule, `${entryLabel}.visibleRule`);
+    assertOptionalObject(entry.enterRule, `${entryLabel}.enterRule`);
+    assertOptionalObject(entry.exitRule, `${entryLabel}.exitRule`);
+  });
+}
+
+function assertBuildingContainerRecordArray(
+  value: unknown,
+  label: string
+): asserts value is ScriptEditorBuildingContainerRecord[] {
+  assertArray(value, label);
+  value.forEach((entry, index) => {
+    const entryLabel = `${label}[${index}]`;
+    assertObject(entry, entryLabel);
+    assertString(entry.id, `${entryLabel}.id`);
+    assertBuildingContainerType(entry.type, `${entryLabel}.type`);
+    assertOptionalString(entry.title, `${entryLabel}.title`);
+    if (entry.source != null) {
+      assertObject(entry.source, `${entryLabel}.source`);
+      assertString(entry.source.type, `${entryLabel}.source.type`);
+      if (entry.source.type === "arrangement-mounted-npcs") {
+        if (entry.source.includeNpcIds != null) {
+          assertStringArray(
+            entry.source.includeNpcIds,
+            `${entryLabel}.source.includeNpcIds`
+          );
+        }
+      } else if (entry.source.type === "static-records") {
+        assertStringArray(entry.source.recordIds, `${entryLabel}.source.recordIds`);
+      }
+    }
+    if (entry.items != null) {
+      assertBuildingContainerActionItemArray(entry.items, `${entryLabel}.items`);
+    }
+  });
+}
+
+function assertBuildingContainerActionItemArray(
+  value: unknown,
+  label: string
+): void {
+  assertArray(value, label);
+  value.forEach((entry, index) => {
+    const entryLabel = `${label}[${index}]`;
+    assertObject(entry, entryLabel);
+    assertString(entry.id, `${entryLabel}.id`);
+    assertString(entry.label, `${entryLabel}.label`);
+    assertString(entry.eventId, `${entryLabel}.eventId`);
+    assertOptionalBoolean(entry.isVisible, `${entryLabel}.isVisible`);
+    assertOptionalBoolean(entry.isEnabled, `${entryLabel}.isEnabled`);
+    assertOptionalString(entry.disabledHint, `${entryLabel}.disabledHint`);
+  });
+}
+
+function assertFlowRecordArray(value: unknown, label: string): void {
+  assertArray(value, label);
+  value.forEach((entry, index) => {
+    const entryLabel = `${label}[${index}]`;
+    assertObject(entry, entryLabel);
+    assertString(entry.id, `${entryLabel}.id`);
+    assertString(entry.title, `${entryLabel}.title`);
+    assertString(entry.playableId, `${entryLabel}.playableId`);
+    assertString(entry.integrationId, `${entryLabel}.integrationId`);
+    assertString(entry.ownerKind, `${entryLabel}.ownerKind`);
+    assertString(entry.ownerId, `${entryLabel}.ownerId`);
+    assertString(entry.returnPolicy, `${entryLabel}.returnPolicy`);
+    assertString(entry.triggerId, `${entryLabel}.triggerId`);
+    assertString(entry.triggerSource, `${entryLabel}.triggerSource`);
+    assertString(entry.triggerEvent, `${entryLabel}.triggerEvent`);
+    assertString(entry.initialNodeId, `${entryLabel}.initialNodeId`);
+    assertArray(entry.nodes, `${entryLabel}.nodes`);
+    entry.nodes.forEach((node, nodeIndex) => {
+      assertObject(node, `${entryLabel}.nodes[${nodeIndex}]`);
+      assertString(node.id, `${entryLabel}.nodes[${nodeIndex}].id`);
+      assertString(node.type, `${entryLabel}.nodes[${nodeIndex}].type`);
+    });
+    assertArray(entry.launchPayload, `${entryLabel}.launchPayload`);
+    assertArray(entry.outcomeRoutes, `${entryLabel}.outcomeRoutes`);
+    if (entry.eventStartTarget != null) {
+      assertObject(entry.eventStartTarget, `${entryLabel}.eventStartTarget`);
+      assertString(entry.eventStartTarget.eventId, `${entryLabel}.eventStartTarget.eventId`);
+      if (entry.eventStartTarget.bindingId != null) {
+        assertString(
+          entry.eventStartTarget.bindingId,
+          `${entryLabel}.eventStartTarget.bindingId`
+        );
+      }
+    }
+  });
+}
+
 function assertStoryPackRecord(
   value: unknown
 ): asserts value is ScriptEditorStoryPackRecord {
@@ -324,8 +446,62 @@ function assertStringRecord(
   }
 }
 
+function assertOptionalObject(value: unknown, label: string): void {
+  if (value == null) {
+    return;
+  }
+  assertObject(value, label);
+}
+
 function assertString(value: unknown, label: string): asserts value is string {
   if (typeof value !== "string" || value.length === 0) {
     throw new Error(`${label} must be a non-empty string.`);
+  }
+}
+
+function assertOptionalString(value: unknown, label: string): void {
+  if (value == null) {
+    return;
+  }
+  assertString(value, label);
+}
+
+function assertNullableString(value: unknown, label: string): void {
+  if (value === null) {
+    return;
+  }
+  assertString(value, label);
+}
+
+function assertOptionalBoolean(value: unknown, label: string): void {
+  if (value == null) {
+    return;
+  }
+  if (typeof value !== "boolean") {
+    throw new Error(`${label} must be a boolean.`);
+  }
+}
+
+function assertStringArray(value: unknown, label: string): asserts value is string[] {
+  assertArray(value, label);
+  value.forEach((entry, index) => {
+    assertString(entry, `${label}[${index}]`);
+  });
+}
+
+function assertBuildingContainerType(
+  value: unknown,
+  label: string
+): void {
+  const allowedTypes = new Set([
+    "character-seats",
+    "action-menu",
+    "status-panel",
+    "text-panel",
+    "image-panel",
+    "resource-panel",
+  ]);
+  if (typeof value !== "string" || !allowedTypes.has(value)) {
+    throw new Error(`${label} must be a supported building container type.`);
   }
 }

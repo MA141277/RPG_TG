@@ -39,6 +39,7 @@ import { createCityDirectoryLeaderResidenceCoordinator } from "./application/run
 import { createCouncilPriorityCityBeggingCoordinator } from "./application/runtime/council-priority-city-begging-coordinator";
 import { createCityHouseTransitionCoordinator } from "./application/runtime/city-house-transition-coordinator";
 import { createHouseDragDropCoordinator } from "./application/runtime/house-drag-drop-coordinator";
+import { triggerBuildingContainerItemAction } from "./application/building/building-container-event-runtime";
 import {
   applyMapAutoAdvanceSnapshot,
   applyMapAutoAdvanceStart,
@@ -1284,15 +1285,16 @@ function dispatchCurrentStoryBattleAction(actionId: string): void {
     context: {
       router: {
         route: ({ state, request }) =>
-          runPlayableRuntime({
-            state,
-            request,
-            characterDefinitions: appState.characterDefinitions,
-            ...(currentPlayerCharacterId == null
-              ? {}
-              : { playerCharacterId: currentPlayerCharacterId }),
-            textEntriesById: activeContentContext.textEntriesById,
-          }),
+            runPlayableRuntime({
+              state,
+              request,
+              characterDefinitions: appState.characterDefinitions,
+              ...(currentPlayerCharacterId == null
+                ? {}
+                : { playerCharacterId: currentPlayerCharacterId }),
+              textEntriesById: activeContentContext.textEntriesById,
+              flowDefinitionsById: activeContentContext.gameContent.flowDefinitionsById,
+            }),
       },
       followUp: {
         handleFollowUp: ({ state, followUp }) => ({
@@ -1305,6 +1307,55 @@ function dispatchCurrentStoryBattleAction(actionId: string): void {
     },
   });
   appState = result.state;
+  renderApp();
+}
+
+function dispatchCurrentFlowAction(
+  playableId: string,
+  action: string,
+  value?: string
+): void {
+  const result = commitRuntimeRequest({
+    state: appState,
+    request: createPlayableActionRequest(
+      playableId as import("./core/contracts/playable-runtime").PlayableId,
+      action,
+      value == null ? undefined : { value }
+    ),
+    context: {
+      router: {
+        route: ({ state, request }) =>
+          runPlayableRuntime({
+            state,
+            request,
+            characterDefinitions: appState.characterDefinitions,
+            ...(currentPlayerCharacterId == null
+              ? {}
+              : { playerCharacterId: currentPlayerCharacterId }),
+            textEntriesById: activeContentContext.textEntriesById,
+            flowDefinitionsById: activeContentContext.gameContent.flowDefinitionsById,
+          }),
+      },
+    },
+  });
+
+  appState = result.state;
+  if (
+    result.state.gameState.ui.currentView === "minigame" &&
+    result.state.gameState.runtime.playableSession == null
+  ) {
+    appState = {
+      ...appState,
+      gameState: {
+        ...appState.gameState,
+        ui: {
+          ...appState.gameState.ui,
+          currentView:
+            result.state.gameState.world.currentHouseId == null ? "city" : "house",
+        },
+      },
+    };
+  }
   renderApp();
 }
 
@@ -2835,6 +2886,65 @@ appElement.addEventListener("click", (event) => {
         type: "action",
         actionId,
       });
+    }
+    return;
+  }
+
+  const playableFlowActionButton = targetElement.closest<HTMLElement>(
+    "[data-action='playable-flow-action']"
+  );
+  if (playableFlowActionButton != null) {
+    const playableId = playableFlowActionButton.dataset.playableId;
+    const action = playableFlowActionButton.dataset.playableAction;
+    if (playableId != null && action != null) {
+      dispatchCurrentFlowAction(
+        playableId,
+        action,
+        playableFlowActionButton.dataset.playableValue || undefined
+      );
+    }
+    return;
+  }
+
+  const buildingContainerItemActionButton = targetElement.closest<HTMLElement>(
+    "[data-action='building-container-item-action']"
+  );
+  if (buildingContainerItemActionButton != null) {
+    const arrangementId =
+      buildingContainerItemActionButton.dataset.buildingArrangementId;
+    const containerId =
+      buildingContainerItemActionButton.dataset.buildingContainerId;
+    const itemId =
+      buildingContainerItemActionButton.dataset.buildingContainerActionId;
+    if (arrangementId != null && containerId != null && itemId != null) {
+      const result = triggerBuildingContainerItemAction({
+        state: appState.gameState,
+        characterDefinitions: appState.characterDefinitions,
+        storyContent: {
+          eventDefinitionsById:
+            activeContentContext.storyContent.eventDefinitionsById,
+          eventBindingsById:
+            activeContentContext.storyContent.eventBindingsById,
+          sceneDefinitionsById:
+            activeContentContext.storyContent.sceneDefinitionsById,
+          activityDefinitionsById:
+            activeContentContext.storyContent.activityDefinitionsById,
+          flowDefinitionsById:
+            activeContentContext.gameContent.flowDefinitionsById,
+          textEntriesById: activeContentContext.storyContent.textEntriesById,
+        },
+        action: {
+          arrangementId,
+          containerId,
+          itemId,
+        },
+      });
+      appState = {
+        ...appState,
+        gameState: result.state,
+        characterDefinitions: result.characterDefinitions,
+      };
+      renderApp();
     }
     return;
   }

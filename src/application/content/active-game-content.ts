@@ -2,6 +2,7 @@ import type { SceneDefinition } from "../../domain/action";
 import type { ActivityDefinition } from "../../domain/activity";
 import type { CardDefinition } from "../../domain/card";
 import type { CharacterDefinition } from "../../domain/character";
+import type { BuildingArrangementDefinition } from "../../domain/building-arrangement";
 import type { CityDefinition } from "../../domain/city";
 import type { CityEntryDefinition } from "../../domain/city-entry";
 import type { CityNpcPoolDefinition, CityNpcPoolRuntimeState } from "../../domain/city-npc";
@@ -15,6 +16,7 @@ import type {
 import type { HouseDefinition } from "../../domain/house";
 import type { LocationAccessDefinition } from "../../domain/location-access";
 import type { MapDefinition, MapNode } from "../../domain/map";
+import type { FlowPlayableDefinition } from "../../domain/playables/flow";
 import type { GridCoordinate } from "../navigation/travel-to-coordinate";
 import {
   createMapLocationProvider,
@@ -46,6 +48,8 @@ export type ActiveGameContent = {
   cityDefinitionById: Record<string, CityDefinition>;
   houses: HouseDefinition[];
   houseDefinitionById: Record<string, HouseDefinition>;
+  buildingArrangements: BuildingArrangementDefinition[];
+  buildingArrangementById: Record<string, BuildingArrangementDefinition>;
   cityEntries: CityEntryDefinition[];
   characters: CharacterDefinition[];
   characterManager: CharacterManager;
@@ -61,6 +65,8 @@ export type ActiveGameContent = {
   taskDefinitionsById: Record<string, TaskDefinition>;
   activityDefinitions: ActivityDefinition[];
   activityDefinitionsById: Record<string, ActivityDefinition>;
+  flowDefinitions: FlowPlayableDefinition[];
+  flowDefinitionsById: Record<string, FlowPlayableDefinition>;
   cards: CardDefinition[];
   valuables: ValuableItemDefinition[];
   cityNpcPools: CityNpcPoolDefinition[];
@@ -81,6 +87,7 @@ export type ActiveGameContentContext = {
   cityDefinitionById: Record<string, CityDefinition>;
   houses: HouseDefinition[];
   houseDefinitionById: Record<string, HouseDefinition>;
+  buildingArrangements: BuildingArrangementDefinition[];
   cityEntries: CityEntryDefinition[];
   cards: CardDefinition[];
   cityNpcPools: CityNpcPoolDefinition[];
@@ -98,6 +105,7 @@ export type ActiveGameContentContext = {
   characterNameById: Record<string, string>;
   characterManager: CharacterManager;
   taskDefinitionsById: Record<string, TaskDefinition>;
+  flowDefinitionsById: Record<string, FlowPlayableDefinition>;
   storyContent: {
     eventDefinitionsById: Record<string, EventDefinition>;
     eventBindingsById: Record<string, EventBinding>;
@@ -119,6 +127,7 @@ export function createActiveGameContent(
   const maps = resolvedPack.maps ?? [];
   const cities = resolvedPack.cities ?? [];
   const houses = resolvedPack.houses ?? [];
+  const buildingArrangements = resolvedPack.buildingArrangements ?? [];
   const cityEntries = resolvedPack.cityEntries ?? [];
   const characters = resolvedPack.characters ?? [];
   const eventDefinitions = resolvedPack.events ?? [];
@@ -126,6 +135,7 @@ export function createActiveGameContent(
   const sceneDefinitions = resolvedPack.scenes ?? [];
   const taskDefinitions = resolvedPack.tasks ?? [];
   const activityDefinitions = resolvedPack.activities ?? [];
+  const flowDefinitions = resolvedPack.flowDefinitions ?? [];
   const cards = resolvedPack.cards ?? [];
   const valuables = resolvedPack.valuables ?? [];
   const cityNpcPools = resolvedPack.cityNpcPools ?? [];
@@ -158,6 +168,10 @@ export function createActiveGameContent(
     houseDefinitionById: Object.fromEntries(
       houses.map((houseDefinition) => [houseDefinition.id, houseDefinition])
     ),
+    buildingArrangements,
+    buildingArrangementById: Object.fromEntries(
+      buildingArrangements.map((arrangement) => [arrangement.id, arrangement])
+    ),
     cityEntries,
     characters,
     characterManager,
@@ -186,6 +200,10 @@ export function createActiveGameContent(
     activityDefinitions,
     activityDefinitionsById: Object.fromEntries(
       activityDefinitions.map((activityDefinition) => [activityDefinition.id, activityDefinition])
+    ),
+    flowDefinitions,
+    flowDefinitionsById: Object.fromEntries(
+      flowDefinitions.map((flowDefinition) => [flowDefinition.id, flowDefinition])
     ),
     cards,
     valuables,
@@ -223,6 +241,7 @@ export function createActiveGameContentContext(
     cityDefinitionById: gameContent.cityDefinitionById,
     houses: gameContent.houses,
     houseDefinitionById: gameContent.houseDefinitionById,
+    buildingArrangements: gameContent.buildingArrangements,
     cityEntries: gameContent.cityEntries,
     cards: gameContent.cards,
     cityNpcPools: gameContent.cityNpcPools,
@@ -244,6 +263,7 @@ export function createActiveGameContentContext(
     characterNameById: gameContent.characterNameById,
     characterManager: gameContent.characterManager,
     taskDefinitionsById: gameContent.taskDefinitionsById,
+    flowDefinitionsById: gameContent.flowDefinitionsById,
     storyContent: {
       eventDefinitionsById: gameContent.eventDefinitionsById,
       eventBindingsById: gameContent.eventBindingsById,
@@ -291,6 +311,10 @@ export function mergeContentPacks(
     maps: mergeById(basePack.maps ?? [], overridePack.maps ?? []),
     cities: mergeById(basePack.cities ?? [], overridePack.cities ?? []),
     houses: mergeById(basePack.houses ?? [], overridePack.houses ?? []),
+    buildingArrangements: mergeById(
+      basePack.buildingArrangements ?? [],
+      overridePack.buildingArrangements ?? []
+    ),
     cityEntries: [...(overridePack.cityEntries ?? [])],
     characters: mergeById(basePack.characters ?? [], overridePack.characters ?? []),
     events: mergeById(basePack.events ?? [], overridePack.events ?? []),
@@ -298,6 +322,10 @@ export function mergeContentPacks(
     scenes: mergeById(basePack.scenes ?? [], overridePack.scenes ?? []),
     tasks: mergeById(basePack.tasks ?? [], overridePack.tasks ?? []),
     activities: mergeById(basePack.activities ?? [], overridePack.activities ?? []),
+    flowDefinitions: mergeById(
+      basePack.flowDefinitions ?? [],
+      overridePack.flowDefinitions ?? []
+    ),
     cards: mergeById(basePack.cards ?? [], overridePack.cards ?? []),
     valuables: mergeById(basePack.valuables ?? [], overridePack.valuables ?? []),
     cityNpcPools: mergeCityNpcPools(basePack.cityNpcPools ?? [], overridePack.cityNpcPools ?? []),
@@ -336,6 +364,7 @@ function normalizeContentPack(pack: ContentPackDefinition): ContentPackDefinitio
     maps: pack.maps ?? [],
     cities: pack.cities ?? [],
     houses: pack.houses ?? [],
+    buildingArrangements: pack.buildingArrangements ?? [],
     cityEntries: pack.cityEntries ?? [],
     characters: pack.characters ?? [],
     events: pack.events ?? [],
@@ -343,6 +372,7 @@ function normalizeContentPack(pack: ContentPackDefinition): ContentPackDefinitio
     scenes: pack.scenes ?? [],
     tasks: pack.tasks ?? [],
     activities: pack.activities ?? [],
+    flowDefinitions: pack.flowDefinitions ?? [],
     cards: pack.cards ?? [],
     valuables: pack.valuables ?? [],
     cityNpcPools: pack.cityNpcPools ?? [],

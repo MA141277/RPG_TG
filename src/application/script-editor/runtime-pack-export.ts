@@ -12,6 +12,7 @@ import { materializeScriptEditorPersonRuntimeCharacter } from "./person-authorin
 import type {
   ScriptEditorEventBindingRecord,
   ScriptEditorEventRecord,
+  ScriptEditorFlowRecord,
   ScriptEditorProjectDefinition,
   ScriptEditorRuntimePackSchemaVersion,
   ScriptEditorStoryPackRecord,
@@ -22,6 +23,7 @@ import type { SceneDefinition } from "../../domain/action";
 import type {
   EventBinding,
   EventDefinition,
+  EventRuntimeAction,
 } from "../../domain/event";
 import type { RuntimeTaskInput } from "../../core/contracts/runtime-result";
 import type {
@@ -53,6 +55,7 @@ type RuntimePackManifestFiles = {
   characters: string;
   cities: string;
   houses: string;
+  buildingArrangements: string;
   cityEntries: string;
   events: string;
   eventBindings: string;
@@ -60,6 +63,7 @@ type RuntimePackManifestFiles = {
   activities: string;
   playables: string;
   playableIntegrations: string;
+  flowDefinitions: string;
   tasks: string;
   textEntries: string;
   cards: string;
@@ -94,6 +98,7 @@ const RUNTIME_PACK_CANONICAL_FILES: RuntimePackManifestFiles = {
   characters: "./characters.json",
   cities: "./cities.json",
   houses: "./houses.json",
+  buildingArrangements: "./building-arrangements.json",
   cityEntries: "./city-entries.json",
   events: "./events.json",
   eventBindings: "./event-bindings.json",
@@ -101,6 +106,7 @@ const RUNTIME_PACK_CANONICAL_FILES: RuntimePackManifestFiles = {
   activities: "./activities.json",
   playables: "./playables.json",
   playableIntegrations: "./playable-integrations.json",
+  flowDefinitions: "./flow-definitions.json",
   tasks: "./tasks.json",
   textEntries: "./text-entries.json",
   cards: "./cards.json",
@@ -135,6 +141,7 @@ export function validateScriptEditorProjectForRuntimeExport(
   const exportedCharacters = materializeRuntimeCharacters(project);
   const cityBuildingRuntimeFamilies =
     materializeScriptEditorCityBuildingRuntimeFamilies(project);
+  appendMountedBuildingDiagnostics(project, diagnostics);
   appendCityBuildingCustomAttributeDiagnostics(project, diagnostics);
   const exportedScenes = narrativeRuntime.scenes;
   const exportedEvents = extractRuntimeEvents(
@@ -172,6 +179,7 @@ export function validateScriptEditorProjectForRuntimeExport(
       characters: exportedCharacters,
       cities: cityBuildingRuntimeFamilies.cities,
       houses: cityBuildingRuntimeFamilies.houses,
+      buildingArrangements: cityBuildingRuntimeFamilies.buildingArrangements,
       cityEntries: cityBuildingRuntimeFamilies.cityEntries,
       events: exportedEvents,
       eventBindings: exportedEventBindings,
@@ -179,6 +187,7 @@ export function validateScriptEditorProjectForRuntimeExport(
       activities: project.activities,
       playables: playableRuntimeFamilies.playables,
       playableIntegrations: playableRuntimeFamilies.playableIntegrations,
+      flowDefinitions: playableRuntimeFamilies.flowDefinitions,
       tasks: exportedTasks,
       textEntries: exportedTextEntries,
       cards: project.cards,
@@ -238,6 +247,40 @@ function appendCityBuildingCustomAttributeDiagnostics(
         message:
           `Building custom attribute "${key}" cannot be exported to the current runtime HouseDefinition contract.`,
       });
+    });
+  });
+}
+
+function appendMountedBuildingDiagnostics(
+  project: ScriptEditorProjectDefinition,
+  diagnostics: ScriptEditorRuntimeExportDiagnostic[]
+): void {
+  const personIds = new Set(project.people.map((person) => person.id));
+
+  project.cities.forEach((city, cityIndex) => {
+    (city.mountedBuildings ?? []).forEach((mountedBuilding, buildingIndex) => {
+      mountedBuilding.npcIds.forEach((npcId, npcIndex) => {
+        if (!personIds.has(npcId)) {
+          diagnostics.push({
+            code: "missing-reference",
+            fieldPath: `project.cities[${cityIndex}].mountedBuildings[${buildingIndex}].npcIds[${npcIndex}]`,
+            message: `Mounted building NPC id "${npcId}" does not resolve to a project person record.`,
+          });
+        }
+      });
+
+      if (
+        mountedBuilding.primaryNpcId != null &&
+        mountedBuilding.primaryNpcId.length > 0 &&
+        !mountedBuilding.npcIds.includes(mountedBuilding.primaryNpcId)
+      ) {
+        diagnostics.push({
+          code: "missing-reference",
+          fieldPath: `project.cities[${cityIndex}].mountedBuildings[${buildingIndex}].primaryNpcId`,
+          message:
+            `Primary mounted NPC id "${mountedBuilding.primaryNpcId}" must be included in the same mounted building npcIds array.`,
+        });
+      }
     });
   });
 }
@@ -307,6 +350,9 @@ export function exportScriptEditorProjectToScenarioPackFiles(
     [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.houses)]: stringifyJson(
       cityBuildingRuntimeFamilies.houses
     ),
+    [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.buildingArrangements)]: stringifyJson(
+      cityBuildingRuntimeFamilies.buildingArrangements
+    ),
     [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.cityEntries)]: stringifyJson(
       cityBuildingRuntimeFamilies.cityEntries
     ),
@@ -327,6 +373,9 @@ export function exportScriptEditorProjectToScenarioPackFiles(
     ),
     [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.playableIntegrations)]: stringifyJson(
       playableRuntimeFamilies.playableIntegrations
+    ),
+    [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.flowDefinitions)]: stringifyJson(
+      playableRuntimeFamilies.flowDefinitions
     ),
     [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.tasks)]: stringifyJson(
       exportedTasks
@@ -370,6 +419,7 @@ function materializeScriptEditorPlayableRuntimeFamilies(
 ): {
   playables: PlayableDefinition[];
   playableIntegrations: PlayableIntegrationDefinition[];
+  flowDefinitions: ScriptEditorFlowRecord[];
 } {
   const playablesById = new Map<string, PlayableDefinition>();
   const playableIntegrations: PlayableIntegrationDefinition[] = [];
@@ -501,9 +551,100 @@ function materializeScriptEditorPlayableRuntimeFamilies(
     } as PlayableIntegrationDefinition & { editorRecordId: string });
   }
 
+  for (const [index, flow] of project.flows.entries()) {
+    const fieldPath = `project.flows[${index}]`;
+    const playableId = readRequiredTrimmedString(
+      flow.playableId,
+      `${fieldPath}.playableId`,
+      diagnostics
+    );
+    const integrationId = readRequiredTrimmedString(
+      flow.integrationId,
+      `${fieldPath}.integrationId`,
+      diagnostics
+    );
+    const ownerKind = readRequiredTrimmedString(
+      flow.ownerKind,
+      `${fieldPath}.ownerKind`,
+      diagnostics
+    );
+    const ownerId = readRequiredTrimmedString(
+      flow.ownerId,
+      `${fieldPath}.ownerId`,
+      diagnostics
+    );
+    const triggerId = readRequiredTrimmedString(
+      flow.triggerId,
+      `${fieldPath}.triggerId`,
+      diagnostics
+    );
+    const triggerEvent = readRequiredTrimmedString(
+      flow.triggerEvent,
+      `${fieldPath}.triggerEvent`,
+      diagnostics
+    );
+    if (
+      playableId == null ||
+      integrationId == null ||
+      ownerKind == null ||
+      ownerId == null ||
+      triggerId == null ||
+      triggerEvent == null
+    ) {
+      continue;
+    }
+    if (integrationIds.has(integrationId)) {
+      diagnostics.push({
+        code: "duplicate-id",
+        fieldPath: `${fieldPath}.integrationId`,
+        message: `Duplicate playable integration id "${integrationId}" cannot be exported.`,
+      });
+      continue;
+    }
+    if (!isFlowOwnerKind(ownerKind) || !isPlayableReturnPolicy(flow.returnPolicy)) {
+      diagnostics.push({
+        code: "invalid-field",
+        fieldPath,
+        message: "Flow owner or return policy is invalid.",
+      });
+      continue;
+    }
+    if (flow.nodes.length === 0 || !flow.nodes.some((node) => node.id === flow.initialNodeId)) {
+      diagnostics.push({
+        code: "invalid-field",
+        fieldPath: `${fieldPath}.initialNodeId`,
+        message: "Flow initialNodeId must reference a declared node.",
+      });
+      continue;
+    }
+    integrationIds.add(integrationId);
+    playableIntegrations.push({
+      editorRecordId: flow.id,
+      integrationId,
+      playableId: playableId as PlayableDefinition["id"],
+      ownerDefaults: {
+        ownerKind: ownerKind as PlayableIntegrationDefinition["ownerDefaults"]["ownerKind"],
+        ownerId,
+        returnPolicy: flow.returnPolicy,
+      },
+      trigger: {
+        triggerId,
+        ownerKind: ownerKind as PlayableIntegrationDefinition["trigger"]["ownerKind"],
+        trigger: triggerEvent,
+        ...materializeLaunchPayload(flow.launchPayload),
+      },
+      outcomeConfig: {
+        handoffByOutcome: Object.fromEntries(
+          flow.outcomeRoutes.map((route) => [route.outcome, route.handoffPolicy])
+        ),
+      },
+    } as PlayableIntegrationDefinition & { editorRecordId: string });
+  }
+
   return {
     playables: Array.from(playablesById.values()),
     playableIntegrations,
+    flowDefinitions: project.flows,
   };
 }
 
@@ -765,6 +906,7 @@ function lowerEditorEventsToRuntimeEvents(
   const exportedEvents: EventDefinition[] = [];
   const eventIds = new Set<string>();
   const referencedEventIds = collectRuntimeReferencedEventIds(project);
+  const flowStartEventIds = collectFlowStartEventIds(project);
   for (const [index, eventRecord] of project.events.entries()) {
     if (isUnreferencedDraftEditorEvent(eventRecord, referencedEventIds)) {
       continue;
@@ -776,6 +918,7 @@ function lowerEditorEventsToRuntimeEvents(
       sceneIds,
       sourceEventIds,
       sourceTaskIds,
+      flowStartEventIds,
       diagnostics
     );
     if (exportedEvent == null) {
@@ -794,6 +937,10 @@ function lowerEditorEventsToRuntimeEvents(
   }
 
   return diagnostics.length === 0 ? exportedEvents : null;
+}
+
+function isFlowOwnerKind(value: string): boolean {
+  return value === "building" || value === "scene" || value === "task" || value === "external";
 }
 
 function collectRuntimeReferencedEventIds(
@@ -827,6 +974,17 @@ function collectRuntimeReferencedEventIds(
     }
   }
 
+  return eventIds;
+}
+
+function collectFlowStartEventIds(project: ScriptEditorProjectDefinition): Set<string> {
+  const eventIds = new Set<string>();
+  for (const flow of project.flows) {
+    const eventId = flow.eventStartTarget?.eventId;
+    if (typeof eventId === "string" && eventId.length > 0) {
+      eventIds.add(eventId);
+    }
+  }
   return eventIds;
 }
 
@@ -866,6 +1024,7 @@ function lowerEditorEventToRuntimeEvent(
   sceneIds: Set<string>,
   sourceEventIds: Set<string>,
   sourceTaskIds: Set<string>,
+  flowStartEventIds: Set<string>,
   diagnostics: ScriptEditorRuntimeExportDiagnostic[]
 ): EventDefinition | null {
   if (typeof eventRecord.id !== "string" || eventRecord.id.length === 0) {
@@ -877,12 +1036,17 @@ function lowerEditorEventToRuntimeEvent(
     return null;
   }
 
-  const entrySceneId = resolveEventEntrySceneId(eventRecord, eventIndex, diagnostics);
+  const entrySceneId = resolveEventEntrySceneId(
+    eventRecord,
+    eventIndex,
+    flowStartEventIds,
+    diagnostics
+  );
   if (entrySceneId == null) {
     return null;
   }
 
-  if (!sceneIds.has(entrySceneId)) {
+  if (entrySceneId.length > 0 && !sceneIds.has(entrySceneId)) {
     diagnostics.push({
       code: "missing-reference",
       fieldPath: `project.events[${eventIndex}].entrySceneId`,
@@ -912,6 +1076,11 @@ function lowerEditorEventToRuntimeEvent(
     return null;
   }
 
+  const actions = lowerEventRuntimeActions(eventRecord, eventIndex, diagnostics);
+  if (actions === null) {
+    return null;
+  }
+
   return {
     id: eventRecord.id,
     chapterId:
@@ -927,9 +1096,10 @@ function lowerEditorEventToRuntimeEvent(
           ? "repeatable"
           : "once",
     ...(Array.isArray(eventRecord.participants) && eventRecord.participants.length > 0
-      ? { participants: eventRecord.participants }
+    ? { participants: eventRecord.participants }
       : {}),
     entrySceneId,
+    ...(actions.length === 0 ? {} : { actions }),
     ...(nextEventId.length === 0 ? {} : { nextEventId }),
     ...(taskInputs.length === 0 ? {} : { taskInputs }),
     ...(Array.isArray(eventRecord.tags) && eventRecord.tags.length > 0
@@ -941,10 +1111,22 @@ function lowerEditorEventToRuntimeEvent(
 function resolveEventEntrySceneId(
   eventRecord: ScriptEditorEventRecord,
   eventIndex: number,
+  flowStartEventIds: Set<string>,
   diagnostics: ScriptEditorRuntimeExportDiagnostic[]
 ): string | null {
   if (typeof eventRecord.entrySceneId === "string" && eventRecord.entrySceneId.length > 0) {
     return eventRecord.entrySceneId;
+  }
+
+  if (hasRuntimeEventActions(eventRecord)) {
+    return "";
+  }
+
+  if (
+    typeof eventRecord.id === "string" &&
+    flowStartEventIds.has(eventRecord.id)
+  ) {
+    return "";
   }
 
   const destination = eventRecord.destination;
@@ -964,6 +1146,36 @@ function resolveEventEntrySceneId(
   }
 
   return `scene.${destination.targetId}`;
+}
+
+function hasRuntimeEventActions(eventRecord: ScriptEditorEventRecord): boolean {
+  return Array.isArray(eventRecord.actions) && eventRecord.actions.length > 0;
+}
+
+function lowerEventRuntimeActions(
+  eventRecord: ScriptEditorEventRecord,
+  eventIndex: number,
+  diagnostics: ScriptEditorRuntimeExportDiagnostic[]
+): EventRuntimeAction[] | null {
+  if (!Array.isArray(eventRecord.actions) || eventRecord.actions.length === 0) {
+    return [];
+  }
+
+  const actions: EventRuntimeAction[] = [];
+  for (const [actionIndex, action] of eventRecord.actions.entries()) {
+    if (action?.type !== "closeBuilding") {
+      diagnostics.push({
+        code: "unsupported-lowering",
+        fieldPath: `project.events[${eventIndex}].actions[${actionIndex}]`,
+        message:
+          "Event export currently supports only closeBuilding runtime actions on imported action-only events.",
+      });
+      return null;
+    }
+    actions.push({ type: "closeBuilding" });
+  }
+
+  return actions;
 }
 
 function lowerRuntimeEventBindings(
@@ -1061,6 +1273,9 @@ function lowerRuntimeEventBinding(
     trigger: {
       timing: binding.trigger.timing,
       action: binding.trigger.action,
+      ...(isPlainObject(binding.trigger.extra)
+        ? { extra: cloneJsonCompatibleValue(binding.trigger.extra) as Record<string, unknown> }
+        : {}),
     },
     ...(conditions == null ? {} : { conditions }),
     ...(typeof binding.priority === "number" ? { priority: binding.priority } : {}),
@@ -1278,8 +1493,13 @@ function isSupportedEventBindingTrigger(trigger: ScriptEditorEventBindingRecord[
       "city-enter",
       "building-enter",
       "indoor-screen-shown",
+      "building-container-item-action",
     ].includes(trigger.action)
   );
+}
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return value != null && typeof value === "object" && !Array.isArray(value);
 }
 
 function lowerEventTaskInputs(

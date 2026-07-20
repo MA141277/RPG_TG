@@ -85,6 +85,7 @@ The repository should use a two-level taxonomy:
 - sub-family
   - `minigame`
   - `battle`
+  - `flow`
 
 Rules:
 
@@ -92,6 +93,7 @@ Rules:
 - `family` is mandatory contract data
 - `story-battle` must use `family: "battle"`
 - ordinary short-form challenge modules such as QTE, begging, accounting, and compounding should use `family: "minigame"`
+- ordinary authored interaction flows such as creator-defined building functions should use `family: "flow"`
 - the repository must not use `minigame` as a blanket term for all playables once this spec is active
 
 ## 7. Current Mismatch Snapshot
@@ -269,7 +271,7 @@ All playables must register through one unified registry.
 Recommended shape:
 
 ```ts
-export type PlayableFamily = "minigame" | "battle";
+export type PlayableFamily = "minigame" | "battle" | "flow";
 
 export type PlayableId =
   | "activity-qte"
@@ -939,6 +941,8 @@ Recommended family mapping:
   - `family: "minigame"`
 - `story-battle`
   - `family: "battle"`
+- `building-flow`
+  - `family: "flow"`
 
 Recommended owner-return defaults:
 

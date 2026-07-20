@@ -88,6 +88,7 @@ export function createAppRenderCoordinator(
       cityDefinition: currentCityDefinition,
       cityDefinitions: activeContentContext.cities,
       houseDefinitions: activeContentContext.houses,
+      buildingArrangements: activeContentContext.buildingArrangements,
       cityEntries: activeContentContext.cityEntries,
       cityNpcPoolDefinitions: activeContentContext.cityNpcPools,
       cityNameById: activeContentContext.cityNameById,
@@ -116,6 +117,7 @@ export function createAppRenderCoordinator(
       citySceneMappingsByCityId,
       historicalCharacters: activeContentContext.historicalCharacters,
       historicalCityRosters: activeContentContext.historicalCityRosters,
+      flowDefinitionsById: activeContentContext.gameContent.flowDefinitionsById,
       presenterOutput,
     });
     dependencies.restoreCampaignTerrainCanvases(appRoot, preservedTerrainCanvases);

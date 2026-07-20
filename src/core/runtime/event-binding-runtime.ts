@@ -48,8 +48,17 @@ export function runEventBindingRuntime(
     };
   }
 
+  const actionState = applyEventRuntimeActions(input.state, eventDefinition);
+  if (hasOnlyStateRuntimeActions(eventDefinition)) {
+    return {
+      state: actionState,
+      activation,
+      candidate,
+    };
+  }
+
   return {
-    state: startEvent(input.state, eventDefinition),
+    state: startEvent(actionState, eventDefinition),
     activation,
     candidate,
   };
@@ -87,7 +96,53 @@ function matchesTriggerContext(
     binding.owner.family === triggerContext.owner.family &&
     (binding.owner.id == null || binding.owner.id === triggerContext.owner.id) &&
     binding.trigger.timing === triggerContext.timing &&
-    binding.trigger.action === triggerContext.action
+    binding.trigger.action === triggerContext.action &&
+    matchesTriggerExtra(binding.trigger.extra, triggerContext.payload)
+  );
+}
+
+function matchesTriggerExtra(
+  expected: Record<string, unknown> | undefined,
+  payload: Record<string, unknown> | undefined
+): boolean {
+  if (expected == null) {
+    return true;
+  }
+
+  return Object.entries(expected).every(
+    ([key, value]) => payload?.[key] === value
+  );
+}
+
+function applyEventRuntimeActions(
+  state: GameState,
+  eventDefinition: EventDefinition
+): GameState {
+  return (eventDefinition.actions ?? []).reduce((currentState, action) => {
+    if (action.type === "closeBuilding") {
+      return {
+        ...currentState,
+        world: {
+          ...currentState.world,
+          currentHouseId: null,
+        },
+        ui: {
+          ...currentState.ui,
+          currentView: "city",
+          overlayView: null,
+          houseSession: null,
+        },
+      };
+    }
+
+    return currentState;
+  }, state);
+}
+
+function hasOnlyStateRuntimeActions(eventDefinition: EventDefinition): boolean {
+  return (
+    (eventDefinition.actions?.length ?? 0) > 0 &&
+    eventDefinition.entrySceneId.length === 0
   );
 }
 

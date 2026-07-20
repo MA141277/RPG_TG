@@ -38,9 +38,26 @@
 
 - Goal:
   - `Replace with the bounded queue goal.`
+- Parent spec:
+  - `docs/blueprints/specs/... or docs/blueprints/version-memo.md#memo-...`
+- Parent requirement role:
+  - `This queue implements one bounded slice of the parent spec. The parent spec remains the total requirement contract.`
 - Forbidden expansions:
   - `Replace with out-of-scope area 1.`
   - `Replace with out-of-scope area 2.`
+
+### Parent Spec Inheritance
+
+- inherited_required_capabilities:
+  - `Replace with parent-spec capability this queue must preserve or implement.`
+- inherited_compatibility_paths:
+  - `Replace with compatibility path from parent spec that this queue must preserve.`
+- inherited_legacy_replacements:
+  - `Replace with old field, behavior, or mechanism from parent spec that this queue owns replacing.`
+- inherited_non_goals:
+  - `Replace with explicit parent-spec non-goal this queue must not violate.`
+- parent_spec_change_policy:
+  - `If implementation proves the parent spec must change, update the parent spec first, then reconcile every affected candidate queue and evidence matrix entry before treating any capability as removed, retired, or unsupported.`
 
 ### Evidence Lock
 
@@ -63,6 +80,18 @@
 #### Cannot Claim
 
 - `ACC-REPLACE-002: Replace with related acceptance that remains outside this queue.`
+- `Out-of-scope means not implemented by this queue; it does not mean retired, removed, or unsupported unless the parent spec was updated first.`
+
+#### Over-Narrowing Guard
+
+- parent_capabilities_not_owned_by_this_queue:
+  - `Replace with inherited parent capability that remains owned by another queue or successor candidate.`
+- forbidden_scope_shrinkage:
+  - `Do not delete or declare unsupported any inherited capability merely because it is outside this queue.`
+- unspecified_detail_policy:
+  - `Fill unspecified implementation details as much as the parent spec reasonably allows, without drifting beyond, contradicting, or running sideways from the parent spec.`
+- gap_routing_policy:
+  - `If a required inherited capability cannot be completed here, record it as residue, prerequisite, blocker, or successor candidate rather than erasing it from the total spec.`
 
 #### Legacy Paths To Replace
 
@@ -114,9 +143,33 @@
 
 - `Queue execution closeout is not equivalent to true topic closure.`
 - `execution_closeout_status = done means the bounded execution slice landed and verified.`
+- `execution_closeout_status = partial means some admitted queue work landed, but part of Can Claim remains unimplemented or unverified and must route to residue, blocker, or successor queue.`
+- `execution_closeout_status = blocked means execution cannot continue without resolving a concrete blocker recorded in blocked_by.`
 - `topic_closure_status = closed is legal only when no still-blocking same-family residue remains inside the queue's bounded topic surface.`
+- `topic_closure_status = open-residue means the bounded execution may be done or partial, but remaining capability must be routed before version closeout.`
+- `topic_closure_status = blocked means topic closure is impossible until a recorded blocker is resolved.`
 - `If residue_remaining = yes, classify it as same-family / cross-family / accepted-residue / none before version-level routing continues.`
+- `residue_family = accepted-residue means the remaining gap is explicitly accepted within the parent/version boundary and does not block closeout.`
+- `Out-of-scope, Cannot Claim, and accepted residue are not retirement authority. Do not write retired/removed/unsupported unless the parent spec was updated first.`
 - `If residue_family = same-family and one lawful continuation exists, name it in next_family_candidate and allow automatic continuation instead of returning to open-ended human queue selection.`
+
+### Completion Completeness Review
+
+- review_status: `pending | passed | gap-fill-used | residue-recorded | blocked`
+- can_claim_coverage:
+  - `Replace with evidence that each Can Claim item is implemented and verified.`
+- parent_spec_preservation:
+  - `Replace with evidence that inherited capabilities, compatibility paths, legacy replacements, and non-goals were not over-narrowed.`
+- out_of_scope_routing:
+  - `Replace with where every Cannot Claim / Out Of Scope item is owned, routed, accepted, or blocked.`
+- verification_sufficiency:
+  - `Replace with why verification covers functional behavior rather than only a representative happy path.`
+- gap_fill_decision:
+  - `not-needed | used-once | not-used-recorded-as-residue | blocked`
+- gap_fill_scope:
+  - `If used-once, name the high-priority missing items repaired in the single permitted gap-fill pass.`
+- remaining_gaps:
+  - `If any remain, route each to same-family residue, cross-family residue, accepted residue, blocker, or successor candidate.`
 
 ### Admission Preconditions
 

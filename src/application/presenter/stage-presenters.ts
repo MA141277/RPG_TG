@@ -9,6 +9,7 @@ import {
 } from "../story/story-runtime";
 import type { AppState } from "../app-shell";
 import type { SceneDefinition } from "../../domain/action";
+import type { BuildingArrangementDefinition } from "../../domain/building-arrangement";
 import type { CityDefinition } from "../../domain/city";
 import type { CityEntryDefinition } from "../../domain/city-entry";
 import type { CityNpcPoolDefinition } from "../../domain/city-npc";
@@ -22,6 +23,7 @@ export type StagePresenterInput = {
   cityDefinition: CityDefinition;
   cityDefinitions?: CityDefinition[];
   houseDefinitions: HouseDefinition[];
+  buildingArrangements?: BuildingArrangementDefinition[];
   cityEntries: CityEntryDefinition[];
   cityNpcPoolDefinitions: CityNpcPoolDefinition[];
   playerCharacterId: string;
@@ -70,6 +72,7 @@ export function createStagePresenterOutput(
     return selectBuildingModuleStage({
       appState: input.appState,
       houseDefinitions: input.houseDefinitions,
+      buildingArrangements: input.buildingArrangements,
       cityNpcPoolDefinitions: input.cityNpcPoolDefinitions,
       playerCharacterId: input.playerCharacterId,
       textEntriesById: input.textEntriesById,

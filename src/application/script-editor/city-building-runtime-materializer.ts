@@ -1,4 +1,5 @@
 import type { CityEntryDefinition } from "../../domain/city-entry";
+import type { BuildingArrangementDefinition } from "../../domain/building-arrangement";
 import type { CityDefinition } from "../../domain/city";
 import type {
   LocationAccessDefinition,
@@ -26,6 +27,7 @@ import { normalizeScriptEditorPersonRecord } from "./person-authoring";
 export type ScriptEditorCityBuildingRuntimeFamilies = {
   cities: CityDefinition[];
   houses: HouseDefinition[];
+  buildingArrangements: BuildingArrangementDefinition[];
   cityEntries: CityEntryDefinition[];
   cityNpcPools: CityNpcPoolDefinition[];
   locationAccess: LocationAccessDefinition[];
@@ -47,6 +49,7 @@ export function materializeScriptEditorCityBuildingRuntimeFamilies(
   return {
     cities: materializeCities(cities, buildings),
     houses: materializeHouses(buildings, people, cities),
+    buildingArrangements: materializeBuildingArrangements(project),
     cityEntries: materializeCityEntries(project.cityEntries, cities, buildings),
     cityNpcPools: materializeCityNpcPools(project.cityNpcPools, people, cities),
     locationAccess: materializeLocationAccess(
@@ -56,6 +59,35 @@ export function materializeScriptEditorCityBuildingRuntimeFamilies(
       project.textEntries
     ),
   };
+}
+
+function materializeBuildingArrangements(
+  project: ScriptEditorProjectDefinition
+): BuildingArrangementDefinition[] {
+  return project.buildingArrangements.map((arrangement) => ({
+    id: arrangement.id,
+    cityId: arrangement.cityId,
+    buildingId: arrangement.buildingId,
+    ...(arrangement.displayName == null ? {} : { displayName: arrangement.displayName }),
+    ...(arrangement.description == null ? {} : { description: arrangement.description }),
+    ...(arrangement.backgroundId == null ? {} : { backgroundId: arrangement.backgroundId }),
+    mountedNpcIds: [...arrangement.mountedNpcIds],
+    primaryNpcId: arrangement.primaryNpcId,
+    containers: arrangement.containers.map((container) => ({
+      id: container.id,
+      type: container.type,
+      ...(container.title == null ? {} : { title: container.title }),
+      ...(container.source == null
+        ? {}
+        : { source: cloneJsonCompatibleValue(container.source) as BuildingArrangementDefinition["containers"][number]["source"] }),
+      ...(container.items == null
+        ? {}
+        : { items: container.items.map((item) => ({ ...item })) }),
+    })),
+    ...(arrangement.visibleRule == null ? {} : { visibleRule: cloneJsonCompatibleValue(arrangement.visibleRule) }),
+    ...(arrangement.enterRule == null ? {} : { enterRule: cloneJsonCompatibleValue(arrangement.enterRule) }),
+    ...(arrangement.exitRule == null ? {} : { exitRule: cloneJsonCompatibleValue(arrangement.exitRule) }),
+  }));
 }
 
 function materializeCities(
@@ -117,19 +149,26 @@ function materializeHouses(
       characterIds: [],
       defaultCharacterId: null,
     };
-    const assignedPersonIds = uniqueStrings([
-      ...readStringArray(baseAttributes.characterIds),
-      ...people
-        .filter((person) => person.houseId === building.id)
-        .map((person) => person.id),
-      ...(mountedBuilding?.npcIds ?? []),
-    ]);
-    const defaultPersonId = firstNonEmptyString(
-      mountedBuilding?.primaryNpcId,
-      building.entryBinding?.defaultPersonId,
-      readString(baseAttributes.defaultCharacterId),
-      assignedPersonIds[0] ?? ""
-    );
+    const assignedPersonIds =
+      mountedBuilding == null
+        ? uniqueStrings([
+            ...readStringArray(baseAttributes.characterIds),
+            ...people
+              .filter((person) => person.houseId === building.id)
+              .map((person) => person.id),
+          ])
+        : uniqueStrings(mountedBuilding.npcIds);
+    const defaultPersonId =
+      mountedBuilding == null
+        ? firstNonEmptyString(
+            building.entryBinding?.defaultPersonId,
+            readString(baseAttributes.defaultCharacterId),
+            assignedPersonIds[0] ?? ""
+          )
+        : firstNonEmptyString(
+            mountedBuilding?.primaryNpcId,
+            assignedPersonIds[0] ?? ""
+          );
     const onEnterEventId = firstNonEmptyString(
       building.entryBinding?.onEnterEventId,
       readString(building.eventBindings?.onEnterEventId)
@@ -598,4 +637,8 @@ function uniqueStrings(values: readonly string[]): string[] {
 function slugifyIdSegment(value: string): string {
   const slug = value.replace(/[^A-Za-z0-9._-]+/g, "-").replace(/^-+|-+$/g, "");
   return slug.length > 0 ? slug : "generated";
+}
+
+function cloneJsonCompatibleValue(value: unknown): unknown {
+  return value == null ? value : JSON.parse(JSON.stringify(value));
 }

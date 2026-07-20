@@ -4,9 +4,9 @@
 
 - blueprint_id: `blueprint.rpg-tg`
 - blueprint_version: `2026.07`
-- active_version: `target.city-building-module-entry-and-project-startup-authoring`
-- active_version_plan: `docs/blueprints/plans/2026-07-19-city-building-module-entry-and-project-startup-authoring-target-plan.md`
-- active_version_spec: `docs/blueprints/specs/2026-07-19-city-building-module-entry-and-project-startup-authoring-target.md`
+- active_version: `target.building-arrangement-container-flow-refactor`
+- active_version_plan: `docs/blueprints/plans/2026-07-20-building-arrangement-container-flow-refactor-target-plan.md`
+- active_version_spec: `docs/blueprints/specs/2026-07-20-building-arrangement-container-flow-refactor-target.md`
 - classification_rules_ref: `docs/blueprints/classification-rule-layer-spec.md`
 - execution_mode: `single-active-task`
 - allow_parallel: `false`
@@ -22,6 +22,7 @@
 
 | Version ID | Spec | Plan | Notes |
 | --- | --- | --- | --- |
+| `target.building-arrangement-container-flow-refactor` | `docs/blueprints/specs/2026-07-20-building-arrangement-container-flow-refactor-target.md` | `docs/blueprints/plans/2026-07-20-building-arrangement-container-flow-refactor-target-plan.md` | `Open successor refactor target created on 2026-07-20 from MEMO-022 and the reviewed evidence draft. It admits queue.building-arrangement-canonical-schema first, then continues through Script Editor building arrangement UX, runtime container shell, event trigger integration, flow playable runtime, flow authoring UX, Zhu Yuanzhang pack migration, legacy house retirement, and final acceptance without entering version closeout unless explicitly requested.` |
 | `target.entry-shell-ui-module-extraction` | `docs/blueprints/specs/2026-07-19-entry-shell-ui-module-extraction-target.md` | `docs/blueprints/plans/2026-07-19-entry-shell-ui-module-extraction-target-plan.md` | `Closed on 2026-07-19 after queue.entry-shell-ui-module-extraction extracted startup/pre-game Entry Shell rendering from MainUiFlow while preserving start game, continue game, JSON start, Script Editor entry, and character-selection behavior.` |
 | `target.city-building-module-entry-and-project-startup-authoring` | `docs/blueprints/specs/2026-07-19-city-building-module-entry-and-project-startup-authoring-target.md` | `docs/blueprints/plans/2026-07-19-city-building-module-entry-and-project-startup-authoring-target-plan.md` | `Open successor startup/module version created on 2026-07-19 from the operator-approved 项目信息 startup authoring and city/building module entry draft. It admits queue.city-building-module-entry-and-project-startup-authoring to add project overview startup controls, converge flexible startup paths, extract separate city/building module entry seams, and prove behavior through simulated-human acceptance.` |
 | `target.script-editor-event-runtime-production-hardening` | `docs/blueprints/specs/2026-07-18-script-editor-event-runtime-production-hardening-target.md` | `docs/blueprints/plans/2026-07-18-script-editor-event-runtime-production-hardening-target-plan.md` | `Open successor event-runtime hardening version created on 2026-07-18 from the operator's production-readiness draft after source audit found old event-system residues and Liu Bang pack trigger/conditions data. It admits queue.script-editor-event-runtime-production-hardening-and-liu-bang-pack-migration to clean/guard old event residues, migrate Liu Bang to event-bindings.json, and prove Script Editor simulated-human authoring plus runtime triggering.` |

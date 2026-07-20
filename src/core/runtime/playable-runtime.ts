@@ -8,6 +8,7 @@ import type {
 import type { RuntimeRequest } from "../contracts/runtime-request";
 import type {
   ActivePlayableSession,
+  PlayableCommand,
   PlayableFamily,
   PlayableId,
   PlayableIntegrationDefinition,
@@ -17,6 +18,11 @@ import type {
   PlayableOwnerContext,
   PlayableSettlement,
 } from "../contracts/playable-runtime";
+import type { FlowPlayableDefinition } from "../../domain/playables/flow";
+import {
+  launchFlowPlayable,
+  reduceFlowPlayable,
+} from "../../application/playables/flow/flow-playable-definition";
 import type { RuntimeState } from "../contracts/runtime-state";
 import {
   startActivityQtePlayable,
@@ -72,6 +78,7 @@ export type PlayableRuntimeOutput = RuntimeResult & {
   session: ActivePlayableSession | null;
   characterDefinitions?: CharacterDefinition[];
   followUp?: RuntimeInteractiveSignal | null;
+  settlement?: PlayableSettlement | null;
 };
 
 type InteractivePlayableId = "activity-qte" | "city-begging" | "story-battle";
@@ -226,6 +233,7 @@ export function runPlayableRuntime(input: {
   playerCharacterId?: string;
   activityDefinitionsById?: Record<string, ActivityDefinition>;
   textEntriesById?: Record<string, string> | undefined;
+  flowDefinitionsById?: Record<string, FlowPlayableDefinition> | undefined;
 }): PlayableRuntimeOutput {
   const resolvedRequest = toPlayableRuntimeRequest(input.request);
   if (resolvedRequest == null) {
@@ -238,6 +246,48 @@ export function runPlayableRuntime(input: {
   }
 
   if (resolvedRequest.phase === "launch") {
+    if (resolvedRequest.launch.launch.family === "flow") {
+      const flowDefinition =
+        input.flowDefinitionsById?.[resolvedRequest.launch.launch.playableId] ??
+        null;
+      if (flowDefinition == null) {
+        return {
+          state: input.state,
+          effects: [],
+          handled: true,
+          session: getActivePlayableSession(
+            input.state,
+            resolvedRequest.launch.launch.playableId
+          ),
+        };
+      }
+
+      const nextState = {
+        ...input.state,
+        core: {
+          ...input.state.core,
+          ui: {
+            ...input.state.core.ui,
+            currentView: "minigame" as const,
+          },
+          runtime: {
+            ...input.state.core.runtime,
+            playableSession: launchFlowPlayable({
+              definition: flowDefinition,
+              integrationId: resolvedRequest.launch.launch.integrationId,
+              ownerContext: resolvedRequest.launch.launch.ownerContext,
+            }),
+          },
+        },
+      };
+      return {
+        state: nextState,
+        effects: [],
+        handled: true,
+        session: getActivePlayableSession(nextState, flowDefinition.id),
+      };
+    }
+
     if (resolvedRequest.launch.launch.playableId === "activity-qte") {
       const activityId = resolvedRequest.launch.launch.payload?.activityId;
       if (typeof activityId !== "string") {
@@ -414,6 +464,25 @@ export function runPlayableRuntime(input: {
   }
 
   if (resolvedRequest.phase === "exit") {
+    if (getActivePlayableSession(input.state, resolvedRequest.playableId)?.family === "flow") {
+      const nextState = {
+        ...input.state,
+        core: {
+          ...input.state.core,
+          runtime: {
+            ...input.state.core.runtime,
+            playableSession: null,
+          },
+        },
+      };
+      return {
+        state: nextState,
+        effects: [],
+        handled: true,
+        session: null,
+      };
+    }
+
     if (resolvedRequest.playableId === "activity-qte") {
       const nextState = exitActivityQtePlayable(input.state);
       return {
@@ -469,6 +538,81 @@ export function runPlayableRuntime(input: {
       effects: [],
       handled: false,
       session: getActivePlayableSession(input.state, resolvedRequest.playableId),
+    };
+  }
+
+  const activeFlowSession = getActivePlayableSession(
+    input.state,
+    resolvedRequest.playableId
+  );
+  const flowDefinition =
+    input.flowDefinitionsById?.[resolvedRequest.playableId] ?? null;
+  if (activeFlowSession?.family === "flow" && flowDefinition != null) {
+    const command = toFlowPlayableCommand(
+      resolvedRequest.action,
+      resolvedRequest.payload
+    );
+    if (command == null) {
+      return {
+        state: input.state,
+        effects: [],
+        handled: true,
+        session: activeFlowSession,
+      };
+    }
+
+    const reduction = reduceFlowPlayable({
+      definition: flowDefinition,
+      session: activeFlowSession,
+      command,
+    });
+    if (
+      reduction.lifecycle.type === "completed" ||
+      reduction.lifecycle.type === "cancelled"
+    ) {
+      const settlement = createPlayableSettlementShell({
+        session: reduction.session,
+        outcome:
+          reduction.lifecycle.type === "cancelled"
+            ? "cancelled"
+            : reduction.lifecycle.result.status === "failed"
+              ? "failure"
+              : "success",
+        factResult: reduction.lifecycle.result,
+      });
+      return {
+        state: {
+          ...input.state,
+          core: {
+            ...input.state.core,
+            runtime: {
+              ...input.state.core.runtime,
+              playableSession: null,
+            },
+          },
+        },
+        effects: [],
+        handled: true,
+        session: null,
+        settlement,
+      };
+    }
+
+    const nextState = {
+      ...input.state,
+      core: {
+        ...input.state.core,
+        runtime: {
+          ...input.state.core.runtime,
+          playableSession: reduction.session,
+        },
+      },
+    };
+    return {
+      state: nextState,
+      effects: [],
+      handled: true,
+      session: reduction.session,
     };
   }
 
@@ -1300,6 +1444,25 @@ function createInteractiveOwnerContext(input: {
     returnPolicy:
       input.playableId === "activity-qte" ? "resume-owner" : "reenter-owner",
   };
+}
+
+function toFlowPlayableCommand(
+  action: string,
+  payload: Record<string, unknown> | undefined
+): PlayableCommand | null {
+  if (action === "confirm") {
+    return { type: "confirm" };
+  }
+
+  if (action === "cancel") {
+    return { type: "cancel" };
+  }
+
+  if (action === "select" && typeof payload?.value === "string") {
+    return { type: "select", value: payload.value };
+  }
+
+  return null;
 }
 
 function getInteractivePlayableIntegrationId(

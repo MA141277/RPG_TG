@@ -1,11 +1,12 @@
 import type { HouseDefinition } from "./house";
-import type { EventOccurrence, EventParticipant } from "./event";
+import type { EventOccurrence, EventParticipant, EventRuntimeAction } from "./event";
 import type {
   LocationAccessConditionExpression,
   LocationAccessConditionSubject,
   LocationAccessValueRef,
 } from "./location-access";
 import type { RuntimeTaskInput } from "../core/contracts/runtime-result";
+import type { FlowNode } from "./playables/flow";
 
 export const SCRIPT_EDITOR_PROJECT_KIND = "script-editor-project";
 export const SCRIPT_EDITOR_PROJECT_MANIFEST_FILE = "project.json";
@@ -23,6 +24,7 @@ export const SCRIPT_EDITOR_PROJECT_FILE_KEYS = [
   "people",
   "cities",
   "buildings",
+  "buildingArrangements",
   "cityEntries",
   "events",
   "eventBindings",
@@ -39,6 +41,7 @@ export const SCRIPT_EDITOR_PROJECT_FILE_KEYS = [
   "historicalCharacterIdByCharacterId",
   "dialogues",
   "minigames",
+  "flows",
   "storyNodes",
   "textEntries",
   "conditionGroups",
@@ -57,6 +60,7 @@ export const SCRIPT_EDITOR_PROJECT_CANONICAL_FILES: Record<
   people: "./people.json",
   cities: "./cities.json",
   buildings: "./buildings.json",
+  buildingArrangements: "./building-arrangements.json",
   cityEntries: "./city-entries.json",
   events: "./events.json",
   eventBindings: "./event-bindings.json",
@@ -73,6 +77,7 @@ export const SCRIPT_EDITOR_PROJECT_CANONICAL_FILES: Record<
   historicalCharacterIdByCharacterId: "./historical-character-id-map.json",
   dialogues: "./dialogues.json",
   minigames: "./minigames.json",
+  flows: "./flows.json",
   storyNodes: "./story-nodes.json",
   textEntries: "./text-entries.json",
   conditionGroups: "./condition-groups.json",
@@ -198,6 +203,55 @@ export type ScriptEditorCityMountedBuilding = {
   buildingId: string;
   npcIds: string[];
   primaryNpcId: string | null;
+};
+
+export type ScriptEditorBuildingContainerType =
+  | "character-seats"
+  | "action-menu"
+  | "status-panel"
+  | "text-panel"
+  | "image-panel"
+  | "resource-panel";
+
+export type ScriptEditorBuildingContainerSource =
+  | {
+      type: "arrangement-mounted-npcs";
+      includeNpcIds?: string[] | undefined;
+    }
+  | {
+      type: "static-records";
+      recordIds: string[];
+    };
+
+export type ScriptEditorBuildingContainerActionItem = {
+  id: string;
+  label: string;
+  eventId: string;
+  isVisible?: boolean | undefined;
+  isEnabled?: boolean | undefined;
+  disabledHint?: string | undefined;
+};
+
+export type ScriptEditorBuildingContainerRecord = {
+  id: string;
+  type: ScriptEditorBuildingContainerType;
+  title?: string | undefined;
+  source?: ScriptEditorBuildingContainerSource | undefined;
+  items?: ScriptEditorBuildingContainerActionItem[] | undefined;
+};
+
+export type ScriptEditorBuildingArrangementRecord = ScriptEditorEntityRecord & {
+  cityId: string;
+  buildingId: string;
+  displayName?: string | undefined;
+  description?: string | undefined;
+  backgroundId?: string | undefined;
+  mountedNpcIds: string[];
+  primaryNpcId: string | null;
+  containers: ScriptEditorBuildingContainerRecord[];
+  visibleRule?: ScriptEditorAccessRule | undefined;
+  enterRule?: ScriptEditorAccessRule | undefined;
+  exitRule?: ScriptEditorAccessRule | undefined;
 };
 
 export type ScriptEditorBuildingRecord = ScriptEditorEntityRecord & {
@@ -439,6 +493,40 @@ export type ScriptEditorMinigameRecord = ScriptEditorEntityRecord & {
   notes?: string;
 };
 
+export type ScriptEditorFlowOwnerKind =
+  | "building"
+  | "scene"
+  | "task"
+  | "external";
+
+export type ScriptEditorFlowTriggerSource =
+  | "manual"
+  | "event-destination"
+  | "container-item"
+  | "other";
+
+export type ScriptEditorFlowRecord = ScriptEditorEntityRecord & {
+  title: string;
+  description?: string;
+  playableId: string;
+  integrationId: string;
+  ownerKind: ScriptEditorFlowOwnerKind;
+  ownerId: string;
+  returnPolicy: ScriptEditorMinigameReturnPolicy;
+  triggerId: string;
+  triggerSource: ScriptEditorFlowTriggerSource;
+  triggerEvent: string;
+  eventStartTarget?: {
+    eventId: string;
+    bindingId?: string;
+  };
+  launchPayload: ScriptEditorKeyValueEntry[];
+  initialNodeId: string;
+  nodes: FlowNode[];
+  outcomeRoutes: ScriptEditorMinigameOutcomeRoute[];
+  notes?: string;
+};
+
 export type ScriptEditorActivityRecord = ScriptEditorEntityRecord & {
   label: string;
   handlerId: string;
@@ -451,6 +539,7 @@ export type ScriptEditorEventRecord = ScriptEditorEntityRecord & {
   occurrence?: EventOccurrence;
   entrySceneId?: string;
   participants?: EventParticipant[];
+  actions?: EventRuntimeAction[];
   tags?: string[];
   triggerTiming?: ScriptEditorEventTriggerTiming;
   repeatable?: boolean;
@@ -525,6 +614,7 @@ export type ScriptEditorProjectDefinition = {
   people: ScriptEditorPersonRecord[];
   cities: ScriptEditorCityRecord[];
   buildings: ScriptEditorBuildingRecord[];
+  buildingArrangements: ScriptEditorBuildingArrangementRecord[];
   cityEntries: ScriptEditorEntityRecord[];
   events: ScriptEditorEventRecord[];
   eventBindings: ScriptEditorEventBindingRecord[];
@@ -541,6 +631,7 @@ export type ScriptEditorProjectDefinition = {
   historicalCharacterIdByCharacterId: Record<string, string>;
   dialogues: ScriptEditorDialogueRecord[];
   minigames: ScriptEditorMinigameRecord[];
+  flows: ScriptEditorFlowRecord[];
   storyNodes: ScriptEditorStoryNodeRecord[];
   textEntries: ScriptEditorTextEntryRecord[];
   conditionGroups: ScriptEditorEntityRecord[];

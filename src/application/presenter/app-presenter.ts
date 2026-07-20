@@ -1,5 +1,6 @@
 import type { AppState } from "../app-shell";
 import type { SceneDefinition } from "../../domain/action";
+import type { BuildingArrangementDefinition } from "../../domain/building-arrangement";
 import type { CityDefinition } from "../../domain/city";
 import type { CityEntryDefinition } from "../../domain/city-entry";
 import type { CityNpcPoolDefinition } from "../../domain/city-npc";
@@ -15,6 +16,7 @@ export type AppPresenterInput = {
   cityDefinition: CityDefinition;
   cityDefinitions?: CityDefinition[];
   houseDefinitions: HouseDefinition[];
+  buildingArrangements?: BuildingArrangementDefinition[];
   cityEntries: CityEntryDefinition[];
   cityNpcPoolDefinitions: CityNpcPoolDefinition[];
   playerCharacterId: string;

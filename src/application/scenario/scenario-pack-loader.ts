@@ -127,6 +127,9 @@ export function parseScenarioPack(value: unknown): ScenarioPackDefinition {
   if (value.houses != null) {
     assertArray(value.houses, "scenario houses");
   }
+  if (value.buildingArrangements != null) {
+    assertArray(value.buildingArrangements, "scenario building arrangements");
+  }
   if (value.maps != null) {
     assertArray(value.maps, "scenario maps");
   }
@@ -147,6 +150,9 @@ export function parseScenarioPack(value: unknown): ScenarioPackDefinition {
   }
   if (value.playableIntegrations != null) {
     assertArray(value.playableIntegrations, "scenario playable integrations");
+  }
+  if (value.flowDefinitions != null) {
+    assertArray(value.flowDefinitions, "scenario flow definitions");
   }
 
   if (value.activities != null) {
@@ -214,8 +220,10 @@ type ScenarioPackManifestFiles = {
   tasks?: string;
   playables?: string;
   playableIntegrations?: string;
+  flowDefinitions?: string;
   cities?: string;
   houses?: string;
+  buildingArrangements?: string;
   maps?: string;
   cityEntries?: string;
   textEntries?: string;

@@ -608,6 +608,43 @@ Rules:
 3. A queue that only proves a seam, adapter, fail-closed guard, or materializer must not claim broader version acceptance unless the acceptance matrix explicitly makes that seam the acceptance.
 4. Candidate recovery must resume from the evidence matrix when it exists; do not restart broad audits without new material evidence.
 
+### 8.7.1 Split Candidate Spec Integrity
+
+When a new operator requirement is added to Blueprint and must be split into multiple candidate subqueues, the requirement-related document is the parent spec source, not an implementation plan.
+
+Requirement-related document means one of:
+
+- operator draft
+- version memo entry
+- PRD
+- bug report
+- approved design note
+- formal version spec
+
+Hard rules:
+
+1. A broad requirement document must not be converted into one concrete execution plan when evidence shows multiple independent subqueues are required.
+2. Split candidate subqueue specs must preserve the parent requirement's total contract.
+3. A subqueue must not over-narrow the function surface only because the local implementation slice is smaller.
+4. A subqueue should expand unspecified implementation details as much as the parent spec reasonably allows, but must not drift beyond, contradict, or run sideways from the parent spec.
+5. Any subqueue that discovers the parent spec is wrong, incomplete, or impossible must stop and update the parent spec first, then update every affected candidate queue and evidence matrix entry.
+6. No subqueue may change the parent requirement by shrinking scope.
+7. No subqueue may delete an unimplemented capability by declaring it unsupported.
+8. No subqueue may convert an `out-of-scope` item into `retired`, `removed`, or `unsupported` unless the parent spec is updated first and affected queues are reconciled.
+9. If a subqueue cannot implement a capability it inherited, it must record the gap as residue, prerequisite, blocker, or successor candidate; it must not erase the capability from the total spec.
+
+Required split review:
+
+1. After candidate subqueues are split, the agent must perform an AI completeness review before admission.
+2. The review must compare the subqueues against the parent requirement document and list:
+   - parent capabilities covered by each subqueue
+   - parent capabilities not yet owned
+   - risks of over-narrowing
+   - drift risks beyond the parent requirement
+   - required follow-up candidate queues or parent-spec updates
+3. The split is incomplete if any parent required outcome, compatibility path, legacy replacement, or explicit non-goal is missing from all subqueues and not intentionally waived in the parent spec.
+4. The review result must be recorded in the version plan Candidate Evidence Matrix, Candidate Recovery Ledger, or an explicitly referenced spec/review document.
+
 ## 8.8 Evidence Lock Before Queue Activation
 
 Before any candidate queue becomes active, the agent must perform an Evidence Lock review.
@@ -630,7 +667,7 @@ Rules:
 1. The Evidence Lock may be a dedicated pre-activation review in the version plan or the first task of an already-started queue.
 2. If implementation anchors are missing, the queue must not proceed into feature implementation.
 3. If prerequisites are missing, the queue must return to version review or split the prerequisite queue.
-4. If the queue can only close a smaller slice than its name implies, the claim boundary must be narrowed before implementation starts.
+4. If the queue can only close a smaller slice than its name implies, the claim boundary must be corrected before implementation starts while preserving the parent spec. Unclaimed required capability must be routed to another queue, recorded as residue, or returned to version review; it must not be silently removed from the total requirement.
 5. Existing active queues may be repaired by adding an `evidence-anchor-reconcile` task before further implementation.
 
 ## 8.9 Queue Claim Boundary
@@ -653,6 +690,77 @@ Rules:
 3. Queue closeout can close only the acceptance ids listed in `Can Claim`.
 4. If implementation lands only a seam or guard, closeout must say so and route remaining acceptance through residue.
 5. Queue residue classification must compare landed behavior against the claim boundary, not the queue title.
+6. `Cannot Claim` and `Out Of Scope` entries are not retirement authority. They mean another owner, later queue, parent-spec update, accepted residue, or explicit waiver is required.
+7. A queue may not mark a capability unsupported, retired, or removed merely because it is outside that queue's local implementation boundary.
+8. If queue implementation proves an inherited capability should be removed, the parent spec must be updated first, all affected candidate queues must be reconciled, and only then may a queue treat that capability as retired.
+
+### 8.9.1 Queue Completion Completeness Review
+
+Every completed execution queue must include an AI completeness review before closeout is claimed.
+
+The queue completion review must evaluate:
+
+- whether the implemented work satisfies the queue's `Can Claim` surface
+- whether inherited parent-spec capability was over-narrowed
+- whether any missing capability was incorrectly treated as unsupported
+- whether `Cannot Claim` / `Out Of Scope` items were correctly routed rather than retired
+- whether the verification evidence covers the queue's functional claim, not only a representative happy path
+
+Bounded gap-fill rule:
+
+1. If the review finds gaps, the agent must rank them by functional importance and risk.
+2. The agent may perform at most one gap-fill pass for the same queue before closeout.
+3. The gap-fill pass must target the highest-priority missing items that fit the admitted queue boundary.
+4. The gap-fill pass must not turn into unlimited scope expansion.
+5. Gaps that remain after the one permitted pass must be recorded as residue, blockers, accepted residue, or successor candidate queues according to their severity.
+6. A queue cannot close as topic-complete if a remaining same-family gap still blocks the claimed capability.
+
+### 8.9.2 Closeout Status Semantics
+
+Queue closeout status fields must use consistent meaning across all queue docs.
+
+`execution_closeout_status` semantics:
+
+- `done`
+  - The bounded execution slice listed in `Can Claim` landed and required verification passed.
+  - `done` does not automatically mean the parent spec or full topic is complete.
+- `partial`
+  - Some admitted queue work landed, but at least one `Can Claim` item remains unimplemented, unverified, or intentionally routed away.
+  - `partial` requires residue, blocker, accepted-residue, or successor-candidate routing before version-level review continues.
+- `blocked`
+  - The queue cannot continue without a concrete blocker.
+  - The blocker must be recorded in `blocked_by` or the queue-local progress record.
+
+`topic_closure_status` semantics:
+
+- `closed`
+  - No same-family gap remains that blocks the queue's claimed topic surface.
+  - `closed` is illegal when `residue_remaining = yes` and the residue is still same-family blocking work.
+- `open-residue`
+  - Execution may be `done` or `partial`, but some required or related capability remains open and must be routed.
+  - Open residue must name its family and next routing effect.
+- `blocked`
+  - The topic cannot close until a recorded blocker is resolved.
+
+`residue_family` semantics:
+
+- `same-family`
+  - The remaining work belongs to the same parent requirement or mechanism family and may need automatic continuation if one lawful next queue exists.
+- `cross-family`
+  - The remaining work belongs to another version, mechanism family, or later target and must route through version-level review.
+- `accepted-residue`
+  - The remaining gap is explicitly accepted within the parent/version boundary and no longer blocks queue or version closeout.
+  - Accepted residue must name why the gap is acceptable.
+- `none`
+  - No meaningful residue remains.
+
+Hard rules:
+
+1. `Out Of Scope`, `Cannot Claim`, and `accepted-residue` are not aliases for `retired`, `removed`, or `unsupported`.
+2. A queue may close with `execution_closeout_status = done` and `topic_closure_status = open-residue` only when the bounded queue work is complete but routed residue remains outside the queue's claim boundary.
+3. A queue may not use `execution_closeout_status = done` to hide an unimplemented `Can Claim` item.
+4. A queue may not use `topic_closure_status = closed` while same-family required capability remains unrouted.
+5. If a capability should truly be retired or removed, update the parent spec first, update affected candidate queues second, then close or revise the queue using the updated parent contract.
 
 ## 8.10 Final Acceptance Coverage Review
 

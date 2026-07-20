@@ -40,19 +40,34 @@ import {
 import {
   appendScriptEditorCityMountedBuilding,
   appendScriptEditorCityMountedBuildingNpc,
+  appendScriptEditorBuildingArrangement,
+  appendScriptEditorBuildingArrangementContainer,
+  appendScriptEditorBuildingArrangementContainerActionItem,
+  appendScriptEditorBuildingArrangementNpc,
   appendScriptEditorAccessCondition,
   appendScriptEditorLocationAttribute,
   appendScriptEditorMenuEntry,
+  listScriptEditorCityBuildingArrangements,
   normalizeScriptEditorBuildingRecord,
   normalizeScriptEditorCityRecord,
   removeScriptEditorAccessCondition,
+  removeScriptEditorBuildingArrangement,
+  removeScriptEditorBuildingArrangementContainer,
+  removeScriptEditorBuildingArrangementContainerActionItem,
+  removeScriptEditorBuildingArrangementNpc,
   removeScriptEditorCityMountedBuilding,
   removeScriptEditorCityMountedBuildingNpc,
   removeScriptEditorLocationAttribute,
   removeScriptEditorMenuEntry,
+  SCRIPT_EDITOR_BUILDING_CONTAINER_TYPES,
   toggleScriptEditorMenuEntryFlag,
   updateScriptEditorAccessConditionField,
   updateScriptEditorAccessField,
+  updateScriptEditorBuildingArrangementContainerActionItemField,
+  updateScriptEditorBuildingArrangementContainerField,
+  updateScriptEditorBuildingArrangementField,
+  updateScriptEditorBuildingArrangementNpc,
+  updateScriptEditorBuildingArrangementPrimaryNpc,
   updateScriptEditorBuildingEntryBindingField,
   updateScriptEditorBuildingField,
   updateScriptEditorCityMountedBuilding,
@@ -95,6 +110,9 @@ import {
   updateScriptEditorMinigameLaunchPayloadField,
   updateScriptEditorMinigameOutcomeRouteField,
 } from "../../application/script-editor/minigame-binding-authoring";
+import {
+  normalizeScriptEditorFlowRecord,
+} from "../../application/script-editor/flow-authoring";
 import {
   appendScriptEditorDialogueFollowUp,
   appendScriptEditorDialogueNode,
@@ -378,6 +396,7 @@ const SCRIPT_EDITOR_RECORD_SEARCH_FAMILY_ATTRIBUTES = {
   dialogues: 'data-script-editor-record-search-family="dialogues"',
   events: 'data-script-editor-record-search-family="events"',
   minigames: 'data-script-editor-record-search-family="minigames"',
+  flows: 'data-script-editor-record-search-family="flows"',
   textEntries: 'data-script-editor-record-search-family="textEntries"',
 };
 
@@ -830,6 +849,10 @@ export class MainUiFlow {
       return this.renderScriptEditorMinigameEditor(records, selectedRecord);
     }
 
+    if (family === "flows") {
+      return this.renderScriptEditorFlowEditor(records, selectedRecord);
+    }
+
     if (family === "textEntries") {
       return this.renderScriptEditorTextEntryEditor(records, selectedRecord);
     }
@@ -993,6 +1016,7 @@ export class MainUiFlow {
       dialogues: "",
       events: "",
       minigames: "",
+      flows: "",
       textEntries: "",
     };
   }
@@ -2145,8 +2169,201 @@ export class MainUiFlow {
             </div>
           `
         )}
-        ${isCityFamily ? this.renderScriptEditorCityMountedBuildingsPanel(location) : ""}
+        ${isCityFamily ? this.renderScriptEditorBuildingArrangementPanel(location) : ""}
         ${this.renderScriptEditorLocationCustomAttributes(location)}
+      </section>
+    `;
+  }
+  renderScriptEditorBuildingArrangementPanel(city) {
+    const project = this.scriptEditorProject;
+    if (project == null) {
+      return "";
+    }
+    const arrangements = listScriptEditorCityBuildingArrangements(project, city.id);
+    const buildingOptions = (project.buildings ?? []).map((building) =>
+      normalizeScriptEditorBuildingRecord(building)
+    );
+    const npcOptions = (project.people ?? [])
+      .map((person) => normalizeScriptEditorPersonRecord(person))
+      .filter((person) => person.personType !== "瑙掕壊");
+    const eventOptions = project.events ?? [];
+    const renderBuildingOptions = (selectedBuildingId) => `
+      <option value="">Select building</option>
+      ${buildingOptions
+        .map(
+          (building) => `
+            <option value="${escapeHtml(building.id)}" ${building.id === selectedBuildingId ? "selected" : ""}>
+              ${escapeHtml(building.name)} (${escapeHtml(building.id)})
+            </option>
+          `
+        )
+        .join("")}
+    `;
+    const renderNpcOptions = (selectedNpcId, allowEmpty = true, allowedNpcIds = null) => `
+      ${allowEmpty ? `<option value="">Select NPC</option>` : ""}
+      ${npcOptions
+        .filter((person) => allowedNpcIds == null || allowedNpcIds.includes(person.id))
+        .map(
+          (person) => `
+            <option value="${escapeHtml(person.id)}" ${person.id === selectedNpcId ? "selected" : ""}>
+              ${escapeHtml(person.name)} (${escapeHtml(person.id)})
+            </option>
+          `
+        )
+        .join("")}
+    `;
+    const renderContainerTypeOptions = (selectedType) =>
+      SCRIPT_EDITOR_BUILDING_CONTAINER_TYPES.map(
+        (type) => `
+          <option value="${escapeHtml(type)}" ${type === selectedType ? "selected" : ""}>${escapeHtml(type)}</option>
+        `
+      ).join("");
+    const renderEventOptions = (selectedEventId) => `
+      <option value="">Select event</option>
+      ${eventOptions
+        .map(
+          (event) => `
+            <option value="${escapeHtml(event.id)}" ${event.id === selectedEventId ? "selected" : ""}>
+              ${escapeHtml(event.name ?? event.id)} (${escapeHtml(event.id)})
+            </option>
+          `
+        )
+        .join("")}
+    `;
+
+    return `
+      <section class="c-script-editor-location-attributes" aria-label="Building Arrangement">
+        <header class="c-script-editor-location-menu__header">
+          <div>
+            <h3 class="c-script-editor-editor-card__title">Building Arrangement</h3>
+          </div>
+          <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="add-building-arrangement">
+            Add Arrangement
+          </button>
+        </header>
+        <div class="c-script-editor-location-menu__list">
+          ${arrangements
+            .map(
+              (arrangement) => `
+                <article class="c-script-editor-location-menu__item" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}">
+                  <div class="c-script-editor-form-grid">
+                    <label class="c-script-editor-form-field">
+                      <span>Arrangement ID</span>
+                      <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(arrangement.id)}" data-script-editor-building-arrangement-field="id" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}" />
+                    </label>
+                    <label class="c-script-editor-form-field">
+                      <span>Building</span>
+                      <select class="c-script-editor-form-field__input" data-script-editor-building-arrangement-field="buildingId" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}">
+                        ${renderBuildingOptions(arrangement.buildingId)}
+                      </select>
+                    </label>
+                    <label class="c-script-editor-form-field">
+                      <span>Display Name</span>
+                      <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(arrangement.displayName ?? "")}" data-script-editor-building-arrangement-field="displayName" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}" />
+                    </label>
+                    <label class="c-script-editor-form-field">
+                      <span>Primary NPC</span>
+                      <select class="c-script-editor-form-field__input" data-script-editor-building-arrangement-primary-npc data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}">
+                        ${renderNpcOptions(arrangement.primaryNpcId ?? "", true, arrangement.mountedNpcIds)}
+                      </select>
+                    </label>
+                  </div>
+                  <div class="c-script-editor-location-menu__list">
+                    ${arrangement.mountedNpcIds
+                      .map(
+                        (npcId, npcIndex) => `
+                          <div class="c-script-editor-form-grid">
+                            <label class="c-script-editor-form-field">
+                              <span>Mounted NPC</span>
+                              <select class="c-script-editor-form-field__input" data-script-editor-building-arrangement-npc data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}" data-script-editor-building-arrangement-npc-index="${npcIndex}">
+                                ${renderNpcOptions(npcId)}
+                              </select>
+                            </label>
+                            <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="remove-building-arrangement-npc" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}" data-script-editor-building-arrangement-npc-index="${npcIndex}">
+                              Remove NPC
+                            </button>
+                          </div>
+                        `
+                      )
+                      .join("")}
+                  </div>
+                  <div class="c-script-editor-location-menu__toggles">
+                    <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="add-building-arrangement-npc" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}">
+                      Add NPC
+                    </button>
+                    <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="add-building-arrangement-container" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}">
+                      Add Container
+                    </button>
+                    <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="remove-building-arrangement" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}">
+                      Remove Arrangement
+                    </button>
+                  </div>
+                  <div class="c-script-editor-location-menu__list">
+                    ${arrangement.containers
+                      .map(
+                        (container, containerIndex) => `
+                          <article class="c-script-editor-location-menu__item">
+                            <div class="c-script-editor-form-grid">
+                              <label class="c-script-editor-form-field">
+                                <span>Container ID</span>
+                                <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(container.id)}" data-script-editor-building-container-field="id" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}" data-script-editor-building-container-index="${containerIndex}" />
+                              </label>
+                              <label class="c-script-editor-form-field">
+                                <span>Container Type</span>
+                                <select class="c-script-editor-form-field__input" data-script-editor-building-container-field="type" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}" data-script-editor-building-container-index="${containerIndex}">
+                                  ${renderContainerTypeOptions(container.type)}
+                                </select>
+                              </label>
+                              <label class="c-script-editor-form-field">
+                                <span>Title</span>
+                                <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(container.title ?? "")}" data-script-editor-building-container-field="title" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}" data-script-editor-building-container-index="${containerIndex}" />
+                              </label>
+                            </div>
+                            ${
+                              container.type === "action-menu"
+                                ? `
+                                  <div class="c-script-editor-location-menu__list">
+                                    ${(container.items ?? [])
+                                      .map(
+                                        (item, actionIndex) => `
+                                          <div class="c-script-editor-form-grid">
+                                            <label class="c-script-editor-form-field">
+                                              <span>Action Label</span>
+                                              <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(item.label)}" data-script-editor-building-container-action-field="label" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}" data-script-editor-building-container-index="${containerIndex}" data-script-editor-building-container-action-index="${actionIndex}" />
+                                            </label>
+                                            <label class="c-script-editor-form-field">
+                                              <span>Event</span>
+                                              <select class="c-script-editor-form-field__input" data-script-editor-building-container-action-field="eventId" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}" data-script-editor-building-container-index="${containerIndex}" data-script-editor-building-container-action-index="${actionIndex}">
+                                                ${renderEventOptions(item.eventId)}
+                                              </select>
+                                            </label>
+                                            <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="remove-building-container-action" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}" data-script-editor-building-container-index="${containerIndex}" data-script-editor-building-container-action-index="${actionIndex}">
+                                              Remove Action
+                                            </button>
+                                          </div>
+                                        `
+                                      )
+                                      .join("")}
+                                  </div>
+                                  <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="add-building-container-action" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}" data-script-editor-building-container-index="${containerIndex}">
+                                    Add Action
+                                  </button>
+                                `
+                                : ""
+                            }
+                            <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="remove-building-arrangement-container" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}" data-script-editor-building-container-index="${containerIndex}">
+                              Remove Container
+                            </button>
+                          </article>
+                        `
+                      )
+                      .join("")}
+                  </div>
+                </article>
+              `
+            )
+            .join("")}
+        </div>
       </section>
     `;
   }
@@ -2942,6 +3159,64 @@ export class MainUiFlow {
                     </div>
                   </template>
                   ${this.renderScriptEditorMinigameTabPanel(minigame)}
+                `
+            }
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  renderScriptEditorFlowEditor(records, selectedRecord) {
+    const flow =
+      selectedRecord == null
+        ? null
+        : normalizeScriptEditorFlowRecord(selectedRecord);
+    const filteredRecords = this.filterScriptEditorRecords("flows", records);
+
+    return `
+      <div class="c-script-editor-editor-card">
+        <div class="c-script-editor-record-layout c-script-editor-record-layout--narrative">
+          ${this.renderScriptEditorPaginatedRecordList({
+            family: "flows",
+            records: filteredRecords,
+            ariaLabel: "建筑功能列表",
+            modifierClass: "c-script-editor-record-list--narrative",
+            toolbar: `
+              <div class="c-script-editor-record-list__toolbar">
+                ${this.renderScriptEditorRecordListSearch("flows", "搜索建筑功能", "按功能标题或 ID 搜索")}
+                <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="add-record">
+                  新增建筑功能
+                </button>
+                <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="remove-record" ${flow == null ? "disabled" : ""}>
+                  删除建筑功能
+                </button>
+              </div>
+            `,
+            renderRecord: (record) => `
+              <button type="button" class="c-script-editor-record-list__item c-script-editor-record-list__item--narrative ${record.id === selectedRecord?.id ? "is-selected" : ""}" data-script-editor-record-id="${escapeHtml(record.id)}">
+                <strong>${escapeHtml(record.title ?? record.id)}</strong>
+                <span>${escapeHtml(`${record.ownerKind ?? "building"}:${record.ownerId ?? "未设置"}`)}</span>
+              </button>
+            `,
+          })}
+          <div class="c-script-editor-record-editor">
+            <!-- SCRIPT_EDITOR_INSPECTOR_SLOT -->
+            <!-- SCRIPT_EDITOR_INSPECTOR_SUPPRESS_TEXT -->
+            ${
+              flow == null
+                ? `<p class="c-script-editor-editor-card__hint">请选择一个建筑功能。节点、启动载荷、事件起点和结果路由都保存在独立的 flow 记录中，不复用 minigame 绑定。</p>`
+                : `
+                  <div class="c-script-editor-shell__cards">
+                    ${this.renderScriptEditorOverviewCard("建筑功能", `${flow.title} / ${flow.playableId}`, "neutral")}
+                    ${this.renderScriptEditorOverviewCard("节点与路由", `节点 ${flow.nodes.length} / 结果路由 ${flow.outcomeRoutes.length}`, "neutral")}
+                    ${this.renderScriptEditorOverviewCard("启动上下文", `${flow.ownerKind}:${flow.ownerId || "未设置"} / ${flow.triggerSource}`, "neutral")}
+                  </div>
+                  <p class="c-script-editor-editor-card__hint">以下 JSON 是该 flow 的完整作者数据边界，可直接编辑节点、选项、启动载荷、事件起点和结果路由。</p>
+                  <textarea class="c-script-editor-record-editor__textarea" data-script-editor-record-json spellcheck="false">${escapeHtml(JSON.stringify(flow, null, 2))}</textarea>
+                  <div class="c-script-editor-editor-card__actions">
+                    <button type="button" class="c-main-ui-json-text-button c-main-ui-json-text-button--accent" data-script-editor-action="apply-record-json">应用建筑功能</button>
+                  </div>
                 `
             }
           </div>
@@ -5184,6 +5459,91 @@ export class MainUiFlow {
       return;
     }
 
+    if (target.matches("[data-script-editor-building-arrangement-field]")) {
+      const arrangementId = target.dataset.scriptEditorBuildingArrangementId ?? "";
+      const field = target.dataset.scriptEditorBuildingArrangementField;
+      if (
+        arrangementId.length > 0 &&
+        ["id", "cityId", "buildingId", "displayName", "description", "backgroundId"].includes(field ?? "")
+      ) {
+        this.applyScriptEditorBuildingArrangementField(arrangementId, field, target.value);
+      }
+      return;
+    }
+
+    if (target.matches("[data-script-editor-building-arrangement-npc]")) {
+      const arrangementId = target.dataset.scriptEditorBuildingArrangementId ?? "";
+      const npcIndex = Number.parseInt(
+        target.dataset.scriptEditorBuildingArrangementNpcIndex ?? "-1",
+        10
+      );
+      if (arrangementId.length > 0 && Number.isInteger(npcIndex) && npcIndex >= 0) {
+        this.applyScriptEditorBuildingArrangementNpc(arrangementId, npcIndex, target.value);
+      }
+      return;
+    }
+
+    if (target.matches("[data-script-editor-building-arrangement-primary-npc]")) {
+      const arrangementId = target.dataset.scriptEditorBuildingArrangementId ?? "";
+      if (arrangementId.length > 0) {
+        this.applyScriptEditorBuildingArrangementPrimaryNpc(arrangementId, target.value);
+      }
+      return;
+    }
+
+    if (target.matches("[data-script-editor-building-container-field]")) {
+      const arrangementId = target.dataset.scriptEditorBuildingArrangementId ?? "";
+      const containerIndex = Number.parseInt(
+        target.dataset.scriptEditorBuildingContainerIndex ?? "-1",
+        10
+      );
+      const field = target.dataset.scriptEditorBuildingContainerField;
+      if (
+        arrangementId.length > 0 &&
+        Number.isInteger(containerIndex) &&
+        containerIndex >= 0 &&
+        ["id", "type", "title"].includes(field ?? "")
+      ) {
+        this.applyScriptEditorBuildingContainerField(
+          arrangementId,
+          containerIndex,
+          field,
+          target.value
+        );
+      }
+      return;
+    }
+
+    if (target.matches("[data-script-editor-building-container-action-field]")) {
+      const arrangementId = target.dataset.scriptEditorBuildingArrangementId ?? "";
+      const containerIndex = Number.parseInt(
+        target.dataset.scriptEditorBuildingContainerIndex ?? "-1",
+        10
+      );
+      const actionIndex = Number.parseInt(
+        target.dataset.scriptEditorBuildingContainerActionIndex ?? "-1",
+        10
+      );
+      const field = target.dataset.scriptEditorBuildingContainerActionField;
+      if (
+        arrangementId.length > 0 &&
+        Number.isInteger(containerIndex) &&
+        containerIndex >= 0 &&
+        Number.isInteger(actionIndex) &&
+        actionIndex >= 0 &&
+        ["id", "label", "eventId", "disabledHint"].includes(field ?? "")
+      ) {
+        this.applyScriptEditorBuildingContainerActionField(
+          arrangementId,
+          containerIndex,
+          actionIndex,
+          field,
+          target.value
+        );
+      }
+      return;
+    }
+
     if (target.matches("[data-script-editor-city-mounted-building-npc]")) {
       const buildingIndex = Number.parseInt(
         target.dataset.scriptEditorCityMountedBuildingIndex ?? "-1",
@@ -5950,6 +6310,105 @@ export class MainUiFlow {
       return;
     }
 
+    if (action === "add-building-arrangement") {
+      this.addScriptEditorBuildingArrangement();
+      return;
+    }
+
+    if (action === "remove-building-arrangement") {
+      const arrangementId = actionElement?.dataset.scriptEditorBuildingArrangementId ?? "";
+      if (arrangementId.length > 0) {
+        this.removeScriptEditorBuildingArrangement(arrangementId);
+      }
+      return;
+    }
+
+    if (action === "add-building-arrangement-npc") {
+      const arrangementId = actionElement?.dataset.scriptEditorBuildingArrangementId ?? "";
+      if (arrangementId.length > 0) {
+        this.addScriptEditorBuildingArrangementNpc(arrangementId);
+      }
+      return;
+    }
+
+    if (action === "remove-building-arrangement-npc") {
+      const arrangementId = actionElement?.dataset.scriptEditorBuildingArrangementId ?? "";
+      const npcIndex = Number.parseInt(
+        actionElement?.dataset.scriptEditorBuildingArrangementNpcIndex ?? "-1",
+        10
+      );
+      if (arrangementId.length > 0 && Number.isInteger(npcIndex) && npcIndex >= 0) {
+        this.removeScriptEditorBuildingArrangementNpc(arrangementId, npcIndex);
+      }
+      return;
+    }
+
+    if (action === "add-building-arrangement-container") {
+      const arrangementId = actionElement?.dataset.scriptEditorBuildingArrangementId ?? "";
+      if (arrangementId.length > 0) {
+        this.addScriptEditorBuildingArrangementContainer(arrangementId);
+      }
+      return;
+    }
+
+    if (action === "remove-building-arrangement-container") {
+      const arrangementId = actionElement?.dataset.scriptEditorBuildingArrangementId ?? "";
+      const containerIndex = Number.parseInt(
+        actionElement?.dataset.scriptEditorBuildingContainerIndex ?? "-1",
+        10
+      );
+      if (
+        arrangementId.length > 0 &&
+        Number.isInteger(containerIndex) &&
+        containerIndex >= 0
+      ) {
+        this.removeScriptEditorBuildingArrangementContainer(arrangementId, containerIndex);
+      }
+      return;
+    }
+
+    if (action === "add-building-container-action") {
+      const arrangementId = actionElement?.dataset.scriptEditorBuildingArrangementId ?? "";
+      const containerIndex = Number.parseInt(
+        actionElement?.dataset.scriptEditorBuildingContainerIndex ?? "-1",
+        10
+      );
+      if (
+        arrangementId.length > 0 &&
+        Number.isInteger(containerIndex) &&
+        containerIndex >= 0
+      ) {
+        this.addScriptEditorBuildingContainerAction(arrangementId, containerIndex);
+      }
+      return;
+    }
+
+    if (action === "remove-building-container-action") {
+      const arrangementId = actionElement?.dataset.scriptEditorBuildingArrangementId ?? "";
+      const containerIndex = Number.parseInt(
+        actionElement?.dataset.scriptEditorBuildingContainerIndex ?? "-1",
+        10
+      );
+      const actionIndex = Number.parseInt(
+        actionElement?.dataset.scriptEditorBuildingContainerActionIndex ?? "-1",
+        10
+      );
+      if (
+        arrangementId.length > 0 &&
+        Number.isInteger(containerIndex) &&
+        containerIndex >= 0 &&
+        Number.isInteger(actionIndex) &&
+        actionIndex >= 0
+      ) {
+        this.removeScriptEditorBuildingContainerAction(
+          arrangementId,
+          containerIndex,
+          actionIndex
+        );
+      }
+      return;
+    }
+
     if (action === "select-narrative-tab") {
       if (narrativeTab != null) {
         this.selectScriptEditorNarrativeTab(narrativeTab);
@@ -6527,8 +6986,10 @@ export class MainUiFlow {
       }
 
       const family = this.scriptEditorSelection.family;
+      const nextRecord =
+        family === "flows" ? normalizeScriptEditorFlowRecord(parsed) : parsed;
       this.commitScriptEditorProject(
-        upsertScriptEditorWorkflowRecord(this.scriptEditorProject, family, parsed)
+        upsertScriptEditorWorkflowRecord(this.scriptEditorProject, family, nextRecord)
       );
       const nextRecords = listScriptEditorWorkflowFamilyRecords(
         this.scriptEditorProject,
@@ -6536,12 +6997,12 @@ export class MainUiFlow {
       );
       this.scriptEditorSelection = {
         family,
-        entityId: parsed.id,
+        entityId: nextRecord.id,
       };
-      this.syncScriptEditorRecordListPageToRecord(family, parsed.id, nextRecords);
+      this.syncScriptEditorRecordListPageToRecord(family, nextRecord.id, nextRecords);
       this.recordScriptEditorNotice({
         tone: "success",
-        message: `已将 JSON 修改应用到${this.getScriptEditorFamilyLabel(family)}：${parsed.id}。`,
+        message: `已将 JSON 修改应用到${this.getScriptEditorFamilyLabel(family)}：${nextRecord.id}。`,
       });
     } catch (error) {
       this.recordScriptEditorNotice({
@@ -7594,6 +8055,234 @@ export class MainUiFlow {
     );
   }
 
+  addScriptEditorBuildingArrangement() {
+    if (
+      this.scriptEditorProject == null ||
+      this.scriptEditorSelection.family !== "cities" ||
+      this.scriptEditorSelection.entityId == null
+    ) {
+      return;
+    }
+
+    this.commitScriptEditorProject(
+      appendScriptEditorBuildingArrangement(
+        this.scriptEditorProject,
+        this.scriptEditorSelection.entityId
+      )
+    );
+    this.scriptEditorNotice = null;
+    this.render();
+  }
+
+  removeScriptEditorBuildingArrangement(arrangementId) {
+    if (this.scriptEditorProject == null) {
+      return;
+    }
+    this.commitScriptEditorProject(
+      removeScriptEditorBuildingArrangement(this.scriptEditorProject, arrangementId)
+    );
+    this.scriptEditorNotice = null;
+    this.render();
+  }
+
+  applyScriptEditorBuildingArrangementField(arrangementId, field, value) {
+    if (this.scriptEditorProject == null) {
+      return;
+    }
+    this.commitScriptEditorProject(
+      updateScriptEditorBuildingArrangementField(
+        this.scriptEditorProject,
+        arrangementId,
+        field,
+        value
+      )
+    );
+    this.scriptEditorNotice = null;
+    this.render();
+  }
+
+  addScriptEditorBuildingArrangementNpc(arrangementId) {
+    if (this.scriptEditorProject == null) {
+      return;
+    }
+    const nextNpcId = this.findNextScriptEditorBuildingArrangementNpcId(arrangementId);
+    this.commitScriptEditorProject(
+      appendScriptEditorBuildingArrangementNpc(
+        this.scriptEditorProject,
+        arrangementId,
+        nextNpcId
+      )
+    );
+    this.scriptEditorNotice = null;
+    this.render();
+  }
+
+  findNextScriptEditorBuildingArrangementNpcId(arrangementId) {
+    const arrangement =
+      this.scriptEditorProject?.buildingArrangements.find((entry) => entry.id === arrangementId) ??
+      null;
+    const selectedNpcIds = new Set(arrangement?.mountedNpcIds ?? []);
+    return (
+      (this.scriptEditorProject?.people ?? [])
+        .map((person) => normalizeScriptEditorPersonRecord(person))
+        .find((person) => person.personType !== "瑙掕壊" && !selectedNpcIds.has(person.id))
+        ?.id ?? ""
+    );
+  }
+
+  removeScriptEditorBuildingArrangementNpc(arrangementId, npcIndex) {
+    if (this.scriptEditorProject == null) {
+      return;
+    }
+    this.commitScriptEditorProject(
+      removeScriptEditorBuildingArrangementNpc(
+        this.scriptEditorProject,
+        arrangementId,
+        npcIndex
+      )
+    );
+    this.scriptEditorNotice = null;
+    this.render();
+  }
+
+  applyScriptEditorBuildingArrangementNpc(arrangementId, npcIndex, npcId) {
+    if (this.scriptEditorProject == null) {
+      return;
+    }
+    this.commitScriptEditorProject(
+      updateScriptEditorBuildingArrangementNpc(
+        this.scriptEditorProject,
+        arrangementId,
+        npcIndex,
+        npcId
+      )
+    );
+    this.scriptEditorNotice = null;
+    this.render();
+  }
+
+  applyScriptEditorBuildingArrangementPrimaryNpc(arrangementId, npcId) {
+    if (this.scriptEditorProject == null) {
+      return;
+    }
+    this.commitScriptEditorProject(
+      updateScriptEditorBuildingArrangementPrimaryNpc(
+        this.scriptEditorProject,
+        arrangementId,
+        npcId
+      )
+    );
+    this.scriptEditorNotice = null;
+    this.render();
+  }
+
+  addScriptEditorBuildingArrangementContainer(arrangementId) {
+    if (this.scriptEditorProject == null) {
+      return;
+    }
+    this.commitScriptEditorProject(
+      appendScriptEditorBuildingArrangementContainer(this.scriptEditorProject, arrangementId)
+    );
+    this.scriptEditorNotice = null;
+    this.render();
+  }
+
+  removeScriptEditorBuildingArrangementContainer(arrangementId, containerIndex) {
+    if (this.scriptEditorProject == null) {
+      return;
+    }
+    this.commitScriptEditorProject(
+      removeScriptEditorBuildingArrangementContainer(
+        this.scriptEditorProject,
+        arrangementId,
+        containerIndex
+      )
+    );
+    this.scriptEditorNotice = null;
+    this.render();
+  }
+
+  applyScriptEditorBuildingContainerField(
+    arrangementId,
+    containerIndex,
+    field,
+    value
+  ) {
+    if (this.scriptEditorProject == null) {
+      return;
+    }
+    this.commitScriptEditorProject(
+      updateScriptEditorBuildingArrangementContainerField(
+        this.scriptEditorProject,
+        arrangementId,
+        containerIndex,
+        field,
+        value
+      )
+    );
+    this.scriptEditorNotice = null;
+    this.render();
+  }
+
+  addScriptEditorBuildingContainerAction(arrangementId, containerIndex) {
+    if (this.scriptEditorProject == null) {
+      return;
+    }
+    this.commitScriptEditorProject(
+      appendScriptEditorBuildingArrangementContainerActionItem(
+        this.scriptEditorProject,
+        arrangementId,
+        containerIndex
+      )
+    );
+    this.scriptEditorNotice = null;
+    this.render();
+  }
+
+  removeScriptEditorBuildingContainerAction(
+    arrangementId,
+    containerIndex,
+    actionIndex
+  ) {
+    if (this.scriptEditorProject == null) {
+      return;
+    }
+    this.commitScriptEditorProject(
+      removeScriptEditorBuildingArrangementContainerActionItem(
+        this.scriptEditorProject,
+        arrangementId,
+        containerIndex,
+        actionIndex
+      )
+    );
+    this.scriptEditorNotice = null;
+    this.render();
+  }
+
+  applyScriptEditorBuildingContainerActionField(
+    arrangementId,
+    containerIndex,
+    actionIndex,
+    field,
+    value
+  ) {
+    if (this.scriptEditorProject == null) {
+      return;
+    }
+    this.commitScriptEditorProject(
+      updateScriptEditorBuildingArrangementContainerActionItemField(
+        this.scriptEditorProject,
+        arrangementId,
+        containerIndex,
+        actionIndex,
+        field,
+        value
+      )
+    );
+    this.scriptEditorNotice = null;
+    this.render();
+  }
+
   applyScriptEditorLocationAccessField(field, value) {
     const location = this.getSelectedScriptEditorLocation();
     if (location == null) {
@@ -7986,6 +8675,8 @@ export class MainUiFlow {
         return "事件";
       case "minigames":
         return "玩法";
+      case "flows":
+        return "建筑功能";
       default:
         return family;
     }

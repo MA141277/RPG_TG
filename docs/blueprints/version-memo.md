@@ -758,11 +758,11 @@
 
 - status: `open`
 - severity: `medium`
-- classification: `memo-only`
-- proposed_queue: `none`
-- owning_queue: `none`
-- admission_status: `not-admitted`
-- latest_disposition: `recorded-as-memo`
+- classification: `queue-candidate`
+- proposed_queue: `queue.script-editor-city-mounted-npc-canonical-authoring-cleanup`
+- owning_queue: `queue.script-editor-city-mounted-npc-canonical-authoring-cleanup`
+- admission_status: `candidate-recorded`
+- latest_disposition: `promoted-to-current-version-candidate`
 - affected_families:
   - `script editor city authoring`
   - `script editor mounted building authoring`
@@ -826,7 +826,7 @@
 - proposed_queue_id: `queue.script-editor-city-mounted-npc-canonical-authoring-cleanup`
 - proposed_class: `candidate`
 - proposed_goal: `Make city.mountedBuildings the single canonical authoring source for mounted building/NPC assignment, remove runtime-family reverse inference from the standard editor flow, and verify empty NPC and empty primary-NPC cases.`
-- admission_note: `Recorded only. This entry must not become an active or candidate queue unless explicitly promoted through the current version plan.`
+- admission_note: `Promoted into the current version plan as a recorded-only candidate on 2026-07-20 after explicit operator request. This entry must not become active unless explicitly admitted through the current version plan.`
 
 #### Acceptance Criteria
 
@@ -1607,3 +1607,405 @@ Out of scope:
 - Automated simulated-human flow covering map entry and review flow.
 - Entry-point tests for normal start, JSON import, and Script Editor runtime preview.
 - Removal-inventory closeout showing every listed residue removed, preserved by design, or waived with reason.
+
+### MEMO-021: UI Scene Layer Stack Draft
+
+- status: `open`
+- severity: `medium`
+- classification: `memo-only`
+- proposed_queue: `none`
+- owning_queue: `none`
+- admission_status: `not-admitted`
+- latest_disposition: `recorded-as-memo`
+- affected_families:
+  - `main UI rendering`
+  - `city view`
+  - `building view`
+  - `map view`
+  - `runtime preview`
+  - `dialogue and modal overlays`
+  - `visual effects`
+
+#### Draft Layer Order
+
+From bottom to top:
+
+1. `BG`
+   - Owns static backgrounds, video backgrounds, scene base images, and other non-interactive environment visuals.
+   - Should not own gameplay interaction or pointer handling.
+2. `BackEffect`
+   - Owns environment effects behind the UI, such as weather, light, smoke, ambient particles, and background transitions.
+   - Default pointer behavior should be non-interactive.
+3. `UI Components`
+   - Owns the primary interactive surface: map, city, building, menus, character panels, buttons, lists, and gameplay controls.
+   - This is the default hit-test layer for normal interaction.
+4. `Popup`
+   - Owns modal and non-modal overlays: dialogue, confirmation panels, refusal prompts, system prompts, and blocking notices.
+   - Modal popups must block lower-layer interaction; non-modal popups must declare their pointer behavior.
+5. `FontEffect`
+   - Owns topmost text and typography effects: floating text, reward text, damage or result numbers, global captions, and transition text.
+   - Default pointer behavior should be non-interactive.
+
+#### Design Notes
+
+- The layer model should be expressed as a shared scene-layer host rather than independent ad hoc `z-index` values in each view.
+- Candidate naming can be `SceneLayerHost` or another project-appropriate name if later admitted.
+- Each layer must have an explicit responsibility and pointer-event policy.
+- Layers should communicate through render input/state, not by directly querying or mutating another layer's DOM.
+- Map, city, building, and runtime preview should converge on the same layer stack so preview behavior does not diverge from production runtime views.
+
+#### Suggested Candidate Queue
+
+- proposed_queue_id: `queue.ui-scene-layer-stack-convergence`
+- proposed_class: `future-target-candidate`
+- proposed_goal: `Introduce a shared UI scene layer stack for BG, BackEffect, UI Components, Popup, and FontEffect so map, city, building, and runtime preview use consistent rendering and pointer-event ownership.`
+- admission_note: `Recorded only. This entry must not become an active or candidate queue unless explicitly promoted through the current version plan.`
+
+#### Acceptance Criteria Draft
+
+- A shared layer contract defines the ordered layers: `BG`, `BackEffect`, `UI Components`, `Popup`, and `FontEffect`.
+- Runtime map, city, and building views can render through the same layer host or equivalent shared layer contract.
+- Modal popup behavior blocks lower-layer interaction consistently.
+- Non-interactive visual layers do not intercept clicks by default.
+- FontEffect renders above popup content without becoming the default interaction owner.
+- Existing dialogue/refusal prompt behavior still works after layering.
+- Runtime preview uses the same layer order as normal runtime views.
+- Source guards or tests prevent view-local arbitrary layer order from replacing the shared contract.
+
+#### Verification Evidence Required For Closure
+
+- `npm run typecheck`
+- `npm run lint:blueprints`
+- `npm test`
+- Browser or simulated-human proof covering at least one map, city, building, popup, and font-effect scenario.
+- Pointer-event tests or browser proof showing background/effect layers do not block UI interaction, while modal popups do block lower layers.
+
+### MEMO-022: Building Arrangement, Generic Containers, Flow Playable, And House Runtime Retirement Draft
+
+- status: `open`
+- severity: `high`
+- classification: `future-target-candidate`
+- proposed_queue: `queue.script-editor-building-arrangement-container-flow-refactor`
+- owning_queue: `none`
+- admission_status: `not-admitted`
+- latest_disposition: `recorded-as-memo-and-candidate`
+- evidence_draft: `docs/blueprints/specs/2026-07-20-building-arrangement-container-flow-refactor-evidence-draft.md`
+- proposed_version: `target.building-arrangement-container-flow-refactor`
+- affected_families:
+  - `script editor city authoring`
+  - `script editor building authoring`
+  - `building arrangement authoring`
+  - `runtime building shell`
+  - `runtime event trigger integration`
+  - `playable runtime shared contract`
+  - `built-in scenario pack migration`
+  - `legacy house runtime retirement`
+
+#### Problem Statement
+
+- Current runtime still contains hardcoded special house modules such as `temple-house`, `tea-house`, `grain-shop`, and `medicine-house`.
+- This conflicts with mod-first authoring because a creator who adds a new building such as a horse stable should not need a matching runtime `*-house` module before the building can expose functions.
+- A building instance's UI, NPC seats, action menu, available actions, and behavior triggers should be data authored in the Script Editor and interpreted by generic runtime mechanisms.
+- This draft must not be treated as one executable implementation plan. It must be split into multiple bounded specs and candidate queues before any implementation begins.
+
+#### Core Direction
+
+- No compatibility fallback:
+  - Do not keep old `house.moduleId` semantics as a fallback.
+  - Do not infer missing new structures from `houses.characterIds`, `defaultCharacterId`, `cityEntries`, or `cityNpcPools`.
+  - Missing data means the relevant UI or function is not shown.
+- Buildings no longer own behavior:
+  - `buildings[]` are building templates only.
+  - Building templates may hold name, category, art/default background, and description.
+  - Building templates must not hold NPCs, functions, menus, module ids, or runtime behavior.
+- Cities own concrete building instances through building arrangement data:
+  - `cities[].buildingArrangements[]` replaces city-mounted building rows as the canonical city-side structure.
+  - A building arrangement represents one concrete building instance in a city.
+  - The arrangement owns city-local display name, selected background, mounted NPCs, primary NPC, generic containers, visible condition, enter rules, and later exit rules.
+- The Script Editor's city-side authoring function should be renamed from the old "mount buildings and people" concept to `建筑编排`.
+  - `建筑编排` mounts building instances, mounted NPCs, and containers/functions to a city-local arrangement.
+  - Building instances do not directly hold function definitions.
+
+#### Target Data Shape Draft
+
+Building template example:
+
+```json
+{
+  "id": "building.temple",
+  "name": "寺庙",
+  "category": "religious",
+  "description": "寺庙类建筑模板",
+  "artId": "card_temple",
+  "defaultBackgroundId": "bg.temple"
+}
+```
+
+Building arrangement example:
+
+```json
+{
+  "id": "arrangement.city.haozhou.huangjue_temple",
+  "buildingId": "building.temple",
+  "displayName": "皇觉寺",
+  "backgroundId": "bg.temple",
+  "npcIds": ["char.abbot", "char.senior_monk", "char.worker"],
+  "primaryNpcId": "char.abbot",
+  "containers": [],
+  "visibleCondition": null,
+  "enterRules": [],
+  "exitRules": []
+}
+```
+
+#### Generic Container Model
+
+- Do not introduce separate hardcoded architectural primitives such as only "menu container" or only "seat container".
+- A building arrangement has `containers[]`.
+- Container type is selected by the Script Editor and interpreted by a generic runtime renderer.
+- Initial container types:
+  - `character-seats`
+  - `action-menu`
+  - `status-panel`
+  - `text-panel`
+  - `image-panel`
+  - `resource-panel`
+- `character-seats` reads only the current arrangement's `npcIds`.
+- In the first version, `character-seats.source.includeNpcIds` should be explicit and must be a subset of the current arrangement's `npcIds`.
+- `action-menu` contains creator-authored action items with labels, event references, conditions, and optional system actions such as leaving the building.
+- The runtime building panel should provide a generic container surface similar to the current 皇觉寺 panel, but data-driven by arrangement containers.
+
+Character seats container example:
+
+```json
+{
+  "id": "main-npc-seats",
+  "type": "character-seats",
+  "title": "寺中人物",
+  "layout": "vertical-card-list",
+  "position": "left",
+  "source": {
+    "type": "arrangement-npcs",
+    "includeNpcIds": ["char.abbot", "char.senior_monk"]
+  },
+  "itemActionEventId": "event.haozhou.temple.click_character"
+}
+```
+
+Action menu container example:
+
+```json
+{
+  "id": "main-actions",
+  "type": "action-menu",
+  "title": "寺中事务",
+  "layout": "vertical-button-list",
+  "position": "center",
+  "items": [
+    { "id": "work", "label": "工作", "eventId": "event.haozhou.temple.work" },
+    { "id": "rest", "label": "休息", "eventId": "event.haozhou.temple.rest" },
+    { "id": "fortune", "label": "测运势", "eventId": "event.haozhou.temple.fortune" },
+    { "id": "donate", "label": "捐香火", "eventId": "event.haozhou.temple.donate" },
+    { "id": "leave", "label": "先退下", "action": "leaveBuilding" }
+  ]
+}
+```
+
+#### Event And Playable Flow
+
+- Clicking any container item emits a unified trigger context:
+
+```ts
+{
+  type: "buildingContainerItemAction",
+  cityId: string,
+  arrangementId: string,
+  buildingId: string,
+  containerId: string,
+  itemId: string,
+  itemKind: string,
+  characterId?: string
+}
+```
+
+- Event actions must be able to start authored behavior:
+
+```ts
+| { type: "startPlayable"; integrationId: string; payload?: object }
+| { type: "startDialogue"; dialogueId: string }
+| { type: "applyEffects"; effects: Effect[] }
+| { type: "gotoScene"; sceneId: string }
+| { type: "closeBuilding" }
+```
+
+- Concrete building functions belong in the `玩法` module, not inside building runtime branches.
+- Add `PlayableFamily = "flow" | "minigame" | "battle"`.
+- `flow` owns ordinary building functions such as rest, donation, buying grain or horses, training, dialogue-like service flows, building work, basic trade, and task receiving.
+- `flow` must use the unified playable lifecycle: launch, session, presenter, reduce, settlement, and handoff.
+- `flow` also uses the unified presenter, with layouts such as `flow-panel`, `menu`, `dialogue`, and `form`.
+- Minimum flow node set:
+  - `screen`
+  - `dialogue`
+  - `choice`
+  - `numberInput`
+  - `condition`
+  - `effects`
+  - `startPlayable`
+  - `end`
+- Permission/security restrictions are intentionally not part of this draft because they could over-constrain future custom minigames.
+
+#### Runtime State And Exit Rules
+
+- Replace old house session state with generic active building state:
+
+```ts
+activeBuilding: {
+  cityId: string;
+  arrangementId: string;
+  mode: "building";
+  dialogueState?: unknown;
+}
+```
+
+- Add playable owner kind:
+
+```ts
+type PlayableOwnerKind = "building" | "scene" | "task" | "external";
+```
+
+- Do not keep using owner kind `house` after deleting house module semantics.
+- The generic building shell should always provide a system leave/back capability.
+- Creators may also configure a leave item in an action container.
+- Exit locking or refusal should be expressed through arrangement `exitRules` / `lockExit`, not by omitting the leave button.
+
+#### Text And Content Strategy
+
+- Use `textId` and `dialogueId` for exported content.
+- The editor may support inline editing, but exported runtime packs should use `textEntries[]` and `dialogues[]`.
+- Runtime must resolve labels, prompts, and dialogue through content ids where the authoring contract requires them.
+
+#### Legacy Structures To Replace And Remove
+
+- Replace data:
+  - `houses.json` -> `buildings[] + cities[].buildingArrangements[]`
+  - `city-entries.json` -> `cities[].buildingArrangements[]`
+  - `city-npc-pools.json` -> `arrangement.npcIds + character-seats containers`
+  - `location-access.json` building-entry portions -> `arrangement.visibleCondition`, `enterRules`, `blockedDialogueId`, `exitRules`
+  - `house.moduleId`, `house.characterIds`, `house.defaultCharacterId` -> delete
+- Remove code after migration is complete:
+  - `src/application/house-modules/*`
+  - `src/application/house-modules/house-module-registry.ts`
+  - `src/core/registry/house-module-*`
+  - `src/core/runtime/house-runtime*`
+  - `src/ui/views/house/*-house-view.ts`
+  - domain types including `HouseModuleId`, `HouseModuleDefinition`, `HouseModuleSessionStateMap`, `ActiveHouseModuleSession`, `HouseModuleRequest`, `HouseModuleViewModel`, old `HouseDefinition.moduleId/characterIds/defaultCharacterId`, `CityEntryDefinition`, `CityNpcPoolDefinition`, and building-entry portions of `LocationAccessDefinition`.
+- `docs/special-house-interface.md` conflicts with this direction and must be retired or superseded by:
+  - `docs/building-arrangement-interface.md`
+  - `docs/building-container-interface.md`
+  - `docs/playable-flow-interface.md`
+- `AGENTS.md` currently enforces the old house interface for house work, so the admitted refactor must explicitly resolve that governance conflict before deleting the old implementation.
+
+#### Required Spec / Queue Decomposition
+
+This draft must not become one implementation plan. It should be split into multiple specs and later queue plans:
+
+1. `Spec A: Canonical Data Schema`
+2. `Spec B: Script Editor Authoring UX`
+3. `Spec C: Runtime Building Shell`
+4. `Spec D: Event Trigger Integration`
+5. `Spec E: Flow Playable Runtime`
+6. `Spec F: Built-in Pack Migration`
+7. `Spec G: Legacy Retirement`
+
+Each later queue plan must include:
+
+- `Inherited Contract Surface`
+- `Feature Preservation Check`
+- `Functional Completeness Review`
+
+Feature preservation checklist:
+
+- Still supports city-local building instances.
+- Still supports mounting NPCs to the building arrangement.
+- `character-seats` reads only current arrangement NPCs.
+- `action-menu` triggers events.
+- Events can start `flow`, `minigame`, and `battle` playables.
+- `flow` uses unified playable presenter/lifecycle.
+- `enterRules` and `exitRules` remain supported.
+- `activeBuilding` can save and restore.
+- `moduleId` and house modules are not reintroduced.
+- Gameplay logic is not moved back into building runtime branches.
+- Later queue narrowing does not delete future container-type entry points.
+
+#### Parent Spec Integrity Reconcile
+
+- parent_spec_source:
+  - `MEMO-022 itself is the parent requirement spec until a formal successor version spec supersedes it.`
+- parent_spec_role:
+  - `This memo defines the total contract for the building arrangement, generic container, flow playable, built-in pack migration, and house runtime retirement refactor.`
+- subqueue_rule:
+  - `No child candidate queue may treat this memo as a concrete implementation plan.`
+  - `Every child candidate queue must state which MEMO-022 capability it owns, which capability it preserves, and which capability remains owned elsewhere.`
+- over_narrowing_guard:
+  - `A child queue must not shrink the total requirement by implementing only the easiest path.`
+  - `A child queue must not delete unimplemented capability by declaring it unsupported.`
+  - `A child queue must not convert out-of-scope work into retired, removed, or unsupported behavior unless MEMO-022 or its successor parent spec is updated first.`
+- parent_spec_change_order:
+  - `If implementation evidence proves this memo must change, update the parent spec first, then update every affected candidate queue, evidence matrix row, and queue claim boundary before implementation continues.`
+
+#### Version-Local Temporary Execution Rule Draft
+
+- draft_status: `memo-only`
+- applies_to_version: `target.building-arrangement-container-flow-refactor`
+- promotion_status: `not-global`
+- promotion_condition:
+  - `After this version's candidate queues complete, evaluate whether this draft should be promoted into the global Blueprint workflow.`
+- purpose:
+  - `Prevent current-version execution from stopping at internal admission, routing, audit, fixture/materialization/export/import ownership, or self-adjudicable gap-fill decisions.`
+- temporary_rule:
+  - `Before all candidate queues in target.building-arrangement-container-flow-refactor finish, candidate queue admission review is an AI-internal execution step rather than a human confirmation point.`
+  - `If the parent spec already defines the capability, prerequisite queue closeout satisfies the candidate admission rule, and the next queue can proceed without changing the parent total spec, deleting or downgrading capability, or rewriting out-of-scope as retired, Blueprint should record the admission conclusion, update the version plan and queue spec, and continue execution.`
+  - `If admission review finds a gap required for the next queue to run and the gap remains inside the parent spec, the gap should be recorded as an in-queue temporary gap fill or prerequisite routing decision and execution should continue without asking for human confirmation.`
+  - `If an operator asks to audit whether a current-version queue is complete, over-narrowed, or missing inherited capability, any confirmed in-parent-spec finding is execution input rather than a human confirmation point. Record it in the active queue, next lawful queue, or version plan as a prerequisite routing decision, in-queue temporary gap fill, closeout blocker, or final-guard evidence, then continue unless a blocker condition applies.`
+  - `Before ending a response while this version has an active or pending candidate queue, run a stop-condition self-check: whether the operator explicitly requested answer-only/no-continuation, whether a real blocker exists, whether the finding is outside the parent spec, and whether continuing would change the parent total spec, delete or downgrade capability, rewrite out-of-scope as retired, or require a product decision. If none apply, do not stop at advice; record the decision and continue execution.`
+  - `For this version, do not frame an in-parent-spec gap as merely a suggested next step. The expected handling is to record the gap and continue execution.`
+  - `Queue closeout and completion completeness review must include an evidence-against-claim check for static placeholders, unbound menu actions, missing runtime-reachable event/flow/closeBuilding paths, or behavior that only survives through legacy house fallback. These findings cannot be written as out-of-scope, retired, unsupported, or deferred without lawful routing inside the parent target.`
+  - `After each queue closeout in this version, attempt repository synchronization with the development trunk according to the current repository workflow, including push and/or merge as applicable to the active branch/worktree state. Wait for the sync command result before continuing. Whether the sync succeeds or fails, record the result in the queue's sync fields or progress log, then continue to the next lawful queue unless the sync result reveals a true code/spec blocker already covered by this rule.`
+  - `Repository sync failure, remote push failure, merge refusal, or unavailable remote state is not by itself a reason to stop current-version queue progression. Treat it as a recorded sync result, not as queue closeout failure, version closeout, or a human confirmation point.`
+  - `Stop and report a blocker only when continuing would require changing the parent total spec, deleting/downgrading/declaring unsupported a parent capability, rewriting out-of-scope as retired, resolving code evidence that conflicts with the queue spec and cannot be independently adjudicated, or making a genuine product decision.`
+  - `Every queue still requires pre-execution no-over-narrowing review against the parent target, queue closeout under Blueprint closeout semantics, one completeness assessment, and at most one high-priority gap fill.`
+  - `Do not enter version closeout under this temporary rule.`
+
+#### Split Completeness Review Required Before Admission
+
+Before this candidate is admitted or split into active execution queues, Blueprint must run and record an AI split completeness review covering:
+
+- `Coverage: which child specs/queues own canonical schema, Script Editor UX, runtime building shell, event integration, flow playable runtime, built-in pack migration, and legacy retirement.`
+- `Unowned capabilities: any MEMO-022 required outcome not owned by a child queue.`
+- `Over-narrowing risks: any child queue that could pass by narrowing away containers, seats, action menus, flow, activeBuilding persistence, enter/exit rules, migration, or deletion of old house logic.`
+- `Drift risks: any child queue that adds behavior outside MEMO-022 rather than filling unspecified implementation detail within the parent boundary.`
+- `Required follow-up: successor parent spec updates, additional child candidate queues, or explicit waivers.`
+
+Current evidence draft:
+
+- `docs/blueprints/specs/2026-07-20-building-arrangement-container-flow-refactor-evidence-draft.md`
+- `The evidence draft is pending operator review. It does not authorize implementation or active queue creation.`
+
+#### Suggested Candidate Queue
+
+- proposed_queue_id: `queue.script-editor-building-arrangement-container-flow-refactor`
+- proposed_class: `future-target-candidate`
+- proposed_goal: `Turn building behavior into Script Editor-authored building arrangements, generic containers, event-triggered playable flows, migrated built-in pack data, and retired legacy house modules without compatibility fallback.`
+- admission_note: `Recorded only. This should not be admitted as one broad implementation queue. Before implementation, Blueprint must split it into bounded specs/queues, run the split completeness review, and reject any over-narrow queue plan that loses the container, flow, migration, activeBuilding persistence, enter/exit rule, or legacy-retirement requirements.`
+
+#### Verification Evidence Required For Closure
+
+- `npm run typecheck`
+- `npm run lint:blueprints`
+- `npm test`
+- Schema validation tests for building templates, arrangements, containers, and playable flow references.
+- Script Editor save/load/export/import tests for arrangement containers and flow/event bindings.
+- Runtime tests for building shell rendering, container item events, activeBuilding save/restore, enter/exit rules, and playable handoff.
+- Built-in Zhu Yuanzhang pack migration tests proving 皇觉寺 and other existing buildings render through arrangements/containers without old house module fallback.
+- Source guards proving old `temple-house`, `tea-house`, `grain-shop`, `medicine-house`, house module registry, old house session types, and deprecated data fields are removed after migration.
+- Simulated-human browser proof covering Script Editor authoring, runtime preview, normal start, JSON runtime pack import, empty mounted NPC behavior, populated seat containers, action menu event triggering, leave behavior, and at least one flow playable launched from a building container.

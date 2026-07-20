@@ -22,6 +22,7 @@ import type {
 } from "../domain/historical-character";
 import type { MapDefinition } from "../domain/map";
 import type { ValuableItemDefinition } from "../domain/valuable-item";
+import type { FlowPlayableDefinition } from "../domain/playables/flow";
 import { assertExists } from "../shared/assert";
 import { renderSharedDialog } from "./components/dialog/shared-dialog";
 import { renderConfirmModal } from "./components/modal/confirm-modal";
@@ -39,6 +40,7 @@ import { renderCityBeggingMiniGameOverlay } from "./views/minigames/city-begging
 import { createMapViewModel, renderMapView } from "./views/map/map-view";
 import { renderSceneView } from "./views/scene/scene-view";
 import { renderStoryBattleView } from "./views/battle/story-battle-view";
+import { renderFlowPlayableView } from "./views/playables/flow-playable-view";
 import { renderValuableLibraryView } from "./views/valuables/valuable-library-view";
 
 type CharacterDetailViewOptions = Parameters<typeof renderCharacterDetailView>[1];
@@ -64,6 +66,7 @@ export type AppRenderInput = {
   historicalCharacters?: HistoricalCharacterRecord[];
   historicalCityRosters?: HistoricalCityRoster[];
   presenterOutput: AppPresenterOutput;
+  flowDefinitionsById?: Record<string, FlowPlayableDefinition>;
 };
 
 function getPlayerCharacter(
@@ -370,6 +373,18 @@ function renderStage(
   input: AppRenderInput,
   playerCharacter: CharacterDefinition
 ): string {
+  if (
+    input.appState.gameState.ui.currentView === "minigame" &&
+    input.appState.gameState.runtime.playableSession?.family === "flow" &&
+    input.flowDefinitionsById != null
+  ) {
+    const session = input.appState.gameState.runtime.playableSession;
+    const definition = input.flowDefinitionsById[session.playableId];
+    if (definition != null) {
+      return renderFlowPlayableView({ definition, session });
+    }
+  }
+
   const { stage } = input.presenterOutput;
 
   if (stage.type === "map") {
@@ -412,7 +427,7 @@ function renderStage(
     );
   }
 
-  if (stage.type === "house") {
+  if (stage.type === "house" || stage.type === "building") {
     return renderBuildingModuleView({
       stage,
       characterDefinitions: input.appState.characterDefinitions,

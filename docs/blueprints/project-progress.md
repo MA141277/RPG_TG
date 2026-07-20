@@ -4,9 +4,9 @@
 
 - entry_id: `project-progress.rpg-tg`
 - active_blueprint: `blueprint.rpg-tg`
-- active_version: `target.city-building-module-entry-and-project-startup-authoring`
-- has_active_queue: `false`
-- next_file: `docs/blueprints/plans/2026-07-19-city-building-module-entry-and-project-startup-authoring-target-plan.md`
+- active_version: `target.building-arrangement-container-flow-refactor`
+- has_active_queue: `true`
+- next_file: `docs/blueprints/queues/legacy-house-runtime-retirement-queue.md`
 - entry_action: `open-next-file`
 
 ## Human Context
@@ -25,11 +25,11 @@
 - Current Blueprint:
   - `docs/blueprints/blueprint.md`
 - Current Version Spec:
-  - `docs/blueprints/specs/2026-07-19-city-building-module-entry-and-project-startup-authoring-target.md`
+  - `docs/blueprints/specs/2026-07-20-building-arrangement-container-flow-refactor-target.md`
 - Current Version Plan:
-  - `docs/blueprints/plans/2026-07-19-city-building-module-entry-and-project-startup-authoring-target-plan.md`
+  - `docs/blueprints/plans/2026-07-20-building-arrangement-container-flow-refactor-target-plan.md`
 - Current Active Queue:
-  - `none`
+  - `docs/blueprints/queues/legacy-house-runtime-retirement-queue.md`
 
 ### Live Entry Guardrails
 
@@ -37,8 +37,8 @@
 - `Admission history, queue closeout history, and review narrative must stay in the version plan, queue docs, or docs/change-log.md rather than living here as competing current-state prose.`
 - `The pointed version is now the closed Entry Shell UI module extraction successor version created from MEMO-011 after the city/building background queue closed.`
 - `target.entry-shell-ui-module-extraction is done with no active queue after queue.entry-shell-ui-module-extraction closed and final version closeout was recorded.`
-- `target.city-building-module-entry-and-project-startup-authoring is open with no active queue after queue.script-editor-city-building-location-access-refusal-runtime-handoff-correction closed. Project-info-authoring, city-building-module-entry, runtime-startup-convergence, acceptance-and-guard, queue.script-editor-city-building-enter-state-and-preview-boundary, queue.script-editor-city-building-secondary-list-and-selector-ux-unification, queue.script-editor-ui-encoding-integrity-guard, queue.script-editor-city-building-background-authoring, queue.script-editor-city-building-location-access-condition-authoring-correction, queue.script-editor-main-ui-flow-mojibake-repair-and-encoding-guard-hardening, and queue.script-editor-city-building-location-access-refusal-runtime-handoff-correction are complete or closed.`
-- `Current entry pointers have been synchronized back to the open target.city-building-module-entry-and-project-startup-authoring version; because an open version exists, no duplicate version was created.`
+- `target.city-building-module-entry-and-project-startup-authoring remains open with no active queue after queue.script-editor-city-mounted-npc-canonical-authoring-cleanup closed locally.`
+- `Current entry pointers remain synchronized back to the open target.city-building-module-entry-and-project-startup-authoring version; because an open version exists, no duplicate version was created.`
 - `queue.script-editor-city-building-enter-state-and-preview-boundary is closed after source guard, automated verification, and partial simulated-human browser proof; runtime preview green-frame browser proof remains recorded as inconclusive rather than claimed.`
 - `queue.script-editor-city-building-secondary-list-and-selector-ux-unification is closed after guard review, automated verification, and bounded browser simulated-human evidence. The version remains open for same-version promotion/admission review rather than version closeout.`
 - `queue.script-editor-ui-encoding-integrity-guard is closed after bounded source guard implementation, automated verification, browser smoke evidence, and queue closeout/handoff. The version remains open for same-version promotion/admission review rather than version closeout.`
@@ -58,7 +58,18 @@
 - `queue.script-editor-event-binding-owner-local-authoring-surfaces is closed after guard review and queue closeout.`
 - `queue.script-editor-event-binding-condition-editor-completion is closed after final guard review, queue closeout/handoff, and the owner-local events tab selector closeout regression fix.`
 - `queue.script-editor-event-body-trigger-field-retirement is closed after guard review and queue closeout/handoff.`
-- `The destination content-entry family correction queue is done. Runtime preview-from-memory is done. The current city/building version remains open with no active queue after queue.script-editor-city-building-location-access-refusal-runtime-handoff-correction closed; do not enter version closeout, commit, push, merge, or admit another queue unless explicitly requested.`
+- `The destination content-entry family correction queue is done. Runtime preview-from-memory is done. The current city/building version remains open with no active queue after queue.script-editor-city-mounted-npc-canonical-authoring-cleanup closed locally; do not enter version closeout, commit, push, merge, or admit another queue unless explicitly requested.`
+- `The operator explicitly requested candidate-queue filtering and continuation on 2026-07-20. queue.script-editor-city-mounted-npc-canonical-authoring-cleanup closed after standard runtime-pack import stopped inferring mountedBuildings from runtime families and export began fail-closing missing mounted NPC references.`
+- `The operator then explicitly asked whether the built-in template pack could be migrated now. queue.zhuyuanzhang-template-mounted-buildings-data-migration closed locally after Zhu Yuanzhang cities gained explicit mountedBuildings data and focused import/export regressions passed; active_queue remains none and the version remains open.`
+- `The operator explicitly requested Blueprint-compliant continuous execution from current version candidates on 2026-07-20 without version closeout. MEMO-022 was promoted into target.building-arrangement-container-flow-refactor, and queue.building-arrangement-canonical-schema is now the active first queue.`
+- `queue.building-arrangement-canonical-schema closed locally after schema/default/validation verification, and queue.script-editor-building-arrangement-authoring-ux is now the active queue.`
+- `queue.script-editor-building-arrangement-authoring-ux closed locally after Script Editor arrangement/container authoring implementation, one high-priority browser-driven gap fill, and verification. The active version remains open with no active queue and no version closeout.`
+- `queue.runtime-building-shell-and-container-rendering is now active after admission review confirmed runtime pack/export/import/materialization fixture ownership belongs in the runtime shell queue.`
+- `queue.runtime-building-shell-and-container-rendering closed locally after explicit buildingArrangements runtime pack/export/import/materialization, generic stage selection, generic shell rendering, and verification. queue.building-container-event-trigger-integration is now active under the version-local temporary execution rule; no version closeout entered.`
+- `queue.building-container-event-trigger-integration closed locally after generic building container action dispatch, EventBindingRuntime payload matching, closeBuilding action handling, export trigger-extra preservation, and full verification. queue.flow-playable-runtime-and-presenter is now active under the version-local temporary execution rule; no version closeout entered.`
+- `queue.flow-playable-runtime-and-presenter closed locally after family=flow shared runtime/presenter/settlement/handoff implementation, one high-priority shell-view gap fill, and full verification. queue.script-editor-flow-playable-authoring-ux is now active under the version-local temporary execution rule; no version closeout entered.`
+- `queue.script-editor-flow-playable-authoring-ux closed locally after first-class flows[] authoring, independent UI, project/runtime pack round-trip, active-content flowDefinitionsById preview indexing, one high-priority gap fill, and full verification. queue.zhuyuanzhang-building-arrangement-pack-migration is now active under the version-local temporary execution rule; no version closeout entered.`
+- `queue.zhuyuanzhang-building-arrangement-pack-migration closed locally on 2026-07-21 after explicit 21-city/189-arrangement migration, generic action-event-flow launch, one high-priority gap fill, and verification. queue.legacy-house-runtime-retirement is now active under the version-local temporary execution rule; no version closeout entered.`
 
 ### Historical References
 

@@ -25,6 +25,7 @@ export type InteractiveActionCoordinatorDependencies = {
   getPlayerCharacterId(): string | null;
   getActivityDefinitionsById(): Record<string, ActivityDefinition>;
   getTextEntriesById(): Record<string, string>;
+  getFlowDefinitionsById(): Record<string, import("../../domain/playables/flow").FlowPlayableDefinition>;
   executeMainRuntime(request: MainRuntimeOrchestratorRequest): void;
   applyInteractiveFollowUp(
     interactive: Exclude<NonNullable<RuntimeInteractiveSignal>, { type: "none" }>
@@ -136,6 +137,7 @@ export function createInteractiveActionCoordinator(
               characterDefinitions: appState.characterDefinitions,
               ...(playerCharacterId == null ? {} : { playerCharacterId }),
               textEntriesById: dependencies.getTextEntriesById(),
+              flowDefinitionsById: dependencies.getFlowDefinitionsById(),
             }),
         },
         followUp: {

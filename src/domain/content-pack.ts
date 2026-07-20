@@ -5,6 +5,7 @@ import type { CharacterDefinition } from "./character";
 import type { CityDefinition } from "./city";
 import type { CityEntryDefinition } from "./city-entry";
 import type { CityNpcPoolDefinition } from "./city-npc";
+import type { BuildingArrangementDefinition } from "./building-arrangement";
 import type { EventBinding, EventDefinition } from "./event";
 import type {
   HistoricalCharacterRecord,
@@ -24,6 +25,7 @@ import type {
   PlayableDefinition,
   PlayableIntegrationDefinition,
 } from "../core/contracts/playable-runtime";
+import type { FlowPlayableDefinition } from "./playables/flow";
 
 export type ContentPackDefinition = {
   schemaVersion: 1;
@@ -34,6 +36,7 @@ export type ContentPackDefinition = {
   maps?: MapDefinition[];
   cities?: CityDefinition[];
   houses?: HouseDefinition[];
+  buildingArrangements?: BuildingArrangementDefinition[];
   cityEntries?: CityEntryDefinition[];
   characters?: CharacterDefinition[];
   events?: EventDefinition[];
@@ -42,6 +45,7 @@ export type ContentPackDefinition = {
   tasks?: TaskDefinition[];
   playables?: PlayableDefinition[];
   playableIntegrations?: PlayableIntegrationDefinition[];
+  flowDefinitions?: FlowPlayableDefinition[];
   activities?: ActivityDefinition[];
   cards?: CardDefinition[];
   valuables?: ValuableItemDefinition[];

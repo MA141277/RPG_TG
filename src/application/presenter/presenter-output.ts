@@ -5,6 +5,7 @@ import type {
 } from "../app-shell";
 import type { HouseCityNpcSummary } from "../city-npcs/select-city-npcs-for-house";
 import type { ActionNode, ChoiceOption, SceneDefinition } from "../../domain/action";
+import type { BuildingArrangementDefinition } from "../../domain/building-arrangement";
 import type { CityDefinition } from "../../domain/city";
 import type { CityEntryDefinition } from "../../domain/city-entry";
 import type { CitySceneMapping } from "../../domain/city-scene-mapping";
@@ -32,6 +33,12 @@ export type AppPresenterStageOutput =
       cityNpcSummaries: HouseCityNpcSummary[];
     }
   | {
+      type: "building";
+      activeHouse: HouseDefinition;
+      arrangement: BuildingArrangementDefinition;
+      containerViewModels: BuildingContainerViewModel[];
+    }
+  | {
       type: "scene";
       currentSceneAction: ActionNode | null;
       currentSceneChoiceOptions: ChoiceOption[];
@@ -44,6 +51,36 @@ export type AppPresenterStageOutput =
     }
   | { type: "battle" }
   | { type: "empty" };
+
+export type BuildingContainerViewModel =
+  | {
+      id: string;
+      type: "character-seats";
+      title?: string | undefined;
+      characters: Array<{
+        id: string;
+        name: string;
+        title?: string | undefined;
+      }>;
+    }
+  | {
+      id: string;
+      type: "action-menu";
+      title?: string | undefined;
+      actions: Array<{
+        id: string;
+        label: string;
+        eventId: string;
+        isVisible: boolean;
+        isEnabled: boolean;
+        disabledHint?: string | undefined;
+      }>;
+    }
+  | {
+      id: string;
+      type: "status-panel" | "text-panel" | "image-panel" | "resource-panel";
+      title?: string | undefined;
+    };
 
 export type AppPresenterOverlayOutput = {
   overlayView: AppState["gameState"]["ui"]["overlayView"];

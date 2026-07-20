@@ -5,6 +5,72 @@
 `docs/change-log.md` 的正式定位是“历史记录 + 人类可读摘要”。
 它不是当前 Blueprint / legacy superpowers 治理的 live execution truth，不作为 resume entry、promotion gate、closeout gate 或固定同步门。
 
+## 2026-07-21 Building Arrangement Temporary Rule and Menu Event Parity Fill
+
+### Added
+- 在 [docs/blueprints/plans/2026-07-20-building-arrangement-container-flow-refactor-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-20-building-arrangement-container-flow-refactor-target-plan.md) 补强当前 version 的临时执行规则：队列完整性审查发现父级 spec 内缺口时必须记录并继续推进，final 前需要执行停止条件自检。
+- 在 [docs/blueprints/version-memo.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/version-memo.md) 为 MEMO-022 追加临时执行规则草稿，明确该草稿暂不提升为全局 Blueprint 工作流规范。
+- 扩展 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，覆盖朱元璋内置包 630 个 action-menu item 都有显式 event、building-container-item-action binding，并且非离开动作进入 flow、离开动作进入 closeBuilding。
+
+### Changed
+- 更新 [src/content/scenario-packs/zhuyuanzhang/events.json](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/content/scenario-packs/zhuyuanzhang/events.json)、[src/content/scenario-packs/zhuyuanzhang/event-bindings.json](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/content/scenario-packs/zhuyuanzhang/event-bindings.json) 和 [src/content/scenario-packs/zhuyuanzhang/flow-definitions.json](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/content/scenario-packs/zhuyuanzhang/flow-definitions.json)，将迁移后的建筑菜单从静态 eventId 补齐为可运行事件/绑定/flow/closeBuilding 数据。
+- 更新 [src/domain/script-editor-project.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/domain/script-editor-project.ts)、[src/application/script-editor/runtime-pack-import.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/runtime-pack-import.ts) 和 [src/application/script-editor/runtime-pack-export.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/runtime-pack-export.ts)，让导入的 runtime event actions 可被保留并导出，并允许 flow start event 使用空 `entrySceneId` round-trip。
+- 更新 [docs/blueprints/queues/legacy-house-runtime-retirement-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/legacy-house-runtime-retirement-queue.md)，把 action-menu event/flow parity gap 记录为当前队列的已完成前置补缺，并将 active task 推进到旧 house runtime 删除实现。
+
+### Impact
+- 删除旧 house runtime 前，内置朱元璋建筑菜单已有显式替代路径，不再依赖旧 house module fallback 才能执行。
+- 当前 version 仍未进入 version closeout；后续继续执行 `queue.legacy-house-runtime-retirement` 的旧代码删除任务。
+
+## 2026-07-21 Building Arrangement Pack Migration and Flow Handoff
+
+### Added
+- 新增 [docs/blueprints/queues/legacy-house-runtime-retirement-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/legacy-house-runtime-retirement-queue.md)，作为迁移完成后的退场队列入口。
+- 扩展 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，覆盖建筑容器 action 通过事件命中后启动 authored flow，并在 flow 完成后返回建筑。
+
+### Changed
+- 更新 [src/application/building/building-container-event-runtime.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/building/building-container-event-runtime.ts)，建筑按钮触发现在可以通过 `EventBindingRuntime` 命中事件后继续启动与事件对应的 flow playable，而不是只停在 scene。
+- 更新 [src/ui/views/playables/flow-playable-view.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/views/playables/flow-playable-view.ts) 与 [src/ui/app-render.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/app-render.ts)，补齐 flow playable 视图渲染。
+- 更新 [src/main.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/main.ts)，补齐 flow playable action 事件分发。
+- 更新 [src/domain/playables/flow.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/domain/playables/flow.ts)，让 flow 定义承载脚本编辑器作者面已有的元数据结构。
+- 更新 [docs/blueprints/queues/zhuyuanzhang-building-arrangement-pack-migration-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/zhuyuanzhang-building-arrangement-pack-migration-queue.md)、[docs/blueprints/plans/2026-07-20-building-arrangement-container-flow-refactor-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-20-building-arrangement-container-flow-refactor-target-plan.md) 和 [docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)，将已完成的迁移队列闭合并把后续推进切到 legacy house runtime retirement。
+
+### Impact
+- 迁移后的建筑功能不再只是静态数据，点击会走统一的事件绑定与 flow playable 入口。
+- 当前 version 仍未进入 version closeout；下一步是退场队列清理旧 house runtime 代码。
+
+## 2026-07-20 Zhuyuanzhang Template Mounted Buildings Data Migration
+
+### Added
+- 新增 [docs/blueprints/queues/zhuyuanzhang-template-mounted-buildings-data-migration-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/zhuyuanzhang-template-mounted-buildings-data-migration-queue.md)，记录内置朱元璋模板包迁移到 canonical mounted-building/NPC authoring 数据形状。
+- 扩展 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，覆盖“使用模板”路径导入后濠州 `cities[].mountedBuildings` 暴露建筑和 NPC。
+
+### Changed
+- 更新 [src/content/scenario-packs/zhuyuanzhang/cities.json](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/content/scenario-packs/zhuyuanzhang/cities.json)，为内置朱元璋包城市补齐显式 `mountedBuildings`，建筑来源于既有 `houseIds`，NPC 和主 NPC 来源于既有 `houses.characterIds/defaultCharacterId`。
+- 调整朱元璋导入后再导出的回归断言：显式 mounted authoring 现在允许 canonical export 补齐运行时 `cityEntries`，而不是要求旧运行时入口表字节级不变。
+
+### Impact
+- 剧本编辑器从“使用模板”进入后，`城市 > 濠州` 能从 canonical `cities[].mountedBuildings` 读取挂载建筑和 NPC。
+- 标准 runtime-pack 导入策略不变：仍不从 `cityEntries`、`houses.characterIds` 或 `cityNpcPools` 反推 mounted authoring truth。
+
+## 2026-07-20 Script Editor City Mounted NPC Canonical Authoring Cleanup
+
+### Added
+- 新增 [docs/blueprints/queues/script-editor-city-mounted-npc-canonical-authoring-cleanup-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-city-mounted-npc-canonical-authoring-cleanup-queue.md)，把 MEMO-020 提升为当前版本中的 active queue governor。
+- 新增导出侧 mounted NPC fail-closed 测试，覆盖 mountedBuildings 引用缺失人选时的 runtime pack 导出错误。
+
+### Changed
+- 更新 [src/application/script-editor/runtime-pack-import.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/runtime-pack-import.ts)，标准 runtime-pack 导入不再从 `cityEntries`、`houses.characterIds` 或 `cityNpcPools` 反推 `cities[].mountedBuildings`。
+- 更新 [src/application/script-editor/runtime-pack-export.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/runtime-pack-export.ts)，导出时会对 mounted building 的 NPC 引用做 fail-closed 校验，缺失的 `npcIds` 或行外 `primaryNpcId` 会产生导出诊断。
+- 更新 [src/application/script-editor/city-building-runtime-materializer.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/city-building-runtime-materializer.ts)，当城市存在某建筑的 mounted row 时，导出的 `houses[].characterIds/defaultCharacterId` 只来自该 row 的 `npcIds/primaryNpcId`；空 `npcIds` 表示该建筑不显示 NPC，不再兼容回退到建筑基础名册或人物 `houseId`。
+- 更新 [src/application/house-modules/temple-house/temple-house-house-module.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/house-modules/temple-house/temple-house-house-module.ts)，寺庙模块在当前建筑没有 mounted default NPC 时渲染空席位并忽略残留模块 action，不再因缺省住持抛错阻断建筑进入。
+- 更新 [tests/city-building-mount-authoring.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/city-building-mount-authoring.test.cjs) 和 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，分别覆盖标准导入不再制造 mounted authoring truth，以及导出 missing-mounted-NPC 失败闭环。
+
+### Impact
+- 规范导入流现在只保留显式 `cities[].mountedBuildings`，不再把 runtime family 当成标准编辑器 canonical authoring truth。
+- 导出流对 mounted NPC 关系做了最小 fail-closed 守门，避免缺失引用静默落进 runtime pack。
+- 运行预览中的特殊建筑席位会随当前城市 mounted NPC authoring 收敛；城市挂载未列出的建筑基础 NPC 不会再混入预览。
+- 未挂载 NPC 的寺庙建筑现在会进入空状态，而不是让模块异常卡住当前城市地点面板。
+
 ## 2026-07-16 EventBindingRuntime Selector Baseline
 
 ### Added

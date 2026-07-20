@@ -465,6 +465,20 @@ function getAbbotCharacter(
   return abbotCharacter;
 }
 
+function findAbbotCharacter(
+  characterDefinitions: CharacterDefinition[],
+  abbotCharacterId: string | null
+): CharacterDefinition | null {
+  if (abbotCharacterId == null) {
+    return null;
+  }
+  return (
+    characterDefinitions.find(
+      (characterDefinition) => characterDefinition.id === abbotCharacterId
+    ) ?? null
+  );
+}
+
 function replaceCharacter(
   characterDefinitions: CharacterDefinition[],
   nextCharacter: CharacterDefinition
@@ -2792,10 +2806,14 @@ function handleAction(
     return createTransitionResult(input);
   }
 
-  const abbotCharacter = getAbbotCharacter(
+  const nextState = ensureTempleRuntimeState(input.gameState);
+  const abbotCharacter = findAbbotCharacter(
     input.characterDefinitions,
     input.houseDefinition.defaultCharacterId
   );
+  if (abbotCharacter == null) {
+    return createTransitionResult(input, { gameState: nextState });
+  }
   const playerCharacter = getPlayerCharacter(
     input.characterDefinitions,
     input.playerCharacterId
@@ -2810,7 +2828,6 @@ function handleAction(
     seniorMonkCharacter,
     "Temple house is missing a senior monk participant for review."
   );
-  const nextState = ensureTempleRuntimeState(input.gameState);
 
   if (input.request.actionId === CLOSE_TEMPLE_LEAVE_REFUSAL_ACTION_ID) {
     return withSessionState(
@@ -3977,10 +3994,36 @@ export const templeHouseHouseModule: HouseModuleDefinition<"temple-house"> = {
   },
   selectViewModel(input): HouseModuleViewModel {
     const nextState = ensureTempleRuntimeState(input.gameState);
-    const abbotCharacter = getAbbotCharacter(
+    const abbotCharacter = findAbbotCharacter(
       input.characterDefinitions,
       input.houseDefinition.defaultCharacterId
     );
+    if (abbotCharacter == null) {
+      return {
+        moduleId: "temple-house",
+        houseId: input.houseDefinition.id,
+        sceneTitle: input.houseDefinition.name,
+        sceneSubtitle: isMonkStoryStage(nextState)
+          ? resolveTempleText(
+              input.textEntriesById,
+              "runtime.zhu_yuanzhang.temple.scene.monk.subtitle"
+            )
+          : resolveTempleText(
+              input.textEntriesById,
+              "runtime.zhu_yuanzhang.temple.scene.daily.subtitle"
+            ),
+        standbyRoster: [],
+        dialogue: null,
+        actionContainer: null,
+        statusCard: null,
+        overlay: null,
+        leaveAction: {
+          id: "leave-house",
+          label: "绂诲紑瀵哄簷",
+          tone: "accent",
+        },
+      };
+    }
     const playerCharacter = getPlayerCharacter(
       input.characterDefinitions,
       input.playerCharacterId

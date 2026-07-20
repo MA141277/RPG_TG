@@ -68,6 +68,10 @@ export type EventParticipant = {
   required?: boolean;
 };
 
+export type EventRuntimeAction = {
+  type: "closeBuilding";
+};
+
 export type EventDefinition = {
   id: EventId;
   chapterId: ChapterId;
@@ -75,6 +79,7 @@ export type EventDefinition = {
   occurrence: EventOccurrence;
   participants?: EventParticipant[];
   entrySceneId: SceneId;
+  actions?: EventRuntimeAction[];
   nextEventId?: EventId;
   taskInputs?: RuntimeTaskInput[];
   tags?: string[];

@@ -11,6 +11,7 @@
     "src/core/**/*.ts",
     "src/application/character/**/*.ts",
     "src/application/activity/**/*.ts",
+    "src/application/building/**/*.ts",
     "src/application/city/**/*.ts",
     "src/application/city-entries/**/*.ts",
     "src/application/city-menu/**/*.ts",
@@ -56,6 +57,7 @@
     "src/main.ts",
     "src/terrain-webgl/**/*.ts",
     "src/ui/**/*.ts",
+    "src/ui/views/building/**/*.ts",
     "src/content/portrait-assets.ts",
     "src/content/yuanmo-campaign-map.ts"
   ]

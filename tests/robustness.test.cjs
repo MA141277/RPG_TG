@@ -1745,15 +1745,30 @@ test("zhuyuanzhang scenario pack migrates event triggers to event bindings", () 
     fs.readFileSync(path.join(packRoot, "event-bindings.json"), "utf8")
   );
 
-  assert.equal(events.length, 5);
-  assert.equal(eventBindings.length, 5);
+  const storyEvents = events.filter((eventRecord) =>
+    eventRecord.id.startsWith("event.story.")
+  );
+  const storyEventBindings = eventBindings.filter((binding) =>
+    binding.id.startsWith("binding.story.")
+  );
+  const buildingActionEvents = events.filter((eventRecord) =>
+    eventRecord.id.startsWith("event.building.")
+  );
+  const buildingActionBindings = eventBindings.filter((binding) =>
+    binding.id.startsWith("binding.building.")
+  );
+
+  assert.equal(storyEvents.length, 5);
+  assert.equal(storyEventBindings.length, 5);
+  assert.equal(buildingActionEvents.length, 630);
+  assert.equal(buildingActionBindings.length, 630);
   assert.equal(events.every((eventRecord) => !Object.hasOwn(eventRecord, "trigger")), true);
   assert.equal(events.every((eventRecord) => !Object.hasOwn(eventRecord, "conditions")), true);
   assert.deepEqual(
-    eventBindings.map((binding) => binding.eventId),
-    events.map((eventRecord) => eventRecord.id)
+    storyEventBindings.map((binding) => binding.eventId),
+    storyEvents.map((eventRecord) => eventRecord.id)
   );
-  assert.deepEqual(eventBindings[0], {
+  assert.deepEqual(storyEventBindings[0], {
     id: "binding.story.zhu_yuanzhang.ordination.house-enter",
     eventId: "event.story.zhu_yuanzhang.ordination",
     owner: { family: "building", id: "house.kulan.temple" },
@@ -5733,8 +5748,44 @@ test(
     );
     assert.deepEqual(exportedPack.cards, sourcePack.cards);
     assert.deepEqual(exportedPack.valuables, sourcePack.valuables);
-    assert.deepEqual(exportedPack.cityEntries, sourcePack.cityEntries);
-    assert.deepEqual(exportedPack.cityNpcPools, sourcePack.cityNpcPools);
+    const exportedCityEntryKeySet = new Set(
+      exportedPack.cityEntries.map(
+        (entry) => `${entry.cityId}\u0000${entry.targetHouseId}`
+      )
+    );
+    for (const sourceEntry of sourcePack.cityEntries) {
+      assert.equal(
+        exportedCityEntryKeySet.has(
+          `${sourceEntry.cityId}\u0000${sourceEntry.targetHouseId}`
+        ),
+        true
+      );
+    }
+    assert.equal(
+      exportedPack.cityEntries.some(
+        (entry) =>
+          entry.cityId === "city.kulan" &&
+          entry.targetHouseId === "house.kulan.keep" &&
+          entry.name === "帅府"
+      ),
+      true
+    );
+    assert.equal(
+      exportedPack.cityEntries.some(
+        (entry) =>
+          entry.cityId === "city.yingtian" &&
+          entry.targetHouseId === "house.yingtian.tea_house"
+      ),
+      true
+    );
+    assert.equal(
+      exportedPack.cityNpcPools.some(
+        (pool) =>
+          pool.cityId === "city.kulan" &&
+          pool.residents.some((resident) => resident.id === "char.kulan_lord")
+      ),
+      true
+    );
     assert.equal(
       exportedPack.locationAccess.some(
         (definition) =>
@@ -7172,6 +7223,323 @@ test(
 );
 
 test(
+  "building container item action trigger matches payload through EventBindingRuntime",
+  () => {
+    const {
+      runEventBindingRuntime,
+    } = require("../.test-dist/core/runtime/event-binding-runtime.js");
+    const state = createBaseState();
+    state.world.currentCityId = "city.start";
+    state.world.currentHouseId = "building.temple";
+    const eventDefinitionsById = {
+      "event.temple.rest": {
+        id: "event.temple.rest",
+        chapterId: "chapter.prototype",
+        name: "Temple Rest",
+        occurrence: "repeatable",
+        entrySceneId: "scene.temple.rest",
+      },
+    };
+    const eventBindings = [
+      {
+        id: "binding.temple.rest.wrong-item",
+        eventId: "event.temple.rest",
+        owner: { family: "building", id: "building.temple" },
+        trigger: {
+          timing: "after",
+          action: "building-container-item-action",
+          extra: {
+            arrangementId: "building-arrangement.city-start.temple",
+            containerId: "container.temple.menu",
+            itemId: "action.temple.work",
+          },
+        },
+        priority: 200,
+        enabled: true,
+      },
+      {
+        id: "binding.temple.rest",
+        eventId: "event.temple.rest",
+        owner: { family: "building", id: "building.temple" },
+        trigger: {
+          timing: "after",
+          action: "building-container-item-action",
+          extra: {
+            arrangementId: "building-arrangement.city-start.temple",
+            containerId: "container.temple.menu",
+            itemId: "action.temple.rest",
+          },
+        },
+        priority: 100,
+        enabled: true,
+      },
+    ];
+
+    const result = runEventBindingRuntime({
+      state,
+      eventDefinitionsById,
+      eventBindings,
+      triggerContext: {
+        owner: { family: "building", id: "building.temple" },
+        timing: "after",
+        action: "building-container-item-action",
+        currentCityId: "city.start",
+        currentHouseId: "building.temple",
+        payload: {
+          arrangementId: "building-arrangement.city-start.temple",
+          containerId: "container.temple.menu",
+          itemId: "action.temple.rest",
+        },
+      },
+    });
+
+    assert.equal(result.candidate?.bindingId, "binding.temple.rest");
+    assert.equal(result.activation?.activeEventId, "event.temple.rest");
+    assert.equal(result.state.scene.activeSceneId, "scene.temple.rest");
+  }
+);
+
+test("event binding runtime closeBuilding action returns from building to city", () => {
+  const {
+    runEventBindingRuntime,
+  } = require("../.test-dist/core/runtime/event-binding-runtime.js");
+  const state = createBaseState();
+  state.world.currentCityId = "city.start";
+  state.world.currentHouseId = "building.temple";
+  state.ui.currentView = "house";
+  state.ui.houseSession = { moduleId: "temple-house", state: {} };
+
+  const result = runEventBindingRuntime({
+    state,
+    eventDefinitionsById: {
+      "event.close-building": {
+        id: "event.close-building",
+        chapterId: "chapter.prototype",
+        name: "Close Building",
+        occurrence: "repeatable",
+        entrySceneId: "",
+        actions: [{ type: "closeBuilding" }],
+      },
+    },
+    eventBindings: [
+      {
+        id: "binding.close-building",
+        eventId: "event.close-building",
+        owner: { family: "building", id: "building.temple" },
+        trigger: {
+          timing: "after",
+          action: "building-container-item-action",
+          extra: { itemId: "action.temple.leave" },
+        },
+        enabled: true,
+      },
+    ],
+    triggerContext: {
+      owner: { family: "building", id: "building.temple" },
+      timing: "after",
+      action: "building-container-item-action",
+      currentCityId: "city.start",
+      currentHouseId: "building.temple",
+      payload: { itemId: "action.temple.leave" },
+    },
+  });
+
+  assert.equal(result.candidate?.bindingId, "binding.close-building");
+  assert.equal(result.state.world.currentHouseId, null);
+  assert.equal(result.state.ui.currentView, "city");
+  assert.equal(result.state.ui.houseSession, null);
+});
+
+test("building container item action runtime starts matching event from container ids", () => {
+  const {
+    triggerBuildingContainerItemAction,
+  } = require("../.test-dist/application/building/building-container-event-runtime.js");
+  const state = createBaseState();
+  state.world.currentCityId = "city.start";
+  state.world.currentHouseId = "building.temple";
+  state.ui.currentView = "house";
+
+  const result = triggerBuildingContainerItemAction({
+    state,
+    characterDefinitions: prototypeCharacters,
+    storyContent: {
+      eventDefinitionsById: {
+        "event.temple.rest": {
+          id: "event.temple.rest",
+          chapterId: "chapter.prototype",
+          name: "Temple Rest",
+          occurrence: "repeatable",
+          entrySceneId: "scene.temple.rest",
+        },
+      },
+      eventBindingsById: {
+        "binding.temple.rest": {
+          id: "binding.temple.rest",
+          eventId: "event.temple.rest",
+          owner: { family: "building", id: "building.temple" },
+          trigger: {
+            timing: "after",
+            action: "building-container-item-action",
+            extra: {
+              arrangementId: "building-arrangement.city-start.temple",
+              containerId: "container.temple.menu",
+              itemId: "action.temple.rest",
+            },
+          },
+          enabled: true,
+        },
+      },
+      sceneDefinitionsById: {
+        "scene.temple.rest": {
+          id: "scene.temple.rest",
+          actions: [],
+        },
+      },
+    },
+    action: {
+      arrangementId: "building-arrangement.city-start.temple",
+      containerId: "container.temple.menu",
+      itemId: "action.temple.rest",
+    },
+  });
+
+  assert.equal(result.state.scene.activeEventId, "event.temple.rest");
+  assert.equal(result.state.scene.activeSceneId, "scene.temple.rest");
+  assert.equal(result.state.ui.currentView, "scene");
+});
+
+test("building container item action launches the authored flow selected by the event", () => {
+  const {
+    triggerBuildingContainerItemAction,
+  } = require("../.test-dist/application/building/building-container-event-runtime.js");
+  const state = createBaseState();
+  state.world.currentCityId = "city.start";
+  state.world.currentHouseId = "building.temple";
+  state.ui.currentView = "house";
+
+  const result = triggerBuildingContainerItemAction({
+    state,
+    characterDefinitions: prototypeCharacters,
+    storyContent: {
+      eventDefinitionsById: {
+        "event.temple.rest": {
+          id: "event.temple.rest",
+          chapterId: "chapter.prototype",
+          name: "Temple Rest",
+          occurrence: "repeatable",
+          entrySceneId: "scene.temple.rest",
+        },
+      },
+      eventBindingsById: {
+        "binding.temple.rest": {
+          id: "binding.temple.rest",
+          eventId: "event.temple.rest",
+          owner: { family: "building", id: "building.temple" },
+          trigger: {
+            timing: "after",
+            action: "building-container-item-action",
+            extra: {
+              arrangementId: "building-arrangement.city-start.temple",
+              containerId: "container.temple.menu",
+              itemId: "action.temple.rest",
+            },
+          },
+          enabled: true,
+        },
+      },
+      sceneDefinitionsById: {
+        "scene.temple.rest": {
+          id: "scene.temple.rest",
+          actions: [],
+        },
+      },
+      flowDefinitionsById: {
+        "flow.temple.rest": {
+          id: "flow.temple.rest",
+          title: "Temple Rest",
+          playableId: "flow.temple.rest",
+          integrationId: "playable.flow.temple.rest",
+          ownerKind: "building",
+          ownerId: "building.temple",
+          returnPolicy: "reenter-owner",
+          eventStartTarget: { eventId: "event.temple.rest" },
+          initialNodeId: "flow.temple.rest.start",
+          nodes: [
+            {
+              id: "flow.temple.rest.start",
+              type: "text",
+              text: "Rest.",
+              nextNodeId: "flow.temple.rest.complete",
+            },
+            {
+              id: "flow.temple.rest.complete",
+              type: "complete",
+              outcome: "success",
+            },
+          ],
+        },
+      },
+    },
+    action: {
+      arrangementId: "building-arrangement.city-start.temple",
+      containerId: "container.temple.menu",
+      itemId: "action.temple.rest",
+    },
+  });
+
+  assert.equal(result.state.runtime.playableSession?.playableId, "flow.temple.rest");
+  assert.equal(result.state.runtime.playableSession?.ownerContext.ownerId, "building.temple");
+  assert.equal(result.state.ui.currentView, "minigame");
+  assert.equal(result.state.scene.activeSceneId, null);
+});
+
+test("script editor runtime export preserves building container action trigger extras", () => {
+  const {
+    exportScriptEditorProjectToScenarioPackFiles,
+  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  const project = createExportableScriptEditorProjectDefinition();
+  project.textEntries = [{ id: "text.opening", text: "Opening line." }];
+  project.dialogues = [{ id: "dialogue.opening", title: "Opening" }];
+  project.events = [
+    {
+      id: "event.opening",
+      title: "Opening Event",
+      destination: { family: "dialogue", targetId: "dialogue.opening" },
+    },
+  ];
+  project.eventBindings = [
+    {
+      id: "binding.temple.rest",
+      eventId: "event.opening",
+      owner: { family: "building", id: "building.temple" },
+      trigger: {
+        timing: "after",
+        action: "building-container-item-action",
+        extra: {
+          arrangementId: "building-arrangement.city-start.temple",
+          containerId: "container.temple.menu",
+          itemId: "action.temple.rest",
+        },
+      },
+      enabled: true,
+    },
+  ];
+
+  const files = exportScriptEditorProjectToScenarioPackFiles(project);
+  const eventBindings = JSON.parse(files["event-bindings.json"]);
+
+  assert.deepEqual(eventBindings[0].trigger, {
+    timing: "after",
+    action: "building-container-item-action",
+    extra: {
+      arrangementId: "building-arrangement.city-start.temple",
+      containerId: "container.temple.menu",
+      itemId: "action.temple.rest",
+    },
+  });
+});
+
+test(
   "event binding runtime routes story triggers through TriggerContext bindings",
   () => {
     const {
@@ -8114,6 +8482,40 @@ test("script editor imports built-in zhuyuanzhang template from the published ma
     assert.equal(project.storyPack.scenarioProfile.playerCharacterId, "char.player");
     assert.ok(project.people.length > 0);
     assert.ok(project.cities.length > 0);
+
+    const haozhouCity = project.cities.find((city) => city.id === "city.kulan");
+    assert.ok(haozhouCity);
+    assert.deepEqual(
+      haozhouCity.mountedBuildings.map((mountedBuilding) => mountedBuilding.buildingId),
+      [
+        "house.kulan.leader_residence",
+        "house.kulan.temple",
+        "home_001",
+        "house.kulan.keep",
+        "house.kulan.tea_house",
+        "house.kulan.market",
+        "house.kulan.grain_shop",
+        "house.kulan.medicine_house",
+        "house.kulan.inn",
+      ]
+    );
+    assert.deepEqual(
+      haozhouCity.mountedBuildings.find(
+        (mountedBuilding) => mountedBuilding.buildingId === "house.kulan.keep"
+      ),
+      {
+        buildingId: "house.kulan.keep",
+        npcIds: [
+          "char.kulan_lord",
+          "char.kulan_xu_da",
+          "char.kulan_tang_he",
+          "char.kulan_chang_yuchun",
+          "char.kulan_guard",
+          "char.kulan_soldier",
+        ],
+        primaryNpcId: "char.kulan_lord",
+      }
+    );
   } finally {
     global.fetch = previousFetch;
     global.window = previousWindow;
@@ -9885,7 +10287,8 @@ test(
     assert.equal(JSON.stringify(houses).includes("visible-disabled"), false);
     assert.equal(houses[0].type, "merchant");
     assert.equal(houses[0].moduleId, "market-house");
-    assert.deepEqual(houses[0].characterIds, ["person.host"]);
+    assert.deepEqual(houses[0].characterIds, []);
+    assert.equal(houses[0].defaultCharacterId, null);
     assert.equal(cityEntries[0].targetHouseId, "building.market");
     assert.equal("house-access-refusal-rules.json" in files, false);
     assert.ok(buildingAccess);
@@ -10761,6 +11164,94 @@ test(
   }
 );
 
+test(
+  "script editor runtime export treats city mounted npc rows as the canonical building roster",
+  () => {
+    const {
+      exportScriptEditorProjectToScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    const project = createExportableScriptEditorProjectDefinition();
+    project.cities = [
+      {
+        id: "city.start",
+        name: "Start City",
+        mountedBuildings: [
+          {
+            buildingId: "building.temple",
+            npcIds: ["person.mounted"],
+            primaryNpcId: "person.mounted",
+          },
+        ],
+      },
+    ];
+    project.buildings = [
+      {
+        id: "building.temple",
+        cityId: "city.start",
+        name: "Temple",
+        baseAttributes: {
+          houseType: "temple",
+          moduleId: "temple-house",
+          characterIds: ["person.legacy"],
+          defaultCharacterId: "person.legacy",
+        },
+      },
+    ];
+    project.people = [
+      {
+        id: "person.mounted",
+        name: "Mounted NPC",
+        personType: "NPC",
+      },
+      {
+        id: "person.legacy",
+        name: "Legacy NPC",
+        personType: "NPC",
+        houseId: "building.temple",
+      },
+    ];
+
+    const files = exportScriptEditorProjectToScenarioPackFiles(project);
+    const houses = JSON.parse(files["houses.json"]);
+
+    assert.deepEqual(houses[0].characterIds, ["person.mounted"]);
+    assert.equal(houses[0].defaultCharacterId, "person.mounted");
+  }
+);
+
+test("script editor runtime export fails closed for missing mounted npc references", () => {
+  const {
+    exportScriptEditorProjectToScenarioPackFiles,
+  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  const project = createExportableScriptEditorProjectDefinition();
+  project.cities = [
+    {
+      id: "city.start",
+      name: "Start City",
+      mountedBuildings: [
+        {
+          buildingId: "building.market",
+          npcIds: ["person.missing"],
+          primaryNpcId: "person.missing",
+        },
+      ],
+    },
+  ];
+  project.buildings = [
+    {
+      id: "building.market",
+      cityId: "city.start",
+      name: "Mounted Market",
+    },
+  ];
+  project.people = [];
+
+  assert.throws(
+    () => exportScriptEditorProjectToScenarioPackFiles(project),
+    /project\.cities\[0\]\.mountedBuildings\[0\]\.npcIds\[0\].*person\.missing/
+  );
+});
+
 test("city entry export preserves mounted building type and artwork instead of leader residence defaults", () => {
   const {
     exportScriptEditorProjectToScenarioPackFiles,
@@ -10936,7 +11427,7 @@ test("script editor runtime export does not invent city entries for unmounted bu
   assert.deepEqual(JSON.parse(files["city-entries.json"]), []);
 });
 
-test("script editor runtime pack import restores mounted city buildings from city entries", () => {
+test("script editor runtime pack import preserves runtime families without inferring mounted authoring rows", () => {
   const {
     importScenarioPackToScriptEditorProject,
   } = require("../.test-dist/application/script-editor/runtime-pack-import.js");
@@ -11016,13 +11507,452 @@ test("script editor runtime pack import restores mounted city buildings from cit
     scenes: [],
   });
 
-  assert.deepEqual(importedProject.cities[0].mountedBuildings, [
+  assert.deepEqual(importedProject.cities[0].mountedBuildings, []);
+  assert.deepEqual(
+    importedProject.cityEntries.map((entry) => ({
+      cityId: entry.cityId,
+      targetHouseId: entry.targetHouseId,
+    })),
+    [{ cityId: "city.kulan", targetHouseId: "house.kulan.temple" }]
+  );
+  assert.deepEqual(
+    importedProject.cityNpcPools.map((pool) => ({
+      cityId: pool.cityId,
+      residents: pool.residents.map((resident) => resident.id),
+    })),
+    [{ cityId: "city.kulan", residents: ["person.host", "person.guard"] }]
+  );
+});
+
+test("script editor default project initializes empty building arrangements", () => {
+  const {
+    createDefaultScriptEditorProjectDefinition,
+  } = require("../.test-dist/application/script-editor/minimal-workflow.js");
+
+  const project = createDefaultScriptEditorProjectDefinition();
+
+  assert.deepEqual(project.buildingArrangements, []);
+});
+
+test("script editor project loader validates explicit building arrangements", () => {
+  const {
+    validateScriptEditorProjectDefinition,
+  } = require("../.test-dist/application/script-editor/editor-project-loader.js");
+
+  const project = {
+    ...createSampleScriptEditorProjectDefinition(),
+    buildingArrangements: [
+      {
+        id: "building-arrangement.city-start.home",
+        cityId: "city.start",
+        buildingId: "building.home",
+        displayName: "Home",
+        backgroundId: "background.home",
+        mountedNpcIds: ["person.hero"],
+        primaryNpcId: "person.hero",
+        containers: [
+          {
+            id: "container.home.seats",
+            type: "character-seats",
+            title: "Seats",
+            source: {
+              type: "arrangement-mounted-npcs",
+              includeNpcIds: ["person.hero"],
+            },
+          },
+          {
+            id: "container.home.menu",
+            type: "action-menu",
+            title: "Menu",
+            items: [
+              {
+                id: "action.home.leave",
+                label: "Leave",
+                eventId: "event.opening",
+              },
+            ],
+          },
+        ],
+        visibleRule: {},
+        enterRule: {},
+        exitRule: {},
+      },
+    ],
+  };
+
+  const validated = validateScriptEditorProjectDefinition(project);
+
+  assert.deepEqual(validated.buildingArrangements, project.buildingArrangements);
+});
+
+test("script editor project loader fails closed on invalid building arrangement shape", () => {
+  const {
+    validateScriptEditorProjectDefinition,
+  } = require("../.test-dist/application/script-editor/editor-project-loader.js");
+
+  assert.throws(
+    () =>
+      validateScriptEditorProjectDefinition({
+        ...createSampleScriptEditorProjectDefinition(),
+        buildingArrangements: [
+          {
+            id: "building-arrangement.invalid",
+            cityId: "city.start",
+            buildingId: "building.home",
+            mountedNpcIds: "person.hero",
+            primaryNpcId: null,
+            containers: [],
+          },
+        ],
+      }),
+    /script editor project buildingArrangements\[0\]\.mountedNpcIds must be an array/
+  );
+});
+
+test("script editor runtime-pack import initializes empty building arrangements without old-data inference", () => {
+  const {
+    importScenarioPackToScriptEditorProject,
+  } = require("../.test-dist/application/script-editor/runtime-pack-import.js");
+
+  const importedProject = importScenarioPackToScriptEditorProject({
+    schemaVersion: 1,
+    id: "scenario.import-no-arrangements",
+    title: "Imported No Arrangements",
+    scenarioProfile: {
+      id: "scenario-profile.import-no-arrangements",
+      playerCharacterId: "person.player",
+      chapterId: "chapter.imported",
+      initialLocation: {
+        mapId: "map.imported",
+        cityId: "city.kulan",
+        houseId: "house.kulan.temple",
+        view: "city",
+      },
+    },
+    characters: [{ id: "person.player", name: "Player" }],
+    cities: [{ id: "city.kulan", name: "Kulan" }],
+    houses: [
+      {
+        id: "house.kulan.temple",
+        cityId: "city.kulan",
+        name: "Temple",
+        type: "temple",
+        characterIds: ["person.host"],
+        defaultCharacterId: "person.host",
+        activityLocationId: "temple",
+      },
+    ],
+    cityEntries: [
+      {
+        id: "city-entry.kulan.temple",
+        cityId: "city.kulan",
+        name: "Temple",
+        directoryType: "building",
+        targetHouseId: "house.kulan.temple",
+        artworkId: "temple-house",
+      },
+    ],
+    cityNpcPools: [
+      {
+        cityId: "city.kulan",
+        residents: [
+          {
+            id: "person.host",
+            cityId: "city.kulan",
+            name: "Host",
+            title: "",
+            personality: "",
+            specialty: "",
+            favorability: 0,
+            activityWeight: { custom: 1 },
+            dialoguePool: [],
+            intelPool: [],
+          },
+        ],
+      },
+    ],
+    events: [],
+    scenes: [],
+  });
+
+  assert.deepEqual(importedProject.buildingArrangements, []);
+  assert.deepEqual(importedProject.cities[0].mountedBuildings, []);
+});
+
+test("script editor runtime export and scenario loader carry explicit building arrangements", async () => {
+  const {
+    exportScriptEditorProjectToScenarioPackFiles,
+  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  const {
+    loadScenarioPackFromFiles,
+  } = require("../.test-dist/application/scenario/scenario-pack-loader.js");
+  const project = createExportableScriptEditorProjectDefinition();
+  project.buildingArrangements = [
     {
-      buildingId: "house.kulan.temple",
-      npcIds: ["person.host", "person.guard"],
-      primaryNpcId: "person.host",
+      id: "building-arrangement.city-start.home",
+      cityId: "city.start",
+      buildingId: "building.home",
+      displayName: "Home Shell",
+      description: "Explicit runtime shell fixture.",
+      backgroundId: "background.home",
+      mountedNpcIds: ["person.hero"],
+      primaryNpcId: "person.hero",
+      containers: [
+        {
+          id: "container.home.seats",
+          type: "character-seats",
+          title: "Seats",
+          source: {
+            type: "arrangement-mounted-npcs",
+            includeNpcIds: ["person.hero"],
+          },
+        },
+        {
+          id: "container.home.menu",
+          type: "action-menu",
+          title: "Menu",
+          items: [
+            {
+              id: "action.home.rest",
+              label: "Rest",
+              eventId: "event.home.rest",
+            },
+          ],
+        },
+      ],
+    },
+  ];
+
+  const serializedFiles = exportScriptEditorProjectToScenarioPackFiles(project);
+  const manifest = JSON.parse(serializedFiles["pack.json"]);
+  const arrangements = JSON.parse(serializedFiles["building-arrangements.json"]);
+  const loadedPack = await loadScenarioPackFromFiles(
+    createImportedFilesFromSerializedJsonRecord(serializedFiles, "runtime-pack")
+  );
+
+  assert.equal(manifest.files.buildingArrangements, "./building-arrangements.json");
+  assert.deepEqual(arrangements, project.buildingArrangements);
+  assert.deepEqual(loadedPack.buildingArrangements, project.buildingArrangements);
+});
+
+test("script editor runtime-pack import preserves explicit building arrangements", async () => {
+  const {
+    exportScriptEditorProjectToScenarioPackFiles,
+  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  const {
+    loadScriptEditorProjectFromScenarioPackFiles,
+  } = require("../.test-dist/application/script-editor/runtime-pack-import.js");
+  const project = createExportableScriptEditorProjectDefinition();
+  project.buildingArrangements = [
+    {
+      id: "building-arrangement.city-start.home",
+      cityId: "city.start",
+      buildingId: "building.home",
+      displayName: "Home Shell",
+      mountedNpcIds: [],
+      primaryNpcId: null,
+      containers: [],
+    },
+  ];
+
+  const serializedFiles = exportScriptEditorProjectToScenarioPackFiles(project);
+  const importedProject = await loadScriptEditorProjectFromScenarioPackFiles(
+    createImportedFilesFromSerializedJsonRecord(serializedFiles, "runtime-pack")
+  );
+
+  assert.deepEqual(importedProject.buildingArrangements, project.buildingArrangements);
+});
+
+test("active game content exposes explicit building arrangements without old-data inference", () => {
+  const content = createActiveGameContent({
+    schemaVersion: 1,
+    id: "pack.arrangement-runtime",
+    title: "Arrangement Runtime",
+    scenarioProfile: {
+      id: "scenario.arrangement-runtime",
+      playerCharacterId: "person.player",
+      chapterId: "chapter.arrangement-runtime",
+      initialLocation: {
+        mapId: "map.start",
+        cityId: "city.start",
+        houseId: "building.temple",
+        view: "house",
+      },
+    },
+    characters: [{ id: "person.player", name: "Player" }],
+    cities: [{ id: "city.start", name: "Start" }],
+    houses: [
+      {
+        id: "building.temple",
+        cityId: "city.start",
+        name: "Temple Base",
+        type: "temple",
+        characterIds: ["person.legacy"],
+        defaultCharacterId: "person.legacy",
+        activityLocationId: "custom",
+      },
+    ],
+    buildingArrangements: [
+      {
+        id: "building-arrangement.city-start.temple",
+        cityId: "city.start",
+        buildingId: "building.temple",
+        displayName: "Temple Shell",
+        mountedNpcIds: [],
+        primaryNpcId: null,
+        containers: [],
+      },
+    ],
+    cityNpcPools: [
+      {
+        cityId: "city.start",
+        residents: [
+          {
+            id: "person.pool",
+            cityId: "city.start",
+            name: "Pool Stranger",
+            title: "Unassigned",
+            personality: "",
+            specialty: "",
+            favorability: 0,
+            activityWeight: { custom: 1 },
+            dialoguePool: [],
+            intelPool: [],
+          },
+        ],
+      },
+    ],
+    events: [],
+    scenes: [],
+  });
+
+  assert.deepEqual(content.buildingArrangements, [
+    {
+      id: "building-arrangement.city-start.temple",
+      cityId: "city.start",
+      buildingId: "building.temple",
+      displayName: "Temple Shell",
+      mountedNpcIds: [],
+      primaryNpcId: null,
+      containers: [],
     },
   ]);
+});
+
+test("building module stage selects generic arrangement shell before old house roster", () => {
+  const {
+    selectBuildingModuleStage,
+  } = require("../.test-dist/application/building/building-module-entry.js");
+  const appState = {
+    gameState: {
+      ...createBaseState(),
+      world: {
+        ...createBaseState().world,
+        currentCityId: "city.start",
+        currentHouseId: "building.temple",
+      },
+      ui: {
+        ...createBaseState().ui,
+        currentView: "house",
+      },
+    },
+    characterDefinitions: [
+      { id: "person.host", name: "Host Monk" },
+      { id: "person.pool", name: "Pool Stranger" },
+    ],
+    playerCoordinate: { x: 0, y: 0 },
+    campaignActorState: { facingDegrees: 0, isMoving: false },
+    campaignTravelState: null,
+    modalState: null,
+    locationDialogueState: null,
+    beggingMiniGameState: null,
+    cityMenuState: null,
+    cityDirectoryState: null,
+    autoAdvanceState: null,
+    uiLayouts: {},
+  };
+
+  const stage = selectBuildingModuleStage({
+    appState,
+    houseDefinitions: [
+      {
+        id: "building.temple",
+        cityId: "city.start",
+        name: "Temple Base",
+        type: "temple",
+        characterIds: [],
+        defaultCharacterId: null,
+        activityLocationId: "custom",
+        backAction: { label: "Leave", targetView: "city" },
+      },
+    ],
+    buildingArrangements: [
+      {
+        id: "building-arrangement.city-start.temple",
+        cityId: "city.start",
+        buildingId: "building.temple",
+        displayName: "Temple Shell",
+        mountedNpcIds: ["person.host"],
+        primaryNpcId: "person.host",
+        containers: [
+          {
+            id: "container.temple.seats",
+            type: "character-seats",
+            title: "Seats",
+            source: {
+              type: "arrangement-mounted-npcs",
+              includeNpcIds: ["person.host"],
+            },
+          },
+        ],
+      },
+    ],
+    cityNpcPoolDefinitions: [
+      {
+        cityId: "city.start",
+        residents: [
+          {
+            id: "person.pool",
+            cityId: "city.start",
+            name: "Pool Stranger",
+            title: "Unassigned",
+            personality: "",
+            specialty: "",
+            favorability: 0,
+            activityWeight: { custom: 1 },
+            dialoguePool: [],
+            intelPool: [],
+          },
+        ],
+      },
+    ],
+    playerCharacterId,
+  });
+
+  assert.equal(stage.type, "building");
+  assert.equal(stage.arrangement.displayName, "Temple Shell");
+  assert.deepEqual(
+    stage.containerViewModels.flatMap((container) =>
+      container.type === "character-seats"
+        ? container.characters.map((character) => character.name)
+        : []
+    ),
+    ["Host Monk"]
+  );
+});
+
+test("generic building shell renderer has an explicit empty-data branch", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src", "ui", "views", "building", "building-module-view.ts"),
+    "utf8"
+  );
+
+  assert.match(source, /input\.stage\.type === "building"/);
+  assert.match(source, /containerViewModels/);
+  assert.match(source, /data-action="leave-house"/);
+  assert.match(source, /data-action="building-container-item-action"/);
+  assert.match(source, /data-building-arrangement-id/);
+  assert.match(source, /data-building-container-id/);
 });
 
 test("script editor runtime-pack import projects eventBindings into editable script-editor surface", () => {
@@ -14063,6 +14993,49 @@ test("temple house greeting, open, beg-alms assignment, and leave refusal resolv
   assert.deepEqual(leaveResult.sessionState?.dialogueOverride?.textLines, [
     "自定义离寺拦截。",
   ]);
+});
+
+test("temple house view model does not require a mounted default abbot", () => {
+  const monkCharacters = createPrototypeCharactersForStoryStage(
+    ZHU_YUANZHANG_STORY_STAGES.huangjueTemple
+  );
+  const unstaffedTempleHouse = {
+    ...templeHouse,
+    characterIds: [],
+    defaultCharacterId: null,
+  };
+
+  const viewModel = templeHouseHouseModule.selectViewModel({
+    gameState: withCouncilInDays(createMonkStageState(), 30),
+    characterDefinitions: monkCharacters,
+    houseDefinition: unstaffedTempleHouse,
+    playerCharacterId,
+    sessionState: null,
+    textEntriesById: {},
+  });
+
+  assert.deepEqual(viewModel.standbyRoster, []);
+  assert.equal(viewModel.dialogue, null);
+  assert.equal(viewModel.actionContainer, null);
+
+  const enterResult = templeHouseHouseModule.enter({
+    gameState: withCouncilInDays(createMonkStageState(), 30),
+    characterDefinitions: monkCharacters,
+    houseDefinition: unstaffedTempleHouse,
+    playerCharacterId,
+    textEntriesById: {},
+  });
+  const actionResult = templeHouseHouseModule.dispatch({
+    gameState: enterResult.gameState,
+    characterDefinitions: enterResult.characterDefinitions,
+    houseDefinition: unstaffedTempleHouse,
+    playerCharacterId,
+    sessionState: enterResult.sessionState,
+    request: { type: "action", actionId: "open-abbot-dialogue" },
+    textEntriesById: {},
+  });
+
+  assert.equal(actionResult.sessionState, enterResult.sessionState);
 });
 
 test("temple house rest summary resolves from text entries", () => {
@@ -25708,7 +26681,7 @@ test("child 30 playable runtime contract exports unified playable launch session
     "utf8"
   );
 
-  assert.match(source, /export type PlayableFamily = "minigame" \| "battle"/);
+  assert.match(source, /export type PlayableFamily = "minigame" \| "battle" \| "flow"/);
   assert.match(source, /export type PlayableDefinition = \{/);
   assert.match(source, /export type PlayableIntegrationDefinition = \{/);
   assert.match(source, /export type PlayableLaunchRequest = \{/);
@@ -27027,6 +28000,271 @@ test("dev browser validation resources avoid mojibake paths and watcher profile 
     fs.existsSync(path.join(process.cwd(), "ui", "yuansu", "人物选择ui", "backgroung.png"))
   );
   assert.match(viteConfigSource, /server:\s*\{[\s\S]*watch:\s*\{[\s\S]*ignored:[\s\S]*\.codex-temp/);
+});
+
+test("flow playable is registered with a building owner integration", () => {
+  const {
+    builtinPlayableDefinitionRegistry,
+  } = require("../.test-dist/core/registry/builtin-playable-definition-registry.js");
+  const {
+    builtinPlayableIntegrationRegistry,
+  } = require("../.test-dist/core/registry/builtin-playable-integration-registry.js");
+
+  assert.equal(
+    builtinPlayableDefinitionRegistry.get("building-flow")?.family,
+    "flow"
+  );
+  const integration = builtinPlayableIntegrationRegistry.get(
+    "playable.building-flow.house.default"
+  );
+  assert.equal(integration?.playableId, "building-flow");
+  assert.equal(integration?.ownerDefaults.ownerKind, "house");
+  assert.equal(integration?.ownerDefaults.returnPolicy, "resume-owner");
+});
+
+test("flow playable launches with building owner context and exposes a presenter model", () => {
+  const {
+    createLaunchPlayableRequest,
+    runPlayableRuntime,
+  } = require("../.test-dist/core/runtime/playable-runtime.js");
+  const {
+    presentFlowPlayable,
+  } = require("../.test-dist/application/playables/flow/flow-playable-presenter.js");
+
+  const flowDefinition = {
+    id: "building-flow",
+    title: "Rest",
+    initialNodeId: "node.start",
+    nodes: [
+      {
+        id: "node.start",
+        type: "text",
+        text: "Rest here.",
+        nextNodeId: "node.finish",
+      },
+      {
+        id: "node.finish",
+        type: "complete",
+        outcome: "success",
+        metrics: { rested: true },
+      },
+    ],
+  };
+  const result = runPlayableRuntime({
+    state: createRuntimeState(),
+    request: createLaunchPlayableRequest("building-flow", {
+      ownerContext: {
+        ownerKind: "house",
+        ownerId: "building.temple",
+        returnPolicy: "resume-owner",
+      },
+    }),
+    characterDefinitions: prototypeCharacters,
+    flowDefinitionsById: {
+      [flowDefinition.id]: flowDefinition,
+    },
+  });
+
+  assert.equal(result.handled, true);
+  assert.equal(result.state.core.ui.currentView, "minigame");
+  assert.equal(result.state.core.runtime.playableSession?.family, "flow");
+  assert.equal(
+    result.state.core.runtime.playableSession?.ownerContext.ownerId,
+    "building.temple"
+  );
+  assert.equal(
+    result.state.core.runtime.playableSession?.state?.currentNodeId,
+    "node.start"
+  );
+
+  const presenter = presentFlowPlayable({
+    definition: flowDefinition,
+    session: result.state.core.runtime.playableSession,
+  });
+  assert.equal(presenter.family, "flow");
+  assert.equal(presenter.layout, "panel");
+  assert.equal(presenter.viewModel.currentNodeId, "node.start");
+});
+
+test("zhuyuanzhang pack carries explicit building arrangements for every mounted building", () => {
+  const packRoot = path.join(
+    process.cwd(),
+    "src/content/scenario-packs/zhuyuanzhang"
+  );
+  const cities = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "cities.json"), "utf8")
+  );
+  const arrangements = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "building-arrangements.json"), "utf8")
+  );
+  const manifest = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "pack.json"), "utf8")
+  );
+  const mountedBuildingIds = cities.flatMap((city) =>
+    (city.mountedBuildings ?? []).map((entry) => entry.buildingId)
+  );
+  const arrangementByBuildingId = new Map(
+    arrangements.map((arrangement) => [arrangement.buildingId, arrangement])
+  );
+
+  assert.equal(manifest.files.buildingArrangements, "building-arrangements.json");
+  assert.equal(manifest.files.flowDefinitions, "flow-definitions.json");
+  assert.equal(arrangements.length, mountedBuildingIds.length);
+  for (const buildingId of mountedBuildingIds) {
+    const arrangement = arrangementByBuildingId.get(buildingId);
+    assert.ok(arrangement, `missing explicit arrangement for ${buildingId}`);
+    assert.ok(
+      arrangement.containers.some((container) => container.type === "character-seats"),
+      `missing character seat container for ${buildingId}`
+    );
+    assert.ok(
+      arrangement.containers.some((container) => container.type === "action-menu"),
+      `missing action menu container for ${buildingId}`
+    );
+  }
+});
+
+test("zhuyuanzhang building action menus have authored event and flow routes", () => {
+  const packRoot = path.join(
+    process.cwd(),
+    "src/content/scenario-packs/zhuyuanzhang"
+  );
+  const arrangements = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "building-arrangements.json"), "utf8")
+  );
+  const events = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "events.json"), "utf8")
+  );
+  const eventBindings = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "event-bindings.json"), "utf8")
+  );
+  const flowDefinitions = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "flow-definitions.json"), "utf8")
+  );
+
+  const eventsById = new Map(events.map((event) => [event.id, event]));
+  const flowsByEventId = new Map(
+    flowDefinitions
+      .filter((flow) => flow.eventStartTarget?.eventId != null)
+      .map((flow) => [flow.eventStartTarget.eventId, flow])
+  );
+  const bindingsByEventId = new Map(
+    eventBindings.map((binding) => [binding.eventId, binding])
+  );
+  const actionItems = [];
+
+  for (const arrangement of arrangements) {
+    for (const container of arrangement.containers ?? []) {
+      if (container.type !== "action-menu") {
+        continue;
+      }
+      for (const item of container.items ?? []) {
+        actionItems.push({ arrangement, container, item });
+      }
+    }
+  }
+
+  assert.equal(actionItems.length, 630);
+
+  for (const { arrangement, container, item } of actionItems) {
+    const event = eventsById.get(item.eventId);
+    assert.ok(event, `missing event for ${item.eventId}`);
+
+    const binding = bindingsByEventId.get(item.eventId);
+    assert.ok(binding, `missing event binding for ${item.eventId}`);
+    assert.equal(binding.owner.family, "building");
+    assert.equal(binding.owner.id, arrangement.buildingId);
+    assert.equal(binding.trigger.action, "building-container-item-action");
+    assert.equal(binding.trigger.extra?.arrangementId, arrangement.id);
+    assert.equal(binding.trigger.extra?.containerId, container.id);
+    assert.equal(binding.trigger.extra?.itemId, item.id);
+
+    if (item.id === "leave" || item.eventId.endsWith(".leave")) {
+      assert.ok(
+        event.actions?.some((action) => action.type === "closeBuilding"),
+        `missing closeBuilding action for ${item.eventId}`
+      );
+      continue;
+    }
+
+    const flow = flowsByEventId.get(item.eventId);
+    assert.ok(flow, `missing authored flow for ${item.eventId}`);
+    assert.equal(flow.ownerKind, "building");
+    assert.equal(flow.ownerId, arrangement.buildingId);
+    assert.equal(flow.triggerSource, "container-item");
+    assert.equal(flow.eventStartTarget?.bindingId, binding.id);
+    assert.ok(flow.outcomeRoutes.length > 0);
+  }
+
+  assert.ok(
+    flowsByEventId.has("event.building.house.kulan.temple.review"),
+    "missing preserved Huangjue Temple review flow"
+  );
+  assert.ok(
+    flowsByEventId.has("event.building.house.kulan.temple.work"),
+    "missing preserved Huangjue Temple work flow"
+  );
+  assert.ok(
+    flowsByEventId.has("event.building.house.kulan.temple.donate"),
+    "missing preserved Huangjue Temple donation flow"
+  );
+});
+
+test("flow playable reduces a command and settles through shared handoff", () => {
+  const {
+    createLaunchPlayableRequest,
+    createPlayableActionRequest,
+    runPlayableRuntime,
+  } = require("../.test-dist/core/runtime/playable-runtime.js");
+  const flowDefinition = {
+    id: "building-flow",
+    title: "Rest",
+    initialNodeId: "node.start",
+    nodes: [
+      {
+        id: "node.start",
+        type: "text",
+        text: "Rest here.",
+        nextNodeId: "node.finish",
+      },
+      {
+        id: "node.finish",
+        type: "complete",
+        outcome: "success",
+        metrics: { rested: true },
+      },
+    ],
+  };
+  const launched = runPlayableRuntime({
+    state: createRuntimeState(),
+    request: createLaunchPlayableRequest("building-flow", {
+      ownerContext: {
+        ownerKind: "house",
+        ownerId: "building.temple",
+        returnPolicy: "resume-owner",
+      },
+    }),
+    characterDefinitions: prototypeCharacters,
+    flowDefinitionsById: {
+      [flowDefinition.id]: flowDefinition,
+    },
+  });
+
+  const settled = runPlayableRuntime({
+    state: launched.state,
+    request: createPlayableActionRequest("building-flow", "confirm"),
+    characterDefinitions: prototypeCharacters,
+    flowDefinitionsById: {
+      [flowDefinition.id]: flowDefinition,
+    },
+  });
+
+  assert.equal(settled.handled, true);
+  assert.equal(settled.state.core.runtime.playableSession, null);
+  assert.equal(settled.settlement?.outcome, "success");
+  assert.equal(settled.settlement?.handoff.type, "resume-owner");
+  assert.equal(settled.settlement?.handoff.ownerId, "building.temple");
+  assert.deepEqual(settled.settlement?.factResult.metrics, { rested: true });
 });
 
 test("script editor ui encoding integrity guard accepts current critical chinese surfaces", () => {

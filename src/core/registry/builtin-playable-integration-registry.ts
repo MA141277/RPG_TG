@@ -90,6 +90,20 @@ const builtinPlayableIntegrations: PlayableIntegrationDefinition[] = [
     },
     outcomeConfig: {},
   },
+  {
+    integrationId: "playable.building-flow.house.default",
+    playableId: "building-flow",
+    ownerDefaults: {
+      ownerKind: "house",
+      returnPolicy: "resume-owner",
+    },
+    trigger: {
+      triggerId: "trigger.playable.building-flow.house.default",
+      ownerKind: "house",
+      trigger: "building-container-item-action",
+    },
+    outcomeConfig: {},
+  },
 ];
 
 export function installBuiltinPlayableIntegrations(

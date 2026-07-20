@@ -30,6 +30,98 @@
       "silk",
       "tea",
       "luxury"
+    ],
+    "mountedBuildings": [
+      {
+        "buildingId": "house.kulan.leader_residence",
+        "npcIds": [
+          "char.kulan_liu_bowen",
+          "char.kulan_li_shanchang",
+          "char.yuanmo.guo_xing",
+          "char.yuanmo.peng_da",
+          "char.yuanmo.zhao_junyong",
+          "char.yuanmo.cheli_buhua",
+          "char.yuanmo.jia_lu",
+          "char.yuanmo.fei_ju",
+          "char.yuanmo.zhang_zhiyuan"
+        ],
+        "primaryNpcId": "char.kulan_liu_bowen"
+      },
+      {
+        "buildingId": "house.kulan.temple",
+        "npcIds": [
+          "char.kulan_temple_abbot",
+          "char.kulan_temple_senior_monk",
+          "char.yuanmo.huangjue_abbot",
+          "char.yuanmo.temple_senior_monk"
+        ],
+        "primaryNpcId": "char.kulan_temple_abbot"
+      },
+      {
+        "buildingId": "home_001",
+        "npcIds": [
+          "char.player"
+        ],
+        "primaryNpcId": "char.player"
+      },
+      {
+        "buildingId": "house.kulan.keep",
+        "npcIds": [
+          "char.kulan_lord",
+          "char.kulan_xu_da",
+          "char.kulan_tang_he",
+          "char.kulan_chang_yuchun",
+          "char.kulan_guard",
+          "char.kulan_soldier"
+        ],
+        "primaryNpcId": "char.kulan_lord"
+      },
+      {
+        "buildingId": "house.kulan.tea_house",
+        "npcIds": [
+          "char.kulan_tea_boss",
+          "char.yuanmo.zhongli_elder",
+          "char.yuanmo.haozhou_red_turban_scout",
+          "char.yuanmo.liu_jizu"
+        ],
+        "primaryNpcId": "char.kulan_tea_boss"
+      },
+      {
+        "buildingId": "house.kulan.market",
+        "npcIds": [
+          "char.kulan_merchant",
+          "char.yuanmo.haozhou_salt_runner"
+        ],
+        "primaryNpcId": "char.kulan_merchant"
+      },
+      {
+        "buildingId": "house.kulan.grain_shop",
+        "npcIds": [
+          "char.kulan_grain_shopkeeper"
+        ],
+        "primaryNpcId": "char.kulan_grain_shopkeeper"
+      },
+      {
+        "buildingId": "house.kulan.medicine_house",
+        "npcIds": [
+          "char.kulan_medicine_doctor"
+        ],
+        "primaryNpcId": "char.kulan_medicine_doctor"
+      },
+      {
+        "buildingId": "house.kulan.inn",
+        "npcIds": [
+          "char.kulan_innkeeper",
+          "char.yuanmo.ma_shi",
+          "char.yuanmo.guo_tianxu",
+          "char.yuanmo.zhang_tianyou",
+          "char.yuanmo.sun_deya",
+          "char.yuanmo.zhou_dexing",
+          "char.yuanmo.guo_ying",
+          "char.yuanmo.li_er"
+        ],
+        "primaryNpcId": "char.kulan_innkeeper"
+      }
     ]
   },
   {
@@ -61,6 +153,65 @@
       "silk",
       "tea",
       "luxury"
+    ],
+    "mountedBuildings": [
+      {
+        "buildingId": "house.yingtian.leader_residence",
+        "npcIds": [
+          "char.yuanmo.song_lian",
+          "char.yuanmo.zhu_sheng",
+          "char.yuanmo.mu_ying",
+          "char.yuanmo.fu_youdej",
+          "char.yuanmo.hu_weiyong",
+          "char.yuanmo.lan_yu",
+          "char.yuanmo.kang_maocai",
+          "char.yuanmo.wu_liang",
+          "char.yuanmo.wu_zhen",
+          "char.yuanmo.xie_zaixing",
+          "char.yuanmo.shao_rong"
+        ],
+        "primaryNpcId": "char.yuanmo.song_lian"
+      },
+      {
+        "buildingId": "house.yingtian.temple",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "home.yingtian",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.yingtian.keep",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.yingtian.tea_house",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.yingtian.market",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.yingtian.grain_shop",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.yingtian.medicine_house",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.yingtian.inn",
+        "npcIds": [],
+        "primaryNpcId": null
+      }
     ]
   },
   {
@@ -92,6 +243,61 @@
       "grain",
       "iron",
       "medicine"
+    ],
+    "mountedBuildings": [
+      {
+        "buildingId": "house.luzhou.leader_residence",
+        "npcIds": [
+          "char.yuanmo.miao_daheng",
+          "char.yuanmo.ding_pulang",
+          "char.yuanmo.geng_zaicheng"
+        ],
+        "primaryNpcId": "char.yuanmo.miao_daheng"
+      },
+      {
+        "buildingId": "house.luzhou.temple",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "home.luzhou",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.luzhou.keep",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.luzhou.tea_house",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.luzhou.market",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.luzhou.grain_shop",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.luzhou.medicine_house",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.luzhou.inn",
+        "npcIds": [
+          "char.yuanmo.feng_guoyong",
+          "char.yuanmo.geng_bingwen",
+          "char.yuanmo.li_wenzhong"
+        ],
+        "primaryNpcId": "char.yuanmo.feng_guoyong"
+      }
     ]
   },
   {
@@ -123,6 +329,55 @@
       "grain",
       "timber",
       "iron"
+    ],
+    "mountedBuildings": [
+      {
+        "buildingId": "house.anqing.leader_residence",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.anqing.temple",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "home.anqing",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.anqing.keep",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.anqing.tea_house",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.anqing.market",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.anqing.grain_shop",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.anqing.medicine_house",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.anqing.inn",
+        "npcIds": [
+          "char.yuanmo.deng_yu"
+        ],
+        "primaryNpcId": "char.yuanmo.deng_yu"
+      }
     ]
   },
   {
@@ -154,6 +409,61 @@
       "fish",
       "timber",
       "iron"
+    ],
+    "mountedBuildings": [
+      {
+        "buildingId": "house.taiping.leader_residence",
+        "npcIds": [
+          "char.yuanmo.yu_tonghai",
+          "char.yuanmo.liao_yongan",
+          "char.yuanmo.liao_yongzhong",
+          "char.yuanmo.chen_yexian"
+        ],
+        "primaryNpcId": "char.yuanmo.yu_tonghai"
+      },
+      {
+        "buildingId": "house.taiping.temple",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "home.taiping",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.taiping.keep",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.taiping.tea_house",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.taiping.market",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.taiping.grain_shop",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.taiping.medicine_house",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.taiping.inn",
+        "npcIds": [
+          "char.yuanmo.hu_dahai",
+          "char.yuanmo.hua_yun"
+        ],
+        "primaryNpcId": "char.yuanmo.hu_dahai"
+      }
     ]
   },
   {
@@ -185,6 +495,58 @@
       "grain",
       "horses",
       "cloth"
+    ],
+    "mountedBuildings": [
+      {
+        "buildingId": "house.anfeng.leader_residence",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.anfeng.temple",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "home.anfeng",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.anfeng.keep",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.anfeng.tea_house",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.anfeng.market",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.anfeng.grain_shop",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.anfeng.medicine_house",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.anfeng.inn",
+        "npcIds": [
+          "char.yuanmo.han_liner",
+          "char.yuanmo.liu_futong",
+          "char.yuanmo.sheng_wenyu",
+          "char.yuanmo.han_tong"
+        ],
+        "primaryNpcId": "char.yuanmo.han_liner"
+      }
     ]
   },
   {
@@ -216,6 +578,57 @@
       "grain",
       "salt",
       "cloth"
+    ],
+    "mountedBuildings": [
+      {
+        "buildingId": "house.runing.leader_residence",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.runing.temple",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "home.runing",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.runing.keep",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.runing.tea_house",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.runing.market",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.runing.grain_shop",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.runing.medicine_house",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.runing.inn",
+        "npcIds": [
+          "char.yuanmo.han_shantong",
+          "char.yuanmo.du_zundao",
+          "char.yuanmo.bai_buxin"
+        ],
+        "primaryNpcId": "char.yuanmo.han_shantong"
+      }
     ]
   },
   {
@@ -247,6 +660,56 @@
       "salt",
       "grain",
       "silk"
+    ],
+    "mountedBuildings": [
+      {
+        "buildingId": "house.huaian.leader_residence",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.huaian.temple",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "home.huaian",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.huaian.keep",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.huaian.tea_house",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.huaian.market",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.huaian.grain_shop",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.huaian.medicine_house",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.huaian.inn",
+        "npcIds": [
+          "char.yuanmo.lv_zhen",
+          "char.yuanmo.panyuan_shao"
+        ],
+        "primaryNpcId": "char.yuanmo.lv_zhen"
+      }
     ]
   },
   {
@@ -278,6 +741,61 @@
       "salt",
       "silk",
       "luxury"
+    ],
+    "mountedBuildings": [
+      {
+        "buildingId": "house.yangzhou.leader_residence",
+        "npcIds": [
+          "char.yuanmo.zhang_tianyou_zhou",
+          "char.yuanmo.zhang_shiyi"
+        ],
+        "primaryNpcId": "char.yuanmo.zhang_tianyou_zhou"
+      },
+      {
+        "buildingId": "house.yangzhou.temple",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "home.yangzhou",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.yangzhou.keep",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.yangzhou.tea_house",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.yangzhou.market",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.yangzhou.grain_shop",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.yangzhou.medicine_house",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.yangzhou.inn",
+        "npcIds": [
+          "char.yuanmo.zhang_shicheng",
+          "char.yuanmo.zhang_shide",
+          "char.yuanmo.li_bosheng",
+          "char.yuanmo.rao_jie"
+        ],
+        "primaryNpcId": "char.yuanmo.zhang_shicheng"
+      }
     ]
   },
   {
@@ -309,6 +827,60 @@
       "silk",
       "tea",
       "luxury"
+    ],
+    "mountedBuildings": [
+      {
+        "buildingId": "house.suzhou.leader_residence",
+        "npcIds": [
+          "char.yuanmo.ye_dexin",
+          "char.yuanmo.chen_ji"
+        ],
+        "primaryNpcId": "char.yuanmo.ye_dexin"
+      },
+      {
+        "buildingId": "house.suzhou.temple",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "home.suzhou",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.suzhou.keep",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.suzhou.tea_house",
+        "npcIds": [
+          "char.yuanmo.shi_naian"
+        ],
+        "primaryNpcId": "char.yuanmo.shi_naian"
+      },
+      {
+        "buildingId": "house.suzhou.market",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.suzhou.grain_shop",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.suzhou.medicine_house",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.suzhou.inn",
+        "npcIds": [
+          "char.yuanmo.zhang_shixin"
+        ],
+        "primaryNpcId": "char.yuanmo.zhang_shixin"
+      }
     ]
   },
   {
@@ -340,6 +912,63 @@
       "fish",
       "iron",
       "grain"
+    ],
+    "mountedBuildings": [
+      {
+        "buildingId": "house.wuchang.leader_residence",
+        "npcIds": [
+          "char.yuanmo.zhang_bixian",
+          "char.yuanmo.luo_furen",
+          "char.yuanmo.zhao_pusheng"
+        ],
+        "primaryNpcId": "char.yuanmo.zhang_bixian"
+      },
+      {
+        "buildingId": "house.wuchang.temple",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "home.wuchang",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.wuchang.keep",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.wuchang.tea_house",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.wuchang.market",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.wuchang.grain_shop",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.wuchang.medicine_house",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.wuchang.inn",
+        "npcIds": [
+          "char.yuanmo.chen_youliang",
+          "char.yuanmo.zhang_dingbian",
+          "char.yuanmo.xu_shouhui",
+          "char.yuanmo.zou_pusheng",
+          "char.yuanmo.chen_li"
+        ],
+        "primaryNpcId": "char.yuanmo.chen_youliang"
+      }
     ]
   },
   {
@@ -371,6 +1000,58 @@
       "grain",
       "timber",
       "medicine"
+    ],
+    "mountedBuildings": [
+      {
+        "buildingId": "house.nanchang.leader_residence",
+        "npcIds": [
+          "char.yuanmo.hu_mei"
+        ],
+        "primaryNpcId": "char.yuanmo.hu_mei"
+      },
+      {
+        "buildingId": "house.nanchang.temple",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "home.nanchang",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.nanchang.keep",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.nanchang.tea_house",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.nanchang.market",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.nanchang.grain_shop",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.nanchang.medicine_house",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.nanchang.inn",
+        "npcIds": [
+          "char.yuanmo.feng_sheng",
+          "char.yuanmo.zhu_wenzheng"
+        ],
+        "primaryNpcId": "char.yuanmo.feng_sheng"
+      }
     ]
   },
   {
@@ -402,6 +1083,55 @@
       "medicine",
       "timber",
       "salt"
+    ],
+    "mountedBuildings": [
+      {
+        "buildingId": "house.chongqing.leader_residence",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.chongqing.temple",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "home.chongqing",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.chongqing.keep",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.chongqing.tea_house",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.chongqing.market",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.chongqing.grain_shop",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.chongqing.medicine_house",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.chongqing.inn",
+        "npcIds": [
+          "char.yuanmo.wan_sheng"
+        ],
+        "primaryNpcId": "char.yuanmo.wan_sheng"
+      }
     ]
   },
   {
@@ -433,6 +1163,58 @@
       "silk",
       "medicine",
       "grain"
+    ],
+    "mountedBuildings": [
+      {
+        "buildingId": "house.chengdu.leader_residence",
+        "npcIds": [
+          "char.yuanmo.dai_shou"
+        ],
+        "primaryNpcId": "char.yuanmo.dai_shou"
+      },
+      {
+        "buildingId": "house.chengdu.temple",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "home.chengdu",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.chengdu.keep",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.chengdu.tea_house",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.chengdu.market",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.chengdu.grain_shop",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.chengdu.medicine_house",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.chengdu.inn",
+        "npcIds": [
+          "char.yuanmo.ming_yuzhen",
+          "char.yuanmo.ming_sheng"
+        ],
+        "primaryNpcId": "char.yuanmo.ming_yuzhen"
+      }
     ]
   },
   {
@@ -464,6 +1246,58 @@
       "fish",
       "silk",
       "salt"
+    ],
+    "mountedBuildings": [
+      {
+        "buildingId": "house.ningbo.leader_residence",
+        "npcIds": [
+          "char.yuanmo.fang_guoying",
+          "char.yuanmo.ni_keren"
+        ],
+        "primaryNpcId": "char.yuanmo.fang_guoying"
+      },
+      {
+        "buildingId": "house.ningbo.temple",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "home.ningbo",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.ningbo.keep",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.ningbo.tea_house",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.ningbo.market",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.ningbo.grain_shop",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.ningbo.medicine_house",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.ningbo.inn",
+        "npcIds": [
+          "char.yuanmo.fang_guozhen"
+        ],
+        "primaryNpcId": "char.yuanmo.fang_guozhen"
+      }
     ]
   },
   {
@@ -495,6 +1329,55 @@
       "fish",
       "timber",
       "salt"
+    ],
+    "mountedBuildings": [
+      {
+        "buildingId": "house.wenzhou.leader_residence",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.wenzhou.temple",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "home.wenzhou",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.wenzhou.keep",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.wenzhou.tea_house",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.wenzhou.market",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.wenzhou.grain_shop",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.wenzhou.medicine_house",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.wenzhou.inn",
+        "npcIds": [
+          "char.yuanmo.fang_li"
+        ],
+        "primaryNpcId": "char.yuanmo.fang_li"
+      }
     ]
   },
   {
@@ -526,6 +1409,58 @@
       "fish",
       "tea",
       "timber"
+    ],
+    "mountedBuildings": [
+      {
+        "buildingId": "house.fuzhou.leader_residence",
+        "npcIds": [
+          "char.yuanmo.chen_zonghai",
+          "char.yuanmo.zheng_ding"
+        ],
+        "primaryNpcId": "char.yuanmo.chen_zonghai"
+      },
+      {
+        "buildingId": "house.fuzhou.temple",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "home.fuzhou",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.fuzhou.keep",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.fuzhou.tea_house",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.fuzhou.market",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.fuzhou.grain_shop",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.fuzhou.medicine_house",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.fuzhou.inn",
+        "npcIds": [
+          "char.yuanmo.chen_youding"
+        ],
+        "primaryNpcId": "char.yuanmo.chen_youding"
+      }
     ]
   },
   {
@@ -557,6 +1492,59 @@
       "luxury",
       "horses",
       "silk"
+    ],
+    "mountedBuildings": [
+      {
+        "buildingId": "house.dadu.leader_residence",
+        "npcIds": [
+          "char.yuanmo.hama",
+          "char.yuanmo.tuotuo"
+        ],
+        "primaryNpcId": "char.yuanmo.hama"
+      },
+      {
+        "buildingId": "house.dadu.temple",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "home.dadu",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.dadu.keep",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.dadu.tea_house",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.dadu.market",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.dadu.grain_shop",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.dadu.medicine_house",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.dadu.inn",
+        "npcIds": [
+          "char.yuanmo.toghon_temur",
+          "char.yuanmo.ayushiridara"
+        ],
+        "primaryNpcId": "char.yuanmo.toghon_temur"
+      }
     ]
   },
   {
@@ -588,6 +1576,60 @@
       "grain",
       "horses",
       "iron"
+    ],
+    "mountedBuildings": [
+      {
+        "buildingId": "house.kaifeng.leader_residence",
+        "npcIds": [
+          "char.yuanmo.guan_bao"
+        ],
+        "primaryNpcId": "char.yuanmo.guan_bao"
+      },
+      {
+        "buildingId": "house.kaifeng.temple",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "home.kaifeng",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.kaifeng.keep",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.kaifeng.tea_house",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.kaifeng.market",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.kaifeng.grain_shop",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.kaifeng.medicine_house",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.kaifeng.inn",
+        "npcIds": [
+          "char.yuanmo.chaghan_temur",
+          "char.yuanmo.koketumur",
+          "char.yuanmo.tian_feng",
+          "char.yuanmo.wang_shicheng_song"
+        ],
+        "primaryNpcId": "char.yuanmo.chaghan_temur"
+      }
     ]
   },
   {
@@ -619,6 +1661,58 @@
       "horses",
       "iron",
       "grain"
+    ],
+    "mountedBuildings": [
+      {
+        "buildingId": "house.gongchang.leader_residence",
+        "npcIds": [
+          "char.yuanmo.li_shichang",
+          "char.yuanmo.baitemur"
+        ],
+        "primaryNpcId": "char.yuanmo.li_shichang"
+      },
+      {
+        "buildingId": "house.gongchang.temple",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "home.gongchang",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.gongchang.keep",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.gongchang.tea_house",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.gongchang.market",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.gongchang.grain_shop",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.gongchang.medicine_house",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.gongchang.inn",
+        "npcIds": [
+          "char.yuanmo.li_siqi"
+        ],
+        "primaryNpcId": "char.yuanmo.li_siqi"
+      }
     ]
   },
   {
@@ -650,6 +1744,55 @@
       "horses",
       "grain",
       "iron"
+    ],
+    "mountedBuildings": [
+      {
+        "buildingId": "house.fengyuan.leader_residence",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.fengyuan.temple",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "home.fengyuan",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.fengyuan.keep",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.fengyuan.tea_house",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.fengyuan.market",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.fengyuan.grain_shop",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.fengyuan.medicine_house",
+        "npcIds": [],
+        "primaryNpcId": null
+      },
+      {
+        "buildingId": "house.fengyuan.inn",
+        "npcIds": [
+          "char.yuanmo.zhang_liangbi"
+        ],
+        "primaryNpcId": "char.yuanmo.zhang_liangbi"
+      }
     ]
   }
 ]

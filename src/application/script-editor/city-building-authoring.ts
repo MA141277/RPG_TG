@@ -1,6 +1,9 @@
 import type {
   LocationAccessConditionExpression,
   ScriptEditorAccessRule,
+  ScriptEditorBuildingArrangementRecord,
+  ScriptEditorBuildingContainerRecord,
+  ScriptEditorBuildingContainerType,
   ScriptEditorBuildingEntryBinding,
   ScriptEditorBuildingRecord,
   ScriptEditorCityMountedBuilding,
@@ -8,6 +11,7 @@ import type {
   ScriptEditorCustomAttributeEntry,
   ScriptEditorMenuEntry,
   ScriptEditorMenuTargetFamily,
+  ScriptEditorProjectDefinition,
 } from "../../domain/script-editor-project";
 import type { HouseDefinition } from "../../domain/house";
 import {
@@ -34,6 +38,15 @@ export const SCRIPT_EDITOR_BUILDING_DEFAULT_MENU_FAMILIES = [
   "management",
   "leave",
 ] as const;
+
+export const SCRIPT_EDITOR_BUILDING_CONTAINER_TYPES = [
+  "character-seats",
+  "action-menu",
+  "status-panel",
+  "text-panel",
+  "image-panel",
+  "resource-panel",
+] as const satisfies readonly ScriptEditorBuildingContainerType[];
 
 function createDefaultAccessRule(): ScriptEditorAccessRule {
   return {};
@@ -279,6 +292,327 @@ export function updateScriptEditorCityMountedBuildingPrimaryNpc(
       itemIndex === buildingIndex ? { ...entry, primaryNpcId } : entry
     ),
   };
+}
+
+export function listScriptEditorCityBuildingArrangements(
+  project: ScriptEditorProjectDefinition,
+  cityId: string
+): ScriptEditorBuildingArrangementRecord[] {
+  return project.buildingArrangements.filter((arrangement) => arrangement.cityId === cityId);
+}
+
+export function appendScriptEditorBuildingArrangement(
+  project: ScriptEditorProjectDefinition,
+  cityId: string
+): ScriptEditorProjectDefinition {
+  const defaultBuilding =
+    project.buildings.find((building) => building.cityId === cityId) ??
+    project.buildings[0] ??
+    null;
+  if (defaultBuilding == null) {
+    return project;
+  }
+  const nextIndex = listScriptEditorCityBuildingArrangements(project, cityId).length + 1;
+  return {
+    ...project,
+    buildingArrangements: [
+      ...project.buildingArrangements,
+      {
+        id: `${cityId}.building-arrangement.${nextIndex}`,
+        cityId,
+        buildingId: defaultBuilding.id,
+        displayName: defaultBuilding.name,
+        mountedNpcIds: [],
+        primaryNpcId: null,
+        containers: [],
+      },
+    ],
+  };
+}
+
+export function removeScriptEditorBuildingArrangement(
+  project: ScriptEditorProjectDefinition,
+  arrangementId: string
+): ScriptEditorProjectDefinition {
+  return {
+    ...project,
+    buildingArrangements: project.buildingArrangements.filter(
+      (arrangement) => arrangement.id !== arrangementId
+    ),
+  };
+}
+
+export function updateScriptEditorBuildingArrangementField(
+  project: ScriptEditorProjectDefinition,
+  arrangementId: string,
+  field:
+    | "id"
+    | "cityId"
+    | "buildingId"
+    | "displayName"
+    | "description"
+    | "backgroundId",
+  value: string
+): ScriptEditorProjectDefinition {
+  return updateScriptEditorBuildingArrangement(project, arrangementId, (arrangement) => {
+    const normalizedValue = field === "description" ? value.trim() : value.trim();
+    if (
+      ["displayName", "description", "backgroundId"].includes(field) &&
+      normalizedValue.length === 0
+    ) {
+      const nextArrangement = { ...arrangement };
+      delete nextArrangement[field];
+      return nextArrangement;
+    }
+    return {
+      ...arrangement,
+      [field]: normalizedValue,
+    };
+  });
+}
+
+export function appendScriptEditorBuildingArrangementNpc(
+  project: ScriptEditorProjectDefinition,
+  arrangementId: string,
+  npcId = ""
+): ScriptEditorProjectDefinition {
+  return updateScriptEditorBuildingArrangement(project, arrangementId, (arrangement) => ({
+    ...arrangement,
+    mountedNpcIds: [...arrangement.mountedNpcIds, npcId],
+  }));
+}
+
+export function removeScriptEditorBuildingArrangementNpc(
+  project: ScriptEditorProjectDefinition,
+  arrangementId: string,
+  npcIndex: number
+): ScriptEditorProjectDefinition {
+  return updateScriptEditorBuildingArrangement(project, arrangementId, (arrangement) => {
+    const mountedNpcIds = arrangement.mountedNpcIds.filter(
+      (_, entryIndex) => entryIndex !== npcIndex
+    );
+    return {
+      ...arrangement,
+      mountedNpcIds,
+      primaryNpcId:
+        arrangement.primaryNpcId != null && mountedNpcIds.includes(arrangement.primaryNpcId)
+          ? arrangement.primaryNpcId
+          : null,
+    };
+  });
+}
+
+export function updateScriptEditorBuildingArrangementNpc(
+  project: ScriptEditorProjectDefinition,
+  arrangementId: string,
+  npcIndex: number,
+  npcId: string
+): ScriptEditorProjectDefinition {
+  return updateScriptEditorBuildingArrangement(project, arrangementId, (arrangement) => {
+    const mountedNpcIds = arrangement.mountedNpcIds.map((entryNpcId, entryIndex) =>
+      entryIndex === npcIndex ? npcId : entryNpcId
+    );
+    return {
+      ...arrangement,
+      mountedNpcIds,
+      primaryNpcId:
+        arrangement.primaryNpcId != null && mountedNpcIds.includes(arrangement.primaryNpcId)
+          ? arrangement.primaryNpcId
+          : null,
+    };
+  });
+}
+
+export function updateScriptEditorBuildingArrangementPrimaryNpc(
+  project: ScriptEditorProjectDefinition,
+  arrangementId: string,
+  primaryNpcId: string
+): ScriptEditorProjectDefinition {
+  return updateScriptEditorBuildingArrangement(project, arrangementId, (arrangement) => ({
+    ...arrangement,
+    primaryNpcId: arrangement.mountedNpcIds.includes(primaryNpcId) ? primaryNpcId : null,
+  }));
+}
+
+export function appendScriptEditorBuildingArrangementContainer(
+  project: ScriptEditorProjectDefinition,
+  arrangementId: string,
+  type: ScriptEditorBuildingContainerType = "character-seats"
+): ScriptEditorProjectDefinition {
+  return updateScriptEditorBuildingArrangement(project, arrangementId, (arrangement) => {
+    const nextIndex = arrangement.containers.length + 1;
+    return {
+      ...arrangement,
+      containers: [
+        ...arrangement.containers,
+        {
+          id: `${arrangement.id}.container.${nextIndex}`,
+          type,
+          source:
+            type === "character-seats"
+              ? { type: "arrangement-mounted-npcs", includeNpcIds: [] }
+              : undefined,
+          items: type === "action-menu" ? [] : undefined,
+        },
+      ],
+    };
+  });
+}
+
+export function removeScriptEditorBuildingArrangementContainer(
+  project: ScriptEditorProjectDefinition,
+  arrangementId: string,
+  containerIndex: number
+): ScriptEditorProjectDefinition {
+  return updateScriptEditorBuildingArrangement(project, arrangementId, (arrangement) => ({
+    ...arrangement,
+    containers: arrangement.containers.filter((_, entryIndex) => entryIndex !== containerIndex),
+  }));
+}
+
+export function updateScriptEditorBuildingArrangementContainerField(
+  project: ScriptEditorProjectDefinition,
+  arrangementId: string,
+  containerIndex: number,
+  field: "id" | "type" | "title",
+  value: string
+): ScriptEditorProjectDefinition {
+  return updateScriptEditorBuildingArrangementContainer(
+    project,
+    arrangementId,
+    containerIndex,
+    (container) => {
+      if (field === "type") {
+        const type = normalizeBuildingContainerType(value);
+        return {
+          ...container,
+          type,
+          source:
+            type === "character-seats"
+              ? container.source ?? { type: "arrangement-mounted-npcs", includeNpcIds: [] }
+              : undefined,
+          items: type === "action-menu" ? container.items ?? [] : undefined,
+        };
+      }
+      const normalizedValue = value.trim();
+      if (field === "title" && normalizedValue.length === 0) {
+        const nextContainer = { ...container };
+        delete nextContainer.title;
+        return nextContainer;
+      }
+      return { ...container, [field]: normalizedValue };
+    }
+  );
+}
+
+export function appendScriptEditorBuildingArrangementContainerActionItem(
+  project: ScriptEditorProjectDefinition,
+  arrangementId: string,
+  containerIndex: number
+): ScriptEditorProjectDefinition {
+  const defaultEvent = project.events[0] ?? null;
+  if (defaultEvent == null) {
+    return project;
+  }
+  return updateScriptEditorBuildingArrangementContainer(
+    project,
+    arrangementId,
+    containerIndex,
+    (container) => {
+      const nextIndex = (container.items ?? []).length + 1;
+      return {
+        ...container,
+        items: [
+          ...(container.items ?? []),
+          {
+            id: `${container.id}.action.${nextIndex}`,
+            label: defaultEvent.id,
+            eventId: defaultEvent.id,
+            isVisible: true,
+            isEnabled: true,
+          },
+        ],
+      };
+    }
+  );
+}
+
+export function removeScriptEditorBuildingArrangementContainerActionItem(
+  project: ScriptEditorProjectDefinition,
+  arrangementId: string,
+  containerIndex: number,
+  actionIndex: number
+): ScriptEditorProjectDefinition {
+  return updateScriptEditorBuildingArrangementContainer(
+    project,
+    arrangementId,
+    containerIndex,
+    (container) => ({
+      ...container,
+      items: (container.items ?? []).filter((_, entryIndex) => entryIndex !== actionIndex),
+    })
+  );
+}
+
+export function updateScriptEditorBuildingArrangementContainerActionItemField(
+  project: ScriptEditorProjectDefinition,
+  arrangementId: string,
+  containerIndex: number,
+  actionIndex: number,
+  field: "id" | "label" | "eventId" | "disabledHint",
+  value: string
+): ScriptEditorProjectDefinition {
+  return updateScriptEditorBuildingArrangementContainer(
+    project,
+    arrangementId,
+    containerIndex,
+    (container) => ({
+      ...container,
+      items: (container.items ?? []).map((item, entryIndex) => {
+        if (entryIndex !== actionIndex) {
+          return item;
+        }
+        const normalizedValue = value.trim();
+        if (field === "disabledHint" && normalizedValue.length === 0) {
+          const nextItem = { ...item };
+          delete nextItem.disabledHint;
+          return nextItem;
+        }
+        return { ...item, [field]: normalizedValue };
+      }),
+    })
+  );
+}
+
+function updateScriptEditorBuildingArrangement(
+  project: ScriptEditorProjectDefinition,
+  arrangementId: string,
+  updateArrangement: (
+    arrangement: ScriptEditorBuildingArrangementRecord
+  ) => ScriptEditorBuildingArrangementRecord
+): ScriptEditorProjectDefinition {
+  return {
+    ...project,
+    buildingArrangements: project.buildingArrangements.map((arrangement) =>
+      arrangement.id === arrangementId ? updateArrangement(arrangement) : arrangement
+    ),
+  };
+}
+
+function updateScriptEditorBuildingArrangementContainer(
+  project: ScriptEditorProjectDefinition,
+  arrangementId: string,
+  containerIndex: number,
+  updateContainer: (
+    container: ScriptEditorBuildingContainerRecord
+  ) => ScriptEditorBuildingContainerRecord
+): ScriptEditorProjectDefinition {
+  return updateScriptEditorBuildingArrangement(project, arrangementId, (arrangement) => ({
+    ...arrangement,
+    containers: arrangement.containers.map((container, entryIndex) =>
+      entryIndex === containerIndex ? updateContainer(container) : container
+    ),
+  }));
 }
 
 export function updateScriptEditorBuildingField(
@@ -833,6 +1167,14 @@ function normalizeMenuTargetFamily(value?: string): ScriptEditorMenuTargetFamily
   return ["dialogue", "event", "trade", "minigame", "info"].includes(value ?? "")
     ? (value as ScriptEditorMenuTargetFamily)
     : "info";
+}
+
+function normalizeBuildingContainerType(value: string): ScriptEditorBuildingContainerType {
+  return SCRIPT_EDITOR_BUILDING_CONTAINER_TYPES.includes(
+    value as ScriptEditorBuildingContainerType
+  )
+    ? (value as ScriptEditorBuildingContainerType)
+    : "character-seats";
 }
 
 function normalizeString(value: unknown, fallback: string): string {
