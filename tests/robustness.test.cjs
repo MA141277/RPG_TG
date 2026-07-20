@@ -26872,6 +26872,32 @@ test("script editor ui encoding integrity guard rejects mojibake source text", (
   assert.match(result.stderr, /mojibake|missing required text/i);
 });
 
+test("script editor ui encoding integrity guard covers building fallback chinese copy", () => {
+  const { spawnSync } = require("node:child_process");
+  const buildingModuleSource = fs.readFileSync(
+    path.join(process.cwd(), "src", "ui", "views", "building", "building-module-view.ts"),
+    "utf8"
+  );
+  const encodingGuardSource = fs.readFileSync(
+    path.join(process.cwd(), "tools", "check-ui-encoding-integrity.mjs"),
+    "utf8"
+  );
+  const result = spawnSync(
+    process.execPath,
+    [path.join(process.cwd(), "tools", "check-ui-encoding-integrity.mjs")],
+    { encoding: "utf8" }
+  );
+
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(encodingGuardSource, /src\/ui\/views\/building\/building-module-view\.ts/);
+  assert.match(buildingModuleSource, /屋敷/);
+  assert.match(buildingModuleSource, /无人接待/);
+  assert.match(buildingModuleSource, /默认角色已展开/);
+  assert.match(buildingModuleSource, /在场人物/);
+  assert.match(buildingModuleSource, /这里是/);
+  assert.doesNotMatch(buildingModuleSource, /灞嬫暦|鏃犱汉|榛樿|鍦ㄥ満|杩欓噷/);
+});
+
 test("layout editor live surface retirement removes editor mount from app-render", () => {
   const source = fs.readFileSync(
     path.join(process.cwd(), "src/ui/app-render.ts"),

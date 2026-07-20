@@ -7,23 +7,23 @@
 - blueprint_version: `2026.07`
 - governance_last_synced_at: `2026-07-20`
 - governance_sync_source: `docs/blueprints/plans/2026-07-19-city-building-module-entry-and-project-startup-authoring-target-plan.md`
-- queue_status: `active`
+- queue_status: `done`
 - queue_class: `required-priority`
-- active_task: `task.script-editor-city-building-location-access-condition-authoring-correction.queue-closeout-and-handoff`
+- active_task: `none`
 - next_task: `none`
-- closeout_status: `in-progress`
+- closeout_status: `done`
 - execution_closeout_status: `partial`
 - topic_closure_status: `open-residue`
-- closure_basis: `Implementation has landed; queue closeout and version-review handoff remain open.`
+- closure_basis: `Per operator direction, simulated-human testing produced a buglist for later unified handling; the queue is closed without claiming ACC-007 as passed.`
 - residue_remaining: `yes`
-- residue_family: `same-family`
-- residue_routing_status: `none`
-- next_family_candidate: `task.script-editor-city-building-location-access-condition-authoring-correction.queue-closeout-and-handoff`
+- residue_family: `accepted-residue`
+- residue_routing_status: `needs-version-review`
+- next_family_candidate: `none`
 - auto_continue_eligible: `false`
 - next_effect: `none`
 - sync_status: `pending`
 - sync_scope: `local-record`
-- sync_summary: `Implementation complete locally; queue closeout and handoff remain pending.`
+- sync_summary: `Queue closed locally with ACC-007 buglist evidence recorded for later unified handling.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
@@ -139,9 +139,9 @@
 
 - queue_goal: `Correct city and building location access authoring so supported conditions can be exported, loaded, evaluated, and simulated-human verified.`
 - task_count: `3`
-- completed_task_count: `2`
-- remaining_task_count: `1`
-- active_task_summary: `Verify the queue and return to version review without version closeout.`
+- completed_task_count: `3`
+- remaining_task_count: `0`
+- active_task_summary: `none`
 - task_briefs:
   - `task.script-editor-city-building-location-access-condition-authoring-correction.evidence-anchor-reconcile: Confirm the admission basis, acceptance boundary, and runtime evidence before implementation.`
   - `task.script-editor-city-building-location-access-condition-authoring-correction.implementation: Implement supported city/building location access authoring and lowering test-first.`
@@ -159,7 +159,7 @@
 | --- | --- | --- | --- | --- |
 | `task.script-editor-city-building-location-access-condition-authoring-correction.evidence-anchor-reconcile` | `completed` | `Confirm the admission basis, acceptance boundary, and runtime evidence before implementation.` | `none` | `Evidence anchor reconciled; admission boundary confirmed.` |
 | `task.script-editor-city-building-location-access-condition-authoring-correction.implementation` | `completed` | `Implement supported city/building location access authoring and lowering test-first.` | `task.script-editor-city-building-location-access-condition-authoring-correction.evidence-anchor-reconcile` | `Implementation landed and verification passed.` |
-| `task.script-editor-city-building-location-access-condition-authoring-correction.queue-closeout-and-handoff` | `in_progress` | `Verify the queue and return to version review without version closeout.` | `task.script-editor-city-building-location-access-condition-authoring-correction.implementation` | `Queue closeout guard is now the active step.` |
+| `task.script-editor-city-building-location-access-condition-authoring-correction.queue-closeout-and-handoff` | `completed` | `Verify the queue and return to version review without version closeout.` | `task.script-editor-city-building-location-access-condition-authoring-correction.implementation` | `Closed per operator direction after recording ACC-007 simulated-human bugs in the buglist document; ACC-007 is not claimed as passed.` |
 
 ### Task Definitions
 
@@ -281,7 +281,7 @@
 ##### Control Block
 
 - task_id: `task.script-editor-city-building-location-access-condition-authoring-correction.queue-closeout-and-handoff`
-- state: `in_progress`
+- state: `completed`
 - task_kind: `execution`
 - scope:
   - `docs/blueprints/plans/2026-07-19-city-building-module-entry-and-project-startup-authoring-target-plan.md`
@@ -309,8 +309,20 @@
 - task_brief:
   - `Verify the queue and return to version review without version closeout.`
 - task_outcome_summary:
-  - `in_progress`
+  - `completed per operator direction; ACC-007 simulated-human failures and incomplete cases are recorded in docs/blueprints/reports/2026-07-20-city-building-location-access-buglist.md for later unified handling, without claiming acceptance pass.`
 - Purpose:
   - `Keep the queue closeout and version review handoff separate from implementation.`
 - Failure mode:
   - `Closing the version instead of returning to review.`
+
+### Queue Closeout Record
+
+- closeout_at: `2026-07-20`
+- closeout_type: `closed-with-buglist`
+- closeout_basis:
+  - `Operator directed that after the current test cases are run and the buglist is organized, the current queue may be closed.`
+  - `docs/blueprints/reports/2026-07-20-city-building-location-access-buglist.md records the simulated-human paths, observed failures, current cause assessment, fix status, and owning version.`
+  - `ACC-CITY-BUILDING-ACCESS-CONDITION-007 remains not passed; it is deliberately not used as acceptance-passed evidence for this closeout.`
+- version_handoff:
+  - `Return to version-level review with active queue cleared.`
+  - `Do not enter version closeout from this queue closeout.`

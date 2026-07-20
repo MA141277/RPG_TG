@@ -87,7 +87,7 @@ export function renderBuildingModuleView(input: {
     <section class="view-house" style="${backgroundStyle}">
       <div class="c-stage-header">
         <div>
-          <p class="c-stage-header__eyebrow">灞嬫暦</p>
+          <p class="c-stage-header__eyebrow">屋敷</p>
           <h1 class="c-stage-header__title">${houseViewModel.title}</h1>
         </div>
         <button class="c-button c-button--ghost" data-action="leave-house">${houseViewModel.backButtonLabel}</button>
@@ -95,10 +95,10 @@ export function renderBuildingModuleView(input: {
       <div class="c-house-interior">
         <div class="c-house-interior__hero c-panel">
           <strong class="c-house-interior__hero-name">
-            ${houseViewModel.defaultCharacterId == null ? "鏃犱汉鎺ュ緟" : "榛樿瑙掕壊宸插睍寮€"}
+            ${houseViewModel.defaultCharacterId == null ? "无人接待" : "默认角色已展开"}
           </strong>
           <p class="c-house-interior__hero-text">
-            杩欓噷鏄?${houseViewModel.title}銆傚悗缁彲浠ュ湪杩欓噷鎺ュ叆瑙掕壊鍔熻兘銆佷簨浠跺叆鍙ｄ笌灏忔父鎴忋€?
+            这里是 ${houseViewModel.title}。后续可以在这里接入角色功能、事件入口与小游戏。
           </p>
         </div>
         <div class="c-house-roster">
@@ -106,7 +106,7 @@ export function renderBuildingModuleView(input: {
             .map(
               (characterSummary) => `
                 <article class="c-roster-card c-panel">
-                  <span class="c-roster-card__title">${characterSummary.title ?? "鍦ㄥ満浜虹墿"}</span>
+                  <span class="c-roster-card__title">${characterSummary.title ?? "在场人物"}</span>
                   <strong class="c-roster-card__name">${characterSummary.name}</strong>
                 </article>
               `

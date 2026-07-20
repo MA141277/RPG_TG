@@ -35,6 +35,16 @@ const defaultChecks = [
     requiredText: ["script-editor"],
   },
   {
+    file: "src/ui/views/building/building-module-view.ts",
+    requiredText: [
+      "屋敷",
+      "无人接待",
+      "默认角色已展开",
+      "这里是",
+      "在场人物",
+    ],
+  },
+  {
     file: "src/application/script-editor/workspace-shell.ts",
     requiredText: ["项目信息", "运行预览", "保存项目", "剧本导出"],
   },

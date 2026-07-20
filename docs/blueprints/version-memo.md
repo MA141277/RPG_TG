@@ -252,6 +252,197 @@
 - Treat it as a corrective queue under the still-open `target.city-building-module-entry-and-project-startup-authoring` version.
 - The prior enter-state queue is closed; this memo records the follow-up correction requested after that closeout.
 
+### MEMO-015: Person Attribute Types And Runtime Condition Comparison
+
+- status: `open`
+- severity: `high`
+- classification: `memo-only`
+- proposed_queue: `none`
+- owning_queue: `none`
+- admission_status: `not-admitted`
+- latest_disposition: `recorded-as-memo`
+- affected_families:
+  - `script editor person authoring`
+  - `script editor custom attribute authoring`
+  - `script editor condition authoring`
+  - `runtime condition evaluation`
+  - `runtime pack export`
+  - `runtime pack import`
+  - `location access runtime`
+
+#### Requested Capability
+
+- Person base attributes and creator-defined custom attributes must have explicit attribute type definitions.
+- The Script Editor must not infer condition behavior from field names, display labels, or current sample values.
+- Condition authoring and runtime evaluation must use the declared attribute type to decide available operators, value controls, export shape, and comparison semantics.
+- Comparable non-numeric attributes such as official rank, noble title, military rank, sect level, grade, and relationship level must be modeled as ordered enum data, not as directly compared display text.
+
+#### Attribute Type Rules
+
+- Creating or maintaining a person attribute requires a `valueType`.
+- Supported minimum attribute types:
+  - `number`: numeric values such as age, force, intelligence, reputation, money, and favor.
+  - `text`: free text values such as native place, title, alias, and notes.
+  - `boolean`: yes/no values such as wanted, ordained, or faction membership flags.
+  - `enum`: fixed unordered options such as gender, faction, person type, or identity type.
+  - `ranked-enum`: fixed ordered options such as official rank, noble title, military rank, sect level, grade, or relationship level.
+- Not every attribute needs an enum table.
+- Only `enum` and `ranked-enum` attributes require an `enumSourceId`.
+- `ranked-enum` option records must include an order value used for runtime comparison.
+- Runtime logic must never compare localized labels such as `知府` and `县尉` directly.
+
+#### Enum Table Rules
+
+- Enum tables must store stable option ids, display labels, and, for ranked enums, numeric order.
+- Person data should store the selected enum option id rather than copied display text.
+- Runtime evaluation resolves the stored option id through the enum table before comparing.
+- Ranked comparison is only valid when both sides reference options from the same enum source unless an explicit conversion rule exists.
+- Missing attribute definitions, enum tables, or enum options must fail closed with diagnostics.
+
+#### Condition Authoring Rules
+
+- The condition editor must constrain operators by selected attribute type:
+  - `number`: equals, not equals, greater than, greater than or equal, less than, less than or equal.
+  - `text`: equals, not equals, contains, exists, does not exist.
+  - `boolean`: equals true or false.
+  - `enum`: equals, not equals, exists, does not exist.
+  - `ranked-enum`: equals, not equals, greater than, greater than or equal, less than, less than or equal, exists, does not exist.
+- Person condition authoring should follow a layered flow:
+  - choose condition factor `person`;
+  - choose person;
+  - choose attribute;
+  - choose an operator constrained by the selected attribute type;
+  - choose or enter the comparison value using a control appropriate for the attribute type.
+- Number attributes use numeric inputs.
+- Text attributes use text inputs.
+- Boolean attributes use yes/no controls.
+- Enum and ranked-enum attributes use option selectors backed by their enum table.
+
+#### Runtime Requirements
+
+- Runtime condition evaluation must read attribute definitions and enum tables from the loaded runtime pack.
+- `number` comparisons must compare normalized numeric values.
+- `text` comparisons must compare normalized strings according to the selected text operator.
+- `boolean` comparisons must compare boolean values.
+- `enum` comparisons must compare stable enum option ids.
+- `ranked-enum` comparisons must resolve option ids to enum option order and compare those numeric orders.
+- The same semantics must apply anywhere person attribute conditions are used, including location access conditions.
+- Runtime pack export must include enough data for runtime evaluation to understand attribute types, enum table bindings, enum option ids, and ranked enum order.
+
+#### Acceptance Criteria
+
+- Person base attributes and custom attributes have explicit type definitions.
+- Creating a custom person attribute requires selecting a supported value type.
+- `enum` and `ranked-enum` attributes require selecting or creating an enum table.
+- `ranked-enum` enum options require stable numeric order.
+- The condition editor displays only operators valid for the selected attribute type.
+- Numeric attributes such as age can be compared without an enum table.
+- Ordinary enum attributes can be checked for equality but cannot use greater-than or less-than operators.
+- Ranked enum attributes such as official rank can be compared by order.
+- Runtime export includes attribute definitions, enum table definitions, person values, and conditions that reference them.
+- Runtime import/load preserves the same type and enum metadata.
+- Runtime condition evaluation uses type metadata and enum order rather than display text.
+- Simulated-human tests cover at least:
+  - numeric person attribute condition;
+  - text person attribute condition;
+  - boolean person attribute condition;
+  - unordered enum person attribute condition;
+  - ranked enum person attribute condition;
+  - the same ranked enum attribute used in a city or building location-access condition.
+- This memo is not a candidate queue and does not authorize execution until explicitly promoted by the user under Blueprint workflow rules.
+
+### MEMO-016: Script Editor Library Navigation And Event Information Architecture Cleanup
+
+- status: `open`
+- severity: `medium`
+- classification: `memo-only`
+- proposed_queue: `none`
+- owning_queue: `none`
+- admission_status: `not-admitted`
+- latest_disposition: `recorded-as-memo`
+- affected_families:
+  - `script editor navigation`
+  - `script editor library authoring`
+  - `script editor dialogue authoring`
+  - `script editor event authoring`
+  - `runtime pack export`
+  - `event runtime handoff`
+
+#### Requested Capability
+
+- Optimize Script Editor navigation grouping and event detail editing so old, duplicate, and empty event surfaces are removed.
+- The event editor should focus on basic information, destination configuration, and a quick path for creating dialogue resources.
+- Dialogue authoring remains a first-class resource, but its navigation belongs under the library group alongside text.
+
+#### Navigation Rules
+
+- Move the `对话` module into the `资料库` group.
+- `对话` and `文本` must appear at the same navigation level under `资料库`.
+- The old standalone `对话` entry should no longer appear in its previous location.
+- This navigation change must not change dialogue data structure, runtime export shape, or runtime semantics.
+
+#### Event Module Removal Rules
+
+- Remove the following event detail surfaces from the `事件` module:
+  - `关联对象`
+  - `Bindings`
+  - `预览和校验`
+- Event binding authoring must remain owned by the new binding system or owner-local binding surfaces, not by the event body detail page.
+- Removing these surfaces must not change `EventBindingRuntime` semantics or restore the old event-body binding model.
+
+#### Event Basic Information Reorganization
+
+- Remove these controls or sections from `事件 -> 基础信息`:
+  - `事件说明`
+  - `高级设置与系统信息`
+- Move the editable content from the old `去向` surface into `事件 -> 基础信息`.
+- After consolidation, `事件 -> 基础信息` should include the necessary event fields and destination fields, including:
+  - event title;
+  - event type;
+  - enabled state;
+  - destination type;
+  - destination target.
+- If the old `去向` tab or section becomes empty after this move, remove it entirely instead of leaving an empty shell.
+
+#### Quick Dialogue Creation Rules
+
+- Add a `新增对话` shortcut button in `事件 -> 基础信息`.
+- Place the shortcut near the event destination controls so creators can create a dialogue while configuring an event destination.
+- Clicking `新增对话` opens a modal dialogue creation surface.
+- The modal must reuse the same node creation/editing capability as the `资料库 -> 对话` module.
+- The shortcut creates a formal dialogue resource in the shared project dialogue data, not event-private temporary data.
+- After creation, the new dialogue must be visible and editable under `资料库 -> 对话`.
+- After creation, the current event destination target should either auto-fill the new dialogue or make it immediately selectable.
+
+#### Non-Goals
+
+- Do not change `EventBindingRuntime` semantics.
+- Do not change event runtime trigger behavior.
+- Do not change the responsibility of `event-bindings.json`.
+- Do not return to the old event-body binding model.
+- Do not perform broad event data structure refactors unless the existing UI fields cannot express the production runtime requirement.
+
+#### Acceptance Criteria
+
+- `对话` appears under `资料库` and at the same level as `文本`.
+- The old standalone `对话` navigation entry is gone.
+- The event detail page no longer shows `关联对象`.
+- The event detail page no longer shows `Bindings`.
+- The event detail page no longer shows `预览和校验`.
+- `事件 -> 基础信息` no longer shows `事件说明`.
+- `事件 -> 基础信息` no longer shows `高级设置与系统信息`.
+- The old `去向` editable content is available under `事件 -> 基础信息`.
+- If `去向` has no remaining content, the `去向` tab or section is not shown.
+- `事件 -> 基础信息` contains a `新增对话` shortcut button.
+- Clicking `新增对话` opens a dialogue creation modal.
+- The modal's node editing behavior stays consistent with `资料库 -> 对话`.
+- A dialogue created from the event shortcut appears in `资料库 -> 对话`.
+- The event destination can select or auto-fill the newly created dialogue.
+- Saving, exporting, and runtime preview continue to support event-to-dialogue handoff.
+- Quick dialogue creation never creates event-private dialogue data; it must write to the shared dialogue data model.
+- Simulated-human testing must cover Script Editor navigation, library dialogue entry, event detail basic information, destination configuration, quick dialogue creation, save, export, and runtime preview.
+- This memo is not a candidate queue and does not authorize execution until explicitly promoted by the user under Blueprint workflow rules.
+
 ### MEMO-012: Script Editor City And Building Background Authoring
 
 - status: `closed`
