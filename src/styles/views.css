@@ -12,8 +12,154 @@
 
 .l-stage:has(> .view-city),
 .l-stage:has(> .view-house),
-.l-stage:has(> .view-scene) {
+.l-stage:has(> .view-scene),
+.l-stage:has(> .view-party-editor) {
   background:
     linear-gradient(rgb(0 0 0 / 28%), rgb(0 0 0 / 28%)),
     linear-gradient(180deg, rgb(0 0 0 / 100%), rgb(0 0 0 / 100%));
+}
+
+.c-map-stage-actions {
+  position: absolute;
+  left: 32px;
+  bottom: 28px;
+  z-index: 4;
+}
+
+.c-map-party-editor-entry {
+  min-width: 132px;
+  min-height: 48px;
+  border: 1px solid rgb(214 185 124 / 85%);
+  border-radius: 12px;
+  background:
+    linear-gradient(180deg, rgb(104 44 23 / 95%), rgb(55 21 13 / 98%));
+  color: rgb(245 231 194);
+  font-size: 18px;
+  letter-spacing: 0.2em;
+  box-shadow:
+    0 10px 24px rgb(0 0 0 / 32%),
+    inset 0 1px 0 rgb(255 236 182 / 22%);
+}
+
+.view-party-editor {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: 20px;
+  min-height: 100%;
+  padding: 32px;
+  background:
+    radial-gradient(circle at top center, rgb(132 78 42 / 26%), transparent 30%),
+    linear-gradient(180deg, rgb(60 30 18 / 96%), rgb(19 11 7 / 98%));
+}
+
+.c-party-editor__resource-bar {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.c-party-editor__resource-slot {
+  display: grid;
+  gap: 6px;
+  padding: 14px 16px;
+  border: 1px solid rgb(213 178 117 / 30%);
+  border-radius: 14px;
+  background: rgb(31 18 12 / 82%);
+  color: rgb(236 220 184);
+}
+
+.c-party-editor__resource-slot--muted {
+  color: rgb(171 157 128);
+}
+
+.c-party-editor__resource-label {
+  font-size: 13px;
+  letter-spacing: 0.16em;
+}
+
+.c-party-editor__resource-value {
+  font-size: 24px;
+}
+
+.c-party-editor__body {
+  display: grid;
+  grid-template-columns: minmax(420px, 1fr) 280px;
+  gap: 24px;
+  align-items: start;
+}
+
+.c-party-editor__teams,
+.c-party-editor__commands {
+  display: grid;
+  gap: 16px;
+}
+
+.c-party-editor__team-card {
+  display: grid;
+  gap: 14px;
+  padding: 24px;
+  border: 1px solid rgb(213 178 117 / 24%);
+  border-radius: 18px;
+  background:
+    linear-gradient(180deg, rgb(62 35 23 / 95%), rgb(29 17 12 / 98%));
+  box-shadow: 0 20px 40px rgb(0 0 0 / 24%);
+  color: rgb(239 222 190);
+}
+
+.c-party-editor__team-title {
+  margin: 0;
+  font-size: 30px;
+}
+
+.c-party-editor__team-summary {
+  margin: 0;
+  color: rgb(197 182 151);
+  font-size: 14px;
+}
+
+.c-party-editor__command {
+  min-height: 56px;
+  border: 1px solid rgb(213 178 117 / 26%);
+  border-radius: 14px;
+  background: rgb(43 24 17 / 92%);
+  color: rgb(240 223 189);
+  font-size: 18px;
+}
+
+.c-party-editor__command:disabled {
+  color: rgb(134 121 100);
+  cursor: default;
+}
+
+.c-formation-preview-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.c-formation-preview-grid__slot {
+  display: grid;
+  gap: 8px;
+  min-height: 88px;
+  padding: 10px;
+  border: 1px solid rgb(214 185 124 / 24%);
+  border-radius: 12px;
+  background: rgb(21 12 9 / 78%);
+}
+
+.c-formation-preview-grid__slot.is-occupied {
+  border-color: rgb(214 185 124 / 52%);
+  background: rgb(63 39 27 / 86%);
+}
+
+.c-formation-preview-grid__slot-key {
+  color: rgb(174 154 120);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.c-formation-preview-grid__slot-label {
+  color: rgb(243 228 198);
+  font-size: 16px;
 }

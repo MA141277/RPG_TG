@@ -23,6 +23,10 @@ import type {
 } from "../domain/historical-character";
 import type { MapDefinition } from "../domain/map";
 import type { ValuableItemDefinition } from "../domain/valuable-item";
+import { createDemoFormationStageState } from "../application/formation/formation-stage";
+import {
+  createPartyEditorStageViewModel,
+} from "../application/formation/formation-stage-view-model";
 import { assertExists } from "../shared/assert";
 import { renderConfirmModal } from "./components/modal/confirm-modal";
 import {
@@ -38,6 +42,7 @@ import { renderCityBeggingMiniGameOverlay } from "./views/minigames/city-begging
 import { createHouseViewModel } from "./views/house/house-view";
 import { renderHouseModuleView } from "./views/house/house-module-view-registry";
 import { createMapViewModel, renderMapView } from "./views/map/map-view";
+import { renderPartyEditorView } from "./views/party/party-editor-view";
 import { renderSceneView } from "./views/scene/scene-view";
 import { renderStoryBattleView } from "./views/battle/story-battle-view";
 import { renderValuableLibraryView } from "./views/valuables/valuable-library-view";
@@ -356,6 +361,13 @@ function renderStage(
     const mapViewModel = createMapViewModel(mapViewModelInput);
 
     return renderMapView(mapViewModel);
+  }
+
+  if (stage.type === "party-editor") {
+    const formationState = createDemoFormationStageState();
+    return renderPartyEditorView(
+      createPartyEditorStageViewModel(formationState)
+    );
   }
 
   if (stage.type === "city") {

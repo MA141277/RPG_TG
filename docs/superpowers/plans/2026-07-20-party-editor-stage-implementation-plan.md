@@ -23,9 +23,9 @@
 
 - Status: `running`
 - Last Updated: `2026-07-20`
-- Current Focus: `Task 3: render the party-editor UI and map entry.`
-- Next Step: `Add the source-based UI test, then build the map button, shared preview renderer, and party-editor view markup.`
-- Verification: `Task 2 targeted verification passed: npm run build:test; node --test tests/party-editor-stage-state.test.cjs`
+- Current Focus: `Task 4: wire main actions and battle shared formation preview.`
+- Next Step: `Extend the targeted tests for main.ts and battle integration, then thread the shared formation preview through battle and add click handlers.`
+- Verification: `Task 3 targeted verification passed: node --test tests/party-editor-ui-source.test.cjs`
 - Notes: `The targeted Node test still requires sandbox escalation because the test runner hits spawn EPERM inside the default sandbox.`
 
 ## Progress Log
@@ -42,6 +42,10 @@
   - Summary: `Completed Task 2 by adding the party-editor currentView literal, stage presenter branch, and open/close stage actions.`
   - Verification: `npm run build:test && node --test tests/party-editor-stage-state.test.cjs`
   - Next: `Start Task 3 and render the map entry plus party-editor stage UI.`
+- 2026-07-20
+  - Summary: `Completed Task 3 by rendering the map-only party-editor entry, adding the new party-editor views, and hiding the global HUD on the new stage.`
+  - Verification: `node --test tests/party-editor-ui-source.test.cjs`
+  - Next: `Start Task 4 and wire main.ts plus the battle shared formation preview.`
 
 ---
 
@@ -554,7 +558,7 @@ git commit -m "feat: route party editor as a stage"
   - `function renderFormationPreviewGrid(slots: FormationPreviewSlotViewModel[], options?: { className?: string }): string`
   - `function renderPartyEditorView(model: PartyEditorStageViewModel): string`
 
-- [ ] **Step 1: Write the source-based UI test**
+- [x] **Step 1: Write the source-based UI test**
 
 ```js
 const test = require("node:test");
@@ -582,13 +586,13 @@ test("party-editor view renders the requested layout and only exit is interactiv
 });
 ```
 
-- [ ] **Step 2: Run the UI test to verify it fails**
+- [x] **Step 2: Run the UI test to verify it fails**
 
 Run: `node --test tests/party-editor-ui-source.test.cjs`
 
 Expected: `FAIL` with `ENOENT` for `src/ui/views/party/party-editor-view.ts` or missing `open-party-editor` markup.
 
-- [ ] **Step 3: Add the shared nine-slot renderer and the new stage view**
+- [x] **Step 3: Add the shared nine-slot renderer and the new stage view**
 
 ```ts
 // src/ui/views/party/formation-preview-grid.ts
@@ -670,7 +674,7 @@ export function renderPartyEditorView(model: PartyEditorStageViewModel): string 
 }
 ```
 
-- [ ] **Step 4: Add the map entry, app render integration, and page styles**
+- [x] **Step 4: Add the map entry, app render integration, and page styles**
 
 ```ts
 // src/ui/views/map/map-view.ts
@@ -756,7 +760,7 @@ import { renderPartyEditorView } from "./views/party/party-editor-view";
 }
 ```
 
-- [ ] **Step 5: Run the UI test to verify it passes**
+- [x] **Step 5: Run the UI test to verify it passes**
 
 Run: `node --test tests/party-editor-ui-source.test.cjs`
 
