@@ -2,6 +2,8 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 const test = require("node:test");
+const ts = require("typescript");
+const vm = require("node:vm");
 
 const root = path.resolve(__dirname, "..");
 const editorDir = path.join(root, "tools", "city-map-building-editor");
@@ -28,6 +30,14 @@ const cityStageLayoutPath = path.join(
   "city",
   "city-stage-layout.ts"
 );
+const cityStageLayoutDataPath = path.join(
+  root,
+  "src",
+  "ui",
+  "views",
+  "city",
+  "city-stage-layout-data.ts"
+);
 
 function readText(filePath) {
   return fs.readFileSync(filePath, "utf8");
@@ -35,6 +45,24 @@ function readText(filePath) {
 
 function readExampleLayout() {
   return JSON.parse(readText(examplePath));
+}
+
+function loadCityStageLayoutDataModule() {
+  const source = readText(cityStageLayoutDataPath);
+  const transpiled = ts.transpileModule(source, {
+    compilerOptions: {
+      module: ts.ModuleKind.CommonJS,
+      target: ts.ScriptTarget.ES2022,
+    },
+    fileName: cityStageLayoutDataPath,
+  }).outputText;
+  const module = { exports: {} };
+  vm.runInNewContext(transpiled, {
+    module,
+    exports: module.exports,
+    require,
+  });
+  return module.exports;
 }
 
 test("city map building editor ships standalone files and shared layout example", () => {
@@ -73,21 +101,46 @@ test("editor keeps entity-first controls instead of old hardcoded building-only 
   }
 });
 
-test("editor exposes prefab-first controls and keeps hit area tied to clickable entities", () => {
+test("editor keeps split example loading read-only instead of exposing prefab mutation controls", () => {
   const html = readText(indexPath);
 
   assert.match(html, /renderQuickSelect/);
-  assert.match(html, /prefab-summary/);
-  assert.match(html, /field-prefab-cols/);
-  assert.match(html, /field-prefab-rows/);
-  assert.match(html, /field-prefab-offset-x/);
-  assert.match(html, /field-prefab-offset-y/);
-  assert.match(html, /renderPrefabPreview/);
-  assert.match(html, /prefab-preview-stage/);
-  assert.match(html, /ground-decoration/);
-  assert.match(html, /entity\.interaction\.clickable && layerState\.hitArea/);
-  assert.match(html, /toggleHitAreaFields/);
+  assert.match(html, /haozhou-city-prefabs\.example\.json/);
+  assert.match(html, /guardReadOnlyPrefabExample/);
+  assert.match(html, /isReadOnlyPrefabExampleLoaded/);
+  assert.match(html, /composePrefabLayoutForEditor/);
+  assert.doesNotMatch(html, /field-prefab-cols/);
+  assert.doesNotMatch(html, /field-prefab-rows/);
+  assert.doesNotMatch(html, /field-prefab-offset-x/);
+  assert.doesNotMatch(html, /field-prefab-offset-y/);
+  assert.doesNotMatch(html, /renderPrefabPreview/);
+  assert.doesNotMatch(html, /renderPrefabEditor/);
+  assert.doesNotMatch(html, /updatePrefabFromQuickEditor/);
   assert.doesNotMatch(html, /data-quick-id="keep"/);
+  assert.match(
+    html,
+    /function onCanvasPointerDown\(event\)\s*{\s*if \(guardReadOnlyPrefabExample\(\)\)/
+  );
+  assert.match(
+    html,
+    /function exportJsonFile\(\)\s*{\s*if \(guardReadOnlyPrefabExample\(\)\)/
+  );
+  assert.match(
+    html,
+    /async function copyLayoutJson\(\)\s*{\s*if \(guardReadOnlyPrefabExample\(\)\)/
+  );
+  assert.match(
+    html,
+    /function syncLayoutJsonPreview\(\)\s*{\s*if \(isReadOnlyPrefabExampleLoaded\(\)\)/
+  );
+  assert.match(
+    html,
+    /function setEditorLayout\(layout, preferredSelectedId = null, readOnlyPrefabExample = null\)/
+  );
+  assert.match(
+    html,
+    /message:\s*"Prefab-backed example is read-only here\. Import a city layout JSON to edit or export data\."/
+  );
 });
 
 test("editor copy no longer frames the layout around the old 20x20 coarse board", () => {
@@ -158,6 +211,7 @@ test("runtime city stage uses the shared layout module instead of hardcoded map 
 });
 
 test("runtime city stage composes prefabs with city instances", () => {
+  const { composeCityStageLayout } = loadCityStageLayoutDataModule();
   const html = readText(indexPath);
   const layout = readExampleLayout();
   const prefabPath = path.join(
@@ -175,4 +229,120 @@ test("runtime city stage composes prefabs with city instances", () => {
   assert.match(layoutSource, /composeCityStageLayout/);
   assert.match(layoutSource, /prefabId/);
   assert.match(html, /haozhou-city-prefabs\.example\.json/);
+
+  const composed = composeCityStageLayout(
+    {
+      version: 2,
+      map: layout.map,
+      grid: layout.grid,
+      instances: [
+        {
+          id: "instance.keep.test",
+          prefabId: "keep",
+          gridX: 9,
+          gridY: 11,
+          render: {
+            visible: false,
+            locked: true,
+            zIndexMode: "manual",
+            zIndex: 77,
+          },
+        },
+      ],
+    },
+    prefabs
+  );
+
+  assert.equal(composed.length, 1);
+  assert.equal(composed[0].id, "instance.keep.test");
+  assert.equal(composed[0].prefabId, "keep");
+  assert.equal(composed[0].name, "帅府");
+  assert.equal(composed[0].entry.type, "house");
+  assert.equal(composed[0].asset.image, "ui/yuansu/菱形格子/shuaifu.png");
+  assert.equal(composed[0].lot.gridX, 9);
+  assert.equal(composed[0].lot.gridY, 11);
+  assert.equal(composed[0].lot.cols, 8);
+  assert.equal(composed[0].lot.rows, 6);
+  assert.equal(composed[0].render.visible, false);
+  assert.equal(composed[0].render.locked, true);
+  assert.equal(composed[0].render.zIndexMode, "manual");
+  assert.equal(composed[0].render.zIndex, 77);
+  assert.equal(composed[0].interaction.label.text, "帅府");
+});
+
+test("composeCityStageLayout preserves legacy entity imports during migration", () => {
+  const { composeCityStageLayout } = loadCityStageLayoutDataModule();
+  const legacyEntity = {
+    id: "legacy.keep",
+    name: "Legacy Keep",
+    category: "special",
+    entry: { type: "house", houseId: "house.kulan.keep" },
+    asset: {
+      image: "legacy.png",
+      naturalWidth: 100,
+      naturalHeight: 50,
+      scale: 1,
+      offsetX: 1,
+      offsetY: 2,
+      anchor: "bottom-center",
+    },
+    lot: {
+      gridX: 1,
+      gridY: 2,
+      cols: 3,
+      rows: 4,
+    },
+    interaction: {
+      clickable: true,
+      label: {
+        text: "Legacy",
+        offsetX: 0,
+        offsetY: -10,
+        width: 20,
+        height: 10,
+      },
+      hitArea: {
+        type: "ellipse",
+        offsetX: 0,
+        offsetY: 0,
+        width: 20,
+        height: 10,
+      },
+    },
+  };
+
+  const composed = composeCityStageLayout(
+    {
+      version: 1,
+      map: {
+        id: "legacy",
+        name: "Legacy",
+        stageWidth: 1,
+        stageHeight: 1,
+        baseSpace: { x: 0, y: 0, width: 1, height: 1 },
+        backgroundImage: "",
+        foregroundImage: "",
+      },
+      grid: {
+        type: "isometric-board",
+        cols: 1,
+        rows: 1,
+        cellWidth: 1,
+        cellHeight: 1,
+        originX: 0,
+        originY: 0,
+      },
+      entities: [legacyEntity],
+    },
+    { prefabs: [] }
+  );
+
+  assert.equal(composed.length, 1);
+  assert.notEqual(composed[0], legacyEntity);
+  assert.equal(composed[0].id, "legacy.keep");
+  assert.equal(composed[0].asset.image, "legacy.png");
+  assert.equal(composed[0].render.visible, true);
+  assert.equal(composed[0].render.locked, false);
+  assert.equal(composed[0].render.zIndexMode, "y-sort");
+  assert.equal(composed[0].render.zIndex, null);
 });
