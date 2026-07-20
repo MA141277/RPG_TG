@@ -240,7 +240,6 @@ function renderPachinkoBoard(input: {
   return `
     <div class="c-grain-shop-modal c-grain-shop-modal--game c-grain-shop-skin-panel c-temple-house-modal c-pachinko-board" role="dialog" aria-modal="true">
       <div class="c-temple-house-qte__header">
-        <h3 class="c-grain-shop-modal__title c-grain-shop-nameplate">${input.title}</h3>
         <p class="c-temple-house-qte__task">${input.taskLabel}</p>
         <p class="c-temple-house-qte__meta">剩余 ${input.remainingBalls} / ${input.totalBalls} 枚 · 分数 ${input.score} · 穿门 ${input.gatePassCount} 次</p>
       </div>

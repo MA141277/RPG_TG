@@ -674,10 +674,10 @@ test("pachinko can run multiple active balls from repeated releases", () => {
   assert.equal(session.activeBalls.length, 2);
 });
 
-test("pachinko refreshes lower random elements after twenty seconds of ticks", () => {
+test("pachinko keeps lower rewards fixed throughout the board session", () => {
   const activityDefinition = {
-    id: "activity.test.pachinko.refresh",
-    label: "Refresh",
+    id: "activity.test.pachinko.fixed-lower-rewards",
+    label: "Fixed lower rewards",
     outcome: {},
   };
   let result = {
@@ -700,8 +700,8 @@ test("pachinko refreshes lower random elements after twenty seconds of ticks", (
 
   const session = result.state.runtime.activitySession;
   assert.equal(session?.type, "pachinko-board");
-  assert.equal(session.layoutVersion, 1);
-  assert.notEqual(session.slotValues.join(","), before);
+  assert.equal(session.layoutVersion, 0);
+  assert.equal(session.slotValues.join(","), before);
 });
 
 test("pachinko release does not reshuffle lower rewards before timed refresh", () => {

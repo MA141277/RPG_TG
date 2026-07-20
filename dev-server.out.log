@@ -3,663 +3,397 @@
 > vite --host 0.0.0.0 --port 5173
 
 
-  [32m[1mVITE[22m v7.3.3[39m  [2mready in [0m[1m1036[22m[2m[0m ms[22m
+  [32m[1mVITE[22m v7.3.3[39m  [2mready in [0m[1m595[22m[2m[0m ms[22m
 
   [32m➜[39m  [1mLocal[22m:   [36mhttp://localhost:[1m5173[22m/[39m
-  [32m➜[39m  [1mNetwork[22m: [36mhttp://192.168.1.19:[1m5173[22m/[39m
+  [32m➜[39m  [1mNetwork[22m: [36mhttp://192.168.1.32:[1m5173[22m/[39m
 [2m[32m  ➜[39m[22m[2m  press [22m[1mh + enter[22m[2m to show help[22m
-[2m20:46:41[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/content/default-runtime-content.ts[22m
-[2m20:46:41[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/grain-shop/grain-market.ts[22m
-[2m20:46:41[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/house-modules/grain-shop/grain-shop-house-module.ts[22m
-[2m20:46:41[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/content/default-runtime-content.ts[22m
-[2m20:46:41[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/content/text-resolution.ts[22m
-[2m20:46:41[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/house-modules/home-house/home-house-house-module.ts[22m
-[2m20:46:41[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/house-modules/keep-house/keep-house-house-module.ts[22m
-[2m20:46:41[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/house-modules/market-house/market-house-house-module.ts[22m
-[2m20:46:41[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/house-modules/medicine-house/medicine-house-house-module.ts[22m
-[2m20:46:41[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/house-modules/tavern/tavern-house-module.ts[22m
-[2m20:46:41[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/house-modules/tea-house/tea-house-house-module.ts[22m
-[2m20:46:41[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/house-modules/temple-house/temple-house-house-module.ts[22m
-[2m20:46:41[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/house/house-runtime.ts[22m
-[2m20:46:41[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/scenario/scenario-pack-loader.ts[22m
-[2m20:46:41[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/scene/scene-runner.ts[22m
-[2m20:46:41[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/story-battle/story-battle-runtime.ts[22m
-[2m20:46:41[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/story/story-callbacks.ts[22m
-[2m20:46:41[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/tea-house/tea-house-actors.ts[22m
-[2m20:46:41[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/content/houses/grain-shop-content.ts[22m
-[2m20:46:41[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/grain-shop/investigate-grain-market.ts[22m
-[2m20:46:41[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/story/story-runtime.ts[22m
-[2m20:46:41[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/content/houses/home-house-content.ts[22m
-[2m20:46:41[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/content/houses/keep-house-content.ts[22m
-[2m20:46:41[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/content/houses/market-house-content.ts[22m
-[2m20:46:41[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/content/houses/medicine-house-content.ts[22m
-[2m20:46:41[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/content/houses/tavern-content.ts[22m
-[2m20:46:41[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/content/houses/tea-house-content.ts[22m
-[2m20:46:41[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/content/houses/temple-house-content.ts[22m
-[2m20:46:41[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/domain/activity.ts[22m
-[2m20:46:41[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/app-render.ts[22m
-[2m20:46:41[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/main.ts[22m
-[2m20:46:41[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/domain/house-module.ts[22m
-[2m20:46:41[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/main-ui/main-ui-flow.js[22m
-[2m11:04:03[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战场/20260630-152616.png[22m
-[2m11:04:03[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战场/20260702-102737.png[22m
-[2m11:04:03[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战场/20260702-102751.png[22m
-[2m11:04:03[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战场/20260702-102754.png[22m
-[2m11:04:03[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战场/20260702-102800.png[22m
-[2m11:04:03[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战场/下载 (1).png[22m
-[2m11:04:03[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战场/下载 (10).png[22m
-[2m11:04:03[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战场/下载 (11).png[22m
-[2m11:04:03[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战场/下载 (12).png[22m
-[2m11:04:03[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战场/下载 (13).png[22m
-[2m11:04:03[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战场/下载 (3).png[22m
-[2m11:04:03[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战场/下载 (4).png[22m
-[2m11:04:03[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战场/下载 (5).png[22m
-[2m11:04:04[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战场/下载 (6).png[22m
-[2m11:04:04[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战场/下载 (7).png[22m
-[2m11:04:04[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战场/下载 (8).png[22m
-[2m11:04:04[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战场/下载 (9).png[22m
-[2m11:04:04[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战场/下载.png[22m
-[2m11:04:19[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战场/下载 (3).png[22m
-[2m11:04:32[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战场/下载 (9).png[22m
-[2m11:05:51[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战场/20260629-142910.png[22m
-[2m11:21:22[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m11:22:30[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m11:22:46[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m11:23:02[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m11:24:27[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m11:27:27[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m11:27:27[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m11:29:27[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m11:30:11[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m11:30:25[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m11:32:28[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m11:40:26[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m11:40:26[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m11:45:18[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战场/下载 (1).png[22m
-[2m11:45:27[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m13:49:59[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战场/20260630-152616.png[22m
-[2m13:49:59[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战场/20260702-102737.png[22m
-[2m13:49:59[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战场/20260702-102751.png[22m
-[2m13:49:59[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战场/20260702-102754.png[22m
-[2m13:49:59[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战场/20260702-102800.png[22m
-[2m13:49:59[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战场/下载 (10).png[22m
-[2m13:49:59[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战场/下载 (4).png[22m
-[2m13:49:59[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战场/下载 (5).png[22m
-[2m13:49:59[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战场/下载 (6).png[22m
-[2m13:49:59[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战场/下载 (7).png[22m
-[2m13:49:59[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战场/下载 (8).png[22m
-[2m13:49:59[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战场/下载 (11).png[22m
-[2m13:49:59[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战场/下载 (12).png[22m
-[2m13:49:59[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战场/下载 (13).png[22m
-[2m13:49:59[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战场/下载.png[22m
-[2m13:50:11[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战场/20260702-134939.png[22m
-[2m13:50:11[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战场/20260702-134942.png[22m
-[2m13:50:11[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战场/下载 (1).png[22m
-[2m13:50:11[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战场/20260630-152616.png[22m
-[2m13:50:11[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战场/20260702-102737.png[22m
-[2m13:50:11[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战场/20260702-102751.png[22m
-[2m13:50:11[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战场/20260702-102754.png[22m
-[2m13:50:11[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战场/20260702-102800.png[22m
-[2m13:50:11[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战场/20260702-134918.png[22m
-[2m13:50:11[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战场/20260702-134925.png[22m
-[2m13:50:11[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战场/20260702-134930.png[22m
-[2m13:50:11[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战场/20260702-134936.png[22m
-[2m14:08:27[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战场/下载 (12).png[22m
-[2m14:11:22[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战场/1_013_blank_large_frame_1.0.png[22m
-[2m14:19:30[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m14:19:30[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m14:19:46[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m14:23:38[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m14:23:38[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m14:24:15[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m14:24:31[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m14:24:37[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m14:26:20[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m14:27:17[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m14:27:35[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m14:27:56[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m14:28:10[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m14:28:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m14:28:50[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m14:29:46[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m14:30:52[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m14:31:00[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m14:39:51[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m14:39:51[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m14:41:30[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m14:41:30[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m14:41:41[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m14:42:04[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m14:44:16[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m14:46:20[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m15:58:47[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m15:58:53[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战场/20260630-152616.png[22m
-[2m15:58:53[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战场/20260702-102737.png[22m
-[2m15:58:53[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战场/20260702-102751.png[22m
-[2m15:58:53[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战场/20260702-102754.png[22m
-[2m15:58:53[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战场/20260702-102800.png[22m
-[2m15:58:53[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战场/20260702-134918.png[22m
-[2m15:58:53[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战场/20260702-134925.png[22m
-[2m15:58:53[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战场/20260702-134930.png[22m
-[2m15:58:53[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战场/20260702-134936.png[22m
-[2m15:58:53[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战场/20260702-134939.png[22m
-[2m15:58:53[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战场/20260702-134942.png[22m
-[2m15:58:53[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战场/下载 (1).png[22m
-[2m15:58:53[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战场/下载 (12).png[22m
-[2m15:58:55[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战场/1_013_blank_large_frame_1.0.png[22m
-[2m15:58:57[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战场/20260629-142910.png[22m
-[2m19:51:09[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/c6faf4c11fa04d4da9584c9b90c458a9.png[22m
-[2m19:53:16[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m19:53:16[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m19:56:18[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/新建文件夹/img_v3_02137_ec7e6caa-dff7-4634-a7d1-823c5e41ad1g.png[22m
-[2m19:56:31[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/新建文件夹/img_v3_02137_763f3c5c-9c2b-49be-9acb-bd52f99829ag.png[22m
-[2m19:56:41[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/新建文件夹/img_v3_02137_a9d528c7-134a-4dff-b66a-e930a361e12g.png[22m
-[2m19:56:58[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/新建文件夹/20260702-195648.png[22m
-[2m19:57:06[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/新建文件夹/20260702-195702.png[22m
-[2m19:57:15[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/新建文件夹/20260702-195709.png[22m
-[2m19:57:38[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/新建文件夹/20260702-195736.png[22m
-[2m19:57:42[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/新建文件夹/20260702-195740.png[22m
-[2m19:57:48[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/新建文件夹/20260702-195746.png[22m
-[2m19:57:52[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/新建文件夹/20260702-195750.png[22m
-[2m19:58:11[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/新建文件夹/20260702-195804.png[22m
-[2m19:58:17[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/新建文件夹/20260702-195813.png[22m
-[2m19:58:52[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/新建文件夹/20260702-195804.png[22m
-[2m19:58:52[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/新建文件夹/20260702-195804.png[22m
-[2m20:00:16[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/新建文件夹/20260702-195813(1).png[22m
-[2m20:00:20[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/新建文件夹/20260702-195813.png[22m
-[2m20:03:21[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/新建文件夹/bf174a8ba87c43afb763606cd47985d2.png[22m
-[2m20:16:09[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/新建文件夹/20260702-201601.png[22m
-[2m20:17:16[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/新建文件夹/20260702-201713.png[22m
-[2m20:17:21[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/新建文件夹/20260702-201718.png[22m
-[2m20:29:50[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/新建文件夹 - 副本/20260702-195648.png[22m
-[2m20:29:50[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/新建文件夹 - 副本/20260702-195702.png[22m
-[2m20:29:50[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/新建文件夹 - 副本/20260702-195709.png[22m
-[2m20:29:50[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/新建文件夹 - 副本/20260702-195736.png[22m
-[2m20:29:50[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/新建文件夹 - 副本/20260702-195740.png[22m
-[2m20:29:50[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/新建文件夹 - 副本/20260702-195750.png[22m
-[2m20:29:50[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/新建文件夹 - 副本/20260702-195804.png[22m
-[2m20:29:50[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/新建文件夹 - 副本/20260702-195746.png[22m
-[2m20:29:50[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/新建文件夹 - 副本/20260702-195813(1).png[22m
-[2m20:29:50[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/新建文件夹 - 副本/20260702-201601.png[22m
-[2m20:29:50[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/新建文件夹 - 副本/20260702-201713.png[22m
-[2m20:29:50[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/新建文件夹 - 副本/20260702-201718.png[22m
-[2m20:29:50[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/新建文件夹 - 副本/bf174a8ba87c43afb763606cd47985d2.png[22m
-[2m20:29:50[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/新建文件夹 - 副本/img_v3_02137_763f3c5c-9c2b-49be-9acb-bd52f99829ag.png[22m
-[2m20:29:50[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/新建文件夹 - 副本/img_v3_02137_a9d528c7-134a-4dff-b66a-e930a361e12g.png[22m
-[2m20:29:50[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/新建文件夹 - 副本/img_v3_02137_ec7e6caa-dff7-4634-a7d1-823c5e41ad1g.png[22m
-[2m20:29:53[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/新建文件夹 - 副本/20260702-195648.png[22m
-[2m20:29:53[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/新建文件夹 - 副本/20260702-195702.png[22m
-[2m20:29:53[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/新建文件夹 - 副本/20260702-195709.png[22m
-[2m20:29:53[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/新建文件夹 - 副本/20260702-195736.png[22m
-[2m20:29:53[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/新建文件夹 - 副本/20260702-195740.png[22m
-[2m20:29:53[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/新建文件夹 - 副本/20260702-195750.png[22m
-[2m20:29:53[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/新建文件夹 - 副本/20260702-195804.png[22m
-[2m20:29:53[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/新建文件夹 - 副本/20260702-195746.png[22m
-[2m20:29:53[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/新建文件夹 - 副本/20260702-195813(1).png[22m
-[2m20:29:53[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/新建文件夹 - 副本/20260702-201601.png[22m
-[2m20:29:53[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/新建文件夹 - 副本/20260702-201713.png[22m
-[2m20:29:53[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/新建文件夹 - 副本/20260702-201718.png[22m
-[2m20:29:53[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/新建文件夹 - 副本/bf174a8ba87c43afb763606cd47985d2.png[22m
-[2m20:29:53[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/新建文件夹 - 副本/img_v3_02137_763f3c5c-9c2b-49be-9acb-bd52f99829ag.png[22m
-[2m20:29:53[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/新建文件夹 - 副本/img_v3_02137_a9d528c7-134a-4dff-b66a-e930a361e12g.png[22m
-[2m20:29:53[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/新建文件夹 - 副本/img_v3_02137_ec7e6caa-dff7-4634-a7d1-823c5e41ad1g.png[22m
-[2m20:30:18[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战斗/20260702-195648.png[22m
-[2m20:30:18[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战斗/20260702-195702.png[22m
-[2m20:30:18[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战斗/20260702-195709.png[22m
-[2m20:30:18[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战斗/20260702-195736.png[22m
-[2m20:30:18[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战斗/20260702-195740.png[22m
-[2m20:30:18[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战斗/20260702-195746.png[22m
-[2m20:30:18[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战斗/20260702-195750.png[22m
-[2m20:30:18[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战斗/20260702-195804.png[22m
-[2m20:30:18[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战斗/20260702-195813(1).png[22m
-[2m20:30:18[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战斗/20260702-201601.png[22m
-[2m20:30:18[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战斗/20260702-201713.png[22m
-[2m20:30:18[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战斗/20260702-201718.png[22m
-[2m20:30:18[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战斗/bf174a8ba87c43afb763606cd47985d2.png[22m
-[2m20:30:18[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战斗/img_v3_02137_763f3c5c-9c2b-49be-9acb-bd52f99829ag.png[22m
-[2m20:30:18[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战斗/img_v3_02137_a9d528c7-134a-4dff-b66a-e930a361e12g.png[22m
-[2m20:30:18[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战斗/img_v3_02137_ec7e6caa-dff7-4634-a7d1-823c5e41ad1g.png[22m
-[2m20:30:18[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/新建文件夹/img_v3_02137_ec7e6caa-dff7-4634-a7d1-823c5e41ad1g.png[22m
-[2m20:30:18[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/新建文件夹/img_v3_02137_763f3c5c-9c2b-49be-9acb-bd52f99829ag.png[22m
-[2m20:30:18[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/新建文件夹/img_v3_02137_a9d528c7-134a-4dff-b66a-e930a361e12g.png[22m
-[2m20:30:18[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/新建文件夹/20260702-195648.png[22m
-[2m20:30:18[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/新建文件夹/20260702-195702.png[22m
-[2m20:30:18[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/新建文件夹/20260702-195709.png[22m
-[2m20:30:18[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/新建文件夹/20260702-195736.png[22m
-[2m20:30:18[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/新建文件夹/20260702-195740.png[22m
-[2m20:30:18[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/新建文件夹/20260702-195746.png[22m
-[2m20:30:18[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/新建文件夹/20260702-195750.png[22m
-[2m20:30:18[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/新建文件夹/20260702-195804.png[22m
-[2m20:30:18[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/新建文件夹/20260702-195813(1).png[22m
-[2m20:30:18[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/新建文件夹/bf174a8ba87c43afb763606cd47985d2.png[22m
-[2m20:30:18[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/新建文件夹/20260702-201601.png[22m
-[2m20:30:18[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/新建文件夹/20260702-201713.png[22m
-[2m20:30:18[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/新建文件夹/20260702-201718.png[22m
-[2m20:45:13[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m20:45:13[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m20:45:33[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m20:45:52[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m20:46:02[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m20:46:28[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m21:27:43[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战斗/img_v3_02137_c83b7d73-03ae-4c9f-88dd-36c12f66f68g.png[22m
-[2m21:32:01[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m21:32:12[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m21:37:57[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战斗/img_v3_02137_c83b7d73-03ae-4c9f-88dd-36c12f66f68g.png[22m
-[2m21:39:19[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战斗/20260702-195750.png[22m
-[2m21:39:32[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战斗/20260702-195746.png[22m
-[2m21:56:04[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m22:00:38[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m22:00:38[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m22:03:56[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m22:08:17[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m22:08:32[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m22:09:06[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m22:24:00[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m22:24:00[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m22:30:00[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m22:38:03[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m22:45:35[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m22:50:38[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m22:55:58[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m23:01:11[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m23:03:15[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m23:10:35[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m23:22:15[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m23:22:42[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m23:23:04[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m23:23:17[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m23:27:05[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m23:29:57[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m23:30:33[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m23:33:22[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m23:33:22[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m23:36:15[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m23:36:15[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m23:36:49[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m23:38:28[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m23:48:51[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m10:07:24[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m10:07:24[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m10:10:53[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m10:13:01[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m11:12:25[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战斗/img_v3_02138_430252a9-af38-4401-9ec8-0a2c0b5ab1eg.png[22m
-[2m11:15:42[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战斗/20260702-195750(1).png[22m
-[2m11:18:47[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m11:22:31[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m11:22:31[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m11:25:55[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m11:29:31[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m11:29:31[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m11:32:07[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m11:32:07[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m11:34:04[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m11:34:05[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m11:36:44[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m11:37:58[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m11:51:18[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战斗/20260702-195709.png[22m
-[2m11:51:18[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战斗/20260702-195709.png[22m
-[2m11:54:30[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m11:55:52[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m11:55:52[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m12:02:25[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m13:40:08[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m13:42:03[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m13:48:42[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m13:50:48[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战斗/battle_popup_frame_9slice.png[22m
-[2m13:51:46[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m13:56:05[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m13:57:40[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m16:27:05[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/upload_1783067190863690930.png[22m
-[2m16:28:00[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/upload_1783067190863690930.png[22m
-[2m16:28:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/stage.png[22m
-[2m16:28:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/stage.png[22m
-[2m16:52:52[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/演出/upload_1783059878753325530.png[22m
-[2m17:11:55[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/演出/20260703-171148.png[22m
-[2m17:12:01[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/演出/20260703-171157.png[22m
-[2m17:43:17[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m17:43:17[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m17:47:35[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m17:48:03[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m17:48:17[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m17:52:49[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m17:52:49[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m18:05:08[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m18:05:37[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m18:10:34[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战斗/20260702-195746(1).png[22m
-[2m18:11:02[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/演出/20260702-195746(1).png[22m
-[2m18:11:02[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战斗/20260702-195746(1).png[22m
-[2m18:16:42[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m18:16:42[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m18:16:57[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m18:17:09[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m18:19:37[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m18:49:44[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m18:54:48[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m19:10:00[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m19:31:15[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m19:32:47[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m19:32:47[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m19:35:14[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m19:35:15[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m19:38:35[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m19:38:35[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m19:39:27[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m19:46:37[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m19:46:37[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m19:47:02[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m19:47:02[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m19:47:22[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m19:47:36[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m19:56:13[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m19:58:34[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m20:02:06[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m20:04:49[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m20:09:03[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m20:09:03[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m10:12:48[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m10:16:52[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m10:19:27[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m10:36:13[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m10:36:13[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m11:12:53[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/upload_1783059878753325530.png[22m
-[2m11:18:02[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m11:44:24[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m11:44:24[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m13:54:16[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m14:07:47[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m14:07:47[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m14:11:00[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m14:18:08[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m14:18:08[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m14:25:35[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mmap/！！！启动必看！！！！！！！！！！.png[22m
-[2m14:25:35[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/core/adapters/legacy-main-adapter.ts[22m
-[2m14:25:35[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/upload_1783059878753325530.png[22m
-[2m14:25:35[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/core/adapters/mod-runtime-main-adapter.ts[22m
-[2m14:25:35[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
-[2m14:25:35[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/point-assembly-event-editor.html[22m
-[2m14:25:36[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/activity/activity-runner.ts[22m
-[2m14:25:36[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/content/active-game-content.ts[22m
-[2m14:25:36[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/house-modules/grain-shop/grain-shop-house-module.ts[22m
-[2m14:25:36[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/house-modules/keep-house/keep-house-house-module.ts[22m
-[2m14:25:36[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/house-modules/medicine-house/medicine-house-house-module.ts[22m
-[2m14:25:36[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/house-modules/temple-house/temple-house-house-module.ts[22m
-[2m14:25:36[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/house/house-runtime.ts[22m
-[2m14:25:36[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/presenter/app-presenter.ts[22m
-[2m14:25:36[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/scenario/scenario-pack-loader.ts[22m
-[2m14:25:36[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/state/create-initial-state.ts[22m
-[2m14:25:36[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/story/story-callbacks.ts[22m
-[2m14:25:36[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/content/houses/grain-shop-content.ts[22m
-[2m14:25:36[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/core/adapters/legacy-house-adapter.ts[22m
-[2m14:25:36[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/core/mods/mod-parser.ts[22m
-[2m14:25:36[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/core/runtime/event-runtime.ts[22m
-[2m14:25:36[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/domain/content-pack.ts[22m
-[2m14:25:36[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/city-depth-mesh/index.html[22m
-[2m14:25:36[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/faxian-depth-mesh/index.html[22m
-[2m14:25:36[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/city-threeview-depth-mesh/index.html[22m
-[2m14:25:36[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/grass-depth-mesh/index.html[22m
-[2m14:25:36[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/grass-normal-mesh/index.html[22m
-[2m14:25:36[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/obj-mesh-decimator/index.html[22m
-[2m14:25:36[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/faxian-depth-gaussian/index.html[22m
-[2m14:25:36[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/activity/activity-runner.ts[22m
-[2m14:25:36[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/content/active-game-content.ts[22m
-[2m14:25:36[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/content/content-pack-loader.ts[22m
-[2m14:25:36[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/house-modules/house-module-registry.ts[22m
-[2m14:25:36[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/house-modules/grain-shop/grain-shop-house-module.ts[22m
-[2m14:25:36[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/house-modules/keep-house/keep-house-house-module.ts[22m
-[2m14:25:36[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/house-modules/medicine-house/medicine-house-house-module.ts[22m
-[2m14:25:36[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/house-modules/temple-house/temple-house-house-module.ts[22m
-[2m14:25:36[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/house/house-runtime.ts[22m
-[2m14:25:36[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/presenter/app-presenter.ts[22m
-[2m14:25:36[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/presenter/stage-presenters.ts[22m
-[2m14:25:36[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/scenario/scenario-pack-loader.ts[22m
-[2m14:25:36[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/state/create-initial-state.ts[22m
-[2m14:25:36[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/story/story-callbacks.ts[22m
-[2m14:25:36[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/content/houses/grain-shop-content.ts[22m
-[2m14:25:36[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/content/houses/home-house-content.ts[22m
-[2m14:25:36[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/content/houses/keep-house-content.ts[22m
-[2m14:25:36[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/content/houses/market-house-content.ts[22m
-[2m14:25:36[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/content/houses/medicine-house-content.ts[22m
-[2m14:25:36[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/content/houses/tavern-content.ts[22m
-[2m14:25:36[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/content/houses/tea-house-content.ts[22m
-[2m14:25:36[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/core/adapters/legacy-house-adapter.ts[22m
-[2m14:25:36[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/core/adapters/legacy-interactive-adapter.ts[22m
-[2m14:25:36[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/core/mods/mod-parser.ts[22m
-[2m14:25:36[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/core/mods/mod-runtime.ts[22m
-[2m14:25:36[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/core/runtime/event-runtime.ts[22m
-[2m14:25:36[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/core/runtime/house-runtime.ts[22m
-[2m14:25:36[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/core/runtime/interactive-runtime.ts[22m
-[2m14:25:36[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/core/runtime/navigation-runtime.ts[22m
-[2m14:25:36[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/core/runtime/runtime-dispatch.ts[22m
-[2m14:25:36[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/core/runtime/runtime-settlement.ts[22m
-[2m14:25:36[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/core/runtime/scene-runtime.ts[22m
-[2m14:25:36[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/core/runtime/state-sync-runtime.ts[22m
-[2m14:25:36[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/core/runtime/time-runtime.ts[22m
-[2m14:25:36[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/domain/content-pack.ts[22m
-[2m14:25:36[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/domain/game-state.ts[22m
-[2m14:25:36[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/domain/house-module.ts[22m
-[2m14:25:36[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/main.ts[22m
-[2m14:25:36[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
-[2m14:25:36[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/map/campaign-terrain-webgl.ts[22m
-[2m14:25:36[22m [36m[1m[vite][22m[39m [32mvite.config.ts changed, restarting server...[39m
-[2m14:25:36[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/house/house-module-view-registry.ts[22m
-[2m14:25:36[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/map/map-view.ts[22m
-[2m14:25:36[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mtools/spine-node-timeline-editor.html[22m
-[2m14:25:36[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mtools/spine-node-timeline-editor-archer.html[22m
-[2m14:25:37[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/playables/story-battle/story-battle-definition.ts[22m
-[2m14:25:37[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/playables/activity-qte/activity-qte-definition.ts[22m
-[2m14:25:40[22m [36m[1m[vite][22m[39m server restarted.
-
-  [32m➜[39m  [1mLocal[22m:   [36mhttp://localhost:[1m5173[22m/[39m
-  [32m➜[39m  [1mNetwork[22m: [36mhttp://192.168.1.23:[1m5173[22m/[39m
-[2m14:47:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/map/map-view.ts[22m
-[2m15:28:00[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/新建文件夹/20260706-152722.png[22m
-[2m15:28:05[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/新建文件夹/20260706-152803.png[22m
-[2m15:28:08[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/新建文件夹/20260706-152807.png[22m
-[2m15:28:12[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/新建文件夹/20260706-152810.png[22m
-[2m15:28:16[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/新建文件夹/20260706-152814.png[22m
-[2m15:28:22[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/新建文件夹/20260706-152820.png[22m
-[2m15:28:28[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/新建文件夹/20260706-152826.png[22m
-[2m15:28:41[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/新建文件夹/20260706-152838.png[22m
-[2m15:53:20[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/新建文件夹/20260706-152722.png[22m
-[2m15:53:20[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/新建文件夹/20260706-152803.png[22m
-[2m15:53:20[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/新建文件夹/20260706-152807.png[22m
-[2m15:53:20[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/新建文件夹/20260706-152810.png[22m
-[2m15:53:20[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/新建文件夹/20260706-152814.png[22m
-[2m15:53:20[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/新建文件夹/20260706-152820.png[22m
-[2m15:53:20[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/新建文件夹/20260706-152826.png[22m
-[2m15:53:20[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/新建文件夹/20260706-152838.png[22m
-[2m16:14:16[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/新建文件夹/20260706-152722.png[22m
-[2m16:14:16[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/新建文件夹/20260706-152803.png[22m
-[2m16:14:16[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/新建文件夹/20260706-152807.png[22m
-[2m16:14:16[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/新建文件夹/20260706-152810.png[22m
-[2m16:14:16[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/新建文件夹/20260706-152814.png[22m
-[2m16:14:16[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/新建文件夹/20260706-152820.png[22m
-[2m16:14:16[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/新建文件夹/20260706-152826.png[22m
-[2m16:14:16[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/新建文件夹/20260706-152838.png[22m
-[2m16:14:58[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/属性栏/20260706-152722.png[22m
-[2m16:14:58[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/属性栏/20260706-152803.png[22m
-[2m16:14:58[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/属性栏/20260706-152807.png[22m
-[2m16:14:58[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/属性栏/20260706-152810.png[22m
-[2m16:14:58[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/属性栏/20260706-152814.png[22m
-[2m16:14:58[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/属性栏/20260706-152820.png[22m
-[2m16:14:58[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/属性栏/20260706-152826.png[22m
-[2m16:14:58[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/属性栏/20260706-152838.png[22m
-[2m16:14:58[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/新建文件夹/20260706-152722.png[22m
-[2m16:14:58[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/新建文件夹/20260706-152803.png[22m
-[2m16:14:58[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/新建文件夹/20260706-152807.png[22m
-[2m16:14:58[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/新建文件夹/20260706-152810.png[22m
-[2m16:14:58[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/新建文件夹/20260706-152814.png[22m
-[2m16:14:58[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/新建文件夹/20260706-152820.png[22m
-[2m16:14:58[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/新建文件夹/20260706-152826.png[22m
-[2m16:14:58[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/新建文件夹/20260706-152838.png[22m
-[2m16:15:21[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/属性栏/20260706-161510.png[22m
-[2m16:15:31[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/属性栏/20260706-161523.jpg[22m
-[2m16:26:43[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/panels/global-player-panel.ts[22m
-[2m16:26:43[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/panels/global-player-panel.ts[22m
-[2m16:27:28[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/panels/global-player-panel.ts[22m
-[2m16:28:07[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
-[2m16:28:07[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
-[2m16:28:58[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
-[2m16:30:03[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
-[2m16:30:03[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
-[2m16:31:29[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
-[2m16:34:25[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
-[2m16:37:33[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
-[2m16:37:33[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
-[2m16:49:15[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/属性栏/20260706-152838.png[22m
-[2m16:49:15[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
-[2m16:49:46[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
-[2m17:01:28[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/panels/global-player-panel.ts[22m
-[2m17:02:10[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
-[2m17:04:17[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/panels/global-player-panel.ts[22m
-[2m17:04:43[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
-[2m17:13:28[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/属性栏/20260706-152826.png[22m
-[2m17:20:46[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/属性栏/20260706-172043.png[22m
-[2m17:25:39[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
-[2m17:25:39[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
-[2m17:33:27[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/属性栏/20260706-172043.png[22m
-[2m17:34:54[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
-[2m17:34:54[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
-[2m17:38:45[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/panels/global-player-panel.ts[22m
-[2m17:39:02[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
-[2m17:39:43[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
-[2m17:42:31[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/panels/global-player-panel.ts[22m
-[2m17:42:43[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
-[2m17:45:39[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/panels/global-player-panel.ts[22m
-[2m17:45:52[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
-[2m18:06:39[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/panels/global-player-panel.ts[22m
-[2m18:06:52[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
-[2m18:07:06[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
-[2m18:17:07[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
-[2m18:29:43[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/属性栏/20260706-152820.png[22m
-[2m18:34:54[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
-[2m18:34:54[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
-[2m18:39:37[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
-[2m19:03:17[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/属性栏/20260706-190314.png[22m
-[2m19:09:46[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/属性栏/20260706-190938.png[22m
-[2m19:10:31[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/属性栏/20260706-191028.png[22m
-[2m19:12:48[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/属性栏/20260706-191028.png[22m
-[2m19:12:48[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/属性栏/20260706-191028.png[22m
-[2m19:49:26[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/属性栏/global_task_panel_frame_20260706-190314.png[22m
-[2m19:50:55[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/panels/global-player-panel.ts[22m
-[2m19:50:55[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/panels/global-player-panel.ts[22m
-[2m19:51:18[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
-[2m19:52:22[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
-[2m19:52:22[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
-[2m19:54:29[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
-[2m19:54:29[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
-[2m19:54:43[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
-[2m19:56:43[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
-[2m19:56:43[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
-[2m19:58:04[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
-[2m19:58:04[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
-[2m19:58:31[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
-[2m20:09:52[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
-[2m20:09:52[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
-[2m11:30:32[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/地图/20260707-111832.png[22m
-[2m11:30:32[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/地图/20260707-111907.png[22m
-[2m11:30:32[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/地图/20260707-111910.png[22m
-[2m11:30:32[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/地图/20260707-111913.png[22m
-[2m11:30:32[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/地图/20260707-111917.png[22m
-[2m11:30:32[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/地图/20260707-111920.png[22m
-[2m11:30:32[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/地图/20260707-111923.png[22m
-[2m11:30:32[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/地图/img_v3_0213b_64f49016-6b4f-442d-aa33-5369497da91g.jpg[22m
-[2m11:30:32[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/地图/20260707-111902.png[22m
-[2m11:33:51[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/card/chengzhengsuoluetu.png[22m
-[2m11:33:51[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/card/chengzhengsuoluetu.png[22m
-[2m11:35:58[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/card/xiangcunsuoluetu.png[22m
-[2m11:35:58[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/card/xiangcunsuoluetu.png[22m
-[2m11:45:39[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
-[2m11:55:26[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
-[2m11:55:26[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
-[2m13:47:59[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
-[2m14:39:10[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/地图/20260707-111832.png[22m
-[2m14:42:05[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/地图/20260707-111902.png[22m
-[2m14:42:05[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/地图/20260707-111902.png[22m
-[2m14:42:16[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/地图/20260707-111907.png[22m
-[2m14:42:29[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/地图/20260707-111923.png[22m
-[2m14:43:00[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/地图/20260707-111920.png[22m
-[2m14:43:00[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/地图/20260707-111920.png[22m
-[2m14:43:12[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/地图/20260707-111917.png[22m
-[2m14:43:59[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/地图/20260707-144356.png[22m
-[2m15:15:21[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/app-render.ts[22m
-[2m15:15:52[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
-[2m15:16:17[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
-[2m15:34:49[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
-[2m15:34:49[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
-[2m15:35:27[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
-[2m15:36:50[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
-[2m15:39:42[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/card/chengzhengsuoluetu.png[22m
-[2m15:39:42[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/card/xiangcunsuoluetu.png[22m
-[2m15:45:54[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
-[2m15:45:54[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
-[2m15:48:02[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/地图/20260707-111910.png[22m
-[2m15:48:25[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/地图/20260707-111913.png[22m
-[2m15:48:30[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/app-render.ts[22m
-[2m15:48:47[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
-[2m15:49:45[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
-[2m15:50:00[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
-[2m15:50:34[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
-[2m15:51:09[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
-[2m15:51:46[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
-[2m15:52:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
-[2m15:55:29[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
-[2m16:18:53[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
-[2m16:18:53[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
-[2m17:47:43[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
-[2m17:48:02[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
-[2m17:57:35[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
-[2m17:57:48[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
-[2m18:46:03[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
-[2m18:46:03[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
-[2m18:47:11[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
-[2m18:49:07[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
-[2m18:49:18[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/地图弹窗ui/1.png[22m
-[2m18:49:18[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/地图弹窗ui/稍后.png[22m
-[2m18:49:18[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/地图弹窗ui/upload_1780652027201943668.png[22m
-[2m18:49:18[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/地图弹窗ui/进入地图.png[22m
-[2m20:14:15[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/属性栏/20260706-152826.png[22m
-[2m20:14:52[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/属性栏/20260706-152803.png[22m
-[2m20:15:09[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/属性栏/20260706-152722.png[22m
-[2m20:15:51[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/属性栏/20260706-152807.png[22m
-[2m20:15:57[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/属性栏/20260706-152810.png[22m
-[2m20:16:12[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/属性栏/20260706-152814.png[22m
-[2m20:16:50[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/属性栏/20260706-152820.png[22m
-[2m20:17:02[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/属性栏/20260706-172043.png[22m
-[2m20:17:21[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/属性栏/20260707-201706.png[22m
-[2m20:18:48[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/属性栏/下载 (2).png[22m
-[2m20:34:35[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/属性栏/下载 (1).png[22m
-[2m20:34:38[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/属性栏/20260706-161510.png[22m
-[2m20:40:03[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/属性栏/20260707-204000.png[22m
-[2m20:43:18[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/属性栏/4c5c29fd-08f1-4108-91d8-e58a5ad54236.jpeg[22m
-[2m21:24:09[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
-[2m21:30:12[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
-[2m21:50:52[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
-[2m21:50:52[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
-[2m21:54:29[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
-[2m21:54:29[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
-[2m10:15:17[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/属性栏/20260706-152826.png[22m
-[2m10:16:06[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/属性栏/20260706-152820.png[22m
-[2m10:19:54[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/属性栏/20260707-204000.png[22m
-[2m10:32:34[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
-[2m10:32:34[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
-[2m10:42:40[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
-[2m10:53:59[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
-[2m16:47:00[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/新建文件夹 (4)/20260708-162747.png[22m
-[2m16:47:00[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/新建文件夹 (4)/20260708-162820.png[22m
-[2m16:47:00[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/新建文件夹 (4)/upload_1783482337498281826.png[22m
-[2m16:47:20[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/对话框/20260708-162747.png[22m
-[2m16:47:20[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/对话框/20260708-162820.png[22m
-[2m16:47:20[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/对话框/upload_1783482337498281826.png[22m
-[2m16:47:20[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/新建文件夹 (4)/20260708-162747.png[22m
-[2m16:47:20[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/新建文件夹 (4)/20260708-162820.png[22m
-[2m16:47:20[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/新建文件夹 (4)/upload_1783482337498281826.png[22m
-[2m16:47:27[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/upload_1780653102041009217.png[22m
-[2m16:54:30[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/对话框/20260708-161846.jpg[22m
-[2m17:12:02[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
-[2m17:28:15[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/对话框/20260708-162747.png[22m
-[2m17:28:22[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/对话框/20260708-162820.png[22m
-[2m17:38:34[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
-[2m17:39:06[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
-[2m17:56:12[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
-[2m17:59:41[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
+[2m14:26:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/属性栏/4c5c29fd-08f1-4108-91d8-e58a5ad54236.jpeg[22m
+[2m14:26:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/评定/20260709-205114.png[22m
+[2m14:26:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/评定/20260709-205119.png[22m
+[2m14:26:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/评定/20260709-205123.png[22m
+[2m14:26:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/选项/20260709-150818_button-clean.png[22m
+[2m14:26:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/content/content-pack-loader.ts[22m
+[2m14:26:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/house-modules/temple-house/temple-house-house-module.ts[22m
+[2m14:26:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/scenario/scenario-pack-loader.ts[22m
+[2m14:26:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/content/content-pack-loader.ts[22m
+[2m14:26:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/domain/map.ts[22m
+[2m14:26:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
+[2m14:26:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/app-render.ts[22m
+[2m14:26:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/city/city-view.ts[22m
+[2m14:26:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/house/grain-shop-house-view.ts[22m
+[2m14:26:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/map/campaign-cloud-webgl.ts[22m
+[2m14:26:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/map/shaders/campaign-terrain.frag.glsl[22m
+[2m14:26:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/scene/scene-view.ts[22m
+[2m14:26:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/assets/yuanmo-map/campaign-rock-texture.png[22m
+[2m14:26:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/assets/yuanmo-map/campaign-snow-texture.png[22m
+[2m14:26:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/main.ts[22m
+[2m14:26:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/domain/map.ts[22m
+[2m14:26:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
+[2m14:26:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
+[2m14:26:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/app-render.ts[22m
+[2m14:26:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/city/city-view.ts[22m
+[2m14:26:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/house/grain-shop-house-view.ts[22m
+[2m14:26:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/house/home-house-view.ts[22m
+[2m14:26:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/house/house-shared-view.ts[22m
+[2m14:26:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/house/market-house-view.ts[22m
+[2m14:26:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/house/medicine-house-house-view.ts[22m
+[2m14:26:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/house/tavern-house-view.ts[22m
+[2m14:26:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/house/temple-house-view.ts[22m
+[2m14:26:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/map/campaign-cloud-webgl.ts[22m
+[2m14:26:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/map/campaign-terrain-webgl.ts[22m
+[2m14:26:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/map/map-view.ts[22m
+[2m14:26:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/map/shaders/campaign-terrain.frag.glsl[22m
+[2m14:26:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/scene/scene-view.ts[22m
+[2m14:26:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/background/upload_1784207698799091496 (1).png[22m
+[2m14:26:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/20260715-120754.png[22m
+[2m14:26:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/评定/20260716-144720.png[22m
+[2m14:26:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/评定/20260716-161057.png[22m
+[2m14:26:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/菱形格子/2.png[22m
+[2m14:26:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/菱形格子/20260716-111958.png[22m
+[2m14:26:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/菱形格子/20260716-141239.png[22m
+[2m14:26:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/菱形格子/chaguan.png[22m
+[2m14:26:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/菱形格子/huangjuesi.png[22m
+[2m14:26:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/菱形格子/huozhai.png[22m
+[2m14:26:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/菱形格子/jianglingfudi.png[22m
+[2m14:26:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/菱形格子/jiuguan.png[22m
+[2m14:26:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/菱形格子/liangpu.png[22m
+[2m14:26:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/菱形格子/shuaifu.png[22m
+[2m14:26:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/菱形格子/yaopu.png[22m
+[2m14:26:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/菱形格子/下载 (3).png[22m
+[2m14:26:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/菱形格子/下载.png[22m
+[2m14:34:49[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/background/upload_1784207698799091496 (1).png[22m
+[2m14:34:49[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/background/upload_1784207698799091496 (1).png[22m
+[2m14:38:14[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
+[2m14:43:55[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
+[2m15:31:15[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/菱形格子/1.png[22m
+[2m15:31:15[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/菱形格子/下载 (3).png[22m
+[2m15:31:21[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/菱形格子/3.png[22m
+[2m15:31:21[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/菱形格子/下载.png[22m
+[2m15:38:44[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/菱形格子/kezhan.png[22m
+[2m15:38:44[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/菱形格子/jiuguan.png[22m
+[2m16:16:47[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/菱形格子/shuaifu.png[22m
+[2m16:16:47[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/菱形格子/shuaifu.png[22m
+[2m16:35:44[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/city/city-view.ts[22m
+[2m16:35:44[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/city/city-view.ts[22m
+[2m16:36:01[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
+[2m16:41:24[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/菱形格子/1.png[22m
+[2m16:41:24[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/菱形格子/3.png[22m
+[2m16:41:24[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/菱形格子/kezhan.png[22m
+[2m16:41:24[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
+[2m16:41:24[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/city/city-view.ts[22m
+[2m16:41:24[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/background/upload_1784207698799091496 (1).png[22m
+[2m16:41:24[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/菱形格子/shuaifu.png[22m
+[2m16:41:24[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/菱形格子/jiuguan.png[22m
+[2m16:41:24[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/菱形格子/下载 (3).png[22m
+[2m16:41:24[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/菱形格子/下载.png[22m
+[2m16:41:25[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/house/house-primary-actor-roster.ts[22m
+[2m16:41:25[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/npc-interaction/npc-interaction.ts[22m
+[2m16:41:25[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/assets/yuanmo-map/campaign-rock-texture.png[22m
+[2m16:41:25[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/domain/battle-ui-editor.ts[22m
+[2m16:41:25[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
+[2m16:41:25[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/assets/yuanmo-map/campaign-snow-texture.png[22m
+[2m16:41:25[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/domain/npc-interaction.ts[22m
+[2m16:41:25[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
+[2m16:41:25[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/components/npc-interaction/npc-interaction-menu.ts[22m
+[2m16:41:25[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/map/shaders/campaign-vegetation-shadow.frag.glsl[22m
+[2m16:41:25[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战斗/archer_airbreak_effect_v2.png[22m
+[2m16:41:25[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/content/content-pack-loader.ts[22m
+[2m16:41:25[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/house-modules/grain-shop/grain-shop-house-module.ts[22m
+[2m16:41:25[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/house-modules/leader-residence/leader-residence-house-module.ts[22m
+[2m16:41:25[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/house-modules/market-house/market-house-house-module.ts[22m
+[2m16:41:25[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/house-modules/medicine-house/medicine-house-house-module.ts[22m
+[2m16:41:25[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/house-modules/tavern/tavern-house-module.ts[22m
+[2m16:41:25[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/house-modules/tea-house/tea-house-house-module.ts[22m
+[2m16:41:25[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/house-modules/temple-house/temple-house-house-module.ts[22m
+[2m16:41:25[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/layout-editor/layout-editor-actions.ts[22m
+[2m16:41:25[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/scenario/scenario-pack-loader.ts[22m
+[2m16:41:25[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/state/create-initial-state.ts[22m
+[2m16:41:25[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/content/layout-editor-presets.ts[22m
+[2m16:41:25[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/core/runtime/house-runtime.ts[22m
+[2m16:41:25[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
+[2m16:41:25[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/tools/layout-editor-view.ts[22m
+[2m16:41:25[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/house/house-shared-view.ts[22m
+[2m16:41:25[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
+[2m16:41:25[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/map/shaders/campaign-terrain.frag.glsl[22m
+[2m16:41:25[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/app-render.ts[22m
+[2m16:41:25[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/map/campaign-cloud-webgl.ts[22m
+[2m16:41:25[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/map/campaign-terrain-webgl.ts[22m
+[2m16:41:25[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/map/map-view.ts[22m
+[2m16:41:25[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/main.ts[22m
+[2m16:41:25[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/app-actions.ts[22m
+[2m16:41:25[22m [36m[1m[vite][22m[39m [32mvite.config.ts changed, restarting server...[39m
+[2m16:41:25[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mtools/spine-node-timeline-editor.html[22m
+[2m16:41:25[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/domain/global-ui.ts[22m
+[2m16:41:25[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/domain/house-module.ts[22m
+[2m16:41:25[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/domain/map.ts[22m
+[2m16:41:25[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/domain/ui-layout.ts[22m
+[2m16:41:25[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/map/shaders/campaign-vegetation-shadow.vert.glsl[22m
+[2m16:41:25[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/map/shaders/campaign-vegetation.frag.glsl[22m
+[2m16:41:25[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/map/shaders/campaign-vegetation.vert.glsl[22m
+[2m16:41:25[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战斗/archer_arrow_flat_effect.png[22m
+[2m16:41:25[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战斗/archer_arrow_path_effect.png[22m
+[2m16:41:25[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战斗/archer_hit_effect.png[22m
+[2m16:41:25[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战斗/archer_hit_effect_flight.png[22m
+[2m16:41:25[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战斗/archer_hit_effect_stage1.png[22m
+[2m16:41:25[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战斗/archer_hit_effect_stage1_v2.png[22m
+[2m16:41:25[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战斗/archer_hit_effect_stage2.png[22m
+[2m16:41:25[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战斗/archer_hit_effect_stage2_v2.png[22m
+[2m16:41:25[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战斗/archer_trail_effect.png[22m
+[2m16:41:25[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/house-modules/market-house/market-house-session-state.ts[22m
+[2m16:41:25[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/layout-editor/layout-editor-target-registry.ts[22m
+[2m16:41:25[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
+[2m16:41:25[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
+[2m16:41:25[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/house/keep-house-view.ts[22m
+[2m16:41:25[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/house/temple-house-view.ts[22m
+[2m16:41:26[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mprototypes/battle-demo/index.html[22m
+[2m16:41:26[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/app-actions.ts[22m
+[2m16:41:26[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/content/content-pack-loader.ts[22m
+[2m16:41:26[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/house-modules/grain-shop/grain-shop-house-module.ts[22m
+[2m16:41:26[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/house-modules/leader-residence/leader-residence-house-module.ts[22m
+[2m16:41:26[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/house-modules/market-house/market-house-house-module.ts[22m
+[2m16:41:26[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/house-modules/medicine-house/medicine-house-house-module.ts[22m
+[2m16:41:26[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/house-modules/tavern/tavern-house-module.ts[22m
+[2m16:41:26[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/house-modules/tea-house/tea-house-house-module.ts[22m
+[2m16:41:26[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/house-modules/temple-house/temple-house-house-module.ts[22m
+[2m16:41:26[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/layout-editor/layout-editor-actions.ts[22m
+[2m16:41:26[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/scenario/scenario-pack-loader.ts[22m
+[2m16:41:26[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/state/create-initial-state.ts[22m
+[2m16:41:26[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/content/layout-editor-presets.ts[22m
+[2m16:41:26[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/core/runtime/house-runtime.ts[22m
+[2m16:41:26[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
+[2m16:41:26[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/app-render.ts[22m
+[2m16:41:26[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/tools/layout-editor-view.ts[22m
+[2m16:41:26[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/house/house-shared-view.ts[22m
+[2m16:41:26[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/map/campaign-cloud-webgl.ts[22m
+[2m16:41:26[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/map/shaders/campaign-terrain.frag.glsl[22m
+[2m16:41:26[22m [36m[1m[vite][22m[39m [32mvite.config.ts changed, restarting server...[39m
+[2m16:41:26[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
+[2m16:41:26[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/main.ts[22m
+[2m16:41:26[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/house-modules/market-house/market-house-session-state.ts[22m
+[2m16:41:26[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/layout-editor/layout-editor-target-registry.ts[22m
+[2m16:41:26[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/domain/global-ui.ts[22m
+[2m16:41:26[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/domain/house-module.ts[22m
+[2m16:41:26[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/domain/map.ts[22m
+[2m16:41:26[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/domain/ui-layout.ts[22m
+[2m16:41:26[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
+[2m16:41:26[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
+[2m16:41:26[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
+[2m16:41:26[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
+[2m16:41:26[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/app-render.ts[22m
+[2m16:41:26[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/tools/layout-editor-view.ts[22m
+[2m16:41:26[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/house/house-shared-view.ts[22m
+[2m16:41:26[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/house/keep-house-view.ts[22m
+[2m16:41:26[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/house/temple-house-view.ts[22m
+[2m16:41:26[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/map/campaign-cloud-webgl.ts[22m
+[2m16:41:26[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/map/campaign-terrain-webgl.ts[22m
+[2m16:41:26[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/map/map-view.ts[22m
+[2m16:41:26[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/map/shaders/campaign-terrain.frag.glsl[22m
+[2m16:41:26[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mtools/spine-node-timeline-editor.html[22m
+[2m16:41:26[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/house/house-primary-actor-roster.ts[22m
+[2m16:41:26[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/assets/yuanmo-map/campaign-rock-texture.png[22m
+[2m16:41:26[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/assets/yuanmo-map/campaign-snow-texture.png[22m
+[2m16:41:26[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/domain/battle-ui-editor.ts[22m
+[2m16:41:26[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/domain/npc-interaction.ts[22m
+[2m16:41:26[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/map/shaders/campaign-vegetation-shadow.frag.glsl[22m
+[2m16:41:26[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/map/shaders/campaign-vegetation-shadow.vert.glsl[22m
+[2m16:41:26[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/map/shaders/campaign-vegetation.frag.glsl[22m
+[2m16:41:26[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/map/shaders/campaign-vegetation.vert.glsl[22m
+[2m16:41:26[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战斗/archer_airbreak_effect_v2.png[22m
+[2m16:41:26[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战斗/archer_arrow_flat_effect.png[22m
+[2m16:41:26[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战斗/archer_arrow_path_effect.png[22m
+[2m16:41:26[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战斗/archer_hit_effect.png[22m
+[2m16:41:26[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战斗/archer_hit_effect_flight.png[22m
+[2m16:41:26[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战斗/archer_hit_effect_stage1.png[22m
+[2m16:41:26[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战斗/archer_hit_effect_stage1_v2.png[22m
+[2m16:41:26[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战斗/archer_hit_effect_stage2.png[22m
+[2m16:41:26[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战斗/archer_hit_effect_stage2_v2.png[22m
+[2m16:41:26[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/battle/战斗/archer_trail_effect.png[22m
+[2m16:41:28[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/npc-interaction/npc-interaction.ts[22m
+[2m16:41:28[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/components/npc-interaction/npc-interaction-menu.ts[22m
+[2m16:41:28[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/菱形格子/1.png[22m
+[2m16:41:28[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/菱形格子/3.png[22m
+[2m16:41:28[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/菱形格子/kezhan.png[22m
+[2m16:41:30[22m [36m[1m[vite][22m[39m server restarted.
+[2m16:43:04[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
+[2m16:43:04[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/city/city-view.ts[22m
+[2m16:43:04[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/background/upload_1784207698799091496 (1).png[22m
+[2m16:43:04[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
+[2m16:43:04[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/菱形格子/shuaifu.png[22m
+[2m16:43:04[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/菱形格子/jiuguan.png[22m
+[2m16:43:04[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/菱形格子/下载 (3).png[22m
+[2m16:43:04[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/菱形格子/下载.png[22m
+[2m16:49:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/city/city-view.ts[22m
+[2m16:49:41[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/city/city-view.ts[22m
+[2m16:49:55[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
+[2m17:05:35[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/city/city-view.ts[22m
+[2m17:05:48[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/city/city-view.ts[22m
+[2m17:05:58[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
+[2m17:14:02[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/city/city-view.ts[22m
+[2m17:14:18[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
+[2m17:14:31[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/main.ts[22m
+[2m17:31:46[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/city/city-view.ts[22m
+[2m17:32:11[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/city/city-view.ts[22m
+[2m17:32:36[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
+[2m17:32:48[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/main.ts[22m
+[2m17:33:01[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/main.ts[22m
+[2m17:33:12[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/main.ts[22m
+[2m17:40:53[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/city/city-view.ts[22m
+[2m17:41:05[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
+[2m17:57:43[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/city/city-view.ts[22m
+[2m17:57:43[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/city/city-view.ts[22m
+[2m17:58:35[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/city/city-view.ts[22m
+[2m17:58:54[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/city/city-view.ts[22m
+[2m17:59:19[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/city/city-view.ts[22m
+[2m17:59:57[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/city/city-view.ts[22m
+[2m18:01:22[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/city/city-view.ts[22m
+[2m19:11:17[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/菱形格子/grass.png[22m
+[2m19:50:10[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/菱形格子/grass2.png[22m
+[2m20:00:31[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/city/city-view.ts[22m
+[2m20:00:57[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/city/city-view.ts[22m
+[2m20:01:15[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/city/city-view.ts[22m
+[2m20:01:45[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
+[2m20:03:36[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/city/city-view.ts[22m
+[2m20:31:39[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/city/city-view.ts[22m
+[2m20:31:39[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/city/city-view.ts[22m
+[2m20:32:15[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/city/city-view.ts[22m
+[2m20:32:32[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/city/city-view.ts[22m
+[2m20:33:10[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/city/city-view.ts[22m
+[2m20:33:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
+[2m20:35:19[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/city/city-view.ts[22m
+[2m20:52:05[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/city/city-view.ts[22m
+[2m20:52:05[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/city/city-view.ts[22m
+[2m20:52:58[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/city/city-view.ts[22m
+[2m21:10:24[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/city/city-view.ts[22m
+[2m21:10:24[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/city/city-view.ts[22m
+[2m21:10:40[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/city/city-view.ts[22m
+[2m21:10:52[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/city/city-view.ts[22m
+[2m21:11:07[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/city/city-view.ts[22m
+[2m10:29:53[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/菱形格子/jianglingfudi.png[22m
+[2m10:29:53[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/yuansu/菱形格子/jianglingfudi.png[22m
+[2m11:07:26[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mtools/city-map-building-editor/index.html[22m
+[2m11:07:51[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mtools/city-map-building-editor/index.html[22m
+[2m11:09:26[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mtools/city-map-building-editor/index.html[22m
+[2m11:11:59[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/弹球ui/下载 (3).png[22m
+[2m11:12:19[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/弹球ui/下载.png[22m
+[2m11:14:11[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/弹球ui/下载 (1).png[22m
+[2m11:15:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/弹球ui/下载 (2).png[22m
+[2m11:25:30[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/弹球ui/下载 (1) - 副本.png[22m
+[2m11:25:30[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/弹球ui/下载 (2) - 副本.png[22m
+[2m11:25:30[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/弹球ui/下载 (3) - 副本.png[22m
+[2m11:25:30[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/弹球ui/下载 - 副本.png[22m
+[2m11:25:41[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/弹球ui/下载 (1) - 副本.png[22m
+[2m11:25:41[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/弹球ui/下载 (2) - 副本.png[22m
+[2m11:25:41[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/弹球ui/下载 (3) - 副本.png[22m
+[2m11:25:41[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/弹球ui/下载 - 副本.png[22m
+[2m11:37:35[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mtools/city-map-building-editor/index.html[22m
+[2m11:37:59[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mtools/city-map-building-editor/index.html[22m
+[2m11:38:36[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mtools/city-map-building-editor/index.html[22m
+[2m11:41:27[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mtools/city-map-building-editor/index.html[22m
+[2m11:42:44[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mtools/city-map-building-editor/index.html[22m
+[2m11:50:00[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mtools/city-map-building-editor/index.html[22m
+[2m14:47:51[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/弹球ui/下载 (4).png[22m
+[2m14:52:50[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mtools/city-map-building-editor/index.html[22m
+[2m14:53:26[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mtools/city-map-building-editor/index.html[22m
+[2m14:53:44[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mtools/city-map-building-editor/index.html[22m
+[2m14:53:57[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mtools/city-map-building-editor/index.html[22m
+[2m14:54:09[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mtools/city-map-building-editor/index.html[22m
+[2m14:54:21[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mtools/city-map-building-editor/index.html[22m
+[2m14:54:32[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mtools/city-map-building-editor/index.html[22m
+[2m14:54:41[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mtools/city-map-building-editor/index.html[22m
+[2m14:54:57[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mtools/city-map-building-editor/index.html[22m
+[2m14:55:21[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mtools/city-map-building-editor/index.html[22m
+[2m14:55:40[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mtools/city-map-building-editor/index.html[22m
+[2m14:56:00[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mtools/city-map-building-editor/index.html[22m
+[2m14:56:13[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mtools/city-map-building-editor/index.html[22m
+[2m14:56:35[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mtools/city-map-building-editor/index.html[22m
+[2m14:57:04[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mtools/city-map-building-editor/index.html[22m
+[2m14:57:17[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mtools/city-map-building-editor/index.html[22m
+[2m14:57:44[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mtools/city-map-building-editor/index.html[22m
+[2m14:57:55[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mtools/city-map-building-editor/index.html[22m
+[2m14:58:10[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mtools/city-map-building-editor/index.html[22m
+[2m14:58:26[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mtools/city-map-building-editor/index.html[22m
+[2m14:58:37[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mtools/city-map-building-editor/index.html[22m
+[2m15:00:16[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mtools/city-map-building-editor/index.html[22m
+[2m15:01:13[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/弹球ui/下载 (5).png[22m
+[2m15:01:44[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/弹球ui/下载 (5).png[22m
+[2m15:03:31[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mtools/city-map-building-editor/index.html[22m
+[2m15:03:48[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mtools/city-map-building-editor/index.html[22m
+[2m15:04:01[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mtools/city-map-building-editor/index.html[22m
+[2m15:04:05[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/弹球ui/下载 (5).png[22m
+[2m15:04:05[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/弹球ui/下载 (5).png[22m
+[2m15:05:01[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mtools/city-map-building-editor/index.html[22m
+[2m15:05:04[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/弹球ui/下载 (6).png[22m
+[2m15:05:15[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mtools/city-map-building-editor/index.html[22m
+[2m15:06:29[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/弹球ui/upload_1784515826005478143.png[22m
+[2m15:11:21[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
+[2m15:11:21[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
+[2m15:11:43[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
+[2m15:23:51[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/弹球ui/20260720-152342.png[22m
+[2m15:43:30[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/弹球ui/20260720-154326.png[22m
+[2m15:43:36[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/弹球ui/下载.png[22m
+[2m15:44:22[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/弹球ui/下载.png[22m
+[2m15:48:58[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
+[2m15:51:50[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/弹球ui/8664a909-e2e3-4458-866b-f369eb1687d6.jpeg[22m
+[2m16:00:12[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/弹球ui/20260720-154326-board-crop.png[22m
+[2m16:01:27[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
+[2m16:15:13[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
+[2m16:15:13[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
+[2m16:15:30[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/弹球ui/20260720-154326-board-crop.png[22m
+[2m16:30:35[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
+[2m16:30:35[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
+[2m16:30:54[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/activity/activity-qte-runtime.ts[22m
+[2m16:31:22[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/activity/activity-qte-runtime.ts[22m
+[2m16:31:22[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/activity/activity-qte-runtime.ts[22m
+[2m16:44:18[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/弹球ui/下载 (1).png[22m
+[2m16:44:20[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/弹球ui/下载 (2).png[22m
+[2m16:56:48[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/弹球ui/20260720-154326-frame.png[22m
+[2m16:57:05[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
+[2m17:05:17[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
+[2m17:05:17[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
+[2m17:15:24[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
+[2m17:22:46[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
+[2m17:22:46[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
+[2m17:24:53[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
+[2m17:39:48[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/弹球ui/20260720-154326.png[22m
+[2m17:41:29[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/弹球ui/20260720-154326.png[22m
+[2m17:41:29[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/弹球ui/20260720-154326.png[22m
+[2m17:41:41[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/弹球ui/下载 (3).png[22m
+[2m17:42:08[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/弹球ui/20260720-154326-frame.png[22m
+[2m17:44:13[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mui/弹球ui/20260720-154326-frame.png[22m
+[2m18:59:32[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
+[2m18:59:32[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
+[2m19:06:32[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/house/temple-house-view.ts[22m
+[2m19:06:33[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/house/temple-house-view.ts[22m
+[2m19:06:49[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/scene/scene-view.ts[22m
+[2m19:19:03[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mtools/city-map-building-editor/index.html[22m
+[2m19:19:22[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mtools/city-map-building-editor/index.html[22m
+[2m19:19:37[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mtools/city-map-building-editor/index.html[22m
+[2m19:19:46[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mtools/city-map-building-editor/index.html[22m
+[2m19:19:55[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mtools/city-map-building-editor/index.html[22m
+[2m19:20:04[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mtools/city-map-building-editor/index.html[22m
+[2m19:20:19[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mtools/city-map-building-editor/index.html[22m
+[2m19:20:48[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mtools/city-map-building-editor/index.html[22m
+[2m19:21:10[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mtools/city-map-building-editor/index.html[22m
+[2m19:21:29[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mtools/city-map-building-editor/index.html[22m
+[2m19:21:58[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mtools/city-map-building-editor/index.html[22m
+[2m19:22:08[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mtools/city-map-building-editor/index.html[22m
+[2m19:22:20[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mtools/city-map-building-editor/index.html[22m
+[2m19:22:28[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mtools/city-map-building-editor/index.html[22m
+[2m19:22:44[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mtools/city-map-building-editor/index.html[22m
+[2m19:23:05[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mtools/city-map-building-editor/index.html[22m
+[2m19:23:13[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mtools/city-map-building-editor/index.html[22m
+[2m19:23:26[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mtools/city-map-building-editor/index.html[22m
+[2m19:23:36[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mtools/city-map-building-editor/index.html[22m
+[2m19:23:45[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mtools/city-map-building-editor/index.html[22m
+[2m19:23:56[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mtools/city-map-building-editor/index.html[22m
+[2m19:24:10[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mtools/city-map-building-editor/index.html[22m
+[2m19:24:25[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mtools/city-map-building-editor/index.html[22m
+[2m19:24:38[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mtools/city-map-building-editor/index.html[22m
+[2m19:25:11[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mtools/city-map-building-editor/index.html[22m
+[2m19:25:40[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mtools/city-map-building-editor/index.html[22m
+[2m19:28:16[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mtools/city-map-building-editor/index.html[22m
+[2m19:31:38[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mtools/city-map-building-editor/index.html[22m
+[2m19:32:55[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mtools/city-map-building-editor/index.html[22m
+[2m19:34:21[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mtools/city-map-building-editor/index.html[22m
+[2m19:34:48[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mtools/city-map-building-editor/index.html[22m

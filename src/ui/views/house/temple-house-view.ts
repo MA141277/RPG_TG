@@ -298,7 +298,6 @@ function renderPachinkoBoardOverlay(
     <div class="c-grain-shop-overlay" data-house-overlay="pachinko-board">
       <div class="c-grain-shop-modal c-grain-shop-modal--game c-grain-shop-skin-panel c-temple-house-modal c-pachinko-board" role="dialog" aria-modal="true">
         <div class="c-temple-house-qte__header">
-          <h3 class="c-grain-shop-modal__title c-grain-shop-nameplate">${overlay.title}</h3>
           <p class="c-temple-house-qte__task">${overlay.taskLabel}</p>
           <p class="c-temple-house-qte__meta">剩余 ${overlay.remainingBalls} / ${overlay.totalBalls} 枚 · 分数 ${overlay.score} · 穿门 ${overlay.gatePassCount} 次</p>
         </div>

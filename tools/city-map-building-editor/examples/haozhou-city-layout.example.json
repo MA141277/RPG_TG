@@ -1,0 +1,1070 @@
+{
+  "version": 1,
+  "map": {
+    "id": "haozhou-city",
+    "name": "濠州城",
+    "stageWidth": 2048,
+    "stageHeight": 1152,
+    "baseSpace": {
+      "x": 139,
+      "y": 88,
+      "width": 1771,
+      "height": 976
+    },
+    "backgroundImage": "ui/yuansu/菱形格子/20260716-111958.png",
+    "foregroundImage": "ui/yuansu/菱形格子/20260716-141239.png",
+    "forbiddenPolygons": [
+      {
+        "id": "front-wall-occlusion",
+        "name": "前景城墙遮挡区",
+        "points": [
+          {
+            "x": 120,
+            "y": 690
+          },
+          {
+            "x": 430,
+            "y": 795
+          },
+          {
+            "x": 760,
+            "y": 850
+          },
+          {
+            "x": 1110,
+            "y": 845
+          },
+          {
+            "x": 1465,
+            "y": 725
+          },
+          {
+            "x": 1625,
+            "y": 770
+          },
+          {
+            "x": 1240,
+            "y": 940
+          },
+          {
+            "x": 560,
+            "y": 932
+          }
+        ]
+      }
+    ],
+    "optionalBuildableMask": [
+      {
+        "x": 650,
+        "y": 302
+      },
+      {
+        "x": 1138,
+        "y": 300
+      },
+      {
+        "x": 1465,
+        "y": 490
+      },
+      {
+        "x": 1462,
+        "y": 582
+      },
+      {
+        "x": 1182,
+        "y": 744
+      },
+      {
+        "x": 720,
+        "y": 748
+      },
+      {
+        "x": 365,
+        "y": 590
+      },
+      {
+        "x": 358,
+        "y": 512
+      }
+    ]
+  },
+  "grid": {
+    "type": "isometric-board",
+    "cols": 20,
+    "rows": 20,
+    "cellWidth": 80,
+    "cellHeight": 40,
+    "originX": 885,
+    "originY": 220,
+    "snap": true,
+    "visible": true,
+    "showCoordinates": true,
+    "showOutline": true
+  },
+  "entities": [
+    {
+      "id": "keep",
+      "name": "帅府",
+      "category": "special",
+      "entry": {
+        "type": "house",
+        "houseId": "house.kulan.keep"
+      },
+      "asset": {
+        "image": "ui/yuansu/菱形格子/shuaifu.png",
+        "naturalWidth": 1333,
+        "naturalHeight": 710,
+        "scale": 0.24,
+        "offsetX": 0,
+        "offsetY": 0,
+        "anchor": "bottom-center"
+      },
+      "lot": {
+        "x": 1025,
+        "y": 600,
+        "cols": 4,
+        "rows": 3,
+        "footprintWidth": 320,
+        "footprintHeight": 120,
+        "gridX": 8,
+        "gridY": 5,
+        "offsetX": 0,
+        "offsetY": 0
+      },
+      "render": {
+        "zIndexMode": "y-sort",
+        "zIndex": null,
+        "visible": true,
+        "locked": false
+      },
+      "interaction": {
+        "clickable": true,
+        "label": {
+          "text": "帅府",
+          "offsetX": 0,
+          "offsetY": -162,
+          "width": 120,
+          "height": 40
+        },
+        "hitArea": {
+          "type": "ellipse",
+          "offsetX": 0,
+          "offsetY": -8,
+          "width": 148,
+          "height": 60
+        }
+      }
+    },
+    {
+      "id": "leader-residence",
+      "name": "将领府邸",
+      "category": "special",
+      "entry": {
+        "type": "city-entry",
+        "cityEntryId": "city-entry.kulan.leader-residence"
+      },
+      "asset": {
+        "image": "ui/yuansu/菱形格子/jianglingfudi.png",
+        "naturalWidth": 1294,
+        "naturalHeight": 695,
+        "scale": 0.24,
+        "offsetX": 0,
+        "offsetY": 0,
+        "anchor": "bottom-center"
+      },
+      "lot": {
+        "x": 785,
+        "y": 520,
+        "cols": 4,
+        "rows": 3,
+        "footprintWidth": 320,
+        "footprintHeight": 120,
+        "gridX": 3,
+        "gridY": 6,
+        "offsetX": 0,
+        "offsetY": 0
+      },
+      "render": {
+        "zIndexMode": "y-sort",
+        "zIndex": null,
+        "visible": true,
+        "locked": false
+      },
+      "interaction": {
+        "clickable": true,
+        "label": {
+          "text": "将领府邸",
+          "offsetX": -6,
+          "offsetY": -158,
+          "width": 120,
+          "height": 48
+        },
+        "hitArea": {
+          "type": "ellipse",
+          "offsetX": 0,
+          "offsetY": -8,
+          "width": 132,
+          "height": 56
+        }
+      }
+    },
+    {
+      "id": "temple",
+      "name": "皇觉寺",
+      "category": "special",
+      "entry": {
+        "type": "house",
+        "houseId": "house.kulan.temple"
+      },
+      "asset": {
+        "image": "ui/yuansu/菱形格子/huangjuesi.png",
+        "naturalWidth": 1066,
+        "naturalHeight": 783,
+        "scale": 0.24,
+        "offsetX": 0,
+        "offsetY": 0,
+        "anchor": "bottom-center"
+      },
+      "lot": {
+        "x": 1205,
+        "y": 640,
+        "cols": 2,
+        "rows": 2,
+        "footprintWidth": 160,
+        "footprintHeight": 80,
+        "gridX": 13,
+        "gridY": 5,
+        "offsetX": 0,
+        "offsetY": 0
+      },
+      "render": {
+        "zIndexMode": "y-sort",
+        "zIndex": null,
+        "visible": true,
+        "locked": false
+      },
+      "interaction": {
+        "clickable": true,
+        "label": {
+          "text": "皇觉寺",
+          "offsetX": 4,
+          "offsetY": -168,
+          "width": 120,
+          "height": 40
+        },
+        "hitArea": {
+          "type": "ellipse",
+          "offsetX": 0,
+          "offsetY": -8,
+          "width": 128,
+          "height": 56
+        }
+      }
+    },
+    {
+      "id": "market",
+      "name": "货栈",
+      "category": "special",
+      "entry": {
+        "type": "house",
+        "houseId": "house.kulan.market"
+      },
+      "asset": {
+        "image": "ui/yuansu/菱形格子/huozhai.png",
+        "naturalWidth": 975,
+        "naturalHeight": 722,
+        "scale": 0.24,
+        "offsetX": 0,
+        "offsetY": 0,
+        "anchor": "bottom-center"
+      },
+      "lot": {
+        "x": 565,
+        "y": 520,
+        "cols": 2,
+        "rows": 2,
+        "footprintWidth": 160,
+        "footprintHeight": 80,
+        "gridX": 2,
+        "gridY": 10,
+        "offsetX": 0,
+        "offsetY": 0
+      },
+      "render": {
+        "zIndexMode": "y-sort",
+        "zIndex": null,
+        "visible": true,
+        "locked": false
+      },
+      "interaction": {
+        "clickable": true,
+        "label": {
+          "text": "货栈",
+          "offsetX": -4,
+          "offsetY": -158,
+          "width": 120,
+          "height": 40
+        },
+        "hitArea": {
+          "type": "ellipse",
+          "offsetX": 0,
+          "offsetY": -8,
+          "width": 118,
+          "height": 52
+        }
+      }
+    },
+    {
+      "id": "tea-house",
+      "name": "茶馆",
+      "category": "special",
+      "entry": {
+        "type": "house",
+        "houseId": "house.kulan.tea_house"
+      },
+      "asset": {
+        "image": "ui/yuansu/菱形格子/chaguan.png",
+        "naturalWidth": 1003,
+        "naturalHeight": 770,
+        "scale": 0.24,
+        "offsetX": 0,
+        "offsetY": 0,
+        "anchor": "bottom-center"
+      },
+      "lot": {
+        "x": 765,
+        "y": 620,
+        "cols": 2,
+        "rows": 2,
+        "footprintWidth": 160,
+        "footprintHeight": 80,
+        "gridX": 7,
+        "gridY": 10,
+        "offsetX": 0,
+        "offsetY": 0
+      },
+      "render": {
+        "zIndexMode": "y-sort",
+        "zIndex": null,
+        "visible": true,
+        "locked": false
+      },
+      "interaction": {
+        "clickable": true,
+        "label": {
+          "text": "茶馆",
+          "offsetX": 0,
+          "offsetY": -162,
+          "width": 120,
+          "height": 40
+        },
+        "hitArea": {
+          "type": "ellipse",
+          "offsetX": 0,
+          "offsetY": -8,
+          "width": 120,
+          "height": 52
+        }
+      }
+    },
+    {
+      "id": "grain-shop",
+      "name": "粮铺",
+      "category": "special",
+      "entry": {
+        "type": "house",
+        "houseId": "house.kulan.grain_shop"
+      },
+      "asset": {
+        "image": "ui/yuansu/菱形格子/liangpu.png",
+        "naturalWidth": 1054,
+        "naturalHeight": 804,
+        "scale": 0.24,
+        "offsetX": 0,
+        "offsetY": 0,
+        "anchor": "bottom-center"
+      },
+      "lot": {
+        "x": 925,
+        "y": 660,
+        "cols": 2,
+        "rows": 2,
+        "footprintWidth": 160,
+        "footprintHeight": 80,
+        "gridX": 10,
+        "gridY": 9,
+        "offsetX": 0,
+        "offsetY": 0
+      },
+      "render": {
+        "zIndexMode": "y-sort",
+        "zIndex": null,
+        "visible": true,
+        "locked": false
+      },
+      "interaction": {
+        "clickable": true,
+        "label": {
+          "text": "粮铺",
+          "offsetX": 0,
+          "offsetY": -166,
+          "width": 120,
+          "height": 40
+        },
+        "hitArea": {
+          "type": "ellipse",
+          "offsetX": 0,
+          "offsetY": -8,
+          "width": 124,
+          "height": 54
+        }
+      }
+    },
+    {
+      "id": "medicine-house",
+      "name": "药铺",
+      "category": "special",
+      "entry": {
+        "type": "house",
+        "houseId": "house.kulan.medicine_house"
+      },
+      "asset": {
+        "image": "ui/yuansu/菱形格子/yaopu.png",
+        "naturalWidth": 1068,
+        "naturalHeight": 710,
+        "scale": 0.24,
+        "offsetX": 0,
+        "offsetY": 0,
+        "anchor": "bottom-center"
+      },
+      "lot": {
+        "x": 885,
+        "y": 760,
+        "cols": 2,
+        "rows": 2,
+        "footprintWidth": 160,
+        "footprintHeight": 80,
+        "gridX": 12,
+        "gridY": 12,
+        "offsetX": 0,
+        "offsetY": 0
+      },
+      "render": {
+        "zIndexMode": "y-sort",
+        "zIndex": null,
+        "visible": true,
+        "locked": false
+      },
+      "interaction": {
+        "clickable": true,
+        "label": {
+          "text": "药铺",
+          "offsetX": 4,
+          "offsetY": -158,
+          "width": 120,
+          "height": 40
+        },
+        "hitArea": {
+          "type": "ellipse",
+          "offsetX": 0,
+          "offsetY": -8,
+          "width": 122,
+          "height": 52
+        }
+      }
+    },
+    {
+      "id": "inn",
+      "name": "客栈",
+      "category": "special",
+      "entry": {
+        "type": "house",
+        "houseId": "house.kulan.inn"
+      },
+      "asset": {
+        "image": "ui/yuansu/菱形格子/kezhan.png",
+        "naturalWidth": 909,
+        "naturalHeight": 829,
+        "scale": 0.24,
+        "offsetX": 0,
+        "offsetY": 0,
+        "anchor": "bottom-center"
+      },
+      "lot": {
+        "x": 1145,
+        "y": 780,
+        "cols": 3,
+        "rows": 2,
+        "footprintWidth": 240,
+        "footprintHeight": 80,
+        "gridX": 15,
+        "gridY": 9,
+        "offsetX": 0,
+        "offsetY": 0
+      },
+      "render": {
+        "zIndexMode": "y-sort",
+        "zIndex": null,
+        "visible": true,
+        "locked": false
+      },
+      "interaction": {
+        "clickable": true,
+        "label": {
+          "text": "客栈",
+          "offsetX": 8,
+          "offsetY": -174,
+          "width": 120,
+          "height": 40
+        },
+        "hitArea": {
+          "type": "ellipse",
+          "offsetX": 0,
+          "offsetY": -8,
+          "width": 120,
+          "height": 52
+        }
+      }
+    },
+    {
+      "id": "decor-house-01",
+      "name": "民居 01",
+      "category": "house",
+      "entry": {
+        "type": "none"
+      },
+      "asset": {
+        "image": "ui/yuansu/菱形格子/1.png",
+        "naturalWidth": 1065,
+        "naturalHeight": 668,
+        "scale": 0.197,
+        "offsetX": 0,
+        "offsetY": 0,
+        "anchor": "bottom-center"
+      },
+      "lot": {
+        "x": 885,
+        "y": 520,
+        "cols": 1,
+        "rows": 1,
+        "footprintWidth": 80,
+        "footprintHeight": 40,
+        "gridX": 7,
+        "gridY": 7,
+        "offsetX": 0,
+        "offsetY": 0
+      },
+      "render": {
+        "zIndexMode": "y-sort",
+        "zIndex": null,
+        "visible": true,
+        "locked": false
+      },
+      "interaction": {
+        "clickable": false,
+        "label": {
+          "text": "",
+          "offsetX": 0,
+          "offsetY": -118,
+          "width": 96,
+          "height": 32
+        },
+        "hitArea": {
+          "type": "ellipse",
+          "offsetX": 0,
+          "offsetY": -8,
+          "width": 118,
+          "height": 48
+        }
+      }
+    },
+    {
+      "id": "decor-house-02",
+      "name": "民居 02",
+      "category": "house",
+      "entry": {
+        "type": "none"
+      },
+      "asset": {
+        "image": "ui/yuansu/菱形格子/3.png",
+        "naturalWidth": 701,
+        "naturalHeight": 592,
+        "scale": 0.271,
+        "offsetX": 0,
+        "offsetY": 0,
+        "anchor": "bottom-center"
+      },
+      "lot": {
+        "x": 885,
+        "y": 560,
+        "cols": 1,
+        "rows": 1,
+        "footprintWidth": 80,
+        "footprintHeight": 40,
+        "gridX": 8,
+        "gridY": 8,
+        "offsetX": 0,
+        "offsetY": 0
+      },
+      "render": {
+        "zIndexMode": "y-sort",
+        "zIndex": null,
+        "visible": true,
+        "locked": false
+      },
+      "interaction": {
+        "clickable": false,
+        "label": {
+          "text": "",
+          "offsetX": 0,
+          "offsetY": -112,
+          "width": 96,
+          "height": 32
+        },
+        "hitArea": {
+          "type": "ellipse",
+          "offsetX": 0,
+          "offsetY": -8,
+          "width": 112,
+          "height": 46
+        }
+      }
+    },
+    {
+      "id": "decor-house-03",
+      "name": "民居 03",
+      "category": "house",
+      "entry": {
+        "type": "none"
+      },
+      "asset": {
+        "image": "ui/yuansu/菱形格子/2.png",
+        "naturalWidth": 1003,
+        "naturalHeight": 648,
+        "scale": 0.204,
+        "offsetX": 0,
+        "offsetY": 0,
+        "anchor": "bottom-center"
+      },
+      "lot": {
+        "x": 1085,
+        "y": 620,
+        "cols": 1,
+        "rows": 1,
+        "footprintWidth": 80,
+        "footprintHeight": 40,
+        "gridX": 12,
+        "gridY": 7,
+        "offsetX": 0,
+        "offsetY": 0
+      },
+      "render": {
+        "zIndexMode": "y-sort",
+        "zIndex": null,
+        "visible": true,
+        "locked": false
+      },
+      "interaction": {
+        "clickable": false,
+        "label": {
+          "text": "",
+          "offsetX": 0,
+          "offsetY": -116,
+          "width": 96,
+          "height": 32
+        },
+        "hitArea": {
+          "type": "ellipse",
+          "offsetX": 0,
+          "offsetY": -8,
+          "width": 116,
+          "height": 48
+        }
+      }
+    },
+    {
+      "id": "decor-house-04",
+      "name": "民居 04",
+      "category": "house",
+      "entry": {
+        "type": "none"
+      },
+      "asset": {
+        "image": "ui/yuansu/菱形格子/3.png",
+        "naturalWidth": 701,
+        "naturalHeight": 592,
+        "scale": 0.268,
+        "offsetX": 0,
+        "offsetY": 0,
+        "anchor": "bottom-center"
+      },
+      "lot": {
+        "x": 525,
+        "y": 580,
+        "cols": 1,
+        "rows": 1,
+        "footprintWidth": 80,
+        "footprintHeight": 40,
+        "gridX": 4,
+        "gridY": 13,
+        "offsetX": 0,
+        "offsetY": 0
+      },
+      "render": {
+        "zIndexMode": "y-sort",
+        "zIndex": null,
+        "visible": true,
+        "locked": false
+      },
+      "interaction": {
+        "clickable": false,
+        "label": {
+          "text": "",
+          "offsetX": 0,
+          "offsetY": -112,
+          "width": 96,
+          "height": 32
+        },
+        "hitArea": {
+          "type": "ellipse",
+          "offsetX": 0,
+          "offsetY": -8,
+          "width": 112,
+          "height": 46
+        }
+      }
+    },
+    {
+      "id": "decor-house-05",
+      "name": "民居 05",
+      "category": "house",
+      "entry": {
+        "type": "none"
+      },
+      "asset": {
+        "image": "ui/yuansu/菱形格子/1.png",
+        "naturalWidth": 1065,
+        "naturalHeight": 668,
+        "scale": 0.193,
+        "offsetX": 0,
+        "offsetY": 0,
+        "anchor": "bottom-center"
+      },
+      "lot": {
+        "x": 645,
+        "y": 680,
+        "cols": 1,
+        "rows": 1,
+        "footprintWidth": 80,
+        "footprintHeight": 40,
+        "gridX": 8,
+        "gridY": 14,
+        "offsetX": 0,
+        "offsetY": 0
+      },
+      "render": {
+        "zIndexMode": "y-sort",
+        "zIndex": null,
+        "visible": true,
+        "locked": false
+      },
+      "interaction": {
+        "clickable": false,
+        "label": {
+          "text": "",
+          "offsetX": 0,
+          "offsetY": -116,
+          "width": 96,
+          "height": 32
+        },
+        "hitArea": {
+          "type": "ellipse",
+          "offsetX": 0,
+          "offsetY": -8,
+          "width": 116,
+          "height": 48
+        }
+      }
+    },
+    {
+      "id": "decor-house-06",
+      "name": "民居 06",
+      "category": "house",
+      "entry": {
+        "type": "none"
+      },
+      "asset": {
+        "image": "ui/yuansu/菱形格子/2.png",
+        "naturalWidth": 1003,
+        "naturalHeight": 648,
+        "scale": 0.204,
+        "offsetX": 0,
+        "offsetY": 0,
+        "anchor": "bottom-center"
+      },
+      "lot": {
+        "x": 765,
+        "y": 740,
+        "cols": 1,
+        "rows": 1,
+        "footprintWidth": 80,
+        "footprintHeight": 40,
+        "gridX": 11,
+        "gridY": 14,
+        "offsetX": 0,
+        "offsetY": 0
+      },
+      "render": {
+        "zIndexMode": "y-sort",
+        "zIndex": null,
+        "visible": true,
+        "locked": false
+      },
+      "interaction": {
+        "clickable": false,
+        "label": {
+          "text": "",
+          "offsetX": 0,
+          "offsetY": -116,
+          "width": 96,
+          "height": 32
+        },
+        "hitArea": {
+          "type": "ellipse",
+          "offsetX": 0,
+          "offsetY": -8,
+          "width": 116,
+          "height": 48
+        }
+      }
+    },
+    {
+      "id": "decor-house-07",
+      "name": "民居 07",
+      "category": "house",
+      "entry": {
+        "type": "none"
+      },
+      "asset": {
+        "image": "ui/yuansu/菱形格子/3.png",
+        "naturalWidth": 701,
+        "naturalHeight": 592,
+        "scale": 0.268,
+        "offsetX": 0,
+        "offsetY": 0,
+        "anchor": "bottom-center"
+      },
+      "lot": {
+        "x": 1245,
+        "y": 700,
+        "cols": 1,
+        "rows": 1,
+        "footprintWidth": 80,
+        "footprintHeight": 40,
+        "gridX": 16,
+        "gridY": 7,
+        "offsetX": 0,
+        "offsetY": 0
+      },
+      "render": {
+        "zIndexMode": "y-sort",
+        "zIndex": null,
+        "visible": true,
+        "locked": false
+      },
+      "interaction": {
+        "clickable": false,
+        "label": {
+          "text": "",
+          "offsetX": 0,
+          "offsetY": -112,
+          "width": 96,
+          "height": 32
+        },
+        "hitArea": {
+          "type": "ellipse",
+          "offsetX": 0,
+          "offsetY": -8,
+          "width": 112,
+          "height": 46
+        }
+      }
+    },
+    {
+      "id": "grass-01",
+      "name": "草丛 01",
+      "category": "ground-decoration",
+      "entry": {
+        "type": "none"
+      },
+      "asset": {
+        "image": "ui/yuansu/菱形格子/grass.png",
+        "naturalWidth": 1356,
+        "naturalHeight": 726,
+        "scale": 0.184,
+        "offsetX": 0,
+        "offsetY": 0,
+        "anchor": "bottom-center"
+      },
+      "lot": {
+        "x": 845,
+        "y": 540,
+        "cols": 1,
+        "rows": 1,
+        "footprintWidth": 80,
+        "footprintHeight": 40,
+        "gridX": 7,
+        "gridY": 8,
+        "offsetX": 0,
+        "offsetY": 0
+      },
+      "render": {
+        "zIndexMode": "y-sort",
+        "zIndex": null,
+        "visible": true,
+        "locked": false
+      },
+      "interaction": {
+        "clickable": false,
+        "label": {
+          "text": "",
+          "offsetX": 0,
+          "offsetY": -70,
+          "width": 80,
+          "height": 28
+        },
+        "hitArea": {
+          "type": "ellipse",
+          "offsetX": 0,
+          "offsetY": -8,
+          "width": 120,
+          "height": 44
+        }
+      }
+    },
+    {
+      "id": "grass-02",
+      "name": "草丛 02",
+      "category": "ground-decoration",
+      "entry": {
+        "type": "none"
+      },
+      "asset": {
+        "image": "ui/yuansu/菱形格子/grass2.png",
+        "naturalWidth": 1525,
+        "naturalHeight": 718,
+        "scale": 0.177,
+        "offsetX": 0,
+        "offsetY": 0,
+        "anchor": "bottom-center"
+      },
+      "lot": {
+        "x": 1045,
+        "y": 640,
+        "cols": 1,
+        "rows": 1,
+        "footprintWidth": 80,
+        "footprintHeight": 40,
+        "gridX": 12,
+        "gridY": 8,
+        "offsetX": 0,
+        "offsetY": 0
+      },
+      "render": {
+        "zIndexMode": "y-sort",
+        "zIndex": null,
+        "visible": true,
+        "locked": false
+      },
+      "interaction": {
+        "clickable": false,
+        "label": {
+          "text": "",
+          "offsetX": 0,
+          "offsetY": -70,
+          "width": 80,
+          "height": 28
+        },
+        "hitArea": {
+          "type": "ellipse",
+          "offsetX": 0,
+          "offsetY": -8,
+          "width": 120,
+          "height": 44
+        }
+      }
+    },
+    {
+      "id": "grass-03",
+      "name": "草丛 03",
+      "category": "ground-decoration",
+      "entry": {
+        "type": "none"
+      },
+      "asset": {
+        "image": "ui/yuansu/菱形格子/grass.png",
+        "naturalWidth": 1356,
+        "naturalHeight": 726,
+        "scale": 0.181,
+        "offsetX": 0,
+        "offsetY": 0,
+        "anchor": "bottom-center"
+      },
+      "lot": {
+        "x": 645,
+        "y": 720,
+        "cols": 1,
+        "rows": 1,
+        "footprintWidth": 80,
+        "footprintHeight": 40,
+        "gridX": 9,
+        "gridY": 15,
+        "offsetX": 0,
+        "offsetY": 0
+      },
+      "render": {
+        "zIndexMode": "y-sort",
+        "zIndex": null,
+        "visible": true,
+        "locked": false
+      },
+      "interaction": {
+        "clickable": false,
+        "label": {
+          "text": "",
+          "offsetX": 0,
+          "offsetY": -70,
+          "width": 80,
+          "height": 28
+        },
+        "hitArea": {
+          "type": "ellipse",
+          "offsetX": 0,
+          "offsetY": -8,
+          "width": 120,
+          "height": 44
+        }
+      }
+    }
+  ],
+  "randomPools": [
+    {
+      "id": "decor-house-pool-basic",
+      "name": "普通民居池",
+      "candidates": [
+        {
+          "entityTemplateId": "decor-house-01",
+          "weight": 1
+        },
+        {
+          "entityTemplateId": "decor-house-02",
+          "weight": 1
+        },
+        {
+          "entityTemplateId": "decor-house-03",
+          "weight": 1
+        }
+      ]
+    }
+  ]
+}
