@@ -2,6 +2,18 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-20 Campaign Shoreline Distance Field Fallback
+
+### Changed
+- `campaign-terrain-webgl.ts` 修正 CPU shoreline signed-distance texture 的无采样像素写入逻辑：地图内部但未被任何 shoreline edge 覆盖的 texel 不再写成透明无效区域，而是根据所在 Hex 的水陆语义写入远距离陆地/水域 signed distance，并保持 A 通道有效。
+- 默认沙滩视觉宽度收窄：`innerRadius` 从 `2.0` 调整为 `1.0`，`outerRadius` 从 `2.4` 调整为 `1.1`；沙滩粗细仍由 `DEFAULT_TERRAIN_BEACH_TUNING` 和运行时 `window.rpgTerrainBeach(...)` 调整。
+
+### Fixed
+- 移除沙滩内部细黄色描边的真实来源：此前 shoreline 距离场局部采样窗口外的 `alpha = 0` 会被 shader 当作沙滩有效区边界参与混合，在陆地内部和 Hex 角点形成可见描边；现在地图内部距离场连续，采样窗口边界不会再被绘制出来。
+
+### Impact
+- 该调整只影响 campaign terrain 的岸线/沙滩视觉采样和默认表现参数，不改变 Hex 水陆语义、通行、寻路、点击、探索、云层、山脉、森林或其他 gameplay 数据。
+
 ## 2026-07-17 Campaign Shoreline Distance Field Sampling
 
 ### Changed

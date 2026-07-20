@@ -297,8 +297,8 @@ type CampaignTerrainBeachConsoleCommand = (
 const DEFAULT_TERRAIN_BEACH_TUNING: CampaignTerrainBeachTuning = {
   textureTiling: 18,
   blendStrength: 1.0,
-  innerRadius: 2.0,
-  outerRadius: 2.4,
+  innerRadius: 1.0,
+  outerRadius: 1.1,
   fineNoiseTiling: 30,
   fineNoiseStrength: 0.16,
   shorelineVisualWaterStrength: 0.76,
@@ -3573,12 +3573,41 @@ function createShorelineDistanceTextureModel(
     });
   }
 
+  const cellKeys = new Set(
+    materialSemanticModel.cells.map((cell) => getHexCellKey(cell.x, cell.y))
+  );
+
   for (let index = 0; index < signedDistanceByPixel.length; index += 1) {
     if (!Number.isFinite(bestAbsDistanceByPixel[index])) {
-      pixels[index * 4] = 128;
-      pixels[index * 4 + 1] = 0;
+      const pixelX = index % textureColumns;
+      const pixelY = Math.floor(index / textureColumns);
+      const u = textureColumns <= 1 ? 0 : pixelX / (textureColumns - 1);
+      const v = textureRows <= 1 ? 0 : pixelY / (textureRows - 1);
+      const point = terrainUvToHexPoint(u, v);
+      const cell = pixelToRoundedHex(point.x, point.y);
+      const cellKey = getHexCellKey(cell.x, cell.y);
+      if (!cellKeys.has(cellKey)) {
+        pixels[index * 4] = 128;
+        pixels[index * 4 + 1] = 0;
+        pixels[index * 4 + 2] = 0;
+        pixels[index * 4 + 3] = 0;
+        continue;
+      }
+
+      const fallbackSignedDistance =
+        materialSemanticModel.landByCellKey.get(cellKey) === true
+          ? -distanceRange
+          : distanceRange;
+      const packedFallbackDistance = packNormalizedUint16(
+        signedDistanceToShorelineDistanceTextureValue(
+          fallbackSignedDistance,
+          distanceRange
+        )
+      );
+      pixels[index * 4] = packedFallbackDistance.high;
+      pixels[index * 4 + 1] = packedFallbackDistance.low;
       pixels[index * 4 + 2] = 0;
-      pixels[index * 4 + 3] = 0;
+      pixels[index * 4 + 3] = 255;
       continue;
     }
 
