@@ -754,6 +754,101 @@
 - Simulated-human testing must cover creating a button, binding an event, creating a card, binding an event, running preview, clicking both, saving/reopening, exporting, JSON importing, and clicking again.
 - This memo is not a candidate queue and does not authorize execution until explicitly promoted by the user under Blueprint workflow rules.
 
+### MEMO-020: Script Editor City Mounted NPC Canonical Authoring Cleanup
+
+- status: `open`
+- severity: `medium`
+- classification: `memo-only`
+- proposed_queue: `none`
+- owning_queue: `none`
+- admission_status: `not-admitted`
+- latest_disposition: `recorded-as-memo`
+- affected_families:
+  - `script editor city authoring`
+  - `script editor mounted building authoring`
+  - `script editor mounted NPC authoring`
+  - `runtime pack import`
+  - `runtime pack export`
+  - `city NPC pools`
+  - `house character assignment`
+
+#### Decision Summary
+
+- The Script Editor city mounted-building/NPC panel must treat `city.mountedBuildings[].npcIds` as the only canonical authoring source for building-to-NPC assignment.
+- `cityNpcPools` is a runtime/export family for city NPC resident data and activity behavior. It must not be used as the canonical source for the city mounted-building/NPC authoring panel.
+- `cityNpcPools` may be generated from canonical city-mounted authoring data during export, but editor UI must not infer or repair `city.mountedBuildings` from `cityNpcPools`.
+- Existing reverse-inference paths that derive `city.mountedBuildings` from `cityEntries`, `houses.characterIds`, and `cityNpcPools` are considered old compatibility logic for this cleanup and should not be reused by the standard authoring flow.
+
+#### Required Standard Flow
+
+1. The city mounted-building/NPC panel reads and writes only `city.mountedBuildings`.
+2. Each mounted building row stores:
+   - `buildingId: string`;
+   - `npcIds: string[]`;
+   - `primaryNpcId: string | null`.
+3. NPC dropdown options are sourced from `project.people` records that are valid NPC/person candidates for authoring.
+4. A mounted building with no NPC is valid and must persist as `npcIds: []`.
+5. A mounted building with no primary NPC is valid and must persist as `primaryNpcId: null`.
+6. If `primaryNpcId` is not present in the same row's `npcIds`, normalization must clear it to `null` or validation must fail closed with a clear authoring error. The preferred default is to clear it to `null` and surface validation feedback.
+7. If `npcIds` references a missing `project.people` record, export/validation must fail closed with actionable diagnostics instead of silently writing a broken runtime resident.
+
+#### Runtime Export Rules
+
+- Export lowers `city.mountedBuildings` into runtime families:
+  - `cities[].houseIds`;
+  - `houses[].cityId`;
+  - `houses[].characterIds`;
+  - `houses[].defaultCharacterId`;
+  - `cityEntries[]`;
+  - `cityNpcPools[]`.
+- When canonical `city.mountedBuildings` exists, exported `cityEntries` and `cityNpcPools` must be generated from it rather than preserved from stale imported runtime tables.
+- Export must preserve the distinction between:
+  - mounted assignment: `city.mountedBuildings[].npcIds`;
+  - runtime city resident/activity data: `cityNpcPools[].residents`.
+
+#### Runtime Import Rules
+
+- Standard Script Editor project import must preserve explicit `cities[].mountedBuildings` when present.
+- Pure runtime-pack import must not silently manufacture canonical mounted-authoring truth by reverse-inferencing from `cityEntries`, `houses.characterIds`, or `cityNpcPools`.
+- If an imported pack lacks `cities[].mountedBuildings`, the editor should treat the mounted-authoring structure as absent and report that the pack does not contain standard mounted-authoring data, rather than pretending the inferred compatibility shape is canonical.
+
+#### Old Logic To Retire
+
+- Do not rely on reverse-inference helpers that reconstruct mounted-authoring data from runtime families, including logic equivalent to:
+  - `applyImportedMountedBuildings`;
+  - `readImportedMountedNpcIds`;
+  - `readImportedPrimaryNpcId`.
+- Do not let `cityNpcPools` drive which NPC rows are displayed in the city mounted-building/NPC panel.
+- Do not use `houses.characterIds` as the editor-side canonical owner for city-mounted NPC assignment.
+
+#### Suggested Candidate Queue
+
+- proposed_queue_id: `queue.script-editor-city-mounted-npc-canonical-authoring-cleanup`
+- proposed_class: `candidate`
+- proposed_goal: `Make city.mountedBuildings the single canonical authoring source for mounted building/NPC assignment, remove runtime-family reverse inference from the standard editor flow, and verify empty NPC and empty primary-NPC cases.`
+- admission_note: `Recorded only. This entry must not become an active or candidate queue unless explicitly promoted through the current version plan.`
+
+#### Acceptance Criteria
+
+- The city mounted-building/NPC panel displays rows only from `city.mountedBuildings`.
+- Existing `city.mountedBuildings[].npcIds` values render as selected NPC rows.
+- The panel does not display additional mounted NPC rows only because matching residents exist in `cityNpcPools`.
+- Adding/removing NPC rows updates only the selected city's `mountedBuildings`.
+- A mounted building with `npcIds: []` remains visible and survives save/load.
+- A mounted building with `primaryNpcId: null` remains valid and survives save/load.
+- Selecting a primary NPC is limited to the same row's mounted `npcIds`.
+- Export generated from canonical authoring data produces coherent `houses.characterIds`, `houses.defaultCharacterId`, `cityEntries`, and `cityNpcPools`.
+- Source guards prove the old reverse-inference helpers are removed or no longer reachable from the standard import/editor flow.
+
+#### Verification Evidence Required For Closure
+
+- UI/source tests proving the panel reads from `city.mountedBuildings` and not from `cityNpcPools`.
+- Save/load tests for mounted buildings with no NPC and no primary NPC.
+- Validation/export tests for missing NPC ids and primary NPC ids outside the row's `npcIds`.
+- Runtime export tests proving canonical mounted authoring lowers into `houses`, `cityEntries`, and `cityNpcPools`.
+- Import tests proving explicit `cities[].mountedBuildings` is preserved and runtime-family reverse inference is not used as canonical authoring truth.
+- Source-search evidence for retired reverse-inference helpers or their removal from the standard editor flow.
+
 ### MEMO-012: Script Editor City And Building Background Authoring
 
 - status: `closed`
