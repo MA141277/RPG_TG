@@ -23,10 +23,10 @@
 
 - Status: `running`
 - Last Updated: `2026-07-20`
-- Current Focus: `Task 2: route party-editor as a formal stage.`
-- Next Step: `Extend the compiled test with stage routing, then add the new view literal and presenter branch.`
-- Verification: `Task 1 targeted verification passed: npm run build:test; node --test tests/party-editor-stage-state.test.cjs`
-- Notes: `The targeted Node test required sandbox escalation because the test runner hit spawn EPERM inside the default sandbox.`
+- Current Focus: `Task 3: render the party-editor UI and map entry.`
+- Next Step: `Add the source-based UI test, then build the map button, shared preview renderer, and party-editor view markup.`
+- Verification: `Task 2 targeted verification passed: npm run build:test; node --test tests/party-editor-stage-state.test.cjs`
+- Notes: `The targeted Node test still requires sandbox escalation because the test runner hits spawn EPERM inside the default sandbox.`
 
 ## Progress Log
 
@@ -38,6 +38,10 @@
   - Summary: `Completed Task 1 by adding the shared formation-stage domain/application seam and the first compiled contract test.`
   - Verification: `npm run build:test && node --test tests/party-editor-stage-state.test.cjs`
   - Next: `Start Task 2 and route party-editor as a formal stage.`
+- 2026-07-20
+  - Summary: `Completed Task 2 by adding the party-editor currentView literal, stage presenter branch, and open/close stage actions.`
+  - Verification: `npm run build:test && node --test tests/party-editor-stage-state.test.cjs`
+  - Next: `Start Task 3 and render the map entry plus party-editor stage UI.`
 
 ---
 
@@ -385,7 +389,7 @@ git commit -m "feat: add shared formation stage seam"
   - `function closePartyEditor(appState: AppState): AppState`
   - `type AppPresenterStageOutput` includes the exact variant `| { type: "party-editor" }`
 
-- [ ] **Step 1: Extend the compiled test to cover stage routing and view updates**
+- [x] **Step 1: Extend the compiled test to cover stage routing and view updates**
 
 ```js
 const {
@@ -431,13 +435,13 @@ test("party-editor opens as a real stage and exits back to map", () => {
 });
 ```
 
-- [ ] **Step 2: Run the compiled test to verify it fails**
+- [x] **Step 2: Run the compiled test to verify it fails**
 
 Run: `npm run build:test && node --test tests/party-editor-stage-state.test.cjs`
 
 Expected: `FAIL` with `openPartyEditor is not a function` or `stage` not equal to `{ type: "party-editor" }`.
 
-- [ ] **Step 3: Add the new stage literal and action helpers**
+- [x] **Step 3: Add the new stage literal and action helpers**
 
 ```ts
 // src/domain/game-state.ts
@@ -480,7 +484,7 @@ export function closePartyEditor(appState: AppState): AppState {
 }
 ```
 
-- [ ] **Step 4: Route the new presenter stage**
+- [x] **Step 4: Route the new presenter stage**
 
 ```ts
 // src/application/presenter/presenter-output.ts
@@ -519,7 +523,7 @@ export type AppPresenterStageOutput =
   }
 ```
 
-- [ ] **Step 5: Run the compiled test to verify it passes**
+- [x] **Step 5: Run the compiled test to verify it passes**
 
 Run: `npm run build:test && node --test tests/party-editor-stage-state.test.cjs`
 

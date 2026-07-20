@@ -35,6 +35,33 @@ export function updateOverlayView(
   };
 }
 
+export function openPartyEditor(appState: AppState): AppState {
+  return {
+    ...appState,
+    gameState: {
+      ...appState.gameState,
+      ui: {
+        ...appState.gameState.ui,
+        overlayView: null,
+        currentView: "party-editor",
+      },
+    },
+  };
+}
+
+export function closePartyEditor(appState: AppState): AppState {
+  return {
+    ...appState,
+    gameState: {
+      ...appState.gameState,
+      ui: {
+        ...appState.gameState.ui,
+        currentView: "map",
+      },
+    },
+  };
+}
+
 export function openCityDirectory(
   appState: AppState,
   input: {

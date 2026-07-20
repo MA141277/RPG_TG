@@ -22,6 +22,7 @@ export type ViewName =
   | "house"
   | "scene"
   | "battle"
+  | "party-editor"
   | "minigame";
 export type SceneStatus = "idle" | "playing" | "waiting-choice";
 export type TimeOfDay = "morning" | "afternoon" | "night";
