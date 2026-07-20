@@ -161,9 +161,6 @@ export function parseScenarioPack(value: unknown): ScenarioPackDefinition {
   if (value.cityNpcPools != null) {
     assertArray(value.cityNpcPools, "scenario city npc pools");
   }
-  if (value.houseAccessRefusalRules != null) {
-    assertArray(value.houseAccessRefusalRules, "scenario house access refusal rules");
-  }
   if (value.locationAccess != null) {
     assertArray(value.locationAccess, "scenario location access");
   }
@@ -227,7 +224,6 @@ type ScenarioPackManifestFiles = {
   cards?: string;
   valuables?: string;
   cityNpcPools?: string;
-  houseAccessRefusalRules?: string;
   locationAccess?: string;
   houseModuleDefaults?: string;
   historicalCharacters?: string;

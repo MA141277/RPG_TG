@@ -2,20 +2,14 @@ import type { CharacterDefinition } from "../../domain/character";
 import type { CityEntryDefinition } from "../../domain/city-entry";
 import type { CityNpcPoolDefinition } from "../../domain/city-npc";
 import type { GameState } from "../../domain/game-state";
-import type {
-  HouseAccessRefusalRule,
-  HouseDefinition,
-} from "../../domain/house";
+import type { HouseDefinition } from "../../domain/house";
 import type { LocationAccessDefinition } from "../../domain/location-access";
 import { evaluateLocationAccess } from "../location-access/location-access-runtime";
 import {
   selectCityNpcSummariesForHouse,
   type HouseCityNpcSummary,
 } from "../city-npcs/select-city-npcs-for-house";
-import {
-  selectHouseEntryAccess,
-  type HouseEntryAccessResult,
-} from "../story/story-stage-access";
+import type { HouseEntryAccessResult } from "../story/story-stage-access";
 
 export type CityBuildingPlacement = {
   placementId: string;
@@ -41,7 +35,6 @@ export type CityBuildingPlacementRuntimeInput =
     state: GameState;
     characterDefinitions: readonly CharacterDefinition[];
     cityNpcPools: readonly CityNpcPoolDefinition[];
-    houseAccessRefusalRules: readonly HouseAccessRefusalRule[];
     locationAccessDefinitions?: readonly LocationAccessDefinition[];
     placementId: string;
   };
@@ -111,19 +104,11 @@ function resolveCityBuildingEntryAccess(
     return locationAccess;
   }
 
-  return selectHouseEntryAccess(
-    input.state,
-    [...input.characterDefinitions],
-    placement.house,
-    [...input.houseAccessRefusalRules]
-  );
+  return { canEnter: true, refusal: null };
 }
 
 export function resolveCityBuildingNpcs(
-  input: Omit<
-    CityBuildingPlacementRuntimeInput,
-    "characterDefinitions" | "houseAccessRefusalRules"
-  >
+  input: Omit<CityBuildingPlacementRuntimeInput, "characterDefinitions">
 ): HouseCityNpcSummary[] {
   const placement = resolvePlacementById(input);
   if (placement == null) {

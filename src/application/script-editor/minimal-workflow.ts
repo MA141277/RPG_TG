@@ -147,7 +147,6 @@ export function createDefaultScriptEditorProjectDefinition(input?: {
     cards: [],
     valuables: [],
     cityNpcPools: [],
-    houseAccessRefusalRules: [],
     houseModuleDefaults: {},
     cityPortraits: {},
     historicalCharacters: [],

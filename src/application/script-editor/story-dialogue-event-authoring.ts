@@ -179,7 +179,6 @@ const SCRIPT_EDITOR_EVENT_BINDING_CONDITION_FIELD_OPTIONS: readonly ScriptEditor
       { value: "story-progress", label: "剧情推进" },
       { value: "city-enter", label: "进入城市" },
       { value: "building-enter", label: "进入建筑" },
-      { value: "indoor-screen-shown", label: "进入室内界面" },
       { value: "dialogue-finished", label: "对话结束" },
       { value: "menu-select", label: "菜单选择" },
       { value: "minigame-settled", label: "小游戏结算" },
@@ -440,6 +439,17 @@ export function updateScriptEditorEventBindingTriggerField(
   field: "timing" | "action",
   value: string
 ): ScriptEditorEventBindingRecord {
+  if (field === "timing" && value.includes(":")) {
+    const [timing = "", action = ""] = value.split(":", 2);
+    return {
+      ...record,
+      trigger: {
+        ...record.trigger,
+        timing: timing.trim(),
+        action: action.trim(),
+      },
+    };
+  }
   return {
     ...record,
     trigger: {

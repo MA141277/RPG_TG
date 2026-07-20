@@ -55,8 +55,8 @@ import {
 import {
   isCityEntryVisibleForStoryStage,
   isHouseVisibleForStoryStage,
-  selectHouseEntryAccess,
 } from "./application/story/story-stage-access";
+import { evaluateLocationAccess } from "./application/location-access/location-access-runtime";
 import {
   travelToCoordinate,
   type GridCoordinate,
@@ -2047,12 +2047,14 @@ function resumeBackgroundMusicIfNeeded(): void {
 }
 
 function canOpenHouseFromCity(houseDefinition: HouseDefinition): boolean {
-  const accessResult = selectHouseEntryAccess(
-    appState.gameState,
-    appState.characterDefinitions,
-    houseDefinition,
-    activeContentContext.gameContent.houseAccessRefusalRules
-  );
+  const accessResult = evaluateLocationAccess({
+    state: appState.gameState,
+    targetFamily: "building",
+    targetId: houseDefinition.id,
+    targetBuilding: houseDefinition,
+    characterDefinitions: appState.characterDefinitions,
+    locationAccessDefinitions: activeContentContext.locationAccess,
+  });
 
   if (accessResult.canEnter) {
     if (appState.locationDialogueState != null) {

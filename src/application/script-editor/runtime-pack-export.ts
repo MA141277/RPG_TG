@@ -65,7 +65,6 @@ type RuntimePackManifestFiles = {
   cards: string;
   valuables: string;
   cityNpcPools: string;
-  houseAccessRefusalRules: string;
   locationAccess: string;
   houseModuleDefaults: string;
   cityPortraits: string;
@@ -107,7 +106,6 @@ const RUNTIME_PACK_CANONICAL_FILES: RuntimePackManifestFiles = {
   cards: "./cards.json",
   valuables: "./valuables.json",
   cityNpcPools: "./city-npc-pools.json",
-  houseAccessRefusalRules: "./house-access-refusal-rules.json",
   locationAccess: "./location-access.json",
   houseModuleDefaults: "./house-module-defaults.json",
   cityPortraits: "./city-portraits.json",
@@ -186,8 +184,6 @@ export function validateScriptEditorProjectForRuntimeExport(
       cards: project.cards,
       valuables: project.valuables,
       cityNpcPools: cityBuildingRuntimeFamilies.cityNpcPools,
-      houseAccessRefusalRules:
-        cityBuildingRuntimeFamilies.houseAccessRefusalRules,
       locationAccess: cityBuildingRuntimeFamilies.locationAccess,
       houseModuleDefaults: project.houseModuleDefaults,
       cityPortraits: project.cityPortraits,
@@ -346,9 +342,6 @@ export function exportScriptEditorProjectToScenarioPackFiles(
     ),
     [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.cityNpcPools)]: stringifyJson(
       cityBuildingRuntimeFamilies.cityNpcPools
-    ),
-    [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.houseAccessRefusalRules)]: stringifyJson(
-      cityBuildingRuntimeFamilies.houseAccessRefusalRules
     ),
     [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.locationAccess)]: stringifyJson(
       cityBuildingRuntimeFamilies.locationAccess

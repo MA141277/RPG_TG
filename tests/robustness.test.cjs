@@ -1,4 +1,4 @@
-﻿const test = require("node:test");
+const test = require("node:test");
 const assert = require("node:assert/strict");
 const { fileURLToPath, pathToFileURL } = require("node:url");
 const ts = require("typescript");
@@ -25,7 +25,6 @@ const {
   prototypeCityEntries,
   prototypeHistoricalCharacterIdByCharacterId,
   prototypeLeaderResidenceHistoricalCharacters,
-  prototypeHouseAccessRefusalRules,
   prototypeHouses,
   prototypeMap,
   prototypeCityNpcPools,
@@ -91,7 +90,6 @@ const {
   canEnterHouseForStoryStage,
   isCityEntryVisibleForStoryStage,
   isHouseVisibleForStoryStage,
-  selectHouseEntryAccess,
 } = require("../.test-dist/application/story/story-stage-access.js");
 const {
   createInitialGrainShopSessionState,
@@ -480,7 +478,6 @@ function createSampleScriptEditorProjectDefinition() {
     cards: [],
     valuables: [],
     cityNpcPools: [],
-    houseAccessRefusalRules: [],
     houseModuleDefaults: {},
     cityPortraits: {},
     historicalCharacters: [],
@@ -617,7 +614,6 @@ function writeScriptEditorProjectFixture(outputRoot) {
         cards: "./cards.json",
         valuables: "./valuables.json",
         cityNpcPools: "./city-npc-pools.json",
-        houseAccessRefusalRules: "./house-access-refusal-rules.json",
         houseModuleDefaults: "./house-module-defaults.json",
         cityPortraits: "./city-portraits.json",
         historicalCharacters: "./historical-characters.json",
@@ -645,7 +641,6 @@ function writeScriptEditorProjectFixture(outputRoot) {
     "cards.json": fixture.cards,
     "valuables.json": fixture.valuables,
     "city-npc-pools.json": fixture.cityNpcPools,
-    "house-access-refusal-rules.json": fixture.houseAccessRefusalRules,
     "house-module-defaults.json": fixture.houseModuleDefaults,
     "city-portraits.json": fixture.cityPortraits,
     "historical-characters.json": fixture.historicalCharacters,
@@ -2155,8 +2150,11 @@ test("base game content pack is sourced from the shared content-pack loader", as
     );
     assert.equal(pack.cityNpcPools.some((pool) => pool.cityId === "city.kulan"), true);
     assert.equal(
-      pack.houseAccessRefusalRules.some(
-        (rule) => rule.id === "rule.zhu_yuanzhang.temple.first_review_stay"
+      pack.locationAccess.some(
+        (definition) =>
+          definition.id ===
+            "location-access.zhu_yuanzhang.temple.first_review_stay.house.kulan.leader_residence" &&
+          definition.blockedMessage === "既然答应了主持，就先不要离开寺院吧。"
       ),
       true
     );
@@ -2242,13 +2240,11 @@ test("zhuyuanzhang scenario pack manifest includes pack-local city and access ta
 
   assert.equal(typeof packManifest.files.cityEntries, "string");
   assert.equal(typeof packManifest.files.cityNpcPools, "string");
-  assert.equal(typeof packManifest.files.houseAccessRefusalRules, "string");
   assert.equal(typeof packManifest.files.cityPortraits, "string");
 
   [
     packManifest.files.cityEntries,
     packManifest.files.cityNpcPools,
-    packManifest.files.houseAccessRefusalRules,
     packManifest.files.cityPortraits,
   ].forEach((fileName) => {
     assert.equal(
@@ -2273,8 +2269,8 @@ test("zhuyuanzhang pack-local city and access tables contain kulan content", () 
   const cityNpcPools = JSON.parse(
     fs.readFileSync(path.join(packRoot, "city-npc-pools.json"), "utf8")
   );
-  const houseAccessRefusalRules = JSON.parse(
-    fs.readFileSync(path.join(packRoot, "house-access-refusal-rules.json"), "utf8")
+  const locationAccess = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "location-access.json"), "utf8")
   );
   const cityPortraits = JSON.parse(
     fs.readFileSync(path.join(packRoot, "city-portraits.json"), "utf8")
@@ -2349,8 +2345,11 @@ test("zhuyuanzhang pack-local city and access tables contain kulan content", () 
     true
   );
   assert.equal(
-    houseAccessRefusalRules.some(
-      (rule) => rule.id === "rule.zhu_yuanzhang.temple.first_review_stay"
+    locationAccess.some(
+      (definition) =>
+        definition.id ===
+          "location-access.zhu_yuanzhang.temple.first_review_stay.house.kulan.leader_residence" &&
+        definition.blockedMessage === "既然答应了主持，就先不要离开寺院吧。"
     ),
     true
   );
@@ -3920,6 +3919,14 @@ test(
 
     assert.match(locationAccessPanelSource, /拒绝提示/);
     assert.match(locationAccessPanelSource, /进入条件/);
+    assert.match(
+      locationAccessPanelSource,
+      /c-script-editor-location-access-section[\s\S]*拒绝提示[\s\S]*c-script-editor-location-access-section[\s\S]*进入条件/
+    );
+    assert.doesNotMatch(
+      locationAccessPanelSource,
+      /c-script-editor-form-grid[\s\S]*拒绝提示[\s\S]*进入条件[\s\S]*<\/div>/
+    );
     assert.match(conditionEditorSource, /没有条件时/);
     assert.match(conditionEditorSource, /新增条件/);
     assert.match(conditionEditorSource, /清空条件/);
@@ -5698,7 +5705,7 @@ test(
     assert.equal(manifest.files.valuables, "./valuables.json");
     assert.equal(manifest.files.cityEntries, "./city-entries.json");
     assert.equal(manifest.files.cityNpcPools, "./city-npc-pools.json");
-    assert.equal(manifest.files.houseAccessRefusalRules, "./house-access-refusal-rules.json");
+    assert.equal(manifest.files.locationAccess, "./location-access.json");
     assert.equal(manifest.files.houseModuleDefaults, "./house-module-defaults.json");
     assert.equal(manifest.files.historicalCharacters, "./historical-characters.json");
     assert.equal(manifest.files.historicalCityRosters, "./historical-city-rosters.json");
@@ -5728,9 +5735,23 @@ test(
     assert.deepEqual(exportedPack.valuables, sourcePack.valuables);
     assert.deepEqual(exportedPack.cityEntries, sourcePack.cityEntries);
     assert.deepEqual(exportedPack.cityNpcPools, sourcePack.cityNpcPools);
-    assert.deepEqual(
-      exportedPack.houseAccessRefusalRules,
-      sourcePack.houseAccessRefusalRules
+    assert.equal(
+      exportedPack.locationAccess.some(
+        (definition) =>
+          definition.blockedMessage === "既然答应了主持，就先不要离开寺院吧。" &&
+          definition.blockedTitle === "暂且留在寺中" &&
+          definition.conditionExpression.type === "not"
+      ),
+      true
+    );
+    assert.equal(
+      exportedPack.locationAccess.some(
+        (definition) =>
+          definition.blockedMessage === "军机要出，请阁下回避。" &&
+          definition.blockedTitle === "帅府闭门" &&
+          definition.blockedSpeakerId === "char.kulan_soldier"
+      ),
+      true
     );
     assert.deepEqual(exportedPack.houseModuleDefaults, sourcePack.houseModuleDefaults);
     assert.deepEqual(exportedPack.historicalCharacters, sourcePack.historicalCharacters);
@@ -9848,7 +9869,10 @@ test(
     const cities = JSON.parse(files["cities.json"]);
     const houses = JSON.parse(files["houses.json"]);
     const cityEntries = JSON.parse(files["city-entries.json"]);
-    const refusalRules = JSON.parse(files["house-access-refusal-rules.json"]);
+    const locationAccess = JSON.parse(files["location-access.json"]);
+    const buildingAccess = locationAccess.find(
+      (definition) => definition.targetId === "building.market"
+    );
 
     assert.equal(cities[0].id, "city.start");
     assert.equal(cities[0].name, "Start City");
@@ -9863,8 +9887,10 @@ test(
     assert.equal(houses[0].moduleId, "market-house");
     assert.deepEqual(houses[0].characterIds, ["person.host"]);
     assert.equal(cityEntries[0].targetHouseId, "building.market");
-    assert.equal(refusalRules[0].speakerCharacterId, "person.host");
-    assert.equal(refusalRules[0].text, "Market is closed.");
+    assert.equal("house-access-refusal-rules.json" in files, false);
+    assert.ok(buildingAccess);
+    assert.equal(buildingAccess.blockedSpeakerId, "person.host");
+    assert.equal(buildingAccess.blockedMessage, "Market is closed.");
   }
 );
 
@@ -10569,9 +10595,9 @@ test(
         cityId: "city.start",
         name: "Market",
         access: {
-          state: "visible-disabled",
+          conditionExpression: { type: "literal", value: false },
           blockedMessage: "Market is closed.",
-          blockedSpeaker: "person.host",
+          blockedSpeakerId: "person.host",
           guidance: "Return later.",
         },
         entryBinding: {
@@ -10587,7 +10613,10 @@ test(
     const houses = JSON.parse(files["houses.json"]);
     const cityEntries = JSON.parse(files["city-entries.json"]);
     const cityNpcPools = JSON.parse(files["city-npc-pools.json"]);
-    const refusalRules = JSON.parse(files["house-access-refusal-rules.json"]);
+    const locationAccess = JSON.parse(files["location-access.json"]);
+    const buildingAccess = locationAccess.find(
+      (definition) => definition.targetId === "building.market"
+    );
 
     assert.deepEqual(houses[0].characterIds, ["person.host"]);
     assert.equal(houses[0].defaultCharacterId, "person.host");
@@ -10611,10 +10640,12 @@ test(
       dialoguePool: [],
       intelPool: [],
     });
-    assert.equal(refusalRules[0].houseIds[0], "building.market");
-    assert.equal(refusalRules[0].speakerCharacterId, "person.host");
-    assert.equal(refusalRules[0].text, "Market is closed.");
-    assert.equal(refusalRules[0].confirmLabel, "Return later.");
+    assert.equal("house-access-refusal-rules.json" in files, false);
+    assert.ok(buildingAccess);
+    assert.equal(buildingAccess.targetFamily, "building");
+    assert.equal(buildingAccess.blockedSpeakerId, "person.host");
+    assert.equal(buildingAccess.blockedMessage, "Market is closed.");
+    assert.equal(buildingAccess.guidance, "Return later.");
   }
 );
 
@@ -11097,9 +11128,9 @@ test(
         cityId: "city.start",
         name: "Market",
         access: {
-          state: "visible-disabled",
+          conditionExpression: { type: "literal", value: false },
           blockedMessage: "Market is closed.",
-          blockedSpeaker: "person.host",
+          blockedSpeakerId: "person.host",
           guidance: "Return later.",
         },
       },
@@ -11133,22 +11164,11 @@ test(
         ],
       },
     ];
-    project.houseAccessRefusalRules = [
-      {
-        id: "house-access-refusal.imported.market",
-        houseIds: ["building.market"],
-        speakerCharacterId: "person.host",
-        title: "Imported",
-        text: "Imported refusal.",
-        confirmLabel: "OK",
-      },
-    ];
-
     const files = exportScriptEditorProjectToScenarioPackFiles(project);
 
     assert.equal(JSON.parse(files["city-entries.json"]).length, 1);
     assert.equal(JSON.parse(files["city-npc-pools.json"])[0].residents.length, 1);
-    assert.equal(JSON.parse(files["house-access-refusal-rules.json"]).length, 1);
+    assert.equal(JSON.parse(files["location-access.json"]).length, 1);
   }
 );
 
@@ -11289,14 +11309,16 @@ test(
           ],
         },
       ],
-      houseAccessRefusalRules: [
+      locationAccessDefinitions: [
         {
-          id: "refusal.market.closed",
-          houseIds: ["house.market"],
-          speakerCharacterId: "npc.host",
-          title: "Market",
-          text: "Market is closed.",
-          confirmLabel: "Return",
+          id: "location-access.building.market",
+          targetFamily: "building",
+          targetId: "house.market",
+          conditionExpression: { type: "literal", value: false },
+          blockedTitle: "Market",
+          blockedMessage: "Market is closed.",
+          blockedSpeakerId: "npc.host",
+          guidance: "Return",
         },
       ],
     };
@@ -11313,7 +11335,7 @@ test(
     }), {
       canEnter: false,
       refusal: {
-        ruleId: "refusal.market.closed",
+        ruleId: "location-access.building.market",
         speakerCharacterId: "npc.host",
         title: "Market",
         text: "Market is closed.",
@@ -11372,7 +11394,6 @@ test("city building placement resolver applies location access before house entr
       },
     ],
     cityNpcPools: [],
-    houseAccessRefusalRules: [],
     locationAccessDefinitions: [
       {
         id: "location-access.building.market",
@@ -11400,6 +11421,150 @@ test("city building placement resolver applies location access before house entr
   assert.equal(resolveCityBuildingView(sharedInput).access.canEnter, false);
 });
 
+test("script editor export writes building access rules only as runtime location access", () => {
+  const {
+    exportScriptEditorProjectToScenarioPackFiles,
+  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  const { evaluateLocationAccess } = require("../.test-dist/application/location-access/location-access-runtime.js");
+  const project = createExportableScriptEditorProjectDefinition();
+  project.buildings = [
+    {
+      id: "building.temple",
+      cityId: "city.start",
+      name: "Temple",
+      baseAttributes: {
+        houseType: "temple",
+        moduleId: "temple-house",
+        characterIds: [],
+        defaultCharacterId: null,
+      },
+    },
+    {
+      id: "building.keep",
+      cityId: "city.start",
+      name: "Keep",
+      baseAttributes: {
+        houseType: "castle",
+        moduleId: "keep-house",
+        characterIds: [],
+        defaultCharacterId: null,
+      },
+    },
+    {
+      id: "building.market",
+      cityId: "city.start",
+      name: "Market",
+      baseAttributes: {
+        houseType: "merchant",
+        moduleId: "market-house",
+        characterIds: [],
+        defaultCharacterId: null,
+      },
+      access: {
+        conditionExpression: {
+          type: "compare",
+          left: {
+            type: "field",
+            subject: "story",
+            fieldId: "flag:flag.story.first-review.completed",
+          },
+          operator: "equals",
+          right: { type: "literal", value: true },
+        },
+        blockedTitle: "Stay in temple",
+        blockedMessage: "Do not leave the temple yet.",
+        blockedSpeakerId: "player",
+        guidance: "OK",
+      },
+    },
+  ];
+  const files = exportScriptEditorProjectToScenarioPackFiles(project);
+  const locationAccess = JSON.parse(files["location-access.json"]);
+  const marketAccess = locationAccess.find(
+    (definition) => definition.targetId === "building.market"
+  );
+  assert.ok(marketAccess);
+  assert.equal("house-access-refusal-rules.json" in files, false);
+  assert.equal(marketAccess.blockedTitle, "Stay in temple");
+  assert.equal(marketAccess.blockedMessage, "Do not leave the temple yet.");
+  assert.equal(marketAccess.blockedSpeakerId, "player");
+  assert.equal(marketAccess.guidance, "OK");
+  assert.equal(
+    locationAccess.some((definition) => definition.targetId === "building.temple"),
+    false
+  );
+  assert.equal(
+    locationAccess.some((definition) => definition.targetId === "building.keep"),
+    false
+  );
+
+  const baseState = createBaseState();
+  const blocked = evaluateLocationAccess({
+    state: {
+      ...baseState,
+      player: { characterId: "char.player" },
+      runtime: {
+        ...baseState.runtime,
+        flags: {},
+        variables: {
+          ...baseState.runtime.variables,
+          [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.stage]: "huangjue-temple",
+        },
+      },
+    },
+    targetFamily: "building",
+    targetId: "building.market",
+    targetBuilding: { id: "building.market", cityId: "city.start", name: "Market" },
+    characterDefinitions: [{ id: "char.player", name: "Player" }],
+    locationAccessDefinitions: locationAccess,
+  });
+  const allowedAfterFlag = evaluateLocationAccess({
+    state: {
+      ...baseState,
+      player: { characterId: "char.player" },
+      runtime: {
+        ...baseState.runtime,
+        flags: { "flag.story.first-review.completed": true },
+        variables: {
+          ...baseState.runtime.variables,
+          [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.stage]: "huangjue-temple",
+        },
+      },
+    },
+    targetFamily: "building",
+    targetId: "building.market",
+    targetBuilding: { id: "building.market", cityId: "city.start", name: "Market" },
+    characterDefinitions: [{ id: "char.player", name: "Player" }],
+    locationAccessDefinitions: locationAccess,
+  });
+
+  assert.deepEqual(blocked, {
+    canEnter: false,
+    refusal: {
+      ruleId: "location-access.building.building.market",
+      speakerCharacterId: "char.player",
+      title: "Stay in temple",
+      text: "Do not leave the temple yet.",
+      confirmLabel: "OK",
+    },
+  });
+  assert.deepEqual(allowedAfterFlag, { canEnter: true, refusal: null });
+});
+
+test("script editor building event bindings remove trigger action and limit timing to enter after and leave before", () => {
+  const source = fs.readFileSync("src/ui/main-ui/main-ui-flow.js", "utf8");
+  const editorSource =
+    source.match(/renderScriptEditorEventBindingEditor\(binding[\s\S]*?\n  renderScriptEditorEventBindingConditionItem/)?.[0] ?? "";
+  const buildingEventsPanelSource =
+    source.match(/renderScriptEditorOwnerLocalEventBindingsPanel\(\{ ownerFamily, ownerId \}\) \{[\s\S]*?renderScriptEditorEventBindingEditor\(binding,\s*\{\s*lockOwner:\s*true\s*\}\)/)?.[0] ?? "";
+
+  assert.match(buildingEventsPanelSource, /ownerFamily/);
+  assert.doesNotMatch(editorSource, /<span>触发动作<\/span>/);
+  assert.doesNotMatch(editorSource, /data-script-editor-event-binding-trigger-field="action"/);
+  assert.match(source, /building:\s*\[[\s\S]*label:\s*"进入后"[\s\S]*label:\s*"离开前"[\s\S]*\]/);
+  assert.doesNotMatch(source, /action:\s*"indoor-screen-shown"/);
+});
+
 test("city building house runtime adapter resolves an allowed placement into a house runtime entry", () => {
   const {
     resolveCityBuildingHouseRuntimeEntry,
@@ -11422,7 +11587,6 @@ test("city building house runtime adapter resolves an allowed placement into a h
     ],
     houses: [grainShopHouse],
     cityNpcPools: [],
-    houseAccessRefusalRules: [],
     locationAccessDefinitions: [],
     placementId: "city-entry.grain-shop",
   });
@@ -11488,7 +11652,6 @@ test("house runtime enters and dispatches through a resolved city building entry
     ],
     houses: [grainShopHouse],
     cityNpcPools: [],
-    houseAccessRefusalRules: [],
     locationAccessDefinitions: [],
     placementId: "city-entry.grain-shop",
   });
@@ -11635,7 +11798,7 @@ test("script editor event binding authoring UI exposes editable controls on the 
   assert.match(source, /data-script-editor-event-binding-owner-field="family"/);
   assert.match(source, /data-script-editor-event-binding-owner-field="id"/);
   assert.match(source, /data-script-editor-event-binding-trigger-field="timing"/);
-  assert.match(source, /data-script-editor-event-binding-trigger-field="action"/);
+  assert.doesNotMatch(source, /data-script-editor-event-binding-trigger-field="action"/);
   assert.match(source, /data-script-editor-event-binding-field="priority"/);
   assert.match(source, /data-script-editor-event-binding-enabled/);
   assert.match(source, /data-script-editor-event-binding-condition-operator/);
@@ -11713,7 +11876,7 @@ test("script editor owner-local event binding trigger edits keep the binding anc
   assert.match(editorSource, /<span>绑定对象类型<\/span>[\s\S]*data-script-editor-event-binding-owner-field="family"/);
   assert.match(editorSource, /<span>绑定对象 ID<\/span>[\s\S]*data-script-editor-event-binding-owner-field="id"/);
   assert.match(editorSource, /<span>触发时机<\/span>[\s\S]*data-script-editor-event-binding-trigger-field="timing"/);
-  assert.match(editorSource, /<span>触发动作<\/span>[\s\S]*data-script-editor-event-binding-trigger-field="action"/);
+  assert.doesNotMatch(editorSource, /<span>触发动作<\/span>[\s\S]*data-script-editor-event-binding-trigger-field="action"/);
   assert.match(editorSource, /data-script-editor-event-binding-condition-operator/);
 
   const binding = {
@@ -11727,18 +11890,13 @@ test("script editor owner-local event binding trigger edits keep the binding anc
   const updatedTiming = updateScriptEditorEventBindingTriggerField(
     binding,
     "timing",
-    "after"
-  );
-  const updatedAction = updateScriptEditorEventBindingTriggerField(
-    updatedTiming,
-    "action",
-    "indoor-screen-shown"
+    "before:building-leave"
   );
 
-  assert.deepEqual(updatedAction.owner, { family: "city", id: "city.kulan" });
-  assert.deepEqual(updatedAction.trigger, {
-    timing: "after",
-    action: "indoor-screen-shown",
+  assert.deepEqual(updatedTiming.owner, { family: "city", id: "city.kulan" });
+  assert.deepEqual(updatedTiming.trigger, {
+    timing: "before",
+    action: "building-leave",
   });
 });
 
@@ -11770,7 +11928,7 @@ test("script editor event binding editor uses event and trigger selectors", () =
   assert.match(editorSource, /getScriptEditorEventBindingTriggerOptions/);
   assert.match(editorSource, /<span>绑定事件<\/span>[\s\S]*<select[\s\S]*data-script-editor-event-binding-field="eventId"/);
   assert.match(editorSource, /<span>触发时机<\/span>[\s\S]*<select[\s\S]*data-script-editor-event-binding-trigger-field="timing"/);
-  assert.match(editorSource, /<span>触发动作<\/span>[\s\S]*<select[\s\S]*data-script-editor-event-binding-trigger-field="action"/);
+  assert.doesNotMatch(editorSource, /<span>触发动作<\/span>[\s\S]*<select[\s\S]*data-script-editor-event-binding-trigger-field="action"/);
   assert.doesNotMatch(editorSource, /<span>绑定事件<\/span>\s*<input[^>]+type="text"[^>]+data-script-editor-event-binding-field="eventId"/);
   assert.doesNotMatch(editorSource, /<span>触发时机<\/span>\s*<input[^>]+type="text"[^>]+data-script-editor-event-binding-trigger-field="timing"/);
 });
@@ -11790,7 +11948,7 @@ test("script editor event body retires triggerTiming while preserving binding tr
   assert.doesNotMatch(eventPanelSource, /<span>触发时机<\/span>/);
   assert.doesNotMatch(eventFieldHandlerSource, /triggerTiming/);
   assert.match(source, /data-script-editor-event-binding-trigger-field="timing"/);
-  assert.match(source, /data-script-editor-event-binding-trigger-field="action"/);
+  assert.doesNotMatch(source, /data-script-editor-event-binding-trigger-field="action"/);
 
   const eventRecord = createDefaultScriptEditorEventRecord(0);
   const updatedEvent = updateScriptEditorEventField(
@@ -12145,7 +12303,6 @@ test("script editor event binding condition editor exposes localized cascading r
     "对话",
     "小游戏",
     "剧情节点",
-    "进入室内界面",
     "等于",
     "不等于",
     "包含",
@@ -13343,74 +13500,6 @@ test("story-stage access keeps leader residence entry visible in monk stage", ()
   );
 });
 
-test("house access refusal blocks leaving temple before first review", () => {
-  const monkState = createMonkStageState();
-  const monkCharacters = createPrototypeCharactersForStoryStage(
-    ZHU_YUANZHANG_STORY_STAGES.huangjueTemple
-  );
-  const monkGrainShop = prototypeHouses.find(
-    (houseDefinition) => houseDefinition.id === "house.kulan.grain_shop"
-  );
-  const monkTempleHouse = prototypeHouses.find(
-    (houseDefinition) => houseDefinition.id === "house.kulan.temple"
-  );
-
-  assert.ok(monkGrainShop);
-  assert.ok(monkTempleHouse);
-
-  const grainShopAccess = selectHouseEntryAccess(
-    monkState,
-    monkCharacters,
-    monkGrainShop,
-    prototypeHouseAccessRefusalRules
-  );
-  const templeAccess = selectHouseEntryAccess(
-    monkState,
-    monkCharacters,
-    monkTempleHouse,
-    prototypeHouseAccessRefusalRules
-  );
-
-  assert.equal(grainShopAccess.canEnter, false);
-  assert.equal(grainShopAccess.refusal?.speakerCharacterId, "char.player");
-  assert.equal(
-    grainShopAccess.refusal?.text,
-    "既然答应了主持，就先不要离开寺院吧。"
-  );
-  assert.equal(templeAccess.canEnter, true);
-});
-
-test("house access refusal shows guard dialogue for keep during monk stage", () => {
-  const monkState = {
-    ...createMonkStageState(),
-    runtime: {
-      ...createMonkStageState().runtime,
-      flags: {
-        ...createMonkStageState().runtime.flags,
-        [ZHU_YUANZHANG_STORY_FLAG_KEYS.firstTempleReviewCompleted]: true,
-      },
-    },
-  };
-  const monkCharacters = createPrototypeCharactersForStoryStage(
-    ZHU_YUANZHANG_STORY_STAGES.huangjueTemple
-  );
-  const monkKeepHouse = prototypeHouses.find(
-    (houseDefinition) => houseDefinition.id === "house.kulan.keep"
-  );
-
-  assert.ok(monkKeepHouse);
-
-  const keepAccess = selectHouseEntryAccess(
-    monkState,
-    monkCharacters,
-    monkKeepHouse,
-    prototypeHouseAccessRefusalRules
-  );
-
-  assert.equal(keepAccess.canEnter, false);
-  assert.equal(keepAccess.refusal?.speakerCharacterId, "char.kulan_soldier");
-  assert.equal(keepAccess.refusal?.text, "军机要出，请阁下回避。");
-});
 
 test("keep house stays in audience mode during monk stage even when review countdown is zero", () => {
   const monkCharacters = createPrototypeCharactersForStoryStage(
@@ -23894,6 +23983,58 @@ test("main shell render-trigger ownerization introduces a city house transition 
   );
 });
 
+test("city building entry evaluates production locationAccess instead of legacy houseAccessRefusalRules", () => {
+  const mainSource = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
+  const canOpenHouseBlock =
+    mainSource.match(
+      /function canOpenHouseFromCity\(houseDefinition: HouseDefinition\): boolean \{[\s\S]*?\n\}/
+    )?.[0] ?? "";
+
+  assert.match(mainSource, /evaluateLocationAccess/);
+  assert.match(canOpenHouseBlock, /evaluateLocationAccess\(\{/);
+  assert.match(canOpenHouseBlock, /targetFamily:\s*"building"/);
+  assert.match(canOpenHouseBlock, /targetId:\s*houseDefinition\.id/);
+  assert.match(canOpenHouseBlock, /targetBuilding:\s*houseDefinition/);
+  assert.match(
+    canOpenHouseBlock,
+    /locationAccessDefinitions:\s*activeContentContext\.locationAccess/
+  );
+  assert.match(
+    canOpenHouseBlock,
+    /cityHouseTransitionCoordinator\.handleHouseAccessRefusal\(accessResult\.refusal\)/
+  );
+  assert.doesNotMatch(canOpenHouseBlock, /selectHouseEntryAccess/);
+  assert.doesNotMatch(canOpenHouseBlock, /houseAccessRefusalRules/);
+});
+
+test("location access retirement removes legacy house access refusal rule runtime and pack fields", () => {
+  const guardedFiles = [
+    "src/application/city/city-building-placement-resolver.ts",
+    "src/application/content/active-game-content.ts",
+    "src/application/content/content-pack-loader.ts",
+    "src/application/scenario/scenario-pack-loader.ts",
+    "src/application/script-editor/runtime-pack-export.ts",
+    "src/application/script-editor/runtime-pack-import.ts",
+    "src/application/script-editor/city-building-runtime-materializer.ts",
+    "src/domain/content-pack.ts",
+    "src/domain/script-editor-project.ts",
+    "src/domain/house.ts",
+  ];
+
+  const offenders = guardedFiles.filter((filePath) => {
+    const source = fs.readFileSync(path.join(process.cwd(), filePath), "utf8");
+    return /houseAccessRefusalRules|HouseAccessRefusalRule|house-access-refusal-rules|selectHouseEntryAccess/.test(
+      source
+    );
+  });
+
+  assert.deepEqual(
+    offenders,
+    [],
+    `Expected location access to be the only city/building entry rule path; legacy refusal residue remains in: ${offenders.join(", ")}`
+  );
+});
+
 test("shell thinning main.ts no longer inlines covered council-priority and city-begging mutation blocks", () => {
   const mainSource = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
   const coordinatorSource = fs.readFileSync(
@@ -26865,6 +27006,7 @@ test("phase 3 scenario-pack validator keeps legacy builtin manifests on the acce
 });
 
 test("dev browser validation resources avoid mojibake paths and watcher profile crashes", () => {
+  const fromCodePoints = (codePoints) => String.fromCodePoint(...codePoints);
   const mainUiCssSource = fs.readFileSync(
     path.join(process.cwd(), "src", "styles", "main-ui.css"),
     "utf8"
@@ -26874,7 +27016,12 @@ test("dev browser validation resources avoid mojibake paths and watcher profile 
     "utf8"
   );
 
-  assert.doesNotMatch(mainUiCssSource, /浜虹墿閫夋嫨ui|娴滆櫣澧块柅澶嬪/);
+  for (const sample of [
+    `${fromCodePoints([0x6d5c, 0x8679, 0x58bf, 0x95ab, 0x590b, 0x5ae8])}ui`,
+    fromCodePoints([0x5a34, 0x6ec6, 0x6ae3, 0x6fa7, 0x5757, 0x67c5, 0x6fb6, 0x5b2a]),
+  ]) {
+    assert.equal(mainUiCssSource.includes(sample), false);
+  }
   assert.match(mainUiCssSource, /ui\/yuansu\/人物选择ui\/backgroung\.png/);
   assert.ok(
     fs.existsSync(path.join(process.cwd(), "ui", "yuansu", "人物选择ui", "backgroung.png"))
@@ -26898,16 +27045,46 @@ test("script editor ui encoding integrity guard accepts current critical chinese
   assert.match(result.stdout, /UI encoding integrity check passed/i);
 });
 
+test("script editor ui encoding integrity guard does not hardcode mojibake sample constants", () => {
+  const decodeUtf8AsWindows1252 = (text) =>
+    new TextDecoder("windows-1252").decode(Buffer.from(text, "utf8"));
+  const fromCodePoints = (codePoints) => String.fromCodePoint(...codePoints);
+  const forbiddenMojibakeSamples = [
+    decodeUtf8AsWindows1252("剧本编辑"),
+    fromCodePoints([0x6d5c, 0x8679, 0x58bf, 0x95ab, 0x590b, 0x5ae8]),
+    fromCodePoints([0x5a34, 0x6ec6, 0x6ae3, 0x6fa7, 0x5757, 0x67c5, 0x6fb6, 0x5b2a]),
+    fromCodePoints([0x705e, 0x5b2b, 0x66a6]),
+    fromCodePoints([0x93c3, 0x72b1, 0x6c49]),
+  ];
+
+  for (const relativePath of [
+    "tools/check-ui-encoding-integrity.mjs",
+    "tests/robustness.test.cjs",
+  ]) {
+    const source = fs.readFileSync(path.join(process.cwd(), relativePath), "utf8");
+    for (const sample of forbiddenMojibakeSamples) {
+      assert.equal(
+        source.includes(sample),
+        false,
+        `${relativePath} must not hardcode mojibake sample constants`
+      );
+    }
+  }
+});
+
 test("script editor ui encoding integrity guard rejects mojibake source text", () => {
   const { spawnSync } = require("node:child_process");
   const os = require("node:os");
+  const corruptLabel = new TextDecoder("windows-1252").decode(
+    Buffer.from("剧本编辑", "utf8")
+  );
   const outputRoot = fs.mkdtempSync(
     path.join(os.tmpdir(), "rpg-tg-ui-encoding-")
   );
   const corruptSourcePath = path.join(outputRoot, "corrupt-ui.js");
   fs.writeFileSync(
     corruptSourcePath,
-    'export const label = "å‰§æœ¬ç¼–è¾‘";\n',
+    `export const label = "${corruptLabel}";\n`,
     "utf8"
   );
 
@@ -26929,6 +27106,7 @@ test("script editor ui encoding integrity guard rejects mojibake source text", (
 
 test("script editor ui encoding integrity guard covers building fallback chinese copy", () => {
   const { spawnSync } = require("node:child_process");
+  const fromCodePoints = (codePoints) => String.fromCodePoint(...codePoints);
   const buildingModuleSource = fs.readFileSync(
     path.join(process.cwd(), "src", "ui", "views", "building", "building-module-view.ts"),
     "utf8"
@@ -26950,7 +27128,15 @@ test("script editor ui encoding integrity guard covers building fallback chinese
   assert.match(buildingModuleSource, /默认角色已展开/);
   assert.match(buildingModuleSource, /在场人物/);
   assert.match(buildingModuleSource, /这里是/);
-  assert.doesNotMatch(buildingModuleSource, /灞嬫暦|鏃犱汉|榛樿|鍦ㄥ満|杩欓噷/);
+  for (const sample of [
+    fromCodePoints([0x705e, 0x5b2b, 0x66a6]),
+    fromCodePoints([0x93c3, 0x72b1, 0x6c49]),
+    fromCodePoints([0x699b, 0x6a3f]),
+    fromCodePoints([0x9366, 0x3125, 0x6e80]),
+    fromCodePoints([0x6769, 0x6b13, 0x5677]),
+  ]) {
+    assert.equal(buildingModuleSource.includes(sample), false);
+  }
 });
 
 test("layout editor live surface retirement removes editor mount from app-render", () => {

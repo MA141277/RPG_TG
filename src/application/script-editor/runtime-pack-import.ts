@@ -73,7 +73,6 @@ type RuntimePackManifestFiles = {
   cards?: string;
   valuables?: string;
   cityNpcPools?: string;
-  houseAccessRefusalRules?: string;
   locationAccess?: string;
   houseModuleDefaults?: string;
   historicalCharacters?: string;
@@ -251,7 +250,6 @@ export function importScenarioPackToScriptEditorProject(
     cards: pack.cards ?? [],
     valuables: pack.valuables ?? [],
     cityNpcPools,
-    houseAccessRefusalRules: pack.houseAccessRefusalRules ?? [],
     houseModuleDefaults: cloneObjectRecord(pack.houseModuleDefaults),
     cityPortraits: cloneStringRecord(pack.cityPortraits),
     historicalCharacters: pack.historicalCharacters ?? [],
@@ -608,6 +606,9 @@ function applyImportedLocationAccess<T extends { id: string }>(
       ...(accessDefinition.blockedReason == null
         ? {}
         : { blockedReason: accessDefinition.blockedReason }),
+      ...(accessDefinition.blockedTitle == null
+        ? {}
+        : { blockedTitle: accessDefinition.blockedTitle }),
       ...(accessDefinition.blockedMessage == null
         ? {}
         : { blockedMessage: accessDefinition.blockedMessage }),

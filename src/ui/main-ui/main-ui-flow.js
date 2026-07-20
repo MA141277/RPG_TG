@@ -236,17 +236,6 @@ const SCRIPT_EDITOR_EVENT_BINDING_OWNER_FAMILY_OPTIONS = [
   { value: "story", label: "剧情节点" },
 ];
 
-const SCRIPT_EDITOR_EVENT_BINDING_TRIGGER_ACTION_OPTIONS = [
-  { value: "story-progress", label: "剧情推进" },
-  { value: "city-enter", label: "进入城市" },
-  { value: "building-enter", label: "进入建筑" },
-  { value: "indoor-screen-shown", label: "进入室内界面" },
-  { value: "dialogue-finished", label: "对话结束" },
-  { value: "menu-select", label: "菜单选择" },
-  { value: "minigame-settled", label: "小游戏结算" },
-  { value: "custom", label: "自定义触发" },
-];
-
 const SCRIPT_EDITOR_EVENT_BINDING_TRIGGER_OPTIONS_BY_OWNER = {
   person: [
     { timing: "after", action: "custom", label: "人物自定义触发" },
@@ -255,8 +244,8 @@ const SCRIPT_EDITOR_EVENT_BINDING_TRIGGER_OPTIONS_BY_OWNER = {
     { timing: "after", action: "city-enter", label: "进入城市后" },
   ],
   building: [
-    { timing: "after", action: "building-enter", label: "进入建筑后" },
-    { timing: "after", action: "indoor-screen-shown", label: "进入室内界面后" },
+    { timing: "after", action: "building-enter", label: "进入后" },
+    { timing: "before", action: "building-leave", label: "离开前" },
   ],
   dialogue: [
     { timing: "after", action: "dialogue-finished", label: "对话结束后" },
@@ -2430,7 +2419,7 @@ export class MainUiFlow {
         <p class="c-script-editor-editor-card__hint">
           这里配置进入城市或建筑前的条件；没有条件时运行时默认允许进入。
         </p>
-        <div class="c-script-editor-form-grid">
+        <div class="c-script-editor-location-access-section">
           <label class="c-script-editor-form-field">
             <span>拒绝提示</span>
             <select class="c-script-editor-form-field__input" data-script-editor-location-access-field="blockedDialogueId">
@@ -2446,6 +2435,8 @@ export class MainUiFlow {
                 .join("")}
             </select>
           </label>
+        </div>
+        <div class="c-script-editor-location-access-section">
           <label class="c-script-editor-form-field">
             <span>进入条件</span>
             ${this.renderScriptEditorLocationAccessConditionEditor(access.conditionExpression)}
@@ -3922,18 +3913,6 @@ export class MainUiFlow {
                 label: option.label,
               })),
               selectedTriggerKey
-            )}
-          </select>
-        </label>
-        <label class="c-script-editor-form-field">
-          <span>触发动作</span>
-          <select class="c-script-editor-form-field__input" data-script-editor-event-binding-id="${escapeHtml(normalizedBinding.id)}" data-script-editor-event-binding-trigger-field="action">
-            ${this.renderScriptEditorOptionList(
-              triggerOptions.map((option) => ({
-                value: option.action,
-                label: option.label,
-              })),
-              normalizedBinding.trigger.action
             )}
           </select>
         </label>

@@ -51,7 +51,7 @@ export function normalizeScriptEditorLocationAccessConditionExpression(
   }
   if (expression.type === "compare") {
     const left = normalizeValueRef(expression.left);
-    if (left == null || left.type !== "field") {
+    if (left == null) {
       return undefined;
     }
     const operator = normalizeCompareOperator(expression.operator);

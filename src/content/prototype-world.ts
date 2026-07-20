@@ -4,7 +4,6 @@ import type {
   CityEntryDefinition,
   CityDefinition,
   CityNpcPoolDefinition,
-  HouseAccessRefusalRule,
   HouseDefinition,
   MapDefinition,
   ValuableItemDefinition,
@@ -18,35 +17,6 @@ import {
   zhuYuanzhangCityRosters,
   zhuYuanzhangEarlyCharacters,
 } from "./zhu-yuanzhang-early-characters";
-
-export const prototypeHouseAccessRefusalRules: HouseAccessRefusalRule[] = [
-  {
-    id: "rule.zhu_yuanzhang.temple.first_review_stay",
-    priority: 100,
-    storyStages: [ZHU_YUANZHANG_STORY_STAGES.huangjueTemple],
-    excludedHouseModuleIds: ["temple-house", "keep-house"],
-    missingFlags: [
-      ZHU_YUANZHANG_STORY_FLAG_KEYS.firstTempleReviewCompleted,
-    ],
-    speakerCharacterId: "player",
-    title: "暂且留在寺中",
-    text: "既然答应了主持，就先不要离开寺院吧。",
-    confirmLabel: "知道了",
-  },
-  {
-    id: "rule.zhu_yuanzhang.temple.keep_closed",
-    priority: 50,
-    houseModuleIds: ["keep-house"],
-    storyStages: [
-      ZHU_YUANZHANG_STORY_STAGES.huangjueTemple,
-      ZHU_YUANZHANG_STORY_STAGES.huangjueBeggingJourney,
-    ],
-    speakerCharacterId: "char.kulan_soldier",
-    title: "帅府闭门",
-    text: "军机要出，请阁下回避。",
-    confirmLabel: "离开",
-  },
-];
 
 export const prototypeMap: MapDefinition = {
   id: "map.prototype_frontier",

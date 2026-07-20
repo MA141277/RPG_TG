@@ -8,10 +8,7 @@ import type {
   CityNpcDefinition,
   CityNpcPoolDefinition,
 } from "../../domain/city-npc";
-import type {
-  HouseAccessRefusalRule,
-  HouseDefinition,
-} from "../../domain/house";
+import type { HouseDefinition } from "../../domain/house";
 import type {
   ScriptEditorAccessRule,
   ScriptEditorBuildingRecord,
@@ -31,7 +28,6 @@ export type ScriptEditorCityBuildingRuntimeFamilies = {
   houses: HouseDefinition[];
   cityEntries: CityEntryDefinition[];
   cityNpcPools: CityNpcPoolDefinition[];
-  houseAccessRefusalRules: HouseAccessRefusalRule[];
   locationAccess: LocationAccessDefinition[];
 };
 
@@ -53,10 +49,6 @@ export function materializeScriptEditorCityBuildingRuntimeFamilies(
     houses: materializeHouses(buildings, people, cities),
     cityEntries: materializeCityEntries(project.cityEntries, cities, buildings),
     cityNpcPools: materializeCityNpcPools(project.cityNpcPools, people, cities),
-    houseAccessRefusalRules: materializeHouseAccessRefusalRules(
-      project.houseAccessRefusalRules,
-      buildings
-    ),
     locationAccess: materializeLocationAccess(
       cities,
       buildings,
@@ -247,57 +239,6 @@ function materializeCityNpcResident(
     activityWeight: { custom: 1 },
     dialoguePool: readStringArray(person.dialogueIds),
     intelPool: [],
-  };
-}
-
-function materializeHouseAccessRefusalRules(
-  explicitRules: readonly ScriptEditorRuntimeRecord[],
-  buildings: readonly ScriptEditorBuildingRecord[]
-): HouseAccessRefusalRule[] {
-  if (explicitRules.length > 0) {
-    return [...explicitRules] as HouseAccessRefusalRule[];
-  }
-
-  const rules = [...explicitRules] as HouseAccessRefusalRule[];
-  const explicitHouseIds = new Set(
-    explicitRules.flatMap((rule) => readStringArray(rule.houseIds))
-  );
-
-  for (const building of buildings) {
-    const access = building.access;
-    if (
-      access == null ||
-      !isAlwaysBlockedAccess(access) ||
-      access.blockedMessage == null ||
-      access.blockedMessage.length === 0 ||
-      explicitHouseIds.has(building.id)
-    ) {
-      continue;
-    }
-
-    rules.push(materializeHouseAccessRefusalRule(building, access));
-  }
-
-  return rules;
-}
-
-function materializeHouseAccessRefusalRule(
-  building: ScriptEditorBuildingRecord,
-  access: ScriptEditorAccessRule
-): HouseAccessRefusalRule {
-  return {
-    id: `house-access-refusal.${slugifyIdSegment(building.id)}`,
-    houseIds: [building.id],
-    speakerCharacterId:
-      access.blockedSpeakerId != null && access.blockedSpeakerId.length > 0
-        ? access.blockedSpeakerId
-        : "player",
-    title: building.name,
-    text: access.blockedMessage ?? "",
-    confirmLabel:
-      access.guidance != null && access.guidance.length > 0
-        ? access.guidance
-        : "返回",
   };
 }
 
@@ -513,6 +454,7 @@ function materializeLocationAccessDefinition(
       targetId,
       conditionExpression: access.conditionExpression,
       ...pickOptionalString("blockedReason", access.blockedReason),
+      ...pickOptionalString("blockedTitle", access.blockedTitle),
       ...pickOptionalString("blockedMessage", blockedMessage),
       ...pickOptionalString("blockedSpeakerId", access.blockedSpeakerId),
       ...pickOptionalString("guidance", access.guidance),
@@ -566,10 +508,6 @@ function resolveAccessBlockedMessage(
   return access.blockedMessage;
 }
 
-function isAlwaysBlockedAccess(access: ScriptEditorAccessRule): boolean {
-  return access.conditionExpression?.type === "literal" &&
-    access.conditionExpression.value === false;
-}
 
 function clampNumber(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
@@ -624,6 +562,7 @@ function readActivityLocationId(
 function readString(value: unknown): string {
   return typeof value === "string" ? value.trim() : "";
 }
+
 
 function pickOptionalString<K extends string>(
   key: K,

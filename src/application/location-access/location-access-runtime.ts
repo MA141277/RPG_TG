@@ -9,6 +9,7 @@ import type {
   LocationAccessTargetFamily,
   LocationAccessValueRef,
 } from "../../domain/location-access";
+import { readZhuYuanzhangStoryStage } from "../../domain/zhu-yuanzhang-story";
 
 export type EvaluateLocationAccessInput = {
   state: GameState;
@@ -44,7 +45,7 @@ export function evaluateLocationAccess(
         input.state,
         accessDefinition.blockedSpeakerId
       ),
-      title: resolveRefusalTitle(input),
+      title: resolveRefusalTitle(accessDefinition, input),
       text:
         accessDefinition.blockedMessage ??
         accessDefinition.blockedReason ??
@@ -204,6 +205,12 @@ function readTimeField(state: GameState, fieldId: string): unknown {
 }
 
 function readStoryField(state: GameState, fieldId: string): unknown {
+  if (fieldId === "zhuYuanzhangStage") {
+    return readZhuYuanzhangStoryStage(state);
+  }
+  if (fieldId.startsWith("flag:")) {
+    return state.runtime.flags[fieldId.slice("flag:".length)] === true;
+  }
   if (fieldId === "chapterId") {
     return state.calendar.chapterId;
   }
@@ -233,8 +240,12 @@ function resolveSpeakerCharacterId(
   return speakerCharacterId;
 }
 
-function resolveRefusalTitle(input: EvaluateLocationAccessInput): string {
+function resolveRefusalTitle(
+  accessDefinition: LocationAccessDefinition,
+  input: EvaluateLocationAccessInput
+): string {
   return (
+    accessDefinition.blockedTitle ??
     input.targetCity?.name ??
     input.targetBuilding?.name ??
     input.targetId

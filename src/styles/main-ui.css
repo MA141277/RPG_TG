@@ -982,6 +982,15 @@
   justify-self: auto;
 }
 
+.c-script-editor-location-access-section {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.c-script-editor-location-access-section + .c-script-editor-location-access-section {
+  margin-top: 0.75rem;
+}
+
 .c-script-editor-location-access-condition__row {
   display: grid;
   grid-template-columns: minmax(12rem, 1.2fr) minmax(8rem, 0.9fr) minmax(10rem, 1fr) auto;

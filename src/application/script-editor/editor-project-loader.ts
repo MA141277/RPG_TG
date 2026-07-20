@@ -106,10 +106,6 @@ export function parseScriptEditorProject(
   assertEntityRecordArray(value.cards, "script editor project cards");
   assertEntityRecordArray(value.valuables, "script editor project valuables");
   assertObjectRecordArray(value.cityNpcPools, "script editor project cityNpcPools");
-  assertEntityRecordArray(
-    value.houseAccessRefusalRules,
-    "script editor project houseAccessRefusalRules"
-  );
   assertObject(value.houseModuleDefaults, "script editor project houseModuleDefaults");
   assertStringRecord(value.cityPortraits, "script editor project cityPortraits");
   assertEntityRecordArray(

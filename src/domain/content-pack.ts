@@ -10,7 +10,7 @@ import type {
   HistoricalCharacterRecord,
   HistoricalCityRoster,
 } from "./historical-character";
-import type { HouseDefinition, HouseAccessRefusalRule } from "./house";
+import type { HouseDefinition } from "./house";
 import type { HouseModuleId } from "./house-module";
 import type { LocationAccessDefinition } from "./location-access";
 import type { MapDefinition } from "./map";
@@ -46,7 +46,6 @@ export type ContentPackDefinition = {
   cards?: CardDefinition[];
   valuables?: ValuableItemDefinition[];
   cityNpcPools?: CityNpcPoolDefinition[];
-  houseAccessRefusalRules?: HouseAccessRefusalRule[];
   locationAccess?: LocationAccessDefinition[];
   houseModuleDefaults?: Partial<Record<HouseModuleId, Record<string, unknown>>>;
   cityPortraits?: Record<string, string>;

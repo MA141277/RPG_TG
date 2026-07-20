@@ -12,7 +12,7 @@ import type {
   HistoricalCharacterRecord,
   HistoricalCityRoster,
 } from "../../domain/historical-character";
-import type { HouseAccessRefusalRule, HouseDefinition } from "../../domain/house";
+import type { HouseDefinition } from "../../domain/house";
 import type { LocationAccessDefinition } from "../../domain/location-access";
 import type { MapDefinition, MapNode } from "../../domain/map";
 import type { GridCoordinate } from "../navigation/travel-to-coordinate";
@@ -64,7 +64,6 @@ export type ActiveGameContent = {
   cards: CardDefinition[];
   valuables: ValuableItemDefinition[];
   cityNpcPools: CityNpcPoolDefinition[];
-  houseAccessRefusalRules: HouseAccessRefusalRule[];
   locationAccess: LocationAccessDefinition[];
   houseModuleDefaults: HouseModuleDefaults;
   cityPortraits: Record<string, string>;
@@ -130,7 +129,6 @@ export function createActiveGameContent(
   const cards = resolvedPack.cards ?? [];
   const valuables = resolvedPack.valuables ?? [];
   const cityNpcPools = resolvedPack.cityNpcPools ?? [];
-  const houseAccessRefusalRules = resolvedPack.houseAccessRefusalRules ?? [];
   const locationAccess = resolvedPack.locationAccess ?? [];
   const historicalCharacters = resolvedPack.historicalCharacters ?? [];
   const historicalCityRosters = resolvedPack.historicalCityRosters ?? [];
@@ -192,7 +190,6 @@ export function createActiveGameContent(
     cards,
     valuables,
     cityNpcPools,
-    houseAccessRefusalRules,
     locationAccess,
     houseModuleDefaults: mergeHouseModuleDefaults(
       undefined,
@@ -304,10 +301,6 @@ export function mergeContentPacks(
     cards: mergeById(basePack.cards ?? [], overridePack.cards ?? []),
     valuables: mergeById(basePack.valuables ?? [], overridePack.valuables ?? []),
     cityNpcPools: mergeCityNpcPools(basePack.cityNpcPools ?? [], overridePack.cityNpcPools ?? []),
-    houseAccessRefusalRules: mergeById(
-      basePack.houseAccessRefusalRules ?? [],
-      overridePack.houseAccessRefusalRules ?? []
-    ),
     locationAccess: mergeById(
       basePack.locationAccess ?? [],
       overridePack.locationAccess ?? []
@@ -353,7 +346,6 @@ function normalizeContentPack(pack: ContentPackDefinition): ContentPackDefinitio
     cards: pack.cards ?? [],
     valuables: pack.valuables ?? [],
     cityNpcPools: pack.cityNpcPools ?? [],
-    houseAccessRefusalRules: pack.houseAccessRefusalRules ?? [],
     locationAccess: pack.locationAccess ?? [],
     houseModuleDefaults: mergeHouseModuleDefaults(undefined, pack.houseModuleDefaults),
     cityPortraits: pack.cityPortraits ?? {},

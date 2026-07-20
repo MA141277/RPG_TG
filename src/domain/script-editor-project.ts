@@ -32,7 +32,6 @@ export const SCRIPT_EDITOR_PROJECT_FILE_KEYS = [
   "cards",
   "valuables",
   "cityNpcPools",
-  "houseAccessRefusalRules",
   "houseModuleDefaults",
   "cityPortraits",
   "historicalCharacters",
@@ -67,7 +66,6 @@ export const SCRIPT_EDITOR_PROJECT_CANONICAL_FILES: Record<
   cards: "./cards.json",
   valuables: "./valuables.json",
   cityNpcPools: "./city-npc-pools.json",
-  houseAccessRefusalRules: "./house-access-refusal-rules.json",
   houseModuleDefaults: "./house-module-defaults.json",
   cityPortraits: "./city-portraits.json",
   historicalCharacters: "./historical-characters.json",
@@ -139,6 +137,7 @@ export type {
 export type ScriptEditorAccessRule = {
   conditionExpression?: LocationAccessConditionExpression | undefined;
   blockedReason?: string | undefined;
+  blockedTitle?: string | undefined;
   blockedMessage?: string | undefined;
   blockedDialogueId?: string | undefined;
   blockedSpeakerId?: string | "player" | undefined;
@@ -535,7 +534,6 @@ export type ScriptEditorProjectDefinition = {
   cards: ScriptEditorEntityRecord[];
   valuables: ScriptEditorEntityRecord[];
   cityNpcPools: ScriptEditorRuntimeRecord[];
-  houseAccessRefusalRules: ScriptEditorEntityRecord[];
   houseModuleDefaults: Record<string, unknown>;
   cityPortraits: Record<string, string>;
   historicalCharacters: ScriptEditorEntityRecord[];

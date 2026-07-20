@@ -50,6 +50,7 @@ export type LocationAccessDefinition = {
   targetId: string;
   conditionExpression: LocationAccessConditionExpression;
   blockedReason?: string;
+  blockedTitle?: string;
   blockedMessage?: string;
   blockedSpeakerId?: CharacterId | "player";
   guidance?: string;

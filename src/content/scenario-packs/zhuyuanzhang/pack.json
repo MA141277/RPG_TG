@@ -19,7 +19,7 @@
     "cards": "cards.json",
     "valuables": "valuables.json",
     "cityNpcPools": "city-npc-pools.json",
-    "houseAccessRefusalRules": "house-access-refusal-rules.json",
+    "locationAccess": "location-access.json",
     "houseModuleDefaults": "house-module-defaults.json",
     "cityPortraits": "city-portraits.json",
     "historicalCharacters": "historical-characters.json",

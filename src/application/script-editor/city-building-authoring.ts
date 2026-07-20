@@ -549,6 +549,7 @@ function normalizeAccessRule(access?: ScriptEditorAccessRule): ScriptEditorAcces
   return {
     ...(conditionExpression == null ? {} : { conditionExpression }),
     ...pickOptionalString("blockedReason", rawAccess?.blockedReason),
+    ...pickOptionalString("blockedTitle", rawAccess?.blockedTitle),
     ...pickOptionalString("blockedMessage", rawAccess?.blockedMessage),
     ...pickOptionalString(
       "blockedDialogueId",

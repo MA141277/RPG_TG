@@ -17,7 +17,7 @@ const CONTENT_PACK_FILE_KEYS = [
   "cards",
   "valuables",
   "cityNpcPools",
-  "houseAccessRefusalRules",
+  "locationAccess",
   "houseModuleDefaults",
   "cityPortraits",
   "historicalCharacters",
