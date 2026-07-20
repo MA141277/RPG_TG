@@ -1,0 +1,3294 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>城市地图建筑实体 / 地块编辑器</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #151712;
+      --panel: #22261f;
+      --panel-2: #2b3027;
+      --line: #56604e;
+      --line-strong: #8e956c;
+      --text: #f3ecd9;
+      --muted: #bbb49f;
+      --gold: #f1c65c;
+      --gold-2: #ffdf7e;
+      --green: #83c894;
+      --blue: #86b7e8;
+      --red: #eb6c5f;
+      --warn: #e9a850;
+      font-family:
+        "Microsoft YaHei",
+        "PingFang SC",
+        "Noto Sans CJK SC",
+        system-ui,
+        sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 14px;
+      letter-spacing: 0;
+    }
+
+    button,
+    input,
+    select,
+    textarea {
+      font: inherit;
+      letter-spacing: 0;
+    }
+
+    button,
+    .file-button {
+      min-height: 30px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #30372d;
+      color: var(--text);
+      cursor: pointer;
+    }
+
+    button:hover,
+    button:focus-visible,
+    .file-button:hover {
+      border-color: var(--gold);
+      outline: none;
+      color: #fff6d5;
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      min-height: 30px;
+      border: 1px solid #535c4c;
+      border-radius: 5px;
+      background: #141713;
+      color: var(--text);
+    }
+
+    input[type="checkbox"] {
+      width: 16px;
+      min-height: 16px;
+      accent-color: var(--gold);
+    }
+
+    textarea {
+      min-height: 120px;
+      padding: 8px;
+      resize: vertical;
+      font-family: Consolas, "Cascadia Mono", monospace;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .app {
+      display: grid;
+      grid-template-rows: auto 1fr;
+      width: 100vw;
+      height: 100vh;
+      min-width: 1180px;
+      overflow: hidden;
+    }
+
+    .toolbar {
+      display: grid;
+      grid-template-columns: auto auto auto auto auto 1fr auto auto auto;
+      gap: 8px;
+      align-items: center;
+      padding: 8px 10px;
+      border-bottom: 1px solid #3d4537;
+      background: #1f241d;
+      box-shadow: 0 8px 20px rgb(0 0 0 / 26%);
+      z-index: 20;
+    }
+
+    .toolbar__group {
+      display: inline-flex;
+      gap: 6px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .file-button {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 10px;
+      white-space: nowrap;
+    }
+
+    .file-button input {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    .toolbar__toggle {
+      display: inline-flex;
+      gap: 6px;
+      align-items: center;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .toolbar__zoom {
+      display: grid;
+      grid-template-columns: auto 112px 44px;
+      gap: 7px;
+      align-items: center;
+      min-width: 190px;
+      color: var(--muted);
+    }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: 322px minmax(540px, 1fr) 342px;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .panel {
+      min-height: 0;
+      overflow: auto;
+      border-right: 1px solid #394134;
+      background: var(--panel);
+    }
+
+    .panel--right {
+      border-right: 0;
+      border-left: 1px solid #394134;
+    }
+
+    .panel__section {
+      padding: 12px;
+      border-bottom: 1px solid #3a4336;
+    }
+
+    .panel__title {
+      margin: 0 0 10px;
+      color: #fff0bf;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .button-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+    }
+
+    .filter-row {
+      display: grid;
+      grid-template-columns: 62px 1fr;
+      gap: 8px;
+      align-items: center;
+      color: var(--muted);
+    }
+
+    .quick-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 6px;
+    }
+
+    .quick-grid button {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      text-align: center;
+    }
+
+    .entity-list {
+      display: grid;
+      gap: 7px;
+      padding: 10px 12px 14px;
+    }
+
+    .entity-card {
+      display: grid;
+      grid-template-columns: 52px 1fr;
+      gap: 9px;
+      align-items: center;
+      width: 100%;
+      min-height: 66px;
+      padding: 7px;
+      text-align: left;
+      border-color: #4c5747;
+      background: #1d231d;
+    }
+
+    .entity-card.is-selected {
+      border-color: var(--gold);
+      background: #302e22;
+      box-shadow: inset 0 0 0 1px rgb(255 220 116 / 18%);
+    }
+
+    .entity-card__thumb {
+      display: grid;
+      place-items: center;
+      width: 52px;
+      height: 48px;
+      overflow: hidden;
+      border: 1px solid #465140;
+      border-radius: 5px;
+      background: #10130f;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .entity-card__thumb img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+
+    .entity-card__name,
+    .entity-card__meta,
+    .entity-card__entry {
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .entity-card__name {
+      color: #fff2c7;
+      font-weight: 800;
+      line-height: 1.25;
+    }
+
+    .entity-card__meta,
+    .entity-card__entry {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    .advanced-json {
+      padding: 0;
+    }
+
+    .advanced-json summary {
+      padding: 12px;
+      color: #fff0bf;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .advanced-json__body {
+      display: grid;
+      gap: 9px;
+      padding: 0 12px 12px;
+    }
+
+    .editor {
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      min-width: 0;
+      min-height: 0;
+      background: #10130e;
+    }
+
+    .editor__bar {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      min-height: 43px;
+      padding: 8px 10px;
+      border-bottom: 1px solid #3d4537;
+      background: #1a1f18;
+    }
+
+    .editor__meta {
+      display: flex;
+      gap: 14px;
+      align-items: center;
+      min-width: 0;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .editor__meta strong {
+      color: #fff2c7;
+    }
+
+    .canvas-help {
+      color: #ffe7a2;
+      font-size: 12px;
+    }
+
+    .viewport {
+      position: relative;
+      min-width: 0;
+      min-height: 0;
+      overflow: auto;
+      background:
+        linear-gradient(90deg, rgb(255 255 255 / 4%) 1px, transparent 1px),
+        linear-gradient(0deg, rgb(255 255 255 / 4%) 1px, transparent 1px),
+        #11140f;
+      background-size: 32px 32px;
+    }
+
+    .stage-shell {
+      position: relative;
+      margin: 24px;
+    }
+
+    .stage {
+      position: absolute;
+      top: 0;
+      left: 0;
+      overflow: visible;
+      background:
+        radial-gradient(circle at 50% 45%, rgb(88 98 76 / 35%), transparent 42%),
+        #20261d;
+      transform-origin: top left;
+    }
+
+    .stage::before {
+      position: absolute;
+      inset: 0;
+      border: 1px solid #65705b;
+      content: "";
+      pointer-events: none;
+    }
+
+    .base-space {
+      position: absolute;
+      overflow: visible;
+      box-shadow: inset 0 0 0 2px rgb(241 198 92 / 46%);
+    }
+
+    .base-space__image,
+    .foreground-image,
+    .svg-layer,
+    .entity-layer {
+      position: absolute;
+      inset: 0;
+    }
+
+    .base-space__image,
+    .foreground-image {
+      width: 100%;
+      height: 100%;
+      object-fit: fill;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    .base-space__image:not(.has-image),
+    .foreground-image:not(.has-image) {
+      display: none;
+    }
+
+    .base-space__image {
+      z-index: 1;
+    }
+
+    .svg-layer {
+      z-index: 2;
+      pointer-events: auto;
+    }
+
+    .entity-layer {
+      z-index: 5;
+    }
+
+    .foreground-image {
+      z-index: 1000;
+      pointer-events: none;
+    }
+
+    .calibration-banner {
+      position: absolute;
+      top: 12px;
+      left: 50%;
+      z-index: 16;
+      max-width: 680px;
+      padding: 8px 12px;
+      border: 1px solid rgb(255 223 126 / 76%);
+      border-radius: 7px;
+      background: rgb(37 30 14 / 88%);
+      color: #fff2c7;
+      font-size: 13px;
+      font-weight: 800;
+      line-height: 1.45;
+      pointer-events: none;
+      transform: translateX(-50%);
+    }
+
+    .buildable-label {
+      fill: #fff4c7;
+      font-size: 22px;
+      font-weight: 800;
+      paint-order: stroke;
+      stroke: rgb(22 29 22 / 88%);
+      stroke-width: 4px;
+      pointer-events: none;
+    }
+
+    .outside-label {
+      fill: #d7d0bb;
+      font-size: 18px;
+      font-weight: 800;
+      opacity: 0.8;
+      paint-order: stroke;
+      stroke: rgb(0 0 0 / 88%);
+      stroke-width: 4px;
+      pointer-events: none;
+    }
+
+    .board-cell {
+      fill: rgb(116 190 132 / 10%);
+      stroke: rgb(255 238 169 / 40%);
+      stroke-width: 1.2;
+      pointer-events: auto;
+    }
+
+    .board-cell:hover,
+    .board-cell.is-hovered {
+      fill: rgb(241 198 92 / 24%);
+      stroke: rgb(255 223 126 / 90%);
+      stroke-width: 2;
+    }
+
+    .board-coordinate {
+      fill: rgb(255 246 213 / 58%);
+      font-size: 9px;
+      font-weight: 700;
+      pointer-events: none;
+      text-anchor: middle;
+      dominant-baseline: middle;
+    }
+
+    .board-outline {
+      fill: none;
+      stroke: rgb(255 223 126 / 92%);
+      stroke-width: 3;
+      stroke-dasharray: 12 7;
+      pointer-events: none;
+    }
+
+    .buildable-polygon {
+      fill: rgb(131 200 148 / 10%);
+      stroke: rgb(131 200 148 / 85%);
+      stroke-width: 3;
+      stroke-dasharray: 9 8;
+    }
+
+    .forbidden-polygon {
+      fill: rgb(235 108 95 / 20%);
+      stroke: rgb(255 145 132 / 82%);
+      stroke-width: 2.4;
+      stroke-dasharray: 12 6;
+    }
+
+    .grid-origin-cross {
+      stroke: rgb(134 183 232 / 90%);
+      stroke-width: 2;
+      pointer-events: none;
+    }
+
+    .footprint-diamond {
+      fill: rgb(241 198 92 / 22%);
+      stroke: rgb(255 223 126 / 95%);
+      stroke-width: 2.4;
+    }
+
+    .footprint-diamond.is-invalid {
+      fill: rgb(235 108 95 / 24%);
+      stroke: rgb(235 108 95 / 96%);
+    }
+
+    .entity {
+      position: absolute;
+      width: 0;
+      height: 0;
+      user-select: none;
+    }
+
+    .entity.is-hidden {
+      opacity: 0.38;
+    }
+
+    .entity__asset {
+      position: absolute;
+      z-index: 4;
+      pointer-events: auto;
+      transform-origin: 50% 100%;
+      cursor: grab;
+    }
+
+    .entity__asset:active {
+      cursor: grabbing;
+    }
+
+    .entity__asset img {
+      display: block;
+      width: 100%;
+      height: auto;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    .entity__asset-missing {
+      display: grid;
+      place-items: center;
+      width: 128px;
+      height: 76px;
+      border: 1px dashed #c58f61;
+      border-radius: 5px;
+      background: rgb(20 20 18 / 72%);
+      color: #f0bd8d;
+      font-size: 12px;
+      text-align: center;
+      transform: translate(-50%, -100%);
+    }
+
+    .entity__render-box,
+    .entity__hit-area {
+      position: absolute;
+      pointer-events: auto;
+    }
+
+    .entity__render-box {
+      z-index: 3;
+      border: 1px dashed rgb(241 198 92 / 86%);
+      pointer-events: none;
+    }
+
+    .entity__hit-area {
+      z-index: 7;
+      border: 2px dashed rgb(134 183 232 / 90%);
+      background: rgb(134 183 232 / 13%);
+      cursor: move;
+    }
+
+    .entity__hit-area.is-ellipse {
+      border-radius: 50%;
+    }
+
+    .hit-resize-handle {
+      position: absolute;
+      right: -8px;
+      bottom: -8px;
+      z-index: 8;
+      width: 16px;
+      height: 16px;
+      border: 2px solid #fff2c7;
+      border-radius: 50%;
+      background: var(--blue);
+      cursor: nwse-resize;
+      pointer-events: auto;
+    }
+
+    .entity__label {
+      position: absolute;
+      z-index: 9;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      padding: 3px 5px;
+      border: 1px solid rgb(230 200 118 / 90%);
+      border-radius: 6px;
+      background: rgb(31 57 47 / 90%);
+      color: #ffedbc;
+      font-size: 12px;
+      font-weight: 800;
+      line-height: 1.15;
+      text-align: center;
+      white-space: normal;
+      overflow-wrap: anywhere;
+      transform: translate(-50%, -100%);
+      cursor: move;
+      pointer-events: auto;
+    }
+
+    .entity__label.is-empty {
+      border-style: dashed;
+      color: #c6bfae;
+      opacity: 0.58;
+    }
+
+    .lot-control-layer {
+      position: absolute;
+      z-index: 12;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .lot-resize-handle {
+      position: absolute;
+      z-index: 14;
+      display: grid;
+      place-items: center;
+      width: 24px;
+      height: 24px;
+      border: 2px solid #fff4c2;
+      border-radius: 50%;
+      background: var(--gold);
+      box-shadow:
+        0 0 0 3px rgb(0 0 0 / 38%),
+        0 0 16px rgb(255 216 102 / 62%);
+      color: #412b09;
+      font-size: 13px;
+      font-weight: 900;
+      pointer-events: auto;
+      transform: translate(-50%, -50%);
+    }
+
+    .lot-resize-handle:hover {
+      background: #ff7a65;
+      cursor: nwse-resize;
+    }
+
+    .lot-resize-handle--width {
+      cursor: ew-resize;
+    }
+
+    .lot-resize-handle--height {
+      cursor: ns-resize;
+    }
+
+    .lot-resize-handle--area {
+      background: #f05f50;
+      cursor: move;
+    }
+
+    .lot-count-badge,
+    .canvas-warning {
+      position: absolute;
+      z-index: 15;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 26px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 900;
+      pointer-events: none;
+      transform: translate(-50%, -100%);
+    }
+
+    .lot-count-badge {
+      border: 1px solid rgb(255 232 150 / 80%);
+      background: rgb(52 39 16 / 88%);
+      color: #ffefb6;
+    }
+
+    .canvas-warning {
+      border: 1px solid rgb(255 164 154 / 80%);
+      background: rgb(84 18 16 / 90%);
+      color: #ffe2de;
+    }
+
+    .move-anchor {
+      position: absolute;
+      z-index: 13;
+      width: 28px;
+      height: 28px;
+      border: 2px solid #fff6d2;
+      border-radius: 50%;
+      background: rgb(131 200 148 / 92%);
+      box-shadow: 0 0 0 3px rgb(0 0 0 / 36%);
+      cursor: move;
+      pointer-events: auto;
+      transform: translate(-50%, -50%);
+    }
+
+    .calibration-point,
+    .grid-origin-handle,
+    .board-move-handle,
+    .board-scale-handle {
+      position: absolute;
+      z-index: 18;
+      display: grid;
+      place-items: center;
+      border: 2px solid #fff4c2;
+      border-radius: 50%;
+      box-shadow:
+        0 0 0 3px rgb(0 0 0 / 42%),
+        0 0 18px rgb(255 216 102 / 68%);
+      font-weight: 900;
+      pointer-events: auto;
+      transform: translate(-50%, -50%);
+    }
+
+    .calibration-point {
+      width: 24px;
+      height: 24px;
+      background: var(--gold);
+      color: #3a2608;
+      cursor: move;
+    }
+
+    .calibration-point.is-selected {
+      background: #ff7a65;
+      color: #2b0d08;
+    }
+
+    .grid-origin-handle,
+    .board-move-handle {
+      width: 30px;
+      height: 30px;
+      background: var(--blue);
+      color: #082138;
+      cursor: move;
+    }
+
+    .board-scale-handle {
+      width: 26px;
+      height: 26px;
+      background: var(--gold);
+      color: #3a2608;
+      cursor: nwse-resize;
+    }
+
+    .point-list {
+      display: grid;
+      gap: 5px;
+      max-height: 154px;
+      overflow: auto;
+      padding: 6px;
+      border: 1px solid #465140;
+      border-radius: 5px;
+      background: #151914;
+    }
+
+    .point-row {
+      display: grid;
+      grid-template-columns: 34px 1fr;
+      gap: 6px;
+      align-items: center;
+      min-height: 28px;
+      padding: 3px 6px;
+      border: 1px solid #3f493b;
+      border-radius: 5px;
+      background: #20261d;
+      color: var(--muted);
+      text-align: left;
+    }
+
+    .point-row.is-selected {
+      border-color: var(--gold);
+      color: #fff2c7;
+    }
+
+    .hint-text {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .app.is-preview .svg-layer,
+    .app.is-preview .lot-control-layer,
+    .app.is-preview .entity__render-box,
+    .app.is-preview .entity__hit-area,
+    .app.is-preview .hit-resize-handle {
+      display: none;
+    }
+
+    .status-line {
+      min-height: 34px;
+      padding: 8px 10px;
+      border-top: 1px solid #3d4537;
+      background: #1a1f18;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .status-line strong {
+      color: #fff2c7;
+    }
+
+    .validation-output {
+      max-height: 150px;
+      overflow: auto;
+      border-top: 1px solid #3d4537;
+      background: #151914;
+    }
+
+    .validation-output:empty {
+      display: none;
+    }
+
+    .validation-item {
+      padding: 7px 10px;
+      border-bottom: 1px solid #30392d;
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .validation-item strong {
+      margin-right: 6px;
+    }
+
+    .validation-item--error strong {
+      color: var(--red);
+    }
+
+    .validation-item--warning strong {
+      color: var(--warn);
+    }
+
+    .validation-item--info strong {
+      color: var(--blue);
+    }
+
+    .form-grid {
+      display: grid;
+      gap: 9px;
+    }
+
+    .field {
+      display: grid;
+      gap: 4px;
+    }
+
+    .field label,
+    .inline-label {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .field-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .check-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .check-row label {
+      display: inline-flex;
+      gap: 6px;
+      align-items: center;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .empty-state {
+      padding: 18px 12px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+  </style>
+</head>
+<body>
+  <div class="app" id="app">
+    <header class="toolbar" aria-label="顶部工具栏">
+      <div class="toolbar__group">
+        <button type="button" id="new-layout">新建布局</button>
+        <button type="button" id="load-example">载入濠州示例</button>
+        <label class="file-button">导入 JSON<input type="file" id="import-json" accept="application/json,.json"></label>
+        <button type="button" id="export-json">导出 JSON</button>
+      </div>
+      <label class="file-button">上传地图底图<input type="file" id="upload-background" accept="image/*"></label>
+      <label class="file-button">上传前景墙体图<input type="file" id="upload-foreground" accept="image/*"></label>
+      <label class="file-button">上传建筑图片<input type="file" id="upload-entity-image" accept="image/*"></label>
+      <span></span>
+      <button type="button" id="calibration-mode-toggle" disabled title="Grid is fixed to the city stage; edit entities only.">Grid fixed</button>
+      <button type="button" id="mode-toggle">预览模式</button>
+      <label class="toolbar__toggle">缩放画布 <input type="range" id="zoom-slider" min="0.25" max="1.25" step="0.05" value="0.55"> <span id="zoom-value">55%</span></label>
+      <button type="button" id="validate-layout">校验布局</button>
+    </header>
+
+    <main class="workspace">
+      <aside class="panel" aria-label="左侧建筑列表">
+        <section class="panel__section">
+          <h2 class="panel__title">建筑列表</h2>
+          <div class="button-row">
+            <button type="button" id="add-entity">新建建筑</button>
+            <button type="button" id="duplicate-entity">复制建筑</button>
+            <button type="button" id="delete-entity">删除建筑</button>
+          </div>
+        </section>
+        <section class="panel__section">
+          <div class="filter-row">
+            <label for="category-filter">类型</label>
+            <select id="category-filter">
+              <option value="all">全部建筑</option>
+              <option value="special">特殊建筑</option>
+              <option value="house">普通建筑</option>
+              <option value="random-slot">随机民居槽位</option>
+              <option value="decoration">装饰建筑</option>
+              <option value="ground-decoration">地面装饰</option>
+            </select>
+          </div>
+        </section>
+        <section class="panel__section">
+          <h2 class="panel__title">一键选中</h2>
+          <div class="quick-grid" id="quick-select">
+            <button type="button" data-quick-id="keep">帅府</button>
+            <button type="button" data-quick-id="leader-residence">将领府邸</button>
+            <button type="button" data-quick-id="temple">皇觉寺</button>
+            <button type="button" data-quick-id="tea-house">茶馆</button>
+            <button type="button" data-quick-id="market">货栈</button>
+            <button type="button" data-quick-id="grain-shop">粮铺</button>
+            <button type="button" data-quick-id="medicine-house">药铺</button>
+            <button type="button" data-quick-id="inn">客栈</button>
+            <button type="button" data-quick-id="decor-house-01">民居 1</button>
+            <button type="button" data-quick-id="decor-house-02">民居 2</button>
+            <button type="button" data-quick-id="decor-house-03">民居 3</button>
+          </div>
+        </section>
+        <div class="entity-list" id="entity-list"></div>
+        <details class="advanced-json">
+          <summary>高级 / 调试 JSON</summary>
+          <div class="advanced-json__body">
+            <label class="field">
+              <span class="inline-label">随机池 JSON</span>
+              <textarea id="random-pools-json" spellcheck="false" aria-label="随机池 JSON"></textarea>
+            </label>
+            <label class="field">
+              <span class="inline-label">当前布局 JSON</span>
+              <textarea id="layout-json-preview" spellcheck="false" readonly aria-label="当前布局 JSON"></textarea>
+            </label>
+            <button type="button" id="copy-layout-json">复制当前布局 JSON 到剪贴板</button>
+          </div>
+        </details>
+      </aside>
+
+      <section class="editor" aria-label="中央画布">
+        <div class="editor__bar">
+          <div class="editor__meta">
+            <span><strong id="map-title">濠州城</strong></span>
+            <span id="stage-readout">舞台 2048x1152</span>
+            <span id="base-readout">地图编辑区域 1771x976 @ 139,88</span>
+            <span id="selected-readout">未选中建筑实体</span>
+          </div>
+          <div class="canvas-help" id="canvas-help">当前使用固定 细分网格 菱形棋盘。拖动建筑会吸附到格子；拖动金色手柄会改变建筑占几格。</div>
+        </div>
+        <div class="viewport" id="viewport">
+          <div class="stage-shell" id="stage-shell">
+            <div class="stage" id="stage">
+              <div class="base-space" id="base-space">
+                <img class="base-space__image" id="background-image" alt="">
+                <svg class="svg-layer" id="map-svg" aria-hidden="true"></svg>
+                <div class="entity-layer" id="entity-layer"></div>
+                <div class="lot-control-layer" id="lot-control-layer"></div>
+                <div class="calibration-banner hidden" id="calibration-banner">城墙内地块网格为固定参考层；此编辑器只调整实体占地、图片尺寸和视觉 offset。</div>
+              </div>
+              <img class="foreground-image" id="foreground-image" alt="">
+            </div>
+          </div>
+        </div>
+        <div class="status-line" id="status-line"><strong>状态</strong> 导入示例 JSON 后可在实景地图上编辑。</div>
+        <div class="validation-output" id="validation-output"></div>
+      </section>
+
+      <aside class="panel panel--right" aria-label="右侧属性面板">
+        <section class="panel__section">
+          <h2 class="panel__title">地图资源</h2>
+          <div class="form-grid">
+            <div class="field-row">
+              <label class="field"><span>地图编号</span><input id="map-id" type="text"></label>
+              <label class="field"><span>地图名称</span><input id="map-name" type="text"></label>
+            </div>
+            <label class="field"><span>底图路径</span><input id="map-background-image" type="text" placeholder="ui/yuansu/菱形格子/20260716-111958.png"></label>
+            <label class="field"><span>前景墙体路径</span><input id="map-foreground-image" type="text" placeholder="ui/yuansu/菱形格子/20260716-141239.png"></label>
+          </div>
+        </section>
+
+        <section class="panel__section">
+          <h2 class="panel__title">显示图层</h2>
+          <div class="check-row">
+            <label><input id="show-buildable" type="checkbox"> 显示城墙参考遮罩</label>
+            <label><input id="show-valid-grid" type="checkbox" checked> 显示网格 / 细分网格 棋盘</label>
+            <label><input id="show-footprint" type="checkbox" checked> 地块框</label>
+            <label><input id="show-image-bounds" type="checkbox" checked> 图片边界</label>
+            <label><input id="show-labels" type="checkbox" checked> 标签按钮</label>
+            <label><input id="show-hit-area" type="checkbox" checked> 点击区域</label>
+            <label><input id="show-forbidden" type="checkbox"> 显示前景遮挡警戒区</label>
+            <label><input id="snap-enabled" type="checkbox" checked> 开启吸附</label>
+          </div>
+        </section>
+
+        <section class="panel__section form-grid">
+          <h2 class="panel__title">细分网格 棋盘设置</h2>
+          <div class="hint-text">请将 细分网格 菱形棋盘整体对齐到城墙内部空地。建筑只能占用棋盘格，不再使用自动识别范围。</div>
+          <div class="field-row">
+            <label class="field"><span>棋盘列数</span><input id="board-cols" type="number" min="40" max="40" step="1" readonly></label>
+            <label class="field"><span>棋盘行数</span><input id="board-rows" type="number" min="40" max="40" step="1" readonly></label>
+          </div>
+          <div class="field-row">
+            <label class="field"><span>棋盘原点 X</span><input id="grid-origin-x" type="number" step="1" readonly></label>
+            <label class="field"><span>棋盘原点 Y</span><input id="grid-origin-y" type="number" step="1" readonly></label>
+          </div>
+          <div class="field-row">
+            <label class="field"><span>格子宽度</span><input id="grid-cell-width" type="number" min="16" step="1" readonly></label>
+            <label class="field"><span>格子高度</span><input id="grid-cell-height" type="number" min="8" step="1" readonly></label>
+          </div>
+          <div class="check-row">
+            <label><input id="show-coordinates" type="checkbox" checked> 显示格子坐标</label>
+            <label><input id="show-board-outline" type="checkbox" checked> 显示棋盘外框</label>
+          </div>
+          <div class="field-row">
+            <label class="field"><span>背景图透明度</span><input id="background-opacity" type="range" min="0" max="1" step="0.05"></label>
+            <label class="field"><span>前景墙体透明度</span><input id="foreground-opacity" type="range" min="0" max="1" step="0.05"></label>
+          </div>
+          <div class="field-row">
+            <label class="field"><span>参考遮罩透明度</span><input id="buildable-opacity" type="range" min="0" max="1" step="0.05"></label>
+            <label class="field"><span>网格透明度</span><input id="grid-opacity" type="range" min="0" max="1" step="0.05"></label>
+          </div>
+          <details>
+            <summary>高级 / 城墙参考遮罩 JSON</summary>
+            <label class="field"><span>referenceMask</span><textarea id="optional-mask-json" spellcheck="false"></textarea></label>
+            <label class="field"><span>前景遮挡区 JSON</span><textarea id="forbidden-polygons-json" spellcheck="false"></textarea></label>
+          </details>
+        </section>
+
+        <section class="panel__section" id="entity-form-empty">
+          <div class="empty-state">选择或新建一个 CityMapBuildingEntity 建筑实体后编辑属性。地块是占位和交互骨架，图片是视觉表现，二者可以分开调整。</div>
+        </section>
+
+        <form class="panel__section form-grid hidden" id="entity-form">
+          <h2 class="panel__title">建筑实体</h2>
+          <div class="field-row">
+            <label class="field"><span>建筑编号</span><input id="field-id" type="text"></label>
+            <label class="field"><span>建筑名称</span><input id="field-name" type="text"></label>
+          </div>
+          <label class="field">
+            <span>类型</span>
+            <select id="field-category">
+              <option value="special">特殊建筑</option>
+              <option value="house">普通建筑</option>
+              <option value="random-slot">随机民居槽位</option>
+              <option value="decoration">装饰建筑</option>
+              <option value="ground-decoration">地面装饰</option>
+            </select>
+          </label>
+
+          <h2 class="panel__title">入口绑定</h2>
+          <label class="field">
+            <span>入口类型</span>
+            <select id="field-entry-type">
+              <option value="none">无入口</option>
+              <option value="house">建筑入口 house</option>
+              <option value="city-entry">地点入口 city-entry</option>
+            </select>
+          </label>
+          <label class="field"><span>houseId</span><input id="field-house-id" type="text" placeholder="house.kulan.keep"></label>
+          <label class="field"><span>cityEntryId</span><input id="field-city-entry-id" type="text" placeholder="city-entry.kulan.leader-residence"></label>
+
+          <h2 class="panel__title">图片</h2>
+          <label class="field"><span>图片路径</span><input id="field-image" type="text" placeholder="ui/yuansu/菱形格子/shuaifu.png"></label>
+          <div class="field-row">
+            <label class="field"><span>原始宽度</span><input id="field-natural-width" type="number" min="0" step="1"></label>
+            <label class="field"><span>原始高度</span><input id="field-natural-height" type="number" min="0" step="1"></label>
+          </div>
+          <div class="field-row">
+            <label class="field"><span>图片缩放</span><input id="field-scale" type="number" min="0.01" step="0.01"></label>
+            <label class="field"><span>图片锚点</span><select id="field-anchor"><option value="bottom-center">底部居中</option><option value="center">中心</option><option value="top-left">左上角</option></select></label>
+          </div>
+          <div class="field-row">
+            <label class="field"><span>图片偏移 X</span><input id="field-offset-x" type="number" step="1"></label>
+            <label class="field"><span>图片偏移 Y</span><input id="field-offset-y" type="number" step="1"></label>
+          </div>
+
+          <h2 class="panel__title">地块 / 占地区域</h2>
+          <div class="field-row">
+            <label class="field"><span>格子 X</span><input id="field-lot-x" type="number" step="1"></label>
+            <label class="field"><span>格子 Y</span><input id="field-lot-y" type="number" step="1"></label>
+          </div>
+          <div class="field-row">
+            <label class="field"><span>占地列数</span><input id="field-cols" type="number" min="1" step="1"></label>
+            <label class="field"><span>占地行数</span><input id="field-rows" type="number" min="1" step="1"></label>
+          </div>
+          <div class="field-row">
+            <label class="field"><span>占地宽度</span><input id="field-footprint-width" type="number" min="1" step="1"></label>
+            <label class="field"><span>占地高度</span><input id="field-footprint-height" type="number" min="1" step="1"></label>
+          </div>
+
+          <h2 class="panel__title">显示</h2>
+          <div class="check-row">
+            <label><input id="field-visible" type="checkbox"> 可见</label>
+            <label><input id="field-locked" type="checkbox"> 锁定</label>
+          </div>
+          <div class="field-row">
+            <label class="field"><span>层级模式</span><select id="field-z-index-mode"><option value="y-sort">按 Y 自动排序</option><option value="manual">手动层级</option></select></label>
+            <label class="field"><span>手动层级</span><input id="field-z-index" type="number" step="1"></label>
+          </div>
+
+          <h2 class="panel__title">交互</h2>
+          <div class="check-row">
+            <label><input id="field-clickable" type="checkbox"> 可点击</label>
+          </div>
+          <label class="field"><span>标签按钮文字</span><input id="field-label-text" type="text"></label>
+          <div class="field-row">
+            <label class="field"><span>标签偏移 X</span><input id="field-label-offset-x" type="number" step="1"></label>
+            <label class="field"><span>标签偏移 Y</span><input id="field-label-offset-y" type="number" step="1"></label>
+          </div>
+          <div class="field-row">
+            <label class="field"><span>标签宽度</span><input id="field-label-width" type="number" min="1" step="1"></label>
+            <label class="field"><span>标签高度</span><input id="field-label-height" type="number" min="1" step="1"></label>
+          </div>
+          <label class="field"><span>点击区域形状</span><select id="field-hit-type"><option value="rect">矩形</option><option value="ellipse">椭圆</option></select></label>
+          <div class="field-row">
+            <label class="field"><span>点击区域偏移 X</span><input id="field-hit-offset-x" type="number" step="1"></label>
+            <label class="field"><span>点击区域偏移 Y</span><input id="field-hit-offset-y" type="number" step="1"></label>
+          </div>
+          <div class="field-row">
+            <label class="field"><span>点击区域宽度</span><input id="field-hit-width" type="number" min="1" step="1"></label>
+            <label class="field"><span>点击区域高度</span><input id="field-hit-height" type="number" min="1" step="1"></label>
+          </div>
+
+          <h2 class="panel__title">随机民居槽位</h2>
+          <label class="field"><span>候选池编号</span><input id="field-random-pool-id" type="text" placeholder="decor-house-pool-basic"></label>
+          <label class="field"><span>允许标签</span><input id="field-random-tags" type="text" placeholder="民居, 小型"></label>
+        </form>
+      </aside>
+    </main>
+  </div>
+
+  <script>
+    "use strict";
+
+    const DEFAULT_OPTIONAL_BUILDABLE_MASK = [
+      { x: 650, y: 302 },
+      { x: 1138, y: 300 },
+      { x: 1465, y: 490 },
+      { x: 1462, y: 582 },
+      { x: 1182, y: 744 },
+      { x: 720, y: 748 },
+      { x: 365, y: 590 },
+      { x: 358, y: 512 }
+    ];
+
+    const DEFAULT_FORBIDDEN_POLYGONS = [
+      {
+        id: "front-wall-occlusion",
+        name: "前景城墙遮挡区",
+        points: [
+          { x: 120, y: 690 },
+          { x: 430, y: 795 },
+          { x: 760, y: 850 },
+          { x: 1110, y: 845 },
+          { x: 1465, y: 725 },
+          { x: 1625, y: 770 },
+          { x: 1240, y: 940 },
+          { x: 560, y: 932 }
+        ]
+      }
+    ];
+
+    const EMPTY_LAYOUT = {
+      version: 1,
+      map: {
+        id: "haozhou-city",
+        name: "濠州城",
+        stageWidth: 2048,
+        stageHeight: 1152,
+        baseSpace: { x: 139, y: 88, width: 1771, height: 976 },
+        backgroundImage: "ui/yuansu/菱形格子/20260716-111958.png",
+        foregroundImage: "ui/yuansu/菱形格子/20260716-141239.png",
+        referenceMask: clone(DEFAULT_OPTIONAL_BUILDABLE_MASK),
+        forbiddenPolygons: []
+      },
+      grid: {
+        type: "isometric-board",
+        cols: 40,
+        rows: 40,
+        cellWidth: 40,
+        cellHeight: 20,
+        originX: 885,
+        originY: 220,
+        snap: true,
+        visible: true,
+        showCoordinates: true,
+        showOutline: true
+      },
+      entities: [],
+      randomPools: [
+        { id: "decor-house-pool-basic", name: "普通民居池", candidates: [] }
+      ]
+    };
+
+    const CATEGORY_LABELS = {
+      special: "特殊建筑",
+      house: "普通建筑",
+      "random-slot": "随机民居槽位",
+      decoration: "装饰建筑",
+      "ground-decoration": "地面装饰"
+    };
+
+    const layerState = {
+      buildable: false,
+      validGrid: true,
+      footprint: true,
+      imageBounds: true,
+      labels: true,
+      hitArea: true,
+      forbidden: false
+    };
+
+    const state = {
+      layout: normalizeLayout(EMPTY_LAYOUT),
+      selectedId: null,
+      filter: "all",
+      mode: "edit",
+      calibrationMode: false,
+      zoom: 0.55,
+      opacity: {
+        background: 1,
+        foreground: 1,
+        buildable: 0.9,
+        grid: 1
+      },
+      backgroundPreview: "",
+      foregroundPreview: "",
+      entityPreviews: new Map(),
+      drag: null,
+      hoverGrid: null,
+      centerSelectedAfterRender: false
+    };
+
+    const dom = {};
+
+    document.addEventListener("DOMContentLoaded", init);
+
+    function init() {
+      for (const id of [
+        "app",
+        "new-layout",
+        "load-example",
+        "import-json",
+        "export-json",
+        "upload-background",
+        "upload-foreground",
+        "upload-entity-image",
+        "calibration-mode-toggle",
+        "mode-toggle",
+        "zoom-slider",
+        "zoom-value",
+        "validate-layout",
+        "category-filter",
+        "entity-list",
+        "quick-select",
+        "random-pools-json",
+        "layout-json-preview",
+        "copy-layout-json",
+        "map-title",
+        "stage-readout",
+        "base-readout",
+        "selected-readout",
+        "viewport",
+        "stage-shell",
+        "stage",
+        "base-space",
+        "background-image",
+        "foreground-image",
+        "map-svg",
+        "entity-layer",
+        "lot-control-layer",
+        "calibration-banner",
+        "status-line",
+        "validation-output",
+        "map-id",
+        "map-name",
+        "map-background-image",
+        "map-foreground-image",
+        "show-buildable",
+        "show-valid-grid",
+        "show-footprint",
+        "show-image-bounds",
+        "show-labels",
+        "show-hit-area",
+        "show-forbidden",
+        "snap-enabled",
+        "board-cols",
+        "board-rows",
+        "show-coordinates",
+        "show-board-outline",
+        "optional-mask-json",
+        "forbidden-polygons-json",
+        "grid-origin-x",
+        "grid-origin-y",
+        "grid-cell-width",
+        "grid-cell-height",
+        "background-opacity",
+        "foreground-opacity",
+        "buildable-opacity",
+        "grid-opacity",
+        "entity-form",
+        "entity-form-empty",
+        "add-entity",
+        "duplicate-entity",
+        "delete-entity",
+        "field-id",
+        "field-name",
+        "field-category",
+        "field-entry-type",
+        "field-house-id",
+        "field-city-entry-id",
+        "field-image",
+        "field-natural-width",
+        "field-natural-height",
+        "field-scale",
+        "field-offset-x",
+        "field-offset-y",
+        "field-anchor",
+        "field-lot-x",
+        "field-lot-y",
+        "field-cols",
+        "field-rows",
+        "field-footprint-width",
+        "field-footprint-height",
+        "field-visible",
+        "field-locked",
+        "field-z-index-mode",
+        "field-z-index",
+        "field-clickable",
+        "field-label-text",
+        "field-label-offset-x",
+        "field-label-offset-y",
+        "field-label-width",
+        "field-label-height",
+        "field-hit-type",
+        "field-hit-offset-x",
+        "field-hit-offset-y",
+        "field-hit-width",
+        "field-hit-height",
+        "field-random-pool-id",
+        "field-random-tags"
+      ]) {
+        dom[toKey(id)] = document.getElementById(id);
+      }
+
+      bindEvents();
+      render();
+    }
+
+    function toKey(id) {
+      return id.replace(/-([a-z])/g, (_, character) => character.toUpperCase());
+    }
+
+    function bindEvents() {
+      dom.newLayout.addEventListener("click", () => {
+        if (!confirm("清空当前布局并新建空白 city-map-layout.json？")) {
+          return;
+        }
+        state.layout = normalizeLayout(EMPTY_LAYOUT);
+        state.selectedId = null;
+        state.entityPreviews.clear();
+        state.backgroundPreview = "";
+        state.foregroundPreview = "";
+        setStatus("已新建空白布局。");
+        render();
+      });
+
+      dom.importJson.addEventListener("change", importJsonFile);
+      dom.loadExample.addEventListener("click", loadHaozhouExample);
+      dom.exportJson.addEventListener("click", exportJsonFile);
+      dom.uploadBackground.addEventListener("change", (event) => uploadMapImage(event, "background"));
+      dom.uploadForeground.addEventListener("change", (event) => uploadMapImage(event, "foreground"));
+      dom.uploadEntityImage.addEventListener("change", uploadEntityImage);
+      dom.modeToggle.addEventListener("click", toggleMode);
+      dom.zoomSlider.addEventListener("input", () => {
+        state.zoom = Number(dom.zoomSlider.value);
+        renderCanvas();
+      });
+      dom.validateLayout.addEventListener("click", () => {
+        const result = validateLayout(state.layout);
+        renderValidation(result);
+        setStatus(`校验完成：${result.errors} 个错误，${result.warnings} 个警告，${result.info} 条提示。`);
+      });
+      dom.categoryFilter.addEventListener("change", () => {
+        state.filter = dom.categoryFilter.value;
+        renderEntityList();
+      });
+      dom.quickSelect.addEventListener("click", (event) => {
+        const button = event.target.closest("[data-quick-id]");
+        if (button != null) {
+          selectEntity(button.dataset.quickId);
+        }
+      });
+      dom.addEntity.addEventListener("click", addEntity);
+      dom.duplicateEntity.addEventListener("click", duplicateEntity);
+      dom.deleteEntity.addEventListener("click", deleteEntity);
+      dom.copyLayoutJson.addEventListener("click", copyLayoutJson);
+      dom.randomPoolsJson.addEventListener("change", updateRandomPoolsFromTextarea);
+      dom.optionalMaskJson.addEventListener("change", updateOptionalMaskFromTextarea);
+      dom.forbiddenPolygonsJson.addEventListener("change", updateForbiddenPolygonsFromTextarea);
+
+      for (const element of [
+        dom.boardCols,
+        dom.boardRows,
+        dom.gridOriginX,
+        dom.gridOriginY,
+        dom.gridCellWidth,
+        dom.gridCellHeight
+      ]) {
+        element.addEventListener("input", updateGridFromForm);
+        element.addEventListener("change", updateGridFromForm);
+      }
+      dom.showCoordinates.addEventListener("change", updateGridFromForm);
+      dom.showBoardOutline.addEventListener("change", updateGridFromForm);
+
+      for (const element of [
+        dom.backgroundOpacity,
+        dom.foregroundOpacity,
+        dom.buildableOpacity,
+        dom.gridOpacity
+      ]) {
+        element.addEventListener("input", updateOpacityFromForm);
+      }
+
+      for (const [key, element] of [
+        ["buildable", dom.showBuildable],
+        ["validGrid", dom.showValidGrid],
+        ["footprint", dom.showFootprint],
+        ["imageBounds", dom.showImageBounds],
+        ["labels", dom.showLabels],
+        ["hitArea", dom.showHitArea],
+        ["forbidden", dom.showForbidden]
+      ]) {
+        element.addEventListener("change", () => {
+          layerState[key] = element.checked;
+          renderCanvas();
+        });
+      }
+
+      dom.snapEnabled.addEventListener("change", () => {
+        state.layout.grid.snap = dom.snapEnabled.checked;
+      });
+
+      for (const element of [
+        dom.mapId,
+        dom.mapName,
+        dom.mapBackgroundImage,
+        dom.mapForegroundImage
+      ]) {
+        element.addEventListener("input", updateMapFromForm);
+      }
+
+      for (const element of dom.entityForm.elements) {
+        element.addEventListener("input", updateEntityFromForm);
+        element.addEventListener("change", updateEntityFromForm);
+      }
+
+      dom.entityLayer.addEventListener("click", onCanvasClick);
+      dom.mapSvg.addEventListener("click", onBoardClick);
+      dom.mapSvg.addEventListener("mousemove", onBoardMouseMove);
+      dom.mapSvg.addEventListener("mouseleave", () => {
+        if (state.hoverGrid != null) {
+          state.hoverGrid = null;
+          renderSvgOverlay();
+        }
+      });
+      dom.baseSpace.addEventListener("pointerdown", onCanvasPointerDown);
+      dom.baseSpace.addEventListener("pointermove", onCanvasPointerMove);
+      dom.baseSpace.addEventListener("pointerup", stopDrag);
+      dom.baseSpace.addEventListener("pointercancel", stopDrag);
+    }
+
+    function clone(value) {
+      return JSON.parse(JSON.stringify(value));
+    }
+
+    function normalizeLayout(input) {
+      const source = input && typeof input === "object" ? input : {};
+      const map = { ...clone(EMPTY_LAYOUT.map), ...(source.map || {}) };
+      map.baseSpace = {
+        ...clone(EMPTY_LAYOUT.map.baseSpace),
+        ...(source.map?.baseSpace || {})
+      };
+      map.referenceMask = normalizePointList(
+        source.map?.referenceMask || source.map?.referenceMask,
+        DEFAULT_OPTIONAL_BUILDABLE_MASK
+      );
+      delete map.referenceMask;
+      map.forbiddenPolygons = normalizeForbiddenPolygons(source.map?.forbiddenPolygons);
+      const grid = { ...clone(EMPTY_LAYOUT.grid), ...(source.grid || {}) };
+      grid.type = "isometric-board";
+      grid.cols = Math.max(1, Math.round(numberOr(grid.cols, 20)));
+      grid.rows = Math.max(1, Math.round(numberOr(grid.rows, 20)));
+      grid.cellWidth = Math.max(16, numberOr(grid.cellWidth, 20));
+      grid.cellHeight = Math.max(8, numberOr(grid.cellHeight, 20));
+      grid.originX = numberOr(grid.originX, 885);
+      grid.originY = numberOr(grid.originY, 220);
+      grid.snap = Boolean(grid.snap);
+      grid.visible = grid.visible !== false;
+      grid.showCoordinates = grid.showCoordinates !== false;
+      grid.showOutline = grid.showOutline !== false;
+      return {
+        version: Number(source.version) || 1,
+        map,
+        grid,
+        entities: Array.isArray(source.entities)
+          ? source.entities.map((entity) => normalizeEntity(entity, grid))
+          : [],
+        randomPools: Array.isArray(source.randomPools)
+          ? source.randomPools
+        : clone(EMPTY_LAYOUT.randomPools)
+      };
+    }
+
+    function normalizePointList(points, fallback) {
+      const normalized = Array.isArray(points)
+        ? points
+            .map((point) => ({
+              x: numberOr(point?.x, NaN),
+              y: numberOr(point?.y, NaN)
+            }))
+            .filter((point) => Number.isFinite(point.x) && Number.isFinite(point.y))
+        : [];
+      return normalized.length >= 3 ? normalized : clone(fallback);
+    }
+
+    function normalizeForbiddenPolygons(polygons) {
+      const source = Array.isArray(polygons) ? polygons : [];
+      return source.map((polygon, index) => ({
+        id: String(polygon?.id || `forbidden-${index + 1}`),
+        name: String(polygon?.name || "前景遮挡参考区"),
+        points: normalizePointList(polygon?.points, [])
+      }));
+    }
+
+    function normalizeEntity(entity, grid = state?.layout?.grid || EMPTY_LAYOUT.grid) {
+      const safe = entity && typeof entity === "object" ? entity : {};
+      const safeInteraction = safe.interaction || {};
+      const safeLot = safe.lot || {};
+      const normalized = {
+        id: String(safe.id || createUniqueId("entity")),
+        name: String(safe.name || "未命名建筑"),
+        category: CATEGORY_LABELS[safe.category] ? safe.category : "decoration",
+        entry: normalizeEntry(safe.entry),
+        asset: {
+          image: "",
+          naturalWidth: 512,
+          naturalHeight: 512,
+          scale: 0.25,
+          offsetX: 0,
+          offsetY: 0,
+          anchor: "bottom-center",
+          ...(safe.asset || {})
+        },
+        lot: {
+          x: 860,
+          y: 520,
+          gridX: 8,
+          gridY: 6,
+          cols: 2,
+          rows: 2,
+          offsetX: 0,
+          offsetY: 0,
+          footprintWidth: 160,
+          footprintHeight: 80,
+          ...safeLot
+        },
+        render: {
+          zIndexMode: "y-sort",
+          zIndex: null,
+          visible: true,
+          locked: false,
+          ...(safe.render || {})
+        },
+        interaction: {
+          clickable: false,
+          ...safeInteraction,
+          label: {
+            text: safe.name || "",
+            offsetX: 0,
+            offsetY: -120,
+            width: 110,
+            height: 36,
+            ...(safeInteraction.label || {})
+          },
+          hitArea: {
+            type: "ellipse",
+            offsetX: 0,
+            offsetY: -8,
+            width: 120,
+            height: 52,
+            ...(safeInteraction.hitArea || {})
+          }
+        }
+      };
+
+      if (safe.random != null) {
+        normalized.random = {
+          poolId: "",
+          allowedTags: [],
+          ...safe.random
+        };
+      }
+
+      normalized.asset.naturalWidth = numberOr(normalized.asset.naturalWidth, 512);
+      normalized.asset.naturalHeight = numberOr(normalized.asset.naturalHeight, 512);
+      normalized.asset.scale = numberOr(normalized.asset.scale, 0.25);
+      normalized.asset.offsetX = numberOr(normalized.asset.offsetX, 0);
+      normalized.asset.offsetY = numberOr(normalized.asset.offsetY, 0);
+      normalized.lot.x = numberOr(normalized.lot.x, 860);
+      normalized.lot.y = numberOr(normalized.lot.y, 520);
+      normalized.lot.cols = Math.max(1, Math.round(numberOr(normalized.lot.cols, 2)));
+      normalized.lot.rows = Math.max(1, Math.round(numberOr(normalized.lot.rows, 2)));
+      const derivedGrid = pixelToGridForGrid(normalized.lot.x, normalized.lot.y, grid);
+      normalized.lot.gridX = Math.round(numberOr(safeLot.gridX, derivedGrid.gridX));
+      normalized.lot.gridY = Math.round(numberOr(safeLot.gridY, derivedGrid.gridY));
+      normalized.lot.offsetX = numberOr(normalized.lot.offsetX, 0);
+      normalized.lot.offsetY = numberOr(normalized.lot.offsetY, 0);
+      clampLotToBoard(normalized, grid);
+      syncLotPixelFields(normalized, grid);
+      return normalized;
+    }
+
+    function normalizeEntry(entry) {
+      if (entry?.type === "house") {
+        return { type: "house", houseId: String(entry.houseId || "") };
+      }
+      if (entry?.type === "city-entry") {
+        return { type: "city-entry", cityEntryId: String(entry.cityEntryId || "") };
+      }
+      return { type: "none" };
+    }
+
+    function numberOr(value, fallback) {
+      const numericValue = Number(value);
+      return Number.isFinite(numericValue) ? numericValue : fallback;
+    }
+
+    function gridToPixel(gridX, gridY) {
+      return gridToPixelForGrid(gridX, gridY, state.layout.grid);
+    }
+
+    function gridToPixelForGrid(gridX, gridY, sourceGrid) {
+      const halfW = sourceGrid.cellWidth / 2;
+      const halfH = sourceGrid.cellHeight / 2;
+      return {
+        x: sourceGrid.originX + (gridX - gridY) * halfW,
+        y: sourceGrid.originY + (gridX + gridY) * halfH
+      };
+    }
+
+    function pixelToGrid(x, y) {
+      return pixelToGridForGrid(x, y, state.layout.grid);
+    }
+
+    function pixelToGridForGrid(x, y, sourceGrid) {
+      const halfW = sourceGrid.cellWidth / 2;
+      const halfH = sourceGrid.cellHeight / 2;
+      const localX = x - sourceGrid.originX;
+      const localY = y - sourceGrid.originY;
+      return {
+        gridX: Math.round((localY / halfH + localX / halfW) / 2),
+        gridY: Math.round((localY / halfH - localX / halfW) / 2)
+      };
+    }
+
+    function clampLotToBoard(entity, sourceGrid = state.layout.grid) {
+      const lot = entity.lot;
+      lot.cols = Math.max(1, Math.min(sourceGrid.cols, Math.round(numberOr(lot.cols, 1))));
+      lot.rows = Math.max(1, Math.min(sourceGrid.rows, Math.round(numberOr(lot.rows, 1))));
+      lot.gridX = Math.max(0, Math.min(sourceGrid.cols - lot.cols, Math.round(numberOr(lot.gridX, 0))));
+      lot.gridY = Math.max(0, Math.min(sourceGrid.rows - lot.rows, Math.round(numberOr(lot.gridY, 0))));
+    }
+
+    function syncLotPixelFields(entity, sourceGrid = state.layout.grid) {
+      const anchor = getLotAnchor(entity, sourceGrid);
+      entity.lot.x = Math.round(anchor.x + numberOr(entity.lot.offsetX, 0));
+      entity.lot.y = Math.round(anchor.y + numberOr(entity.lot.offsetY, 0));
+      entity.lot.footprintWidth = Math.round(Math.max(1, entity.lot.cols * sourceGrid.cellWidth));
+      entity.lot.footprintHeight = Math.round(Math.max(1, entity.lot.rows * sourceGrid.cellHeight));
+    }
+
+    function syncAllLotPixelFields() {
+      for (const entity of state.layout.entities) {
+        clampLotToBoard(entity);
+        syncLotPixelFields(entity);
+      }
+    }
+
+    function getLotAnchor(entity, sourceGrid = state.layout.grid) {
+      const cells = getFootprintCellsWithGrid(entity, sourceGrid);
+      const bounds = getBoundsFromCells(cells);
+      return {
+        x: (bounds.left + bounds.right) / 2,
+        y: bounds.bottom
+      };
+    }
+
+    function getBoardDiamond(gridX, gridY, sourceGrid = state.layout.grid) {
+      const center = gridToPixelForGrid(gridX, gridY, sourceGrid);
+      const halfW = sourceGrid.cellWidth / 2;
+      const halfH = sourceGrid.cellHeight / 2;
+      return {
+        center,
+        points: [
+          { x: center.x, y: center.y - halfH },
+          { x: center.x + halfW, y: center.y },
+          { x: center.x, y: center.y + halfH },
+          { x: center.x - halfW, y: center.y }
+        ]
+      };
+    }
+
+    function getBoardCorners(sourceGrid = state.layout.grid) {
+      const topCell = getBoardDiamond(0, 0, sourceGrid);
+      const rightCell = getBoardDiamond(sourceGrid.cols - 1, 0, sourceGrid);
+      const bottomCell = getBoardDiamond(sourceGrid.cols - 1, sourceGrid.rows - 1, sourceGrid);
+      const leftCell = getBoardDiamond(0, sourceGrid.rows - 1, sourceGrid);
+      return {
+        top: topCell.points[0],
+        right: rightCell.points[1],
+        bottom: bottomCell.points[2],
+        left: leftCell.points[3],
+        center: {
+          x: (topCell.center.x + bottomCell.center.x) / 2,
+          y: (topCell.center.y + bottomCell.center.y) / 2
+        }
+      };
+    }
+
+    function getFootprintCellsWithGrid(entity, sourceGrid = state.layout.grid) {
+      const cells = [];
+      for (let row = 0; row < entity.lot.rows; row += 1) {
+        for (let col = 0; col < entity.lot.cols; col += 1) {
+          cells.push(getBoardDiamond(entity.lot.gridX + col, entity.lot.gridY + row, sourceGrid).points);
+        }
+      }
+      return cells;
+    }
+
+    function getBoundsFromCells(cells) {
+      const points = cells.flat();
+      if (points.length === 0) {
+        return { left: 0, right: 0, top: 0, bottom: 0 };
+      }
+      return {
+        left: Math.min(...points.map((point) => point.x)),
+        right: Math.max(...points.map((point) => point.x)),
+        top: Math.min(...points.map((point) => point.y)),
+        bottom: Math.max(...points.map((point) => point.y))
+      };
+    }
+
+    function render() {
+      renderMapForm();
+      renderCalibrationForm();
+      renderToolbarState();
+      renderEntityList();
+      renderProperties();
+      renderCanvas();
+      syncRandomPoolsTextarea();
+      syncLayoutJsonPreview();
+    }
+
+    function renderToolbarState() {
+      dom.app.classList.toggle("is-preview", state.mode === "preview");
+      state.calibrationMode = false;
+      dom.app.classList.remove("is-calibrating");
+      dom.calibrationModeToggle.textContent = "Grid fixed";
+      dom.calibrationModeToggle.disabled = true;
+      dom.modeToggle.textContent = state.mode === "preview" ? "编辑模式" : "预览模式";
+      dom.zoomSlider.value = String(state.zoom);
+      dom.zoomValue.textContent = `${Math.round(state.zoom * 100)}%`;
+      dom.snapEnabled.checked = Boolean(state.layout.grid.snap);
+      dom.showBuildable.checked = layerState.buildable;
+      dom.showValidGrid.checked = layerState.validGrid;
+      dom.showFootprint.checked = layerState.footprint;
+      dom.showImageBounds.checked = layerState.imageBounds;
+      dom.showLabels.checked = layerState.labels;
+      dom.showHitArea.checked = layerState.hitArea;
+      dom.showForbidden.checked = layerState.forbidden;
+    }
+
+    function renderMapForm() {
+      const map = state.layout.map;
+      dom.mapId.value = map.id;
+      dom.mapName.value = map.name;
+      dom.mapBackgroundImage.value = map.backgroundImage;
+      dom.mapForegroundImage.value = map.foregroundImage;
+    }
+
+    function renderCalibrationForm() {
+      dom.boardCols.value = String(state.layout.grid.cols);
+      dom.boardRows.value = String(state.layout.grid.rows);
+      if (document.activeElement !== dom.forbiddenPolygonsJson) {
+        dom.forbiddenPolygonsJson.value = JSON.stringify(state.layout.map.forbiddenPolygons || [], null, 2);
+      }
+      if (document.activeElement !== dom.optionalMaskJson) {
+        dom.optionalMaskJson.value = JSON.stringify(state.layout.map.referenceMask || [], null, 2);
+      }
+
+      dom.gridOriginX.value = Math.round(state.layout.grid.originX);
+      dom.gridOriginY.value = Math.round(state.layout.grid.originY);
+      dom.gridCellWidth.value = Math.round(state.layout.grid.cellWidth);
+      dom.gridCellHeight.value = Math.round(state.layout.grid.cellHeight);
+      dom.showCoordinates.checked = state.layout.grid.showCoordinates !== false;
+      dom.showBoardOutline.checked = state.layout.grid.showOutline !== false;
+      dom.backgroundOpacity.value = String(state.opacity.background);
+      dom.foregroundOpacity.value = String(state.opacity.foreground);
+      dom.buildableOpacity.value = String(state.opacity.buildable);
+      dom.gridOpacity.value = String(state.opacity.grid);
+    }
+
+    function renderEntityList() {
+      const entities = state.layout.entities.filter((entity) =>
+        state.filter === "all" ? true : entity.category === state.filter
+      );
+
+      dom.entityList.innerHTML = "";
+      if (entities.length === 0) {
+        const empty = document.createElement("div");
+        empty.className = "empty-state";
+        empty.textContent = "当前类型下没有建筑。";
+        dom.entityList.append(empty);
+        return;
+      }
+
+      for (const entity of entities) {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = `entity-card${entity.id === state.selectedId ? " is-selected" : ""}`;
+        button.dataset.entityId = entity.id;
+        button.addEventListener("click", () => selectEntity(entity.id));
+
+        const thumb = document.createElement("span");
+        thumb.className = "entity-card__thumb";
+        const imageUrl = getEntityImageUrl(entity);
+        if (imageUrl) {
+          const image = document.createElement("img");
+          image.src = imageUrl;
+          image.alt = "";
+          thumb.append(image);
+        } else {
+          thumb.textContent = "无图";
+        }
+
+        const text = document.createElement("span");
+        text.innerHTML = `
+          <span class="entity-card__name">${escapeHtml(entity.name)}</span>
+          <span class="entity-card__meta">${escapeHtml(entity.id)} · ${escapeHtml(CATEGORY_LABELS[entity.category] || entity.category)} · ${entity.lot.cols} x ${entity.lot.rows} 格</span>
+          <span class="entity-card__entry">${escapeHtml(getEntrySummary(entity))}</span>
+        `;
+
+        button.append(thumb, text);
+        dom.entityList.append(button);
+      }
+    }
+
+    function renderProperties() {
+      const entity = getSelectedEntity();
+      dom.entityForm.classList.toggle("hidden", entity == null);
+      dom.entityFormEmpty.classList.toggle("hidden", entity != null);
+      dom.duplicateEntity.disabled = entity == null;
+      dom.deleteEntity.disabled = entity == null;
+
+      if (entity == null) {
+        dom.selectedReadout.textContent = "未选中建筑实体";
+        return;
+      }
+
+      dom.selectedReadout.textContent = `选中 ${entity.name} (${entity.id})`;
+      dom.fieldId.value = entity.id;
+      dom.fieldName.value = entity.name;
+      dom.fieldCategory.value = entity.category;
+      dom.fieldEntryType.value = entity.entry.type;
+      dom.fieldHouseId.value = entity.entry.type === "house" ? entity.entry.houseId : "";
+      dom.fieldCityEntryId.value = entity.entry.type === "city-entry" ? entity.entry.cityEntryId : "";
+      dom.fieldImage.value = entity.asset.image;
+      dom.fieldNaturalWidth.value = entity.asset.naturalWidth;
+      dom.fieldNaturalHeight.value = entity.asset.naturalHeight;
+      dom.fieldScale.value = entity.asset.scale;
+      dom.fieldOffsetX.value = entity.asset.offsetX;
+      dom.fieldOffsetY.value = entity.asset.offsetY;
+      dom.fieldAnchor.value = entity.asset.anchor;
+      dom.fieldLotX.value = Math.round(entity.lot.gridX);
+      dom.fieldLotY.value = Math.round(entity.lot.gridY);
+      dom.fieldCols.value = entity.lot.cols;
+      dom.fieldRows.value = entity.lot.rows;
+      dom.fieldFootprintWidth.value = Math.round(entity.lot.footprintWidth);
+      dom.fieldFootprintHeight.value = Math.round(entity.lot.footprintHeight);
+      dom.fieldVisible.checked = Boolean(entity.render.visible);
+      dom.fieldLocked.checked = Boolean(entity.render.locked);
+      dom.fieldZIndexMode.value = entity.render.zIndexMode;
+      dom.fieldZIndex.value = entity.render.zIndex ?? "";
+      dom.fieldClickable.checked = Boolean(entity.interaction.clickable);
+      dom.fieldLabelText.value = entity.interaction.label.text;
+      dom.fieldLabelOffsetX.value = entity.interaction.label.offsetX;
+      dom.fieldLabelOffsetY.value = entity.interaction.label.offsetY;
+      dom.fieldLabelWidth.value = entity.interaction.label.width;
+      dom.fieldLabelHeight.value = entity.interaction.label.height;
+      dom.fieldHitType.value = entity.interaction.hitArea.type;
+      dom.fieldHitOffsetX.value = entity.interaction.hitArea.offsetX;
+      dom.fieldHitOffsetY.value = entity.interaction.hitArea.offsetY;
+      dom.fieldHitWidth.value = entity.interaction.hitArea.width;
+      dom.fieldHitHeight.value = entity.interaction.hitArea.height;
+      dom.fieldRandomPoolId.value = entity.random?.poolId || "";
+      dom.fieldRandomTags.value = Array.isArray(entity.random?.allowedTags)
+        ? entity.random.allowedTags.join(", ")
+        : "";
+    }
+
+    function renderCanvas() {
+      const { map } = state.layout;
+      const base = map.baseSpace;
+      syncAllLotPixelFields();
+      dom.mapTitle.textContent = map.name || map.id || "未命名地图";
+      dom.stageReadout.textContent = `舞台 ${map.stageWidth}x${map.stageHeight}`;
+      dom.baseReadout.textContent = `地图编辑区域 ${base.width}x${base.height} @ ${base.x},${base.y}`;
+
+      dom.stageShell.style.width = `${map.stageWidth * state.zoom}px`;
+      dom.stageShell.style.height = `${map.stageHeight * state.zoom}px`;
+      dom.stage.style.width = `${map.stageWidth}px`;
+      dom.stage.style.height = `${map.stageHeight}px`;
+      dom.stage.style.transform = `scale(${state.zoom})`;
+      dom.baseSpace.style.left = `${base.x}px`;
+      dom.baseSpace.style.top = `${base.y}px`;
+      dom.baseSpace.style.width = `${base.width}px`;
+      dom.baseSpace.style.height = `${base.height}px`;
+      dom.backgroundImage.src = getPreviewUrl(state.backgroundPreview || map.backgroundImage);
+      dom.backgroundImage.classList.toggle("has-image", Boolean(state.backgroundPreview || map.backgroundImage));
+      dom.backgroundImage.style.opacity = String(state.opacity.background);
+      dom.foregroundImage.src = getPreviewUrl(state.foregroundPreview || map.foregroundImage);
+      dom.foregroundImage.classList.toggle("has-image", Boolean(state.foregroundPreview || map.foregroundImage));
+      dom.foregroundImage.style.opacity = String(state.opacity.foreground);
+      dom.calibrationBanner.classList.toggle("hidden", !state.calibrationMode);
+      dom.zoomValue.textContent = `${Math.round(state.zoom * 100)}%`;
+
+      renderSvgOverlay();
+      renderEntities();
+      renderLotControls();
+      syncLayoutJsonPreview();
+      if (state.centerSelectedAfterRender && state.drag == null && !state.calibrationMode) {
+        state.centerSelectedAfterRender = false;
+        requestAnimationFrame(centerViewportOnSelectedEntity);
+      }
+    }
+
+    function renderSvgOverlay() {
+      const base = state.layout.map.baseSpace;
+      const optionalMask = getOptionalBuildableMask();
+      const polygonPoints = optionalMask.map((point) => `${point.x},${point.y}`).join(" ");
+      const buildableLabel = getPolygonCentroid(optionalMask);
+      const selected = getSelectedEntity();
+      const selectedInvalid = selected != null && !isLotInsideBoard(selected, state.layout.grid);
+      const svgParts = [];
+
+      if (layerState.buildable && optionalMask.length >= 3) {
+        svgParts.push(`<polygon class="buildable-polygon" opacity="${state.opacity.buildable}" points="${polygonPoints}"></polygon>`);
+        svgParts.push(`<text class="buildable-label" x="${buildableLabel.x}" y="${buildableLabel.y}" text-anchor="middle">城墙参考遮罩</text>`);
+      }
+
+      if (layerState.forbidden) {
+        svgParts.push(createForbiddenPolygonsMarkup());
+      }
+
+      if (layerState.validGrid) {
+        svgParts.push(`<g class="board-grid-layer" opacity="${state.opacity.grid}">${createBoardGridMarkup()}</g>`);
+        if (state.layout.grid.showOutline !== false) {
+          svgParts.push(createBoardOutlineMarkup());
+        }
+        svgParts.push(createGridOriginMarkup());
+      }
+
+      if (layerState.footprint && selected != null) {
+        svgParts.push(`<g class="footprint-grid-layer">${createFootprintMarkup(selected, selectedInvalid)}</g>`);
+      }
+
+      dom.mapSvg.setAttribute("viewBox", `0 0 ${base.width} ${base.height}`);
+      dom.mapSvg.setAttribute("width", String(base.width));
+      dom.mapSvg.setAttribute("height", String(base.height));
+      dom.mapSvg.innerHTML = svgParts.join("");
+    }
+
+    function createBoardGridMarkup() {
+      const grid = state.layout.grid;
+      const diamonds = [];
+      for (let row = 0; row < grid.rows; row += 1) {
+        for (let col = 0; col < grid.cols; col += 1) {
+          const diamond = getBoardDiamond(col, row, grid);
+          const isHovered = state.hoverGrid?.gridX === col && state.hoverGrid?.gridY === row;
+          diamonds.push(`<g>
+            <polygon class="board-cell${isHovered ? " is-hovered" : ""}" data-grid-x="${col}" data-grid-y="${row}" points="${diamond.points.map((point) => `${point.x},${point.y}`).join(" ")}"><title>${col},${row}</title></polygon>
+            ${grid.showCoordinates === false ? "" : `<text class="board-coordinate" x="${diamond.center.x}" y="${diamond.center.y}">${col},${row}</text>`}
+          </g>`);
+        }
+      }
+      return diamonds.join("");
+    }
+
+    function createBoardOutlineMarkup() {
+      const grid = state.layout.grid;
+      const corners = getBoardCorners(grid);
+      return `<polygon class="board-outline" points="${[corners.top, corners.right, corners.bottom, corners.left].map((point) => `${point.x},${point.y}`).join(" ")}"></polygon>`;
+    }
+
+    function createForbiddenPolygonsMarkup() {
+      return (state.layout.map.forbiddenPolygons || [])
+        .filter((polygon) => Array.isArray(polygon.points) && polygon.points.length >= 3)
+        .map((polygon) => `<polygon class="forbidden-polygon" data-forbidden-id="${escapeHtml(polygon.id)}" points="${polygon.points.map((point) => `${point.x},${point.y}`).join(" ")}"><title>${escapeHtml(polygon.name)}</title></polygon>`)
+        .join("");
+    }
+
+    function createGridOriginMarkup() {
+      const grid = state.layout.grid;
+      const size = 22;
+      return `<g class="grid-origin-layer">
+        <line class="grid-origin-cross" x1="${grid.originX - size}" y1="${grid.originY}" x2="${grid.originX + size}" y2="${grid.originY}"></line>
+        <line class="grid-origin-cross" x1="${grid.originX}" y1="${grid.originY - size}" x2="${grid.originX}" y2="${grid.originY + size}"></line>
+        <text class="buildable-label" x="${grid.originX + 28}" y="${grid.originY - 12}">棋盘原点</text>
+      </g>`;
+    }
+
+    function createFootprintMarkup(entity, invalid) {
+      const diamonds = getFootprintCells(entity);
+      const className = invalid ? "footprint-diamond is-invalid" : "footprint-diamond";
+      return diamonds
+        .map((points) => `<polygon class="${className}" points="${points.map((point) => `${point.x},${point.y}`).join(" ")}"></polygon>`)
+        .join("");
+    }
+
+    function getFootprintCells(entity) {
+      return getFootprintCellsWithGrid(entity, state.layout.grid);
+    }
+
+    function renderEntities() {
+      dom.entityLayer.innerHTML = "";
+      const sorted = [...state.layout.entities].sort((first, second) => getEntityZIndex(first) - getEntityZIndex(second));
+      for (const entity of sorted) {
+        const node = document.createElement("div");
+        node.className = [
+          "entity",
+          entity.id === state.selectedId ? "is-selected" : "",
+          entity.render.visible ? "" : "is-hidden"
+        ].filter(Boolean).join(" ");
+        node.dataset.entityId = entity.id;
+        node.style.left = `${entity.lot.x}px`;
+        node.style.top = `${entity.lot.y}px`;
+        node.style.zIndex = String(getEntityZIndex(entity));
+
+        if (layerState.imageBounds) {
+          node.append(createRenderBox(entity));
+        }
+        if (layerState.hitArea) {
+          node.append(createHitArea(entity));
+        }
+        node.append(createAssetNode(entity));
+        if (layerState.labels) {
+          node.append(createLabelNode(entity));
+        }
+        dom.entityLayer.append(node);
+      }
+    }
+
+    function renderLotControls() {
+      dom.lotControlLayer.innerHTML = "";
+      const entity = getSelectedEntity();
+      if (state.mode === "preview") {
+        return;
+      }
+
+      if (entity == null || !layerState.footprint) {
+        return;
+      }
+
+      const bounds = getFootprintBounds(entity);
+      const invalid = !isLotInsideBoard(entity, state.layout.grid);
+      const controls = document.createDocumentFragment();
+      controls.append(createMoveAnchor(entity.lot.x, entity.lot.y + 34, "拖拽调整占地区域"));
+      controls.append(createLotHandle(bounds.right, (bounds.top + bounds.bottom) / 2, "resize-lot-width", "拖拽增加 / 减少占地列数", "↔"));
+      controls.append(createLotHandle((bounds.left + bounds.right) / 2, bounds.top, "resize-lot-height", "拖拽增加 / 减少占地行数", "↕"));
+      controls.append(createLotHandle(bounds.right, bounds.top, "resize-lot-area", "拖拽调整占用格数", "⤡"));
+
+      const badge = document.createElement("div");
+      badge.className = "lot-count-badge";
+      badge.style.left = `${entity.lot.x}px`;
+      badge.style.top = `${bounds.top - 8}px`;
+      badge.textContent = `${entity.lot.cols} x ${entity.lot.rows} 格`;
+      controls.append(badge);
+
+      if (invalid) {
+        const warning = document.createElement("div");
+        warning.className = "canvas-warning";
+        warning.style.left = `${entity.lot.x}px`;
+        warning.style.top = `${bounds.bottom + 42}px`;
+        warning.textContent = "地块超出 细分网格 棋盘";
+        controls.append(warning);
+      }
+
+      dom.lotControlLayer.append(controls);
+    }
+
+    function renderCalibrationControls() {
+      const controls = document.createDocumentFragment();
+      const corners = getBoardCorners();
+      const move = document.createElement("button");
+      move.type = "button";
+      move.className = "board-move-handle";
+      move.title = "拖动整个 细分网格 棋盘";
+      move.dataset.dragMode = "move-board";
+      move.style.left = `${corners.center.x}px`;
+      move.style.top = `${corners.center.y}px`;
+      move.textContent = "✥";
+      controls.append(move);
+
+      const origin = document.createElement("button");
+      origin.type = "button";
+      origin.className = "grid-origin-handle";
+      origin.title = "拖动棋盘原点";
+      origin.dataset.dragMode = "move-board";
+      origin.style.left = `${state.layout.grid.originX}px`;
+      origin.style.top = `${state.layout.grid.originY}px`;
+      origin.textContent = "+";
+      controls.append(origin);
+
+      for (const [text, mode, x, y, title] of [
+        ["宽", "scale-board-width", corners.center.x + 180, corners.center.y, "拖动调整格子宽度"],
+        ["高", "scale-board-height", corners.center.x, corners.center.y + 100, "拖动调整格子高度"]
+      ]) {
+        const handle = document.createElement("button");
+        handle.type = "button";
+        handle.className = "board-scale-handle";
+        handle.title = title;
+        handle.dataset.dragMode = mode;
+        handle.style.left = `${x}px`;
+        handle.style.top = `${y}px`;
+        handle.textContent = text;
+        controls.append(handle);
+      }
+
+      for (const [name, point, mode, text] of [
+        ["顶点", corners.top, "scale-board-height", "▲"],
+        ["左点", corners.left, "scale-board-width", "◀"],
+        ["右点", corners.right, "scale-board-width", "▶"],
+        ["底点", corners.bottom, "scale-board-height", "▼"]
+      ]) {
+        const handle = document.createElement("button");
+        handle.type = "button";
+        handle.className = "board-scale-handle";
+        handle.title = `${name}：拖动缩放 细分网格 棋盘`;
+        handle.dataset.dragMode = mode;
+        handle.style.left = `${point.x}px`;
+        handle.style.top = `${point.y}px`;
+        handle.textContent = text;
+        controls.append(handle);
+      }
+
+      dom.lotControlLayer.append(controls);
+    }
+
+    function createMoveAnchor(x, y, title) {
+      const node = document.createElement("button");
+      node.type = "button";
+      node.className = "move-anchor";
+      node.title = title;
+      node.dataset.dragMode = "move-entity";
+      node.style.left = `${x}px`;
+      node.style.top = `${y}px`;
+      return node;
+    }
+
+    function createLotHandle(x, y, mode, title, text) {
+      const node = document.createElement("button");
+      node.type = "button";
+      node.className = `lot-resize-handle lot-resize-handle--${mode.includes("width") ? "width" : mode.includes("height") ? "height" : "area"}`;
+      node.title = title;
+      node.dataset.dragMode = mode;
+      node.style.left = `${x}px`;
+      node.style.top = `${y}px`;
+      node.textContent = text;
+      return node;
+    }
+
+    function createRenderBox(entity) {
+      const box = getEntityImageBounds(entity);
+      const node = document.createElement("div");
+      node.className = "entity__render-box";
+      node.style.left = `${box.left - entity.lot.x}px`;
+      node.style.top = `${box.top - entity.lot.y}px`;
+      node.style.width = `${box.right - box.left}px`;
+      node.style.height = `${box.bottom - box.top}px`;
+      return node;
+    }
+
+    function createHitArea(entity) {
+      const hit = entity.interaction.hitArea;
+      const node = document.createElement("div");
+      node.className = `entity__hit-area${hit.type === "ellipse" ? " is-ellipse" : ""}`;
+      node.dataset.dragMode = "move-hit-area";
+      node.style.left = `${numberOr(hit.offsetX, 0) - numberOr(hit.width, 1) / 2}px`;
+      node.style.top = `${numberOr(hit.offsetY, 0) - numberOr(hit.height, 1) / 2}px`;
+      node.style.width = `${numberOr(hit.width, 1)}px`;
+      node.style.height = `${numberOr(hit.height, 1)}px`;
+      const handle = document.createElement("span");
+      handle.className = "hit-resize-handle";
+      handle.title = "拖拽调整点击区域";
+      handle.dataset.dragMode = "resize-hit-area";
+      node.append(handle);
+      return node;
+    }
+
+    function createAssetNode(entity) {
+      const imageUrl = getEntityImageUrl(entity);
+      const width = Math.max(1, entity.asset.naturalWidth * entity.asset.scale);
+      const node = document.createElement("div");
+      node.className = "entity__asset";
+      node.dataset.dragMode = "move-image-offset";
+      node.title = "拖拽图片本体调整图片偏移";
+      node.style.left = `${entity.asset.offsetX}px`;
+      node.style.top = `${entity.asset.offsetY}px`;
+      node.style.width = `${width}px`;
+      node.style.transform = getAnchorTransform(entity.asset.anchor);
+
+      if (imageUrl) {
+        const image = document.createElement("img");
+        image.src = imageUrl;
+        image.alt = "";
+        node.append(image);
+      } else {
+        const missing = document.createElement("div");
+        missing.className = "entity__asset-missing";
+        missing.textContent = "未设置图片";
+        node.append(missing);
+      }
+      return node;
+    }
+
+    function createLabelNode(entity) {
+      const labelData = entity.interaction.label;
+      const label = document.createElement("button");
+      label.type = "button";
+      label.className = `entity__label${labelData.text ? "" : " is-empty"}`;
+      label.dataset.dragMode = "move-label";
+      label.dataset.previewEntityId = entity.id;
+      label.title = "拖动标签调整入口按钮";
+      label.style.left = `${numberOr(labelData.offsetX, 0)}px`;
+      label.style.top = `${numberOr(labelData.offsetY, 0)}px`;
+      label.style.width = `${numberOr(labelData.width, 1)}px`;
+      label.style.height = `${numberOr(labelData.height, 1)}px`;
+      label.textContent = labelData.text || "标签按钮";
+      if (entity.entry.type === "house") {
+        label.setAttribute("data-house-id", entity.entry.houseId);
+      } else if (entity.entry.type === "city-entry") {
+        label.setAttribute("data-city-entry-id", entity.entry.cityEntryId);
+      }
+      return label;
+    }
+
+    function getAnchorTransform(anchor) {
+      if (anchor === "center") {
+        return "translate(-50%, -50%)";
+      }
+      if (anchor === "top-left") {
+        return "translate(0, 0)";
+      }
+      return "translate(-50%, -100%)";
+    }
+
+    function getEntityZIndex(entity) {
+      if (entity.render.zIndexMode === "manual" && entity.render.zIndex != null && entity.render.zIndex !== "") {
+        return Number(entity.render.zIndex);
+      }
+      return Math.round(entity.lot.y);
+    }
+
+    function getEntityImageUrl(entity) {
+      return state.entityPreviews.get(entity.id) || getPreviewUrl(entity.asset.image);
+    }
+
+    function getPreviewUrl(path) {
+      if (!path) {
+        return "";
+      }
+      if (/^(data:|blob:|https?:|file:)/i.test(path)) {
+        return path;
+      }
+      if (path.startsWith("../") || path.startsWith("./") || path.startsWith("/")) {
+        return path;
+      }
+      return `../../${path}`;
+    }
+
+    function updateMapFromForm() {
+      state.layout.map.id = dom.mapId.value.trim();
+      state.layout.map.name = dom.mapName.value.trim();
+      state.layout.map.backgroundImage = dom.mapBackgroundImage.value.trim();
+      state.layout.map.foregroundImage = dom.mapForegroundImage.value.trim();
+      renderCanvas();
+    }
+
+    function updateGridFromForm() {
+      dom.gridOriginX.value = Math.round(state.layout.grid.originX);
+      dom.gridOriginY.value = Math.round(state.layout.grid.originY);
+      dom.gridCellWidth.value = Math.round(state.layout.grid.cellWidth);
+      dom.gridCellHeight.value = Math.round(state.layout.grid.cellHeight);
+      state.layout.grid.showCoordinates = dom.showCoordinates.checked;
+      state.layout.grid.showOutline = dom.showBoardOutline.checked;
+      renderCanvas();
+    }
+
+    function updateOpacityFromForm() {
+      state.opacity.background = numberOr(dom.backgroundOpacity.value, state.opacity.background);
+      state.opacity.foreground = numberOr(dom.foregroundOpacity.value, state.opacity.foreground);
+      state.opacity.buildable = numberOr(dom.buildableOpacity.value, state.opacity.buildable);
+      state.opacity.grid = numberOr(dom.gridOpacity.value, state.opacity.grid);
+      renderCanvas();
+    }
+
+    function updateOptionalMaskFromTextarea() {
+      try {
+        state.layout.map.referenceMask = normalizePointList(JSON.parse(dom.optionalMaskJson.value || "[]"), []);
+        setStatus("已更新城墙参考遮罩。它只用于视觉参考，不参与建筑放置校验。");
+        renderCanvas();
+      } catch (error) {
+        setStatus(`城墙参考遮罩 JSON 解析失败：${error.message}`);
+      }
+    }
+
+    function updateForbiddenPolygonsFromTextarea() {
+      try {
+        state.layout.map.forbiddenPolygons = normalizeForbiddenPolygons(JSON.parse(dom.forbiddenPolygonsJson.value || "[]"));
+        setStatus("已更新前景遮挡警戒区。");
+        renderCanvas();
+      } catch (error) {
+        setStatus(`前景遮挡区 JSON 解析失败：${error.message}`);
+      }
+    }
+
+    function updateEntityFromForm(event) {
+      const entity = getSelectedEntity();
+      if (entity == null) {
+        return;
+      }
+
+      const previousId = entity.id;
+      entity.id = dom.fieldId.value.trim() || previousId;
+      entity.name = dom.fieldName.value;
+      entity.category = dom.fieldCategory.value;
+      entity.entry = readEntryFromForm();
+      entity.asset.image = dom.fieldImage.value.trim();
+      entity.asset.naturalWidth = numberOr(dom.fieldNaturalWidth.value, entity.asset.naturalWidth);
+      entity.asset.naturalHeight = numberOr(dom.fieldNaturalHeight.value, entity.asset.naturalHeight);
+      entity.asset.scale = Math.max(0.01, numberOr(dom.fieldScale.value, entity.asset.scale));
+      entity.asset.offsetX = numberOr(dom.fieldOffsetX.value, 0);
+      entity.asset.offsetY = numberOr(dom.fieldOffsetY.value, 0);
+      entity.asset.anchor = dom.fieldAnchor.value;
+      entity.lot.gridX = Math.round(numberOr(dom.fieldLotX.value, entity.lot.gridX));
+      entity.lot.gridY = Math.round(numberOr(dom.fieldLotY.value, entity.lot.gridY));
+      entity.lot.cols = Math.max(1, Math.round(numberOr(dom.fieldCols.value, 1)));
+      entity.lot.rows = Math.max(1, Math.round(numberOr(dom.fieldRows.value, 1)));
+      entity.lot.offsetX = numberOr(entity.lot.offsetX, 0);
+      entity.lot.offsetY = numberOr(entity.lot.offsetY, 0);
+      clampLotToBoard(entity);
+      syncLotPixelFields(entity);
+      entity.render.visible = dom.fieldVisible.checked;
+      entity.render.locked = dom.fieldLocked.checked;
+      entity.render.zIndexMode = dom.fieldZIndexMode.value;
+      entity.render.zIndex = dom.fieldZIndex.value === "" ? null : numberOr(dom.fieldZIndex.value, null);
+      entity.interaction.clickable = dom.fieldClickable.checked;
+      entity.interaction.label.text = dom.fieldLabelText.value;
+      entity.interaction.label.offsetX = numberOr(dom.fieldLabelOffsetX.value, 0);
+      entity.interaction.label.offsetY = numberOr(dom.fieldLabelOffsetY.value, 0);
+      entity.interaction.label.width = Math.max(1, numberOr(dom.fieldLabelWidth.value, 1));
+      entity.interaction.label.height = Math.max(1, numberOr(dom.fieldLabelHeight.value, 1));
+      entity.interaction.hitArea.type = dom.fieldHitType.value;
+      entity.interaction.hitArea.offsetX = numberOr(dom.fieldHitOffsetX.value, 0);
+      entity.interaction.hitArea.offsetY = numberOr(dom.fieldHitOffsetY.value, 0);
+      entity.interaction.hitArea.width = Math.max(1, numberOr(dom.fieldHitWidth.value, 1));
+      entity.interaction.hitArea.height = Math.max(1, numberOr(dom.fieldHitHeight.value, 1));
+
+      if (entity.category === "random-slot" || dom.fieldRandomPoolId.value.trim() || dom.fieldRandomTags.value.trim()) {
+        entity.random = {
+          poolId: dom.fieldRandomPoolId.value.trim(),
+          allowedTags: dom.fieldRandomTags.value.split(",").map((tag) => tag.trim()).filter(Boolean)
+        };
+      } else {
+        delete entity.random;
+      }
+
+      if (previousId !== entity.id) {
+        const preview = state.entityPreviews.get(previousId);
+        if (preview) {
+          state.entityPreviews.delete(previousId);
+          state.entityPreviews.set(entity.id, preview);
+        }
+        state.selectedId = entity.id;
+      }
+
+      if (event?.target === dom.fieldName && !dom.fieldLabelText.value.trim()) {
+        entity.interaction.label.text = entity.name;
+      }
+      renderEntityList();
+      renderCanvas();
+      syncRandomPoolsTextarea();
+    }
+
+    function readEntryFromForm() {
+      if (dom.fieldEntryType.value === "house") {
+        return { type: "house", houseId: dom.fieldHouseId.value.trim() };
+      }
+      if (dom.fieldEntryType.value === "city-entry") {
+        return { type: "city-entry", cityEntryId: dom.fieldCityEntryId.value.trim() };
+      }
+      return { type: "none" };
+    }
+
+    function addEntity() {
+      const entity = normalizeEntity({
+        id: createUniqueId("building"),
+        name: "新建筑",
+        category: "decoration",
+        lot: {
+          gridX: 9,
+          gridY: 9,
+          cols: 2,
+          rows: 2
+        },
+        interaction: {
+          clickable: false,
+          label: { text: "新建筑", offsetX: 0, offsetY: -118, width: 110, height: 36 },
+          hitArea: { type: "ellipse", offsetX: 0, offsetY: -8, width: 120, height: 52 }
+        }
+      });
+      state.layout.entities.push(entity);
+      selectEntity(entity.id);
+      setStatus("已新建建筑。");
+    }
+
+    function duplicateEntity() {
+      const entity = getSelectedEntity();
+      if (entity == null) {
+        return;
+      }
+      const copy = clone(entity);
+      copy.id = createUniqueId(`${entity.id}-copy`);
+      copy.name = `${entity.name} 复制`;
+      copy.lot.gridX = Math.min(state.layout.grid.cols - copy.lot.cols, copy.lot.gridX + 1);
+      copy.lot.gridY = Math.min(state.layout.grid.rows - copy.lot.rows, copy.lot.gridY + 1);
+      state.layout.entities.push(normalizeEntity(copy, state.layout.grid));
+      selectEntity(copy.id);
+      setStatus("已复制建筑。");
+    }
+
+    function deleteEntity() {
+      const entity = getSelectedEntity();
+      if (entity == null) {
+        return;
+      }
+      if (!confirm(`删除建筑 ${entity.name}？`)) {
+        return;
+      }
+      state.layout.entities = state.layout.entities.filter((candidate) => candidate.id !== entity.id);
+      state.entityPreviews.delete(entity.id);
+      state.selectedId = state.layout.entities[0]?.id || null;
+      setStatus("已删除建筑。");
+      render();
+    }
+
+    function selectEntity(id) {
+      if (!state.layout.entities.some((entity) => entity.id === id)) {
+        setStatus(`没有找到建筑：${id}`);
+        return;
+      }
+      state.selectedId = id;
+      state.centerSelectedAfterRender = true;
+      renderEntityList();
+      renderProperties();
+      renderCanvas();
+    }
+
+    function centerViewportOnSelectedEntity() {
+      const entity = getSelectedEntity();
+      if (entity == null) {
+        return;
+      }
+      const base = state.layout.map.baseSpace;
+      const targetX = (base.x + entity.lot.x) * state.zoom;
+      const targetY = (base.y + entity.lot.y - entity.lot.footprintHeight / 2) * state.zoom;
+      dom.viewport.scrollLeft = Math.max(0, targetX - dom.viewport.clientWidth / 2);
+      dom.viewport.scrollTop = Math.max(0, targetY - dom.viewport.clientHeight / 2);
+    }
+
+    function getSelectedEntity() {
+      return state.layout.entities.find((entity) => entity.id === state.selectedId) || null;
+    }
+
+    function createUniqueId(prefix) {
+      const existingIds = new Set(state.layout?.entities?.map((entity) => entity.id) || []);
+      let candidate = prefix;
+      let index = 1;
+      while (existingIds.has(candidate)) {
+        index += 1;
+        candidate = `${prefix}-${index}`;
+      }
+      return candidate;
+    }
+
+    function onBoardClick(event) {
+      if (state.mode === "preview" || state.drag != null) {
+        return;
+      }
+      const cell = event.target.closest(".board-cell");
+      const entity = getSelectedEntity();
+      if (cell == null || entity == null || entity.render.locked) {
+        return;
+      }
+      entity.lot.gridX = Number(cell.dataset.gridX);
+      entity.lot.gridY = Number(cell.dataset.gridY);
+      clampLotToBoard(entity);
+      syncLotPixelFields(entity);
+      setStatus(`${entity.name} 已移动到格子 ${entity.lot.gridX},${entity.lot.gridY}。`);
+      renderProperties();
+      renderEntityList();
+      renderCanvas();
+    }
+
+    function onBoardMouseMove(event) {
+      const cell = event.target.closest(".board-cell");
+      if (cell == null) {
+        if (state.hoverGrid != null) {
+          state.hoverGrid = null;
+          renderSvgOverlay();
+        }
+        return;
+      }
+      const next = {
+        gridX: Number(cell.dataset.gridX),
+        gridY: Number(cell.dataset.gridY)
+      };
+      if (state.hoverGrid?.gridX === next.gridX && state.hoverGrid?.gridY === next.gridY) {
+        return;
+      }
+      state.hoverGrid = next;
+      setStatus(`当前悬浮格子：${next.gridX},${next.gridY}`);
+      renderSvgOverlay();
+    }
+
+    function onCanvasClick(event) {
+      const label = event.target.closest(".entity__label");
+      const entityNode = event.target.closest(".entity");
+
+      if (state.mode === "preview" && label != null) {
+        event.preventDefault();
+        const entity = state.layout.entities.find((candidate) => candidate.id === label.dataset.previewEntityId);
+        if (entity != null) {
+          showPreviewEntry(entity);
+        }
+        return;
+      }
+
+      if (entityNode != null && state.mode === "edit") {
+        selectEntity(entityNode.dataset.entityId);
+      }
+    }
+
+    function onCanvasPointerDown(event) {
+      if (state.mode === "preview") {
+        return;
+      }
+      const handle = event.target.closest("[data-drag-mode]");
+      const dragMode = handle?.dataset.dragMode || "";
+      if (dragMode === "move-board" || dragMode === "scale-board-width" || dragMode === "scale-board-height") {
+        setStatus("Grid is fixed to the city stage. Edit entity lots and offsets instead.");
+        event.preventDefault();
+        return;
+      }
+      const entityNode = event.target.closest(".entity");
+      const selected = getSelectedEntity();
+      const entity = entityNode != null
+        ? state.layout.entities.find((candidate) => candidate.id === entityNode.dataset.entityId)
+        : selected;
+
+      if (entity == null) {
+        return;
+      }
+      if (entityNode != null) {
+        selectEntity(entity.id);
+      }
+      if (entity.render.locked) {
+        setStatus(`建筑 ${entity.name} 已锁定，不能拖动。`);
+        return;
+      }
+
+      const point = getBasePoint(event);
+      const entityDragMode = handle?.dataset.dragMode || "move-entity";
+      state.drag = {
+        pointerId: event.pointerId,
+        entityId: entity.id,
+        mode: entityDragMode,
+        startPoint: point,
+        startLot: clone(entity.lot),
+        startAnchor: { x: entity.lot.x, y: entity.lot.y },
+        startAsset: clone(entity.asset),
+        startLabel: clone(entity.interaction.label),
+        startHitArea: clone(entity.interaction.hitArea)
+      };
+      dom.baseSpace.setPointerCapture(event.pointerId);
+      event.preventDefault();
+    }
+
+    function onCanvasPointerMove(event) {
+      if (state.drag == null || state.drag.pointerId !== event.pointerId) {
+        return;
+      }
+      const point = getBasePoint(event);
+      const dx = point.x - state.drag.startPoint.x;
+      const dy = point.y - state.drag.startPoint.y;
+
+      if (state.drag.mode === "move-board") {
+        state.layout.grid.originX = Math.round(state.drag.startGrid.originX + dx);
+        state.layout.grid.originY = Math.round(state.drag.startGrid.originY + dy);
+        syncAllLotPixelFields();
+        renderCalibrationForm();
+        renderCanvas();
+        return;
+      }
+
+      if (state.drag.mode === "scale-board-width") {
+        const startDistance = Math.max(1, Math.abs(state.drag.startPoint.x - state.drag.startBoardCenter.x));
+        const nextDistance = Math.max(1, Math.abs(point.x - state.drag.startBoardCenter.x));
+        state.layout.grid.cellWidth = Math.max(16, Math.round(state.drag.startGrid.cellWidth * (nextDistance / startDistance)));
+        syncAllLotPixelFields();
+        renderCalibrationForm();
+        renderCanvas();
+        return;
+      }
+
+      if (state.drag.mode === "scale-board-height") {
+        const startDistance = Math.max(1, Math.abs(state.drag.startPoint.y - state.drag.startBoardCenter.y));
+        const nextDistance = Math.max(1, Math.abs(point.y - state.drag.startBoardCenter.y));
+        state.layout.grid.cellHeight = Math.max(8, Math.round(state.drag.startGrid.cellHeight * (nextDistance / startDistance)));
+        syncAllLotPixelFields();
+        renderCalibrationForm();
+        renderCanvas();
+        return;
+      }
+
+      const entity = state.layout.entities.find((candidate) => candidate.id === state.drag.entityId);
+      if (entity == null || entity.render.locked) {
+        return;
+      }
+
+      if (state.drag.mode === "move-entity") {
+        const startGridPoint = pixelToGridForGrid(state.drag.startAnchor.x, state.drag.startAnchor.y, state.layout.grid);
+        const nextGridPoint = state.layout.grid.snap
+          ? pixelToGrid(state.drag.startAnchor.x + dx, state.drag.startAnchor.y + dy)
+          : {
+              gridX: state.drag.startLot.gridX + Math.round(dx / state.layout.grid.cellWidth),
+              gridY: state.drag.startLot.gridY + Math.round(dy / state.layout.grid.cellHeight)
+            };
+        entity.lot.gridX = state.drag.startLot.gridX + nextGridPoint.gridX - startGridPoint.gridX;
+        entity.lot.gridY = state.drag.startLot.gridY + nextGridPoint.gridY - startGridPoint.gridY;
+        clampLotToBoard(entity);
+        syncLotPixelFields(entity);
+        setStatus(`目标格：${entity.lot.gridX},${entity.lot.gridY}`);
+      } else if (state.drag.mode === "resize-lot-width") {
+        resizeLotByGridPoint(entity, point, "width");
+      } else if (state.drag.mode === "resize-lot-height") {
+        resizeLotByGridPoint(entity, point, "height");
+      } else if (state.drag.mode === "resize-lot-area") {
+        resizeLotByGridPoint(entity, point, "area");
+      } else if (state.drag.mode === "move-image-offset") {
+        entity.asset.offsetX = Math.round(state.drag.startAsset.offsetX + dx);
+        entity.asset.offsetY = Math.round(state.drag.startAsset.offsetY + dy);
+      } else if (state.drag.mode === "move-label") {
+        entity.interaction.label.offsetX = Math.round(state.drag.startLabel.offsetX + dx);
+        entity.interaction.label.offsetY = Math.round(state.drag.startLabel.offsetY + dy);
+      } else if (state.drag.mode === "move-hit-area") {
+        entity.interaction.hitArea.offsetX = Math.round(state.drag.startHitArea.offsetX + dx);
+        entity.interaction.hitArea.offsetY = Math.round(state.drag.startHitArea.offsetY + dy);
+      } else if (state.drag.mode === "resize-hit-area") {
+        entity.interaction.hitArea.width = Math.max(12, Math.round(state.drag.startHitArea.width + dx * 2));
+        entity.interaction.hitArea.height = Math.max(12, Math.round(state.drag.startHitArea.height + dy * 2));
+      }
+
+      renderProperties();
+      renderCanvas();
+    }
+
+    function resizeLotByGridPoint(entity, point, axis) {
+      const target = pixelToGrid(point.x, point.y);
+      if (axis === "width" || axis === "area") {
+        entity.lot.cols = Math.max(1, target.gridX - entity.lot.gridX + 1);
+      }
+      if (axis === "height" || axis === "area") {
+        entity.lot.rows = Math.max(1, target.gridY - entity.lot.gridY + 1);
+      }
+      clampLotToBoard(entity);
+      syncLotPixelFields(entity);
+    }
+
+    function stopDrag(event) {
+      if (state.drag == null || state.drag.pointerId !== event.pointerId) {
+        return;
+      }
+      if (dom.baseSpace.hasPointerCapture(event.pointerId)) {
+        dom.baseSpace.releasePointerCapture(event.pointerId);
+      }
+      state.drag = null;
+    }
+
+    function getBasePoint(event) {
+      const rect = dom.baseSpace.getBoundingClientRect();
+      const base = state.layout.map.baseSpace;
+      return {
+        x: ((event.clientX - rect.left) / rect.width) * base.width,
+        y: ((event.clientY - rect.top) / rect.height) * base.height
+      };
+    }
+
+    function snapIsoPoint(x, y) {
+      return snapIsoPointWithGrid(x, y, state.layout.grid);
+    }
+
+    function snapIsoPointWithGrid(x, y, sourceGrid) {
+      const halfW = sourceGrid.cellWidth / 2;
+      const halfH = sourceGrid.cellHeight / 2;
+      const localX = x - sourceGrid.originX;
+      const localY = y - sourceGrid.originY;
+      const isoA = Math.round(localY / halfH + localX / halfW);
+      const isoB = Math.round(localY / halfH - localX / halfW);
+      return {
+        x: sourceGrid.originX + ((isoA - isoB) * halfW) / 2,
+        y: sourceGrid.originY + ((isoA + isoB) * halfH) / 2
+      };
+    }
+
+    function toggleMode() {
+      state.mode = state.mode === "edit" ? "preview" : "edit";
+      if (state.mode === "preview") {
+        state.calibrationMode = false;
+      }
+      renderToolbarState();
+      renderCanvas();
+      setStatus(state.mode === "preview" ? "预览模式：标签点击只显示模拟入口。" : "编辑模式：可直接拖拽建筑、地块、图片、标签和点击区域。");
+    }
+
+    function toggleCalibrationMode() {
+      state.calibrationMode = false;
+      renderToolbarState();
+      renderCanvas();
+      setStatus("Grid is fixed to the city stage; edit entity lots, image size, and offsets here.");
+    }
+
+    function centerViewportOnGridOrigin() {
+      const base = state.layout.map.baseSpace;
+      const targetX = (base.x + state.layout.grid.originX) * state.zoom;
+      const targetY = (base.y + state.layout.grid.originY) * state.zoom;
+      dom.viewport.scrollLeft = Math.max(0, targetX - dom.viewport.clientWidth / 2);
+      dom.viewport.scrollTop = Math.max(0, targetY - dom.viewport.clientHeight / 2);
+    }
+
+    function showPreviewEntry(entity) {
+      if (!entity.interaction.clickable) {
+        setStatus(`${entity.name} 没有开启可点击。`);
+        return;
+      }
+      if (entity.entry.type === "house") {
+        setStatus(`将触发 house: ${entity.entry.houseId}`);
+        return;
+      }
+      if (entity.entry.type === "city-entry") {
+        setStatus(`将触发 city-entry: ${entity.entry.cityEntryId}`);
+        return;
+      }
+      setStatus(`${entity.name} 没有绑定入口。`);
+    }
+
+    function importJsonFile(event) {
+      const file = event.target.files?.[0];
+      if (file == null) {
+        return;
+      }
+      const reader = new FileReader();
+      reader.addEventListener("load", () => {
+        try {
+          setEditorLayout(JSON.parse(String(reader.result)), state.layout.entities[0]?.id || null);
+          setStatus(`已导入 ${file.name}。`);
+        } catch (error) {
+          setStatus(`导入失败：${error.message}`);
+        }
+      });
+      reader.readAsText(file, "utf-8");
+      event.target.value = "";
+    }
+
+    async function loadHaozhouExample() {
+      try {
+        const response = await fetch("examples/haozhou-city-layout.example.json");
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+        setEditorLayout(await response.json());
+        setStatus("已载入濠州示例。");
+      } catch (error) {
+        setStatus(`载入示例失败：请使用“导入 JSON”选择 examples/haozhou-city-layout.example.json。原因：${error.message}`);
+      }
+    }
+
+    function setEditorLayout(layout, preferredSelectedId = null) {
+      state.layout = normalizeLayout(layout);
+      state.selectedId = state.layout.entities.some((entity) => entity.id === preferredSelectedId)
+        ? preferredSelectedId
+        : state.layout.entities[0]?.id || null;
+      state.centerSelectedAfterRender = true;
+      state.entityPreviews.clear();
+      state.backgroundPreview = "";
+      state.foregroundPreview = "";
+      render();
+    }
+
+    function exportJsonFile() {
+      const result = validateLayout(state.layout);
+      renderValidation(result);
+      if (result.errors > 0 && !confirm(`布局存在 ${result.errors} 个错误，仍然导出？`)) {
+        setStatus("已取消导出。");
+        return;
+      }
+      const blob = new Blob([`${JSON.stringify(state.layout, null, 2)}\n`], { type: "application/json" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "city-map-layout.json";
+      document.body.append(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(link.href);
+      setStatus("已导出 city-map-layout.json。");
+    }
+
+    function uploadMapImage(event, kind) {
+      const file = event.target.files?.[0];
+      if (file == null) {
+        return;
+      }
+      readImageFile(file, (dataUrl) => {
+        if (kind === "background") {
+          state.backgroundPreview = dataUrl;
+          if (!state.layout.map.backgroundImage) {
+            state.layout.map.backgroundImage = file.name;
+          }
+        } else {
+          state.foregroundPreview = dataUrl;
+          if (!state.layout.map.foregroundImage) {
+            state.layout.map.foregroundImage = file.name;
+          }
+        }
+        setStatus(`${file.name} 已作为${kind === "background" ? "地图底图" : "前景墙体图"}预览；导出前请填写项目内相对路径。`);
+        render();
+      });
+      event.target.value = "";
+    }
+
+    function uploadEntityImage(event) {
+      const entity = getSelectedEntity();
+      const file = event.target.files?.[0];
+      if (file == null) {
+        return;
+      }
+      if (entity == null) {
+        setStatus("请先选择一个建筑，再上传建筑图片。");
+        event.target.value = "";
+        return;
+      }
+      readImageFile(file, (dataUrl, image) => {
+        state.entityPreviews.set(entity.id, dataUrl);
+        entity.asset.naturalWidth = image.naturalWidth || entity.asset.naturalWidth;
+        entity.asset.naturalHeight = image.naturalHeight || entity.asset.naturalHeight;
+        if (!entity.asset.image) {
+          entity.asset.image = file.name;
+        }
+        setStatus(`${file.name} 已作为 ${entity.name} 的本地预览；导出前请填写项目内相对路径。`);
+        render();
+      });
+      event.target.value = "";
+    }
+
+    function readImageFile(file, callback) {
+      const reader = new FileReader();
+      reader.addEventListener("load", () => {
+        const dataUrl = String(reader.result);
+        const image = new Image();
+        image.addEventListener("load", () => callback(dataUrl, image));
+        image.src = dataUrl;
+      });
+      reader.readAsDataURL(file);
+    }
+
+    async function copyLayoutJson() {
+      const text = JSON.stringify(state.layout, null, 2);
+      if (navigator.clipboard?.writeText != null) {
+        await navigator.clipboard.writeText(text);
+        setStatus("已复制当前布局 JSON。");
+      } else {
+        setStatus("当前浏览器不支持直接复制，请用导出 JSON。");
+      }
+    }
+
+    function updateRandomPoolsFromTextarea() {
+      try {
+        const parsed = JSON.parse(dom.randomPoolsJson.value || "[]");
+        if (!Array.isArray(parsed)) {
+          throw new Error("随机池必须是数组。");
+        }
+        state.layout.randomPools = parsed;
+        setStatus("已更新随机池。");
+      } catch (error) {
+        setStatus(`随机池 JSON 无效：${error.message}`);
+      }
+    }
+
+    function syncRandomPoolsTextarea() {
+      if (document.activeElement === dom.randomPoolsJson) {
+        return;
+      }
+      dom.randomPoolsJson.value = JSON.stringify(state.layout.randomPools, null, 2);
+    }
+
+    function syncLayoutJsonPreview() {
+      dom.layoutJsonPreview.value = `${JSON.stringify(state.layout, null, 2)}\n`;
+    }
+
+    function validateLayout(layout) {
+      const messages = [];
+      const base = layout.map.baseSpace;
+      const idCounts = new Map();
+      const poolIds = new Set((layout.randomPools || []).map((pool) => pool.id));
+      const specialEntities = layout.entities.filter((entity) => entity.category === "special");
+      const grid = layout.grid;
+
+      for (const entity of layout.entities) {
+        idCounts.set(entity.id, (idCounts.get(entity.id) || 0) + 1);
+      }
+
+      for (const entity of layout.entities) {
+        if ((idCounts.get(entity.id) || 0) > 1) {
+          addMessage("error", entity.id, "建筑编号重复。");
+        }
+        if (!entity.name.trim()) {
+          addMessage("error", entity.id, "建筑名称不能为空。");
+        }
+        if ((entity.category === "special" || entity.interaction.clickable) && entity.entry.type === "none") {
+          addMessage("error", entity.id, "特殊建筑或可点击建筑缺少入口绑定。");
+        }
+        if (entity.entry.type === "house" && !entity.entry.houseId.trim()) {
+          addMessage("error", entity.id, "入口类型为 house 时缺少 houseId。");
+        }
+        if (entity.entry.type === "city-entry" && !entity.entry.cityEntryId.trim()) {
+          addMessage("error", entity.id, "入口类型为 city-entry 时缺少 cityEntryId。");
+        }
+        if (!entity.asset.image.trim()) {
+          addMessage("warning", entity.id, "图片路径为空。");
+        }
+        if (!isBoundsInside(getEntityImageBounds(entity), base)) {
+          addMessage("warning", entity.id, "建筑图片超出地图编辑区域。");
+        }
+        const footprintBounds = getFootprintBounds(entity);
+        const labelBounds = getLabelBounds(entity);
+        const hitBounds = getHitAreaBounds(entity);
+        if (!isBoundsInside(footprintBounds, base)) {
+          addMessage("warning", entity.id, "占地区域超出地图编辑区域。");
+        }
+        if (!isLotInsideBoard(entity, grid)) {
+          addMessage("error", entity.id, "建筑占格超出 细分网格 棋盘。");
+        }
+        if (entity.lot.gridX < 0 || entity.lot.gridY < 0) {
+          addMessage("error", entity.id, "建筑格子坐标不能小于 0。");
+        }
+        if (entity.lot.gridX + entity.lot.cols > grid.cols || entity.lot.gridY + entity.lot.rows > grid.rows) {
+          addMessage("error", entity.id, "建筑底座没有落在 细分网格 棋盘内。");
+        }
+        if (!isBoundsInside(getLabelBounds(entity), base) && (entity.interaction.clickable || entity.interaction.label.text.trim())) {
+          addMessage("warning", entity.id, "标签按钮超出可见区域。");
+        }
+        if (entity.interaction.label.offsetY > -20 && entity.interaction.clickable) {
+          addMessage("warning", entity.id, "标签按钮可能被前景墙体遮挡。");
+        }
+        if (entity.interaction.hitArea.width <= 0 || entity.interaction.hitArea.height <= 0) {
+          addMessage("error", entity.id, "点击区域缺少有效宽高。");
+        }
+        if (Math.hypot(entity.interaction.hitArea.offsetX, entity.interaction.hitArea.offsetY) > Math.max(entity.lot.footprintWidth, entity.lot.footprintHeight)) {
+          addMessage("warning", entity.id, "点击区域明显偏离建筑。");
+        }
+        if (!doBoundsOverlap(getEntityImageBounds(entity), expandBounds(getFootprintBounds(entity), 160))) {
+          addMessage("warning", entity.id, "建筑图片视觉上完全不在地块附近。");
+        }
+        if (entity.category === "random-slot") {
+          if (!entity.random?.poolId || !poolIds.has(entity.random.poolId)) {
+            addMessage("error", entity.id, "随机民居槽位缺少有效候选池。");
+          }
+          if (!Array.isArray(entity.random?.allowedTags) || entity.random.allowedTags.length === 0) {
+            addMessage("warning", entity.id, "随机民居槽位缺少允许标签。");
+          }
+          for (const special of specialEntities) {
+            if (special.id !== entity.id && doBoundsOverlap(getFootprintBounds(entity), expandBounds(getFootprintBounds(special), 80))) {
+              addMessage("warning", entity.id, `随机民居槽位进入特殊建筑 ${special.name} 的保护区。`);
+            }
+          }
+        }
+        if (entity.render.locked) {
+          addMessage("info", entity.id, "锁定建筑不能被拖动。");
+        }
+      }
+
+      for (let firstIndex = 0; firstIndex < layout.entities.length; firstIndex += 1) {
+        for (let secondIndex = firstIndex + 1; secondIndex < layout.entities.length; secondIndex += 1) {
+          const first = layout.entities[firstIndex];
+          const second = layout.entities[secondIndex];
+          if (!first.render.visible || !second.render.visible) {
+            continue;
+          }
+          if (first.category === "ground-decoration" || second.category === "ground-decoration") {
+            continue;
+          }
+          if (doLotRectsOverlap(first, second)) {
+            const isSpecialOverlap = first.category === "special" || second.category === "special";
+            addMessage(isSpecialOverlap ? "error" : "warning", `${first.id} / ${second.id}`, isSpecialOverlap ? "地块与特殊建筑重叠。" : "占地区域明显重叠。");
+          }
+        }
+      }
+
+      return {
+        messages,
+        errors: messages.filter((message) => message.level === "error").length,
+        warnings: messages.filter((message) => message.level === "warning").length,
+        info: messages.filter((message) => message.level === "info").length
+      };
+
+      function addMessage(level, entityId, text) {
+        messages.push({ level, entityId, text });
+      }
+    }
+
+    function renderValidation(result) {
+      dom.validationOutput.innerHTML = "";
+      if (result.messages.length === 0) {
+        const node = document.createElement("div");
+        node.className = "validation-item validation-item--info";
+        node.innerHTML = "<strong>通过</strong>布局校验未发现问题。";
+        dom.validationOutput.append(node);
+        return;
+      }
+      for (const message of result.messages) {
+        const node = document.createElement("div");
+        node.className = `validation-item validation-item--${message.level}`;
+        const label = message.level === "error" ? "错误" : message.level === "warning" ? "警告" : "提示";
+        node.innerHTML = `<strong>${label}</strong>${escapeHtml(message.entityId)}：${escapeHtml(message.text)}`;
+        dom.validationOutput.append(node);
+      }
+    }
+
+    function getEntityImageBounds(entity) {
+      const width = Math.max(1, entity.asset.naturalWidth * entity.asset.scale);
+      const height = Math.max(1, entity.asset.naturalHeight * entity.asset.scale);
+      const anchor = entity.asset.anchor;
+      const x = entity.lot.x + numberOr(entity.asset.offsetX, 0);
+      const y = entity.lot.y + numberOr(entity.asset.offsetY, 0);
+      if (anchor === "center") {
+        return { left: x - width / 2, right: x + width / 2, top: y - height / 2, bottom: y + height / 2 };
+      }
+      if (anchor === "top-left") {
+        return { left: x, right: x + width, top: y, bottom: y + height };
+      }
+      return { left: x - width / 2, right: x + width / 2, top: y - height, bottom: y };
+    }
+
+    function getFootprintBounds(entity) {
+      return getBoundsFromCells(getFootprintCells(entity));
+    }
+
+    function getFootprintCheckPoints(entity) {
+      const bounds = getFootprintBounds(entity);
+      return [
+        { x: (bounds.left + bounds.right) / 2, y: bounds.top },
+        { x: bounds.right, y: (bounds.top + bounds.bottom) / 2 },
+        { x: (bounds.left + bounds.right) / 2, y: bounds.bottom },
+        { x: bounds.left, y: (bounds.top + bounds.bottom) / 2 },
+        { x: entity.lot.x, y: entity.lot.y - entity.lot.footprintHeight / 2 }
+      ];
+    }
+
+    function isLotInsideBoard(entity, sourceGrid = state.layout.grid) {
+      return entity.lot.gridX >= 0
+        && entity.lot.gridY >= 0
+        && entity.lot.gridX + entity.lot.cols <= sourceGrid.cols
+        && entity.lot.gridY + entity.lot.rows <= sourceGrid.rows;
+    }
+
+    function getOptionalBuildableMask(layout = state.layout) {
+      if (!Array.isArray(layout.map?.referenceMask)) {
+        layout.map.referenceMask = clone(DEFAULT_OPTIONAL_BUILDABLE_MASK);
+      }
+      return layout.map.referenceMask;
+    }
+
+    function getForbiddenPolygons(layout = state.layout) {
+      return (layout.map?.forbiddenPolygons || []).filter((polygon) => Array.isArray(polygon.points) && polygon.points.length >= 3);
+    }
+
+    function isGridDiamondBuildable(diamond, mode = "loose", layout = state.layout) {
+      return true;
+    }
+
+    function isEntityBaseOnValidGrid(entity, layout = state.layout) {
+      const grid = layout.grid;
+      const snapped = snapIsoPointWithGrid(entity.lot.x, entity.lot.y, grid);
+      const tolerance = Math.max(8, Math.min(grid.cellWidth, grid.cellHeight) / 4);
+      return Math.hypot(entity.lot.x - snapped.x, entity.lot.y - snapped.y) <= tolerance;
+    }
+
+    function getHitAreaBounds(entity) {
+      const hit = entity.interaction.hitArea;
+      const centerX = entity.lot.x + numberOr(hit.offsetX, 0);
+      const centerY = entity.lot.y + numberOr(hit.offsetY, 0);
+      return {
+        left: centerX - numberOr(hit.width, 1) / 2,
+        right: centerX + numberOr(hit.width, 1) / 2,
+        top: centerY - numberOr(hit.height, 1) / 2,
+        bottom: centerY + numberOr(hit.height, 1) / 2
+      };
+    }
+
+    function getBoundsCheckPoints(bounds) {
+      return [
+        { x: bounds.left, y: bounds.top },
+        { x: bounds.right, y: bounds.top },
+        { x: bounds.right, y: bounds.bottom },
+        { x: bounds.left, y: bounds.bottom },
+        { x: (bounds.left + bounds.right) / 2, y: (bounds.top + bounds.bottom) / 2 }
+      ];
+    }
+
+    function areBoundsInsidePolygon(bounds, polygon) {
+      return getBoundsCheckPoints(bounds).every((point) => isPointInPolygon(point, polygon));
+    }
+
+    function doBoundsTouchPolygon(bounds, polygon) {
+      return getBoundsCheckPoints(bounds).some((point) => isPointInPolygon(point, polygon))
+        || polygon.some((point) => point.x >= bounds.left && point.x <= bounds.right && point.y >= bounds.top && point.y <= bounds.bottom);
+    }
+
+    function getLabelBounds(entity) {
+      const label = entity.interaction.label;
+      const centerX = entity.lot.x + numberOr(label.offsetX, 0);
+      const topY = entity.lot.y + numberOr(label.offsetY, 0) - numberOr(label.height, 1);
+      return {
+        left: centerX - numberOr(label.width, 1) / 2,
+        right: centerX + numberOr(label.width, 1) / 2,
+        top: topY,
+        bottom: topY + numberOr(label.height, 1)
+      };
+    }
+
+    function isBoundsInside(bounds, base) {
+      return bounds.left >= 0 && bounds.top >= 0 && bounds.right <= base.width && bounds.bottom <= base.height;
+    }
+
+    function expandBounds(bounds, amount) {
+      return {
+        left: bounds.left - amount,
+        right: bounds.right + amount,
+        top: bounds.top - amount,
+        bottom: bounds.bottom + amount
+      };
+    }
+
+    function doBoundsOverlap(first, second) {
+      const overlapWidth = Math.min(first.right, second.right) - Math.max(first.left, second.left);
+      const overlapHeight = Math.min(first.bottom, second.bottom) - Math.max(first.top, second.top);
+      return overlapWidth > 0 && overlapHeight > 0;
+    }
+
+    function doLotRectsOverlap(first, second) {
+      return first.lot.gridX < second.lot.gridX + second.lot.cols
+        && first.lot.gridX + first.lot.cols > second.lot.gridX
+        && first.lot.gridY < second.lot.gridY + second.lot.rows
+        && first.lot.gridY + first.lot.rows > second.lot.gridY;
+    }
+
+    function isPointInPolygon(point, polygon) {
+      let isInside = false;
+      for (let index = 0, previousIndex = polygon.length - 1; index < polygon.length; previousIndex = index, index += 1) {
+        const current = polygon[index];
+        const previous = polygon[previousIndex];
+        const intersects =
+          current.y > point.y !== previous.y > point.y &&
+          point.x < ((previous.x - current.x) * (point.y - current.y)) / (previous.y - current.y) + current.x;
+        if (intersects) {
+          isInside = !isInside;
+        }
+      }
+      return isInside;
+    }
+
+    function getPolygonCentroid(polygon) {
+      if (!Array.isArray(polygon) || polygon.length === 0) {
+        return { x: 0, y: 0 };
+      }
+      return polygon.reduce(
+        (sum, point) => ({ x: sum.x + point.x / polygon.length, y: sum.y + point.y / polygon.length }),
+        { x: 0, y: 0 }
+      );
+    }
+
+    function getEntrySummary(entity) {
+      if (entity.entry.type === "house") {
+        return `建筑入口：${entity.entry.houseId || "未绑定"}`;
+      }
+      if (entity.entry.type === "city-entry") {
+        return `地点入口：${entity.entry.cityEntryId || "未绑定"}`;
+      }
+      return "无入口";
+    }
+
+    function setStatus(message) {
+      dom.statusLine.innerHTML = `<strong>状态</strong> ${escapeHtml(message)}`;
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    window.cityMapBuildingEditor = {
+      getLayout() {
+        return clone(state.layout);
+      },
+      getLayoutJson() {
+        return `${JSON.stringify(state.layout, null, 2)}\n`;
+      },
+      importLayout(layout, preferredSelectedId = null) {
+        setEditorLayout(layout, preferredSelectedId);
+        return this.getLayout();
+      },
+      validate() {
+        return clone(validateLayout(state.layout));
+      }
+    };
+  </script>
+</body>
+</html>
