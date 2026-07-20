@@ -4,6 +4,7 @@ dist/
 .runtime/
 .worktrees/
 dev-server-codex.log
+.superpowers/
 
 # Local build/package outputs
 release/
