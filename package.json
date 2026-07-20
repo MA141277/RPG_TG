@@ -45,7 +45,8 @@
     "@esotericsoftware/spine-player": "^4.3.6",
     "gdal3.js": "^2.8.1",
     "pngjs": "^7.0.0",
-    "tga": "^1.0.7"
+    "tga": "^1.0.7",
+    "three": "^0.185.1"
   },
   "build": {
     "appId": "com.rpgtg.desktop",

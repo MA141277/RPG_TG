@@ -397,6 +397,13 @@ Use an `activity-confirm` style session overlay when a house needs to warn the p
 world-time and stamina costs before starting a minigame or work loop. The overlay should stay
 typed, dispatch through normal house action ids, and the actual persistent time/stamina mutation
 should still happen only inside the module lifecycle when the activity resolves.
+If a house-owned work entry supports the shared work-minigame confirmation standard, the same
+typed overlay may include `workDescriptionLines`, `relatedAbilityLines`, `costLines`, `bestScore`,
+`quickCompleteScore`, `quickCompleteActionId`, and `quickCompleteLabel`. Entry-specific persistent
+best scores must be stored in `GameState.runtime.variables` using `var.activity.<activityId>.best_score`,
+so different work entries that share one playable implementation do not overwrite each other.
+Quick-complete actions must still dispatch through the house module and settle through the same
+activity completion path as normal play.
 For staged table overlays such as tavern gambling, per-player public summaries may include
 current best pattern data and visible discard history, while private hand tiles remain hidden
 from other players in the view model.
@@ -426,6 +433,31 @@ further betting or draw controls without reading private session rules.
 If a module-specific overlay needs extra controls, extend the shared typed contract
 (for example a medicine compounding clear action or a shared QTE bar-stop minigame overlay)
 instead of relying on DOM-only behavior.
+For house-owned activity work that reuses the generic activity playable, expose a structured
+shared activity overlay such as `fortune-board` or `pachinko-board` from the shared activity
+session rather than rebuilding a separate house-local QTE timer. The house module may still own
+settlement, rewards, time cost, and return-to-house result copy after the shared playable emits
+its result.
+If that shared activity overlay has staged visual phases, expose the phase and stable animation
+version fields as typed data. For example `fortune-board` carries `phase`, highlighted cell ids,
+selected cell ids, flash state fields such as `flashActive` / `pickFlashActive`,
+`rerollCount`, and speed control fields such as `animationTickMs` / `speedFieldId`;
+renderers use those fields to animate current state and must not infer reroll timing from
+button text, DOM order, or whether a visible label changed.
+For physics-like shared overlays such as `pachinko-board`, expose render-facing positions,
+active ball state, fixed and moving collision pins, gate counters, event log, slot values,
+and launch action ids as typed data. The house renderer may draw those positions, but the
+application/playable runtime owns simulation, scoring, random event selection, and completion.
+If the board supports continuous launches, expose `activeBalls` as the canonical render list;
+`activeBall` may exist only as a compatibility field while older consumers are migrated. Runtime-owned
+layout variation such as lower slot refresh timing must be exposed through typed fields such as
+`layoutRefreshElapsedMs`, `layoutRefreshPeriodMs`, and `layoutVersion`; views may render the updated
+slot values, but must not shuffle or rescore the board themselves.
+If `pachinko-board` includes staged rewards such as a wheel spin, expose the queue and animation
+state as typed fields such as `rewardQueue` and `wheelState`. The runtime owns reward selection,
+weighted probabilities, spin/slow/flash timing, and reward application. Renderers may draw the
+wheel, pointer, selected segment, and dimmed board state, but must not apply score, ball, or
+encounter effects themselves.
 If one overlay contains a staged interaction
 (for example "select a topic, then confirm"),
 extend the shared overlay contract with the staged control fields first
@@ -542,6 +574,34 @@ type HouseModuleViewModel = {
   leaveAction: HouseActionViewModel;
 };
 ```
+
+### Shared NPC Interaction Rule
+
+Any actor exposed in a normal house NPC pool should be eligible for the shared NPC interaction menu when no blocking dialogue, modal, overlay, minigame, or message window is active.
+
+The shared menu owns default actions:
+
+- `角色情报`
+- `谈话`
+- `送礼`
+
+House modules may contribute special actions for the selected actor, and those special actions must render above the default actions. The generic NPC shell must not understand house-specific business rules. Special actions dispatch back through the owning house module lifecycle.
+
+Default `谈话` replaces visible `闲谈` labels as the baseline conversation behavior. Default `送礼` must use shared inventory and must not mutate relationship or inventory until an item is selected and confirmed. Until shared gift inventory settlement exists, `送礼` must stay disabled or render an empty state that performs no persistent mutation.
+
+### Primary Actor Roster Rule
+
+For any special house with `HouseDefinition.defaultCharacterId`, that character is the house primary actor.
+
+Rules:
+
+- `enter()` should default to primary-actor dialogue unless a higher-priority lifecycle state takes over, such as a meeting, story event, refusal, or playable restoration.
+- `selectViewModel()` must include the primary actor in `standbyRoster`.
+- the primary actor must be the first `standbyRoster` entry.
+- secondary fixed actors and city activity actors follow the primary actor.
+- ordinary house dialogue must not render the primary actor as a separate right-side owner card or nonstandard owner-only portrait.
+- ordinary character dialogue must render the active speaker portrait through the shared dialogue-box portrait pattern when portrait metadata is available.
+- meeting/council layouts may use dedicated seating, but they must not reintroduce generic owner-card special casing.
 
 The view should not:
 

@@ -16,10 +16,10 @@ function renderOverlay(overlay: HouseOverlayViewModel | null): string {
   if (overlay.type === "market-trade") {
     return `
       <div class="c-grain-shop-overlay" data-house-overlay="market-trade">
-        <div class="c-grain-shop-modal c-grain-shop-modal--trade c-grain-shop-skin-panel" role="dialog" aria-modal="true">
+        <div class="c-grain-shop-modal c-grain-shop-modal--trade c-grain-shop-skin-panel c-house-trade-popup" role="dialog" aria-modal="true">
           <h3 class="c-grain-shop-modal__title c-grain-shop-nameplate">${overlay.title}</h3>
-          <div class="c-grain-shop-modal__body">
-            <div class="c-market-house-trade-list c-grain-shop-skin-card">
+          <div class="c-grain-shop-modal__body c-house-trade-popup__body c-house-trade-popup__body--market">
+            <div class="c-market-house-trade-list">
               ${overlay.rows
                 .map(
                   (row) => `
@@ -75,7 +75,7 @@ function renderOverlay(overlay: HouseOverlayViewModel | null): string {
             <button type="button" class="c-grain-shop-qty-btn" data-house-action="${overlay.incrementActionId}" aria-label="增加">+</button>
           </div>
           <p class="c-grain-shop-trade__total">合计：${overlay.selectedSummary?.tradeTotal ?? 0} 文</p>
-          <div class="c-grain-shop-modal__body">
+          <div class="c-grain-shop-modal__body c-house-trade-popup__body">
             ${overlay.helperLines.map((line) => `<p class="c-grain-shop-price-hint">${line}</p>`).join("")}
           </div>
           <div class="c-grain-shop-modal__actions c-grain-shop-modal__actions--split">

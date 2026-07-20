@@ -42,6 +42,20 @@ const builtinPlayableIntegrations: PlayableIntegrationDefinition[] = [
     outcomeConfig: {},
   },
   {
+    integrationId: "playable.activity-qte.house.temple",
+    playableId: "activity-qte",
+    ownerDefaults: {
+      ownerKind: "house",
+      returnPolicy: "resume-owner",
+    },
+    trigger: {
+      triggerId: "trigger.playable.activity-qte.house.temple",
+      ownerKind: "house",
+      trigger: "house-action-temple-work",
+    },
+    outcomeConfig: {},
+  },
+  {
     integrationId: "playable.grain-accounting.house.grain-shop",
     playableId: "grain-accounting",
     ownerDefaults: {

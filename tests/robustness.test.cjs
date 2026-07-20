@@ -41,6 +41,15 @@ const {
   templeHouseHouseModule,
 } = require("../.test-dist/application/house-modules/temple-house/temple-house-house-module.js");
 const {
+  renderTempleHouseView,
+} = require("../.test-dist/ui/views/house/temple-house-view.js");
+const {
+  renderKeepHouseView,
+} = require("../.test-dist/ui/views/house/keep-house-view.js");
+const {
+  renderTavernHouseView,
+} = require("../.test-dist/ui/views/house/tavern-house-view.js");
+const {
   marketHouseHouseModule,
 } = require("../.test-dist/application/house-modules/market-house/market-house-house-module.js");
 const {
@@ -49,6 +58,12 @@ const {
 const {
   teaHouseHouseModule,
 } = require("../.test-dist/application/house-modules/tea-house/tea-house-house-module.js");
+const {
+  renderTeaHouseHouseView,
+} = require("../.test-dist/ui/views/house/tea-house-house-view.js");
+const {
+  renderMedicineHouseHouseView,
+} = require("../.test-dist/ui/views/house/medicine-house-house-view.js");
 const {
   resolveCompoundingGrade,
 } = require("../.test-dist/application/medicine-house/compounding-minigame.js");
@@ -84,8 +99,37 @@ const {
   selectHouseEntryAccess,
 } = require("../.test-dist/application/story/story-stage-access.js");
 const {
+  areHexNeighbors,
+  coordinateToRoundedHex,
+  createHexTravelPath,
+  createPassableHexTravelPath,
+  getHexKey,
+  hexToCoordinate,
+} = require("../.test-dist/application/navigation/travel-to-coordinate.js");
+const {
+  getCampaignMapFogViewState,
+  isCampaignMapCoordinateRevealed,
+  revealCampaignMapAroundCoordinate,
+} = require("../.test-dist/application/navigation/campaign-map-exploration.js");
+const {
   createInitialGrainShopSessionState,
 } = require("../.test-dist/application/house-modules/grain-shop/grain-shop-session-state.js");
+const {
+  orderHouseStandbyRoster,
+} = require("../.test-dist/application/house/house-primary-actor-roster.js");
+const {
+  NPC_INTERACTION_DEFAULT_OPTION_IDS,
+  adaptHouseRosterToNpcPool,
+  createNpcInteractionSession,
+  isNpcInteractionBlocked,
+  selectHouseNpcSpecialActions,
+  selectNpcInteractionMenu,
+} = require("../.test-dist/application/npc-interaction/npc-interaction.js");
+const {
+  closeGlobalOverlay,
+  openCharacterDetail,
+  openPlayerDetail,
+} = require("../.test-dist/application/app-actions.js");
 const {
   equipValuableItem,
   getVisibleOwnedCards,
@@ -141,7 +185,13 @@ const {
   sampleScene,
 } = require("../.test-dist/content/sample-scenario.js");
 const {
-  stopActivityQte,
+  adjustActivityFortuneBoardWager,
+  chooseActivityQteCommand,
+  createActivityQteSession,
+  playActivityFortuneBoard,
+  playActivityPachinkoBoard,
+  tickActivityFortuneBoard,
+  tickActivityPachinkoBoard,
 } = require("../.test-dist/application/activity/activity-qte-runtime.js");
 const {
   ZHU_YUANZHANG_STORY_FLAG_KEYS,
@@ -492,62 +542,1053 @@ test("scene start-activity action executes registered fallback activity", () => 
   });
 
   assert.equal(result.currentAction?.type, "narration");
-  assert.equal(result.state.runtime.activitySession?.type, "qte-bar");
+  assert.equal(result.state.runtime.activitySession?.type, "pachinko-board");
   assert.equal(result.state.runtime.activitySession.activityId, "activity.test.special");
   assert.equal(result.state.runtime.variables["var.test.activity.points"], undefined);
 
-  const firstStop = stopActivityQte(
-    {
-      ...result.state,
-      runtime: {
-        ...result.state.runtime,
-        activitySession: {
-          ...result.state.runtime.activitySession,
-          markerPercent: 45,
-        },
-      },
-    },
-    activityDefinition,
-    prototypeCharacters
-  );
-  const secondStop = stopActivityQte(
-    {
-      ...firstStop.state,
-      runtime: {
-        ...firstStop.state.runtime,
-        activitySession: {
-          ...firstStop.state.runtime.activitySession,
-          markerPercent: 62,
-        },
-      },
-    },
-    activityDefinition,
-    firstStop.characterDefinitions
-  );
-  const thirdStop = stopActivityQte(
-    {
-      ...secondStop.state,
-      runtime: {
-        ...secondStop.state.runtime,
-        activitySession: {
-          ...secondStop.state.runtime.activitySession,
-          markerPercent: 0,
-        },
-      },
-    },
-    activityDefinition,
-    secondStop.characterDefinitions
-  );
+  let settledBoard = {
+    state: result.state,
+    characterDefinitions: prototypeCharacters,
+  };
+  for (let round = 0; round < 30; round += 1) {
+    if (settledBoard.state.runtime.activitySession?.type === "result") {
+      break;
+    }
+    settledBoard = playActivityPachinkoBoard(
+      settledBoard.state,
+      activityDefinition,
+      settledBoard.characterDefinitions
+    );
+    for (let tick = 0; tick < 3000; tick += 1) {
+      settledBoard = tickActivityPachinkoBoard(
+        settledBoard.state,
+        activityDefinition,
+        settledBoard.characterDefinitions
+      );
+      if (
+        settledBoard.state.runtime.activitySession?.type === "result" ||
+        (settledBoard.state.runtime.activitySession?.type === "pachinko-board" &&
+          settledBoard.state.runtime.activitySession.phase === "ready")
+      ) {
+        break;
+      }
+    }
+  }
 
-  assert.equal(thirdStop.state.runtime.activitySession?.type, "result");
-  assert.equal(thirdStop.state.runtime.flags["flag.test.activity.completed"], true);
+  assert.equal(settledBoard.state.runtime.activitySession?.type, "result");
+  assert.equal(settledBoard.state.runtime.flags["flag.test.activity.completed"], true);
   assert.equal(
-    thirdStop.state.runtime.flags["flag.activity.test.special.completed"],
+    settledBoard.state.runtime.flags["flag.activity.test.special.completed"],
     true
   );
-  assert.equal(thirdStop.state.runtime.variables["var.test.activity.grade"], "success");
-  assert.equal(thirdStop.state.runtime.variables["var.test.activity.points"], 5);
-  assert.equal(thirdStop.state.runtime.variables["var.activity.last_handler"], "generic.qte");
+  assert.equal(settledBoard.state.runtime.variables["var.test.activity.grade"], "success");
+  assert.equal(settledBoard.state.runtime.variables["var.test.activity.points"], 5);
+  assert.equal(settledBoard.state.runtime.variables["var.activity.last_handler"], "generic.qte");
+  assert.ok(settledBoard.state.runtime.activitySession.score >= 5);
+});
+
+test("pachinko board keeps final settled ball visible before confirming result", () => {
+  const activityDefinition = {
+    id: "activity.test.pachinko.final-settle",
+    label: "Final settle",
+    outcome: {},
+  };
+  const session = createActivityQteSession(activityDefinition, "generic.qte");
+  const result = tickActivityPachinkoBoard(
+    {
+      runtime: {
+        activitySession: {
+          ...session,
+          phase: "dropping",
+          remainingBalls: 0,
+          activeBall: {
+            x: session.boardWidth / 2,
+            y: session.boardHeight - 6,
+            previousX: session.boardWidth / 2,
+            previousY: session.boardHeight - 18,
+            vx: 0,
+            vy: 5,
+            radius: 17,
+          },
+        },
+        flags: {},
+        variables: {},
+      },
+    },
+    activityDefinition,
+    []
+  );
+
+  assert.equal(result.state.runtime.activitySession?.type, "pachinko-board");
+  assert.equal(result.state.runtime.activitySession.phase, "settling");
+  assert.equal(result.state.runtime.activitySession.activeBall, null);
+  assert.notEqual(result.state.runtime.activitySession.lastSlotIndex, null);
+
+  const confirmed = playActivityPachinkoBoard(result.state, activityDefinition, []);
+  assert.equal(confirmed.state.runtime.activitySession?.type, "result");
+  assert.equal(
+    confirmed.state.runtime.flags["flag.activity.test.pachinko.final-settle.completed"],
+    true
+  );
+});
+
+test("pachinko removes first two fixed pin rows from the board", () => {
+  const activityDefinition = {
+    id: "activity.test.pachinko.rows",
+    label: "Rows",
+    outcome: {},
+  };
+  const session = createActivityQteSession(activityDefinition, "generic.qte");
+
+  assert.equal(session.type, "pachinko-board");
+  assert.equal(session.pins.some((pin) => pin.y === 420), false);
+  assert.equal(session.pins.some((pin) => pin.y === 505), false);
+  assert.equal(session.pins.some((pin) => pin.y === 590), true);
+});
+
+test("pachinko can run multiple active balls from repeated releases", () => {
+  const activityDefinition = {
+    id: "activity.test.pachinko.multiball",
+    label: "Multi",
+    outcome: {},
+  };
+  let result = {
+    state: {
+      runtime: {
+        activitySession: createActivityQteSession(activityDefinition, "generic.qte"),
+        flags: {},
+        variables: {},
+      },
+    },
+    characterDefinitions: [],
+  };
+
+  result = playActivityPachinkoBoard(result.state, activityDefinition, []);
+  result = tickActivityPachinkoBoard(result.state, activityDefinition, []);
+  result = playActivityPachinkoBoard(result.state, activityDefinition, []);
+  const session = result.state.runtime.activitySession;
+
+  assert.equal(session?.type, "pachinko-board");
+  assert.equal(session.phase, "dropping");
+  assert.equal(session.remainingBalls, 3);
+  assert.equal(session.activeBalls.length, 2);
+});
+
+test("pachinko refreshes lower random elements after twenty seconds of ticks", () => {
+  const activityDefinition = {
+    id: "activity.test.pachinko.refresh",
+    label: "Refresh",
+    outcome: {},
+  };
+  let result = {
+    state: {
+      runtime: {
+        activitySession: createActivityQteSession(activityDefinition, "generic.qte"),
+        flags: {},
+        variables: {},
+      },
+    },
+    characterDefinitions: [],
+  };
+  const startSession = result.state.runtime.activitySession;
+  const before = startSession.slotValues.join(",");
+  const ticks = Math.ceil(20000 / startSession.animationTickMs);
+
+  for (let index = 0; index < ticks; index += 1) {
+    result = tickActivityPachinkoBoard(result.state, activityDefinition, []);
+  }
+
+  const session = result.state.runtime.activitySession;
+  assert.equal(session?.type, "pachinko-board");
+  assert.equal(session.layoutVersion, 1);
+  assert.notEqual(session.slotValues.join(","), before);
+});
+
+test("pachinko release does not reshuffle lower rewards before timed refresh", () => {
+  const activityDefinition = {
+    id: "activity.test.pachinko.release-keeps-slots",
+    label: "Release keeps slots",
+    outcome: {},
+  };
+  const state = {
+    runtime: {
+      activitySession: {
+        ...createActivityQteSession(activityDefinition, "generic.qte"),
+        slotValues: [5, 3, 3, 2, 2, 2, "wheel"],
+      },
+      flags: {},
+      variables: {},
+    },
+  };
+
+  const result = playActivityPachinkoBoard(state, activityDefinition, []);
+  const session = result.state.runtime.activitySession;
+
+  assert.equal(session?.type, "pachinko-board");
+  assert.deepEqual(session.slotValues, [5, 3, 3, 2, 2, 2, "wheel"]);
+});
+
+test("pachinko wheel reward flow keeps active balls falling", () => {
+  const activityDefinition = {
+    id: "activity.test.pachinko.concurrent-wheel",
+    label: "Concurrent wheel",
+    outcome: {},
+  };
+  const baseSession = createActivityQteSession(activityDefinition, "generic.qte");
+  const state = {
+    runtime: {
+      activitySession: {
+        ...baseSession,
+        phase: "rewarding",
+        remainingBalls: 0,
+        activeBall: {
+          x: baseSession.boardWidth / 2,
+          y: 180,
+          previousX: baseSession.boardWidth / 2,
+          previousY: 170,
+          vx: 0,
+          vy: 4,
+          radius: 17,
+        },
+        activeBalls: [
+          {
+            x: baseSession.boardWidth / 2,
+            y: 180,
+            previousX: baseSession.boardWidth / 2,
+            previousY: 170,
+            vx: 0,
+            vy: 4,
+            radius: 17,
+          },
+        ],
+        wheelState: {
+          ...baseSession.wheelState,
+          phase: "spinning",
+          selectedIndex: 0,
+          selectedReward: baseSession.wheelState.segments[0],
+        },
+      },
+      flags: {},
+      variables: {},
+    },
+  };
+
+  const result = tickActivityPachinkoBoard(state, activityDefinition, []);
+  const session = result.state.runtime.activitySession;
+
+  assert.equal(session?.type, "pachinko-board");
+  assert.equal(session.wheelState.phase, "spinning");
+  assert.equal(session.activeBalls.length, 1);
+  assert.equal(session.activeBalls[0].y > 180, true);
+});
+
+test("pachinko moving gate grants one extra ball immediately", () => {
+  const activityDefinition = {
+    id: "activity.test.pachinko.gate-extra-ball",
+    label: "Gate extra ball",
+    outcome: {},
+  };
+  const baseSession = createActivityQteSession(activityDefinition, "generic.qte");
+  const result = tickActivityPachinkoBoard(
+    {
+      runtime: {
+        activitySession: {
+          ...baseSession,
+          phase: "dropping",
+          remainingBalls: 0,
+          activeBall: {
+            x: baseSession.boardWidth / 2,
+            y: 660,
+            previousX: baseSession.boardWidth / 2,
+            previousY: 650,
+            vx: 0,
+            vy: 18,
+            radius: 17,
+          },
+          activeBalls: [
+            {
+              x: baseSession.boardWidth / 2,
+              y: 660,
+              previousX: baseSession.boardWidth / 2,
+              previousY: 650,
+              vx: 0,
+              vy: 18,
+              radius: 17,
+            },
+          ],
+        },
+        flags: {},
+        variables: {},
+      },
+    },
+    activityDefinition,
+    []
+  );
+
+  const session = result.state.runtime.activitySession;
+  assert.equal(session?.type, "pachinko-board");
+  assert.equal(session.gatePassCount, 1);
+  assert.equal(session.remainingBalls, 1);
+  assert.equal(session.eventCharge, 0);
+});
+
+test("pachinko bottom wheel slot queues a wheel instead of adding a ball", () => {
+  const activityDefinition = {
+    id: "activity.test.pachinko.wheel-slot",
+    label: "Wheel slot",
+    outcome: {},
+  };
+  const baseSession = createActivityQteSession(activityDefinition, "generic.qte");
+  const slotIndex = baseSession.slotValues.findIndex((value) => value === "wheel");
+  assert.notEqual(slotIndex, -1);
+  const slotWidth = baseSession.boardWidth / baseSession.slotValues.length;
+  const ballX = slotWidth * slotIndex + slotWidth / 2;
+  const result = tickActivityPachinkoBoard(
+    {
+      runtime: {
+        activitySession: {
+          ...baseSession,
+          phase: "dropping",
+          remainingBalls: 0,
+          activeBall: {
+            x: ballX,
+            y: baseSession.boardHeight - 6,
+            previousX: ballX,
+            previousY: baseSession.boardHeight - 18,
+            vx: 0,
+            vy: 5,
+            radius: 17,
+          },
+          activeBalls: [],
+        },
+        flags: {},
+        variables: {},
+      },
+    },
+    activityDefinition,
+    []
+  );
+
+  const session = result.state.runtime.activitySession;
+  assert.equal(session?.type, "pachinko-board");
+  assert.equal(session.remainingBalls, 0);
+  assert.equal(session.score, 0);
+  assert.equal(session.rewardQueue.length, 0);
+  assert.equal(session.wheelState.phase, "spinning");
+  assert.notEqual(session.wheelState.selectedReward, null);
+});
+
+test("pachinko queued wheels resolve one at a time and apply rewards after flashing", () => {
+  const activityDefinition = {
+    id: "activity.test.pachinko.wheel-queue",
+    label: "Wheel queue",
+    outcome: {},
+  };
+  let result = {
+    state: {
+      runtime: {
+        activitySession: {
+          ...createActivityQteSession(activityDefinition, "generic.qte"),
+          phase: "rewarding",
+          remainingBalls: 0,
+          rewardQueue: [{ type: "wheel" }, { type: "wheel" }],
+          wheelState: {
+            phase: "idle",
+            elapsedMs: 0,
+            rotationDegrees: 0,
+            targetRotationDegrees: 0,
+            selectedIndex: null,
+            selectedReward: null,
+            flashCount: 0,
+            segments: [
+              { id: "score-2", label: "+2分", kind: "score", amount: 2, weight: 30 },
+              { id: "ball-1", label: "+1球", kind: "extra-ball", amount: 1, weight: 20 },
+            ],
+          },
+        },
+        flags: {},
+        variables: {},
+      },
+    },
+    characterDefinitions: [],
+  };
+
+  result = tickActivityPachinkoBoard(result.state, activityDefinition, []);
+
+  let session = result.state.runtime.activitySession;
+  assert.equal(session?.type, "pachinko-board");
+  assert.equal(session.rewardQueue.length, 1);
+  assert.equal(session.wheelState.phase, "spinning");
+  assert.equal(session.score + session.remainingBalls, 0);
+
+  for (let index = 0; index < 500; index += 1) {
+    result = tickActivityPachinkoBoard(result.state, activityDefinition, []);
+    const maybeSession = result.state.runtime.activitySession;
+    if (
+      maybeSession?.type === "pachinko-board" &&
+      maybeSession.rewardQueue.length === 0 &&
+      maybeSession.wheelState.phase === "settled" &&
+      maybeSession.phase === "settling"
+    ) {
+      break;
+    }
+  }
+
+  session = result.state.runtime.activitySession;
+  assert.equal(session?.type, "pachinko-board");
+  assert.equal(session.rewardQueue.length, 0);
+  assert.equal(session.wheelState.phase, "settled");
+  assert.equal(session.phase, "settling");
+  assert.notEqual(session.wheelState.selectedReward, null);
+  assert.equal(session.score + session.remainingBalls > 1, true);
+});
+
+test("pachinko queued wheels realign selected segment on every spin", () => {
+  const activityDefinition = {
+    id: "activity.test.pachinko.wheel-realign",
+    label: "Wheel realign",
+    outcome: {},
+  };
+  let result = {
+    state: {
+      runtime: {
+        activitySession: {
+          ...createActivityQteSession(activityDefinition, "generic.qte"),
+          phase: "rewarding",
+          remainingBalls: 0,
+          animationTickMs: 100,
+          rewardQueue: [{ type: "wheel" }, { type: "wheel" }, { type: "wheel" }],
+          wheelState: {
+            phase: "idle",
+            elapsedMs: 0,
+            rotationDegrees: 0,
+            targetRotationDegrees: 0,
+            selectedIndex: null,
+            selectedReward: null,
+            flashCount: 0,
+            segments: [
+              { id: "score-2", label: "+2分", kind: "score", amount: 2, weight: 30 },
+              { id: "ball-1", label: "+1球", kind: "extra-ball", amount: 1, weight: 20 },
+              { id: "ball-2", label: "+2球", kind: "extra-ball", amount: 2, weight: 15 },
+              { id: "score-5", label: "+5分", kind: "score", amount: 5, weight: 15 },
+              { id: "score-minus-2", label: "-2分", kind: "score", amount: -2, weight: 10 },
+              { id: "encounter", label: "奇遇", kind: "encounter", amount: 0, weight: 10 },
+            ],
+          },
+        },
+        flags: {},
+        variables: {},
+      },
+    },
+    characterDefinitions: [],
+  };
+  const normalizedDegrees = (value) => ((value % 360) + 360) % 360;
+  const expectedTargetDegrees = (session) => {
+    const segmentAngle = 360 / session.wheelState.segments.length;
+    const selectedCenterDegrees =
+      segmentAngle * session.wheelState.selectedIndex + segmentAngle / 2;
+    return normalizedDegrees(360 - selectedCenterDegrees);
+  };
+  const observedStarts = [];
+
+  for (let guard = 0; guard < 240 && observedStarts.length < 3; guard += 1) {
+    result = tickActivityPachinkoBoard(result.state, activityDefinition, []);
+    const session = result.state.runtime.activitySession;
+    assert.equal(session?.type, "pachinko-board");
+    if (
+      session.wheelState.phase === "spinning" &&
+      session.wheelState.elapsedMs === 0
+    ) {
+      observedStarts.push({
+        selectedIndex: session.wheelState.selectedIndex,
+        targetRotationDegrees: session.wheelState.targetRotationDegrees,
+        expectedRotationDegrees: expectedTargetDegrees(session),
+      });
+    }
+  }
+
+  assert.equal(observedStarts.length, 3);
+  observedStarts.forEach((start) => {
+    assert.equal(
+      normalizedDegrees(start.targetRotationDegrees),
+      start.expectedRotationDegrees
+    );
+  });
+});
+
+test("pachinko wheel labels stay inside reward wedges and moving gate shows extra ball text", () => {
+  const houseViewSource = fs.readFileSync(
+    "src/ui/views/house/temple-house-view.ts",
+    "utf8"
+  );
+  const sceneViewSource = fs.readFileSync("src/ui/views/scene/scene-view.ts", "utf8");
+  const pachinkoCss = fs.readFileSync("src/styles/temple-house.css", "utf8");
+
+  assert.equal(houseViewSource.includes("c-pachinko-board__gate-label"), true);
+  assert.equal(sceneViewSource.includes("c-pachinko-board__gate-label"), true);
+  assert.equal(houseViewSource.includes("+1球"), true);
+  assert.equal(sceneViewSource.includes("+1球"), true);
+  assert.equal(houseViewSource.includes("c-pachinko-wheel__segment"), true);
+  assert.equal(sceneViewSource.includes("c-pachinko-wheel__segment"), true);
+  assert.equal(houseViewSource.includes("is-${wheelState.phase}"), true);
+  assert.equal(sceneViewSource.includes("is-${wheelState.phase}"), true);
+  assert.equal(pachinkoCss.includes(".c-pachinko-wheel__segment::before"), true);
+  assert.equal(pachinkoCss.includes("clip-path: polygon(50% 50%, 25% 6.7%, 75% 6.7%)"), true);
+  assert.equal(
+    pachinkoCss
+      .split(/\r?\n/)
+      .some((line) => line.trim() === "clip-path: polygon(50% 50%, 25% 6.7%, 75% 6.7%);"),
+    true
+  );
+  assert.equal(pachinkoCss.includes("translateY(-82%)"), false);
+  assert.equal(pachinkoCss.includes("top: 22%;"), true);
+  assert.equal(pachinkoCss.includes("rotate(30deg)"), true);
+  assert.equal(pachinkoCss.includes("rotate(90deg)"), false);
+  assert.equal(
+    pachinkoCss.includes(
+      ".c-pachinko-wheel.is-flashing .c-pachinko-wheel__segment.is-selected"
+    ),
+    true
+  );
+  assert.equal(
+    pachinkoCss.includes(
+      ".c-pachinko-wheel.is-holding .c-pachinko-wheel__segment.is-selected"
+    ),
+    true
+  );
+  assert.equal(
+    pachinkoCss.includes(
+      ".c-pachinko-wheel.is-settled .c-pachinko-wheel__segment.is-selected"
+    ),
+    true
+  );
+  assert.equal(
+    pachinkoCss.includes(".c-pachinko-wheel__label.is-selected"),
+    false
+  );
+  assert.equal(
+    pachinkoCss
+      .split(/\r?\n/)
+      .some((line) => line.trim() === ".c-pachinko-wheel__segment.is-selected {"),
+    false
+  );
+  assert.equal(pachinkoCss.includes("background: #ffd35a"), false);
+});
+
+test("pachinko wheel flashes every point three seconds and holds before next queued wheel", () => {
+  const activityDefinition = {
+    id: "activity.test.pachinko.wheel-hold",
+    label: "Wheel hold",
+    outcome: {},
+  };
+  let result = {
+    state: {
+      runtime: {
+        activitySession: {
+          ...createActivityQteSession(activityDefinition, "generic.qte"),
+          phase: "rewarding",
+          remainingBalls: 0,
+          animationTickMs: 100,
+          rewardQueue: [{ type: "wheel" }, { type: "wheel" }],
+          wheelState: {
+            phase: "idle",
+            elapsedMs: 0,
+            rotationDegrees: 0,
+            targetRotationDegrees: 0,
+            selectedIndex: null,
+            selectedReward: null,
+            flashCount: 0,
+            segments: [
+              { id: "score-2", label: "+2分", kind: "score", amount: 2, weight: 100 },
+            ],
+          },
+        },
+        flags: {},
+        variables: {},
+      },
+    },
+    characterDefinitions: [],
+  };
+
+  result = tickActivityPachinkoBoard(result.state, activityDefinition, []);
+  for (let guard = 0; guard < 80; guard += 1) {
+    const session = result.state.runtime.activitySession;
+    assert.equal(session?.type, "pachinko-board");
+    if (session.wheelState.phase === "flashing") {
+      break;
+    }
+    result = tickActivityPachinkoBoard(result.state, activityDefinition, []);
+  }
+
+  let session = result.state.runtime.activitySession;
+  assert.equal(session?.type, "pachinko-board");
+  assert.equal(session.wheelState.phase, "flashing");
+
+  for (let index = 0; index < 9; index += 1) {
+    result = tickActivityPachinkoBoard(result.state, activityDefinition, []);
+  }
+  session = result.state.runtime.activitySession;
+  assert.equal(session?.type, "pachinko-board");
+  assert.equal(session.wheelState.phase, "flashing");
+  assert.equal(session.score, 0);
+
+  for (let index = 0; index < 3; index += 1) {
+    result = tickActivityPachinkoBoard(result.state, activityDefinition, []);
+  }
+  session = result.state.runtime.activitySession;
+  assert.equal(session?.type, "pachinko-board");
+  assert.equal(session.wheelState.phase, "holding");
+  assert.equal(session.score, 2);
+  assert.equal(session.wheelState.selectedReward?.label, "+2分");
+  assert.equal(session.rewardQueue.length, 1);
+
+  for (let index = 0; index < 4; index += 1) {
+    result = tickActivityPachinkoBoard(result.state, activityDefinition, []);
+  }
+  session = result.state.runtime.activitySession;
+  assert.equal(session?.type, "pachinko-board");
+  assert.equal(session.wheelState.phase, "holding");
+  assert.equal(session.rewardQueue.length, 1);
+
+  result = tickActivityPachinkoBoard(result.state, activityDefinition, []);
+  session = result.state.runtime.activitySession;
+  assert.equal(session?.type, "pachinko-board");
+  assert.equal(session.wheelState.phase, "spinning");
+  assert.equal(session.rewardQueue.length, 0);
+});
+
+test("fortune board refunds wager pieces that cannot fit in the selected column", () => {
+  const activityDefinition = {
+    id: "activity.test.refund",
+    title: "Refund test",
+    description: "Refund overflowing board pieces.",
+    handlerId: "generic.qte",
+    timeAdvanceCost: 0,
+    outcome: {},
+  };
+  const baseState = createInitialState({
+    playerCharacterId,
+    initialSceneId: null,
+  });
+  const board = Array.from({ length: 25 }, (_, index) => {
+    const row = Math.floor(index / 5);
+    const column = index % 5;
+    return {
+      row,
+      column,
+      kind: "plain",
+      selected: column === 0 && row < 3,
+    };
+  });
+  const state = {
+    ...baseState,
+    runtime: {
+      ...baseState.runtime,
+      activitySession: {
+        type: "fortune-board",
+        activityId: activityDefinition.id,
+        handlerId: "generic.qte",
+        title: activityDefinition.title,
+        taskLabel: activityDefinition.description,
+        board,
+        remainingPieces: 5,
+        wager: 5,
+        phase: "column-flash",
+        highlightedColumn: 0,
+        selectedColumn: 0,
+        flashTicks: 1,
+        pendingDropCount: 2,
+        scanCellKeys: [],
+        scanCellIndex: 0,
+        highlightedCellKey: null,
+        pickedCellKey: null,
+        selectedCellKeys: [],
+        animationTickMs: 500,
+        score: 0,
+        baseScore: 0,
+        tripletRewards: [],
+        resonanceCount: 0,
+        rumorCount: 0,
+        rerollCount: 0,
+        timeAdvanceCost: 0,
+      },
+    },
+  };
+
+  let result = {
+    state,
+    characterDefinitions: [],
+  };
+  for (let tick = 0; tick < 20; tick += 1) {
+    result = tickActivityFortuneBoard(result.state);
+    if (
+      result.state.runtime.activitySession?.type === "fortune-board" &&
+      result.state.runtime.activitySession.phase === "ready"
+    ) {
+      break;
+    }
+  }
+
+  assert.equal(result.state.runtime.activitySession?.type, "fortune-board");
+  assert.equal(result.state.runtime.activitySession.remainingPieces, 3);
+  assert.equal(
+    result.state.runtime.activitySession.board.filter(
+      (cell) => cell.column === 0 && cell.selected
+    ).length,
+    5
+  );
+});
+
+test("fortune board speed command updates tick interval and scanning waits before first highlight", () => {
+  const activityDefinition = {
+    id: "activity.test.speed",
+    title: "Speed test",
+    description: "Speed slider updates the shared board session.",
+    handlerId: "generic.qte",
+    timeAdvanceCost: 0,
+    outcome: {},
+  };
+  const baseState = createInitialState({
+    playerCharacterId,
+    initialSceneId: null,
+  });
+  const board = Array.from({ length: 25 }, (_, index) => {
+    const row = Math.floor(index / 5);
+    const column = index % 5;
+    return {
+      row,
+      column,
+      kind: "plain",
+      selected: false,
+    };
+  });
+  const state = {
+    ...baseState,
+    runtime: {
+      ...baseState.runtime,
+      activitySession: {
+        type: "fortune-board",
+        activityId: activityDefinition.id,
+        handlerId: "generic.qte",
+        title: activityDefinition.title,
+        taskLabel: activityDefinition.description,
+        board,
+        remainingPieces: 5,
+        wager: 1,
+        phase: "ready",
+        highlightedColumn: null,
+        selectedColumn: null,
+        flashTicks: 0,
+        pendingDropCount: 0,
+        scanCellKeys: [],
+        scanCellIndex: 0,
+        highlightedCellKey: null,
+        pickedCellKey: null,
+        selectedCellKeys: [],
+        animationTickMs: 500,
+        score: 0,
+        baseScore: 0,
+        tripletRewards: [],
+        resonanceCount: 0,
+        rumorCount: 0,
+        rerollCount: 0,
+        timeAdvanceCost: 0,
+      },
+    },
+  };
+
+  const speedResult = chooseActivityQteCommand(
+    state,
+    activityDefinition,
+    [],
+    "speed:300"
+  );
+  assert.equal(speedResult.state.runtime.activitySession?.animationTickMs, 300);
+
+  const playResult = playActivityFortuneBoard(
+    speedResult.state,
+    activityDefinition,
+    []
+  );
+  assert.equal(playResult.state.runtime.activitySession?.phase, "scanning");
+  assert.equal(playResult.state.runtime.activitySession.highlightedColumn, null);
+
+  const firstTick = tickActivityFortuneBoard(playResult.state);
+  assert.equal(firstTick.state.runtime.activitySession?.highlightedColumn, 0);
+});
+
+test("fortune board cell pick flashes twice before settling the selected cell", () => {
+  const activityDefinition = {
+    id: "activity.test.cell-pick-flash",
+    title: "Cell pick flash test",
+    description: "Picked cells flash before settlement.",
+    handlerId: "generic.qte",
+    timeAdvanceCost: 0,
+    outcome: {},
+  };
+  const baseState = createInitialState({
+    playerCharacterId,
+    initialSceneId: null,
+  });
+  const board = Array.from({ length: 25 }, (_, index) => {
+    const row = Math.floor(index / 5);
+    const column = index % 5;
+    return {
+      row,
+      column,
+      kind: "plain",
+      selected: false,
+    };
+  });
+
+  let result = tickActivityFortuneBoard({
+    ...baseState,
+    runtime: {
+      ...baseState.runtime,
+      activitySession: {
+        type: "fortune-board",
+        activityId: activityDefinition.id,
+        handlerId: "generic.qte",
+        title: activityDefinition.title,
+        taskLabel: activityDefinition.description,
+        board,
+        remainingPieces: 5,
+        wager: 1,
+        phase: "cell-scan",
+        highlightedColumn: null,
+        selectedColumn: 0,
+        flashTicks: 0,
+        pendingDropCount: 1,
+        scanCellKeys: ["0:0"],
+        scanCellIndex: 0,
+        highlightedCellKey: "0:0",
+        pickedCellKey: null,
+        selectedCellKeys: [],
+        animationTickMs: 500,
+        score: 0,
+        baseScore: 0,
+        tripletRewards: [],
+        resonanceCount: 0,
+        rumorCount: 0,
+        rerollCount: 0,
+        timeAdvanceCost: 0,
+      },
+    },
+  });
+
+  assert.equal(result.state.runtime.activitySession?.type, "fortune-board");
+  assert.equal(result.state.runtime.activitySession.phase, "cell-pick");
+  assert.equal(result.state.runtime.activitySession.pickedCellKey, "0:0");
+  assert.equal(result.state.runtime.activitySession.flashTicks, 4);
+  assert.equal(result.state.runtime.activitySession.board[0].selected, false);
+
+  result = tickActivityFortuneBoard(result.state);
+  assert.equal(result.state.runtime.activitySession?.type, "fortune-board");
+  assert.equal(result.state.runtime.activitySession.phase, "cell-pick");
+  assert.equal(result.state.runtime.activitySession.flashTicks, 3);
+  assert.equal(result.state.runtime.activitySession.board[0].selected, false);
+
+  result = tickActivityFortuneBoard(result.state);
+  assert.equal(result.state.runtime.activitySession?.type, "fortune-board");
+  assert.equal(result.state.runtime.activitySession.phase, "cell-pick");
+  assert.equal(result.state.runtime.activitySession.flashTicks, 2);
+  assert.equal(result.state.runtime.activitySession.board[0].selected, false);
+
+  result = tickActivityFortuneBoard(result.state);
+  assert.equal(result.state.runtime.activitySession?.type, "fortune-board");
+  assert.equal(result.state.runtime.activitySession.phase, "cell-pick");
+  assert.equal(result.state.runtime.activitySession.flashTicks, 1);
+  assert.equal(result.state.runtime.activitySession.board[0].selected, false);
+
+  result = tickActivityFortuneBoard(result.state);
+  assert.equal(result.state.runtime.activitySession?.type, "fortune-board");
+  assert.equal(result.state.runtime.activitySession.board[0].selected, true);
+});
+
+test("fortune board cell-pick flash does not reuse whole-column flash class", () => {
+  const mainSource = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
+  const sceneViewSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/views/scene/scene-view.ts"),
+    "utf8"
+  );
+  const mainFlashClassIndex = mainSource.indexOf('"is-flashing-column"');
+  const sceneFlashClassIndex = sceneViewSource.indexOf('"is-flashing-column"');
+  assert.notEqual(mainFlashClassIndex, -1);
+  assert.notEqual(sceneFlashClassIndex, -1);
+
+  const mainFlashCondition = mainSource.slice(
+    Math.max(0, mainFlashClassIndex - 160),
+    mainFlashClassIndex
+  );
+  const sceneFlashCondition = sceneViewSource.slice(
+    Math.max(0, sceneFlashClassIndex - 220),
+    sceneFlashClassIndex
+  );
+  assert.match(mainFlashCondition, /phase === "column-flash"/);
+  assert.match(sceneFlashCondition, /phase === "column-flash"/);
+});
+
+test("fortune board reroll removes selected kinds from the remaining random pool", () => {
+  const activityDefinition = {
+    id: "activity.test.depleted-pool",
+    title: "Pool depletion test",
+    description: "Selected rare cells leave the later random pool.",
+    handlerId: "generic.qte",
+    timeAdvanceCost: 0,
+    outcome: {},
+  };
+  const baseState = createInitialState({
+    playerCharacterId,
+    initialSceneId: null,
+  });
+  const board = Array.from({ length: 25 }, (_, index) => {
+    const row = Math.floor(index / 5);
+    const column = index % 5;
+    return {
+      row,
+      column,
+      kind: row === 0 && column === 0 ? "resonance" : "plain",
+      selected: row === 0 && column === 0,
+      ...(row === 0 && column === 0 ? { selectedOrder: 1 } : {}),
+    };
+  });
+  board[1] = {
+    row: 0,
+    column: 1,
+    kind: "timing",
+    selected: false,
+  };
+
+  const result = tickActivityFortuneBoard({
+    ...baseState,
+    runtime: {
+      ...baseState.runtime,
+      activitySession: {
+        type: "fortune-board",
+        activityId: activityDefinition.id,
+        handlerId: "generic.qte",
+        title: activityDefinition.title,
+        taskLabel: activityDefinition.description,
+        board,
+        remainingPieces: 5,
+        wager: 1,
+        phase: "cell-pick",
+        highlightedColumn: null,
+        selectedColumn: 1,
+        flashTicks: 0,
+        pendingDropCount: 1,
+        scanCellKeys: ["0:1"],
+        scanCellIndex: 0,
+        highlightedCellKey: null,
+        pickedCellKey: "0:1",
+        selectedCellKeys: [],
+        animationTickMs: 500,
+        score: 0,
+        baseScore: 0,
+        tripletRewards: [],
+        resonanceCount: 1,
+        rumorCount: 0,
+        rerollCount: 0,
+        timeAdvanceCost: 0,
+      },
+    },
+  });
+
+  assert.equal(result.state.runtime.activitySession?.type, "fortune-board");
+  assert.equal(result.state.runtime.activitySession.phase, "ready");
+  assert.equal(
+    result.state.runtime.activitySession.board.filter(
+      (cell) => cell.kind === "resonance"
+    ).length,
+    1
+  );
+  assert.equal(
+    result.state.runtime.activitySession.board.filter(
+      (cell) => cell.kind === "resonance" && cell.selected
+    ).length,
+    1
+  );
+  assert.equal(
+    result.state.runtime.activitySession.board.filter(
+      (cell) => cell.kind === "timing" && !cell.selected
+    ).length,
+    2
+  );
+});
+
+test("fortune board plays final selected flash and reroll before result", () => {
+  const activityDefinition = {
+    id: "activity.test.final-animation",
+    title: "Final animation test",
+    description: "Final selection animates before settlement.",
+    handlerId: "generic.qte",
+    timeAdvanceCost: 0,
+    outcome: {},
+  };
+  const baseState = createInitialState({
+    playerCharacterId,
+    initialSceneId: null,
+  });
+  const board = Array.from({ length: 25 }, (_, index) => {
+    const row = Math.floor(index / 5);
+    const column = index % 5;
+    return {
+      row,
+      column,
+      kind: "plain",
+      selected: false,
+    };
+  });
+
+  let result = tickActivityFortuneBoard({
+    ...baseState,
+    runtime: {
+      ...baseState.runtime,
+      activitySession: {
+        type: "fortune-board",
+        activityId: activityDefinition.id,
+        handlerId: "generic.qte",
+        title: activityDefinition.title,
+        taskLabel: activityDefinition.description,
+        board,
+        remainingPieces: 1,
+        wager: 1,
+        phase: "cell-pick",
+        highlightedColumn: null,
+        selectedColumn: 0,
+        flashTicks: 0,
+        pendingDropCount: 1,
+        scanCellKeys: ["0:0"],
+        scanCellIndex: 0,
+        highlightedCellKey: null,
+        pickedCellKey: "0:0",
+        selectedCellKeys: [],
+        animationTickMs: 500,
+        score: 0,
+        baseScore: 0,
+        tripletRewards: [],
+        resonanceCount: 0,
+        rumorCount: 0,
+        rerollCount: 0,
+        timeAdvanceCost: 0,
+      },
+    },
+  });
+
+  assert.equal(result.state.runtime.activitySession?.type, "fortune-board");
+  assert.equal(result.state.runtime.activitySession.phase, "final-flash");
+  assert.equal(result.state.runtime.activitySession.selectedCellKeys.includes("0:0"), true);
+
+  for (let tick = 0; tick < 4; tick += 1) {
+    result = tickActivityFortuneBoard(result.state);
+  }
+  assert.equal(result.state.runtime.activitySession?.type, "fortune-board");
+  assert.equal(result.state.runtime.activitySession.phase, "final-reroll");
+
+  for (let tick = 0; tick < 8; tick += 1) {
+    result = tickActivityFortuneBoard(result.state);
+  }
+  assert.equal(result.state.runtime.activitySession?.type, "result");
 });
 
 function withCouncilInDays(state, days = 30) {
@@ -1634,6 +2675,14 @@ test("zhuyuanzhang maps use relative pack asset urls instead of imageAssetId", (
     "./assets/maps/yuanmo-map-regions.png"
   );
   assert.equal(
+    yuanmoCampaignMap.campaignHexGridUrl,
+    "./assets/maps/yuanmo-campaign-hex-grid.json"
+  );
+  assert.equal(
+    yuanmoCampaignMap.campaignVegetationRulesUrl,
+    "./assets/maps/yuanmo-campaign-vegetation-rules.json"
+  );
+  assert.equal(
     yuanmoCampaignMap.layers.every((layer) => typeof layer.imageUrl === "string"),
     true
   );
@@ -1645,10 +2694,48 @@ test("zhuyuanzhang maps use relative pack asset urls instead of imageAssetId", (
     yuanmoCampaignMap.layers.some((layer) => "imageAssetId" in layer),
     false
   );
+  const hexTextureLayer = yuanmoCampaignMap.layers.find(
+    (layer) => layer.id === "map_hex_texture_atlas"
+  );
+  const waterNoiseLayer = yuanmoCampaignMap.layers.find(
+    (layer) => layer.id === "map_water_noise"
+  );
+  const fogNoiseLayer = yuanmoCampaignMap.layers.find(
+    (layer) => layer.id === "map_fog_noise"
+  );
+  const rockTextureLayer = yuanmoCampaignMap.layers.find(
+    (layer) => layer.id === "map_rock_texture"
+  );
+
+  assert.ok(waterNoiseLayer);
+  assert.equal(waterNoiseLayer.width, 512);
+  assert.equal(waterNoiseLayer.height, 512);
+  assert.equal(
+    waterNoiseLayer.imageUrl,
+    "./assets/maps/yuanmo-water-noise.png"
+  );
+  assert.ok(fogNoiseLayer);
+  assert.equal(fogNoiseLayer.width, 640);
+  assert.equal(fogNoiseLayer.height, 640);
+  assert.equal(
+    fogNoiseLayer.imageUrl,
+    "./assets/maps/yuanmo-fog-noise.png"
+  );
+  assert.ok(hexTextureLayer);
+  assert.equal(hexTextureLayer.imageUrl, "./assets/maps/tietu.png");
+  assert.ok(rockTextureLayer);
+  assert.equal(rockTextureLayer.width, 1254);
+  assert.equal(rockTextureLayer.height, 1254);
+  assert.equal(
+    rockTextureLayer.imageUrl,
+    "./assets/maps/campaign-rock-texture.png"
+  );
 
   [
     yuanmoCampaignMap.primaryImageUrl,
     yuanmoCampaignMap.regionOverlayImageUrl,
+    yuanmoCampaignMap.campaignHexGridUrl,
+    yuanmoCampaignMap.campaignVegetationRulesUrl,
     ...yuanmoCampaignMap.layers.map((layer) => layer.imageUrl),
   ].forEach((relativeAssetUrl) => {
     const assetPath = path.join(
@@ -1662,6 +2749,145 @@ test("zhuyuanzhang maps use relative pack asset urls instead of imageAssetId", (
       `Expected zhuyuanzhang map asset ${relativeAssetUrl} to exist`
     );
   });
+  const campaignHexGrid = JSON.parse(
+    fs.readFileSync(
+      path.join(packRoot, "assets", "maps", "yuanmo-campaign-hex-grid.json"),
+      "utf8"
+    )
+  );
+
+  assert.equal(campaignHexGrid.format, "campaign-hex-grid-v1");
+  assert.equal(campaignHexGrid.mapId, "map.yuanmo_campaign");
+  assert.equal(campaignHexGrid.defaults.terrain, "平原");
+  assert.equal(campaignHexGrid.defaults.environment, "草地");
+  assert.equal(campaignHexGrid.source.sampler.method, "hex-center-nearest-pixel");
+  assert.equal(campaignHexGrid.source.sourceLayerId, "map_ground_types");
+  assert.equal(campaignHexGrid.source.terrainSampler.method, "hex-multi-point-color-palette");
+  assert.equal(campaignHexGrid.source.terrainSampler.sourceLayerId, "map_ground_types");
+  assert.equal(campaignHexGrid.source.terrainSampler.fallbackTerrain, "平原");
+  assert.equal(campaignHexGrid.source.heightSampler.method, "hex-multi-point-height-average");
+  assert.equal(campaignHexGrid.source.heightSampler.sourceLayerId, "map_heights");
+  assert.deepEqual(
+    campaignHexGrid.source.terrainSampler.matches.map((match) => match.terrain),
+    ["山脉"]
+  );
+  assert.equal(campaignHexGrid.source.environmentSampler.method, "hex-multi-point-color-palette");
+  assert.equal(campaignHexGrid.source.environmentSampler.sourceLayerId, "map_climates");
+  assert.equal(campaignHexGrid.counts.cells, campaignHexGrid.cells.length);
+  assert.equal(campaignHexGrid.counts.terrains["山脉"] > 0, true);
+  assert.equal(campaignHexGrid.counts.terrains["平原"] > 0, true);
+  assert.equal(campaignHexGrid.counts.environments["森林"] > 0, true);
+  assert.equal(campaignHexGrid.counts.environments["草地"] > 0, true);
+  assert.equal(
+    campaignHexGrid.cells.every((cell) => ["平原", "山脉"].includes(cell.terrain)),
+    true
+  );
+  assert.equal(
+    campaignHexGrid.cells.every(
+      (cell) =>
+        typeof cell.referenceHeight === "number" &&
+        cell.referenceHeight >= 0 &&
+        cell.referenceHeight <= 1
+    ),
+    true
+  );
+  assert.equal(
+    campaignHexGrid.cells.every((cell) => cell.land || cell.referenceHeight === 0),
+    true
+  );
+  assert.equal(
+    campaignHexGrid.cells.every((cell) => cell.land || cell.terrain !== "山脉"),
+    true
+  );
+  assert.equal(
+    campaignHexGrid.cells.every((cell) => ["草地", "森林"].includes(cell.environment)),
+    true
+  );
+  assert.equal(
+    campaignHexGrid.cells.every((cell) => cell.land || cell.environment !== "森林"),
+    true
+  );
+  const hexGridScale = campaignHexGrid.coordinateSystem.hexTerrainScale;
+  const hexGridAspect = campaignHexGrid.coordinateSystem.hexMapAspect;
+  const outsideMapCells = campaignHexGrid.cells.filter((cell) => {
+    const centerX = Math.sqrt(3) * (cell.x + cell.y * 0.5);
+    const centerY = 1.5 * cell.y;
+    const u = centerX / (hexGridAspect * hexGridScale) + 0.5;
+    const v = centerY / hexGridScale + 0.5;
+    return u < 0 || u > 1 || v < 0 || v > 1;
+  });
+
+  assert.equal(
+    outsideMapCells.every((cell) => cell.land === false),
+    true
+  );
+  const vegetationRules = JSON.parse(
+    fs.readFileSync(
+      path.join(packRoot, "assets", "maps", "yuanmo-campaign-vegetation-rules.json"),
+      "utf8"
+    )
+  );
+
+  assert.equal(vegetationRules.format, "campaign-vegetation-rules-v1");
+  assert.equal(vegetationRules.environment, "森林");
+  assert.equal(typeof vegetationRules.density.far.min, "number");
+  assert.equal(typeof vegetationRules.density.far.max, "number");
+  assert.equal(typeof vegetationRules.density.medium.min, "number");
+  assert.equal(typeof vegetationRules.density.medium.max, "number");
+  assert.equal(typeof vegetationRules.density.near.min, "number");
+  assert.equal(typeof vegetationRules.density.near.max, "number");
+  assert.equal(vegetationRules.density.far.min <= vegetationRules.density.far.max, true);
+  assert.equal(vegetationRules.density.medium.min <= vegetationRules.density.medium.max, true);
+  assert.equal(vegetationRules.density.near.min <= vegetationRules.density.near.max, true);
+  assert.equal(vegetationRules.density.far.max <= vegetationRules.density.medium.max, true);
+  assert.equal(vegetationRules.density.medium.max <= vegetationRules.density.near.max, true);
+  assert.equal(typeof vegetationRules.lod.mediumMinScale, "number");
+  assert.equal(typeof vegetationRules.lod.nearMinScale, "number");
+  assert.equal(vegetationRules.lod.mediumMinScale < vegetationRules.lod.nearMinScale, true);
+  assert.equal(typeof vegetationRules.altitude.maxTerrainHeight, "number");
+  assert.equal(vegetationRules.altitude.maxTerrainHeight > 0, true);
+  assert.equal(vegetationRules.altitude.maxTerrainHeight < 1, true);
+  assert.equal(vegetationRules.profile, "temperate-pine-tree");
+  assert.equal(vegetationRules.placement.baseWorldScale, 0.00105);
+  assert.equal(vegetationRules.placement.lift, 0.00062);
+  assert.equal(vegetationRules.shader.ambient, 0.68);
+  assert.equal(vegetationRules.shader.directional, 0.14);
+  assert.equal("windStrength" in vegetationRules.shader, false);
+  assert.equal("windFrequency" in vegetationRules.shader, false);
+  assert.equal(vegetationRules.shadow.opacity, 0.56);
+  assert.equal(vegetationRules.shadow.lightOffsetScale, 0.34);
+  assert.equal(vegetationRules.shadow.lift, 0.00042);
+  assert.equal("offsetX" in vegetationRules.shadow, false);
+  assert.equal("offsetY" in vegetationRules.shadow, false);
+  assert.equal("fadeStartScale" in vegetationRules.shader, false);
+  assert.equal("fadeEndScale" in vegetationRules.shader, false);
+  assert.equal(vegetationRules.variants.length, 5);
+  assert.equal(
+    vegetationRules.variants.every((variant) =>
+      variant.meshUrl.startsWith("../vegetation/pine-tree-")
+    ),
+    true
+  );
+  for (const variant of vegetationRules.variants) {
+    const meshPath = path.join(
+      packRoot,
+      "assets",
+      "maps",
+      variant.meshUrl.replaceAll("/", path.sep)
+    );
+    const mesh = JSON.parse(fs.readFileSync(meshPath, "utf8"));
+
+    assert.equal(mesh.format, "campaign-vegetation-mesh-v1");
+    assert.equal(mesh.source.kind, "obj-mtl");
+    assert.match(mesh.source.objPath, /PineTree_/);
+    assert.equal(mesh.colors.length, mesh.positions.length);
+    assert.equal(mesh.normals.length, mesh.positions.length);
+    assert.equal(mesh.indices.length % 3, 0);
+    assert.equal(
+      mesh.colors.some((color, index) => index % 3 === 1 && color >= 0.58),
+      true
+    );
+  }
 });
 
 test("content pack loader resolves zhuyuanzhang map asset urls", async () => {
@@ -1720,14 +2946,653 @@ test("content pack loader resolves zhuyuanzhang map asset urls", async () => {
       `${packBaseUrl}assets/maps/yuanmo-map-regions.png`
     );
     assert.equal(
+      yuanmoCampaignMap.campaignHexGridUrl,
+      `${packBaseUrl}assets/maps/yuanmo-campaign-hex-grid.json`
+    );
+    assert.equal(
+      yuanmoCampaignMap.campaignVegetationRulesUrl,
+      `${packBaseUrl}assets/maps/yuanmo-campaign-vegetation-rules.json`
+    );
+    assert.equal(
       yuanmoCampaignMap.layers.every((layer) =>
         layer.imageUrl.startsWith(`${packBaseUrl}assets/maps/`)
       ),
       true
     );
+    assert.equal(
+      yuanmoCampaignMap.layers.find((layer) => layer.id === "map_hex_texture_atlas")
+        ?.imageUrl,
+      `${packBaseUrl}assets/maps/tietu.png`
+    );
+    assert.equal(
+      yuanmoCampaignMap.layers.find((layer) => layer.id === "map_water_noise")
+        ?.imageUrl,
+      `${packBaseUrl}assets/maps/yuanmo-water-noise.png`
+    );
+    assert.equal(
+      yuanmoCampaignMap.layers.find((layer) => layer.id === "map_fog_noise")
+        ?.imageUrl,
+      `${packBaseUrl}assets/maps/yuanmo-fog-noise.png`
+    );
+    assert.equal(
+      yuanmoCampaignMap.layers.find((layer) => layer.id === "map_rock_texture")
+        ?.imageUrl,
+      `${packBaseUrl}assets/maps/campaign-rock-texture.png`
+    );
+    assert.equal(
+      yuanmoCampaignMap.layers.find((layer) => layer.id === "map_snow_texture")
+        ?.imageUrl,
+      `${packBaseUrl}assets/maps/campaign-snow-texture.png`
+    );
   } finally {
     global.fetch = originalFetch;
   }
+});
+
+test("built-in yuanmo campaign map declares shared water noise texture layer", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src", "content", "yuanmo-campaign-map.ts"),
+    "utf8"
+  );
+  const assetPath = path.join(
+    process.cwd(),
+    "src",
+    "assets",
+    "yuanmo-map",
+    "yuanmo-water-noise.png"
+  );
+
+  assert.match(source, /yuanmo-water-noise\.png/);
+  assert.match(source, /"id": "map_water_noise"/);
+  assert.equal(fs.existsSync(assetPath), true);
+});
+
+test("built-in yuanmo campaign map declares shared fog noise texture layer", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src", "content", "yuanmo-campaign-map.ts"),
+    "utf8"
+  );
+  const assetPath = path.join(
+    process.cwd(),
+    "src",
+    "assets",
+    "yuanmo-map",
+    "yuanmo-fog-noise.png"
+  );
+
+  assert.match(source, /yuanmo-fog-noise\.png/);
+  assert.match(source, /"id": "map_fog_noise"/);
+  assert.equal(fs.existsSync(assetPath), true);
+});
+
+test("built-in yuanmo campaign map declares shared rock texture layer", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src", "content", "yuanmo-campaign-map.ts"),
+    "utf8"
+  );
+  const assetPath = path.join(
+    process.cwd(),
+    "src",
+    "assets",
+    "yuanmo-map",
+    "campaign-rock-texture.png"
+  );
+
+  assert.match(source, /campaign-rock-texture\.png/);
+  assert.match(source, /"id": "map_rock_texture"/);
+  assert.equal(fs.existsSync(assetPath), true);
+});
+
+test("built-in yuanmo campaign map declares shared snow texture layer", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src", "content", "yuanmo-campaign-map.ts"),
+    "utf8"
+  );
+  const assetPath = path.join(
+    process.cwd(),
+    "src",
+    "assets",
+    "yuanmo-map",
+    "campaign-snow-texture.png"
+  );
+
+  assert.match(source, /campaign-snow-texture\.png/);
+  assert.match(source, /"id": "map_snow_texture"/);
+  assert.equal(fs.existsSync(assetPath), true);
+});
+
+test("campaign terrain WebGL shader uses separate shared animated water texture files", () => {
+  const rendererSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src",
+      "ui",
+      "views",
+      "map",
+      "campaign-terrain-webgl.ts"
+    ),
+    "utf8"
+  );
+  const shaderRoot = path.join(
+    process.cwd(),
+    "src",
+    "ui",
+    "views",
+    "map",
+    "shaders"
+  );
+  const terrainFragmentSource = fs.readFileSync(
+    path.join(shaderRoot, "campaign-terrain.frag.glsl"),
+    "utf8"
+  );
+  const vegetationFragmentSource = fs.readFileSync(
+    path.join(shaderRoot, "campaign-vegetation.frag.glsl"),
+    "utf8"
+  );
+  const vegetationShadowFragmentSource = fs.readFileSync(
+    path.join(shaderRoot, "campaign-vegetation-shadow.frag.glsl"),
+    "utf8"
+  );
+
+  [
+    "campaign-terrain.vert.glsl",
+    "campaign-terrain.frag.glsl",
+    "campaign-actor.vert.glsl",
+    "campaign-actor.frag.glsl",
+    "campaign-vegetation.vert.glsl",
+    "campaign-vegetation.frag.glsl",
+    "campaign-vegetation-shadow.vert.glsl",
+    "campaign-vegetation-shadow.frag.glsl",
+  ].forEach((shaderFileName) => {
+    assert.equal(fs.existsSync(path.join(shaderRoot, shaderFileName)), true);
+  });
+  assert.match(rendererSource, /waterTextureUrl: string \| null/);
+  assert.match(rendererSource, /snowTextureUrl: string \| null/);
+  assert.match(rendererSource, /mountainByCellKey: Map<string, boolean>/);
+  assert.match(rendererSource, /createCampaignMountainHeightSamples/);
+  assert.match(rendererSource, /createNonMountainFlattenedHeightSamples/);
+  assert.match(rendererSource, /NON_MOUNTAIN_HEIGHT_FLATTEN_STRENGTH/);
+  assert.match(rendererSource, /createMountainFloorHeightSamples/);
+  assert.match(rendererSource, /MOUNTAIN_FLOOR_DIFFUSION_PASSES/);
+  assert.match(rendererSource, /getMountainBoundaryHeightFactor/);
+  assert.match(rendererSource, /isMountainHexCell/);
+  assert.match(rendererSource, /createMountainHeightAtPoint/);
+  assert.match(rendererSource, /terrainBaseAmount \+/);
+  assert.match(rendererSource, /mountainDeltaScale/);
+  assert.match(rendererSource, /sampleMountainPeakFieldAtPoint/);
+  assert.match(rendererSource, /createMountainPeakCenter/);
+  assert.match(rendererSource, /getHexLocalMountainFrame/);
+  assert.match(rendererSource, /getMountainHeightSourceAmount/);
+  assert.match(rendererSource, /sampleMountainErodedFbm/);
+  assert.match(rendererSource, /createMountainRangeReliefAtPoint/);
+  assert.match(rendererSource, /sampleOrientedMountainRangeRidge/);
+  assert.match(rendererSource, /MOUNTAIN_HEIGHT_DELTA_REFERENCE_SCALE/);
+  assert.match(rendererSource, /MOUNTAIN_HEIGHT_PEAK_FIELD_SPACING/);
+  assert.match(rendererSource, /const SMOOTH_TERRAIN_MESH_STEP = 1/);
+  assert.match(rendererSource, /sampleValueNoiseWithGradient/);
+  assert.match(rendererSource, /createMountainRidgeAmount/);
+  assert.match(rendererSource, /roundMountainSummitHeight/);
+  assert.match(rendererSource, /MOUNTAIN_HEIGHT_ERODED_FBM_GRADIENT_DAMPING/);
+  assert.match(rendererSource, /MOUNTAIN_HEIGHT_SUMMIT_ROUNDING_STRENGTH/);
+  assert.doesNotMatch(rendererSource, /MOUNTAIN_HEIGHT_SOURCE_MIN/);
+  assert.doesNotMatch(rendererSource, /MOUNTAIN_HEIGHT_SOURCE_MAX/);
+  assert.doesNotMatch(rendererSource, /createMountainCellRelief/);
+  assert.doesNotMatch(rendererSource, /createMountainCellSpineRelief/);
+  assert.doesNotMatch(rendererSource, /createMountainCellSpurRelief/);
+  assert.doesNotMatch(rendererSource, /createMountainCellBodyAmount/);
+  assert.match(rendererSource, /createSmoothBand/);
+  assert.match(rendererSource, /valueNoise2d/);
+  assert.match(rendererSource, /smoothMountainContinuityHeightPass/);
+  assert.match(rendererSource, /createCampaignHexReferenceHeightSamples/);
+  assert.match(rendererSource, /referenceHeightByCellKey/);
+  assert.match(
+    rendererSource,
+    /campaignHexGrid == null\s*\?\s*createSmoothTerrainHeightSamples/s
+  );
+  assert.match(
+    rendererSource,
+    /nonMountainHeightSamples = createNonMountainFlattenedHeightSamples/
+  );
+  assert.match(
+    rendererSource,
+    /mountainFloorHeightSamples = createMountainFloorHeightSamples/
+  );
+  assert.match(rendererSource, /heightSamples = createCampaignMountainHeightSamples/);
+  assert.match(
+    rendererSource,
+    /createCampaignMountainHeightSamples\(\s*mountainFloorHeightSamples,\s*baseHeightSamples,/s
+  );
+  assert.doesNotMatch(
+    rendererSource,
+    /referenceHeight \+ \(mountainHeight - referenceHeight\)/
+  );
+  assert.match(
+    rendererSource,
+    /createSmoothTerrainMesh\(\s*heightSamples,\s*GRID_COLUMNS,\s*GRID_ROWS/s
+  );
+  assert.match(rendererSource, /campaign-terrain\.frag\.glsl\?raw/);
+  assert.match(rendererSource, /const fragmentShaderSource = terrainFragmentShaderRaw/);
+  assert.doesNotMatch(rendererSource, /uniform sampler2D uWaterTexture/);
+  assert.match(terrainFragmentSource, /uniform sampler2D uWaterTexture/);
+  assert.match(terrainFragmentSource, /uniform sampler2D uRockTexture/);
+  assert.match(terrainFragmentSource, /uniform sampler2D uSnowTexture/);
+  assert.match(terrainFragmentSource, /uniform float uSnowHeightStart/);
+  assert.match(terrainFragmentSource, /uniform float uSnowHeightFull/);
+  assert.match(terrainFragmentSource, /uniform float uTimeSeconds/);
+  assert.doesNotMatch(terrainFragmentSource, /getHexBoundaryDistance/);
+  assert.doesNotMatch(terrainFragmentSource, /getShoreBands/);
+  assert.doesNotMatch(terrainFragmentSource, /getShoreRingAmount/);
+  assert.doesNotMatch(terrainFragmentSource, /getShoreEdgeContribution/);
+  assert.doesNotMatch(terrainFragmentSource, /distanceToLandEdge/);
+  assert.doesNotMatch(terrainFragmentSource, /neighborDistance - 0\.92/);
+  assert.doesNotMatch(
+    terrainFragmentSource,
+    /return clamp\(\(1\.0 - neighborWater\) \* water/
+  );
+  assert.doesNotMatch(terrainFragmentSource, /getShoreNearAmount/);
+  assert.doesNotMatch(terrainFragmentSource, /getShoreShallowAmount/);
+  assert.doesNotMatch(terrainFragmentSource, /getShoreMiddleAmount/);
+  assert.doesNotMatch(terrainFragmentSource, /getContinuousShoreBands/);
+  assert.doesNotMatch(terrainFragmentSource, /sampleContinuousShoreRing/);
+  assert.doesNotMatch(terrainFragmentSource, /sampleSeaBoundaryNoise/);
+  assert.doesNotMatch(terrainFragmentSource, /getBoundaryEdgeMask/);
+  assert.doesNotMatch(terrainFragmentSource, /getHexDirectionUv/);
+  assert.doesNotMatch(terrainFragmentSource, /float openWater = 1\.0/);
+  assert.match(terrainFragmentSource, /getRawMaterialWaterAmountAtUv/);
+  assert.match(terrainFragmentSource, /getSemanticWaterAmountAtUv/);
+  assert.match(terrainFragmentSource, /getRawMaterialLandAmountAtUv/);
+  assert.match(terrainFragmentSource, /getSemanticLandAmountAtCell/);
+  assert.match(terrainFragmentSource, /getMaterialSemanticMountainAtCell/);
+  assert.match(terrainFragmentSource, /getMountainTerrainAmount/);
+  assert.match(terrainFragmentSource, /getLocalMountainEdgeInset/);
+  assert.match(terrainFragmentSource, /sampleRockMaterial/);
+  assert.match(terrainFragmentSource, /sampleSnowMaterial/);
+  assert.match(terrainFragmentSource, /getMountainSnowAmount/);
+  assert.match(terrainFragmentSource, /mountainAmount \*/);
+  assert.match(rendererSource, /TERRAIN_SNOW_HEIGHT_START/);
+  assert.match(rendererSource, /mapSnowTextureUrl/);
+  assert.match(terrainFragmentSource, /semanticMountain/);
+  assert.match(terrainFragmentSource, /currentMountain \*\s*edgeInset/s);
+  assert.doesNotMatch(terrainFragmentSource, /mountainBody/);
+  assert.doesNotMatch(terrainFragmentSource, /sampleSoftMountainDisk/);
+  assert.match(terrainFragmentSource, /sampleShorelineChainData/);
+  assert.match(terrainFragmentSource, /getLocalShorelineBoundaryData/);
+  assert.match(terrainFragmentSource, /getShorelineBoundaryWater/);
+  assert.match(terrainFragmentSource, /getShorelineNearShoreTint/);
+  assert.match(terrainFragmentSource, /getVisualLandCellData/);
+  assert.match(terrainFragmentSource, /getLandBeachAmounts/);
+  assert.match(terrainFragmentSource, /getNearSeaEdgeBand/);
+  assert.match(terrainFragmentSource, /getTerrainUvOffset/);
+  assert.match(terrainFragmentSource, /getMapUvInsideAmount/);
+  assert.match(terrainFragmentSource, /sampleLandAtDiskOffset/);
+  assert.match(terrainFragmentSource, /sampleSoftLandDisk/);
+  assert.match(terrainFragmentSource, /sampleNearShoreEdgeNoise/);
+  assert.match(terrainFragmentSource, /sampleBeachEdgeErosionNoise/);
+  assert.match(terrainFragmentSource, /sampleBeachGrain/);
+  assert.match(terrainFragmentSource, /sampleBeachDust/);
+  assert.match(terrainFragmentSource, /boundaryWater = getShorelineBoundaryWater/);
+  assert.match(terrainFragmentSource, /nearShoreTint = getShorelineNearShoreTint/);
+  assert.doesNotMatch(terrainFragmentSource, /getNearSeaEdgeContribution/);
+  assert.doesNotMatch(terrainFragmentSource, /sampleLandInDirection/);
+  assert.doesNotMatch(terrainFragmentSource, /sampleContinuousLandRing/);
+  assert.doesNotMatch(terrainFragmentSource, /neighborOffset, 6\.10, edgeShift/);
+  assert.doesNotMatch(terrainFragmentSource, /4\.30, edgeShift/);
+  assert.doesNotMatch(terrainFragmentSource, /5\.05, edgeShift/);
+  assert.doesNotMatch(terrainFragmentSource, /getLandAmountAtCell\(cell \+ vec2\(2\.0, 0\.0\), hexScale, mapAspect\) \* 0\.82/);
+  assert.doesNotMatch(terrainFragmentSource, /getLandAmountAtCell\(cell \+ vec2\(3\.0, 0\.0\), hexScale, mapAspect\) \* 0\.62/);
+  assert.doesNotMatch(terrainFragmentSource, /getHexDirectionUv\(vec2\(0\.5,/);
+  assert.doesNotMatch(terrainFragmentSource, /getHexDirectionUv\(vec2\(-0\.5,/);
+  assert.doesNotMatch(terrainFragmentSource, /getHexDirectionUv\(vec2\(1\.0, -0\.5\)/);
+  assert.doesNotMatch(terrainFragmentSource, /getHexDirectionUv\(vec2\(-1\.0, 0\.5\)/);
+  assert.doesNotMatch(terrainFragmentSource, /sampleContinuousShoreRing\(uv, 0\.22/);
+  assert.doesNotMatch(terrainFragmentSource, /sampleContinuousShoreRing\(uv, 0\.40/);
+  assert.doesNotMatch(terrainFragmentSource, /sampleContinuousShoreRing\(uv, 2\.65/);
+  assert.doesNotMatch(terrainFragmentSource, /sampleContinuousShoreRing\(uv, 4\.40/);
+  assert.doesNotMatch(terrainFragmentSource, /nearDrift/);
+  assert.doesNotMatch(terrainFragmentSource, /shallowDrift/);
+  assert.doesNotMatch(terrainFragmentSource, /middleDrift/);
+  assert.doesNotMatch(terrainFragmentSource, /sampleContinuousShoreRing\(uv, max/);
+  assert.match(terrainFragmentSource, /roughOuterRadius = max\(4\.30, 6\.10 \+ edgeShift\)/);
+  assert.match(terrainFragmentSource, /sampleSoftLandDisk\(uv, roughOuterRadius/);
+  assert.match(terrainFragmentSource, /smoothstep\(0\.055, 0\.170, outerLand\)/);
+  assert.match(
+    terrainFragmentSource,
+    /getShorelineNearShoreTint\(\s*vUv,\s*hexPoint,\s*hexCell,\s*water,\s*hexScale,\s*mapAspect\s*\)/s
+  );
+  assert.match(terrainFragmentSource, /waveInset = sampleShorelineChainWave/);
+  assert.match(terrainFragmentSource, /chainMileage \* uShorelineErosionFrequency/);
+  assert.doesNotMatch(terrainFragmentSource, /nearShoreTransition =/);
+  assert.match(terrainFragmentSource, /getNearSeaEdgeBand\(\s*vUv,\s*hexScale,\s*mapAspect,\s*boundaryWater,\s*nearSeaBoundaryEdgeShift/s);
+  assert.doesNotMatch(
+    terrainFragmentSource,
+    /vec3 shoreBands = getContinuousShoreBands\(vUv, hexScale, mapAspect, water\)/
+  );
+  assert.match(
+    terrainFragmentSource,
+    /border \* mix\(uTerrainGridLandOpacity, uTerrainGridWaterOpacity, water\)/
+  );
+  assert.doesNotMatch(terrainFragmentSource, /getSharedHexEdgeShoreContribution/);
+  assert.doesNotMatch(terrainFragmentSource, /distanceToSharedEdge/);
+  assert.doesNotMatch(terrainFragmentSource, /getShoreRing2Amount/);
+  assert.doesNotMatch(terrainFragmentSource, /getShoreRing3Amount/);
+  assert.doesNotMatch(terrainFragmentSource, /getStretchedWaveUv/);
+  assert.doesNotMatch(terrainFragmentSource, /sampleStretchedWaterNoise/);
+  assert.doesNotMatch(terrainFragmentSource, /waveLineA/);
+  assert.doesNotMatch(terrainFragmentSource, /waveLineB/);
+  assert.doesNotMatch(terrainFragmentSource, /getLongWaterWave/);
+  assert.doesNotMatch(terrainFragmentSource, /getDirectionalWaterRipple/);
+  assert.doesNotMatch(terrainFragmentSource, /float ridge = sin/);
+  assert.doesNotMatch(terrainFragmentSource, /segmentNoise/);
+  assert.doesNotMatch(terrainFragmentSource, /sampleNoiseWaterRipple/);
+  assert.doesNotMatch(terrainFragmentSource, /anisotropicUv/);
+  assert.doesNotMatch(terrainFragmentSource, /longNoise/);
+  assert.doesNotMatch(terrainFragmentSource, /surfaceNoise/);
+  assert.doesNotMatch(terrainFragmentSource, /surfaceRipple/);
+  assert.doesNotMatch(terrainFragmentSource, /waveCrest/);
+  assert.doesNotMatch(terrainFragmentSource, /waveTrough/);
+  assert.match(terrainFragmentSource, /sampleLayeredWaterFlowNoise/);
+  assert.match(terrainFragmentSource, /sampleNearSeaBoundaryNoise/);
+  assert.match(terrainFragmentSource, /coarseNoise/);
+  assert.match(terrainFragmentSource, /fineNoise/);
+  assert.match(terrainFragmentSource, /raggedNoise/);
+  assert.match(terrainFragmentSource, /tornFiberNoise/);
+  assert.match(terrainFragmentSource, /raggedCuts/);
+  assert.match(terrainFragmentSource, /waterFlowNoise/);
+  assert.match(terrainFragmentSource, /secondaryWaterFlowNoise/);
+  assert.match(terrainFragmentSource, /waterFlowHighlight/);
+  assert.match(terrainFragmentSource, /waterFlowShadow/);
+  assert.match(terrainFragmentSource, /waterFlowWave/);
+  assert.match(terrainFragmentSource, /vec3 animatedColor = vec3\(0\.055, 0\.23, 0\.49\)/);
+  assert.match(terrainFragmentSource, /nearSeaBoundaryFlow/);
+  assert.match(terrainFragmentSource, /nearSeaBoundaryNoise/);
+  assert.match(terrainFragmentSource, /nearSeaBoundaryEdgeShift/);
+  assert.match(terrainFragmentSource, /nearSeaEdgeBand/);
+  assert.match(terrainFragmentSource, /vec3 nearSeaWater = vec3\(0\.16, 0\.52, 0\.72\)/);
+  assert.match(terrainFragmentSource, /nearSeaAwayFromCoast = nearSeaEdgeBand \* \(1\.0 - nearShoreTint \* 0\.52\)/);
+  assert.match(terrainFragmentSource, /animatedColor = mix\(animatedColor, nearSeaWater, nearSeaAwayFromCoast \* 0\.78\)/);
+  assert.doesNotMatch(terrainFragmentSource, /nearShoreTransitionWater/);
+  assert.match(terrainFragmentSource, /vec3 nearShoreTintWater = vec3\(0\.24, 0\.70, 0\.38\)/);
+  assert.match(terrainFragmentSource, /animatedColor = mix\(animatedColor, nearShoreTintWater, nearShoreTint \* 0\.42\)/);
+  assert.match(terrainFragmentSource, /nearSeaBoundaryEdgeShift = \(nearSeaBoundaryNoise - 0\.5\) \* 2\.10/);
+  assert.match(terrainFragmentSource, /nearSeaEdgeBand = getNearSeaEdgeBand/);
+  assert.match(terrainFragmentSource, /nearShoreTint,\s*nearSeaEdgeBand/);
+  assert.match(rendererSource, /rockTextureUrl: string \| null/);
+  assert.match(rendererSource, /uRockTexture/);
+  assert.doesNotMatch(terrainFragmentSource, /shoreBands/);
+  assert.doesNotMatch(terrainFragmentSource, /seaBoundaryFlow/);
+  assert.doesNotMatch(terrainFragmentSource, /staticBandNoise/);
+  assert.doesNotMatch(terrainFragmentSource, /staticShoreLine/);
+  assert.doesNotMatch(terrainFragmentSource, /seaBoundaryNoise/);
+  assert.doesNotMatch(terrainFragmentSource, /middleSeaBoundaryNoise/);
+  assert.doesNotMatch(terrainFragmentSource, /seaBoundaryShift/);
+  assert.doesNotMatch(terrainFragmentSource, /middleSeaBoundaryShift/);
+  assert.doesNotMatch(terrainFragmentSource, /seaBoundaryHighlight/);
+  assert.doesNotMatch(terrainFragmentSource, /seaBoundaryShadow/);
+  assert.doesNotMatch(terrainFragmentSource, /seaBoundaryLineMask/);
+  assert.doesNotMatch(terrainFragmentSource, /boundaryFlowNoise/);
+  assert.doesNotMatch(terrainFragmentSource, /boundaryFlowNoiseFine/);
+  assert.doesNotMatch(terrainFragmentSource, /animatedBoundaryLine/);
+  assert.doesNotMatch(terrainFragmentSource, /shoreLineMask/);
+  assert.doesNotMatch(terrainFragmentSource, /nearShoreEdge\s*=/);
+  assert.doesNotMatch(terrainFragmentSource, /shoreLight/);
+  assert.doesNotMatch(terrainFragmentSource, /float vein/);
+  assert.doesNotMatch(terrainFragmentSource, /surfaceTexture/);
+  assert.doesNotMatch(terrainFragmentSource, /surfaceFlow/);
+  assert.doesNotMatch(terrainFragmentSource, /seaBoundaryFlow = vec2\(uTimeSeconds \* 0\.030/);
+  assert.match(terrainFragmentSource, /waterFlow = vec2\(uTimeSeconds \* 0\.030/);
+  assert.match(terrainFragmentSource, /uv \* 6\.4 \+ flow/);
+  assert.match(terrainFragmentSource, /uv \* 13\.5 \+ flow \* 0\.73/);
+  assert.match(terrainFragmentSource, /vec3\(0\.18, 0\.34, 0\.31\) \* waterFlowHighlight \* 0\.82/);
+  assert.match(terrainFragmentSource, /vec3\(waterFlowWave\) \* 0\.16/);
+  assert.doesNotMatch(terrainFragmentSource, /vec2\(0\.92, 0\.38\), 4\.8, 62\.0/);
+  assert.doesNotMatch(terrainFragmentSource, /boundaryNoise/);
+  assert.doesNotMatch(terrainFragmentSource, /fineBoundaryNoise/);
+  assert.doesNotMatch(terrainFragmentSource, /bandJitter/);
+  assert.doesNotMatch(terrainFragmentSource, /staticBandJitter/);
+  assert.doesNotMatch(terrainFragmentSource, /nearShoreJitter/);
+  assert.doesNotMatch(terrainFragmentSource, /smoothstep\(0\.74, 0\.96, nearShore\)/);
+  assert.doesNotMatch(terrainFragmentSource, /nearShore \+ staticBandJitter/);
+  assert.doesNotMatch(terrainFragmentSource, /nearShoreBand/);
+  assert.doesNotMatch(terrainFragmentSource, /shallowSeaBand/);
+  assert.doesNotMatch(terrainFragmentSource, /middleSeaBand/);
+  assert.doesNotMatch(terrainFragmentSource, /shallowSeaWater/);
+  assert.doesNotMatch(terrainFragmentSource, /middleSeaWater/);
+  assert.match(rendererSource, /wrapS: gl\.REPEAT/);
+  assert.match(rendererSource, /requestRender\("dynamic"\)/);
+  assert.match(terrainFragmentSource, /applyCampaignHistoricTone/);
+  assert.match(terrainFragmentSource, /vec3\(0\.94, 0\.90, 0\.82\)/);
+  assert.doesNotMatch(vegetationFragmentSource, /uniform float uAlpha/);
+  assert.doesNotMatch(rendererSource, /vegetationWind/);
+  assert.doesNotMatch(rendererSource, /windPhase/);
+  assert.doesNotMatch(rendererSource, /vegetationStride = 11/);
+  assert.match(rendererSource, /vegetationStride = 9 \* Float32Array\.BYTES_PER_ELEMENT/);
+  assert.doesNotMatch(vegetationFragmentSource, /vWind/);
+  assert.doesNotMatch(vegetationFragmentSource, /canopyLift/);
+  assert.match(vegetationFragmentSource, /uTerrainCameraLightHeight/);
+  assert.match(vegetationFragmentSource, /uTerrainCameraLightHorizontalPull/);
+  assert.match(vegetationFragmentSource, /centerToFragment/);
+  assert.match(
+    vegetationFragmentSource,
+    /\(vec2\(0\.5, 0\.5\) - viewportUv\)\s*\*\s*vec2\(safeViewportSize\.x \/ safeViewportSize\.y, 1\.0\)/s
+  );
+  assert.match(vegetationFragmentSource, /vegetationShadowDirection/);
+  assert.match(vegetationFragmentSource, /vegetationLightDirection = -vegetationShadowDirection/);
+  assert.match(vegetationFragmentSource, /max\(abs\(centerToFragment\.y\), uTerrainCameraLightHeight\)/);
+  assert.doesNotMatch(vegetationFragmentSource, /uVegetationLightScreenDirection/);
+  assert.doesNotMatch(rendererSource, /VEGETATION_LIGHT_SCREEN_DIRECTION/);
+  assert.match(rendererSource, /getCampaignVegetationTerrainShadowScreenDirection/);
+  assert.match(rendererSource, /centerToFragment/);
+  assert.match(rendererSource, /-centerToFragment\[0\]/);
+  assert.match(rendererSource, /-Math\.max\(Math\.abs\(centerToFragment\[1\]\), TERRAIN_CAMERA_LIGHT_HEIGHT\)/);
+  assert.match(
+    rendererSource,
+    /verticallyFlippedShadowDirection/
+  );
+  assert.match(
+    rendererSource,
+    /vegetationShadowDirection\[0\],\s*-vegetationShadowDirection\[1\]/s
+  );
+  assert.match(
+    rendererSource,
+    /return verticallyFlippedShadowDirection/
+  );
+  assert.match(vegetationFragmentSource, /uTerrainDirectionalLightStrength/);
+  assert.match(vegetationFragmentSource, /gl_FrontFacing/);
+  assert.match(rendererSource, /vegetationShadowProgram/);
+  assert.match(rendererSource, /shadowVertices/);
+  assert.match(rendererSource, /getCampaignVegetationCellVisibility/);
+  assert.match(rendererSource, /getCampaignVegetationShadowWorldDirection/);
+  assert.match(rendererSource, /rules\.density\.far/);
+  assert.match(rendererSource, /lightOffsetScale/);
+  assert.match(rendererSource, /isCampaignVegetationHeightAllowed/);
+  assert.match(rendererSource, /rules\.altitude\?\.maxTerrainHeight/);
+  assert.match(rendererSource, /sampleHeightAt\(heights, columns, rows, u, v\)/);
+  assert.match(rendererSource, /resolvedCount \+= 1;\s*continue;/);
+  assert.match(rendererSource, /createUniformCampaignVegetationCellAllocations/);
+  assert.match(rendererSource, /createUniformCampaignVegetationBucketAllocations/);
+  assert.match(rendererSource, /bucketColumns = 12/);
+  assert.match(rendererSource, /bucketRows = 8/);
+  assert.doesNotMatch(rendererSource, /sort\(\(left, right\) => left\.priority - right\.priority\)/);
+  assert.match(rendererSource, /gl\.enable\(gl\.POLYGON_OFFSET_FILL\)/);
+  assert.match(rendererSource, /gl\.polygonOffset\(-4, -8\)/);
+  assert.match(vegetationShadowFragmentSource, /uniform float uOpacity/);
+  assert.match(vegetationShadowFragmentSource, /float trunkAttach/);
+  assert.match(vegetationShadowFragmentSource, /float endFade/);
+  assert.match(
+    vegetationFragmentSource,
+    /vec4\(shadedColor, 1\.0\)/
+  );
+  assert.doesNotMatch(rendererSource, /getCampaignVegetationAlpha/);
+});
+
+test("campaign hex grid and shader treat outside-map edge cells as water", () => {
+  const packRoot = path.join(
+    process.cwd(),
+    "src",
+    "content",
+    "scenario-packs",
+    "zhuyuanzhang"
+  );
+  const campaignHexGrid = JSON.parse(
+    fs.readFileSync(
+      path.join(packRoot, "assets", "maps", "yuanmo-campaign-hex-grid.json"),
+      "utf8"
+    )
+  );
+  const terrainFragmentSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src",
+      "ui",
+      "views",
+      "map",
+      "shaders",
+      "campaign-terrain.frag.glsl"
+    ),
+    "utf8"
+  );
+  const hexGridScale = campaignHexGrid.coordinateSystem.hexTerrainScale;
+  const hexGridAspect = campaignHexGrid.coordinateSystem.hexMapAspect;
+  const outsideMapCells = campaignHexGrid.cells.filter((cell) => {
+    const centerX = Math.sqrt(3) * (cell.x + cell.y * 0.5);
+    const centerY = 1.5 * cell.y;
+    const u = centerX / (hexGridAspect * hexGridScale) + 0.5;
+    const v = centerY / hexGridScale + 0.5;
+    return u < 0 || u > 1 || v < 0 || v > 1;
+  });
+
+  assert.equal(outsideMapCells.length > 0, true);
+  assert.equal(
+    outsideMapCells.every((cell) => cell.land === false),
+    true
+  );
+  assert.match(terrainFragmentSource, /return mix\(1\.0, semanticWater, mapInside\)/);
+});
+
+test("campaign fog exploration stays active without the removed shader renderer", () => {
+  const mapViewSource = fs.readFileSync(
+    path.join(process.cwd(), "src", "ui", "views", "map", "map-view.ts"),
+    "utf8"
+  );
+  const mainSource = fs.readFileSync(path.join(process.cwd(), "src", "main.ts"), "utf8");
+  const cloudRendererSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src",
+      "ui",
+      "views",
+      "map",
+      "campaign-cloud-webgl.ts"
+    ),
+    "utf8"
+  );
+  const terrainRendererSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src",
+      "ui",
+      "views",
+      "map",
+      "campaign-terrain-webgl.ts"
+    ),
+    "utf8"
+  );
+  const shaderRoot = path.join(
+    process.cwd(),
+    "src",
+    "ui",
+    "views",
+    "map",
+    "shaders"
+  );
+
+  assert.equal(
+    fs.existsSync(path.join(shaderRoot, "campaign-volumetric-cloud.vert.glsl")),
+    false
+  );
+  assert.equal(
+    fs.existsSync(path.join(shaderRoot, "campaign-volumetric-cloud.frag.glsl")),
+    false
+  );
+  assert.equal(fs.existsSync(path.join(shaderRoot, "campaign-fog.vert.glsl")), false);
+  assert.equal(fs.existsSync(path.join(shaderRoot, "campaign-fog.frag.glsl")), false);
+  assert.equal(
+    fs.existsSync(
+      path.join(process.cwd(), "src", "ui", "views", "map", "campaign-fog-webgl.ts")
+    ),
+    false
+  );
+  assert.doesNotMatch(mapViewSource, /data-campaign-map-fog/);
+  assert.doesNotMatch(mapViewSource, /campaign-volumetric-cloud/);
+  assert.doesNotMatch(mainSource, /campaign-fog-webgl/);
+  assert.doesNotMatch(mainSource, /syncCampaignMapFogWebGl/);
+  assert.doesNotMatch(mainSource, /setCampaignMapFogCamera/);
+  assert.match(mainSource, /isCampaignMapCoordinateRevealed/);
+  assert.match(mainSource, /revealCampaignMapAroundCoordinate/);
+  assert.match(
+    terrainRendererSource,
+    /projectCampaignTerrainUvToClientPointAtHeightAnchor/
+  );
+  assert.match(
+    terrainRendererSource,
+    /projectCampaignTerrainUvToClientPointAtCloudRevealHeight/
+  );
+  assert.match(
+    cloudRendererSource,
+    /projectCampaignTerrainUvToClientPointAtCloudRevealHeight/
+  );
+  assert.match(terrainRendererSource, /CLOUD_REVEAL_REFERENCE_HEIGHT/);
+  assert.doesNotMatch(
+    cloudRendererSource,
+    /projectCampaignTerrainUvToClientPointAtHeightAnchor/
+  );
+  assert.doesNotMatch(cloudRendererSource, /heightAnchorCoordinate/);
+});
+
+test("campaign map exploration reveals current hex and one neighbor ring", () => {
+  const coordinateSpace = { width: 509, height: 451 };
+  const startCoordinate = { x: 334, y: 318 };
+  const state = createBaseState();
+  const revealedState = revealCampaignMapAroundCoordinate({
+    state,
+    mapId: "map.yuanmo_campaign",
+    coordinate: startCoordinate,
+    coordinateSpace,
+    revealedAtMs: 1000,
+    animateNewHexes: true,
+  });
+  const startHex = coordinateToRoundedHex(startCoordinate, coordinateSpace);
+  const exploration = getCampaignMapFogViewState(
+    revealedState,
+    "map.yuanmo_campaign"
+  );
+
+  assert.equal(exploration.revealedHexKeys.length, 7);
+  assert.equal(exploration.revealedHexKeys.includes(getHexKey(startHex)), true);
+  assert.equal(
+    isCampaignMapCoordinateRevealed({
+      state: revealedState,
+      mapId: "map.yuanmo_campaign",
+      coordinate: startCoordinate,
+      coordinateSpace,
+    }),
+    true
+  );
+  assert.equal(
+    Object.values(exploration.revealingHexStartedAtMsByKey).every(
+      (startedAtMs) => startedAtMs === 1000
+    ),
+    true
+  );
+  assert.equal(
+    isCampaignMapCoordinateRevealed({
+      state: revealedState,
+      mapId: "map.yuanmo_campaign",
+      coordinate: { x: 5, y: 5 },
+      coordinateSpace,
+    }),
+    false
+  );
 });
 
 test("ui contract modules export the reserve contract families", async () => {
@@ -2005,10 +3870,23 @@ test(
         `${packBaseUrl}assets/maps/yuanmo-map-regions.png`
       );
       assert.equal(
+        yuanmoCampaignMap.campaignHexGridUrl,
+        `${packBaseUrl}assets/maps/yuanmo-campaign-hex-grid.json`
+      );
+      assert.equal(
+        yuanmoCampaignMap.campaignVegetationRulesUrl,
+        `${packBaseUrl}assets/maps/yuanmo-campaign-vegetation-rules.json`
+      );
+      assert.equal(
         yuanmoCampaignMap.layers.every((layer) =>
           layer.imageUrl.startsWith(`${packBaseUrl}assets/maps/`)
         ),
         true
+      );
+      assert.equal(
+        yuanmoCampaignMap.layers.find((layer) => layer.id === "map_hex_texture_atlas")
+          ?.imageUrl,
+        `${packBaseUrl}assets/maps/tietu.png`
       );
     } finally {
       global.fetch = originalFetch;
@@ -2103,6 +3981,14 @@ test(
         ),
         true
       );
+      assert.equal(
+        pack.maps.some(
+          (map) =>
+            map.campaignVegetationRulesUrl ===
+            `${packBaseUrl}assets/maps/yuanmo-campaign-vegetation-rules.json`
+        ),
+        true
+      );
     } finally {
       global.fetch = originalFetch;
       global.window = originalWindow;
@@ -2145,6 +4031,25 @@ test(
           typeof map.primaryImageUrl === "string" &&
           !map.primaryImageUrl.startsWith("./assets/")
       ),
+      true
+    );
+    const yuanmoCampaignMap = pack.maps.find(
+      (map) => map.id === "map.yuanmo_campaign"
+    );
+
+    assert.ok(yuanmoCampaignMap);
+    assert.equal(
+      typeof yuanmoCampaignMap.campaignVegetationRulesUrl === "string" &&
+        yuanmoCampaignMap.campaignVegetationRulesUrl.startsWith("blob:"),
+      true
+    );
+    const vegetationRulesResponse = await fetch(
+      yuanmoCampaignMap.campaignVegetationRulesUrl
+    );
+    const vegetationRules = await vegetationRulesResponse.json();
+    assert.equal(vegetationRules.format, "campaign-vegetation-rules-v1");
+    assert.equal(
+      vegetationRules.variants.every((variant) => variant.meshUrl.startsWith("blob:")),
       true
     );
   }
@@ -2370,7 +4275,7 @@ test("leader residence interaction flow updates relation and learning skill", ()
     sessionState: greetingResult.sessionState,
     request: { type: "action", actionId: "leader-residence:gift" },
   });
-  assert.equal(giftResult.gameState.runtime.variables[relationKey], 3);
+  assert.equal(giftResult.gameState.runtime.variables[relationKey], 1);
   assert.equal(giftResult.sessionState?.overlay?.type, "alert");
 
   const learnResult = leaderResidenceHouseModule.dispatch({
@@ -2406,6 +4311,1260 @@ test("grain trade fails when the player cannot afford the purchase", () => {
 
   assert.equal(result.errorTitle.length > 0, true);
   assert.equal(result.errorMessage.length > 0, true);
+});
+
+test("primary house actor roster helper places the default actor first", () => {
+  const roster = orderHouseStandbyRoster({
+    primaryCharacterId: "char.owner",
+    actors: [
+      { characterId: "char.guest", name: "Guest" },
+      { characterId: "char.owner", name: "Owner", actionId: "open-owner-dialogue" },
+      { characterId: "char.extra", name: "Extra" },
+    ],
+  });
+
+  assert.deepEqual(
+    roster.map((actor) => actor.characterId),
+    ["char.owner", "char.guest", "char.extra"]
+  );
+  assert.equal(roster[0].actionId, "open-owner-dialogue");
+});
+
+test("primary house actor roster helper deduplicates actors without losing the first primary model", () => {
+  const roster = orderHouseStandbyRoster({
+    primaryCharacterId: "char.owner",
+    actors: [
+      { characterId: "char.owner", name: "Owner", actionId: "open-owner-dialogue" },
+      { characterId: "char.guest", name: "Guest" },
+      { characterId: "char.owner", name: "Owner Duplicate" },
+      { characterId: "char.guest", name: "Guest Duplicate" },
+    ],
+  });
+
+  assert.deepEqual(
+    roster.map((actor) => actor.name),
+    ["Owner", "Guest"]
+  );
+});
+
+test("global NPC interaction menu keeps special actions above default actions", () => {
+  const context = { type: "house", houseId: "house.test", moduleId: "tea-house" };
+  const session = createNpcInteractionSession(context, "char.tea");
+  const menu = selectNpcInteractionMenu({
+    session,
+    targetName: "茶博士",
+    specialActions: [
+      { id: "tea:ask-intel", label: "打听", kind: "special" },
+      { id: "tea:debate", label: "舌战", kind: "special", tone: "accent" },
+    ],
+  });
+
+  assert.equal(menu.type, "npc-interaction-menu");
+  assert.deepEqual(
+    menu.options.map((option) => option.id),
+    [
+      "tea:ask-intel",
+      "tea:debate",
+      NPC_INTERACTION_DEFAULT_OPTION_IDS.profile,
+      NPC_INTERACTION_DEFAULT_OPTION_IDS.talk,
+      NPC_INTERACTION_DEFAULT_OPTION_IDS.gift,
+    ]
+  );
+  assert.deepEqual(
+    menu.options.slice(-3).map((option) => option.label),
+    ["角色情报", "谈话", "送礼"]
+  );
+});
+
+test("global NPC gift default is safe when no giftable items exist", () => {
+  const session = createNpcInteractionSession(
+    { type: "house", houseId: "house.test", moduleId: "leader-residence" },
+    "char.leader"
+  );
+  const menu = selectNpcInteractionMenu({
+    session,
+    targetName: "将领",
+    specialActions: [],
+    giftDisabled: true,
+  });
+  const gift = menu.options.find(
+    (option) => option.id === NPC_INTERACTION_DEFAULT_OPTION_IDS.gift
+  );
+
+  assert.equal(gift.label, "送礼");
+  assert.equal(gift.disabled, true);
+});
+
+test("global NPC gift default fails closed without an enabled gift inventory path", () => {
+  const session = createNpcInteractionSession(
+    { type: "house", houseId: "house.test", moduleId: "leader-residence" },
+    "char.leader"
+  );
+  const menu = selectNpcInteractionMenu({
+    session,
+    targetName: "将领",
+    specialActions: [],
+  });
+  const gift = menu.options.find(
+    (option) => option.id === NPC_INTERACTION_DEFAULT_OPTION_IDS.gift
+  );
+
+  assert.equal(gift.disabled, true);
+});
+
+test("global NPC interaction blocks roster clicks while overlays or dialogue own input", () => {
+  assert.equal(
+    isNpcInteractionBlocked({
+      overlayView: null,
+      modalState: null,
+      locationDialogueState: null,
+      hasHouseOverlay: false,
+      hasActiveDialogueAdvance: false,
+    }),
+    false
+  );
+  assert.equal(
+    isNpcInteractionBlocked({
+      overlayView: "detail",
+      modalState: null,
+      locationDialogueState: null,
+      hasHouseOverlay: false,
+      hasActiveDialogueAdvance: false,
+    }),
+    true
+  );
+  assert.equal(
+    isNpcInteractionBlocked({
+      overlayView: null,
+      modalState: { type: "enter-city-confirm", cityId: "city.kulan", cityName: "库兰" },
+      locationDialogueState: null,
+      hasHouseOverlay: false,
+      hasActiveDialogueAdvance: false,
+    }),
+    true
+  );
+  assert.equal(
+    isNpcInteractionBlocked({
+      overlayView: null,
+      modalState: null,
+      locationDialogueState: {
+        type: "house-access-refusal",
+        speakerCharacterId: "char.guard",
+        textLines: ["暂不可入。"],
+        advanceHintText: "点击继续",
+      },
+      hasHouseOverlay: false,
+      hasActiveDialogueAdvance: false,
+    }),
+    true
+  );
+  assert.equal(
+    isNpcInteractionBlocked({
+      overlayView: null,
+      modalState: null,
+      locationDialogueState: null,
+      hasHouseOverlay: true,
+      hasActiveDialogueAdvance: false,
+    }),
+    true
+  );
+  assert.equal(
+    isNpcInteractionBlocked({
+      overlayView: null,
+      modalState: null,
+      locationDialogueState: null,
+      hasHouseOverlay: false,
+      hasActiveDialogueAdvance: true,
+    }),
+    true
+  );
+});
+
+test("global NPC interaction character detail can target a non-player NPC", () => {
+  const baseAppState = createRuntimeState(createBaseState()).app;
+  const opened = openCharacterDetail(
+    { ...baseAppState, gameState: createBaseState() },
+    "char.market_merchant"
+  );
+
+  assert.equal(opened.gameState.ui.overlayView, "detail");
+  assert.equal(opened.gameState.ui.detailCharacterId, "char.market_merchant");
+});
+
+test("player detail clears the NPC detail target and uses the pinned player fallback", () => {
+  const baseAppState = {
+    ...createRuntimeState(createBaseState()).app,
+    gameState: {
+      ...createBaseState(),
+      ui: {
+        ...createBaseState().ui,
+        overlayView: "detail",
+        detailCharacterId: "char.market_merchant",
+      },
+    },
+  };
+  const opened = openPlayerDetail(baseAppState);
+
+  assert.equal(opened.gameState.ui.overlayView, "detail");
+  assert.equal(opened.gameState.ui.detailCharacterId, null);
+});
+
+test("closing global overlay clears the arbitrary character detail target", () => {
+  const baseAppState = {
+    ...createRuntimeState(createBaseState()).app,
+    gameState: {
+      ...createBaseState(),
+      ui: {
+        ...createBaseState().ui,
+        overlayView: "detail",
+        detailCharacterId: "char.market_merchant",
+      },
+    },
+  };
+  const closed = closeGlobalOverlay(baseAppState);
+
+  assert.equal(closed.gameState.ui.overlayView, null);
+  assert.equal(closed.gameState.ui.detailCharacterId, null);
+});
+
+test("global NPC interaction adapts house standby roster into reusable NPC pool", () => {
+  const pool = adaptHouseRosterToNpcPool({
+    context: { type: "house", houseId: "house.market", moduleId: "market-house" },
+    actors: [
+      {
+        characterId: "char.merchant",
+        name: "行商",
+        title: "货栈商人",
+        actionId: "select-market-actor:char.merchant",
+      },
+    ],
+    disabled: false,
+  });
+
+  assert.equal(pool.context.type, "house");
+  assert.equal(pool.actors[0].characterId, "char.merchant");
+  assert.equal(pool.actors[0].name, "行商");
+  assert.equal(pool.actors[0].disabled, false);
+});
+
+test("global NPC interaction keeps house actors without special actions clickable", () => {
+  const pool = adaptHouseRosterToNpcPool({
+    context: { type: "house", houseId: "house.tea", moduleId: "tea-house" },
+    actors: [
+      {
+        characterId: "char.guest",
+        name: "茶客",
+      },
+    ],
+    disabled: false,
+  });
+
+  assert.equal(pool.actors[0].characterId, "char.guest");
+  assert.equal(pool.actors[0].disabled, false);
+});
+
+test("global NPC interaction selects house actor special actions for the target", () => {
+  const actions = selectHouseNpcSpecialActions({
+    targetCharacterId: "char.tea",
+    actors: [
+      {
+        characterId: "char.tea",
+        name: "茶博士",
+        interactionActions: [
+          { id: "order-tea", label: "请茶", kind: "special" },
+          { id: "ask-intel", label: "打听", kind: "special" },
+        ],
+      },
+      {
+        characterId: "char.other",
+        name: "客人",
+        interactionActions: [
+          { id: "other-action", label: "旁事", kind: "special" },
+        ],
+      },
+    ],
+  });
+
+  assert.deepEqual(
+    actions.map((action) => action.id),
+    ["order-tea", "ask-intel"]
+  );
+});
+
+test("global NPC interaction house roster exposes generic NPC target buttons", () => {
+  const enterResult = teaHouseHouseModule.enter({
+    gameState: createBaseState(),
+    characterDefinitions: prototypeCharacters,
+    houseDefinition: teaHouse,
+    playerCharacterId,
+  });
+  const viewModel = teaHouseHouseModule.selectViewModel({
+    gameState: enterResult.gameState,
+    characterDefinitions: enterResult.characterDefinitions,
+    houseDefinition: teaHouse,
+    playerCharacterId,
+    sessionState: enterResult.sessionState,
+  });
+  const html = renderTeaHouseHouseView(viewModel);
+
+  assert.match(html, /data-npc-target=/);
+  assert.match(html, /data-npc-context=/);
+  assert.match(html, /data-npc-context-type="house"/);
+  assert.match(html, new RegExp(`data-house-id="${teaHouse.id}"`));
+  assert.match(html, /data-house-module-id="tea-house"/);
+  const rosterButton = html.match(
+    /<button[\s\S]*?data-npc-target="[^"]+"[\s\S]*?<\/button>/
+  )?.[0];
+  assert.ok(rosterButton, "Expected roster button to be rendered.");
+  assert.doesNotMatch(
+    rosterButton,
+    /data-house-action=/,
+    "Roster actor click should open the NPC interaction menu, not dispatch a house action directly."
+  );
+
+  const rawContext = html.match(/data-npc-context="([^"]+)"/)?.[1];
+  assert.ok(rawContext, "Expected roster button to expose data-npc-context.");
+  const decodedContext = rawContext
+    .replace(/&quot;/g, '"')
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&amp;/g, "&");
+  assert.deepEqual(JSON.parse(decodedContext), {
+    type: "house",
+    houseId: teaHouse.id,
+    moduleId: "tea-house",
+  });
+});
+
+test("global NPC interaction meeting roster seats expose generic NPC target buttons", () => {
+  const baseMeetingViewModel = {
+    moduleId: "keep-house",
+    houseId: keepHouse.id,
+    sceneTitle: "会议",
+    standbyRoster: [
+      {
+        characterId: "char.lord",
+        name: "主公",
+        title: "评议",
+        isSelected: true,
+        actionId: "advance-keep-dialogue",
+      },
+      {
+        characterId: "char.retainer",
+        name: "家臣",
+        title: "列席",
+        isSelected: false,
+      },
+    ],
+    dialogue: null,
+    actionContainer: null,
+    statusCard: null,
+    overlay: null,
+    leaveAction: { id: "leave-house", label: "离开" },
+  };
+
+  const keepHtml = renderKeepHouseView(baseMeetingViewModel);
+  const templeHtml = renderTempleHouseView({
+    ...baseMeetingViewModel,
+    moduleId: "temple-house",
+    houseId: templeHouse.id,
+  });
+
+  for (const html of [keepHtml, templeHtml]) {
+    const seatButton = html.match(
+      /<button[\s\S]*?class="[^"]*c-keep-house-seat[^"]*"[\s\S]*?<\/button>/
+    )?.[0];
+    assert.ok(seatButton, "Expected meeting seat to render as a button.");
+    assert.match(seatButton, /data-npc-target="char\.lord"/);
+    assert.match(seatButton, /data-npc-context=/);
+    assert.doesNotMatch(seatButton, /data-house-action=/);
+  }
+});
+
+test("global NPC interaction house roster disables NPC targets when input is blocked", () => {
+  const {
+    renderHouseStandbyRoster,
+  } = require("../.test-dist/ui/views/house/house-shared-view.js");
+  const html = renderHouseStandbyRoster({
+    moduleId: "tea-house",
+    houseId: "house.tea",
+    sceneTitle: "test",
+    standbyRoster: [
+      {
+        characterId: "char.tea",
+        name: "茶博士",
+        title: "掌柜",
+        actionId: "open-boss-dialogue",
+        disabled: true,
+      },
+    ],
+    dialogue: null,
+    actionContainer: null,
+    statusCard: null,
+    overlay: null,
+    leaveAction: { id: "leave-house", label: "离开" },
+  });
+
+  assert.match(html, /disabled/);
+  assert.doesNotMatch(html, /data-npc-target="char\.tea"/);
+  assert.doesNotMatch(html, /data-house-action="open-boss-dialogue"/);
+});
+
+test("global NPC interaction removes visible idle small-talk labels from tea and medicine menus", () => {
+  const teaEnter = teaHouseHouseModule.enter({
+    gameState: createBaseState(),
+    characterDefinitions: prototypeCharacters,
+    houseDefinition: teaHouse,
+    playerCharacterId,
+  });
+  const teaView = teaHouseHouseModule.selectViewModel({
+    gameState: teaEnter.gameState,
+    characterDefinitions: teaEnter.characterDefinitions,
+    houseDefinition: teaHouse,
+    playerCharacterId,
+    sessionState: { ...teaEnter.sessionState, dialoguePhase: "open" },
+  });
+
+  const medicineEnter = medicineHouseHouseModule.enter({
+    gameState: createBaseState(),
+    characterDefinitions: prototypeCharacters,
+    houseDefinition: medicineHouse,
+    playerCharacterId,
+  });
+  const medicineView = medicineHouseHouseModule.selectViewModel({
+    gameState: medicineEnter.gameState,
+    characterDefinitions: medicineEnter.characterDefinitions,
+    houseDefinition: medicineHouse,
+    playerCharacterId,
+    sessionState: { ...medicineEnter.sessionState, dialoguePhase: "open" },
+  });
+
+  assert.equal(
+    JSON.stringify(teaView.actionContainer?.actions ?? []).includes("闂茶皥"),
+    false
+  );
+  assert.equal(
+    JSON.stringify(medicineView.actionContainer?.actions ?? []).includes("闂茶皥"),
+    false
+  );
+  assert.equal(
+    (teaView.actionContainer?.actions ?? []).some(
+      (action) => action.id === "talk" || action.label === "谈话"
+    ),
+    false
+  );
+  assert.equal(
+    (medicineView.actionContainer?.actions ?? []).some(
+      (action) => action.id === "talk" || action.label === "谈话"
+    ),
+    false
+  );
+});
+
+test("global NPC interaction house action panel appends default NPC choices", () => {
+  const teaEnter = teaHouseHouseModule.enter({
+    gameState: createBaseState(),
+    characterDefinitions: prototypeCharacters,
+    houseDefinition: teaHouse,
+    playerCharacterId,
+  });
+  const teaView = teaHouseHouseModule.selectViewModel({
+    gameState: teaEnter.gameState,
+    characterDefinitions: teaEnter.characterDefinitions,
+    houseDefinition: teaHouse,
+    playerCharacterId,
+    sessionState: { ...teaEnter.sessionState, dialoguePhase: "open" },
+  });
+  const html = renderTeaHouseHouseView(teaView);
+  const actionPanel = html.match(
+    /<nav[\s\S]*?class="c-grain-shop-actions"[\s\S]*?<\/nav>/
+  )?.[0];
+
+  assert.ok(actionPanel, "Expected house action panel to render.");
+  assert.match(actionPanel, /data-house-action="serve-tea"/);
+  assert.match(actionPanel, /data-npc-action="profile"/);
+  assert.match(actionPanel, /data-npc-action="talk"/);
+  assert.match(actionPanel, /data-npc-action="gift"/);
+  assert.ok(
+    actionPanel.indexOf('data-house-action="serve-tea"') <
+      actionPanel.indexOf('data-npc-action="profile"'),
+    "Special house actions should appear before default NPC actions."
+  );
+});
+
+test("global NPC interaction house action panel sources default choices from shared NPC options", () => {
+  const houseSharedSource = fs.readFileSync(
+    path.join(process.cwd(), "src", "ui", "views", "house", "house-shared-view.ts"),
+    "utf8"
+  );
+
+  assert.match(houseSharedSource, /NPC_INTERACTION_DEFAULT_OPTIONS/);
+  assert.doesNotMatch(
+    houseSharedSource,
+    /data-npc-action="profile"[\s\S]*data-npc-action="talk"[\s\S]*data-npc-action="gift"/
+  );
+});
+
+test("global NPC interaction house action panel keeps dismiss actions below default choices", () => {
+  const {
+    renderHouseActionContainer,
+  } = require("../.test-dist/ui/views/house/house-shared-view.js");
+  const html = renderHouseActionContainer({
+    moduleId: "tea-house",
+    houseId: "house.tea",
+    sceneTitle: "茶馆",
+    standbyRoster: [
+      {
+        characterId: "char.tea",
+        name: "茶博士",
+        isSelected: true,
+        interactionActions: [{ id: "serve-tea", label: "请茶", kind: "special" }],
+      },
+    ],
+    dialogue: null,
+    actionContainer: {
+      actions: [
+        { id: "serve-tea", label: "请茶" },
+        { id: "dismiss-dialogue", label: "先退下" },
+      ],
+    },
+    statusCard: null,
+    overlay: null,
+    leaveAction: { id: "leave-house", label: "离开" },
+  });
+
+  assert.ok(
+    html.indexOf('data-house-action="serve-tea"') <
+      html.indexOf('data-npc-action="profile"'),
+    "Business special actions should stay above default NPC choices."
+  );
+  assert.ok(
+    html.indexOf('data-npc-action="gift"') <
+      html.indexOf('data-house-action="dismiss-dialogue"'),
+    "Dismiss house actions should stay below default NPC choices."
+  );
+});
+
+test("global NPC interaction does not append default choices to temple review work assignment", () => {
+  const monkCharacters = createPrototypeCharactersForStoryStage(
+    ZHU_YUANZHANG_STORY_STAGES.huangjueTemple
+  );
+  const entered = templeHouseHouseModule.enter({
+    gameState: {
+      ...createMonkStageState(),
+      runtime: {
+        ...createMonkStageState().runtime,
+        variables: {
+          ...createMonkStageState().runtime.variables,
+          [KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown]: 0,
+        },
+      },
+    },
+    characterDefinitions: monkCharacters,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+  });
+  const contribution = templeHouseHouseModule.dispatch({
+    gameState: entered.gameState,
+    characterDefinitions: entered.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: entered.sessionState,
+    request: { type: "action", actionId: "advance-temple-dialogue" },
+  });
+  const praise = templeHouseHouseModule.dispatch({
+    gameState: contribution.gameState,
+    characterDefinitions: contribution.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: contribution.sessionState,
+    request: { type: "action", actionId: "close-temple-overlay" },
+  });
+  const policy = templeHouseHouseModule.dispatch({
+    gameState: praise.gameState,
+    characterDefinitions: praise.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: praise.sessionState,
+    request: { type: "action", actionId: "advance-temple-dialogue" },
+  });
+  const assignDuty = templeHouseHouseModule.dispatch({
+    gameState: policy.gameState,
+    characterDefinitions: policy.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: policy.sessionState,
+    request: { type: "action", actionId: "advance-temple-dialogue" },
+  });
+  const viewModel = templeHouseHouseModule.selectViewModel({
+    gameState: assignDuty.gameState,
+    characterDefinitions: assignDuty.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: assignDuty.sessionState,
+  });
+  const html = renderTempleHouseView(viewModel);
+
+  assert.equal(assignDuty.sessionState?.meetingStage, "assign-duty");
+  assert.match(html, /select-review-work:temple-help/);
+  assert.doesNotMatch(html, /data-npc-action="profile"/);
+  assert.doesNotMatch(html, /data-npc-action="talk"/);
+  assert.doesNotMatch(html, /data-npc-action="gift"/);
+});
+
+test("global NPC interaction temple abbot click exposes the same dialogue actions as the open panel", () => {
+  const monkCharacters = createPrototypeCharactersForStoryStage(
+    ZHU_YUANZHANG_STORY_STAGES.huangjueTemple
+  );
+  const baseState = withCouncilInDays(createMonkStageState(), 30);
+  const entered = templeHouseHouseModule.enter({
+    gameState: baseState,
+    characterDefinitions: monkCharacters,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+  });
+  const viewModel = templeHouseHouseModule.selectViewModel({
+    gameState: entered.gameState,
+    characterDefinitions: entered.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: { ...entered.sessionState, dialoguePhase: "open" },
+  });
+  const abbotActor = viewModel.standbyRoster.find(
+    (actor) => actor.characterId === templeHouse.defaultCharacterId
+  );
+  const menu = selectNpcInteractionMenu({
+    session: createNpcInteractionSession(
+      { type: "house", houseId: templeHouse.id, moduleId: "temple-house" },
+      templeHouse.defaultCharacterId
+    ),
+    targetName: abbotActor?.name ?? null,
+    specialActions: abbotActor?.interactionActions,
+  });
+
+  assert.deepEqual(
+    menu.options.slice(0, 3).map((option) => option.id),
+    ["open-temple-work-menu", "open-temple-rest-menu", "open-donate"]
+  );
+  assert.equal(menu.options[3].id, NPC_INTERACTION_DEFAULT_OPTION_IDS.profile);
+  assert.equal(
+    menu.options.some((option) => option.id === "ask-fortune"),
+    false
+  );
+});
+
+test("global NPC interaction renderer emits generic menu actions", () => {
+  const {
+    renderNpcInteractionMenu,
+  } = require("../.test-dist/ui/components/npc-interaction/npc-interaction-menu.js");
+  const menu = {
+    type: "npc-interaction-menu",
+    context: { type: "house", houseId: "house.tea", moduleId: "tea-house" },
+    targetCharacterId: "char.tea",
+    targetName: "茶博士",
+    options: [
+      { id: "tea:ask-intel", label: "打听", kind: "special" },
+      { id: "npc-interaction:profile", label: "角色情报", kind: "profile" },
+      { id: "npc-interaction:talk", label: "谈话", kind: "talk" },
+      {
+        id: "npc-interaction:gift",
+        label: "送礼",
+        kind: "gift",
+        disabled: true,
+      },
+    ],
+  };
+  const html = renderNpcInteractionMenu(menu);
+
+  assert.match(html, /data-npc-menu="interaction"/);
+  assert.match(html, /class="c-grain-shop-center c-grain-shop-center--open[^"]*"/);
+  assert.match(html, /class="c-grain-shop-actions[^"]*"/);
+  assert.doesNotMatch(html, /c-npc-interaction-menu/);
+  assert.match(html, /data-npc-action="special"/);
+  assert.match(html, /data-house-action="tea:ask-intel"/);
+  assert.match(html, /data-npc-action="profile"/);
+  assert.match(html, /data-character-id="char\.tea"/);
+  assert.match(html, /disabled/);
+  assert.ok(
+    html.indexOf('data-npc-action="gift"') < html.indexOf('data-npc-action="close"'),
+    "Dismiss actions should stay below the main NPC choices."
+  );
+});
+
+test("global NPC default talk renders visible dialogue and close clears the session", () => {
+  const {
+    chooseNpcDefaultTalk,
+    closeNpcInteraction,
+    openNpcInteraction,
+  } = require("../.test-dist/application/app-actions.js");
+  const {
+    renderNpcInteractionDialogue,
+  } = require("../.test-dist/ui/components/npc-interaction/npc-interaction-menu.js");
+  const baseGameState = createBaseState();
+  const baseAppState = {
+    ...createRuntimeState(baseGameState).app,
+    gameState: baseGameState,
+  };
+  const opened = openNpcInteraction(
+    baseAppState,
+    { type: "house", houseId: "house.tea", moduleId: "tea-house" },
+    "char.tea"
+  );
+  const talked = chooseNpcDefaultTalk(opened, "char.tea");
+  const html = renderNpcInteractionDialogue({
+    session: talked.gameState.ui.npcInteractionSession,
+    targetName: "茶博士",
+    portraitArtClassName: "c-test-portrait",
+  });
+  const closed = closeNpcInteraction(talked);
+
+  assert.match(html, /data-npc-dialogue="default-talk"/);
+  assert.match(html, /class="c-grain-shop-center c-grain-shop-center--open[^"]*"/);
+  assert.match(html, /class="c-grain-shop-actions[^"]*"/);
+  assert.doesNotMatch(html, /c-npc-interaction-menu/);
+  assert.match(html, /茶博士/);
+  assert.match(html, /谈话/);
+  assert.match(html, /c-grain-shop-dialogue__npc/);
+  assert.match(html, /c-test-portrait/);
+  assert.match(html, /data-npc-action="close"/);
+  assert.match(html, /data-npc-action="continue"/);
+  assert.ok(
+    html.indexOf('data-npc-action="continue"') < html.indexOf('data-npc-action="close"'),
+    "Close should be the bottom-most default talk action."
+  );
+  assert.equal(closed.gameState.ui.npcInteractionSession, null);
+});
+
+test("global NPC interaction main has a generic blocked open guard", () => {
+  const mainSource = fs.readFileSync(
+    path.join(process.cwd(), "src", "main.ts"),
+    "utf8"
+  );
+  const npcTargetBlock =
+    mainSource.match(
+      /const npcTargetButton = targetElement\.closest[\s\S]*?const npcActionButton =/
+    )?.[0] ?? "";
+
+  assert.match(npcTargetBlock, /isNpcInteractionBlocked/);
+  assert.match(npcTargetBlock, /selectNpcInteractionBlockState/);
+  assert.doesNotMatch(npcTargetBlock, /tea-house|medicine-house|market-house|tavern|leader-residence/);
+});
+
+test("global NPC interaction profile detail renders above NPC choices", () => {
+  const prototypeCss = fs.readFileSync(
+    path.join(process.cwd(), "src", "styles", "prototype.css"),
+    "utf8"
+  );
+  const npcInteractionCss = fs.readFileSync(
+    path.join(process.cwd(), "src", "styles", "npc-interaction.css"),
+    "utf8"
+  );
+  const detailZIndex =
+    prototypeCss.match(
+      /\.view-character-detail\s*\{[\s\S]*?z-index:\s*calc\(var\(--z-scene-overlay\)\s*\+\s*(\d+)\)/
+    )?.[1] ?? null;
+  const npcChoiceZIndex =
+    npcInteractionCss.match(
+      /\.c-npc-interaction-overlay\s*\{[\s\S]*?z-index:\s*calc\(var\(--z-scene-overlay\)\s*\+\s*(\d+)\)/
+    )?.[1] ?? null;
+
+  assert.notEqual(detailZIndex, null);
+  assert.notEqual(npcChoiceZIndex, null);
+  assert.ok(
+    Number(detailZIndex) > Number(npcChoiceZIndex),
+    "Character detail overlay must stack above the NPC choice overlay opened by 角色情报."
+  );
+});
+
+test("global NPC interaction renderer escapes menu text and attributes", () => {
+  const {
+    renderNpcInteractionMenu,
+  } = require("../.test-dist/ui/components/npc-interaction/npc-interaction-menu.js");
+  const menu = {
+    type: "npc-interaction-menu",
+    context: { type: "house", houseId: "house.tea", moduleId: "tea-house" },
+    targetCharacterId: 'char."tea<&',
+    targetName: '茶"博士<&',
+    options: [
+      {
+        id: 'tea:"ask<&',
+        label: '打听 "</button><script>&',
+        kind: "special",
+      },
+      {
+        id: "npc-interaction:profile",
+        label: '角色情报 "<img>&',
+        kind: 'profile" data-broken="<&',
+      },
+    ],
+  };
+  const html = renderNpcInteractionMenu(menu);
+
+  assert.match(html, /aria-label="茶&quot;博士&lt;&amp;"/);
+  assert.match(html, /data-house-action="tea:&quot;ask&lt;&amp;"/);
+  assert.match(
+    html,
+    /data-npc-action="profile&quot; data-broken=&quot;&lt;&amp;"/
+  );
+  assert.match(html, /data-character-id="char\.&quot;tea&lt;&amp;"/);
+  assert.match(html, /打听 &quot;&lt;\/button&gt;&lt;script&gt;&amp;/);
+  assert.match(html, /角色情报 &quot;&lt;img&gt;&amp;/);
+  assert.doesNotMatch(html, /aria-label="茶"博士</);
+  assert.doesNotMatch(html, /data-house-action="tea:"ask/);
+  assert.doesNotMatch(html, / data-broken="/);
+  assert.doesNotMatch(html, /data-character-id="char\."tea/);
+  assert.doesNotMatch(html, /<\/button><script>/);
+  assert.doesNotMatch(html, /<img>/);
+});
+
+test("global NPC interaction house roster escapes dynamic target and context attributes", () => {
+  const {
+    renderHouseStandbyRoster,
+  } = require("../.test-dist/ui/views/house/house-shared-view.js");
+  const html = renderHouseStandbyRoster({
+    moduleId: 'tea-house" data-broken="<&',
+    houseId: 'house."tea<&',
+    sceneTitle: "test",
+    standbyRoster: [
+      {
+        characterId: 'char."tea<&',
+        name: '茶"博士<&',
+        title: '掌柜"<&',
+        actionId: 'open:"<&',
+      },
+    ],
+    dialogue: null,
+    actionContainer: null,
+    statusCard: null,
+    overlay: null,
+    leaveAction: { id: "leave-house", label: "离开" },
+  });
+
+  assert.match(html, /data-npc-target="char\.&quot;tea&lt;&amp;"/);
+  assert.match(html, /data-house-id="house\.&quot;tea&lt;&amp;"/);
+  assert.match(
+    html,
+    /data-house-module-id="tea-house&quot; data-broken=&quot;&lt;&amp;"/
+  );
+  assert.match(html, /data-npc-context="\{&quot;type&quot;:&quot;house&quot;/);
+  assert.doesNotMatch(html, /data-npc-target="char\."tea/);
+  assert.doesNotMatch(html, /data-house-id="house\."tea/);
+  assert.doesNotMatch(html, / data-broken="/);
+  assert.doesNotMatch(html, /data-house-action=/);
+});
+
+test("global NPC interaction house special action dispatch clears the active NPC session", () => {
+  const {
+    createHouseRuntimeBridge,
+    dispatchHouseRuntimeRequest,
+  } = require("../.test-dist/core/runtime/house-runtime.js");
+  const baseState = createBaseState();
+  const enterResult = teaHouseHouseModule.enter({
+    gameState: baseState,
+    characterDefinitions: prototypeCharacters,
+    houseDefinition: teaHouse,
+    playerCharacterId,
+  });
+  let appState = {
+    ...createRuntimeState(baseState).app,
+    gameState: {
+      ...enterResult.gameState,
+      world: {
+        ...enterResult.gameState.world,
+        currentHouseId: teaHouse.id,
+      },
+      ui: {
+        ...enterResult.gameState.ui,
+        currentView: "house",
+        houseSession: {
+          moduleId: "tea-house",
+          state: enterResult.sessionState,
+        },
+        npcInteractionSession: createNpcInteractionSession(
+          { type: "house", houseId: teaHouse.id, moduleId: "tea-house" },
+          teaHouse.defaultCharacterId
+        ),
+      },
+    },
+    characterDefinitions: enterResult.characterDefinitions,
+  };
+  const runtime = createHouseRuntimeBridge({
+    getAppState: () => appState,
+    setAppState: (nextAppState) => {
+      appState = nextAppState;
+    },
+    renderApp: () => {},
+    startMapAutoAdvance: () => {},
+    stopMapAutoAdvance: () => {},
+    houseDefinitions: prototypeHouses,
+    playerCharacterId,
+    eventDefinitionsById: {},
+    sceneDefinitionsById: {},
+    syncCouncilPriorityAfterGameStateChange: () => false,
+  });
+
+  dispatchHouseRuntimeRequest(runtime, {
+    type: "action",
+    actionId: "inquire",
+  });
+
+  assert.equal(appState.gameState.ui.npcInteractionSession, null);
+  assert.equal(appState.gameState.ui.houseSession?.moduleId, "tea-house");
+});
+
+test("global NPC default talk opens dialogue without mutating runtime state", () => {
+  const {
+    chooseNpcDefaultTalk,
+    openNpcInteraction,
+  } = require("../.test-dist/application/app-actions.js");
+  const baseGameState = createBaseState();
+  const baseAppState = {
+    ...createRuntimeState(baseGameState).app,
+    gameState: baseGameState,
+  };
+  const opened = openNpcInteraction(
+    baseAppState,
+    { type: "house", houseId: "house.tea", moduleId: "tea-house" },
+    "char.tea"
+  );
+  const talked = chooseNpcDefaultTalk(opened, "char.tea");
+
+  assert.equal(talked.gameState.ui.npcInteractionSession?.mode, "dialogue");
+  assert.deepEqual(
+    talked.gameState.runtime.variables,
+    baseGameState.runtime.variables
+  );
+  assert.deepEqual(
+    talked.gameState.runtime.flags,
+    baseGameState.runtime.flags
+  );
+});
+
+test("global NPC interaction tavern actor contributes service special actions above defaults", () => {
+  const enterResult = tavernHouseModule.enter({
+    gameState: createBaseState(),
+    characterDefinitions: prototypeCharacters,
+    houseDefinition: tavernHouse,
+    playerCharacterId,
+  });
+  const openResult = tavernHouseModule.dispatch({
+    gameState: enterResult.gameState,
+    characterDefinitions: enterResult.characterDefinitions,
+    houseDefinition: tavernHouse,
+    playerCharacterId,
+    sessionState: enterResult.sessionState,
+    request: { type: "action", actionId: "advance-greeting" },
+  });
+  const viewModel = tavernHouseModule.selectViewModel({
+    gameState: openResult.gameState,
+    characterDefinitions: openResult.characterDefinitions,
+    houseDefinition: tavernHouse,
+    playerCharacterId,
+    sessionState: openResult.sessionState,
+  });
+  const actor = viewModel.standbyRoster[0];
+  const menu = selectNpcInteractionMenu({
+    session: createNpcInteractionSession(
+      { type: "house", houseId: tavernHouse.id, moduleId: "tavern" },
+      actor.characterId
+    ),
+    targetName: actor.name,
+    specialActions: actor.interactionActions,
+  });
+
+  assert.deepEqual(
+    menu.options.slice(0, 3).map((option) => option.id),
+    ["open-work", "order-drink", "open-gamble"]
+  );
+  assert.deepEqual(
+    menu.options.slice(0, 3).map((option) => option.label),
+    ["工作", "喝酒", "赌博"]
+  );
+  assert.equal(menu.options[3].id, NPC_INTERACTION_DEFAULT_OPTION_IDS.profile);
+});
+
+test("primary house actor appears first in temple daily roster during greeting", () => {
+  const state = createInitialState({
+    cards: prototypeCards,
+    characters: prototypeCharacters,
+    houses: prototypeHouses,
+    cityEntries: prototypeCityEntries,
+    map: prototypeMap,
+  });
+  const entered = templeHouseHouseModule.enter({
+    gameState: state,
+    characterDefinitions: prototypeCharacters,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+  });
+  const viewModel = templeHouseHouseModule.selectViewModel({
+    gameState: entered.gameState,
+    characterDefinitions: entered.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: entered.sessionState,
+  });
+
+  assert.equal(viewModel.dialogue?.characterId, templeHouse.defaultCharacterId);
+  assert.equal(viewModel.standbyRoster[0]?.characterId, templeHouse.defaultCharacterId);
+  assert.ok(
+    viewModel.standbyRoster.some(
+      (actor) => actor.characterId === templeHouse.defaultCharacterId
+    )
+  );
+});
+
+test("primary house actor appears first in temple meeting roster with player still selected", () => {
+  const monkCharacters = createPrototypeCharactersForStoryStage(
+    ZHU_YUANZHANG_STORY_STAGES.huangjueTemple
+  );
+  const baseState = createMonkStageState();
+  const entered = templeHouseHouseModule.enter({
+    gameState: {
+      ...baseState,
+      runtime: {
+        ...baseState.runtime,
+        variables: {
+          ...baseState.runtime.variables,
+          [KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown]: 0,
+        },
+      },
+    },
+    characterDefinitions: monkCharacters,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+  });
+  const viewModel = templeHouseHouseModule.selectViewModel({
+    gameState: entered.gameState,
+    characterDefinitions: entered.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: entered.sessionState,
+  });
+
+  assert.equal(entered.sessionState?.mode, "meeting");
+  assert.equal(viewModel.standbyRoster[0]?.characterId, templeHouse.defaultCharacterId);
+  assert.ok(
+    viewModel.standbyRoster.some(
+      (actor) => actor.characterId === templeHouse.defaultCharacterId
+    )
+  );
+  assert.equal(
+    viewModel.standbyRoster.find((actor) => actor.characterId === playerCharacterId)
+      ?.isSelected,
+    true
+  );
+  assert.ok(
+    viewModel.standbyRoster.some(
+      (actor) =>
+        actor.characterId !== templeHouse.defaultCharacterId &&
+        actor.characterId !== playerCharacterId
+    )
+  );
+});
+
+test("primary house actor appears first in tavern roster during greeting", () => {
+  const state = createInitialState({
+    cards: prototypeCards,
+    characters: prototypeCharacters,
+    houses: prototypeHouses,
+    cityEntries: prototypeCityEntries,
+    map: prototypeMap,
+  });
+  const entered = tavernHouseModule.enter({
+    gameState: state,
+    characterDefinitions: prototypeCharacters,
+    houseDefinition: tavernHouse,
+    playerCharacterId,
+  });
+  const viewModel = tavernHouseModule.selectViewModel({
+    gameState: entered.gameState,
+    characterDefinitions: entered.characterDefinitions,
+    houseDefinition: tavernHouse,
+    playerCharacterId,
+    sessionState: entered.sessionState,
+  });
+
+  assert.equal(viewModel.dialogue?.characterId, tavernHouse.defaultCharacterId);
+  assert.equal(viewModel.standbyRoster[0]?.characterId, tavernHouse.defaultCharacterId);
+  assert.ok(viewModel.standbyRoster[0]?.actionId);
+});
+
+test("primary house actor appears first in grain shop roster during greeting", () => {
+  const state = createBaseState();
+  const entered = grainShopHouseModule.enter({
+    gameState: state,
+    characterDefinitions: prototypeCharacters,
+    houseDefinition: grainShopHouse,
+    playerCharacterId,
+  });
+  const viewModel = grainShopHouseModule.selectViewModel({
+    gameState: entered.gameState,
+    characterDefinitions: entered.characterDefinitions,
+    houseDefinition: grainShopHouse,
+    playerCharacterId,
+    sessionState: entered.sessionState,
+  });
+
+  assert.ok(viewModel.dialogue);
+  assert.equal(viewModel.standbyRoster[0]?.characterId, grainShopHouse.defaultCharacterId);
+});
+
+test("primary house actor appears first in tea house roster during greeting", () => {
+  const state = createInitialState({
+    cards: prototypeCards,
+    characters: prototypeCharacters,
+    houses: prototypeHouses,
+    cityEntries: prototypeCityEntries,
+    map: prototypeMap,
+  });
+  const entered = teaHouseHouseModule.enter({
+    gameState: state,
+    characterDefinitions: prototypeCharacters,
+    houseDefinition: teaHouse,
+    playerCharacterId,
+  });
+  const viewModel = teaHouseHouseModule.selectViewModel({
+    gameState: entered.gameState,
+    characterDefinitions: entered.characterDefinitions,
+    houseDefinition: teaHouse,
+    playerCharacterId,
+    sessionState: entered.sessionState,
+  });
+
+  assert.ok(viewModel.dialogue);
+  assert.equal(viewModel.standbyRoster[0]?.characterId, teaHouse.defaultCharacterId);
+});
+
+test("primary house actor appears first in market house roster during greeting", () => {
+  const state = createInitialState({
+    cards: prototypeCards,
+    characters: prototypeCharacters,
+    houses: prototypeHouses,
+    cityEntries: prototypeCityEntries,
+    map: prototypeMap,
+  });
+  const entered = marketHouseHouseModule.enter({
+    gameState: state,
+    characterDefinitions: prototypeCharacters,
+    houseDefinition: marketHouse,
+    playerCharacterId,
+  });
+  const viewModel = marketHouseHouseModule.selectViewModel({
+    gameState: entered.gameState,
+    characterDefinitions: entered.characterDefinitions,
+    houseDefinition: marketHouse,
+    playerCharacterId,
+    sessionState: entered.sessionState,
+  });
+
+  assert.ok(viewModel.dialogue);
+  assert.equal(viewModel.dialogue.characterId, marketHouse.defaultCharacterId);
+  assert.equal(viewModel.standbyRoster[0]?.characterId, marketHouse.defaultCharacterId);
+  assert.equal(viewModel.standbyRoster[0]?.actionId, `select-market-actor:${marketHouse.defaultCharacterId}`);
+  assert.equal(viewModel.standbyRoster[0]?.isSelected, true);
+  assert.equal(
+    viewModel.standbyRoster.some((actor) => actor.characterId === "shopkeeper_qian"),
+    false
+  );
+});
+
+test("primary house actor appears first in medicine house roster during greeting", () => {
+  const state = createInitialState({
+    cards: prototypeCards,
+    characters: prototypeCharacters,
+    houses: prototypeHouses,
+    cityEntries: prototypeCityEntries,
+    map: prototypeMap,
+  });
+  const entered = medicineHouseHouseModule.enter({
+    gameState: state,
+    characterDefinitions: prototypeCharacters,
+    houseDefinition: medicineHouse,
+    playerCharacterId,
+  });
+  const viewModel = medicineHouseHouseModule.selectViewModel({
+    gameState: entered.gameState,
+    characterDefinitions: entered.characterDefinitions,
+    houseDefinition: medicineHouse,
+    playerCharacterId,
+    sessionState: entered.sessionState,
+  });
+
+  assert.ok(viewModel.dialogue);
+  assert.equal(viewModel.standbyRoster[0]?.characterId, medicineHouse.defaultCharacterId);
+});
+
+test("primary house actor dialogue renders speaker portrait on the dialogue box", () => {
+  const state = createInitialState({
+    cards: prototypeCards,
+    characters: prototypeCharacters,
+    houses: prototypeHouses,
+    cityEntries: prototypeCityEntries,
+    map: prototypeMap,
+  });
+  const entered = tavernHouseModule.enter({
+    gameState: state,
+    characterDefinitions: prototypeCharacters,
+    houseDefinition: tavernHouse,
+    playerCharacterId,
+  });
+  const viewModel = tavernHouseModule.selectViewModel({
+    gameState: entered.gameState,
+    characterDefinitions: entered.characterDefinitions,
+    houseDefinition: tavernHouse,
+    playerCharacterId,
+    sessionState: entered.sessionState,
+  });
+  const markup = renderTavernHouseView({
+    ...viewModel,
+    dialogue:
+      viewModel.dialogue == null
+        ? null
+        : {
+            ...viewModel.dialogue,
+            portraitImageUrl: "/assets/test-tavern-boss.png",
+          },
+  });
+
+  assert.match(markup, /c-grain-shop-dialogue__text/u);
+  assert.match(markup, /c-grain-shop-dialogue__npc/u);
+  assert.match(markup, /c-grain-shop-portrait/u);
+  assert.match(markup, /c-grain-shop-portrait__image/u);
+  assert.match(markup, /\/assets\/test-tavern-boss\.png/u);
+  assert.match(markup, new RegExp(viewModel.dialogue?.speakerName ?? tavernHouse.defaultCharacterId));
+  assert.doesNotMatch(markup, /c-grain-shop-idle-owner/u);
+});
+
+test("temple daily view keeps abbot in left roster instead of meeting layout", () => {
+  const state = createInitialState({
+    cards: prototypeCards,
+    characters: prototypeCharacters,
+    houses: prototypeHouses,
+    cityEntries: prototypeCityEntries,
+    map: prototypeMap,
+  });
+  const entered = templeHouseHouseModule.enter({
+    gameState: state,
+    characterDefinitions: prototypeCharacters,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+  });
+  const viewModel = templeHouseHouseModule.selectViewModel({
+    gameState: entered.gameState,
+    characterDefinitions: entered.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: {
+      ...entered.sessionState,
+      dialoguePhase: "open",
+    },
+  });
+  const markup = renderTempleHouseView(viewModel);
+
+  assert.match(markup, /c-grain-shop-npc-idle/u);
+  assert.doesNotMatch(markup, /c-keep-house-meeting/u);
+  assert.doesNotMatch(markup, /c-grain-shop-idle-owner/u);
 });
 
 test("house enter and leave keep session wiring and interval side effects consistent", () => {
@@ -3113,7 +6272,6 @@ test("temple house review only selects work direction and daily actions start te
     [
       "open-temple-work-menu",
       "open-temple-rest-menu",
-      "ask-fortune",
       "open-donate",
       "dismiss-dialogue",
     ]
@@ -3309,11 +6467,59 @@ test("temple house review copy resolves from text entries during work-plan assig
   });
 
   assert.equal(reopenResult.sessionState?.overlay?.type, "activity-confirm");
-  assert.deepEqual(reopenResult.sessionState?.overlay?.paragraphs.slice(0, 3), [
+  assert.deepEqual(reopenResult.sessionState?.overlay?.paragraphs, []);
+  assert.deepEqual(reopenResult.sessionState?.overlay?.workDescriptionLines, [
     "今日先按自定义经卷目录抄录。",
-    "先净手，再依自定义次序展卷。",
-    "抄完后把自定义册页送回偏殿。",
   ]);
+  assert.notDeepEqual(
+    reopenResult.sessionState?.overlay?.workDescriptionLines,
+    [
+      "今日先按自定义经卷目录抄录。",
+      "先净手，再依自定义次序展卷。",
+      "抄完后把自定义册页送回偏殿。",
+    ]
+  );
+});
+
+test("pachinko play actions use a single-button nine-slice action layout", () => {
+  const houseViewSource = fs.readFileSync(
+    "src/ui/views/house/temple-house-view.ts",
+    "utf8"
+  );
+  const sceneViewSource = fs.readFileSync("src/ui/views/scene/scene-view.ts", "utf8");
+  const pachinkoCss = fs.readFileSync("src/styles/temple-house.css", "utf8");
+
+  const housePachinkoStart = houseViewSource.indexOf("function renderPachinkoBoardOverlay");
+  const scenePachinkoStart = sceneViewSource.indexOf("function renderPachinkoBoard");
+  assert.notEqual(housePachinkoStart, -1);
+  assert.notEqual(scenePachinkoStart, -1);
+
+  const housePachinkoSource = houseViewSource.slice(housePachinkoStart);
+  const scenePachinkoSource = sceneViewSource.slice(
+    scenePachinkoStart,
+    sceneViewSource.indexOf("function renderActivityOverlay")
+  );
+
+  assert.equal(
+    housePachinkoSource.includes("c-grain-shop-modal__actions c-pachinko-board__actions"),
+    true
+  );
+  assert.equal(
+    scenePachinkoSource.includes("c-grain-shop-modal__actions c-pachinko-board__actions"),
+    true
+  );
+  assert.equal(housePachinkoSource.includes("c-fortune-board__actions"), false);
+  assert.equal(scenePachinkoSource.includes("c-fortune-board__actions"), false);
+  assert.equal(pachinkoCss.includes(".c-pachinko-board__actions"), true);
+  assert.equal(pachinkoCss.includes(".c-pachinko-board__play"), true);
+  assert.match(
+    pachinkoCss,
+    /\.c-pachinko-board__actions\s*\{[^}]*grid-template-columns:\s*minmax\(180px,\s*260px\);/s
+  );
+  assert.match(
+    pachinkoCss,
+    /\.c-pachinko-board__play\s*\{[^}]*border-image-source:\s*var\(--grain-shop-button-gold\);/s
+  );
 });
 
 test("temple house greeting, open, beg-alms assignment, and leave refusal resolve from text entries", () => {
@@ -3973,6 +7179,21 @@ test("temple house daily flow resolves fortune and donation through unified stat
     request: { type: "action", actionId: "open-donate" },
   });
   assert.equal(donatePromptResult.sessionState?.overlay?.type, "donate-confirm");
+  const donatePromptViewModel = templeHouseHouseModule.selectViewModel({
+    gameState: donatePromptResult.gameState,
+    characterDefinitions: donatePromptResult.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: donatePromptResult.sessionState,
+  });
+  const donatePromptHtml = renderTempleHouseView(donatePromptViewModel);
+  assert.match(donatePromptHtml, /暂缓/);
+  assert.match(donatePromptHtml, /c-house-temple-utility-popup/);
+  assert.match(donatePromptHtml, /c-house-temple-confirm-popup/);
+  assert.match(
+    donatePromptHtml,
+    /data-house-overlay-variant="temple-utility-popup"/
+  );
 
   const donatedResult = templeHouseHouseModule.dispatch({
     gameState: donatePromptResult.gameState,
@@ -4613,8 +7834,18 @@ test("market house follows greeting open idle rhythm with fixed boss and guest r
     playerCharacterId,
   });
 
-  assert.equal(enterResult.sessionState?.selectedActorId, "shopkeeper_qian");
+  assert.equal(enterResult.sessionState?.selectedActorId, marketHouse.defaultCharacterId);
   assert.equal(enterResult.sessionState?.guestActorIds.length >= 1, true);
+
+  const greetingViewModel = marketHouseHouseModule.selectViewModel({
+    gameState: enterResult.gameState,
+    characterDefinitions: enterResult.characterDefinitions,
+    houseDefinition: marketHouse,
+    playerCharacterId,
+    sessionState: enterResult.sessionState,
+  });
+
+  assert.equal(greetingViewModel.dialogue?.characterId, marketHouse.defaultCharacterId);
 
   const openResult = marketHouseHouseModule.dispatch({
     gameState: enterResult.gameState,
@@ -4629,6 +7860,7 @@ test("market house follows greeting open idle rhythm with fixed boss and guest r
   });
 
   assert.equal(openResult.sessionState?.dialoguePhase, "open");
+  assert.equal(openResult.sessionState?.selectedActorId, marketHouse.defaultCharacterId);
   assert.equal(openResult.sessionState?.dialogueLines[0].includes("货单"), true);
 
   const idleResult = marketHouseHouseModule.dispatch({
@@ -7200,7 +10432,11 @@ test("medicine house greeting flow opens actions after advance", () => {
     sessionState: openResult.sessionState,
   });
 
-  assert.equal(viewModel.actionContainer?.actions.length, 5);
+  assert.equal(viewModel.actionContainer?.actions.length, 4);
+  assert.equal(
+    viewModel.actionContainer?.actions.some((action) => action.id === "talk"),
+    false
+  );
 });
 
 test("medicine house heal and buy update fatigue inventory and gold", () => {
@@ -7605,6 +10841,181 @@ test("temple work is blocked when stamina is below activity cost", () => {
   assert.equal(result.sideEffects, undefined);
 });
 
+test("temple work confirmation shows work sections and quick complete from best score", () => {
+  const monkCharacters = createPrototypeCharactersForStoryStage(
+    ZHU_YUANZHANG_STORY_STAGES.huangjueTemple
+  );
+  const activityId = "activity.zhu_yuanzhang.temple.copy_scripture";
+  const enterResult = templeHouseHouseModule.enter({
+    gameState: {
+      ...withCouncilInDays(createMonkStageState(), 30),
+      runtime: {
+        ...withCouncilInDays(createMonkStageState(), 30).runtime,
+        flags: {
+          ...withCouncilInDays(createMonkStageState(), 30).runtime.flags,
+          [ZHU_YUANZHANG_STORY_FLAG_KEYS.firstTempleReviewCompleted]: true,
+          [ZHU_YUANZHANG_STORY_FLAG_KEYS.templeWorkUnlocked]: true,
+        },
+        variables: {
+          ...withCouncilInDays(createMonkStageState(), 30).runtime.variables,
+          [`var.activity.${activityId}.best_score`]: 20,
+          [KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown]: 30,
+          [TEMPLE_HOUSE_VARIABLE_KEYS.currentWorkPlan]: "temple-help",
+        },
+      },
+    },
+    characterDefinitions: monkCharacters,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+  });
+
+  const result = templeHouseHouseModule.dispatch({
+    gameState: enterResult.gameState,
+    characterDefinitions: enterResult.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: {
+      ...enterResult.sessionState,
+      dialoguePhase: "open",
+      dailyActionPanel: "work",
+    },
+    request: { type: "action", actionId: "assign-temple-task:copy-scripture" },
+  });
+
+  assert.equal(result.sessionState?.overlay?.type, "activity-confirm");
+  assert.equal(result.sessionState.overlay.bestScore, 20);
+  assert.equal(result.sessionState.overlay.quickCompleteScore, 18);
+  assert.equal(result.sessionState.overlay.quickCompleteActionId, "quick-complete-temple-task:copy-scripture");
+  assert.deepEqual(result.sessionState.overlay.paragraphs, []);
+  assert.deepEqual(result.sessionState.overlay.workDescriptionLines, [
+    "在偏殿抄录残缺经卷，顺便替住持整理寺中的旧账与香火名册。",
+  ]);
+  assert.ok(
+    result.sessionState.overlay.workDescriptionLines.every(
+      (line) => !line.startsWith("“")
+    )
+  );
+  assert.deepEqual(result.sessionState.overlay.relatedAbilityLines, [
+    "相关能力：待接入",
+  ]);
+  assert.ok(
+    result.sessionState.overlay.costLines.includes(
+      `体力 -${ACTIVITY_COMPLETION_STAMINA_COST}`
+    )
+  );
+});
+
+test("temple work quick complete uses ninety percent and preserves separate best scores", () => {
+  const monkCharacters = createPrototypeCharactersForStoryStage(
+    ZHU_YUANZHANG_STORY_STAGES.huangjueTemple
+  );
+  const copyActivityId = "activity.zhu_yuanzhang.temple.copy_scripture";
+  const sweepActivityId = "activity.zhu_yuanzhang.temple.sweep_courtyard";
+  const enterResult = templeHouseHouseModule.enter({
+    gameState: {
+      ...withCouncilInDays(createMonkStageState(), 30),
+      runtime: {
+        ...withCouncilInDays(createMonkStageState(), 30).runtime,
+        flags: {
+          ...withCouncilInDays(createMonkStageState(), 30).runtime.flags,
+          [ZHU_YUANZHANG_STORY_FLAG_KEYS.firstTempleReviewCompleted]: true,
+          [ZHU_YUANZHANG_STORY_FLAG_KEYS.templeWorkUnlocked]: true,
+        },
+        variables: {
+          ...withCouncilInDays(createMonkStageState(), 30).runtime.variables,
+          [`var.activity.${copyActivityId}.best_score`]: 20,
+          [`var.activity.${sweepActivityId}.best_score`]: 9,
+          [KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown]: 30,
+          [TEMPLE_HOUSE_VARIABLE_KEYS.currentWorkPlan]: "temple-help",
+          [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.templeContribution]: 0,
+        },
+      },
+    },
+    characterDefinitions: monkCharacters,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+  });
+
+  const result = templeHouseHouseModule.dispatch({
+    gameState: enterResult.gameState,
+    characterDefinitions: enterResult.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: {
+      ...enterResult.sessionState,
+      dialoguePhase: "open",
+      dailyActionPanel: "work",
+    },
+    request: {
+      type: "action",
+      actionId: "quick-complete-temple-task:copy-scripture",
+    },
+  });
+
+  assert.equal(
+    result.gameState.runtime.variables[
+      ZHU_YUANZHANG_STORY_VARIABLE_KEYS.templeContribution
+    ],
+    18
+  );
+  assert.equal(
+    result.gameState.runtime.variables[`var.activity.${copyActivityId}.best_score`],
+    20
+  );
+  assert.equal(
+    result.gameState.runtime.variables[`var.activity.${sweepActivityId}.best_score`],
+    9
+  );
+});
+
+test("temple work result overlay only shows score contribution and gains", () => {
+  const html = renderTempleHouseView({
+    moduleId: "temple-house",
+    houseId: templeHouse.id,
+    sceneTitle: templeHouse.name,
+    standbyRoster: [],
+    dialogue: null,
+    actionContainer: null,
+    statusCard: null,
+    leaveAction: {
+      id: "leave-house",
+      label: "离开寺庙",
+    },
+    overlay: {
+      type: "result",
+      title: "寺务结算",
+      grade: "勤勉",
+      score: 24,
+      rewardLines: [
+        "本次评定：打扫庭院",
+        "玩法分数 24",
+        "贡献值 +24（1:1）",
+        "寺中贡献 +24",
+        "累计贡献 49 / 30",
+        "时间 +3天",
+        "体力 -15",
+        "获得物品：粗布袈裟 x1",
+        "属性：耐力 +1",
+        "方丈似乎已经留意到你的踏实，回到寺中后或许会有新的安排。",
+      ],
+      confirmActionId: "close-temple-result",
+      confirmLabel: "收工",
+    },
+  });
+
+  assert.match(html, /玩法分数 24/);
+  assert.match(html, /贡献值 \+24（1:1）/);
+  assert.match(html, /获得物品：粗布袈裟 x1/);
+  assert.match(html, /属性：耐力 \+1/);
+  assert.doesNotMatch(html, /本次评定/);
+  assert.doesNotMatch(html, /寺中贡献/);
+  assert.doesNotMatch(html, /累计贡献/);
+  assert.doesNotMatch(html, /时间 \+3天/);
+  assert.doesNotMatch(html, /体力 -15/);
+  assert.doesNotMatch(html, /方丈似乎/);
+  assert.doesNotMatch(html, /勤勉/);
+});
+
 test("temple begging settlement is blocked when stamina is below activity cost", () => {
   const baseState = createMonkStageState();
   const lowStaminaMonkCharacters = withPlayerStamina(
@@ -7690,7 +11101,7 @@ test("temple work reaching contribution threshold starts shared map auto advance
           ...withCouncilInDays(createMonkStageState(), 30).runtime.variables,
           [KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown]: 30,
           [TEMPLE_HOUSE_VARIABLE_KEYS.currentWorkPlan]: "temple-help",
-          [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.templeContribution]: 20,
+          [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.templeContribution]: 29,
         },
       },
     },
@@ -7732,26 +11143,55 @@ test("temple work reaching contribution threshold starts shared map auto advance
       actionId: "confirm-start-temple-task:copy-scripture",
     },
   });
+  assert.equal(confirmedWorkResult.sessionState?.overlay, null);
+  assert.equal(
+    confirmedWorkResult.gameState.runtime.playableSession?.playableId,
+    "activity-qte"
+  );
+  assert.equal(
+    confirmedWorkResult.gameState.runtime.playableSession?.integrationId,
+    "playable.activity-qte.house.temple"
+  );
+  assert.equal(
+    confirmedWorkResult.gameState.runtime.activitySession?.type,
+    "pachinko-board"
+  );
 
   let qteResult = confirmedWorkResult;
-  for (let round = 0; round < 3; round += 1) {
+  for (let round = 0; round < 30; round += 1) {
+    if (qteResult.sessionState?.overlay?.type === "result") {
+      break;
+    }
     qteResult = templeHouseHouseModule.dispatch({
       gameState: qteResult.gameState,
       characterDefinitions: qteResult.characterDefinitions,
       houseDefinition: templeHouse,
       playerCharacterId,
-      sessionState: {
-        ...qteResult.sessionState,
-        overlay: {
-          ...qteResult.sessionState.overlay,
-          markerPercent: qteResult.sessionState.overlay.targetStartPercent,
-        },
-      },
-      request: { type: "action", actionId: "temple-work-stop" },
+      sessionState: qteResult.sessionState,
+      request: { type: "action", actionId: "temple-work-board-play" },
     });
+    for (let tick = 0; tick < 3000; tick += 1) {
+      qteResult = templeHouseHouseModule.dispatch({
+        gameState: qteResult.gameState,
+        characterDefinitions: qteResult.characterDefinitions,
+        houseDefinition: templeHouse,
+        playerCharacterId,
+        sessionState: qteResult.sessionState,
+        request: { type: "tick", tickId: "temple-house-work-qte" },
+      });
+      if (
+        qteResult.sessionState?.overlay?.type === "result" ||
+        (qteResult.gameState.runtime.activitySession?.type === "pachinko-board" &&
+          qteResult.gameState.runtime.activitySession.phase === "ready")
+      ) {
+        break;
+      }
+    }
   }
 
   assert.equal(qteResult.sessionState?.overlay?.type, "result");
+  assert.equal(qteResult.gameState.runtime.playableSession, null);
+  assert.equal(qteResult.gameState.runtime.activitySession, null);
   assert.equal(
     getPlayerCharacter(qteResult.characterDefinitions).stamina,
     startingStamina - ACTIVITY_COMPLETION_STAMINA_COST
@@ -8707,7 +12147,7 @@ test("child 14 activity qte result close routes through interactive runtime exit
     "utf8"
   );
   const closeActivityResultBlock = source.match(
-    /function closeCurrentActivityResult\(\)[\s\S]*?\n}\n/
+    /function closeCurrentActivityResult\(\)(?:: void)? \{[\s\S]*?\r?\n}\r?\n/
   )?.[0] ?? "";
 
   assert.doesNotMatch(source, /clearActivityResult/);
@@ -8899,7 +12339,7 @@ test("interactive covered main write-back paths use shared runtime commit helper
     "utf8"
   );
   const onBeggingGameCompleteBlock = source.match(
-    /function onBeggingGameComplete[\s\S]*?\n}\n/
+    /function onBeggingGameComplete[\s\S]*?\r?\n}\r?\n/
   )?.[0] ?? "";
   const syncCityBeggingMiniGamePointerBlock = source.match(
     /function syncCityBeggingMiniGamePointer\(clientX: number\): void \{[\s\S]*?\r?\n}\r?\n\r?\nfunction tickCityBeggingMiniGame/
@@ -9839,7 +13279,7 @@ test("save restore re-activates selected mod through mod runtime", () => {
 test("child 22 restore path can reload imported mod sources after a fresh page load", () => {
   const source = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
   const restoreBlock = source.match(
-    /async function restoreModFromSave\([\s\S]*?\n}\n/
+    /async function restoreModFromSave\([\s\S]*?\r?\n}\r?\n/
   )?.[0] ?? "";
 
   assert.match(source, /selectedModSource/);
@@ -9857,7 +13297,7 @@ test("child 22 restore path can reload imported mod sources after a fresh page l
 test("child 22 continue path does not overwrite a restored mod by re-entering builtin startup", () => {
   const source = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
   const continueBlock = source.match(
-    /function startContinueGameWithLoading\(selectedCharacter: CharacterDefinition\): void \{[\s\S]*?\n}\n/
+    /function startContinueGameWithLoading\(selectedCharacter: CharacterDefinition\): void \{[\s\S]*?\r?\n}\r?\n/
   )?.[0] ?? "";
 
   assert.match(continueBlock, /loadSaveData\(\)/);
@@ -11694,4 +15134,104 @@ test("child 34 removes only the obsolete interactive launch helper while keeping
   assert.match(mainSource, /interactive\.city-begging\.complete/);
   assert.match(mainSource, /interactive\.activity-qte\.tick/);
   assert.doesNotMatch(mainSource, /interactive\.story-battle\.action/);
+});
+
+test("global NPC interaction does not add concrete house business branches to main", () => {
+  const mainSource = fs.readFileSync(
+    path.join(process.cwd(), "src", "main.ts"),
+    "utf8"
+  );
+
+  assert.doesNotMatch(
+    mainSource,
+    /isTeaHouse|isMarketHouse|isMedicineHouse|isTavern|isLeaderResidence/
+  );
+  assert.doesNotMatch(mainSource, /moduleId\s*===\s*["']tea-house["']/);
+  assert.doesNotMatch(mainSource, /moduleId\s*===\s*["']market-house["']/);
+  assert.doesNotMatch(mainSource, /moduleId\s*===\s*["']medicine-house["']/);
+  assert.doesNotMatch(mainSource, /moduleId\s*===\s*["']tavern["']/);
+  assert.match(mainSource, /data-npc-action/);
+});
+
+test("campaign coordinate travel builds a multi-step adjacent hex path", () => {
+  const coordinateSpace = { width: 509, height: 451 };
+  const currentCoordinate = { x: 334, y: 318 };
+  const targetCoordinate = { x: 281, y: 325 };
+  const path = createHexTravelPath({
+    currentCoordinate,
+    targetCoordinate,
+    coordinateSpace,
+  });
+
+  assert.ok(path.length > 2);
+  assert.deepEqual(path[0], currentCoordinate);
+  assert.deepEqual(path[path.length - 1], targetCoordinate);
+
+  const hexPath = path.map((coordinate) =>
+    coordinateToRoundedHex(coordinate, coordinateSpace)
+  );
+  for (let index = 1; index < hexPath.length; index += 1) {
+    const previous = hexPath[index - 1];
+    const next = hexPath[index];
+    assert.ok(
+      areHexNeighbors(previous, next),
+      `Expected ${JSON.stringify(previous)} and ${JSON.stringify(next)} to be adjacent hexes`
+    );
+  }
+});
+
+test("campaign coordinate travel avoids blocked water hexes", () => {
+  const coordinateSpace = { width: 120, height: 120 };
+  const startHex = { x: 0, y: 0 };
+  const blockedHex = { x: 1, y: 0 };
+  const targetHex = { x: 2, y: 0 };
+  const passableHexKeys = new Set();
+  for (let y = -2; y <= 2; y += 1) {
+    for (let x = -2; x <= 3; x += 1) {
+      const hex = { x, y };
+      if (getHexKey(hex) !== getHexKey(blockedHex)) {
+        passableHexKeys.add(getHexKey(hex));
+      }
+    }
+  }
+
+  const path = createPassableHexTravelPath({
+    currentCoordinate: hexToCoordinate(startHex, coordinateSpace),
+    targetCoordinate: hexToCoordinate(targetHex, coordinateSpace),
+    coordinateSpace,
+    travelGrid: {
+      passableHexKeys,
+      bounds: { minX: -2, maxX: 3, minY: -2, maxY: 2 },
+    },
+  });
+
+  assert.notEqual(path, null);
+  const hexPath = path.map((coordinate) =>
+    coordinateToRoundedHex(coordinate, coordinateSpace)
+  );
+  assert.equal(
+    hexPath.some((hex) => getHexKey(hex) === getHexKey(blockedHex)),
+    false
+  );
+  assert.ok(hexPath.length > 3);
+  for (let index = 1; index < hexPath.length; index += 1) {
+    assert.ok(areHexNeighbors(hexPath[index - 1], hexPath[index]));
+  }
+});
+
+test("campaign coordinate travel rejects blocked water destinations", () => {
+  const coordinateSpace = { width: 120, height: 120 };
+  const startHex = { x: 0, y: 0 };
+  const targetHex = { x: 1, y: 0 };
+  const path = createPassableHexTravelPath({
+    currentCoordinate: hexToCoordinate(startHex, coordinateSpace),
+    targetCoordinate: hexToCoordinate(targetHex, coordinateSpace),
+    coordinateSpace,
+    travelGrid: {
+      passableHexKeys: new Set([getHexKey(startHex)]),
+      bounds: { minX: -1, maxX: 1, minY: -1, maxY: 1 },
+    },
+  });
+
+  assert.equal(path, null);
 });

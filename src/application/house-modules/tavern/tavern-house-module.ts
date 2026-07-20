@@ -30,6 +30,7 @@ import {
 } from "../../../domain/tavern";
 import { defaultRuntimeContent } from "../../content/default-runtime-content";
 import { resolveTextEntry, resolveTextTemplateEntry } from "../../content/text-resolution";
+import { orderHouseStandbyRoster } from "../../house/house-primary-actor-roster";
 import {
   advanceTavernGambleMeldCountdown,
   advanceTavernLongPublicReveal,
@@ -2083,32 +2084,55 @@ export const tavernHouseModule: HouseModuleDefinition<"tavern"> = {
     const isGreeting = sessionState.dialoguePhase === "greeting";
     const isOpen = sessionState.dialoguePhase === "open";
     const firstAvailableOffer = lists.availableOffers[0] ?? null;
+    const tavernPrimaryActorId =
+      input.houseDefinition.defaultCharacterId ?? tavernBossProfile.actorId;
+    const tavernBossActor = {
+      characterId: tavernPrimaryActorId,
+      name: tavernBossProfile.name,
+      title: tavernBossProfile.title,
+      actionId: "open-boss-dialogue",
+      isSelected: !isIdle,
+      interactionActions: [
+        {
+          id: "open-work",
+          label: "工作",
+          kind: "special" as const,
+          disabled:
+            lists.availableOffers.length === 0 &&
+            lists.acceptedOffers.length === 0,
+        },
+        {
+          id: "order-drink",
+          label: "喝酒",
+          kind: "special" as const,
+          disabled: playerCharacter.stats.gold < tavernDrinkPrice,
+        },
+        {
+          id: "open-gamble",
+          label: "赌博",
+          kind: "special" as const,
+          tone: "accent" as const,
+          disabled: playerCharacter.stats.gold < tavernWagerStep,
+        },
+      ],
+    };
 
     return {
       moduleId: "tavern",
       houseId: input.houseDefinition.id,
       sceneTitle: "酒馆",
       sceneSubtitle: "找活 / 买酒 / 下注",
-      standbyRoster: isIdle
-        ? [
-            {
-              characterId:
-                input.houseDefinition.defaultCharacterId ?? tavernBossProfile.actorId,
-              name: tavernBossProfile.name,
-              title: tavernBossProfile.title,
-              actionId: "open-boss-dialogue",
-              isSelected: true,
-            },
-          ]
-        : [],
+      standbyRoster: orderHouseStandbyRoster({
+        primaryCharacterId: tavernPrimaryActorId,
+        actors: [tavernBossActor],
+      }),
       dialogue:
         isIdle
           ? null
           : {
               mode: "character",
               speakerName: tavernBossProfile.name,
-              characterId:
-                input.houseDefinition.defaultCharacterId ?? tavernBossProfile.actorId,
+              characterId: tavernPrimaryActorId,
               position: "right",
               textLines: sessionState.dialogueLines,
               advanceActionId: isGreeting ? "advance-greeting" : null,

@@ -1,0 +1,127 @@
+import type { CharacterId } from "../../domain/character";
+import type { HouseStandbyActorViewModel } from "../../domain/house-module";
+import type {
+  NpcInteractionContext,
+  NpcInteractionMenuViewModel,
+  NpcInteractionOptionViewModel,
+  NpcInteractionSession,
+  NpcPoolViewModel,
+} from "../../domain/npc-interaction";
+import { NPC_INTERACTION_DEFAULT_OPTIONS } from "../../domain/npc-interaction";
+
+export { NPC_INTERACTION_DEFAULT_OPTION_IDS } from "../../domain/npc-interaction";
+
+export type NpcInteractionBlockState = {
+  overlayView: string | null;
+  modalState: unknown | null;
+  locationDialogueState: unknown | null;
+  hasHouseOverlay: boolean;
+  hasActiveDialogueAdvance: boolean;
+};
+
+export function createNpcInteractionSession(
+  context: NpcInteractionContext,
+  targetCharacterId: CharacterId
+): NpcInteractionSession {
+  return {
+    context,
+    targetCharacterId,
+    mode: "menu",
+  };
+}
+
+export function closeNpcInteractionSession(): null {
+  return null;
+}
+
+export function selectNpcInteractionMenu(input: {
+  session: NpcInteractionSession;
+  targetName: string | null;
+  specialActions?: NpcInteractionOptionViewModel[];
+  giftDisabled?: boolean;
+}): NpcInteractionMenuViewModel | null {
+  if (input.session == null || input.session.mode !== "menu" || input.targetName == null) {
+    return null;
+  }
+
+  return {
+    type: "npc-interaction-menu",
+    context: input.session.context,
+    targetCharacterId: input.session.targetCharacterId,
+    targetName: input.targetName,
+    options: [
+      ...(input.specialActions ?? []),
+      ...NPC_INTERACTION_DEFAULT_OPTIONS.map((option) => ({
+        ...option,
+        ...(option.kind === "gift" && input.giftDisabled !== false
+          ? { disabled: true }
+          : {}),
+      })),
+    ],
+  };
+}
+
+export function adaptHouseRosterToNpcPool(input: {
+  context: Extract<NpcInteractionContext, { type: "house" }>;
+  actors: HouseStandbyActorViewModel[];
+  disabled: boolean;
+}): NpcPoolViewModel {
+  return {
+    context: input.context,
+    actors: input.actors.map((actor) => ({
+      characterId: actor.characterId,
+      name: actor.name,
+      ...(actor.title == null ? {} : { title: actor.title }),
+      ...(actor.avatarImageUrl == null ? {} : { avatarImageUrl: actor.avatarImageUrl }),
+      ...(actor.isSelected == null ? {} : { isSelected: actor.isSelected }),
+      disabled: input.disabled || actor.disabled === true,
+    })),
+  };
+}
+
+export function selectHouseNpcSpecialActions(input: {
+  actors: HouseStandbyActorViewModel[];
+  targetCharacterId: string | null;
+}): NpcInteractionOptionViewModel[] {
+  if (input.targetCharacterId == null) {
+    return [];
+  }
+
+  return (
+    input.actors.find((actor) => actor.characterId === input.targetCharacterId)
+      ?.interactionActions ?? []
+  );
+}
+
+export function selectNpcInteractionBlockState(input: {
+  overlayView: string | null;
+  modalState: unknown | null;
+  locationDialogueState: unknown | null;
+  houseOverlay?: unknown | null;
+  houseDialogue?: unknown | null;
+  beggingMiniGameState?: unknown | null;
+  activitySession?: unknown | null;
+  messageState?: unknown | null;
+}): NpcInteractionBlockState {
+  return {
+    overlayView: input.overlayView,
+    modalState: input.modalState,
+    locationDialogueState: input.locationDialogueState,
+    hasHouseOverlay:
+      input.houseOverlay != null ||
+      input.beggingMiniGameState != null ||
+      input.activitySession != null ||
+      input.messageState != null,
+    hasActiveDialogueAdvance: input.houseDialogue != null,
+  };
+}
+
+export function isNpcInteractionBlocked(input: NpcInteractionBlockState): boolean {
+  return (
+    input.overlayView != null ||
+    input.modalState != null ||
+    input.locationDialogueState != null ||
+    input.hasHouseOverlay ||
+    input.hasActiveDialogueAdvance
+  );
+}

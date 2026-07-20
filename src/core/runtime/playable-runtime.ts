@@ -5,7 +5,6 @@ import type { RuntimeResult } from "../contracts/runtime-result";
 import type { RuntimeRequest } from "../contracts/runtime-request";
 import type {
   ActivePlayableSession,
-  PlayableDefinition,
   PlayableFamily,
   PlayableId,
   PlayableIntegrationDefinition,
@@ -18,9 +17,12 @@ import type {
 import type { RuntimeState } from "../contracts/runtime-state";
 import {
   startActivityQtePlayable,
-  advanceActivityQtePlayable,
+  adjustActivityQteWagerPlayable,
+  chooseActivityQteCommandPlayable,
   exitActivityQtePlayable,
+  playActivityQtePlayable,
   stopActivityQtePlayable,
+  tickActivityQtePlayable,
 } from "../../application/playables/activity-qte/activity-qte-definition";
 import {
   completeCityBeggingPlayable,
@@ -231,6 +233,48 @@ export function runPlayableRuntime(input: {
   }
 
   if (resolvedRequest.phase === "launch") {
+    if (resolvedRequest.launch.launch.playableId === "activity-qte") {
+      const activityId = resolvedRequest.launch.launch.payload?.activityId;
+      if (typeof activityId !== "string") {
+        return {
+          state: input.state,
+          effects: [],
+          handled: true,
+          session: getActivePlayableSession(input.state, "activity-qte"),
+        };
+      }
+
+      const activityDefinition =
+        input.activityDefinitionsById?.[activityId] ?? null;
+      if (activityDefinition == null) {
+        return {
+          state: input.state,
+          effects: [],
+          handled: true,
+          session: getActivePlayableSession(input.state, "activity-qte"),
+        };
+      }
+
+      const handlerId =
+        typeof resolvedRequest.launch.launch.payload?.handlerId === "string"
+          ? resolvedRequest.launch.launch.payload.handlerId
+          : activityDefinition.fallbackHandlerId ?? activityDefinition.handlerId;
+      const nextState = startActivityQtePlayable({
+        state: input.state,
+        activityDefinition,
+        handlerId,
+        integrationId: resolvedRequest.launch.launch.integrationId,
+        ownerContext: resolvedRequest.launch.launch.ownerContext,
+      });
+
+      return {
+        state: nextState,
+        effects: [],
+        handled: true,
+        session: getActivePlayableSession(nextState, "activity-qte"),
+      };
+    }
+
     if (resolvedRequest.launch.launch.playableId === "city-begging") {
       const now = resolvedRequest.launch.launch.payload?.now;
       const nextState = launchCityBeggingPlayable({
@@ -424,24 +468,113 @@ export function runPlayableRuntime(input: {
   }
 
   if (resolvedRequest.playableId === "activity-qte") {
+    const session = input.state.core.runtime.activitySession;
+    const activityId =
+      session?.type === "qte-bar" ||
+      session?.type === "work-sequence" ||
+      session?.type === "fortune-board" ||
+      session?.type === "pachinko-board"
+        ? session.activityId
+        : null;
+    const activityDefinition =
+      activityId == null ? null : input.activityDefinitionsById?.[activityId] ?? null;
+
     if (resolvedRequest.action === "tick") {
-      const nextState = advanceActivityQtePlayable(input.state);
+      if (activityDefinition == null) {
+        return {
+          state: input.state,
+          effects: [],
+          handled: true,
+          session: getActivePlayableSession(input.state, "activity-qte"),
+        };
+      }
+
+      const completion = tickActivityQtePlayable({
+        state: input.state,
+        activityDefinition,
+        characterDefinitions: input.characterDefinitions,
+      });
       return {
-        state: nextState,
+        state: completion.state,
+        characterDefinitions: completion.characterDefinitions,
         effects: [],
         handled: true,
-        session: getActivePlayableSession(nextState, "activity-qte"),
+        session: getActivePlayableSession(completion.state, "activity-qte"),
+      };
+    }
+
+    if (resolvedRequest.action === "play") {
+      if (activityDefinition == null) {
+        return {
+          state: input.state,
+          effects: [],
+          handled: true,
+          session: getActivePlayableSession(input.state, "activity-qte"),
+        };
+      }
+
+      const completion = playActivityQtePlayable({
+        state: input.state,
+        activityDefinition,
+        characterDefinitions: input.characterDefinitions,
+      });
+
+      return {
+        state: completion.state,
+        characterDefinitions: completion.characterDefinitions,
+        effects: [],
+        handled: true,
+        session: getActivePlayableSession(completion.state, "activity-qte"),
+      };
+    }
+
+    if (
+      resolvedRequest.action === "wager-minus" ||
+      resolvedRequest.action === "wager-plus"
+    ) {
+      const completion = adjustActivityQteWagerPlayable({
+        state: input.state,
+        characterDefinitions: input.characterDefinitions,
+        direction: resolvedRequest.action === "wager-minus" ? -1 : 1,
+      });
+
+      return {
+        state: completion.state,
+        characterDefinitions: completion.characterDefinitions,
+        effects: [],
+        handled: true,
+        session: getActivePlayableSession(completion.state, "activity-qte"),
+      };
+    }
+
+    if (resolvedRequest.action === "speed") {
+      if (activityDefinition == null) {
+        return {
+          state: input.state,
+          effects: [],
+          handled: true,
+          session: getActivePlayableSession(input.state, "activity-qte"),
+        };
+      }
+
+      const tickMs = resolvedRequest.payload?.tickMs;
+      const completion = chooseActivityQteCommandPlayable({
+        state: input.state,
+        activityDefinition,
+        characterDefinitions: input.characterDefinitions,
+        commandId: `speed:${typeof tickMs === "number" ? tickMs : ""}`,
+      });
+
+      return {
+        state: completion.state,
+        characterDefinitions: completion.characterDefinitions,
+        effects: [],
+        handled: true,
+        session: getActivePlayableSession(completion.state, "activity-qte"),
       };
     }
 
     if (resolvedRequest.action === "stop") {
-      const session = input.state.core.runtime.activitySession;
-      const activityId = session?.type === "qte-bar" ? session.activityId : null;
-      const activityDefinition =
-        activityId == null
-          ? null
-          : input.activityDefinitionsById?.[activityId] ?? null;
-
       if (activityDefinition == null) {
         return {
           state: exitActivityQtePlayable(input.state),
@@ -455,6 +588,33 @@ export function runPlayableRuntime(input: {
         state: input.state,
         activityDefinition,
         characterDefinitions: input.characterDefinitions,
+      });
+
+      return {
+        state: completion.state,
+        characterDefinitions: completion.characterDefinitions,
+        effects: [],
+        handled: true,
+        session: getActivePlayableSession(completion.state, "activity-qte"),
+      };
+    }
+
+    if (resolvedRequest.action === "choose") {
+      const commandId = resolvedRequest.payload?.commandId;
+      if (activityDefinition == null || typeof commandId !== "string") {
+        return {
+          state: input.state,
+          effects: [],
+          handled: true,
+          session: getActivePlayableSession(input.state, "activity-qte"),
+        };
+      }
+
+      const completion = chooseActivityQteCommandPlayable({
+        state: input.state,
+        activityDefinition,
+        characterDefinitions: input.characterDefinitions,
+        commandId,
       });
 
       return {

@@ -1,0 +1,39 @@
+.c-npc-interaction-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: calc(var(--z-scene-overlay) + 8);
+  background: transparent;
+}
+
+.c-npc-interaction-actions {
+  position: relative;
+  transform: translateY(calc(-9vh + 100px));
+}
+
+.c-npc-interaction-dismiss {
+  margin-top: 8px;
+}
+
+.c-npc-interaction-stack {
+  display: grid;
+  justify-items: center;
+  gap: 14px;
+  width: min(44vw, 360px);
+  pointer-events: auto;
+  transform: translateY(calc(-9vh + 60px));
+}
+
+.c-npc-interaction-stack .c-npc-interaction-actions {
+  width: 100%;
+  transform: none;
+}
+
+.c-npc-interaction-dialogue-text {
+  width: 100%;
+  color: #3f2a18;
+  pointer-events: auto;
+}
+
+.c-npc-interaction-dialogue-text p {
+  margin: 0;
+}

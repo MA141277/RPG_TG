@@ -3,6 +3,16 @@
   defaultPackTextEntries,
 } from "../../content/pack-content-access";
 import type { ActivityDefinition } from "../../../domain/activity";
+import type {
+  ActivityFortuneBoardSession,
+  ActivityPachinkoBoardSession,
+} from "../../../domain/activity-session";
+import {
+  FORTUNE_BOARD_DEFAULT_ANIMATION_TICK_MS,
+  FORTUNE_BOARD_MAX_ANIMATION_TICK_MS,
+  FORTUNE_BOARD_MIN_ANIMATION_TICK_MS,
+  PACHINKO_BOARD_DEFAULT_ANIMATION_TICK_MS,
+} from "../../../domain/activity-session";
 import type { CharacterDefinition } from "../../../domain/character";
 import type { CalendarDate, GameState } from "../../../domain/game-state";
 import type { HouseActivityConfirmOverlayState } from "../../../domain/house-activity";
@@ -30,6 +40,11 @@ import type {
 } from "../../../domain/house-modules/temple-house-session";
 import { KEEP_HOUSE_VARIABLE_KEYS } from "../../../domain/keep-house";
 import {
+  createLaunchPlayableRequest,
+  createPlayableActionRequest,
+  runPlayableRuntime,
+} from "../../../core/runtime/playable-runtime";
+import {
   isZhuYuanzhangBeggingJourneyStage,
   isZhuYuanzhangMonkStoryStage,
   ZHU_YUANZHANG_STORY_FLAG_KEYS,
@@ -53,7 +68,12 @@ import {
   formatHouseActivityCostLine,
   getHouseWorkDurationDays,
 } from "../../house/house-activity-costs";
+import { orderHouseStandbyRoster } from "../../house/house-primary-actor-roster";
 import { HOUSE_MAP_AUTO_ADVANCE_DAY_INTERVAL_MS } from "../../house/map-auto-advance";
+import {
+  createHousePlayableRuntimeState,
+  readHousePlayableSessionState,
+} from "../../playables/house-playable-runtime-bridge";
 import {
   markLateCouncilAttendancePenaltyProcessed,
   resolveLateCouncilAttendance,
@@ -76,6 +96,11 @@ import { createInitialTempleHouseSessionState } from "./temple-house-session-sta
 const DONATION_AMOUNT = 50;
 const ASSIGN_TEMPLE_TASK_ACTION_PREFIX = "assign-temple-task:";
 const CONFIRM_START_TEMPLE_TASK_ACTION_PREFIX = "confirm-start-temple-task:";
+const QUICK_COMPLETE_TEMPLE_TASK_ACTION_PREFIX = "quick-complete-temple-task:";
+const TEMPLE_WORK_PLAY_ACTION_ID = "temple-work-board-play";
+const TEMPLE_WORK_WAGER_MINUS_ACTION_ID = "temple-work-board-wager-minus";
+const TEMPLE_WORK_WAGER_PLUS_ACTION_ID = "temple-work-board-wager-plus";
+const TEMPLE_WORK_SPEED_FIELD_ID = "temple-work-board-speed";
 const SELECT_REVIEW_WORK_ACTION_PREFIX = "select-review-work:";
 const OPEN_TEMPLE_WORK_MENU_ACTION_ID = "open-temple-work-menu";
 const CLOSE_TEMPLE_WORK_MENU_ACTION_ID = "close-temple-work-menu";
@@ -99,6 +124,8 @@ const TEMPLE_REVIEW_AUTO_ADVANCE_INTERVAL_ID = "temple-review-auto-advance";
 const TEMPLE_REST_AUTO_ADVANCE_INTERVAL_ID = "temple-rest-auto-advance";
 const TEMPLE_WORK_TOTAL_ROUNDS = 3;
 const TEMPLE_WORK_MARKER_STEP = 7;
+const TEMPLE_WORK_REQUIRED_SUCCESSES = 2;
+const TEMPLE_ACTIVITY_QTE_INTEGRATION_ID = "playable.activity-qte.house.temple";
 const TEMPLE_REST_MAX_DAYS = 99;
 const TEMPLE_REST_BASE_RECOVERY = 12;
 const CANCEL_ACTIVITY_CONFIRM_ACTION_ID = "cancel-activity-confirm";
@@ -326,6 +353,7 @@ function resolveTempleTaskDefinition(
 ): TempleHouseTaskDefinition {
   return {
     id: activityDefinition.taskId,
+    activityId: activityDefinition.id,
     missionId: activityDefinition.missionId,
     title: resolveTempleText(textEntriesById, activityDefinition.titleTextId),
     briefing: resolveTempleText(textEntriesById, activityDefinition.briefingTextId),
@@ -383,6 +411,75 @@ function findTempleTaskDefinition(
   ).find((candidateTask) => candidateTask.id === taskId);
   assertExists(taskDefinition, `Temple house task not found for id "${taskId}".`);
   return taskDefinition;
+}
+
+function findTempleTaskActivityDefinition(
+  taskId: string,
+  activityDefinitionsById?: Record<string, ActivityDefinition>
+): TempleTaskActivityDefinition {
+  const activityDefinition =
+    Object.values(activityDefinitionsById ?? {}).find(
+      (candidateActivity) =>
+        isTempleTaskActivityDefinition(candidateActivity) &&
+        candidateActivity.taskId === taskId
+    ) ??
+    defaultTempleTaskActivityDefinitions.find(
+      (candidateActivity) => candidateActivity.taskId === taskId
+    );
+
+  assertExists(
+    activityDefinition,
+    `Temple house task activity not found for task id "${taskId}".`
+  );
+  return activityDefinition as TempleTaskActivityDefinition;
+}
+
+function findActiveTempleWorkTaskId(
+  gameState: GameState,
+  activityDefinitionsById?: Record<string, ActivityDefinition>
+): string | null {
+  const activitySession = gameState.runtime.activitySession;
+  if (
+    activitySession?.type !== "fortune-board" &&
+    activitySession?.type !== "pachinko-board"
+  ) {
+    return null;
+  }
+
+  const activityDefinition =
+    Object.values(activityDefinitionsById ?? {}).find(
+      (candidateActivity) =>
+        candidateActivity.id === activitySession.activityId &&
+        isTempleTaskActivityDefinition(candidateActivity)
+    ) ??
+    defaultTempleTaskActivityDefinitions.find(
+      (candidateActivity) => candidateActivity.id === activitySession.activityId
+    );
+
+  return activityDefinition?.taskId ?? null;
+}
+
+function createTempleWorkPlayableActivityDefinitionsById(
+  activityDefinition: TempleTaskActivityDefinition,
+  activityDefinitionsById?: Record<string, ActivityDefinition>
+): Record<string, ActivityDefinition> {
+  const activityWithoutSettlement: ActivityDefinition = { ...activityDefinition };
+  delete activityWithoutSettlement.outcome;
+  delete activityWithoutSettlement.timeAdvanceCost;
+
+  return {
+    ...(activityDefinitionsById ?? {}),
+    [activityDefinition.id]: {
+      ...activityWithoutSettlement,
+      handlerId: "generic.qte",
+      fallbackHandlerId: "generic.qte",
+      qte: {
+        totalRounds: TEMPLE_WORK_TOTAL_ROUNDS,
+        requiredSuccesses: TEMPLE_WORK_REQUIRED_SUCCESSES,
+      },
+      timeAdvanceCost: 0,
+    },
+  };
 }
 
 type TempleRestSummary = {
@@ -642,17 +739,98 @@ function createAlertOverlay(
 function createActivityConfirmOverlay(
   title: string,
   paragraphs: string[],
-  confirmActionId: string
+  confirmActionId: string,
+  details?: Partial<
+    Pick<
+      HouseActivityConfirmOverlayState,
+      | "workDescriptionLines"
+      | "relatedAbilityLines"
+      | "costLines"
+      | "bestScore"
+      | "quickCompleteScore"
+      | "quickCompleteActionId"
+      | "quickCompleteLabel"
+    >
+  >
 ): HouseActivityConfirmOverlayState {
   return {
     type: "activity-confirm",
     title,
     paragraphs,
+    ...(details?.workDescriptionLines == null
+      ? {}
+      : { workDescriptionLines: details.workDescriptionLines }),
+    ...(details?.relatedAbilityLines == null
+      ? {}
+      : { relatedAbilityLines: details.relatedAbilityLines }),
+    ...(details?.costLines == null ? {} : { costLines: details.costLines }),
+    ...(details?.bestScore == null ? {} : { bestScore: details.bestScore }),
+    ...(details?.quickCompleteScore == null
+      ? {}
+      : { quickCompleteScore: details.quickCompleteScore }),
+    ...(details?.quickCompleteActionId == null
+      ? {}
+      : { quickCompleteActionId: details.quickCompleteActionId }),
+    ...(details?.quickCompleteLabel == null
+      ? {}
+      : { quickCompleteLabel: details.quickCompleteLabel }),
     confirmActionId,
     confirmLabel: "现在开始",
     cancelActionId: CANCEL_ACTIVITY_CONFIRM_ACTION_ID,
     cancelLabel: "稍后再领",
     tone: "info",
+  };
+}
+
+function getActivityBestScoreVariableKey(activityId: string): string {
+  return `var.activity.${activityId}.best_score`;
+}
+
+function readActivityBestScore(
+  gameState: GameState,
+  activityId: string
+): number | null {
+  const value = gameState.runtime.variables[getActivityBestScoreVariableKey(activityId)];
+  return typeof value === "number" && Number.isFinite(value) && value > 0
+    ? Math.floor(value)
+    : null;
+}
+
+function createTempleWorkConfirmDetails(
+  gameState: GameState,
+  taskDefinition: TempleHouseTaskDefinition,
+  taskActivityDefinition: TempleTaskActivityDefinition,
+  durationDays: number
+): Partial<
+  Pick<
+    HouseActivityConfirmOverlayState,
+    | "workDescriptionLines"
+    | "relatedAbilityLines"
+    | "costLines"
+    | "bestScore"
+    | "quickCompleteScore"
+    | "quickCompleteActionId"
+    | "quickCompleteLabel"
+  >
+> {
+  const bestScore = readActivityBestScore(gameState, taskActivityDefinition.id);
+  const quickCompleteScore =
+    bestScore == null ? null : Math.floor(bestScore * 0.9);
+  return {
+    workDescriptionLines: [taskDefinition.briefing],
+    relatedAbilityLines: ["相关能力：待接入"],
+    costLines: [
+      `体力 -${ACTIVITY_COMPLETION_STAMINA_COST}`,
+      `时间 +${durationDays}天`,
+    ],
+    ...(bestScore == null ? {} : { bestScore }),
+    ...(quickCompleteScore == null ? {} : { quickCompleteScore }),
+    ...(quickCompleteScore == null
+      ? {}
+      : {
+          quickCompleteActionId: `${QUICK_COMPLETE_TEMPLE_TASK_ACTION_PREFIX}${taskDefinition.id}`,
+          quickCompleteLabel: "快捷完成",
+        }),
   };
 }
 
@@ -1263,6 +1441,12 @@ function parseConfirmTempleTaskActionId(actionId: string): string | null {
     : null;
 }
 
+function parseQuickCompleteTempleTaskActionId(actionId: string): string | null {
+  return actionId.startsWith(QUICK_COMPLETE_TEMPLE_TASK_ACTION_PREFIX)
+    ? actionId.slice(QUICK_COMPLETE_TEMPLE_TASK_ACTION_PREFIX.length)
+    : null;
+}
+
 function parseReviewWorkActionId(actionId: string): "temple-help" | "beg-alms" | null {
   if (!actionId.startsWith(SELECT_REVIEW_WORK_ACTION_PREFIX)) {
     return null;
@@ -1453,7 +1637,8 @@ function getTempleMeetingParticipantIds(
   return Array.from(
     new Set([
       playerCharacterId,
-      ...houseCharacterIds.filter((characterId) => characterId !== abbotCharacterId),
+      abbotCharacterId,
+      ...houseCharacterIds,
     ])
   );
 }
@@ -1752,7 +1937,6 @@ function getTempleRootActions(
   if (!isMonkStoryStage(gameState)) {
     return [
       { id: OPEN_TEMPLE_REST_MENU_ACTION_ID, label: "休息", tone: "accent" },
-      { id: "ask-fortune", label: "测运势", tone: "accent" },
       { id: "open-donate", label: "捐香火" },
       ...(dialoguePhase === "idle"
         ? []
@@ -1777,7 +1961,6 @@ function getTempleRootActions(
       disabled: currentWorkPlan == null,
     },
     { id: OPEN_TEMPLE_REST_MENU_ACTION_ID, label: "休息" },
-    { id: "ask-fortune", label: "测运势" },
     { id: "open-donate", label: "捐香火" },
     ...(dialoguePhase === "idle"
       ? []
@@ -2345,31 +2528,108 @@ function confirmTempleBeggingFoodSubmission(
   };
 }
 
+function runTempleWorkPlayableRequest(
+  input: HouseModuleDispatchInput<"temple-house">,
+  sessionState: TempleHouseSessionState,
+  taskActivityDefinition: TempleTaskActivityDefinition,
+  request:
+    | ReturnType<typeof createLaunchPlayableRequest>
+    | ReturnType<typeof createPlayableActionRequest>,
+  sideEffects?: HouseModuleTransitionResult<"temple-house">["sideEffects"]
+): HouseModuleTransitionResult<"temple-house"> {
+  const runtimeResult = runPlayableRuntime({
+    state: createHousePlayableRuntimeState({
+      gameState: input.gameState,
+      moduleId: "temple-house",
+      sessionState,
+    }),
+    request,
+    characterDefinitions: input.characterDefinitions,
+    playerCharacterId: input.playerCharacterId,
+    activityDefinitionsById: createTempleWorkPlayableActivityDefinitionsById(
+      taskActivityDefinition,
+      input.activityDefinitionsById
+    ),
+  });
+  const nextSessionState =
+    readHousePlayableSessionState(runtimeResult.state, "temple-house") ??
+    sessionState;
+  const activitySession = runtimeResult.state.core.runtime.activitySession;
+
+  if (activitySession?.type === "result") {
+    const score = activitySession.score;
+    const clearedGameState = {
+      ...runtimeResult.state.core,
+      runtime: {
+        ...runtimeResult.state.core.runtime,
+        activitySession: null,
+        playableSession: null,
+      },
+    };
+
+    return finalizeTempleWorkScore(
+      {
+        ...input,
+        gameState: clearedGameState,
+        characterDefinitions:
+          runtimeResult.characterDefinitions ?? input.characterDefinitions,
+      },
+      nextSessionState,
+      taskActivityDefinition.taskId,
+      score
+    );
+  }
+
+  return {
+    gameState: runtimeResult.state.core,
+    characterDefinitions:
+      runtimeResult.characterDefinitions ?? input.characterDefinitions,
+    sessionState: nextSessionState,
+    ...(sideEffects == null ? {} : { sideEffects }),
+  };
+}
+
 function startTempleWorkMinigame(
   input: HouseModuleDispatchInput<"temple-house">,
   sessionState: TempleHouseSessionState,
   taskDefinition: TempleHouseTaskDefinition
 ): HouseModuleTransitionResult<"temple-house"> {
-  return withSessionState(
-    {
-      gameState: input.gameState,
-      characterDefinitions: input.characterDefinitions,
-    },
-    sessionState,
-    {
-      mode: "daily",
-      meetingStage: "finished",
-      dialoguePhase: "idle",
-      selectedTaskId: taskDefinition.id,
-      dailyActionPanel: "work",
-      overlay: createTempleWorkOverlay(taskDefinition, 1, 0),
-    },
+  const taskActivityDefinition = findTempleTaskActivityDefinition(
+    taskDefinition.id,
+    input.activityDefinitionsById
+  );
+  const nextSessionState = {
+    ...sessionState,
+    mode: "daily" as const,
+    meetingStage: "finished" as const,
+    dialoguePhase: "idle" as const,
+    selectedTaskId: taskDefinition.id,
+    dailyActionPanel: "work" as const,
+    overlay: null,
+  };
+
+  return runTempleWorkPlayableRequest(
+    input,
+    nextSessionState,
+    taskActivityDefinition,
+    createLaunchPlayableRequest("activity-qte", {
+      integrationId: TEMPLE_ACTIVITY_QTE_INTEGRATION_ID,
+      ownerContext: {
+        ownerKind: "house",
+        ownerId: input.houseDefinition.id,
+        returnPolicy: "resume-owner",
+      },
+      payload: {
+        activityId: taskActivityDefinition.id,
+        handlerId: "generic.qte",
+      },
+    }),
     [
       { type: "stop-interval", intervalId: TEMPLE_WORK_INTERVAL_ID },
       {
         type: "start-interval",
         intervalId: TEMPLE_WORK_INTERVAL_ID,
-        everyMs: 90,
+        everyMs: PACHINKO_BOARD_DEFAULT_ANIMATION_TICK_MS,
         request: {
           type: "tick",
           tickId: TEMPLE_WORK_INTERVAL_ID,
@@ -2379,21 +2639,38 @@ function startTempleWorkMinigame(
   );
 }
 
-function finalizeTempleWork(
+function finalizeTempleWorkScore(
   input: HouseModuleDispatchInput<"temple-house">,
   sessionState: TempleHouseSessionState,
-  overlay: TempleHouseQteOverlayState
+  taskId: string,
+  score: number
 ): HouseModuleTransitionResult<"temple-house"> {
   const durationDays = getHouseWorkDurationDays();
-  const resolution = resolveTempleWorkContribution(overlay.successes);
+  const taskDefinition = findTempleTaskDefinition(
+    taskId,
+    input.activityDefinitionsById,
+    input.textEntriesById
+  );
+  const taskActivityDefinition = findTempleTaskActivityDefinition(
+    taskId,
+    input.activityDefinitionsById
+  );
+  const bestScoreKey = getActivityBestScoreVariableKey(taskActivityDefinition.id);
+  const existingBestScore = readActivityBestScore(
+    input.gameState,
+    taskActivityDefinition.id
+  );
+  const nextBestScore = Math.max(existingBestScore ?? 0, score);
+  const resolution = resolveTempleWorkContribution(score);
   const currentContribution = getTempleContribution(input.gameState);
-  const nextContribution = currentContribution + resolution.contribution;
+  const nextContribution = currentContribution + score;
   const unlockBegging =
     !isBeggingUnlocked(input.gameState) && nextContribution >= 30;
 
   const nextVariables = {
     ...input.gameState.runtime.variables,
     [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.templeContribution]: nextContribution,
+    [bestScoreKey]: nextBestScore,
     ...(unlockBegging
       ? {
           [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.templeWeek]: 2,
@@ -2402,9 +2679,10 @@ function finalizeTempleWork(
   };
 
   const rewardLines = [
-    `本次评定：${overlay.taskLabel}`,
-    `命中 ${overlay.successes} / ${overlay.totalRounds} 次`,
-    `寺中贡献 +${resolution.contribution}`,
+    `本次评定：${taskDefinition.title}`,
+    `玩法分数 ${score}`,
+    `贡献值 +${score}（1:1）`,
+    `寺中贡献 +${score}`,
     `累计贡献 ${nextContribution} / 30`,
     `时间 +${durationDays}天`,
     `体力 -${ACTIVITY_COMPLETION_STAMINA_COST}`,
@@ -2472,14 +2750,27 @@ function finalizeTempleWork(
         type: "result",
         title: unlockBegging ? "寺中有了新的安排" : "寺务结算",
         grade: resolution.grade,
-        score: overlay.successes,
+        score,
         rewardLines,
       },
-      selectedTaskId: overlay.taskId,
+      selectedTaskId: taskId,
     },
     sideEffects: [{ type: "stop-interval", intervalId: TEMPLE_WORK_INTERVAL_ID }],
     timeAdvanceCost: convertHouseActivityDaysToSegments(durationDays),
   };
+}
+
+function finalizeTempleWork(
+  input: HouseModuleDispatchInput<"temple-house">,
+  sessionState: TempleHouseSessionState,
+  overlay: TempleHouseQteOverlayState
+): HouseModuleTransitionResult<"temple-house"> {
+  return finalizeTempleWorkScore(
+    input,
+    sessionState,
+    overlay.taskId,
+    overlay.successes
+  );
 }
 
 function handleTempleWorkTick(
@@ -2611,6 +2902,47 @@ function handleField(
     );
   }
 
+  if (input.request.fieldId === TEMPLE_WORK_SPEED_FIELD_ID) {
+    if (
+      input.gameState.runtime.playableSession?.playableId !== "activity-qte" ||
+      input.gameState.runtime.activitySession?.type !== "fortune-board"
+    ) {
+      return createTransitionResult(input, { gameState: nextState });
+    }
+
+    const activeTaskId =
+      sessionState.selectedTaskId ??
+      findActiveTempleWorkTaskId(input.gameState, input.activityDefinitionsById);
+    if (activeTaskId == null) {
+      return createTransitionResult(input, { gameState: nextState });
+    }
+
+    const nextTickMs = clampTempleFortuneBoardTickMs(Number(input.request.value));
+    return runTempleWorkPlayableRequest(
+      {
+        ...input,
+        gameState: nextState,
+      },
+      sessionState,
+      findTempleTaskActivityDefinition(activeTaskId, input.activityDefinitionsById),
+      createPlayableActionRequest("activity-qte", "speed", {
+        tickMs: nextTickMs,
+      }),
+      [
+        { type: "stop-interval", intervalId: TEMPLE_WORK_INTERVAL_ID },
+        {
+          type: "start-interval",
+          intervalId: TEMPLE_WORK_INTERVAL_ID,
+          everyMs: nextTickMs,
+          request: {
+            type: "tick",
+            tickId: TEMPLE_WORK_INTERVAL_ID,
+          },
+        },
+      ]
+    );
+  }
+
   if (input.request.fieldId === TEMPLE_BEGGING_SUBMIT_FIELD_ID) {
     const quantity = Number.parseInt(input.request.value, 10) || 1;
     return updateTempleBeggingSubmitQuantity(
@@ -2661,6 +2993,41 @@ function handleAction(
       },
       sessionState,
       { dialogueOverride: null }
+    );
+  }
+
+  if (
+    input.request.actionId === TEMPLE_WORK_PLAY_ACTION_ID ||
+    input.request.actionId === TEMPLE_WORK_WAGER_MINUS_ACTION_ID ||
+    input.request.actionId === TEMPLE_WORK_WAGER_PLUS_ACTION_ID
+  ) {
+    const activeTaskId =
+      sessionState.selectedTaskId ??
+      findActiveTempleWorkTaskId(input.gameState, input.activityDefinitionsById);
+    if (activeTaskId == null) {
+      return createTransitionResult(input, { gameState: nextState });
+    }
+
+    const taskActivityDefinition = findTempleTaskActivityDefinition(
+      activeTaskId,
+      input.activityDefinitionsById
+    );
+
+    return runTempleWorkPlayableRequest(
+      {
+        ...input,
+        gameState: nextState,
+      },
+      sessionState,
+      taskActivityDefinition,
+      createPlayableActionRequest(
+        "activity-qte",
+        input.request.actionId === TEMPLE_WORK_PLAY_ACTION_ID
+          ? "play"
+          : input.request.actionId === TEMPLE_WORK_WAGER_MINUS_ACTION_ID
+            ? "wager-minus"
+            : "wager-plus"
+      )
     );
   }
 
@@ -3337,6 +3704,10 @@ function handleAction(
           taskDefinition.title
         );
       }
+      const taskActivityDefinition = findTempleTaskActivityDefinition(
+        taskDefinition.id,
+        input.activityDefinitionsById
+      );
       return withSessionState(
         {
           gameState: nextState,
@@ -3346,12 +3717,14 @@ function handleAction(
         {
           overlay: createActivityConfirmOverlay(
             taskDefinition.title,
-            [
-              taskDefinition.briefing,
-              ...taskDefinition.orderLines,
-              formatHouseActivityCostLine(durationDays),
-            ],
-            `${CONFIRM_START_TEMPLE_TASK_ACTION_PREFIX}${taskDefinition.id}`
+            [],
+            `${CONFIRM_START_TEMPLE_TASK_ACTION_PREFIX}${taskDefinition.id}`,
+            createTempleWorkConfirmDetails(
+              nextState,
+              taskDefinition,
+              taskActivityDefinition,
+              durationDays
+            )
           ),
         }
       );
@@ -3388,6 +3761,10 @@ function handleAction(
           taskDefinition.title
         );
       }
+      const taskActivityDefinition = findTempleTaskActivityDefinition(
+        taskDefinition.id,
+        input.activityDefinitionsById
+      );
       return withSessionState(
         {
           gameState: nextState,
@@ -3397,12 +3774,14 @@ function handleAction(
         {
           overlay: createActivityConfirmOverlay(
             taskDefinition.title,
-            [
-              taskDefinition.briefing,
-              ...taskDefinition.orderLines,
-              formatHouseActivityCostLine(durationDays),
-            ],
-            `${CONFIRM_START_TEMPLE_TASK_ACTION_PREFIX}${taskDefinition.id}`
+            [],
+            `${CONFIRM_START_TEMPLE_TASK_ACTION_PREFIX}${taskDefinition.id}`,
+            createTempleWorkConfirmDetails(
+              nextState,
+              taskDefinition,
+              taskActivityDefinition,
+              durationDays
+            )
           ),
         }
       );
@@ -3465,6 +3844,84 @@ function handleAction(
     }
   }
 
+  const quickCompleteTaskId = parseQuickCompleteTempleTaskActionId(
+    input.request.actionId
+  );
+  if (quickCompleteTaskId != null) {
+    const taskDefinition = findTempleTaskDefinition(
+      quickCompleteTaskId,
+      input.activityDefinitionsById,
+      input.textEntriesById
+    );
+    const taskActivityDefinition = findTempleTaskActivityDefinition(
+      quickCompleteTaskId,
+      input.activityDefinitionsById
+    );
+    const bestScore = readActivityBestScore(nextState, taskActivityDefinition.id);
+    if (bestScore == null) {
+      return withSessionState(
+        {
+          gameState: nextState,
+          characterDefinitions: input.characterDefinitions,
+        },
+        sessionState,
+        {
+          overlay: createAlertOverlay(
+            "尚无可用成绩",
+            ["先完整完成一次这项差事，才能按历史最高分快速完成。"],
+            "warning"
+          ),
+        }
+      );
+    }
+
+    const durationDays = getHouseWorkDurationDays();
+    if (!canAffordActivityCost(playerCharacter)) {
+      return withSessionState(
+        {
+          gameState: nextState,
+          characterDefinitions: input.characterDefinitions,
+        },
+        sessionState,
+        {
+          overlay: createLowStaminaOverlay(taskDefinition.title),
+        }
+      );
+    }
+
+    const remainingDays = shouldRouteTempleActivityToCouncil(
+      nextState,
+      durationDays
+    );
+    if (remainingDays != null) {
+      return createTempleInsufficientTimeResult(
+        {
+          ...input,
+          gameState: nextState,
+        },
+        sessionState,
+        remainingDays,
+        durationDays,
+        taskDefinition.title
+      );
+    }
+
+    return finalizeTempleWorkScore(
+      {
+        ...input,
+        gameState: nextState,
+      },
+      {
+        ...sessionState,
+        selectedTaskId: quickCompleteTaskId,
+        dailyActionPanel: "work",
+        overlay: null,
+      },
+      quickCompleteTaskId,
+      Math.floor(bestScore * 0.9)
+    );
+  }
+
   return createTransitionResult(input, {
     gameState: nextState,
   });
@@ -3478,13 +3935,167 @@ function handleTick(
     return createTransitionResult(input);
   }
 
+  if (
+    input.request.tickId === TEMPLE_WORK_INTERVAL_ID &&
+    input.gameState.runtime.playableSession?.playableId === "activity-qte" &&
+    (input.gameState.runtime.activitySession?.type === "fortune-board" ||
+      input.gameState.runtime.activitySession?.type === "pachinko-board")
+  ) {
+    if (
+      input.gameState.runtime.activitySession.type === "pachinko-board" &&
+      input.gameState.runtime.activitySession.phase === "settling"
+    ) {
+      return createTransitionResult(input, {
+        sideEffects: [{ type: "stop-interval", intervalId: TEMPLE_WORK_INTERVAL_ID }],
+      });
+    }
+
+    const activeTaskId =
+      sessionState.selectedTaskId ??
+      findActiveTempleWorkTaskId(input.gameState, input.activityDefinitionsById);
+    if (activeTaskId == null) {
+      return createTransitionResult(input, {
+        sideEffects: [{ type: "stop-interval", intervalId: TEMPLE_WORK_INTERVAL_ID }],
+      });
+    }
+
+    return runTempleWorkPlayableRequest(
+      input,
+      sessionState,
+      findTempleTaskActivityDefinition(activeTaskId, input.activityDefinitionsById),
+      createPlayableActionRequest("activity-qte", "tick")
+    );
+  }
+
   return handleTempleWorkTick(input, sessionState);
+}
+
+function isTempleFortuneBoardSession(
+  gameState: GameState,
+  houseId: string
+): gameState is GameState & {
+  runtime: GameState["runtime"] & {
+    activitySession: ActivityFortuneBoardSession;
+  };
+} {
+  return (
+    gameState.runtime.playableSession?.playableId === "activity-qte" &&
+    gameState.runtime.playableSession.integrationId ===
+      TEMPLE_ACTIVITY_QTE_INTEGRATION_ID &&
+    gameState.runtime.playableSession.ownerContext.ownerKind === "house" &&
+    gameState.runtime.playableSession.ownerContext.ownerId === houseId &&
+    gameState.runtime.activitySession?.type === "fortune-board"
+  );
+}
+
+function isTemplePachinkoBoardSession(
+  gameState: GameState,
+  houseId: string
+): gameState is GameState & {
+  runtime: GameState["runtime"] & {
+    activitySession: ActivityPachinkoBoardSession;
+  };
+} {
+  return (
+    gameState.runtime.playableSession?.playableId === "activity-qte" &&
+    gameState.runtime.playableSession.integrationId ===
+      TEMPLE_ACTIVITY_QTE_INTEGRATION_ID &&
+    gameState.runtime.playableSession.ownerContext.ownerKind === "house" &&
+    gameState.runtime.playableSession.ownerContext.ownerId === houseId &&
+    gameState.runtime.activitySession?.type === "pachinko-board"
+  );
+}
+
+function selectFortuneBoardOverlayViewModel(
+  session: ActivityFortuneBoardSession
+): HouseOverlayViewModel {
+  return {
+    type: "fortune-board",
+    title: session.title,
+    taskLabel: session.taskLabel,
+    board: session.board,
+    remainingPieces: session.remainingPieces,
+    wager: session.wager,
+    phase: session.phase,
+    highlightedColumn: session.highlightedColumn,
+    selectedColumn: session.selectedColumn,
+    flashActive: session.phase === "column-flash" && session.flashTicks % 2 === 0,
+    pickFlashActive: session.phase === "cell-pick" && session.flashTicks % 2 === 0,
+    highlightedCellKey: session.highlightedCellKey,
+    pickedCellKey: session.pickedCellKey,
+    selectedCellKeys: session.selectedCellKeys,
+    score: session.score,
+    baseScore: session.baseScore,
+    tripletRewards: session.tripletRewards,
+    resonanceCount: session.resonanceCount,
+    rumorCount: session.rumorCount,
+    rerollCount: session.rerollCount,
+    animationTickMs: session.animationTickMs,
+    speedFieldId: TEMPLE_WORK_SPEED_FIELD_ID,
+    playActionId: TEMPLE_WORK_PLAY_ACTION_ID,
+    decreaseWagerActionId: TEMPLE_WORK_WAGER_MINUS_ACTION_ID,
+    increaseWagerActionId: TEMPLE_WORK_WAGER_PLUS_ACTION_ID,
+  };
+}
+
+function selectPachinkoBoardOverlayViewModel(
+  session: ActivityPachinkoBoardSession
+): HouseOverlayViewModel {
+  return {
+    type: "pachinko-board",
+    title: session.title,
+    taskLabel: session.taskLabel,
+    boardWidth: session.boardWidth,
+    boardHeight: session.boardHeight,
+    remainingBalls: session.remainingBalls,
+    totalBalls: session.totalBalls,
+    phase: session.phase,
+    activeBall: session.activeBall,
+    activeBalls: session.activeBalls,
+    pins: session.pins,
+    movingGatePins: session.movingGatePins,
+    gatePassCount: session.gatePassCount,
+    eventCharge: session.eventCharge,
+    eventLog: session.eventLog,
+    score: session.score,
+    lastSlotIndex: session.lastSlotIndex,
+    slotValues: session.slotValues,
+    rewardQueue: session.rewardQueue,
+    wheelState: session.wheelState,
+    flipperAngle: session.flipperAngle,
+    movingGateX: session.movingGateX,
+    layoutRefreshElapsedMs: session.layoutRefreshElapsedMs,
+    layoutRefreshPeriodMs: session.layoutRefreshPeriodMs,
+    layoutVersion: session.layoutVersion,
+    playActionId: TEMPLE_WORK_PLAY_ACTION_ID,
+  };
+}
+
+function clampTempleFortuneBoardTickMs(tickMs: number): number {
+  if (!Number.isFinite(tickMs)) {
+    return FORTUNE_BOARD_DEFAULT_ANIMATION_TICK_MS;
+  }
+
+  return Math.max(
+    FORTUNE_BOARD_MIN_ANIMATION_TICK_MS,
+    Math.min(FORTUNE_BOARD_MAX_ANIMATION_TICK_MS, Math.round(tickMs))
+  );
 }
 
 function selectOverlayViewModel(
   overlay: TempleHouseOverlayState,
+  activeFortuneBoardSession: ActivityFortuneBoardSession | null,
+  activePachinkoBoardSession: ActivityPachinkoBoardSession | null,
   textEntriesById?: Record<string, string>
 ): HouseOverlayViewModel | null {
+  if (activePachinkoBoardSession != null) {
+    return selectPachinkoBoardOverlayViewModel(activePachinkoBoardSession);
+  }
+
+  if (activeFortuneBoardSession != null) {
+    return selectFortuneBoardOverlayViewModel(activeFortuneBoardSession);
+  }
+
   if (overlay == null) {
     return null;
   }
@@ -3505,6 +4116,23 @@ function selectOverlayViewModel(
       type: "confirm",
       title: overlay.title,
       paragraphs: overlay.paragraphs,
+      ...(overlay.workDescriptionLines == null
+        ? {}
+        : { workDescriptionLines: overlay.workDescriptionLines }),
+      ...(overlay.relatedAbilityLines == null
+        ? {}
+        : { relatedAbilityLines: overlay.relatedAbilityLines }),
+      ...(overlay.costLines == null ? {} : { costLines: overlay.costLines }),
+      ...(overlay.bestScore == null ? {} : { bestScore: overlay.bestScore }),
+      ...(overlay.quickCompleteScore == null
+        ? {}
+        : { quickCompleteScore: overlay.quickCompleteScore }),
+      ...(overlay.quickCompleteActionId == null
+        ? {}
+        : { quickCompleteActionId: overlay.quickCompleteActionId }),
+      ...(overlay.quickCompleteLabel == null
+        ? {}
+        : { quickCompleteLabel: overlay.quickCompleteLabel }),
       confirmActionId: overlay.confirmActionId,
       confirmLabel: overlay.confirmLabel,
       cancelActionId: overlay.cancelActionId,
@@ -3707,6 +4335,20 @@ export const templeHouseHouseModule: HouseModuleDefinition<"temple-house"> = {
         ),
         selectedWorkPlan: readTempleWorkPlan(nextState),
       };
+    const activeFortuneBoardSession = isTempleFortuneBoardSession(
+      nextState,
+      input.houseDefinition.id
+    )
+      ? nextState.runtime.activitySession
+      : null;
+    const activePachinkoBoardSession = isTemplePachinkoBoardSession(
+      nextState,
+      input.houseDefinition.id
+    )
+      ? nextState.runtime.activitySession
+      : null;
+    const hasActiveTempleWorkPlayable =
+      activeFortuneBoardSession != null || activePachinkoBoardSession != null;
     const donationTotal = readNumericVariable(
       nextState,
       TEMPLE_HOUSE_VARIABLE_KEYS.donationTotal,
@@ -3756,11 +4398,13 @@ export const templeHouseHouseModule: HouseModuleDefinition<"temple-house"> = {
     const shouldShowDailyActions =
       sessionState.mode === "daily" &&
       sessionState.overlay == null &&
+      !hasActiveTempleWorkPlayable &&
       sessionState.dialoguePhase === "open";
     const shouldShowMeetingTasks =
       sessionState.mode === "meeting" &&
       sessionState.meetingStage === "assign-duty" &&
-      sessionState.overlay == null;
+      sessionState.overlay == null &&
+      !hasActiveTempleWorkPlayable;
     const selectedTask =
       sessionState.selectedTaskId == null
         ? null
@@ -3776,6 +4420,66 @@ export const templeHouseHouseModule: HouseModuleDefinition<"temple-house"> = {
       sessionState.mode === "meeting"
         ? meetingParticipantIds
         : input.houseDefinition.characterIds;
+    const standbyActors = standbyCharacterIds.map((characterId) => {
+      const characterDefinition = input.characterDefinitions.find(
+        (candidateCharacter) => candidateCharacter.id === characterId
+      );
+      assertExists(
+        characterDefinition,
+        `Temple standby character not found for id "${characterId}".`
+      );
+      return {
+        characterId: characterDefinition.id,
+        name: characterDefinition.name,
+        ...(sessionState.mode === "daily" &&
+        characterDefinition.id === abbotCharacter.id
+          ? { actionId: "open-abbot-dialogue" }
+          : {}),
+        ...(characterDefinition.id === abbotCharacter.id
+          ? {
+              interactionActions: getTempleRootActions(
+                nextState,
+                currentWorkPlan,
+                sessionState.dialoguePhase
+              )
+                .filter((action) => action.id !== "dismiss-dialogue")
+                .map((action) => ({
+                  ...action,
+                  kind: "special" as const,
+                })),
+            }
+          : {}),
+        ...(sessionState.mode === "meeting" &&
+        characterDefinition.id === input.playerCharacterId
+          ? { isSelected: true }
+          : sessionState.mode === "meeting"
+            ? { isSelected: false }
+            : characterDefinition.id === dialogueSpeaker.id
+              ? { isSelected: true }
+              : {}),
+        ...(characterDefinition.id === abbotCharacter.id
+          ? {
+              avatarArtClassName: "c-temple-house-avatar-art--abbot",
+              portraitArtClassName: "c-temple-house-portrait-art--abbot",
+            }
+          : characterDefinition.id === input.playerCharacterId
+            ? {
+                avatarArtClassName: "c-temple-house-avatar-art--player",
+                portraitArtClassName: "c-temple-house-portrait-art--player",
+              }
+            : {
+                avatarArtClassName: "c-temple-house-avatar-art--senior-monk",
+                portraitArtClassName: "c-temple-house-portrait-art--senior-monk",
+              }),
+        ...(characterDefinition.title == null
+          ? {}
+          : { title: characterDefinition.title }),
+      };
+    });
+    const orderedStandbyActors = orderHouseStandbyRoster({
+      primaryCharacterId: input.houseDefinition.defaultCharacterId,
+      actors: standbyActors,
+    });
 
     return {
       moduleId: "temple-house",
@@ -3790,47 +4494,7 @@ export const templeHouseHouseModule: HouseModuleDefinition<"temple-house"> = {
             input.textEntriesById,
             "runtime.zhu_yuanzhang.temple.scene.daily.subtitle"
           ),
-      standbyRoster: standbyCharacterIds.map((characterId) => {
-          const characterDefinition = input.characterDefinitions.find(
-            (candidateCharacter) => candidateCharacter.id === characterId
-          );
-          assertExists(
-            characterDefinition,
-            `Temple standby character not found for id "${characterId}".`
-          );
-          return {
-            characterId: characterDefinition.id,
-            name: characterDefinition.name,
-            ...(sessionState.mode === "daily" &&
-            characterDefinition.id === abbotCharacter.id &&
-            sessionState.dialoguePhase === "idle"
-              ? { actionId: "open-abbot-dialogue" }
-              : {}),
-            ...(sessionState.mode === "meeting" &&
-            characterDefinition.id === input.playerCharacterId
-              ? { isSelected: true }
-              : sessionState.mode === "meeting"
-                ? { isSelected: false }
-                : {}),
-            ...(characterDefinition.id === abbotCharacter.id
-              ? {
-                  avatarArtClassName: "c-temple-house-avatar-art--abbot",
-                  portraitArtClassName: "c-temple-house-portrait-art--abbot",
-                }
-              : characterDefinition.id === input.playerCharacterId
-                ? {
-                    avatarArtClassName: "c-temple-house-avatar-art--player",
-                    portraitArtClassName: "c-temple-house-portrait-art--player",
-                  }
-                : {
-                    avatarArtClassName: "c-temple-house-avatar-art--senior-monk",
-                    portraitArtClassName: "c-temple-house-portrait-art--senior-monk",
-                  }),
-            ...(characterDefinition.title == null
-              ? {}
-              : { title: characterDefinition.title }),
-          };
-        }),
+      standbyRoster: orderedStandbyActors,
       dialogue:
         sessionState.dialoguePhase === "idle"
           ? null
@@ -3982,7 +4646,12 @@ export const templeHouseHouseModule: HouseModuleDefinition<"temple-house"> = {
           { label: "玩家金钱", value: `${playerCharacter.stats.gold} 文` },
         ],
       },
-      overlay: selectOverlayViewModel(sessionState.overlay, input.textEntriesById),
+      overlay: selectOverlayViewModel(
+        sessionState.overlay,
+        activeFortuneBoardSession,
+        activePachinkoBoardSession,
+        input.textEntriesById
+      ),
       leaveAction: {
         id: "leave-house",
         label: "离开寺庙",

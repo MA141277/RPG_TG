@@ -1,8 +1,15 @@
 import type {
+  HouseActionViewModel,
+  HouseCharacterCardLevel,
   HouseModuleViewModel,
   HouseOverlayViewModel,
   HouseStandbyActorViewModel,
 } from "../../../domain/house-module";
+import { NPC_INTERACTION_DEFAULT_OPTIONS } from "../../../domain/npc-interaction";
+import {
+  renderDialogueTypewriterHint,
+  renderDialogueTypewriterLines,
+} from "../../dialogue-typewriter";
 
 type StandbyRosterOptions = {
   asideClassName?: string;
@@ -20,18 +27,141 @@ type LeaveButtonOptions = {
   className?: string;
 };
 
+type OverlaySkinOptions = {
+  overlayAttribute?: string;
+  modalClassName?: string;
+};
+
 type IdleOwnerOptions = {
   containerClassName?: string;
   buttonClassName?: string;
   renderSecondaryText?: (actor: HouseStandbyActorViewModel) => string;
 };
 
-export function renderHouseAlertOverlay(
-  overlay: Extract<HouseOverlayViewModel, { type: "alert" }>
+type CharacterCardOptions = {
+  className?: string;
+  secondaryText?: string;
+  cardLevel?: HouseCharacterCardLevel;
+};
+
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function getAssessmentPopupClassName(
+  fieldCount: number,
+  extraClassName = ""
 ): string {
+  const classNames = [
+    "c-assessment-popup",
+    "c-house-contribution-settlement",
+    ...(fieldCount >= 4 ? ["c-assessment-popup--wide"] : []),
+    ...extraClassName.trim().split(/\s+/u).filter(Boolean),
+  ];
+
+  return ` ${[...new Set(classNames)].join(" ")}`;
+}
+
+function normalizeCardLevel(
+  level: HouseStandbyActorViewModel["cardLevel"]
+): HouseCharacterCardLevel {
+  return level == null ? 1 : level;
+}
+
+function isDismissHouseAction(action: HouseActionViewModel): boolean {
+  const normalizedId = action.id.toLowerCase();
+
+  return (
+    normalizedId === "dismiss-dialogue" ||
+    normalizedId === "close" ||
+    normalizedId.endsWith(":close") ||
+    action.label === "关闭" ||
+    action.label.includes("退下") ||
+    action.label.includes("离开")
+  );
+}
+
+function renderHouseActionButton(action: HouseActionViewModel): string {
   return `
-    <div class="c-grain-shop-overlay" data-house-overlay="alert">
-      <div class="c-grain-shop-modal c-grain-shop-skin-panel" role="dialog" aria-modal="true">
+    <button
+      type="button"
+      class="c-button c-grain-shop-button ${action.tone === "accent" ? "c-grain-shop-button--gold" : "c-grain-shop-button--paper"}"
+      data-house-action="${escapeHtml(action.id)}"
+      ${action.disabled ? "disabled" : ""}
+    >
+      ${escapeHtml(action.label)}
+    </button>
+  `;
+}
+
+function shouldAppendDefaultNpcActions(
+  actions: HouseActionViewModel[],
+  targetActor: HouseStandbyActorViewModel | null
+): boolean {
+  if (targetActor?.interactionActions == null) {
+    return false;
+  }
+
+  const targetActionIds = new Set(
+    targetActor.interactionActions.map((action) => action.id)
+  );
+
+  return actions.some((action) => targetActionIds.has(action.id));
+}
+
+export function renderHouseCharacterCard(
+  actor: HouseStandbyActorViewModel,
+  options: CharacterCardOptions = {}
+): string {
+  const cardLevel = options.cardLevel ?? normalizeCardLevel(actor.cardLevel);
+  const className = options.className == null ? "" : ` ${options.className}`;
+  const secondaryText = options.secondaryText ?? "";
+
+  return `
+    <article class="c-house-character-card${className}" data-house-card-level="${cardLevel}">
+      <span class="c-house-character-card__banner" aria-hidden="true"></span>
+      <span class="c-house-character-card__ornament" aria-hidden="true"></span>
+      <span class="c-house-character-card__frame" aria-hidden="true"></span>
+      <div class="c-house-character-card__portrait" aria-hidden="true">
+        ${
+          actor.avatarImageUrl == null
+            ? `<span class="c-house-character-card__portrait-art ${actor.avatarArtClassName ?? ""}"></span>`
+            : `<img class="c-house-character-card__portrait-image" src="${actor.avatarImageUrl}" alt="">`
+        }
+      </div>
+      <div class="c-house-character-card__body">
+        <strong class="c-house-character-card__name">${actor.name}</strong>
+        ${secondaryText}
+      </div>
+    </article>
+  `;
+}
+
+export function renderHouseAlertOverlay(
+  overlay: Extract<HouseOverlayViewModel, { type: "alert" }>,
+  options: OverlaySkinOptions = {}
+): string {
+  const isContributionSettlement =
+    overlay.title.includes("贡献") &&
+    overlay.paragraphs.length > 0 &&
+    overlay.paragraphs.every((paragraph) => paragraph.includes("贡献"));
+  const isAssessmentTaskPopup =
+    overlay.title === "本轮差事已定" || overlay.title === "寺务已定";
+  const overlayVariantAttribute =
+    options.overlayAttribute ?? ' data-house-alert-variant="assessment-popup"';
+  const modalClassName = `c-grain-shop-modal c-grain-shop-skin-panel${
+    getAssessmentPopupClassName(overlay.paragraphs.length, options.modalClassName)
+  }${isContributionSettlement ? " c-house-contribution-popup" : ""}${
+    isAssessmentTaskPopup ? " c-house-assessment-task-popup" : ""
+  }`;
+
+  return `
+    <div class="c-grain-shop-overlay" data-house-overlay="alert"${overlayVariantAttribute}>
+      <div class="${modalClassName}" role="dialog" aria-modal="true">
         <h3 class="c-grain-shop-modal__title c-grain-shop-nameplate">${overlay.title}</h3>
         <div class="c-grain-shop-modal__body">
           ${overlay.paragraphs.map((paragraph) => `<p>${paragraph}</p>`).join("")}
@@ -53,9 +183,13 @@ export function renderHouseAlertOverlay(
 export function renderHouseConfirmOverlay(
   overlay: Extract<HouseOverlayViewModel, { type: "confirm" }>
 ): string {
+  const modalClassName = `c-grain-shop-modal c-grain-shop-skin-panel${getAssessmentPopupClassName(
+    overlay.paragraphs.length
+  )}`;
+
   return `
-    <div class="c-grain-shop-overlay" data-house-overlay="confirm">
-      <div class="c-grain-shop-modal c-grain-shop-skin-panel" role="dialog" aria-modal="true">
+    <div class="c-grain-shop-overlay" data-house-overlay="confirm" data-house-overlay-variant="assessment-popup">
+      <div class="${modalClassName}" role="dialog" aria-modal="true">
         <h3 class="c-grain-shop-modal__title c-grain-shop-nameplate">${overlay.title}</h3>
         <div class="c-grain-shop-modal__body">
           ${overlay.paragraphs.map((paragraph) => `<p>${paragraph}</p>`).join("")}
@@ -74,11 +208,19 @@ export function renderHouseConfirmOverlay(
 }
 
 export function renderHouseQuantityConfirmOverlay(
-  overlay: Extract<HouseOverlayViewModel, { type: "quantity-confirm" }>
+  overlay: Extract<HouseOverlayViewModel, { type: "quantity-confirm" }>,
+  options: OverlaySkinOptions = {}
 ): string {
+  const modalClassName = `c-grain-shop-modal c-grain-shop-skin-panel${getAssessmentPopupClassName(
+    overlay.paragraphs.length + 4,
+    options.modalClassName
+  )}`;
+  const overlayVariantAttribute =
+    options.overlayAttribute ?? ' data-house-overlay-variant="assessment-popup"';
+
   return `
-    <div class="c-grain-shop-overlay" data-house-overlay="quantity-confirm">
-      <div class="c-grain-shop-modal c-grain-shop-skin-panel" role="dialog" aria-modal="true">
+    <div class="c-grain-shop-overlay" data-house-overlay="quantity-confirm"${overlayVariantAttribute}>
+      <div class="${modalClassName}" role="dialog" aria-modal="true">
         <h3 class="c-grain-shop-modal__title c-grain-shop-nameplate">${overlay.title}</h3>
         <div class="c-grain-shop-modal__body">
           ${overlay.paragraphs.map((paragraph) => `<p>${paragraph}</p>`).join("")}
@@ -119,26 +261,54 @@ export function renderHouseActionContainer(
     return "";
   }
 
+  const targetActor =
+    viewModel.standbyRoster.find((actor) => actor.isSelected === true) ??
+    viewModel.standbyRoster[0] ??
+    null;
+  const targetCharacterId =
+    targetActor == null ? null : escapeHtml(targetActor.characterId);
+  const primaryHouseActions = viewModel.actionContainer.actions.filter(
+    (action) => !isDismissHouseAction(action)
+  );
+  const dismissHouseActions = viewModel.actionContainer.actions.filter(
+    isDismissHouseAction
+  );
+  const appendDefaultNpcActions = shouldAppendDefaultNpcActions(
+    viewModel.actionContainer.actions,
+    targetActor
+  );
+  const defaultNpcActions =
+    targetCharacterId == null || !appendDefaultNpcActions
+      ? ""
+      : NPC_INTERACTION_DEFAULT_OPTIONS.map((option) => {
+          const buttonTone =
+            option.tone === "accent"
+              ? "c-grain-shop-button--gold"
+              : "c-grain-shop-button--paper";
+          const disabled = option.kind === "gift" || option.disabled === true;
+
+          return `
+            <button
+              type="button"
+              class="c-button c-grain-shop-button ${buttonTone}"
+              data-npc-action="${escapeHtml(option.kind)}"
+              data-character-id="${targetCharacterId}"
+              ${disabled ? "disabled" : ""}
+            >
+              ${escapeHtml(option.label)}
+            </button>
+          `;
+        }).join("");
+
   return `
     <div class="c-grain-shop-center c-grain-shop-center--open">
       <nav
         class="c-grain-shop-actions"
         aria-label="${viewModel.actionContainer.title ?? "房屋操作"}"
       >
-        ${viewModel.actionContainer.actions
-          .map(
-            (action) => `
-              <button
-                type="button"
-                class="c-button c-grain-shop-button ${action.tone === "accent" ? "c-grain-shop-button--gold" : "c-grain-shop-button--paper"}"
-                data-house-action="${action.id}"
-                ${action.disabled ? "disabled" : ""}
-              >
-                ${action.label}
-              </button>
-            `
-          )
-          .join("")}
+        ${primaryHouseActions.map(renderHouseActionButton).join("")}
+        ${defaultNpcActions}
+        ${dismissHouseActions.map(renderHouseActionButton).join("")}
       </nav>
     </div>
   `;
@@ -162,30 +332,53 @@ export function renderHouseStandbyRoster(
           const selectedClass =
             options.includeSelectedState && actor.isSelected ? " is-selected" : "";
           const secondaryText = options.renderSecondaryText?.(actor) ?? "";
+          const targetAttributes = renderHouseNpcTargetAttributes(viewModel, actor);
+          const ariaLabel = escapeHtml(`与 ${actor.name} 交谈`);
 
           return `
             <button
               type="button"
               class="c-grain-shop-npc-idle__button${selectedClass}"
-              ${actor.actionId == null ? "" : `data-house-action="${actor.actionId}"`}
-              aria-label="与 ${actor.name} 交谈"
+              ${targetAttributes}
+              aria-label="${ariaLabel}"
             >
-              <div class="c-grain-shop-avatar" aria-hidden="true">
-                ${
-                  actor.avatarImageUrl == null
-                    ? `<span class="c-grain-shop-avatar__art ${actor.avatarArtClassName ?? ""}"></span>`
-                    : `<img class="c-grain-shop-avatar__image" src="${actor.avatarImageUrl}" alt="">`
-                }
-              </div>
-              <p class="c-grain-shop-avatar__name c-grain-shop-nameplate c-grain-shop-nameplate--small">
-                ${actor.name}
-              </p>
-              ${secondaryText}
+              ${renderHouseCharacterCard(actor, { secondaryText })}
             </button>
           `;
         })
         .join("")}
     </aside>
+  `;
+}
+
+export function renderHouseNpcTargetAttributes(
+  viewModel: HouseModuleViewModel,
+  actor: HouseStandbyActorViewModel
+): string {
+  const houseId = escapeHtml(viewModel.houseId);
+  const moduleId = escapeHtml(viewModel.moduleId);
+
+  if (actor.disabled === true) {
+    return `
+      data-npc-context-type="house"
+      data-house-id="${houseId}"
+      data-house-module-id="${moduleId}"
+      disabled
+    `;
+  }
+
+  const npcContext = JSON.stringify({
+    type: "house",
+    houseId: viewModel.houseId,
+    moduleId: viewModel.moduleId,
+  });
+
+  return `
+    data-npc-target="${escapeHtml(actor.characterId)}"
+    data-npc-context="${escapeHtml(npcContext)}"
+    data-npc-context-type="house"
+    data-house-id="${houseId}"
+    data-house-module-id="${moduleId}"
   `;
 }
 
@@ -200,7 +393,7 @@ export function renderHouseDialogue(
   const clickable = viewModel.dialogue.advanceActionId != null;
   const footerClassName = options.footerClassName ?? "c-grain-shop-dialogue";
   const ariaLabel = options.ariaLabel ?? "对话";
-  const isNarration = viewModel.dialogue.mode === "narration";
+  const typewriterLines = renderDialogueTypewriterLines(viewModel.dialogue.textLines);
 
   return `
     <footer class="${footerClassName}" aria-label="${ariaLabel}">
@@ -208,19 +401,25 @@ export function renderHouseDialogue(
         class="c-grain-shop-dialogue__text c-grain-shop-skin-card ${clickable ? "c-grain-shop-dialogue__text--clickable" : ""}"
         ${clickable ? `data-house-action="${viewModel.dialogue.advanceActionId}" role="button" tabindex="0"` : ""}
       >
-        ${viewModel.dialogue.textLines
-          .map((line) => `<p class="c-grain-shop-dialogue__line">${line}</p>`)
-          .join("")}
+        ${
+          viewModel.dialogue.mode === "character" &&
+          viewModel.dialogue.speakerName != null
+            ? `<p class="c-grain-shop-dialogue__speaker">${viewModel.dialogue.speakerName}</p>`
+            : ""
+        }
+        ${typewriterLines.markup}
         ${
           viewModel.dialogue.advanceHintText == null
             ? ""
-            : `<p class="c-grain-shop-dialogue__hint">${viewModel.dialogue.advanceHintText}</p>`
+            : renderDialogueTypewriterHint(
+                viewModel.dialogue.advanceHintText,
+                typewriterLines.totalDurationMs
+              )
         }
       </div>
       ${
-        isNarration
-          ? ""
-          : `
+        viewModel.dialogue.mode === "character"
+          ? `
             <div class="c-grain-shop-dialogue__npc">
               <div class="c-grain-shop-portrait" aria-hidden="true">
                 ${
@@ -234,6 +433,7 @@ export function renderHouseDialogue(
               </p>
             </div>
           `
+          : ""
       }
     </footer>
   `;
@@ -261,17 +461,10 @@ export function renderHouseIdleOwner(
         ${actor.actionId == null ? "" : `data-house-action="${actor.actionId}"`}
         aria-label="与 ${actor.name} 交谈"
       >
-        <div class="c-grain-shop-portrait" aria-hidden="true">
-          ${
-            actor.portraitImageUrl == null
-              ? `<span class="c-grain-shop-portrait__art ${actor.portraitArtClassName ?? ""}"></span>`
-              : `<img class="c-grain-shop-portrait__image" src="${actor.portraitImageUrl}" alt="">`
-          }
-        </div>
-        <p class="c-grain-shop-portrait__name c-grain-shop-nameplate c-grain-shop-nameplate--small">
-          ${actor.name}
-        </p>
-        ${secondaryText}
+        ${renderHouseCharacterCard(actor, {
+          secondaryText,
+          cardLevel: actor.cardLevel ?? 3,
+        })}
       </button>
     </aside>
   `;
