@@ -23220,6 +23220,61 @@ test("location access runtime blocks enter-city before current city mutation", (
   });
 });
 
+test("routed navigation runtime preserves blocked location access refusal", () => {
+  const {
+    createEnterCityRequest,
+    routeNavigationRuntime,
+  } = require("../.test-dist/core/runtime/navigation-runtime.js");
+  const baseState = createBaseState();
+  const result = routeNavigationRuntime({
+    state: createRuntimeState({
+      ...baseState,
+      player: { characterId: "char.player" },
+      world: { ...baseState.world, currentCityId: "city.start" },
+    }),
+    request: createEnterCityRequest("city.blocked"),
+    cityDefinitionsById: {
+      "city.blocked": {
+        id: "city.blocked",
+        name: "Blocked City",
+        regionId: "region.test",
+        mapNodeId: "node.blocked",
+        houseIds: [],
+        neighbourCityIds: [],
+        travelCost: 1,
+        tags: [],
+        prosperity: 50,
+        danger: 10,
+        specialDemand: [],
+      },
+    },
+    locationAccessDefinitions: [
+      {
+        id: "location-access.city.blocked",
+        targetFamily: "city",
+        targetId: "city.blocked",
+        conditionExpression: { type: "literal", value: false },
+        blockedMessage: "City is not open.",
+        blockedSpeakerId: "player",
+        guidance: "Return later.",
+      },
+    ],
+  });
+
+  assert.equal(result.state.core.world.currentCityId, "city.start");
+  assert.equal(result.navigation, null);
+  assert.deepEqual(result.access, {
+    canEnter: false,
+    refusal: {
+      ruleId: "location-access.city.blocked",
+      speakerCharacterId: "char.player",
+      title: "Blocked City",
+      text: "City is not open.",
+      confirmLabel: "Return later.",
+    },
+  });
+});
+
 test("map city markers use active city definitions with map-owned coordinates", () => {
   const {
     createMapCityMarkers,

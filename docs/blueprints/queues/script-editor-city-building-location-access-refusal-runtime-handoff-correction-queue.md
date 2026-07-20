@@ -7,23 +7,23 @@
 - blueprint_version: `2026.07`
 - governance_last_synced_at: `2026-07-20`
 - governance_sync_source: `docs/blueprints/plans/2026-07-19-city-building-module-entry-and-project-startup-authoring-target-plan.md`
-- queue_status: `dropped`
+- queue_status: `active`
 - queue_class: `required-priority`
-- active_task: `none`
+- active_task: `task.script-editor-city-building-location-access-refusal-runtime-handoff-correction.queue-closeout-and-handoff`
 - next_task: `none`
-- closeout_status: `done`
+- closeout_status: `not-started`
 - execution_closeout_status: `partial`
 - topic_closure_status: `open-residue`
-- closure_basis: `Queue was admitted but not executed; the operator redirected priority to encoding repair before evidence-anchor work began.`
+- closure_basis: `Queue readmitted after encoding repair closed; execution restarted at evidence-anchor reconcile.`
 - residue_remaining: `yes`
-- residue_family: `accepted-residue`
-- residue_routing_status: `needs-version-review`
-- next_family_candidate: `none`
-- auto_continue_eligible: `false`
-- next_effect: `none`
+- residue_family: `same-family`
+- residue_routing_status: `auto-routable`
+- next_family_candidate: `task.script-editor-city-building-location-access-refusal-runtime-handoff-correction.queue-closeout-and-handoff`
+- auto_continue_eligible: `true`
+- next_effect: `resume-active-task`
 - sync_status: `pending`
 - sync_scope: `local-record`
-- sync_summary: `Queue dropped locally before execution because the operator redirected priority to encoding repair.`
+- sync_summary: `Queue readmitted locally after encoding repair closed; evidence-anchor reconcile is active.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
@@ -137,9 +137,9 @@
 
 | Task ID | State | Summary | Depends On | Notes |
 | --- | --- | --- | --- | --- |
-| `task.script-editor-city-building-location-access-refusal-runtime-handoff-correction.evidence-anchor-reconcile` | `dropped` | `Confirm the buglist evidence and runtime handoff boundary before implementation.` | `none` | `Not executed; operator redirected priority to encoding repair.` |
-| `task.script-editor-city-building-location-access-refusal-runtime-handoff-correction.implementation` | `pending` | `Implement refusal handoff correction test-first and verify runtime behavior.` | `task.script-editor-city-building-location-access-refusal-runtime-handoff-correction.evidence-anchor-reconcile` | `Pending evidence lock.` |
-| `task.script-editor-city-building-location-access-refusal-runtime-handoff-correction.queue-closeout-and-handoff` | `pending` | `Verify the queue and return to version review without version closeout.` | `task.script-editor-city-building-location-access-refusal-runtime-handoff-correction.implementation` | `Pending implementation.` |
+| `task.script-editor-city-building-location-access-refusal-runtime-handoff-correction.evidence-anchor-reconcile` | `done` | `Confirm the buglist evidence and runtime handoff boundary before implementation.` | `none` | `Completed on 2026-07-20. Evidence confirmed runNavigationRuntime computed access.refusal, main.ts already consumed runtimeCommit.runtimeResult.access.refusal for city entry, and routeNavigationRuntime dropped result.access before RuntimeResult handoff.` |
+| `task.script-editor-city-building-location-access-refusal-runtime-handoff-correction.implementation` | `done` | `Implement refusal handoff correction test-first and verify runtime behavior.` | `task.script-editor-city-building-location-access-refusal-runtime-handoff-correction.evidence-anchor-reconcile` | `Completed on 2026-07-20. RED proved routed navigation runtime returned undefined access for blocked city entry. GREEN minimally forwards result.access from routeNavigationRuntime.` |
+| `task.script-editor-city-building-location-access-refusal-runtime-handoff-correction.queue-closeout-and-handoff` | `in_progress` | `Verify the queue and return to version review without version closeout.` | `task.script-editor-city-building-location-access-refusal-runtime-handoff-correction.implementation` | `Active task. Automated verification passed; browser simulated-human city/building refusal proof remains pending.` |
 
 ### Task Definitions
 
@@ -148,7 +148,7 @@
 ##### Control Block
 
 - task_id: `task.script-editor-city-building-location-access-refusal-runtime-handoff-correction.evidence-anchor-reconcile`
-- state: `dropped`
+- state: `done`
 - task_kind: `decision-dispatch`
 - scope:
   - `docs/blueprints/reports/2026-07-20-city-building-location-access-buglist.md`
@@ -186,7 +186,7 @@
 - task_brief:
   - `Confirm buglist evidence and runtime handoff seams before implementation.`
 - task_outcome_summary:
-  - `dropped before execution because the operator redirected priority to encoding repair.`
+  - `Completed on 2026-07-20. Root cause is routeNavigationRuntime dropping runNavigationRuntime result.access before the RuntimeResult reaches main city-entry refusal handling. Building entry evidence shows city-building-placement-resolver already checks LocationAccessRuntime before legacy houseAccessRefusalRules.`
 - Purpose:
   - `Avoid fixing symptoms before identifying exactly where city/building locationAccess refusal is lost.`
 - Failure mode:
@@ -197,7 +197,7 @@
 ##### Control Block
 
 - task_id: `task.script-editor-city-building-location-access-refusal-runtime-handoff-correction.implementation`
-- state: `pending`
+- state: `done`
 - task_kind: `execution`
 - scope:
   - `src/core/runtime/navigation-runtime.ts`
@@ -238,7 +238,7 @@
 - task_brief:
   - `Implement refusal handoff correction test-first.`
 - task_outcome_summary:
-  - `pending`
+  - `Completed on 2026-07-20. Added RED coverage for routed navigation runtime preserving blocked location access refusal, watched it fail with actual undefined access, then minimally forwarded result.access from routeNavigationRuntime. Verification passed: focused test, npm run typecheck, npm run lint:encoding, npm run lint:blueprints, and npm test.`
 - Purpose:
   - `Make runtime failed access checks visible and actionable in production flow.`
 - Failure mode:
@@ -249,7 +249,7 @@
 ##### Control Block
 
 - task_id: `task.script-editor-city-building-location-access-refusal-runtime-handoff-correction.queue-closeout-and-handoff`
-- state: `pending`
+- state: `in_progress`
 - task_kind: `execution`
 - scope:
   - `docs/blueprints/plans/2026-07-19-city-building-module-entry-and-project-startup-authoring-target-plan.md`
@@ -277,7 +277,7 @@
 - task_brief:
   - `Verify the queue and return to version review without version closeout.`
 - task_outcome_summary:
-  - `pending`
+  - `in_progress. Automated guard review passed. Browser simulated-human city refusal proof passed: Script Editor city event condition exported into runtime preview, map city click preserved the blocked access result, and the visible refusal overlay showed the default refusal text instead of entering the city. Browser building proof remains inconclusive because the tested building paths are masked by existing legacy houseAccessRefusalRules text before a locationAccess-specific refusal can be distinguished.`
 - Purpose:
   - `Keep queue closeout separate from version closeout.`
 - Failure mode:

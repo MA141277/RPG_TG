@@ -5,8 +5,8 @@
 - entry_id: `project-progress.rpg-tg`
 - active_blueprint: `blueprint.rpg-tg`
 - active_version: `target.city-building-module-entry-and-project-startup-authoring`
-- has_active_queue: `false`
-- next_file: `docs/blueprints/plans/2026-07-19-city-building-module-entry-and-project-startup-authoring-target-plan.md`
+- has_active_queue: `true`
+- next_file: `docs/blueprints/queues/script-editor-city-building-location-access-refusal-runtime-handoff-correction-queue.md`
 - entry_action: `open-next-file`
 
 ## Human Context
@@ -29,7 +29,7 @@
 - Current Version Plan:
   - `docs/blueprints/plans/2026-07-19-city-building-module-entry-and-project-startup-authoring-target-plan.md`
 - Current Active Queue:
-  - `none`
+  - `queue.script-editor-city-building-location-access-refusal-runtime-handoff-correction`
 
 ### Live Entry Guardrails
 
@@ -37,7 +37,7 @@
 - `Admission history, queue closeout history, and review narrative must stay in the version plan, queue docs, or docs/change-log.md rather than living here as competing current-state prose.`
 - `The pointed version is now the closed Entry Shell UI module extraction successor version created from MEMO-011 after the city/building background queue closed.`
 - `target.entry-shell-ui-module-extraction is done with no active queue after queue.entry-shell-ui-module-extraction closed and final version closeout was recorded.`
-- `target.city-building-module-entry-and-project-startup-authoring is open with no active queue after queue.script-editor-main-ui-flow-mojibake-repair-and-encoding-guard-hardening closed. Project-info-authoring, city-building-module-entry, runtime-startup-convergence, acceptance-and-guard, queue.script-editor-city-building-enter-state-and-preview-boundary, queue.script-editor-city-building-secondary-list-and-selector-ux-unification, queue.script-editor-ui-encoding-integrity-guard, queue.script-editor-city-building-background-authoring, queue.script-editor-city-building-location-access-condition-authoring-correction, and queue.script-editor-main-ui-flow-mojibake-repair-and-encoding-guard-hardening are complete or closed.`
+- `target.city-building-module-entry-and-project-startup-authoring is open with active queue queue.script-editor-city-building-location-access-refusal-runtime-handoff-correction after queue.script-editor-main-ui-flow-mojibake-repair-and-encoding-guard-hardening closed. Project-info-authoring, city-building-module-entry, runtime-startup-convergence, acceptance-and-guard, queue.script-editor-city-building-enter-state-and-preview-boundary, queue.script-editor-city-building-secondary-list-and-selector-ux-unification, queue.script-editor-ui-encoding-integrity-guard, queue.script-editor-city-building-background-authoring, queue.script-editor-city-building-location-access-condition-authoring-correction, and queue.script-editor-main-ui-flow-mojibake-repair-and-encoding-guard-hardening are complete or closed.`
 - `Current entry pointers have been synchronized back to the open target.city-building-module-entry-and-project-startup-authoring version; because an open version exists, no duplicate version was created.`
 - `queue.script-editor-city-building-enter-state-and-preview-boundary is closed after source guard, automated verification, and partial simulated-human browser proof; runtime preview green-frame browser proof remains recorded as inconclusive rather than claimed.`
 - `queue.script-editor-city-building-secondary-list-and-selector-ux-unification is closed after guard review, automated verification, and bounded browser simulated-human evidence. The version remains open for same-version promotion/admission review rather than version closeout.`
@@ -58,7 +58,7 @@
 - `queue.script-editor-event-binding-owner-local-authoring-surfaces is closed after guard review and queue closeout.`
 - `queue.script-editor-event-binding-condition-editor-completion is closed after final guard review, queue closeout/handoff, and the owner-local events tab selector closeout regression fix.`
 - `queue.script-editor-event-body-trigger-field-retirement is closed after guard review and queue closeout/handoff.`
-- `The destination content-entry family correction queue is done. Runtime preview-from-memory is done. The current city/building version remains open with no active queue after the encoding repair queue closed; do not enter version closeout, commit, push, merge, or admit another queue unless explicitly requested.`
+- `The destination content-entry family correction queue is done. Runtime preview-from-memory is done. The current city/building version remains open with active queue queue.script-editor-city-building-location-access-refusal-runtime-handoff-correction; do not enter version closeout, commit, push, merge, or admit another queue unless explicitly requested.`
 
 ### Historical References
 

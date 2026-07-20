@@ -170,6 +170,7 @@ export function routeNavigationRuntime(input: {
     },
     effects: [],
     ...(result.followUp == null ? {} : { followUp: result.followUp }),
+    ...(result.access == null ? {} : { access: result.access }),
     navigation: result.navigation,
   };
 }
