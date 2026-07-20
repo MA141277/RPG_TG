@@ -63,6 +63,8 @@ Rules:
 3. For historical explanation, use the compact record in the current active governance docs first.
 4. Open closed queues, old plans, `docs/superpowers/**`, or `docs/change-log.md` only when the current active docs explicitly cite them or when code evidence is insufficient and the file is being used as historical evidence only.
 5. Do not use `docs/change-log.md` as a default search target for Blueprint routing, admission, closeout, scheduling, or implementation truth.
+6. A version memo is not a candidate queue set. Memo entries may record observations, drafts, or possible future work, but they must not be treated as executable candidates unless an operator explicitly asks to promote, inspect, or modify a memo entry.
+7. After a candidate or execution queue completes, the agent must not mine `docs/blueprints/version-memo.md` to decide what to execute next on its own. Memo lookup after queue completion is allowed only when the operator explicitly asks for memo screening, memo promotion, or a named memo/queue review.
 
 ## 4. Single-Writer Truth Model
 
@@ -985,6 +987,8 @@ The refresh order is fixed:
 7. relevant queue docs named by the current version plan
 8. `docs/change-log.md` only when the structured governance docs are insufficient or explicitly cite it
 
+`docs/blueprints/version-memo.md` is deliberately not part of the default refresh order. It may be consulted only when the operator explicitly requests memo screening, memo promotion, or review of a named memo/queue that is recorded only in the memo.
+
 The version plan should record the refresh result in:
 
 - `candidate_backlog_refresh_status`
@@ -1005,6 +1009,21 @@ Hard rules:
 3. If any candidate queue appears in `candidate_queue_ids`, `Candidate Recovery Ledger`, `Queue Promotion Ledger`, or cited queue docs, the agent must list it or explain why it is not eligible yet.
 4. If the candidate truth is stale, missing, or internally inconsistent, the next action is refresh or reconcile; it is not a prose answer that no candidates exist.
 5. The agent must not require the operator to paste a queue doc before performing this refresh when the doc path is already named by governance truth.
+6. A memo-only entry is not a candidate queue for this refresh. It becomes candidate truth only after operator-requested promotion/admission review records it in the current version plan.
+
+### 11.6.1 Simulated-Human Multi-Case Test Discipline
+
+When Blueprint asks for simulated-human testing across multiple test cases or scenarios, the full case set must be executed before any repair pass begins.
+
+Rules:
+
+1. Do not stop after only one passing case when additional requested cases remain.
+2. If a test case fails, record the failure and continue with the remaining cases when execution can still proceed safely.
+3. Only after all requested test cases finish, or execution becomes impossible because of a blocking bug, may the agent switch from test execution to repair work.
+4. After repair, rerun the specific failed test case(s) that produced the problem.
+5. A test case may be marked complete only after it passes on the rerun that verifies the fix.
+6. A test suite may be marked complete only when every requested case has been run and every failed case has been rerun successfully, or when the remaining cases are explicitly unreachable because of a blocking bug that has been recorded.
+7. Do not silently skip cases, collapse cases into one representative case, or mark a partially run suite as complete.
 
 ### 11.7 Task And Queue Repository Sync
 

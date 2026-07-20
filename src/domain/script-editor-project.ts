@@ -140,10 +140,9 @@ export type ScriptEditorAccessRule = {
   conditionExpression?: LocationAccessConditionExpression | undefined;
   blockedReason?: string | undefined;
   blockedMessage?: string | undefined;
-  blockedMessageTextEntryId?: string | undefined;
+  blockedDialogueId?: string | undefined;
   blockedSpeakerId?: string | "player" | undefined;
   guidance?: string | undefined;
-  refusalEventId?: string | undefined;
 };
 
 export type ScriptEditorBuildingEntryBinding = {

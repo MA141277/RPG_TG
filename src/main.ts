@@ -2992,6 +2992,7 @@ function handleModalConfirm() {
             state,
             request,
             cityDefinitionsById: activeContentContext.cityDefinitionById,
+            characterDefinitions: appState.characterDefinitions,
             locationAccessDefinitions: activeContentContext.locationAccess,
           }),
       },
@@ -3004,6 +3005,12 @@ function handleModalConfirm() {
     }),
   });
   appState = runtimeCommit.state;
+  if (runtimeCommit.runtimeResult.access?.refusal != null) {
+    cityHouseTransitionCoordinator.handleHouseAccessRefusal(
+      runtimeCommit.runtimeResult.access.refusal
+    );
+    return;
+  }
   renderApp();
 }
 

@@ -104,6 +104,7 @@ function resolveCityBuildingEntryAccess(
     targetFamily: "building",
     targetId: placement.house.id,
     targetBuilding: placement.house,
+    characterDefinitions: input.characterDefinitions,
     locationAccessDefinitions: input.locationAccessDefinitions ?? [],
   });
   if (!locationAccess.canEnter) {

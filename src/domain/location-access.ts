@@ -3,6 +3,9 @@ import type { CharacterId } from "./character";
 export type LocationAccessTargetFamily = "city" | "building";
 
 export type LocationAccessConditionSubject =
+  | "event"
+  | "person"
+  | "time"
   | "targetCity"
   | "targetBuilding"
   | "player"
@@ -13,6 +16,7 @@ export type LocationAccessValueRef =
   | {
       type: "field";
       subject: LocationAccessConditionSubject;
+      entityId?: string;
       fieldId: string;
     }
   | {
@@ -49,7 +53,6 @@ export type LocationAccessDefinition = {
   blockedMessage?: string;
   blockedSpeakerId?: CharacterId | "player";
   guidance?: string;
-  refusalEventId?: string;
 };
 
 export type LocationAccessResult =

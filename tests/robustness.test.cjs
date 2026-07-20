@@ -3868,6 +3868,10 @@ test("script editor runtime preview keeps failures in the editor and exposes exi
   assert.match(mainUiSource, /data-script-editor-action="exit-runtime-preview"/);
   assert.doesNotMatch(mainUiSource, /data-action="exit-runtime-preview"/);
   assert.match(mainUiSource, />\s*退出预览\s*</);
+  assert.doesNotMatch(mainUiSource, /c-main-ui-runtime-preview-frame/);
+  assert.doesNotMatch(mainUiSource, /class="c-runtime-preview-exit"/);
+  assert.match(mainUiSource, /c-main-ui-runtime-preview-session-banner/);
+  assert.match(mainUiSource, /c-runtime-preview-exit--session/);
   assert.match(mainUiSource, /exitScriptEditorRuntimePreview\(\)/);
   assert.match(mainUiSource, /restoreScriptEditorRuntimePreviewReturnContext/);
   assert.match(mainUiSource, /scriptEditorSelection/);
@@ -3879,9 +3883,67 @@ test("script editor runtime preview keeps failures in the editor and exposes exi
   );
   assert.match(mainUiStyles, /\.c-main-ui-screen--runtime-preview/);
   assert.match(mainUiStyles, /pointer-events:\s*none/);
-  assert.match(mainUiStyles, /\.c-runtime-preview-exit/);
+  assert.doesNotMatch(mainUiStyles, /\.c-main-ui-runtime-preview-frame/);
+  assert.doesNotMatch(mainUiStyles, /\.c-runtime-preview-exit\s*{/);
+  assert.match(mainUiStyles, /\.c-main-ui-runtime-preview-session-banner\s*{[\s\S]*?top:\s*16px;[\s\S]*?right:\s*16px;/);
+  assert.match(mainUiStyles, /\.c-main-ui-runtime-preview-session-banner\s*{[\s\S]*?z-index:\s*2001;/);
   assert.match(mainUiStyles, /pointer-events:\s*auto/);
 });
+
+test(
+  "script editor city/building access panel uses readable refusal labels and condition labels",
+  () => {
+    const mainUiSource = fs.readFileSync(
+      path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+      "utf8"
+    );
+    const locationAccessPanelSource = mainUiSource.slice(
+      mainUiSource.indexOf("renderScriptEditorLocationAccessPanel(location) {"),
+      mainUiSource.indexOf("renderScriptEditorLocationAccessConditionEditor(conditionExpression) {")
+    );
+    const conditionEditorSource = mainUiSource.slice(
+      mainUiSource.indexOf("renderScriptEditorLocationAccessConditionEditor(conditionExpression) {"),
+      mainUiSource.indexOf("renderScriptEditorLocationAccessConditionRow(condition, index) {")
+    );
+    const conditionRowSource = mainUiSource.slice(
+      mainUiSource.indexOf("renderScriptEditorLocationAccessConditionRow(condition, index) {"),
+      mainUiSource.indexOf("renderScriptEditorLocationAccessEventConditionControls(condition, index) {")
+    );
+    const personConditionSource = mainUiSource.slice(
+      mainUiSource.indexOf("renderScriptEditorLocationAccessPersonConditionControls(condition, index, literalValue) {"),
+      mainUiSource.indexOf("renderScriptEditorLocationAccessTimeConditionControls(condition, index, literalValue) {")
+    );
+    const personFieldSource = mainUiSource.slice(
+      mainUiSource.indexOf("getScriptEditorLocationAccessPersonFieldOptions(personId) {"),
+      mainUiSource.indexOf("renderScriptEditorBuildingEntryPanel(location) {")
+    );
+
+    assert.match(locationAccessPanelSource, /拒绝提示/);
+    assert.match(locationAccessPanelSource, /进入条件/);
+    assert.match(conditionEditorSource, /没有条件时/);
+    assert.match(conditionEditorSource, /新增条件/);
+    assert.match(conditionEditorSource, /清空条件/);
+    assert.match(conditionRowSource, /事件|人物|时间/);
+    assert.match(personConditionSource, /未选择人物/);
+    assert.match(personFieldSource, /基础属性/);
+    assert.match(personFieldSource, /自定义属性/);
+    assert.doesNotMatch(locationAccessPanelSource, /\?\?\?\?/);
+    assert.doesNotMatch(conditionEditorSource, /\?\?\?\?/);
+  }
+);
+
+test(
+  "script editor runtime preview rendering is driven by preview session state",
+  () => {
+    const mainUiSource = fs.readFileSync(
+      path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+      "utf8"
+    );
+
+    assert.match(mainUiSource, /scriptEditorRuntimePreviewSession\s*!=\s*null/);
+    assert.match(mainUiSource, /renderRuntimePreviewOverlay\(\)/);
+  }
+);
 
 test(
   "script editor runtime export emits a runtime-compatible scenario pack for the bounded direct-mapping slice",
@@ -4715,6 +4777,81 @@ test(
     assert.equal(exportedPack.textEntries?.["text.opening"], "Opening line.");
   }
 );
+
+test("script editor runtime export ignores unreferenced newly added draft events", () => {
+  const {
+    exportScriptEditorProjectToScenarioPackFiles,
+    validateScriptEditorProjectForRuntimeExport,
+  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  const {
+    createDefaultScriptEditorProjectDefinition,
+  } = require("../.test-dist/application/script-editor/minimal-workflow.js");
+  const {
+    createDefaultScriptEditorEventRecord,
+  } = require("../.test-dist/application/script-editor/story-dialogue-event-authoring.js");
+
+  const project = createDefaultScriptEditorProjectDefinition({
+    idBase: "draft-event-export",
+    title: "Draft Event Export",
+  });
+  const draftEvent = createDefaultScriptEditorEventRecord(project.events.length);
+  project.events = [...project.events, draftEvent];
+
+  assert.deepEqual(validateScriptEditorProjectForRuntimeExport(project), []);
+
+  const serializedFiles = exportScriptEditorProjectToScenarioPackFiles(project);
+  const exportedEvents = JSON.parse(serializedFiles["events.json"]);
+
+  assert.equal(
+    exportedEvents.some((eventRecord) => eventRecord.id === draftEvent.id),
+    false
+  );
+  assert.equal(
+    exportedEvents.some((eventRecord) => eventRecord.id === "event.opening"),
+    true
+  );
+});
+
+test("script editor runtime export still rejects referenced draft events", () => {
+  const {
+    validateScriptEditorProjectForRuntimeExport,
+  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  const {
+    createDefaultScriptEditorProjectDefinition,
+  } = require("../.test-dist/application/script-editor/minimal-workflow.js");
+  const {
+    createDefaultScriptEditorEventRecord,
+  } = require("../.test-dist/application/script-editor/story-dialogue-event-authoring.js");
+
+  const project = createDefaultScriptEditorProjectDefinition({
+    idBase: "referenced-draft-event-export",
+    title: "Referenced Draft Event Export",
+  });
+  const draftEvent = createDefaultScriptEditorEventRecord(project.events.length);
+  project.events = [...project.events, draftEvent];
+  project.eventBindings = [
+    {
+      id: "event-binding.referenced-draft",
+      eventId: draftEvent.id,
+      owner: {
+        family: "city",
+        id: project.cities[0].id,
+      },
+      trigger: {
+        timing: "after",
+        action: "city-enter",
+      },
+      enabled: true,
+    },
+  ];
+
+  const diagnostics = validateScriptEditorProjectForRuntimeExport(project);
+
+  assert.deepEqual(
+    diagnostics.map((diagnostic) => diagnostic.fieldPath),
+    ["project.events[1].destination"]
+  );
+});
 
 test("script editor dialogue story materializer exposes runtime scenes and text entries", () => {
   const {
@@ -6382,7 +6519,13 @@ test("script editor runtime export fails closed on editor event authoring record
     exportScriptEditorProjectToScenarioPackFiles,
   } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
   const project = createExportableScriptEditorProjectDefinition();
-  project.events = [{ id: "event.unsupported", title: "Unsupported Event" }];
+  project.events = [
+    {
+      id: "event.unsupported",
+      title: "Unsupported Event",
+      destination: { family: "minigame", targetId: "minigame.unsupported" },
+    },
+  ];
 
   assert.throws(
     () => exportScriptEditorProjectToScenarioPackFiles(project),
@@ -9125,8 +9268,8 @@ test(
       source,
       /field === "description" \|\|\s+field === "cityId" \|\|\s+field === "backgroundId"/
     );
-    assert.match(source, /data-script-editor-location-access-field="refusalEventId"/);
-    assert.match(source, /data-script-editor-location-access-field="blockedMessageTextEntryId"/);
+    assert.doesNotMatch(source, /data-script-editor-location-access-field="refusalEventId"/);
+    assert.match(source, /data-script-editor-location-access-field="blockedDialogueId"/);
     assert.match(source, /data-script-editor-location-access-condition-action/);
     assert.match(source, /data-script-editor-building-entry-field/);
     assert.match(source, /c-script-editor-record-list__summary/);
@@ -9138,7 +9281,7 @@ test(
     assert.match(cssSource, /\.c-script-editor-location-editor/);
     assert.match(cssSource, /\.c-script-editor-location-menu__item/);
     assert.match(cssSource, /\.c-script-editor-record-list__summary\.is-hidden/);
-    assert.match(mainUiStyles, /\.c-main-ui-runtime-preview-frame/);
+    assert.doesNotMatch(mainUiStyles, /\.c-main-ui-runtime-preview-frame/);
   }
 );
 
@@ -9161,43 +9304,44 @@ test(
     assert.doesNotMatch(source, />拒绝原因</);
     assert.doesNotMatch(source, />引导说明</);
     assert.doesNotMatch(source, />反馈角色</);
+    assert.doesNotMatch(source, />拒绝事件</);
+    assert.doesNotMatch(
+      source,
+      /data-script-editor-location-access-field="refusalEventId"/
+    );
     assert.doesNotMatch(
       source,
       /data-script-editor-location-access-field="conditionExpression"[\s\S]*?<textarea/
     );
     assert.match(
       source,
-      /data-script-editor-location-access-field="blockedMessageTextEntryId"/
+      /data-script-editor-location-access-field="blockedDialogueId"/
     );
-    assert.match(source, /this\.scriptEditorProject\?\.textEntries/);
+    assert.match(source, /this\.scriptEditorProject\?\.dialogues/);
     assert.match(source, /data-script-editor-location-access-condition-action/);
+    assert.match(source, /data-script-editor-location-access-condition-field="factor"/);
+    assert.match(source, /data-script-editor-location-access-condition-field="eventId"/);
+    assert.match(source, /data-script-editor-location-access-condition-field="personId"/);
+    assert.match(source, /data-script-editor-location-access-condition-field="timeField"/);
 
     const options = listScriptEditorLocationAccessConditionFieldOptions();
     assert.deepEqual(
       [...new Set(options.map((option) => option.family))].sort(),
-      ["player", "targetBuilding", "targetCity", "world"]
+      ["event", "person", "time"]
     );
+    assert.equal(options.some((option) => option.family === "targetCity"), false);
+    assert.equal(options.some((option) => option.family === "targetBuilding"), false);
+    assert.equal(options.some((option) => option.family === "world"), false);
+    assert.equal(options.some((option) => option.family === "player"), false);
     assert.equal(options.some((option) => option.family === "payload"), false);
     assert.equal(options.some((option) => option.family === "resolver"), false);
     assert.equal(options.some((option) => option.family === "custom"), false);
     assert.equal(options.some((option) => option.family === "binding-context"), false);
-    assert.equal(
-      options.some(
-        (option) => option.family === "targetCity" && option.fieldId === "prosperity"
-      ),
-      true
-    );
-    assert.equal(
-      options.some(
-        (option) => option.family === "targetBuilding" && option.fieldId === "level"
-      ),
-      true
-    );
   }
 );
 
 test(
-  "script editor city/building access conditions collapse empty groups and resolve refusal prompt text",
+  "script editor city/building access conditions collapse empty groups and resolve refusal prompt dialogue",
   () => {
     const {
       normalizeScriptEditorCityRecord,
@@ -9223,13 +9367,30 @@ test(
         text: "暂时无法进入此城。",
       },
     ];
+    project.dialogues = [
+      {
+        id: "dialogue.refusal.city",
+        title: "City Refusal Dialogue",
+        participantPersonIds: ["person.hero"],
+        nodes: [
+          {
+            id: "dialogue-node.refusal.city.1",
+            nodeType: "dialogue",
+            speakerPersonId: "person.hero",
+            textId: "text.refusal.city",
+            nextNodeId: "",
+            choiceTargetNodeId: "",
+          },
+        ],
+      },
+    ];
     project.cities = [
       {
         id: "city.open",
         name: "Open City",
         access: {
           conditionExpression: { type: "all", conditions: [] },
-          blockedMessageTextEntryId: "text.refusal.city",
+          blockedDialogueId: "dialogue.refusal.city",
         },
       },
       {
@@ -9237,7 +9398,7 @@ test(
         name: "Closed City",
         access: {
           conditionExpression: { type: "literal", value: false },
-          blockedMessageTextEntryId: "text.refusal.city",
+          blockedDialogueId: "dialogue.refusal.city",
         },
       },
     ];
@@ -9253,7 +9414,7 @@ test(
     assert.equal(locationAccess.length, 1);
     assert.equal(locationAccess[0].targetId, "city.closed");
     assert.equal(locationAccess[0].blockedMessage, "暂时无法进入此城。");
-    assert.equal("blockedMessageTextEntryId" in locationAccess[0], false);
+    assert.equal("blockedDialogueId" in locationAccess[0], false);
   }
 );
 
@@ -9839,6 +10000,121 @@ test(
   }
 );
 
+test(
+  "script editor runtime export preserves event person and time location access conditions",
+  () => {
+    const {
+      exportScriptEditorProjectToScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    const project = createExportableScriptEditorProjectDefinition();
+    project.textEntries = [
+      {
+        id: "text.opening",
+        title: "Opening",
+        text: "Opening line.",
+      },
+      {
+        id: "text.access.refusal",
+        title: "Refusal",
+        text: "条件不足，暂时不能进入。",
+      },
+    ];
+    project.people = [
+      {
+        id: "person.hero",
+        name: "Hero",
+        personType: "角色",
+        extendedAttributes: [
+          { key: "stats.politics", label: "政务", value: "72" },
+          { key: "custom.reputation", label: "声望", value: "high" },
+        ],
+      },
+    ];
+    project.events = [
+      {
+        id: "event.opening.done",
+        title: "Opening Done",
+        destination: { family: "dialogue", targetId: "dialogue.opening" },
+      },
+    ];
+    project.dialogues = [
+      { id: "dialogue.opening", title: "Opening" },
+      {
+        id: "dialogue.access.refusal",
+        title: "Refusal Dialogue",
+        participantPersonIds: ["person.hero"],
+        nodes: [
+          {
+            id: "dialogue-node.access.refusal.1",
+            nodeType: "dialogue",
+            speakerPersonId: "person.hero",
+            textId: "text.access.refusal",
+            nextNodeId: "",
+            choiceTargetNodeId: "",
+          },
+        ],
+      },
+    ];
+    project.cities = [
+      {
+        id: "city.gated",
+        name: "Gated City",
+        mapNodeId: "node.gated",
+        access: {
+          conditionExpression: {
+            type: "all",
+            conditions: [
+              {
+                type: "compare",
+                left: {
+                  type: "field",
+                  subject: "event",
+                  entityId: "event.opening.done",
+                  fieldId: "completed",
+                },
+                operator: "equals",
+                right: { type: "literal", value: true },
+              },
+              {
+                type: "compare",
+                left: {
+                  type: "field",
+                  subject: "person",
+                  entityId: "person.hero",
+                  fieldId: "stats.politics",
+                },
+                operator: "greater-than-or-equal",
+                right: { type: "literal", value: 70 },
+              },
+              {
+                type: "compare",
+                left: { type: "field", subject: "time", fieldId: "year" },
+                operator: "greater-than-or-equal",
+                right: { type: "literal", value: 1567 },
+              },
+            ],
+          },
+          blockedDialogueId: "dialogue.access.refusal",
+        },
+      },
+    ];
+    project.buildings = [];
+
+    const files = exportScriptEditorProjectToScenarioPackFiles(project);
+    const locationAccess = JSON.parse(files["location-access.json"]);
+
+    assert.equal(locationAccess.length, 1);
+    assert.equal(locationAccess[0].targetId, "city.gated");
+    assert.equal(locationAccess[0].blockedMessage, "条件不足，暂时不能进入。");
+    assert.deepEqual(
+      locationAccess[0].conditionExpression.conditions.map(
+        (condition) => condition.left.subject
+      ),
+      ["event", "person", "time"]
+    );
+  }
+);
+
 test("location access runtime evaluates literal and compare conditions", () => {
   const {
     evaluateLocationAccess,
@@ -9913,6 +10189,349 @@ test("location access runtime evaluates literal and compare conditions", () => {
     }).canEnter,
     true
   );
+});
+
+test("location access runtime evaluates event person and time conditions", () => {
+  const {
+    evaluateLocationAccess,
+  } = require("../.test-dist/application/location-access/location-access-runtime.js");
+  const baseState = createBaseState();
+  const state = {
+    ...baseState,
+    calendar: { ...baseState.calendar, year: 1567, month: 2, day: 3 },
+    world: { ...baseState.world, timeOfDay: "morning" },
+    runtime: {
+      ...baseState.runtime,
+      eventHistory: {
+        ...baseState.runtime.eventHistory,
+        "event.opening.done": {
+          firedCount: 1,
+          lastTriggeredOn: "1567-02-03",
+        },
+      },
+    },
+  };
+
+  const accessInput = {
+    state,
+    characterDefinitions: [
+      {
+        id: "person.hero",
+        name: "Hero",
+        birthYear: 1530,
+        age: 37,
+        cityId: "city.gated",
+        portraitId: "portrait.hero",
+        stats: {
+          leadership: 10,
+          martial: 20,
+          intelligence: 30,
+          politics: 72,
+          charm: 50,
+          fame: 40,
+          gold: 100,
+        },
+        stamina: 90,
+        customProperties: { reputation: "high" },
+        availableFunctions: [],
+      },
+    ],
+    targetFamily: "city",
+    targetId: "city.gated",
+    targetCity: {
+      id: "city.gated",
+      name: "Gated City",
+      regionId: "region.test",
+      mapNodeId: "node.gated",
+      houseIds: [],
+      neighbourCityIds: [],
+      travelCost: 1,
+      tags: [],
+      prosperity: 50,
+      danger: 20,
+      specialDemand: [],
+    },
+    locationAccessDefinitions: [
+      {
+        id: "location-access.city.gated",
+        targetFamily: "city",
+        targetId: "city.gated",
+        conditionExpression: {
+          type: "all",
+          conditions: [
+            {
+              type: "compare",
+              left: {
+                type: "field",
+                subject: "event",
+                entityId: "event.opening.done",
+                fieldId: "completed",
+              },
+              operator: "equals",
+              right: { type: "literal", value: true },
+            },
+            {
+              type: "compare",
+              left: {
+                type: "field",
+                subject: "person",
+                entityId: "person.hero",
+                fieldId: "stats.politics",
+              },
+              operator: "greater-than-or-equal",
+              right: { type: "literal", value: 70 },
+            },
+            {
+              type: "compare",
+              left: { type: "field", subject: "time", fieldId: "year" },
+              operator: "greater-than-or-equal",
+              right: { type: "literal", value: 1567 },
+            },
+          ],
+        },
+        blockedMessage: "Access denied.",
+      },
+    ],
+  };
+
+  const result = evaluateLocationAccess(accessInput);
+
+  assert.equal(result.canEnter, true);
+
+  const failed = evaluateLocationAccess({
+    ...accessInput,
+    state: {
+      ...state,
+      runtime: {
+        ...state.runtime,
+        eventHistory: {},
+      },
+    },
+    characterDefinitions: [
+      {
+        id: "person.hero",
+        name: "Hero",
+        birthYear: 1530,
+        age: 37,
+        cityId: "city.gated",
+        portraitId: "portrait.hero",
+        stats: {
+          leadership: 10,
+          martial: 20,
+          intelligence: 30,
+          politics: 60,
+          charm: 50,
+          fame: 40,
+          gold: 100,
+        },
+        stamina: 90,
+        availableFunctions: [],
+      },
+    ],
+    targetFamily: "city",
+    targetId: "city.gated",
+    targetCity: {
+      id: "city.gated",
+      name: "Gated City",
+      regionId: "region.test",
+      mapNodeId: "node.gated",
+      houseIds: [],
+      neighbourCityIds: [],
+      travelCost: 1,
+      tags: [],
+      prosperity: 50,
+      danger: 20,
+      specialDemand: [],
+    },
+    locationAccessDefinitions: [
+      {
+        id: "location-access.city.gated",
+        targetFamily: "city",
+        targetId: "city.gated",
+        conditionExpression: {
+          type: "compare",
+          left: {
+            type: "field",
+            subject: "event",
+            entityId: "event.opening.done",
+            fieldId: "completed",
+          },
+          operator: "equals",
+          right: { type: "literal", value: true },
+        },
+        blockedMessage: "Access denied.",
+      },
+    ],
+  });
+
+  assert.equal(failed.canEnter, false);
+  assert.equal(failed.refusal.text, "Access denied.");
+});
+
+test("location access runtime evaluates event condition independently", () => {
+  const {
+    evaluateLocationAccess,
+  } = require("../.test-dist/application/location-access/location-access-runtime.js");
+  const baseState = createBaseState();
+
+  const blocked = evaluateLocationAccess({
+    state: {
+      ...baseState,
+      runtime: {
+        ...baseState.runtime,
+        eventHistory: {},
+      },
+    },
+    targetFamily: "city",
+    targetId: "city.gated",
+    targetCity: {
+      id: "city.gated",
+      name: "Gated City",
+      regionId: "region.test",
+      mapNodeId: "node.gated",
+      houseIds: [],
+      neighbourCityIds: [],
+      travelCost: 1,
+      tags: [],
+      prosperity: 50,
+      danger: 20,
+      specialDemand: [],
+    },
+    locationAccessDefinitions: [
+      {
+        id: "location-access.city.gated",
+        targetFamily: "city",
+        targetId: "city.gated",
+        conditionExpression: {
+          type: "compare",
+          left: {
+            type: "field",
+            subject: "event",
+            entityId: "event.opening.done",
+            fieldId: "completed",
+          },
+          operator: "equals",
+          right: { type: "literal", value: true },
+        },
+        blockedMessage: "Event locked.",
+      },
+    ],
+  });
+
+  assert.equal(blocked.canEnter, false);
+  assert.equal(blocked.refusal.text, "Event locked.");
+});
+
+test("location access runtime evaluates person condition independently", () => {
+  const {
+    evaluateLocationAccess,
+  } = require("../.test-dist/application/location-access/location-access-runtime.js");
+  const baseState = createBaseState();
+
+  const blocked = evaluateLocationAccess({
+    state: baseState,
+    characterDefinitions: [
+      {
+        id: "person.hero",
+        name: "Hero",
+        birthYear: 1530,
+        age: 37,
+        cityId: "city.gated",
+        portraitId: "portrait.hero",
+        stats: {
+          leadership: 10,
+          martial: 20,
+          intelligence: 30,
+          politics: 60,
+          charm: 50,
+          fame: 40,
+          gold: 100,
+        },
+        stamina: 90,
+        availableFunctions: [],
+      },
+    ],
+    targetFamily: "city",
+    targetId: "city.gated",
+    targetCity: {
+      id: "city.gated",
+      name: "Gated City",
+      regionId: "region.test",
+      mapNodeId: "node.gated",
+      houseIds: [],
+      neighbourCityIds: [],
+      travelCost: 1,
+      tags: [],
+      prosperity: 50,
+      danger: 20,
+      specialDemand: [],
+    },
+    locationAccessDefinitions: [
+      {
+        id: "location-access.city.gated",
+        targetFamily: "city",
+        targetId: "city.gated",
+        conditionExpression: {
+          type: "compare",
+          left: {
+            type: "field",
+            subject: "person",
+            entityId: "person.hero",
+            fieldId: "stats.politics",
+          },
+          operator: "greater-than-or-equal",
+          right: { type: "literal", value: 70 },
+        },
+        blockedMessage: "Person locked.",
+      },
+    ],
+  });
+
+  assert.equal(blocked.canEnter, false);
+  assert.equal(blocked.refusal.text, "Person locked.");
+});
+
+test("location access runtime evaluates time condition independently", () => {
+  const {
+    evaluateLocationAccess,
+  } = require("../.test-dist/application/location-access/location-access-runtime.js");
+  const baseState = createBaseState();
+
+  const blocked = evaluateLocationAccess({
+    state: baseState,
+    targetFamily: "city",
+    targetId: "city.gated",
+    targetCity: {
+      id: "city.gated",
+      name: "Gated City",
+      regionId: "region.test",
+      mapNodeId: "node.gated",
+      houseIds: [],
+      neighbourCityIds: [],
+      travelCost: 1,
+      tags: [],
+      prosperity: 50,
+      danger: 20,
+      specialDemand: [],
+    },
+    locationAccessDefinitions: [
+      {
+        id: "location-access.city.gated",
+        targetFamily: "city",
+        targetId: "city.gated",
+        conditionExpression: {
+          type: "compare",
+          left: { type: "field", subject: "time", fieldId: "year" },
+          operator: "greater-than-or-equal",
+          right: { type: "literal", value: 1600 },
+        },
+        blockedMessage: "Time locked.",
+      },
+    ],
+  });
+
+  assert.equal(blocked.canEnter, false);
+  assert.equal(blocked.refusal.text, "Time locked.");
 });
 
 test(
@@ -22533,6 +23152,16 @@ test("child 25 navigation runtime emits explicit entered-city follow-up outcome"
     type: "navigation.entered-city",
     cityId: "city.kulan",
   });
+});
+
+test("main shell enter-city request consumes blocked navigation access into location dialogue state", () => {
+  const mainSource = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
+
+  assert.match(mainSource, /runtimeCommit\.runtimeResult\.access\?\.refusal/);
+  assert.match(
+    mainSource,
+    /if \(runtimeCommit\.runtimeResult\.access\?\.refusal != null\) \{[\s\S]*?cityHouseTransitionCoordinator\.handleHouseAccessRefusal\([\s\S]*?runtimeCommit\.runtimeResult\.access\.refusal/
+  );
 });
 
 test("location access runtime blocks enter-city before current city mutation", () => {

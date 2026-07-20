@@ -617,9 +617,6 @@ function applyImportedLocationAccess<T extends { id: string }>(
       ...(accessDefinition.guidance == null
         ? {}
         : { guidance: accessDefinition.guidance }),
-      ...(accessDefinition.refusalEventId == null
-        ? {}
-        : { refusalEventId: accessDefinition.refusalEventId }),
     },
   };
 }

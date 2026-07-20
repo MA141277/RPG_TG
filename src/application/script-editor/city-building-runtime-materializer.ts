@@ -16,6 +16,7 @@ import type {
   ScriptEditorAccessRule,
   ScriptEditorBuildingRecord,
   ScriptEditorCityRecord,
+  ScriptEditorDialogueRecord,
   ScriptEditorPersonRecord,
   ScriptEditorProjectDefinition,
   ScriptEditorRuntimeRecord,
@@ -56,7 +57,12 @@ export function materializeScriptEditorCityBuildingRuntimeFamilies(
       project.houseAccessRefusalRules,
       buildings
     ),
-    locationAccess: materializeLocationAccess(cities, buildings, project.textEntries),
+    locationAccess: materializeLocationAccess(
+      cities,
+      buildings,
+      project.dialogues,
+      project.textEntries
+    ),
   };
 }
 
@@ -460,6 +466,7 @@ function indexMountedBuildings(
 function materializeLocationAccess(
   cities: readonly ScriptEditorCityRecord[],
   buildings: readonly ScriptEditorBuildingRecord[],
+  dialogues: readonly ScriptEditorDialogueRecord[],
   textEntries: readonly ScriptEditorTextEntryRecord[]
 ): LocationAccessDefinition[] {
   return [
@@ -469,6 +476,7 @@ function materializeLocationAccess(
         city.id,
         city.name,
         city.access,
+        dialogues,
         textEntries
       )
     ),
@@ -478,6 +486,7 @@ function materializeLocationAccess(
         building.id,
         building.name,
         building.access,
+        dialogues,
         textEntries
       )
     ),
@@ -489,12 +498,13 @@ function materializeLocationAccessDefinition(
   targetId: string,
   _targetName: string,
   access: ScriptEditorAccessRule | undefined,
+  dialogues: readonly ScriptEditorDialogueRecord[],
   textEntries: readonly ScriptEditorTextEntryRecord[]
 ): LocationAccessDefinition[] {
   if (access?.conditionExpression == null) {
     return [];
   }
-  const blockedMessage = resolveAccessBlockedMessage(access, textEntries);
+  const blockedMessage = resolveAccessBlockedMessage(access, dialogues, textEntries);
 
   return [
     {
@@ -506,18 +516,43 @@ function materializeLocationAccessDefinition(
       ...pickOptionalString("blockedMessage", blockedMessage),
       ...pickOptionalString("blockedSpeakerId", access.blockedSpeakerId),
       ...pickOptionalString("guidance", access.guidance),
-      ...pickOptionalString("refusalEventId", access.refusalEventId),
     },
   ];
 }
 
 function resolveAccessBlockedMessage(
   access: ScriptEditorAccessRule,
+  dialogues: readonly ScriptEditorDialogueRecord[],
   textEntries: readonly ScriptEditorTextEntryRecord[]
 ): string | undefined {
-  const textEntryId = access.blockedMessageTextEntryId?.trim() ?? "";
-  if (textEntryId.length > 0) {
-    const textEntry = textEntries.find((entry) => entry.id === textEntryId);
+  const dialogueId = access.blockedDialogueId?.trim() ?? "";
+  if (dialogueId.length > 0) {
+    const dialogue = dialogues.find((entry) => entry.id === dialogueId);
+    if (dialogue == null) {
+      return access.blockedMessage;
+    }
+    const textEntryId = dialogue.nodes?.find((node) => node.textId.length > 0)?.textId ?? "";
+    if (textEntryId.length > 0) {
+      const textEntry = textEntries.find((entry) => entry.id === textEntryId);
+      if (textEntry?.text != null && textEntry.text.length > 0) {
+        return textEntry.text;
+      }
+      const rawTextEntry = textEntry as
+        | (ScriptEditorTextEntryRecord & { body?: unknown; title?: unknown })
+        | undefined;
+      if (typeof rawTextEntry?.body === "string" && rawTextEntry.body.length > 0) {
+        return rawTextEntry.body;
+      }
+    }
+    if (dialogue.title.length > 0) {
+      return dialogue.title;
+    }
+  }
+  const legacyTextEntryId = (access as ScriptEditorAccessRule & {
+    blockedMessageTextEntryId?: string;
+  }).blockedMessageTextEntryId?.trim() ?? "";
+  if (legacyTextEntryId.length > 0) {
+    const textEntry = textEntries.find((entry) => entry.id === legacyTextEntryId);
     if (textEntry?.text != null && textEntry.text.length > 0) {
       return textEntry.text;
     }

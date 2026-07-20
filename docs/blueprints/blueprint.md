@@ -4,9 +4,9 @@
 
 - blueprint_id: `blueprint.rpg-tg`
 - blueprint_version: `2026.07`
-- active_version: `target.entry-shell-ui-module-extraction`
-- active_version_plan: `docs/blueprints/plans/2026-07-19-entry-shell-ui-module-extraction-target-plan.md`
-- active_version_spec: `docs/blueprints/specs/2026-07-19-entry-shell-ui-module-extraction-target.md`
+- active_version: `target.city-building-module-entry-and-project-startup-authoring`
+- active_version_plan: `docs/blueprints/plans/2026-07-19-city-building-module-entry-and-project-startup-authoring-target-plan.md`
+- active_version_spec: `docs/blueprints/specs/2026-07-19-city-building-module-entry-and-project-startup-authoring-target.md`
 - classification_rules_ref: `docs/blueprints/classification-rule-layer-spec.md`
 - execution_mode: `single-active-task`
 - allow_parallel: `false`

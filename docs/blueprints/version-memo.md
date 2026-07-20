@@ -149,6 +149,109 @@
 
 ## Open Problems
 
+### MEMO-014: City And Building Location Access Condition Authoring Correction
+
+- status: `open`
+- severity: `high`
+- classification: `queue-candidate`
+- proposed_queue: `queue.script-editor-city-building-location-access-condition-authoring-correction`
+- owning_queue: `queue.script-editor-city-building-location-access-condition-authoring-correction`
+- admission_status: `admitted`
+- latest_disposition: `admitted-to-active-execution`
+- affected_families:
+  - `script editor city authoring`
+  - `script editor building authoring`
+  - `location access runtime`
+  - `runtime city entry`
+  - `runtime building entry`
+  - `normal start`
+  - `JSON runtime pack import`
+  - `Script Editor runtime preview`
+
+#### Requested Capability
+
+- Adjust the Script Editor city and building `进入条件` authoring surface so it matches the intended `locationAccess` runtime gate model.
+- City and building detail pages must share the same `进入条件` structure.
+- The refusal prompt must appear above the condition editor.
+- Remove the old or over-broad entry-state controls:
+  - `拒绝事件`
+  - `拒绝原因`
+  - `引导说明`
+  - `反馈角色`
+- `拒绝提示` must be a select backed by the text module, not free text.
+- `进入条件` must allow zero or more conditions. Zero conditions means the location is enterable.
+- Entry conditions must be limited to three factors:
+  - `事件`
+  - `人物`
+  - `时间`
+
+#### Condition Authoring Rules
+
+- Event condition:
+  - Select an event from `project.events`.
+  - The only allowed expressions are `完成` and `未完成`.
+- Person condition:
+  - Use a layered selector: `人物 -> 属性 -> 表达式 -> 值`.
+  - The person selector is backed by `project.people`.
+  - The attribute selector is backed by the selected person's base attributes plus custom attributes.
+  - The expression selector must be constrained by the selected attribute value type.
+  - Numeric attributes support numeric comparison operators.
+  - Text attributes support equality and contains-style operators.
+  - Boolean attributes support yes/no style operators.
+  - Enum attributes support equality operators.
+- Time condition:
+  - Use a layered selector: `时间字段 -> 表达式 -> 值`.
+  - Time fields should be sourced from runtime game time state, not transient UI state.
+  - Supported expressions should be selected from the valid comparison set for the chosen time field.
+
+#### Runtime Requirements
+
+- City and building entry must continue to flow through the unified `locationAccess` runtime check.
+- The edited authoring condition shape must be exportable, loadable, and interpretable by the production runtime. The runtime must not receive an authoring-only condition shape that it cannot evaluate.
+- No condition means allow entry.
+- All configured conditions satisfied means allow entry.
+- Any failed condition blocks entry and displays the selected refusal prompt text.
+- Normal start, JSON runtime pack import, and Script Editor runtime preview must use the same location-access judgment path.
+- The change must not weaken existing city/building module boundaries or reintroduce direct entry bypasses.
+- Do not change EventBindingRuntime semantics.
+
+#### Acceptance Criteria
+
+- City and building detail pages both expose `进入条件`.
+- `拒绝提示` appears above the condition list.
+- `拒绝提示` is a select backed by project texts and stores the selected `textId`.
+- The UI no longer exposes `拒绝事件`, `拒绝原因`, `引导说明`, or `反馈角色`.
+- The condition factor selector only exposes `事件`, `人物`, and `时间`.
+- Event conditions only expose `完成` / `未完成`.
+- Person conditions support `人物 -> 属性 -> 表达式 -> 值` with attributes sourced from the selected person's base and custom attributes.
+- Time conditions support a runtime-backed time field selector, expression selector, and value control.
+- Empty conditions allow city/building entry.
+- Satisfied conditions allow city/building entry.
+- Failed conditions block city/building entry and display the configured refusal prompt.
+- Runtime export and loader tests prove each supported authoring condition factor is lowered into a runtime-understandable locationAccess condition shape.
+- Production runtime tests prove event, person, and time conditions are actually evaluated at city/building entry, not merely saved in project authoring data.
+- Automated tests cover editor serialization/export and runtime location-access behavior for city and building.
+- Simulated-human browser tests cover city entry conditions and building entry conditions.
+- Simulated-human browser tests must cover every supported city and building entry-condition case, including:
+  - no conditions;
+  - event completed;
+  - event not completed;
+  - person attribute condition satisfied;
+  - person attribute condition failed;
+  - time condition satisfied;
+  - time condition failed;
+  - refusal prompt display when access is blocked.
+- The simulated-human test matrix must run separately for city entry and building entry; passing one family must not be used as proof for the other.
+- Simulated-human test execution must strictly follow the Blueprint multi-case test discipline: run the full required case set, record every failed case, repair only after the case set completes or a blocking bug prevents continuation, then rerun the failed case(s) until they pass.
+- During simulated-human testing, every failed step must be recorded. Fixes may start only after the full test run completes or the test cannot continue.
+- After fixes, the complete simulated-human test set must be rerun from the beginning until every required case passes; no test case may be skipped.
+
+#### Routing Notes
+
+- This memo has been promoted into the current version plan and admitted into the active execution queue after explicit operator request. It does not reopen `queue.script-editor-city-building-enter-state-and-preview-boundary`.
+- Treat it as a corrective queue under the still-open `target.city-building-module-entry-and-project-startup-authoring` version.
+- The prior enter-state queue is closed; this memo records the follow-up correction requested after that closeout.
+
 ### MEMO-012: Script Editor City And Building Background Authoring
 
 - status: `closed`

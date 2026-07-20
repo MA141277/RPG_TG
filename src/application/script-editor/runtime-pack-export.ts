@@ -771,7 +771,11 @@ function lowerEditorEventsToRuntimeEvents(
   );
   const exportedEvents: EventDefinition[] = [];
   const eventIds = new Set<string>();
+  const referencedEventIds = collectRuntimeReferencedEventIds(project);
   for (const [index, eventRecord] of project.events.entries()) {
+    if (isUnreferencedDraftEditorEvent(eventRecord, referencedEventIds)) {
+      continue;
+    }
     const exportedEvent = lowerEditorEventToRuntimeEvent(
       eventRecord,
       index,
@@ -797,6 +801,69 @@ function lowerEditorEventsToRuntimeEvents(
   }
 
   return diagnostics.length === 0 ? exportedEvents : null;
+}
+
+function collectRuntimeReferencedEventIds(
+  project: ScriptEditorProjectDefinition
+): Set<string> {
+  const eventIds = new Set<string>();
+  for (const binding of project.eventBindings) {
+    if (typeof binding.eventId === "string" && binding.eventId.length > 0) {
+      eventIds.add(binding.eventId);
+    }
+  }
+
+  const scenarioProfile = project.storyPack.scenarioProfile;
+  if (
+    scenarioProfile != null &&
+    typeof scenarioProfile === "object" &&
+    !Array.isArray(scenarioProfile)
+  ) {
+    const entryEventId = (scenarioProfile as Record<string, unknown>).entryEventId;
+    if (typeof entryEventId === "string" && entryEventId.length > 0) {
+      eventIds.add(entryEventId);
+    }
+  }
+
+  for (const eventRecord of project.events) {
+    if (
+      typeof eventRecord.nextEventId === "string" &&
+      eventRecord.nextEventId.length > 0
+    ) {
+      eventIds.add(eventRecord.nextEventId);
+    }
+  }
+
+  return eventIds;
+}
+
+function isUnreferencedDraftEditorEvent(
+  eventRecord: ScriptEditorEventRecord,
+  referencedEventIds: Set<string>
+): boolean {
+  if (
+    typeof eventRecord.id === "string" &&
+    eventRecord.id.length > 0 &&
+    referencedEventIds.has(eventRecord.id)
+  ) {
+    return false;
+  }
+
+  const entrySceneId =
+    typeof eventRecord.entrySceneId === "string" ? eventRecord.entrySceneId.trim() : "";
+  const destinationTargetId =
+    typeof eventRecord.destination?.targetId === "string"
+      ? eventRecord.destination.targetId.trim()
+      : "";
+  const nextEventId =
+    typeof eventRecord.nextEventId === "string" ? eventRecord.nextEventId.trim() : "";
+
+  return (
+    entrySceneId.length === 0 &&
+    destinationTargetId.length === 0 &&
+    nextEventId.length === 0 &&
+    (eventRecord.taskInputs == null || eventRecord.taskInputs.length === 0)
+  );
 }
 
 function lowerEditorEventToRuntimeEvent(

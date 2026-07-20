@@ -1,4 +1,4 @@
-import type { CharacterId } from "../../domain/character";
+import type { CharacterDefinition, CharacterId } from "../../domain/character";
 import type { CityDefinition } from "../../domain/city";
 import type { GameState } from "../../domain/game-state";
 import type { HouseDefinition } from "../../domain/house";
@@ -16,6 +16,7 @@ export type EvaluateLocationAccessInput = {
   targetId: string;
   targetCity?: CityDefinition | null;
   targetBuilding?: Pick<HouseDefinition, "id" | "cityId" | "name"> | null;
+  characterDefinitions?: readonly CharacterDefinition[];
   locationAccessDefinitions?: readonly LocationAccessDefinition[];
 };
 
@@ -140,6 +141,12 @@ function resolveValueRef(
       return readField(input.targetCity, valueRef.fieldId);
     case "targetBuilding":
       return readField(input.targetBuilding, valueRef.fieldId);
+    case "event":
+      return readEventField(input.state, valueRef.entityId, valueRef.fieldId);
+    case "person":
+      return readPersonField(input, valueRef.entityId, valueRef.fieldId);
+    case "time":
+      return readTimeField(input.state, valueRef.fieldId);
     case "player":
       return readField(input.state.player, valueRef.fieldId);
     case "world":
@@ -156,6 +163,46 @@ function readWorldField(state: GameState, fieldId: string): unknown {
   return readField(state.world, fieldId);
 }
 
+function readEventField(
+  state: GameState,
+  eventId: string | undefined,
+  fieldId: string
+): unknown {
+  if (eventId == null || eventId.length === 0) {
+    return undefined;
+  }
+  const history = state.runtime.eventHistory[eventId];
+  if (fieldId === "completed") {
+    return (history?.firedCount ?? 0) > 0;
+  }
+  if (fieldId === "firedCount") {
+    return history?.firedCount ?? 0;
+  }
+  return readField(history, fieldId);
+}
+
+function readPersonField(
+  input: EvaluateLocationAccessInput,
+  personId: string | undefined,
+  fieldId: string
+): unknown {
+  const resolvedPersonId =
+    personId != null && personId.length > 0
+      ? personId
+      : input.state.player.characterId;
+  const person = input.characterDefinitions?.find(
+    (definition) => definition.id === resolvedPersonId
+  );
+  return readField(person, fieldId);
+}
+
+function readTimeField(state: GameState, fieldId: string): unknown {
+  if (fieldId === "timeOfDay") {
+    return state.world.timeOfDay;
+  }
+  return readField(state.calendar, fieldId);
+}
+
 function readStoryField(state: GameState, fieldId: string): unknown {
   if (fieldId === "chapterId") {
     return state.calendar.chapterId;
@@ -164,10 +211,16 @@ function readStoryField(state: GameState, fieldId: string): unknown {
 }
 
 function readField(value: unknown, fieldId: string): unknown {
-  if (value == null || typeof value !== "object") {
-    return undefined;
-  }
-  return (value as Record<string, unknown>)[fieldId];
+  return fieldId.split(".").reduce<unknown>((currentValue, segment) => {
+    if (
+      currentValue == null ||
+      typeof currentValue !== "object" ||
+      Array.isArray(currentValue)
+    ) {
+      return undefined;
+    }
+    return (currentValue as Record<string, unknown>)[segment];
+  }, value);
 }
 
 function resolveSpeakerCharacterId(

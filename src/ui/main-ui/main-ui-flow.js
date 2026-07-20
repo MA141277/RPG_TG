@@ -535,6 +535,7 @@ export class MainUiFlow {
       return;
     }
 
+    const hasRuntimePreviewSession = this.scriptEditorRuntimePreviewSession != null;
     const screenMarkup =
       this.currentScreen === "main-menu"
         ? this.renderMainMenu()
@@ -547,7 +548,10 @@ export class MainUiFlow {
               : this.currentScreen === "runtime-preview"
                 ? this.renderRuntimePreviewOverlay()
                 : this.renderCharacterSelect();
-    this.overlayRoot.innerHTML = screenMarkup;
+    const runtimePreviewSessionMarkup = hasRuntimePreviewSession
+      ? this.renderRuntimePreviewSessionBanner()
+      : "";
+    this.overlayRoot.innerHTML = `${screenMarkup}${runtimePreviewSessionMarkup}`;
     this.restoreScriptEditorScrollPosition();
     if (this.currentScreen === "main-menu") {
       this.destroyOpeningBackgroundAnimation = mountOpeningBackgroundAnimation(this.overlayRoot);
@@ -671,11 +675,21 @@ export class MainUiFlow {
   renderRuntimePreviewOverlay() {
     return `
       <section class="c-main-ui-screen c-main-ui-screen--runtime-preview" aria-label="运行预览">
-        <div class="c-main-ui-runtime-preview-frame" aria-hidden="true"></div>
-        <button class="c-runtime-preview-exit" type="button" data-script-editor-action="exit-runtime-preview">
+      </section>
+    `;
+  }
+
+  renderRuntimePreviewSessionBanner() {
+    return `
+      <aside class="c-main-ui-runtime-preview-session-banner" aria-label="运行预览提示">
+        <div class="c-main-ui-runtime-preview-session-banner__text">
+          <span class="c-main-ui-runtime-preview-session-banner__title">运行预览中</span>
+          <span class="c-main-ui-runtime-preview-session-banner__hint">请完成角色选择后继续进入游戏。</span>
+        </div>
+        <button class="c-runtime-preview-exit c-runtime-preview-exit--session" type="button" data-script-editor-action="exit-runtime-preview">
           退出预览
         </button>
-      </section>
+      </aside>
     `;
   }
 
@@ -2405,56 +2419,36 @@ export class MainUiFlow {
   renderScriptEditorLocationAccessPanel(location) {
     const access = location.access ?? {
       conditionExpression: null,
-      blockedMessageTextEntryId: "",
-      refusalEventId: "",
+      blockedDialogueId: "",
     };
-    const eventOptions = (this.scriptEditorProject?.events ?? []).map((event) => ({
-      value: event.id,
-      label: `${event.title ?? event.name ?? event.id} (${event.id})`,
-    }));
-    const textOptions = (this.scriptEditorProject?.textEntries ?? []).map((entry) => ({
-      value: entry.id,
-      label: `${entry.title ?? entry.name ?? entry.text ?? entry.id} (${entry.id})`,
+    const dialogueOptions = (this.scriptEditorProject?.dialogues ?? []).map((dialogue) => ({
+      value: dialogue.id,
+      label: `${dialogue.title ?? dialogue.id} (${dialogue.id})`,
     }));
     return `
-      <section class="c-script-editor-location-panel" aria-label="进入态分栏">
+      <section class="c-script-editor-location-panel" aria-label="进入条件分栏">
         <p class="c-script-editor-editor-card__hint">
-          这里配置对象是可进入、可见但暂不可进入，还是当前阶段完全隐藏，并补齐被拒绝时的反馈文案。
+          这里配置进入城市或建筑前的条件；没有条件时运行时默认允许进入。
         </p>
         <div class="c-script-editor-form-grid">
           <label class="c-script-editor-form-field">
+            <span>拒绝提示</span>
+            <select class="c-script-editor-form-field__input" data-script-editor-location-access-field="blockedDialogueId">
+              <option value="">不弹出拒绝对话</option>
+              ${dialogueOptions
+                .map(
+                  (dialogue) => `
+                    <option value="${escapeHtml(dialogue.value)}" ${dialogue.value === (access.blockedDialogueId ?? "") ? "selected" : ""}>
+                      ${escapeHtml(dialogue.label)}
+                    </option>
+                  `
+                )
+                .join("")}
+            </select>
+          </label>
+          <label class="c-script-editor-form-field">
             <span>进入条件</span>
             ${this.renderScriptEditorLocationAccessConditionEditor(access.conditionExpression)}
-          </label>
-          <label class="c-script-editor-form-field">
-            <span>拒绝提示</span>
-            <select class="c-script-editor-form-field__input" data-script-editor-location-access-field="blockedMessageTextEntryId">
-              <option value="">不显示拒绝提示</option>
-              ${textOptions
-                .map(
-                  (entry) => `
-                    <option value="${escapeHtml(entry.value)}" ${entry.value === (access.blockedMessageTextEntryId ?? "") ? "selected" : ""}>
-                      ${escapeHtml(entry.label)}
-                    </option>
-                  `
-                )
-                .join("")}
-            </select>
-          </label>
-          <label class="c-script-editor-form-field">
-            <span>拒绝事件</span>
-            <select class="c-script-editor-form-field__input" data-script-editor-location-access-field="refusalEventId">
-              <option value="">未选择拒绝事件</option>
-              ${eventOptions
-                .map(
-                  (event) => `
-                    <option value="${escapeHtml(event.value)}" ${event.value === (access.refusalEventId ?? "") ? "selected" : ""}>
-                      ${escapeHtml(event.label)}
-                    </option>
-                  `
-                )
-                .join("")}
-            </select>
           </label>
         </div>
       </section>
@@ -2467,7 +2461,7 @@ export class MainUiFlow {
     );
     const conditionRows =
       conditions.length === 0
-        ? `<p class="c-script-editor-editor-card__hint">未设置条件，运行时默认允许进入。</p>`
+        ? `<p class="c-script-editor-editor-card__hint">没有条件时，运行时默认允许进入。</p>`
         : conditions
             .map((condition, index) =>
               this.renderScriptEditorLocationAccessConditionRow(condition, index)
@@ -2479,7 +2473,7 @@ export class MainUiFlow {
           ${conditionRows}
         </div>
         <div class="c-script-editor-record-editor__actions">
-          <button type="button" class="c-script-editor-record-editor__action" data-script-editor-action="add-location-access-condition" data-script-editor-location-access-condition-action="add">添加条件</button>
+          <button type="button" class="c-script-editor-record-editor__action" data-script-editor-action="add-location-access-condition" data-script-editor-location-access-condition-action="add">新增条件</button>
           <button type="button" class="c-script-editor-record-editor__action" data-script-editor-action="clear-location-access-conditions" data-script-editor-location-access-condition-action="clear">清空条件</button>
         </div>
       </div>
@@ -2487,48 +2481,122 @@ export class MainUiFlow {
   }
 
   renderScriptEditorLocationAccessConditionRow(condition, index) {
-    const options = listScriptEditorLocationAccessConditionFieldOptions();
     const compareCondition =
       condition.type === "compare"
         ? condition
         : {
             type: "compare",
-            left: { type: "field", subject: "world", fieldId: "chapterId" },
+            left: { type: "field", subject: "event", entityId: "", fieldId: "completed" },
             operator: "equals",
-            right: { type: "literal", value: "" },
+            right: { type: "literal", value: true },
           };
-    const selectedField =
-      compareCondition.left?.type === "field"
-        ? `${compareCondition.left.subject}:${compareCondition.left.fieldId}`
-        : "world:chapterId";
-    const selectedOption =
-      options.find((option) => `${option.family}:${option.fieldId}` === selectedField) ??
-      options[0];
+    const factor =
+      compareCondition.left?.type === "field" &&
+      ["event", "person", "time"].includes(compareCondition.left.subject)
+        ? compareCondition.left.subject
+        : "event";
     const literalValue =
       compareCondition.right?.type === "literal" && compareCondition.right.value != null
         ? String(compareCondition.right.value)
         : "";
-    const valueControl =
-      selectedOption.valueType === "boolean"
-        ? `<select class="c-script-editor-form-field__input" data-script-editor-location-access-condition-index="${index}" data-script-editor-location-access-condition-field="literalValue">
-            <option value="true" ${literalValue === "true" ? "selected" : ""}>是</option>
-            <option value="false" ${literalValue === "false" ? "selected" : ""}>否</option>
-          </select>`
-        : `<input class="c-script-editor-form-field__input" type="${selectedOption.valueType === "number" ? "number" : "text"}" value="${escapeHtml(literalValue)}" data-script-editor-location-access-condition-index="${index}" data-script-editor-location-access-condition-field="literalValue" />`;
+    const factorControls =
+      factor === "person"
+        ? this.renderScriptEditorLocationAccessPersonConditionControls(compareCondition, index, literalValue)
+        : factor === "time"
+          ? this.renderScriptEditorLocationAccessTimeConditionControls(compareCondition, index, literalValue)
+          : this.renderScriptEditorLocationAccessEventConditionControls(compareCondition, index);
     return `
       <div class="c-script-editor-location-access-condition__row">
-        <select class="c-script-editor-form-field__input" data-script-editor-location-access-condition-index="${index}" data-script-editor-location-access-condition-field="sourceField">
-          ${options
-            .map((option) => {
-              const optionValue = `${option.family}:${option.fieldId}`;
-              return `
-                <option value="${escapeHtml(optionValue)}" ${optionValue === selectedField ? "selected" : ""}>
-                  ${escapeHtml(option.label)}
-                </option>
-              `;
-            })
-            .join("")}
+        <select class="c-script-editor-form-field__input" data-script-editor-location-access-condition-index="${index}" data-script-editor-location-access-condition-field="factor">
+          <option value="event" ${factor === "event" ? "selected" : ""}>事件</option>
+          <option value="person" ${factor === "person" ? "selected" : ""}>人物</option>
+          <option value="time" ${factor === "time" ? "selected" : ""}>时间</option>
         </select>
+        ${factorControls}
+        <button type="button" class="c-script-editor-record-editor__action" data-script-editor-action="remove-location-access-condition" data-script-editor-location-access-condition-action="remove" data-script-editor-location-access-condition-index="${index}">移除</button>
+      </div>
+    `;
+  }
+
+  renderScriptEditorLocationAccessEventConditionControls(condition, index) {
+    const selectedEventId =
+      condition.left?.type === "field" && condition.left.subject === "event"
+        ? condition.left.entityId ?? ""
+        : "";
+    const eventState =
+      condition.right?.type === "literal" && condition.right.value === false
+        ? "incomplete"
+        : "completed";
+    const eventOptions = this.getScriptEditorProjectRecordOptions("events");
+    return `
+      <select class="c-script-editor-form-field__input" data-script-editor-location-access-condition-index="${index}" data-script-editor-location-access-condition-field="eventId">
+        ${this.renderScriptEditorSelectOptions(eventOptions, selectedEventId, "未选择事件")}
+      </select>
+      <select class="c-script-editor-form-field__input" data-script-editor-location-access-condition-index="${index}" data-script-editor-location-access-condition-field="eventState">
+        <option value="completed" ${eventState === "completed" ? "selected" : ""}>完成</option>
+        <option value="incomplete" ${eventState === "incomplete" ? "selected" : ""}>未完成</option>
+      </select>
+    `;
+  }
+
+  renderScriptEditorLocationAccessPersonConditionControls(condition, index, literalValue) {
+    const selectedPersonId =
+      condition.left?.type === "field" && condition.left.subject === "person"
+        ? condition.left.entityId ?? ""
+        : "";
+    const selectedField =
+      condition.left?.type === "field" && condition.left.subject === "person"
+        ? condition.left.fieldId
+        : "stats.politics";
+    const personOptions = this.getScriptEditorProjectRecordOptions("people");
+    const personFieldOptions = this.getScriptEditorLocationAccessPersonFieldOptions(selectedPersonId);
+    return `
+      <select class="c-script-editor-form-field__input" data-script-editor-location-access-condition-index="${index}" data-script-editor-location-access-condition-field="personId">
+        ${this.renderScriptEditorSelectOptions(personOptions, selectedPersonId, "未选择人物")}
+      </select>
+      <select class="c-script-editor-form-field__input" data-script-editor-location-access-condition-index="${index}" data-script-editor-location-access-condition-field="personField">
+        ${personFieldOptions
+          .map(
+            (option) => `
+              <option value="${escapeHtml(option.value)}" ${option.value === selectedField ? "selected" : ""}>
+                ${escapeHtml(option.label)}
+              </option>
+            `
+          )
+          .join("")}
+      </select>
+      ${this.renderScriptEditorLocationAccessOperatorSelect(condition.operator, index)}
+      <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(literalValue)}" data-script-editor-location-access-condition-index="${index}" data-script-editor-location-access-condition-field="literalValue" />
+    `;
+  }
+
+  renderScriptEditorLocationAccessTimeConditionControls(condition, index, literalValue) {
+    const selectedTimeField =
+      condition.left?.type === "field" && condition.left.subject === "time"
+        ? condition.left.fieldId
+        : "year";
+    return `
+      <select class="c-script-editor-form-field__input" data-script-editor-location-access-condition-index="${index}" data-script-editor-location-access-condition-field="timeField">
+        ${[
+          ["year", "年份"],
+          ["month", "月份"],
+          ["day", "日期"],
+          ["timeOfDay", "时段"],
+        ]
+          .map(
+            ([value, label]) => `
+              <option value="${value}" ${value === selectedTimeField ? "selected" : ""}>${label}</option>
+            `
+          )
+          .join("")}
+      </select>
+      ${this.renderScriptEditorLocationAccessOperatorSelect(condition.operator, index)}
+      <input class="c-script-editor-form-field__input" type="${selectedTimeField === "timeOfDay" ? "text" : "number"}" value="${escapeHtml(literalValue)}" data-script-editor-location-access-condition-index="${index}" data-script-editor-location-access-condition-field="literalValue" />
+    `;
+  }
+
+  renderScriptEditorLocationAccessOperatorSelect(selectedOperator, index) {
+    return `
         <select class="c-script-editor-form-field__input" data-script-editor-location-access-condition-index="${index}" data-script-editor-location-access-condition-field="operator">
           ${[
             ["equals", "等于"],
@@ -2547,10 +2615,27 @@ export class MainUiFlow {
             )
             .join("")}
         </select>
-        ${valueControl}
-        <button type="button" class="c-script-editor-record-editor__action" data-script-editor-action="remove-location-access-condition" data-script-editor-location-access-condition-action="remove" data-script-editor-location-access-condition-index="${index}">移除</button>
-      </div>
     `;
+  }
+
+  getScriptEditorLocationAccessPersonFieldOptions(personId) {
+    const selectedPerson = (this.scriptEditorProject?.people ?? []).find(
+      (person) => person.id === personId
+    );
+    const baseOptions = [
+      { value: "stats.politics", label: "基础属性 / 政务" },
+      { value: "stats.war", label: "基础属性 / 武力" },
+      { value: "stats.intelligence", label: "基础属性 / 智谋" },
+      { value: "personType", label: "基础属性 / 类型" },
+      { value: "role", label: "基础属性 / 角色定位" },
+      { value: "cityId", label: "基础属性 / 所在城市" },
+      { value: "houseId", label: "基础属性 / 所在建筑" },
+    ];
+    const customOptions = (selectedPerson?.extendedAttributes ?? []).map((attribute) => ({
+      value: `customProperties.${attribute.key}`,
+      label: `自定义属性 / ${attribute.label ?? attribute.key}`,
+    }));
+    return [...baseOptions, ...customOptions];
   }
 
   renderScriptEditorBuildingEntryPanel(location) {
@@ -5214,8 +5299,7 @@ export class MainUiFlow {
     if (target.matches("[data-script-editor-location-access-field]")) {
       const field = target.dataset.scriptEditorLocationAccessField;
       if (
-        field === "blockedMessageTextEntryId" ||
-        field === "refusalEventId" ||
+        field === "blockedDialogueId" ||
         field === "conditionExpression"
       ) {
         this.applyScriptEditorLocationAccessField(field, target.value);
@@ -5231,7 +5315,13 @@ export class MainUiFlow {
       if (
         Number.isInteger(index) &&
         index >= 0 &&
-        (field === "sourceField" ||
+        (field === "factor" ||
+          field === "eventId" ||
+          field === "eventState" ||
+          field === "personId" ||
+          field === "personField" ||
+          field === "timeField" ||
+          field === "sourceField" ||
           field === "operator" ||
           field === "literalValue")
       ) {
@@ -5281,7 +5371,9 @@ export class MainUiFlow {
       if (
         Number.isInteger(index) &&
         index >= 0 &&
-        field === "literalValue"
+        (field === "literalValue" ||
+          field === "personField" ||
+          field === "timeField")
       ) {
         this.applyScriptEditorLocationAccessConditionField(
           index,

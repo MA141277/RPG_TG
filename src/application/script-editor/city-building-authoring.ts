@@ -480,7 +480,16 @@ export function updateScriptEditorAccessConditionField<
 >(
   record: TRecord,
   index: number,
-  field: "sourceField" | "operator" | "literalValue",
+  field:
+    | "factor"
+    | "eventId"
+    | "eventState"
+    | "personId"
+    | "personField"
+    | "timeField"
+    | "operator"
+    | "literalValue"
+    | "sourceField",
   value: string
 ): TRecord {
   const access = normalizeAccessRule(record.access);
@@ -542,12 +551,11 @@ function normalizeAccessRule(access?: ScriptEditorAccessRule): ScriptEditorAcces
     ...pickOptionalString("blockedReason", rawAccess?.blockedReason),
     ...pickOptionalString("blockedMessage", rawAccess?.blockedMessage),
     ...pickOptionalString(
-      "blockedMessageTextEntryId",
-      rawAccess?.blockedMessageTextEntryId
+      "blockedDialogueId",
+      rawAccess?.blockedDialogueId ?? rawAccess?.blockedMessageTextEntryId
     ),
     ...pickOptionalString("blockedSpeakerId", rawAccess?.blockedSpeakerId ?? rawAccess?.blockedSpeaker),
     ...pickOptionalString("guidance", rawAccess?.guidance),
-    ...pickOptionalString("refusalEventId", rawAccess?.refusalEventId),
   };
 }
 
