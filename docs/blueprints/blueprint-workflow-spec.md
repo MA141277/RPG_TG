@@ -945,6 +945,9 @@ Required rules:
    - `execution_closeout_status = done`
    - `topic_closure_status = open-residue`
 6. Accepted residue is legal only when the queue explicitly records why that residue no longer blocks bounded topic closure.
+7. After an execution queue completes, closeout judgement must inspect the related implementation surface for superseded old code, old flows, stale compatibility paths, and legacy process residue owned by that queue.
+8. A queue must not claim `topic_closure_status = closed` if related old or compatibility flow residue remains on the queue-owned path without being removed or explicitly classified as accepted residue.
+9. The residue check must be evidence-based. At minimum, it must compare the queue's `Legacy Paths To Replace`, `Compatibility Paths To Preserve`, landed code, tests, and runtime/export/import paths that the queue touched.
 
 ### 11.4 Same-family residue routing
 
@@ -1013,7 +1016,7 @@ Hard rules:
 
 ### 11.6.1 Simulated-Human Multi-Case Test Discipline
 
-When Blueprint asks for simulated-human testing across multiple test cases or scenarios, the full case set must be executed before any repair pass begins.
+When Blueprint asks for simulated-human testing across multiple test cases or scenarios, the full case set must be executed with the built-in browser before any repair pass begins.
 
 Rules:
 
@@ -1024,6 +1027,20 @@ Rules:
 5. A test case may be marked complete only after it passes on the rerun that verifies the fix.
 6. A test suite may be marked complete only when every requested case has been run and every failed case has been rerun successfully, or when the remaining cases are explicitly unreachable because of a blocking bug that has been recorded.
 7. Do not silently skip cases, collapse cases into one representative case, or mark a partially run suite as complete.
+8. Every simulated-human test case must use the built-in browser control path for UI interaction and observation unless the operator explicitly authorizes a different UI-control channel.
+9. During test execution, failures must be recorded in a buglist instead of being fixed immediately, except when the operator explicitly asks to fix a specific bug or all bugs before the case set finishes.
+10. Buglist entries must record at minimum:
+   - owning queue or affected queue candidate when known
+   - test case id or scenario name
+   - reproduction path
+   - observed failure
+   - suspected or confirmed cause
+   - blocking level: `blocking | non-blocking`
+   - repair status: `recorded | fixed | verified | reopened`
+11. Non-blocking bugs do not prevent the current test case set or execution queue from continuing.
+12. If a blocking bug prevents one test case from continuing, record the blocker and proceed to the next independent test case when possible.
+13. Bug repair normally begins after all planned queues finish. Repair may begin earlier only when the operator explicitly asks to fix a named bug, a subset of bugs, or all bugs.
+14. After each bug repair, rerun the failed built-in-browser test case(s) that produced the bug and update the buglist status only after verification passes.
 
 ### 11.7 Task And Queue Repository Sync
 
