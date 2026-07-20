@@ -443,6 +443,317 @@
 - Simulated-human testing must cover Script Editor navigation, library dialogue entry, event detail basic information, destination configuration, quick dialogue creation, save, export, and runtime preview.
 - This memo is not a candidate queue and does not authorize execution until explicitly promoted by the user under Blueprint workflow rules.
 
+### MEMO-017: Script Editor New User Guide Minimal Scenario - Huangjue Temple Night Rules
+
+- status: `open`
+- severity: `medium`
+- classification: `memo-only`
+- proposed_queue: `none`
+- owning_queue: `none`
+- admission_status: `not-admitted`
+- latest_disposition: `recorded-as-memo`
+- affected_families:
+  - `script editor new user guide`
+  - `script editor template authoring`
+  - `script editor text authoring`
+  - `script editor dialogue authoring`
+  - `script editor event authoring`
+  - `script editor event binding authoring`
+  - `script editor city and building authoring`
+  - `location access runtime`
+  - `in-game review / council flow`
+  - `Script Editor runtime preview`
+
+#### Draft Concept
+
+- Working title: `Huangjue Temple Night Rules`.
+- Chinese title to preserve for later UI copy: `Huangjue-si Ye Gui`.
+- Genre direction: rule-horror plus light escape-room scenario.
+- Product role: first new-user-guide sample scenario for Script Editor, focused on making a small but meaningful runnable scenario rather than an empty tutorial output.
+- Narrative role: a parallel branch under the Huangjue Temple / Zhu Yuanzhang chapter context, not a mandatory continuation of chapter one.
+
+#### Rationale
+
+- Users may not finish or fully understand the first chapter before opening the Script Editor.
+- A parallel short scenario can stand alone while still reusing the familiar Huangjue Temple setting.
+- Rule-horror structure lets creators easily customize rules, consequences, dialogue, and route outcomes.
+- The scope stays small enough for a beginner guide while still demonstrating real Script Editor capabilities.
+- The scenario can naturally use the in-game review / council mechanism as an ending review, interrogation, or rule-compliance recap.
+
+#### Suggested Player Loop
+
+- Start in a Huangjue Temple side hall or sealed room.
+- Show a short rule notice.
+- Let the player investigate or interact through building, dialogue, and event entrypoints.
+- Correct choices mark rule-compliance events as completed.
+- Wrong choices trigger refusal or anomaly dialogue.
+- Completing enough rule-compliance events unlocks the next building or room.
+- The ending uses a review-like recap to judge whether the player followed the rules.
+- Success ends with escape, passage, or a revealed clue; failure returns the player to the sealed room or ends with a warning.
+
+#### Minimum Scenario Content
+
+- Characters:
+  - default playable role from the existing Zhu Yuanzhang context;
+  - one mysterious monk or temple keeper NPC.
+- Locations:
+  - starting side hall;
+  - locked inner hall or exit destination.
+- Text entries:
+  - rule notice;
+  - anomaly warning;
+  - success clue;
+  - failure or refusal prompt.
+- Dialogues:
+  - rule notice dialogue;
+  - monk question dialogue;
+  - refusal / violation dialogue;
+  - ending review dialogue.
+- Events:
+  - read rules;
+  - obey first rule;
+  - obey second rule;
+  - answer monk correctly;
+  - unlock inner hall;
+  - fail rule check.
+- Event bindings:
+  - building enter triggers rule notice or monk dialogue;
+  - dialogue completion triggers rule-compliance events;
+  - location access blocks the inner hall until the required event state is satisfied.
+- Location access:
+  - blocked entry displays a dialogue prompt;
+  - no unsupported authoring-only condition shape may reach runtime.
+
+#### New User Guide Requirements
+
+- The guide should let a beginner create this scenario without understanding internal terms such as `event-bindings.json`, `locationAccess`, or runtime pack export.
+- The guide should expose creator-facing questions:
+  - What rule does the player see?
+  - What action violates the rule?
+  - What happens when the player obeys?
+  - What happens when the player violates it?
+  - Which room or building unlocks after success?
+  - What does the final review say?
+- The guide may auto-create the underlying texts, dialogues, events, event bindings, and location-access rules.
+- The generated content must remain editable through the normal Script Editor modules after guide completion.
+- Runtime preview must use the normal Script Editor preview path, not a guide-only runtime path.
+
+#### Open Design Questions For Later Refinement
+
+- Whether the first version should use two rules or three rules.
+- Whether the starting location should be a building directly or a city/building pair.
+- Whether the review ending should use the existing review/council module directly or a dialogue-only approximation until the review module exposes a clean integration surface.
+- Whether the guide should offer fixed template copy or ask the creator to fill each rule in one by one.
+- Whether success should unlock a new room, complete the scenario, or branch to a second short scene.
+
+#### Acceptance Notes For Future Queue Promotion
+
+- This memo is not a candidate queue and does not authorize execution until explicitly promoted by the user under Blueprint workflow rules.
+- Future queue acceptance should require simulated-human Script Editor testing from guide start to runtime preview completion.
+- The generated scenario must be meaningful enough to show rule, consequence, unlock, and ending feedback.
+- The generated scenario must be editable through normal text, dialogue, event, event-binding, city/building, and location-access surfaces.
+- The runtime path must work through normal start/preview semantics without introducing a template-only bypass.
+
+### MEMO-018: Script Editor Buildings JSON Separation And City Building References
+
+- status: `open`
+- severity: `medium`
+- classification: `memo-only`
+- proposed_queue: `none`
+- owning_queue: `none`
+- admission_status: `not-admitted`
+- latest_disposition: `recorded-as-memo`
+- affected_families:
+  - `script editor project package`
+  - `script editor city authoring`
+  - `script editor building authoring`
+  - `runtime pack export`
+  - `runtime pack import`
+  - `city entries`
+  - `location access runtime`
+
+#### Requested Capability
+
+- Keep Script Editor authoring data separated by creator-facing concepts:
+  - city records belong in `cities.json`;
+  - building records belong in `buildings.json`;
+  - cities should keep only building references, such as `houseIds` or `mountedBuildings`, rather than embedding full building definitions.
+- The Script Editor UI should treat building records as first-class editable authoring objects.
+- The city detail surface should manage which building ids are mounted or associated with the city, not duplicate the building records themselves.
+- Runtime export can continue lowering editor `buildings.json` records into runtime `houses.json` until a separate runtime contract migration is explicitly admitted.
+
+#### Current Evidence
+
+- Script Editor project-package contract already has `project.json.files.buildings = "./buildings.json"`.
+- `ScriptEditorProjectDefinition.buildings` is the editor-side building table.
+- `ScriptEditorCityRecord` already supports `houseIds?: string[]` and `mountedBuildings?: { buildingId, npcIds, primaryNpcId }[]`.
+- Runtime scenario packs still use `houses.json` and `HouseDefinition`.
+- `runtime-pack-import.ts` maps runtime `pack.houses` into editor `project.buildings`.
+- `runtime-pack-export.ts` lowers editor buildings back into runtime `houses.json`.
+
+#### Proposed Boundary
+
+- In scope for a future editor-focused queue:
+  - Make the editor/project-package boundary explicit in documentation and tests.
+  - Ensure saved Script Editor projects always write building authoring data to `buildings.json`.
+  - Ensure city records only store stable building references and mount metadata.
+  - Ensure imports from runtime `houses.json` populate editor `buildings.json` on project save.
+  - Ensure export from editor `buildings.json` still produces valid runtime `houses.json`.
+  - Add validation that city building references point to existing building ids.
+  - Add validation that the same building id is not mounted into multiple cities unless explicitly supported.
+- Out of scope unless separately admitted:
+  - Renaming runtime `houses.json` to `buildings.json`.
+  - Renaming `HouseDefinition`, `houseId`, house modules, or runtime house contracts.
+  - Breaking existing scenario-pack consumers that expect `pack.files.houses`.
+  - Removing `city-entries.json` or `location-access.json`.
+
+#### Runtime Contract Note
+
+- Runtime should remain stable for now:
+  - runtime pack input: `houses.json`;
+  - runtime domain: `HouseDefinition`;
+  - runtime city association: `cities[].houseIds` and/or `city-entries.json`;
+  - runtime access control: `location-access.json`.
+- If the project later wants runtime packs to expose `buildings.json` directly, that must be a dedicated contract migration queue with loader/export compatibility, content migration, and source guard coverage.
+
+#### Acceptance Notes For Future Queue Promotion
+
+- Saving a Script Editor project writes building data to `buildings.json`.
+- Opening the saved project restores the same building records from `buildings.json`.
+- City records store building ids or mount metadata, not duplicated building records.
+- Importing a runtime pack with `houses.json` creates editor building records.
+- Exporting an editor project with `buildings.json` produces runtime `houses.json`.
+- Runtime preview, JSON runtime import, and normal start still work after export.
+- Tests cover project save/load, runtime import, runtime export, city reference validation, and duplicate mount rejection or explicit waiver.
+- This memo is not a candidate queue and does not authorize execution until explicitly promoted by the user under Blueprint workflow rules.
+
+### MEMO-019: Script Editor Runtime Preview UI Component Editing Draft
+
+- status: `open`
+- severity: `medium`
+- classification: `memo-only`
+- proposed_queue: `none`
+- owning_queue: `none`
+- admission_status: `not-admitted`
+- latest_disposition: `recorded-as-memo`
+- cleanup_note: `No old preview-layout task remains in this memo after the prior removal of the 2026-07-18 runtime preview layout edit-mode memo. This entry is the consolidated replacement draft for preview UI editing and component authoring.`
+- affected_families:
+  - `Script Editor runtime preview`
+  - `script editor UI editing`
+  - `script editor event authoring`
+  - `script editor dialogue authoring`
+  - `script editor minigame binding`
+  - `script editor city and building authoring`
+  - `runtime pack export`
+  - `runtime pack import`
+  - `runtime UI presentation`
+
+#### Draft Goal
+
+- Extend Script Editor runtime preview so creators can edit a bounded set of UI components while previewing a scenario.
+- The first stage should not attempt a full UE-style blueprint editor or unrestricted UI builder.
+- The first stage should provide partial UI editing capability inside preview, focused on adding and configuring buttons and cards.
+- Preview UI editing must remain a creator-facing composition layer over existing Script Editor events, dialogues, minigames, cities, and buildings.
+- It must not create a preview-only runtime path or hidden click handlers that disappear after export.
+
+#### Core Positioning
+
+- `Run preview` continues to launch the normal runtime preview flow.
+- UI editing is an explicit mode entered from runtime preview, not the default preview behavior.
+- Normal preview must remain playable and must not accidentally move or edit UI components.
+- UI component edits must be stored in Script Editor project data or a future stable layout/component data file.
+- Runtime export must include the UI component configuration in a stable scenario-pack file.
+- The production runtime loader must consume that exported UI component configuration through a formal loader path.
+
+#### First-Stage UI Component Scope
+
+- Supported component types:
+  - button;
+  - card.
+- Supported button authoring:
+  - add button;
+  - remove button;
+  - edit button label;
+  - choose visible/enabled state where supported;
+  - adjust ordering or basic placement;
+  - bind click behavior to an existing Script Editor source.
+- Supported card authoring:
+  - add card;
+  - remove card;
+  - edit card title;
+  - edit card description;
+  - choose image/background asset by stable asset reference where supported;
+  - adjust ordering or basic placement;
+  - bind card click behavior to an existing Script Editor source.
+- First-stage editing may limit itself to adding UI button count and card count plus basic labels and event binding. Advanced layout controls can remain future work.
+
+#### Click Binding Sources
+
+- Button and card click behavior must be selected from existing Script Editor sources, not typed as script code.
+- Minimum selectable source families:
+  - `event` from `project.events`;
+  - `dialogue` from `project.dialogues`;
+  - `minigame` from `project.minigames`;
+  - `city` from `project.cities`;
+  - `building` from `project.buildings`.
+- Later source families may include task, story-node, chapter progress, or other runtime-supported actions only after their runtime handoff is proven.
+- Missing or deleted click targets must be visible as validation errors and must block export or require explicit repair.
+
+#### Runtime Behavior Rules
+
+- A button click that targets an event must dispatch through the formal event runtime path.
+- A button click that targets a dialogue must open the formal dialogue/runtime scene path.
+- A button click that targets a minigame must launch through the formal playable/minigame integration path.
+- A button click that targets a city or building must route through formal navigation and location-access checks.
+- Card clicks follow the same action rules as buttons.
+- UI component actions must not mutate runtime state directly.
+- UI component actions must not bypass EventBindingRuntime, locationAccess, dialogue runtime, playable runtime, or navigation guards.
+
+#### Data And Export Expectations
+
+- UI component configuration should be represented as stable project data, not ad hoc DOM state.
+- Export may use a future `ui-layouts.json`, `ui-components.json`, or equivalent stable file, but the file name and schema must be frozen before implementation.
+- `pack.json.files` must explicitly reference the exported UI component/layout file.
+- Runtime loader must consume the file in normal runtime start, JSON runtime pack import, and Script Editor runtime preview.
+- Asset references must use stable ids such as `assetId`; exported data must not embed local file paths or raw file bytes unless the scenario-pack asset contract explicitly supports that.
+- Invalid component references, missing assets, missing target events, or unsupported action families must fail closed with actionable diagnostics.
+
+#### Relationship To New User Guide
+
+- The `Huangjue Temple Night Rules` beginner scenario can use this capability later to expose cards such as:
+  - view rules;
+  - inspect altar;
+  - ask the monk;
+  - try the inner door.
+- Each card can bind to a formal event, dialogue, or building entry.
+- New users should see creator-facing controls such as `what does this button do` and `what happens when this card is clicked`, not runtime terms such as handler id or pack file.
+
+#### Non-Goals
+
+- Do not implement a UE-style visual blueprint editor in this queue.
+- Do not let users write JavaScript or arbitrary scripts.
+- Do not introduce arbitrary custom component types in the first stage.
+- Do not encode runtime business logic inside layout/component data.
+- Do not create preview-only buttons or cards that do not work after export.
+- Do not change EventBindingRuntime semantics.
+- Do not rename runtime `houses.json` to `buildings.json`.
+- Do not use UI component clicks to bypass location access, dialogue, event, playable, or navigation contracts.
+
+#### Acceptance Notes For Future Queue Promotion
+
+- Runtime preview exposes an explicit UI editing mode only during preview.
+- The UI editing mode can add at least one button.
+- The button can bind its click target to an existing Script Editor event.
+- The UI editing mode can add at least one card.
+- The card can bind its click target to an existing Script Editor event.
+- Previewing the scenario and clicking the created button or card triggers the selected event through the formal runtime path.
+- Project save/reopen preserves the created button/card configuration.
+- Runtime export includes the component configuration in a formal scenario-pack file.
+- JSON runtime import can load the exported pack and the button/card still triggers the selected runtime action.
+- Deleted or missing target events are surfaced as validation errors.
+- Simulated-human testing must cover creating a button, binding an event, creating a card, binding an event, running preview, clicking both, saving/reopening, exporting, JSON importing, and clicking again.
+- This memo is not a candidate queue and does not authorize execution until explicitly promoted by the user under Blueprint workflow rules.
+
 ### MEMO-012: Script Editor City And Building Background Authoring
 
 - status: `closed`
@@ -480,114 +791,9 @@
 - Normal start, JSON runtime pack import, and Script Editor runtime preview all render the configured city/building backgrounds.
 - Automated tests and simulated-human UI checks cover both city and building configuration paths.
 
-### MEMO-013: Script Editor City/Building Enter-State And List/Search Unification
-
-- status: `open`
-- severity: `high`
-- classification: `future-target-candidate`
-- proposed_queue: `queue.script-editor-city-building-enter-state-and-preview-boundary`
-- owning_queue: `none`
-- admission_status: `not-admitted`
-- latest_disposition: `recorded-only`
-- affected_families:
-  - `script editor city authoring`
-  - `script editor building authoring`
-  - `script editor project overview`
-  - `location access runtime`
-  - `runtime preview`
-  - `record list / selector UX`
-
-#### Requested Capability
-
-- City and building detail pages need a full `进入态` tab that creators can actually edit.
-- `基础` must carry `默认背景`.
-- `进入态` must carry editable `进入条件`, `可进入目标`, `提示文案`, and `拒绝提示`.
-- Enter conditions should cover task conditions, event conditions, person stat / attribute conditions, and the existing city / building / player / world / story condition sources.
-- The editor should reuse the existing `locationAccess` runtime meaning instead of inventing a parallel gate schema.
-- Runtime preview mode should show a green border around the game area, but only while preview is active.
-- The secondary list surfaces for city, building, story node, dialogue, event, playable, and text should match the person list shell: search, add, delete, list, and pagination.
-- Detail-page internal selectors should use the same interaction language as the list surfaces, including consistent search / option presentation where selection is required.
-
-#### Scope Notes
-
-- `locationAccess` should stay the gate layer for `conditionExpression`, `blockedMessage`, `blockedSpeakerId`, `guidance`, `blockedReason`, and optional `refusalEventId`.
-- Default background belongs in base information, not in the gate layer.
-- The list/search shell and the detail-page selector shell are related, but they should be treated as shared UI infrastructure rather than one-off per-entity hacks.
-- This draft is broad enough that it may need to be split into smaller candidate queues before admission.
-
-#### Acceptance Notes
-
-- City and building `进入态` tabs switch visibly and expose editable controls.
-- Default background saves and participates in runtime behavior.
-- Enter conditions block or allow entry at runtime through `locationAccess`.
-- Preview mode shows the green frame and normal runtime does not.
-- City, building, story node, dialogue, event, playable, and text all expose search / add / delete / list / pagination in their secondary surfaces.
-- Detail-page internal selectors reuse the same UX language and do not feel like a separate ad hoc control style.
-- Simulated-human tests must record every failure, run every case, and rerun from the start after fixes until the entire chain passes without skipping any case.
-- Normal start, JSON runtime pack import, and Script Editor runtime preview must all preserve the same entry and list/selector behavior.
-
-#### Split Outcome
-
-- `queue.script-editor-city-building-enter-state-and-preview-boundary`
-  - Owns city/building enter-state editing, default background, locationAccess-backed gate editing, and the preview-only green border.
-- `queue.script-editor-city-building-secondary-list-and-selector-ux-unification`
-  - Owns shared secondary list/search/add/delete/pagination shells and detail-page selector UX normalization.
-- The original broad draft remains recorded here as the source memo, but the candidate work should now be reasoned about through the two narrower queues above.
 
 
-### MEMO-011: Entry Shell UI Module Extraction
 
-- status: `closed`
-- severity: `medium`
-- classification: `future-target-candidate`
-- proposed_queue: `queue.entry-shell-ui-module-extraction`
-- owning_queue: `queue.entry-shell-ui-module-extraction`
-- admission_status: `admitted-and-closed`
-- latest_disposition: `closed-with-successor-version`
-- affected_families:
-  - `entry shell`
-  - `main menu`
-  - `json scenario start`
-  - `script editor entry`
-  - `character selection entry`
-
-#### Current Evidence
-
-- `src/ui/main-ui/main-ui-flow.js` currently renders and routes the pre-game entry UI directly through `renderMainMenu`, JSON start selection, Script Editor entry screens, and related `data-main-ui-action` / `data-script-editor-action` handlers.
-- `src/main.ts` starts the entry UI by calling `mainUiFlow.showMainMenu()`, so the first extraction boundary can stay inside UI/view composition without changing runtime startup semantics.
-- The entry UI is not the same boundary as in-game map, city, building, dialogue, review/council, or Script Editor workspace internals.
-
-#### Proposed Scope
-
-- Extract an Entry Shell module for startup/pre-game UI:
-  - main menu;
-  - JSON scenario start selection;
-  - Script Editor entry screens;
-  - character-selection entry presentation and action contract where it belongs to the startup flow.
-- Add a narrow contract module, such as `entry-shell-contract`, for screen ids, action ids, and view model data.
-- Add a render module, such as `entry-shell-view`, that owns markup for entry-shell screens.
-- Keep `MainUiFlow` responsible for state, persistence, file picker calls, startup callbacks, and invoking existing handlers.
-- Do not change game runtime startup/load semantics.
-- Do not extract in-game map/city/review/Script Editor workspace behavior into this queue.
-
-#### Acceptance Criteria
-
-- Entry Shell render code is no longer embedded in `main-ui-flow.js`.
-- `MainUiFlow` delegates startup/pre-game screen rendering to the Entry Shell module through a typed or documented view model contract.
-- Existing visible behavior is preserved:
-  - start game;
-  - continue game;
-  - JSON start;
-  - Script Editor entry;
-  - character-selection entry flow.
-- Tests cover the extracted module contract and ensure main menu action ids remain stable.
-- A browser/manual check confirms the startup UI still renders and routes to each entry flow.
-
-#### Routing Notes
-
-- This is not part of `target.script-editor-event-runtime-production-hardening`.
-- Do not admit while an unrelated active queue is open.
-- Promoted on 2026-07-19 into successor version `target.entry-shell-ui-module-extraction` and active queue `queue.entry-shell-ui-module-extraction`; closed after that queue completed and version closeout was recorded.
 
 ### MEMO-008: Event Trigger Dispatch And Person Event Bindings Need Separate Condition Ownership
 
@@ -1306,57 +1512,3 @@ Out of scope:
 - Automated simulated-human flow covering map entry and review flow.
 - Entry-point tests for normal start, JSON import, and Script Editor runtime preview.
 - Removal-inventory closeout showing every listed residue removed, preserved by design, or waived with reason.
-
-## 2026-07-18 Script Editor Runtime Preview Layout Edit Mode Memo
-
-### Suggested Version
-
-- target_id: `target.script-editor-runtime-preview-layout-edit-mode`
-- purpose: `Implement Script Editor preview edit mode without mixing it into closed event-binding/runtime-preview fixup work.`
-
-### Pasteable Admission Prompt
-
-```text
-按蓝图规范创建并实现新 version，不要混入旧 closeout：
-
-target.script-editor-runtime-preview-layout-edit-mode
-
-目标：
-实现剧本编辑器“预览编辑模式”。
-
-已确认设计：
-1. 剧本编辑器点击【运行预览】后，先进入普通运行预览。
-2. 普通预览右上角显示【编辑布局】和【退出预览】。
-3. 点击【编辑布局】后进入布局编辑态。
-4. 编辑态下：
-   - 点击界面元素选中。
-   - 长按元素后可以拖动位置。
-   - 属性面板可调整位置、尺寸、层级、锚点、缩放策略、引用资源。
-5. 保存粒度是整个项目/剧本包的所有可编辑界面，不是当前画面。
-6. 所有运行时可见界面都要纳入 editable surface registry。
-7. 资源替换支持：
-   - 从项目资产库选择。
-   - 本地导入资源到资产库后选择。
-8. layout JSON 只保存稳定资源引用，例如 assetId，不保存文件内容。
-9. 导出 runtime scenario pack 时生成 ui-layouts.json，并由 pack.json.files 引用。
-10. runtime 正式 loader 消费 ui-layouts，不走临时预览专用路径。
-11. layout 引用缺失资源时导出 fail closed。
-12. 不改 EventBindingRuntime 语义。
-
-建议队列：
-1. queue.script-editor-preview-layout-edit-mode-admission
-2. queue.runtime-editable-surface-registry
-3. queue.script-editor-layout-asset-library
-4. queue.script-editor-preview-layout-editor-ui
-5. queue.runtime-pack-ui-layout-export-loader
-
-先做 admission / evidence reconcile，再进入 implementation。
-```
-
-### Design Notes
-
-- Entry flow is two-stage: `运行预览` starts normal runtime preview first; `编辑布局` explicitly enables editing.
-- Edit mode uses click-to-select and long-press-to-drag to avoid accidental movement during normal runtime interaction.
-- The saved artifact is a project-level layout collection covering all editable runtime screens.
-- Resource replacement uses the project asset library as the primary path, with local import as an asset-library intake path.
-- Runtime/export support must be real scenario-pack support, not a preview-only side channel.
