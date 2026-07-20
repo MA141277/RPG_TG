@@ -215,6 +215,89 @@
       text-align: center;
     }
 
+    .prefab-summary {
+      display: grid;
+      gap: 4px;
+      margin-bottom: 10px;
+      padding: 9px 10px;
+      border: 1px solid #465140;
+      border-radius: 8px;
+      background: #161a15;
+    }
+
+    .prefab-summary strong {
+      color: #fff2c7;
+    }
+
+    .prefab-summary span {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .prefab-preview {
+      display: grid;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .prefab-preview__hint {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .prefab-preview-stage {
+      position: relative;
+      min-height: 246px;
+      overflow: hidden;
+      border: 1px solid #465140;
+      border-radius: 10px;
+      background:
+        radial-gradient(circle at 50% 38%, rgb(134 183 232 / 12%), transparent 34%),
+        linear-gradient(180deg, #171c16 0%, #10130f 100%);
+    }
+
+    .prefab-preview-stage.is-empty::before {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      color: var(--muted);
+      font-size: 12px;
+      content: "选择一个实体后，这里只预览 prefab 自身，不依赖城市底图。";
+    }
+
+    .prefab-preview-grid,
+    .prefab-preview-entity-layer {
+      position: absolute;
+      inset: 0;
+    }
+
+    .prefab-preview-grid,
+    .prefab-preview-entity-layer,
+    .prefab-preview-entity-layer .entity {
+      pointer-events: none;
+    }
+
+    .prefab-preview-diamond {
+      fill: rgb(128 140 118 / 8%);
+      stroke: rgb(166 180 145 / 34%);
+      stroke-width: 1;
+    }
+
+    .prefab-preview-diamond.is-footprint {
+      fill: rgb(241 198 92 / 18%);
+      stroke: rgb(255 223 126 / 85%);
+    }
+
+    .prefab-preview-anchor {
+      fill: rgb(134 183 232 / 92%);
+    }
+
+    .is-hidden {
+      display: none !important;
+    }
+
     .entity-list {
       display: grid;
       gap: 7px;
@@ -947,19 +1030,7 @@
         </section>
         <section class="panel__section">
           <h2 class="panel__title">一键选中</h2>
-          <div class="quick-grid" id="quick-select">
-            <button type="button" data-quick-id="keep">帅府</button>
-            <button type="button" data-quick-id="leader-residence">将领府邸</button>
-            <button type="button" data-quick-id="temple">皇觉寺</button>
-            <button type="button" data-quick-id="tea-house">茶馆</button>
-            <button type="button" data-quick-id="market">货栈</button>
-            <button type="button" data-quick-id="grain-shop">粮铺</button>
-            <button type="button" data-quick-id="medicine-house">药铺</button>
-            <button type="button" data-quick-id="inn">客栈</button>
-            <button type="button" data-quick-id="decor-house-01">民居 1</button>
-            <button type="button" data-quick-id="decor-house-02">民居 2</button>
-            <button type="button" data-quick-id="decor-house-03">民居 3</button>
-          </div>
+          <div class="quick-grid" id="quick-select"></div>
         </section>
         <div class="entity-list" id="entity-list"></div>
         <details class="advanced-json">
@@ -1201,6 +1272,9 @@
       }
     ];
 
+    const HAOZHOU_LAYOUT_EXAMPLE_PATH = "examples/haozhou-city-layout.example.json";
+    const HAOZHOU_PREFAB_EXAMPLE_PATH = "examples/haozhou-city-prefabs.example.json";
+
     const EMPTY_LAYOUT = {
       version: 1,
       map: {
@@ -1221,7 +1295,7 @@
         cellWidth: 40,
         cellHeight: 20,
         originX: 885,
-        originY: 220,
+        originY: 110,
         snap: true,
         visible: true,
         showCoordinates: true,
@@ -1384,6 +1458,7 @@
         dom[toKey(id)] = document.getElementById(id);
       }
 
+      ensurePrefabEditorUi();
       bindEvents();
       render();
     }
@@ -1432,6 +1507,15 @@
           selectEntity(button.dataset.quickId);
         }
       });
+      for (const element of [
+        dom.fieldPrefabCols,
+        dom.fieldPrefabRows,
+        dom.fieldPrefabOffsetX,
+        dom.fieldPrefabOffsetY,
+      ]) {
+        element.addEventListener("input", updatePrefabFromQuickEditor);
+        element.addEventListener("change", updatePrefabFromQuickEditor);
+      }
       dom.addEntity.addEventListener("click", addEntity);
       dom.duplicateEntity.addEventListener("click", duplicateEntity);
       dom.deleteEntity.addEventListener("click", deleteEntity);
@@ -1535,7 +1619,7 @@
       grid.cellWidth = Math.max(16, numberOr(grid.cellWidth, 20));
       grid.cellHeight = Math.max(8, numberOr(grid.cellHeight, 20));
       grid.originX = numberOr(grid.originX, 885);
-      grid.originY = numberOr(grid.originY, 220);
+      grid.originY = numberOr(grid.originY, 110);
       grid.snap = Boolean(grid.snap);
       grid.visible = grid.visible !== false;
       grid.showCoordinates = grid.showCoordinates !== false;
@@ -1550,6 +1634,42 @@
         randomPools: Array.isArray(source.randomPools)
           ? source.randomPools
         : clone(EMPTY_LAYOUT.randomPools)
+      };
+    }
+
+    function composePrefabLayoutForEditor(layoutSource, prefabLibrary) {
+      if (!Array.isArray(layoutSource?.instances) || !Array.isArray(prefabLibrary?.prefabs)) {
+        return layoutSource;
+      }
+
+      const prefabById = new Map(
+        prefabLibrary.prefabs.map((prefab) => [prefab.id, prefab])
+      );
+
+      return {
+        ...layoutSource,
+        entities: layoutSource.instances.map((instance) => {
+          const prefab = prefabById.get(instance.prefabId);
+          if (prefab == null) {
+            throw new Error(`Missing prefab: ${instance.prefabId}`);
+          }
+
+          return {
+            id: instance.id,
+            name: prefab.name,
+            category: prefab.category,
+            entry: clone(prefab.entry),
+            asset: clone(prefab.asset),
+            lot: {
+              gridX: instance.gridX,
+              gridY: instance.gridY,
+              cols: prefab.footprint.cols,
+              rows: prefab.footprint.rows
+            },
+            render: clone(instance.render || {}),
+            interaction: clone(prefab.interaction)
+          };
+        })
       };
     }
 
@@ -1796,11 +1916,70 @@
       renderMapForm();
       renderCalibrationForm();
       renderToolbarState();
+      renderQuickSelect();
       renderEntityList();
       renderProperties();
       renderCanvas();
       syncRandomPoolsTextarea();
       syncLayoutJsonPreview();
+    }
+
+    function ensurePrefabEditorUi() {
+      const section = document.createElement("section");
+      section.className = "panel__section";
+      section.innerHTML = `
+        <h2 class="panel__title">预制体速改</h2>
+        <div class="prefab-summary" id="prefab-summary">
+          <strong>未选中预制体</strong>
+          <span>在这里直接调整占地列行和图片 offset，不需要在大地图里拖拽。</span>
+        </div>
+        <div class="prefab-preview">
+          <div class="prefab-preview__hint">这里预览的是实体 prefab 本身：占地格子、图片 offset、点击区和标签，不绑定任何城市底图。</div>
+          <div class="prefab-preview-stage is-empty" id="prefab-preview-stage">
+            <svg class="prefab-preview-grid" id="prefab-preview-grid" aria-hidden="true"></svg>
+            <div class="prefab-preview-entity-layer" id="prefab-preview-entity-layer"></div>
+          </div>
+        </div>
+        <div class="field-row">
+          <label class="field"><span>预制体占地列数</span><input id="field-prefab-cols" type="number" min="1" step="1"></label>
+          <label class="field"><span>预制体占地行数</span><input id="field-prefab-rows" type="number" min="1" step="1"></label>
+        </div>
+        <div class="field-row">
+          <label class="field"><span>预制图片偏移 X</span><input id="field-prefab-offset-x" type="number" step="1"></label>
+          <label class="field"><span>预制图片偏移 Y</span><input id="field-prefab-offset-y" type="number" step="1"></label>
+        </div>
+      `;
+      dom.entityForm.before(section);
+      dom.prefabSummary = document.getElementById("prefab-summary");
+      dom.fieldPrefabCols = document.getElementById("field-prefab-cols");
+      dom.fieldPrefabRows = document.getElementById("field-prefab-rows");
+      dom.fieldPrefabOffsetX = document.getElementById("field-prefab-offset-x");
+      dom.fieldPrefabOffsetY = document.getElementById("field-prefab-offset-y");
+      dom.prefabPreviewStage = document.getElementById("prefab-preview-stage");
+      dom.prefabPreviewGrid = document.getElementById("prefab-preview-grid");
+      dom.prefabPreviewEntityLayer = document.getElementById("prefab-preview-entity-layer");
+      dom.hitAreaFields = document.getElementById("field-hit-type").closest("label").parentElement;
+    }
+
+    function renderQuickSelect() {
+      dom.quickSelect.innerHTML = "";
+      const entities = [...state.layout.entities].sort((first, second) =>
+        first.category === second.category
+          ? first.name.localeCompare(second.name, "zh-Hans-CN")
+          : first.category.localeCompare(second.category)
+      );
+
+      for (const entity of entities) {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.dataset.quickId = entity.id;
+        button.textContent = entity.name;
+        button.title = `${entity.id} · ${CATEGORY_LABELS[entity.category] || entity.category}`;
+        if (entity.id === state.selectedId) {
+          button.classList.add("is-selected");
+        }
+        dom.quickSelect.append(button);
+      }
     }
 
     function renderToolbarState() {
@@ -1897,12 +2076,130 @@
       }
     }
 
+    function renderPrefabEditor(entity) {
+      if (entity == null) {
+        dom.prefabSummary.innerHTML = `
+          <strong>未选中预制体</strong>
+          <span>在这里直接调整占地列行和图片 offset，不需要在大地图里拖拽。</span>
+        `;
+        dom.fieldPrefabCols.value = "";
+        dom.fieldPrefabRows.value = "";
+        dom.fieldPrefabOffsetX.value = "";
+        dom.fieldPrefabOffsetY.value = "";
+        renderPrefabPreview(null);
+        return;
+      }
+
+      dom.prefabSummary.innerHTML = `
+        <strong>${escapeHtml(entity.name)}</strong>
+        <span>${escapeHtml(entity.id)} · ${escapeHtml(CATEGORY_LABELS[entity.category] || entity.category)} · ${entity.lot.cols} x ${entity.lot.rows} 格</span>
+      `;
+      dom.fieldPrefabCols.value = String(entity.lot.cols);
+      dom.fieldPrefabRows.value = String(entity.lot.rows);
+      dom.fieldPrefabOffsetX.value = String(entity.asset.offsetX);
+      dom.fieldPrefabOffsetY.value = String(entity.asset.offsetY);
+      renderPrefabPreview(entity);
+    }
+
+    function renderPrefabPreview(entity) {
+      dom.prefabPreviewGrid.innerHTML = "";
+      dom.prefabPreviewEntityLayer.innerHTML = "";
+      dom.prefabPreviewStage.classList.toggle("is-empty", entity == null);
+      if (entity == null) {
+        dom.prefabPreviewGrid.removeAttribute("viewBox");
+        return;
+      }
+
+      const previewGrid = createPrefabPreviewGrid(entity);
+      const board = getBoardCorners(previewGrid);
+      const stageWidth = Math.ceil(previewGrid.originX + (previewGrid.cols * previewGrid.cellWidth) / 2 + 32);
+      const stageHeight = Math.ceil(board.bottom.y + 32);
+      dom.prefabPreviewGrid.setAttribute("viewBox", `0 0 ${stageWidth} ${stageHeight}`);
+
+      const footprintCells = new Set();
+      for (let row = 0; row < entity.lot.rows; row += 1) {
+        for (let col = 0; col < entity.lot.cols; col += 1) {
+          footprintCells.add(`${previewGrid.prefabGridX + col},${previewGrid.prefabGridY + row}`);
+        }
+      }
+
+      const diamonds = [];
+      for (let row = 0; row < previewGrid.rows; row += 1) {
+        for (let col = 0; col < previewGrid.cols; col += 1) {
+          const diamond = getBoardDiamond(col, row, previewGrid);
+          const key = `${col},${row}`;
+          diamonds.push(`<polygon class="prefab-preview-diamond${footprintCells.has(key) ? " is-footprint" : ""}" points="${diamond.points.map((point) => `${point.x},${point.y}`).join(" ")}"></polygon>`);
+        }
+      }
+      diamonds.push(`<circle class="prefab-preview-anchor" cx="${previewGrid.prefabEntity.lot.x}" cy="${previewGrid.prefabEntity.lot.y}" r="4"></circle>`);
+      dom.prefabPreviewGrid.innerHTML = diamonds.join("");
+
+      const node = document.createElement("div");
+      node.className = "entity";
+      node.style.left = `${previewGrid.prefabEntity.lot.x}px`;
+      node.style.top = `${previewGrid.prefabEntity.lot.y}px`;
+      node.style.zIndex = "1";
+      node.append(createRenderBox(previewGrid.prefabEntity));
+      if (previewGrid.prefabEntity.interaction.clickable) {
+        node.append(createHitArea(previewGrid.prefabEntity));
+      }
+      node.append(createAssetNode(previewGrid.prefabEntity));
+      node.append(createLabelNode(previewGrid.prefabEntity));
+      dom.prefabPreviewEntityLayer.append(node);
+    }
+
+    function createPrefabPreviewGrid(entity) {
+      const margin = 2;
+      const cellWidth = 40;
+      const cellHeight = 20;
+      const cols = Math.max(entity.lot.cols + margin * 2, 6);
+      const rows = Math.max(entity.lot.rows + margin * 2, 6);
+      const grid = {
+        type: "isometric-board",
+        cols,
+        rows,
+        cellWidth,
+        cellHeight,
+        originX: Math.ceil((rows * cellWidth) / 2) + 32,
+        originY: Math.ceil(cellHeight / 2) + 24,
+        snap: true,
+        visible: true,
+        showCoordinates: false,
+        showOutline: false
+      };
+      const prefabEntity = clone(entity);
+      prefabEntity.lot.gridX = Math.floor((cols - entity.lot.cols) / 2);
+      prefabEntity.lot.gridY = Math.floor((rows - entity.lot.rows) / 2);
+      prefabEntity.lot.offsetX = 0;
+      prefabEntity.lot.offsetY = 0;
+      syncLotPixelFields(prefabEntity, grid);
+      return {
+        ...grid,
+        prefabGridX: prefabEntity.lot.gridX,
+        prefabGridY: prefabEntity.lot.gridY,
+        prefabEntity
+      };
+    }
+
+    function toggleHitAreaFields(entity) {
+      const shouldShow = Boolean(entity?.interaction.clickable);
+      const nodes = [
+        dom.fieldHitType.closest("label"),
+        dom.fieldHitOffsetX.closest(".field-row"),
+        dom.fieldHitWidth.closest(".field-row"),
+      ].filter(Boolean);
+      for (const node of nodes) {
+        node.classList.toggle("is-hidden", !shouldShow);
+      }
+    }
+
     function renderProperties() {
       const entity = getSelectedEntity();
       dom.entityForm.classList.toggle("hidden", entity == null);
       dom.entityFormEmpty.classList.toggle("hidden", entity != null);
       dom.duplicateEntity.disabled = entity == null;
       dom.deleteEntity.disabled = entity == null;
+      renderPrefabEditor(entity);
 
       if (entity == null) {
         dom.selectedReadout.textContent = "未选中建筑实体";
@@ -1948,6 +2245,7 @@
       dom.fieldRandomTags.value = Array.isArray(entity.random?.allowedTags)
         ? entity.random.allowedTags.join(", ")
         : "";
+      toggleHitAreaFields(entity);
     }
 
     function renderCanvas() {
@@ -2091,7 +2389,7 @@
         if (layerState.imageBounds) {
           node.append(createRenderBox(entity));
         }
-        if (layerState.hitArea) {
+        if (entity.interaction.clickable && layerState.hitArea) {
           node.append(createHitArea(entity));
         }
         node.append(createAssetNode(entity));
@@ -2439,9 +2737,30 @@
       if (event?.target === dom.fieldName && !dom.fieldLabelText.value.trim()) {
         entity.interaction.label.text = entity.name;
       }
+      renderProperties();
+      renderQuickSelect();
       renderEntityList();
       renderCanvas();
       syncRandomPoolsTextarea();
+    }
+
+    function updatePrefabFromQuickEditor() {
+      const entity = getSelectedEntity();
+      if (entity == null) {
+        return;
+      }
+
+      entity.lot.cols = Math.max(1, Math.round(numberOr(dom.fieldPrefabCols.value, entity.lot.cols)));
+      entity.lot.rows = Math.max(1, Math.round(numberOr(dom.fieldPrefabRows.value, entity.lot.rows)));
+      entity.asset.offsetX = numberOr(dom.fieldPrefabOffsetX.value, entity.asset.offsetX);
+      entity.asset.offsetY = numberOr(dom.fieldPrefabOffsetY.value, entity.asset.offsetY);
+      clampLotToBoard(entity);
+      syncLotPixelFields(entity);
+      renderPrefabEditor(entity);
+      renderQuickSelect();
+      renderProperties();
+      renderEntityList();
+      renderCanvas();
     }
 
     function readEntryFromForm() {
@@ -2836,14 +3155,24 @@
 
     async function loadHaozhouExample() {
       try {
-        const response = await fetch("examples/haozhou-city-layout.example.json");
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`);
+        const [layoutResponse, prefabResponse] = await Promise.all([
+          fetch(HAOZHOU_LAYOUT_EXAMPLE_PATH),
+          fetch(HAOZHOU_PREFAB_EXAMPLE_PATH)
+        ]);
+        if (!layoutResponse.ok) {
+          throw new Error(`layout HTTP ${layoutResponse.status}`);
         }
-        setEditorLayout(await response.json());
+        if (!prefabResponse.ok) {
+          throw new Error(`prefab HTTP ${prefabResponse.status}`);
+        }
+        const [layout, prefabs] = await Promise.all([
+          layoutResponse.json(),
+          prefabResponse.json()
+        ]);
+        setEditorLayout(composePrefabLayoutForEditor(layout, prefabs));
         setStatus("已载入濠州示例。");
       } catch (error) {
-        setStatus(`载入示例失败：请使用“导入 JSON”选择 examples/haozhou-city-layout.example.json。原因：${error.message}`);
+        setStatus(`载入示例失败：请使用“导入 JSON”选择 ${HAOZHOU_LAYOUT_EXAMPLE_PATH} 与 ${HAOZHOU_PREFAB_EXAMPLE_PATH}。原因：${error.message}`);
       }
     }
 

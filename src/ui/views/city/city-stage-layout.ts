@@ -2,106 +2,20 @@ import type { CityDefinition } from "../../../domain/city";
 import type { CityEntryDefinition } from "../../../domain/city-entry";
 import type { HouseDefinition } from "../../../domain/house";
 import * as haozhouCityLayoutModule from "../../../../tools/city-map-building-editor/examples/haozhou-city-layout.example.json";
-
-type CityStageEntry =
-  | { type: "none" }
-  | { type: "house"; houseId: string }
-  | { type: "city-entry"; cityEntryId: string };
-
-type CityStageAssetAnchor = "bottom-center" | "center" | "top-left";
-
-type CityStageAsset = {
-  image: string;
-  naturalWidth: number;
-  naturalHeight: number;
-  scale: number;
-  offsetX: number;
-  offsetY: number;
-  anchor: CityStageAssetAnchor;
-};
-
-type CityStageLot = {
-  gridX: number;
-  gridY: number;
-  cols: number;
-  rows: number;
-  offsetX?: number;
-  offsetY?: number;
-};
-
-type CityStageRender = {
-  visible?: boolean;
-  zIndex?: number | null;
-  zIndexMode?: "y-sort" | "manual";
-};
-
-type CityStageInteractionLabel = {
-  text: string;
-  offsetX: number;
-  offsetY: number;
-  width: number;
-  height: number;
-};
-
-type CityStageInteractionHitArea = {
-  type: "ellipse" | "rect";
-  offsetX: number;
-  offsetY: number;
-  width: number;
-  height: number;
-};
-
-type CityStageInteraction = {
-  clickable: boolean;
-  label: CityStageInteractionLabel;
-  hitArea: CityStageInteractionHitArea;
-};
-
-type CityStageEntity = {
-  id: string;
-  name: string;
-  category: string;
-  entry: CityStageEntry;
-  asset: CityStageAsset;
-  lot: CityStageLot;
-  render?: CityStageRender;
-  interaction: CityStageInteraction;
-};
-
-type CityStageMap = {
-  id: string;
-  name: string;
-  stageWidth: number;
-  stageHeight: number;
-  baseSpace: {
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-  };
-  backgroundImage: string;
-  foregroundImage: string;
-};
-
-type CityStageGrid = {
-  type: "isometric-board";
-  cols: number;
-  rows: number;
-  cellWidth: number;
-  cellHeight: number;
-  originX: number;
-  originY: number;
-};
-
-type CityStageLayout = {
-  version: number;
-  map: CityStageMap;
-  grid: CityStageGrid;
-  entities: CityStageEntity[];
-};
+import * as haozhouCityPrefabModule from "../../../../tools/city-map-building-editor/examples/haozhou-city-prefabs.example.json";
+import {
+  composeCityStageLayout,
+  type CityStageAsset,
+  type CityStageGrid,
+  type CityStageLayout,
+  type CityStageLayoutSource,
+  type CityStageLot,
+  type CityStagePrefabLibrary,
+  type ComposedCityStageEntity,
+} from "./city-stage-layout-data";
 
 type CityStageRenderMetrics = {
-  entity: CityStageEntity;
+  entity: ComposedCityStageEntity;
   assetUrl: string;
   baseX: number;
   baseY: number;
@@ -133,9 +47,22 @@ function unwrapJsonModule<T>(moduleValue: unknown): T {
   return moduleValue as T;
 }
 
-const haozhouCityStageLayout = unwrapJsonModule<CityStageLayout>(
+const haozhouCityStagePrefabs = unwrapJsonModule<CityStagePrefabLibrary>(
+  haozhouCityPrefabModule
+);
+const haozhouCityStageLayoutSource = unwrapJsonModule<CityStageLayoutSource>(
   haozhouCityLayoutModule
 );
+const haozhouCityStageLayout: CityStageLayout = {
+  version: haozhouCityStageLayoutSource.version,
+  map: haozhouCityStageLayoutSource.map,
+  grid: haozhouCityStageLayoutSource.grid,
+  // Instance prefabId values are resolved against the prefab library here.
+  entities: composeCityStageLayout(
+    haozhouCityStageLayoutSource,
+    haozhouCityStagePrefabs
+  ),
+};
 
 const cityStageAssetModules = import.meta.glob("../../../../ui/**/*.{png,jpg,jpeg,webp}", {
   eager: true,
@@ -273,7 +200,7 @@ function getAssetBox(metrics: {
 }
 
 function isEntityVisible(
-  entity: CityStageEntity,
+  entity: ComposedCityStageEntity,
   visibleHouseIds: Set<string>,
   visibleCityEntryIds: Set<string>
 ): boolean {
@@ -293,7 +220,7 @@ function isEntityVisible(
 }
 
 function createRenderMetrics(
-  entity: CityStageEntity,
+  entity: ComposedCityStageEntity,
   layout: CityStageLayout
 ): CityStageRenderMetrics {
   const { baseSpace } = layout.map;
