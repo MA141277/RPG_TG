@@ -120,7 +120,7 @@ function renderComponentList(appState: AppState): string {
   `;
 }
 
-function renderBattleUiInspector(appState: AppState): string {
+function renderBattleUiEditorSection(appState: AppState): string {
   const sectionEntries = new Map<string, typeof battleUiEditorVariableDefinitions>();
   for (const definition of battleUiEditorVariableDefinitions) {
     const currentSection = sectionEntries.get(definition.section) ?? [];
@@ -132,10 +132,10 @@ function renderBattleUiInspector(appState: AppState): string {
     <aside class="c-layout-editor__sidebar">
       ${renderTargetList(appState)}
       <div class="c-layout-editor__section">
-        <h3 class="c-layout-editor__section-title">\u6218\u6597 UI \u53d8\u91cf</h3>
+        <h3 class="c-layout-editor__section-title">战斗 UI 变量</h3>
         <div class="c-layout-editor__stack">
-          <p>\u8fd9\u4e9b\u503c\u4f1a\u76f4\u63a5\u540c\u6b65\u5230\u6218\u6597 iframe \u91cc\u7684 CSS \u53d8\u91cf\u3002</p>
-          <p>\u8f93\u5165\u53ef\u4ee5\u76f4\u63a5\u5199 <code>px</code> / <code>%</code> / <code>vw</code> / <code>vh</code> / <code>rem</code> / <code>calc(...)</code> \u3002</p>
+          <p>这些值会同步到战斗 iframe 里的 CSS 变量。</p>
+          <p>输入可以写 <code>px</code> / <code>%</code> / <code>vw</code> / <code>vh</code> / <code>rem</code> / <code>calc(...)</code>。</p>
         </div>
       </div>
       <div class="c-layout-editor__section c-layout-editor__section-actions">
@@ -144,7 +144,7 @@ function renderBattleUiInspector(appState: AppState): string {
           class="c-button c-button--ghost c-layout-editor__action-button"
           data-action="copy-layout-params"
         >
-          \u590d\u5236\u6218\u6597 UI \u53c2\u6570
+          复制战斗 UI 参数
         </button>
       </div>
       ${Array.from(sectionEntries.entries())
@@ -363,7 +363,7 @@ function renderElementList(
 
 function renderInspector(appState: AppState): string {
   if (appState.layoutEditor.selectedTargetId === "battle-ui-screen") {
-    return renderBattleUiInspector(appState);
+    return renderBattleUiEditorSection(appState);
   }
 
   const layout = getLayoutForEditor(appState);

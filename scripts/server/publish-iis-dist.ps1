@@ -6,9 +6,14 @@ $ErrorActionPreference = "Stop"
 
 $distPath = Join-Path $ProjectRoot "dist"
 $webConfigPath = Join-Path $distPath "web.config"
+$buildScriptPath = Join-Path $ProjectRoot "scripts\build.ps1"
 
 Set-Location $ProjectRoot
-npm run build
+& $buildScriptPath
+
+if ($LASTEXITCODE -ne 0) {
+  throw "Build failed with exit code $LASTEXITCODE."
+}
 
 if (-not (Test-Path $distPath)) {
   throw "Build output not found: $distPath"

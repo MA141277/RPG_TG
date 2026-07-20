@@ -1448,6 +1448,22 @@
 - Child 3 让 `main.ts` 第一次从“直接控制导航/时间/剧情触发”转成“创建 request 并交给 runtime seam”，后续 Child 4 可以在这个基础上继续把 interactive/minigame/story-battle 接到统一 runtime。
 - 事件系统和 scene 系统现在已经有第一层明确的 core-runtime 接缝，但仍然是过渡实现：具体剧情播放和任务状态机还没有被完全抽离，后续要继续通过 Child 4/后续 task runtime work 收口。
 
+## 2026-07-20 Localhost Process Launch Hardening
+
+### Added
+- 新增 [scripts/process-environment.ps1](/D:/RPG_TG/scripts/process-environment.ps1)，集中清洗 Windows 进程环境中的重复 `Path` / `PATH` 键，并提供统一的 `Start-ProcessWithSanitizedEnvironment` 包装。
+- 新增 [scripts/dev-localhost-service.ps1](/D:/RPG_TG/scripts/dev-localhost-service.ps1)，用 PID 和日志文件管理本地 `localhost:5173` Vite 服务，支持 `start / stop / restart / status`。
+- 新增 PowerShell 回归脚本 [tests/process-environment.test.ps1](/D:/RPG_TG/tests/process-environment.test.ps1)，覆盖重复 `Path` 键的环境清洗行为。
+
+### Changed
+- [scripts/standalone-service.ps1](/D:/RPG_TG/scripts/standalone-service.ps1) 现在通过环境清洗包装启动后台静态服务，避免 Windows `Start-Process` 因 `Path` / `PATH` 冲突直接报错。
+- [scripts/start-dev-localhost.ps1](/D:/RPG_TG/scripts/start-dev-localhost.ps1) 新增 `-Background` 开关，可直接委托给新的后台 localhost 服务脚本。
+- [README.md](/D:/RPG_TG/README.md) 补充了后台本地开发服务的启动、状态与停止命令。
+
+### Impact
+- Codex 或其他自动化工具在 Windows 上启动本地后台服务时，不再因为重复 `Path` 环境变量触发 `Start-Process` 的字典键冲突。
+- 本地 `localhost` 开发现在有了可立即返回控制权的仓库内标准入口，减少直接运行长驻前台命令导致的会话卡死。
+
 ### Changed
 - Runtime city and house registries in `main.ts` are now resettable and scenario-pack aware, rather than fixed startup constants.
 - `generic.qte` no longer auto-completes activities. Missing specialized handlers now fall back to the same click-bar interaction shape used by the Zhu Yuanzhang temple work QTE.

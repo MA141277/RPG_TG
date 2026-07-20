@@ -17,6 +17,20 @@ launcher instead:
 powershell -ExecutionPolicy Bypass -File .\scripts\start-dev-localhost.ps1
 ```
 
+If you need the local Vite server to run as a background Windows process and
+return control immediately, use:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\dev-localhost-service.ps1 -Action start
+```
+
+Check or stop that background service with:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\dev-localhost-service.ps1 -Action status
+powershell -ExecutionPolicy Bypass -File .\scripts\dev-localhost-service.ps1 -Action stop
+```
+
 Default local URL:
 
 ```text
@@ -31,12 +45,36 @@ Create the production bundle:
 npm run build
 ```
 
+If `npm` is not available in the current PowerShell session, use:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\build.ps1
+```
+
+Check TypeScript without relying on `PATH`:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\typecheck.ps1
+```
+
+Run the repository test suite without relying on `PATH`:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\test.ps1
+```
+
 ## Local Production-Style Serving
 
 Serve the built `dist/` folder with the repository static server:
 
 ```powershell
 npm run serve:prod
+```
+
+If `npm` is not available in the current PowerShell session, use:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\serve-prod.ps1
 ```
 
 Default local production-style URL:

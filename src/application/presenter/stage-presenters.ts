@@ -65,10 +65,6 @@ export function createStagePresenterOutput(
     return { type: "map", cityDefinitions };
   }
 
-  if (currentView === "party-editor") {
-    return { type: "party-editor" };
-  }
-
   if (currentView === "city") {
     const cityHouseIds = new Set(activeCityDefinition.houseIds);
     const activeCityHouseDefinitions = input.houseDefinitions.filter(

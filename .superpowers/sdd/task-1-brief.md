@@ -1,118 +1,140 @@
-﻿## Task 1: Replace The Toolbar Buttons With A Registry-Driven Dropdown
+﻿## Task 1: Shared Primary Actor Roster Helper
 
 **Files:**
-- Modify: `tools/spine-node-timeline-editor.html`
-- Modify: `tests/spine-unit-context.test.cjs`
-- Read: `docs/superpowers/specs/2026-07-13-spine-unit-dropdown-design.md`
+- Create: `src/application/house/house-primary-actor-roster.ts`
+- Modify: `tests/robustness.test.cjs`
 
 **Interfaces:**
-- Consumes:
-  - `const SPINE_UNIT_CONFIGS = { ... }`
-  - `function getSpineUnitConfig(unitType)`
-  - `state.currentUnitType`
-- Produces:
-  - `renderSpineUnitOptions(): void`
-  - `syncSpineUnitSelectValue(): void`
-  - A single toolbar `<select>` that renders all known units and disables unconfigured ones.
+- Consumes: `HouseStandbyActorViewModel` from `src/domain/house-module.ts`.
+- Produces: `orderHouseStandbyRoster(input: { primaryCharacterId: string | null; actors: HouseStandbyActorViewModel[] }): HouseStandbyActorViewModel[]`.
 
-- [ ] **Step 1: Write the failing test**
+- [ ] **Step 1: Write the failing helper tests**
 
-Replace the old button-centric assertions with dropdown-oriented coverage:
+Add this import near the other `.test-dist` imports in `tests/robustness.test.cjs`:
 
 ```js
-test("Spine editor exposes a registry-driven unit select control", () => {
-  assert.match(source, /id="unitTypeSelect"/);
-  assert.doesNotMatch(source, /id="unitSwordsmanBtn"/);
-  assert.doesNotMatch(source, /id="unitArcherBtn"/);
-});
-
-test("Spine editor marks unavailable units as disabled unconfigured options", () => {
-  assert.match(source, /enabled:\s*false/);
-  assert.match(source, /\\$\\{config\\.label\\} \\(unconfigured\\)/);
-  assert.match(source, /option\\.disabled = !config\\.enabled;/);
-});
-
-test("Spine editor renders picker options from SPINE_UNIT_CONFIGS", () => {
-  assert.match(source, /function renderSpineUnitOptions\\(\\) \\{/);
-  assert.match(source, /Object\\.entries\\(SPINE_UNIT_CONFIGS\\)/);
-  assert.match(source, /el\\.unitTypeSelect\\.appendChild\\(option\\)/);
-});
-
-test("Spine editor syncs the select value from currentUnitType", () => {
-  assert.match(source, /function syncSpineUnitSelectValue\\(\\) \\{/);
-  assert.match(source, /el\\.unitTypeSelect\\.value = state\\.currentUnitType;/);
-});
+const {
+  orderHouseStandbyRoster,
+} = require("../.test-dist/application/house/house-primary-actor-roster.js");
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
-
-Run:
-
-```bash
-C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe tests\spine-unit-context.test.cjs
-```
-
-Expected:
-
-- `FAIL`
-- Missing `unitTypeSelect`
-- Old swordsman / archer button assertions no longer valid
-- Missing disabled-option and select-rendering helpers
-
-- [ ] **Step 3: Write minimal implementation**
-
-Replace the toolbar button markup and add the option-rendering helpers:
-
-```html
-<div id="unitContextToolbar" class="toolbar unit-toolbar">
-  <label for="unitTypeSelect">Unit</label>
-  <select id="unitTypeSelect"></select>
-</div>
-```
+Add these tests near other house tests in `tests/robustness.test.cjs`:
 
 ```js
-const SPINE_UNIT_CONFIGS = {
-  swordsman: { label: "Swordsman", projectUrl: "/src/faxian/leg/swordsman/project.json", enabled: true, featureGroups: ["swordsman"] },
-  archer: { label: "Archer", projectUrl: "/src/faxian/leg/archer/project.json", enabled: true, featureGroups: ["archer"] },
-  spearman: { label: "Spearman", projectUrl: "", enabled: false, featureGroups: ["spearman"] },
-};
-
-function renderSpineUnitOptions() {
-  if (!el.unitTypeSelect) return;
-  el.unitTypeSelect.innerHTML = "";
-  Object.entries(SPINE_UNIT_CONFIGS).forEach(([unitType, config]) => {
-    const option = document.createElement("option");
-    option.value = unitType;
-    option.textContent = config.enabled ? config.label : `${config.label} (unconfigured)`;
-    option.disabled = !config.enabled;
-    el.unitTypeSelect.appendChild(option);
+test("primary house actor roster helper places the default actor first", () => {
+  const roster = orderHouseStandbyRoster({
+    primaryCharacterId: "char.owner",
+    actors: [
+      { characterId: "char.guest", name: "Guest" },
+      { characterId: "char.owner", name: "Owner", actionId: "open-owner-dialogue" },
+      { characterId: "char.extra", name: "Extra" },
+    ],
   });
-}
 
-function syncSpineUnitSelectValue() {
-  if (!el.unitTypeSelect) return;
-  el.unitTypeSelect.value = state.currentUnitType;
-}
+  assert.deepEqual(
+    roster.map((actor) => actor.characterId),
+    ["char.owner", "char.guest", "char.extra"]
+  );
+  assert.equal(roster[0].actionId, "open-owner-dialogue");
+});
+
+test("primary house actor roster helper deduplicates actors without losing the first primary model", () => {
+  const roster = orderHouseStandbyRoster({
+    primaryCharacterId: "char.owner",
+    actors: [
+      { characterId: "char.owner", name: "Owner", actionId: "open-owner-dialogue" },
+      { characterId: "char.guest", name: "Guest" },
+      { characterId: "char.owner", name: "Owner Duplicate" },
+      { characterId: "char.guest", name: "Guest Duplicate" },
+    ],
+  });
+
+  assert.deepEqual(
+    roster.map((actor) => actor.name),
+    ["Owner", "Guest"]
+  );
+});
 ```
 
-Update `el` to include `unitTypeSelect`, remove button references, and call both helpers from the main render path.
-
-- [ ] **Step 4: Run test to verify it passes**
+- [ ] **Step 2: Run the tests to verify they fail**
 
 Run:
 
 ```bash
-C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe tests\spine-unit-context.test.cjs
+npm run build:test
+node --test tests/robustness.test.cjs --test-name-pattern "primary house actor roster helper"
 ```
 
 Expected:
 
-- `PASS` for the select-rendering assertions
+- `npm run build:test` fails because `src/application/house/house-primary-actor-roster.ts` does not exist, or the focused node test fails because `orderHouseStandbyRoster` is not exported.
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 3: Implement the helper**
+
+Create `src/application/house/house-primary-actor-roster.ts`:
+
+```ts
+import type { HouseStandbyActorViewModel } from "../../domain/house-module";
+
+export function orderHouseStandbyRoster(input: {
+  primaryCharacterId: string | null;
+  actors: HouseStandbyActorViewModel[];
+}): HouseStandbyActorViewModel[] {
+  const seenCharacterIds = new Set<string>();
+  const dedupedActors: HouseStandbyActorViewModel[] = [];
+
+  for (const actor of input.actors) {
+    if (seenCharacterIds.has(actor.characterId)) {
+      continue;
+    }
+    seenCharacterIds.add(actor.characterId);
+    dedupedActors.push(actor);
+  }
+
+  if (input.primaryCharacterId == null) {
+    return dedupedActors;
+  }
+
+  const primaryActor = dedupedActors.find(
+    (actor) => actor.characterId === input.primaryCharacterId
+  );
+  if (primaryActor == null) {
+    return dedupedActors;
+  }
+
+  return [
+    primaryActor,
+    ...dedupedActors.filter(
+      (actor) => actor.characterId !== input.primaryCharacterId
+    ),
+  ];
+}
+```
+
+- [ ] **Step 4: Run the focused helper tests**
+
+Run:
 
 ```bash
-git add tests/spine-unit-context.test.cjs tools/spine-node-timeline-editor.html
-git commit -m "feat: replace spine unit buttons with dropdown"
+npm run build:test
+node --test tests/robustness.test.cjs --test-name-pattern "primary house actor roster helper"
 ```
+
+Expected:
+
+- `npm run build:test` exits with code 0.
+- Both focused helper tests pass.
+
+- [ ] **Step 5: Commit Task 1**
+
+Run:
+
+```bash
+git add src/application/house/house-primary-actor-roster.ts tests/robustness.test.cjs
+git commit -m "test: add house primary actor roster helper"
+```
+
+Expected:
+
+- Commit succeeds and contains only Task 1 files.
 

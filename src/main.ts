@@ -1,7 +1,6 @@
 import "./styles/app.css";
 import { ensureCityNpcPoolsForCurrentDay } from "./application/city-npcs/refresh-city-npc-pools";
 import {
-  setLayoutEditorBattleUiValue,
   selectLayoutEditorComponent,
   selectLayoutEditorElement,
   selectLayoutEditorTarget,
@@ -9,6 +8,7 @@ import {
   setLayoutEditorBackgroundAssetQuery,
   setLayoutEditorBackgroundMode,
   setLayoutEditorBackgroundSlice,
+  setLayoutEditorBattleUiValue,
   setLayoutEditorComponentRectField,
   setLayoutEditorElementRectField,
   toggleLayoutEditor,
@@ -18,13 +18,17 @@ import {
   updateLayoutEditorElementSize,
 } from "./application/layout-editor/layout-editor-actions";
 import {
-  closePartyEditor,
   closeCityMenu,
   closeCityDirectory,
+  closeGlobalOverlay,
+  closeNpcInteraction,
+  chooseNpcDefaultTalk,
   equipValuable,
+  openCharacterDetail,
   openCityMenu,
   openCityDirectory,
-  openPartyEditor,
+  openNpcInteraction,
+  openPlayerDetail,
   selectCard,
   selectValuable,
   setCardFilter,
@@ -71,14 +75,29 @@ import {
   selectHouseEntryAccess,
 } from "./application/story/story-stage-access";
 import {
+  coordinateToRoundedHex,
+  createPassableHexTravelPath,
+  hexToCoordinatePolygon,
+  snapCoordinateToHexCenter,
   travelToCoordinate,
   type GridCoordinate,
 } from "./application/navigation/travel-to-coordinate";
+import {
+  revealCampaignMapHexesForCoordinate,
+} from "./application/map/campaign-map-exploration";
+import {
+  isCampaignMapCoordinateRevealed,
+  revealCampaignMapAroundCoordinate,
+} from "./application/navigation/campaign-map-exploration";
 import { createInitialState } from "./application/state/create-initial-state";
 import {
   createActiveGameContentContextFromModActivation,
   type ActiveGameContentContext,
 } from "./application/content/active-game-content";
+import {
+  isNpcInteractionBlocked,
+  selectNpcInteractionBlockState,
+} from "./application/npc-interaction/npc-interaction";
 import {
   resolveTextEntry,
   resolveTextTemplateEntry,
@@ -166,6 +185,12 @@ import type {
   ModSourceDescriptor,
 } from "./core/contracts/mod-runtime";
 import type { ActivityDefinition } from "./domain/activity";
+import {
+  FORTUNE_BOARD_DEFAULT_ANIMATION_TICK_MS,
+  FORTUNE_BOARD_MAX_ANIMATION_TICK_MS,
+  FORTUNE_BOARD_MIN_ANIMATION_TICK_MS,
+  PACHINKO_BOARD_DEFAULT_ANIMATION_TICK_MS,
+} from "./domain/activity-session";
 import type { SceneDefinition } from "./domain/action";
 import type { GameState } from "./domain/game-state";
 import type { CityDefinition } from "./domain/city";
@@ -175,8 +200,12 @@ import type { CityEntryDefinition } from "./domain/city-entry";
 import type { CityNpcPoolDefinition } from "./domain/city-npc";
 import type { EventDefinition } from "./domain/event";
 import type { HouseDefinition } from "./domain/house";
-import type { HouseModuleTransitionResult } from "./domain/house-module";
+import type {
+  HouseModuleId,
+  HouseModuleTransitionResult,
+} from "./domain/house-module";
 import type { MapDefinition } from "./domain/map";
+import type { NpcInteractionContext } from "./domain/npc-interaction";
 import type {
   ScenarioPackDefinition,
   ScenarioPackSummary,
@@ -214,6 +243,11 @@ import { MainUiFlow } from "./ui/main-ui/main-ui-flow.js";
 import {
   DEFAULT_CAMPAIGN_CITY_DEPTH_MESH_TRANSFORM,
   DEFAULT_CAMPAIGN_TERRAIN_STYLE,
+  createCampaignTerrainCameraCenteredOnCoordinate,
+  getCampaignTerrainCameraTiltRadiansForScale,
+  getCampaignTerrainTravelGrid,
+  isCampaignTerrainUvPassable,
+  projectCampaignTerrainUvToClientPointAtHeightAnchor,
   resolveCampaignTerrainUvFromClientPosition,
   requestCampaignTerrainRender,
   setCampaignTerrainCamera,
@@ -221,14 +255,16 @@ import {
   type CampaignCityDepthMeshTransform,
   type CampaignTerrainStyle,
 } from "./ui/views/map/campaign-terrain-webgl";
+import { syncCampaignCloudWebGl } from "./ui/views/map/campaign-cloud-webgl";
 import { syncCityBeggingMiniGameOverlay } from "./ui/views/minigames/city-begging-minigame-view";
 
 const GAME_VIEWPORT_WIDTH = 1600;
 const GAME_VIEWPORT_HEIGHT = 900;
 const MAP_DEBUG_MIN_SCALE = 0.5;
 const MAP_DEBUG_MAX_SCALE = Number.POSITIVE_INFINITY;
-const MAP_DEBUG_SCALE_STEP_RATIO = 1.08;
+const MAP_DEBUG_SCALE_STEP_RATIO = 1.3;
 const INITIAL_MAP_DEBUG_ANIMATION_DURATION_MS = 250;
+const CAMPAIGN_MAP_ZOOM_ANIMATION_DURATION_MS = 220;
 const LOADING_SCREEN_SIMULATION_DURATION_MS = 350;
 const CAMPAIGN_TRAVEL_SPEED_SCALE = 0.6;
 const CAMPAIGN_TRAVEL_MS_PER_MAP_UNIT = 55 / CAMPAIGN_TRAVEL_SPEED_SCALE;
@@ -239,14 +275,14 @@ const ACTIVITY_QTE_INTERVAL_MS = 90;
 const OPENING_BGM_URL = new URL("../BGM/开局.mp3", import.meta.url).href;
 const IN_GAME_BGM_URL = new URL("../BGM/游戏内.mp3", import.meta.url).href;
 const INITIAL_CAMPAIGN_MAP_DEBUG_STATE: CampaignMapDebugState = {
-  scale: 15,
-  offsetX: -1000,
-  offsetY: 1750,
+  scale: 40,
+  offsetX: 0,
+  offsetY: 0,
 };
 const TARGET_CAMPAIGN_MAP_DEBUG_STATE: CampaignMapDebugState = {
-  scale: 15,
-  offsetX: -1000,
-  offsetY: 1750,
+  scale: 40,
+  offsetX: 0,
+  offsetY: 0,
 };
 
 declare global {
@@ -261,6 +297,13 @@ type CampaignMapDebugState = {
   scale: number;
   offsetX: number;
   offsetY: number;
+};
+
+type CampaignMapZoomAnimationState = {
+  frameId: number | null;
+  startedAtMs: number | null;
+  from: CampaignMapDebugState;
+  to: CampaignMapDebugState;
 };
 
 type BackgroundMusicMode = "opening" | "in-game";
@@ -339,6 +382,62 @@ let activeContentContext: ActiveGameContentContext =
     activationResult: builtinStartupActivation,
   });
 
+function revealCampaignMapAroundAppCoordinate(
+  state: AppState,
+  coordinate: GridCoordinate,
+  options?: {
+    animateNewHexes?: boolean;
+    revealedAtMs?: number;
+  }
+): AppState {
+  const mapDefinition =
+    getMapDefinitionById(state.gameState.world.currentMapId) ?? null;
+  if (
+    mapDefinition?.mode !== "campaign" ||
+    mapDefinition.coordinateSpace == null
+  ) {
+    return state;
+  }
+
+  const nextGameState = revealCampaignMapAroundCoordinate({
+    state: state.gameState,
+    mapId: mapDefinition.id,
+    coordinate,
+    coordinateSpace: mapDefinition.coordinateSpace,
+    ...(options?.animateNewHexes == null
+      ? {}
+      : { animateNewHexes: options.animateNewHexes }),
+    ...(options?.revealedAtMs == null
+      ? {}
+      : { revealedAtMs: options.revealedAtMs }),
+  });
+  if (nextGameState === state.gameState) {
+    return state;
+  }
+
+  return {
+    ...state,
+    gameState: nextGameState,
+  };
+}
+
+function isCurrentCampaignCoordinateRevealed(coordinate: GridCoordinate): boolean {
+  const mapDefinition = getCurrentMapDefinition();
+  if (
+    mapDefinition?.mode !== "campaign" ||
+    mapDefinition.coordinateSpace == null
+  ) {
+    return true;
+  }
+
+  return isCampaignMapCoordinateRevealed({
+    state: appState.gameState,
+    mapId: mapDefinition.id,
+    coordinate,
+    coordinateSpace: mapDefinition.coordinateSpace,
+  });
+}
+
 function getRuntimeText(textId: string, fallback?: string): string {
   return resolveTextEntry(activeContentContext.textEntriesById, textId, fallback);
 }
@@ -391,6 +490,7 @@ const selectableCharacters = selectableCharacterIds.map((characterId) => {
 });
 
 let currentPlayerCharacterId = defaultPlayerCharacterId;
+
 const BATTLE_UI_EDITOR_STORAGE_KEY = "rpg_tg_battle_ui_values_v1";
 
 function loadPersistedBattleUiEditorValues(): Partial<BattleUiEditorValues> {
@@ -399,12 +499,9 @@ function loadPersistedBattleUiEditorValues(): Partial<BattleUiEditorValues> {
     if (raw == null) {
       return {};
     }
-    const parsed = JSON.parse(raw);
-    if (parsed == null || typeof parsed !== "object") {
-      return {};
-    }
+    const parsed = JSON.parse(raw) as Record<string, unknown>;
     const entries = battleUiEditorVariableDefinitions.flatMap((definition) => {
-      const value = (parsed as Record<string, unknown>)[definition.name];
+      const value = parsed[definition.name];
       return typeof value === "string" ? [[definition.name, value] as const] : [];
     });
     return Object.fromEntries(entries) as Partial<BattleUiEditorValues>;
@@ -420,21 +517,26 @@ function persistBattleUiEditorValues(values: BattleUiEditorValues): void {
       JSON.stringify(values)
     );
   } catch {
-    // Ignore storage failures in restricted/private environments.
+    // Best-effort editor persistence; live defaults still apply.
   }
 }
 
-function applyPersistedBattleUiEditorValues(appState: AppState): AppState {
-  const persistedValues = loadPersistedBattleUiEditorValues();
-  const mergedValues = {
-    ...appState.layoutEditor.battleUiValues,
-    ...persistedValues,
+function applyPersistedBattleUiEditorValues(nextState: AppState): AppState {
+  const mergedValues: BattleUiEditorValues = {
+    ...nextState.layoutEditor.battleUiValues,
   };
+  const persistedValues = loadPersistedBattleUiEditorValues();
+  for (const definition of battleUiEditorVariableDefinitions) {
+    const value = persistedValues[definition.name];
+    if (typeof value === "string") {
+      mergedValues[definition.name] = value;
+    }
+  }
   persistBattleUiEditorValues(mergedValues);
   return {
-    ...appState,
+    ...nextState,
     layoutEditor: {
-      ...appState.layoutEditor,
+      ...nextState.layoutEditor,
       battleUiValues: mergedValues,
     },
   };
@@ -470,6 +572,7 @@ let hasAppliedInitialCampaignMapDebug = false;
 let hasStartedInitialCampaignMapDebugAnimation = false;
 let initialCampaignMapDebugAnimationFrame: number | null = null;
 let initialCampaignMapDebugAnimationStartTime: number | null = null;
+let campaignMapZoomAnimationState: CampaignMapZoomAnimationState | null = null;
 let activeMapIntroOverlay: HTMLElement | null = null;
 let activeBackgroundMusicMode: BackgroundMusicMode | null = null;
 let campaignMapScaleDraftValue: string | null = null;
@@ -487,6 +590,12 @@ let shouldSuppressNextClickAfterMapDrag = false;
 let recentPointerDispatchedHouseAction:
   | {
       actionId: string;
+      timestamp: number;
+    }
+  | null = null;
+let recentPointerDispatchedActivityAction:
+  | {
+      action: string;
       timestamp: number;
     }
   | null = null;
@@ -522,6 +631,7 @@ let layoutEditorDragState:
 let campaignMoveAnimationState: CampaignMoveAnimationState | null = null;
 let cityBeggingMiniGameFrameId: number | null = null;
 let activityQteIntervalHandle: number | null = null;
+let activityQteIntervalMs: number | null = null;
 let campaignTravelRequestId = 0;
 let loadingScreenAnimationFrameId: number | null = null;
 let loadingScreenRequestId = 0;
@@ -670,6 +780,14 @@ function createPrototypeAppState(playerCharacterId: string): AppState {
       battleUiValues: createDefaultBattleUiEditorValues(),
     },
   };
+  nextAppState = {
+    ...nextAppState,
+    gameState: revealCampaignMapHexesForCoordinate(
+      nextAppState.gameState,
+      defaultMapDefinition,
+      nextAppState.playerCoordinate
+    ),
+  };
 
   nextAppState = {
     ...nextAppState,
@@ -699,7 +817,13 @@ function createPrototypeAppState(playerCharacterId: string): AppState {
     },
   };
 
-  return nextAppState;
+  return revealCampaignMapAroundAppCoordinate(
+    nextAppState,
+    nextAppState.playerCoordinate,
+    {
+      animateNewHexes: false,
+    }
+  );
 }
 
 function getCurrentPlayerCharacter(): CharacterDefinition | null {
@@ -1281,7 +1405,8 @@ function stopMapAutoAdvance(intervalId: string): void {
 }
 
 function isActivityQteBlockingScene(): boolean {
-  return appState.gameState.runtime.activitySession?.type === "qte-bar";
+  const session = appState.gameState.runtime.activitySession;
+  return session != null && session.type !== "result";
 }
 
 function stopActivityQteLoop(): void {
@@ -1289,6 +1414,7 @@ function stopActivityQteLoop(): void {
     window.clearInterval(activityQteIntervalHandle);
     activityQteIntervalHandle = null;
   }
+  activityQteIntervalMs = null;
 }
 
 function syncRenderedActivityQteMarker(): boolean {
@@ -1308,18 +1434,260 @@ function syncRenderedActivityQteMarker(): boolean {
   return true;
 }
 
+function getFortuneBoardKindLabel(kind: string): string {
+  switch (kind) {
+    case "timing":
+      return "天时";
+    case "favorable":
+      return "顺意";
+    case "complete":
+      return "周全";
+    case "resonance":
+      return "灵犀";
+    case "rumor":
+      return "奇闻";
+    default:
+      return "平";
+  }
+}
+
+function renderFortuneBoardSummary(input: {
+  baseScore: number;
+  resonanceCount: number;
+  rumorCount: number;
+}): string {
+  return [
+    `<span>基础 ${input.baseScore}</span>`,
+    "<span>天时/顺意/周全/平三连计奖</span>",
+    input.resonanceCount > 0
+      ? `<span>灵犀 +${input.resonanceCount * 3} 枚</span>`
+      : "",
+    input.rumorCount > 0 ? "<span>奇闻待触发</span>" : "",
+  ].join("");
+}
+
+function createFortuneBoardRerollDelay(
+  cellKey: string,
+  rerollCount: number,
+  salt: string
+): string {
+  let seed = Array.from(`${cellKey}:${rerollCount}:${salt}`).reduce(
+    (result, char) => (result * 31 + char.charCodeAt(0)) >>> 0,
+    2166136261
+  );
+  seed = (seed * 1664525 + 1013904223) >>> 0;
+  return `${(seed / 0x100000000).toFixed(3)}s`;
+}
+
+function syncRenderedFortuneBoardOverlay(): boolean {
+  const session = appState.gameState.runtime.activitySession;
+  if (session?.type !== "fortune-board") {
+    return false;
+  }
+
+  const overlayElement = appRoot.querySelector<HTMLElement>(
+    "[data-activity-overlay='fortune-board'], [data-house-overlay='fortune-board']"
+  );
+  if (overlayElement == null) {
+    return false;
+  }
+
+  const gridElement = overlayElement.querySelector<HTMLElement>(
+    ".c-fortune-board__grid"
+  );
+  if (gridElement == null) {
+    return false;
+  }
+
+  gridElement.dataset.fortunePhase = session.phase;
+  const metaElement = overlayElement.querySelector<HTMLElement>("[data-fortune-meta]");
+  if (metaElement != null) {
+    metaElement.textContent = `剩余 ${session.remainingPieces} 枚 · 本轮 ${session.wager} 枚 · 玩法分数 ${session.score} · 贡献值 +${session.score}`;
+  }
+
+  const summaryElement = overlayElement.querySelector<HTMLElement>(
+    "[data-fortune-summary]"
+  );
+  if (summaryElement != null) {
+    summaryElement.innerHTML = renderFortuneBoardSummary(session);
+  }
+
+  const speedInputElement = overlayElement.querySelector<HTMLInputElement>(
+    "[data-fortune-speed-input]"
+  );
+  if (
+    speedInputElement != null &&
+    speedInputElement !== document.activeElement
+  ) {
+    speedInputElement.value = String(session.animationTickMs);
+  }
+  const speedValueElement = overlayElement.querySelector<HTMLElement>(
+    "[data-fortune-speed-value]"
+  );
+  if (speedValueElement != null) {
+    speedValueElement.textContent = `${session.animationTickMs}ms`;
+  }
+
+  const playButton = overlayElement.querySelector<HTMLButtonElement>(
+    "[data-activity-action='play-board'], [data-house-action='temple-work-board-play']"
+  );
+  if (playButton != null) {
+    playButton.textContent = session.phase === "scanning" ? "选定此列" : "游玩";
+  }
+
+  session.board.forEach((cell) => {
+    const cellKey = `${cell.row}:${cell.column}`;
+    const cellElement = gridElement.querySelector<HTMLElement>(
+      `[data-fortune-cell-key='${cellKey}']`
+    );
+    if (cellElement == null) {
+      return;
+    }
+
+    const isHighlighted = session.highlightedColumn === cell.column;
+    const isColumnSelected = session.selectedColumn === cell.column;
+    const isCellHighlighted = session.highlightedCellKey === cellKey;
+    const isPicked = session.pickedCellKey === cellKey;
+    const isPickFlashActive =
+      session.phase === "cell-pick" &&
+      isPicked &&
+      session.flashTicks > 0 &&
+      session.flashTicks % 2 === 0;
+    const isNewSelection = session.selectedCellKeys.includes(cellKey);
+    const isFinalSelectionFlash = session.phase === "final-flash" && cell.selected;
+    const nextLabel = getFortuneBoardKindLabel(cell.kind);
+    const labelElement = cellElement.querySelector<HTMLElement>(
+      ".c-fortune-board__cell-label"
+    );
+    const previousKind = cellElement.dataset.fortuneKind ?? cell.kind;
+    const previousLabel =
+      cellElement.dataset.fortuneLabel ??
+      labelElement?.textContent ??
+      nextLabel;
+    const previousRerollCount = Number(cellElement.dataset.fortuneRerollCount ?? "0");
+    const shouldAnimateReroll =
+      previousKind != null &&
+      session.rerollCount > previousRerollCount &&
+      !cell.selected &&
+      !cellElement.classList.contains("is-rerolling");
+
+    if (shouldAnimateReroll) {
+      cellElement.dataset.fortunePreviousLabel = previousLabel;
+      cellElement.dataset.fortuneNextLabel = nextLabel;
+      cellElement.dataset.fortunePreviousKind = previousKind;
+      cellElement.dataset.fortuneNextKind = cell.kind;
+      cellElement.style.setProperty(
+        "--fortune-reroll-out-delay",
+        createFortuneBoardRerollDelay(cellKey, session.rerollCount, "out")
+      );
+      cellElement.style.setProperty(
+        "--fortune-reroll-in-delay",
+        createFortuneBoardRerollDelay(cellKey, session.rerollCount, "in")
+      );
+      cellElement.dataset.fortuneRerollCount = String(session.rerollCount);
+      cellElement.classList.add("is-rerolling");
+      window.setTimeout(() => {
+        cellElement.classList.remove("is-rerolling");
+        delete cellElement.dataset.fortunePreviousLabel;
+        delete cellElement.dataset.fortuneNextLabel;
+        delete cellElement.dataset.fortunePreviousKind;
+        delete cellElement.dataset.fortuneNextKind;
+        cellElement.dataset.fortuneKind = cell.kind;
+        cellElement.dataset.fortuneLabel = nextLabel;
+        cellElement.dataset.fortuneRerollCount = String(session.rerollCount);
+        const settledLabelElement = cellElement.querySelector<HTMLElement>(
+          ".c-fortune-board__cell-label"
+        );
+        if (settledLabelElement != null) {
+          settledLabelElement.textContent = nextLabel;
+        }
+        [
+          "timing",
+          "favorable",
+          "complete",
+          "plain",
+          "rumor",
+          "resonance",
+        ].forEach((kind) => cellElement.classList.remove(`is-kind-${kind}`));
+        cellElement.classList.add(`is-kind-${cell.kind}`);
+      }, 4100);
+    } else if (!cellElement.classList.contains("is-rerolling")) {
+      if (labelElement != null) {
+        labelElement.textContent = nextLabel;
+      }
+      cellElement.dataset.fortuneKind = cell.kind;
+      cellElement.dataset.fortuneLabel = nextLabel;
+      cellElement.dataset.fortuneRerollCount = String(session.rerollCount);
+    }
+
+    const isRerolling = cellElement.classList.contains("is-rerolling");
+    cellElement.className = [
+      "c-fortune-board__cell",
+      isRerolling ? "" : `is-kind-${cell.kind}`,
+      isRerolling ? "is-rerolling" : "",
+      cell.selected ? "is-selected" : "",
+      isHighlighted ? "is-highlighted" : "",
+      isColumnSelected ? "is-column-selected" : "",
+      isCellHighlighted ? "is-cell-highlighted" : "",
+      isPicked ? "is-picked" : "",
+      isPickFlashActive ? "is-picked-flash" : "",
+      isFinalSelectionFlash ? "is-final-selection-flash" : "",
+      session.phase === "column-flash" &&
+      session.flashTicks > 0 &&
+      isColumnSelected &&
+      session.flashTicks % 2 === 0
+        ? "is-flashing-column"
+        : "",
+      isNewSelection ? "is-new-selection" : "",
+    ]
+      .filter(Boolean)
+      .join(" ");
+  });
+
+  return true;
+}
+
+function getActivityQteLoopIntervalMs(): number {
+  const session = appState.gameState.runtime.activitySession;
+  if (session?.type === "pachinko-board") {
+    return session.animationTickMs;
+  }
+
+  return session?.type === "fortune-board"
+    ? session.animationTickMs
+    : ACTIVITY_QTE_INTERVAL_MS;
+}
+
 function syncActivityQteLoop(): void {
-  if (appState.gameState.runtime.activitySession?.type !== "qte-bar") {
+  const session = appState.gameState.runtime.activitySession;
+  if (
+    session?.type !== "qte-bar" &&
+    !(session?.type === "pachinko-board" && session.phase !== "settling") &&
+    !(session?.type === "fortune-board" && session.phase !== "ready")
+  ) {
     stopActivityQteLoop();
     return;
   }
 
-  if (activityQteIntervalHandle != null) {
+  const nextIntervalMs = getActivityQteLoopIntervalMs();
+  if (
+    activityQteIntervalHandle != null &&
+    activityQteIntervalMs === nextIntervalMs
+  ) {
     return;
   }
+  if (activityQteIntervalHandle != null) {
+    stopActivityQteLoop();
+  }
+  activityQteIntervalMs = nextIntervalMs;
 
   activityQteIntervalHandle = window.setInterval(() => {
-    if (appState.gameState.runtime.activitySession?.type !== "qte-bar") {
+    const activeSession = appState.gameState.runtime.activitySession;
+    if (
+      activeSession?.type !== "qte-bar" &&
+      !(activeSession?.type === "pachinko-board" && activeSession.phase !== "settling") &&
+      !(activeSession?.type === "fortune-board" && activeSession.phase !== "ready")
+    ) {
       stopActivityQteLoop();
       return;
     }
@@ -1334,20 +1702,27 @@ function syncActivityQteLoop(): void {
               state,
               request,
               characterDefinitions: appState.characterDefinitions,
+              activityDefinitionsById:
+                activeContentContext.storyContent.activityDefinitionsById,
             }),
         },
       },
     }).state;
 
-    if (!syncRenderedActivityQteMarker()) {
+    if (!syncRenderedActivityQteMarker() && !syncRenderedFortuneBoardOverlay()) {
       renderApp();
     }
-  }, ACTIVITY_QTE_INTERVAL_MS);
+  }, nextIntervalMs);
 }
 
 function stopCurrentActivityQte(): void {
   const session = appState.gameState.runtime.activitySession;
-  if (session?.type !== "qte-bar") {
+  if (
+    session?.type !== "qte-bar" &&
+    session?.type !== "work-sequence" &&
+    session?.type !== "fortune-board" &&
+    session?.type !== "pachinko-board"
+  ) {
     return;
   }
 
@@ -1385,6 +1760,124 @@ function stopCurrentActivityQte(): void {
               characterDefinitions: appState.characterDefinitions,
               activityDefinitionsById:
                 activeContentContext.storyContent.activityDefinitionsById,
+          }),
+      },
+    },
+  }).state;
+  renderApp();
+}
+
+function dispatchCurrentActivityQteAction(action: string): void {
+  const session = appState.gameState.runtime.activitySession;
+  if (session?.type !== "fortune-board" && session?.type !== "pachinko-board") {
+    return;
+  }
+
+  appState = commitRuntimeRequest({
+    state: appState,
+    request: createInteractiveActionRequest(`interactive.activity-qte.${action}`),
+    context: {
+      router: {
+        route: ({ state, request }) =>
+          runInteractiveRuntime({
+            state,
+            request,
+            characterDefinitions: appState.characterDefinitions,
+            activityDefinitionsById:
+              activeContentContext.storyContent.activityDefinitionsById,
+          }),
+      },
+    },
+  }).state;
+  syncActivityQteLoop();
+  renderApp();
+}
+
+function dispatchCurrentActivityQteSpeed(tickMs: number): void {
+  const session = appState.gameState.runtime.activitySession;
+  if (session?.type !== "fortune-board" && session?.type !== "pachinko-board") {
+    return;
+  }
+
+  const nextTickMs =
+    session.type === "pachinko-board"
+      ? Math.max(16, Math.min(100, Math.round(tickMs)))
+      : clampFortuneBoardAnimationTickMs(tickMs);
+  appState = commitRuntimeRequest({
+    state: appState,
+    request: createInteractiveActionRequest("interactive.activity-qte.speed", {
+      tickMs: nextTickMs,
+    }),
+    context: {
+      router: {
+        route: ({ state, request }) =>
+          runInteractiveRuntime({
+            state,
+            request,
+            characterDefinitions: appState.characterDefinitions,
+            activityDefinitionsById:
+              activeContentContext.storyContent.activityDefinitionsById,
+          }),
+      },
+    },
+  }).state;
+  syncActivityQteLoop();
+  if (!syncRenderedFortuneBoardOverlay()) {
+    renderApp();
+  }
+}
+
+function clampFortuneBoardAnimationTickMs(tickMs: number): number {
+  if (!Number.isFinite(tickMs)) {
+    return FORTUNE_BOARD_DEFAULT_ANIMATION_TICK_MS;
+  }
+
+  return Math.max(
+    FORTUNE_BOARD_MIN_ANIMATION_TICK_MS,
+    Math.min(FORTUNE_BOARD_MAX_ANIMATION_TICK_MS, Math.round(tickMs))
+  );
+}
+
+function dispatchActivityActionButton(activityActionButton: HTMLElement): void {
+  const activityAction = activityActionButton.dataset.activityAction;
+  if (activityAction === "stop-qte") {
+    stopCurrentActivityQte();
+  } else if (activityAction === "play-board") {
+    dispatchCurrentActivityQteAction("play");
+  } else if (activityAction === "wager-minus") {
+    dispatchCurrentActivityQteAction("wager-minus");
+  } else if (activityAction === "wager-plus") {
+    dispatchCurrentActivityQteAction("wager-plus");
+  } else if (activityAction === "choose-command") {
+    const commandId = activityActionButton.dataset.activityCommandId;
+    if (commandId != null) {
+      chooseCurrentActivityCommand(commandId);
+    }
+  } else if (activityAction === "close-result") {
+    closeCurrentActivityResult();
+  }
+}
+
+function chooseCurrentActivityCommand(commandId: string): void {
+  const session = appState.gameState.runtime.activitySession;
+  if (session?.type !== "work-sequence") {
+    return;
+  }
+
+  appState = commitRuntimeRequest({
+    state: appState,
+    request: createInteractiveActionRequest("interactive.activity-qte.choose", {
+      commandId,
+    }),
+    context: {
+      router: {
+        route: ({ state, request }) =>
+          runInteractiveRuntime({
+            state,
+            request,
+            characterDefinitions: appState.characterDefinitions,
+            activityDefinitionsById:
+              activeContentContext.storyContent.activityDefinitionsById,
           }),
       },
     },
@@ -2049,6 +2542,15 @@ function createScenarioPackAppState(
 
   nextAppState = {
     ...nextAppState,
+    gameState: revealCampaignMapHexesForCoordinate(
+      nextAppState.gameState,
+      scenarioMapDefinition,
+      nextAppState.playerCoordinate
+    ),
+  };
+
+  nextAppState = {
+    ...nextAppState,
     gameState: {
       ...nextAppState.gameState,
       runtime: {
@@ -2065,7 +2567,13 @@ function createScenarioPackAppState(
     },
   };
 
-  return nextAppState;
+  return revealCampaignMapAroundAppCoordinate(
+    nextAppState,
+    nextAppState.playerCoordinate,
+    {
+      animateNewHexes: false,
+    }
+  );
 }
 
 function mergeCharacterDefinitions(
@@ -2249,6 +2757,7 @@ function resetMainGameRuntime(): void {
 
   initialCampaignMapDebugAnimationFrame = null;
   initialCampaignMapDebugAnimationStartTime = null;
+  cancelCampaignMapZoomAnimation();
   hasAppliedInitialCampaignMapDebug = false;
   hasStartedInitialCampaignMapDebugAnimation = false;
   campaignMapDebugState = {
@@ -2484,6 +2993,7 @@ function renderActiveSurface(): void {
   }
 
   mainUiFlow.render();
+  syncEmbeddedBattleUiEditor();
 }
 
 async function copyCurrentLayoutParams(): Promise<void> {
@@ -2514,15 +3024,6 @@ function handleLayoutEditorInput(targetElement: EventTarget | null): boolean {
 
   if (
     targetElement instanceof HTMLInputElement &&
-    targetElement.hasAttribute("data-layout-background-asset-query")
-  ) {
-    appState = setLayoutEditorBackgroundAssetQuery(appState, targetElement.value);
-    renderActiveSurface();
-    return true;
-  }
-
-  if (
-    targetElement instanceof HTMLInputElement &&
     targetElement.dataset.battleUiVar != null
   ) {
     appState = setLayoutEditorBattleUiValue(
@@ -2532,6 +3033,16 @@ function handleLayoutEditorInput(targetElement: EventTarget | null): boolean {
     );
     persistBattleUiEditorValues(appState.layoutEditor.battleUiValues);
     syncEmbeddedBattleUiEditor();
+    renderActiveSurface();
+    return true;
+  }
+
+  if (
+    targetElement instanceof HTMLInputElement &&
+    targetElement.hasAttribute("data-layout-background-asset-query")
+  ) {
+    appState = setLayoutEditorBackgroundAssetQuery(appState, targetElement.value);
+    renderActiveSurface();
     return true;
   }
 
@@ -2899,6 +3410,32 @@ appElement.addEventListener("input", (event) => {
 
   if (
     targetElement instanceof HTMLInputElement &&
+    targetElement.hasAttribute("data-fortune-speed-input")
+  ) {
+    const nextTickMs = clampFortuneBoardAnimationTickMs(Number(targetElement.value));
+    const speedValueElement = targetElement
+      .closest("[data-fortune-speed-control]")
+      ?.querySelector<HTMLElement>("[data-fortune-speed-value]");
+    if (speedValueElement != null) {
+      speedValueElement.textContent = `${nextTickMs}ms`;
+    }
+
+    const houseFieldId = targetElement.dataset.fortuneSpeedField;
+    if (houseFieldId != null && appState.gameState.ui.currentView === "house") {
+      dispatchHouseRuntimeRequest(houseRuntime, {
+        type: "field",
+        fieldId: houseFieldId,
+        value: String(nextTickMs),
+      });
+      return;
+    }
+
+    dispatchCurrentActivityQteSpeed(nextTickMs);
+    return;
+  }
+
+  if (
+    targetElement instanceof HTMLInputElement &&
     targetElement.dataset.campaignTerrainStyleField != null
   ) {
     handleCampaignTerrainStyleInput(targetElement);
@@ -3037,6 +3574,24 @@ appElement.addEventListener("change", (event) => {
 appElement.addEventListener("keydown", (event) => {
   const targetElement = event.target;
   if (
+    event.code === "Space" &&
+    !(targetElement instanceof HTMLInputElement) &&
+    !(targetElement instanceof HTMLTextAreaElement)
+  ) {
+    const session = appState.gameState.runtime.activitySession;
+    if (session?.type === "pachinko-board" && session.phase !== "dropping") {
+      const playButton = appRoot.querySelector<HTMLButtonElement>(
+        "[data-activity-overlay='pachinko-board'] [data-activity-action='play-board'], [data-house-overlay='pachinko-board'] [data-house-action='temple-work-board-play']"
+      );
+      if (playButton != null && !playButton.disabled) {
+        event.preventDefault();
+        playButton.click();
+        return;
+      }
+    }
+  }
+
+  if (
     event.key === "Enter" &&
     targetElement instanceof HTMLInputElement &&
     targetElement.hasAttribute("data-campaign-map-scale-input")
@@ -3110,6 +3665,26 @@ appElement.addEventListener("pointerdown", (event) => {
 
   const targetElement = event.target;
   if (!(targetElement instanceof HTMLElement)) {
+    return;
+  }
+
+  const pointerActivityActionButton = targetElement.closest<HTMLElement>(
+    "[data-activity-action]"
+  );
+  const pointerActivityAction =
+    pointerActivityActionButton?.dataset.activityAction;
+  if (
+    pointerActivityActionButton != null &&
+    pointerActivityAction != null &&
+    shouldDispatchActivityActionOnPointerDown(pointerActivityAction)
+  ) {
+    event.preventDefault();
+    event.stopPropagation();
+    recentPointerDispatchedActivityAction = {
+      action: pointerActivityAction,
+      timestamp: window.performance.now(),
+    };
+    dispatchActivityActionButton(pointerActivityActionButton);
     return;
   }
 
@@ -3219,6 +3794,7 @@ appElement.addEventListener("pointerdown", (event) => {
     return;
   }
 
+  cancelCampaignMapZoomAnimation();
   campaignMapDragState = {
     pointerId: event.pointerId,
     startClientX: event.clientX,
@@ -3227,6 +3803,7 @@ appElement.addEventListener("pointerdown", (event) => {
     startOffsetY: campaignMapDebugState.offsetY,
     didMove: false,
   };
+  hideCampaignHoverHexOutline();
   campaignMap.classList.add("is-dragging");
   campaignMap.setPointerCapture(event.pointerId);
 });
@@ -3241,6 +3818,10 @@ appElement.addEventListener("pointermove", (event) => {
     return;
   }
 
+  if (campaignMapDragState == null) {
+    updateCampaignHoverHexOutline(event);
+  }
+
   if (
     campaignMapDragState == null ||
     campaignMapDragState.pointerId !== event.pointerId
@@ -3248,6 +3829,7 @@ appElement.addEventListener("pointermove", (event) => {
     return;
   }
 
+  hideCampaignHoverHexOutline();
   const deltaX = event.clientX - campaignMapDragState.startClientX;
   const deltaY = event.clientY - campaignMapDragState.startClientY;
   if (Math.abs(deltaX) + Math.abs(deltaY) > 3) {
@@ -3263,6 +3845,7 @@ appElement.addEventListener("pointermove", (event) => {
 
 appElement.addEventListener("pointerup", endCampaignMapDrag);
 appElement.addEventListener("pointercancel", endCampaignMapDrag);
+appElement.addEventListener("pointerleave", hideCampaignHoverHexOutline);
 
 function clearHouseTileDropMarkers(): void {
   appRoot
@@ -3490,6 +4073,40 @@ window.addEventListener("message", (event) => {
   handleBattleDemoResultMessage(event.data);
 });
 
+function parseNpcInteractionContext(
+  rawContext: string
+): NpcInteractionContext | null {
+  try {
+    const value: unknown = JSON.parse(rawContext);
+    if (value == null || typeof value !== "object") {
+      return null;
+    }
+
+    const candidate = value as Record<string, unknown>;
+    if (
+      candidate.type === "house" &&
+      typeof candidate.houseId === "string" &&
+      (candidate.moduleId == null || typeof candidate.moduleId === "string")
+    ) {
+      const context: NpcInteractionContext = {
+        type: "house",
+        houseId: candidate.houseId,
+      };
+      if (candidate.moduleId != null) {
+        return {
+          ...context,
+          moduleId: candidate.moduleId as HouseModuleId,
+        };
+      }
+      return context;
+    }
+  } catch {
+    return null;
+  }
+
+  return null;
+}
+
 appElement.addEventListener("click", (event) => {
   if (shouldSuppressNextClickAfterMapDrag) {
     shouldSuppressNextClickAfterMapDrag = false;
@@ -3555,25 +4172,7 @@ appElement.addEventListener("click", (event) => {
     "[data-action='close-overlay'], [data-action='close-character-detail']"
   );
   if (closeOverlayButton != null) {
-    appState = updateOverlayView(appState, null);
-    renderApp();
-    return;
-  }
-
-  const openPartyEditorButton = targetElement.closest<HTMLElement>(
-    "[data-action='open-party-editor']"
-  );
-  if (openPartyEditorButton != null) {
-    appState = openPartyEditor(appState);
-    renderApp();
-    return;
-  }
-
-  const closePartyEditorButton = targetElement.closest<HTMLElement>(
-    "[data-action='close-party-editor']"
-  );
-  if (closePartyEditorButton != null) {
-    appState = closePartyEditor(appState);
+    appState = closeGlobalOverlay(appState);
     renderApp();
     return;
   }
@@ -3582,9 +4181,84 @@ appElement.addEventListener("click", (event) => {
     "[data-action='open-player-detail']"
   );
   if (playerCardButton != null) {
-    appState = updateOverlayView(appState, "detail");
+    appState = openPlayerDetail(appState);
     renderApp();
     return;
+  }
+
+  const npcTargetButton = targetElement.closest<HTMLElement>(
+    "[data-npc-target][data-npc-context]"
+  );
+  if (npcTargetButton != null) {
+    const characterId = npcTargetButton.dataset.npcTarget;
+    const rawContext = npcTargetButton.dataset.npcContext;
+    const blockState = selectNpcInteractionBlockState({
+      overlayView: appState.gameState.ui.overlayView,
+      modalState: appState.modalState,
+      locationDialogueState: appState.locationDialogueState,
+      beggingMiniGameState: appState.beggingMiniGameState,
+      activitySession: appState.gameState.runtime.activitySession,
+    });
+    debugNpcInteraction("npc-target:hit", {
+      characterId,
+      rawContext,
+      blockState,
+      targetTag: targetElement.tagName,
+      targetClassName: targetElement.className,
+      buttonClassName: npcTargetButton.className,
+    });
+    if (characterId != null && rawContext != null) {
+      const context = parseNpcInteractionContext(rawContext);
+      if (context != null && !isNpcInteractionBlocked(blockState)) {
+        appState = openNpcInteraction(appState, context, characterId);
+        debugNpcInteraction("npc-target:opened", {
+          characterId,
+          context,
+        });
+        renderApp();
+      } else {
+        debugNpcInteraction("npc-target:blocked", {
+          characterId,
+          context,
+          isBlocked: isNpcInteractionBlocked(blockState),
+        });
+      }
+    }
+    return;
+  }
+
+  const npcActionButton = targetElement.closest<HTMLElement>("[data-npc-action]");
+  if (npcActionButton != null) {
+    const npcAction = npcActionButton.dataset.npcAction;
+    if (npcAction === "close") {
+      appState = closeNpcInteraction(appState);
+      renderApp();
+      return;
+    }
+
+    if (npcAction === "continue") {
+      appState = closeNpcInteraction(appState);
+      renderApp();
+      return;
+    }
+
+    if (npcAction === "profile") {
+      const characterId = npcActionButton.dataset.characterId;
+      if (characterId != null && characterId.length > 0) {
+        appState = openCharacterDetail(appState, characterId);
+        renderApp();
+      }
+      return;
+    }
+
+    if (npcAction === "talk") {
+      const characterId = npcActionButton.dataset.characterId;
+      if (characterId != null && characterId.length > 0) {
+        appState = chooseNpcDefaultTalk(appState, characterId);
+        renderApp();
+      }
+      return;
+    }
   }
 
   const openCardsButton = targetElement.closest<HTMLElement>(
@@ -3956,11 +4630,15 @@ appElement.addEventListener("click", (event) => {
   );
   if (activityActionButton != null) {
     const activityAction = activityActionButton.dataset.activityAction;
-    if (activityAction === "stop-qte") {
-      stopCurrentActivityQte();
-    } else if (activityAction === "close-result") {
-      closeCurrentActivityResult();
+    if (
+      activityAction != null &&
+      shouldSuppressPointerDispatchedActivityClick(activityAction)
+    ) {
+      event.preventDefault();
+      event.stopPropagation();
+      return;
     }
+    dispatchActivityActionButton(activityActionButton);
     return;
   }
 
@@ -4073,6 +4751,10 @@ appElement.addEventListener("click", (event) => {
   }
 
   if (appState.autoAdvanceState != null) {
+    debugCampaignMapClick("blocked:auto-advance", {
+      targetTag: targetElement.tagName,
+      targetClassName: targetElement.className,
+    });
     return;
   }
 
@@ -4080,6 +4762,25 @@ appElement.addEventListener("click", (event) => {
   if (mapCell != null && appState.gameState.ui.currentView === "map") {
     const xValue = Number(mapCell.dataset.mapX);
     const yValue = Number(mapCell.dataset.mapY);
+    debugCampaignMapClick("map-cell:hit", {
+      targetTag: targetElement.tagName,
+      targetClassName: targetElement.className,
+      mapCellTag: mapCell.tagName,
+      mapCellClassName: mapCell.className,
+      x: xValue,
+      y: yValue,
+      cityId: mapCell.dataset.cityId || null,
+      markerId: mapCell.dataset.campaignMarkerId || null,
+      nodeId: mapCell.dataset.mapNodeId || null,
+      revealedAttribute: mapCell.dataset.mapNodeRevealed ?? null,
+    });
+    if (!isCurrentCampaignCoordinateRevealed({ x: xValue, y: yValue })) {
+      debugCampaignMapClick("map-cell:blocked-unrevealed", {
+        x: xValue,
+        y: yValue,
+      });
+      return;
+    }
     const cityId = mapCell.dataset.cityId || null;
     const mapNodeName = mapCell.dataset.mapNodeName || null;
     const cityName =
@@ -4095,6 +4796,13 @@ appElement.addEventListener("click", (event) => {
 
   const campaignMap = targetElement.closest<HTMLElement>("[data-campaign-map-viewport]");
   if (campaignMap != null && appState.gameState.ui.currentView === "map") {
+    debugCampaignMapClick("viewport:hit", {
+      targetTag: targetElement.tagName,
+      targetClassName: targetElement.className,
+      clientX: event.clientX,
+      clientY: event.clientY,
+      ...describeNearestCampaignMarker(campaignMap, event.clientX, event.clientY),
+    });
     const clickTarget = resolveCampaignTerrainUvFromClientPosition(
       campaignMap,
       event.clientX,
@@ -4102,14 +4810,39 @@ appElement.addEventListener("click", (event) => {
     );
     const coordinateSpace = getCurrentMapDefinition()?.coordinateSpace;
     if (clickTarget == null || coordinateSpace == null) {
+      debugCampaignMapClick("viewport:blocked-no-uv-or-coordinate-space", {
+        hasClickTarget: clickTarget != null,
+        hasCoordinateSpace: coordinateSpace != null,
+      });
+      return;
+    }
+    const targetCoordinate = {
+      x: clickTarget.u * coordinateSpace.width,
+      y: (1 - clickTarget.v) * coordinateSpace.height,
+    };
+    if (!isCurrentCampaignCoordinateRevealed(targetCoordinate)) {
+      debugCampaignMapClick("viewport:blocked-unrevealed", {
+        clickTarget,
+        targetCoordinate,
+      });
+      return;
+    }
+    if (
+      isCampaignTerrainUvPassable(campaignMap, clickTarget.u, clickTarget.v) !== true
+    ) {
+      debugCampaignMapClick("viewport:blocked-impassable", {
+        clickTarget,
+        targetCoordinate,
+      });
       return;
     }
 
+    debugCampaignMapClick("viewport:start-travel", {
+      clickTarget,
+      targetCoordinate,
+    });
     startCampaignTravel(
-      {
-        x: clickTarget.u * coordinateSpace.width,
-        y: (1 - clickTarget.v) * coordinateSpace.height,
-      },
+      targetCoordinate,
       null,
       null
     );
@@ -4122,10 +4855,11 @@ function handleModalConfirm() {
   }
 
   if (appState.modalState.type === "travel-confirm") {
-    const nextCoordinate = travelToCoordinate(
-      appState.playerCoordinate,
-      appState.modalState.targetCoordinate
-    );
+    const travelPath = createCampaignTravelPath(appState.modalState.targetCoordinate);
+    if (travelPath == null) {
+      return;
+    }
+    const nextCoordinate = getLastTravelPathCoordinate(travelPath);
     const reachedCityDefinition =
       appState.modalState.cityId == null
         ? null
@@ -4140,11 +4874,13 @@ function handleModalConfirm() {
           }
         : null;
 
-    const previousCoordinate = appState.playerCoordinate;
+    const travelRequestId = campaignTravelRequestId + 1;
+    campaignTravelRequestId = travelRequestId;
+    stopCampaignMoveAnimation();
     appState = {
       ...appState,
       campaignTravelState: {
-        targetCoordinate: appState.modalState.targetCoordinate,
+        targetCoordinate: nextCoordinate,
         cityId: appState.modalState.cityId,
         cityName: appState.modalState.cityName,
       },
@@ -4152,17 +4888,35 @@ function handleModalConfirm() {
       locationDialogueState: null,
     };
     renderApp();
-    void animateCampaignMove(previousCoordinate, nextCoordinate).then(() => {
+    void animateCampaignMovePath(
+      travelPath,
+      () => campaignTravelRequestId === travelRequestId
+    ).then(() => {
+      if (campaignTravelRequestId !== travelRequestId) {
+        return;
+      }
+
       const shouldEnterCity =
         appState.campaignTravelState != null &&
         appState.campaignTravelState.targetCoordinate.x === nextCoordinate.x &&
         appState.campaignTravelState.targetCoordinate.y === nextCoordinate.y;
-      const nextAppState = {
+      let nextAppState = {
         ...appState,
         campaignTravelState: null,
         modalState: shouldEnterCity ? pendingEnterCityState : null,
         locationDialogueState: null,
       };
+      const currentMapDefinition = getCurrentMapDefinition();
+      if (currentMapDefinition != null) {
+        nextAppState = {
+          ...nextAppState,
+          gameState: revealCampaignMapHexesForCoordinate(
+            nextAppState.gameState,
+            currentMapDefinition,
+            nextCoordinate
+          ),
+        };
+      }
       const runtimeCommit = commitRuntimeRequest({
         state: nextAppState,
         request: createAdvanceTimeSegmentsRequest(1),
@@ -4242,12 +4996,125 @@ function cancelCampaignTravel(): void {
   renderApp();
 }
 
+function debugCampaignMapClick(
+  eventName: string,
+  details: Record<string, unknown> = {}
+): void {
+  const payload = {
+    event: eventName,
+    view: appState.gameState.ui.currentView,
+    autoAdvance: appState.autoAdvanceState != null,
+    modalType: appState.modalState?.type ?? null,
+    overlayView: appState.gameState.ui.overlayView,
+    ...details,
+  };
+  window.console.info(
+    `[RPG_TG_DEBUG][campaign-map-click] ${JSON.stringify(payload)}`
+  );
+}
+
+function debugNpcInteraction(
+  eventName: string,
+  details: Record<string, unknown> = {}
+): void {
+  const payload = {
+    event: eventName,
+    view: appState.gameState.ui.currentView,
+    modalType: appState.modalState?.type ?? null,
+    overlayView: appState.gameState.ui.overlayView,
+    activeNpcSession: appState.gameState.ui.npcInteractionSession,
+    ...details,
+  };
+  window.console.info(
+    `[RPG_TG_DEBUG][npc-interaction] ${JSON.stringify(payload)}`
+  );
+}
+
+function describeNearestCampaignMarker(
+  campaignMap: HTMLElement,
+  clientX: number,
+  clientY: number
+): Record<string, unknown> {
+  const markers = Array.from(
+    campaignMap.querySelectorAll<HTMLElement>(".c-campaign-marker")
+  );
+  const measuredMarkers = markers.map((marker) => {
+    const rect = marker.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    return {
+      marker,
+      markerId: marker.dataset.campaignMarkerId ?? null,
+      cityId: marker.dataset.cityId || null,
+      nodeId: marker.dataset.mapNodeId ?? null,
+      ready: marker.hasAttribute("data-terrain-projection-ready"),
+      hidden: marker.hidden,
+      disabled: marker.hasAttribute("disabled"),
+      pointerEvents: window.getComputedStyle(marker).pointerEvents,
+      rect: {
+        left: Math.round(rect.left),
+        top: Math.round(rect.top),
+        width: Math.round(rect.width),
+        height: Math.round(rect.height),
+      },
+      distance: Math.hypot(centerX - clientX, centerY - clientY),
+    };
+  });
+  measuredMarkers.sort((left, right) => left.distance - right.distance);
+  const nearest = measuredMarkers[0] ?? null;
+
+  return {
+    markerCount: markers.length,
+    markerReadyCount: markers.filter((marker) =>
+      marker.hasAttribute("data-terrain-projection-ready")
+    ).length,
+    markerVisibleCount: markers.filter((marker) => !marker.hidden).length,
+    nearestMarker:
+      nearest == null
+        ? null
+        : {
+            markerId: nearest.markerId,
+            cityId: nearest.cityId,
+            nodeId: nearest.nodeId,
+            ready: nearest.ready,
+            hidden: nearest.hidden,
+            disabled: nearest.disabled,
+            pointerEvents: nearest.pointerEvents,
+            rect: nearest.rect,
+            distance: Math.round(nearest.distance),
+          },
+  };
+}
+
 function startCampaignTravel(
   targetCoordinate: GridCoordinate,
   cityId: string | null,
   cityName: string | null
 ): void {
-  const nextCoordinate = travelToCoordinate(appState.playerCoordinate, targetCoordinate);
+  debugCampaignMapClick("startCampaignTravel:requested", {
+    targetCoordinate,
+    cityId,
+    cityName,
+    playerCoordinate: appState.playerCoordinate,
+  });
+  const travelPath = createCampaignTravelPath(targetCoordinate);
+  if (travelPath == null) {
+    debugCampaignMapClick("startCampaignTravel:no-path", {
+      targetCoordinate,
+      cityId,
+      cityName,
+      playerCoordinate: appState.playerCoordinate,
+    });
+    return;
+  }
+  const nextCoordinate = getLastTravelPathCoordinate(travelPath);
+  debugCampaignMapClick("startCampaignTravel:path-created", {
+    targetCoordinate,
+    nextCoordinate,
+    cityId,
+    cityName,
+    pathLength: travelPath.length,
+  });
   const reachedCityDefinition =
     cityId == null ? null : activeContentContext.cityDefinitionById[cityId] ?? null;
   const pendingEnterCityState =
@@ -4258,7 +5125,6 @@ function startCampaignTravel(
           cityName: reachedCityDefinition.name,
         }
       : null;
-  const previousCoordinate = appState.playerCoordinate;
   const travelRequestId = campaignTravelRequestId + 1;
   campaignTravelRequestId = travelRequestId;
   stopCampaignMoveAnimation();
@@ -4275,7 +5141,10 @@ function startCampaignTravel(
   };
   renderApp();
 
-  void animateCampaignMove(previousCoordinate, nextCoordinate).then(() => {
+  void animateCampaignMovePath(
+    travelPath,
+    () => campaignTravelRequestId === travelRequestId
+  ).then(() => {
     if (campaignTravelRequestId !== travelRequestId) {
       return;
     }
@@ -4285,12 +5154,23 @@ function startCampaignTravel(
       activeTravelState != null &&
       activeTravelState.targetCoordinate.x === nextCoordinate.x &&
       activeTravelState.targetCoordinate.y === nextCoordinate.y;
-    const nextAppState = {
+    let nextAppState = {
       ...appState,
       campaignTravelState: null,
       modalState: shouldEnterCity ? pendingEnterCityState : null,
       locationDialogueState: null,
     };
+    const currentMapDefinition = getCurrentMapDefinition();
+    if (currentMapDefinition != null) {
+      nextAppState = {
+        ...nextAppState,
+        gameState: revealCampaignMapHexesForCoordinate(
+          nextAppState.gameState,
+          currentMapDefinition,
+          nextCoordinate
+        ),
+      };
+    }
     const runtimeCommit = commitRuntimeRequest({
       state: nextAppState,
       request: createAdvanceTimeSegmentsRequest(1),
@@ -4307,6 +5187,238 @@ function startCampaignTravel(
     appState = runtimeCommit.state;
     renderApp();
   });
+}
+
+function createCampaignTravelPath(targetCoordinate: GridCoordinate): GridCoordinate[] | null {
+  const currentMapDefinition = getCurrentMapDefinition();
+  const campaignCoordinateSpace =
+    currentMapDefinition?.mode === "campaign"
+      ? currentMapDefinition.coordinateSpace ?? null
+      : null;
+  const snappedTargetCoordinate =
+    campaignCoordinateSpace == null
+      ? targetCoordinate
+      : snapCoordinateToHexCenter(targetCoordinate, campaignCoordinateSpace);
+  const nextCoordinate = travelToCoordinate(
+    appState.playerCoordinate,
+    snappedTargetCoordinate
+  );
+
+  if (
+    currentMapDefinition?.mode !== "campaign" ||
+    currentMapDefinition.coordinateSpace == null
+  ) {
+    return [appState.playerCoordinate, nextCoordinate];
+  }
+  if (!isCurrentCampaignCoordinateRevealed(nextCoordinate)) {
+    return null;
+  }
+
+  const travelGrid = getCampaignTerrainTravelGrid(appRoot);
+  if (travelGrid == null) {
+    return null;
+  }
+
+  return createPassableHexTravelPath({
+    currentCoordinate: appState.playerCoordinate,
+    targetCoordinate: nextCoordinate,
+    coordinateSpace: currentMapDefinition.coordinateSpace,
+    travelGrid,
+  });
+}
+
+function hideCampaignHoverHexOutline(): void {
+  const hoverOutline = appRoot.querySelector<SVGSVGElement>(
+    "[data-campaign-hover-hex='true']"
+  );
+  const polygonElement = hoverOutline?.querySelector<SVGPolygonElement>(
+    "[data-campaign-hover-hex-polygon='true']"
+  );
+  hoverOutline?.setAttribute("hidden", "");
+  polygonElement?.setAttribute("points", "");
+}
+
+const CAMPAIGN_HOVER_HEX_EDGE_SEGMENTS = 5;
+
+function updateCampaignHoverHexOutline(event: PointerEvent): void {
+  if (
+    appState.gameState.ui.currentView !== "map" ||
+    campaignMapDragState != null ||
+    isInitialCampaignMapDebugAnimating()
+  ) {
+    hideCampaignHoverHexOutline();
+    return;
+  }
+
+  const hitElement = document.elementFromPoint(event.clientX, event.clientY);
+  if (!(hitElement instanceof HTMLElement)) {
+    hideCampaignHoverHexOutline();
+    return;
+  }
+
+  if (hitElement.closest(".c-campaign-map-debug") != null) {
+    hideCampaignHoverHexOutline();
+    return;
+  }
+
+  const campaignMap = hitElement.closest<HTMLElement>(
+    "[data-campaign-map-viewport]"
+  );
+  const currentMapDefinition = getCurrentMapDefinition();
+  const coordinateSpace = currentMapDefinition?.coordinateSpace ?? null;
+  const hoverOutline = campaignMap?.querySelector<SVGSVGElement>(
+    "[data-campaign-hover-hex='true']"
+  );
+  const polygonElement = hoverOutline?.querySelector<SVGPolygonElement>(
+    "[data-campaign-hover-hex-polygon='true']"
+  );
+  if (
+    campaignMap == null ||
+    currentMapDefinition?.mode !== "campaign" ||
+    coordinateSpace == null ||
+    hoverOutline == null ||
+    polygonElement == null
+  ) {
+    hideCampaignHoverHexOutline();
+    return;
+  }
+
+  const clickTarget = resolveCampaignTerrainUvFromClientPosition(
+    campaignMap,
+    event.clientX,
+    event.clientY
+  );
+  if (clickTarget == null) {
+    hideCampaignHoverHexOutline();
+    return;
+  }
+
+  const targetCoordinate = {
+    x: clickTarget.u * coordinateSpace.width,
+    y: (1 - clickTarget.v) * coordinateSpace.height,
+  };
+  const hoverHex = coordinateToRoundedHex(targetCoordinate, coordinateSpace);
+  const hoverCenterCoordinate = snapCoordinateToHexCenter(
+    targetCoordinate,
+    coordinateSpace
+  );
+  const hoverCenterU = hoverCenterCoordinate.x / coordinateSpace.width;
+  const hoverCenterV = 1 - hoverCenterCoordinate.y / coordinateSpace.height;
+  if (!isCurrentCampaignCoordinateRevealed(hoverCenterCoordinate)) {
+    hideCampaignHoverHexOutline();
+    return;
+  }
+  if (
+    isCampaignTerrainUvPassable(campaignMap, hoverCenterU, hoverCenterV) !== true
+  ) {
+    hideCampaignHoverHexOutline();
+    return;
+  }
+  if (createCampaignTravelPath(hoverCenterCoordinate) == null) {
+    hideCampaignHoverHexOutline();
+    return;
+  }
+
+  const mapRect = campaignMap.getBoundingClientRect();
+  if (mapRect.width <= 0 || mapRect.height <= 0) {
+    hideCampaignHoverHexOutline();
+    return;
+  }
+
+  const hoverHexPolygon = hexToCoordinatePolygon({
+    hex: hoverHex,
+    coordinateSpace,
+    radiusScale: 1.015,
+  });
+  const hoverHexOutlineCoordinates = createTerrainFollowingHexOutlineCoordinates(
+    hoverHexPolygon
+  );
+  const points: string[] = [];
+  for (const outlineCoordinate of hoverHexOutlineCoordinates) {
+    const outlineU = outlineCoordinate.x / coordinateSpace.width;
+    const outlineV = 1 - outlineCoordinate.y / coordinateSpace.height;
+    const projectedPoint = projectCampaignTerrainUvToClientPointAtHeightAnchor(
+      campaignMap,
+      outlineU,
+      outlineV,
+      outlineU,
+      outlineV
+    );
+    if (projectedPoint == null) {
+      hideCampaignHoverHexOutline();
+      return;
+    }
+
+    points.push(
+      `${(projectedPoint.clientX - mapRect.left).toFixed(2)},${(projectedPoint.clientY - mapRect.top).toFixed(2)}`
+    );
+  }
+
+  hoverOutline.setAttribute(
+    "viewBox",
+    `0 0 ${mapRect.width.toFixed(2)} ${mapRect.height.toFixed(2)}`
+  );
+  polygonElement.setAttribute("points", points.join(" "));
+  hoverOutline.removeAttribute("hidden");
+}
+
+function createTerrainFollowingHexOutlineCoordinates(
+  polygon: GridCoordinate[]
+): GridCoordinate[] {
+  const outlineCoordinates: GridCoordinate[] = [];
+
+  for (let cornerIndex = 0; cornerIndex < polygon.length; cornerIndex += 1) {
+    const from = polygon[cornerIndex];
+    const to = polygon[(cornerIndex + 1) % polygon.length];
+    if (from == null || to == null) {
+      continue;
+    }
+
+    for (let segmentIndex = 0; segmentIndex < CAMPAIGN_HOVER_HEX_EDGE_SEGMENTS; segmentIndex += 1) {
+      const amount = segmentIndex / CAMPAIGN_HOVER_HEX_EDGE_SEGMENTS;
+      outlineCoordinates.push({
+        x: from.x + (to.x - from.x) * amount,
+        y: from.y + (to.y - from.y) * amount,
+      });
+    }
+  }
+
+  return outlineCoordinates;
+}
+
+function getLastTravelPathCoordinate(path: GridCoordinate[]): GridCoordinate {
+  return path[path.length - 1] ?? appState.playerCoordinate;
+}
+
+async function animateCampaignMovePath(
+  path: GridCoordinate[],
+  shouldContinue: () => boolean
+): Promise<void> {
+  if (path.length <= 1) {
+    syncCampaignActorRuntimeState(
+      getLastTravelPathCoordinate(path),
+      appState.campaignActorState.facingDegrees,
+      false
+    );
+    renderApp();
+    return;
+  }
+
+  for (let index = 1; index < path.length; index += 1) {
+    if (!shouldContinue()) {
+      return;
+    }
+
+    const from = path[index - 1] ?? appState.playerCoordinate;
+    const to = path[index] ?? from;
+    await animateCampaignMove(from, to);
+  }
+
+  syncCampaignActorRuntimeState(
+    getLastTravelPathCoordinate(path),
+    appState.campaignActorState.facingDegrees,
+    false
+  );
 }
 
 function animateCampaignMove(
@@ -4384,9 +5496,20 @@ function syncCampaignActorRuntimeState(
   facingDegrees: number,
   isMoving: boolean
 ): void {
-  appState.playerCoordinate = coordinate;
-  appState.campaignActorState.facingDegrees = facingDegrees;
-  appState.campaignActorState.isMoving = isMoving;
+  appState = {
+    ...appState,
+    playerCoordinate: coordinate,
+    campaignActorState: {
+      facingDegrees,
+      isMoving,
+    },
+  };
+  const nextAppState = revealCampaignMapAroundAppCoordinate(appState, coordinate, {
+    animateNewHexes: true,
+  });
+  if (nextAppState !== appState) {
+    appState = nextAppState;
+  }
 }
 
 function syncCampaignActorView(): void {
@@ -4432,10 +5555,35 @@ function captureCampaignTerrainCanvases(
 ): HTMLCanvasElement[] | null {
   const canvases = Array.from(
     root.querySelectorAll<HTMLCanvasElement>(
-      "[data-campaign-map-terrain], [data-campaign-map-actor-layer]"
+      "[data-campaign-map-terrain], [data-campaign-map-actor-layer], [data-campaign-map-fog], [data-campaign-map-cloud]"
     )
   );
   return canvases.length === 0 ? null : canvases;
+}
+
+function syncPreservedCanvasAttributes(
+  preservedCanvas: HTMLCanvasElement,
+  replacementCanvas: HTMLCanvasElement
+): void {
+  for (const attribute of Array.from(preservedCanvas.attributes)) {
+    if (
+      attribute.name.startsWith("data-") ||
+      attribute.name === "aria-label" ||
+      attribute.name === "aria-hidden"
+    ) {
+      preservedCanvas.removeAttribute(attribute.name);
+    }
+  }
+
+  for (const attribute of Array.from(replacementCanvas.attributes)) {
+    if (
+      attribute.name.startsWith("data-") ||
+      attribute.name === "aria-label" ||
+      attribute.name === "aria-hidden"
+    ) {
+      preservedCanvas.setAttribute(attribute.name, attribute.value);
+    }
+  }
 }
 
 function restoreCampaignTerrainCanvases(
@@ -4448,7 +5596,7 @@ function restoreCampaignTerrainCanvases(
 
   const replacementCanvases = Array.from(
     root.querySelectorAll<HTMLCanvasElement>(
-      "[data-campaign-map-terrain], [data-campaign-map-actor-layer]"
+      "[data-campaign-map-terrain], [data-campaign-map-actor-layer], [data-campaign-map-fog], [data-campaign-map-cloud]"
     )
   );
   if (replacementCanvases.length !== preservedCanvases.length) {
@@ -4461,11 +5609,103 @@ function restoreCampaignTerrainCanvases(
       return;
     }
 
+    syncPreservedCanvasAttributes(preservedCanvas, replacementCanvas);
     replacementCanvas.replaceWith(preservedCanvas);
   });
 }
 
+function getCampaignMarkerStableKey(element: HTMLElement): string | null {
+  if (element.dataset.campaignMarkerId != null) {
+    return `marker:${element.dataset.campaignMarkerId}`;
+  }
+  if (element.dataset.campaignMarkerSummaryId != null) {
+    return `summary:${element.dataset.campaignMarkerSummaryId}`;
+  }
+
+  return null;
+}
+
+function captureCampaignMarkerElements(
+  root: ParentNode
+): Map<string, HTMLElement> | null {
+  const markerElements = Array.from(
+    root.querySelectorAll<HTMLElement>(
+      "[data-campaign-marker-id], [data-campaign-marker-summary-id]"
+    )
+  );
+  if (markerElements.length === 0) {
+    return null;
+  }
+
+  const preservedElements = new Map<string, HTMLElement>();
+  for (const markerElement of markerElements) {
+    const stableKey = getCampaignMarkerStableKey(markerElement);
+    if (stableKey != null) {
+      preservedElements.set(stableKey, markerElement);
+    }
+  }
+
+  return preservedElements.size === 0 ? null : preservedElements;
+}
+
+function syncPreservedCampaignMarkerAttributes(
+  preservedElement: HTMLElement,
+  replacementElement: HTMLElement
+): void {
+  const dynamicProjectionAttributes = new Set([
+    "style",
+    "hidden",
+    "data-terrain-projection-ready",
+  ]);
+
+  for (const attribute of Array.from(preservedElement.attributes)) {
+    if (dynamicProjectionAttributes.has(attribute.name)) {
+      continue;
+    }
+    if (!replacementElement.hasAttribute(attribute.name)) {
+      preservedElement.removeAttribute(attribute.name);
+    }
+  }
+
+  for (const attribute of Array.from(replacementElement.attributes)) {
+    if (dynamicProjectionAttributes.has(attribute.name)) {
+      continue;
+    }
+    preservedElement.setAttribute(attribute.name, attribute.value);
+  }
+}
+
+function restoreCampaignMarkerElements(
+  root: ParentNode,
+  preservedElements: Map<string, HTMLElement> | null
+): void {
+  if (preservedElements == null || preservedElements.size === 0) {
+    return;
+  }
+
+  const replacementElements = Array.from(
+    root.querySelectorAll<HTMLElement>(
+      "[data-campaign-marker-id], [data-campaign-marker-summary-id]"
+    )
+  );
+  for (const replacementElement of replacementElements) {
+    const stableKey = getCampaignMarkerStableKey(replacementElement);
+    const preservedElement =
+      stableKey == null ? null : preservedElements.get(stableKey) ?? null;
+    if (preservedElement == null) {
+      continue;
+    }
+
+    syncPreservedCampaignMarkerAttributes(preservedElement, replacementElement);
+    replacementElement.replaceWith(preservedElement);
+  }
+}
+
 function renderApp() {
+  if (syncRenderedFortuneBoardOverlay()) {
+    return;
+  }
+
   const activeScaleInput = document.activeElement;
   const focusedScaleInput =
     activeScaleInput instanceof HTMLInputElement &&
@@ -4504,6 +5744,10 @@ function renderAppFrame(
     appState.gameState.ui.currentView === "map"
       ? captureCampaignTerrainCanvases(appRoot)
       : null;
+  const preservedCampaignMarkers =
+    appState.gameState.ui.currentView === "map"
+      ? captureCampaignMarkerElements(appRoot)
+      : null;
   const presenterOutput = createAppPresenterOutput({
     appState,
     playerCharacterId: currentPlayerCharacterId,
@@ -4540,6 +5784,7 @@ function renderAppFrame(
     presenterOutput,
   });
   restoreCampaignTerrainCanvases(appRoot, preservedTerrainCanvases);
+  restoreCampaignMarkerElements(appRoot, preservedCampaignMarkers);
   startInitialCampaignMapDebugAnimationIfNeeded();
   syncCampaignMapDebugView();
   syncCampaignTerrainStyleView();
@@ -4548,6 +5793,7 @@ function renderAppFrame(
   syncMapIntroOverlay();
   syncActivityQteLoop();
   syncCampaignTerrainWebGl(appRoot);
+  syncCampaignCloudWebGl(appRoot);
   syncCityBeggingMiniGameOverlay(appRoot, appState.beggingMiniGameState);
   syncEmbeddedBattleUiEditor();
 }
@@ -4597,7 +5843,13 @@ function syncGameViewport(): void {
 }
 
 function shouldDispatchHouseActionOnPointerDown(actionId: string): boolean {
-  return actionId === "temple-work-stop" || actionId === "tavern-work-stop";
+  return (
+    actionId === "temple-work-stop" ||
+    actionId === "tavern-work-stop" ||
+    actionId === "temple-work-board-play" ||
+    actionId === "temple-work-board-wager-minus" ||
+    actionId === "temple-work-board-wager-plus"
+  );
 }
 
 function shouldSuppressPointerDispatchedHouseClick(actionId: string): boolean {
@@ -4617,6 +5869,32 @@ function shouldSuppressPointerDispatchedHouseClick(actionId: string): boolean {
   return shouldSuppress;
 }
 
+function shouldDispatchActivityActionOnPointerDown(action: string): boolean {
+  return (
+    action === "stop-qte" ||
+    action === "play-board" ||
+    action === "wager-minus" ||
+    action === "wager-plus"
+  );
+}
+
+function shouldSuppressPointerDispatchedActivityClick(action: string): boolean {
+  if (recentPointerDispatchedActivityAction == null) {
+    return false;
+  }
+
+  const elapsedMs =
+    window.performance.now() - recentPointerDispatchedActivityAction.timestamp;
+  const shouldSuppress =
+    recentPointerDispatchedActivityAction.action === action && elapsedMs < 500;
+
+  if (shouldSuppress || elapsedMs >= 500) {
+    recentPointerDispatchedActivityAction = null;
+  }
+
+  return shouldSuppress;
+}
+
 function handleCampaignMapDebugAction(action: string | undefined): void {
   if (action === "zoom-in") {
     zoomCampaignMapAtScreenCenter(getSteppedCampaignMapScale(1));
@@ -4629,6 +5907,7 @@ function handleCampaignMapDebugAction(action: string | undefined): void {
   }
 
   if (action === "reset") {
+    cancelCampaignMapZoomAnimation();
     setCampaignMapDebugState(campaignMapDebugHomeState);
     return;
   }
@@ -4932,6 +6211,10 @@ function startInitialCampaignMapDebugAnimationIfNeeded(): void {
 
   hasStartedInitialCampaignMapDebugAnimation = true;
   initialCampaignMapDebugAnimationStartTime = null;
+  const mapHomeState = createCurrentCampaignMapHomeDebugState();
+  campaignMapDebugState = { ...mapHomeState };
+  campaignMapDebugHomeState = { ...mapHomeState };
+  syncCampaignMapDebugView();
   showMapIntroOverlay(
     getRuntimeText("runtime.zhu_yuanzhang.chapter_intro.huai_xi_begging")
   );
@@ -4968,23 +6251,23 @@ function startInitialCampaignMapDebugAnimationIfNeeded(): void {
 }
 
 function interpolateCampaignMapDebugState(progress: number): CampaignMapDebugState {
+  void progress;
   return {
-    scale:
-      INITIAL_CAMPAIGN_MAP_DEBUG_STATE.scale +
-      (TARGET_CAMPAIGN_MAP_DEBUG_STATE.scale -
-        INITIAL_CAMPAIGN_MAP_DEBUG_STATE.scale) *
-        progress,
-    offsetX:
-      INITIAL_CAMPAIGN_MAP_DEBUG_STATE.offsetX +
-      (TARGET_CAMPAIGN_MAP_DEBUG_STATE.offsetX -
-        INITIAL_CAMPAIGN_MAP_DEBUG_STATE.offsetX) *
-        progress,
-    offsetY:
-      INITIAL_CAMPAIGN_MAP_DEBUG_STATE.offsetY +
-      (TARGET_CAMPAIGN_MAP_DEBUG_STATE.offsetY -
-        INITIAL_CAMPAIGN_MAP_DEBUG_STATE.offsetY) *
-        progress,
+    ...campaignMapDebugHomeState,
   };
+}
+
+function createCurrentCampaignMapHomeDebugState(): CampaignMapDebugState {
+  const mapDefinition = getCurrentMapDefinition();
+  if (mapDefinition?.mode !== "campaign" || mapDefinition.coordinateSpace == null) {
+    return { ...TARGET_CAMPAIGN_MAP_DEBUG_STATE };
+  }
+
+  return createCampaignTerrainCameraCenteredOnCoordinate({
+    coordinate: appState.playerCoordinate,
+    coordinateSpace: mapDefinition.coordinateSpace,
+    scale: TARGET_CAMPAIGN_MAP_DEBUG_STATE.scale,
+  });
 }
 
 function isInitialCampaignMapDebugAnimating(): boolean {
@@ -5048,6 +6331,10 @@ function syncMapIntroOverlay(): void {
 }
 
 function zoomCampaignMapAtScreenCenter(nextScale: number): void {
+  startCampaignMapZoomAnimation(createCampaignMapZoomTargetState(nextScale));
+}
+
+function createCampaignMapZoomTargetState(nextScale: number): CampaignMapDebugState {
   const clampedScale = clamp(
     nextScale,
     MAP_DEBUG_MIN_SCALE,
@@ -5055,12 +6342,87 @@ function zoomCampaignMapAtScreenCenter(nextScale: number): void {
   );
   const currentScale = Math.max(campaignMapDebugState.scale, 0.0001);
   const scaleRatio = clampedScale / currentScale;
+  const currentTiltCos = Math.cos(
+    getCampaignTerrainCameraTiltRadiansForScale(currentScale)
+  );
+  const nextTiltCos = Math.cos(
+    getCampaignTerrainCameraTiltRadiansForScale(clampedScale)
+  );
+  const safeCurrentTiltCos =
+    Math.abs(currentTiltCos) < 0.0001 ? 1 : currentTiltCos;
 
-  setCampaignMapDebugState({
+  return {
     scale: clampedScale,
     offsetX: campaignMapDebugState.offsetX * scaleRatio,
-    offsetY: campaignMapDebugState.offsetY * scaleRatio,
-  });
+    offsetY:
+      campaignMapDebugState.offsetY *
+      scaleRatio *
+      (nextTiltCos / safeCurrentTiltCos),
+  };
+}
+
+function startCampaignMapZoomAnimation(targetState: CampaignMapDebugState): void {
+  cancelCampaignMapZoomAnimation();
+
+  campaignMapZoomAnimationState = {
+    frameId: null,
+    startedAtMs: null,
+    from: { ...campaignMapDebugState },
+    to: targetState,
+  };
+
+  const animate = (timestamp: number) => {
+    if (campaignMapZoomAnimationState == null) {
+      return;
+    }
+    if (campaignMapZoomAnimationState.startedAtMs == null) {
+      campaignMapZoomAnimationState.startedAtMs = timestamp;
+    }
+
+    const elapsedMs = timestamp - campaignMapZoomAnimationState.startedAtMs;
+    const progress = clamp(
+      elapsedMs / CAMPAIGN_MAP_ZOOM_ANIMATION_DURATION_MS,
+      0,
+      1
+    );
+    const easedProgress = easeOutCubic(progress);
+    setCampaignMapDebugState(
+      interpolateCampaignMapState(
+        campaignMapZoomAnimationState.from,
+        campaignMapZoomAnimationState.to,
+        easedProgress
+      )
+    );
+
+    if (progress < 1) {
+      campaignMapZoomAnimationState.frameId = window.requestAnimationFrame(animate);
+      return;
+    }
+
+    setCampaignMapDebugState(campaignMapZoomAnimationState.to);
+    campaignMapZoomAnimationState = null;
+  };
+
+  campaignMapZoomAnimationState.frameId = window.requestAnimationFrame(animate);
+}
+
+function cancelCampaignMapZoomAnimation(): void {
+  if (campaignMapZoomAnimationState?.frameId != null) {
+    window.cancelAnimationFrame(campaignMapZoomAnimationState.frameId);
+  }
+  campaignMapZoomAnimationState = null;
+}
+
+function interpolateCampaignMapState(
+  from: CampaignMapDebugState,
+  to: CampaignMapDebugState,
+  progress: number
+): CampaignMapDebugState {
+  return {
+    scale: from.scale + (to.scale - from.scale) * progress,
+    offsetX: from.offsetX + (to.offsetX - from.offsetX) * progress,
+    offsetY: from.offsetY + (to.offsetY - from.offsetY) * progress,
+  };
 }
 
 function setCampaignMapDebugState(nextState: CampaignMapDebugState): void {
@@ -5069,6 +6431,7 @@ function setCampaignMapDebugState(nextState: CampaignMapDebugState): void {
     offsetX: Math.round(nextState.offsetX),
     offsetY: Math.round(nextState.offsetY),
   };
+  hideCampaignHoverHexOutline();
   syncCampaignMapDebugView();
 }
 
@@ -5214,7 +6577,17 @@ function endCampaignMapDrag(event: PointerEvent): void {
   }
   campaignMap?.classList.remove("is-dragging");
   shouldSuppressNextClickAfterMapDrag = campaignMapDragState.didMove;
+  const shouldUpdateHoverOutline = !campaignMapDragState.didMove;
   campaignMapDragState = null;
+  if (shouldUpdateHoverOutline) {
+    updateCampaignHoverHexOutline(event);
+  }
+}
+
+function easeOutCubic(value: number): number {
+  const clampedValue = clamp(value, 0, 1);
+
+  return 1 - (1 - clampedValue) ** 3;
 }
 
 function clamp(value: number, min: number, max: number): number {

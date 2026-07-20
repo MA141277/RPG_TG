@@ -1,69 +1,97 @@
-# Task 3 Report: Group Dedicated Controls By Unit Without Touching Shared Controls
+# Task 3 Report: House Renderer Cleanup
+
+Status: DONE
 
 ## Scope
 
-- Task brief: `D:\GitHub克隆文件\RPG_TG\RPG_TG\.superpowers\sdd\task-3-brief.md`
-- Owned files:
-  - `D:\GitHub克隆文件\RPG_TG\RPG_TG\tests\spine-unit-context.test.cjs`
-  - `D:\GitHub克隆文件\RPG_TG\RPG_TG\tools\spine-node-timeline-editor.html`
+Modified only the Task 3 implementation files:
+
+- `src/ui/views/house/house-shared-view.ts`
+- `src/ui/views/house/temple-house-view.ts`
+- `tests/robustness.test.cjs`
 
 ## TDD Evidence
 
-### RED
+Added the focused renderer regression tests in `tests/robustness.test.cjs`:
 
-1. Added the Task 3 assertions to `tests/spine-unit-context.test.cjs`:
-   - shared controls remain outside dedicated unit groups
-   - `renderSpineUnitFeatureGroups()` sets visibility directly from `state.currentUnitType`
-2. Ran:
+- `primary house actor dialogue does not render separate right-side portrait`
+- `temple daily view keeps abbot in left roster instead of right owner slot`
 
-```powershell
-C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe tests\spine-unit-context.test.cjs
+Red run:
+
+```bash
+npm run build:test
+node --test tests/robustness.test.cjs --test-name-pattern "primary house actor dialogue|temple daily view"
 ```
 
-3. Result:
+Result: exit 1, 299 pass / 2 fail.
 
-```text
-✖ Spine editor renders unit-specific group visibility from currentUnitType
-AssertionError [ERR_ASSERTION]: The input did not match the regular expression /el\.swordsmanFeatureGroup\.hidden = state\.currentUnitType !== "swordsman";/
+- Tavern failed as expected because `renderHouseDialogue()` emitted `c-grain-shop-dialogue__npc` and `c-grain-shop-portrait`.
+- Temple failed before the expected `c-grain-shop-idle-owner` assertion because the current daily idle view model keeps the abbot marked `isSelected: true`, so the renderer classified the idle daily roster as a meeting roster. This exposed a branch mismatch in the renderer's meeting heuristic.
+
+Green run:
+
+```bash
+npm run build:test
+node --test tests/robustness.test.cjs --test-name-pattern "primary house actor dialogue|temple daily view"
 ```
 
-This was the expected RED state from the brief: the helper still derived group visibility through config/featureGroups instead of direct `currentUnitType` checks.
+Result: exit 0, 301 pass / 0 fail.
 
-### GREEN
+Additional check:
 
-1. Implemented the minimal HTML/JS changes in `tools/spine-node-timeline-editor.html`:
-   - removed the empty top-toolbar dedicated group placeholders
-   - wrapped the existing archer-only rows in `#archerFeatureGroup`
-   - wrapped the existing swordsman-only rows in `#swordsmanFeatureGroup`
-   - updated `renderSpineUnitFeatureGroups()` to toggle each wrapper from `state.currentUnitType`
-2. Re-ran:
-
-```powershell
-C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe tests\spine-unit-context.test.cjs
+```bash
+git diff --check -- src/ui/views/house/house-shared-view.ts src/ui/views/house/temple-house-view.ts tests/robustness.test.cjs
 ```
 
-3. Result:
-
-```text
-✔ Spine editor defines a unit registry for swordsman and archer
-✔ Spine editor switches unit context only after a project load succeeds
-✔ Spine editor exposes top-level swordsman and archer unit buttons
-✔ Spine editor binds the unit buttons to switchSpineUnitContext
-✔ Spine editor gates swordsman and archer feature groups by unit context
-✔ Spine editor keeps shared controls outside dedicated unit groups
-✔ Spine editor renders unit-specific group visibility from currentUnitType
-ℹ pass 7
-ℹ fail 0
-```
+Result: exit 0. Git printed CRLF conversion warnings only.
 
 ## Implementation Notes
 
-- Shared controls were left outside the new unit-dedicated wrappers.
-- The render call site already invoked `renderSpineUnitFeatureGroups()` before the per-object enable/disable logic in `renderProperties()`, so no render-order change was required.
-- I preserved unrelated working-tree edits already present in `tools/spine-node-timeline-editor.html` and limited the task implementation to the dedicated-control wrappers plus the visibility helper.
+- Removed the ordinary right-side dialogue portrait block from shared house dialogue rendering.
+- Kept character speaker names inside the dialogue text block.
+- Removed temple idle owner splitting and right-side idle owner rendering.
+- Kept the non-meeting temple roster rendering against `viewModel.standbyRoster`.
+- Adjusted temple meeting detection so idle daily view models with a selected primary actor still render as daily idle roster, not meeting roster.
 
-## Self-Review
+## Concerns
 
-- Verified the focused test failed first for the intended reason, then passed after the minimal implementation.
-- Reviewed the owned-file diff to confirm the task-specific additions in the test file and the unit-group wrapper/helper changes in the editor file.
-- Commit staging will be selective for `tools/spine-node-timeline-editor.html` because that file contains unrelated pre-existing local modifications outside Task 3.
+None after the reviewer follow-up fix. The earlier concern about daily selected primary actors has been resolved by requiring meeting-style selection state across the full roster.
+
+## Reviewer Follow-Up Fix
+
+Reviewer finding addressed:
+
+- Daily temple `open` view models still have dialogue and a selected primary actor, so the previous `!isIdle && isSelected != null` heuristic still routed them through `renderMeetingRoster()`.
+
+Implementation:
+
+- Updated `tests/robustness.test.cjs` so the temple renderer coverage uses a non-idle daily `open` view model.
+- Added an assertion that daily temple markup does not include `c-keep-house-meeting`.
+- Updated `src/ui/views/house/temple-house-view.ts` so meeting rendering requires meeting-style roster selection data: every roster actor must carry `isSelected` state and at least one actor must be selected. Daily dialogue rosters only mark the active speaker, so they now stay on `renderHouseStandbyRoster()`.
+
+Red run:
+
+```bash
+npm run build:test
+node --test tests/robustness.test.cjs --test-name-pattern "primary house actor dialogue|temple daily view"
+```
+
+Result: build exited 0; focused test exited 1, 300 pass / 1 fail. The non-idle daily temple test failed because markup rendered `c-keep-house-meeting` and omitted `c-grain-shop-npc-idle`.
+
+Green run:
+
+```bash
+npm run build:test
+node --test tests/robustness.test.cjs --test-name-pattern "primary house actor dialogue|temple daily view"
+```
+
+Result: build exited 0; focused test exited 0, 301 pass / 0 fail.
+
+Additional check:
+
+```bash
+git diff --check -- src/ui/views/house/temple-house-view.ts tests/robustness.test.cjs .superpowers/sdd/task-3-report.md
+```
+
+Result: exit 0. Git printed CRLF conversion warnings for the touched source/test files only.

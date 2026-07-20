@@ -1,14 +1,41 @@
-import type { GridCoordinate } from "../../../application/navigation/travel-to-coordinate";
+﻿import {
+  coordinateToRoundedHex,
+  getHexKey,
+  type GridCoordinate,
+} from "../../../application/navigation/travel-to-coordinate";
 import type { CityDefinition } from "../../../domain/city";
 import { campaignUnitAssets } from "../../../content/yuanmo-strat-unit-assets";
 import type {
   HistoricalCharacterRecord,
   HistoricalCityRoster,
 } from "../../../domain/historical-character";
-import type { MapDefinition, MapLayer, MapNode, MapStats } from "../../../domain/map";
+import type {
+  MapDefinition,
+  MapExplorationState,
+  MapLayer,
+  MapNode,
+  MapStats,
+} from "../../../domain/map";
+import {
+  campaignMapCoordinateToHex,
+  getCampaignHexCellKey,
+  getCampaignHexDisc,
+} from "../../../domain/campaign-hex";
 import redTurbanMarkerUrl from "../../../assets/yuanmo-map/chuang-swordsman-marker.png";
-import cityDepthMeshAssetUrl from "../../../3dasset/city1-lowpoly.json?url";
-import cityDepthTextureUrl from "../../../image2mesh/city1.png?url";
+import cityDepthMeshAssetUrl from "../../../3dasset/city_hun/city-hun-campaign-lowpoly.json?url";
+import cityDepthTextureUrl from "../../../3dasset/city_hun/texture_pbr_20250901.png?url";
+import yuanmoHexBuildingUrl from "../../../../ui/yuansu/20260715-120754.png?url";
+
+const YUANMO_HEX_BUILDING = {
+  mapId: "map.yuanmo_campaign",
+  nodeId: "settlement.fenyang_province",
+  cityId: "city.kulan",
+  x: 336.6,
+  y: 318.6,
+  travelX: 334,
+  travelY: 318,
+  label: "濠州",
+} as const;
 
 type CityMarker = {
   id: string;
@@ -25,6 +52,7 @@ type CampaignMarker = {
   y: number;
   kind: NonNullable<MapNode["kind"]>;
   summary: string;
+  isRevealed: boolean;
   historicalCharacters: {
     primary: string[];
     secondary: string[];
@@ -35,6 +63,7 @@ type CampaignMarker = {
 
 export type MapViewModel = {
   mode: "grid" | "campaign";
+  mapId: string;
   mapName: string;
   size: number;
   playerCoordinate: GridCoordinate;
@@ -51,15 +80,25 @@ export type MapViewModel = {
   };
   primaryImageUrl: string | null;
   regionOverlayImageUrl: string | null;
+  campaignHexGridUrl: string | null;
+  campaignVegetationRulesUrl: string | null;
   heightmapImageUrl: string | null;
   hexTextureAtlasImageUrl: string | null;
   materialTextureImageUrl: string | null;
+  grassTextureImageUrl: string | null;
+  sandTextureImageUrl: string | null;
+  rockTextureImageUrl: string | null;
+  snowTextureImageUrl: string | null;
+  waterTextureImageUrl: string | null;
+  cloudNoiseTextureImageUrl: string | null;
+  revealedHexKeys: string[];
   cityDepthMeshAssetUrl: string | null;
   cityDepthTextureUrl: string | null;
   cityDepthMeshCoordinate: {
     x: number;
     y: number;
   } | null;
+  cloudClearHexKeys: string[];
   campaignMarkers: CampaignMarker[];
   layers: MapLayer[];
   stats: MapStats | null;
@@ -70,12 +109,34 @@ export function createMapViewModel(input: {
   playerCoordinate: GridCoordinate;
   playerFacingDegrees?: number;
   playerIsMoving?: boolean;
+  revealedHexKeys?: string[];
   cityDefinitions: CityDefinition[];
   cityCoordinatesById: Record<string, GridCoordinate>;
   historicalCharacters?: HistoricalCharacterRecord[];
   historicalCityRosters?: HistoricalCityRoster[];
+  mapExplorationState?: MapExplorationState | null;
 }): MapViewModel {
   const mode = input.mapDefinition.mode ?? "grid";
+  const coordinateSpace = input.mapDefinition.coordinateSpace ?? {
+    width: input.mapDefinition.size ?? 5,
+    height: input.mapDefinition.size ?? 5,
+  };
+  const displaySize = input.mapDefinition.displaySize ?? {
+    width: input.mapDefinition.size ?? 5,
+    height: input.mapDefinition.size ?? 5,
+  };
+  const playerHex = campaignMapCoordinateToHex(
+    input.playerCoordinate,
+    coordinateSpace
+  );
+  const cloudClearHexKeys = Array.from(
+    new Set([
+      ...(input.revealedHexKeys ?? []),
+      ...getCampaignHexDisc(playerHex, 1).map((cell) =>
+        getCampaignHexCellKey(cell.x, cell.y)
+      ),
+    ])
+  );
   const historicalCharacterNameById = Object.fromEntries(
     (input.historicalCharacters ?? []).map((characterRecord) => [
       characterRecord.id,
@@ -93,9 +154,11 @@ export function createMapViewModel(input: {
         cityDefinition.id,
       ])
   );
+  const revealedHexKeySet = new Set(input.mapExplorationState?.revealedHexKeys ?? []);
 
   return {
     mode,
+    mapId: input.mapDefinition.id,
     mapName: input.mapDefinition.name,
     size: input.mapDefinition.size ?? 5,
     playerCoordinate: input.playerCoordinate,
@@ -116,16 +179,13 @@ export function createMapViewModel(input: {
         };
       })
       .filter((cityMarker): cityMarker is CityMarker => cityMarker != null),
-    coordinateSpace: input.mapDefinition.coordinateSpace ?? {
-      width: input.mapDefinition.size ?? 5,
-      height: input.mapDefinition.size ?? 5,
-    },
-    displaySize: input.mapDefinition.displaySize ?? {
-      width: input.mapDefinition.size ?? 5,
-      height: input.mapDefinition.size ?? 5,
-    },
+    coordinateSpace,
+    displaySize,
     primaryImageUrl: input.mapDefinition.primaryImageUrl ?? null,
     regionOverlayImageUrl: input.mapDefinition.regionOverlayImageUrl ?? null,
+    campaignHexGridUrl: input.mapDefinition.campaignHexGridUrl ?? null,
+    campaignVegetationRulesUrl:
+      input.mapDefinition.campaignVegetationRulesUrl ?? null,
     heightmapImageUrl:
       input.mapDefinition.layers?.find((layer) => layer.id === "map_heights")
         ?.imageUrl ?? null,
@@ -140,9 +200,31 @@ export function createMapViewModel(input: {
       input.mapDefinition.layers?.find((layer) => layer.id === "map_material_texture")
         ?.imageUrl ??
       null,
+    grassTextureImageUrl:
+      input.mapDefinition.layers?.find((layer) => layer.id === "map_grass_texture")
+        ?.imageUrl ?? null,
+    sandTextureImageUrl:
+      input.mapDefinition.layers?.find((layer) => layer.id === "map_sand_texture")
+        ?.imageUrl ?? null,
+    rockTextureImageUrl:
+      input.mapDefinition.layers?.find((layer) => layer.id === "map_rock_texture")
+        ?.imageUrl ?? null,
+    snowTextureImageUrl:
+      input.mapDefinition.layers?.find((layer) => layer.id === "map_snow_texture")
+        ?.imageUrl ?? null,
+    waterTextureImageUrl:
+      input.mapDefinition.layers?.find((layer) => layer.id === "map_water_noise")
+        ?.imageUrl ?? null,
+    cloudNoiseTextureImageUrl:
+      input.mapDefinition.layers?.find((layer) => layer.id === "map_fog_noise")
+        ?.imageUrl ?? null,
+    revealedHexKeys: Array.from(
+      new Set(input.mapExplorationState?.revealedHexKeys ?? [])
+    ).sort(),
     cityDepthMeshAssetUrl,
     cityDepthTextureUrl,
     cityDepthMeshCoordinate: input.mapDefinition.initialPlayerCoordinate ?? null,
+    cloudClearHexKeys,
     campaignMarkers: input.mapDefinition.nodes
       .map((node, index) => {
         const nodeId = node.id ?? node.cityId ?? `map-node.${index}`;
@@ -163,6 +245,17 @@ export function createMapViewModel(input: {
           y: node.y,
           kind: node.kind ?? (node.cityId == null ? "landmark" : "city"),
           summary: node.summary ?? "",
+          isRevealed: revealedHexKeySet.has(
+            getHexKey(
+              coordinateToRoundedHex(
+                { x: node.x, y: node.y },
+                input.mapDefinition.coordinateSpace ?? {
+                  width: input.mapDefinition.size ?? 1,
+                  height: input.mapDefinition.size ?? 1,
+                }
+              )
+            )
+          ),
           historicalCharacters:
             roster == null
               ? null
@@ -259,7 +352,7 @@ function renderCharacterGroup(label: string, names: string[]): string {
     return "";
   }
 
-  return `<span><b>${label}</b>${names.map(escapeHtml).join("、")}</span>`;
+  return `<span><b>${label}</b>${names.map(escapeHtml).join(" / ")}</span>`;
 }
 
 function renderHistoricalCharacters(
@@ -270,18 +363,58 @@ function renderHistoricalCharacters(
   }
 
   const characterGroups = [
-    renderCharacterGroup("核心人物：", marker.historicalCharacters.primary),
-    renderCharacterGroup("相关人物：", marker.historicalCharacters.secondary),
-    renderCharacterGroup("背景人物：", marker.historicalCharacters.background),
+    renderCharacterGroup("Primary: ", marker.historicalCharacters.primary),
+    renderCharacterGroup("Related: ", marker.historicalCharacters.secondary),
+    renderCharacterGroup("Background: ", marker.historicalCharacters.background),
   ]
     .filter((item) => item !== "")
     .join("");
   const notes =
     marker.historicalCharacters.notes === ""
       ? ""
-      : `<span><b>设定说明：</b>${escapeHtml(marker.historicalCharacters.notes)}</span>`;
+      : `<span><b>Notes: </b>${escapeHtml(marker.historicalCharacters.notes)}</span>`;
 
   return `<span class="c-campaign-marker__characters">${characterGroups}${notes}</span>`;
+}
+
+function renderCampaignHexBuilding(model: MapViewModel): string {
+  if (model.mapId !== YUANMO_HEX_BUILDING.mapId) {
+    return "";
+  }
+
+  const left = (YUANMO_HEX_BUILDING.x / model.coordinateSpace.width) * 100;
+  const bottom = (YUANMO_HEX_BUILDING.y / model.coordinateSpace.height) * 100;
+  const heightU = YUANMO_HEX_BUILDING.x / model.coordinateSpace.width;
+  const heightV = 1 - YUANMO_HEX_BUILDING.y / model.coordinateSpace.height;
+
+  return `
+    <span
+      class="c-campaign-hex-building"
+      style="--hex-building-left:${left.toFixed(3)}%; --hex-building-bottom:${bottom.toFixed(3)}%;"
+      data-terrain-projected-point="true"
+      data-map-height-u="${heightU.toFixed(5)}"
+      data-map-height-v="${heightV.toFixed(5)}"
+      aria-label="${escapeHtml(YUANMO_HEX_BUILDING.label)}"
+    >
+      <img
+        class="c-campaign-hex-building__image"
+        src="${yuanmoHexBuildingUrl}"
+        alt=""
+        aria-hidden="true"
+      >
+      <button
+        type="button"
+        class="c-campaign-hex-building__hotspot"
+        data-map-node-id="${YUANMO_HEX_BUILDING.nodeId}"
+        data-map-node-name="${escapeHtml(YUANMO_HEX_BUILDING.label)}"
+        data-map-x="${YUANMO_HEX_BUILDING.travelX}"
+        data-map-y="${YUANMO_HEX_BUILDING.travelY}"
+        data-city-id="${YUANMO_HEX_BUILDING.cityId}"
+        title="${escapeHtml(YUANMO_HEX_BUILDING.label)} (${YUANMO_HEX_BUILDING.travelX}, ${YUANMO_HEX_BUILDING.travelY})"
+        aria-label="进入${escapeHtml(YUANMO_HEX_BUILDING.label)}"
+      ></button>
+    </span>
+  `;
 }
 
 function renderCampaignMarkers(model: MapViewModel): string {
@@ -294,29 +427,51 @@ function renderCampaignMarkers(model: MapViewModel): string {
       const displayName = getMarkerDisplayName(marker.name);
       const markerName = escapeHtml(marker.name);
       const markerSummary = escapeHtml(marker.summary);
+      const markerPositionStyle = `--marker-left:${left.toFixed(3)}%; --marker-bottom:${bottom.toFixed(3)}%;`;
+      const markerInteractionAttributes = marker.isRevealed
+        ? `
+          data-map-node-id="${marker.id}"
+          data-map-node-name="${markerName}"
+          title="${markerName} (${marker.x}, ${marker.y})"
+        `
+        : `
+          disabled
+          aria-hidden="true"
+          tabindex="-1"
+          data-map-node-revealed="false"
+        `;
+      const markerProjectionAttributes = `
+          data-terrain-projected-point="true"
+          data-map-height-u="${heightU.toFixed(5)}"
+          data-map-height-v="${heightV.toFixed(5)}"
+        `;
 
       return `
         <button
           class="c-campaign-marker ${getMarkerClass(marker.kind)}"
-          style="--marker-left:${left.toFixed(3)}%; --marker-bottom:${bottom.toFixed(3)}%;"
-          data-terrain-projected-point="true"
-          data-map-height-u="${heightU.toFixed(5)}"
-          data-map-height-v="${heightV.toFixed(5)}"
+          style="${markerPositionStyle}"
+          ${markerProjectionAttributes}
+          data-campaign-marker-id="${escapeHtml(marker.id)}"
           data-map-x="${marker.x}"
           data-map-y="${marker.y}"
           data-city-id="${marker.cityId ?? ""}"
-          data-map-node-id="${marker.id}"
-          data-map-node-name="${markerName}"
-          title="${markerName} (${marker.x}, ${marker.y})"
+          ${markerInteractionAttributes}
         >
           <span class="c-campaign-marker__dot"></span>
           <span class="c-campaign-marker__label">${escapeHtml(displayName)}</span>
-          <span class="c-campaign-marker__summary">
-            <strong>${markerName}</strong>
-            ${marker.summary === "" ? "" : `<span>${markerSummary}</span>`}
-            ${renderHistoricalCharacters(marker)}
-          </span>
         </button>
+        <span
+          class="c-campaign-marker__summary"
+          style="${markerPositionStyle}"
+          ${markerProjectionAttributes}
+          data-campaign-marker-summary-id="${escapeHtml(marker.id)}"
+          aria-hidden="true"
+          data-map-node-revealed="${marker.isRevealed ? "true" : "false"}"
+        >
+          <strong>${markerName}</strong>
+          ${marker.summary === "" ? "" : `<span>${markerSummary}</span>`}
+          ${renderHistoricalCharacters(marker)}
+        </span>
       `;
     })
     .join("");
@@ -330,7 +485,7 @@ export function renderCampaignLayers(layers: MapLayer[]): string {
           <img class="c-map-layer-card__image" src="${layer.imageUrl}" alt="${layer.label}" loading="lazy">
           <div class="c-map-layer-card__copy">
             <strong>${layer.label}</strong>
-            <span>${layer.width}x${layer.height} · ${layer.description}</span>
+            <span>${layer.width}x${layer.height} 路 ${layer.description}</span>
           </div>
         </article>
       `
@@ -355,20 +510,6 @@ export function renderCampaignStats(stats: MapStats | null): string {
         ? ""
         : `<p class="c-map-resource-summary">${stats.resourceSummary}</p>`
     }
-  `;
-}
-
-function renderMapStageActions(): string {
-  return `
-    <div class="c-map-stage-actions">
-      <button
-        type="button"
-        class="c-map-party-editor-entry"
-        data-action="open-party-editor"
-      >
-        部队
-      </button>
-    </div>
   `;
 }
 
@@ -415,6 +556,13 @@ function renderCampaignMapVisualLayer(
           data-map-texture-url="${model.hexTextureAtlasImageUrl}"
           data-map-height-url="${model.heightmapImageUrl}"
           data-map-material-url="${model.materialTextureImageUrl}"
+          ${model.campaignHexGridUrl == null ? "" : `data-map-hex-grid-url="${model.campaignHexGridUrl}"`}
+          ${model.campaignVegetationRulesUrl == null ? "" : `data-map-vegetation-rules-url="${model.campaignVegetationRulesUrl}"`}
+          ${model.grassTextureImageUrl == null ? "" : `data-map-grass-texture-url="${model.grassTextureImageUrl}"`}
+          ${model.sandTextureImageUrl == null ? "" : `data-map-sand-texture-url="${model.sandTextureImageUrl}"`}
+          ${model.rockTextureImageUrl == null ? "" : `data-map-rock-texture-url="${model.rockTextureImageUrl}"`}
+          ${model.snowTextureImageUrl == null ? "" : `data-map-snow-texture-url="${model.snowTextureImageUrl}"`}
+          ${model.waterTextureImageUrl == null ? "" : `data-map-water-texture-url="${model.waterTextureImageUrl}"`}
           ${cityDepthMeshAttributes}
           aria-label="${model.mapName} terrain"
         ></canvas>
@@ -429,6 +577,7 @@ function renderCampaignMapVisualLayer(
           data-map-texture-url="${model.hexTextureAtlasImageUrl}"
           data-map-height-url="${model.heightmapImageUrl}"
           data-map-material-url="${model.materialTextureImageUrl}"
+          ${model.campaignHexGridUrl == null ? "" : `data-map-hex-grid-url="${model.campaignHexGridUrl}"`}
           aria-hidden="true"
         ></canvas>
       `
@@ -460,6 +609,7 @@ function renderCampaignMapVisualLayer(
       ${
         options.includeInteractivePoints
           ? `
+            ${renderCampaignHexBuilding(model)}
             ${renderCampaignMarkers(model)}
             ${actorCanvasMarkup}
             <span
@@ -510,6 +660,24 @@ function renderCampaignMap(model: MapViewModel): string {
         ${renderCampaignMapVisualLayer(model, {
           includeInteractivePoints: true,
         })}
+        <canvas
+          class="c-campaign-map__cloud"
+          data-campaign-map-cloud="true"
+          data-map-coordinate-width="${model.coordinateSpace.width}"
+          data-map-coordinate-height="${model.coordinateSpace.height}"
+          data-map-revealed-hex-keys="${escapeHtml(model.revealedHexKeys.join(" "))}"
+          ${model.cloudNoiseTextureImageUrl == null ? "" : `data-map-cloud-noise-url="${model.cloudNoiseTextureImageUrl}"`}
+          aria-hidden="true"
+        ></canvas>
+        <svg
+          class="c-campaign-map__hover-hex"
+          data-campaign-hover-hex="true"
+          aria-hidden="true"
+          focusable="false"
+          hidden
+        >
+          <polygon data-campaign-hover-hex-polygon="true" points=""></polygon>
+        </svg>
         <div class="c-campaign-map__tiltshift" aria-hidden="true">
           ${renderCampaignMapVisualLayer(model, {
             transformClassName: "c-campaign-map__transform c-campaign-map__transform--tiltshift",
@@ -519,7 +687,6 @@ function renderCampaignMap(model: MapViewModel): string {
           })}
         </div>
         <div class="c-campaign-map__vignette" aria-hidden="true"></div>
-        <div class="c-campaign-map__fps-hud" data-campaign-fps-hud="true">FPS: 0</div>
         <div class="c-campaign-map-debug" aria-label="Campaign map debug controls">
           <div class="c-campaign-map-debug__readout">
             <span>Scale <strong data-campaign-map-scale>1.00x</strong></span>
@@ -604,22 +771,20 @@ export function renderMapView(model: MapViewModel): string {
     return `
       <section class="view-map view-map--campaign">
         ${renderCampaignMap(model)}
-        ${renderMapStageActions()}
       </section>
     `;
   }
 
   return `
     <section class="view-map view-map--grid">
-      ${renderMapStageActions()}
       <div class="c-stage-header">
         <div>
-          <p class="c-stage-header__eyebrow">地图巡行</p>
+          <p class="c-stage-header__eyebrow">鍦板浘宸¤</p>
           <h1 class="c-stage-header__title">${model.mapName}</h1>
         </div>
         <div class="c-map-legend">
-          <span class="c-map-legend__item"><span class="c-player-token"></span> 玩家</span>
-          <span class="c-map-legend__item"><span class="c-city-token">城池</span></span>
+          <span class="c-map-legend__item"><span class="c-player-token"></span> 鐜╁</span>
+          <span class="c-map-legend__item"><span class="c-city-token">鍩庢睜</span></span>
         </div>
       </div>
       ${renderGridMap(model)}

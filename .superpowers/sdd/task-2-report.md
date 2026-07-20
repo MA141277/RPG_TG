@@ -1,85 +1,92 @@
-# Task 2 Report: Top-Level Unit Selector And Context-Aware Auto-Loading
+# Task 2 Report: Temple And Tavern View Models
+
+## Status
+
+DONE
 
 ## Scope
 
-- Task brief: `.superpowers/sdd/task-2-brief.md`
-- Task limited to:
-  - `tests/spine-unit-context.test.cjs`
-  - `tools/spine-node-timeline-editor.html`
-- Explicitly excluded:
-  - Task 3 group-wrapper work
-  - broader toolbar regrouping
-  - unrelated existing editor modifications
+Modified only the Task 2 implementation files:
 
-## TDD Record
+- `src/application/house-modules/temple-house/temple-house-house-module.ts`
+- `src/application/house-modules/tavern/tavern-house-module.ts`
+- `tests/robustness.test.cjs`
 
-### RED
+The report file was created as requested and was not included in the original Task 2 implementation commit.
 
-1. Added failing assertions in `tests/spine-unit-context.test.cjs` for:
-   - top-level `unitContextToolbar`
-   - `unitSwordsmanBtn`
-   - `unitArcherBtn`
-   - click bindings to `switchSpineUnitContext(...)`
-2. Ran:
+## TDD Evidence
 
-```powershell
-C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe tests\spine-unit-context.test.cjs
+Added the requested failing tests to `tests/robustness.test.cjs`:
+
+- `primary house actor appears first in temple daily roster during greeting`
+- `primary house actor appears first in tavern roster during greeting`
+
+Red run:
+
+```bash
+npm run build:test
+node --test tests/robustness.test.cjs --test-name-pattern "primary house actor appears first"
 ```
 
-3. Observed expected failure:
-   - `Spine editor exposes top-level swordsman and archer unit buttons`
-   - `Spine editor binds the unit buttons to switchSpineUnitContext`
-   - failure reason matched missing selector toolbar/buttons and missing button bindings
+Result: build succeeded; focused test run failed as expected on Tavern because the greeting roster was empty and `viewModel.standbyRoster[0]?.characterId` was `undefined` instead of `char.kulan_innkeeper`.
 
-### GREEN
+Green run:
 
-1. Added the minimal Task 2 implementation in `tools/spine-node-timeline-editor.html`:
-   - top-level unit selector toolbar markup
-   - `el.unitSwordsmanBtn` / `el.unitArcherBtn`
-   - `renderSpineUnitContextControls()`
-   - `renderAll()` call to refresh selector active state
-   - click bindings to `switchSpineUnitContext("swordsman")` and `switchSpineUnitContext("archer")`
-2. Re-ran:
-
-```powershell
-C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe tests\spine-unit-context.test.cjs
+```bash
+npm run build:test
+node --test tests/robustness.test.cjs --test-name-pattern "primary house actor appears first"
 ```
 
-3. Observed green result:
+Result: build succeeded; focused test run passed with 298 passing tests and 0 failures under the name pattern.
 
-```text
-✔ Spine editor defines a unit registry for swordsman and archer
-✔ Spine editor switches unit context only after a project load succeeds
-✔ Spine editor exposes top-level swordsman and archer unit buttons
-✔ Spine editor binds the unit buttons to switchSpineUnitContext
-✔ Spine editor gates swordsman and archer feature groups by unit context
-```
+## Implementation Notes
 
-## Files Changed
+Tavern `selectViewModel()` now imports and uses `orderHouseStandbyRoster()`, creates a stable boss actor from `defaultCharacterId ?? tavernBossProfile.actorId`, and returns that actor in `standbyRoster` during greeting/open dialogue as well as idle.
 
-- `tests/spine-unit-context.test.cjs`
-  - added Task 2 selector/binding coverage at lines 26 and 33
-- `tools/spine-node-timeline-editor.html`
-  - selector markup at lines 588-590
-  - DOM refs at lines 1150-1151
-  - selector active-state render helper at lines 3616-3618
-  - render hook at line 3635
-  - button event bindings at lines 9300-9301
+Temple `selectViewModel()` now builds the standby actor list before returning, preserves meeting participant order, and applies `orderHouseStandbyRoster()` for non-meeting daily view models so the default abbot actor is first.
 
-## Self-Review
+No `main.ts` house-specific branch was added, no application HTML strings were introduced, and no persistent gameplay state was changed.
 
-- Confirmed the implementation stays within Task 2:
-  - no dedicated group wrappers added
-  - no broader regrouping performed
-  - no changes to `switchSpineUnitContext(...)` behavior beyond wiring existing buttons to it
-- Confirmed the editor file contains unrelated pre-existing modifications outside this task.
-- Commit should include only the Task 2 hunks from the editor file, plus the test/report file changes.
+## Commit
 
-## Verification
+Created commit:
 
-- Focused test run passed:
-  - `tests/spine-unit-context.test.cjs`
+- `6a0900ee feat: keep house primary actors in roster`
 
 ## Concerns
 
-- The working tree contains unrelated pre-existing changes in `tools/spine-node-timeline-editor.html`; those should remain outside the Task 2 commit.
+None.
+
+## Reviewer Fix: Temple Meeting Primary Actor
+
+Reviewer finding addressed:
+
+- Temple meeting view models omitted the abbot/default primary actor because `getTempleMeetingParticipantIds()` filtered the abbot out and meeting mode bypassed `orderHouseStandbyRoster()`.
+
+Test coverage added:
+
+- `primary house actor appears first in temple meeting roster with player still selected`
+
+Red run:
+
+```bash
+npm run build:test
+node --test tests/robustness.test.cjs --test-name-pattern "primary house actor"
+```
+
+Result: build succeeded; focused test run failed as expected because the meeting roster started with `char.player` instead of `char.kulan_temple_abbot`.
+
+Fix:
+
+- Temple meeting participant ids now include the abbot/default primary actor.
+- Temple `selectViewModel()` now applies `orderHouseStandbyRoster()` to meeting and daily rosters.
+- The existing meeting player selected state remains on the player actor, and non-primary meeting participants remain in the roster.
+
+Green run:
+
+```bash
+npm run build:test
+node --test tests/robustness.test.cjs --test-name-pattern "primary house actor"
+```
+
+Result: build succeeded; focused test run passed with 299 passing tests and 0 failures under the name pattern.

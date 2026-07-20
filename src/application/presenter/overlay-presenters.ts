@@ -18,7 +18,6 @@ export function createOverlayPresenterOutput(
   const shouldShowGlobalHud =
     input.appState.gameState.ui.currentView !== "house" &&
     input.appState.gameState.ui.currentView !== "battle" &&
-    input.appState.gameState.ui.currentView !== "party-editor" &&
     !isSceneActive &&
     !isBeggingMiniGameActive;
   const locationText =

@@ -1,20 +1,16 @@
 param(
   [ValidateSet("start", "stop", "restart", "status")]
   [string]$Action = "start",
-  [string]$ListenHost = "0.0.0.0",
-  [int]$Port = 8080,
-  [string]$StaticRoot = "dist",
-  [switch]$SkipBuild
+  [int]$Port = 5173
 )
 
 $ErrorActionPreference = "Stop"
 
 $projectRoot = Split-Path -Parent $PSScriptRoot
 $runtimeDirectory = Join-Path $projectRoot ".runtime"
-$pidFilePath = Join-Path $runtimeDirectory "standalone-service.pid"
-$outputLogPath = Join-Path $runtimeDirectory "standalone-service.out.log"
-$errorLogPath = Join-Path $runtimeDirectory "standalone-service.err.log"
-$staticRootPath = [System.IO.Path]::GetFullPath((Join-Path $projectRoot $StaticRoot))
+$pidFilePath = Join-Path $runtimeDirectory "dev-localhost.pid"
+$outputLogPath = Join-Path $runtimeDirectory "dev-localhost.out.log"
+$errorLogPath = Join-Path $runtimeDirectory "dev-localhost.err.log"
 
 . (Join-Path $PSScriptRoot "resolve-node-path.ps1")
 . (Join-Path $PSScriptRoot "process-environment.ps1")
@@ -24,7 +20,6 @@ $viteCliPath = Get-ProjectPackageExecutable `
   -ProjectRoot $projectRoot `
   -PackageName "vite" `
   -RelativePaths @("bin\vite.js")
-$staticServerEntryPath = Join-Path $projectRoot "scripts\serve-static.mjs"
 
 function Ensure-RuntimeDirectory {
   if (-not (Test-Path -LiteralPath $runtimeDirectory)) {
@@ -62,38 +57,22 @@ function Remove-PidFileIfStale {
   }
 }
 
-function Start-StandaloneService {
+function Start-LocalhostService {
   Remove-PidFileIfStale
 
   $existingProcess = Get-ServiceProcess
   if ($null -ne $existingProcess) {
-    Write-Output "Standalone service is already running. PID: $($existingProcess.Id)"
+    Write-Output "Localhost dev service is already running. PID: $($existingProcess.Id)"
     Write-Output "URL: http://localhost:$Port/"
     return
-  }
-
-  if ($SkipBuild -and -not (Test-Path -LiteralPath $staticRootPath)) {
-    throw "Static root does not exist: $staticRootPath"
-  }
-
-  if (-not $SkipBuild) {
-    & $nodeExecutable $viteCliPath build
-    if ($LASTEXITCODE -ne 0) {
-      throw "Build failed with exit code $LASTEXITCODE."
-    }
-  }
-
-  if (-not (Test-Path -LiteralPath $staticRootPath)) {
-    throw "Static root does not exist: $staticRootPath"
   }
 
   Ensure-RuntimeDirectory
 
   $arguments = @(
-    $staticServerEntryPath,
-    "--host", $ListenHost,
-    "--port", $Port,
-    "--root", $StaticRoot
+    $viteCliPath,
+    "--host", "localhost",
+    "--port", $Port
   )
 
   $process = Start-ProcessWithSanitizedEnvironment `
@@ -109,38 +88,38 @@ function Start-StandaloneService {
   Start-Sleep -Milliseconds 800
   $runningProcess = Get-ServiceProcess
   if ($null -eq $runningProcess) {
-    throw "Standalone service exited immediately. Check logs under $runtimeDirectory"
+    throw "Localhost dev service exited immediately. Check logs under $runtimeDirectory"
   }
 
-  Write-Output "Standalone service started. PID: $($runningProcess.Id)"
+  Write-Output "Localhost dev service started. PID: $($runningProcess.Id)"
   Write-Output "URL: http://localhost:$Port/"
   Write-Output "Logs:"
   Write-Output "  $outputLogPath"
   Write-Output "  $errorLogPath"
 }
 
-function Stop-StandaloneService {
+function Stop-LocalhostService {
   $serviceProcess = Get-ServiceProcess
   if ($null -eq $serviceProcess) {
     Remove-PidFileIfStale
-    Write-Output "Standalone service is not running."
+    Write-Output "Localhost dev service is not running."
     return
   }
 
   Stop-Process -Id $serviceProcess.Id -Force
   Remove-Item -LiteralPath $pidFilePath -Force -ErrorAction SilentlyContinue
-  Write-Output "Standalone service stopped. PID: $($serviceProcess.Id)"
+  Write-Output "Localhost dev service stopped. PID: $($serviceProcess.Id)"
 }
 
-function Show-StandaloneServiceStatus {
+function Show-LocalhostServiceStatus {
   Remove-PidFileIfStale
   $serviceProcess = Get-ServiceProcess
   if ($null -eq $serviceProcess) {
-    Write-Output "Standalone service status: stopped"
+    Write-Output "Localhost dev service status: stopped"
     return
   }
 
-  Write-Output "Standalone service status: running"
+  Write-Output "Localhost dev service status: running"
   Write-Output "PID: $($serviceProcess.Id)"
   Write-Output "URL: http://localhost:$Port/"
   Write-Output "Logs:"
@@ -150,16 +129,16 @@ function Show-StandaloneServiceStatus {
 
 switch ($Action) {
   "start" {
-    Start-StandaloneService
+    Start-LocalhostService
   }
   "stop" {
-    Stop-StandaloneService
+    Stop-LocalhostService
   }
   "restart" {
-    Stop-StandaloneService
-    Start-StandaloneService
+    Stop-LocalhostService
+    Start-LocalhostService
   }
   "status" {
-    Show-StandaloneServiceStatus
+    Show-LocalhostServiceStatus
   }
 }

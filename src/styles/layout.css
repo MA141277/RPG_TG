@@ -38,10 +38,6 @@
   overflow: hidden;
 }
 
-.l-stage:has(> .view-story-battle--embedded) {
-  padding: 0;
-}
-
 .l-overlay-ui {
   position: absolute;
   top: var(--space-4);

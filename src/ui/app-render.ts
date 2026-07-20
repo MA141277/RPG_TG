@@ -8,7 +8,12 @@ import {
   resolveCharacterAvatarImageUrl,
   resolveCharacterPortraitImageUrl,
 } from "./portrait-assets";
+import {
+  renderDialogueTypewriterHint,
+  renderDialogueTypewriterLines,
+} from "./dialogue-typewriter";
 import type { GridCoordinate } from "../application/navigation/travel-to-coordinate";
+import { getRevealedCampaignHexKeys } from "../application/map/campaign-map-exploration";
 import type { CardDefinition } from "../domain/card";
 import type { CharacterDefinition } from "../domain/character";
 import type { CityDefinition } from "../domain/city";
@@ -23,18 +28,22 @@ import type {
 } from "../domain/historical-character";
 import type { MapDefinition } from "../domain/map";
 import type { ValuableItemDefinition } from "../domain/valuable-item";
-import { createDemoFormationStageState } from "../application/formation/formation-stage";
-import {
-  createBattleFormationPreviewViewModel,
-  createPartyEditorStageViewModel,
-} from "../application/formation/formation-stage-view-model";
 import { assertExists } from "../shared/assert";
 import { renderConfirmModal } from "./components/modal/confirm-modal";
+import {
+  renderNpcInteractionDialogue,
+  renderNpcInteractionMenu,
+} from "./components/npc-interaction/npc-interaction-menu";
+import {
+  isNpcInteractionBlocked,
+  selectNpcInteractionBlockState,
+  selectHouseNpcSpecialActions,
+  selectNpcInteractionMenu,
+} from "../application/npc-interaction/npc-interaction";
 import {
   createGlobalPlayerPanelModel,
   renderGlobalPlayerPanel,
 } from "./panels/global-player-panel";
-import cityEntryPortraitUrl from "../../ui/card/chengzhengsuoluetu.png?url";
 import { renderCharacterDetailView } from "./views/character/character-detail-view";
 import { renderCardLibraryView } from "./views/cards/card-library-view";
 import { renderCity3dView } from "./views/city/city-3d-view";
@@ -43,7 +52,6 @@ import { renderCityBeggingMiniGameOverlay } from "./views/minigames/city-begging
 import { createHouseViewModel } from "./views/house/house-view";
 import { renderHouseModuleView } from "./views/house/house-module-view-registry";
 import { createMapViewModel, renderMapView } from "./views/map/map-view";
-import { renderPartyEditorView } from "./views/party/party-editor-view";
 import { renderSceneView } from "./views/scene/scene-view";
 import { renderStoryBattleView } from "./views/battle/story-battle-view";
 import { renderValuableLibraryView } from "./views/valuables/valuable-library-view";
@@ -85,6 +93,22 @@ function getPlayerCharacter(
     `Player character not found for id "${playerCharacterId}".`
   );
   return playerCharacter;
+}
+
+function getDetailCharacter(
+  appState: AppState,
+  playerCharacter: CharacterDefinition
+): CharacterDefinition {
+  const detailCharacterId = appState.gameState.ui.detailCharacterId;
+  if (detailCharacterId == null) {
+    return playerCharacter;
+  }
+
+  return (
+    appState.characterDefinitions.find(
+      (characterDefinition) => characterDefinition.id === detailCharacterId
+    ) ?? playerCharacter
+  );
 }
 
 function resolveEquippedItemName(
@@ -161,9 +185,10 @@ function renderOverlay(input: AppRenderInput, playerCharacter: CharacterDefiniti
   const overlayView = input.presenterOutput.overlay.overlayView;
 
   if (overlayView === "detail") {
+    const detailCharacter = getDetailCharacter(input.appState, playerCharacter);
     return renderCharacterDetailView(
-      playerCharacter,
-      buildCharacterDetailOptions(input, playerCharacter)
+      detailCharacter,
+      buildCharacterDetailOptions(input, detailCharacter)
     );
   }
 
@@ -189,7 +214,9 @@ function renderOverlay(input: AppRenderInput, playerCharacter: CharacterDefiniti
 
 function renderModal(
   modalState: AppModalState,
-  cityPortraits: Record<string, string>
+  cityPortraits: Record<string, string>,
+  mapDefinition: MapDefinition,
+  cityDefinitions: CityDefinition[]
 ): string {
   if (modalState == null) {
     return "";
@@ -213,15 +240,129 @@ function renderModal(
     });
   }
 
+  const mapEntryVisualKind = resolveMapEntryVisualKind(
+    modalState.cityId,
+    mapDefinition,
+    cityDefinitions
+  );
+
   return renderConfirmModal({
     title: `进入 ${modalState.cityName}`,
     body: "人物与城市坐标已经重合，确认后展开城市结构。",
     confirmLabel: "进入城市",
     cancelLabel: "稍后",
-    className: "c-confirm-modal--map-entry",
+    className: `c-confirm-modal--map-entry c-confirm-modal--map-entry-${mapEntryVisualKind}`,
     portraitLabel: cityPortraits[modalState.cityId] ?? modalState.cityName,
-    portraitImageUrl: cityEntryPortraitUrl,
+    portraitImageUrl: null,
   });
+}
+
+function renderNpcInteractionOverlay(input: AppRenderInput): string {
+  const session = input.appState.gameState.ui.npcInteractionSession;
+  const stage = input.presenterOutput.stage;
+  const specialActions =
+    session?.context.type === "house" &&
+    stage.type === "house" &&
+    stage.moduleViewModel != null
+      ? selectHouseNpcSpecialActions({
+          actors: stage.moduleViewModel.standbyRoster,
+          targetCharacterId: session.targetCharacterId,
+        })
+      : [];
+  const targetHouseActor =
+    session?.context.type === "house" &&
+    stage.type === "house" &&
+    stage.moduleViewModel != null
+      ? stage.moduleViewModel.standbyRoster.find(
+          (actor) => actor.characterId === session.targetCharacterId
+        ) ?? null
+      : null;
+  const targetCharacterDefinition =
+    session == null
+      ? null
+      : input.appState.characterDefinitions.find(
+          (characterDefinition) =>
+            characterDefinition.id === session.targetCharacterId
+        ) ?? null;
+  const targetName =
+    session == null
+      ? null
+      : targetHouseActor?.name ?? targetCharacterDefinition?.name ?? null;
+  const targetPortraitImageUrl =
+    targetHouseActor?.portraitImageUrl ??
+    (targetCharacterDefinition == null
+      ? null
+      : resolveCharacterPortraitImageUrl(targetCharacterDefinition));
+  const targetPortraitArtClassName = targetHouseActor?.portraitArtClassName ?? null;
+  const menu = selectNpcInteractionMenu({
+    session,
+    targetName,
+    specialActions,
+    giftDisabled: true,
+  });
+
+  if (menu != null) {
+    window.console.info(
+      `[RPG_TG_DEBUG][npc-interaction-menu] ${JSON.stringify({
+        targetCharacterId: menu.targetCharacterId,
+        targetName: menu.targetName,
+        options: menu.options.map((option) => ({
+          id: option.id,
+          label: option.label,
+          kind: option.kind,
+          disabled: option.disabled === true,
+        })),
+      })}`
+    );
+  }
+
+  return (
+    renderNpcInteractionMenu(menu) +
+    renderNpcInteractionDialogue({
+      session,
+      targetName,
+      portraitImageUrl: targetPortraitImageUrl,
+      portraitArtClassName: targetPortraitArtClassName,
+    })
+  );
+}
+
+function applyHouseNpcInteractionBlockedState(
+  viewModel: HouseModuleViewModel,
+  blocked: boolean
+): HouseModuleViewModel {
+  if (!blocked) {
+    return viewModel;
+  }
+
+  return {
+    ...viewModel,
+    standbyRoster: viewModel.standbyRoster.map((actor) => ({
+      ...actor,
+      disabled: true,
+    })),
+  };
+}
+
+function resolveMapEntryVisualKind(
+  cityId: string,
+  mapDefinition: MapDefinition,
+  cityDefinitions: CityDefinition[]
+): "city" | "village" {
+  const cityDefinition = cityDefinitions.find((city) => city.id === cityId);
+  if (
+    cityDefinition?.tags.some((tag) =>
+      ["castle-town", "large-city", "commercial", "market"].includes(tag)
+    )
+  ) {
+    return "city";
+  }
+
+  const mapNode = mapDefinition.nodes.find(
+    (node) => node.id === cityDefinition?.mapNodeId
+  );
+
+  return mapNode?.kind === "settlement" ? "village" : "city";
 }
 
 function renderLocationDialogue(
@@ -239,6 +380,7 @@ function renderLocationDialogue(
     ) ?? null;
   const portraitImageUrl =
     speaker == null ? null : resolveCharacterPortraitImageUrl(speaker);
+  const typewriterLines = renderDialogueTypewriterLines(dialogueState.textLines);
 
   return `
     <footer class="c-grain-shop-dialogue c-scene-dialogue c-location-dialogue" aria-label="地点对话">
@@ -248,10 +390,11 @@ function renderLocationDialogue(
         role="button"
         tabindex="0"
       >
-        ${dialogueState.textLines
-          .map((line) => `<p class="c-grain-shop-dialogue__line">${line}</p>`)
-          .join("")}
-        <p class="c-grain-shop-dialogue__hint">${dialogueState.advanceHintText}</p>
+        ${typewriterLines.markup}
+        ${renderDialogueTypewriterHint(
+          dialogueState.advanceHintText,
+          typewriterLines.totalDurationMs
+        )}
       </div>
       <div class="c-grain-shop-dialogue__npc">
         <div class="c-grain-shop-portrait" aria-hidden="true">
@@ -356,19 +499,26 @@ function renderStage(
       playerCoordinate: input.appState.playerCoordinate,
       playerFacingDegrees: input.appState.campaignActorState.facingDegrees,
       playerIsMoving: input.appState.campaignActorState.isMoving,
+      revealedHexKeys: getRevealedCampaignHexKeys(
+        input.appState.gameState,
+        input.mapDefinition.id
+      ),
       cityDefinitions: stage.cityDefinitions,
       cityCoordinatesById: input.cityCoordinatesById,
+      ...(input.historicalCharacters == null
+        ? {}
+        : { historicalCharacters: input.historicalCharacters }),
+      ...(input.historicalCityRosters == null
+        ? {}
+        : { historicalCityRosters: input.historicalCityRosters }),
+      mapExplorationState:
+        input.appState.gameState.runtime.mapExplorationByMapId[
+          input.mapDefinition.id
+        ] ?? null,
     };
     const mapViewModel = createMapViewModel(mapViewModelInput);
 
     return renderMapView(mapViewModel);
-  }
-
-  if (stage.type === "party-editor") {
-    const formationState = createDemoFormationStageState();
-    return renderPartyEditorView(
-      createPartyEditorStageViewModel(formationState)
-    );
   }
 
   if (stage.type === "city") {
@@ -392,9 +542,24 @@ function renderStage(
 
   if (stage.type === "house") {
     if (stage.moduleViewModel != null) {
+      const npcInteractionBlocked = isNpcInteractionBlocked(
+        selectNpcInteractionBlockState({
+          overlayView: input.presenterOutput.overlay.overlayView,
+          modalState: input.presenterOutput.overlay.modalState,
+          locationDialogueState:
+            input.presenterOutput.overlay.locationDialogueState,
+          houseOverlay: stage.moduleViewModel.overlay,
+          houseDialogue: stage.moduleViewModel.dialogue,
+          beggingMiniGameState: input.appState.beggingMiniGameState,
+          activitySession: input.appState.gameState.runtime.activitySession,
+        })
+      );
       return renderHouseModuleView(
         withResolvedHousePortraits(
-          stage.moduleViewModel,
+          applyHouseNpcInteractionBlockedState(
+            stage.moduleViewModel,
+            npcInteractionBlocked
+          ),
           input.appState.characterDefinitions
         )
       );
@@ -454,10 +619,7 @@ function renderStage(
   }
 
   if (stage.type === "battle") {
-    const formationState = createDemoFormationStageState();
-    return renderStoryBattleView(input.appState.gameState.storyBattle, {
-      formationPreview: createBattleFormationPreviewViewModel(formationState),
-    });
+    return renderStoryBattleView(input.appState.gameState.storyBattle);
   }
 
   return "";
@@ -501,8 +663,11 @@ export function renderApp(input: AppRenderInput): string {
             )}
             ${renderModal(
               input.presenterOutput.overlay.modalState,
-              input.cityPortraits
+              input.cityPortraits,
+              input.mapDefinition,
+              input.cityDefinitions ?? []
             )}
+            ${renderNpcInteractionOverlay(input)}
             ${renderCityBeggingMiniGameOverlay(input.appState.beggingMiniGameState)}
             ${renderOverlay(input, playerCharacter)}
             ${renderLayoutEditor(input.appState)}

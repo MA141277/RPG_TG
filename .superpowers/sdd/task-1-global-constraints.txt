@@ -1,8 +1,0 @@
-﻿Global constraints:
-- Only modify `tests/spine-unit-context.test.cjs` and `tools/spine-node-timeline-editor.html` in this task.
-- Implement Task 1 only: add the failing regression test and the minimal unit-context runtime skeleton needed for that test to pass.
-- Do not add the selector UI in this task unless the task brief explicitly requires it.
-- The unit registry must include exactly `swordsman` and `archer` with project URLs `/src/faxian/leg/swordsman/project.json` and `/src/faxian/leg/archer/project.json`.
-- `switchSpineUnitContext(unitType)` must load `config.projectUrl`, return `false` on load failure, and only update `state.currentUnitType` after a successful load.
-- Add source structure that supports dedicated feature-group gating for `swordsmanFeatureGroup` and `archerFeatureGroup`.
-- Do not revert unrelated existing edits in the working tree.
