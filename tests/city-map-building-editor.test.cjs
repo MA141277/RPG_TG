@@ -65,6 +65,213 @@ function loadCityStageLayoutDataModule() {
   return module.exports;
 }
 
+function extractEditorScript() {
+  const html = readText(indexPath);
+  const match = html.match(/<script>([\s\S]*)<\/script>/);
+  assert.ok(match, "expected inline editor script");
+  return match[1];
+}
+
+function createClassList() {
+  const values = new Set();
+  return {
+    add(...tokens) {
+      for (const token of tokens) {
+        values.add(token);
+      }
+    },
+    remove(...tokens) {
+      for (const token of tokens) {
+        values.delete(token);
+      }
+    },
+    toggle(token, force) {
+      if (force === undefined) {
+        if (values.has(token)) {
+          values.delete(token);
+          return false;
+        }
+        values.add(token);
+        return true;
+      }
+      if (force) {
+        values.add(token);
+      } else {
+        values.delete(token);
+      }
+      return force;
+    },
+    contains(token) {
+      return values.has(token);
+    },
+  };
+}
+
+function createElement(overrides = {}) {
+  return {
+    value: "",
+    checked: false,
+    disabled: false,
+    textContent: "",
+    innerHTML: "",
+    src: "",
+    files: [],
+    style: {},
+    dataset: {},
+    classList: createClassList(),
+    closest() {
+      return { classList: createClassList() };
+    },
+    addEventListener() {},
+    removeEventListener() {},
+    focus() {},
+    ...overrides,
+  };
+}
+
+function createEditorRuntimeHarness() {
+  const source = `${extractEditorScript()}
+window.__cityEditorTestApi = {
+  state,
+  dom,
+  normalizePrefabLibrary,
+  normalizeCityLayout,
+  syncEditorLayoutFromSources,
+  renderCityLayoutPanel,
+  uploadEntityImage,
+  updateCityLayoutFromForm,
+  exportCityLayoutJson,
+  getSelectedPrefab,
+  getSelectedInstance,
+  getSelectedEntity,
+  assignDom(patch) {
+    Object.assign(dom, patch);
+  },
+  setSources(prefabLibrary, cityLayout, preferredSelectedId = null) {
+    state.prefabLibrary = normalizePrefabLibrary(prefabLibrary);
+    state.cityLayout = normalizeCityLayout(cityLayout);
+    syncEditorLayoutFromSources(preferredSelectedId);
+  },
+  stubUi() {
+    render = () => {};
+    renderProperties = () => {};
+    renderQuickSelect = () => {};
+    renderEntityList = () => {};
+    renderCanvas = () => {};
+    renderReadOnlyPrefabState = () => {};
+    setStatus = () => {};
+  },
+  stubReadImageFile(fn) {
+    readImageFile = fn;
+  }
+};`;
+  const context = {
+    console,
+    window: {},
+    document: {
+      addEventListener() {},
+      getElementById() {
+        return createElement();
+      },
+    },
+    confirm: () => true,
+    requestAnimationFrame: () => 0,
+    cancelAnimationFrame() {},
+    navigator: { clipboard: { writeText: async () => {} } },
+    URL: { createObjectURL: () => "blob:test", revokeObjectURL() {} },
+    Blob,
+    Image: class {},
+    FileReader: class {},
+    fetch: async () => ({ ok: true, json: async () => ({}) }),
+    setTimeout,
+    clearTimeout,
+  };
+  context.window = context;
+  vm.runInNewContext(source, context, { filename: indexPath });
+  return context.window.__cityEditorTestApi;
+}
+
+function createSplitEditorSources() {
+  return {
+    prefabLibrary: {
+      version: 2,
+      prefabs: [
+        {
+          id: "keep",
+          name: "Keep",
+          category: "special",
+          entry: { type: "house", houseId: "keep-house" },
+          asset: {
+            image: "keep.png",
+            naturalWidth: 320,
+            naturalHeight: 240,
+            scale: 1,
+            anchor: "bottom-center",
+            offsetX: 0,
+            offsetY: 0,
+          },
+          footprint: { cols: 4, rows: 3 },
+          interaction: {
+            clickable: true,
+            label: {
+              text: "Keep",
+              offsetX: 0,
+              offsetY: -32,
+              width: 120,
+              height: 30,
+            },
+            hitArea: {
+              type: "diamond",
+              offsetX: 0,
+              offsetY: 0,
+              width: 160,
+              height: 80,
+            },
+          },
+        },
+      ],
+    },
+    cityLayout: {
+      version: 2,
+      map: {
+        id: "test-city",
+        name: "Test City",
+        stageWidth: 1600,
+        stageHeight: 900,
+        backgroundImage: "",
+        foregroundImage: "",
+        baseSpace: { x: 0, y: 0, width: 1600, height: 900 },
+      },
+      grid: {
+        type: "isometric-board",
+        cols: 10,
+        rows: 9,
+        cellWidth: 40,
+        cellHeight: 20,
+        originX: 400,
+        originY: 120,
+        showCoordinates: true,
+        showBoardOutline: true,
+      },
+      instances: [
+        {
+          id: "instance.keep",
+          prefabId: "keep",
+          gridX: 2,
+          gridY: 3,
+          render: {
+            visible: true,
+            locked: false,
+            zIndexMode: "footprint",
+            zIndex: null,
+          },
+        },
+      ],
+      randomPools: [],
+    },
+  };
+}
+
 test("city map building editor ships standalone files and shared layout example", () => {
   assert.equal(fs.existsSync(indexPath), true);
   assert.equal(fs.existsSync(readmePath), true);
@@ -333,4 +540,91 @@ test("composeCityStageLayout preserves legacy entity imports during migration", 
   assert.equal(composed[0].render.locked, false);
   assert.equal(composed[0].render.zIndexMode, "y-sort");
   assert.equal(composed[0].render.zIndex, null);
+});
+
+test("city layout panel render path uses split source data without runtime reference errors", () => {
+  const api = createEditorRuntimeHarness();
+  const { prefabLibrary, cityLayout } = createSplitEditorSources();
+  api.stubUi();
+  api.assignDom({
+    cityLayoutForm: createElement(),
+    propertiesEmpty: createElement(),
+    duplicateEntity: createElement(),
+    deleteEntity: createElement(),
+    selectedReadout: createElement(),
+    fieldInstanceId: createElement(),
+    fieldInstancePrefabId: createElement(),
+    fieldInstanceGridX: createElement(),
+    fieldInstanceGridY: createElement(),
+    fieldInstanceCols: createElement(),
+    fieldInstanceRows: createElement(),
+    fieldInstanceVisible: createElement(),
+    fieldInstanceLocked: createElement(),
+    fieldInstanceZIndexMode: createElement(),
+    fieldInstanceZIndex: createElement(),
+  });
+  api.setSources(prefabLibrary, cityLayout, "instance.keep");
+  api.state.editorMode = "city-layout";
+  api.state.selectedPrefabId = "keep";
+
+  assert.doesNotThrow(() => api.renderCityLayoutPanel("instance.keep"));
+  assert.equal(api.dom.fieldInstanceId.value, "instance.keep");
+  assert.equal(api.dom.fieldInstanceCols.value, 4);
+  assert.equal(api.dom.fieldInstanceRows.value, 3);
+});
+
+test("prefab image uploads resolve the selected prefab and update prefab-owned asset fields", () => {
+  const api = createEditorRuntimeHarness();
+  const { prefabLibrary, cityLayout } = createSplitEditorSources();
+  api.stubUi();
+  api.assignDom({
+    statusLine: createElement(),
+  });
+  api.stubReadImageFile((file, callback) => {
+    callback("data:image/png;base64,test", {
+      naturalWidth: 640,
+      naturalHeight: 320,
+    });
+  });
+  api.setSources(prefabLibrary, cityLayout, "instance.keep");
+  api.state.selectedPrefabId = "keep";
+  const event = {
+    target: {
+      files: [{ name: "keep-upload.png" }],
+      value: "filled",
+    },
+  };
+
+  assert.doesNotThrow(() => api.uploadEntityImage(event));
+  assert.equal(api.getSelectedPrefab().asset.naturalWidth, 640);
+  assert.equal(api.getSelectedPrefab().asset.naturalHeight, 320);
+  assert.equal(api.state.entityPreviews.get("keep"), "data:image/png;base64,test");
+  assert.equal(event.target.value, "");
+});
+
+test("city layout form clamps the source instance before recomposing and export", () => {
+  const api = createEditorRuntimeHarness();
+  const { prefabLibrary, cityLayout } = createSplitEditorSources();
+  api.stubUi();
+  api.assignDom({
+    fieldInstanceId: createElement({ value: "instance.keep" }),
+    fieldInstanceGridX: createElement({ value: "99" }),
+    fieldInstanceGridY: createElement({ value: "99" }),
+    fieldInstanceVisible: createElement({ checked: true }),
+    fieldInstanceLocked: createElement({ checked: false }),
+    fieldInstanceZIndexMode: createElement({ value: "footprint" }),
+    fieldInstanceZIndex: createElement({ value: "" }),
+  });
+  api.setSources(prefabLibrary, cityLayout, "instance.keep");
+  api.state.selectedPrefabId = "keep";
+  api.state.selectedInstanceId = "instance.keep";
+  api.state.selectedId = "instance.keep";
+
+  api.updateCityLayoutFromForm();
+
+  assert.equal(api.getSelectedInstance().gridX, 6);
+  assert.equal(api.getSelectedInstance().gridY, 6);
+  const exported = JSON.parse(api.exportCityLayoutJson());
+  assert.equal(exported.instances[0].gridX, 6);
+  assert.equal(exported.instances[0].gridY, 6);
 });

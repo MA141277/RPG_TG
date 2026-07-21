@@ -2572,7 +2572,10 @@
 
     function renderCityLayoutPanel(instanceId) {
       const instance = getSelectedInstance(instanceId);
-      const prefab = getSelectedPrefab();
+      const prefab = instance == null
+        ? null
+        : getPrefabById(instance.prefabId) || getSelectedPrefab();
+      const entity = instance == null ? null : getComposedEntityById(instance.id);
       dom.cityLayoutForm.classList.toggle("hidden", instance == null);
       dom.propertiesEmpty.classList.toggle("hidden", instance == null);
       dom.duplicateEntity.disabled = instance == null;
@@ -2589,8 +2592,8 @@
       dom.fieldInstancePrefabId.value = instance.prefabId;
       dom.fieldInstanceGridX.value = Math.round(instance.gridX);
       dom.fieldInstanceGridY.value = Math.round(instance.gridY);
-      dom.fieldInstanceCols.value = entity.lot.cols;
-      dom.fieldInstanceRows.value = entity.lot.rows;
+      dom.fieldInstanceCols.value = entity?.lot.cols ?? prefab.footprint.cols;
+      dom.fieldInstanceRows.value = entity?.lot.rows ?? prefab.footprint.rows;
       dom.fieldInstanceVisible.checked = Boolean(instance.render.visible);
       dom.fieldInstanceLocked.checked = Boolean(instance.render.locked);
       dom.fieldInstanceZIndexMode.value = instance.render.zIndexMode;
@@ -3123,6 +3126,7 @@
       instance.id = dom.fieldInstanceId.value.trim() || previousId;
       instance.gridX = Math.max(0, Math.round(numberOr(dom.fieldInstanceGridX.value, instance.gridX)));
       instance.gridY = Math.max(0, Math.round(numberOr(dom.fieldInstanceGridY.value, instance.gridY)));
+      clampInstanceToBoard(instance);
       instance.render.visible = dom.fieldInstanceVisible.checked;
       instance.render.locked = dom.fieldInstanceLocked.checked;
       instance.render.zIndexMode = dom.fieldInstanceZIndexMode.value;
@@ -3133,10 +3137,6 @@
         state.selectedId = instance.id;
       }
       syncEditorLayoutFromSources(instance.id);
-      const entity = getSelectedEntity();
-      if (entity != null) {
-        clampLotToBoard(entity);
-      }
       renderProperties();
       renderQuickSelect();
       renderEntityList();
@@ -3315,11 +3315,28 @@
     }
 
     function getSelectedPrefab() {
-      return state.prefabLibrary.prefabs.find((prefab) => prefab.id === state.selectedPrefabId) || null;
+      return getPrefabById(state.selectedPrefabId);
     }
 
     function getSelectedInstance(instanceId = state.selectedInstanceId) {
       return state.cityLayout.instances.find((instance) => instance.id === instanceId) || null;
+    }
+
+    function getPrefabById(prefabId) {
+      return state.prefabLibrary.prefabs.find((prefab) => prefab.id === prefabId) || null;
+    }
+
+    function getComposedEntityById(instanceId) {
+      return state.layout.entities.find((entity) => entity.id === instanceId) || null;
+    }
+
+    function clampInstanceToBoard(instance) {
+      const prefab = getPrefabById(instance.prefabId);
+      const cols = Math.max(1, Math.round(numberOr(prefab?.footprint?.cols, 1)));
+      const rows = Math.max(1, Math.round(numberOr(prefab?.footprint?.rows, 1)));
+      const grid = state.cityLayout.grid;
+      instance.gridX = Math.max(0, Math.min(Math.max(0, grid.cols - cols), Math.round(numberOr(instance.gridX, 0))));
+      instance.gridY = Math.max(0, Math.min(Math.max(0, grid.rows - rows), Math.round(numberOr(instance.gridY, 0))));
     }
 
     function selectPrefab(prefabId) {
@@ -3800,7 +3817,10 @@
     }
 
     function uploadEntityImage(event) {
-      const entity = getSelectedEntity();
+      const selectedInstance = getSelectedInstance();
+      const prefab = selectedInstance == null
+        ? getSelectedPrefab()
+        : getPrefabById(selectedInstance.prefabId) || getSelectedPrefab();
       const file = event.target.files?.[0];
       if (file == null) {
         return;
