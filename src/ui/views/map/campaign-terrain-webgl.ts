@@ -76,6 +76,8 @@ type CampaignVegetationRulesAsset = CampaignVegetationRulesDefinition & {
 type CampaignVegetationAsset = {
   rules: CampaignVegetationRulesAsset;
   meshesById: Map<string, VegetationMeshAsset>;
+  meshPromisesById: Map<string, Promise<VegetationMeshAsset | null>>;
+  failedMeshIds: Set<string>;
 };
 
 type CampaignVegetationCell = {
@@ -1754,6 +1756,12 @@ async function initCampaignTerrainWebGl(
           canvasWidth: input.canvas.width,
           canvasHeight: input.canvas.height,
           avoidancePoints,
+          onVariantMeshNeeded: (variant) => {
+            ensureCampaignVegetationVariantMesh(vegetationAsset, variant, () => {
+              lastVegetationMeshSignature = "";
+              requestRender("static");
+            });
+          },
         });
         gl.bindBuffer(gl.ARRAY_BUFFER, vegetationVertexBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, vegetationMesh.vertices, gl.DYNAMIC_DRAW);
@@ -3003,16 +3011,12 @@ async function loadCampaignVegetationAsset(
       meshUrl: resolveAssetUrl(variant.meshUrl, rulesUrl),
     })),
   };
-  const meshes = await Promise.all(
-    normalizedRules.variants.map(async (variant) => [
-      variant.id,
-      await loadCampaignVegetationMeshAsset(variant.meshUrl),
-    ] as const)
-  );
 
   return {
     rules: normalizedRules,
-    meshesById: new Map(meshes),
+    meshesById: new Map(),
+    meshPromisesById: new Map(),
+    failedMeshIds: new Set(),
   };
 }
 
@@ -3030,6 +3034,40 @@ async function loadCampaignVegetationMeshAsset(
     indices: new Uint32Array(mesh.indices),
     bounds: mesh.bounds,
   };
+}
+
+function ensureCampaignVegetationVariantMesh(
+  asset: CampaignVegetationAsset,
+  variant: CampaignVegetationRulesAsset["variants"][number],
+  onLoaded: () => void
+): void {
+  if (
+    asset.meshesById.has(variant.id) ||
+    asset.meshPromisesById.has(variant.id) ||
+    asset.failedMeshIds.has(variant.id)
+  ) {
+    return;
+  }
+
+  const promise = loadCampaignVegetationMeshAsset(variant.meshUrl)
+    .then((mesh) => {
+      asset.meshesById.set(variant.id, mesh);
+      onLoaded();
+      return mesh;
+    })
+    .catch((error: unknown) => {
+      asset.failedMeshIds.add(variant.id);
+      console.error(
+        `Failed to load campaign vegetation mesh "${variant.id}".`,
+        error
+      );
+      return null;
+    })
+    .finally(() => {
+      asset.meshPromisesById.delete(variant.id);
+    });
+
+  asset.meshPromisesById.set(variant.id, promise);
 }
 
 function resolveAssetUrl(value: string, baseUrl: string): string {
@@ -3601,6 +3639,9 @@ function createCampaignVegetationMesh(input: {
   canvasWidth: number;
   canvasHeight: number;
   avoidancePoints: CampaignVegetationAvoidancePoint[];
+  onVariantMeshNeeded: (
+    variant: CampaignVegetationRulesAsset["variants"][number]
+  ) => void;
 }): VegetationMeshData {
   const density = getCampaignVegetationDensity(currentCamera.scale, input.asset.rules);
   const instances: CampaignVegetationInstance[] = [];
@@ -3663,6 +3704,7 @@ function createCampaignVegetationMesh(input: {
       input.asset,
       input.avoidancePoints,
       input.sampleHeightAtUv,
+      input.onVariantMeshNeeded,
       allocation.count,
       maxInstances
     );
@@ -3911,6 +3953,9 @@ function appendCampaignVegetationCellInstances(
   asset: CampaignVegetationAsset,
   avoidancePoints: CampaignVegetationAvoidancePoint[],
   sampleHeightAtUv: (u: number, v: number) => number,
+  onVariantMeshNeeded: (
+    variant: CampaignVegetationRulesAsset["variants"][number]
+  ) => void,
   targetCount: number,
   maxInstances: number
 ): void {
@@ -3955,6 +4000,7 @@ function appendCampaignVegetationCellInstances(
     );
     const mesh = asset.meshesById.get(variant.id);
     if (mesh == null) {
+      onVariantMeshNeeded(variant);
       continue;
     }
     const placement = getCampaignVegetationVariantPlacement(rules, variant);

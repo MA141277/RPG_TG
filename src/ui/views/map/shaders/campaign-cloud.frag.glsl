@@ -97,7 +97,7 @@ const float ARTICLE_CORE_CLEAR_EROSION_STRENGTH = 0.42;
 const float ARTICLE_BASE_MIST_ALPHA = 0.24;
 const float ARTICLE_BODY_ALPHA = 1.14;
 const float ARTICLE_RIM_BODY_ALPHA = 0.16;
-const float ARTICLE_INNER_WISP_ALPHA = 0.035;
+const float ARTICLE_INNER_WISP_ALPHA = 0.0;
 const vec2 ARTICLE_AIR_MIST_HOLE_CLEAR_RANGE = vec2(0.62, 0.92);
 const vec2 ARTICLE_ISOLATED_CLOUD_CLEAR_RANGE = vec2(0.88, 0.985);
 const float ARTICLE_REVEAL_DISSOLVE_NOISE = 0.42;
@@ -498,7 +498,7 @@ vec4 sampleOuterPuffCloudLayer(
   float viewportRadius = length(viewportSpace * vec2(0.72, 1.0));
   float outerScreenBias = smoothstep(0.30, 0.74, viewportRadius);
   float biasedPuffMass = clamp(
-    puffyMass * (0.84 + outerScreenBias * 0.24) + cloudBankMask * 0.06,
+    puffyMass * (0.84 + outerScreenBias * 0.24),
     0.0,
     1.0
   );
@@ -976,7 +976,7 @@ vec4 sampleArticleCloudSea(vec2 uv, float time) {
     cloudSample.x * 0.70 + billow(cloudSample.y) * 0.16 + cloudDetail * 0.14
   );
   float baseMist = ARTICLE_BASE_MIST_ALPHA * (0.52 + cloudDetail * 0.16 + deepZone * 0.22);
-  float bodyAlpha = ARTICLE_BODY_ALPHA * cloudLobe * (0.16 + deepZone * 0.84);
+  float bodyAlpha = ARTICLE_BODY_ALPHA * cloudLobe * deepZone;
   float rimAlpha = ARTICLE_RIM_BODY_ALPHA * edgeBand * (0.38 + cloudDensity * 0.62);
   float innerWisp =
     isolatedCloudKeep *
