@@ -138,6 +138,8 @@ window.__cityEditorTestApi = {
   normalizeCityLayout,
   syncEditorLayoutFromSources,
   renderCityLayoutPanel,
+  importJsonFile,
+  selectPrefab,
   uploadEntityImage,
   updateCityLayoutFromForm,
   exportCityLayoutJson,
@@ -163,6 +165,24 @@ window.__cityEditorTestApi = {
   },
   stubReadImageFile(fn) {
     readImageFile = fn;
+  },
+  stubFileReaderText(text) {
+    FileReader = class {
+      constructor() {
+        this.listeners = new Map();
+        this.result = "";
+      }
+      addEventListener(type, callback) {
+        this.listeners.set(type, callback);
+      }
+      readAsText() {
+        this.result = text;
+        const callback = this.listeners.get("load");
+        if (callback) {
+          callback();
+        }
+      }
+    };
   }
 };`;
   const context = {
@@ -226,6 +246,39 @@ function createSplitEditorSources() {
               offsetY: 0,
               width: 160,
               height: 80,
+            },
+          },
+        },
+        {
+          id: "watchtower",
+          name: "Watchtower",
+          category: "special",
+          entry: { type: "none" },
+          asset: {
+            image: "watchtower.png",
+            naturalWidth: 256,
+            naturalHeight: 256,
+            scale: 1,
+            anchor: "bottom-center",
+            offsetX: 0,
+            offsetY: 0,
+          },
+          footprint: { cols: 2, rows: 2 },
+          interaction: {
+            clickable: false,
+            label: {
+              text: "Watchtower",
+              offsetX: 0,
+              offsetY: -24,
+              width: 96,
+              height: 24,
+            },
+            hitArea: {
+              type: "diamond",
+              offsetX: 0,
+              offsetY: 0,
+              width: 80,
+              height: 40,
             },
           },
         },
@@ -627,4 +680,107 @@ test("city layout form clamps the source instance before recomposing and export"
   const exported = JSON.parse(api.exportCityLayoutJson());
   assert.equal(exported.instances[0].gridX, 6);
   assert.equal(exported.instances[0].gridY, 6);
+});
+
+test("prefab-library imports update prefab state and preserve the current city layout", () => {
+  const api = createEditorRuntimeHarness();
+  const { prefabLibrary, cityLayout } = createSplitEditorSources();
+  api.stubUi();
+  api.stubFileReaderText(
+    JSON.stringify({
+      version: 2,
+      prefabs: [
+        {
+          id: "imported-prefab",
+          name: "Imported Prefab",
+          category: "decoration",
+          entry: { type: "none" },
+          asset: {
+            image: "imported.png",
+            naturalWidth: 128,
+            naturalHeight: 128,
+            scale: 1,
+            anchor: "bottom-center",
+            offsetX: 0,
+            offsetY: 0,
+          },
+          footprint: { cols: 1, rows: 1 },
+          interaction: {
+            clickable: false,
+            label: {
+              text: "Imported",
+              offsetX: 0,
+              offsetY: -12,
+              width: 64,
+              height: 16,
+            },
+            hitArea: {
+              type: "diamond",
+              offsetX: 0,
+              offsetY: 0,
+              width: 32,
+              height: 16,
+            },
+          },
+        },
+      ],
+    })
+  );
+  api.setSources(prefabLibrary, cityLayout, "instance.keep");
+  const previousLayout = JSON.parse(api.exportCityLayoutJson());
+  const event = {
+    target: {
+      files: [{ name: "prefabs.json" }],
+      value: "filled",
+    },
+  };
+
+  api.importJsonFile(event);
+
+  assert.equal(api.state.prefabLibrary.prefabs.length, 1);
+  assert.equal(api.state.prefabLibrary.prefabs[0].id, "imported-prefab");
+  assert.deepEqual(JSON.parse(api.exportCityLayoutJson()), previousLayout);
+  assert.equal(event.target.value, "");
+});
+
+test("prefab selection without a matching instance clears stale instance state and edits the selected prefab", () => {
+  const api = createEditorRuntimeHarness();
+  const { prefabLibrary, cityLayout } = createSplitEditorSources();
+  api.stubUi();
+  api.assignDom({
+    statusLine: createElement(),
+  });
+  api.stubReadImageFile((file, callback) => {
+    callback("data:image/png;base64,watchtower", {
+      naturalWidth: 512,
+      naturalHeight: 128,
+    });
+  });
+  api.setSources(prefabLibrary, cityLayout, "instance.keep");
+  api.state.editorMode = "prefab";
+  api.state.selectedInstanceId = "instance.keep";
+  api.state.selectedId = "instance.keep";
+
+  api.selectPrefab("watchtower");
+
+  assert.equal(api.state.selectedPrefabId, "watchtower");
+  assert.equal(api.state.selectedInstanceId, null);
+  assert.equal(api.state.selectedId, null);
+
+  const keepBefore = api.state.prefabLibrary.prefabs.find((prefab) => prefab.id === "keep");
+  const watchtowerBefore = api.state.prefabLibrary.prefabs.find((prefab) => prefab.id === "watchtower");
+  const event = {
+    target: {
+      files: [{ name: "watchtower-upload.png" }],
+      value: "filled",
+    },
+  };
+
+  api.uploadEntityImage(event);
+
+  assert.equal(watchtowerBefore.asset.naturalWidth, 512);
+  assert.equal(watchtowerBefore.asset.naturalHeight, 128);
+  assert.equal(api.state.entityPreviews.get("watchtower"), "data:image/png;base64,watchtower");
+  assert.equal(keepBefore.asset.naturalWidth, 320);
+  assert.equal(keepBefore.asset.naturalHeight, 240);
 });

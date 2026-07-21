@@ -1914,6 +1914,13 @@
 
     function decomposeLayoutToSources(layout) {
       const normalizedLayout = normalizeLayout(layout);
+      if (Array.isArray(layout?.prefabs)) {
+        return {
+          prefabLibrary: normalizePrefabLibrary(layout),
+          cityLayout: normalizeCityLayout(state.cityLayout)
+        };
+      }
+
       if (Array.isArray(layout?.instances)) {
         return {
           prefabLibrary: normalizePrefabLibrary(state.prefabLibrary),
@@ -3349,6 +3356,9 @@
       if (matchingInstance != null) {
         state.selectedInstanceId = matchingInstance.id;
         state.selectedId = matchingInstance.id;
+      } else {
+        state.selectedInstanceId = null;
+        state.selectedId = null;
       }
       state.centerSelectedAfterRender = true;
       renderEntityList();
@@ -3818,9 +3828,11 @@
 
     function uploadEntityImage(event) {
       const selectedInstance = getSelectedInstance();
-      const prefab = selectedInstance == null
+      const prefab = state.editorMode === "prefab"
         ? getSelectedPrefab()
-        : getPrefabById(selectedInstance.prefabId) || getSelectedPrefab();
+        : selectedInstance == null
+          ? getSelectedPrefab()
+          : getPrefabById(selectedInstance.prefabId) || getSelectedPrefab();
       const file = event.target.files?.[0];
       if (file == null) {
         return;
