@@ -15,7 +15,7 @@ import { renderCityStageScene } from "./city-stage-layout";
 import haozhouCityBackgroundUrl from "../../../../ui/background/upload_1784207698799091496 (1).png?url";
 import cityDiamondBaseTextureUrl from "../../../../ui/yuansu/菱形格子/20260716-111958.png?url";
 import cityDiamondForegroundWallUrl from "../../../../ui/yuansu/菱形格子/20260716-141239.png?url";
-import cityBuildingLeaderResidenceUrl from "../../../../ui/yuansu/菱形格子/jianglingfudi.png?url";
+import cityBuildingLeaderResidenceUrl from "../../../../ui/yuansu/菱形格子/upload_1784633870754903686.png?url";
 import cityBuildingKeepUrl from "../../../../ui/yuansu/菱形格子/shuaifu.png?url";
 import cityBuildingTeaHouseUrl from "../../../../ui/yuansu/菱形格子/chaguan.png?url";
 import cityBuildingMarketUrl from "../../../../ui/yuansu/菱形格子/huozhai.png?url";
@@ -161,8 +161,8 @@ const CITY_MAP_BUILDING_PROTOTYPES: CityMapBuildingPrototype[] = [
     imageUrl: cityBuildingLeaderResidenceUrl,
     baseX: 675,
     baseY: 455,
-    assetWidth: 1294,
-    assetHeight: 695,
+    assetWidth: 1259,
+    assetHeight: 859,
     renderScale: CITY_BUILDING_RENDER_SCALE,
     ringWidth: 132,
     ringHeight: 56,

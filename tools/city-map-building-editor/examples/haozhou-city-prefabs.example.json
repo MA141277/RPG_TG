@@ -49,18 +49,18 @@
         "cityEntryId": "city-entry.kulan.leader-residence"
       },
       "asset": {
-        "image": "ui/yuansu/菱形格子/jianglingfudi.png",
-        "naturalWidth": 1294,
-        "naturalHeight": 695,
+        "image": "ui/yuansu/菱形格子/upload_1784633870754903686.png",
+        "naturalWidth": 1259,
+        "naturalHeight": 859,
         "scale": 0.29,
-        "offsetX": -11,
-        "offsetY": -2,
+        "offsetX": -3,
+        "offsetY": -5,
         "rotation": 5,
         "anchor": "bottom-center"
       },
       "footprint": {
-        "cols": 12,
-        "rows": 9
+        "cols": 11,
+        "rows": 8
       },
       "interaction": {
         "clickable": true,
@@ -73,8 +73,8 @@
         },
         "hitArea": {
           "type": "ellipse",
-          "offsetX": 7,
-          "offsetY": -97,
+          "offsetX": -6,
+          "offsetY": -118,
           "width": 201,
           "height": 106
         }
