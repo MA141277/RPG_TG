@@ -30,6 +30,10 @@
 - routing_basis: `replace-with-written-routing-evidence | none`
 - next_lawful_queue_recommendation: `queue.replace-me | none`
 - auto_admission_ready: `true | false`
+- stop_reason: `none | version-closeout-confirmation | explicit-answer-only | operator-requested-suspend | real-blocker | outside-parent-spec | parent-spec-change | capability-downgrade-risk | retired-rewrite-risk | product-decision`
+- stop_basis: `replace-with-written-stop-evidence | none`
+- next_unblocked_action: `classify-fresh-work | write-admission-review | activate-admitted-queue | resume-active-queue | auto-reconcile-active-task | write-queue-closeout | return-to-promotion-review | write-version-closeout | resolve-blocker | none`
+- human_input_required: `true | false`
 - blocked_by: []
 - candidate_queue_ids:
   - `queue.replace-me`
@@ -89,6 +93,7 @@
 - `If no open version exists, version creation becomes the required next governance action before any queue admission or implementation can begin.`
 - `Queue closeout may auto-advance; version closeout must not be inferred from queue completion alone.`
 - `When version acceptance and closeout conditions are satisfied, ask exactly one human confirmation before changing version_status to done.`
+- `If the agent lawfully stops or asks for input, it must first write stop_reason / stop_basis / next_unblocked_action / human_input_required into this version plan.`
 
 ### Post-Queue Closeout Pause Policy
 
@@ -112,6 +117,10 @@
 7. `Only after the admitted queue doc exposes queue_status=active plus a live active_task may implementation start.`
 8. `User scope approval is boundary approval only; it does not replace admission.`
 9. `When intake does not proceed directly into implementation, return the fixed operator receipt rather than a long Blueprint internal analysis dump.`
+10. `Once a queue-candidate is already structurally recorded in current version truth, later admission review is an internal governance step rather than a default human confirmation point.`
+11. `If an admission gap or completeness-audit finding remains inside the parent spec, record it as gap fill, residue, guard evidence, or routing truth and continue unless blocker rules or stop-condition rules require human input.`
+12. `Before stopping while a live queue, pending candidate, or uniquely lawful next governance step still exists, run the workflow stop-condition self-check instead of pausing by default.`
+13. `If the self-check concludes that a stop is lawful, record the structured stop fields in the version plan before ending the response.`
 
 ### Candidate Recovery Ledger
 
@@ -194,7 +203,7 @@ Allowed `next_action` values:
 
 - `Queue execution closeout is not equivalent to true topic closure.`
 - `Queue docs own execution_closeout_status / topic_closure_status / closure_basis / residue_remaining / residue_family / residue_routing_status / next_family_candidate / auto_continue_eligible.`
-- `This version plan owns closure_review_subject / closure_review_status / residue_candidate_id / residue_candidate_family / routing_basis / next_lawful_queue_recommendation / auto_admission_ready.`
+- `This version plan owns closure_review_subject / closure_review_status / residue_candidate_id / residue_candidate_family / routing_basis / next_lawful_queue_recommendation / auto_admission_ready / stop_reason / stop_basis / next_unblocked_action / human_input_required.`
 - `If same-family residue is uniquely routable, write the continuation here and avoid asking the operator which queue should come next.`
 - `If multiple lawful residue continuations remain genuinely unresolved, route to human choice only then.`
 
@@ -252,9 +261,9 @@ Allowed `next_action` values:
 7. `If queue closeout leaves residue, absorb same-family or cross-family routing truth here before repository sync begins.`
 8. `Record local repository sync state after the docs are updated.`
 9. `At queue closeout, create one local branch-commit for the completed execution queue before activating the next queue or continuing version-level promotion review.`
-10. `Defer push and baseline merge unless remote collaboration or an explicit queue/version contract requires remote sync.`
-11. `If a push is started, wait for the push result before any later Blueprint scheduling action continues.`
-12. `If the next legal step is unique, continue directly into closeout, same-family routing, or version review after the local queue commit is recorded and any attempted push has returned success or failure.`
+10. `At queue closeout, attempt remote-sync toward the remote development trunk mod-first-dev after the local branch-commit is recorded.`
+11. `If a push or merge is started, wait for the result before any later Blueprint scheduling action continues.`
+12. `Whether remote-sync succeeds or fails, record the result and, if the next legal step is unique, continue directly into closeout, same-family routing, or version review.`
 11. `Update docs/change-log.md only when code, runtime, compatibility, shared interface, or user-visible behavior changed.`
 
 ### Human Confirmation Constraint
@@ -272,6 +281,14 @@ Allowed `next_action` values:
 - `Ask only when the baseline is ambiguous or when merge-conflict handling has multiple mutually exclusive legal resolutions that current version truth cannot decide alone.`
 - `Exception: version closeout requires explicit human confirmation before version_status changes from open to done.`
 
+### Explicit Operator-Directed Closure Or Suspension
+
+- `If the operator explicitly requests suspending the current version, keep version_status=open, set stop_reason=operator-requested-suspend, record stop_basis plus next_unblocked_action, and set human_input_required=false.`
+- `If the operator explicitly requests closing the current version, use version_status=done only when closeout truth is actually satisfied; otherwise use version_status=archived.`
+- `If the operator explicitly requests suspending the current execution queue, clear active_queue in this version plan, synchronize the queue doc to queue_status=suspended, and record the lawful resume action here.`
+- `If the operator explicitly requests closing the current execution queue before it is actually complete, route it as dropped rather than done and absorb any remaining residue here.`
+- `If the operator explicitly requests suspending or dropping a candidate queue, update Candidate Recovery Ledger and Queue Promotion Ledger in the same batch rather than leaving the request as prose only.`
+
 ### Repository Sync Policy
 
 - `Git sync is non-governing.`
@@ -279,10 +296,9 @@ Allowed `next_action` values:
 - `push / merge must not become a queue closeout gate.`
 - `push / merge must not become a version closeout gate.`
 - `Task execution conclusions are written first; repository sync state is recorded second.`
-- `Default Blueprint governance/documentation refinement uses local-record during execution and one branch-commit at queue closeout.`
+- `Default Blueprint governance/documentation refinement uses local-record during execution, one branch-commit at queue closeout, then attempted remote-sync toward mod-first-dev.`
 - `Every completed execution queue should have its own local commit before later Blueprint scheduling continues.`
-- `Push is optional per queue and may be batched after multiple queue commits.`
-- `remote-sync runs only when requested, when collaboration requires remote visibility, or when a queue/version closeout contract explicitly requires it.`
+- `Every completed execution queue should then attempt remote-sync toward mod-first-dev; if that remote-sync fails, record the failure and continue from written governance truth.`
 - `Once push starts, wait for its success or failure result before continuing queue activation, promotion review, or version scheduling.`
 - `Avoid process-only commits for minor field synchronization unless that synchronization is the bounded queue or task itself.`
 - `A failed sync attempt is recorded only as repository sync result in the queue-local sync record.`
@@ -296,8 +312,8 @@ Allowed `next_action` values:
 1. `local-record: write local docs/code and queue-local sync state without creating a commit.`
 2. `branch-commit: draft the commit message as <type>: <brief title> plus a Summary: block with real bullets, run commit-message validation, and create one semantic local commit for the completed execution queue.`
 3. `branch-push: push the working branch after one or more queue commits; wait for the push result before continuing.`
-4. `remote-sync: push the working branch and, only when explicitly required, merge/push the baseline; wait for the remote-sync result before continuing.`
-5. `Resume from the written Blueprint truth after local-record, queue branch-commit, or any attempted push returns success or failure; failed remote-sync is not a closeout or admission blocker.`
+4. `remote-sync: push the working branch and attempt merge/push to the development trunk mod-first-dev; wait for the remote-sync result before continuing.`
+5. `Resume from the written Blueprint truth after local-record, queue branch-commit, or attempted remote-sync returns success or failure; failed remote-sync is not a closeout or admission blocker.`
 
 ### Prior Promotion Record
 

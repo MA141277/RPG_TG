@@ -1,6 +1,5 @@
 import type { CharacterId } from "./character";
 import type { CityNpcActivityLocationId } from "./city-npc";
-import type { EventId } from "./event";
 
 export type HouseId = string;
 
@@ -29,8 +28,6 @@ export type HouseDefinition = {
   level?: number;
   damaged?: boolean;
   outputMultiplier?: number;
-  onEnterEventId?: EventId;
-  onLeaveEventId?: EventId;
   backAction: {
     label: string;
     targetView: "city";

@@ -100,11 +100,21 @@ function writeVersionPlanFixture(
     "- routing_basis: `none`",
     "- next_lawful_queue_recommendation: `none`",
     "- auto_admission_ready: `false`",
-    "- blocked_by: []",
+    "- stop_reason: `none`",
+    "- stop_basis: `none`",
+    "- next_unblocked_action: `none`",
+    "- human_input_required: `false`",
+      "- blocked_by: []",
       "- candidate_queue_ids:",
       ...candidateQueueIds.map((queueId) => `  - \`${queueId}\``),
       "",
       ...OPERATOR_INTAKE_CONTRACT_LINES,
+      "### Candidate Backlog Refresh Rule",
+      "",
+      "- `After queue closeout or candidate-routing changes, refresh candidate truth before answering whether any same-version candidate queue remains.`",
+      "- `Read project-progress -> blueprint -> current version plan -> candidate_queue_ids -> Candidate Recovery Ledger -> Queue Promotion Ledger -> named queue docs.`",
+      "- `Do not answer none unless candidate_backlog_refresh_status=fresh and candidate_backlog_snapshot is empty.`",
+      "",
     ].join("\n")
   );
 }

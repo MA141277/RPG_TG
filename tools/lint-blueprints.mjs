@@ -53,13 +53,25 @@ const allowedIntakeFeedbackModes = new Set([
   "fixed-receipt",
 ]);
 const allowedClosureReviewStatuses = new Set(["none", "evaluating", "routed", "blocked"]);
+const allowedStopReasons = new Set([
+  "none",
+  "version-closeout-confirmation",
+  "explicit-answer-only",
+  "operator-requested-suspend",
+  "real-blocker",
+  "outside-parent-spec",
+  "parent-spec-change",
+  "capability-downgrade-risk",
+  "retired-rewrite-risk",
+  "product-decision",
+]);
 const allowedResidueFamilies = new Set([
   "same-family",
   "cross-family",
   "accepted-residue",
   "none",
 ]);
-const allowedQueueStatuses = new Set(["active", "blocked", "done", "dropped"]);
+const allowedQueueStatuses = new Set(["active", "blocked", "suspended", "done", "dropped"]);
 const allowedExecutionCloseoutStatuses = new Set(["done", "partial", "blocked"]);
 const allowedTopicClosureStatuses = new Set(["closed", "open-residue", "blocked"]);
 const allowedResidueRoutingStatuses = new Set([
@@ -107,13 +119,19 @@ export function lintBlueprintDocs(repoRoot = process.cwd()) {
     blueprintPath,
     targetPlanPath,
     targetSpecPath,
+    activeVersionId,
   } = resolveLiveTruthPaths(repoRoot, failures);
 
   lintProjectProgress(projectProgressPath, failures, repoRoot);
   lintBlueprintIndex(blueprintPath, failures, repoRoot);
   lintTargetPlan(targetPlanPath, failures, repoRoot, "version plan");
   lintTargetSpec(targetSpecPath, failures, repoRoot, "version spec");
-  lintQueueDocs(path.join(blueprintsRoot, "queues"), failures, repoRoot);
+  lintQueueDocs(
+    path.join(blueprintsRoot, "queues"),
+    failures,
+    repoRoot,
+    activeVersionId
+  );
   lintWorkflowIntakeContract(
     path.join(blueprintsRoot, "blueprint-workflow-spec.md"),
     failures,
@@ -247,6 +265,7 @@ function resolveLiveTruthPaths(repoRoot, failures) {
     blueprintPath,
     targetPlanPath,
     targetSpecPath,
+    activeVersionId,
   };
 }
 
@@ -457,8 +476,11 @@ function lintWorkflowGitSyncContract(filePath, failures, repoRoot) {
   requirePatterns(text, relativePath, failures, [
     [/Every completed execution queue should form its own local `branch-commit`/u, "workflow spec must require a local commit for each completed execution queue"],
     [/Once a push is started, no later Blueprint scheduling action may continue until the push returns success or failure/u, "workflow spec must require waiting for push results before continuing Blueprint scheduling"],
-    [/Push is not bound to every queue; multiple queue commits may be pushed in one later batch/u, "workflow spec must allow batched push after multiple queue commits"],
+    [/Every completed execution queue should attempt remote-sync after its queue-local branch-commit/u, "workflow spec must require per-queue remote-sync attempts"],
     [/Resume truth comes from the written governance docs, not branch memory or remote push status/u, "workflow spec must keep Blueprint resume independent from remote push status"],
+    [/^### 12\.1 Explicit Operator-Directed Closure Or Suspension$/m, "workflow spec must define explicit operator-directed closure or suspension"],
+    [/queue_status = suspended/u, "workflow spec must define suspended queue handling"],
+    [/stop_reason = operator-requested-suspend/u, "workflow spec must define operator-requested version suspension"],
     [/^### 11\.2\.1 Post-Queue Closeout Pause Policy$/m, "workflow spec must define post-queue closeout pause policy"],
     [/post_queue_closeout_pause_policy = auto-continue/u, "workflow spec must define auto-continue as the default post-queue pause policy"],
     [/pause-when-explicitly-requested/u, "workflow spec must define explicit pause mode"],
@@ -516,7 +538,9 @@ function lintEvidenceBoundTemplates(blueprintsRoot, failures, repoRoot) {
         [/Cannot Claim/u, "target plan template candidate ledger must include non-claim scope"],
         [/Every completed execution queue should have its own local commit/u, "target plan template must require one local commit per completed queue"],
         [/Once push starts, wait for its success or failure result/u, "target plan template must require waiting for push results"],
-        [/Push is optional per queue and may be batched/u, "target plan template must allow batched push"],
+        [/attempt remote-sync toward (the )?remote development trunk mod-first-dev/u, "target plan template must require remote-sync toward mod-first-dev"],
+        [/Every completed execution queue should then attempt remote-sync toward mod-first-dev/u, "target plan template must require per-queue remote-sync attempts"],
+        [/operator-requested-suspend/u, "target plan template must define operator-requested suspension"],
         [/post_queue_closeout_pause_policy/u, "target plan template must include post-queue closeout pause policy"],
         [/^### Post-Queue Closeout Pause Policy$/m, "target plan template must include a Post-Queue Closeout Pause Policy section"],
         [/If post_queue_closeout_pause_policy=auto-continue and the next legal step is unique/u, "target plan template must prevent default continuation prompts under auto-continue"],
@@ -540,11 +564,18 @@ function lintEvidenceBoundTemplates(blueprintsRoot, failures, repoRoot) {
         [/^### Claim Boundary$/m, "execution queue template must include a Claim Boundary section"],
         [/^#### Can Claim$/m, "execution queue template must include Can Claim"],
         [/^#### Cannot Claim$/m, "execution queue template must include Cannot Claim"],
+        [/^#### Capability Floor$/m, "execution queue template must include Capability Floor"],
+        [/^#### User Path Coverage Matrix$/m, "execution queue template must include User Path Coverage Matrix"],
+        [/^#### Functional Loss Budget$/m, "execution queue template must include Functional Loss Budget"],
+        [/^#### Replacement Proof$/m, "execution queue template must include Replacement Proof"],
         [/^#### Implementation Anchors$/m, "execution queue template must include Implementation Anchors"],
+        [/functional_loss_audit:/u, "execution queue template must include functional_loss_audit"],
         [/task\.replace-me\.evidence-anchor-reconcile/u, "execution queue template must include evidence-anchor-reconcile as the first task"],
         [/Every completed execution queue should produce one local commit/u, "execution queue template must require one local commit per completed queue"],
         [/Once push starts, wait for its success or failure result/u, "execution queue template must require waiting for push results"],
-        [/Push is optional per queue and may be batched/u, "execution queue template must allow batched push"],
+        [/attempted remote-sync toward mod-first-dev/u, "execution queue template must define attempted remote-sync toward mod-first-dev"],
+        [/Every completed execution queue should then attempt remote-sync toward mod-first-dev/u, "execution queue template must require per-queue remote-sync attempts"],
+        [/queue_status=suspended/u, "execution queue template must define suspended queue handling"],
       ]);
     }
   }
@@ -618,6 +649,7 @@ function lintTargetPlan(filePath, failures, repoRoot, label) {
 
   const relativePath = relative(repoRoot, filePath);
   const isTemplate = relativePath.includes("/templates/");
+  const versionStatus = matchField(text, "version_status");
   rejectQueueLocalSyncFields(text, relativePath, failures, label);
 
   if (/^- next_legal_action:/m.test(text)) {
@@ -699,6 +731,10 @@ function lintTargetPlan(filePath, failures, repoRoot, label) {
     "intake_summary",
     "intake_result",
     "intake_feedback_mode",
+    "stop_reason",
+    "stop_basis",
+    "next_unblocked_action",
+    "human_input_required",
   ]) {
     requireFieldValue(
       text,
@@ -760,6 +796,10 @@ function lintTargetPlan(filePath, failures, repoRoot, label) {
   const closureReviewStatus = closureRoutingValues.closure_review_status;
   const residueCandidateFamily = closureRoutingValues.residue_candidate_family;
   const autoAdmissionReady = closureRoutingValues.auto_admission_ready;
+  const stopReason = matchField(text, "stop_reason");
+  const stopBasis = matchField(text, "stop_basis");
+  const nextUnblockedAction = matchField(text, "next_unblocked_action");
+  const humanInputRequired = matchField(text, "human_input_required");
 
   if (
     !isTemplate &&
@@ -788,6 +828,33 @@ function lintTargetPlan(filePath, failures, repoRoot, label) {
   ) {
     failures.push(
       `${relativePath}: ${label} auto_admission_ready "${autoAdmissionReady}" is not an allowed boolean value`
+    );
+  }
+
+  if (!isTemplate && stopReason != null && !allowedStopReasons.has(stopReason)) {
+    failures.push(
+      `${relativePath}: ${label} stop_reason "${stopReason}" is not an allowed enum value`
+    );
+  }
+
+  if (
+    !isTemplate &&
+    nextUnblockedAction != null &&
+    nextUnblockedAction !== "none" &&
+    !allowedVersionNextActions.has(nextUnblockedAction)
+  ) {
+    failures.push(
+      `${relativePath}: ${label} next_unblocked_action "${nextUnblockedAction}" is not an allowed enum value`
+    );
+  }
+
+  if (
+    !isTemplate &&
+    humanInputRequired != null &&
+    !allowedBooleanStrings.has(humanInputRequired)
+  ) {
+    failures.push(
+      `${relativePath}: ${label} human_input_required "${humanInputRequired}" is not an allowed boolean value`
     );
   }
 
@@ -954,6 +1021,55 @@ function lintTargetPlan(filePath, failures, repoRoot, label) {
       `${relativePath}: ${label} auto_admission_ready=true requires a structured residue candidate and recommendation`
     );
   }
+
+  if (
+    !isTemplate &&
+    stopReason === "none" &&
+    (
+      (stopBasis != null && stopBasis !== "none") ||
+      (nextUnblockedAction != null && nextUnblockedAction !== "none") ||
+      humanInputRequired === "true"
+    )
+  ) {
+    failures.push(
+      `${relativePath}: ${label} stop_reason=none requires stop_basis=none, next_unblocked_action=none, and human_input_required=false`
+    );
+  }
+
+  if (!isTemplate && stopReason === "operator-requested-suspend") {
+    if (
+      stopBasis == null ||
+      stopBasis === "none" ||
+      nextUnblockedAction == null ||
+      nextUnblockedAction === "none" ||
+      humanInputRequired !== "false"
+    ) {
+      failures.push(
+        `${relativePath}: ${label} stop_reason=operator-requested-suspend requires stop_basis, next_unblocked_action, and human_input_required=false`
+      );
+    }
+  } else if (
+    !isTemplate &&
+    stopReason != null &&
+    stopReason !== "none" &&
+    (
+      stopBasis == null ||
+      stopBasis === "none" ||
+      nextUnblockedAction == null ||
+      nextUnblockedAction === "none" ||
+      humanInputRequired !== "true"
+    )
+  ) {
+    failures.push(
+      `${relativePath}: ${label} stop_reason=${stopReason} requires stop_basis, next_unblocked_action, and human_input_required=true`
+    );
+  }
+
+  if ((isTemplate || versionStatus === "open") && !/^### Candidate Backlog Refresh Rule$/m.test(text)) {
+    failures.push(
+      `${relativePath}: ${label} with version_status=open must include a Candidate Backlog Refresh Rule section`
+    );
+  }
 }
 
 function lintTargetSpec(filePath, failures, repoRoot, label) {
@@ -984,7 +1100,7 @@ function lintTargetSpec(filePath, failures, repoRoot, label) {
   }
 }
 
-function lintQueueDocs(queueDir, failures, repoRoot) {
+function lintQueueDocs(queueDir, failures, repoRoot, activeVersionId) {
   if (!fs.existsSync(queueDir)) {
     return;
   }
@@ -995,11 +1111,11 @@ function lintQueueDocs(queueDir, failures, repoRoot) {
     }
 
     const filePath = path.join(queueDir, entry.name);
-    lintQueueDoc(filePath, failures, repoRoot, false);
+    lintQueueDoc(filePath, failures, repoRoot, false, activeVersionId);
   }
 }
 
-function lintQueueDoc(filePath, failures, repoRoot, isTemplate) {
+function lintQueueDoc(filePath, failures, repoRoot, isTemplate, activeVersionId = null) {
   const text = readFileOrFail(filePath, failures, repoRoot);
   if (text == null) {
     return;
@@ -1007,6 +1123,9 @@ function lintQueueDoc(filePath, failures, repoRoot, isTemplate) {
 
   const relativePath = relative(repoRoot, filePath);
   const head = text.split(/\r?\n/u).slice(0, 35).join("\n");
+  const ownerVersion =
+    matchField(head, "belongs_to_version") ??
+    matchField(head, "belongs_to_target");
 
   for (const requiredField of [
     "queue_status",
@@ -1061,6 +1180,13 @@ function lintQueueDoc(filePath, failures, repoRoot, isTemplate) {
       "next_family_candidate",
       "auto_continue_eligible",
     ].some((fieldName) => queueClosureValues[fieldName] != null);
+  const requiresActiveVersionClaimStructure =
+    isTemplate ||
+    (
+      activeVersionId != null &&
+      ownerVersion === activeVersionId &&
+      /^### Claim Boundary$/m.test(text)
+    );
 
   if (!isTemplate && queueStatus != null && !allowedQueueStatuses.has(queueStatus)) {
     failures.push(
@@ -1224,6 +1350,22 @@ function lintQueueDoc(filePath, failures, repoRoot, isTemplate) {
         failures.push(`${relativePath}: Queue Snapshot missing "${fieldName}"`);
       }
     }
+  }
+
+  if (requiresActiveVersionClaimStructure) {
+    requirePatterns(text, relativePath, failures, [
+      [/^#### Capability Floor$/m, "active-version queue docs must include a Capability Floor section"],
+      [/^#### User Path Coverage Matrix$/m, "active-version queue docs must include a User Path Coverage Matrix section"],
+      [/^#### Functional Loss Budget$/m, "active-version queue docs must include a Functional Loss Budget section"],
+      [/^#### Replacement Proof$/m, "active-version queue docs must include a Replacement Proof section"],
+      [/^### Completion Completeness Review$/m, "active-version queue docs must include a Completion Completeness Review section"],
+      [/^- functional_loss_audit:/m, "active-version queue docs must record functional_loss_audit in Completion Completeness Review"],
+      [/^- replacement_proof_summary:/m, "active-version queue docs must record replacement_proof_summary in Completion Completeness Review"],
+      [/^- previous_owner_or_path:/m, "active-version queue docs must record previous_owner_or_path in Replacement Proof"],
+      [/^- new_owner_or_path:/m, "active-version queue docs must record new_owner_or_path in Replacement Proof"],
+      [/^- behavior_preservation_expectation:/m, "active-version queue docs must record behavior_preservation_expectation in Replacement Proof"],
+      [/^- verification_evidence:/m, "active-version queue docs must record verification_evidence in Replacement Proof"],
+    ]);
   }
 
   if (

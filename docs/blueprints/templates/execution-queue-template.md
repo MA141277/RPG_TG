@@ -7,7 +7,7 @@
 - blueprint_version: `2026.07`
 - governance_last_synced_at: `2000-01-01`
 - governance_sync_source: `docs/blueprints/blueprint.md`
-- queue_status: `active | blocked | done | dropped`
+- queue_status: `active | blocked | suspended | done | dropped`
 - queue_class: `required`
 - active_task: `task.replace-me.evidence-anchor-reconcile | none`
 - next_task: `task.replace-me | none`
@@ -82,6 +82,10 @@
 - `ACC-REPLACE-002: Replace with related acceptance that remains outside this queue.`
 - `Out-of-scope means not implemented by this queue; it does not mean retired, removed, or unsupported unless the parent spec was updated first.`
 
+#### Capability Floor
+
+- `Replace with inherited or adjacent functional surface that must still work after this queue closes, even if this queue is not the primary owner of that acceptance.`
+
 #### Over-Narrowing Guard
 
 - parent_capabilities_not_owned_by_this_queue:
@@ -101,6 +105,23 @@
 
 - `Replace with compatibility behavior or path that must remain valid.`
 
+#### User Path Coverage Matrix
+
+- primary_paths:
+  - `Replace with the main user-visible path this queue must keep working.`
+- alternate_paths:
+  - `Replace with import / preview / alternate entry / recovery path that must not regress.`
+- empty_or_fail_closed_paths:
+  - `Replace with empty-data / blocked / fail-closed path that must remain coherent.`
+- forbidden_regressions:
+  - `Replace with a regression that this queue must explicitly avoid even if the primary path still works.`
+
+#### Functional Loss Budget
+
+- budget: `zero | explicit-waiver-only`
+- loss_accounting_rule:
+  - `Replace with how any lost functionality must be routed as residue, blocker, or explicit waiver rather than silently accepted.`
+
 #### Implementation Anchors
 
 - Must inspect:
@@ -113,6 +134,17 @@
 #### Verification Coverage
 
 - `Replace with proof or test that demonstrates the claimed acceptance.`
+
+#### Replacement Proof
+
+- previous_owner_or_path:
+  - `Replace with the old owner/path if this queue migrates or replaces behavior.`
+- new_owner_or_path:
+  - `Replace with the new owner/path.`
+- behavior_preservation_expectation:
+  - `Replace with what must remain equivalent or intentionally different.`
+- verification_evidence:
+  - `Replace with proof that the replacement path is actually wired and reachable.`
 
 ### Parent Version
 
@@ -164,6 +196,10 @@
   - `Replace with where every Cannot Claim / Out Of Scope item is owned, routed, accepted, or blocked.`
 - verification_sufficiency:
   - `Replace with why verification covers functional behavior rather than only a representative happy path.`
+- functional_loss_audit:
+  - `Replace with evidence that no user-visible functionality was lost, reduced to placeholder behavior, or left reachable only through legacy fallback.`
+- replacement_proof_summary:
+  - `Replace with a short summary of how migration/replacement claims were verified.`
 - gap_fill_decision:
   - `not-needed | used-once | not-used-recorded-as-residue | blocked`
 - gap_fill_scope:
@@ -179,14 +215,20 @@
 - `User scope approval alone must not be treated as queue admission.`
 - `Candidate tracking belongs in the version plan; this queue doc is for admitted queue truth only.`
 
+### Explicit Operator-Directed Closure Or Suspension
+
+- `If the operator explicitly requests suspending this queue, set queue_status=suspended, remove live active_task execution, and synchronize the owning version plan in the same batch.`
+- `If the operator explicitly requests closing this queue before Can Claim is actually satisfied, set queue_status=dropped rather than done and route remaining residue explicitly.`
+- `Do not fabricate completed_acceptance, closure_basis, or topic_closure_status=closed merely because the operator asked to stop work.`
+
 ### Repository Sync Record Rule
 
 - `After a task reaches any terminal after-state and the required docs are updated, record local repository sync state.`
 - `The queue-local sync record stores only repository sync result; it does not change task, queue, or version truth.`
-- `Default Blueprint governance/documentation refinement uses local-record during execution and one branch-commit at queue closeout.`
+- `Default Blueprint governance/documentation refinement uses local-record during execution, one branch-commit at queue closeout, then attempted remote-sync toward mod-first-dev.`
 - `Every completed execution queue should produce one local commit with a typed subject and Summary body before later Blueprint scheduling continues.`
-- `Push is optional per queue and may be batched after multiple queue commits.`
-- `Push and baseline merge are remote-sync actions; run them only when requested, when collaboration requires remote visibility, or when a queue/version closeout contract explicitly requires them.`
+- `Every completed execution queue should then attempt remote-sync toward mod-first-dev; if that remote-sync fails, record the failure and continue from written governance truth.`
+- `Push and merge are remote-sync actions; once either starts, wait for its success or failure result before continuing queue activation, promotion review, or version scheduling.`
 - `Once push starts, wait for its success or failure result before continuing queue activation, promotion review, or version scheduling.`
 - `A blocked queue still allows local-record, branch-commit, and remote-sync; repository sync is not forbidden just because execution is blocked.`
 - `sync failure must not be copied into blocked_by, queue closeout gates, version closeout gates, or version scheduling truth.`

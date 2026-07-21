@@ -38,7 +38,6 @@ export const sampleHouse: HouseDefinition = {
   type: "castle",
   characterIds: ["char.oda_nobunaga", "char.kinoshita_tokichiro"],
   defaultCharacterId: "char.oda_nobunaga",
-  onEnterEventId: "event.gifu.council_001",
   backAction: {
     label: "返回城下町",
     targetView: "city",

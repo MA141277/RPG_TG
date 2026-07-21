@@ -78,8 +78,13 @@ GlobalUI
 - `defaultCharacterId`：默认打开主角色
 - `activityLocationId`：可选的城市级流动 NPC 槽位
 - `moduleId`：可选的特殊 house 行为绑定
-- `onEnterEventId`：进入房屋时触发的事件入口
-- `onLeaveEventId`：离开房屋时触发的事件入口
+
+进入/离开建筑时的剧情触发不再属于 `House` 合同本身，而是统一走：
+
+- `navigation.enter-house`
+- `navigation.entered-house` follow-up
+- `runStoryTriggerRuntime({ timing: "house-enter" })`
+- `EventBinding.trigger = after/building-enter`
 
 不要把人物详细数据直接塞进 `House`，只保留 ID 引用，避免多人编辑时互相冲突。
 

@@ -60,6 +60,18 @@
     ]
   },
   {
+    "id": "event.building.house.kulan.leader_residence.enter",
+    "chapterId": "chapter.zhu-yuanzhang-rise",
+    "name": "将领府邸 - 进入",
+    "occurrence": "repeatable",
+    "entrySceneId": "scene.building.house.kulan.leader_residence.enter",
+    "tags": [
+      "building-enter",
+      "building:house.kulan.leader_residence",
+      "action:enter"
+    ]
+  },
+  {
     "id": "event.building.house.kulan.leader_residence.review",
     "chapterId": "chapter.zhu-yuanzhang-rise",
     "name": "将领府邸 - 议事",
@@ -89,6 +101,18 @@
     ]
   },
   {
+    "id": "event.building.house.kulan.temple.enter",
+    "chapterId": "chapter.zhu-yuanzhang-rise",
+    "name": "皇觉寺 - 进入",
+    "occurrence": "repeatable",
+    "entrySceneId": "scene.building.house.kulan.temple.enter",
+    "tags": [
+      "building-enter",
+      "building:house.kulan.temple",
+      "action:enter"
+    ]
+  },
+  {
     "id": "event.building.house.kulan.temple.review",
     "chapterId": "chapter.zhu-yuanzhang-rise",
     "name": "皇觉寺 - 评定",
@@ -110,6 +134,42 @@
       "building-action",
       "building:house.kulan.temple",
       "action:work"
+    ]
+  },
+  {
+    "id": "event.building.house.kulan.temple.copy_scripture",
+    "chapterId": "chapter.zhu-yuanzhang-rise",
+    "name": "皇觉寺 - 抄经",
+    "occurrence": "repeatable",
+    "entrySceneId": "",
+    "tags": [
+      "building-action",
+      "building:house.kulan.temple",
+      "action:copy-scripture"
+    ]
+  },
+  {
+    "id": "event.building.house.kulan.temple.sweep_courtyard",
+    "chapterId": "chapter.zhu-yuanzhang-rise",
+    "name": "皇觉寺 - 打扫庭院",
+    "occurrence": "repeatable",
+    "entrySceneId": "",
+    "tags": [
+      "building-action",
+      "building:house.kulan.temple",
+      "action:sweep-courtyard"
+    ]
+  },
+  {
+    "id": "event.building.house.kulan.temple.carry_water",
+    "chapterId": "chapter.zhu-yuanzhang-rise",
+    "name": "皇觉寺 - 挑水",
+    "occurrence": "repeatable",
+    "entrySceneId": "",
+    "tags": [
+      "building-action",
+      "building:house.kulan.temple",
+      "action:carry-water"
     ]
   },
   {
@@ -171,6 +231,18 @@
     ]
   },
   {
+    "id": "event.building.house.kulan.keep.enter",
+    "chapterId": "chapter.zhu-yuanzhang-rise",
+    "name": "帅府 - 进入",
+    "occurrence": "repeatable",
+    "entrySceneId": "scene.building.house.kulan.keep.enter",
+    "tags": [
+      "building-enter",
+      "building:house.kulan.keep",
+      "action:enter"
+    ]
+  },
+  {
     "id": "event.building.house.kulan.keep.review",
     "chapterId": "chapter.zhu-yuanzhang-rise",
     "name": "帅府 - 评定",
@@ -209,6 +281,18 @@
       "building-action",
       "building:house.kulan.keep",
       "action:leave"
+    ]
+  },
+  {
+    "id": "event.building.house.kulan.tea_house.enter",
+    "chapterId": "chapter.zhu-yuanzhang-rise",
+    "name": "茶馆 - 进入",
+    "occurrence": "repeatable",
+    "entrySceneId": "scene.building.house.kulan.tea_house.enter",
+    "tags": [
+      "building-enter",
+      "building:house.kulan.tea_house",
+      "action:enter"
     ]
   },
   {
@@ -265,6 +349,18 @@
     ]
   },
   {
+    "id": "event.building.house.kulan.market.enter",
+    "chapterId": "chapter.zhu-yuanzhang-rise",
+    "name": "货栈 - 进入",
+    "occurrence": "repeatable",
+    "entrySceneId": "scene.building.house.kulan.market.enter",
+    "tags": [
+      "building-enter",
+      "building:house.kulan.market",
+      "action:enter"
+    ]
+  },
+  {
     "id": "event.building.house.kulan.market.talk",
     "chapterId": "chapter.zhu-yuanzhang-rise",
     "name": "货栈 - 交谈",
@@ -318,6 +414,18 @@
     ]
   },
   {
+    "id": "event.building.house.kulan.grain_shop.enter",
+    "chapterId": "chapter.zhu-yuanzhang-rise",
+    "name": "粮铺 - 进入",
+    "occurrence": "repeatable",
+    "entrySceneId": "scene.building.house.kulan.grain_shop.enter",
+    "tags": [
+      "building-enter",
+      "building:house.kulan.grain_shop",
+      "action:enter"
+    ]
+  },
+  {
     "id": "event.building.house.kulan.grain_shop.trade",
     "chapterId": "chapter.zhu-yuanzhang-rise",
     "name": "粮铺 - 粮食交易",
@@ -359,6 +467,18 @@
     ]
   },
   {
+    "id": "event.building.house.kulan.medicine_house.enter",
+    "chapterId": "chapter.zhu-yuanzhang-rise",
+    "name": "药铺 - 进入",
+    "occurrence": "repeatable",
+    "entrySceneId": "scene.building.house.kulan.medicine_house.enter",
+    "tags": [
+      "building-enter",
+      "building:house.kulan.medicine_house",
+      "action:enter"
+    ]
+  },
+  {
     "id": "event.building.house.kulan.medicine_house.treatment",
     "chapterId": "chapter.zhu-yuanzhang-rise",
     "name": "药铺 - 治疗",
@@ -397,6 +517,18 @@
       "building-action",
       "building:house.kulan.medicine_house",
       "action:leave"
+    ]
+  },
+  {
+    "id": "event.building.house.kulan.inn.enter",
+    "chapterId": "chapter.zhu-yuanzhang-rise",
+    "name": "客栈 - 进入",
+    "occurrence": "repeatable",
+    "entrySceneId": "scene.building.house.kulan.inn.enter",
+    "tags": [
+      "building-enter",
+      "building:house.kulan.inn",
+      "action:enter"
     ]
   },
   {

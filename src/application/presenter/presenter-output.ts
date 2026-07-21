@@ -10,36 +10,36 @@ import type { CityEntryDefinition } from "../../domain/city-entry";
 import type { CitySceneMapping } from "../../domain/city-scene-mapping";
 import type { HouseDefinition } from "../../domain/house";
 
+export type PresenterCityStageOutput = {
+  type: "city";
+  activeCityDefinition: CityDefinition;
+  activeCityHouseDefinitions: HouseDefinition[];
+  activeCityEntries: CityEntryDefinition[];
+  citySceneMapping: CitySceneMapping | null;
+};
+
+export type PresenterBuildingStageOutput = {
+  type: "building";
+  activeHouse: HouseDefinition;
+  arrangement: BuildingArrangementDefinition;
+  containerViewModels: BuildingContainerViewModel[];
+};
+
 export type AppPresenterStageOutput =
   | { type: "map" }
-  | {
-      type: "city";
-      activeCityDefinition: CityDefinition;
-      activeCityHouseDefinitions: HouseDefinition[];
-      activeCityEntries: CityEntryDefinition[];
-      citySceneMapping: CitySceneMapping | null;
-    }
+  | PresenterCityStageOutput
   | {
       type: "city-3d";
       activeCityDefinition: CityDefinition;
       citySceneMapping: CitySceneMapping | null;
     }
-  | {
-      type: "building";
-      activeHouse: HouseDefinition;
-      arrangement: BuildingArrangementDefinition;
-      containerViewModels: BuildingContainerViewModel[];
-    }
+  | PresenterBuildingStageOutput
   | {
       type: "scene";
       currentSceneAction: ActionNode | null;
       currentSceneChoiceOptions: ChoiceOption[];
-      cityUnderlay?: {
-        activeCityDefinition: CityDefinition;
-        activeCityHouseDefinitions: HouseDefinition[];
-        activeCityEntries: CityEntryDefinition[];
-        citySceneMapping: CitySceneMapping | null;
-      };
+      cityUnderlay?: Omit<PresenterCityStageOutput, "type">;
+      buildingUnderlay?: Omit<PresenterBuildingStageOutput, "type">;
     }
   | { type: "battle" }
   | { type: "empty" };

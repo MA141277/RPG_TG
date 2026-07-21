@@ -87,6 +87,10 @@
 - `Final cross-entrypoint acceptance or version closeout.`
 - `Any new gameplay beyond preserving the existing built-in behavior.`
 
+#### Capability Floor
+
+- `The Zhu Yuanzhang built-in pack must still present the same building functions through authored arrangements, events, and flows, without legacy house fallback.`
+
 #### Over-Narrowing Guard
 
 - parent_capabilities_not_owned_by_this_queue:
@@ -116,6 +120,33 @@
 - Must preserve:
   - `Explicit arrangement/container/flow contracts and no-inference import behavior.`
 
+#### User Path Coverage Matrix
+
+- primary_paths:
+  - `Built-in gameplay path: entering migrated Zhu Yuanzhang buildings still exposes the expected functions and leave behavior.`
+- alternate_paths:
+  - `Pack load/export path: migrated pack data remains canonical through runtime pack import/export.`
+- empty_or_fail_closed_paths:
+  - `Any missing migrated event/binding/flow data fails closed as a content bug instead of silently running legacy house logic.`
+- forbidden_regressions:
+  - `Do not claim migration complete if only temple or one representative building works while other authored actions still depend on old runtime code.`
+
+#### Functional Loss Budget
+
+- budget: `zero`
+- loss_accounting_rule:
+  - `Every lost built-in building function must be repaired, routed, or blocked explicitly; migration parity cannot be inferred from partial sample success.`
+
+#### Replacement Proof
+
+- previous_owner_or_path:
+  - `Built-in Zhu Yuanzhang house runtime modules, hardcoded action menus, and legacy building state paths.`
+- new_owner_or_path:
+  - `Explicit Zhu Yuanzhang building arrangements, event bindings, events, and flow definitions.`
+- behavior_preservation_expectation:
+  - `The same built-in building meaning remains available to players through authored data rather than old house runtime code.`
+- verification_evidence:
+  - `Migration counts, action-to-event-flow coverage, and queue verification prove the built-in pack runs on authored building data.`
 ### Queue Snapshot
 
 - queue_goal: `Migrate built-in Zhu Yuanzhang building behavior and rosters into explicit arrangement/container/event/flow data without old fallback.`
@@ -151,6 +182,10 @@
   - `Legacy house runtime deletion is routed to queue.legacy-house-runtime-retirement; final cross-entrypoint acceptance is routed to queue.building-arrangement-final-acceptance-and-removal-guard.`
 - verification_sufficiency:
   - `Typecheck, focused migration/runtime tests, and full robustness verification passed; the flow launch regression covers action -> EventBindingRuntime -> authored flow session.`
+- functional_loss_audit:
+  - `Built-in building behavior parity was verified on the authored arrangement/event/flow path; no migrated function was intentionally dropped or left dependent on hidden legacy fallback.`
+- replacement_proof_summary:
+  - `Zhu Yuanzhang building behavior moved from legacy runtime code into explicit authored arrangements, events, and flows, with migration and verification evidence covering the replacement.`
 - gap_fill_decision:
   - `used-once`
 - gap_fill_scope:

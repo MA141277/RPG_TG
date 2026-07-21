@@ -317,6 +317,7 @@ function assertBuildingArrangementRecordArray(
     assertOptionalString(entry.displayName, `${entryLabel}.displayName`);
     assertOptionalString(entry.description, `${entryLabel}.description`);
     assertOptionalString(entry.backgroundId, `${entryLabel}.backgroundId`);
+    assertOptionalBuildingLayoutRecord(entry.layout, `${entryLabel}.layout`);
     assertStringArray(entry.mountedNpcIds, `${entryLabel}.mountedNpcIds`);
     assertNullableString(entry.primaryNpcId, `${entryLabel}.primaryNpcId`);
     assertBuildingContainerRecordArray(entry.containers, `${entryLabel}.containers`);
@@ -487,6 +488,96 @@ function assertStringArray(value: unknown, label: string): asserts value is stri
   value.forEach((entry, index) => {
     assertString(entry, `${label}[${index}]`);
   });
+}
+
+function assertOptionalBuildingLayoutRecord(value: unknown, label: string): void {
+  if (value == null) {
+    return;
+  }
+  assertObject(value, label);
+  assertBuildingLayoutTemplateId(value.templateId, `${label}.templateId`);
+  if (value.shellClassNames != null) {
+    assertStringArray(value.shellClassNames, `${label}.shellClassNames`);
+  }
+  if (value.nodes != null) {
+    assertBuildingLayoutNodeArray(value.nodes, `${label}.nodes`);
+  }
+}
+
+function assertBuildingLayoutNodeArray(value: unknown, label: string): void {
+  assertArray(value, label);
+  value.forEach((entry, index) => {
+    const entryLabel = `${label}[${index}]`;
+    assertObject(entry, entryLabel);
+    assertString(entry.id, `${entryLabel}.id`);
+    assertBuildingLayoutNodeKind(entry.kind, `${entryLabel}.kind`);
+    assertString(entry.regionId, `${entryLabel}.regionId`);
+    assertOptionalString(entry.sourceContainerId, `${entryLabel}.sourceContainerId`);
+    if (entry.sourceContainerType != null) {
+      assertBuildingContainerType(
+        entry.sourceContainerType,
+        `${entryLabel}.sourceContainerType`
+      );
+    }
+    assertOptionalString(entry.presentation, `${entryLabel}.presentation`);
+    if (entry.characterFilter != null) {
+      assertBuildingLayoutCharacterFilter(
+        entry.characterFilter,
+        `${entryLabel}.characterFilter`
+      );
+    }
+    if (entry.actionFilter != null) {
+      assertBuildingLayoutActionFilter(
+        entry.actionFilter,
+        `${entryLabel}.actionFilter`
+      );
+    }
+    assertOptionalBoolean(
+      entry.previewSelectable,
+      `${entryLabel}.previewSelectable`
+    );
+    assertOptionalBoolean(
+      entry.previewDraggable,
+      `${entryLabel}.previewDraggable`
+    );
+    assertOptionalBoolean(
+      entry.previewDropTarget,
+      `${entryLabel}.previewDropTarget`
+    );
+    assertOptionalString(entry.clickActionId, `${entryLabel}.clickActionId`);
+  });
+}
+
+function assertBuildingLayoutTemplateId(value: unknown, label: string): void {
+  if (value !== "default-shell" && value !== "meeting-stage") {
+    throw new Error(`${label} must be a supported building layout template id.`);
+  }
+}
+
+function assertBuildingLayoutNodeKind(value: unknown, label: string): void {
+  const allowedKinds = new Set([
+    "header",
+    "description",
+    "character-seats",
+    "action-menu",
+    "leave-action",
+    "fallback-panels",
+  ]);
+  if (typeof value !== "string" || !allowedKinds.has(value)) {
+    throw new Error(`${label} must be a supported building layout node kind.`);
+  }
+}
+
+function assertBuildingLayoutCharacterFilter(value: unknown, label: string): void {
+  if (value !== "all" && value !== "primary" && value !== "secondary") {
+    throw new Error(`${label} must be a supported building layout character filter.`);
+  }
+}
+
+function assertBuildingLayoutActionFilter(value: unknown, label: string): void {
+  if (value !== "all" && value !== "non-leave" && value !== "leave-only") {
+    throw new Error(`${label} must be a supported building layout action filter.`);
+  }
 }
 
 function assertBuildingContainerType(

@@ -81,6 +81,35 @@ export function createNavigationTimeFollowUpBridge(
         };
       }
 
+      if (input.outcome.type === "navigation.entered-house") {
+        const storyContent = dependencies.getStoryContent();
+        const result = runStoryTriggerRuntime({
+          timing: "house-enter",
+          state: input.state.core,
+          characterDefinitions: dependencies.getCharacterDefinitions(),
+          eventDefinitionsById: storyContent.eventDefinitionsById,
+          ...(storyContent.eventBindingsById == null
+            ? {}
+            : { eventBindingsById: storyContent.eventBindingsById }),
+          sceneDefinitionsById: storyContent.sceneDefinitionsById,
+          ...(storyContent.activityDefinitionsById == null
+            ? {}
+            : { activityDefinitionsById: storyContent.activityDefinitionsById }),
+          ...(storyContent.textEntriesById == null
+            ? {}
+            : { textEntriesById: storyContent.textEntriesById }),
+        });
+
+        return {
+          handled: true,
+          state: {
+            ...input.state,
+            core: result.state,
+          },
+          characterDefinitions: result.characterDefinitions,
+        };
+      }
+
       if (input.outcome.type === "time.council-threshold-crossed") {
         return applyCouncilPriorityFollowUp({
           state: input.state,

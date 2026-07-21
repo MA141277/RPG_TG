@@ -43,10 +43,12 @@ import {
   appendScriptEditorBuildingArrangement,
   appendScriptEditorBuildingArrangementContainer,
   appendScriptEditorBuildingArrangementContainerActionItem,
+  appendScriptEditorBuildingArrangementLayoutNode,
   appendScriptEditorBuildingArrangementNpc,
   appendScriptEditorAccessCondition,
   appendScriptEditorLocationAttribute,
   appendScriptEditorMenuEntry,
+  readScriptEditorBuildingLayoutRecord,
   listScriptEditorCityBuildingArrangements,
   normalizeScriptEditorBuildingRecord,
   normalizeScriptEditorCityRecord,
@@ -54,18 +56,26 @@ import {
   removeScriptEditorBuildingArrangement,
   removeScriptEditorBuildingArrangementContainer,
   removeScriptEditorBuildingArrangementContainerActionItem,
+  removeScriptEditorBuildingArrangementLayoutNode,
   removeScriptEditorBuildingArrangementNpc,
   removeScriptEditorCityMountedBuilding,
   removeScriptEditorCityMountedBuildingNpc,
   removeScriptEditorLocationAttribute,
   removeScriptEditorMenuEntry,
   SCRIPT_EDITOR_BUILDING_CONTAINER_TYPES,
+  SCRIPT_EDITOR_BUILDING_LAYOUT_ACTION_FILTERS,
+  SCRIPT_EDITOR_BUILDING_LAYOUT_CHARACTER_FILTERS,
+  SCRIPT_EDITOR_BUILDING_LAYOUT_NODE_KINDS,
+  SCRIPT_EDITOR_BUILDING_LAYOUT_TEMPLATE_IDS,
   toggleScriptEditorMenuEntryFlag,
   updateScriptEditorAccessConditionField,
   updateScriptEditorAccessField,
   updateScriptEditorBuildingArrangementContainerActionItemField,
   updateScriptEditorBuildingArrangementContainerField,
   updateScriptEditorBuildingArrangementField,
+  updateScriptEditorBuildingArrangementLayoutField,
+  updateScriptEditorBuildingArrangementLayoutNodeField,
+  updateScriptEditorBuildingArrangementLayoutNodeFlag,
   updateScriptEditorBuildingArrangementNpc,
   updateScriptEditorBuildingArrangementPrimaryNpc,
   updateScriptEditorBuildingEntryBindingField,
@@ -395,10 +405,342 @@ const SCRIPT_EDITOR_RECORD_SEARCH_FAMILY_ATTRIBUTES = {
   storyNodes: 'data-script-editor-record-search-family="storyNodes"',
   dialogues: 'data-script-editor-record-search-family="dialogues"',
   events: 'data-script-editor-record-search-family="events"',
+  scenes: 'data-script-editor-record-search-family="scenes"',
   minigames: 'data-script-editor-record-search-family="minigames"',
   flows: 'data-script-editor-record-search-family="flows"',
   textEntries: 'data-script-editor-record-search-family="textEntries"',
 };
+
+const SCRIPT_EDITOR_SCENE_ACTION_TYPES = [
+  "background",
+  "music",
+  "narration",
+  "dialogue",
+  "choice",
+  "effect",
+  "jump",
+  "start-event",
+  "start-activity",
+  "callback",
+];
+
+const SCRIPT_EDITOR_SCENE_DIALOGUE_SIDES = ["left", "right", "center"];
+
+const SCRIPT_EDITOR_SCENE_ACTION_LABELS = {
+  background: "背景",
+  music: "音乐",
+  narration: "旁白",
+  dialogue: "对话",
+  choice: "选择",
+  effect: "效果",
+  jump: "跳转",
+  "start-event": "启动事件",
+  "start-activity": "启动活动",
+  callback: "回调",
+};
+
+const SCRIPT_EDITOR_SCENE_DIALOGUE_SIDE_LABELS = {
+  left: "左侧",
+  right: "右侧",
+  center: "居中",
+};
+
+function normalizeScriptEditorSceneRequiredString(value) {
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function normalizeScriptEditorSceneOptionalString(value) {
+  if (typeof value !== "string") {
+    return undefined;
+  }
+
+  const normalizedValue = value.trim();
+  return normalizedValue.length === 0 ? undefined : normalizedValue;
+}
+
+function createDefaultScriptEditorSceneAction(type = "narration") {
+  switch (type) {
+    case "background":
+      return { type: "background", backgroundId: "" };
+    case "music":
+      return { type: "music", musicId: "", loop: true };
+    case "dialogue":
+      return {
+        type: "dialogue",
+        characterId: "",
+        side: "left",
+        text: undefined,
+        textId: undefined,
+        portraitId: undefined,
+      };
+    case "choice":
+      return {
+        type: "choice",
+        prompt: undefined,
+        promptTextId: undefined,
+        options: [],
+      };
+    case "effect":
+      return { type: "effect", effects: [] };
+    case "jump":
+      return { type: "jump", nextSceneId: "" };
+    case "start-event":
+      return { type: "start-event", eventId: "" };
+    case "start-activity":
+      return {
+        type: "start-activity",
+        activityId: "",
+        fallbackActivityId: undefined,
+      };
+    case "callback":
+      return {
+        type: "callback",
+        handlerId: "",
+        payload: undefined,
+      };
+    case "narration":
+    default:
+      return {
+        type: "narration",
+        text: undefined,
+        textId: undefined,
+      };
+  }
+}
+
+function normalizeScriptEditorSceneAction(action) {
+  const type = SCRIPT_EDITOR_SCENE_ACTION_TYPES.includes(action?.type)
+    ? action.type
+    : "narration";
+  const baseAction = createDefaultScriptEditorSceneAction(type);
+
+  switch (type) {
+    case "background":
+      return {
+        ...baseAction,
+        backgroundId: normalizeScriptEditorSceneRequiredString(action?.backgroundId),
+      };
+    case "music":
+      return {
+        ...baseAction,
+        musicId: normalizeScriptEditorSceneRequiredString(action?.musicId),
+        loop: action?.loop !== false,
+      };
+    case "dialogue":
+      return {
+        ...baseAction,
+        characterId: normalizeScriptEditorSceneRequiredString(action?.characterId),
+        side: SCRIPT_EDITOR_SCENE_DIALOGUE_SIDES.includes(action?.side) ? action.side : "left",
+        text: normalizeScriptEditorSceneOptionalString(action?.text),
+        textId: normalizeScriptEditorSceneOptionalString(action?.textId),
+        portraitId: normalizeScriptEditorSceneOptionalString(action?.portraitId),
+      };
+    case "choice":
+      return {
+        ...baseAction,
+        prompt: normalizeScriptEditorSceneOptionalString(action?.prompt),
+        promptTextId: normalizeScriptEditorSceneOptionalString(action?.promptTextId),
+        options: Array.isArray(action?.options) ? action.options : [],
+      };
+    case "effect":
+      return {
+        ...baseAction,
+        effects: Array.isArray(action?.effects) ? action.effects : [],
+      };
+    case "jump":
+      return {
+        ...baseAction,
+        nextSceneId: normalizeScriptEditorSceneRequiredString(action?.nextSceneId),
+      };
+    case "start-event":
+      return {
+        ...baseAction,
+        eventId: normalizeScriptEditorSceneRequiredString(action?.eventId),
+      };
+    case "start-activity":
+      return {
+        ...baseAction,
+        activityId: normalizeScriptEditorSceneRequiredString(action?.activityId),
+        fallbackActivityId: normalizeScriptEditorSceneOptionalString(action?.fallbackActivityId),
+      };
+    case "callback":
+      return {
+        ...baseAction,
+        handlerId: normalizeScriptEditorSceneRequiredString(action?.handlerId),
+        payload:
+          action?.payload != null &&
+          typeof action.payload === "object" &&
+          !Array.isArray(action.payload)
+            ? action.payload
+            : undefined,
+      };
+    case "narration":
+    default:
+      return {
+        ...baseAction,
+        text: normalizeScriptEditorSceneOptionalString(action?.text),
+        textId: normalizeScriptEditorSceneOptionalString(action?.textId),
+      };
+  }
+}
+
+function normalizeScriptEditorSceneRecord(scene) {
+  return {
+    ...scene,
+    id: typeof scene?.id === "string" ? scene.id : "",
+    name: typeof scene?.name === "string" ? scene.name : "",
+    actions: Array.isArray(scene?.actions)
+      ? scene.actions.map((action) => normalizeScriptEditorSceneAction(action))
+      : [],
+  };
+}
+
+function updateScriptEditorSceneField(scene, field, value) {
+  const normalizedScene = normalizeScriptEditorSceneRecord(scene);
+
+  if (field === "id") {
+    return {
+      ...normalizedScene,
+      id: normalizeScriptEditorSceneRequiredString(value),
+    };
+  }
+
+  if (field === "name") {
+    return {
+      ...normalizedScene,
+      name: value,
+    };
+  }
+
+  return normalizedScene;
+}
+
+function appendScriptEditorSceneAction(scene, type = "narration") {
+  const normalizedScene = normalizeScriptEditorSceneRecord(scene);
+  const nextType = SCRIPT_EDITOR_SCENE_ACTION_TYPES.includes(type) ? type : "narration";
+  return {
+    ...normalizedScene,
+    actions: [...normalizedScene.actions, createDefaultScriptEditorSceneAction(nextType)],
+  };
+}
+
+function removeScriptEditorSceneAction(scene, index) {
+  const normalizedScene = normalizeScriptEditorSceneRecord(scene);
+  return {
+    ...normalizedScene,
+    actions: normalizedScene.actions.filter((_, actionIndex) => actionIndex !== index),
+  };
+}
+
+function updateScriptEditorSceneActionField(scene, index, field, value) {
+  const normalizedScene = normalizeScriptEditorSceneRecord(scene);
+  const currentAction = normalizedScene.actions[index];
+
+  if (currentAction == null) {
+    return normalizedScene;
+  }
+
+  if (field === "type") {
+    return {
+      ...normalizedScene,
+      actions: normalizedScene.actions.map((action, actionIndex) =>
+        actionIndex === index ? createDefaultScriptEditorSceneAction(value) : action
+      ),
+    };
+  }
+
+  const nextAction = normalizeScriptEditorSceneAction({
+    ...currentAction,
+    [field]:
+      field === "text" || field === "prompt"
+        ? value
+        : normalizeScriptEditorSceneOptionalString(value) ?? "",
+  });
+
+  if (field === "text" || field === "prompt") {
+    nextAction[field] = normalizeScriptEditorSceneOptionalString(value);
+  } else if (field === "loop") {
+    nextAction.loop = value === true;
+  }
+
+  return {
+    ...normalizedScene,
+    actions: normalizedScene.actions.map((action, actionIndex) =>
+      actionIndex === index ? nextAction : action
+    ),
+  };
+}
+
+function updateScriptEditorSceneActionJsonField(scene, index, field, value) {
+  const normalizedScene = normalizeScriptEditorSceneRecord(scene);
+  const currentAction = normalizedScene.actions[index];
+
+  if (currentAction == null) {
+    return normalizedScene;
+  }
+
+  if (field === "options") {
+    const nextOptions = value.trim().length === 0 ? [] : JSON.parse(value);
+    if (!Array.isArray(nextOptions)) {
+      throw new Error("场景选择项必须是数组。");
+    }
+
+    return {
+      ...normalizedScene,
+      actions: normalizedScene.actions.map((action, actionIndex) =>
+        actionIndex === index
+          ? normalizeScriptEditorSceneAction({
+              ...currentAction,
+              options: nextOptions,
+            })
+          : action
+      ),
+    };
+  }
+
+  if (field === "effects") {
+    const nextEffects = value.trim().length === 0 ? [] : JSON.parse(value);
+    if (!Array.isArray(nextEffects)) {
+      throw new Error("场景效果列表必须是数组。");
+    }
+
+    return {
+      ...normalizedScene,
+      actions: normalizedScene.actions.map((action, actionIndex) =>
+        actionIndex === index
+          ? normalizeScriptEditorSceneAction({
+              ...currentAction,
+              effects: nextEffects,
+            })
+          : action
+      ),
+    };
+  }
+
+  if (field === "payload") {
+    const nextPayload = value.trim().length === 0 ? undefined : JSON.parse(value);
+    if (
+      nextPayload !== undefined &&
+      (nextPayload == null || Array.isArray(nextPayload) || typeof nextPayload !== "object")
+    ) {
+      throw new Error("场景回调参数结构必须是对象。");
+    }
+
+    return {
+      ...normalizedScene,
+      actions: normalizedScene.actions.map((action, actionIndex) =>
+        actionIndex === index
+          ? normalizeScriptEditorSceneAction({
+              ...currentAction,
+              payload: nextPayload,
+            })
+          : action
+      ),
+    };
+  }
+
+  return normalizedScene;
+}
 
 export class MainUiFlow {
   constructor(options) {
@@ -837,6 +1179,10 @@ export class MainUiFlow {
       return this.renderScriptEditorDialogueEditor(records, selectedRecord);
     }
 
+    if (family === "scenes") {
+      return this.renderScriptEditorScenesEditor(records, selectedRecord);
+    }
+
     if (family === "events") {
       return this.renderScriptEditorEventEditor(records, selectedRecord);
     }
@@ -924,6 +1270,207 @@ export class MainUiFlow {
               data-script-editor-record-json
               spellcheck="false"
             >${escapeHtml(selectedRecordJson)}</textarea>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  renderScriptEditorScenesEditor(records, selectedRecord) {
+    {
+      const filteredRecords = this.filterScriptEditorRecords("scenes", records);
+      const scene =
+        selectedRecord == null ? null : normalizeScriptEditorSceneRecord(selectedRecord);
+      const sceneActionCount = scene?.actions.length ?? 0;
+      const firstActionType =
+        scene != null && scene.actions.length > 0 && typeof scene.actions[0]?.type === "string"
+          ? SCRIPT_EDITOR_SCENE_ACTION_LABELS[scene.actions[0].type] ?? scene.actions[0].type
+          : "未设置";
+
+      return `
+        <div class="c-script-editor-editor-card">
+          <div class="c-script-editor-record-layout c-script-editor-record-layout--narrative">
+            ${this.renderScriptEditorPaginatedRecordList({
+              family: "scenes",
+              records: filteredRecords,
+              ariaLabel: "场景列表",
+              modifierClass: "c-script-editor-record-list--narrative",
+              toolbar: `
+                <div class="c-script-editor-record-list__toolbar">
+                  ${this.renderScriptEditorRecordListSearch("scenes", "搜索场景", "按场景名称、标题或 ID 搜索")}
+                  <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="add-record">
+                    新增场景
+                  </button>
+                  <button
+                    type="button"
+                    class="c-main-ui-json-text-button"
+                    data-script-editor-action="remove-record"
+                    ${scene == null ? "disabled" : ""}
+                  >
+                    删除场景
+                  </button>
+                </div>
+              `,
+              renderRecord: (record) => `
+                <button
+                  type="button"
+                  class="c-script-editor-record-list__item c-script-editor-record-list__item--narrative ${record.id === scene?.id ? "is-selected" : ""}"
+                  data-script-editor-record-id="${escapeHtml(record.id)}"
+                >
+                  <strong>${escapeHtml(this.getScriptEditorRecordLabel(record))}</strong>
+                  <span>${escapeHtml(record.id)}</span>
+                </button>
+              `,
+            })}
+            <div class="c-script-editor-record-editor">
+              <!-- SCRIPT_EDITOR_INSPECTOR_SLOT -->
+              <!-- SCRIPT_EDITOR_INSPECTOR_SUPPRESS_TEXT -->
+              ${
+                scene == null
+                  ? `<p class="c-script-editor-editor-card__hint">请选择一个场景后继续编辑。场景只负责演出内容本体，建筑进入触发仍通过事件绑定与事件链路接入，不在这里写建筑硬编码逻辑。</p>`
+                  : `
+                    <div class="c-script-editor-shell__cards">
+                      ${this.renderScriptEditorOverviewCard("场景", this.getScriptEditorRecordLabel(scene), "neutral")}
+                      ${this.renderScriptEditorOverviewCard("动作数", String(sceneActionCount), "neutral")}
+                      ${this.renderScriptEditorOverviewCard("首动作", firstActionType, "neutral")}
+                    </div>
+                    <section class="c-script-editor-narrative-panel" aria-label="场景基础信息">
+                      <div class="c-script-editor-form-grid">
+                        <label class="c-script-editor-form-field">
+                          <span>场景名称</span>
+                          <input
+                            class="c-script-editor-form-field__input"
+                            type="text"
+                            value="${escapeHtml(scene.name)}"
+                            data-script-editor-scene-field="name"
+                          />
+                        </label>
+                      </div>
+                      ${this.renderScriptEditorSystemDetails(
+                        "高级设置与系统信息",
+                        "场景只负责演出步骤、页面播放与后续跳转标识；入口触发仍由事件绑定与事件决定。",
+                        `
+                          <div class="c-script-editor-form-grid">
+                            <label class="c-script-editor-form-field">
+                            <span>场景编号</span>
+                              <input
+                                class="c-script-editor-form-field__input"
+                                type="text"
+                                value="${escapeHtml(scene.id)}"
+                                data-script-editor-scene-field="id"
+                              />
+                            </label>
+                          </div>
+                        `
+                      )}
+                    </section>
+                    <section class="c-script-editor-narrative-panel" aria-label="场景动作列表">
+                      <div class="c-script-editor-narrative-panel__header">
+                        <div>
+                          <p class="c-script-editor-editor-card__eyebrow">场景动作</p>
+                          <h3 class="c-script-editor-editor-card__title">结构化演出步骤</h3>
+                        </div>
+                        <button
+                          type="button"
+                          class="c-main-ui-json-text-button"
+                          data-script-editor-action="add-scene-action"
+                        >
+                          新增动作
+                        </button>
+                      </div>
+                    <p class="c-script-editor-editor-card__hint">
+                      这里优先提供创作者可直接理解的字段和引用选择器；只在复杂参数结构处保留受限结构输入，为后续预览态的拖拽、选中与点击配置扩展留出通用边界。
+                    </p>
+                    <div class="c-script-editor-narrative-list">
+                      ${
+                        scene.actions.length === 0
+                          ? `<p class="c-script-editor-editor-card__hint">当前还没有动作步骤。可以先新增旁白、对话、跳转等基础演出节点。</p>`
+                          : scene.actions
+                              .map((action, index) =>
+                                this.renderScriptEditorSceneActionEditor(action, index)
+                                )
+                                .join("")
+                        }
+                      </div>
+                    </section>
+                  `
+              }
+            </div>
+          </div>
+        </div>
+      `;
+    }
+    const filteredRecords = this.filterScriptEditorRecords("scenes", records);
+    const sceneActionCount = Array.isArray(selectedRecord?.actions)
+      ? selectedRecord.actions.length
+      : 0;
+    const firstActionType =
+      selectedRecord != null &&
+      Array.isArray(selectedRecord.actions) &&
+      typeof selectedRecord.actions[0]?.type === "string"
+        ? selectedRecord.actions[0].type
+        : "未设置";
+
+    return `
+      <div class="c-script-editor-editor-card">
+        <div class="c-script-editor-record-layout c-script-editor-record-layout--narrative">
+          ${this.renderScriptEditorPaginatedRecordList({
+            family: "scenes",
+            records: filteredRecords,
+            ariaLabel: "场景列表",
+            modifierClass: "c-script-editor-record-list--narrative",
+            toolbar: `
+              <div class="c-script-editor-record-list__toolbar">
+                ${this.renderScriptEditorRecordListSearch("scenes", "搜索场景", "按场景名称、标题或 ID 搜索")}
+                <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="add-record">
+                  新增场景
+                </button>
+                <button
+                  type="button"
+                  class="c-main-ui-json-text-button"
+                  data-script-editor-action="remove-record"
+                  ${selectedRecord == null ? "disabled" : ""}
+                >
+                  删除场景
+                </button>
+              </div>
+            `,
+            renderRecord: (record) => `
+              <button
+                type="button"
+                class="c-script-editor-record-list__item c-script-editor-record-list__item--narrative ${record.id === selectedRecord?.id ? "is-selected" : ""}"
+                data-script-editor-record-id="${escapeHtml(record.id)}"
+              >
+                <strong>${escapeHtml(this.getScriptEditorRecordLabel(record))}</strong>
+                <span>${escapeHtml(record.id)}</span>
+              </button>
+            `,
+          })}
+          <div class="c-script-editor-record-editor">
+            <!-- SCRIPT_EDITOR_INSPECTOR_SLOT -->
+            <!-- SCRIPT_EDITOR_INSPECTOR_SUPPRESS_TEXT -->
+            ${
+              selectedRecord == null
+                ? `<p class="c-script-editor-editor-card__hint">请选择一个场景后继续编辑。场景作者面只负责 scene 本体数据，触发关系仍通过 event binding / event 链接，不在这里硬编码建筑逻辑。</p>`
+                : `
+                  <div class="c-script-editor-shell__cards">
+                    ${this.renderScriptEditorOverviewCard("场景", this.getScriptEditorRecordLabel(selectedRecord), "neutral")}
+                    ${this.renderScriptEditorOverviewCard("动作数", String(sceneActionCount), "neutral")}
+                    ${this.renderScriptEditorOverviewCard("首动作", firstActionType, "neutral")}
+                  </div>
+                  <p class="c-script-editor-editor-card__hint">当前作者面保留通用 JSON 边界，便于后续继续扩展场景预览、组件选中与布局写回，而不引入新的运行时硬编码。</p>
+                  <textarea
+                    class="c-script-editor-record-editor__textarea"
+                    data-script-editor-record-json
+                    spellcheck="false"
+                  >${escapeHtml(JSON.stringify(selectedRecord, null, 2))}</textarea>
+                  <div class="c-script-editor-editor-card__actions">
+                    <button type="button" class="c-main-ui-json-text-button c-main-ui-json-text-button--accent" data-script-editor-action="apply-record-json">
+                      应用场景
+                    </button>
+                  </div>
+                `
+            }
           </div>
         </div>
       </div>
@@ -2230,6 +2777,40 @@ export class MainUiFlow {
         )
         .join("")}
     `;
+    const readArrangementLayout = (arrangement) =>
+      readScriptEditorBuildingLayoutRecord(arrangement.layout);
+    const renderLayoutTemplateOptions = (selectedTemplateId) =>
+      SCRIPT_EDITOR_BUILDING_LAYOUT_TEMPLATE_IDS.map(
+        (templateId) => `
+          <option value="${escapeHtml(templateId)}" ${templateId === selectedTemplateId ? "selected" : ""}>${escapeHtml(templateId)}</option>
+        `
+      ).join("");
+    const renderOptionalContainerTypeOptions = (selectedType = "") => `
+      <option value="">Auto</option>
+      ${renderContainerTypeOptions(selectedType)}
+    `;
+    const renderLayoutNodeKindOptions = (selectedKind) =>
+      SCRIPT_EDITOR_BUILDING_LAYOUT_NODE_KINDS.map(
+        (kind) => `
+          <option value="${escapeHtml(kind)}" ${kind === selectedKind ? "selected" : ""}>${escapeHtml(kind)}</option>
+        `
+      ).join("");
+    const renderLayoutCharacterFilterOptions = (selectedFilter = "") => `
+      <option value="">Unset</option>
+      ${SCRIPT_EDITOR_BUILDING_LAYOUT_CHARACTER_FILTERS.map(
+        (filter) => `
+          <option value="${escapeHtml(filter)}" ${filter === selectedFilter ? "selected" : ""}>${escapeHtml(filter)}</option>
+        `
+      ).join("")}
+    `;
+    const renderLayoutActionFilterOptions = (selectedFilter = "") => `
+      <option value="">Unset</option>
+      ${SCRIPT_EDITOR_BUILDING_LAYOUT_ACTION_FILTERS.map(
+        (filter) => `
+          <option value="${escapeHtml(filter)}" ${filter === selectedFilter ? "selected" : ""}>${escapeHtml(filter)}</option>
+        `
+      ).join("")}
+    `;
 
     return `
       <section class="c-script-editor-location-attributes" aria-label="Building Arrangement">
@@ -2291,6 +2872,9 @@ export class MainUiFlow {
                     <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="add-building-arrangement-npc" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}">
                       Add NPC
                     </button>
+                    <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="add-building-layout-node" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}">
+                      Add Layout Node
+                    </button>
                     <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="add-building-arrangement-container" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}">
                       Add Container
                     </button>
@@ -2298,6 +2882,103 @@ export class MainUiFlow {
                       Remove Arrangement
                     </button>
                   </div>
+                  ${(() => {
+                    const layout = readArrangementLayout(arrangement);
+                    return `
+                      <article class="c-script-editor-location-menu__item">
+                        <header class="c-script-editor-location-menu__header">
+                          <div>
+                            <h4 class="c-script-editor-editor-card__title">Layout</h4>
+                          </div>
+                        </header>
+                        <div class="c-script-editor-form-grid">
+                          <label class="c-script-editor-form-field">
+                            <span>Template</span>
+                            <select class="c-script-editor-form-field__input" data-script-editor-building-layout-field="templateId" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}">
+                              ${renderLayoutTemplateOptions(layout.templateId)}
+                            </select>
+                          </label>
+                          <label class="c-script-editor-form-field">
+                            <span>Shell Classes</span>
+                            <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml((layout.shellClassNames ?? []).join(", "))}" data-script-editor-building-layout-field="shellClassNames" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}" />
+                          </label>
+                        </div>
+                        <div class="c-script-editor-location-menu__list">
+                          ${(layout.nodes ?? [])
+                            .map(
+                              (node, nodeIndex) => `
+                                <article class="c-script-editor-location-menu__item">
+                                  <div class="c-script-editor-form-grid">
+                                    <label class="c-script-editor-form-field">
+                                      <span>Node ID</span>
+                                      <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(node.id)}" data-script-editor-building-layout-node-field="id" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}" data-script-editor-building-layout-node-index="${nodeIndex}" />
+                                    </label>
+                                    <label class="c-script-editor-form-field">
+                                      <span>Kind</span>
+                                      <select class="c-script-editor-form-field__input" data-script-editor-building-layout-node-field="kind" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}" data-script-editor-building-layout-node-index="${nodeIndex}">
+                                        ${renderLayoutNodeKindOptions(node.kind)}
+                                      </select>
+                                    </label>
+                                    <label class="c-script-editor-form-field">
+                                      <span>Region ID</span>
+                                      <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(node.regionId)}" data-script-editor-building-layout-node-field="regionId" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}" data-script-editor-building-layout-node-index="${nodeIndex}" />
+                                    </label>
+                                    <label class="c-script-editor-form-field">
+                                      <span>Source Container Type</span>
+                                      <select class="c-script-editor-form-field__input" data-script-editor-building-layout-node-field="sourceContainerType" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}" data-script-editor-building-layout-node-index="${nodeIndex}">
+                                        ${renderOptionalContainerTypeOptions(node.sourceContainerType ?? "")}
+                                      </select>
+                                    </label>
+                                    <label class="c-script-editor-form-field">
+                                      <span>Source Container ID</span>
+                                      <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(node.sourceContainerId ?? "")}" data-script-editor-building-layout-node-field="sourceContainerId" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}" data-script-editor-building-layout-node-index="${nodeIndex}" />
+                                    </label>
+                                    <label class="c-script-editor-form-field">
+                                      <span>Presentation</span>
+                                      <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(node.presentation ?? "")}" data-script-editor-building-layout-node-field="presentation" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}" data-script-editor-building-layout-node-index="${nodeIndex}" />
+                                    </label>
+                                    <label class="c-script-editor-form-field">
+                                      <span>Character Filter</span>
+                                      <select class="c-script-editor-form-field__input" data-script-editor-building-layout-node-field="characterFilter" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}" data-script-editor-building-layout-node-index="${nodeIndex}">
+                                        ${renderLayoutCharacterFilterOptions(node.characterFilter ?? "")}
+                                      </select>
+                                    </label>
+                                    <label class="c-script-editor-form-field">
+                                      <span>Action Filter</span>
+                                      <select class="c-script-editor-form-field__input" data-script-editor-building-layout-node-field="actionFilter" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}" data-script-editor-building-layout-node-index="${nodeIndex}">
+                                        ${renderLayoutActionFilterOptions(node.actionFilter ?? "")}
+                                      </select>
+                                    </label>
+                                    <label class="c-script-editor-form-field">
+                                      <span>Click Action ID</span>
+                                      <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(node.clickActionId ?? "")}" data-script-editor-building-layout-node-field="clickActionId" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}" data-script-editor-building-layout-node-index="${nodeIndex}" />
+                                    </label>
+                                  </div>
+                                  <div class="c-script-editor-location-menu__toggles">
+                                    <label class="c-script-editor-form-field">
+                                      <span>Preview Selectable</span>
+                                      <input type="checkbox" ${node.previewSelectable === true ? "checked" : ""} data-script-editor-building-layout-node-flag="previewSelectable" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}" data-script-editor-building-layout-node-index="${nodeIndex}" />
+                                    </label>
+                                    <label class="c-script-editor-form-field">
+                                      <span>Preview Draggable</span>
+                                      <input type="checkbox" ${node.previewDraggable === true ? "checked" : ""} data-script-editor-building-layout-node-flag="previewDraggable" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}" data-script-editor-building-layout-node-index="${nodeIndex}" />
+                                    </label>
+                                    <label class="c-script-editor-form-field">
+                                      <span>Preview Drop Target</span>
+                                      <input type="checkbox" ${node.previewDropTarget === true ? "checked" : ""} data-script-editor-building-layout-node-flag="previewDropTarget" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}" data-script-editor-building-layout-node-index="${nodeIndex}" />
+                                    </label>
+                                    <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="remove-building-layout-node" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}" data-script-editor-building-layout-node-index="${nodeIndex}">
+                                      Remove Layout Node
+                                    </button>
+                                  </div>
+                                </article>
+                              `
+                            )
+                            .join("")}
+                        </div>
+                      </article>
+                    `;
+                  })()}
                   <div class="c-script-editor-location-menu__list">
                     ${arrangement.containers
                       .map(
@@ -2849,34 +3530,19 @@ export class MainUiFlow {
   renderScriptEditorBuildingEntryPanel(location) {
     const entryBinding = location.entryBinding ?? {
       defaultPersonId: "",
-      onEnterEventId: "",
-      onLeaveEventId: "",
       returnTarget: "city",
     };
-    const eventOptions = this.getScriptEditorProjectRecordOptions("events");
     const personOptions = this.getScriptEditorProjectRecordOptions("people");
     return `
       <section class="c-script-editor-location-panel" aria-label="建筑入口分栏">
         <p class="c-script-editor-editor-card__hint">
-          建筑入口挂接只声明默认落点和进入/离开事件引用，不在这里展开正式事件编辑项。
+          建筑入口分栏只声明默认落点和返回目标；进入建筑后的剧情/功能触发统一改由 arrangement / eventBindings 处理，不再保留 building-local 入口事件字段。
         </p>
         <div class="c-script-editor-form-grid">
           <label class="c-script-editor-form-field">
             <span>默认落点人物</span>
             <select class="c-script-editor-form-field__input" data-script-editor-building-entry-field="defaultPersonId">
               ${this.renderScriptEditorSelectOptions(personOptions, entryBinding.defaultPersonId, "未选择默认落点人物")}
-            </select>
-          </label>
-          <label class="c-script-editor-form-field">
-            <span>进入建筑事件</span>
-            <select class="c-script-editor-form-field__input" data-script-editor-building-entry-field="onEnterEventId">
-              ${this.renderScriptEditorSelectOptions(eventOptions, entryBinding.onEnterEventId, "未选择进入建筑事件")}
-            </select>
-          </label>
-          <label class="c-script-editor-form-field">
-            <span>离开建筑事件</span>
-            <select class="c-script-editor-form-field__input" data-script-editor-building-entry-field="onLeaveEventId">
-              ${this.renderScriptEditorSelectOptions(eventOptions, entryBinding.onLeaveEventId, "未选择离开建筑事件")}
             </select>
           </label>
           <label class="c-script-editor-form-field">
@@ -3544,6 +4210,201 @@ export class MainUiFlow {
     `;
   }
 
+  renderScriptEditorSceneActionEditor(action, index) {
+    const textEntryOptions = this.createScriptEditorTextEntryReferenceOptions();
+    const personOptions = this.createScriptEditorPersonReferenceOptions();
+    const eventOptions = this.createScriptEditorEventReferenceOptions();
+    const sceneOptions = this.createScriptEditorSceneReferenceOptions();
+    const activityOptions = this.createScriptEditorActivityReferenceOptions();
+    const actionLabel = SCRIPT_EDITOR_SCENE_ACTION_LABELS[action.type] ?? action.type;
+
+    let body = "";
+
+    if (action.type === "background") {
+      body = `
+        <div class="c-script-editor-form-grid">
+          <label class="c-script-editor-form-field c-script-editor-form-field--wide">
+            <span>背景编号</span>
+            <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(action.backgroundId ?? "")}" data-script-editor-scene-action-field="backgroundId" data-script-editor-scene-action-index="${index}" />
+          </label>
+        </div>
+      `;
+    } else if (action.type === "music") {
+      body = `
+        <div class="c-script-editor-form-grid">
+          <label class="c-script-editor-form-field">
+            <span>音乐编号</span>
+            <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(action.musicId ?? "")}" data-script-editor-scene-action-field="musicId" data-script-editor-scene-action-index="${index}" />
+          </label>
+          <label class="c-script-editor-person-editor__toggle">
+            <input type="checkbox" data-script-editor-scene-action-flag="loop" data-script-editor-scene-action-index="${index}" ${action.loop !== false ? "checked" : ""} />
+            <span>循环播放</span>
+          </label>
+        </div>
+      `;
+    } else if (action.type === "narration") {
+      body = `
+        <div class="c-script-editor-form-grid">
+          <label class="c-script-editor-form-field">
+            <span>文本条目编号</span>
+            <select class="c-script-editor-form-field__input" data-script-editor-scene-action-field="textId" data-script-editor-scene-action-index="${index}">
+              ${this.renderScriptEditorSelectOptions(textEntryOptions, action.textId ?? "", "未选择文本")}
+            </select>
+          </label>
+          <label class="c-script-editor-form-field c-script-editor-form-field--wide">
+            <span>直接文本</span>
+            <textarea class="c-script-editor-record-editor__textarea c-script-editor-record-editor__textarea--compact" data-script-editor-scene-action-field="text" data-script-editor-scene-action-index="${index}" spellcheck="false">${escapeHtml(action.text ?? "")}</textarea>
+          </label>
+        </div>
+      `;
+    } else if (action.type === "dialogue") {
+      body = `
+        <div class="c-script-editor-form-grid">
+          <label class="c-script-editor-form-field">
+            <span>人物编号</span>
+            <select class="c-script-editor-form-field__input" data-script-editor-scene-action-field="characterId" data-script-editor-scene-action-index="${index}">
+              ${this.renderScriptEditorSelectOptions(personOptions, action.characterId ?? "", "未选择人物")}
+            </select>
+          </label>
+          <label class="c-script-editor-form-field">
+            <span>出现位置</span>
+            <select class="c-script-editor-form-field__input" data-script-editor-scene-action-field="side" data-script-editor-scene-action-index="${index}">
+              ${SCRIPT_EDITOR_SCENE_DIALOGUE_SIDES.map(
+                (side) =>
+                  `<option value="${side}" ${action.side === side ? "selected" : ""}>${SCRIPT_EDITOR_SCENE_DIALOGUE_SIDE_LABELS[side] ?? side}</option>`
+              ).join("")}
+            </select>
+          </label>
+          <label class="c-script-editor-form-field">
+            <span>文本条目编号</span>
+            <select class="c-script-editor-form-field__input" data-script-editor-scene-action-field="textId" data-script-editor-scene-action-index="${index}">
+              ${this.renderScriptEditorSelectOptions(textEntryOptions, action.textId ?? "", "未选择文本")}
+            </select>
+          </label>
+          <label class="c-script-editor-form-field">
+            <span>立绘编号</span>
+            <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(action.portraitId ?? "")}" data-script-editor-scene-action-field="portraitId" data-script-editor-scene-action-index="${index}" />
+          </label>
+          <label class="c-script-editor-form-field c-script-editor-form-field--wide">
+            <span>直接对话文本</span>
+            <textarea class="c-script-editor-record-editor__textarea c-script-editor-record-editor__textarea--compact" data-script-editor-scene-action-field="text" data-script-editor-scene-action-index="${index}" spellcheck="false">${escapeHtml(action.text ?? "")}</textarea>
+          </label>
+        </div>
+      `;
+    } else if (action.type === "choice") {
+      body = `
+        <div class="c-script-editor-form-grid">
+          <label class="c-script-editor-form-field">
+            <span>提示文本条目编号</span>
+            <select class="c-script-editor-form-field__input" data-script-editor-scene-action-field="promptTextId" data-script-editor-scene-action-index="${index}">
+              ${this.renderScriptEditorSelectOptions(textEntryOptions, action.promptTextId ?? "", "未选择文本")}
+            </select>
+          </label>
+          <label class="c-script-editor-form-field c-script-editor-form-field--wide">
+            <span>直接提示文本</span>
+            <textarea class="c-script-editor-record-editor__textarea c-script-editor-record-editor__textarea--compact" data-script-editor-scene-action-field="prompt" data-script-editor-scene-action-index="${index}" spellcheck="false">${escapeHtml(action.prompt ?? "")}</textarea>
+          </label>
+          <label class="c-script-editor-form-field c-script-editor-form-field--wide">
+            <span>选项结构</span>
+            <textarea class="c-script-editor-record-editor__textarea c-script-editor-record-editor__textarea--compact" data-script-editor-scene-action-json-field="options" data-script-editor-scene-action-index="${index}" spellcheck="false">${escapeHtml(JSON.stringify(action.options ?? [], null, 2))}</textarea>
+          </label>
+        </div>
+      `;
+    } else if (action.type === "effect") {
+      body = `
+        <div class="c-script-editor-form-grid">
+          <label class="c-script-editor-form-field c-script-editor-form-field--wide">
+            <span>效果列表结构</span>
+            <textarea class="c-script-editor-record-editor__textarea c-script-editor-record-editor__textarea--compact" data-script-editor-scene-action-json-field="effects" data-script-editor-scene-action-index="${index}" spellcheck="false">${escapeHtml(JSON.stringify(action.effects ?? [], null, 2))}</textarea>
+          </label>
+        </div>
+      `;
+    } else if (action.type === "jump") {
+      body = `
+        <div class="c-script-editor-form-grid">
+          <label class="c-script-editor-form-field">
+            <span>下一场景</span>
+            <select class="c-script-editor-form-field__input" data-script-editor-scene-action-field="nextSceneId" data-script-editor-scene-action-index="${index}">
+              ${this.renderScriptEditorSelectOptions(sceneOptions, action.nextSceneId ?? "", "未选择下一场景")}
+            </select>
+          </label>
+        </div>
+      `;
+    } else if (action.type === "start-event") {
+      body = `
+        <div class="c-script-editor-form-grid">
+          <label class="c-script-editor-form-field">
+            <span>事件编号</span>
+            <select class="c-script-editor-form-field__input" data-script-editor-scene-action-field="eventId" data-script-editor-scene-action-index="${index}">
+              ${this.renderScriptEditorSelectOptions(eventOptions, action.eventId ?? "", "未选择事件")}
+            </select>
+          </label>
+        </div>
+      `;
+    } else if (action.type === "start-activity") {
+      body = `
+        <div class="c-script-editor-form-grid">
+          <label class="c-script-editor-form-field">
+            <span>活动编号</span>
+            <select class="c-script-editor-form-field__input" data-script-editor-scene-action-field="activityId" data-script-editor-scene-action-index="${index}">
+              ${this.renderScriptEditorSelectOptions(activityOptions, action.activityId ?? "", "未选择活动")}
+            </select>
+          </label>
+          <label class="c-script-editor-form-field">
+            <span>回落活动编号</span>
+            <select class="c-script-editor-form-field__input" data-script-editor-scene-action-field="fallbackActivityId" data-script-editor-scene-action-index="${index}">
+              ${this.renderScriptEditorSelectOptions(activityOptions, action.fallbackActivityId ?? "", "未选择回落活动")}
+            </select>
+          </label>
+        </div>
+      `;
+    } else if (action.type === "callback") {
+      body = `
+        <div class="c-script-editor-form-grid">
+          <label class="c-script-editor-form-field">
+            <span>回调处理器编号</span>
+            <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(action.handlerId ?? "")}" data-script-editor-scene-action-field="handlerId" data-script-editor-scene-action-index="${index}" />
+          </label>
+          <label class="c-script-editor-form-field c-script-editor-form-field--wide">
+            <span>回调参数结构</span>
+            <textarea class="c-script-editor-record-editor__textarea c-script-editor-record-editor__textarea--compact" data-script-editor-scene-action-json-field="payload" data-script-editor-scene-action-index="${index}" spellcheck="false">${escapeHtml(action.payload == null ? "" : JSON.stringify(action.payload, null, 2))}</textarea>
+          </label>
+        </div>
+      `;
+    }
+
+    return `
+      <article class="c-script-editor-narrative-item">
+        <div class="c-script-editor-narrative-panel__header">
+          <div>
+            <p class="c-script-editor-editor-card__eyebrow">动作 ${index + 1}</p>
+            <h3 class="c-script-editor-editor-card__title">${escapeHtml(actionLabel)}</h3>
+          </div>
+          <button
+            type="button"
+            class="c-main-ui-json-text-button"
+            data-script-editor-action="remove-scene-action"
+            data-script-editor-scene-action-index="${index}"
+          >
+            删除动作
+          </button>
+        </div>
+        <div class="c-script-editor-form-grid">
+          <label class="c-script-editor-form-field">
+            <span>动作类型</span>
+            <select class="c-script-editor-form-field__input" data-script-editor-scene-action-field="type" data-script-editor-scene-action-index="${index}">
+              ${SCRIPT_EDITOR_SCENE_ACTION_TYPES.map(
+                (type) =>
+                  `<option value="${type}" ${action.type === type ? "selected" : ""}>${SCRIPT_EDITOR_SCENE_ACTION_LABELS[type] ?? type}</option>`
+              ).join("")}
+            </select>
+          </label>
+        </div>
+        ${body}
+      </article>
+    `;
+  }
+
   createScriptEditorPersonReferenceOptions() {
     return (this.scriptEditorProject?.people ?? []).map((person) => ({
       value: person.id,
@@ -3572,6 +4433,20 @@ export class MainUiFlow {
     return (this.scriptEditorProject?.events ?? []).map((eventRecord) => ({
       value: eventRecord.id,
       label: `${eventRecord.title ?? eventRecord.name ?? eventRecord.id} (${eventRecord.id})`,
+    }));
+  }
+
+  createScriptEditorSceneReferenceOptions() {
+    return (this.scriptEditorProject?.scenes ?? []).map((scene) => ({
+      value: scene.id,
+      label: `${scene.name ?? scene.title ?? scene.id} (${scene.id})`,
+    }));
+  }
+
+  createScriptEditorActivityReferenceOptions() {
+    return (this.scriptEditorProject?.activities ?? []).map((activity) => ({
+      value: activity.id,
+      label: `${activity.label ?? activity.name ?? activity.id} (${activity.id})`,
     }));
   }
 
@@ -5192,6 +6067,77 @@ export class MainUiFlow {
       return;
     }
 
+    if (target.matches("[data-script-editor-scene-field]")) {
+      const field = target.dataset.scriptEditorSceneField;
+      if (field === "id" || field === "name") {
+        this.applyScriptEditorSceneField(field, target.value);
+      }
+      return;
+    }
+
+    if (target.matches("[data-script-editor-scene-action-field]")) {
+      const field = target.dataset.scriptEditorSceneActionField;
+      const index = Number.parseInt(
+        target.dataset.scriptEditorSceneActionIndex ?? "-1",
+        10
+      );
+      if (
+        [
+          "type",
+          "backgroundId",
+          "musicId",
+          "text",
+          "textId",
+          "characterId",
+          "side",
+          "portraitId",
+          "prompt",
+          "promptTextId",
+          "nextSceneId",
+          "eventId",
+          "activityId",
+          "fallbackActivityId",
+          "handlerId",
+        ].includes(field ?? "") &&
+        Number.isInteger(index) &&
+        index >= 0
+      ) {
+        this.applyScriptEditorSceneActionField(index, field, target.value);
+      }
+      return;
+    }
+
+    if (target.matches("[data-script-editor-scene-action-json-field]")) {
+      const field = target.dataset.scriptEditorSceneActionJsonField;
+      const index = Number.parseInt(
+        target.dataset.scriptEditorSceneActionIndex ?? "-1",
+        10
+      );
+      if (
+        ["options", "effects", "payload"].includes(field ?? "") &&
+        Number.isInteger(index) &&
+        index >= 0
+      ) {
+        this.applyScriptEditorSceneActionJsonField(index, field, target.value);
+      }
+      return;
+    }
+
+    if (
+      target instanceof globalThis.HTMLInputElement &&
+      target.matches("[data-script-editor-scene-action-flag]")
+    ) {
+      const field = target.dataset.scriptEditorSceneActionFlag;
+      const index = Number.parseInt(
+        target.dataset.scriptEditorSceneActionIndex ?? "-1",
+        10
+      );
+      if (field === "loop" && Number.isInteger(index) && index >= 0) {
+        this.applyScriptEditorSceneActionField(index, "loop", target.checked);
+      }
+      return;
+    }
+
     if (target.matches("[data-script-editor-dialogue-node-field]")) {
       const field = target.dataset.scriptEditorDialogueNodeField;
       const index = Number.parseInt(
@@ -5491,6 +6437,51 @@ export class MainUiFlow {
       return;
     }
 
+    if (target.matches("[data-script-editor-building-layout-field]")) {
+      const arrangementId = target.dataset.scriptEditorBuildingArrangementId ?? "";
+      const field = target.dataset.scriptEditorBuildingLayoutField;
+      if (
+        arrangementId.length > 0 &&
+        ["templateId", "shellClassNames"].includes(field ?? "")
+      ) {
+        this.applyScriptEditorBuildingLayoutField(arrangementId, field, target.value);
+      }
+      return;
+    }
+
+    if (target.matches("[data-script-editor-building-layout-node-field]")) {
+      const arrangementId = target.dataset.scriptEditorBuildingArrangementId ?? "";
+      const nodeIndex = Number.parseInt(
+        target.dataset.scriptEditorBuildingLayoutNodeIndex ?? "-1",
+        10
+      );
+      const field = target.dataset.scriptEditorBuildingLayoutNodeField;
+      if (
+        arrangementId.length > 0 &&
+        Number.isInteger(nodeIndex) &&
+        nodeIndex >= 0 &&
+        [
+          "id",
+          "kind",
+          "regionId",
+          "sourceContainerId",
+          "sourceContainerType",
+          "presentation",
+          "characterFilter",
+          "actionFilter",
+          "clickActionId",
+        ].includes(field ?? "")
+      ) {
+        this.applyScriptEditorBuildingLayoutNodeField(
+          arrangementId,
+          nodeIndex,
+          field,
+          target.value
+        );
+      }
+      return;
+    }
+
     if (target.matches("[data-script-editor-building-container-field]")) {
       const arrangementId = target.dataset.scriptEditorBuildingArrangementId ?? "";
       const containerIndex = Number.parseInt(
@@ -5509,6 +6500,34 @@ export class MainUiFlow {
           containerIndex,
           field,
           target.value
+        );
+      }
+      return;
+    }
+
+    if (
+      target instanceof globalThis.HTMLInputElement &&
+      target.matches("[data-script-editor-building-layout-node-flag]")
+    ) {
+      const arrangementId = target.dataset.scriptEditorBuildingArrangementId ?? "";
+      const nodeIndex = Number.parseInt(
+        target.dataset.scriptEditorBuildingLayoutNodeIndex ?? "-1",
+        10
+      );
+      const field = target.dataset.scriptEditorBuildingLayoutNodeFlag;
+      if (
+        arrangementId.length > 0 &&
+        Number.isInteger(nodeIndex) &&
+        nodeIndex >= 0 &&
+        ["previewSelectable", "previewDraggable", "previewDropTarget"].includes(
+          field ?? ""
+        )
+      ) {
+        this.applyScriptEditorBuildingLayoutNodeFlag(
+          arrangementId,
+          nodeIndex,
+          field,
+          target.checked
         );
       }
       return;
@@ -5674,12 +6693,7 @@ export class MainUiFlow {
     }
     if (target.matches("[data-script-editor-building-entry-field]")) {
       const field = target.dataset.scriptEditorBuildingEntryField;
-      if (
-        field === "defaultPersonId" ||
-        field === "onEnterEventId" ||
-        field === "onLeaveEventId" ||
-        field === "returnTarget"
-      ) {
+      if (field === "defaultPersonId" || field === "returnTarget") {
         this.applyScriptEditorBuildingEntryField(field, target.value);
       }
     }
@@ -6343,6 +7357,26 @@ export class MainUiFlow {
       return;
     }
 
+    if (action === "add-building-layout-node") {
+      const arrangementId = actionElement?.dataset.scriptEditorBuildingArrangementId ?? "";
+      if (arrangementId.length > 0) {
+        this.addScriptEditorBuildingLayoutNode(arrangementId);
+      }
+      return;
+    }
+
+    if (action === "remove-building-layout-node") {
+      const arrangementId = actionElement?.dataset.scriptEditorBuildingArrangementId ?? "";
+      const nodeIndex = Number.parseInt(
+        actionElement?.dataset.scriptEditorBuildingLayoutNodeIndex ?? "-1",
+        10
+      );
+      if (arrangementId.length > 0 && Number.isInteger(nodeIndex) && nodeIndex >= 0) {
+        this.removeScriptEditorBuildingLayoutNode(arrangementId, nodeIndex);
+      }
+      return;
+    }
+
     if (action === "add-building-arrangement-container") {
       const arrangementId = actionElement?.dataset.scriptEditorBuildingArrangementId ?? "";
       if (arrangementId.length > 0) {
@@ -6480,6 +7514,22 @@ export class MainUiFlow {
 
     if (action === "add-dialogue-node") {
       this.addScriptEditorDialogueNode();
+      return;
+    }
+
+    if (action === "add-scene-action") {
+      this.addScriptEditorSceneAction();
+      return;
+    }
+
+    if (action === "remove-scene-action") {
+      const sceneActionIndex = Number.parseInt(
+        actionElement?.dataset.scriptEditorSceneActionIndex ?? "-1",
+        10
+      );
+      if (Number.isInteger(sceneActionIndex) && sceneActionIndex >= 0) {
+        this.removeScriptEditorSceneAction(sceneActionIndex);
+      }
       return;
     }
 
@@ -7443,6 +8493,64 @@ export class MainUiFlow {
     this.replaceSelectedScriptEditorDialogue(updateScriptEditorDialogueField(dialogue, field, value));
   }
 
+  applyScriptEditorSceneField(field, value) {
+    const scene = this.getSelectedScriptEditorScene();
+    if (scene == null) {
+      return;
+    }
+
+    this.replaceSelectedScriptEditorScene(updateScriptEditorSceneField(scene, field, value));
+  }
+
+  addScriptEditorSceneAction() {
+    const scene = this.getSelectedScriptEditorScene();
+    if (scene == null) {
+      return;
+    }
+
+    this.replaceSelectedScriptEditorScene(appendScriptEditorSceneAction(scene));
+  }
+
+  removeScriptEditorSceneAction(index) {
+    const scene = this.getSelectedScriptEditorScene();
+    if (scene == null) {
+      return;
+    }
+
+    this.replaceSelectedScriptEditorScene(removeScriptEditorSceneAction(scene, index));
+  }
+
+  applyScriptEditorSceneActionField(index, field, value) {
+    const scene = this.getSelectedScriptEditorScene();
+    if (scene == null) {
+      return;
+    }
+
+    this.replaceSelectedScriptEditorScene(
+      updateScriptEditorSceneActionField(scene, index, field, value)
+    );
+  }
+
+  applyScriptEditorSceneActionJsonField(index, field, value) {
+    const scene = this.getSelectedScriptEditorScene();
+    if (scene == null) {
+      return;
+    }
+
+    try {
+      this.replaceSelectedScriptEditorScene(
+        updateScriptEditorSceneActionJsonField(scene, index, field, value)
+      );
+    } catch (error) {
+      this.recordScriptEditorNotice({
+        tone: "warning",
+        message:
+          error instanceof Error ? error.message : "场景动作 JSON 更新失败。",
+      });
+      this.render();
+    }
+  }
+
   addScriptEditorDialogueParticipant() {
     const dialogue = this.getSelectedScriptEditorDialogue();
     if (dialogue == null) {
@@ -8176,6 +9284,85 @@ export class MainUiFlow {
     this.render();
   }
 
+  applyScriptEditorBuildingLayoutField(arrangementId, field, value) {
+    if (this.scriptEditorProject == null) {
+      return;
+    }
+    this.commitScriptEditorProject(
+      updateScriptEditorBuildingArrangementLayoutField(
+        this.scriptEditorProject,
+        arrangementId,
+        field,
+        value
+      )
+    );
+    this.scriptEditorNotice = null;
+    this.render();
+  }
+
+  addScriptEditorBuildingLayoutNode(arrangementId) {
+    if (this.scriptEditorProject == null) {
+      return;
+    }
+    this.commitScriptEditorProject(
+      appendScriptEditorBuildingArrangementLayoutNode(
+        this.scriptEditorProject,
+        arrangementId
+      )
+    );
+    this.scriptEditorNotice = null;
+    this.render();
+  }
+
+  removeScriptEditorBuildingLayoutNode(arrangementId, nodeIndex) {
+    if (this.scriptEditorProject == null) {
+      return;
+    }
+    this.commitScriptEditorProject(
+      removeScriptEditorBuildingArrangementLayoutNode(
+        this.scriptEditorProject,
+        arrangementId,
+        nodeIndex
+      )
+    );
+    this.scriptEditorNotice = null;
+    this.render();
+  }
+
+  applyScriptEditorBuildingLayoutNodeField(arrangementId, nodeIndex, field, value) {
+    if (this.scriptEditorProject == null) {
+      return;
+    }
+    this.commitScriptEditorProject(
+      updateScriptEditorBuildingArrangementLayoutNodeField(
+        this.scriptEditorProject,
+        arrangementId,
+        nodeIndex,
+        field,
+        value
+      )
+    );
+    this.scriptEditorNotice = null;
+    this.render();
+  }
+
+  applyScriptEditorBuildingLayoutNodeFlag(arrangementId, nodeIndex, field, checked) {
+    if (this.scriptEditorProject == null) {
+      return;
+    }
+    this.commitScriptEditorProject(
+      updateScriptEditorBuildingArrangementLayoutNodeFlag(
+        this.scriptEditorProject,
+        arrangementId,
+        nodeIndex,
+        field,
+        checked
+      )
+    );
+    this.scriptEditorNotice = null;
+    this.render();
+  }
+
   addScriptEditorBuildingArrangementContainer(arrangementId) {
     if (this.scriptEditorProject == null) {
       return;
@@ -8667,6 +9854,8 @@ export class MainUiFlow {
         return "建筑";
       case "dialogues":
         return "对话";
+      case "scenes":
+        return "场景";
       case "textEntries":
         return "文本";
       case "storyNodes":
@@ -8836,6 +10025,47 @@ export class MainUiFlow {
       (dialogue) => dialogue.id === this.scriptEditorSelection.entityId
     );
     return selectedDialogue == null ? null : normalizeScriptEditorDialogueRecord(selectedDialogue);
+  }
+
+  getSelectedScriptEditorScene() {
+    if (
+      this.scriptEditorProject == null ||
+      this.scriptEditorSelection.family !== "scenes" ||
+      this.scriptEditorSelection.entityId == null
+    ) {
+      return null;
+    }
+
+    const selectedScene = this.scriptEditorProject.scenes.find(
+      (scene) => scene.id === this.scriptEditorSelection.entityId
+    );
+    return selectedScene == null ? null : normalizeScriptEditorSceneRecord(selectedScene);
+  }
+
+  replaceSelectedScriptEditorScene(nextScene) {
+    if (
+      this.scriptEditorProject == null ||
+      this.scriptEditorSelection.family !== "scenes" ||
+      this.scriptEditorSelection.entityId == null
+    ) {
+      return;
+    }
+
+    const previousId = this.scriptEditorSelection.entityId;
+    const nextScenes = this.scriptEditorProject.scenes.map((scene) =>
+      scene.id === previousId ? nextScene : scene
+    );
+    this.commitScriptEditorProject({
+      ...this.scriptEditorProject,
+      scenes: nextScenes,
+    });
+    this.scriptEditorSelection = {
+      family: "scenes",
+      entityId: nextScene.id,
+    };
+    this.syncScriptEditorRecordListPageToRecord("scenes", nextScene.id, nextScenes);
+    this.scriptEditorNotice = null;
+    this.render();
   }
 
   replaceSelectedScriptEditorDialogue(nextDialogue) {

@@ -3,6 +3,12 @@ import type {
   ScriptEditorAccessRule,
   ScriptEditorBuildingArrangementRecord,
   ScriptEditorBuildingContainerRecord,
+  ScriptEditorBuildingLayoutActionFilter,
+  ScriptEditorBuildingLayoutCharacterFilter,
+  ScriptEditorBuildingLayoutNodeKind,
+  ScriptEditorBuildingLayoutNodeRecord,
+  ScriptEditorBuildingLayoutRecord,
+  ScriptEditorBuildingLayoutTemplateId,
   ScriptEditorBuildingContainerType,
   ScriptEditorBuildingEntryBinding,
   ScriptEditorBuildingRecord,
@@ -14,6 +20,12 @@ import type {
   ScriptEditorProjectDefinition,
 } from "../../domain/script-editor-project";
 import type { HouseDefinition } from "../../domain/house";
+import {
+  BUILDING_LAYOUT_TEMPLATE_IDS,
+  createDefaultBuildingLayoutDefinition,
+  normalizeBuildingLayoutTemplateId,
+  resolveBuildingLayoutDefinition,
+} from "../building/building-layout-templates";
 import {
   appendScriptEditorLocationAccessCondition,
   normalizeScriptEditorLocationAccessConditionExpression,
@@ -48,6 +60,31 @@ export const SCRIPT_EDITOR_BUILDING_CONTAINER_TYPES = [
   "resource-panel",
 ] as const satisfies readonly ScriptEditorBuildingContainerType[];
 
+export const SCRIPT_EDITOR_BUILDING_LAYOUT_TEMPLATE_IDS = [
+  ...BUILDING_LAYOUT_TEMPLATE_IDS,
+] as const satisfies readonly ScriptEditorBuildingLayoutTemplateId[];
+
+export const SCRIPT_EDITOR_BUILDING_LAYOUT_NODE_KINDS = [
+  "header",
+  "description",
+  "character-seats",
+  "action-menu",
+  "leave-action",
+  "fallback-panels",
+] as const satisfies readonly ScriptEditorBuildingLayoutNodeKind[];
+
+export const SCRIPT_EDITOR_BUILDING_LAYOUT_CHARACTER_FILTERS = [
+  "all",
+  "primary",
+  "secondary",
+] as const satisfies readonly ScriptEditorBuildingLayoutCharacterFilter[];
+
+export const SCRIPT_EDITOR_BUILDING_LAYOUT_ACTION_FILTERS = [
+  "all",
+  "non-leave",
+  "leave-only",
+] as const satisfies readonly ScriptEditorBuildingLayoutActionFilter[];
+
 function createDefaultAccessRule(): ScriptEditorAccessRule {
   return {};
 }
@@ -68,8 +105,6 @@ function createDefaultMenuEntry(idBase: string, menuFamily: string): ScriptEdito
 function createDefaultBuildingEntryBinding(): ScriptEditorBuildingEntryBinding {
   return {
     defaultPersonId: "",
-    onEnterEventId: "",
-    onLeaveEventId: "",
     returnTarget: "city",
   };
 }
@@ -79,6 +114,71 @@ function createDefaultBackAction(): HouseDefinition["backAction"] {
     label: "返回",
     targetView: "city",
   };
+}
+
+function createDefaultBuildingLayoutNode(nodeIndex: number): ScriptEditorBuildingLayoutNodeRecord {
+  return {
+    id: `node.new.${nodeIndex}`,
+    kind: "action-menu",
+    regionId: "body",
+    sourceContainerType: "action-menu",
+    actionFilter: "all",
+    previewSelectable: true,
+  };
+}
+
+export function createDefaultScriptEditorBuildingLayoutRecord(
+  templateId: ScriptEditorBuildingLayoutTemplateId = "default-shell"
+): ScriptEditorBuildingLayoutRecord {
+  return toScriptEditorBuildingLayoutRecord(
+    createDefaultBuildingLayoutDefinition(templateId)
+  );
+}
+
+export function readScriptEditorBuildingLayoutRecord(
+  layout: ScriptEditorBuildingLayoutRecord | undefined
+): ScriptEditorBuildingLayoutRecord {
+  return toScriptEditorBuildingLayoutRecord(
+    resolveBuildingLayoutDefinition(layout)
+  );
+}
+
+function toScriptEditorBuildingLayoutRecord(
+  layout: ReturnType<typeof resolveBuildingLayoutDefinition>
+): ScriptEditorBuildingLayoutRecord {
+  return {
+    templateId: layout.templateId,
+    shellClassNames: [...(layout.shellClassNames ?? [])],
+    nodes: (layout.nodes ?? []).map((node) => ({ ...node })),
+  };
+}
+
+function isBuildingLayoutNodeKind(value: string): value is ScriptEditorBuildingLayoutNodeKind {
+  return SCRIPT_EDITOR_BUILDING_LAYOUT_NODE_KINDS.includes(
+    value as ScriptEditorBuildingLayoutNodeKind
+  );
+}
+
+function isBuildingContainerType(value: string): value is ScriptEditorBuildingContainerType {
+  return SCRIPT_EDITOR_BUILDING_CONTAINER_TYPES.includes(
+    value as ScriptEditorBuildingContainerType
+  );
+}
+
+function isBuildingLayoutCharacterFilter(
+  value: string
+): value is ScriptEditorBuildingLayoutCharacterFilter {
+  return SCRIPT_EDITOR_BUILDING_LAYOUT_CHARACTER_FILTERS.includes(
+    value as ScriptEditorBuildingLayoutCharacterFilter
+  );
+}
+
+function isBuildingLayoutActionFilter(
+  value: string
+): value is ScriptEditorBuildingLayoutActionFilter {
+  return SCRIPT_EDITOR_BUILDING_LAYOUT_ACTION_FILTERS.includes(
+    value as ScriptEditorBuildingLayoutActionFilter
+  );
 }
 
 export function createDefaultScriptEditorCityRecord(index: number): ScriptEditorCityRecord {
@@ -161,7 +261,6 @@ export function normalizeScriptEditorBuildingRecord(
 ): ScriptEditorBuildingRecord {
   const rawBuilding = building as Partial<ScriptEditorBuildingRecord> &
     Record<string, unknown>;
-  const eventBindings = normalizeEventBindings(rawBuilding);
   return {
     id: building.id,
     cityId: normalizeString(building.cityId, "city.start"),
@@ -174,7 +273,6 @@ export function normalizeScriptEditorBuildingRecord(
     menuEntries: normalizeMenuEntries(building.menuEntries, `${building.id}.menu`),
     access: normalizeAccessRule(building.access),
     entryBinding: normalizeBuildingEntryBinding(building.entryBinding),
-    ...(eventBindings == null ? {} : { eventBindings }),
     backAction: normalizeBackAction(building.backAction),
   };
 }
@@ -322,6 +420,7 @@ export function appendScriptEditorBuildingArrangement(
         cityId,
         buildingId: defaultBuilding.id,
         displayName: defaultBuilding.name,
+        layout: createDefaultScriptEditorBuildingLayoutRecord(),
         mountedNpcIds: [],
         primaryNpcId: null,
         containers: [],
@@ -505,6 +604,181 @@ export function updateScriptEditorBuildingArrangementContainerField(
   );
 }
 
+export function updateScriptEditorBuildingArrangementLayoutField(
+  project: ScriptEditorProjectDefinition,
+  arrangementId: string,
+  field: "templateId" | "shellClassNames",
+  value: string
+): ScriptEditorProjectDefinition {
+  return updateScriptEditorBuildingArrangement(project, arrangementId, (arrangement) => {
+    const currentLayout = readScriptEditorBuildingLayoutRecord(arrangement.layout);
+    if (field === "templateId") {
+      const templateId = normalizeBuildingLayoutTemplateId(value);
+      const nextLayout =
+        arrangement.layout?.nodes != null && arrangement.layout.nodes.length > 0
+          ? { ...currentLayout, templateId }
+          : {
+              ...createDefaultScriptEditorBuildingLayoutRecord(templateId),
+              shellClassNames: [...(currentLayout.shellClassNames ?? [])],
+            };
+      return {
+        ...arrangement,
+        layout: nextLayout,
+      };
+    }
+
+    const shellClassNames = value
+      .split(",")
+      .map((entry) => entry.trim())
+      .filter((entry, index, source) => entry.length > 0 && source.indexOf(entry) === index);
+
+    return {
+      ...arrangement,
+      layout: {
+        ...currentLayout,
+        shellClassNames,
+      },
+    };
+  });
+}
+
+export function appendScriptEditorBuildingArrangementLayoutNode(
+  project: ScriptEditorProjectDefinition,
+  arrangementId: string
+): ScriptEditorProjectDefinition {
+  return updateScriptEditorBuildingArrangement(project, arrangementId, (arrangement) => {
+    const currentLayout = readScriptEditorBuildingLayoutRecord(arrangement.layout);
+    const nodes = currentLayout.nodes ?? [];
+    return {
+      ...arrangement,
+      layout: {
+        ...currentLayout,
+        nodes: [...nodes, createDefaultBuildingLayoutNode(nodes.length + 1)],
+      },
+    };
+  });
+}
+
+export function removeScriptEditorBuildingArrangementLayoutNode(
+  project: ScriptEditorProjectDefinition,
+  arrangementId: string,
+  nodeIndex: number
+): ScriptEditorProjectDefinition {
+  return updateScriptEditorBuildingArrangement(project, arrangementId, (arrangement) => {
+    const currentLayout = readScriptEditorBuildingLayoutRecord(arrangement.layout);
+    return {
+      ...arrangement,
+      layout: {
+        ...currentLayout,
+        nodes: (currentLayout.nodes ?? []).filter((_, index) => index !== nodeIndex),
+      },
+    };
+  });
+}
+
+export function updateScriptEditorBuildingArrangementLayoutNodeField(
+  project: ScriptEditorProjectDefinition,
+  arrangementId: string,
+  nodeIndex: number,
+  field:
+    | "id"
+    | "kind"
+    | "regionId"
+    | "sourceContainerId"
+    | "sourceContainerType"
+    | "presentation"
+    | "characterFilter"
+    | "actionFilter"
+    | "clickActionId",
+  value: string
+): ScriptEditorProjectDefinition {
+  return updateScriptEditorBuildingArrangementLayoutNode(
+    project,
+    arrangementId,
+    nodeIndex,
+    (node) => {
+      const normalizedValue = value.trim();
+
+      if (field === "kind") {
+        const kind: ScriptEditorBuildingLayoutNodeKind = isBuildingLayoutNodeKind(value)
+          ? value
+          : "action-menu";
+        return {
+          ...node,
+          kind,
+        };
+      }
+
+      if (field === "sourceContainerType") {
+        return normalizedValue.length === 0
+          ? removeOptionalLayoutNodeField(node, field)
+          : {
+              ...node,
+              sourceContainerType: isBuildingContainerType(value)
+                ? value
+                : node.sourceContainerType,
+            };
+      }
+
+      if (field === "characterFilter") {
+        return normalizedValue.length === 0
+          ? removeOptionalLayoutNodeField(node, field)
+          : {
+              ...node,
+              characterFilter: isBuildingLayoutCharacterFilter(value)
+                ? value
+                : node.characterFilter,
+            };
+      }
+
+      if (field === "actionFilter") {
+        return normalizedValue.length === 0
+          ? removeOptionalLayoutNodeField(node, field)
+          : {
+              ...node,
+              actionFilter: isBuildingLayoutActionFilter(value)
+                ? value
+                : node.actionFilter,
+            };
+      }
+
+      if (
+        (
+          field === "sourceContainerId" ||
+          field === "presentation" ||
+          field === "clickActionId"
+        ) &&
+        normalizedValue.length === 0
+      ) {
+        return removeOptionalLayoutNodeField(node, field);
+      }
+
+      return {
+        ...node,
+        [field]: normalizedValue,
+      };
+    }
+  );
+}
+
+export function updateScriptEditorBuildingArrangementLayoutNodeFlag(
+  project: ScriptEditorProjectDefinition,
+  arrangementId: string,
+  nodeIndex: number,
+  field: "previewSelectable" | "previewDraggable" | "previewDropTarget",
+  checked: boolean
+): ScriptEditorProjectDefinition {
+  return updateScriptEditorBuildingArrangementLayoutNode(
+    project,
+    arrangementId,
+    nodeIndex,
+    (node) =>
+      checked
+        ? { ...node, [field]: true }
+        : removeOptionalLayoutNodeField(node, field)
+  );
+}
+
 export function appendScriptEditorBuildingArrangementContainerActionItem(
   project: ScriptEditorProjectDefinition,
   arrangementId: string,
@@ -613,6 +887,45 @@ function updateScriptEditorBuildingArrangementContainer(
       entryIndex === containerIndex ? updateContainer(container) : container
     ),
   }));
+}
+
+function updateScriptEditorBuildingArrangementLayoutNode(
+  project: ScriptEditorProjectDefinition,
+  arrangementId: string,
+  nodeIndex: number,
+  updateNode: (
+    node: ScriptEditorBuildingLayoutNodeRecord
+  ) => ScriptEditorBuildingLayoutNodeRecord
+): ScriptEditorProjectDefinition {
+  return updateScriptEditorBuildingArrangement(project, arrangementId, (arrangement) => {
+    const currentLayout = readScriptEditorBuildingLayoutRecord(arrangement.layout);
+    return {
+      ...arrangement,
+      layout: {
+        ...currentLayout,
+        nodes: (currentLayout.nodes ?? []).map((node, index) =>
+          index === nodeIndex ? updateNode(node) : node
+        ),
+      },
+    };
+  });
+}
+
+function removeOptionalLayoutNodeField<
+  TField extends
+    | "sourceContainerId"
+    | "sourceContainerType"
+    | "presentation"
+    | "characterFilter"
+    | "actionFilter"
+    | "clickActionId"
+    | "previewSelectable"
+    | "previewDraggable"
+    | "previewDropTarget",
+>(node: ScriptEditorBuildingLayoutNodeRecord, field: TField): ScriptEditorBuildingLayoutNodeRecord {
+  const nextNode = { ...node };
+  delete nextNode[field];
+  return nextNode;
 }
 
 export function updateScriptEditorBuildingField(
@@ -923,8 +1236,6 @@ function normalizeBuildingEntryBinding(
 ): ScriptEditorBuildingEntryBinding {
   return {
     defaultPersonId: normalizeOptionalString(binding?.defaultPersonId),
-    onEnterEventId: normalizeOptionalString(binding?.onEnterEventId),
-    onLeaveEventId: normalizeOptionalString(binding?.onLeaveEventId),
     returnTarget: normalizeString(binding?.returnTarget, "city"),
   };
 }
@@ -1023,24 +1334,6 @@ function normalizeCustomAttributeValue(
   return Array.isArray(value)
     ? value.filter((entry): entry is string => typeof entry === "string")
     : null;
-}
-
-function normalizeEventBindings(
-  building: Partial<ScriptEditorBuildingRecord> & Record<string, unknown>
-): ScriptEditorBuildingRecord["eventBindings"] | undefined {
-  const eventBindings = building.eventBindings ?? {};
-  const onEnterEventId = normalizeOptionalString(
-    eventBindings.onEnterEventId ?? building.onEnterEventId
-  );
-  const onLeaveEventId = normalizeOptionalString(
-    eventBindings.onLeaveEventId ?? building.onLeaveEventId
-  );
-  return onEnterEventId.length === 0 && onLeaveEventId.length === 0
-    ? undefined
-    : {
-        ...(onEnterEventId.length === 0 ? {} : { onEnterEventId }),
-        ...(onLeaveEventId.length === 0 ? {} : { onLeaveEventId }),
-      };
 }
 
 function normalizeLocationAccessConditionExpression(

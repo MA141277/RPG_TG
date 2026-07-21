@@ -111,6 +111,10 @@
 - `ACC-BUILDING-FLOW-010: Script Editor flow playable authoring UX.`
 - `Out-of-scope means not implemented by this queue; it does not mean retired, removed, or unsupported unless the parent spec was updated first.`
 
+#### Capability Floor
+
+- `Behavior-free building templates, city-local buildingArrangements schema, and downstream runtime/editor cutover paths must remain representable without reintroducing moduleId- or house-based truth.`
+
 #### Over-Narrowing Guard
 
 - parent_capabilities_not_owned_by_this_queue:
@@ -142,6 +146,23 @@
 - `Existing runtime export/import and startup paths must not be changed in this schema queue beyond fail-closed schema additions.`
 - `Explicit mounted NPC data must remain available until the buildingArrangements cutover.`
 
+#### User Path Coverage Matrix
+
+- primary_paths:
+  - `Authoring path: new or existing projects can carry explicit buildingArrangements and behavior-free building templates through load/save/import/export.`
+- alternate_paths:
+  - `Compatibility path: older projects without buildingArrangements still default fail-closed to an empty list rather than inferred legacy data.`
+- empty_or_fail_closed_paths:
+  - `Missing or malformed buildingArrangements data stays empty or validation-failed instead of silently reconstructing house behavior.`
+- forbidden_regressions:
+  - `Do not keep template schema valid only by retaining legacy moduleId or mounted NPC carrier fields as hidden runtime truth.`
+
+#### Functional Loss Budget
+
+- budget: `zero`
+- loss_accounting_rule:
+  - `Any schema capability that cannot be expressed here must route to residue or a downstream queue; it cannot disappear behind compatibility inference.`
+
 #### Implementation Anchors
 
 - Must inspect:
@@ -171,6 +192,17 @@
 - `Tests prove missing buildingArrangements defaults to an empty array for existing projects without inferring from old runtime families.`
 - `Tests prove building templates no longer need behavior-bearing schema fields for new behavior-free records.`
 - `Source guard proves first queue did not introduce UI/runtime/legacy-deletion claims outside ACC-BUILDING-FLOW-001..002.`
+
+#### Replacement Proof
+
+- previous_owner_or_path:
+  - `Legacy building behavior-bearing fields on template/building records and inferred mounted-building carriers.`
+- new_owner_or_path:
+  - `Behavior-free building templates plus explicit city-local buildingArrangements.`
+- behavior_preservation_expectation:
+  - `Schema cutover preserves downstream ability to author/render/trigger buildings while removing template-level business truth.`
+- verification_evidence:
+  - `Typecheck, robustness tests, and queue source guards prove the new schema is canonical and the old inference path is not reused.`
 
 ### Parent Version
 
@@ -224,6 +256,10 @@
   - `Passed: npm run typecheck.`
   - `Passed: npm run lint:blueprints.`
   - `Passed: npm test.`
+- functional_loss_audit:
+  - `No creator-facing or runtime building capability was retired in this queue; downstream queues remain explicitly routed and the schema layer does not strand them behind legacy-only fields.`
+- replacement_proof_summary:
+  - `Behavior-bearing template/building fields were replaced by behavior-free template metadata plus explicit buildingArrangements, with validation and no-inference guards proving the new path is the only schema truth.`
 - gap_fill_decision:
   - `not-needed`
 - gap_fill_scope:

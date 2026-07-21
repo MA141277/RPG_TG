@@ -30,6 +30,7 @@ export type RuntimeInteractiveSignal =
 
 export type RuntimeFollowUpOutcome =
   | { type: "navigation.entered-city"; cityId: string }
+  | { type: "navigation.entered-house"; houseId: string }
   | { type: "time.advanced" }
   | { type: "time.council-threshold-crossed" };
 

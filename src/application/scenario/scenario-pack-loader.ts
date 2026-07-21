@@ -120,6 +120,108 @@ export function parseScenarioPack(value: unknown): ScenarioPackDefinition {
       ["immediate", "after-map-entry"]
     );
   }
+  if (value.scenarioProfile.characterStartups != null) {
+    assertArray(
+      value.scenarioProfile.characterStartups,
+      "scenario characterStartups"
+    );
+    for (const [index, record] of value.scenarioProfile.characterStartups.entries()) {
+      assertObject(record, `scenario characterStartups[${index}]`);
+      assertString(
+        record.characterId,
+        `scenario characterStartups[${index}].characterId`
+      );
+      if (record.initialLocation != null) {
+        assertObject(
+          record.initialLocation,
+          `scenario characterStartups[${index}].initialLocation`
+        );
+        assertOptionalString(
+          record.initialLocation.mapId,
+          `scenario characterStartups[${index}].initialLocation.mapId`
+        );
+        assertOptionalString(
+          record.initialLocation.cityId,
+          `scenario characterStartups[${index}].initialLocation.cityId`
+        );
+        if (
+          record.initialLocation.houseId !== undefined &&
+          record.initialLocation.houseId !== null &&
+          typeof record.initialLocation.houseId !== "string"
+        ) {
+          throw new Error(
+            `scenario characterStartups[${index}].initialLocation.houseId must be string or null.`
+          );
+        }
+        if (
+          record.initialLocation.sceneId !== undefined &&
+          record.initialLocation.sceneId !== null &&
+          typeof record.initialLocation.sceneId !== "string"
+        ) {
+          throw new Error(
+            `scenario characterStartups[${index}].initialLocation.sceneId must be string or null.`
+          );
+        }
+        assertOptionalString(
+          record.initialLocation.view,
+          `scenario characterStartups[${index}].initialLocation.view`
+        );
+      }
+      if (record.initialUi != null) {
+        assertObject(
+          record.initialUi,
+          `scenario characterStartups[${index}].initialUi`
+        );
+        assertOptionalString(
+          record.initialUi.reviewDateText,
+          `scenario characterStartups[${index}].initialUi.reviewDateText`
+        );
+        assertOptionalString(
+          record.initialUi.mainHouseMissionText,
+          `scenario characterStartups[${index}].initialUi.mainHouseMissionText`
+        );
+      }
+      if (record.initialRuntime != null) {
+        assertObject(
+          record.initialRuntime,
+          `scenario characterStartups[${index}].initialRuntime`
+        );
+      }
+      if (record.launchPolicy != null) {
+        assertObject(
+          record.launchPolicy,
+          `scenario characterStartups[${index}].launchPolicy`
+        );
+        assertOptionalString(
+          record.launchPolicy.initialView,
+          `scenario characterStartups[${index}].launchPolicy.initialView`
+        );
+        assertOptionalEnum(
+          record.launchPolicy.entryEventTiming,
+          `scenario characterStartups[${index}].launchPolicy.entryEventTiming`,
+          ["immediate", "after-map-entry"]
+        );
+      }
+      if (
+        record.entryEventId !== undefined &&
+        record.entryEventId !== null &&
+        typeof record.entryEventId !== "string"
+      ) {
+        throw new Error(
+          `scenario characterStartups[${index}].entryEventId must be string or null.`
+        );
+      }
+      if (
+        record.openingFlowId !== undefined &&
+        record.openingFlowId !== null &&
+        typeof record.openingFlowId !== "string"
+      ) {
+        throw new Error(
+          `scenario characterStartups[${index}].openingFlowId must be string or null.`
+        );
+      }
+    }
+  }
   assertArray(value.characters, "scenario characters");
   if (value.cities != null) {
     assertArray(value.cities, "scenario cities");

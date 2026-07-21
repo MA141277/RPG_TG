@@ -848,6 +848,9 @@ function cloneScenarioProfileRuntimeFields(
     ...(isInitialRuntime(scenarioProfile.initialRuntime)
       ? { initialRuntime: scenarioProfile.initialRuntime }
       : {}),
+    ...(isScenarioCharacterStartups(scenarioProfile.characterStartups)
+      ? { characterStartups: scenarioProfile.characterStartups }
+      : {}),
     ...(isLaunchPolicy(scenarioProfile.launchPolicy)
       ? { launchPolicy: scenarioProfile.launchPolicy }
       : {}),
@@ -1691,6 +1694,64 @@ function isInitialRuntime(
   return (
     (record.flags == null || isBooleanRecord(record.flags)) &&
     (record.variables == null || isRuntimeVariableRecord(record.variables))
+  );
+}
+
+function isScenarioCharacterStartups(
+  value: unknown
+): value is ScenarioProfileDefinition["characterStartups"] {
+  if (!Array.isArray(value)) {
+    return false;
+  }
+
+  return value.every((record) => {
+    if (record == null || typeof record !== "object" || Array.isArray(record)) {
+      return false;
+    }
+
+    const candidate = record as Record<string, unknown>;
+    return (
+      typeof candidate.characterId === "string" &&
+      (candidate.initialCalendar == null || isCalendarDate(candidate.initialCalendar)) &&
+      (candidate.initialLocation == null ||
+        isScenarioCharacterStartupLocation(candidate.initialLocation)) &&
+      (candidate.initialPlayerCoordinate == null ||
+        isCoordinate(candidate.initialPlayerCoordinate)) &&
+      (candidate.initialUi == null || isInitialUi(candidate.initialUi)) &&
+      (candidate.initialRuntime == null || isInitialRuntime(candidate.initialRuntime)) &&
+      (candidate.launchPolicy == null || isScenarioCharacterLaunchPolicy(candidate.launchPolicy)) &&
+      (candidate.entryEventId == null || typeof candidate.entryEventId === "string") &&
+      (candidate.openingFlowId == null || typeof candidate.openingFlowId === "string")
+    );
+  });
+}
+
+function isScenarioCharacterStartupLocation(value: unknown): boolean {
+  if (value == null || typeof value !== "object" || Array.isArray(value)) {
+    return false;
+  }
+
+  const record = value as Record<string, unknown>;
+  return (
+    (record.mapId == null || typeof record.mapId === "string") &&
+    (record.cityId == null || typeof record.cityId === "string") &&
+    (record.houseId == null || typeof record.houseId === "string") &&
+    (record.sceneId == null || typeof record.sceneId === "string") &&
+    (record.view == null || typeof record.view === "string")
+  );
+}
+
+function isScenarioCharacterLaunchPolicy(value: unknown): boolean {
+  if (value == null || typeof value !== "object" || Array.isArray(value)) {
+    return false;
+  }
+
+  const record = value as Record<string, unknown>;
+  return (
+    (record.initialView == null || typeof record.initialView === "string") &&
+    (record.entryEventTiming == null ||
+      record.entryEventTiming === "immediate" ||
+      record.entryEventTiming === "after-map-entry")
   );
 }
 

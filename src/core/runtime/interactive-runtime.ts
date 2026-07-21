@@ -342,6 +342,7 @@ function exitInteractiveState(
         ...state.core,
         runtime: {
           ...state.core.runtime,
+          playableSession: null,
           activitySession: null,
         },
       },

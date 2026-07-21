@@ -77,6 +77,47 @@ export function createStagePresenterOutput(
     });
   }
 
+  if (currentView === "minigame") {
+    if (input.appState.gameState.world.currentHouseId != null) {
+      return selectBuildingModuleStage({
+        appState: {
+          ...input.appState,
+          gameState: {
+            ...input.appState.gameState,
+            ui: {
+              ...input.appState.gameState.ui,
+              currentView: "house",
+            },
+          },
+        },
+        houseDefinitions: input.houseDefinitions,
+        buildingArrangements: input.buildingArrangements,
+        cityNpcPoolDefinitions: input.cityNpcPoolDefinitions,
+        playerCharacterId: input.playerCharacterId,
+        textEntriesById: input.textEntriesById,
+      });
+    }
+
+    if (input.appState.gameState.world.currentCityId != null) {
+      return selectCityModuleStage({
+        appState: {
+          ...input.appState,
+          gameState: {
+            ...input.appState.gameState,
+            ui: {
+              ...input.appState.gameState.ui,
+              currentView: "city",
+            },
+          },
+        },
+        activeCityDefinition,
+        houseDefinitions: input.houseDefinitions,
+        cityEntries: input.cityEntries,
+        citySceneMapping,
+      });
+    }
+  }
+
   if (currentView === "scene") {
     const cityUnderlay =
       input.appState.gameState.world.currentCityId != null &&
@@ -87,6 +128,26 @@ export function createStagePresenterOutput(
             houseDefinitions: input.houseDefinitions,
             cityEntries: input.cityEntries,
             citySceneMapping,
+          })
+        : undefined;
+    const buildingUnderlay =
+      input.appState.gameState.world.currentHouseId != null
+        ? selectBuildingModuleStage({
+            appState: {
+              ...input.appState,
+              gameState: {
+                ...input.appState.gameState,
+                ui: {
+                  ...input.appState.gameState.ui,
+                  currentView: "house",
+                },
+              },
+            },
+            houseDefinitions: input.houseDefinitions,
+            buildingArrangements: input.buildingArrangements,
+            cityNpcPoolDefinitions: input.cityNpcPoolDefinitions,
+            playerCharacterId: input.playerCharacterId,
+            textEntriesById: input.textEntriesById,
           })
         : undefined;
 
@@ -101,6 +162,15 @@ export function createStagePresenterOutput(
         input.sceneDefinitionsById ?? {}
       ),
       ...(cityUnderlay == null ? {} : { cityUnderlay }),
+      ...(buildingUnderlay == null || buildingUnderlay.type !== "building"
+        ? {}
+        : {
+            buildingUnderlay: {
+              activeHouse: buildingUnderlay.activeHouse,
+              arrangement: buildingUnderlay.arrangement,
+              containerViewModels: buildingUnderlay.containerViewModels,
+            },
+          }),
     };
   }
 

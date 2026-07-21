@@ -326,5 +326,149 @@
         "textId": "scene.story.zhu_yuanzhang.haozhou_return_encounter.015"
       }
     ]
+  },
+  {
+    "id": "scene.building.house.kulan.leader_residence.enter",
+    "name": "将领府邸 - 进入",
+    "actions": [
+      {
+        "type": "dialogue",
+        "characterId": "char.kulan_liu_bowen",
+        "side": "left",
+        "textId": "runtime.zhu_yuanzhang.keep.audience.greeting.001"
+      },
+      {
+        "type": "dialogue",
+        "characterId": "char.kulan_liu_bowen",
+        "side": "left",
+        "textId": "runtime.zhu_yuanzhang.keep.audience.greeting.002"
+      }
+    ]
+  },
+  {
+    "id": "scene.building.house.kulan.temple.enter",
+    "name": "皇觉寺 - 进入",
+    "actions": [
+      {
+        "type": "dialogue",
+        "characterId": "char.kulan_temple_abbot",
+        "side": "left",
+        "textId": "runtime.zhu_yuanzhang.temple.greeting.001"
+      },
+      {
+        "type": "dialogue",
+        "characterId": "char.kulan_temple_abbot",
+        "side": "left",
+        "textId": "runtime.zhu_yuanzhang.temple.greeting.002"
+      }
+    ]
+  },
+  {
+    "id": "scene.building.house.kulan.keep.enter",
+    "name": "帅府 - 进入",
+    "actions": [
+      {
+        "type": "dialogue",
+        "characterId": "char.kulan_lord",
+        "side": "left",
+        "textId": "runtime.zhu_yuanzhang.keep.audience.open.001"
+      },
+      {
+        "type": "dialogue",
+        "characterId": "char.kulan_lord",
+        "side": "left",
+        "textId": "runtime.zhu_yuanzhang.keep.audience.open.002"
+      }
+    ]
+  },
+  {
+    "id": "scene.building.house.kulan.tea_house.enter",
+    "name": "茶馆 - 进入",
+    "actions": [
+      {
+        "type": "dialogue",
+        "characterId": "char.kulan_tea_boss",
+        "side": "left",
+        "textId": "runtime.zhu_yuanzhang.tea_house.greeting.fixed.001"
+      },
+      {
+        "type": "dialogue",
+        "characterId": "char.kulan_tea_boss",
+        "side": "left",
+        "textId": "runtime.zhu_yuanzhang.tea_house.open.fixed.001"
+      }
+    ]
+  },
+  {
+    "id": "scene.building.house.kulan.market.enter",
+    "name": "货栈 - 进入",
+    "actions": [
+      {
+        "type": "dialogue",
+        "characterId": "char.kulan_merchant",
+        "side": "left",
+        "textId": "runtime.zhu_yuanzhang.market_house.greeting.001"
+      },
+      {
+        "type": "dialogue",
+        "characterId": "char.kulan_merchant",
+        "side": "left",
+        "textId": "runtime.zhu_yuanzhang.market_house.greeting.002"
+      }
+    ]
+  },
+  {
+    "id": "scene.building.house.kulan.grain_shop.enter",
+    "name": "粮铺 - 进入",
+    "actions": [
+      {
+        "type": "dialogue",
+        "characterId": "char.kulan_grain_shopkeeper",
+        "side": "left",
+        "textId": "runtime.zhu_yuanzhang.grain_shop.greeting.001"
+      },
+      {
+        "type": "dialogue",
+        "characterId": "char.kulan_grain_shopkeeper",
+        "side": "left",
+        "textId": "runtime.zhu_yuanzhang.grain_shop.default.004"
+      }
+    ]
+  },
+  {
+    "id": "scene.building.house.kulan.medicine_house.enter",
+    "name": "药铺 - 进入",
+    "actions": [
+      {
+        "type": "dialogue",
+        "characterId": "char.kulan_medicine_doctor",
+        "side": "left",
+        "textId": "runtime.zhu_yuanzhang.medicine_house.greeting.001"
+      },
+      {
+        "type": "dialogue",
+        "characterId": "char.kulan_medicine_doctor",
+        "side": "left",
+        "textId": "runtime.zhu_yuanzhang.medicine_house.dialogue.001"
+      }
+    ]
+  },
+  {
+    "id": "scene.building.house.kulan.inn.enter",
+    "name": "客栈 - 进入",
+    "actions": [
+      {
+        "type": "dialogue",
+        "characterId": "char.kulan_innkeeper",
+        "side": "left",
+        "textId": "runtime.zhu_yuanzhang.tavern.greeting.001"
+      },
+      {
+        "type": "dialogue",
+        "characterId": "char.kulan_innkeeper",
+        "side": "left",
+        "textId": "runtime.zhu_yuanzhang.tavern.open.002"
+      }
+    ]
   }
 ]

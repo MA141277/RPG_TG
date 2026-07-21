@@ -97,6 +97,10 @@
 - `Legacy house runtime/module/view deletion.`
 - `Final end-to-end acceptance or version closeout.`
 
+#### Capability Floor
+
+- `Creators must still be able to author flow playables as first-class content objects and route events into them without depending on scene-local or shell-local JSON hacks.`
+
 #### Over-Narrowing Guard
 
 - parent_capabilities_not_owned_by_this_queue:
@@ -134,6 +138,33 @@
   - `No flow-specific business branch in src/main.ts.`
   - `No built-in pack migration or legacy deletion.`
 
+#### User Path Coverage Matrix
+
+- primary_paths:
+  - `Authoring path: creators can create/edit flows, nodes, payloads, and event start targets from the dedicated Script Editor surface.`
+- alternate_paths:
+  - `Project/runtime pack path: authored flows survive save/export/import and remain preview-indexable.`
+- empty_or_fail_closed_paths:
+  - `Missing or invalid flow definitions stay visibly incomplete instead of silently falling back to ad hoc runtime defaults.`
+- forbidden_regressions:
+  - `Do not keep flow launch configurable only through inline event payload editing or old preview-only state.`
+
+#### Functional Loss Budget
+
+- budget: `zero`
+- loss_accounting_rule:
+  - `Any missing authoring destination or payload control must be fixed or routed; a minimal flow list is not enough to claim creator-facing convergence.`
+
+#### Replacement Proof
+
+- previous_owner_or_path:
+  - `Ad hoc or shell-local flow authoring state and preview-only indexing.`
+- new_owner_or_path:
+  - `First-class Script Editor flows[] authoring surface with project/runtime pack persistence.`
+- behavior_preservation_expectation:
+  - `Creators keep a complete authoring path from flow definition to event routing without hidden side channels.`
+- verification_evidence:
+  - `Authoring round-trip tests, preview indexing proof, and queue browser checks cover the replacement path.`
 ### Queue Snapshot
 
 - queue_goal: `Author first-class flow playable records in Script Editor and preserve them through project/runtime pack boundaries.`
@@ -157,6 +188,10 @@
   - `Remaining work is routed to built-in pack migration, legacy house retirement, and final acceptance.`
 - verification_sufficiency:
   - `npm run typecheck`, npm run lint:blueprints, and npm test passed with 689 tests.`
+- functional_loss_audit:
+  - `First-class flow authoring preserved creator reachability across creation, editing, save/export/import, and preview indexing; no required path was left hidden in old UI state.`
+- replacement_proof_summary:
+  - `Dedicated flows[] authoring replaced preview-local and ad hoc flow editing, with round-trip and preview evidence proving the new owner path.`
 - gap_fill_decision:
   - `used-once`
 - gap_fill_scope:

@@ -106,6 +106,10 @@
 - `Final end-to-end acceptance or version closeout.`
 - `Out-of-scope means not implemented by this queue; it does not mean retired, removed, or unsupported unless the parent spec was updated first.`
 
+#### Capability Floor
+
+- `Authored building container clicks must still route into runtime-reachable event actions, including closeBuilding, instead of depending on hardcoded menu handlers.`
+
 #### Over-Narrowing Guard
 
 - parent_capabilities_not_owned_by_this_queue:
@@ -133,6 +137,23 @@
 - `Existing event runtime bindings for city/building/story triggers.`
 - `Existing old house runtime behavior for unmigrated content.`
 - `Existing system leave behavior for the generic building shell.`
+
+#### User Path Coverage Matrix
+
+- primary_paths:
+  - `Runtime click path: clicking an authored building container item dispatches the matching buildingContainerItemAction event.`
+- alternate_paths:
+  - `Authoring/export/import path: trigger.extra data survives round-trip and still resolves at runtime.`
+- empty_or_fail_closed_paths:
+  - `Unbound or malformed container actions stay visibly non-runnable or fail closed instead of silently calling legacy handlers.`
+- forbidden_regressions:
+  - `Do not preserve action reachability only because an old house action table is still wired.`
+
+#### Functional Loss Budget
+
+- budget: `zero`
+- loss_accounting_rule:
+  - `If any authored container action cannot reach runtime through the new event path, record it as gap fill, residue, or blocker rather than treating basic click success as enough.`
 
 #### Implementation Anchors
 
@@ -167,6 +188,17 @@
 - `RED/GREEN tests prove EventBindingRuntime can match buildingContainerItemAction triggers using building, arrangement, container, and item context.`
 - `RED/GREEN tests prove closeBuilding returns to city through event/runtime action semantics rather than direct building-specific code.`
 - `Source guard proves this queue does not implement flow runtime, built-in migration, or legacy house deletion.`
+
+#### Replacement Proof
+
+- previous_owner_or_path:
+  - `House/module-specific menu action handlers and implicit close/leave logic.`
+- new_owner_or_path:
+  - `Generic container click -> EventBindingRuntime -> event action / closeBuilding pipeline.`
+- behavior_preservation_expectation:
+  - `Container actions remain runtime-reachable, data-driven, and leave-path safe without building-specific business branches in main flow code.`
+- verification_evidence:
+  - `Trigger.extra preservation checks, runtime dispatch tests, and closeBuilding verification prove the new path is actually wired.`
 
 ### Parent Version
 
@@ -219,6 +251,10 @@
   - `Passed: npm run typecheck.`
   - `Passed: npm run lint:blueprints.`
   - `Passed: npm test.`
+- functional_loss_audit:
+  - `Container action reachability was preserved through authored event bindings; no click path was left functional only through legacy menu code.`
+- replacement_proof_summary:
+  - `Generic EventBindingRuntime dispatch now owns building container clicks, including closeBuilding, with export/runtime evidence covering the replacement.`
 - gap_fill_decision:
   - `not-needed`
 - gap_fill_scope:

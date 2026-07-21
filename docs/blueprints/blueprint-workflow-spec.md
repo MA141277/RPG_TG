@@ -163,6 +163,10 @@ The version plan is the only live governor for:
 - `routing_basis`
 - `next_lawful_queue_recommendation`
 - `auto_admission_ready`
+- `stop_reason`
+- `stop_basis`
+- `next_unblocked_action`
+- `human_input_required`
 - `candidate_backlog_refresh_status`
 - `candidate_backlog_snapshot`
 - `candidate_backlog_scan_sources`
@@ -518,6 +522,58 @@ This record may live in a ledger table or equivalent structured section, but it 
 
 The purpose is to allow later sessions to resume from existing admission evidence instead of repeating a from-scratch audit.
 
+### 8.4.1 Admission Review Is Internal Governance Work
+
+Once a `queue-candidate` has already been structurally recorded in current version truth, admission review is an internal Blueprint execution step rather than a default human confirmation point.
+
+Rules:
+
+1. If the parent spec already defines the capability, prerequisite queue closeout satisfies the admission rule, and the next queue can proceed without changing the parent total spec, deleting or downgrading capability, or rewriting out-of-scope as retired, the agent must record the admission conclusion and continue.
+2. If admission review finds a gap required for the next queue to run and that gap remains inside the parent spec, record it as an in-queue temporary gap fill or prerequisite routing decision and continue rather than asking for human confirmation.
+3. If a current-version queue completeness audit finds an in-parent-spec gap, over-narrowing risk, or missing inherited capability, treat that finding as execution input rather than a default human confirmation point.
+4. Such findings must be recorded as one of:
+   - in-queue temporary gap fill
+   - prerequisite routing decision
+   - closeout blocker
+   - final-guard evidence
+   - same-family residue
+   - cross-family residue
+   - accepted residue
+5. Admission review or queue audit may stop for human input only when blocker or stop-condition rules elsewhere in this workflow explicitly allow it.
+
+### 8.4.2 Structured Stop Record
+
+If the agent stops, pauses, or asks for human input while current governance truth still has a live queue, a pending candidate, or a uniquely lawful next governance action, the stop must be recorded structurally in the current version plan before the response ends.
+
+The stop record must carry at minimum:
+
+- `stop_reason`
+- `stop_basis`
+- `next_unblocked_action`
+- `human_input_required`
+
+Allowed `stop_reason` values:
+
+- `none`
+- `version-closeout-confirmation`
+- `explicit-answer-only`
+- `real-blocker`
+- `outside-parent-spec`
+- `parent-spec-change`
+- `capability-downgrade-risk`
+- `retired-rewrite-risk`
+- `product-decision`
+
+Rules:
+
+1. `stop_reason = none` means the agent should continue automatically when other workflow rules allow continuation.
+2. `stop_reason = version-closeout-confirmation` is the normal structured reason for the one allowed version-closeout confirmation question.
+3. `real-blocker` must refer to a concrete blocker, such as missing external state, conflicting evidence that cannot be adjudicated independently, or a required action the agent cannot lawfully perform from current truth.
+4. `product-decision` is legal only when two or more mutually exclusive lawful branches remain and choosing among them would change active truth.
+5. `stop_basis` must summarize the concrete evidence or rule that makes the stop lawful; it must not be left implicit in prose history.
+6. `next_unblocked_action` must name the next governance action expected after the blocking input or confirmation is received.
+7. `human_input_required = true` is legal only when `stop_reason != none`.
+
 ## 8.5 Evidence-Bound Version Creation
 
 New versions must be created from a lightweight operator draft plus AI-generated evidence, not from a prose target directly.
@@ -678,9 +734,12 @@ Required queue sections:
 
 - `Can Claim`
 - `Cannot Claim`
+- `Capability Floor`
 - `Legacy Paths To Replace`
 - `Compatibility Paths To Preserve`
 - `Implementation Anchors`
+- `User Path Coverage Matrix`
+- `Functional Loss Budget`
 - `Verification Coverage`
 
 Rules:
@@ -693,6 +752,40 @@ Rules:
 6. `Cannot Claim` and `Out Of Scope` entries are not retirement authority. They mean another owner, later queue, parent-spec update, accepted residue, or explicit waiver is required.
 7. A queue may not mark a capability unsupported, retired, or removed merely because it is outside that queue's local implementation boundary.
 8. If queue implementation proves an inherited capability should be removed, the parent spec must be updated first, all affected candidate queues must be reconciled, and only then may a queue treat that capability as retired.
+9. `Capability Floor` must name the inherited functional surfaces that this queue is not allowed to delete, degrade, or silently narrow while implementing its local slice.
+10. `User Path Coverage Matrix` must name the concrete user-visible paths and regression-sensitive paths needed to judge whether the queue preserved real functionality rather than only a smallest happy path.
+11. `Functional Loss Budget` must default to `zero`. Any non-zero functional loss must be explicitly routed as waiver or accepted residue in parent/version truth; it must not be implied by a narrower implementation.
+12. If a queue replaces, migrates, or relocates a capability, it must provide replacement proof that names the previous owner/path, the new owner/path, the behavior-preservation expectation, and the verification evidence for the replacement.
+13. A seam, adapter, shell, guard, materializer, or fail-closed implementation slice must not claim broader user-facing semantics unless the acceptance matrix explicitly makes that narrower slice the real acceptance surface.
+
+### 8.9.0 Functional Integrity Guard
+
+Queue specs must prevent a bounded implementation slice from passing by preserving only the smallest currently working path while silently losing surrounding functionality.
+
+Required queue-local integrity records:
+
+- `Capability Floor`
+- `User Path Coverage Matrix`
+- `Functional Loss Budget`
+
+Required rules:
+
+1. `Capability Floor` must enumerate the parent-spec capabilities, interaction families, or runtime obligations that must still work after this queue closes even if they are not the primary `Can Claim` owner.
+2. `User Path Coverage Matrix` must include, where applicable:
+   - primary entry paths
+   - alternate entry/import/preview/startup paths
+   - leave/return/recovery paths
+   - empty/no-data/fail-closed paths
+   - rejection/blocked/error-handling paths
+3. A queue must not rely on one representative happy path as proof that the broader functional surface remains intact when the parent spec or queue surface clearly implies multiple user-visible paths.
+4. `Functional Loss Budget = zero` means the queue may not knowingly remove or degrade any inherited functional path without explicit parent/version acceptance.
+5. If a functional path is intentionally not preserved in the current queue, the path must be recorded as:
+   - another queue's owned acceptance
+   - same-family residue
+   - cross-family residue
+   - blocker
+   - accepted residue or waiver
+6. It is illegal to let a queue appear complete when a user-visible path has been replaced by a static placeholder, unreachable action, disconnected route, or behavior that only survives through legacy fallback.
 
 ### 8.9.1 Queue Completion Completeness Review
 
@@ -705,6 +798,10 @@ The queue completion review must evaluate:
 - whether any missing capability was incorrectly treated as unsupported
 - whether `Cannot Claim` / `Out Of Scope` items were correctly routed rather than retired
 - whether the verification evidence covers the queue's functional claim, not only a representative happy path
+- whether the `Capability Floor` remained intact
+- whether the `User Path Coverage Matrix` still holds through real reachable behavior
+- whether any functional loss occurred despite the queue's claimed narrow scope
+- whether any replacement or migration claim has written replacement proof rather than prose-only handoff language
 
 Bounded gap-fill rule:
 
@@ -714,6 +811,7 @@ Bounded gap-fill rule:
 4. The gap-fill pass must not turn into unlimited scope expansion.
 5. Gaps that remain after the one permitted pass must be recorded as residue, blockers, accepted residue, or successor candidate queues according to their severity.
 6. A queue cannot close as topic-complete if a remaining same-family gap still blocks the claimed capability.
+7. A queue cannot close as functionally preserved if the functional-loss audit still shows lost entry paths, unreachable follow-up paths, placeholder-only behavior, or legacy-only survival of the claimed path.
 
 ### 8.9.2 Closeout Status Semantics
 
@@ -974,6 +1072,24 @@ It is illegal to stop at:
 
 when those are already the only legal next step.
 
+### 11.2.0 Stop-Condition Self-Check
+
+Before ending a response while the current version still has an active queue, a pending candidate queue, or a uniquely lawful next governance action, the agent must run a stop-condition self-check.
+
+The self-check must ask whether:
+
+- the operator explicitly requested answer-only or no-continuation behavior
+- a real blocker exists
+- the finding is outside the parent spec
+- continuing would change the parent total spec
+- continuing would delete or downgrade capability
+- continuing would rewrite out-of-scope as retired or unsupported
+- continuing would require a genuine product decision
+
+If none of those are true, the agent must not stop at advice or a default confirmation prompt. It must record the governance decision and continue to the next lawful step.
+
+If any of those are true and the agent therefore stops or asks for input, it must first write the structured stop record in current version truth.
+
 ### 11.2.1 Post-Queue Closeout Pause Policy
 
 The version plan owns post-queue pause behavior through:
@@ -1157,7 +1273,7 @@ After a task reaches a terminal execution state:
 1. write the task after-state first
 2. write queue truth and any required version truth second
 3. record the local repository sync state third
-4. defer push and baseline merge until explicitly requested, collaboration needs remote visibility, or a queue/version contract requires remote sync
+4. do not start remote push / merge before queue closeout unless a queue/version contract explicitly requires earlier remote sync
 5. continue Blueprint scheduling after the local-record step or any attempted repository sync returns a result
 
 After a queue reaches queue closeout:
@@ -1165,10 +1281,11 @@ After a queue reaches queue closeout:
 1. create one local `branch-commit` for that completed execution queue before activating the next queue or continuing version-level promotion review
 2. use a commit message with a typed subject plus a `Summary:` body containing real content bullets
 3. record the local commit result in the queue-local sync record
-4. keep push optional; do not require one push per queue
-5. if push is deferred, record that the queue has a local commit and remote sync is pending or not requested
-6. a completed queue-local `branch-commit` is not a pause boundary by itself
-7. after repository sync is recorded, continue to the next lawful Blueprint scheduling action unless `post_queue_closeout_pause_policy = pause-when-explicitly-requested`, a blocker exists, multiple mutually exclusive legal branches exist, or version closeout confirmation is required
+4. attempt `remote-sync` toward the remote development trunk `mod-first-dev` after the local `branch-commit` is recorded
+5. wait for the push / merge result before continuing any later Blueprint scheduling action
+6. regardless of remote-sync success or failure, record the result in the queue-local sync record and keep the already-recorded execution conclusion unchanged
+7. a completed queue-local `branch-commit` is not a pause boundary by itself
+8. after repository sync result is recorded, continue to the next lawful Blueprint scheduling action unless `post_queue_closeout_pause_policy = pause-when-explicitly-requested`, a blocker exists, multiple mutually exclusive legal branches exist, or version closeout confirmation is required
 
 Repository sync success or failure must not rewrite the already-recorded execution conclusion.
 
@@ -1205,11 +1322,49 @@ Hard throttle:
    - finish automatic closeout from existing evidence
    - or report `blocked` with the smallest concrete blocker
 5. If same-family residue routing is uniquely supported by queue closeout and version truth, do not ask the human to choose the next queue.
+6. In-parent-spec admission gaps, completeness-audit findings, and queue-local implementation-bearing findings must not be turned into default confirmation prompts when they can be recorded and routed automatically under current governance truth.
+7. If a stop or question is lawful, the current version plan must already contain `stop_reason`, `stop_basis`, `next_unblocked_action`, and `human_input_required` before the response ends.
 
 Version-level exception:
 
 - version closeout confirmation is allowed, and required, when the version is closeout-ready and changing `version_status` to `done` would alter active truth
 - if closeout is not confirmed, resume from the still-open version rather than inferring closure
+
+### 12.1 Explicit Operator-Directed Closure Or Suspension
+
+If the operator explicitly requests closing or suspending the current execution queue, a candidate queue, or the current version, the agent may comply without treating that request as an implementation blocker, but it must update the governing docs in the same batch.
+
+Hard rules:
+
+1. Do not counterfeit completion. An explicit operator request may authorize closure or suspension, but it must not be used to falsely mark unfinished work as `done`.
+2. When the operator explicitly requests closing the current execution queue:
+   - use `queue_status = done` only if the queue's claimed acceptance and closeout truth are actually satisfied
+   - otherwise use `queue_status = dropped`
+   - update queue closeout truth, residue routing, and version-plan routing truth in the same batch
+3. When the operator explicitly requests suspending the current execution queue:
+   - use `queue_status = suspended`
+   - clear live task execution from the queue doc
+   - set the version plan `active_queue = none`
+   - record the suspension basis and lawful resume action in the version plan
+4. When the operator explicitly requests suspending a candidate queue:
+   - keep the candidate in version-level truth
+   - update the candidate ledger and queue-promotion record to show it is operator-suspended / on-hold
+   - do not silently drop or complete it
+5. When the operator explicitly requests closing a candidate queue without execution:
+   - mark that candidate as operator-dropped or rejected in version-level truth
+   - remove it from future promotion routing
+   - do not create fake execution-closeout history for a queue that never ran
+6. When the operator explicitly requests suspending the current version:
+   - keep `version_status = open`
+   - record `stop_reason = operator-requested-suspend`
+   - record `stop_basis`, `next_unblocked_action`, and `human_input_required = false`
+   - do not mark the version `done` or `archived` merely to express suspension
+7. When the operator explicitly requests closing the current version:
+   - use `version_status = done` only if closeout truth is actually satisfied
+   - otherwise use `version_status = archived`
+   - reconcile `active_queue`, candidate routing, and any remaining residue in the same write batch
+8. Operator-directed closure or suspension is a document-write action, not a conversation-only note. `project-progress`, `blueprint`, the current version plan, and any affected queue docs must be synchronized before the response ends when their owned truth changes.
+9. If a suspended queue or version is later resumed, resume from the written governance truth rather than recreating the item from scratch.
 
 ## 13. Consistency Checks
 
@@ -1329,12 +1484,12 @@ Rules:
    - `local-record`: write local docs/code and queue-local sync state without creating a commit
    - `branch-commit`: create one semantic local commit for one completed execution queue
    - `branch-push`: push the working branch without baseline merge
-   - `remote-sync`: push the working branch and, only when explicitly required, merge/push the baseline
+   - `remote-sync`: push the working branch and attempt merge/push to the development trunk `mod-first-dev`
 5. Every completed execution queue should form its own local `branch-commit` before later Blueprint scheduling continues.
-6. The default Blueprint governance/documentation refinement path is `local-record` during execution, `branch-commit` at queue closeout, and deferred push unless remote visibility is requested or required.
-7. Push is not bound to every queue; multiple queue commits may be pushed in one later batch.
+6. The default Blueprint governance/documentation refinement path is `local-record` during execution, `branch-commit` at queue closeout, then attempted `remote-sync` toward `mod-first-dev`.
+7. Every completed execution queue should attempt remote-sync after its queue-local branch-commit; if that remote-sync fails, record the failure and continue Blueprint scheduling from written governance truth.
 8. Once a push is started, no later Blueprint scheduling action may continue until the push returns success or failure.
-9. Terminal task after-state does not by itself require immediate commit, push, baseline merge, or baseline push.
+9. Terminal task after-state does not by itself require immediate commit, push, or merge before queue closeout.
 10. Avoid process-only commits for minor field synchronization unless that synchronization is the bounded queue or task itself.
 11. Every git commit, including merge commits, must carry its own structured content summary in the commit message body.
 12. Commit / push / merge are non-governing: they must not change task state, queue state, version state, or version scheduling truth.
@@ -1343,7 +1498,7 @@ Rules:
 15. Repository sync failure must not be rewritten as queue blocker, target blocker, queue_status change, version_status change, decision_state change, repository/global verification failure, or decision_required.
 16. Repository sync failure must not block task closeout, queue closeout, version review handoff, same-family continuation routing, or next lawful queue activation.
 17. After a returned push result is recorded, Blueprint scheduling continues from written governance docs whether the push succeeded or failed.
-18. Ask the user only when baseline selection is ambiguous or when merge-conflict handling has multiple mutually exclusive legal resolutions that current version truth cannot decide.
+18. Ask the user only when merge-conflict handling has multiple mutually exclusive legal resolutions that current version truth cannot decide.
 19. Resume truth comes from the written governance docs, not branch memory or remote push status.
 20. A merge conflict is part of repository sync, not execution-state governance.
 21. A merge conflict must not rewrite the already-recorded task, queue, or target conclusion.

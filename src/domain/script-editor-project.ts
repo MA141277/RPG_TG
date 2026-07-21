@@ -151,8 +151,6 @@ export type ScriptEditorAccessRule = {
 
 export type ScriptEditorBuildingEntryBinding = {
   defaultPersonId: string;
-  onEnterEventId: string;
-  onLeaveEventId: string;
   returnTarget: string;
 };
 
@@ -232,6 +230,49 @@ export type ScriptEditorBuildingContainerActionItem = {
   disabledHint?: string | undefined;
 };
 
+export type ScriptEditorBuildingLayoutTemplateId =
+  | "default-shell"
+  | "meeting-stage";
+
+export type ScriptEditorBuildingLayoutNodeKind =
+  | "header"
+  | "description"
+  | "character-seats"
+  | "action-menu"
+  | "leave-action"
+  | "fallback-panels";
+
+export type ScriptEditorBuildingLayoutCharacterFilter =
+  | "all"
+  | "primary"
+  | "secondary";
+
+export type ScriptEditorBuildingLayoutActionFilter =
+  | "all"
+  | "non-leave"
+  | "leave-only";
+
+export type ScriptEditorBuildingLayoutNodeRecord = {
+  id: string;
+  kind: ScriptEditorBuildingLayoutNodeKind;
+  regionId: string;
+  sourceContainerId?: string | undefined;
+  sourceContainerType?: ScriptEditorBuildingContainerType | undefined;
+  presentation?: string | undefined;
+  characterFilter?: ScriptEditorBuildingLayoutCharacterFilter | undefined;
+  actionFilter?: ScriptEditorBuildingLayoutActionFilter | undefined;
+  previewSelectable?: boolean | undefined;
+  previewDraggable?: boolean | undefined;
+  previewDropTarget?: boolean | undefined;
+  clickActionId?: string | undefined;
+};
+
+export type ScriptEditorBuildingLayoutRecord = {
+  templateId: ScriptEditorBuildingLayoutTemplateId;
+  shellClassNames?: string[] | undefined;
+  nodes?: ScriptEditorBuildingLayoutNodeRecord[] | undefined;
+};
+
 export type ScriptEditorBuildingContainerRecord = {
   id: string;
   type: ScriptEditorBuildingContainerType;
@@ -246,6 +287,7 @@ export type ScriptEditorBuildingArrangementRecord = ScriptEditorEntityRecord & {
   displayName?: string | undefined;
   description?: string | undefined;
   backgroundId?: string | undefined;
+  layout?: ScriptEditorBuildingLayoutRecord | undefined;
   mountedNpcIds: string[];
   primaryNpcId: string | null;
   containers: ScriptEditorBuildingContainerRecord[];
@@ -281,10 +323,6 @@ export type ScriptEditorBuildingRecord = ScriptEditorEntityRecord & {
   menuEntries?: ScriptEditorMenuEntry[];
   access?: ScriptEditorAccessRule;
   entryBinding?: ScriptEditorBuildingEntryBinding;
-  eventBindings?: {
-    onEnterEventId?: string;
-    onLeaveEventId?: string;
-  };
   backAction?: HouseDefinition["backAction"];
 };
 

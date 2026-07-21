@@ -629,7 +629,7 @@ UI 控件：
 - 优先级
 - 启用开关
 
-长期应迁移为事件绑定的旧字段：
+已退役并从当前项目删除的旧字段：
 
 - `onEnterEventId`
 - `onLeaveEventId`
@@ -1220,8 +1220,8 @@ operator + left + right -> boolean
 迁移工具 UI 需要支持：
 
 - 从事件 `triggerTiming + conditionGroups + relations` 生成事件绑定。
-- 从建筑 `onEnterEventId/onLeaveEventId` 生成建筑绑定。
-- 从建筑 `entryBinding.onEnterEventId/onLeaveEventId` 生成建筑绑定。
+- 不再从建筑 `onEnterEventId/onLeaveEventId` 生成建筑绑定；建筑进入触发统一由 EventBinding 作者面直接配置。
+- 不再从建筑 `entryBinding.onEnterEventId/onLeaveEventId` 生成建筑绑定；旧字段已退役，不再作为迁移来源。
 - 从人物 `eventIds` 生成“相关事件”，不自动生成触发绑定，除非用户选择触发动作。
 - 从对话 `followUps` 中的 event 目标生成对话完成 / 选项绑定。
 - 从菜单项 `targetFamily=event` 生成菜单绑定。

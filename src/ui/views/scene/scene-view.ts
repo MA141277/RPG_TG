@@ -133,7 +133,7 @@ function getFortuneBoardKindLabel(kind: string): string {
   }
 }
 
-function renderActivityOverlay(activitySession: ActiveActivitySession): string {
+export function renderActivityOverlay(activitySession: ActiveActivitySession): string {
   if (activitySession?.type === "fortune-board") {
     return `
       <div class="c-grain-shop-overlay" data-activity-overlay="fortune-board">

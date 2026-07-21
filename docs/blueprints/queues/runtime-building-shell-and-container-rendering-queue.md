@@ -108,6 +108,10 @@
 - `Final end-to-end acceptance or version closeout.`
 - `Out-of-scope means not implemented by this queue; it does not mean retired, removed, or unsupported unless the parent spec was updated first.`
 
+#### Capability Floor
+
+- `Entering a building must still open a runtime shell that can render authored containers, preserve activeBuilding state, and fail closed when arrangement data is missing.`
+
 #### Over-Narrowing Guard
 
 - parent_capabilities_not_owned_by_this_queue:
@@ -136,6 +140,23 @@
 - `Existing house runtime for unmigrated content until migration and retirement queues complete.`
 - `Existing city/building entry navigation using currentHouseId until activeBuilding naming is fully cut over.`
 - `Existing leave-house action behavior.`
+
+#### User Path Coverage Matrix
+
+- primary_paths:
+  - `Runtime path: normal entry into an authored building renders the generic shell and its containers.`
+- alternate_paths:
+  - `Save/restore path: activeBuilding and its rendered arrangement survive state persistence and reload.`
+- empty_or_fail_closed_paths:
+  - `Buildings without arrangement data fail closed or show the bounded empty state without falling back to old house presentation.`
+- forbidden_regressions:
+  - `Do not keep building entry functional only because a legacy house view still intercepts the route.`
+
+#### Functional Loss Budget
+
+- budget: `zero`
+- loss_accounting_rule:
+  - `Any lost entry/render/save behavior must be fixed or routed as residue before queue closeout; generic shell conversion is not permission to drop non-happy-path behavior.`
 
 #### Implementation Anchors
 
@@ -174,6 +195,17 @@
 - `RED/GREEN tests prove building module stage selects a generic building shell when an explicit arrangement matches the active city/building.`
 - `RED/GREEN tests prove generic shell renders empty mounted NPC/container data without fallback rows or crashes.`
 - `Source guard proves this queue does not implement container event dispatch, flow runtime, built-in migration, or legacy house deletion.`
+
+#### Replacement Proof
+
+- previous_owner_or_path:
+  - `House-specific runtime shell/view composition and ad hoc building presentation branches.`
+- new_owner_or_path:
+  - `Generic runtime building shell and container rendering pipeline backed by buildingArrangements.`
+- behavior_preservation_expectation:
+  - `Players can still enter, view, leave, and restore buildings through the new shell without hidden house fallback.`
+- verification_evidence:
+  - `Automated save/restore coverage plus runtime shell verification prove generic rendering owns the path.`
 
 ### Parent Version
 
@@ -363,6 +395,10 @@
   - `Passed: npm run typecheck.`
   - `Passed: npm run lint:blueprints.`
   - `Passed: npm test.`
+- functional_loss_audit:
+  - `The generic shell preserved building entry, render, leave, and restore behavior; no verified path remained reachable only through removed house rendering branches.`
+- replacement_proof_summary:
+  - `House-specific rendering branches were superseded by the generic building shell, with explicit runtime materialization and persistence proof covering the replacement path.`
 - gap_fill_decision:
   - `not-needed`
 - gap_fill_scope:

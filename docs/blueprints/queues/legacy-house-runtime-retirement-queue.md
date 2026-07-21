@@ -81,6 +81,10 @@
 - `Final acceptance or version closeout.`
 - `Any deletion that would remove the only replacement path.`
 
+#### Capability Floor
+
+- `After legacy deletion, every still-supported building entry and action path must remain executable through the explicit arrangement/event/flow/closeBuilding pipeline.`
+
 #### Over-Narrowing Guard
 
 - parent_capabilities_not_owned_by_this_queue:
@@ -117,6 +121,33 @@
 - Must preserve:
   - `Replacement building arrangement and flow runtime path remains canonical.`
 
+#### User Path Coverage Matrix
+
+- primary_paths:
+  - `Runtime path: migrated buildings still enter, execute authored actions, and leave without old house runtime code.`
+- alternate_paths:
+  - `Maintenance path: remaining reusable mechanic defaults live under their mechanic owners rather than the removed house framework.`
+- empty_or_fail_closed_paths:
+  - `Buildings with no explicit arrangement now fail closed or show the bounded empty state instead of reviving legacy fallback views.`
+- forbidden_regressions:
+  - `Do not declare legacy removal complete if any migrated action remains executable only through deleted house code.`
+
+#### Functional Loss Budget
+
+- budget: `zero`
+- loss_accounting_rule:
+  - `Any behavior that would be lost by deletion must be repaired first or routed as blocker/residue; deletion alone is never proof of replacement parity.`
+
+#### Replacement Proof
+
+- previous_owner_or_path:
+  - `House modules, house registries, house runtime bridges, house UI views, and special-house governance.`
+- new_owner_or_path:
+  - `Explicit building arrangements plus EventBindingRuntime -> flow/closeBuilding behavior and mechanic-owned defaults.`
+- behavior_preservation_expectation:
+  - `Supported building entry/action semantics remain reachable on the new authored path after legacy code is removed.`
+- verification_evidence:
+  - `Source removal proof, action-menu parity gap fill, and typecheck/test/lint verification demonstrate the authored replacement path is live.`
 ### Queue Snapshot
 
 - queue_goal: `Retire superseded house runtime after replacement behavior is proven.`
@@ -168,6 +199,29 @@
   - `npm run lint:blueprints`
   - `npm test`
 
+### Completion Completeness Review
+
+- review_status: `passed`
+- can_claim_coverage:
+  - `ACC-BUILDING-FLOW-008 is covered: superseded house runtime code was removed only after replacement authored behavior was proven.`
+- parent_spec_preservation:
+  - `No parent capability was narrowed or declared unsupported; final acceptance remained with queue.building-arrangement-final-acceptance-and-removal-guard.`
+- out_of_scope_routing:
+  - `Version closeout and broader final acceptance stayed outside this queue and remained explicitly routed.`
+- verification_sufficiency:
+  - `Passed: npm run typecheck.`
+  - `Passed: npm run lint:blueprints.`
+  - `Passed: npm test.`
+- functional_loss_audit:
+  - `Legacy retirement did not strand any verified Zhu Yuanzhang building action or leave path; replacement behavior was proven before deletion and no legacy fallback remains.`
+- replacement_proof_summary:
+  - `Legacy house runtime owners were removed only after explicit event/binding/flow/closeBuilding replacement proof covered migrated building behavior.`
+- gap_fill_decision:
+  - `used-once`
+- gap_fill_scope:
+  - `Filled the built-in action-menu parity gap before deleting legacy house runtime paths.`
+- remaining_gaps:
+  - `No same-queue replacement parity gap remains after legacy deletion; final acceptance remained routed downstream.`
 ### Closeout Record
 
 - closed_at: `2026-07-21`

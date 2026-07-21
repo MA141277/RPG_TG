@@ -419,7 +419,6 @@ export const prototypeHouses: HouseDefinition[] = [
     name: "皇觉寺",
     type: "temple",
     moduleId: "temple-house",
-    onEnterEventId: "event.story.zhu_yuanzhang.ordination",
     characterIds: ["char.kulan_temple_abbot", "char.kulan_temple_senior_monk"],
     defaultCharacterId: "char.kulan_temple_abbot",
     backAction: {

@@ -107,6 +107,10 @@
 - `Final end-to-end acceptance or version closeout.`
 - `Out-of-scope means not implemented by this queue; it does not mean retired, removed, or unsupported unless the parent spec was updated first.`
 
+#### Capability Floor
+
+- `Building-hosted flow playables must still execute, settle, and hand off through the shared playable runtime without requiring building-specific presenter code.`
+
 #### Over-Narrowing Guard
 
 - parent_capabilities_not_owned_by_this_queue:
@@ -133,6 +137,23 @@
 - `Existing minigame and battle playable launches, actions, exits, sessions, and registries.`
 - `Existing EventBindingRuntime trigger discipline.`
 - `Existing old house runtime behavior for unmigrated content until later migration and retirement queues complete.`
+
+#### User Path Coverage Matrix
+
+- primary_paths:
+  - `Runtime path: an event starts a family=flow playable from a building and the playable presents, settles, and returns control correctly.`
+- alternate_paths:
+  - `Shared-runtime path: the same flow family can be launched by non-building owners without diverging contract truth.`
+- empty_or_fail_closed_paths:
+  - `Unsupported flow payloads or owners fail closed rather than half-starting through ad hoc presenter branches.`
+- forbidden_regressions:
+  - `Do not keep flow settlement working only because old building shell state or one-off presenter shims still intercept the result.`
+
+#### Functional Loss Budget
+
+- budget: `zero`
+- loss_accounting_rule:
+  - `Any missing launch/presenter/settlement/handoff behavior must be repaired or routed before closeout; shared-runtime extraction cannot silently narrow supported flow semantics.`
 
 #### Implementation Anchors
 
@@ -168,6 +189,17 @@
 - `RED/GREEN tests prove a flow session can reduce commands and expose a presenter model through shared runtime/presenter seams.`
 - `RED/GREEN tests prove flow completion produces settlement/handoff data without direct building shell navigation.`
 - `Source guards prove this queue does not implement Script Editor flow authoring UX, built-in migration, or legacy house deletion.`
+
+#### Replacement Proof
+
+- previous_owner_or_path:
+  - `Prototype or building-local flow runtime/presenter behavior embedded in shell-specific code.`
+- new_owner_or_path:
+  - `Shared playable runtime and presenter contract for family=flow with building owner support.`
+- behavior_preservation_expectation:
+  - `Building-hosted flows remain fully playable while the runtime becomes reusable across owners.`
+- verification_evidence:
+  - `Shared runtime tests, settlement/handoff proof, and queue verification cover the launched flow path end to end.`
 
 ### Parent Version
 
@@ -219,6 +251,10 @@
   - `Passed: npm run typecheck.`
   - `Passed: npm run lint:blueprints.`
   - `Passed: npm test; 686 tests passed.`
+- functional_loss_audit:
+  - `Flow runtime extraction did not reduce building-hosted playable behavior to a placeholder; launch, presenter, settlement, and handoff remained verified on the shared path.`
+- replacement_proof_summary:
+  - `The shared family=flow runtime replaced shell-local behavior while preserving building-owner execution and settlement semantics.`
 - gap_fill_decision:
   - `gap-fill-used`
 - gap_fill_scope:

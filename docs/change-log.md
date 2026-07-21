@@ -5,7 +5,95 @@
 `docs/change-log.md` 的正式定位是“历史记录 + 人类可读摘要”。
 它不是当前 Blueprint / legacy superpowers 治理的 live execution truth，不作为 resume entry、promotion gate、closeout gate 或固定同步门。
 
+## 2026-07-21 Script Editor Scenes Authoring Surface
+
+### Changed
+- 更新 [src/application/script-editor/minimal-workflow.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/minimal-workflow.ts) 与 [src/application/script-editor/workspace-shell.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/workspace-shell.ts)，把 `scenes` 纳入 Script Editor 最小工作流可见家族、对象树分组与 `scenes.json` 导出落点，确保剧本包里的建筑进入演出不再只存在于导入数据而没有正式作者面入口。
+- 更新 [src/ui/main-ui/main-ui-flow.js](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/main-ui/main-ui-flow.js)，把 `scenes` 从整条记录 JSON 文本框升级为结构化作者面：顶层字段、动作列表、常用引用选择器与受限 JSON escape hatch 分离，继续保持 `scene` 只负责演出内容、`building-enter` 触发仍经由 `event binding / event` 路径，不把建筑逻辑写回运行时硬编码。
+- 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，补充 `scene` 结构化作者面字段、动作编辑入口与专用 helper 回归，防止作者面退回到整条记录 JSON-only 的状态。
+
+### Impact
+- 现在这两件事都具备正式入口：剧本包里的 `building -> event binding -> event -> scene` 链路可以继续承载进入建筑后的对话，而 Script Editor 也能直接浏览和编辑 `scene` 记录本体；后续若增加预览态选中、拖拽布局、组件点击动作配置，仍可沿同一条配置驱动链路扩展。
+
 ## 2026-07-21 Legacy House Runtime Retirement
+
+### Changed
+- 更新 [src/domain/house.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/domain/house.ts)、[src/domain/script-editor-project.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/domain/script-editor-project.ts)、[src/application/script-editor/city-building-authoring.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/city-building-authoring.ts)、[src/application/script-editor/city-building-runtime-materializer.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/city-building-runtime-materializer.ts) 与 [src/ui/main-ui/main-ui-flow.js](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/main-ui/main-ui-flow.js)，删除建筑与编辑器侧的 `onEnterEventId / onLeaveEventId` 及对应作者面入口；建筑进入绑定只保留当前通用 `entryBinding` 与项目级 `eventBindings` 路径。
+- 更新 [src/application/navigation/enter-house.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/navigation/enter-house.ts)、[src/core/contracts/runtime-result.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/core/contracts/runtime-result.ts)、[src/core/runtime/navigation-runtime.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/core/runtime/navigation-runtime.ts)、[src/application/runtime/navigation-time-follow-up.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/runtime/navigation-time-follow-up.ts) 和 [src/main.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/main.ts)，把进入建筑后的剧情触发统一收口为 `navigation.enter-house -> navigation.entered-house -> runStoryTriggerRuntime({ timing: "house-enter" })`；运行时不再从 `HouseDefinition` 直接拉起旧事件入口。
+- 更新 [src/content/prototype-world.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/content/prototype-world.ts)、[src/content/sample-scenario.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/content/sample-scenario.ts) 和 [src/content/scenario-packs/zhuyuanzhang/houses.json](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/content/scenario-packs/zhuyuanzhang/houses.json)，删除内置内容中的旧 house 进入事件字段，避免内容层继续保留已废弃合同。
+
+### Impact
+- 建筑进入剧情现在只认 Script Editor arrangement / EventBinding / shared runtime 这条正式链路，不再存在 `house.onEnterEventId` 这类旁路；后续无论建筑 UI 布局如何继续通用化，进入建筑触发都不会再回流到旧 house 合同。
+- 编辑器与运行时的建筑进入合同已经收敛到项目级 `eventBindings` 和通用 navigation follow-up，上层继续推进布局编辑、预览拖拽、组件点击动作配置时，不需要再兼容或迁移旧房屋事件入口字段。
+
+## 2026-07-21 Scenario Pack Character Startup Override Unification
+
+### Changed
+- 更新 [src/domain/scenario-profile.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/domain/scenario-profile.ts)、[src/application/startup/startup-session-coordinator.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/startup/startup-session-coordinator.ts)、[src/application/scenario/scenario-pack-loader.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/scenario/scenario-pack-loader.ts) 和 [src/application/script-editor/runtime-pack-export.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/runtime-pack-export.ts)，为 scenario profile 增加按 `characterId` 覆写启动状态的 `characterStartups` 合同，并在 startup coordinator 里统一解析所选角色的有效 startup profile。
+- 更新 [src/content/scenario-packs/zhuyuanzhang/scenario-profile.json](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/content/scenario-packs/zhuyuanzhang/scenario-profile.json)，让徐达、汤和、常遇春在壳层选角后切到 `guo-zixing-camp` 阶段，并清除和尚期开场 `entryEventId / openingFlowId`，不再错误继承寺庙和尚期的建筑禁入与进入剧情。
+
+### Impact
+- 同一份 runtime 剧本包现在可以用数据声明“不同角色从不同剧情启动态进入”，`JSON 开局` 不需要再靠入口侧隐式推断角色阶段，也不会再和其他同类入口跑出两套互相冲突的建筑访问/进入剧情结果。
+
+## 2026-07-21 Building Layout Template Runtime Generalization
+
+### Changed
+- 更新 [src/application/presenter/presenter-output.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/presenter/presenter-output.ts)、[src/application/presenter/stage-presenters.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/presenter/stage-presenters.ts) 与 [src/ui/app-render.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/app-render.ts)，让 `scene` 阶段在 `currentHouseId` 存在时复用当前 building stage 作为 underlay，而不是只支持 city underlay；进入建筑即触发的 authored scene/dialogue 不再掉到黑底。
+- 更新 [src/domain/building-arrangement.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/domain/building-arrangement.ts)、[src/domain/script-editor-project.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/domain/script-editor-project.ts)、[src/application/script-editor/editor-project-loader.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/editor-project-loader.ts) 和 [src/application/script-editor/city-building-runtime-materializer.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/city-building-runtime-materializer.ts)，将 building arrangement 布局合同从旧 `layoutVariant` 升级为结构化 `layout` 定义，支持 `shellClassNames`、节点级 `previewSelectable / previewDraggable / previewDropTarget` 以及预留 `clickActionId`。
+- 重写 [src/ui/views/building/building-module-view.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/views/building/building-module-view.ts)，移除运行时内置的建筑专用模板分支，改为只解释通用布局节点与容器绑定；具体建筑视觉结构改由 arrangement `layout.nodes` 与 `shellClassNames` 配置驱动。
+- 继续更新 [src/ui/views/building/building-module-view.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/views/building/building-module-view.ts)、[src/styles/grain-shop.css](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/styles/grain-shop.css)、[src/styles/keep-house.css](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/styles/keep-house.css)、[src/styles/tea-house.css](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/styles/tea-house.css) 和 [src/styles/temple-house.css](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/styles/temple-house.css)，把 renderer 里残留的 `grain-shop / keep-house / tea-house` 布局类名抽成通用 `c-building-layout-*` 类，再由旧壳样式表通过兼容选择器承接视觉。
+- 继续更新 [src/ui/views/building/building-module-view.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/views/building/building-module-view.ts)、[src/styles/grain-shop.css](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/styles/grain-shop.css)、[src/styles/keep-house.css](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/styles/keep-house.css)、[src/styles/tea-house.css](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/styles/tea-house.css) 和 [src/styles/temple-house.css](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/styles/temple-house.css)，把 building renderer 里残留的 `c-grain-shop-*` 皮肤输出进一步收口为通用 `view-house-building-shell`、`c-building-skin-*` 钩子，并让寺院/茶馆/货栈/将领府等主题壳通过共享变量覆盖保持旧视觉。
+- 继续更新 [src/ui/views/building/building-module-view.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/views/building/building-module-view.ts)、[src/styles/grain-shop.css](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/styles/grain-shop.css) 和 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，让 arrangement `layout.templateId / regionId / kind / presentation` 进一步映射为稳定的 `c-building-layout-template-*`、`c-building-layout-node-*`、`c-building-layout-region-*` 语义类，避免后续预览拖拽/选中/点击配置还要重新拆 renderer。
+- 继续更新 [src/application/script-editor/city-building-authoring.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/city-building-authoring.ts)、[src/ui/main-ui/main-ui-flow.js](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/main-ui/main-ui-flow.js) 和 [tests/city-building-mount-authoring.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/city-building-mount-authoring.test.cjs)，把 building arrangement 的 `layout` 合同补进 Script Editor 作者面，支持模板、壳类名、layout node 与 preview flag 的 project-level 增删改，避免后续组件可编辑/布局调整继续依赖手写 JSON 或 runtime 硬编码。
+- 继续更新 [src/application/building/building-layout-templates.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/building/building-layout-templates.ts)、[src/ui/views/building/building-module-view.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/views/building/building-module-view.ts)、[src/application/script-editor/city-building-authoring.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/city-building-authoring.ts) 和 [src/ui/main-ui/main-ui-flow.js](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/main-ui/main-ui-flow.js)，把默认 `layout` / `layout.nodes` 的模板解析统一收口到共享 `building-layout-templates`，移除 renderer、authoring、编辑器 UI 各自内嵌的 `default-shell` 字面量与重复默认节点定义，让布局模板切换和后续预览编辑都共享一套入口。
+- 继续更新 [src/styles/keep-house.css](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/styles/keep-house.css) 和 [src/styles/temple-house.css](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/styles/temple-house.css)，删除已无运行时输出的 `c-keep-house-*` 兼容选择器，只保留当前 building layout renderer 真正产出的 `c-building-layout-*` 语义钩子，继续回收旧壳样式里的历史硬编码残留。
+- 更新 [src/content/scenario-packs/zhuyuanzhang/building-arrangements.json](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/content/scenario-packs/zhuyuanzhang/building-arrangements.json)，把所有寺院 arrangement 从旧 `layoutVariant` 切到显式 `layout` 配置，保留旧寺院壳的中央功能板、席位区、侧栏人物和离开入口，但不再依赖运行时硬编码模板。
+- 继续更新 [src/content/scenario-packs/zhuyuanzhang/building-arrangements.json](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/content/scenario-packs/zhuyuanzhang/building-arrangements.json)，为将领府邸、茶馆、货栈、粮铺、药铺、客栈和自宅补齐 `primary-npc` / `leave-action` 等节点，让旧壳所需的左侧人物列、右侧主位人物和底部离开入口都转为 arrangement 数据控制。
+- 扩展 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，让 renderer 回归断言直接覆盖配置驱动 layout、节点数据属性和未来预览扩展 seam。
+
+### Impact
+- 建筑运行时现在只保留通用容器和通用布局节点解释，具体布局细节已从渲染器分支移回数据配置层，后续剧本编辑器预览态的拖动、选中和点击编辑都可以沿同一份 `layout` 合同扩展；同一条 authored event / scene 路径在建筑内也会保留建筑壳背景，不会因 scene handoff 丢失 underlay。
+- `layout.templateId` 不再只是被写成 `data-*` 旁路字段，而是进入正式 DOM 语义层；后续如果要为 Script Editor 预览态增加模板级高亮、region 落点、节点框选或点击动作配置，可以直接依赖这批通用类而不是重新引入建筑特判。
+- building layout 不再只是 runtime 消费合同，Script Editor 也开始把它当成正式作者面数据处理；后续无论是拖拽生成配置、选中组件写回节点，还是给组件补点击动作配置，都可以沿这条 `project -> runtime pack -> arrangement layout` 链路继续推进。
+- 默认布局模板现在由共享模板表统一解析，Script Editor 新建 arrangement、布局编辑器回显和 runtime 渲染都会拿到同一套模板节点；后续如果要加预览态拖拽、节点选中或模板切换写回，不需要再分别修三套默认逻辑。
+- 非寺院建筑当前也开始回收旧壳结构语义：粮铺系和府邸/自宅不再只显示“中心按钮 + 空白背景”，而是通过 authored `layout` 明确声明侧边人物、主位人物和离开位，后续再细调时不需要往 renderer 里补建筑条件分支。
+- 当前自动验证重新通过 `npm run typecheck`、`npm test -- --runInBand` 与 `npm run lint:blueprints`；运行时不再依赖 `layoutVariant` 或寺院专用渲染分支。
+- 当前自动验证继续通过 `npm run typecheck` 与 `npm test -- --runInBand`；局部 `stylelint` 检查确认这轮新增的 `keep-house.css` 选择器顺序问题已消除，但 `grain-shop.css` / `tea-house.css` 仍存在仓库既有样式规范债，尚未在本轮一并清理。
+
+## 2026-07-21 Temple Arrangement UI Regression Recovery
+
+### Changed
+- 更新 [src/ui/views/building/building-module-view.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/views/building/building-module-view.ts) 与 [src/styles/temple-house.css](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/styles/temple-house.css)，将 `layoutVariant: "temple-stage"` 的 arrangement 建筑页从新三栏信息面板回收为重构前的旧寺院壳布局，继续复用 arrangement 数据与 `building-container-item-action` 事件链路，但恢复左侧人物列、中间功能板、中央席位、右侧主持像与底部离开按钮的旧视觉结构。
+
+### Impact
+- 皇觉寺及同类寺院 arrangement 页面重新对齐到玩家熟悉的旧 UI 语义，不再出现重构后新增信息面板导致的整体布局漂移；后续功能修复可以在不再改动视觉骨架的前提下继续推进。
+
+## 2026-07-21 Building Arrangement Final Guard Gap Fill
+
+### Added
+- 扩展 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，补充皇觉寺 `抄经 / 打扫庭院 / 挑水` 三个直达动作的事件/绑定/flow 覆盖，并新增 `flow complete -> launchPlayable` 回归，防止建筑按钮再次只停在说明 flow 而不进入实际活动。
+
+### Changed
+- 更新 [src/core/runtime/playable-runtime.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/core/runtime/playable-runtime.ts) 和 [src/core/runtime/interactive-runtime.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/core/runtime/interactive-runtime.ts)，让 authored flow 在完成节点可通过通用 `detail.launchPlayable` 继续启动后续 playable，并在 `activity-qte` 退出时正确清理会话状态。
+- 更新 [src/ui/views/scene/scene-view.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/views/scene/scene-view.ts) 和 [src/ui/app-render.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/app-render.ts)，使建筑视图也能叠加渲染活动层，避免寺院工作启动后因为仍停留在 building stage 而看不到交互。
+- 更新 [src/content/scenario-packs/zhuyuanzhang/building-arrangements.json](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/content/scenario-packs/zhuyuanzhang/building-arrangements.json)、[src/content/scenario-packs/zhuyuanzhang/events.json](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/content/scenario-packs/zhuyuanzhang/events.json)、[src/content/scenario-packs/zhuyuanzhang/event-bindings.json](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/content/scenario-packs/zhuyuanzhang/event-bindings.json) 和 [src/content/scenario-packs/zhuyuanzhang/flow-definitions.json](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/content/scenario-packs/zhuyuanzhang/flow-definitions.json)，把皇觉寺顶层动作从单个“寺内工作”恢复为直达 `抄经 / 打扫庭院 / 挑水`，并通过 authored event-binding / flow handoff 进入对应 temple activity。
+
+### Impact
+- 皇觉寺现在不仅恢复了寺院式布局壳，还重新具备可点击的日常功能入口；玩家从建筑页点击 `抄经 / 打扫庭院 / 挑水` 会走统一 building arrangement / event binding / flow / playable 链路，而不是依赖旧 house runtime 或 `main.ts` 特判。
+- Final guard 队列的自动验证当前继续保持绿色：`npm run typecheck`、`npm test -- --runInBand`、`npm run lint:blueprints` 已通过；剩余工作是补齐内置浏览器中的人工可见回归证据。
+
+### Added
+- 扩展 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，让 Script Editor building arrangement round-trip 覆盖 `layoutVariant`，并新增 arrangement renderer 视图回归，防止皇觉寺再次退化回无语义的通用壳布局。
+
+### Changed
+- 更新 [src/application/content/content-pack-loader.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/content/content-pack-loader.ts)，内置 manifest 水合现在显式读取 `buildingArrangements` 与 `flowDefinitions`，避免 built-in 包回寺后丢失建筑壳与 flow authored 路径。
+- 更新 [src/domain/building-arrangement.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/domain/building-arrangement.ts)、[src/domain/script-editor-project.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/domain/script-editor-project.ts)、[src/application/script-editor/editor-project-loader.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/editor-project-loader.ts) 和 [src/application/script-editor/city-building-runtime-materializer.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/city-building-runtime-materializer.ts)，为 building arrangements 增加 data-driven `layoutVariant` 合同，并保持 Script Editor / runtime pack round-trip。
+- 更新 [src/ui/views/building/building-module-view.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/views/building/building-module-view.ts)、[src/styles/prototype.css](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/styles/prototype.css) 和 [src/styles/temple-house.css](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/styles/temple-house.css)，给 generic `view-house` 补齐基础视觉壳，并让 arrangement renderer 支持寺院式 `temple-stage` 布局变体。
+- 更新 [src/content/scenario-packs/zhuyuanzhang/building-arrangements.json](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/content/scenario-packs/zhuyuanzhang/building-arrangements.json)，将 `arrangement.city.kulan.house.kulan.temple` 切到 `layoutVariant: "temple-stage"`，在不恢复旧 house runtime 的前提下保留皇觉寺旧式布局语义。
+
+### Impact
+- 皇觉寺在 authored arrangement / event / playable-flow 路径上重新具备稳定的建筑壳、背景与布局呈现，不再因为 built-in manifest 水合缺口或 generic shell 过度简化而退化成空白页或黑底按钮页。
+- Final guard 队列当前已重新通过 `npm run typecheck`、`npm run lint:blueprints` 与 `npm test`，并在内置浏览器中再次确认皇觉寺壳布局与 `评定` flow 启动可达；当前 version 仍未进入 version closeout。
 
 ### Added
 - 扩展 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs) 和 [tests/hardcoded-scenario-pack-boundary.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/hardcoded-scenario-pack-boundary.test.cjs)，加入旧 house runtime/source 路径退场 guard，并退休旧 house runtime 直接断言。
@@ -3185,3 +3273,14 @@
 
 ### Impact
 - The next city/building slice must first inventory resolver boundaries and select the smallest lawful implementation before changing production code.
+
+## 2026-07-21 Zhuyuanzhang Kulan Building Enter Dialogue Restoration
+
+### Changed
+- Added authored `building-enter` bindings, events, and scenes for the Kulan leader residence, temple, keep, tea house, market, grain shop, medicine house, and inn inside the `zhuyuanzhang` scenario pack.
+- Reused existing pack-local `text-entries.json` dialogue copy for those new enter scenes so the restored building greetings remain scenario-pack content instead of runtime hardcoded text.
+- Added coverage that checks both the pack-authored `binding -> event -> scene` chain and the script-editor import surface for the restored Kulan building-enter dialogue routes.
+
+### Impact
+- Entering the covered Kulan buildings can again trigger pre-refactor-style greeting dialogue through scenario-pack data.
+- The same restored enter-dialogue routes are now visible to the script editor after importing the built-in `zhuyuanzhang` pack, keeping later adjustment on the authoring path.

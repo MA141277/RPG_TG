@@ -4,9 +4,9 @@
 
 - entry_id: `project-progress.rpg-tg`
 - active_blueprint: `blueprint.rpg-tg`
-- active_version: `target.building-arrangement-container-flow-refactor`
+- active_version: `target.script-editor-event-centered-authoring-scene-retirement-and-portrait-resource-refactor`
 - has_active_queue: `false`
-- next_file: `docs/blueprints/plans/2026-07-20-building-arrangement-container-flow-refactor-target-plan.md`
+- next_file: `docs/blueprints/plans/2026-07-22-script-editor-event-centered-authoring-scene-retirement-and-portrait-resource-refactor-target-plan.md`
 - entry_action: `open-next-file`
 
 ## Human Context
@@ -25,9 +25,9 @@
 - Current Blueprint:
   - `docs/blueprints/blueprint.md`
 - Current Version Spec:
-  - `docs/blueprints/specs/2026-07-20-building-arrangement-container-flow-refactor-target.md`
+  - `docs/blueprints/specs/2026-07-22-script-editor-event-centered-authoring-scene-retirement-and-portrait-resource-refactor-target.md`
 - Current Version Plan:
-  - `docs/blueprints/plans/2026-07-20-building-arrangement-container-flow-refactor-target-plan.md`
+  - `docs/blueprints/plans/2026-07-22-script-editor-event-centered-authoring-scene-retirement-and-portrait-resource-refactor-target-plan.md`
 - Current Active Queue:
   - `none`
 
@@ -71,6 +71,14 @@
 - `queue.script-editor-flow-playable-authoring-ux closed locally after first-class flows[] authoring, independent UI, project/runtime pack round-trip, active-content flowDefinitionsById preview indexing, one high-priority gap fill, and full verification. queue.zhuyuanzhang-building-arrangement-pack-migration is now active under the version-local temporary execution rule; no version closeout entered.`
 - `queue.zhuyuanzhang-building-arrangement-pack-migration closed locally on 2026-07-21 after explicit 21-city/189-arrangement migration, generic action-event-flow launch, one high-priority gap fill, and verification. queue.legacy-house-runtime-retirement is now active under the version-local temporary execution rule; no version closeout entered.`
 - `queue.legacy-house-runtime-retirement closed locally on 2026-07-21 after old house runtime, registries, module sources, UI views, and special-house governance were removed and verification passed. The active version remains open with no active queue until repository sync is recorded and queue.building-arrangement-final-acceptance-and-removal-guard is admitted; no version closeout entered.`
+- `queue.building-arrangement-final-acceptance-and-removal-guard is now active after post-closeout repository sync for queue.legacy-house-runtime-retirement succeeded; no version closeout entered.`
+- `queue.building-arrangement-final-acceptance-and-removal-guard closed with same-family runtime-layout residue after final-guard review and approved design evidence proved the current renderer still depends on named layout-variant branching and cannot yet preserve pre-refactor visual structure across all migrated buildings through one reusable generic mechanism. queue.building-layout-template-runtime-generalization is now the active queue under the same version; no version closeout entered.`
+- `queue.building-layout-template-runtime-generalization is now closed locally after browser proof confirmed template-driven runtime layout parity on meeting-stage and default-shell samples plus preserved action reachability/leave-path recovery. The active version remains open with no active queue and returns to same-version promotion review, where queue.building-arrangement-final-acceptance-and-removal-guard is the next lawful queue recommendation; no version closeout entered.`
+- `queue.building-arrangement-final-acceptance-and-removal-guard is now re-admitted as the active queue after runtime layout generalization closed. Per explicit operator instruction, the shared flow-playable Continue progression issue is not handled in the current version and must be recorded as waiver/accepted residue if reproduced during renewed final acceptance; no version closeout entered.`
+- `queue.building-arrangement-final-acceptance-and-removal-guard is closed after renewed automated verification plus browser proof covered normal start, JSON import start, and Script Editor runtime preview on the updated runtime layout mechanism. The shared flow-playable Continue progression issue remains explicit accepted residue/waiver for that closed version by operator instruction.`
+
+- `target.building-arrangement-container-flow-refactor was explicitly closed on 2026-07-22 and is now historical evidence only.`
+- `Current entry pointers now route to target.script-editor-event-centered-authoring-scene-retirement-and-portrait-resource-refactor as the lawful active open successor version created from MEMO-025.`
 
 ### Historical References
 

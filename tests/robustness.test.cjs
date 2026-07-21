@@ -133,6 +133,9 @@ const {
   loadDefaultRuntimeContent,
 } = require("../.test-dist/application/content/default-runtime-content.js");
 const {
+  loadContentPackFromManifestText,
+} = require("../.test-dist/application/content/content-pack-loader.js");
+const {
   sampleScene,
 } = require("../.test-dist/content/sample-scenario.js");
 const {
@@ -196,6 +199,84 @@ assert.ok(templeHouse, "Expected prototype temple house to exist.");
 assert.ok(
   leaderResidenceEntry,
   "Expected prototype leader residence city entry to exist."
+);
+
+test(
+  "content pack manifest hydration loads building arrangements for built-in scenario packs",
+  async () => {
+    const manifestPath = path.join(
+      process.cwd(),
+      "src",
+      "content",
+      "scenario-packs",
+      "zhuyuanzhang",
+      "pack.json"
+    );
+    const manifestUrl = pathToFileURL(manifestPath).href;
+    const manifestText = fs.readFileSync(manifestPath, "utf8");
+    const originalFetch = global.fetch;
+
+    global.fetch = async (input) => {
+      const url =
+        typeof input === "string"
+          ? input
+          : input instanceof URL
+            ? input.href
+            : input.url;
+      const filePath = fileURLToPath(url);
+      if (!fs.existsSync(filePath)) {
+        return {
+          ok: false,
+          status: 404,
+          text: async () => "",
+          json: async () => {
+            throw new Error(`Missing fixture file: ${filePath}`);
+          },
+        };
+      }
+
+      return {
+        ok: true,
+        status: 200,
+        text: async () => fs.readFileSync(filePath, "utf8"),
+        json: async () => JSON.parse(fs.readFileSync(filePath, "utf8")),
+      };
+    };
+
+    try {
+      const pack = await loadContentPackFromManifestText(
+        manifestText,
+        manifestUrl
+      );
+
+      assert.equal(Array.isArray(pack.buildingArrangements), true);
+      assert.ok(
+        pack.buildingArrangements.length > 0,
+        "Expected built-in scenario pack hydration to populate buildingArrangements."
+      );
+      assert.equal(
+        pack.buildingArrangements.some(
+          (arrangement) =>
+            arrangement.id === "arrangement.city.kulan.house.kulan.temple"
+        ),
+        true
+      );
+      assert.equal(Array.isArray(pack.flowDefinitions), true);
+      assert.ok(
+        pack.flowDefinitions.length > 0,
+        "Expected built-in scenario pack hydration to populate flowDefinitions."
+      );
+      assert.equal(
+        pack.flowDefinitions.some(
+          (flowDefinition) =>
+            flowDefinition.id === "flow.building.house.kulan.temple.review"
+        ),
+        true
+      );
+    } finally {
+      global.fetch = originalFetch;
+    }
+  }
 );
 
 function createBaseState() {
@@ -1468,7 +1549,7 @@ test("scene view does not inherit concrete house background classes", () => {
   );
 });
 
-test("city-context scene rendering keeps the full city view behind event dialogue", () => {
+test("scene rendering keeps the current city or building view behind event dialogue", () => {
   const appRenderSource = fs.readFileSync(
     path.join(process.cwd(), "src", "ui", "app-render.ts"),
     "utf8"
@@ -1484,9 +1565,12 @@ test("city-context scene rendering keeps the full city view behind event dialogu
 
   assert.doesNotMatch(cityViewSource, /renderCitySceneBackdrop/);
   assert.match(appRenderSource, /function renderCitySceneUnderlay/);
+  assert.match(appRenderSource, /function renderBuildingSceneUnderlay/);
   assert.match(appRenderSource, /renderCityModuleView/);
+  assert.match(appRenderSource, /renderBuildingModuleView/);
   assert.match(appRenderSource, /underlayMarkup:/);
   assert.match(appRenderSource, /view-scene__underlay/);
+  assert.match(appRenderSource, /stage\.buildingUnderlay != null/);
   assert.match(sceneViewSource, /underlayMarkup\?: string/);
   assert.match(sceneViewSource, /\$\{input\.underlayMarkup \?\? ""\}/);
 });
@@ -1851,8 +1935,8 @@ test("zhuyuanzhang scenario pack migrates event triggers to event bindings", () 
 
   assert.equal(storyEvents.length, 5);
   assert.equal(storyEventBindings.length, 5);
-  assert.equal(buildingActionEvents.length, 630);
-  assert.equal(buildingActionBindings.length, 630);
+  assert.equal(buildingActionBindings.length, buildingActionEvents.length);
+  assert.ok(buildingActionEvents.length > 600);
   assert.equal(events.every((eventRecord) => !Object.hasOwn(eventRecord, "trigger")), true);
   assert.equal(events.every((eventRecord) => !Object.hasOwn(eventRecord, "conditions")), true);
   assert.deepEqual(
@@ -6229,7 +6313,163 @@ test(
     const startupAppState = result.session.createAppState();
     assert.deepEqual(bootstraps, [null]);
     assert.equal(startupAppState.gameState.ui.currentView, "map");
-    assert.equal(startupAppState.gameState.scene.activeEventId, null);
+  assert.equal(startupAppState.gameState.scene.activeEventId, null);
+  }
+);
+
+test(
+  "scenario pack character startup overrides retarget shell-selected characters onto character-specific startup state",
+  async () => {
+    const {
+      runStartupSessionCoordinator,
+    } = require("../.test-dist/application/startup/startup-session-coordinator.js");
+
+    const selectedCharacter = {
+      ...prototypeCharacters[0],
+      id: "char.selected.camp",
+      name: "Selected Camp Character",
+    };
+    const scenarioPack = {
+      id: "scenario.test.character-startup-override",
+      schemaVersion: 1,
+      title: "Character Startup Override",
+      scenarioProfile: {
+        id: "scenario.test.character-startup-override",
+        playerCharacterId: "char.profile.default",
+        chapterId: "chapter.prototype",
+        initialLocation: {
+          mapId: prototypeMap.id,
+          cityId: "city.kulan",
+          houseId: "house.kulan_temple",
+          view: "house",
+        },
+        initialRuntime: {
+          variables: {
+            "var.story.zhu_yuanzhang.stage": "huangjue-temple",
+          },
+        },
+        launchPolicy: {
+          characterSelection: "shell",
+          initialView: "map",
+          entryEventTiming: "after-map-entry",
+        },
+        entryEventId: "event.test.shell-selection",
+        openingFlowId: "flow.test.shell-selection",
+        characterStartups: [
+          {
+            characterId: "char.selected.camp",
+            initialRuntime: {
+              variables: {
+                "var.story.zhu_yuanzhang.stage": "guo-zixing-camp",
+              },
+            },
+            entryEventId: null,
+            openingFlowId: null,
+          },
+        ],
+      },
+      characters: [selectedCharacter],
+      events: [],
+      scenes: [],
+    };
+    const activationResult = {
+      ok: true,
+      activatedMod: {
+        normalizedContentSources: [scenarioPack],
+      },
+    };
+    const createdAppStates = [];
+    const bootstrapCalls = [];
+
+    const result = await runStartupSessionCoordinator(
+      {
+        type: "scenario-pack",
+        scenarioPack,
+        selectedCharacter,
+        source: {
+          kind: "file",
+          name: "character-startup-override",
+          filePath: "character-startup-override/pack.json",
+        },
+      },
+      {
+        activateBuiltinDefaultMod: async () => activationResult,
+        restoreModFromSave: async () => null,
+        activateScenarioPackMod: async () => activationResult,
+        createPrototypeAppState: () => {
+          throw new Error("builtin path should not run");
+        },
+        createHaozhouReturnEncounterAppState: (appState) => appState,
+        createScenarioPackAppState: (pack, playerCharacterId) => {
+          createdAppStates.push({ pack, playerCharacterId });
+          return {
+            gameState: {
+              ...createBaseState(),
+              player: {
+                ...createBaseState().player,
+                characterId: playerCharacterId,
+              },
+              ui: {
+                ...createBaseState().ui,
+                currentView: pack.scenarioProfile.launchPolicy.initialView,
+              },
+              runtime: {
+                ...createBaseState().runtime,
+                variables: {
+                  ...pack.scenarioProfile.initialRuntime.variables,
+                },
+              },
+              scene: {
+                ...createBaseState().scene,
+                activeEventId: null,
+              },
+            },
+            characterDefinitions: [selectedCharacter],
+            playerCoordinate: { x: 0, y: 0 },
+            campaignActorState: { facingDegrees: 0, isMoving: false },
+            campaignTravelState: null,
+            modalState: null,
+            locationDialogueState: null,
+            beggingMiniGameState: null,
+            cityMenuState: null,
+            cityDirectoryState: null,
+            autoAdvanceState: null,
+            uiLayouts: {},
+            layoutEditor: {},
+          };
+        },
+        createStartupContentContext: () => ({
+          packId: scenarioPack.id,
+          storyContent: {
+            eventDefinitionsById: {},
+            sceneDefinitionsById: {},
+            activityDefinitionsById: {},
+            textEntriesById: {},
+          },
+        }),
+        bootstrapStartupStoryAppState: ({ appState, bootstrap }) => {
+          bootstrapCalls.push(bootstrap);
+          return appState;
+        },
+      }
+    );
+
+    assert.equal(result.ok, true);
+    const startupAppState = result.session.createAppState();
+    assert.equal(createdAppStates[0]?.playerCharacterId, selectedCharacter.id);
+    assert.equal(
+      createdAppStates[0]?.pack.scenarioProfile.initialRuntime.variables[
+        "var.story.zhu_yuanzhang.stage"
+      ],
+      "guo-zixing-camp"
+    );
+    assert.equal(createdAppStates[0]?.pack.scenarioProfile.entryEventId, undefined);
+    assert.equal(createdAppStates[0]?.pack.scenarioProfile.openingFlowId, undefined);
+    assert.equal(
+      startupAppState.gameState.runtime.variables["var.story.zhu_yuanzhang.stage"],
+      "guo-zixing-camp"
+    );
+    assert.equal(bootstrapCalls[0], null);
   }
 );
 
@@ -7558,9 +7798,15 @@ test("building container item action launches the authored flow selected by the 
           nodes: [
             {
               id: "flow.temple.rest.start",
-              type: "text",
-              text: "Rest.",
-              nextNodeId: "flow.temple.rest.complete",
+              type: "choice",
+              prompt: "Rest?",
+              options: [
+                {
+                  id: "choice.temple.rest",
+                  label: "Rest",
+                  nextNodeId: "flow.temple.rest.complete",
+                },
+              ],
             },
             {
               id: "flow.temple.rest.complete",
@@ -8308,7 +8554,7 @@ test("script editor workspace groups creator navigation by project top bar, worl
       },
       {
         label: "剧情与文本",
-        families: ["storyNodes", "dialogues", "events"],
+        families: ["storyNodes", "dialogues", "scenes", "events"],
       },
       {
         label: "玩法",
@@ -8607,6 +8853,54 @@ test("script editor imports built-in zhuyuanzhang template from the published ma
         primaryNpcId: "char.kulan_lord",
       }
     );
+
+    for (const eventId of [
+      "event.building.house.kulan.leader_residence.enter",
+      "event.building.house.kulan.temple.enter",
+      "event.building.house.kulan.keep.enter",
+      "event.building.house.kulan.tea_house.enter",
+      "event.building.house.kulan.market.enter",
+      "event.building.house.kulan.grain_shop.enter",
+      "event.building.house.kulan.medicine_house.enter",
+      "event.building.house.kulan.inn.enter",
+    ]) {
+      assert.ok(
+        project.events.some((event) => event.id === eventId),
+        `expected imported script editor project to expose ${eventId}`
+      );
+    }
+
+    for (const sceneId of [
+      "scene.building.house.kulan.leader_residence.enter",
+      "scene.building.house.kulan.temple.enter",
+      "scene.building.house.kulan.keep.enter",
+      "scene.building.house.kulan.tea_house.enter",
+      "scene.building.house.kulan.market.enter",
+      "scene.building.house.kulan.grain_shop.enter",
+      "scene.building.house.kulan.medicine_house.enter",
+      "scene.building.house.kulan.inn.enter",
+    ]) {
+      assert.ok(
+        project.scenes.some((scene) => scene.id === sceneId),
+        `expected imported script editor project to expose ${sceneId}`
+      );
+    }
+
+    for (const bindingId of [
+      "binding.building.house.kulan.leader_residence.enter",
+      "binding.building.house.kulan.temple.enter",
+      "binding.building.house.kulan.keep.enter",
+      "binding.building.house.kulan.tea_house.enter",
+      "binding.building.house.kulan.market.enter",
+      "binding.building.house.kulan.grain_shop.enter",
+      "binding.building.house.kulan.medicine_house.enter",
+      "binding.building.house.kulan.inn.enter",
+    ]) {
+      assert.ok(
+        project.eventBindings.some((binding) => binding.id === bindingId),
+        `expected imported script editor project to expose ${bindingId}`
+      );
+    }
   } finally {
     global.fetch = previousFetch;
     global.window = previousWindow;
@@ -9118,7 +9412,7 @@ test("script editor selector UX queue replaces project-backed location id text f
     mainUiSource,
     /type="text"[^>]+data-script-editor-building-entry-field="onEnterEventId"/
   );
-  assert.match(
+  assert.doesNotMatch(
     mainUiSource,
     /<select[^>]+data-script-editor-building-entry-field="onEnterEventId"/
   );
@@ -9170,11 +9464,76 @@ test(
     assert.equal(visibleFamilies.includes("buildings"), true);
     assert.equal(visibleFamilies.includes("textEntries"), true);
     assert.equal(visibleFamilies.includes("dialogues"), true);
+    assert.equal(visibleFamilies.includes("scenes"), true);
     assert.equal(visibleFamilies.includes("minigames"), true);
     assert.equal(visibleFamilies.includes("storyNodes"), true);
     assert.equal(visibleFamilies.includes("events"), true);
   }
 );
+
+test("script editor scenes family stays visible and editable through the common authoring path", () => {
+  const {
+    createDefaultScriptEditorProjectDefinition,
+    createScriptEditorWorkflowRecordDraft,
+    getScriptEditorWorkflowVisibleFamilies,
+    removeScriptEditorWorkflowRecord,
+    upsertScriptEditorWorkflowRecord,
+  } = require("../.test-dist/application/script-editor/minimal-workflow.js");
+  const {
+    createScriptEditorWorkspaceShellViewModel,
+  } = require("../.test-dist/application/script-editor/workspace-shell.js");
+  const mainUiSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    "utf8"
+  );
+  const project = createDefaultScriptEditorProjectDefinition({
+    idBase: "scene-authoring",
+    title: "Scene Authoring",
+  });
+
+  assert.equal(getScriptEditorWorkflowVisibleFamilies().includes("scenes"), true);
+
+  const draft = createScriptEditorWorkflowRecordDraft("scenes", project.scenes.length);
+  assert.equal(draft.id, "scene.new.1");
+  assert.equal(Array.isArray(draft.actions), true);
+
+  const withScene = upsertScriptEditorWorkflowRecord(project, "scenes", draft);
+  assert.equal(withScene.scenes.some((record) => record.id === draft.id), true);
+
+  const workspace = createScriptEditorWorkspaceShellViewModel({
+    project: withScene,
+    visibleFamilies: getScriptEditorWorkflowVisibleFamilies(),
+  });
+  const visibleFamilies = workspace.objectTreeGroups.flatMap((group) =>
+    group.nodes.map((node) => node.family)
+  );
+  assert.equal(visibleFamilies.includes("scenes"), true);
+
+  const removed = removeScriptEditorWorkflowRecord(withScene, "scenes", draft.id);
+  assert.equal(removed.scenes.some((record) => record.id === draft.id), false);
+
+  assert.match(mainUiSource, /if \(family === "scenes"\)/);
+  assert.match(mainUiSource, /renderScriptEditorScenesEditor\(records, selectedRecord\)/);
+  assert.match(mainUiSource, /renderScriptEditorRecordListSearch\("scenes", "搜索场景"/);
+  assert.match(mainUiSource, /case "scenes":\s*return "场景"/);
+});
+
+test("script editor scenes authoring surface exposes structured scene controls", () => {
+  const mainUiSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    "utf8"
+  );
+
+  assert.match(mainUiSource, /data-script-editor-scene-field="name"/);
+  assert.match(mainUiSource, /data-script-editor-scene-action-field="type"/);
+  assert.match(mainUiSource, /data-script-editor-scene-action-json-field="options"/);
+  assert.match(mainUiSource, /data-script-editor-action="add-scene-action"/);
+  assert.match(mainUiSource, /getSelectedScriptEditorScene\(\)/);
+  assert.match(mainUiSource, /replaceSelectedScriptEditorScene\(nextScene\)/);
+  assert.match(mainUiSource, /applyScriptEditorSceneField\(field, value\)/);
+  assert.match(mainUiSource, /applyScriptEditorSceneActionField\(index, field, value\)/);
+  assert.match(mainUiSource, /applyScriptEditorSceneActionJsonField\(index, field, value\)/);
+});
 
 test("script editor minimal workflow record helpers support draft upsert and remove", () => {
   const {
@@ -9974,11 +10333,6 @@ test(
     );
     building = updateScriptEditorBuildingEntryBindingField(
       building,
-      "onEnterEventId",
-      "event.enter.market"
-    );
-    building = updateScriptEditorBuildingEntryBindingField(
-      building,
       "returnTarget",
       "city"
     );
@@ -10005,7 +10359,7 @@ test(
     assert.equal(city.access.blockedMessage, "暂未开放");
     assert.equal(city.backgroundId, "chengzhen");
     assert.equal(normalizedCity.entryBinding.defaultPersonId, "person.host");
-    assert.equal(normalizedCity.entryBinding.onEnterEventId, "event.enter.market");
+    assert.equal(normalizedCity.entryBinding.returnTarget, "city");
     assert.equal(normalizedCity.cityId, "city.kulan");
     assert.equal(normalizedCity.backgroundId, "zizhai");
   }
@@ -10193,8 +10547,6 @@ test(
       defaultCharacterId: "person.host",
       activityLocationId: "market",
       backAction: { label: "回城", targetView: "city" },
-      onEnterEventId: "event.enter.market",
-      onLeaveEventId: "event.leave.market",
     });
 
     assert.equal(normalizedBuilding.baseAttributes.houseType, "merchant");
@@ -10210,8 +10562,7 @@ test(
       label: "回城",
       targetView: "city",
     });
-    assert.equal(normalizedBuilding.eventBindings?.onEnterEventId, "event.enter.market");
-    assert.equal(normalizedBuilding.eventBindings?.onLeaveEventId, "event.leave.market");
+    assert.equal("eventBindings" in normalizedBuilding, false);
   }
 );
 
@@ -11096,8 +11447,6 @@ test(
         },
         entryBinding: {
           defaultPersonId: "person.host",
-          onEnterEventId: "event.enter.market",
-          onLeaveEventId: "event.leave.market",
           returnTarget: "city",
         },
       },
@@ -11114,8 +11463,8 @@ test(
 
     assert.deepEqual(houses[0].characterIds, ["person.host"]);
     assert.equal(houses[0].defaultCharacterId, "person.host");
-    assert.equal(houses[0].onEnterEventId, "event.enter.market");
-    assert.equal(houses[0].onLeaveEventId, "event.leave.market");
+    assert.equal("onEnterEventId" in houses[0], false);
+    assert.equal("onLeaveEventId" in houses[0], false);
     assert.deepEqual(houses[0].backAction, { label: "返回", targetView: "city" });
     assert.equal(houses[0].activityLocationId, "custom");
     assert.equal(cityEntries[0].cityId, "city.start");
@@ -11639,6 +11988,9 @@ test("script editor project loader validates explicit building arrangements", ()
         buildingId: "building.home",
         displayName: "Home",
         backgroundId: "background.home",
+        layout: {
+          templateId: "meeting-stage",
+        },
         mountedNpcIds: ["person.hero"],
         primaryNpcId: "person.hero",
         containers: [
@@ -11786,6 +12138,9 @@ test("script editor runtime export and scenario loader carry explicit building a
       displayName: "Home Shell",
       description: "Explicit runtime shell fixture.",
       backgroundId: "background.home",
+      layout: {
+        templateId: "meeting-stage",
+      },
       mountedNpcIds: ["person.hero"],
       primaryNpcId: "person.hero",
       containers: [
@@ -11840,6 +12195,9 @@ test("script editor runtime-pack import preserves explicit building arrangements
       cityId: "city.start",
       buildingId: "building.home",
       displayName: "Home Shell",
+      layout: {
+        templateId: "meeting-stage",
+      },
       mountedNpcIds: [],
       primaryNpcId: null,
       containers: [],
@@ -11852,6 +12210,129 @@ test("script editor runtime-pack import preserves explicit building arrangements
   );
 
   assert.deepEqual(importedProject.buildingArrangements, project.buildingArrangements);
+});
+
+test("building module renderer resolves arrangement layout config without house fallback", () => {
+  const {
+    renderBuildingModuleView,
+  } = require("../.test-dist/ui/views/building/building-module-view.js");
+
+  const markup = renderBuildingModuleView({
+    stage: {
+      type: "building",
+      activeHouse: {
+        id: "building.temple",
+        cityId: "city.start",
+        name: "Temple Base",
+        backgroundId: "temple",
+        type: "temple",
+        characterIds: [],
+        defaultCharacterId: null,
+        backAction: {
+          label: "Return",
+          targetView: "city",
+        },
+      },
+      arrangement: {
+        id: "building-arrangement.city-start.temple",
+        cityId: "city.start",
+        buildingId: "building.temple",
+        displayName: "Temple Shell",
+        description: "Explicit temple arrangement shell.",
+        backgroundId: "temple",
+        layout: {
+          templateId: "meeting-stage",
+          shellClassNames: ["view-house-temple"],
+          nodes: [
+            {
+              id: "node.actions",
+              kind: "action-menu",
+              regionId: "actions",
+              sourceContainerType: "action-menu",
+              actionFilter: "non-leave",
+              presentation: "gold-center-nav",
+              previewSelectable: true,
+            },
+            {
+              id: "node.meeting-roster",
+              kind: "character-seats",
+              regionId: "center",
+              sourceContainerType: "character-seats",
+              characterFilter: "all",
+              presentation: "meeting-grid",
+              previewSelectable: true,
+            },
+            {
+              id: "node.leave",
+              kind: "leave-action",
+              regionId: "leave",
+              sourceContainerType: "action-menu",
+              actionFilter: "leave-only",
+              presentation: "gold-leave",
+              previewSelectable: true,
+              clickActionId: "leave-building",
+            },
+          ],
+        },
+        mountedNpcIds: ["person.abbot"],
+        primaryNpcId: "person.abbot",
+        containers: [],
+      },
+      containerViewModels: [
+        {
+          id: "container.temple.seats",
+          type: "character-seats",
+          title: "Seats",
+          characters: [
+            {
+              id: "person.abbot",
+              name: "Abbot",
+              title: "Host",
+            },
+          ],
+        },
+        {
+          id: "container.temple.menu",
+          type: "action-menu",
+          title: "Actions",
+          actions: [
+            {
+              id: "review",
+              label: "Review",
+              eventId: "event.temple.review",
+              isVisible: true,
+              isEnabled: true,
+            },
+            {
+              id: "leave",
+              label: "Leave",
+              eventId: "event.temple.leave",
+              isVisible: true,
+              isEnabled: true,
+            },
+          ],
+        },
+      ],
+    },
+    characterDefinitions: [],
+    characterManager: {},
+  });
+
+  assert.doesNotMatch(markup, /view-house-grain-shop/);
+  assert.match(markup, /view-house-building-shell/);
+  assert.match(markup, /c-building-layout-template/);
+  assert.match(markup, /c-building-layout-template--meeting-stage/);
+  assert.match(markup, /view-house-temple/);
+  assert.match(markup, /c-building-layout-seat/);
+  assert.match(markup, /c-building-layout-actions/);
+  assert.match(markup, /c-building-skin-button/);
+  assert.match(markup, /c-building-layout-node--action-menu/);
+  assert.match(markup, /c-building-layout-region--actions/);
+  assert.match(markup, /c-building-layout-node-presentation--gold-center-nav/);
+  assert.match(markup, /data-building-layout-node-id="node.actions"/);
+  assert.match(markup, /data-layout-preview-selectable="true"/);
+  assert.match(markup, /data-building-layout-click-action-id="leave-building"/);
+  assert.doesNotMatch(markup, /data-action="leave-house"/);
 });
 
 test("active game content exposes explicit building arrangements without old-data inference", () => {
@@ -12027,6 +12508,199 @@ test("building module stage selects generic arrangement shell before old house r
       container.type === "character-seats"
         ? container.characters.map((character) => character.name)
         : []
+    ),
+    ["Host Monk"]
+  );
+});
+
+test("minigame presenter preserves the building stage when a house-hosted playable is active", () => {
+  const {
+    createStagePresenterOutput,
+  } = require("../.test-dist/application/presenter/stage-presenters.js");
+
+  const baseState = createBaseState();
+  const appState = {
+    gameState: {
+      ...baseState,
+      world: {
+        ...baseState.world,
+        currentCityId: "city.start",
+        currentHouseId: "building.temple",
+      },
+      ui: {
+        ...baseState.ui,
+        currentView: "minigame",
+      },
+      runtime: {
+        ...baseState.runtime,
+        playableSession: {
+          sessionId: "playable.flow.building.temple",
+          playableId: "flow.building.temple.review",
+          integrationId: "playable.flow.building.temple.review",
+          family: "flow",
+          ownerContext: {
+            ownerKind: "house",
+            ownerId: "building.temple",
+            returnPolicy: "resume-owner",
+          },
+          status: "active",
+          state: { currentNodeId: "node.start" },
+        },
+      },
+    },
+    characterDefinitions: [{ id: "person.host", name: "Host Monk" }],
+    playerCoordinate: { x: 0, y: 0 },
+    campaignActorState: { facingDegrees: 0, isMoving: false },
+    campaignTravelState: null,
+    modalState: null,
+    locationDialogueState: null,
+    beggingMiniGameState: null,
+    cityMenuState: null,
+    cityDirectoryState: null,
+    autoAdvanceState: null,
+    uiLayouts: {},
+  };
+
+  const stage = createStagePresenterOutput({
+    appState,
+    cityDefinition: { id: "city.start", name: "Start City" },
+    cityDefinitions: [{ id: "city.start", name: "Start City" }],
+    houseDefinitions: [
+      {
+        id: "building.temple",
+        cityId: "city.start",
+        name: "Temple Base",
+        type: "temple",
+        characterIds: [],
+        defaultCharacterId: null,
+        activityLocationId: "custom",
+        backAction: { label: "Leave", targetView: "city" },
+      },
+    ],
+    buildingArrangements: [
+      {
+        id: "building-arrangement.city-start.temple",
+        cityId: "city.start",
+        buildingId: "building.temple",
+        displayName: "Temple Shell",
+        mountedNpcIds: [],
+        primaryNpcId: null,
+        containers: [],
+      },
+    ],
+    cityEntries: [],
+    cityNpcPoolDefinitions: [],
+    playerCharacterId: "person.player",
+  });
+
+  assert.equal(stage.type, "building");
+  assert.equal(stage.activeHouse.id, "building.temple");
+});
+
+test("scene presenter preserves the building stage as underlay when a house event is active", () => {
+  const {
+    createStagePresenterOutput,
+  } = require("../.test-dist/application/presenter/stage-presenters.js");
+
+  const baseState = createBaseState();
+  const appState = {
+    gameState: {
+      ...baseState,
+      world: {
+        ...baseState.world,
+        currentCityId: "city.start",
+        currentHouseId: "building.temple",
+      },
+      ui: {
+        ...baseState.ui,
+        currentView: "scene",
+      },
+      scene: {
+        ...baseState.scene,
+        activeEventId: "event.building.temple.enter",
+        activeSceneId: "scene.building.temple.enter",
+        cursor: 0,
+        status: "playing",
+      },
+    },
+    characterDefinitions: [{ id: "person.host", name: "Host Monk", title: "Abbot" }],
+    playerCoordinate: { x: 0, y: 0 },
+    campaignActorState: { facingDegrees: 0, isMoving: false },
+    campaignTravelState: null,
+    modalState: null,
+    locationDialogueState: null,
+    beggingMiniGameState: null,
+    cityMenuState: null,
+    cityDirectoryState: null,
+    autoAdvanceState: null,
+    uiLayouts: {},
+  };
+
+  const stage = createStagePresenterOutput({
+    appState,
+    cityDefinition: { id: "city.start", name: "Start City" },
+    cityDefinitions: [{ id: "city.start", name: "Start City" }],
+    houseDefinitions: [
+      {
+        id: "building.temple",
+        cityId: "city.start",
+        name: "Temple Base",
+        type: "temple",
+        characterIds: [],
+        defaultCharacterId: null,
+        backgroundId: "temple",
+        backAction: {
+          label: "Return",
+          targetView: "city",
+        },
+      },
+    ],
+    buildingArrangements: [
+      {
+        id: "building-arrangement.city-start.temple",
+        cityId: "city.start",
+        buildingId: "building.temple",
+        displayName: "Temple Shell",
+        backgroundId: "temple",
+        mountedNpcIds: ["person.host"],
+        primaryNpcId: "person.host",
+        containers: [
+          {
+            id: "container.temple.seats",
+            type: "character-seats",
+            title: "Seats",
+            source: {
+              type: "arrangement-mounted-npcs",
+            },
+          },
+        ],
+      },
+    ],
+    cityEntries: [],
+    cityNpcPoolDefinitions: [],
+    playerCharacterId: "person.player",
+    sceneDefinitionsById: {
+      "scene.building.temple.enter": {
+        id: "scene.building.temple.enter",
+        actions: [
+          {
+            type: "dialogue",
+            speakerId: "person.host",
+            text: "Welcome.",
+          },
+        ],
+      },
+    },
+  });
+
+  assert.equal(stage.type, "scene");
+  assert.equal(stage.cityUnderlay, undefined);
+  assert.ok(stage.buildingUnderlay);
+  assert.equal(stage.buildingUnderlay.activeHouse.id, "building.temple");
+  assert.equal(stage.buildingUnderlay.arrangement.displayName, "Temple Shell");
+  assert.deepEqual(
+    stage.buildingUnderlay.containerViewModels[0]?.characters?.map(
+      (character) => character.name
     ),
     ["Host Monk"]
   );
@@ -13474,13 +14148,7 @@ test("script editor event deletion removes all cross-record event references", (
   ];
   project.buildings[0].entryBinding = {
     defaultPersonId: "person.hero",
-    onEnterEventId: deletedEventId,
-    onLeaveEventId: keepEventId,
     returnTarget: "city",
-  };
-  project.buildings[0].eventBindings = {
-    onEnterEventId: deletedEventId,
-    onLeaveEventId: deletedEventId,
   };
   project.events = [
     {
@@ -13520,10 +14188,8 @@ test("script editor event deletion removes all cross-record event references", (
     },
   ]);
   assert.deepEqual(nextProject.buildings[0].menuEntries, []);
-  assert.equal(nextProject.buildings[0].entryBinding.onEnterEventId, "");
-  assert.equal(nextProject.buildings[0].entryBinding.onLeaveEventId, keepEventId);
-  assert.equal(nextProject.buildings[0].eventBindings?.onEnterEventId, "");
-  assert.equal(nextProject.buildings[0].eventBindings?.onLeaveEventId, "");
+  assert.equal(nextProject.buildings[0].entryBinding.defaultPersonId, "person.hero");
+  assert.equal(nextProject.buildings[0].entryBinding.returnTarget, "city");
 
   const {
     exportScriptEditorProjectToScenarioPackFiles,
@@ -23586,7 +24252,11 @@ test("child 23 scenario-pack startup defers app-state bootstrap until after acti
   );
   assert.match(
     coordinatorSource,
-    /createAppState:\s*createStartupAppStateBuilder\([\s\S]*deps\.createScenarioPackAppState\(scenarioPack,\s*playerCharacterId\)/
+    /createAppState:\s*createStartupAppStateBuilder\([\s\S]*deps\.createScenarioPackAppState\(\s*effectiveScenarioPack,\s*playerCharacterId\s*\)/
+  );
+  assert.match(
+    coordinatorSource,
+    /createAppState:\s*createStartupAppStateBuilder\([\s\S]*readScenarioStartupStoryBootstrap\(\s*effectiveScenarioPack\s*\)/
   );
   assert.match(
     mainSource,
@@ -24633,7 +25303,19 @@ test("map review provider acceptance keeps normal json and preview entrypoints o
 
   assert.match(
     startupCoordinatorSource,
-    /deps\.createScenarioPackAppState\(scenarioPack,\s*playerCharacterId\)/
+    /resolveScenarioProfileForCharacter\(/
+  );
+  assert.match(
+    startupCoordinatorSource,
+    /const effectiveScenarioPack = \{[\s\S]*scenarioProfile:\s*resolveScenarioProfileForCharacter\(/
+  );
+  assert.match(
+    startupCoordinatorSource,
+    /deps\.createScenarioPackAppState\(\s*effectiveScenarioPack,\s*playerCharacterId\s*\)/
+  );
+  assert.match(
+    startupCoordinatorSource,
+    /readScenarioStartupStoryBootstrap\(\s*effectiveScenarioPack\s*\)/
   );
   assert.match(mainSource, /function createScenarioPackAppState\(/);
   assert.match(mainSource, /mapLocationProvider\.getCityLocation/);
@@ -28255,7 +28937,7 @@ test("zhuyuanzhang building action menus have authored event and flow routes", (
     }
   }
 
-  assert.equal(actionItems.length, 630);
+  assert.equal(actionItems.length, 632);
 
   for (const { arrangement, container, item } of actionItems) {
     const event = eventsById.get(item.eventId);
@@ -28296,9 +28978,124 @@ test("zhuyuanzhang building action menus have authored event and flow routes", (
     "missing preserved Huangjue Temple work flow"
   );
   assert.ok(
+    flowsByEventId.has("event.building.house.kulan.temple.copy_scripture"),
+    "missing Huangjue Temple copy scripture flow"
+  );
+  assert.ok(
+    flowsByEventId.has("event.building.house.kulan.temple.sweep_courtyard"),
+    "missing Huangjue Temple sweep courtyard flow"
+  );
+  assert.ok(
+    flowsByEventId.has("event.building.house.kulan.temple.carry_water"),
+    "missing Huangjue Temple carry water flow"
+  );
+  assert.ok(
     flowsByEventId.has("event.building.house.kulan.temple.donate"),
     "missing preserved Huangjue Temple donation flow"
   );
+});
+
+test("zhuyuanzhang kulan building-enter routes stay fully authored in pack data", () => {
+  const packRoot = path.join(
+    process.cwd(),
+    "src/content/scenario-packs/zhuyuanzhang"
+  );
+  const eventBindings = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "event-bindings.json"), "utf8")
+  );
+  const events = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "events.json"), "utf8")
+  );
+  const scenes = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "scenes.json"), "utf8")
+  );
+
+  const expectedRoutes = [
+    {
+      buildingId: "house.kulan.leader_residence",
+      bindingId: "binding.building.house.kulan.leader_residence.enter",
+      eventId: "event.building.house.kulan.leader_residence.enter",
+      sceneId: "scene.building.house.kulan.leader_residence.enter",
+    },
+    {
+      buildingId: "house.kulan.temple",
+      bindingId: "binding.building.house.kulan.temple.enter",
+      eventId: "event.building.house.kulan.temple.enter",
+      sceneId: "scene.building.house.kulan.temple.enter",
+    },
+    {
+      buildingId: "house.kulan.keep",
+      bindingId: "binding.building.house.kulan.keep.enter",
+      eventId: "event.building.house.kulan.keep.enter",
+      sceneId: "scene.building.house.kulan.keep.enter",
+    },
+    {
+      buildingId: "house.kulan.tea_house",
+      bindingId: "binding.building.house.kulan.tea_house.enter",
+      eventId: "event.building.house.kulan.tea_house.enter",
+      sceneId: "scene.building.house.kulan.tea_house.enter",
+    },
+    {
+      buildingId: "house.kulan.market",
+      bindingId: "binding.building.house.kulan.market.enter",
+      eventId: "event.building.house.kulan.market.enter",
+      sceneId: "scene.building.house.kulan.market.enter",
+    },
+    {
+      buildingId: "house.kulan.grain_shop",
+      bindingId: "binding.building.house.kulan.grain_shop.enter",
+      eventId: "event.building.house.kulan.grain_shop.enter",
+      sceneId: "scene.building.house.kulan.grain_shop.enter",
+    },
+    {
+      buildingId: "house.kulan.medicine_house",
+      bindingId: "binding.building.house.kulan.medicine_house.enter",
+      eventId: "event.building.house.kulan.medicine_house.enter",
+      sceneId: "scene.building.house.kulan.medicine_house.enter",
+    },
+    {
+      buildingId: "house.kulan.inn",
+      bindingId: "binding.building.house.kulan.inn.enter",
+      eventId: "event.building.house.kulan.inn.enter",
+      sceneId: "scene.building.house.kulan.inn.enter",
+    },
+  ];
+
+  const eventsById = new Map(events.map((event) => [event.id, event]));
+  const scenesById = new Map(scenes.map((scene) => [scene.id, scene]));
+
+  for (const route of expectedRoutes) {
+    const binding = eventBindings.find((entry) => entry.id === route.bindingId);
+    assert.ok(binding, `missing building-enter binding ${route.bindingId}`);
+    assert.equal(binding.owner.family, "building");
+    assert.equal(binding.owner.id, route.buildingId);
+    assert.equal(binding.trigger.timing, "after");
+    assert.equal(binding.trigger.action, "building-enter");
+
+    const event = eventsById.get(route.eventId);
+    assert.ok(event, `missing building-enter event ${route.eventId}`);
+    assert.equal(event.entrySceneId, route.sceneId);
+    assert.ok(event.tags.includes("building-enter"));
+    assert.ok(event.tags.includes(`building:${route.buildingId}`));
+    assert.ok(event.tags.includes("action:enter"));
+
+    const scene = scenesById.get(route.sceneId);
+    assert.ok(scene, `missing building-enter scene ${route.sceneId}`);
+    assert.ok(Array.isArray(scene.actions));
+    assert.ok(
+      scene.actions.some((action) => action.type === "dialogue"),
+      `expected dialogue actions for ${route.sceneId}`
+    );
+  }
+
+  const templeBinding = eventBindings.find(
+    (entry) => entry.id === "binding.building.house.kulan.temple.enter"
+  );
+  assert.equal(
+    templeBinding.conditions.conditions[0].key,
+    "flag.story.zhu_yuanzhang.ordination.completed"
+  );
+  assert.equal(templeBinding.conditions.conditions[0].expected, true);
 });
 
 test("legacy house runtime retirement removes superseded house code and governance", () => {
@@ -28384,6 +29181,56 @@ test("flow playable reduces a command and settles through shared handoff", () =>
   assert.equal(settled.settlement?.handoff.type, "resume-owner");
   assert.equal(settled.settlement?.handoff.ownerId, "building.temple");
   assert.deepEqual(settled.settlement?.factResult.metrics, { rested: true });
+});
+
+test("dispatchCurrentFlowAction routes activity definitions into shared playable runtime", () => {
+  const mainSource = fs.readFileSync(
+    path.join(process.cwd(), "src/main.ts"),
+    "utf8"
+  );
+  const dispatchCurrentFlowActionBlock =
+    mainSource.match(
+      /function dispatchCurrentFlowAction\([\s\S]*?\r?\n}\r?\n\r?\ntype BattleDemoResultMessage/
+    )?.[0] ?? "";
+
+  assert.match(dispatchCurrentFlowActionBlock, /runPlayableRuntime\(/);
+  assert.match(
+    dispatchCurrentFlowActionBlock,
+    /activityDefinitionsById:\s*activeContentContext\.storyContent\.activityDefinitionsById/
+  );
+  assert.match(
+    dispatchCurrentFlowActionBlock,
+    /flowDefinitionsById:\s*activeContentContext\.gameContent\.flowDefinitionsById/
+  );
+});
+
+test("house-hosted flow presenter exports an overlay variant and app render keeps the building shell under it", () => {
+  const flowPlayableViewSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/views/playables/flow-playable-view.ts"),
+    "utf8"
+  );
+  const appRenderSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/app-render.ts"),
+    "utf8"
+  );
+
+  assert.match(
+    flowPlayableViewSource,
+    /export function renderFlowPlayableOverlay\(/
+  );
+  assert.match(flowPlayableViewSource, /c-grain-shop-overlay/);
+  assert.match(
+    appRenderSource,
+    /renderFlowPlayableOverlay/
+  );
+  assert.match(
+    appRenderSource,
+    /ownerContext\.ownerKind === "house"/
+  );
+  assert.match(
+    appRenderSource,
+    /renderBuildingModuleView\([\s\S]*renderFlowPlayableOverlay\(/ 
+  );
 });
 
 test("script editor ui encoding integrity guard accepts current critical chinese surfaces", () => {

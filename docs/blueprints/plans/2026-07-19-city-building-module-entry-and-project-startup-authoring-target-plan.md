@@ -30,6 +30,10 @@
 - routing_basis: `none`
 - next_lawful_queue_recommendation: `none`
 - auto_admission_ready: `false`
+- stop_reason: `none`
+- stop_basis: `none`
+- next_unblocked_action: `none`
+- human_input_required: `false`
 - blocked_by: []
 - candidate_queue_ids:
   - `queue.script-editor-city-building-location-access-refusal-runtime-handoff-correction`
@@ -203,6 +207,21 @@
 | `ACC-CITY-BUILDING-ACCESS-CONDITION-005` | `queue.script-editor-city-building-location-access-condition-authoring-correction` | `pending` | `pending` | `Time conditions must use runtime-backed time field, expression, and value controls.` |
 | `ACC-CITY-BUILDING-ACCESS-CONDITION-006` | `queue.script-editor-city-building-location-access-condition-authoring-correction` | `pending` | `pending` | `Runtime export/load must lower each supported authoring factor into runtime-understandable locationAccess conditions, and production runtime must evaluate no-condition, satisfied, failed, and refusal-prompt cases.` |
 | `ACC-CITY-BUILDING-ACCESS-CONDITION-007` | `queue.script-editor-city-building-location-access-condition-authoring-correction` | `pending` | `pending` | `Simulated-human tests must run the full city and building case matrix separately and follow Blueprint multi-case test discipline before any completion claim.` |
+
+### Candidate Backlog Refresh Rule
+
+- `After an execution queue closes or candidate routing changes, refresh candidate truth before answering whether more same-version candidate queues remain.`
+- `Read project-progress -> blueprint -> current version plan -> candidate_queue_ids -> Candidate Recovery Ledger -> Queue Promotion Ledger -> named queue docs.`
+- `Use docs/change-log.md only when structured governance docs are insufficient or explicitly cited by the current version plan.`
+- `Do not answer none unless candidate_backlog_refresh_status=fresh and candidate_backlog_snapshot is empty.`
+- `If candidate truth is stale, missing, or inconsistent, refresh or reconcile it rather than answering with prose.`
+
+### Explicit Operator-Directed Closure Or Suspension
+
+- `If the operator explicitly requests suspending this version, keep version_status=open, write stop_reason=operator-requested-suspend with stop_basis plus next_unblocked_action, and set human_input_required=false in the Control Block.`
+- `If the operator explicitly requests closing this version before closeout truth is actually satisfied, do not counterfeit done; reconcile residue/candidate truth first and use archived only when the version is being intentionally retired rather than completed.`
+- `If the operator explicitly requests suspending the current execution queue, set active_queue=none here, synchronize the queue doc to queue_status=suspended, and record the lawful resume action in this plan.`
+- `If the operator explicitly requests dropping a current or candidate queue, route it as dropped/rejected in governance truth rather than leaving that instruction as prose only.`
 
 ### Progress Log
 

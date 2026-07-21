@@ -39,6 +39,7 @@ export const SCRIPT_EDITOR_MINIMAL_WORKFLOW_FAMILIES = [
   "cities",
   "buildings",
   "dialogues",
+  "scenes",
   "minigames",
   "flows",
   "textEntries",
@@ -203,6 +204,7 @@ export function listScriptEditorWorkflowFamilyRecords(
   | ScriptEditorCityRecord[]
   | ScriptEditorBuildingRecord[]
   | ScriptEditorDialogueRecord[]
+  | ScriptEditorEntityRecord[]
   | ScriptEditorMinigameRecord[]
   | ScriptEditorFlowRecord[]
   | ScriptEditorStoryNodeRecord[]
@@ -219,6 +221,8 @@ export function listScriptEditorWorkflowFamilyRecords(
       return project.buildings;
     case "dialogues":
       return project.dialogues;
+    case "scenes":
+      return project.scenes;
     case "minigames":
       return project.minigames;
     case "flows":
@@ -242,6 +246,7 @@ export function createScriptEditorWorkflowRecordDraft(
   | ScriptEditorCityRecord
   | ScriptEditorBuildingRecord
   | ScriptEditorDialogueRecord
+  | ScriptEditorEntityRecord
   | ScriptEditorMinigameRecord
   | ScriptEditorFlowRecord
   | ScriptEditorStoryNodeRecord
@@ -260,6 +265,12 @@ export function createScriptEditorWorkflowRecordDraft(
       return createDefaultScriptEditorBuildingRecord(index) as ScriptEditorBuildingRecord;
     case "dialogues":
       return createDefaultScriptEditorDialogueRecord(index) as ScriptEditorDialogueRecord;
+    case "scenes":
+      return {
+        id: `scene.new.${suffix}`,
+        name: `New Scene ${suffix}`,
+        actions: [],
+      };
     case "minigames":
       return createDefaultScriptEditorMinigameRecord(index) as ScriptEditorMinigameRecord;
     case "flows":
@@ -286,6 +297,7 @@ export function upsertScriptEditorWorkflowRecord(
     | ScriptEditorCityRecord
     | ScriptEditorBuildingRecord
     | ScriptEditorDialogueRecord
+    | ScriptEditorEntityRecord
     | ScriptEditorMinigameRecord
     | ScriptEditorFlowRecord
     | ScriptEditorStoryNodeRecord
@@ -332,6 +344,8 @@ function replaceProjectFamily(
     | ScriptEditorCityRecord[]
     | ScriptEditorBuildingRecord[]
     | ScriptEditorDialogueRecord[]
+    | ScriptEditorMinigameRecord[]
+    | ScriptEditorFlowRecord[]
     | ScriptEditorStoryNodeRecord[]
     | ScriptEditorEventRecord[]
     | ScriptEditorEventBindingRecord[]
@@ -347,6 +361,8 @@ function replaceProjectFamily(
       return { ...project, buildings: nextRecords as ScriptEditorBuildingRecord[] };
     case "dialogues":
       return { ...project, dialogues: nextRecords as ScriptEditorDialogueRecord[] };
+    case "scenes":
+      return { ...project, scenes: nextRecords as ScriptEditorEntityRecord[] };
     case "minigames":
       return { ...project, minigames: nextRecords as ScriptEditorMinigameRecord[] };
     case "flows":
@@ -408,38 +424,12 @@ function removeEventReferencesFromScriptEditorProject(
         building.menuEntries,
         removedEventId
       );
-      const nextEntryBinding = removeBuildingEventBindingReferences(
-        building.entryBinding,
-        removedEventId
-      );
-      const nextEventBindings = removeBuildingEventBindingReferences(
-        building.eventBindings,
-        removedEventId
-      );
-      if (
-        nextMenuEntries === building.menuEntries &&
-        nextEntryBinding === building.entryBinding &&
-        nextEventBindings === building.eventBindings
-      ) {
+      if (nextMenuEntries === building.menuEntries) {
         return building;
       }
       const nextBuilding: ScriptEditorBuildingRecord = { ...building };
       if (nextMenuEntries !== building.menuEntries && nextMenuEntries != null) {
         nextBuilding.menuEntries = nextMenuEntries;
-      }
-      if (
-        nextEntryBinding !== building.entryBinding &&
-        nextEntryBinding != null
-      ) {
-        nextBuilding.entryBinding =
-          nextEntryBinding as NonNullable<ScriptEditorBuildingRecord["entryBinding"]>;
-      }
-      if (
-        nextEventBindings !== building.eventBindings &&
-        nextEventBindings != null
-      ) {
-        nextBuilding.eventBindings =
-          nextEventBindings as NonNullable<ScriptEditorBuildingRecord["eventBindings"]>;
       }
       return nextBuilding;
     }),
@@ -532,44 +522,6 @@ function removeDialogueEventFollowUps(
     (followUp) => !(followUp.targetFamily === "event" && followUp.targetId === removedEventId)
   );
   return nextFollowUps.length === followUps.length ? followUps : nextFollowUps;
-}
-
-function removeBuildingEventBindingReferences(
-  binding:
-    | ScriptEditorBuildingRecord["entryBinding"]
-    | ScriptEditorBuildingRecord["eventBindings"]
-    | undefined,
-  removedEventId: string
-): ScriptEditorBuildingRecord["entryBinding"] | ScriptEditorBuildingRecord["eventBindings"] | undefined {
-  if (binding == null) {
-    return binding;
-  }
-
-  const nextOnEnterEventId =
-    binding.onEnterEventId === removedEventId ? "" : binding.onEnterEventId;
-  const nextOnLeaveEventId =
-    binding.onLeaveEventId === removedEventId ? "" : binding.onLeaveEventId;
-  if (
-    nextOnEnterEventId === binding.onEnterEventId &&
-    nextOnLeaveEventId === binding.onLeaveEventId
-  ) {
-    return binding;
-  }
-
-  const nextBinding: Record<string, unknown> = { ...binding };
-  if (nextOnEnterEventId == null) {
-    delete nextBinding.onEnterEventId;
-  } else {
-    nextBinding.onEnterEventId = nextOnEnterEventId;
-  }
-  if (nextOnLeaveEventId == null) {
-    delete nextBinding.onLeaveEventId;
-  } else {
-    nextBinding.onLeaveEventId = nextOnLeaveEventId;
-  }
-  return nextBinding as
-    | ScriptEditorBuildingRecord["entryBinding"]
-    | ScriptEditorBuildingRecord["eventBindings"];
 }
 
 export function getScriptEditorWorkflowVisibleFamilies(): readonly ScriptEditorProjectFileKey[] {

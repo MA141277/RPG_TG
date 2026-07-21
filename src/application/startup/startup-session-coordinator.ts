@@ -19,6 +19,7 @@ import type {
   ScenarioPackDefinition,
   ScenarioPackSummary,
 } from "../../domain/scenario-pack";
+import { resolveScenarioProfileForCharacter } from "../../domain/scenario-profile";
 import type { StartupStoryBootstrap } from "./startup-story-bootstrap";
 
 export type StartupSaveData = {
@@ -216,6 +217,13 @@ async function createRestoreStartupSession(
       saveData?.selectedCharacterId ??
       activatedContentSource.scenarioProfile.playerCharacterId ??
       selectedCharacter.id;
+    const effectiveScenarioPack = {
+      ...activatedContentSource,
+      scenarioProfile: resolveScenarioProfileForCharacter(
+        activatedContentSource.scenarioProfile,
+        playerCharacterId
+      ),
+    };
     return createStartupSessionResult({
       activationResult,
       contentContext: deps.createStartupContentContext(activationResult),
@@ -223,10 +231,10 @@ async function createRestoreStartupSession(
       createAppState: createStartupAppStateBuilder(
         () =>
           deps.createScenarioPackAppState(
-            activatedContentSource,
+            effectiveScenarioPack,
             playerCharacterId
           ),
-        readScenarioStartupStoryBootstrap(activatedContentSource),
+        readScenarioStartupStoryBootstrap(effectiveScenarioPack),
         deps,
         createStartupStatusMaps({
           characterStatusById,
@@ -312,13 +320,20 @@ async function createLoadedScenarioPackStartupSession(
   );
   const playerCharacterId =
     selectedCharacter?.id ?? scenarioPack.scenarioProfile.playerCharacterId;
+  const effectiveScenarioPack = {
+    ...scenarioPack,
+    scenarioProfile: resolveScenarioProfileForCharacter(
+      scenarioPack.scenarioProfile,
+      playerCharacterId
+    ),
+  };
   return createStartupSessionResult({
     activationResult,
     contentContext: deps.createStartupContentContext(activationResult),
     playerCharacterId,
     createAppState: createStartupAppStateBuilder(
-      () => deps.createScenarioPackAppState(scenarioPack, playerCharacterId),
-      readScenarioStartupStoryBootstrap(scenarioPack),
+      () => deps.createScenarioPackAppState(effectiveScenarioPack, playerCharacterId),
+      readScenarioStartupStoryBootstrap(effectiveScenarioPack),
       deps
     ),
   });

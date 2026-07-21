@@ -10,6 +10,7 @@ import type {
   ActivePlayableSession,
   PlayableCommand,
   PlayableFamily,
+  PlayableFactResult,
   PlayableId,
   PlayableIntegrationDefinition,
   PlayableIntegrationId,
@@ -570,6 +571,15 @@ export function runPlayableRuntime(input: {
       reduction.lifecycle.type === "completed" ||
       reduction.lifecycle.type === "cancelled"
     ) {
+      const launchedFromFlowCompletion = tryLaunchPlayableFromFlowCompletion({
+        input,
+        session: reduction.session,
+        factResult: reduction.lifecycle.result,
+      });
+      if (launchedFromFlowCompletion != null) {
+        return launchedFromFlowCompletion;
+      }
+
       const settlement = createPlayableSettlementShell({
         session: reduction.session,
         outcome:
@@ -597,7 +607,6 @@ export function runPlayableRuntime(input: {
         settlement,
       };
     }
-
     const nextState = {
       ...input.state,
       core: {
@@ -1124,6 +1133,56 @@ export function createPlayableSettlementShell(input: {
   };
 }
 
+function tryLaunchPlayableFromFlowCompletion(input: {
+  input: Parameters<typeof runPlayableRuntime>[0];
+  session: ActivePlayableSession;
+  factResult: PlayableFactResult;
+}): PlayableRuntimeOutput | null {
+  const launchConfig = readFlowCompletionLaunchConfig(input.factResult.detail);
+  if (launchConfig == null) {
+    return null;
+  }
+
+  const ownerContext = {
+    ...input.session.ownerContext,
+    ...(launchConfig.ownerContext ?? {}),
+    ownerId:
+      launchConfig.ownerContext?.ownerId ?? input.session.ownerContext.ownerId,
+  };
+  const currentView =
+    ownerContext.ownerKind === "house"
+      ? ("house" as const)
+      : ownerContext.ownerKind === "scene"
+        ? ("scene" as const)
+        : input.input.state.core.ui.currentView;
+  const preparedState = {
+    ...input.input.state,
+    core: {
+      ...input.input.state.core,
+      ui: {
+        ...input.input.state.core.ui,
+        currentView,
+      },
+      runtime: {
+        ...input.input.state.core.runtime,
+        playableSession: null,
+      },
+    },
+  };
+
+  return runPlayableRuntime({
+    ...input.input,
+    state: preparedState,
+    request: createLaunchPlayableRequest(launchConfig.playableId, {
+      ...(launchConfig.integrationId == null
+        ? {}
+        : { integrationId: launchConfig.integrationId }),
+      ownerContext,
+      ...(launchConfig.payload == null ? {} : { payload: launchConfig.payload }),
+    }),
+  });
+}
+
 function toPlayableRuntimeRequest(
   request: RuntimeRequest
 ): ResolvedPlayableRuntimeRequest | null {
@@ -1481,6 +1540,39 @@ function getInteractivePlayableIntegrationId(
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value != null;
+}
+
+function readFlowCompletionLaunchConfig(
+  detail: PlayableFactResult["detail"]
+): {
+  playableId: PlayableId;
+  integrationId?: PlayableIntegrationId | undefined;
+  ownerContext?: Partial<PlayableOwnerContext> | undefined;
+  payload?: Record<string, unknown> | undefined;
+} | null {
+  if (!isRecord(detail)) {
+    return null;
+  }
+
+  const launchPlayable = detail.launchPlayable;
+  if (!isRecord(launchPlayable) || typeof launchPlayable.playableId !== "string") {
+    return null;
+  }
+
+  return {
+    playableId: launchPlayable.playableId as PlayableId,
+    ...(typeof launchPlayable.integrationId === "string"
+      ? { integrationId: launchPlayable.integrationId as PlayableIntegrationId }
+      : {}),
+    ...(isRecord(launchPlayable.ownerContext)
+      ? {
+          ownerContext: launchPlayable.ownerContext as Partial<PlayableOwnerContext>,
+        }
+      : {}),
+    ...(isRecord(launchPlayable.payload)
+      ? { payload: launchPlayable.payload }
+      : {}),
+  };
 }
 
 export {

@@ -38,9 +38,12 @@ import { renderCity3dView } from "./views/city/city-3d-view";
 import { renderCityModuleView } from "./views/city/city-module-view";
 import { renderCityBeggingMiniGameOverlay } from "./views/minigames/city-begging-minigame-view";
 import { createMapViewModel, renderMapView } from "./views/map/map-view";
-import { renderSceneView } from "./views/scene/scene-view";
+import { renderActivityOverlay, renderSceneView } from "./views/scene/scene-view";
 import { renderStoryBattleView } from "./views/battle/story-battle-view";
-import { renderFlowPlayableView } from "./views/playables/flow-playable-view";
+import {
+  renderFlowPlayableOverlay,
+  renderFlowPlayableView,
+} from "./views/playables/flow-playable-view";
 import { renderValuableLibraryView } from "./views/valuables/valuable-library-view";
 
 type CharacterDetailViewOptions = Parameters<typeof renderCharacterDetailView>[1];
@@ -369,10 +372,34 @@ function renderCitySceneUnderlay(
   `;
 }
 
+function renderBuildingSceneUnderlay(
+  buildingUnderlay: NonNullable<
+    Extract<AppPresenterOutput["stage"], { type: "scene" }>["buildingUnderlay"]
+  >,
+  input: AppRenderInput
+): string {
+  return `
+    <div class="view-scene__underlay" aria-hidden="true">
+      ${renderBuildingModuleView({
+        stage: {
+          type: "building",
+          activeHouse: buildingUnderlay.activeHouse,
+          arrangement: buildingUnderlay.arrangement,
+          containerViewModels: buildingUnderlay.containerViewModels,
+        },
+        characterDefinitions: input.appState.characterDefinitions,
+        characterManager: input.characterManager,
+      })}
+    </div>
+  `;
+}
+
 function renderStage(
   input: AppRenderInput,
   playerCharacter: CharacterDefinition
 ): string {
+  const { stage } = input.presenterOutput;
+
   if (
     input.appState.gameState.ui.currentView === "minigame" &&
     input.appState.gameState.runtime.playableSession?.family === "flow" &&
@@ -381,11 +408,19 @@ function renderStage(
     const session = input.appState.gameState.runtime.playableSession;
     const definition = input.flowDefinitionsById[session.playableId];
     if (definition != null) {
+      if (session.ownerContext.ownerKind === "house" && stage.type === "building") {
+        return `
+          ${renderBuildingModuleView({
+            stage,
+            characterDefinitions: input.appState.characterDefinitions,
+            characterManager: input.characterManager,
+          })}
+          ${renderFlowPlayableOverlay({ definition, session })}
+        `;
+      }
       return renderFlowPlayableView({ definition, session });
     }
   }
-
-  const { stage } = input.presenterOutput;
 
   if (stage.type === "map") {
     const mapViewModelInput: Parameters<typeof createMapViewModel>[0] = {
@@ -428,18 +463,24 @@ function renderStage(
   }
 
   if (stage.type === "building") {
-    return renderBuildingModuleView({
+    const buildingMarkup = renderBuildingModuleView({
       stage,
       characterDefinitions: input.appState.characterDefinitions,
       characterManager: input.characterManager,
     });
+    const activityOverlay = renderActivityOverlay(
+      input.appState.gameState.runtime.activitySession
+    );
+    return `${buildingMarkup}${activityOverlay}`;
   }
 
   if (stage.type === "scene") {
     const sceneUnderlayMarkup =
-      stage.cityUnderlay == null
-        ? undefined
-        : renderCitySceneUnderlay(stage.cityUnderlay, input, playerCharacter);
+      stage.buildingUnderlay != null
+        ? renderBuildingSceneUnderlay(stage.buildingUnderlay, input)
+        : stage.cityUnderlay == null
+          ? undefined
+          : renderCitySceneUnderlay(stage.cityUnderlay, input, playerCharacter);
 
     return renderSceneView({
       currentAction: stage.currentSceneAction,

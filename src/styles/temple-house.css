@@ -1,7 +1,10 @@
 .view-house-temple {
-  --grain-shop-scene-bg: url("../../ui/background/temple.jpg");
-  --grain-shop-shopkeeper-portrait: url("../../ui/npc/zhuchi.png");
-  --grain-shop-shopkeeper-avatar: url("../../ui/npc/zhuchi(touxiang).png");
+  --building-shell-scene-bg: url("../../ui/background/temple.jpg");
+  --building-skin-portrait-image: url("../../ui/npc/zhuchi.png");
+  --building-skin-avatar-image: url("../../ui/npc/zhuchi(touxiang).png");
+  --grain-shop-scene-bg: var(--building-shell-scene-bg);
+  --grain-shop-shopkeeper-portrait: var(--building-skin-portrait-image);
+  --grain-shop-shopkeeper-avatar: var(--building-skin-avatar-image);
 }
 
 .view-house-temple::after {
@@ -14,7 +17,7 @@
   min-width: 148px;
 }
 
-.view-house-temple .c-keep-house-meeting {
+.view-house-temple .c-building-layout-meeting {
   position: absolute;
   inset: 17% 11% 26% 7%;
   z-index: 1;
@@ -26,7 +29,7 @@
   pointer-events: none;
 }
 
-.view-house-temple .c-keep-house-seat {
+.view-house-temple .c-building-layout-seat {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -34,7 +37,7 @@
   min-width: 0;
 }
 
-.view-house-temple .c-keep-house-seat__avatar {
+.view-house-temple .c-building-layout-seat__avatar {
   width: 134px;
   height: 134px;
   transition:
@@ -42,12 +45,12 @@
     filter var(--duration-fast) ease;
 }
 
-.view-house-temple .c-keep-house-seat.is-selected .c-keep-house-seat__avatar {
+.view-house-temple .c-building-layout-seat.is-selected .c-building-layout-seat__avatar {
   filter: brightness(1.04);
   transform: translateY(-4px);
 }
 
-.view-house-temple .c-keep-house-seat__nameplate {
+.view-house-temple .c-building-layout-seat__nameplate {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -64,13 +67,13 @@
     inset 0 1px 0 rgb(255 255 255 / 55%);
 }
 
-.view-house-temple .c-keep-house-seat__name {
+.view-house-temple .c-building-layout-seat__name {
   font-family: var(--font-title);
   font-size: 1.65rem;
   line-height: 1.1;
 }
 
-.view-house-temple .c-keep-house-seat__title {
+.view-house-temple .c-building-layout-seat__title {
   margin-top: 0.2rem;
   font-size: 0.92rem;
   color: #65503a;
@@ -196,6 +199,7 @@
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
+.c-activity-work-sequence__actions .c-building-skin-button,
 .c-activity-work-sequence__actions .c-grain-shop-button {
   min-width: 0;
 }
@@ -515,24 +519,24 @@
 }
 
 @media (width <= 900px) {
-  .view-house-temple .c-keep-house-meeting {
+  .view-house-temple .c-building-layout-meeting {
     inset: 12% 4% 30%;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 1.4rem 0.9rem;
   }
 
-  .view-house-temple .c-keep-house-seat__avatar {
+  .view-house-temple .c-building-layout-seat__avatar {
     width: 108px;
     height: 108px;
   }
 
-  .view-house-temple .c-keep-house-seat__nameplate {
+  .view-house-temple .c-building-layout-seat__nameplate {
     min-width: 150px;
     min-height: 3.6rem;
     padding: 0.45rem 0.7rem 0.6rem;
   }
 
-  .view-house-temple .c-keep-house-seat__name {
+  .view-house-temple .c-building-layout-seat__name {
     font-size: 1.2rem;
   }
 

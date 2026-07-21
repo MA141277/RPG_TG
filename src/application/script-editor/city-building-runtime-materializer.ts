@@ -71,6 +71,13 @@ function materializeBuildingArrangements(
     ...(arrangement.displayName == null ? {} : { displayName: arrangement.displayName }),
     ...(arrangement.description == null ? {} : { description: arrangement.description }),
     ...(arrangement.backgroundId == null ? {} : { backgroundId: arrangement.backgroundId }),
+    ...(arrangement.layout == null
+      ? {}
+      : {
+          layout: cloneJsonCompatibleValue(
+            arrangement.layout
+          ) as BuildingArrangementDefinition["layout"],
+        }),
     mountedNpcIds: [...arrangement.mountedNpcIds],
     primaryNpcId: arrangement.primaryNpcId,
     containers: arrangement.containers.map((container) => ({
@@ -169,14 +176,6 @@ function materializeHouses(
             mountedBuilding?.primaryNpcId,
             assignedPersonIds[0] ?? ""
           );
-    const onEnterEventId = firstNonEmptyString(
-      building.entryBinding?.onEnterEventId,
-      readString(building.eventBindings?.onEnterEventId)
-    );
-    const onLeaveEventId = firstNonEmptyString(
-      building.entryBinding?.onLeaveEventId,
-      readString(building.eventBindings?.onLeaveEventId)
-    );
     const backAction = readBackAction(building.backAction);
 
     return {
@@ -187,8 +186,6 @@ function materializeHouses(
       type: readHouseType(baseAttributes.houseType),
       characterIds: assignedPersonIds,
       defaultCharacterId: defaultPersonId.length > 0 ? defaultPersonId : null,
-      ...(onEnterEventId.length === 0 ? {} : { onEnterEventId }),
-      ...(onLeaveEventId.length === 0 ? {} : { onLeaveEventId }),
       backAction,
       visibleStoryStages: readStringArray(baseAttributes.visibleStoryStages),
       enterableStoryStages: readStringArray(baseAttributes.enterableStoryStages),

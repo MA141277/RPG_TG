@@ -30,6 +30,10 @@
 - routing_basis: `none`
 - next_lawful_queue_recommendation: `none`
 - auto_admission_ready: `false`
+- stop_reason: `none`
+- stop_basis: `none`
+- next_unblocked_action: `none`
+- human_input_required: `false`
 - blocked_by: []
 - candidate_queue_ids:
   - `queue.script-editor-event-runtime-production-hardening-and-liu-bang-pack-migration`
@@ -148,6 +152,21 @@
 | `ACC-EVENT-RUNTIME-PRODUCTION-004` | `queue.script-editor-event-runtime-production-hardening-and-liu-bang-pack-migration` | `runtime-pack export fail-closed tests for unsupported owners, trigger entrypoints, and advanced/resolver/custom conditions` | `covered` | `none` |
 | `ACC-EVENT-RUNTIME-PRODUCTION-005` | `queue.script-editor-event-runtime-production-hardening-and-liu-bang-pack-migration` | `Liu Bang pack pack.json/event-bindings.json migration plus loader test` | `covered` | `none` |
 | `ACC-EVENT-RUNTIME-PRODUCTION-006` | `queue.script-editor-event-runtime-production-hardening-and-liu-bang-pack-migration` | `real in-app-browser simulated-human flow: Script Editor template -> add dialogue -> add event -> set dialogue destination -> configure city.kulan owner-local city-enter binding -> runtime preview from memory -> unified character selection -> campaign map -> enter Haozhou -> EventBindingRuntime dialogue overlay over city view -> advance back to city` | `covered` | `city-context scene display regressions were found, fixed, and verified` |
+
+### Candidate Backlog Refresh Rule
+
+- `After an execution queue closes or candidate routing changes, refresh candidate truth before answering whether more same-version candidate queues remain.`
+- `Read project-progress -> blueprint -> current version plan -> candidate_queue_ids -> Candidate Recovery Ledger -> Queue Promotion Ledger -> named queue docs.`
+- `Use docs/change-log.md only when structured governance docs are insufficient or explicitly cited by the current version plan.`
+- `Do not answer none unless candidate_backlog_refresh_status=fresh and candidate_backlog_snapshot is empty.`
+- `If candidate truth is stale, missing, or inconsistent, refresh or reconcile it rather than answering with prose.`
+
+### Explicit Operator-Directed Closure Or Suspension
+
+- `If the operator explicitly requests suspending this version, keep version_status=open, write stop_reason=operator-requested-suspend with stop_basis plus next_unblocked_action, and set human_input_required=false in the Control Block.`
+- `If the operator explicitly requests closing this version before closeout truth is actually satisfied, do not counterfeit done; reconcile residue/candidate truth first and use archived only when the version is being intentionally retired rather than completed.`
+- `If the operator explicitly requests suspending the current execution queue, set active_queue=none here, synchronize the queue doc to queue_status=suspended, and record the lawful resume action in this plan.`
+- `If the operator explicitly requests dropping a current or candidate queue, route it as dropped/rejected in governance truth rather than leaving that instruction as prose only.`
 
 ### Progress Log
 

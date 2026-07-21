@@ -142,6 +142,7 @@ const FAMILY_LABELS: Record<string, string> = {
   quests: "任务",
   activities: "活动",
   dialogues: "对话",
+  scenes: "场景",
   minigames: "玩法",
   storyNodes: "剧情节点",
   textEntries: "文本",
@@ -167,7 +168,7 @@ const TREE_GROUPS: Array<{
   {
     id: "narrative",
     label: "剧情与文本",
-    families: ["storyNodes", "dialogues", "events"],
+    families: ["storyNodes", "dialogues", "scenes", "events"],
   },
   {
     id: "gameplay",
@@ -1409,6 +1410,16 @@ function createExportTargets(
           "deferred"
         ),
       ];
+    case "scenes":
+      return [
+        buildTarget(
+          "export.authored-scenes",
+          "场景落点",
+          "scenes.json",
+          "场景记录会直接进入 scenes.json，便于建筑进入演出与后续作者面预览统一消费。",
+          blockedStatus
+        ),
+      ];
     case "minigames":
       return [
         buildTarget(
@@ -1502,6 +1513,8 @@ function getFamilyRecords(
       return project.activities;
     case "dialogues":
       return project.dialogues;
+    case "scenes":
+      return project.scenes;
     case "minigames":
       return project.minigames;
     case "storyNodes":

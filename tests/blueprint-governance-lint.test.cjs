@@ -7,6 +7,7 @@ const { pathToFileURL } = require("node:url");
 const { spawnSync } = require("node:child_process");
 const {
   createGovernanceFixture,
+  OPERATOR_INTAKE_CONTRACT_LINES,
   writeFixtureFile,
 } = require("./helpers/blueprint-governance-fixtures.cjs");
 
@@ -1797,6 +1798,10 @@ test("blueprint lint rejects version plans that route same-family residue withou
       "- routing_basis: `Queue closeout proved one residue family.`",
       "- next_lawful_queue_recommendation: `none`",
       "- auto_admission_ready: `true`",
+      "- stop_reason: `none`",
+      "- stop_basis: `none`",
+      "- next_unblocked_action: `none`",
+      "- human_input_required: `false`",
       "- blocked_by: []",
       "",
       "## Human Context",
@@ -1861,6 +1866,10 @@ test("blueprint lint rejects version plans that mark auto admission ready withou
       "- routing_basis: `none`",
       "- next_lawful_queue_recommendation: `none`",
       "- auto_admission_ready: `true`",
+      "- stop_reason: `none`",
+      "- stop_basis: `none`",
+      "- next_unblocked_action: `none`",
+      "- human_input_required: `false`",
       "- blocked_by: []",
       "",
       "## Human Context",
@@ -1922,6 +1931,10 @@ test("blueprint lint rejects version plans that carry residue routing without th
       "- residue_candidate_family: `cross-family`",
       "- next_lawful_queue_recommendation: `queue.follow-up`",
       "- auto_admission_ready: `false`",
+      "- stop_reason: `none`",
+      "- stop_basis: `none`",
+      "- next_unblocked_action: `none`",
+      "- human_input_required: `false`",
       "- blocked_by: []",
       "",
       "## Human Context",
@@ -1947,4 +1960,410 @@ test("blueprint lint rejects version plans that carry residue routing without th
     failures.join("\n"),
     /closure routing.*(closure_review_subject|closure_review_status|routing_basis)/i
   );
+});
+
+test("blueprint lint rejects version plans whose stop_reason is none but stop fields still claim human input", async () => {
+  const repoRoot = createFixtureRepo();
+  writeFile(
+    repoRoot,
+    "docs/blueprints/plans/test-target-plan.md",
+    [
+      "# Target Plan Title",
+      "",
+      "## Control Block",
+      "",
+      "- document_role: `version-governor`",
+      "- version_id: `target.test`",
+      "- version_status: `open`",
+      "- active_phase: `phase.test`",
+      "- active_queue: `none`",
+      "- decision_state: `promotion-review`",
+      "- next_decision: `same-version-admission-or-version-closeout`",
+      "- next_action: `return-to-promotion-review`",
+      "- resume_gate: `promotion-review`",
+      "- promotion_review_result: `none`",
+      "- review_subject_id: `none`",
+      "- review_subject_classification: `none`",
+      "- proposed_queue_id: `none`",
+      "- review_basis: `none`",
+      "- admission_status: `none`",
+      "- intake_status: `none`",
+      "- intake_item_id: `none`",
+      "- intake_summary: `none`",
+      "- intake_result: `none`",
+      "- intake_feedback_mode: `none`",
+      "- closure_review_subject: `none`",
+      "- closure_review_status: `none`",
+      "- residue_candidate_id: `none`",
+      "- residue_candidate_family: `none`",
+      "- routing_basis: `none`",
+      "- next_lawful_queue_recommendation: `none`",
+      "- auto_admission_ready: `false`",
+      "- stop_reason: `none`",
+      "- stop_basis: `still waiting for a human answer`",
+      "- next_unblocked_action: `write-version-closeout`",
+      "- human_input_required: `true`",
+      "- blocked_by: []",
+      "",
+      "## Human Context",
+      "",
+      "### Operator Intake Contract",
+      "",
+      "- Intake surface:",
+      "  - `浜哄伐鍙緭鍏ワ細鏂伴渶姹?+ 鍙傝€冩不鐞嗚鑼冦€俙",
+      "- Fixed receipt:",
+      "  - `澶勭悊缁撴灉锛氬凡杩涘叆 Blueprint 鍐呴儴娌荤悊銆俙",
+      "  - `褰撳墠鎵ц鎯呭喌锛氱瓑寰呯増鏈眰鏀舵暃銆俙",
+      "  - `浜哄伐鎿嶄綔锛氬綋鍓嶄笉闇€瑕?/ 褰撳墠闇€瑕佺‘璁?xxx`",
+      "- Default visibility rule:",
+      "  - `榛樿涓嶅悜浜哄伐鏆撮湶鐪熷€奸摼缁嗚妭銆俙",
+      "",
+    ].join("\n")
+  );
+
+  const { lintBlueprintDocs } = await loadBlueprintLintModule();
+  const failures = lintBlueprintDocs(repoRoot);
+
+  assert.match(
+    failures.join("\n"),
+    /stop_reason=none requires stop_basis=none, next_unblocked_action=none, and human_input_required=false/i
+  );
+});
+
+test("blueprint lint rejects version plans whose non-none stop_reason lacks structured stop truth", async () => {
+  const repoRoot = createFixtureRepo();
+  writeFile(
+    repoRoot,
+    "docs/blueprints/plans/test-target-plan.md",
+    [
+      "# Target Plan Title",
+      "",
+      "## Control Block",
+      "",
+      "- document_role: `version-governor`",
+      "- version_id: `target.test`",
+      "- version_status: `open`",
+      "- active_phase: `phase.test`",
+      "- active_queue: `none`",
+      "- decision_state: `promotion-review`",
+      "- next_decision: `version-closeout`",
+      "- next_action: `write-version-closeout`",
+      "- resume_gate: `promotion-review`",
+      "- promotion_review_result: `closeout-ready`",
+      "- review_subject_id: `none`",
+      "- review_subject_classification: `none`",
+      "- proposed_queue_id: `none`",
+      "- review_basis: `all acceptance covered`",
+      "- admission_status: `none`",
+      "- intake_status: `none`",
+      "- intake_item_id: `none`",
+      "- intake_summary: `none`",
+      "- intake_result: `none`",
+      "- intake_feedback_mode: `none`",
+      "- closure_review_subject: `target.test`",
+      "- closure_review_status: `routed`",
+      "- residue_candidate_id: `none`",
+      "- residue_candidate_family: `none`",
+      "- routing_basis: `ready for closeout confirmation`",
+      "- next_lawful_queue_recommendation: `none`",
+      "- auto_admission_ready: `false`",
+      "- stop_reason: `version-closeout-confirmation`",
+      "- stop_basis: `none`",
+      "- next_unblocked_action: `none`",
+      "- human_input_required: `false`",
+      "- blocked_by: []",
+      "",
+      "## Human Context",
+      "",
+      "### Operator Intake Contract",
+      "",
+      "- Intake surface:",
+      "  - `浜哄伐鍙緭鍏ワ細鏂伴渶姹?+ 鍙傝€冩不鐞嗚鑼冦€俙",
+      "- Fixed receipt:",
+      "  - `澶勭悊缁撴灉锛氬凡杩涘叆 Blueprint 鍐呴儴娌荤悊銆俙",
+      "  - `褰撳墠鎵ц鎯呭喌锛氱瓑寰呯増鏈眰鏀舵暃銆俙",
+      "  - `浜哄伐鎿嶄綔锛氬綋鍓嶄笉闇€瑕?/ 褰撳墠闇€瑕佺‘璁?xxx`",
+      "- Default visibility rule:",
+      "  - `榛樿涓嶅悜浜哄伐鏆撮湶鐪熷€奸摼缁嗚妭銆俙",
+      "",
+    ].join("\n")
+  );
+
+  const { lintBlueprintDocs } = await loadBlueprintLintModule();
+  const failures = lintBlueprintDocs(repoRoot);
+
+  assert.match(
+    failures.join("\n"),
+    /stop_reason=version-closeout-confirmation requires stop_basis, next_unblocked_action, and human_input_required=true/i
+  );
+});
+
+test("blueprint lint accepts operator-requested version suspension when structured stop truth is complete", async () => {
+  const repoRoot = createFixtureRepo();
+  writeFile(
+    repoRoot,
+    "docs/blueprints/plans/test-target-plan.md",
+    [
+      "# Target Plan Title",
+      "",
+      "## Control Block",
+      "",
+      "- document_role: `version-governor`",
+      "- version_id: `target.test`",
+      "- version_status: `open`",
+      "- active_phase: `phase.test`",
+      "- active_queue: `none`",
+      "- decision_state: `promotion-review`",
+      "- next_decision: `same-version-admission-or-version-closeout`",
+      "- next_action: `return-to-promotion-review`",
+      "- resume_gate: `promotion-review`",
+      "- post_queue_closeout_pause_policy: `auto-continue`",
+      "- promotion_review_result: `none`",
+      "- review_subject_id: `none`",
+      "- review_subject_classification: `none`",
+      "- proposed_queue_id: `none`",
+      "- review_basis: `none`",
+      "- admission_status: `none`",
+      "- intake_status: `none`",
+      "- intake_item_id: `none`",
+      "- intake_summary: `none`",
+      "- intake_result: `none`",
+      "- intake_feedback_mode: `none`",
+      "- closure_review_subject: `none`",
+      "- closure_review_status: `none`",
+      "- residue_candidate_id: `none`",
+      "- residue_candidate_family: `none`",
+      "- routing_basis: `none`",
+      "- next_lawful_queue_recommendation: `none`",
+      "- auto_admission_ready: `false`",
+      "- stop_reason: `operator-requested-suspend`",
+      "- stop_basis: `The operator explicitly requested suspending the current version.`",
+      "- next_unblocked_action: `return-to-promotion-review`",
+      "- human_input_required: `false`",
+      "- blocked_by: []",
+      "- candidate_queue_ids:",
+      "",
+      ...OPERATOR_INTAKE_CONTRACT_LINES,
+      "### Candidate Backlog Refresh Rule",
+      "",
+      "- `After queue closeout or candidate-routing changes, refresh candidate truth before answering whether any same-version candidate queue remains.`",
+      "- `Read project-progress -> blueprint -> current version plan -> candidate_queue_ids -> Candidate Recovery Ledger -> Queue Promotion Ledger -> named queue docs.`",
+      "- `Do not answer none unless candidate_backlog_refresh_status=fresh and candidate_backlog_snapshot is empty.`",
+      "",
+    ].join("\n")
+  );
+
+  const { lintBlueprintDocs } = await loadBlueprintLintModule();
+  const failures = lintBlueprintDocs(repoRoot);
+
+  assert.doesNotMatch(
+    failures.join("\n"),
+    /operator-requested-suspend requires stop_basis, next_unblocked_action, and human_input_required=false/i
+  );
+});
+
+test("blueprint lint accepts suspended queue status when no live active task remains", async () => {
+  const repoRoot = createFixtureRepo();
+  writeFile(
+    repoRoot,
+    "docs/blueprints/queues/test-queue.md",
+    [
+      "# Queue Title",
+      "",
+      "## Control Block",
+      "",
+      "- queue_id: `queue.test`",
+      "- belongs_to_version: `target.test`",
+      "- queue_status: `suspended`",
+      "- queue_class: `required`",
+      "- active_task: `none`",
+      "- next_task: `task.test`",
+      "- closeout_status: `in-progress`",
+      "- next_effect: `return-to-version-review`",
+      "- sync_status: `pending`",
+      "- sync_scope: `local-record`",
+      "- sync_summary: `Queue suspended by explicit operator request after governance truth was written.`",
+      "- blocked_by: []",
+      "- allowed_item_classifications:",
+      "  - `current-target-item`",
+      "- reject_item_classifications:",
+      "  - `out-of-scope`",
+      "",
+      "## Human Context",
+      "",
+      "### Queue Snapshot",
+      "",
+      "- queue_goal: `Keep the queue available for later resumption.`",
+      "- task_count: `1`",
+      "- completed_task_count: `0`",
+      "- remaining_task_count: `1`",
+      "- active_task_summary: `Queue is suspended by explicit operator request.`",
+      "- task_briefs:",
+      "  - `task.test: Resume when the operator reopens the queue.`",
+      "",
+      "### Task Ledger",
+      "",
+      "| Task ID | State | Summary | Depends On | Notes |",
+      "| --- | --- | --- | --- | --- |",
+      "| `task.test` | `queued` | `Resume when the operator reopens the queue.` | `none` | `Suspended queue fixture.` |",
+      "",
+      "### Task Definitions",
+      "",
+      "#### `task.test`",
+      "",
+      "##### Control Block",
+      "",
+      "- task_id: `task.test`",
+      "- state: `queued`",
+      "- task_kind: `execution`",
+      "- scope:",
+      "  - `docs/blueprints/queues/test-queue.md`",
+      "- must_inspect:",
+      "  - `docs/blueprints/queues/test-queue.md`",
+      "- must_not_change:",
+      "  - `historical evidence`",
+      "- done_when:",
+      "  - `The operator resumes or drops the queue.`",
+      "- verify_with:",
+      "  - `npm run lint:blueprints`",
+      "- if_blocked:",
+      "  - `Record the blocker in the queue doc.`",
+      "- promote_next_if_done: `none`",
+      "- stop_if:",
+      "  - `none`",
+      "",
+      "##### Human Context",
+      "",
+      "- task_brief:",
+      "  - `Resume the queue later.`",
+      "- task_outcome_summary:",
+      "  - `The queue remains suspended until reopened.`",
+      "",
+    ].join("\n")
+  );
+
+  const { lintBlueprintDocs } = await loadBlueprintLintModule();
+  const failures = lintBlueprintDocs(repoRoot);
+
+  assert.doesNotMatch(failures.join("\n"), /queue_status=suspended is not an allowed queue status/i);
+  assert.doesNotMatch(failures.join("\n"), /queue must not keep active_task=.*while queue_status=suspended/i);
+});
+
+test("blueprint lint rejects open version plans that omit Candidate Backlog Refresh Rule", async () => {
+  const { repoRoot, targetPlanPath } = createGovernanceFixture({
+    activeQueueId: "none",
+  });
+  const planPath = path.join(repoRoot, ...targetPlanPath.split("/"));
+  const text = fs.readFileSync(planPath, "utf8").replace(
+    /\r?\n### Candidate Backlog Refresh Rule[\s\S]*$/m,
+    "\n"
+  );
+  fs.writeFileSync(planPath, text, "utf8");
+
+  const { lintBlueprintDocs } = await loadBlueprintLintModule();
+  const failures = lintBlueprintDocs(repoRoot);
+
+  assert.match(
+    failures.join("\n"),
+    /open must include a Candidate Backlog Refresh Rule section/i
+  );
+});
+
+test("blueprint lint rejects active-version claim-boundary queues that omit anti-over-narrowing structure", async () => {
+  const { repoRoot } = createGovernanceFixture();
+  writeFile(
+    repoRoot,
+    "docs/blueprints/queues/test-active-queue.md",
+    [
+      "# Queue Title",
+      "",
+      "## Control Block",
+      "",
+      "- queue_id: `queue.test-active`",
+      "- belongs_to_version: `target.test`",
+      "- queue_status: `active`",
+      "- queue_class: `required`",
+      "- active_task: `task.test`",
+      "- next_task: `none`",
+      "- closeout_status: `in-progress`",
+      "- next_effect: `none`",
+      "- sync_status: `pending`",
+      "- sync_scope: `none`",
+      "- sync_summary: `none`",
+      "- blocked_by: []",
+      "- allowed_item_classifications:",
+      "  - `current-target-item`",
+      "- reject_item_classifications:",
+      "  - `out-of-scope`",
+      "",
+      "## Human Context",
+      "",
+      "### Claim Boundary",
+      "",
+      "#### Can Claim",
+      "",
+      "- `ACC-TEST-001: Keep one bounded acceptance.`",
+      "",
+      "#### Cannot Claim",
+      "",
+      "- `ACC-TEST-002: Leave other capability to another queue.`",
+      "",
+      "### Queue Snapshot",
+      "",
+      "- queue_goal: `Keep the queue active.`",
+      "- task_count: `1`",
+      "- completed_task_count: `0`",
+      "- remaining_task_count: `1`",
+      "- active_task_summary: `Run the current task.`",
+      "- task_briefs:",
+      "  - `task.test: Run the current task.`",
+      "",
+      "### Task Ledger",
+      "",
+      "| Task ID | State | Summary | Depends On | Notes |",
+      "| --- | --- | --- | --- | --- |",
+      "| `task.test` | `active` | `Run the current task.` | `none` | `Current task.` |",
+      "",
+      "### Task Definitions",
+      "",
+      "#### `task.test`",
+      "",
+      "##### Control Block",
+      "",
+      "- task_id: `task.test`",
+      "- state: `active`",
+      "- task_kind: `execution`",
+      "- scope:",
+      "  - `docs/blueprints/queues/test-active-queue.md`",
+      "- must_inspect:",
+      "  - `docs/blueprints/queues/test-active-queue.md`",
+      "- must_not_change:",
+      "  - `historical evidence`",
+      "- done_when:",
+      "  - `Queue shell is synchronized.`",
+      "- verify_with:",
+      "  - `npm run lint:blueprints`",
+      "- if_blocked:",
+      "  - `Record the blocker in the queue doc.`",
+      "- promote_next_if_done: `none`",
+      "- stop_if:",
+      "  - `none`",
+      "",
+      "##### Human Context",
+      "",
+      "- task_brief:",
+      "  - `Run the current task.`",
+      "- task_outcome_summary:",
+      "  - `The queue shell stays synchronized.`",
+      "",
+    ].join("\n")
+  );
+
+  const { lintBlueprintDocs } = await loadBlueprintLintModule();
+  const failures = lintBlueprintDocs(repoRoot);
+
+  assert.match(failures.join("\n"), /Capability Floor/i);
+  assert.match(failures.join("\n"), /User Path Coverage Matrix/i);
+  assert.match(failures.join("\n"), /functional_loss_audit/i);
+  assert.match(failures.join("\n"), /previous_owner_or_path/i);
 });

@@ -106,6 +106,174 @@
     ]
   },
   {
+    "id": "flow.building.house.kulan.temple.copy_scripture",
+    "title": "皇觉寺抄经",
+    "description": "皇觉寺的作者定义抄经入口。",
+    "playableId": "flow.building.house.kulan.temple.copy_scripture",
+    "integrationId": "playable.flow.building.house.kulan.temple.copy_scripture",
+    "ownerKind": "building",
+    "ownerId": "house.kulan.temple",
+    "returnPolicy": "reenter-owner",
+    "triggerId": "trigger.building.house.kulan.temple.copy_scripture",
+    "triggerSource": "container-item",
+    "triggerEvent": "building-container-item-action",
+    "eventStartTarget": {
+      "eventId": "event.building.house.kulan.temple.copy_scripture",
+      "bindingId": "binding.building.house.kulan.temple.copy_scripture.container-item"
+    },
+    "launchPayload": [],
+    "initialNodeId": "flow.building.house.kulan.temple.copy_scripture.start",
+    "outcomeRoutes": [
+      {
+        "id": "flow.building.house.kulan.temple.copy_scripture.success",
+        "outcome": "success",
+        "handoffPolicy": "reenter-owner",
+        "summary": "返回皇觉寺。",
+        "effectHint": ""
+      }
+    ],
+    "nodes": [
+      {
+        "id": "flow.building.house.kulan.temple.copy_scripture.start",
+        "type": "text",
+        "text": "住持命你在偏殿抄录残经，先定心，再落笔。",
+        "nextNodeId": "flow.building.house.kulan.temple.copy_scripture.complete"
+      },
+      {
+        "id": "flow.building.house.kulan.temple.copy_scripture.complete",
+        "type": "complete",
+        "outcome": "success",
+        "detail": {
+          "buildingId": "house.kulan.temple",
+          "functionId": "copy-scripture",
+          "launchPlayable": {
+            "playableId": "activity-qte",
+            "integrationId": "playable.activity-qte.house.temple",
+            "ownerContext": {
+              "ownerKind": "house",
+              "returnPolicy": "resume-owner"
+            },
+            "payload": {
+              "activityId": "activity.zhu_yuanzhang.temple.copy_scripture"
+            }
+          }
+        }
+      }
+    ]
+  },
+  {
+    "id": "flow.building.house.kulan.temple.sweep_courtyard",
+    "title": "皇觉寺打扫庭院",
+    "description": "皇觉寺的作者定义扫院入口。",
+    "playableId": "flow.building.house.kulan.temple.sweep_courtyard",
+    "integrationId": "playable.flow.building.house.kulan.temple.sweep_courtyard",
+    "ownerKind": "building",
+    "ownerId": "house.kulan.temple",
+    "returnPolicy": "reenter-owner",
+    "triggerId": "trigger.building.house.kulan.temple.sweep_courtyard",
+    "triggerSource": "container-item",
+    "triggerEvent": "building-container-item-action",
+    "eventStartTarget": {
+      "eventId": "event.building.house.kulan.temple.sweep_courtyard",
+      "bindingId": "binding.building.house.kulan.temple.sweep_courtyard.container-item"
+    },
+    "launchPayload": [],
+    "initialNodeId": "flow.building.house.kulan.temple.sweep_courtyard.start",
+    "outcomeRoutes": [
+      {
+        "id": "flow.building.house.kulan.temple.sweep_courtyard.success",
+        "outcome": "success",
+        "handoffPolicy": "reenter-owner",
+        "summary": "返回皇觉寺。",
+        "effectHint": ""
+      }
+    ],
+    "nodes": [
+      {
+        "id": "flow.building.house.kulan.temple.sweep_courtyard.start",
+        "type": "text",
+        "text": "知客僧把竹帚递给你，吩咐先把前殿与庭院清扫干净。",
+        "nextNodeId": "flow.building.house.kulan.temple.sweep_courtyard.complete"
+      },
+      {
+        "id": "flow.building.house.kulan.temple.sweep_courtyard.complete",
+        "type": "complete",
+        "outcome": "success",
+        "detail": {
+          "buildingId": "house.kulan.temple",
+          "functionId": "sweep-courtyard",
+          "launchPlayable": {
+            "playableId": "activity-qte",
+            "integrationId": "playable.activity-qte.house.temple",
+            "ownerContext": {
+              "ownerKind": "house",
+              "returnPolicy": "resume-owner"
+            },
+            "payload": {
+              "activityId": "activity.zhu_yuanzhang.temple.sweep_courtyard"
+            }
+          }
+        }
+      }
+    ]
+  },
+  {
+    "id": "flow.building.house.kulan.temple.carry_water",
+    "title": "皇觉寺挑水",
+    "description": "皇觉寺的作者定义挑水入口。",
+    "playableId": "flow.building.house.kulan.temple.carry_water",
+    "integrationId": "playable.flow.building.house.kulan.temple.carry_water",
+    "ownerKind": "building",
+    "ownerId": "house.kulan.temple",
+    "returnPolicy": "reenter-owner",
+    "triggerId": "trigger.building.house.kulan.temple.carry_water",
+    "triggerSource": "container-item",
+    "triggerEvent": "building-container-item-action",
+    "eventStartTarget": {
+      "eventId": "event.building.house.kulan.temple.carry_water",
+      "bindingId": "binding.building.house.kulan.temple.carry_water.container-item"
+    },
+    "launchPayload": [],
+    "initialNodeId": "flow.building.house.kulan.temple.carry_water.start",
+    "outcomeRoutes": [
+      {
+        "id": "flow.building.house.kulan.temple.carry_water.success",
+        "outcome": "success",
+        "handoffPolicy": "reenter-owner",
+        "summary": "返回皇觉寺。",
+        "effectHint": ""
+      }
+    ],
+    "nodes": [
+      {
+        "id": "flow.building.house.kulan.temple.carry_water.start",
+        "type": "text",
+        "text": "后院水缸见底，今日这担水得由你挑上山门。",
+        "nextNodeId": "flow.building.house.kulan.temple.carry_water.complete"
+      },
+      {
+        "id": "flow.building.house.kulan.temple.carry_water.complete",
+        "type": "complete",
+        "outcome": "success",
+        "detail": {
+          "buildingId": "house.kulan.temple",
+          "functionId": "carry-water",
+          "launchPlayable": {
+            "playableId": "activity-qte",
+            "integrationId": "playable.activity-qte.house.temple",
+            "ownerContext": {
+              "ownerKind": "house",
+              "returnPolicy": "resume-owner"
+            },
+            "payload": {
+              "activityId": "activity.zhu_yuanzhang.temple.carry_water"
+            }
+          }
+        }
+      }
+    ]
+  },
+  {
     "id": "flow.building.house.kulan.temple.donate",
     "title": "皇觉寺捐香火",
     "description": "皇觉寺的作者定义捐香火入口。",

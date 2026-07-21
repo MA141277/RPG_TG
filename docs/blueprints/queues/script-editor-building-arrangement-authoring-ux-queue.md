@@ -107,6 +107,10 @@
 - `Final end-to-end acceptance or version closeout.`
 - `Out-of-scope means not implemented by this queue; it does not mean retired, removed, or unsupported unless the parent spec was updated first.`
 
+#### Capability Floor
+
+- `Creators must still be able to author city-local building arrangements, containers, NPC placements, and empty-data-safe arrangement editing without falling back to legacy house authoring surfaces.`
+
 #### Over-Narrowing Guard
 
 - parent_capabilities_not_owned_by_this_queue:
@@ -137,6 +141,23 @@
 - `Existing project save/load keeps explicit buildingArrangements data.`
 - `Existing runtime export/import paths remain untouched until downstream queues cut over.`
 
+#### User Path Coverage Matrix
+
+- primary_paths:
+  - `Script Editor path: open a city, create or edit building arrangements, edit containers, and save the project without touching legacy house structures.`
+- alternate_paths:
+  - `Load-existing-project path: projects with empty or partial arrangement data still render an editable arrangement surface instead of crashing or hiding the owner surface.`
+- empty_or_fail_closed_paths:
+  - `Missing arrangement data shows an intentional empty/default authoring state rather than synthetic house content.`
+- forbidden_regressions:
+  - `Do not preserve authoring reachability only through old mountedBuildings or house module UI.`
+
+#### Functional Loss Budget
+
+- budget: `zero`
+- loss_accounting_rule:
+  - `Any missing authoring control must be repaired, routed, or explicitly blocked; it cannot be treated as acceptable because the runtime path still exists.`
+
 #### Implementation Anchors
 
 - Must inspect:
@@ -165,6 +186,17 @@
 - `Authoring helpers prove containers can be added/removed/updated for all supported container types.`
 - `UI source tests prove the city module exposes Building Arrangement controls and generic container controls rather than only mounted building/NPC controls.`
 - `Tests prove empty mounted NPCs or empty containers remain valid and do not generate fallback rows.`
+
+#### Replacement Proof
+
+- previous_owner_or_path:
+  - `Legacy city/building house-oriented authoring controls and implicit mounted-building edit paths.`
+- new_owner_or_path:
+  - `Script Editor building arrangement/container authoring UI backed by canonical project fields.`
+- behavior_preservation_expectation:
+  - `Creators keep equivalent arrangement-editing reachability while legacy house-specific authoring surfaces stop owning the feature.`
+- verification_evidence:
+  - `Queue browser proof, loader/save/export tests, and source inspection show authoring is reachable from the dedicated arrangement surface.`
 
 ### Parent Version
 
@@ -344,6 +376,10 @@
   - `Passed: npm test.`
   - `Passed: node --test tests/city-building-mount-authoring.test.cjs --test-name-pattern "building arrangement|mounted building".`
   - `Browser proof: localhost Script Editor template city details exposed Building Arrangement with empty data showing no fallback rows; add-arrangement browser gap-fill found and fixed invalid default empty fields.`
+- functional_loss_audit:
+  - `Arrangement/container authoring stayed creator-reachable after the cutover; no required edit path depends on a hidden legacy surface.`
+- replacement_proof_summary:
+  - `The dedicated arrangement authoring surface now owns building/container editing, and verification covered empty/default data plus persisted round-trip behavior.`
 - gap_fill_decision:
   - `used-once`
 - gap_fill_scope:

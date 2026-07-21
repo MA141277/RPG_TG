@@ -155,7 +155,11 @@ test("script editor building arrangement authoring updates project-level arrange
     appendScriptEditorBuildingArrangementNpc,
     appendScriptEditorBuildingArrangementContainer,
     appendScriptEditorBuildingArrangementContainerActionItem,
+    appendScriptEditorBuildingArrangementLayoutNode,
     updateScriptEditorBuildingArrangementContainerField,
+    updateScriptEditorBuildingArrangementLayoutField,
+    updateScriptEditorBuildingArrangementLayoutNodeField,
+    updateScriptEditorBuildingArrangementLayoutNodeFlag,
     updateScriptEditorBuildingArrangementNpc,
     updateScriptEditorBuildingArrangementPrimaryNpc,
   } = require("../.test-dist/application/script-editor/city-building-authoring.js");
@@ -197,11 +201,48 @@ test("script editor building arrangement authoring updates project-level arrange
   const arrangementId = project.buildingArrangements[0].id;
   assert.equal(project.buildingArrangements[0].buildingId, "building.temple");
   assert.equal(project.buildingArrangements[0].displayName, "Temple");
+  assert.equal(project.buildingArrangements[0].layout.templateId, "default-shell");
+  assert.ok(project.buildingArrangements[0].layout.nodes.length > 0);
+  assert.equal(project.buildingArrangements[0].layout.nodes[0].id, "node.header");
   project = appendScriptEditorBuildingArrangementNpc(project, arrangementId, "person.host");
   project = updateScriptEditorBuildingArrangementPrimaryNpc(
     project,
     arrangementId,
     "person.host"
+  );
+  project = updateScriptEditorBuildingArrangementLayoutField(
+    project,
+    arrangementId,
+    "templateId",
+    "meeting-stage"
+  );
+  project = updateScriptEditorBuildingArrangementLayoutField(
+    project,
+    arrangementId,
+    "shellClassNames",
+    "view-house-temple, view-house-building-shell"
+  );
+  project = appendScriptEditorBuildingArrangementLayoutNode(project, arrangementId);
+  project = updateScriptEditorBuildingArrangementLayoutNodeField(
+    project,
+    arrangementId,
+    0,
+    "kind",
+    "character-seats"
+  );
+  project = updateScriptEditorBuildingArrangementLayoutNodeField(
+    project,
+    arrangementId,
+    0,
+    "regionId",
+    "focus"
+  );
+  project = updateScriptEditorBuildingArrangementLayoutNodeFlag(
+    project,
+    arrangementId,
+    0,
+    "previewDraggable",
+    true
   );
   project = updateScriptEditorBuildingArrangementNpc(
     project,
@@ -229,6 +270,14 @@ test("script editor building arrangement authoring updates project-level arrange
 
   assert.deepEqual(project.buildingArrangements[0].mountedNpcIds, ["person.other"]);
   assert.equal(project.buildingArrangements[0].primaryNpcId, null);
+  assert.equal(project.buildingArrangements[0].layout.templateId, "meeting-stage");
+  assert.deepEqual(project.buildingArrangements[0].layout.shellClassNames, [
+    "view-house-temple",
+    "view-house-building-shell",
+  ]);
+  assert.equal(project.buildingArrangements[0].layout.nodes[0].kind, "character-seats");
+  assert.equal(project.buildingArrangements[0].layout.nodes[0].regionId, "focus");
+  assert.equal(project.buildingArrangements[0].layout.nodes[0].previewDraggable, true);
   assert.equal(project.buildingArrangements[0].containers[0].type, "resource-panel");
   assert.equal(project.buildingArrangements[0].containers[0].items, undefined);
   assert.deepEqual(baseProject.buildingArrangements, []);
@@ -247,9 +296,15 @@ test("script editor city profile UI exposes building arrangement and generic con
   assert.match(mainUiSource, /renderScriptEditorBuildingArrangementPanel\(location\)/);
   assert.match(mainUiSource, /data-script-editor-building-arrangement-field/);
   assert.match(mainUiSource, /data-script-editor-building-arrangement-npc/);
+  assert.match(mainUiSource, /data-script-editor-building-layout-field/);
+  assert.match(mainUiSource, /data-script-editor-building-layout-node-field/);
+  assert.match(mainUiSource, /data-script-editor-building-layout-node-flag/);
   assert.match(mainUiSource, /data-script-editor-building-container-field/);
   assert.match(mainUiSource, /data-script-editor-building-container-action-field/);
   assert.match(mainUiSource, /SCRIPT_EDITOR_BUILDING_CONTAINER_TYPES/);
+  assert.match(authoringSource, /SCRIPT_EDITOR_BUILDING_LAYOUT_TEMPLATE_IDS/);
+  assert.match(authoringSource, /readScriptEditorBuildingLayoutRecord/);
+  assert.match(authoringSource, /SCRIPT_EDITOR_BUILDING_LAYOUT_NODE_KINDS/);
   for (const containerType of [
     "character-seats",
     "action-menu",
@@ -260,6 +315,23 @@ test("script editor city profile UI exposes building arrangement and generic con
   ]) {
     assert.match(authoringSource, new RegExp(containerType));
   }
+});
+
+test("script editor building layout helpers resolve template defaults without inline UI fallback objects", () => {
+  const {
+    createDefaultScriptEditorBuildingLayoutRecord,
+    readScriptEditorBuildingLayoutRecord,
+  } = require("../.test-dist/application/script-editor/city-building-authoring.js");
+
+  const defaultLayout = createDefaultScriptEditorBuildingLayoutRecord();
+  const meetingLayout = readScriptEditorBuildingLayoutRecord({
+    templateId: "meeting-stage",
+  });
+
+  assert.equal(defaultLayout.templateId, "default-shell");
+  assert.ok(defaultLayout.nodes.length > 0);
+  assert.equal(meetingLayout.templateId, "meeting-stage");
+  assert.ok(meetingLayout.nodes.some((node) => node.presentation === "meeting-grid"));
 });
 
 test(

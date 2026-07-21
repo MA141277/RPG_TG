@@ -149,6 +149,128 @@
     "enabled": true
   },
   {
+    "id": "binding.building.house.kulan.leader_residence.enter",
+    "eventId": "event.building.house.kulan.leader_residence.enter",
+    "owner": {
+      "family": "building",
+      "id": "house.kulan.leader_residence"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-enter"
+    },
+    "priority": 90,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.kulan.temple.enter",
+    "eventId": "event.building.house.kulan.temple.enter",
+    "owner": {
+      "family": "building",
+      "id": "house.kulan.temple"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-enter"
+    },
+    "conditions": {
+      "operator": "all",
+      "conditions": [
+        {
+          "type": "flag",
+          "key": "flag.story.zhu_yuanzhang.ordination.completed",
+          "expected": true
+        }
+      ]
+    },
+    "priority": 90,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.kulan.keep.enter",
+    "eventId": "event.building.house.kulan.keep.enter",
+    "owner": {
+      "family": "building",
+      "id": "house.kulan.keep"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-enter"
+    },
+    "priority": 90,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.kulan.tea_house.enter",
+    "eventId": "event.building.house.kulan.tea_house.enter",
+    "owner": {
+      "family": "building",
+      "id": "house.kulan.tea_house"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-enter"
+    },
+    "priority": 90,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.kulan.market.enter",
+    "eventId": "event.building.house.kulan.market.enter",
+    "owner": {
+      "family": "building",
+      "id": "house.kulan.market"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-enter"
+    },
+    "priority": 90,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.kulan.grain_shop.enter",
+    "eventId": "event.building.house.kulan.grain_shop.enter",
+    "owner": {
+      "family": "building",
+      "id": "house.kulan.grain_shop"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-enter"
+    },
+    "priority": 90,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.kulan.medicine_house.enter",
+    "eventId": "event.building.house.kulan.medicine_house.enter",
+    "owner": {
+      "family": "building",
+      "id": "house.kulan.medicine_house"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-enter"
+    },
+    "priority": 90,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.kulan.inn.enter",
+    "eventId": "event.building.house.kulan.inn.enter",
+    "owner": {
+      "family": "building",
+      "id": "house.kulan.inn"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-enter"
+    },
+    "priority": 90,
+    "enabled": true
+  },
+  {
     "id": "binding.building.house.kulan.leader_residence.review.container-item",
     "eventId": "event.building.house.kulan.leader_residence.review",
     "owner": {
@@ -219,6 +341,63 @@
         "arrangementId": "arrangement.city.kulan.house.kulan.temple",
         "containerId": "house.kulan.temple.actions",
         "itemId": "work"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.kulan.temple.copy_scripture.container-item",
+    "eventId": "event.building.house.kulan.temple.copy_scripture",
+    "owner": {
+      "family": "building",
+      "id": "house.kulan.temple"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.kulan.house.kulan.temple",
+        "containerId": "house.kulan.temple.actions",
+        "itemId": "copy-scripture"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.kulan.temple.sweep_courtyard.container-item",
+    "eventId": "event.building.house.kulan.temple.sweep_courtyard",
+    "owner": {
+      "family": "building",
+      "id": "house.kulan.temple"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.kulan.house.kulan.temple",
+        "containerId": "house.kulan.temple.actions",
+        "itemId": "sweep-courtyard"
+      }
+    },
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "id": "binding.building.house.kulan.temple.carry_water.container-item",
+    "eventId": "event.building.house.kulan.temple.carry_water",
+    "owner": {
+      "family": "building",
+      "id": "house.kulan.temple"
+    },
+    "trigger": {
+      "timing": "after",
+      "action": "building-container-item-action",
+      "extra": {
+        "arrangementId": "arrangement.city.kulan.house.kulan.temple",
+        "containerId": "house.kulan.temple.actions",
+        "itemId": "carry-water"
       }
     },
     "priority": 100,

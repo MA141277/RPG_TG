@@ -97,6 +97,7 @@ import { createPrototypeStartupAppStateBuilder } from "./application/startup/pro
 import { resolveScenarioStartupTarget } from "./application/startup/scenario-startup-target";
 import {
   createEnterCityRequest,
+  createEnterHouseRequest,
   routeNavigationRuntime,
 } from "./core/runtime/navigation-runtime";
 import { enterHouse } from "./application/navigation/enter-house";
@@ -217,6 +218,17 @@ declare global {
     onBeggingGameComplete?: (
       result: CityBeggingGameCompletionResult
     ) => void;
+    __RPG_TG_DEBUG__?: {
+      getAppState(): AppState;
+      getActiveContentContext(): ActiveGameContentContext;
+      getPresenterStageSummary(): {
+        currentView: AppState["gameState"]["ui"]["currentView"];
+        currentCityId: string | null;
+        currentHouseId: string | null;
+        buildingArrangementCount: number;
+        stageType: string;
+      };
+    };
   }
 }
 
@@ -994,14 +1006,36 @@ function enterBuilding(houseId: string): void {
     return;
   }
 
-  appState = {
-    ...appState,
-    gameState: enterHouse(
-      appState.gameState,
-      houseDefinition,
-      activeContentContext.storyContent.eventDefinitionsById
-    ),
-  };
+  const runtimeCommit = commitRuntimeRequest({
+    state: appState,
+    request: createEnterHouseRequest(houseId),
+    context: createRuntimeCommitContext({
+      router: {
+        route: ({ state, request }) =>
+          routeNavigationRuntime({
+            state,
+            request,
+            houseDefinition,
+            cityDefinitionsById: activeContentContext.cityDefinitionById,
+            characterDefinitions: appState.characterDefinitions,
+            locationAccessDefinitions: activeContentContext.locationAccess,
+          }),
+      },
+      followUp: {
+        handleFollowUp: ({ state, followUp }) =>
+          followUp.type === "reenter-house"
+            ? { state }
+            : navigationTimeFollowUp.applyOutcome({ state, outcome: followUp }),
+      },
+    }),
+  });
+  appState = runtimeCommit.state;
+  if (runtimeCommit.runtimeResult.access?.refusal != null) {
+    cityHouseTransitionCoordinator.handleHouseAccessRefusal(
+      runtimeCommit.runtimeResult.access.refusal
+    );
+    return;
+  }
   renderApp();
 }
 
@@ -1344,6 +1378,8 @@ function dispatchCurrentFlowAction(
             ...(currentPlayerCharacterId == null
               ? {}
               : { playerCharacterId: currentPlayerCharacterId }),
+            activityDefinitionsById:
+              activeContentContext.storyContent.activityDefinitionsById,
             textEntriesById: activeContentContext.textEntriesById,
             flowDefinitionsById: activeContentContext.gameContent.flowDefinitionsById,
           }),

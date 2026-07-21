@@ -32,76 +32,76 @@
 2. Open the app in Codex in-app browser / Browser Use, for example `http://localhost:5173/` or the currently assigned local port.
 3. Enter the Script Editor.
 4. Create or open a test project that contains at least one event and at least one owner object.
-5. Visit each owner detail page and click the `事件` tab:
-   - `人物`
-   - `城市`
-   - `建筑`
-   - `对话`
-   - `小游戏`
-   - `剧情节点`
-6. Confirm each `事件` tab actually switches the visible panel, not only that the tab button exists.
-7. Confirm each owner-local `事件` tab shows the event binding authoring surface.
+5. Visit each owner detail page and click the `浜嬩欢` tab:
+   - `浜虹墿`
+   - `鍩庡競`
+   - `寤虹瓚`
+   - `瀵硅瘽`
+   - `灏忔父鎴廯
+   - `鍓ф儏鑺傜偣`
+6. Confirm each `浜嬩欢` tab actually switches the visible panel, not only that the tab button exists.
+7. Confirm each owner-local `浜嬩欢` tab shows the event binding authoring surface.
 8. Visit the event detail page and confirm:
-   - there is no `条件` tab on the event body page;
+   - there is no `鏉′欢` tab on the event body page;
    - event body condition editing is not reachable;
    - binding references are read-only reverse references or jump links, not direct trigger/condition editors.
 
 ### How To Bind An Event
 
 1. Open an owner detail page, such as a city or building.
-2. Click the `事件` tab.
-3. Click `新增事件绑定` / `Add Binding`.
-4. In `绑定事件`, choose an event from the selector.
+2. Click the `浜嬩欢` tab.
+3. Click `鏂板浜嬩欢缁戝畾` / `Add Binding`.
+4. In `缁戝畾浜嬩欢`, choose an event from the selector.
    - The selector must be driven by `project.events`.
    - The visible option should show the event title plus `eventId`.
    - The stored value remains the stable `eventId`.
    - A free text input is not acceptable as the primary authoring path.
-5. In `触发时机` / `触发动作`, choose from the owner-family trigger selector.
+5. In `瑙﹀彂鏃舵満` / `瑙﹀彂鍔ㄤ綔`, choose from the owner-family trigger selector.
    - The selector must be based on the supported trigger options for the current owner family.
    - Authors should not hand-write trigger action strings in the primary path.
-6. Configure `启用` and `优先级` as needed.
+6. Configure `鍚敤` and `浼樺厛绾 as needed.
 7. Save the project.
 8. Export the runtime pack and confirm the binding is written to `event-bindings.json`, not to `events.json`.
 
 ### Owner-Local And Dedicated Binding Surface Rules
 
-- The owner-local `事件` tab and the dedicated `eventBindings` management surface must not expose the same controls in the same way.
-- In an owner-local `事件` tab, the binding owner is the current object and must stay locked:
-  - `绑定对象类型` / `owner.family` must not be editable there.
-  - `绑定对象 ID` / `owner.id` must not be editable there.
+- The owner-local `浜嬩欢` tab and the dedicated `eventBindings` management surface must not expose the same controls in the same way.
+- In an owner-local `浜嬩欢` tab, the binding owner is the current object and must stay locked:
+  - `缁戝畾瀵硅薄绫诲瀷` / `owner.family` must not be editable there.
+  - `缁戝畾瀵硅薄 ID` / `owner.id` must not be editable there.
   - Editing trigger fields must not change `owner.family` or `owner.id`.
   - A binding card must not disappear from the current owner-local list after changing trigger timing or trigger action.
-- In the dedicated first-class `eventBindings` management surface, `绑定对象类型` and `绑定对象 ID` may remain editable because that surface owns global binding management.
+- In the dedicated first-class `eventBindings` management surface, `缁戝畾瀵硅薄绫诲瀷` and `缁戝畾瀵硅薄 ID` may remain editable because that surface owns global binding management.
 - Do not confuse owner fields with trigger fields:
-  - `绑定对象类型` means `owner.family`.
-  - `绑定对象 ID` means `owner.id`.
-  - `触发时机` means `trigger.timing`.
-  - `触发动作` means `trigger.action`.
-  - `绑定事件` means `eventId`.
+  - `缁戝畾瀵硅薄绫诲瀷` means `owner.family`.
+  - `缁戝畾瀵硅薄 ID` means `owner.id`.
+  - `瑙﹀彂鏃舵満` means `trigger.timing`.
+  - `瑙﹀彂鍔ㄤ綔` means `trigger.action`.
+  - `缁戝畾浜嬩欢` means `eventId`.
 - Locking the owner in an owner-local tab must only hide or lock `owner.family` and `owner.id`.
 - Locking the owner must not hide:
-  - `绑定事件`;
-  - `触发时机`;
-  - `触发动作`;
+  - `缁戝畾浜嬩欢`;
+  - `瑙﹀彂鏃舵満`;
+  - `瑙﹀彂鍔ㄤ綔`;
   - condition editor controls.
-- `触发时机` and `触发动作` must remain Chinese-labelled selectors in owner-local tabs, using the current owner family as the option source.
+- `瑙﹀彂鏃舵満` and `瑙﹀彂鍔ㄤ綔` must remain Chinese-labelled selectors in owner-local tabs, using the current owner family as the option source.
 - The dedicated binding surface should be used when the creator needs to move a binding between owners.
 
 ### How To Configure Conditions
 
-1. Open a binding editor from a dedicated event binding surface or an owner-local `事件` tab.
-2. In `组合关系`, choose a Chinese-labelled option:
-   - `满足全部`
-   - `满足任一`
-   - `全部不满足`
+1. Open a binding editor from a dedicated event binding surface or an owner-local `浜嬩欢` tab.
+2. In `缁勫悎鍏崇郴`, choose a Chinese-labelled option:
+   - `婊¤冻鍏ㄩ儴`
+   - `婊¤冻浠讳竴`
+   - `鍏ㄩ儴涓嶆弧瓒砢
 3. Add a condition item.
 4. Choose a Chinese-labelled condition type, such as:
-   - `标记条件`
-   - `变量条件`
-   - `表达式条件`
-   - `自定义条件`
-   - `触发上下文条件`
-5. Choose `字段来源` and then choose a `字段` from the registry-backed selector.
+   - `鏍囪鏉′欢`
+   - `鍙橀噺鏉′欢`
+   - `琛ㄨ揪寮忔潯浠禶
+   - `鑷畾涔夋潯浠禶
+   - `瑙﹀彂涓婁笅鏂囨潯浠禶
+5. Choose `瀛楁鏉ユ簮` and then choose a `瀛楁` from the registry-backed selector.
 6. The field registry should include relevant authoring fields when available:
    - person base fields, such as force / intelligence / politics;
    - person custom / extended attributes;
@@ -110,9 +110,9 @@
    - building base fields;
    - building custom / extended attributes;
    - payload and binding-context fields.
-7. Choose `判断方式`.
+7. Choose `鍒ゆ柇鏂瑰紡`.
    - Available operators should be constrained by the selected field `valueType`.
-8. Enter or select `目标值`.
+8. Enter or select `鐩爣鍊糮.
    - Boolean, enum, number, and text values should use appropriate controls.
 9. Basic `flag` / `variable` conditions may export to runnable runtime shape when supported.
 10. Advanced `expression` / `custom` / `binding-context` conditions may be saved as authoring data, but unsupported runtime/export paths must fail closed with diagnostics rather than silently becoming runnable.
@@ -170,28 +170,28 @@
 
 #### Requested Capability
 
-- Adjust the Script Editor city and building `进入条件` authoring surface so it matches the intended `locationAccess` runtime gate model.
-- City and building detail pages must share the same `进入条件` structure.
+- Adjust the Script Editor city and building `杩涘叆鏉′欢` authoring surface so it matches the intended `locationAccess` runtime gate model.
+- City and building detail pages must share the same `杩涘叆鏉′欢` structure.
 - The refusal prompt must appear above the condition editor.
 - Remove the old or over-broad entry-state controls:
-  - `拒绝事件`
-  - `拒绝原因`
-  - `引导说明`
-  - `反馈角色`
-- `拒绝提示` must be a select backed by the text module, not free text.
-- `进入条件` must allow zero or more conditions. Zero conditions means the location is enterable.
+  - `鎷掔粷浜嬩欢`
+  - `鎷掔粷鍘熷洜`
+  - `寮曞璇存槑`
+  - `鍙嶉瑙掕壊`
+- `鎷掔粷鎻愮ず` must be a select backed by the text module, not free text.
+- `杩涘叆鏉′欢` must allow zero or more conditions. Zero conditions means the location is enterable.
 - Entry conditions must be limited to three factors:
-  - `事件`
-  - `人物`
-  - `时间`
+  - `浜嬩欢`
+  - `浜虹墿`
+  - `鏃堕棿`
 
 #### Condition Authoring Rules
 
 - Event condition:
   - Select an event from `project.events`.
-  - The only allowed expressions are `完成` and `未完成`.
+  - The only allowed expressions are `瀹屾垚` and `鏈畬鎴恅.
 - Person condition:
-  - Use a layered selector: `人物 -> 属性 -> 表达式 -> 值`.
+  - Use a layered selector: `浜虹墿 -> 灞炴€?-> 琛ㄨ揪寮?-> 鍊糮.
   - The person selector is backed by `project.people`.
   - The attribute selector is backed by the selected person's base attributes plus custom attributes.
   - The expression selector must be constrained by the selected attribute value type.
@@ -200,7 +200,7 @@
   - Boolean attributes support yes/no style operators.
   - Enum attributes support equality operators.
 - Time condition:
-  - Use a layered selector: `时间字段 -> 表达式 -> 值`.
+  - Use a layered selector: `鏃堕棿瀛楁 -> 琛ㄨ揪寮?-> 鍊糮.
   - Time fields should be sourced from runtime game time state, not transient UI state.
   - Supported expressions should be selected from the valid comparison set for the chosen time field.
 
@@ -217,13 +217,13 @@
 
 #### Acceptance Criteria
 
-- City and building detail pages both expose `进入条件`.
-- `拒绝提示` appears above the condition list.
-- `拒绝提示` is a select backed by project texts and stores the selected `textId`.
-- The UI no longer exposes `拒绝事件`, `拒绝原因`, `引导说明`, or `反馈角色`.
-- The condition factor selector only exposes `事件`, `人物`, and `时间`.
-- Event conditions only expose `完成` / `未完成`.
-- Person conditions support `人物 -> 属性 -> 表达式 -> 值` with attributes sourced from the selected person's base and custom attributes.
+- City and building detail pages both expose `杩涘叆鏉′欢`.
+- `鎷掔粷鎻愮ず` appears above the condition list.
+- `鎷掔粷鎻愮ず` is a select backed by project texts and stores the selected `textId`.
+- The UI no longer exposes `鎷掔粷浜嬩欢`, `鎷掔粷鍘熷洜`, `寮曞璇存槑`, or `鍙嶉瑙掕壊`.
+- The condition factor selector only exposes `浜嬩欢`, `浜虹墿`, and `鏃堕棿`.
+- Event conditions only expose `瀹屾垚` / `鏈畬鎴恅.
+- Person conditions support `浜虹墿 -> 灞炴€?-> 琛ㄨ揪寮?-> 鍊糮 with attributes sourced from the selected person's base and custom attributes.
 - Time conditions support a runtime-backed time field selector, expression selector, and value control.
 - Empty conditions allow city/building entry.
 - Satisfied conditions allow city/building entry.
@@ -289,7 +289,7 @@
 - Not every attribute needs an enum table.
 - Only `enum` and `ranked-enum` attributes require an `enumSourceId`.
 - `ranked-enum` option records must include an order value used for runtime comparison.
-- Runtime logic must never compare localized labels such as `知府` and `县尉` directly.
+- Runtime logic must never compare localized labels such as `鐭ュ簻` and `鍘垮皦` directly.
 
 #### Enum Table Rules
 
@@ -376,42 +376,42 @@
 
 #### Navigation Rules
 
-- Move the `对话` module into the `资料库` group.
-- `对话` and `文本` must appear at the same navigation level under `资料库`.
-- The old standalone `对话` entry should no longer appear in its previous location.
+- Move the `瀵硅瘽` module into the `璧勬枡搴揱 group.
+- `瀵硅瘽` and `鏂囨湰` must appear at the same navigation level under `璧勬枡搴揱.
+- The old standalone `瀵硅瘽` entry should no longer appear in its previous location.
 - This navigation change must not change dialogue data structure, runtime export shape, or runtime semantics.
 
 #### Event Module Removal Rules
 
-- Remove the following event detail surfaces from the `事件` module:
-  - `关联对象`
+- Remove the following event detail surfaces from the `浜嬩欢` module:
+  - `鍏宠仈瀵硅薄`
   - `Bindings`
-  - `预览和校验`
+  - `棰勮鍜屾牎楠宍
 - Event binding authoring must remain owned by the new binding system or owner-local binding surfaces, not by the event body detail page.
 - Removing these surfaces must not change `EventBindingRuntime` semantics or restore the old event-body binding model.
 
 #### Event Basic Information Reorganization
 
-- Remove these controls or sections from `事件 -> 基础信息`:
-  - `事件说明`
-  - `高级设置与系统信息`
-- Move the editable content from the old `去向` surface into `事件 -> 基础信息`.
-- After consolidation, `事件 -> 基础信息` should include the necessary event fields and destination fields, including:
+- Remove these controls or sections from `浜嬩欢 -> 鍩虹淇℃伅`:
+  - `浜嬩欢璇存槑`
+  - `楂樼骇璁剧疆涓庣郴缁熶俊鎭痐
+- Move the editable content from the old `鍘诲悜` surface into `浜嬩欢 -> 鍩虹淇℃伅`.
+- After consolidation, `浜嬩欢 -> 鍩虹淇℃伅` should include the necessary event fields and destination fields, including:
   - event title;
   - event type;
   - enabled state;
   - destination type;
   - destination target.
-- If the old `去向` tab or section becomes empty after this move, remove it entirely instead of leaving an empty shell.
+- If the old `鍘诲悜` tab or section becomes empty after this move, remove it entirely instead of leaving an empty shell.
 
 #### Quick Dialogue Creation Rules
 
-- Add a `新增对话` shortcut button in `事件 -> 基础信息`.
+- Add a `鏂板瀵硅瘽` shortcut button in `浜嬩欢 -> 鍩虹淇℃伅`.
 - Place the shortcut near the event destination controls so creators can create a dialogue while configuring an event destination.
-- Clicking `新增对话` opens a modal dialogue creation surface.
-- The modal must reuse the same node creation/editing capability as the `资料库 -> 对话` module.
+- Clicking `鏂板瀵硅瘽` opens a modal dialogue creation surface.
+- The modal must reuse the same node creation/editing capability as the `璧勬枡搴?-> 瀵硅瘽` module.
 - The shortcut creates a formal dialogue resource in the shared project dialogue data, not event-private temporary data.
-- After creation, the new dialogue must be visible and editable under `资料库 -> 对话`.
+- After creation, the new dialogue must be visible and editable under `璧勬枡搴?-> 瀵硅瘽`.
 - After creation, the current event destination target should either auto-fill the new dialogue or make it immediately selectable.
 
 #### Non-Goals
@@ -424,19 +424,19 @@
 
 #### Acceptance Criteria
 
-- `对话` appears under `资料库` and at the same level as `文本`.
-- The old standalone `对话` navigation entry is gone.
-- The event detail page no longer shows `关联对象`.
+- `瀵硅瘽` appears under `璧勬枡搴揱 and at the same level as `鏂囨湰`.
+- The old standalone `瀵硅瘽` navigation entry is gone.
+- The event detail page no longer shows `鍏宠仈瀵硅薄`.
 - The event detail page no longer shows `Bindings`.
-- The event detail page no longer shows `预览和校验`.
-- `事件 -> 基础信息` no longer shows `事件说明`.
-- `事件 -> 基础信息` no longer shows `高级设置与系统信息`.
-- The old `去向` editable content is available under `事件 -> 基础信息`.
-- If `去向` has no remaining content, the `去向` tab or section is not shown.
-- `事件 -> 基础信息` contains a `新增对话` shortcut button.
-- Clicking `新增对话` opens a dialogue creation modal.
-- The modal's node editing behavior stays consistent with `资料库 -> 对话`.
-- A dialogue created from the event shortcut appears in `资料库 -> 对话`.
+- The event detail page no longer shows `棰勮鍜屾牎楠宍.
+- `浜嬩欢 -> 鍩虹淇℃伅` no longer shows `浜嬩欢璇存槑`.
+- `浜嬩欢 -> 鍩虹淇℃伅` no longer shows `楂樼骇璁剧疆涓庣郴缁熶俊鎭痐.
+- The old `鍘诲悜` editable content is available under `浜嬩欢 -> 鍩虹淇℃伅`.
+- If `鍘诲悜` has no remaining content, the `鍘诲悜` tab or section is not shown.
+- `浜嬩欢 -> 鍩虹淇℃伅` contains a `鏂板瀵硅瘽` shortcut button.
+- Clicking `鏂板瀵硅瘽` opens a dialogue creation modal.
+- The modal's node editing behavior stays consistent with `璧勬枡搴?-> 瀵硅瘽`.
+- A dialogue created from the event shortcut appears in `璧勬枡搴?-> 瀵硅瘽`.
 - The event destination can select or auto-fill the newly created dialogue.
 - Saving, exporting, and runtime preview continue to support event-to-dialogue handoff.
 - Quick dialogue creation never creates event-private dialogue data; it must write to the shared dialogue data model.
@@ -989,22 +989,22 @@
 
 #### Required Behavior
 
-- In the script editor city module, rename the creator-facing `进入态` concept to `条件`.
-- In the script editor building module, rename the creator-facing `进入态` concept to `条件`.
-- The city/building `条件` surface must allow creators to configure the entry condition expression directly.
+- In the script editor city module, rename the creator-facing `杩涘叆鎬乣 concept to `鏉′欢`.
+- In the script editor building module, rename the creator-facing `杩涘叆鎬乣 concept to `鏉′欢`.
+- The city/building `鏉′欢` surface must allow creators to configure the entry condition expression directly.
 - Runtime entry checks must execute those configured condition expressions through `LocationAccessRuntime`.
 - City and building entry eligibility should use the same runtime condition-expression path rather than feature-specific UI flags or scattered navigation checks.
-- Importing an existing scenario pack must read the pack's existing city/building judgment or access expressions and display them in the script editor's `条件` configuration surface.
+- Importing an existing scenario pack must read the pack's existing city/building judgment or access expressions and display them in the script editor's `鏉′欢` configuration surface.
 - Exported scenario packs must preserve the configured condition expressions in the runtime structure required by `LocationAccessRuntime`.
 
 #### Acceptance Criteria
 
-- City authoring shows `条件`, not `进入态`, for entry eligibility configuration.
-- Building authoring shows `条件`, not `进入态`, for entry eligibility configuration.
-- The `条件` UI can configure the condition expression used for entry.
+- City authoring shows `鏉′欢`, not `杩涘叆鎬乣, for entry eligibility configuration.
+- Building authoring shows `鏉′欢`, not `杩涘叆鎬乣, for entry eligibility configuration.
+- The `鏉′欢` UI can configure the condition expression used for entry.
 - Runtime city entry evaluates the exported city condition through `LocationAccessRuntime`.
 - Runtime building entry evaluates the exported building condition through `LocationAccessRuntime`.
-- Imported scenario packs with existing access/judgment expressions reopen in the editor with equivalent `条件` configuration visible.
+- Imported scenario packs with existing access/judgment expressions reopen in the editor with equivalent `鏉′欢` configuration visible.
 - Save/export/import round trip preserves the configured city/building condition expressions.
 
 #### Suggested Candidate Queue
@@ -1222,15 +1222,15 @@
 
 #### Observable Behavior
 
-- The script editor person detail surface currently exposes a sibling tab labeled `对话`.
+- The script editor person detail surface currently exposes a sibling tab labeled `瀵硅瘽`.
 - The tab edits `person.dialogueIds`, which is only a relationship/organization list.
 - The current runtime does not treat `person.dialogueIds` as a generic "click this person to open dialogue" trigger.
 - Creators can reasonably misread this tab as a runtime dialogue trigger configuration surface.
-- The same sibling navigation does not expose a dedicated `技能` tab, even though person skills are core editable character data.
+- The same sibling navigation does not expose a dedicated `鎶€鑳絗 tab, even though person skills are core editable character data.
 
 #### Current Implementation Evidence
 
-- `src/ui/main-ui/main-ui-flow.js` defines the person tab buttons as `属性`, `对话`, `交易`, and `事件`.
+- `src/ui/main-ui/main-ui-flow.js` defines the person tab buttons as `灞炴€, `瀵硅瘽`, `浜ゆ槗`, and `浜嬩欢`.
 - `renderScriptEditorPersonTabPanel` renders the `dialogues` tab through `renderScriptEditorPersonRelationPanel`.
 - The `dialogues` tab writes to `person.dialogueIds` through `addScriptEditorPersonRelation("dialogueIds")` and related handlers.
 - The editor PRD states that the person dialogue tab is only a relationship organization entry and is not a second dialogue editor.
@@ -1242,8 +1242,8 @@ The person authoring UI exposes a relationship-only field as a top-level creator
 
 #### Required Final Mechanism
 
-- Remove the `对话` tab from the person detail sibling tab list.
-- Add a sibling `技能` tab for person skill editing.
+- Remove the `瀵硅瘽` tab from the person detail sibling tab list.
+- Add a sibling `鎶€鑳絗 tab for person skill editing.
 - Keep actual dialogue trigger configuration on the correct runtime entry surfaces: events, city/building/NPC placement, menu actions, and dialogue follow-ups.
 - Do not expose `person.dialogueIds` as a normal creator-facing runtime trigger field unless a later queue implements a real resolver path for it.
 - Preserve existing data import/export for `dialogueIds` if needed for compatibility, but do not present it as an active person feature.
@@ -1257,15 +1257,15 @@ The person authoring UI exposes a relationship-only field as a top-level creator
 
 #### Acceptance Criteria
 
-- Person detail tabs no longer show `对话`.
-- Person detail tabs show a sibling `技能` tab.
-- Skill fields remain editable from the new `技能` tab.
+- Person detail tabs no longer show `瀵硅瘽`.
+- Person detail tabs show a sibling `鎶€鑳絗 tab.
+- Skill fields remain editable from the new `鎶€鑳絗 tab.
 - Dialogue trigger setup remains discoverable through event, dialogue, city/building, NPC placement, or menu entry surfaces rather than person `dialogueIds`.
 - Existing person save/export/runtime materialization remains valid.
 
 #### Verification Evidence Required For Closure
 
-- UI/source test proving the person tab list contains `技能` and does not contain `对话`.
+- UI/source test proving the person tab list contains `鎶€鑳絗 and does not contain `瀵硅瘽`.
 - Tests proving skill updates still write to the expected person skill fields.
 - Regression coverage proving removing the tab does not delete imported `dialogueIds` data during load/save/export unless a separate migration explicitly does so.
 
@@ -1285,15 +1285,15 @@ The person authoring UI exposes a relationship-only field as a top-level creator
 #### Observable Behavior
 
 - In the script editor person detail profile tab, the UI shows the normal person base/profile form first.
-- The same page then renders an additional panel labeled `映射字段 / 角色资料字段组`.
+- The same page then renders an additional panel labeled `鏄犲皠瀛楁 / 瑙掕壊璧勬枡瀛楁缁刞.
 - The additional panel exposes overlapping person fields such as name, person type, role, biography, birth year, death year, age, city/building references, stats, and skills.
-- This makes it look as if the imported or authored character data has gained an extra `角色资料字段组`, even though the duplicate block is UI rendering rather than a new data row in the scenario pack.
+- This makes it look as if the imported or authored character data has gained an extra `瑙掕壊璧勬枡瀛楁缁刞, even though the duplicate block is UI rendering rather than a new data row in the scenario pack.
 
 #### Current Implementation Evidence
 
 - `src/ui/main-ui/main-ui-flow.js` renders a handwritten person profile form in `renderScriptEditorPersonTabPanel`.
 - The same render path then calls `renderScriptEditorPersonMappedFieldGroups(person)`.
-- `renderScriptEditorPersonMappedFieldGroups` renders the hardcoded `映射字段 / 角色资料字段组` panel.
+- `renderScriptEditorPersonMappedFieldGroups` renders the hardcoded `鏄犲皠瀛楁 / 瑙掕壊璧勬枡瀛楁缁刞 panel.
 - The mapped controls are sourced from `listScriptEditorPersonFieldDefinitions()` in `src/application/script-editor/field-mapping.ts`.
 - `src/application/script-editor/field-mapping.ts` already defines the person field table for base, profile, stat, skill, and custom-family representative fields.
 - `src/application/script-editor/person-authoring.ts` already routes many fixed fields through mapped attribute helpers.
@@ -1307,7 +1307,7 @@ The person profile authoring surface currently combines two field sources: a leg
 - Render the normal person profile page from one canonical field source.
 - Use the field mapping table as the source of truth for base/profile/stat/skill fields where those fields are part of the current authoring contract.
 - Read and edit creator-defined custom attributes from the person custom attribute list or a governed custom-field group.
-- Do not show an internal implementation label such as `映射字段` as a creator-facing field group.
+- Do not show an internal implementation label such as `鏄犲皠瀛楁` as a creator-facing field group.
 - Do not keep a second handwritten form that edits the same canonical fields unless it is explicitly a debug/raw-data view.
 - Preserve existing save/export behavior for person records while removing duplicate editing paths.
 
@@ -1320,10 +1320,10 @@ The person profile authoring surface currently combines two field sources: a leg
 
 #### Acceptance Criteria
 
-- The person profile tab shows one coherent set of base/profile controls, not both the legacy form and `角色资料字段组`.
+- The person profile tab shows one coherent set of base/profile controls, not both the legacy form and `瑙掕壊璧勬枡瀛楁缁刞.
 - Name, person type, role, biography, birth/death year, age, city/building, portrait, stats, and skills remain editable where supported by the current contract.
 - Custom attributes remain editable without being mixed into duplicated base/profile controls.
-- Creator-facing labels are product/domain labels, not internal labels such as `映射字段`.
+- Creator-facing labels are product/domain labels, not internal labels such as `鏄犲皠瀛楁`.
 - Existing person import, save, export, and runtime materialization tests remain green.
 
 #### Verification Evidence Required For Closure
@@ -1722,8 +1722,8 @@ From bottom to top:
   - `cities[].buildingArrangements[]` replaces city-mounted building rows as the canonical city-side structure.
   - A building arrangement represents one concrete building instance in a city.
   - The arrangement owns city-local display name, selected background, mounted NPCs, primary NPC, generic containers, visible condition, enter rules, and later exit rules.
-- The Script Editor's city-side authoring function should be renamed from the old "mount buildings and people" concept to `建筑编排`.
-  - `建筑编排` mounts building instances, mounted NPCs, and containers/functions to a city-local arrangement.
+- The Script Editor's city-side authoring function should be renamed from the old "mount buildings and people" concept to `寤虹瓚缂栨帓`.
+  - `寤虹瓚缂栨帓` mounts building instances, mounted NPCs, and containers/functions to a city-local arrangement.
   - Building instances do not directly hold function definitions.
 
 #### Target Data Shape Draft
@@ -1733,9 +1733,9 @@ Building template example:
 ```json
 {
   "id": "building.temple",
-  "name": "寺庙",
+  "name": "瀵哄簷",
   "category": "religious",
-  "description": "寺庙类建筑模板",
+  "description": "瀵哄簷绫诲缓绛戞ā鏉?,
   "artId": "card_temple",
   "defaultBackgroundId": "bg.temple"
 }
@@ -1747,7 +1747,7 @@ Building arrangement example:
 {
   "id": "arrangement.city.haozhou.huangjue_temple",
   "buildingId": "building.temple",
-  "displayName": "皇觉寺",
+  "displayName": "鐨囪瀵?,
   "backgroundId": "bg.temple",
   "npcIds": ["char.abbot", "char.senior_monk", "char.worker"],
   "primaryNpcId": "char.abbot",
@@ -1773,7 +1773,7 @@ Building arrangement example:
 - `character-seats` reads only the current arrangement's `npcIds`.
 - In the first version, `character-seats.source.includeNpcIds` should be explicit and must be a subset of the current arrangement's `npcIds`.
 - `action-menu` contains creator-authored action items with labels, event references, conditions, and optional system actions such as leaving the building.
-- The runtime building panel should provide a generic container surface similar to the current 皇觉寺 panel, but data-driven by arrangement containers.
+- The runtime building panel should provide a generic container surface similar to the current 鐨囪瀵?panel, but data-driven by arrangement containers.
 
 Character seats container example:
 
@@ -1781,7 +1781,7 @@ Character seats container example:
 {
   "id": "main-npc-seats",
   "type": "character-seats",
-  "title": "寺中人物",
+  "title": "瀵轰腑浜虹墿",
   "layout": "vertical-card-list",
   "position": "left",
   "source": {
@@ -1798,15 +1798,15 @@ Action menu container example:
 {
   "id": "main-actions",
   "type": "action-menu",
-  "title": "寺中事务",
+  "title": "瀵轰腑浜嬪姟",
   "layout": "vertical-button-list",
   "position": "center",
   "items": [
-    { "id": "work", "label": "工作", "eventId": "event.haozhou.temple.work" },
-    { "id": "rest", "label": "休息", "eventId": "event.haozhou.temple.rest" },
-    { "id": "fortune", "label": "测运势", "eventId": "event.haozhou.temple.fortune" },
-    { "id": "donate", "label": "捐香火", "eventId": "event.haozhou.temple.donate" },
-    { "id": "leave", "label": "先退下", "action": "leaveBuilding" }
+    { "id": "work", "label": "宸ヤ綔", "eventId": "event.haozhou.temple.work" },
+    { "id": "rest", "label": "浼戞伅", "eventId": "event.haozhou.temple.rest" },
+    { "id": "fortune", "label": "娴嬭繍鍔?, "eventId": "event.haozhou.temple.fortune" },
+    { "id": "donate", "label": "鎹愰鐏?, "eventId": "event.haozhou.temple.donate" },
+    { "id": "leave", "label": "鍏堥€€涓?, "action": "leaveBuilding" }
   ]
 }
 ```
@@ -1838,7 +1838,7 @@ Action menu container example:
 | { type: "closeBuilding" }
 ```
 
-- Concrete building functions belong in the `玩法` module, not inside building runtime branches.
+- Concrete building functions belong in the `鐜╂硶` module, not inside building runtime branches.
 - Add `PlayableFamily = "flow" | "minigame" | "battle"`.
 - `flow` owns ordinary building functions such as rest, donation, buying grain or horses, training, dialogue-like service flows, building work, basic trade, and task receiving.
 - `flow` must use the unified playable lifecycle: launch, session, presenter, reduce, settlement, and handoff.
@@ -2006,7 +2006,7 @@ Current evidence draft:
 - Schema validation tests for building templates, arrangements, containers, and playable flow references.
 - Script Editor save/load/export/import tests for arrangement containers and flow/event bindings.
 - Runtime tests for building shell rendering, container item events, activeBuilding save/restore, enter/exit rules, and playable handoff.
-- Built-in Zhu Yuanzhang pack migration tests proving 皇觉寺 and other existing buildings render through arrangements/containers without old house module fallback.
+- Built-in Zhu Yuanzhang pack migration tests proving 鐨囪瀵?and other existing buildings render through arrangements/containers without old house module fallback.
 - Source guards proving old `temple-house`, `tea-house`, `grain-shop`, `medicine-house`, house module registry, old house session types, and deprecated data fields are removed after migration.
 - Simulated-human browser proof covering Script Editor authoring, runtime preview, normal start, JSON runtime pack import, empty mounted NPC behavior, populated seat containers, action menu event triggering, leave behavior, and at least one flow playable launched from a building container.
 
@@ -2030,14 +2030,14 @@ Current evidence draft:
 
 - Repro path:
   - open the Script Editor;
-  - go to the `城市` module;
+  - go to the `鍩庡競` module;
   - delete all cities;
   - create one new city;
   - run runtime preview;
   - choose a character and start the game;
   - enter the map.
 - The map still shows cities from the template pack.
-- Entering `濠州` still shows the original template pack building list instead of the edited project result.
+- Entering `婵犲窞` still shows the original template pack building list instead of the edited project result.
 
 #### Root Cause
 
@@ -2050,9 +2050,485 @@ Current evidence draft:
 
 - The previewed runtime state does not match the current project draft.
 - City deletion in the editor cannot be trusted when previewing a project derived from the base pack.
-- The symptom is visible both on the world map and when entering `濠州`.
+- The symptom is visible both on the world map and when entering `婵犲窞`.
 
 #### Verification
 
-- A focused regression test now passes for the explicit override case where the base pack contains `濠州` and the override pack contains only a new city.
+- A focused regression test now passes for the explicit override case where the base pack contains `婵犲窞` and the override pack contains only a new city.
 - The verified fix makes explicit override cities and houses authoritative runtime families for activation.
+### MEMO-025: Script Editor Event-Centered Authoring And Portrait Resource Refactor Draft
+
+- status: `open`
+- severity: `high`
+- classification: `future-target-candidate`
+- proposed_queue: `queue.script-editor-event-centered-authoring-scene-retirement-and-portrait-resource-refactor`
+- owning_queue: `none`
+- admission_status: `not-admitted`
+- latest_disposition: `recorded-as-memo-and-candidate`
+- evidence_draft: `docs/blueprints/specs/2026-07-22-script-editor-event-centered-authoring-scene-retirement-and-portrait-resource-refactor-evidence-draft.md`
+- proposed_version: `target.script-editor-event-centered-authoring-scene-retirement-and-portrait-resource-refactor`
+- affected_families:
+  - `script editor event authoring`
+  - `script editor minigame authoring`
+  - `script editor person authoring`
+  - `script editor portrait resource authoring`
+  - `script editor building authoring`
+  - `runtime export/import`
+  - `runtime event triggering`
+  - `runtime resource loading`
+  - `simulated-human acceptance`
+
+#### Problem Statement
+
+- The current Script Editor still mixes creator-facing authoring with implementation-facing concepts such as standalone minigame dispatch, object-to-object direct jumps, and ad hoc runtime-oriented tabs.
+- `dialogue / minigame / task / function` do not yet read as one event-centered content system to creators.
+- Person portrait selection currently depends on `people[].portraitId` values already present in the project, so a new project or first created person can expose an empty portrait list.
+- The current authoring shape risks divergence between editor configuration, exported runtime data, and actual runtime behavior.
+
+#### Event-Centered Authoring Direction
+
+- Treat `dialogue`, `minigame`, `task`, and `function` as content objects, not direct routing owners.
+- Route all content transitions through `event`.
+- Required canonical transition shape:
+  - `dialogue -> event -> target`
+  - `function -> event -> target`
+  - `minigame -> event -> target`
+  - `task -> event -> target`
+- Event destination target families must unify to:
+  - `task`
+  - `function`
+  - `dialogue`
+  - `minigame`
+- Direct object-to-object transitions such as `function -> minigame` or `dialogue -> minigame` should not remain as creator-facing truth.
+
+#### Script Editor Surface Direction
+
+- Rename the current `鐜╂硶` authoring surface to `灏忔父鎴廯.
+- Keep `鏂板鐜╂硶缁戝畾` as the creator-facing entry for adding a minigame binding/entry.
+- Collapse minigame authoring tabs by removing:
+  - `瑙﹀彂涓庤皟搴
+  - `缁撶畻涓庤繑鍥瀈
+  - `寮曠敤鍏崇郴`
+  - `浜嬩欢`
+- Retain a single `鍩虹淇℃伅` tab that holds:
+  - minigame prototype
+  - launch parameters
+  - return policy
+  - success / failure / cancel events
+  - host scope
+- Event becomes the only creator-facing routing center. Dialogue, function, task, and minigame surfaces should expose event hookups but not become separate dispatch systems.
+
+#### Building And Existing Behavior Preservation
+
+- Building functions must continue to travel through the Script Editor-authored `arrangement / event-binding / flow / playable` path.
+- However, the creator-facing meaning should still be `function -> event -> dialogue/minigame/task/function`.
+- Structural unification must not change pre-refactor gameplay meaning.
+- If a pre-refactor building function launched a minigame directly in user-facing behavior, the refactor must preserve that behavior and must not insert an unnecessary explanatory flow/dialogue layer.
+- Existing temple function semantics are a known example: behavior must stay aligned with the pre-refactor function result rather than drifting into extra authored ceremony.
+
+#### Trigger Timing And Context Contract
+
+- Freeze an authoring/runtime trigger timing matrix at least for:
+  - city enter / leave
+  - building enter / leave
+  - building function click / execute / complete / cancel
+  - dialogue start / choice / end
+  - minigame start / success / failure / cancel / return
+  - task accept / advance / complete / fail
+  - conditional auto-trigger
+- Freeze a shared trigger-context contract so equivalent triggers use stable fields across editor preview and runtime, including:
+  - current city
+  - current building
+  - current function
+  - current dialogue
+  - current minigame
+  - current task
+  - trigger source
+  - current host object
+  - return target
+
+#### Data Structure Refactor And Runtime Sync
+
+- This draft assumes explicit incompatible data-structure refactoring rather than long-term backward-compatible layering.
+- At minimum, the following families are expected to change:
+  - event definitions
+  - event destinations
+  - minigame bindings
+  - dialogue/function/task event attachment structures
+  - building-function-to-event mappings
+  - trigger timing and trigger-context payload structures
+  - person portrait references
+  - portrait resources and portrait variants
+  - resource-to-file mapping records
+- Incompatible editor-side structure change is not sufficient by itself. Runtime must be updated in the same batch so:
+  - editor preview
+  - exported runtime pack
+  - runtime loading
+  - event triggering
+  - object reference resolution
+  - resource rendering
+  all continue to interpret the new model consistently.
+- The repository must not accept a state where the editor can author the new structure but runtime still expects the old one.
+
+#### Formal Scene Retirement Direction
+
+- This memo now records an explicit stronger direction than simple boundary-thinning: `scene` should be removed as a formal creator-facing family and as a formal runtime content family rather than merely reduced in scope.
+- The new canonical authoring/runtime meaning is:
+  - backgrounds belong to city/building/building-arrangement ownership
+  - narration, speaker lines, portraits, speaker side, and dialogue choices belong to the dialogue authoring family
+  - all routing and follow-up ownership belongs to event
+  - building function interaction continues to use the authored `arrangement / event-binding / flow / playable` implementation path
+  - creator-facing interpretation remains `function -> event -> dialogue/minigame/task/function`
+- `scene` must no longer remain the place where creators configure:
+  - background selection
+  - narration lines
+  - character speech lines
+  - dialogue speaker placement
+  - branching target routing
+  - event startup
+  - activity startup
+  - callback-based behavior handoff
+- The current repository shape is considered over-coupled because `scene` currently mixes:
+  - presentation responsibilities
+  - business-effect responsibilities
+  - runtime startup routing
+  - activity launch
+  - follow-up progression
+- Evidence for this over-coupling already exists in the current contract shape:
+  - `src/domain/action.ts` still defines `SceneDefinition`
+  - `ActionNode` still includes `background`, `music`, `narration`, `dialogue`, `choice`, `effect`, `jump`, `start-event`, `start-activity`, and `callback`
+  - `ChoiceOption` still includes `nextSceneId`, `nextEventId`, `effects`, and `conditions`
+- Under this memo's strengthened direction, these are not acceptable long-term creator-facing truths.
+
+#### Event-As-Only-Router Clarification
+
+- This memo now explicitly records the user-directed rule that all routing must be unified through event rather than split between event and scene.
+- The allowed creator-facing routing meaning becomes:
+  - `dialogue -> event -> target`
+  - `function -> event -> target`
+  - `minigame -> event -> target`
+  - `task -> event -> target`
+- The event target set remains:
+  - `task`
+  - `function`
+  - `dialogue`
+  - `minigame`
+- `dialogue` may remain a content/presentation object, but it must not remain a hidden second dispatch owner through runtime scene lowering.
+- Building-enter, building-function-click, building-function-complete, dialogue-end, minigame-result, and similar transitions must all route through event/event-binding rather than `entrySceneId`, `nextSceneId`, or scene-local callback chains.
+
+#### Scene Removal And Content Migration Rules
+
+- `scene` should be removed from:
+  - Script Editor visible families
+  - Script Editor project formal family list
+  - runtime pack canonical family list
+  - runtime loading requirements
+  - runtime state/session truth
+  - startup target truth
+  - presenter input truth
+- Content that previously lived in scene must migrate as follows:
+  - city/building/building-arrangement backgrounds migrate to city/building/building-arrangement families
+  - narration and speaker lines migrate to dialogue authoring
+  - portrait references and side placement migrate to dialogue authoring
+  - choice presentation migrates to dialogue authoring
+  - routing targets after dialogue choice/end migrate to event
+  - activity/minigame/task/flow launch migrates to event and playable/flow integration seams
+- There should be no creator-facing requirement to configure the same presentation material in both dialogue and some other family.
+- In particular:
+  - backgrounds should not be configured in scene once city/building ownership exists
+  - narration and character speech should not be configured in scene when dialogue already exists
+  - creators should not configure a scene wrapper merely to show dialogue that is already modeled as dialogue
+
+#### No-Compatibility Residue Rule
+
+- This retirement must be one-batch and incompatible by design.
+- Do not keep:
+  - compatibility readers
+  - compatibility writers
+  - bridge exports
+  - fallback startup fields
+  - temporary runtime shims
+  - hidden scene-lowering materializers
+  - dual-path authoring truth
+- Specifically, the repository must not keep long-lived compatibility for:
+  - `scenes.json`
+  - `SceneDefinition`
+  - `ActionNode`
+  - `entrySceneId`
+  - `nextSceneId`
+  - runtime `activeSceneId`
+  - scene cursor / waiting-choice state as formal cross-feature truth
+  - `dialogue -> scene` lowering seams
+- The target state is not "support both event+scene and event-only". The target state is "remove scene and migrate its responsibilities".
+
+#### Current Repository Residue Inventory To Remove
+
+- The following repository surfaces are now explicitly in-scope for removal or migration under this memo:
+  - `src/domain/action.ts`
+    - remove `SceneDefinition`
+    - remove `ActionNode`
+    - remove `ChoiceOption.nextSceneId`
+  - `src/domain/script-editor-project.ts`
+    - remove `project.scenes`
+  - `src/domain/event.ts`
+    - remove `entrySceneId`
+  - `src/domain/game-state.ts`
+    - remove `activeSceneId`-based formal scene session ownership if still present as canonical truth
+  - `src/domain/content-pack.ts`
+    - stop importing/exporting `SceneDefinition` as formal pack content
+  - `src/application/script-editor/minimal-workflow.ts`
+    - remove `scenes` family from visible workflow families and draft helpers
+  - `src/application/script-editor/workspace-shell.ts`
+    - remove `scenes` object-tree surface and `scenes.json` export language
+  - `src/ui/main-ui/main-ui-flow.js`
+    - remove `scenes` authoring family
+    - remove startup `sceneId` authoring
+    - remove scene action authoring UI
+  - `src/application/script-editor/story-dialogue-event-authoring.ts`
+    - remove `entrySceneId` from event authoring
+    - event destination becomes the formal creator-facing router
+  - `src/application/script-editor/dialogue-story-runtime-materializer.ts`
+    - remove entirely
+    - dialogue must no longer lower into runtime scene truth
+  - `src/application/script-editor/runtime-pack-export.ts`
+    - remove `scenes.json`
+    - remove `resolveEventEntrySceneId`
+    - remove lowering from editor dialogue destination to `scene.<dialogue-id>`
+    - remove `entrySceneId` validation and export
+  - `src/application/script-editor/runtime-pack-import.ts`
+    - remove scene import family and imported `entrySceneId` bridge logic
+  - `src/application/scenario/scenario-pack-loader.ts`
+    - remove `initialLocation.sceneId` validation if startup scene truth is retired
+  - `src/application/scene/scene-runner.ts`
+    - remove entirely
+  - `src/application/scene/choice-resolver.ts`
+    - remove or replace so choice routing no longer depends on `nextSceneId`
+  - `src/core/contracts/scene-runtime.ts`
+    - remove entirely
+  - `src/application/story/story-runtime.ts`
+    - remove runtime dependence on `sceneDefinitionsById`, active scene progression, and scene pause/advance logic
+  - `src/application/events/event-runner.ts`
+    - stop starting events via `entrySceneId`
+  - `src/application/content/active-game-content.ts`
+    - remove `sceneDefinitions` and `sceneDefinitionsById`
+  - `src/application/state/create-initial-state.ts`
+    - remove scene bootstrap truth
+  - `src/application/state/game-store.ts`
+    - remove scene-based current action/current choice derivation
+  - `src/application/presenter/presenter-output.ts`
+    - remove `currentSceneAction` and `currentSceneChoiceOptions`
+  - `src/application/presenter/stage-presenters.ts`
+    - stop consuming `SceneDefinition`
+  - `src/application/startup/scenario-startup-target.ts`
+    - remove startup `sceneId` ownership
+  - `src/application/startup/startup-story-bootstrap.ts`
+    - stop requiring `SceneDefinition` lookup tables
+  - `src/application/runtime/indoor-screen-story-follow-up.ts`
+    - remove active-scene-based follow-up ownership
+  - `src/application/runtime/navigation-time-follow-up.ts`
+    - remove scene-definition handoff assumptions
+  - `src/application/runtime/main-runtime-orchestrator.ts`
+    - remove formal scene-definition orchestration inputs
+  - `src/content/pack-content-access.ts`
+    - stop loading built-in pack scenes as formal content
+  - `src/content/scenario-packs/**/scenes.json`
+    - migrate or delete
+  - `src/content/story/zhu-yuanzhang-main-story.ts`
+    - remove scene-based main story truth
+  - `src/content/sample-scenario.ts`
+    - remove sample scene-based content shape
+  - `src/ui/views/scene/scene-view.ts`
+    - remove scene-specific renderer surface
+  - `src/main.ts`
+    - stop importing `SceneDefinition`
+    - stop bootstrapping `activeSceneId`
+
+#### Runtime Pack And Built-In Content Migration Requirements
+
+- Runtime packs must stop carrying `scenes.json` as a canonical table.
+- Events must stop carrying `entrySceneId`.
+- Startup profiles must stop carrying `initialLocation.sceneId` if startup scene truth is removed from the new model.
+- Built-in packs such as `zhuyuanzhang` must migrate existing scene content into:
+  - dialogue content
+  - event routes
+  - event bindings
+  - building arrangement or city/building background ownership
+- Current building-enter authored greetings that now exist as:
+  - `building-enter -> event binding -> event -> scene`
+  must be migrated to:
+  - `building-enter -> event binding -> event -> dialogue`
+- Built-in pack migration must not preserve hidden scene tables "just for old content".
+
+#### Runtime State And Startup Retirement Requirements
+
+- Canonical runtime state must stop exposing scene-session truth such as:
+  - `activeSceneId`
+  - scene cursor
+  - waiting-choice scene mode
+- Startup targeting must stop depending on:
+  - `scenarioProfile.initialLocation.sceneId`
+  - direct scene startup resolution
+- Presenter/render paths must stop requiring:
+  - `currentSceneAction`
+  - `currentSceneChoiceOptions`
+  - scene-definition lookup maps
+
+#### Test And Source Guard Requirements For Retirement
+
+- This memo now requires retirement tests, not only migration tests.
+- Source guards should prove that production code no longer uses:
+  - `SceneDefinition`
+  - `ActionNode`
+  - `entrySceneId`
+  - `nextSceneId`
+  - `scene-runner`
+  - `dialogue-story-runtime-materializer`
+  - `scenes.json` as a formal exported runtime family
+- Regression coverage must prove:
+  - building-enter dialogue still works through `event binding -> event -> dialogue`
+  - building function launch still works through `arrangement / event-binding / flow / playable`
+  - dialogue presentation still works without scene runtime
+  - runtime import/export no longer accepts scene as a formal truth family
+  - startup, preview, and built-in content continue to work after scene removal
+
+#### Ordered Implementation Batch For This Memo
+
+- The recommended execution order is:
+  - freeze the no-scene target contract in tests and docs first
+  - remove `scene` from formal Script Editor project and UI families
+  - remove `scenes.json` and `entrySceneId` from runtime-pack import/export and loader contracts
+  - remove scene runtime/session/presenter/startup state
+  - migrate built-in packs and authored content to dialogue/event/building ownership
+  - remove leftover tests, docs, and source references that still assume scene truth
+- This ordering is intentional:
+  - it prevents new work from re-entering the old scene path during migration
+  - it exposes missing migration surfaces early
+  - it avoids a misleading intermediate state where both scene and event-only routing claim to be formal truth
+
+#### File-Level Evidence Already Observed
+
+- Current runtime-export evidence:
+  - `src/application/script-editor/runtime-pack-export.ts` still resolves dialogue destinations into `scene.<dialogue-id>` via `resolveEventEntrySceneId`
+  - event export still writes `entrySceneId`
+- Current runtime-state evidence:
+  - runtime, startup, presenter, and story paths still use `activeSceneId`, scene lookups, or scene-render/session helpers
+- Current authoring evidence:
+  - Script Editor still exposes a `scenes` family and startup scene selection
+- Current content evidence:
+  - built-in and sample content still include `scenes.json` or `SceneDefinition`-based truth
+- Current test evidence:
+  - robustness tests still assert `scenes.json`, `entrySceneId`, `activeSceneId`, and scene-runner behavior as formal correctness
+
+#### Documentation Replacement Requirement
+
+- When this memo is eventually implemented, all docs that currently describe:
+  - `EventDefinition -> SceneDefinition -> ActionNode`
+  - `scenes.json`
+  - `entrySceneId`
+  - direct scene startup
+  as formal architecture must be rewritten in the same batch.
+- Documentation must not preserve a stale "scene is still canonical" explanation once code has moved to the new event-centered model.
+
+#### Change Logging Requirement For Refactors
+
+- Every incompatible structure change must record a concise structured change note for later verification.
+- The record should include at least:
+  - changed structures
+  - removed fields/relations
+  - added fields/relations
+  - export changes
+  - runtime-reader changes
+  - high-risk legacy behavior to recheck
+  - scenario-specific regression focus points
+- These records are test baselines, not archival-only notes. They should be used as the reference set for simulated-human regression and runtime troubleshooting.
+
+#### Portrait Resource Direction
+
+- Portrait choice must come from project-level portrait resources, not from reverse-collecting existing `people[].portraitId`.
+- Add a project-level portrait resource family such as:
+  - `portraits`
+  - `portraitVariants`
+- Keep person-side references limited to:
+  - `portraitId`
+  - `portraitVariantId`
+- A new empty project must still expose a portrait list once portrait resources exist; the first created person must not depend on legacy person data to obtain options.
+
+#### Portrait Preview, Thumbnail, And Organization Requirements
+
+- After selecting a portrait reference, the person editor must show the resolved preview image immediately.
+- If a variant is selected, show the variant image preferentially.
+- Portrait option lists should display thumbnails per item, not text-only ids.
+- Portrait variants should also display thumbnails.
+- Large portrait sets require creator-facing organization support:
+  - search by name / id / label
+  - category or tag filters
+  - sorting at least by name, creation order, and recent use
+- Current selection should remain easy to locate in a large list.
+
+#### Portrait Resource To File Mapping Contract
+
+- Portrait resources must own explicit file mapping rules rather than letting file references leak into person records.
+- At minimum, define:
+  - stable resource id
+  - image file path
+  - thumbnail source policy
+  - whether a variant owns an independent file
+- Editor thumbnail rendering, current preview rendering, and runtime rendering must resolve through the same mapping rules.
+
+#### Deletion And Rename Integrity
+
+- Deleting any referenced object must remove or invalidate its dependent references immediately rather than leaving dangling ids in the project.
+- This applies to:
+  - dialogue
+  - minigame
+  - function
+  - task
+  - event
+  - building-linked objects
+  - portrait resources
+  - portrait variants
+- If an object/resource is renamed and identifiers remain author-visible, linked references should update automatically rather than requiring manual repair.
+
+#### Acceptance And Simulated-Human Proof Direction
+
+- Simulated-human coverage should exercise environment-specific triggers, not only unit-level helpers.
+- Minimum environment families:
+  - city
+  - building
+  - building-function
+  - dialogue
+  - minigame
+  - task
+- Minimum proof expectations include:
+  - correct environment trigger
+  - correct event hit
+  - correct trigger context
+  - correct destination family and target
+  - correct follow-on chain behavior
+  - cancel/failure/return/re-entry boundary behavior
+- Portrait authoring also requires a smallest usable creator path:
+  1. create project
+  2. create portrait resource
+  3. create person
+  4. choose portrait
+  5. see thumbnail in the option list
+  6. see current portrait preview
+  7. verify preview/export/runtime still resolve the same resource
+
+#### Suggested Candidate Queue
+
+- proposed_queue_id: `queue.script-editor-event-centered-authoring-scene-retirement-and-portrait-resource-refactor`
+- proposed_class: `future-target-candidate`
+- proposed_goal: `Unify Script Editor authoring around event-centered routing, retire scene as a formal creator-facing/runtime family, preserve building function meaning through function -> event -> dialogue/minigame/task/function, and add project-level portrait resources with stable preview/list/thumbnail behavior under one incompatible no-compatibility-residue successor target.`
+- admission_note: `Recorded only. This memo does not authorize implementation. Before admission, Blueprint must keep this as a future-target source item, create a formal evidence draft, split the work into bounded child queues, keep scene retirement and runtime/export/preview cutover in the same parent execution domain, and reject any split that preserves scene as creator-facing routing truth, leaves compatibility residue, or routes portrait resources to a different successor target/version.`
+
+#### Verification Evidence Required For Closure
+
+- `npm run typecheck`
+- `npm run lint:blueprints`
+- `npm test`
+- Source guards proving creator-facing event routing does not regress into direct object-to-object jumps.
+- Export/import tests proving the new event-centered structures and portrait resource families survive round-trip.
+- Runtime tests proving the new structures are readable and runnable without fallback to old semantics.
+- Simulated-human coverage for city/building/dialogue/minigame/task trigger environments.
+- Simulated-human coverage for portrait resource creation, thumbnail selection, current preview, and runtime continuity.
