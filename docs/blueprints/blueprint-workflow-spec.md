@@ -701,6 +701,35 @@ Required split review:
 3. The split is incomplete if any parent required outcome, compatibility path, legacy replacement, or explicit non-goal is missing from all subqueues and not intentionally waived in the parent spec.
 4. The review result must be recorded in the version plan Candidate Evidence Matrix, Candidate Recovery Ledger, or an explicitly referenced spec/review document.
 
+### 8.7.2 Queue Spec Anti-Over-Narrowing Contract
+
+Blueprint must reject queue specs that can succeed only by shrinking the parent capability surface down to the smallest currently convenient implementation slice.
+
+Minimum queue-spec contract:
+
+- parent inherited capabilities
+- parent compatibility paths
+- parent legacy replacements
+- queue `Can Claim`
+- queue `Cannot Claim`
+- `Capability Floor`
+- `User Path Coverage Matrix`
+- `Functional Loss Budget`
+- `Replacement Proof`
+- `Completion Completeness Review`
+
+Hard rules:
+
+1. A queue title, task list, or local implementation seam must not become the de facto requirement if the parent spec clearly defines a broader user-facing or runtime-facing capability surface.
+2. If a queue implements only one sub-surface of a broader capability, the queue spec must explicitly identify:
+   - which parent capabilities it owns closing
+   - which parent capabilities it must preserve but does not own closing
+   - which parent capabilities are routed to another queue, residue path, blocker, or explicit waiver
+3. A queue spec is invalid if it can be read as "implement the smallest reachable path and call the rest out-of-scope" while the parent spec still requires the broader capability.
+4. A queue spec must not silently collapse multi-entry, multi-trigger, preview/runtime/export/import, or recovery-path obligations into one representative path unless the parent spec explicitly narrows the requirement first.
+5. Admission review must treat missing queue-spec integrity records as a queue-authoring defect, not as permission to proceed with an underspecified queue.
+6. Queue closeout must be denied when the queue doc still lacks the structure needed to prove that broader inherited behavior survived the bounded implementation.
+
 ## 8.8 Evidence Lock Before Queue Activation
 
 Before any candidate queue becomes active, the agent must perform an Evidence Lock review.
@@ -725,6 +754,8 @@ Rules:
 3. If prerequisites are missing, the queue must return to version review or split the prerequisite queue.
 4. If the queue can only close a smaller slice than its name implies, the claim boundary must be corrected before implementation starts while preserving the parent spec. Unclaimed required capability must be routed to another queue, recorded as residue, or returned to version review; it must not be silently removed from the total requirement.
 5. Existing active queues may be repaired by adding an `evidence-anchor-reconcile` task before further implementation.
+6. Evidence Lock must confirm that the queue's `Capability Floor`, `User Path Coverage Matrix`, and `Functional Loss Budget` are specific enough to detect functional loss outside the queue's primary happy path.
+7. If Evidence Lock cannot name the non-primary paths, inherited capability floor, or replacement proof obligations needed to guard against over-narrowing, the queue must be blocked or revised before feature implementation begins.
 
 ## 8.9 Queue Claim Boundary
 
@@ -757,6 +788,9 @@ Rules:
 11. `Functional Loss Budget` must default to `zero`. Any non-zero functional loss must be explicitly routed as waiver or accepted residue in parent/version truth; it must not be implied by a narrower implementation.
 12. If a queue replaces, migrates, or relocates a capability, it must provide replacement proof that names the previous owner/path, the new owner/path, the behavior-preservation expectation, and the verification evidence for the replacement.
 13. A seam, adapter, shell, guard, materializer, or fail-closed implementation slice must not claim broader user-facing semantics unless the acceptance matrix explicitly makes that narrower slice the real acceptance surface.
+14. If the parent spec names creator-facing meaning, runtime meaning, or cross-surface consistency obligations, the queue spec must preserve that meaning explicitly rather than assuming the local implementation shape can redefine it.
+15. `User Path Coverage Matrix` must be written at the same semantic level as the parent requirement. It is invalid to list only one UI button, one test fixture, or one internal entrypoint when the parent capability clearly spans more than that.
+16. `Replacement Proof` must prove not only that the new path exists, but also that the old truth owner is no longer the required route unless the parent spec explicitly preserves both.
 
 ### 8.9.0 Functional Integrity Guard
 
@@ -812,6 +846,7 @@ Bounded gap-fill rule:
 5. Gaps that remain after the one permitted pass must be recorded as residue, blockers, accepted residue, or successor candidate queues according to their severity.
 6. A queue cannot close as topic-complete if a remaining same-family gap still blocks the claimed capability.
 7. A queue cannot close as functionally preserved if the functional-loss audit still shows lost entry paths, unreachable follow-up paths, placeholder-only behavior, or legacy-only survival of the claimed path.
+8. A queue cannot pass completeness review merely because one golden path works if inherited alternate paths, trigger paths, preview/runtime paths, import/export paths, or recovery paths are still unverified, broken, or silently narrowed.
 
 ### 8.9.2 Closeout Status Semantics
 
@@ -1072,6 +1107,20 @@ It is illegal to stop at:
 
 when those are already the only legal next step.
 
+It is also illegal to stop at:
+
+- active-task completion
+- task after-state sync
+- queue closeout sync
+- version-plan admission sync
+- active queue activation
+- active queue handoff
+- active queue switch
+- repository sync result recording
+- documentation-only state synchronization
+
+when executable work still exists and no lawful stop condition applies.
+
 ### 11.2.0 Stop-Condition Self-Check
 
 Before ending a response while the current version still has an active queue, a pending candidate queue, or a uniquely lawful next governance action, the agent must run a stop-condition self-check.
@@ -1087,6 +1136,16 @@ The self-check must ask whether:
 - continuing would require a genuine product decision
 
 If none of those are true, the agent must not stop at advice or a default confirmation prompt. It must record the governance decision and continue to the next lawful step.
+
+If none of those are true, the agent must also not stop merely because:
+
+- one queue just closed
+- a new queue was just admitted
+- the active queue just changed
+- repository sync just returned a result
+- governance docs were just synchronized
+
+Those are execution transitions, not lawful pause points.
 
 If any of those are true and the agent therefore stops or asks for input, it must first write the structured stop record in current version truth.
 
@@ -1286,6 +1345,7 @@ After a queue reaches queue closeout:
 6. regardless of remote-sync success or failure, record the result in the queue-local sync record and keep the already-recorded execution conclusion unchanged
 7. a completed queue-local `branch-commit` is not a pause boundary by itself
 8. after repository sync result is recorded, continue to the next lawful Blueprint scheduling action unless `post_queue_closeout_pause_policy = pause-when-explicitly-requested`, a blocker exists, multiple mutually exclusive legal branches exist, or version closeout confirmation is required
+9. local-record, branch-commit, attempted remote-sync, and recorded sync result are not lawful pause points by themselves
 
 Repository sync success or failure must not rewrite the already-recorded execution conclusion.
 
@@ -1324,6 +1384,7 @@ Hard throttle:
 5. If same-family residue routing is uniquely supported by queue closeout and version truth, do not ask the human to choose the next queue.
 6. In-parent-spec admission gaps, completeness-audit findings, and queue-local implementation-bearing findings must not be turned into default confirmation prompts when they can be recorded and routed automatically under current governance truth.
 7. If a stop or question is lawful, the current version plan must already contain `stop_reason`, `stop_basis`, `next_unblocked_action`, and `human_input_required` before the response ends.
+8. The agent must not ask or stop after active-task completion, queue closeout completion, admission sync, active queue switch, repository sync result recording, or doc-sync completion when the next legal action is unique.
 
 Version-level exception:
 
@@ -1455,6 +1516,10 @@ These remain mandatory future enforcement categories:
 8. detect queue closeout that stops at prose residue discussion without version-level routing truth
 9. detect sessions that still ask humans to choose the next queue when same-family routing is already unique
 10. detect sessions that still collapse governance completion into topic closure without proving old-structure exit
+11. detect sessions that stop after task completion, queue closeout, admission sync, active queue switch, or repository sync result even though no lawful stop condition was recorded
+12. detect sessions that end without a stop-condition self-check when an active task or uniquely lawful next action still exists
+13. detect queue docs admitted or closed without the mandatory anti-over-narrowing structure (`Capability Floor`, `User Path Coverage Matrix`, `Functional Loss Budget`, `Replacement Proof`, `Completion Completeness Review`)
+14. detect queue docs whose claimed acceptance closes while inherited parent capabilities, alternate paths, or replacement proof remain structurally unspecified
 
 Until stronger automation exists, these are still hard workflow rules, not optional guidance.
 
@@ -1542,4 +1607,6 @@ The Blueprint model is successful only when:
 - historical narrative no longer masquerades as live control
 - `open + no active queue` is supported without fake work
 - task completion automatically rolls through verification, residue scan, gate re-evaluation, closeout sync, and target handoff when no blocker remains
+- active-task completion, queue closeout, admission sync, and active-queue switching do not create default pause points
+- queue specs cannot pass by shrinking inherited capability surfaces down to one happy path or one local seam
 

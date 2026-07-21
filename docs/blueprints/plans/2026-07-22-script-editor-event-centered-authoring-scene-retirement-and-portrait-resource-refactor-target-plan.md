@@ -6,7 +6,7 @@
 - version_id: `target.script-editor-event-centered-authoring-scene-retirement-and-portrait-resource-refactor`
 - version_status: `open`
 - active_phase: `phase.execution`
-- active_queue: `queue.script-editor-event-centered-authoring-model-unification`
+- active_queue: `queue.scene-family-retirement-and-content-migration`
 - decision_state: `active-execution`
 - next_decision: `queue-closeout-or-return-to-version-review`
 - next_action: `resume-active-queue`
@@ -28,7 +28,7 @@
 - residue_candidate_id: `none`
 - residue_candidate_family: `none`
 - routing_basis: `formal-target-created-from-memo-025`
-- next_lawful_queue_recommendation: `none`
+- next_lawful_queue_recommendation: `queue.event-centered-runtime-pack-preview-export-sync`
 - auto_admission_ready: `false`
 - stop_reason: `none`
 - stop_basis: `none`
@@ -44,9 +44,9 @@
   - `queue.script-editor-event-centered-authoring-final-acceptance-and-residue-guard`
 - candidate_backlog_refresh_status: `fresh`
 - candidate_backlog_snapshot:
-  - `queue.script-editor-event-centered-authoring-model-unification: admitted as the active first queue for creator-facing event-centered semantics and destination-family ownership.`
-  - `queue.event-router-only-trigger-contract-freeze: recorded-only required queue for event-only routing truth and stable trigger timing/context contracts.`
-  - `queue.scene-family-retirement-and-content-migration: recorded-only required queue for formal scene removal, content migration, and no-compatibility-residue retirement.`
+  - `queue.script-editor-event-centered-authoring-model-unification: closed locally after ACC-EVENT-CENTER-001 verification and queue closeout; no same-family residue remains in its bounded authoring-model scope.`
+  - `queue.event-router-only-trigger-contract-freeze: closed locally after ACC-EVENT-CENTER-002 verification and queue closeout; no same-family residue remains in its bounded router-freeze scope.`
+  - `queue.scene-family-retirement-and-content-migration: admitted as the active third queue for formal scene removal, content migration, and no-compatibility-residue retirement.`
   - `queue.event-centered-runtime-pack-preview-export-sync: recorded-only required queue for preview/export/import/loader/runtime convergence on the no-scene model.`
   - `queue.portrait-resource-authoring-and-resource-mapping-convergence: recorded-only required queue for portrait resources, variants, mapping, thumbnails, and runtime continuity.`
   - `queue.script-editor-event-centered-authoring-final-acceptance-and-residue-guard: recorded-only required-final guard queue for cross-environment trigger proof and portrait creator-path acceptance.`
@@ -75,9 +75,9 @@
   - `The evidence draft proved the work must stay in one successor target/version with five bounded implementation queues plus a required-final acceptance queue.`
 - Activation conclusion:
   - `Formal target docs now exist for target.script-editor-event-centered-authoring-scene-retirement-and-portrait-resource-refactor.`
-  - `queue.script-editor-event-centered-authoring-model-unification is now the active queue.`
-  - `task.script-editor-event-centered-authoring-model-unification.evidence-anchor-reconcile is the active task.`
-  - `Implementation is authorized only inside the admitted queue boundary after its evidence-anchor task confirms claim scope, anchors, and verification floor.`
+- `queue.scene-family-retirement-and-content-migration is now the active queue.`
+- `task.scene-family-retirement-and-content-migration.content-migration-and-scene-removal is the active task.`
+- `queue.event-router-only-trigger-contract-freeze is closed after ACC-EVENT-CENTER-002 verification. queue.scene-family-retirement-and-content-migration evidence-anchor reconcile is complete, so implementation is now authorized only inside the admitted ACC-EVENT-CENTER-003 / 004 / 007 scene-retirement boundary.`
 - `This target is now the current active open version in the blueprint chain after target.building-arrangement-container-flow-refactor closed on 2026-07-22.`
 
 ### Version Lifecycle Rules
@@ -88,6 +88,14 @@
 - `Do not turn scene retirement into compatibility layering, temporary shims, dual-path truth, or boundary-thinning.`
 - `Do not split portrait resource convergence into another target/version.`
 - `Do not implement code without an admitted child queue doc and a live active task.`
+- `Task completion, queue closeout sync, admission sync, active queue switch, repository sync result recording, and doc-only state sync are not lawful stop points by themselves.`
+
+### Auto-Continue Stop Rule
+
+- `Before ending a response while an active queue, active task, or uniquely lawful next governance action still exists, run the workflow stop-condition self-check.`
+- `Only these causes may lawfully stop execution: explicit answer-only request, real blocker, outside-parent-spec work, parent-spec change, capability downgrade risk, retired-rewrite risk, or genuine product decision.`
+- `If none applies, do not stop at task completion, queue closeout, admission, queue activation, queue switch, sync recording, or status reporting; continue directly into the next lawful action.`
+- `If one applies, write stop_reason / stop_basis / next_unblocked_action / human_input_required here before the response ends.`
 
 ### Queue Admission Startup Rules
 
@@ -96,6 +104,19 @@
 3. `Before admitting any child queue, verify that it does not narrow MEMO-025 by keeping scene as formal routing truth, by leaving editor/runtime divergence, or by routing portrait resources elsewhere.`
 4. `queue.scene-family-retirement-and-content-migration` and `queue.event-centered-runtime-pack-preview-export-sync` must be admitted and executed as a coupled consecutive pair inside this same target/version.`
 5. `Only after version-plan admission truth exists and the admitted queue doc exposes queue_status=active plus a live active_task may implementation start.`
+
+### Queue Spec Integrity Rule
+
+- `No child queue under this target may pass by shrinking MEMO-025 down to one happy path, one helper seam, or one locally convenient surface.`
+- `Before admission or closeout, each queue must be specific enough to prove inherited capability preservation, alternate-path survival, and replacement-truth exit rather than only local implementation success.`
+- `If a queue spec cannot yet name its capability floor, non-primary user/runtime paths, functional-loss guard, or replacement proof obligation, revise the queue spec first instead of proceeding with a thin execution boundary.`
+
+### Blueprint Lint Failure Handling
+
+- `If npm run lint:blueprints fails during this version's admission, evidence-lock, implementation, or closeout path, first repair the governing docs/spec structure inside the current lawful boundary rather than treating the failure as advisory.`
+- `If the lint failure proves the current queue spec is too thin, revise the queue spec before continuing implementation or closeout; do not defer the missing structure into a later queue by default.`
+- `If the lint failure cannot be repaired inside the current admitted boundary without changing the parent total spec, write the blocker/reroute truth here and return to parent-spec or queue-routing governance rather than claiming progress through a failed gate.`
+- `Blueprint lint failure must not be recorded as accepted residue, and it must not be bypassed by repository sync, pause, or queue handoff.`
 
 ### Operator Intake Contract
 
@@ -118,9 +139,9 @@
 
 | Candidate ID | Last Classification | Proposed Queue | Latest Disposition | Recheck Trigger | Acceptance Refs | Implementation Anchors | Can Claim | Cannot Claim | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| `item.script-editor-event-centered-authoring-model-unification` | `queue-candidate` | `queue.script-editor-event-centered-authoring-model-unification` | `admitted-active` | `none` | `ACC-EVENT-CENTER-001` | `src/domain/script-editor-project.ts; src/application/script-editor/**; src/ui/main-ui/main-ui-flow.js` | `creator-facing event-centered semantics and destination-family ownership` | `scene retirement, trigger freeze, runtime cutover, portrait mapping` | `Admitted on 2026-07-22 as the first lawful queue after remote sync toward origin/mod-first-dev succeeded and no-over-narrowing review confirmed later trigger freeze, scene retirement, runtime cutover, and portrait convergence all depend on stable creator-facing model semantics.` |
-| `item.event-router-only-trigger-contract-freeze` | `queue-candidate` | `queue.event-router-only-trigger-contract-freeze` | `recorded-only` | `after model-unification queue closes` | `ACC-EVENT-CENTER-002` | `src/domain/event.ts; EventBindingRuntime entrypoints; trigger-context contracts; tests/**` | `event-only routing truth and stable trigger timing/context contracts` | `scene content migration; portrait mapping` | `Must not preserve entrySceneId/nextSceneId as hidden formal truth.` |
-| `item.scene-family-retirement-and-content-migration` | `queue-candidate` | `queue.scene-family-retirement-and-content-migration` | `recorded-only` | `after router-only freeze closes` | `ACC-EVENT-CENTER-003; ACC-EVENT-CENTER-004; ACC-EVENT-CENTER-007` | `src/domain/action.ts; src/domain/script-editor-project.ts; src/application/scene/**; src/application/story/**; src/application/startup/**; src/ui/views/scene/**` | `formal scene retirement and content migration` | `runtime/export/import divergence as acceptable residue` | `Must hand off immediately to runtime-pack sync inside the same target/version.` |
+| `item.script-editor-event-centered-authoring-model-unification` | `queue-candidate` | `queue.script-editor-event-centered-authoring-model-unification` | `closed-local` | `none` | `ACC-EVENT-CENTER-001` | `src/domain/script-editor-project.ts; src/application/script-editor/**; src/ui/main-ui/main-ui-flow.js` | `creator-facing event-centered semantics and destination-family ownership` | `scene retirement, trigger freeze, runtime cutover, portrait mapping` | `Closed on 2026-07-22 after typecheck, test, and blueprint-lint verification confirmed the creator-facing model moved onto event destination ownership with no same-family residue inside ACC-EVENT-CENTER-001.` |
+| `item.event-router-only-trigger-contract-freeze` | `queue-candidate` | `queue.event-router-only-trigger-contract-freeze` | `closed-local` | `none` | `ACC-EVENT-CENTER-002` | `src/domain/event.ts; EventBindingRuntime entrypoints; trigger-context contracts; tests/**` | `event-only routing truth and stable trigger timing/context contracts` | `scene content migration; portrait mapping` | `Closed on 2026-07-22 after shared trigger contract/runtime-export matrix freeze, event-only activation cutover, and full verification.` |
+| `item.scene-family-retirement-and-content-migration` | `queue-candidate` | `queue.scene-family-retirement-and-content-migration` | `admitted-active` | `none` | `ACC-EVENT-CENTER-003; ACC-EVENT-CENTER-004; ACC-EVENT-CENTER-007` | `src/domain/action.ts; src/domain/script-editor-project.ts; src/application/scene/**; src/application/story/**; src/application/startup/**; src/ui/views/scene/**` | `formal scene retirement and content migration` | `runtime/export/import divergence as acceptable residue` | `Admitted on 2026-07-22 immediately after router-freeze closeout. Evidence lock confirms that scene truth still spans authoring/project/runtime/startup/presenter surfaces and must be removed directly in this queue.` |
 | `item.event-centered-runtime-pack-preview-export-sync` | `queue-candidate` | `queue.event-centered-runtime-pack-preview-export-sync` | `recorded-only` | `after scene-retirement queue closes` | `ACC-EVENT-CENTER-005` | `src/application/script-editor/runtime-pack-export.ts; src/application/script-editor/runtime-pack-import.ts; src/application/scenario/scenario-pack-loader.ts; preview/runtime loaders; tests/**` | `editor/runtime/export/import no-scene convergence` | `editor-only structure changes with old runtime truth still alive` | `This queue is a coupled follow-up to scene retirement, not an independent later cleanup.` |
 | `item.portrait-resource-authoring-and-resource-mapping-convergence` | `queue-candidate` | `queue.portrait-resource-authoring-and-resource-mapping-convergence` | `recorded-only` | `after no-scene runtime convergence closes` | `ACC-EVENT-CENTER-006` | `src/domain/script-editor-project.ts; portrait authoring helpers/UI; resource mapping/runtime loaders; tests/**` | `portrait resources, variants, mapping, thumbnail/current preview/runtime continuity` | `routing portrait work into another target/version or keeping person-driven reverse collection` | `May execute last, but only inside this target/version.` |
 | `item.script-editor-event-centered-authoring-final-acceptance-and-residue-guard` | `queue-candidate` | `queue.script-editor-event-centered-authoring-final-acceptance-and-residue-guard` | `recorded-only` | `all implementation queues close or route blockers` | `ACC-EVENT-CENTER-008` | `tests/**; browser flow; source guards; version acceptance ledger` | `final no-over-narrowing acceptance and creator-path proof` | `primary implementation ownership` | `Must not be used to hide implementation-bearing residue.` |
@@ -129,9 +150,9 @@
 
 | Queue ID | Current Disposition | Promote When | Notes |
 | --- | --- | --- | --- |
-| `queue.script-editor-event-centered-authoring-model-unification` | `active` | `none` | `Admitted as the active first queue on 2026-07-22. It now owns ACC-EVENT-CENTER-001 evidence lock, creator-facing model semantics, destination-family ownership, and queue-local admission proof.` |
-| `queue.event-router-only-trigger-contract-freeze` | `candidate-not-admitted` | `After model-unification closes.` | `Must freeze event-only routing before scene retirement.` |
-| `queue.scene-family-retirement-and-content-migration` | `candidate-not-admitted` | `After router-only freeze closes.` | `Must be followed immediately by runtime-pack sync.` |
+| `queue.script-editor-event-centered-authoring-model-unification` | `done-local` | `none` | `Closed on 2026-07-22 after ACC-EVENT-CENTER-001 verification and no-over-narrowing review passed.` |
+| `queue.event-router-only-trigger-contract-freeze` | `done-local` | `none` | `Closed on 2026-07-22 after ACC-EVENT-CENTER-002 verification and no-over-narrowing review passed.` |
+| `queue.scene-family-retirement-and-content-migration` | `active` | `none` | `Admitted on 2026-07-22 immediately after router-freeze closed. Evidence-anchor reconcile is complete and implementation is live.` |
 | `queue.event-centered-runtime-pack-preview-export-sync` | `candidate-not-admitted` | `Immediately after scene-retirement queue closes.` | `Coupled consecutive pair with scene retirement.` |
 | `queue.portrait-resource-authoring-and-resource-mapping-convergence` | `candidate-not-admitted` | `After no-scene runtime convergence closes.` | `Must remain in this target/version.` |
 | `queue.script-editor-event-centered-authoring-final-acceptance-and-residue-guard` | `candidate-not-admitted` | `After all implementation queues close or lawfully route blockers.` | `Required-final guard queue only.` |
@@ -156,3 +177,7 @@
 - `2026-07-22`: `Promoted MEMO-025 into formal target.script-editor-event-centered-authoring-scene-retirement-and-portrait-resource-refactor after the operator approved the successor-target route. The new target is open with no active queue. It records five bounded implementation candidates plus one required-final acceptance queue, but does not change the current active version or authorize implementation.`
 - `2026-07-22`: `After the operator explicitly closed target.building-arrangement-container-flow-refactor, Blueprint entry pointers were switched to this target. It is now the lawful active open version with no admitted child queue yet, so the next governed action remains candidate/admission review rather than implementation.`
 - `2026-07-22`: `Repository sync toward origin/mod-first-dev completed successfully before successor-version admission work continued. Admission review then confirmed queue.script-editor-event-centered-authoring-model-unification is the lawful first bounded queue because trigger freeze, scene retirement, runtime cutover, and portrait convergence all depend on stable creator-facing event-centered semantics. The queue is now active with task.script-editor-event-centered-authoring-model-unification.evidence-anchor-reconcile as the current task.`
+- `2026-07-22`: `queue.script-editor-event-centered-authoring-model-unification later closed after typecheck, test, and blueprint-lint verification confirmed ACC-EVENT-CENTER-001 with no same-family residue. Per post_queue_closeout_pause_policy=auto-continue, the version immediately admitted queue.event-router-only-trigger-contract-freeze as the next lawful queue rather than pausing at promotion review.`
+- `2026-07-22`: `queue.event-router-only-trigger-contract-freeze evidence-anchor reconcile is now complete. Source inspection confirmed that EventDefinition.entrySceneId, EventRuntimeCandidate.sceneId, startEvent(), story-runtime/building runtime scene handoff, and caller-local TriggerContext assembly still hold formal routing truth today, so implementation begins inside ACC-EVENT-CENTER-002 with scene retirement, runtime/export convergence, and portrait-resource work explicitly preserved for later queues.`
+- `2026-07-22`: `queue.event-router-only-trigger-contract-freeze later closed after shared trigger contract/runtime-export matrix freeze, event-only activation cutover, and full verification (npm run lint:blueprints, npm run typecheck, npm test). Per post_queue_closeout_pause_policy=auto-continue, the version immediately admitted queue.scene-family-retirement-and-content-migration as the next lawful queue rather than pausing at promotion review.`
+- `2026-07-22`: `queue.scene-family-retirement-and-content-migration evidence-anchor reconcile is now complete. Source inspection confirmed that scene still survives as formal truth in domain/action.ts, project.scenes, scenes.json, runtime pack import/export, startup sceneId, scene-runner/scene-view/presenter paths, and dialogue-story-runtime-materializer, so implementation begins inside ACC-EVENT-CENTER-003 / 004 / 007 with runtime/export convergence and portrait-resource work explicitly preserved for later queues.`

@@ -51,10 +51,12 @@ AI must produce:
 - draft requirement coverage
 - acceptance matrix
 - candidate queue split
+- parent capability coverage across the split
 - implementation anchors
 - legacy paths to replace
 - compatibility paths to preserve
 - queue claim boundaries
+- capability floors and user-path coverage expectations
 - first queue recommendation
 - high-risk drift points
 
@@ -102,6 +104,7 @@ The formal version plan must include:
 - Candidate Recovery Ledger with acceptance refs and implementation anchors
 - Candidate Evidence Matrix
 - Acceptance Coverage Ledger
+- queue-spec anti-over-narrowing guards strong enough to reject thin queue specs before admission
 
 ### Step 5: Require Evidence Lock Before Execution
 
@@ -116,6 +119,8 @@ Evidence Lock must confirm:
 - which legacy paths must be replaced
 - which compatibility paths must be preserved
 - which verification proves the queue's claim
+- which inherited capability floor must survive the queue
+- which non-primary user paths must be checked so the queue cannot pass on one happy path alone
 
 If a queue has already started without this evidence, AI must add an `evidence-anchor-reconcile` task before further implementation.
 
@@ -129,7 +134,8 @@ Use this quick checklist when approving an Evidence Draft:
 3. Are must-preserve items protected?
 4. Are must-replace items assigned to candidate queues?
 5. Does each candidate queue have a clear can-claim / cannot-claim boundary?
-6. Does the first queue make sense as the first implementation step?
+6. Does each candidate queue preserve the broader parent capability instead of collapsing it to one seam or happy path?
+7. Does the first queue make sense as the first implementation step?
 ```
 
 If any answer is unclear, ask AI to revise the Evidence Draft before formal documents are written.
@@ -199,6 +205,8 @@ AI must:
    - compatibility paths to preserve
    - can-claim acceptance refs
    - cannot-claim acceptance refs
+   - inherited capability floor
+   - non-primary user paths or runtime paths that must not be lost
    - reject or split conditions
 8. Return the fixed operator receipt unless the operator explicitly asks for internal analysis.
 
@@ -218,7 +226,10 @@ The operator does not need to review all Control Block fields.
 - Do not treat operator scope approval as queue admission.
 - Do not implement the candidate until the version plan records admission truth and the admitted queue doc exists.
 - Do not let a mid-version candidate expand the current queue's `Can Claim` list unless the queue evidence is updated and the expansion remains inside the current queue boundary.
+- Do not admit a queue whose spec is too thin to detect over-narrowing, placeholder-only survival, legacy-only fallback survival, or loss of alternate/recovery/runtime paths.
 - Do not use push success or failure as a reason to admit, reject, block, or close a candidate.
+- Do not stop work merely because a queue closed, a new queue was admitted, an active queue switched, repository sync was recorded, or governance docs were synchronized.
+- Before AI stops while executable work still exists, it must pass the workflow stop-condition self-check defined in `docs/blueprints/blueprint-workflow-spec.md`.
 
 ### Fixed Operator Receipt
 
@@ -262,6 +273,7 @@ Stop and request a revised Evidence Draft if:
 - a candidate queue has no implementation anchors
 - final validation is the primary owner of normal implementation acceptance
 - a queue title is broad but its can-claim boundary is vague
+- a queue can "pass" while only one happy path works and broader inherited paths remain unspecified
 - compatibility behavior is listed in prose but not assigned to a proof
 - a must-replace legacy path is not owned by any queue
 - the first queue would start implementation before prerequisites are proven

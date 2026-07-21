@@ -6,7 +6,7 @@
 - active_blueprint: `blueprint.rpg-tg`
 - active_version: `target.script-editor-event-centered-authoring-scene-retirement-and-portrait-resource-refactor`
 - has_active_queue: `true`
-- next_file: `docs/blueprints/queues/script-editor-event-centered-authoring-model-unification-queue.md`
+- next_file: `docs/blueprints/queues/scene-family-retirement-and-content-migration-queue.md`
 - entry_action: `open-next-file`
 
 ## Human Context
@@ -29,7 +29,7 @@
 - Current Version Plan:
   - `docs/blueprints/plans/2026-07-22-script-editor-event-centered-authoring-scene-retirement-and-portrait-resource-refactor-target-plan.md`
 - Current Active Queue:
-  - `queue.script-editor-event-centered-authoring-model-unification`
+  - `queue.scene-family-retirement-and-content-migration`
 
 ### Live Entry Guardrails
 
@@ -79,7 +79,9 @@
 
 - `target.building-arrangement-container-flow-refactor was explicitly closed on 2026-07-22 and is now historical evidence only.`
 - `Current entry pointers now route to target.script-editor-event-centered-authoring-scene-retirement-and-portrait-resource-refactor as the lawful active open successor version created from MEMO-025.`
-- `queue.script-editor-event-centered-authoring-model-unification is now the active queue under the MEMO-025 successor target after remote sync toward origin/mod-first-dev succeeded and first-queue admission review confirmed the creator-facing event-centered model queue is the lawful first bounded slice.`
+- `queue.script-editor-event-centered-authoring-model-unification is now closed after ACC-EVENT-CENTER-001 verification confirmed creator-facing event-centered semantics and destination-family ownership with no same-family residue in that bounded queue.`
+- `queue.event-router-only-trigger-contract-freeze is now closed after ACC-EVENT-CENTER-002 verification confirmed event-only runtime routing truth and shared trigger timing/context contract freeze with no same-family residue in that bounded queue.`
+- `queue.scene-family-retirement-and-content-migration is now the active queue under the MEMO-025 successor target. Its evidence-anchor reconcile is complete, and implementation is now confined to ACC-EVENT-CENTER-003 / 004 / 007: formal scene-family retirement, content migration, and no-compatibility-residue removal.`
 
 ### Historical References
 

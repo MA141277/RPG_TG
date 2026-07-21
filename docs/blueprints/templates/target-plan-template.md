@@ -84,6 +84,14 @@
 - `Before a candidate queue becomes active, record evidence_lock_status, implementation_anchor_status, prerequisite_status, acceptance_claim_scope, acceptance_not_claimed, must_inspect, must_modify, must_replace, must_preserve, and minimum_verification.`
 - `If a queue is already active before this evidence exists, add an evidence-anchor-reconcile task before further implementation.`
 - `If implementation anchors are missing or conflicting, block activation or split the prerequisite queue instead of starting feature implementation.`
+- `Evidence Lock must also verify that each admitted queue has enough anti-over-narrowing structure to police parent capability preservation, non-primary path survival, and replacement-truth exit.`
+
+### Queue Spec Integrity Rule
+
+- `Candidate admission must reject or revise any queue whose spec is too thin to prove parent capability preservation.`
+- `At minimum, an admitted queue must expose inherited capability coverage, Can Claim, Cannot Claim, Capability Floor, User Path Coverage Matrix, Functional Loss Budget, Replacement Proof, and Completion Completeness Review.`
+- `Do not admit a queue that could appear complete while alternate entry paths, preview/runtime/export/import paths, follow-up routing, or recovery/fail-closed paths are silently lost.`
+- `Do not admit a queue whose local implementation seam, helper, adapter, shell, or guard has become the de facto requirement when the parent spec still defines a broader user-facing or runtime-facing capability.`
 
 ### Version Lifecycle Rules
 
@@ -94,6 +102,14 @@
 - `Queue closeout may auto-advance; version closeout must not be inferred from queue completion alone.`
 - `When version acceptance and closeout conditions are satisfied, ask exactly one human confirmation before changing version_status to done.`
 - `If the agent lawfully stops or asks for input, it must first write stop_reason / stop_basis / next_unblocked_action / human_input_required into this version plan.`
+- `Task completion, queue closeout sync, admission sync, active queue switch, repository sync result recording, and doc-only state sync are not lawful stop points by themselves.`
+
+### Auto-Continue Stop Rule
+
+- `Before ending a response while an active queue, active task, or uniquely lawful next governance action still exists, run the workflow stop-condition self-check.`
+- `Only these causes may lawfully stop execution: explicit answer-only request, real blocker, outside-parent-spec work, parent-spec change, capability downgrade risk, retired-rewrite risk, or genuine product decision.`
+- `If none applies, do not stop at task completion, queue closeout, admission, queue activation, queue switch, sync recording, or status reporting; continue directly into the next lawful action.`
+- `If one applies, write stop_reason / stop_basis / next_unblocked_action / human_input_required here before the response ends.`
 
 ### Post-Queue Closeout Pause Policy
 
@@ -121,6 +137,7 @@
 11. `If an admission gap or completeness-audit finding remains inside the parent spec, record it as gap fill, residue, guard evidence, or routing truth and continue unless blocker rules or stop-condition rules require human input.`
 12. `Before stopping while a live queue, pending candidate, or uniquely lawful next governance step still exists, run the workflow stop-condition self-check instead of pausing by default.`
 13. `If the self-check concludes that a stop is lawful, record the structured stop fields in the version plan before ending the response.`
+14. `Do not treat admission completion, queue activation, queue switch, queue closeout sync, repository sync result recording, or doc-only synchronization as a valid reason to end a response.`
 
 ### Candidate Recovery Ledger
 
@@ -149,6 +166,12 @@
 | Queue ID | Source Docs | Acceptance Refs | Implementation Anchors | Legacy Paths To Replace | Compatibility Paths To Preserve | Reject Or Split If |
 | --- | --- | --- | --- | --- | --- | --- |
 | `queue.replace-me` | `docs/...` | `ACC-REPLACE-001` | `src/or/tests/path` | `legacy/path/or/field` | `compatibility/path/or/behavior` | `Replace with condition that blocks admission or requires a split.` |
+
+### Candidate Queue Integrity Checklist
+
+- `For each candidate queue, record whether its spec already names the inherited capability floor, non-primary user paths, replacement proof obligations, and functional-loss guard needed to prevent over-narrowing.`
+- `If any of those are missing, revise the queue spec before admission rather than discovering the gap only after implementation starts.`
+- `A candidate queue split is incomplete if the parent required capability exists only as prose and is not structurally owned, preserved, or routed by the queue set.`
 
 ### Acceptance Coverage Ledger
 
@@ -264,7 +287,8 @@ Allowed `next_action` values:
 10. `At queue closeout, attempt remote-sync toward the remote development trunk mod-first-dev after the local branch-commit is recorded.`
 11. `If a push or merge is started, wait for the result before any later Blueprint scheduling action continues.`
 12. `Whether remote-sync succeeds or fails, record the result and, if the next legal step is unique, continue directly into closeout, same-family routing, or version review.`
-11. `Update docs/change-log.md only when code, runtime, compatibility, shared interface, or user-visible behavior changed.`
+13. `Update docs/change-log.md only when code, runtime, compatibility, shared interface, or user-visible behavior changed.`
+14. `Recording the sync result is not a legal pause point by itself; if the next legal step is unique and no lawful stop condition exists, continue automatically.`
 
 ### Human Confirmation Constraint
 

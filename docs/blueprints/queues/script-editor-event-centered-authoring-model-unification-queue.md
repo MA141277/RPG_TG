@@ -7,23 +7,23 @@
 - blueprint_version: `2026.07`
 - governance_last_synced_at: `2026-07-22`
 - governance_sync_source: `docs/blueprints/plans/2026-07-22-script-editor-event-centered-authoring-scene-retirement-and-portrait-resource-refactor-target-plan.md`
-- queue_status: `active`
+- queue_status: `done`
 - queue_class: `required`
-- active_task: `task.script-editor-event-centered-authoring-model-unification.evidence-anchor-reconcile`
-- next_task: `task.script-editor-event-centered-authoring-model-unification.model-contract-and-authoring-surface`
-- closeout_status: `in-progress`
-- execution_closeout_status: `partial`
-- topic_closure_status: `open-residue`
-- closure_basis: `admitted-first-queue-not-yet-closed`
+- active_task: `none`
+- next_task: `none`
+- closeout_status: `done`
+- execution_closeout_status: `done`
+- topic_closure_status: `closed`
+- closure_basis: `ACC-EVENT-CENTER-001 is now covered inside the admitted queue boundary. Creator-facing event destination ownership is unified across dialogue / function / minigame / task, dialogue-local followUp routing is removed from the main authoring truth, and no same-family residue remains inside this queue's bounded authoring-model scope.`
 - residue_remaining: `no`
 - residue_family: `none`
 - residue_routing_status: `none`
-- next_family_candidate: `none`
-- auto_continue_eligible: `false`
-- next_effect: `none`
+- next_family_candidate: `queue.event-router-only-trigger-contract-freeze`
+- auto_continue_eligible: `true`
+- next_effect: `promote-next-queue`
 - sync_status: `pending`
 - sync_scope: `local-record`
-- sync_summary: `Queue admission was recorded after remote sync toward origin/mod-first-dev succeeded at the version layer. Queue-local closeout sync is pending because execution has just started.`
+- sync_summary: `Queue closeout is recorded locally. Repository sync is deferred while the parent version auto-continues into queue.event-router-only-trigger-contract-freeze, so this queue keeps a local-record sync state instead of claiming repository completion early.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
@@ -70,7 +70,7 @@
 
 ### Evidence Lock
 
-- evidence_lock_status: `pending`
+- evidence_lock_status: `confirmed`
 - implementation_anchor_status: `confirmed`
 - prerequisite_status: `ready`
 - acceptance_claim_scope:
@@ -103,6 +103,18 @@
 - `ACC-EVENT-CENTER-006: portrait resource authoring and resource mapping convergence.`
 - `ACC-EVENT-CENTER-008: final simulated-human acceptance across trigger environments and portrait creator path.`
 - `Out-of-scope means not implemented by this queue; it does not mean retired, removed, or unsupported unless the parent spec was updated first.`
+
+#### Parent Capability Coverage
+
+- owned_closure:
+  - `Creator-facing event-centered semantics and destination-family ownership across dialogue / function / minigame / task.`
+- preserved_not_owned:
+  - `Building creator-facing meaning remains function -> event -> dialogue/minigame/task/function.`
+  - `Normal start, JSON runtime pack import, and Script Editor runtime preview remain routeable toward the later converged no-scene model.`
+- routed_elsewhere:
+  - `Trigger timing/context freeze and event-only routing truth stay with queue.event-router-only-trigger-contract-freeze.`
+  - `Scene retirement and no-compatibility-residue removal stay with queue.scene-family-retirement-and-content-migration.`
+  - `Portrait resources and final simulated-human acceptance stay with their later recorded queues.`
 
 #### Capability Floor
 
@@ -139,8 +151,12 @@
   - `Script Editor creators can understand and author destination ownership through one event-centered model instead of scene wrappers.`
 - alternate_paths:
   - `Building creator-facing flows still read as function -> event -> dialogue/minigame/task/function even before later runtime migration queues land.`
+- leave_return_or_followup_paths:
+  - `Event destination selection, authoring navigation, and follow-up ownership remain reachable without falling back to dialogue-local followUps or scene-shaped wrappers.`
 - empty_or_fail_closed_paths:
   - `Incomplete or unsupported destination-family combinations fail closed in authoring rather than falling back to hidden scene wrappers.`
+- rejection_or_error_paths:
+  - `Unsupported destination-family combinations stay explicitly blocked in authoring validation instead of being silently accepted by legacy fallback semantics.`
 - forbidden_regressions:
   - `Do not keep event-centered naming while runtime/export-facing authoring still depends on scene-local wrapper truth.`
 
@@ -181,6 +197,8 @@
   - `Event-centered creator-facing content model with explicit destination-family ownership.`
 - behavior_preservation_expectation:
   - `Creators gain a clearer single routing model while existing building-function meaning and stable content ids are preserved.`
+- old_truth_owner_exit_proof:
+  - `Dialogue followUps are removed from the main authoring truth and scene-shaped wrappers no longer own creator-facing destination selection, so the old semantic owners are not still required for normal authoring.`
 - verification_evidence:
   - `Tests and source inspection must show the new model is the formal creator-facing owner rather than documentation-only relabeling.`
 
@@ -195,9 +213,9 @@
 
 - queue_goal: `Admit and execute the first MEMO-025 slice that unifies creator-facing dialogue / function / minigame / task semantics under one event-centered model.`
 - task_count: `3`
-- completed_task_count: `0`
-- remaining_task_count: `3`
-- active_task_summary: `Confirm evidence lock, creator-facing contract boundaries, implementation anchors, and verification floor before implementation.` 
+- completed_task_count: `3`
+- remaining_task_count: `0`
+- active_task_summary: `No active task remains; ACC-EVENT-CENTER-001 is closed and control routes to queue.event-router-only-trigger-contract-freeze.` 
 - task_briefs:
   - `task.script-editor-event-centered-authoring-model-unification.evidence-anchor-reconcile: Confirm ACC-EVENT-CENTER-001 evidence lock and no-over-narrowing boundaries before implementation.`
   - `task.script-editor-event-centered-authoring-model-unification.model-contract-and-authoring-surface: Land the event-centered creator-facing model and destination-family ownership in authoring surfaces.`
@@ -222,25 +240,35 @@
 
 ### Completion Completeness Review
 
-- review_status: `pending`
+- review_status: `passed`
 - can_claim_coverage:
-  - `Pending execution. ACC-EVENT-CENTER-001 is not yet verified.`
+  - `ACC-EVENT-CENTER-001 is covered: Script Editor now exposes quests as a formal destination family, keeps flows as an implementation seam rather than creator-facing router truth, and removes dialogue.followUps from the main authoring UI, workspace summary, and validation path.`
 - parent_spec_preservation:
-  - `Pending execution. The queue must prove it did not weaken building meaning, later trigger-freeze ownership, or later scene-retirement obligations.`
+  - `Building creator-facing meaning remains function -> event -> dialogue/minigame/task/function.`
+  - `Later ownership was not narrowed: trigger freeze, scene retirement, runtime/export convergence, and portrait-resource convergence remain routed to their recorded successor queues without being mislabeled complete here.`
+- capability_floor_verification:
+  - `The queue closed without weakening building-function meaning or reintroducing scene-shaped creator wrappers as the semantic owner of destination selection.`
 - out_of_scope_routing:
   - `Later acceptances remain owned by the next recorded queues in the version plan.`
 - verification_sufficiency:
-  - `Pending execution. Verification must prove creator-facing ownership changed in real authoring surfaces, not only in docs or type definitions.`
+  - `Passed: npm run lint:blueprints.`
+  - `Passed: npm run typecheck.`
+  - `Passed: npm test.`
+  - `Source and regression coverage prove the creator-facing routing model changed in real authoring surfaces rather than only in docs or type definitions.`
+- user_path_matrix_verification:
+  - `Primary authoring, alternate building-flow interpretation, follow-up ownership, and fail-closed validation paths remain coherent under the event-centered model rather than surviving only through dialogue-local or scene-local fallbacks.`
 - functional_loss_audit:
-  - `Pending execution. No creator-facing destination capability may be lost or silently reduced to placeholders.`
+  - `No creator-facing destination family was silently removed. Dialogue, event, minigame, and task all remain addressable from the event destination selector, while flows stay visible as implementation-facing building functions.`
 - replacement_proof_summary:
-  - `Pending execution.`
+  - `The formal creator-facing routing owner moved from scene-shaped or dialogue-local follow-up semantics to event destination ownership, and regression tests now guard that shift directly.`
+- placeholder_or_legacy_fallback_audit:
+  - `No claimed creator-facing path survives only through placeholder labels, hidden scene wrappers, or legacy dialogue.followUps in the main authoring truth.`
 - gap_fill_decision:
   - `not-needed`
 - gap_fill_scope:
   - `none`
 - remaining_gaps:
-  - `Pending execution.`
+  - `No still-blocking residue remains inside ACC-EVENT-CENTER-001. Successor queues still own router freeze, scene retirement, runtime/export convergence, portrait resources, and final acceptance.`
 
 ### Admission Preconditions
 
@@ -277,9 +305,9 @@
 
 | Task ID | State | Summary | Depends On | Notes |
 | --- | --- | --- | --- | --- |
-| `task.script-editor-event-centered-authoring-model-unification.evidence-anchor-reconcile` | `active` | `Confirm ACC-EVENT-CENTER-001 evidence lock, creator-facing contract boundaries, implementation anchors, and verification floor before implementation.` | `none` | `This task may still split or block the queue if the current model or anchors prove wider than the admitted boundary.` |
-| `task.script-editor-event-centered-authoring-model-unification.model-contract-and-authoring-surface` | `queued` | `Land the event-centered creator-facing model and destination-family ownership in authoring surfaces.` | `task.script-editor-event-centered-authoring-model-unification.evidence-anchor-reconcile` | `This task must stay inside ACC-EVENT-CENTER-001 and must not absorb later router-freeze or scene-retirement work.` |
-| `task.script-editor-event-centered-authoring-model-unification.queue-closeout-and-handoff` | `queued` | `Verify, review completeness, and route the next lawful queue without claiming later acceptances.` | `task.script-editor-event-centered-authoring-model-unification.model-contract-and-authoring-surface` | `Expected next lawful queue is queue.event-router-only-trigger-contract-freeze if no blocker or residue changes that routing.` |
+| `task.script-editor-event-centered-authoring-model-unification.evidence-anchor-reconcile` | `done` | `Confirm ACC-EVENT-CENTER-001 evidence lock, creator-facing contract boundaries, implementation anchors, and verification floor before implementation.` | `none` | `Evidence lock confirmed: task remains out of event destination family, dialogue followUps remain legacy family-local routing truth, scenes remain visible creator-facing family, and this queue must confine its implementation slice to authoring/domain/UI semantics without claiming scene retirement, trigger freeze, runtime cutover, or portrait convergence.` |
+| `task.script-editor-event-centered-authoring-model-unification.model-contract-and-authoring-surface` | `done` | `Land the event-centered creator-facing model and destination-family ownership in authoring surfaces.` | `task.script-editor-event-centered-authoring-model-unification.evidence-anchor-reconcile` | `Completed without absorbing later router-freeze or scene-retirement work: task destination family is formalized, quests/flows are visible in workflow navigation, and dialogue-local followUp routing is removed from the main authoring truth.` |
+| `task.script-editor-event-centered-authoring-model-unification.queue-closeout-and-handoff` | `done` | `Verify, review completeness, and route the next lawful queue without claiming later acceptances.` | `task.script-editor-event-centered-authoring-model-unification.model-contract-and-authoring-surface` | `ACC-EVENT-CENTER-001 is now closed; control routes lawfully to queue.event-router-only-trigger-contract-freeze.` |
 
 ### Task Definitions
 
@@ -288,7 +316,7 @@
 ##### Control Block
 
 - task_id: `task.script-editor-event-centered-authoring-model-unification.evidence-anchor-reconcile`
-- state: `active`
+- state: `done`
 - task_kind: `decision-dispatch`
 - scope:
   - `docs/blueprints/specs/2026-07-22-script-editor-event-centered-authoring-scene-retirement-and-portrait-resource-refactor-target.md`
@@ -319,14 +347,14 @@
 - task_brief:
   - `Lock the first queue's creator-facing scope before implementation.`
 - task_outcome_summary:
-  - `Pending.`
+  - `Confirmed that ACC-EVENT-CENTER-001 must be satisfied by authoring/model/UI changes only: event destination family needs formal task coverage, dialogue followUps must stop acting as a creator-facing routing owner, scenes remain visible but cannot keep semantic ownership of creator routing truth, and all later scene retirement / trigger freeze / runtime-pack / portrait work stays routed to later queues.`
 
 #### `task.script-editor-event-centered-authoring-model-unification.model-contract-and-authoring-surface`
 
 ##### Control Block
 
 - task_id: `task.script-editor-event-centered-authoring-model-unification.model-contract-and-authoring-surface`
-- state: `queued`
+- state: `done`
 - task_kind: `execution`
 - scope:
   - `src/domain/script-editor-project.ts`
@@ -353,14 +381,14 @@
 - task_brief:
   - `Land the event-centered creator-facing model and destination-family ownership in authoring surfaces.`
 - task_outcome_summary:
-  - `Pending.`
+  - `Task completed. The event destination contract now covers task, the minimal workflow/workspace shell expose quests and flows with event-centered semantics, the main authoring UI removes dialogue followUp editing and validation as routing truth, and regression coverage proves the creator-facing model changed without claiming scene retirement or runtime/export cutover.`
 
 #### `task.script-editor-event-centered-authoring-model-unification.queue-closeout-and-handoff`
 
 ##### Control Block
 
 - task_id: `task.script-editor-event-centered-authoring-model-unification.queue-closeout-and-handoff`
-- state: `queued`
+- state: `done`
 - task_kind: `decision-dispatch`
 - scope:
   - `docs/blueprints/plans/2026-07-22-script-editor-event-centered-authoring-scene-retirement-and-portrait-resource-refactor-target-plan.md`
@@ -384,8 +412,16 @@
 - task_brief:
   - `Verify, review completeness, and hand off to the next lawful queue.`
 - task_outcome_summary:
-  - `Pending.`
+  - `Verification passed on the landed worktree: npm run lint:blueprints, npm run typecheck, and npm test all remained green. Completeness review confirmed ACC-EVENT-CENTER-001 closed without same-family residue and without narrowing later trigger-freeze, scene-retirement, runtime/export, or portrait-resource obligations. The next lawful queue is queue.event-router-only-trigger-contract-freeze.`
+
+### Closeout Record
+
+- closed_at: `2026-07-22`
+- closed_by: `AI execution under target.script-editor-event-centered-authoring-scene-retirement-and-portrait-resource-refactor`
+- closeout_pending: `false`
 
 ### Progress Log
 
 - `2026-07-22`: `Queue admitted as the first lawful execution slice under target.script-editor-event-centered-authoring-scene-retirement-and-portrait-resource-refactor after remote sync toward origin/mod-first-dev succeeded and no-over-narrowing review confirmed that later trigger freeze, scene retirement, runtime cutover, and portrait convergence all depend on stable creator-facing event-centered semantics. Active execution begins with evidence-anchor reconciliation rather than direct feature implementation.`
+- `2026-07-22`: `Evidence-anchor reconcile is complete. Source inspection confirmed three creator-facing gaps inside ACC-EVENT-CENTER-001: ScriptEditorEventDestinationFamily lacked task coverage even though quests already exist as a formal authoring family; dialogue.followUps remained a family-local routing owner in the main authoring UI and workspace-shell validation surfaces; and scenes remained a visible creator-facing family whose continued visibility cannot be allowed to imply semantic routing ownership. Implementation was therefore constrained to domain/application/UI authoring surfaces only, with scene retirement, trigger freeze, runtime/export convergence, and portrait-resource convergence explicitly preserved as later queues.`
+- `2026-07-22`: `Model-contract implementation and closeout review completed. The event destination selector now covers task, creator workflow navigation now exposes quests and flows with event-centered meaning, dialogue-local followUp routing controls were removed from the main authoring truth, and regression coverage passed again (npm run lint:blueprints, npm run typecheck, npm test). ACC-EVENT-CENTER-001 is therefore closed with no same-family residue, and control routes to queue.event-router-only-trigger-contract-freeze.`

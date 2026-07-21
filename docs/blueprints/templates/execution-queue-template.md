@@ -86,6 +86,15 @@
 
 - `Replace with inherited or adjacent functional surface that must still work after this queue closes, even if this queue is not the primary owner of that acceptance.`
 
+#### Parent Capability Coverage
+
+- owned_closure:
+  - `Replace with the parent capability this queue actually closes.`
+- preserved_not_owned:
+  - `Replace with inherited capability this queue must not regress even though another queue owns final closure.`
+- routed_elsewhere:
+  - `Replace with parent capability intentionally routed to another queue, residue path, blocker, or explicit waiver.`
+
 #### Over-Narrowing Guard
 
 - parent_capabilities_not_owned_by_this_queue:
@@ -111,8 +120,12 @@
   - `Replace with the main user-visible path this queue must keep working.`
 - alternate_paths:
   - `Replace with import / preview / alternate entry / recovery path that must not regress.`
+- leave_return_or_followup_paths:
+  - `Replace with leave / return / follow-up / chained-routing path that must remain reachable.`
 - empty_or_fail_closed_paths:
   - `Replace with empty-data / blocked / fail-closed path that must remain coherent.`
+- rejection_or_error_paths:
+  - `Replace with refusal / rejection / error-handling path that must remain truthful and reachable.`
 - forbidden_regressions:
   - `Replace with a regression that this queue must explicitly avoid even if the primary path still works.`
 
@@ -143,6 +156,8 @@
   - `Replace with the new owner/path.`
 - behavior_preservation_expectation:
   - `Replace with what must remain equivalent or intentionally different.`
+- old_truth_owner_exit_proof:
+  - `Replace with proof that the old owner/path is no longer the required truth unless dual ownership is explicitly preserved by the parent spec.`
 - verification_evidence:
   - `Replace with proof that the replacement path is actually wired and reachable.`
 
@@ -184,6 +199,7 @@
 - `residue_family = accepted-residue means the remaining gap is explicitly accepted within the parent/version boundary and does not block closeout.`
 - `Out-of-scope, Cannot Claim, and accepted residue are not retirement authority. Do not write retired/removed/unsupported unless the parent spec was updated first.`
 - `If residue_family = same-family and one lawful continuation exists, name it in next_family_candidate and allow automatic continuation instead of returning to open-ended human queue selection.`
+- `Active-task completion, queue closeout sync, active queue handoff, and state-only sync are execution transitions, not lawful pause points by themselves.`
 
 ### Completion Completeness Review
 
@@ -192,14 +208,20 @@
   - `Replace with evidence that each Can Claim item is implemented and verified.`
 - parent_spec_preservation:
   - `Replace with evidence that inherited capabilities, compatibility paths, legacy replacements, and non-goals were not over-narrowed.`
+- capability_floor_verification:
+  - `Replace with proof that non-owned-but-required inherited capability still works after this queue's change.`
 - out_of_scope_routing:
   - `Replace with where every Cannot Claim / Out Of Scope item is owned, routed, accepted, or blocked.`
 - verification_sufficiency:
   - `Replace with why verification covers functional behavior rather than only a representative happy path.`
+- user_path_matrix_verification:
+  - `Replace with proof that the primary, alternate, recovery, and fail-closed paths in the matrix were actually checked or intentionally routed.`
 - functional_loss_audit:
   - `Replace with evidence that no user-visible functionality was lost, reduced to placeholder behavior, or left reachable only through legacy fallback.`
 - replacement_proof_summary:
   - `Replace with a short summary of how migration/replacement claims were verified.`
+- placeholder_or_legacy_fallback_audit:
+  - `Replace with evidence that claimed behavior did not survive only through placeholder UI, dead routes, or legacy fallback truth.`
 - gap_fill_decision:
   - `not-needed | used-once | not-used-recorded-as-residue | blocked`
 - gap_fill_scope:
@@ -221,6 +243,18 @@
 - `If the operator explicitly requests closing this queue before Can Claim is actually satisfied, set queue_status=dropped rather than done and route remaining residue explicitly.`
 - `Do not fabricate completed_acceptance, closure_basis, or topic_closure_status=closed merely because the operator asked to stop work.`
 
+### Auto-Continue Stop Rule
+
+- `Before ending a response while this queue still has a live active_task or while queue closeout has a uniquely lawful next action, run the workflow stop-condition self-check from the Blueprint workflow spec.`
+- `If no lawful stop cause exists, do not stop at task completion, queue closeout sync, queue handoff, repository sync result recording, or status commentary; continue into the next lawful task or version-level action.`
+- `If a lawful stop cause exists, the owning version plan must already contain stop_reason / stop_basis / next_unblocked_action / human_input_required before the response ends.`
+
+### Queue Spec Integrity Rule
+
+- `A queue spec is invalid if it can only pass by shrinking parent capability meaning down to one local seam, one golden path, or one convenient happy path.`
+- `Admission must stop if Parent Capability Coverage, User Path Coverage Matrix, Functional Loss Budget, Replacement Proof, or Completion Completeness Review is missing or too vague to police over-narrowing.`
+- `Queue closeout must fail if the queue cannot show that inherited non-owned capability, alternate paths, or replacement-truth exit were preserved or explicitly routed.`
+
 ### Repository Sync Record Rule
 
 - `After a task reaches any terminal after-state and the required docs are updated, record local repository sync state.`
@@ -233,6 +267,7 @@
 - `A blocked queue still allows local-record, branch-commit, and remote-sync; repository sync is not forbidden just because execution is blocked.`
 - `sync failure must not be copied into blocked_by, queue closeout gates, version closeout gates, or version scheduling truth.`
 - `remote-sync failure must not block queue closeout, version review handoff, same-family continuation routing, or next lawful queue activation after the failure result is recorded.`
+- `Recording the sync result is not a lawful pause point by itself.`
 
 ### Activation Order
 
