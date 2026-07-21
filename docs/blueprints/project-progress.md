@@ -5,8 +5,8 @@
 - entry_id: `project-progress.rpg-tg`
 - active_blueprint: `blueprint.rpg-tg`
 - active_version: `target.script-editor-event-centered-authoring-scene-retirement-and-portrait-resource-refactor`
-- has_active_queue: `false`
-- next_file: `docs/blueprints/plans/2026-07-22-script-editor-event-centered-authoring-scene-retirement-and-portrait-resource-refactor-target-plan.md`
+- has_active_queue: `true`
+- next_file: `docs/blueprints/queues/script-editor-event-centered-authoring-model-unification-queue.md`
 - entry_action: `open-next-file`
 
 ## Human Context
@@ -29,7 +29,7 @@
 - Current Version Plan:
   - `docs/blueprints/plans/2026-07-22-script-editor-event-centered-authoring-scene-retirement-and-portrait-resource-refactor-target-plan.md`
 - Current Active Queue:
-  - `none`
+  - `queue.script-editor-event-centered-authoring-model-unification`
 
 ### Live Entry Guardrails
 
@@ -79,6 +79,7 @@
 
 - `target.building-arrangement-container-flow-refactor was explicitly closed on 2026-07-22 and is now historical evidence only.`
 - `Current entry pointers now route to target.script-editor-event-centered-authoring-scene-retirement-and-portrait-resource-refactor as the lawful active open successor version created from MEMO-025.`
+- `queue.script-editor-event-centered-authoring-model-unification is now the active queue under the MEMO-025 successor target after remote sync toward origin/mod-first-dev succeeded and first-queue admission review confirmed the creator-facing event-centered model queue is the lawful first bounded slice.`
 
 ### Historical References
 

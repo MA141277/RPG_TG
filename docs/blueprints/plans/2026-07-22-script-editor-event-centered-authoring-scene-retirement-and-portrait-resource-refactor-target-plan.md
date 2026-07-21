@@ -5,14 +5,14 @@
 - document_role: `version-governor`
 - version_id: `target.script-editor-event-centered-authoring-scene-retirement-and-portrait-resource-refactor`
 - version_status: `open`
-- active_phase: `phase.promotion-review`
-- active_queue: `none`
-- decision_state: `promotion-review`
-- next_decision: `same-version-admission-or-version-closeout`
-- next_action: `return-to-promotion-review`
-- resume_gate: `version-review`
+- active_phase: `phase.execution`
+- active_queue: `queue.script-editor-event-centered-authoring-model-unification`
+- decision_state: `active-execution`
+- next_decision: `queue-closeout-or-return-to-version-review`
+- next_action: `resume-active-queue`
+- resume_gate: `open-active-queue`
 - post_queue_closeout_pause_policy: `auto-continue`
-- promotion_review_result: `recorded`
+- promotion_review_result: `admitted`
 - review_subject_id: `none`
 - review_subject_classification: `none`
 - proposed_queue_id: `none`
@@ -28,7 +28,7 @@
 - residue_candidate_id: `none`
 - residue_candidate_family: `none`
 - routing_basis: `formal-target-created-from-memo-025`
-- next_lawful_queue_recommendation: `queue.script-editor-event-centered-authoring-model-unification`
+- next_lawful_queue_recommendation: `none`
 - auto_admission_ready: `false`
 - stop_reason: `none`
 - stop_basis: `none`
@@ -44,7 +44,7 @@
   - `queue.script-editor-event-centered-authoring-final-acceptance-and-residue-guard`
 - candidate_backlog_refresh_status: `fresh`
 - candidate_backlog_snapshot:
-  - `queue.script-editor-event-centered-authoring-model-unification: recorded-only required first queue for creator-facing event-centered semantics and destination-family ownership.`
+  - `queue.script-editor-event-centered-authoring-model-unification: admitted as the active first queue for creator-facing event-centered semantics and destination-family ownership.`
   - `queue.event-router-only-trigger-contract-freeze: recorded-only required queue for event-only routing truth and stable trigger timing/context contracts.`
   - `queue.scene-family-retirement-and-content-migration: recorded-only required queue for formal scene removal, content migration, and no-compatibility-residue retirement.`
   - `queue.event-centered-runtime-pack-preview-export-sync: recorded-only required queue for preview/export/import/loader/runtime convergence on the no-scene model.`
@@ -75,8 +75,9 @@
   - `The evidence draft proved the work must stay in one successor target/version with five bounded implementation queues plus a required-final acceptance queue.`
 - Activation conclusion:
   - `Formal target docs now exist for target.script-editor-event-centered-authoring-scene-retirement-and-portrait-resource-refactor.`
-  - `No child queue is admitted.`
-  - `No implementation is authorized from this plan until a later admission review creates an active queue doc.`
+  - `queue.script-editor-event-centered-authoring-model-unification is now the active queue.`
+  - `task.script-editor-event-centered-authoring-model-unification.evidence-anchor-reconcile is the active task.`
+  - `Implementation is authorized only inside the admitted queue boundary after its evidence-anchor task confirms claim scope, anchors, and verification floor.`
 - `This target is now the current active open version in the blueprint chain after target.building-arrangement-container-flow-refactor closed on 2026-07-22.`
 
 ### Version Lifecycle Rules
@@ -117,7 +118,7 @@
 
 | Candidate ID | Last Classification | Proposed Queue | Latest Disposition | Recheck Trigger | Acceptance Refs | Implementation Anchors | Can Claim | Cannot Claim | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| `item.script-editor-event-centered-authoring-model-unification` | `queue-candidate` | `queue.script-editor-event-centered-authoring-model-unification` | `recorded-only` | `admission review after this target becomes the lawful active execution target` | `ACC-EVENT-CENTER-001` | `src/domain/script-editor-project.ts; src/application/script-editor/**; src/ui/main-ui/main-ui-flow.js` | `creator-facing event-centered semantics and destination-family ownership` | `scene retirement, trigger freeze, runtime cutover, portrait mapping` | `Must stay narrow to creator-facing model semantics.` |
+| `item.script-editor-event-centered-authoring-model-unification` | `queue-candidate` | `queue.script-editor-event-centered-authoring-model-unification` | `admitted-active` | `none` | `ACC-EVENT-CENTER-001` | `src/domain/script-editor-project.ts; src/application/script-editor/**; src/ui/main-ui/main-ui-flow.js` | `creator-facing event-centered semantics and destination-family ownership` | `scene retirement, trigger freeze, runtime cutover, portrait mapping` | `Admitted on 2026-07-22 as the first lawful queue after remote sync toward origin/mod-first-dev succeeded and no-over-narrowing review confirmed later trigger freeze, scene retirement, runtime cutover, and portrait convergence all depend on stable creator-facing model semantics.` |
 | `item.event-router-only-trigger-contract-freeze` | `queue-candidate` | `queue.event-router-only-trigger-contract-freeze` | `recorded-only` | `after model-unification queue closes` | `ACC-EVENT-CENTER-002` | `src/domain/event.ts; EventBindingRuntime entrypoints; trigger-context contracts; tests/**` | `event-only routing truth and stable trigger timing/context contracts` | `scene content migration; portrait mapping` | `Must not preserve entrySceneId/nextSceneId as hidden formal truth.` |
 | `item.scene-family-retirement-and-content-migration` | `queue-candidate` | `queue.scene-family-retirement-and-content-migration` | `recorded-only` | `after router-only freeze closes` | `ACC-EVENT-CENTER-003; ACC-EVENT-CENTER-004; ACC-EVENT-CENTER-007` | `src/domain/action.ts; src/domain/script-editor-project.ts; src/application/scene/**; src/application/story/**; src/application/startup/**; src/ui/views/scene/**` | `formal scene retirement and content migration` | `runtime/export/import divergence as acceptable residue` | `Must hand off immediately to runtime-pack sync inside the same target/version.` |
 | `item.event-centered-runtime-pack-preview-export-sync` | `queue-candidate` | `queue.event-centered-runtime-pack-preview-export-sync` | `recorded-only` | `after scene-retirement queue closes` | `ACC-EVENT-CENTER-005` | `src/application/script-editor/runtime-pack-export.ts; src/application/script-editor/runtime-pack-import.ts; src/application/scenario/scenario-pack-loader.ts; preview/runtime loaders; tests/**` | `editor/runtime/export/import no-scene convergence` | `editor-only structure changes with old runtime truth still alive` | `This queue is a coupled follow-up to scene retirement, not an independent later cleanup.` |
@@ -128,7 +129,7 @@
 
 | Queue ID | Current Disposition | Promote When | Notes |
 | --- | --- | --- | --- |
-| `queue.script-editor-event-centered-authoring-model-unification` | `candidate-not-admitted` | `After this target becomes the lawful execution owner and no-over-narrowing review confirms the first queue boundary.` | `Recommended first queue.` |
+| `queue.script-editor-event-centered-authoring-model-unification` | `active` | `none` | `Admitted as the active first queue on 2026-07-22. It now owns ACC-EVENT-CENTER-001 evidence lock, creator-facing model semantics, destination-family ownership, and queue-local admission proof.` |
 | `queue.event-router-only-trigger-contract-freeze` | `candidate-not-admitted` | `After model-unification closes.` | `Must freeze event-only routing before scene retirement.` |
 | `queue.scene-family-retirement-and-content-migration` | `candidate-not-admitted` | `After router-only freeze closes.` | `Must be followed immediately by runtime-pack sync.` |
 | `queue.event-centered-runtime-pack-preview-export-sync` | `candidate-not-admitted` | `Immediately after scene-retirement queue closes.` | `Coupled consecutive pair with scene retirement.` |
@@ -154,3 +155,4 @@
 
 - `2026-07-22`: `Promoted MEMO-025 into formal target.script-editor-event-centered-authoring-scene-retirement-and-portrait-resource-refactor after the operator approved the successor-target route. The new target is open with no active queue. It records five bounded implementation candidates plus one required-final acceptance queue, but does not change the current active version or authorize implementation.`
 - `2026-07-22`: `After the operator explicitly closed target.building-arrangement-container-flow-refactor, Blueprint entry pointers were switched to this target. It is now the lawful active open version with no admitted child queue yet, so the next governed action remains candidate/admission review rather than implementation.`
+- `2026-07-22`: `Repository sync toward origin/mod-first-dev completed successfully before successor-version admission work continued. Admission review then confirmed queue.script-editor-event-centered-authoring-model-unification is the lawful first bounded queue because trigger freeze, scene retirement, runtime cutover, and portrait convergence all depend on stable creator-facing event-centered semantics. The queue is now active with task.script-editor-event-centered-authoring-model-unification.evidence-anchor-reconcile as the current task.`
