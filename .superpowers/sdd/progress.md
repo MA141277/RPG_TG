@@ -8,3 +8,4 @@
 - Task 5: complete (commits 51db1a05..6dc83668, review clean).
 - Task 6: complete (commits 75ef1ef8..022dc855, review clean).
 - Final review: complete (commit e296cda4, review clean; local verification passed: npm run typecheck, npm test, npm run build, npm run lint:plans).
+- Task 1: complete (commits 7205b44..c4e2945, review clean after read-only example loader fix).

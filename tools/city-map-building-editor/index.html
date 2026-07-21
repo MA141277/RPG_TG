@@ -972,7 +972,7 @@
             <button type="button" id="add-entity">新建建筑</button>
             <button type="button" id="duplicate-entity">复制建筑</button>
             <button type="button" id="delete-entity">删除建筑</button>
-            <button type="button" id="auto-place-enterable-buildings">一键补齐可进入建筑</button>
+            <button type="button" id="auto-place-enterable-buildings">一键补齐未放置Prefab</button>
           </div>
         </section>
         <section class="panel__section">
@@ -2428,6 +2428,7 @@
       dom.showLabels.checked = layerState.labels;
       dom.showHitArea.checked = layerState.hitArea;
       dom.showForbidden.checked = layerState.forbidden;
+      dom.autoPlaceEnterableBuildings.disabled = state.editorMode !== "city-layout";
     }
 
     function renderReadOnlyPrefabState() {
@@ -2457,6 +2458,7 @@
       const hasPrefabSelection = getSelectedPrefab() != null;
       const hasInstanceSelection = getSelectedInstance() != null;
       const hasEditableSelection = state.editorMode === "prefab" ? hasPrefabSelection : hasInstanceSelection;
+      dom.autoPlaceEnterableBuildings.disabled = readOnly || state.editorMode !== "city-layout";
       dom.duplicateEntity.disabled = readOnly || !hasEditableSelection;
       dom.deleteEntity.disabled = readOnly || !hasEditableSelection;
       for (const element of dom.prefabForm.elements) {
@@ -3324,15 +3326,182 @@
       return { type: "none" };
     }
 
-    function getMissingEnterablePrefabs() {
+    function getMissingAutoPlacePrefabs() {
       const placedPrefabIds = new Set(state.cityLayout.instances.map((instance) => instance.prefabId));
-      return state.prefabLibrary.prefabs.filter((prefab) => {
-        return prefab.entry.type !== "none" && !placedPrefabIds.has(prefab.id);
+      return state.prefabLibrary.prefabs.filter((prefab) => !placedPrefabIds.has(prefab.id));
+    }
+
+    function getPlacedAutoPlacePrefabIds() {
+      return state.cityLayout.instances
+        .map((instance) => instance.prefabId)
+        .filter((prefabId, index, source) => source.indexOf(prefabId) === index);
+    }
+
+    function getPrefabFootprintArea(prefab) {
+      return Math.max(1, prefab.footprint.cols) * Math.max(1, prefab.footprint.rows);
+    }
+
+    function sortPrefabsForAutoPlacement(prefabs) {
+      return [...prefabs].sort((first, second) => {
+        return (
+          getPrefabFootprintArea(second) - getPrefabFootprintArea(first)
+          || second.footprint.cols - first.footprint.cols
+          || second.footprint.rows - first.footprint.rows
+          || first.id.localeCompare(second.id)
+        );
       });
     }
 
+    function createAutoPlacementProbe(prefab, gridX, gridY) {
+      return normalizeEntity({
+        id: `auto-probe:${prefab.id}`,
+        prefabId: prefab.id,
+        name: prefab.name,
+        category: prefab.category,
+        entry: clone(prefab.entry),
+        asset: clone(prefab.asset),
+        lot: {
+          gridX,
+          gridY,
+          cols: prefab.footprint.cols,
+          rows: prefab.footprint.rows
+        },
+        render: { visible: true, locked: false, zIndexMode: "y-sort", zIndex: null },
+        interaction: clone(prefab.interaction)
+      }, state.layout.grid);
+    }
+
+    function doLotRectsOverlapWithSpacing(first, second, spacing = 1) {
+      return first.lot.gridX - spacing < second.lot.gridX + second.lot.cols
+        && first.lot.gridX + first.lot.cols + spacing > second.lot.gridX
+        && first.lot.gridY - spacing < second.lot.gridY + second.lot.rows
+        && first.lot.gridY + first.lot.rows + spacing > second.lot.gridY;
+    }
+
+    function doesAutoPlacementOverlapExistingEntities(probe) {
+      return state.layout.entities.some((entity) => doLotRectsOverlapWithSpacing(probe, entity, 1));
+    }
+
+    function scoreAutoPlacementCandidate(prefab, gridX, gridY) {
+      const probe = createAutoPlacementProbe(prefab, gridX, gridY);
+      const probeCenterX = probe.lot.gridX + probe.lot.cols / 2;
+      const probeCenterY = probe.lot.gridY + probe.lot.rows / 2;
+      const boardCenterX = state.layout.grid.cols / 2;
+      const boardCenterY = state.layout.grid.rows / 2;
+      const centerBias = -(Math.abs(probeCenterX - boardCenterX) + Math.abs(probeCenterY - boardCenterY));
+      const neighbors = state.layout.entities;
+
+      if (neighbors.length === 0) {
+        return centerBias;
+      }
+
+      let nearestDistance = Number.POSITIVE_INFINITY;
+      let adjacencyScore = 0;
+      for (const entity of neighbors) {
+        const entityCenterX = entity.lot.gridX + entity.lot.cols / 2;
+        const entityCenterY = entity.lot.gridY + entity.lot.rows / 2;
+        const distance = Math.abs(probeCenterX - entityCenterX) + Math.abs(probeCenterY - entityCenterY);
+        nearestDistance = Math.min(nearestDistance, distance);
+
+        const touchesHorizontally =
+          probe.lot.gridX + probe.lot.cols === entity.lot.gridX
+          || entity.lot.gridX + entity.lot.cols === probe.lot.gridX;
+        const overlapsRows =
+          probe.lot.gridY < entity.lot.gridY + entity.lot.rows
+          && probe.lot.gridY + probe.lot.rows > entity.lot.gridY;
+        const touchesVertically =
+          probe.lot.gridY + probe.lot.rows === entity.lot.gridY
+          || entity.lot.gridY + entity.lot.rows === probe.lot.gridY;
+        const overlapsCols =
+          probe.lot.gridX < entity.lot.gridX + entity.lot.cols
+          && probe.lot.gridX + probe.lot.cols > entity.lot.gridX;
+
+        if ((touchesHorizontally && overlapsRows) || (touchesVertically && overlapsCols)) {
+          adjacencyScore += 6;
+        }
+      }
+
+      const clusterScore = Number.isFinite(nearestDistance)
+        ? Math.max(0, 18 - nearestDistance)
+        : 0;
+      return centerBias + clusterScore + adjacencyScore;
+    }
+
+    function findBestAutoPlacementForPrefab(prefab) {
+      let best = null;
+      for (let gridY = 0; gridY <= state.layout.grid.rows - prefab.footprint.rows; gridY += 1) {
+        for (let gridX = 0; gridX <= state.layout.grid.cols - prefab.footprint.cols; gridX += 1) {
+          const probe = createAutoPlacementProbe(prefab, gridX, gridY);
+          if (!canPlaceEntityLot(probe, state.layout.grid) || doesAutoPlacementOverlapExistingEntities(probe)) {
+            continue;
+          }
+          const score = scoreAutoPlacementCandidate(prefab, gridX, gridY);
+          if (
+            best == null
+            || score > best.score
+            || (score === best.score && (gridY < best.gridY || (gridY === best.gridY && gridX < best.gridX)))
+          ) {
+            best = { gridX, gridY, score };
+          }
+        }
+      }
+      return best;
+    }
+
+    function createAutoPlacedInstance(prefab, gridX, gridY) {
+      const usedIds = new Set(state.cityLayout.instances.map((instance) => instance.id));
+      const instanceId = createScopedUniqueId(`instance.${prefab.id}`, usedIds);
+      return normalizeCityInstance({
+        id: instanceId,
+        prefabId: prefab.id,
+        gridX,
+        gridY,
+        render: {
+          visible: true,
+          locked: false,
+          zIndexMode: "y-sort",
+          zIndex: null
+        }
+      }, state.cityLayout.grid);
+    }
+
     function autoPlaceMissingEnterableBuildings() {
-      return;
+      if (state.editorMode !== "city-layout") {
+        setStatus("请切换到 City Layout 后再执行一键补齐未放置Prefab。");
+        return;
+      }
+
+      const skipped = getPlacedAutoPlacePrefabIds();
+      const placed = [];
+      const failed = [];
+      const prefabs = sortPrefabsForAutoPlacement(getMissingAutoPlacePrefabs());
+
+      for (const prefab of prefabs) {
+        const best = findBestAutoPlacementForPrefab(prefab);
+        if (best == null) {
+          failed.push(prefab.id);
+          continue;
+        }
+        const instance = createAutoPlacedInstance(prefab, best.gridX, best.gridY);
+        state.cityLayout.instances.push(instance);
+        syncEditorLayoutFromSources(instance.id);
+        placed.push(prefab.id);
+      }
+
+      if (placed.length > 0) {
+        selectInstance(state.cityLayout.instances[state.cityLayout.instances.length - 1].id);
+      } else {
+        renderProperties();
+        renderQuickSelect();
+        renderEntityList();
+        renderCanvas();
+      }
+
+      setStatus(
+        `自动排布完成：已放置 ${placed.length} [${placed.join(", ") || "-"}]；`
+        + `已存在 ${skipped.length} [${skipped.join(", ") || "-"}]；`
+        + `未放置 ${failed.length} [${failed.join(", ") || "-"}]。`
+      );
     }
 
     function addEntity() {
@@ -4536,6 +4705,9 @@ This compatibility loader only previews composed runtime entities. Import a city
     }
 
     function setStatus(message) {
+      if (dom.statusLine == null) {
+        return;
+      }
       dom.statusLine.innerHTML = `<strong>状态</strong> ${escapeHtml(message)}`;
     }
 

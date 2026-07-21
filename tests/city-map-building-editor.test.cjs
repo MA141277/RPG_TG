@@ -184,7 +184,11 @@ window.__cityEditorTestApi = {
   getCanvasEntities,
   createBoardGridMarkup,
   isStreetGridCell,
-  getMissingEnterablePrefabs: typeof getMissingEnterablePrefabs === "function" ? getMissingEnterablePrefabs : undefined,
+  sortPrefabsForAutoPlacement: typeof sortPrefabsForAutoPlacement === "function" ? sortPrefabsForAutoPlacement : undefined,
+  scoreAutoPlacementCandidate: typeof scoreAutoPlacementCandidate === "function" ? scoreAutoPlacementCandidate : undefined,
+  findBestAutoPlacementForPrefab: typeof findBestAutoPlacementForPrefab === "function" ? findBestAutoPlacementForPrefab : undefined,
+  createAutoPlacedInstance: typeof createAutoPlacedInstance === "function" ? createAutoPlacedInstance : undefined,
+  getMissingAutoPlacePrefabs: typeof getMissingAutoPlacePrefabs === "function" ? getMissingAutoPlacePrefabs : undefined,
   autoPlaceMissingEnterableBuildings: typeof autoPlaceMissingEnterableBuildings === "function" ? autoPlaceMissingEnterableBuildings : undefined,
   onBoardClick,
   assignDom(patch) {
@@ -200,7 +204,6 @@ window.__cityEditorTestApi = {
     renderEntityList = () => {};
     renderCanvas = () => {};
     renderReadOnlyPrefabState = () => {};
-    setStatus = () => {};
   },
   stubReadImageFile(fn) {
     readImageFile = fn;
@@ -527,6 +530,7 @@ test("runtime city stage composes prefabs with city instances", () => {
   );
   const prefabs = JSON.parse(readText(prefabPath));
   const layoutSource = readText(cityStageLayoutPath);
+  const keepPrefab = prefabs.prefabs.find((prefab) => prefab.id === "keep");
 
   assert.equal(fs.existsSync(prefabPath), true);
   assert.equal(Array.isArray(prefabs.prefabs), true);
@@ -567,8 +571,8 @@ test("runtime city stage composes prefabs with city instances", () => {
   assert.equal(composed[0].asset.image, "ui/yuansu/菱形格子/shuaifu.png");
   assert.equal(composed[0].lot.gridX, 9);
   assert.equal(composed[0].lot.gridY, 11);
-  assert.equal(composed[0].lot.cols, 8);
-  assert.equal(composed[0].lot.rows, 6);
+  assert.equal(composed[0].lot.cols, keepPrefab.footprint.cols);
+  assert.equal(composed[0].lot.rows, keepPrefab.footprint.rows);
   assert.equal(composed[0].render.visible, false);
   assert.equal(composed[0].render.locked, true);
   assert.equal(composed[0].render.zIndexMode, "manual");
@@ -684,15 +688,15 @@ test("city layout panel render path uses split source data without runtime refer
   assert.equal(api.dom.fieldInstanceRows.value, 3);
 });
 
-test("city layout exposes an auto-place action for missing enterable buildings", () => {
+test("city layout exposes an auto-place action for all missing prefabs", () => {
   const html = readText(indexPath);
 
   assert.match(html, /id="auto-place-enterable-buildings"/);
-  assert.match(html, /一键补齐可进入建筑/);
+  assert.match(html, /一键补齐未放置Prefab/);
   assert.match(html, /autoPlaceMissingEnterableBuildings/);
 });
 
-test("auto-place only considers missing enterable prefabs once each", () => {
+test("auto-place considers all missing prefabs once each", () => {
   const api = createEditorRuntimeHarness();
   const { prefabLibrary, cityLayout } = createSplitEditorSources();
   api.stubUi();
@@ -755,12 +759,316 @@ test("auto-place only considers missing enterable prefabs once each", () => {
   api.setSources(prefabLibrary, cityLayout, "instance.keep");
   api.state.editorMode = "city-layout";
 
-  const missing = api.getMissingEnterablePrefabs().map((prefab) => prefab.id);
+  const missing = api.getMissingAutoPlacePrefabs().map((prefab) => prefab.id);
 
   assert.deepEqual(missing.includes("keep"), false);
   assert.deepEqual(missing.includes("watchtower"), false);
-  assert.deepEqual(missing.includes("decor-only"), false);
+  assert.deepEqual(missing.includes("decor-only"), true);
   assert.deepEqual(missing.length > 0, true);
+});
+
+test("auto-place is city-layout only and leaves prefab mode untouched", () => {
+  const api = createEditorRuntimeHarness();
+  const { prefabLibrary, cityLayout } = createSplitEditorSources();
+  const statusLine = createElement();
+  api.stubUi();
+  api.assignDom({ statusLine });
+  api.setSources(prefabLibrary, cityLayout, "instance.keep");
+  api.state.editorMode = "prefab";
+  const before = JSON.stringify(api.state.cityLayout.instances);
+
+  api.autoPlaceMissingEnterableBuildings();
+
+  assert.equal(JSON.stringify(api.state.cityLayout.instances), before);
+  assert.match(statusLine.innerHTML, /City Layout/);
+});
+
+test("auto-place sorts larger footprints first and appends all missing prefabs", () => {
+  const api = createEditorRuntimeHarness();
+  const { prefabLibrary, cityLayout } = createSplitEditorSources();
+  api.stubUi();
+  api.assignDom({ statusLine: createElement() });
+  cityLayout.instances = [];
+  prefabLibrary.prefabs.push(
+    {
+      id: "guildhall",
+      name: "Guildhall",
+      category: "special",
+      entry: { type: "house", houseId: "guildhall-house" },
+      asset: {
+        image: "guildhall.png",
+        naturalWidth: 48,
+        naturalHeight: 48,
+        scale: 1,
+        offsetX: 0,
+        offsetY: 0,
+        rotation: 0,
+        anchor: "bottom-center",
+      },
+      footprint: { cols: 3, rows: 3 },
+      interaction: {
+        clickable: true,
+        label: { text: "Guildhall", offsetX: 0, offsetY: 0, width: 1, height: 1 },
+        hitArea: { type: "rect", offsetX: 0, offsetY: 0, width: 1, height: 1 },
+      },
+    },
+    {
+      id: "market",
+      name: "Market",
+      category: "house",
+      entry: { type: "city-entry", cityEntryId: "market-square" },
+      asset: {
+        image: "market.png",
+        naturalWidth: 48,
+        naturalHeight: 48,
+        scale: 1,
+        offsetX: 0,
+        offsetY: 0,
+        rotation: 0,
+        anchor: "bottom-center",
+      },
+      footprint: { cols: 2, rows: 2 },
+      interaction: {
+        clickable: true,
+        label: { text: "Market", offsetX: 0, offsetY: 0, width: 1, height: 1 },
+        hitArea: { type: "rect", offsetX: 0, offsetY: 0, width: 1, height: 1 },
+      },
+    },
+    {
+      id: "hut",
+      name: "Hut",
+      category: "house",
+      entry: { type: "house", houseId: "hut-house" },
+      asset: {
+        image: "hut.png",
+        naturalWidth: 48,
+        naturalHeight: 48,
+        scale: 1,
+        offsetX: 0,
+        offsetY: 0,
+        rotation: 0,
+        anchor: "bottom-center",
+      },
+      footprint: { cols: 1, rows: 1 },
+      interaction: {
+        clickable: true,
+        label: { text: "Hut", offsetX: 0, offsetY: 0, width: 1, height: 1 },
+        hitArea: { type: "rect", offsetX: 0, offsetY: 0, width: 1, height: 1 },
+      },
+    }
+    ,
+    {
+      id: "decor-only",
+      name: "Decor Only",
+      category: "decoration",
+      entry: { type: "none" },
+      asset: {
+        image: "decor.png",
+        naturalWidth: 32,
+        naturalHeight: 32,
+        scale: 1,
+        offsetX: 0,
+        offsetY: 0,
+        rotation: 0,
+        anchor: "bottom-center",
+      },
+      footprint: { cols: 1, rows: 2 },
+      interaction: {
+        clickable: false,
+        label: { text: "", offsetX: 0, offsetY: 0, width: 1, height: 1 },
+        hitArea: { type: "rect", offsetX: 0, offsetY: 0, width: 1, height: 1 },
+      },
+    }
+  );
+  api.setSources(prefabLibrary, cityLayout);
+  api.state.editorMode = "city-layout";
+  api.state.layout.grid.cols = 24;
+  api.state.layout.grid.rows = 24;
+  api.state.cityLayout.grid.cols = 24;
+  api.state.cityLayout.grid.rows = 24;
+
+  const sortedIds = api.sortPrefabsForAutoPlacement(
+    api.getMissingAutoPlacePrefabs()
+  ).map((prefab) => prefab.id);
+
+  assert.equal(
+    JSON.stringify(sortedIds),
+    JSON.stringify(["keep", "guildhall", "market", "watchtower", "decor-only", "hut"])
+  );
+
+  api.autoPlaceMissingEnterableBuildings();
+
+  const ids = api.state.cityLayout.instances.map((instance) => instance.prefabId);
+  assert.equal(
+    JSON.stringify(ids),
+    JSON.stringify(["keep", "guildhall", "market", "watchtower", "decor-only", "hut"])
+  );
+  assert.equal(new Set(ids).size, ids.length);
+});
+
+test("auto-place never creates a placement on street cells and keeps at least one-cell spacing", () => {
+  const api = createEditorRuntimeHarness();
+  const { prefabLibrary, cityLayout } = createSplitEditorSources();
+  api.stubUi();
+  api.assignDom({ statusLine: createElement() });
+  cityLayout.grid.cols = 24;
+  cityLayout.grid.rows = 24;
+  cityLayout.map.baseSpace.width = 2400;
+  cityLayout.map.baseSpace.height = 1600;
+  prefabLibrary.prefabs.push(
+    {
+      id: "guildhall",
+      name: "Guildhall",
+      category: "special",
+      entry: { type: "house", houseId: "guildhall-house" },
+      asset: {
+        image: "guildhall.png",
+        naturalWidth: 48,
+        naturalHeight: 48,
+        scale: 1,
+        offsetX: 0,
+        offsetY: 0,
+        rotation: 0,
+        anchor: "bottom-center",
+      },
+      footprint: { cols: 3, rows: 3 },
+      interaction: {
+        clickable: true,
+        label: { text: "Guildhall", offsetX: 0, offsetY: 0, width: 1, height: 1 },
+        hitArea: { type: "rect", offsetX: 0, offsetY: 0, width: 1, height: 1 },
+      },
+    },
+    {
+      id: "market",
+      name: "Market",
+      category: "house",
+      entry: { type: "city-entry", cityEntryId: "market-square" },
+      asset: {
+        image: "market.png",
+        naturalWidth: 48,
+        naturalHeight: 48,
+        scale: 1,
+        offsetX: 0,
+        offsetY: 0,
+        rotation: 0,
+        anchor: "bottom-center",
+      },
+      footprint: { cols: 2, rows: 2 },
+      interaction: {
+        clickable: true,
+        label: { text: "Market", offsetX: 0, offsetY: 0, width: 1, height: 1 },
+        hitArea: { type: "rect", offsetX: 0, offsetY: 0, width: 1, height: 1 },
+      },
+    }
+  );
+  api.setSources(prefabLibrary, cityLayout, "instance.keep");
+  api.state.editorMode = "city-layout";
+
+  api.autoPlaceMissingEnterableBuildings();
+
+  const seenCells = new Set();
+  for (const entity of api.state.layout.entities) {
+    for (let x = entity.lot.gridX; x < entity.lot.gridX + entity.lot.cols; x += 1) {
+      for (let y = entity.lot.gridY; y < entity.lot.gridY + entity.lot.rows; y += 1) {
+        assert.equal(api.isStreetGridCell(x, y), false);
+        const key = `${x},${y}`;
+        assert.equal(seenCells.has(key), false);
+        seenCells.add(key);
+      }
+    }
+  }
+
+  for (let index = 0; index < api.state.layout.entities.length; index += 1) {
+    const first = api.state.layout.entities[index];
+    for (let otherIndex = index + 1; otherIndex < api.state.layout.entities.length; otherIndex += 1) {
+      const second = api.state.layout.entities[otherIndex];
+      const separated =
+        first.lot.gridX + first.lot.cols + 1 <= second.lot.gridX
+        || second.lot.gridX + second.lot.cols + 1 <= first.lot.gridX
+        || first.lot.gridY + first.lot.rows + 1 <= second.lot.gridY
+        || second.lot.gridY + second.lot.rows + 1 <= first.lot.gridY;
+      assert.equal(
+        separated,
+        true,
+        `${first.id} and ${second.id} should keep at least one empty grid cell between footprints`
+      );
+    }
+  }
+});
+
+test("auto-place reports placed, skipped, and failed prefabs in status output", () => {
+  const api = createEditorRuntimeHarness();
+  const { prefabLibrary, cityLayout } = createSplitEditorSources();
+  const statusLine = createElement();
+  api.stubUi();
+  api.assignDom({ statusLine });
+  cityLayout.grid.cols = 6;
+  cityLayout.grid.rows = 6;
+  cityLayout.instances.push({
+    id: "existing.watchtower",
+    prefabId: "watchtower",
+    gridX: 0,
+    gridY: 4,
+    render: { visible: true, locked: false, zIndexMode: "y-sort", zIndex: null },
+  });
+  prefabLibrary.prefabs.push(
+    {
+      id: "market",
+      name: "Market",
+      category: "house",
+      entry: { type: "city-entry", cityEntryId: "market-square" },
+      asset: {
+        image: "market.png",
+        naturalWidth: 48,
+        naturalHeight: 48,
+        scale: 1,
+        offsetX: 0,
+        offsetY: 0,
+        rotation: 0,
+        anchor: "bottom-center",
+      },
+      footprint: { cols: 2, rows: 2 },
+      interaction: {
+        clickable: true,
+        label: { text: "Market", offsetX: 0, offsetY: 0, width: 1, height: 1 },
+        hitArea: { type: "rect", offsetX: 0, offsetY: 0, width: 1, height: 1 },
+      },
+    },
+    {
+      id: "oversize",
+      name: "Oversize",
+      category: "special",
+      entry: { type: "none" },
+      asset: {
+        image: "oversize.png",
+        naturalWidth: 48,
+        naturalHeight: 48,
+        scale: 1,
+        offsetX: 0,
+        offsetY: 0,
+        rotation: 0,
+        anchor: "bottom-center",
+      },
+      footprint: { cols: 7, rows: 7 },
+      interaction: {
+        clickable: true,
+        label: { text: "Oversize", offsetX: 0, offsetY: 0, width: 1, height: 1 },
+        hitArea: { type: "rect", offsetX: 0, offsetY: 0, width: 1, height: 1 },
+      },
+    }
+  );
+  api.setSources(prefabLibrary, cityLayout, "instance.keep");
+  api.state.editorMode = "city-layout";
+
+  api.autoPlaceMissingEnterableBuildings();
+
+  assert.match(statusLine.innerHTML, /已放置 1/);
+  assert.match(statusLine.innerHTML, /market/);
+  assert.match(statusLine.innerHTML, /已存在 2/);
+  assert.match(statusLine.innerHTML, /keep/);
+  assert.match(statusLine.innerHTML, /watchtower/);
+  assert.match(statusLine.innerHTML, /未放置 1/);
+  assert.match(statusLine.innerHTML, /oversize/);
 });
 
 test("prefab image uploads resolve the selected prefab and update prefab-owned asset fields", () => {

@@ -1,0 +1,1889 @@
+# Review package: 53b45cf09a96cd6ac6b41e7659d4b03b67336091..acab13917009af16c36dcd34793e9807825617dc
+
+## Commits
+acab139 test: add city layout auto-place entry contract
+
+## Files changed
+ .../sdd/city-layout-auto-place-task-1-report.md    |  98 +++++
+ tests/city-map-building-editor.test.cjs            | 463 ++++++++++++++++++++-
+ tools/city-map-building-editor/index.html          | 325 ++++++++++++---
+ 3 files changed, 823 insertions(+), 63 deletions(-)
+
+## Diff
+diff --git a/.superpowers/sdd/city-layout-auto-place-task-1-report.md b/.superpowers/sdd/city-layout-auto-place-task-1-report.md
+new file mode 100644
+index 0000000..3c345c0
+--- /dev/null
++++ b/.superpowers/sdd/city-layout-auto-place-task-1-report.md
+@@ -0,0 +1,98 @@
++# City Layout Auto Place Task 1 Report
++
++## What I Changed
++
++- Added Task 1 TDD coverage in `tests/city-map-building-editor.test.cjs`.
++  - Exposed guarded harness accessors for `getMissingEnterablePrefabs` and `autoPlaceMissingEnterableBuildings` so the runtime contract can be asserted without crashing unrelated tests before implementation.
++  - Added a UI contract test for the City Layout auto-place button id, label, and function reference.
++  - Added a runtime contract test proving only missing enterable prefabs are returned, excluding already placed prefabs and non-enterable prefabs.
++- Added the minimal City Layout UI entry contract in `tools/city-map-building-editor/index.html`.
++  - Added button id `auto-place-enterable-buildings` with proper Chinese label `一键补齐可进入建筑`.
++  - Registered the button in the DOM lookup list.
++  - Added `getMissingEnterablePrefabs()` helper.
++  - Added no-op `autoPlaceMissingEnterableBuildings()` function.
++  - Wired the button click to `autoPlaceMissingEnterableBuildings`.
++- Kept the implementation intentionally limited to the entry contract only. No placement logic or status reporting was added.
++
++## Files Changed
++
++- `C:\Users\EDY\Documents\GitHub\RPG_TG\tests\city-map-building-editor.test.cjs`
++- `C:\Users\EDY\Documents\GitHub\RPG_TG\tools\city-map-building-editor\index.html`
++
++## TDD Evidence
++
++### RED
++
++Command:
++
++```powershell
++node --test tests/city-map-building-editor.test.cjs
++```
++
++Observed result:
++
++- Exit code: `1`
++- New failure 1: `city layout exposes an auto-place action for missing enterable buildings`
++  - Missing `id="auto-place-enterable-buildings"`
++- New failure 2: `auto-place only considers missing enterable prefabs once each`
++  - `TypeError: api.getMissingEnterablePrefabs is not a function`
++- Also present before completion of this task run:
++  - `runtime city stage composes prefabs with city instances`
++  - Assertion mismatch `11 !== 8`
++
++### GREEN For Task 1 Contract Tests
++
++Command:
++
++```powershell
++node --test --test-name-pattern "auto-place" tests/city-map-building-editor.test.cjs
++```
++
++Observed result:
++
++```text
++✔ city layout exposes an auto-place action for missing enterable buildings
++✔ auto-place only considers missing enterable prefabs once each
++ℹ tests 2
++ℹ pass 2
++ℹ fail 0
++```
++
++### Full Targeted File Re-run
++
++Command:
++
++```powershell
++node --test tests/city-map-building-editor.test.cjs
++```
++
++Observed result:
++
++- Exit code: `1`
++- Task 1 tests now pass.
++- One unrelated pre-existing failure remains:
++  - `runtime city stage composes prefabs with city instances`
++  - Assertion mismatch `11 !== 8`
++
++## Tests Run
++
++1. `node --test tests/city-map-building-editor.test.cjs`
++   - RED confirmed for the new Task 1 tests.
++2. `node --test --test-name-pattern "auto-place" tests/city-map-building-editor.test.cjs`
++   - GREEN for the new Task 1 contract tests.
++3. `node --test tests/city-map-building-editor.test.cjs`
++   - New Task 1 tests remain green; unrelated existing failure remains in the file.
++
++## Self-Review
++
++- The helper only inspects prefab enterability and existing placed prefab ids, matching the narrow Task 1 contract.
++- The button label stays in proper Chinese to match the editor’s current UI copy conventions.
++- No `main.ts` or runtime gameplay wiring was touched.
++- No auto-placement behavior was implemented prematurely.
++
++## Concerns
++
++- The targeted test file is not fully green because of an unrelated existing failure:
++  - `runtime city stage composes prefabs with city instances`
++  - Current observed mismatch: expected `8`, actual `11`
++- The owned files already had other in-progress edits in the working tree before this task. I adjusted to the current file state and did not revert unrelated changes.
+diff --git a/tests/city-map-building-editor.test.cjs b/tests/city-map-building-editor.test.cjs
+index 410a85a..4a2b60e 100644
+--- a/tests/city-map-building-editor.test.cjs
++++ b/tests/city-map-building-editor.test.cjs
+@@ -1,11 +1,11 @@
+-const assert = require("node:assert/strict");
++﻿const assert = require("node:assert/strict");
+ const fs = require("node:fs");
+ const path = require("node:path");
+ const test = require("node:test");
+ const ts = require("typescript");
+ const vm = require("node:vm");
+ 
+ const root = path.resolve(__dirname, "..");
+ const editorDir = path.join(root, "tools", "city-map-building-editor");
+ const indexPath = path.join(editorDir, "index.html");
+ const readmePath = path.join(editorDir, "README.md");
+@@ -111,53 +111,89 @@ function createElement(overrides = {}) {
+   return {
+     value: "",
+     checked: false,
+     disabled: false,
+     textContent: "",
+     innerHTML: "",
+     src: "",
+     files: [],
+     style: {},
+     dataset: {},
++    elements: [],
+     classList: createClassList(),
++    children: [],
++    _capturedPointerIds: new Set(),
++    append(...nodes) {
++      this.children.push(...nodes);
++    },
+     closest() {
+       return { classList: createClassList() };
+     },
+     addEventListener() {},
+     removeEventListener() {},
+     focus() {},
++    setPointerCapture(pointerId) {
++      this._capturedPointerIds.add(pointerId);
++    },
++    releasePointerCapture(pointerId) {
++      this._capturedPointerIds.delete(pointerId);
++    },
++    hasPointerCapture(pointerId) {
++      return this._capturedPointerIds.has(pointerId);
++    },
++    getBoundingClientRect() {
++      return { left: 0, top: 0, width: 1000, height: 1000 };
++    },
+     ...overrides,
+   };
+ }
+ 
+ function createEditorRuntimeHarness() {
+   const source = `${extractEditorScript()}
+ window.__cityEditorTestApi = {
+   state,
+   dom,
++  init,
++  layerState,
+   normalizePrefabLibrary,
+   normalizeCityLayout,
+   convertLegacyEntitiesLayout,
+   setEditorLayout,
+   setEditorSources,
+   syncEditorLayoutFromSources,
++  loadDefaultPrefabLibrary,
+   renderCityLayoutPanel,
+   importJsonFile,
+   saveJsonFile,
+   selectPrefab,
+   uploadEntityImage,
++  updatePrefabFromForm,
+   updateCityLayoutFromForm,
++  onCanvasPointerDown,
++  onCanvasPointerMove,
++  stopDrag,
+   exportCityLayoutJson,
+   exportPrefabLibraryJson,
++  renderCanvas,
++  renderEntities,
++  syncEntityBackToSources,
++  shouldRenderCityMapImages,
++  createAssetNode,
+   getSelectedPrefab,
+   getSelectedInstance,
+   getSelectedEntity,
++  getCanvasEntities,
++  createBoardGridMarkup,
++  isStreetGridCell,
++  getMissingEnterablePrefabs: typeof getMissingEnterablePrefabs === "function" ? getMissingEnterablePrefabs : undefined,
++  autoPlaceMissingEnterableBuildings: typeof autoPlaceMissingEnterableBuildings === "function" ? autoPlaceMissingEnterableBuildings : undefined,
++  onBoardClick,
+   assignDom(patch) {
+     Object.assign(dom, patch);
+   },
+   setSources(prefabLibrary, cityLayout, preferredSelectedId = null) {
+     setEditorSources(prefabLibrary, cityLayout, preferredSelectedId);
+   },
+   stubUi() {
+     render = () => {};
+     renderProperties = () => {};
+     renderQuickSelect = () => {};
+@@ -182,27 +218,33 @@ window.__cityEditorTestApi = {
+         this.result = text;
+         const callback = this.listeners.get("load");
+         if (callback) {
+           callback();
+         }
+       }
+     };
+   },
+   stubSaveFilePicker(fn) {
+     showSaveFilePicker = fn;
++  },
++  stubFetch(fn) {
++    fetch = fn;
+   }
+ };`;
+   const context = {
+     console,
+     window: {},
+     document: {
+       addEventListener() {},
++      createElement() {
++        return createElement();
++      },
+       getElementById() {
+         return createElement();
+       },
+     },
+     confirm: () => true,
+     requestAnimationFrame: () => 0,
+     cancelAnimationFrame() {},
+     navigator: { clipboard: { writeText: async () => {} } },
+     URL: { createObjectURL: () => "blob:test", revokeObjectURL() {} },
+     Blob,
+@@ -635,20 +677,99 @@ test("city layout panel render path uses split source data without runtime refer
+   api.setSources(prefabLibrary, cityLayout, "instance.keep");
+   api.state.editorMode = "city-layout";
+   api.state.selectedPrefabId = "keep";
+ 
+   assert.doesNotThrow(() => api.renderCityLayoutPanel("instance.keep"));
+   assert.equal(api.dom.fieldInstanceId.value, "instance.keep");
+   assert.equal(api.dom.fieldInstanceCols.value, 4);
+   assert.equal(api.dom.fieldInstanceRows.value, 3);
+ });
+ 
++test("city layout exposes an auto-place action for missing enterable buildings", () => {
++  const html = readText(indexPath);
++
++  assert.match(html, /id="auto-place-enterable-buildings"/);
++  assert.match(html, /一键补齐可进入建筑/);
++  assert.match(html, /autoPlaceMissingEnterableBuildings/);
++});
++
++test("auto-place only considers missing enterable prefabs once each", () => {
++  const api = createEditorRuntimeHarness();
++  const { prefabLibrary, cityLayout } = createSplitEditorSources();
++  api.stubUi();
++  prefabLibrary.prefabs.push(
++    {
++      id: "market",
++      name: "Market",
++      category: "house",
++      entry: { type: "city-entry", cityEntryId: "market-square" },
++      asset: {
++        image: "market.png",
++        naturalWidth: 48,
++        naturalHeight: 48,
++        scale: 1,
++        offsetX: 0,
++        offsetY: 0,
++        rotation: 0,
++        anchor: "bottom-center",
++      },
++      footprint: { cols: 2, rows: 2 },
++      interaction: {
++        clickable: true,
++        label: { text: "Market", offsetX: 0, offsetY: 0, width: 1, height: 1 },
++        hitArea: { type: "rect", offsetX: 0, offsetY: 0, width: 1, height: 1 },
++      },
++    },
++    {
++      id: "decor-only",
++      name: "Decor Only",
++      category: "decoration",
++      entry: { type: "none" },
++      asset: {
++        image: "decor.png",
++        naturalWidth: 32,
++        naturalHeight: 32,
++        scale: 1,
++        offsetX: 0,
++        offsetY: 0,
++        rotation: 0,
++        anchor: "bottom-center",
++      },
++      footprint: { cols: 1, rows: 1 },
++      interaction: {
++        clickable: false,
++        label: { text: "", offsetX: 0, offsetY: 0, width: 1, height: 1 },
++        hitArea: { type: "rect", offsetX: 0, offsetY: 0, width: 1, height: 1 },
++      },
++    }
++  );
++  cityLayout.instances = [
++    cityLayout.instances[0],
++    {
++      id: "existing.watchtower",
++      prefabId: "watchtower",
++      gridX: 20,
++      gridY: 20,
++      render: { visible: true, locked: false, zIndexMode: "y-sort", zIndex: null },
++    },
++  ];
++  api.setSources(prefabLibrary, cityLayout, "instance.keep");
++  api.state.editorMode = "city-layout";
++
++  const missing = api.getMissingEnterablePrefabs().map((prefab) => prefab.id);
++
++  assert.deepEqual(missing.includes("keep"), false);
++  assert.deepEqual(missing.includes("watchtower"), false);
++  assert.deepEqual(missing.includes("decor-only"), false);
++  assert.deepEqual(missing.length > 0, true);
++});
++
+ test("prefab image uploads resolve the selected prefab and update prefab-owned asset fields", () => {
+   const api = createEditorRuntimeHarness();
+   const { prefabLibrary, cityLayout } = createSplitEditorSources();
+   api.stubUi();
+   api.assignDom({
+     statusLine: createElement(),
+   });
+   api.stubReadImageFile((file, callback) => {
+     callback("data:image/png;base64,test", {
+       naturalWidth: 640,
+@@ -815,20 +936,360 @@ test("saveJsonFile reuses the remembered handle and overwrites without reopening
+ 
+   await api.saveJsonFile();
+   api.state.prefabLibrary.prefabs[0].name = "Updated Keep";
+   await api.saveJsonFile();
+ 
+   assert.equal(pickerCalls, 1);
+   assert.equal(writes.length, 2);
+   assert.match(writes[1], /Updated Keep/);
+ });
+ 
++test("prefab editor copy uses readable chinese labels for category and entry type", () => {
++  const html = readText(indexPath);
++
++  assert.match(
++    html,
++    /<select id="field-prefab-category">[\s\S]*<option value="special">(?:特殊建筑|&#x7279;&#x6b8a;&#x5efa;&#x7b51;)<\/option>[\s\S]*<option value="house">(?:普通建筑|&#x666e;&#x901a;&#x5efa;&#x7b51;)<\/option>/
++  );
++  assert.match(
++    html,
++    /<select id="field-prefab-entry-type">[\s\S]*<option value="none">(?:无入口|&#x65e0;&#x5165;&#x53e3;)<\/option>[\s\S]*<option value="house">(?:建筑入口|&#x5efa;&#x7b51;&#x5165;&#x53e3;) house<\/option>/
++  );
++  assert.match(
++    html,
++    /id="field-prefab-rotation"/
++  );
++});
++
++test("prefab form updates asset rotation for prefab-owned image transforms", () => {
++  const api = createEditorRuntimeHarness();
++  const { prefabLibrary, cityLayout } = createSplitEditorSources();
++  api.stubUi();
++  api.assignDom({
++    fieldPrefabId: createElement({ value: "keep" }),
++    fieldPrefabName: createElement({ value: "Keep" }),
++    fieldPrefabCategory: createElement({ value: "special" }),
++    fieldPrefabEntryType: createElement({ value: "house" }),
++    fieldPrefabHouseId: createElement({ value: "keep-house" }),
++    fieldPrefabCityEntryId: createElement({ value: "" }),
++    fieldPrefabImage: createElement({ value: "keep.png" }),
++    fieldPrefabNaturalWidth: createElement({ value: "320" }),
++    fieldPrefabNaturalHeight: createElement({ value: "240" }),
++    fieldPrefabScale: createElement({ value: "1" }),
++    fieldPrefabAnchor: createElement({ value: "bottom-center" }),
++    fieldPrefabOffsetX: createElement({ value: "0" }),
++    fieldPrefabOffsetY: createElement({ value: "0" }),
++    fieldPrefabRotation: createElement({ value: "33" }),
++    fieldPrefabCols: createElement({ value: "4" }),
++    fieldPrefabRows: createElement({ value: "3" }),
++    fieldPrefabClickable: createElement({ checked: true }),
++    fieldPrefabLabelText: createElement({ value: "Keep" }),
++    fieldPrefabLabelOffsetX: createElement({ value: "0" }),
++    fieldPrefabLabelOffsetY: createElement({ value: "-32" }),
++    fieldPrefabLabelWidth: createElement({ value: "120" }),
++    fieldPrefabLabelHeight: createElement({ value: "30" }),
++    fieldPrefabHitType: createElement({ value: "diamond" }),
++    fieldPrefabHitOffsetX: createElement({ value: "0" }),
++    fieldPrefabHitOffsetY: createElement({ value: "0" }),
++    fieldPrefabHitWidth: createElement({ value: "160" }),
++    fieldPrefabHitHeight: createElement({ value: "80" }),
++  });
++  api.setSources(prefabLibrary, cityLayout, "instance.keep");
++  api.state.editorMode = "prefab";
++  api.state.selectedPrefabId = "keep";
++
++  api.updatePrefabFromForm();
++
++  assert.equal(api.getSelectedPrefab().asset.rotation, 33);
++});
++
++test("asset preview nodes use semi-transparent rotated prefab imagery", () => {
++  const api = createEditorRuntimeHarness();
++  const { prefabLibrary, cityLayout } = createSplitEditorSources();
++  api.stubUi();
++  api.setSources(prefabLibrary, cityLayout, "instance.keep");
++  const entity = api.getSelectedEntity();
++  entity.asset.rotation = 27;
++
++  const node = api.createAssetNode(entity);
++
++  assert.equal(node.style.opacity, "0.8");
++  assert.match(node.style.transform, /rotate\(27deg\)/);
++});
++
++test("prefab asset nodes expose a visual rotation handle", () => {
++  const api = createEditorRuntimeHarness();
++  const { prefabLibrary, cityLayout } = createSplitEditorSources();
++  api.stubUi();
++  api.setSources(prefabLibrary, cityLayout, "instance.keep");
++  api.state.editorMode = "prefab";
++
++  const node = api.createAssetNode(api.getSelectedEntity());
++  const rotationHandle = node.children.find((child) => child.dataset?.dragMode === "rotate-image");
++
++  assert.ok(rotationHandle);
++  assert.equal(rotationHandle.className, "asset-rotation-handle");
++});
++
++test("dragging the prefab rotation handle updates asset rotation", () => {
++  const api = createEditorRuntimeHarness();
++  const { prefabLibrary, cityLayout } = createSplitEditorSources();
++  api.stubUi();
++  api.assignDom({
++    baseSpace: createElement({
++      getBoundingClientRect() {
++        return { left: 0, top: 0, width: 1771, height: 976 };
++      },
++    }),
++  });
++  api.setSources(prefabLibrary, cityLayout, "instance.keep");
++  api.state.editorMode = "prefab";
++  api.state.selectedPrefabId = "keep";
++  api.state.selectedId = "instance.keep";
++  const entity = api.getSelectedEntity();
++  const anchorX = entity.lot.x + entity.asset.offsetX;
++  const anchorY = entity.lot.y + entity.asset.offsetY;
++  const target = {
++    closest(selector) {
++      if (selector === "[data-drag-mode]") {
++        return { dataset: { dragMode: "rotate-image" } };
++      }
++      if (selector === ".entity") {
++        return { dataset: { entityId: entity.id } };
++      }
++      return null;
++    },
++  };
++
++  api.onCanvasPointerDown({
++    pointerId: 1,
++    clientX: anchorX,
++    clientY: anchorY - 100,
++    target,
++    preventDefault() {},
++  });
++  api.onCanvasPointerMove({
++    pointerId: 1,
++    clientX: anchorX + 100,
++    clientY: anchorY,
++  });
++  api.stopDrag({ pointerId: 1 });
++
++  assert.equal(api.getSelectedPrefab().asset.rotation, 90);
++});
++
++test("loadDefaultPrefabLibrary populates prefabs before any city layout is loaded", async () => {
++  const api = createEditorRuntimeHarness();
++  api.stubUi();
++  api.stubFetch(async () => ({
++    ok: true,
++    async json() {
++      return {
++        version: 2,
++        prefabs: [{
++          id: "default-prefab",
++          name: "Default Prefab",
++          category: "decoration",
++          asset: { image: "default.png", naturalWidth: 32, naturalHeight: 32, scale: 1, anchor: "bottom-center", offsetX: 0, offsetY: 0 },
++          footprint: { cols: 1, rows: 1 },
++          interaction: { clickable: false, label: { text: "", offsetX: 0, offsetY: 0, width: 80, height: 24 }, hitArea: { type: "rect", offsetX: 0, offsetY: 0, width: 24, height: 24 } },
++          entry: { type: "none" }
++        }]
++      };
++    }
++  }));
++
++  api.state.prefabLibrary.prefabs = [];
++  await api.loadDefaultPrefabLibrary();
++
++  assert.equal(api.state.prefabLibrary.prefabs.length, 1);
++  assert.equal(api.state.prefabLibrary.prefabs[0].id, "default-prefab");
++  assert.equal(api.state.selectedPrefabId, "default-prefab");
++});
++
++test("init auto-loads the default prefab library for prefab-first editing", async () => {
++  const api = createEditorRuntimeHarness();
++  api.stubUi();
++  api.assignDom({
++    prefabForm: createElement({ elements: [] }),
++    cityLayoutForm: createElement({ elements: [] }),
++  });
++  let fetchedPath = null;
++  api.stubFetch(async (url) => {
++    fetchedPath = url;
++    return {
++      ok: true,
++      async json() {
++        return {
++          prefabs: [
++            {
++              id: "boot-prefab",
++              name: "Boot Prefab",
++              category: "special",
++              entry: { type: "none", houseId: "", cityEntryId: "" },
++              asset: {
++                image: "boot.png",
++                naturalWidth: 64,
++                naturalHeight: 64,
++                scale: 1,
++                anchor: "bottom-center",
++                offsetX: 0,
++                offsetY: 0,
++              },
++              footprint: { cols: 1, rows: 1 },
++              interaction: {
++                clickable: false,
++                label: { text: "", offsetX: 0, offsetY: -24, width: 80, height: 24 },
++                hitArea: { type: "rect", offsetX: 0, offsetY: 0, width: 80, height: 40 },
++              },
++            },
++          ],
++        };
++      },
++    };
++  });
++
++  api.init();
++  await new Promise((resolve) => setTimeout(resolve, 0));
++  await new Promise((resolve) => setTimeout(resolve, 0));
++
++  assert.equal(
++    fetchedPath,
++    "examples/haozhou-city-prefabs.example.json"
++  );
++  assert.equal(api.state.prefabLibrary.prefabs.length, 1);
++  assert.equal(api.state.prefabLibrary.prefabs[0].id, "boot-prefab");
++  assert.equal(api.state.selectedPrefabId, "boot-prefab");
++});
++
++test("prefab mode exposes a standalone preview entity even when no city instance exists", () => {
++  const api = createEditorRuntimeHarness();
++  const { prefabLibrary, cityLayout } = createSplitEditorSources();
++  api.stubUi();
++  cityLayout.instances = [];
++  api.setSources(prefabLibrary, cityLayout);
++  api.state.editorMode = "prefab";
++
++  api.selectPrefab("watchtower");
++
++  const previewEntity = api.getSelectedEntity();
++  assert.ok(previewEntity);
++  assert.equal(previewEntity.prefabId, "watchtower");
++  assert.equal(previewEntity.lot.cols, 2);
++  assert.equal(previewEntity.lot.rows, 2);
++});
++
++test("street cells are marked in the grid markup and cannot receive city-layout placement", () => {
++  const api = createEditorRuntimeHarness();
++  const { prefabLibrary, cityLayout } = createSplitEditorSources();
++  api.stubUi();
++  api.setSources(prefabLibrary, cityLayout, "instance.keep");
++  api.state.editorMode = "city-layout";
++  api.state.selectedInstanceId = "instance.keep";
++  api.state.selectedId = "instance.keep";
++  api.state.layout.grid.cols = 40;
++  api.state.layout.grid.rows = 40;
++  api.state.cityLayout.grid.cols = 40;
++  api.state.cityLayout.grid.rows = 40;
++
++  assert.equal(api.isStreetGridCell(16, 5), true);
++  assert.equal(api.isStreetGridCell(5, 17), true);
++  assert.equal(api.isStreetGridCell(5, 5), false);
++  assert.match(api.createBoardGridMarkup(), /board-cell is-street/);
++
++  api.onBoardClick({
++    target: {
++      closest(selector) {
++        if (selector !== ".board-cell") {
++          return null;
++        }
++        return {
++          dataset: {
++            gridX: "16",
++            gridY: "5",
++          },
++        };
++      },
++    },
++  });
++
++  assert.equal(api.getSelectedInstance().gridX, 2);
++  assert.equal(api.getSelectedInstance().gridY, 3);
++});
++
++test("street cells use dedicated red styling in the editor stylesheet", () => {
++  const html = readText(indexPath);
++
++  assert.match(html, /\.board-cell\.is-street\s*\{/);
++  assert.match(html, /\.board-cell\.is-street[\s\S]*fill:\s*rgb\(235 108 95 \/ 2[0-9]%\)/);
++  assert.match(html, /\.board-cell\.is-street[\s\S]*stroke:\s*rgb\(255 145 132 \/ 9[0-9]%\)/);
++});
++
++test("prefab mode uses a standalone preview entity for canvas rendering", () => {
++  const api = createEditorRuntimeHarness();
++  const { prefabLibrary, cityLayout } = createSplitEditorSources();
++  api.stubUi();
++  cityLayout.instances = [];
++  api.setSources(prefabLibrary, cityLayout);
++  api.state.editorMode = "prefab";
++  api.selectPrefab("watchtower");
++  api.assignDom({
++    entityLayer: createElement(),
++  });
++
++  api.renderEntities();
++
++  assert.equal(api.getCanvasEntities().length, 1);
++  assert.equal(api.dom.entityLayer.children.length, 1);
++  assert.equal(api.dom.entityLayer.children[0].dataset.entityId, "prefab-preview:watchtower");
++});
++
++test("prefab mode hides city background and foreground map imagery", () => {
++  const api = createEditorRuntimeHarness();
++  const { prefabLibrary, cityLayout } = createSplitEditorSources();
++  api.stubUi();
++  api.setSources(prefabLibrary, cityLayout);
++  api.state.editorMode = "prefab";
++
++  assert.equal(api.shouldRenderCityMapImages(), false);
++
++  api.state.editorMode = "city-layout";
++  assert.equal(api.shouldRenderCityMapImages(), true);
++});
++
++test("city-layout sync updates instance placement without mutating prefab visuals", () => {
++  const api = createEditorRuntimeHarness();
++  const { prefabLibrary, cityLayout } = createSplitEditorSources();
++  api.stubUi();
++  api.setSources(prefabLibrary, cityLayout, "instance.keep");
++  api.state.editorMode = "city-layout";
++  api.state.selectedInstanceId = "instance.keep";
++  api.state.selectedId = "instance.keep";
++  api.state.selectedPrefabId = "keep";
++
++  const prefabBefore = structuredClone(api.state.prefabLibrary.prefabs[0]);
++  const entity = api.getSelectedEntity();
++  entity.lot.gridX = 7;
++  entity.lot.gridY = 8;
++  entity.asset.offsetX = 99;
++  entity.interaction.label.offsetY = -999;
++
++  api.syncEntityBackToSources(entity);
++
++  assert.equal(api.getSelectedInstance().gridX, 7);
++  assert.equal(api.getSelectedInstance().gridY, 8);
++  assert.equal(
++    JSON.stringify(api.state.prefabLibrary.prefabs[0]),
++    JSON.stringify(prefabBefore)
++  );
++});
++
+ test("editor converts legacy entity layouts into prefabs and instances", () => {
+   const api = createEditorRuntimeHarness();
+   const { cityLayout } = createSplitEditorSources();
+   api.stubUi();
+ 
+   const converted = api.convertLegacyEntitiesLayout({
+     version: 1,
+     map: cityLayout.map,
+     grid: cityLayout.grid,
+     entities: [
+diff --git a/tools/city-map-building-editor/index.html b/tools/city-map-building-editor/index.html
+index 17f9d9f..e23305a 100644
+--- a/tools/city-map-building-editor/index.html
++++ b/tools/city-map-building-editor/index.html
+@@ -1,11 +1,11 @@
+-<!doctype html>
++﻿<!doctype html>
+ <html lang="zh-Hans">
+ <head>
+   <meta charset="utf-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1">
+   <title>城市地图建筑实体 / 地块编辑器</title>
+   <style>
+     :root {
+       color-scheme: dark;
+       --bg: #151712;
+       --panel: #22261f;
+@@ -183,21 +183,21 @@
+ 
+     .panel__title {
+       margin: 0 0 10px;
+       color: #fff0bf;
+       font-size: 13px;
+       font-weight: 800;
+     }
+ 
+     .button-row {
+       display: grid;
+-      grid-template-columns: repeat(3, 1fr);
++      grid-template-columns: repeat(4, 1fr);
+       gap: 6px;
+     }
+ 
+     .filter-row {
+       display: grid;
+       grid-template-columns: 62px 1fr;
+       gap: 8px;
+       align-items: center;
+       color: var(--muted);
+     }
+@@ -466,20 +466,33 @@
+       pointer-events: auto;
+     }
+ 
+     .board-cell:hover,
+     .board-cell.is-hovered {
+       fill: rgb(241 198 92 / 24%);
+       stroke: rgb(255 223 126 / 90%);
+       stroke-width: 2;
+     }
+ 
++    .board-cell.is-street {
++      fill: rgb(235 108 95 / 22%);
++      stroke: rgb(255 145 132 / 96%);
++      stroke-width: 1.8;
++    }
++
++    .board-cell.is-street:hover,
++    .board-cell.is-street.is-hovered {
++      fill: rgb(235 108 95 / 32%);
++      stroke: rgb(255 186 176 / 100%);
++      stroke-width: 2.2;
++    }
++
+     .board-coordinate {
+       fill: rgb(255 246 213 / 58%);
+       font-size: 9px;
+       font-weight: 700;
+       pointer-events: none;
+       text-anchor: middle;
+       dominant-baseline: middle;
+     }
+ 
+     .board-outline {
+@@ -596,20 +609,41 @@
+       z-index: 8;
+       width: 16px;
+       height: 16px;
+       border: 2px solid #fff2c7;
+       border-radius: 50%;
+       background: var(--blue);
+       cursor: nwse-resize;
+       pointer-events: auto;
+     }
+ 
++    .asset-rotation-handle {
++      position: absolute;
++      z-index: 8;
++      display: grid;
++      place-items: center;
++      width: 18px;
++      height: 18px;
++      border: 2px solid #fff4c2;
++      border-radius: 50%;
++      background: #7fd0ff;
++      box-shadow:
++        0 0 0 3px rgb(0 0 0 / 36%),
++        0 0 12px rgb(127 208 255 / 48%);
++      color: #082138;
++      font-size: 11px;
++      font-weight: 900;
++      pointer-events: auto;
++      transform: translate(-50%, -50%);
++      cursor: grab;
++    }
++
+     .entity__label {
+       position: absolute;
+       z-index: 9;
+       display: inline-flex;
+       align-items: center;
+       justify-content: center;
+       overflow: hidden;
+       padding: 3px 5px;
+       border: 1px solid rgb(230 200 118 / 90%);
+       border-radius: 6px;
+@@ -931,20 +965,21 @@
+     </header>
+ 
+     <main class="workspace">
+       <aside class="panel" aria-label="左侧建筑列表">
+         <section class="panel__section">
+           <h2 class="panel__title">建筑列表</h2>
+           <div class="button-row">
+             <button type="button" id="add-entity">新建建筑</button>
+             <button type="button" id="duplicate-entity">复制建筑</button>
+             <button type="button" id="delete-entity">删除建筑</button>
++            <button type="button" id="auto-place-enterable-buildings">一键补齐可进入建筑</button>
+           </div>
+         </section>
+         <section class="panel__section">
+           <div class="filter-row">
+             <label for="category-filter">类型</label>
+             <select id="category-filter">
+               <option value="all">全部建筑</option>
+               <option value="special">特殊建筑</option>
+               <option value="house">普通建筑</option>
+               <option value="random-slot">随机民居槽位</option>
+@@ -969,112 +1004,113 @@
+               <span class="inline-label">当前布局 JSON</span>
+               <textarea id="layout-json-preview" spellcheck="false" readonly aria-label="当前布局 JSON"></textarea>
+             </label>
+             <button type="button" id="copy-layout-json">复制当前布局 JSON 到剪贴板</button>
+           </div>
+         </details>
+         <section class="panel__section hidden" id="properties-empty">
+           <div class="empty-state">Prefab Editor owns visual, interaction, and footprint truth. City Layout owns placement and instance render metadata only.</div>
+         </section>
+ 
+-        <form class="panel__section form-grid hidden" id="prefab-form">
++                <form class="panel__section form-grid hidden" id="prefab-form">
+           <h2 class="panel__title">Prefab Editor</h2>
+           <div class="field-row">
+             <label class="field"><span>Prefab ID</span><input id="field-prefab-id" type="text"></label>
+             <label class="field"><span>Prefab Name</span><input id="field-prefab-name" type="text"></label>
+           </div>
+           <label class="field">
+             <span>Category</span>
+             <select id="field-prefab-category">
+-              <option value="special">鐗规畩寤虹瓚</option>
+-              <option value="house">鏅€氬缓绛?/option>
+-              <option value="random-slot">闅忔満姘戝眳妲戒綅</option>
+-              <option value="decoration">瑁呴グ寤虹瓚</option>
+-              <option value="ground-decoration">鍦伴潰瑁呴グ</option>
++              <option value="special">&#x7279;&#x6b8a;&#x5efa;&#x7b51;</option>
++              <option value="house">&#x666e;&#x901a;&#x5efa;&#x7b51;</option>
++              <option value="random-slot">&#x968f;&#x673a;&#x6c11;&#x5c45;&#x69fd;&#x4f4d;</option>
++              <option value="decoration">&#x88c5;&#x9970;&#x5efa;&#x7b51;</option>
++              <option value="ground-decoration">&#x5730;&#x9762;&#x88c5;&#x9970;</option>
+             </select>
+           </label>
+-          <h2 class="panel__title">鍏ュ彛缁戝畾</h2>
++          <h2 class="panel__title">&#x5165;&#x53e3;&#x7ed1;&#x5b9a;</h2>
+           <label class="field">
+-            <span>鍏ュ彛绫诲瀷</span>
++            <span>&#x5165;&#x53e3;&#x7c7b;&#x578b;</span>
+             <select id="field-prefab-entry-type">
+-              <option value="none">鏃犲叆鍙?/option>
+-              <option value="house">寤虹瓚鍏ュ彛 house</option>
+-              <option value="city-entry">鍦扮偣鍏ュ彛 city-entry</option>
++              <option value="none">&#x65e0;&#x5165;&#x53e3;</option>
++              <option value="house">&#x5efa;&#x7b51;&#x5165;&#x53e3; house</option>
++              <option value="city-entry">&#x5730;&#x70b9;&#x5165;&#x53e3; city-entry</option>
+             </select>
+           </label>
+           <label class="field"><span>houseId</span><input id="field-prefab-house-id" type="text" placeholder="house.kulan.keep"></label>
+           <label class="field"><span>cityEntryId</span><input id="field-prefab-city-entry-id" type="text" placeholder="city-entry.kulan.leader-residence"></label>
+-          <h2 class="panel__title">鍥剧墖</h2>
+-          <label class="field"><span>鍥剧墖璺緞</span><input id="field-prefab-image" type="text" placeholder="ui/yuansu/鑿卞舰鏍煎瓙/shuaifu.png"></label>
++          <h2 class="panel__title">&#x56fe;&#x7247;</h2>
++          <label class="field"><span>&#x56fe;&#x7247;&#x8def;&#x5f84;</span><input id="field-prefab-image" type="text" placeholder="ui/yuansu/&#x83f1;&#x5f62;&#x683c;&#x5b50;/shuaifu.png"></label>
+           <div class="field-row">
+-            <label class="field"><span>鍘熷瀹藉害</span><input id="field-prefab-natural-width" type="number" min="0" step="1"></label>
+-            <label class="field"><span>鍘熷楂樺害</span><input id="field-prefab-natural-height" type="number" min="0" step="1"></label>
++            <label class="field"><span>&#x539f;&#x59cb;&#x5bbd;&#x5ea6;</span><input id="field-prefab-natural-width" type="number" min="0" step="1"></label>
++            <label class="field"><span>&#x539f;&#x59cb;&#x9ad8;&#x5ea6;</span><input id="field-prefab-natural-height" type="number" min="0" step="1"></label>
+           </div>
+           <div class="field-row">
+-            <label class="field"><span>鍥剧墖缂╂斁</span><input id="field-prefab-scale" type="number" min="0.01" step="0.01"></label>
+-            <label class="field"><span>鍥剧墖閿氱偣</span><select id="field-prefab-anchor"><option value="bottom-center">搴曢儴灞呬腑</option><option value="center">涓績</option><option value="top-left">宸︿笂瑙?/option></select></label>
++            <label class="field"><span>&#x56fe;&#x7247;&#x7f29;&#x653e;</span><input id="field-prefab-scale" type="number" min="0.01" step="0.01"></label>
++            <label class="field"><span>&#x56fe;&#x7247;&#x951a;&#x70b9;</span><select id="field-prefab-anchor"><option value="bottom-center">&#x5e95;&#x90e8;&#x5c45;&#x4e2d;</option><option value="center">&#x4e2d;&#x5fc3;</option><option value="top-left">&#x5de6;&#x4e0a;&#x89d2;</option></select></label>
+           </div>
+           <div class="field-row">
+-            <label class="field"><span>鍥剧墖鍋忕Щ X</span><input id="field-prefab-offset-x" type="number" step="1"></label>
+-            <label class="field"><span>鍥剧墖鍋忕Щ Y</span><input id="field-prefab-offset-y" type="number" step="1"></label>
++            <label class="field"><span>&#x56fe;&#x7247;&#x504f;&#x79fb; X</span><input id="field-prefab-offset-x" type="number" step="1"></label>
++            <label class="field"><span>&#x56fe;&#x7247;&#x504f;&#x79fb; Y</span><input id="field-prefab-offset-y" type="number" step="1"></label>
+           </div>
++          <label class="field"><span>&#x56fe;&#x7247;&#x65cb;&#x8f6c;</span><input id="field-prefab-rotation" type="number" step="1"></label>
+           <h2 class="panel__title">Footprint</h2>
+           <div class="field-row">
+-            <label class="field"><span>鍗犲湴鍒楁暟</span><input id="field-prefab-cols" type="number" min="1" step="1"></label>
+-            <label class="field"><span>鍗犲湴琛屾暟</span><input id="field-prefab-rows" type="number" min="1" step="1"></label>
++            <label class="field"><span>&#x5360;&#x5730;&#x5217;&#x6570;</span><input id="field-prefab-cols" type="number" min="1" step="1"></label>
++            <label class="field"><span>&#x5360;&#x5730;&#x884c;&#x6570;</span><input id="field-prefab-rows" type="number" min="1" step="1"></label>
+           </div>
+-          <h2 class="panel__title">浜や簰</h2>
++          <h2 class="panel__title">&#x4ea4;&#x4e92;</h2>
+           <div class="check-row">
+-            <label><input id="field-prefab-clickable" type="checkbox"> 鍙偣鍑?/label>
++            <label><input id="field-prefab-clickable" type="checkbox"> &#x53ef;&#x70b9;&#x51fb;</label>
+           </div>
+-          <label class="field"><span>鏍囩鎸夐挳鏂囧瓧</span><input id="field-prefab-label-text" type="text"></label>
++          <label class="field"><span>&#x6807;&#x7b7e;&#x6309;&#x94ae;&#x6587;&#x5b57;</span><input id="field-prefab-label-text" type="text"></label>
+           <div class="field-row">
+-            <label class="field"><span>鏍囩鍋忕Щ X</span><input id="field-prefab-label-offset-x" type="number" step="1"></label>
+-            <label class="field"><span>鏍囩鍋忕Щ Y</span><input id="field-prefab-label-offset-y" type="number" step="1"></label>
++            <label class="field"><span>&#x6807;&#x7b7e;&#x504f;&#x79fb; X</span><input id="field-prefab-label-offset-x" type="number" step="1"></label>
++            <label class="field"><span>&#x6807;&#x7b7e;&#x504f;&#x79fb; Y</span><input id="field-prefab-label-offset-y" type="number" step="1"></label>
+           </div>
+           <div class="field-row">
+-            <label class="field"><span>鏍囩瀹藉害</span><input id="field-prefab-label-width" type="number" min="1" step="1"></label>
+-            <label class="field"><span>鏍囩楂樺害</span><input id="field-prefab-label-height" type="number" min="1" step="1"></label>
++            <label class="field"><span>&#x6807;&#x7b7e;&#x5bbd;&#x5ea6;</span><input id="field-prefab-label-width" type="number" min="1" step="1"></label>
++            <label class="field"><span>&#x6807;&#x7b7e;&#x9ad8;&#x5ea6;</span><input id="field-prefab-label-height" type="number" min="1" step="1"></label>
+           </div>
+-          <label class="field"><span>鐐瑰嚮鍖哄煙褰㈢姸</span><select id="field-prefab-hit-type"><option value="rect">鐭╁舰</option><option value="ellipse">妞渾</option></select></label>
++          <label class="field"><span>&#x70b9;&#x51fb;&#x533a;&#x57df;&#x5f62;&#x72b6;</span><select id="field-prefab-hit-type"><option value="rect">&#x77e9;&#x5f62;</option><option value="ellipse">&#x692d;&#x5706;</option></select></label>
+           <div class="field-row">
+-            <label class="field"><span>鐐瑰嚮鍖哄煙鍋忕Щ X</span><input id="field-prefab-hit-offset-x" type="number" step="1"></label>
+-            <label class="field"><span>鐐瑰嚮鍖哄煙鍋忕Щ Y</span><input id="field-prefab-hit-offset-y" type="number" step="1"></label>
++            <label class="field"><span>&#x70b9;&#x51fb;&#x533a;&#x57df;&#x504f;&#x79fb; X</span><input id="field-prefab-hit-offset-x" type="number" step="1"></label>
++            <label class="field"><span>&#x70b9;&#x51fb;&#x533a;&#x57df;&#x504f;&#x79fb; Y</span><input id="field-prefab-hit-offset-y" type="number" step="1"></label>
+           </div>
+           <div class="field-row">
+-            <label class="field"><span>鐐瑰嚮鍖哄煙瀹藉害</span><input id="field-prefab-hit-width" type="number" min="1" step="1"></label>
+-            <label class="field"><span>鐐瑰嚮鍖哄煙楂樺害</span><input id="field-prefab-hit-height" type="number" min="1" step="1"></label>
++            <label class="field"><span>&#x70b9;&#x51fb;&#x533a;&#x57df;&#x5bbd;&#x5ea6;</span><input id="field-prefab-hit-width" type="number" min="1" step="1"></label>
++            <label class="field"><span>&#x70b9;&#x51fb;&#x533a;&#x57df;&#x9ad8;&#x5ea6;</span><input id="field-prefab-hit-height" type="number" min="1" step="1"></label>
+           </div>
+         </form>
+ 
+         <form class="panel__section form-grid hidden" id="city-layout-form">
+           <h2 class="panel__title">City Layout</h2>
+           <div class="field-row">
+             <label class="field"><span>Instance ID</span><input id="field-instance-id" type="text"></label>
+             <label class="field"><span>Prefab ID</span><input id="field-instance-prefab-id" type="text" readonly></label>
+           </div>
+           <div class="field-row">
+-            <label class="field"><span>鏍煎瓙 X</span><input id="field-instance-grid-x" type="number" step="1"></label>
+-            <label class="field"><span>鏍煎瓙 Y</span><input id="field-instance-grid-y" type="number" step="1"></label>
++            <label class="field"><span>&#x683c;&#x5b50; X</span><input id="field-instance-grid-x" type="number" step="1"></label>
++            <label class="field"><span>&#x683c;&#x5b50; Y</span><input id="field-instance-grid-y" type="number" step="1"></label>
+           </div>
+           <div class="field-row">
+-            <label class="field"><span>Footprint 鍒楁暟</span><input id="field-instance-cols" type="number" readonly></label>
+-            <label class="field"><span>Footprint 琛屾暟</span><input id="field-instance-rows" type="number" readonly></label>
++            <label class="field"><span>Footprint &#x5217;&#x6570;</span><input id="field-instance-cols" type="number" readonly></label>
++            <label class="field"><span>Footprint &#x884c;&#x6570;</span><input id="field-instance-rows" type="number" readonly></label>
+           </div>
+           <h2 class="panel__title">Instance Render</h2>
+           <div class="check-row">
+-            <label><input id="field-instance-visible" type="checkbox"> 鍙</label>
+-            <label><input id="field-instance-locked" type="checkbox"> 閿佸畾</label>
++            <label><input id="field-instance-visible" type="checkbox"> &#x53ef;&#x89c1;</label>
++            <label><input id="field-instance-locked" type="checkbox"> &#x9501;&#x5b9a;</label>
+           </div>
+           <div class="field-row">
+-            <label class="field"><span>灞傜骇妯″紡</span><select id="field-instance-z-index-mode"><option value="y-sort">鎸?Y 鑷姩鎺掑簭</option><option value="manual">鎵嬪姩灞傜骇</option></select></label>
+-            <label class="field"><span>鎵嬪姩灞傜骇</span><input id="field-instance-z-index" type="number" step="1"></label>
++            <label class="field"><span>&#x5c42;&#x7ea7;&#x6a21;&#x5f0f;</span><select id="field-instance-z-index-mode"><option value="y-sort">&#x6309; Y &#x81ea;&#x52a8;&#x6392;&#x5e8f;</option><option value="manual">&#x624b;&#x52a8;&#x5c42;&#x7ea7;</option></select></label>
++            <label class="field"><span>&#x624b;&#x52a8;&#x5c42;&#x7ea7;</span><input id="field-instance-z-index" type="number" step="1"></label>
+           </div>
+         </form>
+       </aside>
+ 
+       <section class="editor" aria-label="中央画布">
+         <div class="editor__bar">
+           <div class="editor__meta">
+             <span><strong id="map-title">濠州城</strong></span>
+             <span id="stage-readout">舞台 2048x1152</span>
+             <span id="base-readout">地图编辑区域 1771x976 @ 139,88</span>
+@@ -1290,20 +1326,21 @@
+           { x: 1465, y: 725 },
+           { x: 1625, y: 770 },
+           { x: 1240, y: 940 },
+           { x: 560, y: 932 }
+         ]
+       }
+     ];
+ 
+     const HAOZHOU_LAYOUT_EXAMPLE_PATH = "examples/haozhou-city-layout.example.json";
+     const HAOZHOU_PREFAB_EXAMPLE_PATH = "examples/haozhou-city-prefabs.example.json";
++    const STREET_GRID_INDEXES = new Set([16, 17]);
+ 
+     const EMPTY_LAYOUT = {
+       version: 1,
+       map: {
+         id: "haozhou-city",
+         name: "濠州城",
+         stageWidth: 2048,
+         stageHeight: 1152,
+         baseSpace: { x: 139, y: 88, width: 1771, height: 976 },
+         backgroundImage: "ui/yuansu/菱形格子/20260716-111958.png",
+@@ -1461,20 +1498,21 @@
+         "buildable-opacity",
+         "grid-opacity",
+         "entity-form",
+         "entity-form-empty",
+         "properties-empty",
+         "prefab-form",
+         "city-layout-form",
+         "add-entity",
+         "duplicate-entity",
+         "delete-entity",
++        "auto-place-enterable-buildings",
+         "field-id",
+         "field-name",
+         "field-category",
+         "field-entry-type",
+         "field-house-id",
+         "field-city-entry-id",
+         "field-image",
+         "field-natural-width",
+         "field-natural-height",
+         "field-scale",
+@@ -1510,20 +1548,21 @@
+         "field-prefab-entry-type",
+         "field-prefab-house-id",
+         "field-prefab-city-entry-id",
+         "field-prefab-image",
+         "field-prefab-natural-width",
+         "field-prefab-natural-height",
+         "field-prefab-scale",
+         "field-prefab-anchor",
+         "field-prefab-offset-x",
+         "field-prefab-offset-y",
++        "field-prefab-rotation",
+         "field-prefab-cols",
+         "field-prefab-rows",
+         "field-prefab-clickable",
+         "field-prefab-label-text",
+         "field-prefab-label-offset-x",
+         "field-prefab-label-offset-y",
+         "field-prefab-label-width",
+         "field-prefab-label-height",
+         "field-prefab-hit-type",
+         "field-prefab-hit-offset-x",
+@@ -1539,20 +1578,21 @@
+         "field-instance-visible",
+         "field-instance-locked",
+         "field-instance-z-index-mode",
+         "field-instance-z-index"
+       ]) {
+         dom[toKey(id)] = document.getElementById(id);
+       }
+       syncEditorLayoutFromSources();
+       bindEvents();
+       render();
++      void loadDefaultPrefabLibrary();
+     }
+ 
+     function toKey(id) {
+       return id.replace(/-([a-z])/g, (_, character) => character.toUpperCase());
+     }
+ 
+     function bindEvents() {
+       dom.newLayout.addEventListener("click", () => {
+         if (!confirm("清空当前布局并新建空白 city-map-layout.json？")) {
+           return;
+@@ -1591,20 +1631,21 @@
+           selectInstance(button.dataset.quickId);
+           return;
+         }
+         if (prefabButton != null) {
+           selectPrefab(prefabButton.dataset.quickPrefabId);
+         }
+       });
+       dom.addEntity.addEventListener("click", addEntity);
+       dom.duplicateEntity.addEventListener("click", duplicateEntity);
+       dom.deleteEntity.addEventListener("click", deleteEntity);
++      dom.autoPlaceEnterableBuildings.addEventListener("click", autoPlaceMissingEnterableBuildings);
+       dom.copyLayoutJson.addEventListener("click", copyLayoutJson);
+       dom.randomPoolsJson.addEventListener("change", updateRandomPoolsFromTextarea);
+       dom.optionalMaskJson.addEventListener("change", updateOptionalMaskFromTextarea);
+       dom.forbiddenPolygonsJson.addEventListener("change", updateForbiddenPolygonsFromTextarea);
+ 
+       for (const element of [
+         dom.boardCols,
+         dom.boardRows,
+         dom.gridOriginX,
+         dom.gridOriginY,
+@@ -1761,20 +1802,21 @@
+         name: String(safe.name || "未命名 Prefab"),
+         category: CATEGORY_LABELS[safe.category] ? safe.category : "decoration",
+         entry: normalizeEntry(safe.entry),
+         asset: {
+           image: "",
+           naturalWidth: 512,
+           naturalHeight: 512,
+           scale: 0.25,
+           offsetX: 0,
+           offsetY: 0,
++          rotation: 0,
+           anchor: "bottom-center",
+           ...(safe.asset || {})
+         },
+         footprint: {
+           cols: Math.max(1, Math.round(numberOr(safe.footprint?.cols, 2))),
+           rows: Math.max(1, Math.round(numberOr(safe.footprint?.rows, 2)))
+         },
+         interaction: {
+           clickable: Boolean(safeInteraction.clickable),
+           label: {
+@@ -2014,20 +2056,23 @@
+       if (instance != null) {
+         instance.gridX = entity.lot.gridX;
+         instance.gridY = entity.lot.gridY;
+         instance.render = {
+           visible: entity.render.visible,
+           locked: entity.render.locked,
+           zIndexMode: entity.render.zIndexMode,
+           zIndex: entity.render.zIndex ?? null
+         };
+       }
++      if (state.editorMode !== "prefab") {
++        return;
++      }
+       const prefab = state.prefabLibrary.prefabs.find((candidate) => candidate.id === (entity.prefabId || state.selectedPrefabId));
+       if (prefab != null) {
+         prefab.name = entity.name;
+         prefab.category = entity.category;
+         prefab.entry = clone(entity.entry);
+         prefab.asset = clone(entity.asset);
+         prefab.footprint = {
+           cols: entity.lot.cols,
+           rows: entity.lot.rows
+         };
+@@ -2095,20 +2140,21 @@
+         name: String(safe.name || "未命名建筑"),
+         category: CATEGORY_LABELS[safe.category] ? safe.category : "decoration",
+         entry: normalizeEntry(safe.entry),
+         asset: {
+           image: "",
+           naturalWidth: 512,
+           naturalHeight: 512,
+           scale: 0.25,
+           offsetX: 0,
+           offsetY: 0,
++          rotation: 0,
+           anchor: "bottom-center",
+           ...(safe.asset || {})
+         },
+         lot: {
+           x: 860,
+           y: 520,
+           gridX: 8,
+           gridY: 6,
+           cols: 2,
+           rows: 2,
+@@ -2153,20 +2199,21 @@
+           allowedTags: [],
+           ...safe.random
+         };
+       }
+ 
+       normalized.asset.naturalWidth = numberOr(normalized.asset.naturalWidth, 512);
+       normalized.asset.naturalHeight = numberOr(normalized.asset.naturalHeight, 512);
+       normalized.asset.scale = numberOr(normalized.asset.scale, 0.25);
+       normalized.asset.offsetX = numberOr(normalized.asset.offsetX, 0);
+       normalized.asset.offsetY = numberOr(normalized.asset.offsetY, 0);
++      normalized.asset.rotation = numberOr(normalized.asset.rotation, 0);
+       normalized.lot.x = numberOr(normalized.lot.x, 860);
+       normalized.lot.y = numberOr(normalized.lot.y, 520);
+       normalized.lot.cols = Math.max(1, Math.round(numberOr(normalized.lot.cols, 2)));
+       normalized.lot.rows = Math.max(1, Math.round(numberOr(normalized.lot.rows, 2)));
+       const derivedGrid = pixelToGridForGrid(normalized.lot.x, normalized.lot.y, grid);
+       normalized.lot.gridX = Math.round(numberOr(safeLot.gridX, derivedGrid.gridX));
+       normalized.lot.gridY = Math.round(numberOr(safeLot.gridY, derivedGrid.gridY));
+       normalized.lot.offsetX = numberOr(normalized.lot.offsetX, 0);
+       normalized.lot.offsetY = numberOr(normalized.lot.offsetY, 0);
+       clampLotToBoard(normalized, grid);
+@@ -2587,20 +2634,21 @@
+       dom.fieldPrefabCategory.value = prefab.category;
+       dom.fieldPrefabEntryType.value = prefab.entry.type;
+       dom.fieldPrefabHouseId.value = prefab.entry.type === "house" ? prefab.entry.houseId : "";
+       dom.fieldPrefabCityEntryId.value = prefab.entry.type === "city-entry" ? prefab.entry.cityEntryId : "";
+       dom.fieldPrefabImage.value = prefab.asset.image;
+       dom.fieldPrefabNaturalWidth.value = prefab.asset.naturalWidth;
+       dom.fieldPrefabNaturalHeight.value = prefab.asset.naturalHeight;
+       dom.fieldPrefabScale.value = prefab.asset.scale;
+       dom.fieldPrefabOffsetX.value = prefab.asset.offsetX;
+       dom.fieldPrefabOffsetY.value = prefab.asset.offsetY;
++      dom.fieldPrefabRotation.value = prefab.asset.rotation ?? 0;
+       dom.fieldPrefabAnchor.value = prefab.asset.anchor;
+       dom.fieldPrefabCols.value = prefab.footprint.cols;
+       dom.fieldPrefabRows.value = prefab.footprint.rows;
+       dom.fieldPrefabClickable.checked = Boolean(prefab.interaction.clickable);
+       dom.fieldPrefabLabelText.value = prefab.interaction.label.text;
+       dom.fieldPrefabLabelOffsetX.value = prefab.interaction.label.offsetX;
+       dom.fieldPrefabLabelOffsetY.value = prefab.interaction.label.offsetY;
+       dom.fieldPrefabLabelWidth.value = prefab.interaction.label.width;
+       dom.fieldPrefabLabelHeight.value = prefab.interaction.label.height;
+       dom.fieldPrefabHitType.value = prefab.interaction.hitArea.type;
+@@ -2653,54 +2701,58 @@
+ 
+       dom.stageShell.style.width = `${map.stageWidth * state.zoom}px`;
+       dom.stageShell.style.height = `${map.stageHeight * state.zoom}px`;
+       dom.stage.style.width = `${map.stageWidth}px`;
+       dom.stage.style.height = `${map.stageHeight}px`;
+       dom.stage.style.transform = `scale(${state.zoom})`;
+       dom.baseSpace.style.left = `${base.x}px`;
+       dom.baseSpace.style.top = `${base.y}px`;
+       dom.baseSpace.style.width = `${base.width}px`;
+       dom.baseSpace.style.height = `${base.height}px`;
+-      dom.backgroundImage.src = getPreviewUrl(state.backgroundPreview || map.backgroundImage);
+-      dom.backgroundImage.classList.toggle("has-image", Boolean(state.backgroundPreview || map.backgroundImage));
++      const showCityMapImages = shouldRenderCityMapImages();
++      const backgroundImage = showCityMapImages ? getPreviewUrl(state.backgroundPreview || map.backgroundImage) : "";
++      const foregroundImage = showCityMapImages ? getPreviewUrl(state.foregroundPreview || map.foregroundImage) : "";
++      dom.backgroundImage.src = backgroundImage;
++      dom.backgroundImage.classList.toggle("has-image", Boolean(backgroundImage));
+       dom.backgroundImage.style.opacity = String(state.opacity.background);
+-      dom.foregroundImage.src = getPreviewUrl(state.foregroundPreview || map.foregroundImage);
+-      dom.foregroundImage.classList.toggle("has-image", Boolean(state.foregroundPreview || map.foregroundImage));
++      dom.foregroundImage.src = foregroundImage;
++      dom.foregroundImage.classList.toggle("has-image", Boolean(foregroundImage));
+       dom.foregroundImage.style.opacity = String(state.opacity.foreground);
+       dom.calibrationBanner.classList.toggle("hidden", !state.calibrationMode);
+       dom.zoomValue.textContent = `${Math.round(state.zoom * 100)}%`;
+ 
+       renderSvgOverlay();
+       renderEntities();
+       renderLotControls();
+       syncLayoutJsonPreview();
+       if (state.centerSelectedAfterRender && state.drag == null && !state.calibrationMode) {
+         state.centerSelectedAfterRender = false;
+         requestAnimationFrame(centerViewportOnSelectedEntity);
+       }
+     }
+ 
+     function renderSvgOverlay() {
+       const base = state.layout.map.baseSpace;
+       const optionalMask = getOptionalBuildableMask();
+       const polygonPoints = optionalMask.map((point) => `${point.x},${point.y}`).join(" ");
+       const buildableLabel = getPolygonCentroid(optionalMask);
+       const selected = getSelectedEntity();
+-      const selectedInvalid = selected != null && !isLotInsideBoard(selected, state.layout.grid);
++      const selectedInvalid = selected != null && state.editorMode === "city-layout" && !canPlaceEntityLot(selected, state.layout.grid);
++      const showCitySpecificOverlays = state.editorMode === "city-layout";
+       const svgParts = [];
+ 
+-      if (layerState.buildable && optionalMask.length >= 3) {
++      if (showCitySpecificOverlays && layerState.buildable && optionalMask.length >= 3) {
+         svgParts.push(`<polygon class="buildable-polygon" opacity="${state.opacity.buildable}" points="${polygonPoints}"></polygon>`);
+         svgParts.push(`<text class="buildable-label" x="${buildableLabel.x}" y="${buildableLabel.y}" text-anchor="middle">城墙参考遮罩</text>`);
+       }
+ 
+-      if (layerState.forbidden) {
++      if (showCitySpecificOverlays && layerState.forbidden) {
+         svgParts.push(createForbiddenPolygonsMarkup());
+       }
+ 
+       if (layerState.validGrid) {
+         svgParts.push(`<g class="board-grid-layer" opacity="${state.opacity.grid}">${createBoardGridMarkup()}</g>`);
+         if (state.layout.grid.showOutline !== false) {
+           svgParts.push(createBoardOutlineMarkup());
+         }
+         svgParts.push(createGridOriginMarkup());
+       }
+@@ -2715,22 +2767,23 @@
+       dom.mapSvg.innerHTML = svgParts.join("");
+     }
+ 
+     function createBoardGridMarkup() {
+       const grid = state.layout.grid;
+       const diamonds = [];
+       for (let row = 0; row < grid.rows; row += 1) {
+         for (let col = 0; col < grid.cols; col += 1) {
+           const diamond = getBoardDiamond(col, row, grid);
+           const isHovered = state.hoverGrid?.gridX === col && state.hoverGrid?.gridY === row;
++          const isStreet = state.editorMode === "city-layout" && isStreetGridCell(col, row);
+           diamonds.push(`<g>
+-            <polygon class="board-cell${isHovered ? " is-hovered" : ""}" data-grid-x="${col}" data-grid-y="${row}" points="${diamond.points.map((point) => `${point.x},${point.y}`).join(" ")}"><title>${col},${row}</title></polygon>
++            <polygon class="board-cell${isHovered ? " is-hovered" : ""}${isStreet ? " is-street" : ""}" data-grid-x="${col}" data-grid-y="${row}" points="${diamond.points.map((point) => `${point.x},${point.y}`).join(" ")}"><title>${col},${row}</title></polygon>
+             ${grid.showCoordinates === false ? "" : `<text class="board-coordinate" x="${diamond.center.x}" y="${diamond.center.y}">${col},${row}</text>`}
+           </g>`);
+         }
+       }
+       return diamonds.join("");
+     }
+ 
+     function createBoardOutlineMarkup() {
+       const grid = state.layout.grid;
+       const corners = getBoardCorners(grid);
+@@ -2759,23 +2812,64 @@
+       const className = invalid ? "footprint-diamond is-invalid" : "footprint-diamond";
+       return diamonds
+         .map((points) => `<polygon class="${className}" points="${points.map((point) => `${point.x},${point.y}`).join(" ")}"></polygon>`)
+         .join("");
+     }
+ 
+     function getFootprintCells(entity) {
+       return getFootprintCellsWithGrid(entity, state.layout.grid);
+     }
+ 
++    function createPrefabPreviewEntity(prefab) {
++      const preview = normalizeEntity({
++        id: `prefab-preview:${prefab.id}`,
++        prefabId: prefab.id,
++        name: prefab.name,
++        category: prefab.category,
++        entry: clone(prefab.entry),
++        asset: clone(prefab.asset),
++        lot: {
++          gridX: Math.max(0, Math.floor((state.layout.grid.cols - prefab.footprint.cols) / 2)),
++          gridY: Math.max(0, Math.floor((state.layout.grid.rows - prefab.footprint.rows) / 2)),
++          cols: prefab.footprint.cols,
++          rows: prefab.footprint.rows
++        },
++        render: { visible: true, locked: false, zIndexMode: "y-sort", zIndex: 0 },
++        interaction: clone(prefab.interaction)
++      });
++      preview.render = { ...preview.render, visible: true };
++      return preview;
++    }
++
++    function getCanvasEntities() {
++      if (state.editorMode !== "prefab") {
++        return state.layout.entities;
++      }
++      const selectedPrefab = getSelectedPrefab();
++      if (selectedPrefab == null) {
++        return state.layout.entities;
++      }
++      const hasExistingInstance = state.layout.entities.some((entity) => entity.prefabId === selectedPrefab.id);
++      return hasExistingInstance ? state.layout.entities : [createPrefabPreviewEntity(selectedPrefab)];
++    }
++
++    function getCanvasEntityById(entityId) {
++      return getCanvasEntities().find((entity) => entity.id === entityId) || null;
++    }
++
++    function shouldRenderCityMapImages() {
++      return state.editorMode !== "prefab";
++    }
++
+     function renderEntities() {
+       dom.entityLayer.innerHTML = "";
+-      const sorted = [...state.layout.entities].sort((first, second) => getEntityZIndex(first) - getEntityZIndex(second));
++      const sorted = [...getCanvasEntities()].sort((first, second) => getEntityZIndex(first) - getEntityZIndex(second));
+       for (const entity of sorted) {
+         const node = document.createElement("div");
+         node.className = [
+           "entity",
+           entity.id === state.selectedId ? "is-selected" : "",
+           entity.render.visible ? "" : "is-hidden"
+         ].filter(Boolean).join(" ");
+         node.dataset.entityId = entity.id;
+         node.style.left = `${entity.lot.x}px`;
+         node.style.top = `${entity.lot.y}px`;
+@@ -2800,21 +2894,21 @@
+       const entity = getSelectedEntity();
+       if (state.mode === "preview") {
+         return;
+       }
+ 
+       if (entity == null || !layerState.footprint) {
+         return;
+       }
+ 
+       const bounds = getFootprintBounds(entity);
+-      const invalid = !isLotInsideBoard(entity, state.layout.grid);
++      const invalid = state.editorMode === "city-layout" ? !canPlaceEntityLot(entity, state.layout.grid) : false;
+       const controls = document.createDocumentFragment();
+       if (state.editorMode === "city-layout") {
+         controls.append(createMoveAnchor(entity.lot.x, entity.lot.y + 34, "拖拽调整占地区域"));
+       } else {
+         controls.append(createLotHandle(bounds.right, (bounds.top + bounds.bottom) / 2, "resize-lot-width", "拖拽增加 / 减少占地列数", "↔"));
+         controls.append(createLotHandle((bounds.left + bounds.right) / 2, bounds.top, "resize-lot-height", "拖拽增加 / 减少占地行数", "↕"));
+         controls.append(createLotHandle(bounds.right, bounds.top, "resize-lot-area", "拖拽调整占用格数", "⤡"));
+       }
+ 
+       const badge = document.createElement("div");
+@@ -2822,21 +2916,23 @@
+       badge.style.left = `${entity.lot.x}px`;
+       badge.style.top = `${bounds.top - 8}px`;
+       badge.textContent = `${entity.lot.cols} x ${entity.lot.rows} 格`;
+       controls.append(badge);
+ 
+       if (invalid) {
+         const warning = document.createElement("div");
+         warning.className = "canvas-warning";
+         warning.style.left = `${entity.lot.x}px`;
+         warning.style.top = `${bounds.bottom + 42}px`;
+-        warning.textContent = "地块超出 细分网格 棋盘";
++        warning.textContent = doesLotOverlapStreet(entity)
++          ? "地块进入街道禁放格"
++          : "地块超出 细分网格 棋盘";
+         controls.append(warning);
+       }
+ 
+       dom.lotControlLayer.append(controls);
+     }
+ 
+     function renderCalibrationControls() {
+       const controls = document.createDocumentFragment();
+       const corners = getBoardCorners();
+       const move = document.createElement("button");
+@@ -2941,43 +3037,61 @@
+       handle.className = "hit-resize-handle";
+       handle.title = "拖拽调整点击区域";
+       handle.dataset.dragMode = "resize-hit-area";
+       node.append(handle);
+       return node;
+     }
+ 
+     function createAssetNode(entity) {
+       const imageUrl = getEntityImageUrl(entity);
+       const width = Math.max(1, entity.asset.naturalWidth * entity.asset.scale);
++      const height = Math.max(1, entity.asset.naturalHeight * entity.asset.scale);
+       const node = document.createElement("div");
+       node.className = "entity__asset";
+       node.dataset.dragMode = "move-image-offset";
+       node.title = "拖拽图片本体调整图片偏移";
+       node.style.left = `${entity.asset.offsetX}px`;
+       node.style.top = `${entity.asset.offsetY}px`;
+       node.style.width = `${width}px`;
+-      node.style.transform = getAnchorTransform(entity.asset.anchor);
++      node.style.transformOrigin = getAssetTransformOrigin(entity.asset.anchor);
++      node.style.opacity = "0.8";
++      node.style.transform = getAssetTransform(entity.asset.anchor, entity.asset.rotation);
+ 
+       if (imageUrl) {
+         const image = document.createElement("img");
+         image.src = imageUrl;
+         image.alt = "";
+         node.append(image);
+       } else {
+         const missing = document.createElement("div");
+         missing.className = "entity__asset-missing";
+         missing.textContent = "未设置图片";
+         node.append(missing);
+       }
++      if (state.editorMode === "prefab") {
++        node.append(createAssetRotationHandle(width, height));
++      }
+       return node;
+     }
+ 
++    function createAssetRotationHandle(width, height) {
++      const handle = document.createElement("button");
++      handle.type = "button";
++      handle.className = "asset-rotation-handle";
++      handle.dataset.dragMode = "rotate-image";
++      handle.title = "拖拽旋转图片";
++      handle.style.left = `${width / 2}px`;
++      handle.style.top = `${Math.max(-26, -height * 0.08)}px`;
++      handle.textContent = "↻";
++      return handle;
++    }
++
+     function createLabelNode(entity) {
+       const labelData = entity.interaction.label;
+       const label = document.createElement("button");
+       label.type = "button";
+       label.className = `entity__label${labelData.text ? "" : " is-empty"}`;
+       label.dataset.dragMode = "move-label";
+       label.dataset.previewEntityId = entity.id;
+       label.title = "拖动标签调整入口按钮";
+       label.style.left = `${numberOr(labelData.offsetX, 0)}px`;
+       label.style.top = `${numberOr(labelData.offsetY, 0)}px`;
+@@ -2995,20 +3109,34 @@
+     function getAnchorTransform(anchor) {
+       if (anchor === "center") {
+         return "translate(-50%, -50%)";
+       }
+       if (anchor === "top-left") {
+         return "translate(0, 0)";
+       }
+       return "translate(-50%, -100%)";
+     }
+ 
++    function getAssetTransform(anchor, rotation = 0) {
++      return `${getAnchorTransform(anchor)} rotate(${numberOr(rotation, 0)}deg)`;
++    }
++
++    function getAssetTransformOrigin(anchor) {
++      if (anchor === "center") {
++        return "50% 50%";
++      }
++      if (anchor === "top-left") {
++        return "0 0";
++      }
++      return "50% 100%";
++    }
++
+     function getEntityZIndex(entity) {
+       if (entity.render.zIndexMode === "manual" && entity.render.zIndex != null && entity.render.zIndex !== "") {
+         return Number(entity.render.zIndex);
+       }
+       return Math.round(entity.lot.y);
+     }
+ 
+     function getEntityImageUrl(entity) {
+       return state.entityPreviews.get(entity.prefabId || entity.id)
+         || state.entityPreviews.get(entity.id)
+@@ -3108,20 +3236,21 @@
+       prefab.id = dom.fieldPrefabId.value.trim() || previousId;
+       prefab.name = dom.fieldPrefabName.value;
+       prefab.category = dom.fieldPrefabCategory.value;
+       prefab.entry = readPrefabEntryFromForm();
+       prefab.asset.image = dom.fieldPrefabImage.value.trim();
+       prefab.asset.naturalWidth = numberOr(dom.fieldPrefabNaturalWidth.value, prefab.asset.naturalWidth);
+       prefab.asset.naturalHeight = numberOr(dom.fieldPrefabNaturalHeight.value, prefab.asset.naturalHeight);
+       prefab.asset.scale = Math.max(0.01, numberOr(dom.fieldPrefabScale.value, prefab.asset.scale));
+       prefab.asset.offsetX = numberOr(dom.fieldPrefabOffsetX.value, 0);
+       prefab.asset.offsetY = numberOr(dom.fieldPrefabOffsetY.value, 0);
++      prefab.asset.rotation = numberOr(dom.fieldPrefabRotation.value, 0);
+       prefab.asset.anchor = dom.fieldPrefabAnchor.value;
+       prefab.footprint.cols = Math.max(1, Math.round(numberOr(dom.fieldPrefabCols.value, 1)));
+       prefab.footprint.rows = Math.max(1, Math.round(numberOr(dom.fieldPrefabRows.value, 1)));
+       prefab.interaction.clickable = dom.fieldPrefabClickable.checked;
+       prefab.interaction.label.text = dom.fieldPrefabLabelText.value;
+       prefab.interaction.label.offsetX = numberOr(dom.fieldPrefabLabelOffsetX.value, 0);
+       prefab.interaction.label.offsetY = numberOr(dom.fieldPrefabLabelOffsetY.value, 0);
+       prefab.interaction.label.width = Math.max(1, numberOr(dom.fieldPrefabLabelWidth.value, 1));
+       prefab.interaction.label.height = Math.max(1, numberOr(dom.fieldPrefabLabelHeight.value, 1));
+       prefab.interaction.hitArea.type = dom.fieldPrefabHitType.value;
+@@ -3188,20 +3317,31 @@
+     function readPrefabEntryFromForm() {
+       if (dom.fieldPrefabEntryType.value === "house") {
+         return { type: "house", houseId: dom.fieldPrefabHouseId.value.trim() };
+       }
+       if (dom.fieldPrefabEntryType.value === "city-entry") {
+         return { type: "city-entry", cityEntryId: dom.fieldPrefabCityEntryId.value.trim() };
+       }
+       return { type: "none" };
+     }
+ 
++    function getMissingEnterablePrefabs() {
++      const placedPrefabIds = new Set(state.cityLayout.instances.map((instance) => instance.prefabId));
++      return state.prefabLibrary.prefabs.filter((prefab) => {
++        return prefab.entry.type !== "none" && !placedPrefabIds.has(prefab.id);
++      });
++    }
++
++    function autoPlaceMissingEnterableBuildings() {
++      return;
++    }
++
+     function addEntity() {
+       if (guardReadOnlyPrefabExample()) {
+         return;
+       }
+       if (state.editorMode === "prefab") {
+         const prefab = normalizePrefab({
+           id: `prefab-${state.prefabLibrary.prefabs.length + 1}`,
+           name: "新 Prefab",
+           category: "decoration",
+           asset: {
+@@ -3344,21 +3484,21 @@
+     }
+ 
+     function getSelectedEntity() {
+       if (state.editorMode === "prefab") {
+         const selectedPrefab = getSelectedPrefab();
+         if (selectedPrefab == null) {
+           return null;
+         }
+         return state.layout.entities.find((entity) => entity.prefabId === selectedPrefab.id)
+           || state.layout.entities.find((entity) => entity.id === state.selectedId)
+-          || null;
++          || createPrefabPreviewEntity(selectedPrefab);
+       }
+       return state.layout.entities.find((entity) => entity.id === state.selectedInstanceId) || null;
+     }
+ 
+     function getSelectedPrefab() {
+       return getPrefabById(state.selectedPrefabId);
+     }
+ 
+     function getSelectedInstance(instanceId = state.selectedInstanceId) {
+       return state.cityLayout.instances.find((instance) => instance.id === instanceId) || null;
+@@ -3458,20 +3598,25 @@
+         return;
+       }
+       if (state.mode === "preview" || state.drag != null) {
+         return;
+       }
+       const cell = event.target.closest(".board-cell");
+       const instance = getSelectedInstance();
+       if (cell == null || instance == null || instance.render.locked) {
+         return;
+       }
++      if (isStreetGridCell(Number(cell.dataset.gridX), Number(cell.dataset.gridY))) {
++        setStatus(`格子 ${cell.dataset.gridX},${cell.dataset.gridY} 属于街道禁放区。`);
++        renderCanvas();
++        return;
++      }
+       instance.gridX = Number(cell.dataset.gridX);
+       instance.gridY = Number(cell.dataset.gridY);
+       syncEditorLayoutFromSources(instance.id);
+       const entity = getSelectedEntity();
+       if (entity != null) {
+         clampLotToBoard(entity);
+         syncEntityBackToSources(entity);
+         syncEditorLayoutFromSources(instance.id);
+       }
+       setStatus(`布局实例已移动到格子 ${instance.gridX},${instance.gridY}。`);
+@@ -3500,30 +3645,30 @@
+       setStatus(`当前悬浮格子：${next.gridX},${next.gridY}`);
+       renderSvgOverlay();
+     }
+ 
+     function onCanvasClick(event) {
+       const label = event.target.closest(".entity__label");
+       const entityNode = event.target.closest(".entity");
+ 
+       if (state.mode === "preview" && label != null) {
+         event.preventDefault();
+-        const entity = state.layout.entities.find((candidate) => candidate.id === label.dataset.previewEntityId);
++        const entity = getCanvasEntityById(label.dataset.previewEntityId);
+         if (entity != null) {
+           showPreviewEntry(entity);
+         }
+         return;
+       }
+ 
+       if (entityNode != null && state.mode === "edit") {
+         const entityId = entityNode.dataset.entityId;
+-        const entity = state.layout.entities.find((candidate) => candidate.id === entityId);
++        const entity = getCanvasEntityById(entityId);
+         if (entity == null) {
+           return;
+         }
+         if (state.editorMode === "prefab") {
+           selectPrefab(entity.prefabId || entity.id);
+           return;
+         }
+         selectInstance(entity.id);
+       }
+     }
+@@ -3540,28 +3685,28 @@
+       if (dragMode === "move-board" || dragMode === "scale-board-width" || dragMode === "scale-board-height") {
+         setStatus("Grid is fixed to the city stage. Edit entity lots and offsets instead.");
+         event.preventDefault();
+         return;
+       }
+       if (state.editorMode === "prefab" && (dragMode === "move-entity" || dragMode === "move-board")) {
+         return;
+       }
+       if (
+         state.editorMode === "city-layout"
+-        && ["resize-lot-width", "resize-lot-height", "resize-lot-area", "move-image-offset", "move-label", "move-hit-area", "resize-hit-area"].includes(dragMode)
++        && ["resize-lot-width", "resize-lot-height", "resize-lot-area", "move-image-offset", "move-label", "move-hit-area", "resize-hit-area", "rotate-image"].includes(dragMode)
+       ) {
+         return;
+       }
+       const entityNode = event.target.closest(".entity");
+       const selected = getSelectedEntity();
+       const entity = entityNode != null
+-        ? state.layout.entities.find((candidate) => candidate.id === entityNode.dataset.entityId)
++        ? getCanvasEntityById(entityNode.dataset.entityId)
+         : selected;
+ 
+       if (entity == null) {
+         return;
+       }
+       if (entityNode != null) {
+         if (state.editorMode === "prefab") {
+           selectPrefab(entity.prefabId || entity.id);
+         } else {
+           selectInstance(entity.id);
+@@ -3572,21 +3717,21 @@
+         return;
+       }
+ 
+       const point = getBasePoint(event);
+       const entityDragMode = handle?.dataset.dragMode || "move-entity";
+       if (state.editorMode === "prefab" && entityDragMode === "move-entity") {
+         return;
+       }
+       if (
+         state.editorMode === "city-layout"
+-        && ["resize-lot-width", "resize-lot-height", "resize-lot-area", "move-image-offset", "move-label", "move-hit-area", "resize-hit-area"].includes(entityDragMode)
++        && ["resize-lot-width", "resize-lot-height", "resize-lot-area", "move-image-offset", "move-label", "move-hit-area", "resize-hit-area", "rotate-image"].includes(entityDragMode)
+       ) {
+         return;
+       }
+       state.drag = {
+         pointerId: event.pointerId,
+         entityId: entity.id,
+         mode: entityDragMode,
+         startPoint: point,
+         startLot: clone(entity.lot),
+         startAnchor: { x: entity.lot.x, y: entity.lot.y },
+@@ -3631,21 +3776,21 @@
+       if (state.drag.mode === "scale-board-height") {
+         const startDistance = Math.max(1, Math.abs(state.drag.startPoint.y - state.drag.startBoardCenter.y));
+         const nextDistance = Math.max(1, Math.abs(point.y - state.drag.startBoardCenter.y));
+         state.layout.grid.cellHeight = Math.max(8, Math.round(state.drag.startGrid.cellHeight * (nextDistance / startDistance)));
+         syncAllLotPixelFields();
+         renderCalibrationForm();
+         renderCanvas();
+         return;
+       }
+ 
+-      const entity = state.layout.entities.find((candidate) => candidate.id === state.drag.entityId);
++      const entity = getCanvasEntityById(state.drag.entityId);
+       if (entity == null || entity.render.locked) {
+         return;
+       }
+ 
+       if (state.drag.mode === "move-entity") {
+         const startGridPoint = pixelToGridForGrid(state.drag.startAnchor.x, state.drag.startAnchor.y, state.layout.grid);
+         const nextGridPoint = state.layout.grid.snap
+           ? pixelToGrid(state.drag.startAnchor.x + dx, state.drag.startAnchor.y + dy)
+           : {
+               gridX: state.drag.startLot.gridX + Math.round(dx / state.layout.grid.cellWidth),
+@@ -3658,20 +3803,22 @@
+         setStatus(`目标格：${entity.lot.gridX},${entity.lot.gridY}`);
+       } else if (state.drag.mode === "resize-lot-width") {
+         resizeLotByGridPoint(entity, point, "width");
+       } else if (state.drag.mode === "resize-lot-height") {
+         resizeLotByGridPoint(entity, point, "height");
+       } else if (state.drag.mode === "resize-lot-area") {
+         resizeLotByGridPoint(entity, point, "area");
+       } else if (state.drag.mode === "move-image-offset") {
+         entity.asset.offsetX = Math.round(state.drag.startAsset.offsetX + dx);
+         entity.asset.offsetY = Math.round(state.drag.startAsset.offsetY + dy);
++      } else if (state.drag.mode === "rotate-image") {
++        entity.asset.rotation = Math.round(getDraggedRotation(entity, point, state.drag));
+       } else if (state.drag.mode === "move-label") {
+         entity.interaction.label.offsetX = Math.round(state.drag.startLabel.offsetX + dx);
+         entity.interaction.label.offsetY = Math.round(state.drag.startLabel.offsetY + dy);
+       } else if (state.drag.mode === "move-hit-area") {
+         entity.interaction.hitArea.offsetX = Math.round(state.drag.startHitArea.offsetX + dx);
+         entity.interaction.hitArea.offsetY = Math.round(state.drag.startHitArea.offsetY + dy);
+       } else if (state.drag.mode === "resize-hit-area") {
+         entity.interaction.hitArea.width = Math.max(12, Math.round(state.drag.startHitArea.width + dx * 2));
+         entity.interaction.hitArea.height = Math.max(12, Math.round(state.drag.startHitArea.height + dy * 2));
+       }
+@@ -3686,20 +3833,34 @@
+       if (axis === "width" || axis === "area") {
+         entity.lot.cols = Math.max(1, target.gridX - entity.lot.gridX + 1);
+       }
+       if (axis === "height" || axis === "area") {
+         entity.lot.rows = Math.max(1, target.gridY - entity.lot.gridY + 1);
+       }
+       clampLotToBoard(entity);
+       syncLotPixelFields(entity);
+     }
+ 
++    function getDraggedRotation(entity, point, dragState) {
++      const anchor = getAssetAnchorPoint(entity, dragState.startAsset);
++      const startAngle = Math.atan2(dragState.startPoint.y - anchor.y, dragState.startPoint.x - anchor.x);
++      const nextAngle = Math.atan2(point.y - anchor.y, point.x - anchor.x);
++      return numberOr(dragState.startAsset.rotation, 0) + ((nextAngle - startAngle) * 180) / Math.PI;
++    }
++
++    function getAssetAnchorPoint(entity, asset = entity.asset) {
++      return {
++        x: entity.lot.x + numberOr(asset.offsetX, 0),
++        y: entity.lot.y + numberOr(asset.offsetY, 0)
++      };
++    }
++
+     function stopDrag(event) {
+       if (state.drag == null || state.drag.pointerId !== event.pointerId) {
+         return;
+       }
+       if (dom.baseSpace.hasPointerCapture(event.pointerId)) {
+         dom.baseSpace.releasePointerCapture(event.pointerId);
+       }
+       state.drag = null;
+     }
+ 
+@@ -3830,20 +3991,41 @@
+       } catch (error) {
+         setStatus(`载入示例失败：请使用“导入 JSON”选择 ${HAOZHOU_LAYOUT_EXAMPLE_PATH} 与 ${HAOZHOU_PREFAB_EXAMPLE_PATH}。原因：${error.message}`);
+       }
+     }
+ 
+     function setEditorLayout(layout, preferredSelectedId = null, readOnlyPrefabExample = null) {
+       const { prefabLibrary, cityLayout } = decomposeLayoutToSources(layout);
+       setEditorSources(prefabLibrary, cityLayout, preferredSelectedId, readOnlyPrefabExample);
+     }
+ 
++    async function loadDefaultPrefabLibrary() {
++      if (state.prefabLibrary.prefabs.length > 0) {
++        return;
++      }
++      try {
++        const response = await fetch(HAOZHOU_PREFAB_EXAMPLE_PATH);
++        if (!response.ok) {
++          throw new Error(`prefab HTTP ${response.status}`);
++        }
++        const prefabs = await response.json();
++        state.prefabLibrary = normalizePrefabLibrary(prefabs);
++        if (!state.selectedPrefabId && state.prefabLibrary.prefabs.length > 0) {
++          state.selectedPrefabId = state.prefabLibrary.prefabs[0].id;
++        }
++        syncEditorLayoutFromSources();
++        render();
++      } catch (error) {
++        console.warn("loadDefaultPrefabLibrary failed", error);
++      }
++    }
++
+     function getCurrentJsonDocumentDescriptor() {
+       if (state.editorMode === "prefab") {
+         return {
+           key: "prefab",
+           text: exportPrefabLibraryJson(),
+           filename: "city-stage-prefabs.json",
+           buttonLabel: "Prefab JSON"
+         };
+       }
+       return {
+@@ -4201,20 +4383,39 @@ This compatibility loader only previews composed runtime entities. Import a city
+       ];
+     }
+ 
+     function isLotInsideBoard(entity, sourceGrid = state.layout.grid) {
+       return entity.lot.gridX >= 0
+         && entity.lot.gridY >= 0
+         && entity.lot.gridX + entity.lot.cols <= sourceGrid.cols
+         && entity.lot.gridY + entity.lot.rows <= sourceGrid.rows;
+     }
+ 
++    function isStreetGridCell(gridX, gridY) {
++      return STREET_GRID_INDEXES.has(gridX) || STREET_GRID_INDEXES.has(gridY);
++    }
++
++    function doesLotOverlapStreet(entity) {
++      for (let x = entity.lot.gridX; x < entity.lot.gridX + entity.lot.cols; x += 1) {
++        for (let y = entity.lot.gridY; y < entity.lot.gridY + entity.lot.rows; y += 1) {
++          if (isStreetGridCell(x, y)) {
++            return true;
++          }
++        }
++      }
++      return false;
++    }
++
++    function canPlaceEntityLot(entity, sourceGrid = state.layout.grid) {
++      return isLotInsideBoard(entity, sourceGrid) && !doesLotOverlapStreet(entity);
++    }
++
+     function getOptionalBuildableMask(layout = state.layout) {
+       if (!Array.isArray(layout.map?.referenceMask)) {
+         layout.map.referenceMask = clone(DEFAULT_OPTIONAL_BUILDABLE_MASK);
+       }
+       return layout.map.referenceMask;
+     }
+ 
+     function getForbiddenPolygons(layout = state.layout) {
+       return (layout.map?.forbiddenPolygons || []).filter((polygon) => Array.isArray(polygon.points) && polygon.points.length >= 3);
+     }

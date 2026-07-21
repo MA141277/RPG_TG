@@ -12,30 +12,31 @@
         "image": "ui/yuansu/菱形格子/shuaifu.png",
         "naturalWidth": 1333,
         "naturalHeight": 710,
-        "scale": 0.24,
-        "offsetX": 0,
-        "offsetY": 0,
+        "scale": 0.3,
+        "offsetX": -6,
+        "offsetY": -6,
+        "rotation": 2,
         "anchor": "bottom-center"
       },
       "footprint": {
-        "cols": 8,
-        "rows": 6
+        "cols": 11,
+        "rows": 9
       },
       "interaction": {
         "clickable": true,
         "label": {
           "text": "帅府",
-          "offsetX": 0,
-          "offsetY": -162,
+          "offsetX": -63,
+          "offsetY": -175,
           "width": 120,
           "height": 40
         },
         "hitArea": {
           "type": "ellipse",
-          "offsetX": 0,
-          "offsetY": -8,
-          "width": 148,
-          "height": 60
+          "offsetX": -5,
+          "offsetY": -99,
+          "width": 204,
+          "height": 116
         }
       }
     },
@@ -51,30 +52,31 @@
         "image": "ui/yuansu/菱形格子/jianglingfudi.png",
         "naturalWidth": 1294,
         "naturalHeight": 695,
-        "scale": 0.24,
-        "offsetX": 0,
-        "offsetY": 0,
+        "scale": 0.29,
+        "offsetX": -11,
+        "offsetY": -2,
+        "rotation": 5,
         "anchor": "bottom-center"
       },
       "footprint": {
-        "cols": 8,
-        "rows": 6
+        "cols": 12,
+        "rows": 9
       },
       "interaction": {
         "clickable": true,
         "label": {
           "text": "将领府邸",
-          "offsetX": -6,
-          "offsetY": -158,
+          "offsetX": -79,
+          "offsetY": -211,
           "width": 120,
           "height": 48
         },
         "hitArea": {
           "type": "ellipse",
-          "offsetX": 0,
-          "offsetY": -8,
-          "width": 132,
-          "height": 56
+          "offsetX": 7,
+          "offsetY": -97,
+          "width": 201,
+          "height": 106
         }
       }
     },
@@ -91,13 +93,14 @@
         "naturalWidth": 1066,
         "naturalHeight": 783,
         "scale": 0.24,
-        "offsetX": 0,
-        "offsetY": 0,
+        "offsetX": 2,
+        "offsetY": -2,
+        "rotation": 0,
         "anchor": "bottom-center"
       },
       "footprint": {
-        "cols": 4,
-        "rows": 4
+        "cols": 7,
+        "rows": 6
       },
       "interaction": {
         "clickable": true,
@@ -110,8 +113,8 @@
         },
         "hitArea": {
           "type": "ellipse",
-          "offsetX": 0,
-          "offsetY": -8,
+          "offsetX": 8,
+          "offsetY": -63,
           "width": 128,
           "height": 56
         }
@@ -129,28 +132,29 @@
         "image": "ui/yuansu/菱形格子/huozhai.png",
         "naturalWidth": 975,
         "naturalHeight": 722,
-        "scale": 0.24,
-        "offsetX": 0,
-        "offsetY": 0,
+        "scale": 0.29,
+        "offsetX": -1,
+        "offsetY": -3,
+        "rotation": 0,
         "anchor": "bottom-center"
       },
       "footprint": {
-        "cols": 4,
-        "rows": 4
+        "cols": 8,
+        "rows": 8
       },
       "interaction": {
         "clickable": true,
         "label": {
           "text": "货栈",
-          "offsetX": -4,
-          "offsetY": -158,
+          "offsetX": -47,
+          "offsetY": -188,
           "width": 120,
           "height": 40
         },
         "hitArea": {
           "type": "ellipse",
           "offsetX": 0,
-          "offsetY": -8,
+          "offsetY": -71,
           "width": 118,
           "height": 52
         }
@@ -169,13 +173,14 @@
         "naturalWidth": 1003,
         "naturalHeight": 770,
         "scale": 0.24,
-        "offsetX": 0,
-        "offsetY": 0,
+        "offsetX": -2,
+        "offsetY": -3,
+        "rotation": 0,
         "anchor": "bottom-center"
       },
       "footprint": {
-        "cols": 4,
-        "rows": 4
+        "cols": 6,
+        "rows": 6
       },
       "interaction": {
         "clickable": true,
@@ -208,13 +213,14 @@
         "naturalWidth": 1054,
         "naturalHeight": 804,
         "scale": 0.24,
-        "offsetX": 0,
-        "offsetY": 0,
+        "offsetX": 2,
+        "offsetY": -4,
+        "rotation": 0,
         "anchor": "bottom-center"
       },
       "footprint": {
-        "cols": 4,
-        "rows": 4
+        "cols": 7,
+        "rows": 7
       },
       "interaction": {
         "clickable": true,
@@ -247,13 +253,14 @@
         "naturalWidth": 1068,
         "naturalHeight": 710,
         "scale": 0.24,
-        "offsetX": 0,
-        "offsetY": 0,
+        "offsetX": 5,
+        "offsetY": -5,
+        "rotation": 0,
         "anchor": "bottom-center"
       },
       "footprint": {
-        "cols": 4,
-        "rows": 4
+        "cols": 7,
+        "rows": 6
       },
       "interaction": {
         "clickable": true,
@@ -288,11 +295,12 @@
         "scale": 0.24,
         "offsetX": 0,
         "offsetY": 0,
+        "rotation": 0,
         "anchor": "bottom-center"
       },
       "footprint": {
         "cols": 6,
-        "rows": 4
+        "rows": 6
       },
       "interaction": {
         "clickable": true,
@@ -324,13 +332,14 @@
         "naturalWidth": 1065,
         "naturalHeight": 668,
         "scale": 0.197,
-        "offsetX": 0,
-        "offsetY": 0,
+        "offsetX": -2,
+        "offsetY": 3,
+        "rotation": 0,
         "anchor": "bottom-center"
       },
       "footprint": {
-        "cols": 2,
-        "rows": 2
+        "cols": 5,
+        "rows": 5
       },
       "interaction": {
         "clickable": false,
@@ -364,11 +373,12 @@
         "scale": 0.271,
         "offsetX": 0,
         "offsetY": 0,
+        "rotation": 0,
         "anchor": "bottom-center"
       },
       "footprint": {
-        "cols": 2,
-        "rows": 2
+        "cols": 5,
+        "rows": 5
       },
       "interaction": {
         "clickable": false,
@@ -399,14 +409,15 @@
         "image": "ui/yuansu/菱形格子/2.png",
         "naturalWidth": 1003,
         "naturalHeight": 648,
-        "scale": 0.204,
+        "scale": 0.28,
         "offsetX": 0,
         "offsetY": 0,
+        "rotation": 0,
         "anchor": "bottom-center"
       },
       "footprint": {
-        "cols": 2,
-        "rows": 2
+        "cols": 7,
+        "rows": 7
       },
       "interaction": {
         "clickable": false,
@@ -438,13 +449,14 @@
         "naturalWidth": 701,
         "naturalHeight": 592,
         "scale": 0.268,
-        "offsetX": 0,
-        "offsetY": 0,
+        "offsetX": 5,
+        "offsetY": 8,
+        "rotation": 0,
         "anchor": "bottom-center"
       },
       "footprint": {
-        "cols": 2,
-        "rows": 2
+        "cols": 5,
+        "rows": 4
       },
       "interaction": {
         "clickable": false,
@@ -475,14 +487,15 @@
         "image": "ui/yuansu/菱形格子/1.png",
         "naturalWidth": 1065,
         "naturalHeight": 668,
-        "scale": 0.193,
-        "offsetX": 0,
-        "offsetY": 0,
+        "scale": 0.26,
+        "offsetX": -2,
+        "offsetY": -6,
+        "rotation": 0,
         "anchor": "bottom-center"
       },
       "footprint": {
-        "cols": 2,
-        "rows": 2
+        "cols": 8,
+        "rows": 7
       },
       "interaction": {
         "clickable": false,
@@ -513,14 +526,15 @@
         "image": "ui/yuansu/菱形格子/2.png",
         "naturalWidth": 1003,
         "naturalHeight": 648,
-        "scale": 0.204,
-        "offsetX": 0,
-        "offsetY": 0,
+        "scale": 0.27,
+        "offsetX": 2,
+        "offsetY": -5,
+        "rotation": 0,
         "anchor": "bottom-center"
       },
       "footprint": {
-        "cols": 2,
-        "rows": 2
+        "cols": 7,
+        "rows": 7
       },
       "interaction": {
         "clickable": false,
@@ -554,11 +568,12 @@
         "scale": 0.268,
         "offsetX": 0,
         "offsetY": 0,
+        "rotation": 0,
         "anchor": "bottom-center"
       },
       "footprint": {
-        "cols": 2,
-        "rows": 2
+        "cols": 6,
+        "rows": 4
       },
       "interaction": {
         "clickable": false,
@@ -592,11 +607,12 @@
         "scale": 0.184,
         "offsetX": 0,
         "offsetY": 0,
+        "rotation": 0,
         "anchor": "bottom-center"
       },
       "footprint": {
-        "cols": 2,
-        "rows": 2
+        "cols": 7,
+        "rows": 6
       },
       "interaction": {
         "clickable": false,
@@ -628,13 +644,14 @@
         "naturalWidth": 1525,
         "naturalHeight": 718,
         "scale": 0.177,
-        "offsetX": 0,
-        "offsetY": 0,
+        "offsetX": 2,
+        "offsetY": -2,
+        "rotation": 0,
         "anchor": "bottom-center"
       },
       "footprint": {
-        "cols": 2,
-        "rows": 2
+        "cols": 7,
+        "rows": 6
       },
       "interaction": {
         "clickable": false,
@@ -666,20 +683,21 @@
         "naturalWidth": 1356,
         "naturalHeight": 726,
         "scale": 0.181,
-        "offsetX": 0,
-        "offsetY": 0,
+        "offsetX": -2,
+        "offsetY": -3,
+        "rotation": 0,
         "anchor": "bottom-center"
       },
       "footprint": {
-        "cols": 2,
-        "rows": 2
+        "cols": 7,
+        "rows": 7
       },
       "interaction": {
         "clickable": false,
         "label": {
           "text": "",
-          "offsetX": 0,
-          "offsetY": -70,
+          "offsetX": -101,
+          "offsetY": -136,
           "width": 80,
           "height": 28
         },
