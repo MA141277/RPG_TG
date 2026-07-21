@@ -136,6 +136,9 @@ window.__cityEditorTestApi = {
   dom,
   normalizePrefabLibrary,
   normalizeCityLayout,
+  convertLegacyEntitiesLayout,
+  setEditorLayout,
+  setEditorSources,
   syncEditorLayoutFromSources,
   renderCityLayoutPanel,
   importJsonFile,
@@ -150,9 +153,7 @@ window.__cityEditorTestApi = {
     Object.assign(dom, patch);
   },
   setSources(prefabLibrary, cityLayout, preferredSelectedId = null) {
-    state.prefabLibrary = normalizePrefabLibrary(prefabLibrary);
-    state.cityLayout = normalizeCityLayout(cityLayout);
-    syncEditorLayoutFromSources(preferredSelectedId);
+    setEditorSources(prefabLibrary, cityLayout, preferredSelectedId);
   },
   stubUi() {
     render = () => {};
@@ -389,6 +390,15 @@ test("editor separates prefab editing from city layout editing", () => {
   assert.match(html, /exportCityLayoutJson/);
   assert.doesNotMatch(html, /field-instance-offset-x/);
   assert.doesNotMatch(html, /field-instance-offset-y/);
+});
+
+test("editor docs describe prefab-first workflow and legacy import", () => {
+  const readme = readText(readmePath);
+
+  assert.match(readme, /Prefab Editor/);
+  assert.match(readme, /City Layout/);
+  assert.match(readme, /haozhou-city-prefabs\.example\.json/);
+  assert.match(readme, /legacy entities import/i);
 });
 
 test("editor copy no longer frames the layout around the old 20x20 coarse board", () => {
@@ -743,6 +753,185 @@ test("prefab-library imports update prefab state and preserve the current city l
   assert.equal(event.target.value, "");
 });
 
+test("editor converts legacy entity layouts into prefabs and instances", () => {
+  const api = createEditorRuntimeHarness();
+  const { cityLayout } = createSplitEditorSources();
+  api.stubUi();
+
+  const converted = api.convertLegacyEntitiesLayout({
+    version: 1,
+    map: cityLayout.map,
+    grid: cityLayout.grid,
+    entities: [
+      {
+        id: "legacy.keep",
+        prefabId: "keep-prefab",
+        name: "Legacy Keep",
+        category: "special",
+        entry: { type: "house", houseId: "legacy-keep" },
+        asset: {
+          image: "legacy-keep.png",
+          naturalWidth: 400,
+          naturalHeight: 300,
+          scale: 1,
+          offsetX: 8,
+          offsetY: -4,
+          anchor: "bottom-center",
+        },
+        lot: {
+          gridX: 3,
+          gridY: 5,
+          cols: 4,
+          rows: 2,
+        },
+        render: {
+          visible: false,
+          locked: true,
+          zIndexMode: "manual",
+          zIndex: 99,
+        },
+        interaction: {
+          clickable: true,
+          label: {
+            text: "Legacy Keep",
+            offsetX: 0,
+            offsetY: -20,
+            width: 100,
+            height: 24,
+          },
+          hitArea: {
+            type: "diamond",
+            offsetX: 0,
+            offsetY: 0,
+            width: 96,
+            height: 48,
+          },
+        },
+      },
+    ],
+  });
+
+  assert.equal(converted.prefabLibrary.prefabs.length, 1);
+  assert.equal(converted.prefabLibrary.prefabs[0].id, "keep-prefab");
+  assert.equal(converted.prefabLibrary.prefabs[0].asset.offsetX, 8);
+  assert.equal(converted.prefabLibrary.prefabs[0].footprint.cols, 4);
+  assert.equal(converted.cityLayout.instances.length, 1);
+  assert.equal(converted.cityLayout.instances[0].id, "legacy.keep");
+  assert.equal(converted.cityLayout.instances[0].prefabId, "keep-prefab");
+  assert.equal(converted.cityLayout.instances[0].gridX, 3);
+  assert.equal(converted.cityLayout.instances[0].render.zIndex, 99);
+});
+
+test("legacy entity imports keep conflicting shared prefab ids distinct", () => {
+  const api = createEditorRuntimeHarness();
+  const { prefabLibrary, cityLayout } = createSplitEditorSources();
+  api.stubUi();
+  api.stubFileReaderText(
+    JSON.stringify({
+      version: 1,
+      map: cityLayout.map,
+      grid: cityLayout.grid,
+      entities: [
+        {
+          id: "legacy.instance.keep-a",
+          prefabId: "shared-keep",
+          name: "Keep A",
+          category: "special",
+          entry: { type: "house", houseId: "keep-a" },
+          asset: {
+            image: "keep-a.png",
+            naturalWidth: 256,
+            naturalHeight: 256,
+            scale: 1,
+            offsetX: 4,
+            offsetY: 0,
+            anchor: "bottom-center",
+          },
+          lot: {
+            gridX: 1,
+            gridY: 2,
+            cols: 2,
+            rows: 2,
+          },
+          interaction: {
+            clickable: true,
+            label: {
+              text: "Keep A",
+              offsetX: 0,
+              offsetY: -16,
+              width: 80,
+              height: 20,
+            },
+            hitArea: {
+              type: "diamond",
+              offsetX: 0,
+              offsetY: 0,
+              width: 64,
+              height: 32,
+            },
+          },
+        },
+        {
+          id: "legacy.instance.keep-b",
+          prefabId: "shared-keep",
+          name: "Keep B",
+          category: "special",
+          entry: { type: "house", houseId: "keep-b" },
+          asset: {
+            image: "keep-b.png",
+            naturalWidth: 320,
+            naturalHeight: 160,
+            scale: 1,
+            offsetX: -12,
+            offsetY: 5,
+            anchor: "bottom-center",
+          },
+          lot: {
+            gridX: 5,
+            gridY: 4,
+            cols: 3,
+            rows: 1,
+          },
+          interaction: {
+            clickable: true,
+            label: {
+              text: "Keep B",
+              offsetX: 2,
+              offsetY: -18,
+              width: 90,
+              height: 22,
+            },
+            hitArea: {
+              type: "ellipse",
+              offsetX: 0,
+              offsetY: 0,
+              width: 72,
+              height: 36,
+            },
+          },
+        },
+      ],
+    })
+  );
+  api.setSources(prefabLibrary, cityLayout, "instance.keep");
+
+  api.importJsonFile({
+    target: {
+      files: [{ name: "legacy-layout.json" }],
+      value: "filled",
+    },
+  });
+
+  const importedPrefabIds = api.state.prefabLibrary.prefabs.map((prefab) => prefab.id);
+  const importedInstancePrefabIds = api.state.cityLayout.instances.map((instance) => instance.prefabId);
+
+  assert.equal(importedPrefabIds.length, 2);
+  assert.equal(importedInstancePrefabIds.length, 2);
+  assert.equal(importedPrefabIds[0], "shared-keep");
+  assert.match(importedPrefabIds[1], /^shared-keep-\d+$/);
+  assert.deepEqual(importedInstancePrefabIds, importedPrefabIds);
+});
+
 test("prefab selection without a matching instance clears stale instance state and edits the selected prefab", () => {
   const api = createEditorRuntimeHarness();
   const { prefabLibrary, cityLayout } = createSplitEditorSources();
@@ -783,4 +972,33 @@ test("prefab selection without a matching instance clears stale instance state a
   assert.equal(api.state.entityPreviews.get("watchtower"), "data:image/png;base64,watchtower");
   assert.equal(keepBefore.asset.naturalWidth, 320);
   assert.equal(keepBefore.asset.naturalHeight, 240);
+});
+
+test("setEditorSources clamps imported city instances against prefab footprints before export", () => {
+  const api = createEditorRuntimeHarness();
+  const { prefabLibrary, cityLayout } = createSplitEditorSources();
+  api.stubUi();
+
+  cityLayout.instances = [
+    {
+      id: "instance.keep.edge",
+      prefabId: "keep",
+      gridX: 9,
+      gridY: 8,
+      render: {
+        visible: true,
+        locked: false,
+        zIndexMode: "y-sort",
+        zIndex: null,
+      },
+    },
+  ];
+
+  api.setSources(prefabLibrary, cityLayout, "instance.keep.edge");
+
+  assert.equal(api.getSelectedEntity().lot.gridX, 6);
+  assert.equal(api.getSelectedEntity().lot.gridY, 6);
+  const exported = JSON.parse(api.exportCityLayoutJson());
+  assert.equal(exported.instances[0].gridX, 6);
+  assert.equal(exported.instances[0].gridY, 6);
 });

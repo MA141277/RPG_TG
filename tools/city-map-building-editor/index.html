@@ -1883,10 +1883,12 @@
     }
 
     function exportCityLayoutJson() {
+      clampAllInstancesToBoard();
       return `${JSON.stringify(state.cityLayout, null, 2)}\n`;
     }
 
     function syncEditorLayoutFromSources(preferredSelectedInstanceId = state.selectedInstanceId) {
+      clampAllInstancesToBoard();
       state.layout = normalizeLayout({
         version: state.cityLayout.version,
         map: clone(state.cityLayout.map),
@@ -1929,45 +1931,68 @@
       }
 
       if (Array.isArray(layout?.entities)) {
-        const prefabs = [];
-        const instances = [];
-        for (const entity of normalizedLayout.entities) {
-          const prefabId = entity.prefabId || entity.id;
-          prefabs.push(normalizePrefab({
-            id: prefabId,
-            name: entity.name,
-            category: entity.category,
-            entry: entity.entry,
-            asset: entity.asset,
-            footprint: {
-              cols: entity.lot.cols,
-              rows: entity.lot.rows
-            },
-            interaction: entity.interaction
-          }));
-          instances.push(normalizeCityInstance({
-            id: entity.id,
-            prefabId,
-            gridX: entity.lot.gridX,
-            gridY: entity.lot.gridY,
-            render: entity.render
-          }, normalizedLayout.grid));
-        }
-        return {
-          prefabLibrary: normalizePrefabLibrary({ prefabs }),
-          cityLayout: normalizeCityLayout({
-            version: normalizedLayout.version,
-            map: normalizedLayout.map,
-            grid: normalizedLayout.grid,
-            instances,
-            randomPools: normalizedLayout.randomPools
-          })
-        };
+        return convertLegacyEntitiesLayout(normalizedLayout);
       }
 
       return {
         prefabLibrary: normalizePrefabLibrary(state.prefabLibrary),
         cityLayout: normalizeCityLayout(layout)
+      };
+    }
+
+    function convertLegacyEntitiesLayout(layout) {
+      const normalizedLayout = normalizeLayout(layout);
+      const prefabs = [];
+      const instances = [];
+      const usedPrefabIds = new Set();
+      const importedPrefabsByRequestedId = new Map();
+      for (const entity of normalizedLayout.entities) {
+        const requestedPrefabId = String(entity.prefabId || entity.id || "prefab");
+        const normalizedPrefab = normalizePrefab({
+          id: requestedPrefabId,
+          name: entity.name,
+          category: entity.category,
+          entry: entity.entry,
+          asset: entity.asset,
+          footprint: {
+            cols: entity.lot.cols,
+            rows: entity.lot.rows
+          },
+          interaction: entity.interaction
+        });
+        const prefabSignature = getPrefabSignature(normalizedPrefab);
+        const knownPrefabs = importedPrefabsByRequestedId.get(requestedPrefabId) || [];
+        let prefabId = knownPrefabs.find((candidate) => candidate.signature === prefabSignature)?.id || null;
+        if (prefabId == null) {
+          prefabId = createScopedUniqueId(requestedPrefabId, usedPrefabIds);
+          usedPrefabIds.add(prefabId);
+          prefabs.push({
+            ...normalizedPrefab,
+            id: prefabId
+          });
+          knownPrefabs.push({
+            id: prefabId,
+            signature: prefabSignature
+          });
+          importedPrefabsByRequestedId.set(requestedPrefabId, knownPrefabs);
+        }
+        instances.push(normalizeCityInstance({
+          id: entity.id,
+          prefabId,
+          gridX: entity.lot.gridX,
+          gridY: entity.lot.gridY,
+          render: entity.render
+        }, normalizedLayout.grid));
+      }
+      return {
+        prefabLibrary: normalizePrefabLibrary({ prefabs }),
+        cityLayout: normalizeCityLayout({
+          version: normalizedLayout.version,
+          map: normalizedLayout.map,
+          grid: normalizedLayout.grid,
+          instances,
+          randomPools: normalizedLayout.randomPools
+        })
       };
     }
 
@@ -2061,6 +2086,7 @@
       const safeLot = safe.lot || {};
       const normalized = {
         id: String(safe.id || createUniqueId("entity")),
+        prefabId: safe.prefabId == null ? "" : String(safe.prefabId),
         name: String(safe.name || "未命名建筑"),
         category: CATEGORY_LABELS[safe.category] ? safe.category : "decoration",
         entry: normalizeEntry(safe.entry),
@@ -3337,6 +3363,12 @@
       return state.layout.entities.find((entity) => entity.id === instanceId) || null;
     }
 
+    function clampAllInstancesToBoard() {
+      for (const instance of state.cityLayout.instances) {
+        clampInstanceToBoard(instance);
+      }
+    }
+
     function clampInstanceToBoard(instance) {
       const prefab = getPrefabById(instance.prefabId);
       const cols = Math.max(1, Math.round(numberOr(prefab?.footprint?.cols, 1)));
@@ -3344,6 +3376,23 @@
       const grid = state.cityLayout.grid;
       instance.gridX = Math.max(0, Math.min(Math.max(0, grid.cols - cols), Math.round(numberOr(instance.gridX, 0))));
       instance.gridY = Math.max(0, Math.min(Math.max(0, grid.rows - rows), Math.round(numberOr(instance.gridY, 0))));
+    }
+
+    function getPrefabSignature(prefab) {
+      const comparablePrefab = clone(prefab);
+      delete comparablePrefab.id;
+      return JSON.stringify(comparablePrefab);
+    }
+
+    function createScopedUniqueId(baseId, usedIds) {
+      const seed = String(baseId || "prefab");
+      let candidate = seed;
+      let index = 1;
+      while (usedIds.has(candidate)) {
+        index += 1;
+        candidate = `${seed}-${index}`;
+      }
+      return candidate;
     }
 
     function selectPrefab(prefabId) {

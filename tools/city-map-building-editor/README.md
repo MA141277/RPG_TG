@@ -20,6 +20,77 @@ python -m http.server 8765 --bind 127.0.0.1
 
 如果 `file://` 下真实城镇底图或前景墙体图没有显示，优先使用上面的本地静态服务。浏览器对本地文件和跨目录资源的限制不完全一致。
 
+## Current Workflow
+
+当前编辑器已经改成 prefab-first 双层数据模型，不再把所有可复用建筑参数直接写进单个城市布局。
+
+- `Prefab Editor`
+  - 编辑可复用实体本体
+  - 管理 `asset.image`、`asset.offsetX`、`asset.offsetY`、`asset.scale`
+  - 管理 footprint 宽高、label、hit area、入口绑定
+  - 这些值应该跨城市复用，不在城市布局层单独改
+- `City Layout`
+  - 只编辑实例放置和实例级渲染状态
+  - 管理 `prefabId`、`gridX`、`gridY`
+  - 管理 `render.visible`、`render.locked`、`render.zIndexMode`、`render.zIndex`
+  - 不允许在这里改 prefab 的图片偏移、占地尺寸或交互形状
+
+## Prefab Editor
+
+`Prefab Editor` 可以在没有具体城市底图的情况下独立工作，目标是把一个建筑、杂草、烂木头或其他 city stage 实体调到可复用状态。
+
+推荐先在这里完成：
+
+- 绑定图片路径
+- 调整图片大小和 `offsetX / offsetY`
+- 调整 footprint 占地尺寸
+- 调整 label 和 hit area
+- 保存 prefab 库
+
+示例 prefab 库文件：
+
+- `tools/city-map-building-editor/examples/haozhou-city-prefabs.example.json`
+
+## City Layout
+
+`City Layout` 只负责把 prefab 实例摆进某一个城市，不再承担 prefab 本体编辑。
+
+城市布局文件现在以 `instances` 为主，每个实例只引用 prefab：
+
+```json
+{
+  "instances": [
+    {
+      "id": "haozhou-keep-main",
+      "prefabId": "keep",
+      "gridX": 16,
+      "gridY": 10
+    }
+  ]
+}
+```
+
+这意味着：
+
+- 同一个 prefab 可以在多个城市里复用
+- offset 对齐只维护一次
+- 城市布局导出时会按 prefab footprint 自动收口到合法格子范围
+
+## Legacy Entities Import
+
+编辑器仍然保留 `legacy entities import` 兼容路径。
+
+如果导入旧格式 JSON，旧的 `entities` 会先转换成：
+
+- 一个 prefab library
+- 一个 city layout `instances` 列表
+
+转换规则：
+
+- 优先保留旧实体上的 `prefabId`
+- 如果多个旧实体共享同一个 `prefabId` 且 prefab 数据完全一致，它们会复用同一个 prefab
+- 如果多个旧实体共享同一个 `prefabId` 但 prefab 数据不同，编辑器会自动生成带后缀的新 prefab id，避免覆盖
+
 ## 主放置模型
 
 编辑器现在使用固定 `40 x 40` 等距菱形棋盘作为主放置模型，不再依赖自动识别城墙内部范围。
@@ -33,7 +104,7 @@ python -m http.server 8765 --bind 127.0.0.1
     "cellWidth": 40,
     "cellHeight": 20,
     "originX": 885,
-    "originY": 40?40,
+    "originY": 110,
     "snap": true,
     "visible": true,
     "showCoordinates": true,
