@@ -101,46 +101,34 @@ test("editor keeps entity-first controls instead of old hardcoded building-only 
   }
 });
 
-test("editor keeps split example loading read-only instead of exposing prefab mutation controls", () => {
+test("editor still supports split example composition and migration imports", () => {
   const html = readText(indexPath);
 
   assert.match(html, /renderQuickSelect/);
   assert.match(html, /haozhou-city-prefabs\.example\.json/);
-  assert.match(html, /guardReadOnlyPrefabExample/);
-  assert.match(html, /isReadOnlyPrefabExampleLoaded/);
+  assert.match(html, /normalizePrefabLibrary/);
+  assert.match(html, /normalizeCityLayout/);
+  assert.match(html, /composeEditorEntities/);
   assert.match(html, /composePrefabLayoutForEditor/);
-  assert.doesNotMatch(html, /field-prefab-cols/);
-  assert.doesNotMatch(html, /field-prefab-rows/);
-  assert.doesNotMatch(html, /field-prefab-offset-x/);
-  assert.doesNotMatch(html, /field-prefab-offset-y/);
-  assert.doesNotMatch(html, /renderPrefabPreview/);
-  assert.doesNotMatch(html, /renderPrefabEditor/);
-  assert.doesNotMatch(html, /updatePrefabFromQuickEditor/);
-  assert.doesNotMatch(html, /data-quick-id="keep"/);
+  assert.match(html, /function setEditorLayout\(layout, preferredSelectedId = null, readOnlyPrefabExample = null\)/);
   assert.match(
     html,
-    /function onCanvasPointerDown\(event\)\s*{\s*if \(guardReadOnlyPrefabExample\(\)\)/
+    /function importJsonFile\(event\)/
   );
-  assert.match(
-    html,
-    /function exportJsonFile\(\)\s*{\s*if \(guardReadOnlyPrefabExample\(\)\)/
-  );
-  assert.match(
-    html,
-    /async function copyLayoutJson\(\)\s*{\s*if \(guardReadOnlyPrefabExample\(\)\)/
-  );
-  assert.match(
-    html,
-    /function syncLayoutJsonPreview\(\)\s*{\s*if \(isReadOnlyPrefabExampleLoaded\(\)\)/
-  );
-  assert.match(
-    html,
-    /function setEditorLayout\(layout, preferredSelectedId = null, readOnlyPrefabExample = null\)/
-  );
-  assert.match(
-    html,
-    /message:\s*"Prefab-backed example is read-only here\. Import a city layout JSON to edit or export data\."/
-  );
+});
+
+test("editor separates prefab editing from city layout editing", () => {
+  const html = readText(indexPath);
+
+  assert.match(html, /editor-mode-toggle/);
+  assert.match(html, /Prefab Editor/);
+  assert.match(html, /City Layout/);
+  assert.match(html, /composeEditorEntities/);
+  assert.match(html, /field-instance-prefab-id/);
+  assert.match(html, /exportPrefabLibraryJson/);
+  assert.match(html, /exportCityLayoutJson/);
+  assert.doesNotMatch(html, /field-instance-offset-x/);
+  assert.doesNotMatch(html, /field-instance-offset-y/);
 });
 
 test("editor copy no longer frames the layout around the old 20x20 coarse board", () => {
