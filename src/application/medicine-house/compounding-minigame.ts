@@ -5,7 +5,7 @@ import type {
   MedicineHouseHerbDefinition,
 } from "../../domain/medicine-house";
 import { pickRandom } from "../../shared/random";
-import { getMedicineHouseContentDefaults } from "../house-modules/medicine-house/medicine-house-content-defaults";
+import { getMedicineHouseContentDefaults } from "./medicine-house-content-defaults";
 
 export type CompoundingMixTotals = {
   coldBalance: number;

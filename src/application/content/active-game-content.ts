@@ -122,7 +122,7 @@ export function createActiveGameContent(
   const resolvedPack =
     overridePack == null
       ? normalizeContentPack(basePack)
-      : mergeContentPacks(normalizeContentPack(basePack), normalizeContentPack(overridePack));
+      : mergeContentPacks(normalizeContentPack(basePack), overridePack);
 
   const maps = resolvedPack.maps ?? [];
   const cities = resolvedPack.cities ?? [];
@@ -289,7 +289,7 @@ export function createActiveGameContentContextFromModActivation(input: {
 
   const mergedPack = overridePacks.reduce<ContentPackDefinition>(
     (currentPack, overridePack) =>
-      mergeContentPacks(currentPack, normalizeContentPack(overridePack)),
+      mergeContentPacks(currentPack, overridePack),
     normalizeContentPack(basePack)
   );
 
@@ -300,6 +300,12 @@ export function mergeContentPacks(
   basePack: ContentPackDefinition,
   overridePack: ContentPackDefinition
 ): ContentPackDefinition {
+  const hasCities = hasOwnProperty(overridePack, "cities");
+  const hasHouses = hasOwnProperty(overridePack, "houses");
+  const hasBuildingArrangements = hasOwnProperty(overridePack, "buildingArrangements");
+  const hasCityEntries = hasOwnProperty(overridePack, "cityEntries");
+  const hasCityNpcPools = hasOwnProperty(overridePack, "cityNpcPools");
+
   return {
     ...basePack,
     ...overridePack,
@@ -309,13 +315,18 @@ export function mergeContentPacks(
       ...(overridePack.textEntries ?? {}),
     },
     maps: mergeById(basePack.maps ?? [], overridePack.maps ?? []),
-    cities: mergeById(basePack.cities ?? [], overridePack.cities ?? []),
-    houses: mergeById(basePack.houses ?? [], overridePack.houses ?? []),
-    buildingArrangements: mergeById(
+    cities: replaceWhenDeclared(basePack.cities ?? [], overridePack.cities, hasCities),
+    houses: replaceWhenDeclared(basePack.houses ?? [], overridePack.houses, hasHouses),
+    buildingArrangements: replaceWhenDeclared(
       basePack.buildingArrangements ?? [],
-      overridePack.buildingArrangements ?? []
+      overridePack.buildingArrangements,
+      hasBuildingArrangements
     ),
-    cityEntries: [...(overridePack.cityEntries ?? [])],
+    cityEntries: replaceWhenDeclared(
+      basePack.cityEntries ?? [],
+      overridePack.cityEntries,
+      hasCityEntries
+    ),
     characters: mergeById(basePack.characters ?? [], overridePack.characters ?? []),
     events: mergeById(basePack.events ?? [], overridePack.events ?? []),
     eventBindings: mergeById(basePack.eventBindings ?? [], overridePack.eventBindings ?? []),
@@ -328,7 +339,11 @@ export function mergeContentPacks(
     ),
     cards: mergeById(basePack.cards ?? [], overridePack.cards ?? []),
     valuables: mergeById(basePack.valuables ?? [], overridePack.valuables ?? []),
-    cityNpcPools: mergeCityNpcPools(basePack.cityNpcPools ?? [], overridePack.cityNpcPools ?? []),
+    cityNpcPools: replaceWhenDeclared(
+      basePack.cityNpcPools ?? [],
+      overridePack.cityNpcPools,
+      hasCityNpcPools
+    ),
     locationAccess: mergeById(
       basePack.locationAccess ?? [],
       overridePack.locationAccess ?? []
@@ -446,24 +461,19 @@ function mergeById<T extends Identified>(base: T[], override: T[]): T[] {
   return [...base.filter((entry) => !overrideIds.has(entry.id)), ...override];
 }
 
-function mergeCityNpcPools(
-  base: CityNpcPoolDefinition[],
-  override: CityNpcPoolDefinition[]
-): CityNpcPoolDefinition[] {
-  if (override.length === 0) {
-    return base;
-  }
+function replaceWhenDeclared<T>(
+  base: T[],
+  override: readonly T[] | undefined,
+  hasOverride: boolean
+): T[] {
+  return hasOverride ? [...(override ?? [])] : base;
+}
 
-  const overrideByCityId = Object.fromEntries(
-    override.map((poolDefinition) => [poolDefinition.cityId, poolDefinition])
-  );
-
-  return [
-    ...base
-      .filter((poolDefinition) => overrideByCityId[poolDefinition.cityId] == null)
-      .map((poolDefinition) => poolDefinition),
-    ...override.map((poolDefinition) => poolDefinition),
-  ];
+function hasOwnProperty<T extends object, K extends PropertyKey>(
+  value: T,
+  key: K
+): boolean {
+  return Object.prototype.hasOwnProperty.call(value, key);
 }
 
 function mergeHistoricalCityRosters(

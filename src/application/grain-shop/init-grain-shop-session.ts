@@ -1,7 +1,7 @@
 import type { CharacterDefinition } from "../../domain/character";
 import type { GameState } from "../../domain/game-state";
 import { GRAIN_SHOP_VARIABLE_KEYS } from "../../domain/grain-shop";
-import { getGrainShopContentDefaults } from "../house-modules/grain-shop/grain-shop-content-defaults";
+import { getGrainShopContentDefaults } from "./grain-shop-content-defaults";
 import { getQuotedGrainPrice } from "./grain-market";
 import { setGrainPrice } from "./grain-shop-mutations";
 import { ensurePlayerGrainInventory } from "../inventory/trade-inventory";

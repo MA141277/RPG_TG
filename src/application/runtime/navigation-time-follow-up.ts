@@ -10,7 +10,6 @@ import type { CharacterDefinition } from "../../domain/character";
 import type { EventBinding, EventDefinition } from "../../domain/event";
 import type { GameState } from "../../domain/game-state";
 import type { HouseDefinition } from "../../domain/house";
-import type { HouseModuleTransitionResult } from "../../domain/house-module";
 import type { RuntimeFollowUpOutcome } from "../../core/contracts/runtime-result";
 import type { RuntimeState } from "../../core/contracts/runtime-state";
 import { runStoryTriggerRuntime } from "../../core/runtime/scene-runtime";
@@ -33,6 +32,12 @@ export type NavigationTimeFollowUpResult = {
   state: RuntimeState;
   characterDefinitions?: CharacterDefinition[];
   handled: boolean;
+};
+
+export type CouncilArrivalNotice = {
+  speakerCharacterId?: string;
+  textLines?: string[];
+  advanceHintText?: string;
 };
 
 export type NavigationTimeFollowUpBridge = {
@@ -105,7 +110,7 @@ export function applyCouncilPriorityFollowUp(input: {
   state: RuntimeState;
   houseDefinitions: HouseDefinition[];
   textEntriesById: Record<string, string>;
-  councilArrivalNotice?: HouseModuleTransitionResult["councilArrivalNotice"];
+  councilArrivalNotice?: CouncilArrivalNotice;
 }): NavigationTimeFollowUpResult {
   if (
     input.previousGameState != null &&
@@ -140,7 +145,9 @@ export function applyCouncilPriorityFollowUp(input: {
           gameState: input.state.core,
           houseDefinitions: input.houseDefinitions,
           textEntriesById: input.textEntriesById,
-          councilArrivalNotice: input.councilArrivalNotice,
+          ...(input.councilArrivalNotice == null
+            ? {}
+            : { councilArrivalNotice: input.councilArrivalNotice }),
         }),
         beggingMiniGameState: null,
         cityMenuState: null,
@@ -176,7 +183,7 @@ function createCouncilArrivalDialogue(input: {
   gameState: GameState;
   houseDefinitions: HouseDefinition[];
   textEntriesById: Record<string, string>;
-  councilArrivalNotice?: HouseModuleTransitionResult["councilArrivalNotice"];
+  councilArrivalNotice?: CouncilArrivalNotice;
 }): NonNullable<AppState["locationDialogueState"]> | null {
   const priorityHouse = getCouncilPriorityHouseDefinition(
     input.gameState,

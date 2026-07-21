@@ -1,51 +1,41 @@
 # RPG_TG Agent Rules
 
-This repository uses strict module-boundary rules for any new `house` implementation.
+This repository uses Script Editor-authored building arrangements and event-triggered playable flows for building behavior.
 
 ## Mandatory Trigger
 
-If a user asks to:
+If a user asks to add or change building behavior, first inspect whether the behavior belongs in:
 
-- create a new house
-- implement a house instance
-- clone or prototype a house
-- add a special house feature
-- extend an existing house with minigame / trade / dialogue / service flow
+- Script Editor building arrangements and containers
+- event bindings
+- event-triggered playable flow definitions
+- shared runtime mechanisms
 
-you must stop and present the house interface contract first.
+## Hard Constraints For Building Work
 
-Do this before writing code, editing files, or proposing a concrete implementation.
+When implementing building behavior:
 
-The contract to present is defined in:
-
-- `docs/special-house-interface.md`
-
-## Hard Constraints For House Work
-
-When implementing any special house module:
-
-1. Do not hardcode house-specific business branches in `src/main.ts`.
-2. Do not make `main.ts` import a concrete house business module directly unless the user explicitly asks for a temporary prototype-only exception.
+1. Do not hardcode building-specific business branches in `src/main.ts`.
+2. Do not make `main.ts` import concrete building business modules directly unless the user explicitly asks for a temporary prototype-only exception.
 3. Do not return HTML strings from `application/*` modules.
-4. Do not store persistent house gameplay data in ad hoc top-level globals.
-5. Do not overwrite player base stats, money, skills, or inventory as part of house-session initialization.
+4. Do not store persistent building gameplay data in ad hoc top-level globals.
+5. Do not overwrite player base stats, money, skills, or inventory as part of building-session initialization.
 6. All persistent gameplay changes must flow through unified game state structures.
-7. All house modules must conform to the interface and lifecycle rules in `docs/special-house-interface.md`.
+7. Building behavior must be authored as arrangement containers, events, playable flows, or reusable shared runtime mechanisms.
 
 ## Required Response Pattern
 
-For any request to add or build a house instance, the first response must:
+For any request to add or change building behavior, the first response must:
 
-1. Say that the house must follow the repository house interface contract.
-2. Summarize the required interface sections.
+1. Say that building behavior must follow the Script Editor arrangement/event/playable-flow path.
+2. Summarize the affected authoring surfaces.
 3. State any current mismatch in the codebase if relevant.
 4. Only then proceed with design or implementation.
 
 ## Documentation Update Rule
 
-If a house module changes shared interfaces, runtime session structure, registry shape, or cross-module wiring, update:
+If building arrangements, container contracts, event trigger wiring, playable flow contracts, runtime session structure, or cross-module wiring change, update:
 
-- `docs/special-house-interface.md`
 - `docs/change-log.md`
 
 ## Repository Commit Message Rule
@@ -68,7 +58,7 @@ Repository enforcement for this rule lives in:
 
 For gameplay loop, progression, review/council flow, timed skip, assignment, minigame, or story-driven system work:
 
-1. Do not treat the current request as a one-off scene or one-off house patch by default.
+1. Do not treat the current request as a one-off scene or one-off building patch by default.
 2. First inspect whether the repo already has a similar mechanism, cadence, or lifecycle that should be extracted and reused.
 3. Prefer refining a reusable mechanism component, shared state machine, or shared runtime contract over copying a flow into another module.
 4. If an implementation feels like a temporary story insert, hand-written special branch, or duplicated house logic, stop and redesign the shared mechanism first.
@@ -107,7 +97,7 @@ If a user asks to:
 - add a new minigame
 - add a new playable
 - modify an existing minigame or playable
-- integrate a playable into a house, scene, task, or external flow
+- integrate a playable into a building, scene, task, or external flow
 - change QTE / city-begging / grain-accounting / medicine-compounding / story-battle behavior
 - discuss playable runtime, playable integration, playable settlement, or playable handoff
 
@@ -115,9 +105,7 @@ you must first use:
 
 - `.codex/skills/playable-governance/SKILL.md`
 
-If the playable is hosted inside a house flow, also follow:
-
-- `docs/special-house-interface.md`
+If the playable is hosted from a building, route it through Script Editor authored events and playable flow definitions.
 
 ## Spine Plugin Trigger
 
@@ -129,7 +117,7 @@ The tool and collaboration rules are documented in:
 
 - `docs/spine-plugin.md`
 
-Do not treat this as house work. Start the dev server if needed and explain the tool's save rules, especially that new piece images must live under `src/faxian/leg/` and JSON stores `leg:` references rather than image bytes.
+Do not treat this as building work. Start the dev server if needed and explain the tool's save rules, especially that new piece images must live under `src/faxian/leg/` and JSON stores `leg:` references rather than image bytes.
 
 ## Superpowers Plan Governance
 

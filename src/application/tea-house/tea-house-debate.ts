@@ -4,7 +4,7 @@ import type {
   TeaHouseTopicCard,
 } from "../../domain/tea-house";
 import { TEA_HOUSE_TOPIC_CARDS } from "../../domain/tea-house";
-import { getTeaHouseContentDefaults } from "../house-modules/tea-house/tea-house-content-defaults";
+import { getTeaHouseContentDefaults } from "./tea-house-content-defaults";
 
 type RandomSource = () => number;
 

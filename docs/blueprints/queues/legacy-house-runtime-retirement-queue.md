@@ -7,12 +7,12 @@
 - blueprint_version: `2026.07`
 - governance_last_synced_at: `2026-07-21`
 - governance_sync_source: `docs/blueprints/plans/2026-07-20-building-arrangement-container-flow-refactor-target-plan.md`
-- queue_status: `active`
+- queue_status: `done`
 - queue_class: `required`
-- active_task: `task.legacy-house-runtime-retirement.implementation`
+- active_task: `none`
 - next_task: `none`
-- closeout_status: `in-progress`
-- execution_closeout_status: `partial`
+- closeout_status: `done`
+- execution_closeout_status: `done`
 - topic_closure_status: `open-residue`
 - closure_basis: `Successor queue for removing superseded house runtime after explicit building arrangements, container rendering, event trigger integration, and authored flow launch have replaced the relevant migrated behavior.`
 - residue_remaining: `yes`
@@ -22,8 +22,8 @@
 - auto_continue_eligible: `true`
 - next_effect: `promote-next-queue`
 - sync_status: `success`
-- sync_scope: `local-record`
-- sync_summary: `Evidence reconcile recorded locally after the in-parent-spec action-menu event/flow parity gap was filled and verified; no commit or push attempted.`
+- sync_scope: `branch-push`
+- sync_summary: `Repository sync after implementation closeout succeeded against origin/mod-first-dev on 2026-07-21; the queue closeout changes were pushed on the development trunk before continuing to the final guard candidate.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
@@ -121,9 +121,9 @@
 
 - queue_goal: `Retire superseded house runtime after replacement behavior is proven.`
 - task_count: `2`
-- completed_task_count: `1`
-- remaining_task_count: `1`
-- active_task_summary: `Remove superseded house runtime code and references while preserving the verified arrangement/event/flow replacement path.`
+- completed_task_count: `2`
+- remaining_task_count: `0`
+- active_task_summary: `none`
 - task_briefs:
   - `task.legacy-house-runtime-retirement.evidence-anchor-reconcile: Confirm the legacy runtime residues and replacement anchors.`
   - `task.legacy-house-runtime-retirement.implementation: Remove superseded house runtime code and update references.`
@@ -133,7 +133,7 @@
 | Task ID | State | Summary | Depends On | Notes |
 | --- | --- | --- | --- | --- |
 | `task.legacy-house-runtime-retirement.evidence-anchor-reconcile` | `done` | `Confirmed legacy runtime residues, replacement anchors, and action-menu event/flow parity gap.` | `none` | `Closed after filling the in-parent-spec menu event/flow parity gap: 630 action-menu eventIds now have explicit events, event bindings, and either flow or closeBuilding paths.` |
-| `task.legacy-house-runtime-retirement.implementation` | `active` | `Remove superseded house runtime code and update references.` | `task.legacy-house-runtime-retirement.evidence-anchor-reconcile` | `Must not delete the replacement building arrangement and flow path.` |
+| `task.legacy-house-runtime-retirement.implementation` | `done` | `Removed superseded house runtime code and references while preserving the building arrangement/event/flow path.` | `task.legacy-house-runtime-retirement.evidence-anchor-reconcile` | `Closed after verification: npm run typecheck, npm run lint:blueprints, and npm test.` |
 
 ### Task Definitions
 
@@ -155,14 +155,37 @@
 
 #### `task.legacy-house-runtime-retirement.implementation`
 
-- state: `active`
+- state: `done`
 - task_kind: `execution`
 - task_brief:
   - `Remove superseded house runtime code and update references.`
 - task_outcome_summary:
-  - `Pending implementation.`
+  - `Deleted the superseded house runtime directories, registries, core/application runtime bridges, legacy house UI views, special-house interface document, and old AGENTS house-module governance. Runtime building entry now only renders explicit building arrangements and otherwise shows no old fallback. Building entry/exit uses generic city-view/navigation state transitions, and migrated action-menu behavior remains on EventBindingRuntime -> flow/closeBuilding paths. Reusable non-house defaults used by remaining grain/medicine/tea mechanics were moved under their mechanic folders.`
 - done_when:
   - `Legacy house runtime code, registries, and views are removed or routed without losing the replacement path.`
 - verify_with:
   - `npm run typecheck`
+  - `npm run lint:blueprints`
   - `npm test`
+
+### Closeout Record
+
+- closed_at: `2026-07-21`
+- closed_by: `AI execution under target.building-arrangement-container-flow-refactor version-local temporary execution rule`
+- completed_acceptance:
+  - `ACC-BUILDING-FLOW-008: superseded house runtime code retired after replacement authored arrangement/event/flow paths were proven.`
+- implementation_summary:
+  - `Removed src/application/house-modules/**, src/core/registry/house-module-*, src/core/runtime/house-runtime.ts, src/application/house/house-runtime.ts, src/core/adapters/legacy-house-adapter.ts, src/ui/views/house/**, and docs/special-house-interface.md.`
+  - `Removed AGENTS.md special-house contract triggers and replaced them with Script Editor building arrangement/event/playable-flow guidance.`
+  - `Changed building presentation to render only explicit building arrangements and return empty output when no arrangement exists, matching the no-compat/no-empty-data-display rule.`
+  - `Retired old house-runtime tests as skipped legacy assertions and added/kept removal guards proving old paths are gone.`
+- verification:
+  - `npm run typecheck: passed`
+  - `npm run lint:blueprints: passed`
+  - `npm test: passed`
+- completeness_assessment:
+  - `No parent capability was narrowed: migrated Zhu Yuanzhang action menus already have explicit event bindings, flow definitions, and closeBuilding events before deletion.`
+  - `No legacy fallback remains for the removed paths named by this queue.`
+  - `One high-priority test-maintenance gap fill was used: old house-runtime tests were retired/skipped and replacement removal guards were kept so the suite no longer asserts deleted behavior.`
+- routed_residue:
+  - `Final end-to-end acceptance, browser proof, and broader source-removal guard review remain routed to queue.building-arrangement-final-acceptance-and-removal-guard.`

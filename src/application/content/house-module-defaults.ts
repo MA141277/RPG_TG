@@ -1,13 +1,4 @@
-import {
-  HOUSE_MODULE_IDS,
-  type HouseModuleId,
-} from "../../domain/house-module";
-
-export type HouseModuleDefaults = Partial<
-  Record<HouseModuleId, Record<string, unknown>>
->;
-
-const HOUSE_MODULE_ID_SET = new Set<string>(HOUSE_MODULE_IDS);
+export type HouseModuleDefaults = Record<string, Record<string, unknown>>;
 
 export function assertHouseModuleDefaults(
   value: unknown,
@@ -16,12 +7,6 @@ export function assertHouseModuleDefaults(
   assertRecord(value, label);
 
   for (const [moduleId, moduleDefaults] of Object.entries(value)) {
-    if (!HOUSE_MODULE_ID_SET.has(moduleId)) {
-      throw new Error(
-        `${label} contains unsupported house module id "${moduleId}".`
-      );
-    }
-
     assertRecord(
       moduleDefaults,
       `${label} entry "${moduleId}"`
@@ -35,7 +20,12 @@ export function mergeHouseModuleDefaults(
 ): HouseModuleDefaults {
   const mergedDefaults: HouseModuleDefaults = {};
 
-  for (const moduleId of HOUSE_MODULE_IDS) {
+  const moduleIds = new Set([
+    ...Object.keys(base ?? {}),
+    ...Object.keys(override ?? {}),
+  ]);
+
+  for (const moduleId of moduleIds) {
     const baseEntry = base?.[moduleId];
     const overrideEntry = override?.[moduleId];
     if (baseEntry == null && overrideEntry == null) {
@@ -53,7 +43,7 @@ export function mergeHouseModuleDefaults(
 
 export function getHouseModuleDefaults<Defaults extends Record<string, unknown>>(
   defaultsByModuleId: HouseModuleDefaults | undefined,
-  moduleId: HouseModuleId
+  moduleId: string
 ): Defaults | undefined {
   const moduleDefaults = defaultsByModuleId?.[moduleId];
   return moduleDefaults as Defaults | undefined;

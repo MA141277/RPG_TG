@@ -1,6 +1,6 @@
-import type { AccountingGrade, AccountingGradeReward } from "../../../domain/grain-shop";
-import { defaultRuntimeContent } from "../../content/default-runtime-content";
-import { getHouseModuleDefaults } from "../../content/house-module-defaults";
+import type { AccountingGrade, AccountingGradeReward } from "../../domain/grain-shop";
+import { defaultRuntimeContent } from "../content/default-runtime-content";
+import { getHouseModuleDefaults } from "../content/house-module-defaults";
 
 export type GrainShopContentDefaults = {
   grainShopNpcGreetingTextIds: string[];

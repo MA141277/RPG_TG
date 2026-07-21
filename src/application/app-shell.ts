@@ -5,10 +5,6 @@ import type { CityBeggingMiniGameState } from "../domain/city-begging-minigame";
 import type { CityEntryDirectoryType, CityEntryOption } from "../domain/city-entry";
 import type { CityStatusById } from "../domain/city-status";
 import type {
-  HouseMapAutoAdvanceCompletion,
-  MapAutoAdvanceSnapshot,
-} from "../domain/house-module";
-import type {
   UiLayoutByTargetId,
 } from "../domain/ui-layout";
 import type { CityMenuState } from "./city-menu/city-menu";
@@ -44,6 +40,22 @@ export type AppLocationDialogueState =
       targetHouseId: string;
     }
   | null;
+
+export type MapAutoAdvanceSnapshot = {
+  gameState: ReturnType<typeof createInitialState>;
+  characterDefinitions: CharacterDefinition[];
+};
+
+export type BuildingMapAutoAdvanceCompletion =
+  | {
+      type: "enter-house";
+      houseId: string;
+    }
+  | {
+      type: "restore-house-session";
+      houseId: string;
+      houseSession: ReturnType<typeof createInitialState>["ui"]["houseSession"];
+    };
 
 export type AppState = {
   gameState: ReturnType<typeof createInitialState>;
@@ -81,7 +93,7 @@ export type AppState = {
         label: string;
         targetHouseId: string;
         snapshots: MapAutoAdvanceSnapshot[] | null;
-        completion: HouseMapAutoAdvanceCompletion | null;
+        completion: BuildingMapAutoAdvanceCompletion | null;
       }
     | null;
   uiLayouts: UiLayoutByTargetId;

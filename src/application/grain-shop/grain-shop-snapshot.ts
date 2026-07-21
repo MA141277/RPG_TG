@@ -5,7 +5,7 @@ import {
   type GrainShopPlayerSnapshot,
 } from "../../domain/grain-shop";
 import { convertDouToWholeShi } from "../../domain/grain-unit";
-import { getGrainShopContentDefaults } from "../house-modules/grain-shop/grain-shop-content-defaults";
+import { getGrainShopContentDefaults } from "./grain-shop-content-defaults";
 import {
   ensurePlayerGrainInventory,
   readPlayerGrainDou,

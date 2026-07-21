@@ -15,7 +15,6 @@ import type { CityEntryDefinition } from "../../domain/city-entry";
 import type { CityNpcPoolDefinition } from "../../domain/city-npc";
 import type { CitySceneMapping } from "../../domain/city-scene-mapping";
 import type { HouseDefinition } from "../../domain/house";
-import type { HouseModuleRegistry } from "../house-modules/house-module-registry";
 import type { AppPresenterStageOutput } from "./presenter-output";
 
 export type StagePresenterInput = {
@@ -30,7 +29,6 @@ export type StagePresenterInput = {
   textEntriesById?: Record<string, string>;
   citySceneMappingsByCityId?: Record<string, CitySceneMapping>;
   sceneDefinitionsById?: Record<string, SceneDefinition>;
-  houseModuleRegistry?: HouseModuleRegistry;
 };
 
 export function createStagePresenterOutput(
@@ -76,7 +74,6 @@ export function createStagePresenterOutput(
       cityNpcPoolDefinitions: input.cityNpcPoolDefinitions,
       playerCharacterId: input.playerCharacterId,
       textEntriesById: input.textEntriesById,
-      houseModuleRegistry: input.houseModuleRegistry,
     });
   }
 

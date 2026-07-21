@@ -5,6 +5,23 @@
 `docs/change-log.md` 的正式定位是“历史记录 + 人类可读摘要”。
 它不是当前 Blueprint / legacy superpowers 治理的 live execution truth，不作为 resume entry、promotion gate、closeout gate 或固定同步门。
 
+## 2026-07-21 Legacy House Runtime Retirement
+
+### Added
+- 扩展 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs) 和 [tests/hardcoded-scenario-pack-boundary.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/hardcoded-scenario-pack-boundary.test.cjs)，加入旧 house runtime/source 路径退场 guard，并退休旧 house runtime 直接断言。
+
+### Changed
+- 更新 [src/application/building/building-module-entry.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/building/building-module-entry.ts)、[src/ui/views/building/building-module-view.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/views/building/building-module-view.ts) 和 [src/main.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/main.ts)，建筑页只消费显式 building arrangements/container/event/flow 路径；没有编排数据时不再显示旧 fallback。
+- 将粮行、药铺、茶馆仍被通用机制使用的 defaults 移到各自非 house 模块目录：[src/application/grain-shop/grain-shop-content-defaults.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/grain-shop/grain-shop-content-defaults.ts)、[src/application/medicine-house/medicine-house-content-defaults.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/medicine-house/medicine-house-content-defaults.ts)、[src/application/tea-house/tea-house-content-defaults.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/tea-house/tea-house-content-defaults.ts)。
+- 更新 [AGENTS.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/AGENTS.md)，移除 special-house 接口触发规则，改为建筑编排、事件和 playable flow 的 mod-first 规则。
+
+### Removed
+- 删除 `src/application/house-modules/**`、`src/core/registry/house-module-*`、`src/core/runtime/house-runtime.ts`、`src/application/house/house-runtime.ts`、`src/core/adapters/legacy-house-adapter.ts`、`src/ui/views/house/**` 和 `docs/special-house-interface.md`。
+
+### Impact
+- 旧 house module runtime 不再作为建筑功能 fallback 存在；现有内置建筑功能依赖前一阶段补齐的显式 event binding、flow definition 和 closeBuilding 数据。
+- 当前 version 仍未进入 version closeout；下一步按蓝图自动准入 `queue.building-arrangement-final-acceptance-and-removal-guard`。
+
 ## 2026-07-21 Building Arrangement Temporary Rule and Menu Event Parity Fill
 
 ### Added

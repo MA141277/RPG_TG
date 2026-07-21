@@ -4,7 +4,7 @@ import {
   getInsufficientDaysForTimedActivity,
   hasReachedCouncilDate,
 } from "../time/council-priority";
-import type { HouseModuleId } from "../../domain/house-module";
+import type { CouncilPriorityBuildingKind } from "../time/council-priority";
 import {
   applyReviewCycleSchedule,
   getReviewCycleCountdown,
@@ -23,7 +23,7 @@ export type ReviewCyclePolicy = {
   ): number | null;
   getPriorityHouseModuleId(
     state: GameState
-  ): Extract<HouseModuleId, "keep-house" | "temple-house">;
+  ): CouncilPriorityBuildingKind;
   syncCompatibilityMirrors(
     state: GameState,
     input?: Omit<ReviewCycleScheduleInput, "scheduledDate">

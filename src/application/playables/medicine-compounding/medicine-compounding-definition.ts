@@ -1,13 +1,19 @@
 import type { CharacterDefinition } from "../../../domain/character";
+import type { HouseActivityConfirmOverlayState } from "../../../domain/house-activity";
 import type { MedicineHouseActionOutcome } from "../../../domain/medicine-house";
-import type { MedicineHouseSessionState } from "../../../domain/house-modules/medicine-house-session";
+import type {
+  CompoundingHerbSelection,
+  CompoundingSessionTarget,
+  MedicineHouseCompoundingGrade,
+  MedicineHouseHerbDefinition,
+} from "../../../domain/medicine-house";
 import type { RuntimeState } from "../../../core/contracts/runtime-state";
 import { assertExists } from "../../../shared/assert";
 import {
   convertHouseActivityDaysToSegments,
   getHouseMinigameDurationDays,
 } from "../../house/house-activity-costs";
-import { getMedicineHouseContentDefaults } from "../../house-modules/medicine-house/medicine-house-content-defaults";
+import { getMedicineHouseContentDefaults } from "../../medicine-house/medicine-house-content-defaults";
 import {
   addHerbSelection,
   getAvailableHerbsForSkill,
@@ -20,6 +26,40 @@ import {
   ACTIVITY_COMPLETION_STAMINA_COST,
   spendPlayerStamina,
 } from "../../player/player-stamina";
+
+type MedicineHouseOverlayState =
+  | {
+      type: "alert";
+      title: string;
+      paragraphs: string[];
+      tone?: "info" | "success" | "warning";
+    }
+  | HouseActivityConfirmOverlayState
+  | {
+      type: "buy";
+      selectedItemId: string | null;
+    }
+  | {
+      type: "compounding";
+      target: CompoundingSessionTarget;
+      availableHerbs: MedicineHouseHerbDefinition[];
+      selections: CompoundingHerbSelection[];
+      selectionsLeft: number;
+      secondsLeft: number;
+    }
+  | {
+      type: "result";
+      grade: MedicineHouseCompoundingGrade;
+      summaryLines: string[];
+      rewardLines: string[];
+    }
+  | null;
+
+type MedicineHouseSessionState = {
+  npcGreeting: string;
+  dialoguePhase: "greeting" | "open" | "idle";
+  overlay: MedicineHouseOverlayState;
+};
 
 function countSelections(
   selections: Array<{ amount: number }>
@@ -36,7 +76,7 @@ function getActiveSession(state: RuntimeState): MedicineHouseSessionState | null
     return null;
   }
 
-  return houseSession.state;
+  return houseSession.state as MedicineHouseSessionState;
 }
 
 function withSessionState(

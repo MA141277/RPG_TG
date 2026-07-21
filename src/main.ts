@@ -28,6 +28,7 @@ import { createMainRuntimeOrchestrator } from "./application/runtime/main-runtim
 import {
   applyCouncilPriorityFollowUp,
   createNavigationTimeFollowUpBridge,
+  type CouncilArrivalNotice,
 } from "./application/runtime/navigation-time-follow-up";
 import {
   applyCampaignTravelCompletion,
@@ -38,6 +39,7 @@ import { createCity3dHouseEntryCoordinator } from "./application/runtime/city-3d
 import { createCityDirectoryLeaderResidenceCoordinator } from "./application/runtime/city-directory-leader-residence-coordinator";
 import { createCouncilPriorityCityBeggingCoordinator } from "./application/runtime/council-priority-city-begging-coordinator";
 import { createCityHouseTransitionCoordinator } from "./application/runtime/city-house-transition-coordinator";
+import { applyCityViewTransition } from "./application/runtime/city-view-transition";
 import { createHouseDragDropCoordinator } from "./application/runtime/house-drag-drop-coordinator";
 import { triggerBuildingContainerItemAction } from "./application/building/building-container-event-runtime";
 import {
@@ -97,6 +99,7 @@ import {
   createEnterCityRequest,
   routeNavigationRuntime,
 } from "./core/runtime/navigation-runtime";
+import { enterHouse } from "./application/navigation/enter-house";
 import {
   createAdvanceTimeSegmentsRequest,
   createDayStartRequest,
@@ -106,13 +109,6 @@ import {
   createPrototypeCharactersForStoryStage,
 } from "./content/prototype-world";
 import { getZhuYuanzhangCitySceneMappingByCityId } from "./content/city-scene-mappings";
-import {
-  createHouseRuntimeBridge,
-  dispatchHouseRuntimeRequest,
-  enterHouseThroughRuntime,
-  leaveHouseThroughRuntime,
-  type HouseRuntimeBridge,
-} from "./core/runtime/house-runtime";
 import {
   createExitInteractiveRequest,
   createInteractiveActionRequest,
@@ -135,6 +131,7 @@ import type {
   RuntimeFollowUpContext,
   RuntimeRouter,
 } from "./core/runtime/runtime-router";
+import type { RuntimeState } from "./core/contracts/runtime-state";
 import type {
   ModActivationResult,
   ModSourceDescriptor,
@@ -150,7 +147,6 @@ import type { CityEntryDefinition } from "./domain/city-entry";
 import type { CityNpcPoolDefinition } from "./domain/city-npc";
 import type { EventDefinition } from "./domain/event";
 import type { HouseDefinition } from "./domain/house";
-import type { HouseModuleTransitionResult } from "./domain/house-module";
 import type { MapDefinition } from "./domain/map";
 import type {
   ScenarioPackDefinition,
@@ -401,12 +397,6 @@ let campaignMapDragState:
     }
   | null = null;
 let shouldSuppressNextClickAfterMapDrag = false;
-let recentPointerDispatchedHouseAction:
-  | {
-      actionId: string;
-      timestamp: number;
-    }
-  | null = null;
 let houseDragPayload: string | null = null;
 let houseTileDragState:
   | {
@@ -424,7 +414,6 @@ let houseTileDragState:
       restingBeforeId: string | null;
     }
   | null = null;
-let suppressHouseClickUntilMs = 0;
 let cityBeggingMiniGameFrameId: number | null = null;
 let activityQteIntervalHandle: number | null = null;
 let campaignTravelRequestId = 0;
@@ -434,16 +423,13 @@ let activeLoadingScreenElement: HTMLElement | null = null;
 let activeLoadingTheme: LoadingTheme | null = null;
 const mapAutoAdvanceHandles: Record<string, number> = {};
 
-let houseRuntime: HouseRuntimeBridge = createHouseRuntimeInstance();
 const cityHouseTransitionCoordinator = createCityHouseTransitionCoordinator({
   getAppState: () => appState,
   setAppState: (nextAppState) => {
     appState = nextAppState;
   },
   renderApp,
-  clearHouseIntervals: () => {
-    houseRuntime.clearAllHouseIntervals();
-  },
+  clearHouseIntervals: () => {},
   stopCityBeggingMiniGameLoop,
   canEnterCity3d: () =>
     getActiveCitySceneMappingsByCityId()[appState.gameState.world.currentCityId] !=
@@ -505,7 +491,7 @@ const cityDirectoryLeaderResidenceCoordinator =
       ) ?? null,
     canOpenHouseFromCity,
     enterHouse: (houseId) => {
-      enterHouseThroughRuntime(houseRuntime, houseId);
+      enterBuilding(houseId);
     },
     getHistoricalCharacters: () => activeContentContext.historicalCharacters,
     getHistoricalCharacterIdByCharacterId: () =>
@@ -520,17 +506,12 @@ const city3dHouseEntryCoordinator = createCity3dHouseEntryCoordinator({
     ) ?? null,
   canOpenHouseFromCity,
   enterHouse: (houseId) => {
-    enterHouseThroughRuntime(houseRuntime, houseId);
+    enterBuilding(houseId);
   },
   getWindowOrigin: () => window.location.origin,
 });
 const houseDragDropCoordinator = createHouseDragDropCoordinator({
-  dispatchHouseAction: (actionId) => {
-    dispatchHouseRuntimeRequest(houseRuntime, {
-      type: "action",
-      actionId,
-    });
-  },
+  dispatchHouseAction: () => {},
   renderApp,
 });
 const campaignMoveAnimationCoordinator =
@@ -566,9 +547,7 @@ const mainRuntimeOrchestrator = createMainRuntimeOrchestrator({
   }),
   resetMainGameRuntime,
   setActiveContentContext,
-  recreateHouseRuntime: () => {
-    houseRuntime = createHouseRuntimeInstance();
-  },
+  recreateHouseRuntime: () => {},
   setGameVisibility,
   hideMainUiFlow: () => {
     mainUiFlow.hide();
@@ -794,7 +773,7 @@ function getCouncilPriorityHouseDefinition(): HouseDefinition | null {
 
 function createCouncilArrivalDialogue(
   targetHouseId: string,
-  councilArrivalNotice?: HouseModuleTransitionResult["councilArrivalNotice"]
+  councilArrivalNotice?: CouncilArrivalNotice
 ): NonNullable<AppState["locationDialogueState"]> | null {
   const priorityHouse = getCouncilPriorityHouseDefinition();
   if (priorityHouse == null) {
@@ -850,14 +829,14 @@ function clearTransientUiForCouncilTrigger(): void {
 
 function syncCouncilPriorityAfterGameStateChange(
   previousGameState: GameState,
-  councilArrivalNotice?: HouseModuleTransitionResult["councilArrivalNotice"]
+  councilArrivalNotice?: CouncilArrivalNotice
 ): boolean {
   const followUp = applyCouncilPriorityFollowUp({
     state: stateSyncCoreSeam.createRuntimeStateFromAppState(appState),
     previousGameState,
     houseDefinitions: activeContentContext.houses,
     textEntriesById: activeContentContext.textEntriesById,
-    councilArrivalNotice,
+    ...(councilArrivalNotice == null ? {} : { councilArrivalNotice }),
   });
   if (!followUp.handled) {
     return false;
@@ -1008,25 +987,59 @@ function openBeggingMiniGame(): void {
   councilPriorityCityBeggingCoordinator.openBeggingMiniGame();
 }
 
-function createHouseRuntimeInstance(): HouseRuntimeBridge {
-  return createHouseRuntimeBridge({
-    getAppState: () => appState,
-    setAppState: (nextAppState) => {
-      appState = nextAppState;
+function enterBuilding(houseId: string): void {
+  const houseDefinition =
+    activeContentContext.houses.find((house) => house.id === houseId) ?? null;
+  if (houseDefinition == null) {
+    return;
+  }
+
+  appState = {
+    ...appState,
+    gameState: enterHouse(
+      appState.gameState,
+      houseDefinition,
+      activeContentContext.storyContent.eventDefinitionsById
+    ),
+  };
+  renderApp();
+}
+
+function leaveBuilding(): void {
+  appState = applyCityViewTransition(appState, { type: "leave-house" });
+  renderApp();
+}
+
+function applyBuildingAutoAdvanceCompletion(
+  completion: NonNullable<AppState["autoAdvanceState"]>["completion"]
+): void {
+  if (completion == null) {
+    return;
+  }
+
+  enterBuilding(completion.houseId);
+}
+
+function applyRuntimeReenterBuilding(
+  state: RuntimeState,
+  houseId: string
+): RuntimeState {
+  return {
+    ...state,
+    core: {
+      ...state.core,
+      world: {
+        ...state.core.world,
+        currentHouseId: houseId,
+      },
+      ui: {
+        ...state.core.ui,
+        currentView: "house",
+        overlayView: null,
+        houseSession: null,
+      },
     },
-    renderApp,
-    syncCouncilPriorityAfterGameStateChange,
-    startMapAutoAdvance,
-    stopMapAutoAdvance,
-    houseDefinitions: activeContentContext.houses,
-    playerCharacterId: currentPlayerCharacterId,
-    eventDefinitionsById: activeContentContext.storyContent.eventDefinitionsById,
-    eventBindingsById: activeContentContext.storyContent.eventBindingsById,
-    sceneDefinitionsById: activeContentContext.storyContent.sceneDefinitionsById,
-    activityDefinitionsById:
-      activeContentContext.storyContent.activityDefinitionsById,
-    textEntriesById: activeContentContext.storyContent.textEntriesById,
-  });
+  };
 }
 
 function stopMapAutoAdvance(intervalId: string): void {
@@ -1184,11 +1197,10 @@ function startMapAutoAdvance(input: {
 }): void {
   stopMapAutoAdvance(input.intervalId);
   if (input.snapshots != null && input.snapshots.length === 0 && input.completion != null) {
-    houseRuntime.applyMapAutoAdvanceCompletion(input.completion);
+    applyBuildingAutoAdvanceCompletion(input.completion);
     return;
   }
   cancelCampaignTravel();
-  houseRuntime.clearAllHouseIntervals();
   appState = applyMapAutoAdvanceStart(appState, input);
   renderApp();
 
@@ -1204,7 +1216,7 @@ function startMapAutoAdvance(input: {
       if (nextSnapshot == null) {
         stopMapAutoAdvance(input.intervalId);
         if (autoAdvanceState.completion != null) {
-          houseRuntime.applyMapAutoAdvanceCompletion(autoAdvanceState.completion);
+          applyBuildingAutoAdvanceCompletion(autoAdvanceState.completion);
           return;
         }
         renderApp();
@@ -1220,7 +1232,7 @@ function startMapAutoAdvance(input: {
       if (remainingSnapshots.length === 0) {
         stopMapAutoAdvance(input.intervalId);
         if (autoAdvanceState.completion != null) {
-          houseRuntime.applyMapAutoAdvanceCompletion(autoAdvanceState.completion);
+          applyBuildingAutoAdvanceCompletion(autoAdvanceState.completion);
           return;
         }
       }
@@ -1251,7 +1263,7 @@ function startMapAutoAdvance(input: {
       hasReachedCouncilDate(appState.gameState);
     if (councilArrived && autoAdvanceState.completion != null) {
       stopMapAutoAdvance(input.intervalId);
-      houseRuntime.applyMapAutoAdvanceCompletion(autoAdvanceState.completion);
+      applyBuildingAutoAdvanceCompletion(autoAdvanceState.completion);
       return;
     }
     if (appState.autoAdvanceState == null) {
@@ -1300,7 +1312,7 @@ function dispatchCurrentStoryBattleAction(actionId: string): void {
         handleFollowUp: ({ state, followUp }) => ({
           state:
             followUp.type === "reenter-house"
-              ? houseRuntime.applyInteractiveFollowUp(followUp)
+              ? applyRuntimeReenterBuilding(state, followUp.houseId)
               : state,
         }),
       },
@@ -2031,7 +2043,6 @@ function setGameVisibility(isVisible: boolean): void {
 }
 
 function resetMainGameRuntime(): void {
-  houseRuntime.clearAllHouseIntervals();
   stopCityBeggingMiniGameLoop();
   stopActivityQteLoop();
 
@@ -2180,14 +2191,6 @@ appElement.addEventListener("input", (event) => {
     return;
   }
 
-  const fieldId = targetElement.dataset.houseField;
-  if (fieldId != null) {
-    dispatchHouseRuntimeRequest(houseRuntime, {
-      type: "field",
-      fieldId,
-      value: targetElement.value,
-    });
-  }
 });
 
 appElement.addEventListener("change", (event) => {
@@ -2235,27 +2238,6 @@ appElement.addEventListener("wheel", (event) => {
 appElement.addEventListener("pointerdown", (event) => {
   const targetElement = event.target;
   if (!(targetElement instanceof HTMLElement)) {
-    return;
-  }
-
-  const pointerHouseActionButton = targetElement.closest<HTMLElement>(
-    "[data-house-action]"
-  );
-  const pointerHouseActionId = pointerHouseActionButton?.dataset.houseAction;
-  if (
-    pointerHouseActionId != null &&
-    shouldDispatchHouseActionOnPointerDown(pointerHouseActionId)
-  ) {
-    event.preventDefault();
-    event.stopPropagation();
-    recentPointerDispatchedHouseAction = {
-      actionId: pointerHouseActionId,
-      timestamp: window.performance.now(),
-    };
-    dispatchHouseRuntimeRequest(houseRuntime, {
-      type: "action",
-      actionId: pointerHouseActionId,
-    });
     return;
   }
 
@@ -2412,7 +2394,6 @@ appElement.addEventListener("pointerup", (event) => {
   if (!didMove) {
     return;
   }
-  suppressHouseClickUntilMs = window.performance.now() + 250;
   const dragState = {
     payload: pointerDragState.payload,
     beforeId,
@@ -2865,31 +2846,6 @@ appElement.addEventListener("click", (event) => {
     return;
   }
 
-  const houseActionButton = targetElement.closest<HTMLElement>(
-    "[data-house-action]"
-  );
-  if (houseActionButton != null) {
-    if (window.performance.now() < suppressHouseClickUntilMs) {
-      event.preventDefault();
-      event.stopPropagation();
-      suppressHouseClickUntilMs = 0;
-      return;
-    }
-    const actionId = houseActionButton.dataset.houseAction;
-    if (actionId != null) {
-      if (shouldSuppressPointerDispatchedHouseClick(actionId)) {
-        event.preventDefault();
-        event.stopPropagation();
-        return;
-      }
-      dispatchHouseRuntimeRequest(houseRuntime, {
-        type: "action",
-        actionId,
-      });
-    }
-    return;
-  }
-
   const playableFlowActionButton = targetElement.closest<HTMLElement>(
     "[data-action='playable-flow-action']"
   );
@@ -2953,7 +2909,7 @@ appElement.addEventListener("click", (event) => {
     "[data-action='leave-house']"
   );
   if (leaveHouseButton != null) {
-    leaveHouseThroughRuntime(houseRuntime);
+    leaveBuilding();
     return;
   }
 
@@ -3088,7 +3044,6 @@ function handleModalConfirm() {
     return;
   }
 
-  houseRuntime.clearAllHouseIntervals();
   const clearedModalState = {
     ...appState,
     modalState: null,
@@ -3374,27 +3329,6 @@ function syncGameViewport(): void {
   uiOverlayElement?.style.setProperty("--game-width", `${GAME_VIEWPORT_WIDTH}px`);
   uiOverlayElement?.style.setProperty("--game-height", `${GAME_VIEWPORT_HEIGHT}px`);
   uiOverlayElement?.style.setProperty("--game-scale", `${scale}`);
-}
-
-function shouldDispatchHouseActionOnPointerDown(actionId: string): boolean {
-  return actionId === "temple-work-stop" || actionId === "tavern-work-stop";
-}
-
-function shouldSuppressPointerDispatchedHouseClick(actionId: string): boolean {
-  if (recentPointerDispatchedHouseAction == null) {
-    return false;
-  }
-
-  const elapsedMs =
-    window.performance.now() - recentPointerDispatchedHouseAction.timestamp;
-  const shouldSuppress =
-    recentPointerDispatchedHouseAction.actionId === actionId && elapsedMs < 500;
-
-  if (shouldSuppress || elapsedMs >= 500) {
-    recentPointerDispatchedHouseAction = null;
-  }
-
-  return shouldSuppress;
 }
 
 function handleCampaignMapDebugAction(action: string | undefined): void {

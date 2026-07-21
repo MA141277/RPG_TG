@@ -36,13 +36,7 @@ const defaultChecks = [
   },
   {
     file: "src/ui/views/building/building-module-view.ts",
-    requiredText: [
-      "屋敷",
-      "无人接待",
-      "默认角色已展开",
-      "这里是",
-      "在场人物",
-    ],
+    requiredText: ["建筑", "返回", "在场人物"],
   },
   {
     file: "src/application/script-editor/workspace-shell.ts",

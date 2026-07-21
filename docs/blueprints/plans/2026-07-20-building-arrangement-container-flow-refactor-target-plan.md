@@ -6,11 +6,11 @@
 - version_id: `target.building-arrangement-container-flow-refactor`
 - version_status: `open`
 - active_phase: `phase.execution`
-- active_queue: `queue.legacy-house-runtime-retirement`
-- decision_state: `active-execution`
-- next_decision: `queue-closeout-or-return-to-version-review`
-- next_action: `resume-active-queue`
-- resume_gate: `active-queue`
+- active_queue: `none`
+- decision_state: `promotion-review`
+- next_decision: `same-version-admission-or-version-closeout`
+- next_action: `return-to-promotion-review`
+- resume_gate: `version-plan`
 - post_queue_closeout_pause_policy: `auto-continue`
 - promotion_review_result: `admitted`
 - review_subject_id: `none`
@@ -46,7 +46,7 @@
   - `queue.flow-playable-runtime-and-presenter: closed locally after family=flow shared contract, building owner integration, flow session/reduce/presenter/settlement/handoff, one high-priority shell-view gap fill, and full verification.`
   - `queue.script-editor-flow-playable-authoring-ux: closed locally after first-class flows[] authoring, independent UI, project/runtime pack round-trip, active-content flowDefinitionsById preview indexing, and full verification.`
   - `queue.zhuyuanzhang-building-arrangement-pack-migration: closed locally after explicit arrangement migration, generic action-event-flow launch, one high-priority gap fill, and verification.`
-  - `queue.legacy-house-runtime-retirement: evidence reconcile completed after filling the in-parent-spec action-menu event/flow parity gap; implementation task is active.`
+  - `queue.legacy-house-runtime-retirement: closed locally after old house runtime, registries, module sources, UI views, special-house governance, and fallback entry/view branches were removed; repository sync is pending record.`
   - `queue.building-arrangement-final-acceptance-and-removal-guard: pending final guard; admit last.`
 - candidate_backlog_scan_sources:
   - `project-progress`
@@ -157,7 +157,7 @@
 | `item.flow-playable-runtime-and-presenter` | `queue-candidate` | `queue.flow-playable-runtime-and-presenter` | `closed` | `none` | `ACC-BUILDING-FLOW-005` | `src/core/contracts/playable-runtime.ts; src/core/runtime/playable-runtime.ts; playable registries; presenter/view modules` | `family=flow, building owner kind, flow lifecycle/presenter/reduce/settlement/handoff` | `Script Editor flow authoring UX; built-in pack migration; legacy deletion` | `Closed locally after shared flow contract/runtime/presenter/settlement/handoff implementation, one high-priority shell-view gap fill, and full verification; downstream capability remains routed rather than narrowed.` |
 | `item.script-editor-flow-playable-authoring-ux` | `queue-candidate` | `queue.script-editor-flow-playable-authoring-ux` | `closed` | `none` | `ACC-BUILDING-FLOW-010` | `src/domain/script-editor-project.ts; src/application/script-editor/**; src/ui/main-ui/main-ui-flow.js; runtime-pack export/import; active content` | `first-class flow authoring records, nodes, payloads, outcome routes, owner context, event-start target selection` | `runtime flow internals; container UI; built-in pack migration; legacy deletion` | `Closed locally after full verification; preview flowDefinitionsById gap fill used once.` |
 | `item.zhuyuanzhang-building-arrangement-pack-migration` | `queue-candidate` | `queue.zhuyuanzhang-building-arrangement-pack-migration` | `closed` | `none` | `ACC-BUILDING-FLOW-007` | `src/content/scenario-packs/zhuyuanzhang/**; tests/**; runtime pack import/export; active content` | `built-in pack migration to arrangements, containers, events, playables, and rosters without fallback` | `legacy house runtime deletion before parity proof; new gameplay beyond preserving existing functions` | `Closed after explicit migration, generic action-event-flow runtime handoff, one permitted high-priority gap fill, and verification.` |
-| `item.legacy-house-runtime-retirement` | `queue-candidate` | `queue.legacy-house-runtime-retirement` | `active` | `closed or blocked` | `ACC-BUILDING-FLOW-008` | `src/application/house-modules/**; src/core/registry/house-module-*; src/core/runtime/house-runtime*; src/ui/views/house/**; docs/special-house-interface.md; AGENTS.md` | `delete old house module runtime, registries, sessions, views, deprecated fields, and superseded governance` | `deletion before migrated replacement proof; preserving old code as fallback` | `Evidence reconcile completed after the action-menu event/flow parity gap was filled and verified; implementation task is active.` |
+| `item.legacy-house-runtime-retirement` | `queue-candidate` | `queue.legacy-house-runtime-retirement` | `closed` | `none` | `ACC-BUILDING-FLOW-008` | `src/application/house-modules/**; src/core/registry/house-module-*; src/core/runtime/house-runtime*; src/ui/views/house/**; docs/special-house-interface.md; AGENTS.md` | `delete old house module runtime, registries, sessions, views, deprecated fields, and superseded governance` | `deletion before migrated replacement proof; preserving old code as fallback` | `Closed locally after old runtime/module/view/governance removal and verification; repository sync result pending.` |
 | `item.building-arrangement-final-acceptance-and-removal-guard` | `queue-candidate` | `queue.building-arrangement-final-acceptance-and-removal-guard` | `recorded-only` | `all implementation queues close or route blockers` | `ACC-BUILDING-FLOW-009` | `tests/**; browser proof; source guards; version acceptance ledger` | `end-to-end acceptance and no-over-narrowing/removal guards` | `primary feature implementation; version closeout without explicit confirmation` | `Pending final guard queue; cannot be used to implement missing functionality by shrinking acceptance.` |
 
 ### Queue Promotion Ledger
@@ -171,7 +171,7 @@
 | `queue.flow-playable-runtime-and-presenter` | `closed` | `none` | `Closed locally after shared flow runtime/presenter verification.`
 | `queue.script-editor-flow-playable-authoring-ux` | `closed` | `none` | `Closed locally after authoring and preview content verification.`
 | `queue.zhuyuanzhang-building-arrangement-pack-migration` | `closed` | `none` | `Closed after migration parity and action-to-flow runtime handoff verification.`
-| `queue.legacy-house-runtime-retirement` | `active` | `already admitted` | `Evidence reconcile done; implementation active for deleting superseded house runtime after replacement path verification.`
+| `queue.legacy-house-runtime-retirement` | `closed` | `none` | `Closed locally after old house runtime retirement implementation and verification; repository sync result pending before next queue execution.`
 | `queue.building-arrangement-final-acceptance-and-removal-guard` | `pending-final` | `all implementation queues close or route blockers.` | `Final acceptance only; no version closeout without explicit confirmation.`
 
 ### Progress Log
@@ -190,3 +190,5 @@
 - `2026-07-21`: `Strengthened the version-local temporary execution rule after an audit-response pause exposed a process gap: current-version queue completeness audits now feed execution records and continuation when findings remain inside the parent spec, and final responses require a stop-condition self-check before stopping at advice.`
 - `2026-07-21`: `Filled the in-parent-spec Zhu Yuanzhang action-menu event/flow parity gap before legacy deletion: all 630 migrated action-menu eventIds now have explicit event definitions and building-container-item-action bindings; non-leave actions have authored flow definitions; leave actions have closeBuilding event actions. Typecheck, Blueprint lint, and full tests passed. queue.legacy-house-runtime-retirement advanced from evidence reconcile to implementation without version closeout.`
 - `2026-07-21`: `Extended the version-local temporary execution rule so each queue closeout attempts repository synchronization with the development trunk and records the result before continuing; sync failure is a recorded repository result and does not block same-version queue progression unless it exposes a true code/spec blocker.`
+- `2026-07-21`: `Closed queue.legacy-house-runtime-retirement locally after deleting superseded house modules, house registries, old core/application house runtimes, old house UI views, special-house governance, and fallback building presentation paths. Verification passed: npm run typecheck, npm run lint:blueprints, and npm test. Repository sync result is pending record before automatic admission of queue.building-arrangement-final-acceptance-and-removal-guard; no version closeout entered.`
+- `2026-07-21`: `Recorded the post-closeout repository sync for queue.legacy-house-runtime-retirement as succeeded against origin/mod-first-dev, then continued toward the final guard candidate without entering version closeout.`

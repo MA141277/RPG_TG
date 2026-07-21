@@ -3,14 +3,12 @@ import type {
   AppModalState,
   AppState,
 } from "../app-shell";
-import type { HouseCityNpcSummary } from "../city-npcs/select-city-npcs-for-house";
 import type { ActionNode, ChoiceOption, SceneDefinition } from "../../domain/action";
 import type { BuildingArrangementDefinition } from "../../domain/building-arrangement";
 import type { CityDefinition } from "../../domain/city";
 import type { CityEntryDefinition } from "../../domain/city-entry";
 import type { CitySceneMapping } from "../../domain/city-scene-mapping";
 import type { HouseDefinition } from "../../domain/house";
-import type { HouseModuleViewModel } from "../../domain/house-module";
 
 export type AppPresenterStageOutput =
   | { type: "map" }
@@ -25,12 +23,6 @@ export type AppPresenterStageOutput =
       type: "city-3d";
       activeCityDefinition: CityDefinition;
       citySceneMapping: CitySceneMapping | null;
-    }
-  | {
-      type: "house";
-      activeHouse: HouseDefinition;
-      moduleViewModel: HouseModuleViewModel | null;
-      cityNpcSummaries: HouseCityNpcSummary[];
     }
   | {
       type: "building";

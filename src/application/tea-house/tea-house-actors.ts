@@ -7,7 +7,7 @@ import type { GameState } from "../../domain/game-state";
 import {
   getTeaHouseFixedNpcFavorabilityVariableKey,
 } from "../../domain/tea-house";
-import { getTeaHouseContentDefaults } from "../house-modules/tea-house/tea-house-content-defaults";
+import { getTeaHouseContentDefaults } from "./tea-house-content-defaults";
 
 export type TeaHouseActor = {
   id: string;

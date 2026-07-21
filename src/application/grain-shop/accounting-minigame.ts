@@ -3,7 +3,7 @@ import type {
   AccountingGradeReward,
   LedgerQuestion,
 } from "../../domain/grain-shop";
-import { getGrainShopContentDefaults } from "../house-modules/grain-shop/grain-shop-content-defaults";
+import { getGrainShopContentDefaults } from "./grain-shop-content-defaults";
 import { randomInt } from "../../shared/random";
 
 export function generateLedgerQuestion(): LedgerQuestion {

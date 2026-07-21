@@ -5,8 +5,8 @@
 - entry_id: `project-progress.rpg-tg`
 - active_blueprint: `blueprint.rpg-tg`
 - active_version: `target.building-arrangement-container-flow-refactor`
-- has_active_queue: `true`
-- next_file: `docs/blueprints/queues/legacy-house-runtime-retirement-queue.md`
+- has_active_queue: `false`
+- next_file: `docs/blueprints/plans/2026-07-20-building-arrangement-container-flow-refactor-target-plan.md`
 - entry_action: `open-next-file`
 
 ## Human Context
@@ -29,7 +29,7 @@
 - Current Version Plan:
   - `docs/blueprints/plans/2026-07-20-building-arrangement-container-flow-refactor-target-plan.md`
 - Current Active Queue:
-  - `docs/blueprints/queues/legacy-house-runtime-retirement-queue.md`
+  - `none`
 
 ### Live Entry Guardrails
 
@@ -70,6 +70,7 @@
 - `queue.flow-playable-runtime-and-presenter closed locally after family=flow shared runtime/presenter/settlement/handoff implementation, one high-priority shell-view gap fill, and full verification. queue.script-editor-flow-playable-authoring-ux is now active under the version-local temporary execution rule; no version closeout entered.`
 - `queue.script-editor-flow-playable-authoring-ux closed locally after first-class flows[] authoring, independent UI, project/runtime pack round-trip, active-content flowDefinitionsById preview indexing, one high-priority gap fill, and full verification. queue.zhuyuanzhang-building-arrangement-pack-migration is now active under the version-local temporary execution rule; no version closeout entered.`
 - `queue.zhuyuanzhang-building-arrangement-pack-migration closed locally on 2026-07-21 after explicit 21-city/189-arrangement migration, generic action-event-flow launch, one high-priority gap fill, and verification. queue.legacy-house-runtime-retirement is now active under the version-local temporary execution rule; no version closeout entered.`
+- `queue.legacy-house-runtime-retirement closed locally on 2026-07-21 after old house runtime, registries, module sources, UI views, and special-house governance were removed and verification passed. The active version remains open with no active queue until repository sync is recorded and queue.building-arrangement-final-acceptance-and-removal-guard is admitted; no version closeout entered.`
 
 ### Historical References
 

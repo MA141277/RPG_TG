@@ -1,7 +1,7 @@
-import type { TeaHouseTopicCard } from "../../../domain/tea-house";
-import { TEA_HOUSE_TOPIC_CARDS } from "../../../domain/tea-house";
-import { defaultRuntimeContent } from "../../content/default-runtime-content";
-import { getHouseModuleDefaults } from "../../content/house-module-defaults";
+import type { TeaHouseTopicCard } from "../../domain/tea-house";
+import { TEA_HOUSE_TOPIC_CARDS } from "../../domain/tea-house";
+import { defaultRuntimeContent } from "../content/default-runtime-content";
+import { getHouseModuleDefaults } from "../content/house-module-defaults";
 
 export type TeaHouseBossProfile = {
   actorId: string;

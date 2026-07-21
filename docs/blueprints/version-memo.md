@@ -2009,3 +2009,50 @@ Current evidence draft:
 - Built-in Zhu Yuanzhang pack migration tests proving 皇觉寺 and other existing buildings render through arrangements/containers without old house module fallback.
 - Source guards proving old `temple-house`, `tea-house`, `grain-shop`, `medicine-house`, house module registry, old house session types, and deprecated data fields are removed after migration.
 - Simulated-human browser proof covering Script Editor authoring, runtime preview, normal start, JSON runtime pack import, empty mounted NPC behavior, populated seat containers, action menu event triggering, leave behavior, and at least one flow playable launched from a building container.
+
+### MEMO-023: Runtime Preview Reintroduces Base City And House Data After Deleting All Cities
+
+- status: `open`
+- severity: `high`
+- classification: `memo-only`
+- proposed_queue: `none`
+- owning_queue: `none`
+- admission_status: `not-admitted`
+- latest_disposition: `recorded-as-bug`
+- affected_families:
+  - `script editor city authoring`
+  - `script editor runtime preview`
+  - `runtime content activation`
+  - `scenario pack merge semantics`
+  - `city and house selection`
+
+#### Observed Behavior
+
+- Repro path:
+  - open the Script Editor;
+  - go to the `城市` module;
+  - delete all cities;
+  - create one new city;
+  - run runtime preview;
+  - choose a character and start the game;
+  - enter the map.
+- The map still shows cities from the template pack.
+- Entering `濠州` still shows the original template pack building list instead of the edited project result.
+
+#### Root Cause
+
+- Runtime preview exports the current Script Editor project to a scenario pack and then starts it through the normal scenario-pack activation path.
+- The startup activation still carries the default `content-pack.base-game.zhuyuanzhang` base pack.
+- `createActiveGameContent` merged `cities` and `houses` by inheriting base pack data when the override pack was present, instead of treating the override pack's explicit city/house families as authoritative.
+- Because of that merge rule, deleted cities were reintroduced during preview instead of staying deleted.
+
+#### Impact
+
+- The previewed runtime state does not match the current project draft.
+- City deletion in the editor cannot be trusted when previewing a project derived from the base pack.
+- The symptom is visible both on the world map and when entering `濠州`.
+
+#### Verification
+
+- A focused regression test now passes for the explicit override case where the base pack contains `濠州` and the override pack contains only a new city.
+- The verified fix makes explicit override cities and houses authoritative runtime families for activation.

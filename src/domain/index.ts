@@ -13,7 +13,6 @@ export * from "./global-ui";
 export * from "./historical-character";
 export * from "./home-house";
 export * from "./house";
-export * from "./house-module";
 export * from "./leader-residence";
 export * from "./keep-house";
 export * from "./temple-house";

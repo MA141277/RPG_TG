@@ -427,7 +427,7 @@ function renderStage(
     );
   }
 
-  if (stage.type === "house" || stage.type === "building") {
+  if (stage.type === "building") {
     return renderBuildingModuleView({
       stage,
       characterDefinitions: input.appState.characterDefinitions,

@@ -7,7 +7,7 @@ import { assertExists } from "../../shared/assert";
 import { pickRandom } from "../../shared/random";
 import { defaultRuntimeContent } from "../content/default-runtime-content";
 import { resolveTextEntry } from "../content/text-resolution";
-import { getGrainShopContentDefaults } from "../house-modules/grain-shop/grain-shop-content-defaults";
+import { getGrainShopContentDefaults } from "./grain-shop-content-defaults";
 import { ensureShopMarketData } from "../markets/market-refresh-system";
 import { selectCurrentCity } from "../selectors/select-current-city";
 

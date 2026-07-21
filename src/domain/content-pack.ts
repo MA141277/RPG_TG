@@ -12,7 +12,6 @@ import type {
   HistoricalCityRoster,
 } from "./historical-character";
 import type { HouseDefinition } from "./house";
-import type { HouseModuleId } from "./house-module";
 import type { LocationAccessDefinition } from "./location-access";
 import type { MapDefinition } from "./map";
 import type { UiAssetCatalog } from "./ui/asset-catalog";
@@ -51,7 +50,7 @@ export type ContentPackDefinition = {
   valuables?: ValuableItemDefinition[];
   cityNpcPools?: CityNpcPoolDefinition[];
   locationAccess?: LocationAccessDefinition[];
-  houseModuleDefaults?: Partial<Record<HouseModuleId, Record<string, unknown>>>;
+  houseModuleDefaults?: Record<string, Record<string, unknown>>;
   cityPortraits?: Record<string, string>;
   historicalCharacterIdByCharacterId?: Record<string, string>;
   historicalCharacters?: HistoricalCharacterRecord[];

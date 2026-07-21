@@ -2,9 +2,9 @@ import type {
   CompoundingSessionTarget,
   MedicineHouseHerbDefinition,
   MedicineHousePreparedMedicineEffect,
-} from "../../../domain/medicine-house";
-import { defaultRuntimeContent } from "../../content/default-runtime-content";
-import { getHouseModuleDefaults } from "../../content/house-module-defaults";
+} from "../../domain/medicine-house";
+import { defaultRuntimeContent } from "../content/default-runtime-content";
+import { getHouseModuleDefaults } from "../content/house-module-defaults";
 
 export type MedicineHousePreparedMedicineDefinition = {
   id: string;
