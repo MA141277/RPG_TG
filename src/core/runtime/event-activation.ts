@@ -3,7 +3,6 @@ import type { RuntimeTaskInput } from "../contracts/runtime-result";
 
 export type ActivatedEvent = {
   activeEventId: string;
-  sceneId: string | null;
   taskInputs: RuntimeTaskInput[];
 };
 
@@ -16,7 +15,6 @@ export function activateEvent(
 
   return {
     activeEventId: candidate.eventId,
-    sceneId: candidate.sceneId ?? null,
     taskInputs: candidate.taskInputs ?? [],
   };
 }

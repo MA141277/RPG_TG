@@ -38,6 +38,7 @@ export const SCRIPT_EDITOR_MINIMAL_WORKFLOW_FAMILIES = [
   "people",
   "cities",
   "buildings",
+  "quests",
   "dialogues",
   "scenes",
   "minigames",
@@ -219,6 +220,8 @@ export function listScriptEditorWorkflowFamilyRecords(
       return project.cities;
     case "buildings":
       return project.buildings;
+    case "quests":
+      return project.quests;
     case "dialogues":
       return project.dialogues;
     case "scenes":
@@ -263,6 +266,11 @@ export function createScriptEditorWorkflowRecordDraft(
       return createDefaultScriptEditorCityRecord(index) as ScriptEditorCityRecord;
     case "buildings":
       return createDefaultScriptEditorBuildingRecord(index) as ScriptEditorBuildingRecord;
+    case "quests":
+      return {
+        id: `task.new.${suffix}`,
+        title: `Task ${suffix}`,
+      };
     case "dialogues":
       return createDefaultScriptEditorDialogueRecord(index) as ScriptEditorDialogueRecord;
     case "scenes":
@@ -359,6 +367,8 @@ function replaceProjectFamily(
       return { ...project, cities: nextRecords as ScriptEditorCityRecord[] };
     case "buildings":
       return { ...project, buildings: nextRecords as ScriptEditorBuildingRecord[] };
+    case "quests":
+      return { ...project, quests: nextRecords as ScriptEditorEntityRecord[] };
     case "dialogues":
       return { ...project, dialogues: nextRecords as ScriptEditorDialogueRecord[] };
     case "scenes":

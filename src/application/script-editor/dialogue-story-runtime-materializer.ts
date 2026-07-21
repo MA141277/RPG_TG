@@ -1,4 +1,7 @@
-import type { ActionNode, SceneDefinition } from "../../domain/action";
+import type {
+  RuntimeDialogueDefinition,
+  RuntimeDialogueNode,
+} from "../../domain/dialogue";
 import type {
   ScriptEditorDialogueRecord,
   ScriptEditorDialogueNodeRecord,
@@ -19,11 +22,11 @@ export type ScriptEditorDialogueStoryMaterializerDiagnostic = {
 
 export type ScriptEditorDialogueStoryMaterializerInput = Pick<
   ScriptEditorProjectDefinition,
-  "dialogues" | "storyNodes" | "scenes" | "textEntries"
+  "dialogues" | "storyNodes" | "textEntries"
 >;
 
 export type ScriptEditorDialogueStoryMaterializerResult = {
-  scenes: SceneDefinition[] | null;
+  dialogues: RuntimeDialogueDefinition[] | null;
   textEntries: Record<string, string> | null;
   diagnostics: ScriptEditorDialogueStoryMaterializerDiagnostic[];
 };
@@ -33,10 +36,10 @@ export function materializeScriptEditorDialogueStoryRuntime(
 ): ScriptEditorDialogueStoryMaterializerResult {
   const diagnostics: ScriptEditorDialogueStoryMaterializerDiagnostic[] = [];
   const textEntries = mapTextEntries(input.textEntries, diagnostics);
-  const scenes = materializeScenes(input, diagnostics);
+  const dialogues = materializeDialogues(input, diagnostics);
 
   return {
-    scenes: diagnostics.length === 0 ? scenes : null,
+    dialogues: diagnostics.length === 0 ? dialogues : null,
     textEntries: diagnostics.length === 0 ? textEntries : null,
     diagnostics,
   };
@@ -73,67 +76,46 @@ function mapTextEntries(
   return exportedTextEntries;
 }
 
-function materializeScenes(
+function materializeDialogues(
   input: ScriptEditorDialogueStoryMaterializerInput,
   diagnostics: ScriptEditorDialogueStoryMaterializerDiagnostic[]
-): SceneDefinition[] {
+): RuntimeDialogueDefinition[] {
   const storyNodeIds = new Set(input.storyNodes.map((storyNode) => storyNode.id));
   const textEntryIds = new Set(input.textEntries.map((entry) => entry.id));
-  const loweredScenes: SceneDefinition[] = [];
-  const sceneIds = new Set<string>();
-
-  for (const [index, scene] of input.scenes.entries()) {
-    if (typeof scene.id !== "string" || scene.id.length === 0) {
-      diagnostics.push({
-        code: "missing-field",
-        fieldPath: `project.scenes[${index}].id`,
-        message: "Runtime scene export requires every imported scene to provide a non-empty id.",
-      });
-      continue;
-    }
-    if (sceneIds.has(scene.id)) {
-      diagnostics.push({
-        code: "duplicate-id",
-        fieldPath: `project.scenes[${index}].id`,
-        message: `Duplicate scene id "${scene.id}" cannot be exported.`,
-      });
-      continue;
-    }
-    sceneIds.add(scene.id);
-    loweredScenes.push(scene as unknown as SceneDefinition);
-  }
+  const loweredDialogues: RuntimeDialogueDefinition[] = [];
+  const dialogueIds = new Set<string>();
 
   for (const [index, storyNode] of input.storyNodes.entries()) {
     appendUnsupportedStoryNodeDiagnostics(storyNode, index, diagnostics);
   }
 
   for (const [dialogueIndex, dialogue] of input.dialogues.entries()) {
-    const dialogueScenes = lowerDialogueToScenes(
+    const runtimeDialogues = lowerDialogueToRuntimeDialogues(
       dialogue,
       dialogueIndex,
       storyNodeIds,
       textEntryIds,
       diagnostics
     );
-    if (dialogueScenes == null) {
+    if (runtimeDialogues == null) {
       continue;
     }
 
-    for (const scene of dialogueScenes) {
-      if (sceneIds.has(scene.id)) {
+    for (const runtimeDialogue of runtimeDialogues) {
+      if (dialogueIds.has(runtimeDialogue.id)) {
         diagnostics.push({
           code: "duplicate-id",
           fieldPath: `project.dialogues[${dialogueIndex}].id`,
-          message: `Dialogue "${dialogue.id}" lowers to duplicate scene id "${scene.id}".`,
+          message: `Dialogue "${dialogue.id}" lowers to duplicate runtime dialogue id "${runtimeDialogue.id}".`,
         });
         continue;
       }
-      sceneIds.add(scene.id);
-      loweredScenes.push(scene);
+      dialogueIds.add(runtimeDialogue.id);
+      loweredDialogues.push(runtimeDialogue);
     }
   }
 
-  return loweredScenes;
+  return loweredDialogues;
 }
 
 function appendUnsupportedStoryNodeDiagnostics(
@@ -144,24 +126,32 @@ function appendUnsupportedStoryNodeDiagnostics(
   const relatedDialogueIds = storyNode.relatedDialogueIds ?? [];
   const relatedEventIds = storyNode.relatedEventIds ?? [];
   const relatedPersonIds = storyNode.relatedPersonIds ?? [];
-  if (relatedDialogueIds.length > 0 || relatedEventIds.length > 0 || relatedPersonIds.length > 0) {
+  if (
+    relatedDialogueIds.length > 0 ||
+    relatedEventIds.length > 0 ||
+    relatedPersonIds.length > 0
+  ) {
     diagnostics.push({
       code: "unsupported-lowering",
       fieldPath: `project.storyNodes[${index}]`,
       message:
-        "Story node relation lowering is not supported in this minimal narrative export slice.",
+        "Story node relation lowering is not supported in this bounded dialogue export slice.",
     });
   }
 }
 
-function lowerDialogueToScenes(
+function lowerDialogueToRuntimeDialogues(
   dialogue: ScriptEditorDialogueRecord,
   dialogueIndex: number,
   storyNodeIds: Set<string>,
   textEntryIds: Set<string>,
   diagnostics: ScriptEditorDialogueStoryMaterializerDiagnostic[]
-): SceneDefinition[] | null {
-  if (dialogue.storyNodeId != null && dialogue.storyNodeId.length > 0 && !storyNodeIds.has(dialogue.storyNodeId)) {
+): RuntimeDialogueDefinition[] | null {
+  if (
+    dialogue.storyNodeId != null &&
+    dialogue.storyNodeId.length > 0 &&
+    !storyNodeIds.has(dialogue.storyNodeId)
+  ) {
     diagnostics.push({
       code: "missing-reference",
       fieldPath: `project.dialogues[${dialogueIndex}].storyNodeId`,
@@ -172,12 +162,22 @@ function lowerDialogueToScenes(
 
   const nodes = dialogue.nodes ?? [];
   if (nodes.length === 0) {
-    const fallbackScene = lowerDialogueFallbackScene(dialogue, dialogueIndex, textEntryIds, diagnostics);
-    return fallbackScene == null ? null : [fallbackScene];
+    const fallbackDialogue = lowerDialogueFallbackRuntimeDialogue(
+      dialogue,
+      dialogueIndex,
+      textEntryIds,
+      diagnostics
+    );
+    return fallbackDialogue == null ? null : [fallbackDialogue];
   }
 
-  const nodeSceneIds = mapDialogueNodeSceneIds(dialogue, dialogueIndex, nodes, diagnostics);
-  const scenes: SceneDefinition[] = [];
+  const nodeDialogueIds = mapDialogueNodeRuntimeIds(
+    dialogue,
+    dialogueIndex,
+    nodes,
+    diagnostics
+  );
+  const runtimeDialogues: RuntimeDialogueDefinition[] = [];
 
   for (const [nodeIndex, node] of nodes.entries()) {
     if (typeof node.textId !== "string" || node.textId.length === 0) {
@@ -197,28 +197,30 @@ function lowerDialogueToScenes(
       continue;
     }
 
-    const sceneId = nodeSceneIds.get(node.id);
-    if (sceneId == null) {
+    const runtimeDialogueId = nodeDialogueIds.get(node.id);
+    if (runtimeDialogueId == null) {
       continue;
     }
 
-    const actions = lowerDialogueNodeActions(
-      dialogue,
+    const runtimeNodes = lowerDialogueNodeRuntimeNodes(
       dialogueIndex,
       node,
       nodeIndex,
       nodes,
-      nodeSceneIds,
+      nodeDialogueIds,
       diagnostics
     );
-    if (actions.length === 0) {
+    if (runtimeNodes.length === 0) {
       continue;
     }
 
-    scenes.push({
-      id: sceneId,
-      name: nodeIndex === 0 ? dialogue.title || dialogue.id : `${dialogue.title || dialogue.id} / ${node.id}`,
-      actions,
+    runtimeDialogues.push({
+      id: runtimeDialogueId,
+      name:
+        nodeIndex === 0
+          ? dialogue.title || dialogue.id
+          : `${dialogue.title || dialogue.id} / ${node.id}`,
+      nodes: runtimeNodes,
     });
   }
 
@@ -227,19 +229,19 @@ function lowerDialogueToScenes(
       code: "unsupported-lowering",
       fieldPath: `project.dialogues[${dialogueIndex}].followUps`,
       message:
-        "Dialogue follow-up lowering is not supported in this minimal narrative export slice.",
+        "Dialogue follow-up lowering is not supported in this bounded dialogue export slice.",
     });
   }
 
-  return scenes;
+  return runtimeDialogues;
 }
 
-function lowerDialogueFallbackScene(
+function lowerDialogueFallbackRuntimeDialogue(
   dialogue: ScriptEditorDialogueRecord,
   dialogueIndex: number,
   textEntryIds: Set<string>,
   diagnostics: ScriptEditorDialogueStoryMaterializerDiagnostic[]
-): SceneDefinition | null {
+): RuntimeDialogueDefinition | null {
   const fallbackTextId = `text.${dialogue.id.replace(/^dialogue\./, "")}`;
   if (!textEntryIds.has(fallbackTextId)) {
     diagnostics.push({
@@ -252,9 +254,9 @@ function lowerDialogueFallbackScene(
   }
 
   return {
-    id: `scene.${dialogue.id}`,
+    id: dialogue.id,
     name: dialogue.title || dialogue.id,
-    actions: [
+    nodes: [
       {
         type: "dialogue",
         characterId: firstParticipantOrHero(dialogue),
@@ -265,14 +267,14 @@ function lowerDialogueFallbackScene(
   };
 }
 
-function mapDialogueNodeSceneIds(
+function mapDialogueNodeRuntimeIds(
   dialogue: ScriptEditorDialogueRecord,
   dialogueIndex: number,
   nodes: ScriptEditorDialogueNodeRecord[],
   diagnostics: ScriptEditorDialogueStoryMaterializerDiagnostic[]
 ): Map<string, string> {
-  const nodeSceneIds = new Map<string, string>();
-  const rootSceneId = `scene.${dialogue.id}`;
+  const nodeDialogueIds = new Map<string, string>();
+  const rootDialogueId = dialogue.id;
 
   for (const [nodeIndex, node] of nodes.entries()) {
     if (typeof node.id !== "string" || node.id.length === 0) {
@@ -283,43 +285,42 @@ function mapDialogueNodeSceneIds(
       });
       continue;
     }
-    if (nodeSceneIds.has(node.id)) {
+    if (nodeDialogueIds.has(node.id)) {
       diagnostics.push({
         code: "duplicate-id",
         fieldPath: `project.dialogues[${dialogueIndex}].nodes[${nodeIndex}].id`,
-        message: `Duplicate dialogue node id "${node.id}" cannot be lowered into runtime scenes.`,
+        message: `Duplicate dialogue node id "${node.id}" cannot be lowered into runtime dialogues.`,
       });
       continue;
     }
 
-    nodeSceneIds.set(
+    nodeDialogueIds.set(
       node.id,
-      nodeIndex === 0 ? rootSceneId : `${rootSceneId}.${node.id}`
+      nodeIndex === 0 ? rootDialogueId : `${rootDialogueId}.${node.id}`
     );
   }
 
-  return nodeSceneIds;
+  return nodeDialogueIds;
 }
 
-function lowerDialogueNodeActions(
-  dialogue: ScriptEditorDialogueRecord,
+function lowerDialogueNodeRuntimeNodes(
   dialogueIndex: number,
   node: ScriptEditorDialogueNodeRecord,
   nodeIndex: number,
   nodes: ScriptEditorDialogueNodeRecord[],
-  nodeSceneIds: Map<string, string>,
+  nodeDialogueIds: Map<string, string>,
   diagnostics: ScriptEditorDialogueStoryMaterializerDiagnostic[]
-): ActionNode[] {
+): RuntimeDialogueNode[] {
   if (node.nodeType === "choice") {
-    const targetSceneId = resolveDialogueNodeTargetSceneId(
+    const targetDialogueId = resolveDialogueNodeTargetDialogueId(
       dialogueIndex,
       nodeIndex,
       "choiceTargetNodeId",
       typeof node.choiceTargetNodeId === "string" ? node.choiceTargetNodeId : "",
-      nodeSceneIds,
+      nodeDialogueIds,
       diagnostics
     );
-    if (targetSceneId == null) {
+    if (targetDialogueId == null) {
       return [];
     }
 
@@ -331,19 +332,19 @@ function lowerDialogueNodeActions(
           {
             id: `${node.id}.choiceTarget`,
             labelTextId: node.textId,
-            nextSceneId: targetSceneId,
+            nextDialogueId: targetDialogueId,
           },
         ],
       },
     ];
   }
 
-  const actions: ActionNode[] = [];
+  const runtimeNodes: RuntimeDialogueNode[] = [];
 
   if (node.nodeType === "narration") {
-    actions.push({ type: "narration", textId: node.textId });
+    runtimeNodes.push({ type: "narration", textId: node.textId });
   } else {
-    actions.push({
+    runtimeNodes.push({
       type: "dialogue",
       characterId: node.speakerPersonId || "person.hero",
       side: "center",
@@ -356,32 +357,32 @@ function lowerDialogueNodeActions(
   const targetNodeId =
     explicitNextNodeId.length > 0 ? explicitNextNodeId : nodes[nodeIndex + 1]?.id;
   if (targetNodeId != null && targetNodeId.length > 0) {
-    const targetSceneId = resolveDialogueNodeTargetSceneId(
+    const targetDialogueId = resolveDialogueNodeTargetDialogueId(
       dialogueIndex,
       nodeIndex,
       "nextNodeId",
       targetNodeId,
-      nodeSceneIds,
+      nodeDialogueIds,
       diagnostics
     );
-    if (targetSceneId != null) {
-      actions.push({ type: "jump", nextSceneId: targetSceneId });
+    if (targetDialogueId != null) {
+      runtimeNodes.push({ type: "jump", nextDialogueId: targetDialogueId });
     }
   }
 
-  return actions;
+  return runtimeNodes;
 }
 
-function resolveDialogueNodeTargetSceneId(
+function resolveDialogueNodeTargetDialogueId(
   dialogueIndex: number,
   nodeIndex: number,
   field: "nextNodeId" | "choiceTargetNodeId",
   targetNodeId: string,
-  nodeSceneIds: Map<string, string>,
+  nodeDialogueIds: Map<string, string>,
   diagnostics: ScriptEditorDialogueStoryMaterializerDiagnostic[]
 ): string | null {
-  const targetSceneId = nodeSceneIds.get(targetNodeId);
-  if (targetSceneId == null) {
+  const targetDialogueId = nodeDialogueIds.get(targetNodeId);
+  if (targetDialogueId == null) {
     diagnostics.push({
       code: "missing-reference",
       fieldPath: `project.dialogues[${dialogueIndex}].nodes[${nodeIndex}].${field}`,
@@ -390,7 +391,7 @@ function resolveDialogueNodeTargetSceneId(
     return null;
   }
 
-  return targetSceneId;
+  return targetDialogueId;
 }
 
 function firstParticipantOrHero(dialogue: ScriptEditorDialogueRecord): string {

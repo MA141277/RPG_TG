@@ -28,7 +28,6 @@ export const SCRIPT_EDITOR_PROJECT_FILE_KEYS = [
   "cityEntries",
   "events",
   "eventBindings",
-  "scenes",
   "quests",
   "activities",
   "cards",
@@ -64,7 +63,6 @@ export const SCRIPT_EDITOR_PROJECT_CANONICAL_FILES: Record<
   cityEntries: "./city-entries.json",
   events: "./events.json",
   eventBindings: "./event-bindings.json",
-  scenes: "./scenes.json",
   quests: "./quests.json",
   activities: "./activities.json",
   cards: "./cards.json",
@@ -349,6 +347,7 @@ export type ScriptEditorDialogueNodeType =
 export type ScriptEditorDialogueFollowUpTargetFamily =
   | "dialogue"
   | "event"
+  | "task"
   | "city"
   | "building"
   | "minigame";
@@ -465,7 +464,8 @@ export type ScriptEditorConditionGroup = {
 export type ScriptEditorEventDestinationFamily =
   | "dialogue"
   | "event"
-  | "minigame";
+  | "minigame"
+  | "task";
 
 export type ScriptEditorEventDestination = {
   family: ScriptEditorEventDestinationFamily;
@@ -575,7 +575,6 @@ export type ScriptEditorEventRecord = ScriptEditorEntityRecord & {
   description?: string;
   chapterId?: string;
   occurrence?: EventOccurrence;
-  entrySceneId?: string;
   participants?: EventParticipant[];
   actions?: EventRuntimeAction[];
   tags?: string[];
@@ -656,7 +655,6 @@ export type ScriptEditorProjectDefinition = {
   cityEntries: ScriptEditorEntityRecord[];
   events: ScriptEditorEventRecord[];
   eventBindings: ScriptEditorEventBindingRecord[];
-  scenes: ScriptEditorEntityRecord[];
   quests: ScriptEditorEntityRecord[];
   activities: ScriptEditorActivityRecord[];
   cards: ScriptEditorEntityRecord[];

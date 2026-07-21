@@ -1,4 +1,7 @@
-import type { ActionNode, ChoiceOption } from "../../domain/action";
+import type {
+  RuntimeDialogueChoiceOption,
+  RuntimeDialogueNode,
+} from "../../domain/dialogue";
 
 export type TextResolutionContext = {
   textEntriesById: Record<string, string>;
@@ -40,9 +43,9 @@ export function resolveTextTemplateEntry(
 }
 
 export function resolveChoiceOptionText(
-  option: ChoiceOption,
+  option: RuntimeDialogueChoiceOption,
   context: TextResolutionContext
-): ChoiceOption & { label: string } {
+): RuntimeDialogueChoiceOption & { label: string } {
   return {
     ...option,
     label: resolveTextEntry(
@@ -53,10 +56,10 @@ export function resolveChoiceOptionText(
   };
 }
 
-export function resolveActionNodeText(
-  action: ActionNode,
+export function resolveDialogueNodeText(
+  action: RuntimeDialogueNode,
   context: TextResolutionContext
-): ActionNode {
+): RuntimeDialogueNode {
   if (action.type === "narration" || action.type === "dialogue") {
     return {
       ...action,

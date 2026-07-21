@@ -4,16 +4,16 @@ import {
   selectCityModuleUnderlay,
 } from "../city/city-module-entry";
 import {
-  getCurrentChoiceOptions,
-  getCurrentSceneAction,
+  getCurrentDialogueChoiceOptions,
+  getCurrentDialogueNode,
 } from "../story/story-runtime";
 import type { AppState } from "../app-shell";
-import type { SceneDefinition } from "../../domain/action";
 import type { BuildingArrangementDefinition } from "../../domain/building-arrangement";
 import type { CityDefinition } from "../../domain/city";
 import type { CityEntryDefinition } from "../../domain/city-entry";
 import type { CityNpcPoolDefinition } from "../../domain/city-npc";
 import type { CitySceneMapping } from "../../domain/city-scene-mapping";
+import type { RuntimeDialogueDefinition } from "../../domain/dialogue";
 import type { HouseDefinition } from "../../domain/house";
 import type { AppPresenterStageOutput } from "./presenter-output";
 
@@ -28,7 +28,7 @@ export type StagePresenterInput = {
   playerCharacterId: string;
   textEntriesById?: Record<string, string>;
   citySceneMappingsByCityId?: Record<string, CitySceneMapping>;
-  sceneDefinitionsById?: Record<string, SceneDefinition>;
+  dialogueDefinitionsById?: Record<string, RuntimeDialogueDefinition>;
 };
 
 export function createStagePresenterOutput(
@@ -118,7 +118,7 @@ export function createStagePresenterOutput(
     }
   }
 
-  if (currentView === "scene") {
+  if (currentView === "dialogue") {
     const cityUnderlay =
       input.appState.gameState.world.currentCityId != null &&
       input.appState.gameState.world.currentHouseId == null
@@ -152,14 +152,14 @@ export function createStagePresenterOutput(
         : undefined;
 
     return {
-      type: "scene",
-      currentSceneAction: getCurrentSceneAction(
+      type: "dialogue",
+      currentDialogueNode: getCurrentDialogueNode(
         input.appState.gameState,
-        input.sceneDefinitionsById ?? {}
+        input.dialogueDefinitionsById ?? {}
       ),
-      currentSceneChoiceOptions: getCurrentChoiceOptions(
+      currentDialogueChoiceOptions: getCurrentDialogueChoiceOptions(
         input.appState.gameState,
-        input.sceneDefinitionsById ?? {}
+        input.dialogueDefinitionsById ?? {}
       ),
       ...(cityUnderlay == null ? {} : { cityUnderlay }),
       ...(buildingUnderlay == null || buildingUnderlay.type !== "building"

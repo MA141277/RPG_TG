@@ -111,6 +111,23 @@
 - `Before admission or closeout, each queue must be specific enough to prove inherited capability preservation, alternate-path survival, and replacement-truth exit rather than only local implementation success.`
 - `If a queue spec cannot yet name its capability floor, non-primary user/runtime paths, functional-loss guard, or replacement proof obligation, revise the queue spec first instead of proceeding with a thin execution boundary.`
 
+### Operator Receipt Record
+
+- receipt_join_status: `success | failed | success-already-recorded`
+- receipt_join_type: `execution-queue | candidate-queue | not-added`
+- receipt_join_queue_id: `queue.scene-family-retirement-and-content-migration | none`
+- receipt_reason_code: `absorbed-into-active-queue | recorded-as-candidate | admission-routing-required | active-queue-already-exists | candidate-only-not-admitted | blocked-by-governance-truth | rejected-by-scope-or-evidence | none`
+- receipt_reason_basis:
+  - `Use current version-plan governance truth as the basis for operator-facing intake output.`
+- receipt_active_queue: `queue.scene-family-retirement-and-content-migration`
+- receipt_active_task: `task.scene-family-retirement-and-content-migration.content-migration-and-scene-removal`
+- receipt_queue_goal:
+  - `Retire scene as a formal family, migrate its content ownership, and remove scene compatibility residue without weakening event-centered building meaning.`
+- receipt_next_step:
+  - `Continue the active scene-retirement queue until the current lawful task batch completes or a lawful stop condition is recorded.`
+- receipt_human_action: `none-required | confirmation-required | wait-for-blocker`
+- receipt_internal_analysis_exposed: `false | true`
+
 ### Blueprint Lint Failure Handling
 
 - `If npm run lint:blueprints fails during this version's admission, evidence-lock, implementation, or closeout path, first repair the governing docs/spec structure inside the current lawful boundary rather than treating the failure as advisory.`
@@ -119,6 +136,8 @@
 - `Blueprint lint failure must not be recorded as accepted residue, and it must not be bypassed by repository sync, pause, or queue handoff.`
 
 ### Operator Intake Contract
+
+- `Operator Receipt Record below is the current structured source of truth for operator-facing intake output.`
 
 - Intake surface:
   - `人工只输入：新需求 + 参考治理规范。`
@@ -137,14 +156,14 @@
 
 ### Candidate Recovery Ledger
 
-| Candidate ID | Last Classification | Proposed Queue | Latest Disposition | Recheck Trigger | Acceptance Refs | Implementation Anchors | Can Claim | Cannot Claim | Notes |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| `item.script-editor-event-centered-authoring-model-unification` | `queue-candidate` | `queue.script-editor-event-centered-authoring-model-unification` | `closed-local` | `none` | `ACC-EVENT-CENTER-001` | `src/domain/script-editor-project.ts; src/application/script-editor/**; src/ui/main-ui/main-ui-flow.js` | `creator-facing event-centered semantics and destination-family ownership` | `scene retirement, trigger freeze, runtime cutover, portrait mapping` | `Closed on 2026-07-22 after typecheck, test, and blueprint-lint verification confirmed the creator-facing model moved onto event destination ownership with no same-family residue inside ACC-EVENT-CENTER-001.` |
-| `item.event-router-only-trigger-contract-freeze` | `queue-candidate` | `queue.event-router-only-trigger-contract-freeze` | `closed-local` | `none` | `ACC-EVENT-CENTER-002` | `src/domain/event.ts; EventBindingRuntime entrypoints; trigger-context contracts; tests/**` | `event-only routing truth and stable trigger timing/context contracts` | `scene content migration; portrait mapping` | `Closed on 2026-07-22 after shared trigger contract/runtime-export matrix freeze, event-only activation cutover, and full verification.` |
-| `item.scene-family-retirement-and-content-migration` | `queue-candidate` | `queue.scene-family-retirement-and-content-migration` | `admitted-active` | `none` | `ACC-EVENT-CENTER-003; ACC-EVENT-CENTER-004; ACC-EVENT-CENTER-007` | `src/domain/action.ts; src/domain/script-editor-project.ts; src/application/scene/**; src/application/story/**; src/application/startup/**; src/ui/views/scene/**` | `formal scene retirement and content migration` | `runtime/export/import divergence as acceptable residue` | `Admitted on 2026-07-22 immediately after router-freeze closeout. Evidence lock confirms that scene truth still spans authoring/project/runtime/startup/presenter surfaces and must be removed directly in this queue.` |
-| `item.event-centered-runtime-pack-preview-export-sync` | `queue-candidate` | `queue.event-centered-runtime-pack-preview-export-sync` | `recorded-only` | `after scene-retirement queue closes` | `ACC-EVENT-CENTER-005` | `src/application/script-editor/runtime-pack-export.ts; src/application/script-editor/runtime-pack-import.ts; src/application/scenario/scenario-pack-loader.ts; preview/runtime loaders; tests/**` | `editor/runtime/export/import no-scene convergence` | `editor-only structure changes with old runtime truth still alive` | `This queue is a coupled follow-up to scene retirement, not an independent later cleanup.` |
-| `item.portrait-resource-authoring-and-resource-mapping-convergence` | `queue-candidate` | `queue.portrait-resource-authoring-and-resource-mapping-convergence` | `recorded-only` | `after no-scene runtime convergence closes` | `ACC-EVENT-CENTER-006` | `src/domain/script-editor-project.ts; portrait authoring helpers/UI; resource mapping/runtime loaders; tests/**` | `portrait resources, variants, mapping, thumbnail/current preview/runtime continuity` | `routing portrait work into another target/version or keeping person-driven reverse collection` | `May execute last, but only inside this target/version.` |
-| `item.script-editor-event-centered-authoring-final-acceptance-and-residue-guard` | `queue-candidate` | `queue.script-editor-event-centered-authoring-final-acceptance-and-residue-guard` | `recorded-only` | `all implementation queues close or route blockers` | `ACC-EVENT-CENTER-008` | `tests/**; browser flow; source guards; version acceptance ledger` | `final no-over-narrowing acceptance and creator-path proof` | `primary implementation ownership` | `Must not be used to hide implementation-bearing residue.` |
+| Candidate ID | Last Classification | Proposed Queue | Latest Disposition | Recheck Trigger Type | Recheck Trigger Basis | Acceptance Refs | Implementation Anchors | Can Claim | Cannot Claim | Notes |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `item.script-editor-event-centered-authoring-model-unification` | `queue-candidate` | `queue.script-editor-event-centered-authoring-model-unification` | `closed-local` | `none` | `No recheck is currently needed because the queue is already closed locally.` | `ACC-EVENT-CENTER-001` | `src/domain/script-editor-project.ts; src/application/script-editor/**; src/ui/main-ui/main-ui-flow.js` | `creator-facing event-centered semantics and destination-family ownership` | `scene retirement, trigger freeze, runtime cutover, portrait mapping` | `Closed on 2026-07-22 after typecheck, test, and blueprint-lint verification confirmed the creator-facing model moved onto event destination ownership with no same-family residue inside ACC-EVENT-CENTER-001.` |
+| `item.event-router-only-trigger-contract-freeze` | `queue-candidate` | `queue.event-router-only-trigger-contract-freeze` | `closed-local` | `none` | `No recheck is currently needed because the queue is already closed locally.` | `ACC-EVENT-CENTER-002` | `src/domain/event.ts; EventBindingRuntime entrypoints; trigger-context contracts; tests/**` | `event-only routing truth and stable trigger timing/context contracts` | `scene content migration; portrait mapping` | `Closed on 2026-07-22 after shared trigger contract/runtime-export matrix freeze, event-only activation cutover, and full verification.` |
+| `item.scene-family-retirement-and-content-migration` | `queue-candidate` | `queue.scene-family-retirement-and-content-migration` | `admitted-active` | `none` | `No candidate recheck applies while this queue is the current admitted active queue.` | `ACC-EVENT-CENTER-003; ACC-EVENT-CENTER-004; ACC-EVENT-CENTER-007` | `src/domain/action.ts; src/domain/script-editor-project.ts; src/application/scene/**; src/application/story/**; src/application/startup/**; src/ui/views/scene/**` | `formal scene retirement and content migration` | `runtime/export/import divergence as acceptable residue` | `Admitted on 2026-07-22 immediately after router-freeze closeout. Evidence lock confirms that scene truth still spans authoring/project/runtime/startup/presenter surfaces and must be removed directly in this queue.` |
+| `item.event-centered-runtime-pack-preview-export-sync` | `queue-candidate` | `queue.event-centered-runtime-pack-preview-export-sync` | `recorded-only` | `active-queue-absorption-changed` | `Recheck only after queue.scene-family-retirement-and-content-migration closes and the no-scene runtime/export/import handoff is ready for admission.` | `ACC-EVENT-CENTER-005` | `src/application/script-editor/runtime-pack-export.ts; src/application/script-editor/runtime-pack-import.ts; src/application/scenario/scenario-pack-loader.ts; preview/runtime loaders; tests/**` | `editor/runtime/export/import no-scene convergence` | `editor-only structure changes with old runtime truth still alive` | `This queue is a coupled follow-up to scene retirement, not an independent later cleanup.` |
+| `item.portrait-resource-authoring-and-resource-mapping-convergence` | `queue-candidate` | `queue.portrait-resource-authoring-and-resource-mapping-convergence` | `recorded-only` | `active-queue-absorption-changed` | `Recheck only after no-scene runtime convergence closes and portrait-resource work becomes the next lawful queue.` | `ACC-EVENT-CENTER-006` | `src/domain/script-editor-project.ts; portrait authoring helpers/UI; resource mapping/runtime loaders; tests/**` | `portrait resources, variants, mapping, thumbnail/current preview/runtime continuity` | `routing portrait work into another target/version or keeping person-driven reverse collection` | `May execute last, but only inside this target/version.` |
+| `item.script-editor-event-centered-authoring-final-acceptance-and-residue-guard` | `queue-candidate` | `queue.script-editor-event-centered-authoring-final-acceptance-and-residue-guard` | `recorded-only` | `active-queue-absorption-changed` | `Recheck only after all implementation queues close or route blockers and final acceptance becomes lawfully admissible.` | `ACC-EVENT-CENTER-008` | `tests/**; browser flow; source guards; version acceptance ledger` | `final no-over-narrowing acceptance and creator-path proof` | `primary implementation ownership` | `Must not be used to hide implementation-bearing residue.` |
 
 ### Queue Promotion Ledger
 
@@ -164,6 +183,59 @@
 - `Use docs/change-log.md only when structured governance docs are insufficient or explicitly cited by the current version plan.`
 - `Do not answer none unless candidate_backlog_refresh_status=fresh and candidate_backlog_snapshot is empty.`
 - `If candidate truth is stale, missing, or inconsistent, refresh or reconcile it rather than answering with prose.`
+
+### Candidate Evidence Matrix
+
+| Queue ID | Source Docs | Acceptance Refs | Implementation Anchors | Legacy Paths To Replace | Compatibility Paths To Preserve | Reject Or Split Reason | Reject Or Split Basis |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `queue.scene-family-retirement-and-content-migration` | `docs/blueprints/specs/2026-07-22-script-editor-event-centered-authoring-scene-retirement-and-portrait-resource-refactor-target.md` | `ACC-EVENT-CENTER-003; ACC-EVENT-CENTER-004; ACC-EVENT-CENTER-007` | `src/domain/action.ts; src/domain/script-editor-project.ts; src/application/scene/**; src/application/story/**; src/application/startup/**; src/ui/views/scene/**` | `SceneDefinition / ActionNode / project.scenes / scenes.json / entrySceneId / nextSceneId / activeSceneId / scene runtime-session truth` | `event/event-binding remain router truth; arrangement -> event-binding -> flow / playable remains legal implementation path` | `none` | `This queue is already admitted and structurally complete for its current boundary.` |
+| `queue.event-centered-runtime-pack-preview-export-sync` | `docs/blueprints/specs/2026-07-22-script-editor-event-centered-authoring-scene-retirement-and-portrait-resource-refactor-target.md` | `ACC-EVENT-CENTER-005` | `src/application/script-editor/runtime-pack-export.ts; src/application/script-editor/runtime-pack-import.ts; src/application/scenario/scenario-pack-loader.ts; preview/runtime loaders; tests/**` | `scene-owned runtime pack families and no-scene divergence across export/import/loader paths` | `No-scene authoring/runtime/export/import parity after scene retirement closes` | `none` | `Candidate remains valid and awaits the coupled scene-retirement handoff.` |
+| `queue.portrait-resource-authoring-and-resource-mapping-convergence` | `docs/blueprints/specs/2026-07-22-script-editor-event-centered-authoring-scene-retirement-and-portrait-resource-refactor-target.md` | `ACC-EVENT-CENTER-006` | `src/domain/script-editor-project.ts; portrait authoring helpers/UI; resource mapping/runtime loaders; tests/**` | `person-driven reverse collection and unstable portrait resource mapping` | `portrait-resource continuity across authoring/runtime surfaces` | `none` | `Candidate remains valid inside this version and must not be routed to another target.` |
+
+### Candidate Queue Integrity Checklist
+
+- `Each candidate queue must name its inherited capability floor, non-primary user/runtime paths, replacement proof obligations, and functional-loss guard before admission.`
+- `Reject or split any candidate that could appear complete while creator-facing meaning, runtime meaning, trigger timing/context, or editor/runtime/export/import consistency is still only implied in prose.`
+- `Do not let the later runtime-sync queue silently absorb formal scene-retirement work that belongs to the active queue.`
+
+### Execution Self-Review Gate
+
+- review_scope: `admission-review | queue-closeout-review | version-closeout-review`
+- version_acceptance_alignment:
+  - `Current active queue still owns ACC-EVENT-CENTER-003 / 004 / 007; later queues remain recorded-only for ACC-EVENT-CENTER-005 / 006 / 008.`
+- parent_spec_alignment:
+  - `This version still preserves MEMO-025 as event-centered authoring + scene retirement + runtime/export/import sync + portrait convergence without weakening no-compatibility-residue requirements.`
+- queue_claim_alignment:
+  - `The active queue claims only formal scene retirement/content migration, while runtime/export/import sync, portrait convergence, and final acceptance remain routed to later queues.`
+- over_narrowing_check:
+  - `The updated candidate ledgers and evidence matrix now structurally prevent the active queue or later queues from collapsing parent capability into one seam or one happy path.`
+- residue_or_blocker_routing_check:
+  - `No new blocker was discovered during this version-doc sync; remaining work is still routed to the recorded later queues.`
+- verification_adequacy_check:
+  - `Version-doc governance sync will be validated through npm run lint:blueprints.`
+- next_lawful_action_check:
+  - `Continue the active queue until the current lawful task batch completes or a lawful stop condition is recorded.`
+
+### Runtime/Browser Acceptance Gate
+
+- gate_required: `true`
+- covered_surfaces:
+  - `Final version closeout must still prove editor/runtime/import-export and creator-path behavior through direct interaction evidence where applicable.`
+- interaction_path:
+  - `Deferred to the later acceptance-bearing queue and version-closeout path; this governance sync does not itself claim interaction completion.`
+- proof_mode:
+  - `equivalent-waiver`
+- proof_artifacts:
+  - `none yet; this version doc sync records the requirement and defers proof to the covered queues.`
+- fail_closed_check:
+  - `Any queue claiming interaction-dependent completion later must record fail-closed behavior for missing bindings/data rather than relying on source-only reasoning.`
+- waiver_basis:
+  - `This document update changes governance structure only; it does not itself claim UI/runtime completion.`
+
+### Closure Routing Record
+
+- `Current same-family routing remains unchanged: queue.scene-family-retirement-and-content-migration stays active, queue.event-centered-runtime-pack-preview-export-sync remains the next lawful same-family queue after active-queue closeout, and portrait/final-acceptance queues remain later routed candidates.`
+- `No version-level blocker or reroute was introduced by this governance sync.`
 
 ### Explicit Operator-Directed Closure Or Suspension
 

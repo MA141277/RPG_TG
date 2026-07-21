@@ -116,6 +116,8 @@
 
 #### User Path Coverage Matrix
 
+- semantic_dimensions:
+  - `Replace with the parent-level semantic dimensions this queue must preserve or close, such as creator-facing meaning, runtime meaning, trigger timing, trigger context, preview/runtime/export/import consistency, or replacement ownership.`
 - primary_paths:
   - `Replace with the main user-visible path this queue must keep working.`
 - alternate_paths:
@@ -128,6 +130,17 @@
   - `Replace with refusal / rejection / error-handling path that must remain truthful and reachable.`
 - forbidden_regressions:
   - `Replace with a regression that this queue must explicitly avoid even if the primary path still works.`
+
+#### Meaning Preservation
+
+- creator_facing_meaning:
+  - `Replace with the creator-facing meaning inherited from the parent spec that this queue must preserve.`
+- runtime_meaning:
+  - `Replace with the runtime-facing meaning or contract this queue must preserve.`
+- trigger_timing_or_context:
+  - `Replace with trigger timing / trigger-context dimensions that must not be silently narrowed.`
+- consistency_surfaces:
+  - `Replace with editor / preview / runtime / export / import / loader surfaces that must stay aligned or be explicitly routed elsewhere.`
 
 #### Functional Loss Budget
 
@@ -160,6 +173,8 @@
   - `Replace with proof that the old owner/path is no longer the required truth unless dual ownership is explicitly preserved by the parent spec.`
 - verification_evidence:
   - `Replace with proof that the replacement path is actually wired and reachable.`
+- replacement_scope_limit:
+  - `Replace with what this queue replaces fully, what it preserves, and what is routed to another queue or residue path.`
 
 ### Parent Version
 
@@ -229,6 +244,40 @@
 - remaining_gaps:
   - `If any remain, route each to same-family residue, cross-family residue, accepted residue, blocker, or successor candidate.`
 
+### Execution Self-Review Gate
+
+- review_scope: `task-completion | admission-review | queue-closeout | version-closeout`
+- version_acceptance_alignment:
+  - `Replace with how the claimed completion maps to the version acceptance ids and coverage state.`
+- parent_spec_alignment:
+  - `Replace with how the current result still matches the controlling parent spec rather than only a local seam.`
+- queue_claim_alignment:
+  - `Replace with how the result satisfies Can Claim and avoids over-claiming Cannot Claim.`
+- over_narrowing_check:
+  - `Replace with evidence that implementation did not silently shrink creator-facing, runtime-facing, trigger, preview/runtime, or import/export meaning.`
+- residue_or_blocker_routing_check:
+  - `Replace with where every discovered gap is routed if completion cannot honestly absorb it.`
+- verification_adequacy_check:
+  - `Replace with why the available verification is sufficient for the claimed completion boundary.`
+- next_lawful_action_check:
+  - `Replace with the uniquely lawful next action after this review, or explain why multiple lawful branches/blockers remain.`
+
+### Runtime/Browser Acceptance Gate
+
+- gate_required: `true | false`
+- covered_surfaces:
+  - `Replace with the UI/editor/runtime/import-export/preview surfaces that require interaction proof.`
+- interaction_path:
+  - `Replace with the real interaction path that was executed or intentionally waived.`
+- proof_mode:
+  - `in-app-browser | runtime-trace | automated-test-visible-output | equivalent-waiver`
+- proof_artifacts:
+  - `Replace with commands, screenshots, traces, reports, or test cases that prove the covered behavior.`
+- fail_closed_check:
+  - `Replace with how missing data, missing binding, blocked trigger, or empty state behaves on the covered path.`
+- waiver_basis:
+  - `none | Replace with why interaction proof is not required or not currently possible and what evidence replaces it.`
+
 ### Admission Preconditions
 
 - `This queue must not be created or treated as implementation authority until the version plan already records admission review truth.`
@@ -253,6 +302,10 @@
 
 - `A queue spec is invalid if it can only pass by shrinking parent capability meaning down to one local seam, one golden path, or one convenient happy path.`
 - `Admission must stop if Parent Capability Coverage, User Path Coverage Matrix, Functional Loss Budget, Replacement Proof, or Completion Completeness Review is missing or too vague to police over-narrowing.`
+- `Admission must also stop if Meaning Preservation or semantic_dimensions is missing when the parent capability spans creator-facing meaning, runtime meaning, trigger timing/context, or editor/runtime/export/import consistency.`
+- `If the queue replaces an old owner/path, old_truth_owner_exit_proof and replacement_scope_limit are mandatory; “new path exists” is not enough.`
+- `Queue closeout or version-closeout claims that depend on UI/editor/runtime interaction must also carry Runtime/Browser Acceptance Gate or an explicit waiver basis.`
+- `Implementation-task completion, admission completion, queue closeout, and version closeout must carry Execution Self-Review Gate; prose-only completion claims are invalid.`
 - `Queue closeout must fail if the queue cannot show that inherited non-owned capability, alternate paths, or replacement-truth exit were preserved or explicitly routed.`
 
 ### Repository Sync Record Rule

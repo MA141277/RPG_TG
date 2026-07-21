@@ -33,6 +33,10 @@ import type {
   PlayableReturnPolicy,
 } from "../../core/contracts/playable-runtime";
 import {
+  isSupportedEventBindingOwnerFamily,
+  isSupportedEventBindingTrigger,
+} from "../../core/runtime/event-binding-contract";
+import {
   builtinPlayableDefinitionRegistry,
 } from "../../core/registry/builtin-playable-definition-registry";
 
@@ -1482,23 +1486,6 @@ function readEventBindingConditionOperator(
   }
 
   return condition.operator;
-}
-
-function isSupportedEventBindingOwnerFamily(value: string): boolean {
-  return ["story", "city", "building"].includes(value);
-}
-
-function isSupportedEventBindingTrigger(trigger: ScriptEditorEventBindingRecord["trigger"]): boolean {
-  return (
-    trigger.timing === "after" &&
-    [
-      "story-progress",
-      "city-enter",
-      "building-enter",
-      "indoor-screen-shown",
-      "building-container-item-action",
-    ].includes(trigger.action)
-  );
 }
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {

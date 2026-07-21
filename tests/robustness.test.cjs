@@ -6778,7 +6778,7 @@ test("script editor event destination authoring uses localized content-entry fam
   );
 
   assert.match(destinationPanelSource, />\s*去向类型\s*</);
-  for (const familyLabel of ["对话", "事件", "小游戏"]) {
+  for (const familyLabel of ["对话", "事件", "小游戏", "任务"]) {
     assert.match(destinationFamilyOptionsSource, new RegExp(`${familyLabel}`));
   }
   for (const unsupportedDestinationLabel of ["人物", "城市", "建筑", "UI"]) {
@@ -6799,12 +6799,14 @@ test("script editor event destination authoring uses localized content-entry fam
   assert.match(destinationTargetOptionsSource, /project\.events/);
   assert.match(destinationTargetOptionsSource, /project\.dialogues/);
   assert.match(destinationTargetOptionsSource, /project\.minigames/);
+  assert.match(destinationTargetOptionsSource, /project\.quests/);
   assert.doesNotMatch(destinationTargetOptionsSource, /project\.people/);
   assert.doesNotMatch(destinationTargetOptionsSource, /project\.cities/);
   assert.doesNotMatch(destinationTargetOptionsSource, /project\.buildings/);
   assert.match(destinationTargetOptionsSource, /event\.title/);
   assert.match(destinationTargetOptionsSource, /dialogue\.title/);
   assert.match(destinationTargetOptionsSource, /minigame\.title/);
+  assert.match(destinationTargetOptionsSource, /quest\.title/);
   assert.match(destinationTargetOptionsSource, /dialogue\.id/);
   assert.match(relationsPanelSource, /关联人物/);
   assert.match(relationsPanelSource, /关联城市/);
@@ -7545,7 +7547,8 @@ test(
     assert.equal(result.activation?.activeEventId, "event.opening.high");
     assert.equal(result.candidate?.bindingId, "binding.opening.high.city-enter");
     assert.equal(result.state.scene.activeEventId, "event.opening.high");
-    assert.equal(result.state.scene.activeSceneId, "scene.opening.high");
+    assert.equal(result.state.scene.activeSceneId, null);
+    assert.equal(result.state.ui.currentView, "house");
     assert.equal(
       result.state.runtime.eventHistory["event.opening.high"]?.firedCount,
       1
@@ -7626,7 +7629,8 @@ test(
 
     assert.equal(result.candidate?.bindingId, "binding.temple.rest");
     assert.equal(result.activation?.activeEventId, "event.temple.rest");
-    assert.equal(result.state.scene.activeSceneId, "scene.temple.rest");
+    assert.equal(result.state.scene.activeSceneId, null);
+    assert.equal(result.state.ui.currentView, "house");
   }
 );
 
@@ -7723,7 +7727,12 @@ test("building container item action runtime starts matching event from containe
       sceneDefinitionsById: {
         "scene.temple.rest": {
           id: "scene.temple.rest",
-          actions: [],
+          actions: [
+            {
+              type: "narration",
+              text: "Temple rest.",
+            },
+          ],
         },
       },
     },
@@ -8558,7 +8567,7 @@ test("script editor workspace groups creator navigation by project top bar, worl
       },
       {
         label: "玩法",
-        families: ["minigames"],
+        families: ["quests", "minigames", "flows"],
       },
       {
         label: "资料库",
@@ -9462,10 +9471,12 @@ test(
     assert.equal(visibleFamilies.includes("people"), true);
     assert.equal(visibleFamilies.includes("cities"), true);
     assert.equal(visibleFamilies.includes("buildings"), true);
+    assert.equal(visibleFamilies.includes("quests"), true);
     assert.equal(visibleFamilies.includes("textEntries"), true);
     assert.equal(visibleFamilies.includes("dialogues"), true);
     assert.equal(visibleFamilies.includes("scenes"), true);
     assert.equal(visibleFamilies.includes("minigames"), true);
+    assert.equal(visibleFamilies.includes("flows"), true);
     assert.equal(visibleFamilies.includes("storyNodes"), true);
     assert.equal(visibleFamilies.includes("events"), true);
   }
@@ -13443,7 +13454,8 @@ test(
     assert.match(source, /SCRIPT_EDITOR_INSPECTOR_SUPPRESS_TEXT/);
     assert.match(source, /data-script-editor-inspector-header-slot/);
     assert.match(source, /"add-dialogue-node"/);
-    assert.match(source, /"add-dialogue-follow-up"/);
+    assert.doesNotMatch(source, /"add-dialogue-follow-up"/);
+    assert.match(source, /对话结束后的正式去向统一由事件绑定与事件 destination 负责/);
     assert.doesNotMatch(
       source,
       /<input[^>]+data-script-editor-dialogue-node-field="(?:speakerPersonId|textId|nextNodeId|choiceTargetNodeId)"/

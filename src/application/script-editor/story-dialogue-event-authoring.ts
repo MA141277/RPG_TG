@@ -30,6 +30,7 @@ export const SCRIPT_EDITOR_DIALOGUE_NODE_TYPES: readonly ScriptEditorDialogueNod
 export const SCRIPT_EDITOR_DIALOGUE_FOLLOWUP_FAMILIES: readonly ScriptEditorDialogueFollowUpTargetFamily[] = [
   "dialogue",
   "event",
+  "task",
   "city",
   "building",
   "minigame",
@@ -231,6 +232,7 @@ export const SCRIPT_EDITOR_EVENT_DESTINATION_FAMILIES: readonly ScriptEditorEven
   "dialogue",
   "event",
   "minigame",
+  "task",
 ] as const;
 
 export function createDefaultScriptEditorStoryNodeRecord(index: number): ScriptEditorStoryNodeRecord {

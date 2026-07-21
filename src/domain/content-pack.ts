@@ -1,4 +1,3 @@
-import type { SceneDefinition } from "./action";
 import type { ActivityDefinition } from "./activity";
 import type { CardDefinition } from "./card";
 import type { CharacterDefinition } from "./character";
@@ -6,6 +5,7 @@ import type { CityDefinition } from "./city";
 import type { CityEntryDefinition } from "./city-entry";
 import type { CityNpcPoolDefinition } from "./city-npc";
 import type { BuildingArrangementDefinition } from "./building-arrangement";
+import type { RuntimeDialogueDefinition } from "./dialogue";
 import type { EventBinding, EventDefinition } from "./event";
 import type {
   HistoricalCharacterRecord,
@@ -40,7 +40,7 @@ export type ContentPackDefinition = {
   characters?: CharacterDefinition[];
   events?: EventDefinition[];
   eventBindings?: EventBinding[];
-  scenes?: SceneDefinition[];
+  dialogues?: RuntimeDialogueDefinition[];
   tasks?: TaskDefinition[];
   playables?: PlayableDefinition[];
   playableIntegrations?: PlayableIntegrationDefinition[];

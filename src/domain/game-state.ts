@@ -1,7 +1,7 @@
-import type { SceneId } from "./action";
 import type { CharacterId } from "./character";
 import type { CityId } from "./city";
 import type { CityNpcPoolRuntimeState } from "./city-npc";
+import type { DialogueId } from "./dialogue";
 import type { EventId } from "./event";
 import type { HouseId } from "./house";
 import type { CityMarketData } from "./market";
@@ -21,10 +21,10 @@ export type ViewName =
   | "city"
   | "city-3d"
   | "house"
-  | "scene"
+  | "dialogue"
   | "battle"
   | "minigame";
-export type SceneStatus = "idle" | "playing" | "waiting-choice";
+export type DialogueStatus = "idle" | "playing" | "waiting-choice";
 export type TimeOfDay = "morning" | "afternoon" | "night";
 export type CalendarDate = {
   year: number;
@@ -51,11 +51,11 @@ export type GameState = {
     month: number;
     day: number;
   };
-  scene: {
+  dialogue: {
     activeEventId: EventId | null;
-    activeSceneId: SceneId | null;
+    activeDialogueId: DialogueId | null;
     cursor: number;
-    status: SceneStatus;
+    status: DialogueStatus;
   };
   storyBattle: ActiveStoryBattleSession;
   ui: GlobalUIState & {

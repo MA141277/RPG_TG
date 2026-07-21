@@ -1,16 +1,16 @@
 import type { AppState } from "../app-shell";
 import type { ActiveGameContentContext } from "../content/active-game-content";
 import type { ActivityDefinition } from "../../domain/activity";
-import type { SceneDefinition } from "../../domain/action";
+import type { RuntimeDialogueDefinition } from "../../domain/dialogue";
 import type { CharacterDefinition } from "../../domain/character";
 import type { EventBinding, EventDefinition } from "../../domain/event";
 import type { GameState } from "../../domain/game-state";
 import type { StartupSessionBootstrap } from "../startup/startup-session-coordinator";
 import { applyIndoorScreenStoryFollowUp } from "./indoor-screen-story-follow-up";
 import {
-  advanceStorySceneStep,
-  chooseStorySceneOption,
-  getCurrentChoiceOptions,
+  advanceStoryDialogueStep,
+  chooseStoryDialogueOption,
+  getCurrentDialogueChoiceOptions,
   type StoryTriggerTiming,
 } from "../story/story-runtime";
 import { runStoryTriggerRuntime } from "../../core/runtime/scene-runtime";
@@ -21,7 +21,7 @@ export type MainRuntimeOrchestratorRequest =
       session: StartupSessionBootstrap;
     }
   | {
-      type: "advance-story-scene";
+      type: "advance-story-dialogue";
     }
   | {
       type: "choose-story-option";
@@ -50,7 +50,7 @@ export type MainRuntimeOrchestratorDependencies = {
   getStoryContent(): {
     eventDefinitionsById: Record<string, EventDefinition>;
     eventBindingsById?: Record<string, EventBinding>;
-    sceneDefinitionsById: Record<string, SceneDefinition>;
+    dialogueDefinitionsById: Record<string, RuntimeDialogueDefinition>;
     activityDefinitionsById?: Record<string, ActivityDefinition>;
     textEntriesById?: Record<string, string>;
   };
@@ -91,7 +91,7 @@ export function createMainRuntimeOrchestrator(
       ...(storyContent.eventBindingsById == null
         ? {}
         : { eventBindingsById: storyContent.eventBindingsById }),
-      sceneDefinitionsById: storyContent.sceneDefinitionsById,
+      dialogueDefinitionsById: storyContent.dialogueDefinitionsById,
       ...(storyContent.activityDefinitionsById == null
         ? {}
         : { activityDefinitionsById: storyContent.activityDefinitionsById }),
@@ -151,15 +151,15 @@ export function createMainRuntimeOrchestrator(
       const appState = dependencies.getAppState();
       const storyContent = dependencies.getStoryContent();
 
-      if (request.type === "advance-story-scene") {
-        const result = advanceStorySceneStep(
+      if (request.type === "advance-story-dialogue") {
+        const result = advanceStoryDialogueStep(
           {
             state: appState.gameState,
             characterDefinitions: appState.characterDefinitions,
           },
           {
             eventDefinitionsById: storyContent.eventDefinitionsById,
-            sceneDefinitionsById: storyContent.sceneDefinitionsById,
+            dialogueDefinitionsById: storyContent.dialogueDefinitionsById,
             activityDefinitionsById: storyContent.activityDefinitionsById,
             textEntriesById: storyContent.textEntriesById,
           }
@@ -187,22 +187,22 @@ export function createMainRuntimeOrchestrator(
         return getNoopResult();
       }
 
-      const selectedOption = getCurrentChoiceOptions(
+      const selectedOption = getCurrentDialogueChoiceOptions(
         appState.gameState,
-        storyContent.sceneDefinitionsById
+        storyContent.dialogueDefinitionsById
       ).find((choiceOption) => choiceOption.id === request.choiceId);
       if (selectedOption == null) {
         return getNoopResult();
       }
 
-      const result = chooseStorySceneOption(
+      const result = chooseStoryDialogueOption(
         {
           state: appState.gameState,
           characterDefinitions: appState.characterDefinitions,
         },
         {
           eventDefinitionsById: storyContent.eventDefinitionsById,
-          sceneDefinitionsById: storyContent.sceneDefinitionsById,
+          dialogueDefinitionsById: storyContent.dialogueDefinitionsById,
           activityDefinitionsById: storyContent.activityDefinitionsById,
           textEntriesById: storyContent.textEntriesById,
         },

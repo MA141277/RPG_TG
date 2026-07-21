@@ -2261,6 +2261,44 @@ Current evidence draft:
   - `dialogue -> scene` lowering seams
 - The target state is not "support both event+scene and event-only". The target state is "remove scene and migrate its responsibilities".
 
+#### Interrupted Resume And Documentation Completeness Guard
+
+- This memo also records a governance guard for interrupted Blueprint execution so accidental session exit does not let partially updated queue docs masquerade as completed truth.
+- On resume, the agent must not continue from `active_task`, queue title, or a single status field alone.
+- Resume must begin with a reconciliation audit across at least:
+  - repository resume entry / project-progress truth
+  - active version plan
+  - active queue document
+  - required closeout or progress-log sections
+  - `docs/change-log.md` if the queue type requires it
+  - current repository diff / landed source truth
+- Documentation truth and source truth must be compared explicitly. If they diverge, the queue must first record the mismatch and restore governance truth before claiming continuation or completion.
+- Queue or task completion must not be inferred merely because some implementation diff exists, nor merely because some queue fields were already filled.
+- Blueprint handling should treat the following states as separate and require explicit reconciliation:
+  - implementation state
+  - governance-document state
+  - verification state
+  - repository-sync state
+  - next-step routing state
+- If an interruption occurred mid-batch, resume records should explicitly identify:
+  - `current_task_real_state`
+  - `doc_reconcile_status`
+  - `source_reconcile_status`
+  - `verification_not_yet_run`
+  - `remaining_acceptance_gaps`
+  - concrete next edit targets
+- A queue must not be treated as functionally complete when governance docs lag behind code truth, and code must not be treated as fully landed when required governance records are still missing.
+- Before queue closeout or task closeout is claimed after an interrupted session, Blueprint should run a completeness review that checks:
+  - whether required documentation sections were fully written rather than partially stubbed
+  - whether claimed landed behavior matches current source and reachable runtime paths
+  - whether any capability or constraint was dropped because the prior session ended early
+  - whether any missing verification was accidentally implied as already complete
+- This guard exists to prevent three specific failure modes:
+  - resuming from stale queue/task status while the actual landed work differs
+  - mistaking partially written governance docs for complete closeout truth
+  - silently losing functionality or constraints because the interrupted session never recorded the remaining gaps
+- Under this memo, interrupted execution recovery is not doc-only resume and not diff-only resume; it is a reconciliation step between governance truth, source truth, verification truth, and remaining acceptance truth.
+
 #### Current Repository Residue Inventory To Remove
 
 - The following repository surfaces are now explicitly in-scope for removal or migration under this memo:
@@ -2532,3 +2570,45 @@ Current evidence draft:
 - Runtime tests proving the new structures are readable and runnable without fallback to old semantics.
 - Simulated-human coverage for city/building/dialogue/minigame/task trigger environments.
 - Simulated-human coverage for portrait resource creation, thumbnail selection, current preview, and runtime continuity.
+
+### MEMO-026: Blueprint Continuous Execution Prompt Hardening Draft
+
+#### Problem Statement
+
+- Current Blueprint stop-condition and continuous-execution rules already forbid most status-only pauses, but operator continuation prompts can still underspecify what should happen when there is no `active_queue`, or when the agent becomes uncertain about the current queue/task/doc transition.
+- That ambiguity can still produce abnormal pauses caused by agent misunderstanding rather than by a lawful stop condition.
+
+#### Draft Direction
+
+- Prefer a continuation prompt that explicitly covers both cases:
+  - when an `active_queue` already exists
+  - when no `active_queue` exists and Blueprint must first route to the next lawful queue through version-level governance truth
+- Treat agent-local uncertainty as non-blocking by default:
+  - uncertainty about the current step
+  - uncertainty about queue/task status
+  - uncertainty about version-doc state
+  - incomplete memory
+  - the need to reread the current truth chain
+  - fear that the latest transition may have been misunderstood
+
+#### Recommended Prompt Shape
+
+- Recommended operator prompt draft:
+  - `按蓝图规范继续执行当前 active queue；如果当前没有 active queue，则先依据当前 truth chain 完成 version-level promotion-review、same-family residue routing 或 next lawful queue admission，并在文档真值同步后激活唯一 lawful active queue，然后继续执行，直到该 queue 当前不存在可继续执行的 lawful task 为止。除非命中蓝图白名单合法停机条件，否则不得停止。agent 对当前步骤、当前 queue/task 状态、版本文档状态、下一 lawful action 的理解不确定、记忆不完整、需要重新阅读、担心自己理解错，这些都不是合法停机条件；应先自行重新读取当前 truth chain、完成 self-check，并按当前最保守且不降级能力的 lawful action 继续执行。不得因为“可能理解错了”而停下询问。若需停下，必须先把 stop_reason、stop_basis、next_unblocked_action、human_input_required 写入当前 version plan，再说明原因；若未写入，则视为不得停下。`
+
+#### Intended Governance Effect
+
+- Remove ambiguity around `if no active queue` handling so the agent does not interpret "筛选 active queue" as free-form queue picking.
+- Push the agent toward:
+  - rereading current truth first
+  - choosing the least capability-reducing lawful next action
+  - treating misunderstanding risk as a recoverable execution condition rather than a stop basis
+- Reduce abnormal pauses caused by:
+  - step-transition misunderstanding
+  - stale memory of current governance truth
+  - over-cautious requests for confirmation when one lawful path already exists
+
+#### Promotion Note
+
+- This memo entry is recorded only.
+- It does not itself change formal Blueprint workflow behavior until explicitly promoted into `docs/blueprints/blueprint-workflow-spec.md`.

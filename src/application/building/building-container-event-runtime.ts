@@ -1,11 +1,13 @@
-import type { SceneDefinition } from "../../domain/action";
 import type { ActivityDefinition } from "../../domain/activity";
 import type { CharacterDefinition } from "../../domain/character";
+import type { RuntimeDialogueDefinition } from "../../domain/dialogue";
 import type { EventBinding, EventDefinition } from "../../domain/event";
 import type { GameState } from "../../domain/game-state";
 import type { FlowPlayableDefinition } from "../../domain/playables/flow";
+import { createRuntimeTriggerContext } from "../../core/runtime/event-binding-contract";
 import { runEventBindingRuntime } from "../../core/runtime/event-binding-runtime";
-import { runSceneUntilPause } from "../scene/scene-runner";
+import { resolveActiveEventPresentationDialogueId } from "../dialogue/dialogue-presentation";
+import { runDialogueUntilPause } from "../dialogue/dialogue-runner";
 import { launchFlowPlayable } from "../playables/flow/flow-playable-definition";
 
 export type BuildingContainerItemAction = {
@@ -17,7 +19,7 @@ export type BuildingContainerItemAction = {
 export type BuildingContainerEventStoryContent = {
   eventDefinitionsById: Record<string, EventDefinition>;
   eventBindingsById?: Record<string, EventBinding> | undefined;
-  sceneDefinitionsById: Record<string, SceneDefinition>;
+  dialogueDefinitionsById: Record<string, RuntimeDialogueDefinition>;
   activityDefinitionsById?: Record<string, ActivityDefinition> | undefined;
   flowDefinitionsById?: Record<string, FlowPlayableDefinition> | undefined;
   textEntriesById?: Record<string, string> | undefined;
@@ -50,18 +52,16 @@ export function triggerBuildingContainerItemAction(
     state: input.state,
     eventDefinitionsById: input.storyContent.eventDefinitionsById,
     eventBindings: Object.values(input.storyContent.eventBindingsById ?? {}),
-    triggerContext: {
+    triggerContext: createRuntimeTriggerContext({
+      state: input.state,
       owner: { family: "building", id: currentHouseId },
-      timing: "after",
       action: "building-container-item-action",
-      currentCityId: input.state.world.currentCityId,
-      currentHouseId,
       payload: {
         arrangementId: input.action.arrangementId,
         containerId: input.action.containerId,
         itemId: input.action.itemId,
       },
-    },
+    }),
   });
 
   if (bindingResult.activation == null) {
@@ -83,10 +83,10 @@ export function triggerBuildingContainerItemAction(
       activeFlow.integrationId ?? `playable.${activeFlow.id}`;
     const nextState = {
       ...bindingResult.state,
-      scene: {
-        ...bindingResult.state.scene,
+      dialogue: {
+        ...bindingResult.state.dialogue,
         activeEventId: null,
-        activeSceneId: null,
+        activeDialogueId: null,
         cursor: 0,
         status: "idle" as const,
       },
@@ -113,20 +113,23 @@ export function triggerBuildingContainerItemAction(
     };
   }
 
-  const activeSceneId = bindingResult.state.scene.activeSceneId;
-  const activeScene =
-    activeSceneId == null
+  const activeDialogueId = resolveActiveEventPresentationDialogueId(
+    bindingResult.state,
+    input.storyContent.eventDefinitionsById
+  );
+  const activeDialogue =
+    activeDialogueId == null
       ? null
-      : input.storyContent.sceneDefinitionsById[activeSceneId] ?? null;
-  if (activeScene == null || activeScene.actions.length === 0) {
+      : input.storyContent.dialogueDefinitionsById[activeDialogueId] ?? null;
+  if (activeDialogue == null || activeDialogue.nodes.length === 0) {
     return {
       state: bindingResult.state,
       characterDefinitions: input.characterDefinitions,
     };
   }
 
-  const sceneResult = runSceneUntilPause(bindingResult.state, {
-    sceneDefinitionsById: input.storyContent.sceneDefinitionsById,
+  const dialogueResult = runDialogueUntilPause(bindingResult.state, {
+    dialogueDefinitionsById: input.storyContent.dialogueDefinitionsById,
     eventDefinitionsById: input.storyContent.eventDefinitionsById,
     activityDefinitionsById: input.storyContent.activityDefinitionsById,
     characterDefinitions: input.characterDefinitions,
@@ -134,7 +137,7 @@ export function triggerBuildingContainerItemAction(
   });
 
   return {
-    state: sceneResult.state,
-    characterDefinitions: sceneResult.characterDefinitions,
+    state: dialogueResult.state,
+    characterDefinitions: dialogueResult.characterDefinitions,
   };
 }

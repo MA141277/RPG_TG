@@ -1,7 +1,7 @@
 import type { CharacterId } from "./character";
 import type { CityId } from "./city";
+import type { DialogueId } from "./dialogue";
 import type { ChapterId, EventId } from "./event";
-import type { SceneId } from "./action";
 import type { ViewName, CalendarDate, GameState } from "./game-state";
 import type { HouseId } from "./house";
 import type { MapId } from "./map";
@@ -24,7 +24,7 @@ export type ScenarioCharacterStartupOverride = {
     mapId?: MapId;
     cityId?: CityId;
     houseId?: HouseId | null;
-    sceneId?: SceneId | null;
+    dialogueId?: DialogueId | null;
     view?: ViewName;
   };
   initialPlayerCoordinate?: {
@@ -51,7 +51,7 @@ export type ScenarioProfileDefinition = {
     mapId: MapId;
     cityId: CityId;
     houseId: HouseId | null;
-    sceneId?: SceneId;
+    dialogueId?: DialogueId;
     view: ViewName;
   };
   initialPlayerCoordinate?: {
@@ -147,14 +147,14 @@ export function resolveScenarioProfileForCharacter(
                 ...profile.initialLocation,
                 ...override.initialLocation,
               };
-              if (override.initialLocation.sceneId === null) {
-                const { sceneId: _sceneId, ...rest } = mergedLocation;
+              if (override.initialLocation.dialogueId === null) {
+                const { dialogueId: _dialogueId, ...rest } = mergedLocation;
                 return rest;
               }
-              if (typeof mergedLocation.sceneId === "string") {
+              if (typeof mergedLocation.dialogueId === "string") {
                 return mergedLocation;
               }
-              const { sceneId: _sceneId, ...rest } = mergedLocation;
+              const { dialogueId: _dialogueId, ...rest } = mergedLocation;
               return rest;
             })(),
           },

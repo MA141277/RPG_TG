@@ -5,6 +5,32 @@
 `docs/change-log.md` 的正式定位是“历史记录 + 人类可读摘要”。
 它不是当前 Blueprint / legacy superpowers 治理的 live execution truth，不作为 resume entry、promotion gate、closeout gate 或固定同步门。
 
+## 2026-07-22 Script Editor Event-Centered Authoring Model Unification
+
+### Changed
+- 更新 [src/domain/script-editor-project.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/domain/script-editor-project.ts) 与 [src/application/script-editor/story-dialogue-event-authoring.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/story-dialogue-event-authoring.ts)，把 `task` 纳入正式 `ScriptEditorEventDestinationFamily`，使 `quests` 可以作为事件去向目标进入作者面合同，而不是继续缺席于 event-centered 语义模型。
+- 更新 [src/application/script-editor/minimal-workflow.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/minimal-workflow.ts)、[src/application/script-editor/workspace-shell.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/workspace-shell.ts) 与 [src/ui/main-ui/main-ui-flow.js](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/main-ui/main-ui-flow.js)，把 `quests` 接入 Script Editor 可见工作流、对象树与事件去向目标选择器，并把 `flows` 明确标注为“建筑功能”的实现缝语义，而不是创作者正式路由 owner。
+- 更新 [src/ui/main-ui/main-ui-flow.js](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/main-ui/main-ui-flow.js) 与 [src/application/script-editor/workspace-shell.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/workspace-shell.ts)，移除对话作者面上的 `followUps` 正式编辑入口、摘要卡和工作台校验，把“对话结束后的去向”明确收口到 `event binding / event destination`，避免继续保留 family-local routing truth。
+- 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，把 `task` 纳入 event destination family 覆盖，校验 `quests` / `flows` 在 Script Editor workflow 中可见，并防止主作者面回退到 `dialogue.followUps` 直接路由控制。
+
+### Impact
+- Script Editor 当前的 creator-facing 路由语义开始正式收口为 `function -> event -> dialogue/minigame/task/function`，`task` 不再只是 runtime/export 侧存在的对象，创作者可以通过事件去向直接引用。
+- `dialogue.followUps` 仍可作为历史数据字段留在内部结构里，但它不再占据主作者面、工作台摘要或校验入口；后续 scene 退役与 runtime/export 收口时，可以继续沿 event-centered 模型推进，而不是再和 dialogue-local routing truth 双轨并存。
+
+## 2026-07-22 Event Router Only Trigger Contract Freeze
+
+### Changed
+- 新增 [src/core/runtime/event-binding-contract.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/core/runtime/event-binding-contract.ts)，把运行时正式支持的 `event binding owner family` / `trigger timing+action` 收口为一套共享 contract，并提供统一 `createRuntimeTriggerContext()`，避免 `story-runtime`、建筑容器事件入口和导出侧继续各自手搓 trigger context。
+- 新增 [src/application/events/event-presentation.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/events/event-presentation.ts)，把“event 激活”与“scene 展示承载”拆开：`entrySceneId` 仍暂时保留为展示数据，但不再通过 runtime candidate/activation 成为正式路由真相。
+- 更新 [src/core/contracts/event-runtime.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/core/runtime/event-activation.ts)、[src/core/runtime/event-binding-runtime.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/core/runtime/event-binding-runtime.ts) 与 [src/application/events/event-runner.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/events/event-runner.ts)，移除 `EventRuntimeCandidate.sceneId` / `ActivatedEvent.sceneId`，并让 `startEvent()` 只负责激活 event/history，不再直接把 `sceneId` 写成正式 dispatch contract。
+- 更新 [src/application/scene/scene-runner.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/scene/scene-runner.ts)、[src/application/story/story-runtime.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/story/story-runtime.ts) 与 [src/application/building/building-container-event-runtime.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/building/building-container-event-runtime.ts)，让 scene 只在真正需要演出时由 presentation helper materialize；building-function / building-enter / story trigger 入口改为共享 trigger-context 合同，不再继续保留 caller-local route truth。
+- 更新 [src/application/script-editor/runtime-pack-export.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/runtime-pack-export.ts)，让 runtime export 与运行时入口复用同一套 supported owner/trigger matrix，继续 fail-closed，而不是由导出侧保留另一份硬编码支持表。
+- 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，把 direct `runEventBindingRuntime()` 断言改到 event-only activation 语义，并补足 building/story 包装入口的展示回归，防止后续又把 `sceneId` 回灌成 runtime formal router。
+
+### Impact
+- 当前正式路由真相已经从 `entrySceneId -> candidate.sceneId -> activation.sceneId -> startEvent(scene)` 这条链路退回到 `event/event-binding`；`scene` 仍可作为下一队列待迁出的展示家族存在，但不再占用本队列要求冻结的 formal route contract。
+- trigger timing / trigger-context 的正式支持矩阵现在在 runtime/export 共用一份 contract，后续 `scene-family-retirement-and-content-migration` 与 `event-centered-runtime-pack-preview-export-sync` 可以沿这套冻结合同继续收口，而不是再面对多份漂移支持表。
+
 ## 2026-07-21 Script Editor Scenes Authoring Surface
 
 ### Changed

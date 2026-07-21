@@ -1,10 +1,10 @@
 import type { AppState } from "../app-shell";
-import type { SceneDefinition } from "../../domain/action";
 import type { BuildingArrangementDefinition } from "../../domain/building-arrangement";
 import type { CityDefinition } from "../../domain/city";
 import type { CityEntryDefinition } from "../../domain/city-entry";
 import type { CityNpcPoolDefinition } from "../../domain/city-npc";
 import type { CitySceneMapping } from "../../domain/city-scene-mapping";
+import type { RuntimeDialogueDefinition } from "../../domain/dialogue";
 import type { HouseDefinition } from "../../domain/house";
 import { createOverlayPresenterOutput } from "./overlay-presenters";
 import type { AppPresenterOutput } from "./presenter-output";
@@ -22,7 +22,7 @@ export type AppPresenterInput = {
   cityNameById: Record<string, string>;
   textEntriesById?: Record<string, string>;
   citySceneMappingsByCityId?: Record<string, CitySceneMapping>;
-  sceneDefinitionsById?: Record<string, SceneDefinition>;
+  dialogueDefinitionsById?: Record<string, RuntimeDialogueDefinition>;
 };
 
 export function createAppPresenterOutput(
@@ -33,8 +33,8 @@ export function createAppPresenterOutput(
     overlay: createOverlayPresenterOutput(input),
   };
 
-  if (input.sceneDefinitionsById != null) {
-    output.sceneDefinitionsById = input.sceneDefinitionsById;
+  if (input.dialogueDefinitionsById != null) {
+    output.dialogueDefinitionsById = input.dialogueDefinitionsById;
   }
 
   return output;

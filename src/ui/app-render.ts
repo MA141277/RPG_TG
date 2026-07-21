@@ -348,7 +348,7 @@ function renderCampaignTravelBanner(
 
 function renderCitySceneUnderlay(
   cityUnderlay: NonNullable<
-    Extract<AppPresenterOutput["stage"], { type: "scene" }>["cityUnderlay"]
+    Extract<AppPresenterOutput["stage"], { type: "dialogue" }>["cityUnderlay"]
   >,
   input: AppRenderInput,
   playerCharacter: CharacterDefinition
@@ -374,7 +374,7 @@ function renderCitySceneUnderlay(
 
 function renderBuildingSceneUnderlay(
   buildingUnderlay: NonNullable<
-    Extract<AppPresenterOutput["stage"], { type: "scene" }>["buildingUnderlay"]
+    Extract<AppPresenterOutput["stage"], { type: "dialogue" }>["buildingUnderlay"]
   >,
   input: AppRenderInput
 ): string {
@@ -474,7 +474,7 @@ function renderStage(
     return `${buildingMarkup}${activityOverlay}`;
   }
 
-  if (stage.type === "scene") {
+  if (stage.type === "dialogue") {
     const sceneUnderlayMarkup =
       stage.buildingUnderlay != null
         ? renderBuildingSceneUnderlay(stage.buildingUnderlay, input)
@@ -483,10 +483,10 @@ function renderStage(
           : renderCitySceneUnderlay(stage.cityUnderlay, input, playerCharacter);
 
     return renderSceneView({
-      currentAction: stage.currentSceneAction,
+      currentAction: stage.currentDialogueNode,
       activitySession: input.appState.gameState.runtime.activitySession,
       characterDefinitions: input.appState.characterDefinitions,
-      choiceOptions: stage.currentSceneChoiceOptions,
+      choiceOptions: stage.currentDialogueChoiceOptions,
       ...(sceneUnderlayMarkup == null
         ? {}
         : { underlayMarkup: sceneUnderlayMarkup }),

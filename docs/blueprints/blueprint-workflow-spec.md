@@ -362,6 +362,65 @@ Hard rules:
 3. Default intake output must not expose truth-chain detail, candidate set, ranking process, `Why Not The Others`, `Human Involvement Boundary`, or raw admission fields.
 4. Those internal details may be expanded only when the operator explicitly asks for Blueprint internal analysis.
 
+### 7.1.2 Operator Receipt Schema
+
+The fixed operator receipt must also be writable as structured governance-facing output fields rather than prose-only narration.
+
+Required receipt fields:
+
+- `receipt_join_status`
+- `receipt_join_type`
+- `receipt_join_queue_id`
+- `receipt_reason_code`
+- `receipt_reason_basis`
+- `receipt_active_queue`
+- `receipt_active_task`
+- `receipt_queue_goal`
+- `receipt_next_step`
+- `receipt_human_action`
+- `receipt_internal_analysis_exposed`
+
+Allowed `receipt_join_status` values:
+
+- `success`
+- `failed`
+- `success-already-recorded`
+
+Allowed `receipt_join_type` values:
+
+- `execution-queue`
+- `candidate-queue`
+- `not-added`
+
+Allowed `receipt_reason_code` values:
+
+- `absorbed-into-active-queue`
+- `recorded-as-candidate`
+- `admission-routing-required`
+- `active-queue-already-exists`
+- `candidate-only-not-admitted`
+- `blocked-by-governance-truth`
+- `rejected-by-scope-or-evidence`
+- `none`
+
+Allowed `receipt_human_action` values:
+
+- `none-required`
+- `confirmation-required`
+- `wait-for-blocker`
+
+Allowed `receipt_internal_analysis_exposed` values:
+
+- `false`
+- `true`
+
+Hard rules:
+
+1. The structured receipt fields must agree with the operator-facing receipt text when both are present.
+2. `receipt_reason_code` must come from the allow-list above; freeform explanation belongs in `receipt_reason_basis`, not in the code field.
+3. `receipt_internal_analysis_exposed = false` is the default unless the operator explicitly asked for Blueprint internal analysis.
+4. `receipt_active_queue`, `receipt_active_task`, and `receipt_queue_goal` must come from current live truth when an active queue exists; otherwise they must explicitly record `none`.
+
 ### 7.2 Mandatory admission before fresh implementation
 
 Any fresh implementation item that is classified as `queue-candidate` must complete version-level admission before implementation starts.
@@ -400,6 +459,53 @@ Hard rules:
 2. after those document updates, place the restarted queue into the candidate queue set rather than the execution queue
 3. restarting a queue must not stop, replace, or preempt the current active execution queue
 4. the restarted queue may become active only after the current active queue closes and version-level admission review lawfully promotes it
+
+### 7.3.1 Candidate Recheck Trigger Allow-List
+
+Candidate recheck must use an allow-list rather than ad hoc prose.
+
+Allowed `recheck_trigger_type` values:
+
+- `new-material-evidence`
+- `active-queue-absorption-changed`
+- `parent-spec-updated`
+- `acceptance-ownership-changed`
+- `implementation-anchor-changed`
+- `candidate-version-membership-changed`
+- `operator-explicit-recheck`
+- `none`
+
+Hard rules:
+
+1. A candidate queue must not be fully re-audited from scratch unless `recheck_trigger_type != none`.
+2. `recheck_trigger_basis` must summarize the concrete evidence that justifies the recheck.
+3. `operator-explicit-recheck` authorizes a recheck, but it does not authorize direct promotion to execution without admission.
+4. If no allow-list trigger applies, candidate handling must resume from existing ledger truth.
+
+### 7.3.2 Candidate Reject-Or-Split Reason Allow-List
+
+Candidate admission and candidate evidence review must record reject-or-split reasons structurally.
+
+Allowed `reject_or_split_reason` values:
+
+- `missing-implementation-anchor`
+- `missing-acceptance-ownership`
+- `scope-too-broad-needs-split`
+- `parent-capability-not-structurally-covered`
+- `anti-over-narrowing-structure-missing`
+- `prerequisite-queue-required`
+- `conflicts-with-active-queue-boundary`
+- `belongs-to-other-version-or-target`
+- `parent-spec-update-required`
+- `none`
+
+Hard rules:
+
+1. `reject_or_split_reason` must come from the allow-list above; detailed explanation belongs in `reject_or_split_basis`.
+2. A candidate queue that is rejected or split must identify the smallest concrete structural reason rather than generic prose such as "needs more work".
+3. `scope-too-broad-needs-split` is required when one broad requirement cannot be lawfully admitted as a single queue without losing parent capability coverage.
+4. `anti-over-narrowing-structure-missing` is required when the candidate lacks the fields needed to prove capability floor, user-path coverage, replacement proof, or meaning preservation.
+5. `parent-spec-update-required` is required when candidate legality depends on changing the parent contract before admission can continue.
 
 ### 7.4 Required write order for admission
 
@@ -545,6 +651,8 @@ Rules:
 
 If the agent stops, pauses, or asks for human input while current governance truth still has a live queue, a pending candidate, or a uniquely lawful next governance action, the stop must be recorded structurally in the current version plan before the response ends.
 
+Blueprint stop legality is defined by an allow-list, not by enumerating forbidden intermediate states.
+
 The stop record must carry at minimum:
 
 - `stop_reason`
@@ -573,6 +681,8 @@ Rules:
 5. `stop_basis` must summarize the concrete evidence or rule that makes the stop lawful; it must not be left implicit in prose history.
 6. `next_unblocked_action` must name the next governance action expected after the blocking input or confirmation is received.
 7. `human_input_required = true` is legal only when `stop_reason != none`.
+8. A stop is lawful only when current truth can be mapped to one of the allowed `stop_reason` values above; if it cannot, the agent must continue.
+9. Forbidden-stop examples elsewhere in this workflow are explanatory guardrails, not the primary legal test.
 
 ## 8.5 Evidence-Bound Version Creation
 
@@ -729,6 +839,51 @@ Hard rules:
 4. A queue spec must not silently collapse multi-entry, multi-trigger, preview/runtime/export/import, or recovery-path obligations into one representative path unless the parent spec explicitly narrows the requirement first.
 5. Admission review must treat missing queue-spec integrity records as a queue-authoring defect, not as permission to proceed with an underspecified queue.
 6. Queue closeout must be denied when the queue doc still lacks the structure needed to prove that broader inherited behavior survived the bounded implementation.
+7. Queue authoring must use a required-structure allow-list. If the queue spec omits a required structure relevant to the parent capability, the queue is not admission-ready even if implementation anchors already exist.
+8. "One working path" is never enough by itself when the parent capability spans multiple semantic surfaces, user paths, trigger times, trigger contexts, or editor/runtime/export/import seams.
+9. A queue spec must name the parent-facing meaning it preserves. Local implementation terminology must not silently redefine creator-facing meaning, runtime meaning, or content-authoring meaning inherited from the parent spec.
+10. If the queue replaces an old owner, old field family, old routing family, or old content family, the spec must prove both the new owner path and the old owner exit condition. Partial replacement without old-truth exit proof is not complete queue authoring.
+
+### 8.7.3 Queue Spec Required-Structure Allow-List
+
+Queue specs must be authored from a positive required-structure list, not only from a title and task list.
+
+Required structures for any admitted execution queue:
+
+- parent inherited capabilities
+- parent compatibility paths
+- parent legacy replacements
+- `Can Claim`
+- `Cannot Claim`
+- `Capability Floor`
+- `Parent Capability Coverage`
+- `Over-Narrowing Guard`
+- `User Path Coverage Matrix`
+- `Functional Loss Budget`
+- `Implementation Anchors`
+- `Verification Coverage`
+- `Replacement Proof`
+- `Completion Completeness Review`
+
+Additional structures become mandatory when relevant to the parent capability:
+
+- creator-facing meaning preservation
+- runtime meaning preservation
+- trigger timing coverage
+- trigger-context coverage
+- authoring / preview / runtime / export / import / loader consistency coverage
+- alternate-entry / recovery / follow-up / fail-closed coverage
+- old-truth-owner exit proof
+
+Hard rules:
+
+1. Admission review must reject a queue spec that lacks any required structure relevant to the admitted boundary.
+2. Relevance is determined from the parent spec, acceptance matrix, inherited capability surface, and replacement path, not from the narrowest current implementation seam.
+3. If the parent spec spans creator-facing meaning plus runtime path, the queue spec must cover both; it is invalid to describe only implementation anchors or only one UI path.
+4. If the parent spec spans trigger timing or trigger context, the queue spec must name those dimensions explicitly; it is invalid to treat one trigger point as representative unless the parent spec narrows first.
+5. If the parent spec spans editor/runtime/export/import/preview/loader consistency, the queue spec must declare which of those surfaces it owns closing, which it preserves, and which are routed elsewhere.
+6. If the queue migrates, retires, or replaces an older mechanism, the queue spec must include old-owner exit proof and must not pass on "new path exists" alone.
+7. Missing structure must be repaired by queue-spec revision, parent-spec revision, or candidate split before implementation begins. It must not be deferred as an unspoken reviewer expectation.
 
 ## 8.8 Evidence Lock Before Queue Activation
 
@@ -847,6 +1002,69 @@ Bounded gap-fill rule:
 6. A queue cannot close as topic-complete if a remaining same-family gap still blocks the claimed capability.
 7. A queue cannot close as functionally preserved if the functional-loss audit still shows lost entry paths, unreachable follow-up paths, placeholder-only behavior, or legacy-only survival of the claimed path.
 8. A queue cannot pass completeness review merely because one golden path works if inherited alternate paths, trigger paths, preview/runtime paths, import/export paths, or recovery paths are still unverified, broken, or silently narrowed.
+
+### 8.9.1A Execution Self-Review Gate
+
+Before an agent may mark an implementation task, admission review, queue closeout review, or version closeout review as complete, it must write a structured self-review against current governance truth and code/runtime evidence.
+
+Required self-review fields:
+
+- review_scope
+- version_acceptance_alignment
+- parent_spec_alignment
+- queue_claim_alignment
+- over_narrowing_check
+- residue_or_blocker_routing_check
+- verification_adequacy_check
+- next_lawful_action_check
+
+Hard rules:
+
+1. The self-review is mandatory for:
+   - implementation-task completion
+   - queue closeout review
+   - version-level admission review completion
+   - version closeout review
+2. The self-review must compare claimed completion against:
+   - the controlling parent spec
+   - the current version acceptance matrix
+   - the queue claim boundary
+   - actual implementation or runtime evidence
+3. A prose-only statement such as "looks complete", "main path works", or "already synced" is not a valid self-review.
+4. If the self-review finds misalignment, the result must route to gap fill, residue, blocker, candidate split, or parent-spec update before completion may be claimed.
+5. The self-review must explicitly confirm that the claimed next action is the uniquely lawful next action under current governance truth; if not, completion must not silently hand off.
+
+### 8.9.1B Runtime And Browser Acceptance Gate
+
+When a queue changes user-facing UI, editor authoring behavior, import/export behavior, runtime trigger flow, preview behavior, or editor-authored runtime data, automated source checks are not sufficient by themselves.
+
+In those cases, queue closeout and version closeout must include a structured runtime/browser acceptance gate unless an explicit recorded waiver explains why equivalent non-browser evidence is sufficient.
+
+Required gate fields when applicable:
+
+- gate_required
+- covered_surfaces
+- interaction_path
+- proof_mode
+- proof_artifacts
+- fail_closed_check
+- waiver_basis
+
+Hard rules:
+
+1. `gate_required = true` whenever the claimed completion touches any of:
+   - visible UI behavior
+   - creator-facing editor behavior
+   - preview/runtime parity
+   - import/export round-trip behavior
+   - trigger timing or trigger-context behavior
+   - runtime routing that must be observed through real interaction
+2. `proof_mode` must name the strongest available proof path, such as in-app browser interaction, runtime execution trace, test harness with visible output, or an explicitly justified equivalent.
+3. If local browser interaction is available, the gate should prefer the in-app browser or equivalent directly observable path over source-only reasoning.
+4. `proof_artifacts` must identify the concrete evidence used, such as commands, screenshots, traces, reports, or test cases.
+5. `fail_closed_check` must state how the covered behavior responds when required data, binding, or trigger prerequisites are absent.
+6. If the gate is waived, `waiver_basis` must state why browser/runtime interaction proof is unnecessary or currently impossible and what evidence replaces it.
+7. A queue or version must not claim UI/runtime completion on source-only evidence when the covered behavior is materially interaction-dependent.
 
 ### 8.9.2 Closeout Status Semantics
 
@@ -1125,7 +1343,7 @@ when executable work still exists and no lawful stop condition applies.
 
 Before ending a response while the current version still has an active queue, a pending candidate queue, or a uniquely lawful next governance action, the agent must run a stop-condition self-check.
 
-The self-check must ask whether:
+Blueprint must use a lawful-stop allow-list as the primary rule. A stop is legal only if at least one of the following is true:
 
 - the operator explicitly requested answer-only or no-continuation behavior
 - a real blocker exists
@@ -1135,9 +1353,18 @@ The self-check must ask whether:
 - continuing would rewrite out-of-scope as retired or unsupported
 - continuing would require a genuine product decision
 
-If none of those are true, the agent must not stop at advice or a default confirmation prompt. It must record the governance decision and continue to the next lawful step.
+If none of those are true, the agent must not stop. It must record the governance decision and continue to the next lawful step.
 
-If none of those are true, the agent must also not stop merely because:
+Agent-local uncertainty is not a lawful stop condition. In particular, the agent must not treat any of the following as a stop basis by themselves:
+
+- incomplete memory of the current queue/task/doc state
+- uncertainty about its own understanding of the current step
+- the need to reread current governance truth or local code
+- fear that it may have misunderstood the latest transition
+
+When such uncertainty exists but no lawful-stop allow-list item applies, the agent must first reread the current truth chain and then continue with the least capability-reducing lawful action supported by current governance truth.
+
+Forbidden-stop states remain a secondary guardrail. In particular, if none of the lawful-stop conditions above are true, the agent must not stop merely because:
 
 - one queue just closed
 - a new queue was just admitted
@@ -1148,6 +1375,38 @@ If none of those are true, the agent must also not stop merely because:
 Those are execution transitions, not lawful pause points.
 
 If any of those are true and the agent therefore stops or asks for input, it must first write the structured stop record in current version truth.
+
+### 11.2.0A Active Queue Continuous Execution Duty
+
+When a version still has an `active_queue`, Blueprint execution must continue until that queue currently has no further lawful task that can be executed under present governance truth.
+
+Hard rules:
+
+1. The agent must continue from the current `active_task` into the next lawful task automatically when:
+   - the current task is completed
+   - verification, queue-doc sync, version-plan sync, and repository-sync recording are complete or lawfully recordable
+   - no real blocker or other lawful stop condition exists
+2. The agent must not stop merely because it has:
+   - synchronized status
+   - completed admission sync
+   - completed queue activation or queue switch
+   - completed documentation sync
+   - reported the current state or summarized progress
+3. `active-task complete`, `active-queue still has another lawful task`, and `no lawful stop condition` together mean continuation is mandatory, not optional.
+4. If the current active queue has no further lawful task, the agent must continue into the next uniquely lawful Blueprint scheduling step rather than stopping at prose summary.
+5. A request such as:
+   - `按蓝图规范继续执行当前 active queue，直到该 queue 当前不存在可继续执行的 lawful task 为止`
+   - `若无真实 blocker，自动进入下一个 task`
+   - `不得只做状态同步后停下`
+   is reinforcement of existing Blueprint behavior, not a temporary per-turn override.
+6. If the agent lawfully stops anyway, it must first write all of the following into the current version plan before the response ends:
+   - `stop_reason`
+   - `stop_basis`
+   - `next_unblocked_action`
+   - `human_input_required`
+7. It is illegal to stop at task completion, queue closeout synchronization, admission completion, repository sync result recording, or status-only reporting when another lawful task or uniquely lawful next Blueprint action still exists.
+8. If the agent is unsure whether it correctly understood the current queue/task/doc transition, it must reread the current truth chain before choosing a stop. Misunderstanding risk, incomplete recall, or reread need are not lawful pause points by themselves.
+9. After rereading, if current truth still exposes one least capability-reducing lawful next action and no allow-list stop condition applies, continuation remains mandatory.
 
 ### 11.2.1 Post-Queue Closeout Pause Policy
 

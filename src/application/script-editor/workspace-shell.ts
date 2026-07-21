@@ -198,6 +198,14 @@ const DEFERRED_EXPORT_TARGET_FAMILIES = new Set<ScriptEditorProjectFileKey>([
   "effectBundles",
 ]);
 
+FAMILY_LABELS.flows = "建筑功能";
+const gameplayTreeGroup = TREE_GROUPS.find((group) => group.id === "gameplay");
+if (gameplayTreeGroup != null) {
+  gameplayTreeGroup.families = ["quests", "minigames", "flows"];
+}
+DEFERRED_SHELL_FAMILIES.add("quests");
+DEFERRED_SHELL_FAMILIES.add("flows");
+
 const ISSUE_SEVERITY_ORDER: Record<
   ScriptEditorWorkspaceValidationIssue["severity"],
   number
@@ -723,7 +731,12 @@ function describeSelectionLinkPreview(
 
   if (family === "dialogues") {
     const dialogue = project.dialogues.find((record) => record.id === entityId);
-    return `节点 ${(dialogue?.nodes ?? []).length} 条，后续去向 ${(dialogue?.followUps ?? []).length} 条。`;
+    return `节点 ${(dialogue?.nodes ?? []).length} 条，参与人物 ${(dialogue?.participantPersonIds ?? []).length} 条。`;
+  }
+
+  if (family === "quests") {
+    const quest = project.quests.find((record) => record.id === entityId);
+    return `任务 ${quest?.id ?? entityId} 已并入事件中心创作模型，后续由事件路由到对话、玩法或任务状态推进。`;
   }
 
   if (family === "events") {
@@ -737,6 +750,11 @@ function describeSelectionLinkPreview(
   if (family === "minigames") {
     const minigame = project.minigames.find((record) => record.id === entityId);
     return `玩法绑定 outcome ${(minigame?.outcomeRoutes ?? []).length} 条，launch payload ${(minigame?.launchPayload ?? []).length} 条。`;
+  }
+
+  if (family === "flows") {
+    const flow = (project.flows ?? []).find((record) => record.id === entityId);
+    return `建筑功能 ${flow?.id ?? entityId} 保留为内部实现缝，创作端去向语义以事件为唯一正式路由入口。`;
   }
 
   if (family === "storyNodes") {
@@ -776,11 +794,19 @@ function describeSelectionExportPreview(
   }
 
   if (family === "dialogues") {
-    return "对话将下沉到 scenes.json 与 text-entries.json；本队列只先给出预览与阻塞提示，不补完 lowering。";
+    return "对话创作语义已收口为事件去向目标；当前运行包仍会在后续队列内收口到 scenes.json 与 text-entries.json，但这不再是创作者的正式路由真相。";
+  }
+
+  if (family === "quests") {
+    return "任务作为正式内容对象保留在 tasks.json 导出路径上，创作端由事件选择器统一引用。";
   }
 
   if (family === "minigames") {
     return "玩法绑定采用下沉导出原则，后续需挂到事件、对话或菜单的正式可调用结构，而不是独立新分表。";
+  }
+
+  if (family === "flows") {
+    return "建筑功能作为允许的实现缝保留在 flow/playable 收口上，创作端仍以“功能 -> 事件 -> 对话/玩法/任务/功能”语义理解。";
   }
 
   if (family === "storyNodes") {
@@ -943,24 +969,6 @@ function collectLinkedValidationIssues(
       });
     }
 
-    for (const [index, followUp] of (dialogue.followUps ?? []).entries()) {
-      const targetFamily = resolveAuthoringTargetFamily(followUp.targetFamily);
-      if (targetFamily == null || followUp.targetId.trim().length === 0) {
-        continue;
-      }
-
-      if (!hasRecord(project, targetFamily, followUp.targetId)) {
-        addMissingReferenceIssue({
-          id: `linked.dialogues.follow-up.${dialogue.id}.${index}`,
-          severity: "attention",
-          title: "对话后续去向缺失",
-          message: `对话 ${dialogue.id} 的后续去向 ${followUp.targetFamily}:${followUp.targetId} 不存在。`,
-          targetFamily: "dialogues",
-          targetEntityId: dialogue.id,
-          targetTab: "summary",
-        });
-      }
-    }
   }
 
   for (const eventRecord of project.events) {
@@ -1252,9 +1260,6 @@ function resolveIssueTab(
   }
 
   if (family === "dialogues") {
-    if (remainder.startsWith("followUps")) {
-      return "summary";
-    }
     if (remainder.startsWith("nodes")) {
       return "nodes";
     }
@@ -1542,6 +1547,7 @@ function resolveAuthoringTargetFamily(
   family:
     | "dialogue"
     | "event"
+    | "task"
     | "person"
     | "city"
     | "building"
@@ -1556,6 +1562,8 @@ function resolveAuthoringTargetFamily(
       return "dialogues";
     case "event":
       return "events";
+    case "task":
+      return "quests";
     case "city":
       return "cities";
     case "building":

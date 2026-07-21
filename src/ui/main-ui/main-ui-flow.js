@@ -124,7 +124,6 @@ import {
   normalizeScriptEditorFlowRecord,
 } from "../../application/script-editor/flow-authoring";
 import {
-  appendScriptEditorDialogueFollowUp,
   appendScriptEditorDialogueNode,
   appendScriptEditorDialogueParticipant,
   appendScriptEditorEventBindingConditionItem,
@@ -136,13 +135,11 @@ import {
   normalizeScriptEditorEventBindingRecord,
   normalizeScriptEditorEventRecord,
   normalizeScriptEditorStoryNodeRecord,
-  removeScriptEditorDialogueFollowUp,
   removeScriptEditorDialogueNode,
   removeScriptEditorDialogueParticipant,
   removeScriptEditorEventBindingConditionItem,
   removeScriptEditorEventRelationEntry,
   removeScriptEditorStoryNodeRelation,
-  SCRIPT_EDITOR_DIALOGUE_FOLLOWUP_FAMILIES,
   SCRIPT_EDITOR_DIALOGUE_NODE_TYPES,
   SCRIPT_EDITOR_EVENT_BINDING_CONDITION_GROUP_OPERATORS,
   SCRIPT_EDITOR_EVENT_DESTINATION_FAMILIES,
@@ -150,7 +147,6 @@ import {
   SCRIPT_EDITOR_STORY_PROGRESS_MODES,
   toggleScriptEditorEventRepeatable,
   updateScriptEditorDialogueField,
-  updateScriptEditorDialogueFollowUpField,
   updateScriptEditorDialogueNodeField,
   updateScriptEditorDialogueParticipant,
   updateScriptEditorEventBindingConditionItemField,
@@ -402,6 +398,7 @@ const SCRIPT_EDITOR_RECORD_SEARCH_FAMILY_ATTRIBUTES = {
   people: 'data-script-editor-record-search-family="people"',
   cities: 'data-script-editor-record-search-family="cities"',
   buildings: 'data-script-editor-record-search-family="buildings"',
+  quests: 'data-script-editor-record-search-family="quests"',
   storyNodes: 'data-script-editor-record-search-family="storyNodes"',
   dialogues: 'data-script-editor-record-search-family="dialogues"',
   events: 'data-script-editor-record-search-family="events"',
@@ -1559,6 +1556,7 @@ export class MainUiFlow {
       people: "",
       cities: "",
       buildings: "",
+      quests: "",
       storyNodes: "",
       dialogues: "",
       events: "",
@@ -4090,42 +4088,9 @@ export class MainUiFlow {
               )
               .join("")}
           </div>
-          <div class="c-script-editor-narrative-panel__header">
-            <div>
-              <p class="c-script-editor-editor-card__eyebrow">后续动作</p>
-              <h3 class="c-script-editor-editor-card__title">对话结束后去向</h3>
-            </div>
-            <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="add-dialogue-follow-up">
-              新增去向
-            </button>
-          </div>
-          <div class="c-script-editor-narrative-list">
-            ${(dialogue.followUps ?? [])
-              .map(
-                (followUp, index) => `
-                  <article class="c-script-editor-narrative-item">
-                    <div class="c-script-editor-form-grid">
-                      <label class="c-script-editor-form-field">
-                        <span>去向类型</span>
-                        <select class="c-script-editor-form-field__input" data-script-editor-dialogue-follow-up-field="targetFamily" data-script-editor-dialogue-follow-up-index="${index}">
-                          ${SCRIPT_EDITOR_DIALOGUE_FOLLOWUP_FAMILIES.map(
-                            (family) => `<option value="${family}" ${followUp.targetFamily === family ? "selected" : ""}>${family}</option>`
-                          ).join("")}
-                        </select>
-                      </label>
-                      <label class="c-script-editor-form-field">
-                        <span>去向目标 ID</span>
-                        <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(followUp.targetId)}" data-script-editor-dialogue-follow-up-field="targetId" data-script-editor-dialogue-follow-up-index="${index}" />
-                      </label>
-                    </div>
-                    <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="remove-dialogue-follow-up" data-script-editor-dialogue-follow-up-index="${index}">
-                      删除去向
-                    </button>
-                  </article>
-                `
-              )
-              .join("")}
-          </div>
+          <p class="c-script-editor-editor-card__hint">
+            对话节点只负责演出顺序与内部节点跳转。对话结束后的正式去向统一由事件绑定与事件 destination 负责，本页不再维护独立 follow-up 路由真相。
+          </p>
         </section>
       `;
     }
@@ -4134,12 +4099,12 @@ export class MainUiFlow {
       return `
         <section class="c-script-editor-narrative-panel" aria-label="对话预览分栏">
           <p class="c-script-editor-editor-card__hint">
-            这里先提供 bounded 摘要预览：节点数 ${dialogue.nodes?.length ?? 0}，参与人物 ${dialogue.participantPersonIds?.length ?? 0}，后续动作 ${dialogue.followUps?.length ?? 0}。真正演出预览与跳转校验由后续更深的预览队列承接。
+            这里先提供 bounded 摘要预览：节点数 ${dialogue.nodes?.length ?? 0}，参与人物 ${dialogue.participantPersonIds?.length ?? 0}。真正演出预览与正式去向校验由后续更深的事件与预览队列承接。
           </p>
           <div class="c-script-editor-shell__cards">
             ${this.renderScriptEditorOverviewCard("节点顺序", `当前 ${dialogue.nodes?.length ?? 0} 个节点。`, "neutral")}
             ${this.renderScriptEditorOverviewCard("人物参与", `当前 ${dialogue.participantPersonIds?.length ?? 0} 个参与人物。`, "neutral")}
-            ${this.renderScriptEditorOverviewCard("后续动作", `当前 ${dialogue.followUps?.length ?? 0} 条去向。`, "neutral")}
+            ${this.renderScriptEditorOverviewCard("正式路由", "对话结束后的去向由事件负责。", "neutral")}
           </div>
         </section>
       `;
@@ -4469,6 +4434,7 @@ export class MainUiFlow {
       dialogue: "对话",
       event: "事件",
       minigame: "小游戏",
+      task: "任务",
     };
 
     return SCRIPT_EDITOR_EVENT_DESTINATION_FAMILIES.map((family) => ({
@@ -4482,6 +4448,7 @@ export class MainUiFlow {
       cities: [],
       buildings: [],
       events: [],
+      quests: [],
       dialogues: [],
       minigames: [],
     };
@@ -4504,6 +4471,13 @@ export class MainUiFlow {
       return project.minigames.map((minigame) => ({
         value: minigame.id,
         label: `${minigame.title ?? minigame.name ?? minigame.id} (${minigame.id})`,
+      }));
+    }
+
+    if (family === "task") {
+      return project.quests.map((quest) => ({
+        value: quest.id,
+        label: `${quest.title ?? quest.name ?? quest.id} (${quest.id})`,
       }));
     }
 
@@ -5269,18 +5243,6 @@ export class MainUiFlow {
       return [];
     }
 
-    const dialogueRefs = this.scriptEditorProject.dialogues
-      .filter((dialogue) =>
-        (dialogue.followUps ?? []).some(
-          (followUp) =>
-            followUp.targetFamily === "minigame" && followUp.targetId === minigameId
-        )
-      )
-      .map((dialogue) => ({
-        label: `Dialogue / ${dialogue.title || dialogue.id}`,
-        summary: `${dialogue.id} follow-up -> ${minigameId}`,
-      }));
-
     const eventRefs = this.scriptEditorProject.events
       .filter(
         (eventRecord) =>
@@ -5305,7 +5267,7 @@ export class MainUiFlow {
           }))
       );
 
-    return [...dialogueRefs, ...eventRefs, ...locationRefs];
+    return [...eventRefs, ...locationRefs];
   }
 
   renderScriptEditorStringRelationPanel(title, relationKind, entries) {
@@ -6156,22 +6118,6 @@ export class MainUiFlow {
       return;
     }
 
-    if (target.matches("[data-script-editor-dialogue-follow-up-field]")) {
-      const field = target.dataset.scriptEditorDialogueFollowUpField;
-      const index = Number.parseInt(
-        target.dataset.scriptEditorDialogueFollowUpIndex ?? "-1",
-        10
-      );
-      if (
-        (field === "targetFamily" || field === "targetId") &&
-        Number.isInteger(index) &&
-        index >= 0
-      ) {
-        this.applyScriptEditorDialogueFollowUpField(index, field, target.value);
-      }
-      return;
-    }
-
     if (target.matches('[data-script-editor-relation-kind="dialogue-participants"]')) {
       const index = Number.parseInt(target.dataset.scriptEditorRelationIndex ?? "-1", 10);
       if (Number.isInteger(index) && index >= 0) {
@@ -6971,10 +6917,6 @@ export class MainUiFlow {
       actionElement?.dataset.scriptEditorDialogueNodeIndex ?? "-1",
       10
     );
-    const dialogueFollowUpIndex = Number.parseInt(
-      actionElement?.dataset.scriptEditorDialogueFollowUpIndex ?? "-1",
-      10
-    );
     const eventBindingId = actionElement?.dataset.scriptEditorEventBindingId ?? null;
     const ownerFamily = actionElement?.dataset.scriptEditorOwnerFamily ?? null;
     const ownerId = actionElement?.dataset.scriptEditorOwnerId ?? null;
@@ -7536,18 +7478,6 @@ export class MainUiFlow {
     if (action === "remove-dialogue-node") {
       if (Number.isInteger(dialogueNodeIndex) && dialogueNodeIndex >= 0) {
         this.removeScriptEditorDialogueNode(dialogueNodeIndex);
-      }
-      return;
-    }
-
-    if (action === "add-dialogue-follow-up") {
-      this.addScriptEditorDialogueFollowUp();
-      return;
-    }
-
-    if (action === "remove-dialogue-follow-up") {
-      if (Number.isInteger(dialogueFollowUpIndex) && dialogueFollowUpIndex >= 0) {
-        this.removeScriptEditorDialogueFollowUp(dialogueFollowUpIndex);
       }
       return;
     }
@@ -8606,35 +8536,6 @@ export class MainUiFlow {
 
     this.replaceSelectedScriptEditorDialogue(
       updateScriptEditorDialogueNodeField(dialogue, index, field, value)
-    );
-  }
-
-  addScriptEditorDialogueFollowUp() {
-    const dialogue = this.getSelectedScriptEditorDialogue();
-    if (dialogue == null) {
-      return;
-    }
-
-    this.replaceSelectedScriptEditorDialogue(appendScriptEditorDialogueFollowUp(dialogue));
-  }
-
-  removeScriptEditorDialogueFollowUp(index) {
-    const dialogue = this.getSelectedScriptEditorDialogue();
-    if (dialogue == null) {
-      return;
-    }
-
-    this.replaceSelectedScriptEditorDialogue(removeScriptEditorDialogueFollowUp(dialogue, index));
-  }
-
-  applyScriptEditorDialogueFollowUpField(index, field, value) {
-    const dialogue = this.getSelectedScriptEditorDialogue();
-    if (dialogue == null) {
-      return;
-    }
-
-    this.replaceSelectedScriptEditorDialogue(
-      updateScriptEditorDialogueFollowUpField(dialogue, index, field, value)
     );
   }
 
@@ -9852,6 +9753,8 @@ export class MainUiFlow {
         return "城市";
       case "buildings":
         return "建筑";
+      case "quests":
+        return "任务";
       case "dialogues":
         return "对话";
       case "scenes":

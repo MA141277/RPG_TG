@@ -266,7 +266,6 @@ function toEventBindingRuntimeCandidate(
     bindingId: binding.id,
     eventId: eventDefinition.id,
     priority: binding.priority ?? 0,
-    sceneId: eventDefinition.entrySceneId,
     taskInputs: eventDefinition.taskInputs ?? [],
   };
 }

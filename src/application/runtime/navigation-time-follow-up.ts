@@ -5,7 +5,7 @@ import {
 } from "../content/text-resolution";
 import { defaultReviewCyclePolicy } from "../review/review-cycle-provider";
 import type { ActivityDefinition } from "../../domain/activity";
-import type { SceneDefinition } from "../../domain/action";
+import type { RuntimeDialogueDefinition } from "../../domain/dialogue";
 import type { CharacterDefinition } from "../../domain/character";
 import type { EventBinding, EventDefinition } from "../../domain/event";
 import type { GameState } from "../../domain/game-state";
@@ -17,7 +17,7 @@ import { runStoryTriggerRuntime } from "../../core/runtime/scene-runtime";
 export type NavigationTimeFollowUpStoryContent = {
   eventDefinitionsById: Record<string, EventDefinition>;
   eventBindingsById?: Record<string, EventBinding>;
-  sceneDefinitionsById: Record<string, SceneDefinition>;
+  dialogueDefinitionsById: Record<string, RuntimeDialogueDefinition>;
   activityDefinitionsById?: Record<string, ActivityDefinition>;
   textEntriesById?: Record<string, string>;
 };
@@ -62,7 +62,7 @@ export function createNavigationTimeFollowUpBridge(
           ...(storyContent.eventBindingsById == null
             ? {}
             : { eventBindingsById: storyContent.eventBindingsById }),
-          sceneDefinitionsById: storyContent.sceneDefinitionsById,
+          dialogueDefinitionsById: storyContent.dialogueDefinitionsById,
           ...(storyContent.activityDefinitionsById == null
             ? {}
             : { activityDefinitionsById: storyContent.activityDefinitionsById }),
@@ -91,7 +91,7 @@ export function createNavigationTimeFollowUpBridge(
           ...(storyContent.eventBindingsById == null
             ? {}
             : { eventBindingsById: storyContent.eventBindingsById }),
-          sceneDefinitionsById: storyContent.sceneDefinitionsById,
+          dialogueDefinitionsById: storyContent.dialogueDefinitionsById,
           ...(storyContent.activityDefinitionsById == null
             ? {}
             : { activityDefinitionsById: storyContent.activityDefinitionsById }),

@@ -1,4 +1,3 @@
-import type { SceneId } from "../../domain/action";
 import type { GameState } from "../../domain/game-state";
 import type { ScenarioProfileDefinition } from "../../domain/scenario-profile";
 
@@ -7,7 +6,7 @@ export type ScenarioStartupTarget = {
   currentCityId: string;
   currentHouseId: string | null;
   currentView: GameState["ui"]["currentView"];
-  activeSceneId: SceneId | null;
+  activeDialogueId: string | null;
 };
 
 export function resolveScenarioStartupTarget(
@@ -22,9 +21,9 @@ export function resolveScenarioStartupTarget(
     currentHouseId:
       currentView === "house" ? profile.initialLocation.houseId : null,
     currentView,
-    activeSceneId:
-      currentView === "scene"
-        ? profile.initialLocation.sceneId ?? null
+    activeDialogueId:
+      currentView === "dialogue"
+        ? profile.initialLocation.dialogueId ?? null
         : null,
   };
 }

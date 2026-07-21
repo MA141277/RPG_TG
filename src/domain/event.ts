@@ -2,7 +2,6 @@ import type { RuntimeTaskInput } from "../core/contracts/runtime-result";
 
 export type EventId = string;
 export type ChapterId = string;
-type SceneId = string;
 type CharacterId = string;
 type CityId = string;
 type HouseId = string;
@@ -78,7 +77,7 @@ export type EventDefinition = {
   name: string;
   occurrence: EventOccurrence;
   participants?: EventParticipant[];
-  entrySceneId: SceneId;
+  dialogueId: string;
   actions?: EventRuntimeAction[];
   nextEventId?: EventId;
   taskInputs?: RuntimeTaskInput[];

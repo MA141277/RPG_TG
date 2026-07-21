@@ -1,4 +1,3 @@
-import type { SceneDefinition } from "../../domain/action";
 import type { ActivityDefinition } from "../../domain/activity";
 import type { CardDefinition } from "../../domain/card";
 import type { CharacterDefinition } from "../../domain/character";
@@ -8,6 +7,7 @@ import type { CityEntryDefinition } from "../../domain/city-entry";
 import type { CityNpcPoolDefinition, CityNpcPoolRuntimeState } from "../../domain/city-npc";
 import type { ContentPackDefinition } from "../../domain/content-pack";
 import type { ModActivationResult } from "../../core/contracts/mod-runtime";
+import type { RuntimeDialogueDefinition } from "../../domain/dialogue";
 import type { EventBinding, EventDefinition } from "../../domain/event";
 import type {
   HistoricalCharacterRecord,
@@ -59,8 +59,8 @@ export type ActiveGameContent = {
   eventDefinitionsById: Record<string, EventDefinition>;
   eventBindings: EventBinding[];
   eventBindingsById: Record<string, EventBinding>;
-  sceneDefinitions: SceneDefinition[];
-  sceneDefinitionsById: Record<string, SceneDefinition>;
+  dialogueDefinitions: RuntimeDialogueDefinition[];
+  dialogueDefinitionsById: Record<string, RuntimeDialogueDefinition>;
   taskDefinitions: TaskDefinition[];
   taskDefinitionsById: Record<string, TaskDefinition>;
   activityDefinitions: ActivityDefinition[];
@@ -109,7 +109,7 @@ export type ActiveGameContentContext = {
   storyContent: {
     eventDefinitionsById: Record<string, EventDefinition>;
     eventBindingsById: Record<string, EventBinding>;
-    sceneDefinitionsById: Record<string, SceneDefinition>;
+    dialogueDefinitionsById: Record<string, RuntimeDialogueDefinition>;
     activityDefinitionsById: Record<string, ActivityDefinition>;
     textEntriesById: Record<string, string>;
   };
@@ -132,7 +132,7 @@ export function createActiveGameContent(
   const characters = resolvedPack.characters ?? [];
   const eventDefinitions = resolvedPack.events ?? [];
   const eventBindings = resolvedPack.eventBindings ?? [];
-  const sceneDefinitions = resolvedPack.scenes ?? [];
+  const dialogueDefinitions = resolvedPack.dialogues ?? [];
   const taskDefinitions = resolvedPack.tasks ?? [];
   const activityDefinitions = resolvedPack.activities ?? [];
   const flowDefinitions = resolvedPack.flowDefinitions ?? [];
@@ -189,9 +189,9 @@ export function createActiveGameContent(
     eventBindingsById: Object.fromEntries(
       eventBindings.map((eventBinding) => [eventBinding.id, eventBinding])
     ),
-    sceneDefinitions,
-    sceneDefinitionsById: Object.fromEntries(
-      sceneDefinitions.map((sceneDefinition) => [sceneDefinition.id, sceneDefinition])
+    dialogueDefinitions,
+    dialogueDefinitionsById: Object.fromEntries(
+      dialogueDefinitions.map((dialogueDefinition) => [dialogueDefinition.id, dialogueDefinition])
     ),
     taskDefinitions,
     taskDefinitionsById: Object.fromEntries(
@@ -267,7 +267,7 @@ export function createActiveGameContentContext(
     storyContent: {
       eventDefinitionsById: gameContent.eventDefinitionsById,
       eventBindingsById: gameContent.eventBindingsById,
-      sceneDefinitionsById: gameContent.sceneDefinitionsById,
+      dialogueDefinitionsById: gameContent.dialogueDefinitionsById,
       activityDefinitionsById: gameContent.activityDefinitionsById,
       textEntriesById: gameContent.textEntriesById,
     },
@@ -330,7 +330,7 @@ export function mergeContentPacks(
     characters: mergeById(basePack.characters ?? [], overridePack.characters ?? []),
     events: mergeById(basePack.events ?? [], overridePack.events ?? []),
     eventBindings: mergeById(basePack.eventBindings ?? [], overridePack.eventBindings ?? []),
-    scenes: mergeById(basePack.scenes ?? [], overridePack.scenes ?? []),
+    dialogues: mergeById(basePack.dialogues ?? [], overridePack.dialogues ?? []),
     tasks: mergeById(basePack.tasks ?? [], overridePack.tasks ?? []),
     activities: mergeById(basePack.activities ?? [], overridePack.activities ?? []),
     flowDefinitions: mergeById(
@@ -384,7 +384,7 @@ function normalizeContentPack(pack: ContentPackDefinition): ContentPackDefinitio
     characters: pack.characters ?? [],
     events: pack.events ?? [],
     eventBindings: pack.eventBindings ?? [],
-    scenes: pack.scenes ?? [],
+    dialogues: pack.dialogues ?? [],
     tasks: pack.tasks ?? [],
     activities: pack.activities ?? [],
     flowDefinitions: pack.flowDefinitions ?? [],

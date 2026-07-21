@@ -3,11 +3,15 @@ import type {
   AppModalState,
   AppState,
 } from "../app-shell";
-import type { ActionNode, ChoiceOption, SceneDefinition } from "../../domain/action";
 import type { BuildingArrangementDefinition } from "../../domain/building-arrangement";
 import type { CityDefinition } from "../../domain/city";
 import type { CityEntryDefinition } from "../../domain/city-entry";
 import type { CitySceneMapping } from "../../domain/city-scene-mapping";
+import type {
+  RuntimeDialogueChoiceOption,
+  RuntimeDialogueDefinition,
+  RuntimeDialogueNode,
+} from "../../domain/dialogue";
 import type { HouseDefinition } from "../../domain/house";
 
 export type PresenterCityStageOutput = {
@@ -35,9 +39,9 @@ export type AppPresenterStageOutput =
     }
   | PresenterBuildingStageOutput
   | {
-      type: "scene";
-      currentSceneAction: ActionNode | null;
-      currentSceneChoiceOptions: ChoiceOption[];
+      type: "dialogue";
+      currentDialogueNode: RuntimeDialogueNode | null;
+      currentDialogueChoiceOptions: RuntimeDialogueChoiceOption[];
       cityUnderlay?: Omit<PresenterCityStageOutput, "type">;
       buildingUnderlay?: Omit<PresenterBuildingStageOutput, "type">;
     }
@@ -86,5 +90,5 @@ export type AppPresenterOverlayOutput = {
 export type AppPresenterOutput = {
   stage: AppPresenterStageOutput;
   overlay: AppPresenterOverlayOutput;
-  sceneDefinitionsById?: Record<string, SceneDefinition>;
+  dialogueDefinitionsById?: Record<string, RuntimeDialogueDefinition>;
 };

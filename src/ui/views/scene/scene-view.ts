@@ -1,4 +1,7 @@
-import type { ActionNode, ChoiceOption } from "../../../domain/action";
+import type {
+  RuntimeDialogueChoiceOption,
+  RuntimeDialogueNode,
+} from "../../../domain/dialogue";
 import type { ActiveActivitySession } from "../../../domain/activity-session";
 import {
   FORTUNE_BOARD_MAX_ANIMATION_TICK_MS,
@@ -6,17 +9,17 @@ import {
 } from "../../../domain/activity-session";
 import type { CharacterDefinition } from "../../../domain/character";
 import {
-  resolveActionNodeText,
+  resolveDialogueNodeText,
   resolveChoiceOptionText,
 } from "../../../application/content/text-resolution";
 import { renderSharedDialog } from "../../components/dialog/shared-dialog";
 import { resolveCharacterPortraitImageUrl } from "../../portrait-assets";
 
 type SceneViewInput = {
-  currentAction: ActionNode | null;
+  currentAction: RuntimeDialogueNode | null;
   activitySession: ActiveActivitySession;
   characterDefinitions: CharacterDefinition[];
-  choiceOptions: ChoiceOption[];
+  choiceOptions: RuntimeDialogueChoiceOption[];
   underlayMarkup?: string;
   textEntriesById?: Record<string, string>;
 };
@@ -94,7 +97,7 @@ function renderSceneDialogueCard(
   });
 }
 
-function renderChoiceList(choiceOptions: ChoiceOption[]): string {
+function renderChoiceList(choiceOptions: RuntimeDialogueChoiceOption[]): string {
   return `
     <div class="c-grain-shop-center c-grain-shop-center--open">
       <nav class="c-grain-shop-actions" aria-label="剧情选择">
@@ -315,7 +318,7 @@ export function renderSceneView(input: SceneViewInput): string {
   const action =
     input.currentAction == null
       ? null
-      : resolveActionNodeText(input.currentAction, { textEntriesById });
+      : resolveDialogueNodeText(input.currentAction, { textEntriesById });
   const resolvedChoiceOptions = input.choiceOptions.map((option) =>
     resolveChoiceOptionText(option, { textEntriesById })
   );

@@ -141,9 +141,9 @@
 
 ### Candidate Recovery Ledger
 
-| Candidate ID | Last Classification | Proposed Queue | Latest Disposition | Recheck Trigger | Acceptance Refs | Implementation Anchors | Can Claim | Cannot Claim | Notes |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| `item.replace-me` | `queue-candidate` | `queue.replace-me` | `deferred` | `only if new evidence invalidates the old basis or changes queue absorption` | `ACC-REPLACE-001` | `src/or/tests/path` | `ACC-REPLACE-001` | `ACC-REPLACE-002` | `Use this ledger to resume admission from existing evidence rather than restarting from scratch.` |
+| Candidate ID | Last Classification | Proposed Queue | Latest Disposition | Recheck Trigger Type | Recheck Trigger Basis | Acceptance Refs | Implementation Anchors | Can Claim | Cannot Claim | Notes |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `item.replace-me` | `queue-candidate` | `queue.replace-me` | `deferred` | `new-material-evidence | active-queue-absorption-changed | parent-spec-updated | acceptance-ownership-changed | implementation-anchor-changed | candidate-version-membership-changed | operator-explicit-recheck | none` | `Replace with the concrete evidence that justifies recheck, or none.` | `ACC-REPLACE-001` | `src/or/tests/path` | `ACC-REPLACE-001` | `ACC-REPLACE-002` | `Use this ledger to resume admission from existing evidence rather than restarting from scratch.` |
 
 ### Queue Promotion Ledger
 
@@ -163,9 +163,9 @@
 
 ### Candidate Evidence Matrix
 
-| Queue ID | Source Docs | Acceptance Refs | Implementation Anchors | Legacy Paths To Replace | Compatibility Paths To Preserve | Reject Or Split If |
-| --- | --- | --- | --- | --- | --- | --- |
-| `queue.replace-me` | `docs/...` | `ACC-REPLACE-001` | `src/or/tests/path` | `legacy/path/or/field` | `compatibility/path/or/behavior` | `Replace with condition that blocks admission or requires a split.` |
+| Queue ID | Source Docs | Acceptance Refs | Implementation Anchors | Legacy Paths To Replace | Compatibility Paths To Preserve | Reject Or Split Reason | Reject Or Split Basis |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `queue.replace-me` | `docs/...` | `ACC-REPLACE-001` | `src/or/tests/path` | `legacy/path/or/field` | `compatibility/path/or/behavior` | `missing-implementation-anchor | missing-acceptance-ownership | scope-too-broad-needs-split | parent-capability-not-structurally-covered | anti-over-narrowing-structure-missing | prerequisite-queue-required | conflicts-with-active-queue-boundary | belongs-to-other-version-or-target | parent-spec-update-required | none` | `Replace with the concrete reason this candidate must be rejected or split, or none.` |
 
 ### Candidate Queue Integrity Checklist
 
@@ -178,6 +178,40 @@
 | Acceptance ID | Primary Owner Queue | Proof Artifact | Status | Residue Or Blocker |
 | --- | --- | --- | --- | --- |
 | `ACC-REPLACE-001` | `queue.replace-me` | `test-or-source-reference` | `uncovered | covered | accepted-residue | blocked` | `none` |
+
+### Execution Self-Review Gate
+
+- review_scope: `admission-review | queue-closeout-review | version-closeout-review`
+- version_acceptance_alignment:
+  - `Replace with how the current review result aligns with the version acceptance matrix.`
+- parent_spec_alignment:
+  - `Replace with how the current routing or closure result still matches the controlling parent spec.`
+- queue_claim_alignment:
+  - `Replace with whether the reviewed queue claimed only what it owns and routed the rest lawfully.`
+- over_narrowing_check:
+  - `Replace with whether any queue result became narrower than the version requirement without explicit routing.`
+- residue_or_blocker_routing_check:
+  - `Replace with whether every discovered gap is routed to residue, blocker, accepted residue, or successor queue.`
+- verification_adequacy_check:
+  - `Replace with whether the cited verification is sufficient for the claimed review result.`
+- next_lawful_action_check:
+  - `Replace with the uniquely lawful next action, or explain the lawful blocker/branch if not unique.`
+
+### Runtime/Browser Acceptance Gate
+
+- gate_required: `true | false`
+- covered_surfaces:
+  - `Replace with the UI/editor/runtime/import-export/preview surfaces that require direct interaction proof at version-review level.`
+- interaction_path:
+  - `Replace with the executed path or recorded reason it was waived.`
+- proof_mode:
+  - `in-app-browser | runtime-trace | automated-test-visible-output | equivalent-waiver`
+- proof_artifacts:
+  - `Replace with the concrete artifacts used for closeout-level acceptance.`
+- fail_closed_check:
+  - `Replace with the fail-closed / blocked / empty-state behavior evidence relevant to this review.`
+- waiver_basis:
+  - `none | Replace with why direct interaction proof is not required or not currently possible and what evidence replaces it.`
 
 ### Closure Routing Record
 
@@ -240,6 +274,8 @@ Allowed `next_action` values:
 
 ### Operator Intake Contract
 
+- `Use Operator Receipt Record below as the structured source of truth for operator-facing intake output.`
+
 - Allowed operator intake:
   - `新需求`
   - `参考治理规范`
@@ -272,6 +308,23 @@ Allowed `next_action` values:
 
 - Default visibility rule:
   - `默认不向人工暴露真值链细节、候选全集、Why Not The Others、Human Involvement Boundary、admission 内部字段或排序全过程，除非人工明确要求展开内部分析。`
+
+### Operator Receipt Record
+
+- receipt_join_status: `success | failed | success-already-recorded`
+- receipt_join_type: `execution-queue | candidate-queue | not-added`
+- receipt_join_queue_id: `queue.replace-me | none`
+- receipt_reason_code: `absorbed-into-active-queue | recorded-as-candidate | admission-routing-required | active-queue-already-exists | candidate-only-not-admitted | blocked-by-governance-truth | rejected-by-scope-or-evidence | none`
+- receipt_reason_basis:
+  - `Replace with the concrete basis for the receipt result.`
+- receipt_active_queue: `queue.replace-me | none`
+- receipt_active_task: `task.replace-me | none`
+- receipt_queue_goal:
+  - `Replace with the live queue goal, or none.`
+- receipt_next_step:
+  - `Replace with the next lawful Blueprint action to be shown to the operator.`
+- receipt_human_action: `none-required | confirmation-required | wait-for-blocker`
+- receipt_internal_analysis_exposed: `false | true`
 
 ### Post-Task Auto-Reconcile
 

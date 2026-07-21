@@ -19,7 +19,7 @@ export type InitialStateInput = {
   cards: CardInventory;
   valuables: ValuableItemInventory;
   activeEventId?: string | null;
-  activeSceneId?: string | null;
+  activeDialogueId?: string | null;
   currentView?: GameState["ui"]["currentView"];
   timeOfDay?: GameState["world"]["timeOfDay"];
   councilDate?: GameState["world"]["schedule"]["councilDate"];
@@ -58,12 +58,12 @@ export function createInitialState(input: InitialStateInput): GameState {
       month: input.month,
       day: input.day,
     },
-    scene: {
+    dialogue: {
       activeEventId: input.activeEventId ?? null,
-      activeSceneId: input.activeSceneId ?? null,
+      activeDialogueId: input.activeDialogueId ?? null,
       cursor: 0,
       status:
-        input.activeSceneId == null ? "idle" : "playing",
+        input.activeDialogueId == null ? "idle" : "playing",
     },
     storyBattle: null,
     ui: {
