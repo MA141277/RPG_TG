@@ -914,7 +914,7 @@
         <button type="button" id="new-layout">新建布局</button>
         <button type="button" id="load-example">载入濠州示例</button>
         <label class="file-button">导入 JSON<input type="file" id="import-json" accept="application/json,.json"></label>
-        <button type="button" id="export-json">导出 JSON</button>
+        <button type="button" id="export-json">保存 JSON</button>
       </div>
       <label class="file-button">上传地图底图<input type="file" id="upload-background" accept="image/*"></label>
       <label class="file-button">上传前景墙体图<input type="file" id="upload-foreground" accept="image/*"></label>
@@ -1364,6 +1364,10 @@
       prefabLibrary: normalizePrefabLibrary(EMPTY_PREFAB_LIBRARY),
       cityLayout: normalizeCityLayout(EMPTY_CITY_LAYOUT),
       layout: normalizeLayout(EMPTY_LAYOUT),
+      fileHandles: {
+        prefab: null,
+        cityLayout: null
+      },
       selectedId: null,
       selectedPrefabId: null,
       selectedInstanceId: null,
@@ -1553,6 +1557,7 @@
         if (!confirm("清空当前布局并新建空白 city-map-layout.json？")) {
           return;
         }
+        clearJsonFileHandles();
         setEditorLayout(EMPTY_LAYOUT);
                 setStatus("已新建空白布局。");
         render();
@@ -1560,7 +1565,7 @@
 
       dom.importJson.addEventListener("change", importJsonFile);
       dom.loadExample.addEventListener("click", loadHaozhouExample);
-      dom.exportJson.addEventListener("click", exportJsonFile);
+      dom.exportJson.addEventListener("click", saveJsonFile);
       dom.editorModeToggle.addEventListener("click", toggleEditorMode);
       dom.uploadBackground.addEventListener("change", (event) => uploadMapImage(event, "background"));
       dom.uploadForeground.addEventListener("change", (event) => uploadMapImage(event, "foreground"));
@@ -2354,6 +2359,7 @@
     }
 
     function renderToolbarState() {
+      const descriptor = getCurrentJsonDocumentDescriptor();
       dom.app.classList.toggle("is-preview", state.mode === "preview");
       state.calibrationMode = false;
       dom.app.classList.remove("is-calibrating");
@@ -2364,6 +2370,9 @@
       dom.editorModeReadout.textContent = state.editorMode === "prefab" ? "Prefab Editor" : "City Layout";
       dom.zoomSlider.value = String(state.zoom);
       dom.zoomValue.textContent = `${Math.round(state.zoom * 100)}%`;
+      dom.exportJson.textContent = supportsOverwriteSave()
+        ? `${state.fileHandles[descriptor.key] == null ? "保存" : "覆盖保存"} ${descriptor.buttonLabel}`
+        : `导出 ${descriptor.buttonLabel}`;
       dom.snapEnabled.checked = Boolean(state.layout.grid.snap);
       dom.showBuildable.checked = layerState.buildable;
       dom.showValidGrid.checked = layerState.validGrid;
@@ -3788,6 +3797,7 @@
       const reader = new FileReader();
       reader.addEventListener("load", () => {
         try {
+          clearJsonFileHandles();
           setEditorLayout(JSON.parse(String(reader.result)), state.selectedInstanceId || null);
           setStatus(`已导入 ${file.name}。`);
         } catch (error) {
@@ -3814,6 +3824,7 @@
           layoutResponse.json(),
           prefabResponse.json()
         ]);
+        clearJsonFileHandles();
         setEditorSources(prefabs, layout);
         setStatus("Split prefab example loaded.");
       } catch (error) {
@@ -3826,25 +3837,84 @@
       setEditorSources(prefabLibrary, cityLayout, preferredSelectedId, readOnlyPrefabExample);
     }
 
+    function getCurrentJsonDocumentDescriptor() {
+      if (state.editorMode === "prefab") {
+        return {
+          key: "prefab",
+          text: exportPrefabLibraryJson(),
+          filename: "city-stage-prefabs.json",
+          buttonLabel: "Prefab JSON"
+        };
+      }
+      return {
+        key: "cityLayout",
+        text: exportCityLayoutJson(),
+        filename: "city-map-layout.json",
+        buttonLabel: "City Layout JSON"
+      };
+    }
+
+    function supportsOverwriteSave() {
+      return typeof window.showSaveFilePicker === "function" && window.isSecureContext !== false;
+    }
+
+    function clearJsonFileHandles() {
+      state.fileHandles.prefab = null;
+      state.fileHandles.cityLayout = null;
+    }
+
+    async function saveJsonFile() {
+      if (guardReadOnlyPrefabExample()) {
+        return;
+      }
+      const descriptor = getCurrentJsonDocumentDescriptor();
+      if (!supportsOverwriteSave()) {
+        exportJsonFile();
+        setStatus(`当前环境不支持覆盖保存，已改为导出 ${descriptor.filename}。建议从 localhost 打开编辑器。`);
+        return;
+      }
+      try {
+        let handle = state.fileHandles[descriptor.key];
+        if (handle == null) {
+          handle = await window.showSaveFilePicker({
+            suggestedName: descriptor.filename,
+            types: [{
+              description: "JSON Files",
+              accept: {
+                "application/json": [".json"]
+              }
+            }]
+          });
+          state.fileHandles[descriptor.key] = handle;
+        }
+        const writable = await handle.createWritable();
+        await writable.write(descriptor.text);
+        await writable.close();
+        renderToolbarState();
+        setStatus(`已覆盖保存 ${handle.name || descriptor.filename}。`);
+      } catch (error) {
+        if (error?.name === "AbortError") {
+          setStatus("已取消保存。");
+          return;
+        }
+        setStatus(`保存失败：${error.message}`);
+      }
+    }
+
     function exportJsonFile() {
       if (guardReadOnlyPrefabExample()) {
         return;
       }
-      const text = state.editorMode === "prefab"
-        ? exportPrefabLibraryJson()
-        : exportCityLayoutJson();
-      const filename = state.editorMode === "prefab"
-        ? "city-stage-prefabs.json"
-        : "city-map-layout.json";
-      const blob = new Blob([text], { type: "application/json" });
+      const descriptor = getCurrentJsonDocumentDescriptor();
+      const blob = new Blob([descriptor.text], { type: "application/json" });
       const link = document.createElement("a");
       link.href = URL.createObjectURL(blob);
-      link.download = filename;
+      link.download = descriptor.filename;
       document.body.append(link);
       link.click();
       link.remove();
       URL.revokeObjectURL(link.href);
-      setStatus(`已导出 ${filename}。`);
+      setStatus(`已导出 ${descriptor.filename}。`);
     }
 
     function uploadMapImage(event, kind) {

@@ -142,10 +142,12 @@ window.__cityEditorTestApi = {
   syncEditorLayoutFromSources,
   renderCityLayoutPanel,
   importJsonFile,
+  saveJsonFile,
   selectPrefab,
   uploadEntityImage,
   updateCityLayoutFromForm,
   exportCityLayoutJson,
+  exportPrefabLibraryJson,
   getSelectedPrefab,
   getSelectedInstance,
   getSelectedEntity,
@@ -184,6 +186,9 @@ window.__cityEditorTestApi = {
         }
       }
     };
+  },
+  stubSaveFilePicker(fn) {
+    showSaveFilePicker = fn;
   }
 };`;
   const context = {
@@ -204,6 +209,7 @@ window.__cityEditorTestApi = {
     Image: class {},
     FileReader: class {},
     fetch: async () => ({ ok: true, json: async () => ({}) }),
+    isSecureContext: true,
     setTimeout,
     clearTimeout,
   };
@@ -751,6 +757,69 @@ test("prefab-library imports update prefab state and preserve the current city l
   assert.equal(api.state.prefabLibrary.prefabs[0].id, "imported-prefab");
   assert.deepEqual(JSON.parse(api.exportCityLayoutJson()), previousLayout);
   assert.equal(event.target.value, "");
+});
+
+test("saveJsonFile writes prefab libraries through a file handle when overwrite-save is available", async () => {
+  const api = createEditorRuntimeHarness();
+  const { prefabLibrary, cityLayout } = createSplitEditorSources();
+  api.stubUi();
+  const pickerCalls = [];
+  const writes = [];
+  api.stubSaveFilePicker(async (options) => {
+    pickerCalls.push(options);
+    return {
+      name: "prefabs.json",
+      async createWritable() {
+        return {
+          async write(text) {
+            writes.push(text);
+          },
+          async close() {},
+        };
+      },
+    };
+  });
+  api.setSources(prefabLibrary, cityLayout, "instance.keep");
+  api.state.editorMode = "prefab";
+
+  await api.saveJsonFile();
+
+  assert.equal(pickerCalls.length, 1);
+  assert.equal(writes.length, 1);
+  assert.equal(writes[0], api.exportPrefabLibraryJson());
+  assert.equal(api.state.fileHandles.prefab?.name, "prefabs.json");
+});
+
+test("saveJsonFile reuses the remembered handle and overwrites without reopening the picker", async () => {
+  const api = createEditorRuntimeHarness();
+  const { prefabLibrary, cityLayout } = createSplitEditorSources();
+  api.stubUi();
+  let pickerCalls = 0;
+  const writes = [];
+  api.stubSaveFilePicker(async () => {
+    pickerCalls += 1;
+    return {
+      name: "prefabs.json",
+      async createWritable() {
+        return {
+          async write(text) {
+            writes.push(text);
+          },
+          async close() {},
+        };
+      },
+    };
+  });
+  api.setSources(prefabLibrary, cityLayout, "instance.keep");
+  api.state.editorMode = "prefab";
+
+  await api.saveJsonFile();
+  api.state.prefabLibrary.prefabs[0].name = "Updated Keep";
+  await api.saveJsonFile();
+
+  assert.equal(pickerCalls, 1);
+  assert.equal(writes.length, 2);
+  assert.match(writes[1], /Updated Keep/);
 });
 
 test("editor converts legacy entity layouts into prefabs and instances", () => {
