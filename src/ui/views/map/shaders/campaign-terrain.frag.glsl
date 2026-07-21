@@ -1,4 +1,8 @@
+#ifdef GL_FRAGMENT_PRECISION_HIGH
+precision highp float;
+#else
 precision mediump float;
+#endif
 uniform sampler2D uMaterialTexture;
 uniform sampler2D uMaterialSemanticTexture;
 uniform sampler2D uShorelineDistanceTexture;
@@ -39,6 +43,7 @@ uniform float uShorelineCornerRoundness;
 uniform vec2 uMaterialSemanticTextureSize;
 uniform vec4 uMaterialSemanticBounds;
 uniform float uShorelineDistanceRange;
+uniform vec4 uShorelineDistanceBounds;
 varying vec2 vUv;
 varying float vHeight;
 varying vec3 vNormal;
@@ -335,7 +340,12 @@ vec2 getMapInteriorAndShorelineValid(vec2 uv, float valid) {
 }
 
 vec2 sampleShorelineDistanceField(vec2 uv) {
-  vec4 sampleValue = texture2D(uShorelineDistanceTexture, clamp(uv, vec2(0.0), vec2(1.0)));
+  vec2 shorelineUv = (uv - uShorelineDistanceBounds.xy) /
+    max(uShorelineDistanceBounds.zw, vec2(0.0001));
+  vec4 sampleValue = texture2D(
+    uShorelineDistanceTexture,
+    clamp(shorelineUv, vec2(0.0), vec2(1.0))
+  );
 
   return vec2(decodeShorelineDistance(sampleValue.rg), sampleValue.a);
 }
@@ -733,6 +743,10 @@ void main() {
   float mapAspect = uHexMapAspect;
   vec2 hexPoint = vec2((vUv.x - 0.5) * mapAspect, vUv.y - 0.5) * hexScale;
   vec2 hexCell = pixelToRoundedHex(hexPoint);
+  if (getMaterialSemanticInsideAmount(hexCell) < 0.5) {
+    discard;
+  }
+
   vec2 hexUv = getHexCellUv(hexCell, hexScale, mapAspect);
   vec3 material = texture2D(uMaterialTexture, clamp(hexUv, 0.0, 1.0)).rgb;
   float water = getSemanticWaterAmountAtUv(hexUv);

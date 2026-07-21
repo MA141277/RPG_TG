@@ -2,6 +2,27 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-21 Campaign Terrain Hex-Clipped Chunk Mesh
+
+### Fixed
+- `campaign-terrain-webgl.ts` 将 chunk terrain mesh 从三角中心 ownership 裁剪改为连续网格 + fragment 级 Hex ownership discard：mesh 保持连续覆盖，shader 通过 `uTerrainChunkCellBounds` 丢弃不属于当前 chunk 的 Hex 像素。
+- chunk terrain mesh 的几何覆盖范围改为与 padded 采样范围一致，再由 fragment ownership 裁掉非本 chunk 像素，避免核心 mesh 边界过紧时被 discard 后没有任何 chunk 覆盖而露出黑色接缝。
+- bump `CAMPAIGN_TERRAIN_CHUNK_ALGORITHM_VERSION`，避免浏览器继续命中旧 IndexedDB 中三角中心裁剪 mesh 缓存。
+
+### Impact
+- 修复三角中心裁剪和过紧 mesh 覆盖在 chunk 边界留下的小三角/短线接缝；岸线距离场仍保持 chunk 局部化，实际像素归属与 Hex 语义归属对齐。
+
+## 2026-07-20 Campaign Terrain Chunked Initialization Cache
+
+### Changed
+- `campaign-terrain-webgl.ts` 将 campaign terrain 初始化拆成全图轻量语义层和按需视觉 chunk：全图只保留 Hex `materialSemanticModel` 与 `travelGrid`，地形高度 samples、terrain mesh、局部 shoreline distance texture、植被实例高度查询和城市/actor 高度查询改为围绕玩家当前位置按 8x8 Hex chunk 构建。
+- 初始渲染只请求玩家附近 8 Hex 半径内的 chunk，并预取 12 Hex 半径外圈；玩家移动后 renderer 会继续按当前位置补齐缺失 chunk。terrain canvas 会为每个可见 chunk 独立上传 WebGL buffer 和 shoreline texture，actor layer 只复用 CPU/IndexedDB chunk 数据，不上传 terrain GPU buffer。
+- 新增 `campaign-terrain-cache-v1` IndexedDB 持久缓存和当前会话内存缓存。缓存 key 包含地图输入签名、chunk 坐标、网格参数、chunk 算法版本和岸线关键调参签名；缓存命中时直接反序列化 typed array 并上传/复用，避免刷新或重进地图后重复构建同一 chunk。
+- 岸线 signed-distance texture 改为支持局部 UV bounds；shader 通过 `uShorelineDistanceBounds` 将全局 `vUv` 映射到当前 chunk 的局部距离场，仍从 Hex 陆水语义派生同一条岸线视觉规则。
+
+### Impact
+- 该调整只改变 campaign terrain 的初始化/缓存/上传粒度，不改变 Hex 数据图、通行、寻路、点击、探索或 marker 语义。基础草/沙/岩/雪/水贴图仍按现有 URL 整张加载；图片切 tile 不属于本次变更。
+
 ## 2026-07-20 Campaign Shoreline Distance Field Fallback
 
 ### Changed
