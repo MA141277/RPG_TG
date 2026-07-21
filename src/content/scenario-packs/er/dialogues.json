@@ -1,0 +1,76 @@
+[
+  {
+    "id": "dlg_luo_classroom",
+    "title": "罗老师：别把“学不会”当结论",
+    "storyNodeId": "",
+    "participantPersonIds": [],
+    "nodes": [
+      {
+        "id": "dlg_luo_classroom.dlg_luo_classroom_n1",
+        "nodeType": "dialogue",
+        "speakerPersonId": "",
+        "textId": "text.dlg_luo_classroom.dlg_luo_classroom_n1",
+        "nextNodeId": "dlg_luo_classroom.dlg_luo_classroom_n2",
+        "choiceTargetNodeId": ""
+      },
+      {
+        "id": "dlg_luo_classroom.dlg_luo_classroom_n2",
+        "nodeType": "dialogue",
+        "speakerPersonId": "",
+        "textId": "text.dlg_luo_classroom.dlg_luo_classroom_n2",
+        "nextNodeId": "dlg_luo_classroom.dlg_luo_classroom_n3",
+        "choiceTargetNodeId": ""
+      },
+      {
+        "id": "dlg_luo_classroom.dlg_luo_classroom_n3",
+        "nodeType": "dialogue",
+        "speakerPersonId": "",
+        "textId": "text.dlg_luo_classroom.dlg_luo_classroom_n3",
+        "nextNodeId": "",
+        "choiceTargetNodeId": ""
+      }
+    ],
+    "followUps": []
+  },
+  {
+    "id": "dlg_zhen_library",
+    "title": "甄老师：把难题折成小问",
+    "storyNodeId": "",
+    "participantPersonIds": [],
+    "nodes": [
+      {
+        "id": "dlg_zhen_library.dlg_zhen_library_n1",
+        "nodeType": "dialogue",
+        "speakerPersonId": "",
+        "textId": "text.dlg_zhen_library.dlg_zhen_library_n1",
+        "nextNodeId": "dlg_zhen_library.dlg_zhen_library_n2",
+        "choiceTargetNodeId": ""
+      },
+      {
+        "id": "dlg_zhen_library.dlg_zhen_library_n2",
+        "nodeType": "dialogue",
+        "speakerPersonId": "",
+        "textId": "text.dlg_zhen_library.dlg_zhen_library_n2",
+        "nextNodeId": "dlg_zhen_library.dlg_zhen_library_n3",
+        "choiceTargetNodeId": ""
+      },
+      {
+        "id": "dlg_zhen_library.dlg_zhen_library_n3",
+        "nodeType": "dialogue",
+        "speakerPersonId": "",
+        "textId": "text.dlg_zhen_library.dlg_zhen_library_n3",
+        "nextNodeId": "dlg_zhen_library.dlg_zhen_library_n4",
+        "choiceTargetNodeId": ""
+      },
+      {
+        "id": "dlg_zhen_library.dlg_zhen_library_n4",
+        "nodeType": "dialogue",
+        "speakerPersonId": "",
+        "textId": "text.dlg_zhen_library.dlg_zhen_library_n4",
+        "nextNodeId": "",
+        "choiceTargetNodeId": ""
+      }
+    ],
+    "followUps": []
+  }
+]

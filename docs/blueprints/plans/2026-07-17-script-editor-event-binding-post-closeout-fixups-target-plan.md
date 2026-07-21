@@ -4,15 +4,15 @@
 
 - document_role: `version-governor`
 - version_id: `target.script-editor-event-binding-post-closeout-fixups`
-- version_status: `open`
-- active_phase: `phase.version-review-pending`
+- version_status: `done`
+- active_phase: `phase.version-closed`
 - active_queue: `none`
-- decision_state: `idle-open`
+- decision_state: `closed`
 - next_decision: `version-closeout`
 - next_action: `write-version-closeout`
-- resume_gate: `no-active-queue`
+- resume_gate: `closed-version-record`
 - post_queue_closeout_pause_policy: `pause-when-explicitly-requested`
-- promotion_review_result: `queue-closeout-complete`
+- promotion_review_result: `none`
 - review_subject_id: `none`
 - review_subject_classification: `none`
 - proposed_queue_id: `none`
@@ -23,11 +23,11 @@
 - intake_summary: `none`
 - intake_result: `none`
 - intake_feedback_mode: `none`
-- closure_review_subject: `none`
-- closure_review_status: `none`
+- closure_review_subject: `target.script-editor-event-binding-post-closeout-fixups`
+- closure_review_status: `routed`
 - residue_candidate_id: `none`
 - residue_candidate_family: `none`
-- routing_basis: `none`
+- routing_basis: `final-closeout-no-residue`
 - next_lawful_queue_recommendation: `none`
 - auto_admission_ready: `false`
 - blocked_by: []
@@ -152,6 +152,7 @@
 
 ### Progress Log
 
+- `2026-07-20`: `Closed target.script-editor-event-binding-post-closeout-fixups after explicit operator confirmation. Acceptance coverage ledger is fully covered, candidate_backlog_refresh_status is fresh, candidate_backlog_snapshot is empty, active_queue and active_task are none, and no same-version residue remains. The next repository work is a separate successor target for AI Mod Draft editor-project generation; this closed fixup target must not be reopened for that work.`
 - `2026-07-17`: `Created target.script-editor-event-binding-post-closeout-fixups as a successor/fixup version after target.script-editor-event-binding-runtime-replacement closed. The predecessor remains done and is not reopened. Admitted queue.script-editor-event-destination-selector-completion first because event destination UI currently exposes raw English family enums and free-text targetId while runtime export supports only dialogue destinations. Recorded queue.script-editor-runtime-preview-from-memory as the next candidate after destination selector completion; no implementation code was changed.`
 - `2026-07-17`: `Completed queue.script-editor-event-destination-selector-completion implementation without queue closeout. Event destination family authoring now exposes the Chinese dialogue-only runnable main path, destination targetId uses a project.dialogues-backed selector showing title plus id, selected values still save dialogue.id, and unsupported non-dialogue destinations remain fail-closed rather than runnable. Verification passed: focused destination tests, npm run typecheck, npm run lint:blueprints, and npm test (611/611). Runtime preview-from-memory remains only a candidate and was not admitted.`
 - `2026-07-17`: `Closed queue.script-editor-event-destination-selector-completion after guard review and Blueprint handoff without entering version closeout, committing, pushing, merging, or admitting runtime preview. Guard review confirmed the event destination family main path no longer uses raw English enum mapping, targetId is a select backed by project.dialogues, options show dialogue title plus id and save dialogue.id, non-dialogue destinations are only unsupported legacy/import residue, runtime export remains dialogue-only fail-closed, EventBindingRuntime semantics were not changed, and EventDefinition trigger/conditions authoring did not return. Remaining blocker is queue.script-editor-runtime-preview-from-memory, still unadmitted.`

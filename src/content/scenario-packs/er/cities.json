@@ -1,0 +1,23 @@
+[
+  {
+    "id": "city_erzhong",
+    "name": "二中城",
+    "houseIds": [
+      "b_classroom",
+      "b_library",
+      "b_gym",
+      "b_canteen"
+    ],
+    "mountedBuildings": [],
+    "neighbourCityIds": [],
+    "profileMap": {
+      "displayName": "二中城",
+      "description": "学渣在二中逆袭的故事",
+      "tags": [
+        "ai-mod-draft"
+      ]
+    },
+    "extendedAttributes": [],
+    "menuEntries": []
+  }
+]

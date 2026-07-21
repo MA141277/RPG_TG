@@ -1,0 +1,19 @@
+[
+  {
+    "id": "stage_01_entrance_bgm",
+    "title": "Stage 1",
+    "chapterId": "stage_01_entrance_bgm",
+    "summary": "",
+    "progressMode": "block",
+    "relatedPersonIds": [],
+    "relatedDialogueIds": [
+      "dlg_luo_classroom",
+      "dlg_zhen_library"
+    ],
+    "relatedEventIds": [
+      "evt_teach_beat_align",
+      "evt_library_breakdown",
+      "evt_gym_reset_breath"
+    ]
+  }
+]

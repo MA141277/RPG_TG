@@ -4,12 +4,12 @@
 
 - entry_id: `project-progress.rpg-tg`
 - active_blueprint: `blueprint.rpg-tg`
-- active_version: `target.script-editor-event-binding-post-closeout-fixups`
+- active_version: `target.ai-mod-draft-editor-project`
 - has_active_queue: `false`
 - active_queue: `none`
 - active_task: `none`
-- next_file: `docs/blueprints/plans/2026-07-17-script-editor-event-binding-post-closeout-fixups-target-plan.md`
-- entry_action: `open-next-file`
+- next_file: `docs/blueprints/plans/2026-07-20-ai-mod-draft-editor-project-target-plan.md`
+- entry_action: `stop`
 
 ## Human Context
 
@@ -27,17 +27,20 @@
 - Current Blueprint:
   - `docs/blueprints/blueprint.md`
 - Current Version Spec:
-  - `docs/blueprints/specs/2026-07-17-script-editor-event-binding-post-closeout-fixups-target.md`
+  - `docs/blueprints/specs/2026-07-20-ai-mod-draft-editor-project-target.md`
 - Current Version Plan:
-  - `docs/blueprints/plans/2026-07-17-script-editor-event-binding-post-closeout-fixups-target-plan.md`
+  - `docs/blueprints/plans/2026-07-20-ai-mod-draft-editor-project-target-plan.md`
 - Current Active Queue:
-  - `none`
+  - `docs/blueprints/queues/ai-mod-draft-editor-project-foundation-queue.md`
 
 ### Live Entry Guardrails
 
 - `This file only states the current resume entry and downstream pointer set.`
 - `Admission history, queue closeout history, and review narrative must stay in the version plan, queue docs, or docs/change-log.md rather than living here as competing current-state prose.`
-- `The pointed version is now the open post-closeout fixup version for submit/merge blockers discovered after the script-editor event binding runtime replacement version closed.`
+- `The pointed version is now the open AI Mod Draft editor-project generation version.`
+- `target.script-editor-event-binding-post-closeout-fixups is closed and must not be reopened for AI Mod Draft work.`
+- `queue.ai-mod-draft-editor-project-foundation is closed after landing the schema, deterministic converter, package-writing CLI, and env-only AI generation CLI foundation.`
+- `queue.ai-mod-draft-editor-project-ui-integration is closed after landing the Script Editor landing-page AI generation panel backed by the existing AI Mod Draft application helper.`
 - `target.script-editor-event-binding-runtime-replacement remains done and must not be reopened for these fixups.`
 - `queue.script-editor-event-destination-selector-completion is closed after guard review and queue closeout/handoff.`
 - `queue.script-editor-event-destination-selector-family-coverage-correction is closed after guard review and queue closeout/handoff.`

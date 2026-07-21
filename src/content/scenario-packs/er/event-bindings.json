@@ -1,0 +1,82 @@
+[
+  {
+    "id": "bind_evt_teach_classroom_owner_teacher",
+    "eventId": "evt_teach_beat_align",
+    "owner": {
+      "family": "building"
+    },
+    "trigger": {
+      "timing": "building-enter",
+      "action": "enter"
+    },
+    "conditions": {
+      "operator": "all",
+      "conditions": []
+    },
+    "priority": 0,
+    "enabled": true,
+    "meta": {
+      "source": "ai-mod-draft"
+    }
+  },
+  {
+    "id": "bind_evt_library_library_owner_librarian",
+    "eventId": "evt_library_breakdown",
+    "owner": {
+      "family": "building"
+    },
+    "trigger": {
+      "timing": "building-enter",
+      "action": "enter"
+    },
+    "conditions": {
+      "operator": "all",
+      "conditions": []
+    },
+    "priority": 0,
+    "enabled": true,
+    "meta": {
+      "source": "ai-mod-draft"
+    }
+  },
+  {
+    "id": "bind_evt_gym_gym_owner_coach",
+    "eventId": "evt_gym_reset_breath",
+    "owner": {
+      "family": "building"
+    },
+    "trigger": {
+      "timing": "building-enter",
+      "action": "enter"
+    },
+    "conditions": {
+      "operator": "all",
+      "conditions": []
+    },
+    "priority": 0,
+    "enabled": true,
+    "meta": {
+      "source": "ai-mod-draft"
+    }
+  },
+  {
+    "id": "bind_evt_teach_optional_canteen_owner_mgr",
+    "eventId": "evt_teach_beat_align",
+    "owner": {
+      "family": "building"
+    },
+    "trigger": {
+      "timing": "building-enter",
+      "action": "enter"
+    },
+    "conditions": {
+      "operator": "all",
+      "conditions": []
+    },
+    "priority": 0,
+    "enabled": true,
+    "meta": {
+      "source": "ai-mod-draft"
+    }
+  }
+]

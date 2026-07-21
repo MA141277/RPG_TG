@@ -1,0 +1,83 @@
+[
+  {
+    "id": "evt_teach_beat_align",
+    "title": "教室：罗老师递来“第一拍”",
+    "chapterId": "stage_01_entrance_bgm",
+    "occurrence": "once",
+    "destination": {
+      "family": "dialogue",
+      "targetId": "dlg_luo_classroom"
+    },
+    "relations": {
+      "storyNodeId": "stage_01_entrance_bgm",
+      "personIds": [],
+      "cityIds": [
+        "city_erzhong"
+      ],
+      "buildingIds": [
+        "b_classroom",
+        "b_library",
+        "b_gym",
+        "b_canteen"
+      ]
+    },
+    "previewSummary": {
+      "previewNotes": "教室：罗老师递来“第一拍”",
+      "validationNotes": ""
+    }
+  },
+  {
+    "id": "evt_library_breakdown",
+    "title": "图书馆：甄老师让难题“分拍”",
+    "chapterId": "stage_01_entrance_bgm",
+    "occurrence": "once",
+    "destination": {
+      "family": "dialogue",
+      "targetId": "dlg_luo_classroom"
+    },
+    "relations": {
+      "storyNodeId": "stage_01_entrance_bgm",
+      "personIds": [],
+      "cityIds": [
+        "city_erzhong"
+      ],
+      "buildingIds": [
+        "b_classroom",
+        "b_library",
+        "b_gym",
+        "b_canteen"
+      ]
+    },
+    "previewSummary": {
+      "previewNotes": "图书馆：甄老师让难题“分拍”",
+      "validationNotes": ""
+    }
+  },
+  {
+    "id": "evt_gym_reset_breath",
+    "title": "操场：杨教练叫你把呼吸调成鼓点",
+    "chapterId": "stage_01_entrance_bgm",
+    "occurrence": "once",
+    "destination": {
+      "family": "dialogue",
+      "targetId": "dlg_luo_classroom"
+    },
+    "relations": {
+      "storyNodeId": "stage_01_entrance_bgm",
+      "personIds": [],
+      "cityIds": [
+        "city_erzhong"
+      ],
+      "buildingIds": [
+        "b_classroom",
+        "b_library",
+        "b_gym",
+        "b_canteen"
+      ]
+    },
+    "previewSummary": {
+      "previewNotes": "操场：杨教练叫你把呼吸调成鼓点",
+      "validationNotes": ""
+    }
+  }
+]

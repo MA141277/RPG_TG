@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "kind": "script-editor-project",
+  "id": "project.topic-i1y-lr7-h7s-fik-ffx-sg6-qzx-nes-k05-fij",
+  "title": "学渣在二中逆袭的故事",
+  "description": "Generated from AI Mod Draft v1.",
+  "completionState": {
+    "state": "draft"
+  },
+  "files": {
+    "storyPack": "./story-pack.json",
+    "maps": "./maps.json",
+    "people": "./people.json",
+    "cities": "./cities.json",
+    "buildings": "./buildings.json",
+    "cityEntries": "./city-entries.json",
+    "events": "./events.json",
+    "eventBindings": "./event-bindings.json",
+    "scenes": "./scenes.json",
+    "quests": "./quests.json",
+    "activities": "./activities.json",
+    "cards": "./cards.json",
+    "valuables": "./valuables.json",
+    "cityNpcPools": "./city-npc-pools.json",
+    "houseAccessRefusalRules": "./house-access-refusal-rules.json",
+    "houseModuleDefaults": "./house-module-defaults.json",
+    "cityPortraits": "./city-portraits.json",
+    "historicalCharacters": "./historical-characters.json",
+    "historicalCityRosters": "./historical-city-rosters.json",
+    "historicalCharacterIdByCharacterId": "./historical-character-id-map.json",
+    "dialogues": "./dialogues.json",
+    "minigames": "./minigames.json",
+    "storyNodes": "./story-nodes.json",
+    "textEntries": "./text-entries.json",
+    "conditionGroups": "./condition-groups.json",
+    "effectBundles": "./effect-bundles.json"
+  }
+}

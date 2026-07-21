@@ -1,0 +1,82 @@
+[
+  {
+    "id": "b_classroom",
+    "cityId": "city_erzhong",
+    "name": "高二（2）班教室",
+    "profileMap": {
+      "displayName": "高二（2）班教室",
+      "description": "",
+      "tags": [
+        "ai-mod-draft"
+      ]
+    },
+    "extendedAttributes": [],
+    "menuEntries": [],
+    "entryBinding": {
+      "defaultPersonId": "",
+      "onEnterEventId": "",
+      "onLeaveEventId": "",
+      "returnTarget": "city"
+    }
+  },
+  {
+    "id": "b_library",
+    "cityId": "city_erzhong",
+    "name": "图书馆自习区",
+    "profileMap": {
+      "displayName": "图书馆自习区",
+      "description": "",
+      "tags": [
+        "ai-mod-draft"
+      ]
+    },
+    "extendedAttributes": [],
+    "menuEntries": [],
+    "entryBinding": {
+      "defaultPersonId": "",
+      "onEnterEventId": "",
+      "onLeaveEventId": "",
+      "returnTarget": "city"
+    }
+  },
+  {
+    "id": "b_gym",
+    "cityId": "city_erzhong",
+    "name": "操场与体育馆门口",
+    "profileMap": {
+      "displayName": "操场与体育馆门口",
+      "description": "",
+      "tags": [
+        "ai-mod-draft"
+      ]
+    },
+    "extendedAttributes": [],
+    "menuEntries": [],
+    "entryBinding": {
+      "defaultPersonId": "",
+      "onEnterEventId": "",
+      "onLeaveEventId": "",
+      "returnTarget": "city"
+    }
+  },
+  {
+    "id": "b_canteen",
+    "cityId": "city_erzhong",
+    "name": "食堂窗口",
+    "profileMap": {
+      "displayName": "食堂窗口",
+      "description": "",
+      "tags": [
+        "ai-mod-draft"
+      ]
+    },
+    "extendedAttributes": [],
+    "menuEntries": [],
+    "entryBinding": {
+      "defaultPersonId": "",
+      "onEnterEventId": "",
+      "onLeaveEventId": "",
+      "returnTarget": "city"
+    }
+  }
+]

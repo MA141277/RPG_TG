@@ -19,6 +19,7 @@ import {
   exportScriptEditorProjectToScenarioPackFiles,
   validateScriptEditorProjectForRuntimeExport,
 } from "../../application/script-editor/runtime-pack-export";
+import { generateScriptEditorProjectFromAiTopic } from "../../application/ai-mod-draft/ai-mod-draft-ui-flow";
 import { loadScriptEditorProjectFromScenarioPackUrl } from "../../application/script-editor/runtime-pack-import";
 import {
   canContinueScriptEditorProjectEntry,
@@ -168,6 +169,8 @@ const characterCardLayoutBindings = Array.from({ length: 8 }, (_, index) => ({
 }));
 
 const DEFAULT_SCRIPT_EDITOR_TEMPLATE_SCENARIO_PACK_URL = "/scenario-packs/zhuyuanzhang/pack.json";
+const DEFAULT_AI_MOD_DRAFT_BASE_URL = "https://epone.ggb.today/";
+const DEFAULT_AI_MOD_DRAFT_MODEL = "gpt-5.4-nano";
 
 const SCRIPT_EDITOR_EVENT_BINDING_CONDITION_TYPE_OPTIONS = [
   { value: "flag", label: "标记条件" },
@@ -415,6 +418,7 @@ export class MainUiFlow {
     this.scriptEditorProjectLibrary = [];
     this.scriptEditorProjectSource = "new";
     this.scriptEditorPendingDeleteProjectId = null;
+    this.scriptEditorAiProjectGenerating = false;
     this.scriptEditorAuxiliaryPanelOpen = false;
     this.scriptEditorPersonTab = "profile";
     this.scriptEditorLocationTab = "profile";
@@ -746,9 +750,70 @@ export class MainUiFlow {
             </button>
           </div>
 
+          ${this.renderScriptEditorAiProjectPanel()}
+
           ${this.renderScriptEditorProjectLibrary(projectLibraryEntries)}
 
           ${this.renderScriptEditorFileInputs()}
+        </div>
+      </section>
+    `;
+  }
+
+  renderScriptEditorAiProjectPanel() {
+    return `
+      <section class="c-script-editor-ai-panel" aria-label="AI 生成项目">
+        <header class="c-script-editor-ai-panel__header">
+          <div>
+            <p class="c-script-editor-landing__eyebrow">AI 生成项目</p>
+            <h2 class="c-script-editor-editor-card__title">从题材生成编辑器项目</h2>
+          </div>
+          <button
+            type="button"
+            class="c-main-ui-json-text-button c-main-ui-json-text-button--accent"
+            data-script-editor-action="generate-ai-project"
+            ${this.scriptEditorAiProjectGenerating ? "disabled" : ""}
+          >
+            ${this.scriptEditorAiProjectGenerating ? "生成中" : "生成编辑器项目"}
+          </button>
+        </header>
+        <div class="c-script-editor-ai-panel__form">
+          <label class="c-script-editor-form-field c-script-editor-ai-panel__topic">
+            <span>题材</span>
+            <textarea
+              class="c-script-editor-form-field__input"
+              rows="3"
+              data-script-editor-ai-topic
+              placeholder="学渣在二中逆袭的故事"
+            ></textarea>
+          </label>
+          <label class="c-script-editor-form-field">
+            <span>API Key</span>
+            <input
+              class="c-script-editor-form-field__input"
+              type="password"
+              autocomplete="off"
+              data-script-editor-ai-api-key
+            />
+          </label>
+          <label class="c-script-editor-form-field">
+            <span>代理地址</span>
+            <input
+              class="c-script-editor-form-field__input"
+              type="url"
+              value="${escapeHtml(DEFAULT_AI_MOD_DRAFT_BASE_URL)}"
+              data-script-editor-ai-base-url
+            />
+          </label>
+          <label class="c-script-editor-form-field">
+            <span>模型</span>
+            <input
+              class="c-script-editor-form-field__input"
+              type="text"
+              value="${escapeHtml(DEFAULT_AI_MOD_DRAFT_MODEL)}"
+              data-script-editor-ai-model
+            />
+          </label>
         </div>
       </section>
     `;
@@ -5431,6 +5496,11 @@ export class MainUiFlow {
       return;
     }
 
+    if (action === "generate-ai-project") {
+      await this.handleScriptEditorAiProjectGeneration();
+      return;
+    }
+
     if (action === "continue-session") {
       if (this.scriptEditorProject != null) {
         this.scriptEditorNotice = null;
@@ -7613,6 +7683,75 @@ export class MainUiFlow {
     }
   }
 
+  async handleScriptEditorAiProjectGeneration() {
+    const topic = this.readScriptEditorAiField("[data-script-editor-ai-topic]");
+    const apiKey = this.readScriptEditorAiField("[data-script-editor-ai-api-key]");
+    const baseUrl =
+      this.readScriptEditorAiField("[data-script-editor-ai-base-url]") ||
+      DEFAULT_AI_MOD_DRAFT_BASE_URL;
+    const model =
+      this.readScriptEditorAiField("[data-script-editor-ai-model]") ||
+      DEFAULT_AI_MOD_DRAFT_MODEL;
+
+    if (topic.length === 0 || apiKey.length === 0 || baseUrl.length === 0 || model.length === 0) {
+      this.recordScriptEditorNotice({
+        tone: "warning",
+        message: "请填写题材、API Key、代理地址和模型。",
+      });
+      this.render();
+      return;
+    }
+
+    this.scriptEditorAiProjectGenerating = true;
+    this.recordScriptEditorNotice({
+      tone: "success",
+      message: "正在生成 AI 项目草稿。",
+    });
+    this.render();
+
+    try {
+      const result = await generateScriptEditorProjectFromAiTopic({
+        topic,
+        config: {
+          apiKey,
+          baseUrl,
+          model,
+        },
+      });
+      this.scriptEditorProjectSource = "ai-generated";
+      this.commitScriptEditorProject(result.project);
+      this.resetScriptEditorRecordListPages();
+      this.resetScriptEditorRecordSearch();
+      this.scriptEditorSelection = {
+        family: "storyPack",
+        entityId: null,
+      };
+      this.scriptEditorAuxiliaryPanelOpen = false;
+      this.scriptEditorProjectDirectoryHandle = null;
+      this.scriptEditorExportDirectoryHandle = null;
+      this.scriptEditorPendingDeleteProjectId = null;
+      this.resetScriptEditorNoticeTimeline();
+      this.recordScriptEditorNotice({
+        tone: "success",
+        message: "已生成 AI 编辑器项目草稿。",
+      });
+      this.scriptEditorAiProjectGenerating = false;
+      this.setScreen("script-editor-workspace");
+    } catch (error) {
+      this.scriptEditorAiProjectGenerating = false;
+      this.recordScriptEditorNotice({
+        tone: "warning",
+        message: error instanceof Error ? error.message : "AI 项目生成失败。",
+      });
+      this.render();
+    }
+  }
+
+  readScriptEditorAiField(selector) {
+    const field = this.overlayRoot.querySelector(selector);
+    return typeof field?.value === "string" ? field.value.trim() : "";
+  }
+
   getScriptEditorFamilyLabel(family) {
     switch (family) {
       case "storyPack":
@@ -7919,6 +8058,8 @@ export class MainUiFlow {
         return "本地打开";
       case "imported":
         return "运行时导入";
+      case "ai-generated":
+        return "AI 生成";
       case "new":
       default:
         return "新建项目";

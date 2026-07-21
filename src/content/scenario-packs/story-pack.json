@@ -1,0 +1,125 @@
+{
+  "id": "story-pack.topic-i1y-lr7-h7s-fik-ffx-sg6-qzx-nes-k05-fij",
+  "title": "学渣在二中逆袭的故事",
+  "description": "学渣在二中逆袭的故事",
+  "aiDraftResidue": [
+    {
+      "id": "loop_heart_to_board",
+      "type": "action-loop",
+      "source": {
+        "id": "loop_heart_to_board",
+        "name": "心跳→黑板（先把“我不行”敲成“我试试”）",
+        "loopSteps": [
+          "与罗老师在教室对话触发“节拍学习”的第一句建议",
+          "在同桌阿七的提示里选择一个微习惯（只改变一点点）",
+          "把选择反馈为动能上升的叙事文本（不做数值运算，仅记录）"
+        ],
+        "taikoLikeBeatNote": "把“看不懂”当作混乱噪音，把“再来一次”当作重新对齐节拍。"
+      }
+    },
+    {
+      "id": "loop_focus_to_pages",
+      "type": "action-loop",
+      "source": {
+        "id": "loop_focus_to_pages",
+        "name": "专注→翻页（用安静把节奏磨出来）",
+        "loopSteps": [
+          "与甄老师在图书馆自习区对话触发“把题变简单”的方法口令",
+          "从一段解题步骤的断点开始补全（以文案方式呈现“补完一拍”）",
+          "获得士气与被认可感的叙事结果（为后续事件铺垫）"
+        ],
+        "taikoLikeBeatNote": "每翻一页都是一拍：不追求快，只追求稳。"
+      }
+    },
+    {
+      "id": "loop_body_to_ready",
+      "type": "action-loop",
+      "source": {
+        "id": "loop_body_to_ready",
+        "name": "身体→状态（先把心从傍晚拉回正轨）",
+        "loopSteps": [
+          "与杨教练在操场门口对话，得到“稳节拍”的提醒",
+          "在食堂窗口用一句话把压力换成行动（叙事完成小目标）",
+          "回到教室形成阶段总结对话的前置条件"
+        ],
+        "taikoLikeBeatNote": "呼吸是节拍器：吸一口，下一拍就更准。"
+      }
+    },
+    {
+      "id": "residue.theme-frame",
+      "type": "theme-frame",
+      "summary": "Original AI Mod Draft topic frame and system mappings.",
+      "themeFrame": {
+        "topic": "学渣在二中逆袭的故事",
+        "tone": "热血、贴近校园、带点幽默与小确幸",
+        "coreLoopIntent": "在二中校园的日常关卡中，通过“打节奏般的努力”收集学习动能，逐步扭转自我认知，并获得同伴与老师的认可。",
+        "taikoLikePromise": "用节奏/击打的隐喻组织学习行动的节拍感（在本草案中仅保留框架与文案，不做可执行规则）。"
+      },
+      "statMapping": {
+        "focus": {
+          "label": "专注",
+          "purpose": "决定任务中“跟上节拍”的稳定度",
+          "initial": 40,
+          "range": [
+            0,
+            100
+          ]
+        },
+        "morale": {
+          "label": "士气",
+          "purpose": "影响对挫折的恢复速度与对话选择的开放度",
+          "initial": 35,
+          "range": [
+            0,
+            100
+          ]
+        },
+        "momentum": {
+          "label": "学习动能",
+          "purpose": "推动阶段目标达成（故事推进所需的“积累”）",
+          "initial": 0,
+          "range": [
+            0,
+            100
+          ]
+        },
+        "trust": {
+          "label": "被认可感",
+          "purpose": "与他人互动后的好感与后续支持",
+          "initial": 10,
+          "range": [
+            0,
+            100
+          ]
+        }
+      },
+      "skillMapping": [],
+      "stages": [
+        {
+          "id": "stage_01_entrance_bgm",
+          "name": "一鼓作气·入节拍（傍晚走廊）",
+          "objective": "在教室、图书馆、操场三处完成“节拍提示”的对话与选择，获得学习动能并启动逆袭态势。",
+          "stageRulesPlaceholder": "本草案不包含可执行玩法；仅提供叙事与互动节点的框架。",
+          "mapHighlights": [
+            "走廊光带像节拍线",
+            "黑板涂鸦像待完成的节奏图案",
+            "操场风声像稳定的鼓点"
+          ],
+          "startBindingsHint": "进入舞台后，先从教室对话触发，再依次去图书馆与操场。"
+        }
+      ]
+    }
+  ],
+  "scenarioProfile": {
+    "id": "scenario.topic-i1y-lr7-h7s-fik-ffx-sg6-qzx-nes-k05-fij",
+    "title": "学渣在二中逆袭的故事",
+    "playerCharacterId": "p_xueze",
+    "chapterId": "",
+    "initialLocation": {
+      "mapId": "map.ai-mod-draft",
+      "cityId": "city_erzhong",
+      "houseId": "b_classroom",
+      "view": "city"
+    }
+  }
+}

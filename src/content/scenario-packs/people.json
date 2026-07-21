@@ -1,0 +1,114 @@
+[
+  {
+    "id": "p_xueze",
+    "name": "学渣小泽",
+    "personType": "角色",
+    "role": "protagonist",
+    "extendedAttributes": [
+      {
+        "key": "stat.focus",
+        "label": "focus",
+        "value": "40"
+      },
+      {
+        "key": "stat.morale",
+        "label": "morale",
+        "value": "35"
+      },
+      {
+        "key": "stat.momentum",
+        "label": "momentum",
+        "value": "0"
+      },
+      {
+        "key": "stat.trust",
+        "label": "trust",
+        "value": "10"
+      }
+    ],
+    "dialogueIds": [],
+    "eventIds": [],
+    "tradeBinding": {
+      "enabled": false,
+      "entryId": ""
+    }
+  },
+  {
+    "id": "p_teacher_luo",
+    "name": "罗老师",
+    "personType": "NPC",
+    "role": "teacher",
+    "extendedAttributes": [],
+    "dialogueIds": [],
+    "eventIds": [],
+    "tradeBinding": {
+      "enabled": false,
+      "entryId": ""
+    }
+  },
+  {
+    "id": "p_librarian_zhen",
+    "name": "甄老师/馆员",
+    "personType": "NPC",
+    "role": "librarian",
+    "extendedAttributes": [],
+    "dialogueIds": [],
+    "eventIds": [],
+    "tradeBinding": {
+      "enabled": false,
+      "entryId": ""
+    }
+  },
+  {
+    "id": "p_coach_yang",
+    "name": "杨教练",
+    "personType": "NPC",
+    "role": "coach",
+    "extendedAttributes": [],
+    "dialogueIds": [],
+    "eventIds": [],
+    "tradeBinding": {
+      "enabled": false,
+      "entryId": ""
+    }
+  },
+  {
+    "id": "p_friend_qi",
+    "name": "同桌阿七",
+    "personType": "NPC",
+    "role": "classmate",
+    "extendedAttributes": [],
+    "dialogueIds": [],
+    "eventIds": [],
+    "tradeBinding": {
+      "enabled": false,
+      "entryId": ""
+    }
+  },
+  {
+    "id": "p_friend_min",
+    "name": "前排小敏",
+    "personType": "NPC",
+    "role": "classmate",
+    "extendedAttributes": [],
+    "dialogueIds": [],
+    "eventIds": [],
+    "tradeBinding": {
+      "enabled": false,
+      "entryId": ""
+    }
+  },
+  {
+    "id": "p_canteen_mgr",
+    "name": "食堂窗口阿姨",
+    "personType": "NPC",
+    "role": "canteen_mgr",
+    "extendedAttributes": [],
+    "dialogueIds": [],
+    "eventIds": [],
+    "tradeBinding": {
+      "enabled": false,
+      "entryId": ""
+    }
+  }
+]
