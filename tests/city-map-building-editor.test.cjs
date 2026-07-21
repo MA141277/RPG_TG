@@ -1,4 +1,4 @@
-const assert = require("node:assert/strict");
+﻿const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 const test = require("node:test");
@@ -118,13 +118,31 @@ function createElement(overrides = {}) {
     files: [],
     style: {},
     dataset: {},
+    elements: [],
     classList: createClassList(),
+    children: [],
+    _capturedPointerIds: new Set(),
+    append(...nodes) {
+      this.children.push(...nodes);
+    },
     closest() {
       return { classList: createClassList() };
     },
     addEventListener() {},
     removeEventListener() {},
     focus() {},
+    setPointerCapture(pointerId) {
+      this._capturedPointerIds.add(pointerId);
+    },
+    releasePointerCapture(pointerId) {
+      this._capturedPointerIds.delete(pointerId);
+    },
+    hasPointerCapture(pointerId) {
+      return this._capturedPointerIds.has(pointerId);
+    },
+    getBoundingClientRect() {
+      return { left: 0, top: 0, width: 1000, height: 1000 };
+    },
     ...overrides,
   };
 }
@@ -134,23 +152,41 @@ function createEditorRuntimeHarness() {
 window.__cityEditorTestApi = {
   state,
   dom,
+  init,
+  layerState,
   normalizePrefabLibrary,
   normalizeCityLayout,
   convertLegacyEntitiesLayout,
   setEditorLayout,
   setEditorSources,
   syncEditorLayoutFromSources,
+  loadDefaultPrefabLibrary,
   renderCityLayoutPanel,
   importJsonFile,
   saveJsonFile,
   selectPrefab,
   uploadEntityImage,
+  updatePrefabFromForm,
   updateCityLayoutFromForm,
+  onCanvasPointerDown,
+  onCanvasPointerMove,
+  stopDrag,
   exportCityLayoutJson,
   exportPrefabLibraryJson,
+  renderCanvas,
+  renderEntities,
+  syncEntityBackToSources,
+  shouldRenderCityMapImages,
+  createAssetNode,
   getSelectedPrefab,
   getSelectedInstance,
   getSelectedEntity,
+  getCanvasEntities,
+  createBoardGridMarkup,
+  isStreetGridCell,
+  getMissingEnterablePrefabs: typeof getMissingEnterablePrefabs === "function" ? getMissingEnterablePrefabs : undefined,
+  autoPlaceMissingEnterableBuildings: typeof autoPlaceMissingEnterableBuildings === "function" ? autoPlaceMissingEnterableBuildings : undefined,
+  onBoardClick,
   assignDom(patch) {
     Object.assign(dom, patch);
   },
@@ -189,6 +225,9 @@ window.__cityEditorTestApi = {
   },
   stubSaveFilePicker(fn) {
     showSaveFilePicker = fn;
+  },
+  stubFetch(fn) {
+    fetch = fn;
   }
 };`;
   const context = {
@@ -196,6 +235,9 @@ window.__cityEditorTestApi = {
     window: {},
     document: {
       addEventListener() {},
+      createElement() {
+        return createElement();
+      },
       getElementById() {
         return createElement();
       },
@@ -642,6 +684,85 @@ test("city layout panel render path uses split source data without runtime refer
   assert.equal(api.dom.fieldInstanceRows.value, 3);
 });
 
+test("city layout exposes an auto-place action for missing enterable buildings", () => {
+  const html = readText(indexPath);
+
+  assert.match(html, /id="auto-place-enterable-buildings"/);
+  assert.match(html, /一键补齐可进入建筑/);
+  assert.match(html, /autoPlaceMissingEnterableBuildings/);
+});
+
+test("auto-place only considers missing enterable prefabs once each", () => {
+  const api = createEditorRuntimeHarness();
+  const { prefabLibrary, cityLayout } = createSplitEditorSources();
+  api.stubUi();
+  prefabLibrary.prefabs.push(
+    {
+      id: "market",
+      name: "Market",
+      category: "house",
+      entry: { type: "city-entry", cityEntryId: "market-square" },
+      asset: {
+        image: "market.png",
+        naturalWidth: 48,
+        naturalHeight: 48,
+        scale: 1,
+        offsetX: 0,
+        offsetY: 0,
+        rotation: 0,
+        anchor: "bottom-center",
+      },
+      footprint: { cols: 2, rows: 2 },
+      interaction: {
+        clickable: true,
+        label: { text: "Market", offsetX: 0, offsetY: 0, width: 1, height: 1 },
+        hitArea: { type: "rect", offsetX: 0, offsetY: 0, width: 1, height: 1 },
+      },
+    },
+    {
+      id: "decor-only",
+      name: "Decor Only",
+      category: "decoration",
+      entry: { type: "none" },
+      asset: {
+        image: "decor.png",
+        naturalWidth: 32,
+        naturalHeight: 32,
+        scale: 1,
+        offsetX: 0,
+        offsetY: 0,
+        rotation: 0,
+        anchor: "bottom-center",
+      },
+      footprint: { cols: 1, rows: 1 },
+      interaction: {
+        clickable: false,
+        label: { text: "", offsetX: 0, offsetY: 0, width: 1, height: 1 },
+        hitArea: { type: "rect", offsetX: 0, offsetY: 0, width: 1, height: 1 },
+      },
+    }
+  );
+  cityLayout.instances = [
+    cityLayout.instances[0],
+    {
+      id: "existing.watchtower",
+      prefabId: "watchtower",
+      gridX: 20,
+      gridY: 20,
+      render: { visible: true, locked: false, zIndexMode: "y-sort", zIndex: null },
+    },
+  ];
+  api.setSources(prefabLibrary, cityLayout, "instance.keep");
+  api.state.editorMode = "city-layout";
+
+  const missing = api.getMissingEnterablePrefabs().map((prefab) => prefab.id);
+
+  assert.deepEqual(missing.includes("keep"), false);
+  assert.deepEqual(missing.includes("watchtower"), false);
+  assert.deepEqual(missing.includes("decor-only"), false);
+  assert.deepEqual(missing.length > 0, true);
+});
+
 test("prefab image uploads resolve the selected prefab and update prefab-owned asset fields", () => {
   const api = createEditorRuntimeHarness();
   const { prefabLibrary, cityLayout } = createSplitEditorSources();
@@ -820,6 +941,346 @@ test("saveJsonFile reuses the remembered handle and overwrites without reopening
   assert.equal(pickerCalls, 1);
   assert.equal(writes.length, 2);
   assert.match(writes[1], /Updated Keep/);
+});
+
+test("prefab editor copy uses readable chinese labels for category and entry type", () => {
+  const html = readText(indexPath);
+
+  assert.match(
+    html,
+    /<select id="field-prefab-category">[\s\S]*<option value="special">(?:特殊建筑|&#x7279;&#x6b8a;&#x5efa;&#x7b51;)<\/option>[\s\S]*<option value="house">(?:普通建筑|&#x666e;&#x901a;&#x5efa;&#x7b51;)<\/option>/
+  );
+  assert.match(
+    html,
+    /<select id="field-prefab-entry-type">[\s\S]*<option value="none">(?:无入口|&#x65e0;&#x5165;&#x53e3;)<\/option>[\s\S]*<option value="house">(?:建筑入口|&#x5efa;&#x7b51;&#x5165;&#x53e3;) house<\/option>/
+  );
+  assert.match(
+    html,
+    /id="field-prefab-rotation"/
+  );
+});
+
+test("prefab form updates asset rotation for prefab-owned image transforms", () => {
+  const api = createEditorRuntimeHarness();
+  const { prefabLibrary, cityLayout } = createSplitEditorSources();
+  api.stubUi();
+  api.assignDom({
+    fieldPrefabId: createElement({ value: "keep" }),
+    fieldPrefabName: createElement({ value: "Keep" }),
+    fieldPrefabCategory: createElement({ value: "special" }),
+    fieldPrefabEntryType: createElement({ value: "house" }),
+    fieldPrefabHouseId: createElement({ value: "keep-house" }),
+    fieldPrefabCityEntryId: createElement({ value: "" }),
+    fieldPrefabImage: createElement({ value: "keep.png" }),
+    fieldPrefabNaturalWidth: createElement({ value: "320" }),
+    fieldPrefabNaturalHeight: createElement({ value: "240" }),
+    fieldPrefabScale: createElement({ value: "1" }),
+    fieldPrefabAnchor: createElement({ value: "bottom-center" }),
+    fieldPrefabOffsetX: createElement({ value: "0" }),
+    fieldPrefabOffsetY: createElement({ value: "0" }),
+    fieldPrefabRotation: createElement({ value: "33" }),
+    fieldPrefabCols: createElement({ value: "4" }),
+    fieldPrefabRows: createElement({ value: "3" }),
+    fieldPrefabClickable: createElement({ checked: true }),
+    fieldPrefabLabelText: createElement({ value: "Keep" }),
+    fieldPrefabLabelOffsetX: createElement({ value: "0" }),
+    fieldPrefabLabelOffsetY: createElement({ value: "-32" }),
+    fieldPrefabLabelWidth: createElement({ value: "120" }),
+    fieldPrefabLabelHeight: createElement({ value: "30" }),
+    fieldPrefabHitType: createElement({ value: "diamond" }),
+    fieldPrefabHitOffsetX: createElement({ value: "0" }),
+    fieldPrefabHitOffsetY: createElement({ value: "0" }),
+    fieldPrefabHitWidth: createElement({ value: "160" }),
+    fieldPrefabHitHeight: createElement({ value: "80" }),
+  });
+  api.setSources(prefabLibrary, cityLayout, "instance.keep");
+  api.state.editorMode = "prefab";
+  api.state.selectedPrefabId = "keep";
+
+  api.updatePrefabFromForm();
+
+  assert.equal(api.getSelectedPrefab().asset.rotation, 33);
+});
+
+test("asset preview nodes use semi-transparent rotated prefab imagery", () => {
+  const api = createEditorRuntimeHarness();
+  const { prefabLibrary, cityLayout } = createSplitEditorSources();
+  api.stubUi();
+  api.setSources(prefabLibrary, cityLayout, "instance.keep");
+  const entity = api.getSelectedEntity();
+  entity.asset.rotation = 27;
+
+  const node = api.createAssetNode(entity);
+
+  assert.equal(node.style.opacity, "0.8");
+  assert.match(node.style.transform, /rotate\(27deg\)/);
+});
+
+test("prefab asset nodes expose a visual rotation handle", () => {
+  const api = createEditorRuntimeHarness();
+  const { prefabLibrary, cityLayout } = createSplitEditorSources();
+  api.stubUi();
+  api.setSources(prefabLibrary, cityLayout, "instance.keep");
+  api.state.editorMode = "prefab";
+
+  const node = api.createAssetNode(api.getSelectedEntity());
+  const rotationHandle = node.children.find((child) => child.dataset?.dragMode === "rotate-image");
+
+  assert.ok(rotationHandle);
+  assert.equal(rotationHandle.className, "asset-rotation-handle");
+});
+
+test("dragging the prefab rotation handle updates asset rotation", () => {
+  const api = createEditorRuntimeHarness();
+  const { prefabLibrary, cityLayout } = createSplitEditorSources();
+  api.stubUi();
+  api.assignDom({
+    baseSpace: createElement({
+      getBoundingClientRect() {
+        return { left: 0, top: 0, width: 1771, height: 976 };
+      },
+    }),
+  });
+  api.setSources(prefabLibrary, cityLayout, "instance.keep");
+  api.state.editorMode = "prefab";
+  api.state.selectedPrefabId = "keep";
+  api.state.selectedId = "instance.keep";
+  const entity = api.getSelectedEntity();
+  const anchorX = entity.lot.x + entity.asset.offsetX;
+  const anchorY = entity.lot.y + entity.asset.offsetY;
+  const target = {
+    closest(selector) {
+      if (selector === "[data-drag-mode]") {
+        return { dataset: { dragMode: "rotate-image" } };
+      }
+      if (selector === ".entity") {
+        return { dataset: { entityId: entity.id } };
+      }
+      return null;
+    },
+  };
+
+  api.onCanvasPointerDown({
+    pointerId: 1,
+    clientX: anchorX,
+    clientY: anchorY - 100,
+    target,
+    preventDefault() {},
+  });
+  api.onCanvasPointerMove({
+    pointerId: 1,
+    clientX: anchorX + 100,
+    clientY: anchorY,
+  });
+  api.stopDrag({ pointerId: 1 });
+
+  assert.equal(api.getSelectedPrefab().asset.rotation, 90);
+});
+
+test("loadDefaultPrefabLibrary populates prefabs before any city layout is loaded", async () => {
+  const api = createEditorRuntimeHarness();
+  api.stubUi();
+  api.stubFetch(async () => ({
+    ok: true,
+    async json() {
+      return {
+        version: 2,
+        prefabs: [{
+          id: "default-prefab",
+          name: "Default Prefab",
+          category: "decoration",
+          asset: { image: "default.png", naturalWidth: 32, naturalHeight: 32, scale: 1, anchor: "bottom-center", offsetX: 0, offsetY: 0 },
+          footprint: { cols: 1, rows: 1 },
+          interaction: { clickable: false, label: { text: "", offsetX: 0, offsetY: 0, width: 80, height: 24 }, hitArea: { type: "rect", offsetX: 0, offsetY: 0, width: 24, height: 24 } },
+          entry: { type: "none" }
+        }]
+      };
+    }
+  }));
+
+  api.state.prefabLibrary.prefabs = [];
+  await api.loadDefaultPrefabLibrary();
+
+  assert.equal(api.state.prefabLibrary.prefabs.length, 1);
+  assert.equal(api.state.prefabLibrary.prefabs[0].id, "default-prefab");
+  assert.equal(api.state.selectedPrefabId, "default-prefab");
+});
+
+test("init auto-loads the default prefab library for prefab-first editing", async () => {
+  const api = createEditorRuntimeHarness();
+  api.stubUi();
+  api.assignDom({
+    prefabForm: createElement({ elements: [] }),
+    cityLayoutForm: createElement({ elements: [] }),
+  });
+  let fetchedPath = null;
+  api.stubFetch(async (url) => {
+    fetchedPath = url;
+    return {
+      ok: true,
+      async json() {
+        return {
+          prefabs: [
+            {
+              id: "boot-prefab",
+              name: "Boot Prefab",
+              category: "special",
+              entry: { type: "none", houseId: "", cityEntryId: "" },
+              asset: {
+                image: "boot.png",
+                naturalWidth: 64,
+                naturalHeight: 64,
+                scale: 1,
+                anchor: "bottom-center",
+                offsetX: 0,
+                offsetY: 0,
+              },
+              footprint: { cols: 1, rows: 1 },
+              interaction: {
+                clickable: false,
+                label: { text: "", offsetX: 0, offsetY: -24, width: 80, height: 24 },
+                hitArea: { type: "rect", offsetX: 0, offsetY: 0, width: 80, height: 40 },
+              },
+            },
+          ],
+        };
+      },
+    };
+  });
+
+  api.init();
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  await new Promise((resolve) => setTimeout(resolve, 0));
+
+  assert.equal(
+    fetchedPath,
+    "examples/haozhou-city-prefabs.example.json"
+  );
+  assert.equal(api.state.prefabLibrary.prefabs.length, 1);
+  assert.equal(api.state.prefabLibrary.prefabs[0].id, "boot-prefab");
+  assert.equal(api.state.selectedPrefabId, "boot-prefab");
+});
+
+test("prefab mode exposes a standalone preview entity even when no city instance exists", () => {
+  const api = createEditorRuntimeHarness();
+  const { prefabLibrary, cityLayout } = createSplitEditorSources();
+  api.stubUi();
+  cityLayout.instances = [];
+  api.setSources(prefabLibrary, cityLayout);
+  api.state.editorMode = "prefab";
+
+  api.selectPrefab("watchtower");
+
+  const previewEntity = api.getSelectedEntity();
+  assert.ok(previewEntity);
+  assert.equal(previewEntity.prefabId, "watchtower");
+  assert.equal(previewEntity.lot.cols, 2);
+  assert.equal(previewEntity.lot.rows, 2);
+});
+
+test("street cells are marked in the grid markup and cannot receive city-layout placement", () => {
+  const api = createEditorRuntimeHarness();
+  const { prefabLibrary, cityLayout } = createSplitEditorSources();
+  api.stubUi();
+  api.setSources(prefabLibrary, cityLayout, "instance.keep");
+  api.state.editorMode = "city-layout";
+  api.state.selectedInstanceId = "instance.keep";
+  api.state.selectedId = "instance.keep";
+  api.state.layout.grid.cols = 40;
+  api.state.layout.grid.rows = 40;
+  api.state.cityLayout.grid.cols = 40;
+  api.state.cityLayout.grid.rows = 40;
+
+  assert.equal(api.isStreetGridCell(16, 5), true);
+  assert.equal(api.isStreetGridCell(5, 17), true);
+  assert.equal(api.isStreetGridCell(5, 5), false);
+  assert.match(api.createBoardGridMarkup(), /board-cell is-street/);
+
+  api.onBoardClick({
+    target: {
+      closest(selector) {
+        if (selector !== ".board-cell") {
+          return null;
+        }
+        return {
+          dataset: {
+            gridX: "16",
+            gridY: "5",
+          },
+        };
+      },
+    },
+  });
+
+  assert.equal(api.getSelectedInstance().gridX, 2);
+  assert.equal(api.getSelectedInstance().gridY, 3);
+});
+
+test("street cells use dedicated red styling in the editor stylesheet", () => {
+  const html = readText(indexPath);
+
+  assert.match(html, /\.board-cell\.is-street\s*\{/);
+  assert.match(html, /\.board-cell\.is-street[\s\S]*fill:\s*rgb\(235 108 95 \/ 2[0-9]%\)/);
+  assert.match(html, /\.board-cell\.is-street[\s\S]*stroke:\s*rgb\(255 145 132 \/ 9[0-9]%\)/);
+});
+
+test("prefab mode uses a standalone preview entity for canvas rendering", () => {
+  const api = createEditorRuntimeHarness();
+  const { prefabLibrary, cityLayout } = createSplitEditorSources();
+  api.stubUi();
+  cityLayout.instances = [];
+  api.setSources(prefabLibrary, cityLayout);
+  api.state.editorMode = "prefab";
+  api.selectPrefab("watchtower");
+  api.assignDom({
+    entityLayer: createElement(),
+  });
+
+  api.renderEntities();
+
+  assert.equal(api.getCanvasEntities().length, 1);
+  assert.equal(api.dom.entityLayer.children.length, 1);
+  assert.equal(api.dom.entityLayer.children[0].dataset.entityId, "prefab-preview:watchtower");
+});
+
+test("prefab mode hides city background and foreground map imagery", () => {
+  const api = createEditorRuntimeHarness();
+  const { prefabLibrary, cityLayout } = createSplitEditorSources();
+  api.stubUi();
+  api.setSources(prefabLibrary, cityLayout);
+  api.state.editorMode = "prefab";
+
+  assert.equal(api.shouldRenderCityMapImages(), false);
+
+  api.state.editorMode = "city-layout";
+  assert.equal(api.shouldRenderCityMapImages(), true);
+});
+
+test("city-layout sync updates instance placement without mutating prefab visuals", () => {
+  const api = createEditorRuntimeHarness();
+  const { prefabLibrary, cityLayout } = createSplitEditorSources();
+  api.stubUi();
+  api.setSources(prefabLibrary, cityLayout, "instance.keep");
+  api.state.editorMode = "city-layout";
+  api.state.selectedInstanceId = "instance.keep";
+  api.state.selectedId = "instance.keep";
+  api.state.selectedPrefabId = "keep";
+
+  const prefabBefore = structuredClone(api.state.prefabLibrary.prefabs[0]);
+  const entity = api.getSelectedEntity();
+  entity.lot.gridX = 7;
+  entity.lot.gridY = 8;
+  entity.asset.offsetX = 99;
+  entity.interaction.label.offsetY = -999;
+
+  api.syncEntityBackToSources(entity);
+
+  assert.equal(api.getSelectedInstance().gridX, 7);
+  assert.equal(api.getSelectedInstance().gridY, 8);
+  assert.equal(
+    JSON.stringify(api.state.prefabLibrary.prefabs[0]),
+    JSON.stringify(prefabBefore)
+  );
 });
 
 test("editor converts legacy entity layouts into prefabs and instances", () => {
