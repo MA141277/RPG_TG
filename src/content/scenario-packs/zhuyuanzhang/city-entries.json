@@ -8,6 +8,62 @@
     "artworkId": "leader-residence"
   },
   {
+    "id": "city-entry.kulan.temple",
+    "cityId": "city.kulan",
+    "name": "皇觉寺",
+    "directoryType": "building",
+    "targetHouseId": "house.kulan.temple",
+    "artworkId": "temple-house"
+  },
+  {
+    "id": "city-entry.kulan.keep",
+    "cityId": "city.kulan",
+    "name": "帅府",
+    "directoryType": "building",
+    "targetHouseId": "house.kulan.keep",
+    "artworkId": "keep-house"
+  },
+  {
+    "id": "city-entry.kulan.tea-house",
+    "cityId": "city.kulan",
+    "name": "茶馆",
+    "directoryType": "building",
+    "targetHouseId": "house.kulan.tea_house",
+    "artworkId": "tea-house"
+  },
+  {
+    "id": "city-entry.kulan.market",
+    "cityId": "city.kulan",
+    "name": "货栈",
+    "directoryType": "building",
+    "targetHouseId": "house.kulan.market",
+    "artworkId": "market-house"
+  },
+  {
+    "id": "city-entry.kulan.grain-shop",
+    "cityId": "city.kulan",
+    "name": "粮铺",
+    "directoryType": "building",
+    "targetHouseId": "house.kulan.grain_shop",
+    "artworkId": "grain-shop"
+  },
+  {
+    "id": "city-entry.kulan.medicine-house",
+    "cityId": "city.kulan",
+    "name": "药铺",
+    "directoryType": "building",
+    "targetHouseId": "house.kulan.medicine_house",
+    "artworkId": "medicine-house"
+  },
+  {
+    "id": "city-entry.kulan.inn",
+    "cityId": "city.kulan",
+    "name": "客栈",
+    "directoryType": "building",
+    "targetHouseId": "house.kulan.inn",
+    "artworkId": "tavern"
+  },
+  {
     "id": "city-entry.yingtian.leader-residence",
     "cityId": "city.yingtian",
     "name": "将领府邸",

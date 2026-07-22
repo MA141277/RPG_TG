@@ -1,8 +1,37 @@
 
-> rpg-tg@0.1.0 dev:localhost
-> vite --host localhost --port 5173
+> rpg-tg@0.1.0 dev
+> vite --host 0.0.0.0 --port 5173 --host 0.0.0.0 --port 5173
 
 
-  VITE v7.3.3  ready in 330 ms
+  [32m[1mVITE[22m v7.3.3[39m  [2mready in [0m[1m231[22m[2m[0m ms[22m
 
-  ➜  Local:   http://localhost:5173/
+  [32m➜[39m  [1mLocal[22m:   [36mhttp://localhost:[1m5173[22m/[39m
+  [32m➜[39m  [1mNetwork[22m: [36mhttp://192.168.1.22:[1m5173[22m/[39m
+[2m20:11:54[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/script-editor/workspace-shell.ts[22m
+[2m20:12:52[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/script-editor/workspace-shell.ts[22m
+[2m20:17:02[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/script-editor/script-editor-workspace-view.ts[22m
+[2m20:17:31[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/main-ui/main-ui-flow.js[22m
+[2m20:21:10[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/application/script-editor/workspace-shell.ts[22m
+[2m20:21:35[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/script-editor/script-editor-workspace-view.ts[22m
+[2m20:21:51[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/main-ui/main-ui-flow.js[22m
+[2m20:26:05[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/script-editor/script-editor-workspace-view.ts[22m
+[2m20:26:45[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
+[2m20:30:17[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/script-editor/script-editor-workspace-view.ts[22m
+[2m20:30:46[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
+[2m20:31:40[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
+[2m20:42:31[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/main-ui/main-ui-flow.js[22m
+[2m20:42:54[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
+[2m20:47:45[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/main-ui/main-ui-flow.js[22m
+[2m20:51:35[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/main-ui/main-ui-flow.js[22m
+[2m20:52:10[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/main-ui/main-ui-flow.js[22m
+[2m20:56:26[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/main-ui/main-ui-flow.js[22m
+[2m20:58:39[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/main-ui/main-ui-flow.js[22m
+[2m20:59:59[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
+[2m21:02:34[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/script-editor/script-editor-workspace-view.ts[22m
+[2m21:04:11[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/main-ui/main-ui-flow.js[22m
+[2m21:10:16[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/main-ui/main-ui-flow.js[22m
+[2m21:11:34[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
+[2m21:12:20[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m
+[2m21:17:55[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/main-ui/main-ui-flow.js[22m
+[2m21:19:09[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/ui/views/script-editor/script-editor-workspace-view.ts[22m
+[2m21:20:31[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/app.css[22m

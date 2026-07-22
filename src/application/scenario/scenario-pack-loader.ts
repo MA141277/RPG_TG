@@ -1,4 +1,9 @@
-import { resolveContentPackMapAssetUrls } from "../content/content-pack-loader";
+import {
+  resolveContentPackMapAssetUrls,
+  resolveContentPackPortraitAssetUrls,
+} from "../content/content-pack-loader";
+import { assertHouseModuleDefaults } from "../content/house-module-defaults";
+import { GAME_VIEW_NAMES } from "../../domain/game-state";
 import type { ScenarioPackDefinition } from "../../domain/scenario-pack";
 
 export async function loadScenarioPackFromUrl(
@@ -31,6 +36,23 @@ export async function loadScenarioPackFromFiles(
   const manifestFileEntry = selectScenarioPackManifestFileEntry(indexedFiles);
 
   if (manifestFileEntry == null) {
+    const scriptEditorProjectManifestEntry =
+      selectScriptEditorProjectManifestFileEntry(indexedFiles);
+    if (scriptEditorProjectManifestEntry != null) {
+      const rawProjectManifest = JSON.parse(
+        await scriptEditorProjectManifestEntry.file.text()
+      );
+      if (
+        typeof rawProjectManifest === "object" &&
+        rawProjectManifest != null &&
+        (rawProjectManifest as { kind?: unknown }).kind === "script-editor-project"
+      ) {
+        throw new Error(
+          "导入的是 Script Editor 项目包（project.json kind=script-editor-project），不是 JSON 开局需要的运行时剧本包。请在剧本编辑器中打开项目，或先导出运行时剧本包再用于 JSON 开局；JSON 开局目录必须包含 pack.json。"
+        );
+      }
+    }
+
     if (files.length === 1) {
       const [singleFile] = files;
       if (singleFile == null) {
@@ -80,13 +102,149 @@ export function parseScenarioPack(value: unknown): ScenarioPackDefinition {
   ) {
     throw new Error("scenario initialLocation.houseId must be string or null.");
   }
-  assertString(value.scenarioProfile.initialLocation.view, "scenario initialLocation.view");
+  if (
+    value.scenarioProfile.initialLocation.dialogueId !== undefined &&
+    value.scenarioProfile.initialLocation.dialogueId !== null &&
+    typeof value.scenarioProfile.initialLocation.dialogueId !== "string"
+  ) {
+    throw new Error("scenario initialLocation.dialogueId must be string or null.");
+  }
+  assertEnum(
+    value.scenarioProfile.initialLocation.view,
+    "scenario initialLocation.view",
+    GAME_VIEW_NAMES
+  );
+  if (value.scenarioProfile.launchPolicy != null) {
+    assertObject(value.scenarioProfile.launchPolicy, "scenario launchPolicy");
+    assertOptionalEnum(
+      value.scenarioProfile.launchPolicy.characterSelection,
+      "scenario launchPolicy.characterSelection",
+      ["shell", "fixed"]
+    );
+    assertOptionalEnum(
+      value.scenarioProfile.launchPolicy.initialView,
+      "scenario launchPolicy.initialView",
+      GAME_VIEW_NAMES
+    );
+    assertOptionalEnum(
+      value.scenarioProfile.launchPolicy.entryEventTiming,
+      "scenario launchPolicy.entryEventTiming",
+      ["immediate", "after-map-entry"]
+    );
+  }
+  if (value.scenarioProfile.characterStartups != null) {
+    assertArray(
+      value.scenarioProfile.characterStartups,
+      "scenario characterStartups"
+    );
+    for (const [index, record] of value.scenarioProfile.characterStartups.entries()) {
+      assertObject(record, `scenario characterStartups[${index}]`);
+      assertString(
+        record.characterId,
+        `scenario characterStartups[${index}].characterId`
+      );
+      if (record.initialLocation != null) {
+        assertObject(
+          record.initialLocation,
+          `scenario characterStartups[${index}].initialLocation`
+        );
+        assertOptionalString(
+          record.initialLocation.mapId,
+          `scenario characterStartups[${index}].initialLocation.mapId`
+        );
+        assertOptionalString(
+          record.initialLocation.cityId,
+          `scenario characterStartups[${index}].initialLocation.cityId`
+        );
+        if (
+          record.initialLocation.houseId !== undefined &&
+          record.initialLocation.houseId !== null &&
+          typeof record.initialLocation.houseId !== "string"
+        ) {
+          throw new Error(
+            `scenario characterStartups[${index}].initialLocation.houseId must be string or null.`
+          );
+        }
+        if (
+          record.initialLocation.dialogueId !== undefined &&
+          record.initialLocation.dialogueId !== null &&
+          typeof record.initialLocation.dialogueId !== "string"
+        ) {
+          throw new Error(
+            `scenario characterStartups[${index}].initialLocation.dialogueId must be string or null.`
+          );
+        }
+        assertOptionalEnum(
+          record.initialLocation.view,
+          `scenario characterStartups[${index}].initialLocation.view`,
+          GAME_VIEW_NAMES
+        );
+      }
+      if (record.initialUi != null) {
+        assertObject(
+          record.initialUi,
+          `scenario characterStartups[${index}].initialUi`
+        );
+        assertOptionalString(
+          record.initialUi.reviewDateText,
+          `scenario characterStartups[${index}].initialUi.reviewDateText`
+        );
+        assertOptionalString(
+          record.initialUi.mainHouseMissionText,
+          `scenario characterStartups[${index}].initialUi.mainHouseMissionText`
+        );
+      }
+      if (record.initialRuntime != null) {
+        assertObject(
+          record.initialRuntime,
+          `scenario characterStartups[${index}].initialRuntime`
+        );
+      }
+      if (record.launchPolicy != null) {
+        assertObject(
+          record.launchPolicy,
+          `scenario characterStartups[${index}].launchPolicy`
+        );
+        assertOptionalEnum(
+          record.launchPolicy.initialView,
+          `scenario characterStartups[${index}].launchPolicy.initialView`,
+          GAME_VIEW_NAMES
+        );
+        assertOptionalEnum(
+          record.launchPolicy.entryEventTiming,
+          `scenario characterStartups[${index}].launchPolicy.entryEventTiming`,
+          ["immediate", "after-map-entry"]
+        );
+      }
+      if (
+        record.entryEventId !== undefined &&
+        record.entryEventId !== null &&
+        typeof record.entryEventId !== "string"
+      ) {
+        throw new Error(
+          `scenario characterStartups[${index}].entryEventId must be string or null.`
+        );
+      }
+      if (
+        record.openingFlowId !== undefined &&
+        record.openingFlowId !== null &&
+        typeof record.openingFlowId !== "string"
+      ) {
+        throw new Error(
+          `scenario characterStartups[${index}].openingFlowId must be string or null.`
+        );
+      }
+    }
+  }
   assertArray(value.characters, "scenario characters");
   if (value.cities != null) {
     assertArray(value.cities, "scenario cities");
   }
   if (value.houses != null) {
     assertArray(value.houses, "scenario houses");
+  }
+  if (value.buildingArrangements != null) {
+    assertArray(value.buildingArrangements, "scenario building arrangements");
   }
   if (value.maps != null) {
     assertArray(value.maps, "scenario maps");
@@ -95,9 +253,32 @@ export function parseScenarioPack(value: unknown): ScenarioPackDefinition {
     assertArray(value.cityEntries, "scenario city entries");
   }
   assertArray(value.events, "scenario events");
-  assertArray(value.scenes, "scenario scenes");
+  assertRuntimeEventsDoNotUseRetiredTriggerFields(value.events);
+  if (value.eventBindings != null) {
+    assertArray(value.eventBindings, "scenario eventBindings");
+  }
+  assertArray(value.dialogues, "scenario dialogues");
+  assertRuntimeDialoguesDoNotUseRetiredActions(value.dialogues);
   if (value.tasks != null) {
     assertArray(value.tasks, "scenario tasks");
+  }
+  if (value.playables != null) {
+    assertArray(value.playables, "scenario playables");
+  }
+  if (value.playableIntegrations != null) {
+    assertArray(value.playableIntegrations, "scenario playable integrations");
+    assertPlayableIntegrationsDoNotUseRetiredSceneOwnerKind(
+      value.playableIntegrations
+    );
+  }
+  if (value.flowDefinitions != null) {
+    throw new Error(
+      'scenario flowDefinitions is retired; use flowPlayables as the content-only flow family.'
+    );
+  }
+  if (value.flowPlayables != null) {
+    assertArray(value.flowPlayables, "scenario flow playables");
+    assertFlowPlayablesDoNotUseRetiredSceneOwnerKind(value.flowPlayables);
   }
 
   if (value.activities != null) {
@@ -112,8 +293,14 @@ export function parseScenarioPack(value: unknown): ScenarioPackDefinition {
   if (value.cityNpcPools != null) {
     assertArray(value.cityNpcPools, "scenario city npc pools");
   }
-  if (value.houseAccessRefusalRules != null) {
-    assertArray(value.houseAccessRefusalRules, "scenario house access refusal rules");
+  if (value.locationAccess != null) {
+    assertArray(value.locationAccess, "scenario location access");
+  }
+  if (value.houseModuleDefaults != null) {
+    assertHouseModuleDefaults(
+      value.houseModuleDefaults,
+      "scenario houseModuleDefaults"
+    );
   }
   if (value.historicalCharacters != null) {
     assertArray(value.historicalCharacters, "scenario historical characters");
@@ -123,6 +310,12 @@ export function parseScenarioPack(value: unknown): ScenarioPackDefinition {
   }
   if (value.cityPortraits != null) {
     assertObject(value.cityPortraits, "scenario city portraits");
+  }
+  if (value.portraits != null) {
+    assertArray(value.portraits, "scenario portraits");
+  }
+  if (value.portraitVariants != null) {
+    assertArray(value.portraitVariants, "scenario portrait variants");
   }
   if (value.textEntries != null) {
     assertObject(value.textEntries, "scenario text entries");
@@ -134,25 +327,122 @@ export function parseScenarioPack(value: unknown): ScenarioPackDefinition {
     );
   }
 
-  return value as ScenarioPackDefinition;
+  const runtimeDialogues = Array.isArray(value.dialogues)
+    ? (value.dialogues as NonNullable<ScenarioPackDefinition["dialogues"]>)
+    : [];
+
+  return {
+    ...(value as ScenarioPackDefinition),
+    dialogues: runtimeDialogues,
+  };
+}
+
+function assertRuntimeEventsDoNotUseRetiredTriggerFields(events: unknown[]): void {
+  events.forEach((eventDefinition, index) => {
+    assertObject(eventDefinition, `scenario events[${index}]`);
+    if (
+      Object.hasOwn(eventDefinition, "trigger") ||
+      Object.hasOwn(eventDefinition, "conditions")
+    ) {
+      throw new Error(
+        `scenario events[${index}] event body trigger/conditions are retired; use event-bindings.json for runtime trigger configuration.`
+      );
+    }
+  });
+}
+
+function assertRuntimeDialoguesDoNotUseRetiredActions(dialogues: unknown[]): void {
+  dialogues.forEach((dialogueDefinition, index) => {
+    assertObject(dialogueDefinition, `scenario dialogues[${index}]`);
+    if (Object.hasOwn(dialogueDefinition, "actions")) {
+      throw new Error(
+        `scenario dialogues[${index}] uses retired actions[]; use dialogues[].nodes instead.`
+      );
+    }
+  });
+}
+
+function assertPlayableIntegrationsDoNotUseRetiredSceneOwnerKind(
+  playableIntegrations: unknown[]
+): void {
+  playableIntegrations.forEach((integrationDefinition, index) => {
+    assertObject(
+      integrationDefinition,
+      `scenario playableIntegrations[${index}]`
+    );
+    const ownerDefaults = isRecord(integrationDefinition.ownerDefaults)
+      ? integrationDefinition.ownerDefaults
+      : null;
+    const trigger = isRecord(integrationDefinition.trigger)
+      ? integrationDefinition.trigger
+      : null;
+    if (
+      ownerDefaults?.ownerKind === "scene" ||
+      trigger?.ownerKind === "scene"
+    ) {
+      throw new Error(
+        `scenario playableIntegrations[${index}] uses retired ownerKind "scene".`
+      );
+    }
+  });
+}
+
+function assertFlowPlayablesDoNotUseRetiredSceneOwnerKind(
+  flowPlayables: unknown[]
+): void {
+  flowPlayables.forEach((flowPlayable, index) => {
+    assertObject(flowPlayable, `scenario flowPlayables[${index}]`);
+    const record = flowPlayable as Record<string, unknown>;
+    if (record.ownerKind === "scene") {
+      throw new Error(
+        `scenario flowPlayables[${index}] uses retired ownerKind "scene".`
+      );
+    }
+    for (const retiredField of [
+      "playableId",
+      "integrationId",
+      "ownerKind",
+      "ownerId",
+      "returnPolicy",
+      "triggerId",
+      "triggerSource",
+      "triggerEvent",
+      "eventStartTarget",
+      "launchPayload",
+    ]) {
+      if (Object.hasOwn(record, retiredField)) {
+        throw new Error(
+          `scenario flowPlayables[${index}] uses retired routing field "${retiredField}".`
+        );
+      }
+    }
+  });
 }
 
 type ScenarioPackManifestFiles = {
   scenarioProfile: string;
   characters: string;
   events: string;
-  scenes: string;
+  dialogues: string;
   tasks?: string;
+  playables?: string;
+  playableIntegrations?: string;
+  flowPlayables?: string;
   cities?: string;
   houses?: string;
+  buildingArrangements?: string;
   maps?: string;
   cityEntries?: string;
   textEntries?: string;
+  eventBindings?: string;
   activities?: string;
   cards?: string;
   valuables?: string;
   cityNpcPools?: string;
-  houseAccessRefusalRules?: string;
+  locationAccess?: string;
+  houseModuleDefaults?: string;
+  portraits?: string;
+  portraitVariants?: string;
   historicalCharacters?: string;
   historicalCityRosters?: string;
   cityPortraits?: string;
@@ -216,6 +506,20 @@ function selectScenarioPackManifestFileEntry(
   return manifestEntries[0] ?? null;
 }
 
+function selectScriptEditorProjectManifestFileEntry(
+  indexedFiles: Record<string, ScenarioPackImportFileEntry>
+): ScenarioPackImportFileEntry | null {
+  const projectEntries = Object.values(indexedFiles).filter((entry) =>
+    entry.relativePath.endsWith("/project.json") || entry.relativePath === "project.json"
+  );
+
+  if (projectEntries.length === 0) {
+    return null;
+  }
+
+  return projectEntries[0] ?? null;
+}
+
 async function hydrateScenarioPackManifest(
   manifest: ScenarioPackManifest,
   manifestUrl: string
@@ -237,6 +541,10 @@ async function hydrateScenarioPackManifest(
     hydratedFields.maps,
     manifestUrl
   );
+  const resolvedPortraits = resolveContentPackPortraitAssetUrls(
+    hydratedFields.portraits,
+    manifestUrl
+  );
 
   return {
     schemaVersion: manifest.schemaVersion,
@@ -245,6 +553,7 @@ async function hydrateScenarioPackManifest(
     ...(manifest.description == null ? {} : { description: manifest.description }),
     ...hydratedFields,
     ...(resolvedMaps == null ? {} : { maps: resolvedMaps }),
+    ...(resolvedPortraits == null ? {} : { portraits: resolvedPortraits }),
   };
 }
 
@@ -274,6 +583,11 @@ async function hydrateScenarioPackManifestFromFiles(
     manifestDirectoryPath,
     indexedFiles
   );
+  const resolvedPortraits = resolveImportedScenarioPackPortraitAssetUrls(
+    hydratedFields.portraits,
+    manifestDirectoryPath,
+    indexedFiles
+  );
 
   return {
     schemaVersion: manifest.schemaVersion,
@@ -282,7 +596,41 @@ async function hydrateScenarioPackManifestFromFiles(
     ...(manifest.description == null ? {} : { description: manifest.description }),
     ...hydratedFields,
     ...(resolvedMaps == null ? {} : { maps: resolvedMaps }),
+    ...(resolvedPortraits == null ? {} : { portraits: resolvedPortraits }),
   };
+}
+
+function resolveImportedScenarioPackPortraitAssetUrls(
+  portraits: ScenarioPackDefinition["portraits"],
+  manifestDirectoryPath: string,
+  indexedFiles: Record<string, ScenarioPackImportFileEntry>
+) {
+  if (!Array.isArray(portraits)) {
+    return portraits;
+  }
+
+  const assetUrlCache: Record<string, string> = {};
+  return portraits.map((portrait, index) => ({
+    ...portrait,
+    portraitImage: resolveImportedScenarioPackAssetReference(
+      portrait.portraitImage,
+      `scenario portraits[${index}].portraitImage`,
+      manifestDirectoryPath,
+      indexedFiles,
+      assetUrlCache
+    ),
+    ...(portrait.avatarImage == null
+      ? {}
+      : {
+          avatarImage: resolveImportedScenarioPackAssetReference(
+            portrait.avatarImage,
+            `scenario portraits[${index}].avatarImage`,
+            manifestDirectoryPath,
+            indexedFiles,
+            assetUrlCache
+          ),
+        }),
+  }));
 }
 
 function resolveImportedScenarioPackMapAssetUrls(
@@ -292,13 +640,16 @@ function resolveImportedScenarioPackMapAssetUrls(
 ) {
   const assetUrlCache: Record<string, string> = {};
 
-  return maps?.map((mapDefinition) => ({
+  return maps?.map((mapDefinition, mapIndex) => ({
     ...mapDefinition,
     ...(mapDefinition.primaryImageUrl == null
       ? {}
       : {
           primaryImageUrl: resolveImportedScenarioPackAssetUrl(
-            mapDefinition.primaryImageUrl,
+            readImportedScenarioPackAssetPath(
+              mapDefinition.primaryImageUrl,
+              `scenario maps[${mapIndex}].primaryImageUrl`
+            ),
             manifestDirectoryPath,
             indexedFiles,
             assetUrlCache
@@ -308,7 +659,10 @@ function resolveImportedScenarioPackMapAssetUrls(
       ? {}
       : {
           regionOverlayImageUrl: resolveImportedScenarioPackAssetUrl(
-            mapDefinition.regionOverlayImageUrl,
+            readImportedScenarioPackAssetPath(
+              mapDefinition.regionOverlayImageUrl,
+              `scenario maps[${mapIndex}].regionOverlayImageUrl`
+            ),
             manifestDirectoryPath,
             indexedFiles,
             assetUrlCache
@@ -317,10 +671,13 @@ function resolveImportedScenarioPackMapAssetUrls(
     ...(mapDefinition.layers == null
       ? {}
       : {
-          layers: mapDefinition.layers.map((layerDefinition) => ({
+          layers: mapDefinition.layers.map((layerDefinition, layerIndex) => ({
             ...layerDefinition,
             imageUrl: resolveImportedScenarioPackAssetUrl(
-              layerDefinition.imageUrl,
+              readImportedScenarioPackAssetPath(
+                layerDefinition.imageUrl,
+                `scenario maps[${mapIndex}].layers[${layerIndex}].imageUrl`
+              ),
               manifestDirectoryPath,
               indexedFiles,
               assetUrlCache
@@ -330,12 +687,24 @@ function resolveImportedScenarioPackMapAssetUrls(
   }));
 }
 
+function readImportedScenarioPackAssetPath(value: unknown, label: string): string {
+  if (typeof value !== "string" || value.length === 0) {
+    throw new Error(`${label} must be a non-empty string.`);
+  }
+
+  return value;
+}
+
 function resolveImportedScenarioPackAssetUrl(
   value: string,
   manifestDirectoryPath: string,
   indexedFiles: Record<string, ScenarioPackImportFileEntry>,
   assetUrlCache: Record<string, string>
 ): string {
+  if (value.startsWith("data:")) {
+    return normalizeImageDataUrlMime(value);
+  }
+
   if (/^(https?:|file:|blob:|\/)/.test(value)) {
     return value;
   }
@@ -350,9 +719,72 @@ function resolveImportedScenarioPackAssetUrl(
     return cachedAssetUrl;
   }
 
-  const nextAssetUrl = URL.createObjectURL(importedFile.file);
+  const nextAssetUrl = URL.createObjectURL(createImportedAssetBlob(importedFile));
   assetUrlCache[importedFile.relativePath] = nextAssetUrl;
   return nextAssetUrl;
+}
+
+function createImportedAssetBlob(importedFile: ScenarioPackImportFileEntry): Blob {
+  const mimeType = resolveImportedAssetMimeType(importedFile);
+  if (mimeType === importedFile.file.type) {
+    return importedFile.file;
+  }
+
+  return new Blob([importedFile.file], { type: mimeType });
+}
+
+function resolveImportedAssetMimeType(
+  importedFile: ScenarioPackImportFileEntry
+): string {
+  if (importedFile.file.type.startsWith("image/")) {
+    return importedFile.file.type;
+  }
+
+  const mimeTypeByExtension: Record<string, string> = {
+    ".apng": "image/apng",
+    ".avif": "image/avif",
+    ".gif": "image/gif",
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".png": "image/png",
+    ".svg": "image/svg+xml",
+    ".webp": "image/webp",
+  };
+  const lowerPath = importedFile.relativePath.toLowerCase();
+  const matchedExtension = Object.keys(mimeTypeByExtension).find((extension) =>
+    lowerPath.endsWith(extension)
+  );
+  return matchedExtension == null
+    ? importedFile.file.type || "application/octet-stream"
+    : (mimeTypeByExtension[matchedExtension] as string);
+}
+
+function normalizeImageDataUrlMime(value: string): string {
+  const match = /^data:([^;,]+);base64,([A-Za-z0-9+/=]+)/.exec(value);
+  if (match == null || match[1] !== "application/octet-stream") {
+    return value;
+  }
+
+  const detectedMimeType = detectBase64ImageMimeType(match[2] ?? "");
+  return detectedMimeType == null
+    ? value
+    : value.replace("data:application/octet-stream;base64,", `data:${detectedMimeType};base64,`);
+}
+
+function detectBase64ImageMimeType(base64Value: string): string | null {
+  if (base64Value.startsWith("iVBORw0KGgo")) {
+    return "image/png";
+  }
+  if (base64Value.startsWith("/9j/")) {
+    return "image/jpeg";
+  }
+  if (base64Value.startsWith("R0lGOD")) {
+    return "image/gif";
+  }
+  if (base64Value.startsWith("UklGR")) {
+    return "image/webp";
+  }
+  return null;
 }
 
 function resolveScenarioPackImportedFileEntry(
@@ -426,7 +858,26 @@ function isScenarioPackManifest(value: unknown): value is ScenarioPackManifest {
     typeof files.scenarioProfile === "string" &&
     typeof files.characters === "string" &&
     typeof files.events === "string" &&
-    typeof files.scenes === "string"
+    typeof files.dialogues === "string"
+  );
+}
+
+function resolveImportedScenarioPackAssetReference(
+  value: string,
+  label: string,
+  manifestDirectoryPath: string,
+  indexedFiles: Record<string, ScenarioPackImportFileEntry>,
+  assetUrlCache: Record<string, string>
+): string {
+  if (value.startsWith("builtin:")) {
+    return value;
+  }
+
+  return resolveImportedScenarioPackAssetUrl(
+    readImportedScenarioPackAssetPath(value, label),
+    manifestDirectoryPath,
+    indexedFiles,
+    assetUrlCache
   );
 }
 
@@ -449,4 +900,37 @@ function assertString(value: unknown, label: string): asserts value is string {
   if (typeof value !== "string" || value.length === 0) {
     throw new Error(`${label} must be a non-empty string.`);
   }
+}
+
+function assertEnum<T extends string>(
+  value: unknown,
+  label: string,
+  allowedValues: readonly T[]
+): asserts value is T {
+  if (!allowedValues.includes(value as T)) {
+    throw new Error(`${label} must be one of: ${allowedValues.join(", ")}.`);
+  }
+}
+
+function assertOptionalString(
+  value: unknown,
+  label: string
+): asserts value is string | undefined {
+  if (value != null && (typeof value !== "string" || value.length === 0)) {
+    throw new Error(`${label} must be a non-empty string when present.`);
+  }
+}
+
+function assertOptionalEnum<T extends string>(
+  value: unknown,
+  label: string,
+  allowedValues: readonly T[]
+): asserts value is T | undefined {
+  if (value != null && !allowedValues.includes(value as T)) {
+    throw new Error(`${label} must be one of: ${allowedValues.join(", ")}.`);
+  }
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value != null && typeof value === "object" && !Array.isArray(value);
 }

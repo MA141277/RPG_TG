@@ -1,7 +1,7 @@
 import type { CharacterDefinition } from "../../domain/character";
 import type { GameState } from "../../domain/game-state";
 import { GRAIN_SHOP_VARIABLE_KEYS } from "../../domain/grain-shop";
-import { grainShopInitialValues } from "../../content/houses/grain-shop-content";
+import { getGrainShopContentDefaults } from "./grain-shop-content-defaults";
 import { getQuotedGrainPrice } from "./grain-market";
 import { setGrainPrice } from "./grain-shop-mutations";
 import { ensurePlayerGrainInventory } from "../inventory/trade-inventory";
@@ -15,6 +15,7 @@ export function initGrainShopSession(
   state: GameState,
   characterDefinitions: CharacterDefinition[]
 ): InitGrainShopSessionResult {
+  const { grainShopInitialValues } = getGrainShopContentDefaults();
   const nextVariables = { ...state.runtime.variables };
   const hasFood = typeof nextVariables[GRAIN_SHOP_VARIABLE_KEYS.food] === "number";
 

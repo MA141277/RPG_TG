@@ -10,11 +10,11 @@ import type {
 import type { RuntimeRequest } from "../contracts/runtime-request";
 import type { RuntimeState } from "../contracts/runtime-state";
 import {
-  createLegacyPlayableSession,
+  createInteractivePlayableSession,
   resolvePlayableLaunchRequest,
   runPlayableRuntime,
 } from "./playable-runtime";
-import { builtinPlayableDefinitionRegistry } from "../registry/playable-definition-registry";
+import { readDefaultPlayableDefinitionRegistry } from "./playable-runtime-registries";
 
 export type InteractiveRuntimeOutput = InteractiveRuntimeResult & {
   characterDefinitions?: CharacterDefinition[];
@@ -59,7 +59,7 @@ export function runInteractiveRuntime(input: {
       state: input.state,
       effects: [],
       session: getActiveInteractiveSession(input.state, null),
-      interactive: { type: "none" },
+      followUp: { type: "none" },
     };
   }
 
@@ -88,6 +88,9 @@ export function runInteractiveRuntime(input: {
       ...(playableResult.characterDefinitions == null
         ? {}
         : { characterDefinitions: playableResult.characterDefinitions }),
+      ...(playableResult.characterStatusById == null
+        ? {}
+        : { characterStatusById: playableResult.characterStatusById }),
       effects: playableResult.effects,
       session:
         playableResult.session == null
@@ -95,7 +98,7 @@ export function runInteractiveRuntime(input: {
           : request.phase === "launch"
             ? createInteractiveSession(request)
             : getActiveInteractiveSession(playableResult.state, request.kind),
-      interactive: playableResult.interactive ?? { type: "none" },
+      followUp: playableResult.followUp ?? { type: "none" },
     };
   }
 
@@ -104,7 +107,7 @@ export function runInteractiveRuntime(input: {
       state: exitInteractiveState(input.state, request.kind),
       effects: [],
       session: null,
-      interactive: { type: "none" },
+      followUp: { type: "none" },
     };
   }
 
@@ -113,7 +116,7 @@ export function runInteractiveRuntime(input: {
       state: input.state,
       effects: [],
       session: getActiveInteractiveSession(input.state, request.kind),
-      interactive: { type: "none" },
+      followUp: { type: "none" },
     };
   }
 
@@ -121,7 +124,7 @@ export function runInteractiveRuntime(input: {
     state: input.state,
     effects: [],
     session: getActiveInteractiveSession(input.state, request.kind),
-    interactive: { type: "none" },
+    followUp: { type: "none" },
   };
 }
 
@@ -137,9 +140,14 @@ export function toInteractiveRuntimeRequest(
       return null;
     }
 
+    const kind = toInteractiveRuntimeKind(launch.definition.id);
+    if (kind == null) {
+      return null;
+    }
+
     return {
       phase: "launch",
-      kind: resolveLaunchKind(launch.definition.legacyInteractiveKind),
+      kind,
       interactiveId: request.eventId,
       source: { type: "external", id: request.eventId },
       playableLaunch: launch.launch,
@@ -175,35 +183,28 @@ export function toInteractiveRuntimeRequest(
   return actionRequest;
 }
 
-function resolveLaunchKind(
-  interactiveKind: string | undefined
-): InteractiveRuntimeKind {
-  if (interactiveKind === "activity-qte") {
+function toInteractiveRuntimeKind(
+  playableId: string | undefined
+): InteractiveRuntimeKind | null {
+  if (playableId === "activity-qte") {
     return "activity-qte";
   }
 
-  if (interactiveKind === "story-battle") {
-    return "story-battle";
-  }
-
-  return "city-begging";
-}
-
-function resolveActionKind(actionId: string): InteractiveRuntimeKind | null {
-  const definition = builtinPlayableDefinitionRegistry.matchActionId(actionId);
-  if (definition?.legacyInteractiveKind === "activity-qte") {
-    return "activity-qte";
-  }
-
-  if (definition?.legacyInteractiveKind === "city-begging") {
+  if (playableId === "city-begging") {
     return "city-begging";
   }
 
-  if (definition?.legacyInteractiveKind === "story-battle") {
+  if (playableId === "story-battle") {
     return "story-battle";
   }
 
   return null;
+}
+
+function resolveActionKind(actionId: string): InteractiveRuntimeKind | null {
+  const definition =
+    readDefaultPlayableDefinitionRegistry().matchActionId(actionId);
+  return toInteractiveRuntimeKind(definition?.id);
 }
 
 function createInteractiveSession(
@@ -241,8 +242,8 @@ function getActiveInteractiveSession(
       kind,
       sessionId: createInteractiveSessionId(kind),
       source,
-      playable: createLegacyPlayableSession({
-        kind,
+      playable: createInteractivePlayableSession({
+        playableId: kind,
         source,
       }) ?? {
         sessionId: "playable.city-begging",
@@ -259,26 +260,30 @@ function getActiveInteractiveSession(
     };
   }
 
-  if (kind === "activity-qte" && state.core.runtime.activitySession?.type === "qte-bar") {
+  if (
+    kind === "activity-qte" &&
+    state.core.runtime.activitySession != null &&
+    state.core.runtime.activitySession.type !== "result"
+  ) {
     const source = {
-      type: "scene" as const,
-      sceneId: state.core.scene.activeSceneId ?? "scene.unknown",
+      type: "house" as const,
+      houseId: state.core.world.currentHouseId ?? "house.unknown",
     };
     return {
       kind,
       sessionId: createInteractiveSessionId(kind),
       source,
-      playable: createLegacyPlayableSession({
-        kind,
+      playable: createInteractivePlayableSession({
+        playableId: kind,
         source,
       }) ?? {
         sessionId: "playable.activity-qte",
         playableId: "activity-qte",
-        integrationId: "playable.activity-qte.scene.default",
+        integrationId: "playable.activity-qte.dialogue.default",
         family: "minigame",
         ownerContext: {
-          ownerKind: "scene",
-          ownerId: source.sceneId,
+          ownerKind: "house",
+          ownerId: source.houseId,
           returnPolicy: "resume-owner",
         },
         status: "active",
@@ -288,24 +293,24 @@ function getActiveInteractiveSession(
 
   if (kind === "story-battle" && state.core.storyBattle != null) {
     const source = {
-      type: "scene" as const,
-      sceneId: state.core.scene.activeSceneId ?? "scene.unknown",
+      type: "house" as const,
+      houseId: state.core.world.currentHouseId ?? "house.unknown",
     };
     return {
       kind,
       sessionId: createInteractiveSessionId(kind),
       source,
-      playable: createLegacyPlayableSession({
-        kind,
+      playable: createInteractivePlayableSession({
+        playableId: kind,
         source,
       }) ?? {
         sessionId: "playable.story-battle",
         playableId: "story-battle",
-        integrationId: "playable.story-battle.scene.default",
+        integrationId: "playable.story-battle.dialogue.default",
         family: "battle",
         ownerContext: {
-          ownerKind: "scene",
-          ownerId: source.sceneId,
+          ownerKind: "house",
+          ownerId: source.houseId,
           returnPolicy: "reenter-owner",
         },
         status: "active",
@@ -337,6 +342,7 @@ function exitInteractiveState(
         ...state.core,
         runtime: {
           ...state.core.runtime,
+          playableSession: null,
           activitySession: null,
         },
       },

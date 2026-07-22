@@ -1,23 +1,20 @@
-import { selectCityNpcSummariesForHouse } from "../city-npcs/select-city-npcs-for-house";
+import { selectBuildingModuleStage } from "../building/building-module-entry";
 import {
-  getCurrentChoiceOptions,
-  getCurrentSceneAction,
+  selectCityModuleStage,
+  selectCityModuleUnderlay,
+} from "../city/city-module-entry";
+import {
+  getCurrentDialogueChoiceOptions,
+  getCurrentDialogueNode,
 } from "../story/story-runtime";
-import {
-  isCityEntryVisibleForStoryStage,
-  isHouseVisibleForStoryStage,
-} from "../story/story-stage-access";
 import type { AppState } from "../app-shell";
-import type { SceneDefinition } from "../../domain/action";
+import type { BuildingArrangementDefinition } from "../../domain/building-arrangement";
 import type { CityDefinition } from "../../domain/city";
 import type { CityEntryDefinition } from "../../domain/city-entry";
 import type { CityNpcPoolDefinition } from "../../domain/city-npc";
 import type { CitySceneMapping } from "../../domain/city-scene-mapping";
+import type { RuntimeDialogueDefinition } from "../../domain/dialogue";
 import type { HouseDefinition } from "../../domain/house";
-import {
-  builtinHouseModuleRegistry,
-  type HouseModuleRegistry,
-} from "../../core/registry/house-module-registry";
 import type { AppPresenterStageOutput } from "./presenter-output";
 
 export type StagePresenterInput = {
@@ -25,32 +22,18 @@ export type StagePresenterInput = {
   cityDefinition: CityDefinition;
   cityDefinitions?: CityDefinition[];
   houseDefinitions: HouseDefinition[];
+  buildingArrangements?: BuildingArrangementDefinition[];
   cityEntries: CityEntryDefinition[];
   cityNpcPoolDefinitions: CityNpcPoolDefinition[];
   playerCharacterId: string;
   textEntriesById?: Record<string, string>;
   citySceneMappingsByCityId?: Record<string, CitySceneMapping>;
-  sceneDefinitionsById?: Record<string, SceneDefinition>;
-  houseModuleRegistry?: HouseModuleRegistry;
+  dialogueDefinitionsById?: Record<string, RuntimeDialogueDefinition>;
 };
-
-function selectActiveHouseDefinition(
-  appState: AppState,
-  houseDefinitions: HouseDefinition[]
-): HouseDefinition | null {
-  return (
-    houseDefinitions.find(
-      (houseDefinition) =>
-        houseDefinition.id === appState.gameState.world.currentHouseId
-    ) ?? null
-  );
-}
 
 export function createStagePresenterOutput(
   input: StagePresenterInput
 ): AppPresenterStageOutput {
-  const houseModuleRegistry =
-    input.houseModuleRegistry ?? builtinHouseModuleRegistry;
   const currentView = input.appState.gameState.ui.currentView;
   const cityDefinitions = input.cityDefinitions ?? [input.cityDefinition];
   const activeCityDefinition =
@@ -62,42 +45,17 @@ export function createStagePresenterOutput(
     input.citySceneMappingsByCityId?.[activeCityDefinition.id] ?? null;
 
   if (currentView === "map") {
-    return { type: "map", cityDefinitions };
+    return { type: "map" };
   }
 
   if (currentView === "city") {
-    const cityHouseIds = new Set(activeCityDefinition.houseIds);
-    const activeCityHouseDefinitions = input.houseDefinitions.filter(
-      (houseDefinition) => {
-        if (
-          !(
-            houseDefinition.cityId === activeCityDefinition.id ||
-            cityHouseIds.has(houseDefinition.id)
-          )
-        ) {
-          return false;
-        }
-
-        return isHouseVisibleForStoryStage(
-          input.appState.gameState,
-          input.appState.characterDefinitions,
-          houseDefinition
-        );
-      }
-    );
-    const activeCityEntries = input.cityEntries.filter(
-      (cityEntry) =>
-        cityEntry.cityId === activeCityDefinition.id &&
-        isCityEntryVisibleForStoryStage(input.appState.gameState, cityEntry)
-    );
-
-    return {
-      type: "city",
+    return selectCityModuleStage({
+      appState: input.appState,
       activeCityDefinition,
-      activeCityHouseDefinitions,
-      activeCityEntries,
+      houseDefinitions: input.houseDefinitions,
+      cityEntries: input.cityEntries,
       citySceneMapping,
-    };
+    });
   }
 
   if (currentView === "city-3d") {
@@ -109,58 +67,110 @@ export function createStagePresenterOutput(
   }
 
   if (currentView === "house") {
-    const activeHouse = selectActiveHouseDefinition(
-      input.appState,
-      input.houseDefinitions
-    );
-
-    if (activeHouse == null) {
-      return { type: "empty" };
-    }
-
-    if (activeHouse.moduleId != null) {
-      const houseModule = houseModuleRegistry.getModule(activeHouse.moduleId);
-      return {
-        type: "house",
-        activeHouse,
-        moduleViewModel:
-          houseModule == null
-            ? null
-            : houseModule.selectViewModel({
-          gameState: input.appState.gameState,
-          characterDefinitions: input.appState.characterDefinitions,
-          houseDefinition: activeHouse,
-          playerCharacterId: input.playerCharacterId,
-          sessionState: input.appState.gameState.ui.houseSession?.state ?? null,
-          textEntriesById: input.textEntriesById,
-        }),
-        cityNpcSummaries: [],
-      };
-    }
-
-    return {
-      type: "house",
-      activeHouse,
-      moduleViewModel: null,
-      cityNpcSummaries: selectCityNpcSummariesForHouse(
-        input.appState.gameState,
-        activeHouse,
-        input.cityNpcPoolDefinitions
-      ),
-    };
+    return selectBuildingModuleStage({
+      appState: input.appState,
+      houseDefinitions: input.houseDefinitions,
+      buildingArrangements: input.buildingArrangements,
+      cityNpcPoolDefinitions: input.cityNpcPoolDefinitions,
+      playerCharacterId: input.playerCharacterId,
+      textEntriesById: input.textEntriesById,
+    });
   }
 
-  if (currentView === "scene") {
+  if (currentView === "minigame") {
+    if (input.appState.gameState.world.currentHouseId != null) {
+      return selectBuildingModuleStage({
+        appState: {
+          ...input.appState,
+          gameState: {
+            ...input.appState.gameState,
+            ui: {
+              ...input.appState.gameState.ui,
+              currentView: "house",
+            },
+          },
+        },
+        houseDefinitions: input.houseDefinitions,
+        buildingArrangements: input.buildingArrangements,
+        cityNpcPoolDefinitions: input.cityNpcPoolDefinitions,
+        playerCharacterId: input.playerCharacterId,
+        textEntriesById: input.textEntriesById,
+      });
+    }
+
+    if (input.appState.gameState.world.currentCityId != null) {
+      return selectCityModuleStage({
+        appState: {
+          ...input.appState,
+          gameState: {
+            ...input.appState.gameState,
+            ui: {
+              ...input.appState.gameState.ui,
+              currentView: "city",
+            },
+          },
+        },
+        activeCityDefinition,
+        houseDefinitions: input.houseDefinitions,
+        cityEntries: input.cityEntries,
+        citySceneMapping,
+      });
+    }
+  }
+
+  if (currentView === "dialogue") {
+    const cityUnderlay =
+      input.appState.gameState.world.currentCityId != null &&
+      input.appState.gameState.world.currentHouseId == null
+        ? selectCityModuleUnderlay({
+            appState: input.appState,
+            activeCityDefinition,
+            houseDefinitions: input.houseDefinitions,
+            cityEntries: input.cityEntries,
+            citySceneMapping,
+          })
+        : undefined;
+    const buildingUnderlay =
+      input.appState.gameState.world.currentHouseId != null
+        ? selectBuildingModuleStage({
+            appState: {
+              ...input.appState,
+              gameState: {
+                ...input.appState.gameState,
+                ui: {
+                  ...input.appState.gameState.ui,
+                  currentView: "house",
+                },
+              },
+            },
+            houseDefinitions: input.houseDefinitions,
+            buildingArrangements: input.buildingArrangements,
+            cityNpcPoolDefinitions: input.cityNpcPoolDefinitions,
+            playerCharacterId: input.playerCharacterId,
+            textEntriesById: input.textEntriesById,
+          })
+        : undefined;
+
     return {
-      type: "scene",
-      currentSceneAction: getCurrentSceneAction(
+      type: "dialogue",
+      currentDialogueNode: getCurrentDialogueNode(
         input.appState.gameState,
-        input.sceneDefinitionsById ?? {}
+        input.dialogueDefinitionsById ?? {}
       ),
-      currentSceneChoiceOptions: getCurrentChoiceOptions(
+      currentDialogueChoiceOptions: getCurrentDialogueChoiceOptions(
         input.appState.gameState,
-        input.sceneDefinitionsById ?? {}
+        input.dialogueDefinitionsById ?? {}
       ),
+      ...(cityUnderlay == null ? {} : { cityUnderlay }),
+      ...(buildingUnderlay == null || buildingUnderlay.type !== "building"
+        ? {}
+        : {
+            buildingUnderlay: {
+              activeHouse: buildingUnderlay.activeHouse,
+              arrangement: buildingUnderlay.arrangement,
+              containerViewModels: buildingUnderlay.containerViewModels,
+            },
+          }),
     };
   }
 

@@ -1,6 +1,6 @@
 # Weekly Module Backlog
 
-> **Historical Template:** Module backlog ownership is now folded into `weekly-next-split-review` for the active five-artifact weekly bundle. Do not create this file for new weekly sets unless governance explicitly reactivates the legacy artifact scheme.
+> **Historical Template:** Deprecated under `fail-closed progress-driven governance`. Module backlog ownership was previously folded into `weekly-next-split-review` for the old weekly bundle. Do not create new active work from this template.
 
 **Week Of:** `YYYY-MM-DD`
 

@@ -1,12 +1,16 @@
 import type { Effect } from "./effect";
 
-export type PlayableFamily = "minigame" | "battle";
+export type PlayableFamily = "minigame" | "battle" | "flow";
 
 export type PlayableId = string & {};
 
 export type PlayableIntegrationId = string & {};
 
-export type PlayableOwnerKind = "house" | "scene" | "task" | "external";
+export type PlayableOwnerKind =
+  | "house"
+  | "dialogue"
+  | "task"
+  | "external";
 
 export type PlayableReturnPolicy =
   | "resume-owner"
@@ -50,7 +54,6 @@ export type PlayableDefinition = {
   id: PlayableId;
   family: PlayableFamily;
   commandPrefix: string;
-  legacyInteractiveKind?: string | undefined;
 };
 
 export type PlayableIntegrationDefinition = {
@@ -76,6 +79,12 @@ export type PlayableLaunchRequest = {
   payload?: Record<string, unknown> | undefined;
 };
 
+export type PlayableCommand =
+  | { type: "confirm" }
+  | { type: "cancel" }
+  | { type: "select"; value: string }
+  | { type: "custom"; actionId: string; payload?: Record<string, unknown> };
+
 export type ActivePlayableSession = {
   sessionId: string;
   playableId: PlayableId;
@@ -83,6 +92,7 @@ export type ActivePlayableSession = {
   family: PlayableFamily;
   ownerContext: PlayableOwnerContext;
   status: "active" | "completed" | "cancelled";
+  state?: Record<string, unknown> | undefined;
 };
 
 export type PlayablePresenterModel = {
@@ -96,6 +106,7 @@ export type PlayablePresenterModel = {
     label: string;
     commandType: "confirm" | "cancel" | "custom";
   }>;
+  viewModel?: Record<string, unknown> | undefined;
   detail?: Record<string, unknown> | undefined;
 };
 

@@ -3,24 +3,21 @@ import {
   resolveTextEntry,
   resolveTextTemplateEntry,
 } from "../content/text-resolution";
-import {
-  getCouncilPriorityHouseModuleId,
-  hasReachedCouncilDate,
-} from "../time/council-priority";
+import { defaultReviewCyclePolicy } from "../review/review-cycle-provider";
 import type { ActivityDefinition } from "../../domain/activity";
-import type { SceneDefinition } from "../../domain/action";
+import type { RuntimeDialogueDefinition } from "../../domain/dialogue";
 import type { CharacterDefinition } from "../../domain/character";
-import type { EventDefinition } from "../../domain/event";
+import type { EventBinding, EventDefinition } from "../../domain/event";
 import type { GameState } from "../../domain/game-state";
 import type { HouseDefinition } from "../../domain/house";
-import type { HouseModuleTransitionResult } from "../../domain/house-module";
 import type { RuntimeFollowUpOutcome } from "../../core/contracts/runtime-result";
 import type { RuntimeState } from "../../core/contracts/runtime-state";
-import { runStoryTriggerRuntime } from "../../core/runtime/scene-runtime";
+import { runStoryTriggerRuntime } from "../../core/runtime/dialogue-runtime";
 
 export type NavigationTimeFollowUpStoryContent = {
   eventDefinitionsById: Record<string, EventDefinition>;
-  sceneDefinitionsById: Record<string, SceneDefinition>;
+  eventBindingsById?: Record<string, EventBinding>;
+  dialogueDefinitionsById: Record<string, RuntimeDialogueDefinition>;
   activityDefinitionsById?: Record<string, ActivityDefinition>;
   textEntriesById?: Record<string, string>;
 };
@@ -35,6 +32,12 @@ export type NavigationTimeFollowUpResult = {
   state: RuntimeState;
   characterDefinitions?: CharacterDefinition[];
   handled: boolean;
+};
+
+export type CouncilArrivalNotice = {
+  speakerCharacterId?: string;
+  textLines?: string[];
+  advanceHintText?: string;
 };
 
 export type NavigationTimeFollowUpBridge = {
@@ -56,7 +59,39 @@ export function createNavigationTimeFollowUpBridge(
           state: input.state.core,
           characterDefinitions: dependencies.getCharacterDefinitions(),
           eventDefinitionsById: storyContent.eventDefinitionsById,
-          sceneDefinitionsById: storyContent.sceneDefinitionsById,
+          ...(storyContent.eventBindingsById == null
+            ? {}
+            : { eventBindingsById: storyContent.eventBindingsById }),
+          dialogueDefinitionsById: storyContent.dialogueDefinitionsById,
+          ...(storyContent.activityDefinitionsById == null
+            ? {}
+            : { activityDefinitionsById: storyContent.activityDefinitionsById }),
+          ...(storyContent.textEntriesById == null
+            ? {}
+            : { textEntriesById: storyContent.textEntriesById }),
+        });
+
+        return {
+          handled: true,
+          state: {
+            ...input.state,
+            core: result.state,
+          },
+          characterDefinitions: result.characterDefinitions,
+        };
+      }
+
+      if (input.outcome.type === "navigation.entered-house") {
+        const storyContent = dependencies.getStoryContent();
+        const result = runStoryTriggerRuntime({
+          timing: "house-enter",
+          state: input.state.core,
+          characterDefinitions: dependencies.getCharacterDefinitions(),
+          eventDefinitionsById: storyContent.eventDefinitionsById,
+          ...(storyContent.eventBindingsById == null
+            ? {}
+            : { eventBindingsById: storyContent.eventBindingsById }),
+          dialogueDefinitionsById: storyContent.dialogueDefinitionsById,
           ...(storyContent.activityDefinitionsById == null
             ? {}
             : { activityDefinitionsById: storyContent.activityDefinitionsById }),
@@ -104,12 +139,12 @@ export function applyCouncilPriorityFollowUp(input: {
   state: RuntimeState;
   houseDefinitions: HouseDefinition[];
   textEntriesById: Record<string, string>;
-  councilArrivalNotice?: HouseModuleTransitionResult["councilArrivalNotice"];
+  councilArrivalNotice?: CouncilArrivalNotice;
 }): NavigationTimeFollowUpResult {
   if (
     input.previousGameState != null &&
-    (hasReachedCouncilDate(input.previousGameState) ||
-      !hasReachedCouncilDate(input.state.core))
+    (defaultReviewCyclePolicy.hasReachedReviewDate(input.previousGameState) ||
+      !defaultReviewCyclePolicy.hasReachedReviewDate(input.state.core))
   ) {
     return {
       handled: false,
@@ -139,7 +174,9 @@ export function applyCouncilPriorityFollowUp(input: {
           gameState: input.state.core,
           houseDefinitions: input.houseDefinitions,
           textEntriesById: input.textEntriesById,
-          councilArrivalNotice: input.councilArrivalNotice,
+          ...(input.councilArrivalNotice == null
+            ? {}
+            : { councilArrivalNotice: input.councilArrivalNotice }),
         }),
         beggingMiniGameState: null,
         cityMenuState: null,
@@ -155,7 +192,7 @@ function getCouncilPriorityHouseDefinition(
   gameState: GameState,
   houseDefinitions: HouseDefinition[]
 ): HouseDefinition | null {
-  const priorityModuleId = getCouncilPriorityHouseModuleId(gameState);
+  const priorityModuleId = defaultReviewCyclePolicy.getPriorityHouseModuleId(gameState);
   const currentCityId = gameState.world.currentCityId;
 
   return (
@@ -175,7 +212,7 @@ function createCouncilArrivalDialogue(input: {
   gameState: GameState;
   houseDefinitions: HouseDefinition[];
   textEntriesById: Record<string, string>;
-  councilArrivalNotice?: HouseModuleTransitionResult["councilArrivalNotice"];
+  councilArrivalNotice?: CouncilArrivalNotice;
 }): NonNullable<AppState["locationDialogueState"]> | null {
   const priorityHouse = getCouncilPriorityHouseDefinition(
     input.gameState,

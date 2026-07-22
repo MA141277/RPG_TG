@@ -1,5 +1,8 @@
 # Mod-First Weekly Orchestration Plan
 
+> **Historical Artifact:** Deprecated under `fail-closed progress-driven governance`. This file records the retired weekly-governance model and must not be used as the active resume entry for new work.
+
+
 > **Purpose:** Use this file to govern the fresh mod-first continuation set that begins after the closed `2026-07-02` Child 14/15/16 queue. This set exists to open a different problem type rather than to reopen the completed runtime-handoff children.
 
 **Week Of:** `2026-07-02`
@@ -210,3 +213,4 @@ Do not mark this weekly plan `completed` until:
 - [x] Verification recorded
 - [x] Weekly review index updated
 - [x] Required visibility deliverables linked and present
+

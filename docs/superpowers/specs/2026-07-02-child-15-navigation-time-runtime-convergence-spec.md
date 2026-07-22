@@ -1,5 +1,7 @@
 # Child 15 Navigation + Time Runtime Convergence Spec
 
+> **Legacy Governance Context:** This document was authored under the retired `weekly plan / weekly set / weekly orchestration` model. Keep its technical scope, but treat any weekly-governance references as historical context only. If this legacy artifact is explicitly resumed, use `docs/superpowers/project-progress.md`; otherwise use `docs/blueprints/project-progress.md` for current repository work.
+
 ## 1. Goal
 
 Define the formal `Child 15` boundary for the queued follow-up child behind `Child 14` in the fresh `2026-07-02` weekly continuation set.
@@ -190,3 +192,4 @@ Child 15 is done enough only when:
 - the remaining later continuation is no longer "navigation/time mixed entry cleanup" but a different problem type
 
 If those answers remain ambiguous, Child 15 is not complete.
+

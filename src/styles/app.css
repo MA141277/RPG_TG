@@ -6,7 +6,6 @@
 @import url("./prototype.css");
 @import url("./main-ui.css");
 @import url("./loading-screen.css");
-@import url("./layout-editor.css");
 @import url("./utilities.css");
 @import url("./views.css");
 @import url("./city-3d.css");
@@ -15,4 +14,5 @@
 @import url("./temple-house.css");
 @import url("./keep-house.css");
 @import url("./story-battle.css");
+@import url("./script-editor.css");
 @import url("./cursor.css");

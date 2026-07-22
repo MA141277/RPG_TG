@@ -1,5 +1,7 @@
 # Core Production Integration Implementation Plan
 
+> **Legacy Governance Context:** This document was authored under the retired `weekly plan / weekly set / weekly orchestration` model. Keep its technical scope, but treat any weekly-governance references as historical context only. If this legacy artifact is explicitly resumed, use `docs/superpowers/project-progress.md`; otherwise use `docs/blueprints/project-progress.md` for current repository work.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Close the remaining production-path gaps in Child 1, Child 2, and Child 3 so engine boot ownership, save/load ownership, and runtime dispatch ownership are centered on `src/core` rather than on partially migrated `src/main.ts` orchestration.
@@ -602,3 +604,4 @@ Expected:
 - [ ] `Progress Log` updated
 - [ ] Verification recorded
 - [ ] Queue decision recorded
+

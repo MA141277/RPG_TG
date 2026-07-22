@@ -4,11 +4,6 @@
     "chapterId": "chapter.chu_han_rising",
     "name": "沛县亭长开局",
     "occurrence": "once",
-    "trigger": {
-      "timing": "manual",
-      "priority": 200
-    },
-    "conditions": [],
     "participants": [
       {
         "role": "player",
@@ -21,10 +16,10 @@
         "required": true
       }
     ],
-    "entrySceneId": "scene.story.liu_bang.pei_county_opening",
     "tags": [
       "json-pack",
       "opening"
-    ]
+    ],
+    "dialogueId": "scene.story.liu_bang.pei_county_opening"
   }
 ]

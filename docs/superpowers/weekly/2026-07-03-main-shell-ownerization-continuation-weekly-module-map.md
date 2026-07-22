@@ -1,5 +1,8 @@
 # Main Shell Ownerization Continuation Weekly Module Map
 
+> **Historical Artifact:** Deprecated under `fail-closed progress-driven governance`. This file records the retired weekly-governance model and must not be used as the active resume entry for new work.
+
+
 **Week Of:** `2026-07-03`
 
 ## Purpose
@@ -24,3 +27,4 @@ This file maps the modules most relevant to the fresh `main.ts` shell-ownerizati
 - The closed Child 24 seam remains historical truth and should not be reopened under a new name.
 - The continuation queue is intentionally separated by problem type so each child removes one residual shell-boundary debt at a time.
 - `src/main.ts` remains the highest-priority module only because it still exposes the residual debt being queued, not because the goal is generic file splitting.
+

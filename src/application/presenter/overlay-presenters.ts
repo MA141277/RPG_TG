@@ -11,14 +11,14 @@ export type OverlayPresenterInput = {
 export function createOverlayPresenterOutput(
   input: OverlayPresenterInput
 ): AppPresenterOverlayOutput {
-  const isSceneActive =
-    input.appState.gameState.ui.currentView === "scene" ||
-    input.appState.gameState.scene.activeSceneId != null;
+  const isDialogueActive =
+    input.appState.gameState.ui.currentView === "dialogue" ||
+    input.appState.gameState.dialogue.activeDialogueId != null;
   const isBeggingMiniGameActive = input.appState.beggingMiniGameState != null;
   const shouldShowGlobalHud =
     input.appState.gameState.ui.currentView !== "house" &&
     input.appState.gameState.ui.currentView !== "battle" &&
-    !isSceneActive &&
+    !isDialogueActive &&
     !isBeggingMiniGameActive;
   const locationText =
     input.cityNameById[input.appState.gameState.world.currentCityId] ??
@@ -33,4 +33,3 @@ export function createOverlayPresenterOutput(
     locationDialogueState: input.appState.locationDialogueState,
   };
 }
-

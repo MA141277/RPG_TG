@@ -1,5 +1,7 @@
 # Child 21 Unified Gameplay Contribution Registry Plan
 
+> **Legacy Governance Context:** This document was authored under the retired `weekly plan / weekly set / weekly orchestration` model. Keep its technical scope, but treat any weekly-governance references as historical context only. If this legacy artifact is explicitly resumed, use `docs/superpowers/project-progress.md`; otherwise use `docs/blueprints/project-progress.md` for current repository work.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Introduce one mod-facing gameplay contribution registry that validates and installs navigation/event/scene/task/house contributions through manifests and shared registries instead of scattered static imports and placeholder registry types.
@@ -271,3 +273,4 @@ Expected:
 - [x] `Execution State` updated
 - [x] `Progress Log` updated
 - [x] Verification recorded
+

@@ -2,6 +2,1757 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+`docs/change-log.md` 的正式定位是“历史记录 + 人类可读摘要”。
+它不是当前 Blueprint / legacy superpowers 治理的 live execution truth，不作为 resume entry、promotion gate、closeout gate 或固定同步门。
+
+## 2026-07-22 Event-Only Routing Family Replacement Closeout
+
+## 2026-07-22 Portrait Resource Family Convergence
+
+### Changed
+- 更新 [src/domain/script-editor-project.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/domain/script-editor-project.ts)、[src/domain/content-pack.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/domain/content-pack.ts)、[src/core/contracts/mod-manifest.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/core/contracts/mod-manifest.ts) 与新增的 [src/domain/portrait-resource.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/domain/portrait-resource.ts)，把 `portraits` / `portraitVariants` 提升为正式 project/runtime-pack/content-pack family，不再让人物或对话字段反向充当画像资源清单真值。
+- 更新 [src/application/script-editor/minimal-workflow.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/minimal-workflow.ts)、[src/application/script-editor/person-authoring.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/workspace-shell.ts)、[src/application/script-editor/runtime-pack-export.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/runtime-pack-export.ts)、[src/application/script-editor/runtime-pack-import.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/runtime-pack-import.ts)、[src/application/content/content-pack-loader.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/content/content-pack-loader.ts) 与新增的 [src/application/script-editor/portrait-authoring.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/portrait-authoring.ts)，让新项目、作者面、导出、导入、loader 和工作区对象树统一读写画像 family。
+- 更新 [src/ui/portrait-assets.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/portrait-assets.ts)，移除旧的硬编码画像映射真值，只从 materialized `portraitImageUrl/avatarImageUrl` 与 `builtin:` 资源引用解析运行时画像。
+- 更新 [src/content/scenario-packs/zhuyuanzhang/pack.json](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/content/scenario-packs/zhuyuanzhang/pack.json)、[src/content/scenario-packs/zhuyuanzhang/characters.json](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/content/scenario-packs/zhuyuanzhang/characters.json)、[src/content/scenario-packs/zhuyuanzhang/portraits.json](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/content/scenario-packs/zhuyuanzhang/portraits.json)、[src/content/scenario-packs/zhuyuanzhang/portrait-variants.json](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/content/scenario-packs/zhuyuanzhang/portrait-variants.json) 以及 [src/content/scenario-packs/liu-bang-pei-county-opening/pack.json](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/content/scenario-packs/liu-bang-pei-county-opening/pack.json)、[src/content/scenario-packs/liu-bang-pei-county-opening/portraits.json](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/content/scenario-packs/liu-bang-pei-county-opening/portraits.json)、[src/content/scenario-packs/liu-bang-pei-county-opening/portrait-variants.json](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/content/scenario-packs/liu-bang-pei-county-opening/portrait-variants.json)，把内置包显式迁到 `portraits.json` / `portrait-variants.json`，并删除朱元璋人物记录上的内联 `portraitVariants` 真值。
+- 更新 [src/content/prototype-world.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/content/prototype-world.ts)，让原型启动链路不再把 `prototypeCharacters[].portraitVariants` 当作 authored truth，而是从内置包的 portrait family materialize 当前阶段立绘与头像。
+- 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，补充 portrait family round-trip、built-in pack ownership、prototype startup materialization 与 source-guard 回归。
+- 同步 [docs/blueprints/queues/portrait-resource-authoring-and-resource-mapping-convergence-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/portrait-resource-authoring-and-resource-mapping-convergence-queue.md)、[docs/blueprints/queues/script-editor-event-centered-authoring-final-acceptance-and-residue-guard-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-event-centered-authoring-final-acceptance-and-residue-guard-queue.md)、[docs/blueprints/plans/2026-07-22-script-editor-event-centered-authoring-scene-retirement-and-portrait-resource-refactor-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-22-script-editor-event-centered-authoring-scene-retirement-and-portrait-resource-refactor-target-plan.md) 与 [docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)，记录 portrait queue closeout 与 final-acceptance queue admission。
+
+### Impact
+- 画像资源的正式真值现在收口到 `portraits` / `portraitVariants` family，人物和对话只保留稳定引用，不再反向承担资源所有权。
+- 新项目、内置包、运行时预览、导入导出、loader 和 prototype startup 已经走同一份画像映射合同；这为后续 final acceptance 的创作者路径和跨入口验证提供了统一基线。
+- 当前 version 的 active queue 已从 portrait convergence 切换到 final acceptance guard；portrait queue 不再承载实现工作。
+
+### Changed
+- 更新 [src/domain/content-pack.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/domain/content-pack.ts)、[src/application/content/active-game-content.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/content/active-game-content.ts)、[src/application/content/content-pack-loader.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/content/content-pack-loader.ts)、[src/application/scenario/scenario-pack-loader.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/scenario/scenario-pack-loader.ts)、[src/application/script-editor/runtime-pack-export.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/runtime-pack-export.ts) 与 [src/application/script-editor/runtime-pack-import.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/runtime-pack-import.ts)，把 runtime/content canonical flow family 从 `flowDefinitions` 正式替换为 `flowPlayables`，并让 manifest / import / loader 对退役的 `flowDefinitions` fail closed，不再保留双轨真值或兼容桥。
+- 更新 [src/core/runtime/playable-runtime.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/core/runtime/playable-runtime.ts)、[src/application/runtime/interactive-action-coordinator.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/runtime/interactive-action-coordinator.ts)、[src/application/building/building-container-event-runtime.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/building/building-container-event-runtime.ts)、[src/application/presenter/app-render-coordinator.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/presenter/app-render-coordinator.ts)、[src/ui/app-render.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/app-render.ts) 与 [src/main.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/main.ts)，统一运行时预览、building launchFlow、presenter 和主入口的 flow playable 查找路径为 `flowPlayablesById`，确保 event-owned launchFlow 之后不再回落到旧 family 名称。
+- 更新 [src/content/scenario-packs/zhuyuanzhang/pack.json](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/content/scenario-packs/zhuyuanzhang/pack.json) 并将 [src/content/scenario-packs/zhuyuanzhang/flow-playables.json](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/content/scenario-packs/zhuyuanzhang/flow-playables.json) 作为新的 canonical 文件名，收口内置包对 content-only flow playable family 的正式声明。
+- 更新 [tests/city-building-mount-authoring.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/city-building-mount-authoring.test.cjs) 与 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，把 round-trip、loader rejection、built-in hydration、runtime preview lookup 和 source guard 全部改到 `flowPlayables` / `flowPlayablesById`，防止 event-only routing queue 只做 UI 隐藏而没有真正替换 canonical truth。
+- 同步 [docs/blueprints/queues/event-only-routing-family-retirement-and-reference-replacement-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/event-only-routing-family-retirement-and-reference-replacement-queue.md)、[docs/blueprints/plans/2026-07-22-script-editor-event-centered-authoring-scene-retirement-and-portrait-resource-refactor-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-22-script-editor-event-centered-authoring-scene-retirement-and-portrait-resource-refactor-target-plan.md) 与 [docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)，记录当前 queue 已 local closeout，下一步需先满足 version-local repository sync gate，之后才能 admission portrait queue。
+
+### Impact
+- `queue.event-only-routing-family-retirement-and-reference-replacement` 不再只是“隐藏 flows UI”；它已经把 runtime/content/export/import/loader/preview 的 canonical truth 一次性替换成 `flowPlayables`，并对退役的 `flowDefinitions` fail closed，满足 no-compatibility-residue 方向。
+- 当前 version 的下一个 lawful action 不是直接开 portrait queue，而是先完成该 queue 的 repository sync batch 记录；只有同步结果返回后，portrait queue admission 才合法。
+
+## 2026-07-22 Script Editor Event-Centered Authoring Model Unification
+
+## 2026-07-22 Scene Retirement Closeout And Runtime Pack Sync Start
+
+### Changed
+- 更新 [src/application/script-editor/runtime-pack-import.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/runtime-pack-import.ts) 与 [src/application/scenario/scenario-pack-loader.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/scenario/scenario-pack-loader.ts)，将导入的 `playableIntegrations` 明确分流为 `flow` 与 `minigame` 两类：凡是已由 `flowDefinitions` 声明的 integration，不再错误落入 `project.minigames`，同时让编辑器兼容导入与正常 scenario-pack 加载都对退役的 scene-era ownerKind 和 `dialogues[].actions` 形态 fail closed。
+- 更新 [tests/city-building-mount-authoring.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/city-building-mount-authoring.test.cjs)，补充 round-trip 守卫，要求 building-owned flow integration 在 runtime pack 导入后只保留到 `flows`，不得再被误分类到 `minigames`。
+- 同步 [docs/blueprints/queues/scene-family-retirement-and-content-migration-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/scene-family-retirement-and-content-migration-queue.md)、[docs/blueprints/queues/event-centered-runtime-pack-preview-export-sync-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/event-centered-runtime-pack-preview-export-sync-queue.md)、[docs/blueprints/plans/2026-07-22-script-editor-event-centered-authoring-scene-retirement-and-portrait-resource-refactor-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-22-script-editor-event-centered-authoring-scene-retirement-and-portrait-resource-refactor-target-plan.md) 与 [docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)，记录 `scene-family-retirement-and-content-migration` 正式 closeout，并把当前 active queue 切换到 `event-centered-runtime-pack-preview-export-sync`。
+
+### Impact
+- `scene-family-retirement-and-content-migration` 现在可以合法 closeout：formal scene family 已退出 production truth，后续工作不再允许把 scene 退役残留伪装成 runtime/export/import 收口任务。
+- `event-centered-runtime-pack-preview-export-sync` 已正式启动，当前第一批实现重点是把 preview/export/import/loader/runtime 全部锁到同一份 no-scene canonical truth，而不是容忍 editor/runtime 通过宽松兼容重新分叉。
+
+## 2026-07-22 Scene Family Retirement And Content Migration Progress
+
+### Changed
+- 更新 [src/application/script-editor/runtime-pack-export.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/runtime-pack-export.ts) 与 [src/application/scenario/scenario-pack-loader.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/scenario/scenario-pack-loader.ts)，为 scenario profile 与 character startup `initialLocation` 正式补齐 `dialogueId` 契约，避免 scene 退役后启动导出/加载链路仍只认 `houseId/view` 而丢失直接对话启动目标。
+- 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，把导入朱元璋 runtime 包后的 round-trip 断言从旧 `SceneDefinition/actions/entrySceneId` 真值改到当前 `dialogue/nodes/dialogueId` 真值，并修正 `main.ts` runtime commit 守卫对 `advanceCurrentStoryDialogue` 的源码匹配。
+- 更新 [src/application/runtime/main-runtime-orchestrator.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/runtime/main-runtime-orchestrator.ts)、[src/application/runtime/navigation-time-follow-up.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/runtime/navigation-time-follow-up.ts)、[src/application/runtime/indoor-screen-story-follow-up.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/runtime/indoor-screen-story-follow-up.ts)、[src/core/runtime/scene-choice-resolution.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/core/runtime/scene-choice-resolution.ts) 与 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，把 runtime/测试中的 `scene-runtime`、`scene-runner`、`scene choice-resolver` 包装层改为直接依赖 `dialogue-runtime`、`dialogue-runner` 与 `dialogue-choice-resolver`。
+- 删除 [src/application/scene/scene-runner.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/scene/scene-runner.ts)、[src/application/scene/choice-resolver.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/scene/choice-resolver.ts) 与 [src/core/runtime/scene-runtime.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/core/runtime/scene-runtime.ts)，移除这一批已经退化为命名兼容壳的 `scene` 桥接层。
+
+### Impact
+- 启动态正式支持 `dialogueId` 后，event-centered + no-scene 路径下的“直接进对话”不再靠旧 scene 启动字段旁路维持；这条链路已经在导出、loader 和 robustness 回归里被锁定。
+- `scene` 在 runtime 代码层又少了一层正式包装命名，但当前 queue 还没有完成 closeout：`scenes.json`、scenario-pack manifest `files.scenes`、import/export 对旧 `scenes` 表的兼容读取，以及内置内容文件名仍然存在，说明 formal scene family 还没有彻底退出 canonical pack truth。
+- 当前自动验证通过 `npm run typecheck`、`npm run lint:blueprints`、`npm test -- --runInBand tests/robustness.test.cjs`；这证明本批迁移没有引入新回归，但不代表 `scene-family-retirement-and-content-migration` 已经完成。
+
+### Changed
+- 更新 [src/domain/script-editor-project.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/domain/script-editor-project.ts) 与 [src/application/script-editor/story-dialogue-event-authoring.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/story-dialogue-event-authoring.ts)，把 `task` 纳入正式 `ScriptEditorEventDestinationFamily`，使 `quests` 可以作为事件去向目标进入作者面合同，而不是继续缺席于 event-centered 语义模型。
+- 更新 [src/application/script-editor/minimal-workflow.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/minimal-workflow.ts)、[src/application/script-editor/workspace-shell.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/workspace-shell.ts) 与 [src/ui/main-ui/main-ui-flow.js](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/main-ui/main-ui-flow.js)，把 `quests` 接入 Script Editor 可见工作流、对象树与事件去向目标选择器，并把 `flows` 明确标注为“建筑功能”的实现缝语义，而不是创作者正式路由 owner。
+- 更新 [src/ui/main-ui/main-ui-flow.js](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/main-ui/main-ui-flow.js) 与 [src/application/script-editor/workspace-shell.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/workspace-shell.ts)，移除对话作者面上的 `followUps` 正式编辑入口、摘要卡和工作台校验，把“对话结束后的去向”明确收口到 `event binding / event destination`，避免继续保留 family-local routing truth。
+- 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，把 `task` 纳入 event destination family 覆盖，校验 `quests` / `flows` 在 Script Editor workflow 中可见，并防止主作者面回退到 `dialogue.followUps` 直接路由控制。
+
+### Impact
+- Script Editor 当前的 creator-facing 路由语义开始正式收口为 `function -> event -> dialogue/minigame/task/function`，`task` 不再只是 runtime/export 侧存在的对象，创作者可以通过事件去向直接引用。
+- `dialogue.followUps` 仍可作为历史数据字段留在内部结构里，但它不再占据主作者面、工作台摘要或校验入口；后续 scene 退役与 runtime/export 收口时，可以继续沿 event-centered 模型推进，而不是再和 dialogue-local routing truth 双轨并存。
+
+## 2026-07-22 Event Router Only Trigger Contract Freeze
+
+### Changed
+- 新增 [src/core/runtime/event-binding-contract.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/core/runtime/event-binding-contract.ts)，把运行时正式支持的 `event binding owner family` / `trigger timing+action` 收口为一套共享 contract，并提供统一 `createRuntimeTriggerContext()`，避免 `story-runtime`、建筑容器事件入口和导出侧继续各自手搓 trigger context。
+- 新增 [src/application/events/event-presentation.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/events/event-presentation.ts)，把“event 激活”与“scene 展示承载”拆开：`entrySceneId` 仍暂时保留为展示数据，但不再通过 runtime candidate/activation 成为正式路由真相。
+- 更新 [src/core/contracts/event-runtime.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/core/runtime/event-activation.ts)、[src/core/runtime/event-binding-runtime.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/core/runtime/event-binding-runtime.ts) 与 [src/application/events/event-runner.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/events/event-runner.ts)，移除 `EventRuntimeCandidate.sceneId` / `ActivatedEvent.sceneId`，并让 `startEvent()` 只负责激活 event/history，不再直接把 `sceneId` 写成正式 dispatch contract。
+- 更新 [src/application/scene/scene-runner.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/scene/scene-runner.ts)、[src/application/story/story-runtime.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/story/story-runtime.ts) 与 [src/application/building/building-container-event-runtime.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/building/building-container-event-runtime.ts)，让 scene 只在真正需要演出时由 presentation helper materialize；building-function / building-enter / story trigger 入口改为共享 trigger-context 合同，不再继续保留 caller-local route truth。
+- 更新 [src/application/script-editor/runtime-pack-export.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/runtime-pack-export.ts)，让 runtime export 与运行时入口复用同一套 supported owner/trigger matrix，继续 fail-closed，而不是由导出侧保留另一份硬编码支持表。
+- 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，把 direct `runEventBindingRuntime()` 断言改到 event-only activation 语义，并补足 building/story 包装入口的展示回归，防止后续又把 `sceneId` 回灌成 runtime formal router。
+
+### Impact
+- 当前正式路由真相已经从 `entrySceneId -> candidate.sceneId -> activation.sceneId -> startEvent(scene)` 这条链路退回到 `event/event-binding`；`scene` 仍可作为下一队列待迁出的展示家族存在，但不再占用本队列要求冻结的 formal route contract。
+- trigger timing / trigger-context 的正式支持矩阵现在在 runtime/export 共用一份 contract，后续 `scene-family-retirement-and-content-migration` 与 `event-centered-runtime-pack-preview-export-sync` 可以沿这套冻结合同继续收口，而不是再面对多份漂移支持表。
+
+## 2026-07-21 Script Editor Scenes Authoring Surface
+
+### Changed
+- 更新 [src/application/script-editor/minimal-workflow.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/minimal-workflow.ts) 与 [src/application/script-editor/workspace-shell.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/workspace-shell.ts)，把 `scenes` 纳入 Script Editor 最小工作流可见家族、对象树分组与 `scenes.json` 导出落点，确保剧本包里的建筑进入演出不再只存在于导入数据而没有正式作者面入口。
+- 更新 [src/ui/main-ui/main-ui-flow.js](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/main-ui/main-ui-flow.js)，把 `scenes` 从整条记录 JSON 文本框升级为结构化作者面：顶层字段、动作列表、常用引用选择器与受限 JSON escape hatch 分离，继续保持 `scene` 只负责演出内容、`building-enter` 触发仍经由 `event binding / event` 路径，不把建筑逻辑写回运行时硬编码。
+- 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，补充 `scene` 结构化作者面字段、动作编辑入口与专用 helper 回归，防止作者面退回到整条记录 JSON-only 的状态。
+
+### Impact
+- 现在这两件事都具备正式入口：剧本包里的 `building -> event binding -> event -> scene` 链路可以继续承载进入建筑后的对话，而 Script Editor 也能直接浏览和编辑 `scene` 记录本体；后续若增加预览态选中、拖拽布局、组件点击动作配置，仍可沿同一条配置驱动链路扩展。
+
+## 2026-07-21 Legacy House Runtime Retirement
+
+### Changed
+- 更新 [src/domain/house.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/domain/house.ts)、[src/domain/script-editor-project.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/domain/script-editor-project.ts)、[src/application/script-editor/city-building-authoring.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/city-building-authoring.ts)、[src/application/script-editor/city-building-runtime-materializer.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/city-building-runtime-materializer.ts) 与 [src/ui/main-ui/main-ui-flow.js](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/main-ui/main-ui-flow.js)，删除建筑与编辑器侧的 `onEnterEventId / onLeaveEventId` 及对应作者面入口；建筑进入绑定只保留当前通用 `entryBinding` 与项目级 `eventBindings` 路径。
+- 更新 [src/application/navigation/enter-house.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/navigation/enter-house.ts)、[src/core/contracts/runtime-result.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/core/contracts/runtime-result.ts)、[src/core/runtime/navigation-runtime.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/core/runtime/navigation-runtime.ts)、[src/application/runtime/navigation-time-follow-up.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/runtime/navigation-time-follow-up.ts) 和 [src/main.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/main.ts)，把进入建筑后的剧情触发统一收口为 `navigation.enter-house -> navigation.entered-house -> runStoryTriggerRuntime({ timing: "house-enter" })`；运行时不再从 `HouseDefinition` 直接拉起旧事件入口。
+- 更新 [src/content/prototype-world.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/content/prototype-world.ts)、[src/content/sample-scenario.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/content/sample-scenario.ts) 和 [src/content/scenario-packs/zhuyuanzhang/houses.json](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/content/scenario-packs/zhuyuanzhang/houses.json)，删除内置内容中的旧 house 进入事件字段，避免内容层继续保留已废弃合同。
+
+### Impact
+- 建筑进入剧情现在只认 Script Editor arrangement / EventBinding / shared runtime 这条正式链路，不再存在 `house.onEnterEventId` 这类旁路；后续无论建筑 UI 布局如何继续通用化，进入建筑触发都不会再回流到旧 house 合同。
+- 编辑器与运行时的建筑进入合同已经收敛到项目级 `eventBindings` 和通用 navigation follow-up，上层继续推进布局编辑、预览拖拽、组件点击动作配置时，不需要再兼容或迁移旧房屋事件入口字段。
+
+## 2026-07-21 Scenario Pack Character Startup Override Unification
+
+### Changed
+- 更新 [src/domain/scenario-profile.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/domain/scenario-profile.ts)、[src/application/startup/startup-session-coordinator.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/startup/startup-session-coordinator.ts)、[src/application/scenario/scenario-pack-loader.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/scenario/scenario-pack-loader.ts) 和 [src/application/script-editor/runtime-pack-export.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/runtime-pack-export.ts)，为 scenario profile 增加按 `characterId` 覆写启动状态的 `characterStartups` 合同，并在 startup coordinator 里统一解析所选角色的有效 startup profile。
+- 更新 [src/content/scenario-packs/zhuyuanzhang/scenario-profile.json](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/content/scenario-packs/zhuyuanzhang/scenario-profile.json)，让徐达、汤和、常遇春在壳层选角后切到 `guo-zixing-camp` 阶段，并清除和尚期开场 `entryEventId / openingFlowId`，不再错误继承寺庙和尚期的建筑禁入与进入剧情。
+
+### Impact
+- 同一份 runtime 剧本包现在可以用数据声明“不同角色从不同剧情启动态进入”，`JSON 开局` 不需要再靠入口侧隐式推断角色阶段，也不会再和其他同类入口跑出两套互相冲突的建筑访问/进入剧情结果。
+
+## 2026-07-21 Building Layout Template Runtime Generalization
+
+### Changed
+- 更新 [src/application/presenter/presenter-output.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/presenter/presenter-output.ts)、[src/application/presenter/stage-presenters.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/presenter/stage-presenters.ts) 与 [src/ui/app-render.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/app-render.ts)，让 `scene` 阶段在 `currentHouseId` 存在时复用当前 building stage 作为 underlay，而不是只支持 city underlay；进入建筑即触发的 authored scene/dialogue 不再掉到黑底。
+- 更新 [src/domain/building-arrangement.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/domain/building-arrangement.ts)、[src/domain/script-editor-project.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/domain/script-editor-project.ts)、[src/application/script-editor/editor-project-loader.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/editor-project-loader.ts) 和 [src/application/script-editor/city-building-runtime-materializer.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/city-building-runtime-materializer.ts)，将 building arrangement 布局合同从旧 `layoutVariant` 升级为结构化 `layout` 定义，支持 `shellClassNames`、节点级 `previewSelectable / previewDraggable / previewDropTarget` 以及预留 `clickActionId`。
+- 重写 [src/ui/views/building/building-module-view.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/views/building/building-module-view.ts)，移除运行时内置的建筑专用模板分支，改为只解释通用布局节点与容器绑定；具体建筑视觉结构改由 arrangement `layout.nodes` 与 `shellClassNames` 配置驱动。
+- 继续更新 [src/ui/views/building/building-module-view.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/views/building/building-module-view.ts)、[src/styles/grain-shop.css](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/styles/grain-shop.css)、[src/styles/keep-house.css](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/styles/keep-house.css)、[src/styles/tea-house.css](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/styles/tea-house.css) 和 [src/styles/temple-house.css](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/styles/temple-house.css)，把 renderer 里残留的 `grain-shop / keep-house / tea-house` 布局类名抽成通用 `c-building-layout-*` 类，再由旧壳样式表通过兼容选择器承接视觉。
+- 继续更新 [src/ui/views/building/building-module-view.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/views/building/building-module-view.ts)、[src/styles/grain-shop.css](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/styles/grain-shop.css)、[src/styles/keep-house.css](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/styles/keep-house.css)、[src/styles/tea-house.css](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/styles/tea-house.css) 和 [src/styles/temple-house.css](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/styles/temple-house.css)，把 building renderer 里残留的 `c-grain-shop-*` 皮肤输出进一步收口为通用 `view-house-building-shell`、`c-building-skin-*` 钩子，并让寺院/茶馆/货栈/将领府等主题壳通过共享变量覆盖保持旧视觉。
+- 继续更新 [src/ui/views/building/building-module-view.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/views/building/building-module-view.ts)、[src/styles/grain-shop.css](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/styles/grain-shop.css) 和 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，让 arrangement `layout.templateId / regionId / kind / presentation` 进一步映射为稳定的 `c-building-layout-template-*`、`c-building-layout-node-*`、`c-building-layout-region-*` 语义类，避免后续预览拖拽/选中/点击配置还要重新拆 renderer。
+- 继续更新 [src/application/script-editor/city-building-authoring.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/city-building-authoring.ts)、[src/ui/main-ui/main-ui-flow.js](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/main-ui/main-ui-flow.js) 和 [tests/city-building-mount-authoring.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/city-building-mount-authoring.test.cjs)，把 building arrangement 的 `layout` 合同补进 Script Editor 作者面，支持模板、壳类名、layout node 与 preview flag 的 project-level 增删改，避免后续组件可编辑/布局调整继续依赖手写 JSON 或 runtime 硬编码。
+- 继续更新 [src/application/building/building-layout-templates.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/building/building-layout-templates.ts)、[src/ui/views/building/building-module-view.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/views/building/building-module-view.ts)、[src/application/script-editor/city-building-authoring.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/city-building-authoring.ts) 和 [src/ui/main-ui/main-ui-flow.js](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/main-ui/main-ui-flow.js)，把默认 `layout` / `layout.nodes` 的模板解析统一收口到共享 `building-layout-templates`，移除 renderer、authoring、编辑器 UI 各自内嵌的 `default-shell` 字面量与重复默认节点定义，让布局模板切换和后续预览编辑都共享一套入口。
+- 继续更新 [src/styles/keep-house.css](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/styles/keep-house.css) 和 [src/styles/temple-house.css](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/styles/temple-house.css)，删除已无运行时输出的 `c-keep-house-*` 兼容选择器，只保留当前 building layout renderer 真正产出的 `c-building-layout-*` 语义钩子，继续回收旧壳样式里的历史硬编码残留。
+- 更新 [src/content/scenario-packs/zhuyuanzhang/building-arrangements.json](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/content/scenario-packs/zhuyuanzhang/building-arrangements.json)，把所有寺院 arrangement 从旧 `layoutVariant` 切到显式 `layout` 配置，保留旧寺院壳的中央功能板、席位区、侧栏人物和离开入口，但不再依赖运行时硬编码模板。
+- 继续更新 [src/content/scenario-packs/zhuyuanzhang/building-arrangements.json](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/content/scenario-packs/zhuyuanzhang/building-arrangements.json)，为将领府邸、茶馆、货栈、粮铺、药铺、客栈和自宅补齐 `primary-npc` / `leave-action` 等节点，让旧壳所需的左侧人物列、右侧主位人物和底部离开入口都转为 arrangement 数据控制。
+- 扩展 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，让 renderer 回归断言直接覆盖配置驱动 layout、节点数据属性和未来预览扩展 seam。
+
+### Impact
+- 建筑运行时现在只保留通用容器和通用布局节点解释，具体布局细节已从渲染器分支移回数据配置层，后续剧本编辑器预览态的拖动、选中和点击编辑都可以沿同一份 `layout` 合同扩展；同一条 authored event / scene 路径在建筑内也会保留建筑壳背景，不会因 scene handoff 丢失 underlay。
+- `layout.templateId` 不再只是被写成 `data-*` 旁路字段，而是进入正式 DOM 语义层；后续如果要为 Script Editor 预览态增加模板级高亮、region 落点、节点框选或点击动作配置，可以直接依赖这批通用类而不是重新引入建筑特判。
+- building layout 不再只是 runtime 消费合同，Script Editor 也开始把它当成正式作者面数据处理；后续无论是拖拽生成配置、选中组件写回节点，还是给组件补点击动作配置，都可以沿这条 `project -> runtime pack -> arrangement layout` 链路继续推进。
+- 默认布局模板现在由共享模板表统一解析，Script Editor 新建 arrangement、布局编辑器回显和 runtime 渲染都会拿到同一套模板节点；后续如果要加预览态拖拽、节点选中或模板切换写回，不需要再分别修三套默认逻辑。
+- 非寺院建筑当前也开始回收旧壳结构语义：粮铺系和府邸/自宅不再只显示“中心按钮 + 空白背景”，而是通过 authored `layout` 明确声明侧边人物、主位人物和离开位，后续再细调时不需要往 renderer 里补建筑条件分支。
+- 当前自动验证重新通过 `npm run typecheck`、`npm test -- --runInBand` 与 `npm run lint:blueprints`；运行时不再依赖 `layoutVariant` 或寺院专用渲染分支。
+- 当前自动验证继续通过 `npm run typecheck` 与 `npm test -- --runInBand`；局部 `stylelint` 检查确认这轮新增的 `keep-house.css` 选择器顺序问题已消除，但 `grain-shop.css` / `tea-house.css` 仍存在仓库既有样式规范债，尚未在本轮一并清理。
+
+## 2026-07-21 Temple Arrangement UI Regression Recovery
+
+### Changed
+- 更新 [src/ui/views/building/building-module-view.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/views/building/building-module-view.ts) 与 [src/styles/temple-house.css](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/styles/temple-house.css)，将 `layoutVariant: "temple-stage"` 的 arrangement 建筑页从新三栏信息面板回收为重构前的旧寺院壳布局，继续复用 arrangement 数据与 `building-container-item-action` 事件链路，但恢复左侧人物列、中间功能板、中央席位、右侧主持像与底部离开按钮的旧视觉结构。
+
+### Impact
+- 皇觉寺及同类寺院 arrangement 页面重新对齐到玩家熟悉的旧 UI 语义，不再出现重构后新增信息面板导致的整体布局漂移；后续功能修复可以在不再改动视觉骨架的前提下继续推进。
+
+## 2026-07-21 Building Arrangement Final Guard Gap Fill
+
+### Added
+- 扩展 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，补充皇觉寺 `抄经 / 打扫庭院 / 挑水` 三个直达动作的事件/绑定/flow 覆盖，并新增 `flow complete -> launchPlayable` 回归，防止建筑按钮再次只停在说明 flow 而不进入实际活动。
+
+### Changed
+- 更新 [src/core/runtime/playable-runtime.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/core/runtime/playable-runtime.ts) 和 [src/core/runtime/interactive-runtime.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/core/runtime/interactive-runtime.ts)，让 authored flow 在完成节点可通过通用 `detail.launchPlayable` 继续启动后续 playable，并在 `activity-qte` 退出时正确清理会话状态。
+- 更新 [src/ui/views/scene/scene-view.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/views/scene/scene-view.ts) 和 [src/ui/app-render.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/app-render.ts)，使建筑视图也能叠加渲染活动层，避免寺院工作启动后因为仍停留在 building stage 而看不到交互。
+- 更新 [src/content/scenario-packs/zhuyuanzhang/building-arrangements.json](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/content/scenario-packs/zhuyuanzhang/building-arrangements.json)、[src/content/scenario-packs/zhuyuanzhang/events.json](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/content/scenario-packs/zhuyuanzhang/events.json)、[src/content/scenario-packs/zhuyuanzhang/event-bindings.json](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/content/scenario-packs/zhuyuanzhang/event-bindings.json) 和 [src/content/scenario-packs/zhuyuanzhang/flow-definitions.json](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/content/scenario-packs/zhuyuanzhang/flow-definitions.json)，把皇觉寺顶层动作从单个“寺内工作”恢复为直达 `抄经 / 打扫庭院 / 挑水`，并通过 authored event-binding / flow handoff 进入对应 temple activity。
+
+### Impact
+- 皇觉寺现在不仅恢复了寺院式布局壳，还重新具备可点击的日常功能入口；玩家从建筑页点击 `抄经 / 打扫庭院 / 挑水` 会走统一 building arrangement / event binding / flow / playable 链路，而不是依赖旧 house runtime 或 `main.ts` 特判。
+- Final guard 队列的自动验证当前继续保持绿色：`npm run typecheck`、`npm test -- --runInBand`、`npm run lint:blueprints` 已通过；剩余工作是补齐内置浏览器中的人工可见回归证据。
+
+### Added
+- 扩展 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，让 Script Editor building arrangement round-trip 覆盖 `layoutVariant`，并新增 arrangement renderer 视图回归，防止皇觉寺再次退化回无语义的通用壳布局。
+
+### Changed
+- 更新 [src/application/content/content-pack-loader.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/content/content-pack-loader.ts)，内置 manifest 水合现在显式读取 `buildingArrangements` 与 `flowDefinitions`，避免 built-in 包回寺后丢失建筑壳与 flow authored 路径。
+- 更新 [src/domain/building-arrangement.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/domain/building-arrangement.ts)、[src/domain/script-editor-project.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/domain/script-editor-project.ts)、[src/application/script-editor/editor-project-loader.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/editor-project-loader.ts) 和 [src/application/script-editor/city-building-runtime-materializer.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/city-building-runtime-materializer.ts)，为 building arrangements 增加 data-driven `layoutVariant` 合同，并保持 Script Editor / runtime pack round-trip。
+- 更新 [src/ui/views/building/building-module-view.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/views/building/building-module-view.ts)、[src/styles/prototype.css](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/styles/prototype.css) 和 [src/styles/temple-house.css](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/styles/temple-house.css)，给 generic `view-house` 补齐基础视觉壳，并让 arrangement renderer 支持寺院式 `temple-stage` 布局变体。
+- 更新 [src/content/scenario-packs/zhuyuanzhang/building-arrangements.json](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/content/scenario-packs/zhuyuanzhang/building-arrangements.json)，将 `arrangement.city.kulan.house.kulan.temple` 切到 `layoutVariant: "temple-stage"`，在不恢复旧 house runtime 的前提下保留皇觉寺旧式布局语义。
+
+### Impact
+- 皇觉寺在 authored arrangement / event / playable-flow 路径上重新具备稳定的建筑壳、背景与布局呈现，不再因为 built-in manifest 水合缺口或 generic shell 过度简化而退化成空白页或黑底按钮页。
+- Final guard 队列当前已重新通过 `npm run typecheck`、`npm run lint:blueprints` 与 `npm test`，并在内置浏览器中再次确认皇觉寺壳布局与 `评定` flow 启动可达；当前 version 仍未进入 version closeout。
+
+### Added
+- 扩展 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs) 和 [tests/hardcoded-scenario-pack-boundary.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/hardcoded-scenario-pack-boundary.test.cjs)，加入旧 house runtime/source 路径退场 guard，并退休旧 house runtime 直接断言。
+
+### Changed
+- 更新 [src/application/building/building-module-entry.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/building/building-module-entry.ts)、[src/ui/views/building/building-module-view.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/views/building/building-module-view.ts) 和 [src/main.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/main.ts)，建筑页只消费显式 building arrangements/container/event/flow 路径；没有编排数据时不再显示旧 fallback。
+- 将粮行、药铺、茶馆仍被通用机制使用的 defaults 移到各自非 house 模块目录：[src/application/grain-shop/grain-shop-content-defaults.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/grain-shop/grain-shop-content-defaults.ts)、[src/application/medicine-house/medicine-house-content-defaults.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/medicine-house/medicine-house-content-defaults.ts)、[src/application/tea-house/tea-house-content-defaults.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/tea-house/tea-house-content-defaults.ts)。
+- 更新 [AGENTS.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/AGENTS.md)，移除 special-house 接口触发规则，改为建筑编排、事件和 playable flow 的 mod-first 规则。
+
+### Removed
+- 删除 `src/application/house-modules/**`、`src/core/registry/house-module-*`、`src/core/runtime/house-runtime.ts`、`src/application/house/house-runtime.ts`、`src/core/adapters/legacy-house-adapter.ts`、`src/ui/views/house/**` 和 `docs/special-house-interface.md`。
+
+### Impact
+- 旧 house module runtime 不再作为建筑功能 fallback 存在；现有内置建筑功能依赖前一阶段补齐的显式 event binding、flow definition 和 closeBuilding 数据。
+- 当前 version 仍未进入 version closeout；下一步按蓝图自动准入 `queue.building-arrangement-final-acceptance-and-removal-guard`。
+
+## 2026-07-21 Building Arrangement Temporary Rule and Menu Event Parity Fill
+
+### Added
+- 在 [docs/blueprints/plans/2026-07-20-building-arrangement-container-flow-refactor-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-20-building-arrangement-container-flow-refactor-target-plan.md) 补强当前 version 的临时执行规则：队列完整性审查发现父级 spec 内缺口时必须记录并继续推进，final 前需要执行停止条件自检。
+- 在 [docs/blueprints/version-memo.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/version-memo.md) 为 MEMO-022 追加临时执行规则草稿，明确该草稿暂不提升为全局 Blueprint 工作流规范。
+- 扩展 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，覆盖朱元璋内置包 630 个 action-menu item 都有显式 event、building-container-item-action binding，并且非离开动作进入 flow、离开动作进入 closeBuilding。
+
+### Changed
+- 更新 [src/content/scenario-packs/zhuyuanzhang/events.json](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/content/scenario-packs/zhuyuanzhang/events.json)、[src/content/scenario-packs/zhuyuanzhang/event-bindings.json](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/content/scenario-packs/zhuyuanzhang/event-bindings.json) 和 [src/content/scenario-packs/zhuyuanzhang/flow-definitions.json](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/content/scenario-packs/zhuyuanzhang/flow-definitions.json)，将迁移后的建筑菜单从静态 eventId 补齐为可运行事件/绑定/flow/closeBuilding 数据。
+- 更新 [src/domain/script-editor-project.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/domain/script-editor-project.ts)、[src/application/script-editor/runtime-pack-import.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/runtime-pack-import.ts) 和 [src/application/script-editor/runtime-pack-export.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/runtime-pack-export.ts)，让导入的 runtime event actions 可被保留并导出，并允许 flow start event 使用空 `entrySceneId` round-trip。
+- 更新 [docs/blueprints/queues/legacy-house-runtime-retirement-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/legacy-house-runtime-retirement-queue.md)，把 action-menu event/flow parity gap 记录为当前队列的已完成前置补缺，并将 active task 推进到旧 house runtime 删除实现。
+
+### Impact
+- 删除旧 house runtime 前，内置朱元璋建筑菜单已有显式替代路径，不再依赖旧 house module fallback 才能执行。
+- 当前 version 仍未进入 version closeout；后续继续执行 `queue.legacy-house-runtime-retirement` 的旧代码删除任务。
+
+## 2026-07-21 Building Arrangement Pack Migration and Flow Handoff
+
+### Added
+- 新增 [docs/blueprints/queues/legacy-house-runtime-retirement-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/legacy-house-runtime-retirement-queue.md)，作为迁移完成后的退场队列入口。
+- 扩展 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，覆盖建筑容器 action 通过事件命中后启动 authored flow，并在 flow 完成后返回建筑。
+
+### Changed
+- 更新 [src/application/building/building-container-event-runtime.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/building/building-container-event-runtime.ts)，建筑按钮触发现在可以通过 `EventBindingRuntime` 命中事件后继续启动与事件对应的 flow playable，而不是只停在 scene。
+- 更新 [src/ui/views/playables/flow-playable-view.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/views/playables/flow-playable-view.ts) 与 [src/ui/app-render.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/app-render.ts)，补齐 flow playable 视图渲染。
+- 更新 [src/main.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/main.ts)，补齐 flow playable action 事件分发。
+- 更新 [src/domain/playables/flow.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/domain/playables/flow.ts)，让 flow 定义承载脚本编辑器作者面已有的元数据结构。
+- 更新 [docs/blueprints/queues/zhuyuanzhang-building-arrangement-pack-migration-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/zhuyuanzhang-building-arrangement-pack-migration-queue.md)、[docs/blueprints/plans/2026-07-20-building-arrangement-container-flow-refactor-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-20-building-arrangement-container-flow-refactor-target-plan.md) 和 [docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)，将已完成的迁移队列闭合并把后续推进切到 legacy house runtime retirement。
+
+### Impact
+- 迁移后的建筑功能不再只是静态数据，点击会走统一的事件绑定与 flow playable 入口。
+- 当前 version 仍未进入 version closeout；下一步是退场队列清理旧 house runtime 代码。
+
+## 2026-07-20 Zhuyuanzhang Template Mounted Buildings Data Migration
+
+### Added
+- 新增 [docs/blueprints/queues/zhuyuanzhang-template-mounted-buildings-data-migration-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/zhuyuanzhang-template-mounted-buildings-data-migration-queue.md)，记录内置朱元璋模板包迁移到 canonical mounted-building/NPC authoring 数据形状。
+- 扩展 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，覆盖“使用模板”路径导入后濠州 `cities[].mountedBuildings` 暴露建筑和 NPC。
+
+### Changed
+- 更新 [src/content/scenario-packs/zhuyuanzhang/cities.json](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/content/scenario-packs/zhuyuanzhang/cities.json)，为内置朱元璋包城市补齐显式 `mountedBuildings`，建筑来源于既有 `houseIds`，NPC 和主 NPC 来源于既有 `houses.characterIds/defaultCharacterId`。
+- 调整朱元璋导入后再导出的回归断言：显式 mounted authoring 现在允许 canonical export 补齐运行时 `cityEntries`，而不是要求旧运行时入口表字节级不变。
+
+### Impact
+- 剧本编辑器从“使用模板”进入后，`城市 > 濠州` 能从 canonical `cities[].mountedBuildings` 读取挂载建筑和 NPC。
+- 标准 runtime-pack 导入策略不变：仍不从 `cityEntries`、`houses.characterIds` 或 `cityNpcPools` 反推 mounted authoring truth。
+
+## 2026-07-20 Script Editor City Mounted NPC Canonical Authoring Cleanup
+
+### Added
+- 新增 [docs/blueprints/queues/script-editor-city-mounted-npc-canonical-authoring-cleanup-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-city-mounted-npc-canonical-authoring-cleanup-queue.md)，把 MEMO-020 提升为当前版本中的 active queue governor。
+- 新增导出侧 mounted NPC fail-closed 测试，覆盖 mountedBuildings 引用缺失人选时的 runtime pack 导出错误。
+
+### Changed
+- 更新 [src/application/script-editor/runtime-pack-import.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/runtime-pack-import.ts)，标准 runtime-pack 导入不再从 `cityEntries`、`houses.characterIds` 或 `cityNpcPools` 反推 `cities[].mountedBuildings`。
+- 更新 [src/application/script-editor/runtime-pack-export.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/runtime-pack-export.ts)，导出时会对 mounted building 的 NPC 引用做 fail-closed 校验，缺失的 `npcIds` 或行外 `primaryNpcId` 会产生导出诊断。
+- 更新 [src/application/script-editor/city-building-runtime-materializer.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/city-building-runtime-materializer.ts)，当城市存在某建筑的 mounted row 时，导出的 `houses[].characterIds/defaultCharacterId` 只来自该 row 的 `npcIds/primaryNpcId`；空 `npcIds` 表示该建筑不显示 NPC，不再兼容回退到建筑基础名册或人物 `houseId`。
+- 更新 [src/application/house-modules/temple-house/temple-house-house-module.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/house-modules/temple-house/temple-house-house-module.ts)，寺庙模块在当前建筑没有 mounted default NPC 时渲染空席位并忽略残留模块 action，不再因缺省住持抛错阻断建筑进入。
+- 更新 [tests/city-building-mount-authoring.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/city-building-mount-authoring.test.cjs) 和 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，分别覆盖标准导入不再制造 mounted authoring truth，以及导出 missing-mounted-NPC 失败闭环。
+
+### Impact
+- 规范导入流现在只保留显式 `cities[].mountedBuildings`，不再把 runtime family 当成标准编辑器 canonical authoring truth。
+- 导出流对 mounted NPC 关系做了最小 fail-closed 守门，避免缺失引用静默落进 runtime pack。
+- 运行预览中的特殊建筑席位会随当前城市 mounted NPC authoring 收敛；城市挂载未列出的建筑基础 NPC 不会再混入预览。
+- 未挂载 NPC 的寺庙建筑现在会进入空状态，而不是让模块异常卡住当前城市地点面板。
+
+## 2026-07-16 EventBindingRuntime Selector Baseline
+
+### Added
+- 新增 [src/core/runtime/event-binding-runtime.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree-5/src/core/runtime/event-binding-runtime.ts)，提供 `runEventBindingRuntime`，从 `EventBinding` 行和 `TriggerContext` 中选择候选事件。
+- 扩展 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree-5/tests/robustness.test.cjs)，覆盖 triggerless event body 通过 event binding 被选择、激活并写入 `eventHistory`。
+
+### Changed
+- EventBindingRuntime baseline 复用现有 `activateEvent` 和 `startEvent` handoff，不接管 scene/task/house/navigation/playable/location-access 子 runtime 生命周期。
+- 更新 [src/application/story/story-runtime.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree-5/src/application/story/story-runtime.ts)，当 story content 暴露 `eventBindingsById` 时通过 `TriggerContext` 调用 EventBindingRuntime；没有绑定表时保留旧 `selectTriggeredEvents` 兼容路径。
+
+### Impact
+- 双表事件输入现在有了独立 runtime selector baseline 和 story trigger adapter；旧 `selectTriggeredEvents` 路径仍保留，等待后续 old-runtime retirement 队列处理。
+
+## 2026-07-16 Script Editor Zhuyuanzhang Event Binding Pack Migration
+
+### Added
+- 新增 [src/content/scenario-packs/zhuyuanzhang/event-bindings.json](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree-5/src/content/scenario-packs/zhuyuanzhang/event-bindings.json)，承载朱元璋内置包五条事件的触发入口、条件、priority 和启用状态。
+- 扩展 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree-5/tests/robustness.test.cjs)，覆盖内置朱元璋包双表迁移和默认 runtime content 暴露内置 event bindings。
+
+### Changed
+- 更新 [src/content/scenario-packs/zhuyuanzhang/pack.json](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree-5/src/content/scenario-packs/zhuyuanzhang/pack.json)，新增 `files.eventBindings`。
+- 更新 [src/content/scenario-packs/zhuyuanzhang/events.json](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree-5/src/content/scenario-packs/zhuyuanzhang/events.json)，事件体不再保存 `trigger` 和 `conditions`。
+- 更新 [src/application/content/content-pack-loader.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree-5/src/application/content/content-pack-loader.ts) 和 [src/content/pack-content-access.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree-5/src/content/pack-content-access.ts)，让 manifest 水合和默认包访问层读取 `eventBindings`。
+- 更新 [src/application/script-editor/runtime-pack-import.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree-5/src/application/script-editor/runtime-pack-import.ts) 和 [src/application/script-editor/runtime-pack-export.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree-5/src/application/script-editor/runtime-pack-export.ts)，导入的 runtime `eventBindings` 会作为 runtime family 原样保留并随导出写回。
+
+### Impact
+- 内置朱元璋默认内容现在与脚本编辑器导出的 runtime pack 一样具备 `events.json` + `event-bindings.json` 双表输入形状。
+- 本批次未实现 EventBindingRuntime，也未删除旧 `selectTriggeredEvents` / trigger evaluator 路径；这些仍由后续 runtime convergence 和 old-runtime retirement 队列处理。
+
+## 2026-07-16 Script Editor Event Binding Export Convergence
+
+### Added
+- 扩展 [src/application/script-editor/runtime-pack-export.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree-5/src/application/script-editor/runtime-pack-export.ts)，runtime-pack 导出现在写出 `pack.json.files.eventBindings` 和 `event-bindings.json`。
+- 新增 event binding export 校验：unsupported owner family、trigger timing/action、payload schema 和 binding conditions 在 runnable export 阶段 fail closed。
+
+### Changed
+- 更新 [src/domain/event.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree-5/src/domain/event.ts)，将 `EventDefinition.trigger` 和 `EventDefinition.conditions` 改为过渡期可选字段，使 `events.json` 可以作为纯事件体表导出。
+- 更新 [src/application/events/trigger-evaluator.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree-5/src/application/events/trigger-evaluator.ts) 和 [src/core/runtime/event-runtime.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree-5/src/core/runtime/event-runtime.ts)，旧 trigger selector 会跳过无 `trigger` 的事件体，并在 priority 读取上兼容 triggerless event body。
+- 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree-5/tests/robustness.test.cjs)，将 script-editor runtime export 断言切到双表边界：`events.json` 不含 trigger/conditions，`event-bindings.json` 承载触发入口，旧 selector 不消费 triggerless export。
+
+### Impact
+- 脚本编辑器导出的 runtime pack 已具备后续 EventBindingRuntime 所需的双表输入形状。
+- 本批次未迁移内置朱元璋包、未实现 EventBindingRuntime，也未删除旧 runtime trigger/evaluator 路径。
+
+## 2026-07-16 Script Editor Event Binding Authoring UI
+
+### Added
+- 扩展 [src/domain/script-editor-project.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree-5/src/domain/script-editor-project.ts)，新增项目级 `ScriptEditorEventBindingRecord` 和 canonical `event-bindings.json` 分文件。
+- 扩展 [src/application/script-editor/story-dialogue-event-authoring.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree-5/src/application/script-editor/story-dialogue-event-authoring.ts)，新增 event binding 默认记录和归一化 helper。
+- 在 [src/ui/main-ui/main-ui-flow.js](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree-5/src/ui/main-ui/main-ui-flow.js) 的事件编辑器中新增 Bindings 页签，显示指向当前事件的项目级 event binding 记录。
+
+### Changed
+- 更新 [src/application/script-editor/editor-project-loader.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree-5/src/application/script-editor/editor-project-loader.ts) 和 [src/application/script-editor/editor-project-save.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree-5/src/application/script-editor/editor-project-save.ts)，保存项目时输出 `event-bindings.json`，导入旧项目缺少该文件时归一化为空数组。
+- 更新 [src/application/script-editor/minimal-workflow.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree-5/src/application/script-editor/minimal-workflow.ts) 和 [src/application/script-editor/runtime-pack-import.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree-5/src/application/script-editor/runtime-pack-import.ts)，为默认项目和旧 runtime-pack 导入投影补齐空 `eventBindings`。
+- 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree-5/tests/robustness.test.cjs)，覆盖 script-editor project event-bindings.json 保存/导入、事件编辑器绑定导航和作者 helper 归一化。
+
+### Impact
+- 脚本编辑器项目现在能在作者侧保存和查看独立 event binding 表，为后续 runtime-pack export convergence 队列提供数据入口。
+- 本批次未改变 runtime-pack 导出语义、未迁移内置朱元璋包、未启用 EventBindingRuntime，也未删除旧 `EventDefinition.trigger` / `conditions` / `selectTriggeredEvents` 运行时路径。
+
+## 2026-07-16 Script Editor Event Binding Contract Loader
+
+### Added
+- 扩展 [src/domain/event.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree-5/src/domain/event.ts)，新增 `EventBinding`、`EventBindingOwner`、`EventBindingTrigger`、`EventBindingConditionGroup` 和 `TriggerContext` contract。
+- 扩展 [src/domain/content-pack.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree-5/src/domain/content-pack.ts)，为 content pack 新增可选 `eventBindings` 表。
+- 扩展 [src/application/content/active-game-content.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree-5/src/application/content/active-game-content.ts)，将 `eventBindings` 纳入 active content、by-id 索引、merge/normalize 和 story content context。
+
+### Changed
+- 更新 [src/application/scenario/scenario-pack-loader.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree-5/src/application/scenario/scenario-pack-loader.ts)，允许 `pack.json.files.eventBindings` 通过 manifest hydration 进入 scenario pack，并对 `eventBindings` 执行数组校验。
+- 更新 [src/application/content/default-runtime-content.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree-5/src/application/content/default-runtime-content.ts) 和 [src/content/pack-content-access.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree-5/src/content/pack-content-access.ts)，为默认运行时内容暴露 `eventBindings` 存储面。
+- 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree-5/tests/robustness.test.cjs)，覆盖 event-bindings.json fail-closed 校验、active content 索引和默认 runtime content 加载。
+
+### Impact
+- 后续脚本编辑器 UI、导出、朱元璋包迁移和 EventBindingRuntime 队列现在有可读取的 `event-bindings.json` contract/loader 基线。
+- 旧 `EventDefinition.trigger`、`EventDefinition.conditions` 和 `selectTriggeredEvents` 仍保留为生产运行时依赖，等待后续 runtime convergence 与 retirement 队列处理。
+
+## 2026-07-16 Script Editor Zhuyuanzhang Template Direct Load
+
+### Changed
+- 更新 [src/application/script-editor/runtime-pack-import.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree/src/application/script-editor/runtime-pack-import.ts)，新增 `loadScriptEditorProjectFromScenarioPackUrl`，复用已存在的 scenario pack URL manifest loader 和 script editor compatibility import。
+- 更新 [src/ui/main-ui/main-ui-flow.js](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree/src/ui/main-ui/main-ui-flow.js)，脚本编辑器“使用模板”按钮现在直接加载 `/scenario-packs/zhuyuanzhang/pack.json`，不再打开文件/目录选择入口。
+- 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree/tests/robustness.test.cjs)，覆盖 UI direct-load wiring 和内置朱元璋发布 manifest URL 导入。
+
+### Impact
+- 创作者可以一键从内置朱元璋模板进入脚本编辑器工作台，不需要手动选择内置包目录。
+- 该批次未新增模板目录、模板选择器或多模板管理流程。
+
+## 2026-07-16 LocationAccessRuntime Reopen Completion
+
+### Changed
+- 更新 [src/application/script-editor/city-building-authoring.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree/src/application/script-editor/city-building-authoring.ts) 和 [src/ui/main-ui/main-ui-flow.js](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree/src/ui/main-ui/main-ui-flow.js)，城市/建筑 access 面板现在可用 JSON 编辑 `conditionExpression`，不再只是只读显示 configured/default。
+- 更新 [src/application/script-editor/runtime-pack-import.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree/src/application/script-editor/runtime-pack-import.ts) 和 [src/application/script-editor/city-building-runtime-materializer.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree/src/application/script-editor/city-building-runtime-materializer.ts)，导入 city NPC residents 到 people 时断开嵌套对象共享，并在 mounted city NPC pool 导出时优先保留显式 resident payload。
+- 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree/tests/robustness.test.cjs)，覆盖 script-editor access `conditionExpression` JSON 写入。
+
+### Impact
+- LocationAccessRuntime 的 city/building conditionExpression 现在具备作者侧设置入口，并继续通过 `location-access.json` 导出、加载和运行时入口守卫。
+- 导入再导出朱元璋 runtime pack 时，`city-npc-pools.json` 的 resident `activityWeight` 不再被 person normalization 间接清空。
+
+## 2026-07-16 City Entry Runtime Override Merge Fix
+
+### Changed
+- 更新 [src/application/content/active-game-content.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree/src/application/content/active-game-content.ts)，让 override scenario pack 提供某个 `cityId` 的 `cityEntries` 时按城市替换基础包同城入口，而不是只按 entry `id` 合并。
+- 更新 [src/main.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree/src/main.ts)、[src/application/presenter/stage-presenters.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree/src/application/presenter/stage-presenters.ts) 和 [src/ui/views/city/city-view.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree/src/ui/views/city/city-view.ts)，城市地点/建筑列表只从当前城市 `cityEntries.targetHouseId` 反查建筑，不再从 `city.houseIds` 或 `data-house-id` 旧入口直进建筑。
+- 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree/tests/robustness.test.cjs)，覆盖 exported scenario pack 激活时不会继续保留同城市默认/template city entries。
+
+### Impact
+- 剧本编辑器导出的 `city-entries.json` 覆盖后，运行时 active content 不再把基础包同城默认地点混回城市地点列表。
+- 城市建筑入口协议统一为 `city-entries.json` 生成的 `data-city-entry-id`，避免旧的 house-id 直达入口绕过新流程。
+
+## 2026-07-16 Script Editor City Building Mount NPC Authoring
+
+### Added
+- 扩展 [src/domain/script-editor-project.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree/src/domain/script-editor-project.ts)，为 `ScriptEditorCityRecord` 新增 city-owned `mountedBuildings` 作者数据结构。
+- 扩展 [src/application/script-editor/city-building-authoring.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree/src/application/script-editor/city-building-authoring.ts)，新增挂载建筑、挂载 NPC、primary NPC 的归一化和编辑 helper。
+- 在 [src/ui/main-ui/main-ui-flow.js](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree/src/ui/main-ui/main-ui-flow.js) 的城市 profile 面板新增挂载建筑与人物编辑区，支持通过下拉选择建筑、挂载 NPC，并从已挂载 NPC 中选择主 NPC。
+- 新增 [tests/city-building-mount-authoring.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree/tests/city-building-mount-authoring.test.cjs)，覆盖 city-owned mounted building/NPC/primary NPC 作者数据和 UI 控件入口。
+
+### Changed
+- 更新 [package.json](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/codex-mod-first-dev-20260716-sync-worktree/package.json)，将新的 mount authoring 测试纳入默认 `npm test`。
+
+### Impact
+- 创作者可以在城市详情页维护“城市 -> 挂载建筑 -> 挂载 NPC -> 主 NPC”的作者数据，不再需要手写 raw JSON。
+- 本批次未实现 runtime-pack export/runtime loading conversion；该工作作为 same-family residue 路由到 `queue.script-editor-city-building-mount-export-runtime-convergence`。
+
+## 2026-07-16 Map City List Compatibility Preservation
+
+### Added
+- 新增 [src/application/map/map-city-marker-view-model.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/map/map-city-marker-view-model.ts)，提供可测试的 `createMapCityMarkers`，明确城市 marker 的 id/name 来自 `CityDefinition`，坐标来自 map-owned `cityCoordinatesById`。
+
+### Changed
+- 更新 [src/ui/views/map/map-view.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/views/map/map-view.ts)，复用 `createMapCityMarkers` 生成地图城市 marker，不迁移 map coordinate ownership。
+- 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，覆盖 map marker 坐标来源，并补强 enter-city confirm 通过 shared runtime dispatch 携带 `activeContentContext.locationAccess` 的 source proof。
+- 更新 [tsconfig.test.json](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tsconfig.test.json)，将 `src/application/map/**/*.ts` 纳入测试构建，以便地图 application helper 可被行为测试直接验证。
+
+### Impact
+- 地图城市列表兼容性获得明确测试保护：城市坐标仍由 map nodes / `cityCoordinatesById` 路径拥有，城市进入仍通过 LocationAccessRuntime 边界检查。
+- 本批次未迁移坐标所有权，未新增城市经营、税收、征服、生产或建筑升级玩法循环。
+
+## 2026-07-16 Script Editor City Building Custom Attribute Authoring
+
+### Added
+- 为 [src/application/script-editor/city-building-authoring.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/city-building-authoring.ts) 新增城市/建筑 `extendedAttributes` 的 append、update、remove helper。
+- 在 [src/ui/main-ui/main-ui-flow.js](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/main-ui/main-ui-flow.js) 的城市/建筑 profile 面板新增自定义属性编辑区，支持新增、删除和编辑 key/label/value。
+
+### Changed
+- 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，覆盖城市/建筑自定义属性 helper、UI/action/input 绑定，以及现有项目 save/load 对自定义属性的保留。
+
+### Impact
+- 创作者可以在城市和建筑详情页编辑自定义属性，不再只能通过 raw JSON 修改 `extendedAttributes`。
+- 本批次未扩大到广泛 runtime-pack export/import validation、条件表达式作者 UI、地图坐标迁移或城市经营/建筑升级玩法。
+
+## 2026-07-16 Script Editor City Building Export Import Validation
+
+### Changed
+- 更新 [src/application/script-editor/runtime-pack-export.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/runtime-pack-export.ts)，当城市/建筑 `extendedAttributes` 包含当前 runtime `CityDefinition` / `HouseDefinition` 无法承载的普通自定义属性时，runtime export validation 改为 fail closed，而不是静默丢弃。
+- 保留城市 `specialDemand` 作为已知投影属性继续导出到 runtime city `specialDemand`。
+- 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，覆盖 unsupported city/building custom attributes 的诊断与导出失败行为。
+
+### Impact
+- 城市/建筑自定义属性在 runtime-pack 边界不再静默丢失；后续若要真正保留普通 custom attributes，需要先扩展 runtime contract 或建立明确的兼容承载策略。
+
+## 2026-07-16 City Building Status Save Runtime Convergence
+
+### Added
+- 新增 [src/domain/city-status.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/domain/city-status.ts) 和 [src/domain/building-status.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/domain/building-status.ts)，为城市与建筑当前值提供与 CharacterStatus 同构的 materialize/merge 状态 overlay。
+
+### Changed
+- 扩展 [src/application/app-shell.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/app-shell.ts)、[src/core/contracts/runtime-result.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/core/contracts/runtime-result.ts)、[src/core/runtime/state-sync-core-seam.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/core/runtime/state-sync-core-seam.ts) 和 [src/core/runtime/state-sync-runtime.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/core/runtime/state-sync-runtime.ts)，让 `cityStatusById` 与 `buildingStatusById` 通过共享 runtime commit 合并到 AppState。
+- 更新 [src/application/startup/startup-session-coordinator.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/startup/startup-session-coordinator.ts) 和 [src/main.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/main.ts)，将非空城市/建筑状态 map 保存到 `SaveEnvelope.modState` 并在启动恢复时回填 AppState。
+- 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，覆盖城市/建筑 status materializer 不突变 authored definitions、runtime commit 合并、startup restore 和 main 保存入口。
+
+### Impact
+- 城市繁荣/危险/需求和建筑运行期等级/损坏/产出倍率等当前值可以通过状态 overlay 持久化，不需要修改 authored `CityDefinition` / `HouseDefinition`。
+- 本批次未实现 custom-attribute authoring 控件、广泛导入导出校验、地图坐标迁移或城市经营/建筑升级玩法循环。
+
+## 2026-07-16 Building To HouseRuntime Adapter
+
+### Added
+- 新增 [src/application/city/city-building-house-runtime-adapter.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/city/city-building-house-runtime-adapter.ts)，复用 city-building placement/access 解析结果，把已允许进入的建筑入口转换为 resolved `HouseRuntimeEntry`。
+- 扩展 [src/core/contracts/house-runtime.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/core/contracts/house-runtime.ts)，新增 `HouseRuntimeEntry` 与 `enter-resolved` 请求，用于让 HouseRuntime 消费已解析的建筑入口。
+
+### Changed
+- 更新 [src/core/runtime/house-runtime.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/core/runtime/house-runtime.ts)，新增 `enterResolvedHouseThroughRuntime`，并缓存 resolved house definition 以支持后续 dispatch/leave；旧的 `enterHouseThroughRuntime(houseId)` 兼容路径保持可用。
+- 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，覆盖 city-building adapter 输出 resolved runtime entry，以及 HouseRuntime 在没有全局 `houseDefinitions` 查表时仍能通过 resolved entry enter + dispatch。
+- 关闭 `queue.script-editor-building-house-runtime-adapter`，将 city/building runtime status/save 收敛分类为 same-family residue，并路由到 `queue.city-building-status-save-runtime-convergence`。
+
+### Impact
+- HouseRuntime 可以作为 post-entry interaction/session/module runner 消费由城市建筑边界解析出的 entry，不再要求所有入口都由 HouseRuntime 从裸 house id 重新承担主解析责任。
+- 本批次未执行 city/building status overlay、custom-attribute authoring、广泛导入导出校验或地图坐标迁移。
+
+## 2026-07-16 LocationAccessRuntime Convergence
+
+### Added
+- 新增 [src/domain/location-access.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/domain/location-access.ts) 和 [src/application/location-access/location-access-runtime.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/location-access/location-access-runtime.ts)，定义运行期 `LocationAccessDefinition` / `LocationAccessResult` 并提供纯 evaluator，支持 literal、compare、all、any、not 访问条件。
+- 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，覆盖运行包导出 `location-access.json`、访问条件求值、building entry 前置拦截，以及 city enter 在 `currentCityId` mutation 前被拦截。
+
+### Changed
+- 更新 runtime pack 导出/导入、scenario pack loader、ContentPack 和 ActiveGameContent，使 script-editor city/building `access.conditionExpression` 作为独立 `locationAccess` runtime family 保留和激活。
+- 更新 [src/application/city/city-building-placement-resolver.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/city/city-building-placement-resolver.ts) 和 [src/core/runtime/navigation-runtime.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/core/runtime/navigation-runtime.ts)，在 building entry 和 city enter 的已覆盖路径中先执行 LocationAccessRuntime，再进入既有 house/story/refusal flow 或 `enterCity` mutation。
+- 关闭 `queue.location-access-runtime-convergence`，将后续 HouseRuntime post-entry adapter 收敛分类为 same-family residue，并路由到 `queue.script-editor-building-house-runtime-adapter`。
+
+### Impact
+- 城市和建筑访问条件不再只停留在作者态；运行包和 active content 可以消费同一套 location access family。
+- 已覆盖的城市进入和建筑进入路径会在状态切换前 fail closed，避免先修改 `currentCityId` 或进入 house flow 后才发现不可进入。
+- 本批次未执行 HouseRuntime 降权、city/building status overlay、地图坐标迁移或广泛导入导出校验。
+
+## 2026-07-16 Script Editor City Building Definition Contract
+
+### Changed
+- 更新 [src/domain/script-editor-project.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/domain/script-editor-project.ts)、[src/application/script-editor/city-building-authoring.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/city-building-authoring.ts) 和 [src/ui/main-ui/main-ui-flow.js](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/main-ui/main-ui-flow.js)，让剧本编辑器城市/建筑作者态记录使用 `baseAttributes`、`profileMap`、`extendedAttributes` 与 `access.conditionExpression`，不再在新契约面暴露 `access.state` 或 visible/disabled/hidden 下拉。
+- 更新 [src/application/script-editor/city-building-runtime-materializer.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/city-building-runtime-materializer.ts)、[src/application/script-editor/runtime-pack-export.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/runtime-pack-export.ts) 和 [src/application/script-editor/runtime-pack-import.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/runtime-pack-import.ts)，将新城市/建筑定义兼容 materialize 为现有 runtime `CityDefinition`、`HouseDefinition`、city entries、NPC pools 和 refusal rules。
+- 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，覆盖无 visibility state 的新定义契约、旧 visible-disabled/hidden 输入吸收到 literal-false conditionExpression、城市属性导出到 runtime cities，以及现有 HouseRuntime 兼容字段导出。
+- 关闭 `queue.script-editor-city-building-definition-restructure`，将运行时 `conditionExpression` 评估和城市/建筑进入前拦截分类为 same-family residue，并路由到 `queue.location-access-runtime-convergence`。
+
+### Impact
+- 后续 LocationAccessRuntime、HouseRuntime adapter、状态 overlay、导入导出校验和地图兼容队列可以依赖最小城市/建筑定义边界。
+- 当前批次只塑形访问条件数据，不执行表达式求值，也不迁移地图坐标所有权或 HouseRuntime 执行所有权。
+
+## 2026-07-15 Script Editor Dialogue Node Progression Guard
+
+### Changed
+- 剧本编辑器 dialogue/story runtime materializer 现在会对非空 `nextNodeId` 和 `choiceTargetNodeId` fail closed，避免把尚未支持的节点推进/分支引用静默导出为线性 runtime scene。
+- 关闭 `queue.script-editor-branching-event-task-chain-convergence` 的 bounded guard slice，并将真实 node-target runtime branching 分类为 same-family residue。
+- 新增 `queue.script-editor-dialogue-node-target-branching-convergence` 作为 active continuation，先从 baseline reconcile 开始选择非兼容式的 runtime 节点目标模型。
+- dialogue node-target branching 的第一段真实 runtime 模型已落地：materializer 会把 dialogue nodes 拆成稳定 runtime scenes，用 `jump` 表达 `nextNodeId`，保留数组顺序的隐式下一节点，并把 bounded single-target `choiceTargetNodeId` 降为 `ChoiceOption.nextSceneId`。
+
+### Impact
+- 当前导出不会再丢失已填写的节点推进意图；不支持的分支会明确阻止导出。
+- 下一步治理焦点收窄到 `nextNodeId/choiceTargetNodeId` 如何真实落到 runtime scene/cursor 目标，而不是直接扩大到完整 event/task 链。
+- 已支持的节点目标引用现在会生成可由现有 scene runner/choice resolver 执行的 runtime progression；缺失目标仍会 fail closed。
+
+## 2026-07-15 Script Editor City Building Placement Resolver
+
+### Added
+- 新增 [src/application/city/city-building-placement-resolver.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/city/city-building-placement-resolver.ts)，提供 `resolveCityBuildingPlacements`、`resolveCityBuildingView`、`canEnterCityBuilding` 和 `resolveCityBuildingNpcs`，让运行期/预览侧通过一个共享 seam 解析城市本地建筑入口、访问结果与 NPC 摘要。
+- 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，覆盖 placement derivation、缺失目标 house fail-closed、访问拒绝、NPC 摘要、单个 view 解析和缺失 placement 返回 `null`。
+- 新增 [docs/blueprints/queues/script-editor-dialogue-story-structure-convergence-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-dialogue-story-structure-convergence-queue.md)，作为后续 dialogue/story runtime-consumable structure 收敛的 active queue，当前任务为 `boundary-baseline-reconcile`。
+- 新增 [src/application/script-editor/dialogue-story-runtime-materializer.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/dialogue-story-runtime-materializer.ts)，把编辑器 dialogue/story/textEntries 到 runtime `SceneDefinition[]` 与 `textEntries` map 的最小 materialization 从 exporter 私有逻辑提升为共享 seam。
+- 新增 [docs/blueprints/queues/script-editor-dialogue-story-runtime-handoff-convergence-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-dialogue-story-runtime-handoff-convergence-queue.md)，作为后续 dialogue/story runtime handoff/progression 收敛的 active queue，当前任务为 `boundary-baseline-reconcile`。
+
+### Changed
+- resolver 当前以 `CityEntryDefinition.id` 作为 placement id，连接现有 `cityEntries`、`houses`、`cityNpcPools` 和 `houseAccessRefusalRules`，避免消费者继续分散手工拼接这些 runtime family。
+- [src/application/script-editor/runtime-pack-export.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/runtime-pack-export.ts) 现在复用 dialogue/story runtime materializer 生成 scenes/text-entries，继续对 choice、followUps、story-node relations、缺失 text 和重复 id fail closed。
+- 关闭 `queue.script-editor-city-building-placement-resolver-convergence`，将持久 placement schema migration、override layering、dialogue inheritance 和 broader consumer migration 分类为 cross-family residue，并把 version 返回 promotion review，推荐下一步筛选 `queue.script-editor-dialogue-story-structure-convergence`。
+- 关闭 `queue.script-editor-dialogue-story-structure-convergence`，将 full runtime handoff/progression、branching choices、followUps、story-node relation lowering 和 runtime-scene import reconstruction 分类为 cross-family residue，并把 version 返回 promotion review，推荐下一步筛选 `queue.script-editor-dialogue-story-runtime-handoff-convergence`。
+
+### Impact
+- 城市/建筑运行期视图现在有一个可复用的 placement resolver 基线；缺失 city entry 或 target house 时会 fail closed。
+- dialogue inheritance 和更完整的 placement schema 仍是后续队列治理项，不被隐藏在本次 bounded resolver slice 中。
+- 当前最小 narrative export 能继续通过共享 materializer 输出 runtime scenes/textEntries；完整剧情推进、分支和导入重建仍需后续队列处理。
+
+## 2026-07-15 Script Editor Condition Runtime Evaluation Convergence
+
+### Changed
+- 更新 [src/application/script-editor/runtime-pack-export.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/runtime-pack-export.ts)，让剧本编辑器事件 `conditionGroups` 中支持的 typed condition nodes 导出为 runtime `EventConditionNode`，包括 group、flag、variable、event-fired、chapter、location、character-exists、character-available、character-in-city 和 mission-status。
+- 保持 task-only 条件节点（如 signal）在事件导出边界 fail closed，不会被静默当作通过条件。
+- 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，覆盖事件条件导出到 `events.json`、不支持条件诊断、以及导出的条件在 `selectTriggeredEvents` 中被 runtime evaluator 实际评估。
+- 关闭 `queue.script-editor-condition-runtime-evaluation-convergence`，将更宽的 city/building/story/scenario 条件消费分类为 cross-family residue，并把版本回收到 promotion review。
+
+### Impact
+- 剧本编辑器中为事件配置的基础 typed 条件不再在导出时被整体拒绝；导出的剧本包会携带可运行期评估的事件条件。
+- 不属于事件运行期条件的 task-only 节点仍然阻止导出，避免生成看似有效但运行时不会正确判断的剧本包。
+
+## 2026-07-15 CharacterStatus Save And Runtime Continuation
+
+### Changed
+- 新增 [src/domain/character-status.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/domain/character-status.ts)，将 `CharacterStatus`、materializer 和 patch merge 作为 domain 纯契约提供，同时保留 [src/application/character/character-status.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/character/character-status.ts) 的兼容导出入口。
+- 更新 [src/application/app-shell.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/app-shell.ts)、[src/core/contracts/runtime-result.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/core/contracts/runtime-result.ts)、[src/core/runtime/state-sync-core-seam.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/core/runtime/state-sync-core-seam.ts) 和 [src/core/runtime/state-sync-runtime.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/core/runtime/state-sync-runtime.ts)，让 `AppState.characterStatusById` 成为运行期状态仓，并在共享 `commitRuntimeRequest` 边界合并补丁。
+- 更新城市化缘 settlement、playable runtime 与 interactive runtime，使化缘完成时产生并透传金钱和耐力 `CharacterStatus` 补丁；未改变 playableId、family、registry、owner 或 handoff。
+- 更新 [src/core/save/browser-save-record.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/core/save/browser-save-record.ts)、[src/application/startup/startup-session-coordinator.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/startup/startup-session-coordinator.ts) 和 [src/main.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/main.ts)，将非空状态保存到 `SaveEnvelope.modState.characterStatusById`，并在恢复时覆盖到新创建的人物运行视图，不修改 authored definition。
+- 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，覆盖无状态新游戏、补丁合并、城市化缘端到端聚合、浏览器存档往返、启动恢复和 authored definition 不变性。
+
+### Impact
+- 已覆盖的角色金钱与耐力变化可以跨浏览器存档和启动恢复保留，不再只存在于瞬时 `characterDefinitions` 视图中。
+- 新游戏或没有状态补丁的 runtime commit 不会创建空 `characterStatusById` 记录。
+- 其他 house/playable/object-family 的状态迁移未在本批扩展，后续按 Blueprint residue 分类继续治理。
+
+## 2026-07-15 Script Editor Project Completion State Gating
+
+### Changed
+- 更新 [src/domain/script-editor-project.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/domain/script-editor-project.ts)、[src/application/script-editor/editor-project-save.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/editor-project-save.ts)、[src/application/script-editor/editor-project-loader.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/editor-project-loader.ts) 和 [src/application/script-editor/project-completion-state.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/project-completion-state.ts)，将剧本编辑器项目完成状态沉淀为项目定义与 `project.json` manifest 的 durable truth。
+- 更新 [src/application/script-editor/minimal-workflow.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/minimal-workflow.ts) 与 [src/application/script-editor/runtime-pack-import.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/runtime-pack-import.ts)，让新建项目和从 runtime pack 导入的编辑器项目都以 `draft` 状态进入编辑流。
+- 更新 [src/ui/main-ui/main-ui-flow.js](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/main-ui/main-ui-flow.js)，让“导出剧本包”成为唯一会把项目标记为 `complete` 的 UI 路径，并且只在 runtime package 成功写出后再回写项目草稿；保存、打开、导入和运行预览都不隐式标记完成。
+- 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，补入 completion state 保存/加载持久化和 export-only 完成标记的回归覆盖。
+- 关闭 `queue.script-editor-project-completion-state-gating`，记录该队列无 same-family residue，并将 `target.script-editor-authoring-data-structure-unification` 返回 promotion review。
+- 新增 [docs/blueprints/queues/script-editor-unified-field-mapping-table-freeze-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-unified-field-mapping-table-freeze-queue.md)，并将其作为新的 active queue 启动，当前 active task 为 `task.script-editor-unified-field-mapping-table-freeze.boundary-baseline-reconcile`。
+- 新增 [src/application/script-editor/field-mapping.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/field-mapping.ts)，冻结第一段共享字段定义契约：字段 id、canonical key、label、group、valueType、order、editability/runtime mutability 预留、默认值、enum options 与 reference family。
+- 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，补入人物字段代表切片测试，覆盖 base string、profile text/reference、stat number、skill number、enum、boolean、reference-list 与 key-value-list custom 字段，并验证重复 id、缺失 metadata、非法 valueType 和非法 order 会 fail closed。
+- 关闭 `queue.script-editor-unified-field-mapping-table-freeze`，记录字段映射 UI 消费和对象族迁移属于 cross-family residue，并将 version 返回 promotion review，推荐下一步筛选 `queue.script-editor-character-definition-status-convergence`。
+- 新增 [docs/blueprints/queues/script-editor-character-definition-status-convergence-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-character-definition-status-convergence-queue.md)，将 `queue.script-editor-character-definition-status-convergence` 提升为当前 active queue，并启动 `task.script-editor-character-definition-status-convergence.boundary-baseline-reconcile`。
+- 新增 [src/application/character/character-status.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/character/character-status.ts)，提供 `CharacterStatus` overlay、`characterStatusById` merge helper，以及 status-aware materialized character view。
+- 更新 [src/application/script-editor/person-authoring.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/person-authoring.ts)、[src/application/script-editor/runtime-pack-import.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/runtime-pack-import.ts) 与 [src/application/script-editor/runtime-pack-export.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/runtime-pack-export.ts)，让剧本编辑器人物记录在导入/导出边界 materialize 为 runtime `CharacterDefinition`，最小人物也会导出完整 stats/skills/stamina/default functions 字段。
+- 更新 [src/application/player/player-stamina.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/player/player-stamina.ts) 与 [src/application/grain-shop/grain-shop-mutations.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/grain-shop/grain-shop-mutations.ts)，让体力、金钱和算术技能的共享 mutation 返回 `characterStatusById` patch，同时保留既有 materialized `characterDefinitions` 兼容输出。
+- 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，补入 runtime export 角色 shape、CharacterStatus overlay materialization、以及共享 mutation status patch 输出的回归覆盖。
+- 关闭 `queue.script-editor-character-definition-status-convergence` 的 bounded definition/materializer slice；fresh verification 为 typecheck 通过、512 tests 全绿、Blueprint/plan/governance checks 全通过。
+- 将尚未接入 canonical save state 与 startup restore 的 CharacterStatus 持久化问题分类为 same-family residue，并新增 [docs/blueprints/queues/script-editor-character-status-save-runtime-continuation-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-character-status-save-runtime-continuation-queue.md) 作为唯一 active continuation。
+
+### Impact
+- 后续 authoring/data convergence 队列可以依赖项目级 `draft/complete` truth，而不需要从缓存、UI 状态或 runtime 包存在性推断项目是否完成。
+- 未完成项目保持可继续编辑的草稿语义；只有成功导出的 runtime 剧本包会把项目推进到完成状态。
+- 后续角色、城市/建筑、叙事、事件和条件队列会先消费共享字段映射契约，而不是继续在各面板里复制字段标签、类型和排序。
+- 当前字段映射实现仍是 bounded representative slice；全量城市/建筑/叙事/小游戏 UI 迁移保留给后续对象族队列。
+- 当前 Blueprint 已进入角色定义/状态收敛队列；已落地第一段 CharacterDefinition/CharacterStatus selector/materializer 与 mutation patch 输出，后续 closeout 会分类仍未迁移的 broad runtime consumer 和完整角色 UI residue。
+- 当前 active queue 已切换到 CharacterStatus save/runtime continuation；下一步先确定 `modState`、state-sync commit、SaveEnvelope 和 startup restore 的唯一状态归属，再进行 TDD 实现。
+
+## 2026-07-15 Script Editor Authoring Data Structure Unification Version Activation
+
+### Changed
+- 新增 [docs/blueprints/specs/2026-07-15-script-editor-authoring-data-structure-unification-target.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/specs/2026-07-15-script-editor-authoring-data-structure-unification-target.md)，将既有 authoring/data-structure unification draft 正式提升为 `target.script-editor-authoring-data-structure-unification`。
+- 新增 [docs/blueprints/plans/2026-07-15-script-editor-authoring-data-structure-unification-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-15-script-editor-authoring-data-structure-unification-target-plan.md)，记录新 version 的候选队列组合，并把 `queue.script-editor-project-cache-save-export-preview` 设为首个 pending admission subject。
+- 更新 [docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md) 与 [docs/blueprints/blueprint.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/blueprint.md)，将 Blueprint 主链从已关闭的 runtime-pack-unification version 切换到新的 authoring/data-structure unification version。
+- 更新 [docs/blueprints/specs/2026-07-14-script-editor-authoring-data-structure-unification-draft.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/specs/2026-07-14-script-editor-authoring-data-structure-unification-draft.md)，把 draft 状态标记为已提升的历史来源，避免后续把草稿误当作 live truth。
+- 新增 [docs/blueprints/queues/script-editor-project-cache-save-export-preview-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-project-cache-save-export-preview-queue.md)，并将其提升为新 version 的首个 active queue，当前 active task 为 `task.script-editor-project-cache-save-export-preview.boundary-baseline-reconcile`。
+- 更新 [src/application/script-editor/project-workspace-library.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/project-workspace-library.ts)，让剧本编辑器项目库条目记录 package location 与 stale/valid 状态，并提供继续编辑 gating helper。
+- 更新 [src/ui/main-ui/main-ui-flow.js](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/main-ui/main-ui-flow.js)，让剧本编辑器导出 runtime 包前先把当前项目草稿写回已有项目目录 handle，避免导出内容和最近编辑状态脱节。
+- 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，新增项目库 location/stale validity 与导出前保存草稿的回归覆盖。
+- 关闭 `queue.script-editor-project-cache-save-export-preview` 的第一段 bounded slice，并将 create-at-save-path package skeleton、stale path probing、imported package edit-in-place、runtime preview-from-disk 等 same-family residue 路由为 `queue.script-editor-project-cache-save-export-preview-continuation` 候选。
+- 新增 [docs/blueprints/queues/script-editor-project-cache-save-export-preview-continuation-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-project-cache-save-export-preview-continuation-queue.md)，并将其作为 same-family continuation active queue 启动，当前 active task 为 `task.script-editor-project-cache-save-export-preview-continuation.boundary-baseline-reconcile`。
+- 关闭 `queue.script-editor-project-cache-save-export-preview-continuation` 的 bounded continuation slice，记录 durable save-location 与 stale continue gating 已落地，剩余 create-at-save-path package skeleton、imported package edit-in-place、runtime preview-from-disk 仍属于 same-family residue。
+- 新增 [docs/blueprints/queues/script-editor-durable-package-workflow-continuation-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-durable-package-workflow-continuation-queue.md)，并将其作为新的 active queue 启动，当前 active task 为 `task.script-editor-durable-package-workflow-continuation.boundary-baseline-reconcile`。
+- 更新 [src/ui/main-ui/main-ui-flow.js](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/main-ui/main-ui-flow.js)、[src/application/script-editor/workspace-shell.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/workspace-shell.ts) 和 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，让新建剧本先创建可保存项目骨架，“打开草稿”改为可写目录打开并保留目录 handle，工作台新增“运行预览”并在启动前从已保存项目目录重读再加载 runtime pack。
+- 关闭 `queue.script-editor-durable-package-workflow-continuation`，记录 package skeleton、writable-directory draft edit-in-place 与 runtime preview-from-disk 已落地且无 same-family residue；version 回到 promotion review 以筛选下一候选队列。
+- 新增 [docs/blueprints/queues/script-editor-project-completion-state-gating-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-project-completion-state-gating-queue.md)，并将其作为新的 active queue 启动，当前 active task 为 `task.script-editor-project-completion-state-gating.boundary-baseline-reconcile`。
+
+### Impact
+- 当前 Blueprint 已进入新的 open successor version；project package persistence 相关三个队列均已关闭，剧本编辑器后续 authoring/data convergence 队列可以依赖稳定的 editable project package truth；当前继续推进项目完成状态 gating。
+- 后续 script-editor authoring/data-structure 工作不再挂回已关闭的 `target.script-editor-runtime-pack-unification`。
+
+## 2026-07-15 Script Editor Runtime Pack Unification Version Closeout
+
+### Changed
+- 更新 [docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md)，将 `target.script-editor-runtime-pack-unification` 从 `open` 正式切换为 `done`，记录所有 10 个候选队列均已关闭、无 active task、无剩余 lawful same-version candidate，并写入 2026-07-15 的显式人工关闭确认。
+- 更新 [docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md) 与 [docs/blueprints/blueprint.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/blueprint.md)，保留最新关闭版本作为历史指针，并明确后续 fresh work 必须先进入 successor version 分类/开版，而不是继续向该已关闭版本追加队列。
+
+### Impact
+- `target.script-editor-runtime-pack-unification` 已正式关闭；在当前 Blueprint 下不再允许继续提升任何 same-version runtime-pack-unification queue。
+- 当前脚本编辑器 runtime-pack 统一成果已经沉淀为历史基线，后续相关工作必须通过新版本或显式治理重开记录推进。
+
+## 2026-07-14 Script Editor Scenario Profile Startup Export
+
+### Changed
+- 更新 [src/application/script-editor/runtime-pack-export.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/runtime-pack-export.ts) 和 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，让脚本编辑器导出 `scenario-profile.json` 时保留已声明的 runtime startup 字段，包括 `entryEventId`、`initialCalendar`、`initialPlayerCoordinate`、`initialUi`、`initialRuntime`、`openingFlowId` 和 `tags`。
+- 新增 [docs/blueprints/queues/script-editor-scenario-profile-startup-export-convergence-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-scenario-profile-startup-export-convergence-queue.md)，并同步 [docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md) 与 [docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)，将 scenarioProfile startup export convergence 队列收口为 `done`。
+
+### Impact
+- 从真实 Zhu Yuanzhang 剧本包导入到脚本编辑器后再导出的剧本包，现在通过主菜单 JSON 导入时会保留 `entryEventId`，启动协调器能进入 `event.story.zhu_yuanzhang.ordination` 开场事件。
+- 该修复不通过启动器猜测开场事件，也不新增兼容回退；启动所需 truth 由导出的 scenarioProfile 正式携带。
+
+## 2026-07-14 Script Editor Minimal Narrative Export
+
+### Changed
+- 更新 [src/application/script-editor/runtime-pack-export.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/runtime-pack-export.ts)、[src/application/script-editor/minimal-workflow.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/minimal-workflow.ts) 和 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，把最简剧本编辑器项目中的 `dialogues/storyNodes` 从 blanket deferred export 提升为正式最小 lowering：可导出的 dialogue 节点会生成 runtime `SceneDefinition` actions，并继续使用正式 `text-entries.json`。
+- 新增 [docs/blueprints/queues/script-editor-narrative-authoring-export-convergence-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-narrative-authoring-export-convergence-queue.md)，并同步 [docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md) 与 [docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)，将 narrative authoring export convergence 队列收口为 `done`。
+
+### Impact
+- 新建最简单剧本现在可以导出为 startup-loadable 剧本包，并可通过 `loadScenarioPackFromFiles` 加载。
+- 更复杂的 narrative 形状，如 choice 节点、follow-up lowering、story-node relation lowering，仍保持 fail-closed，等待后续更宽的 narrative compiler 队列处理。
+
+## 2026-07-14 Script Editor Non-Activities Runtime Family Export
+
+### Changed
+- 更新 [src/domain/script-editor-project.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/domain/script-editor-project.ts)、[src/application/script-editor/editor-project-loader.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/editor-project-loader.ts)、[src/application/script-editor/minimal-workflow.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/minimal-workflow.ts)、[src/application/script-editor/runtime-pack-import.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/runtime-pack-import.ts)、[src/application/script-editor/runtime-pack-export.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/runtime-pack-export.ts)、[src/application/scenario/scenario-pack-loader.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/scenario/scenario-pack-loader.ts) 和 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，把 `cards`、`cityEntries`、`cityNpcPools`、`cityPortraits`、`historicalCharacterIdByCharacterId`、`historicalCharacters`、`historicalCityRosters`、`houseAccessRefusalRules`、`houseModuleDefaults`、`maps`、`scenes`、`valuables` 提升为脚本编辑器正式项目/运行时家族，并让导入导出走 canonical split files。
+- 导入场景包目录时，地图资产引用会被收进项目内的 `data:` URL，导出的剧本包可由 `loadScenarioPackFromFiles` 直接加载，不再依赖原导入目录的 asset 文件。
+- 更新 [docs/blueprints/queues/script-editor-non-activities-runtime-family-export-convergence-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-non-activities-runtime-family-export-convergence-queue.md)、[docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md) 和 [docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)，将该队列收口为 `done` 并把版本计划回收到 promotion review。
+
+### Impact
+- 真实 Zhu Yuanzhang 剧本包现在可以走 `import -> script-editor project -> export -> loadScenarioPackFromFiles`，且这 12 个 runtime family 不再进入 `compatibilityImport.unresolvedFamilies`。
+- 新建最简单剧本的 `dialogues/storyNodes` lowering 仍属于已记录的 `queue.script-editor-narrative-authoring-export-convergence` 候选，不在本次队列内解决。
+
+## 2026-07-14 Script Editor Activities Runtime Export
+
+### Changed
+- 更新 [src/domain/script-editor-project.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/domain/script-editor-project.ts)、[src/application/script-editor/runtime-pack-import.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/runtime-pack-import.ts)、[src/application/script-editor/runtime-pack-export.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/runtime-pack-export.ts)、[src/application/script-editor/workspace-shell.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/workspace-shell.ts)、[src/application/script-editor/editor-project-loader.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/editor-project-loader.ts)、[src/application/script-editor/minimal-workflow.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/minimal-workflow.ts) 和 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，把 `activities` 提升为脚本编辑器的一等项目/运行时家族，并让导入、导出、工作区和回归测试都走正式的 `activities.json` 流程。
+- 更新 [docs/blueprints/queues/script-editor-activities-authoring-export-convergence-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-activities-authoring-export-convergence-queue.md) 与 [docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md)，将 activities 收口为已完成的队列，并把版本计划回收到 promotion-review。
+- 更新 [docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)，移除 activities 队列的 active entry，改回版本计划入口。
+
+### Impact
+- 导入的 Zhu Yuanzhang 剧本包不再报 `Unresolved imported runtime family "activities"`。
+- 当前导出仍会被其他跨家族未解析运行时家族阻断：`cards`、`cityEntries`、`cityNpcPools`、`cityPortraits`、`historicalCharacterIdByCharacterId`、`historicalCharacters`、`historicalCityRosters`、`houseAccessRefusalRules`、`houseModuleDefaults`、`maps`、`scenes`、`valuables`。
+
+## 2026-07-10 Script Editor Freeze Scope Clarification
+
+## 2026-07-13 Script Editor Implementation Version Opening
+
+## 2026-07-14 Script Editor PRD Alignment Version Closeout
+
+### Changed
+- 更新 [docs/blueprints/queues/script-editor-prd-workbench-ui-visual-alignment-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-prd-workbench-ui-visual-alignment-queue.md)，将 `queue.script-editor-prd-workbench-ui-visual-alignment` 从 active 收口为 `done`，记录其 creator-first workbench visual convergence 已完成、无剩余 same-version residue，且仓库同步批次已由提交 `570bf9a5` 推送到 `origin/mod-first-dev`。
+- 更新 [docs/blueprints/plans/2026-07-13-script-editor-prd-alignment-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-13-script-editor-prd-alignment-target-plan.md)，把 `target.script-editor-prd-alignment` 从 `open` 正式切换为 `done`，补齐 version closeout judgement、显式人工关闭确认、未来路由，以及最后一个 visual queue 的关闭历史真值。
+- 更新 [docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md) 与 [docs/blueprints/blueprint.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/blueprint.md)，移除旧 PRD alignment active queue 入口，把该 version 改写为关闭历史证据。
+
+### Impact
+- `target.script-editor-prd-alignment` 已正式关闭；在当前 Blueprint 下不再允许继续提升任何 same-version PRD 对齐 queue。
+- 当前 script-editor 的 PRD 对齐成果现在完整沉淀为历史基线，后续工作必须从 successor version 推进，而不是回到已关闭的 PRD alignment version 内继续补丁式扩张。
+
+## 2026-07-14 Script Editor Runtime Pack Unification Version Opening
+
+### Changed
+- 新增 [docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md)，将 `target.script-editor-runtime-pack-unification` 正式写成新的 live version plan，并记录 6 条候选 queue、首个 lawful recommendation `queue.script-editor-runtime-family-contract-alignment`，以及当前仓内仍存在的 admission basis：`compatibilityImport` 残留、`activities` 仍走 bounded compatibility path、`basePackId` 仍未形成显式继承契约、`src/content/pack-content-access.ts` 仍保留默认包直接导入。
+- 更新 [docs/blueprints/specs/2026-07-14-script-editor-runtime-pack-unification-target.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/specs/2026-07-14-script-editor-runtime-pack-unification-target.md)，把它从“successor-candidate draft”改写为已于 `2026-07-14` 通过 Blueprint 指针提升的 live successor version truth。
+- 更新 [docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md) 与 [docs/blueprints/blueprint.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/blueprint.md)，将 live 入口切换到 `target.script-editor-runtime-pack-unification`，并明确当前没有 active queue、下一步应从新 version plan 发起 admission review。
+
+### Impact
+- Blueprint 当前 live version 已从“PRD 对齐”切换为“runtime pack 最终统一”；resume 链现在应从 `project-progress -> blueprint -> 2026-07-14 runtime-pack-unification version plan` 继续，而不是回到旧 queue。
+- 后续 script-editor 工作的合法起点不再是 UI/PRD 细节补丁，而是 scenario-pack family contract、runtime-pack export、basePackId 继承、fixed-pack consumer deprivileging、compatibility retirement 这些收口型架构队列。
+
+## 2026-07-14 Script Editor Runtime Family Contract Queue Admission
+
+### Changed
+- 新增 [docs/blueprints/queues/script-editor-runtime-family-contract-alignment-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-runtime-family-contract-alignment-queue.md)，将 `queue.script-editor-runtime-family-contract-alignment` 写成当前 live queue truth，并把边界明确收敛在“mandatory runtime families / inheritable families / unsupported families / fail-closed obligations”的最终契约冻结，不允许顺手扩张到 export 实现、consumer rewiring 或 authoring 结构收口。
+- 更新 [docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md)、[docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)，将 `target.script-editor-runtime-pack-unification` 从 version-level `promotion-review` 切回 `active-execution`，并把当前入口同步到新 admitted queue。
+- 同步 version plan 的 Queue Promotion Ledger、Candidate Classification Record、候选恢复说明与历史提升记录，使首个 queue 明确呈现为 `active` / `admitted + queue active`，并将“无 active queue”限定为 admission 前的历史启动状态。
+
+### Impact
+- Blueprint 当前不再停在 successor version 的空 version-review 状态；当前 live entry 已经收敛到 `task.script-editor-runtime-family-contract-alignment.boundary-baseline-reconcile`。
+- 后续 script-editor runtime-pack 统一工作必须先冻结最终 family contract，再继续 authoring convergence、export unification、base-pack inheritance、fixed-pack deprivileging、compatibility retirement 这些后续 queue。
+
+## 2026-07-14 Script Editor Runtime Family Contract Baseline Reconcile
+
+### Changed
+- 更新 [docs/blueprints/queues/script-editor-runtime-family-contract-alignment-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-runtime-family-contract-alignment-queue.md)，将 `task.script-editor-runtime-family-contract-alignment.boundary-baseline-reconcile` 标记为 completed，并把当前 active task 推进到 `task.script-editor-runtime-family-contract-alignment.final-runtime-family-contract-freeze`。
+- 记录 baseline evidence：`activities` 仍作为 compatibility residue 保留、`compatibilityImport.unresolvedFamilies` 仍在 export 阶段 fail closed、`basePackId` 仍主要是 metadata passthrough、`src/content/pack-content-access.ts` 仍存在固定 builtin scenario-pack 直接导入，因此下一步仍应写 explicit runtime-family contract，而不是跳入 export implementation 或 consumer deprivileging。
+
+### Impact
+- 当前 runtime-family-contract queue 已正式越过 baseline reconcile，接下来只能在 bounded contract-writing 范围内冻结 mandatory / inheritable / unsupported family truth 和 fail-closed obligations。
+- 后续 authoring convergence、runtime-pack export unification、base-pack inheritance governance、fixed-pack consumer deprivileging、compatibility retirement 仍保持候选队列，不得在当前任务内顺手实现。
+
+## 2026-07-14 Script Editor Runtime Family Contract Freeze
+
+### Changed
+- 更新 [docs/scenario-pack-unified-format.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/scenario-pack-unified-format.md)，新增 Runtime Family Contract，明确 mandatory runtime families、explicitly inheritable runtime families、unsupported/transitional families 与 fail-closed obligations。
+- 更新 [docs/blueprints/specs/2026-07-14-script-editor-runtime-pack-unification-target.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/specs/2026-07-14-script-editor-runtime-pack-unification-target.md)，把 unsupported/transitional families 与 fail-closed obligations 写入 active version spec，供后续 authoring/export/inheritance/consumer/compatibility 队列消费。
+- 更新 [docs/blueprints/queues/script-editor-runtime-family-contract-alignment-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-runtime-family-contract-alignment-queue.md)，将 `task.script-editor-runtime-family-contract-alignment.final-runtime-family-contract-freeze` 标记为 completed，并把 active task 推进到 `queue-closeout-and-handoff`。
+
+### Impact
+- 当前队列已经落下最终 family contract 文档真值；后续实现队列不得再用 silent empty arrays、hidden builtin defaults、compatibilityImport 或 private lowering dialect 绕开该契约。
+- 剩余工作转入 queue closeout/handoff：验证契约、分类仍存在的 residue，并把后续候选路由交回 version review。
+
+## 2026-07-14 Script Editor Runtime Family Contract Queue Closeout
+
+### Changed
+- 更新 [docs/blueprints/queues/script-editor-runtime-family-contract-alignment-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-runtime-family-contract-alignment-queue.md)，将 `queue.script-editor-runtime-family-contract-alignment` 从 active 收口为 `done`，记录 bounded contract-definition slice 已验证并关闭。
+- 更新 [docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md) 与 [docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)，将 live version 从 active-execution 切回 promotion-review，清空 active_queue，并把 downstream recommendation 指向 `queue.script-editor-runtime-family-authoring-convergence`。
+
+### Impact
+- 当前 Blueprint 已无 active queue；后续必须从 runtime-pack-unification version plan 做下一条 downstream queue admission review，而不是继续在已关闭的 runtime-family-contract queue 内扩张。
+- 剩余 residue 被分类为 cross-family：authoring convergence、export unification、base-pack inheritance、fixed-pack consumer deprivileging、compatibility retirement 仍按候选队列顺序推进。
+
+## 2026-07-14 Script Editor Runtime Family Authoring Convergence Queue Admission
+
+### Changed
+- 新增 [docs/blueprints/queues/script-editor-runtime-family-authoring-convergence-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-runtime-family-authoring-convergence-queue.md)，将 `queue.script-editor-runtime-family-authoring-convergence` 写成当前 live queue truth，并把范围收敛在作者面并行结构退场与 runtime 归一之前的最小 lawful 收口，不允许顺手扩张到 export unification、base-pack inheritance 或 consumer deprivileging。
+- 更新 [docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md) 与 [docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)，将 live entry 从已关闭的 runtime-family-contract queue 切换到 authoring-convergence queue，并记录当前 active task。
+- 补充 version plan 的 admission review record，明确 fresh evidence 来自 `src/domain/script-editor-project.ts`、`src/application/script-editor/runtime-pack-import.ts`、`src/application/script-editor/runtime-pack-export.ts`、`src/application/script-editor/workspace-shell.ts` 与 `src/ui/main-ui/main-ui-flow.js` 中仍然并存的 authoring-only 和 runtime family surface。
+
+### Impact
+- Blueprint 当前重新进入 active execution，但控制权已经从 contract freeze 转到 authoring convergence；后续代码/文档动作必须先收口作者面并行结构，再谈 export unification。
+- 当前 active queue 文档已明确下一步任务序列，避免把 authoring convergence 误当成 exporter 或 consumer 的实现 queue。
+
+## 2026-07-14 Script Editor Runtime Family Authoring Baseline Reconcile
+
+### Changed
+- 更新 [docs/blueprints/queues/script-editor-runtime-family-authoring-convergence-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-runtime-family-authoring-convergence-queue.md)，将 `task.script-editor-runtime-family-authoring-convergence.boundary-baseline-reconcile` 标记为 completed，并把当前 active task 推进到 `task.script-editor-runtime-family-authoring-convergence.authoring-parallel-structure-retirement-map`。
+- 更新 [docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md)，记录当前 queue 进展：作者面并行结构仍然存在，且该队列仍比 export unification、base-pack inheritance、fixed-pack consumer deprivileging、compatibility retirement 更窄。
+
+### Impact
+- 当前 authoring-convergence queue 已完成 baseline reconcile；下一步只能写 authoring-only parallel structure 的退场映射，不能提前进入导出实现或消费者改线。
+
+## 2026-07-14 Script Editor Runtime Family Authoring Retirement Map
+
+### Changed
+- 更新 [docs/blueprints/queues/script-editor-runtime-family-authoring-convergence-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-runtime-family-authoring-convergence-queue.md)，新增 Authoring Parallel Structure Retirement Map，明确 `people/cities/buildings/events/quests/textEntries` 可按 runtime-owned contract 收口，`dialogues/storyNodes/minigames` 必须交给后续 export unification 下沉，`conditionGroups/effectBundles` 只能作为 compiler input，`compatibilityImport.unresolvedFamilies` 必须从日常 authoring truth 退回迁移证据。
+- 更新 [docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md)，记录 retirement-map task 完成，并把当前 active task 推进到 `task.script-editor-runtime-family-authoring-convergence.queue-closeout-and-handoff`。
+
+### Impact
+- 当前 queue 已有明确的 authoring 结构退场图；剩余工作是 closeout/handoff，把仍需后续实现的 export、inheritance、consumer、compatibility residue 路由回版本级 review。
+
+## 2026-07-14 Script Editor Runtime Family Authoring Queue Closeout
+
+### Changed
+- 更新 [docs/blueprints/queues/script-editor-runtime-family-authoring-convergence-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-runtime-family-authoring-convergence-queue.md)，将 `queue.script-editor-runtime-family-authoring-convergence` 从 active 收口为 `done`，记录 bounded authoring-convergence slice 已完成并 verified。
+- 更新 [docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md) 与 [docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)，将 live version 从 active-execution 切回 promotion-review，清空 active_queue，并把 downstream recommendation 指向 `queue.script-editor-runtime-pack-export-unification`。
+
+### Impact
+- 当前 Blueprint 再次无 active queue；后续必须从 runtime-pack-unification version plan 做 export-unification admission review，而不是继续在已关闭的 authoring-convergence queue 内扩张。
+- 剩余 residue 被分类为 cross-family：export unification、base-pack inheritance governance、fixed-pack consumer deprivileging、compatibility retirement 仍按后续候选队列推进。
+
+## 2026-07-14 Script Editor Runtime Pack Export Unification Queue Admission
+
+### Changed
+- 新增 [docs/blueprints/queues/script-editor-runtime-pack-export-unification-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-runtime-pack-export-unification-queue.md)，将 `queue.script-editor-runtime-pack-export-unification` 写成当前 live queue truth，并把范围收敛在 formal startup-consumable scenario-pack export contract，不允许扩张进 basePackId inheritance、fixed-pack consumer deprivileging 或 compatibility retirement。
+- 更新 [docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md) 与 [docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)，将 live entry 从 version-level promotion-review 切回 active-execution，并记录当前 active task。
+- 记录 fresh evidence：`src/application/script-editor/runtime-pack-export.ts` 当前仍写空 `scenes.json`、未在 manifest 中输出 `activities`、对 `dialogues/minigames/storyNodes` fail closed，并且仍会因 `compatibilityImport.unresolvedFamilies` 阻塞 export；而 startup loader 已能消费 manifest-driven scenario-pack。
+
+### Impact
+- Blueprint 当前重新进入 active execution，但控制权已经从 authoring convergence 转到 runtime-pack export unification。
+- 后续动作必须先冻结 formal startup-consumable export contract，再决定是否进入实现或 closeout；不能用空 scenes、缺失 activities 或 compatibility residue 作为最终 runtime truth。
+
+## 2026-07-14 Script Editor Runtime Pack Export Baseline Reconcile
+
+### Changed
+- 更新 [docs/blueprints/queues/script-editor-runtime-pack-export-unification-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-runtime-pack-export-unification-queue.md)，将 `task.script-editor-runtime-pack-export-unification.boundary-baseline-reconcile` 标记为 completed，并把当前 active task 推进到 `task.script-editor-runtime-pack-export-unification.startup-consumable-export-contract-map`。
+- 更新 [docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md)，记录当前 exporter 仍是 bounded partial seam：空 `scenes.json`、缺少 `activities` manifest 输出、对 `dialogues/minigames/storyNodes` fail closed，并且仍受 `compatibilityImport.unresolvedFamilies` 阻塞。
+
+### Impact
+- 当前 export-unification queue 已完成 baseline reconcile；下一步只能写 startup-consumable export contract map，不能提前扩张到 basePackId inheritance、consumer deprivileging 或 compatibility retirement。
+
+## 2026-07-14 Script Editor Runtime Pack Export Contract Map
+
+### Changed
+- 更新 [docs/blueprints/queues/script-editor-runtime-pack-export-unification-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-runtime-pack-export-unification-queue.md)，新增 Startup-Consumable Export Contract Map，明确 `scenarioProfile/characters/cities/houses/events/scenes/activities/tasks/textEntries` 的正式导出义务、当前 gap、queue decision，以及 export fail-closed rules。
+- 更新 [docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md)，记录 export contract map 完成，并把当前 active task 推进到 `task.script-editor-runtime-pack-export-unification.queue-closeout-and-handoff`。
+
+### Impact
+- 当前 queue 已有正式 startup-consumable export 契约图；后续实现不得再用空 `scenes`、缺失 `activities`、private export dialect 或 `compatibilityImport` 残留来宣称 runtime-pack export 成功。
+- basePackId family overlay、fixed-pack consumer deprivileging、compatibility retirement 仍明确属于后续队列，不在当前 queue 内顺手实现。
+
+## 2026-07-14 Script Editor Runtime Pack Export Queue Closeout
+
+### Changed
+- 更新 [docs/blueprints/queues/script-editor-runtime-pack-export-unification-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-runtime-pack-export-unification-queue.md)，将 `queue.script-editor-runtime-pack-export-unification` 从 active 收口为 `done`，记录 bounded export-contract slice 已完成并 verified。
+- 更新 [docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md) 与 [docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)，将 live version 从 active-execution 切回 promotion-review，清空 active_queue，并把 downstream recommendation 指向 `queue.script-editor-base-pack-inheritance-governance`。
+
+### Impact
+- 当前 Blueprint 已无 active queue；后续必须从 runtime-pack-unification version plan 做 base-pack inheritance governance admission review，而不是继续在已关闭的 export-unification queue 内扩张。
+- 剩余 residue 被分类为 cross-family：base-pack inheritance governance、fixed-pack consumer deprivileging、compatibility retirement 仍按后续候选队列推进。
+
+## 2026-07-14 Script Editor Base Pack Inheritance Governance Queue Admission
+
+### Changed
+- 新增 [docs/blueprints/queues/script-editor-base-pack-inheritance-governance-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-base-pack-inheritance-governance-queue.md)，将 `queue.script-editor-base-pack-inheritance-governance` 写成当前 live queue truth，并把范围收敛在 `basePackId` 的 family-level overlay 与 fail-closed 继承契约，不允许扩张到 fixed-pack consumer deprivileging 或 compatibility retirement。
+- 更新 [docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md) 与 [docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)，将 live entry 从 version-level promotion-review 切回 active-execution，并记录当前 active task。
+- 更新 [docs/blueprints/blueprint.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/blueprint.md)，同步 active version registry 备注，避免继续把已关闭的 runtime-family-contract queue 描述成当前执行队列。
+
+### Impact
+- Blueprint 当前重新进入 active execution，但控制权已经从 export contract 转到 base-pack inheritance governance。
+- 后续动作必须先写明确的 family overlay contract，不能把当前 builtin fallback、空输出或 metadata passthrough 当成正式继承语义。
+
+## 2026-07-14 Script Editor Base Pack Inheritance Baseline Reconcile
+
+### Changed
+- 更新 [docs/blueprints/queues/script-editor-base-pack-inheritance-governance-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-base-pack-inheritance-governance-queue.md)，将 `task.script-editor-base-pack-inheritance-governance.boundary-baseline-reconcile` 标记为 completed，并把当前 active task 推进到 `task.script-editor-base-pack-inheritance-governance.family-overlay-contract-map`。
+- 更新 [docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md)，记录当前 baseline 证据：`runtime-pack-import.ts` 只保存 `rawPack.basePackId` / `manifest.basePackId` 元数据，`runtime-pack-export.ts` 只通过 `pickOptionalPackMetadata` 透传 `storyPack.basePackId`，尚未解析 mandatory 或 explicitly inheritable runtime families。
+
+### Impact
+- 当前 base-pack-inheritance queue 已完成 baseline reconcile；下一步只能写 family-level overlay contract map，不能提前进入 fixed-pack consumer rewiring 或 compatibility retirement。
+
+## 2026-07-14 Script Editor Base Pack Inheritance Contract Map
+
+### Changed
+- 更新 [docs/blueprints/queues/script-editor-base-pack-inheritance-governance-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-base-pack-inheritance-governance-queue.md)，新增 Family Overlay Contract Map，明确 mandatory runtime families 与 explicitly inheritable runtime families 的 overlay rule、inheritance source 与 failure rule。
+- 更新 [docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md)，记录 family overlay contract map 完成，并把当前 active task 推进到 `task.script-editor-base-pack-inheritance-governance.queue-closeout-and-handoff`。
+
+### Impact
+- 当前 queue 已有正式 basePackId family overlay 契约图；后续实现不得再把 metadata passthrough、builtin hard import、空数组、hidden default 或 compatibility residue 当成 lawful inheritance resolution。
+- fixed-pack consumer deprivileging 与 compatibility retirement 仍属于后续队列，不在当前 queue 内顺手实现。
+
+## 2026-07-14 Script Editor Base Pack Inheritance Queue Closeout
+
+### Changed
+- 更新 [docs/blueprints/queues/script-editor-base-pack-inheritance-governance-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-base-pack-inheritance-governance-queue.md)，将 `queue.script-editor-base-pack-inheritance-governance` 从 active 收口为 `done`，记录 bounded inheritance-governance slice 已完成并 verified。
+- 更新 [docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md) 与 [docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)，将 live version 从 active-execution 切回 promotion-review，清空 active_queue，并把 downstream recommendation 指向 `queue.script-editor-fixed-pack-consumer-deprivileging`。
+
+### Impact
+- 当前 Blueprint 已无 active queue；后续必须从 runtime-pack-unification version plan 做 fixed-pack consumer deprivileging admission review，而不是继续在已关闭的 inheritance queue 内扩张。
+- 剩余 residue 被分类为 cross-family：fixed-pack consumer deprivileging 与 compatibility retirement 仍按后续候选队列推进。
+
+## 2026-07-14 Script Editor Fixed Pack Consumer Deprivileging Queue Admission
+
+### Changed
+- 新增 [docs/blueprints/queues/script-editor-fixed-pack-consumer-deprivileging-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-fixed-pack-consumer-deprivileging-queue.md)，将 `queue.script-editor-fixed-pack-consumer-deprivileging` 写成当前 live queue truth，并把范围收敛在 covered consumers 从 fixed zhuyuanzhang/default-pack imports 转向 active scenario-pack content resolution。
+- 更新 [docs/blueprints/blueprint.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/blueprint.md)、[docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md) 与 [docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md)，将 live entry 从 version-level promotion-review 切回 active-execution，并记录当前 active task。
+- 记录 fresh evidence：`src/content/pack-content-access.ts` 仍直接导入 `zhuyuanzhang` 的 activities/events/scenes/text entries/home-house/keep-house JSON，`temple-house-active-content.ts`、`home-house-content.ts`、`keep-house-content.ts` 仍通过 default-pack facade 消费这些内容。
+
+### Impact
+- Blueprint 当前重新进入 active execution，但控制权已经从 base-pack inheritance governance 转到 fixed-pack consumer deprivileging。
+- 后续动作必须先确认 covered consumer 边界并写 active-content-only route contract，不能把 hard-imported builtin JSON 当成正式 runtime-pack 继承或消费路径。
+
+## 2026-07-14 Script Editor Fixed Pack Consumer Baseline Reconcile
+
+### Changed
+- 更新 [docs/blueprints/queues/script-editor-fixed-pack-consumer-deprivileging-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-fixed-pack-consumer-deprivileging-queue.md)，将 `task.script-editor-fixed-pack-consumer-deprivileging.boundary-baseline-reconcile` 标记为 completed，并把当前 active task 推进到 `task.script-editor-fixed-pack-consumer-deprivileging.consumer-route-contract-map`。
+- 更新 [docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md)，记录当前 baseline 证据：`src/content/pack-content-access.ts` 仍直接导入 `zhuyuanzhang` 的 activities/events/scenes/text entries/home-house/keep-house JSON，`temple-house-active-content.ts`、`home-house-content.ts`、`keep-house-content.ts` 仍通过 default-pack facade 消费这些内容。
+
+### Impact
+- 当前 fixed-pack-consumer queue 已完成 baseline reconcile；下一步只能写 active-content-only consumer route contract map，不能提前扩张到 compatibility retirement 或 broad startup policy。
+
+## 2026-07-14 Script Editor Fixed Pack Consumer Route Contract Map
+
+### Changed
+- 更新 [docs/blueprints/queues/script-editor-fixed-pack-consumer-deprivileging-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-fixed-pack-consumer-deprivileging-queue.md)，新增 Consumer Route Contract Map，明确 `src/content/pack-content-access.ts`、`src/application/content/default-pack-content.ts`、`temple-house-active-content.ts`、`home-house-content.ts`、`keep-house-content.ts` 的 active-content-only 路由义务和可保留基线。
+- 更新 [docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md)，记录 consumer route contract map 完成，并把当前 active task 推进到 `task.script-editor-fixed-pack-consumer-deprivileging.queue-closeout-and-handoff`。
+
+### Impact
+- 当前 queue 已有正式 covered consumer route 契约图；后续实现不得再把 fixed zhuyuanzhang JSON imports 或 default-pack facade 作为 covered runtime truth。
+- compatibility retirement 仍明确属于后续队列，不在当前 queue 内顺手实现。
+
+## 2026-07-14 Script Editor Fixed Pack Consumer Queue Closeout
+
+### Changed
+- 更新 [docs/blueprints/queues/script-editor-fixed-pack-consumer-deprivileging-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-fixed-pack-consumer-deprivileging-queue.md)，将 `queue.script-editor-fixed-pack-consumer-deprivileging` 从 active 收口为 `done`，记录 bounded consumer-deprivileging slice 已完成并 verified。
+- 更新 [docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md) 与 [docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)，将 live version 从 active-execution 切回 promotion-review，清空 active_queue，并把 downstream recommendation 指向 `queue.script-editor-compatibility-boundary-retirement`。
+
+### Impact
+- 当前 Blueprint 已无 active queue；后续必须从 runtime-pack-unification version plan 做 compatibility-boundary retirement admission review，而不是继续在已关闭的 fixed-pack-consumer queue 内扩张。
+- 剩余 residue 被分类为 cross-family：compatibility-boundary retirement 仍按后续候选队列推进。
+
+## 2026-07-14 Script Editor Compatibility Boundary Retirement Queue Admission
+
+### Changed
+- 新增 [docs/blueprints/queues/script-editor-compatibility-boundary-retirement-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-compatibility-boundary-retirement-queue.md)，将 `queue.script-editor-compatibility-boundary-retirement` 写成当前 live queue truth，并把范围收敛在把 `compatibilityImport.unresolvedFamilies` 从日常 authoring/export truth 退回 migration-only evidence。
+- 更新 [docs/blueprints/blueprint.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/blueprint.md)、[docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md) 与 [docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md)，将 live entry 从 version-level promotion-review 切回 active-execution，并记录当前 active task。
+- 记录 fresh evidence：`workspace-shell.ts` 与 `main-ui-flow.js` 仍把兼容残留计数作为日常风险/状态展示，`runtime-pack-export.ts` 仍对 `storyPack.compatibilityImport.unresolvedFamilies` fail closed，`runtime-pack-import.ts` 仍保存 unresolved families 作为 compatibility residue。
+
+### Impact
+- Blueprint 当前重新进入 active execution，但控制权已经从 fixed-pack consumer deprivileging 转到 compatibility-boundary retirement。
+- 后续动作必须先确认兼容残留边界并写 migration-only retirement contract，不能把 compatibility residue 当成最终 runtime-pack truth。
+
+## 2026-07-14 Script Editor Compatibility Boundary Baseline Reconcile
+
+### Changed
+- 更新 [docs/blueprints/queues/script-editor-compatibility-boundary-retirement-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-compatibility-boundary-retirement-queue.md)，将 `task.script-editor-compatibility-boundary-retirement.boundary-baseline-reconcile` 标记为 completed，并把当前 active task 推进到 `task.script-editor-compatibility-boundary-retirement.retirement-contract-map`。
+- 更新 [docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md)，记录当前 baseline 证据：workspace shell 与 main UI 仍把兼容残留计数作为日常 authoring risk，runtime export 仍对 `storyPack.compatibilityImport.unresolvedFamilies` fail closed。
+
+### Impact
+- 当前 compatibility-boundary queue 已完成 baseline reconcile；下一步只能写 migration-only compatibility retirement contract map，不能移除历史 import support 或重开已关闭的 export/inheritance/consumer contract。
+
+## 2026-07-14 Script Editor Compatibility Boundary Retirement Contract Map
+
+### Changed
+- 更新 [docs/blueprints/queues/script-editor-compatibility-boundary-retirement-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-compatibility-boundary-retirement-queue.md)，新增 Compatibility Retirement Contract Map，明确 runtime import、authoring model、workspace shell、main UI flow、runtime export、version closeout 的 migration-only compatibility boundary。
+- 更新 [docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md)，记录 retirement contract map 完成，并把当前 active task 推进到 `task.script-editor-compatibility-boundary-retirement.queue-closeout-and-handoff`。
+
+### Impact
+- 当前 queue 已有正式 compatibility retirement 契约图；后续实现不得再把 `compatibilityImport.unresolvedFamilies` 当成最终 runtime-pack truth 或正常 authoring/export success state。
+- 历史 import support 仍保留为 migration evidence，不在当前 queue 内顺手删除。
+
+## 2026-07-14 Script Editor Compatibility Boundary Queue Closeout
+
+### Changed
+- 更新 [docs/blueprints/queues/script-editor-compatibility-boundary-retirement-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-compatibility-boundary-retirement-queue.md)，将 `queue.script-editor-compatibility-boundary-retirement` 从 active 收口为 `done`，记录 bounded compatibility-retirement slice 已完成并 verified。
+- 更新 [docs/blueprints/blueprint.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/blueprint.md)、[docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-14-script-editor-runtime-pack-unification-target-plan.md) 与 [docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)，将 live version 从 active-execution 切回 promotion-review，清空 active_queue，并记录当前候选组合已无剩余 unadmitted contract-governance queue。
+
+### Impact
+- 当前 Blueprint 已无 active queue；runtime-pack-unification version 仍保持 open，因为实现落地与最终 acceptance 尚未显式关闭。
+- 后续若继续推进，必须在 version-level promotion review 中基于 fresh evidence 创建实现/acceptance 队列，不能继续追加已关闭 contract-governance queue。
+
+## 2026-07-14 Script Editor Person Runtime Attribute Editing Alignment
+
+### Changed
+- 更新 [src/application/script-editor/person-authoring.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/person-authoring.ts)，让导入人物 JSON 中的 primitive runtime 字段自动并入 `extendedAttributes`，并在属性编辑、删除时把 `age`、`clanId`、`stats.*`、`skills.*` 等路径同步回写到人物记录，避免它们只停留在只读摘要里。
+- 更新 [src/ui/main-ui/main-ui-flow.js](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/main-ui/main-ui-flow.js) 与 [src/styles/script-editor.css](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/styles/script-editor.css)，把人物详情顶部的“当前人物 JSON 属性”区域从只读展示改为可直接 `新增 / 编辑 / 删除` 的属性键值编辑器，并移除下方重复的扩展属性编辑块。
+- 继续更新 [src/domain/script-editor-project.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/domain/script-editor-project.ts)、[src/application/script-editor/person-authoring.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/person-authoring.ts) 与 [src/ui/main-ui/main-ui-flow.js](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/main-ui/main-ui-flow.js)，为人物扩展属性补入创作者可见的 `label`，把导入的 runtime 字段映射成“年龄 / 所属 / 统率 / 武勇 / 智略 / 政务 / 魅力 / 名声”等属性名，并让顶部编辑区只暴露“属性名 + 属性值”，不再直接泄露内部 `key` 路径。
+- 继续更新 [src/domain/script-editor-project.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/domain/script-editor-project.ts)、[src/application/script-editor/person-authoring.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/person-authoring.ts) 与 [src/ui/main-ui/main-ui-flow.js](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/main-ui/main-ui-flow.js)，把 `cityId / houseId / portraitId / portraitVariantId` 从人物扩展属性里提升为固定人物字段，并在“属性”分栏中改成基于当前项目城市、建筑和现有人物立绘/立绘变体的下拉选择。
+- 继续更新 [src/ui/main-ui/main-ui-flow.js](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/main-ui/main-ui-flow.js)、[src/styles/script-editor.css](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/styles/script-editor.css) 与 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，把人物 JSON 属性区改成固定宽度的 6 列卡片网格，并将每页显示上限收敛为 18 个卡片（3 行），超出部分通过独立的上一页/下一页分页切换显示。
+- 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，补入两类回归：顶部属性区必须暴露现有属性编辑 action，以及导入的 runtime 人物字段必须被吸收到可编辑属性列表并支持值更新/属性删除。
+- 更新 [docs/blueprints/queues/script-editor-prd-workbench-ui-visual-alignment-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-prd-workbench-ui-visual-alignment-queue.md)，将这次人物 runtime 属性并入可编辑属性面的实现事实记录到当前 active visual queue，而不把它误记成新的并行队列。
+
+### Impact
+- 剧本编辑器中的人物详情现在会直接暴露导入角色卡里的 `age`、`clanId`、`stats.leadership`、`stats.martial`、`stats.intelligence`、`stats.politics`、`stats.charm`、`stats.fame` 等 runtime 字段，且可以在同一块区域内直接改值或删属性。
+- 创作者在人物属性编辑区里看到的已经不再是原始 `stats.leadership` 这一类内部路径，而是可编辑的“属性名 + 属性值”形式；内部 `key` 只保留给回写映射使用，不再直接暴露到创作者视图。
+- `cityId / houseId / portraitId / portraitVariantId` 不再混在自由扩展属性列表里，而是回到人物固定属性区并以受控下拉框编辑；其中建筑列表会跟随当前城市过滤，立绘变体下拉会优先读取当前人物已携带的 `portraitVariants` 元数据。
+- 当人物属性过多时，顶部 JSON 属性区现在不会继续无限向下扩张；它会固定成每行 6 张卡片、每页最多 3 行的分页网格，新增属性时也会自动跳转到最后一页。
+- 这次实现仍属于 `queue.script-editor-prd-workbench-ui-visual-alignment` 的同边界 creator-visible field convergence 批次；没有重开已关闭的人物作者面队列，也没有扩张到新的 schema owner。
+
+## 2026-07-13 Script Editor Load Save Queue Admission
+
+## 2026-07-13 Script Editor Export Queue Admission
+
+## 2026-07-13 Script Editor Export Queue Closeout
+
+## 2026-07-13 Script Editor Compatibility Import Queue Closeout
+
+## 2026-07-13 Script Editor UI Shell Queue Closeout
+
+## 2026-07-13 Script Editor Minimal Workflow Queue Closeout
+
+## 2026-07-13 Shared Condition Effect Queue Admission
+
+## 2026-07-13 Shared Condition Effect Queue Closeout
+
+## 2026-07-13 Script Editor Implementation Version Closeout
+
+## 2026-07-13 Script Editor PRD Alignment Version Opening
+
+## 2026-07-13 Script Editor PRD Workspace Queue Admission
+
+## 2026-07-13 Script Editor Project Selection And Responsive Workspace Candidate Recording
+
+### Changed
+- 更新 [docs/blueprints/plans/2026-07-13-script-editor-prd-alignment-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-13-script-editor-prd-alignment-target-plan.md)，将“项目选择/管理与当前项目编辑职责拆分、独立剧本列表页、项目继续编辑/删除、删除确认、工作区多宽度适配”记录为 `item.script-editor-prd-project-selection-and-workspace-layout`，并写入新的候选队列 `queue.script-editor-prd-project-selection-and-workspace-layout-alignment`。
+- 同步 version plan 的 intake 字段、候选队列清单、候选分类记录与历史记录，明确该需求当前只能以 `candidate-recorded` 形式保留，不能在 `queue.script-editor-prd-workspace-and-navigation-alignment` 仍处于 active 时并行提升。
+
+### Impact
+- Blueprint 现在已经把“独立剧本列表页 + 项目管理动作 + 响应式工作台布局”沉淀为正式候选，不会再丢失为会话口头结论。
+- 当前 live execution 仍保持不变：执行入口继续停在 `queue.script-editor-prd-workspace-and-navigation-alignment`，后续只有在该 active queue 收口后，才可按版本级 review 决定是否提升这个新候选。
+
+### Changed
+- 新增 [docs/blueprints/queues/script-editor-prd-workspace-and-navigation-alignment-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-prd-workspace-and-navigation-alignment-queue.md)，将 `queue.script-editor-prd-workspace-and-navigation-alignment` 写成当前 live queue truth，并明确它只拥有 PRD 4.x 的工作台、中文导航、项目总览与编辑阶段路由，不得扩张进人物或后续对象家族编辑。
+- 更新 [docs/blueprints/plans/2026-07-13-script-editor-prd-alignment-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-13-script-editor-prd-alignment-target-plan.md)、[docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)、以及 [docs/blueprints/blueprint.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/blueprint.md)，将 `target.script-editor-prd-alignment` 从 version-level `promotion-review` 切回 `active-execution`，并把当前入口同步到新 admitted queue。
+
+### Impact
+- Blueprint 当前不再停在“等待 queue admission review”的空转状态；当前 live entry 已经收敛到 `task.script-editor-prd-workspace-and-navigation-alignment.workspace-and-navigation-implementation`。
+- 接下来的代码改动必须受该 queue 边界约束，只能先补齐 PRD 4.x 的工作台与导航对齐，不能直接越过到人物作者面或更深的对象家族编辑。
+
+## 2026-07-13 Script Editor PRD Workspace Queue Closeout And Same-Family Promotion
+
+## 2026-07-13 Script Editor Project Selection Queue Closeout
+
+## 2026-07-13 Script Editor Person Authoring Queue Admission
+
+### Changed
+- 新增 [docs/blueprints/queues/script-editor-prd-person-authoring-alignment-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-prd-person-authoring-alignment-queue.md)，将 `queue.script-editor-prd-person-authoring-alignment` 写成当前 live queue truth，并把队列边界明确收敛在 PRD 第 5 节的人物统一模型、人物列表/详情、结构化分栏、以及 bounded relation/capability 入口，不允许顺手扩张进城市/建筑或正式对话/事件页。
+- 更新 [docs/blueprints/plans/2026-07-13-script-editor-prd-alignment-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-13-script-editor-prd-alignment-target-plan.md)、[docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)、以及 [docs/blueprints/blueprint.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/blueprint.md)，将 `target.script-editor-prd-alignment` 从 version-level `promotion-review` 切回 `active-execution`，并把当前入口同步到新 admitted queue。
+
+### Impact
+- 当前 live entry 不再停在 person-authoring 的 version review，而是正式进入 `task.script-editor-prd-person-authoring-alignment.person-authoring-implementation`。
+- 后续 script-editor PRD 对齐必须先在人物作者面内完成统一人物模型与结构化分栏首切，不能越过到城市/建筑/menu 或正式对话/事件页实现。
+
+## 2026-07-13 Script Editor Person Authoring Queue Closeout
+
+### Changed
+- 新增 [src/application/script-editor/person-authoring.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/person-authoring.ts)，沉淀人物作者面的结构化 helper：统一人物记录归一化、默认人物草稿、基础字段更新、扩展属性增删改、对话/事件关联入口，以及交易绑定开关与条目写回。
+- 更新 [src/domain/script-editor-project.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/domain/script-editor-project.ts)、[src/application/script-editor/minimal-workflow.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/minimal-workflow.ts)、[src/ui/main-ui/main-ui-flow.js](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/main-ui/main-ui-flow.js)、以及 [src/styles/script-editor.css](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/styles/script-editor.css)，将 `people` 从 generic minimal record 编辑切到 dedicated 人物作者面：人物列表/详情改为专用布局，详情补齐 `属性 / 对话 / 交易 / 事件` 四个结构化分栏，并接入 bounded relation/capability entrypoints。
+- 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，新增人物作者面对齐回归与 helper 归一化回归，覆盖人物详情分栏、bounded relation action id，以及交易绑定与关联列表的结构化写回。
+- 更新 [docs/blueprints/queues/script-editor-prd-person-authoring-alignment-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-prd-person-authoring-alignment-queue.md)、[docs/blueprints/plans/2026-07-13-script-editor-prd-alignment-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-13-script-editor-prd-alignment-target-plan.md)、[docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)、以及 [docs/blueprints/blueprint.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/blueprint.md)，将 `queue.script-editor-prd-person-authoring-alignment` 从 active 收口为 `done`，并把 live PRD version 入口切回 promotion-review。
+
+### Impact
+- 当前 PRD alignment version 已经拥有第一版 dedicated 人物作者面：`people` 不再停留在 generic JSON/minimal record 编辑，而是具备统一人物模型、结构化详情分栏与 bounded relation/capability 入口。
+- `queue.script-editor-prd-person-authoring-alignment` 已变为关闭历史证据；当前 live entry 不再停在该 queue 执行，而是回到 `target.script-editor-prd-alignment` 的 version-level promotion review。
+- 当前记录的下一个 lawful candidate 是 `queue.script-editor-prd-city-building-and-menu-alignment`；后续若继续推进 PRD 对齐，应先基于 version plan 做城市/建筑/menu 绑定面 admission review，而不是重开已关闭的人物作者面队列。
+
+## 2026-07-13 Script Editor City Building And Menu Queue Admission
+
+### Changed
+- 新增 [docs/blueprints/queues/script-editor-prd-city-building-and-menu-alignment-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-prd-city-building-and-menu-alignment-queue.md)，将 `queue.script-editor-prd-city-building-and-menu-alignment` 写成当前 live queue truth，并把队列边界明确收敛在 PRD 第 6 节的城市/建筑容器关系、menu family 配置、进入条件与进入态分层、以及 building entry binding 面，不允许顺手扩张进正式对话/事件/剧情页。
+- 更新 [docs/blueprints/plans/2026-07-13-script-editor-prd-alignment-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-13-script-editor-prd-alignment-target-plan.md)、[docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)、以及 [docs/blueprints/blueprint.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/blueprint.md)，将 `target.script-editor-prd-alignment` 从 version-level `promotion-review` 切回 `active-execution`，并把当前入口同步到新 admitted queue。
+
+### Impact
+- Blueprint 当前不再停在“等待 city/building queue admission review”的状态；当前 live entry 已经收敛到 `task.script-editor-prd-city-building-and-menu-alignment.city-building-and-menu-implementation`。
+- 接下来的 script-editor PRD 对齐必须先补齐城市/建筑 dedicated authoring surface、menu family 配置、进入态与 entry binding 首切，不能直接越过到正式 dialogue/event/story queue。
+
+## 2026-07-13 Script Editor City Building And Menu Queue Closeout
+
+### Changed
+- 新增 [src/application/script-editor/city-building-authoring.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/city-building-authoring.ts)，沉淀城市/建筑作者面的结构化 helper：默认城市/建筑草稿、菜单项增删改、menu target 配置、进入态写回，以及建筑入口挂接字段写回。
+- 更新 [src/domain/script-editor-project.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/domain/script-editor-project.ts)、[src/application/script-editor/minimal-workflow.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/minimal-workflow.ts)、[src/ui/main-ui/main-ui-flow.js](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/main-ui/main-ui-flow.js)、以及 [src/styles/script-editor.css](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/styles/script-editor.css)，将 `cities / buildings` 从隐藏或 generic editor 处理切到 dedicated 作者面：工作台现在直接暴露城市/建筑对象树，详情页补齐 `基础 / 菜单 / 进入态 / 入口` 结构化分栏，并接入 menu binding、access state、building entry binding 首切。
+- 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，新增城市/建筑作者面对齐回归与 helper 归一化回归，并将 minimal workflow 可见 family 断言扩展到 `cities / buildings`。
+- 更新 [docs/blueprints/queues/script-editor-prd-city-building-and-menu-alignment-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-prd-city-building-and-menu-alignment-queue.md)、[docs/blueprints/plans/2026-07-13-script-editor-prd-alignment-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-13-script-editor-prd-alignment-target-plan.md)、[docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)、以及 [docs/blueprints/blueprint.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/blueprint.md)，将 `queue.script-editor-prd-city-building-and-menu-alignment` 从 active 收口为 `done`，并把 live PRD version 入口切回 promotion-review。
+
+### Impact
+- 当前 PRD alignment version 已经拥有第一版 dedicated 城市/建筑作者面：`cities / buildings` 不再停留在隐藏 family 或 generic JSON 编辑，而是具备 menu family 配置、access-state 以及 building entry binding 首切。
+- `queue.script-editor-prd-city-building-and-menu-alignment` 已变为关闭历史证据；当前 live entry 不再停在该 queue 执行，而是回到 `target.script-editor-prd-alignment` 的 version-level promotion review。
+- 当前记录的下一个 lawful candidate 是 `queue.script-editor-prd-dialogue-event-story-alignment`；后续若继续推进 PRD 对齐，应先基于 version plan 做剧情/对话/事件作者面 admission review，而不是重开已关闭的 city/building queue。
+
+## 2026-07-13 Script Editor Dialogue Event Story Queue Admission
+
+## 2026-07-13 Script Editor Dialogue Event Story Queue Closeout
+
+### Changed
+- 新增 [src/application/script-editor/story-dialogue-event-authoring.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/story-dialogue-event-authoring.ts)，沉淀剧情/对话/事件作者面的结构化 helper：默认草稿、字段归一化、剧情关联、对话节点/后续动作、以及事件条件组/去向/关联对象/预览摘要写回。
+- 更新 [src/domain/script-editor-project.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/domain/script-editor-project.ts)、[src/application/script-editor/minimal-workflow.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/runtime-pack-import.ts)、[src/ui/main-ui/main-ui-flow.js](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/main-ui/main-ui-flow.js)、以及 [src/styles/script-editor.css](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/styles/script-editor.css)，将 `storyNodes / dialogues / events` 从 generic 或 deferred 处理切到 dedicated 作者面：工作台现在直接暴露剧情/对话/事件对象树，详情页补齐剧情 `基础 / 关联 / 摘要`、对话 `基础 / 节点 / 预览`、事件 `基础信息 / 条件 / 去向 / 关联对象 / 预览与校验` 结构化分栏，并把 runtime pack 导入适配到新的 bounded event authoring 记录形态。
+- 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，新增剧情/对话/事件作者面对齐回归与 helper 归一化回归，并把 minimal workflow 断言调整为“family 可见但 dialogue/story export 仍按 bounded policy defer”。
+- 更新 [docs/blueprints/queues/script-editor-prd-dialogue-event-story-alignment-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-prd-dialogue-event-story-alignment-queue.md)、[docs/blueprints/plans/2026-07-13-script-editor-prd-alignment-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-13-script-editor-prd-alignment-target-plan.md)、[docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)、以及 [docs/blueprints/blueprint.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/blueprint.md)，将 `queue.script-editor-prd-dialogue-event-story-alignment` 从 active 收口为 `done`，并把 live PRD version 入口切回下一条 lawful continuation admission。
+
+### Impact
+- 当前 PRD alignment version 已经拥有第一版 dedicated 剧情/对话/事件作者面：`storyNodes / dialogues / events` 不再停留在 generic JSON 编辑或 deferred family，而是具备结构化事件区块与 bounded linkage/preview-summary 入口。
+- `queue.script-editor-prd-dialogue-event-story-alignment` 已变为关闭历史证据；其 remaining same-family residue 已明确转移到 `queue.script-editor-prd-minigame-binding-alignment`。
+
+## 2026-07-13 Script Editor Minigame Binding Queue Admission
+
+### Changed
+- 新增 [docs/blueprints/queues/script-editor-prd-minigame-binding-alignment-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-prd-minigame-binding-alignment-queue.md)，将 `queue.script-editor-prd-minigame-binding-alignment` 写成当前 live queue truth，并把队列边界明确收敛在 PRD 第 10 节的 configuration-first minigame/playable binding surface、bounded launch/settlement 配置、以及 cross-object linkage 入口，不允许顺手扩张进 shared playable runtime contract 或 preview/export product 面。
+- 更新 [docs/blueprints/plans/2026-07-13-script-editor-prd-alignment-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-13-script-editor-prd-alignment-target-plan.md)、[docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)、以及 [docs/blueprints/blueprint.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/blueprint.md)，将 `target.script-editor-prd-alignment` 从 version-level promotion review 切回 `active-execution`，并把当前入口同步到新 admitted queue。
+
+### Impact
+- Blueprint 当前不再停在“等待 minigame-binding queue admission review”的状态；当前 live entry 已经收敛到 `task.script-editor-prd-minigame-binding-alignment.minigame-binding-implementation`。
+- 接下来的 script-editor PRD 对齐必须先补齐玩法绑定作者面与 bounded settlement 配置首切，不能直接越过到 preview/validation/export queue。
+
+## 2026-07-13 Script Editor Preview Validation Export Queue Closeout
+
+### Changed
+- 更新 [src/application/script-editor/workspace-shell.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/workspace-shell.ts)、[src/ui/views/script-editor/script-editor-workspace-view.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/views/script-editor/script-editor-workspace-view.ts)、[src/ui/main-ui/main-ui-flow.js](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/main-ui/main-ui-flow.js)、以及 [src/styles/script-editor.css](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/styles/script-editor.css)，将 script-editor 工作台右侧摘要扩成一个按需打开的统一辅助区：补齐结构预览、统一校验列表、问题回跳、以及当前对象的导出落点摘要。
+- 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，新增 preview queue 回归，覆盖辅助区模型、linked issue routing、toggle/jump action，以及工作台视图的中文文案与数据属性接缝。
+- 更新 [docs/blueprints/queues/script-editor-prd-preview-validation-export-alignment-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-prd-preview-validation-export-alignment-queue.md)、[docs/blueprints/plans/2026-07-13-script-editor-prd-alignment-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-13-script-editor-prd-alignment-target-plan.md)、[docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)、以及 [docs/blueprints/blueprint.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/blueprint.md)，将 `queue.script-editor-prd-preview-validation-export-alignment` 从 active 收口为 `done`，并把 live PRD version 入口切回 promotion-review。
+
+### Impact
+- 当前 PRD alignment version 已经拥有第一版统一 preview/validation/export handoff surface：预览与校验不再散落在事件局部 notes 和 export-only diagnostics 里，而是可以在工作台内按需展开并直接回跳到对象家族与对应 tab。
+- `queue.script-editor-prd-preview-validation-export-alignment` 已变为关闭历史证据；当前 live entry 不再停在该 queue 执行，而是回到 `target.script-editor-prd-alignment` 的 version-level promotion review。
+- 当前记录的下一个 lawful candidate 是 `queue.script-editor-prd-workbench-ui-visual-alignment`；后续若继续推进 PRD 对齐，应先基于 version plan 做最终 creator-workbench 视觉收敛 admission review，而不是重开已关闭的 preview/export queue。
+
+## 2026-07-13 Script Editor Preview Validation Export Queue Repository Sync
+
+### Changed
+- 更新 [docs/blueprints/queues/script-editor-prd-preview-validation-export-alignment-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-prd-preview-validation-export-alignment-queue.md)，将关闭后的 `sync_status` 从 `pending` 补齐为 `done`，并记录提交 `04e79e6` 已成功推送到 `origin/mod-first-dev`。
+
+### Impact
+- 关闭后的 preview queue 现在不再缺少 repository sync 事实，队列关闭记录与远端开发母线状态保持一致。
+- 后续 PRD 队列推进可以直接把 `queue.script-editor-prd-preview-validation-export-alignment` 当作已验证且已同步的历史基线使用。
+
+## 2026-07-13 Script Editor Workbench UI Visual Queue Admission
+
+### Changed
+- 新增 [docs/blueprints/queues/script-editor-prd-workbench-ui-visual-alignment-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-prd-workbench-ui-visual-alignment-queue.md)，将 `queue.script-editor-prd-workbench-ui-visual-alignment` 写成当前 live queue truth，并把队列边界明确收敛在 creator-first workbench shell convergence、warm-paper 视觉系统、以及首屏 creator-visible summary filtering，不允许顺手扩张回 project-selection 管理或任何已关闭结构队列。
+- 更新 [docs/blueprints/plans/2026-07-13-script-editor-prd-alignment-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-13-script-editor-prd-alignment-target-plan.md)、[docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)、以及 [docs/blueprints/blueprint.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/blueprint.md)，将 `target.script-editor-prd-alignment` 从 version-level promotion review 切回 `active-execution`，并把当前入口同步到新 admitted queue。
+
+### Impact
+- Blueprint 当前不再停在“preview queue closeout 之后的 version review”状态；当前 live entry 已经收敛到 `task.script-editor-prd-workbench-ui-visual-alignment.workbench-ui-visual-implementation`。
+- 接下来的 script-editor PRD 对齐必须先完成 creator-first workbench shell 的最终视觉收敛和首屏创作语义清理，不能再回头重开已关闭的结构性队列。
+
+## 2026-07-13 Script Editor Workbench UI Visual First Cut
+
+### Changed
+- 更新 [src/ui/views/script-editor/script-editor-workspace-view.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/views/script-editor/script-editor-workspace-view.ts)、[src/styles/script-editor.css](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/styles/script-editor.css)、以及 [src/ui/main-ui/main-ui-flow.js](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/main-ui/main-ui-flow.js)，将工作台首屏从旧的深色 scaffold 摘要壳推进到第一版 warm-paper creator shell：顶部动作收敛为“返回项目列表 + 保存/校验/导出”，工作区不再常驻 open/import/project-entry 按钮，左侧对象区增加当前工作域引导，整体背景与卡片层级切到浅暖纸面方向。
+- 更新 [src/application/script-editor/workspace-shell.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/workspace-shell.ts)，把工作台 badge、项目总览统计、以及对象摘要卡从 raw ID 导向调整为 creator-visible copy，减少首屏对 `id`/内部键值的直接暴露。
+- 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，补充 visual queue 首切回归，确认工作台视图已经暴露 `返回项目列表` 动作，且人物摘要卡不再把 raw `id` 作为主摘要文案。
+
+### Impact
+- 用户现在在“人物与世界”等对象工作区看到的将不再是上一个 dark scaffold 阶段的摘要板，而是更接近蓝图要求的 creator-first workbench shell。
+- 当前首切先解决“视觉外壳 + 首屏摘要语义”问题；更深层的字段显隐与高级信息收口仍继续受 `queue.script-editor-prd-workbench-ui-visual-alignment` 约束推进。
+
+## 2026-07-13 Script Editor Workspace Scroll Intake Routing
+
+### Changed
+- 更新 [docs/blueprints/plans/2026-07-13-script-editor-prd-alignment-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-13-script-editor-prd-alignment-target-plan.md) 与 [docs/blueprints/queues/script-editor-prd-workbench-ui-visual-alignment-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-prd-workbench-ui-visual-alignment-queue.md)，将“剧本编辑器工作区没有滚动条、下方内容不可达”的新问题记录为 `item.script-editor-workspace-scroll-accessibility`，并明确按蓝图规范被当前 active 的 `queue.script-editor-prd-workbench-ui-visual-alignment` 吸收，而不是新建并行候选队列。
+
+### Impact
+- 当前蓝图没有被错误地分叉出第二条同家族工作台队列；滚动可达性问题现在归属于正在进行的 creator-workbench visual queue。
+- 后续若主会话继续推进该 active queue，应在不越出既有视觉/布局边界的前提下，把工作区滚动可达性作为该队列的明确实现义务处理。
+
+## 2026-07-13 Script Editor Advanced System Details Convergence
+
+### Changed
+- 更新 [src/ui/main-ui/main-ui-flow.js](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/main-ui/main-ui-flow.js) 与 [src/styles/script-editor.css](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/styles/script-editor.css)，新增共享的 `高级设置与系统信息` 折叠块样式与渲染 helper，并把项目总览、人物、城市/建筑、剧情、对话、事件、玩法绑定等基础页签中的首屏系统字段收口到该折叠层，而不是继续把 `ID` / 挂接标识直接铺在作者首屏。
+- 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，补充 visual-alignment 回归，确保高级系统信息折叠 helper、样式类以及故事/对话/事件/玩法的字段显隐文案继续存在。
+- 更新 [docs/blueprints/queues/script-editor-prd-workbench-ui-visual-alignment-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-prd-workbench-ui-visual-alignment-queue.md)，把这一批实现记录进当前 active task 的队列事实，明确它属于 visual queue 的同一 bounded 首屏字段收敛批次。
+
+### Impact
+- 当前 script-editor 工作台已经不只是 warm-paper 外壳收敛，首屏字段显隐也开始符合 creator-first 要求：创作标题、摘要、描述留在主视图，系统标识转入统一折叠块。
+- 该队列仍未 closeout；剩余工作继续集中在活跃 visual queue，包括工作区滚动可达性和任何尚未完成的同边界视觉/布局清理。
+
+## 2026-07-13 Script Editor Workspace Scroll Recovery
+
+### Changed
+- 更新 [src/styles/script-editor.css](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/styles/script-editor.css)，让 `.c-main-ui-screen--script-editor-flow` 在固定的 main-ui shell 内自己承担纵向滚动：补充 `height: 100%`、`overflow-y: auto`、`overflow-x: hidden` 与 `overscroll-behavior-y: contain`，不再依赖被全局锁死的 `html/body/#app` 页面滚动。
+- 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，新增 script-editor 工作区滚动回归，确保 visual-alignment 队列不会再把固定壳中的工作台滚动能力回退掉。
+- 更新 [docs/blueprints/queues/script-editor-prd-workbench-ui-visual-alignment-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-prd-workbench-ui-visual-alignment-queue.md)，把这次滚动修复记入当前 active visual queue 的实现事实，而不是误记成新的并行队列。
+
+### Impact
+- 剧本编辑器现在在现有固定 main-ui/game-frame 约束下恢复了纵向可达性，下方被裁掉的工作台内容可以通过 screen 内滚动继续访问。
+- 这仍然属于 `queue.script-editor-prd-workbench-ui-visual-alignment` 的同边界实现批次；队列尚未 closeout，后续仍需继续完成剩余视觉/布局清理与同步。
+
+## 2026-07-13 Script Editor Central Editor Reflow
+
+### Changed
+- 更新 [src/ui/views/script-editor/script-editor-workspace-view.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/views/script-editor/script-editor-workspace-view.ts)、[src/ui/main-ui/main-ui-flow.js](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/main-ui/main-ui-flow.js) 与 [src/styles/script-editor.css](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/styles/script-editor.css)，把真实的对象编辑面板从工作台外部下方的独立追加区块收回到 `.c-script-editor-shell__workspace` 的中央主列，并新增 `c-script-editor-shell__editor-stage` 容器，让当前对象详情优先停留在主编辑区顶部，摘要信息退到其下方。
+- 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，新增布局回归，确保 `renderScriptEditorWorkspaceView(workspace, this.renderScriptEditorEditorPanel())` 继续成立，避免详情面板再次被挂回工作台底部。
+- 更新 [docs/blueprints/queues/script-editor-prd-workbench-ui-visual-alignment-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-prd-workbench-ui-visual-alignment-queue.md)，把这次中央编辑列回流记入当前 active visual queue 的实现事实。
+
+### Impact
+- “人物详情”以及同类对象详情不再掉到整个工作台最下面，而是回到符合线框预期的中央主编辑区。
+- 当前布局更接近蓝图中的“左侧导航/对象列表 + 中央主编辑区 + 右侧辅助区”结构，但该 visual queue 仍未 closeout。
+
+## 2026-07-13 Script Editor Minigame Binding Queue Closeout
+
+### Changed
+- 新增 [src/application/script-editor/minigame-binding-authoring.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/minigame-binding-authoring.ts)，沉淀玩法绑定作者面的结构化 helper：默认绑定草稿、builtin playable / integration 选项、绑定字段归一化、launch payload 增删改、以及 outcome settlement route 写回。
+- 更新 [src/domain/script-editor-project.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/domain/script-editor-project.ts)、[src/application/script-editor/minimal-workflow.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/workspace-shell.ts)、[src/ui/main-ui/main-ui-flow.js](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/main-ui/main-ui-flow.js)、以及 [src/styles/script-editor.css](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/styles/script-editor.css)，将 `minigames` 从 empty/deferred family 切到 dedicated binding 作者面：工作台现在直接暴露玩法绑定对象树，详情页补齐 `基础信息 / 触发与调用 / 结算与返回 / 引用关系` 结构化分栏，并接入 reverse-reference visibility。
+- 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，新增玩法绑定作者面对齐回归与 helper 归一化回归，并把 minimal workflow 可见 family 断言扩展到 `minigames`。
+- 更新 [docs/blueprints/queues/script-editor-prd-minigame-binding-alignment-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-prd-minigame-binding-alignment-queue.md)、[docs/blueprints/plans/2026-07-13-script-editor-prd-alignment-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-13-script-editor-prd-alignment-target-plan.md)、[docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)、以及 [docs/blueprints/blueprint.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/blueprint.md)，将 `queue.script-editor-prd-minigame-binding-alignment` 从 active 收口为 `done`，并把 live PRD version 入口切回下一条 lawful continuation admission。
+
+### Impact
+- 当前 PRD alignment version 已经拥有第一版 dedicated 玩法绑定作者面：`minigames` 不再停留在 empty/deferred family，而是具备 bounded playable selection、launch payload、settlement route 与 reverse-reference visibility。
+- `queue.script-editor-prd-minigame-binding-alignment` 已变为关闭历史证据；其 remaining same-family residue 已明确转移到 `queue.script-editor-prd-preview-validation-export-alignment`。
+
+## 2026-07-13 Script Editor Preview Validation Export Queue Admission
+
+### Changed
+- 新增 [docs/blueprints/queues/script-editor-prd-preview-validation-export-alignment-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-prd-preview-validation-export-alignment-queue.md)，将 `queue.script-editor-prd-preview-validation-export-alignment` 写成当前 live queue truth，并把队列边界明确收敛在 PRD 第 11-12 节的 structure preview、linked validation、以及 export handoff surface，不允许顺手扩张进 final workbench visual redesign 或 shared runtime/schema redesign。
+- 更新 [docs/blueprints/plans/2026-07-13-script-editor-prd-alignment-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-13-script-editor-prd-alignment-target-plan.md)、[docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)、以及 [docs/blueprints/blueprint.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/blueprint.md)，将 `target.script-editor-prd-alignment` 继续保持在 `active-execution`，并把当前入口同步到新 admitted queue。
+
+### Impact
+- Blueprint 当前不再停在“minigame-binding closeout 之后的 version review”状态；当前 live entry 已经收敛到 `task.script-editor-prd-preview-validation-export-alignment.boundary-baseline-reconcile`。
+- 接下来的 script-editor PRD 对齐必须先确认并补齐 preview / validation / export handoff 的 unified auxiliary surface，不能提前跳到最终 creator-first workbench visual convergence。
+
+### Changed
+- 新增 [docs/blueprints/queues/script-editor-prd-dialogue-event-story-alignment-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-prd-dialogue-event-story-alignment-queue.md)，将 `queue.script-editor-prd-dialogue-event-story-alignment` 写成当前 live queue truth，并把队列边界明确收敛在 PRD 第 7-9 节的剧情/对话/事件 dedicated authoring surface、结构化事件区块、以及 bounded linkage/preview-summary 入口，不允许顺手扩张进 minigame runtime 或 preview/export product 面。
+- 更新 [docs/blueprints/plans/2026-07-13-script-editor-prd-alignment-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-13-script-editor-prd-alignment-target-plan.md)、[docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)、以及 [docs/blueprints/blueprint.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/blueprint.md)，将 `target.script-editor-prd-alignment` 从 version-level `promotion-review` 切回 `active-execution`，并把当前入口同步到新 admitted queue。
+
+### Impact
+- Blueprint 当前不再停在“等待 dialogue/event/story queue admission review”的状态；当前 live entry 已经收敛到 `task.script-editor-prd-dialogue-event-story-alignment.dialogue-event-story-implementation`。
+- 接下来的 script-editor PRD 对齐必须先补齐剧情/对话/事件 dedicated authoring surface 与结构化事件区块首切，不能直接越过到 minigame-binding 或 preview/export queue。
+
+### Changed
+- 更新 [src/application/script-editor/project-workspace-library.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/project-workspace-library.ts)、[src/ui/main-ui/main-ui-flow.js](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/main-ui/main-ui-flow.js)、以及 [src/styles/script-editor.css](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/styles/script-editor.css)，为剧本编辑器入口补齐 `项目选择与管理` 面：主入口现在维护 bounded in-memory 项目库，支持按项目 `继续编辑 / 删除项目 / 确认删除`，并将 landing 与项目卡片布局适配到宽/中/窄三档宽度。
+- 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，新增项目库 helper 与项目选择队列回归，覆盖 dedicated project list、continue/delete action id、delete confirmation，以及样式类存在性。
+- 更新 [docs/blueprints/queues/script-editor-prd-project-selection-and-workspace-layout-alignment-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-prd-project-selection-and-workspace-layout-alignment-queue.md)、[docs/blueprints/plans/2026-07-13-script-editor-prd-alignment-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-13-script-editor-prd-alignment-target-plan.md)、[docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)、以及 [docs/blueprints/blueprint.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/blueprint.md)，将 `queue.script-editor-prd-project-selection-and-workspace-layout-alignment` 从 active 收口为 done，并把 live PRD version 入口切回 promotion-review。
+
+### Impact
+- 当前 PRD alignment version 已经把工作台 first-cut 之后的同家族 gap 收敛完毕：项目选择/管理不再和当前项目编辑混在同一入口态，且工作区/项目卡片已经具备多宽度适配。
+- `queue.script-editor-prd-project-selection-and-workspace-layout-alignment` 已变为关闭历史证据；当前 live entry 不再停在 queue 执行，而是回到 `target.script-editor-prd-alignment` 的 version-level promotion review。
+- 当前记录的下一个 lawful candidate 是 `queue.script-editor-prd-person-authoring-alignment`；后续若继续推进 PRD 对齐，应先基于 version plan 做人设作者面 admission review，而不是重开已关闭的 workbench/project-selection 队列。
+
+### Changed
+- 更新 [src/application/script-editor/workspace-shell.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/workspace-shell.ts)、[src/ui/views/script-editor/script-editor-workspace-view.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/views/script-editor/script-editor-workspace-view.ts)、以及 [src/ui/main-ui/main-ui-flow.js](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/main-ui/main-ui-flow.js)，把剧本编辑器工作台推进为 PRD 4.x 对齐的中文工作台：导航改为 `项目总览 / 对象导航 / 校验导出`，总览页补齐项目状态、创作进度、风险与阻塞、下一步建议，`storyPack` 中央编辑区也切成正式项目总览面而不是旧的 `Project` scaffold copy。
+- 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs) 与 [tests/blueprint-governance-lint.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/blueprint-governance-lint.test.cjs)，新增 PRD workspace/navigation 对齐回归，并将 live version plan 断言切到当前真实的 `target.script-editor-prd-alignment`。
+- 更新 [docs/blueprints/queues/script-editor-prd-workspace-and-navigation-alignment-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-prd-workspace-and-navigation-alignment-queue.md)，将 `queue.script-editor-prd-workspace-and-navigation-alignment` 从 active 收口为 `done`，并把剩余 same-family residue 路由到下一条 workbench continuation queue。
+- 新增 [docs/blueprints/queues/script-editor-prd-project-selection-and-workspace-layout-alignment-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-prd-project-selection-and-workspace-layout-alignment-queue.md)，并同步更新 [docs/blueprints/plans/2026-07-13-script-editor-prd-alignment-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-13-script-editor-prd-alignment-target-plan.md)、[docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)、以及 [docs/blueprints/blueprint.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/blueprint.md)，将 `queue.script-editor-prd-project-selection-and-workspace-layout-alignment` 设为当前新的 active queue。
+
+### Impact
+- 当前 PRD alignment version 已经拥有正式的中文工作台和项目总览入口，不再把 script editor 当成 shell + raw JSON scaffold 的延伸。
+- `queue.script-editor-prd-workspace-and-navigation-alignment` 已变为关闭历史证据；其 remaining same-family residue 不再停留在口头说明，而是被明确提升为新的 queue governor。
+- 当前 live entry 已经推进到 `task.script-editor-prd-project-selection-and-workspace-layout-alignment.project-selection-and-layout-implementation`；下一步 workbench 工作应先补脚本列表/项目管理与响应式布局，再进入人物作者面。
+
+### Changed
+- 新增 [docs/blueprints/specs/2026-07-13-script-editor-prd-alignment-target.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/specs/2026-07-13-script-editor-prd-alignment-target.md)，把新的 successor version 明确定义为“按 [docs/script-editor-prd.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/script-editor-prd.md) 对齐剧本编辑器产品面”的治理主轴，并写清它继承已关闭 implementation baseline、不得静默重开冻结契约、以及必须复用现有 runtime-compatible export path 的边界。
+- 新增 [docs/blueprints/plans/2026-07-13-script-editor-prd-alignment-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-13-script-editor-prd-alignment-target-plan.md)，将 `target.script-editor-prd-alignment` 作为 open successor version 建立起来，并记录六条 candidate-recorded PRD alignment queue 族，但暂不 admitted 任何 queue。
+- 更新 [docs/blueprints/blueprint.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/blueprint.md) 与 [docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)，把 live entry 从已关闭的 implementation version 切到新的 PRD alignment version；当前入口没有 active queue，下一步是 version-level admission review。
+
+### Impact
+- 剧本编辑器相关工作现在不再挂在已关闭的 `target.script-editor-implementation` 下面，而是进入一个新的 open successor version。
+- 当前 Blueprint 已明确：下一步不是直接写代码，而是先对 `queue.script-editor-prd-workspace-and-navigation-alignment` 做 admission review，因为 PRD 把工作台本身列为第一优先级。
+
+### Changed
+- 更新 [docs/blueprints/plans/2026-07-13-script-editor-implementation-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-13-script-editor-implementation-target-plan.md)，将 `target.script-editor-implementation` 从 closeout-ready 的 `open` 正式切换为 `done`，并把 closeout confirmation、future routing、以及最终 prior promotion record 写成 version-level historical truth。
+- 更新 [docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md) 与 [docs/blueprints/blueprint.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/blueprint.md)，把当前 Blueprint 入口说明改成“最新 governed version 已关闭、暂无 open successor”的状态，而不是仍停在 implementation version 的 closeout-ready 描述。
+
+### Impact
+- `target.script-editor-implementation` 已正式关闭；在当前 Blueprint 下不再允许继续提升同 version queue。
+- 若后续还要推进 script-editor 相关改进，必须先创建新 version，或做一次同等显式的 version-level reopen 决定，而不能直接复用已关闭的 implementation version。 
+
+### Changed
+- 新增 [src/application/script-editor/shared-rule-compiler.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/shared-rule-compiler.ts)，落地首个 bounded shared-rule compiler：对 `conditionGroups / effectBundles` 建索引、做共享 authoring 校验，并把支持的 task-host 条件/效果 lowering 到当前 `TaskDefinition` 契约。
+- 更新 [src/application/script-editor/runtime-pack-export.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/runtime-pack-export.ts)，让 script-editor runtime export/validation 不再对整个 `conditionGroups / effectBundles` 家族一刀切 fail closed，而是复用 shared-rule compiler 输出 `tasks.json`，同时对缺引用或 unsupported lowering 保持显式阻塞。
+- 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，新增共享 task 条件/效果编译成功与 unsupported lowering fail-closed 回归覆盖，并收紧 workspace shell 阻塞 surfacing 断言以匹配当前真实阻塞来源。
+- 更新 [docs/blueprints/queues/shared-condition-effect-authoring-integration-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/shared-condition-effect-authoring-integration-queue.md)、[docs/blueprints/plans/2026-07-13-script-editor-implementation-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-13-script-editor-implementation-target-plan.md)、[docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)、以及 [docs/blueprints/blueprint.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/blueprint.md)，把 `queue.shared-condition-effect-authoring-integration` 从 active 收口为 done，并把 live version 入口切到无 active queue 的 version-closeout readiness。
+
+### Impact
+- 当前 implementation version 已拥有首个真正落地的 shared-rule authoring path：`conditionGroups / effectBundles` 不再只是 schema-placeholder，而是可以在 bounded task slice 上通过一个复用 compile/export seam 进入当前 runtime-compatible pack。
+- 当前实现没有把 shared-rule 话题扩张成 broad host coverage；未覆盖的 host lowering 仍显式 fail closed，因此不会偷偷长出新的 feature-local rule dialect。
+- `queue.shared-condition-effect-authoring-integration` 已变为关闭历史证据；当前 implementation version 没有 active queue，接下来只剩 version closeout truth 与一次显式人工确认。
+
+### Changed
+- 新增 [docs/blueprints/queues/shared-condition-effect-authoring-integration-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/shared-condition-effect-authoring-integration-queue.md)，把 `queue.shared-condition-effect-authoring-integration` 的 queue goal、task ledger、首条 bounded implementation slice、禁止扩张边界、以及 closeout/routing 规则写成 queue-level live truth。
+- 更新 [docs/blueprints/plans/2026-07-13-script-editor-implementation-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-13-script-editor-implementation-target-plan.md)、[docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)、以及 [docs/blueprints/blueprint.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/blueprint.md)，将当前 implementation version 从 `promotion-review` 切换回 `active-execution`，并把 `queue.shared-condition-effect-authoring-integration` 设为单一 active queue。
+- 将当前执行切口明确冻结为“shared authoring-rule validator / compiler / export integration”：只承接 `conditionGroups / effectBundles` 的共享 authoring 定义、验证、compile adapter、以及导出接入，不提前吸收 broad UI polish、完整 dialogue/minigame/story-node compile、或 runtime-schema redesign。
+
+### Impact
+- Blueprint 当前不再停在 minimal workflow closeout 之后的 version review；实现版已经重新进入 `active-execution`，恢复入口切到 `task.shared-condition-effect-authoring-integration.shared-rule-compiler-and-export-integration`。
+- 当前 live queue 已明确先解决 `conditionGroups / effectBundles` 从 schema-placeholder 到 shared compile path 的缺口，而不是继续在已关闭的 minimal workflow queue 上扩张能力。
+- 后续 shared-rule 实现会受 queue-level live truth 约束：支持的 bounded host 可以接入 compile/export，未覆盖的 host 仍需显式 fail closed，而不是默默生成新的 feature-local rule dialect。
+
+### Changed
+- 新增 [src/application/script-editor/minimal-workflow.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/minimal-workflow.ts)，把最小可用 workflow 的默认项目模板、可见 family 边界、以及 bounded record draft/upsert/remove helper 收口为单独应用层模块，供主菜单入口工作流直接复用。
+- 更新 [src/ui/main-ui/main-ui-flow.js](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/main-ui/main-ui-flow.js)，把 `剧本编辑器` 主菜单入口、landing page 的 `新建/打开/导入` 动作、project-first workspace、最小对象编辑、以及 `保存 / 校验 / 导出` handoff 全部接入现有 overlay/action/file-input 流。
+- 更新 [src/styles/script-editor.css](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/styles/script-editor.css) 与 [src/styles/app.css](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/styles/app.css)，补齐 minimal workflow 的入口页、workspace chrome、notice、form grid、record list、以及 JSON editor 样式。
+- 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，新增 default minimal workflow project exportability、visible family filtering、以及 bounded record helper 的回归覆盖。
+- 更新 [docs/blueprints/queues/script-editor-minimal-usable-workflow-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-minimal-usable-workflow-queue.md)、[docs/blueprints/plans/2026-07-13-script-editor-implementation-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-13-script-editor-implementation-target-plan.md)、[docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)、以及 [docs/blueprints/blueprint.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/blueprint.md)，将 `queue.script-editor-minimal-usable-workflow` 从 active 收口为 done，并把 live version 入口切回无 active queue 的 promotion review。
+
+### Impact
+- 当前 implementation version 已拥有第一个真正对用户可见的 script-editor workflow，而不是只有 persistence / export / compatibility / creator-shell 基底；用户现在可以从主菜单进入编辑器，创建或打开项目，并在同一路径里完成保存、校验和导出 handoff。
+- `queue.script-editor-minimal-usable-workflow` 已变为关闭历史证据；后续恢复入口不再是 queue doc，而是 implementation version plan 的 promotion review。
+- 当前版本里唯一仍被记录为 open 的实现候选重新回到 `queue.shared-condition-effect-authoring-integration`，后续若要继续扩大 script-editor 可编辑语义，需要先经过 version-level review，而不是在已关闭的 first-loop queue 上继续漂移。
+
+### Changed
+- 新增 [src/application/script-editor/workspace-shell.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/workspace-shell.ts)，落地首个 project-backed script-editor workspace shell view-model：在不进入主菜单工作流的前提下，统一汇总对象树分组、选中对象摘要、导出 handoff 状态，以及 compatibility residue 摘要。
+- 新增 [src/ui/views/script-editor/script-editor-workspace-view.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/views/script-editor/script-editor-workspace-view.ts) 与 [src/styles/script-editor.css](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/styles/script-editor.css)，补齐 creator-facing workspace shell、top navigation chrome、object-tree scaffold、inspector cards 与 handoff summary 的壳层表现。
+- 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，新增 script-editor workspace shell 的对象树 scaffold 与 export blocker / compatibility residue surfacing 回归覆盖。
+- 新增 [docs/blueprints/queues/script-editor-ui-shell-and-core-workflow-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/script-editor-ui-shell-and-core-workflow-queue.md)，并同步更新 [docs/blueprints/plans/2026-07-13-script-editor-implementation-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-13-script-editor-implementation-target-plan.md)、[docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)、以及 [docs/blueprints/blueprint.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/blueprint.md)，将 `queue.script-editor-ui-shell-and-core-workflow` 记为完成并把 live version 入口切回无 active queue 的 promotion review。
+
+### Impact
+- 当前 implementation version 已拥有可复用的 script-editor creator shell，而不是只有 persistence / export / import 底层 seam；后续 product-facing workflow 不需要再重建 editor chrome、对象树与 handoff 摘要。
+- `queue.script-editor-ui-shell-and-core-workflow` 已变为关闭历史证据；后续恢复入口重新回到 implementation version plan 的 promotion review。
+- 下一条更大的候选现在可以直接评估 `queue.script-editor-minimal-usable-workflow`，因为 creator-shell 基底已经落地，而 shared-rule/product scope 是否需要进一步前置约束也能在 version-level review 中继续裁定。
+
+### Changed
+- 更新 [src/application/script-editor/runtime-pack-import.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/runtime-pack-import.ts)，将 unresolved runtime-only families 从“导入时报错拒绝”推进为“导入时保留到 `storyPack.compatibilityImport` 的 `unresolvedFamilies` 与 `diagnostics`”，让现有 scenario pack 可以进入 editor project 而不丢失原始 runtime payload。
+- 更新 [src/application/script-editor/runtime-pack-export.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/runtime-pack-export.ts)，当 imported compatibility residue 仍未被后续队列解析时，runtime export 会显式 fail closed，避免把保留下来的 runtime-only payload 静默丢出导出结果。
+- 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，新增 unresolved runtime-only family residue preservation 与 imported residue export fail-closed 的回归覆盖。
+- 更新 [docs/blueprints/queues/compatibility-import-adapter-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/compatibility-import-adapter-queue.md)、[docs/blueprints/plans/2026-07-13-script-editor-implementation-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-13-script-editor-implementation-target-plan.md)、[docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)、以及 [docs/blueprints/blueprint.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/blueprint.md)，将 `queue.compatibility-import-adapter` 从 active 收口为 done，并把 live version 入口切回无 active queue 的 promotion review。
+
+### Impact
+- 当前 implementation version 已满足 compatibility-import queue 的 bounded closeout：现有 runtime scenario pack 可以被非破坏性导入，未解析家族不会丢失，而且在后续 authoring/export 仍未支持前不会被误导出。
+- `queue.compatibility-import-adapter` 已变为关闭历史证据；后续恢复入口不再是 queue doc，而是 implementation version plan 的 promotion review。
+- script-editor 的三条上游 seam 现在都已落地：authoring-project persistence、runtime-pack export、以及 compatibility import。下一条 queue 需要由 version-level review 在 shared-rule / creator-shell / minimal-workflow 候选之间继续裁定。 
+
+## 2026-07-13 Script Editor Compatibility Import Direct Slice
+
+### Changed
+- 新增 [src/application/script-editor/runtime-pack-import.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/runtime-pack-import.ts)，落地首个 bounded `scenario pack -> script-editor project` compatibility importer：只导入 frozen direct families，并保留 `pack.json` 中的 `basePackId` / `author` / `version` / `tags` 到 `storyPack` 侧元数据。
+- 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，新增 direct-family 导入成功与 unresolved runtime-only family fail-closed 诊断回归覆盖。
+- 更新 [docs/blueprints/queues/compatibility-import-adapter-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/compatibility-import-adapter-queue.md) 与 [docs/blueprints/plans/2026-07-13-script-editor-implementation-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-13-script-editor-implementation-target-plan.md)，将 `task.compatibility-import-adapter.direct-family-import-and-compatibility-diagnostics` 记为完成，并把当前 active task 推进到 queue closeout/handoff。
+
+### Impact
+- 当前 implementation version 已拥有真实的 compatibility-import seam：一个 manifest-driven runtime scenario pack 现在可以被解释成 bounded `ScriptEditorProjectDefinition`，而不是只停留在蓝图契约层。
+- `scenes`、`activities` 以及其他 unresolved runtime-only families 不会再被静默丢弃；当前实现会用显式诊断拒绝导入，为后续 same-family residue routing 提供可验证真值。
+- 当前 live queue 仍是 `queue.compatibility-import-adapter`，但代码实现任务已完成，下一步只剩队列 closeout、残留归类与后续 lawful continuation 的治理同步。 
+
+## 2026-07-13 Script Editor Compatibility Import Queue Admission
+
+### Changed
+- 新增 [docs/blueprints/queues/compatibility-import-adapter-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/compatibility-import-adapter-queue.md)，把 `queue.compatibility-import-adapter` 的 queue goal、task ledger、禁止扩张边界、以及 closeout/routing 规则写成 queue-level live truth。
+- 更新 [docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)、[docs/blueprints/blueprint.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/blueprint.md)、以及 [docs/blueprints/plans/2026-07-13-script-editor-implementation-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-13-script-editor-implementation-target-plan.md)，将当前 implementation version 从 `promotion-review` 切换回 `active-execution`，并把 `queue.compatibility-import-adapter` 设为单一 active queue。
+- 将当前执行切口明确冻结为“manifest-driven runtime-pack compatibility import + unresolved-family diagnostics”，只承接 scenario-pack -> script-editor project 的 direct-family import 与显式兼容诊断，不提前吸收 export redesign、shared-rule integration 或 creator-facing UI workflow。
+
+### Impact
+- Blueprint 当前不再停在 export queue closeout 之后的 version review；实现版已经重新进入 `active-execution`，恢复入口切到 `task.compatibility-import-adapter.direct-family-import-and-compatibility-diagnostics`。
+- 当前 live queue 已明确先解决“现有 scenario-pack 如何进入 editor project”这个 importer-first 入口，而不是提前把 shared-rule、UI 或第二轮 export 扩张混入同一条执行线。
+- 最小可用 script-editor workflow 的默认 `导入现有剧本包` 前置路径现在已有独立 queue truth，后续兼容导入实现不需要再从会话 prose 重新整理边界。 
+
+### Changed
+- 新增 [src/application/script-editor/runtime-pack-export.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/runtime-pack-export.ts)，落地首个 bounded `script-editor project -> runtime-compatible scenario pack` 导出缝：直接映射 `storyPack -> pack.json/scenario-profile.json`、`people -> characters.json`、`cities -> cities.json`、`buildings -> houses.json`、`events -> events.json`、`quests -> tasks.json`、`textEntries -> text-entries.json`，并补齐运行时必需的空 `scenes.json`。
+- 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，新增导出成功、deferred family fail-closed、以及 opening scenario profile 缺失字段拒绝导出的回归覆盖。
+- 更新 [docs/blueprints/queues/authoring-runtime-export-pipeline-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/authoring-runtime-export-pipeline-queue.md)、[docs/blueprints/plans/2026-07-13-script-editor-implementation-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-13-script-editor-implementation-target-plan.md)、以及 [docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)，把 `queue.authoring-runtime-export-pipeline` 从 active 收口为 done，并将 live version 入口切回无 active queue 的 promotion-review 状态。
+- 将当前 version-level `next_lawful_queue_recommendation` 写为 `queue.compatibility-import-adapter`，因为 persistence 与 export 这两条上游 seam 已落地，后续可以从 frozen compatibility policy 出发检查 importer 是否成为最小下一切口。
+
+### Impact
+- 当前 script-editor implementation version 已拥有真实的 runtime-pack export handoff：作者项目不再只停留在 load/save substrate，而是可以导出首个 runtime-compatible scenario-pack artifact，并在不支持的 authoring family 上显式 fail closed。
+- `queue.authoring-runtime-export-pipeline` 已变为关闭历史证据；后续恢复入口不再是 queue doc，而是 implementation version plan 的 promotion review。
+- 最小可用 script-editor workflow 的前置条件又向前推进了一步：`save/reopen` 与 `real export` 现在都已具备，接下来只需由 version-level review 判断 compatibility import 或其他候选谁是下一条最小 lawful queue。
+
+### Changed
+- 更新 [docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)、[docs/blueprints/blueprint.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/blueprint.md)、以及 [docs/blueprints/plans/2026-07-13-script-editor-implementation-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-13-script-editor-implementation-target-plan.md)，将当前 implementation version 从 `promotion-review` 切换到 `active-execution`，并把 `queue.authoring-runtime-export-pipeline` 设为单一 active queue。
+- 新增 [docs/blueprints/queues/authoring-runtime-export-pipeline-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/authoring-runtime-export-pipeline-queue.md)，把 queue goal、task ledger、active task、禁止扩张边界、以及 closeout/routing 规则写成 queue-level live truth。
+- 将当前执行切口明确冻结为“authoring -> runtime export pipeline + bounded validator assembly”，只承接 frozen mapping contract 的 runtime-pack export 与 fail-closed validator 组装，不提前吸收 compatibility import、shared-rule integration 或 creator-facing UI workflow。
+
+### Impact
+- Blueprint 当前不再停在 export candidate 的 admission review；实现版已经重新进入 `active-execution`，恢复入口切到 `task.authoring-runtime-export-pipeline.boundary-baseline-reconcile`。
+- 后续 script-editor 实现现在以 queue-level live truth 控制 export 队列，而不是继续停留在 version-level prose review。
+- 当前 active queue 已明确把范围收紧到 export pipeline，本轮不会因 admission 同步而提前把 importer、shared-rule 或 UI 候选混入同一执行线。
+
+## 2026-07-13 Script Editor Minimal Usable Workflow Candidate Clarification
+
+### Changed
+- 更新 [docs/blueprints/specs/2026-07-13-script-editor-implementation-target.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/specs/2026-07-13-script-editor-implementation-target.md) 与 [docs/blueprints/plans/2026-07-13-script-editor-implementation-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-13-script-editor-implementation-target-plan.md)，将“最小可用剧本编辑器”从原 `queue.script-editor-ui-shell-and-core-workflow` 的范围说明中拆出，新增独立候选 `queue.script-editor-minimal-usable-workflow` / `item.script-editor-minimal-usable-workflow`。
+- 在同一份 version plan 中补入新的 `Candidate Scope Notes`，明确 `queue.script-editor-ui-shell-and-core-workflow` 收窄为可复用 editor shell / workspace framing，而新的 `queue.script-editor-minimal-usable-workflow` 专门承接主界面 `剧本编辑器` 入口、编辑器首页 `新建/打开/导入` 三入口、项目优先的工作区骨架、最小对象树 `项目 / 人物 / 文本 / 剧情节点 / 事件`、以及 `校验 -> 导出` 的最短可用路径。
+- 继续在同一份 version plan 中补入 `Candidate Admission Basis Notes`，将 `queue.script-editor-minimal-usable-workflow` 的 future admission prerequisite、required owned surfaces、minimum acceptance loop、以及 must-not-absorb 边界写成结构化候选依据，避免后续 promote 时再次退回会话 prose 整理。
+
+### Impact
+- “可用的最小剧本编辑器” 现在已经作为独立候选写入当前 implementation version truth，后续恢复时不需要再从会话 prose 重新整理入口、页面、最小对象范围以及最短用户路径。
+- 当前 live admission 仍保持在 `queue.authoring-runtime-export-pipeline`；这次补充只扩展候选真值，不改变当前 pending admission subject，也不会把 editor shell 和最小可用产品闭环继续混成一个过宽候选。
+- 后续若要正式 promote `queue.script-editor-minimal-usable-workflow`，Blueprint 已经拥有更接近 admission review 的结构化依据，可直接从 version truth 继续，而不需要再次让人工重述前置条件和最小闭环定义。
+
+### Changed
+- 更新 [docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md) 与 [docs/blueprints/plans/2026-07-13-script-editor-implementation-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-13-script-editor-implementation-target-plan.md)，将 `queue.editor-project-load-save-foundation` 从 pending admission review 提升为当前 implementation version 的单一 active queue。
+- 新增 [docs/blueprints/queues/editor-project-load-save-foundation-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/editor-project-load-save-foundation-queue.md)，把 queue-goal、task ledger、active task、禁止扩张边界、以及 closeout/routing 规则写成 queue-level live truth。
+- 将当前首个执行切口明确冻结为“manifest-driven editor project load/save + validation foundation”，只承接 authoring project manifest、split-table persistence、和 bounded validation，不提前吸收 runtime export、compatibility import、shared-rule integration 或 UI workflow。
+
+### Impact
+- Blueprint 当前不再停在“已有候选、尚未 admission”的状态；实现版已经正式进入 `active-execution`。
+- 后续这条工作流的恢复入口不再是 version-level admission review，而是 active queue 下的 `task.editor-project-load-save-foundation.manifest-load-save-and-validation`。
+- script editor implementation 的第一条执行线被收窄到一个可验证的基础设施切口，后续 export/import/UI 队列将建立在这一层稳定 authoring-project substrate 之上。
+
+### Changed
+- 新增 [src/domain/script-editor-project.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/domain/script-editor-project.ts)、[src/application/script-editor/editor-project-loader.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/editor-project-loader.ts)、以及 [src/application/script-editor/editor-project-save.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/editor-project-save.ts)，正式落地 script-editor authoring project 的 manifest-driven split-table persistence seam。
+- 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs) 与 [tsconfig.test.json](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tsconfig.test.json)，为 script-editor project hydration / save-output / manifest validation 增加回归覆盖，并让新 `src/application/script-editor/**` 模块进入 `.test-dist` 测试编译。
+- 更新 [docs/blueprints/queues/editor-project-load-save-foundation-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/editor-project-load-save-foundation-queue.md)、[docs/blueprints/plans/2026-07-13-script-editor-implementation-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-13-script-editor-implementation-target-plan.md)、以及 [docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)，把这条 queue 从 active 收口为 done，并将 live version 返回到无 active queue 的 promotion-review 状态。
+- 将 `queue.authoring-runtime-export-pipeline` 设为当前 pending admission review subject，作为 persistence foundation 之后的下一条 lawful implementation queue。
+
+### Impact
+- 当前 script-editor implementation version 已拥有一个可执行的 authoring-project substrate：project manifest、canonical split-table registry、imported-directory hydration、save serialization、以及 bounded validation 均已具备。
+- `queue.editor-project-load-save-foundation` 已变为关闭历史证据；后续实现不再需要重新发明 editor-project persistence，而是可以在这一层稳定 substrate 之上继续推进 export/import/UI 等下游 queue。
+- Blueprint 当前已从首条 implementation queue 的 active execution 返回到 promotion review，下一步恢复入口重新回到 implementation version plan，而不是停留在已关闭 queue 上。
+
+### Changed
+- 新增 [docs/blueprints/specs/2026-07-13-script-editor-implementation-target.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/specs/2026-07-13-script-editor-implementation-target.md) 与 [docs/blueprints/plans/2026-07-13-script-editor-implementation-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-13-script-editor-implementation-target-plan.md)，把新的 successor version 正式定义为 `target.script-editor-implementation`。
+- 更新 [docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md) 与 [docs/blueprints/blueprint.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/blueprint.md)，将 Blueprint live 入口从已关闭的 `target.script-editor-contract-freeze` 切换到新的 implementation version。
+- 新 version 以 `candidate-recorded` 形式预登记了 5 个 implementation queue，但保持 `active_queue = none`，未创建 queue doc，也未启动执行。
+- 在同一份 implementation version plan 中把 `queue.editor-project-load-save-foundation` 选为当前 pending admission review subject，理由是 editor-project persistence 是冻结基线之上的最小上游实现切口。
+
+### Impact
+- Blueprint 当前已经拥有一个正式打开的 successor implementation version，后续 admission 和执行都不再需要回到已关闭的 contract-freeze version 上继续操作。
+- 新 version 的职责被明确限制为“在冻结边界上实现编辑器并跑通链路”，不再把 authoring/mapping/compat/shared-rule/runtime-delta 边界重新混回实现治理。
+- 当前已完成“先筛选出实现版第一条 queue”的治理动作，但仍停在 admission review：没有 queue doc、没有 active queue、也没有启动执行。
+
+### Changed
+- 更新 [docs/blueprints/plans/2026-07-10-script-editor-contract-freeze-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/blueprint-governance-mainline-20260710/docs/blueprints/plans/2026-07-10-script-editor-contract-freeze-target-plan.md)，把当前 script-editor freeze 需求正式收口为 5 个 bounded `queue-candidate`，分别对应 authoring contract、mapping contract、compatibility/import-export policy、shared condition/effect mechanism、以及 minimum runtime contract change audit。
+- 将 `candidate_queue_ids` 从空集更新为这 5 个已记录候选队列，并同步补入对应 `item.xxx -> proposed_queue_id` 的 `Candidate Classification Record` 与 `Queue Promotion Ledger`。
+- 在同一份 version plan 中把 `queue.editor-native-authoring-contract-freeze` 选为当前 pending admission review subject，理由是 creator-facing object model / ownership / naming / editor-only metadata 边界位于其余 mapping、compatibility、shared rule、minimum runtime delta 候选之前。
+- 保持 `active_queue = none`、不创建 queue doc，只把当前 version 的下一个 lawful step 收口为“从已记录候选里选择一个进入 same-version admission review”。
+- 更新 [docs/blueprints/specs/2026-07-10-script-editor-contract-freeze-target.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/blueprint-governance-mainline-20260710/docs/blueprints/specs/2026-07-10-script-editor-contract-freeze-target.md)，把当前 version 的冻结边界明确拆成 `Must Freeze / Required Decisions / Deferred Work / Drift Guards` 四组。
+- 在同一份 version spec 中新增 `Version Deliverables`，把当前 version 必须产出的契约成果显式收口为 authoring contract、mapping contract、compat/import-export policy、shared condition/effect mechanism、minimum runtime delta、gap classification matrix，以及 version-governance output 七类交付物。
+- 明确当前 version 必须冻结的范围是：`editor-native authoring contract`、`authoring -> runtime mapping contract`、`compatibility / import-export policy`、`shared condition / effect mechanism`、以及 editor 落地所需的最小 runtime/schema delta。
+- 明确当前 version 不承接完整 script-editor UI 交付、页面/组件细节、全仓库 script hardcode 清理、大规模 runtime consumer 重写或与冻结契约无直接关系的 modularization residue。
+
+### Impact
+- 当前 version 不再处于“只有 contract portfolio、没有 live candidate”的状态；这 5 个 script-editor freeze queue 已成为正式候选真值，但仍未 admission、未激活、未进入实现。
+- 当前 version 已经完成“先筛选出下一条执行队列”的治理动作，但仍停在 admission review，不会因为这次同步就提前进入 queue activation 或代码实现。
+- 后续 Blueprint 不需要再把同一份需求重新从零拆分，只需从当前 version plan 里记录好的 candidate ledger 恢复，并在其中选择一个 bounded queue 做 admission review。
+- 后续 script-editor 相关 queue admission 不再只依赖宽泛 prose，而是要对照这份冻结清单判断事项属于“必须冻结”“需要决策”“暂不处理”还是“禁止漂移”。
+- 当前 version 现在不只是“要冻结什么”，还明确写出了“最终必须产出什么”，后续 closeout 和 successor version handoff 可以直接对照 deliverables 校验，而不必再从 Scope / Acceptance Criteria 里反推交付物。
+- 这使当前 version 更清楚地表达“先冻结设计/契约，再决定是否进入实现版本”，避免 bounded freeze queue admission 与 editor implementation scope 再次混淆。
+
+## 2026-07-10 Blueprint Version Switch To Script Editor Contract Freeze
+
+### Changed
+- 更新 [docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md) 与 [docs/blueprints/blueprint.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/blueprint.md)，把 Blueprint 主链从 `target.project-complete-modularization` 切换到新的 `target.script-editor-contract-freeze`。
+- 更新 [docs/blueprints/specs/2026-07-06-project-complete-modularization-target.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/specs/2026-07-06-project-complete-modularization-target.md) 与 [docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md)，把当前 modularization / runtime ownerization / shell closeout 主轴正式写成历史 closeout，并将 grain-shop helper-family residue 与 broader runtime-orchestration / house-session ownerization residue 路由为 post-closeout historical follow-up，而不是继续同 version admission。
+- 新增 [docs/blueprints/specs/2026-07-10-script-editor-contract-freeze-target.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/specs/2026-07-10-script-editor-contract-freeze-target.md) 与 [docs/blueprints/plans/2026-07-10-script-editor-contract-freeze-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-10-script-editor-contract-freeze-target-plan.md)，把新 current version 收口为“剧本编辑器设计 / 契约冻结”，明确只记录 queue family，不创建 queue doc，也不顺带启动实现。
+
+### Impact
+- “剧本编辑器”议题不再继续吸收到旧 modularization version，而是作为一个独立 successor version 处理，避免把 editor 设计冻结和 runtime residue 收口混成同一条治理主线。
+- 新 current version 现在只承载 `editor-native authoring contract`、`authoring -> runtime mapping contract`、`compatibility / import-export policy`、`shared condition / effect mechanism`、以及最小 `runtime contract changes` 的冻结目标，不默认吸纳主程式 shell 化、sub-runtimes 重构、全仓库硬编码迁移或完整 UI 落地。
+- 本次切换没有创建新的 queue 文档，也没有推进任何实现代码改动；Blueprint 主链只完成了 version closeout / version opening 的治理切换。
+
+## 2026-07-10 Blueprint Closure Judgement And Residue Routing Upgrade
+
+### Changed
+- 更新 [docs/blueprints/blueprint-workflow-spec.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/blueprint-governance-20260710/docs/blueprints/blueprint-workflow-spec.md)，把 queue closeout 明确拆分为 `execution_closeout_status` 与 `topic_closure_status` 两层判断，并把 same-family residue routing 收口为 Blueprint 内部默认流程，而不是每次 closeout 后重新退回人工 prose 决策。
+- 更新 [docs/blueprints/templates/target-plan-template.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/blueprint-governance-20260710/docs/blueprints/templates/target-plan-template.md) 与当前 live [docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/blueprint-governance-20260710/docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md)，新增 version-level closure routing 字段，使 `closure_review_subject / residue_candidate_family / next_lawful_queue_recommendation / auto_admission_ready` 成为结构化治理真值。
+- 更新 [docs/blueprints/templates/execution-queue-template.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/blueprint-governance-20260710/docs/blueprints/templates/execution-queue-template.md)，把 queue-level closure judgement 字段收进唯一 `## Control Block`，避免 live truth 再次散落在 `Closeout Decision` 之类的 prose 区域。
+- 更新 [tools/lint-blueprints.mjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/blueprint-governance-20260710/tools/lint-blueprints.mjs)、[tests/blueprint-governance-lint.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/blueprint-governance-20260710/tests/blueprint-governance-lint.test.cjs) 与 [tests/helpers/blueprint-governance-fixtures.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.worktrees/blueprint-governance-20260710/tests/helpers/blueprint-governance-fixtures.cjs)，把以下 fail-closed 规则纳入自动治理：
+  - `topic_closure_status = closed` 不得与 `residue_remaining = yes` 并存
+  - `residue_family = same-family` 时必须命名后继 continuation
+  - `auto_continue_eligible = true` 与 `auto_admission_ready = true` 都必须绑定结构化 continuation truth
+  - version-level residue routing 缺失 `closure_review_subject / closure_review_status / routing_basis` 时不得成立
+
+### Impact
+- Blueprint 现在能更稳定地区分“queue 执行动作完成”和“主题真实收口完成”，避免仅因治理动作发生就把 topic 误判为 closed。
+- 同一 residue family 的后继步骤默认会在 Blueprint 内部继续路由，只有真的存在多路合法分叉时才需要人工决策。
+- queue / candidate / closeout 的状态表达更接近代码真实完成度，而不是只反映文档同步或治理动作是否发生。
+
+## 2026-07-09 Three.js Renderer Boundary
+
+### Added
+- 新增 `three` 运行时依赖，作为后续 3D / WebGL 表现层基础库。
+- `docs/architecture.md` 记录 3D renderer 依赖边界：`three` 只能直接用于 `src/ui/**` 表现层，不能进入 `content`、`domain`、`application` 或 runtime 模块。
+
+### Impact
+- 后续 3D 场景、模型、特效、拾取和后处理可以复用 three.js 的现成渲染能力；玩法状态、探索、通行、事件、任务、house 会话和资源变化仍必须通过统一 game state / runtime 结构流转，不能藏进 three.js scene graph 或 `Object3D.userData`。
+
+## 2026-07-08 Character Select Ink Feedback
+
+### Changed
+- 角色选择界面的墨点反馈从 DOM 矩形边缘采样改为图片 alpha 轮廓采样：`main-ui-flow.js` 会优先读取目标控件自身 CSS 背景图，按当前 `background-size` / `background-position` 计算实际绘制区域，再从透明像素边界提取轮廓点和外法线生成墨点。
+- 角色选择界面初始化时会预热角色卡、书签、翻页按钮、返回按钮和开始按钮的轮廓缓存；无可采样图片或图片尚未加载时仍保留旧矩形采样兜底，避免 UI 反馈完全丢失。
+
+### Impact
+- 玩家在角色选择页悬浮或键盘聚焦控件时，墨点点选效果会贴近 UI 图片自身的不规则轮廓，而不是贴住控件外接方框；视觉资产仍由现有 CSS / 布局编辑器背景图维护。
+
+## 2026-07-08 Campaign Map Interaction Stability
+
+### Added
+- 大地图新增可踏足 hex 悬浮反馈层：`map-view.ts` 生成 `data-campaign-hover-hex` SVG overlay，`main.ts` 根据当前 terrain 投影、探索状态、地形通行判定和寻路结果绘制白色六边形描边，`prototype.css` 将其放在云层之上且不接管鼠标事件。
+
+### Changed
+- 大地图 marker 和 marker summary 增加稳定 DOM 身份，`renderAppFrame()` 在地图重绘时像保活 terrain / actor / cloud canvas 一样移植旧 marker 节点，并只同步语义属性，保留 terrain 投影产生的位置样式，减少玩家移动结束时城市/建筑标识被销毁重建造成的刷新感。
+- `docs/architecture.md` 同步大地图 marker 保活、可踏足 hex hover 反馈只读寻路结果、以及 hover 描边位于云层上方的层级契约。
+- 云层 reveal mask 新增上一帧探索纹理与 `uRevealTransition` 过渡；新探索格开洞时按云噪声做溶解式切换，避免云层直接消失。
+- 云层 shader 在已探索空洞内进一步衰减全图空气雾层和孤立云团残留，但不改变洞口边缘云壁的语义来源。
+- 大地图通行网格改为按 `map_ground_types` 的水域材质语义生成，和 terrain shader 的陆地/水体渲染判断对齐；`map_heights` 不再负责寻路通行判定，避免低矮陆地被当成水体。
+- 可踏足 hex 悬浮描边改为几何角点投影、高度锚定到当前 hex 中心，避免角点误采邻格高度导致六边形端点翘起或下陷。
+- 云层空洞内的次级残留层同步衰减，减少已探索核心区里额外覆盖整层薄雾或外云团残影。
+- 云层 reveal mask 的 hex 多边形同样改为角点投影、中心高度锚定，避免 mask 轮廓因角点误采邻格高度而变形。
+- 大地图通行性收紧为 terrain shader 同款“hex 中心材质”语义，并直接使用 `map_ground_types` 原始尺寸采样；岸边水格不再因为角点陆地样本被放行。
+- 云洞核心区的 inner wisp、云影与 outer puff 后叠层统一随空气雾层 keep mask 衰减到 0，避免洞内残留独立薄层。
+- 云洞边缘扰动按视觉反馈恢复旧版单向 offset 采样路径，保留此前更强的云墙撕裂和融合效果。
+- 云洞流动边缘恢复使用 reveal red 通道浅云层生成 `edgeBand` / `shallowZone` / `rimAlpha`；真正的硬六边形块改为从 raw `baseClear` 迁出，核心清空、空气雾和孤立云残留都改读 offset 后的有机 clear field，避免原始 mask 块作为独立透明度分区显露。
+
+### Impact
+- 玩家移动后地图标识节点保持稳定，地图 hover 反馈只提示当前实际可抵达的已探索陆地 hex；低矮陆地按渲染材质参与寻路，云层开图仍由探索状态驱动，视觉过渡更接近云层被逐步拨开的效果。
+
+## 2026-07-07 Campaign Viewport Cloud Shader
+
+### Added
+- 新增大地图视口级云雾 overlay renderer `src/ui/views/map/campaign-cloud-webgl.ts`，通过独立 `data-campaign-map-cloud` canvas 渲染慢速动态云层。
+- 新增 `campaign-cloud.vert.glsl` 与 `campaign-cloud.frag.glsl`，使用连续程序 FBM、billow 云雾变体与 `map_fog_noise` 轻量贴图扰动生成云体密度、明暗层次和轻微自阴影质感。
+- 新增视口空间探索挖空 reveal mask：`map-view.ts` 将当前地图累计 `revealedHexKeys` 传给云层 canvas，`campaign-cloud-webgl.ts` 生成 `uRevealTexture`，`campaign-cloud.frag.glsl` 用它裁切云层 alpha。
+- `campaign-terrain-webgl.ts` 新增只读投影 helper，将 terrain UV 投影到当前视口 client 坐标；云层 renderer 用它在完整视口云层上对齐地图 hex 挖空。
+- `travel-to-coordinate.ts` 新增 `hexToCoordinatePolygon()`，让探索挖空复用 navigation 的尖顶 axial hex 几何。
+
+### Changed
+- 大地图初始相机改为以玩家当前坐标为屏幕中心，默认缩放改为 40x；地图 reset 会回到同一 home camera。
+- `campaign-terrain-webgl.ts` 新增按地图坐标生成居中相机的 helper，避免 `main.ts` 复制 terrain 投影矩阵细节。
+- 未探索 campaign marker 在 view model 层标记为不可交互，渲染时不再带 `data-map-node-id`，并通过 disabled / pointer-events 屏蔽点击和 hover 详情。
+- campaign 地形通行网格从 hex 中心单点高度判定改为 hex 区域多点采样：中心为明确陆地或区域内有足够陆地样本才可通行，减少低矮陆地被误判为水体导致无法寻路的问题。
+- `docs/architecture.md` 收敛为地图模块责任、数据流和层级契约，不再记录云层 shader 的噪声、距离场、阈值等实现细节。
+- `map-view.ts` 在 `c-campaign-map` 视口内生成云雾 canvas，并把 marker 悬浮详情拆成独立 overlay；`prototype.css` 将云层限制在地图视口中，`pointer-events: none`，层级压过地图建筑点本体，但低于 marker 悬浮详情、debug 控件、全局 UI 和确认 modal。
+- `campaign-terrain-webgl.ts` 的地形投影同步不再给 marker 本体或玩家写入深度排序高层级；marker、玩家 DOM sprite 和 actor canvas 固定在云层下方，只有 marker 悬浮详情固定在云层上方。
+- 云雾 shader 重构为烟雾式密度场：云体主体形状、团块边界、明暗和 reveal 边缘撕裂由连续 FBM、billow 变体与贴图扰动主导，Worley/胞体距离场只保留为低权重团块破碎，不再形成可见细胞纹。
+- 云雾 shader 移除导致屏幕斜向条纹的剪切雾丝层，改用各向同性的细粒度 puff / vapor breakup 扰动补充云面细节；最终 alpha 遮挡表达保持由 shader 末端统一控制。
+- 云雾主密度噪声从单个低频 `coverage` 门控改为三组独立中频 puff field 的加权密度场，低频噪声只参与域扭曲和明暗；避免 `max()` 并集把整屏填成白雾，也避免通过常量保底掩盖采样不均。云层颜色同步调回偏亮白的云体反照率。
+- 云雾密度拆成连续 `overcast` 覆盖层和 `cloudHeightField()` 高度层，屏幕覆盖由连续云幕维持，云团形状不再依赖透明度空洞。
+- 云雾颜色层改为基于高度场梯度的近似法线光照：通过邻近采样估算坡度，再由 `slopeLight`、`ambientOcclusion`、`selfShadow` 和 `cloudHighlight` 生成亮面与软阴影，避免“白底叠黑块”或纯白无结构。
+- 云雾光照继续加入沿光照方向的高度差采样：`upwindHeight` 产生云体投影式软阴影，`downwindHeight` 产生背光侧亮边，让满屏云幕内部出现可读的明暗起伏，而不是只有均匀白色。
+- 云雾 shader 提高高度场细节和阴影动态范围：`microShadow` / `microHighlight` 参与 RGB 细节，阴影色加深但最终 alpha 遮挡表达保持不变。
+- `campaign-cloud.frag.glsl` 顶部新增云层调参表，集中暴露 `CLOUD_SAMPLE_SCALE`、`CLOUD_FLOW_SPEED`、`CLOUD_TEXTURE_SAMPLE_SCALE`、细节/阴影/高光强度、reveal 距离场侵蚀和浅云参数，便于后续直接调整云团大小、噪声采样区域、流速和空洞形态。
+- 云层动态从单纯移动噪声 offset 改为 `buildCloudSpace()` 平流采样坐标：低频风向、缓慢 curl 和 flow warp 共同驱动云体高度场、贴图细节和 reveal 边缘，使整片云层具有连续慢速流动。
+- `campaign-terrain-webgl.ts` 新增只读 `getCampaignTerrainCamera()`，`campaign-cloud-webgl.ts` 每帧将当前地图相机作为 `uMapCamera` 传入云层 shader；云层采样空间按 `offset / scale` 的有效相机平移做弱反向采样偏移、按相机 scale 做部分缩放，保持气象层自身流动的同时响应地图拖拽和缩放，并避免单纯缩放因 offset 同步变化产生额外漂移。
+- 探索空洞从单一 reveal alpha 裁切改为距离场驱动：`campaign-cloud-webgl.ts` 先栅格化已探索尖顶 hex 联合区域，再用边界距离场写入 `uRevealTexture`，shader 只负责用云阻力噪声侵蚀 `clearMask`，不再额外叠加完整云墙环。
+- `campaign-cloud-webgl.ts` 的 reveal mask 不再通过核心/外肩/外圈多层 polygon alpha 与 canvas blur 生成；red 通道改为洞外距离带浅云近场，green 通道改为清空 signed-distance 场，texture alpha 固定为 255 以避免 canvas 预乘 alpha 吃掉语义通道。
+- 云洞外侧浅云近场改为距离场语义：`CLOUD_REVEAL_FIELD_*_RATIO` 根据当前投影 hex 半径生成内清空、外清空和浅云距离带，`REVEAL_SHALLOW_*` 在 shader 中只把它解释为浅云区，外圈之外恢复当前深云层。
+- 浅云层从“深云降透明度 / RGB 染色”改为独立稀疏云体：`sampleShallowCloudLayer()` 使用更高覆盖阈值、更小 puff 采样和自身明暗来生成少量浅云团；主合成在浅云语义区降低深云保留量，再叠加浅云层，避免形成均匀浅白盘或透明度锐减的假过渡。
+- 浅云到深云、浅云到空洞的过渡改为 reveal 语义场与 `cloudResistance` 云阻力共同决定云体替换比例；边界处会按云团/细节噪声破碎，而不是只依赖 smoothstep 圆滑羽化。
+- 修正浅云密度场过稀的问题：浅云层改用更符合当前高度场分布的成云阈值，并新增 `puffPresence` 云团存在场与干区削减场，让浅云区出现少量可见云团，而不是完全无云或只靠 alpha 提亮。
+- 云洞边缘移除独立 `cloudWall` 合成层；边界厚度现在只能来自距离场 clear mask 被云阻力噪声局部侵蚀，以及浅云层对深云层的替换，避免截图中那种预制白色厚环。
+- 云洞 shader 移除低 alpha `discard`，让透明边缘继续走正常 alpha blend，避免在云洞边界重新切出像素级硬边。
+- 云洞边缘从“mask 加少量噪声扰动”改为“开洞压力与云阻力对抗”：`cloudResistance` 由大团块、billow 扇贝状云缘、细节纹理和云丝纹理组成，密云会咬住边界形成残留云壁，薄云才会被打开，确保 reveal 边缘能看到实际噪声轮廓。
+
+### Impact
+- 大地图云层、探索开洞和可踏足反馈的表现不再依赖简单 alpha 蒙版或一次性 DOM 重绘，视觉层和交互层的稳定性更接近持续运行的战役地图系统。
+
+## 2026-07-08 Review Cadence Shared Mechanism Support Spec
+
+### Added
+- 新增 Blueprint 支撑规范 [docs/blueprints/specs/2026-07-08-review-cadence-follow-up-shared-review-support-spec.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/specs/2026-07-08-review-cadence-follow-up-shared-review-support-spec.md)，把“今日评定 / today's review”正式收口为当前 `queue.review-cadence-follow-up-contract-closure` 的共享机制设计依据，而不是 keep-house / temple-house 的私有功能补丁。
+- 该规范明确区分三层边界：scenario-pack review 配置层、共享 review 机制层、宿主 house/UI 承载层，并明确当前阶段不通过新增 `review sub-runtime` 来承载此问题。
+- 该规范冻结了统一 review 状态、触发源、visibility policy / review gate / host selector、配置声明边界、模块目录建议、迁移顺序、Blueprint admission 依据与结构性验收标准。
+
+### Changed
+- 更新 [docs/blueprints/specs/2026-07-06-project-complete-modularization-target.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/specs/2026-07-06-project-complete-modularization-target.md)，把 `queue.review-cadence-follow-up-contract-closure` 正式补入 current target 的 `Queue Contract Portfolio`，并把 admission rule 明确绑定到这份新的支撑规范。
+- 更新当前 live [docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md)，为既有 `item.review-cadence-follow-up-contract-closure` / `queue.review-cadence-follow-up-contract-closure` 补入 support spec 依据，明确本次设计任务沿用既有 queue candidate，而不是另起新的 same-target queue identity。
+
+### Impact
+- 后续若要推进“今日评定共享机制改造”，不需要再次从零解释为什么它不是单一 house feature，也不需要在 admission 讨论里重新发明 host/state/visibility/config 边界。
+- Blueprint 当前对该问题的治理身份更清晰：它属于既有 `queue.review-cadence-follow-up-contract-closure` 的边界深化，而不是一个重复 candidate。
+- 未来实施时，可以按共享规则 -> 统一状态 -> 触发收敛 -> 宿主适配 -> scenario-pack 数据化的顺序推进，而不是继续把逻辑散落在 house、runtime、time 与 UI 分支中。
+
+## 2026-07-08 Blueprint Intake Minimal Input And Fixed Receipt Rule
+
+### Changed
+- 更新 [docs/blueprints/blueprint-workflow-spec.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/blueprint-workflow-spec.md)，把 fresh queue intake 的人工输入面正式收口为 `新需求 + 参考治理规范`，并明确 Blueprint 必须内部完成真值链读取、active-queue 吸收判断、候选收敛与 admission routing。
+- 更新 [docs/blueprints/templates/target-plan-template.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/templates/target-plan-template.md) 与当前 live [docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md)，新增固定 operator receipt 契约，默认输出统一为 `处理结果 / 原因说明 / 当前执行情况 / 下一步` 四段回执，并显式写入 `人工操作：当前不需要 / 当前需要确认 xxx`。
+- 更新 [docs/blueprints/templates/execution-queue-template.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/templates/execution-queue-template.md)，要求 operator receipt 的 `当前执行情况` 直接取自 `queue_id`、`active_task` 与 `queue_goal`，避免队列可观测性继续依赖会话 prose。
+- 更新 [tools/lint-blueprints.mjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tools/lint-blueprints.mjs) 与 [tests/blueprint-governance-lint.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/blueprint-governance-lint.test.cjs)，把 `intake_feedback_mode` 收口为单一 `fixed-receipt`，并增加对最小人工输入规则、固定回执契约和 operator snapshot contract 的静态校验。
+
+### Impact
+- 人工创建 fresh queue 相关需求时，不再需要手工命名 `item.xxx` 或填写 review/admission 内部字段。
+- Blueprint 对人工的默认反馈不再漂移成长篇内部分析，而是固定返回同一张简洁回执，同时保留队列目标、任务数和当前任务的可见性来源。
+- active queue 存在时，新增需求默认只会被吸收到当前队列或收敛为候选项；并行激活第二个 active queue 仍然被 fail-closed。 
+
+## 2026-07-07 Playable Contribution Runtime Closure
+
+### Changed
+- 扩展 [src/core/contracts/gameplay-contribution.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/core/contracts/gameplay-contribution.ts) 与 [src/core/mods/mod-parser.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/core/mods/mod-parser.ts)，把 `playables` 与 `playableIntegrations` 提升为正式的 mod gameplay contribution 家族。
+- 更新 [src/core/mods/mod-runtime.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/core/mods/mod-runtime.ts)，让 activated mod 在统一 contribution 安装阶段记录 playable ids / integration ids，而不是只覆盖 navigation / events / scenes / tasks / houses。
+- 新增 [src/core/runtime/playable-runtime-registries.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/core/runtime/playable-runtime-registries.ts)，把默认 playable registry bundle 收口为显式 runtime seam，并允许它从 activated mod 进行配置，同时保留明确的 builtin first-party seed 安装。
+- 更新 [src/core/runtime/playable-runtime.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/core/runtime/playable-runtime.ts)、[src/core/runtime/interactive-runtime.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/core/runtime/interactive-runtime.ts) 与 [src/main.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/main.ts)，让 covered playable runtime path 消费 activation-configurable default registries，而不是只依赖隐藏的 builtin registry fallback。
+- 同步关闭 Blueprint queue [docs/blueprints/queues/playable-family-gap-audit-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/playable-family-gap-audit-queue.md)，并把当前 target 返回到 open + no-active-queue 的同 target admission review 状态。
+
+### Impact
+- playable family 现在正式进入统一的 mod contribution truth，后续新增或迁移 playable 时，不必再把它们留在 gameplay contribution contract 之外。
+- runtime 默认 playable registries 不再只是隐式引用 builtin registry 常量；激活中的 mod 已经可以显式配置默认 playable 解析面。
+- builtin playable 仍然保留 first-party seed 兼容路径，但它现在属于显式安装机制，而不是 generic runtime 的隐藏兜底。
+
+## 2026-07-07 Zhuyuanzhang Scenario-Pack Integration Support Spec
+
+### Added
+- 新增 Blueprint 支撑规范 [docs/blueprints/specs/2026-07-07-zhuyuanzhang-scenario-pack-integration-support-spec.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/specs/2026-07-07-zhuyuanzhang-scenario-pack-integration-support-spec.md)，把 `zhuyuanzhang` 在当前 complete-modularization target 下的目标终态正式收口为“一个 canonical scenario-pack，而不是 TS 装配 + 旧资源路径的混合体”。
+- 该规范明确冻结了 `zhuyuanzhang` 的主从表模型：`pack.json` 作为唯一入口主表，`scenario-profile / events / scenes / tasks / maps / cities / houses / characters` 作为当前兼容主干表，`text-entries / city-portraits / city-entries / activities / house-access-refusal-rules / historical-*` 作为从表或补充映射表；`visual-assets` 被降格为共享契约升级后的计划扩展。
+- 该规范把 `visual-assets.json` 明确收口为“共享 scenario-pack/content-pack contract、loader、validator 支持之后才能启用”的后续扩展，并要求剧本专属 CG、portrait、house/playable 插图在迁移时逐步进入 `src/content/scenario-packs/zhuyuanzhang/assets/**`，但在升级前继续走当前运行时支持的字段和映射。
+
+### Changed
+- 明确 `zhuyuanzhang` 剧本整合默认遵循“数据驱动 + shared loader seam”原则：`events` 只做触发与路由，`scenes` 只做演出与分支，`tasks` 只做进度状态机；文案与视觉资源改造都必须以当前共享契约能力为上限，超出现状的表或字段必须先走 shared loader seam 升级，不能由剧本包单方面发明。
+- 明确共享 framework/UI baseline 不是 `zhuyuanzhang` 包内真值，不得为了追求表面自包含而把 layout-editor baseline、共享按钮/面板、或 shared skin 资源并入剧本包。
+- 明确整合验证必须同时覆盖 `pack.json.files`、`textId` / `sceneId` / `taskId` / `eventId` / `assetId` 引用完整性、pack-local asset 存在性、以及迁移后的 source-path audit。
+
+### Impact
+- 后续若要推进 `zhuyuanzhang` 完整剧本包整合，不需要再次从零定义“哪些内容该进包、哪些不能进包、主从表如何拆、如何验收”；当前 Blueprint 已有一份可复用的正式支撑规范。
+
+## 2026-07-07 Shared Contract Upgrade Governance Spec
+
+### Added
+- 新增治理规范 [docs/superpowers/specs/2026-07-07-shared-contract-upgrade-governance-spec.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/superpowers/specs/2026-07-07-shared-contract-upgrade-governance-spec.md)，单独冻结 shared `scenario-pack/content-pack` 契约链路的升级顺序、层级责任和验收门槛，并明确它不是 Blueprint/live truth。
+- 该规范把 shared 能力升级固定为 `contract -> loader -> validator -> active-content -> consumer -> pack adoption -> cleanup` 七层链路，防止 pack 侧先偷跑字段、再倒逼 shared runtime 补洞。
+- 该规范把当前最敏感的三类能力 `visualAssets`、任务 `textId`、更丰富的 `scene graph` 收口为 shared 上游 readiness 问题，而不是 `zhuyuanzhang` 包内可自行启用的问题。
+
+### Impact
+- 后续如果要推进 `visual-assets`、任务 `textId`、`rich scene graph` 这类能力，仓库现在已经有一份独立治理文档可直接作为上游升级门槛，不需要再把 pack-level 规划和 shared contract 扩展混写在同一份规范里。
+- 该规范不会改变当前 active queue truth，也不会取代 target-plan/queue-doc 的 live execution authority；它只为未来同 target queue admission 和实施 closeout 提供稳定边界。
+
+## 2026-07-07 Target Lifecycle Explicit-Open-Explicit-Close Rule
+
+### Changed
+- 更新 [docs/blueprints/blueprint-workflow-spec.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/blueprint-workflow-spec.md)，明确 target 生命周期不再由 queue 完成情况自动推断：
+  - `open target` 在没有 explicit closeout confirmation 前持续保持 open
+  - `active_queue = none` 只表示当前没有 active queue，不表示 target 自动关闭
+  - 只要 target 仍是 `open`，就可以继续增加新的 same-target queue
+  - `target_status` 从 `open` 变到 `done` 前，必须有一次明确的人类关闭确认
+- 更新 [docs/blueprints/templates/target-plan-template.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/templates/target-plan-template.md) 与 [docs/blueprints/templates/target-spec-template.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/templates/target-spec-template.md)，把 explicit-open / explicit-close 规则和 “open target 仍可继续 admit 新 queue” 固化为模板默认语义。
+- 更新当前 live [docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md) 与 [docs/blueprints/specs/2026-07-06-project-complete-modularization-target.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/specs/2026-07-06-project-complete-modularization-target.md)，明确当前 modularization target 在没有 explicit human closeout confirmation 前保持 open，并允许继续承接新的 same-target queue。
+
+### Impact
+- target closeout 不再会被“所有 queue 都做完了”这类流程信号自动推导出来。
+- 以后只要 current target 仍 open，就不需要为了继续同一时期工作而伪造 sibling target；可以直接在同一 target 下增加新的 queue。
+- target closeout 现在从自动流程分支收口为“closeout-ready + 一次人工确认”。
+
+## 2026-07-07 Queue Admission Startup Loop Closure
+
+### Changed
+- 更新 [docs/blueprints/blueprint-workflow-spec.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/blueprint-workflow-spec.md)，把“新增 Queue 的标准起手流程”正式写成硬规则：
+  - fresh queue item 必须先读取当前真值链
+  - 必须先检查是否已有 active queue 以及能否被当前 queue 吸收
+  - `queue-candidate` 必须先进入 target-level admission，而不是先创建 queue doc 或先开始实现
+  - queue activation 的固定顺序被写死为 `target-plan review sync -> queue doc activation -> target-plan active_queue sync -> implementation`
+  - `execution_mode = single-active-task` 且 `allow_parallel = false` 时，禁止并行激活第二个 active queue
+- 更新 [docs/blueprints/classification-rule-layer-spec.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/classification-rule-layer-spec.md)，明确 `queue-candidate` 的默认去向是 admission，不是 implementation；并补入 recorded candidate 的 recovery rule，要求优先从既有 admission record 恢复。
+- 更新 [docs/blueprints/templates/target-plan-template.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/templates/target-plan-template.md)，加入：
+  - admission startup rules
+  - candidate recovery ledger
+  - single-active-queue rule
+- 更新 [docs/blueprints/templates/execution-queue-template.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/templates/execution-queue-template.md)，去掉 `queue_status = candidate`，明确 queue doc 只承载 admitted queue truth，不再充当 pre-admission candidate 容器。
+- 更新当前 live [docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md)，补入 queue admission startup 与 candidate recovery 的当前期恢复规则。
+- 更新 [tools/lint-blueprints.mjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tools/lint-blueprints.mjs) 与 [tests/blueprint-governance-lint.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/blueprint-governance-lint.test.cjs)，把以下低成本可静态拦截项纳入 lint：
+  - queue doc 使用 `queue_status = candidate`
+  - target plan 已写 `active_queue = none`，但 queue doc 已经先变成 `active`
+  - target plan 已命名一个 `active_queue`，但 queue docs 没有唯一匹配的 active queue
+  - active queue 已存在时，target plan 仍保留第二个 live admission review subject
+
+### Impact
+- 新增 queue 不再需要每次从头 full re-audit；只要 candidate 已经被结构化记录，后续默认从 admission record 恢复，只有 material recheck trigger 才允许重开 full audit。
+- “未 admission 先建 queue / 先激活 queue / 先实现”的治理短路被进一步 fail-closed。
+- 用户范围确认与 queue admission 的边界被继续硬化，避免 scope approval 再次漂移成执行授权。
+
+## 2026-07-07 UI Runtime Contract Consumption Queue Closeout
+
+### Changed
+- 同步当前 live Blueprint 真值：
+  - [docs/blueprints/queues/ui-runtime-contract-consumption-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/ui-runtime-contract-consumption-queue.md)
+  - [docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md)
+  - [docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)
+- `queue.ui-runtime-contract-consumption` 已从 `active` 收口为 `done`，其唯一 active task 已标记完成并补入 closeout decision 与 verification record。
+- 当前 target 已从 `active-execution` 返回到 `open + idle-open`，当前无 active queue；下一合法执行点收口为“同 target 的 fresh work admission review 或显式 target closeout”。
+
+### Impact
+- 共享对话框提取与本轮限定替换点不再停留在代码已完成但治理未 closeout 的悬空状态。
+- 后续若继续推进新的 UI 或 modularization 工作，必须重新经过 target-level classification / admission，而不能隐式复用已关闭 queue。
+
+## 2026-07-07 Blueprint Admission And Closeout Fail-Closed Sealing
+
+### Changed
+- 更新 [docs/blueprints/blueprint-workflow-spec.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/blueprint-workflow-spec.md)，把以下漏洞提升为硬规则而非建议：
+  - `queue-candidate` 不得在 `active_queue = none` 时跳过 admission 直接进入实现
+  - 用户范围确认不等于 queue admission
+  - 会改变 active truth 的 classification 不得停留在会话 prose，必须结构化写入 target plan
+  - active task 验证通过且下一合法执行点唯一时，不得停在状态汇报，必须自动进入 auto-reconcile / closeout / target-review handoff
+- 更新 [docs/blueprints/templates/target-plan-template.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/templates/target-plan-template.md)，新增 admission review 承载字段：
+  - `review_subject_id`
+  - `review_subject_classification`
+  - `proposed_queue_id`
+  - `review_basis`
+  - `admission_status`
+- 更新 [docs/blueprints/templates/execution-queue-template.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/templates/execution-queue-template.md)，把 queue doc 明确限制为“被 admission 后的执行真值载体”，不再允许 scope approval 直接替代 queue activation。
+- 更新 [docs/blueprints/classification-rule-layer-spec.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/classification-rule-layer-spec.md)，明确 classification layer 只能路由，不能自行授权实现；任何会改变 active truth 的 classification 都必须回写 target plan admission fields。
+- 更新当前 live [docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md)，补入 admission review 结构化字段，并将当前下一执行点从单纯 `resume-active-queue` 收口为 `auto-reconcile-active-task`，避免“验证完成却停在汇报”继续漂移。
+- 更新 [tools/lint-blueprints.mjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tools/lint-blueprints.mjs) 与 [tests/blueprint-governance-lint.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/blueprint-governance-lint.test.cjs)，把当前可静态拦截的 admission / closeout 状态矛盾纳入 lint。
+
+### Impact
+- Blueprint 现在对 admission 的最小真值链是 fail-closed 的：没有 target-plan admission truth 和 admitted queue doc，就不能把 fresh `queue-candidate` 当作实现授权。
+- target plan 不再只靠 prose 说明“正在审查什么”；当前 admission 审查对象已经有结构化承载位。
+- “做完了是否继续 closeout / promotion review / 文档同步”这类低价值询问，在唯一合法分支已明确时被正式禁止。
+- 当前 lint 已可直接拒绝多类静态治理短路，但仍把“会话执行顺序本身”的更强自动阻断列为明确治理债务，而不是继续留在口头提醒层。
+
+## 2026-07-07 Blueprint Governance Model Hardening
+
+### Changed
+- 重写 [docs/blueprints/blueprint-workflow-spec.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/blueprint-workflow-spec.md)，把 Blueprint 恢复链正式收口为 `project-progress -> blueprint -> target plan -> active queue -> active task`，并把 `target plan` / `queue doc` 固定为 target 层与 queue 层的唯一 live governor。
+- 重写 [docs/blueprints/classification-rule-layer-spec.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/classification-rule-layer-spec.md)，让 classification layer 明确依附新的 single-writer Blueprint 模型，只负责路由，不再冒充 live execution controller。
+- 将 P0/P1 Blueprint 约束草案正式落库：Control Block 独占执行真值，`decision_state`/`target_status` 从上游镜像中收口，`promotion_review_result` / `resume_gate` / `next_effect` 等字段改为结构化约束。
+- 按 B 方案继续收紧 Blueprint 真值字段：`project-progress.next_step` 改为枚举 `entry_action`，`target plan.next_legal_action` 改为枚举 `next_action`，并移除 target plan 的 live `Current Decision` 解释区。
+- 将 target spec / target-spec template 的 `Queue Portfolio` 改为 `Queue Contract Portfolio`，移除 `State` / `Source` 这类 runtime / history 混合列，收口为纯 contract 表。
+- 新增 [tools/lint-blueprints.mjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tools/lint-blueprints.mjs) 与 `npm run lint:blueprints`，把 Blueprint 一致性检查从“人工遵守”推进到“脚本拒绝漂移”。
+- 新增 [tools/validate-commit-message.mjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tools/validate-commit-message.mjs)、[.githooks/commit-msg](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.githooks/commit-msg) 与 [/.github/workflows/validate-commit-messages.yml](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/.github/workflows/validate-commit-messages.yml)，把“每次 git 提交都必须带内容概述”从口头要求升级为仓库级 commit-msg / CI 双重门禁。
+- 重写 Blueprint 模板族：
+  - [docs/blueprints/templates/project-progress-template.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/templates/project-progress-template.md)
+  - [docs/blueprints/templates/blueprint-template.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/templates/blueprint-template.md)
+  - [docs/blueprints/templates/target-spec-template.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/templates/target-spec-template.md)
+  - [docs/blueprints/templates/target-plan-template.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/templates/target-plan-template.md)
+  - [docs/blueprints/templates/execution-queue-template.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/templates/execution-queue-template.md)
+- 重写当前 live 文档：
+  - [docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)
+  - [docs/blueprints/blueprint.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/blueprint.md)
+  - [docs/blueprints/specs/2026-07-06-project-complete-modularization-target.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/specs/2026-07-06-project-complete-modularization-target.md)
+  - [docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md)
+- 当前 modularization target 不再用“所有已知 queue 都关闭”来直接推导 `done`；现改为 `open + idle-open`，使当前 target 在 `active_queue = none` 时仍可通过 promotion-review 接纳新 queue。
+- 清理关闭 queue 文档中的误导性 live/historical 混写：`Current Queue` 改为 `Historical Task Ledger`，关闭记录中的 `Resume ...` 改写为历史性 handoff 描述，不再冒充当前执行指令。
+- `docs/change-log.md` 自身在治理模型中降级为历史镜像层，不再被 Blueprint 规范声明为 promotion / closeout gate。
+- 进一步确认 `docs/change-log.md` 的正式定位为“历史记录 + 人类可读摘要”，并从 Blueprint 正式约束中移除它作为 fixed sync order 强制节点与治理必扫项的角色。
+- 更新 [docs/superpowers/README.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/superpowers/README.md) 与 [docs/superpowers/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/superpowers/project-progress.md)，把它们显式标成 Blueprint 之后的 legacy / historical 入口。
+- 批量修正多份 legacy `docs/superpowers/plans/**` 与 `docs/superpowers/specs/**` 顶部的恢复提示，避免单独打开旧文件时仍把 `docs/superpowers/project-progress.md` 误读成当前仓库的默认恢复入口。
+
+### Impact
+- 当前恢复执行不再需要从 `change-log`、旧 `docs/superpowers/**` 或关闭 queue 叙事中推断真值。
+- `project-progress` 和 `blueprint` 已移除高漂移 completed registry 与 queue-local truth，live 状态只保留必要入口字段。
+- task 完成后的自动动作、queue/target closeout、人工确认频率限制、以及 `mod-first-dev` 集成闭环都已经进入 Blueprint 规范与 target plan 的显式规则层。
+- 当前仓库级 git 提交也不再允许只有标题没有正文概述；普通 commit 与 merge commit 都必须使用 `<type>: <brief title>` + `Summary:` bullets。
+
+## 2026-07-06 Blueprint Workflow Spec
+
+### Added
+- 新增 [docs/blueprints/blueprint-workflow-spec.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/blueprint-workflow-spec.md)，正式定义新的 Blueprint 工作流，作为后续仓库治理与执行恢复的唯一新流程来源。
+- 新建 `docs/blueprints/` 目录，作为新工作流的规范根目录，预留 `project-progress.md`、`blueprint.md`、`queues/`、`specs/`、`plans/`、`templates/` 等后续标准位置。
+- 新增 [docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md) 作为全局恢复入口，以及 [docs/blueprints/blueprint.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/blueprint.md) 作为单一当前 owner 文档。
+- 新增 [docs/blueprints/queues/blueprint-workflow-bootstrap-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/blueprint-workflow-bootstrap-queue.md)，用于把新工作流从规则源文档引导到第一个真实 topic。
+- 新增 [docs/blueprints/specs/2026-07-06-project-complete-modularization-target.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/specs/2026-07-06-project-complete-modularization-target.md)，把当前时期的正式 target 固定为项目“完全 Mod 化”，并显式写入 target 级验收标准。
+- 新增 [docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md)，作为当前时期 target 的 target-level governor。
+- 新增 [docs/blueprints/queues/core-production-integration-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/core-production-integration-queue.md)，作为单一 `mod化` target 下的首个真实迭代任务队列。
+- 新增 Blueprint 模板族：
+  - [docs/blueprints/templates/project-progress-template.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/templates/project-progress-template.md)
+  - [docs/blueprints/templates/blueprint-template.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/templates/blueprint-template.md)
+  - [docs/blueprints/templates/execution-queue-template.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/templates/execution-queue-template.md)
+  - [docs/blueprints/templates/target-spec-template.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/templates/target-spec-template.md)
+  - [docs/blueprints/templates/target-plan-template.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/templates/target-plan-template.md)
+
+### Changed
+- 明确旧 `docs/superpowers/**` 工作流文档从现在起只作为历史参考，不再作为新执行的主治理入口。
+- 新工作流术语收口为 `project-progress -> blueprint -> target spec -> target plan -> task queue -> execution artifacts`。
+- Blueprint 允许跨不同时期存在多个 target，但同一时期只保留一个 current target；当前时期正式目标固定为项目“完全 Mod 化”，后续同时期迭代事项不再提升为 sibling target，而是进入不同 queue。
+- 可执行单元从 Blueprint target 下沉为 queue task，状态模型固定为：`candidate`、`queued`、`active`、`blocked`、`done`、`dropped`。
+- 当前“完全 Mod 化” target 已补入 phase 级验收框架：`Phase 1 Runtime Closure`、`Phase 2 Contribution Closure`、`Phase 3 Authoring Closure`、`Phase 4 Final Mod-First Acceptance`；phase 只作为 target 内部验收结构，不新增新的治理入口层。
+- 当前 target plan 已为各 queue 家族补入轻量定义卡片，统一记录 `Goal / Promote when / Out of scope / Done when`，避免候选 queue 只有名称而缺少启动与关闭条件。
+- `core-production-integration` queue 已从粗粒度任务列表补强为 task execution contract 结构，为每个正式 task 明确 `Purpose / Must examine / Required output / Done when / Verification / Failure mode`。
+- `core-production-integration` 的 engine owner-line 已按实际代码状态收口为 retirement：删除了未接生产启动流的 `src/core/engine/**` 及其孤立 supporting types，并把回归从“engine skeleton 存在”改为“orphaned engine seam 已退役”。
+- `core-production-integration` 的 save-envelope-cutover 已接出第一条真实浏览器存档链：新增 `src/core/save/browser-save-record.ts`，让 `main.ts` 通过 save envelope 读写 `selectedCharacterId / selectedModId / selectedModSource`，并在 startup-session apply 与 `beforeunload` 时写入浏览器存储。
+- `core-production-integration` 的 runtime-ownership-closeout 已完成：当前不再需要单独提升 `state-sync-and-runtime-canonicalization`，因为 `commitRuntimeRequest() -> dispatchRuntimeRequest()` 仍是覆盖范围内的生产 write-back 主线，而剩余直接 `gameState`/view 切换更接近 shell-thinning residue。
+- 已新增 [docs/blueprints/queues/shell-thinning-and-final-ownerization-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/shell-thinning-and-final-ownerization-queue.md) 作为新的 Phase 1 active queue，并按当前 `main.ts` 残余实况拆出第一版任务：view transition ownerization、travel/auto-advance ownerization、render-prepass ownerization、以及 queue closeout。
+- 已新增 [src/application/runtime/city-view-transition.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/runtime/city-view-transition.ts)，把 `leave-city / enter-city-3d / leave-city-3d` 这组三段覆盖范围内的视图切换与 `world/ui` 清理从 `main.ts` 提取为独立 owner seam；对应 queue 已将 active task 推进到 `travel-and-auto-advance-ownerization`。
+- 已新增 [src/application/runtime/campaign-travel-transition.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/runtime/campaign-travel-transition.ts)，把 `startCampaignTravel()` 中覆盖范围内的 travel-start 与 travel-completion app-state 变更从 `main.ts` 提取为独立 owner seam；`travel-and-auto-advance-ownerization` 任务当前仍保持 `active`，后续继续处理 map auto-advance residue。
+- 已新增 [src/application/runtime/map-auto-advance-transition.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/runtime/map-auto-advance-transition.ts)，把 `startMapAutoAdvance()` 中覆盖范围内的启动态和 snapshot 应用态从 `main.ts` 提取为独立 owner seam；`travel-and-auto-advance-ownerization` 已完成，当前 active task 已推进到 `render-prepass-ownerization`。
+- 已新增 [src/application/runtime/render-prepass-state.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/runtime/render-prepass-state.ts)，把 `renderAppFrame()` 中直接通过 `ensureCityNpcPoolsForCurrentDay()` 回写 `appState.gameState` 的 prepass mutation 提取为独立 seam；`render-prepass-ownerization` 已完成。
+- `shell-thinning-and-final-ownerization` 已正式收口：当前 `main.ts` 剩余的直接写入主要属于 shell 级 UI/事件编排、startup-time app-state assembly、或极窄兼容 handoff，暂时不再单独提升 `state-sync-and-runtime-canonicalization` 或 `startup-builder-ownerization`。
+- 已新增 [docs/blueprints/queues/builtin-content-deprivileging-closeout-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/builtin-content-deprivileging-closeout-queue.md)，作为新的 Phase 2 active queue，并按当前实况把 builtin-first 生产特权收口为第一版任务梯度：`baseline-reconcile -> builtin-registry-and-loader-audit -> runtime-consumer-deprivileging -> queue-closeout`。
+- 当前 Phase 2 的实际打开依据已明确记录：builtin house/playable 仍通过静态 builtin registry seed 进入生产路径，startup 仍有 hardwired builtin-default activation，UI reserve / schema / layout / skin / asset catalog 仍以 builtin baseline 预载方式参与生产消费，因此先正式提升 `builtin-content-deprivileging-closeout`，而不是直接跳到 `unified-contribution-intake-closeout` 或 `first-party-mod-acceptance`。
+- `builtin-content-deprivileging-closeout` 的 baseline-reconcile 已完成：当前第一优先级 blocker 已收口为 house/playable 静态 builtin registry seed、startup 直构 builtin loaded mod、以及默认 base-pack bootstrap；UI reserve layering 目前先按显式 framework baseline 处理，后续仅在更强证据出现时再升级为 blocker。
+- 已更新 [src/main.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/main.ts)，把 builtin startup 与 builtin save-source reload 从 startup-time `createLoadedModFromManifest(...)` 直构切到共享 `mod.load-builtin + builtinModsById` loader seam，并为其补入新的 robustness 回归；当前 `builtin-registry-and-loader-audit` 仍继续，下一步聚焦静态 builtin house/playable registry seed。
+- 已新增 [src/core/registry/builtin-house-module-registry.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/core/registry/builtin-house-module-registry.ts)、[src/core/registry/builtin-playable-definition-registry.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/core/registry/builtin-playable-definition-registry.ts)、[src/core/registry/builtin-playable-integration-registry.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/core/registry/builtin-playable-integration-registry.ts)，并把 builtin static seed ownership 从通用 core registry 文件中拆出到显式 builtin installer 模块；对应 runtime/presenter/view 消费方已改为通过这些显式 builtin seam 读取默认注册表，`builtin-registry-and-loader-audit` 因而可以收口并推进到 `runtime-consumer-deprivileging`。
+- 已更新 [src/application/content/default-runtime-content.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/content/default-runtime-content.ts) 与 [src/main.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/main.ts)，让 default runtime content 不再自带 `createBaseGameContentPack()` builtin self-load，而是改为由 `main.ts` 显式注入当前默认 pack；这使 `runtime-consumer-deprivileging` 的第一条 builtin-preloaded consumer 路径已经收窄，后续重点转向 active-content bootstrap 与 UI reserve baseline 的剩余 disposition。
+- 已更新 [src/core/mods/mod-runtime.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/core/mods/mod-runtime.ts)、[src/application/content/active-game-content.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/content/active-game-content.ts)、[src/application/startup/startup-session-coordinator.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/startup/startup-session-coordinator.ts) 与 [src/main.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/main.ts)，让 scenario activation 可以保留 `base + scenario` 的多 content source activation 结果，并把 active content context 的启动装配改成直接从 `activationResult.normalizedContentSources` 组装，而不再额外传入 `basePack`；这进一步收窄了 active-content/bootstrap 的 builtin handoff residue。
+- `builtin-content-deprivileging-closeout` 已正式收口：经最新 source-path audit 确认，主 startup/runtime 路径并不会消费 `src/application/ui/ui-contract-registry.ts` 或 `src/content/ui/**` 这套 reserve family；当前真实 runtime `uiLayouts` 仍直接来自 [src/content/layout-editor-presets.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/content/layout-editor-presets.ts) 的显式 baseline，因此 UI reserve layering 暂按 framework/editor baseline 记录，而不是继续作为 builtin-only 生产特权 blocker。
+- Blueprint 全局入口链已同步到“当前无 active queue，等待下一次 target-level promotion 决策”的状态：`project-progress.md`、`blueprint.md`、当前 target plan 与 target spec 都改为以 `builtin-content-deprivileging-closeout` 的 closeout 记录作为最新 Phase 2 证据。
+- Blueprint 工作流现已正式切到 AI-first 定义：`project-progress.md`、`blueprint.md`、当前 target spec/plan、以及当前仍承载 promotion 真值的关闭 queue 文档都新增了 `## Control Block`，并把 `active_queue = none`、`active_task = none`、`promotion-review` 这类执行真值结构化为机器可读状态。
+- [docs/blueprints/blueprint-workflow-spec.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/blueprint-workflow-spec.md) 已重写为 AI-first authoritative spec，正式定义 `Blueprint = execution index`、`Target = version delivery unit`、`Queue = execution decomposition unit`、`Task = smallest executable governance unit`，并补入 paused promotion、candidate gating、drift stop、remote integration 等规则。
+- Blueprint 模板族已同步重构为 AI-first 形态：所有模板默认输出 `Control Block + Human Context`、结构化 task block、candidate gate 和 closeout decision block，避免新 queue 再退回 prose-first 文档。
+- 已新增 [docs/blueprints/classification-rule-layer-spec.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/classification-rule-layer-spec.md)，作为 AI-first Blueprint 之上的追加 classification layer，用规则驱动方式把新事项先路由到 `current-target-item / queue-candidate / content-pipeline-item / asset-pipeline-item / future-target-candidate / uncertain-needs-review / historical-residue / out-of-scope`，而不是默认塞进当前 queue。
+- 当前 Blueprint、Project Progress、Target spec/plan 与 queue/template 结构都已挂接 classification layer：Blueprint 提供规则层入口和 low-confidence fallback，Target 提供 target-specific classification overrides，Queue/template 提供 allowed/reject item classifications，从而让 AI 先分类、再决定是否 promotion。
+- 当前 target-level promotion review 已正式拒绝立即提升 `queue.unified-contribution-intake-closeout`：新鲜 intake audit 证明已审计的贡献家族仍通过共享 `gameplay contribution contract -> mod manifest contribution declaration -> mod runtime contribution installation -> shared registry families` 进入生产路径，因此该 queue 仅保留为 conditional fallback，治理下一步切换到 `Phase 3: Authoring Closure`，评审 `queue.authoring-entrypoint-and-fail-closed-closure` 是否真的需要提升。
+- 已新增 [docs/blueprints/queues/authoring-entrypoint-and-fail-closed-closure-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/authoring-entrypoint-and-fail-closed-closure-queue.md)，并正式把它提升为当前 active Phase 3 queue：最新 authoring audit 确认 `playable` 已具备 scaffold/validator/CI 入口，但 `scenario-pack/default-pack/house-family` 仍依赖手工目录、catalog、builtin adapter 与 registration glue，因此当前 active work 切到 `scenario-pack-and-default-pack-entrypoint-closure`。
+- `blueprint-workflow-bootstrap` 已从进行中 handoff queue 收口为 `done` 历史记录，当前仓库真实执行入口已经切到“单一 mod 化 target + active queue”模型。
+- `core-production-integration` 已从错误的同时期 sibling target 回收为当前“完全 Mod 化” target 下的首个迭代任务队列。
+
+### Impact
+- 后续新治理文档、恢复入口和执行计划应落在 `docs/blueprints/**`，而不是继续在 `docs/superpowers/**` 中追加新的 weekly/queue 控制器。
+- 仓库当前不再只是“新工作流规则源文档”落地，而是已经有真实当前时期“完全 Mod 化” target、target-level governor、显式 target 验收标准，以及可继续追加的 queue 结构，可从 `docs/blueprints/project-progress.md` 直接恢复执行。
+- 当前 Blueprint 已不再要求 AI 先读长段历史再推断下一步；只读 Control Block 即可识别当前 target、当前无 active queue 的 promotion-review 状态、以及下一个合法决策点。
+- 后续若要继续推进新的 queue family，应先在 target-level promotion note 中写明证据，再把对应 queue 从 candidate/conditional 正式提升，而不是直接从 narrative prose 进入执行。
+- 后续新出现的 code/content/asset/UI/framework/runtime/authoring 事项，不应再默认归入当前 target 或当前 queue；应先走 classification record，再根据 confidence 与 matched rules 路由到 queue 候选、pipeline 项、未来 target 候选或人工复核。
+- 旧 superpowers 文档仍保留供历史边界和验证脉络参考，但不会再被视为当前执行顺序的权威来源。
+
+## 2026-07-07 Phase 4 Residue Closeout And Acceptance Promotion
+
+### Added
+- 新增 [docs/blueprints/queues/first-party-mod-acceptance-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/first-party-mod-acceptance-queue.md)，作为当前 active 的 Phase 4 acceptance-proof queue，用于收口 builtin content 是否已经能被诚实描述为 first-party mod production path。
+
+### Changed
+- [docs/blueprints/queues/historical-residue-disposition-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/historical-residue-disposition-queue.md) 已正式 closeout：shell residue、builtin framework baseline、legacy scenario-pack compatibility residue 与 later-acceptance review 现在统一沉淀为一份关闭记录，不再继续作为 active controller。
+- Blueprint 入口链 [docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)、[docs/blueprints/blueprint.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/blueprint.md)、当前 target spec/plan 已先后从 `queue.historical-residue-disposition` 切到 `queue.first-party-mod-acceptance`，并在 acceptance proof 写成后继续推进到 `task.first-party-mod-acceptance.queue-closeout`。
+- 当前 target 的 Phase 4 解释也已收口为：残余处置完成，接下来先做 builtin-versus-first-party acceptance baseline，而不是直接跳到 final closeout 或重新打开更早期实现队列。
+- 当前 Phase 4 acceptance-proof 记录也已补齐：共享 builtin loader、activationResult-driven active content assembly、显式 builtin registry seed、UI baseline residue 与 legacy builtin scenario-pack compatibility residue 现在都被写入同一份 acceptance matrix；`queue.first-party-mod-acceptance` 随后已正式 closeout，并把当前 active controller 推进到新建的 [docs/blueprints/queues/final-acceptance-closeout-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/final-acceptance-closeout-queue.md)。
+- `queue.final-acceptance-closeout` 的 baseline-reconcile 现也已完成：target-level recheck 确认 required queues 的 closeout 证据仍然 coherent，且当前剩余工作已收窄为 target-level acceptance writing，而不是重新发现新的实现型 blocker。
+
+### Impact
+- 当前这轮 Phase 4 active work 曾从“历史残余同步”推进到“最终目标验收收口”，并一度进入 `queue.final-acceptance-closeout`。
+- 当前 `queue.final-acceptance-closeout` 现也已正式 closeout：target 级 acceptance-ready 结论已经完成同步，`target.project-complete-modularization` 现已标记为 `done`，Blueprint 入口链也已回到合法的 `no-active-queue` promotion-review 状态。
+- 后续若再出现新的仓库级 modularization 工作，应先回到 classification / promotion-review，而不是继续把工作塞回已经关闭的 final closeout queue。
+
+## 2026-07-06 Fail-Closed Progress-Driven Governance Spec
+
+### Added
+- 新增仓库级治理 spec：[docs/superpowers/specs/2026-07-06-fail-closed-progress-driven-governance-spec.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/superpowers/specs/2026-07-06-fail-closed-progress-driven-governance-spec.md)，把后续执行模型从 `weekly plan / weekly set / weekly orchestration` 切换为以 `项目进度文档` 为唯一续接真相源的 fail-closed 工作流。
+
+### Changed
+- 明确规定：如果 closeout 不能唯一推出 `next child / next action / next entry document`，则当前 child 或 task 不得标记为 `closed`。
+- 明确规定：child closeout 必须同时满足结构化 closeout、项目进度同步、next child recheck/none、以及远端 push 成功等硬门禁，否则只能停留在 `running`、`blocked` 或 `completed-but-open`。
+- 明确规定：旧 `weekly` 治理文档后续只作为历史记录保留，不再作为当前执行入口或当前队列控制器。
+- `docs/superpowers/specs/plan-governance-spec.md`、`docs/superpowers/README.md`、`docs/superpowers/plans/_plan-template.md`、`docs/superpowers/plans/_playable-plan-template.md`、`AGENTS.md` 与 `tools/lint-superpowers-plans.mjs` 已同步切到新模型，避免 spec、入口说明、模板和结构化校验继续各说各话。
+- 新增 `docs/superpowers/project-progress.md` 与 `docs/superpowers/templates/project-progress-template.md`、`child-closeout-template.md`、`task-closeout-template.md`，把唯一续接真相源与标准 closeout 输出格式正式落库。
+- `docs/superpowers/templates/weekly-*.md` 现已显式标记为历史模板，避免后续再被误当成当前执行入口。
+- `docs/superpowers/specs/weekly-orchestration-spec.md` 已显式降级为历史 spec，避免它继续和新治理 spec 形成并列入口。
+- 第三轮去歧义清扫已为仍保留旧 `weekly` 术语的历史 child plan / design spec 批量补上 `Legacy Governance Context` 头注，明确这些文件只保留技术与历史语境，不再充当现行治理入口。
+
+### Impact
+- 后续治理重构将围绕 `docs/superpowers/project-progress.md`、child plan 模板、closeout 模板与 plan governance spec 展开，而不是继续修补旧 weekly 模型。
+- 这次 spec 为正式弃用 weekly plan 提供了仓库内的第一份主规范，后续 README、模板、lint 约束与历史文档定位都将按它收敛。
+
+## 2026-07-02 Spine Plugin Workflow Contract
+
+### Added
+- 新增 `docs/spine-plugin.md`，记录 Spine 节点时间轴/绑定管理工具的启动方式、绑定编辑规则、物块图片来源和 JSON 保存交接规则。
+- 新增项目内 Codex skill `.codex/skills/start-spine-plugin/SKILL.md`，用于在用户输入“启动spine插件”等请求时自动启动 `tools/spine-node-timeline-editor.html` 对应的 Vite 服务并说明用法。
+
+### Changed
+- `AGENTS.md` 新增 Spine 插件触发规则，明确该请求不属于 house work，优先使用项目内 skill。
+- Spine 工具协作约定收口为：新增物块图片必须位于 `src/faxian/leg/`，JSON 保存 `leg:` 图片引用和绑定数据，不再把新上传图片内嵌为 base64。
+
+### Impact
+- 后续拉取仓库的 Codex 会话可以通过“启动spine插件”进入固定启动流程。
+- 复制/导出 JSON 适合提交给 Codex 修改骨骼、绑定、物块变换和动作数据；图片文件本体仍由项目目录管理。
+
 ## 2026-07-03 Child 34 Playable Enforcement And Legacy Closeout
 
 ### Added
@@ -1481,3 +3232,149 @@
 ### Impact
 - 皇觉寺获得了与自宅接近的“歇脚 -> 恢复体力 -> 等待评定”节奏，但没有把自宅私有 `var.home.*` 恢复数据直接硬绑到寺庙模块。
 - 2026-06-04：体力不足时，禁止开始会消耗体力的内置小游戏与工作流程，并在城市场景、粮行算账、药铺配药、茶馆舌战、酒馆接活/交活、寺庙寺务/化缘交粮入口统一改为 NPC 劝玩家先休息后再来。
+## 2026-07-06 Phase 3 Authoring Entrypoints
+
+### Added
+- Added `tools/scaffold-scenario-pack.mjs` and `tools/validate-scenario-packs.mjs` plus package-script entrypoints so scenario-pack authoring has a repository-owned scaffold and validation path.
+- Added a fail-closed default-pack authoring contract: `validate-scenario-packs` now rejects `src/content/pack-content-access.ts` when its scenario-pack imports drift away from the catalog's default scenario-pack entry.
+- Added `src/core/registry/builtin-house-module-contributions.ts` so builtin house module and renderer wiring now enter the shared registry seam through one contribution list.
+
+### Changed
+- The builtin house registry installer no longer merges two separate static arrays for module and renderer registration.
+- `docs/special-house-interface.md` now explicitly requires builtin house seed wiring to live in one shared contribution list instead of split module/render tables.
+- Blueprint closeout truth for Phase 3 authoring now records `queue.authoring-entrypoint-and-fail-closed-closure` as closed, returns the target to `promotion-review` with no active queue, and explicitly rejects promotion of `queue.framework-scaffold-and-template-closure` on current evidence.
+
+### Impact
+- Scenario-pack/default-pack authoring no longer depends on undocumented manual catalog and adapter glue alone; authors now have a scaffold path and a fail-closed validator.
+- Builtin house authoring has a clearer next seam: new registry wiring can be expressed through one contribution record instead of two disconnected edits.
+- Current Phase 3 residue is limited to accepted compatibility residue and later target-level review, so further queue promotion now requires fresh evidence instead of silently continuing the same authoring queue.
+
+## 2026-07-07 Phase 4 Residue Promotion
+
+### Added
+- Added [docs/blueprints/queues/historical-residue-disposition-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/historical-residue-disposition-queue.md) as the first active Phase 4 queue under the current complete-modularization target.
+
+### Changed
+- `docs/blueprints/project-progress.md`, `docs/blueprints/blueprint.md`, the current target plan, and the current target spec now advance from `promotion-review` back into `active-execution` on `queue.historical-residue-disposition`.
+- Current target truth now treats the remaining Phase 4 work as synchronized residue routing rather than another newly-proven implementation blocker by default.
+
+### Impact
+- The repository now has one explicit controller for accepted-history, accepted-framework-baseline, and accepted-compatibility residue instead of leaving those items spread across old queue closeout notes.
+- Later Phase 4 handoff decisions such as `queue.first-party-mod-acceptance` or `queue.final-acceptance-closeout` must now pass through the active residue queue instead of being promoted directly from implicit closeout caveats.
+
+## 2026-07-16 Script Editor City Mounted NPC Row Regression
+
+### Fixed
+- The city profile's mounted-building editor now makes the 新增 NPC button add the first available unmounted NPC id, keeping the new row visible and immediately editable instead of letting city-detail normalization remove an empty placeholder.
+- Added focused coverage for deleting a mounted building entry from city-owned `mountedBuildings` data.
+- Scenario-pack export now lowers city-owned `mountedBuildings` into runtime `cities.json`, `houses.json`, `city-entries.json`, and `city-npc-pools.json` instead of keeping imported template relationship tables authoritative when mounted building data exists.
+
+### Impact
+- Creators can add an NPC under a city-mounted building and then select the NPC from the dropdown in the same editing flow.
+- Exported packs now load the authored city-mounted building and mounted NPC relationships at runtime, including city entries and house NPC/default NPC fields.
+- The reopened city building/NPC mounting authoring queue and its export/runtime convergence follow-up are both recorded as reclosed.
+
+## 2026-07-14 Script Editor Person Attribute Page Stability
+
+### Changed
+- The script editor person-attribute grid now keeps the current page stable after deleting one attribute card instead of immediately backfilling the gap with the next-page card, reducing the false impression that multiple attributes were deleted together.
+- The person attribute block title now uses the creator-facing label `自定义属性` instead of the raw-implementation-oriented `当前人物 JSON 属性`.
+- The person authoring surface no longer renders the redundant `人物作者面 / 人物详情 / 人物工作台 / 亲兵` explanatory label stack around the embedded workbench shell; instead, the tab controls are mounted directly into the compact inspector header band.
+- The people profile form no longer renders the `高级设置与系统信息` foldout, so the first-screen authoring area now transitions directly from the biography field into the custom-attribute block without a dead disclosure row.
+
+### Impact
+- Attribute deletion inside the workbench now behaves closer to human expectation: removing one card only removes that card from the visible page, while later-page content stays on its own page until the creator explicitly navigates.
+- The top-of-sheet wording is now consistent with the current authoring model, which exposes editable custom attributes rather than a raw JSON inspection panel.
+- The person editor header is visually simpler and closer to the approved wireframe rhythm because the creator now sees one active control band instead of duplicated labels plus a separate tab row.
+- The people editor's primary form reads more like a continuous authoring sheet and wastes less vertical space, which better matches the current creator-first workbench layout.
+
+## 2026-07-15 Script Editor Task Effect Mutation Settlement
+
+### Added
+- Added a core `mutateCharacterNumericProperty` effect for shared-rule task effects, with runtime settlement support that writes through `CharacterStatus` patches instead of mutating authored character definitions directly.
+- Added coverage proving shared-rule export lowering, runtime settlement status output, and task-runtime dispatch propagation for explicit character numeric property mutations.
+
+### Changed
+- `EffectSettlementInput` and `EffectSettlementResult` can now carry character definitions and `characterStatusById` when an effect path needs canonical character mutation ownership.
+- `RuntimeResult.characterDefinitions` is now typed as `CharacterDefinition[]`, matching the runtime paths that propagate settled character materialization.
+- Blueprint truth closes `queue.script-editor-event-effect-activation-convergence` after the bounded task/shared-rule mutation slice and routes broader event/scene effect convergence residue back to version promotion review.
+
+### Impact
+- Editor-authored task effects can now mutate numeric character properties through the same durable status overlay path used by covered runtime property mutations.
+- Remaining scene/choice legacy effect application and broader event activation migration stay explicit future work instead of being hidden inside this settlement slice.
+
+## 2026-07-15 Script Editor Typed Condition Authoring Contract
+
+### Added
+- Added an editor-owned typed condition authoring contract for script-editor condition groups and event conditions.
+- Added coverage for typed event condition defaults/normalization and rejection of legacy free-text event condition items.
+
+### Changed
+- Event authoring now stores condition groups as typed condition nodes instead of `conditionType/operator/value` string items.
+- The event condition UI uses a condition-type selector with typed key/value bindings.
+- Shared-rule task condition lowering now consumes the shared editor condition contract while preserving the existing bounded task condition subset.
+
+### Impact
+- Later event/story/city/building queues can build on one typed condition authoring source instead of inventing per-family string parsing.
+
+## 2026-07-15 Script Editor City Building NPC Runtime Materialization
+
+### Added
+- Added a bounded script-editor city/building runtime materializer for export-time `houses`, `city-entries`, `city-npc-pools`, and `house-access-refusal-rules`.
+- Added coverage proving authored building entry binding, access refusal text, and NPC city/house assignment export into runtime families, while explicit imported runtime family records are not duplicated.
+
+### Changed
+- Runtime pack export now uses the materialized city/building/NPC families for validation and serialization when those runtime families are empty.
+- Imported explicit city/building runtime family records remain authoritative and are preserved for round-trip export.
+- Blueprint truth closes `queue.script-editor-city-building-entry-and-npc-authoring-priority` with no same-family residue and returns the open version to promotion review.
+
+### Impact
+- A simple editor-authored building with an assigned NPC and disabled/hidden access can export a runnable runtime pack without manual JSON edits for city entries, NPC pools, house roster fields, or refusal rules.
+
+## 2026-07-15 Script Editor Building Runtime House Structure
+
+### Changed
+- `ScriptEditorBuildingRecord` now explicitly owns covered runtime `HouseDefinition` fields including house type, character ids, default character, activity location, back action, module id, event ids, story-stage fields, and current-city matching.
+- City/building authoring defaults and normalization now produce runtime-house-compatible building records.
+- Runtime pack import normalizes imported `houses` into the editor building contract instead of storing them as implicit unknown fields.
+
+### Impact
+- Building authoring no longer relies on export-only projection as the durable source for required `houses.json` structure fields.
+- City-local placement ids, override layering, and centralized resolver ownership remain explicit follow-up residue for the placement resolver queue.
+
+## 2026-07-15 Script Editor City Building Placement Resolver Queue
+
+### Added
+- Added `queue.script-editor-city-building-placement-resolver-convergence` as the active Blueprint queue for city-local placements, entry ownership, NPC assignment ownership, access/refusal lookup, dialogue inheritance, and centralized resolver seams.
+
+### Changed
+- Blueprint entry points now resume from the placement resolver queue's `boundary-baseline-reconcile` task instead of version promotion review.
+
+### Impact
+- The next city/building slice must first inventory resolver boundaries and select the smallest lawful implementation before changing production code.
+
+## 2026-07-21 Zhuyuanzhang Kulan Building Enter Dialogue Restoration
+
+### Changed
+- Added authored `building-enter` bindings, events, and scenes for the Kulan leader residence, temple, keep, tea house, market, grain shop, medicine house, and inn inside the `zhuyuanzhang` scenario pack.
+- Reused existing pack-local `text-entries.json` dialogue copy for those new enter scenes so the restored building greetings remain scenario-pack content instead of runtime hardcoded text.
+- Added coverage that checks both the pack-authored `binding -> event -> scene` chain and the script-editor import surface for the restored Kulan building-enter dialogue routes.
+
+### Impact
+- Entering the covered Kulan buildings can again trigger pre-refactor-style greeting dialogue through scenario-pack data.
+- The same restored enter-dialogue routes are now visible to the script editor after importing the built-in `zhuyuanzhang` pack, keeping later adjustment on the authoring path.
+
+## 2026-07-22 No-Scene Startup Contract Convergence
+
+### Added
+- Added a shared runtime `ViewName` contract helper so scenario-pack loading, runtime export validation, and startup metadata can all fail close on retired startup views instead of silently accepting legacy `scene` startup truth.
+- Added regression coverage for retired startup `scene` views, dialogue startup round-trip through runtime packs, and mod startup metadata alignment on the shared startup target resolver.
+
+### Changed
+- Scenario-pack loader and script-editor runtime export now reject retired startup `scene` views in `scenarioProfile.initialLocation.view`, `launchPolicy.initialView`, and character startup overrides.
+- Scenario startup target resolution is now shared between startup-session application and mod startup metadata so dialogue startup view and dialogue id are preserved through one canonical resolver.
+- The built-in Liu Bang scenario pack now starts from a no-scene startup view that stays compatible with the event-centered startup contract.
+
+### Impact
+- Normal start, JSON runtime-pack import, and Script Editor runtime preview now agree on the same startup-view contract instead of letting legacy `scene` startup values leak through different entry paths.
+- Runtime-pack export/import, loader validation, and activated mod startup metadata no longer keep a hidden scene-era startup divergence after scene retirement.

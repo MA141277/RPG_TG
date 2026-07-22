@@ -5,7 +5,7 @@ import {
   type GrainShopPlayerSnapshot,
 } from "../../domain/grain-shop";
 import { convertDouToWholeShi } from "../../domain/grain-unit";
-import { grainShopInitialValues } from "../../content/houses/grain-shop-content";
+import { getGrainShopContentDefaults } from "./grain-shop-content-defaults";
 import {
   ensurePlayerGrainInventory,
   readPlayerGrainDou,
@@ -24,6 +24,7 @@ export function createGrainShopSnapshot(
   state: GameState,
   playerCharacter: CharacterDefinition
 ): GrainShopPlayerSnapshot {
+  const { grainShopInitialValues } = getGrainShopContentDefaults();
   const syncedState = ensurePlayerGrainInventory(state);
   const foodDou = readPlayerGrainDou(syncedState);
   const sellableFoodShi = convertDouToWholeShi(foodDou);

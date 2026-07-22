@@ -1,36 +1,32 @@
 import type { RuntimeRequest } from "../contracts/runtime-request";
 import type {
-  RuntimeFollowUpOutcome,
-  RuntimeInteractiveSignal,
+  RuntimeFollowUp,
 } from "../contracts/runtime-result";
 import type { RuntimeResult } from "../contracts/runtime-result";
 import type { RuntimeState } from "../contracts/runtime-state";
+import type { CharacterDefinition } from "../../domain/character";
 
 export type RuntimeRouteInput = {
   state: RuntimeState;
   request: RuntimeRequest;
 };
 
-export type RuntimeInteractiveFollowUpInput = {
+export type RuntimeFollowUpInput = {
   state: RuntimeState;
-  interactive: Exclude<NonNullable<RuntimeInteractiveSignal>, { type: "none" }>;
+  followUp: Exclude<NonNullable<RuntimeFollowUp>, { type: "none" }>;
 };
 
-export type RuntimeOutcomeFollowUpInput = {
+export type RuntimeFollowUpResult = {
   state: RuntimeState;
-  outcome: RuntimeFollowUpOutcome;
-};
-
-export type RuntimeOutcomeFollowUpResult = {
-  state: RuntimeState;
-  characterDefinitions?: unknown;
+  characterDefinitions?: CharacterDefinition[];
 };
 
 export type RuntimeFollowUpContext = {
-  handleInteractive?(input: RuntimeInteractiveFollowUpInput): RuntimeState;
-  handleOutcome?(input: RuntimeOutcomeFollowUpInput): RuntimeOutcomeFollowUpResult;
+  handleFollowUp?(input: RuntimeFollowUpInput): RuntimeFollowUpResult;
 };
 
+export type RuntimeRouteResult = RuntimeResult;
+
 export interface RuntimeRouter {
-  route(input: RuntimeRouteInput): RuntimeResult;
+  route(input: RuntimeRouteInput): RuntimeRouteResult;
 }

@@ -15,7 +15,7 @@ export type GameModManifest = {
     mapId?: string;
     cityId?: string;
     houseId?: string | null;
-    sceneId?: string;
+    dialogueId?: string;
     view?: string;
   };
 };

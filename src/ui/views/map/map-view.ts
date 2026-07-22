@@ -1,19 +1,32 @@
-import type { GridCoordinate } from "../../../application/navigation/travel-to-coordinate";
-import type { CityDefinition } from "../../../domain/city";
+﻿import {
+  coordinateToRoundedHex,
+  getHexKey,
+  type GridCoordinate,
+} from "../../../application/navigation/travel-to-coordinate";
 import { campaignUnitAssets } from "../../../content/yuanmo-strat-unit-assets";
+import type {
+  MapCityLocation,
+  MapLocationProvider,
+} from "../../../application/map/map-location-provider";
 import type {
   HistoricalCharacterRecord,
   HistoricalCityRoster,
 } from "../../../domain/historical-character";
-import type { MapDefinition, MapLayer, MapNode, MapStats } from "../../../domain/map";
+import type {
+  MapDefinition,
+  MapLayer,
+  MapNode,
+  MapStats,
+} from "../../../domain/map";
+import {
+  campaignMapCoordinateToHex,
+  getCampaignHexCellKey,
+  getCampaignHexDisc,
+} from "../../../domain/campaign-hex";
 import redTurbanMarkerUrl from "../../../assets/yuanmo-map/chuang-swordsman-marker.png";
+import cityDepthMeshAssetUrl from "../../../3dasset/city_hun/city-hun-campaign-lowpoly.json?url";
+import cityDepthTextureUrl from "../../../3dasset/city_hun/texture_pbr_20250901.png?url";
 
-type CityMarker = {
-  id: string;
-  name: string;
-  x: number;
-  y: number;
-};
 
 type CampaignMarker = {
   id: string;
@@ -23,6 +36,7 @@ type CampaignMarker = {
   y: number;
   kind: NonNullable<MapNode["kind"]>;
   summary: string;
+  isRevealed: boolean;
   historicalCharacters: {
     primary: string[];
     secondary: string[];
@@ -38,7 +52,7 @@ export type MapViewModel = {
   playerCoordinate: GridCoordinate;
   playerFacingDegrees: number;
   playerIsMoving: boolean;
-  cityMarkers: CityMarker[];
+  cityMarkers: MapCityLocation[];
   coordinateSpace: {
     width: number;
     height: number;
@@ -50,7 +64,18 @@ export type MapViewModel = {
   primaryImageUrl: string | null;
   regionOverlayImageUrl: string | null;
   heightmapImageUrl: string | null;
+  hexTextureAtlasImageUrl: string | null;
   materialTextureImageUrl: string | null;
+  waterTextureImageUrl: string | null;
+  cloudNoiseTextureImageUrl: string | null;
+  revealedHexKeys: string[];
+  cityDepthMeshAssetUrl: string | null;
+  cityDepthTextureUrl: string | null;
+  cityDepthMeshCoordinate: {
+    x: number;
+    y: number;
+  } | null;
+  cloudClearHexKeys: string[];
   campaignMarkers: CampaignMarker[];
   layers: MapLayer[];
   stats: MapStats | null;
@@ -61,12 +86,32 @@ export function createMapViewModel(input: {
   playerCoordinate: GridCoordinate;
   playerFacingDegrees?: number;
   playerIsMoving?: boolean;
-  cityDefinitions: CityDefinition[];
-  cityCoordinatesById: Record<string, GridCoordinate>;
+  revealedHexKeys?: string[];
+  mapLocationProvider: MapLocationProvider;
   historicalCharacters?: HistoricalCharacterRecord[];
   historicalCityRosters?: HistoricalCityRoster[];
 }): MapViewModel {
   const mode = input.mapDefinition.mode ?? "grid";
+  const coordinateSpace = input.mapDefinition.coordinateSpace ?? {
+    width: input.mapDefinition.size ?? 5,
+    height: input.mapDefinition.size ?? 5,
+  };
+  const displaySize = input.mapDefinition.displaySize ?? {
+    width: input.mapDefinition.size ?? 5,
+    height: input.mapDefinition.size ?? 5,
+  };
+  const playerHex = campaignMapCoordinateToHex(
+    input.playerCoordinate,
+    coordinateSpace
+  );
+  const cloudClearHexKeys = Array.from(
+    new Set([
+      ...(input.revealedHexKeys ?? []),
+      ...getCampaignHexDisc(playerHex, 1).map((cell) =>
+        getCampaignHexCellKey(cell.x, cell.y)
+      ),
+    ])
+  );
   const historicalCharacterNameById = Object.fromEntries(
     (input.historicalCharacters ?? []).map((characterRecord) => [
       characterRecord.id,
@@ -76,14 +121,7 @@ export function createMapViewModel(input: {
   const historicalRosterByCityNodeId = Object.fromEntries(
     (input.historicalCityRosters ?? []).map((roster) => [roster.cityNodeId, roster])
   );
-  const cityIdByMapNodeId = Object.fromEntries(
-    input.cityDefinitions
-      .filter((cityDefinition) => cityDefinition.mapNodeId != null)
-      .map((cityDefinition) => [
-        cityDefinition.mapNodeId as string,
-        cityDefinition.id,
-      ])
-  );
+  const revealedHexKeySet = new Set(input.revealedHexKeys ?? []);
 
   return {
     mode,
@@ -92,37 +130,36 @@ export function createMapViewModel(input: {
     playerCoordinate: input.playerCoordinate,
     playerFacingDegrees: input.playerFacingDegrees ?? 0,
     playerIsMoving: input.playerIsMoving ?? false,
-    cityMarkers: input.cityDefinitions
-      .map((cityDefinition) => {
-        const coordinate = input.cityCoordinatesById[cityDefinition.id];
-        if (coordinate == null) {
-          return null;
-        }
-
-        return {
-          id: cityDefinition.id,
-          name: cityDefinition.name,
-          x: coordinate.x,
-          y: coordinate.y,
-        };
-      })
-      .filter((cityMarker): cityMarker is CityMarker => cityMarker != null),
-    coordinateSpace: input.mapDefinition.coordinateSpace ?? {
-      width: input.mapDefinition.size ?? 5,
-      height: input.mapDefinition.size ?? 5,
-    },
-    displaySize: input.mapDefinition.displaySize ?? {
-      width: input.mapDefinition.size ?? 5,
-      height: input.mapDefinition.size ?? 5,
-    },
+    cityMarkers: input.mapLocationProvider.listCityLocationMarkers(),
+    coordinateSpace,
+    displaySize,
     primaryImageUrl: input.mapDefinition.primaryImageUrl ?? null,
     regionOverlayImageUrl: input.mapDefinition.regionOverlayImageUrl ?? null,
     heightmapImageUrl:
       input.mapDefinition.layers?.find((layer) => layer.id === "map_heights")
         ?.imageUrl ?? null,
+    hexTextureAtlasImageUrl:
+      input.mapDefinition.layers?.find((layer) => layer.id === "map_hex_texture_atlas")
+        ?.imageUrl ??
+      input.mapDefinition.primaryImageUrl ??
+      null,
     materialTextureImageUrl:
+      input.mapDefinition.layers?.find((layer) => layer.id === "map_ground_types")
+        ?.imageUrl ??
       input.mapDefinition.layers?.find((layer) => layer.id === "map_material_texture")
+        ?.imageUrl ??
+      null,
+    waterTextureImageUrl:
+      input.mapDefinition.layers?.find((layer) => layer.id === "map_water_noise")
         ?.imageUrl ?? null,
+    cloudNoiseTextureImageUrl:
+      input.mapDefinition.layers?.find((layer) => layer.id === "map_fog_noise")
+        ?.imageUrl ?? null,
+    revealedHexKeys: cloudClearHexKeys,
+    cityDepthMeshAssetUrl,
+    cityDepthTextureUrl,
+    cityDepthMeshCoordinate: input.mapDefinition.initialPlayerCoordinate ?? null,
+    cloudClearHexKeys,
     campaignMarkers: input.mapDefinition.nodes
       .map((node, index) => {
         const nodeId = node.id ?? node.cityId ?? `map-node.${index}`;
@@ -137,12 +174,25 @@ export function createMapViewModel(input: {
           id: nodeId,
           cityId:
             node.cityId ??
-            (node.id == null ? null : cityIdByMapNodeId[node.id] ?? null),
+            (node.id == null
+              ? null
+              : input.mapLocationProvider.getCityIdByMapNodeId(node.id)),
           name: node.label ?? node.cityId ?? `Node ${index + 1}`,
           x: node.x,
           y: node.y,
           kind: node.kind ?? (node.cityId == null ? "landmark" : "city"),
           summary: node.summary ?? "",
+          isRevealed: revealedHexKeySet.has(
+            getHexKey(
+              coordinateToRoundedHex(
+                { x: node.x, y: node.y },
+                input.mapDefinition.coordinateSpace ?? {
+                  width: input.mapDefinition.size ?? 1,
+                  height: input.mapDefinition.size ?? 1,
+                }
+              )
+            )
+          ),
           historicalCharacters:
             roster == null
               ? null
@@ -239,7 +289,7 @@ function renderCharacterGroup(label: string, names: string[]): string {
     return "";
   }
 
-  return `<span><b>${label}</b>${names.map(escapeHtml).join("、")}</span>`;
+  return `<span><b>${label}</b>${names.map(escapeHtml).join(" / ")}</span>`;
 }
 
 function renderHistoricalCharacters(
@@ -250,16 +300,16 @@ function renderHistoricalCharacters(
   }
 
   const characterGroups = [
-    renderCharacterGroup("核心人物：", marker.historicalCharacters.primary),
-    renderCharacterGroup("相关人物：", marker.historicalCharacters.secondary),
-    renderCharacterGroup("背景人物：", marker.historicalCharacters.background),
+    renderCharacterGroup("Primary: ", marker.historicalCharacters.primary),
+    renderCharacterGroup("Related: ", marker.historicalCharacters.secondary),
+    renderCharacterGroup("Background: ", marker.historicalCharacters.background),
   ]
     .filter((item) => item !== "")
     .join("");
   const notes =
     marker.historicalCharacters.notes === ""
       ? ""
-      : `<span><b>设定说明：</b>${escapeHtml(marker.historicalCharacters.notes)}</span>`;
+      : `<span><b>Notes: </b>${escapeHtml(marker.historicalCharacters.notes)}</span>`;
 
   return `<span class="c-campaign-marker__characters">${characterGroups}${notes}</span>`;
 }
@@ -274,29 +324,51 @@ function renderCampaignMarkers(model: MapViewModel): string {
       const displayName = getMarkerDisplayName(marker.name);
       const markerName = escapeHtml(marker.name);
       const markerSummary = escapeHtml(marker.summary);
+      const markerPositionStyle = `--marker-left:${left.toFixed(3)}%; --marker-bottom:${bottom.toFixed(3)}%;`;
+      const markerInteractionAttributes = marker.isRevealed
+        ? `
+          data-map-node-id="${marker.id}"
+          data-map-node-name="${markerName}"
+          title="${markerName} (${marker.x}, ${marker.y})"
+        `
+        : `
+          disabled
+          aria-hidden="true"
+          tabindex="-1"
+          data-map-node-revealed="false"
+        `;
+      const markerProjectionAttributes = `
+          data-terrain-projected-point="true"
+          data-map-height-u="${heightU.toFixed(5)}"
+          data-map-height-v="${heightV.toFixed(5)}"
+        `;
 
       return `
         <button
           class="c-campaign-marker ${getMarkerClass(marker.kind)}"
-          style="--marker-left:${left.toFixed(3)}%; --marker-bottom:${bottom.toFixed(3)}%;"
-          data-terrain-projected-point="true"
-          data-map-height-u="${heightU.toFixed(5)}"
-          data-map-height-v="${heightV.toFixed(5)}"
+          style="${markerPositionStyle}"
+          ${markerProjectionAttributes}
+          data-campaign-marker-id="${escapeHtml(marker.id)}"
           data-map-x="${marker.x}"
           data-map-y="${marker.y}"
           data-city-id="${marker.cityId ?? ""}"
-          data-map-node-id="${marker.id}"
-          data-map-node-name="${markerName}"
-          title="${markerName} (${marker.x}, ${marker.y})"
+          ${markerInteractionAttributes}
         >
           <span class="c-campaign-marker__dot"></span>
           <span class="c-campaign-marker__label">${escapeHtml(displayName)}</span>
-          <span class="c-campaign-marker__summary">
-            <strong>${markerName}</strong>
-            ${marker.summary === "" ? "" : `<span>${markerSummary}</span>`}
-            ${renderHistoricalCharacters(marker)}
-          </span>
         </button>
+        <span
+          class="c-campaign-marker__summary"
+          style="${markerPositionStyle}"
+          ${markerProjectionAttributes}
+          data-campaign-marker-summary-id="${escapeHtml(marker.id)}"
+          aria-hidden="true"
+          data-map-node-revealed="${marker.isRevealed ? "true" : "false"}"
+        >
+          <strong>${markerName}</strong>
+          ${marker.summary === "" ? "" : `<span>${markerSummary}</span>`}
+          ${renderHistoricalCharacters(marker)}
+        </span>
       `;
     })
     .join("");
@@ -310,7 +382,7 @@ export function renderCampaignLayers(layers: MapLayer[]): string {
           <img class="c-map-layer-card__image" src="${layer.imageUrl}" alt="${layer.label}" loading="lazy">
           <div class="c-map-layer-card__copy">
             <strong>${layer.label}</strong>
-            <span>${layer.width}x${layer.height} · ${layer.description}</span>
+            <span>${layer.width}x${layer.height} 路 ${layer.description}</span>
           </div>
         </article>
       `
@@ -347,31 +419,53 @@ function renderCampaignMapVisualLayer(
     ariaHidden?: boolean;
   }
 ): string {
+  const canRenderWebGlTerrain =
+    model.hexTextureAtlasImageUrl != null &&
+    model.heightmapImageUrl != null &&
+    model.materialTextureImageUrl != null;
+  const cityDepthMeshU =
+    model.cityDepthMeshCoordinate == null
+      ? null
+      : model.cityDepthMeshCoordinate.x / model.coordinateSpace.width;
+  const cityDepthMeshV =
+    model.cityDepthMeshCoordinate == null
+      ? null
+      : 1 - model.cityDepthMeshCoordinate.y / model.coordinateSpace.height;
+  const cityDepthMeshAttributes =
+    model.cityDepthMeshAssetUrl == null ||
+    model.cityDepthTextureUrl == null ||
+    cityDepthMeshU == null ||
+    cityDepthMeshV == null
+      ? ""
+      : `
+          data-campaign-city-mesh-url="${model.cityDepthMeshAssetUrl}"
+          data-campaign-city-texture-url="${model.cityDepthTextureUrl}"
+          data-campaign-city-u="${cityDepthMeshU.toFixed(5)}"
+          data-campaign-city-v="${cityDepthMeshV.toFixed(5)}"
+        `;
   const terrainCanvasMarkup =
-    model.primaryImageUrl == null ||
-    model.heightmapImageUrl == null ||
-    model.materialTextureImageUrl == null
+    !canRenderWebGlTerrain
       ? ""
       : `
         <canvas
           class="c-campaign-map__terrain"
           data-campaign-map-terrain="true"
-          data-map-texture-url="${model.primaryImageUrl}"
+          data-map-texture-url="${model.hexTextureAtlasImageUrl}"
           data-map-height-url="${model.heightmapImageUrl}"
           data-map-material-url="${model.materialTextureImageUrl}"
+          ${model.waterTextureImageUrl == null ? "" : `data-map-water-texture-url="${model.waterTextureImageUrl}"`}
+          ${cityDepthMeshAttributes}
           aria-label="${model.mapName} terrain"
         ></canvas>
       `;
   const actorCanvasMarkup =
     options.includeInteractivePoints &&
-    model.primaryImageUrl != null &&
-    model.heightmapImageUrl != null &&
-    model.materialTextureImageUrl != null
+    canRenderWebGlTerrain
       ? `
         <canvas
           class="c-campaign-map__actor-layer"
           data-campaign-map-actor-layer="true"
-          data-map-texture-url="${model.primaryImageUrl}"
+          data-map-texture-url="${model.hexTextureAtlasImageUrl}"
           data-map-height-url="${model.heightmapImageUrl}"
           data-map-material-url="${model.materialTextureImageUrl}"
           aria-hidden="true"
@@ -380,11 +474,11 @@ function renderCampaignMapVisualLayer(
       : "";
   const terrainEnabledMarkup = options.includeInteractivePoints ? terrainCanvasMarkup : "";
   const imageMarkup =
-    model.primaryImageUrl == null
+    model.primaryImageUrl == null || canRenderWebGlTerrain
       ? ""
       : `<img class="c-campaign-map__image c-campaign-map__image--fallback" src="${model.primaryImageUrl}" alt="${model.mapName}">`;
   const regionOverlayMarkup =
-    model.regionOverlayImageUrl == null
+    model.regionOverlayImageUrl == null || canRenderWebGlTerrain
       ? ""
       : `<img class="c-campaign-map__regions" src="${model.regionOverlayImageUrl}" alt="">`;
   const playerHeightX = model.playerCoordinate.x / model.coordinateSpace.width;
@@ -455,6 +549,24 @@ function renderCampaignMap(model: MapViewModel): string {
         ${renderCampaignMapVisualLayer(model, {
           includeInteractivePoints: true,
         })}
+        <canvas
+          class="c-campaign-map__cloud"
+          data-campaign-map-cloud="true"
+          data-map-coordinate-width="${model.coordinateSpace.width}"
+          data-map-coordinate-height="${model.coordinateSpace.height}"
+          data-map-revealed-hex-keys="${escapeHtml(model.revealedHexKeys.join(" "))}"
+          ${model.cloudNoiseTextureImageUrl == null ? "" : `data-map-cloud-noise-url="${model.cloudNoiseTextureImageUrl}"`}
+          aria-hidden="true"
+        ></canvas>
+        <svg
+          class="c-campaign-map__hover-hex"
+          data-campaign-hover-hex="true"
+          aria-hidden="true"
+          focusable="false"
+          hidden
+        >
+          <polygon data-campaign-hover-hex-polygon="true" points=""></polygon>
+        </svg>
         <div class="c-campaign-map__tiltshift" aria-hidden="true">
           ${renderCampaignMapVisualLayer(model, {
             transformClassName: "c-campaign-map__transform c-campaign-map__transform--tiltshift",
@@ -472,8 +584,70 @@ function renderCampaignMap(model: MapViewModel): string {
           </div>
           <div class="c-campaign-map-debug__actions">
             <button type="button" data-map-debug-action="zoom-out">-</button>
+            <label class="c-campaign-map-debug__scale-field">
+              <span>Zoom</span>
+              <input
+                type="text"
+                inputmode="decimal"
+                value="1.00"
+                data-campaign-map-scale-input
+                aria-label="Map zoom scale"
+              >
+            </label>
             <button type="button" data-map-debug-action="zoom-in">+</button>
             <button type="button" data-map-debug-action="reset">Reset</button>
+          </div>
+          <div class="c-campaign-map-debug__terrain-style">
+            <label>
+              <span>Sat <strong data-campaign-terrain-style-value="saturation">1.00</strong></span>
+              <input type="range" min="0" max="3" step="0.01" value="1.00" data-campaign-terrain-style-field="saturation">
+            </label>
+            <label>
+              <span>Bright <strong data-campaign-terrain-style-value="brightness">1.00</strong></span>
+              <input type="range" min="0" max="3" step="0.01" value="1.00" data-campaign-terrain-style-field="brightness">
+            </label>
+            <label>
+              <span>Lift <strong data-campaign-terrain-style-value="brightnessOffset">0.000</strong></span>
+              <input type="range" min="-0.2" max="0.2" step="0.005" value="0.000" data-campaign-terrain-style-field="brightnessOffset">
+            </label>
+            <label>
+              <span>Shade Min <strong data-campaign-terrain-style-value="shadeMin">1.00</strong></span>
+              <input type="range" min="0" max="2" step="0.01" value="1.00" data-campaign-terrain-style-field="shadeMin">
+            </label>
+            <label>
+              <span>Shade Max <strong data-campaign-terrain-style-value="shadeMax">1.00</strong></span>
+              <input type="range" min="0" max="2" step="0.01" value="1.00" data-campaign-terrain-style-field="shadeMax">
+            </label>
+            <button type="button" data-map-debug-action="terrain-style-reset">Reset Terrain</button>
+          </div>
+          <div class="c-campaign-map-debug__terrain-style">
+            <label>
+              <span>City Rot <strong data-campaign-city-mesh-value="rotationDegrees">0deg</strong></span>
+              <input type="range" min="-180" max="180" step="1" value="0" data-campaign-city-mesh-field="rotationDegrees">
+            </label>
+            <label>
+              <span>City Tilt <strong data-campaign-city-mesh-value="pitchDegrees">0deg</strong></span>
+              <input type="range" min="-90" max="90" step="1" value="0" data-campaign-city-mesh-field="pitchDegrees">
+            </label>
+            <label>
+              <span>City Size <strong data-campaign-city-mesh-value="scale">1.00</strong></span>
+              <input type="range" min="0.1" max="6" step="0.01" value="1" data-campaign-city-mesh-field="scale">
+            </label>
+            <label>
+              <span>Tile X <strong data-campaign-city-mesh-value="offsetX">0.00</strong></span>
+              <input type="range" min="-1" max="1" step="0.01" value="0" data-campaign-city-mesh-field="offsetX">
+            </label>
+            <label>
+              <span>Tile Y <strong data-campaign-city-mesh-value="offsetY">0.00</strong></span>
+              <input type="range" min="-1" max="1" step="0.01" value="0" data-campaign-city-mesh-field="offsetY">
+            </label>
+            <label>
+              <span>City Lift <strong data-campaign-city-mesh-value="lift">0.0000</strong></span>
+              <input type="range" min="-0.08" max="0.16" step="0.001" value="0" data-campaign-city-mesh-field="lift">
+            </label>
+            <button type="button" data-map-debug-action="city-mesh-reset">Reset City</button>
+            <button type="button" data-map-debug-action="city-mesh-copy">Copy Params</button>
+            <span data-campaign-city-mesh-copy-status></span>
           </div>
         </div>
       </div>
@@ -494,12 +668,12 @@ export function renderMapView(model: MapViewModel): string {
     <section class="view-map view-map--grid">
       <div class="c-stage-header">
         <div>
-          <p class="c-stage-header__eyebrow">地图巡行</p>
+          <p class="c-stage-header__eyebrow">鍦板浘宸¤</p>
           <h1 class="c-stage-header__title">${model.mapName}</h1>
         </div>
         <div class="c-map-legend">
-          <span class="c-map-legend__item"><span class="c-player-token"></span> 玩家</span>
-          <span class="c-map-legend__item"><span class="c-city-token">城池</span></span>
+          <span class="c-map-legend__item"><span class="c-player-token"></span> 鐜╁</span>
+          <span class="c-map-legend__item"><span class="c-city-token">鍩庢睜</span></span>
         </div>
       </div>
       ${renderGridMap(model)}

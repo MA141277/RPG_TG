@@ -4,7 +4,7 @@
   "playerCharacterId": "char.player",
   "chapterId": "chapter.zhu-yuanzhang-rise",
   "initialLocation": {
-    "mapId": "map.prototype_frontier",
+    "mapId": "map.yuanmo_campaign",
     "cityId": "city.kulan",
     "houseId": "house.kulan.temple",
     "view": "house"
@@ -13,6 +13,43 @@
     "variables": {
       "var.story.zhu_yuanzhang.stage": "huangjue-temple"
     }
+  },
+  "characterStartups": [
+    {
+      "characterId": "char.kulan_xu_da",
+      "initialRuntime": {
+        "variables": {
+          "var.story.zhu_yuanzhang.stage": "guo-zixing-camp"
+        }
+      },
+      "entryEventId": null,
+      "openingFlowId": null
+    },
+    {
+      "characterId": "char.kulan_tang_he",
+      "initialRuntime": {
+        "variables": {
+          "var.story.zhu_yuanzhang.stage": "guo-zixing-camp"
+        }
+      },
+      "entryEventId": null,
+      "openingFlowId": null
+    },
+    {
+      "characterId": "char.kulan_chang_yuchun",
+      "initialRuntime": {
+        "variables": {
+          "var.story.zhu_yuanzhang.stage": "guo-zixing-camp"
+        }
+      },
+      "entryEventId": null,
+      "openingFlowId": null
+    }
+  ],
+  "launchPolicy": {
+    "characterSelection": "shell",
+    "initialView": "map",
+    "entryEventTiming": "after-map-entry"
   },
   "entryEventId": "event.story.zhu_yuanzhang.ordination",
   "openingFlowId": "flow.zhu_yuanzhang.monk_opening",

@@ -115,6 +115,80 @@ Recommended optional shape:
 
 Split tables are JSON files referenced by `pack.json.files`.
 
+## Runtime Family Contract
+
+The script editor and runtime startup path use one scenario-pack family contract. This contract classifies families by runtime obligation, not by current editor UI convenience.
+
+### Mandatory Runtime Families
+
+The following families define the minimum formal runtime scenario-pack surface for script-editor-owned startup and gameplay truth:
+
+- `scenarioProfile`
+- `characters`
+- `cities`
+- `houses`
+- `events`
+- `scenes`
+- `activities`
+- `tasks`
+- `textEntries`
+
+Rules:
+
+1. These families must resolve through the same scenario-pack contract consumed by the startup loader.
+2. They may be authored locally or resolved from an explicit `basePackId` inheritance contract.
+3. They must not be silently omitted, silently lowered to empty arrays, injected from hidden builtin defaults, or reconstructed only from `compatibilityImport` residue.
+4. If a mandatory family is neither present locally nor resolved through a declared base pack, export and startup validation must fail closed.
+
+### Explicitly Inheritable Runtime Families
+
+The following families may be absent from a local pack only when `basePackId` inheritance explicitly resolves them:
+
+- `maps`
+- `cityEntries`
+- `cityNpcPools`
+- `houseModuleDefaults`
+- `houseAccessRefusalRules`
+- `cards`
+- `valuables`
+- `historicalCharacters`
+- `historicalCityRosters`
+- `cityPortraits`
+- `historicalCharacterIdByCharacterId`
+
+Rules:
+
+1. Inheritance is family-level contract truth, not a vague fallback label.
+2. A family that is neither exported locally nor resolved from the declared base pack must fail closed instead of producing a runtime-incomplete pack.
+3. Implementations must not infer inheritable behavior from whichever builtin pack is currently hard-imported.
+
+### Unsupported Or Transitional Families
+
+The following families remain outside the final runtime scenario-pack family contract until a later version explicitly promotes them:
+
+- `uiScreenSchemas`
+- `uiLayouts`
+- `uiSkins`
+- `uiAssetCatalogs`
+- any editor-only shadow family that duplicates an existing runtime family
+- any export-only private lowering dialect
+
+Rules:
+
+1. Unsupported families may be preserved as historical import evidence, but they must not be required for daily authoring/export truth.
+2. Unsupported families must not be emitted as silent empty placeholders in a pack that claims to be startup-consumable.
+3. New runtime data must land in the formal runtime family it belongs to, not in compatibility storage.
+
+### Fail-Closed Obligations
+
+Runtime-pack import/export and startup validation must fail closed when:
+
+1. any mandatory family is missing after local content and declared base-pack inheritance are resolved;
+2. any explicitly inheritable family is referenced but cannot be resolved from local content or the declared base pack;
+3. `compatibilityImport.unresolvedFamilies` is still required to produce daily export output;
+4. a consumer bypasses active scenario-pack resolution through fixed builtin pack imports where active content should own the path;
+5. export would otherwise succeed by writing empty arrays, hidden defaults, or a private shadow dialect for unresolved runtime truth.
+
 ### Required Split Tables
 
 Every scenario pack must provide:
@@ -415,4 +489,3 @@ The next repository step should be:
 2. migrate `zhuyuanzhang` from TS assembly to the same manifest + split-table standard
 3. require all new scenario packs to follow this spec
 4. then continue moving remaining text-bearing content into `text-entries.json`
-

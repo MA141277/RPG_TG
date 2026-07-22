@@ -1,5 +1,7 @@
 # Engine Runtime Boundary Implementation Plan
 
+> **Legacy Governance Context:** This document was authored under the retired `weekly plan / weekly set / weekly orchestration` model. Keep its technical scope, but treat any weekly-governance references as historical context only. If this legacy artifact is explicitly resumed, use `docs/superpowers/project-progress.md`; otherwise use `docs/blueprints/project-progress.md` for current repository work.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Establish the first production-safe `src/core` boundary for engine boot, runtime dispatch, effect settlement, state ownership, and a minimal save envelope seam so later child plans can extract presentation, navigation, and save hardening without `main.ts` remaining the architecture owner.
@@ -883,3 +885,4 @@ git commit -m "refactor: route main through core boundary adapter"
 - [x] `Progress Log` updated
 - [x] Verification recorded
 - [x] Change log updated
+

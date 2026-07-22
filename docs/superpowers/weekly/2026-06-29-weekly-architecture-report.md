@@ -1,5 +1,8 @@
 # Weekly Architecture Report
 
+> **Historical Artifact:** Deprecated under `fail-closed progress-driven governance`. This file records the retired weekly-governance model and must not be used as the active resume entry for new work.
+
+
 **Week Of:** `2026-06-29`
 
 ## Purpose
@@ -357,3 +360,4 @@ These are architecture candidates only. They are not unlocked children and must 
 - State synchronization now has a first formal StateSync Runtime boundary, but deeper save IO integration, runtime dispatch auto-commit integration, and full legacy state migration remain future scope.
 - Child 10 baseline and Child 11/13 closeout now prove that covered shared follow-up, covered interactive, covered house, and covered settlement slices can live under runtime ownership without reopening the frozen shared contract layer, but broader runtime-family convergence is still intentionally deferred.
 - The next runtime continuation decision is now a decomposition risk rather than a missing-contract risk: if a later child mixes interactive legacy cleanup with navigation/time/event/scene convergence, it is likely to grow beyond one reviewable boundary.
+

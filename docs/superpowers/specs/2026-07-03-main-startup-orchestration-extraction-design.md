@@ -1,5 +1,7 @@
 # Main Startup Orchestration Extraction Design
 
+> **Legacy Governance Context:** This document was authored under the retired `weekly plan / weekly set / weekly orchestration` model. Keep its technical scope, but treat any weekly-governance references as historical context only. If this legacy artifact is explicitly resumed, use `docs/superpowers/project-progress.md`; otherwise use `docs/blueprints/project-progress.md` for current repository work.
+
 **Goal:** Open a fresh post-Child-22 continuation line that extracts `startup / continue / restore / scenario import` orchestration from `src/main.ts` into one explicit coordinator seam without reopening runtime spine, render orchestration, or other already-closed roadmap boundaries.
 
 ## Why This Needs A Fresh Weekly Review
@@ -10,7 +12,7 @@ The `2026-07-02` mod-first weekly set is closed after Child 22. That set already
 - save/load now preserves `selectedModSource` and can restore imported mods after a fresh page load
 - no active, queued, or locked child remains in the closed set
 
-That means later work cannot be framed as “continue Child 22.” Any new execution must begin from a fresh weekly review and must prove that it is solving a different problem type.
+That means later work cannot be framed as “continue Child 22.�?Any new execution must begin from a fresh weekly review and must prove that it is solving a different problem type.
 
 The next different problem type is not save/restore parity. It is the remaining startup-family orchestration black box in `src/main.ts`.
 
@@ -72,7 +74,7 @@ Move startup-family orchestration plus broader bootstrap and some shell decision
 
 ### Option C: Force `main.ts` To Become A Minimal Shell Immediately
 
-Treat this as a broad “thin shell” rewrite and pull multiple orchestration families out at once.
+Treat this as a broad “thin shell�?rewrite and pull multiple orchestration families out at once.
 
 **Pros**
 
@@ -122,7 +124,7 @@ src/main.ts startup-family entry -> startup coordinator -> mod activation/bootst
 - `MainUiFlow` redesign or public contract expansion
 - task / house / event / scene runtime contract changes
 - new save-envelope family design
-- broad “make `main.ts` small” refactors unrelated to startup-family orchestration
+- broad “make `main.ts` small�?refactors unrelated to startup-family orchestration
 
 ## Hard Scope Guardrails
 
@@ -134,7 +136,7 @@ The active child must stop and reopen review if any of these becomes necessary:
 4. redesigning `MainUiFlow` instead of consuming it as-is
 5. adding a new save contract family beyond consuming the already-closed `selectedModSource` path
 
-These are not “adjacent improvements.” They are proof that the work has crossed into a different problem type.
+These are not “adjacent improvements.�?They are proof that the work has crossed into a different problem type.
 
 ## Proposed Architecture
 
@@ -227,7 +229,7 @@ Reason:
 
 - this prevents speculative queue growth
 - the next child, if any, must be justified only after the startup-family extraction closes
-- later continuation must prove it is a different boundary, not just “more `main.ts` cleanup”
+- later continuation must prove it is a different boundary, not just “more `main.ts` cleanup�?
 
 ## Exit Conditions For The First Active Child
 
@@ -250,3 +252,4 @@ It only opens the next safe continuation line:
 - prevent infinite scope growth
 
 If later work still wants to thin `main.ts` further, that work must begin from a new weekly review and must prove it is not re-entering this same startup-family boundary.
+

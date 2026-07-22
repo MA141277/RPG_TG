@@ -1,5 +1,8 @@
 # Playable Runtime Migration Weekly Orchestration Plan
 
+> **Historical Artifact:** Deprecated under `fail-closed progress-driven governance`. This file records the retired weekly-governance model and must not be used as the active resume entry for new work.
+
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to execute any promoted child task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Drive the phased playable-runtime migration queue from the Child 30 skeleton into later covered/house-local/battle/enforcement children without appending this problem type back into the old `main-shell-ownerization` weekly set.
@@ -120,7 +123,7 @@ None in this weekly set. Child 34 is completed and the queue is closed.
 
 ## Child Decomposition Rule
 
-The playable-runtime queue must remain phased. Do not merge these children back into one “big migration” plan.
+The playable-runtime queue must remain phased. Do not merge these children back into one 鈥渂ig migration鈥?plan.
 
 Required phase intent:
 
@@ -234,3 +237,4 @@ Expected:
 - [x] `Execution State` updated
 - [x] `Progress Log` updated
 - [x] Verification recorded
+

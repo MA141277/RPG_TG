@@ -68,8 +68,10 @@ This queue does not cover:
 
 ### Parent Target
 
-- Target owner:
-  - `docs/blueprints/targets/2026-07-06-project-complete-modularization-target-v1.md`
+- Target spec:
+  - `docs/blueprints/specs/2026-07-06-project-complete-modularization-target.md`
+- Target plan:
+  - `docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md`
 
 ### Closed Review Record
 
@@ -79,7 +81,7 @@ This queue does not cover:
 - Closed Task:
   - `none`
 - Handoff At Closure:
-  - `Return control to the v1 target and decide whether Phase 1 can hand off to Phase 2 queue promotion. Do not reopen state-sync-and-runtime-canonicalization unless a new production blocker is proven.`
+  - `Return to the current target plan and decide whether Phase 1 can hand off to Phase 2 queue promotion. Do not reopen state-sync-and-runtime-canonicalization unless a new production blocker is proven.`
 - Verification:
   - `Targeted shell-thinning regressions, full npm test, and a closeout residue audit of src/main.ts.`
 - Notes:
@@ -361,7 +363,7 @@ This queue does not cover:
 - Task ID:
   - `none`
 - Recorded handoff at closure:
-  - `Queue is closed. Return control to the target and promote a new queue only if a stronger current-period modularization need is proven.`
+  - `Queue is closed. Return control to the target plan and promote a new queue only if a stronger current-period modularization need is proven.`
 - Recorded expected output:
   - `A target-level decision on the next queue family, not more shell-thinning work by default.`
 
@@ -446,4 +448,4 @@ This queue does not cover:
 - 2026-07-06
   - Summary: `Closed shell-thinning-and-final-ownerization after the residue audit found that the remaining direct main.ts writes are shell-owned UI/event cleanup, startup-time assembly, or a narrow leader-residence compatibility handoff rather than a live runtime/state canonicalization blocker.`
   - Verification: `main.ts residue audit plus npm test`
-  - Next: `Return control to the target and decide whether Phase 1 can now hand off to Phase 2 contribution-closure work.`
+  - Next: `Return to the target plan and decide whether Phase 1 can now hand off to Phase 2 contribution-closure work.`

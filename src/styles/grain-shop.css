@@ -1,7 +1,11 @@
+.view-house-building-shell,
 .view-house-grain-shop {
-  --grain-shop-scene-bg: url("../../ui/background/lianghang.png");
-  --grain-shop-shopkeeper-portrait: url("../../ui/npc/zhanggui.png");
-  --grain-shop-shopkeeper-avatar: url("../../ui/npc/zhangguitouxiang.png");
+  --building-shell-scene-bg: url("../../ui/background/lianghang.png");
+  --building-skin-portrait-image: url("../../ui/npc/zhanggui.png");
+  --building-skin-avatar-image: url("../../ui/npc/zhangguitouxiang.png");
+  --grain-shop-scene-bg: var(--building-shell-scene-bg);
+  --grain-shop-shopkeeper-portrait: var(--building-skin-portrait-image);
+  --grain-shop-shopkeeper-avatar: var(--building-skin-avatar-image);
   --grain-shop-accounting-title: url("../../ui/算术UI/material-202605291354-006.png");
   --grain-shop-accounting-hud: url("../../ui/算术UI/material-202605291354-005.png");
   --grain-shop-accounting-board: url("../../ui/算术UI/material-202605291352-002.png");
@@ -28,6 +32,8 @@
   isolation: isolate;
 }
 
+.view-house-building-shell::before,
+.view-house-building-shell::after,
 .view-house-grain-shop::before,
 .view-house-grain-shop::after {
   content: "";
@@ -36,13 +42,15 @@
   pointer-events: none;
 }
 
+.view-house-building-shell::before,
 .view-house-grain-shop::before {
   z-index: 0;
   background:
     linear-gradient(180deg, rgb(255 247 227 / 12%), rgb(73 49 27 / 8%)),
-    center / cover no-repeat var(--grain-shop-scene-bg);
+    center / cover no-repeat var(--building-shell-scene-bg, var(--grain-shop-scene-bg));
 }
 
+.view-house-building-shell::after,
 .view-house-grain-shop::after {
   z-index: 0;
   background:
@@ -50,19 +58,23 @@
     linear-gradient(180deg, rgb(86 60 31 / 12%) 0%, rgb(82 57 32 / 0%) 28%, rgb(54 34 20 / 18%) 64%, rgb(29 18 11 / 68%) 100%);
 }
 
+.view-house-building-shell > *,
 .view-house-grain-shop > * {
   position: relative;
   z-index: 1;
 }
 
 .view-house-home {
+  --building-shell-scene-bg: url("../../ui/background/zizhai.png");
   --grain-shop-scene-bg: url("../../ui/background/zizhai.png");
 }
 
 .c-grain-shop-skin-panel,
 .c-grain-shop-skin-card,
 .c-grain-shop-skin-dark,
+.c-building-skin-button,
 .c-grain-shop-button,
+.c-building-skin-nameplate,
 .c-grain-shop-nameplate {
   background-repeat: no-repeat;
 }
@@ -92,6 +104,7 @@
   color: #f5e8c9;
 }
 
+.c-building-skin-nameplate,
 .c-grain-shop-nameplate {
   display: inline-flex;
   align-items: center;
@@ -106,6 +119,7 @@
   background-size: 100% 100%;
 }
 
+.c-building-skin-nameplate--small,
 .c-grain-shop-nameplate--small {
   min-height: 40px;
   min-width: 124px;
@@ -113,6 +127,7 @@
   font-size: 0.95rem;
 }
 
+.c-building-skin-button,
 .c-grain-shop-button {
   border: 0;
   color: #432917;
@@ -121,6 +136,7 @@
   background-color: transparent;
 }
 
+.c-building-skin-button--paper,
 .c-grain-shop-button--paper {
   border: 12px solid transparent;
   border-image-source: var(--grain-shop-panel-light);
@@ -129,6 +145,7 @@
   border-image-repeat: stretch;
 }
 
+.c-building-skin-button--gold,
 .c-grain-shop-button--gold {
   border: 12px solid transparent;
   border-image-source: var(--grain-shop-button-gold);
@@ -138,10 +155,14 @@
   color: #f6e5b9;
 }
 
+.c-building-layout-template .c-building-layout-region--actions.c-building-layout-action-dock--open,
+.c-building-layout-action-dock--open,
 .c-grain-shop-center--open {
   align-items: center;
 }
 
+.c-building-layout-template .c-building-layout-region--actions.c-building-layout-action-dock,
+.c-building-layout-action-dock,
 .c-grain-shop-center {
   grid-area: 1 / 1;
   z-index: 3;
@@ -151,7 +172,8 @@
   pointer-events: none;
 }
 
-.c-grain-shop-actions {
+.c-building-layout-actions,
+  .c-grain-shop-actions {
   display: flex;
   flex-direction: column;
   align-items: stretch;
@@ -167,6 +189,7 @@
   pointer-events: auto;
 }
 
+.c-building-layout-actions .c-button,
 .c-grain-shop-actions .c-button {
   width: 100%;
   justify-content: center;
@@ -175,53 +198,66 @@
 
 .c-grain-shop-dialogue {
   grid-area: 1 / 1;
-  z-index: 2;
-  align-self: end;
-  display: grid;
-
-  /* 参考 lianghangcankao：对话框与立绘紧贴成一组，靠右排列 */
-  grid-template-columns: minmax(0, min(46vw, 460px)) auto;
-  gap: 0;
-  justify-content: end;
-  align-items: end;
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: block;
   width: 100%;
-  padding: 0 var(--space-2) var(--space-2);
-  padding-left: clamp(150px, 18vw, 200px);
+  height: 100%;
+  padding: 0;
+  pointer-events: none;
+}
 
-  /* 铺满网格用于排版，但不拦截中央功能按钮的点击 */
+.c-grain-shop-dialogue::before {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  display: block;
+  content: "";
+  background-image: url("../../ui/yuansu/对话框/20260708-162747.png");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 100% 100%;
   pointer-events: none;
 }
 
 .c-grain-shop-dialogue.c-location-dialogue {
   position: absolute;
-  right: 0;
-  bottom: 0;
-  left: 0;
+  inset: 0;
   z-index: calc(var(--z-global-ui) - 1);
-  grid-template-columns: minmax(360px, 520px) auto;
   color: #2f2319;
 }
 
 .c-grain-shop-dialogue__text,
-.c-grain-shop-dialogue__npc {
+.c-grain-shop-dialogue__text--clickable {
   pointer-events: auto;
 }
 
 .c-grain-shop-dialogue__text {
-  min-height: 88px;
-  padding: var(--space-4) var(--space-5);
+  position: absolute;
+  top: calc(100% * 902 / 1152);
+  left: calc(100% * 440 / 2048);
+  z-index: 5;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: flex-start;
+  width: calc(100% * 1040 / 2048);
+  height: calc(100% * 184 / 1152);
+  min-height: 0;
+  padding: calc(100% * 14 / 1152) calc(100% * 28 / 2048);
+  border: 0;
   background: none;
-  box-shadow: 0 6px 18px rgb(0 0 0 / 14%);
+  box-shadow: none;
+  overflow: hidden;
 }
 
 .c-grain-shop-dialogue__line {
   margin: 0;
-  line-height: 1.7;
-  font-size: 1.02rem;
+  color: #2f2117;
+  font-size: clamp(1rem, 1.22vw, 1.28rem);
+  line-height: 1.72;
+  text-shadow: 0 1px 0 rgb(255 248 228 / 52%);
 }
 
 .c-grain-shop-dialogue__text--clickable {
@@ -234,55 +270,96 @@
 }
 
 .c-grain-shop-dialogue__hint {
-  margin: var(--space-2) 0 0;
-  font-size: 0.85rem;
-  opacity: 0.75;
-  text-align: right;
+  position: absolute;
+  right: calc(100% * 40 / 1220);
+  bottom: calc(100% * 16 / 184);
+  margin: 0;
+  color: #6c4a2a;
+  font-size: clamp(0.78rem, 0.86vw, 0.92rem);
+  opacity: 0.86;
   align-self: flex-end;
+  text-align: right;
 }
 
 .c-grain-shop-dialogue__npc {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-1);
-  flex-shrink: 0;
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: block;
+  pointer-events: none;
 }
 
-/* 对话时右侧大立绘 */
+.c-building-skin-portrait,
 .c-grain-shop-portrait {
-  display: flex;
-  align-items: stretch;
-  justify-content: center;
-  width: min(36vw, 300px);
-  min-height: min(50vh, 420px);
+  position: absolute;
+  right: calc(100% * 92 / 2048);
+  bottom: 0;
+  z-index: 2;
+  display: block;
+  width: calc(100% * 390 / 2048);
+  height: calc(100% * 560 / 1152);
   padding: 0;
   background: none;
   box-shadow: none;
+  overflow: visible;
+  pointer-events: none;
 }
 
+.c-building-skin-portrait__art,
 .c-grain-shop-portrait__art {
   display: block;
-  flex: 1;
-  min-height: 100%;
-  background: center bottom / auto 100% no-repeat var(--grain-shop-shopkeeper-portrait);
+  width: 100%;
+  height: 100%;
+  background:
+    center bottom / auto 100% no-repeat
+    var(--building-skin-portrait-image, var(--grain-shop-shopkeeper-portrait));
 }
 
-.c-grain-shop-portrait__image {
+.c-building-skin-portrait__image,
+.c-grain-shop-portrait__image,
+.c-location-dialogue__portrait-image {
   display: block;
   width: 100%;
-  height: auto;
-  max-height: min(50vh, 420px);
+  height: 100%;
+  max-height: none;
   object-fit: contain;
   object-position: center bottom;
 }
 
+.c-building-skin-portrait__name,
 .c-grain-shop-portrait__name {
+  position: absolute;
+  top: calc(100% * 883 / 1152);
+  left: calc(100% * 141 / 2048);
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: calc(100% * 276 / 2048);
+  height: calc(100% * 76 / 1152);
+  min-width: 0;
+  min-height: 0;
   margin: 0;
+  padding: 0 calc(100% * 30 / 2048);
+  border: 0;
+  color: #f8e6bb;
+  background-image: url("../../ui/yuansu/对话框/20260708-162820.png");
+  background-repeat: no-repeat;
+  background-position:
+    calc(var(--game-width) * -141 / 2048)
+    calc(var(--game-height) * -883 / 1152);
+  background-size: var(--game-width) var(--game-height);
+  font-family: var(--font-title);
+  font-size: clamp(0.92rem, 1.22vw, 1.28rem);
+  line-height: 1;
   text-align: center;
+  text-shadow: 0 1px 2px rgb(46 18 10 / 78%);
+  pointer-events: none;
+  white-space: nowrap;
 }
 
 /* 关闭对话后左侧小头像（与大立绘区分） */
+.c-building-skin-avatar,
 .c-grain-shop-avatar {
   display: flex;
   align-items: stretch;
@@ -293,13 +370,17 @@
   box-shadow: none;
 }
 
+.c-building-skin-avatar__art,
 .c-grain-shop-avatar__art {
   display: block;
   width: 100%;
   height: 100%;
-  background: center / cover no-repeat var(--grain-shop-shopkeeper-avatar);
+  background:
+    center / cover no-repeat
+    var(--building-skin-avatar-image, var(--grain-shop-shopkeeper-avatar));
 }
 
+.c-building-skin-avatar__image,
 .c-grain-shop-avatar__image {
   display: block;
   width: 100%;
@@ -307,6 +388,7 @@
   object-fit: cover;
 }
 
+.c-building-skin-avatar__name,
 .c-grain-shop-avatar__name {
   margin: 0;
   max-width: 124px;
@@ -365,7 +447,9 @@
   margin: 0;
 }
 
-.c-grain-shop-npc-idle {
+.c-building-layout-template .c-building-layout-region--sidebar.c-building-layout-roster,
+.c-building-layout-roster,
+  .c-grain-shop-npc-idle {
   position: fixed;
   left: var(--space-4);
   top: 50%;
@@ -374,6 +458,7 @@
   pointer-events: auto;
 }
 
+.c-building-layout-roster__button,
 .c-grain-shop-npc-idle__button {
   display: flex;
   flex-direction: column;
@@ -395,12 +480,18 @@
     box-shadow var(--duration-fast) ease;
 }
 
+.c-building-layout-roster__button:hover .c-building-skin-avatar,
+.c-building-layout-roster__button:hover .c-grain-shop-avatar,
+.c-building-layout-roster__button:focus-visible .c-building-skin-avatar,
+.c-building-layout-roster__button:focus-visible .c-grain-shop-avatar,
 .c-grain-shop-npc-idle__button:hover .c-grain-shop-avatar,
 .c-grain-shop-npc-idle__button:focus-visible .c-grain-shop-avatar {
   filter: brightness(1.06);
 }
 
-.c-grain-shop-idle-owner {
+.c-building-layout-template .c-building-layout-region--focus.c-building-layout-focus,
+.c-building-layout-focus,
+  .c-grain-shop-idle-owner {
   position: fixed;
   right: var(--space-4);
   top: 50%;
@@ -409,6 +500,7 @@
   pointer-events: auto;
 }
 
+.c-building-layout-focus__button,
 .c-grain-shop-idle-owner__button {
   display: flex;
   flex-direction: column;
@@ -422,12 +514,19 @@
   color: inherit;
 }
 
+.c-building-layout-focus__button:hover .c-building-skin-portrait,
+.c-building-layout-focus__button:hover .c-grain-shop-portrait,
+.c-building-layout-focus__button:focus-visible .c-building-skin-portrait,
+.c-building-layout-focus__button:focus-visible .c-grain-shop-portrait,
 .c-grain-shop-idle-owner__button:hover .c-grain-shop-portrait,
 .c-grain-shop-idle-owner__button:focus-visible .c-grain-shop-portrait {
   filter: brightness(1.06);
 }
 
-.c-grain-shop-leave {
+.c-building-layout-template .c-building-layout-region--leave .c-building-layout-leave,
+.c-building-layout-template .c-building-layout-region--footer .c-building-layout-leave,
+.c-building-layout-leave,
+  .c-grain-shop-leave {
   position: fixed;
   right: var(--space-4);
   bottom: var(--space-4);
@@ -1060,7 +1159,8 @@
 }
 
 .view-house-medicine-house {
-  --grain-shop-scene-bg: url("../../ui/background/huichuntang.png");
+  --building-shell-scene-bg: url("../../ui/background/huichuntang.png");
+  --grain-shop-scene-bg: var(--building-shell-scene-bg);
   --medicine-scene-frame: url("../../ui/药铺UI/material-202605271718-003.png");
   --medicine-top-parchment: url("../../ui/药铺UI/material-202605271713-007.png");
   --medicine-herb-panel: url("../../ui/药铺UI/material-202605271713-002.png");
@@ -1825,10 +1925,12 @@
 }
 
 @media (width <= 640px) {
+  .c-building-layout-roster,
   .c-grain-shop-npc-idle {
     left: var(--space-3);
   }
 
+  .c-building-layout-focus,
   .c-grain-shop-idle-owner {
     right: var(--space-3);
   }
@@ -1839,6 +1941,7 @@
     width: min(100%, 148px);
   }
 
+  .c-building-skin-avatar,
   .c-grain-shop-avatar {
     width: 56px;
     height: 56px;
@@ -1848,6 +1951,7 @@
     font-size: 0.95rem;
   }
 
+  .c-building-layout-leave,
   .c-grain-shop-leave {
     right: var(--space-3);
     bottom: var(--space-3);
@@ -1866,11 +1970,13 @@
     padding: var(--space-3) var(--space-4);
   }
 
+  .c-building-skin-portrait,
   .c-grain-shop-portrait {
     width: min(42vw, 220px);
     min-height: min(44vh, 300px);
   }
 
+  .c-building-layout-actions,
   .c-grain-shop-actions {
     width: min(100%, 208px);
   }

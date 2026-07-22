@@ -1,25 +1,27 @@
 import type {
-  ActionNode,
-  ChoiceOption,
   CharacterDefinition,
   CityDefinition,
   EventDefinition,
   HouseDefinition,
   MapDefinition,
   MissionDefinition,
-  SceneDefinition,
 } from "../domain";
+import type {
+  RuntimeDialogueChoiceOption,
+  RuntimeDialogueDefinition,
+  RuntimeDialogueNode,
+} from "../domain/dialogue";
 
 export const sampleMap: MapDefinition = {
   id: "map.central_japan",
-  name: "中央地图",
+  name: "Central Map",
   backgroundId: "bg.map.central_japan",
   nodes: [{ cityId: "city.gifu", x: 412, y: 268 }],
 };
 
 export const sampleCity: CityDefinition = {
   id: "city.gifu",
-  name: "岐阜",
+  name: "Gifu",
   regionId: "region.mino",
   mapNodeId: "map-node.gifu",
   houseIds: ["house.gifu.castle"],
@@ -34,13 +36,12 @@ export const sampleCity: CityDefinition = {
 export const sampleHouse: HouseDefinition = {
   id: "house.gifu.castle",
   cityId: "city.gifu",
-  name: "岐阜城",
+  name: "Gifu Castle",
   type: "castle",
   characterIds: ["char.oda_nobunaga", "char.kinoshita_tokichiro"],
   defaultCharacterId: "char.oda_nobunaga",
-  onEnterEventId: "event.gifu.council_001",
   backAction: {
-    label: "返回城下町",
+    label: "Return To City",
     targetView: "city",
   },
 };
@@ -48,13 +49,13 @@ export const sampleHouse: HouseDefinition = {
 export const sampleCharacters: CharacterDefinition[] = [
   {
     id: "char.oda_nobunaga",
-    name: "织田信长",
+    name: "Oda Nobunaga",
     birthYear: 1534,
     deathYear: null,
     age: 33,
     clanId: "clan.oda",
-    title: "家主",
-    occupation: "武士",
+    title: "Lord",
+    occupation: "Samurai",
     cityId: "city.gifu",
     houseId: "house.gifu.castle",
     portraitId: "portrait.oda_nobunaga",
@@ -69,11 +70,11 @@ export const sampleCharacters: CharacterDefinition[] = [
       gold: 5000,
     },
     stamina: 92,
-    biography: "织田家的年轻家督，正处于势力扩张的关键阶段。",
+    biography: "Young lord of the Oda clan.",
     availableFunctions: [
       {
         id: "func.oda.assign_mission",
-        label: "发布任务",
+        label: "Assign Mission",
         type: "open-event",
         eventId: "event.gifu.council_001",
       },
@@ -81,13 +82,13 @@ export const sampleCharacters: CharacterDefinition[] = [
   },
   {
     id: "char.kinoshita_tokichiro",
-    name: "木下藤吉郎",
+    name: "Kinoshita Tokichiro",
     birthYear: 1536,
     deathYear: null,
     age: 31,
     clanId: "clan.oda",
-    title: "足轻大将",
-    occupation: "武士",
+    title: "Retainer",
+    occupation: "Samurai",
     cityId: "city.gifu",
     houseId: "house.gifu.castle",
     portraitId: "portrait.kinoshita_tokichiro",
@@ -102,74 +103,46 @@ export const sampleCharacters: CharacterDefinition[] = [
       gold: 120,
     },
     stamina: 88,
-    biography: "足轻出身，善于随机应变，正在争取更多军功与信任。",
+    biography: "A quick-witted rising retainer.",
     availableFunctions: [
       {
         id: "func.kinoshita.trade",
-        label: "交易",
+        label: "Trade",
         type: "trade",
       },
       {
         id: "func.kinoshita.tea_minigame",
-        label: "茶席小游戏",
+        label: "Tea Minigame",
         type: "minigame",
         minigameId: "minigame.tea_ceremony",
       },
     ],
-    onTalkSceneId: "scene.gifu.council_001",
+    onTalkDialogueId: "scene.gifu.council_001",
   },
 ];
 
 export const sampleMission: MissionDefinition = {
   id: "mission.unify_mino",
-  title: "整合美浓",
-  description: "接受主命，推进美浓地区统一。",
+  title: "Unify Mino",
+  description: "Advance regional unification.",
   issuerCharacterId: "char.oda_nobunaga",
-  statusText: "前往相关城池处理内政与外交。",
-  rewardText: "提升名声与家中地位。",
+  statusText: "Handle local and diplomatic work.",
+  rewardText: "Raise reputation and status.",
 };
 
 export const sampleTextEntries: Record<string, string> = {
-  "scene.gifu.council_001.001": "主公，请把这个任务交给我吧！",
-  "scene.gifu.council_001.002": "噢？那你就试试看吧，猴子。",
-  "scene.gifu.council_001.prompt": "你要如何回应？",
-  "scene.gifu.council_001.choice.accept": "接受任务",
-  "scene.gifu.council_001.choice.reject": "拒绝并推荐他人",
+  "scene.gifu.council_001.001": "My lord, please leave this mission to me.",
+  "scene.gifu.council_001.002": "Then prove it.",
+  "scene.gifu.council_001.prompt": "How will you respond?",
+  "scene.gifu.council_001.choice.accept": "Accept mission",
+  "scene.gifu.council_001.choice.reject": "Decline and recommend another",
 };
 
 export const sampleEvent: EventDefinition = {
   id: "event.gifu.council_001",
   chapterId: "chapter.rising_sun",
-  name: "评定间请命事件",
+  name: "Council Request",
   occurrence: "once",
-  trigger: {
-    timing: "house-enter",
-    scope: {
-      houseId: "house.gifu.castle",
-    },
-    priority: 100,
-  },
-  conditions: [
-    {
-      type: "chapter",
-      chapterId: "chapter.rising_sun",
-    },
-    {
-      type: "event-fired",
-      eventId: "event.gifu.council_001",
-      expected: false,
-    },
-    {
-      type: "character-available",
-      characterId: "char.oda_nobunaga",
-      expected: true,
-    },
-    {
-      type: "character-available",
-      characterId: "char.kinoshita_tokichiro",
-      expected: true,
-    },
-  ],
   participants: [
     {
       role: "primary",
@@ -182,14 +155,14 @@ export const sampleEvent: EventDefinition = {
       required: true,
     },
   ],
-  entrySceneId: "scene.gifu.council_001",
+  dialogueId: "scene.gifu.council_001",
   tags: ["main", "mission"],
 };
 
-export const sampleScene: SceneDefinition = {
+export const sampleDialogue: RuntimeDialogueDefinition = {
   id: "scene.gifu.council_001",
-  name: "评定间请命",
-  actions: [
+  name: "Council Request",
+  nodes: [
     {
       type: "background",
       backgroundId: "bg.council_room",
@@ -229,19 +202,21 @@ export const sampleScene: SceneDefinition = {
   ],
 };
 
-export const sampleScenesById: Record<string, SceneDefinition> = {
-  [sampleScene.id]: sampleScene,
+export const sampleDialoguesById: Record<string, RuntimeDialogueDefinition> = {
+  [sampleDialogue.id]: sampleDialogue,
 };
 
 export const sampleEventsById: Record<string, EventDefinition> = {
   [sampleEvent.id]: sampleEvent,
 };
 
-export function getSampleChoiceOptions(): ChoiceOption[] | null {
-  const choiceAction = sampleScene.actions.find(
-    (actionNode): actionNode is Extract<ActionNode, { type: "choice" }> =>
-      actionNode.type === "choice"
+export function getSampleChoiceOptions(): RuntimeDialogueChoiceOption[] | null {
+  const choiceNode = sampleDialogue.nodes.find(
+    (
+      node
+    ): node is Extract<RuntimeDialogueNode, { type: "choice" }> =>
+      node.type === "choice"
   );
 
-  return choiceAction?.options ?? null;
+  return choiceNode?.options ?? null;
 }

@@ -1,5 +1,7 @@
 # Child 14 Interactive Remaining Legacy Convergence Spec
 
+> **Legacy Governance Context:** This document was authored under the retired `weekly plan / weekly set / weekly orchestration` model. Keep its technical scope, but treat any weekly-governance references as historical context only. If this legacy artifact is explicitly resumed, use `docs/superpowers/project-progress.md`; otherwise use `docs/blueprints/project-progress.md` for current repository work.
+
 ## 1. Goal
 
 Define the formal `Child 14` boundary for the first fresh weekly continuation set after the closed `Child 13` queue.
@@ -230,3 +232,4 @@ Child 14 is done enough only when:
 - the remaining work can move on to Child 15 / Child 16 rather than another same-type interactive cleanup child
 
 If those answers remain ambiguous, Child 14 is not complete.
+

@@ -1,21 +1,28 @@
 import type { ContentPackDefinition } from "../../domain/content-pack";
 import type { MapDefinition } from "../../domain/map";
+import { assertHouseModuleDefaults } from "./house-module-defaults";
 
 const CONTENT_PACK_FILE_KEYS = [
   "maps",
   "cities",
   "houses",
+  "buildingArrangements",
   "cityEntries",
   "characters",
   "events",
-  "scenes",
+  "eventBindings",
+  "dialogues",
   "tasks",
+  "flowPlayables",
   "textEntries",
   "activities",
   "cards",
   "valuables",
   "cityNpcPools",
-  "houseAccessRefusalRules",
+  "locationAccess",
+  "houseModuleDefaults",
+  "portraits",
+  "portraitVariants",
   "cityPortraits",
   "historicalCharacters",
   "historicalCityRosters",
@@ -56,15 +63,29 @@ export async function loadContentPackFromManifestText(
     hydratedFields.maps,
     manifestUrl
   );
+  const resolvedPortraits = resolveContentPackPortraitAssetUrls(
+    hydratedFields.portraits,
+    manifestUrl
+  );
 
-  return {
+  const pack = {
     schemaVersion: manifest.schemaVersion,
     id: manifest.id,
     title: manifest.title,
     ...(manifest.description == null ? {} : { description: manifest.description }),
     ...hydratedFields,
     ...(resolvedMaps == null ? {} : { maps: resolvedMaps }),
+    ...(resolvedPortraits == null ? {} : { portraits: resolvedPortraits }),
   };
+
+  if (pack.houseModuleDefaults != null) {
+    assertHouseModuleDefaults(
+      pack.houseModuleDefaults,
+      "content pack houseModuleDefaults"
+    );
+  }
+
+  return pack;
 }
 
 export function resolvePackRelativeUrl(
@@ -88,6 +109,11 @@ function parseContentPackManifest(value: unknown): ContentPackManifest {
   assertString(value.id, "content pack id");
   assertString(value.title, "content pack title");
   assertObject(value.files, "content pack files");
+  if (Object.hasOwn(value.files, "flowDefinitions")) {
+    throw new Error(
+      'content pack files.flowDefinitions is retired; use files.flowPlayables instead.'
+    );
+  }
 
   return value as ContentPackManifest;
 }
@@ -149,6 +175,25 @@ export function resolveContentPackMapAssetUrls(
       ...(layers == null ? {} : { layers }),
     };
   });
+}
+
+export function resolveContentPackPortraitAssetUrls(
+  portraits: Partial<ContentPackDefinition>["portraits"],
+  manifestUrl: string
+): ContentPackDefinition["portraits"] | undefined {
+  return portraits?.map((portrait) => ({
+    ...portrait,
+    portraitImage:
+      resolvePackRelativeUrl(manifestUrl, portrait.portraitImage) ??
+      portrait.portraitImage,
+    ...(portrait.avatarImage == null
+      ? {}
+      : {
+          avatarImage:
+            resolvePackRelativeUrl(manifestUrl, portrait.avatarImage) ??
+            portrait.avatarImage,
+        }),
+  }));
 }
 
 function assertObject(

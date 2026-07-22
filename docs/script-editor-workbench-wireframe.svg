@@ -1,0 +1,155 @@
+<svg width="1600" height="980" viewBox="0 0 1600 980" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1600" y2="980" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F4E7D2"/>
+      <stop offset="1" stop-color="#E9D7BC"/>
+    </linearGradient>
+    <linearGradient id="panel" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#F8F0E1"/>
+      <stop offset="1" stop-color="#EEDFC8"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#D9985A"/>
+      <stop offset="1" stop-color="#C67F43"/>
+    </linearGradient>
+    <style>
+      .title { font: 700 26px 'Microsoft YaHei', 'PingFang SC', sans-serif; fill: #4B3523; }
+      .h1 { font: 700 46px 'Microsoft YaHei', 'PingFang SC', sans-serif; fill: #3F2B1C; }
+      .h2 { font: 700 28px 'Microsoft YaHei', 'PingFang SC', sans-serif; fill: #4A3322; }
+      .h3 { font: 700 20px 'Microsoft YaHei', 'PingFang SC', sans-serif; fill: #7A5533; }
+      .body { font: 400 18px 'Microsoft YaHei', 'PingFang SC', sans-serif; fill: #5E4735; }
+      .muted { font: 400 16px 'Microsoft YaHei', 'PingFang SC', sans-serif; fill: #8E735C; }
+      .small { font: 400 14px 'Microsoft YaHei', 'PingFang SC', sans-serif; fill: #8E735C; }
+      .btn { font: 700 18px 'Microsoft YaHei', 'PingFang SC', sans-serif; fill: #FFF8EF; }
+      .btn-dark { font: 700 18px 'Microsoft YaHei', 'PingFang SC', sans-serif; fill: #5B402B; }
+      .chip { font: 700 15px 'Microsoft YaHei', 'PingFang SC', sans-serif; fill: #FFF8EF; }
+    </style>
+  </defs>
+
+  <rect width="1600" height="980" fill="url(#bg)"/>
+
+  <text x="64" y="58" class="title">Script Editor Workbench Wireframe</text>
+
+  <rect x="40" y="88" width="1520" height="86" rx="28" fill="#F7ECDD" stroke="#C7A47B"/>
+  <text x="72" y="140" class="h3">当前项目：朱元璋起势 · 演示稿</text>
+
+  <rect x="980" y="108" width="140" height="44" rx="22" fill="#EFE2D1" stroke="#B88E63"/>
+  <text x="1016" y="136" class="btn-dark">返回列表</text>
+
+  <rect x="1138" y="108" width="100" height="44" rx="22" fill="#EFE2D1" stroke="#B88E63"/>
+  <text x="1172" y="136" class="btn-dark">保存</text>
+
+  <rect x="1256" y="108" width="100" height="44" rx="22" fill="#EFE2D1" stroke="#B88E63"/>
+  <text x="1290" y="136" class="btn-dark">校验</text>
+
+  <rect x="1374" y="102" width="130" height="56" rx="28" fill="url(#accent)"/>
+  <text x="1416" y="137" class="btn">导出</text>
+
+  <rect x="40" y="198" width="180" height="724" rx="30" fill="url(#panel)" stroke="#C7A47B"/>
+  <text x="68" y="246" class="h3">主功能</text>
+  <text x="68" y="276" class="muted">按创作对象切换</text>
+
+  <rect x="58" y="312" width="144" height="142" rx="24" fill="#D59A5B" stroke="#B97C42"/>
+  <text x="88" y="376" class="h2">人物</text>
+  <text x="88" y="408" class="body">角色设定</text>
+
+  <rect x="58" y="472" width="144" height="142" rx="24" fill="#F3E6D4" stroke="#C7A47B"/>
+  <text x="88" y="536" class="h2">城市</text>
+  <text x="88" y="568" class="body">世界节点</text>
+
+  <rect x="58" y="632" width="144" height="142" rx="24" fill="#F3E6D4" stroke="#C7A47B"/>
+  <text x="88" y="696" class="h2">建筑</text>
+  <text x="88" y="728" class="body">地点场景</text>
+
+  <rect x="244" y="198" width="340" height="724" rx="30" fill="url(#panel)" stroke="#C7A47B"/>
+  <text x="274" y="246" class="h3">二级菜单 / 人物列表</text>
+  <text x="274" y="276" class="muted">当前对象族下的具体实例</text>
+
+  <rect x="274" y="306" width="280" height="48" rx="18" fill="#FBF5EC" stroke="#C7A47B"/>
+  <text x="298" y="337" class="muted">搜索人物 / ID / 标签</text>
+
+  <rect x="274" y="372" width="132" height="44" rx="22" fill="#EFE2D1" stroke="#B88E63"/>
+  <text x="318" y="400" class="btn-dark">新增人物</text>
+
+  <rect x="422" y="372" width="132" height="44" rx="22" fill="#D9B39C" stroke="#B67F6E"/>
+  <text x="466" y="400" class="btn-dark">删除人物</text>
+
+  <rect x="274" y="442" width="280" height="110" rx="22" fill="#E9C89C" stroke="#B97C42"/>
+  <text x="300" y="482" class="h3">朱元璋</text>
+  <text x="300" y="514" class="body">主角 / 可操控角色</text>
+  <text x="300" y="540" class="small">char.zhu-yuanzhang</text>
+
+  <rect x="274" y="568" width="280" height="92" rx="22" fill="#F7ECDD" stroke="#C7A47B"/>
+  <text x="300" y="608" class="h3">汤和</text>
+  <text x="300" y="636" class="small">同伴人物</text>
+
+  <rect x="274" y="676" width="280" height="92" rx="22" fill="#F7ECDD" stroke="#C7A47B"/>
+  <text x="300" y="716" class="h3">郭子兴</text>
+  <text x="300" y="744" class="small">势力首领</text>
+
+  <rect x="274" y="784" width="280" height="92" rx="22" fill="#F7ECDD" stroke="#C7A47B"/>
+  <text x="300" y="824" class="h3">马秀英</text>
+  <text x="300" y="852" class="small">关系人物</text>
+
+  <rect x="608" y="198" width="720" height="724" rx="30" fill="url(#panel)" stroke="#C7A47B"/>
+  <text x="642" y="246" class="h3">中央主编辑区</text>
+  <text x="642" y="276" class="muted">当前选中对象：人物 / 朱元璋</text>
+
+  <text x="642" y="340" class="h1">朱元璋</text>
+  <rect x="858" y="302" width="122" height="40" rx="20" fill="#C9DEC8" stroke="#7FA17B"/>
+  <text x="892" y="328" class="chip">已就绪</text>
+
+  <rect x="642" y="372" width="654" height="126" rx="24" fill="#FBF5EC" stroke="#C7A47B"/>
+  <text x="670" y="408" class="h3">基础信息</text>
+  <text x="670" y="440" class="body">名称：朱元璋</text>
+  <text x="940" y="440" class="body">ID：char.zhu-yuanzhang</text>
+  <text x="670" y="472" class="body">分类：主角 / 可操控角色</text>
+  <text x="940" y="472" class="body">所属阶段：起势线</text>
+
+  <rect x="642" y="522" width="654" height="250" rx="24" fill="#FBF5EC" stroke="#C7A47B"/>
+  <text x="670" y="560" class="h3">属性配置</text>
+  <text x="670" y="588" class="muted">在这里新增、删除、设置当前对象属性</text>
+
+  <rect x="1120" y="544" width="148" height="42" rx="21" fill="url(#accent)"/>
+  <text x="1164" y="571" class="btn">新增属性</text>
+
+  <rect x="670" y="612" width="598" height="52" rx="16" fill="#F4E7D6" stroke="#C7A47B"/>
+  <text x="692" y="644" class="body">属性名：统率</text>
+  <text x="852" y="644" class="body">key：leadership</text>
+  <text x="1034" y="644" class="body">类型：数值</text>
+  <text x="1160" y="644" class="body">值：82</text>
+
+  <rect x="670" y="678" width="598" height="52" rx="16" fill="#F4E7D6" stroke="#C7A47B"/>
+  <text x="692" y="710" class="body">属性名：魅力</text>
+  <text x="852" y="710" class="body">key：charisma</text>
+  <text x="1034" y="710" class="body">类型：数值</text>
+  <text x="1160" y="710" class="body">值：76</text>
+
+  <rect x="642" y="796" width="654" height="98" rx="24" fill="#FBF5EC" stroke="#C7A47B"/>
+  <text x="670" y="832" class="h3">关联配置</text>
+  <text x="670" y="862" class="body">所属城市：濠州   关系对象：汤和 / 马秀英   绑定事件：开场事件</text>
+
+  <rect x="1352" y="198" width="208" height="724" rx="30" fill="url(#panel)" stroke="#C7A47B"/>
+  <text x="1382" y="246" class="h3">侧边摘要</text>
+  <text x="1382" y="276" class="muted">状态和辅助信息</text>
+
+  <rect x="1382" y="312" width="148" height="94" rx="20" fill="#FBF5EC" stroke="#C7A47B"/>
+  <text x="1406" y="348" class="small">当前类型</text>
+  <text x="1406" y="382" class="h3">人物</text>
+
+  <rect x="1382" y="424" width="148" height="94" rx="20" fill="#FBF5EC" stroke="#C7A47B"/>
+  <text x="1406" y="460" class="small">列表位置</text>
+  <text x="1406" y="494" class="h3">1 / 12</text>
+
+  <rect x="1382" y="536" width="148" height="94" rx="20" fill="#FBF5EC" stroke="#C7A47B"/>
+  <text x="1406" y="572" class="small">校验状态</text>
+  <text x="1406" y="606" class="h3">通过</text>
+
+  <rect x="1382" y="648" width="148" height="132" rx="20" fill="#FBF5EC" stroke="#C7A47B"/>
+  <text x="1406" y="684" class="small">对象操作</text>
+  <text x="1406" y="718" class="body">保存当前对象</text>
+  <text x="1406" y="748" class="body">复制对象</text>
+  <text x="1406" y="778" class="body">删除当前对象</text>
+
+  <text x="64" y="954" class="muted">布局重点：左侧负责选类型与选对象，中央负责属性增删改，顶部只保留全局动作。</text>
+</svg>

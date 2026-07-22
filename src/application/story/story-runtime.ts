@@ -1,19 +1,46 @@
-import type { ChoiceOption, SceneDefinition } from "../../domain/action";
 import type { ActivityDefinition } from "../../domain/activity";
 import type { CharacterDefinition } from "../../domain/character";
-import type { EventDefinition, EventTriggerTiming } from "../../domain/event";
+import type {
+  RuntimeDialogueChoiceOption,
+  RuntimeDialogueDefinition,
+} from "../../domain/dialogue";
+import type {
+  EventBinding,
+  EventDefinition,
+} from "../../domain/event";
 import type { GameState } from "../../domain/game-state";
+import { runEventBindingRuntime } from "../../core/runtime/event-binding-runtime";
+import { createRuntimeTriggerContext } from "../../core/runtime/event-binding-contract";
 import { startEvent } from "../events/event-runner";
+import { resolveDialogueChoiceOption } from "../dialogue/dialogue-choice-resolver";
 import {
-  selectTriggeredEvents,
-  type TriggerEvaluationInput,
-} from "../events/trigger-evaluator";
-import { resolveChoiceOption } from "../scene/choice-resolver";
-import { advanceScene, runSceneUntilPause } from "../scene/scene-runner";
+  advanceDialogue,
+  runDialogueUntilPause,
+} from "../dialogue/dialogue-runner";
+
+export type StoryTriggerTiming =
+  | "manual"
+  | "game-start"
+  | "date-change"
+  | "turn-end"
+  | "travel-complete"
+  | "city-enter"
+  | "house-enter"
+  | "indoor-screen-shown"
+  | "talk"
+  | "custom";
+
+export type StoryTriggerInput = {
+  timing: StoryTriggerTiming;
+  cityId?: string;
+  houseId?: string;
+  characterId?: string;
+};
 
 type StoryContent = {
   eventDefinitionsById: Record<string, EventDefinition>;
-  sceneDefinitionsById: Record<string, SceneDefinition>;
+  eventBindingsById?: Record<string, EventBinding> | undefined;
+  dialogueDefinitionsById: Record<string, RuntimeDialogueDefinition>;
   activityDefinitionsById?: Record<string, ActivityDefinition> | undefined;
   textEntriesById?: Record<string, string> | undefined;
 };
@@ -25,59 +52,12 @@ type StoryRuntimeContext = {
 
 type StoryRuntimeResult = StoryRuntimeContext;
 
-function createScopedTriggerContext(
-  state: GameState,
-  characterDefinitions: CharacterDefinition[]
-) {
-  return {
-    isCharacterAvailable: (characterId: string) =>
-      characterDefinitions.some(
-        (characterDefinition) => characterDefinition.id === characterId
-      ),
-    isCharacterInClan: (characterId: string, clanId: string) =>
-      characterDefinitions.some(
-        (characterDefinition) =>
-          characterDefinition.id === characterId &&
-          characterDefinition.clanId === clanId
-      ),
-    isCharacterInCity: (characterId: string, cityId: string) =>
-      characterDefinitions.some(
-        (characterDefinition) =>
-          characterDefinition.id === characterId &&
-          characterDefinition.cityId === cityId
-      ),
-    doesClanExist: (clanId: string) =>
-      characterDefinitions.some(
-        (characterDefinition) => characterDefinition.clanId === clanId
-      ),
-    getClanRelation: () => null,
-    isCityOwnedByClan: () => false,
-    hasEventFired: (eventId: string) =>
-      (state.runtime.eventHistory[eventId]?.firedCount ?? 0) > 0,
-    getEventFiredCount: (eventId: string) =>
-      state.runtime.eventHistory[eventId]?.firedCount ?? 0,
-    getMonthsSinceEvent: () => null,
-    getMissionStatus: (missionId: string) => {
-      if (state.missions.activeMissionId === missionId) {
-        return "active";
-      }
-
-      if (state.missions.completedMissionIds.includes(missionId)) {
-        return "completed";
-      }
-
-      return "inactive";
-    },
-    runCustomCondition: () => false,
-  };
-}
-
-export function syncStoryScene(
+export function syncStoryDialogue(
   runtime: StoryRuntimeContext,
   content: StoryContent
 ): StoryRuntimeResult {
-  const result = runSceneUntilPause(runtime.state, {
-    sceneDefinitionsById: content.sceneDefinitionsById,
+  const result = runDialogueUntilPause(runtime.state, {
+    dialogueDefinitionsById: content.dialogueDefinitionsById,
     eventDefinitionsById: content.eventDefinitionsById,
     activityDefinitionsById: content.activityDefinitionsById,
     characterDefinitions: runtime.characterDefinitions,
@@ -100,7 +80,7 @@ export function startStoryEventById(
     return runtime;
   }
 
-  return syncStoryScene(
+  return syncStoryDialogue(
     {
       state: startEvent(runtime.state, eventDefinition),
       characterDefinitions: runtime.characterDefinitions,
@@ -112,34 +92,96 @@ export function startStoryEventById(
 export function triggerStoryEvents(
   runtime: StoryRuntimeContext,
   content: StoryContent,
-  input: TriggerEvaluationInput
+  input: StoryTriggerInput
 ): StoryRuntimeResult {
-  const triggeredEvents = selectTriggeredEvents(
-    runtime.state,
-    Object.values(content.eventDefinitionsById),
-    input,
-    createScopedTriggerContext(runtime.state, runtime.characterDefinitions)
-  );
-  const targetEvent = triggeredEvents[0];
-  if (targetEvent == null) {
+  const eventBindings = Object.values(content.eventBindingsById ?? {});
+  const bindingResult = runEventBindingRuntime({
+    state: runtime.state,
+    eventDefinitionsById: content.eventDefinitionsById,
+    eventBindings,
+    triggerContext: buildTriggerContext(input, runtime.state),
+  });
+
+  if (bindingResult.activation == null) {
     return runtime;
   }
 
-  return syncStoryScene(
+  return syncStoryDialogue(
     {
-      state: startEvent(runtime.state, targetEvent),
+      state: bindingResult.state,
       characterDefinitions: runtime.characterDefinitions,
     },
     content
   );
 }
 
-export function advanceStorySceneStep(
+function buildTriggerContext(
+  input: StoryTriggerInput,
+  state: GameState
+){
+  if (input.timing === "city-enter") {
+    const currentCityId = input.cityId ?? state.world.currentCityId;
+    return createRuntimeTriggerContext({
+      state: {
+        ...state,
+        world: {
+          ...state.world,
+          currentCityId,
+        },
+      },
+      owner: {
+        family: "city",
+        ...(currentCityId == null ? {} : { id: currentCityId }),
+      },
+      action: "city-enter",
+    });
+  }
+
+  if (input.timing === "house-enter" || input.timing === "indoor-screen-shown") {
+    const currentCityId = input.cityId ?? state.world.currentCityId;
+    const currentHouseId = input.houseId ?? state.world.currentHouseId;
+    return createRuntimeTriggerContext({
+      state: {
+        ...state,
+        world: {
+          ...state.world,
+          currentCityId,
+          currentHouseId,
+        },
+      },
+      owner: {
+        family: "building",
+        ...(currentHouseId == null ? {} : { id: currentHouseId }),
+      },
+      action:
+        input.timing === "house-enter"
+          ? "building-enter"
+          : "indoor-screen-shown",
+    });
+  }
+
+  const currentCityId = input.cityId ?? state.world.currentCityId;
+  const currentHouseId = input.houseId ?? state.world.currentHouseId;
+  return createRuntimeTriggerContext({
+    state: {
+      ...state,
+      world: {
+        ...state.world,
+        currentCityId,
+        currentHouseId,
+      },
+    },
+    owner: { family: "story", id: state.calendar.chapterId },
+    action: input.timing,
+  });
+}
+
+export function advanceStoryDialogueStep(
   runtime: StoryRuntimeContext,
   content: StoryContent
 ): StoryRuntimeResult {
-  const result = advanceScene(runtime.state, {
-    sceneDefinitionsById: content.sceneDefinitionsById,
+  const result = advanceDialogue(runtime.state, {
+    dialogueDefinitionsById: content.dialogueDefinitionsById,
     eventDefinitionsById: content.eventDefinitionsById,
     activityDefinitionsById: content.activityDefinitionsById,
     characterDefinitions: runtime.characterDefinitions,
@@ -152,18 +194,21 @@ export function advanceStorySceneStep(
   };
 }
 
-export function chooseStorySceneOption(
+export function chooseStoryDialogueOption(
   runtime: StoryRuntimeContext,
   content: StoryContent,
-  selectedOption: ChoiceOption
+  selectedOption: RuntimeDialogueChoiceOption
 ): StoryRuntimeResult {
-  const choiceResult = resolveChoiceOption(runtime.state, selectedOption, {
-    sceneDefinitionsById: content.sceneDefinitionsById,
+  const choiceResult = resolveDialogueChoiceOption(
+    runtime.state,
+    selectedOption,
+    {
     eventDefinitionsById: content.eventDefinitionsById,
     characterDefinitions: runtime.characterDefinitions,
-  });
+    }
+  );
 
-  return syncStoryScene(
+  return syncStoryDialogue(
     {
       state: choiceResult.state,
       characterDefinitions: choiceResult.characterDefinitions,
@@ -172,34 +217,34 @@ export function chooseStorySceneOption(
   );
 }
 
-export function getCurrentSceneAction(
+export function getCurrentDialogueNode(
   state: GameState,
-  sceneDefinitionsById: Record<string, SceneDefinition>
+  dialogueDefinitionsById: Record<string, RuntimeDialogueDefinition>
 ) {
-  if (state.scene.activeSceneId == null) {
+  if (state.dialogue.activeDialogueId == null) {
     return null;
   }
 
-  const activeScene = sceneDefinitionsById[state.scene.activeSceneId];
-  if (activeScene == null) {
+  const activeDialogue = dialogueDefinitionsById[state.dialogue.activeDialogueId];
+  if (activeDialogue == null) {
     return null;
   }
 
-  return activeScene.actions[state.scene.cursor] ?? null;
+  return activeDialogue.nodes[state.dialogue.cursor] ?? null;
 }
 
-export function getCurrentChoiceOptions(
+export function getCurrentDialogueChoiceOptions(
   state: GameState,
-  sceneDefinitionsById: Record<string, SceneDefinition>
-): ChoiceOption[] {
-  const currentAction = getCurrentSceneAction(state, sceneDefinitionsById);
-  return currentAction?.type === "choice" ? currentAction.options : [];
+  dialogueDefinitionsById: Record<string, RuntimeDialogueDefinition>
+): RuntimeDialogueChoiceOption[] {
+  const currentNode = getCurrentDialogueNode(state, dialogueDefinitionsById);
+  return currentNode?.type === "choice" ? currentNode.options : [];
 }
 
 export function buildStoryTriggerInput(
-  timing: EventTriggerTiming,
+  timing: StoryTriggerTiming,
   state: GameState
-): TriggerEvaluationInput {
+): StoryTriggerInput {
   return {
     timing,
     cityId: state.world.currentCityId,

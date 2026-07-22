@@ -12,7 +12,9 @@ import type {
   GameplayContributionDeclaration,
   GameplayContributionRegistry,
 } from "../contracts/gameplay-contribution";
+import type { ContentPackDefinition } from "../../domain/content-pack";
 import type { ScenarioPackDefinition } from "../../domain/scenario-pack";
+import { resolveScenarioProfileStartupPresentation } from "../../domain/scenario-profile";
 import {
   loadModSource,
   type ModSourceLoaderContext,
@@ -48,8 +50,16 @@ export function createLoadedModFromManifest(input: {
 export function createLoadedModFromScenarioPack(input: {
   source: ModSourceDescriptor;
   scenarioPack: ScenarioPackDefinition;
+  baseContentPack?: ContentPackDefinition;
 }): LoadedMod {
   const profile = input.scenarioPack.scenarioProfile;
+  const startupPresentation = resolveScenarioProfileStartupPresentation(profile);
+  const entryContentPackIds = Array.from(
+    new Set([
+      ...(input.baseContentPack == null ? [] : [input.baseContentPack.id]),
+      input.scenarioPack.id,
+    ])
+  );
 
   return createLoadedModFromManifest({
     source: input.source,
@@ -58,17 +68,50 @@ export function createLoadedModFromScenarioPack(input: {
       schemaVersion: String(input.scenarioPack.schemaVersion),
       version: "1.0.0",
       title: input.scenarioPack.title,
-      entryContentPackIds: [input.scenarioPack.id],
+      entryContentPackIds,
+      gameplayContributions: {
+        playables: collectPlayableIds(input.scenarioPack),
+        playableIntegrations: collectPlayableIntegrationIds(input.scenarioPack),
+      },
       defaultStart: {
         playerCharacterId: profile.playerCharacterId,
         mapId: profile.initialLocation.mapId,
         cityId: profile.initialLocation.cityId,
-        houseId: profile.initialLocation.houseId,
-        view: profile.initialLocation.view,
+        houseId: startupPresentation.currentHouseId,
+        ...(startupPresentation.activeDialogueId == null
+          ? {}
+          : { dialogueId: startupPresentation.activeDialogueId }),
+        view: startupPresentation.currentView,
       },
     },
-    rawContent: input.scenarioPack,
+    rawContent:
+      input.baseContentPack == null
+        ? input.scenarioPack
+        : [input.baseContentPack, input.scenarioPack],
   });
+}
+
+function collectPlayableIds(scenarioPack: ScenarioPackDefinition): string[] {
+  return Array.isArray(scenarioPack.playables)
+    ? scenarioPack.playables.flatMap((playable) =>
+        typeof playable.id === "string" && playable.id.trim().length > 0
+          ? [playable.id]
+          : []
+      )
+    : [];
+}
+
+function collectPlayableIntegrationIds(
+  scenarioPack: ScenarioPackDefinition
+): string[] {
+  return Array.isArray(scenarioPack.playableIntegrations)
+    ? scenarioPack.playableIntegrations.flatMap((integration) =>
+        typeof integration.integrationId === "string" &&
+        integration.integrationId.trim().length > 0
+          ? [integration.integrationId]
+          : []
+      )
+    : [];
 }
 
 export async function runModRuntime(input: {
@@ -313,7 +356,9 @@ function readActiveLoadedMod(state: ModRuntimeState): LoadedMod | null {
 }
 
 function createActivatedMod(loadedMod: LoadedMod): ActivatedMod {
-  const normalizedContentSources = [loadedMod.rawContent];
+  const normalizedContentSources = Array.isArray(loadedMod.rawContent)
+    ? loadedMod.rawContent
+    : [loadedMod.rawContent];
 
   return {
     modId: loadedMod.manifest.id,
@@ -340,6 +385,9 @@ function createActivatedMod(loadedMod: LoadedMod): ActivatedMod {
       ...(loadedMod.manifest.defaultStart?.houseId == null
         ? {}
         : { houseId: loadedMod.manifest.defaultStart.houseId }),
+      ...(loadedMod.manifest.defaultStart?.dialogueId == null
+        ? {}
+        : { dialogueId: loadedMod.manifest.defaultStart.dialogueId }),
       ...(loadedMod.manifest.defaultStart?.view == null
         ? {}
         : { view: loadedMod.manifest.defaultStart.view }),
@@ -353,9 +401,11 @@ type ContributionSource = {
   cities?: unknown;
   cityEntries?: unknown;
   events?: unknown;
-  scenes?: unknown;
+  dialogues?: unknown;
   tasks?: unknown;
   houses?: unknown;
+  playables?: unknown;
+  playableIntegrations?: unknown;
 };
 
 function installGameplayContributions(input: {
@@ -372,13 +422,29 @@ function installGameplayContributions(input: {
     ...collectRecordIds(sources, "cityEntries"),
   ]);
   const availableEvents = uniqueStrings(collectRecordIds(sources, "events"));
-  const availableScenes = uniqueStrings(collectRecordIds(sources, "scenes"));
+  const availableDialogues = uniqueStrings(
+    collectRecordIds(sources, "dialogues")
+  );
   const availableTasks = uniqueStrings(collectRecordIds(sources, "tasks"));
   const availableHouses = uniqueStrings(collectRecordIds(sources, "houses"));
+  const availablePlayables = uniqueStrings(collectRecordIds(sources, "playables"));
+  const availablePlayableIntegrations = uniqueStrings(
+    collectRecordIds(sources, "playableIntegrations", "integrationId")
+  );
   const resolvedHouses = resolveContributionIds({
     family: "houses",
     declaredIds: input.manifest.gameplayContributions?.houses,
     availableIds: availableHouses,
+  });
+  const resolvedPlayables = resolveContributionIds({
+    family: "playables",
+    declaredIds: input.manifest.gameplayContributions?.playables,
+    availableIds: availablePlayables,
+  });
+  const resolvedPlayableIntegrations = resolveContributionIds({
+    family: "playableIntegrations",
+    declaredIds: input.manifest.gameplayContributions?.playableIntegrations,
+    availableIds: availablePlayableIntegrations,
   });
 
   return {
@@ -401,10 +467,10 @@ function installGameplayContributions(input: {
       declaredIds: input.manifest.gameplayContributions?.events,
       availableIds: availableEvents,
     }),
-    scenes: resolveContributionIds({
-      family: "scenes",
-      declaredIds: input.manifest.gameplayContributions?.scenes,
-      availableIds: availableScenes,
+    dialogues: resolveContributionIds({
+      family: "dialogues",
+      declaredIds: input.manifest.gameplayContributions?.dialogues,
+      availableIds: availableDialogues,
     }),
     tasks: resolveContributionIds({
       family: "tasks",
@@ -413,12 +479,15 @@ function installGameplayContributions(input: {
     }),
     houses: resolvedHouses,
     houseModules: collectHouseModuleIds(sources, resolvedHouses),
+    playables: resolvedPlayables,
+    playableIntegrations: resolvedPlayableIntegrations,
   };
 }
 
 function collectRecordIds(
   sources: readonly ContributionSource[],
-  key: keyof ContributionSource
+  key: keyof ContributionSource,
+  idField = "id"
 ): string[] {
   return sources.flatMap((source) => {
     const value = source[key];
@@ -431,7 +500,7 @@ function collectRecordIds(
         return [];
       }
 
-      const id = (entry as { id?: unknown }).id;
+      const id = (entry as Record<string, unknown>)[idField];
       return typeof id === "string" && id.trim().length > 0 ? [id] : [];
     });
   });

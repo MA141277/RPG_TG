@@ -2,11 +2,16 @@ import type { CharacterDefinition } from "../../domain/character";
 import type { GameState } from "../../domain/game-state";
 import { convertShiToDou } from "../../domain/grain-unit";
 import { GRAIN_SHOP_VARIABLE_KEYS } from "../../domain/grain-shop";
+import {
+  mergeCharacterStatusById,
+  type CharacterStatusById,
+} from "../character/character-status";
 import { mutatePlayerGrainDou } from "../inventory/trade-inventory";
 
 export type GrainShopMutationResult = {
   state: GameState;
   characterDefinitions: CharacterDefinition[];
+  characterStatusById?: CharacterStatusById;
 };
 
 function withVariable(
@@ -53,6 +58,7 @@ export function mutatePlayerGold(
   playerCharacterId: string,
   delta: number
 ): GrainShopMutationResult {
+  let characterStatusById: CharacterStatusById = {};
   return {
     state,
     characterDefinitions: characterDefinitions.map((characterDefinition) => {
@@ -60,14 +66,22 @@ export function mutatePlayerGold(
         return characterDefinition;
       }
 
+      const nextGold = characterDefinition.stats.gold + delta;
+      characterStatusById = mergeCharacterStatusById(
+        characterStatusById,
+        playerCharacterId,
+        { statPatch: { gold: nextGold } }
+      );
+
       return {
         ...characterDefinition,
         stats: {
           ...characterDefinition.stats,
-          gold: characterDefinition.stats.gold + delta,
+          gold: nextGold,
         },
       };
     }),
+    characterStatusById,
   };
 }
 
@@ -77,6 +91,7 @@ export function mutatePlayerArithmetic(
   playerCharacterId: string,
   delta: number
 ): GrainShopMutationResult {
+  let characterStatusById: CharacterStatusById = {};
   return {
     state,
     characterDefinitions: characterDefinitions.map((characterDefinition) => {
@@ -89,14 +104,22 @@ export function mutatePlayerArithmetic(
         return characterDefinition;
       }
 
+      const nextArithmetic = Math.max(0, baseSkills.arithmetic + delta);
+      characterStatusById = mergeCharacterStatusById(
+        characterStatusById,
+        playerCharacterId,
+        { skillPatch: { arithmetic: nextArithmetic } }
+      );
+
       return {
         ...characterDefinition,
         skills: {
           ...baseSkills,
-          arithmetic: Math.max(0, baseSkills.arithmetic + delta),
+          arithmetic: nextArithmetic,
         },
       };
     }),
+    characterStatusById,
   };
 }
 

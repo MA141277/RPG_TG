@@ -4,9 +4,8 @@ import type {
   StoryBattleCompletion,
   StoryBattleUnit,
 } from "../../domain/story-battle";
-import { KEEP_HOUSE_VARIABLE_KEYS } from "../../domain/keep-house";
 import { resolveTextEntry } from "../content/text-resolution";
-import { formatCouncilStatusText } from "../time/time-progression";
+import { defaultReviewCyclePolicy } from "../review/review-cycle-provider";
 
 export type StoryBattleActionResult = {
   state: GameState;
@@ -282,21 +281,28 @@ export function dispatchStoryBattleAction(
     session.phase === "embedded-running"
   ) {
     const completion = session.completion;
+    const reviewSyncedState = defaultReviewCyclePolicy.applySchedule(state, {
+      scheduledDate: state.calendar,
+      missionText:
+        completion.mainMissionText ??
+        getStoryBattleText(
+          context,
+          "battle.story.zhu_yuanzhang.sundeya_rescue.main_mission.post_battle",
+          "鎴樺悗璇勫畾"
+        ),
+    });
     const nextState: GameState = {
-      ...state,
+      ...reviewSyncedState,
       storyBattle: null,
       world: {
-        ...state.world,
+        ...reviewSyncedState.world,
         ...(completion.enterHouseId == null
           ? {}
           : { currentHouseId: completion.enterHouseId }),
-        schedule: {
-          councilDate: state.calendar,
-        },
       },
       ui: {
-        ...state.ui,
-        currentView: completion.enterHouseId == null ? "scene" : "house",
+        ...reviewSyncedState.ui,
+        currentView: completion.enterHouseId == null ? "dialogue" : "house",
         mainHouseMissionText:
           completion.mainMissionText ??
           getStoryBattleText(
@@ -304,20 +310,18 @@ export function dispatchStoryBattleAction(
             "battle.story.zhu_yuanzhang.sundeya_rescue.main_mission.post_battle",
             "战后评定"
           ),
-        reviewDateText: formatCouncilStatusText(0),
       },
       runtime: {
-        ...state.runtime,
+        ...reviewSyncedState.runtime,
         flags: {
-          ...state.runtime.flags,
+          ...reviewSyncedState.runtime.flags,
           [completion.completedFlagKey]: true,
           [completion.winFlagKey]: true,
         },
         variables: {
-          ...state.runtime.variables,
+          ...reviewSyncedState.runtime.variables,
           [completion.battleIdVariableKey]: session.battleId,
           [completion.resultVariableKey]: "victory",
-          [KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown]: 0,
         },
       },
     };
@@ -402,21 +406,28 @@ export function dispatchStoryBattleAction(
 
   if (actionId === "finish" && session.phase === "victory") {
     const completion = session.completion;
+    const reviewSyncedState = defaultReviewCyclePolicy.applySchedule(state, {
+      scheduledDate: state.calendar,
+      missionText:
+        completion.mainMissionText ??
+        getStoryBattleText(
+          context,
+          "battle.story.zhu_yuanzhang.sundeya_rescue.main_mission.post_battle",
+          "鎴樺悗璇勫畾"
+        ),
+    });
     const nextState: GameState = {
-      ...state,
+      ...reviewSyncedState,
       storyBattle: null,
       world: {
-        ...state.world,
+        ...reviewSyncedState.world,
         ...(completion.enterHouseId == null
           ? {}
           : { currentHouseId: completion.enterHouseId }),
-        schedule: {
-          councilDate: state.calendar,
-        },
       },
       ui: {
-        ...state.ui,
-        currentView: completion.enterHouseId == null ? "scene" : "house",
+        ...reviewSyncedState.ui,
+        currentView: completion.enterHouseId == null ? "dialogue" : "house",
         mainHouseMissionText:
           completion.mainMissionText ??
           getStoryBattleText(
@@ -424,20 +435,18 @@ export function dispatchStoryBattleAction(
             "battle.story.zhu_yuanzhang.sundeya_rescue.main_mission.post_battle",
             "战后评定"
           ),
-        reviewDateText: formatCouncilStatusText(0),
       },
       runtime: {
-        ...state.runtime,
+        ...reviewSyncedState.runtime,
         flags: {
-          ...state.runtime.flags,
+          ...reviewSyncedState.runtime.flags,
           [completion.completedFlagKey]: true,
           [completion.winFlagKey]: true,
         },
         variables: {
-          ...state.runtime.variables,
+          ...reviewSyncedState.runtime.variables,
           [completion.battleIdVariableKey]: session.battleId,
           [completion.resultVariableKey]: "victory",
-          [KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown]: 0,
         },
       },
     };

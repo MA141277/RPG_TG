@@ -1,12 +1,14 @@
-# Queued Child Spec
+# Child Spec
 
-> **Purpose:** Use this template for a child that is approved as a candidate inside the current weekly set but is not yet executable. A queued child spec locks boundary and completion criteria early while leaving concrete implementation sequencing to the later active child plan.
+> **Purpose:** Use this template for a child that is approved as a future or waiting boundary but is not yet executable. The spec locks scope, out-of-scope, exit conditions, and verification early, while the later child plan owns concrete execution.
 
 ## Basic Info
 
 - Child: `Child X`
-- Status: `queued`
-- Parent weekly set: `docs/superpowers/plans/YYYY-MM-DD-weekly-orchestration-plan.md`
+- Status: `waiting`
+- Parent progress document: `docs/superpowers/project-progress.md`
+- Parent stage: `Stage X`
+- Parent task: `Task X`
 - Depends on: `Replace with the required predecessor child or none.`
 
 ## Primary Boundary
@@ -51,7 +53,7 @@
 
 ## Promotion Recheck
 
-Before this child is promoted from `queued` to `active`, recheck:
+Before this child is promoted from `waiting` to `running`, recheck:
 
 - does the primary boundary still exist?
 - did the previous child already absorb part of this scope?
@@ -65,9 +67,6 @@ Promotion result:
 
 - Candidate risks:
   - `Replace with any risk worth rechecking before promotion.`
-- Weekly artifacts to refresh before planning:
-  - `weekly-review-index`
-  - `weekly-module-map`
-  - `weekly-call-flows`
-  - `weekly-next-split-review`
-  - `weekly-architecture-report`
+- Owner documents to refresh before promotion:
+  - `docs/superpowers/project-progress.md`
+  - `docs/superpowers/plans/<future-child-plan>.md`

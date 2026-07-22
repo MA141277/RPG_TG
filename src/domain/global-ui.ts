@@ -1,6 +1,5 @@
 import type { CharacterId } from "./character";
 import type { CardCategory } from "./card";
-import type { ActiveHouseModuleSession } from "./house-module";
 import type { MissionId } from "./mission";
 
 export type GlobalPanelType = "player-card" | "main-mission" | "resource-bar" | "notifications";
@@ -9,6 +8,10 @@ export type CardLibraryFilter = "all" | CardCategory;
 export type ValuableLibraryFilter = "all" | "equipment";
 export type ValuableLibrarySortKey = "name" | "price" | "ownedCount" | "category";
 export type SortDirection = "asc" | "desc";
+export type DeprecatedHouseSession = {
+  moduleId: string;
+  state: unknown;
+} | null;
 
 export type GlobalUIState = {
   visiblePanels: GlobalPanelType[];
@@ -21,5 +24,5 @@ export type GlobalUIState = {
   valuableLibraryFilter: ValuableLibraryFilter;
   valuableLibrarySortKey: ValuableLibrarySortKey;
   valuableLibrarySortDirection: SortDirection;
-  houseSession: ActiveHouseModuleSession;
+  houseSession: DeprecatedHouseSession;
 };

@@ -1,0 +1,1811 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>点选装配式事件编辑器原型</title>
+  <style>
+    :root {
+      --bg: #f7f8fa;
+      --panel: #ffffff;
+      --panel-2: #ffffff;
+      --line: #cfd7e3;
+      --line-soft: #e2e8f0;
+      --text: #172033;
+      --muted: #64748b;
+      --blue: #ff4b5f;
+      --blue-2: #f0374d;
+      --green: #15803d;
+      --yellow: #a16207;
+      --red: #ff4b5f;
+      --topbar: #171b22;
+      --topbar-2: #20242c;
+      --shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+      --radius: 8px;
+      font-family: "Microsoft YaHei", "PingFang SC", "Segoe UI", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-width: 1180px;
+      height: 100vh;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    button, input, select, textarea {
+      font: inherit;
+    }
+
+    button {
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #fff;
+      color: var(--text);
+      cursor: pointer;
+      transition: background .15s, border-color .15s, color .15s, transform .08s;
+    }
+
+    button:hover { border-color: #94a3b8; background: #f8fafc; }
+    button:active { transform: translateY(1px); }
+
+    .funloom-topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 56px;
+      padding: 0 98px;
+      background: linear-gradient(180deg, var(--topbar), #141820);
+      color: #e5e7eb;
+      box-shadow: 0 12px 28px rgba(15, 23, 42, 0.28);
+      position: relative;
+      z-index: 5;
+    }
+
+    .funloom-left,
+    .funloom-right,
+    .funloom-nav {
+      display: flex;
+      align-items: center;
+    }
+
+    .funloom-left {
+      gap: 54px;
+    }
+
+    .funloom-logo {
+      display: flex;
+      align-items: center;
+      min-width: 156px;
+      height: 40px;
+    }
+
+    .funloom-logo img {
+      display: block;
+      width: 156px;
+      height: 40px;
+      object-fit: contain;
+    }
+
+    .funloom-nav {
+      gap: 38px;
+      height: 56px;
+    }
+
+    .funloom-nav a {
+      position: relative;
+      display: flex;
+      align-items: center;
+      height: 56px;
+      color: #c9ced7;
+      text-decoration: none;
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .funloom-nav a.active {
+      color: #fff;
+    }
+
+    .funloom-nav a.active::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      bottom: 0;
+      width: 72px;
+      height: 3px;
+      border-radius: 3px 3px 0 0;
+      background: var(--blue);
+      transform: translateX(-50%);
+    }
+
+    .funloom-right {
+      gap: 12px;
+    }
+
+    .top-search {
+      display: grid;
+      grid-template-columns: 1fr 34px;
+      align-items: center;
+      width: 424px;
+      height: 24px;
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.1);
+      overflow: hidden;
+    }
+
+    .top-search input {
+      height: 22px;
+      border: 0;
+      background: transparent;
+      color: #e5e7eb;
+      padding: 0 12px;
+      font-size: 12px;
+      box-shadow: none;
+    }
+
+    .top-search input::placeholder {
+      color: #a9afb9;
+    }
+
+    .top-search button {
+      height: 22px;
+      border: 0;
+      border-left: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.16);
+      color: #fff;
+      padding: 0;
+      font-size: 13px;
+    }
+
+    .top-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      background: rgba(255, 255, 255, 0.07);
+      color: #d8dde6;
+      display: inline-grid;
+      place-items: center;
+      font-size: 15px;
+    }
+
+    .top-avatar {
+      width: 38px;
+      height: 38px;
+      border-radius: 999px;
+      border: 0;
+      background: transparent;
+      display: inline-grid;
+      place-items: center;
+      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.16);
+      padding: 0;
+      overflow: hidden;
+    }
+
+    .top-avatar img {
+      display: block;
+      width: 38px;
+      height: 38px;
+      object-fit: cover;
+    }
+
+    .app {
+      display: grid;
+      grid-template-columns: 286px minmax(640px, 1fr) 390px;
+      height: calc(100vh - 56px);
+    }
+
+    .sidebar, .preview {
+      background: #111827;
+      color: #dbeafe;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .sidebar {
+      border-right: 1px solid #0f172a;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .brand {
+      padding: 16px;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.24);
+    }
+
+    .brand-title {
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 0;
+    }
+
+    .brand-sub {
+      margin-top: 4px;
+      color: #94a3b8;
+      font-size: 12px;
+    }
+
+    .pool-scroll {
+      padding: 12px;
+      overflow: auto;
+    }
+
+    details.pool {
+      border: 1px solid rgba(148, 163, 184, 0.22);
+      border-radius: var(--radius);
+      margin-bottom: 12px;
+      background: rgba(15, 23, 42, 0.66);
+    }
+
+    details.pool[open] summary {
+      border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+    }
+
+    summary {
+      padding: 10px 12px;
+      cursor: pointer;
+      font-weight: 650;
+      color: #e5e7eb;
+      list-style: none;
+      user-select: none;
+    }
+
+    summary::-webkit-details-marker { display: none; }
+    summary::before {
+      content: "▸";
+      display: inline-block;
+      width: 18px;
+      color: #93c5fd;
+    }
+    details[open] summary::before { content: "▾"; }
+
+    .pool-tools {
+      display: flex;
+      gap: 8px;
+      padding: 10px;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+    }
+
+    .pool-tools input {
+      width: 100%;
+      min-width: 0;
+      height: 30px;
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      border-radius: 6px;
+      padding: 0 8px;
+      background: #0f172a;
+      color: #e5e7eb;
+      outline: none;
+    }
+
+    .pool-tools button {
+      height: 30px;
+      flex: 0 0 auto;
+      padding: 0 9px;
+      background: var(--blue);
+      border-color: var(--blue);
+      color: #eff6ff;
+      font-size: 12px;
+    }
+
+    .pool-list {
+      padding: 6px;
+    }
+
+    .pool-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      width: 100%;
+      min-height: 34px;
+      padding: 7px 8px;
+      border-radius: 6px;
+      color: #cbd5e1;
+      cursor: pointer;
+    }
+
+    .pool-item:hover,
+    .pool-item.active {
+      background: rgba(255, 75, 95, 0.2);
+      color: #fff;
+    }
+
+    .pool-type {
+      color: #fca5b0;
+      font-size: 11px;
+      white-space: nowrap;
+    }
+
+    .main {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      min-height: 0;
+      border-right: 1px solid var(--line);
+      background: var(--bg);
+    }
+
+    .main-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      height: 56px;
+      padding: 0 20px;
+      border-bottom: 1px solid var(--line);
+      background: #fff;
+    }
+
+    .crumb {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .main-title {
+      font-weight: 760;
+      color: var(--text);
+    }
+
+    .main-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .primary {
+      border-color: var(--blue);
+      background: var(--blue);
+      color: #fff;
+      padding: 8px 12px;
+      font-weight: 650;
+      box-shadow: 0 10px 22px rgba(255, 75, 95, 0.2);
+    }
+
+    .primary:hover {
+      border-color: var(--blue-2);
+      background: var(--blue-2);
+    }
+
+    .ghost {
+      padding: 7px 10px;
+      background: #f8fafc;
+      border-color: #ffc4cc;
+      color: #ef3b50;
+    }
+
+    .content {
+      overflow: auto;
+      padding: 18px 20px 28px;
+    }
+
+    .status-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .badge.yellow { background: #fef3c7; color: var(--yellow); border: 1px solid #fde68a; }
+    .badge.green { background: #dcfce7; color: var(--green); border: 1px solid #bbf7d0; }
+    .badge.blue { background: #ffe4e8; color: #ef3b50; border: 1px solid #ffc4cc; }
+    .badge.gray { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+
+    .section {
+      margin-bottom: 14px;
+      border: 1px solid var(--line-soft);
+      border-radius: var(--radius);
+      background: var(--panel-2);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .section-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      min-height: 44px;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--line-soft);
+      background: #f8fafc;
+    }
+
+    .section-title {
+      font-size: 14px;
+      font-weight: 760;
+    }
+
+    .section-body {
+      padding: 14px;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .field label, .field-label {
+      color: #475569;
+      font-size: 12px;
+      font-weight: 650;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      min-width: 0;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #fff;
+      color: var(--text);
+      outline: none;
+    }
+
+    input, select {
+      height: 34px;
+      padding: 0 9px;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      border-color: #60a5fa;
+      box-shadow: 0 0 0 3px rgba(96, 165, 250, .18);
+    }
+
+    input[readonly], select:disabled {
+      background: #f1f5f9;
+      color: #64748b;
+    }
+
+    input[type="range"] {
+      padding: 0;
+      border: 0;
+      height: 26px;
+    }
+
+    textarea {
+      min-height: 58px;
+      resize: vertical;
+      padding: 8px 9px;
+      line-height: 1.5;
+    }
+
+    .range-row {
+      display: grid;
+      grid-template-columns: 1fr 58px;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .check-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .check {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 34px;
+      padding: 7px 9px;
+      border: 1px solid var(--line-soft);
+      border-radius: 6px;
+      background: #f8fafc;
+      color: #334155;
+      font-size: 13px;
+    }
+
+    .check input { width: 14px; height: 14px; }
+
+    .event-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .event-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 10px;
+      border: 1px solid var(--line-soft);
+      border-radius: 6px;
+      background: #f8fafc;
+      cursor: pointer;
+    }
+
+    .event-row:hover { border-color: #93c5fd; background: #eff6ff; }
+
+    .empty {
+      padding: 16px;
+      border: 1px dashed #cbd5e1;
+      border-radius: 6px;
+      color: var(--muted);
+      text-align: center;
+      background: #f8fafc;
+    }
+
+    .radio-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .radio-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      min-height: 34px;
+      padding: 6px 10px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #fff;
+      color: #334155;
+    }
+
+    .radio-pill input { width: 14px; height: 14px; }
+
+    .card-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .rule-card {
+      border: 1px solid var(--line-soft);
+      border-radius: var(--radius);
+      background: #fff;
+      box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
+      overflow: hidden;
+    }
+
+    .rule-card.dragging {
+      opacity: .52;
+      border-color: #60a5fa;
+    }
+
+    .card-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      min-height: 38px;
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--line-soft);
+      background: #f8fafc;
+    }
+
+    .card-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 720;
+      color: #334155;
+    }
+
+    .drag-handle {
+      color: #94a3b8;
+      cursor: grab;
+      user-select: none;
+      font-size: 16px;
+    }
+
+    .delete {
+      width: 26px;
+      height: 26px;
+      padding: 0;
+      border-color: #fecaca;
+      color: var(--red);
+      background: #fff1f2;
+      font-weight: 760;
+    }
+
+    .card-body {
+      padding: 10px;
+    }
+
+    .inline-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(120px, 1fr));
+      gap: 8px;
+      align-items: end;
+    }
+
+    .inline-grid.three { grid-template-columns: repeat(3, minmax(130px, 1fr)); }
+    .inline-grid.two { grid-template-columns: repeat(2, minmax(150px, 1fr)); }
+
+    .choice-list {
+      display: grid;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .choice-row {
+      display: grid;
+      grid-template-columns: 1fr 154px 30px;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .small-btn {
+      min-height: 30px;
+      padding: 5px 8px;
+      font-size: 12px;
+      border-color: #ffc4cc;
+      background: #fff5f6;
+      color: #ef3b50;
+      font-weight: 700;
+    }
+
+    .small-btn:hover,
+    .ghost:hover {
+      border-color: var(--blue);
+      background: #ffe4e8;
+      color: #d92d42;
+    }
+
+    .preview {
+      display: flex;
+      flex-direction: column;
+      border-left: 1px solid #0f172a;
+    }
+
+    .preview-head {
+      padding: 14px;
+      border-bottom: 1px solid rgba(148, 163, 184, .22);
+    }
+
+    .preview-title {
+      font-size: 15px;
+      font-weight: 760;
+      color: #eff6ff;
+    }
+
+    .preview-sub {
+      margin-top: 4px;
+      color: #94a3b8;
+      font-size: 12px;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 4px;
+      padding: 10px 10px 0;
+      overflow-x: auto;
+      border-bottom: 1px solid rgba(148, 163, 184, .22);
+    }
+
+    .tab {
+      height: 32px;
+      padding: 0 9px;
+      border-color: rgba(148, 163, 184, .26);
+      background: #0f172a;
+      color: #cbd5e1;
+      white-space: nowrap;
+      font-size: 12px;
+    }
+
+    .tab.active {
+      background: var(--blue);
+      border-color: var(--blue);
+      color: #fff;
+    }
+
+    pre {
+      flex: 1;
+      margin: 0;
+      padding: 14px;
+      overflow: auto;
+      color: #dbeafe;
+      line-height: 1.48;
+      font-size: 12px;
+      tab-size: 2;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .json-key { color: #93c5fd; }
+    .json-string { color: #bbf7d0; }
+    .json-number { color: #fde68a; }
+    .json-boolean { color: #fca5a5; }
+    .json-null { color: #c4b5fd; }
+
+    .toast {
+      position: fixed;
+      right: 410px;
+      bottom: 22px;
+      z-index: 20;
+      min-width: 240px;
+      padding: 12px 14px;
+      border-radius: var(--radius);
+      background: #0f172a;
+      color: #fff;
+      box-shadow: 0 18px 40px rgba(15, 23, 42, .24);
+      opacity: 0;
+      transform: translateY(12px);
+      pointer-events: none;
+      transition: opacity .2s, transform .2s;
+      font-weight: 650;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  </style>
+</head>
+<body>
+  <header class="funloom-topbar">
+    <div class="funloom-left">
+      <div class="funloom-logo" aria-label="funloom">
+        <img src="assets/funloom-logo.png" alt="funloom">
+      </div>
+      <nav class="funloom-nav" aria-label="主导航">
+        <a href="#">首页</a>
+        <a href="#">分类</a>
+        <a href="#" class="active">创作</a>
+        <a href="#">仓库</a>
+      </nav>
+    </div>
+    <div class="funloom-right">
+      <div class="top-search">
+        <input placeholder="查询游戏" aria-label="查询游戏">
+        <button aria-label="搜索">⌕</button>
+      </div>
+      <button class="top-icon" aria-label="消息">✉</button>
+      <button class="top-avatar" aria-label="用户头像">
+        <img src="assets/funloom-avatar.png" alt="">
+      </button>
+    </div>
+  </header>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-title">Mod 事件编辑器</div>
+        <div class="brand-sub">点选装配式交互原型 · 单文件</div>
+      </div>
+      <div class="pool-scroll" id="poolRoot"></div>
+    </aside>
+
+    <main class="main">
+      <div class="main-top">
+        <div>
+          <div class="crumb" id="crumb">全局池 / 角色表</div>
+          <div class="main-title" id="mainTitle">角色详情</div>
+        </div>
+        <div class="main-actions" id="mainActions"></div>
+      </div>
+      <div class="content" id="editor"></div>
+    </main>
+
+    <aside class="preview">
+      <div class="preview-head">
+        <div class="preview-title">实时数据预览</div>
+        <div class="preview-sub">点选、添加卡片和输入文本会立即映射为 JSON</div>
+      </div>
+      <div class="tabs" id="jsonTabs"></div>
+      <pre id="jsonPreview"></pre>
+    </aside>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const pools = {
+      characters: [
+        { id: "char_zhu_yuanzhang", name: "朱元璋", kind: "base", role: "本体·可覆盖", force: "濠州", stats: { force: 78, int: 82, command: 86 }, appear: "至正十二年", flags: [] },
+        { id: "char_chen_youliang", name: "陈友谅", kind: "new", role: "新建", force: "集庆", stats: { force: 88, int: 76, command: 90 }, appear: "至正十五年", flags: ["flag_met_chen"] },
+        { id: "char_trainer", name: "某武术教头", kind: "new", role: "NPC", force: "濠州", stats: { force: 71, int: 48, command: 54 }, appear: "游戏开始", flags: [] },
+        { id: "char_merchant", name: "某商人", kind: "new", role: "NPC", force: "应天府", stats: { force: 32, int: 69, command: 36 }, appear: "游戏开始", flags: [] }
+      ],
+      locations: [
+        { id: "loc_haozhou", name: "濠州" },
+        { id: "loc_yingtian", name: "应天府" },
+        { id: "loc_jiqing", name: "集庆" }
+      ],
+      modules: [
+        { id: "start-battle", name: "start-battle", label: "战斗" },
+        { id: "open-shop", name: "open-shop", label: "交易" },
+        { id: "rest", name: "rest", label: "休息" }
+      ],
+      flags: [
+        { id: "flag_met_chen", name: "见过陈友谅" },
+        { id: "flag_honnouji_done", name: "本能寺已发生" }
+      ],
+      variables: [
+        { id: "stamina", name: "体力" },
+        { id: "money", name: "金钱" },
+        { id: "exp", name: "经验" }
+      ]
+    };
+
+    const state = {
+      selectedType: "character",
+      selectedId: "char_zhu_yuanzhang",
+      previewTab: "characters",
+      eventSeq: 1,
+      nodeSeq: 1,
+      conditionSeq: 1,
+      effectSeq: 1,
+      choiceSeq: 1,
+      events: [],
+      scenes: []
+    };
+
+    const triggerOptions = [
+      ["talk", "与角色对话(talk)"],
+      ["house-enter", "进入地点(house-enter)"],
+      ["date-change", "日期变化(date-change)"],
+      ["battle-end", "战斗结束(battle-end)"]
+    ];
+    const conditionTypes = [
+      ["flag", "flag"],
+      ["variable", "数值"],
+      ["event-triggered", "事件是否已触发"],
+      ["character-stat", "角色属性"],
+      ["date", "日期"]
+    ];
+    const effectTypes = [
+      ["set-flag", "设置flag(set-flag)"],
+      ["modify", "修改数值(modify)"],
+      ["invoke-module", "调起玩法模块(invoke-module)"],
+      ["start-event", "触发另一事件(start-event)"],
+      ["start-scene", "进入场景(start-scene)"]
+    ];
+    const nodeTypes = [
+      ["dialogue", "对话(dialogue)"],
+      ["narration", "旁白(narration)"],
+      ["choice", "选择肢(choice)"],
+      ["jump", "跳转(jump)"]
+    ];
+
+    const $ = (selector, root = document) => root.querySelector(selector);
+
+    function uid(prefix) {
+      const key = prefix + "Seq";
+      const n = state[key]++;
+      return prefix + "_" + String(n).padStart(3, "0");
+    }
+
+    function optionHtml(items, selected) {
+      return items.map(([value, label]) => `<option value="${esc(value)}"${value === selected ? " selected" : ""}>${esc(label)}</option>`).join("");
+    }
+
+    function poolOptions(poolName, selected, placeholder) {
+      const rows = pools[poolName].map(item => [item.id, item.name + (item.label ? `（${item.label}）` : "")]);
+      const all = placeholder ? [["", placeholder], ...rows] : rows;
+      return optionHtml(all, selected);
+    }
+
+    function esc(value) {
+      return String(value ?? "").replace(/[&<>"']/g, ch => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#039;"
+      })[ch]);
+    }
+
+    function selectedCharacter() {
+      return pools.characters.find(c => c.id === state.selectedId);
+    }
+
+    function selectedEvent() {
+      return state.events.find(e => e.id === state.selectedId);
+    }
+
+    function sceneForEvent(event) {
+      return state.scenes.find(s => s.id === event.sceneId);
+    }
+
+    function render() {
+      renderPools();
+      renderMain();
+      renderPreviewTabs();
+      renderPreview();
+    }
+
+    function renderPools() {
+      const groups = [
+        { key: "characters", title: "角色表", type: "character", items: pools.characters, add: true },
+        { key: "locations", title: "地点表", type: "location", items: pools.locations },
+        { key: "modules", title: "玩法模块表", type: "module", items: pools.modules },
+        { key: "flags", title: "flag 池", type: "flag", items: pools.flags },
+        { key: "variables", title: "变量池", type: "variable", items: pools.variables }
+      ];
+
+      $("#poolRoot").innerHTML = groups.map(group => `
+        <details class="pool" open data-pool="${group.key}">
+          <summary>${group.title}</summary>
+          <div class="pool-tools">
+            <input data-search="${group.key}" placeholder="搜索${group.title}">
+            ${group.add ? `<button data-action="new-character">+ 新建角色</button>` : ""}
+          </div>
+          <div class="pool-list">
+            ${group.items.map(item => `
+              <div class="pool-item ${state.selectedId === item.id ? "active" : ""}" data-select-type="${group.type}" data-select-id="${item.id}">
+                <span>${esc(item.name)}</span>
+                <span class="pool-type">${esc(item.role || item.label || item.id)}</span>
+              </div>
+            `).join("")}
+          </div>
+        </details>
+      `).join("");
+    }
+
+    function renderMain() {
+      if (state.selectedType === "character") renderCharacterPanel(selectedCharacter());
+      else if (state.selectedType === "event") renderEventPanel(selectedEvent());
+      else renderPoolInfo();
+    }
+
+    function renderPoolInfo() {
+      const titleMap = { location: "地点详情", module: "玩法模块详情", flag: "Flag 详情", variable: "变量详情" };
+      $("#crumb").textContent = "全局池 / 引用项";
+      $("#mainTitle").textContent = titleMap[state.selectedType] || "引用项详情";
+      $("#mainActions").innerHTML = "";
+      const poolName = state.selectedType === "location" ? "locations" : state.selectedType === "module" ? "modules" : state.selectedType === "flag" ? "flags" : "variables";
+      const item = pools[poolName].find(row => row.id === state.selectedId);
+      $("#editor").innerHTML = `
+        <section class="section">
+          <div class="section-head"><div class="section-title">${esc(item.name)}</div><span class="badge gray">全局池引用</span></div>
+          <div class="section-body">
+            <div class="grid-2">
+              <div class="field"><label>ID</label><input readonly value="${esc(item.id)}"></div>
+              <div class="field"><label>显示名</label><input readonly value="${esc(item.name)}"></div>
+            </div>
+          </div>
+        </section>
+      `;
+      renderPreview();
+    }
+
+    function renderCharacterPanel(char) {
+      $("#crumb").textContent = "全局池 / 角色表";
+      $("#mainTitle").textContent = `角色详情：${char.name}`;
+      $("#mainActions").innerHTML = `<button class="primary" data-action="save-character">保存</button>`;
+      const badge = char.kind === "base"
+        ? `<span class="badge yellow">本体角色 · 覆盖编辑</span>`
+        : `<span class="badge green">新建角色</span>`;
+      const charEvents = state.events.filter(e => e.ownerId === char.id);
+
+      $("#editor").innerHTML = `
+        <div class="status-bar">
+          ${badge}
+          <span class="badge gray">所有下拉候选来自全局池</span>
+        </div>
+
+        <section class="section">
+          <div class="section-head"><div class="section-title">基础属性</div></div>
+          <div class="section-body">
+            <div class="grid-2">
+              <div class="field"><label>id</label><input data-char-field="id" ${char.kind === "base" ? "readonly" : ""} value="${esc(char.id)}"></div>
+              <div class="field"><label>姓名</label><input data-char-field="name" value="${esc(char.name)}"></div>
+            </div>
+            <div class="grid-3" style="margin-top:12px">
+              ${statField("force", "武力", char.stats.force)}
+              ${statField("int", "智力", char.stats.int)}
+              ${statField("command", "统率", char.stats.command)}
+            </div>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-head"><div class="section-title">初始条件</div></div>
+          <div class="section-body">
+            <div class="grid-2">
+              <div class="field">
+                <label>出场时间</label>
+                <select data-char-field="appear">
+                  ${optionHtml([["游戏开始", "游戏开始"], ["至正十二年", "至正十二年"], ["至正十五年", "至正十五年"], ["本能寺之后", "本能寺之后"]], char.appear)}
+                </select>
+              </div>
+              <div class="field">
+                <label>初始势力 / 地点</label>
+                <select data-char-field="force">${optionHtml(pools.locations.map(l => [l.name, l.name]), char.force)}</select>
+              </div>
+            </div>
+            <div class="field" style="margin-top:12px">
+              <div class="field-label">初始 flag</div>
+              <div class="check-grid">
+                ${pools.flags.map(flag => `
+                  <label class="check"><input type="checkbox" data-char-flag="${flag.id}" ${char.flags.includes(flag.id) ? "checked" : ""}>${flag.name}</label>
+                `).join("")}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-head">
+            <div class="section-title">该角色关联事件</div>
+            <button class="small-btn" data-action="new-event-for-character" data-owner="${char.id}">+ 为该角色新建事件</button>
+          </div>
+          <div class="section-body">
+            ${charEvents.length ? `<div class="event-list">${charEvents.map(event => `
+              <div class="event-row" data-select-type="event" data-select-id="${event.id}">
+                <div><strong>${esc(event.name)}</strong><div class="crumb">${esc(event.id)} · ${esc(event.trigger.type)}</div></div>
+                <span class="badge blue">编辑事件</span>
+              </div>
+            `).join("")}</div>` : `<div class="empty">尚无事件。点击右上按钮创建一个完全由点选装配的事件。</div>`}
+          </div>
+        </section>
+      `;
+    }
+
+    function statField(key, label, value) {
+      return `
+        <div class="field">
+          <label>${label}</label>
+          <div class="range-row">
+            <input type="range" min="1" max="100" data-char-stat="${key}" value="${value}">
+            <input type="number" min="1" max="100" data-char-stat-number="${key}" value="${value}">
+          </div>
+        </div>
+      `;
+    }
+
+    function renderEventPanel(event) {
+      const owner = pools.characters.find(c => c.id === event.ownerId);
+      $("#crumb").textContent = `事件表 / ${owner ? owner.name : "未指定角色"}`;
+      $("#mainTitle").textContent = `事件详情：${event.name}`;
+      $("#mainActions").innerHTML = `<button class="ghost" data-action="back-to-owner">返回角色</button><button class="primary" data-action="save-event">保存</button>`;
+      const scene = sceneForEvent(event);
+
+      $("#editor").innerHTML = `
+        <div class="status-bar">
+          <span class="badge blue">非连线流程图 · 条件隐式决定关系</span>
+          <span class="badge gray">${esc(event.id)}</span>
+        </div>
+
+        <section class="section">
+          <div class="section-head"><div class="section-title">① Trigger 触发时机</div></div>
+          <div class="section-body">
+            <div class="grid-2">
+              <div class="field">
+                <label>触发时机</label>
+                <select data-event-field="trigger.type">${optionHtml(triggerOptions, event.trigger.type)}</select>
+              </div>
+              ${triggerConfigHtml(event)}
+            </div>
+            <div class="field" style="margin-top:12px">
+              <div class="field-label">触发次数</div>
+              <div class="radio-row">
+                ${frequencyRadio(event, "once", "仅一次(once)")}
+                ${frequencyRadio(event, "repeatable", "可重复(repeatable)")}
+                ${frequencyRadio(event, "cooldown", "冷却触发(cooldown)")}
+              </div>
+            </div>
+            ${event.frequency === "cooldown" ? `
+              <div class="field" style="margin-top:12px; max-width:220px">
+                <label>冷却天数</label>
+                <input type="number" min="1" data-event-field="cooldownDays" value="${event.cooldownDays}">
+              </div>` : ""}
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-head">
+            <div class="section-title">② Conditions 条件</div>
+            <button class="small-btn" data-action="add-condition">+ 添加条件</button>
+          </div>
+          <div class="section-body">
+            <div class="card-list" id="conditionsList">
+              ${event.conditions.map(condition => conditionCard(condition)).join("") || `<div class="empty">无条件。可添加多张条件卡片叠加判断。</div>`}
+            </div>
+            <div class="field" style="margin-top:12px">
+              <div class="field-label">条件关系</div>
+              <div class="radio-row">
+                ${conditionJoinRadio(event, "all", "全部满足 all")}
+                ${conditionJoinRadio(event, "any", "任一满足 any")}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-head">
+            <div class="section-title">③ Effects 效果链</div>
+            <button class="small-btn" data-action="add-effect">+ 添加效果</button>
+          </div>
+          <div class="section-body">
+            <div class="card-list" id="effectsList">
+              ${event.effects.map((effect, index) => effectCard(effect, index)).join("") || `<div class="empty">无效果。添加后可拖拽调整执行顺序。</div>`}
+            </div>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-head">
+            <div class="section-title">④ Scene 演出节点</div>
+            <button class="small-btn" data-action="add-node">+ 添加节点</button>
+          </div>
+          <div class="section-body">
+            <div class="card-list" id="nodesList">
+              ${scene.nodes.map((node, index) => sceneNodeCard(node, index)).join("") || `<div class="empty">无演出节点。文本输入会自动生成 textId。</div>`}
+            </div>
+          </div>
+        </section>
+      `;
+    }
+
+    function triggerConfigHtml(event) {
+      if (event.trigger.type === "talk") {
+        const locked = event.ownerId ? "disabled" : "";
+        const note = event.ownerId ? `<div class="crumb">由“为该角色新建事件”自动锁定</div>` : "";
+        return `
+          <div class="field">
+            <label>对话对象</label>
+            <select data-event-field="trigger.targetId" ${locked}>${poolOptions("characters", event.trigger.targetId)}</select>
+            ${note}
+          </div>
+        `;
+      }
+      if (event.trigger.type === "house-enter") {
+        return `<div class="field"><label>进入地点</label><select data-event-field="trigger.locationId">${poolOptions("locations", event.trigger.locationId)}</select></div>`;
+      }
+      if (event.trigger.type === "battle-end") {
+        return `<div class="field"><label>战斗事件</label><select data-event-field="trigger.battleEventId">${eventOptions(event.trigger.battleEventId, "选择事件 ID")}</select></div>`;
+      }
+      return `<div class="field"><label>日期规则</label><select data-event-field="trigger.dateRule">${optionHtml([["daily", "每日"], ["month-start", "每月初"], ["year-start", "每年初"]], event.trigger.dateRule || "daily")}</select></div>`;
+    }
+
+    function frequencyRadio(event, value, label) {
+      return `<label class="radio-pill"><input type="radio" name="frequency" data-event-field="frequency" value="${value}" ${event.frequency === value ? "checked" : ""}>${label}</label>`;
+    }
+
+    function conditionJoinRadio(event, value, label) {
+      return `<label class="radio-pill"><input type="radio" name="conditionJoin" data-event-field="conditionJoin" value="${value}" ${event.conditionJoin === value ? "checked" : ""}>${label}</label>`;
+    }
+
+    function conditionCard(condition) {
+      return `
+        <div class="rule-card" data-condition-id="${condition.id}">
+          <div class="card-head">
+            <div class="card-title"><span class="badge gray">条件</span>${esc(condition.type)}</div>
+            <button class="delete" data-action="delete-condition" data-id="${condition.id}">×</button>
+          </div>
+          <div class="card-body">
+            <div class="inline-grid">
+              <div class="field"><label>条件类型</label><select data-condition-field="type">${optionHtml(conditionTypes, condition.type)}</select></div>
+              ${conditionDetailHtml(condition)}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function conditionDetailHtml(condition) {
+      if (condition.type === "flag") {
+        return `
+          <div class="field"><label>flag 名</label><select data-condition-field="flagId">${poolOptions("flags", condition.flagId)}</select></div>
+          <div class="field"><label>状态</label><select data-condition-field="state">${optionHtml([["on", "已点亮"], ["off", "未点亮"]], condition.state)}</select></div>
+        `;
+      }
+      if (condition.type === "variable") {
+        return `
+          <div class="field"><label>变量</label><select data-condition-field="variableId">${poolOptions("variables", condition.variableId)}</select></div>
+          <div class="field"><label>运算符</label><select data-condition-field="operator">${optionHtml([[">=", "≥"], ["<=", "≤"], ["=", "="]], condition.operator)}</select></div>
+          <div class="field"><label>数值</label><input type="number" data-condition-field="value" value="${esc(condition.value)}"></div>
+        `;
+      }
+      if (condition.type === "event-triggered") {
+        return `<div class="field"><label>事件 ID</label><select data-condition-field="eventId">${eventOptions(condition.eventId, "选择事件 ID")}</select></div>`;
+      }
+      if (condition.type === "character-stat") {
+        return `
+          <div class="field"><label>角色</label><select data-condition-field="characterId">${poolOptions("characters", condition.characterId)}</select></div>
+          <div class="field"><label>属性</label><select data-condition-field="stat">${optionHtml([["force", "武力"], ["int", "智力"], ["command", "统率"]], condition.stat)}</select></div>
+          <div class="field"><label>至少</label><input type="number" data-condition-field="value" value="${esc(condition.value)}"></div>
+        `;
+      }
+      return `
+        <div class="field"><label>日期字段</label><select data-condition-field="dateField">${optionHtml([["year", "年份"], ["month", "月份"], ["day", "日期"]], condition.dateField)}</select></div>
+        <div class="field"><label>运算符</label><select data-condition-field="operator">${optionHtml([[">=", "≥"], ["<=", "≤"], ["=", "="]], condition.operator)}</select></div>
+        <div class="field"><label>值</label><input type="number" data-condition-field="value" value="${esc(condition.value)}"></div>
+      `;
+    }
+
+    function effectCard(effect, index) {
+      return `
+        <div class="rule-card" draggable="true" data-drag-kind="effect" data-effect-id="${effect.id}">
+          <div class="card-head">
+            <div class="card-title"><span class="drag-handle">☰</span><span class="badge blue">${index + 1}</span>${esc(effect.type)}</div>
+            <button class="delete" data-action="delete-effect" data-id="${effect.id}">×</button>
+          </div>
+          <div class="card-body">
+            <div class="inline-grid">
+              <div class="field"><label>效果类型</label><select data-effect-field="type">${optionHtml(effectTypes, effect.type)}</select></div>
+              ${effectDetailHtml(effect)}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function effectDetailHtml(effect) {
+      if (effect.type === "set-flag") {
+        return `
+          <div class="field"><label>flag</label><select data-effect-field="flagId">${poolOptions("flags", effect.flagId)}</select></div>
+          <div class="field"><label>状态</label><select data-effect-field="state">${optionHtml([["on", "点亮"], ["off", "熄灭"]], effect.state)}</select></div>
+        `;
+      }
+      if (effect.type === "modify") {
+        return `
+          <div class="field"><label>变量</label><select data-effect-field="variableId">${poolOptions("variables", effect.variableId)}</select></div>
+          <div class="field"><label>方向</label><select data-effect-field="op">${optionHtml([["+", "+"], ["-", "-"]], effect.op)}</select></div>
+          <div class="field"><label>数值</label><input type="number" data-effect-field="amount" value="${esc(effect.amount)}"></div>
+        `;
+      }
+      if (effect.type === "invoke-module") {
+        const module = effect.moduleId || "start-battle";
+        return `
+          <div class="field"><label>玩法模块</label><select data-effect-field="moduleId">${poolOptions("modules", module)}</select></div>
+          ${moduleParamHtml(effect)}
+        `;
+      }
+      if (effect.type === "start-event") {
+        return `<div class="field"><label>目标事件</label><select data-effect-field="targetEventId">${eventOptions(effect.targetEventId, "选择事件 ID")}</select></div>`;
+      }
+      return `<div class="field"><label>目标场景</label><select data-effect-field="sceneId">${sceneOptions(effect.sceneId, "选择 Scene ID")}</select></div>`;
+    }
+
+    function moduleParamHtml(effect) {
+      if (effect.moduleId === "open-shop") {
+        return `<div class="field"><label>商品列表</label><select data-effect-field="shopList">${optionHtml([["basic_goods", "基础商品"], ["weapon_goods", "武器商品"], ["rare_goods", "稀有商品"]], effect.shopList || "basic_goods")}</select></div>`;
+      }
+      if (effect.moduleId === "rest") {
+        return `<div class="field"><label>休息恢复</label><input type="number" data-effect-field="recover" value="${esc(effect.recover || 30)}"></div>`;
+      }
+      return `
+        <div class="field"><label>对手</label><select data-effect-field="opponentId">${poolOptions("characters", effect.opponentId || "char_chen_youliang")}</select></div>
+        <div class="field"><label>难度</label><select data-effect-field="difficulty">${optionHtml([["easy", "简单"], ["normal", "普通"], ["hard", "困难"]], effect.difficulty || "normal")}</select></div>
+      `;
+    }
+
+    function sceneNodeCard(node, index) {
+      return `
+        <div class="rule-card" draggable="true" data-drag-kind="node" data-node-id="${node.id}">
+          <div class="card-head">
+            <div class="card-title"><span class="drag-handle">☰</span><span class="badge green">${index + 1}</span>${esc(node.type)}</div>
+            <button class="delete" data-action="delete-node" data-id="${node.id}">×</button>
+          </div>
+          <div class="card-body">
+            <div class="inline-grid ${node.type === "narration" ? "two" : ""}">
+              <div class="field"><label>节点类型</label><select data-node-field="type">${optionHtml(nodeTypes, node.type)}</select></div>
+              ${nodeDetailHtml(node)}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function nodeDetailHtml(node) {
+      if (node.type === "dialogue") {
+        return `
+          <div class="field"><label>说话人</label><select data-node-field="speakerId">${poolOptions("characters", node.speakerId)}</select></div>
+          <div class="field" style="grid-column: span 2"><label>文本</label><textarea data-node-field="text" placeholder="输入台词，自动分配 textId">${esc(node.text)}</textarea></div>
+        `;
+      }
+      if (node.type === "narration") {
+        return `<div class="field"><label>旁白文本</label><textarea data-node-field="text" placeholder="输入旁白，自动分配 textId">${esc(node.text)}</textarea></div>`;
+      }
+      if (node.type === "choice") {
+        return `
+          <div class="field" style="grid-column: span 3">
+            <label>选择肢</label>
+            <button class="small-btn" data-action="add-choice" data-node-id="${node.id}" type="button">+ 添加选项</button>
+            <div class="choice-list">
+              ${node.choices.map(choice => `
+                <div class="choice-row" data-choice-id="${choice.id}">
+                  <input data-choice-field="text" placeholder="选项文本，自动分配 textId" value="${esc(choice.text)}">
+                  <select data-choice-field="result">${optionHtml([["jump-event", "跳转事件"], ["trigger-effect", "触发效果"]], choice.result)}</select>
+                  <button class="delete" data-action="delete-choice" data-node-id="${node.id}" data-id="${choice.id}">×</button>
+                </div>
+              `).join("") || `<div class="empty">尚无选项</div>`}
+            </div>
+          </div>
+        `;
+      }
+      return `<div class="field"><label>跳转事件</label><select data-node-field="targetEventId">${eventOptions(node.targetEventId, "选择事件 ID")}</select></div>`;
+    }
+
+    function eventOptions(selected, placeholder) {
+      const rows = state.events.map(event => [event.id, event.name || event.id]);
+      return optionHtml(placeholder ? [["", placeholder], ...rows] : rows, selected);
+    }
+
+    function sceneOptions(selected, placeholder) {
+      const rows = state.scenes.map(scene => [scene.id, scene.id]);
+      return optionHtml(placeholder ? [["", placeholder], ...rows] : rows, selected);
+    }
+
+    function renderPreviewTabs() {
+      const tabs = [
+        ["characters", "characters.json"],
+        ["events", "events.json"],
+        ["scenes", "scenes.json"],
+        ["texts", "text-entries.json"]
+      ];
+      $("#jsonTabs").innerHTML = tabs.map(([key, label]) => `
+        <button class="tab ${state.previewTab === key ? "active" : ""}" data-preview-tab="${key}">${label}</button>
+      `).join("");
+    }
+
+    function renderPreview() {
+      const data = serializeAll();
+      const current = state.previewTab === "characters" ? data.characters
+        : state.previewTab === "events" ? data.events
+        : state.previewTab === "scenes" ? data.scenes
+        : data.textEntries;
+      $("#jsonPreview").innerHTML = highlightJson(JSON.stringify(current, null, 2));
+    }
+
+    function serializeAll() {
+      const textEntries = {};
+      const scenes = state.scenes.map(scene => ({
+        id: scene.id,
+        nodes: scene.nodes.map(node => serializeNode(node, textEntries))
+      }));
+
+      const events = state.events.map(event => ({
+        id: event.id,
+        name: event.name,
+        ownerId: event.ownerId,
+        trigger: clean({
+          type: event.trigger.type,
+          targetId: event.trigger.targetId,
+          locationId: event.trigger.locationId,
+          dateRule: event.trigger.dateRule,
+          battleEventId: event.trigger.battleEventId
+        }),
+        frequency: event.frequency,
+        cooldownDays: event.frequency === "cooldown" ? Number(event.cooldownDays || 1) : undefined,
+        conditionJoin: event.conditionJoin,
+        conditions: event.conditions.map(serializeCondition),
+        effects: event.effects.map(serializeEffect),
+        sceneId: event.sceneId
+      }));
+
+      const characters = pools.characters.map(char => ({
+        id: char.id,
+        name: char.name,
+        source: char.kind === "base" ? "base-override" : "mod-new",
+        stats: char.stats,
+        initial: {
+          appear: char.appear,
+          force: char.force,
+          flags: char.flags
+        },
+        events: state.events.filter(event => event.ownerId === char.id).map(event => event.id)
+      }));
+
+      return { characters, events, scenes, textEntries };
+    }
+
+    function serializeCondition(condition) {
+      if (condition.type === "flag") return { type: "flag", flagId: condition.flagId, state: condition.state };
+      if (condition.type === "variable") return { type: "variable", variableId: condition.variableId, operator: condition.operator, value: Number(condition.value || 0) };
+      if (condition.type === "event-triggered") return { type: "event-triggered", eventId: condition.eventId };
+      if (condition.type === "character-stat") return { type: "character-stat", characterId: condition.characterId, stat: condition.stat, operator: ">=", value: Number(condition.value || 0) };
+      return { type: "date", dateField: condition.dateField, operator: condition.operator, value: Number(condition.value || 0) };
+    }
+
+    function serializeEffect(effect) {
+      if (effect.type === "set-flag") return { type: "set-flag", flagId: effect.flagId, state: effect.state };
+      if (effect.type === "modify") return { type: "modify", variableId: effect.variableId, op: effect.op, amount: Number(effect.amount || 0) };
+      if (effect.type === "invoke-module") {
+        const params = effect.moduleId === "open-shop"
+          ? { shopList: effect.shopList || "basic_goods" }
+          : effect.moduleId === "rest"
+            ? { recover: Number(effect.recover || 30) }
+            : { opponentId: effect.opponentId || "char_chen_youliang", difficulty: effect.difficulty || "normal" };
+        return { type: "invoke-module", moduleId: effect.moduleId || "start-battle", params };
+      }
+      if (effect.type === "start-event") return { type: "start-event", targetEventId: effect.targetEventId };
+      return { type: "start-scene", sceneId: effect.sceneId };
+    }
+
+    function serializeNode(node, textEntries) {
+      if (node.type === "dialogue") {
+        const textId = textIdFor(node.id);
+        textEntries[textId] = node.text || "";
+        return { type: "dialogue", speakerId: node.speakerId, textId };
+      }
+      if (node.type === "narration") {
+        const textId = textIdFor(node.id);
+        textEntries[textId] = node.text || "";
+        return { type: "narration", textId };
+      }
+      if (node.type === "choice") {
+        return {
+          type: "choice",
+          options: node.choices.map(choice => {
+            const textId = textIdFor(choice.id);
+            textEntries[textId] = choice.text || "";
+            return { textId, result: choice.result };
+          })
+        };
+      }
+      return { type: "jump", targetEventId: node.targetEventId };
+    }
+
+    function textIdFor(id) {
+      return "txt_" + id.replace(/[^a-zA-Z0-9]+/g, "_");
+    }
+
+    function clean(obj) {
+      return Object.fromEntries(Object.entries(obj).filter(([, value]) => value !== undefined && value !== ""));
+    }
+
+    function highlightJson(json) {
+      return esc(json).replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, match => {
+        let cls = "json-number";
+        if (/^"/.test(match)) cls = /:$/.test(match) ? "json-key" : "json-string";
+        else if (/true|false/.test(match)) cls = "json-boolean";
+        else if (/null/.test(match)) cls = "json-null";
+        return `<span class="${cls}">${match}</span>`;
+      });
+    }
+
+    function makeEvent(ownerId) {
+      const owner = pools.characters.find(c => c.id === ownerId);
+      const baseId = ownerId === "char_trainer" ? "event_trainer_repeat_battle" : "event_" + ownerId.replace("char_", "");
+      const eventId = uniqueEventId(baseId);
+      const sceneId = eventId.replace("event_", "scene_");
+      const event = {
+        id: eventId,
+        name: owner ? `${owner.name}事件` : "新事件",
+        ownerId,
+        trigger: { type: "talk", targetId: ownerId, dateRule: "daily" },
+        frequency: "repeatable",
+        cooldownDays: 3,
+        conditionJoin: "all",
+        conditions: [],
+        effects: [],
+        sceneId
+      };
+      state.events.push(event);
+      state.scenes.push({ id: sceneId, nodes: [] });
+      state.selectedType = "event";
+      state.selectedId = event.id;
+      render();
+    }
+
+    function uniqueEventId(baseId) {
+      if (!state.events.some(event => event.id === baseId)) return baseId;
+      let index = 2;
+      while (state.events.some(event => event.id === `${baseId}_${index}`)) index += 1;
+      return `${baseId}_${index}`;
+    }
+
+    function addCondition(event) {
+      event.conditions.push({
+        id: uid("condition"),
+        type: "variable",
+        variableId: "stamina",
+        operator: ">=",
+        value: 20,
+        flagId: "flag_met_chen",
+        state: "on",
+        eventId: "",
+        characterId: event.ownerId,
+        stat: "force",
+        dateField: "year"
+      });
+    }
+
+    function addEffect(event) {
+      event.effects.push({
+        id: uid("effect"),
+        type: "modify",
+        variableId: "stamina",
+        op: "-",
+        amount: 10,
+        flagId: "flag_met_chen",
+        state: "on",
+        moduleId: "start-battle",
+        opponentId: "char_chen_youliang",
+        difficulty: "normal",
+        targetEventId: "",
+        sceneId: event.sceneId
+      });
+    }
+
+    function addNode(scene) {
+      scene.nodes.push({
+        id: uid("node"),
+        type: "dialogue",
+        speakerId: selectedEvent()?.ownerId || "char_trainer",
+        text: "",
+        choices: [],
+        targetEventId: ""
+      });
+    }
+
+    function showToast(text) {
+      const toast = $("#toast");
+      toast.textContent = text;
+      toast.classList.add("show");
+      window.clearTimeout(showToast.timer);
+      showToast.timer = window.setTimeout(() => toast.classList.remove("show"), 2200);
+    }
+
+    document.addEventListener("click", event => {
+      const target = event.target.closest("[data-action], [data-select-id], [data-preview-tab]");
+      if (!target) return;
+
+      if (target.dataset.previewTab) {
+        state.previewTab = target.dataset.previewTab;
+        renderPreviewTabs();
+        renderPreview();
+        return;
+      }
+
+      if (target.dataset.selectId) {
+        state.selectedType = target.dataset.selectType;
+        state.selectedId = target.dataset.selectId;
+        render();
+        return;
+      }
+
+      const action = target.dataset.action;
+      const eventObj = selectedEvent();
+      const scene = eventObj ? sceneForEvent(eventObj) : null;
+
+      if (action === "new-character") {
+        const id = "char_new_" + (pools.characters.length + 1);
+        pools.characters.push({ id, name: "新角色", kind: "new", role: "新建", force: "濠州", stats: { force: 50, int: 50, command: 50 }, appear: "游戏开始", flags: [] });
+        state.selectedType = "character";
+        state.selectedId = id;
+        render();
+      }
+      if (action === "save-character") {
+        renderPreview();
+        showToast("已保存");
+      }
+      if (action === "new-event-for-character") makeEvent(target.dataset.owner);
+      if (action === "back-to-owner" && eventObj) {
+        state.selectedType = "character";
+        state.selectedId = eventObj.ownerId;
+        render();
+      }
+      if (action === "save-event") {
+        renderPreview();
+        const msg = eventObj?.ownerId === "char_trainer" ? "训练师事件已创建（未写一行代码）" : "已保存";
+        showToast(msg);
+      }
+      if (action === "add-condition") {
+        addCondition(eventObj);
+        render();
+      }
+      if (action === "delete-condition") {
+        eventObj.conditions = eventObj.conditions.filter(row => row.id !== target.dataset.id);
+        render();
+      }
+      if (action === "add-effect") {
+        addEffect(eventObj);
+        render();
+      }
+      if (action === "delete-effect") {
+        eventObj.effects = eventObj.effects.filter(row => row.id !== target.dataset.id);
+        render();
+      }
+      if (action === "add-node") {
+        addNode(scene);
+        render();
+      }
+      if (action === "delete-node") {
+        scene.nodes = scene.nodes.filter(row => row.id !== target.dataset.id);
+        render();
+      }
+      if (action === "add-choice") {
+        const node = scene.nodes.find(row => row.id === target.dataset.nodeId);
+        node.choices.push({ id: uid("choice"), text: "", result: "jump-event" });
+        render();
+      }
+      if (action === "delete-choice") {
+        const node = scene.nodes.find(row => row.id === target.dataset.nodeId);
+        node.choices = node.choices.filter(row => row.id !== target.dataset.id);
+        render();
+      }
+    });
+
+    document.addEventListener("input", event => {
+      const t = event.target;
+      const char = selectedCharacter();
+      const eventObj = selectedEvent();
+      const scene = eventObj ? sceneForEvent(eventObj) : null;
+
+      if (t.dataset.search) {
+        const q = t.value.trim();
+        const pool = t.closest(".pool");
+        pool.querySelectorAll(".pool-item").forEach(item => {
+          item.style.display = item.textContent.includes(q) ? "" : "none";
+        });
+        return;
+      }
+
+      if (state.selectedType === "character" && char) {
+        if (t.dataset.charField === "name") char.name = t.value;
+        if (t.dataset.charField === "id" && char.kind !== "base") char.id = t.value;
+        if (t.dataset.charStat) {
+          char.stats[t.dataset.charStat] = Number(t.value || 0);
+          const pair = $(`[data-char-stat-number="${t.dataset.charStat}"]`);
+          if (pair) pair.value = t.value;
+        }
+        if (t.dataset.charStatNumber) {
+          char.stats[t.dataset.charStatNumber] = Number(t.value || 0);
+          const pair = $(`[data-char-stat="${t.dataset.charStatNumber}"]`);
+          if (pair) pair.value = t.value;
+        }
+        renderPreview();
+      }
+
+      if (state.selectedType === "event" && eventObj) {
+        updateNested(eventObj, t.dataset.eventField, t.value);
+        const conditionCardEl = t.closest("[data-condition-id]");
+        const effectCardEl = t.closest("[data-effect-id]");
+        const nodeCardEl = t.closest("[data-node-id]");
+        const choiceEl = t.closest("[data-choice-id]");
+        if (conditionCardEl && t.dataset.conditionField) {
+          const condition = eventObj.conditions.find(row => row.id === conditionCardEl.dataset.conditionId);
+          condition[t.dataset.conditionField] = t.type === "number" ? Number(t.value || 0) : t.value;
+        }
+        if (effectCardEl && t.dataset.effectField) {
+          const effectRow = eventObj.effects.find(row => row.id === effectCardEl.dataset.effectId);
+          effectRow[t.dataset.effectField] = t.type === "number" ? Number(t.value || 0) : t.value;
+        }
+        if (nodeCardEl && t.dataset.nodeField) {
+          const node = scene.nodes.find(row => row.id === nodeCardEl.dataset.nodeId);
+          node[t.dataset.nodeField] = t.value;
+        }
+        if (choiceEl && t.dataset.choiceField) {
+          const node = scene.nodes.find(row => row.id === nodeCardEl.dataset.nodeId);
+          const choice = node.choices.find(row => row.id === choiceEl.dataset.choiceId);
+          choice[t.dataset.choiceField] = t.value;
+        }
+        renderPreview();
+      }
+    });
+
+    document.addEventListener("change", event => {
+      const t = event.target;
+      const char = selectedCharacter();
+      const eventObj = selectedEvent();
+      const scene = eventObj ? sceneForEvent(eventObj) : null;
+      let needsRender = false;
+
+      if (state.selectedType === "character" && char) {
+        if (t.dataset.charField === "appear") char.appear = t.value;
+        if (t.dataset.charField === "force") char.force = t.value;
+        if (t.dataset.charFlag) {
+          if (t.checked && !char.flags.includes(t.dataset.charFlag)) char.flags.push(t.dataset.charFlag);
+          if (!t.checked) char.flags = char.flags.filter(flag => flag !== t.dataset.charFlag);
+        }
+        renderPreview();
+      }
+
+      if (state.selectedType === "event" && eventObj) {
+        if (t.dataset.eventField) {
+          updateNested(eventObj, t.dataset.eventField, t.value);
+          needsRender = ["trigger.type", "frequency"].includes(t.dataset.eventField);
+          if (t.dataset.eventField === "trigger.type" && t.value === "talk") eventObj.trigger.targetId = eventObj.ownerId;
+        }
+        const conditionCardEl = t.closest("[data-condition-id]");
+        const effectCardEl = t.closest("[data-effect-id]");
+        const nodeCardEl = t.closest("[data-node-id]");
+        const choiceEl = t.closest("[data-choice-id]");
+        if (conditionCardEl && t.dataset.conditionField) {
+          const condition = eventObj.conditions.find(row => row.id === conditionCardEl.dataset.conditionId);
+          condition[t.dataset.conditionField] = t.value;
+          needsRender = t.dataset.conditionField === "type";
+        }
+        if (effectCardEl && t.dataset.effectField) {
+          const effectRow = eventObj.effects.find(row => row.id === effectCardEl.dataset.effectId);
+          effectRow[t.dataset.effectField] = t.value;
+          needsRender = ["type", "moduleId"].includes(t.dataset.effectField);
+        }
+        if (nodeCardEl && t.dataset.nodeField) {
+          const node = scene.nodes.find(row => row.id === nodeCardEl.dataset.nodeId);
+          node[t.dataset.nodeField] = t.value;
+          needsRender = t.dataset.nodeField === "type";
+          if (t.dataset.nodeField === "type" && t.value === "choice" && node.choices.length === 0) {
+            node.choices.push({ id: uid("choice"), text: "", result: "jump-event" });
+          }
+        }
+        if (choiceEl && t.dataset.choiceField) {
+          const node = scene.nodes.find(row => row.id === nodeCardEl.dataset.nodeId);
+          const choice = node.choices.find(row => row.id === choiceEl.dataset.choiceId);
+          choice[t.dataset.choiceField] = t.value;
+        }
+        needsRender ? render() : renderPreview();
+      }
+    });
+
+    function updateNested(obj, path, value) {
+      if (!path) return;
+      const parts = path.split(".");
+      let cursor = obj;
+      while (parts.length > 1) {
+        cursor = cursor[parts.shift()];
+      }
+      const key = parts[0];
+      cursor[key] = key.toLowerCase().includes("days") ? Number(value || 0) : value;
+    }
+
+    document.addEventListener("dragstart", event => {
+      const card = event.target.closest("[draggable='true']");
+      if (!card) return;
+      card.classList.add("dragging");
+      event.dataTransfer.setData("text/plain", JSON.stringify({
+        kind: card.dataset.dragKind,
+        id: card.dataset.effectId || card.dataset.nodeId
+      }));
+    });
+
+    document.addEventListener("dragend", event => {
+      const card = event.target.closest("[draggable='true']");
+      if (card) card.classList.remove("dragging");
+    });
+
+    document.addEventListener("dragover", event => {
+      const list = event.target.closest("#effectsList, #nodesList");
+      if (!list) return;
+      event.preventDefault();
+    });
+
+    document.addEventListener("drop", event => {
+      const list = event.target.closest("#effectsList, #nodesList");
+      const overCard = event.target.closest("[draggable='true']");
+      if (!list || !overCard) return;
+      event.preventDefault();
+      const data = JSON.parse(event.dataTransfer.getData("text/plain"));
+      const eventObj = selectedEvent();
+      const scene = sceneForEvent(eventObj);
+      const rows = data.kind === "effect" ? eventObj.effects : scene.nodes;
+      const from = rows.findIndex(row => row.id === data.id);
+      const toId = overCard.dataset.effectId || overCard.dataset.nodeId;
+      const to = rows.findIndex(row => row.id === toId);
+      if (from < 0 || to < 0 || from === to) return;
+      const [moved] = rows.splice(from, 1);
+      rows.splice(to, 0, moved);
+      render();
+    });
+
+    render();
+  </script>
+</body>
+</html>

@@ -1,5 +1,8 @@
 # Weekly Review Index
 
+> **Historical Artifact:** Deprecated under `fail-closed progress-driven governance`. This file records the retired weekly-governance model and must not be used as the active resume entry for new work.
+
+
 **Week Of:** `2026-06-29`
 
 **Weekly Plan:** `docs/superpowers/plans/2026-06-29-weekly-orchestration-plan.md`
@@ -147,3 +150,4 @@ The old files may remain as historical references, but they are no longer indepe
   - `None. A later child must be newly reviewed and authored first.`
 - Unlock dependency after that:
   - `Any child after Child 13 still requires a fresh weekly review, explicit spec/plan authoring, and queue-governance updates before implementation may start.`
+

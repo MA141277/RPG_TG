@@ -1,5 +1,8 @@
 # Weekly Orchestration Plan
 
+> **Historical Artifact:** Deprecated under `fail-closed progress-driven governance`. This file records the retired weekly-governance model and must not be used as the active resume entry for new work.
+
+
 > **Purpose:** Use this file to govern one lightweight continuation set after the closed Child 13 queue. This set should answer only four questions: what this set is trying to finish, which child is active now, which child is next, and when this set must close.
 
 **Week Of:** `2026-07-02`
@@ -204,3 +207,4 @@ Do not mark this weekly plan `completed` until:
 - [x] Verification recorded
 - [x] Weekly review index updated
 - [x] Required visibility deliverables linked and present
+

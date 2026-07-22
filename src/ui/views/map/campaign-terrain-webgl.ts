@@ -1,14 +1,25 @@
+import type {
+  CoordinateSpace,
+  GridCoordinate,
+  HexTravelGrid,
+} from "../../../application/navigation/travel-to-coordinate";
+import actorFragmentShaderRaw from "./shaders/campaign-actor.frag.glsl?raw";
+import actorVertexShaderRaw from "./shaders/campaign-actor.vert.glsl?raw";
+import terrainFragmentShaderRaw from "./shaders/campaign-terrain.frag.glsl?raw";
+import terrainVertexShaderRaw from "./shaders/campaign-terrain.vert.glsl?raw";
+
 type CampaignTerrainInput = {
   canvas: HTMLCanvasElement;
   textureUrl: string;
   heightUrl: string;
   materialUrl: string;
+  waterTextureUrl: string | null;
   renderMode: "terrain" | "actor";
 };
 
 type MeshData = {
   vertices: Float32Array;
-  indices: Uint16Array;
+  indices: Uint32Array;
 };
 
 type ActorMeshData = {
@@ -16,21 +27,59 @@ type ActorMeshData = {
   indices: Uint16Array;
 };
 
+type CityDepthMeshData = {
+  vertices: Float32Array;
+  indices: Uint32Array;
+};
+
+type CityDepthMeshAsset = {
+  positions: Float32Array;
+  normals: Float32Array;
+  uvs: Float32Array;
+  indices: Uint32Array;
+  textureImage: HTMLImageElement;
+  u: number;
+  v: number;
+  minHeight: number;
+};
+
+type CityDepthMeshAssetJson = {
+  format: string;
+  positions: number[];
+  normals: number[];
+  uvs: number[];
+  indices: number[];
+};
+
+export type CampaignCityDepthMeshTransform = {
+  rotationDegrees: number;
+  pitchDegrees: number;
+  scale: number;
+  offsetX: number;
+  offsetY: number;
+  lift: number;
+};
+
 type ActorBoneAsset = {
   name: string;
   parentIndex: number | null;
   localPosition: [number, number, number];
+  localRotation: [number, number, number, number];
 };
 
 type ActorModelAsset = {
   scale: number;
-  localBindPositions: Float32Array;
-  bindNormals: Float32Array;
+  facingOffsetDegrees: number;
+  posturePitchDegrees: number;
+  positions: Float32Array;
+  normals: Float32Array;
   uvs: Float32Array;
   indices: Uint16Array;
   vertexBoneIndices: Uint16Array;
+  vertexBoneInfluenceIndices: Uint16Array;
+  vertexBoneInfluenceWeights: Float32Array;
+  inverseBindMatrices: Float32Array;
   bones: ActorBoneAsset[];
-  bindGlobalPositions: [number, number, number][];
   originOffset: [number, number, number];
   bounds: {
     min: [number, number, number];
@@ -45,6 +94,7 @@ type ActorAnimationClipAsset = {
   numAnimatedBones: number;
   animatedBoneNames: string[];
   rotations: number[][][];
+  localPositions?: number[][][];
   rootPositions: number[][];
   pelvisPositions: number[][];
 };
@@ -54,31 +104,122 @@ type ActorAnimationSetAsset = {
   walk: ActorAnimationClipAsset;
 };
 
+type ActorAnimationClipName = keyof ActorAnimationSetAsset;
+
 type ActorAnimationPose = {
   globalRotations: [number, number, number, number][];
   globalPositions: [number, number, number][];
 };
 
+type ActorAnimationPlaybackState = {
+  activeClipName: ActorAnimationClipName;
+  activeStartedAtMs: number;
+  blendFromClipName: ActorAnimationClipName | null;
+  blendFromStartedAtMs: number;
+  blendStartedAtMs: number;
+  blendDurationMs: number;
+};
+
 type Mat4 = Float32Array;
 
-const GRID_COLUMNS = 128;
-const GRID_ROWS = 96;
-const HEIGHT_SCALE = 0.27;
+const GRID_COLUMNS = 768;
+const GRID_ROWS = 680;
+const HEIGHT_SCALE = 0.0675;
 const TERRAIN_SCALE = 1.46;
 const CAMERA_TILT_RADIANS = -0.82;
 const CAMERA_BASE_DISTANCE = 2.72;
 const CAMERA_OFFSET_UNIT = 0.0032;
+const CAMERA_REFERENCE_SCALE = 15;
 const FOV_RADIANS = 38 * Math.PI / 180;
 const ACTOR_REFERENCE_CAMERA_SCALE = 40;
 const ACTOR_MODEL_BASE_SCALE = 0.011;
 const ACTOR_MODEL_FACING_OFFSET_RADIANS = Math.PI / 2;
-const IDENTITY_QUATERNION: [number, number, number, number] = [0, 0, 0, 1];
+const ACTOR_ANIMATION_BLEND_DURATION_MS = 180;
+const HEX_TERRAIN_SCALE = 138;
+const HEX_MAP_ASPECT = 1.1285;
+const HEX_ELEVATION_LEVELS = 8;
+const HEX_WATER_HEIGHT_THRESHOLD = 0.005;
+const HEX_WALL_HEIGHT_EPSILON = 0.01;
+const GRASS_TEXTURE_DETAIL = 1.15;
+const GRASS_AMBIENT_LIGHT = 0.58;
+const CITY_DEPTH_MESH_WORLD_SCALE = 0.035;
+const CITY_DEPTH_MESH_HEIGHT_SCALE = 0.034;
+const CITY_DEPTH_MESH_BASE_LIFT = 0.0015;
+const CITY_DEPTH_MESH_TILE_OFFSET_X_SCALE = 2 / (HEX_MAP_ASPECT * HEX_TERRAIN_SCALE);
+const CITY_DEPTH_MESH_TILE_OFFSET_Y_SCALE = 2 / HEX_TERRAIN_SCALE;
+const WATER_ANIMATION_FRAME_INTERVAL_MS = 1000 / 24;
+const vertexShaderSource = createShaderSource(terrainVertexShaderRaw, {
+  __HEIGHT_SCALE__: HEIGHT_SCALE.toFixed(2),
+});
+const fragmentShaderSource = createShaderSource(terrainFragmentShaderRaw, {
+  __GRASS_AMBIENT_LIGHT__: GRASS_AMBIENT_LIGHT.toFixed(2),
+  __GRASS_TEXTURE_DETAIL__: GRASS_TEXTURE_DETAIL.toFixed(2),
+  __HEX_MAP_ASPECT__: HEX_MAP_ASPECT.toFixed(4),
+  __HEX_TERRAIN_SCALE__: HEX_TERRAIN_SCALE.toFixed(1),
+});
+const actorVertexShaderSource = actorVertexShaderRaw;
+const actorFragmentShaderSource = actorFragmentShaderRaw;
+export const DEFAULT_CAMPAIGN_CITY_DEPTH_MESH_TRANSFORM: CampaignCityDepthMeshTransform = {
+  rotationDegrees: 0,
+  pitchDegrees: 0,
+  scale: 1,
+  offsetX: 0,
+  offsetY: 0,
+  lift: 0,
+};
+export type CampaignTerrainStyle = {
+  saturation: number;
+  brightness: number;
+  brightnessOffset: number;
+  shadeMin: number;
+  shadeMax: number;
+};
 
-type CampaignTerrainCamera = {
+export const DEFAULT_CAMPAIGN_TERRAIN_STYLE: CampaignTerrainStyle = {
+  saturation: 1,
+  brightness: 1,
+  brightnessOffset: 0,
+  shadeMin: 1,
+  shadeMax: 1,
+};
+const IDENTITY_QUATERNION: [number, number, number, number] = [0, 0, 0, 1];
+const IDENTITY_MATRIX_4 = new Float32Array([
+  1, 0, 0, 0,
+  0, 1, 0, 0,
+  0, 0, 1, 0,
+  0, 0, 0, 1,
+]);
+
+export type CampaignTerrainCamera = {
   scale: number;
   offsetX: number;
   offsetY: number;
 };
+
+export function createCampaignTerrainCameraCenteredOnCoordinate(input: {
+  coordinate: GridCoordinate;
+  coordinateSpace: CoordinateSpace;
+  scale: number;
+}): CampaignTerrainCamera {
+  const safeScale = Math.max(input.scale, 0.1);
+  const u = input.coordinate.x / Math.max(input.coordinateSpace.width, 1);
+  const v = 1 - input.coordinate.y / Math.max(input.coordinateSpace.height, 1);
+  const worldPoint = createTerrainWorldPoint(u, v, 0);
+  const scaledX = worldPoint[0] * TERRAIN_SCALE;
+  const scaledY = worldPoint[1] * TERRAIN_SCALE;
+  const scaledZ = worldPoint[2];
+  const tiltCos = Math.cos(CAMERA_TILT_RADIANS);
+  const tiltSin = Math.sin(CAMERA_TILT_RADIANS);
+  const tiltedY = scaledY * tiltCos - scaledZ * tiltSin;
+  const cameraTranslateX = -scaledX;
+  const cameraTranslateY = -tiltedY;
+
+  return {
+    scale: safeScale,
+    offsetX: Math.round(cameraTranslateX * safeScale / CAMERA_OFFSET_UNIT),
+    offsetY: Math.round(-cameraTranslateY * safeScale / CAMERA_OFFSET_UNIT),
+  };
+}
 
 type CampaignTerrainRenderer = {
   canvas: HTMLCanvasElement;
@@ -89,9 +230,13 @@ type CampaignTerrainRenderer = {
   projectionInput: {
     canvas: HTMLCanvasElement;
     heights: Float32Array;
+    materialLandMask: Uint8Array;
+    materialColumns: number;
+    materialRows: number;
     columns: number;
     rows: number;
   };
+  travelGrid: HexTravelGrid;
 };
 
 type CampaignActorData = {
@@ -106,10 +251,14 @@ type CampaignActorData = {
 };
 
 const activeRenderers = new Map<HTMLCanvasElement, CampaignTerrainRenderer>();
+const pendingRendererCanvases = new Set<HTMLCanvasElement>();
 
 type CampaignTerrainProjectionInput = {
   canvas: HTMLCanvasElement;
   heights: Float32Array;
+  materialLandMask: Uint8Array;
+  materialColumns: number;
+  materialRows: number;
   columns: number;
   rows: number;
 };
@@ -117,6 +266,13 @@ type CampaignTerrainProjectionInput = {
 export type CampaignTerrainUvPoint = {
   u: number;
   v: number;
+};
+
+export type CampaignTerrainClientPoint = {
+  clientX: number;
+  clientY: number;
+  visible: boolean;
+  w: number;
 };
 
 let currentCamera: CampaignTerrainCamera = {
@@ -136,6 +292,85 @@ export function setCampaignTerrainCamera(camera: CampaignTerrainCamera): void {
   for (const renderer of activeRenderers.values()) {
     renderer.requestRender("static");
   }
+}
+
+export function getCampaignTerrainCamera(): CampaignTerrainCamera {
+  return currentCamera;
+}
+
+export function getCampaignTerrainProjectionSignature(root: ParentNode): string {
+  const terrainCanvas = root.querySelector<HTMLCanvasElement>("[data-campaign-map-terrain]");
+  const renderer =
+    terrainCanvas == null ? null : activeRenderers.get(terrainCanvas) ?? null;
+
+  return [
+    renderer == null ? "pending" : "ready",
+    currentCamera.scale.toFixed(4),
+    currentCamera.offsetX.toFixed(1),
+    currentCamera.offsetY.toFixed(1),
+    terrainCanvas?.width ?? 0,
+    terrainCanvas?.height ?? 0,
+  ].join("|");
+}
+
+export function projectCampaignTerrainUvToClientPoint(
+  root: ParentNode,
+  u: number,
+  v: number
+): CampaignTerrainClientPoint | null {
+  return projectCampaignTerrainUvToClientPointAtHeightAnchor(root, u, v, u, v);
+}
+
+export function projectCampaignTerrainUvToClientPointAtHeightAnchor(
+  root: ParentNode,
+  u: number,
+  v: number,
+  heightU: number,
+  heightV: number
+): CampaignTerrainClientPoint | null {
+  const terrainCanvas = root.querySelector<HTMLCanvasElement>("[data-campaign-map-terrain]");
+  if (terrainCanvas == null) {
+    return null;
+  }
+
+  const renderer = activeRenderers.get(terrainCanvas);
+  if (renderer == null) {
+    return null;
+  }
+
+  const rect = terrainCanvas.getBoundingClientRect();
+  if (rect.width <= 0 || rect.height <= 0) {
+    return null;
+  }
+
+  const matrix = createTerrainMatrix(
+    terrainCanvas.width / Math.max(terrainCanvas.height, 1)
+  );
+  const height = sampleHeightAt(
+    renderer.projectionInput.heights,
+    renderer.projectionInput.columns,
+    renderer.projectionInput.rows,
+    heightU,
+    heightV
+  );
+  const screenPoint = projectPoint(matrix, createTerrainWorldPoint(u, v, height));
+  const normalizedX = (screenPoint.x + 1) / 2;
+  const normalizedY = (1 - screenPoint.y) / 2;
+  const visible =
+    screenPoint.w > 0 &&
+    screenPoint.z >= -1 &&
+    screenPoint.z <= 1 &&
+    normalizedX >= 0 &&
+    normalizedX <= 1 &&
+    normalizedY >= 0 &&
+    normalizedY <= 1;
+
+  return {
+    clientX: rect.left + normalizedX * rect.width,
+    clientY: rect.top + normalizedY * rect.height,
+    visible,
+    w: screenPoint.w,
+  };
 }
 
 export function resolveCampaignTerrainUvFromClientPosition(
@@ -176,6 +411,39 @@ export function resolveCampaignTerrainUvFromClientPosition(
   );
 }
 
+export function isCampaignTerrainUvPassable(
+  root: ParentNode,
+  u: number,
+  v: number
+): boolean | null {
+  const terrainCanvas = root.querySelector<HTMLCanvasElement>("[data-campaign-map-terrain]");
+  if (terrainCanvas == null) {
+    return null;
+  }
+
+  const renderer = activeRenderers.get(terrainCanvas);
+  if (renderer == null) {
+    return null;
+  }
+
+  return isHexPassableAtUv(
+    renderer.projectionInput.materialLandMask,
+    renderer.projectionInput.materialColumns,
+    renderer.projectionInput.materialRows,
+    u,
+    v
+  );
+}
+
+export function getCampaignTerrainTravelGrid(root: ParentNode): HexTravelGrid | null {
+  const terrainCanvas = root.querySelector<HTMLCanvasElement>("[data-campaign-map-terrain]");
+  if (terrainCanvas == null) {
+    return null;
+  }
+
+  return activeRenderers.get(terrainCanvas)?.travelGrid ?? null;
+}
+
 export function syncCampaignTerrainWebGl(root: ParentNode): void {
   const canvases = Array.from(
     root.querySelectorAll<HTMLCanvasElement>(
@@ -190,30 +458,42 @@ export function syncCampaignTerrainWebGl(root: ParentNode): void {
       activeRenderers.delete(canvas);
     }
   }
+  for (const canvas of Array.from(pendingRendererCanvases)) {
+    if (!nextCanvasSet.has(canvas) || !canvas.isConnected) {
+      pendingRendererCanvases.delete(canvas);
+    }
+  }
 
   if (canvases.length === 0) {
     return;
   }
 
   for (const canvas of canvases) {
-    if (activeRenderers.has(canvas)) {
+    if (activeRenderers.has(canvas) || pendingRendererCanvases.has(canvas)) {
       continue;
     }
 
     const textureUrl = canvas.dataset.mapTextureUrl;
     const heightUrl = canvas.dataset.mapHeightUrl;
     const materialUrl = canvas.dataset.mapMaterialUrl;
+    const waterTextureUrl = canvas.dataset.mapWaterTextureUrl ?? null;
     const renderMode =
       canvas.dataset.campaignMapActorLayer === "true" ? "actor" : "terrain";
-    if (textureUrl == null || heightUrl == null || materialUrl == null) {
+    if (
+      textureUrl == null ||
+      heightUrl == null ||
+      materialUrl == null
+    ) {
       continue;
     }
 
+    pendingRendererCanvases.add(canvas);
     void initCampaignTerrainWebGl({
       canvas,
       textureUrl,
       heightUrl,
       materialUrl,
+      waterTextureUrl,
       renderMode,
     }).then((renderer) => {
       if (!nextCanvasSet.has(canvas) || !canvas.isConnected) {
@@ -222,11 +502,14 @@ export function syncCampaignTerrainWebGl(root: ParentNode): void {
       }
 
       activeRenderers.set(canvas, renderer);
+      canvas.classList.remove("has-error");
       canvas.classList.add("is-ready");
       canvas.classList.toggle("has-actor-model", renderer.hasActorAsset);
     }).catch((error: unknown) => {
       console.error("Failed to render campaign terrain WebGL map.", error);
       canvas.classList.add("has-error");
+    }).finally(() => {
+      pendingRendererCanvases.delete(canvas);
     });
   }
 }
@@ -245,25 +528,54 @@ async function initCampaignTerrainWebGl(
     throw new Error("This browser does not support WebGL.");
   }
 
-  const derivativesExtension = gl.getExtension("OES_standard_derivatives");
-  if (derivativesExtension == null) {
-    throw new Error("This browser does not support terrain derivative shading.");
-  }
-
   const actorAssetPromise = shouldRenderActorInThisCanvas
     ? loadCampaignActorAsset(input.canvas).catch((error: unknown) => {
       console.error("Failed to load campaign actor asset.", error);
       return null;
     })
     : Promise.resolve(null);
-  const [textureImage, heightImage, materialImage, actorAsset] = await Promise.all([
+  const cityDepthAssetPromise = renderTerrain
+    ? loadCampaignCityDepthMeshAsset(input.canvas).catch((error: unknown) => {
+      console.error("Failed to load campaign city depth mesh asset.", error);
+      return null;
+    })
+    : Promise.resolve(null);
+  const waterTextureImagePromise =
+    renderTerrain && input.waterTextureUrl != null
+      ? loadImage(input.waterTextureUrl).catch((error: unknown) => {
+        console.error("Failed to load campaign water texture.", error);
+        return null;
+      })
+      : Promise.resolve(null);
+  const [
+    textureImage,
+    heightImage,
+    materialImage,
+    waterTextureImage,
+    actorAsset,
+    cityDepthAsset,
+  ] = await Promise.all([
     loadImage(input.textureUrl),
     loadImage(input.heightUrl),
     loadImage(input.materialUrl),
+    waterTextureImagePromise,
     actorAssetPromise,
+    cityDepthAssetPromise,
   ]);
-  const heightSamples = sampleHeightImage(heightImage, GRID_COLUMNS, GRID_ROWS);
-  const mesh = createTerrainMesh(heightSamples, GRID_COLUMNS, GRID_ROWS);
+  const baseHeightSamples = sampleHeightImage(heightImage, GRID_COLUMNS, GRID_ROWS);
+  const materialLandMask = sampleMaterialLandMask(materialImage);
+  const heightSamples = createHexLayeredHeightSamples(
+    baseHeightSamples,
+    GRID_COLUMNS,
+    GRID_ROWS
+  );
+  const mesh = renderTerrain
+    ? createHexLayeredTerrainMesh(
+      heightSamples,
+      GRID_COLUMNS,
+      GRID_ROWS
+    )
+    : null;
   const program = createProgram(gl, vertexShaderSource, fragmentShaderSource);
   const actorProgram = createProgram(gl, actorVertexShaderSource, actorFragmentShaderSource);
   const positionLocation = gl.getAttribLocation(program, "aPosition");
@@ -271,7 +583,20 @@ async function initCampaignTerrainWebGl(
   const matrixLocation = gl.getUniformLocation(program, "uMatrix");
   const textureLocation = gl.getUniformLocation(program, "uTexture");
   const materialTextureLocation = gl.getUniformLocation(program, "uMaterialTexture");
-  const lightLocation = gl.getUniformLocation(program, "uLight");
+  const waterTextureLocation = gl.getUniformLocation(program, "uWaterTexture");
+  const waterTextureEnabledLocation = gl.getUniformLocation(
+    program,
+    "uWaterTextureEnabled"
+  );
+  const timeSecondsLocation = gl.getUniformLocation(program, "uTimeSeconds");
+  const landTextureColorAdjustLocation = gl.getUniformLocation(
+    program,
+    "uLandTextureColorAdjust"
+  );
+  const landTextureShadeRangeLocation = gl.getUniformLocation(
+    program,
+    "uLandTextureShadeRange"
+  );
   const actorPositionLocation = gl.getAttribLocation(actorProgram, "aPosition");
   const actorNormalLocation = gl.getAttribLocation(actorProgram, "aNormal");
   const actorUvLocation = gl.getAttribLocation(actorProgram, "aUv");
@@ -279,12 +604,22 @@ async function initCampaignTerrainWebGl(
   const actorLightLocation = gl.getUniformLocation(actorProgram, "uLight");
   const actorTextureLocation = gl.getUniformLocation(actorProgram, "uTexture");
   const actorTintLocation = gl.getUniformLocation(actorProgram, "uTint");
+  const actorForceOpaqueAlphaLocation = gl.getUniformLocation(actorProgram, "uForceOpaqueAlpha");
   const vertexBuffer = gl.createBuffer();
   const indexBuffer = gl.createBuffer();
   const actorVertexBuffer = gl.createBuffer();
   const actorIndexBuffer = gl.createBuffer();
+  const cityDepthVertexBuffer = gl.createBuffer();
+  const cityDepthIndexBuffer = gl.createBuffer();
   const texture = createTexture(gl, textureImage);
   const materialTexture = createTexture(gl, materialImage);
+  const waterTexture =
+    waterTextureImage == null
+      ? null
+      : createTexture(gl, waterTextureImage, {
+        wrapS: gl.REPEAT,
+        wrapT: gl.REPEAT,
+      });
   const actorTexture =
     actorAsset?.textureImage == null
       ? null
@@ -292,50 +627,97 @@ async function initCampaignTerrainWebGl(
         wrapS: gl.REPEAT,
         wrapT: gl.REPEAT,
       });
+  const cityDepthTexture =
+    cityDepthAsset == null ? null : createTexture(gl, cityDepthAsset.textureImage);
 
-  if (
-    positionLocation < 0 ||
-    uvLocation < 0 ||
-    matrixLocation == null ||
-    textureLocation == null ||
-    materialTextureLocation == null ||
-    lightLocation == null ||
-    actorPositionLocation < 0 ||
-    actorNormalLocation < 0 ||
-    actorUvLocation < 0 ||
-    actorMatrixLocation == null ||
-    actorLightLocation == null ||
-    actorTextureLocation == null ||
-    actorTintLocation == null ||
-    vertexBuffer == null ||
-    indexBuffer == null ||
-    actorVertexBuffer == null ||
-    actorIndexBuffer == null
-  ) {
-    throw new Error("Failed to initialize campaign terrain WebGL resources.");
+  const missingResources = [
+    positionLocation < 0 ? "aPosition" : null,
+    uvLocation < 0 ? "aUv" : null,
+    matrixLocation == null ? "uMatrix" : null,
+    textureLocation == null ? "uTexture" : null,
+    materialTextureLocation == null ? "uMaterialTexture" : null,
+    waterTextureLocation == null ? "uWaterTexture" : null,
+    waterTextureEnabledLocation == null ? "uWaterTextureEnabled" : null,
+    timeSecondsLocation == null ? "uTimeSeconds" : null,
+    landTextureColorAdjustLocation == null ? "uLandTextureColorAdjust" : null,
+    landTextureShadeRangeLocation == null ? "uLandTextureShadeRange" : null,
+    actorPositionLocation < 0 ? "actor.aPosition" : null,
+    actorNormalLocation < 0 ? "actor.aNormal" : null,
+    actorUvLocation < 0 ? "actor.aUv" : null,
+    actorMatrixLocation == null ? "actor.uMatrix" : null,
+    actorLightLocation == null ? "actor.uLight" : null,
+    actorTextureLocation == null ? "actor.uTexture" : null,
+    actorTintLocation == null ? "actor.uTint" : null,
+    actorForceOpaqueAlphaLocation == null ? "actor.uForceOpaqueAlpha" : null,
+    vertexBuffer == null ? "terrain.vertexBuffer" : null,
+    indexBuffer == null ? "terrain.indexBuffer" : null,
+    actorVertexBuffer == null ? "actor.vertexBuffer" : null,
+    actorIndexBuffer == null ? "actor.indexBuffer" : null,
+    cityDepthVertexBuffer == null ? "cityDepth.vertexBuffer" : null,
+    cityDepthIndexBuffer == null ? "cityDepth.indexBuffer" : null,
+  ].filter((resource): resource is string => resource != null);
+  if (missingResources.length > 0) {
+    throw new Error(
+      `Failed to initialize campaign terrain WebGL resources: ${missingResources.join(", ")}.`
+    );
   }
 
-  gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
-  gl.bufferData(gl.ARRAY_BUFFER, mesh.vertices, gl.STATIC_DRAW);
-  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
-  gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, mesh.indices, gl.STATIC_DRAW);
+  if (mesh != null) {
+    const uintIndicesExtension = gl.getExtension("OES_element_index_uint");
+    if (uintIndicesExtension == null) {
+      throw new Error("This browser cannot draw the campaign terrain mesh.");
+    }
+    gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, mesh.vertices, gl.STATIC_DRAW);
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, mesh.indices, gl.STATIC_DRAW);
+  }
+  let cityDepthMesh =
+    cityDepthAsset == null
+      ? null
+      : createCityDepthMesh(
+        cityDepthAsset,
+        heightSamples,
+        GRID_COLUMNS,
+        GRID_ROWS,
+        readCampaignCityDepthMeshTransform(input.canvas)
+      );
+  if (cityDepthMesh != null) {
+    gl.bindBuffer(gl.ARRAY_BUFFER, cityDepthVertexBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, cityDepthMesh.vertices, gl.STATIC_DRAW);
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, cityDepthIndexBuffer);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, cityDepthMesh.indices, gl.STATIC_DRAW);
+  }
   gl.enable(gl.DEPTH_TEST);
+  gl.disable(gl.BLEND);
   gl.disable(gl.CULL_FACE);
   const projectionInput: CampaignTerrainProjectionInput = {
     canvas: input.canvas,
     heights: heightSamples,
+    materialLandMask: materialLandMask.landMask,
+    materialColumns: materialLandMask.columns,
+    materialRows: materialLandMask.rows,
     columns: GRID_COLUMNS,
     rows: GRID_ROWS,
   };
+  const travelGrid = createHexTravelGrid(
+    materialLandMask.landMask,
+    materialLandMask.columns,
+    materialLandMask.rows
+  );
 
   let frameId: number | null = null;
   let isDisposed = false;
-  let shouldAnimate = false;
   let hasPendingRender = false;
   let projectedPointsNeedSync = true;
   let lastActorSignature = "";
+  let lastCityDepthMeshSignature = "";
   let lastCanvasWidth = 0;
   let lastCanvasHeight = 0;
+  const actorAnimationState = createActorAnimationPlaybackState();
+  const animatesTerrainWater = renderTerrain && waterTexture != null;
+  const animatesActorModel = shouldRenderActorInThisCanvas && actorAsset != null && actorTexture != null;
+  let dynamicAnimationTimeoutId: number | null = null;
   const render = () => {
     if (isDisposed) {
       return;
@@ -355,7 +737,7 @@ async function initCampaignTerrainWebGl(
     gl.clearColor(renderTerrain ? 0.02 : 0, renderTerrain ? 0.04 : 0, renderTerrain ? 0.04 : 0, 0);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-    if (renderTerrain) {
+    if (renderTerrain && mesh != null) {
       gl.useProgram(program);
       gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
       gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
@@ -365,7 +747,23 @@ async function initCampaignTerrainWebGl(
       gl.activeTexture(gl.TEXTURE1);
       gl.bindTexture(gl.TEXTURE_2D, materialTexture);
       gl.uniform1i(materialTextureLocation, 1);
-      gl.uniform3f(lightLocation, -0.92, 0.28, 0.36);
+      gl.activeTexture(gl.TEXTURE2);
+      gl.bindTexture(gl.TEXTURE_2D, waterTexture ?? texture);
+      gl.uniform1i(waterTextureLocation, 2);
+      gl.uniform1f(waterTextureEnabledLocation, waterTexture == null ? 0 : 1);
+      gl.uniform1f(timeSecondsLocation, performance.now() * 0.001);
+      const terrainStyle = readCampaignTerrainStyle(input.canvas);
+      gl.uniform3f(
+        landTextureColorAdjustLocation,
+        terrainStyle.saturation,
+        terrainStyle.brightness,
+        terrainStyle.brightnessOffset
+      );
+      gl.uniform2f(
+        landTextureShadeRangeLocation,
+        terrainStyle.shadeMin,
+        terrainStyle.shadeMax
+      );
       gl.uniformMatrix4fv(
         matrixLocation,
         false,
@@ -384,7 +782,73 @@ async function initCampaignTerrainWebGl(
         stride,
         3 * Float32Array.BYTES_PER_ELEMENT
       );
-      gl.drawElements(gl.TRIANGLES, mesh.indices.length, gl.UNSIGNED_SHORT, 0);
+      gl.drawElements(gl.TRIANGLES, mesh.indices.length, gl.UNSIGNED_INT, 0);
+    }
+
+    if (renderTerrain && cityDepthAsset != null && cityDepthTexture != null) {
+      const cityDepthMeshTransform = readCampaignCityDepthMeshTransform(input.canvas);
+      const cityDepthMeshSignature = getCampaignCityDepthMeshTransformSignature(
+        cityDepthMeshTransform
+      );
+      if (cityDepthMesh == null || cityDepthMeshSignature !== lastCityDepthMeshSignature) {
+        cityDepthMesh = createCityDepthMesh(
+          cityDepthAsset,
+          heightSamples,
+          GRID_COLUMNS,
+          GRID_ROWS,
+          cityDepthMeshTransform
+        );
+        gl.bindBuffer(gl.ARRAY_BUFFER, cityDepthVertexBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, cityDepthMesh.vertices, gl.DYNAMIC_DRAW);
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, cityDepthIndexBuffer);
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, cityDepthMesh.indices, gl.STATIC_DRAW);
+        lastCityDepthMeshSignature = cityDepthMeshSignature;
+      }
+      gl.useProgram(actorProgram);
+      gl.bindBuffer(gl.ARRAY_BUFFER, cityDepthVertexBuffer);
+      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, cityDepthIndexBuffer);
+      const cityDepthStride = 8 * Float32Array.BYTES_PER_ELEMENT;
+      gl.enableVertexAttribArray(actorPositionLocation);
+      gl.vertexAttribPointer(
+        actorPositionLocation,
+        3,
+        gl.FLOAT,
+        false,
+        cityDepthStride,
+        0
+      );
+      gl.enableVertexAttribArray(actorNormalLocation);
+      gl.vertexAttribPointer(
+        actorNormalLocation,
+        3,
+        gl.FLOAT,
+        false,
+        cityDepthStride,
+        3 * Float32Array.BYTES_PER_ELEMENT
+      );
+      gl.enableVertexAttribArray(actorUvLocation);
+      gl.vertexAttribPointer(
+        actorUvLocation,
+        2,
+        gl.FLOAT,
+        false,
+        cityDepthStride,
+        6 * Float32Array.BYTES_PER_ELEMENT
+      );
+      gl.uniformMatrix4fv(
+        actorMatrixLocation,
+        false,
+        createTerrainMatrix(input.canvas.width / Math.max(input.canvas.height, 1))
+      );
+      gl.uniform3f(actorLightLocation, -0.58, 0.52, 0.62);
+      gl.activeTexture(gl.TEXTURE0);
+      gl.bindTexture(gl.TEXTURE_2D, cityDepthTexture);
+      gl.uniform1i(actorTextureLocation, 0);
+      gl.uniform3f(actorTintLocation, 1, 1, 1);
+      gl.uniform1f(actorForceOpaqueAlphaLocation, 0);
+      gl.disable(gl.CULL_FACE);
+      gl.depthMask(true);
+      gl.drawElements(gl.TRIANGLES, cityDepthMesh.indices.length, gl.UNSIGNED_INT, 0);
     }
 
     const actor = readCampaignActorData(input.canvas);
@@ -399,13 +863,13 @@ async function initCampaignTerrainWebGl(
         projectedPointsNeedSync = true;
         lastActorSignature = actorSignature;
       }
-      shouldAnimate = true;
       const actorHeight = sampleHeightAt(heightSamples, GRID_COLUMNS, GRID_ROWS, actor.u, actor.v);
       const actorMesh = createActorMesh(
         actor,
         actorHeight,
         actorAsset.model,
-        actorAsset.animations
+        actorAsset.animations,
+        actorAnimationState
       );
       gl.useProgram(actorProgram);
       gl.bindBuffer(gl.ARRAY_BUFFER, actorVertexBuffer);
@@ -450,12 +914,11 @@ async function initCampaignTerrainWebGl(
       gl.bindTexture(gl.TEXTURE_2D, actorTexture);
       gl.uniform1i(actorTextureLocation, 0);
       gl.uniform3f(actorTintLocation, 1, 1, 1);
-      gl.enable(gl.CULL_FACE);
-      gl.cullFace(gl.BACK);
+      gl.uniform1f(actorForceOpaqueAlphaLocation, 1);
+      gl.disable(gl.CULL_FACE);
       gl.drawElements(gl.TRIANGLES, actorMesh.indices.length, gl.UNSIGNED_SHORT, 0);
       gl.disable(gl.CULL_FACE);
     } else {
-      shouldAnimate = false;
       if (lastActorSignature !== "") {
         projectedPointsNeedSync = true;
         lastActorSignature = "";
@@ -467,9 +930,20 @@ async function initCampaignTerrainWebGl(
       projectedPointsNeedSync = false;
     }
 
-    if (shouldAnimate) {
-      requestRender("dynamic");
+    if (animatesTerrainWater || animatesActorModel) {
+      scheduleDynamicAnimationRender();
     }
+  };
+
+  const scheduleDynamicAnimationRender = () => {
+    if (isDisposed || dynamicAnimationTimeoutId != null || hasPendingRender) {
+      return;
+    }
+
+    dynamicAnimationTimeoutId = window.setTimeout(() => {
+      dynamicAnimationTimeoutId = null;
+      requestRender("dynamic");
+    }, WATER_ANIMATION_FRAME_INTERVAL_MS);
   };
 
   const requestRender = (reason: "static" | "dynamic" = "dynamic") => {
@@ -500,10 +974,14 @@ async function initCampaignTerrainWebGl(
     requestRender,
     hasActorAsset: actorAsset != null && actorTexture != null,
     projectionInput,
+    travelGrid,
     dispose: () => {
       isDisposed = true;
       if (frameId != null) {
         window.cancelAnimationFrame(frameId);
+      }
+      if (dynamicAnimationTimeoutId != null) {
+        window.clearTimeout(dynamicAnimationTimeoutId);
       }
 
       window.removeEventListener("resize", handleResize);
@@ -511,10 +989,18 @@ async function initCampaignTerrainWebGl(
       gl.deleteBuffer(indexBuffer);
       gl.deleteBuffer(actorVertexBuffer);
       gl.deleteBuffer(actorIndexBuffer);
+      gl.deleteBuffer(cityDepthVertexBuffer);
+      gl.deleteBuffer(cityDepthIndexBuffer);
       gl.deleteTexture(texture);
       gl.deleteTexture(materialTexture);
+      if (waterTexture != null) {
+        gl.deleteTexture(waterTexture);
+      }
       if (actorTexture != null) {
         gl.deleteTexture(actorTexture);
+      }
+      if (cityDepthTexture != null) {
+        gl.deleteTexture(cityDepthTexture);
       }
       gl.deleteProgram(program);
       gl.deleteProgram(actorProgram);
@@ -561,16 +1047,22 @@ async function loadCampaignActorAsset(
   const [model, textureImage, idleAnimation, walkAnimation] = await Promise.all([
     loadJson<{
       scale?: number;
+      facingOffsetDegrees?: number;
+      posturePitchDegrees?: number;
       positions: number[];
       normals: number[];
       uvs: number[];
       boneIndices: number[];
+      boneInfluenceIndices?: number[];
+      boneInfluenceWeights?: number[];
+      inverseBindMatrices?: number[];
       indices: number[];
       origin: [number, number, number];
       bones: Array<{
         name: string;
         parentIndex: number | null;
         localPosition: [number, number, number];
+        localRotation?: [number, number, number, number];
       }>;
       bounds: {
         min: [number, number, number];
@@ -586,42 +1078,46 @@ async function loadCampaignActorAsset(
     name: bone.name,
     parentIndex: bone.parentIndex,
     localPosition: bone.localPosition,
+    localRotation: normalizeQuaternion(bone.localRotation ?? [0, 0, 0, 1]),
   }));
-  const bindGlobalPositions = computeActorGlobalBonePositions(bones);
   const vertexBoneIndices = new Uint16Array(model.boneIndices);
-  const localBindPositions = new Float32Array(model.positions.length);
-  const centeredBindGlobalPositions = bindGlobalPositions.map((position) => ([
-    position[0] - (model.origin[0] ?? 0),
-    position[1] - (model.origin[1] ?? 0),
-    position[2] - (model.origin[2] ?? 0),
-  ] as [number, number, number]));
-
-  for (let vertexIndex = 0; vertexIndex < model.positions.length / 3; vertexIndex += 1) {
-    const positionOffset = vertexIndex * 3;
-    const boneIndex = vertexBoneIndices[vertexIndex] ?? 0;
-    const bindBonePosition = centeredBindGlobalPositions[boneIndex] ?? [0, 0, 0];
-    localBindPositions[positionOffset] = (model.positions[positionOffset] ?? 0) - bindBonePosition[0];
-    localBindPositions[positionOffset + 1] =
-      (model.positions[positionOffset + 1] ?? 0) - bindBonePosition[1];
-    localBindPositions[positionOffset + 2] =
-      (model.positions[positionOffset + 2] ?? 0) - bindBonePosition[2];
-  }
+  const vertexCount = model.positions.length / 3;
+  const vertexBoneInfluenceIndices =
+    model.boneInfluenceIndices != null &&
+      model.boneInfluenceIndices.length === vertexCount * 4
+      ? new Uint16Array(model.boneInfluenceIndices)
+      : createSingleInfluenceIndices(vertexBoneIndices);
+  const vertexBoneInfluenceWeights =
+    model.boneInfluenceWeights != null &&
+      model.boneInfluenceWeights.length === vertexCount * 4
+      ? new Float32Array(model.boneInfluenceWeights)
+      : createSingleInfluenceWeights(vertexCount);
+  const originOffset: [number, number, number] = [
+    -(model.origin[0] ?? 0),
+    -(model.origin[1] ?? 0),
+    -(model.origin[2] ?? 0),
+  ];
+  const inverseBindMatrices =
+    model.inverseBindMatrices != null &&
+      model.inverseBindMatrices.length === bones.length * 16
+      ? new Float32Array(model.inverseBindMatrices)
+      : createFallbackInverseBindMatrices(computeActorGlobalBonePose(bones, originOffset));
 
   return {
     model: {
       scale: model.scale ?? 1,
-      localBindPositions,
-      bindNormals: new Float32Array(model.normals),
+      facingOffsetDegrees: model.facingOffsetDegrees ?? 90,
+      posturePitchDegrees: model.posturePitchDegrees ?? 0,
+      positions: new Float32Array(model.positions),
+      normals: new Float32Array(model.normals),
       uvs: new Float32Array(model.uvs),
       vertexBoneIndices,
+      vertexBoneInfluenceIndices,
+      vertexBoneInfluenceWeights,
+      inverseBindMatrices,
       indices: new Uint16Array(model.indices),
       bones,
-      bindGlobalPositions: centeredBindGlobalPositions,
-      originOffset: [
-        -(model.origin[0] ?? 0),
-        -(model.origin[1] ?? 0),
-        -(model.origin[2] ?? 0),
-      ],
+      originOffset,
       bounds: model.bounds,
     },
     textureImage,
@@ -630,6 +1126,157 @@ async function loadCampaignActorAsset(
       walk: walkAnimation,
     },
   };
+}
+
+async function loadCampaignCityDepthMeshAsset(
+  canvas: HTMLCanvasElement
+): Promise<CityDepthMeshAsset | null> {
+  const meshUrl = canvas.dataset.campaignCityMeshUrl;
+  const textureUrl = canvas.dataset.campaignCityTextureUrl;
+  const u = Number(canvas.dataset.campaignCityU);
+  const v = Number(canvas.dataset.campaignCityV);
+  if (
+    meshUrl == null ||
+    textureUrl == null ||
+    !Number.isFinite(u) ||
+    !Number.isFinite(v)
+  ) {
+    return null;
+  }
+
+  const [asset, textureImage] = await Promise.all([
+    loadJson<CityDepthMeshAssetJson>(meshUrl),
+    loadImage(textureUrl),
+  ]);
+  if (asset.format !== "city-depth-mesh-lowpoly-v1") {
+    throw new Error(`Unsupported city depth mesh format "${asset.format}".`);
+  }
+  if (
+    asset.positions.length % 3 !== 0 ||
+    asset.normals.length !== asset.positions.length ||
+    asset.uvs.length !== (asset.positions.length / 3) * 2 ||
+    asset.indices.length % 3 !== 0
+  ) {
+    throw new Error("City depth mesh asset arrays are inconsistent.");
+  }
+
+  let minHeight = Number.POSITIVE_INFINITY;
+  for (let index = 1; index < asset.positions.length; index += 3) {
+    minHeight = Math.min(minHeight, asset.positions[index] ?? minHeight);
+  }
+
+  return {
+    positions: new Float32Array(asset.positions),
+    normals: new Float32Array(asset.normals),
+    uvs: new Float32Array(asset.uvs),
+    indices: new Uint32Array(asset.indices),
+    textureImage,
+    u: clamp(u, 0, 1),
+    v: clamp(v, 0, 1),
+    minHeight: Number.isFinite(minHeight) ? minHeight : 0,
+  };
+}
+
+function createCityDepthMesh(
+  asset: CityDepthMeshAsset,
+  heights: Float32Array,
+  columns: number,
+  rows: number,
+  transform: CampaignCityDepthMeshTransform
+): CityDepthMeshData {
+  const snappedCenter = snapTerrainUvToHexCenter(asset.u, asset.v);
+  const terrainHeight = sampleHeightAt(
+    heights,
+    columns,
+    rows,
+    snappedCenter.u,
+    snappedCenter.v
+  );
+  const center = createTerrainWorldPoint(
+    snappedCenter.u,
+    snappedCenter.v,
+    terrainHeight
+  );
+  const centerX =
+    center[0] + transform.offsetX * CITY_DEPTH_MESH_TILE_OFFSET_X_SCALE;
+  const centerY =
+    center[1] - transform.offsetY * CITY_DEPTH_MESH_TILE_OFFSET_Y_SCALE;
+  const vertices = new Float32Array((asset.positions.length / 3) * 8);
+  const rotation = transform.rotationDegrees * Math.PI / 180;
+  const rotationCos = Math.cos(rotation);
+  const rotationSin = Math.sin(rotation);
+  const pitch = transform.pitchDegrees * Math.PI / 180;
+  const pitchCos = Math.cos(pitch);
+  const pitchSin = Math.sin(pitch);
+  const horizontalScale = CITY_DEPTH_MESH_WORLD_SCALE * transform.scale;
+  const verticalScale = CITY_DEPTH_MESH_HEIGHT_SCALE * transform.scale;
+
+  for (let vertexIndex = 0; vertexIndex < asset.positions.length / 3; vertexIndex += 1) {
+    const positionOffset = vertexIndex * 3;
+    const uvOffset = vertexIndex * 2;
+    const outputOffset = vertexIndex * 8;
+    const localX = asset.positions[positionOffset] ?? 0;
+    const localHeight = asset.positions[positionOffset + 1] ?? asset.minHeight;
+    const localY = asset.positions[positionOffset + 2] ?? 0;
+    const localZ = localHeight - asset.minHeight;
+    const pitchedY =
+      localY * horizontalScale * pitchCos - localZ * verticalScale * pitchSin;
+    const pitchedZ =
+      localY * horizontalScale * pitchSin + localZ * verticalScale * pitchCos;
+    const rotatedX = localX * horizontalScale * rotationCos - pitchedY * rotationSin;
+    const rotatedY = localX * horizontalScale * rotationSin + pitchedY * rotationCos;
+    const normalX = asset.normals[positionOffset] ?? 0;
+    const normalHeight = asset.normals[positionOffset + 1] ?? 1;
+    const normalY = asset.normals[positionOffset + 2] ?? 0;
+    const pitchedNormalY = normalY * pitchCos - normalHeight * pitchSin;
+    const pitchedNormalZ = normalY * pitchSin + normalHeight * pitchCos;
+    const rotatedNormalX = normalX * rotationCos - pitchedNormalY * rotationSin;
+    const rotatedNormalY = normalX * rotationSin + pitchedNormalY * rotationCos;
+    const worldNormal = normalizeVector3([
+      rotatedNormalX,
+      -rotatedNormalY,
+      pitchedNormalZ,
+    ]);
+
+    vertices[outputOffset] = centerX + rotatedX;
+    vertices[outputOffset + 1] = centerY - rotatedY;
+    vertices[outputOffset + 2] =
+      center[2] +
+      CITY_DEPTH_MESH_BASE_LIFT +
+      transform.lift +
+      pitchedZ;
+    vertices[outputOffset + 3] = worldNormal[0];
+    vertices[outputOffset + 4] = worldNormal[1];
+    vertices[outputOffset + 5] = worldNormal[2];
+    vertices[outputOffset + 6] = asset.uvs[uvOffset] ?? 0;
+    vertices[outputOffset + 7] = asset.uvs[uvOffset + 1] ?? 0;
+  }
+
+  return {
+    vertices,
+    indices: asset.indices,
+  };
+}
+
+function snapTerrainUvToHexCenter(u: number, v: number): { u: number; v: number } {
+  const point = terrainUvToHexPoint(u, v);
+  const cell = pixelToRoundedHex(point.x, point.y);
+  const center = hexToPixel(cell.x, cell.y);
+
+  return {
+    u: hexPointToTerrainU(center.x),
+    v: hexPointToTerrainV(center.y),
+  };
+}
+
+function normalizeVector3(input: [number, number, number]): [number, number, number] {
+  const length = Math.hypot(input[0], input[1], input[2]) || 1;
+
+  return [
+    input[0] / length,
+    input[1] / length,
+    input[2] / length,
+  ];
 }
 
 function sampleHeightImage(
@@ -659,6 +1306,69 @@ function sampleHeightImage(
   }
 
   return heights;
+}
+
+function sampleMaterialLandMask(
+  image: HTMLImageElement
+): { landMask: Uint8Array; columns: number; rows: number } {
+  const columns = Math.max(image.naturalWidth || image.width, 1);
+  const rows = Math.max(image.naturalHeight || image.height, 1);
+  const canvas = document.createElement("canvas");
+  canvas.width = columns;
+  canvas.height = rows;
+
+  const context = canvas.getContext("2d", { willReadFrequently: true });
+  if (context == null) {
+    throw new Error("Failed to create material sampling context.");
+  }
+
+  context.imageSmoothingEnabled = false;
+  context.drawImage(image, 0, 0, columns, rows);
+  const data = context.getImageData(0, 0, columns, rows).data;
+  const landMask = new Uint8Array(columns * rows);
+
+  for (let index = 0; index < landMask.length; index += 1) {
+    const pixelOffset = index * 4;
+    const red = data[pixelOffset] ?? 0;
+    const green = data[pixelOffset + 1] ?? red;
+    const blue = data[pixelOffset + 2] ?? red;
+    landMask[index] = isWaterMaterialColor(red, green, blue) ? 0 : 1;
+  }
+
+  return {
+    landMask,
+    columns,
+    rows,
+  };
+}
+
+function hexToPixel(x: number, y: number): { x: number; y: number } {
+  return {
+    x: Math.sqrt(3) * (x + y * 0.5),
+    y: 1.5 * y,
+  };
+}
+
+function pixelToRoundedHex(x: number, y: number): { x: number; y: number } {
+  const axialX = 0.5773503 * x - 0.3333333 * y;
+  const axialY = 0.6666667 * y;
+  const axialZ = -axialX - axialY;
+  let roundedX = Math.floor(axialX + 0.5);
+  let roundedY = Math.floor(axialY + 0.5);
+  let roundedZ = Math.floor(axialZ + 0.5);
+  const diffX = Math.abs(roundedX - axialX);
+  const diffY = Math.abs(roundedY - axialY);
+  const diffZ = Math.abs(roundedZ - axialZ);
+
+  if (diffX > diffY && diffX > diffZ) {
+    roundedX = -roundedY - roundedZ;
+  } else if (diffY > diffZ) {
+    roundedY = -roundedX - roundedZ;
+  } else {
+    roundedZ = -roundedX - roundedY;
+  }
+
+  return { x: roundedX, y: roundedY };
 }
 
 function getHeightFromHeightmapColor(red: number, green: number, blue: number): number {
@@ -725,7 +1435,16 @@ function syncProjectedPoints(input: {
     point.style.setProperty("--terrain-point-top", "auto");
     point.style.setProperty("--terrain-point-bottom", `${bottom.toFixed(3)}%`);
     point.style.setProperty("--terrain-point-perspective-scale", perspectiveScale.toFixed(3));
-    point.style.zIndex = `${20 + depthLayer}`;
+    if (
+      point.classList.contains("c-campaign-marker") ||
+      point.classList.contains("c-campaign-player")
+    ) {
+      point.style.zIndex = "2";
+    } else if (point.classList.contains("c-campaign-marker__summary")) {
+      point.style.zIndex = "6";
+    } else {
+      point.style.zIndex = `${20 + depthLayer}`;
+    }
   }
 }
 
@@ -741,8 +1460,29 @@ function sampleHeightAt(
   return heights[y * columns + x] ?? 0;
 }
 
+function sampleLandMaskAt(
+  materialLandMask: Uint8Array,
+  columns: number,
+  rows: number,
+  u: number,
+  v: number
+): number {
+  if (u < 0 || u > 1 || v < 0 || v > 1) {
+    return 0;
+  }
+
+  const x = Math.min(Math.max(Math.round(u * (columns - 1)), 0), columns - 1);
+  const y = Math.min(Math.max(Math.round(v * (rows - 1)), 0), rows - 1);
+
+  return materialLandMask[y * columns + x] ?? 0;
+}
+
 function isWaterHeightColor(red: number, green: number, blue: number): boolean {
   return blue > 72 && blue > red * 1.35 && blue > green * 1.18;
+}
+
+function isWaterMaterialColor(red: number, green: number, blue: number): boolean {
+  return red >= 56 && green < 31 && blue < 31;
 }
 
 function readCampaignActorData(canvas: HTMLCanvasElement): CampaignActorData | null {
@@ -770,11 +1510,117 @@ function readCampaignActorData(canvas: HTMLCanvasElement): CampaignActorData | n
   };
 }
 
+function readCampaignTerrainStyle(canvas: HTMLCanvasElement): CampaignTerrainStyle {
+  return {
+    saturation: readFiniteDatasetNumber(
+      canvas.dataset.mapTextureSaturation,
+      DEFAULT_CAMPAIGN_TERRAIN_STYLE.saturation,
+      0,
+      3
+    ),
+    brightness: readFiniteDatasetNumber(
+      canvas.dataset.mapTextureBrightness,
+      DEFAULT_CAMPAIGN_TERRAIN_STYLE.brightness,
+      0,
+      3
+    ),
+    brightnessOffset: readFiniteDatasetNumber(
+      canvas.dataset.mapTextureBrightnessOffset,
+      DEFAULT_CAMPAIGN_TERRAIN_STYLE.brightnessOffset,
+      -0.5,
+      0.5
+    ),
+    shadeMin: readFiniteDatasetNumber(
+      canvas.dataset.mapTextureShadeMin,
+      DEFAULT_CAMPAIGN_TERRAIN_STYLE.shadeMin,
+      0,
+      2
+    ),
+    shadeMax: readFiniteDatasetNumber(
+      canvas.dataset.mapTextureShadeMax,
+      DEFAULT_CAMPAIGN_TERRAIN_STYLE.shadeMax,
+      0,
+      2
+    ),
+  };
+}
+
+function readCampaignCityDepthMeshTransform(
+  canvas: HTMLCanvasElement
+): CampaignCityDepthMeshTransform {
+  return {
+    rotationDegrees: readFiniteDatasetNumber(
+      canvas.dataset.campaignCityRotation,
+      DEFAULT_CAMPAIGN_CITY_DEPTH_MESH_TRANSFORM.rotationDegrees,
+      -180,
+      180
+    ),
+    pitchDegrees: readFiniteDatasetNumber(
+      canvas.dataset.campaignCityPitch,
+      DEFAULT_CAMPAIGN_CITY_DEPTH_MESH_TRANSFORM.pitchDegrees,
+      -90,
+      90
+    ),
+    scale: readFiniteDatasetNumber(
+      canvas.dataset.campaignCityScale,
+      DEFAULT_CAMPAIGN_CITY_DEPTH_MESH_TRANSFORM.scale,
+      0.1,
+      6
+    ),
+    offsetX: readFiniteDatasetNumber(
+      canvas.dataset.campaignCityOffsetX,
+      DEFAULT_CAMPAIGN_CITY_DEPTH_MESH_TRANSFORM.offsetX,
+      -1,
+      1
+    ),
+    offsetY: readFiniteDatasetNumber(
+      canvas.dataset.campaignCityOffsetY,
+      DEFAULT_CAMPAIGN_CITY_DEPTH_MESH_TRANSFORM.offsetY,
+      -1,
+      1
+    ),
+    lift: readFiniteDatasetNumber(
+      canvas.dataset.campaignCityLift,
+      DEFAULT_CAMPAIGN_CITY_DEPTH_MESH_TRANSFORM.lift,
+      -0.08,
+      0.16
+    ),
+  };
+}
+
+function getCampaignCityDepthMeshTransformSignature(
+  transform: CampaignCityDepthMeshTransform
+): string {
+  return [
+    transform.rotationDegrees.toFixed(3),
+    transform.pitchDegrees.toFixed(3),
+    transform.scale.toFixed(3),
+    transform.offsetX.toFixed(3),
+    transform.offsetY.toFixed(3),
+    transform.lift.toFixed(4),
+  ].join("|");
+}
+
+function readFiniteDatasetNumber(
+  value: string | undefined,
+  fallback: number,
+  min: number,
+  max: number
+): number {
+  const parsedValue = Number(value);
+  if (!Number.isFinite(parsedValue)) {
+    return fallback;
+  }
+
+  return Math.min(Math.max(parsedValue, min), max);
+}
+
 function createActorMesh(
   actor: CampaignActorData,
   height: number,
   model: ActorModelAsset,
-  animations: ActorAnimationSetAsset
+  animations: ActorAnimationSetAsset,
+  animationState: ActorAnimationPlaybackState
 ): ActorMeshData {
   const scaleCompensation = clamp(
     ACTOR_REFERENCE_CAMERA_SCALE / Math.max(currentCamera.scale, 0.0001),
@@ -783,13 +1629,17 @@ function createActorMesh(
   );
   const angle =
     actor.facingDegrees * Math.PI / 180 +
-    ACTOR_MODEL_FACING_OFFSET_RADIANS;
-  const activeClip = actor.isMoving ? animations.walk : animations.idle;
-  const sampledPose = sampleActorAnimationPose(
-    activeClip,
+    (Number.isFinite(model.facingOffsetDegrees)
+      ? model.facingOffsetDegrees * Math.PI / 180
+      : ACTOR_MODEL_FACING_OFFSET_RADIANS);
+  const timeMs = performance.now();
+  const sampledPose = sampleActorAnimationSetPose(
+    animations,
     model.bones,
     model.originOffset,
-    performance.now()
+    actor.isMoving ? "walk" : "idle",
+    animationState,
+    timeMs
   );
   const center = createTerrainWorldPoint(
     actor.u,
@@ -797,49 +1647,76 @@ function createActorMesh(
     height
   );
   const scale = ACTOR_MODEL_BASE_SCALE * model.scale * scaleCompensation;
-  const localBindPositions = model.localBindPositions;
-  const bindNormals = model.bindNormals;
+  const positions = model.positions;
+  const normals = model.normals;
+  const vertexBoneInfluenceIndices = model.vertexBoneInfluenceIndices;
+  const vertexBoneInfluenceWeights = model.vertexBoneInfluenceWeights;
+  const poseMatrices = createActorPoseMatrices(sampledPose);
+  const skinMatrices = poseMatrices.map((poseMatrix, boneIndex) =>
+    multiplyMatrices(poseMatrix, readPackedMatrix4(model.inverseBindMatrices, boneIndex))
+  );
   const uvs = model.uvs;
-  const output = new Float32Array((localBindPositions.length / 3) * 8);
+  const vertexCount = model.vertexBoneIndices.length;
+  const output = new Float32Array(vertexCount * 8);
   const facingCos = Math.cos(angle);
   const facingSin = Math.sin(angle);
-  for (let vertexIndex = 0; vertexIndex < localBindPositions.length / 3; vertexIndex += 1) {
+  const posturePitchRadians = model.posturePitchDegrees * Math.PI / 180;
+  for (let vertexIndex = 0; vertexIndex < vertexCount; vertexIndex += 1) {
     const positionOffset = vertexIndex * 3;
     const uvOffset = vertexIndex * 2;
     const outputOffset = vertexIndex * 8;
-    const boneIndex = model.vertexBoneIndices[vertexIndex] ?? 0;
-    const boneRotation = sampledPose.globalRotations[boneIndex] ?? IDENTITY_QUATERNION;
-    const bonePosition = sampledPose.globalPositions[boneIndex] ?? [0, 0, 0];
-    const animatedLocalPosition = rotateVectorByQuaternion([
-      (localBindPositions[positionOffset] ?? 0) * scale,
-      (localBindPositions[positionOffset + 1] ?? 0) * scale,
-      (localBindPositions[positionOffset + 2] ?? 0) * scale,
-    ], boneRotation);
-    const animatedActorPosition: [number, number, number] = [
-      bonePosition[0] * scale + animatedLocalPosition[0],
-      bonePosition[1] * scale + animatedLocalPosition[1],
-      bonePosition[2] * scale + animatedLocalPosition[2],
+    const sourcePosition: [number, number, number] = [
+      positions[positionOffset] ?? 0,
+      positions[positionOffset + 1] ?? 0,
+      positions[positionOffset + 2] ?? 0,
     ];
+    const sourceNormal: [number, number, number] = [
+      normals[positionOffset] ?? 0,
+      normals[positionOffset + 1] ?? 0,
+      normals[positionOffset + 2] ?? 1,
+    ];
+    const animatedActorPosition: [number, number, number] = [0, 0, 0];
+    const animatedActorNormal: [number, number, number] = [0, 0, 0];
+    for (let influenceIndex = 0; influenceIndex < 4; influenceIndex += 1) {
+      const packedInfluenceIndex = vertexIndex * 4 + influenceIndex;
+      const influenceWeight = vertexBoneInfluenceWeights[packedInfluenceIndex] ?? 0;
+      if (influenceWeight <= 0.00001) {
+        continue;
+      }
+
+      const boneIndex = vertexBoneInfluenceIndices[packedInfluenceIndex] ?? 0;
+      const skinMatrix = skinMatrices[boneIndex] ?? IDENTITY_MATRIX_4;
+      const animatedLocalPosition = transformPointByMatrix(skinMatrix, sourcePosition);
+      const animatedLocalNormal = transformDirectionByMatrix(skinMatrix, sourceNormal);
+      animatedActorPosition[0] += animatedLocalPosition[0] * influenceWeight;
+      animatedActorPosition[1] += animatedLocalPosition[1] * influenceWeight;
+      animatedActorPosition[2] += animatedLocalPosition[2] * influenceWeight;
+      animatedActorNormal[0] += animatedLocalNormal[0] * influenceWeight;
+      animatedActorNormal[1] += animatedLocalNormal[1] * influenceWeight;
+      animatedActorNormal[2] += animatedLocalNormal[2] * influenceWeight;
+    }
+    animatedActorPosition[0] *= scale;
+    animatedActorPosition[1] *= scale;
+    animatedActorPosition[2] *= scale;
+    const posturedPosition = rotateVectorAroundX(animatedActorPosition, posturePitchRadians);
     const rotatedX =
-      animatedActorPosition[0] * facingCos - animatedActorPosition[1] * facingSin;
+      posturedPosition[0] * facingCos - posturedPosition[1] * facingSin;
     const rotatedY =
-      animatedActorPosition[0] * facingSin + animatedActorPosition[1] * facingCos;
-    const rotatedNormal = rotateVectorByQuaternion([
-      bindNormals[positionOffset] ?? 0,
-      bindNormals[positionOffset + 1] ?? 0,
-      bindNormals[positionOffset + 2] ?? 1,
-    ], boneRotation);
+      posturedPosition[0] * facingSin + posturedPosition[1] * facingCos;
+    const blendedNormal = normalizeVector3(
+      rotateVectorAroundX(animatedActorNormal, posturePitchRadians)
+    );
     const rotatedNormalX =
-      rotatedNormal[0] * facingCos - rotatedNormal[1] * facingSin;
+      blendedNormal[0] * facingCos - blendedNormal[1] * facingSin;
     const rotatedNormalY =
-      rotatedNormal[0] * facingSin + rotatedNormal[1] * facingCos;
+      blendedNormal[0] * facingSin + blendedNormal[1] * facingCos;
 
     output[outputOffset] = center[0] + rotatedX;
     output[outputOffset + 1] = center[1] + rotatedY;
-    output[outputOffset + 2] = center[2] + animatedActorPosition[2];
+    output[outputOffset + 2] = center[2] + posturedPosition[2];
     output[outputOffset + 3] = rotatedNormalX;
     output[outputOffset + 4] = rotatedNormalY;
-    output[outputOffset + 5] = rotatedNormal[2];
+    output[outputOffset + 5] = blendedNormal[2];
     output[outputOffset + 6] = uvs[uvOffset] ?? 0;
     output[outputOffset + 7] = uvs[uvOffset + 1] ?? 0;
   }
@@ -850,8 +1727,40 @@ function createActorMesh(
   };
 }
 
-function computeActorGlobalBonePositions(bones: ActorBoneAsset[]): [number, number, number][] {
+function createSingleInfluenceIndices(vertexBoneIndices: Uint16Array): Uint16Array {
+  const influenceIndices = new Uint16Array(vertexBoneIndices.length * 4);
+  for (let vertexIndex = 0; vertexIndex < vertexBoneIndices.length; vertexIndex += 1) {
+    influenceIndices[vertexIndex * 4] = vertexBoneIndices[vertexIndex] ?? 0;
+  }
+  return influenceIndices;
+}
+
+function createSingleInfluenceWeights(vertexCount: number): Float32Array {
+  const influenceWeights = new Float32Array(vertexCount * 4);
+  for (let vertexIndex = 0; vertexIndex < vertexCount; vertexIndex += 1) {
+    influenceWeights[vertexIndex * 4] = 1;
+  }
+  return influenceWeights;
+}
+
+function createFallbackInverseBindMatrices(bindPose: ActorAnimationPose): Float32Array {
+  const inverseBindMatrices = new Float32Array(bindPose.globalPositions.length * 16);
+  for (let boneIndex = 0; boneIndex < bindPose.globalPositions.length; boneIndex += 1) {
+    const bindMatrix = createTransformMatrixFromQuaternion(
+      bindPose.globalPositions[boneIndex] ?? [0, 0, 0],
+      bindPose.globalRotations[boneIndex] ?? IDENTITY_QUATERNION
+    );
+    inverseBindMatrices.set(invertMatrix4(bindMatrix), boneIndex * 16);
+  }
+  return inverseBindMatrices;
+}
+
+function computeActorGlobalBonePose(
+  bones: ActorBoneAsset[],
+  rootPosition: [number, number, number]
+): ActorAnimationPose {
   const globalPositions = bones.map(() => [0, 0, 0] as [number, number, number]);
+  const globalRotations = bones.map(() => [0, 0, 0, 1] as [number, number, number, number]);
   for (let index = 0; index < bones.length; index += 1) {
     const bone = bones[index];
     if (bone == null) {
@@ -859,18 +1768,204 @@ function computeActorGlobalBonePositions(bones: ActorBoneAsset[]): [number, numb
     }
 
     if (bone.parentIndex == null) {
-      globalPositions[index] = [...bone.localPosition];
+      globalPositions[index] = [
+        rootPosition[0] + bone.localPosition[0],
+        rootPosition[1] + bone.localPosition[1],
+        rootPosition[2] + bone.localPosition[2],
+      ];
+      globalRotations[index] = bone.localRotation;
       continue;
     }
 
     const parentPosition = globalPositions[bone.parentIndex] ?? [0, 0, 0];
+    const parentRotation = globalRotations[bone.parentIndex] ?? IDENTITY_QUATERNION;
+    const rotatedLocalPosition = rotateVectorByQuaternion(bone.localPosition, parentRotation);
     globalPositions[index] = [
-      parentPosition[0] + bone.localPosition[0],
-      parentPosition[1] + bone.localPosition[1],
-      parentPosition[2] + bone.localPosition[2],
+      parentPosition[0] + rotatedLocalPosition[0],
+      parentPosition[1] + rotatedLocalPosition[1],
+      parentPosition[2] + rotatedLocalPosition[2],
     ];
+    globalRotations[index] = normalizeQuaternion(
+      multiplyQuaternions(parentRotation, bone.localRotation)
+    );
   }
-  return globalPositions;
+  return {
+    globalPositions,
+    globalRotations,
+  };
+}
+
+function createActorPoseMatrices(pose: ActorAnimationPose): Mat4[] {
+  return pose.globalPositions.map((position, index) =>
+    createTransformMatrixFromQuaternion(
+      position,
+      pose.globalRotations[index] ?? IDENTITY_QUATERNION
+    )
+  );
+}
+
+function createActorAnimationPlaybackState(): ActorAnimationPlaybackState {
+  return {
+    activeClipName: "idle",
+    activeStartedAtMs: 0,
+    blendFromClipName: null,
+    blendFromStartedAtMs: 0,
+    blendStartedAtMs: 0,
+    blendDurationMs: ACTOR_ANIMATION_BLEND_DURATION_MS,
+  };
+}
+
+function sampleActorAnimationSetPose(
+  animations: ActorAnimationSetAsset,
+  bones: ActorBoneAsset[],
+  originOffset: [number, number, number],
+  targetClipName: ActorAnimationClipName,
+  playbackState: ActorAnimationPlaybackState,
+  timeMs: number
+): ActorAnimationPose {
+  if (playbackState.activeStartedAtMs <= 0) {
+    playbackState.activeStartedAtMs = timeMs;
+  }
+
+  if (playbackState.activeClipName !== targetClipName) {
+    playbackState.blendFromClipName = playbackState.activeClipName;
+    playbackState.blendFromStartedAtMs = playbackState.activeStartedAtMs;
+    playbackState.blendStartedAtMs = timeMs;
+    playbackState.blendDurationMs = ACTOR_ANIMATION_BLEND_DURATION_MS;
+    playbackState.activeClipName = targetClipName;
+    playbackState.activeStartedAtMs = timeMs;
+  }
+
+  const activePose = sampleActorAnimationPose(
+    animations[playbackState.activeClipName],
+    bones,
+    originOffset,
+    timeMs - playbackState.activeStartedAtMs
+  );
+
+  if (playbackState.blendFromClipName == null) {
+    return activePose;
+  }
+
+  const blendElapsedMs = timeMs - playbackState.blendStartedAtMs;
+  const blendAmount = smoothstep(
+    clamp(blendElapsedMs / Math.max(playbackState.blendDurationMs, 1), 0, 1)
+  );
+  if (blendAmount >= 1) {
+    playbackState.blendFromClipName = null;
+    return activePose;
+  }
+
+  const blendFromPose = sampleActorAnimationPose(
+    animations[playbackState.blendFromClipName],
+    bones,
+    originOffset,
+    timeMs - playbackState.blendFromStartedAtMs
+  );
+
+  return blendActorAnimationPoses(blendFromPose, activePose, blendAmount);
+}
+
+function blendActorAnimationPoses(
+  from: ActorAnimationPose,
+  to: ActorAnimationPose,
+  amount: number
+): ActorAnimationPose {
+  const poseLength = Math.max(from.globalPositions.length, to.globalPositions.length);
+  const globalPositions: [number, number, number][] = [];
+  const globalRotations: [number, number, number, number][] = [];
+
+  for (let index = 0; index < poseLength; index += 1) {
+    globalPositions.push(
+      lerpVector3(
+        from.globalPositions[index] ?? [0, 0, 0],
+        to.globalPositions[index] ?? from.globalPositions[index] ?? [0, 0, 0],
+        amount
+      )
+    );
+    globalRotations.push(
+      nlerpQuaternion(
+        from.globalRotations[index] ?? IDENTITY_QUATERNION,
+        to.globalRotations[index] ?? from.globalRotations[index] ?? IDENTITY_QUATERNION,
+        amount
+      )
+    );
+  }
+
+  return {
+    globalPositions,
+    globalRotations,
+  };
+}
+
+function createTransformMatrixFromQuaternion(
+  position: [number, number, number],
+  rotation: [number, number, number, number]
+): Mat4 {
+  const [x, y, z, w] = normalizeQuaternion(rotation);
+  const xx = x * x;
+  const yy = y * y;
+  const zz = z * z;
+  const xy = x * y;
+  const xz = x * z;
+  const yz = y * z;
+  const wx = w * x;
+  const wy = w * y;
+  const wz = w * z;
+
+  return new Float32Array([
+    1 - 2 * (yy + zz), 2 * (xy + wz), 2 * (xz - wy), 0,
+    2 * (xy - wz), 1 - 2 * (xx + zz), 2 * (yz + wx), 0,
+    2 * (xz + wy), 2 * (yz - wx), 1 - 2 * (xx + yy), 0,
+    position[0], position[1], position[2], 1,
+  ]);
+}
+
+function readPackedMatrix4(matrices: Float32Array, matrixIndex: number): Mat4 {
+  const offset = matrixIndex * 16;
+  if (offset < 0 || offset + 15 >= matrices.length) {
+    return IDENTITY_MATRIX_4;
+  }
+  return new Float32Array(matrices.subarray(offset, offset + 16));
+}
+
+function transformPointByMatrix(
+  matrix: Mat4,
+  point: [number, number, number]
+): [number, number, number] {
+  const [x, y, z] = point;
+  return [
+    readMatrixValue(matrix, 0) * x +
+      readMatrixValue(matrix, 4) * y +
+      readMatrixValue(matrix, 8) * z +
+      readMatrixValue(matrix, 12),
+    readMatrixValue(matrix, 1) * x +
+      readMatrixValue(matrix, 5) * y +
+      readMatrixValue(matrix, 9) * z +
+      readMatrixValue(matrix, 13),
+    readMatrixValue(matrix, 2) * x +
+      readMatrixValue(matrix, 6) * y +
+      readMatrixValue(matrix, 10) * z +
+      readMatrixValue(matrix, 14),
+  ];
+}
+
+function transformDirectionByMatrix(
+  matrix: Mat4,
+  direction: [number, number, number]
+): [number, number, number] {
+  const [x, y, z] = direction;
+  return normalizeVector3([
+    readMatrixValue(matrix, 0) * x +
+      readMatrixValue(matrix, 4) * y +
+      readMatrixValue(matrix, 8) * z,
+    readMatrixValue(matrix, 1) * x +
+      readMatrixValue(matrix, 5) * y +
+      readMatrixValue(matrix, 9) * z,
+    readMatrixValue(matrix, 2) * x +
+      readMatrixValue(matrix, 6) * y +
+      readMatrixValue(matrix, 10) * z,
+  ]);
 }
 
 function sampleActorAnimationPose(
@@ -907,10 +2002,25 @@ function sampleActorAnimationPose(
     }
 
     const parentIndex = bone.parentIndex ?? 0;
-    const localRotation = sampleClipQuaternion(clip, boneIndex - 1, frameA, frameB, frameMix);
+    const localRotation = sampleClipQuaternion(
+      clip,
+      boneIndex - 1,
+      frameA,
+      frameB,
+      frameMix,
+      bone.localRotation
+    );
+    const localPosition = sampleClipVector3(
+      clip.localPositions,
+      boneIndex - 1,
+      frameA,
+      frameB,
+      frameMix,
+      bone.localPosition
+    );
     const parentRotation = globalRotations[parentIndex] ?? IDENTITY_QUATERNION;
     const parentPosition = globalPositions[parentIndex] ?? [0, 0, 0];
-    const rotatedLocalPosition = rotateVectorByQuaternion(bone.localPosition, parentRotation);
+    const rotatedLocalPosition = rotateVectorByQuaternion(localPosition, parentRotation);
 
     globalRotations[boneIndex] = normalizeQuaternion(
       multiplyQuaternions(parentRotation, localRotation)
@@ -933,11 +2043,25 @@ function sampleClipQuaternion(
   animatedBoneIndex: number,
   frameA: number,
   frameB: number,
-  frameMix: number
+  frameMix: number,
+  fallback: [number, number, number, number]
 ): [number, number, number, number] {
-  const frameARotation = clip.rotations[frameA]?.[animatedBoneIndex] ?? IDENTITY_QUATERNION;
+  const frameARotation = clip.rotations[frameA]?.[animatedBoneIndex] ?? fallback;
   const frameBRotation = clip.rotations[frameB]?.[animatedBoneIndex] ?? frameARotation;
   return nlerpQuaternion(frameARotation, frameBRotation, frameMix);
+}
+
+function sampleClipVector3(
+  frames: number[][][] | undefined,
+  animatedBoneIndex: number,
+  frameA: number,
+  frameB: number,
+  frameMix: number,
+  fallback: [number, number, number]
+): [number, number, number] {
+  const frameAPosition = frames?.[frameA]?.[animatedBoneIndex] ?? fallback;
+  const frameBPosition = frames?.[frameB]?.[animatedBoneIndex] ?? frameAPosition;
+  return lerpVector3(frameAPosition, frameBPosition, frameMix);
 }
 
 function lerpVector3(
@@ -984,6 +2108,23 @@ function rotateVectorByQuaternion(
   ];
 }
 
+function rotateVectorAroundX(
+  vector: [number, number, number],
+  angleRadians: number
+): [number, number, number] {
+  if (Math.abs(angleRadians) <= 0.000001) {
+    return vector;
+  }
+
+  const cosine = Math.cos(angleRadians);
+  const sine = Math.sin(angleRadians);
+  return [
+    vector[0],
+    vector[1] * cosine - vector[2] * sine,
+    vector[1] * sine + vector[2] * cosine,
+  ];
+}
+
 function normalizeQuaternion(input: number[]): [number, number, number, number] {
   const length =
     Math.hypot(input[0] ?? 0, input[1] ?? 0, input[2] ?? 0, input[3] ?? 0) ||
@@ -1015,62 +2156,297 @@ function nlerpQuaternion(
   ]);
 }
 
-function createTerrainMesh(
+function createHexLayeredHeightSamples(
+  heights: Float32Array,
+  columns: number,
+  rows: number
+): Float32Array {
+  const layeredHeights = new Float32Array(heights.length);
+
+  for (let y = 0; y < rows; y += 1) {
+    const v = y / Math.max(rows - 1, 1);
+    for (let x = 0; x < columns; x += 1) {
+      const u = x / Math.max(columns - 1, 1);
+      const hexPoint = terrainUvToHexPoint(u, v);
+      const hexCell = pixelToRoundedHex(hexPoint.x, hexPoint.y);
+      const hexCenter = hexToPixel(hexCell.x, hexCell.y);
+      const centerU = hexPointToTerrainU(hexCenter.x);
+      const centerV = hexPointToTerrainV(hexCenter.y);
+      const centerHeight = sampleHeightAt(heights, columns, rows, centerU, centerV);
+      layeredHeights[y * columns + x] = quantizeHexElevation(centerHeight);
+    }
+  }
+
+  return layeredHeights;
+}
+
+function createHexTravelGrid(
+  materialLandMask: Uint8Array,
+  columns: number,
+  rows: number
+): HexTravelGrid {
+  const hexCells = getTerrainHexCells();
+  const passableHexKeys = new Set<string>();
+  const bounds = {
+    minX: Number.POSITIVE_INFINITY,
+    maxX: Number.NEGATIVE_INFINITY,
+    minY: Number.POSITIVE_INFINITY,
+    maxY: Number.NEGATIVE_INFINITY,
+  };
+
+  for (const cell of hexCells) {
+    bounds.minX = Math.min(bounds.minX, cell.x);
+    bounds.maxX = Math.max(bounds.maxX, cell.x);
+    bounds.minY = Math.min(bounds.minY, cell.y);
+    bounds.maxY = Math.max(bounds.maxY, cell.y);
+    const center = hexToPixel(cell.x, cell.y);
+    if (isHexPassableAtHexPoint(
+      materialLandMask,
+      columns,
+      rows,
+      center
+    )) {
+      passableHexKeys.add(getHexCellKey(cell.x, cell.y));
+    }
+  }
+
+  return {
+    passableHexKeys,
+    bounds,
+  };
+}
+
+function createHexLayeredTerrainMesh(
   heights: Float32Array,
   columns: number,
   rows: number
 ): MeshData {
-  const vertices = new Float32Array(columns * rows * 5);
+  const vertices: number[] = [];
   const indices: number[] = [];
+  const hexCells = getTerrainHexCells();
+  const heightByCellKey = new Map<string, number>();
 
-  for (let y = 0; y < rows; y += 1) {
-    for (let x = 0; x < columns; x += 1) {
-      const index = y * columns + x;
-      const offset = index * 5;
-      const u = x / Math.max(columns - 1, 1);
-      const v = y / Math.max(rows - 1, 1);
-      const height = heights[index] ?? 0;
-
-      vertices[offset] = (u - 0.5) * 2;
-      vertices[offset + 1] = (0.5 - v) * 2;
-      vertices[offset + 2] = height * HEIGHT_SCALE;
-      vertices[offset + 3] = u;
-      vertices[offset + 4] = v;
-    }
+  for (const cell of hexCells) {
+    const center = hexToPixel(cell.x, cell.y);
+    const height = sampleHeightAt(
+      heights,
+      columns,
+      rows,
+      hexPointToTerrainU(center.x),
+      hexPointToTerrainV(center.y)
+    );
+    heightByCellKey.set(getHexCellKey(cell.x, cell.y), height);
   }
 
-  for (let y = 0; y < rows - 1; y += 1) {
-    for (let x = 0; x < columns - 1; x += 1) {
-      const topLeft = y * columns + x;
-      const topRight = topLeft + 1;
-      const bottomLeft = topLeft + columns;
-      const bottomRight = bottomLeft + 1;
-      indices.push(topLeft, bottomLeft, topRight, topRight, bottomLeft, bottomRight);
+  for (const cell of hexCells) {
+    const center = hexToPixel(cell.x, cell.y);
+    const height = heightByCellKey.get(getHexCellKey(cell.x, cell.y)) ?? 0;
+    const centerVertexIndex = addHexTerrainVertex(vertices, center.x, center.y, height);
+    const cornerVertexIndices = HEX_CORNER_OFFSETS.map((corner) =>
+      addHexTerrainVertex(vertices, center.x + corner.x, center.y + corner.y, height)
+    );
+
+    for (let cornerIndex = 0; cornerIndex < cornerVertexIndices.length; cornerIndex += 1) {
+      const nextCornerIndex = (cornerIndex + 1) % cornerVertexIndices.length;
+      indices.push(
+        centerVertexIndex,
+        cornerVertexIndices[nextCornerIndex] ?? centerVertexIndex,
+        cornerVertexIndices[cornerIndex] ?? centerVertexIndex
+      );
+    }
+
+    for (let edgeIndex = 0; edgeIndex < HEX_NEIGHBOR_DIRECTIONS.length; edgeIndex += 1) {
+      const neighbor = HEX_NEIGHBOR_DIRECTIONS[edgeIndex] ?? { x: 0, y: 0 };
+      const neighborHeight =
+        heightByCellKey.get(getHexCellKey(cell.x + neighbor.x, cell.y + neighbor.y)) ??
+        0;
+      if (height <= neighborHeight + HEX_WALL_HEIGHT_EPSILON) {
+        continue;
+      }
+
+      const firstCorner = HEX_CORNER_OFFSETS[edgeIndex] ?? HEX_CORNER_OFFSETS[0];
+      const secondCorner =
+        HEX_CORNER_OFFSETS[(edgeIndex + 1) % HEX_CORNER_OFFSETS.length] ??
+        HEX_CORNER_OFFSETS[0];
+      addHexTerrainWall(
+        vertices,
+        indices,
+        center.x + firstCorner.x,
+        center.y + firstCorner.y,
+        center.x + secondCorner.x,
+        center.y + secondCorner.y,
+        height,
+        neighborHeight
+      );
     }
   }
 
   return {
-    vertices,
-    indices: new Uint16Array(indices),
+    vertices: new Float32Array(vertices),
+    indices: new Uint32Array(indices),
   };
 }
 
-function rotateAroundXAxis(
-  y: number,
-  z: number,
-  angle: number
-): { y: number; z: number } {
-  const cosine = Math.cos(angle);
-  const sine = Math.sin(angle);
+const HEX_CORNER_OFFSETS = [
+  { x: 0, y: -1 },
+  { x: Math.sqrt(3) / 2, y: -0.5 },
+  { x: Math.sqrt(3) / 2, y: 0.5 },
+  { x: 0, y: 1 },
+  { x: -Math.sqrt(3) / 2, y: 0.5 },
+  { x: -Math.sqrt(3) / 2, y: -0.5 },
+] as const;
+
+const HEX_NEIGHBOR_DIRECTIONS = [
+  { x: 0, y: -1 },
+  { x: 1, y: -1 },
+  { x: 1, y: 0 },
+  { x: 0, y: 1 },
+  { x: -1, y: 1 },
+  { x: -1, y: 0 },
+] as const;
+
+function getTerrainHexCells(): Array<{ x: number; y: number }> {
+  const mapMinX = -HEX_MAP_ASPECT * HEX_TERRAIN_SCALE * 0.5;
+  const mapMaxX = HEX_MAP_ASPECT * HEX_TERRAIN_SCALE * 0.5;
+  const mapMinY = -HEX_TERRAIN_SCALE * 0.5;
+  const mapMaxY = HEX_TERRAIN_SCALE * 0.5;
+  const axialBounds = [
+    pixelToRoundedHex(mapMinX, mapMinY),
+    pixelToRoundedHex(mapMaxX, mapMinY),
+    pixelToRoundedHex(mapMinX, mapMaxY),
+    pixelToRoundedHex(mapMaxX, mapMaxY),
+  ];
+  const minX = Math.min(...axialBounds.map((cell) => cell.x)) - 2;
+  const maxX = Math.max(...axialBounds.map((cell) => cell.x)) + 2;
+  const minY = Math.min(...axialBounds.map((cell) => cell.y)) - 2;
+  const maxY = Math.max(...axialBounds.map((cell) => cell.y)) + 2;
+  const cells: Array<{ x: number; y: number }> = [];
+
+  for (let y = minY; y <= maxY; y += 1) {
+    for (let x = minX; x <= maxX; x += 1) {
+      const center = hexToPixel(x, y);
+      if (
+        center.x < mapMinX - Math.sqrt(3) ||
+        center.x > mapMaxX + Math.sqrt(3) ||
+        center.y < mapMinY - 1 ||
+        center.y > mapMaxY + 1
+      ) {
+        continue;
+      }
+      cells.push({ x, y });
+    }
+  }
+
+  return cells;
+}
+
+function addHexTerrainWall(
+  vertices: number[],
+  indices: number[],
+  firstX: number,
+  firstY: number,
+  secondX: number,
+  secondY: number,
+  topHeight: number,
+  bottomHeight: number
+): void {
+  const topFirst = addHexTerrainVertex(vertices, firstX, firstY, topHeight);
+  const topSecond = addHexTerrainVertex(vertices, secondX, secondY, topHeight);
+  const bottomFirst = addHexTerrainVertex(vertices, firstX, firstY, bottomHeight);
+  const bottomSecond = addHexTerrainVertex(vertices, secondX, secondY, bottomHeight);
+
+  indices.push(topFirst, bottomFirst, topSecond, topSecond, bottomFirst, bottomSecond);
+}
+
+function addHexTerrainVertex(
+  vertices: number[],
+  hexPointX: number,
+  hexPointY: number,
+  height: number
+): number {
+  const u = hexPointToTerrainU(hexPointX);
+  const v = hexPointToTerrainV(hexPointY);
+  const vertexIndex = vertices.length / 5;
+  vertices.push(
+    (u - 0.5) * 2,
+    (0.5 - v) * 2,
+    height * HEIGHT_SCALE,
+    u,
+    v
+  );
+
+  return vertexIndex;
+}
+
+function terrainUvToHexPoint(u: number, v: number): { x: number; y: number } {
   return {
-    y: y * cosine - z * sine,
-    z: y * sine + z * cosine,
+    x: (u - 0.5) * HEX_MAP_ASPECT * HEX_TERRAIN_SCALE,
+    y: (v - 0.5) * HEX_TERRAIN_SCALE,
   };
+}
+
+function hexPointToTerrainU(x: number): number {
+  return clamp(x / (HEX_MAP_ASPECT * HEX_TERRAIN_SCALE) + 0.5, 0, 1);
+}
+
+function hexPointToTerrainV(y: number): number {
+  return clamp(y / HEX_TERRAIN_SCALE + 0.5, 0, 1);
+}
+
+function getHexCellKey(x: number, y: number): string {
+  return `${x},${y}`;
+}
+
+function quantizeHexElevation(height: number): number {
+  if (height <= HEX_WATER_HEIGHT_THRESHOLD) {
+    return 0;
+  }
+
+  const level = Math.max(
+    1,
+    Math.round(clamp(height, 0, 1) * (HEX_ELEVATION_LEVELS - 1))
+  );
+
+  return level / (HEX_ELEVATION_LEVELS - 1);
+}
+
+function isHexPassableAtUv(
+  materialLandMask: Uint8Array,
+  columns: number,
+  rows: number,
+  u: number,
+  v: number
+): boolean {
+  const point = terrainUvToHexPoint(u, v);
+  const cell = pixelToRoundedHex(point.x, point.y);
+  return isHexPassableAtHexPoint(
+    materialLandMask,
+    columns,
+    rows,
+    hexToPixel(cell.x, cell.y)
+  );
+}
+
+function isHexPassableAtHexPoint(
+  materialLandMask: Uint8Array,
+  columns: number,
+  rows: number,
+  center: { x: number; y: number }
+): boolean {
+  return (
+    sampleLandMaskAt(
+      materialLandMask,
+      columns,
+      rows,
+      hexPointToTerrainU(center.x),
+      hexPointToTerrainV(center.y)
+    ) > 0
+  );
 }
 
 function createTexture(
   gl: WebGLRenderingContext,
-  image: HTMLImageElement,
+  image: TexImageSource,
   options?: {
     wrapS?: number;
     wrapT?: number;
@@ -1113,18 +2489,23 @@ function resizeCanvasToDisplaySize(canvas: HTMLCanvasElement): void {
 
 function createTerrainMatrix(aspectRatio: number): Mat4 {
   const safeScale = Math.max(currentCamera.scale, 0.1);
+  const screenScale = safeScale / CAMERA_REFERENCE_SCALE;
   const projection = createPerspectiveMatrix(FOV_RADIANS, aspectRatio, 0.1, 20);
   const translation = createTranslationMatrix(
-    currentCamera.offsetX * CAMERA_OFFSET_UNIT / safeScale,
-    -currentCamera.offsetY * CAMERA_OFFSET_UNIT / safeScale,
-    -CAMERA_BASE_DISTANCE / safeScale
+    currentCamera.offsetX * CAMERA_OFFSET_UNIT / CAMERA_REFERENCE_SCALE / screenScale,
+    -currentCamera.offsetY * CAMERA_OFFSET_UNIT / CAMERA_REFERENCE_SCALE / screenScale,
+    -CAMERA_BASE_DISTANCE / CAMERA_REFERENCE_SCALE
   );
   const tilt = createRotationXMatrix(CAMERA_TILT_RADIANS);
   const scale = createScaleMatrix(TERRAIN_SCALE, TERRAIN_SCALE, 1);
+  const screenZoom = createScaleMatrix(screenScale, screenScale, 1);
 
   return multiplyMatrices(
-    projection,
-    multiplyMatrices(translation, multiplyMatrices(tilt, scale))
+    screenZoom,
+    multiplyMatrices(
+      projection,
+      multiplyMatrices(translation, multiplyMatrices(tilt, scale))
+    )
   );
 }
 
@@ -1319,6 +2700,16 @@ function createProgram(
   return program;
 }
 
+function createShaderSource(
+  source: string,
+  replacements: Record<string, string>
+): string {
+  return Object.entries(replacements).reduce(
+    (shaderSource, [token, value]) => shaderSource.replaceAll(token, value),
+    source
+  );
+}
+
 function multiplyMatrices(left: Mat4, right: Mat4): Mat4 {
   const result = new Float32Array(16);
 
@@ -1335,12 +2726,106 @@ function multiplyMatrices(left: Mat4, right: Mat4): Mat4 {
   return result;
 }
 
+function invertMatrix4(matrix: Mat4): Mat4 {
+  const m: [
+    number, number, number, number,
+    number, number, number, number,
+    number, number, number, number,
+    number, number, number, number,
+  ] = [
+    readMatrixValue(matrix, 0),
+    readMatrixValue(matrix, 1),
+    readMatrixValue(matrix, 2),
+    readMatrixValue(matrix, 3),
+    readMatrixValue(matrix, 4),
+    readMatrixValue(matrix, 5),
+    readMatrixValue(matrix, 6),
+    readMatrixValue(matrix, 7),
+    readMatrixValue(matrix, 8),
+    readMatrixValue(matrix, 9),
+    readMatrixValue(matrix, 10),
+    readMatrixValue(matrix, 11),
+    readMatrixValue(matrix, 12),
+    readMatrixValue(matrix, 13),
+    readMatrixValue(matrix, 14),
+    readMatrixValue(matrix, 15),
+  ];
+  const inverse = new Float32Array(16);
+  inverse[0] = m[5] * m[10] * m[15] - m[5] * m[11] * m[14] -
+    m[9] * m[6] * m[15] + m[9] * m[7] * m[14] +
+    m[13] * m[6] * m[11] - m[13] * m[7] * m[10];
+  inverse[4] = -m[4] * m[10] * m[15] + m[4] * m[11] * m[14] +
+    m[8] * m[6] * m[15] - m[8] * m[7] * m[14] -
+    m[12] * m[6] * m[11] + m[12] * m[7] * m[10];
+  inverse[8] = m[4] * m[9] * m[15] - m[4] * m[11] * m[13] -
+    m[8] * m[5] * m[15] + m[8] * m[7] * m[13] +
+    m[12] * m[5] * m[11] - m[12] * m[7] * m[9];
+  inverse[12] = -m[4] * m[9] * m[14] + m[4] * m[10] * m[13] +
+    m[8] * m[5] * m[14] - m[8] * m[6] * m[13] -
+    m[12] * m[5] * m[10] + m[12] * m[6] * m[9];
+  inverse[1] = -m[1] * m[10] * m[15] + m[1] * m[11] * m[14] +
+    m[9] * m[2] * m[15] - m[9] * m[3] * m[14] -
+    m[13] * m[2] * m[11] + m[13] * m[3] * m[10];
+  inverse[5] = m[0] * m[10] * m[15] - m[0] * m[11] * m[14] -
+    m[8] * m[2] * m[15] + m[8] * m[3] * m[14] +
+    m[12] * m[2] * m[11] - m[12] * m[3] * m[10];
+  inverse[9] = -m[0] * m[9] * m[15] + m[0] * m[11] * m[13] +
+    m[8] * m[1] * m[15] - m[8] * m[3] * m[13] -
+    m[12] * m[1] * m[11] + m[12] * m[3] * m[9];
+  inverse[13] = m[0] * m[9] * m[14] - m[0] * m[10] * m[13] -
+    m[8] * m[1] * m[14] + m[8] * m[2] * m[13] +
+    m[12] * m[1] * m[10] - m[12] * m[2] * m[9];
+  inverse[2] = m[1] * m[6] * m[15] - m[1] * m[7] * m[14] -
+    m[5] * m[2] * m[15] + m[5] * m[3] * m[14] +
+    m[13] * m[2] * m[7] - m[13] * m[3] * m[6];
+  inverse[6] = -m[0] * m[6] * m[15] + m[0] * m[7] * m[14] +
+    m[4] * m[2] * m[15] - m[4] * m[3] * m[14] -
+    m[12] * m[2] * m[7] + m[12] * m[3] * m[6];
+  inverse[10] = m[0] * m[5] * m[15] - m[0] * m[7] * m[13] -
+    m[4] * m[1] * m[15] + m[4] * m[3] * m[13] +
+    m[12] * m[1] * m[7] - m[12] * m[3] * m[5];
+  inverse[14] = -m[0] * m[5] * m[14] + m[0] * m[6] * m[13] +
+    m[4] * m[1] * m[14] - m[4] * m[2] * m[13] -
+    m[12] * m[1] * m[6] + m[12] * m[2] * m[5];
+  inverse[3] = -m[1] * m[6] * m[11] + m[1] * m[7] * m[10] +
+    m[5] * m[2] * m[11] - m[5] * m[3] * m[10] -
+    m[9] * m[2] * m[7] + m[9] * m[3] * m[6];
+  inverse[7] = m[0] * m[6] * m[11] - m[0] * m[7] * m[10] -
+    m[4] * m[2] * m[11] + m[4] * m[3] * m[10] +
+    m[8] * m[2] * m[7] - m[8] * m[3] * m[6];
+  inverse[11] = -m[0] * m[5] * m[11] + m[0] * m[7] * m[9] +
+    m[4] * m[1] * m[11] - m[4] * m[3] * m[9] -
+    m[8] * m[1] * m[7] + m[8] * m[3] * m[5];
+  inverse[15] = m[0] * m[5] * m[10] - m[0] * m[6] * m[9] -
+    m[4] * m[1] * m[10] + m[4] * m[2] * m[9] +
+    m[8] * m[1] * m[6] - m[8] * m[2] * m[5];
+
+  const determinant =
+    m[0] * readMatrixValue(inverse, 0) +
+    m[1] * readMatrixValue(inverse, 4) +
+    m[2] * readMatrixValue(inverse, 8) +
+    m[3] * readMatrixValue(inverse, 12);
+  if (Math.abs(determinant) <= 0.0000001) {
+    return IDENTITY_MATRIX_4;
+  }
+
+  for (let index = 0; index < 16; index += 1) {
+    inverse[index] = readMatrixValue(inverse, index) / determinant;
+  }
+  return inverse;
+}
+
 function readMatrixValue(matrix: Mat4, index: number): number {
   return matrix[index] ?? 0;
 }
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
+}
+
+function smoothstep(value: number): number {
+  const clampedValue = clamp(value, 0, 1);
+  return clampedValue * clampedValue * (3 - 2 * clampedValue);
 }
 
 function createPerspectiveMatrix(
@@ -1390,141 +2875,3 @@ function createScaleMatrix(x: number, y: number, z: number): Mat4 {
     0, 0, 0, 1,
   ]);
 }
-
-const vertexShaderSource = `
-  attribute vec3 aPosition;
-  attribute vec2 aUv;
-  uniform mat4 uMatrix;
-  varying vec2 vUv;
-  varying float vHeight;
-  varying vec2 vTerrainPosition;
-
-  void main() {
-    vUv = aUv;
-    vHeight = aPosition.z / ${HEIGHT_SCALE.toFixed(2)};
-    vTerrainPosition = aPosition.xy;
-    gl_Position = uMatrix * vec4(aPosition, 1.0);
-  }
-`;
-
-const fragmentShaderSource = `
-  #extension GL_OES_standard_derivatives : enable
-  precision mediump float;
-  uniform sampler2D uTexture;
-  uniform sampler2D uMaterialTexture;
-  uniform vec3 uLight;
-  varying vec2 vUv;
-  varying float vHeight;
-  varying vec2 vTerrainPosition;
-
-  float hash(vec2 point) {
-    return fract(sin(dot(point, vec2(127.1, 311.7))) * 43758.5453);
-  }
-
-  float valueNoise(vec2 point) {
-    vec2 cell = floor(point);
-    vec2 local = fract(point);
-    vec2 smoothLocal = local * local * (3.0 - 2.0 * local);
-
-    float a = hash(cell);
-    float b = hash(cell + vec2(1.0, 0.0));
-    float c = hash(cell + vec2(0.0, 1.0));
-    float d = hash(cell + vec2(1.0, 1.0));
-
-    return mix(mix(a, b, smoothLocal.x), mix(c, d, smoothLocal.x), smoothLocal.y);
-  }
-
-  float colorDistance(vec3 left, vec3 right) {
-    return distance(left, right);
-  }
-
-  float materialWeight(vec3 material, vec3 target, float radius) {
-    return 1.0 - smoothstep(0.0, radius, colorDistance(material, target));
-  }
-
-  void main() {
-    vec4 base = texture2D(uTexture, vUv);
-    vec3 material = texture2D(uMaterialTexture, vUv).rgb;
-    vec3 detail = texture2D(uMaterialTexture, vUv * 2.35).rgb;
-    float materialLuma = dot(material, vec3(0.2126, 0.7152, 0.0722));
-    float detailLuma = dot(detail, vec3(0.2126, 0.7152, 0.0722));
-    float detailGrain = (detailLuma - 0.5) * 0.12;
-    float water = step(0.1, material.b - max(material.r, material.g) * 0.72) * step(0.22, material.b);
-    float forest = max(
-      materialWeight(material, vec3(0.05, 0.30, 0.08), 0.30),
-      materialWeight(material, vec3(0.10, 0.42, 0.12), 0.34)
-    );
-    float denseForest = forest * smoothstep(0.08, 0.34, material.g - max(material.r, material.b));
-    float mountain = max(
-      materialWeight(material, vec3(0.38, 0.30, 0.22), 0.32),
-      materialWeight(material, vec3(0.48, 0.46, 0.42), 0.36)
-    );
-    float sand = max(
-      materialWeight(material, vec3(0.72, 0.62, 0.28), 0.36),
-      materialWeight(material, vec3(0.78, 0.70, 0.42), 0.38)
-    );
-    float plain = clamp(1.0 - max(max(water, forest), max(mountain, sand)), 0.0, 1.0);
-    vec2 gradient = vec2(dFdx(vHeight), dFdy(vHeight)) * 5.8;
-    vec3 normal = normalize(vec3(-gradient.x, -gradient.y, 0.62));
-    float directionalLight = max(dot(normal, normalize(uLight)), 0.0);
-    float sideShadow = clamp(0.62 + directionalLight * 0.42, 0.5, 1.06);
-    float ridgeShadow = clamp(1.0 - length(gradient) * mix(1.35, 1.85, mountain), 0.6, 1.0);
-    float grain = valueNoise(vTerrainPosition * mix(48.0, 118.0, mountain)) * mix(0.03, 0.085, mountain + forest);
-    float fineGrain = valueNoise(vTerrainPosition * 168.0) * mix(0.014, 0.042, mountain + forest);
-    float shade = sideShadow + vHeight * 0.1;
-    vec3 color = base.rgb * shade * ridgeShadow;
-    vec3 tint =
-      plain * vec3(0.86, 1.10, 0.66) +
-      forest * vec3(0.22, 1.08, 0.24) +
-      mountain * vec3(0.58, 0.53, 0.44) +
-      sand * vec3(1.30, 1.10, 0.58) +
-      water * vec3(0.34, 0.62, 1.22);
-    color *= mix(vec3(1.0), tint, 0.9);
-    color *= 1.0 - forest * 0.08 - mountain * 0.22 + sand * 0.04;
-    color *= 1.0 + detailGrain;
-    color += vec3(grain + fineGrain);
-    color = mix(color, color * vec3(0.48, 0.78, 0.42), denseForest * 0.72);
-    color = mix(color, base.rgb * vec3(0.36, 0.62, 1.06) * shade, water * 0.82);
-    color = mix(color, color * mix(vec3(0.58, 0.96, 0.52), vec3(0.78, 1.30, 0.62), materialLuma), forest * 0.42);
-    color = mix(color, color * mix(vec3(0.58), vec3(1.28), materialLuma), mountain * 0.34);
-    color = mix(color, color * mix(vec3(0.86, 0.76, 0.46), vec3(1.22, 1.08, 0.66), materialLuma), sand * 0.34);
-    gl_FragColor = vec4(color, 1.0);
-  }
-`;
-
-const actorVertexShaderSource = `
-  attribute vec3 aPosition;
-  attribute vec3 aNormal;
-  attribute vec2 aUv;
-  uniform mat4 uMatrix;
-  varying vec3 vNormal;
-  varying vec2 vUv;
-
-  void main() {
-    vNormal = aNormal;
-    vUv = aUv;
-    gl_Position = uMatrix * vec4(aPosition, 1.0);
-  }
-`;
-
-const actorFragmentShaderSource = `
-  precision mediump float;
-  uniform vec3 uLight;
-  uniform sampler2D uTexture;
-  uniform vec3 uTint;
-  varying vec3 vNormal;
-  varying vec2 vUv;
-
-  void main() {
-    vec3 normal = normalize(vNormal);
-    float directionalLight = max(dot(normal, normalize(uLight)), 0.0);
-    float light = 0.42 + directionalLight * 0.58;
-    vec3 rim = vec3(0.16, 0.12, 0.08) * pow(1.0 - max(normal.z, 0.0), 2.0);
-    vec4 base = texture2D(uTexture, vUv);
-    if (base.a < 0.08) {
-      discard;
-    }
-    vec3 color = base.rgb * uTint;
-    gl_FragColor = vec4(color * light + rim, base.a);
-  }
-`;

@@ -1,5 +1,7 @@
 # Sub-Runtime Ownerization Implementation Spec
 
+> **Legacy Governance Context:** This document was authored under the retired `weekly plan / weekly set / weekly orchestration` model. Keep its technical scope, but treat any weekly-governance references as historical context only. If this legacy artifact is explicitly resumed, use `docs/superpowers/project-progress.md`; otherwise use `docs/blueprints/project-progress.md` for current repository work.
+
 ## 1. Goal
 
 Define the formal `Child 11 Sub-Runtime Ownerization Implementation` boundary for the current mod-first engine/runtime roadmap.
@@ -300,3 +302,4 @@ Child 11 is done enough only when:
 - verification passes
 
 If those answers remain ambiguous, Child 11 is not complete.
+

@@ -1,5 +1,7 @@
 # Child 16 Event + Scene Handoff Convergence Plan
 
+> **Legacy Governance Context:** This document was authored under the retired `weekly plan / weekly set / weekly orchestration` model. Keep its technical scope, but treat any weekly-governance references as historical context only. If this legacy artifact is explicitly resumed, use `docs/superpowers/project-progress.md`; otherwise use `docs/blueprints/project-progress.md` for current repository work.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Converge the remaining covered shell-owned story handoff line so covered event activation and event-to-scene handoff become runtime-owned on the narrowed `triggerStoryEventsForTiming()` production path.
@@ -275,3 +277,4 @@ Expected:
 - [x] `Execution State` updated
 - [x] `Progress Log` updated
 - [x] Verification recorded
+

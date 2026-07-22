@@ -1,4 +1,9 @@
-export type ViewName = "map" | "city" | "house" | "scene" | "interactive";
+export type ViewName =
+  | "map"
+  | "city"
+  | "house"
+  | "dialogue"
+  | "interactive";
 
 export type EngineState = {
   selectedModId: string;

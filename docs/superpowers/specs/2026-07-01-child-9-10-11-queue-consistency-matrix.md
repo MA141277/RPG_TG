@@ -1,5 +1,7 @@
 # Child 9-10-11 Queue Consistency Matrix
 
+> **Legacy Governance Context:** This document was authored under the retired `weekly plan / weekly set / weekly orchestration` model. Keep its technical scope, but treat any weekly-governance references as historical context only. If this legacy artifact is explicitly resumed, use `docs/superpowers/project-progress.md`; otherwise use `docs/blueprints/project-progress.md` for current repository work.
+
 > **Role:** This document is a cross-check aid. It does not replace the weekly plan, child plans, or Child 10 baseline. Its purpose is to compress the current queue truth into one audit table so Child 9 closeout, Child 10 closeout, and Child 11 unlock can be validated quickly without re-reading the full doc set first.
 
 **Date:** `2026-07-01`
@@ -90,3 +92,4 @@ It should not be used as a substitute for reading:
 - the active child plan
 - the weekly orchestration plan
 - the Child 10 baseline
+

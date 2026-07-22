@@ -1,5 +1,7 @@
 # Mod-First Unified Contract Roadmap Design
 
+> **Legacy Governance Context:** This document was authored under the retired `weekly plan / weekly set / weekly orchestration` model. Keep its technical scope, but treat any weekly-governance references as historical context only. If this legacy artifact is explicitly resumed, use `docs/superpowers/project-progress.md`; otherwise use `docs/blueprints/project-progress.md` for current repository work.
+
 **Goal:** Move the repository from partial runtime ownerization to a mod-first architecture where builtin content and external mods enter the same runtime pipeline through stable contracts rather than scenario-specific glue.
 
 ## Why This Roadmap Exists
@@ -149,3 +151,4 @@ Do not attach these plans to the closed `2026-07-02` weekly set.
 - `docs/superpowers/plans/2026-07-02-child-20-house-runtime-mod-registration-plan.md`
 - `docs/superpowers/plans/2026-07-02-child-21-unified-gameplay-contribution-registry-plan.md`
 - `docs/superpowers/plans/2026-07-02-child-22-end-to-end-mod-first-runtime-closure-plan.md`
+

@@ -79,9 +79,11 @@ function migrateEngineState(
       currentView:
         input.engineState.currentView === "city" ||
         input.engineState.currentView === "house" ||
-        input.engineState.currentView === "scene" ||
+        input.engineState.currentView === "dialogue" ||
         input.engineState.currentView === "interactive"
           ? input.engineState.currentView
+          : input.engineState.currentView === "scene"
+            ? "dialogue"
           : "map",
     };
   }

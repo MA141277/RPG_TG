@@ -1,5 +1,8 @@
 # Main Runtime Ownerization Weekly Architecture Report
 
+> **Historical Artifact:** Deprecated under `fail-closed progress-driven governance`. This file records the retired weekly-governance model and must not be used as the active resume entry for new work.
+
+
 **Week Of:** `2026-07-03`
 
 ## Purpose
@@ -56,3 +59,4 @@ This is enough to close the set. Any later ownerization claim must prove a diffe
 - `None inside this set yet`
 
 Any later split must be justified after Child 24 closes.
+

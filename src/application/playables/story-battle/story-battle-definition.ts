@@ -19,10 +19,10 @@ function withPlayableSession(
       playableSession: {
         sessionId: "playable.story-battle",
         playableId: "story-battle",
-        integrationId: "playable.story-battle.scene.default",
+        integrationId: "playable.story-battle.dialogue.default",
         family: "battle",
         ownerContext: {
-          ownerKind: "scene",
+          ownerKind: ownerId == null ? "external" : "house",
           ownerId,
           returnPolicy: "reenter-owner",
         },
@@ -55,15 +55,16 @@ export function dispatchStoryBattlePlayableAction(input: {
   textEntriesById?: Record<string, string> | undefined;
 }): {
   state: RuntimeState;
-  interactive: RuntimeInteractiveSignal;
+  followUp: RuntimeInteractiveSignal;
 } {
   const result = dispatchStoryBattleAction(input.state.core, input.battleActionId, {
     textEntriesById: input.textEntriesById,
   });
   const ownerId =
     input.state.core.runtime.playableSession?.ownerContext.ownerId ??
-    input.state.core.scene.activeSceneId ??
-    "scene.unknown";
+    input.state.core.dialogue.activeDialogueId ??
+    input.state.core.dialogue.activeEventId ??
+    input.state.core.world.currentHouseId;
   const nextCore =
     result.state.storyBattle == null
       ? {
@@ -80,7 +81,7 @@ export function dispatchStoryBattlePlayableAction(input: {
       ...input.state,
       core: nextCore,
     },
-    interactive:
+    followUp:
       result.enterHouseId == null
         ? { type: "none" }
         : { type: "reenter-house", houseId: result.enterHouseId },

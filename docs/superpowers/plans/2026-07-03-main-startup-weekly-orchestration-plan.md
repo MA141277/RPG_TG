@@ -1,5 +1,8 @@
 # Main Startup Weekly Orchestration Plan
 
+> **Historical Artifact:** Deprecated under `fail-closed progress-driven governance`. This file records the retired weekly-governance model and must not be used as the active resume entry for new work.
+
+
 > **Purpose:** Govern the fresh post-Child-22 continuation set that opens a new problem type: extracting startup-family orchestration from `src/main.ts` without reopening the closed mod-first closure queue.
 
 **Week Of:** `2026-07-03`
@@ -184,3 +187,4 @@ Do not mark this weekly plan `completed` until:
 - [x] Verification recorded
 - [x] Weekly review index updated
 - [x] Required visibility deliverables linked and present
+

@@ -1,15 +1,10 @@
-import {
-  teaHouseInitialSpirit,
-  teaHousePersonalityTopicWeights,
-  teaHouseTopicCounterMap,
-  teaHouseTurnTimeLimitSec,
-} from "../../content/houses/tea-house-content";
 import type {
   TeaHouseDebateSummary,
   TeaHouseDebateWinner,
   TeaHouseTopicCard,
 } from "../../domain/tea-house";
 import { TEA_HOUSE_TOPIC_CARDS } from "../../domain/tea-house";
+import { getTeaHouseContentDefaults } from "./tea-house-content-defaults";
 
 type RandomSource = () => number;
 
@@ -40,6 +35,8 @@ function getTotalWeight(weights: Record<TeaHouseTopicCard, number>): number {
 }
 
 export function createInitialTeaHouseDebateState(): TeaHouseDebateRoundState {
+  const { teaHouseInitialSpirit } = getTeaHouseContentDefaults();
+
   return {
     round: 1,
     playerSpirit: teaHouseInitialSpirit,
@@ -53,7 +50,8 @@ export function pickTeaHouseAiTopic(
   personality: string,
   randomSource: RandomSource = Math.random
 ): TeaHouseTopicCard {
-  const defaultWeights = teaHousePersonalityTopicWeights["圆滑"];
+  const { teaHousePersonalityTopicWeights } = getTeaHouseContentDefaults();
+  const defaultWeights = Object.values(teaHousePersonalityTopicWeights)[0];
   if (defaultWeights == null) {
     throw new Error("Missing default tea house debate weights.");
   }
@@ -70,13 +68,15 @@ export function pickTeaHouseAiTopic(
     }
   }
 
-  return "义";
+  return TEA_HOUSE_TOPIC_CARDS[0];
 }
 
 export function resolveTeaHouseDebateWinner(
   playerTopic: TeaHouseTopicCard,
   npcTopic: TeaHouseTopicCard
 ): TeaHouseDebateWinner {
+  const { teaHouseTopicCounterMap } = getTeaHouseContentDefaults();
+
   if (playerTopic === npcTopic) {
     return "draw";
   }
@@ -116,32 +116,32 @@ export function resolveTeaHouseDebateRound(
   let playerSpirit = roundState.playerSpirit;
   let npcSpirit = roundState.npcSpirit;
   let consecutivePlayerWins = roundState.consecutivePlayerWins;
-  const lines = [`你出「${playerTopic}」，对手出「${npcTopic}」。`];
+  const lines = [`Player used ${playerTopic}; opponent used ${npcTopic}.`];
   const winner = resolveTeaHouseDebateWinner(playerTopic, npcTopic);
 
   if (didTimeout) {
     playerSpirit -= 1;
-    lines.push("你犹疑超时，气势先失 1 点。");
+    lines.push("Player timed out and loses 1 spirit.");
   }
 
   if (winner === "player") {
     npcSpirit -= 2;
     consecutivePlayerWins += 1;
-    lines.push("你抓住话头压过了对方，敌方气势 -2。");
+    lines.push("Player wins the exchange and the opponent loses 2 spirit.");
 
     if (consecutivePlayerWins >= 2) {
       npcSpirit -= 1;
-      lines.push("你连续压制成功，追加伤害 1 点。");
+      lines.push("Player chains momentum and deals 1 bonus spirit damage.");
     }
   } else if (winner === "npc") {
     playerSpirit -= 2;
     consecutivePlayerWins = 0;
-    lines.push("对方顺势反压，你的气势 -2。");
+    lines.push("Opponent wins the exchange and the player loses 2 spirit.");
   } else {
     playerSpirit -= 1;
     npcSpirit -= 1;
     consecutivePlayerWins = 0;
-    lines.push("双方各执一词，气势各 -1。");
+    lines.push("The exchange is a draw and both sides lose 1 spirit.");
   }
 
   const nextState: TeaHouseDebateRoundState = {
@@ -166,5 +166,6 @@ export function resolveTeaHouseDebateRound(
 }
 
 export function createDebateNextRoundTimer(): number {
+  const { teaHouseTurnTimeLimitSec } = getTeaHouseContentDefaults();
   return teaHouseTurnTimeLimitSec;
 }

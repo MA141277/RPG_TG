@@ -1,5 +1,12 @@
 import type { ContentPackDefinition } from "../domain/content-pack";
 import { loadContentPackFromManifestUrl } from "../application/content/content-pack-loader";
+import * as scenarioPackCatalogJsonModule from "./scenario-packs/catalog.json";
+import {
+  getDefaultScenarioPackCatalogEntry,
+  parseScenarioPackCatalog,
+  resolveCatalogManifestUrl,
+  SCENARIO_PACK_CATALOG_PUBLIC_URL,
+} from "../application/content/catalog-loader";
 
 declare const process:
   | {
@@ -7,10 +14,13 @@ declare const process:
     }
   | undefined;
 
-const DEFAULT_BASE_GAME_MANIFEST_PATH =
-  "src/content/scenario-packs/zhuyuanzhang/pack.json";
-const DEFAULT_BASE_GAME_PUBLISHED_MANIFEST_PATH =
-  "/scenario-packs/zhuyuanzhang/pack.json";
+const DEFAULT_BASE_GAME_CATALOG_PATH = "src/content/scenario-packs/catalog.json";
+const defaultBaseGameScenarioPackCatalogEntry = getDefaultScenarioPackCatalogEntry(
+  parseScenarioPackCatalog(
+    (scenarioPackCatalogJsonModule as { default?: unknown }).default ??
+      scenarioPackCatalogJsonModule
+  )
+);
 
 let baseGameContentPackPromise: Promise<ContentPackDefinition> | null = null;
 
@@ -29,17 +39,23 @@ function resolveDefaultBaseGameManifestUrl(): string {
     typeof process !== "undefined" &&
     typeof process.cwd === "function"
   ) {
-    return toFileUrl(`${process.cwd()}\\${DEFAULT_BASE_GAME_MANIFEST_PATH}`);
+    return resolveCatalogManifestUrl(
+      toFileUrl(`${process.cwd()}\\${DEFAULT_BASE_GAME_CATALOG_PATH}`),
+      defaultBaseGameScenarioPackCatalogEntry.manifestPath
+    );
   }
 
   if (typeof window !== "undefined") {
     return new URL(
-      DEFAULT_BASE_GAME_PUBLISHED_MANIFEST_PATH,
+      resolveCatalogManifestUrl(
+        SCENARIO_PACK_CATALOG_PUBLIC_URL,
+        defaultBaseGameScenarioPackCatalogEntry.manifestPath
+      ),
       window.location.href
     ).href;
   }
 
-  return DEFAULT_BASE_GAME_MANIFEST_PATH;
+  return resolveDefaultManifestPathWithoutRuntime();
 }
 
 function toFileUrl(path: string): string {
@@ -47,4 +63,13 @@ function toFileUrl(path: string): string {
   return normalizedPath.startsWith("/")
     ? `file://${normalizedPath}`
     : `file:///${normalizedPath}`;
+}
+
+function resolveDefaultManifestPathWithoutRuntime(): string {
+  const manifestPath = defaultBaseGameScenarioPackCatalogEntry.manifestPath;
+  if (/^(https?:|file:|\/)/.test(manifestPath)) {
+    return manifestPath;
+  }
+
+  return `${DEFAULT_BASE_GAME_CATALOG_PATH.replace(/\/catalog\.json$/, "")}/${manifestPath.replace(/^\.?\//, "")}`;
 }

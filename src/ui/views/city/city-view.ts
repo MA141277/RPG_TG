@@ -11,11 +11,11 @@ import type {
   CityEntryOption,
 } from "../../../domain/city-entry";
 import type { CitySceneMapping } from "../../../domain/city-scene-mapping";
-import type { HouseDefinition } from "../../../domain/house";
+import { resolveLocationBackgroundImageUrl } from "../../location-backgrounds";
 import cityBackgroundVideoUrl from "../../../../ui/background/city.mp4?url";
 
-function getHouseArtworkClass(houseDefinition: HouseDefinition): string {
-  switch (houseDefinition.moduleId) {
+function getCityEntryArtworkClass(cityEntry: CityEntryDefinition): string {
+  switch (cityEntry.artworkId) {
     case "home-house":
       return "c-kulan-house-card--home-house";
     case "medicine-house":
@@ -127,15 +127,39 @@ function renderCityMenuButtons(playerCharacter: CharacterDefinition): string {
   `;
 }
 
-function renderLocationsDeckView(input: {
-  cityDefinition: CityDefinition;
-  houseDefinitions: HouseDefinition[];
-  cityEntries: CityEntryDefinition[];
-}): string {
-  const visibleHouseDefinitions = input.houseDefinitions.filter(
-    (houseDefinition) => houseDefinition.moduleId !== "leader-residence"
+function renderCityBackground(cityDefinition: CityDefinition): string {
+  const backgroundImageUrl = resolveLocationBackgroundImageUrl(
+    cityDefinition.backgroundId
   );
 
+  if (backgroundImageUrl != null) {
+    return `
+      <div
+        class="c-kulan-city__background-image"
+        style="background-image:url('${backgroundImageUrl}')"
+        aria-hidden="true"
+      ></div>
+    `;
+  }
+
+  return `
+    <video
+      class="c-kulan-city__background-video"
+      autoplay
+      muted
+      loop
+      playsinline
+      aria-hidden="true"
+    >
+      <source src="${cityBackgroundVideoUrl}" type="video/mp4" />
+    </video>
+  `;
+}
+
+function renderLocationsDeckView(input: {
+  cityDefinition: CityDefinition;
+  cityEntries: CityEntryDefinition[];
+}): string {
   return `
     <div class="c-city-locations-view" role="dialog" aria-modal="true" aria-label="${input.cityDefinition.name}地点">
       <div class="c-city-locations-view__backdrop" data-action="close-city-menu"></div>
@@ -151,23 +175,9 @@ function renderLocationsDeckView(input: {
               (cityEntry) => `
                 <button
                   type="button"
-                  class="c-kulan-house-card c-kulan-house-card--leader-residence"
+                  class="c-kulan-house-card ${getCityEntryArtworkClass(cityEntry)}"
                   data-city-entry-id="${cityEntry.id}"
                   aria-label="打开${cityEntry.name}"
-                >
-                  <span class="c-kulan-house-card__art" aria-hidden="true"></span>
-                </button>
-              `
-            )
-            .join("")}
-          ${visibleHouseDefinitions
-            .map(
-              (houseDefinition) => `
-                <button
-                  type="button"
-                  class="c-kulan-house-card ${getHouseArtworkClass(houseDefinition)}"
-                  data-house-id="${houseDefinition.id}"
-                  aria-label="进入${houseDefinition.name}"
                 >
                   <span class="c-kulan-house-card__art" aria-hidden="true"></span>
                 </button>
@@ -189,7 +199,6 @@ function renderLocationsDeckView(input: {
 
 function renderCityMenuPanel(input: {
   cityDefinition: CityDefinition;
-  houseDefinitions: HouseDefinition[];
   cityEntries: CityEntryDefinition[];
   cityMenuState: CityMenuState | null;
 }): string {
@@ -309,7 +318,7 @@ function renderCityMenuPanel(input: {
 export function renderCityView(
   cityDefinition: CityDefinition,
   playerCharacter: CharacterDefinition,
-  houseDefinitions: HouseDefinition[],
+  _houseDefinitions: unknown[],
   cityEntries: CityEntryDefinition[],
   cityMenuState: CityMenuState | null,
   cityDirectoryState:
@@ -337,16 +346,7 @@ export function renderCityView(
   return `
     <section class="view-city view-city--kulan">
       <div class="c-kulan-city">
-        <video
-          class="c-kulan-city__background-video"
-          autoplay
-          muted
-          loop
-          playsinline
-          aria-hidden="true"
-        >
-          <source src="${cityBackgroundVideoUrl}" type="video/mp4" />
-        </video>
+        ${renderCityBackground(cityDefinition)}
         <div class="c-kulan-city__body">
           <div class="c-kulan-city__stage">
             <button type="button" class="c-kulan-city__leave-action" data-action="leave-city">
@@ -358,7 +358,6 @@ export function renderCityView(
         </div>
         ${renderCityMenuPanel({
           cityDefinition,
-          houseDefinitions,
           cityEntries,
           cityMenuState,
         })}

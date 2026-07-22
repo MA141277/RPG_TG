@@ -12,12 +12,12 @@ export function startEvent(state: GameState, eventDefinition: EventDefinition): 
 
   return {
     ...state,
-    scene: {
-      ...state.scene,
+    dialogue: {
+      ...state.dialogue,
       activeEventId: eventDefinition.id,
-      activeSceneId: eventDefinition.entrySceneId,
+      activeDialogueId: null,
       cursor: 0,
-      status: "playing",
+      status: "idle",
     },
     runtime: {
       ...state.runtime,
@@ -35,10 +35,6 @@ export function startEvent(state: GameState, eventDefinition: EventDefinition): 
               [`${eventDefinition.id}:${state.calendar.chapterId}`]: 1,
             }
           : state.runtime.variables,
-    },
-    ui: {
-      ...state.ui,
-      currentView: "scene",
     },
   };
 }

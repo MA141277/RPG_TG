@@ -5,6 +5,7 @@ export type CityId = string;
 export type CityDefinition = {
   id: CityId;
   name: string;
+  backgroundId?: string;
   regionId: string;
   mapNodeId: string;
   houseIds: HouseId[];

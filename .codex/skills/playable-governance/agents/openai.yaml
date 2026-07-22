@@ -1,0 +1,4 @@
+interface:
+  display_name: "Playable Governance"
+  short_description: "Govern playable and minigame changes in RPG_TG."
+  default_prompt: "Use $playable-governance to evaluate a playable or minigame change in RPG_TG before implementation."

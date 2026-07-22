@@ -1,5 +1,8 @@
 # Weekly Module Map
 
+> **Historical Artifact:** Deprecated under `fail-closed progress-driven governance`. This file records the retired weekly-governance model and must not be used as the active resume entry for new work.
+
+
 **Week Of:** `2026-07-02`
 
 ## Purpose
@@ -36,3 +39,4 @@ If a module cannot be summarized here, it is still acting like a black box.
 
 - What later problem type, if any, still deserves extraction now that covered navigation/time entry and covered story-trigger handoff are both converged?
 - Should the bounded council-priority follow-up stay shell-side, or does a future fresh review justify treating it as a different continuation category?
+

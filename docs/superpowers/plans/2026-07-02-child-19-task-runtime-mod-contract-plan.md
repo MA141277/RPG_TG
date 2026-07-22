@@ -1,5 +1,7 @@
 # Child 19 Task Runtime Mod Contract Plan
 
+> **Legacy Governance Context:** This document was authored under the retired `weekly plan / weekly set / weekly orchestration` model. Keep its technical scope, but treat any weekly-governance references as historical context only. If this legacy artifact is explicitly resumed, use `docs/superpowers/project-progress.md`; otherwise use `docs/blueprints/project-progress.md` for current repository work.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Promote task runtime from a first-slice internal subsystem to a mod-facing contract that can be declared by content packs/mods, loaded through shared pack/runtime paths, and progressed only through typed runtime actions and signals.
@@ -267,3 +269,4 @@ Expected:
 - [x] `Execution State` updated
 - [x] `Progress Log` updated
 - [x] Verification recorded
+

@@ -17,10 +17,58 @@
   pointer-events: none;
 }
 
+.c-main-ui-overlay:has(.c-main-ui-screen--runtime-preview) {
+  pointer-events: none;
+}
+
 .c-main-ui-screen {
   position: relative;
   width: 100%;
   height: 100%;
+}
+
+.c-main-ui-screen--runtime-preview {
+  color: transparent;
+  font-size: 0;
+  pointer-events: none;
+}
+
+.c-main-ui-runtime-preview-session-banner {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 2001;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid rgb(58 209 92 / 72%);
+  border-radius: 8px;
+  background: rgb(14 18 15 / 92%);
+  color: #e7f8ea;
+  box-shadow:
+    0 0 0 1px rgb(255 255 255 / 8%),
+    0 10px 24px rgb(0 0 0 / 28%);
+  pointer-events: auto;
+}
+
+.c-main-ui-runtime-preview-session-banner__text {
+  display: grid;
+  gap: 2px;
+}
+
+.c-main-ui-runtime-preview-session-banner__title {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.c-main-ui-runtime-preview-session-banner__hint {
+  font-size: 12px;
+  color: rgb(231 248 234 / 82%);
+}
+
+.c-runtime-preview-exit--session {
+  position: static;
 }
 
 .c-main-ui-sr-only {
@@ -231,7 +279,7 @@
   overflow: hidden;
   background:
     linear-gradient(90deg, rgb(33 25 22 / 78%), rgb(33 25 22 / 36%)),
-    url("../../ui/yuansu/浜虹墿閫夋嫨ui/backgroung.png") center center / cover no-repeat;
+    url("../../ui/yuansu/人物选择ui/backgroung.png") center center / cover no-repeat;
   transform: translate(-50%, -50%) scale(var(--game-scale, 1));
   transform-origin: center;
 }
@@ -932,4 +980,25 @@
 .c-main-ui-page-turn-button.c-main-ui-layout-component,
 .c-main-ui-image-button--choose.c-main-ui-layout-component {
   justify-self: auto;
+}
+
+.c-script-editor-location-access-section {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.c-script-editor-location-access-section + .c-script-editor-location-access-section {
+  margin-top: 0.75rem;
+}
+
+.c-script-editor-location-access-condition__row {
+  display: grid;
+  grid-template-columns: minmax(12rem, 1.2fr) minmax(8rem, 0.9fr) minmax(10rem, 1fr) auto;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.c-script-editor-location-access-condition__rows {
+  display: grid;
+  gap: 0.5rem;
 }

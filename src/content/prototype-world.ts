@@ -4,7 +4,6 @@ import type {
   CityEntryDefinition,
   CityDefinition,
   CityNpcPoolDefinition,
-  HouseAccessRefusalRule,
   HouseDefinition,
   MapDefinition,
   ValuableItemDefinition,
@@ -18,35 +17,34 @@ import {
   zhuYuanzhangCityRosters,
   zhuYuanzhangEarlyCharacters,
 } from "./zhu-yuanzhang-early-characters";
+import type {
+  PortraitResourceDefinition,
+  PortraitVariantDefinition,
+} from "../domain/portrait-resource";
+import * as defaultZhuyuanzhangPortraitsModule from "./scenario-packs/zhuyuanzhang/portraits.json";
+import * as defaultZhuyuanzhangPortraitVariantsModule from "./scenario-packs/zhuyuanzhang/portrait-variants.json";
 
-export const prototypeHouseAccessRefusalRules: HouseAccessRefusalRule[] = [
-  {
-    id: "rule.zhu_yuanzhang.temple.first_review_stay",
-    priority: 100,
-    storyStages: [ZHU_YUANZHANG_STORY_STAGES.huangjueTemple],
-    excludedHouseModuleIds: ["temple-house", "keep-house"],
-    missingFlags: [
-      ZHU_YUANZHANG_STORY_FLAG_KEYS.firstTempleReviewCompleted,
-    ],
-    speakerCharacterId: "player",
-    title: "暂且留在寺中",
-    text: "既然答应了主持，就先不要离开寺院吧。",
-    confirmLabel: "知道了",
-  },
-  {
-    id: "rule.zhu_yuanzhang.temple.keep_closed",
-    priority: 50,
-    houseModuleIds: ["keep-house"],
-    storyStages: [
-      ZHU_YUANZHANG_STORY_STAGES.huangjueTemple,
-      ZHU_YUANZHANG_STORY_STAGES.huangjueBeggingJourney,
-    ],
-    speakerCharacterId: "char.kulan_soldier",
-    title: "帅府闭门",
-    text: "军机要出，请阁下回避。",
-    confirmLabel: "离开",
-  },
-];
+function unwrapJsonModule<T>(moduleValue: unknown): T {
+  if (
+    moduleValue != null &&
+    typeof moduleValue === "object" &&
+    "default" in moduleValue
+  ) {
+    return (moduleValue as { default: T }).default;
+  }
+
+  return moduleValue as T;
+}
+
+const prototypePortraitResources = unwrapJsonModule<PortraitResourceDefinition[]>(
+  defaultZhuyuanzhangPortraitsModule
+);
+const prototypePortraitVariants = unwrapJsonModule<PortraitVariantDefinition[]>(
+  defaultZhuyuanzhangPortraitVariantsModule
+);
+const prototypePortraitResourceById = Object.fromEntries(
+  prototypePortraitResources.map((portrait) => [portrait.id, portrait])
+);
 
 export const prototypeMap: MapDefinition = {
   id: "map.prototype_frontier",
@@ -449,7 +447,6 @@ export const prototypeHouses: HouseDefinition[] = [
     name: "皇觉寺",
     type: "temple",
     moduleId: "temple-house",
-    onEnterEventId: "event.story.zhu_yuanzhang.ordination",
     characterIds: ["char.kulan_temple_abbot", "char.kulan_temple_senior_monk"],
     defaultCharacterId: "char.kulan_temple_abbot",
     backAction: {
@@ -598,38 +595,6 @@ export const prototypeCharacters: CharacterDefinition[] = [
     cityId: "city.kulan",
     houseId: "home_001",
     portraitId: "portrait.player",
-    portraitVariants: [
-      {
-        id: "stage-20",
-        label: "通常",
-        portraitId: "portrait.player.stage.20",
-      },
-      {
-        id: "stage-25",
-        label: "微笑",
-        portraitId: "portrait.player.stage.25",
-      },
-      {
-        id: "stage-26",
-        label: "二十六岁",
-        portraitId: "portrait.player.stage.26",
-      },
-      {
-        id: "stage-29",
-        label: "二十九岁",
-        portraitId: "portrait.player.stage.29",
-      },
-      {
-        id: "stage-34-39",
-        label: "三十四至三十九岁",
-        portraitId: "portrait.player.stage.34_39",
-      },
-      {
-        id: "stage-40",
-        label: "四十岁",
-        portraitId: "portrait.player.stage.40",
-      },
-    ],
     portraitVariantId: "stage-20",
     stats: {
       leadership: 60,
@@ -1560,13 +1525,6 @@ function cloneCharacterDefinition(
     ...characterDefinition,
     stats: { ...characterDefinition.stats },
     availableFunctions: [...characterDefinition.availableFunctions],
-    ...(characterDefinition.portraitVariants == null
-      ? {}
-      : {
-          portraitVariants: characterDefinition.portraitVariants.map((variant) => ({
-            ...variant,
-          })),
-        }),
     ...(characterDefinition.flags == null
       ? {}
       : { flags: [...characterDefinition.flags] }),
@@ -1579,10 +1537,55 @@ function cloneCharacterDefinition(
   };
 }
 
+function materializePrototypeCharacterPortraitState(
+  characterDefinition: CharacterDefinition
+): CharacterDefinition {
+  const scopedVariants = prototypePortraitVariants
+    .filter((variant) => variant.parentPortraitId === characterDefinition.portraitId)
+    .map((variant) => {
+      const portrait = prototypePortraitResourceById[variant.portraitId];
+      return {
+        id: variant.id,
+        label: variant.label,
+        portraitId: variant.portraitId,
+        ...(portrait == null
+          ? {}
+          : {
+              portraitImageUrl: portrait.portraitImage,
+              ...(portrait.avatarImage == null
+                ? {}
+                : { avatarImageUrl: portrait.avatarImage }),
+            }),
+      };
+    });
+  const activeVariant =
+    scopedVariants.find(
+      (variant) => variant.id === characterDefinition.portraitVariantId
+    ) ?? null;
+  const basePortrait = prototypePortraitResourceById[characterDefinition.portraitId];
+
+  return {
+    ...characterDefinition,
+    ...(scopedVariants.length === 0 ? {} : { portraitVariants: scopedVariants }),
+    ...(activeVariant?.portraitImageUrl != null
+      ? { portraitImageUrl: activeVariant.portraitImageUrl }
+      : basePortrait == null
+        ? {}
+        : { portraitImageUrl: basePortrait.portraitImage }),
+    ...(activeVariant?.avatarImageUrl != null
+      ? { avatarImageUrl: activeVariant.avatarImageUrl }
+      : basePortrait?.avatarImage == null
+        ? {}
+        : { avatarImageUrl: basePortrait.avatarImage }),
+  };
+}
+
 export function createPrototypeCharactersForStoryStage(
   storyStage: ZhuYuanzhangStoryStage
 ): CharacterDefinition[] {
-  const characterDefinitions = prototypeCharacters.map(cloneCharacterDefinition);
+  const characterDefinitions = prototypeCharacters
+    .map(cloneCharacterDefinition)
+    .map(materializePrototypeCharacterPortraitState);
   const playerCharacter = characterDefinitions.find(
     (characterDefinition) => characterDefinition.id === "char.player"
   );

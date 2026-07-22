@@ -1,0 +1,16 @@
+## Task Closeout
+
+- Closed Task: `Task X`
+- Parent Stage: `Stage X`
+- Task Closeout Status: `closed`
+- Project Progress Synced: `yes`
+- Next Task: `Task Y` / `none`
+- Next Task Status: `waiting` / `running` / `blocked` / `none`
+- Next Required Action: `replace-with-next-action`
+- Next Entry Document: `docs/superpowers/project-progress.md`
+- Next Owner Document: `docs/superpowers/plans/<next-child-plan>.md` / `none`
+- Push Status: `success` / `failure` / `not-pushed`
+- Push Commit: `commit-sha` / `none`
+- Resume From: `Open docs/superpowers/project-progress.md.`
+
+`Push Commit` must satisfy the repository commit-message rule: `<type>: <brief title>` plus a `Summary:` section with at least one bullet.

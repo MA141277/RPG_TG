@@ -7648,6 +7648,14 @@
         "imageUrl": "./assets/maps/tie1.png"
       },
       {
+        "id": "map_hex_texture_atlas",
+        "label": "Hex texture atlas",
+        "width": 1024,
+        "height": 1024,
+        "description": "tietu.png 4x4",
+        "imageUrl": "./assets/maps/tietu.png"
+      },
+      {
         "id": "map_regions",
         "label": "Province color mask",
         "width": 509,
@@ -7670,6 +7678,22 @@
         "height": 903,
         "description": "map_ground_types.tga",
         "imageUrl": "./assets/maps/yuanmo-map-ground-types.png"
+      },
+      {
+        "id": "map_water_noise",
+        "label": "Water noise texture",
+        "width": 512,
+        "height": 512,
+        "description": "tileable ancient-map water ripple noise",
+        "imageUrl": "./assets/maps/yuanmo-water-noise.png"
+      },
+      {
+        "id": "map_fog_noise",
+        "label": "Fog noise texture",
+        "width": 640,
+        "height": 640,
+        "description": "tileable campaign fog noise",
+        "imageUrl": "./assets/maps/yuanmo-fog-noise.png"
       },
       {
         "id": "map_trade_routes",

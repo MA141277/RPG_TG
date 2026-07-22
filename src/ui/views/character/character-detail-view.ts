@@ -1,7 +1,6 @@
 import type { CharacterDefinition, SkillKey } from "../../../domain/character";
 import type {
   CharacterDetailScreenLayout,
-  LayoutEditorState,
   UiLayoutBackground,
   UiLayoutComponent,
   UiLayoutElement,
@@ -56,7 +55,6 @@ type CharacterDetailViewOptions = {
   armorName?: string;
   notoriety?: number;
   layout?: CharacterDetailScreenLayout;
-  layoutEditor?: LayoutEditorState;
 };
 
 type CharacterDetailLiveBinding = {
@@ -184,17 +182,6 @@ function renderLayoutStyle(
   return style.join(";");
 }
 
-function isLayoutEditorEnabled(
-  layout: CharacterDetailScreenLayout | undefined,
-  layoutEditor: LayoutEditorState | undefined
-): boolean {
-  return (
-    layout != null &&
-    layoutEditor?.isOpen === true &&
-    layoutEditor.selectedTargetId === layout.id
-  );
-}
-
 function renderComponentLayoutAttributes(
   options: CharacterDetailViewOptions,
   binding: CharacterDetailLiveBinding
@@ -208,29 +195,12 @@ function renderComponentLayoutAttributes(
     binding.offsetComponentId == null
       ? null
       : getLayoutComponent(options.layout, binding.offsetComponentId);
-  const isEditorEnabled = isLayoutEditorEnabled(options.layout, options.layoutEditor);
   const classNames = [
     ...(binding.className == null ? [] : binding.className.split(" ")),
     "c-main-ui-layout-component",
   ];
 
-  if (isEditorEnabled) {
-    classNames.push("is-layout-editable");
-  }
-
-  if (
-    isEditorEnabled &&
-    options.layoutEditor?.selectedComponentId === binding.componentId &&
-    options.layoutEditor.selectedElementId == null
-  ) {
-    classNames.push("is-selected-layout-component");
-  }
-
-  const interactiveAttributes = isEditorEnabled
-    ? ` data-layout-component-handle="${binding.componentId}" data-layout-component-select="${binding.componentId}" data-layout-live-label="${component.label}"`
-    : "";
-
-  return ` class="${classNames.join(" ")}" style="${renderLayoutStyle(component, offsetComponent)}"${interactiveAttributes}`;
+  return ` class="${classNames.join(" ")}" style="${renderLayoutStyle(component, offsetComponent)}"`;
 }
 
 function renderElementLayoutAttributes(
@@ -243,49 +213,12 @@ function renderElementLayoutAttributes(
     return binding.className == null ? "" : ` class="${binding.className}"`;
   }
 
-  const isEditorEnabled = isLayoutEditorEnabled(options.layout, options.layoutEditor);
   const classNames = [
     ...(binding.className == null ? [] : binding.className.split(" ")),
     "c-main-ui-layout-element",
   ];
 
-  if (isEditorEnabled) {
-    classNames.push("is-layout-editable");
-  }
-
-  if (
-    isEditorEnabled &&
-    options.layoutEditor?.selectedComponentId === binding.componentId &&
-    options.layoutEditor.selectedElementId === binding.elementId
-  ) {
-    classNames.push("is-selected-layout-element");
-  }
-
-  const value = `${binding.componentId}:${binding.elementId}`;
-  const interactiveAttributes = isEditorEnabled
-    ? ` data-layout-element-handle="${value}" data-layout-element-select="${value}" data-layout-live-label="${element.label}"`
-    : "";
-
-  return ` class="${classNames.join(" ")}" style="left:${element.rect.x}px;top:${element.rect.y}px;width:${element.rect.width}px;height:${element.rect.height}px"${interactiveAttributes}`;
-}
-
-function renderComponentResizeHandle(
-  options: CharacterDetailViewOptions,
-  componentId: string
-): string {
-  return isLayoutEditorEnabled(options.layout, options.layoutEditor)
-    ? `<span class="c-main-ui-layout-resize-handle" data-layout-component-resize="${componentId}" data-layout-resize-axis="xy" aria-hidden="true"></span>`
-    : "";
-}
-
-function renderElementResizeHandle(
-  options: CharacterDetailViewOptions,
-  componentId: string,
-  elementId: string
-): string {
-  return isLayoutEditorEnabled(options.layout, options.layoutEditor)
-    ? `<span class="c-main-ui-layout-element-resize-handle" data-layout-element-resize="${componentId}:${elementId}" data-layout-resize-axis="xy" aria-hidden="true"></span>`
-    : "";
+  return ` class="${classNames.join(" ")}" style="left:${element.rect.x}px;top:${element.rect.y}px;width:${element.rect.width}px;height:${element.rect.height}px"`;
 }
 
 function renderMeter(value: number, modifierClassName = ""): string {
@@ -383,19 +316,16 @@ export function renderCharacterDetailView(
         ...characterDetailLiveBindings.canvas,
         className: "c-character-detail",
       })}>
-        ${renderComponentResizeHandle(options, "character-detail-canvas")}
         <div class="c-character-detail__left-column">
           <div ${renderComponentLayoutAttributes(options, {
             ...characterDetailLiveBindings.namePlaque,
             className: "c-character-detail__name-plaque",
           })}>
-            ${renderComponentResizeHandle(options, "character-detail-name-plaque")}
             <span ${renderElementLayoutAttributes(options, {
               ...characterDetailLiveBindings.name,
               className: "c-character-detail__portrait-label",
             })}>
               ${character.name}
-              ${renderElementResizeHandle(options, "character-detail-name-plaque", "name")}
             </span>
           </div>
           <div ${renderComponentLayoutAttributes(options, {
@@ -407,26 +337,22 @@ export function renderCharacterDetailView(
                 ? ""
                 : `<img class="c-character-detail__portrait-image" src="${portraitImageUrl}" alt="${character.name}立绘">`
             }
-            ${renderComponentResizeHandle(options, "character-detail-portrait-area")}
           </div>
           <div ${renderComponentLayoutAttributes(options, {
             ...characterDetailLiveBindings.biography,
             className: "c-character-detail__biography",
           })}>
-            ${renderComponentResizeHandle(options, "character-detail-biography")}
             <div ${renderElementLayoutAttributes(options, {
               ...characterDetailLiveBindings.lifespan,
               className: "c-character-detail__lifespan",
             })}>
               ${character.birthYear}～${character.deathYear ?? "在世"}
-              ${renderElementResizeHandle(options, "character-detail-biography", "lifespan")}
             </div>
             <p ${renderElementLayoutAttributes(options, {
               ...characterDetailLiveBindings.bio,
               className: "c-character-detail__bio",
             })}>
               ${character.biography ?? "暂无人物简介。"}
-              ${renderElementResizeHandle(options, "character-detail-biography", "bio")}
             </p>
           </div>
         </div>
@@ -436,19 +362,16 @@ export function renderCharacterDetailView(
             ...characterDetailLiveBindings.basicInfo,
             className: "c-character-detail__info-panel",
           })}>
-            ${renderComponentResizeHandle(options, "character-detail-basic-info")}
             <h2 ${renderElementLayoutAttributes(options, {
               ...characterDetailLiveBindings.basicInfoTitle,
               className: "c-character-detail__panel-title",
             })}>
               基本情报
-              ${renderElementResizeHandle(options, "character-detail-basic-info", "title")}
             </h2>
             <div ${renderElementLayoutAttributes(options, {
               ...characterDetailLiveBindings.basicInfoContent,
               className: "c-character-detail__info-grid",
             })}>
-              ${renderElementResizeHandle(options, "character-detail-basic-info", "content")}
               <div class="c-character-detail__info-row">
                 <span class="c-character-detail__label">所属</span>
                 <strong>${options.clanName ?? "无"}</strong>
@@ -484,19 +407,16 @@ export function renderCharacterDetailView(
             ...characterDetailLiveBindings.abilityInfo,
             className: "c-character-detail__ability-panel",
           })}>
-            ${renderComponentResizeHandle(options, "character-detail-ability-info")}
             <h2 ${renderElementLayoutAttributes(options, {
               ...characterDetailLiveBindings.abilityInfoTitle,
               className: "c-character-detail__panel-title",
             })}>
               能力情报
-              ${renderElementResizeHandle(options, "character-detail-ability-info", "title")}
             </h2>
             <div ${renderElementLayoutAttributes(options, {
               ...characterDetailLiveBindings.abilityInfoContent,
               className: "c-character-detail__ability-grid",
             })}>
-              ${renderElementResizeHandle(options, "character-detail-ability-info", "content")}
               <div class="c-character-detail__stat-row">
                 <span class="c-character-detail__label">${STAT_LABELS.leadership}</span>
                 ${renderMeter(leadership)}
@@ -539,19 +459,16 @@ export function renderCharacterDetailView(
             ...characterDetailLiveBindings.skillInfo,
             className: "c-character-detail__skill-panel",
           })}>
-            ${renderComponentResizeHandle(options, "character-detail-skill-info")}
             <h2 ${renderElementLayoutAttributes(options, {
               ...characterDetailLiveBindings.skillInfoTitle,
               className: "c-character-detail__panel-title",
             })}>
               技能情报
-              ${renderElementResizeHandle(options, "character-detail-skill-info", "title")}
             </h2>
             <ul ${renderElementLayoutAttributes(options, {
               ...characterDetailLiveBindings.skillInfoContent,
               className: "c-character-detail__skills-grid",
             })}>
-              ${renderElementResizeHandle(options, "character-detail-skill-info", "content")}
               ${DETAIL_SKILLS.map((skill) => renderSkillIconRow(skill, skills)).join("")}
             </ul>
           </div>
@@ -560,28 +477,24 @@ export function renderCharacterDetailView(
             ...characterDetailLiveBindings.actions,
             className: "c-character-detail__actions",
           })}>
-            ${renderComponentResizeHandle(options, "character-detail-actions")}
           </div>
           <button ${renderComponentLayoutAttributes(options, {
             ...characterDetailLiveBindings.cardButton,
             className: "c-character-detail__action-button c-character-detail__action-button--card",
           })} type="button" data-action="open-cards">
             卡片
-            ${renderComponentResizeHandle(options, "character-detail-card-button")}
           </button>
           <button ${renderComponentLayoutAttributes(options, {
             ...characterDetailLiveBindings.valuablesButton,
             className: "c-character-detail__action-button c-character-detail__action-button--item",
           })} type="button" data-action="open-valuables">
             贵重品
-            ${renderComponentResizeHandle(options, "character-detail-valuables-button")}
           </button>
           <button ${renderComponentLayoutAttributes(options, {
             ...characterDetailLiveBindings.backButton,
             className: "c-character-detail__action-button c-character-detail__action-button--back",
           })} type="button" data-action="close-character-detail">
             返回
-            ${renderComponentResizeHandle(options, "character-detail-back-button")}
           </button>
         </div>
       </div>

@@ -1,5 +1,8 @@
 # Weekly Architecture Report
 
+> **Historical Artifact:** Deprecated under `fail-closed progress-driven governance`. This file records the retired weekly-governance model and must not be used as the active resume entry for new work.
+
+
 **Week Of:** `2026-07-02`
 
 ## Purpose
@@ -118,3 +121,4 @@ flowchart TD
 No later child is recorded inside this closed set.
 
 If later continuation is still needed, it must begin from a fresh weekly review and identify a different problem type than the completed Child 14 / Child 15 / Child 16 sequence.
+

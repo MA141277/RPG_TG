@@ -1,10 +1,3 @@
-import {
-  medicineHouseAilmentTargets,
-  medicineHouseCompoundingBaseDurationSec,
-  medicineHouseCompoundingBaseTurns,
-  medicineHouseCompoundingGradeRewards,
-  medicineHouseHerbCatalog,
-} from "../../content/houses/medicine-house-content";
 import type {
   CompoundingHerbSelection,
   CompoundingSessionTarget,
@@ -12,6 +5,7 @@ import type {
   MedicineHouseHerbDefinition,
 } from "../../domain/medicine-house";
 import { pickRandom } from "../../shared/random";
+import { getMedicineHouseContentDefaults } from "./medicine-house-content-defaults";
 
 export type CompoundingMixTotals = {
   coldBalance: number;
@@ -23,7 +17,7 @@ export type CompoundingGradeResult = {
   grade: MedicineHouseCompoundingGrade;
   totals: CompoundingMixTotals;
   summaryLines: string[];
-  reward: (typeof medicineHouseCompoundingGradeRewards)["S"];
+  reward: ReturnType<typeof getMedicineHouseContentDefaults>["medicineHouseCompoundingGradeRewards"]["S"];
 };
 
 function sumSelections(
@@ -53,6 +47,11 @@ export function getCompoundingLimits(medicineSkill: number): {
   durationSec: number;
   herbCount: number;
 } {
+  const {
+    medicineHouseCompoundingBaseDurationSec,
+    medicineHouseCompoundingBaseTurns,
+    medicineHouseHerbCatalog,
+  } = getMedicineHouseContentDefaults();
   const tier = Math.max(0, Math.floor(medicineSkill / 3));
   return {
     maxTurns: medicineHouseCompoundingBaseTurns + tier,
@@ -62,6 +61,7 @@ export function getCompoundingLimits(medicineSkill: number): {
 }
 
 export function pickCompoundingTarget(medicineSkill: number): CompoundingSessionTarget {
+  const { medicineHouseAilmentTargets } = getMedicineHouseContentDefaults();
   const tier = Math.max(0, Math.floor(medicineSkill / 4));
   const pool = medicineHouseAilmentTargets.filter((_, index) => index <= 2 + tier);
   return pickRandom(pool.length > 0 ? pool : medicineHouseAilmentTargets);
@@ -70,6 +70,7 @@ export function pickCompoundingTarget(medicineSkill: number): CompoundingSession
 export function getAvailableHerbsForSkill(
   medicineSkill: number
 ): MedicineHouseHerbDefinition[] {
+  const { medicineHouseHerbCatalog } = getMedicineHouseContentDefaults();
   const { herbCount } = getCompoundingLimits(medicineSkill);
   return medicineHouseHerbCatalog.slice(0, herbCount);
 }
@@ -79,6 +80,7 @@ export function resolveCompoundingGrade(
   selections: CompoundingHerbSelection[],
   herbs: MedicineHouseHerbDefinition[]
 ): CompoundingGradeResult {
+  const { medicineHouseCompoundingGradeRewards } = getMedicineHouseContentDefaults();
   const totals = sumSelections(selections, herbs);
   const coldDelta = Math.abs(totals.coldBalance - target.coldRequired);
   const healDelta = Math.abs(totals.heal - target.healRequired);

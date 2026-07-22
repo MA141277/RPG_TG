@@ -1,5 +1,8 @@
 # Weekly Module Map
 
+> **Historical Artifact:** Deprecated under `fail-closed progress-driven governance`. This file records the retired weekly-governance model and must not be used as the active resume entry for new work.
+
+
 **Week Of:** `2026-06-29`
 
 ## Purpose
@@ -134,3 +137,4 @@ If a module cannot be summarized here, it is still acting like a black box.
 - Where should the public `House Runtime Request` contract stop so it does not leak domain `HouseModuleRequest` into core ownership?
 - Should `EngineRegistry` keep only abstract lookup tables in `src/core`, with concrete content/module assembly remaining outside `core` during migration?
 - Which presenter output fields should become stable contracts before the future layout renderer boundary is introduced?
+

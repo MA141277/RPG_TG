@@ -1,5 +1,8 @@
 # Main Startup Weekly Module Map
 
+> **Historical Artifact:** Deprecated under `fail-closed progress-driven governance`. This file records the retired weekly-governance model and must not be used as the active resume entry for new work.
+
+
 **Week Of:** `2026-07-03`
 
 ## Purpose
@@ -21,3 +24,4 @@ This file maps the modules relevant to the fresh startup-family extraction set.
 - Can startup-family routing move out of `main.ts` without forcing any `MainUiFlow` contract redesign?
 - Can Child 23 consume existing bootstrap helpers without reopening render orchestration?
 - Does the startup-family extraction need one coordinator file or a coordinator plus a small contract file?
+

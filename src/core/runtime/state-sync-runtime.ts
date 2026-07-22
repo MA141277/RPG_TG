@@ -7,35 +7,16 @@ import type {
 import type { RuntimeRequest } from "../contracts/runtime-request";
 import type { RuntimeResult } from "../contracts/runtime-result";
 import type { TaskDefinition } from "../contracts/task-runtime";
-import type { RuntimeState as LegacyBridgeRuntimeState } from "../contracts/runtime-state";
 import type { RuntimeFollowUpContext, RuntimeRouter } from "./runtime-router";
 import { dispatchRuntimeRequest } from "./runtime-dispatch";
-import { syncAppState } from "./state-sync-app-bridge";
-import { hydrateFromSave } from "./state-sync-hydration";
+import {
+  stateSyncCoreSeam,
+  type RuntimeAppStateInput,
+} from "./state-sync-core-seam";
 import { rebuildAfterModActivation } from "./state-sync-mod-rebuild";
-import { normalizeRuntimeState } from "./state-sync-normalization";
-import { preparePresentationInput } from "./state-sync-presentation";
-import { prepareSaveState } from "./state-sync-save";
 import { validateCanonicalRuntimeState } from "./state-sync-validation";
 
-export type RuntimeStateBridgeInput = {
-  gameState: LegacyBridgeRuntimeState["core"];
-  beggingMiniGameState: LegacyBridgeRuntimeState["app"]["beggingMiniGameState"];
-  autoAdvanceState: LegacyBridgeRuntimeState["app"]["autoAdvanceState"];
-  campaignTravelState: LegacyBridgeRuntimeState["app"]["campaignTravelState"];
-  cityDirectoryState: LegacyBridgeRuntimeState["app"]["cityDirectoryState"];
-  cityMenuState: LegacyBridgeRuntimeState["app"]["cityMenuState"];
-  locationDialogueState: LegacyBridgeRuntimeState["app"]["locationDialogueState"];
-  modalState: LegacyBridgeRuntimeState["app"]["modalState"];
-  characterDefinitions?: unknown;
-};
-
-export type RuntimeResultBridgeInput = {
-  state: LegacyBridgeRuntimeState;
-  characterDefinitions?: unknown;
-};
-
-export type RuntimeCommitInput<TAppState extends RuntimeStateBridgeInput> = {
+export type RuntimeCommitInput<TAppState extends RuntimeAppStateInput> = {
   state: TAppState;
   request: RuntimeRequest;
   context: {
@@ -45,98 +26,28 @@ export type RuntimeCommitInput<TAppState extends RuntimeStateBridgeInput> = {
   };
 };
 
-export type RuntimeCommitResult<TAppState extends RuntimeStateBridgeInput> = {
+export type RuntimeCommitResult<TAppState extends RuntimeAppStateInput> = {
   state: TAppState;
   runtimeResult: RuntimeResult;
 };
 
-export function createRuntimeBridgeState(
-  state: RuntimeStateBridgeInput
-): LegacyBridgeRuntimeState {
-  return {
-    core: state.gameState,
-    app: {
-      beggingMiniGameState: state.beggingMiniGameState,
-      autoAdvanceState: state.autoAdvanceState,
-      campaignTravelState: state.campaignTravelState,
-      cityDirectoryState: state.cityDirectoryState,
-      cityMenuState: state.cityMenuState,
-      locationDialogueState: state.locationDialogueState,
-      modalState: state.modalState,
-    },
-    view: {},
-  };
-}
-
-export function applyRuntimeBridgeState<
-  TAppState extends RuntimeStateBridgeInput,
->(
-  state: TAppState,
-  runtimeState: LegacyBridgeRuntimeState,
-  characterDefinitions?: unknown
-): TAppState {
-  return {
-    ...state,
-    gameState: runtimeState.core,
-    beggingMiniGameState: runtimeState.app.beggingMiniGameState,
-    autoAdvanceState: runtimeState.app.autoAdvanceState,
-    campaignTravelState: runtimeState.app.campaignTravelState,
-    cityDirectoryState: runtimeState.app.cityDirectoryState,
-    cityMenuState: runtimeState.app.cityMenuState,
-    locationDialogueState: runtimeState.app.locationDialogueState,
-    modalState: runtimeState.app.modalState,
-    ...(characterDefinitions == null
-      ? {}
-      : { characterDefinitions }),
-  } as TAppState;
-}
-
-export function applyRuntimeBridgeResult<
-  TAppState extends RuntimeStateBridgeInput,
->(state: TAppState, result: RuntimeResultBridgeInput): TAppState {
-  return applyRuntimeBridgeState(
-    state,
-    result.state,
-    result.characterDefinitions
-  );
-}
-
-export function createInteractiveRuntimeState(
-  state: RuntimeStateBridgeInput
-): LegacyBridgeRuntimeState {
-  return createRuntimeBridgeState(state);
-}
-
-export function applyInteractiveRuntimeState<
-  TAppState extends RuntimeStateBridgeInput,
->(
-  state: TAppState,
-  runtimeState: LegacyBridgeRuntimeState,
-  characterDefinitions?: unknown
-): TAppState {
-  return applyRuntimeBridgeState(state, runtimeState, characterDefinitions);
-}
-
-export function applyInteractiveRuntimeResult<
-  TAppState extends RuntimeStateBridgeInput,
->(state: TAppState, result: RuntimeResultBridgeInput): TAppState {
-  return applyRuntimeBridgeResult(state, result);
-}
-
 export function commitRuntimeRequest<
-  TAppState extends RuntimeStateBridgeInput,
+  TAppState extends RuntimeAppStateInput,
 >(input: RuntimeCommitInput<TAppState>): RuntimeCommitResult<TAppState> {
   const runtimeResult = dispatchRuntimeRequest({
-    state: createRuntimeBridgeState(input.state),
+    state: stateSyncCoreSeam.createRuntimeStateFromAppState(input.state),
     request: input.request,
     context: input.context,
   });
 
   return {
-    state: applyRuntimeBridgeState(
+    state: stateSyncCoreSeam.applyRuntimeStateToAppState(
       input.state,
       runtimeResult.state,
-      runtimeResult.characterDefinitions
+      runtimeResult.characterDefinitions,
+      runtimeResult.characterStatusById,
+      runtimeResult.cityStatusById,
+      runtimeResult.buildingStatusById
     ),
     runtimeResult,
   };
@@ -148,9 +59,11 @@ export function syncState(
 ): StateSyncResult {
   let runtimeState =
     context.runtimeState ??
-    normalizeRuntimeState(
-      hydrateFromSave(context.saveState) ??
-        canonicalFromLegacyRuntimeState(context.legacyRuntimeState)
+    stateSyncCoreSeam.normalizeRuntimeState(
+      stateSyncCoreSeam.hydrateRuntimeState(
+        context.saveState,
+        context.legacyRuntimeState
+      )
     );
 
   if (trigger.type === "mod-activated") {
@@ -163,11 +76,11 @@ export function syncState(
 
   const appState =
     trigger.type === "session-rebuild"
-      ? syncAppState(runtimeState, context.appState)
+      ? stateSyncCoreSeam.syncAppState(runtimeState, context.appState)
       : context.appState;
   const saveState =
     trigger.type === "pre-save"
-      ? prepareSaveState(runtimeState, context.saveState)
+      ? stateSyncCoreSeam.createSaveState(runtimeState, context.saveState)
       : context.saveState;
 
   const result: StateSyncResult = {
@@ -184,31 +97,13 @@ export function syncState(
   if (context.presentationInput !== undefined) {
     result.presentationInput = context.presentationInput;
   } else if (appState !== undefined) {
-    result.presentationInput = preparePresentationInput(runtimeState, appState);
+    result.presentationInput = stateSyncCoreSeam.createPresentationInput(
+      runtimeState,
+      appState
+    );
   }
 
   return result;
-}
-
-function canonicalFromLegacyRuntimeState(
-  state: LegacyBridgeRuntimeState | undefined
-): ReturnType<typeof normalizeRuntimeState> {
-  if (state == null) {
-    throw new Error("StateSync Runtime requires runtime state input.");
-  }
-
-  return {
-    core: state.core,
-    tasks: {},
-    events: {},
-    narrative: {},
-    world: {},
-    interactive: {
-      ...state.app,
-      core: state.core,
-    },
-    modules: {},
-  };
 }
 
 function validateConsistency(runtimeState: CanonicalRuntimeState): string[] {

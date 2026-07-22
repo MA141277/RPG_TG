@@ -1,5 +1,6 @@
 import type { RuntimeRequest } from "../contracts/runtime-request";
 import type { RuntimeResult } from "../contracts/runtime-result";
+import type { EffectSettlementResult } from "../contracts/effect-settlement";
 import type { RuntimeState } from "../contracts/runtime-state";
 import type {
   TaskAction,
@@ -7,6 +8,7 @@ import type {
   TaskSignal,
 } from "../contracts/task-runtime";
 import type { RuntimeFollowUpContext } from "./runtime-router";
+import type { RuntimeRouteResult } from "./runtime-router";
 import type { RuntimeRouter } from "./runtime-router";
 import { settleRuntimeEffects } from "./runtime-settlement";
 import {
@@ -28,112 +30,137 @@ export function dispatchRuntimeRequest(input: {
     state: input.state,
     request: input.request,
   });
-  const effectSettlement = settleRuntimeEffects({
+  return settleRoutedRuntimeResult({
+    routed,
+    followUp: input.context.followUp,
+    taskDefinitionsById: input.context.taskDefinitionsById,
+  });
+}
+
+function settleRoutedRuntimeResult(input: {
+  routed: RuntimeRouteResult;
+  followUp: RuntimeFollowUpContext | undefined;
+  taskDefinitionsById: Record<string, TaskDefinition> | undefined;
+}): RuntimeResult {
+  const { routed, followUp, taskDefinitionsById } = input;
+  const settledEffects = settleRuntimeEffects({
     state: routed.state,
     effects: routed.effects,
     emittedBy: "runtime-router",
     appliedBy: "runtime-settlement",
+    ...(routed.characterDefinitions == null
+      ? {}
+      : { characterDefinitions: routed.characterDefinitions }),
+    ...(routed.characterStatusById == null
+      ? {}
+      : { characterStatusById: routed.characterStatusById }),
   });
-  const taskSettlement = settleRuntimeTasks({
-    state: effectSettlement.state,
-    taskActions: routed.taskActions,
-    taskSignals: routed.taskSignals,
-    taskDefinitionsById: input.context.taskDefinitionsById,
+  const settledTasks = settleRuntimeTasks({
+    state: settledEffects.state,
+    taskInputs: routed.taskInputs,
+    taskDefinitionsById,
   });
-  const settlement =
-    taskSettlement.effects.length === 0
-      ? { state: taskSettlement.state }
+  const finalState: EffectSettlementResult =
+    settledTasks.effects.length === 0
+      ? {
+          state: settledTasks.state,
+          ...(settledEffects.characterDefinitions == null
+            ? {}
+            : { characterDefinitions: settledEffects.characterDefinitions }),
+          ...(settledEffects.characterStatusById == null
+            ? {}
+            : { characterStatusById: settledEffects.characterStatusById }),
+          settledEffects: [],
+          unsupportedEffects: [],
+          warnings: [],
+        }
       : settleRuntimeEffects({
-          state: taskSettlement.state,
-          effects: taskSettlement.effects,
-          emittedBy: "task-runtime",
-          appliedBy: "runtime-settlement",
-        });
-  const followUp = settleRuntimeFollowUp({
-    state: settlement.state,
-    outcome: routed.outcome,
-    interactive: routed.interactive,
-    context: input.context.followUp,
+        state: settledTasks.state,
+        effects: settledTasks.effects,
+        emittedBy: "task-runtime",
+        appliedBy: "runtime-settlement",
+        ...(settledEffects.characterDefinitions == null
+          ? {}
+          : { characterDefinitions: settledEffects.characterDefinitions }),
+        ...(settledEffects.characterStatusById == null
+          ? {}
+          : { characterStatusById: settledEffects.characterStatusById }),
+      });
+  const handledFollowUp = settleRuntimeFollowUp({
+    state: finalState.state,
+    followUp: routed.followUp,
+    context: followUp,
   });
 
   return {
     ...routed,
-    ...(taskSettlement.taskUpdates.length === 0
+    ...(handledFollowUp.characterDefinitions === undefined
       ? {}
-      : {
-          taskUpdates: [
-            ...(routed.taskUpdates ?? []),
-            ...taskSettlement.taskUpdates,
-          ],
-        }),
-    ...(followUp.characterDefinitions === undefined
+      : { characterDefinitions: handledFollowUp.characterDefinitions }),
+    ...(handledFollowUp.characterDefinitions !== undefined ||
+    finalState.characterDefinitions === undefined
       ? {}
-      : { characterDefinitions: followUp.characterDefinitions }),
-    state: followUp.state,
-    ...(followUp.outcome === undefined ? {} : { outcome: followUp.outcome }),
-    ...(followUp.interactive === undefined
+      : { characterDefinitions: finalState.characterDefinitions }),
+    ...(finalState.characterStatusById === undefined
       ? {}
-      : { interactive: followUp.interactive }),
+      : { characterStatusById: finalState.characterStatusById }),
+    state: handledFollowUp.state,
+    ...(handledFollowUp.followUp === undefined
+      ? {}
+      : { followUp: handledFollowUp.followUp }),
   };
 }
 
 function settleRuntimeTasks(input: {
   state: RuntimeState;
-  taskActions: RuntimeResult["taskActions"];
-  taskSignals: RuntimeResult["taskSignals"];
+  taskInputs: RuntimeRouteResult["taskInputs"];
   taskDefinitionsById: Record<string, TaskDefinition> | undefined;
 }): {
   state: RuntimeState;
-  taskUpdates: NonNullable<RuntimeResult["taskUpdates"]>;
   effects: RuntimeResult["effects"];
 } {
   if (input.taskDefinitionsById == null) {
     return {
       state: input.state,
-      taskUpdates: [],
       effects: [],
     };
   }
 
   let nextTaskState =
     input.state.core.runtime.tasks ?? createEmptyTaskRuntimeState("");
-  const taskUpdates: NonNullable<RuntimeResult["taskUpdates"]> = [];
+  let didSettleTaskState = false;
   const effects: RuntimeResult["effects"] = [];
 
-  for (const taskAction of input.taskActions ?? []) {
-    if (!isTaskRuntimeAction(taskAction)) {
+  for (const taskInput of input.taskInputs ?? []) {
+    if (isTaskRuntimeAction(taskInput)) {
+      const result = applyTaskAction({
+        state: nextTaskState,
+        definitionsById: input.taskDefinitionsById,
+        action: taskInput,
+      });
+      nextTaskState = result.state;
+      didSettleTaskState ||= result.taskUpdates.length > 0;
+      effects.push(...result.effects);
       continue;
     }
 
-    const result = applyTaskAction({
-      state: nextTaskState,
-      definitionsById: input.taskDefinitionsById,
-      action: taskAction,
-    });
-    nextTaskState = result.state;
-    taskUpdates.push(...result.taskUpdates);
-    effects.push(...result.effects);
-  }
-
-  for (const taskSignal of input.taskSignals ?? []) {
-    if (!isTaskRuntimeSignal(taskSignal)) {
+    if (!isTaskRuntimeSignal(taskInput)) {
       continue;
     }
 
     const result = applyTaskSignal({
       state: nextTaskState,
       definitionsById: input.taskDefinitionsById,
-      signal: taskSignal,
+      signal: taskInput,
     });
     nextTaskState = result.state;
-    taskUpdates.push(...result.taskUpdates);
+    didSettleTaskState ||= result.taskUpdates.length > 0;
     effects.push(...result.effects);
   }
 
-  if (taskUpdates.length === 0 && effects.length === 0) {
+  if (!didSettleTaskState && effects.length === 0) {
     return {
       state: input.state,
-      taskUpdates,
       effects,
     };
   }
@@ -149,26 +176,25 @@ function settleRuntimeTasks(input: {
         },
       },
     },
-    taskUpdates,
     effects,
   };
 }
 
 function isTaskRuntimeAction(
-  value: NonNullable<RuntimeResult["taskActions"]>[number]
+  value: NonNullable<RuntimeResult["taskInputs"]>[number]
 ): value is TaskAction {
   const candidate = value as Record<string, unknown>;
   return (
     (value.type === "start" ||
       value.type === "complete" ||
       value.type === "fail") &&
-    typeof value.taskId === "string" &&
+    typeof candidate.taskId === "string" &&
     typeof candidate.occurredAt === "string"
   );
 }
 
 function isTaskRuntimeSignal(
-  value: NonNullable<RuntimeResult["taskSignals"]>[number]
+  value: NonNullable<RuntimeResult["taskInputs"]>[number]
 ): value is TaskSignal {
   const candidate = value as Record<string, unknown>;
   return (
@@ -179,46 +205,34 @@ function isTaskRuntimeSignal(
 
 function settleRuntimeFollowUp(input: {
   state: RuntimeState;
-  outcome: RuntimeResult["outcome"];
-  interactive: RuntimeResult["interactive"];
+  followUp: RuntimeResult["followUp"];
   context: RuntimeFollowUpContext | undefined;
 }): {
   state: RuntimeState;
-  characterDefinitions?: unknown;
-  outcome: RuntimeResult["outcome"];
-  interactive: RuntimeResult["interactive"];
+  characterDefinitions?: RuntimeResult["characterDefinitions"];
+  followUp: RuntimeResult["followUp"];
 } {
   let state = input.state;
-  let characterDefinitions: unknown;
-  let outcome = input.outcome;
-  let interactive = input.interactive;
+  let characterDefinitions: RuntimeResult["characterDefinitions"];
+  let followUp = input.followUp;
 
-  if (outcome != null && input.context?.handleOutcome != null) {
-    const handled = input.context.handleOutcome({
+  if (
+    followUp != null &&
+    followUp.type !== "none" &&
+    input.context?.handleFollowUp != null
+  ) {
+    const handled = input.context.handleFollowUp({
       state,
-      outcome,
+      followUp,
     });
     state = handled.state;
     characterDefinitions = handled.characterDefinitions;
-    outcome = null;
-  }
-
-  if (
-    interactive != null &&
-    interactive.type !== "none" &&
-    input.context?.handleInteractive != null
-  ) {
-    state = input.context.handleInteractive({
-      state,
-      interactive,
-    });
-    interactive = { type: "none" };
+    followUp = { type: "none" };
   }
 
   return {
     state,
     ...(characterDefinitions === undefined ? {} : { characterDefinitions }),
-    outcome,
-    interactive,
+    followUp,
   };
 }

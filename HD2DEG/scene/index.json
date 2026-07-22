@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-11T20:07:30+08:00",
+  "updatedAt": "2026-06-23T17:04:55+08:00",
   "count": 37,
   "items": [
     {
@@ -7,13 +7,27 @@
       "kind": "scene",
       "title": "default_scene",
       "createdAt": "2026-04-27T16:56:48+08:00",
-      "updatedAt": "2026-06-11T20:07:30+08:00",
+      "updatedAt": "2026-06-23T17:04:55+08:00",
       "schemaVersion": 1,
-      "objectCount": 37,
-      "buildingCount": 37,
+      "objectCount": 35,
+      "buildingCount": 35,
       "npcCount": 10,
       "files": {
         "scene": "scene/default_scene/scene.json"
+      }
+    },
+    {
+      "id": "default_scene__interior__house_3",
+      "kind": "scene",
+      "title": "default_scene__interior__house_3",
+      "createdAt": "2026-04-29T01:26:31+08:00",
+      "updatedAt": "2026-06-23T17:02:39+08:00",
+      "schemaVersion": 1,
+      "objectCount": 0,
+      "buildingCount": 0,
+      "npcCount": 0,
+      "files": {
+        "scene": "scene/default_scene__interior__house_3/scene.json"
       }
     },
     {
@@ -392,20 +406,6 @@
       "npcCount": 0,
       "files": {
         "scene": "scene/default_scene__interior__house_1/scene.json"
-      }
-    },
-    {
-      "id": "default_scene__interior__house_3",
-      "kind": "scene",
-      "title": "default_scene__interior__house_3",
-      "createdAt": "2026-04-29T01:26:31+08:00",
-      "updatedAt": "2026-05-06T20:11:06+08:00",
-      "schemaVersion": 1,
-      "objectCount": 0,
-      "buildingCount": 0,
-      "npcCount": 0,
-      "files": {
-        "scene": "scene/default_scene__interior__house_3/scene.json"
       }
     },
     {

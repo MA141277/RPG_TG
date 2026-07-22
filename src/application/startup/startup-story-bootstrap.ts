@@ -1,18 +1,18 @@
 import type { AppState } from "../app-shell";
 import type { ActivityDefinition } from "../../domain/activity";
-import type { SceneDefinition } from "../../domain/action";
+import type { RuntimeDialogueDefinition } from "../../domain/dialogue";
 import type { EventDefinition } from "../../domain/event";
 import { startStoryEventById } from "../story/story-runtime";
 
 export type StartupStoryBootstrap = {
   eventId: string;
-  sceneCursor?: number;
-  sceneStatus?: AppState["gameState"]["scene"]["status"];
+  dialogueCursor?: number;
+  dialogueStatus?: AppState["gameState"]["dialogue"]["status"];
 };
 
 export type StartupStoryBootstrapContent = {
   eventDefinitionsById: Record<string, EventDefinition>;
-  sceneDefinitionsById: Record<string, SceneDefinition>;
+  dialogueDefinitionsById: Record<string, RuntimeDialogueDefinition>;
   activityDefinitionsById?: Record<string, ActivityDefinition>;
   textEntriesById?: Record<string, string>;
 };
@@ -34,31 +34,31 @@ export function applyStartupStoryBootstrap(input: {
     },
     {
       eventDefinitionsById: content.eventDefinitionsById,
-      sceneDefinitionsById: content.sceneDefinitionsById,
+      dialogueDefinitionsById: content.dialogueDefinitionsById,
       activityDefinitionsById: content.activityDefinitionsById,
       textEntriesById: content.textEntriesById,
     },
     bootstrap.eventId
   );
 
-  const nextScene =
-    bootstrap.sceneCursor == null && bootstrap.sceneStatus == null
-      ? storyResult.state.scene
+  const nextDialogue =
+    bootstrap.dialogueCursor == null && bootstrap.dialogueStatus == null
+      ? storyResult.state.dialogue
       : {
-          ...storyResult.state.scene,
-          ...(bootstrap.sceneCursor == null
+          ...storyResult.state.dialogue,
+          ...(bootstrap.dialogueCursor == null
             ? {}
-            : { cursor: bootstrap.sceneCursor }),
-          ...(bootstrap.sceneStatus == null
+            : { cursor: bootstrap.dialogueCursor }),
+          ...(bootstrap.dialogueStatus == null
             ? {}
-            : { status: bootstrap.sceneStatus }),
+            : { status: bootstrap.dialogueStatus }),
         };
 
   return {
     ...appState,
     gameState: {
       ...storyResult.state,
-      scene: nextScene,
+      dialogue: nextDialogue,
     },
     characterDefinitions: storyResult.characterDefinitions,
   };

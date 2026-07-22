@@ -1,0 +1,872 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>剧本编辑器 UI 重设计演示</title>
+    <style>
+      :root {
+        --bg: #140d08;
+        --panel: rgba(47, 28, 17, 0.9);
+        --panel-2: rgba(29, 20, 14, 0.94);
+        --line: rgba(226, 190, 132, 0.22);
+        --line-strong: rgba(226, 190, 132, 0.42);
+        --text: #f7ecdd;
+        --muted: rgba(247, 236, 221, 0.68);
+        --gold: #ddb26d;
+        --green-soft: rgba(56, 100, 68, 0.24);
+        --danger: #8b4338;
+        --shadow: 0 24px 70px rgba(0, 0, 0, 0.32);
+        --radius-xl: 28px;
+        --radius-lg: 20px;
+        --radius-md: 14px;
+        --radius-sm: 999px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Noto Serif SC", "Source Han Serif SC", "Microsoft YaHei", serif;
+        color: var(--text);
+        background:
+          radial-gradient(circle at top left, rgba(159, 101, 37, 0.16), transparent 28%),
+          radial-gradient(circle at top right, rgba(70, 121, 80, 0.12), transparent 26%),
+          linear-gradient(180deg, #0f0906 0%, #1c110b 100%);
+      }
+
+      button,
+      input,
+      select,
+      textarea {
+        font: inherit;
+      }
+
+      .page {
+        min-height: 100vh;
+        padding: 28px;
+      }
+
+      .shell {
+        width: min(1480px, 100%);
+        margin: 0 auto;
+      }
+
+      .demo-bar,
+      .hero-card,
+      .panel,
+      .project-card,
+      .workspace-frame,
+      .workspace-rail,
+      .workspace-listpane,
+      .workspace-center,
+      .workspace-right,
+      .confirm-modal__card {
+        border: 1px solid var(--line);
+        border-radius: var(--radius-xl);
+        background: linear-gradient(180deg, rgba(55, 32, 19, 0.92), rgba(33, 22, 15, 0.96));
+        box-shadow: var(--shadow);
+      }
+
+      .demo-bar {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 20px;
+        padding: 14px 18px;
+        background: rgba(24, 15, 10, 0.84);
+        backdrop-filter: blur(14px);
+      }
+
+      .demo-bar__title {
+        margin: 0;
+        font-size: 18px;
+      }
+
+      .demo-bar__meta {
+        margin: 4px 0 0;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .segmented {
+        display: inline-flex;
+        gap: 8px;
+        padding: 6px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius-sm);
+        background: rgba(255, 255, 255, 0.03);
+      }
+
+      .segmented button,
+      .workspace-stage-tabs button,
+      .workspace-subnav button {
+        border: 0;
+        cursor: pointer;
+      }
+
+      .segmented button {
+        padding: 10px 16px;
+        border-radius: var(--radius-sm);
+        color: var(--muted);
+        background: transparent;
+      }
+
+      .segmented button.is-active,
+      .workspace-stage-tabs button.is-active {
+        color: #1a110a;
+        background: linear-gradient(180deg, #f2d4a1, #d4a05a);
+      }
+
+      .screen {
+        display: none;
+      }
+
+      .screen.is-active {
+        display: block;
+      }
+
+      .hero {
+        display: grid;
+        grid-template-columns: minmax(0, 1.1fr) minmax(320px, 0.9fr);
+        gap: 18px;
+      }
+
+      .hero-card,
+      .panel {
+        padding: 28px;
+      }
+
+      .eyebrow {
+        margin: 0 0 10px;
+        color: var(--gold);
+        font-size: 13px;
+        letter-spacing: 0.08em;
+      }
+
+      .hero-card h1 {
+        margin: 0;
+        font-size: clamp(30px, 4vw, 48px);
+        line-height: 1.04;
+      }
+
+      .hero-card p,
+      .panel__copy,
+      .project-card__copy,
+      .workspace-settings__subtitle,
+      .workspace-listpane__count,
+      .workspace-field__hint {
+        color: var(--muted);
+      }
+
+      .hero-card__actions,
+      .hero-card__chips,
+      .project-card__actions,
+      .workspace-actions,
+      .workspace-listpane__actions,
+      .workspace-settings__row,
+      .workspace-chip-row,
+      .confirm-modal__actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .primary-btn,
+      .secondary-btn,
+      .ghost-btn,
+      .danger-btn,
+      .tiny-btn {
+        border: 1px solid transparent;
+        border-radius: var(--radius-sm);
+        padding: 11px 18px;
+        cursor: pointer;
+      }
+
+      .primary-btn {
+        color: #1d1209;
+        background: linear-gradient(180deg, #f2d4a1, #d8a35e);
+      }
+
+      .secondary-btn,
+      .tiny-btn {
+        color: var(--text);
+        background: rgba(255, 255, 255, 0.05);
+        border-color: var(--line);
+      }
+
+      .ghost-btn {
+        color: var(--muted);
+        background: transparent;
+        border-color: var(--line);
+      }
+
+      .danger-btn {
+        color: #ffded7;
+        background: rgba(139, 67, 56, 0.22);
+        border-color: rgba(180, 93, 78, 0.48);
+      }
+
+      .tiny-btn {
+        padding: 8px 14px;
+      }
+
+      .pill,
+      .status-pill,
+      .workspace-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 13px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius-sm);
+        font-size: 13px;
+        color: var(--muted);
+        background: rgba(255, 255, 255, 0.03);
+      }
+
+      .status-pill--ok {
+        background: var(--green-soft);
+        border-color: rgba(105, 172, 117, 0.28);
+        color: #dbf0dd;
+      }
+
+      .panel__grid,
+      .project-list {
+        display: grid;
+        gap: 14px;
+      }
+
+      .panel__grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .panel__item {
+        padding: 16px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius-md);
+        background: rgba(255, 255, 255, 0.03);
+      }
+
+      .panel__item strong,
+      .project-card__title,
+      .tree-item__title,
+      .workspace-summary strong {
+        display: block;
+        margin-bottom: 6px;
+      }
+
+      .project-card {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 18px;
+        padding: 22px 24px;
+      }
+
+      .project-card__meta {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px;
+        margin-top: 14px;
+      }
+
+      .project-card__meta div {
+        padding: 12px;
+        border-radius: var(--radius-md);
+        background: rgba(255, 255, 255, 0.035);
+      }
+
+      .project-card__meta span,
+      .workspace-summary span,
+      .workspace-field__label {
+        display: block;
+        color: rgba(247, 236, 221, 0.56);
+        font-size: 12px;
+        margin-bottom: 4px;
+      }
+
+      .workspace-layout {
+        display: grid;
+        gap: 18px;
+      }
+
+      .workspace-frame {
+        overflow: hidden;
+      }
+
+      .workspace-toolbar-strip {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 14px 18px;
+        border-bottom: 1px solid var(--line);
+        background: rgba(17, 11, 8, 0.3);
+      }
+
+      .workspace-stage-tabs,
+      .workspace-subnav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .workspace-stage-tabs button,
+      .workspace-subnav button {
+        border: 1px solid var(--line);
+        border-radius: var(--radius-sm);
+        padding: 9px 14px;
+        color: var(--muted);
+        background: rgba(255, 255, 255, 0.03);
+      }
+
+      .workspace-subnav {
+        padding: 12px 18px 0;
+      }
+
+      .workspace-subnav button.is-active {
+        color: var(--text);
+        border-color: var(--line-strong);
+        background: rgba(124, 79, 39, 0.22);
+      }
+
+      .workspace-body {
+        display: grid;
+        grid-template-columns: 136px 320px minmax(0, 1fr) 280px;
+        gap: 16px;
+        padding: 16px;
+      }
+
+      .workspace-rail,
+      .workspace-listpane,
+      .workspace-center,
+      .workspace-right {
+        padding: 18px;
+      }
+
+      .workspace-rail {
+        display: grid;
+        align-content: start;
+        gap: 10px;
+      }
+
+      .workspace-rail__item {
+        padding: 14px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius-md);
+        color: var(--muted);
+        background: rgba(255, 255, 255, 0.03);
+      }
+
+      .workspace-rail__item strong {
+        display: block;
+        color: var(--text);
+        margin-bottom: 6px;
+      }
+
+      .workspace-rail__item.is-active,
+      .tree-item.is-active {
+        border-color: var(--line-strong);
+        background: rgba(124, 79, 39, 0.26);
+      }
+
+      .workspace-listpane__header {
+        margin-bottom: 12px;
+      }
+
+      .workspace-listpane__actions {
+        margin-bottom: 14px;
+      }
+
+      .tree-list {
+        display: grid;
+        gap: 10px;
+      }
+
+      .tree-item {
+        padding: 13px 14px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius-md);
+        background: rgba(255, 255, 255, 0.03);
+      }
+
+      .tree-item__meta {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .workspace-main {
+        display: grid;
+        gap: 14px;
+      }
+
+      .workspace-settings {
+        display: grid;
+        gap: 14px;
+      }
+
+      .workspace-settings__hero {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        gap: 14px;
+        align-items: start;
+      }
+
+      .workspace-settings__title {
+        margin: 0;
+        font-size: clamp(28px, 3vw, 42px);
+      }
+
+      .workspace-settings__grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+      }
+
+      .workspace-field {
+        padding: 16px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius-lg);
+        background: rgba(255, 255, 255, 0.03);
+      }
+
+      .workspace-field--full {
+        grid-column: 1 / -1;
+      }
+
+      .workspace-input,
+      .workspace-select,
+      .workspace-textarea {
+        width: 100%;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 12px 14px;
+        color: var(--text);
+        background: rgba(19, 13, 9, 0.7);
+      }
+
+      .workspace-textarea {
+        min-height: 120px;
+        resize: vertical;
+      }
+
+      .workspace-right__stack {
+        display: grid;
+        gap: 12px;
+      }
+
+      .workspace-summary {
+        padding: 14px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius-md);
+        background: rgba(255, 255, 255, 0.035);
+      }
+
+      .workspace-summary strong {
+        margin-top: 6px;
+        font-size: 18px;
+      }
+
+      .confirm-modal {
+        position: fixed;
+        inset: 0;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        background: rgba(8, 6, 4, 0.58);
+        backdrop-filter: blur(12px);
+      }
+
+      .confirm-modal.is-open {
+        display: flex;
+      }
+
+      .confirm-modal__card {
+        width: min(460px, 100%);
+        padding: 24px;
+      }
+
+      .confirm-modal__card h2 {
+        margin: 0 0 10px;
+      }
+
+      .confirm-modal__card p {
+        color: var(--muted);
+      }
+
+      .confirm-modal__actions {
+        margin-top: 20px;
+        justify-content: flex-end;
+      }
+
+      @media (max-width: 1240px) {
+        .hero,
+        .workspace-body,
+        .workspace-settings__grid,
+        .panel__grid,
+        .project-card__meta {
+          grid-template-columns: minmax(0, 1fr);
+        }
+
+        .project-card {
+          grid-template-columns: minmax(0, 1fr);
+        }
+      }
+
+      @media (max-width: 780px) {
+        .page {
+          padding: 16px;
+        }
+
+        .hero-card,
+        .panel,
+        .project-card,
+        .workspace-rail,
+        .workspace-listpane,
+        .workspace-center,
+        .workspace-right,
+        .confirm-modal__card {
+          padding: 18px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <div class="shell">
+        <header class="demo-bar">
+          <div>
+            <h1 class="demo-bar__title">剧本编辑器 UI 重设计演示</h1>
+            <p class="demo-bar__meta">演示“项目列表页 + 对象导航式编辑工作台”的结构。</p>
+          </div>
+          <div class="segmented" aria-label="演示视图切换">
+            <button class="is-active" data-screen-target="project-list">剧本列表页</button>
+            <button data-screen-target="workspace">编辑工作台</button>
+          </div>
+        </header>
+
+        <section class="screen is-active" data-screen="project-list">
+          <section class="hero">
+            <article class="hero-card">
+              <p class="eyebrow">项目入口重设计</p>
+              <h1>把“选择项目”和“编辑项目”拆开</h1>
+              <p>列表页只负责新建、导入、继续编辑、删除。进入项目后，工作台只做当前项目创作。</p>
+              <div class="hero-card__actions">
+                <button class="primary-btn">新建剧本</button>
+                <button class="secondary-btn">导入现有内容</button>
+                <button class="ghost-btn">返回主菜单</button>
+              </div>
+              <div class="hero-card__chips" style="margin-top: 18px;">
+                <span class="pill">3 个项目</span>
+                <span class="pill">2 个可导出</span>
+                <span class="pill">1 个有阻塞</span>
+              </div>
+            </article>
+
+            <aside class="panel">
+              <p class="eyebrow">为什么更合理</p>
+              <div class="panel__grid">
+                <div class="panel__item">
+                  <strong>职责更清楚</strong>
+                  <span class="panel__copy">项目选择和项目编辑不再混在一个页面里。</span>
+                </div>
+                <div class="panel__item">
+                  <strong>首屏更聚焦</strong>
+                  <span class="panel__copy">工作台首屏直接进入对象导航和具体配置。</span>
+                </div>
+                <div class="panel__item">
+                  <strong>删除更安全</strong>
+                  <span class="panel__copy">项目删除通过统一确认流程处理。</span>
+                </div>
+                <div class="panel__item">
+                  <strong>像真正编辑器</strong>
+                  <span class="panel__copy">左侧选对象，中间改配置，右侧看摘要。</span>
+                </div>
+              </div>
+            </aside>
+          </section>
+
+          <section class="project-list" style="margin-top: 18px;">
+            <article class="project-card">
+              <div>
+                <strong class="project-card__title">朱元璋起势 · 演示稿</strong>
+                <p class="project-card__copy">已具备人物、事件与菜单入口骨架，适合演示从项目列表进入编辑工作台。</p>
+                <div class="project-card__meta">
+                  <div><span>项目 ID</span>project.zhuyuanzhang.demo</div>
+                  <div><span>最近保存</span>今天 14:32</div>
+                  <div><span>状态</span><span class="status-pill status-pill--ok">可导出</span></div>
+                  <div><span>下一步</span>补人物关系</div>
+                </div>
+              </div>
+              <div class="project-card__actions">
+                <button class="primary-btn" data-screen-target="workspace">继续编辑</button>
+                <button class="danger-btn" data-open-delete="朱元璋起势 · 演示稿">删除</button>
+              </div>
+            </article>
+
+            <article class="project-card">
+              <div>
+                <strong class="project-card__title">建文余波 · 草稿</strong>
+                <p class="project-card__copy">已搭出城市和菜单框架，但仍缺事件去向和文本映射。</p>
+                <div class="project-card__meta">
+                  <div><span>项目 ID</span>project.jianwen.draft</div>
+                  <div><span>最近保存</span>昨天 22:11</div>
+                  <div><span>状态</span><span class="pill">有阻塞</span></div>
+                  <div><span>下一步</span>修复校验问题</div>
+                </div>
+              </div>
+              <div class="project-card__actions">
+                <button class="secondary-btn" data-screen-target="workspace">继续编辑</button>
+                <button class="danger-btn" data-open-delete="建文余波 · 草稿">删除</button>
+              </div>
+            </article>
+          </section>
+        </section>
+
+        <section class="screen" data-screen="workspace">
+          <div class="workspace-layout">
+            <section class="workspace-frame">
+              <div class="workspace-toolbar-strip">
+                <div class="workspace-stage-tabs" aria-label="工作台阶段">
+                  <button>项目总览</button>
+                  <button class="is-active">对象导航</button>
+                  <button>校验导出</button>
+                </div>
+                <div class="workspace-actions">
+                  <button class="ghost-btn" data-screen-target="project-list">返回剧本列表</button>
+                  <button class="secondary-btn">保存</button>
+                  <button class="secondary-btn">校验</button>
+                  <button class="primary-btn">导出</button>
+                </div>
+              </div>
+
+              <div class="workspace-subnav" aria-label="当前阶段二级菜单">
+                <button class="is-active">人物列表</button>
+                <button>城市列表</button>
+                <button>建筑物列表</button>
+              </div>
+
+              <div class="workspace-body">
+                <aside class="workspace-rail">
+                  <p class="eyebrow">对象家族</p>
+                  <div class="workspace-rail__item is-active">
+                    <strong>人物</strong>
+                    当前 12
+                  </div>
+                  <div class="workspace-rail__item">
+                    <strong>城市</strong>
+                    当前 3
+                  </div>
+                  <div class="workspace-rail__item">
+                    <strong>建筑物</strong>
+                    当前 9
+                  </div>
+                </aside>
+
+                <aside class="workspace-listpane">
+                  <div class="workspace-listpane__header">
+                    <div>
+                      <p class="eyebrow">人物列表</p>
+                      <span class="workspace-listpane__count">二级菜单下的对象实例列表</span>
+                    </div>
+                  </div>
+
+                  <div class="workspace-listpane__actions">
+                    <button class="secondary-btn">新增人物</button>
+                    <button class="danger-btn">删除人物</button>
+                  </div>
+
+                  <div class="tree-list">
+                    <div class="tree-item is-active">
+                      <strong class="tree-item__title">朱元璋</strong>
+                      <div class="tree-item__meta"><span>人物</span><span>主角</span></div>
+                    </div>
+                    <div class="tree-item">
+                      <strong class="tree-item__title">汤和</strong>
+                      <div class="tree-item__meta"><span>人物</span><span>同伴</span></div>
+                    </div>
+                    <div class="tree-item">
+                      <strong class="tree-item__title">郭子兴</strong>
+                      <div class="tree-item__meta"><span>人物</span><span>阵营首领</span></div>
+                    </div>
+                    <div class="tree-item">
+                      <strong class="tree-item__title">马秀英</strong>
+                      <div class="tree-item__meta"><span>人物</span><span>关键关系</span></div>
+                    </div>
+                  </div>
+                </aside>
+
+                <main class="workspace-center">
+                  <section class="workspace-main">
+                    <div class="workspace-settings">
+                      <div class="workspace-settings__hero">
+                        <div>
+                          <p class="eyebrow">人物设置界面</p>
+                          <h3 class="workspace-settings__title">朱元璋</h3>
+                          <p class="workspace-settings__subtitle">点击左侧人物后，中央区直接进入该人物的具体设置界面。</p>
+                        </div>
+                        <div class="workspace-actions">
+                          <span class="pill">人物 ID: char.zhu-yuanzhang</span>
+                          <span class="pill">角色类型: 主角</span>
+                        </div>
+                      </div>
+
+                      <div class="workspace-settings__grid">
+                        <article class="workspace-field">
+                          <label class="workspace-field__label">人物名称</label>
+                          <input class="workspace-input" value="朱元璋" />
+                        </article>
+                        <article class="workspace-field">
+                          <label class="workspace-field__label">人物类型</label>
+                          <select class="workspace-select">
+                            <option selected>主角 / 可操控角色</option>
+                            <option>NPC</option>
+                            <option>重要配角</option>
+                          </select>
+                        </article>
+                        <article class="workspace-field">
+                          <label class="workspace-field__label">所属阵营</label>
+                          <input class="workspace-input" value="皇觉寺线 / 早期成长" />
+                        </article>
+                        <article class="workspace-field">
+                          <label class="workspace-field__label">默认所在城市</label>
+                          <select class="workspace-select">
+                            <option selected>濠州</option>
+                            <option>临濠</option>
+                            <option>应天</option>
+                          </select>
+                        </article>
+                        <article class="workspace-field workspace-field--full">
+                          <label class="workspace-field__label">人物简介</label>
+                          <textarea class="workspace-textarea">起于微末的核心角色，承担成长、关系建立、事件推进与玩法入口绑定的主视角责任。</textarea>
+                        </article>
+                        <article class="workspace-field">
+                          <label class="workspace-field__label">关系入口</label>
+                          <div class="workspace-chip-row">
+                            <span class="workspace-chip">汤和</span>
+                            <span class="workspace-chip">马秀英</span>
+                            <span class="workspace-chip">郭子兴</span>
+                          </div>
+                        </article>
+                        <article class="workspace-field">
+                          <label class="workspace-field__label">绑定入口</label>
+                          <div class="workspace-chip-row">
+                            <span class="workspace-chip">开场事件</span>
+                            <span class="workspace-chip">寺庙支线</span>
+                            <span class="workspace-chip">人物对话</span>
+                          </div>
+                        </article>
+                        <article class="workspace-field workspace-field--full">
+                          <label class="workspace-field__label">基础功能</label>
+                          <div class="workspace-settings__row">
+                            <button class="secondary-btn">保存当前人物</button>
+                            <button class="secondary-btn">复制人物</button>
+                            <button class="danger-btn">删除当前人物</button>
+                          </div>
+                        </article>
+                      </div>
+                    </div>
+                  </section>
+                </main>
+
+                <aside class="workspace-right">
+                  <div class="workspace-right__stack">
+                    <div class="workspace-summary">
+                      <span>当前家族</span>
+                      <strong>人物</strong>
+                    </div>
+                    <div class="workspace-summary">
+                      <span>当前列表</span>
+                      <strong>人物列表</strong>
+                    </div>
+                    <div class="workspace-summary">
+                      <span>当前选中</span>
+                      <strong>朱元璋</strong>
+                    </div>
+                    <div class="workspace-summary">
+                      <span>基础功能</span>
+                      <strong>新增 / 删除 / 进入设置</strong>
+                    </div>
+                  </div>
+                </aside>
+              </div>
+            </section>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <div class="confirm-modal" id="delete-modal" aria-hidden="true">
+      <div class="confirm-modal__card">
+        <h2>确认删除项目？</h2>
+        <p id="delete-copy">删除后将无法恢复。</p>
+        <div class="confirm-modal__actions">
+          <button class="ghost-btn" id="cancel-delete">取消</button>
+          <button class="danger-btn" id="confirm-delete">确认删除</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const screenButtons = document.querySelectorAll("[data-screen-target]");
+      const screens = document.querySelectorAll("[data-screen]");
+      const deleteModal = document.getElementById("delete-modal");
+      const deleteCopy = document.getElementById("delete-copy");
+      const cancelDelete = document.getElementById("cancel-delete");
+      const confirmDelete = document.getElementById("confirm-delete");
+      let deletingName = "";
+
+      function setScreen(target) {
+        screens.forEach((screen) => {
+          screen.classList.toggle("is-active", screen.dataset.screen === target);
+        });
+
+        screenButtons.forEach((button) => {
+          if (button.closest(".segmented")) {
+            button.classList.toggle("is-active", button.dataset.screenTarget === target);
+          }
+        });
+      }
+
+      screenButtons.forEach((button) => {
+        button.addEventListener("click", () => {
+          const target = button.dataset.screenTarget;
+          if (target) {
+            setScreen(target);
+          }
+        });
+      });
+
+      document.querySelectorAll("[data-open-delete]").forEach((button) => {
+        button.addEventListener("click", () => {
+          deletingName = button.dataset.openDelete || "该项目";
+          deleteCopy.textContent = `将删除“${deletingName}”。这个演示页不会真的删除数据，但真实工作流中这里应有明确确认流程。`;
+          deleteModal.classList.add("is-open");
+          deleteModal.setAttribute("aria-hidden", "false");
+        });
+      });
+
+      cancelDelete.addEventListener("click", () => {
+        deleteModal.classList.remove("is-open");
+        deleteModal.setAttribute("aria-hidden", "true");
+      });
+
+      confirmDelete.addEventListener("click", () => {
+        deleteCopy.textContent = `已确认删除“${deletingName}”的演示动作。`;
+        setTimeout(() => {
+          deleteModal.classList.remove("is-open");
+          deleteModal.setAttribute("aria-hidden", "true");
+        }, 700);
+      });
+    </script>
+  </body>
+</html>

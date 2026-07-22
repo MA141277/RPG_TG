@@ -1,5 +1,8 @@
 # Main Shell Ownerization Continuation Weekly Call Flows
 
+> **Historical Artifact:** Deprecated under `fail-closed progress-driven governance`. This file records the retired weekly-governance model and must not be used as the active resume entry for new work.
+
+
 **Week Of:** `2026-07-03`
 
 ## Purpose
@@ -93,3 +96,4 @@ immediate queued follow-up: Child 26
 locked follow-up child: Child 27
 candidate-only later work: Child 28, Child 29
 ```
+

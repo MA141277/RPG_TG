@@ -190,11 +190,13 @@ Allowed top-level `family` values today:
 
 - `minigame`
 - `battle`
+- `flow`
 
 Rules:
 
 - use `family: "minigame"` for ordinary short-form challenge mechanics
 - use `family: "battle"` for battle-family mechanics such as `story-battle`
+- use `family: "flow"` for ordinary authored interaction flows such as creator-defined building functions
 - do not invent `family` variants such as `qte`, `debate`, `gambling`, or `house`
 - internal variants belong under mechanic detail, not top-level family
 

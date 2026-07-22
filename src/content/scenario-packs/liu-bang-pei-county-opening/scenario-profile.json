@@ -12,7 +12,7 @@
     "mapId": "map.yuanmo_campaign",
     "cityId": "city.pei_county",
     "houseId": null,
-    "view": "scene"
+    "view": "map"
   },
   "initialPlayerCoordinate": {
     "x": 334,

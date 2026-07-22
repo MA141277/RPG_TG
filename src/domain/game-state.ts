@@ -1,7 +1,7 @@
-import type { SceneId } from "./action";
 import type { CharacterId } from "./character";
 import type { CityId } from "./city";
 import type { CityNpcPoolRuntimeState } from "./city-npc";
+import type { DialogueId } from "./dialogue";
 import type { EventId } from "./event";
 import type { HouseId } from "./house";
 import type { CityMarketData } from "./market";
@@ -14,16 +14,33 @@ import type { CardInventory } from "./card";
 import type { ValuableItemInventory } from "./valuable-item";
 import type { TaskRuntimeState } from "../core/contracts/task-runtime";
 import type { ActivePlayableSession } from "../core/contracts/playable-runtime";
+import type { CampaignMapExplorationState } from "./map-exploration";
 
 export type ViewName =
   | "map"
   | "city"
   | "city-3d"
   | "house"
-  | "scene"
+  | "dialogue"
   | "battle"
   | "minigame";
-export type SceneStatus = "idle" | "playing" | "waiting-choice";
+export const GAME_VIEW_NAMES = [
+  "map",
+  "city",
+  "city-3d",
+  "house",
+  "dialogue",
+  "battle",
+  "minigame",
+] as const satisfies readonly ViewName[];
+
+export function isViewName(value: unknown): value is ViewName {
+  return (
+    typeof value === "string" &&
+    (GAME_VIEW_NAMES as readonly string[]).includes(value)
+  );
+}
+export type DialogueStatus = "idle" | "playing" | "waiting-choice";
 export type TimeOfDay = "morning" | "afternoon" | "night";
 export type CalendarDate = {
   year: number;
@@ -50,11 +67,11 @@ export type GameState = {
     month: number;
     day: number;
   };
-  scene: {
+  dialogue: {
     activeEventId: EventId | null;
-    activeSceneId: SceneId | null;
+    activeDialogueId: DialogueId | null;
     cursor: number;
-    status: SceneStatus;
+    status: DialogueStatus;
   };
   storyBattle: ActiveStoryBattleSession;
   ui: GlobalUIState & {
@@ -74,6 +91,7 @@ export type GameState = {
     cityNpcPools: Record<CityId, CityNpcPoolRuntimeState>;
     cityMarkets: Record<CityId, CityMarketData>;
     activitySession: ActiveActivitySession;
+    mapExploration: CampaignMapExplorationState;
     eventHistory: Record<
       EventId,
       {

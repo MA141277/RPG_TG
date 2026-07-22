@@ -1,5 +1,8 @@
 # Main Shell Ownerization Continuation Weekly Review Index
 
+> **Historical Artifact:** Deprecated under `fail-closed progress-driven governance`. This file records the retired weekly-governance model and must not be used as the active resume entry for new work.
+
+
 **Week Of:** `2026-07-03`
 
 **Weekly Set Plan:** `docs/superpowers/plans/2026-07-03-main-shell-ownerization-continuation-weekly-orchestration-plan.md`
@@ -79,3 +82,4 @@
   - covered navigation/time follow-up remains the highest-priority residual shell-boundary debt in the fresh continuation queue
 - Category:
   - `active-child execution`
+

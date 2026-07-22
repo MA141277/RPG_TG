@@ -3,7 +3,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const allowedEntryActions = new Set(["open-next-file", "stop", "blocked"]);
-const allowedTargetNextActions = new Set([
+const allowedVersionNextActions = new Set([
   "classify-fresh-work",
   "write-admission-review",
   "activate-admitted-queue",
@@ -11,15 +11,19 @@ const allowedTargetNextActions = new Set([
   "auto-reconcile-active-task",
   "write-queue-closeout",
   "return-to-promotion-review",
-  "write-target-closeout",
+  "write-version-closeout",
   "resolve-blocker",
 ]);
-const allowedTargetNextDecisions = new Set([
+const allowedVersionNextDecisions = new Set([
   "queue-admission-review",
-  "queue-closeout-or-return-to-target-review",
-  "same-target-admission-or-target-closeout",
-  "target-closeout",
+  "queue-closeout-or-return-to-version-review",
+  "same-version-admission-or-version-closeout",
+  "version-closeout",
   "resolve-blocker",
+]);
+const allowedPostQueueCloseoutPausePolicies = new Set([
+  "auto-continue",
+  "pause-when-explicitly-requested",
 ]);
 const allowedAdmissionStatuses = new Set([
   "none",
@@ -29,87 +33,120 @@ const allowedAdmissionStatuses = new Set([
   "deferred",
   "blocked",
 ]);
-const allowedQueueStatuses = new Set(["active", "blocked", "done", "dropped"]);
-const allowedGoalStatuses = new Set(["in-progress", "satisfied"]);
-const allowedFailureOwnerScopes = new Set([
+const allowedIntakeStatuses = new Set([
   "none",
-  "queue-local",
-  "target-level",
-  "repository/global",
+  "evaluating",
+  "absorbed",
+  "candidate-recorded",
+  "admission-review",
 ]);
-const allowedV1CloseoutStatuses = new Set([
-  "in-progress",
-  "done",
-  "escalated-to-target",
+const allowedIntakeResults = new Set([
+  "none",
+  "absorbed-into-active-queue",
+  "queued-as-candidate",
+  "promoted-to-admission",
+  "rejected",
+  "deferred",
 ]);
-const allowedCandidateStates = new Set(["candidate", "prepared", "active"]);
-const allowedTransitionStates = new Set(["candidate", "prepared", "active", "none"]);
-const allowedAbsorbFailureScopes = new Set(["target-level", "repository/global", "none"]);
-const allowedAbsorbResolutionKinds = new Set([
-  "candidate-rewrite",
-  "new-candidate",
-  "unique-transition-queue",
+const allowedIntakeFeedbackModes = new Set([
+  "none",
+  "fixed-receipt",
+]);
+const allowedClosureReviewStatuses = new Set(["none", "evaluating", "routed", "blocked"]);
+const allowedStopReasons = new Set([
+  "none",
+  "version-closeout-confirmation",
+  "explicit-answer-only",
+  "operator-requested-suspend",
+  "real-blocker",
+  "outside-parent-spec",
+  "parent-spec-change",
+  "capability-downgrade-risk",
+  "retired-rewrite-risk",
+  "product-decision",
+]);
+const allowedResidueFamilies = new Set([
+  "same-family",
+  "cross-family",
+  "accepted-residue",
   "none",
 ]);
-const forbiddenHumanControlTerms = [
-  "admission",
-  "closeout",
-  "sync",
-  "promote",
-  "promotion",
-  "state machine",
-  "active_queue",
+const allowedQueueStatuses = new Set(["active", "blocked", "suspended", "done", "dropped"]);
+const allowedExecutionCloseoutStatuses = new Set(["done", "partial", "blocked"]);
+const allowedTopicClosureStatuses = new Set(["closed", "open-residue", "blocked"]);
+const allowedResidueRoutingStatuses = new Set([
+  "auto-routable",
+  "needs-version-review",
+  "needs-human-decision",
+  "none",
+]);
+const allowedBooleanStrings = new Set(["true", "false"]);
+const allowedSyncStatuses = new Set(["pending", "success", "failed"]);
+const allowedSyncScopes = new Set([
+  "local-record",
+  "branch-commit",
+  "branch-push",
+  "baseline-merge",
+  "baseline-push",
+  "remote-sync",
+  "none",
+]);
+const closureRoutingFields = [
+  "closure_review_subject",
+  "closure_review_status",
+  "residue_candidate_id",
+  "residue_candidate_family",
+  "routing_basis",
+  "next_lawful_queue_recommendation",
+  "auto_admission_ready",
+];
+const queueClosureJudgementFields = [
+  "execution_closeout_status",
+  "topic_closure_status",
+  "closure_basis",
+  "residue_remaining",
+  "residue_family",
+  "residue_routing_status",
+  "next_family_candidate",
+  "auto_continue_eligible",
 ];
 
 export function lintBlueprintDocs(repoRoot = process.cwd()) {
   const failures = [];
   const blueprintsRoot = path.join(repoRoot, "docs", "blueprints");
-
-  const projectProgressPath = path.join(blueprintsRoot, "project-progress.md");
-  const blueprintPath = path.join(blueprintsRoot, "blueprint.md");
-  const blueprintText = readFileOrFail(blueprintPath, failures, repoRoot);
-  const liveTargetSpecPath = path.join(
-    blueprintsRoot,
-    "specs",
-    "2026-07-06-project-complete-modularization-target.md"
-  );
-  const liveTargetPlanPath = path.join(
-    blueprintsRoot,
-    "plans",
-    "2026-07-06-project-complete-modularization-target-plan.md"
-  );
-
-  const targetPlanPath = fs.existsSync(liveTargetPlanPath)
-    ? liveTargetPlanPath
-    : firstMarkdownFile(path.join(blueprintsRoot, "plans"));
-  const targetSpecPath = fs.existsSync(liveTargetSpecPath)
-    ? liveTargetSpecPath
-    : firstMarkdownFile(path.join(blueprintsRoot, "specs"));
-  const targetFilePath = resolveActiveTargetFile(blueprintText, repoRoot);
+  const {
+    projectProgressPath,
+    blueprintPath,
+    targetPlanPath,
+    targetSpecPath,
+    activeVersionId,
+  } = resolveLiveTruthPaths(repoRoot, failures);
 
   lintProjectProgress(projectProgressPath, failures, repoRoot);
   lintBlueprintIndex(blueprintPath, failures, repoRoot);
-  lintTargetV1(targetFilePath, failures, repoRoot, "target");
-  if (targetFilePath != null) {
-    lintTargetPlanCompatibilityShell(
-      targetPlanPath,
-      targetFilePath,
-      failures,
-      repoRoot,
-      "target plan"
-    );
-    lintTargetSpecCompatibilityShell(
-      targetSpecPath,
-      targetFilePath,
-      failures,
-      repoRoot,
-      "target spec"
-    );
-  } else {
-    lintTargetPlan(targetPlanPath, failures, repoRoot, "target plan");
-    lintTargetSpec(targetSpecPath, failures, repoRoot, "target spec");
-  }
-  lintQueueDocs(path.join(blueprintsRoot, "queues"), failures, repoRoot, targetFilePath != null);
+  lintTargetPlan(targetPlanPath, failures, repoRoot, "version plan");
+  lintTargetSpec(targetSpecPath, failures, repoRoot, "version spec");
+  lintQueueDocs(
+    path.join(blueprintsRoot, "queues"),
+    failures,
+    repoRoot,
+    activeVersionId
+  );
+  lintWorkflowIntakeContract(
+    path.join(blueprintsRoot, "blueprint-workflow-spec.md"),
+    failures,
+    repoRoot
+  );
+  lintWorkflowEvidenceContract(
+    path.join(blueprintsRoot, "blueprint-workflow-spec.md"),
+    failures,
+    repoRoot
+  );
+  lintWorkflowGitSyncContract(
+    path.join(blueprintsRoot, "blueprint-workflow-spec.md"),
+    failures,
+    repoRoot
+  );
   lintTemplate(
     path.join(blueprintsRoot, "templates", "project-progress-template.md"),
     failures,
@@ -121,43 +158,163 @@ export function lintBlueprintDocs(repoRoot = process.cwd()) {
     failures,
     repoRoot,
     (filePath, innerFailures) =>
-      lintTargetPlanCompatibilityTemplate(
-        filePath,
-        innerFailures,
-        repoRoot,
-        "target-plan template"
-      )
-  );
-  lintTemplate(
-    path.join(blueprintsRoot, "templates", "topic-queue-template.md"),
-    failures,
-    repoRoot,
-    (filePath, innerFailures) =>
-      lintTopicQueueCompatibilityTemplate(
-        filePath,
-        innerFailures,
-        repoRoot,
-        "topic-queue template"
-      )
+      lintTargetPlan(filePath, innerFailures, repoRoot, "version-plan template")
   );
   lintTemplate(
     path.join(blueprintsRoot, "templates", "target-spec-template.md"),
     failures,
     repoRoot,
     (filePath, innerFailures) =>
-      lintTargetSpec(filePath, innerFailures, repoRoot, "target-spec template")
+      lintTargetSpec(filePath, innerFailures, repoRoot, "version-spec template")
+  );
+  lintTemplate(
+    path.join(blueprintsRoot, "templates", "execution-queue-template.md"),
+    failures,
+    repoRoot,
+    (filePath, innerFailures) =>
+      lintQueueDoc(filePath, innerFailures, repoRoot, true)
+  );
+  if (targetPlanPath != null && fs.existsSync(targetPlanPath)) {
+    lintTargetPlanOperatorContract(targetPlanPath, failures, repoRoot);
+  }
+  lintTargetPlanOperatorContract(
+    path.join(blueprintsRoot, "templates", "target-plan-template.md"),
+    failures,
+    repoRoot
+  );
+  lintEvidenceBoundTemplates(blueprintsRoot, failures, repoRoot);
+  lintReadableQueueOperatorSnapshotContract(
+    path.join(blueprintsRoot, "templates", "execution-queue-template.md"),
+    failures,
+    repoRoot
   );
 
   lintCrossDocumentConsistency(
     projectProgressPath,
     blueprintPath,
-    targetFilePath,
     targetPlanPath,
     failures,
     repoRoot
   );
 
   return failures;
+}
+
+function resolveLiveTruthPaths(repoRoot, failures) {
+  const blueprintsRoot = path.join(repoRoot, "docs", "blueprints");
+  const projectProgressPath = path.join(blueprintsRoot, "project-progress.md");
+  const fallbackBlueprintPath = path.join(blueprintsRoot, "blueprint.md");
+  let blueprintPath = fallbackBlueprintPath;
+  let blueprintText = null;
+
+  if (fs.existsSync(projectProgressPath)) {
+    const projectProgressText = fs.readFileSync(projectProgressPath, "utf8");
+    const nextFileRef = matchField(projectProgressText, "next_file");
+    if (
+      nextFileRef != null &&
+      nextFileRef !== "none" &&
+      nextFileRef.endsWith("/blueprint.md")
+    ) {
+      blueprintPath = path.join(repoRoot, ...nextFileRef.split("/"));
+    }
+  }
+
+  if (fs.existsSync(blueprintPath)) {
+    blueprintText = fs.readFileSync(blueprintPath, "utf8");
+  } else if (fs.existsSync(fallbackBlueprintPath)) {
+    blueprintPath = fallbackBlueprintPath;
+    blueprintText = fs.readFileSync(blueprintPath, "utf8");
+  }
+
+  const activeVersionId = blueprintText == null
+    ? null
+    : matchField(blueprintText, "active_version");
+  const targetPlanPath = resolveBlueprintDocumentPath({
+    repoRoot,
+    blueprintsRoot,
+    blueprintText,
+    fieldNames: ["active_version_plan"],
+    searchDirectory: path.join(blueprintsRoot, "plans"),
+    ownerFieldNames: ["version_id"],
+    ownerId: activeVersionId,
+  });
+  const targetSpecPath = resolveBlueprintDocumentPath({
+    repoRoot,
+    blueprintsRoot,
+    blueprintText,
+    fieldNames: ["active_version_spec"],
+    searchDirectory: path.join(blueprintsRoot, "specs"),
+    ownerFieldNames: ["version_id"],
+    ownerId: activeVersionId,
+  });
+
+  if (blueprintText != null && targetPlanPath == null) {
+    failures.push(
+      `${relative(repoRoot, blueprintPath)}: cannot resolve current version plan from blueprint pointers`
+    );
+  }
+
+  if (blueprintText != null && targetSpecPath == null) {
+    failures.push(
+      `${relative(repoRoot, blueprintPath)}: cannot resolve current version spec from blueprint pointers`
+    );
+  }
+
+  return {
+    projectProgressPath,
+    blueprintPath,
+    targetPlanPath,
+    targetSpecPath,
+    activeVersionId,
+  };
+}
+
+function resolveBlueprintDocumentPath({
+  repoRoot,
+  blueprintsRoot,
+  blueprintText,
+  fieldNames,
+  searchDirectory,
+  ownerFieldNames,
+  ownerId,
+}) {
+  if (blueprintText != null) {
+    for (const fieldName of fieldNames) {
+      const ref = matchField(blueprintText, fieldName);
+      if (ref != null && ref !== "none") {
+        return path.join(repoRoot, ...ref.split("/"));
+      }
+    }
+
+    return null;
+  }
+
+  const matchedByOwner = findMarkdownFileByOwnerField(searchDirectory, ownerFieldNames, ownerId);
+  if (matchedByOwner != null) {
+    return matchedByOwner;
+  }
+
+  return firstMarkdownFile(searchDirectory);
+}
+
+function findMarkdownFileByOwnerField(directoryPath, fieldNames, ownerId) {
+  if (ownerId == null || ownerId === "none" || !fs.existsSync(directoryPath)) {
+    return null;
+  }
+
+  for (const entry of fs.readdirSync(directoryPath, { withFileTypes: true })) {
+    if (!entry.isFile() || !entry.name.endsWith(".md")) {
+      continue;
+    }
+
+    const filePath = path.join(directoryPath, entry.name);
+    const text = fs.readFileSync(filePath, "utf8");
+    if (fieldNames.some((fieldName) => matchField(text, fieldName) === ownerId)) {
+      return filePath;
+    }
+  }
+
+  return null;
 }
 
 function lintTemplate(filePath, failures, repoRoot, lintFn) {
@@ -175,20 +332,7 @@ function lintProjectProgress(filePath, failures, repoRoot) {
   }
 
   const relativePath = relative(repoRoot, filePath);
-  for (const forbiddenField of [
-    "active_target_file",
-    "execution_queue",
-    "candidate_queues",
-    "transition_queue",
-    "active_queue",
-    "active_task",
-  ]) {
-    if (new RegExp(`^- ${escapeRegExp(forbiddenField)}:`, "m").test(text)) {
-      failures.push(
-        `${relativePath}: project-progress must not mirror downstream truth field "${forbiddenField}"`
-      );
-    }
-  }
+  rejectQueueLocalSyncFields(text, relativePath, failures, "project-progress");
 
   if (/^- next_step:/m.test(text)) {
     failures.push(
@@ -196,12 +340,9 @@ function lintProjectProgress(filePath, failures, repoRoot) {
     );
   }
 
-  const nextFile = matchField(text, "next_file");
-  if (nextFile == null) {
-    failures.push(`${relativePath}: project-progress missing Control Block field "next_file"`);
-  } else if (nextFile !== "docs/blueprints/blueprint.md") {
+  if (/^- active_target:/m.test(text)) {
     failures.push(
-      `${relativePath}: project-progress next_file must point to docs/blueprints/blueprint.md for the unique recovery chain`
+      `${relativePath}: project-progress must not use legacy live pointer field "active_target"; use active_version`
     );
   }
 
@@ -224,18 +365,52 @@ function lintBlueprintIndex(filePath, failures, repoRoot) {
   }
 
   const relativePath = relative(repoRoot, filePath);
+  requireFieldValue(
+    text,
+    "blueprint_version",
+    relativePath,
+    failures,
+    `${relativePath}: blueprint missing Control Block field "blueprint_version"`
+  );
+  requireFieldValue(
+    text,
+    "active_version",
+    relativePath,
+    failures,
+    `${relativePath}: blueprint missing Control Block field "active_version"`
+  );
+  requireFieldValue(
+    text,
+    "active_version_plan",
+    relativePath,
+    failures,
+    `${relativePath}: blueprint missing Control Block field "active_version_plan"`
+  );
+  requireFieldValue(
+    text,
+    "active_version_spec",
+    relativePath,
+    failures,
+    `${relativePath}: blueprint missing Control Block field "active_version_spec"`
+  );
+  rejectQueueLocalSyncFields(text, relativePath, failures, "blueprint");
   for (const forbiddenField of [
-    "target_status",
+    "active_target",
+    "active_target_plan",
+    "active_target_spec",
+  ]) {
+    if (new RegExp(`^- ${escapeRegExp(forbiddenField)}:`, "m").test(text)) {
+      failures.push(
+        `${relativePath}: blueprint must not use legacy live pointer field "${forbiddenField}"; use version terminology`
+      );
+    }
+  }
+  for (const forbiddenField of [
+    "version_status",
     "decision_state",
     "active_queue",
     "active_task",
     "completed_targets",
-    "execution_queue",
-    "candidate_queues",
-    "transition_queue",
-    "decision_required",
-    "has_active_queue",
-    "next_file",
   ]) {
     if (new RegExp(`^- ${escapeRegExp(forbiddenField)}:`, "m").test(text)) {
       failures.push(
@@ -243,26 +418,10 @@ function lintBlueprintIndex(filePath, failures, repoRoot) {
       );
     }
   }
-
-  const activeTargetFile = matchField(text, "active_target_file");
-  if (activeTargetFile != null) {
-    const resolvedTargetFile = path.join(repoRoot, ...activeTargetFile.split("/"));
-    if (!fs.existsSync(resolvedTargetFile)) {
-      failures.push(
-        `${relativePath}: blueprint active_target_file points to a missing document (${activeTargetFile})`
-      );
-    }
-
-    if (/^- active_target_plan:/m.test(text)) {
-      failures.push(
-        `${relativePath}: blueprint must not keep active_target_plan once active_target_file exists`
-      );
-    }
-  }
 }
 
-function lintTargetV1(filePath, failures, repoRoot, label) {
-  if (filePath == null) {
+function lintWorkflowIntakeContract(filePath, failures, repoRoot) {
+  if (!fs.existsSync(filePath)) {
     return;
   }
 
@@ -272,235 +431,228 @@ function lintTargetV1(filePath, failures, repoRoot, label) {
   }
 
   const relativePath = relative(repoRoot, filePath);
-  for (const requiredField of [
-    "target_id",
-    "version_goal",
-    "execution_queue",
-    "candidate_queues",
-    "transition_queue",
-    "absorb_resolution",
-    "constraints",
-    "artifact_rules",
-    "done_when",
-    "closeout_condition",
-    "decision_required",
-  ]) {
-    if (!new RegExp(`^- ${escapeRegExp(requiredField)}:`, "m").test(text)) {
-      failures.push(`${relativePath}: ${label} missing Control Block field "${requiredField}"`);
+  requirePatterns(text, relativePath, failures, [
+    [/\u65b0\u9700\u6c42/u, 'workflow spec must name `???` as allowed intake input'],
+    [/\u53c2\u8003\u6cbb\u7406\u89c4\u8303/u, 'workflow spec must name `??????` as allowed intake input'],
+    [/^### 7\.1\.1 Fixed operator receipt contract$/m, "workflow spec must define the fixed operator receipt contract"],
+    [/\u5904\u7406\u7ed3\u679c\uff1a/u, "workflow spec must publish the fixed receipt labels"],
+    [/\u4eba\u5de5\u64cd\u4f5c\uff1a\u5f53\u524d\u4e0d\u9700\u8981 \/ \u5f53\u524d\u9700\u8981\u786e\u8ba4 xxx/u, "workflow spec must require the explicit human-action line"],
+    [/Default intake output must not expose truth-chain detail/i, "workflow spec must hide Blueprint internal analysis by default"],
+  ]);
+}
+
+function lintWorkflowEvidenceContract(filePath, failures, repoRoot) {
+  if (!fs.existsSync(filePath)) {
+    return;
+  }
+
+  const text = readFileOrFail(filePath, failures, repoRoot);
+  if (text == null) {
+    return;
+  }
+
+  const relativePath = relative(repoRoot, filePath);
+  requirePatterns(text, relativePath, failures, [
+    [/^## 8\.5 Evidence-Bound Version Creation$/m, "workflow spec must define evidence-bound version creation"],
+    [/^## 8\.6 Acceptance Matrix Rules$/m, "workflow spec must define acceptance matrix rules"],
+    [/^## 8\.7 Candidate Evidence Matrix Rules$/m, "workflow spec must define candidate evidence matrix rules"],
+    [/^### 8\.7\.2 Queue Spec Anti-Over-Narrowing Contract$/m, "workflow spec must define the queue-spec anti-over-narrowing contract"],
+    [/^## 8\.8 Evidence Lock Before Queue Activation$/m, "workflow spec must define evidence lock before queue activation"],
+    [/^## 8\.9 Queue Claim Boundary$/m, "workflow spec must define queue claim boundaries"],
+    [/^## 8\.10 Final Acceptance Coverage Review$/m, "workflow spec must define final acceptance coverage review"],
+  ]);
+}
+
+function lintWorkflowGitSyncContract(filePath, failures, repoRoot) {
+  if (!fs.existsSync(filePath)) {
+    return;
+  }
+
+  const text = readFileOrFail(filePath, failures, repoRoot);
+  if (text == null) {
+    return;
+  }
+
+  const relativePath = relative(repoRoot, filePath);
+  requirePatterns(text, relativePath, failures, [
+    [/Every completed execution queue should form its own local `branch-commit`/u, "workflow spec must require a local commit for each completed execution queue"],
+    [/Once a push is started, no later Blueprint scheduling action may continue until the push returns success or failure/u, "workflow spec must require waiting for push results before continuing Blueprint scheduling"],
+    [/Every completed execution queue should attempt remote-sync after its queue-local branch-commit/u, "workflow spec must require per-queue remote-sync attempts"],
+    [/Resume truth comes from the written governance docs, not branch memory or remote push status/u, "workflow spec must keep Blueprint resume independent from remote push status"],
+    [/^### 12\.1 Explicit Operator-Directed Closure Or Suspension$/m, "workflow spec must define explicit operator-directed closure or suspension"],
+    [/queue_status = suspended/u, "workflow spec must define suspended queue handling"],
+    [/stop_reason = operator-requested-suspend/u, "workflow spec must define operator-requested version suspension"],
+    [/^### 11\.2\.1 Post-Queue Closeout Pause Policy$/m, "workflow spec must define post-queue closeout pause policy"],
+    [/post_queue_closeout_pause_policy = auto-continue/u, "workflow spec must define auto-continue as the default post-queue pause policy"],
+    [/pause-when-explicitly-requested/u, "workflow spec must define explicit pause mode"],
+    [/Restarted queue handling is still candidate handling until admission is legal/u, "workflow spec must keep restarted queues in candidate handling until lawful admission"],
+    [/restarted queue may become active only after the current active queue closes/u, "workflow spec must prevent restarted queues from preempting active queues"],
+    [/^### 11\.6 Candidate Backlog Refresh Before Version Review$/m, "workflow spec must define candidate backlog refresh before version review"],
+    [/candidate_backlog_refresh_status/u, "workflow spec must define candidate backlog refresh status"],
+    [/A `fresh` refresh with an empty candidate snapshot is the only lawful basis/u, "workflow spec must require fresh empty candidate snapshot before saying none"],
+    [/must not require the operator to paste a queue doc/u, "workflow spec must require agents to refresh named queue docs without operator paste"],
+  ]);
+}
+
+function lintEvidenceBoundTemplates(blueprintsRoot, failures, repoRoot) {
+  const targetSpecTemplatePath = path.join(
+    blueprintsRoot,
+    "templates",
+    "target-spec-template.md"
+  );
+  const targetPlanTemplatePath = path.join(
+    blueprintsRoot,
+    "templates",
+    "target-plan-template.md"
+  );
+  const executionQueueTemplatePath = path.join(
+    blueprintsRoot,
+    "templates",
+    "execution-queue-template.md"
+  );
+
+  if (fs.existsSync(targetSpecTemplatePath)) {
+    const text = readFileOrFail(targetSpecTemplatePath, failures, repoRoot);
+    if (text != null) {
+      const relativePath = relative(repoRoot, targetSpecTemplatePath);
+      requirePatterns(text, relativePath, failures, [
+        [/^### Version Draft Summary$/m, "target spec template must include a Version Draft Summary section"],
+        [/^### Evidence Draft Review$/m, "target spec template must include an Evidence Draft Review section"],
+        [/^### Draft Requirement Coverage$/m, "target spec template must include Draft Requirement Coverage"],
+        [/^### Acceptance Matrix$/m, "target spec template must include an Acceptance Matrix"],
+        [/^### Final Acceptance Coverage Contract$/m, "target spec template must include a Final Acceptance Coverage Contract"],
+      ]);
     }
   }
 
-  const executionQueue = matchField(text, "execution_queue");
-  const decisionRequired = matchField(text, "decision_required");
-  const candidateEntries = parseCandidateEntries(text);
-  const activeCandidates = candidateEntries.filter((entry) => entry.state === "active");
-
-  if (candidateEntries.length === 0) {
-    failures.push(`${relativePath}: ${label} must define at least one candidate_queues entry`);
-  }
-
-  for (const entry of candidateEntries) {
-    for (const [fieldName, fieldValue] of [
-      ["state", entry.state],
-      ["entry_conditions", entry.entryConditions],
-      ["drop_if", entry.dropIf],
-      ["on_failure", entry.onFailure],
-    ]) {
-      if (fieldValue == null) {
-        failures.push(
-          `${relativePath}: candidate ${entry.candidateId} missing required field ${fieldName}`
-        );
-      }
-    }
-
-    if (!allowedCandidateStates.has(entry.state)) {
-      failures.push(
-        `${relativePath}: candidate ${entry.candidateId} uses invalid state=${entry.state}`
-      );
-    }
-  }
-
-  for (const legacyFieldName of ["activation_condition", "fallback_on_failure"]) {
-    if (new RegExp(`\\b${escapeRegExp(legacyFieldName)}\\b`).test(text)) {
-      failures.push(
-        `${relativePath}: ${label} must not use legacy candidate/task field "${legacyFieldName}"`
-      );
+  if (fs.existsSync(targetPlanTemplatePath)) {
+    const text = readFileOrFail(targetPlanTemplatePath, failures, repoRoot);
+    if (text != null) {
+      const relativePath = relative(repoRoot, targetPlanTemplatePath);
+      requirePatterns(text, relativePath, failures, [
+        [/^### Evidence Draft Summary$/m, "target plan template must include an Evidence Draft Summary"],
+        [/^### Evidence Lock Rule$/m, "target plan template must include an Evidence Lock Rule"],
+        [/^### Queue Spec Integrity Rule$/m, "target plan template must include a Queue Spec Integrity Rule section"],
+        [/^### Candidate Evidence Matrix$/m, "target plan template must include a Candidate Evidence Matrix"],
+        [/^### Candidate Queue Integrity Checklist$/m, "target plan template must include a Candidate Queue Integrity Checklist section"],
+        [/^### Acceptance Coverage Ledger$/m, "target plan template must include an Acceptance Coverage Ledger"],
+        [/Implementation Anchors/u, "target plan template candidate ledger must include implementation anchors"],
+        [/Can Claim/u, "target plan template candidate ledger must include claim scope"],
+        [/Cannot Claim/u, "target plan template candidate ledger must include non-claim scope"],
+        [/Every completed execution queue should have its own local commit/u, "target plan template must require one local commit per completed queue"],
+        [/Once push starts, wait for its success or failure result/u, "target plan template must require waiting for push results"],
+        [/attempt remote-sync toward (the )?remote development trunk mod-first-dev/u, "target plan template must require remote-sync toward mod-first-dev"],
+        [/Every completed execution queue should then attempt remote-sync toward mod-first-dev/u, "target plan template must require per-queue remote-sync attempts"],
+        [/operator-requested-suspend/u, "target plan template must define operator-requested suspension"],
+        [/post_queue_closeout_pause_policy/u, "target plan template must include post-queue closeout pause policy"],
+        [/^### Post-Queue Closeout Pause Policy$/m, "target plan template must include a Post-Queue Closeout Pause Policy section"],
+        [/If post_queue_closeout_pause_policy=auto-continue and the next legal step is unique/u, "target plan template must prevent default continuation prompts under auto-continue"],
+        [/If a restarted queue requires document updates/u, "target plan template must route restarted queues through candidate updates"],
+        [/A restarted queue must not stop, replace, preempt, or immediately become the current active execution queue/u, "target plan template must prevent restarted queues from preempting active queues"],
+        [/^### Candidate Backlog Refresh Rule$/m, "target plan template must include a Candidate Backlog Refresh Rule section"],
+        [/candidate_backlog_refresh_status/u, "target plan template must include candidate backlog refresh status"],
+        [/candidate_backlog_snapshot/u, "target plan template must include candidate backlog snapshot"],
+        [/Do not answer no candidate queues remain unless candidate_backlog_refresh_status=fresh/u, "target plan template must block no-candidate answers until refresh is fresh"],
+        [/Do not require the operator to paste a queue doc/u, "target plan template must require named queue docs to be refreshed without operator paste"],
+      ]);
     }
   }
 
-  if (activeCandidates.length > 1) {
-    failures.push(
-      `${relativePath}: only one candidate may use state=active, found ${activeCandidates.length}`
-    );
-  }
-
-  if (executionQueue === "none" && activeCandidates.length > 0) {
-    failures.push(
-      `${relativePath}: execution_queue=none conflicts with candidate ${activeCandidates[0].candidateId} state=active`
-    );
-  }
-
-  if (
-    executionQueue != null &&
-    executionQueue !== "none" &&
-    activeCandidates.length === 1 &&
-    activeCandidates[0].candidateId !== executionQueue
-  ) {
-    failures.push(
-      `${relativePath}: execution_queue=${executionQueue} must match active candidate ${activeCandidates[0].candidateId}`
-    );
-  }
-
-  const transitionQueue = parseTransitionQueue(text);
-  const absorbResolution = parseAbsorbResolution(text);
-  const activeTransitionQueueId =
-    transitionQueue != null &&
-    transitionQueue.queueId !== "none" &&
-    transitionQueue.state === "active"
-      ? transitionQueue.queueId
-      : null;
-  if (transitionQueue != null) {
-    if (!allowedTransitionStates.has(transitionQueue.state)) {
-      failures.push(
-        `${relativePath}: transition queue uses invalid state=${transitionQueue.state}`
-      );
-    }
-
-    if (transitionQueue.queueId === "none" && transitionQueue.state !== "none") {
-      failures.push(
-        `${relativePath}: transition queue state=${transitionQueue.state} requires a queue_id`
-      );
-    }
-
-    if (transitionQueue.queueId !== "none" && transitionQueue.state === "none") {
-      failures.push(
-        `${relativePath}: transition queue queue_id=${transitionQueue.queueId} cannot use state=none`
-      );
-    }
-
-    if (transitionQueue.queueId !== "none" && transitionQueue.bindsCandidates.length === 0) {
-      failures.push(
-        `${relativePath}: transition queue must bind explicit candidate ids before it can exist`
-      );
-    }
-
-    if (
-      transitionQueue.queueId !== "none" &&
-      transitionQueue.bindsCandidates.some(
-        (candidateId) => !candidateEntries.some((entry) => entry.candidateId === candidateId)
-      )
-    ) {
-      failures.push(
-        `${relativePath}: transition queue must bind only candidate ids that already exist in candidate_queues`
-      );
-    }
-
-    if (transitionQueue.queueId !== "none" && activeCandidates.length > 0) {
-      failures.push(
-        `${relativePath}: transition queue must not coexist with candidate state=active because only one execution slot may exist`
-      );
-    }
-
-    if (
-      transitionQueue.queueId !== "none" &&
-      transitionQueue.state !== "active" &&
-      executionQueue != null &&
-      executionQueue !== "none"
-    ) {
-      failures.push(
-        `${relativePath}: transition queue state=${transitionQueue.state} must not coexist with execution_queue=${executionQueue}`
-      );
-    }
-
-    if (
-      transitionQueue.state === "active" &&
-      executionQueue != null &&
-      executionQueue !== transitionQueue.queueId
-    ) {
-      failures.push(
-        `${relativePath}: execution_queue=${executionQueue} must match active transition queue ${transitionQueue.queueId}`
-      );
+  if (fs.existsSync(executionQueueTemplatePath)) {
+    const text = readFileOrFail(executionQueueTemplatePath, failures, repoRoot);
+    if (text != null) {
+      const relativePath = relative(repoRoot, executionQueueTemplatePath);
+      requirePatterns(text, relativePath, failures, [
+        [/^### Evidence Lock$/m, "execution queue template must include an Evidence Lock section"],
+        [/^### Claim Boundary$/m, "execution queue template must include a Claim Boundary section"],
+        [/^#### Can Claim$/m, "execution queue template must include Can Claim"],
+        [/^#### Cannot Claim$/m, "execution queue template must include Cannot Claim"],
+        [/^#### Capability Floor$/m, "execution queue template must include Capability Floor"],
+        [/^#### Parent Capability Coverage$/m, "execution queue template must include Parent Capability Coverage"],
+        [/^#### User Path Coverage Matrix$/m, "execution queue template must include User Path Coverage Matrix"],
+        [/^#### Functional Loss Budget$/m, "execution queue template must include Functional Loss Budget"],
+        [/^#### Replacement Proof$/m, "execution queue template must include Replacement Proof"],
+        [/^#### Implementation Anchors$/m, "execution queue template must include Implementation Anchors"],
+        [/^### Queue Spec Integrity Rule$/m, "execution queue template must include a Queue Spec Integrity Rule section"],
+        [/- owned_closure:/u, "execution queue template must include owned_closure in Parent Capability Coverage"],
+        [/- preserved_not_owned:/u, "execution queue template must include preserved_not_owned in Parent Capability Coverage"],
+        [/- routed_elsewhere:/u, "execution queue template must include routed_elsewhere in Parent Capability Coverage"],
+        [/- leave_return_or_followup_paths:/u, "execution queue template must include leave_return_or_followup_paths in User Path Coverage Matrix"],
+        [/- rejection_or_error_paths:/u, "execution queue template must include rejection_or_error_paths in User Path Coverage Matrix"],
+        [/- old_truth_owner_exit_proof:/u, "execution queue template must include old_truth_owner_exit_proof in Replacement Proof"],
+        [/functional_loss_audit:/u, "execution queue template must include functional_loss_audit"],
+        [/capability_floor_verification:/u, "execution queue template must include capability_floor_verification"],
+        [/user_path_matrix_verification:/u, "execution queue template must include user_path_matrix_verification"],
+        [/placeholder_or_legacy_fallback_audit:/u, "execution queue template must include placeholder_or_legacy_fallback_audit"],
+        [/task\.replace-me\.evidence-anchor-reconcile/u, "execution queue template must include evidence-anchor-reconcile as the first task"],
+        [/Every completed execution queue should produce one local commit/u, "execution queue template must require one local commit per completed queue"],
+        [/Once push starts, wait for its success or failure result/u, "execution queue template must require waiting for push results"],
+        [/attempted remote-sync toward mod-first-dev/u, "execution queue template must define attempted remote-sync toward mod-first-dev"],
+        [/Every completed execution queue should then attempt remote-sync toward mod-first-dev/u, "execution queue template must require per-queue remote-sync attempts"],
+        [/queue_status=suspended/u, "execution queue template must define suspended queue handling"],
+      ]);
     }
   }
+}
 
-  if (absorbResolution == null) {
-    failures.push(`${relativePath}: ${label} must define absorb_resolution`);
-  } else {
-    const { sourceQueue, failureScope, resolutionKind, resolutionTarget } = absorbResolution;
-
-    if (!allowedAbsorbFailureScopes.has(failureScope ?? "")) {
-      failures.push(
-        `${relativePath}: absorb_resolution failure_scope=${failureScope} is not allowed`
-      );
-    }
-
-    if (!allowedAbsorbResolutionKinds.has(resolutionKind ?? "")) {
-      failures.push(
-        `${relativePath}: absorb_resolution resolution_kind=${resolutionKind} is not allowed`
-      );
-    }
-
-    if (
-      sourceQueue === "none" ||
-      failureScope === "none" ||
-      resolutionKind === "none" ||
-      resolutionTarget === "none"
-    ) {
-      const allNone =
-        sourceQueue === "none" &&
-        failureScope === "none" &&
-        resolutionKind === "none" &&
-        resolutionTarget === "none";
-      if (!allNone) {
-        failures.push(
-          `${relativePath}: absorb_resolution must record one legal target-owned path or be all none`
-        );
-      }
-    } else {
-      if (resolutionKind === "unique-transition-queue") {
-        if (transitionQueue == null || transitionQueue.queueId !== resolutionTarget) {
-          failures.push(
-            `${relativePath}: absorb_resolution unique-transition-queue must target the active transition_queue`
-          );
-        }
-      } else if (
-        !candidateEntries.some((entry) => entry.candidateId === resolutionTarget)
-      ) {
-        failures.push(
-          `${relativePath}: absorb_resolution must target an existing candidate or transition queue`
-        );
-      }
-    }
+function lintTargetPlanOperatorContract(filePath, failures, repoRoot) {
+  if (!fs.existsSync(filePath)) {
+    return;
   }
 
-  if (
-    executionQueue != null &&
-    executionQueue !== "none" &&
-    activeCandidates.length === 0 &&
-    activeTransitionQueueId == null
-  ) {
-    failures.push(
-      `${relativePath}: execution_queue=${executionQueue} must be backed by one active candidate or one active transition queue`
-    );
+  const text = readFileOrFail(filePath, failures, repoRoot);
+  if (text == null) {
+    return;
   }
 
-  if (activeCandidates.length > 0 && activeTransitionQueueId != null) {
-    failures.push(
-      `${relativePath}: active candidate and active transition queue would create double live execution truth`
-    );
+  const relativePath = relative(repoRoot, filePath);
+  requirePatterns(text, relativePath, failures, [
+    [/^### Operator Intake Contract$/m, "version plan must include an Operator Intake Contract section"],
+    [/\u65b0\u9700\u6c42/u, "version plan must limit operator intake to `???`"],
+    [/\u53c2\u8003\u6cbb\u7406\u89c4\u8303/u, "version plan must limit operator intake to `??????`"],
+    [/\u5904\u7406\u7ed3\u679c\uff1a/u, "version plan must publish the fixed operator receipt block"],
+    [/\u5f53\u524d\u6267\u884c\u60c5\u51b5\uff1a/u, "version plan must publish the current-execution receipt block"],
+    [/\u4eba\u5de5\u64cd\u4f5c\uff1a\u5f53\u524d\u4e0d\u9700\u8981 \/ \u5f53\u524d\u9700\u8981\u786e\u8ba4 xxx/u, "version plan must publish the explicit human-action receipt line"],
+    [/\u9ed8\u8ba4\u4e0d\u5411\u4eba\u5de5\u66b4\u9732\u771f\u503c\u94fe\u7ec6\u8282/u, "version plan must default-hide Blueprint internal analysis"],
+  ]);
+}
+
+function lintQueueOperatorSnapshotContract(filePath, failures, repoRoot) {
+  if (!fs.existsSync(filePath)) {
+    return;
   }
 
-  if (
-    decisionRequired != null &&
-    decisionRequired !== "none" &&
-    forbiddenHumanControlTerms.some((term) =>
-      decisionRequired.toLowerCase().includes(term)
-    )
-  ) {
-    failures.push(
-      `${relativePath}: decision_required must stay human-facing and must not expose internal control semantics`
-    );
+  const text = readFileOrFail(filePath, failures, repoRoot);
+  if (text == null) {
+    return;
   }
+
+  const relativePath = relative(repoRoot, filePath);
+  requirePatterns(text, relativePath, failures, [
+    [/^### Operator Snapshot Contract$/m, "execution queue template must include an Operator Snapshot Contract section"],
+    [/\u5f53\u524d\u6267\u884c\u961f\u5217.*queue_id/u, "execution queue template must map ?????? to queue_id"],
+    [/\u5f53\u524d\u4efb\u52a1.*active_task/u, "execution queue template must map ???? to active_task"],
+    [/\u5f53\u524d\u961f\u5217\u76ee\u6807.*queue_goal/u, "execution queue template must map ?????? to queue_goal"],
+  ]);
+}
+
+function lintReadableQueueOperatorSnapshotContract(filePath, failures, repoRoot) {
+  if (!fs.existsSync(filePath)) {
+    return;
+  }
+
+  const text = readFileOrFail(filePath, failures, repoRoot);
+  if (text == null) {
+    return;
+  }
+
+  const relativePath = relative(repoRoot, filePath);
+  requirePatterns(text, relativePath, failures, [
+    [/^### Operator Snapshot Contract$/m, "execution queue template must include an Operator Snapshot Contract section"],
+    [/\u5f53\u524d\u6267\u884c\u961f\u5217.*queue_id/u, "execution queue template must map ?????? to queue_id"],
+    [/\u5f53\u524d\u4efb\u52a1.*active_task/u, "execution queue template must map ???? to active_task"],
+    [/\u5f53\u524d\u961f\u5217\u76ee\u6807.*queue_goal/u, "execution queue template must map ?????? to queue_goal"],
+  ]);
 }
 
 function lintTargetPlan(filePath, failures, repoRoot, label) {
@@ -511,6 +663,8 @@ function lintTargetPlan(filePath, failures, repoRoot, label) {
 
   const relativePath = relative(repoRoot, filePath);
   const isTemplate = relativePath.includes("/templates/");
+  const versionStatus = matchField(text, "version_status");
+  rejectQueueLocalSyncFields(text, relativePath, failures, label);
 
   if (/^- next_legal_action:/m.test(text)) {
     failures.push(
@@ -524,6 +678,19 @@ function lintTargetPlan(filePath, failures, repoRoot, label) {
     );
   }
 
+  requireFieldValue(
+    text,
+    "version_status",
+    relativePath,
+    failures,
+    `${relativePath}: ${label} missing Control Block field "version_status"`
+  );
+  if (/^- target_status:/m.test(text)) {
+    failures.push(
+      `${relativePath}: ${label} must not use legacy target_status; use version_status`
+    );
+  }
+
   const nextAction = requireFieldValue(
     text,
     "next_action",
@@ -531,7 +698,7 @@ function lintTargetPlan(filePath, failures, repoRoot, label) {
     failures,
     `${label} missing Control Block field "next_action"`
   );
-  if (!isTemplate && nextAction != null && !allowedTargetNextActions.has(nextAction)) {
+  if (!isTemplate && nextAction != null && !allowedVersionNextActions.has(nextAction)) {
     failures.push(
       `${relativePath}: ${label} next_action "${nextAction}" is not an allowed enum value`
     );
@@ -544,9 +711,26 @@ function lintTargetPlan(filePath, failures, repoRoot, label) {
     failures,
     `${label} missing Control Block field "next_decision"`
   );
-  if (!isTemplate && nextDecision != null && !allowedTargetNextDecisions.has(nextDecision)) {
+  if (!isTemplate && nextDecision != null && !allowedVersionNextDecisions.has(nextDecision)) {
     failures.push(
       `${relativePath}: ${label} next_decision "${nextDecision}" is not an allowed enum value`
+    );
+  }
+
+  const postQueueCloseoutPausePolicy = requireFieldValue(
+    text,
+    "post_queue_closeout_pause_policy",
+    relativePath,
+    failures,
+    `${relativePath}: ${label} missing Control Block field "post_queue_closeout_pause_policy"`
+  );
+  if (
+    !isTemplate &&
+    postQueueCloseoutPausePolicy != null &&
+    !allowedPostQueueCloseoutPausePolicies.has(postQueueCloseoutPausePolicy)
+  ) {
+    failures.push(
+      `${relativePath}: ${label} post_queue_closeout_pause_policy "${postQueueCloseoutPausePolicy}" is not an allowed enum value`
     );
   }
 
@@ -556,6 +740,15 @@ function lintTargetPlan(filePath, failures, repoRoot, label) {
     "proposed_queue_id",
     "review_basis",
     "admission_status",
+    "intake_status",
+    "intake_item_id",
+    "intake_summary",
+    "intake_result",
+    "intake_feedback_mode",
+    "stop_reason",
+    "stop_basis",
+    "next_unblocked_action",
+    "human_input_required",
   ]) {
     requireFieldValue(
       text,
@@ -566,10 +759,116 @@ function lintTargetPlan(filePath, failures, repoRoot, label) {
     );
   }
 
+  const closureRoutingValues = Object.fromEntries(
+    closureRoutingFields.map((fieldName) => [
+      fieldName,
+      requireFieldValue(
+        text,
+        fieldName,
+        relativePath,
+        failures,
+        `${relativePath}: ${label} closure routing requires Control Block field "${fieldName}"`
+      ),
+    ])
+  );
+
   const admissionStatus = matchField(text, "admission_status");
   if (!isTemplate && admissionStatus != null && !allowedAdmissionStatuses.has(admissionStatus)) {
     failures.push(
       `${relativePath}: ${label} admission_status "${admissionStatus}" is not an allowed enum value`
+    );
+  }
+
+  const intakeStatus = matchField(text, "intake_status");
+  const intakeItemId = matchField(text, "intake_item_id");
+  const intakeSummary = matchField(text, "intake_summary");
+  const intakeResult = matchField(text, "intake_result");
+  const intakeFeedbackMode = matchField(text, "intake_feedback_mode");
+
+  if (!isTemplate && intakeStatus != null && !allowedIntakeStatuses.has(intakeStatus)) {
+    failures.push(
+      `${relativePath}: ${label} intake_status "${intakeStatus}" is not an allowed enum value`
+    );
+  }
+
+  if (!isTemplate && intakeResult != null && !allowedIntakeResults.has(intakeResult)) {
+    failures.push(
+      `${relativePath}: ${label} intake_result "${intakeResult}" is not an allowed enum value`
+    );
+  }
+
+  if (
+    !isTemplate &&
+    intakeFeedbackMode != null &&
+    !allowedIntakeFeedbackModes.has(intakeFeedbackMode)
+  ) {
+    failures.push(
+      `${relativePath}: ${label} intake_feedback_mode "${intakeFeedbackMode}" is not an allowed enum value`
+    );
+  }
+
+  const closureReviewStatus = closureRoutingValues.closure_review_status;
+  const residueCandidateFamily = closureRoutingValues.residue_candidate_family;
+  const autoAdmissionReady = closureRoutingValues.auto_admission_ready;
+  const stopReason = matchField(text, "stop_reason");
+  const stopBasis = matchField(text, "stop_basis");
+  const nextUnblockedAction = matchField(text, "next_unblocked_action");
+  const humanInputRequired = matchField(text, "human_input_required");
+
+  if (
+    !isTemplate &&
+    closureReviewStatus != null &&
+    !allowedClosureReviewStatuses.has(closureReviewStatus)
+  ) {
+    failures.push(
+      `${relativePath}: ${label} closure_review_status "${closureReviewStatus}" is not an allowed enum value`
+    );
+  }
+
+  if (
+    !isTemplate &&
+    residueCandidateFamily != null &&
+    !allowedResidueFamilies.has(residueCandidateFamily)
+  ) {
+    failures.push(
+      `${relativePath}: ${label} residue_candidate_family "${residueCandidateFamily}" is not an allowed enum value`
+    );
+  }
+
+  if (
+    !isTemplate &&
+    autoAdmissionReady != null &&
+    !allowedBooleanStrings.has(autoAdmissionReady)
+  ) {
+    failures.push(
+      `${relativePath}: ${label} auto_admission_ready "${autoAdmissionReady}" is not an allowed boolean value`
+    );
+  }
+
+  if (!isTemplate && stopReason != null && !allowedStopReasons.has(stopReason)) {
+    failures.push(
+      `${relativePath}: ${label} stop_reason "${stopReason}" is not an allowed enum value`
+    );
+  }
+
+  if (
+    !isTemplate &&
+    nextUnblockedAction != null &&
+    nextUnblockedAction !== "none" &&
+    !allowedVersionNextActions.has(nextUnblockedAction)
+  ) {
+    failures.push(
+      `${relativePath}: ${label} next_unblocked_action "${nextUnblockedAction}" is not an allowed enum value`
+    );
+  }
+
+  if (
+    !isTemplate &&
+    humanInputRequired != null &&
+    !allowedBooleanStrings.has(humanInputRequired)
+  ) {
+    failures.push(
+      `${relativePath}: ${label} human_input_required "${humanInputRequired}" is not an allowed boolean value`
     );
   }
 
@@ -582,6 +881,20 @@ function lintTargetPlan(filePath, failures, repoRoot, label) {
   const reviewSubjectId = matchField(text, "review_subject_id");
   const proposedQueueId = matchField(text, "proposed_queue_id");
   const reviewBasis = matchField(text, "review_basis");
+  const blockedByEntries = extractListEntries(text, "blocked_by");
+  const closureReviewSubject = closureRoutingValues.closure_review_subject;
+  const residueCandidateId = closureRoutingValues.residue_candidate_id;
+  const routingBasis = closureRoutingValues.routing_basis;
+  const nextLawfulQueueRecommendation =
+    closureRoutingValues.next_lawful_queue_recommendation;
+  const hasClosureRoutingTruth = [
+    closureReviewSubject,
+    closureReviewStatus,
+    residueCandidateId,
+    residueCandidateFamily,
+    routingBasis,
+    nextLawfulQueueRecommendation,
+  ].some((value) => value != null && value !== "none") || autoAdmissionReady === "true";
 
   if (!isTemplate && activeQueue === "none" && decisionState === "active-execution") {
     failures.push(
@@ -632,6 +945,145 @@ function lintTargetPlan(filePath, failures, repoRoot, label) {
       `${relativePath}: ${label} must not keep a live admission review subject while active_queue=${activeQueue}`
     );
   }
+
+  if (
+    !isTemplate &&
+    blockedByEntries.some((entry) => isRepositorySyncMirror(entry))
+  ) {
+    failures.push(
+      `${relativePath}: ${label} blocked_by must not mirror merge conflict or repository sync state as version-level blocker truth`
+    );
+  }
+
+  if (
+    !isTemplate &&
+    intakeStatus === "none" &&
+    [intakeItemId, intakeSummary, intakeResult, intakeFeedbackMode].some(
+      (value) => value != null && value !== "none"
+    )
+  ) {
+    failures.push(
+      `${relativePath}: ${label} intake_status=none requires intake_item_id/intake_summary/intake_result/intake_feedback_mode to all be none`
+    );
+  }
+
+  if (!isTemplate && intakeStatus != null && intakeStatus !== "none") {
+    if (intakeItemId == null || intakeItemId === "none") {
+      failures.push(
+        `${relativePath}: ${label} must name intake_item_id while intake_status=${intakeStatus}`
+      );
+    }
+
+    if (intakeSummary == null || intakeSummary === "none") {
+      failures.push(
+        `${relativePath}: ${label} must keep intake_summary while intake_status=${intakeStatus}`
+      );
+    }
+
+    if (intakeFeedbackMode == null || intakeFeedbackMode === "none") {
+      failures.push(
+        `${relativePath}: ${label} must keep intake_feedback_mode while intake_status=${intakeStatus}`
+      );
+    }
+
+    if (intakeStatus === "evaluating" && intakeResult !== "none") {
+      failures.push(
+        `${relativePath}: ${label} intake_status=evaluating requires intake_result=none until evaluation resolves`
+      );
+    }
+
+    if (intakeStatus !== "evaluating" && (intakeResult == null || intakeResult === "none")) {
+      failures.push(
+        `${relativePath}: ${label} must keep intake_result while intake_status=${intakeStatus}`
+      );
+    }
+  }
+
+  if (
+    !isTemplate &&
+    hasClosureRoutingTruth &&
+    [closureReviewSubject, closureReviewStatus, routingBasis].some(
+      (value) => value == null || value === "none"
+    )
+  ) {
+    failures.push(
+      `${relativePath}: ${label} closure routing requires closure_review_subject, closure_review_status, and routing_basis before residue routing can be recorded`
+    );
+  }
+
+  if (
+    !isTemplate &&
+    residueCandidateFamily === "same-family" &&
+    (nextLawfulQueueRecommendation == null || nextLawfulQueueRecommendation === "none")
+  ) {
+    failures.push(
+      `${relativePath}: ${label} residue_candidate_family=same-family requires next_lawful_queue_recommendation to name the next lawful queue`
+    );
+  }
+
+  if (
+    !isTemplate &&
+    autoAdmissionReady === "true" &&
+    (
+      residueCandidateId == null ||
+      residueCandidateId === "none" ||
+      nextLawfulQueueRecommendation == null ||
+      nextLawfulQueueRecommendation === "none"
+    )
+  ) {
+    failures.push(
+      `${relativePath}: ${label} auto_admission_ready=true requires a structured residue candidate and recommendation`
+    );
+  }
+
+  if (
+    !isTemplate &&
+    stopReason === "none" &&
+    (
+      (stopBasis != null && stopBasis !== "none") ||
+      (nextUnblockedAction != null && nextUnblockedAction !== "none") ||
+      humanInputRequired === "true"
+    )
+  ) {
+    failures.push(
+      `${relativePath}: ${label} stop_reason=none requires stop_basis=none, next_unblocked_action=none, and human_input_required=false`
+    );
+  }
+
+  if (!isTemplate && stopReason === "operator-requested-suspend") {
+    if (
+      stopBasis == null ||
+      stopBasis === "none" ||
+      nextUnblockedAction == null ||
+      nextUnblockedAction === "none" ||
+      humanInputRequired !== "false"
+    ) {
+      failures.push(
+        `${relativePath}: ${label} stop_reason=operator-requested-suspend requires stop_basis, next_unblocked_action, and human_input_required=false`
+      );
+    }
+  } else if (
+    !isTemplate &&
+    stopReason != null &&
+    stopReason !== "none" &&
+    (
+      stopBasis == null ||
+      stopBasis === "none" ||
+      nextUnblockedAction == null ||
+      nextUnblockedAction === "none" ||
+      humanInputRequired !== "true"
+    )
+  ) {
+    failures.push(
+      `${relativePath}: ${label} stop_reason=${stopReason} requires stop_basis, next_unblocked_action, and human_input_required=true`
+    );
+  }
+
+  if ((isTemplate || versionStatus === "open") && !/^### Candidate Backlog Refresh Rule$/m.test(text)) {
+    failures.push(
+      `${relativePath}: ${label} with version_status=open must include a Candidate Backlog Refresh Rule section`
+    );
+  }
 }
 
 function lintTargetSpec(filePath, failures, repoRoot, label) {
@@ -641,6 +1093,7 @@ function lintTargetSpec(filePath, failures, repoRoot, label) {
   }
 
   const relativePath = relative(repoRoot, filePath);
+  rejectQueueLocalSyncFields(text, relativePath, failures, label);
 
   if (/^### Queue Portfolio$/m.test(text)) {
     failures.push(
@@ -661,7 +1114,7 @@ function lintTargetSpec(filePath, failures, repoRoot, label) {
   }
 }
 
-function lintQueueDocs(queueDir, failures, repoRoot, usingV1Target = false) {
+function lintQueueDocs(queueDir, failures, repoRoot, activeVersionId) {
   if (!fs.existsSync(queueDir)) {
     return;
   }
@@ -672,147 +1125,344 @@ function lintQueueDocs(queueDir, failures, repoRoot, usingV1Target = false) {
     }
 
     const filePath = path.join(queueDir, entry.name);
-    const text = fs.readFileSync(filePath, "utf8");
-    const relativePath = relative(repoRoot, filePath);
-    const head = text.split(/\r?\n/u).slice(0, 25).join("\n");
+    lintQueueDoc(filePath, failures, repoRoot, false, activeVersionId);
+  }
+}
 
-    if (usingV1Target && /target plan|target spec/i.test(text)) {
+function lintQueueDoc(filePath, failures, repoRoot, isTemplate, activeVersionId = null) {
+  const text = readFileOrFail(filePath, failures, repoRoot);
+  if (text == null) {
+    return;
+  }
+
+  const relativePath = relative(repoRoot, filePath);
+  const head = text.split(/\r?\n/u).slice(0, 35).join("\n");
+  const ownerVersion =
+    matchField(head, "belongs_to_version") ??
+    matchField(head, "belongs_to_target");
+
+  for (const requiredField of [
+    "queue_status",
+    "active_task",
+    "closeout_status",
+    "next_effect",
+  ]) {
+    if (!new RegExp(`^- ${escapeRegExp(requiredField)}:`, "m").test(head)) {
       failures.push(
-        `${relativePath}: queue doc must reference the v1 target owner instead of target plan/spec once active_target_file exists`
+        `${relativePath}: queue Control Block missing "${requiredField}"`
+      );
+    }
+  }
+
+  if (/^- status:/m.test(head)) {
+    failures.push(
+      `${relativePath}: queue Control Block must not use legacy status field; use queue_status`
+    );
+  }
+
+  const queueStatus = matchField(head, "queue_status");
+  const activeTask = matchField(head, "active_task");
+  const syncStatus = matchField(head, "sync_status");
+  const syncScope = matchField(head, "sync_scope");
+  const syncSummary = matchField(head, "sync_summary");
+  const queueSnapshotRequired = isTemplate || queueStatus === "active";
+  const queueSnapshotFields = [
+    "queue_goal",
+    "task_count",
+    "completed_task_count",
+    "remaining_task_count",
+    "active_task_summary",
+    "task_briefs",
+  ];
+  const queueSnapshotValues = Object.fromEntries(
+    queueSnapshotFields.map((fieldName) => [fieldName, matchField(text, fieldName)])
+  );
+  const queueClosureValues = Object.fromEntries(
+    queueClosureJudgementFields.map((fieldName) => [fieldName, matchField(text, fieldName)])
+  );
+  const taskLedgerIds = extractTaskLedgerIds(text);
+  const taskDefinitions = extractTaskDefinitions(text);
+  const taskDefinitionIds = taskDefinitions.map((definition) => definition.taskId);
+  const closureJudgementInScope =
+    isTemplate ||
+    [
+      "execution_closeout_status",
+      "topic_closure_status",
+      "closure_basis",
+      "residue_family",
+      "residue_routing_status",
+      "next_family_candidate",
+      "auto_continue_eligible",
+    ].some((fieldName) => queueClosureValues[fieldName] != null);
+  const requiresActiveVersionClaimStructure =
+    isTemplate ||
+    (
+      activeVersionId != null &&
+      ownerVersion === activeVersionId &&
+      /^### Claim Boundary$/m.test(text)
+    );
+
+  if (!isTemplate && queueStatus != null && !allowedQueueStatuses.has(queueStatus)) {
+    failures.push(
+      `${relativePath}: queue_status=${queueStatus} is not an allowed queue status`
+    );
+  }
+
+  if (
+    !isTemplate &&
+    /^(active|blocked)$/u.test(queueStatus ?? "") &&
+    /^- belongs_to_target:/m.test(head)
+  ) {
+    failures.push(
+      `${relativePath}: governed queue docs must not use legacy belongs_to_target; use belongs_to_version`
+    );
+  }
+
+  if (
+    !isTemplate &&
+    queueStatus !== "active" &&
+    activeTask != null &&
+    activeTask !== "none"
+  ) {
+    failures.push(
+      `${relativePath}: queue must not keep active_task=${activeTask} while queue_status=${queueStatus}`
+    );
+  }
+
+  if (isTemplate || queueStatus === "active" || queueStatus === "blocked") {
+    for (const fieldName of ["sync_status", "sync_scope", "sync_summary"]) {
+      if (!new RegExp(`^- ${escapeRegExp(fieldName)}:`, "m").test(head)) {
+        failures.push(
+          `${relativePath}: queue Control Block missing repository sync record field "${fieldName}"`
+        );
+      }
+    }
+  }
+
+  if (!isTemplate && syncStatus != null && !allowedSyncStatuses.has(syncStatus)) {
+    failures.push(
+      `${relativePath}: sync_status=${syncStatus} is not an allowed repository sync status`
+    );
+  }
+
+  if (!isTemplate && syncScope != null && !allowedSyncScopes.has(syncScope)) {
+    failures.push(
+      `${relativePath}: sync_scope=${syncScope} is not an allowed repository sync scope`
+    );
+  }
+
+  const blockedByEntries = extractListEntries(head, "blocked_by");
+  if (
+    blockedByEntries.some((entry) => isRepositorySyncMirror(entry))
+  ) {
+    failures.push(
+      `${relativePath}: queue blocked_by must not mirror merge conflict or repository sync state as execution blockers`
+    );
+  }
+
+  if (closureJudgementInScope) {
+    for (const fieldName of queueClosureJudgementFields) {
+      if (queueClosureValues[fieldName] == null) {
+        failures.push(
+          `${relativePath}: queue closeout judgement requires Control Block field "${fieldName}"`
+        );
+      }
+    }
+  }
+
+  if (
+    !isTemplate &&
+    queueClosureValues.execution_closeout_status != null &&
+    !allowedExecutionCloseoutStatuses.has(queueClosureValues.execution_closeout_status)
+  ) {
+    failures.push(
+      `${relativePath}: execution_closeout_status="${queueClosureValues.execution_closeout_status}" is not an allowed queue closeout value`
+    );
+  }
+
+  if (
+    !isTemplate &&
+    queueClosureValues.topic_closure_status != null &&
+    !allowedTopicClosureStatuses.has(queueClosureValues.topic_closure_status)
+  ) {
+    failures.push(
+      `${relativePath}: topic_closure_status="${queueClosureValues.topic_closure_status}" is not an allowed topic closure value`
+    );
+  }
+
+  if (
+    !isTemplate &&
+    queueClosureValues.residue_family != null &&
+    !allowedResidueFamilies.has(queueClosureValues.residue_family)
+  ) {
+    failures.push(
+      `${relativePath}: residue_family="${queueClosureValues.residue_family}" is not an allowed residue family`
+    );
+  }
+
+  if (
+    !isTemplate &&
+    queueClosureValues.residue_routing_status != null &&
+    !allowedResidueRoutingStatuses.has(queueClosureValues.residue_routing_status)
+  ) {
+    failures.push(
+      `${relativePath}: residue_routing_status="${queueClosureValues.residue_routing_status}" is not an allowed routing status`
+    );
+  }
+
+  if (
+    !isTemplate &&
+    queueClosureValues.auto_continue_eligible != null &&
+    !allowedBooleanStrings.has(queueClosureValues.auto_continue_eligible)
+  ) {
+    failures.push(
+      `${relativePath}: auto_continue_eligible="${queueClosureValues.auto_continue_eligible}" is not an allowed boolean value`
+    );
+  }
+
+  if (
+    !isTemplate &&
+    queueClosureValues.topic_closure_status === "closed" &&
+    queueClosureValues.residue_remaining === "yes"
+  ) {
+    failures.push(
+      `${relativePath}: topic_closure_status=closed cannot coexist with residue_remaining=yes`
+    );
+  }
+
+  if (
+    !isTemplate &&
+    queueClosureValues.residue_family === "same-family" &&
+    (queueClosureValues.next_family_candidate == null ||
+      queueClosureValues.next_family_candidate === "none")
+  ) {
+    failures.push(
+      `${relativePath}: residue_family=same-family requires next_family_candidate to name the continuation`
+    );
+  }
+
+  if (
+    !isTemplate &&
+    queueClosureValues.auto_continue_eligible === "true" &&
+    (queueClosureValues.next_family_candidate == null ||
+      queueClosureValues.next_family_candidate === "none")
+  ) {
+    failures.push(
+      `${relativePath}: auto_continue_eligible=true requires a named continuation`
+    );
+  }
+
+  if (queueSnapshotRequired) {
+    if (!/^### Queue Snapshot$/m.test(text)) {
+      failures.push(
+        `${relativePath}: active queue docs must include a Queue Snapshot section`
       );
     }
 
-    for (const requiredField of [
-      "queue_status",
-      "active_task",
-      "closeout_status",
-      "next_effect",
-    ]) {
-      if (!new RegExp(`^- ${escapeRegExp(requiredField)}:`, "m").test(head)) {
-        failures.push(
-          `${relativePath}: queue Control Block missing "${requiredField}"`
-        );
+    for (const fieldName of queueSnapshotFields) {
+      if (!new RegExp(`^- ${escapeRegExp(fieldName)}:`, "m").test(text)) {
+        failures.push(`${relativePath}: Queue Snapshot missing "${fieldName}"`);
       }
     }
+  }
 
-    if (/^- status:/m.test(head)) {
+  if (requiresActiveVersionClaimStructure) {
+    requirePatterns(text, relativePath, failures, [
+      [/^#### Parent Capability Coverage$/m, "active-version queue docs must include a Parent Capability Coverage section"],
+      [/^#### Capability Floor$/m, "active-version queue docs must include a Capability Floor section"],
+      [/^#### User Path Coverage Matrix$/m, "active-version queue docs must include a User Path Coverage Matrix section"],
+      [/^#### Functional Loss Budget$/m, "active-version queue docs must include a Functional Loss Budget section"],
+      [/^#### Replacement Proof$/m, "active-version queue docs must include a Replacement Proof section"],
+      [/^### Completion Completeness Review$/m, "active-version queue docs must include a Completion Completeness Review section"],
+      [/^- owned_closure:/m, "active-version queue docs must record owned_closure in Parent Capability Coverage"],
+      [/^- preserved_not_owned:/m, "active-version queue docs must record preserved_not_owned in Parent Capability Coverage"],
+      [/^- routed_elsewhere:/m, "active-version queue docs must record routed_elsewhere in Parent Capability Coverage"],
+      [/^- leave_return_or_followup_paths:/m, "active-version queue docs must record leave_return_or_followup_paths in User Path Coverage Matrix"],
+      [/^- rejection_or_error_paths:/m, "active-version queue docs must record rejection_or_error_paths in User Path Coverage Matrix"],
+      [/^- functional_loss_audit:/m, "active-version queue docs must record functional_loss_audit in Completion Completeness Review"],
+      [/^- capability_floor_verification:/m, "active-version queue docs must record capability_floor_verification in Completion Completeness Review"],
+      [/^- user_path_matrix_verification:/m, "active-version queue docs must record user_path_matrix_verification in Completion Completeness Review"],
+      [/^- replacement_proof_summary:/m, "active-version queue docs must record replacement_proof_summary in Completion Completeness Review"],
+      [/^- placeholder_or_legacy_fallback_audit:/m, "active-version queue docs must record placeholder_or_legacy_fallback_audit in Completion Completeness Review"],
+      [/^- previous_owner_or_path:/m, "active-version queue docs must record previous_owner_or_path in Replacement Proof"],
+      [/^- new_owner_or_path:/m, "active-version queue docs must record new_owner_or_path in Replacement Proof"],
+      [/^- behavior_preservation_expectation:/m, "active-version queue docs must record behavior_preservation_expectation in Replacement Proof"],
+      [/^- old_truth_owner_exit_proof:/m, "active-version queue docs must record old_truth_owner_exit_proof in Replacement Proof"],
+      [/^- verification_evidence:/m, "active-version queue docs must record verification_evidence in Replacement Proof"],
+    ]);
+  }
+
+  if (
+    queueSnapshotRequired &&
+    queueSnapshotValues.task_count != null &&
+    Number.isFinite(Number(queueSnapshotValues.task_count)) &&
+    Number(queueSnapshotValues.task_count) !== taskLedgerIds.length
+  ) {
+    failures.push(
+      `${relativePath}: Queue Snapshot task_count=${queueSnapshotValues.task_count} does not match Task Ledger count ${taskLedgerIds.length}`
+    );
+  }
+
+  if (queueStatus === "active") {
+    if (activeTask == null || activeTask === "none") {
+      failures.push(`${relativePath}: active queues must expose a non-none active_task`);
+    }
+
+    if (activeTask != null && activeTask !== "none" && !taskLedgerIds.includes(activeTask)) {
       failures.push(
-        `${relativePath}: queue Control Block must not use legacy status field; use queue_status`
+        `${relativePath}: active_task=${activeTask} is missing from the queue task ledger`
       );
     }
 
-    const queueStatus = head.match(/^- queue_status: `([^`]+)`/m)?.[1] ?? null;
-    const activeTask = head.match(/^- active_task: `([^`]+)`/m)?.[1] ?? null;
-    const goalStatus = head.match(/^- goal_status: `([^`]+)`/m)?.[1] ?? null;
-    const failureOwnerScope =
-      head.match(/^- failure_owner_scope: `([^`]+)`/m)?.[1] ?? null;
-    const closeoutStatus = head.match(/^- closeout_status: `([^`]+)`/m)?.[1] ?? null;
-    const nextEffect = head.match(/^- next_effect: `([^`]+)`/m)?.[1] ?? null;
-
-    if (queueStatus != null && !allowedQueueStatuses.has(queueStatus)) {
+    if (
+      activeTask != null &&
+      activeTask !== "none" &&
+      !taskDefinitionIds.includes(activeTask)
+    ) {
       failures.push(
-        `${relativePath}: queue_status=${queueStatus} is not an allowed queue status`
+        `${relativePath}: active_task=${activeTask} is missing from task definitions`
       );
     }
+  }
 
-    if (queueStatus !== "active" && activeTask != null && activeTask !== "none") {
-      failures.push(
-        `${relativePath}: queue must not keep active_task=${activeTask} while queue_status=${queueStatus}`
-      );
-    }
-
-    const usesEscalatedTerminalState = closeoutStatus === "escalated-to-target";
-    const needsV1ExecutionFields =
-      usingV1Target &&
-      (queueStatus === "active" ||
-        usesEscalatedTerminalState ||
-        goalStatus != null ||
-        failureOwnerScope != null);
-
-    if (needsV1ExecutionFields) {
-      if (goalStatus == null) {
+  if (queueSnapshotRequired) {
+    for (const taskId of taskLedgerIds) {
+      if (!taskDefinitionIds.includes(taskId)) {
         failures.push(
-          `${relativePath}: v1 queue must declare goal_status so queue goal completion stays distinct from closeout`
-        );
-      } else if (!allowedGoalStatuses.has(goalStatus)) {
-        failures.push(
-          `${relativePath}: goal_status=${goalStatus} is not an allowed v1 goal status`
-        );
-      }
-
-      if (failureOwnerScope == null) {
-        failures.push(
-          `${relativePath}: v1 queue must declare failure_owner_scope for verification ownership`
-        );
-      } else if (!allowedFailureOwnerScopes.has(failureOwnerScope)) {
-        failures.push(
-          `${relativePath}: failure_owner_scope=${failureOwnerScope} is not an allowed v1 failure owner scope`
-        );
-      }
-
-      if (closeoutStatus == null) {
-        failures.push(
-          `${relativePath}: v1 queue must declare closeout_status`
-        );
-      } else if (!allowedV1CloseoutStatuses.has(closeoutStatus)) {
-        failures.push(
-          `${relativePath}: closeout_status=${closeoutStatus} is not an allowed v1 closeout status`
-        );
-      }
-
-      if (usesEscalatedTerminalState) {
-        if (queueStatus !== "done") {
-          failures.push(
-            `${relativePath}: closeout_status=escalated-to-target requires queue_status=done`
-          );
-        }
-
-        if (goalStatus !== "satisfied") {
-          failures.push(
-            `${relativePath}: closeout_status=escalated-to-target requires goal_status=satisfied`
-          );
-        }
-
-        if (activeTask !== "none") {
-          failures.push(
-            `${relativePath}: closeout_status=escalated-to-target requires active_task=none`
-          );
-        }
-
-        if (nextEffect !== "absorb-into-target") {
-          failures.push(
-            `${relativePath}: non-owner verification failure must use next_effect=absorb-into-target`
-          );
-        }
-      }
-
-      if (
-        goalStatus === "satisfied" &&
-        (failureOwnerScope === "target-level" ||
-          failureOwnerScope === "repository/global") &&
-        closeoutStatus !== "escalated-to-target"
-      ) {
-        failures.push(
-          `${relativePath}: non-owner verification failure must not remain attached to queue closeout as blocked or in-progress`
+          `${relativePath}: task ledger entry ${taskId} is missing from task definitions`
         );
       }
     }
 
-    if (queueStatus === "done") {
-      const disallowedPatterns = [
-        /^### Execution State$/m,
-        /^## Next Executable Task$/m,
-        /^## Candidate Backlog$/m,
-        /Current Focus:/m,
-        /Active Task:/m,
-        /Next Step:/m,
-      ];
-      for (const pattern of disallowedPatterns) {
-        if (pattern.test(text)) {
-          failures.push(
-            `${relativePath}: done queue still contains live execution label matching ${pattern}`
-          );
-        }
+    for (const definition of taskDefinitions) {
+      if (!definition.hasTaskBrief) {
+        failures.push(
+          `${relativePath}: task definition ${definition.taskId} is missing required task_brief`
+        );
+      }
+
+      if (!definition.hasTaskOutcomeSummary) {
+        failures.push(
+          `${relativePath}: task definition ${definition.taskId} is missing required task_outcome_summary`
+        );
+      }
+    }
+  }
+
+  if (queueStatus === "done") {
+    const disallowedPatterns = [
+      /^### Execution State$/m,
+      /^## Next Executable Task$/m,
+      /^## Candidate Backlog$/m,
+      /Current Focus:/m,
+      /Active Task:/m,
+      /Next Step:/m,
+    ];
+    for (const pattern of disallowedPatterns) {
+      if (pattern.test(text)) {
+        failures.push(
+          `${relativePath}: done queue still contains live execution label matching ${pattern}`
+        );
       }
     }
   }
@@ -821,7 +1471,6 @@ function lintQueueDocs(queueDir, failures, repoRoot, usingV1Target = false) {
 function lintCrossDocumentConsistency(
   projectProgressPath,
   blueprintPath,
-  targetFilePath,
   targetPlanPath,
   failures,
   repoRoot
@@ -829,55 +1478,32 @@ function lintCrossDocumentConsistency(
   if (
     !fs.existsSync(projectProgressPath) ||
     !fs.existsSync(blueprintPath) ||
-    (!fs.existsSync(targetPlanPath) && !fs.existsSync(targetFilePath ?? ""))
+    !fs.existsSync(targetPlanPath)
   ) {
     return;
   }
 
   const projectProgressText = fs.readFileSync(projectProgressPath, "utf8");
   const blueprintText = fs.readFileSync(blueprintPath, "utf8");
-  const targetText =
-    targetFilePath != null && fs.existsSync(targetFilePath)
-      ? fs.readFileSync(targetFilePath, "utf8")
-      : null;
-  const targetPlanText =
-    targetPlanPath != null && fs.existsSync(targetPlanPath)
-      ? fs.readFileSync(targetPlanPath, "utf8")
-      : null;
+  const targetPlanText = fs.readFileSync(targetPlanPath, "utf8");
 
-  const projectActiveTarget = matchField(projectProgressText, "active_target");
-  const blueprintActiveTarget = matchField(blueprintText, "active_target");
+  const projectActiveTarget = matchField(projectProgressText, "active_version");
+  const blueprintActiveTarget = matchField(blueprintText, "active_version");
   if (
     projectActiveTarget != null &&
     blueprintActiveTarget != null &&
     projectActiveTarget !== blueprintActiveTarget
   ) {
     failures.push(
-      `${relative(repoRoot, projectProgressPath)}: active_target must match blueprint active_target`
-    );
-  }
-
-  const targetId = targetText != null ? matchField(targetText, "target_id") : null;
-  if (
-    blueprintActiveTarget != null &&
-    targetId != null &&
-    blueprintActiveTarget !== targetId
-  ) {
-    failures.push(
-      `${relative(repoRoot, blueprintPath)}: active_target must match target target_id`
+      `${relative(repoRoot, projectProgressPath)}: active_version must match blueprint active_version`
     );
   }
 
   const hasActiveQueue = matchField(projectProgressText, "has_active_queue");
-  const usingV1Target = targetText != null;
-  const activeQueue = usingV1Target
-    ? matchField(targetText, "execution_queue")
-    : matchField(targetPlanText, "active_queue");
-  const activeQueueLabel = usingV1Target ? "execution_queue" : "active_queue";
-  const activeQueueOwnerPath = relative(repoRoot, usingV1Target ? targetFilePath : targetPlanPath);
+  const activeQueue = matchField(targetPlanText, "active_queue");
   if (hasActiveQueue === "false" && activeQueue != null && activeQueue !== "none") {
     failures.push(
-      `${relative(repoRoot, projectProgressPath)}: has_active_queue=false conflicts with target ${activeQueueLabel}=${activeQueue}`
+      `${relative(repoRoot, projectProgressPath)}: has_active_queue=false conflicts with target plan active_queue=${activeQueue}`
     );
   }
 
@@ -897,231 +1523,21 @@ function lintCrossDocumentConsistency(
 
   if (activeQueue === "none" && activeQueueDocs.length > 0) {
     failures.push(
-      `${activeQueueOwnerPath}: ${activeQueueLabel}=none conflicts with active queue docs (${activeQueueDocs.join(", ")})`
+      `${relative(repoRoot, targetPlanPath)}: active_queue=none conflicts with active queue docs (${activeQueueDocs.join(", ")})`
     );
   }
 
   if (activeQueue != null && activeQueue !== "none") {
     if (activeQueueDocs.length === 0) {
       failures.push(
-        `${activeQueueOwnerPath}: ${activeQueueLabel}=${activeQueue} has no matching active queue doc`
+        `${relative(repoRoot, targetPlanPath)}: active_queue=${activeQueue} has no matching active queue doc`
       );
     } else if (activeQueueDocs.length > 1 || activeQueueDocs[0] !== activeQueue) {
       failures.push(
-        `${activeQueueOwnerPath}: ${activeQueueLabel}=${activeQueue} conflicts with active queue docs (${activeQueueDocs.join(", ")})`
+        `${relative(repoRoot, targetPlanPath)}: active_queue=${activeQueue} conflicts with active queue docs (${activeQueueDocs.join(", ")})`
       );
     }
   }
-
-  if (targetText != null && targetPlanText != null) {
-    const legacyActiveQueue = matchField(targetPlanText, "active_queue");
-    if (
-      legacyActiveQueue != null &&
-      activeQueue != null &&
-      legacyActiveQueue !== activeQueue
-    ) {
-      failures.push(
-        `${relative(repoRoot, targetPlanPath)}: legacy active_queue=${legacyActiveQueue} must mirror target execution_queue=${activeQueue}`
-      );
-    }
-  }
-}
-
-function lintTargetPlanCompatibilityShell(
-  filePath,
-  targetFilePath,
-  failures,
-  repoRoot,
-  label
-) {
-  const text = readFileOrFail(filePath, failures, repoRoot);
-  if (text == null) {
-    return;
-  }
-
-  const relativePath = relative(repoRoot, filePath);
-  if (!/^##+ Compatibility Pointer$/m.test(text)) {
-    failures.push(`${relativePath}: ${label} compatibility shell missing "Compatibility Pointer"`);
-  }
-
-  const activeTargetRelative = relative(repoRoot, targetFilePath);
-  if (!text.includes(activeTargetRelative)) {
-    failures.push(
-      `${relativePath}: ${label} compatibility shell must point to active_target_file (${activeTargetRelative})`
-    );
-  }
-
-  if (/^- active_queue:/m.test(text) || /^- next_action:/m.test(text)) {
-    failures.push(
-      `${relativePath}: ${label} compatibility shell must not keep legacy target-plan control fields once a v1 target owner exists`
-    );
-  }
-}
-
-function lintTargetSpecCompatibilityShell(
-  filePath,
-  targetFilePath,
-  failures,
-  repoRoot,
-  label
-) {
-  const text = readFileOrFail(filePath, failures, repoRoot);
-  if (text == null) {
-    return;
-  }
-
-  const relativePath = relative(repoRoot, filePath);
-  if (!/^##+ Compatibility Pointer$/m.test(text)) {
-    failures.push(`${relativePath}: ${label} compatibility shell missing "Compatibility Pointer"`);
-  }
-
-  const activeTargetRelative = relative(repoRoot, targetFilePath);
-  if (!text.includes(activeTargetRelative)) {
-    failures.push(
-      `${relativePath}: ${label} compatibility shell must point to active_target_file (${activeTargetRelative})`
-    );
-  }
-
-  if (/^### Goal$/m.test(text) || /^### Acceptance Criteria$/m.test(text)) {
-    failures.push(
-      `${relativePath}: ${label} compatibility shell must not keep thick target prose once a v1 target owner exists`
-    );
-  }
-}
-
-function lintTargetPlanCompatibilityTemplate(filePath, failures, repoRoot, label) {
-  const text = readFileOrFail(filePath, failures, repoRoot);
-  if (text == null) {
-    return;
-  }
-
-  const relativePath = relative(repoRoot, filePath);
-  if (!/^##+ Compatibility Pointer$/m.test(text)) {
-    failures.push(`${relativePath}: ${label} missing "Compatibility Pointer"`);
-  }
-
-  if (/^## Control Block$/m.test(text) || /admission_status/i.test(text)) {
-    failures.push(
-      `${relativePath}: ${label} must stay a compatibility shell and must not reintroduce legacy target-plan control fields`
-    );
-  }
-}
-
-function lintTopicQueueCompatibilityTemplate(filePath, failures, repoRoot, label) {
-  const text = readFileOrFail(filePath, failures, repoRoot);
-  if (text == null) {
-    return;
-  }
-
-  const relativePath = relative(repoRoot, filePath);
-  if (!/compatibility alias/i.test(text)) {
-    failures.push(`${relativePath}: ${label} must state that it is a compatibility alias`);
-  }
-
-  if (!/execution-queue-template\.md/i.test(text)) {
-    failures.push(
-      `${relativePath}: ${label} must point to execution-queue-template.md as the canonical queue template`
-    );
-  }
-
-  if (/^## Control Block$/m.test(text) || /active_task:/i.test(text)) {
-    failures.push(
-      `${relativePath}: ${label} must not keep a second live queue template structure`
-    );
-  }
-}
-
-function resolveActiveTargetFile(blueprintText, repoRoot) {
-  if (blueprintText == null) {
-    return null;
-  }
-
-  const activeTargetFile = matchField(blueprintText, "active_target_file");
-  if (activeTargetFile == null) {
-    return null;
-  }
-
-  return path.join(repoRoot, ...activeTargetFile.split("/"));
-}
-
-function parseCandidateEntries(text) {
-  const sectionMatch = text.match(/^- candidate_queues:\r?\n([\s\S]*?)^- transition_queue:/m);
-  if (sectionMatch == null) {
-    return [];
-  }
-
-  const entries = [];
-  let currentEntry = null;
-
-  for (const line of sectionMatch[1].split(/\r?\n/u)) {
-    const candidateId = line.match(/^  - candidate_id: `([^`]+)`$/u)?.[1] ?? null;
-    if (candidateId != null) {
-      if (currentEntry != null) {
-        entries.push(materializeCandidateEntry(currentEntry));
-      }
-
-      currentEntry = { candidateId, lines: [] };
-      continue;
-    }
-
-    if (currentEntry != null) {
-      currentEntry.lines.push(line);
-    }
-  }
-
-  if (currentEntry != null) {
-    entries.push(materializeCandidateEntry(currentEntry));
-  }
-
-  return entries;
-}
-
-function materializeCandidateEntry(entry) {
-  const body = entry.lines.join("\n");
-  return {
-    candidateId: entry.candidateId,
-    state: body.match(/^    state: `([^`]+)`/m)?.[1] ?? null,
-    entryConditions: body.match(/^    entry_conditions: `([^`]+)`/m)?.[1] ?? null,
-    dropIf: body.match(/^    drop_if: `([^`]+)`/m)?.[1] ?? null,
-    onFailure: body.match(/^    on_failure: `([^`]+)`/m)?.[1] ?? null,
-  };
-}
-
-function parseTransitionQueue(text) {
-  const sectionMatch = text.match(
-    /^- transition_queue:\r?\n([\s\S]*?)(?=^- [a-z_]+:|\Z)/m
-  );
-  if (sectionMatch == null) {
-    return null;
-  }
-
-  const queueId =
-    sectionMatch[1].match(/^  - queue_id: `([^`]+)`/m)?.[1] ?? null;
-  const state = sectionMatch[1].match(/^  - state: `([^`]+)`/m)?.[1] ?? null;
-  const bindsBlock =
-    sectionMatch[1].match(/^  - binds_candidates:\r?\n((?:    - `[^`]+`\r?\n)*)/m)?.[1] ??
-    "";
-  const bindsCandidates = [...bindsBlock.matchAll(/^\s+- `([^`]+)`/gm)].map(
-    (match) => match[1]
-  );
-
-  return { queueId, state, bindsCandidates };
-}
-
-function parseAbsorbResolution(text) {
-  const sectionMatch = text.match(/^- absorb_resolution:\r?\n([\s\S]*?)^- constraints:/m);
-  if (sectionMatch == null) {
-    return null;
-  }
-
-  return {
-    sourceQueue: sectionMatch[1].match(/^  - source_queue: `([^`]+)`/m)?.[1] ?? null,
-    failureScope: sectionMatch[1].match(/^  - failure_scope: `([^`]+)`/m)?.[1] ?? null,
-    resolutionKind:
-      sectionMatch[1].match(/^  - resolution_kind: `([^`]+)`/m)?.[1] ?? null,
-    resolutionTarget:
-      sectionMatch[1].match(/^  - resolution_target: `([^`]+)`/m)?.[1] ?? null,
-  };
 }
 
 function collectActiveQueueDocs(queueDir) {
@@ -1149,6 +1565,52 @@ function collectActiveQueueDocs(queueDir) {
   return activeQueueIds.sort();
 }
 
+function requirePatterns(text, relativePath, failures, checks) {
+  for (const [pattern, message] of checks) {
+    if (!pattern.test(text)) {
+      failures.push(`${relativePath}: ${message}`);
+    }
+  }
+}
+
+function extractTaskLedgerIds(text) {
+  const taskIds = [];
+  for (const match of text.matchAll(/^\| `([^`]+)` \|/gm)) {
+    if (match[1].startsWith("task.")) {
+      taskIds.push(match[1]);
+    }
+  }
+
+  return [...new Set(taskIds)];
+}
+
+function extractTaskDefinitions(text) {
+  const definitions = [];
+  const headingMatches = [...text.matchAll(/^#{3,4} `([^`]+)`$/gm)];
+
+  for (let index = 0; index < headingMatches.length; index += 1) {
+    const [, taskId] = headingMatches[index];
+    if (!taskId.startsWith("task.")) {
+      continue;
+    }
+
+    const start = headingMatches[index].index ?? 0;
+    const end =
+      index + 1 < headingMatches.length
+        ? headingMatches[index + 1].index
+        : text.length;
+    const section = text.slice(start, end);
+
+    definitions.push({
+      taskId,
+      hasTaskBrief: /^- task_brief:/m.test(section),
+      hasTaskOutcomeSummary: /^- task_outcome_summary:/m.test(section),
+    });
+  }
+
+  return definitions;
+}
+
 function requireFieldValue(text, fieldName, relativePath, failures, failureMessage) {
   const value = matchField(text, fieldName);
   if (value == null) {
@@ -1163,6 +1625,37 @@ function matchField(text, fieldName) {
   return (
     text.match(new RegExp(`^- ${escapeRegExp(fieldName)}: \`([^\\\`]+)\``, "m"))?.[1] ??
     null
+  );
+}
+
+function extractListEntries(text, fieldName) {
+  const match = text.match(
+    new RegExp(`^- ${escapeRegExp(fieldName)}:\\s*\\r?\\n((?:  - .*\\r?\\n?)*)`, "m")
+  );
+  if (match == null || match[1].trim() === "") {
+    return [];
+  }
+
+  return match[1]
+    .split(/\r?\n/u)
+    .map((line) => line.trim())
+    .filter((line) => line.startsWith("- "))
+    .map((line) => line.slice(2).replace(/^`|`$/g, ""));
+}
+
+function rejectQueueLocalSyncFields(text, relativePath, failures, label) {
+  for (const fieldName of ["sync_status", "sync_scope", "sync_summary"]) {
+    if (new RegExp(`^- ${escapeRegExp(fieldName)}:`, "m").test(text)) {
+      failures.push(
+        `${relativePath}: ${label} must not mirror queue-local repository sync field "${fieldName}"`
+      );
+    }
+  }
+}
+
+function isRepositorySyncMirror(entry) {
+  return /(repository sync|sync failure|sync failed|repository sync failed|merge conflict|branch push|baseline merge|baseline push|\bgit\b|\bcommit\b|\bpush\b|\bmerge\b)/i.test(
+    entry
   );
 }
 

@@ -1,5 +1,8 @@
 # Mod-First Weekly Call Flows
 
+> **Historical Artifact:** Deprecated under `fail-closed progress-driven governance`. This file records the retired weekly-governance model and must not be used as the active resume entry for new work.
+
+
 **Week Of:** `2026-07-02`
 
 ## Purpose
@@ -177,3 +180,4 @@ createSaveEnvelope() -> selectedModSource persisted in save envelope -> loadSave
 
 - Child 22 is now complete for save/source persistence and fresh restore source reload parity.
 - The remaining next-step question is no longer inside this same closure boundary; any further continuation now requires a fresh weekly review.
+

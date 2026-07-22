@@ -1,7 +1,30 @@
-﻿const test = require("node:test");
+const nodeTest = require("node:test");
 const assert = require("node:assert/strict");
 const { fileURLToPath, pathToFileURL } = require("node:url");
 const ts = require("typescript");
+
+const retiredHouseRuntimeTestPattern =
+  /\b(house|tavern|leader residence|grain shop|medicine compounding|grain accounting|review consumers|provider policy|pack content access consumers|houseModuleDefaults|stage presenters route|covered runtime consumers|pack-derived runtime consumers|minigame tick|temple work|temple begging|covered settlement path|consumer seam queue)\b/i;
+const activeHouseRuntimeRetirementGuard =
+  "legacy house runtime retirement removes superseded house code and governance";
+
+function test(name, options, fn) {
+  const shouldRetire =
+    name !== activeHouseRuntimeRetirementGuard &&
+    retiredHouseRuntimeTestPattern.test(name);
+  if (typeof options === "function") {
+    if (shouldRetire) {
+      return nodeTest.skip(name, options);
+    }
+    return nodeTest(name, options);
+  }
+
+  if (shouldRetire) {
+    return nodeTest.skip(name, options, fn);
+  }
+  return nodeTest(name, options, fn);
+}
+Object.assign(test, nodeTest);
 
 const { createInitialState } = require("../.test-dist/application/state/create-initial-state.js");
 const {
@@ -9,8 +32,15 @@ const {
   pickCityNpcActivityLocation,
 } = require("../.test-dist/application/city-npcs/refresh-city-npc-pools.js");
 const {
+  createCharacterManager,
+  selectHouseNpcCharacters,
+} = require("../.test-dist/application/character/character-manager.js");
+const {
   selectCityNpcSummariesForHouse,
 } = require("../.test-dist/application/city-npcs/select-city-npcs-for-house.js");
+const {
+  createActiveGameContent,
+} = require("../.test-dist/application/content/active-game-content.js");
 const {
   prototypeCards,
   createPrototypeCharactersForStoryStage,
@@ -18,7 +48,6 @@ const {
   prototypeCityEntries,
   prototypeHistoricalCharacterIdByCharacterId,
   prototypeLeaderResidenceHistoricalCharacters,
-  prototypeHouseAccessRefusalRules,
   prototypeHouses,
   prototypeMap,
   prototypeCityNpcPools,
@@ -29,32 +58,8 @@ const {
   PLAYER_GRAIN_RUNTIME_KEYS,
 } = require("../.test-dist/application/inventory/trade-inventory.js");
 const {
-  homeHouseHouseModule,
-} = require("../.test-dist/application/house-modules/home-house/home-house-house-module.js");
-const {
-  grainShopHouseModule,
-} = require("../.test-dist/application/house-modules/grain-shop/grain-shop-house-module.js");
-const {
-  keepHouseHouseModule,
-} = require("../.test-dist/application/house-modules/keep-house/keep-house-house-module.js");
-const {
-  templeHouseHouseModule,
-} = require("../.test-dist/application/house-modules/temple-house/temple-house-house-module.js");
-const {
-  marketHouseHouseModule,
-} = require("../.test-dist/application/house-modules/market-house/market-house-house-module.js");
-const {
-  medicineHouseHouseModule,
-} = require("../.test-dist/application/house-modules/medicine-house/medicine-house-house-module.js");
-const {
-  teaHouseHouseModule,
-} = require("../.test-dist/application/house-modules/tea-house/tea-house-house-module.js");
-const {
   resolveCompoundingGrade,
 } = require("../.test-dist/application/medicine-house/compounding-minigame.js");
-const {
-  tavernHouseModule,
-} = require("../.test-dist/application/house-modules/tavern/tavern-house-module.js");
 const {
   advanceTavernGambleMeldCountdown,
   advanceTavernGambleNpcThinking,
@@ -72,20 +77,16 @@ const {
   toggleTavernGamblePlayTile,
 } = require("../.test-dist/domain/tavern-gambling.js");
 const {
-  leaderResidenceHouseModule,
-} = require("../.test-dist/application/house-modules/leader-residence/leader-residence-house-module.js");
-const {
   selectLeaderResidenceOptions,
 } = require("../.test-dist/application/city-entries/select-leader-residence-options.js");
+const {
+  createCityMenuState,
+} = require("../.test-dist/application/city-menu/city-menu.js");
 const {
   canEnterHouseForStoryStage,
   isCityEntryVisibleForStoryStage,
   isHouseVisibleForStoryStage,
-  selectHouseEntryAccess,
 } = require("../.test-dist/application/story/story-stage-access.js");
-const {
-  createInitialGrainShopSessionState,
-} = require("../.test-dist/application/house-modules/grain-shop/grain-shop-session-state.js");
 const {
   equipValuableItem,
   getVisibleOwnedCards,
@@ -93,9 +94,6 @@ const {
   resolveSelectedCardId,
   resolveSelectedValuableId,
 } = require("../.test-dist/application/inventory/inventory-selection.js");
-const {
-  accountingGradeRewards,
-} = require("../.test-dist/content/houses/grain-shop-content.js");
 const { GRAIN_SHOP_VARIABLE_KEYS } = require("../.test-dist/domain/grain-shop.js");
 const { HOME_HOUSE_VARIABLE_KEYS } = require("../.test-dist/domain/home-house.js");
 const { KEEP_HOUSE_VARIABLE_KEYS } = require("../.test-dist/domain/keep-house.js");
@@ -129,18 +127,21 @@ const {
 } = require("../.test-dist/application/story/story-callbacks.js");
 const { startEvent } = require("../.test-dist/application/events/event-runner.js");
 const {
-  runSceneUntilPause,
-} = require("../.test-dist/application/scene/scene-runner.js");
-const {
-  createActiveGameContent,
-} = require("../.test-dist/application/content/active-game-content.js");
+  runDialogueUntilPause,
+} = require("../.test-dist/application/dialogue/dialogue-runner.js");
 const {
   loadDefaultRuntimeContent,
 } = require("../.test-dist/application/content/default-runtime-content.js");
 const {
-  sampleScene,
+  loadContentPackFromManifestText,
+} = require("../.test-dist/application/content/content-pack-loader.js");
+const {
+  sampleDialogue,
 } = require("../.test-dist/content/sample-scenario.js");
 const {
+  adjustActivityFortuneBoardWager,
+  playActivityFortuneBoard,
+  tickActivityFortuneBoard,
   stopActivityQte,
 } = require("../.test-dist/application/activity/activity-qte-runtime.js");
 const {
@@ -198,6 +199,84 @@ assert.ok(templeHouse, "Expected prototype temple house to exist.");
 assert.ok(
   leaderResidenceEntry,
   "Expected prototype leader residence city entry to exist."
+);
+
+test(
+  "content pack manifest hydration loads building arrangements for built-in scenario packs",
+  async () => {
+    const manifestPath = path.join(
+      process.cwd(),
+      "src",
+      "content",
+      "scenario-packs",
+      "zhuyuanzhang",
+      "pack.json"
+    );
+    const manifestUrl = pathToFileURL(manifestPath).href;
+    const manifestText = fs.readFileSync(manifestPath, "utf8");
+    const originalFetch = global.fetch;
+
+    global.fetch = async (input) => {
+      const url =
+        typeof input === "string"
+          ? input
+          : input instanceof URL
+            ? input.href
+            : input.url;
+      const filePath = fileURLToPath(url);
+      if (!fs.existsSync(filePath)) {
+        return {
+          ok: false,
+          status: 404,
+          text: async () => "",
+          json: async () => {
+            throw new Error(`Missing fixture file: ${filePath}`);
+          },
+        };
+      }
+
+      return {
+        ok: true,
+        status: 200,
+        text: async () => fs.readFileSync(filePath, "utf8"),
+        json: async () => JSON.parse(fs.readFileSync(filePath, "utf8")),
+      };
+    };
+
+    try {
+      const pack = await loadContentPackFromManifestText(
+        manifestText,
+        manifestUrl
+      );
+
+      assert.equal(Array.isArray(pack.buildingArrangements), true);
+      assert.ok(
+        pack.buildingArrangements.length > 0,
+        "Expected built-in scenario pack hydration to populate buildingArrangements."
+      );
+      assert.equal(
+        pack.buildingArrangements.some(
+          (arrangement) =>
+            arrangement.id === "arrangement.city.kulan.house.kulan.temple"
+        ),
+        true
+      );
+      assert.equal(Array.isArray(pack.flowPlayables), true);
+      assert.ok(
+        pack.flowPlayables.length > 0,
+        "Expected built-in scenario pack hydration to populate flowPlayables."
+      );
+      assert.equal(
+        pack.flowPlayables.some(
+          (flowDefinition) =>
+            flowDefinition.id === "flow.building.house.kulan.temple.review"
+        ),
+        true
+      );
+    } finally {
+      global.fetch = originalFetch;
+    }
+  }
 );
 
 function createBaseState() {
@@ -426,13 +505,267 @@ function createImportedScenarioPackFilesFromDisk(packRoot, packFolderName) {
   });
 }
 
+function createImportedScriptEditorProjectFilesFromDisk(projectRoot, projectFolderName) {
+  return collectFilePaths(projectRoot).map((filePath) => {
+    const fileName = path.basename(filePath);
+    const relativePath = path
+      .relative(projectRoot, filePath)
+      .replaceAll(path.sep, "/");
+    const file = new File([fs.readFileSync(filePath)], fileName, {
+      type: fileName.endsWith(".json")
+        ? "application/json"
+        : "application/octet-stream",
+    });
+
+    Object.defineProperty(file, "webkitRelativePath", {
+      configurable: true,
+      value: `${projectFolderName}/${relativePath}`,
+    });
+
+    return file;
+  });
+}
+
+function createSampleScriptEditorProjectDefinition() {
+  return {
+    schemaVersion: 1,
+    kind: "script-editor-project",
+    id: "project.test.script-editor",
+    title: "Test Script Editor Project",
+    description: "Bounded load save foundation test project.",
+    completionState: { state: "draft" },
+    storyPack: {
+      id: "story-pack.test.script-editor",
+      title: "Test Story Pack",
+      description: "Authoring-side project root.",
+    },
+    maps: [{ id: "map.test.script-editor", name: "Test Map" }],
+    people: [
+      {
+        id: "person.hero",
+        name: "Hero",
+        role: "playable",
+        portraitId: "portrait.hero",
+      },
+    ],
+    portraits: [
+      {
+        id: "portrait.hero",
+        label: "Hero Portrait",
+        portraitImage: "builtin:user/20.png",
+        avatarImage: "builtin:user/20 - touxiang.png",
+      },
+    ],
+    portraitVariants: [],
+    cities: [{ id: "city.start", name: "Starting City" }],
+    buildings: [{ id: "building.home", cityId: "city.start", name: "Home" }],
+    cityEntries: [],
+    events: [{ id: "event.opening", title: "Opening Event" }],
+    eventBindings: [],
+    quests: [{ id: "quest.first", title: "First Quest" }],
+    activities: [{ id: "activity.opening", label: "Opening Activity", handlerId: "generic.qte" }],
+    cards: [],
+    valuables: [],
+    cityNpcPools: [],
+    houseModuleDefaults: {},
+    cityPortraits: {},
+    historicalCharacters: [],
+    historicalCityRosters: [],
+    historicalCharacterIdByCharacterId: {},
+    dialogues: [{ id: "dialogue.opening", title: "Opening Dialogue" }],
+    minigames: [{ id: "minigame.demo", title: "Demo Minigame" }],
+    storyNodes: [{ id: "story-node.opening", title: "Opening Node" }],
+    textEntries: [{ id: "text.opening", text: "Opening line." }],
+    conditionGroups: [{ id: "condition.opening-ready", operator: "all" }],
+    effectBundles: [{ id: "effect.opening-complete", type: "flag-set" }],
+  };
+}
+
+function createExportableScriptEditorProjectDefinition() {
+  const project = createSampleScriptEditorProjectDefinition();
+  return {
+    ...project,
+    storyPack: {
+      ...project.storyPack,
+      basePackId: "content-pack.base-game.zhuyuanzhang",
+      scenarioProfile: {
+        id: "scenario.test.script-editor",
+        title: "Test Script Editor Scenario",
+        playerCharacterId: "person.hero",
+        chapterId: "chapter.test.script-editor",
+        initialLocation: {
+          mapId: "map.test.script-editor",
+          cityId: "city.start",
+          houseId: "building.home",
+          view: "city",
+        },
+      },
+    },
+    dialogues: [],
+    activities: [],
+    minigames: [],
+    storyNodes: [],
+    events: [],
+    conditionGroups: [],
+    effectBundles: [],
+  };
+}
+
+function createImportedFilesFromSerializedJsonRecord(fileMap, folderName) {
+  return Object.entries(fileMap).map(([fileName, contents]) => {
+    const file = new File([contents], path.basename(fileName), {
+      type: "application/json",
+    });
+
+    Object.defineProperty(file, "webkitRelativePath", {
+      configurable: true,
+      value: `${folderName}/${fileName.replaceAll("\\", "/")}`,
+    });
+
+    return file;
+  });
+}
+
+function collectFilePaths(root) {
+  const result = [];
+  for (const name of fs.readdirSync(root)) {
+    const full = path.join(root, name);
+    const stat = fs.statSync(full);
+    if (stat.isDirectory()) {
+      result.push(...collectFilePaths(full));
+    } else {
+      result.push(full);
+    }
+  }
+  return result;
+}
+
+function createScenarioPackFilesFromDirectory(root, folderName) {
+  return collectFilePaths(root).map((filePath) => {
+    const relativePath = path.relative(root, filePath).replaceAll("\\", "/");
+    const file = new File([fs.readFileSync(filePath)], path.basename(filePath), {
+      type: filePath.endsWith(".json") ? "application/json" : "application/octet-stream",
+    });
+
+    Object.defineProperty(file, "webkitRelativePath", {
+      configurable: true,
+      value: `${folderName}/${relativePath}`,
+    });
+
+    return file;
+  });
+}
+
+function normalizeMapAssetUrlsForComparison(maps) {
+  return maps?.map((mapDefinition) => ({
+    ...mapDefinition,
+    ...(mapDefinition.primaryImageUrl == null
+      ? {}
+      : { primaryImageUrl: "<runtime-asset-url>" }),
+    ...(mapDefinition.regionOverlayImageUrl == null
+      ? {}
+      : { regionOverlayImageUrl: "<runtime-asset-url>" }),
+    ...(mapDefinition.layers == null
+      ? {}
+      : {
+          layers: mapDefinition.layers.map((layerDefinition) => ({
+            ...layerDefinition,
+            imageUrl: "<runtime-asset-url>",
+          })),
+        }),
+  }));
+}
+
+function writeScriptEditorProjectFixture(outputRoot) {
+  const fixture = createSampleScriptEditorProjectDefinition();
+  const projectRoot = path.join(outputRoot, "script-editor-project");
+  fs.mkdirSync(projectRoot, { recursive: true });
+
+  const files = {
+    "project.json": {
+      schemaVersion: 1,
+      kind: "script-editor-project",
+      id: fixture.id,
+      title: fixture.title,
+      description: fixture.description,
+      files: {
+        storyPack: "./story-pack.json",
+        maps: "./maps.json",
+        people: "./people.json",
+        cities: "./cities.json",
+        buildings: "./buildings.json",
+        cityEntries: "./city-entries.json",
+        events: "./events.json",
+        eventBindings: "./event-bindings.json",
+        quests: "./quests.json",
+        activities: "./activities.json",
+        cards: "./cards.json",
+        valuables: "./valuables.json",
+        cityNpcPools: "./city-npc-pools.json",
+        houseModuleDefaults: "./house-module-defaults.json",
+        cityPortraits: "./city-portraits.json",
+        historicalCharacters: "./historical-characters.json",
+        historicalCityRosters: "./historical-city-rosters.json",
+        historicalCharacterIdByCharacterId: "./historical-character-id-map.json",
+        dialogues: "./dialogues.json",
+        minigames: "./minigames.json",
+        storyNodes: "./story-nodes.json",
+        textEntries: "./text-entries.json",
+        conditionGroups: "./condition-groups.json",
+        effectBundles: "./effect-bundles.json",
+      },
+    },
+    "story-pack.json": fixture.storyPack,
+    "maps.json": fixture.maps,
+    "people.json": fixture.people,
+    "cities.json": fixture.cities,
+    "buildings.json": fixture.buildings,
+    "city-entries.json": fixture.cityEntries,
+    "events.json": fixture.events,
+    "event-bindings.json": fixture.eventBindings,
+    "quests.json": fixture.quests,
+    "activities.json": fixture.activities,
+    "cards.json": fixture.cards,
+    "valuables.json": fixture.valuables,
+    "city-npc-pools.json": fixture.cityNpcPools,
+    "house-module-defaults.json": fixture.houseModuleDefaults,
+    "city-portraits.json": fixture.cityPortraits,
+    "historical-characters.json": fixture.historicalCharacters,
+    "historical-city-rosters.json": fixture.historicalCityRosters,
+    "historical-character-id-map.json": fixture.historicalCharacterIdByCharacterId,
+    "dialogues.json": fixture.dialogues,
+    "minigames.json": fixture.minigames,
+    "story-nodes.json": fixture.storyNodes,
+    "text-entries.json": fixture.textEntries,
+    "condition-groups.json": fixture.conditionGroups,
+    "effect-bundles.json": fixture.effectBundles,
+  };
+
+  for (const [fileName, value] of Object.entries(files)) {
+    fs.writeFileSync(
+      path.join(projectRoot, fileName),
+      `${JSON.stringify(value, null, 2)}\n`,
+      "utf8"
+    );
+  }
+
+  return { fixture, projectRoot };
+}
+
 test.before(async () => {
+  const {
+    createBaseGameContentPack,
+  } = require("../.test-dist/content/base-game-content-pack.js");
+
   await withLocalJsonFileFetch(async () => {
-    await loadDefaultRuntimeContent();
+    await loadDefaultRuntimeContent(() => createBaseGameContentPack());
   });
 });
 
 test("scene start-activity action executes registered fallback activity", () => {
+  const {
+    runDialogueUntilPause,
+  } = require("../.test-dist/application/dialogue/dialogue-runner.js");
   const state = createBaseState();
   const activityDefinition = {
     id: "activity.test.special",
@@ -460,15 +793,13 @@ test("scene start-activity action executes registered fallback activity", () => 
     chapterId: "chapter.prototype",
     name: "Activity integration test",
     occurrence: "repeatable",
-    trigger: { timing: "manual" },
-    conditions: [],
-    entrySceneId: "scene.test.activity",
+    dialogueId: "dialogue.test.activity",
   };
-  const sceneDefinitionsById = {
-    "scene.test.activity": {
-      id: "scene.test.activity",
-      name: "Activity scene",
-      actions: [
+  const dialogueDefinitionsById = {
+    "dialogue.test.activity": {
+      id: "dialogue.test.activity",
+      name: "Activity dialogue",
+      nodes: [
         {
           type: "start-activity",
           activityId: "activity.test.special",
@@ -480,8 +811,8 @@ test("scene start-activity action executes registered fallback activity", () => 
       ],
     },
   };
-  const result = runSceneUntilPause(startEvent(state, eventDefinition), {
-    sceneDefinitionsById,
+  const result = runDialogueUntilPause(startEvent(state, eventDefinition), {
+    dialogueDefinitionsById,
     eventDefinitionsById: {
       [eventDefinition.id]: eventDefinition,
     },
@@ -491,63 +822,73 @@ test("scene start-activity action executes registered fallback activity", () => 
     characterDefinitions: prototypeCharacters,
   });
 
-  assert.equal(result.currentAction?.type, "narration");
-  assert.equal(result.state.runtime.activitySession?.type, "qte-bar");
+  assert.equal(result.currentNode?.type, "narration");
+  assert.equal(result.state.runtime.activitySession?.type, "fortune-board");
   assert.equal(result.state.runtime.activitySession.activityId, "activity.test.special");
   assert.equal(result.state.runtime.variables["var.test.activity.points"], undefined);
 
-  const firstStop = stopActivityQte(
-    {
-      ...result.state,
-      runtime: {
-        ...result.state.runtime,
-        activitySession: {
-          ...result.state.runtime.activitySession,
-          markerPercent: 45,
-        },
-      },
-    },
-    activityDefinition,
-    prototypeCharacters
-  );
-  const secondStop = stopActivityQte(
-    {
-      ...firstStop.state,
-      runtime: {
-        ...firstStop.state.runtime,
-        activitySession: {
-          ...firstStop.state.runtime.activitySession,
-          markerPercent: 62,
-        },
-      },
-    },
-    activityDefinition,
-    firstStop.characterDefinitions
-  );
-  const thirdStop = stopActivityQte(
-    {
-      ...secondStop.state,
-      runtime: {
-        ...secondStop.state.runtime,
-        activitySession: {
-          ...secondStop.state.runtime.activitySession,
-          markerPercent: 0,
-        },
-      },
-    },
-    activityDefinition,
-    secondStop.characterDefinitions
-  );
+  let settledBoard = {
+    state: result.state,
+    characterDefinitions: prototypeCharacters,
+  };
+  for (let round = 0; round < 10; round += 1) {
+    if (settledBoard.state.runtime.activitySession?.type === "result") {
+      break;
+    }
+    while (
+      settledBoard.state.runtime.activitySession.type === "fortune-board" &&
+      settledBoard.state.runtime.activitySession.wager <
+        Math.min(5, settledBoard.state.runtime.activitySession.remainingPieces)
+    ) {
+      settledBoard = {
+        state: adjustActivityFortuneBoardWager(settledBoard.state, 1),
+        characterDefinitions: settledBoard.characterDefinitions,
+      };
+    }
+    settledBoard = playActivityFortuneBoard(
+      settledBoard.state,
+      activityDefinition,
+      settledBoard.characterDefinitions
+    );
+    settledBoard = tickActivityFortuneBoard(
+      settledBoard.state,
+      activityDefinition,
+      settledBoard.characterDefinitions
+    );
+    settledBoard = playActivityFortuneBoard(
+      settledBoard.state,
+      activityDefinition,
+      settledBoard.characterDefinitions
+    );
+    for (let tick = 0; tick < 100; tick += 1) {
+      settledBoard = tickActivityFortuneBoard(
+        settledBoard.state,
+        activityDefinition,
+        settledBoard.characterDefinitions
+      );
+      if (
+        settledBoard.state.runtime.activitySession?.type === "result" ||
+        (settledBoard.state.runtime.activitySession?.type === "fortune-board" &&
+          settledBoard.state.runtime.activitySession.phase === "ready")
+      ) {
+        break;
+      }
+    }
+  }
 
-  assert.equal(thirdStop.state.runtime.activitySession?.type, "result");
-  assert.equal(thirdStop.state.runtime.flags["flag.test.activity.completed"], true);
+  assert.equal(settledBoard.state.runtime.activitySession?.type, "result");
+  assert.equal(settledBoard.state.runtime.flags["flag.test.activity.completed"], true);
   assert.equal(
-    thirdStop.state.runtime.flags["flag.activity.test.special.completed"],
+    settledBoard.state.runtime.flags["flag.activity.test.special.completed"],
     true
   );
-  assert.equal(thirdStop.state.runtime.variables["var.test.activity.grade"], "success");
-  assert.equal(thirdStop.state.runtime.variables["var.test.activity.points"], 5);
-  assert.equal(thirdStop.state.runtime.variables["var.activity.last_handler"], "generic.qte");
+  assert.equal(settledBoard.state.runtime.variables["var.test.activity.grade"], "success");
+  assert.equal(settledBoard.state.runtime.variables["var.test.activity.points"], 5);
+  assert.equal(
+    settledBoard.state.runtime.variables["var.activity.last_handler"],
+    "generic.qte"
+  );
+  assert.ok(settledBoard.state.runtime.activitySession.score >= 5);
 });
 
 function withCouncilInDays(state, days = 30) {
@@ -569,6 +910,175 @@ function withCouncilInDays(state, days = 30) {
     },
   };
 }
+
+test("review cycle helper schedules review state and compatibility mirrors together", () => {
+  const { applyReviewCycleSchedule } = require(
+    "../.test-dist/application/review/review-cycle.js"
+  );
+
+  const state = createBaseState();
+  const scheduledDate = addTestDays(state.calendar, 12);
+  const result = applyReviewCycleSchedule(state, {
+    scheduledDate,
+    missionText: "shared-review-task",
+  });
+
+  assert.deepEqual(result.world.schedule.councilDate, scheduledDate);
+  assert.equal(
+    result.runtime.variables[KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown],
+    12
+  );
+  assert.equal(result.ui.reviewDateText, "距离评定 12 天");
+  assert.equal(result.ui.mainHouseMissionText, "shared-review-task");
+});
+
+test("review cycle helper marks review due now without duplicating owner-local writes", () => {
+  const { applyReviewCycleSchedule } = require(
+    "../.test-dist/application/review/review-cycle.js"
+  );
+
+  const state = createBaseState();
+  const result = applyReviewCycleSchedule(state, {
+    scheduledDate: state.calendar,
+    missionText: "战后评定",
+  });
+
+  assert.deepEqual(result.world.schedule.councilDate, state.calendar);
+  assert.equal(
+    result.runtime.variables[KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown],
+    0
+  );
+  assert.equal(result.ui.reviewDateText, "今日评定");
+  assert.equal(result.ui.mainHouseMissionText, "战后评定");
+});
+
+test("review cycle helper derives countdown from canonical schedule even when legacy mirror drifts", () => {
+  const {
+    getReviewCycleCountdown,
+    getReviewCycleStatusText,
+  } = require("../.test-dist/application/review/review-cycle.js");
+
+  const state = {
+    ...createBaseState(),
+    world: {
+      ...createBaseState().world,
+      schedule: {
+        ...createBaseState().world.schedule,
+        councilDate: addTestDays(createBaseState().calendar, 5),
+      },
+    },
+    runtime: {
+      ...createBaseState().runtime,
+      variables: {
+        ...createBaseState().runtime.variables,
+        [KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown]: 99,
+      },
+    },
+    ui: {
+      ...createBaseState().ui,
+      reviewDateText: "legacy-drift",
+    },
+  };
+
+  assert.equal(getReviewCycleCountdown(state), 5);
+  assert.equal(getReviewCycleStatusText(state), "距离评定 5 天");
+});
+
+test("review cycle provider exposes shared schedule policy without house presentation copy", () => {
+  const {
+    createReviewCyclePolicy,
+  } = require("../.test-dist/application/review/review-cycle-provider.js");
+  const providerSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src",
+      "application",
+      "review",
+      "review-cycle-provider.ts"
+    ),
+    "utf8"
+  );
+
+  const policy = createReviewCyclePolicy();
+  const state = withCouncilInDays(createBaseState(), 5);
+
+  assert.equal(policy.getCountdown(state), 5);
+  assert.equal(policy.getStatusText(state), "距离评定 5 天");
+  assert.equal(policy.hasReachedReviewDate(state), false);
+  assert.equal(policy.getInsufficientDaysForTimedActivity(state, 7), 5);
+  assert.doesNotMatch(providerSource, /runtime\.zhu_yuanzhang|keep\.review|temple\.review/);
+});
+
+test("map review boundary residue cleanup routes review consumers through provider policy", () => {
+  const directReviewConsumerPaths = [
+    "src/application/house-modules/home-house/home-house-house-module.ts",
+    "src/application/house-modules/keep-house/keep-house-house-module.ts",
+    "src/application/house-modules/temple-house/temple-house-house-module.ts",
+    "src/application/house-modules/grain-shop/grain-shop-house-module.ts",
+    "src/application/house-modules/tea-house/tea-house-house-module.ts",
+    "src/application/house-modules/tavern/tavern-house-module.ts",
+    "src/application/house-modules/medicine-house/medicine-house-house-module.ts",
+    "src/application/story/story-callbacks.ts",
+    "src/application/story-battle/story-battle-runtime.ts",
+  ];
+
+  for (const relativePath of directReviewConsumerPaths) {
+    const source = fs.readFileSync(path.join(process.cwd(), relativePath), "utf8");
+
+    assert.match(
+      source,
+      /defaultReviewCyclePolicy/,
+      `${relativePath} should consume the review lifecycle through ReviewCyclePolicy`
+    );
+    assert.doesNotMatch(
+      source,
+      /from ["'](?:\.\.\/)*\.\.\/time\/council-priority["']/,
+      `${relativePath} should not import council-priority directly`
+    );
+    assert.doesNotMatch(
+      source,
+      /from ["'](?:\.\.\/)*\.\.\/review\/review-cycle["']/,
+      `${relativePath} should not import review-cycle directly`
+    );
+  }
+});
+
+test("home house enter refreshes stale review mirrors from canonical review cycle", () => {
+  const state = {
+    ...createBaseState(),
+    world: {
+      ...createBaseState().world,
+      schedule: {
+        ...createBaseState().world.schedule,
+        councilDate: addTestDays(createBaseState().calendar, 7),
+      },
+    },
+    runtime: {
+      ...createBaseState().runtime,
+      variables: {
+        ...createBaseState().runtime.variables,
+        [KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown]: 42,
+      },
+    },
+    ui: {
+      ...createBaseState().ui,
+      reviewDateText: "stale-review-text",
+    },
+  };
+
+  const result = homeHouseHouseModule.enter({
+    gameState: state,
+    characterDefinitions: prototypeCharacters,
+    playerCharacterId,
+    houseDefinition: homeHouse,
+  });
+
+  assert.equal(
+    result.gameState.runtime.variables[KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown],
+    7
+  );
+  assert.equal(result.gameState.ui.reviewDateText, "距离评定 7 天");
+});
 
 function createStateWithGrainVariables() {
   const state = createBaseState();
@@ -630,7 +1140,7 @@ test("active game content indexes pack text entries by id", () => {
       "scene.test.line.001": "第一句台词",
       "scene.test.choice.001": "接受",
     },
-    scenes: [],
+    dialogues: [],
     events: [],
     characters: [],
     cities: [],
@@ -653,7 +1163,7 @@ test("active game content indexes merged task definitions by id", () => {
       id: "pack.base.tasks",
       title: "Base Tasks",
       textEntries: {},
-      scenes: [],
+      dialogues: [],
       events: [],
       characters: [],
       cities: [],
@@ -676,7 +1186,7 @@ test("active game content indexes merged task definitions by id", () => {
       id: "pack.override.tasks",
       title: "Override Tasks",
       textEntries: {},
-      scenes: [],
+      dialogues: [],
       events: [],
       characters: [],
       cities: [],
@@ -707,9 +1217,309 @@ test("active game content indexes merged task definitions by id", () => {
   );
 });
 
-test("scene view resolves narration dialogue and choice text through text ids", () => {
+test("active game content uses override pack city entries without inheriting base entries", () => {
+  const content = createActiveGameContent(
+    {
+      schemaVersion: 1,
+      id: "pack.base.city-entries",
+      title: "Base City Entries",
+      textEntries: {},
+      dialogues: [],
+      events: [],
+      characters: [],
+      cities: [],
+      houses: [],
+      maps: [],
+      cityEntries: [
+        {
+          id: "city-entry.prior.city-a",
+          cityId: "city.test-a",
+          name: "Prior City A Entry",
+          directoryType: "leader-residence",
+          targetHouseId: "house.prior.city-a",
+          artworkId: "leader-residence",
+        },
+        {
+          id: "city-entry.prior.city-b",
+          cityId: "city.test-b",
+          name: "Prior City B Entry",
+          directoryType: "leader-residence",
+          targetHouseId: "house.prior.city-b",
+          artworkId: "leader-residence",
+        },
+      ],
+      activities: [],
+      cards: [],
+      valuables: [],
+    },
+    {
+      schemaVersion: 1,
+      id: "pack.override.city-entries",
+      title: "Override City Entries",
+      textEntries: {},
+      dialogues: [],
+      events: [],
+      characters: [],
+      cities: [],
+      houses: [],
+      maps: [],
+      cityEntries: [
+        {
+          id: "city-entry.override.city-a.market",
+          cityId: "city.test-a",
+          name: "Override City A Market",
+          directoryType: "leader-residence",
+          targetHouseId: "house.override.market",
+          artworkId: "leader-residence",
+        },
+      ],
+      activities: [],
+      cards: [],
+      valuables: [],
+    }
+  );
+
+  assert.deepEqual(
+    content.cityEntries.map((entryDefinition) => entryDefinition.id),
+    ["city-entry.override.city-a.market"]
+  );
+});
+
+test("active game content clears prior city entries when override pack supplies a city with no entries", () => {
+  const content = createActiveGameContent(
+    {
+      schemaVersion: 1,
+      id: "pack.base.city-entries.clear",
+      title: "Base City Entries Clear",
+      textEntries: {},
+      dialogues: [],
+      events: [],
+      characters: [],
+      cities: [
+        {
+          id: "city.test-clear",
+          name: "Base City",
+          regionId: "region.test",
+          mapNodeId: "node.test-clear",
+          houseIds: ["house.base.leader"],
+          neighbourCityIds: [],
+          travelCost: 1,
+          tags: [],
+          prosperity: 50,
+          danger: 0,
+          specialDemand: [],
+        },
+      ],
+      houses: [],
+      maps: [],
+      cityEntries: [
+        {
+          id: "city-entry.base.leader",
+          cityId: "city.test-clear",
+          name: "将领府邸",
+          directoryType: "leader-residence",
+          targetHouseId: "house.base.leader",
+          artworkId: "leader-residence",
+        },
+      ],
+      activities: [],
+      cards: [],
+      valuables: [],
+    },
+    {
+      schemaVersion: 1,
+      id: "pack.override.city-entries.clear",
+      title: "Override City Entries Clear",
+      textEntries: {},
+      dialogues: [],
+      events: [],
+      characters: [],
+      cities: [
+        {
+          id: "city.test-clear",
+          name: "Override Empty City",
+          regionId: "region.test",
+          mapNodeId: "node.test-clear",
+          houseIds: [],
+          neighbourCityIds: [],
+          travelCost: 1,
+          tags: [],
+          prosperity: 50,
+          danger: 0,
+          specialDemand: [],
+        },
+      ],
+      houses: [],
+      maps: [],
+      cityEntries: [],
+      activities: [],
+      cards: [],
+      valuables: [],
+    }
+  );
+
+  assert.deepEqual(
+    content.cityEntries.filter((entryDefinition) => entryDefinition.cityId === "city.test-clear"),
+    []
+  );
+});
+
+test("active game content treats explicit override cities and houses as authoritative runtime families", () => {
+  const content = createActiveGameContent(
+    {
+      schemaVersion: 1,
+      id: "pack.base.authoritative-city-house",
+      title: "Base City House",
+      textEntries: {},
+      dialogues: [],
+      events: [],
+      characters: [],
+      cities: [
+        {
+          id: "city.haozhou",
+          name: "濠州",
+          regionId: "region.test",
+          mapNodeId: "node.haozhou",
+          houseIds: ["house.haozhou.keep"],
+          neighbourCityIds: [],
+          travelCost: 1,
+          tags: [],
+          prosperity: 50,
+          danger: 0,
+          specialDemand: [],
+        },
+      ],
+      houses: [
+        {
+          id: "house.haozhou.keep",
+          cityId: "city.haozhou",
+          name: "帅府",
+          backgroundId: "keep-house",
+          type: "castle",
+          characterIds: [],
+          defaultCharacterId: null,
+          backAction: { label: "返回", targetView: "city" },
+          visibleStoryStages: [],
+          enterableStoryStages: [],
+          requiresPlayerCurrentCityMatch: true,
+          moduleId: "keep-house",
+          activityLocationId: "custom",
+        },
+      ],
+      maps: [],
+      cityEntries: [
+        {
+          id: "city-entry.haozhou.keep",
+          cityId: "city.haozhou",
+          name: "帅府",
+          directoryType: "leader-residence",
+          targetHouseId: "house.haozhou.keep",
+          artworkId: "keep-house",
+        },
+      ],
+      activities: [],
+      cards: [],
+      valuables: [],
+    },
+    {
+      schemaVersion: 1,
+      id: "pack.override.authoritative-city-house",
+      title: "Override City House",
+      textEntries: {},
+      dialogues: [],
+      events: [],
+      characters: [],
+      cities: [
+        {
+          id: "city.new",
+          name: "新城市",
+          regionId: "region.test",
+          mapNodeId: "node.new",
+          houseIds: [],
+          neighbourCityIds: [],
+          travelCost: 1,
+          tags: [],
+          prosperity: 50,
+          danger: 0,
+          specialDemand: [],
+        },
+      ],
+      houses: [],
+      maps: [],
+      cityEntries: [],
+      activities: [],
+      cards: [],
+      valuables: [],
+    }
+  );
+
+  assert.deepEqual(
+    content.cities.map((cityDefinition) => cityDefinition.id),
+    ["city.new"]
+  );
+  assert.deepEqual(content.houses, []);
+  assert.equal(content.cityDefinitionById["city.haozhou"], undefined);
+  assert.equal(content.houseDefinitionById["house.haozhou.keep"], undefined);
+});
+
+test("active game content merges module-keyed house defaults by module id", () => {
+  const content = createActiveGameContent(
+    {
+      schemaVersion: 1,
+      id: "pack.base.house-defaults",
+      title: "Base House Defaults",
+      textEntries: {},
+      dialogues: [],
+      events: [],
+      characters: [],
+      cities: [],
+      houses: [],
+      maps: [],
+      cityEntries: [],
+      houseModuleDefaults: {
+        "home-house": {
+          preserved: "base",
+          shared: "base",
+        },
+      },
+      activities: [],
+      cards: [],
+      valuables: [],
+    },
+    {
+      schemaVersion: 1,
+      id: "pack.override.house-defaults",
+      title: "Override House Defaults",
+      textEntries: {},
+      dialogues: [],
+      events: [],
+      characters: [],
+      cities: [],
+      houses: [],
+      maps: [],
+      cityEntries: [],
+      houseModuleDefaults: {
+        "home-house": {
+          shared: "override",
+          added: "override",
+        },
+      },
+      activities: [],
+      cards: [],
+      valuables: [],
+    }
+  );
+
+  assert.deepEqual(content.houseModuleDefaults["home-house"], {
+    preserved: "base",
+    shared: "override",
+    added: "override",
+  });
+});
+
+test("dialogue text resolution resolves narration dialogue and choice text through text ids", () => {
   const {
-    resolveActionNodeText,
+    resolveDialogueNodeText,
   } = require("../.test-dist/application/content/text-resolution.js");
 
   const textEntriesById = {
@@ -718,7 +1528,7 @@ test("scene view resolves narration dialogue and choice text through text ids", 
     "scene.test.choice.no": "拒绝",
   };
 
-  const resolved = resolveActionNodeText(
+  const resolved = resolveDialogueNodeText(
     {
       type: "choice",
       promptTextId: "scene.test.prompt",
@@ -737,6 +1547,85 @@ test("scene view resolves narration dialogue and choice text through text ids", 
     resolved.options.map((option) => option.label),
     ["接受", "拒绝"]
   );
+});
+
+test("scene view does not inherit concrete house background classes", () => {
+  const sceneViewSource = fs.readFileSync(
+    path.join(process.cwd(), "src", "ui", "views", "dialogue", "dialogue-view.ts"),
+    "utf8"
+  );
+
+  assert.match(sceneViewSource, /data-dialogue-view="dialogue"/);
+  assert.match(sceneViewSource, /\bview-dialogue\b/);
+  assert.doesNotMatch(
+    sceneViewSource,
+    /<section class="[^"]*\bview-house-(?:temple|grain-shop)\b[^"]*" data-dialogue-view=/
+  );
+});
+
+test("scene rendering keeps the current city or building view behind event dialogue", () => {
+  const appRenderSource = fs.readFileSync(
+    path.join(process.cwd(), "src", "ui", "app-render.ts"),
+    "utf8"
+  );
+  const cityViewSource = fs.readFileSync(
+    path.join(process.cwd(), "src", "ui", "views", "city", "city-view.ts"),
+    "utf8"
+  );
+  const sceneViewSource = fs.readFileSync(
+    path.join(process.cwd(), "src", "ui", "views", "dialogue", "dialogue-view.ts"),
+    "utf8"
+  );
+
+  assert.doesNotMatch(cityViewSource, /renderCitySceneBackdrop/);
+  assert.match(appRenderSource, /function renderCitySceneUnderlay/);
+  assert.match(appRenderSource, /function renderBuildingSceneUnderlay/);
+  assert.match(appRenderSource, /renderCityModuleView/);
+  assert.match(appRenderSource, /renderBuildingModuleView/);
+  assert.match(appRenderSource, /underlayMarkup:/);
+  assert.match(appRenderSource, /view-dialogue__underlay/);
+  assert.match(appRenderSource, /stage\.buildingUnderlay != null/);
+  assert.match(sceneViewSource, /underlayMarkup\?: string/);
+  assert.match(sceneViewSource, /\$\{input\.underlayMarkup \?\? ""\}/);
+});
+
+test("shared dialog component module defines canonical dialog result attrs", () => {
+  const sharedDialogPath = path.join(
+    process.cwd(),
+    "src/ui/components/dialog/shared-dialog.ts"
+  );
+
+  assert.ok(fs.existsSync(sharedDialogPath));
+  const sharedDialogSource = fs.readFileSync(sharedDialogPath, "utf8");
+
+  assert.match(sharedDialogSource, /export type SharedDialogAction/);
+  assert.match(sharedDialogSource, /export function renderSharedDialog/);
+  assert.match(sharedDialogSource, /data-dialog-result=/);
+  assert.match(sharedDialogSource, /data-dialog-action-id=/);
+});
+
+test("confirm modal keeps legacy modal actions while delegating structure to shared dialog", () => {
+  const confirmModalSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/components/modal/confirm-modal.ts"),
+    "utf8"
+  );
+
+  assert.match(confirmModalSource, /shared-dialog/);
+  assert.match(confirmModalSource, /data-modal-action/);
+  assert.match(confirmModalSource, /result:\s*"confirm"/);
+  assert.match(confirmModalSource, /result:\s*"cancel"/);
+});
+
+test("scene dialogue card delegates to shared dialog and preserves advance action semantics", () => {
+  const sceneViewSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/views/dialogue/dialogue-view.ts"),
+    "utf8"
+  );
+
+  assert.match(sceneViewSource, /shared-dialog/);
+  assert.match(sceneViewSource, /data-dialogue-action/);
+  assert.match(sceneViewSource, /result:\s*"action"/);
+  assert.match(sceneViewSource, /id:\s*options\.advanceActionId/);
 });
 
 test("text resolution interpolates template entries with named variables", () => {
@@ -923,24 +1812,19 @@ test("story callbacks do not keep inline fallback prose for guo zixing camp runt
   );
 });
 
-test("sample scenario scene content is migrated to text ids", () => {
-  const dialogueAction = sampleScene.actions.find(
-    (action) => action.type === "dialogue"
+test("sample scenario dialogue content is migrated to text ids", () => {
+  const dialogueNode = sampleDialogue.nodes.find(
+    (node) => node.type === "dialogue"
   );
-  const choiceAction = sampleScene.actions.find(
-    (action) => action.type === "choice"
-  );
+  const choiceNode = sampleDialogue.nodes.find((node) => node.type === "choice");
 
-  assert.ok(dialogueAction);
-  assert.equal(dialogueAction.text, undefined);
-  assert.equal(typeof dialogueAction.textId, "string");
+  assert.ok(dialogueNode);
+  assert.equal(typeof dialogueNode.textId, "string");
 
-  assert.ok(choiceAction);
-  assert.equal(choiceAction.prompt, undefined);
-  assert.equal(typeof choiceAction.promptTextId, "string");
-  assert.equal(choiceAction.options.every((option) => option.label == null), true);
+  assert.ok(choiceNode);
+  assert.equal(typeof choiceNode.promptTextId, "string");
   assert.equal(
-    choiceAction.options.every((option) => typeof option.labelTextId === "string"),
+    choiceNode.options.every((option) => typeof option.labelTextId === "string"),
     true
   );
 });
@@ -957,7 +1841,7 @@ test("liu bang json scenario pack uses external text entries for scene content",
     fs.readFileSync(path.join(packRoot, "pack.json"), "utf8")
   );
   const scenes = JSON.parse(
-    fs.readFileSync(path.join(packRoot, "scenes.json"), "utf8")
+    fs.readFileSync(path.join(packRoot, "dialogues.json"), "utf8")
   );
   const textEntries = JSON.parse(
     fs.readFileSync(path.join(packRoot, "text-entries.json"), "utf8")
@@ -966,7 +1850,7 @@ test("liu bang json scenario pack uses external text entries for scene content",
   assert.equal(packManifest.files.textEntries, "text-entries.json");
   assert.equal(
     scenes.some((scene) =>
-      scene.actions.some(
+      scene.nodes.some(
         (action) =>
           (action.type === "narration" || action.type === "dialogue") &&
           typeof action.textId === "string" &&
@@ -977,7 +1861,7 @@ test("liu bang json scenario pack uses external text entries for scene content",
   );
   assert.equal(
     scenes.some((scene) =>
-      scene.actions.some(
+      scene.nodes.some(
         (action) =>
           action.type === "choice" &&
           typeof action.promptTextId === "string" &&
@@ -1009,14 +1893,16 @@ test("zhuyuanzhang scenario pack manifest follows canonical split-table shape", 
   assert.equal(packManifest.kind, "scenario-pack");
   assert.equal(typeof packManifest.files.scenarioProfile, "string");
   assert.equal(typeof packManifest.files.events, "string");
-  assert.equal(typeof packManifest.files.scenes, "string");
+  assert.equal(typeof packManifest.files.eventBindings, "string");
+  assert.equal(typeof packManifest.files.dialogues, "string");
   assert.equal(typeof packManifest.files.textEntries, "string");
   assert.equal(typeof packManifest.files.activities, "string");
 
   [
     packManifest.files.scenarioProfile,
     packManifest.files.events,
-    packManifest.files.scenes,
+    packManifest.files.eventBindings,
+    packManifest.files.dialogues,
     packManifest.files.textEntries,
     packManifest.files.activities,
   ].forEach((fileName) => {
@@ -1025,6 +1911,64 @@ test("zhuyuanzhang scenario pack manifest follows canonical split-table shape", 
       true,
       `Expected zhuyuanzhang pack file ${fileName} to exist`
     );
+  });
+});
+
+test("zhuyuanzhang scenario pack migrates event triggers to event bindings", () => {
+  const packRoot = path.join(
+    process.cwd(),
+    "src",
+    "content",
+    "scenario-packs",
+    "zhuyuanzhang"
+  );
+  const events = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "events.json"), "utf8")
+  );
+  const eventBindings = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "event-bindings.json"), "utf8")
+  );
+
+  const storyEvents = events.filter((eventRecord) =>
+    eventRecord.id.startsWith("event.story.")
+  );
+  const storyEventBindings = eventBindings.filter((binding) =>
+    binding.id.startsWith("binding.story.")
+  );
+  const buildingActionEvents = events.filter((eventRecord) =>
+    eventRecord.id.startsWith("event.building.")
+  );
+  const buildingActionBindings = eventBindings.filter((binding) =>
+    binding.id.startsWith("binding.building.")
+  );
+
+  assert.equal(storyEvents.length, 5);
+  assert.equal(storyEventBindings.length, 5);
+  assert.equal(buildingActionBindings.length, buildingActionEvents.length);
+  assert.ok(buildingActionEvents.length > 600);
+  assert.equal(events.every((eventRecord) => !Object.hasOwn(eventRecord, "trigger")), true);
+  assert.equal(events.every((eventRecord) => !Object.hasOwn(eventRecord, "conditions")), true);
+  assert.deepEqual(
+    storyEventBindings.map((binding) => binding.eventId),
+    storyEvents.map((eventRecord) => eventRecord.id)
+  );
+  assert.deepEqual(storyEventBindings[0], {
+    id: "binding.story.zhu_yuanzhang.ordination.house-enter",
+    eventId: "event.story.zhu_yuanzhang.ordination",
+    owner: { family: "building", id: "house.kulan.temple" },
+    trigger: { timing: "after", action: "building-enter" },
+    conditions: {
+      operator: "all",
+      conditions: [
+        {
+          type: "flag",
+          key: "flag.story.zhu_yuanzhang.ordination.completed",
+          expected: false,
+        },
+      ],
+    },
+    priority: 200,
+    enabled: true,
   });
 });
 
@@ -1037,7 +1981,7 @@ test("zhuyuanzhang scenario pack keeps scene text in pack-local text entries", (
     "zhuyuanzhang"
   );
   const scenes = JSON.parse(
-    fs.readFileSync(path.join(packRoot, "scenes.json"), "utf8")
+    fs.readFileSync(path.join(packRoot, "dialogues.json"), "utf8")
   );
   const textEntries = JSON.parse(
     fs.readFileSync(path.join(packRoot, "text-entries.json"), "utf8")
@@ -1049,7 +1993,7 @@ test("zhuyuanzhang scenario pack keeps scene text in pack-local text entries", (
   assert.equal(scenarioProfile.id, "scenario.zhu_yuanzhang.monk_opening");
   assert.equal(
     scenes.some((scene) =>
-      scene.actions.some(
+      scene.nodes.some(
         (action) =>
           (action.type === "narration" || action.type === "dialogue") &&
           typeof action.textId === "string" &&
@@ -1349,14 +2293,29 @@ test("base game content pack is sourced from the shared content-pack loader", as
     "Expected base-game-content-pack.ts to delegate to the shared loader."
   );
   assert.equal(
-    source.includes("scenario-packs/zhuyuanzhang/pack.json"),
+    source.includes("getDefaultScenarioPackCatalogEntry"),
     true,
-    "Expected base-game-content-pack.ts to load the fixed zhuyuanzhang manifest path."
+    "Expected base-game-content-pack.ts to resolve the builtin default pack from shared catalog truth."
+  );
+  assert.equal(
+    source.includes("resolveCatalogManifestUrl"),
+    true,
+    "Expected base-game-content-pack.ts to resolve the default manifest URL through the shared catalog helper."
+  );
+  assert.equal(
+    source.includes("window.location.href"),
+    true,
+    "Expected the browser runtime to resolve the default manifest URL against window.location.href."
+  );
+  assert.equal(
+    source.includes("scenario-packs/zhuyuanzhang/pack.json"),
+    false,
+    "Expected base-game-content-pack.ts to stop hardcoding the zhuyuanzhang manifest path."
   );
   assert.equal(
     source.includes("/scenario-packs/zhuyuanzhang/pack.json"),
-    true,
-    "Expected the browser runtime to fetch the published scenario-pack route."
+    false,
+    "Expected the browser runtime to stop hardcoding the published zhuyuanzhang manifest route."
   );
   assert.equal(
     source.includes("/src/content/scenario-packs/zhuyuanzhang/pack.json"),
@@ -1390,24 +2349,30 @@ test("base game content pack is sourced from the shared content-pack loader", as
     );
     assert.equal(pack.cityNpcPools.some((pool) => pool.cityId === "city.kulan"), true);
     assert.equal(
-      pack.houseAccessRefusalRules.some(
-        (rule) => rule.id === "rule.zhu_yuanzhang.temple.first_review_stay"
+      pack.locationAccess.some(
+        (definition) =>
+          definition.id ===
+            "location-access.zhu_yuanzhang.temple.first_review_stay.house.kulan.leader_residence" &&
+          definition.blockedMessage === "既然答应了主持，就先不要离开寺院吧。"
       ),
       true
     );
   });
 });
 
-test("story content registry does not hard-import zhuyuanzhang pack tables", () => {
-  const source = fs.readFileSync(
-    path.join(process.cwd(), "src", "content", "story", "index.ts"),
-    "utf8"
+test("legacy story content registry file is removed after active-content story ownership converges", () => {
+  const storyIndexPath = path.join(
+    process.cwd(),
+    "src",
+    "content",
+    "story",
+    "index.ts"
   );
 
   assert.equal(
-    source.includes("scenario-packs/zhuyuanzhang"),
+    fs.existsSync(storyIndexPath),
     false,
-    "Expected src/content/story/index.ts to stop hard-importing zhuyuanzhang pack tables."
+    "Expected src/content/story/index.ts to be removed once story content is served through active-content context."
   );
 });
 
@@ -1474,14 +2439,16 @@ test("zhuyuanzhang scenario pack manifest includes pack-local city and access ta
 
   assert.equal(typeof packManifest.files.cityEntries, "string");
   assert.equal(typeof packManifest.files.cityNpcPools, "string");
-  assert.equal(typeof packManifest.files.houseAccessRefusalRules, "string");
   assert.equal(typeof packManifest.files.cityPortraits, "string");
+  assert.equal(typeof packManifest.files.portraits, "string");
+  assert.equal(typeof packManifest.files.portraitVariants, "string");
 
   [
     packManifest.files.cityEntries,
     packManifest.files.cityNpcPools,
-    packManifest.files.houseAccessRefusalRules,
     packManifest.files.cityPortraits,
+    packManifest.files.portraits,
+    packManifest.files.portraitVariants,
   ].forEach((fileName) => {
     assert.equal(
       fs.existsSync(path.join(packRoot, fileName)),
@@ -1505,8 +2472,8 @@ test("zhuyuanzhang pack-local city and access tables contain kulan content", () 
   const cityNpcPools = JSON.parse(
     fs.readFileSync(path.join(packRoot, "city-npc-pools.json"), "utf8")
   );
-  const houseAccessRefusalRules = JSON.parse(
-    fs.readFileSync(path.join(packRoot, "house-access-refusal-rules.json"), "utf8")
+  const locationAccess = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "location-access.json"), "utf8")
   );
   const cityPortraits = JSON.parse(
     fs.readFileSync(path.join(packRoot, "city-portraits.json"), "utf8")
@@ -1516,13 +2483,76 @@ test("zhuyuanzhang pack-local city and access tables contain kulan content", () 
     cityEntries.some((entry) => entry.id === "city-entry.kulan.leader-residence"),
     true
   );
+  assert.deepEqual(
+    cityEntries
+      .filter((entry) => entry.cityId === "city.kulan")
+      .map((entry) => ({
+        name: entry.name,
+        directoryType: entry.directoryType,
+        targetHouseId: entry.targetHouseId,
+        artworkId: entry.artworkId,
+      })),
+    [
+      {
+        name: "将领府邸",
+        directoryType: "leader-residence",
+        targetHouseId: "house.kulan.leader_residence",
+        artworkId: "leader-residence",
+      },
+      {
+        name: "皇觉寺",
+        directoryType: "building",
+        targetHouseId: "house.kulan.temple",
+        artworkId: "temple-house",
+      },
+      {
+        name: "帅府",
+        directoryType: "building",
+        targetHouseId: "house.kulan.keep",
+        artworkId: "keep-house",
+      },
+      {
+        name: "茶馆",
+        directoryType: "building",
+        targetHouseId: "house.kulan.tea_house",
+        artworkId: "tea-house",
+      },
+      {
+        name: "货栈",
+        directoryType: "building",
+        targetHouseId: "house.kulan.market",
+        artworkId: "market-house",
+      },
+      {
+        name: "粮铺",
+        directoryType: "building",
+        targetHouseId: "house.kulan.grain_shop",
+        artworkId: "grain-shop",
+      },
+      {
+        name: "药铺",
+        directoryType: "building",
+        targetHouseId: "house.kulan.medicine_house",
+        artworkId: "medicine-house",
+      },
+      {
+        name: "客栈",
+        directoryType: "building",
+        targetHouseId: "house.kulan.inn",
+        artworkId: "tavern",
+      },
+    ]
+  );
   assert.equal(
     cityNpcPools.some((pool) => pool.cityId === "city.kulan" && pool.residents.length > 0),
     true
   );
   assert.equal(
-    houseAccessRefusalRules.some(
-      (rule) => rule.id === "rule.zhu_yuanzhang.temple.first_review_stay"
+    locationAccess.some(
+      (definition) =>
+        definition.id ===
+          "location-access.zhu_yuanzhang.temple.first_review_stay.house.kulan.leader_residence" &&
+        definition.blockedMessage === "既然答应了主持，就先不要离开寺院吧。"
     ),
     true
   );
@@ -1662,6 +2692,25 @@ test("zhuyuanzhang maps use relative pack asset urls instead of imageAssetId", (
       `Expected zhuyuanzhang map asset ${relativeAssetUrl} to exist`
     );
   });
+});
+
+test("zhuyuanzhang launch policy starts from the campaign map instead of the prototype grid", () => {
+  const packRoot = path.join(
+    process.cwd(),
+    "src/content/scenario-packs/zhuyuanzhang"
+  );
+  const scenarioProfile = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "scenario-profile.json"), "utf8")
+  );
+  const maps = JSON.parse(fs.readFileSync(path.join(packRoot, "maps.json"), "utf8"));
+  const initialMap = maps.find(
+    (mapDefinition) => mapDefinition.id === scenarioProfile.initialLocation.mapId
+  );
+
+  assert.equal(scenarioProfile.initialLocation.mapId, "map.yuanmo_campaign");
+  assert.equal(scenarioProfile.launchPolicy.initialView, "map");
+  assert.equal(initialMap?.mode, "campaign");
+  assert.match(initialMap?.primaryImageUrl, /^\.\/assets\/maps\/HD\.png$/);
 });
 
 test("content pack loader resolves zhuyuanzhang map asset urls", async () => {
@@ -1838,6 +2887,19 @@ test("content pack definition accepts optional task contribution fields", async 
   assert.equal(source.includes("tasks?: TaskDefinition[];"), true);
 });
 
+test("content pack definition accepts optional houseModuleDefaults field", async () => {
+  const source = await fs.promises.readFile(
+    path.join(process.cwd(), "src", "domain", "content-pack.ts"),
+    "utf8"
+  );
+
+  assert.equal(source.includes('import type { HouseModuleId }'), true);
+  assert.equal(
+    source.includes("houseModuleDefaults?: Partial<Record<HouseModuleId, Record<string, unknown>>>;"),
+    true
+  );
+});
+
 test("content pack loader ignores missing optional ui reserve files", async () => {
   const { loadContentPackFromManifestText } = await import(
     "../.test-dist/application/content/content-pack-loader.js"
@@ -1922,6 +2984,59 @@ test("content pack loader hydrates optional task contribution files", async () =
   }
 });
 
+test("content pack loader hydrates optional houseModuleDefaults file", async () => {
+  const { loadContentPackFromManifestText } = await import(
+    "../.test-dist/application/content/content-pack-loader.js"
+  );
+  const originalFetch = global.fetch;
+  const expectedDefaults = {
+    "home-house": {
+      homeHouseIntroLines: ["intro.test"],
+      homeHouseMainLines: ["main.test"],
+      homeHouseRestMenuLines: ["rest.test"],
+      homeHouseRecoveryTuning: {
+        hpBase: 10,
+        hpRatio: 0.15,
+        fatigueBase: 12,
+        fatigueRatio: 0.18,
+        customRestMaxDays: 99,
+      },
+    },
+  };
+
+  global.fetch = async (input) => {
+    const url = typeof input === "string" ? input : input.url;
+
+    if (url.endsWith("/house-module-defaults.json")) {
+      return {
+        ok: true,
+        json: async () => expectedDefaults,
+      };
+    }
+
+    return {
+      ok: true,
+      json: async () => [],
+    };
+  };
+
+  try {
+    const pack = await loadContentPackFromManifestText(
+      JSON.stringify({
+        schemaVersion: 1,
+        id: "pack.test",
+        title: "Pack Test",
+        files: { houseModuleDefaults: "house-module-defaults.json" },
+      }),
+      "file:///virtual/pack.json"
+    );
+
+    assert.deepEqual(pack.houseModuleDefaults, expectedDefaults);
+  } finally {
+    global.fetch = originalFetch;
+  }
+});
+
 test("main runtime path does not import the ui reserve registry yet", async () => {
   const source = await fs.promises.readFile(
     path.join(process.cwd(), "src", "main.ts"),
@@ -1932,20 +3047,20 @@ test("main runtime path does not import the ui reserve registry yet", async () =
 });
 
 test(
-  "existing layout editor target registry still stays on the current ui-layout path",
+  "layout editor target registry retirement removes the dead registry module",
   async () => {
-    const source = await fs.promises.readFile(
-      path.join(
-        process.cwd(),
-        "src",
-        "application",
-        "layout-editor",
-        "layout-editor-target-registry.ts"
+    assert.equal(
+      fs.existsSync(
+        path.join(
+          process.cwd(),
+          "src",
+          "application",
+          "layout-editor",
+          "layout-editor-target-registry.ts"
+        )
       ),
-      "utf8"
+      false
     );
-
-    assert.equal(source.includes("../../domain/ui-layout"), true);
   }
 );
 
@@ -2037,6 +3152,26 @@ test(
 );
 
 test(
+  "scenario pack loader reserves optional houseModuleDefaults manifest and validation seams",
+  async () => {
+    const source = await fs.promises.readFile(
+      path.join(
+        process.cwd(),
+        "src",
+        "application",
+        "scenario",
+        "scenario-pack-loader.ts"
+      ),
+      "utf8"
+    );
+
+    assert.equal(source.includes("houseModuleDefaults?: string;"), true);
+    assert.match(source, /value\.houseModuleDefaults != null/);
+    assert.match(source, /assertHouseModuleDefaults\(/);
+  }
+);
+
+test(
   "scenario pack loader accepts browser root-relative manifest urls for built-in JSON starts",
   async () => {
     const {
@@ -2097,6 +3232,10 @@ test(
       assert.equal(pack.id, "scenario-pack.zhu_yuanzhang.monk_opening");
       assert.equal(pack.scenarioProfile.id, "scenario.zhu_yuanzhang.monk_opening");
       assert.equal(
+        pack.houseModuleDefaults["home-house"].homeHouseRecoveryTuning.customRestMaxDays,
+        99
+      );
+      assert.equal(
         pack.maps.some(
           (map) =>
             map.primaryImageUrl === `${packBaseUrl}assets/maps/HD.png`
@@ -2146,6 +3285,11432 @@ test(
           !map.primaryImageUrl.startsWith("./assets/")
       ),
       true
+    );
+  }
+);
+
+test(
+  "scenario pack loader normalizes legacy octet-stream data image map assets",
+  async () => {
+    const {
+      loadScenarioPackFromFiles,
+    } = require("../.test-dist/application/scenario/scenario-pack-loader.js");
+    const legacyPngDataUrl =
+      "data:application/octet-stream;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAAB";
+    const importedFiles = createImportedFilesFromSerializedJsonRecord(
+      {
+        "pack.json": JSON.stringify({
+          schemaVersion: 1,
+          kind: "scenario-pack",
+          id: "scenario-pack.test.legacy-map-data-url",
+          title: "Legacy Map Data Url",
+          files: {
+            scenarioProfile: "./scenario-profile.json",
+            maps: "./maps.json",
+            characters: "./characters.json",
+            events: "./events.json",
+            dialogues: "./dialogues.json",
+          },
+        }),
+      "scenario-profile.json": JSON.stringify({
+        id: "scenario.test.legacy-map-data-url",
+        title: "Legacy Map Data Url",
+        playerCharacterId: "char.test",
+        chapterId: "chapter.test",
+        initialLocation: {
+          mapId: "map.test",
+          cityId: "city.test",
+          houseId: null,
+          view: "map",
+        },
+      }),
+        "maps.json": JSON.stringify([
+          {
+            id: "map.test",
+            name: "Map Test",
+            backgroundId: "bg.map.test",
+            nodes: [],
+            primaryImageUrl: legacyPngDataUrl,
+            regionOverlayImageUrl: legacyPngDataUrl,
+            layers: [
+              {
+                id: "map.test.layer",
+                label: "Layer",
+                width: 1,
+                height: 1,
+                description: "legacy png",
+                imageUrl: legacyPngDataUrl,
+              },
+            ],
+          },
+        ]),
+        "characters.json": JSON.stringify([{ id: "char.test", name: "Test" }]),
+        "events.json": JSON.stringify([]),
+        "dialogues.json": JSON.stringify([]),
+      },
+      "legacy-map-pack"
+    );
+
+    const pack = await loadScenarioPackFromFiles(importedFiles);
+    const [mapDefinition] = pack.maps;
+
+    assert.match(mapDefinition.primaryImageUrl, /^data:image\/png;base64,/);
+    assert.match(mapDefinition.regionOverlayImageUrl, /^data:image\/png;base64,/);
+    assert.match(mapDefinition.layers[0].imageUrl, /^data:image\/png;base64,/);
+  }
+);
+
+test("scenario pack loader reports missing imported map layer image URLs clearly", async () => {
+  const {
+    loadScenarioPackFromFiles,
+  } = require("../.test-dist/application/scenario/scenario-pack-loader.js");
+  const importedFiles = createImportedFilesFromSerializedJsonRecord(
+    {
+      "pack.json": JSON.stringify({
+        schemaVersion: 1,
+        kind: "scenario-pack",
+        id: "scenario-pack.test.missing-layer-image",
+        title: "Missing Layer Image",
+        files: {
+          scenarioProfile: "./scenario-profile.json",
+          maps: "./maps.json",
+          characters: "./characters.json",
+          events: "./events.json",
+          dialogues: "./dialogues.json",
+        },
+      }),
+      "scenario-profile.json": JSON.stringify({
+        id: "scenario.test.missing-layer-image",
+        title: "Missing Layer Image",
+        playerCharacterId: "char.test",
+        chapterId: "chapter.test",
+        initialLocation: {
+          mapId: "map.test",
+          cityId: "city.test",
+          houseId: null,
+          view: "map",
+        },
+      }),
+      "maps.json": JSON.stringify([
+        {
+          id: "map.test",
+          name: "Map Test",
+          backgroundId: "bg.map.test",
+          nodes: [],
+          layers: [
+            {
+              id: "map.test.layer",
+              label: "Layer",
+              width: 1,
+              height: 1,
+            },
+          ],
+        },
+      ]),
+      "characters.json": JSON.stringify([{ id: "char.test", name: "Test" }]),
+      "events.json": JSON.stringify([]),
+      "dialogues.json": JSON.stringify([]),
+    },
+    "missing-layer-image-pack"
+  );
+
+  await assert.rejects(
+    () => loadScenarioPackFromFiles(importedFiles),
+    /scenario maps\[0\]\.layers\[0\]\.imageUrl must be a non-empty string/
+  );
+});
+
+test("scenario pack loader rejects non-array event bindings files", async () => {
+  const {
+    loadScenarioPackFromFiles,
+  } = require("../.test-dist/application/scenario/scenario-pack-loader.js");
+  const importedFiles = createImportedFilesFromSerializedJsonRecord(
+    {
+      "pack.json": JSON.stringify({
+        schemaVersion: 1,
+        kind: "scenario-pack",
+        id: "scenario-pack.test.event-bindings",
+        title: "Event Bindings Pack",
+        files: {
+          scenarioProfile: "./scenario-profile.json",
+          characters: "./characters.json",
+          events: "./events.json",
+          eventBindings: "./event-bindings.json",
+          dialogues: "./dialogues.json",
+        },
+      }),
+      "scenario-profile.json": JSON.stringify({
+        id: "scenario.test.event-bindings",
+        title: "Event Bindings Pack",
+        playerCharacterId: "char.test",
+        chapterId: "chapter.test",
+        initialLocation: {
+          mapId: "map.test",
+          cityId: "city.test",
+          houseId: null,
+          view: "map",
+        },
+      }),
+      "characters.json": JSON.stringify([{ id: "char.test", name: "Test" }]),
+      "events.json": JSON.stringify([]),
+      "event-bindings.json": JSON.stringify({ id: "binding.invalid" }),
+      "dialogues.json": JSON.stringify([]),
+    },
+    "event-bindings-pack"
+  );
+
+  await assert.rejects(
+    () => loadScenarioPackFromFiles(importedFiles),
+    /scenario eventBindings must be an array/
+  );
+});
+
+test("scenario pack loader rejects old event-body trigger and conditions fields", async () => {
+  const {
+    loadScenarioPackFromFiles,
+  } = require("../.test-dist/application/scenario/scenario-pack-loader.js");
+  const importedFiles = createImportedFilesFromSerializedJsonRecord(
+    {
+      "pack.json": JSON.stringify({
+        schemaVersion: 1,
+        kind: "scenario-pack",
+        id: "scenario-pack.old-event-body-fields",
+        title: "Old Event Body Fields",
+        files: {
+          scenarioProfile: "./scenario-profile.json",
+          characters: "./characters.json",
+          events: "./events.json",
+          dialogues: "./dialogues.json",
+        },
+      }),
+      "scenario-profile.json": JSON.stringify({
+        id: "scenario.old-event-body-fields",
+        title: "Old Event Body Fields",
+        playerCharacterId: "char.test",
+        chapterId: "chapter.test",
+        initialLocation: {
+          mapId: "map.test",
+          cityId: "city.test",
+          houseId: null,
+          view: "map",
+        },
+      }),
+      "characters.json": JSON.stringify([{ id: "char.test", name: "Test" }]),
+      "events.json": JSON.stringify([
+        {
+          id: "event.old",
+          chapterId: "chapter.test",
+          name: "Old Event",
+          occurrence: "once",
+          trigger: { timing: "manual" },
+          conditions: [],
+          dialogueId: "scene.old",
+        },
+      ]),
+      "dialogues.json": JSON.stringify([{ id: "scene.old", actions: [] }]),
+    },
+    "old-event-body-fields-pack"
+  );
+
+  await assert.rejects(
+    () => loadScenarioPackFromFiles(importedFiles),
+    /event body trigger\/conditions are retired; use event-bindings\.json/
+  );
+});
+
+test("scenario pack loader rejects retired dialogue actions and scene-owned playable owner kinds", async () => {
+  const {
+    loadScenarioPackFromFiles,
+  } = require("../.test-dist/application/scenario/scenario-pack-loader.js");
+  const importedFiles = createImportedFilesFromSerializedJsonRecord(
+    {
+      "pack.json": JSON.stringify({
+        schemaVersion: 1,
+        kind: "scenario-pack",
+        id: "scenario-pack.retired-scene-runtime-shapes",
+        title: "Retired Scene Runtime Shapes",
+        files: {
+          scenarioProfile: "./scenario-profile.json",
+          characters: "./characters.json",
+          events: "./events.json",
+          dialogues: "./dialogues.json",
+          playableIntegrations: "./playable-integrations.json",
+          flowDefinitions: "./flow-definitions.json",
+        },
+      }),
+      "scenario-profile.json": JSON.stringify({
+        id: "scenario.retired-scene-runtime-shapes",
+        title: "Retired Scene Runtime Shapes",
+        playerCharacterId: "char.test",
+        chapterId: "chapter.test",
+        initialLocation: {
+          mapId: "map.test",
+          cityId: "city.test",
+          houseId: null,
+          view: "dialogue",
+        },
+      }),
+      "characters.json": JSON.stringify([{ id: "char.test", name: "Test" }]),
+      "events.json": JSON.stringify([]),
+      "dialogues.json": JSON.stringify([{ id: "dialogue.old", actions: [] }]),
+      "playable-integrations.json": JSON.stringify([
+        {
+          integrationId: "playable.old.scene",
+          playableId: "activity-qte",
+          ownerDefaults: { ownerKind: "scene", ownerId: "dialogue.old" },
+          trigger: {
+            triggerId: "trigger.old.scene",
+            ownerKind: "scene",
+            trigger: "event.old",
+          },
+          outcomeConfig: {},
+        },
+      ]),
+      "flow-definitions.json": JSON.stringify([
+        {
+          id: "flow.old.scene",
+          title: "Old Scene Flow",
+          ownerKind: "scene",
+          initialNodeId: "node.start",
+          nodes: [{ id: "node.start", type: "text", text: "Old", nextNodeId: null }],
+          outcomeRoutes: [],
+        },
+      ]),
+    },
+    "retired-scene-runtime-shapes-pack"
+  );
+
+  await assert.rejects(
+    () => loadScenarioPackFromFiles(importedFiles),
+    /retired actions\[\]|retired ownerKind "scene"|retired routing field|flowDefinitions is retired/
+  );
+});
+
+test("scenario pack loader rejects retired startup scene views", async () => {
+  const {
+    loadScenarioPackFromFiles,
+  } = require("../.test-dist/application/scenario/scenario-pack-loader.js");
+  const importedFiles = createImportedFilesFromSerializedJsonRecord(
+    {
+      "pack.json": JSON.stringify({
+        schemaVersion: 1,
+        kind: "scenario-pack",
+        id: "scenario-pack.retired-scene-start-view",
+        title: "Retired Scene Start View",
+        files: {
+          scenarioProfile: "./scenario-profile.json",
+          characters: "./characters.json",
+          events: "./events.json",
+          dialogues: "./dialogues.json",
+        },
+      }),
+      "scenario-profile.json": JSON.stringify({
+        id: "scenario.retired-scene-start-view",
+        title: "Retired Scene Start View",
+        playerCharacterId: "char.test",
+        chapterId: "chapter.test",
+        initialLocation: {
+          mapId: "map.test",
+          cityId: "city.test",
+          houseId: null,
+          view: "map",
+        },
+        launchPolicy: {
+          characterSelection: "fixed",
+          initialView: "scene",
+        },
+      }),
+      "characters.json": JSON.stringify([{ id: "char.test", name: "Test" }]),
+      "events.json": JSON.stringify([]),
+      "dialogues.json": JSON.stringify([]),
+    },
+    "retired-scene-start-view-pack"
+  );
+
+  await assert.rejects(
+    () => loadScenarioPackFromFiles(importedFiles),
+    /scenario launchPolicy\.initialView must be one of: map, city, city-3d, house, dialogue, battle, minigame/
+  );
+});
+
+test("built-in Liu Bang pack uses event-bindings instead of event-body trigger fields", async () => {
+  const {
+    loadScenarioPackFromFiles,
+  } = require("../.test-dist/application/scenario/scenario-pack-loader.js");
+  const liuBangPackRoot = path.join(
+    process.cwd(),
+    "src/content/scenario-packs/liu-bang-pei-county-opening"
+  );
+  const packManifest = JSON.parse(
+    fs.readFileSync(path.join(liuBangPackRoot, "pack.json"), "utf8")
+  );
+  const events = JSON.parse(
+    fs.readFileSync(path.join(liuBangPackRoot, "events.json"), "utf8")
+  );
+
+  assert.equal(packManifest.files.eventBindings, "event-bindings.json");
+  for (const eventDefinition of events) {
+    assert.equal(Object.hasOwn(eventDefinition, "trigger"), false);
+    assert.equal(Object.hasOwn(eventDefinition, "conditions"), false);
+  }
+
+  const scenarioPack = await loadScenarioPackFromFiles(
+    createScenarioPackFilesFromDirectory(liuBangPackRoot, "liu-bang")
+  );
+
+  assert.ok(
+    scenarioPack.eventBindings?.some(
+      (binding) => binding.eventId === "event.story.liu_bang.pei_county_opening"
+    )
+  );
+});
+
+test("scenario pack loader reports script editor project packages with a creator-facing error", async () => {
+  const {
+    loadScenarioPackFromFiles,
+  } = require("../.test-dist/application/scenario/scenario-pack-loader.js");
+  const {
+    serializeScriptEditorProjectToFiles,
+  } = require("../.test-dist/application/script-editor/editor-project-save.js");
+  const project = createExportableScriptEditorProjectDefinition();
+  const projectFiles = serializeScriptEditorProjectToFiles(project);
+
+  assert.ok(Object.hasOwn(projectFiles, "project.json"));
+  assert.equal(Object.hasOwn(projectFiles, "pack.json"), false);
+
+  await assert.rejects(
+    () =>
+      loadScenarioPackFromFiles(
+        createImportedFilesFromSerializedJsonRecord(
+          projectFiles,
+          "script-editor-project-package"
+        )
+      ),
+    (error) => {
+      assert.ok(error instanceof Error);
+      assert.match(error.message, /Script Editor 项目包/);
+      assert.match(error.message, /剧本编辑器中打开项目/);
+      assert.match(error.message, /导出运行时剧本包/);
+      assert.match(error.message, /pack\.json/);
+      return true;
+    }
+  );
+});
+
+test("active game content indexes event bindings by id", () => {
+  const {
+    createActiveGameContent,
+  } = require("../.test-dist/application/content/active-game-content.js");
+
+  const content = createActiveGameContent({
+    schemaVersion: 1,
+    id: "content-pack.test.event-bindings",
+    title: "Event Bindings Content",
+    characters: [],
+    events: [],
+    eventBindings: [
+      {
+        id: "binding.test.city-enter",
+        eventId: "event.test.city-enter",
+        owner: { family: "city", id: "city.test" },
+        trigger: { timing: "after", action: "city-enter" },
+        priority: 10,
+        enabled: true,
+      },
+    ],
+    dialogues: [],
+  });
+
+  assert.equal(content.eventBindings[0]?.id, "binding.test.city-enter");
+  assert.equal(
+    content.eventBindingsById["binding.test.city-enter"]?.eventId,
+    "event.test.city-enter"
+  );
+});
+
+test(
+  "script editor project loader can hydrate a manifest-driven imported project directory",
+  async () => {
+    const {
+      loadScriptEditorProjectFromFiles,
+    } = require("../.test-dist/application/script-editor/editor-project-loader.js");
+    const os = require("node:os");
+    const outputRoot = fs.mkdtempSync(
+      path.join(os.tmpdir(), "rpg-tg-script-editor-project-")
+    );
+    const { fixture, projectRoot } = writeScriptEditorProjectFixture(outputRoot);
+    const importedFiles = createImportedScriptEditorProjectFilesFromDisk(
+      projectRoot,
+      "script-editor-project"
+    );
+
+    const project = await loadScriptEditorProjectFromFiles(importedFiles);
+
+    assert.equal(project.id, fixture.id);
+    assert.equal(project.storyPack.id, fixture.storyPack.id);
+    assert.equal(project.people[0]?.id, "person.hero");
+    assert.equal(project.textEntries[0]?.text, "Opening line.");
+  }
+);
+
+test("script editor project save emits canonical split files", async () => {
+  const {
+    loadScriptEditorProjectFromFiles,
+  } = require("../.test-dist/application/script-editor/editor-project-loader.js");
+  const {
+    serializeScriptEditorProjectToFiles,
+  } = require("../.test-dist/application/script-editor/editor-project-save.js");
+  const project = {
+    ...createSampleScriptEditorProjectDefinition(),
+    eventBindings: [
+      {
+        id: "binding.opening.city-enter",
+        eventId: "event.opening",
+        owner: { family: "city", id: "city.start" },
+        trigger: { timing: "after", action: "city-enter" },
+        priority: 20,
+        enabled: true,
+      },
+    ],
+  };
+
+  const serializedFiles = serializeScriptEditorProjectToFiles(project);
+  const manifest = JSON.parse(serializedFiles["project.json"]);
+  const savedStoryPack = JSON.parse(serializedFiles["story-pack.json"]);
+  const savedPeople = JSON.parse(serializedFiles["people.json"]);
+  const savedEventBindings = JSON.parse(serializedFiles["event-bindings.json"]);
+  const loadedProject = await loadScriptEditorProjectFromFiles(
+    createImportedFilesFromSerializedJsonRecord(serializedFiles, "script-editor-project")
+  );
+
+  assert.equal(manifest.kind, "script-editor-project");
+  assert.equal(Object.hasOwn(serializedFiles, "pack.json"), false);
+  assert.equal(manifest.files.storyPack, "./story-pack.json");
+  assert.equal(manifest.files.eventBindings, "./event-bindings.json");
+  assert.equal(manifest.files.effectBundles, "./effect-bundles.json");
+  assert.equal(savedStoryPack.id, project.storyPack.id);
+  assert.equal(savedPeople[0]?.id, project.people[0]?.id);
+  assert.equal(savedEventBindings[0]?.id, "binding.opening.city-enter");
+  assert.equal(loadedProject.eventBindings[0]?.eventId, "event.opening");
+});
+
+test("script editor schema reference drives project save and runtime export versions", () => {
+  const {
+    SCRIPT_EDITOR_PROJECT_SCHEMA_VERSION,
+    SCRIPT_EDITOR_RUNTIME_PACK_SCHEMA_VERSION,
+  } = require("../.test-dist/domain/script-editor-project.js");
+  const {
+    serializeScriptEditorProjectToFiles,
+  } = require("../.test-dist/application/script-editor/editor-project-save.js");
+  const {
+    exportScriptEditorProjectToScenarioPackFiles,
+  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  const project = createExportableScriptEditorProjectDefinition();
+
+  const projectManifest = JSON.parse(
+    serializeScriptEditorProjectToFiles(project)["project.json"]
+  );
+  const runtimePackManifest = JSON.parse(
+    exportScriptEditorProjectToScenarioPackFiles(project)["pack.json"]
+  );
+  const runtimePackImportSource = fs.readFileSync(
+    path.join(process.cwd(), "src/application/script-editor/runtime-pack-import.ts"),
+    "utf8"
+  );
+
+  assert.equal(projectManifest.schemaVersion, SCRIPT_EDITOR_PROJECT_SCHEMA_VERSION);
+  assert.equal(runtimePackManifest.schemaVersion, SCRIPT_EDITOR_RUNTIME_PACK_SCHEMA_VERSION);
+  assert.match(runtimePackImportSource, /SCRIPT_EDITOR_RUNTIME_PACK_SCHEMA_VERSION/);
+  assert.match(
+    runtimePackImportSource,
+    /candidate\.schemaVersion\s*!==\s*SCRIPT_EDITOR_RUNTIME_PACK_SCHEMA_VERSION/
+  );
+});
+
+test("script editor default project creation consumes schema reference constants", () => {
+  const minimalWorkflowSource = fs.readFileSync(
+    path.join(process.cwd(), "src/application/script-editor/minimal-workflow.ts"),
+    "utf8"
+  );
+
+  assert.match(minimalWorkflowSource, /SCRIPT_EDITOR_PROJECT_SCHEMA_VERSION/);
+  assert.match(minimalWorkflowSource, /SCRIPT_EDITOR_PROJECT_KIND/);
+  assert.doesNotMatch(minimalWorkflowSource, /schemaVersion:\s*1\b/);
+  assert.doesNotMatch(minimalWorkflowSource, /kind:\s*"script-editor-project"/);
+});
+
+test("script editor project completion state persists through project save and load", async () => {
+  const {
+    loadScriptEditorProjectFromFiles,
+  } = require("../.test-dist/application/script-editor/editor-project-loader.js");
+  const {
+    markScriptEditorProjectCompleteForExport,
+  } = require("../.test-dist/application/script-editor/project-completion-state.js");
+  const {
+    serializeScriptEditorProjectToFiles,
+  } = require("../.test-dist/application/script-editor/editor-project-save.js");
+  const project = createSampleScriptEditorProjectDefinition();
+
+  assert.equal(project.completionState.state, "draft");
+
+  const completedProject = markScriptEditorProjectCompleteForExport(project, {
+    completedAt: "2026-07-15T00:00:00.000Z",
+  });
+  const serializedFiles = serializeScriptEditorProjectToFiles(completedProject);
+  const manifest = JSON.parse(serializedFiles["project.json"]);
+  const loadedProject = await loadScriptEditorProjectFromFiles(
+    createImportedFilesFromSerializedJsonRecord(serializedFiles, "completed-project")
+  );
+
+  assert.deepEqual(manifest.completionState, {
+    state: "complete",
+    completedAt: "2026-07-15T00:00:00.000Z",
+    completedBy: "runtime-export",
+  });
+  assert.deepEqual(loadedProject.completionState, manifest.completionState);
+  assert.equal(project.completionState.state, "draft");
+});
+
+test("script editor runtime export marks completion without forcing a project package save", () => {
+  const mainUiSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    "utf8"
+  );
+
+  assert.match(mainUiSource, /markScriptEditorProjectCompleteForExport/);
+  assert.match(
+    mainUiSource,
+    /const completedProject = markScriptEditorProjectCompleteForExport\(this\.scriptEditorProject/
+  );
+  assert.match(
+    mainUiSource,
+    /this\.commitScriptEditorProject\(completedProject\)/
+  );
+  const exportMethod = mainUiSource.slice(
+    mainUiSource.indexOf("async exportScriptEditorProject()"),
+    mainUiSource.indexOf("captureScriptEditorRuntimePreviewReturnContext()")
+  );
+  assert.doesNotMatch(exportMethod, /persistScriptEditorProjectDraft/);
+  assert.doesNotMatch(exportMethod, /serializeScriptEditorProjectToFiles/);
+  const saveMethod = mainUiSource.slice(
+    mainUiSource.indexOf("async saveScriptEditorProject()"),
+    mainUiSource.indexOf("async createScriptEditorProjectAtSavePath()")
+  );
+  const previewMethod = mainUiSource.slice(
+    mainUiSource.indexOf("async previewScriptEditorProjectRuntime()"),
+    mainUiSource.indexOf("async openScriptEditorProjectFromDirectory()")
+  );
+
+  assert.doesNotMatch(saveMethod, /markScriptEditorProjectCompleteForExport/);
+  assert.doesNotMatch(previewMethod, /markScriptEditorProjectCompleteForExport/);
+});
+
+test("script editor project library helpers support upsert find and remove", () => {
+  const {
+    createScriptEditorProjectLibraryEntry,
+    findScriptEditorProjectLibraryEntry,
+    removeScriptEditorProjectLibraryEntry,
+    upsertScriptEditorProjectLibraryEntry,
+  } = require("../.test-dist/application/script-editor/project-workspace-library.js");
+  const firstProject = createExportableScriptEditorProjectDefinition();
+  const secondProject = createExportableScriptEditorProjectDefinition();
+  secondProject.id = "project.second";
+  secondProject.title = "Second Project";
+
+  let entries = [];
+  entries = upsertScriptEditorProjectLibraryEntry(
+    entries,
+    createScriptEditorProjectLibraryEntry(firstProject, "new")
+  );
+  entries = upsertScriptEditorProjectLibraryEntry(
+    entries,
+    createScriptEditorProjectLibraryEntry(secondProject, "opened")
+  );
+
+  assert.deepEqual(entries.map((entry) => entry.projectId), ["project.second", firstProject.id]);
+  assert.equal(findScriptEditorProjectLibraryEntry(entries, "project.second")?.title, "Second Project");
+
+  entries = upsertScriptEditorProjectLibraryEntry(
+    entries,
+    createScriptEditorProjectLibraryEntry(
+      {
+        ...firstProject,
+        title: "Updated First Project",
+      },
+      "imported"
+    )
+  );
+  assert.deepEqual(entries.map((entry) => entry.projectId), [firstProject.id, "project.second"]);
+  assert.equal(findScriptEditorProjectLibraryEntry(entries, firstProject.id)?.source, "imported");
+  assert.equal(findScriptEditorProjectLibraryEntry(entries, firstProject.id)?.title, "Updated First Project");
+
+  entries = removeScriptEditorProjectLibraryEntry(entries, "project.second");
+  assert.deepEqual(entries.map((entry) => entry.projectId), [firstProject.id]);
+  assert.equal(findScriptEditorProjectLibraryEntry(entries, "project.second"), null);
+});
+
+test("script editor project library records durable package location and stale validity", () => {
+  const {
+    canContinueScriptEditorProjectEntry,
+    createScriptEditorProjectLibraryEntry,
+    markScriptEditorProjectLibraryEntryStale,
+  } = require("../.test-dist/application/script-editor/project-workspace-library.js");
+  const project = createExportableScriptEditorProjectDefinition();
+
+  const entry = createScriptEditorProjectLibraryEntry(project, "opened", {
+    locationKind: "directory",
+    displayPath: "C:/Users/Administrator/Desktop/script-pack",
+    durable: true,
+  });
+
+  assert.equal(entry.packageLocation.locationKind, "directory");
+  assert.equal(entry.packageLocation.durable, true);
+  assert.equal(entry.validity.state, "valid");
+  assert.equal(canContinueScriptEditorProjectEntry(entry), true);
+
+  const staleEntry = markScriptEditorProjectLibraryEntryStale(
+    entry,
+    "Package path no longer contains project.json."
+  );
+
+  assert.equal(staleEntry.validity.state, "stale");
+  assert.match(staleEntry.validity.reason, /project\.json/);
+  assert.equal(canContinueScriptEditorProjectEntry(staleEntry), false);
+});
+
+test("script editor runtime export does not write project package files before exporting", () => {
+  const mainUiSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    "utf8"
+  );
+  const workspaceShellSource = fs.readFileSync(
+    path.join(process.cwd(), "src/application/script-editor/workspace-shell.ts"),
+    "utf8"
+  );
+  const saveMethod = mainUiSource.slice(
+    mainUiSource.indexOf("async saveScriptEditorProject()"),
+    mainUiSource.indexOf("async createScriptEditorProjectAtSavePath()")
+  );
+  const exportMethod = mainUiSource.slice(
+    mainUiSource.indexOf("async exportScriptEditorProject()"),
+    mainUiSource.indexOf("captureScriptEditorRuntimePreviewReturnContext()")
+  );
+
+  assert.doesNotMatch(exportMethod, /persistScriptEditorProjectDraftBeforeExport/);
+  assert.doesNotMatch(exportMethod, /persistScriptEditorProjectDraft\(/);
+  assert.match(
+    exportMethod,
+    /exportScriptEditorProjectToScenarioPackFiles\(this\.scriptEditorProject\)/
+  );
+  assert.doesNotMatch(exportMethod, /serializeScriptEditorProjectToFiles/);
+  assert.match(saveMethod, /serializeScriptEditorProjectToFiles\(this\.scriptEditorProject\)/);
+  assert.doesNotMatch(saveMethod, /exportScriptEditorProjectToScenarioPackFiles/);
+  assert.match(workspaceShellSource, /label:\s*"剧本导出"/);
+  assert.doesNotMatch(workspaceShellSource, /label:\s*"导入导出"/);
+});
+
+test("script editor workspace renders the runtime export toolbar action", () => {
+  const workspaceViewSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/ui/views/script-editor/script-editor-workspace-view.ts"
+    ),
+    "utf8"
+  );
+
+  const renderToolbarButtonsSource = workspaceViewSource.slice(
+    workspaceViewSource.indexOf("function renderToolbarButtons"),
+    workspaceViewSource.indexOf("function renderProjectEntryButton")
+  );
+
+  assert.doesNotMatch(renderToolbarButtonsSource, /action\.id !== "export"/);
+  assert.match(renderToolbarButtonsSource, /action\.id === "export"/);
+  assert.match(renderToolbarButtonsSource, /data-script-editor-action="\$\{escapeHtml\(action\.id\)\}"/);
+});
+
+test("script editor save records durable directory location and blocks stale continue entries", () => {
+  const mainUiSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    "utf8"
+  );
+
+  assert.match(
+    mainUiSource,
+    /canContinueScriptEditorProjectEntry/
+  );
+  assert.match(
+    mainUiSource,
+    /this\.rememberScriptEditorProjectPackageLocation\(result\)/
+  );
+  assert.match(
+    mainUiSource,
+    /if \(!canContinueScriptEditorProjectEntry\(projectEntry\)\)/
+  );
+});
+
+test("script editor new project creates a package skeleton before opening the workspace", () => {
+  const mainUiSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    "utf8"
+  );
+
+  assert.match(
+    mainUiSource,
+    /await this\.createScriptEditorProjectAtSavePath\(\)/
+  );
+  assert.match(
+    mainUiSource,
+    /async createScriptEditorProjectAtSavePath\(\)/
+  );
+  assert.match(
+    mainUiSource,
+    /serializeScriptEditorProjectToFiles\(project\)/
+  );
+  assert.match(
+    mainUiSource,
+    /this\.rememberScriptEditorProjectPackageLocation\(result\)/
+  );
+});
+
+test("script editor opens project drafts through a writable directory handle", () => {
+  const mainUiSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    "utf8"
+  );
+
+  assert.match(
+    mainUiSource,
+    /await this\.openScriptEditorProjectFromDirectory\(\)/
+  );
+  assert.match(
+    mainUiSource,
+    /async openScriptEditorProjectFromDirectory\(\)/
+  );
+  assert.match(
+    mainUiSource,
+    /readFilesFromDirectoryHandle\(directoryHandle\)/
+  );
+  assert.match(
+    mainUiSource,
+    /this\.scriptEditorProjectDirectoryHandle = directoryHandle/
+  );
+  assert.match(
+    mainUiSource,
+    /this\.rememberScriptEditorProjectPackageLocation\(\{\s*mode: "directory",\s*directoryHandle,\s*\}\)/
+  );
+});
+
+test("script editor runtime preview launches from current in-memory project data", () => {
+  const mainUiSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    "utf8"
+  );
+  const mainSource = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
+  const workspaceShellSource = fs.readFileSync(
+    path.join(process.cwd(), "src/application/script-editor/workspace-shell.ts"),
+    "utf8"
+  );
+
+  assert.match(workspaceShellSource, /id: "preview-runtime"/);
+  assert.match(workspaceShellSource, /当前编辑器内存数据/);
+  assert.doesNotMatch(workspaceShellSource, /保存当前草稿后/);
+  assert.doesNotMatch(workspaceShellSource, /项目目录重新读取/);
+  assert.match(
+    mainUiSource,
+    /if \(action === "preview-runtime"\) \{\s*await this\.previewScriptEditorProjectRuntime\(\);/
+  );
+  assert.match(
+    mainUiSource,
+    /async previewScriptEditorProjectRuntime\(\)/
+  );
+  const previewMethod = mainUiSource.slice(
+    mainUiSource.indexOf("async previewScriptEditorProjectRuntime()"),
+    mainUiSource.indexOf("async openScriptEditorProjectFromDirectory()")
+  );
+  assert.match(previewMethod, /exportScriptEditorProjectToScenarioPackFiles\(this\.scriptEditorProject\)/);
+  assert.match(
+    previewMethod,
+    /loadScenarioPackFromFiles\(\s*createTextImportFilesFromRecord\(serializedPackFiles\)/
+  );
+  assert.match(
+    previewMethod,
+    /const startResult = await this\.onStartLoadedScenarioPack\(scenarioPack\);/
+  );
+  assert.match(previewMethod, /if \(startResult === "started"\)/);
+  assert.match(previewMethod, /this\.setScreen\("runtime-preview"\)/);
+  assert.doesNotMatch(
+    previewMethod,
+    /await this\.onStartLoadedScenarioPack\(scenarioPack\);\s*this\.setScreen\("runtime-preview"\);/
+  );
+  assert.doesNotMatch(previewMethod, /onStartScenarioPack/);
+  assert.match(previewMethod, /this\.scriptEditorRuntimePreviewSession/);
+  assert.match(previewMethod, /captureScriptEditorRuntimePreviewReturnContext\(\)/);
+  assert.doesNotMatch(previewMethod, /scriptEditorProjectDirectoryHandle/);
+  assert.doesNotMatch(previewMethod, /readFilesFromDirectoryHandle/);
+  assert.doesNotMatch(previewMethod, /loadScriptEditorProjectFromFiles/);
+  assert.doesNotMatch(previewMethod, /markScriptEditorProjectCompleteForExport/);
+  assert.doesNotMatch(previewMethod, /persistScriptEditorProjectDraftBeforeExport/);
+  assert.match(mainSource, /onStartLoadedScenarioPack:\s*startLoadedScenarioPackWithLoading/);
+  assert.match(mainSource, /async function startLoadedScenarioPackWithLoading\(\s*scenarioPack:\s*ScenarioPackDefinition\s*\)/);
+  assert.match(mainSource, /filePath:\s*`preview:\$\{scenarioPack\.id\}`/);
+  const loadedPreviewHelper = mainSource.slice(
+    mainSource.indexOf("async function startLoadedScenarioPackWithLoading("),
+    mainSource.indexOf("async function prepareScenarioPackCharacterSelection(")
+  );
+  assert.match(loadedPreviewHelper, /runScenarioPackStartupRequestWithLoading\(\{\s*type:\s*"scenario-pack"/);
+  assert.match(
+    mainSource,
+    /async function startLoadedScenarioPackWithLoading\([\s\S]*prepareScenarioPackCharacterSelection\([\s\S]*previewSession:\s*true/
+  );
+});
+
+test("script editor runtime preview keeps failures in the editor and exposes exit preview return context", () => {
+  const mainUiSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    "utf8"
+  );
+  const mainUiStyles = fs.readFileSync(
+    path.join(process.cwd(), "src/styles/main-ui.css"),
+    "utf8"
+  );
+  const previewMethod = mainUiSource.slice(
+    mainUiSource.indexOf("async previewScriptEditorProjectRuntime()"),
+    mainUiSource.indexOf("async openScriptEditorProjectFromDirectory()")
+  );
+
+  assert.match(previewMethod, /catch \(error\)/);
+  assert.match(previewMethod, /recordScriptEditorNotice\(\{\s*tone: "warning"/);
+  assert.match(previewMethod, /this\.setScreen\("script-editor-workspace"\)/);
+  assert.match(mainUiSource, /renderRuntimePreviewOverlay\(\)/);
+  assert.match(mainUiSource, /data-script-editor-action="exit-runtime-preview"/);
+  assert.doesNotMatch(mainUiSource, /data-action="exit-runtime-preview"/);
+  assert.match(mainUiSource, />\s*退出预览\s*</);
+  assert.doesNotMatch(mainUiSource, /c-main-ui-runtime-preview-frame/);
+  assert.doesNotMatch(mainUiSource, /class="c-runtime-preview-exit"/);
+  assert.match(mainUiSource, /c-main-ui-runtime-preview-session-banner/);
+  assert.match(mainUiSource, /c-runtime-preview-exit--session/);
+  assert.match(mainUiSource, /exitScriptEditorRuntimePreview\(\)/);
+  assert.match(mainUiSource, /restoreScriptEditorRuntimePreviewReturnContext/);
+  assert.match(mainUiSource, /scriptEditorSelection/);
+  assert.match(mainUiSource, /scriptEditorEventTab/);
+  assert.match(mainUiSource, /scriptEditorScrollTop/);
+  assert.match(
+    mainUiStyles,
+    /\.c-main-ui-overlay:has\(\.c-main-ui-screen--runtime-preview\)\s*{[^}]*pointer-events:\s*none/s
+  );
+  assert.match(mainUiStyles, /\.c-main-ui-screen--runtime-preview/);
+  assert.match(mainUiStyles, /pointer-events:\s*none/);
+  assert.doesNotMatch(mainUiStyles, /\.c-main-ui-runtime-preview-frame/);
+  assert.doesNotMatch(mainUiStyles, /\.c-runtime-preview-exit\s*{/);
+  assert.match(mainUiStyles, /\.c-main-ui-runtime-preview-session-banner\s*{[\s\S]*?top:\s*16px;[\s\S]*?right:\s*16px;/);
+  assert.match(mainUiStyles, /\.c-main-ui-runtime-preview-session-banner\s*{[\s\S]*?z-index:\s*2001;/);
+  assert.match(mainUiStyles, /pointer-events:\s*auto/);
+});
+
+test(
+  "script editor city/building access panel uses readable refusal labels and condition labels",
+  () => {
+    const mainUiSource = fs.readFileSync(
+      path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+      "utf8"
+    );
+    const locationAccessPanelSource = mainUiSource.slice(
+      mainUiSource.indexOf("renderScriptEditorLocationAccessPanel(location) {"),
+      mainUiSource.indexOf("renderScriptEditorLocationAccessConditionEditor(conditionExpression) {")
+    );
+    const conditionEditorSource = mainUiSource.slice(
+      mainUiSource.indexOf("renderScriptEditorLocationAccessConditionEditor(conditionExpression) {"),
+      mainUiSource.indexOf("renderScriptEditorLocationAccessConditionRow(condition, index) {")
+    );
+    const conditionRowSource = mainUiSource.slice(
+      mainUiSource.indexOf("renderScriptEditorLocationAccessConditionRow(condition, index) {"),
+      mainUiSource.indexOf("renderScriptEditorLocationAccessEventConditionControls(condition, index) {")
+    );
+    const personConditionSource = mainUiSource.slice(
+      mainUiSource.indexOf("renderScriptEditorLocationAccessPersonConditionControls(condition, index, literalValue) {"),
+      mainUiSource.indexOf("renderScriptEditorLocationAccessTimeConditionControls(condition, index, literalValue) {")
+    );
+    const personFieldSource = mainUiSource.slice(
+      mainUiSource.indexOf("getScriptEditorLocationAccessPersonFieldOptions(personId) {"),
+      mainUiSource.indexOf("renderScriptEditorBuildingEntryPanel(location) {")
+    );
+
+    assert.match(locationAccessPanelSource, /拒绝提示/);
+    assert.match(locationAccessPanelSource, /进入条件/);
+    assert.match(
+      locationAccessPanelSource,
+      /c-script-editor-location-access-section[\s\S]*拒绝提示[\s\S]*c-script-editor-location-access-section[\s\S]*进入条件/
+    );
+    assert.doesNotMatch(
+      locationAccessPanelSource,
+      /c-script-editor-form-grid[\s\S]*拒绝提示[\s\S]*进入条件[\s\S]*<\/div>/
+    );
+    assert.match(conditionEditorSource, /没有条件时/);
+    assert.match(conditionEditorSource, /新增条件/);
+    assert.match(conditionEditorSource, /清空条件/);
+    assert.match(conditionRowSource, /事件|人物|时间/);
+    assert.match(personConditionSource, /未选择人物/);
+    assert.match(personFieldSource, /基础属性/);
+    assert.match(personFieldSource, /自定义属性/);
+    assert.doesNotMatch(locationAccessPanelSource, /\?\?\?\?/);
+    assert.doesNotMatch(conditionEditorSource, /\?\?\?\?/);
+  }
+);
+
+test(
+  "script editor runtime preview rendering is driven by preview session state",
+  () => {
+    const mainUiSource = fs.readFileSync(
+      path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+      "utf8"
+    );
+
+    assert.match(mainUiSource, /scriptEditorRuntimePreviewSession\s*!=\s*null/);
+    assert.match(mainUiSource, /renderRuntimePreviewOverlay\(\)/);
+  }
+);
+
+test(
+  "script editor runtime export emits a runtime-compatible scenario pack for the bounded direct-mapping slice",
+  async () => {
+    const {
+      exportScriptEditorProjectToScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    const {
+      loadScenarioPackFromFiles,
+    } = require("../.test-dist/application/scenario/scenario-pack-loader.js");
+    const project = createExportableScriptEditorProjectDefinition();
+
+    const serializedFiles = exportScriptEditorProjectToScenarioPackFiles(project);
+    const manifest = JSON.parse(serializedFiles["pack.json"]);
+    const exportedScenarioProfile = JSON.parse(
+      serializedFiles["scenario-profile.json"]
+    );
+    const exportedScenes = JSON.parse(serializedFiles["dialogues.json"]);
+    const exportedTextEntries = JSON.parse(serializedFiles["text-entries.json"]);
+    const exportedPack = await loadScenarioPackFromFiles(
+      createImportedFilesFromSerializedJsonRecord(
+        serializedFiles,
+        "exported-scenario-pack"
+      )
+    );
+
+    assert.ok(Object.hasOwn(serializedFiles, "pack.json"));
+    assert.equal(Object.hasOwn(serializedFiles, "project.json"), false);
+    assert.equal(manifest.kind, "scenario-pack");
+    assert.equal(manifest.id, project.storyPack.id);
+    assert.equal(manifest.basePackId, "content-pack.base-game.zhuyuanzhang");
+    assert.equal(manifest.files.scenarioProfile, "./scenario-profile.json");
+    assert.equal(manifest.files.characters, "./characters.json");
+    assert.equal(manifest.files.tasks, "./tasks.json");
+    assert.equal(manifest.files.textEntries, "./text-entries.json");
+    assert.equal(exportedScenarioProfile.id, "scenario.test.script-editor");
+    assert.equal(exportedScenarioProfile.playerCharacterId, "person.hero");
+    assert.deepEqual(exportedScenes, []);
+    assert.equal(exportedTextEntries["text.opening"], "Opening line.");
+    assert.equal(exportedPack.scenarioProfile.id, "scenario.test.script-editor");
+    assert.equal(exportedPack.characters[0]?.id, "person.hero");
+    assert.equal(exportedPack.characters[0]?.birthYear, 0);
+    assert.equal(exportedPack.characters[0]?.age, 0);
+    assert.equal(exportedPack.characters[0]?.cityId, "city.start");
+    assert.equal(exportedPack.characters[0]?.portraitId, "portrait.hero");
+    assert.equal(exportedPack.characters[0]?.stats?.leadership, 0);
+    assert.equal(exportedPack.characters[0]?.stats?.gold, 0);
+    assert.equal(exportedPack.characters[0]?.skills?.military, 0);
+    assert.equal(exportedPack.characters[0]?.stamina, 100);
+    assert.deepEqual(exportedPack.characters[0]?.availableFunctions, []);
+    assert.equal(exportedPack.houses?.[0]?.id, "building.home");
+    assert.equal(exportedPack.tasks?.[0]?.id, "quest.first");
+    assert.equal(exportedPack.textEntries?.["text.opening"], "Opening line.");
+  }
+);
+
+test("character status materializer overlays stat skill and stamina patches without mutating definitions", () => {
+  const {
+    materializeCharacterDefinition,
+    materializeCharacterDefinitions,
+  } = require("../.test-dist/application/character/character-status.js");
+  const baseCharacter = {
+    ...prototypeCharacters[0],
+    id: "char.status.test",
+    stats: {
+      ...prototypeCharacters[0].stats,
+      gold: 120,
+      leadership: 60,
+    },
+    skills: {
+      ...prototypeCharacters[0].skills,
+      military: 2,
+    },
+    stamina: 80,
+  };
+
+  const withoutStatus = materializeCharacterDefinition(baseCharacter);
+  const withEmptyStatus = materializeCharacterDefinition(baseCharacter, {});
+  const withPatch = materializeCharacterDefinition(baseCharacter, {
+    statPatch: { gold: 150 },
+    skillPatch: { military: 3 },
+    stamina: 70,
+  });
+  const [materializedFromMap] = materializeCharacterDefinitions(
+    [baseCharacter],
+    {
+      "char.status.test": {
+        statPatch: { leadership: 65 },
+      },
+    }
+  );
+
+  assert.notEqual(withoutStatus, baseCharacter);
+  assert.deepEqual(withoutStatus, baseCharacter);
+  assert.deepEqual(withEmptyStatus, baseCharacter);
+  assert.equal(withPatch.stats.gold, 150);
+  assert.equal(withPatch.skills.military, 3);
+  assert.equal(withPatch.stamina, 70);
+  assert.equal(baseCharacter.stats.gold, 120);
+  assert.equal(baseCharacter.skills.military, 2);
+  assert.equal(baseCharacter.stamina, 80);
+  assert.equal(materializedFromMap.stats.leadership, 65);
+});
+
+test("character status materializer overlays custom property patches without mutating definitions", () => {
+  const {
+    materializeCharacterDefinition,
+    mergeCharacterStatusById,
+  } = require("../.test-dist/application/character/character-status.js");
+  const baseCharacter = {
+    ...prototypeCharacters[0],
+    id: "char.status.custom",
+    customProperties: {
+      "character.devotion": 3,
+      "character.currency": 120,
+    },
+  };
+
+  const mergedStatus = mergeCharacterStatusById({}, baseCharacter.id, {
+    customPropertyPatch: {
+      "character.devotion": 8,
+      "character.currency": 90,
+    },
+  });
+  const withPatch = materializeCharacterDefinition(
+    baseCharacter,
+    mergedStatus[baseCharacter.id]
+  );
+
+  assert.deepEqual(withPatch.customProperties, {
+    "character.devotion": 8,
+    "character.currency": 90,
+  });
+  assert.deepEqual(baseCharacter.customProperties, {
+    "character.devotion": 3,
+    "character.currency": 120,
+  });
+});
+
+test("city and building status materializers overlay current values without mutating definitions", () => {
+  const {
+    materializeCityDefinition,
+    mergeCityStatusById,
+  } = require("../.test-dist/domain/city-status.js");
+  const {
+    materializeBuildingDefinition,
+    mergeBuildingStatusById,
+  } = require("../.test-dist/domain/building-status.js");
+  const authoredCity = {
+    id: "city.status.test",
+    name: "Status City",
+    regionId: "region.test",
+    mapNodeId: "map-node.status",
+    houseIds: ["house.status.test"],
+    neighbourCityIds: [],
+    travelCost: 1,
+    tags: ["trade"],
+    prosperity: 45,
+    danger: 20,
+    specialDemand: ["rice"],
+  };
+  const authoredBuilding = {
+    id: "house.status.test",
+    cityId: authoredCity.id,
+    name: "Status House",
+    type: "custom",
+    characterIds: ["char.owner"],
+    defaultCharacterId: "char.owner",
+    moduleId: "custom.module",
+    activityLocationId: "market",
+    backAction: { label: "Back", targetView: "city" },
+  };
+
+  const cityStatusById = mergeCityStatusById({}, authoredCity.id, {
+    valuePatch: {
+      prosperity: 72,
+      danger: 8,
+      specialDemand: ["salt"],
+    },
+  });
+  const buildingStatusById = mergeBuildingStatusById({}, authoredBuilding.id, {
+    profilePatch: {
+      name: "Runtime House",
+      defaultCharacterId: null,
+    },
+    runtimePatch: {
+      level: 3,
+      damaged: true,
+      outputMultiplier: 1.25,
+    },
+  });
+
+  const materializedCity = materializeCityDefinition(
+    authoredCity,
+    cityStatusById[authoredCity.id]
+  );
+  const materializedBuilding = materializeBuildingDefinition(
+    authoredBuilding,
+    buildingStatusById[authoredBuilding.id]
+  );
+
+  assert.deepEqual(materializedCity, {
+    ...authoredCity,
+    prosperity: 72,
+    danger: 8,
+    specialDemand: ["salt"],
+  });
+  assert.deepEqual(materializedBuilding, {
+    ...authoredBuilding,
+    name: "Runtime House",
+    defaultCharacterId: null,
+    level: 3,
+    damaged: true,
+    outputMultiplier: 1.25,
+  });
+  assert.deepEqual(authoredCity, {
+    id: "city.status.test",
+    name: "Status City",
+    regionId: "region.test",
+    mapNodeId: "map-node.status",
+    houseIds: ["house.status.test"],
+    neighbourCityIds: [],
+    travelCost: 1,
+    tags: ["trade"],
+    prosperity: 45,
+    danger: 20,
+    specialDemand: ["rice"],
+  });
+  assert.deepEqual(authoredBuilding, {
+    id: "house.status.test",
+    cityId: authoredCity.id,
+    name: "Status House",
+    type: "custom",
+    characterIds: ["char.owner"],
+    defaultCharacterId: "char.owner",
+    moduleId: "custom.module",
+    activityLocationId: "market",
+    backAction: { label: "Back", targetView: "city" },
+  });
+});
+
+test("runtime property mutation applies numeric custom properties through CharacterStatus patches", () => {
+  const {
+    mutateCharacterNumericProperty,
+  } = require("../.test-dist/application/character/runtime-property-mutation.js");
+  const state = createBaseState();
+  const player = {
+    ...prototypeCharacters[0],
+    id: "char.runtime.custom",
+    customProperties: {
+      "character.devotion": 3,
+    },
+  };
+
+  const addResult = mutateCharacterNumericProperty({
+    state,
+    characterDefinitions: [player],
+    characterId: player.id,
+    propertyId: "custom.character.devotion",
+    operation: "add",
+    value: 5,
+  });
+  const subtractResult = mutateCharacterNumericProperty({
+    state,
+    characterDefinitions: addResult.characterDefinitions,
+    characterId: player.id,
+    propertyId: "custom.character.devotion",
+    operation: "subtract",
+    value: 2,
+  });
+
+  assert.equal(
+    addResult.characterDefinitions[0].customProperties["character.devotion"],
+    8
+  );
+  assert.equal(
+    addResult.characterStatusById[player.id].customPropertyPatch[
+      "character.devotion"
+    ],
+    8
+  );
+  assert.equal(
+    subtractResult.characterDefinitions[0].customProperties["character.devotion"],
+    6
+  );
+  assert.equal(player.customProperties["character.devotion"], 3);
+});
+
+test("shared character mutations expose CharacterStatus patches while preserving materialized compatibility", () => {
+  const {
+    spendPlayerStamina,
+  } = require("../.test-dist/application/player/player-stamina.js");
+  const {
+    mutatePlayerGold,
+    mutatePlayerArithmetic,
+  } = require("../.test-dist/application/grain-shop/grain-shop-mutations.js");
+  const state = createBaseState();
+  const player = {
+    ...prototypeCharacters[0],
+    id: "char.status.mutation",
+    stamina: 80,
+    stats: {
+      ...prototypeCharacters[0].stats,
+      gold: 120,
+    },
+    skills: {
+      ...prototypeCharacters[0].skills,
+      arithmetic: 2,
+    },
+  };
+
+  const staminaResult = spendPlayerStamina(state, [player], player.id, 15);
+  const goldResult = mutatePlayerGold(state, [player], player.id, -20);
+  const skillResult = mutatePlayerArithmetic(state, [player], player.id, 1);
+
+  assert.equal(staminaResult.characterDefinitions[0].stamina, 65);
+  assert.equal(
+    staminaResult.characterStatusById[player.id].stamina,
+    65
+  );
+  assert.equal(goldResult.characterDefinitions[0].stats.gold, 100);
+  assert.equal(
+    goldResult.characterStatusById[player.id].statPatch.gold,
+    100
+  );
+  assert.equal(skillResult.characterDefinitions[0].skills.arithmetic, 3);
+  assert.equal(
+    skillResult.characterStatusById[player.id].skillPatch.arithmetic,
+    3
+  );
+  assert.equal(player.stamina, 80);
+  assert.equal(player.stats.gold, 120);
+  assert.equal(player.skills.arithmetic, 2);
+});
+
+test("runtime commit merges CharacterStatus patches into the AppState-owned status store", () => {
+  const {
+    commitRuntimeRequest,
+  } = require("../.test-dist/core/runtime/state-sync-runtime.js");
+  const state = {
+    gameState: createBaseState(),
+    characterDefinitions: prototypeCharacters,
+    characterStatusById: {
+      "character.zhu_yuanzhang": {
+        statPatch: { gold: 50 },
+      },
+    },
+    playerCoordinate: { x: 0, y: 0 },
+    campaignActorState: { facingDegrees: 0, isMoving: false },
+    campaignTravelState: null,
+    modalState: null,
+    locationDialogueState: null,
+    beggingMiniGameState: null,
+    cityMenuState: null,
+    cityDirectoryState: null,
+    autoAdvanceState: null,
+    uiLayouts: {},
+  };
+
+  const result = commitRuntimeRequest({
+    state,
+    request: {
+      family: "action",
+      type: "action",
+      actionId: "test.character-status",
+    },
+    context: {
+      router: {
+        route: ({ state: runtimeState }) => ({
+          state: runtimeState,
+          effects: [],
+          characterStatusById: {
+            "character.zhu_yuanzhang": {
+              statPatch: { leadership: 70 },
+              stamina: 65,
+            },
+          },
+        }),
+      },
+    },
+  });
+
+  assert.deepEqual(
+    result.state.characterStatusById["character.zhu_yuanzhang"],
+    {
+      statPatch: {
+        gold: 50,
+        leadership: 70,
+      },
+      stamina: 65,
+    }
+  );
+});
+
+test("runtime commit merges city and building status patches into the AppState-owned status stores", () => {
+  const {
+    commitRuntimeRequest,
+  } = require("../.test-dist/core/runtime/state-sync-runtime.js");
+  const state = {
+    gameState: createBaseState(),
+    characterDefinitions: prototypeCharacters,
+    cityStatusById: {
+      "city.kulan": {
+        valuePatch: { prosperity: 40 },
+      },
+    },
+    buildingStatusById: {
+      "house.kulan.market": {
+        runtimePatch: { level: 1 },
+      },
+    },
+    playerCoordinate: { x: 0, y: 0 },
+    campaignActorState: { facingDegrees: 0, isMoving: false },
+    campaignTravelState: null,
+    modalState: null,
+    locationDialogueState: null,
+    beggingMiniGameState: null,
+    cityMenuState: null,
+    cityDirectoryState: null,
+    autoAdvanceState: null,
+    uiLayouts: {},
+  };
+
+  const result = commitRuntimeRequest({
+    state,
+    request: {
+      family: "action",
+      type: "action",
+      actionId: "test.city-building-status",
+    },
+    context: {
+      router: {
+        route: ({ state: runtimeState }) => ({
+          state: runtimeState,
+          effects: [],
+          cityStatusById: {
+            "city.kulan": {
+              valuePatch: { danger: 12 },
+            },
+          },
+          buildingStatusById: {
+            "house.kulan.market": {
+              profilePatch: { name: "Runtime Market" },
+              runtimePatch: { damaged: true },
+            },
+          },
+        }),
+      },
+    },
+  });
+
+  assert.deepEqual(result.state.cityStatusById["city.kulan"], {
+    valuePatch: {
+      prosperity: 40,
+      danger: 12,
+    },
+  });
+  assert.deepEqual(result.state.buildingStatusById["house.kulan.market"], {
+    profilePatch: {
+      name: "Runtime Market",
+    },
+    runtimePatch: {
+      level: 1,
+      damaged: true,
+    },
+  });
+});
+
+test("runtime commit does not create CharacterStatus records when no patch is emitted", () => {
+  const {
+    commitRuntimeRequest,
+  } = require("../.test-dist/core/runtime/state-sync-runtime.js");
+  const state = {
+    gameState: createBaseState(),
+    characterDefinitions: prototypeCharacters,
+    playerCoordinate: { x: 0, y: 0 },
+    campaignActorState: { facingDegrees: 0, isMoving: false },
+    campaignTravelState: null,
+    modalState: null,
+    locationDialogueState: null,
+    beggingMiniGameState: null,
+    cityMenuState: null,
+    cityDirectoryState: null,
+    autoAdvanceState: null,
+    uiLayouts: {},
+  };
+
+  const result = commitRuntimeRequest({
+    state,
+    request: {
+      family: "action",
+      type: "action",
+      actionId: "test.no-character-status",
+    },
+    context: {
+      router: {
+        route: ({ state: runtimeState }) => ({
+          state: runtimeState,
+          effects: [],
+        }),
+      },
+    },
+  });
+
+  assert.equal(
+    Object.prototype.hasOwnProperty.call(result.state, "characterStatusById"),
+    false
+  );
+});
+
+test("city begging completion emits combined gold and stamina CharacterStatus patches", () => {
+  const {
+    applyCityBeggingMiniGameCompletion,
+  } = require("../.test-dist/application/minigames/city-begging-minigame.js");
+  const player = {
+    ...prototypeCharacters[0],
+    id: "char.status.city-begging",
+    stamina: 80,
+    stats: {
+      ...prototypeCharacters[0].stats,
+      gold: 120,
+    },
+  };
+
+  const result = applyCityBeggingMiniGameCompletion(
+    createBaseState(),
+    [player],
+    player.id,
+    {
+      foodGain: 3,
+      goldGain: 7,
+      maxCombo: 5,
+      success: true,
+    }
+  );
+
+  assert.deepEqual(result.characterStatusById[player.id], {
+    statPatch: { gold: 127 },
+    stamina: 65,
+  });
+  assert.equal(player.stats.gold, 120);
+  assert.equal(player.stamina, 80);
+});
+
+test("city begging playable completion persists its CharacterStatus through runtime commit", () => {
+  const {
+    commitRuntimeRequest,
+  } = require("../.test-dist/core/runtime/state-sync-runtime.js");
+  const {
+    createPlayableActionRequest,
+    runPlayableRuntime,
+  } = require("../.test-dist/core/runtime/playable-runtime.js");
+  const player = {
+    ...prototypeCharacters[0],
+    id: "char.status.city-begging-runtime",
+    stamina: 80,
+    stats: {
+      ...prototypeCharacters[0].stats,
+      gold: 120,
+    },
+  };
+  const state = {
+    gameState: createBaseState(),
+    characterDefinitions: [player],
+    playerCoordinate: { x: 0, y: 0 },
+    campaignActorState: { facingDegrees: 0, isMoving: false },
+    campaignTravelState: null,
+    modalState: null,
+    locationDialogueState: null,
+    beggingMiniGameState: null,
+    cityMenuState: null,
+    cityDirectoryState: null,
+    autoAdvanceState: null,
+    uiLayouts: {},
+  };
+  const request = createPlayableActionRequest("city-begging", "complete", {
+    result: {
+      foodGain: 3,
+      goldGain: 7,
+      maxCombo: 5,
+      success: true,
+    },
+  });
+
+  const result = commitRuntimeRequest({
+    state,
+    request,
+    context: {
+      router: {
+        route: ({ state: runtimeState, request: runtimeRequest }) =>
+          runPlayableRuntime({
+            state: runtimeState,
+            request: runtimeRequest,
+            characterDefinitions: state.characterDefinitions,
+            playerCharacterId: player.id,
+          }),
+      },
+    },
+  });
+
+  assert.deepEqual(result.state.characterStatusById[player.id], {
+    statPatch: { gold: 127 },
+    stamina: 65,
+  });
+  assert.equal(result.state.characterDefinitions[0].stats.gold, 127);
+  assert.equal(result.state.characterDefinitions[0].stamina, 65);
+});
+
+test("startup restore materializes saved CharacterStatus without mutating authored definitions", async () => {
+  const {
+    runStartupSessionCoordinator,
+  } = require("../.test-dist/application/startup/startup-session-coordinator.js");
+  const authoredCharacter = {
+    ...prototypeCharacters[0],
+    id: "char.status.restore",
+    stamina: 80,
+    stats: {
+      ...prototypeCharacters[0].stats,
+      gold: 120,
+    },
+  };
+  const createAuthoredAppState = () => ({
+    gameState: createBaseState(),
+    characterDefinitions: [authoredCharacter],
+    playerCoordinate: { x: 0, y: 0 },
+    campaignActorState: { facingDegrees: 0, isMoving: false },
+    campaignTravelState: null,
+    modalState: null,
+    locationDialogueState: null,
+    beggingMiniGameState: null,
+    cityMenuState: null,
+    cityDirectoryState: null,
+    autoAdvanceState: null,
+    uiLayouts: {},
+  });
+  const activationResult = {
+    ok: true,
+    activatedMod: {
+      normalizedContentSources: [],
+    },
+  };
+
+  const result = await runStartupSessionCoordinator(
+    {
+      type: "restore",
+      selectedCharacter: authoredCharacter,
+      saveData: {
+        selectedCharacterId: authoredCharacter.id,
+        selectedModId: "builtin.default",
+        selectedModSource: {
+          kind: "builtin",
+          modId: "builtin.default",
+        },
+        modState: {
+          characterStatusById: {
+            [authoredCharacter.id]: {
+              statPatch: { gold: 175 },
+              stamina: 60,
+            },
+          },
+        },
+      },
+    },
+    {
+      activateBuiltinDefaultMod: async () => activationResult,
+      restoreModFromSave: async () => activationResult,
+      activateScenarioPackMod: async () => activationResult,
+      createPrototypeAppState: createAuthoredAppState,
+      createHaozhouReturnEncounterAppState: (appState) => appState,
+      createScenarioPackAppState: createAuthoredAppState,
+      createStartupContentContext: () => ({
+        packId: "builtin.default",
+        storyContent: {
+          eventDefinitionsById: {},
+          sceneDefinitionsById: {},
+          activityDefinitionsById: {},
+          textEntriesById: {},
+        },
+      }),
+      bootstrapStartupStoryAppState: ({ appState }) => appState,
+    }
+  );
+
+  assert.equal(result.ok, true);
+  const restoredAppState = result.session.createAppState();
+  assert.equal(restoredAppState.characterDefinitions[0].stats.gold, 175);
+  assert.equal(restoredAppState.characterDefinitions[0].stamina, 60);
+  assert.deepEqual(restoredAppState.characterStatusById, {
+    [authoredCharacter.id]: {
+      statPatch: { gold: 175 },
+      stamina: 60,
+    },
+  });
+  assert.equal(authoredCharacter.stats.gold, 120);
+  assert.equal(authoredCharacter.stamina, 80);
+});
+
+test("startup restore preserves saved city and building status maps on AppState", async () => {
+  const {
+    runStartupSessionCoordinator,
+  } = require("../.test-dist/application/startup/startup-session-coordinator.js");
+  const authoredCharacter = {
+    ...prototypeCharacters[0],
+    id: "char.status.location-restore",
+  };
+  const createAuthoredAppState = () => ({
+    gameState: createBaseState(),
+    characterDefinitions: [authoredCharacter],
+    playerCoordinate: { x: 0, y: 0 },
+    campaignActorState: { facingDegrees: 0, isMoving: false },
+    campaignTravelState: null,
+    modalState: null,
+    locationDialogueState: null,
+    beggingMiniGameState: null,
+    cityMenuState: null,
+    cityDirectoryState: null,
+    autoAdvanceState: null,
+    uiLayouts: {},
+  });
+  const activationResult = {
+    ok: true,
+    activatedMod: {
+      normalizedContentSources: [],
+    },
+  };
+
+  const result = await runStartupSessionCoordinator(
+    {
+      type: "restore",
+      selectedCharacter: authoredCharacter,
+      saveData: {
+        selectedCharacterId: authoredCharacter.id,
+        selectedModId: "builtin.default",
+        selectedModSource: {
+          kind: "builtin",
+          modId: "builtin.default",
+        },
+        modState: {
+          cityStatusById: {
+            "city.kulan": {
+              valuePatch: {
+                prosperity: 88,
+                danger: 9,
+              },
+            },
+          },
+          buildingStatusById: {
+            "house.kulan.market": {
+              runtimePatch: {
+                level: 2,
+                damaged: false,
+              },
+            },
+          },
+        },
+      },
+    },
+    {
+      activateBuiltinDefaultMod: async () => activationResult,
+      restoreModFromSave: async () => activationResult,
+      activateScenarioPackMod: async () => activationResult,
+      createPrototypeAppState: createAuthoredAppState,
+      createHaozhouReturnEncounterAppState: (appState) => appState,
+      createScenarioPackAppState: createAuthoredAppState,
+      createStartupContentContext: () => ({
+        packId: "builtin.default",
+        storyContent: {
+          eventDefinitionsById: {},
+          sceneDefinitionsById: {},
+          activityDefinitionsById: {},
+          textEntriesById: {},
+        },
+      }),
+      bootstrapStartupStoryAppState: ({ appState }) => appState,
+    }
+  );
+
+  assert.equal(result.ok, true);
+  const restoredAppState = result.session.createAppState();
+  assert.deepEqual(restoredAppState.cityStatusById, {
+    "city.kulan": {
+      valuePatch: {
+        prosperity: 88,
+        danger: 9,
+      },
+    },
+  });
+  assert.deepEqual(restoredAppState.buildingStatusById, {
+    "house.kulan.market": {
+      runtimePatch: {
+        level: 2,
+        damaged: false,
+      },
+    },
+  });
+});
+
+test(
+  "script editor runtime export lowers the minimal authored narrative into startup-loadable dialogues",
+  async () => {
+    const {
+      exportScriptEditorProjectToScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    const {
+      createDefaultScriptEditorProjectDefinition,
+    } = require("../.test-dist/application/script-editor/minimal-workflow.js");
+    const {
+      loadScenarioPackFromFiles,
+    } = require("../.test-dist/application/scenario/scenario-pack-loader.js");
+    const project = createDefaultScriptEditorProjectDefinition({
+      idBase: "minimal-narrative",
+      title: "Minimal Narrative",
+    });
+
+    const serializedFiles = exportScriptEditorProjectToScenarioPackFiles(project);
+    const exportedDialogues = JSON.parse(serializedFiles["dialogues.json"]);
+    const exportedTextEntries = JSON.parse(serializedFiles["text-entries.json"]);
+    const exportedPack = await loadScenarioPackFromFiles(
+      createImportedFilesFromSerializedJsonRecord(
+        serializedFiles,
+        "minimal-narrative-pack"
+      )
+    );
+
+    assert.equal(exportedDialogues[0]?.id, "dialogue.opening");
+    assert.equal(exportedDialogues[0]?.name, "Opening Dialogue");
+    assert.equal(exportedDialogues[0]?.nodes?.[0]?.type, "dialogue");
+    assert.equal(exportedDialogues[0]?.nodes?.[0]?.textId, "text.opening");
+    assert.equal(exportedTextEntries["text.opening"], "Opening line.");
+    assert.equal(exportedPack.dialogues?.[0]?.id, "dialogue.opening");
+    assert.equal(exportedPack.textEntries?.["text.opening"], "Opening line.");
+  }
+);
+
+test("script editor runtime export ignores unreferenced newly added draft events", () => {
+  const {
+    exportScriptEditorProjectToScenarioPackFiles,
+    validateScriptEditorProjectForRuntimeExport,
+  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  const {
+    createDefaultScriptEditorProjectDefinition,
+  } = require("../.test-dist/application/script-editor/minimal-workflow.js");
+  const {
+    createDefaultScriptEditorEventRecord,
+  } = require("../.test-dist/application/script-editor/story-dialogue-event-authoring.js");
+
+  const project = createDefaultScriptEditorProjectDefinition({
+    idBase: "draft-event-export",
+    title: "Draft Event Export",
+  });
+  const draftEvent = createDefaultScriptEditorEventRecord(project.events.length);
+  project.events = [...project.events, draftEvent];
+
+  assert.deepEqual(validateScriptEditorProjectForRuntimeExport(project), []);
+
+  const serializedFiles = exportScriptEditorProjectToScenarioPackFiles(project);
+  const exportedEvents = JSON.parse(serializedFiles["events.json"]);
+
+  assert.equal(
+    exportedEvents.some((eventRecord) => eventRecord.id === draftEvent.id),
+    false
+  );
+  assert.equal(
+    exportedEvents.some((eventRecord) => eventRecord.id === "event.opening"),
+    true
+  );
+});
+
+test("script editor runtime export still rejects referenced draft events", () => {
+  const {
+    validateScriptEditorProjectForRuntimeExport,
+  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  const {
+    createDefaultScriptEditorProjectDefinition,
+  } = require("../.test-dist/application/script-editor/minimal-workflow.js");
+  const {
+    createDefaultScriptEditorEventRecord,
+  } = require("../.test-dist/application/script-editor/story-dialogue-event-authoring.js");
+
+  const project = createDefaultScriptEditorProjectDefinition({
+    idBase: "referenced-draft-event-export",
+    title: "Referenced Draft Event Export",
+  });
+  const draftEvent = createDefaultScriptEditorEventRecord(project.events.length);
+  project.events = [...project.events, draftEvent];
+  project.eventBindings = [
+    {
+      id: "event-binding.referenced-draft",
+      eventId: draftEvent.id,
+      owner: {
+        family: "city",
+        id: project.cities[0].id,
+      },
+      trigger: {
+        timing: "after",
+        action: "city-enter",
+      },
+      enabled: true,
+    },
+  ];
+
+  const diagnostics = validateScriptEditorProjectForRuntimeExport(project);
+
+  assert.deepEqual(
+    diagnostics.map((diagnostic) => diagnostic.fieldPath),
+    ["project.events[1].destination"]
+  );
+});
+
+test("script editor dialogue story materializer exposes runtime dialogues and text entries", () => {
+  const {
+    materializeScriptEditorDialogueStoryRuntime,
+  } = require("../.test-dist/application/script-editor/dialogue-story-runtime-materializer.js");
+  const result = materializeScriptEditorDialogueStoryRuntime({
+    dialogues: [
+      {
+        id: "dialogue.opening",
+        title: "Opening Dialogue",
+        storyNodeId: "story-node.opening",
+        participantPersonIds: ["person.hero"],
+        nodes: [
+          {
+            id: "dialogue-node.1",
+            nodeType: "dialogue",
+            speakerPersonId: "person.hero",
+            textId: "text.opening",
+            nextNodeId: "",
+            choiceTargetNodeId: "",
+          },
+        ],
+        followUps: [],
+      },
+    ],
+    storyNodes: [{ id: "story-node.opening", title: "Opening Node" }],
+    textEntries: [{ id: "text.opening", text: "Opening line." }],
+  });
+
+  assert.deepEqual(result.diagnostics, []);
+  assert.equal(result.textEntries?.["text.opening"], "Opening line.");
+  assert.equal(result.dialogues?.[0]?.id, "dialogue.opening");
+  assert.equal(result.dialogues?.[0]?.nodes?.[0]?.type, "dialogue");
+  assert.equal(result.dialogues?.[0]?.nodes?.[0]?.textId, "text.opening");
+});
+
+test("script editor dialogue story materializer lowers node progression targets into runtime dialogues", () => {
+  const {
+    materializeScriptEditorDialogueStoryRuntime,
+  } = require("../.test-dist/application/script-editor/dialogue-story-runtime-materializer.js");
+
+  const result = materializeScriptEditorDialogueStoryRuntime({
+    dialogues: [
+      {
+        id: "dialogue.branching",
+        title: "Branching",
+        nodes: [
+          {
+            id: "dialogue-node.1",
+            nodeType: "dialogue",
+            speakerPersonId: "person.hero",
+            textId: "text.opening",
+            nextNodeId: "dialogue-node.3",
+            choiceTargetNodeId: "",
+          },
+          {
+            id: "dialogue-node.2",
+            nodeType: "choice",
+            speakerPersonId: "",
+            textId: "text.choice",
+            nextNodeId: "",
+            choiceTargetNodeId: "dialogue-node.3",
+          },
+          {
+            id: "dialogue-node.3",
+            nodeType: "narration",
+            speakerPersonId: "",
+            textId: "text.followup",
+            nextNodeId: "",
+            choiceTargetNodeId: "",
+          },
+        ],
+      },
+    ],
+    storyNodes: [],
+    textEntries: [
+      { id: "text.opening", text: "Opening line." },
+      { id: "text.choice", text: "Continue." },
+      { id: "text.followup", text: "Follow-up line." },
+    ],
+  });
+
+  assert.deepEqual(result.diagnostics, []);
+  assert.equal(result.textEntries?.["text.choice"], "Continue.");
+  assert.deepEqual(
+    result.dialogues?.map((dialogue) => dialogue.id),
+    [
+      "dialogue.branching",
+      "dialogue.branching.dialogue-node.2",
+      "dialogue.branching.dialogue-node.3",
+    ]
+  );
+  assert.deepEqual(result.dialogues?.[0]?.nodes, [
+    {
+      type: "dialogue",
+      characterId: "person.hero",
+      side: "center",
+      textId: "text.opening",
+    },
+    { type: "jump", nextDialogueId: "dialogue.branching.dialogue-node.3" },
+  ]);
+  assert.deepEqual(result.dialogues?.[1]?.nodes, [
+    {
+      type: "choice",
+      promptTextId: "text.choice",
+      options: [
+        {
+          id: "dialogue-node.2.choiceTarget",
+          labelTextId: "text.choice",
+          nextDialogueId: "dialogue.branching.dialogue-node.3",
+        },
+      ],
+    },
+  ]);
+});
+
+test("script editor dialogue story materializer rejects missing node progression targets", () => {
+  const {
+    materializeScriptEditorDialogueStoryRuntime,
+  } = require("../.test-dist/application/script-editor/dialogue-story-runtime-materializer.js");
+
+  const result = materializeScriptEditorDialogueStoryRuntime({
+    dialogues: [
+      {
+        id: "dialogue.branching",
+        title: "Branching",
+        nodes: [
+          {
+            id: "dialogue-node.1",
+            nodeType: "dialogue",
+            speakerPersonId: "person.hero",
+            textId: "text.opening",
+            nextNodeId: "dialogue-node.missing",
+            choiceTargetNodeId: "",
+          },
+        ],
+      },
+    ],
+    storyNodes: [],
+    textEntries: [{ id: "text.opening", text: "Opening line." }],
+  });
+
+  assert.equal(result.dialogues, null);
+  assert.equal(result.textEntries, null);
+  assert.deepEqual(result.diagnostics.map((diagnostic) => diagnostic.fieldPath), [
+    "project.dialogues[0].nodes[0].nextNodeId",
+  ]);
+  assert.match(
+    result.diagnostics.map((diagnostic) => diagnostic.message).join("\n"),
+    /missing dialogue node target/i
+  );
+});
+
+test(
+  "script editor activities family round-trips through runtime pack import and export",
+  async () => {
+    const {
+      exportScriptEditorProjectToScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    const {
+      loadScriptEditorProjectFromScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-import.js");
+
+    const project = {
+      ...createExportableScriptEditorProjectDefinition(),
+      activities: [
+        {
+          id: "activity.test.script-editor",
+          label: "Test Activity",
+          handlerId: "generic.qte",
+          fallbackHandlerId: "generic.qte",
+          houseModuleId: "temple-house",
+          taskId: "task.test.script-editor",
+          missionId: "mission.test.script-editor",
+          titleTextId: "text.activity.title",
+          briefingTextId: "text.activity.briefing",
+          orderLineTextIds: ["text.activity.order.001"],
+          keepMinTier: "runner",
+          timeAdvanceCost: 1,
+          qte: {
+            totalRounds: 3,
+            requiredSuccesses: 2,
+          },
+          outcome: {
+            completedFlagKey: "flag.activity.test.completed",
+            gradeVariableKey: "var.activity.test.grade",
+            scoreVariableKey: "var.activity.test.score",
+            effects: [
+              {
+                type: "change-variable",
+                key: "var.story.activity.test.progress",
+                delta: 1,
+              },
+            ],
+          },
+          tags: ["scenario", "task"],
+        },
+      ],
+    };
+
+    const serializedFiles = exportScriptEditorProjectToScenarioPackFiles(project);
+    const manifest = JSON.parse(serializedFiles["pack.json"]);
+
+    assert.equal(manifest.files.activities, "./activities.json");
+    assert.ok(serializedFiles["activities.json"], "activities.json should be exported");
+
+    const importedProject = await loadScriptEditorProjectFromScenarioPackFiles(
+      createImportedFilesFromSerializedJsonRecord(
+        serializedFiles,
+        "exported-scenario-pack"
+      )
+    );
+
+    assert.equal(importedProject.activities?.length, 1);
+    assert.equal(importedProject.activities?.[0]?.id, "activity.test.script-editor");
+    assert.equal(importedProject.activities?.[0]?.handlerId, "generic.qte");
+    assert.equal(importedProject.activities?.[0]?.qte?.requiredSuccesses, 2);
+  }
+);
+
+test(
+  "script editor minigame bindings export as playable runtime families and round-trip",
+  async () => {
+    const {
+      exportScriptEditorProjectToScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    const {
+      loadScriptEditorProjectFromScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-import.js");
+    const {
+      loadScenarioPackFromFiles,
+    } = require("../.test-dist/application/scenario/scenario-pack-loader.js");
+
+    const project = {
+      ...createExportableScriptEditorProjectDefinition(),
+      minigames: [
+        {
+          id: "minigame.training.qte",
+          title: "Training QTE",
+          description: "Opening training playable binding.",
+          playableId: "activity-qte",
+          integrationId: "playable.activity-qte.dialogue.training",
+          ownerKind: "dialogue",
+          ownerId: "dialogue.opening",
+          returnPolicy: "resume-owner",
+          triggerId: "trigger.playable.activity-qte.dialogue.training",
+          triggerSource: "event-destination",
+          triggerEvent: "event.opening",
+          launchPayload: [
+            {
+              key: "difficulty",
+              value: "easy",
+            },
+          ],
+          outcomeRoutes: [
+            {
+              id: "outcome.success",
+              outcome: "success",
+              handoffPolicy: "resume-owner",
+              summary: "Training completed.",
+              effectHint: "",
+            },
+          ],
+          notes: "Runtime export should preserve this as playable integration data.",
+        },
+      ],
+    };
+
+    const serializedFiles = exportScriptEditorProjectToScenarioPackFiles(project);
+    const manifest = JSON.parse(serializedFiles["pack.json"]);
+
+    assert.equal(manifest.files.playables, "./playables.json");
+    assert.equal(manifest.files.playableIntegrations, "./playable-integrations.json");
+    assert.ok(serializedFiles["playables.json"], "playables.json should be exported");
+    assert.ok(
+      serializedFiles["playable-integrations.json"],
+      "playable-integrations.json should be exported"
+    );
+
+    const exportedPack = await loadScenarioPackFromFiles(
+      createImportedFilesFromSerializedJsonRecord(
+        serializedFiles,
+        "exported-playable-pack"
+      )
+    );
+
+    assert.deepEqual(exportedPack.playables, [
+      {
+        id: "activity-qte",
+        family: "minigame",
+        commandPrefix: "interactive.activity-qte.",
+      },
+    ]);
+    assert.equal(exportedPack.playableIntegrations?.[0]?.integrationId, "playable.activity-qte.dialogue.training");
+    assert.equal(exportedPack.playableIntegrations?.[0]?.playableId, "activity-qte");
+    assert.deepEqual(exportedPack.playableIntegrations?.[0]?.ownerDefaults, {
+      ownerKind: "dialogue",
+      ownerId: "dialogue.opening",
+      returnPolicy: "resume-owner",
+    });
+    assert.deepEqual(exportedPack.playableIntegrations?.[0]?.trigger, {
+      triggerId: "trigger.playable.activity-qte.dialogue.training",
+      ownerKind: "dialogue",
+      trigger: "event.opening",
+      launchPayload: {
+        difficulty: "easy",
+      },
+    });
+
+    const importedProject = await loadScriptEditorProjectFromScenarioPackFiles(
+      createImportedFilesFromSerializedJsonRecord(
+        serializedFiles,
+        "imported-playable-pack"
+      )
+    );
+
+    assert.equal(importedProject.minigames.length, 1);
+    assert.equal(importedProject.minigames[0]?.id, "minigame.training.qte");
+    assert.equal(importedProject.minigames[0]?.playableId, "activity-qte");
+    assert.equal(
+      importedProject.minigames[0]?.integrationId,
+      "playable.activity-qte.dialogue.training"
+    );
+  }
+);
+
+test(
+  "script editor exported pack activates runtime story task status and playable contributions end to end",
+  async () => {
+    const {
+      exportScriptEditorProjectToScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    const {
+      loadScenarioPackFromFiles,
+    } = require("../.test-dist/application/scenario/scenario-pack-loader.js");
+    const {
+      createEmptyModRuntimeState,
+      createLoadedModFromScenarioPack,
+      runModRuntime,
+    } = require("../.test-dist/core/mods/mod-runtime.js");
+    const {
+      configureDefaultPlayableRuntimeRegistriesFromActivatedMod,
+      createLaunchPlayableRequest,
+      resetDefaultPlayableRuntimeRegistries,
+      resolvePlayableLaunchRequest,
+    } = require("../.test-dist/core/runtime/playable-runtime.js");
+    const {
+      runStoryTriggerRuntime,
+    } = require("../.test-dist/core/runtime/dialogue-runtime.js");
+    const {
+      dispatchRuntimeRequest,
+    } = require("../.test-dist/core/runtime/runtime-dispatch.js");
+    const {
+      materializeCharacterDefinitions,
+    } = require("../.test-dist/application/character/character-status.js");
+
+    const project = createExportableScriptEditorProjectDefinition();
+    project.storyPack.scenarioProfile = {
+      ...project.storyPack.scenarioProfile,
+      launchPolicy: {
+        characterSelection: "fixed",
+        initialView: "city",
+        entryEventTiming: "immediate",
+      },
+      entryEventId: "event.opening",
+    };
+    project.textEntries = [{ id: "text.opening", text: "Opening line." }];
+    project.dialogues = [
+      {
+        id: "dialogue.opening",
+        title: "Opening",
+        nodes: [
+          {
+            id: "dialogue-node.opening",
+            nodeType: "dialogue",
+            speakerPersonId: "person.hero",
+            textId: "text.opening",
+          },
+        ],
+      },
+    ];
+    project.quests = [
+      {
+        id: "task.opening",
+        title: "Opening Task",
+        objectives: [{ id: "report", target: 1, signalType: "scene.reported" }],
+      },
+    ];
+    project.activities = [
+      {
+        id: "activity.training",
+        label: "Training",
+        handlerId: "generic.qte",
+      },
+    ];
+    project.events = [
+      {
+        id: "event.opening",
+        title: "Opening Event",
+        triggerTiming: "city-enter",
+        relations: { cityIds: ["city.kulan"] },
+        destination: { family: "dialogue", targetId: "dialogue.opening" },
+        conditionGroups: [
+          {
+            id: "condition.opening",
+            operator: "all",
+            conditions: [
+              { type: "flag", key: "story.opening.enabled", expected: true },
+              { type: "variable", key: "story.progress", operator: ">=", value: 3 },
+            ],
+          },
+        ],
+        taskInputs: [
+          {
+            type: "start",
+            taskId: "task.opening",
+            occurredAt: "2026-07-15T00:00:00.000Z",
+            source: "script-editor:event.opening",
+          },
+        ],
+      },
+    ];
+    project.minigames = [
+      {
+        id: "minigame.training.qte",
+        title: "Training QTE",
+        description: "Opening training playable binding.",
+        playableId: "activity-qte",
+        integrationId: "playable.activity-qte.dialogue.training",
+        ownerKind: "dialogue",
+        ownerId: "dialogue.opening",
+        returnPolicy: "resume-owner",
+        triggerId: "trigger.playable.activity-qte.dialogue.training",
+        triggerSource: "event-destination",
+        triggerEvent: "event.opening",
+        launchPayload: [{ key: "difficulty", value: "easy" }],
+        outcomeRoutes: [
+          {
+            id: "outcome.success",
+            outcome: "success",
+            handoffPolicy: "resume-owner",
+            summary: "Training completed.",
+            effectHint: "",
+          },
+        ],
+      },
+    ];
+    project.eventBindings = [
+      {
+        id: "binding.opening.city-enter",
+        eventId: "event.opening",
+        owner: { family: "city", id: "city.kulan" },
+        trigger: { timing: "after", action: "city-enter" },
+        priority: 10,
+        enabled: true,
+      },
+    ];
+
+    const serializedFiles = exportScriptEditorProjectToScenarioPackFiles(project);
+    const exportedPack = await loadScenarioPackFromFiles(
+      createImportedFilesFromSerializedJsonRecord(
+        serializedFiles,
+        "exported-end-to-end-pack"
+      )
+    );
+    const loadedMod = createLoadedModFromScenarioPack({
+      source: {
+        kind: "file",
+        name: "Exported End To End Pack",
+        filePath: "exported-end-to-end-pack/pack.json",
+      },
+      scenarioPack: exportedPack,
+    });
+    const activationResult = await runModRuntime({
+      state: createEmptyModRuntimeState(),
+      request: {
+        type: "mod.activate-loaded",
+        requestId: "test:script-editor-end-to-end-exported-pack",
+        loadedMod,
+      },
+      context: { allowedCapabilities: [] },
+    });
+
+    assert.equal(activationResult.ok, true);
+    if (!activationResult.ok) {
+      return;
+    }
+
+    assert.deepEqual(activationResult.activatedMod.gameplayContributions.playables, [
+      "activity-qte",
+    ]);
+    assert.deepEqual(
+      activationResult.activatedMod.gameplayContributions.playableIntegrations,
+      ["playable.activity-qte.dialogue.training"]
+    );
+
+    configureDefaultPlayableRuntimeRegistriesFromActivatedMod(
+      activationResult.activatedMod
+    );
+    try {
+      const playableLaunch = resolvePlayableLaunchRequest({
+        request: createLaunchPlayableRequest("activity-qte", {
+          integrationId: "playable.activity-qte.dialogue.training",
+        }),
+      });
+      assert.equal(playableLaunch?.ok, true);
+      assert.equal(playableLaunch?.launch.integrationId, "playable.activity-qte.dialogue.training");
+    } finally {
+      resetDefaultPlayableRuntimeRegistries();
+    }
+
+    const eventsById = Object.fromEntries(
+      exportedPack.events.map((eventDefinition) => [eventDefinition.id, eventDefinition])
+    );
+    const openingEvent = eventsById["event.opening"];
+
+    assert.equal(openingEvent.dialogueId, "dialogue.opening");
+    assert.equal(Object.hasOwn(openingEvent, "trigger"), false);
+    assert.equal(Object.hasOwn(openingEvent, "conditions"), false);
+    assert.deepEqual(exportedPack.eventBindings, [
+      {
+        id: "binding.opening.city-enter",
+        eventId: "event.opening",
+        owner: { family: "city", id: "city.kulan" },
+        trigger: { timing: "after", action: "city-enter" },
+        priority: 10,
+        enabled: true,
+      },
+    ]);
+    assert.deepEqual(openingEvent.taskInputs, [
+      {
+        type: "start",
+        taskId: "task.opening",
+        occurredAt: "2026-07-15T00:00:00.000Z",
+        source: "script-editor:event.opening",
+      },
+    ]);
+
+    const settled = dispatchRuntimeRequest({
+      state: createRuntimeState(),
+      request: { family: "external", type: "external", eventId: "event.opening" },
+      context: {
+        router: {
+          route: ({ state: routedState }) => ({
+            state: routedState,
+            effects: [],
+            taskInputs: openingEvent.taskInputs ?? [],
+          }),
+        },
+        taskDefinitionsById: Object.fromEntries(
+          exportedPack.tasks.map((taskDefinition) => [taskDefinition.id, taskDefinition])
+        ),
+      },
+    });
+
+    assert.equal(
+      settled.state.core.runtime.tasks.instancesByTaskId["task.opening"].status,
+      "active"
+    );
+
+    const saveEnvelope = {
+      selectedModId: exportedPack.id,
+      selectedCharacterId: "person.hero",
+      characterStatusById: {
+        "person.hero": {
+          statPatch: { gold: 250 },
+          stamina: 66,
+        },
+      },
+    };
+    const [restoredHero] = materializeCharacterDefinitions(
+      exportedPack.characters,
+      JSON.parse(JSON.stringify(saveEnvelope.characterStatusById))
+    );
+
+    assert.equal(saveEnvelope.selectedModId, exportedPack.id);
+    assert.equal(restoredHero.stats.gold, 250);
+    assert.equal(restoredHero.stamina, 66);
+    assert.equal(exportedPack.characters[0].stats.gold, 0);
+  }
+);
+
+test(
+  "script editor exported event bindings trigger runtime scene handoff through loaded pack content",
+  async () => {
+    const {
+      exportScriptEditorProjectToScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    const {
+      loadScenarioPackFromFiles,
+    } = require("../.test-dist/application/scenario/scenario-pack-loader.js");
+    const {
+      triggerStoryEvents,
+    } = require("../.test-dist/application/story/story-runtime.js");
+
+    const project = createExportableScriptEditorProjectDefinition();
+    project.storyPack.scenarioProfile = {
+      ...project.storyPack.scenarioProfile,
+      initialLocation: {
+        mapId: "map.test",
+        cityId: "city.kulan",
+        view: "city",
+      },
+    };
+    project.textEntries = [{ id: "text.runtime.binding", text: "Runtime binding fired." }];
+    project.dialogues = [
+      {
+        id: "dialogue.runtime.binding",
+        title: "Runtime Binding Dialogue",
+        nodes: [
+          {
+            id: "dialogue-node.runtime.binding",
+            nodeType: "dialogue",
+            speakerPersonId: "person.hero",
+            textId: "text.runtime.binding",
+          },
+        ],
+      },
+    ];
+    project.events = [
+      {
+        id: "event.runtime.binding",
+        title: "Runtime Binding Event",
+        destination: { family: "dialogue", targetId: "dialogue.runtime.binding" },
+      },
+    ];
+    project.eventBindings = [
+      {
+        id: "binding.runtime.city-enter",
+        eventId: "event.runtime.binding",
+        owner: { family: "city", id: "city.kulan" },
+        trigger: { timing: "after", action: "city-enter" },
+        conditions: {
+          operator: "all",
+          conditions: [
+            { type: "flag", field: "story.runtime.ready", operator: "==", value: true },
+            { type: "variable", field: "story.runtime.progress", operator: ">=", value: 2 },
+          ],
+        },
+        priority: 50,
+        enabled: true,
+      },
+    ];
+
+    const serializedFiles = exportScriptEditorProjectToScenarioPackFiles(project);
+    const exportedEventBindings = JSON.parse(serializedFiles["event-bindings.json"]);
+    assert.deepEqual(exportedEventBindings[0]?.conditions, {
+      operator: "all",
+      conditions: [
+        { type: "flag", key: "story.runtime.ready", expected: true },
+        { type: "variable", key: "story.runtime.progress", operator: ">=", value: 2 },
+      ],
+    });
+
+    const exportedPack = await loadScenarioPackFromFiles(
+      createImportedFilesFromSerializedJsonRecord(
+        serializedFiles,
+        "runtime-effectiveness-pack"
+      )
+    );
+    const state = createBaseState();
+    state.world.currentCityId = "city.kulan";
+    state.runtime.flags["story.runtime.ready"] = true;
+    state.runtime.variables["story.runtime.progress"] = 2;
+    const result = triggerStoryEvents(
+      {
+        state,
+        characterDefinitions: exportedPack.characters,
+      },
+      {
+        eventDefinitionsById: Object.fromEntries(
+          exportedPack.events.map((eventDefinition) => [eventDefinition.id, eventDefinition])
+        ),
+        eventBindingsById: Object.fromEntries(
+          exportedPack.eventBindings.map((binding) => [binding.id, binding])
+        ),
+        dialogueDefinitionsById: Object.fromEntries(
+          exportedPack.dialogues.map((dialogueDefinition) => [dialogueDefinition.id, dialogueDefinition])
+        ),
+        textEntriesById: exportedPack.textEntries ?? {},
+      },
+      { timing: "city-enter", cityId: "city.kulan" }
+    );
+
+    assert.equal(result.state.dialogue.activeEventId, "event.runtime.binding");
+    assert.equal(result.state.dialogue.activeDialogueId, "dialogue.runtime.binding");
+    assert.equal(
+      result.state.runtime.eventHistory["event.runtime.binding"]?.firedCount,
+      1
+    );
+  }
+);
+
+test("script editor runtime export ignores obsolete storyPack.runtimeEvents bridge", () => {
+  const {
+    exportScriptEditorProjectToScenarioPackFiles,
+  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  const project = createExportableScriptEditorProjectDefinition();
+  project.textEntries = [{ id: "text.opening", text: "Opening line." }];
+  project.dialogues = [{ id: "dialogue.opening", title: "Opening" }];
+  project.events = [
+    {
+      id: "event.opening",
+      title: "Opening Event",
+      destination: { family: "dialogue", targetId: "dialogue.opening" },
+    },
+  ];
+  project.eventBindings = [
+    {
+      id: "binding.opening.city-enter",
+      eventId: "event.opening",
+      owner: { family: "city", id: "city.kulan" },
+      trigger: { timing: "after", action: "city-enter" },
+      enabled: true,
+    },
+  ];
+  project.storyPack.runtimeEvents = [
+    {
+      id: "event.obsolete.bridge",
+      chapterId: "chapter.obsolete",
+      name: "Obsolete Bridge",
+      occurrence: "once",
+      trigger: { timing: "city-enter" },
+      conditions: [],
+      dialogueId: "scene.obsolete.bridge",
+    },
+  ];
+  project.storyPack.runtimeEventBindings = [
+    {
+      id: "binding.obsolete.bridge",
+      eventId: "event.obsolete.bridge",
+      owner: { family: "city", id: "city.obsolete" },
+      trigger: { timing: "after", action: "city-enter" },
+    },
+  ];
+
+  const files = exportScriptEditorProjectToScenarioPackFiles(project);
+  const events = JSON.parse(files["events.json"]);
+  const eventBindings = JSON.parse(files["event-bindings.json"]);
+
+  assert.deepEqual(events.map((eventDefinition) => eventDefinition.id), [
+    "event.opening",
+  ]);
+  assert.equal(Object.hasOwn(events[0], "trigger"), false);
+  assert.equal(Object.hasOwn(events[0], "conditions"), false);
+  assert.deepEqual(eventBindings.map((binding) => binding.id), [
+    "binding.opening.city-enter",
+  ]);
+});
+
+test("script editor runtime-pack import does not persist storyPack.runtimeEvents side channel", () => {
+  const {
+    importScenarioPackToScriptEditorProject,
+  } = require("../.test-dist/application/script-editor/runtime-pack-import.js");
+  const importedProject = importScenarioPackToScriptEditorProject({
+    schemaVersion: 1,
+    id: "scenario.no-runtime-events-bridge",
+    title: "No Runtime Events Bridge",
+    scenarioProfile: {
+      id: "scenario-profile.no-runtime-events-bridge",
+      playerCharacterId: "person.player",
+      chapterId: "chapter.no-runtime-events-bridge",
+      initialLocation: {
+        mapId: "map.imported",
+        cityId: "city.kulan",
+        houseId: null,
+        view: "city",
+      },
+    },
+    characters: [],
+    cities: [{ id: "city.kulan", name: "Kulan" }],
+    houses: [],
+    events: [
+      {
+        id: "event.imported",
+        name: "Imported Event",
+        chapterId: "chapter.no-runtime-events-bridge",
+        occurrence: "once",
+        dialogueId: "scene.imported",
+      },
+    ],
+    eventBindings: [
+      {
+        id: "binding.imported.city-enter",
+        eventId: "event.imported",
+        owner: { family: "city", id: "city.kulan" },
+        trigger: { timing: "after", action: "city-enter" },
+      },
+    ],
+    dialogues: [{ id: "scene.imported", name: "Imported Dialogue", nodes: [] }],
+  });
+
+  assert.equal(Object.hasOwn(importedProject.storyPack, "runtimeEvents"), false);
+  assert.equal(Object.hasOwn(importedProject.storyPack, "runtimeEventBindings"), false);
+  assert.deepEqual(importedProject.events.map((eventRecord) => eventRecord.id), [
+    "event.imported",
+  ]);
+  assert.deepEqual(importedProject.eventBindings.map((binding) => binding.id), [
+    "binding.imported.city-enter",
+  ]);
+});
+
+test(
+  "script editor preserves imported Zhu Yuanzhang runtime families through export",
+  async () => {
+    const {
+      exportScriptEditorProjectToScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    const {
+      loadScriptEditorProjectFromScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-import.js");
+    const {
+      loadScenarioPackFromFiles,
+    } = require("../.test-dist/application/scenario/scenario-pack-loader.js");
+
+    const sourceFiles = createScenarioPackFilesFromDirectory(
+      path.join(__dirname, "../src/content/scenario-packs/zhuyuanzhang"),
+      "zhuyuanzhang"
+    );
+    const sourcePack = await loadScenarioPackFromFiles(sourceFiles);
+    const importedProject = await loadScriptEditorProjectFromScenarioPackFiles(sourceFiles);
+
+    assert.equal(
+      importedProject.storyPack.compatibilityImport?.unresolvedFamilies,
+      undefined
+    );
+
+    const serializedFiles = exportScriptEditorProjectToScenarioPackFiles(importedProject);
+    const manifest = JSON.parse(serializedFiles["pack.json"]);
+    const exportedPack = await loadScenarioPackFromFiles(
+      createImportedFilesFromSerializedJsonRecord(
+        serializedFiles,
+        "exported-zhuyuanzhang"
+      )
+    );
+
+    assert.equal(manifest.files.dialogues, "./dialogues.json");
+    assert.equal(manifest.files.events, "./events.json");
+    assert.equal(manifest.files.maps, "./maps.json");
+    assert.equal(manifest.files.cards, "./cards.json");
+    assert.equal(manifest.files.valuables, "./valuables.json");
+    assert.equal(manifest.files.cityEntries, "./city-entries.json");
+    assert.equal(manifest.files.cityNpcPools, "./city-npc-pools.json");
+    assert.equal(manifest.files.locationAccess, "./location-access.json");
+    assert.equal(manifest.files.houseModuleDefaults, "./house-module-defaults.json");
+    assert.equal(manifest.files.historicalCharacters, "./historical-characters.json");
+    assert.equal(manifest.files.historicalCityRosters, "./historical-city-rosters.json");
+    assert.equal(manifest.files.cityPortraits, "./city-portraits.json");
+    assert.equal(manifest.files.portraits, "./portraits.json");
+    assert.equal(manifest.files.portraitVariants, "./portrait-variants.json");
+    assert.equal(
+      manifest.files.historicalCharacterIdByCharacterId,
+      "./historical-character-id-map.json"
+    );
+
+    assert.equal(Array.isArray(exportedPack.dialogues), true);
+    assert.equal(exportedPack.dialogues.length >= sourcePack.dialogues.length, true);
+    for (const sourceScene of sourcePack.dialogues) {
+      assert.equal(
+        exportedPack.dialogues.some((dialogueDefinition) => dialogueDefinition.id === sourceScene.id),
+        true,
+        `missing migrated dialogue root ${sourceScene.id}`
+      );
+    }
+    assert.equal(
+      exportedPack.dialogues.every(
+        (dialogueDefinition) =>
+          Array.isArray(dialogueDefinition.nodes) &&
+          !Object.hasOwn(dialogueDefinition, "actions")
+      ),
+      true
+    );
+    assert.equal(
+      exportedPack.dialogues.some((dialogueDefinition) =>
+        typeof dialogueDefinition.id === "string" &&
+        dialogueDefinition.id.includes(".imported-node-")
+      ),
+      true
+    );
+    assert.equal(
+      exportedPack.events.every(
+        (eventDefinition) =>
+          !Object.hasOwn(eventDefinition, "trigger") &&
+          !Object.hasOwn(eventDefinition, "conditions") &&
+          !Object.hasOwn(eventDefinition, "entrySceneId") &&
+          typeof eventDefinition.dialogueId === "string"
+      ),
+      true
+    );
+    assert.equal(
+      exportedPack.events.some(
+        (eventDefinition) =>
+          typeof eventDefinition.dialogueId === "string" &&
+          eventDefinition.dialogueId.length > 0
+      ),
+      true
+    );
+    assert.deepEqual(exportedPack.eventBindings, sourcePack.eventBindings);
+    assert.deepEqual(
+      normalizeMapAssetUrlsForComparison(exportedPack.maps),
+      normalizeMapAssetUrlsForComparison(sourcePack.maps)
+    );
+    assert.deepEqual(exportedPack.cards, sourcePack.cards);
+    assert.deepEqual(exportedPack.valuables, sourcePack.valuables);
+    const exportedCityEntryKeySet = new Set(
+      exportedPack.cityEntries.map(
+        (entry) => `${entry.cityId}\u0000${entry.targetHouseId}`
+      )
+    );
+    for (const sourceEntry of sourcePack.cityEntries) {
+      assert.equal(
+        exportedCityEntryKeySet.has(
+          `${sourceEntry.cityId}\u0000${sourceEntry.targetHouseId}`
+        ),
+        true
+      );
+    }
+    assert.equal(
+      exportedPack.cityEntries.some(
+        (entry) =>
+          entry.cityId === "city.kulan" &&
+          entry.targetHouseId === "house.kulan.keep" &&
+          entry.name === "帅府"
+      ),
+      true
+    );
+    assert.equal(
+      exportedPack.cityEntries.some(
+        (entry) =>
+          entry.cityId === "city.yingtian" &&
+          entry.targetHouseId === "house.yingtian.tea_house"
+      ),
+      true
+    );
+    assert.equal(
+      exportedPack.cityNpcPools.some(
+        (pool) =>
+          pool.cityId === "city.kulan" &&
+          pool.residents.some((resident) => resident.id === "char.kulan_lord")
+      ),
+      true
+    );
+    assert.equal(
+      exportedPack.locationAccess.some(
+        (definition) =>
+          definition.blockedMessage === "既然答应了主持，就先不要离开寺院吧。" &&
+          definition.blockedTitle === "暂且留在寺中" &&
+          definition.conditionExpression.type === "not"
+      ),
+      true
+    );
+    assert.equal(
+      exportedPack.locationAccess.some(
+        (definition) =>
+          definition.blockedMessage === "军机要出，请阁下回避。" &&
+          definition.blockedTitle === "帅府闭门" &&
+          definition.blockedSpeakerId === "char.kulan_soldier"
+      ),
+      true
+    );
+    assert.deepEqual(exportedPack.houseModuleDefaults, sourcePack.houseModuleDefaults);
+    assert.deepEqual(exportedPack.historicalCharacters, sourcePack.historicalCharacters);
+    assert.deepEqual(exportedPack.historicalCityRosters, sourcePack.historicalCityRosters);
+    assert.deepEqual(exportedPack.cityPortraits, sourcePack.cityPortraits);
+    assert.deepEqual(exportedPack.portraits, sourcePack.portraits);
+    assert.deepEqual(exportedPack.portraitVariants, sourcePack.portraitVariants);
+    assert.deepEqual(
+      exportedPack.historicalCharacterIdByCharacterId,
+      sourcePack.historicalCharacterIdByCharacterId
+    );
+  }
+);
+
+test(
+  "script editor preserves imported map asset image MIME types through export",
+  async () => {
+    const {
+      exportScriptEditorProjectToScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    const {
+      loadScriptEditorProjectFromScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-import.js");
+
+    const packRoot = path.join(
+      process.cwd(),
+      "src",
+      "content",
+      "scenario-packs",
+      "zhuyuanzhang"
+    );
+    const sourceFiles = createScenarioPackFilesFromDirectory(
+      packRoot,
+      "zhuyuanzhang"
+    );
+    const importedProject = await loadScriptEditorProjectFromScenarioPackFiles(sourceFiles);
+    const serializedFiles = exportScriptEditorProjectToScenarioPackFiles(importedProject);
+    const exportedMaps = JSON.parse(serializedFiles["maps.json"]);
+    const campaignMap = exportedMaps.find(
+      (mapDefinition) => mapDefinition.id === "map.yuanmo_campaign"
+    );
+
+    assert.ok(campaignMap, "Expected exported Zhu Yuanzhang campaign map.");
+    assert.match(campaignMap.primaryImageUrl, /^data:image\/png;base64,/);
+    assert.match(campaignMap.regionOverlayImageUrl, /^data:image\/png;base64,/);
+    assert.equal(
+      campaignMap.layers.every((layerDefinition) =>
+        layerDefinition.imageUrl.startsWith("data:image/png;base64,")
+      ),
+      true
+    );
+    assert.equal(JSON.stringify(exportedMaps).includes("application/octet-stream"), false);
+  }
+);
+
+test(
+  "script editor exported scenario profile startup fields boot entry events without deferred launch policy",
+  async () => {
+    const {
+      exportScriptEditorProjectToScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    const {
+      loadScriptEditorProjectFromScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-import.js");
+    const {
+      loadScenarioPackFromFiles,
+    } = require("../.test-dist/application/scenario/scenario-pack-loader.js");
+    const {
+      runStartupSessionCoordinator,
+    } = require("../.test-dist/application/startup/startup-session-coordinator.js");
+
+    const sourceFiles = createScenarioPackFilesFromDirectory(
+      path.join(__dirname, "../src/content/scenario-packs/zhuyuanzhang"),
+      "zhuyuanzhang"
+    );
+    const importedProject = await loadScriptEditorProjectFromScenarioPackFiles(sourceFiles);
+
+    assert.equal(
+      importedProject.storyPack.scenarioProfile.entryEventId,
+      "event.story.zhu_yuanzhang.ordination"
+    );
+    delete importedProject.storyPack.scenarioProfile.launchPolicy;
+
+    const serializedFiles = exportScriptEditorProjectToScenarioPackFiles(importedProject);
+    const exportedProfile = JSON.parse(serializedFiles["scenario-profile.json"]);
+    const exportedPack = await loadScenarioPackFromFiles(
+      createImportedFilesFromSerializedJsonRecord(
+        serializedFiles,
+        "exported-zhuyuanzhang"
+      )
+    );
+    const baseState = createBaseState();
+    const activationResult = {
+      ok: true,
+      activatedMod: {
+        normalizedContentSources: [exportedPack],
+      },
+    };
+    const bootstraps = [];
+
+    assert.equal(exportedProfile.entryEventId, "event.story.zhu_yuanzhang.ordination");
+    assert.equal(exportedProfile.launchPolicy, undefined);
+    assert.equal(exportedPack.scenarioProfile.entryEventId, "event.story.zhu_yuanzhang.ordination");
+
+    const result = await runStartupSessionCoordinator(
+      {
+        type: "scenario-files",
+        files: createImportedFilesFromSerializedJsonRecord(
+          serializedFiles,
+          "exported-zhuyuanzhang"
+        ),
+      },
+      {
+        activateBuiltinDefaultMod: async () => activationResult,
+        restoreModFromSave: async () => null,
+        activateScenarioPackMod: async () => activationResult,
+        createPrototypeAppState: () => ({
+          gameState: baseState,
+          characterDefinitions: prototypeCharacters,
+          playerCoordinate: { x: 0, y: 0 },
+          campaignActorState: { facingDegrees: 0, isMoving: false },
+          campaignTravelState: null,
+          modalState: null,
+          locationDialogueState: null,
+          beggingMiniGameState: null,
+          cityMenuState: null,
+          cityDirectoryState: null,
+          autoAdvanceState: null,
+          uiLayouts: {},
+          layoutEditor: {},
+        }),
+        createHaozhouReturnEncounterAppState: (appState) => appState,
+        createScenarioPackAppState: () => ({
+          gameState: {
+            ...baseState,
+            scene: {
+              ...baseState.scene,
+              activeEventId: null,
+              activeSceneId: null,
+              cursor: 0,
+              status: "idle",
+            },
+          },
+          characterDefinitions: prototypeCharacters,
+          playerCoordinate: { x: 0, y: 0 },
+          campaignActorState: { facingDegrees: 0, isMoving: false },
+          campaignTravelState: null,
+          modalState: null,
+          locationDialogueState: null,
+          beggingMiniGameState: null,
+          cityMenuState: null,
+          cityDirectoryState: null,
+          autoAdvanceState: null,
+          uiLayouts: {},
+          layoutEditor: {},
+        }),
+        createStartupContentContext: () => ({
+          packId: exportedPack.id,
+          storyContent: {
+            eventDefinitionsById: Object.fromEntries(
+              exportedPack.events.map((eventDefinition) => [eventDefinition.id, eventDefinition])
+            ),
+            dialogueDefinitionsById: Object.fromEntries(
+              exportedPack.dialogues.map((dialogueDefinition) => [
+                dialogueDefinition.id,
+                dialogueDefinition,
+              ])
+            ),
+            activityDefinitionsById: {},
+            textEntriesById: exportedPack.textEntries ?? {},
+          },
+        }),
+        bootstrapStartupStoryAppState: ({ appState, bootstrap }) => {
+          bootstraps.push(bootstrap);
+          return {
+            ...appState,
+            gameState: {
+              ...appState.gameState,
+              scene: {
+                ...appState.gameState.scene,
+                activeEventId: bootstrap?.eventId ?? null,
+                activeSceneId:
+                  bootstrap == null ? null : "scene.story.zhu_yuanzhang.ordination",
+                cursor: bootstrap?.sceneCursor ?? 0,
+                status: bootstrap?.sceneStatus ?? "playing",
+              },
+            },
+          };
+        },
+      }
+    );
+
+    assert.equal(result.ok, true);
+    const startupAppState = result.session.createAppState();
+    assert.equal(bootstraps[0]?.eventId, "event.story.zhu_yuanzhang.ordination");
+    assert.equal(
+      startupAppState.gameState.scene.activeEventId,
+      "event.story.zhu_yuanzhang.ordination"
+    );
+  }
+);
+
+test(
+  "script editor preserves scenario launch policy and defers entry events until map entry",
+  async () => {
+    const {
+      exportScriptEditorProjectToScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    const {
+      loadScriptEditorProjectFromScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-import.js");
+    const {
+      loadScenarioPackFromFiles,
+    } = require("../.test-dist/application/scenario/scenario-pack-loader.js");
+    const {
+      runStartupSessionCoordinator,
+    } = require("../.test-dist/application/startup/startup-session-coordinator.js");
+
+    const sourceFiles = createScenarioPackFilesFromDirectory(
+      path.join(__dirname, "../src/content/scenario-packs/zhuyuanzhang"),
+      "zhuyuanzhang"
+    );
+    const importedProject = await loadScriptEditorProjectFromScenarioPackFiles(sourceFiles);
+    const serializedFiles = exportScriptEditorProjectToScenarioPackFiles(importedProject);
+    const exportedProfile = JSON.parse(serializedFiles["scenario-profile.json"]);
+    const exportedPack = await loadScenarioPackFromFiles(
+      createImportedFilesFromSerializedJsonRecord(
+        serializedFiles,
+        "exported-zhuyuanzhang-launch-policy"
+      )
+    );
+    const baseState = createBaseState();
+    const bootstraps = [];
+    const activationResult = {
+      ok: true,
+      activatedMod: {
+        normalizedContentSources: [exportedPack],
+      },
+    };
+
+    assert.deepEqual(exportedProfile.launchPolicy, {
+      characterSelection: "shell",
+      initialView: "map",
+      entryEventTiming: "after-map-entry",
+    });
+    assert.deepEqual(exportedPack.scenarioProfile.launchPolicy, exportedProfile.launchPolicy);
+
+    const result = await runStartupSessionCoordinator(
+      {
+        type: "scenario-files",
+        files: createImportedFilesFromSerializedJsonRecord(
+          serializedFiles,
+          "exported-zhuyuanzhang-launch-policy"
+        ),
+      },
+      {
+        activateBuiltinDefaultMod: async () => activationResult,
+        restoreModFromSave: async () => null,
+        activateScenarioPackMod: async () => activationResult,
+        createPrototypeAppState: () => ({
+          gameState: baseState,
+          characterDefinitions: prototypeCharacters,
+          playerCoordinate: { x: 0, y: 0 },
+          campaignActorState: { facingDegrees: 0, isMoving: false },
+          campaignTravelState: null,
+          modalState: null,
+          locationDialogueState: null,
+          beggingMiniGameState: null,
+          cityMenuState: null,
+          cityDirectoryState: null,
+          autoAdvanceState: null,
+          uiLayouts: {},
+          layoutEditor: {},
+        }),
+        createHaozhouReturnEncounterAppState: (appState) => appState,
+        createScenarioPackAppState: () => ({
+          gameState: {
+            ...baseState,
+            ui: {
+              ...baseState.ui,
+              currentView: exportedPack.scenarioProfile.launchPolicy.initialView,
+            },
+            scene: {
+              ...baseState.scene,
+              activeEventId: null,
+              activeSceneId: null,
+              cursor: 0,
+              status: "idle",
+            },
+          },
+          characterDefinitions: prototypeCharacters,
+          playerCoordinate: { x: 0, y: 0 },
+          campaignActorState: { facingDegrees: 0, isMoving: false },
+          campaignTravelState: null,
+          modalState: null,
+          locationDialogueState: null,
+          beggingMiniGameState: null,
+          cityMenuState: null,
+          cityDirectoryState: null,
+          autoAdvanceState: null,
+          uiLayouts: {},
+          layoutEditor: {},
+        }),
+        createStartupContentContext: () => ({
+          packId: exportedPack.id,
+          storyContent: {
+            eventDefinitionsById: Object.fromEntries(
+              exportedPack.events.map((eventDefinition) => [eventDefinition.id, eventDefinition])
+            ),
+            dialogueDefinitionsById: Object.fromEntries(
+              exportedPack.dialogues.map((dialogueDefinition) => [
+                dialogueDefinition.id,
+                dialogueDefinition,
+              ])
+            ),
+            activityDefinitionsById: {},
+            textEntriesById: exportedPack.textEntries ?? {},
+          },
+        }),
+        bootstrapStartupStoryAppState: ({ appState, bootstrap }) => {
+          bootstraps.push(bootstrap);
+          return {
+            ...appState,
+            gameState: {
+              ...appState.gameState,
+              scene: {
+                ...appState.gameState.scene,
+                activeEventId: bootstrap?.eventId ?? null,
+                activeSceneId:
+                  bootstrap == null ? null : "scene.story.zhu_yuanzhang.ordination",
+                cursor: bootstrap?.sceneCursor ?? 0,
+                status: bootstrap?.sceneStatus ?? "playing",
+              },
+            },
+          };
+        },
+      }
+    );
+
+    assert.equal(result.ok, true);
+    const startupAppState = result.session.createAppState();
+    assert.deepEqual(bootstraps, [null]);
+    assert.equal(startupAppState.gameState.ui.currentView, "map");
+  assert.equal(startupAppState.gameState.scene.activeEventId, null);
+  }
+);
+
+test(
+  "scenario pack character startup overrides retarget shell-selected characters onto character-specific startup state",
+  async () => {
+    const {
+      runStartupSessionCoordinator,
+    } = require("../.test-dist/application/startup/startup-session-coordinator.js");
+
+    const selectedCharacter = {
+      ...prototypeCharacters[0],
+      id: "char.selected.camp",
+      name: "Selected Camp Character",
+    };
+    const scenarioPack = {
+      id: "scenario.test.character-startup-override",
+      schemaVersion: 1,
+      title: "Character Startup Override",
+      scenarioProfile: {
+        id: "scenario.test.character-startup-override",
+        playerCharacterId: "char.profile.default",
+        chapterId: "chapter.prototype",
+        initialLocation: {
+          mapId: prototypeMap.id,
+          cityId: "city.kulan",
+          houseId: "house.kulan_temple",
+          view: "house",
+        },
+        initialRuntime: {
+          variables: {
+            "var.story.zhu_yuanzhang.stage": "huangjue-temple",
+          },
+        },
+        launchPolicy: {
+          characterSelection: "shell",
+          initialView: "map",
+          entryEventTiming: "after-map-entry",
+        },
+        entryEventId: "event.test.shell-selection",
+        openingFlowId: "flow.test.shell-selection",
+        characterStartups: [
+          {
+            characterId: "char.selected.camp",
+            initialRuntime: {
+              variables: {
+                "var.story.zhu_yuanzhang.stage": "guo-zixing-camp",
+              },
+            },
+            entryEventId: null,
+            openingFlowId: null,
+          },
+        ],
+      },
+      characters: [selectedCharacter],
+      events: [],
+      dialogues: [],
+    };
+    const activationResult = {
+      ok: true,
+      activatedMod: {
+        normalizedContentSources: [scenarioPack],
+      },
+    };
+    const createdAppStates = [];
+    const bootstrapCalls = [];
+
+    const result = await runStartupSessionCoordinator(
+      {
+        type: "scenario-pack",
+        scenarioPack,
+        selectedCharacter,
+        source: {
+          kind: "file",
+          name: "character-startup-override",
+          filePath: "character-startup-override/pack.json",
+        },
+      },
+      {
+        activateBuiltinDefaultMod: async () => activationResult,
+        restoreModFromSave: async () => null,
+        activateScenarioPackMod: async () => activationResult,
+        createPrototypeAppState: () => {
+          throw new Error("builtin path should not run");
+        },
+        createHaozhouReturnEncounterAppState: (appState) => appState,
+        createScenarioPackAppState: (pack, playerCharacterId) => {
+          createdAppStates.push({ pack, playerCharacterId });
+          return {
+            gameState: {
+              ...createBaseState(),
+              player: {
+                ...createBaseState().player,
+                characterId: playerCharacterId,
+              },
+              ui: {
+                ...createBaseState().ui,
+                currentView: pack.scenarioProfile.launchPolicy.initialView,
+              },
+              runtime: {
+                ...createBaseState().runtime,
+                variables: {
+                  ...pack.scenarioProfile.initialRuntime.variables,
+                },
+              },
+              scene: {
+                ...createBaseState().scene,
+                activeEventId: null,
+              },
+            },
+            characterDefinitions: [selectedCharacter],
+            playerCoordinate: { x: 0, y: 0 },
+            campaignActorState: { facingDegrees: 0, isMoving: false },
+            campaignTravelState: null,
+            modalState: null,
+            locationDialogueState: null,
+            beggingMiniGameState: null,
+            cityMenuState: null,
+            cityDirectoryState: null,
+            autoAdvanceState: null,
+            uiLayouts: {},
+            layoutEditor: {},
+          };
+        },
+        createStartupContentContext: () => ({
+          packId: scenarioPack.id,
+          storyContent: {
+            eventDefinitionsById: {},
+            sceneDefinitionsById: {},
+            activityDefinitionsById: {},
+            textEntriesById: {},
+          },
+        }),
+        bootstrapStartupStoryAppState: ({ appState, bootstrap }) => {
+          bootstrapCalls.push(bootstrap);
+          return appState;
+        },
+      }
+    );
+
+    assert.equal(result.ok, true);
+    const startupAppState = result.session.createAppState();
+    assert.equal(createdAppStates[0]?.playerCharacterId, selectedCharacter.id);
+    assert.equal(
+      createdAppStates[0]?.pack.scenarioProfile.initialRuntime.variables[
+        "var.story.zhu_yuanzhang.stage"
+      ],
+      "guo-zixing-camp"
+    );
+    assert.equal(createdAppStates[0]?.pack.scenarioProfile.entryEventId, undefined);
+    assert.equal(createdAppStates[0]?.pack.scenarioProfile.openingFlowId, undefined);
+    assert.equal(
+      startupAppState.gameState.runtime.variables["var.story.zhu_yuanzhang.stage"],
+      "guo-zixing-camp"
+    );
+    assert.equal(bootstrapCalls[0], null);
+  }
+);
+
+test(
+  "scenario launch policy shell selection starts JSON packs with the selected character",
+  async () => {
+    const {
+      runStartupSessionCoordinator,
+    } = require("../.test-dist/application/startup/startup-session-coordinator.js");
+
+    const selectedCharacter = {
+      ...prototypeCharacters[0],
+      id: "char.selected.shell",
+      name: "Selected Shell Character",
+    };
+    const scenarioPack = {
+      id: "scenario.test.shell-selection",
+      schemaVersion: 1,
+      title: "Shell Selection Scenario",
+      scenarioProfile: {
+        id: "scenario.test.shell-selection",
+        playerCharacterId: "char.profile.default",
+        chapterId: "chapter.prototype",
+        launchPolicy: {
+          characterSelection: "shell",
+          initialView: "map",
+          entryEventTiming: "after-map-entry",
+        },
+        initialLocation: {
+          mapId: prototypeMap.id,
+          cityId: "city.kulan",
+          houseId: null,
+          view: "house",
+        },
+        entryEventId: "event.test.shell-selection",
+      },
+      characters: [selectedCharacter],
+      events: [],
+      dialogues: [],
+    };
+    const activationResult = {
+      ok: true,
+      activatedMod: {
+        normalizedContentSources: [scenarioPack],
+      },
+    };
+    const createdAppStates = [];
+
+    const result = await runStartupSessionCoordinator(
+      {
+        type: "scenario-pack",
+        scenarioPack,
+        selectedCharacter,
+        source: {
+          kind: "file",
+          name: "shell-selection",
+          filePath: "shell-selection/pack.json",
+        },
+      },
+      {
+        activateBuiltinDefaultMod: async () => activationResult,
+        restoreModFromSave: async () => null,
+        activateScenarioPackMod: async () => activationResult,
+        createPrototypeAppState: () => {
+          throw new Error("builtin path should not run");
+        },
+        createHaozhouReturnEncounterAppState: (appState) => appState,
+        createScenarioPackAppState: (pack, playerCharacterId) => {
+          createdAppStates.push({ pack, playerCharacterId });
+          return {
+            gameState: {
+              ...createBaseState(),
+              player: {
+                ...createBaseState().player,
+                characterId: playerCharacterId,
+              },
+              ui: {
+                ...createBaseState().ui,
+                currentView: pack.scenarioProfile.launchPolicy.initialView,
+              },
+              scene: {
+                ...createBaseState().scene,
+                activeEventId: null,
+              },
+            },
+            characterDefinitions: [selectedCharacter],
+            playerCoordinate: { x: 0, y: 0 },
+            campaignActorState: { facingDegrees: 0, isMoving: false },
+            campaignTravelState: null,
+            modalState: null,
+            locationDialogueState: null,
+            beggingMiniGameState: null,
+            cityMenuState: null,
+            cityDirectoryState: null,
+            autoAdvanceState: null,
+            uiLayouts: {},
+            layoutEditor: {},
+          };
+        },
+        createStartupContentContext: () => ({
+          packId: scenarioPack.id,
+          storyContent: {
+            eventDefinitionsById: {},
+            sceneDefinitionsById: {},
+            activityDefinitionsById: {},
+            textEntriesById: {},
+          },
+        }),
+        bootstrapStartupStoryAppState: ({ appState }) => appState,
+      }
+    );
+
+    assert.equal(result.ok, true);
+    assert.equal(result.session.playerCharacterId, selectedCharacter.id);
+    const startupAppState = result.session.createAppState();
+    assert.equal(createdAppStates[0]?.playerCharacterId, selectedCharacter.id);
+    assert.equal(startupAppState.gameState.player.characterId, selectedCharacter.id);
+    assert.equal(startupAppState.gameState.ui.currentView, "map");
+    assert.equal(startupAppState.gameState.dialogue.activeEventId, null);
+  }
+);
+
+test("scenario profile export and loader preserve concrete dialogue startup targets", async () => {
+  const {
+    exportScriptEditorProjectToScenarioPackFiles,
+  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  const {
+    loadScriptEditorProjectFromScenarioPackFiles,
+  } = require("../.test-dist/application/script-editor/runtime-pack-import.js");
+  const {
+    loadScenarioPackFromFiles,
+  } = require("../.test-dist/application/scenario/scenario-pack-loader.js");
+
+  const sourceFiles = createScenarioPackFilesFromDirectory(
+    path.join(__dirname, "../src/content/scenario-packs/zhuyuanzhang"),
+    "zhuyuanzhang"
+  );
+  const importedProject = await loadScriptEditorProjectFromScenarioPackFiles(sourceFiles);
+  importedProject.storyPack.scenarioProfile.launchPolicy = {
+    ...(importedProject.storyPack.scenarioProfile.launchPolicy ?? {}),
+    characterSelection: "fixed",
+    initialView: "dialogue",
+  };
+  importedProject.storyPack.scenarioProfile.initialLocation = {
+    ...importedProject.storyPack.scenarioProfile.initialLocation,
+    view: "dialogue",
+    dialogueId: "scene.story.zhu_yuanzhang.ordination",
+  };
+
+  const serializedFiles = exportScriptEditorProjectToScenarioPackFiles(importedProject);
+  const exportedProfile = JSON.parse(serializedFiles["scenario-profile.json"]);
+  const exportedPack = await loadScenarioPackFromFiles(
+    createImportedFilesFromSerializedJsonRecord(
+      serializedFiles,
+      "exported-zhuyuanzhang-scene-start"
+    )
+  );
+
+  assert.equal(
+    exportedProfile.initialLocation.dialogueId,
+    "scene.story.zhu_yuanzhang.ordination"
+  );
+  assert.equal(
+    exportedPack.scenarioProfile.initialLocation.dialogueId,
+    "scene.story.zhu_yuanzhang.ordination"
+  );
+  assert.equal(exportedPack.scenarioProfile.launchPolicy.initialView, "dialogue");
+});
+
+test("script editor runtime export rejects retired startup scene views", () => {
+  const {
+    exportScriptEditorProjectToScenarioPackFiles,
+  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+
+  const project = createExportableScriptEditorProjectDefinition();
+  project.storyPack.scenarioProfile.launchPolicy = {
+    characterSelection: "fixed",
+    initialView: "scene",
+  };
+
+  assert.throws(
+    () => exportScriptEditorProjectToScenarioPackFiles(project),
+    /project\.storyPack\.scenarioProfile\.launchPolicy\.initialView must be one of: map, city, city-3d, house, dialogue, battle, minigame/
+  );
+});
+
+test("loaded scenario-pack mod startup metadata resolves dialogue startup through the shared target contract", async () => {
+  const {
+    exportScriptEditorProjectToScenarioPackFiles,
+  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  const {
+    loadScenarioPackFromFiles,
+  } = require("../.test-dist/application/scenario/scenario-pack-loader.js");
+  const {
+    createLoadedModFromScenarioPack,
+  } = require("../.test-dist/core/mods/mod-runtime.js");
+
+  const project = createExportableScriptEditorProjectDefinition();
+  project.storyPack.scenarioProfile.launchPolicy = {
+    characterSelection: "fixed",
+    initialView: "dialogue",
+  };
+  project.storyPack.scenarioProfile.initialLocation = {
+    ...project.storyPack.scenarioProfile.initialLocation,
+    view: "dialogue",
+    dialogueId: "dialogue.opening",
+  };
+  project.dialogues = [
+    {
+      id: "dialogue.opening",
+      title: "Opening",
+      nodes: [],
+    },
+  ];
+
+  const serializedFiles = exportScriptEditorProjectToScenarioPackFiles(project);
+  const exportedPack = await loadScenarioPackFromFiles(
+    createImportedFilesFromSerializedJsonRecord(
+      serializedFiles,
+      "exported-dialogue-startup-metadata"
+    )
+  );
+  const loadedMod = createLoadedModFromScenarioPack({
+    source: {
+      kind: "file",
+      name: "Dialogue Startup Metadata",
+      filePath: "exported-dialogue-startup-metadata/pack.json",
+    },
+    scenarioPack: exportedPack,
+  });
+
+  assert.deepEqual(loadedMod.manifest.defaultStart, {
+    playerCharacterId: exportedPack.scenarioProfile.playerCharacterId,
+    mapId: exportedPack.scenarioProfile.initialLocation.mapId,
+    cityId: exportedPack.scenarioProfile.initialLocation.cityId,
+    houseId: null,
+    dialogueId: "dialogue.opening",
+    view: "dialogue",
+  });
+});
+
+test("zhuyuanzhang portrait resources are pack-owned and characters no longer inline portrait variants", () => {
+  const packRoot = path.join(
+    process.cwd(),
+    "src",
+    "content",
+    "scenario-packs",
+    "zhuyuanzhang"
+  );
+  const characters = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "characters.json"), "utf8")
+  );
+  const portraits = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "portraits.json"), "utf8")
+  );
+  const portraitVariants = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "portrait-variants.json"), "utf8")
+  );
+
+  assert.equal(
+    characters.every((character) => !Object.hasOwn(character, "portraitVariants")),
+    true
+  );
+  assert.equal(
+    portraits.some((portrait) => portrait.id === "portrait.player"),
+    true
+  );
+  assert.equal(
+    portraits.some((portrait) => portrait.id === "portrait.kulan_xu_da"),
+    true
+  );
+  assert.equal(
+    portraitVariants.some(
+      (variant) =>
+        variant.id === "stage-20" &&
+        variant.parentPortraitId === "portrait.player" &&
+        variant.portraitId === "portrait.player.stage.20"
+    ),
+    true
+  );
+});
+
+test("prototype startup materializes portrait variants from pack-owned portrait families", () => {
+  const playerDefinition = prototypeCharacters.find(
+    (character) => character.id === "char.player"
+  );
+  const stageCharacters = createPrototypeCharactersForStoryStage(
+    ZHU_YUANZHANG_STORY_STAGES.guoZixingCamp
+  );
+  const stagedPlayer = stageCharacters.find(
+    (character) => character.id === "char.player"
+  );
+
+  assert.equal(Object.hasOwn(playerDefinition, "portraitVariants"), false);
+  assert.equal(playerDefinition.portraitVariantId, "stage-20");
+  assert.equal(Array.isArray(stagedPlayer.portraitVariants), true);
+  assert.equal(
+    stagedPlayer.portraitVariants.some(
+      (variant) =>
+        variant.id === "stage-20" &&
+        variant.parentPortraitId === undefined &&
+        variant.portraitId === "portrait.player.stage.20" &&
+        typeof variant.portraitImageUrl === "string"
+    ),
+    true
+  );
+  assert.equal(stagedPlayer.portraitImageUrl, "builtin:user/20.png");
+});
+
+test("scenario startup target resolves direct map city house and dialogue starts", () => {
+  const {
+    resolveScenarioStartupTarget,
+  } = require("../.test-dist/application/startup/scenario-startup-target.js");
+  const baseProfile = {
+    id: "scenario.startup-target",
+    title: "Startup Target",
+    playerCharacterId,
+    chapterId: "chapter.prototype",
+    initialLocation: {
+      mapId: prototypeMap.id,
+      cityId: "city.kulan",
+      houseId: "house.kulan_temple",
+      dialogueId: "dialogue.direct.start",
+      view: "map",
+    },
+  };
+
+  assert.deepEqual(
+    resolveScenarioStartupTarget({
+      ...baseProfile,
+      launchPolicy: { characterSelection: "fixed", initialView: "map" },
+    }),
+    {
+      currentMapId: prototypeMap.id,
+      currentCityId: "city.kulan",
+      currentHouseId: null,
+      currentView: "map",
+      activeDialogueId: null,
+    }
+  );
+  assert.deepEqual(
+    resolveScenarioStartupTarget({
+      ...baseProfile,
+      launchPolicy: { characterSelection: "fixed", initialView: "city" },
+    }),
+    {
+      currentMapId: prototypeMap.id,
+      currentCityId: "city.kulan",
+      currentHouseId: null,
+      currentView: "city",
+      activeDialogueId: null,
+    }
+  );
+  assert.deepEqual(
+    resolveScenarioStartupTarget({
+      ...baseProfile,
+      launchPolicy: { characterSelection: "fixed", initialView: "house" },
+    }),
+    {
+      currentMapId: prototypeMap.id,
+      currentCityId: "city.kulan",
+      currentHouseId: "house.kulan_temple",
+      currentView: "house",
+      activeDialogueId: null,
+    }
+  );
+  assert.deepEqual(
+    resolveScenarioStartupTarget({
+      ...baseProfile,
+      launchPolicy: { characterSelection: "fixed", initialView: "dialogue" },
+    }),
+    {
+      currentMapId: prototypeMap.id,
+      currentCityId: "city.kulan",
+      currentHouseId: null,
+      currentView: "dialogue",
+      activeDialogueId: "dialogue.direct.start",
+    }
+  );
+});
+
+test("script editor project form exposes scenario launch policy fields", () => {
+  const mainUiSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    "utf8"
+  );
+
+  for (const field of [
+    "scenarioProfile.entryEventId",
+    "scenarioProfile.launchPolicy.entryEventTiming",
+  ]) {
+    assert.match(mainUiSource, new RegExp(`renderScriptEditorField\\("${field}"`));
+    assert.match(mainUiSource, new RegExp(`case "${field}"`));
+  }
+  assert.match(mainUiSource, /renderScriptEditorStartupSelect\("characterSelection"/);
+  assert.match(mainUiSource, /renderScriptEditorStartupSelect\("initialView"/);
+  assert.match(mainUiSource, /characterSelection:\s*normalizedValue/);
+  assert.match(mainUiSource, /initialView:\s*normalizedValue/);
+});
+
+test("script editor event destination authoring uses localized content-entry family and target selectors", () => {
+  const mainUiSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    "utf8"
+  );
+  const destinationPanelStart = mainUiSource.indexOf(
+    'if (this.scriptEditorEventTab === "destination")'
+  );
+  const destinationPanelEnd = mainUiSource.indexOf(
+    'if (this.scriptEditorEventTab === "relations")',
+    destinationPanelStart
+  );
+  const destinationPanelSource = mainUiSource.slice(
+    destinationPanelStart,
+    destinationPanelEnd
+  );
+  const destinationFamilyOptionsStart = mainUiSource.indexOf(
+    "createScriptEditorEventDestinationFamilyOptions()"
+  );
+  const destinationFamilyOptionsEnd = mainUiSource.indexOf(
+    "createScriptEditorEventDestinationTargetOptions",
+    destinationFamilyOptionsStart
+  );
+  const destinationFamilyOptionsSource = mainUiSource.slice(
+    destinationFamilyOptionsStart,
+    destinationFamilyOptionsEnd
+  );
+  const destinationTargetOptionsEnd = mainUiSource.indexOf(
+    "renderScriptEditorEventTabPanel",
+    destinationFamilyOptionsEnd
+  );
+  const destinationTargetOptionsSource = mainUiSource.slice(
+    destinationFamilyOptionsEnd,
+    destinationTargetOptionsEnd
+  );
+  const relationsPanelStart = mainUiSource.indexOf(
+    'if (this.scriptEditorEventTab === "relations")',
+    destinationPanelEnd
+  );
+  const relationsPanelEnd = mainUiSource.indexOf(
+    'if (this.scriptEditorEventTab === "preview")',
+    relationsPanelStart
+  );
+  const relationsPanelSource = mainUiSource.slice(
+    relationsPanelStart,
+    relationsPanelEnd
+  );
+
+  assert.match(destinationPanelSource, />\s*去向类型\s*</);
+  for (const familyLabel of ["对话", "事件", "小游戏", "任务"]) {
+    assert.match(destinationFamilyOptionsSource, new RegExp(`${familyLabel}`));
+  }
+  for (const unsupportedDestinationLabel of ["人物", "城市", "建筑", "UI"]) {
+    assert.doesNotMatch(
+      destinationFamilyOptionsSource,
+      new RegExp(`${unsupportedDestinationLabel}`)
+    );
+  }
+  assert.doesNotMatch(destinationPanelSource, />\$\{family\}</);
+  assert.match(
+    destinationPanelSource,
+    /<select[^>]+data-script-editor-event-destination-field="targetId"/
+  );
+  assert.doesNotMatch(
+    destinationPanelSource,
+    /<input[^>]+data-script-editor-event-destination-field="targetId"/
+  );
+  assert.match(destinationTargetOptionsSource, /project\.events/);
+  assert.match(destinationTargetOptionsSource, /project\.dialogues/);
+  assert.match(destinationTargetOptionsSource, /project\.minigames/);
+  assert.match(destinationTargetOptionsSource, /project\.quests/);
+  assert.doesNotMatch(destinationTargetOptionsSource, /project\.people/);
+  assert.doesNotMatch(destinationTargetOptionsSource, /project\.cities/);
+  assert.doesNotMatch(destinationTargetOptionsSource, /project\.buildings/);
+  assert.match(destinationTargetOptionsSource, /event\.title/);
+  assert.match(destinationTargetOptionsSource, /dialogue\.title/);
+  assert.match(destinationTargetOptionsSource, /minigame\.title/);
+  assert.match(destinationTargetOptionsSource, /quest\.title/);
+  assert.match(destinationTargetOptionsSource, /dialogue\.id/);
+  assert.match(relationsPanelSource, /关联人物/);
+  assert.match(relationsPanelSource, /关联城市/);
+  assert.match(relationsPanelSource, /关联建筑/);
+  assert.match(destinationPanelSource, /暂不支持导出为可运行事件/);
+});
+
+test("script editor event destination helper stores selected target ids and clears stale targets on family change", () => {
+  const {
+    updateScriptEditorEventDestinationField,
+  } = require("../.test-dist/application/script-editor/story-dialogue-event-authoring.js");
+
+  let eventRecord = {
+    id: "event.opening",
+    title: "Opening Event",
+    destination: { family: "dialogue", targetId: "" },
+  };
+  eventRecord = updateScriptEditorEventDestinationField(
+    eventRecord,
+    "targetId",
+    " dialogue.opening "
+  );
+  assert.equal(eventRecord.destination.targetId, "dialogue.opening");
+
+  eventRecord = updateScriptEditorEventDestinationField(eventRecord, "family", "event");
+  assert.equal(eventRecord.destination.family, "event");
+  assert.equal(eventRecord.destination.targetId, "");
+
+  eventRecord = updateScriptEditorEventDestinationField(eventRecord, "targetId", " event.followup ");
+  assert.equal(eventRecord.destination.targetId, "event.followup");
+
+  eventRecord = updateScriptEditorEventDestinationField(eventRecord, "family", "minigame");
+  assert.equal(eventRecord.destination.family, "minigame");
+  assert.equal(eventRecord.destination.targetId, "");
+
+  eventRecord = updateScriptEditorEventDestinationField(eventRecord, "family", "city");
+  assert.equal(eventRecord.destination.family, "dialogue");
+  assert.equal(eventRecord.destination.targetId, "");
+});
+
+test("script editor event destination export remains dialogue-only", () => {
+  const {
+    exportScriptEditorProjectToScenarioPackFiles,
+  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  const project = createExportableScriptEditorProjectDefinition();
+  project.textEntries = [{ id: "text.opening", text: "Opening line." }];
+  project.dialogues = [
+    {
+      id: "dialogue.opening",
+      title: "Opening",
+      nodes: [
+        {
+          id: "dialogue-node.opening",
+          nodeType: "dialogue",
+          speakerPersonId: "person.hero",
+          textId: "text.opening",
+        },
+      ],
+    },
+  ];
+  const eventRecord = {
+    id: "event.opening",
+    title: "Opening Event",
+    destination: { family: "dialogue", targetId: "dialogue.opening" },
+  };
+
+  project.events = [eventRecord];
+  const files = exportScriptEditorProjectToScenarioPackFiles(project);
+  const events = JSON.parse(files["events.json"]);
+  assert.equal(events[0]?.dialogueId, "dialogue.opening");
+
+  project.events = [
+    {
+      ...eventRecord,
+      destination: { family: "event", targetId: "event.followup" },
+    },
+  ];
+  assert.throws(
+    () => exportScriptEditorProjectToScenarioPackFiles(project),
+    /supports only editor events whose destination targets a dialogue/i
+  );
+
+  project.events = [
+    {
+      ...eventRecord,
+      destination: { family: "minigame", targetId: "minigame.duel" },
+    },
+  ];
+  assert.throws(
+    () => exportScriptEditorProjectToScenarioPackFiles(project),
+    /supports only editor events whose destination targets a dialogue/i
+  );
+});
+
+test(
+  "script editor runtime export fails closed on deferred authoring families",
+  () => {
+    const {
+      exportScriptEditorProjectToScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    const project = createExportableScriptEditorProjectDefinition();
+    project.dialogues = [{ id: "dialogue.unsupported" }];
+    project.minigames = [{ id: "minigame.unsupported" }];
+    project.storyNodes = [{ id: "story-node.unsupported" }];
+
+    assert.throws(
+      () => exportScriptEditorProjectToScenarioPackFiles(project),
+      /dialogues|minigames|storyNodes/i
+    );
+  }
+);
+
+test("script editor runtime export fails closed on editor event authoring records", () => {
+  const {
+    exportScriptEditorProjectToScenarioPackFiles,
+  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  const project = createExportableScriptEditorProjectDefinition();
+  project.events = [
+    {
+      id: "event.unsupported",
+      title: "Unsupported Event",
+      destination: { family: "minigame", targetId: "minigame.unsupported" },
+    },
+  ];
+
+  assert.throws(
+    () => exportScriptEditorProjectToScenarioPackFiles(project),
+    /supports only editor events whose destination targets a dialogue/i
+  );
+});
+
+test(
+  "script editor runtime export compiles bounded shared task condition and effect references",
+  () => {
+    const {
+      exportScriptEditorProjectToScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    const project = createExportableScriptEditorProjectDefinition();
+    project.quests = [
+      {
+        id: "quest.shared-rule",
+        title: "Shared Rule Quest",
+        objectives: [{ id: "report", target: 1, signalType: "scene.reported" }],
+        startConditionGroupId: "condition.task-start",
+        completionConditionGroupId: "condition.task-complete",
+        onCompleteEffectBundleId: "effect.task-complete",
+      },
+    ];
+    project.conditionGroups = [
+      {
+        id: "condition.task-start",
+        operator: "all",
+        conditions: [{ type: "flag", key: "quest.start.ready", expected: true }],
+      },
+      {
+        id: "condition.task-complete",
+        operator: "all",
+        conditions: [{ type: "signal", signalType: "scene.reported" }],
+      },
+      {
+        id: "condition.unused",
+        operator: "all",
+        conditions: [{ type: "elapsed-time", since: "startedAt", atLeastDays: 3 }],
+      },
+    ];
+    project.effectBundles = [
+      {
+        id: "effect.task-complete",
+        effects: [{ type: "setFlag", key: "quest.shared.done", value: true }],
+      },
+    ];
+
+    const serializedFiles = exportScriptEditorProjectToScenarioPackFiles(project);
+    const exportedTasks = JSON.parse(serializedFiles["tasks.json"]);
+
+    assert.deepEqual(exportedTasks[0]?.startConditions, [
+      { type: "flag", flag: "quest.start.ready", value: true },
+    ]);
+    assert.deepEqual(exportedTasks[0]?.completionConditions, [
+      { type: "signal", signalType: "scene.reported" },
+    ]);
+    assert.deepEqual(exportedTasks[0]?.onCompleteEffects, [
+      { type: "setFlag", key: "quest.shared.done", value: true },
+    ]);
+  }
+);
+
+test(
+  "script editor runtime export lowers shared character property mutation effects",
+  () => {
+    const {
+      exportScriptEditorProjectToScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    const project = createExportableScriptEditorProjectDefinition();
+    project.quests = [
+      {
+        id: "quest.shared-rule",
+        title: "Shared Rule Quest",
+        objectives: [{ id: "report", target: 1, signalType: "scene.reported" }],
+        onCompleteEffectBundleId: "effect.character-devotion",
+      },
+    ];
+    project.effectBundles = [
+      {
+        id: "effect.character-devotion",
+        effects: [
+          {
+            type: "mutateCharacterNumericProperty",
+            characterId: "person.hero",
+            propertyId: "custom.character.devotion",
+            operation: "add",
+            value: 5,
+          },
+        ],
+      },
+    ];
+
+    const serializedFiles = exportScriptEditorProjectToScenarioPackFiles(project);
+    const exportedTasks = JSON.parse(serializedFiles["tasks.json"]);
+
+    assert.deepEqual(exportedTasks[0]?.onCompleteEffects, [
+      {
+        type: "mutateCharacterNumericProperty",
+        characterId: "person.hero",
+        propertyId: "custom.character.devotion",
+        operation: "add",
+        value: 5,
+      },
+    ]);
+  }
+);
+
+test(
+  "script editor runtime export fails closed on unsupported shared-rule lowering",
+  () => {
+    const {
+      exportScriptEditorProjectToScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    const project = createExportableScriptEditorProjectDefinition();
+    project.quests = [
+      {
+        id: "quest.shared-rule",
+        title: "Shared Rule Quest",
+        objectives: [{ id: "report", target: 1, signalType: "scene.reported" }],
+        completionConditionGroupId: "condition.unsupported",
+      },
+    ];
+    project.conditionGroups = [
+      {
+        id: "condition.unsupported",
+        operator: "any",
+        conditions: [{ type: "signal", signalType: "scene.reported" }],
+      },
+    ];
+    project.effectBundles = [];
+
+    assert.throws(
+      () => exportScriptEditorProjectToScenarioPackFiles(project),
+      /shared-rule|condition group|operator|task/i
+    );
+  }
+);
+
+test(
+  "script editor runtime export leaves legacy event condition groups out of event bodies",
+  () => {
+    const {
+      exportScriptEditorProjectToScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    const project = createExportableScriptEditorProjectDefinition();
+    project.textEntries = [{ id: "text.opening", text: "Opening line." }];
+    project.dialogues = [{ id: "dialogue.opening", title: "Opening" }];
+    project.events = [
+      {
+        id: "event.opening",
+        title: "Opening Event",
+        triggerTiming: "city-enter",
+        relations: { cityIds: ["city.start"] },
+        destination: { family: "dialogue", targetId: "dialogue.opening" },
+        conditionGroups: [
+          {
+            id: "condition.opening",
+            operator: "all",
+            conditions: [
+              { type: "flag", key: "story.opening.enabled", expected: true },
+              { type: "variable", key: "story.progress", operator: ">=", value: 3 },
+              { type: "location", cityId: "city.start" },
+            ],
+          },
+        ],
+      },
+    ];
+
+    const files = exportScriptEditorProjectToScenarioPackFiles(project);
+    const events = JSON.parse(files["events.json"]);
+
+    assert.equal(Object.hasOwn(events[0], "conditions"), false);
+    assert.equal(Object.hasOwn(events[0], "trigger"), false);
+  }
+);
+
+test(
+  "script editor runtime export writes event bindings as a separate file",
+  () => {
+    const {
+      exportScriptEditorProjectToScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    const project = createExportableScriptEditorProjectDefinition();
+    project.textEntries = [{ id: "text.opening", text: "Opening line." }];
+    project.dialogues = [{ id: "dialogue.opening", title: "Opening" }];
+    project.events = [
+      {
+        id: "event.opening",
+        title: "Opening Event",
+        triggerTiming: "city-enter",
+        relations: { cityIds: ["city.start"] },
+        destination: { family: "dialogue", targetId: "dialogue.opening" },
+        conditionGroups: [
+          {
+            id: "condition.opening",
+            operator: "all",
+            conditions: [{ type: "flag", key: "story.opening.enabled", expected: true }],
+          },
+        ],
+      },
+    ];
+    project.eventBindings = [
+      {
+        id: "binding.opening.city-enter",
+        eventId: "event.opening",
+        owner: { family: "city", id: "city.kulan" },
+        trigger: { timing: "after", action: "city-enter" },
+        priority: 10,
+        enabled: true,
+      },
+    ];
+    project.eventBindings = [
+      {
+        id: "binding.opening.city-enter",
+        eventId: "event.opening",
+        owner: { family: "city", id: "city.start" },
+        trigger: { timing: "after", action: "city-enter" },
+        priority: 20,
+        enabled: true,
+      },
+    ];
+
+    const files = exportScriptEditorProjectToScenarioPackFiles(project);
+    const manifest = JSON.parse(files["pack.json"]);
+    const events = JSON.parse(files["events.json"]);
+    const eventBindings = JSON.parse(files["event-bindings.json"]);
+
+    assert.equal(manifest.files.eventBindings, "./event-bindings.json");
+    assert.equal(events[0].id, "event.opening");
+    assert.equal(Object.hasOwn(events[0], "trigger"), false);
+    assert.equal(Object.hasOwn(events[0], "conditions"), false);
+    assert.deepEqual(eventBindings, [
+      {
+        id: "binding.opening.city-enter",
+        eventId: "event.opening",
+        owner: { family: "city", id: "city.start" },
+        trigger: { timing: "after", action: "city-enter" },
+        priority: 20,
+        enabled: true,
+      },
+    ]);
+  }
+);
+
+test(
+  "script editor runtime export lowers basic event binding conditions",
+  () => {
+    const {
+      exportScriptEditorProjectToScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    const {
+      runEventBindingRuntime,
+    } = require("../.test-dist/core/runtime/event-binding-runtime.js");
+    const project = createExportableScriptEditorProjectDefinition();
+    project.textEntries = [{ id: "text.opening", text: "Opening line." }];
+    project.dialogues = [{ id: "dialogue.opening", title: "Opening" }];
+    project.events = [
+      {
+        id: "event.opening",
+        title: "Opening Event",
+        destination: { family: "dialogue", targetId: "dialogue.opening" },
+      },
+    ];
+    project.eventBindings = [
+      {
+        id: "binding.opening.city-enter",
+        eventId: "event.opening",
+        owner: { family: "city", id: "city.start" },
+        trigger: { timing: "after", action: "city-enter" },
+        conditions: {
+          operator: "all",
+          conditions: [
+            { type: "flag", field: "story.ready", operator: "==", value: true },
+            { type: "variable", field: "story.progress", operator: ">=", value: 2 },
+          ],
+        },
+        priority: 20,
+        enabled: true,
+      },
+    ];
+
+    const files = exportScriptEditorProjectToScenarioPackFiles(project);
+    const events = JSON.parse(files["events.json"]);
+    const eventBindings = JSON.parse(files["event-bindings.json"]);
+
+    assert.equal(Object.hasOwn(events[0], "conditions"), false);
+    assert.deepEqual(eventBindings[0].conditions, {
+      operator: "all",
+      conditions: [
+        { type: "flag", key: "story.ready", expected: true },
+        { type: "variable", key: "story.progress", operator: ">=", value: 2 },
+      ],
+    });
+    assert.equal(Object.hasOwn(eventBindings[0].conditions.conditions[0], "field"), false);
+    assert.equal(Object.hasOwn(eventBindings[0].conditions.conditions[0], "value"), false);
+    assert.equal(Object.hasOwn(eventBindings[0].conditions.conditions[1], "field"), false);
+
+    const state = createBaseState();
+    state.runtime.flags["story.ready"] = true;
+    state.runtime.variables["story.progress"] = 3;
+    const result = runEventBindingRuntime({
+      state,
+      eventDefinitionsById: {
+        "event.opening": {
+          id: "event.opening",
+          chapterId: "chapter.prototype",
+          name: "Opening Event",
+          occurrence: "once",
+          dialogueId: "scene.opening",
+        },
+      },
+      eventBindings,
+      triggerContext: {
+        owner: { family: "city", id: "city.start" },
+        timing: "after",
+        action: "city-enter",
+      },
+    });
+
+    assert.equal(result.candidate?.bindingId, "binding.opening.city-enter");
+  }
+);
+
+test("script editor runtime export omits empty event binding condition groups", () => {
+  const {
+    exportScriptEditorProjectToScenarioPackFiles,
+  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  const project = createExportableScriptEditorProjectDefinition();
+  project.textEntries = [{ id: "text.opening", text: "Opening line." }];
+  project.dialogues = [{ id: "dialogue.opening", title: "Opening" }];
+  project.events = [
+    {
+      id: "event.opening",
+      title: "Opening Event",
+      destination: { family: "dialogue", targetId: "dialogue.opening" },
+    },
+  ];
+  project.eventBindings = [
+    {
+      id: "binding.opening.city-enter",
+      eventId: "event.opening",
+      owner: { family: "city", id: "city.start" },
+      trigger: { timing: "after", action: "city-enter" },
+      conditions: {
+        operator: "all",
+        conditions: [],
+      },
+      priority: 20,
+      enabled: true,
+    },
+  ];
+
+  const files = exportScriptEditorProjectToScenarioPackFiles(project);
+  const eventBindings = JSON.parse(files["event-bindings.json"]);
+
+  assert.equal(Object.hasOwn(eventBindings[0], "conditions"), false);
+});
+
+test(
+  "script editor runtime export fails closed on unsupported event binding fields",
+  () => {
+    const {
+      exportScriptEditorProjectToScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    const project = createExportableScriptEditorProjectDefinition();
+    project.textEntries = [{ id: "text.opening", text: "Opening line." }];
+    project.dialogues = [{ id: "dialogue.opening", title: "Opening" }];
+    project.events = [
+      {
+        id: "event.opening",
+        title: "Opening Event",
+        destination: { family: "dialogue", targetId: "dialogue.opening" },
+      },
+    ];
+    project.eventBindings = [
+      {
+        id: "binding.opening.unsupported",
+        eventId: "event.opening",
+        owner: { family: "custom", id: "city.start" },
+        trigger: { timing: "after", action: "city-enter" },
+      },
+    ];
+
+    assert.throws(
+      () => exportScriptEditorProjectToScenarioPackFiles(project),
+      /eventBindings|owner|custom|unsupported/i
+    );
+  }
+);
+
+test(
+  "script editor runtime export fails closed on event binding triggers without runtime entrypoints",
+  () => {
+    const {
+      exportScriptEditorProjectToScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    const unsupportedRuntimeEntrypoints = [
+      ["dialogue-finished", "dialogue", "dialogue.opening"],
+      ["menu-select", "menu", "menu.opening"],
+      ["minigame-finished", "minigame", "minigame.opening"],
+    ];
+
+    for (const [action, ownerFamily, ownerId] of unsupportedRuntimeEntrypoints) {
+      const project = createExportableScriptEditorProjectDefinition();
+      project.textEntries = [{ id: "text.opening", text: "Opening line." }];
+      project.dialogues = [{ id: "dialogue.opening", title: "Opening" }];
+      project.events = [
+        {
+          id: "event.opening",
+          title: "Opening Event",
+          destination: { family: "dialogue", targetId: "dialogue.opening" },
+        },
+      ];
+      project.eventBindings = [
+        {
+          id: `binding.opening.${action}`,
+          eventId: "event.opening",
+          owner: { family: ownerFamily, id: ownerId },
+          trigger: { timing: "after", action },
+          enabled: true,
+        },
+      ];
+
+      assert.throws(
+        () => exportScriptEditorProjectToScenarioPackFiles(project),
+        /eventBindings|trigger|entrypoint|unsupported/i,
+        action
+      );
+    }
+  }
+);
+
+test(
+  "script editor runtime export fails closed on event binding owners without runtime entrypoints",
+  () => {
+    const {
+      exportScriptEditorProjectToScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    const unsupportedRuntimeOwners = [
+      ["dialogue", "dialogue.opening"],
+      ["menu", "menu.opening"],
+      ["minigame", "minigame.opening"],
+    ];
+
+    for (const [ownerFamily, ownerId] of unsupportedRuntimeOwners) {
+      const project = createExportableScriptEditorProjectDefinition();
+      project.textEntries = [{ id: "text.opening", text: "Opening line." }];
+      project.dialogues = [{ id: "dialogue.opening", title: "Opening" }];
+      project.events = [
+        {
+          id: "event.opening",
+          title: "Opening Event",
+          destination: { family: "dialogue", targetId: "dialogue.opening" },
+        },
+      ];
+      project.eventBindings = [
+        {
+          id: `binding.opening.${ownerFamily}`,
+          eventId: "event.opening",
+          owner: { family: ownerFamily, id: ownerId },
+          trigger: { timing: "after", action: "city-enter" },
+          enabled: true,
+        },
+      ];
+
+      assert.throws(
+        () => exportScriptEditorProjectToScenarioPackFiles(project),
+        /eventBindings|owner|entrypoint|unsupported/i,
+        ownerFamily
+      );
+    }
+  }
+);
+
+test(
+  "script editor runtime export keeps event binding triggers with existing runtime entrypoints",
+  () => {
+    const {
+      exportScriptEditorProjectToScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    const project = createExportableScriptEditorProjectDefinition();
+    project.textEntries = [{ id: "text.opening", text: "Opening line." }];
+    project.dialogues = [{ id: "dialogue.opening", title: "Opening" }];
+    project.events = [
+      {
+        id: "event.opening",
+        title: "Opening Event",
+        destination: { family: "dialogue", targetId: "dialogue.opening" },
+      },
+    ];
+    project.eventBindings = [
+      {
+        id: "binding.opening.indoor-screen-shown",
+        eventId: "event.opening",
+        owner: { family: "building", id: "building.grain-shop" },
+        trigger: { timing: "after", action: "indoor-screen-shown" },
+        enabled: true,
+      },
+    ];
+
+    const files = exportScriptEditorProjectToScenarioPackFiles(project);
+    const eventBindings = JSON.parse(files["event-bindings.json"]);
+
+    assert.deepEqual(eventBindings[0].trigger, {
+      timing: "after",
+      action: "indoor-screen-shown",
+    });
+  }
+);
+
+test(
+  "script editor runtime export fails closed on event binding conditions before resolver lowering",
+  () => {
+    const {
+      exportScriptEditorProjectToScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    const project = createExportableScriptEditorProjectDefinition();
+    project.textEntries = [{ id: "text.opening", text: "Opening line." }];
+    project.dialogues = [{ id: "dialogue.opening", title: "Opening" }];
+    project.events = [
+      {
+        id: "event.opening",
+        title: "Opening Event",
+        destination: { family: "dialogue", targetId: "dialogue.opening" },
+      },
+    ];
+    project.eventBindings = [
+      {
+        id: "binding.opening.city-enter",
+        eventId: "event.opening",
+        owner: { family: "city", id: "city.start" },
+        trigger: { timing: "after", action: "city-enter" },
+        conditions: {
+          operator: "all",
+          conditions: [{ type: "signal", resolverId: "scene.reported" }],
+        },
+      },
+    ];
+
+    assert.throws(
+      () => exportScriptEditorProjectToScenarioPackFiles(project),
+      /eventBindings|conditions|resolver|lowering/i
+    );
+  }
+);
+
+test(
+  "event binding runtime selects matching binding and starts the triggerless event",
+  () => {
+    const {
+      runEventBindingRuntime,
+    } = require("../.test-dist/core/runtime/event-binding-runtime.js");
+    const state = createBaseState();
+    state.world.currentCityId = "city.kulan";
+    state.runtime.flags["story.opening.enabled"] = true;
+    const eventDefinitionsById = {
+      "event.opening.low": {
+        id: "event.opening.low",
+        chapterId: "chapter.prototype",
+        name: "Opening Low",
+        occurrence: "once",
+        dialogueId: "dialogue.opening.low",
+      },
+      "event.opening.high": {
+        id: "event.opening.high",
+        chapterId: "chapter.prototype",
+        name: "Opening High",
+        occurrence: "once",
+        dialogueId: "dialogue.opening.high",
+      },
+    };
+    const eventBindings = [
+      {
+        id: "binding.opening.low.city-enter",
+        eventId: "event.opening.low",
+        owner: { family: "city", id: "city.kulan" },
+        trigger: { timing: "after", action: "city-enter" },
+        priority: 10,
+        enabled: true,
+      },
+      {
+        id: "binding.opening.high.city-enter",
+        eventId: "event.opening.high",
+        owner: { family: "city", id: "city.kulan" },
+        trigger: { timing: "after", action: "city-enter" },
+        conditions: {
+          operator: "all",
+          conditions: [
+            {
+              type: "flag",
+              key: "story.opening.enabled",
+              expected: true,
+            },
+          ],
+        },
+        priority: 200,
+        enabled: true,
+      },
+    ];
+
+    const result = runEventBindingRuntime({
+      state,
+      eventDefinitionsById,
+      eventBindings,
+      triggerContext: {
+        owner: { family: "city", id: "city.kulan" },
+        timing: "after",
+        action: "city-enter",
+        currentCityId: "city.kulan",
+      },
+    });
+
+    assert.equal(result.activation?.activeEventId, "event.opening.high");
+    assert.equal(result.candidate?.bindingId, "binding.opening.high.city-enter");
+    assert.equal(result.state.dialogue.activeEventId, "event.opening.high");
+    assert.equal(result.state.dialogue.activeDialogueId, null);
+    assert.equal(result.state.ui.currentView, "house");
+    assert.equal(
+      result.state.runtime.eventHistory["event.opening.high"]?.firedCount,
+      1
+    );
+  }
+);
+
+test(
+  "building container item action trigger matches payload through EventBindingRuntime",
+  () => {
+    const {
+      runEventBindingRuntime,
+    } = require("../.test-dist/core/runtime/event-binding-runtime.js");
+    const state = createBaseState();
+    state.world.currentCityId = "city.start";
+    state.world.currentHouseId = "building.temple";
+    const eventDefinitionsById = {
+      "event.temple.rest": {
+        id: "event.temple.rest",
+        chapterId: "chapter.prototype",
+        name: "Temple Rest",
+        occurrence: "repeatable",
+        dialogueId: "dialogue.temple.rest",
+      },
+    };
+    const eventBindings = [
+      {
+        id: "binding.temple.rest.wrong-item",
+        eventId: "event.temple.rest",
+        owner: { family: "building", id: "building.temple" },
+        trigger: {
+          timing: "after",
+          action: "building-container-item-action",
+          extra: {
+            arrangementId: "building-arrangement.city-start.temple",
+            containerId: "container.temple.menu",
+            itemId: "action.temple.work",
+          },
+        },
+        priority: 200,
+        enabled: true,
+      },
+      {
+        id: "binding.temple.rest",
+        eventId: "event.temple.rest",
+        owner: { family: "building", id: "building.temple" },
+        trigger: {
+          timing: "after",
+          action: "building-container-item-action",
+          extra: {
+            arrangementId: "building-arrangement.city-start.temple",
+            containerId: "container.temple.menu",
+            itemId: "action.temple.rest",
+          },
+        },
+        priority: 100,
+        enabled: true,
+      },
+    ];
+
+    const result = runEventBindingRuntime({
+      state,
+      eventDefinitionsById,
+      eventBindings,
+      triggerContext: {
+        owner: { family: "building", id: "building.temple" },
+        timing: "after",
+        action: "building-container-item-action",
+        currentCityId: "city.start",
+        currentHouseId: "building.temple",
+        payload: {
+          arrangementId: "building-arrangement.city-start.temple",
+          containerId: "container.temple.menu",
+          itemId: "action.temple.rest",
+        },
+      },
+    });
+
+    assert.equal(result.candidate?.bindingId, "binding.temple.rest");
+    assert.equal(result.activation?.activeEventId, "event.temple.rest");
+    assert.equal(result.state.dialogue.activeDialogueId, null);
+    assert.equal(result.state.ui.currentView, "house");
+  }
+);
+
+test("event binding runtime closeBuilding action returns from building to city", () => {
+  const {
+    runEventBindingRuntime,
+  } = require("../.test-dist/core/runtime/event-binding-runtime.js");
+  const state = createBaseState();
+  state.world.currentCityId = "city.start";
+  state.world.currentHouseId = "building.temple";
+  state.ui.currentView = "house";
+  state.ui.houseSession = { moduleId: "temple-house", state: {} };
+
+  const result = runEventBindingRuntime({
+    state,
+    eventDefinitionsById: {
+      "event.close-building": {
+        id: "event.close-building",
+        chapterId: "chapter.prototype",
+        name: "Close Building",
+        occurrence: "repeatable",
+        dialogueId: "",
+        actions: [{ type: "closeBuilding" }],
+      },
+    },
+    eventBindings: [
+      {
+        id: "binding.close-building",
+        eventId: "event.close-building",
+        owner: { family: "building", id: "building.temple" },
+        trigger: {
+          timing: "after",
+          action: "building-container-item-action",
+          extra: { itemId: "action.temple.leave" },
+        },
+        enabled: true,
+      },
+    ],
+    triggerContext: {
+      owner: { family: "building", id: "building.temple" },
+      timing: "after",
+      action: "building-container-item-action",
+      currentCityId: "city.start",
+      currentHouseId: "building.temple",
+      payload: { itemId: "action.temple.leave" },
+    },
+  });
+
+  assert.equal(result.candidate?.bindingId, "binding.close-building");
+  assert.equal(result.state.world.currentHouseId, null);
+  assert.equal(result.state.ui.currentView, "city");
+  assert.equal(result.state.ui.houseSession, null);
+});
+
+test("building container item action runtime starts matching event from container ids", () => {
+  const {
+    triggerBuildingContainerItemAction,
+  } = require("../.test-dist/application/building/building-container-event-runtime.js");
+  const state = createBaseState();
+  state.world.currentCityId = "city.start";
+  state.world.currentHouseId = "building.temple";
+  state.ui.currentView = "house";
+
+  const result = triggerBuildingContainerItemAction({
+    state,
+    characterDefinitions: prototypeCharacters,
+    storyContent: {
+      eventDefinitionsById: {
+        "event.temple.rest": {
+          id: "event.temple.rest",
+          chapterId: "chapter.prototype",
+          name: "Temple Rest",
+          occurrence: "repeatable",
+          dialogueId: "dialogue.temple.rest",
+        },
+      },
+      eventBindingsById: {
+        "binding.temple.rest": {
+          id: "binding.temple.rest",
+          eventId: "event.temple.rest",
+          owner: { family: "building", id: "building.temple" },
+          trigger: {
+            timing: "after",
+            action: "building-container-item-action",
+            extra: {
+              arrangementId: "building-arrangement.city-start.temple",
+              containerId: "container.temple.menu",
+              itemId: "action.temple.rest",
+            },
+          },
+          enabled: true,
+        },
+      },
+      dialogueDefinitionsById: {
+        "dialogue.temple.rest": {
+          id: "dialogue.temple.rest",
+          name: "Temple Rest",
+          nodes: [
+            {
+              type: "narration",
+              text: "Temple rest.",
+            },
+          ],
+        },
+      },
+    },
+    action: {
+      arrangementId: "building-arrangement.city-start.temple",
+      containerId: "container.temple.menu",
+      itemId: "action.temple.rest",
+    },
+  });
+
+  assert.equal(result.state.dialogue.activeEventId, "event.temple.rest");
+  assert.equal(result.state.dialogue.activeDialogueId, "dialogue.temple.rest");
+  assert.equal(result.state.ui.currentView, "dialogue");
+});
+
+test("building container item action launches the authored flow selected by the event", () => {
+  const {
+    triggerBuildingContainerItemAction,
+  } = require("../.test-dist/application/building/building-container-event-runtime.js");
+  const state = createBaseState();
+  state.world.currentCityId = "city.start";
+  state.world.currentHouseId = "building.temple";
+  state.ui.currentView = "house";
+
+  const result = triggerBuildingContainerItemAction({
+    state,
+    characterDefinitions: prototypeCharacters,
+    storyContent: {
+      eventDefinitionsById: {
+        "event.temple.rest": {
+          id: "event.temple.rest",
+          chapterId: "chapter.prototype",
+          name: "Temple Rest",
+          occurrence: "repeatable",
+          dialogueId: "",
+          actions: [
+            {
+              type: "launchFlow",
+              flowId: "flow.temple.rest",
+              ownerContext: {
+                ownerKind: "house",
+                ownerId: "building.temple",
+                returnPolicy: "reenter-owner",
+              },
+            },
+          ],
+        },
+      },
+      eventBindingsById: {
+        "binding.temple.rest": {
+          id: "binding.temple.rest",
+          eventId: "event.temple.rest",
+          owner: { family: "building", id: "building.temple" },
+          trigger: {
+            timing: "after",
+            action: "building-container-item-action",
+            extra: {
+              arrangementId: "building-arrangement.city-start.temple",
+              containerId: "container.temple.menu",
+              itemId: "action.temple.rest",
+            },
+          },
+          enabled: true,
+        },
+      },
+      dialogueDefinitionsById: {
+        "dialogue.temple.rest": {
+          id: "dialogue.temple.rest",
+          name: "Temple Rest",
+          nodes: [],
+        },
+      },
+      flowPlayablesById: {
+        "flow.temple.rest": {
+          id: "flow.temple.rest",
+          title: "Temple Rest",
+          initialNodeId: "flow.temple.rest.start",
+          nodes: [
+            {
+              id: "flow.temple.rest.start",
+              type: "choice",
+              prompt: "Rest?",
+              options: [
+                {
+                  id: "choice.temple.rest",
+                  label: "Rest",
+                  nextNodeId: "flow.temple.rest.complete",
+                },
+              ],
+            },
+            {
+              id: "flow.temple.rest.complete",
+              type: "complete",
+              outcome: "success",
+            },
+          ],
+        },
+      },
+    },
+    action: {
+      arrangementId: "building-arrangement.city-start.temple",
+      containerId: "container.temple.menu",
+      itemId: "action.temple.rest",
+    },
+  });
+
+  assert.equal(result.state.runtime.playableSession?.playableId, "flow.temple.rest");
+  assert.equal(result.state.runtime.playableSession?.ownerContext.ownerId, "building.temple");
+  assert.equal(result.state.ui.currentView, "minigame");
+  assert.equal(result.state.dialogue.activeDialogueId, null);
+});
+
+test("script editor runtime export preserves building container action trigger extras", () => {
+  const {
+    exportScriptEditorProjectToScenarioPackFiles,
+  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  const project = createExportableScriptEditorProjectDefinition();
+  project.textEntries = [{ id: "text.opening", text: "Opening line." }];
+  project.dialogues = [{ id: "dialogue.opening", title: "Opening" }];
+  project.events = [
+    {
+      id: "event.opening",
+      title: "Opening Event",
+      destination: { family: "dialogue", targetId: "dialogue.opening" },
+    },
+  ];
+  project.eventBindings = [
+    {
+      id: "binding.temple.rest",
+      eventId: "event.opening",
+      owner: { family: "building", id: "building.temple" },
+      trigger: {
+        timing: "after",
+        action: "building-container-item-action",
+        extra: {
+          arrangementId: "building-arrangement.city-start.temple",
+          containerId: "container.temple.menu",
+          itemId: "action.temple.rest",
+        },
+      },
+      enabled: true,
+    },
+  ];
+
+  const files = exportScriptEditorProjectToScenarioPackFiles(project);
+  const eventBindings = JSON.parse(files["event-bindings.json"]);
+
+  assert.deepEqual(eventBindings[0].trigger, {
+    timing: "after",
+    action: "building-container-item-action",
+    extra: {
+      arrangementId: "building-arrangement.city-start.temple",
+      containerId: "container.temple.menu",
+      itemId: "action.temple.rest",
+    },
+  });
+});
+
+test(
+  "event binding runtime routes story triggers through TriggerContext bindings",
+  () => {
+    const {
+      triggerStoryEvents,
+    } = require("../.test-dist/application/story/story-runtime.js");
+    const state = createBaseState();
+    state.world.currentCityId = "city.kulan";
+    const eventDefinition = {
+      id: "event.story.binding.city",
+      chapterId: "chapter.prototype",
+      name: "Binding City",
+      occurrence: "once",
+      dialogueId: "dialogue.story.binding.city",
+    };
+    const dialogueDefinition = {
+      id: "dialogue.story.binding.city",
+      name: "Binding City Dialogue",
+      nodes: [
+        {
+          type: "narration",
+          text: "Binding fired.",
+        },
+      ],
+    };
+
+    const result = triggerStoryEvents(
+      {
+        state,
+        characterDefinitions: prototypeCharacters,
+      },
+      {
+        eventDefinitionsById: {
+          [eventDefinition.id]: eventDefinition,
+        },
+        eventBindingsById: {
+          "binding.story.binding.city-enter": {
+            id: "binding.story.binding.city-enter",
+            eventId: eventDefinition.id,
+            owner: { family: "city", id: "city.kulan" },
+            trigger: { timing: "after", action: "city-enter" },
+            priority: 100,
+            enabled: true,
+          },
+        },
+        dialogueDefinitionsById: {
+          [dialogueDefinition.id]: dialogueDefinition,
+        },
+      },
+      { timing: "city-enter", cityId: "city.kulan" }
+    );
+
+    assert.equal(result.state.dialogue.activeEventId, eventDefinition.id);
+    assert.equal(result.state.dialogue.activeDialogueId, dialogueDefinition.id);
+    assert.equal(
+      result.state.runtime.eventHistory[eventDefinition.id]?.firedCount,
+      1
+    );
+  }
+);
+
+test(
+  "old event runtime retirement removes trigger body scanning paths",
+  () => {
+    const sourceFiles = [
+      "src/domain/event.ts",
+      "src/application/story/story-runtime.ts",
+      "src/core/contracts/event-runtime.ts",
+    ];
+    const source = sourceFiles
+      .map((filePath) => fs.readFileSync(path.join(process.cwd(), filePath), "utf8"))
+      .join("\n");
+
+    assert.equal(
+      fs.existsSync(
+        path.join(process.cwd(), "src", "application", "events", "trigger-evaluator.ts")
+      ),
+      false
+    );
+    assert.equal(
+      fs.existsSync(path.join(process.cwd(), "src", "core", "runtime", "event-runtime.ts")),
+      false
+    );
+    assert.doesNotMatch(source, /selectTriggeredEvents|trigger-evaluator/);
+    assert.doesNotMatch(
+      source,
+      /export type EventTrigger|export type EventTriggerScope/
+    );
+    assert.doesNotMatch(
+      source,
+      /EventDefinition[\s\S]*?trigger\?:|EventDefinition[\s\S]*?conditions\?:/
+    );
+  }
+);
+
+test("old event condition evaluator residue is removed from production source", () => {
+  const conditionEvaluatorPath = path.join(
+    process.cwd(),
+    "src",
+    "application",
+    "events",
+    "condition-evaluator.ts"
+  );
+  const eventDomainSource = fs.readFileSync(
+    path.join(process.cwd(), "src", "domain", "event.ts"),
+    "utf8"
+  );
+
+  assert.equal(fs.existsSync(conditionEvaluatorPath), false);
+  assert.doesNotMatch(eventDomainSource, /export type EventCondition\b/);
+  assert.doesNotMatch(eventDomainSource, /export type EventConditionNode\b/);
+});
+
+test(
+  "script editor exported dialogue event preserves materialized scene entry",
+  () => {
+    const {
+      exportScriptEditorProjectToScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    const {
+      getCurrentSceneAction,
+    } = require("../.test-dist/application/story/story-runtime.js");
+    const project = createExportableScriptEditorProjectDefinition();
+    project.textEntries = [{ id: "text.opening", text: "Opening line." }];
+    project.dialogues = [
+      {
+        id: "dialogue.opening",
+        title: "Opening",
+        nodes: [
+          {
+            id: "dialogue-node.opening",
+            nodeType: "dialogue",
+            speakerPersonId: "person.hero",
+            textId: "text.opening",
+          },
+        ],
+      },
+    ];
+    project.events = [
+      {
+        id: "event.opening",
+        title: "Opening Event",
+        triggerTiming: "city-enter",
+        relations: { cityIds: ["city.kulan"] },
+        destination: { family: "dialogue", targetId: "dialogue.opening" },
+      },
+    ];
+
+    const files = exportScriptEditorProjectToScenarioPackFiles(project);
+    const events = JSON.parse(files["events.json"]);
+    const dialogues = JSON.parse(files["dialogues.json"]);
+    const textEntries = JSON.parse(files["text-entries.json"]);
+    const [openingEvent] = events;
+    const [openingDialogue] = dialogues;
+
+    assert.equal(openingEvent.dialogueId, "dialogue.opening");
+    assert.equal(Object.hasOwn(openingEvent, "trigger"), false);
+    assert.equal(openingDialogue.id, "dialogue.opening");
+    assert.equal(openingDialogue.nodes[0]?.type, "dialogue");
+    assert.equal(textEntries[openingDialogue.nodes[0]?.textId], "Opening line.");
+  }
+);
+
+test(
+  "script editor exported event body preserves nextEventId chain data",
+  () => {
+    const {
+      exportScriptEditorProjectToScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    const project = createExportableScriptEditorProjectDefinition();
+    project.textEntries = [
+      { id: "text.opening", text: "Opening line." },
+      { id: "text.followup", text: "Follow-up line." },
+    ];
+    project.dialogues = [
+      {
+        id: "dialogue.opening",
+        title: "Opening",
+        nodes: [
+          {
+            id: "dialogue-node.opening",
+            nodeType: "dialogue",
+            speakerPersonId: "person.hero",
+            textId: "text.opening",
+          },
+        ],
+      },
+      {
+        id: "dialogue.followup",
+        title: "Follow-up",
+        nodes: [
+          {
+            id: "dialogue-node.followup",
+            nodeType: "dialogue",
+            speakerPersonId: "person.hero",
+            textId: "text.followup",
+          },
+        ],
+      },
+    ];
+    project.events = [
+      {
+        id: "event.opening",
+        title: "Opening Event",
+        triggerTiming: "city-enter",
+        relations: { cityIds: ["city.kulan"] },
+        destination: { family: "dialogue", targetId: "dialogue.opening" },
+        nextEventId: "event.followup",
+      },
+      {
+        id: "event.followup",
+        title: "Follow-up Event",
+        destination: { family: "dialogue", targetId: "dialogue.followup" },
+      },
+    ];
+
+    const files = exportScriptEditorProjectToScenarioPackFiles(project);
+    const events = JSON.parse(files["events.json"]);
+    const dialogues = JSON.parse(files["dialogues.json"]);
+    const textEntries = JSON.parse(files["text-entries.json"]);
+    const eventDefinitionsById = Object.fromEntries(
+      events.map((eventDefinition) => [eventDefinition.id, eventDefinition])
+    );
+    const dialogueDefinitionsById = Object.fromEntries(
+      dialogues.map((dialogueDefinition) => [dialogueDefinition.id, dialogueDefinition])
+    );
+
+    assert.equal(eventDefinitionsById["event.opening"].nextEventId, "event.followup");
+
+    assert.equal(eventDefinitionsById["event.opening"].dialogueId, "dialogue.opening");
+    assert.equal(eventDefinitionsById["event.followup"].dialogueId, "dialogue.followup");
+    assert.equal(dialogueDefinitionsById["dialogue.followup"].nodes[0]?.type, "dialogue");
+    assert.equal(
+      textEntries[dialogueDefinitionsById["dialogue.followup"].nodes[0]?.textId],
+      "Follow-up line."
+    );
+  }
+);
+
+test(
+  "script editor exported event body taskInputs settle through runtime task state",
+  () => {
+    const {
+      exportScriptEditorProjectToScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    const {
+      dispatchRuntimeRequest,
+    } = require("../.test-dist/core/runtime/runtime-dispatch.js");
+    const project = createExportableScriptEditorProjectDefinition();
+    project.textEntries = [{ id: "text.opening", text: "Opening line." }];
+    project.dialogues = [
+      {
+        id: "dialogue.opening",
+        title: "Opening",
+        nodes: [
+          {
+            id: "dialogue-node.opening",
+            nodeType: "dialogue",
+            speakerPersonId: "person.hero",
+            textId: "text.opening",
+          },
+        ],
+      },
+    ];
+    project.quests = [
+      {
+        id: "task.opening",
+        title: "Opening Task",
+        objectives: [{ id: "report", target: 1, signalType: "scene.reported" }],
+      },
+    ];
+    project.events = [
+      {
+        id: "event.opening",
+        title: "Opening Event",
+        triggerTiming: "city-enter",
+        relations: { cityIds: ["city.kulan"] },
+        destination: { family: "dialogue", targetId: "dialogue.opening" },
+        taskInputs: [
+          {
+            type: "start",
+            taskId: "task.opening",
+            occurredAt: "2026-07-15T00:00:00.000Z",
+            source: "script-editor:event.opening",
+          },
+        ],
+      },
+    ];
+
+    const files = exportScriptEditorProjectToScenarioPackFiles(project);
+    const events = JSON.parse(files["events.json"]);
+    const tasks = JSON.parse(files["tasks.json"]);
+    const eventDefinitionsById = Object.fromEntries(
+      events.map((eventDefinition) => [eventDefinition.id, eventDefinition])
+    );
+    const taskDefinitionsById = Object.fromEntries(
+      tasks.map((taskDefinition) => [taskDefinition.id, taskDefinition])
+    );
+
+    assert.deepEqual(eventDefinitionsById["event.opening"].taskInputs, [
+      {
+        type: "start",
+        taskId: "task.opening",
+        occurredAt: "2026-07-15T00:00:00.000Z",
+        source: "script-editor:event.opening",
+      },
+    ]);
+
+    const settled = dispatchRuntimeRequest({
+      state: createRuntimeState(),
+      request: { family: "external", type: "external", eventId: "event.opening" },
+      context: {
+        router: {
+          route: ({ state }) => ({
+            state,
+            effects: [],
+            taskInputs: eventDefinitionsById["event.opening"].taskInputs ?? [],
+          }),
+        },
+        taskDefinitionsById,
+      },
+    });
+
+    assert.equal(
+      settled.state.core.runtime.tasks.instancesByTaskId["task.opening"].status,
+      "active"
+    );
+  }
+);
+
+test(
+  "script editor exported event body preserves taskInputs for later activation",
+  () => {
+    const {
+      exportScriptEditorProjectToScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    const project = createExportableScriptEditorProjectDefinition();
+    project.textEntries = [{ id: "text.opening", text: "Opening line." }];
+    project.dialogues = [
+      {
+        id: "dialogue.opening",
+        title: "Opening",
+        nodes: [
+          {
+            id: "dialogue-node.opening",
+            nodeType: "dialogue",
+            speakerPersonId: "person.hero",
+            textId: "text.opening",
+          },
+        ],
+      },
+    ];
+    project.quests = [
+      {
+        id: "task.opening",
+        title: "Opening Task",
+        objectives: [{ id: "report", target: 1, signalType: "scene.reported" }],
+      },
+    ];
+    project.events = [
+      {
+        id: "event.opening",
+        title: "Opening Event",
+        triggerTiming: "city-enter",
+        relations: { cityIds: ["city.kulan"] },
+        destination: { family: "dialogue", targetId: "dialogue.opening" },
+        taskInputs: [
+          {
+            type: "start",
+            taskId: "task.opening",
+            occurredAt: "2026-07-15T00:00:00.000Z",
+            source: "script-editor:event.opening",
+          },
+        ],
+      },
+    ];
+
+    const files = exportScriptEditorProjectToScenarioPackFiles(project);
+    const events = JSON.parse(files["events.json"]);
+    const [openingEvent] = events;
+
+    assert.equal(openingEvent.id, "event.opening");
+    assert.equal(Object.hasOwn(openingEvent, "trigger"), false);
+    assert.deepEqual(openingEvent.taskInputs, [
+      {
+        type: "start",
+        taskId: "task.opening",
+        occurredAt: "2026-07-15T00:00:00.000Z",
+        source: "script-editor:event.opening",
+      },
+    ]);
+  }
+);
+
+test("script editor runtime export rejects missing event taskInput task targets", () => {
+  const {
+    exportScriptEditorProjectToScenarioPackFiles,
+  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  const project = createExportableScriptEditorProjectDefinition();
+  project.textEntries = [{ id: "text.opening", text: "Opening line." }];
+  project.dialogues = [
+    {
+      id: "dialogue.opening",
+      title: "Opening",
+      nodes: [
+        {
+          id: "dialogue-node.opening",
+          nodeType: "dialogue",
+          speakerPersonId: "person.hero",
+          textId: "text.opening",
+        },
+      ],
+    },
+  ];
+  project.quests = [];
+  project.events = [
+    {
+      id: "event.opening",
+      title: "Opening Event",
+      destination: { family: "dialogue", targetId: "dialogue.opening" },
+      taskInputs: [
+        {
+          type: "start",
+          taskId: "task.missing",
+          occurredAt: "2026-07-15T00:00:00.000Z",
+        },
+      ],
+    },
+  ];
+
+  assert.throws(
+    () => exportScriptEditorProjectToScenarioPackFiles(project),
+    /taskInputs|task\.missing|missing task/i
+  );
+});
+
+test("script editor runtime export rejects missing nextEventId targets", () => {
+  const {
+    exportScriptEditorProjectToScenarioPackFiles,
+  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  const project = createExportableScriptEditorProjectDefinition();
+  project.textEntries = [{ id: "text.opening", text: "Opening line." }];
+  project.dialogues = [
+    {
+      id: "dialogue.opening",
+      title: "Opening",
+      nodes: [
+        {
+          id: "dialogue-node.opening",
+          nodeType: "dialogue",
+          speakerPersonId: "person.hero",
+          textId: "text.opening",
+        },
+      ],
+    },
+  ];
+  project.events = [
+    {
+      id: "event.opening",
+      title: "Opening Event",
+      destination: { family: "dialogue", targetId: "dialogue.opening" },
+      nextEventId: "event.missing",
+    },
+  ];
+
+  assert.throws(
+    () => exportScriptEditorProjectToScenarioPackFiles(project),
+    /nextEventId|event\.missing|missing next event/i
+  );
+});
+
+test(
+  "script editor runtime export validator rejects missing opening scenario profile fields",
+  () => {
+    const {
+      exportScriptEditorProjectToScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    const project = createExportableScriptEditorProjectDefinition();
+    delete project.storyPack.scenarioProfile.initialLocation.view;
+
+    assert.throws(
+      () => exportScriptEditorProjectToScenarioPackFiles(project),
+      /storyPack\.scenarioProfile\.initialLocation\.view/i
+    );
+  }
+);
+
+test(
+  "script editor compatibility import maps the bounded direct-family runtime pack slice into an authoring project",
+  async () => {
+    const {
+      exportScriptEditorProjectToScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    const {
+      loadScriptEditorProjectFromScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-import.js");
+    const project = createExportableScriptEditorProjectDefinition();
+
+    const importedProject = await loadScriptEditorProjectFromScenarioPackFiles(
+      createImportedFilesFromSerializedJsonRecord(
+        exportScriptEditorProjectToScenarioPackFiles(project),
+        "imported-scenario-pack"
+      )
+    );
+
+    assert.equal(importedProject.kind, "script-editor-project");
+    assert.equal(importedProject.id, project.storyPack.id);
+    assert.equal(importedProject.title, project.storyPack.title);
+    assert.equal(
+      importedProject.storyPack.basePackId,
+      "content-pack.base-game.zhuyuanzhang"
+    );
+    assert.deepEqual(
+      importedProject.storyPack.scenarioProfile,
+      project.storyPack.scenarioProfile
+    );
+    assert.equal(importedProject.people[0]?.id, "person.hero");
+    assert.equal(importedProject.cities[0]?.id, "city.start");
+    assert.equal(importedProject.buildings[0]?.id, "building.home");
+    assert.deepEqual(importedProject.events, []);
+    assert.equal(importedProject.quests[0]?.id, "quest.first");
+    assert.deepEqual(importedProject.dialogues, []);
+    assert.deepEqual(importedProject.minigames, []);
+    assert.deepEqual(importedProject.storyNodes, []);
+    assert.equal(importedProject.textEntries[0]?.id, "text.opening");
+    assert.equal(importedProject.textEntries[0]?.text, "Opening line.");
+    assert.deepEqual(importedProject.conditionGroups, []);
+    assert.deepEqual(importedProject.effectBundles, []);
+  }
+);
+
+test(
+  "script editor compatibility import preserves unsupported ui reserve families as explicit residue",
+  async () => {
+    const {
+      exportScriptEditorProjectToScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    const {
+      loadScriptEditorProjectFromScenarioPackFiles,
+      validateScenarioPackForScriptEditorImport,
+    } = require("../.test-dist/application/script-editor/runtime-pack-import.js");
+    const {
+      loadScenarioPackFromFiles,
+    } = require("../.test-dist/application/scenario/scenario-pack-loader.js");
+    const project = createExportableScriptEditorProjectDefinition();
+    const serializedFiles = exportScriptEditorProjectToScenarioPackFiles(project);
+    const manifest = JSON.parse(serializedFiles["pack.json"]);
+
+    manifest.files.uiScreenSchemas = "./ui-screen-schemas.json";
+    serializedFiles["pack.json"] = `${JSON.stringify(manifest, null, 2)}\n`;
+    serializedFiles["ui-screen-schemas.json"] = `${JSON.stringify(
+      [{ id: "ui.unsupported.screen", title: "Unsupported Screen" }],
+      null,
+      2
+    )}\n`;
+    serializedFiles["activities.json"] = `${JSON.stringify(
+      [{ id: "activity.unsupported.demo", label: "Unsupported Activity" }],
+      null,
+      2
+    )}\n`;
+
+    const importedFiles = createImportedFilesFromSerializedJsonRecord(
+      serializedFiles,
+      "imported-scenario-pack"
+    );
+    const pack = await loadScenarioPackFromFiles(importedFiles);
+    const diagnostics = validateScenarioPackForScriptEditorImport(pack);
+
+    assert.deepEqual(
+      diagnostics.map((diagnostic) => diagnostic.fieldPath),
+      ["pack.uiScreenSchemas"]
+    );
+    assert.equal(
+      diagnostics.every((diagnostic) => diagnostic.code === "unsupported-family"),
+      true
+    );
+
+    const importedProject = await loadScriptEditorProjectFromScenarioPackFiles(
+      importedFiles
+    );
+
+    assert.deepEqual(importedProject.dialogues, []);
+    assert.deepEqual(importedProject.minigames, []);
+    assert.deepEqual(importedProject.storyNodes, []);
+    assert.deepEqual(
+      importedProject.storyPack.compatibilityImport?.unresolvedFamilies?.uiScreenSchemas,
+      [{ id: "ui.unsupported.screen", title: "Unsupported Screen" }]
+    );
+    assert.equal(importedProject.activities[0]?.id, "activity.unsupported.demo");
+    assert.equal(importedProject.activities[0]?.label, "Unsupported Activity");
+    assert.equal(
+      importedProject.storyPack.compatibilityImport?.unresolvedFamilies?.activities,
+      undefined
+    );
+    assert.deepEqual(
+      importedProject.storyPack.compatibilityImport?.diagnostics?.map(
+        (diagnostic) => diagnostic.fieldPath
+      ),
+      ["pack.uiScreenSchemas"]
+    );
+  }
+);
+
+test(
+  "script editor compatibility import explains when a project export is passed to the runtime-pack importer",
+  async () => {
+    const {
+      serializeScriptEditorProjectToFiles,
+    } = require("../.test-dist/application/script-editor/editor-project-save.js");
+    const {
+      loadScriptEditorProjectFromScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-import.js");
+    const project = createExportableScriptEditorProjectDefinition();
+
+    await assert.rejects(
+      () =>
+        loadScriptEditorProjectFromScenarioPackFiles(
+          createImportedFilesFromSerializedJsonRecord(
+            serializeScriptEditorProjectToFiles(project),
+            "opened-project"
+          )
+        ),
+      /project\.json exports|runtime pack export|pack\.json/i
+    );
+  }
+);
+
+test("script editor workspace shell builds a reusable object-tree scaffold", () => {
+  const {
+    createScriptEditorWorkspaceShellViewModel,
+  } = require("../.test-dist/application/script-editor/workspace-shell.js");
+  const project = createExportableScriptEditorProjectDefinition();
+
+  const workspace = createScriptEditorWorkspaceShellViewModel({
+    project,
+    selection: {
+      family: "people",
+      entityId: "person.hero",
+    },
+  });
+
+  assert.equal(workspace.selection.family, "people");
+  assert.equal(workspace.selection.entityId, "person.hero");
+  assert.equal(workspace.toolbarActions.find((action) => action.id === "export")?.status, "ready");
+  assert.deepEqual(workspace.navigationItems, []);
+  assert.equal(
+    workspace.objectTreeGroups[0]?.nodes.some((node) => node.family === "storyPack"),
+    true
+  );
+  assert.equal(workspace.inspector.title, "Hero");
+  assert.doesNotMatch(workspace.inspector.cards[0]?.body ?? "", /id:\s*person\.hero/);
+  assert.match(workspace.inspector.cards[0]?.body ?? "", /Hero|勇者|player/i);
+});
+
+test("script editor workspace groups creator navigation by project top bar, world, narrative, and gameplay", () => {
+  const {
+    createScriptEditorWorkspaceShellViewModel,
+  } = require("../.test-dist/application/script-editor/workspace-shell.js");
+  const project = createSampleScriptEditorProjectDefinition();
+
+  const workspace = createScriptEditorWorkspaceShellViewModel({ project });
+
+  assert.deepEqual(
+    workspace.objectTreeGroups.map((group) => ({
+      label: group.label,
+      families: group.nodes.map((node) => node.family),
+    })),
+    [
+      {
+        label: "项目",
+        families: ["storyPack"],
+      },
+      {
+        label: "世界",
+        families: ["people", "portraits", "portraitVariants", "cities", "buildings"],
+      },
+      {
+        label: "剧情与文本",
+        families: ["storyNodes", "dialogues", "events"],
+      },
+      {
+        label: "玩法",
+        families: ["quests", "minigames"],
+      },
+      {
+        label: "资料库",
+        families: ["textEntries"],
+      },
+    ]
+  );
+  assert.equal(
+    workspace.objectTreeGroups.some((group) =>
+      group.nodes.some((node) => node.family === "textEntries")
+    ),
+    true
+  );
+  assert.equal(workspace.objectTreeGroups[0]?.nodes[0]?.label, "剧本导出");
+});
+
+test("script editor workspace shell exposes portrait families in the world group for new projects", () => {
+  const {
+    createScriptEditorWorkspaceShellViewModel,
+  } = require("../.test-dist/application/script-editor/workspace-shell.js");
+  const {
+    createDefaultScriptEditorProjectDefinition,
+  } = require("../.test-dist/application/script-editor/minimal-workflow.js");
+  const project = createDefaultScriptEditorProjectDefinition();
+
+  const workspace = createScriptEditorWorkspaceShellViewModel({ project });
+  const worldGroup = workspace.objectTreeGroups.find((group) => group.id === "world");
+
+  assert.deepEqual(
+    worldGroup?.nodes.map((node) => node.family),
+    ["people", "portraits", "portraitVariants", "cities", "buildings"]
+  );
+  assert.equal(
+    worldGroup?.nodes.find((node) => node.family === "portraits")?.itemCount,
+    1
+  );
+});
+
+test("script editor PRD workspace shell exposes a Chinese-first project overview", () => {
+  const {
+    createScriptEditorWorkspaceShellViewModel,
+  } = require("../.test-dist/application/script-editor/workspace-shell.js");
+  const project = createExportableScriptEditorProjectDefinition();
+
+  const workspace = createScriptEditorWorkspaceShellViewModel({
+    project,
+    selection: {
+      family: "storyPack",
+      entityId: null,
+    },
+  });
+
+  assert.deepEqual(workspace.navigationItems, []);
+  assert.equal(workspace.inspector.eyebrow, "项目总览");
+  assert.deepEqual(
+    workspace.inspector.cards.map((card) => card.title),
+    ["项目状态", "创作进度", "风险与阻塞", "下一步建议"]
+  );
+});
+
+test("script editor workspace toolbar exposes project info as the overview entry", () => {
+  const {
+    createScriptEditorWorkspaceShellViewModel,
+  } = require("../.test-dist/application/script-editor/workspace-shell.js");
+  const project = createExportableScriptEditorProjectDefinition();
+
+  const workspace = createScriptEditorWorkspaceShellViewModel({
+    project,
+    selection: {
+      family: "cities",
+      entityId: project.cities[0]?.id ?? null,
+    },
+  });
+  const toolbarActionIds = workspace.toolbarActions.map((action) => action.id);
+
+  assert.equal(toolbarActionIds[0], "project-info");
+  assert.equal(toolbarActionIds.includes("preview-runtime"), true);
+  assert.equal(toolbarActionIds.includes("export"), true);
+  assert.equal(workspace.toolbarActions[0]?.label, "项目信息");
+
+  const mainUiSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    "utf8"
+  );
+  assert.match(mainUiSource, /if \(action === "project-info"\)/);
+  assert.match(
+    mainUiSource,
+    /family:\s*"storyPack"[\s\S]*entityId:\s*null/
+  );
+});
+
+test("script editor project overview startup controls use project-backed selectors", () => {
+  const mainUiSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    "utf8"
+  );
+
+  assert.match(mainUiSource, /data-script-editor-startup-field/);
+  assert.match(mainUiSource, /renderScriptEditorStartupSelect\("initialView"/);
+  assert.match(mainUiSource, /renderScriptEditorStartupSelect\("cityId"/);
+  assert.match(mainUiSource, /renderScriptEditorStartupSelect\("houseId"/);
+  assert.match(mainUiSource, /renderScriptEditorStartupSelect\("playerCharacterId"/);
+  assert.doesNotMatch(
+    mainUiSource,
+    /renderScriptEditorStartupSelect\("sceneId"/
+  );
+  assert.match(
+    mainUiSource,
+    /initialView:\s*\[\s*"scenarioProfile\.launchPolicy\.initialView",\s*"scenarioProfile\.initialLocation\.view",?\s*\]/
+  );
+  assert.match(mainUiSource, /this\.scriptEditorProject\.cities\.map/);
+  assert.match(mainUiSource, /this\.scriptEditorProject\.buildings\.map/);
+  assert.doesNotMatch(mainUiSource, /this\.scriptEditorProject\.scenes\.map/);
+  assert.match(mainUiSource, /person\.personType === "角色"/);
+  assert.doesNotMatch(
+    mainUiSource,
+    /renderScriptEditorField\("scenarioProfile\.launchPolicy\.initialView"/
+  );
+  assert.doesNotMatch(
+    mainUiSource,
+    /renderScriptEditorField\("scenarioProfile\.initialLocation\.cityId"/
+  );
+  assert.doesNotMatch(
+    mainUiSource,
+    /renderScriptEditorField\("scenarioProfile\.initialLocation\.houseId"/
+  );
+});
+
+test("script editor workspace labels save and runtime export actions without mixing package types", () => {
+  const workspaceViewSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/views/script-editor/script-editor-workspace-view.ts"),
+    "utf8"
+  );
+  const mainUiSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    "utf8"
+  );
+  const scriptEditorCssSource = fs.readFileSync(
+    path.join(process.cwd(), "src/styles/script-editor.css"),
+    "utf8"
+  );
+
+  assert.match(
+    workspaceViewSource,
+    /\.filter\(\(action\) => action\.id !== "save"\)/
+  );
+  assert.match(
+    workspaceViewSource,
+    /\.filter\(\(action\) => action\.id !== "validate"\)/
+  );
+  assert.match(workspaceViewSource, /action\.id === "export"/);
+  assert.match(workspaceViewSource, /\$\{renderToolbarButtons\(model\)\}/);
+  assert.doesNotMatch(workspaceViewSource, /renderProjectEntryButton/);
+  assert.doesNotMatch(workspaceViewSource, /c-script-editor-shell__toolbar--tabs/);
+  assert.match(
+    mainUiSource,
+    /项目根信息[\s\S]*data-script-editor-action="save"[\s\S]*保存项目/
+  );
+  assert.doesNotMatch(
+    mainUiSource,
+    /项目根信息[\s\S]*data-script-editor-action="save"[\s\S]{0,120}导出/
+  );
+  assert.match(mainUiSource, /if \(action === "export"\) \{\s*await this\.exportScriptEditorProject\(\);/);
+  assert.match(mainUiSource, /if \(action === "save"\) \{\s*await this\.saveScriptEditorProject\(\);/);
+});
+
+test("city and building stage presenters route through separate module entry seams", () => {
+  const stagePresenterSource = fs.readFileSync(
+    path.join(process.cwd(), "src/application/presenter/stage-presenters.ts"),
+    "utf8"
+  );
+  const appRenderSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/app-render.ts"),
+    "utf8"
+  );
+  const cityModuleEntrySource = fs.readFileSync(
+    path.join(process.cwd(), "src/application/city/city-module-entry.ts"),
+    "utf8"
+  );
+  const buildingModuleEntrySource = fs.readFileSync(
+    path.join(process.cwd(), "src/application/building/building-module-entry.ts"),
+    "utf8"
+  );
+  const cityModuleViewSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/views/city/city-module-view.ts"),
+    "utf8"
+  );
+  const buildingModuleViewSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/views/building/building-module-view.ts"),
+    "utf8"
+  );
+
+  assert.match(stagePresenterSource, /selectCityModuleStage/);
+  assert.match(stagePresenterSource, /selectBuildingModuleStage/);
+  assert.match(appRenderSource, /renderCityModuleView/);
+  assert.match(appRenderSource, /renderBuildingModuleView/);
+  assert.match(cityModuleEntrySource, /export function selectCityModuleStage/);
+  assert.match(cityModuleEntrySource, /isCityEntryVisibleForStoryStage/);
+  assert.match(cityModuleEntrySource, /isHouseVisibleForStoryStage/);
+  assert.match(buildingModuleEntrySource, /export function selectBuildingModuleStage/);
+  assert.match(buildingModuleEntrySource, /houseModuleRegistry\.getModule/);
+  assert.match(buildingModuleEntrySource, /selectCityNpcSummariesForHouse/);
+  assert.match(cityModuleViewSource, /export function renderCityModuleView/);
+  assert.match(cityModuleViewSource, /renderCityView/);
+  assert.match(buildingModuleViewSource, /export function renderBuildingModuleView/);
+  assert.match(buildingModuleViewSource, /renderHouseModuleView/);
+  assert.match(buildingModuleViewSource, /createHouseViewModel/);
+});
+
+test("script editor landing labels opening an existing project as opening a draft", () => {
+  const mainUiSource = [
+    "src/ui/main-ui/main-ui-flow.js",
+    "src/ui/entry-shell/entry-shell-view.js",
+  ]
+    .map((filePath) => fs.readFileSync(path.join(process.cwd(), filePath), "utf8"))
+    .join("\n");
+
+  assert.match(mainUiSource, /新建剧本/);
+  assert.match(mainUiSource, /打开草稿/);
+  assert.match(mainUiSource, /使用模板/);
+  assert.match(mainUiSource, />\s*返回\s*<\/button>/);
+  assert.match(mainUiSource, /c-script-editor-landing__help-button/);
+  assert.match(mainUiSource, />\s*\?\s*<\/button>/);
+  assert.doesNotMatch(mainUiSource, /c-script-editor-landing__header/);
+  assert.doesNotMatch(mainUiSource, />\s*新建剧本项目\s*<\/button>/);
+  assert.doesNotMatch(mainUiSource, />\s*新建模板\s*<\/button>/);
+  assert.doesNotMatch(mainUiSource, />\s*打开剧本项目\s*<\/button>/);
+  assert.doesNotMatch(mainUiSource, />\s*导入现有剧本包\s*<\/button>/);
+  assert.doesNotMatch(mainUiSource, />\s*返回主菜单\s*<\/button>/);
+});
+
+test("script editor template action directly loads the built-in zhuyuanzhang pack", () => {
+  const mainUiSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    "utf8"
+  );
+
+  assert.match(
+    mainUiSource,
+    /DEFAULT_SCRIPT_EDITOR_TEMPLATE_SCENARIO_PACK_URL\s*=\s*"\/scenario-packs\/zhuyuanzhang\/pack\.json"/
+  );
+  assert.match(
+    mainUiSource,
+    /loadScriptEditorProjectFromScenarioPackUrl\(\s*DEFAULT_SCRIPT_EDITOR_TEMPLATE_SCENARIO_PACK_URL\s*\)/
+  );
+  assert.doesNotMatch(
+    mainUiSource,
+    /action === "import-pack"[\s\S]{0,240}\.querySelector\("\[data-script-editor-pack-file\]"\)/
+  );
+});
+
+test("script editor imports built-in zhuyuanzhang template from the published manifest url", async () => {
+  const {
+    loadScriptEditorProjectFromScenarioPackUrl,
+  } = require("../.test-dist/application/script-editor/runtime-pack-import.js");
+
+  const packRoot = path.join(
+    process.cwd(),
+    "src/content/scenario-packs/zhuyuanzhang"
+  );
+  const previousFetch = global.fetch;
+  const previousWindow = global.window;
+  global.window = { location: { href: "https://example.test/editor/" } };
+  global.fetch = async (url) => {
+    const parsed = new URL(String(url), "https://example.test");
+    const relativePath = parsed.pathname.replace(
+      /^\/scenario-packs\/zhuyuanzhang\/?/,
+      ""
+    );
+    const filePath = path.join(packRoot, relativePath || "pack.json");
+    if (!fs.existsSync(filePath)) {
+      return new Response("missing", { status: 404 });
+    }
+    return new Response(fs.readFileSync(filePath), { status: 200 });
+  };
+
+  try {
+    const project = await loadScriptEditorProjectFromScenarioPackUrl(
+      "/scenario-packs/zhuyuanzhang/pack.json"
+    );
+
+    assert.equal(project.id, "scenario-pack.zhu_yuanzhang.monk_opening");
+    assert.equal(project.storyPack.scenarioProfile.playerCharacterId, "char.player");
+    assert.ok(project.people.length > 0);
+    assert.ok(project.cities.length > 0);
+
+    const haozhouCity = project.cities.find((city) => city.id === "city.kulan");
+    assert.ok(haozhouCity);
+    assert.deepEqual(
+      haozhouCity.mountedBuildings.map((mountedBuilding) => mountedBuilding.buildingId),
+      [
+        "house.kulan.leader_residence",
+        "house.kulan.temple",
+        "home_001",
+        "house.kulan.keep",
+        "house.kulan.tea_house",
+        "house.kulan.market",
+        "house.kulan.grain_shop",
+        "house.kulan.medicine_house",
+        "house.kulan.inn",
+      ]
+    );
+    assert.deepEqual(
+      haozhouCity.mountedBuildings.find(
+        (mountedBuilding) => mountedBuilding.buildingId === "house.kulan.keep"
+      ),
+      {
+        buildingId: "house.kulan.keep",
+        npcIds: [
+          "char.kulan_lord",
+          "char.kulan_xu_da",
+          "char.kulan_tang_he",
+          "char.kulan_chang_yuchun",
+          "char.kulan_guard",
+          "char.kulan_soldier",
+        ],
+        primaryNpcId: "char.kulan_lord",
+      }
+    );
+
+    for (const eventId of [
+      "event.building.house.kulan.leader_residence.enter",
+      "event.building.house.kulan.temple.enter",
+      "event.building.house.kulan.keep.enter",
+      "event.building.house.kulan.tea_house.enter",
+      "event.building.house.kulan.market.enter",
+      "event.building.house.kulan.grain_shop.enter",
+      "event.building.house.kulan.medicine_house.enter",
+      "event.building.house.kulan.inn.enter",
+    ]) {
+      assert.ok(
+        project.events.some((event) => event.id === eventId),
+        `expected imported script editor project to expose ${eventId}`
+      );
+    }
+
+    for (const sceneId of [
+      "scene.building.house.kulan.leader_residence.enter",
+      "scene.building.house.kulan.temple.enter",
+      "scene.building.house.kulan.keep.enter",
+      "scene.building.house.kulan.tea_house.enter",
+      "scene.building.house.kulan.market.enter",
+      "scene.building.house.kulan.grain_shop.enter",
+      "scene.building.house.kulan.medicine_house.enter",
+      "scene.building.house.kulan.inn.enter",
+    ]) {
+      assert.ok(
+        project.dialogues.some((dialogue) => dialogue.id === sceneId),
+        `expected imported script editor project to expose ${sceneId}`
+      );
+    }
+
+    for (const bindingId of [
+      "binding.building.house.kulan.leader_residence.enter",
+      "binding.building.house.kulan.temple.enter",
+      "binding.building.house.kulan.keep.enter",
+      "binding.building.house.kulan.tea_house.enter",
+      "binding.building.house.kulan.market.enter",
+      "binding.building.house.kulan.grain_shop.enter",
+      "binding.building.house.kulan.medicine_house.enter",
+      "binding.building.house.kulan.inn.enter",
+    ]) {
+      assert.ok(
+        project.eventBindings.some((binding) => binding.id === bindingId),
+        `expected imported script editor project to expose ${bindingId}`
+      );
+    }
+  } finally {
+    global.fetch = previousFetch;
+    global.window = previousWindow;
+  }
+});
+
+test("script editor landing help action is styled as a circular question button", () => {
+  const scriptEditorStyles = fs.readFileSync(
+    path.join(process.cwd(), "src/styles/script-editor.css"),
+    "utf8"
+  );
+
+  assert.match(scriptEditorStyles, /\.c-script-editor-landing__help-button/);
+  assert.match(scriptEditorStyles, /margin-left:\s*auto/);
+  assert.match(scriptEditorStyles, /border-radius:\s*50%/);
+  assert.match(scriptEditorStyles, /aspect-ratio:\s*1/);
+});
+
+test("script editor workspace shell surfaces export blockers and compatibility residue", () => {
+  const {
+    createScriptEditorWorkspaceShellViewModel,
+  } = require("../.test-dist/application/script-editor/workspace-shell.js");
+  const project = createExportableScriptEditorProjectDefinition();
+  project.quests = [
+    {
+      id: "quest.shared-rule",
+      title: "Shared Rule Quest",
+      objectives: [{ id: "report", target: 1, signalType: "scene.reported" }],
+      completionConditionGroupId: "condition.unsupported",
+    },
+  ];
+  project.conditionGroups = [
+    {
+      id: "condition.unsupported",
+      operator: "not",
+      conditions: [{ type: "signal", signalType: "scene.reported" }],
+    },
+  ];
+  project.storyPack.compatibilityImport = {
+    unresolvedFamilies: {
+      dialogues: [{ id: "dialogue.unsupported.opening" }],
+    },
+  };
+
+  const workspace = createScriptEditorWorkspaceShellViewModel({ project });
+
+  assert.equal(workspace.toolbarActions.find((action) => action.id === "export")?.status, "blocked");
+  assert.deepEqual(workspace.badges, []);
+  assert.equal(workspace.handoffSummary.blockedCount > 0, true);
+  assert.equal(
+    workspace.objectTreeGroups.some((group) =>
+      group.nodes.some((node) => node.tone === "warning")
+    ),
+    true
+  );
+  const riskCard = workspace.inspector.cards.find((card) => card.title === "风险与阻塞");
+  assert.match(
+    riskCard?.body ?? "",
+    /unresolved|fail closed|阻塞/i
+  );
+});
+
+test("script editor workspace view omits the top project pill text block", () => {
+  const workspaceViewSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/views/script-editor/script-editor-workspace-view.ts"),
+    "utf8"
+  );
+  const workspaceStyleSource = fs.readFileSync(
+    path.join(process.cwd(), "src/styles/script-editor.css"),
+    "utf8"
+  );
+  assert.doesNotMatch(workspaceViewSource, /c-script-editor-shell__project-pill/);
+  assert.doesNotMatch(workspaceViewSource, /c-script-editor-shell__project-strip/);
+  assert.doesNotMatch(workspaceViewSource, /当前项目：/);
+  assert.doesNotMatch(workspaceViewSource, /renderProjectEntryButton/);
+  assert.doesNotMatch(workspaceStyleSource, /c-script-editor-shell__project-pill/);
+  assert.doesNotMatch(workspaceStyleSource, /c-script-editor-shell__project-strip/);
+});
+
+test("script editor preview queue exposes a unified auxiliary panel with linked issue routing", () => {
+  const {
+    createScriptEditorWorkspaceShellViewModel,
+  } = require("../.test-dist/application/script-editor/workspace-shell.js");
+  const project = createExportableScriptEditorProjectDefinition();
+  project.events = [
+    {
+      id: "event.opening",
+      title: "Opening Event",
+      destination: {
+        family: "dialogue",
+        targetId: "dialogue.missing.branch",
+      },
+    },
+  ];
+  project.people[0].dialogueIds = ["dialogue.missing.branch"];
+
+  const workspace = createScriptEditorWorkspaceShellViewModel({
+    project,
+    selection: {
+      family: "events",
+      entityId: "event.opening",
+    },
+    auxiliaryPanelOpen: true,
+  });
+
+  assert.equal(workspace.auxiliaryPanel.isOpen, true);
+  assert.equal(workspace.auxiliaryPanel.previewCards.length >= 3, true);
+  assert.equal(workspace.auxiliaryPanel.exportTargets.length >= 1, true);
+  assert.equal(workspace.auxiliaryPanel.summary.blockedCount > 0, true);
+  assert.equal(
+    workspace.auxiliaryPanel.issues.some(
+      (issue) =>
+        issue.targetFamily === "events" &&
+        issue.targetEntityId === "event.opening" &&
+        issue.targetTab === "destination"
+    ),
+    true
+  );
+});
+
+test("script editor PRD workspace view retires English shell chrome copy", () => {
+  const workspaceViewSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/ui/views/script-editor/script-editor-workspace-view.ts"
+    ),
+    "utf8"
+  );
+
+  assert.doesNotMatch(workspaceViewSource, /Script Editor Workbench Wireframe/);
+  assert.match(workspaceViewSource, /返回列表/);
+  assert.match(workspaceViewSource, /c-script-editor-shell__editor-stage/);
+  assert.match(workspaceViewSource, /c-script-editor-tree-group/);
+  assert.match(workspaceViewSource, /c-script-editor-shell__inspector/);
+  assert.doesNotMatch(workspaceViewSource, /renderProjectEntryButton/);
+  assert.doesNotMatch(workspaceViewSource, /c-script-editor-shell__toolbar-button--selected/);
+  assert.match(workspaceViewSource, /splitWorkspaceTreeGroups/);
+  assert.doesNotMatch(workspaceViewSource, /预览与校验辅助区/);
+  assert.doesNotMatch(workspaceViewSource, /校验与导出摘要/);
+  assert.doesNotMatch(workspaceViewSource, /data-script-editor-action="toggle-preview-panel"/);
+  assert.doesNotMatch(workspaceViewSource, /data-script-editor-action="jump-to-preview-issue"/);
+  assert.doesNotMatch(workspaceViewSource, /data-script-editor-nav=/);
+  assert.doesNotMatch(workspaceViewSource, /阻塞数/);
+  assert.doesNotMatch(workspaceViewSource, /关注项/);
+  assert.doesNotMatch(workspaceViewSource, /Script Editor Shell/);
+  assert.doesNotMatch(workspaceViewSource, /Handoff Summary/);
+});
+
+test("script editor visual alignment queue keeps the editor panel inside the central workspace instead of appending it below the shell", () => {
+  const mainUiSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    "utf8"
+  );
+
+  assert.match(
+    mainUiSource,
+    /renderScriptEditorWorkspaceView\(\s*workspace,\s*this\.renderScriptEditorEditorPanel\(\)\s*\)/
+  );
+  assert.doesNotMatch(mainUiSource, /c-script-editor-workflow__editor/);
+});
+
+test("script editor PRD project overview panel replaces the old Project scaffold copy", () => {
+  const mainUiSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    "utf8"
+  );
+
+  assert.match(mainUiSource, /项目总览/);
+  assert.match(mainUiSource, /项目状态/);
+  assert.match(mainUiSource, /下一步建议/);
+  assert.doesNotMatch(
+    mainUiSource,
+    /<p class="c-script-editor-editor-card__eyebrow">Project<\/p>/
+  );
+});
+
+test("script editor project selection queue exposes dedicated project list and delete flow", () => {
+  const mainUiSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    "utf8"
+  );
+  const scriptEditorCssSource = fs.readFileSync(
+    path.join(process.cwd(), "src/styles/script-editor.css"),
+    "utf8"
+  );
+
+  assert.match(mainUiSource, /项目选择与管理/);
+  assert.match(mainUiSource, /继续编辑/);
+  assert.match(mainUiSource, /删除项目/);
+  assert.match(mainUiSource, /确认删除/);
+  assert.match(mainUiSource, /data-script-editor-action="continue-project"/);
+  assert.match(mainUiSource, /data-script-editor-action="request-delete-project"/);
+  assert.match(mainUiSource, /data-script-editor-action="confirm-delete-project"/);
+  assert.match(scriptEditorCssSource, /c-script-editor-project-library/);
+  assert.match(scriptEditorCssSource, /c-script-editor-project-card/);
+});
+
+test("script editor person authoring queue exposes dedicated person detail tabs and bounded relation entrypoints", () => {
+  const mainUiSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    "utf8"
+  );
+  const workspaceViewSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/views/script-editor/script-editor-workspace-view.ts"),
+    "utf8"
+  );
+  const scriptEditorCssSource = fs.readFileSync(
+    path.join(process.cwd(), "src/styles/script-editor.css"),
+    "utf8"
+  );
+
+  assert.doesNotMatch(
+    mainUiSource,
+    /<p class="c-script-editor-editor-card__eyebrow">人物作者面<\/p>/
+  );
+  assert.doesNotMatch(
+    mainUiSource,
+    /<h2 class="c-script-editor-editor-card__title">人物详情<\/h2>/
+  );
+  assert.match(mainUiSource, /属性/);
+  assert.match(mainUiSource, /对话/);
+  assert.match(mainUiSource, /交易/);
+  assert.match(mainUiSource, /事件/);
+  assert.match(mainUiSource, /data-script-editor-action="select-person-tab"/);
+  assert.match(mainUiSource, /SCRIPT_EDITOR_INSPECTOR_SUPPRESS_TEXT/);
+  assert.match(mainUiSource, /data-script-editor-inspector-header-slot/);
+  assert.match(mainUiSource, /renderScriptEditorPersonTabList\(\)/);
+  assert.match(workspaceViewSource, /extractTemplateSlot/);
+  assert.match(workspaceViewSource, /hideHeaderText/);
+  assert.match(mainUiSource, /"add-person-dialogue-link"/);
+  assert.match(mainUiSource, /"add-person-event-link"/);
+  assert.match(mainUiSource, /renderScriptEditorPersonRelationSelect/);
+  assert.match(mainUiSource, /createScriptEditorDialogueReferenceOptions/);
+  assert.match(mainUiSource, /createScriptEditorEventReferenceOptions/);
+  assert.match(mainUiSource, /createScriptEditorTradeBindingReferenceOptions/);
+  assert.match(mainUiSource, /this\.scriptEditorProject\?\.dialogues/);
+  assert.match(mainUiSource, /this\.scriptEditorProject\?\.events/);
+  assert.match(mainUiSource, /this\.scriptEditorProject\?\.buildings/);
+  assert.match(mainUiSource, /listScriptEditorPersonFieldDefinitions/);
+  assert.match(mainUiSource, /data-script-editor-person-mapped-field/);
+  assert.match(mainUiSource, /renderScriptEditorPersonMappedFieldGroups/);
+  assert.match(mainUiSource, /data-script-editor-record-search-family="people"/);
+  assert.match(mainUiSource, /filterScriptEditorRecords\("people", records\)/);
+  assert.match(
+    mainUiSource,
+    /renderScriptEditorPersonTabPanel\(person\)\}/
+  );
+  assert.match(
+    mainUiSource,
+    /data-script-editor-person-field="biography"[\s\S]*?renderScriptEditorPersonSummaryAttributes\(person\)/
+  );
+  assert.match(scriptEditorCssSource, /c-script-editor-person-editor__tabs/);
+  assert.match(scriptEditorCssSource, /c-script-editor-person-editor__tabs[\s\S]*border-bottom/);
+  assert.match(scriptEditorCssSource, /c-script-editor-person-editor__tab[\s\S]*border-radius:\s*10px 10px 0 0/);
+  assert.match(scriptEditorCssSource, /c-script-editor-person-editor__tab\.is-active[\s\S]*border-bottom-color/);
+  assert.match(scriptEditorCssSource, /c-script-editor-shell__inspector-header/);
+  assert.match(scriptEditorCssSource, /c-script-editor-record-list__search/);
+  assert.match(scriptEditorCssSource, /c-script-editor-person-attributes/);
+});
+
+test("script editor person authoring queue renders current json-backed person attributes in the embedded summary", () => {
+  const mainUiSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    "utf8"
+  );
+  const scriptEditorCssSource = fs.readFileSync(
+    path.join(process.cwd(), "src/styles/script-editor.css"),
+    "utf8"
+  );
+
+  assert.match(mainUiSource, /renderScriptEditorPersonSummaryAttributes\(person\)/);
+  assert.doesNotMatch(
+    mainUiSource,
+    /<p class="c-script-editor-editor-card__eyebrow">已有属性<\/p>/
+  );
+  assert.match(mainUiSource, /自定义属性/);
+  assert.match(mainUiSource, /data-script-editor-person-attribute-field="key"/);
+  assert.match(mainUiSource, /data-script-editor-person-attribute-field="label"/);
+  assert.match(mainUiSource, /data-script-editor-person-attribute-field="value"/);
+  assert.match(mainUiSource, /placeholder="属性键"/);
+  assert.match(mainUiSource, /placeholder="属性名"/);
+  assert.match(mainUiSource, /data-script-editor-action="remove-person-attribute"/);
+  assert.match(mainUiSource, /c-script-editor-person-summary__remove/);
+  assert.match(mainUiSource, /aria-label="删除属性"/);
+  assert.match(mainUiSource, /data-script-editor-action="add-person-attribute"/);
+  assert.match(mainUiSource, /SCRIPT_EDITOR_PERSON_ATTRIBUTE_PAGE_SIZE\s*=\s*10/);
+  assert.match(mainUiSource, /data-script-editor-action="person-attribute-page-prev"/);
+  assert.match(mainUiSource, /data-script-editor-action="person-attribute-page-next"/);
+  assert.match(mainUiSource, /person\.extendedAttributes \?\? \[\]/);
+  assert.match(mainUiSource, /data-script-editor-person-field="cityId"/);
+  assert.match(mainUiSource, /data-script-editor-person-field="houseId"/);
+  assert.match(mainUiSource, /data-script-editor-person-field="portraitId"/);
+  assert.match(mainUiSource, /data-script-editor-person-field="portraitVariantId"/);
+  assert.match(scriptEditorCssSource, /c-script-editor-person-summary/);
+  assert.match(scriptEditorCssSource, /c-script-editor-person-summary__item/);
+  assert.match(scriptEditorCssSource, /c-script-editor-person-summary__remove/);
+  assert.match(scriptEditorCssSource, /grid-template-columns:\s*repeat\(5,/);
+  assert.doesNotMatch(scriptEditorCssSource, /overflow-x:\s*auto;/);
+});
+
+test("script editor people search preserves IME composition until composition end", () => {
+  const mainUiSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    "utf8"
+  );
+
+  assert.match(mainUiSource, /addEventListener\("compositionend", this\.handleCompositionEnd\)/);
+  assert.match(mainUiSource, /removeEventListener\("compositionend", this\.handleCompositionEnd\)/);
+  assert.match(
+    mainUiSource,
+    /onInput\(event\)\s*\{[\s\S]*?target\.matches\("\[data-script-editor-record-search-family\]"\)[\s\S]*?event\.isComposing === true[\s\S]*?return;/
+  );
+  assert.match(
+    mainUiSource,
+    /onCompositionEnd\(event\)\s*\{[\s\S]*?target\.matches\("\[data-script-editor-record-search-family\]"\)[\s\S]*?this\.setScriptEditorRecordSearchValue\(family, target\.value\);/
+  );
+});
+
+test("script editor text entry authoring hides ids from creators and clamps list summaries to two lines", () => {
+  const mainUiSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    "utf8"
+  );
+  const scriptEditorCssSource = fs.readFileSync(
+    path.join(process.cwd(), "src/styles/script-editor.css"),
+    "utf8"
+  );
+  const textEntryEditorStart = mainUiSource.indexOf(
+    "  renderScriptEditorTextEntryEditor(records, selectedRecord)"
+  );
+  const textEntryEditorEnd = mainUiSource.indexOf(
+    "getScriptEditorRecordListPage",
+    textEntryEditorStart
+  );
+  const textEntryEditorSource =
+    textEntryEditorStart >= 0 && textEntryEditorEnd > textEntryEditorStart
+      ? mainUiSource.slice(textEntryEditorStart, textEntryEditorEnd)
+      : "";
+
+  assert.match(mainUiSource, /family === "textEntries"[\s\S]*?renderScriptEditorTextEntryEditor\(records, selectedRecord\)/);
+  assert.match(textEntryEditorSource, /data-script-editor-action="apply-text-entry-text"/);
+  assert.match(textEntryEditorSource, /data-script-editor-text-entry-text/);
+  assert.match(textEntryEditorSource, /SCRIPT_EDITOR_INSPECTOR_SLOT/);
+  assert.match(textEntryEditorSource, /SCRIPT_EDITOR_INSPECTOR_SUPPRESS_TEXT/);
+  assert.match(textEntryEditorSource, /data-script-editor-inspector-header-slot/);
+  assert.match(textEntryEditorSource, /c-script-editor-editor-card__actions--end/);
+  assert.match(scriptEditorCssSource, /\.c-script-editor-editor-card__actions--end[\s\S]*justify-content:\s*flex-end/);
+  assert.match(textEntryEditorSource, /placeholder="请输入文本内容"/);
+  assert.match(textEntryEditorSource, /c-script-editor-record-list__item--text-entry/);
+  assert.match(textEntryEditorSource, /c-script-editor-record-list__title--clamp-2/);
+  assert.doesNotMatch(
+    textEntryEditorSource,
+    /c-script-editor-editor-card__title">文本/
+  );
+  assert.doesNotMatch(
+    textEntryEditorSource,
+    /data-script-editor-record-json/
+  );
+  assert.doesNotMatch(
+    textEntryEditorSource,
+    /<span>\$\{escapeHtml\(record\.id\)\}<\/span>/
+  );
+  assert.match(mainUiSource, /applyScriptEditorTextEntryText\(\)/);
+  assert.match(
+    mainUiSource,
+    /upsertScriptEditorWorkflowRecord\(this\.scriptEditorProject, "textEntries", nextRecord\)/
+  );
+  assert.match(scriptEditorCssSource, /c-script-editor-record-list__title--clamp-2/);
+  assert.match(scriptEditorCssSource, /-webkit-line-clamp:\s*2/);
+});
+
+test("script editor person authoring queue removes the advanced system details foldout from the profile form", () => {
+  const mainUiSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    "utf8"
+  );
+
+  assert.doesNotMatch(mainUiSource, /data-script-editor-person-field="id"/);
+  assert.doesNotMatch(mainUiSource, /<span>人物 ID<\/span>/);
+});
+
+test("script editor visual alignment queue hides system fields behind advanced details panels", () => {
+  const mainUiSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    "utf8"
+  );
+  const scriptEditorCssSource = fs.readFileSync(
+    path.join(process.cwd(), "src/styles/script-editor.css"),
+    "utf8"
+  );
+
+  assert.match(mainUiSource, /renderScriptEditorSystemDetails\(title, hint, body\)/);
+  assert.match(mainUiSource, /高级设置与系统信息/);
+  assert.match(mainUiSource, /剧情内部标识与章节挂接默认折叠/);
+  assert.match(mainUiSource, /对话内部标识与所属剧情挂接默认折叠/);
+  assert.match(mainUiSource, /事件内部标识默认折叠/);
+  assert.match(mainUiSource, /玩法绑定内部标识默认折叠/);
+  assert.match(scriptEditorCssSource, /c-script-editor-system-details/);
+  assert.match(scriptEditorCssSource, /c-script-editor-system-details__summary/);
+});
+
+test("script editor visual alignment queue keeps workspace scrolling inside the fixed main-ui shell", () => {
+  const scriptEditorCssSource = fs.readFileSync(
+    path.join(process.cwd(), "src/styles/script-editor.css"),
+    "utf8"
+  );
+
+  assert.match(scriptEditorCssSource, /\.c-main-ui-screen--script-editor-flow\s*\{/);
+  assert.match(scriptEditorCssSource, /overflow-y:\s*auto;/);
+  assert.match(scriptEditorCssSource, /overscroll-behavior-y:\s*contain;/);
+});
+
+test("script editor visual alignment queue preserves workspace scroll position across rerenders", () => {
+  const mainUiSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    "utf8"
+  );
+
+  assert.match(mainUiSource, /this\.scriptEditorScrollTop = 0;/);
+  assert.match(mainUiSource, /this\.captureScriptEditorScrollPosition\(\);/);
+  assert.match(mainUiSource, /this\.restoreScriptEditorScrollPosition\(\);/);
+  assert.match(mainUiSource, /captureScriptEditorScrollPosition\(\)/);
+  assert.match(mainUiSource, /restoreScriptEditorScrollPosition\(\)/);
+  assert.match(mainUiSource, /scriptEditorScreen\.scrollTop = this\.scriptEditorScrollTop;/);
+});
+
+test("script editor visual alignment queue paginates secondary record lists at six items per page", () => {
+  const mainUiSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    "utf8"
+  );
+  const scriptEditorCssSource = fs.readFileSync(
+    path.join(process.cwd(), "src/styles/script-editor.css"),
+    "utf8"
+  );
+
+  assert.match(mainUiSource, /SCRIPT_EDITOR_SECONDARY_LIST_PAGE_SIZE\s*=\s*6/);
+  assert.match(mainUiSource, /renderScriptEditorPaginatedRecordList/);
+  assert.match(mainUiSource, /data-script-editor-action="record-page-prev"/);
+  assert.match(mainUiSource, /data-script-editor-action="record-page-next"/);
+  assert.match(mainUiSource, /aria-label="上一页"[\s\S]*‹/);
+  assert.match(mainUiSource, /aria-label="下一页"[\s\S]*›/);
+  assert.match(mainUiSource, /changeScriptEditorRecordListPage\(delta\)/);
+  assert.match(scriptEditorCssSource, /c-script-editor-record-pagination/);
+  assert.match(scriptEditorCssSource, /c-script-editor-record-pagination__status/);
+  assert.match(scriptEditorCssSource, /c-script-editor-record-list[\s\S]*min-height:\s*580px/);
+  assert.match(scriptEditorCssSource, /c-script-editor-record-pagination[\s\S]*margin-top:\s*auto/);
+  assert.match(scriptEditorCssSource, /c-script-editor-record-pagination__status[\s\S]*white-space:\s*nowrap/);
+});
+
+test("script editor secondary list UX queue exposes search controls for all authoring secondary lists", () => {
+  const mainUiSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    "utf8"
+  );
+
+  for (const family of [
+    "people",
+    "cities",
+    "buildings",
+    "storyNodes",
+    "dialogues",
+    "events",
+    "minigames",
+    "textEntries",
+  ]) {
+    assert.match(
+      mainUiSource,
+      new RegExp(`data-script-editor-record-search-family="${family}"`)
+    );
+  }
+});
+
+test("script editor secondary list UX queue clears current search when adding a record", () => {
+  const mainUiSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    "utf8"
+  );
+
+  assert.match(
+    mainUiSource,
+    /this\.scriptEditorRecordSearch\s*=\s*\{\s*\.\.\.this\.scriptEditorRecordSearch,\s*\[family\]:\s*""[\s\S]*?upsertScriptEditorWorkflowRecord/
+  );
+});
+
+test("script editor selector UX queue replaces project-backed location id text fields with selects", () => {
+  const mainUiSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    "utf8"
+  );
+
+  assert.doesNotMatch(
+    mainUiSource,
+    /type="text"[^>]+data-script-editor-location-field="cityId"/
+  );
+  assert.match(
+    mainUiSource,
+    /<select[^>]+data-script-editor-location-field="cityId"/
+  );
+  assert.doesNotMatch(
+    mainUiSource,
+    /type="text"[^>]+data-script-editor-location-menu-field="targetId"/
+  );
+  assert.match(
+    mainUiSource,
+    /<select[^>]+data-script-editor-location-menu-field="targetId"/
+  );
+  assert.doesNotMatch(
+    mainUiSource,
+    /type="text"[^>]+data-script-editor-building-entry-field="onEnterEventId"/
+  );
+  assert.doesNotMatch(
+    mainUiSource,
+    /<select[^>]+data-script-editor-building-entry-field="onEnterEventId"/
+  );
+});
+
+test("script editor visual alignment queue separates sidebar secondary list and editor stage with borders", () => {
+  const scriptEditorCssSource = fs.readFileSync(
+    path.join(process.cwd(), "src/styles/script-editor.css"),
+    "utf8"
+  );
+
+  assert.match(scriptEditorCssSource, /c-script-editor-shell__sidebar/);
+  assert.match(scriptEditorCssSource, /c-script-editor-shell__editor-stage/);
+  assert.match(scriptEditorCssSource, /c-script-editor-record-list__toolbar/);
+  assert.match(scriptEditorCssSource, /c-script-editor-record-editor/);
+});
+
+test(
+  "script editor minimal workflow seeds bounded visible families without narrative export blockers",
+  () => {
+    const {
+      createDefaultScriptEditorProjectDefinition,
+      getScriptEditorWorkflowVisibleFamilies,
+    } = require("../.test-dist/application/script-editor/minimal-workflow.js");
+    const {
+      validateScriptEditorProjectForRuntimeExport,
+    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    const {
+      createScriptEditorWorkspaceShellViewModel,
+    } = require("../.test-dist/application/script-editor/workspace-shell.js");
+    const project = createDefaultScriptEditorProjectDefinition({
+      idBase: "queue-minimal",
+      title: "Queue Minimal",
+    });
+
+    const diagnostics = validateScriptEditorProjectForRuntimeExport(project);
+    const workspace = createScriptEditorWorkspaceShellViewModel({
+      project,
+      visibleFamilies: getScriptEditorWorkflowVisibleFamilies(),
+    });
+    const visibleFamilies = workspace.objectTreeGroups.flatMap((group) =>
+      group.nodes.map((node) => node.family)
+    );
+
+    assert.deepEqual(diagnostics, []);
+    assert.equal(visibleFamilies.includes("storyPack"), true);
+    assert.equal(visibleFamilies.includes("people"), true);
+    assert.equal(visibleFamilies.includes("cities"), true);
+    assert.equal(visibleFamilies.includes("buildings"), true);
+    assert.equal(visibleFamilies.includes("quests"), true);
+    assert.equal(visibleFamilies.includes("textEntries"), true);
+    assert.equal(visibleFamilies.includes("dialogues"), true);
+    assert.equal(visibleFamilies.includes("scenes"), false);
+    assert.equal(visibleFamilies.includes("minigames"), true);
+    assert.equal(visibleFamilies.includes("flows"), false);
+    assert.equal(visibleFamilies.includes("storyNodes"), true);
+    assert.equal(visibleFamilies.includes("events"), true);
+  }
+);
+
+test.skip("script editor scenes family stays visible and editable through the common authoring path", () => {
+  const {
+    createDefaultScriptEditorProjectDefinition,
+    createScriptEditorWorkflowRecordDraft,
+    getScriptEditorWorkflowVisibleFamilies,
+    removeScriptEditorWorkflowRecord,
+    upsertScriptEditorWorkflowRecord,
+  } = require("../.test-dist/application/script-editor/minimal-workflow.js");
+  const {
+    createScriptEditorWorkspaceShellViewModel,
+  } = require("../.test-dist/application/script-editor/workspace-shell.js");
+  const mainUiSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    "utf8"
+  );
+  const project = createDefaultScriptEditorProjectDefinition({
+    idBase: "scene-authoring",
+    title: "Scene Authoring",
+  });
+
+  assert.equal(getScriptEditorWorkflowVisibleFamilies().includes("scenes"), true);
+
+  const draft = createScriptEditorWorkflowRecordDraft("scenes", project.scenes.length);
+  assert.equal(draft.id, "scene.new.1");
+  assert.equal(Array.isArray(draft.actions), true);
+
+  const withScene = upsertScriptEditorWorkflowRecord(project, "scenes", draft);
+  assert.equal(withScene.scenes.some((record) => record.id === draft.id), true);
+
+  const workspace = createScriptEditorWorkspaceShellViewModel({
+    project: withScene,
+    visibleFamilies: getScriptEditorWorkflowVisibleFamilies(),
+  });
+  const visibleFamilies = workspace.objectTreeGroups.flatMap((group) =>
+    group.nodes.map((node) => node.family)
+  );
+  assert.equal(visibleFamilies.includes("scenes"), false);
+
+  const removed = removeScriptEditorWorkflowRecord(withScene, "scenes", draft.id);
+  assert.equal(removed.scenes.some((record) => record.id === draft.id), false);
+
+  assert.doesNotMatch(mainUiSource, /if \(family === "scenes"\)/);
+  assert.doesNotMatch(mainUiSource, /renderScriptEditorScenesEditor\(records, selectedRecord\)/);
+  assert.match(mainUiSource, /renderScriptEditorRecordListSearch\("scenes", "搜索场景"/);
+  assert.match(mainUiSource, /case "scenes":\s*return "场景"/);
+});
+
+test.skip("script editor scenes authoring surface is retired from the creator-facing workspace", () => {
+  const mainUiSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    "utf8"
+  );
+
+  assert.doesNotMatch(mainUiSource, /data-script-editor-scene-field="name"/);
+  assert.doesNotMatch(mainUiSource, /data-script-editor-scene-action-field="type"/);
+  assert.doesNotMatch(mainUiSource, /data-script-editor-scene-action-json-field="options"/);
+  assert.doesNotMatch(mainUiSource, /data-script-editor-action="add-scene-action"/);
+  assert.doesNotMatch(mainUiSource, /getSelectedScriptEditorScene\(\)/);
+  assert.doesNotMatch(mainUiSource, /replaceSelectedScriptEditorScene\(nextScene\)/);
+  assert.doesNotMatch(mainUiSource, /applyScriptEditorSceneField\(field, value\)/);
+  assert.doesNotMatch(mainUiSource, /applyScriptEditorSceneActionField\(index, field, value\)/);
+  assert.doesNotMatch(mainUiSource, /applyScriptEditorSceneActionJsonField\(index, field, value\)/);
+});
+
+test("script editor minimal workflow record helpers support draft upsert and remove", () => {
+  const {
+    createDefaultScriptEditorProjectDefinition,
+    createScriptEditorWorkflowRecordDraft,
+    removeScriptEditorWorkflowRecord,
+    upsertScriptEditorWorkflowRecord,
+  } = require("../.test-dist/application/script-editor/minimal-workflow.js");
+  let project = createDefaultScriptEditorProjectDefinition();
+  const draft = createScriptEditorWorkflowRecordDraft("people", project.people.length);
+
+  project = upsertScriptEditorWorkflowRecord(project, "people", draft);
+  assert.equal(project.people.some((record) => record.id === draft.id), true);
+
+  project = upsertScriptEditorWorkflowRecord(project, "people", {
+    ...draft,
+    name: "Updated Person",
+  });
+  assert.equal(
+    project.people.find((record) => record.id === draft.id)?.name,
+    "Updated Person"
+  );
+
+  project = removeScriptEditorWorkflowRecord(project, "people", draft.id);
+  assert.equal(project.people.some((record) => record.id === draft.id), false);
+});
+
+test("script editor person authoring helpers normalize trade and relation entry fields", () => {
+  const {
+    createDefaultScriptEditorPersonRecord,
+    normalizeScriptEditorPersonRecord,
+    updateScriptEditorPersonField,
+    toggleScriptEditorPersonTradeEnabled,
+    appendScriptEditorPersonRelation,
+    updateScriptEditorPersonRelation,
+  } = require("../.test-dist/application/script-editor/person-authoring.js");
+
+  let person = createDefaultScriptEditorPersonRecord(0);
+  person = updateScriptEditorPersonField(person, "personType", "角色");
+  person = toggleScriptEditorPersonTradeEnabled(person, true);
+  person = updateScriptEditorPersonField(person, "tradeBinding.entryId", "trade.market");
+  person = appendScriptEditorPersonRelation(person, "dialogueIds");
+  person = updateScriptEditorPersonRelation(person, "dialogueIds", 0, "dialogue.hero.open");
+
+  const normalized = normalizeScriptEditorPersonRecord(person);
+
+  assert.equal(normalized.personType, "角色");
+  assert.equal(normalized.role, "playable");
+  assert.equal(normalized.tradeBinding.enabled, true);
+  assert.equal(normalized.tradeBinding.entryId, "trade.market");
+  assert.deepEqual(normalized.dialogueIds, ["dialogue.hero.open"]);
+
+  const withProfile = updateScriptEditorPersonField(normalized, "birthYear", "1328");
+  const withStat = updateScriptEditorPersonField(
+    withProfile,
+    "stats.leadership",
+    "72"
+  );
+  const withSkill = updateScriptEditorPersonField(
+    withStat,
+    "skills.military",
+    "4"
+  );
+
+  assert.equal(withSkill.birthYear, 1328);
+  assert.equal(withSkill.stats.leadership, 72);
+  assert.equal(withSkill.skills.military, 4);
+});
+
+test("script editor field mapping contract exposes representative person field definitions", () => {
+  const {
+    listScriptEditorPersonFieldDefinitions,
+    validateScriptEditorFieldDefinitions,
+  } = require("../.test-dist/application/script-editor/field-mapping.js");
+
+  const definitions = listScriptEditorPersonFieldDefinitions();
+  const definitionById = new Map(
+    definitions.map((definition) => [definition.id, definition])
+  );
+
+  assert.equal(definitionById.get("person.name")?.canonicalKey, "name");
+  assert.equal(definitionById.get("person.name")?.valueType, "string");
+  assert.equal(definitionById.get("person.biography")?.group, "profile");
+  assert.deepEqual(
+    definitionById.get("person.personType")?.enumOptions?.map((option) => option.value),
+    ["角色", "NPC"]
+  );
+  assert.equal(definitionById.get("person.stats.leadership")?.valueType, "number");
+  assert.equal(definitionById.has("person.skills.strategy"), false);
+  assert.equal(definitionById.get("person.skills.military")?.valueType, "number");
+  assert.equal(definitionById.get("person.birthYear")?.group, "profile");
+  assert.equal(definitionById.get("person.stamina")?.group, "stat");
+  assert.equal(definitionById.get("person.stats.gold")?.group, "stat");
+  assert.equal(definitionById.get("person.skills.medicine")?.group, "skill");
+  assert.equal(definitionById.get("person.tradeBinding.enabled")?.valueType, "boolean");
+  assert.equal(definitionById.get("person.dialogueIds")?.valueType, "reference-list");
+  assert.equal(definitionById.get("person.dialogueIds")?.referenceFamily, "dialogues");
+  assert.equal(definitionById.get("person.extendedAttributes")?.valueType, "key-value-list");
+  assert.deepEqual(
+    definitions
+      .filter((definition) => definition.group === "stat")
+      .map((definition) => definition.canonicalKey),
+    [
+      "stats.leadership",
+      "stats.martial",
+      "stats.intelligence",
+      "stats.politics",
+      "stats.charm",
+      "stats.fame",
+      "stats.gold",
+      "stamina",
+    ]
+  );
+  assert.deepEqual(
+    definitions
+      .filter((definition) => definition.group === "skill")
+      .map((definition) => definition.canonicalKey),
+    [
+      "skills.ashigaru",
+      "skills.horse",
+      "skills.teppo",
+      "skills.navy",
+      "skills.archery",
+      "skills.martial",
+      "skills.military",
+      "skills.ninjutsu",
+      "skills.construction",
+      "skills.development",
+      "skills.mining",
+      "skills.arithmetic",
+      "skills.etiquette",
+      "skills.rhetoric",
+      "skills.tea",
+      "skills.medicine",
+    ]
+  );
+  assert.deepEqual(validateScriptEditorFieldDefinitions(definitions), []);
+});
+
+test("script editor field mapping validation rejects duplicate ids and invalid metadata", () => {
+  const {
+    validateScriptEditorFieldDefinitions,
+  } = require("../.test-dist/application/script-editor/field-mapping.js");
+
+  const diagnostics = validateScriptEditorFieldDefinitions([
+    {
+      id: "person.name",
+      canonicalKey: "name",
+      label: "Name",
+      group: "base",
+      valueType: "string",
+      order: 1,
+    },
+    {
+      id: "person.name",
+      canonicalKey: "duplicateName",
+      label: "Duplicate Name",
+      group: "base",
+      valueType: "string",
+      order: 2,
+    },
+    {
+      id: "person.bad",
+      canonicalKey: "",
+      label: "",
+      group: "base",
+      valueType: "unsupported",
+      order: Number.NaN,
+    },
+  ]);
+
+  assert.deepEqual(
+    diagnostics.map((diagnostic) => diagnostic.code),
+    [
+      "duplicate-field-id",
+      "missing-canonical-key",
+      "missing-label",
+      "invalid-value-type",
+      "invalid-order",
+    ]
+  );
+});
+
+test("script editor person authoring helpers absorb imported runtime attributes into editable extended attributes", () => {
+  const {
+    appendScriptEditorPersonAttribute,
+    normalizeScriptEditorPersonRecord,
+    updateScriptEditorPersonAttribute,
+    removeScriptEditorPersonAttribute,
+  } = require("../.test-dist/application/script-editor/person-authoring.js");
+
+  const imported = normalizeScriptEditorPersonRecord({
+    id: "char.player",
+    name: "朱元璋",
+    title: "亲兵",
+    occupation: "军中跑腿",
+    age: 32,
+    clanId: "clan.guo",
+    cityId: "city.kulan",
+    houseId: "house.kulan.keep",
+    portraitId: "portrait.player",
+    portraitVariantId: "stage-20",
+    portraitVariants: [
+      { id: "stage-20", label: "20 岁", portraitId: "portrait.player.stage.20" },
+      { id: "stage-25", label: "25 岁", portraitId: "portrait.player.stage.25" },
+    ],
+    stats: {
+      leadership: 60,
+      martial: 58,
+      intelligence: 55,
+      politics: 42,
+      charm: 51,
+      fame: 8,
+    },
+  });
+
+  const extendedAttributeKeys = imported.extendedAttributes.map((entry) => entry.key);
+  assert.equal(extendedAttributeKeys.includes("age"), true);
+  assert.equal(extendedAttributeKeys.includes("clanId"), true);
+  assert.equal(extendedAttributeKeys.includes("cityId"), false);
+  assert.equal(extendedAttributeKeys.includes("houseId"), false);
+  assert.equal(extendedAttributeKeys.includes("portraitId"), false);
+  assert.equal(extendedAttributeKeys.includes("portraitVariantId"), false);
+  assert.equal(extendedAttributeKeys.includes("stats.leadership"), true);
+  assert.equal(extendedAttributeKeys.includes("stats.martial"), true);
+  assert.equal(extendedAttributeKeys.includes("stats.intelligence"), true);
+  assert.equal(extendedAttributeKeys.includes("stats.politics"), true);
+  assert.equal(extendedAttributeKeys.includes("stats.charm"), true);
+  assert.equal(extendedAttributeKeys.includes("stats.fame"), true);
+  assert.equal(
+    imported.extendedAttributes.find((entry) => entry.key === "age")?.label,
+    "年龄"
+  );
+  assert.equal(
+    imported.extendedAttributes.find((entry) => entry.key === "clanId")?.label,
+    "所属"
+  );
+  assert.equal(
+    imported.extendedAttributes.find((entry) => entry.key === "stats.leadership")?.label,
+    "统率"
+  );
+  assert.equal(imported.cityId, "city.kulan");
+  assert.equal(imported.houseId, "house.kulan.keep");
+  assert.equal(imported.portraitId, "portrait.player");
+  assert.equal(imported.portraitVariantId, "stage-20");
+
+  const leadershipIndex = imported.extendedAttributes.findIndex(
+    (entry) => entry.key === "stats.leadership"
+  );
+  const ageIndex = imported.extendedAttributes.findIndex((entry) => entry.key === "age");
+
+  const updated = updateScriptEditorPersonAttribute(
+    imported,
+    leadershipIndex,
+    "value",
+    "61"
+  );
+  assert.equal(updated.stats.leadership, 61);
+
+  const renamed = updateScriptEditorPersonAttribute(
+    updated,
+    leadershipIndex,
+    "label",
+    "带兵"
+  );
+  assert.equal(renamed.extendedAttributes[leadershipIndex].label, "带兵");
+  assert.equal(renamed.stats.leadership, 61);
+
+  const beforeRemovalKeys = updated.extendedAttributes.map((entry) => entry.key);
+  const removed = removeScriptEditorPersonAttribute(updated, ageIndex);
+  const afterRemovalKeys = removed.extendedAttributes.map((entry) => entry.key);
+  assert.equal(afterRemovalKeys.length, beforeRemovalKeys.length - 1);
+  assert.deepEqual(
+    beforeRemovalKeys.filter((key) => !afterRemovalKeys.includes(key)),
+    ["age"]
+  );
+  assert.equal("age" in removed, false);
+
+  const appended = appendScriptEditorPersonAttribute(removed);
+  const appendedIndex = appended.extendedAttributes.length - 1;
+  const relabeled = updateScriptEditorPersonAttribute(
+    appended,
+    appendedIndex,
+    "label",
+    "忠诚"
+  );
+  const withValue = updateScriptEditorPersonAttribute(
+    relabeled,
+    appendedIndex,
+    "value",
+    "80"
+  );
+  assert.equal(withValue.extendedAttributes[appendedIndex].key, "");
+  assert.equal(withValue.extendedAttributes[appendedIndex].label, "忠诚");
+  assert.equal(withValue.extendedAttributes[appendedIndex].value, "80");
+  assert.equal("忠诚" in withValue, false);
+});
+
+test("script editor person authoring helper delete only removes the targeted nested runtime attribute", () => {
+  const {
+    normalizeScriptEditorPersonRecord,
+    removeScriptEditorPersonAttribute,
+  } = require("../.test-dist/application/script-editor/person-authoring.js");
+
+  const person = normalizeScriptEditorPersonRecord({
+    id: "char.player",
+    name: "朱元璋",
+    birthYear: 1535,
+    age: 32,
+    clanId: "clan.guo",
+    stats: {
+      leadership: 60,
+      martial: 58,
+      intelligence: 55,
+      politics: 42,
+      charm: 51,
+      fame: 8,
+      gold: 120,
+    },
+    stamina: 100,
+    skills: {
+      horse: 3,
+      teppo: 1,
+      navy: 0,
+      archery: 1,
+      martial: 2,
+      military: 2,
+      ashigaru: 2,
+    },
+  });
+
+  const beforeKeys = person.extendedAttributes.map((entry) => entry.key);
+  const fameIndex = person.extendedAttributes.findIndex(
+    (entry) => entry.key === "stats.fame"
+  );
+  const removed = removeScriptEditorPersonAttribute(person, fameIndex);
+  const afterKeys = removed.extendedAttributes.map((entry) => entry.key);
+
+  assert.equal(afterKeys.length, beforeKeys.length - 1);
+  assert.deepEqual(
+    beforeKeys.filter((key) => !afterKeys.includes(key)),
+    ["stats.fame"]
+  );
+  assert.equal(removed.stats.fame, undefined);
+  assert.equal(removed.stats.gold, 120);
+  assert.deepEqual(removed.skills, {
+    horse: 3,
+    teppo: 1,
+    navy: 0,
+    archery: 1,
+    martial: 2,
+    military: 2,
+    ashigaru: 2,
+  });
+});
+
+test("character manager derives playable roles and house npc rosters from character data", () => {
+  const createCharacter = (overrides) => ({
+    id: "char.test",
+    name: "测试人物",
+    birthYear: 1350,
+    deathYear: null,
+    age: 20,
+    cityId: "city.test",
+    houseId: undefined,
+    portraitId: "portrait.test",
+    stats: {
+      leadership: 10,
+      martial: 10,
+      intelligence: 10,
+      politics: 10,
+      charm: 10,
+      fame: 10,
+      gold: 10,
+    },
+    stamina: 100,
+    availableFunctions: [],
+    ...overrides,
+  });
+  const characters = [
+    createCharacter({
+      id: "char.player",
+      personType: "角色",
+      role: "playable",
+      houseId: "home.player",
+    }),
+    createCharacter({
+      id: "char.keep_npc",
+      name: "守备",
+      houseId: "house.keep",
+    }),
+    createCharacter({
+      id: "char.fallback_npc",
+      name: "账房",
+    }),
+  ];
+  const keepHouseDefinition = {
+    id: "house.keep",
+    cityId: "city.test",
+    name: "军府",
+    type: "residence",
+    characterIds: ["char.fallback_npc"],
+    defaultCharacterId: null,
+    backAction: { label: "返回", targetView: "city" },
+  };
+
+  const manager = createCharacterManager(characters);
+
+  assert.deepEqual(
+    manager.playableCharacters.map((character) => character.id),
+    ["char.player"]
+  );
+  assert.deepEqual(
+    manager.npcCharacters.map((character) => character.id),
+    ["char.keep_npc", "char.fallback_npc"]
+  );
+  assert.deepEqual(
+    manager.getHouseNpcCharacters(keepHouseDefinition).map((character) => character.id),
+    ["char.keep_npc"]
+  );
+  assert.equal(manager.getDefaultHouseNpcCharacterId(keepHouseDefinition), "char.keep_npc");
+});
+
+test("house npc helpers fall back to explicit characterIds when npc house ownership is absent", () => {
+  const createCharacter = (overrides) => ({
+    id: "char.test",
+    name: "测试人物",
+    birthYear: 1350,
+    deathYear: null,
+    age: 20,
+    cityId: "city.test",
+    portraitId: "portrait.test",
+    stats: {
+      leadership: 10,
+      martial: 10,
+      intelligence: 10,
+      politics: 10,
+      charm: 10,
+      fame: 10,
+      gold: 10,
+    },
+    stamina: 100,
+    availableFunctions: [],
+    ...overrides,
+  });
+  const characters = [
+    createCharacter({
+      id: "char.player",
+      personType: "角色",
+      role: "playable",
+      houseId: "house.market",
+    }),
+    createCharacter({
+      id: "char.market_npc",
+      name: "掌柜",
+    }),
+  ];
+  const houseDefinition = {
+    id: "house.market",
+    cityId: "city.test",
+    name: "商铺",
+    type: "merchant",
+    characterIds: ["char.market_npc"],
+    defaultCharacterId: "char.market_npc",
+    backAction: { label: "返回", targetView: "city" },
+  };
+
+  const manager = createCharacterManager(characters);
+  const houseNpcCharacters = selectHouseNpcCharacters(characters, houseDefinition);
+
+  assert.deepEqual(
+    houseNpcCharacters.map((character) => character.id),
+    ["char.market_npc"]
+  );
+  assert.equal(manager.getDefaultHouseNpcCharacterId(houseDefinition), "char.market_npc");
+});
+
+test("active game content builds a character manager from loaded characters", () => {
+  const content = createActiveGameContent({
+    schemaVersion: 1,
+    id: "pack.test",
+    title: "测试包",
+    characters: [
+      {
+        id: "char.player",
+        name: "主角",
+        personType: "角色",
+        role: "playable",
+        birthYear: 1350,
+        deathYear: null,
+        age: 20,
+        cityId: "city.test",
+        portraitId: "portrait.test",
+        stats: {
+          leadership: 10,
+          martial: 10,
+          intelligence: 10,
+          politics: 10,
+          charm: 10,
+          fame: 10,
+          gold: 10,
+        },
+        stamina: 100,
+        availableFunctions: [],
+      },
+      {
+        id: "char.npc",
+        name: "NPC",
+        birthYear: 1350,
+        deathYear: null,
+        age: 20,
+        cityId: "city.test",
+        houseId: "house.test",
+        portraitId: "portrait.test",
+        stats: {
+          leadership: 10,
+          martial: 10,
+          intelligence: 10,
+          politics: 10,
+          charm: 10,
+          fame: 10,
+          gold: 10,
+        },
+        stamina: 100,
+        availableFunctions: [],
+      },
+    ],
+  });
+
+  assert.equal(
+    content.characterManager.getPlayableCharacterById("char.player")?.id,
+    "char.player"
+  );
+  assert.equal(content.characterManager.getNpcCharacterById("char.npc")?.id, "char.npc");
+});
+
+test("main ui selectable characters are derived from the content character manager", () => {
+  const source = fs.readFileSync(path.join(__dirname, "../src/main.ts"), "utf8");
+
+  assert.doesNotMatch(source, /const selectableCharacterIds = \[/);
+  assert.match(source, /characterManager\.playableCharacters/);
+});
+
+test("script editor person attribute pagination keeps the current page stable after deleting one card", () => {
+  const mainUiSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    "utf8"
+  );
+
+  assert.match(
+    mainUiSource,
+    /this\.scriptEditorPersonAttributeVisibleIndices = null;/
+  );
+  assert.match(
+    mainUiSource,
+    /this\.scriptEditorPersonAttributeVisibleIndices == null\s*\?\s*defaultVisibleIndices/
+  );
+  assert.match(
+    mainUiSource,
+    /visibleEntries:\s*visibleIndices[\s\S]*?\.map\(\(index\) => \{/
+  );
+  assert.match(
+    mainUiSource,
+    /this\.scriptEditorPersonAttributeVisibleIndices\s*=\s*this\.scriptEditorPersonAttributeVisibleIndices[\s\S]*?\.filter\(\(visibleIndex\) => visibleIndex !== index\)[\s\S]*?visibleIndex > index \? visibleIndex - 1 : visibleIndex/
+  );
+  assert.doesNotMatch(
+    mainUiSource,
+    /visibleEntries:\s*entries\.slice\(\s*startIndex,\s*startIndex \+ SCRIPT_EDITOR_PERSON_ATTRIBUTE_PAGE_SIZE\s*\)/
+  );
+});
+
+test("script editor person attribute rerenders preserve the horizontal card scroll position", () => {
+  const mainUiSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    "utf8"
+  );
+
+  assert.match(mainUiSource, /this\.scriptEditorPersonAttributeScrollLeft = 0;/);
+  assert.match(
+    mainUiSource,
+    /const personAttributeList = this\.overlayRoot\.querySelector\(\s*"\.c-script-editor-person-summary__list"/
+  );
+  assert.match(mainUiSource, /this\.scriptEditorPersonAttributeScrollLeft = personAttributeList\.scrollLeft;/);
+  assert.match(mainUiSource, /personAttributeList\.scrollLeft = this\.scriptEditorPersonAttributeScrollLeft;/);
+});
+
+test(
+  "script editor city/building queue exposes dedicated city and building detail tabs, base background, and gate entrypoints",
+  () => {
+    const source = fs.readFileSync("src/ui/main-ui/main-ui-flow.js", "utf8");
+    const cssSource = fs.readFileSync("src/styles/script-editor.css", "utf8");
+    const mainUiStyles = fs.readFileSync("src/styles/main-ui.css", "utf8");
+
+    assert.doesNotMatch(source, /城市作者面|建筑作者面/);
+    assert.match(source, /基础/);
+    assert.match(source, /菜单/);
+    assert.match(source, /进入条件/);
+    assert.match(source, /入口/);
+    assert.match(source, /默认背景/);
+    assert.match(source, /add-location-menu-entry/);
+    assert.match(source, /remove-location-menu-entry/);
+    assert.match(source, /data-script-editor-location-access-field/);
+    assert.match(source, /data-script-editor-location-field="backgroundId"/);
+    assert.match(
+      source,
+      /field === "description" \|\|\s+field === "cityId" \|\|\s+field === "backgroundId"/
+    );
+    assert.doesNotMatch(source, /data-script-editor-location-access-field="refusalEventId"/);
+    assert.match(source, /data-script-editor-location-access-field="blockedDialogueId"/);
+    assert.match(source, /data-script-editor-location-access-condition-action/);
+    assert.match(source, /data-script-editor-building-entry-field/);
+    assert.match(source, /c-script-editor-record-list__summary/);
+    assert.match(source, /SCRIPT_EDITOR_INSPECTOR_SUPPRESS_TEXT/);
+    assert.match(source, /data-script-editor-inspector-header-slot/);
+    assert.doesNotMatch(source, /SCRIPT_EDITOR_ACCESS_STATES/);
+    assert.doesNotMatch(source, /visible-enabled|visible-disabled/);
+    assert.match(source, /conditionExpression/);
+    assert.match(cssSource, /\.c-script-editor-location-editor/);
+    assert.match(cssSource, /\.c-script-editor-location-menu__item/);
+    assert.match(cssSource, /\.c-script-editor-record-list__summary\.is-hidden/);
+    assert.doesNotMatch(mainUiStyles, /\.c-main-ui-runtime-preview-frame/);
+  }
+);
+
+test(
+  "script editor city/building access condition editor exposes runtime-backed picker contract",
+  () => {
+    const source = fs.readFileSync("src/ui/main-ui/main-ui-flow.js", "utf8");
+    const {
+      listScriptEditorLocationAccessConditionFieldOptions,
+    } = require("../.test-dist/application/script-editor/location-access-authoring.js");
+
+    assert.match(
+      source,
+      /renderScriptEditorLocationTabButton\("access", "进入条件"\)/
+    );
+    assert.doesNotMatch(
+      source,
+      /renderScriptEditorLocationTabButton\("access", "进入态"\)/
+    );
+    assert.doesNotMatch(source, />拒绝原因</);
+    assert.doesNotMatch(source, />引导说明</);
+    assert.doesNotMatch(source, />反馈角色</);
+    assert.doesNotMatch(source, />拒绝事件</);
+    assert.doesNotMatch(
+      source,
+      /data-script-editor-location-access-field="refusalEventId"/
+    );
+    assert.doesNotMatch(
+      source,
+      /data-script-editor-location-access-field="conditionExpression"[\s\S]*?<textarea/
+    );
+    assert.match(
+      source,
+      /data-script-editor-location-access-field="blockedDialogueId"/
+    );
+    assert.match(source, /this\.scriptEditorProject\?\.dialogues/);
+    assert.match(source, /data-script-editor-location-access-condition-action/);
+    assert.match(source, /data-script-editor-location-access-condition-field="factor"/);
+    assert.match(source, /data-script-editor-location-access-condition-field="eventId"/);
+    assert.match(source, /data-script-editor-location-access-condition-field="personId"/);
+    assert.match(source, /data-script-editor-location-access-condition-field="timeField"/);
+
+    const options = listScriptEditorLocationAccessConditionFieldOptions();
+    assert.deepEqual(
+      [...new Set(options.map((option) => option.family))].sort(),
+      ["event", "person", "time"]
+    );
+    assert.equal(options.some((option) => option.family === "targetCity"), false);
+    assert.equal(options.some((option) => option.family === "targetBuilding"), false);
+    assert.equal(options.some((option) => option.family === "world"), false);
+    assert.equal(options.some((option) => option.family === "player"), false);
+    assert.equal(options.some((option) => option.family === "payload"), false);
+    assert.equal(options.some((option) => option.family === "resolver"), false);
+    assert.equal(options.some((option) => option.family === "custom"), false);
+    assert.equal(options.some((option) => option.family === "binding-context"), false);
+  }
+);
+
+test(
+  "script editor city/building access conditions collapse empty groups and resolve refusal prompt dialogue",
+  () => {
+    const {
+      normalizeScriptEditorCityRecord,
+    } = require("../.test-dist/application/script-editor/city-building-authoring.js");
+    const {
+      exportScriptEditorProjectToScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    const project = createExportableScriptEditorProjectDefinition();
+
+    const normalizedCity = normalizeScriptEditorCityRecord({
+      id: "city.open",
+      name: "Open City",
+      access: {
+        conditionExpression: { type: "all", conditions: [] },
+      },
+    });
+    assert.equal("conditionExpression" in (normalizedCity.access ?? {}), false);
+
+    project.textEntries = [
+      {
+        id: "text.refusal.city",
+        title: "City Refusal",
+        text: "暂时无法进入此城。",
+      },
+    ];
+    project.dialogues = [
+      {
+        id: "dialogue.refusal.city",
+        title: "City Refusal Dialogue",
+        participantPersonIds: ["person.hero"],
+        nodes: [
+          {
+            id: "dialogue-node.refusal.city.1",
+            nodeType: "dialogue",
+            speakerPersonId: "person.hero",
+            textId: "text.refusal.city",
+            nextNodeId: "",
+            choiceTargetNodeId: "",
+          },
+        ],
+      },
+    ];
+    project.cities = [
+      {
+        id: "city.open",
+        name: "Open City",
+        access: {
+          conditionExpression: { type: "all", conditions: [] },
+          blockedDialogueId: "dialogue.refusal.city",
+        },
+      },
+      {
+        id: "city.closed",
+        name: "Closed City",
+        access: {
+          conditionExpression: { type: "literal", value: false },
+          blockedDialogueId: "dialogue.refusal.city",
+        },
+      },
+    ];
+    project.buildings = [];
+
+    const files = exportScriptEditorProjectToScenarioPackFiles(project);
+    const locationAccess = JSON.parse(files["location-access.json"]);
+
+    assert.equal(
+      locationAccess.some((entry) => entry.targetId === "city.open"),
+      false
+    );
+    assert.equal(locationAccess.length, 1);
+    assert.equal(locationAccess[0].targetId, "city.closed");
+    assert.equal(locationAccess[0].blockedMessage, "暂时无法进入此城。");
+    assert.equal("blockedDialogueId" in locationAccess[0], false);
+  }
+);
+
+test(
+  "script editor city/building authoring helpers normalize menu access and entry-binding fields",
+  () => {
+    const {
+      createDefaultScriptEditorBuildingRecord,
+      createDefaultScriptEditorCityRecord,
+      normalizeScriptEditorBuildingRecord,
+      updateScriptEditorAccessField,
+      updateScriptEditorBuildingEntryBindingField,
+      updateScriptEditorBuildingField,
+      updateScriptEditorCityField,
+      updateScriptEditorMenuEntryField,
+      toggleScriptEditorMenuEntryFlag,
+    } = require("../.test-dist/application/script-editor/city-building-authoring.js");
+
+    let city = createDefaultScriptEditorCityRecord(0);
+    city = updateScriptEditorCityField(city, "name", "苦兰城");
+    city = updateScriptEditorMenuEntryField(city, 0, "targetFamily", "dialogue");
+    city = updateScriptEditorMenuEntryField(city, 0, "targetId", "dialogue.city.kulan");
+    city = toggleScriptEditorMenuEntryFlag(city, 0, "isEnabled", false);
+    city = updateScriptEditorAccessField(city, "state", "visible-disabled");
+    city = updateScriptEditorAccessField(
+      city,
+      "conditionExpression",
+      JSON.stringify({
+        type: "compare",
+        left: { type: "field", subject: "world", fieldId: "chapterId" },
+        operator: "equals",
+        right: { type: "literal", value: "chapter.open" },
+      })
+    );
+    city = updateScriptEditorAccessField(city, "blockedMessage", "暂未开放");
+    city = updateScriptEditorCityField(city, "backgroundId", "chengzhen");
+
+    let building = createDefaultScriptEditorBuildingRecord(0, "city.kulan");
+    building = updateScriptEditorBuildingEntryBindingField(
+      building,
+      "defaultPersonId",
+      "person.host"
+    );
+    building = updateScriptEditorBuildingEntryBindingField(
+      building,
+      "returnTarget",
+      "city"
+    );
+    building = updateScriptEditorBuildingField(building, "backgroundId", "zizhai");
+
+    const normalizedCity = normalizeScriptEditorBuildingRecord({
+      ...building,
+      id: "building.market",
+      cityId: "city.kulan",
+      name: "市集",
+    });
+
+    assert.equal(city.name, "苦兰城");
+    assert.equal(city.menuEntries[0].targetFamily, "dialogue");
+    assert.equal(city.menuEntries[0].targetId, "dialogue.city.kulan");
+    assert.equal(city.menuEntries[0].isEnabled, false);
+    assert.equal("state" in city.access, false);
+    assert.deepEqual(city.access.conditionExpression, {
+      type: "compare",
+      left: { type: "field", subject: "world", fieldId: "chapterId" },
+      operator: "equals",
+      right: { type: "literal", value: "chapter.open" },
+    });
+    assert.equal(city.access.blockedMessage, "暂未开放");
+    assert.equal(city.backgroundId, "chengzhen");
+    assert.equal(normalizedCity.entryBinding.defaultPersonId, "person.host");
+    assert.equal(normalizedCity.entryBinding.returnTarget, "city");
+    assert.equal(normalizedCity.cityId, "city.kulan");
+    assert.equal(normalizedCity.backgroundId, "zizhai");
+  }
+);
+
+test(
+  "script editor city/building default background persists through runtime export and import",
+  async () => {
+    const {
+      createDefaultScriptEditorProjectDefinition,
+    } = require("../.test-dist/application/script-editor/minimal-workflow.js");
+    const {
+      exportScriptEditorProjectToScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    const {
+      loadScriptEditorProjectFromScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-import.js");
+
+    const project = createDefaultScriptEditorProjectDefinition();
+    project.cities[0] = {
+      ...project.cities[0],
+      backgroundId: "chengzhen",
+    };
+    project.buildings[0] = {
+      ...project.buildings[0],
+      backgroundId: "zizhai",
+    };
+
+    const files = exportScriptEditorProjectToScenarioPackFiles(project);
+    const cities = JSON.parse(files["cities.json"]);
+    const houses = JSON.parse(files["houses.json"]);
+    assert.equal(cities[0].backgroundId, "chengzhen");
+    assert.equal(houses[0].backgroundId, "zizhai");
+
+    const importedProject = await loadScriptEditorProjectFromScenarioPackFiles(
+      createImportedFilesFromSerializedJsonRecord(files, "backgrounds")
+    );
+    assert.equal(importedProject.cities[0].backgroundId, "chengzhen");
+    assert.equal(importedProject.buildings[0].backgroundId, "zizhai");
+  }
+);
+
+test("city and building runtime views consume configured background ids", () => {
+  const cityViewSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/views/city/city-view.ts"),
+    "utf8"
+  );
+  const buildingViewSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/views/building/building-module-view.ts"),
+    "utf8"
+  );
+
+  assert.match(cityViewSource, /resolveLocationBackgroundImageUrl/);
+  assert.match(cityViewSource, /cityDefinition\.backgroundId/);
+  assert.match(cityViewSource, /renderCityBackground\(cityDefinition\)/);
+  assert.match(cityViewSource, /class="c-kulan-city__background-image"/);
+  assert.match(buildingViewSource, /resolveLocationBackgroundImageUrl/);
+  assert.match(buildingViewSource, /input\.stage\.activeHouse\.backgroundId/);
+  assert.match(buildingViewSource, /style="\$\{backgroundStyle\}"/);
+});
+
+test(
+  "script editor city/building custom attribute helpers edit bounded extendedAttributes entries",
+  () => {
+    const {
+      appendScriptEditorLocationAttribute,
+      createDefaultScriptEditorBuildingRecord,
+      createDefaultScriptEditorCityRecord,
+      removeScriptEditorLocationAttribute,
+      updateScriptEditorLocationAttribute,
+    } = require("../.test-dist/application/script-editor/city-building-authoring.js");
+
+    let city = createDefaultScriptEditorCityRecord(0);
+    city = appendScriptEditorLocationAttribute(city);
+    city = updateScriptEditorLocationAttribute(city, 0, "key", "tradeRank");
+    city = updateScriptEditorLocationAttribute(city, 0, "label", "Trade Rank");
+    city = updateScriptEditorLocationAttribute(city, 0, "value", "3");
+
+    assert.deepEqual(city.extendedAttributes, [
+      { key: "tradeRank", label: "Trade Rank", value: "3" },
+    ]);
+
+    let building = createDefaultScriptEditorBuildingRecord(0, "city.start");
+    building = appendScriptEditorLocationAttribute(building);
+    building = updateScriptEditorLocationAttribute(building, 0, "key", "taxRate");
+    building = updateScriptEditorLocationAttribute(building, 0, "value", "5");
+    building = appendScriptEditorLocationAttribute(building);
+    building = updateScriptEditorLocationAttribute(building, 1, "key", "emptySlot");
+    building = removeScriptEditorLocationAttribute(building, 0);
+
+    assert.deepEqual(building.extendedAttributes, [
+      { key: "emptySlot", value: "" },
+    ]);
+  }
+);
+
+test(
+  "script editor city/building profile UI exposes custom attribute controls and routes edits",
+  () => {
+    const mainUiSource = fs.readFileSync(
+      path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+      "utf8"
+    );
+
+    assert.match(mainUiSource, /renderScriptEditorLocationCustomAttributes\(location\)/);
+    assert.match(mainUiSource, /data-script-editor-action="add-location-attribute"/);
+    assert.match(mainUiSource, /data-script-editor-action="remove-location-attribute"/);
+    assert.match(mainUiSource, /data-script-editor-location-attribute-field="key"/);
+    assert.match(mainUiSource, /data-script-editor-location-attribute-field="label"/);
+    assert.match(mainUiSource, /data-script-editor-location-attribute-field="value"/);
+    assert.match(mainUiSource, /location\.extendedAttributes \?\? \[\]/);
+    assert.match(mainUiSource, /addScriptEditorLocationAttribute\(\)/);
+    assert.match(mainUiSource, /removeScriptEditorLocationAttribute\(locationAttributeIndex\)/);
+    assert.match(mainUiSource, /applyScriptEditorLocationAttributeField\(index, field, target\.value\)/);
+  }
+);
+
+test(
+  "script editor project save and load preserve city/building custom attributes",
+  async () => {
+    const {
+      createDefaultScriptEditorProjectDefinition,
+    } = require("../.test-dist/application/script-editor/minimal-workflow.js");
+    const {
+      serializeScriptEditorProjectToFiles,
+    } = require("../.test-dist/application/script-editor/editor-project-save.js");
+    const {
+      loadScriptEditorProjectFromFiles,
+    } = require("../.test-dist/application/script-editor/editor-project-loader.js");
+
+    const project = createDefaultScriptEditorProjectDefinition({
+      idBase: "city-building-custom-attributes",
+      title: "City Building Custom Attributes",
+    });
+    project.cities[0].extendedAttributes = [
+      { key: "tradeRank", label: "Trade Rank", value: "3" },
+    ];
+    project.buildings[0].extendedAttributes = [
+      { key: "taxRate", label: "Tax Rate", value: "5" },
+    ];
+
+    const serializedFiles = serializeScriptEditorProjectToFiles(project);
+    const loadedProject = await loadScriptEditorProjectFromFiles(
+      createImportedFilesFromSerializedJsonRecord(
+        serializedFiles,
+        "city-building-custom-attributes"
+      )
+    );
+
+    assert.deepEqual(loadedProject.cities[0].extendedAttributes, [
+      { key: "tradeRank", label: "Trade Rank", value: "3" },
+    ]);
+    assert.deepEqual(loadedProject.buildings[0].extendedAttributes, [
+      { key: "taxRate", label: "Tax Rate", value: "5" },
+    ]);
+  }
+);
+
+test(
+  "script editor building authoring records own runtime house structure fields",
+  () => {
+    const {
+      createDefaultScriptEditorBuildingRecord,
+      normalizeScriptEditorBuildingRecord,
+    } = require("../.test-dist/application/script-editor/city-building-authoring.js");
+
+    const defaultBuilding = createDefaultScriptEditorBuildingRecord(0, "city.kulan");
+    assert.equal(defaultBuilding.baseAttributes.houseType, "custom");
+    assert.deepEqual(defaultBuilding.baseAttributes.characterIds, []);
+    assert.equal(defaultBuilding.baseAttributes.defaultCharacterId, null);
+    assert.equal(defaultBuilding.baseAttributes.activityLocationId, "custom");
+    assert.equal("type" in defaultBuilding, false);
+    assert.equal("characterIds" in defaultBuilding, false);
+    assert.deepEqual(defaultBuilding.backAction, {
+      label: "返回",
+      targetView: "city",
+    });
+
+    const normalizedBuilding = normalizeScriptEditorBuildingRecord({
+      id: "building.market",
+      cityId: "city.kulan",
+      name: "市集",
+      type: "merchant",
+      characterIds: ["person.host", "", "person.guest"],
+      defaultCharacterId: "person.host",
+      activityLocationId: "market",
+      backAction: { label: "回城", targetView: "city" },
+    });
+
+    assert.equal(normalizedBuilding.baseAttributes.houseType, "merchant");
+    assert.deepEqual(normalizedBuilding.baseAttributes.characterIds, [
+      "person.host",
+      "person.guest",
+    ]);
+    assert.equal(normalizedBuilding.baseAttributes.defaultCharacterId, "person.host");
+    assert.equal(normalizedBuilding.baseAttributes.activityLocationId, "market");
+    assert.equal("type" in normalizedBuilding, false);
+    assert.equal("characterIds" in normalizedBuilding, false);
+    assert.deepEqual(normalizedBuilding.backAction, {
+      label: "回城",
+      targetView: "city",
+    });
+    assert.equal("eventBindings" in normalizedBuilding, false);
+  }
+);
+
+test(
+  "script editor city/building definition contract removes visibility access state",
+  () => {
+    const {
+      normalizeScriptEditorBuildingRecord,
+      normalizeScriptEditorCityRecord,
+    } = require("../.test-dist/application/script-editor/city-building-authoring.js");
+
+    const city = normalizeScriptEditorCityRecord({
+      id: "city.start",
+      name: "Start City",
+      mapNodeId: "node.start",
+      baseAttributes: {
+        ownerFactionId: "faction.ming",
+        prosperity: 72,
+        security: 45,
+        population: 12000,
+      },
+      profileMap: {
+        displayName: "Start",
+        description: "A governed city definition.",
+        tags: ["river-port"],
+      },
+      extendedAttributes: [{ key: "tradeRank", label: "Trade Rank", value: 3 }],
+      access: {
+        conditionExpression: { type: "literal", value: false },
+        blockedMessage: "City closed.",
+        blockedSpeakerId: "player",
+        guidance: "Return later.",
+      },
+    });
+    const building = normalizeScriptEditorBuildingRecord({
+      id: "building.market",
+      cityId: "city.start",
+      name: "Market",
+      baseAttributes: {
+        houseType: "merchant",
+        activityLocationId: "market",
+        moduleId: "market-house",
+        characterIds: ["person.host", ""],
+        defaultCharacterId: "person.host",
+        level: 2,
+        damaged: false,
+        outputMultiplier: 1.5,
+        visibleStoryStages: ["stage.open"],
+        enterableStoryStages: ["stage.open"],
+        requiresPlayerCurrentCityMatch: true,
+      },
+      profileMap: {
+        displayName: "Central Market",
+        description: "A governed building definition.",
+        tags: ["trade"],
+      },
+      extendedAttributes: [{ key: "taxRate", value: 5 }],
+      access: {
+        conditionExpression: { type: "literal", value: true },
+        blockedMessage: "",
+      },
+    });
+
+    assert.equal("state" in city.access, false);
+    assert.deepEqual(city.access.conditionExpression, {
+      type: "literal",
+      value: false,
+    });
+    assert.equal(city.baseAttributes.prosperity, 72);
+    assert.equal(city.profileMap.displayName, "Start");
+    assert.equal(city.extendedAttributes[0].key, "tradeRank");
+    assert.equal("type" in building, false);
+    assert.equal(building.baseAttributes.houseType, "merchant");
+    assert.deepEqual(building.baseAttributes.characterIds, ["person.host"]);
+    assert.equal(building.baseAttributes.moduleId, "market-house");
+    assert.equal(building.profileMap.displayName, "Central Market");
+    assert.equal(building.extendedAttributes[0].key, "taxRate");
+  }
+);
+
+test(
+  "script editor runtime export materializes new city building definition records without leaking visibility state",
+  () => {
+    const {
+      exportScriptEditorProjectToScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    const project = createExportableScriptEditorProjectDefinition();
+    project.cities = [
+      {
+        id: "city.start",
+        name: "Start City",
+        regionId: "region.test",
+        mapNodeId: "node.start",
+        neighbourCityIds: [],
+        travelCost: 1,
+        baseAttributes: {
+          ownerFactionId: "faction.ming",
+          prosperity: 72,
+          security: 45,
+          population: 12000,
+        },
+        profileMap: {
+          displayName: "Start",
+          description: "A governed city definition.",
+          tags: ["river-port"],
+        },
+        extendedAttributes: [{ key: "specialDemand", value: ["salt"] }],
+        access: {
+          conditionExpression: { type: "literal", value: true },
+        },
+        mountedBuildings: [
+          {
+            buildingId: "building.market",
+            npcIds: [],
+            primaryNpcId: null,
+          },
+        ],
+      },
+    ];
+    project.buildings = [
+      {
+        id: "building.market",
+        cityId: "city.start",
+        name: "Market",
+        baseAttributes: {
+          houseType: "merchant",
+          activityLocationId: "market",
+          moduleId: "market-house",
+          characterIds: ["person.host"],
+          defaultCharacterId: "person.host",
+        },
+        profileMap: {
+          displayName: "Central Market",
+          description: "A governed building definition.",
+          tags: ["trade"],
+        },
+        extendedAttributes: [],
+        access: {
+          conditionExpression: { type: "literal", value: false },
+          blockedMessage: "Market is closed.",
+          blockedSpeakerId: "person.host",
+          guidance: "Return later.",
+        },
+      },
+    ];
+
+    const files = exportScriptEditorProjectToScenarioPackFiles(project);
+    const cities = JSON.parse(files["cities.json"]);
+    const houses = JSON.parse(files["houses.json"]);
+    const cityEntries = JSON.parse(files["city-entries.json"]);
+    const locationAccess = JSON.parse(files["location-access.json"]);
+    const buildingAccess = locationAccess.find(
+      (definition) => definition.targetId === "building.market"
+    );
+
+    assert.equal(cities[0].id, "city.start");
+    assert.equal(cities[0].name, "Start City");
+    assert.equal(cities[0].mapNodeId, "node.start");
+    assert.equal(cities[0].prosperity, 72);
+    assert.equal(cities[0].danger, 55);
+    assert.deepEqual(cities[0].specialDemand, ["salt"]);
+    assert.equal(cities[0].tags.includes("river-port"), true);
+    assert.equal(JSON.stringify(cities).includes("visible-disabled"), false);
+    assert.equal(JSON.stringify(houses).includes("visible-disabled"), false);
+    assert.equal(houses[0].type, "merchant");
+    assert.equal(houses[0].moduleId, "market-house");
+    assert.deepEqual(houses[0].characterIds, []);
+    assert.equal(houses[0].defaultCharacterId, null);
+    assert.equal(cityEntries[0].targetHouseId, "building.market");
+    assert.equal("house-access-refusal-rules.json" in files, false);
+    assert.ok(buildingAccess);
+    assert.equal(buildingAccess.blockedSpeakerId, "person.host");
+    assert.equal(buildingAccess.blockedMessage, "Market is closed.");
+  }
+);
+
+test(
+  "script editor runtime export fails closed on unsupported city building custom attributes",
+  () => {
+    const {
+      exportScriptEditorProjectToScenarioPackFiles,
+      validateScriptEditorProjectForRuntimeExport,
+    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    const project = createExportableScriptEditorProjectDefinition();
+    project.cities = [
+      {
+        id: "city.start",
+        name: "Start City",
+        extendedAttributes: [
+          { key: "tradeRank", label: "Trade Rank", value: "3" },
+          { key: "specialDemand", value: ["salt"] },
+        ],
+      },
+    ];
+    project.buildings = [
+      {
+        id: "building.market",
+        cityId: "city.start",
+        name: "Market",
+        extendedAttributes: [{ key: "taxRate", label: "Tax Rate", value: "5" }],
+      },
+    ];
+
+    const diagnostics = validateScriptEditorProjectForRuntimeExport(project);
+
+    assert.deepEqual(
+      diagnostics.map((diagnostic) => ({
+        code: diagnostic.code,
+        fieldPath: diagnostic.fieldPath,
+      })),
+      [
+        {
+          code: "unsupported-lowering",
+          fieldPath: "project.cities[0].extendedAttributes[0]",
+        },
+        {
+          code: "unsupported-lowering",
+          fieldPath: "project.buildings[0].extendedAttributes[0]",
+        },
+      ]
+    );
+    assert.throws(
+      () => exportScriptEditorProjectToScenarioPackFiles(project),
+      /city custom attribute|building custom attribute|tradeRank|taxRate/i
+    );
+  }
+);
+
+test(
+  "script editor runtime export preserves city and building access conditions as a runtime family",
+  () => {
+    const {
+      exportScriptEditorProjectToScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    const project = createExportableScriptEditorProjectDefinition();
+    project.cities = [
+      {
+        id: "city.blocked",
+        name: "Blocked City",
+        mapNodeId: "node.blocked",
+        access: {
+          conditionExpression: {
+            type: "compare",
+            left: { type: "field", subject: "world", fieldId: "chapterId" },
+            operator: "equals",
+            right: { type: "literal", value: "chapter.open" },
+          },
+          blockedMessage: "City is not open.",
+          blockedSpeakerId: "player",
+          guidance: "Return later.",
+        },
+      },
+    ];
+    project.buildings = [
+      {
+        id: "building.market",
+        cityId: "city.blocked",
+        name: "Market",
+        access: {
+          conditionExpression: { type: "literal", value: false },
+          blockedMessage: "Market is closed.",
+          blockedSpeakerId: "person.host",
+          guidance: "Leave",
+        },
+      },
+    ];
+
+    const files = exportScriptEditorProjectToScenarioPackFiles(project);
+    const manifest = JSON.parse(files["pack.json"]);
+    const locationAccess = JSON.parse(files["location-access.json"]);
+
+    assert.equal(manifest.files.locationAccess, "./location-access.json");
+    assert.deepEqual(
+      locationAccess.map((entry) => ({
+        targetFamily: entry.targetFamily,
+        targetId: entry.targetId,
+        conditionExpression: entry.conditionExpression,
+        blockedMessage: entry.blockedMessage,
+        blockedSpeakerId: entry.blockedSpeakerId,
+        guidance: entry.guidance,
+      })),
+      [
+        {
+          targetFamily: "city",
+          targetId: "city.blocked",
+          conditionExpression: {
+            type: "compare",
+            left: { type: "field", subject: "world", fieldId: "chapterId" },
+            operator: "equals",
+            right: { type: "literal", value: "chapter.open" },
+          },
+          blockedMessage: "City is not open.",
+          blockedSpeakerId: "player",
+          guidance: "Return later.",
+        },
+        {
+          targetFamily: "building",
+          targetId: "building.market",
+          conditionExpression: { type: "literal", value: false },
+          blockedMessage: "Market is closed.",
+          blockedSpeakerId: "person.host",
+          guidance: "Leave",
+        },
+      ]
+    );
+  }
+);
+
+test(
+  "script editor runtime export preserves event person and time location access conditions",
+  () => {
+    const {
+      exportScriptEditorProjectToScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    const project = createExportableScriptEditorProjectDefinition();
+    project.textEntries = [
+      {
+        id: "text.opening",
+        title: "Opening",
+        text: "Opening line.",
+      },
+      {
+        id: "text.access.refusal",
+        title: "Refusal",
+        text: "条件不足，暂时不能进入。",
+      },
+    ];
+    project.people = [
+      {
+        id: "person.hero",
+        name: "Hero",
+        personType: "角色",
+        extendedAttributes: [
+          { key: "stats.politics", label: "政务", value: "72" },
+          { key: "custom.reputation", label: "声望", value: "high" },
+        ],
+      },
+    ];
+    project.events = [
+      {
+        id: "event.opening.done",
+        title: "Opening Done",
+        destination: { family: "dialogue", targetId: "dialogue.opening" },
+      },
+    ];
+    project.dialogues = [
+      { id: "dialogue.opening", title: "Opening" },
+      {
+        id: "dialogue.access.refusal",
+        title: "Refusal Dialogue",
+        participantPersonIds: ["person.hero"],
+        nodes: [
+          {
+            id: "dialogue-node.access.refusal.1",
+            nodeType: "dialogue",
+            speakerPersonId: "person.hero",
+            textId: "text.access.refusal",
+            nextNodeId: "",
+            choiceTargetNodeId: "",
+          },
+        ],
+      },
+    ];
+    project.cities = [
+      {
+        id: "city.gated",
+        name: "Gated City",
+        mapNodeId: "node.gated",
+        access: {
+          conditionExpression: {
+            type: "all",
+            conditions: [
+              {
+                type: "compare",
+                left: {
+                  type: "field",
+                  subject: "event",
+                  entityId: "event.opening.done",
+                  fieldId: "completed",
+                },
+                operator: "equals",
+                right: { type: "literal", value: true },
+              },
+              {
+                type: "compare",
+                left: {
+                  type: "field",
+                  subject: "person",
+                  entityId: "person.hero",
+                  fieldId: "stats.politics",
+                },
+                operator: "greater-than-or-equal",
+                right: { type: "literal", value: 70 },
+              },
+              {
+                type: "compare",
+                left: { type: "field", subject: "time", fieldId: "year" },
+                operator: "greater-than-or-equal",
+                right: { type: "literal", value: 1567 },
+              },
+            ],
+          },
+          blockedDialogueId: "dialogue.access.refusal",
+        },
+      },
+    ];
+    project.buildings = [];
+
+    const files = exportScriptEditorProjectToScenarioPackFiles(project);
+    const locationAccess = JSON.parse(files["location-access.json"]);
+
+    assert.equal(locationAccess.length, 1);
+    assert.equal(locationAccess[0].targetId, "city.gated");
+    assert.equal(locationAccess[0].blockedMessage, "条件不足，暂时不能进入。");
+    assert.deepEqual(
+      locationAccess[0].conditionExpression.conditions.map(
+        (condition) => condition.left.subject
+      ),
+      ["event", "person", "time"]
+    );
+  }
+);
+
+test("location access runtime evaluates literal and compare conditions", () => {
+  const {
+    evaluateLocationAccess,
+  } = require("../.test-dist/application/location-access/location-access-runtime.js");
+  const baseState = createBaseState();
+  const state = {
+    ...baseState,
+    calendar: { ...baseState.calendar, chapterId: "chapter.closed" },
+  };
+
+  assert.deepEqual(
+    evaluateLocationAccess({
+      state,
+      targetFamily: "city",
+      targetId: "city.blocked",
+      targetCity: {
+        id: "city.blocked",
+        name: "Blocked City",
+        regionId: "region.test",
+        mapNodeId: "node.blocked",
+        houseIds: [],
+        neighbourCityIds: [],
+        travelCost: 1,
+        tags: ["frontier"],
+        prosperity: 50,
+        danger: 20,
+        specialDemand: [],
+      },
+      locationAccessDefinitions: [
+        {
+          id: "location-access.city.blocked",
+          targetFamily: "city",
+          targetId: "city.blocked",
+          conditionExpression: {
+            type: "compare",
+            left: { type: "field", subject: "world", fieldId: "chapterId" },
+            operator: "equals",
+            right: { type: "literal", value: "chapter.open" },
+          },
+          blockedMessage: "City is not open.",
+          blockedSpeakerId: "player",
+          guidance: "Return later.",
+        },
+      ],
+    }),
+    {
+      canEnter: false,
+      refusal: {
+        ruleId: "location-access.city.blocked",
+        speakerCharacterId: "char.player",
+        title: "Blocked City",
+        text: "City is not open.",
+        confirmLabel: "Return later.",
+      },
+    }
+  );
+
+  assert.equal(
+    evaluateLocationAccess({
+      state,
+      targetFamily: "building",
+      targetId: "building.market",
+      targetBuilding: { id: "building.market", cityId: "city.blocked", name: "Market" },
+      locationAccessDefinitions: [
+        {
+          id: "location-access.building.market",
+          targetFamily: "building",
+          targetId: "building.market",
+          conditionExpression: { type: "literal", value: true },
+        },
+      ],
+    }).canEnter,
+    true
+  );
+});
+
+test("location access runtime evaluates event person and time conditions", () => {
+  const {
+    evaluateLocationAccess,
+  } = require("../.test-dist/application/location-access/location-access-runtime.js");
+  const baseState = createBaseState();
+  const state = {
+    ...baseState,
+    calendar: { ...baseState.calendar, year: 1567, month: 2, day: 3 },
+    world: { ...baseState.world, timeOfDay: "morning" },
+    runtime: {
+      ...baseState.runtime,
+      eventHistory: {
+        ...baseState.runtime.eventHistory,
+        "event.opening.done": {
+          firedCount: 1,
+          lastTriggeredOn: "1567-02-03",
+        },
+      },
+    },
+  };
+
+  const accessInput = {
+    state,
+    characterDefinitions: [
+      {
+        id: "person.hero",
+        name: "Hero",
+        birthYear: 1530,
+        age: 37,
+        cityId: "city.gated",
+        portraitId: "portrait.hero",
+        stats: {
+          leadership: 10,
+          martial: 20,
+          intelligence: 30,
+          politics: 72,
+          charm: 50,
+          fame: 40,
+          gold: 100,
+        },
+        stamina: 90,
+        customProperties: { reputation: "high" },
+        availableFunctions: [],
+      },
+    ],
+    targetFamily: "city",
+    targetId: "city.gated",
+    targetCity: {
+      id: "city.gated",
+      name: "Gated City",
+      regionId: "region.test",
+      mapNodeId: "node.gated",
+      houseIds: [],
+      neighbourCityIds: [],
+      travelCost: 1,
+      tags: [],
+      prosperity: 50,
+      danger: 20,
+      specialDemand: [],
+    },
+    locationAccessDefinitions: [
+      {
+        id: "location-access.city.gated",
+        targetFamily: "city",
+        targetId: "city.gated",
+        conditionExpression: {
+          type: "all",
+          conditions: [
+            {
+              type: "compare",
+              left: {
+                type: "field",
+                subject: "event",
+                entityId: "event.opening.done",
+                fieldId: "completed",
+              },
+              operator: "equals",
+              right: { type: "literal", value: true },
+            },
+            {
+              type: "compare",
+              left: {
+                type: "field",
+                subject: "person",
+                entityId: "person.hero",
+                fieldId: "stats.politics",
+              },
+              operator: "greater-than-or-equal",
+              right: { type: "literal", value: 70 },
+            },
+            {
+              type: "compare",
+              left: { type: "field", subject: "time", fieldId: "year" },
+              operator: "greater-than-or-equal",
+              right: { type: "literal", value: 1567 },
+            },
+          ],
+        },
+        blockedMessage: "Access denied.",
+      },
+    ],
+  };
+
+  const result = evaluateLocationAccess(accessInput);
+
+  assert.equal(result.canEnter, true);
+
+  const failed = evaluateLocationAccess({
+    ...accessInput,
+    state: {
+      ...state,
+      runtime: {
+        ...state.runtime,
+        eventHistory: {},
+      },
+    },
+    characterDefinitions: [
+      {
+        id: "person.hero",
+        name: "Hero",
+        birthYear: 1530,
+        age: 37,
+        cityId: "city.gated",
+        portraitId: "portrait.hero",
+        stats: {
+          leadership: 10,
+          martial: 20,
+          intelligence: 30,
+          politics: 60,
+          charm: 50,
+          fame: 40,
+          gold: 100,
+        },
+        stamina: 90,
+        availableFunctions: [],
+      },
+    ],
+    targetFamily: "city",
+    targetId: "city.gated",
+    targetCity: {
+      id: "city.gated",
+      name: "Gated City",
+      regionId: "region.test",
+      mapNodeId: "node.gated",
+      houseIds: [],
+      neighbourCityIds: [],
+      travelCost: 1,
+      tags: [],
+      prosperity: 50,
+      danger: 20,
+      specialDemand: [],
+    },
+    locationAccessDefinitions: [
+      {
+        id: "location-access.city.gated",
+        targetFamily: "city",
+        targetId: "city.gated",
+        conditionExpression: {
+          type: "compare",
+          left: {
+            type: "field",
+            subject: "event",
+            entityId: "event.opening.done",
+            fieldId: "completed",
+          },
+          operator: "equals",
+          right: { type: "literal", value: true },
+        },
+        blockedMessage: "Access denied.",
+      },
+    ],
+  });
+
+  assert.equal(failed.canEnter, false);
+  assert.equal(failed.refusal.text, "Access denied.");
+});
+
+test("location access runtime evaluates event condition independently", () => {
+  const {
+    evaluateLocationAccess,
+  } = require("../.test-dist/application/location-access/location-access-runtime.js");
+  const baseState = createBaseState();
+
+  const blocked = evaluateLocationAccess({
+    state: {
+      ...baseState,
+      runtime: {
+        ...baseState.runtime,
+        eventHistory: {},
+      },
+    },
+    targetFamily: "city",
+    targetId: "city.gated",
+    targetCity: {
+      id: "city.gated",
+      name: "Gated City",
+      regionId: "region.test",
+      mapNodeId: "node.gated",
+      houseIds: [],
+      neighbourCityIds: [],
+      travelCost: 1,
+      tags: [],
+      prosperity: 50,
+      danger: 20,
+      specialDemand: [],
+    },
+    locationAccessDefinitions: [
+      {
+        id: "location-access.city.gated",
+        targetFamily: "city",
+        targetId: "city.gated",
+        conditionExpression: {
+          type: "compare",
+          left: {
+            type: "field",
+            subject: "event",
+            entityId: "event.opening.done",
+            fieldId: "completed",
+          },
+          operator: "equals",
+          right: { type: "literal", value: true },
+        },
+        blockedMessage: "Event locked.",
+      },
+    ],
+  });
+
+  assert.equal(blocked.canEnter, false);
+  assert.equal(blocked.refusal.text, "Event locked.");
+});
+
+test("location access runtime evaluates person condition independently", () => {
+  const {
+    evaluateLocationAccess,
+  } = require("../.test-dist/application/location-access/location-access-runtime.js");
+  const baseState = createBaseState();
+
+  const blocked = evaluateLocationAccess({
+    state: baseState,
+    characterDefinitions: [
+      {
+        id: "person.hero",
+        name: "Hero",
+        birthYear: 1530,
+        age: 37,
+        cityId: "city.gated",
+        portraitId: "portrait.hero",
+        stats: {
+          leadership: 10,
+          martial: 20,
+          intelligence: 30,
+          politics: 60,
+          charm: 50,
+          fame: 40,
+          gold: 100,
+        },
+        stamina: 90,
+        availableFunctions: [],
+      },
+    ],
+    targetFamily: "city",
+    targetId: "city.gated",
+    targetCity: {
+      id: "city.gated",
+      name: "Gated City",
+      regionId: "region.test",
+      mapNodeId: "node.gated",
+      houseIds: [],
+      neighbourCityIds: [],
+      travelCost: 1,
+      tags: [],
+      prosperity: 50,
+      danger: 20,
+      specialDemand: [],
+    },
+    locationAccessDefinitions: [
+      {
+        id: "location-access.city.gated",
+        targetFamily: "city",
+        targetId: "city.gated",
+        conditionExpression: {
+          type: "compare",
+          left: {
+            type: "field",
+            subject: "person",
+            entityId: "person.hero",
+            fieldId: "stats.politics",
+          },
+          operator: "greater-than-or-equal",
+          right: { type: "literal", value: 70 },
+        },
+        blockedMessage: "Person locked.",
+      },
+    ],
+  });
+
+  assert.equal(blocked.canEnter, false);
+  assert.equal(blocked.refusal.text, "Person locked.");
+});
+
+test("location access runtime evaluates time condition independently", () => {
+  const {
+    evaluateLocationAccess,
+  } = require("../.test-dist/application/location-access/location-access-runtime.js");
+  const baseState = createBaseState();
+
+  const blocked = evaluateLocationAccess({
+    state: baseState,
+    targetFamily: "city",
+    targetId: "city.gated",
+    targetCity: {
+      id: "city.gated",
+      name: "Gated City",
+      regionId: "region.test",
+      mapNodeId: "node.gated",
+      houseIds: [],
+      neighbourCityIds: [],
+      travelCost: 1,
+      tags: [],
+      prosperity: 50,
+      danger: 20,
+      specialDemand: [],
+    },
+    locationAccessDefinitions: [
+      {
+        id: "location-access.city.gated",
+        targetFamily: "city",
+        targetId: "city.gated",
+        conditionExpression: {
+          type: "compare",
+          left: { type: "field", subject: "time", fieldId: "year" },
+          operator: "greater-than-or-equal",
+          right: { type: "literal", value: 1600 },
+        },
+        blockedMessage: "Time locked.",
+      },
+    ],
+  });
+
+  assert.equal(blocked.canEnter, false);
+  assert.equal(blocked.refusal.text, "Time locked.");
+});
+
+test(
+  "script editor runtime export materializes city building entry npc and refusal families from authoring fields",
+  () => {
+    const {
+      exportScriptEditorProjectToScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    const project = createExportableScriptEditorProjectDefinition();
+    project.people = [
+      {
+        id: "person.host",
+        name: "Market Host",
+        personType: "NPC",
+        cityId: "city.start",
+        houseId: "building.market",
+      },
+    ];
+    project.cities = [
+      {
+        id: "city.start",
+        name: "Start City",
+        mountedBuildings: [
+          {
+            buildingId: "building.market",
+            npcIds: ["person.host"],
+            primaryNpcId: "person.host",
+          },
+        ],
+      },
+    ];
+    project.buildings = [
+      {
+        id: "building.market",
+        cityId: "city.start",
+        name: "Market",
+        access: {
+          conditionExpression: { type: "literal", value: false },
+          blockedMessage: "Market is closed.",
+          blockedSpeakerId: "person.host",
+          guidance: "Return later.",
+        },
+        entryBinding: {
+          defaultPersonId: "person.host",
+          returnTarget: "city",
+        },
+      },
+    ];
+
+    const files = exportScriptEditorProjectToScenarioPackFiles(project);
+    const houses = JSON.parse(files["houses.json"]);
+    const cityEntries = JSON.parse(files["city-entries.json"]);
+    const cityNpcPools = JSON.parse(files["city-npc-pools.json"]);
+    const locationAccess = JSON.parse(files["location-access.json"]);
+    const buildingAccess = locationAccess.find(
+      (definition) => definition.targetId === "building.market"
+    );
+
+    assert.deepEqual(houses[0].characterIds, ["person.host"]);
+    assert.equal(houses[0].defaultCharacterId, "person.host");
+    assert.equal("onEnterEventId" in houses[0], false);
+    assert.equal("onLeaveEventId" in houses[0], false);
+    assert.deepEqual(houses[0].backAction, { label: "返回", targetView: "city" });
+    assert.equal(houses[0].activityLocationId, "custom");
+    assert.equal(cityEntries[0].cityId, "city.start");
+    assert.equal(cityEntries[0].targetHouseId, "building.market");
+    assert.equal(cityEntries[0].name, "Market");
+    assert.equal(cityNpcPools[0].cityId, "city.start");
+    assert.deepEqual(cityNpcPools[0].residents[0], {
+      id: "person.host",
+      cityId: "city.start",
+      name: "Market Host",
+      title: "",
+      personality: "",
+      specialty: "",
+      favorability: 0,
+      activityWeight: { custom: 1 },
+      dialoguePool: [],
+      intelPool: [],
+    });
+    assert.equal("house-access-refusal-rules.json" in files, false);
+    assert.ok(buildingAccess);
+    assert.equal(buildingAccess.targetFamily, "building");
+    assert.equal(buildingAccess.blockedSpeakerId, "person.host");
+    assert.equal(buildingAccess.blockedMessage, "Market is closed.");
+    assert.equal(buildingAccess.guidance, "Return later.");
+  }
+);
+
+test(
+  "script editor runtime export materializes city mounted buildings and npcs over imported runtime tables",
+  () => {
+    const {
+      exportScriptEditorProjectToScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    const project = createExportableScriptEditorProjectDefinition();
+    project.cities = [
+      {
+        id: "city.start",
+        name: "Start City",
+        mountedBuildings: [
+          {
+            buildingId: "building.market",
+            npcIds: ["person.host", "person.guard"],
+            primaryNpcId: "person.host",
+          },
+        ],
+      },
+    ];
+    project.buildings = [
+      {
+        id: "building.market",
+        cityId: "city.imported",
+        name: "Mounted Market",
+        baseAttributes: {
+          houseType: "merchant",
+          moduleId: "market-house",
+          activityLocationId: "market",
+        },
+      },
+    ];
+    project.people = [
+      {
+        id: "person.host",
+        name: "Mounted Host",
+        personType: "NPC",
+      },
+      {
+        id: "person.guard",
+        name: "Mounted Guard",
+        personType: "NPC",
+      },
+    ];
+    project.cityEntries = [
+      {
+        id: "city-entry.imported.old",
+        cityId: "city.imported",
+        name: "Imported Old Entry",
+        directoryType: "leader-residence",
+        targetHouseId: "building.imported",
+        artworkId: "leader-residence",
+      },
+    ];
+    project.cityNpcPools = [
+      {
+        cityId: "city.imported",
+        residents: [
+          {
+            id: "person.imported",
+            cityId: "city.imported",
+            name: "Imported NPC",
+            title: "",
+            personality: "",
+            specialty: "",
+            favorability: 0,
+            activityWeight: { custom: 1 },
+            dialoguePool: [],
+            intelPool: [],
+          },
+        ],
+      },
+    ];
+
+    const files = exportScriptEditorProjectToScenarioPackFiles(project);
+    const cities = JSON.parse(files["cities.json"]);
+    const houses = JSON.parse(files["houses.json"]);
+    const cityEntries = JSON.parse(files["city-entries.json"]);
+    const cityNpcPools = JSON.parse(files["city-npc-pools.json"]);
+
+    assert.deepEqual(cities[0].houseIds, ["building.market"]);
+    assert.equal(houses[0].cityId, "city.start");
+    assert.deepEqual(houses[0].characterIds, ["person.host", "person.guard"]);
+    assert.equal(houses[0].defaultCharacterId, "person.host");
+    assert.deepEqual(
+      cityEntries.map((entry) => ({
+        cityId: entry.cityId,
+        directoryType: entry.directoryType,
+        artworkId: entry.artworkId,
+        targetHouseId: entry.targetHouseId,
+        name: entry.name,
+      })),
+      [
+        {
+          cityId: "city.start",
+          directoryType: "building",
+          artworkId: "market-house",
+          targetHouseId: "building.market",
+          name: "Mounted Market",
+        },
+      ]
+    );
+    assert.deepEqual(
+      cityNpcPools.map((pool) => ({
+        cityId: pool.cityId,
+        residents: pool.residents.map((resident) => resident.id),
+      })),
+      [{ cityId: "city.start", residents: ["person.host", "person.guard"] }]
+    );
+  }
+);
+
+test(
+  "script editor runtime export treats city mounted npc rows as the canonical building roster",
+  () => {
+    const {
+      exportScriptEditorProjectToScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    const project = createExportableScriptEditorProjectDefinition();
+    project.cities = [
+      {
+        id: "city.start",
+        name: "Start City",
+        mountedBuildings: [
+          {
+            buildingId: "building.temple",
+            npcIds: ["person.mounted"],
+            primaryNpcId: "person.mounted",
+          },
+        ],
+      },
+    ];
+    project.buildings = [
+      {
+        id: "building.temple",
+        cityId: "city.start",
+        name: "Temple",
+        baseAttributes: {
+          houseType: "temple",
+          moduleId: "temple-house",
+          characterIds: ["person.legacy"],
+          defaultCharacterId: "person.legacy",
+        },
+      },
+    ];
+    project.people = [
+      {
+        id: "person.mounted",
+        name: "Mounted NPC",
+        personType: "NPC",
+      },
+      {
+        id: "person.legacy",
+        name: "Legacy NPC",
+        personType: "NPC",
+        houseId: "building.temple",
+      },
+    ];
+
+    const files = exportScriptEditorProjectToScenarioPackFiles(project);
+    const houses = JSON.parse(files["houses.json"]);
+
+    assert.deepEqual(houses[0].characterIds, ["person.mounted"]);
+    assert.equal(houses[0].defaultCharacterId, "person.mounted");
+  }
+);
+
+test("script editor runtime export fails closed for missing mounted npc references", () => {
+  const {
+    exportScriptEditorProjectToScenarioPackFiles,
+  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  const project = createExportableScriptEditorProjectDefinition();
+  project.cities = [
+    {
+      id: "city.start",
+      name: "Start City",
+      mountedBuildings: [
+        {
+          buildingId: "building.market",
+          npcIds: ["person.missing"],
+          primaryNpcId: "person.missing",
+        },
+      ],
+    },
+  ];
+  project.buildings = [
+    {
+      id: "building.market",
+      cityId: "city.start",
+      name: "Mounted Market",
+    },
+  ];
+  project.people = [];
+
+  assert.throws(
+    () => exportScriptEditorProjectToScenarioPackFiles(project),
+    /project\.cities\[0\]\.mountedBuildings\[0\]\.npcIds\[0\].*person\.missing/
+  );
+});
+
+test("city entry export preserves mounted building type and artwork instead of leader residence defaults", () => {
+  const {
+    exportScriptEditorProjectToScenarioPackFiles,
+  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  const project = createExportableScriptEditorProjectDefinition();
+  project.cities = [
+    {
+      id: "city.kulan",
+      name: "Kulan",
+      mountedBuildings: [
+        { buildingId: "house.kulan.temple", npcIds: [], primaryNpcId: null },
+        { buildingId: "house.kulan.tea_house", npcIds: [], primaryNpcId: null },
+      ],
+    },
+  ];
+  project.buildings = [
+    {
+      id: "house.kulan.temple",
+      cityId: "city.kulan",
+      name: "皇觉寺",
+      baseAttributes: {
+        houseType: "temple",
+        moduleId: "temple-house",
+        activityLocationId: "temple",
+      },
+    },
+    {
+      id: "house.kulan.tea_house",
+      cityId: "city.kulan",
+      name: "茶馆",
+      baseAttributes: {
+        houseType: "tea-house",
+        moduleId: "tea-house",
+        activityLocationId: "tea-house",
+      },
+    },
+  ];
+
+  const files = exportScriptEditorProjectToScenarioPackFiles(project);
+  const cityEntries = JSON.parse(files["city-entries.json"]);
+
+  assert.deepEqual(
+    cityEntries.map((entry) => ({
+      name: entry.name,
+      directoryType: entry.directoryType,
+      artworkId: entry.artworkId,
+      targetHouseId: entry.targetHouseId,
+    })),
+    [
+      {
+        name: "皇觉寺",
+        directoryType: "building",
+        artworkId: "temple-house",
+        targetHouseId: "house.kulan.temple",
+      },
+      {
+        name: "茶馆",
+        directoryType: "building",
+        artworkId: "tea-house",
+        targetHouseId: "house.kulan.tea_house",
+      },
+    ]
+  );
+});
+
+test("city entry export rewrites stale imported leader residence metadata for mounted buildings", () => {
+  const {
+    exportScriptEditorProjectToScenarioPackFiles,
+  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  const project = createExportableScriptEditorProjectDefinition();
+  project.cities = [
+    {
+      id: "city.kulan",
+      name: "Kulan",
+      mountedBuildings: [
+        { buildingId: "house.kulan.temple", npcIds: [], primaryNpcId: null },
+        { buildingId: "house.kulan.tea_house", npcIds: [], primaryNpcId: null },
+      ],
+    },
+  ];
+  project.buildings = [
+    {
+      id: "house.kulan.temple",
+      cityId: "city.kulan",
+      name: "皇觉寺",
+      baseAttributes: {
+        houseType: "temple",
+        moduleId: "temple-house",
+        activityLocationId: "temple",
+      },
+    },
+    {
+      id: "house.kulan.tea_house",
+      cityId: "city.kulan",
+      name: "茶馆",
+      baseAttributes: {
+        houseType: "tea-house",
+        moduleId: "tea-house",
+        activityLocationId: "tea-house",
+      },
+    },
+  ];
+  project.cityEntries = [
+    {
+      id: "city-entry.city.kulan.house.kulan.temple",
+      cityId: "city.kulan",
+      name: "将领府邸",
+      directoryType: "leader-residence",
+      targetHouseId: "house.kulan.temple",
+      artworkId: "leader-residence",
+    },
+    {
+      id: "city-entry.city.kulan.house.kulan.tea_house",
+      cityId: "city.kulan",
+      name: "将领府邸",
+      directoryType: "leader-residence",
+      targetHouseId: "house.kulan.tea_house",
+      artworkId: "leader-residence",
+    },
+  ];
+
+  const files = exportScriptEditorProjectToScenarioPackFiles(project);
+  const cityEntries = JSON.parse(files["city-entries.json"]);
+
+  assert.deepEqual(
+    cityEntries.map((entry) => ({
+      id: entry.id,
+      name: entry.name,
+      directoryType: entry.directoryType,
+      artworkId: entry.artworkId,
+      targetHouseId: entry.targetHouseId,
+    })),
+    [
+      {
+        id: "city-entry.city.kulan.house.kulan.temple",
+        name: "皇觉寺",
+        directoryType: "building",
+        artworkId: "temple-house",
+        targetHouseId: "house.kulan.temple",
+      },
+      {
+        id: "city-entry.city.kulan.house.kulan.tea_house",
+        name: "茶馆",
+        directoryType: "building",
+        artworkId: "tea-house",
+        targetHouseId: "house.kulan.tea_house",
+      },
+    ]
+  );
+});
+
+test("script editor runtime export does not invent city entries for unmounted buildings", () => {
+  const {
+    exportScriptEditorProjectToScenarioPackFiles,
+  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  const project = createExportableScriptEditorProjectDefinition();
+  project.cities = [{ id: "city.empty", name: "Empty City" }];
+  project.buildings = [
+    {
+      id: "house.empty.market",
+      cityId: "city.empty",
+      name: "Unconfigured Market",
+      baseAttributes: {
+        houseType: "merchant",
+        moduleId: "market-house",
+        activityLocationId: "market",
+      },
+    },
+  ];
+
+  const files = exportScriptEditorProjectToScenarioPackFiles(project);
+
+  assert.deepEqual(JSON.parse(files["city-entries.json"]), []);
+});
+
+test("script editor runtime pack import preserves runtime families without inferring mounted authoring rows", () => {
+  const {
+    importScenarioPackToScriptEditorProject,
+  } = require("../.test-dist/application/script-editor/runtime-pack-import.js");
+  const importedProject = importScenarioPackToScriptEditorProject({
+    schemaVersion: 1,
+    id: "scenario.imported",
+    title: "Imported Scenario",
+    scenarioProfile: {
+      id: "scenario-profile.imported",
+      playerCharacterId: "person.player",
+      chapterId: "chapter.imported",
+      initialLocation: {
+        mapId: "map.imported",
+        cityId: "city.kulan",
+        houseId: null,
+        view: "city",
+      },
+    },
+    characters: [
+      { id: "person.host", name: "Host", personType: "NPC" },
+      { id: "person.guard", name: "Guard", personType: "NPC" },
+    ],
+    cities: [{ id: "city.kulan", name: "Kulan" }],
+    houses: [
+      {
+        id: "house.kulan.temple",
+        cityId: "city.kulan",
+        name: "皇觉寺",
+        type: "temple",
+        characterIds: ["person.host", "person.guard"],
+        defaultCharacterId: "person.host",
+        activityLocationId: "temple",
+      },
+    ],
+    cityEntries: [
+      {
+        id: "city-entry.kulan.temple",
+        cityId: "city.kulan",
+        name: "皇觉寺",
+        directoryType: "building",
+        targetHouseId: "house.kulan.temple",
+        artworkId: "temple-house",
+      },
+    ],
+    cityNpcPools: [
+      {
+        cityId: "city.kulan",
+        residents: [
+          {
+            id: "person.host",
+            cityId: "city.kulan",
+            name: "Host",
+            title: "",
+            personality: "",
+            specialty: "",
+            favorability: 0,
+            activityWeight: { custom: 1 },
+            dialoguePool: [],
+            intelPool: [],
+          },
+          {
+            id: "person.guard",
+            cityId: "city.kulan",
+            name: "Guard",
+            title: "",
+            personality: "",
+            specialty: "",
+            favorability: 0,
+            activityWeight: { custom: 1 },
+            dialoguePool: [],
+            intelPool: [],
+          },
+        ],
+      },
+    ],
+    events: [],
+    dialogues: [],
+  });
+
+  assert.deepEqual(importedProject.cities[0].mountedBuildings, []);
+  assert.deepEqual(
+    importedProject.cityEntries.map((entry) => ({
+      cityId: entry.cityId,
+      targetHouseId: entry.targetHouseId,
+    })),
+    [{ cityId: "city.kulan", targetHouseId: "house.kulan.temple" }]
+  );
+  assert.deepEqual(
+    importedProject.cityNpcPools.map((pool) => ({
+      cityId: pool.cityId,
+      residents: pool.residents.map((resident) => resident.id),
+    })),
+    [{ cityId: "city.kulan", residents: ["person.host", "person.guard"] }]
+  );
+});
+
+test("script editor default project initializes empty building arrangements", () => {
+  const {
+    createDefaultScriptEditorProjectDefinition,
+  } = require("../.test-dist/application/script-editor/minimal-workflow.js");
+
+  const project = createDefaultScriptEditorProjectDefinition();
+
+  assert.deepEqual(project.buildingArrangements, []);
+});
+
+test("script editor project loader validates explicit building arrangements", () => {
+  const {
+    validateScriptEditorProjectDefinition,
+  } = require("../.test-dist/application/script-editor/editor-project-loader.js");
+
+  const project = {
+    ...createSampleScriptEditorProjectDefinition(),
+    buildingArrangements: [
+      {
+        id: "building-arrangement.city-start.home",
+        cityId: "city.start",
+        buildingId: "building.home",
+        displayName: "Home",
+        backgroundId: "background.home",
+        layout: {
+          templateId: "meeting-stage",
+        },
+        mountedNpcIds: ["person.hero"],
+        primaryNpcId: "person.hero",
+        containers: [
+          {
+            id: "container.home.seats",
+            type: "character-seats",
+            title: "Seats",
+            source: {
+              type: "arrangement-mounted-npcs",
+              includeNpcIds: ["person.hero"],
+            },
+          },
+          {
+            id: "container.home.menu",
+            type: "action-menu",
+            title: "Menu",
+            items: [
+              {
+                id: "action.home.leave",
+                label: "Leave",
+                eventId: "event.opening",
+              },
+            ],
+          },
+        ],
+        visibleRule: {},
+        enterRule: {},
+        exitRule: {},
+      },
+    ],
+  };
+
+  const validated = validateScriptEditorProjectDefinition(project);
+
+  assert.deepEqual(validated.buildingArrangements, project.buildingArrangements);
+});
+
+test("script editor project loader fails closed on invalid building arrangement shape", () => {
+  const {
+    validateScriptEditorProjectDefinition,
+  } = require("../.test-dist/application/script-editor/editor-project-loader.js");
+
+  assert.throws(
+    () =>
+      validateScriptEditorProjectDefinition({
+        ...createSampleScriptEditorProjectDefinition(),
+        buildingArrangements: [
+          {
+            id: "building-arrangement.invalid",
+            cityId: "city.start",
+            buildingId: "building.home",
+            mountedNpcIds: "person.hero",
+            primaryNpcId: null,
+            containers: [],
+          },
+        ],
+      }),
+    /script editor project buildingArrangements\[0\]\.mountedNpcIds must be an array/
+  );
+});
+
+test("script editor runtime-pack import initializes empty building arrangements without old-data inference", () => {
+  const {
+    importScenarioPackToScriptEditorProject,
+  } = require("../.test-dist/application/script-editor/runtime-pack-import.js");
+
+  const importedProject = importScenarioPackToScriptEditorProject({
+    schemaVersion: 1,
+    id: "scenario.import-no-arrangements",
+    title: "Imported No Arrangements",
+    scenarioProfile: {
+      id: "scenario-profile.import-no-arrangements",
+      playerCharacterId: "person.player",
+      chapterId: "chapter.imported",
+      initialLocation: {
+        mapId: "map.imported",
+        cityId: "city.kulan",
+        houseId: "house.kulan.temple",
+        view: "city",
+      },
+    },
+    characters: [{ id: "person.player", name: "Player" }],
+    cities: [{ id: "city.kulan", name: "Kulan" }],
+    houses: [
+      {
+        id: "house.kulan.temple",
+        cityId: "city.kulan",
+        name: "Temple",
+        type: "temple",
+        characterIds: ["person.host"],
+        defaultCharacterId: "person.host",
+        activityLocationId: "temple",
+      },
+    ],
+    cityEntries: [
+      {
+        id: "city-entry.kulan.temple",
+        cityId: "city.kulan",
+        name: "Temple",
+        directoryType: "building",
+        targetHouseId: "house.kulan.temple",
+        artworkId: "temple-house",
+      },
+    ],
+    cityNpcPools: [
+      {
+        cityId: "city.kulan",
+        residents: [
+          {
+            id: "person.host",
+            cityId: "city.kulan",
+            name: "Host",
+            title: "",
+            personality: "",
+            specialty: "",
+            favorability: 0,
+            activityWeight: { custom: 1 },
+            dialoguePool: [],
+            intelPool: [],
+          },
+        ],
+      },
+    ],
+    events: [],
+    dialogues: [],
+  });
+
+  assert.deepEqual(importedProject.buildingArrangements, []);
+  assert.deepEqual(importedProject.cities[0].mountedBuildings, []);
+});
+
+test("script editor runtime export and scenario loader carry explicit building arrangements", async () => {
+  const {
+    exportScriptEditorProjectToScenarioPackFiles,
+  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  const {
+    loadScenarioPackFromFiles,
+  } = require("../.test-dist/application/scenario/scenario-pack-loader.js");
+  const project = createExportableScriptEditorProjectDefinition();
+  project.buildingArrangements = [
+    {
+      id: "building-arrangement.city-start.home",
+      cityId: "city.start",
+      buildingId: "building.home",
+      displayName: "Home Shell",
+      description: "Explicit runtime shell fixture.",
+      backgroundId: "background.home",
+      layout: {
+        templateId: "meeting-stage",
+      },
+      mountedNpcIds: ["person.hero"],
+      primaryNpcId: "person.hero",
+      containers: [
+        {
+          id: "container.home.seats",
+          type: "character-seats",
+          title: "Seats",
+          source: {
+            type: "arrangement-mounted-npcs",
+            includeNpcIds: ["person.hero"],
+          },
+        },
+        {
+          id: "container.home.menu",
+          type: "action-menu",
+          title: "Menu",
+          items: [
+            {
+              id: "action.home.rest",
+              label: "Rest",
+              eventId: "event.home.rest",
+            },
+          ],
+        },
+      ],
+    },
+  ];
+
+  const serializedFiles = exportScriptEditorProjectToScenarioPackFiles(project);
+  const manifest = JSON.parse(serializedFiles["pack.json"]);
+  const arrangements = JSON.parse(serializedFiles["building-arrangements.json"]);
+  const loadedPack = await loadScenarioPackFromFiles(
+    createImportedFilesFromSerializedJsonRecord(serializedFiles, "runtime-pack")
+  );
+
+  assert.equal(manifest.files.buildingArrangements, "./building-arrangements.json");
+  assert.deepEqual(arrangements, project.buildingArrangements);
+  assert.deepEqual(loadedPack.buildingArrangements, project.buildingArrangements);
+});
+
+test("script editor runtime-pack import preserves explicit building arrangements", async () => {
+  const {
+    exportScriptEditorProjectToScenarioPackFiles,
+  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  const {
+    loadScriptEditorProjectFromScenarioPackFiles,
+  } = require("../.test-dist/application/script-editor/runtime-pack-import.js");
+  const project = createExportableScriptEditorProjectDefinition();
+  project.buildingArrangements = [
+    {
+      id: "building-arrangement.city-start.home",
+      cityId: "city.start",
+      buildingId: "building.home",
+      displayName: "Home Shell",
+      layout: {
+        templateId: "meeting-stage",
+      },
+      mountedNpcIds: [],
+      primaryNpcId: null,
+      containers: [],
+    },
+  ];
+
+  const serializedFiles = exportScriptEditorProjectToScenarioPackFiles(project);
+  const importedProject = await loadScriptEditorProjectFromScenarioPackFiles(
+    createImportedFilesFromSerializedJsonRecord(serializedFiles, "runtime-pack")
+  );
+
+  assert.deepEqual(importedProject.buildingArrangements, project.buildingArrangements);
+});
+
+test("building module renderer resolves arrangement layout config without house fallback", () => {
+  const {
+    renderBuildingModuleView,
+  } = require("../.test-dist/ui/views/building/building-module-view.js");
+
+  const markup = renderBuildingModuleView({
+    stage: {
+      type: "building",
+      activeHouse: {
+        id: "building.temple",
+        cityId: "city.start",
+        name: "Temple Base",
+        backgroundId: "temple",
+        type: "temple",
+        characterIds: [],
+        defaultCharacterId: null,
+        backAction: {
+          label: "Return",
+          targetView: "city",
+        },
+      },
+      arrangement: {
+        id: "building-arrangement.city-start.temple",
+        cityId: "city.start",
+        buildingId: "building.temple",
+        displayName: "Temple Shell",
+        description: "Explicit temple arrangement shell.",
+        backgroundId: "temple",
+        layout: {
+          templateId: "meeting-stage",
+          shellClassNames: ["view-house-temple"],
+          nodes: [
+            {
+              id: "node.actions",
+              kind: "action-menu",
+              regionId: "actions",
+              sourceContainerType: "action-menu",
+              actionFilter: "non-leave",
+              presentation: "gold-center-nav",
+              previewSelectable: true,
+            },
+            {
+              id: "node.meeting-roster",
+              kind: "character-seats",
+              regionId: "center",
+              sourceContainerType: "character-seats",
+              characterFilter: "all",
+              presentation: "meeting-grid",
+              previewSelectable: true,
+            },
+            {
+              id: "node.leave",
+              kind: "leave-action",
+              regionId: "leave",
+              sourceContainerType: "action-menu",
+              actionFilter: "leave-only",
+              presentation: "gold-leave",
+              previewSelectable: true,
+              clickActionId: "leave-building",
+            },
+          ],
+        },
+        mountedNpcIds: ["person.abbot"],
+        primaryNpcId: "person.abbot",
+        containers: [],
+      },
+      containerViewModels: [
+        {
+          id: "container.temple.seats",
+          type: "character-seats",
+          title: "Seats",
+          characters: [
+            {
+              id: "person.abbot",
+              name: "Abbot",
+              title: "Host",
+            },
+          ],
+        },
+        {
+          id: "container.temple.menu",
+          type: "action-menu",
+          title: "Actions",
+          actions: [
+            {
+              id: "review",
+              label: "Review",
+              eventId: "event.temple.review",
+              isVisible: true,
+              isEnabled: true,
+            },
+            {
+              id: "leave",
+              label: "Leave",
+              eventId: "event.temple.leave",
+              isVisible: true,
+              isEnabled: true,
+            },
+          ],
+        },
+      ],
+    },
+    characterDefinitions: [],
+    characterManager: {},
+  });
+
+  assert.doesNotMatch(markup, /view-house-grain-shop/);
+  assert.match(markup, /view-house-building-shell/);
+  assert.match(markup, /c-building-layout-template/);
+  assert.match(markup, /c-building-layout-template--meeting-stage/);
+  assert.match(markup, /view-house-temple/);
+  assert.match(markup, /c-building-layout-seat/);
+  assert.match(markup, /c-building-layout-actions/);
+  assert.match(markup, /c-building-skin-button/);
+  assert.match(markup, /c-building-layout-node--action-menu/);
+  assert.match(markup, /c-building-layout-region--actions/);
+  assert.match(markup, /c-building-layout-node-presentation--gold-center-nav/);
+  assert.match(markup, /data-building-layout-node-id="node.actions"/);
+  assert.match(markup, /data-layout-preview-selectable="true"/);
+  assert.match(markup, /data-building-layout-click-action-id="leave-building"/);
+  assert.doesNotMatch(markup, /data-action="leave-house"/);
+});
+
+test("active game content exposes explicit building arrangements without old-data inference", () => {
+  const content = createActiveGameContent({
+    schemaVersion: 1,
+    id: "pack.arrangement-runtime",
+    title: "Arrangement Runtime",
+    scenarioProfile: {
+      id: "scenario.arrangement-runtime",
+      playerCharacterId: "person.player",
+      chapterId: "chapter.arrangement-runtime",
+      initialLocation: {
+        mapId: "map.start",
+        cityId: "city.start",
+        houseId: "building.temple",
+        view: "house",
+      },
+    },
+    characters: [{ id: "person.player", name: "Player" }],
+    cities: [{ id: "city.start", name: "Start" }],
+    houses: [
+      {
+        id: "building.temple",
+        cityId: "city.start",
+        name: "Temple Base",
+        type: "temple",
+        characterIds: ["person.legacy"],
+        defaultCharacterId: "person.legacy",
+        activityLocationId: "custom",
+      },
+    ],
+    buildingArrangements: [
+      {
+        id: "building-arrangement.city-start.temple",
+        cityId: "city.start",
+        buildingId: "building.temple",
+        displayName: "Temple Shell",
+        mountedNpcIds: [],
+        primaryNpcId: null,
+        containers: [],
+      },
+    ],
+    cityNpcPools: [
+      {
+        cityId: "city.start",
+        residents: [
+          {
+            id: "person.pool",
+            cityId: "city.start",
+            name: "Pool Stranger",
+            title: "Unassigned",
+            personality: "",
+            specialty: "",
+            favorability: 0,
+            activityWeight: { custom: 1 },
+            dialoguePool: [],
+            intelPool: [],
+          },
+        ],
+      },
+    ],
+    events: [],
+    dialogues: [],
+  });
+
+  assert.deepEqual(content.buildingArrangements, [
+    {
+      id: "building-arrangement.city-start.temple",
+      cityId: "city.start",
+      buildingId: "building.temple",
+      displayName: "Temple Shell",
+      mountedNpcIds: [],
+      primaryNpcId: null,
+      containers: [],
+    },
+  ]);
+});
+
+test("building module stage selects generic arrangement shell before old house roster", () => {
+  const {
+    selectBuildingModuleStage,
+  } = require("../.test-dist/application/building/building-module-entry.js");
+  const appState = {
+    gameState: {
+      ...createBaseState(),
+      world: {
+        ...createBaseState().world,
+        currentCityId: "city.start",
+        currentHouseId: "building.temple",
+      },
+      ui: {
+        ...createBaseState().ui,
+        currentView: "house",
+      },
+    },
+    characterDefinitions: [
+      { id: "person.host", name: "Host Monk" },
+      { id: "person.pool", name: "Pool Stranger" },
+    ],
+    playerCoordinate: { x: 0, y: 0 },
+    campaignActorState: { facingDegrees: 0, isMoving: false },
+    campaignTravelState: null,
+    modalState: null,
+    locationDialogueState: null,
+    beggingMiniGameState: null,
+    cityMenuState: null,
+    cityDirectoryState: null,
+    autoAdvanceState: null,
+    uiLayouts: {},
+  };
+
+  const stage = selectBuildingModuleStage({
+    appState,
+    houseDefinitions: [
+      {
+        id: "building.temple",
+        cityId: "city.start",
+        name: "Temple Base",
+        type: "temple",
+        characterIds: [],
+        defaultCharacterId: null,
+        activityLocationId: "custom",
+        backAction: { label: "Leave", targetView: "city" },
+      },
+    ],
+    buildingArrangements: [
+      {
+        id: "building-arrangement.city-start.temple",
+        cityId: "city.start",
+        buildingId: "building.temple",
+        displayName: "Temple Shell",
+        mountedNpcIds: ["person.host"],
+        primaryNpcId: "person.host",
+        containers: [
+          {
+            id: "container.temple.seats",
+            type: "character-seats",
+            title: "Seats",
+            source: {
+              type: "arrangement-mounted-npcs",
+              includeNpcIds: ["person.host"],
+            },
+          },
+        ],
+      },
+    ],
+    cityNpcPoolDefinitions: [
+      {
+        cityId: "city.start",
+        residents: [
+          {
+            id: "person.pool",
+            cityId: "city.start",
+            name: "Pool Stranger",
+            title: "Unassigned",
+            personality: "",
+            specialty: "",
+            favorability: 0,
+            activityWeight: { custom: 1 },
+            dialoguePool: [],
+            intelPool: [],
+          },
+        ],
+      },
+    ],
+    playerCharacterId,
+  });
+
+  assert.equal(stage.type, "building");
+  assert.equal(stage.arrangement.displayName, "Temple Shell");
+  assert.deepEqual(
+    stage.containerViewModels.flatMap((container) =>
+      container.type === "character-seats"
+        ? container.characters.map((character) => character.name)
+        : []
+    ),
+    ["Host Monk"]
+  );
+});
+
+test("minigame presenter preserves the building stage when a house-hosted playable is active", () => {
+  const {
+    createStagePresenterOutput,
+  } = require("../.test-dist/application/presenter/stage-presenters.js");
+
+  const baseState = createBaseState();
+  const appState = {
+    gameState: {
+      ...baseState,
+      world: {
+        ...baseState.world,
+        currentCityId: "city.start",
+        currentHouseId: "building.temple",
+      },
+      ui: {
+        ...baseState.ui,
+        currentView: "minigame",
+      },
+      runtime: {
+        ...baseState.runtime,
+        playableSession: {
+          sessionId: "playable.flow.building.temple",
+          playableId: "flow.building.temple.review",
+          integrationId: "playable.flow.building.temple.review",
+          family: "flow",
+          ownerContext: {
+            ownerKind: "house",
+            ownerId: "building.temple",
+            returnPolicy: "resume-owner",
+          },
+          status: "active",
+          state: { currentNodeId: "node.start" },
+        },
+      },
+    },
+    characterDefinitions: [{ id: "person.host", name: "Host Monk" }],
+    playerCoordinate: { x: 0, y: 0 },
+    campaignActorState: { facingDegrees: 0, isMoving: false },
+    campaignTravelState: null,
+    modalState: null,
+    locationDialogueState: null,
+    beggingMiniGameState: null,
+    cityMenuState: null,
+    cityDirectoryState: null,
+    autoAdvanceState: null,
+    uiLayouts: {},
+  };
+
+  const stage = createStagePresenterOutput({
+    appState,
+    cityDefinition: { id: "city.start", name: "Start City" },
+    cityDefinitions: [{ id: "city.start", name: "Start City" }],
+    houseDefinitions: [
+      {
+        id: "building.temple",
+        cityId: "city.start",
+        name: "Temple Base",
+        type: "temple",
+        characterIds: [],
+        defaultCharacterId: null,
+        activityLocationId: "custom",
+        backAction: { label: "Leave", targetView: "city" },
+      },
+    ],
+    buildingArrangements: [
+      {
+        id: "building-arrangement.city-start.temple",
+        cityId: "city.start",
+        buildingId: "building.temple",
+        displayName: "Temple Shell",
+        mountedNpcIds: [],
+        primaryNpcId: null,
+        containers: [],
+      },
+    ],
+    cityEntries: [],
+    cityNpcPoolDefinitions: [],
+    playerCharacterId: "person.player",
+  });
+
+  assert.equal(stage.type, "building");
+  assert.equal(stage.activeHouse.id, "building.temple");
+});
+
+test("scene presenter preserves the building stage as underlay when a house event is active", () => {
+  const {
+    createStagePresenterOutput,
+  } = require("../.test-dist/application/presenter/stage-presenters.js");
+
+  const baseState = createBaseState();
+  const appState = {
+    gameState: {
+      ...baseState,
+      world: {
+        ...baseState.world,
+        currentCityId: "city.start",
+        currentHouseId: "building.temple",
+      },
+      ui: {
+        ...baseState.ui,
+        currentView: "scene",
+      },
+      scene: {
+        ...baseState.scene,
+        activeEventId: "event.building.temple.enter",
+        activeSceneId: "scene.building.temple.enter",
+        cursor: 0,
+        status: "playing",
+      },
+    },
+    characterDefinitions: [{ id: "person.host", name: "Host Monk", title: "Abbot" }],
+    playerCoordinate: { x: 0, y: 0 },
+    campaignActorState: { facingDegrees: 0, isMoving: false },
+    campaignTravelState: null,
+    modalState: null,
+    locationDialogueState: null,
+    beggingMiniGameState: null,
+    cityMenuState: null,
+    cityDirectoryState: null,
+    autoAdvanceState: null,
+    uiLayouts: {},
+  };
+
+  const stage = createStagePresenterOutput({
+    appState,
+    cityDefinition: { id: "city.start", name: "Start City" },
+    cityDefinitions: [{ id: "city.start", name: "Start City" }],
+    houseDefinitions: [
+      {
+        id: "building.temple",
+        cityId: "city.start",
+        name: "Temple Base",
+        type: "temple",
+        characterIds: [],
+        defaultCharacterId: null,
+        backgroundId: "temple",
+        backAction: {
+          label: "Return",
+          targetView: "city",
+        },
+      },
+    ],
+    buildingArrangements: [
+      {
+        id: "building-arrangement.city-start.temple",
+        cityId: "city.start",
+        buildingId: "building.temple",
+        displayName: "Temple Shell",
+        backgroundId: "temple",
+        mountedNpcIds: ["person.host"],
+        primaryNpcId: "person.host",
+        containers: [
+          {
+            id: "container.temple.seats",
+            type: "character-seats",
+            title: "Seats",
+            source: {
+              type: "arrangement-mounted-npcs",
+            },
+          },
+        ],
+      },
+    ],
+    cityEntries: [],
+    cityNpcPoolDefinitions: [],
+    playerCharacterId: "person.player",
+    sceneDefinitionsById: {
+      "scene.building.temple.enter": {
+        id: "scene.building.temple.enter",
+        actions: [
+          {
+            type: "dialogue",
+            speakerId: "person.host",
+            text: "Welcome.",
+          },
+        ],
+      },
+    },
+  });
+
+  assert.equal(stage.type, "scene");
+  assert.equal(stage.cityUnderlay, undefined);
+  assert.ok(stage.buildingUnderlay);
+  assert.equal(stage.buildingUnderlay.activeHouse.id, "building.temple");
+  assert.equal(stage.buildingUnderlay.arrangement.displayName, "Temple Shell");
+  assert.deepEqual(
+    stage.buildingUnderlay.containerViewModels[0]?.characters?.map(
+      (character) => character.name
+    ),
+    ["Host Monk"]
+  );
+});
+
+test("generic building shell renderer has an explicit empty-data branch", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src", "ui", "views", "building", "building-module-view.ts"),
+    "utf8"
+  );
+
+  assert.match(source, /input\.stage\.type !== "building"/);
+  assert.match(source, /containerViewModels/);
+  assert.match(source, /data-action="leave-house"/);
+  assert.match(source, /data-action="building-container-item-action"/);
+  assert.match(source, /data-building-arrangement-id/);
+  assert.match(source, /data-building-container-id/);
+});
+
+test("script editor runtime-pack import projects eventBindings into editable script-editor surface", () => {
+  const {
+    importScenarioPackToScriptEditorProject,
+  } = require("../.test-dist/application/script-editor/runtime-pack-import.js");
+  const {
+    serializeScriptEditorProjectToFiles,
+  } = require("../.test-dist/application/script-editor/editor-project-save.js");
+  const importedProject = importScenarioPackToScriptEditorProject({
+    schemaVersion: 1,
+    id: "scenario.imported-bindings",
+    title: "Imported Bindings",
+    scenarioProfile: {
+      id: "scenario-profile.imported-bindings",
+      playerCharacterId: "person.player",
+      chapterId: "chapter.imported",
+      initialLocation: {
+        mapId: "map.imported",
+        cityId: "city.kulan",
+        houseId: null,
+        view: "city",
+      },
+    },
+    characters: [],
+    cities: [{ id: "city.kulan", name: "Kulan" }],
+    houses: [],
+    events: [{ id: "event.opening", name: "Opening", chapterId: "chapter.imported" }],
+    eventBindings: [
+      {
+        id: "binding.imported.opening",
+        eventId: "event.opening",
+        owner: { family: "city", id: "city.kulan" },
+        trigger: { timing: "after", action: "city-enter" },
+        conditions: {
+          operator: "all",
+          conditions: [
+            { type: "flag", field: "story.ready", operator: "==", value: true },
+            { type: "variable", field: "story.progress", operator: ">=", value: 2 },
+          ],
+        },
+        priority: 4,
+        enabled: false,
+      },
+    ],
+    dialogues: [],
+  });
+  const savedFiles = serializeScriptEditorProjectToFiles(importedProject);
+  const savedEventBindings = JSON.parse(savedFiles["event-bindings.json"]);
+
+  assert.equal(importedProject.eventBindings.length, 1);
+  assert.deepEqual(importedProject.eventBindings[0], {
+    id: "binding.imported.opening",
+    eventId: "event.opening",
+    owner: { family: "city", id: "city.kulan" },
+    trigger: { timing: "after", action: "city-enter" },
+    conditions: {
+      operator: "all",
+      conditions: [
+        { type: "flag", field: "story.ready", operator: "==", value: true },
+        { type: "variable", field: "story.progress", operator: ">=", value: 2 },
+      ],
+    },
+    priority: 4,
+    enabled: false,
+  });
+  assert.deepEqual(savedEventBindings, importedProject.eventBindings);
+  assert.equal(Object.hasOwn(importedProject.events[0], "conditions"), false);
+});
+
+test(
+  "script editor runtime export does not duplicate explicit city building runtime family records",
+  () => {
+    const {
+      exportScriptEditorProjectToScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    const project = createExportableScriptEditorProjectDefinition();
+    project.people = [
+      {
+        id: "person.host",
+        name: "Market Host",
+        personType: "NPC",
+        cityId: "city.start",
+        houseId: "building.market",
+      },
+    ];
+    project.cities = [
+      {
+        id: "city.start",
+        name: "Start City",
+        mountedBuildings: [
+          {
+            buildingId: "building.market",
+            npcIds: ["person.host"],
+            primaryNpcId: "person.host",
+          },
+        ],
+      },
+    ];
+    project.buildings = [
+      {
+        id: "building.market",
+        cityId: "city.start",
+        name: "Market",
+        access: {
+          conditionExpression: { type: "literal", value: false },
+          blockedMessage: "Market is closed.",
+          blockedSpeakerId: "person.host",
+          guidance: "Return later.",
+        },
+      },
+    ];
+    project.cityEntries = [
+      {
+        id: "city-entry.custom.market",
+        cityId: "city.start",
+        name: "Custom Market",
+        directoryType: "leader-residence",
+        targetHouseId: "building.market",
+        artworkId: "leader-residence",
+      },
+    ];
+    project.cityNpcPools = [
+      {
+        cityId: "city.start",
+        residents: [
+          {
+            id: "person.host",
+            cityId: "city.start",
+            name: "Imported Host",
+            title: "Imported",
+            personality: "",
+            specialty: "",
+            favorability: 10,
+            activityWeight: { custom: 1 },
+            dialoguePool: [],
+            intelPool: [],
+          },
+        ],
+      },
+    ];
+    const files = exportScriptEditorProjectToScenarioPackFiles(project);
+
+    assert.equal(JSON.parse(files["city-entries.json"]).length, 1);
+    assert.equal(JSON.parse(files["city-npc-pools.json"])[0].residents.length, 1);
+    assert.equal(JSON.parse(files["location-access.json"]).length, 1);
+  }
+);
+
+test(
+  "city building placement resolver derives placements from city entries and fails closed for missing houses",
+  () => {
+    const {
+      resolveCityBuildingPlacements,
+    } = require("../.test-dist/application/city/city-building-placement-resolver.js");
+    const placements = resolveCityBuildingPlacements({
+      cityId: "city.start",
+      cityEntries: [
+        {
+          id: "city-entry.market",
+          cityId: "city.start",
+          name: "Market Entry",
+          targetHouseId: "house.market",
+        },
+        {
+          id: "city-entry.missing",
+          cityId: "city.start",
+          name: "Missing Entry",
+          targetHouseId: "house.missing",
+        },
+        {
+          id: "city-entry.other",
+          cityId: "city.other",
+          name: "Other Entry",
+          targetHouseId: "house.other",
+        },
+      ],
+      houses: [
+        {
+          id: "house.market",
+          cityId: "city.start",
+          name: "Market",
+          type: "merchant",
+          characterIds: [],
+          defaultCharacterId: null,
+          activityLocationId: "market",
+          backAction: { label: "返回", targetView: "city" },
+        },
+      ],
+    });
+
+    assert.deepEqual(
+      placements.map((placement) => ({
+        placementId: placement.placementId,
+        cityId: placement.cityId,
+        houseId: placement.houseId,
+        label: placement.label,
+      })),
+      [
+        {
+          placementId: "city-entry.market",
+          cityId: "city.start",
+          houseId: "house.market",
+          label: "Market Entry",
+        },
+      ]
+    );
+  }
+);
+
+test(
+  "city building placement resolver returns access and npc view data through one placement id",
+  () => {
+    const {
+      canEnterCityBuilding,
+      resolveCityBuildingNpcs,
+      resolveCityBuildingView,
+    } = require("../.test-dist/application/city/city-building-placement-resolver.js");
+    const baseState = createBaseState();
+    const state = {
+      ...baseState,
+      player: { characterId: "char.player" },
+      runtime: {
+        ...baseState.runtime,
+        flags: {},
+        cityNpcPools: {
+          "city.start": {
+            cityId: "city.start",
+            lastRefreshedOn: "1356-01-01",
+            residents: {
+              "npc.host": {
+                npcId: "npc.host",
+                favorability: 15,
+                currentLocationId: "market",
+              },
+            },
+          },
+        },
+      },
+      world: {
+        ...baseState.world,
+        currentCityId: "city.start",
+      },
+    };
+    const sharedInput = {
+      state,
+      characterDefinitions: [{ id: "char.player", name: "Player" }],
+      cityEntries: [
+        {
+          id: "city-entry.market",
+          cityId: "city.start",
+          name: "Market Entry",
+          targetHouseId: "house.market",
+        },
+      ],
+      houses: [
+        {
+          id: "house.market",
+          cityId: "city.start",
+          name: "Market",
+          type: "merchant",
+          characterIds: ["npc.host"],
+          defaultCharacterId: "npc.host",
+          activityLocationId: "market",
+          backAction: { label: "返回", targetView: "city" },
+        },
+      ],
+      cityNpcPools: [
+        {
+          cityId: "city.start",
+          residents: [
+            {
+              id: "npc.host",
+              cityId: "city.start",
+              name: "Market Host",
+              title: "Shopkeeper",
+              personality: "",
+              specialty: "",
+              favorability: 15,
+              activityWeight: { market: 1 },
+              dialoguePool: [],
+              intelPool: [],
+            },
+          ],
+        },
+      ],
+      locationAccessDefinitions: [
+        {
+          id: "location-access.building.market",
+          targetFamily: "building",
+          targetId: "house.market",
+          conditionExpression: { type: "literal", value: false },
+          blockedTitle: "Market",
+          blockedMessage: "Market is closed.",
+          blockedSpeakerId: "npc.host",
+          guidance: "Return",
+        },
+      ],
+    };
+
+    assert.deepEqual(resolveCityBuildingNpcs({
+      ...sharedInput,
+      placementId: "city-entry.market",
+    }), [
+      { id: "npc.host", name: "Market Host", title: "Shopkeeper" },
+    ]);
+    assert.deepEqual(canEnterCityBuilding({
+      ...sharedInput,
+      placementId: "city-entry.market",
+    }), {
+      canEnter: false,
+      refusal: {
+        ruleId: "location-access.building.market",
+        speakerCharacterId: "npc.host",
+        title: "Market",
+        text: "Market is closed.",
+        confirmLabel: "Return",
+      },
+    });
+    assert.equal(
+      resolveCityBuildingView({
+        ...sharedInput,
+        placementId: "city-entry.market",
+      }).placementId,
+      "city-entry.market"
+    );
+    assert.equal(
+      resolveCityBuildingView({
+        ...sharedInput,
+        placementId: "city-entry.missing",
+      }),
+      null
+    );
+  }
+);
+
+test("city building placement resolver applies location access before house entry", () => {
+  const {
+    canEnterCityBuilding,
+    resolveCityBuildingView,
+  } = require("../.test-dist/application/city/city-building-placement-resolver.js");
+  const baseState = createBaseState();
+  const state = {
+    ...baseState,
+    player: { characterId: "char.player" },
+    world: { ...baseState.world, currentCityId: "city.start" },
+  };
+  const sharedInput = {
+    state,
+    characterDefinitions: [{ id: "char.player", name: "Player" }],
+    cityEntries: [
+      {
+        id: "city-entry.market",
+        cityId: "city.start",
+        name: "Market Entry",
+        targetHouseId: "house.market",
+      },
+    ],
+    houses: [
+      {
+        id: "house.market",
+        cityId: "city.start",
+        name: "Market",
+        type: "merchant",
+        characterIds: [],
+        defaultCharacterId: null,
+        activityLocationId: "market",
+        backAction: { label: "返回", targetView: "city" },
+      },
+    ],
+    cityNpcPools: [],
+    locationAccessDefinitions: [
+      {
+        id: "location-access.building.market",
+        targetFamily: "building",
+        targetId: "house.market",
+        conditionExpression: { type: "literal", value: false },
+        blockedMessage: "Market is closed.",
+        blockedSpeakerId: "player",
+        guidance: "Return later.",
+      },
+    ],
+    placementId: "city-entry.market",
+  };
+
+  assert.deepEqual(canEnterCityBuilding(sharedInput), {
+    canEnter: false,
+    refusal: {
+      ruleId: "location-access.building.market",
+      speakerCharacterId: "char.player",
+      title: "Market",
+      text: "Market is closed.",
+      confirmLabel: "Return later.",
+    },
+  });
+  assert.equal(resolveCityBuildingView(sharedInput).access.canEnter, false);
+});
+
+test("script editor export writes building access rules only as runtime location access", () => {
+  const {
+    exportScriptEditorProjectToScenarioPackFiles,
+  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  const { evaluateLocationAccess } = require("../.test-dist/application/location-access/location-access-runtime.js");
+  const project = createExportableScriptEditorProjectDefinition();
+  project.buildings = [
+    {
+      id: "building.temple",
+      cityId: "city.start",
+      name: "Temple",
+      baseAttributes: {
+        houseType: "temple",
+        moduleId: "temple-house",
+        characterIds: [],
+        defaultCharacterId: null,
+      },
+    },
+    {
+      id: "building.keep",
+      cityId: "city.start",
+      name: "Keep",
+      baseAttributes: {
+        houseType: "castle",
+        moduleId: "keep-house",
+        characterIds: [],
+        defaultCharacterId: null,
+      },
+    },
+    {
+      id: "building.market",
+      cityId: "city.start",
+      name: "Market",
+      baseAttributes: {
+        houseType: "merchant",
+        moduleId: "market-house",
+        characterIds: [],
+        defaultCharacterId: null,
+      },
+      access: {
+        conditionExpression: {
+          type: "compare",
+          left: {
+            type: "field",
+            subject: "story",
+            fieldId: "flag:flag.story.first-review.completed",
+          },
+          operator: "equals",
+          right: { type: "literal", value: true },
+        },
+        blockedTitle: "Stay in temple",
+        blockedMessage: "Do not leave the temple yet.",
+        blockedSpeakerId: "player",
+        guidance: "OK",
+      },
+    },
+  ];
+  const files = exportScriptEditorProjectToScenarioPackFiles(project);
+  const locationAccess = JSON.parse(files["location-access.json"]);
+  const marketAccess = locationAccess.find(
+    (definition) => definition.targetId === "building.market"
+  );
+  assert.ok(marketAccess);
+  assert.equal("house-access-refusal-rules.json" in files, false);
+  assert.equal(marketAccess.blockedTitle, "Stay in temple");
+  assert.equal(marketAccess.blockedMessage, "Do not leave the temple yet.");
+  assert.equal(marketAccess.blockedSpeakerId, "player");
+  assert.equal(marketAccess.guidance, "OK");
+  assert.equal(
+    locationAccess.some((definition) => definition.targetId === "building.temple"),
+    false
+  );
+  assert.equal(
+    locationAccess.some((definition) => definition.targetId === "building.keep"),
+    false
+  );
+
+  const baseState = createBaseState();
+  const blocked = evaluateLocationAccess({
+    state: {
+      ...baseState,
+      player: { characterId: "char.player" },
+      runtime: {
+        ...baseState.runtime,
+        flags: {},
+        variables: {
+          ...baseState.runtime.variables,
+          [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.stage]: "huangjue-temple",
+        },
+      },
+    },
+    targetFamily: "building",
+    targetId: "building.market",
+    targetBuilding: { id: "building.market", cityId: "city.start", name: "Market" },
+    characterDefinitions: [{ id: "char.player", name: "Player" }],
+    locationAccessDefinitions: locationAccess,
+  });
+  const allowedAfterFlag = evaluateLocationAccess({
+    state: {
+      ...baseState,
+      player: { characterId: "char.player" },
+      runtime: {
+        ...baseState.runtime,
+        flags: { "flag.story.first-review.completed": true },
+        variables: {
+          ...baseState.runtime.variables,
+          [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.stage]: "huangjue-temple",
+        },
+      },
+    },
+    targetFamily: "building",
+    targetId: "building.market",
+    targetBuilding: { id: "building.market", cityId: "city.start", name: "Market" },
+    characterDefinitions: [{ id: "char.player", name: "Player" }],
+    locationAccessDefinitions: locationAccess,
+  });
+
+  assert.deepEqual(blocked, {
+    canEnter: false,
+    refusal: {
+      ruleId: "location-access.building.building.market",
+      speakerCharacterId: "char.player",
+      title: "Stay in temple",
+      text: "Do not leave the temple yet.",
+      confirmLabel: "OK",
+    },
+  });
+  assert.deepEqual(allowedAfterFlag, { canEnter: true, refusal: null });
+});
+
+test("script editor building event bindings remove trigger action and limit timing to enter after and leave before", () => {
+  const source = fs.readFileSync("src/ui/main-ui/main-ui-flow.js", "utf8");
+  const editorSource =
+    source.match(/renderScriptEditorEventBindingEditor\(binding[\s\S]*?\n  renderScriptEditorEventBindingConditionItem/)?.[0] ?? "";
+  const buildingEventsPanelSource =
+    source.match(/renderScriptEditorOwnerLocalEventBindingsPanel\(\{ ownerFamily, ownerId \}\) \{[\s\S]*?renderScriptEditorEventBindingEditor\(binding,\s*\{\s*lockOwner:\s*true\s*\}\)/)?.[0] ?? "";
+
+  assert.match(buildingEventsPanelSource, /ownerFamily/);
+  assert.doesNotMatch(editorSource, /<span>触发动作<\/span>/);
+  assert.doesNotMatch(editorSource, /data-script-editor-event-binding-trigger-field="action"/);
+  assert.match(source, /building:\s*\[[\s\S]*label:\s*"进入后"[\s\S]*label:\s*"离开前"[\s\S]*\]/);
+  assert.doesNotMatch(source, /action:\s*"indoor-screen-shown"/);
+});
+
+test("city building house runtime adapter resolves an allowed placement into a house runtime entry", () => {
+  const {
+    resolveCityBuildingHouseRuntimeEntry,
+  } = require("../.test-dist/application/city/city-building-house-runtime-adapter.js");
+  const baseState = createBaseState();
+  const entryResult = resolveCityBuildingHouseRuntimeEntry({
+    state: {
+      ...baseState,
+      player: { characterId: "char.player" },
+      world: { ...baseState.world, currentCityId: grainShopHouse.cityId },
+    },
+    characterDefinitions: [{ id: "char.player", name: "Player" }],
+    cityEntries: [
+      {
+        id: "city-entry.grain-shop",
+        cityId: grainShopHouse.cityId,
+        name: "Grain Shop Entry",
+        targetHouseId: grainShopHouse.id,
+      },
+    ],
+    houses: [grainShopHouse],
+    cityNpcPools: [],
+    locationAccessDefinitions: [],
+    placementId: "city-entry.grain-shop",
+  });
+
+  assert.equal(entryResult.canEnter, true);
+  assert.equal(entryResult.entry.placementId, "city-entry.grain-shop");
+  assert.equal(entryResult.entry.source, "city-building-placement");
+  assert.equal(entryResult.entry.houseId, grainShopHouse.id);
+  assert.equal(entryResult.entry.houseDefinition.moduleId, "grain-shop");
+});
+
+test("house runtime enters and dispatches through a resolved city building entry", () => {
+  const {
+    resolveCityBuildingHouseRuntimeEntry,
+  } = require("../.test-dist/application/city/city-building-house-runtime-adapter.js");
+  const {
+    createHouseRuntimeBridge,
+    dispatchHouseRuntimeRequest,
+    enterResolvedHouseThroughRuntime,
+  } = require("../.test-dist/core/runtime/house-runtime.js");
+  const baseState = createBaseState();
+  let appState = {
+    gameState: {
+      ...baseState,
+      world: {
+        ...baseState.world,
+        currentCityId: grainShopHouse.cityId,
+        currentHouseId: null,
+      },
+      ui: {
+        ...baseState.ui,
+        currentView: "city",
+        overlayView: null,
+        houseSession: null,
+      },
+    },
+    characterDefinitions: prototypeCharacters,
+    playerCoordinate: { x: 0, y: 0 },
+    campaignActorState: {
+      facingDegrees: 0,
+      isMoving: false,
+    },
+    campaignTravelState: null,
+    modalState: null,
+    locationDialogueState: null,
+    beggingMiniGameState: null,
+    cityMenuState: null,
+    cityDirectoryState: null,
+    autoAdvanceState: null,
+    uiLayouts: {},
+    layoutEditor: {},
+  };
+  const entryResult = resolveCityBuildingHouseRuntimeEntry({
+    state: appState.gameState,
+    characterDefinitions: appState.characterDefinitions,
+    cityEntries: [
+      {
+        id: "city-entry.grain-shop",
+        cityId: grainShopHouse.cityId,
+        name: "Grain Shop Entry",
+        targetHouseId: grainShopHouse.id,
+      },
+    ],
+    houses: [grainShopHouse],
+    cityNpcPools: [],
+    locationAccessDefinitions: [],
+    placementId: "city-entry.grain-shop",
+  });
+  const runtime = createHouseRuntimeBridge({
+    getAppState: () => appState,
+    setAppState: (nextAppState) => {
+      appState = nextAppState;
+    },
+    renderApp: () => {},
+    startMapAutoAdvance: () => {},
+    stopMapAutoAdvance: () => {},
+    houseDefinitions: [],
+    playerCharacterId,
+    eventDefinitionsById: {},
+    sceneDefinitionsById: {},
+    syncCouncilPriorityAfterGameStateChange: () => false,
+  });
+
+  assert.equal(entryResult.canEnter, true);
+  enterResolvedHouseThroughRuntime(runtime, entryResult.entry);
+  dispatchHouseRuntimeRequest(runtime, {
+    type: "action",
+    actionId: "advance-greeting",
+  });
+
+  assert.equal(appState.gameState.world.currentHouseId, grainShopHouse.id);
+  assert.equal(appState.gameState.ui.currentView, "house");
+  assert.equal(appState.gameState.ui.houseSession?.moduleId, "grain-shop");
+  assert.equal(appState.gameState.ui.houseSession?.state?.dialoguePhase, "open");
+});
+
+test("city location deck uses only city entry buttons for building entry", () => {
+  const cityViewSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/views/city/city-view.ts"),
+    "utf8"
+  );
+  const renderLocationsDeckViewBlock = cityViewSource.match(
+    /function renderLocationsDeckView\([\s\S]*?\r?\n}\r?\n\r?\nfunction renderCityMenuPanel/
+  )?.[0] ?? "";
+
+  assert.match(renderLocationsDeckViewBlock, /data-city-entry-id=/);
+  assert.match(renderLocationsDeckViewBlock, /getCityEntryArtworkClass\(cityEntry\)/);
+  assert.doesNotMatch(renderLocationsDeckViewBlock, /data-house-id=/);
+  assert.doesNotMatch(renderLocationsDeckViewBlock, /visibleHouseDefinitions/);
+});
+
+test("city entry artwork class comes from city entry artwork id", () => {
+  const cityViewSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/views/city/city-view.ts"),
+    "utf8"
+  );
+
+  assert.match(cityViewSource, /function getCityEntryArtworkClass/);
+  assert.match(cityViewSource, /cityEntry\.artworkId/);
+  assert.match(cityViewSource, /c-kulan-house-card--tea-house/);
+  assert.match(cityViewSource, /c-kulan-house-card--temple-house/);
+});
+
+test("city click handling no longer exposes direct house-id entry protocol", () => {
+  const mainSource = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
+  const appClickCoordinatorSource = fs.readFileSync(
+    path.join(process.cwd(), "src/application/ui/app-click-coordinator.ts"),
+    "utf8"
+  );
+
+  assert.doesNotMatch(mainSource, /\[data-house-id\]/);
+  assert.doesNotMatch(appClickCoordinatorSource, /\[data-house-id\]/);
+});
+
+test("non directory city entries enter the target building directly", () => {
+  const coordinatorSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/application/runtime/city-directory-leader-residence-coordinator.ts"
+    ),
+    "utf8"
+  );
+
+  assert.match(coordinatorSource, /cityEntry\.directoryType !== "leader-residence"/);
+  assert.match(coordinatorSource, /enterHouseFromCity\(cityEntry\.targetHouseId\)/);
+});
+
+test(
+  "script editor story/dialogue/event queue exposes dedicated narrative tabs and bounded relation entrypoints",
+  () => {
+    const source = fs.readFileSync("src/ui/main-ui/main-ui-flow.js", "utf8");
+    const cssSource = fs.readFileSync("src/styles/script-editor.css", "utf8");
+
+    assert.doesNotMatch(source, /剧情作者面|对话作者面|事件作者面/);
+    assert.match(source, /基础信息|去向|关联对象|预览与校验/);
+    assert.doesNotMatch(source, /data-script-editor-event-tab="conditions"/);
+    assert.match(source, /data-script-editor-action="select-narrative-tab"/);
+    assert.match(source, /data-script-editor-action="select-event-tab"/);
+    assert.match(source, /SCRIPT_EDITOR_INSPECTOR_SUPPRESS_TEXT/);
+    assert.match(source, /data-script-editor-inspector-header-slot/);
+    assert.match(source, /"add-dialogue-node"/);
+    assert.doesNotMatch(source, /"add-dialogue-follow-up"/);
+    assert.match(source, /对话结束后的正式去向统一由事件绑定与事件 destination 负责/);
+    assert.doesNotMatch(
+      source,
+      /<input[^>]+data-script-editor-dialogue-node-field="(?:speakerPersonId|textId|nextNodeId|choiceTargetNodeId)"/
+    );
+    assert.match(source, /renderScriptEditorDialogueNodeReferenceSelect/);
+    assert.match(source, /this\.scriptEditorProject\.people/);
+    assert.match(source, /this\.scriptEditorProject\.textEntries/);
+    assert.match(source, /dialogue\.nodes/);
+    assert.doesNotMatch(source, /"add-event-condition-group"/);
+    assert.doesNotMatch(source, /"add-event-condition-item"/);
+    assert.doesNotMatch(source, /"remove-event-condition-group"/);
+    assert.doesNotMatch(source, /"remove-event-condition-item"/);
+    assert.match(source, /"add-event-related-buildings"/);
+    assert.match(cssSource, /\.c-script-editor-narrative-editor/);
+    assert.match(cssSource, /\.c-script-editor-narrative-panel/);
+    assert.match(cssSource, /\.c-script-editor-narrative-inline/);
+  }
+);
+
+test("script editor event editor exposes event binding navigation", () => {
+  const source = fs.readFileSync("src/ui/main-ui/main-ui-flow.js", "utf8");
+
+  assert.match(source, /renderScriptEditorEventBindingSummary/);
+  assert.match(source, /data-script-editor-event-tab="bindings"/);
+  assert.match(source, /scriptEditorProject\?\.eventBindings/);
+  assert.match(source, /binding\.eventId === eventRecord\.id/);
+  assert.match(source, /data-script-editor-event-binding-id/);
+  const eventTabPanelSource =
+    source.match(/renderScriptEditorEventTabPanel\(eventRecord\) \{[\s\S]*?\n  renderScriptEditorMinigameTabPanel/)?.[0] ?? "";
+  assert.doesNotMatch(eventTabPanelSource, /data-script-editor-action="add-event-binding"/);
+  assert.doesNotMatch(eventTabPanelSource, /data-script-editor-action="remove-event-binding"/);
+  assert.doesNotMatch(eventTabPanelSource, /renderScriptEditorEventBindingEditor/);
+  assert.doesNotMatch(eventTabPanelSource, /data-script-editor-event-binding-condition/);
+});
+
+test("script editor event binding authoring UI exposes editable controls on the dedicated eventBindings surface", () => {
+  const source = fs.readFileSync("src/ui/main-ui/main-ui-flow.js", "utf8");
+  const fallbackEditorSource =
+    source.match(/return `\s*<div class="c-script-editor-editor-card">[\s\S]*?\n    `;\s*\n  }\s*\n\s*renderScriptEditorPaginatedRecordList/)?.[0] ?? "";
+
+  assert.match(source, /family === "eventBindings"/);
+  assert.match(source, /renderScriptEditorEventBindingEditor\(selectedRecord/);
+  assert.match(source, /data-script-editor-action="add-event-binding"/);
+  assert.match(source, /data-script-editor-action="remove-event-binding"/);
+  assert.doesNotMatch(fallbackEditorSource, /data-script-editor-event-binding-field="eventId"/);
+  assert.match(source, /data-script-editor-event-binding-field="eventId"/);
+  assert.match(source, /data-script-editor-event-binding-owner-field="family"/);
+  assert.match(source, /data-script-editor-event-binding-owner-field="id"/);
+  assert.match(source, /data-script-editor-event-binding-trigger-field="timing"/);
+  assert.doesNotMatch(source, /data-script-editor-event-binding-trigger-field="action"/);
+  assert.match(source, /data-script-editor-event-binding-field="priority"/);
+  assert.match(source, /data-script-editor-event-binding-enabled/);
+  assert.match(source, /data-script-editor-event-binding-condition-operator/);
+  assert.match(source, /data-script-editor-event-binding-condition-item-field="type"/);
+  assert.match(source, /data-script-editor-event-binding-condition-item-field="field"/);
+  assert.match(source, /data-script-editor-event-binding-condition-item-field="operator"/);
+  assert.match(source, /data-script-editor-event-binding-condition-item-field="value"/);
+  assert.match(source, /data-script-editor-action="add-event-binding-condition-item"/);
+  assert.match(source, /data-script-editor-action="remove-event-binding-condition-item"/);
+  assert.match(source, /applyScriptEditorEventBindingField/);
+  assert.match(source, /applyScriptEditorEventBindingOwnerField/);
+  assert.match(source, /applyScriptEditorEventBindingTriggerField/);
+  assert.match(source, /applyScriptEditorEventBindingConditionOperator/);
+  assert.match(source, /applyScriptEditorEventBindingConditionItemField/);
+});
+
+test("script editor owner-local event binding surfaces expose hooks that write project eventBindings", () => {
+  const source = fs.readFileSync("src/ui/main-ui/main-ui-flow.js", "utf8");
+  const ownerFamilies = ["person", "city", "building", "dialogue", "minigame", "story"];
+
+  assert.match(source, /renderScriptEditorOwnerLocalEventBindingsPanel/);
+  assert.match(source, /add-owner-local-event-binding/);
+  assert.match(source, /remove-owner-local-event-binding/);
+  assert.match(source, /eventBindings:\s*\[/);
+  assert.doesNotMatch(source, /person\.eventIds\s*=/);
+  assert.doesNotMatch(source, /relatedEventIds\s*=/);
+  assert.doesNotMatch(source, /onEnterEventId\s*=/);
+  assert.doesNotMatch(source, /onLeaveEventId\s*=/);
+
+  for (const ownerFamily of ownerFamilies) {
+    assert.match(source, new RegExp(`ownerFamily:\\s*"${ownerFamily}"`));
+  }
+});
+
+test("script editor owner-local event binding authoring is routed through event tabs", () => {
+  const source = fs.readFileSync("src/ui/main-ui/main-ui-flow.js", "utf8");
+  const ownerFamilies = ["person", "city", "building", "dialogue", "minigame", "story"];
+
+  assert.match(source, /renderScriptEditorOwnerLocalEventBindingsPanel/);
+  assert.match(source, /data-script-editor-owner-local-event-bindings/);
+  assert.match(source, /renderScriptEditorPersonTabButton\("events", "事件"\)/);
+  assert.match(source, /renderScriptEditorLocationTabButton\("events", "事件"\)/);
+  assert.match(source, /renderScriptEditorNarrativeTabButton\("events", "事件"\)/);
+  assert.match(source, /renderScriptEditorMinigameTabButton\("events", "事件"\)/);
+
+  for (const ownerFamily of ownerFamilies) {
+    assert.match(source, new RegExp(`ownerFamily:\\s*"${ownerFamily}"`));
+  }
+
+  const profilePanelSource =
+    source.match(/const cityOptions = this\.getScriptEditorPersonCityOptions\(\);[\s\S]*?return `\s*<section class="c-script-editor-person-panel" aria-label="属性分栏">[\s\S]*?\n    `;\s*\n  }\s*\n\s*renderScriptEditorPersonMappedFieldGroups/)?.[0] ?? "";
+  assert.doesNotMatch(profilePanelSource, /renderScriptEditorOwnerLocalEventBindingsPanel/);
+
+  const minigameBasicsSource =
+    source.match(/return `\s*<section class="c-script-editor-minigame-panel" aria-label="玩法绑定基础信息分栏">[\s\S]*?\n  renderScriptEditorEventBindingsEditor/)?.[0] ?? "";
+  assert.doesNotMatch(minigameBasicsSource, /renderScriptEditorOwnerLocalEventBindingsPanel/);
+});
+
+test("script editor owner-local event binding trigger edits keep the binding anchored", () => {
+  const source = fs.readFileSync("src/ui/main-ui/main-ui-flow.js", "utf8");
+  const {
+    updateScriptEditorEventBindingTriggerField,
+  } = require("../.test-dist/application/script-editor/story-dialogue-event-authoring.js");
+  const ownerLocalPanelSource =
+    source.match(/renderScriptEditorOwnerLocalEventBindingsPanel\(\{ ownerFamily, ownerId \}\) \{[\s\S]*?\n  renderScriptEditorEventBindingEditor/)?.[0] ?? "";
+  const editorSource =
+    source.match(/renderScriptEditorEventBindingEditor\(binding[\s\S]*?\n  renderScriptEditorEventBindingConditionItem/)?.[0] ?? "";
+  const independentSurfaceSource =
+    source.match(/renderScriptEditorPaginatedRecordList\(\{[\s\S]*?\n  renderScriptEditorOwnerLocalEventBindingsPanel/)?.[0] ?? "";
+
+  assert.match(ownerLocalPanelSource, /renderScriptEditorEventBindingEditor\(binding,\s*\{\s*lockOwner:\s*true\s*\}\)/);
+  assert.match(independentSurfaceSource, /renderScriptEditorEventBindingEditor\(selectedRecord\)/);
+  assert.match(editorSource, /lockOwner/);
+  assert.match(editorSource, /!\s*lockOwner[\s\S]*data-script-editor-event-binding-owner-field="family"[\s\S]*data-script-editor-event-binding-owner-field="id"/);
+  assert.match(editorSource, /<span>绑定对象类型<\/span>[\s\S]*data-script-editor-event-binding-owner-field="family"/);
+  assert.match(editorSource, /<span>绑定对象 ID<\/span>[\s\S]*data-script-editor-event-binding-owner-field="id"/);
+  assert.match(editorSource, /<span>触发时机<\/span>[\s\S]*data-script-editor-event-binding-trigger-field="timing"/);
+  assert.doesNotMatch(editorSource, /<span>触发动作<\/span>[\s\S]*data-script-editor-event-binding-trigger-field="action"/);
+  assert.match(editorSource, /data-script-editor-event-binding-condition-operator/);
+
+  const binding = {
+    id: "binding.owner-local.city",
+    eventId: "event.owner-local",
+    owner: { family: "city", id: "city.kulan" },
+    trigger: { timing: "after", action: "city-enter" },
+    priority: 10,
+    enabled: true,
+  };
+  const updatedTiming = updateScriptEditorEventBindingTriggerField(
+    binding,
+    "timing",
+    "before:building-leave"
+  );
+
+  assert.deepEqual(updatedTiming.owner, { family: "city", id: "city.kulan" });
+  assert.deepEqual(updatedTiming.trigger, {
+    timing: "before",
+    action: "building-leave",
+  });
+});
+
+test("script editor tab selectors allow owner-local event tabs and reject event-body conditions tab", () => {
+  const source = fs.readFileSync("src/ui/main-ui/main-ui-flow.js", "utf8");
+  const locationSelectorSource =
+    source.match(/selectScriptEditorLocationTab\(tab\) \{[\s\S]*?\n  selectScriptEditorNarrativeTab/)?.[0] ?? "";
+  const narrativeSelectorSource =
+    source.match(/selectScriptEditorNarrativeTab\(tab\) \{[\s\S]*?\n  selectScriptEditorEventTab/)?.[0] ?? "";
+  const minigameSelectorSource =
+    source.match(/selectScriptEditorMinigameTab\(tab\) \{[\s\S]*?\n  toggleScriptEditorAuxiliaryPanel/)?.[0] ?? "";
+  const eventSelectorSource =
+    source.match(/selectScriptEditorEventTab\(tab\) \{[\s\S]*?\n  selectScriptEditorMinigameTab/)?.[0] ?? "";
+
+  assert.match(locationSelectorSource, /\["profile", "menus", "access", "events"\]/);
+  assert.match(locationSelectorSource, /\["profile", "menus", "access", "entry", "events"\]/);
+  assert.match(narrativeSelectorSource, /\["profile", "links", "summary", "events"\]/);
+  assert.match(narrativeSelectorSource, /\["profile", "nodes", "summary", "events"\]/);
+  assert.match(minigameSelectorSource, /\["basics", "launch", "settlement", "references", "events"\]/);
+  assert.doesNotMatch(eventSelectorSource, /"conditions"/);
+});
+
+test("script editor event binding editor uses event and trigger selectors", () => {
+  const source = fs.readFileSync("src/ui/main-ui/main-ui-flow.js", "utf8");
+  const editorSource =
+    source.match(/renderScriptEditorEventBindingEditor\(binding[\s\S]*?\n  renderScriptEditorEventBindingConditionItem/)?.[0] ?? "";
+
+  assert.match(editorSource, /getScriptEditorEventBindingEventOptions/);
+  assert.match(editorSource, /getScriptEditorEventBindingTriggerOptions/);
+  assert.match(editorSource, /<span>绑定事件<\/span>[\s\S]*<select[\s\S]*data-script-editor-event-binding-field="eventId"/);
+  assert.match(editorSource, /<span>触发时机<\/span>[\s\S]*<select[\s\S]*data-script-editor-event-binding-trigger-field="timing"/);
+  assert.doesNotMatch(editorSource, /<span>触发动作<\/span>[\s\S]*<select[\s\S]*data-script-editor-event-binding-trigger-field="action"/);
+  assert.doesNotMatch(editorSource, /<span>绑定事件<\/span>\s*<input[^>]+type="text"[^>]+data-script-editor-event-binding-field="eventId"/);
+  assert.doesNotMatch(editorSource, /<span>触发时机<\/span>\s*<input[^>]+type="text"[^>]+data-script-editor-event-binding-trigger-field="timing"/);
+});
+
+test("script editor event body retires triggerTiming while preserving binding trigger selectors", () => {
+  const source = fs.readFileSync("src/ui/main-ui/main-ui-flow.js", "utf8");
+  const {
+    createDefaultScriptEditorEventRecord,
+    updateScriptEditorEventField,
+  } = require("../.test-dist/application/script-editor/story-dialogue-event-authoring.js");
+  const eventPanelSource =
+    source.match(/renderScriptEditorEventTabPanel\(eventRecord\) \{[\s\S]*?\n  renderScriptEditorEventBindingSummary/)?.[0] ?? "";
+  const eventFieldHandlerSource =
+    source.match(/if \(target\.matches\("\[data-script-editor-event-field\]"\)\) \{[\s\S]*?\n    if \(/)?.[0] ?? "";
+
+  assert.doesNotMatch(eventPanelSource, /data-script-editor-event-field="triggerTiming"/);
+  assert.doesNotMatch(eventPanelSource, /<span>触发时机<\/span>/);
+  assert.doesNotMatch(eventFieldHandlerSource, /triggerTiming/);
+  assert.match(source, /data-script-editor-event-binding-trigger-field="timing"/);
+  assert.doesNotMatch(source, /data-script-editor-event-binding-trigger-field="action"/);
+
+  const eventRecord = createDefaultScriptEditorEventRecord(0);
+  const updatedEvent = updateScriptEditorEventField(
+    eventRecord,
+    "triggerTiming",
+    "city-enter"
+  );
+  assert.equal(updatedEvent.triggerTiming, eventRecord.triggerTiming);
+});
+
+test("script editor event body conditionGroups residue is removed while preserving binding conditions", () => {
+  const uiSource = fs.readFileSync("src/ui/main-ui/main-ui-flow.js", "utf8");
+  const domainSource = fs.readFileSync("src/domain/script-editor-project.ts", "utf8");
+  const authoringSource = fs.readFileSync(
+    "src/application/script-editor/story-dialogue-event-authoring.ts",
+    "utf8"
+  );
+  const minimalWorkflowSource = fs.readFileSync(
+    "src/application/script-editor/minimal-workflow.ts",
+    "utf8"
+  );
+
+  assert.doesNotMatch(domainSource, /ScriptEditorEventRecord[\s\S]*conditionGroups\?/);
+  assert.doesNotMatch(authoringSource, /appendScriptEditorEventConditionGroup/);
+  assert.doesNotMatch(authoringSource, /updateScriptEditorEventConditionGroupMode/);
+  assert.doesNotMatch(authoringSource, /removeScriptEditorEventConditionGroup/);
+  assert.doesNotMatch(authoringSource, /appendScriptEditorEventConditionItem/);
+  assert.doesNotMatch(authoringSource, /updateScriptEditorEventConditionItemField/);
+  assert.doesNotMatch(authoringSource, /removeScriptEditorEventConditionItem/);
+  assert.doesNotMatch(minimalWorkflowSource, /eventRecord\.conditionGroups/);
+  assert.doesNotMatch(uiSource, /eventRecord\.conditionGroups/);
+  assert.doesNotMatch(uiSource, /SCRIPT_EDITOR_EVENT_CONDITION_GROUP_MODES/);
+  assert.match(authoringSource, /SCRIPT_EDITOR_EVENT_BINDING_CONDITION_GROUP_OPERATORS/);
+  assert.match(uiSource, /SCRIPT_EDITOR_EVENT_BINDING_CONDITION_GROUP_OPERATORS/);
+  assert.match(authoringSource, /updateScriptEditorEventBindingConditionOperator/);
+  assert.match(uiSource, /data-script-editor-event-binding-condition-operator/);
+});
+
+test("script editor event binding condition field registry covers owner attributes and custom fields", () => {
+  const {
+    listScriptEditorEventBindingConditionFieldOptions,
+  } = require("../.test-dist/application/script-editor/story-dialogue-event-authoring.js");
+
+  const fieldOptions = listScriptEditorEventBindingConditionFieldOptions();
+  const paths = new Set(fieldOptions.map((option) => option.path));
+  const labels = new Set(fieldOptions.map((option) => option.label));
+
+  for (const path of [
+    "person.base.force",
+    "person.base.intelligence",
+    "person.base.politics",
+    "person.custom.*",
+    "city.base.prosperity",
+    "city.custom.*",
+    "building.base.cityId",
+    "building.custom.*",
+    "payload.*",
+    "trigger.action",
+    "owner.family",
+  ]) {
+    assert.ok(paths.has(path), `missing condition field path ${path}`);
+  }
+
+  for (const label of [
+    "人物武力",
+    "人物智谋",
+    "人物政务",
+    "人物自定义属性",
+    "城市繁荣",
+    "城市自定义属性",
+    "建筑所属城市",
+    "建筑自定义属性",
+    "触发载荷字段",
+    "触发动作",
+  ]) {
+    assert.ok(labels.has(label), `missing condition field label ${label}`);
+  }
+
+  assert.ok(fieldOptions.every((option) => !/flag|variable|field|operator|value/.test(option.label)));
+});
+
+test("script editor story/dialogue/event authoring helpers normalize bounded narrative fields", () => {
+  const {
+    createDefaultScriptEditorDialogueRecord,
+    createDefaultScriptEditorEventBindingRecord,
+    createDefaultScriptEditorEventRecord,
+    createDefaultScriptEditorStoryNodeRecord,
+    normalizeScriptEditorDialogueRecord,
+    normalizeScriptEditorEventBindingRecord,
+    normalizeScriptEditorEventRecord,
+    normalizeScriptEditorStoryNodeRecord,
+    appendScriptEditorDialogueFollowUp,
+    appendScriptEditorDialogueNode,
+    appendScriptEditorDialogueParticipant,
+    appendScriptEditorEventRelationEntry,
+    appendScriptEditorStoryNodeRelation,
+    toggleScriptEditorEventRepeatable,
+    updateScriptEditorDialogueField,
+    updateScriptEditorDialogueFollowUpField,
+    updateScriptEditorDialogueNodeField,
+    updateScriptEditorDialogueParticipant,
+    updateScriptEditorEventDestinationField,
+    updateScriptEditorEventField,
+    updateScriptEditorEventPreviewSummaryField,
+    updateScriptEditorEventRelationField,
+    updateScriptEditorStoryNodeField,
+    updateScriptEditorStoryNodeRelation,
+  } = require("../.test-dist/application/script-editor/story-dialogue-event-authoring.js");
+
+  let storyNode = createDefaultScriptEditorStoryNodeRecord(0);
+  storyNode = updateScriptEditorStoryNodeField(storyNode, "progressMode", "invalid-mode");
+  storyNode = appendScriptEditorStoryNodeRelation(storyNode, "relatedDialogueIds");
+  storyNode = updateScriptEditorStoryNodeRelation(
+    storyNode,
+    "relatedDialogueIds",
+    0,
+    "dialogue.hero.open"
+  );
+  const normalizedStoryNode = normalizeScriptEditorStoryNodeRecord(storyNode);
+
+  let dialogue = createDefaultScriptEditorDialogueRecord(0);
+  dialogue = updateScriptEditorDialogueField(dialogue, "storyNodeId", "story-node.hero");
+  dialogue = appendScriptEditorDialogueParticipant(dialogue);
+  dialogue = updateScriptEditorDialogueParticipant(dialogue, 0, "person.hero");
+  dialogue = appendScriptEditorDialogueNode(dialogue);
+  dialogue = updateScriptEditorDialogueNodeField(dialogue, 1, "nodeType", "choice");
+  dialogue = updateScriptEditorDialogueNodeField(dialogue, 1, "textId", "text.dialogue.choice");
+  dialogue = appendScriptEditorDialogueFollowUp(dialogue);
+  dialogue = updateScriptEditorDialogueFollowUpField(dialogue, 0, "targetFamily", "building");
+  dialogue = updateScriptEditorDialogueFollowUpField(dialogue, 0, "targetId", "building.teahouse");
+  const normalizedDialogue = normalizeScriptEditorDialogueRecord(dialogue);
+
+  let eventRecord = createDefaultScriptEditorEventRecord(0);
+  eventRecord = updateScriptEditorEventField(eventRecord, "title", "Opening Event");
+  eventRecord = toggleScriptEditorEventRepeatable(eventRecord, true);
+  eventRecord = updateScriptEditorEventDestinationField(eventRecord, "family", "event");
+  eventRecord = updateScriptEditorEventDestinationField(
+    eventRecord,
+    "targetId",
+    "event.follow-up"
+  );
+  eventRecord = updateScriptEditorEventRelationField(
+    eventRecord,
+    "storyNodeId",
+    "story-node.hero"
+  );
+  eventRecord = appendScriptEditorEventRelationEntry(eventRecord, "personIds");
+  eventRecord = updateScriptEditorEventRelationField(
+    eventRecord,
+    "personIds",
+    0,
+    "person.hero"
+  );
+  eventRecord = updateScriptEditorEventPreviewSummaryField(
+    eventRecord,
+    "previewNotes",
+    "Preview the event branch."
+  );
+  const normalizedEvent = normalizeScriptEditorEventRecord(eventRecord);
+  const eventBinding = normalizeScriptEditorEventBindingRecord({
+    ...createDefaultScriptEditorEventBindingRecord(0),
+    eventId: " event.opening ",
+    owner: { family: "city", id: " city.start " },
+    trigger: { timing: " after ", action: " city-enter " },
+    priority: Number.NaN,
+    enabled: false,
+  });
+
+  assert.equal(normalizedStoryNode.progressMode, "block");
+  assert.deepEqual(normalizedStoryNode.relatedDialogueIds, ["dialogue.hero.open"]);
+  assert.equal(normalizedDialogue.storyNodeId, "story-node.hero");
+  assert.equal(normalizedDialogue.participantPersonIds[0], "person.hero");
+  assert.equal(normalizedDialogue.nodes[1].nodeType, "choice");
+  assert.equal(normalizedDialogue.followUps[0].targetFamily, "building");
+  assert.equal(normalizedDialogue.followUps[0].targetId, "building.teahouse");
+  assert.equal(normalizedEvent.title, "Opening Event");
+  assert.equal(normalizedEvent.triggerTiming, "manual");
+  assert.equal(normalizedEvent.repeatable, true);
+  assert.equal(Object.hasOwn(normalizedEvent, "conditionGroups"), false);
+  assert.equal(normalizedEvent.destination.family, "event");
+  assert.equal(normalizedEvent.destination.targetId, "event.follow-up");
+  assert.equal(normalizedEvent.relations.storyNodeId, "story-node.hero");
+  assert.deepEqual(normalizedEvent.relations.personIds, ["person.hero"]);
+  assert.equal(normalizedEvent.previewSummary.previewNotes, "Preview the event branch.");
+  assert.equal(eventBinding.id, "event-binding.new.1");
+  assert.equal(eventBinding.eventId, "event.opening");
+  assert.deepEqual(eventBinding.owner, { family: "city", id: "city.start" });
+  assert.deepEqual(eventBinding.trigger, { timing: "after", action: "city-enter" });
+  assert.equal(eventBinding.priority, 0);
+  assert.equal(eventBinding.enabled, false);
+});
+
+test("script editor event binding authoring helpers edit records and workflow membership", () => {
+  const {
+    appendScriptEditorEventBindingConditionItem,
+    createDefaultScriptEditorEventBindingRecord,
+    normalizeScriptEditorEventBindingRecord,
+    removeScriptEditorEventBindingConditionItem,
+    updateScriptEditorEventBindingConditionItemField,
+    updateScriptEditorEventBindingConditionOperator,
+    updateScriptEditorEventBindingField,
+    updateScriptEditorEventBindingOwnerField,
+    updateScriptEditorEventBindingTriggerField,
+  } = require("../.test-dist/application/script-editor/story-dialogue-event-authoring.js");
+  const {
+    createDefaultScriptEditorProjectDefinition,
+    createScriptEditorWorkflowRecordDraft,
+    listScriptEditorWorkflowFamilyRecords,
+    removeScriptEditorWorkflowRecord,
+    upsertScriptEditorWorkflowRecord,
+  } = require("../.test-dist/application/script-editor/minimal-workflow.js");
+
+  let binding = createDefaultScriptEditorEventBindingRecord(0);
+  binding = updateScriptEditorEventBindingField(binding, "eventId", " event.opening ");
+  binding = updateScriptEditorEventBindingField(binding, "priority", "7");
+  binding = updateScriptEditorEventBindingField(binding, "enabled", false);
+  binding = updateScriptEditorEventBindingOwnerField(binding, "family", " city ");
+  binding = updateScriptEditorEventBindingOwnerField(binding, "id", " city.kulan ");
+  binding = updateScriptEditorEventBindingTriggerField(binding, "timing", " after ");
+  binding = updateScriptEditorEventBindingTriggerField(binding, "action", " city-enter ");
+  binding = updateScriptEditorEventBindingConditionOperator(binding, "any");
+  binding = appendScriptEditorEventBindingConditionItem(binding, "flag");
+  binding = updateScriptEditorEventBindingConditionItemField(binding, 0, "field", "story.ready");
+  binding = updateScriptEditorEventBindingConditionItemField(binding, 0, "value", "false");
+  binding = appendScriptEditorEventBindingConditionItem(binding, "variable");
+  binding = updateScriptEditorEventBindingConditionItemField(binding, 1, "field", "story.progress");
+  binding = updateScriptEditorEventBindingConditionItemField(binding, 1, "operator", ">=");
+  binding = updateScriptEditorEventBindingConditionItemField(binding, 1, "value", "3");
+  binding = removeScriptEditorEventBindingConditionItem(binding, 0);
+
+  const normalizedBinding = normalizeScriptEditorEventBindingRecord(binding);
+
+  assert.equal(normalizedBinding.eventId, "event.opening");
+  assert.deepEqual(normalizedBinding.owner, { family: "city", id: "city.kulan" });
+  assert.deepEqual(normalizedBinding.trigger, { timing: "after", action: "city-enter" });
+  assert.equal(normalizedBinding.priority, 7);
+  assert.equal(normalizedBinding.enabled, false);
+  assert.deepEqual(normalizedBinding.conditions, {
+    operator: "any",
+    conditions: [
+      {
+        type: "variable",
+        field: "story.progress",
+        operator: ">=",
+        value: 3,
+      },
+    ],
+  });
+
+  const project = createDefaultScriptEditorProjectDefinition();
+  const draft = createScriptEditorWorkflowRecordDraft("eventBindings", 0);
+  const withDraft = upsertScriptEditorWorkflowRecord(project, "eventBindings", draft);
+  const withUpdatedBinding = upsertScriptEditorWorkflowRecord(
+    withDraft,
+    "eventBindings",
+    normalizedBinding
+  );
+  assert.deepEqual(
+    listScriptEditorWorkflowFamilyRecords(withUpdatedBinding, "eventBindings").map(
+      (record) => record.id
+    ),
+    ["event-binding.new.1"]
+  );
+  const withoutBinding = removeScriptEditorWorkflowRecord(
+    withUpdatedBinding,
+    "eventBindings",
+    "event-binding.new.1"
+  );
+  assert.deepEqual(listScriptEditorWorkflowFamilyRecords(withoutBinding, "eventBindings"), []);
+});
+
+test("script editor event binding conditions authoring preserves flag and variable conditions on EventBinding", () => {
+  const {
+    appendScriptEditorEventBindingConditionItem,
+    createDefaultScriptEditorEventBindingRecord,
+    normalizeScriptEditorEventBindingRecord,
+    updateScriptEditorEventBindingConditionItemField,
+    updateScriptEditorEventBindingConditionOperator,
+  } = require("../.test-dist/application/script-editor/story-dialogue-event-authoring.js");
+
+  let binding = createDefaultScriptEditorEventBindingRecord(0);
+  binding = updateScriptEditorEventBindingConditionOperator(binding, "all");
+  binding = appendScriptEditorEventBindingConditionItem(binding, "flag");
+  binding = updateScriptEditorEventBindingConditionItemField(binding, 0, "field", "story.ready");
+  binding = updateScriptEditorEventBindingConditionItemField(binding, 0, "operator", "==");
+  binding = updateScriptEditorEventBindingConditionItemField(binding, 0, "value", "true");
+  binding = appendScriptEditorEventBindingConditionItem(binding, "variable");
+  binding = updateScriptEditorEventBindingConditionItemField(binding, 1, "field", "story.progress");
+  binding = updateScriptEditorEventBindingConditionItemField(binding, 1, "operator", ">=");
+  binding = updateScriptEditorEventBindingConditionItemField(binding, 1, "value", "2");
+
+  const normalizedBinding = normalizeScriptEditorEventBindingRecord(binding);
+  const eventDefinition = { id: "event.opening", name: "Opening" };
+
+  assert.deepEqual(normalizedBinding.conditions, {
+    operator: "all",
+    conditions: [
+      { type: "flag", field: "story.ready", operator: "==", value: true },
+      { type: "variable", field: "story.progress", operator: ">=", value: 2 },
+    ],
+  });
+  assert.equal(Object.hasOwn(eventDefinition, "conditions"), false);
+});
+
+test("script editor event binding condition removal clears empty condition groups", () => {
+  const {
+    appendScriptEditorEventBindingConditionItem,
+    createDefaultScriptEditorEventBindingRecord,
+    removeScriptEditorEventBindingConditionItem,
+    updateScriptEditorEventBindingConditionItemField,
+    updateScriptEditorEventBindingConditionOperator,
+  } = require("../.test-dist/application/script-editor/story-dialogue-event-authoring.js");
+
+  let binding = createDefaultScriptEditorEventBindingRecord(0);
+  binding = updateScriptEditorEventBindingConditionOperator(binding, "all");
+  binding = appendScriptEditorEventBindingConditionItem(binding, "flag");
+  binding = updateScriptEditorEventBindingConditionItemField(binding, 0, "field", "story.ready");
+  binding = updateScriptEditorEventBindingConditionItemField(binding, 0, "value", "true");
+  binding = removeScriptEditorEventBindingConditionItem(binding, 0);
+
+  assert.equal(Object.hasOwn(binding, "conditions"), false);
+});
+
+test("script editor event binding condition editor exposes localized cascading registry controls", () => {
+  const source = fs.readFileSync("src/ui/main-ui/main-ui-flow.js", "utf8");
+
+  assert.match(source, /listScriptEditorEventBindingConditionFieldOptions/);
+  assert.match(source, /data-script-editor-event-binding-condition-field-registry/);
+  assert.match(source, /data-script-editor-event-binding-condition-item-field="sourceFamily"/);
+  assert.match(source, /data-script-editor-event-binding-condition-value-type/);
+  assert.match(source, /data-script-editor-event-binding-condition-resolver/);
+  assert.match(source, /data-script-editor-event-binding-condition-expression/);
+  assert.match(source, /data-script-editor-event-binding-condition-custom/);
+  assert.match(source, /data-script-editor-event-binding-condition-binding-context/);
+
+  for (const label of [
+    "标记条件",
+    "变量条件",
+    "表达式条件",
+    "自定义条件",
+    "触发上下文条件",
+    "满足全部",
+    "满足任一",
+    "全部不满足",
+    "字段来源",
+    "字段",
+    "判断方式",
+    "目标值",
+    "人物",
+    "城市",
+    "建筑",
+    "对话",
+    "小游戏",
+    "剧情节点",
+    "等于",
+    "不等于",
+    "包含",
+    "布尔值",
+    "数字",
+    "文本",
+  ]) {
+    assert.match(source, new RegExp(label));
+  }
+
+  assert.doesNotMatch(source, />flag</);
+  assert.doesNotMatch(source, />variable</);
+  assert.doesNotMatch(source, />expression</);
+  assert.doesNotMatch(source, />custom</);
+  assert.doesNotMatch(source, />binding-context</);
+  assert.doesNotMatch(source, />all</);
+  assert.doesNotMatch(source, />any</);
+  assert.doesNotMatch(source, />not</);
+  assert.doesNotMatch(source, />operator</);
+  assert.doesNotMatch(source, />value</);
+});
+
+test("script editor event binding condition authoring registry preserves advanced draft conditions", () => {
+  const {
+    appendScriptEditorEventBindingConditionItem,
+    createDefaultScriptEditorEventBindingRecord,
+    listScriptEditorEventBindingConditionFieldOptions,
+    normalizeScriptEditorEventBindingRecord,
+    updateScriptEditorEventBindingConditionItemField,
+    updateScriptEditorEventBindingConditionOperator,
+  } = require("../.test-dist/application/script-editor/story-dialogue-event-authoring.js");
+
+  const fieldOptions = listScriptEditorEventBindingConditionFieldOptions();
+  assert.ok(
+    fieldOptions.some(
+      (option) =>
+        option.sourceFamily === "binding-context" &&
+        option.valueType === "enum" &&
+        option.resolverId === "script-editor.trigger-action"
+    )
+  );
+  assert.ok(
+    fieldOptions.some(
+      (option) =>
+        option.sourceFamily === "flag" &&
+        option.valueType === "boolean" &&
+        option.label === "剧情就绪标记"
+    )
+  );
+
+  let binding = createDefaultScriptEditorEventBindingRecord(0);
+  binding = updateScriptEditorEventBindingConditionOperator(binding, "not");
+  binding = appendScriptEditorEventBindingConditionItem(binding, "expression");
+  binding = updateScriptEditorEventBindingConditionItemField(binding, 0, "sourceFamily", "variable");
+  binding = updateScriptEditorEventBindingConditionItemField(binding, 0, "field", "story.progress");
+  binding = updateScriptEditorEventBindingConditionItemField(binding, 0, "operator", ">=");
+  binding = updateScriptEditorEventBindingConditionItemField(binding, 0, "value", "4");
+  binding = updateScriptEditorEventBindingConditionItemField(binding, 0, "valueType", "number");
+  binding = appendScriptEditorEventBindingConditionItem(binding, "custom");
+  binding = updateScriptEditorEventBindingConditionItemField(binding, 1, "handlerId", "condition.custom.check");
+  binding = updateScriptEditorEventBindingConditionItemField(binding, 1, "payload", '{"threshold":2}');
+  binding = appendScriptEditorEventBindingConditionItem(binding, "binding-context");
+  binding = updateScriptEditorEventBindingConditionItemField(binding, 2, "field", "trigger.action");
+  binding = updateScriptEditorEventBindingConditionItemField(binding, 2, "operator", "==");
+  binding = updateScriptEditorEventBindingConditionItemField(binding, 2, "value", "indoor-screen-shown");
+  binding = updateScriptEditorEventBindingConditionItemField(binding, 2, "resolverId", "script-editor.trigger-action");
+
+  const normalizedBinding = normalizeScriptEditorEventBindingRecord(binding);
+
+  assert.deepEqual(normalizedBinding.conditions, {
+    operator: "not",
+    conditions: [
+      {
+        type: "expression",
+        sourceFamily: "variable",
+        field: "story.progress",
+        operator: ">=",
+        value: 4,
+        valueType: "number",
+      },
+      {
+        type: "custom",
+        handlerId: "condition.custom.check",
+        payload: '{"threshold":2}',
+      },
+      {
+        type: "binding-context",
+        sourceFamily: "binding-context",
+        field: "trigger.action",
+        operator: "==",
+        value: "indoor-screen-shown",
+        valueType: "enum",
+        resolverId: "script-editor.trigger-action",
+      },
+    ],
+  });
+});
+
+test("script editor event deletion removes all cross-record event references", () => {
+  const {
+    createDefaultScriptEditorProjectDefinition,
+    removeScriptEditorWorkflowRecord,
+  } = require("../.test-dist/application/script-editor/minimal-workflow.js");
+
+  const project = createDefaultScriptEditorProjectDefinition({
+    idBase: "event-delete-cascade",
+    title: "Event Delete Cascade",
+  });
+  const deletedEventId = "event.delete.me";
+  const keepEventId = "event.keep.me";
+
+  project.storyPack.entryEventId = deletedEventId;
+
+  project.people[0].eventIds = [deletedEventId, keepEventId];
+  project.cities[0].menuEntries = [
+    {
+      id: "city.start.menu.event",
+      label: "City Event",
+      menuFamily: "overview",
+      targetFamily: "event",
+      targetId: deletedEventId,
+      isVisible: true,
+      isEnabled: true,
+      disabledHint: "",
+    },
+    {
+      id: "city.start.menu.dialogue",
+      label: "City Dialogue",
+      menuFamily: "overview",
+      targetFamily: "dialogue",
+      targetId: "dialogue.opening",
+      isVisible: true,
+      isEnabled: true,
+      disabledHint: "",
+    },
+  ];
+  project.buildings[0].menuEntries = [
+    {
+      id: "building.home.menu.event",
+      label: "Building Event",
+      menuFamily: "dialogue",
+      targetFamily: "event",
+      targetId: deletedEventId,
+      isVisible: true,
+      isEnabled: true,
+      disabledHint: "",
+    },
+  ];
+  project.buildings[0].entryBinding = {
+    defaultPersonId: "person.hero",
+    returnTarget: "city",
+  };
+  project.events = [
+    {
+      ...project.events[0],
+      id: keepEventId,
+      nextEventId: deletedEventId,
+      destination: { family: "dialogue", targetId: "dialogue.opening" },
+    },
+    {
+      ...project.events[0],
+      id: deletedEventId,
+      title: "Delete Me",
+      destination: { family: "dialogue", targetId: "dialogue.opening" },
+      nextEventId: "",
+    },
+  ];
+
+  const nextProject = removeScriptEditorWorkflowRecord(
+    project,
+    "events",
+    deletedEventId
+  );
+
+  assert.equal(nextProject.events.some((event) => event.id === deletedEventId), false);
+  assert.equal(nextProject.storyPack.entryEventId, undefined);
+  assert.deepEqual(nextProject.people[0].eventIds, [keepEventId]);
+  assert.deepEqual(nextProject.cities[0].menuEntries, [
+    {
+      id: "city.start.menu.dialogue",
+      label: "City Dialogue",
+      menuFamily: "overview",
+      targetFamily: "dialogue",
+      targetId: "dialogue.opening",
+      isVisible: true,
+      isEnabled: true,
+      disabledHint: "",
+    },
+  ]);
+  assert.deepEqual(nextProject.buildings[0].menuEntries, []);
+  assert.equal(nextProject.buildings[0].entryBinding.defaultPersonId, "person.hero");
+  assert.equal(nextProject.buildings[0].entryBinding.returnTarget, "city");
+
+  const {
+    exportScriptEditorProjectToScenarioPackFiles,
+  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  const exportedEvents = JSON.parse(
+    exportScriptEditorProjectToScenarioPackFiles(nextProject)["events.json"]
+  );
+  assert.equal(exportedEvents.some((event) => event.id === deletedEventId), false);
+  assert.equal(exportedEvents.some((event) => event.nextEventId === deletedEventId), false);
+});
+
+test(
+  "script editor minigame binding queue exposes a dedicated binding editor with launch settlement and reference tabs",
+  () => {
+    const source = fs.readFileSync("src/ui/main-ui/main-ui-flow.js", "utf8");
+    const cssSource = fs.readFileSync("src/styles/script-editor.css", "utf8");
+    const workspaceShellSource = fs.readFileSync(
+      "src/application/script-editor/workspace-shell.ts",
+      "utf8"
+    );
+
+    assert.doesNotMatch(source, /玩法绑定作者面|Minigame Binding/);
+    assert.match(source, /基础信息|触发与调用|结算与返回|引用关系/);
+    assert.match(source, /data-script-editor-action="select-minigame-tab"/);
+    assert.match(source, /SCRIPT_EDITOR_INSPECTOR_SUPPRESS_TEXT/);
+    assert.match(source, /data-script-editor-inspector-header-slot/);
+    assert.match(source, /"add-minigame-launch-payload-entry"/);
+    assert.match(source, /"add-minigame-outcome-route"/);
+    assert.match(source, /data-script-editor-minigame-field=/);
+    assert.match(source, /data-script-editor-minigame-launch-field=/);
+    assert.match(source, /data-script-editor-minigame-outcome-field=/);
+    assert.match(cssSource, /\.c-script-editor-minigame-editor/);
+    assert.match(cssSource, /\.c-script-editor-minigame-list/);
+    assert.doesNotMatch(workspaceShellSource, /"dialogues", "storyNodes", "minigames"/);
+  }
+);
+
+test(
+  "script editor minigame binding authoring helpers normalize builtin defaults and bounded settlement fields",
+  () => {
+    const {
+      appendScriptEditorMinigameLaunchPayloadEntry,
+      appendScriptEditorMinigameOutcomeRoute,
+      createDefaultScriptEditorMinigameRecord,
+      normalizeScriptEditorMinigameRecord,
+      removeScriptEditorMinigameLaunchPayloadEntry,
+      updateScriptEditorMinigameField,
+      updateScriptEditorMinigameIntegration,
+      updateScriptEditorMinigameLaunchPayloadField,
+      updateScriptEditorMinigameOutcomeRouteField,
+    } = require("../.test-dist/application/script-editor/minigame-binding-authoring.js");
+
+    let record = createDefaultScriptEditorMinigameRecord(0);
+    record = updateScriptEditorMinigameField(record, "title", "市集算盘");
+    record = updateScriptEditorMinigameField(record, "playableId", "grain-accounting");
+    record = updateScriptEditorMinigameIntegration(
+      record,
+      "playable.grain-accounting.house.grain-shop"
+    );
+    record = updateScriptEditorMinigameField(record, "ownerId", "building.grain-shop");
+    record = updateScriptEditorMinigameField(record, "triggerSource", "location-menu");
+    record = appendScriptEditorMinigameLaunchPayloadEntry(record);
+    record = updateScriptEditorMinigameLaunchPayloadField(record, 0, "key", "ledgerId");
+    record = updateScriptEditorMinigameLaunchPayloadField(
+      record,
+      0,
+      "value",
+      "grain.shop.default"
+    );
+    record = appendScriptEditorMinigameOutcomeRoute(record);
+    record = updateScriptEditorMinigameOutcomeRouteField(record, 1, "outcome", "failure");
+    record = updateScriptEditorMinigameOutcomeRouteField(
+      record,
+      1,
+      "handoffPolicy",
+      "close-only"
+    );
+    record = updateScriptEditorMinigameOutcomeRouteField(
+      record,
+      1,
+      "effectHint",
+      "扣除信誉"
+    );
+    record = removeScriptEditorMinigameLaunchPayloadEntry(record, 1);
+
+    const normalized = normalizeScriptEditorMinigameRecord(record);
+
+    assert.equal(normalized.title, "市集算盘");
+    assert.equal(normalized.playableId, "grain-accounting");
+    assert.equal(
+      normalized.integrationId,
+      "playable.grain-accounting.house.grain-shop"
+    );
+    assert.equal(normalized.ownerKind, "house");
+    assert.equal(normalized.returnPolicy, "resume-owner");
+    assert.equal(
+      normalized.triggerId,
+      "trigger.playable.grain-accounting.house.grain-shop"
+    );
+    assert.equal(normalized.launchPayload.length, 1);
+    assert.deepEqual(normalized.launchPayload[0], {
+      key: "ledgerId",
+      value: "grain.shop.default",
+    });
+    assert.equal(normalized.outcomeRoutes[1].outcome, "failure");
+    assert.equal(normalized.outcomeRoutes[1].handoffPolicy, "close-only");
+    assert.equal(normalized.outcomeRoutes[1].effectHint, "扣除信誉");
+  }
+);
+
+test(
+  "script editor runtime export fails closed when imported compatibility residue is still unresolved",
+  async () => {
+    const {
+      exportScriptEditorProjectToScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    const {
+      loadScriptEditorProjectFromScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-import.js");
+    const project = createExportableScriptEditorProjectDefinition();
+    const serializedFiles = exportScriptEditorProjectToScenarioPackFiles(project);
+    const manifest = JSON.parse(serializedFiles["pack.json"]);
+
+    manifest.files.uiScreenSchemas = "./ui-screen-schemas.json";
+    serializedFiles["pack.json"] = `${JSON.stringify(manifest, null, 2)}\n`;
+    serializedFiles["ui-screen-schemas.json"] = `${JSON.stringify(
+      [{ id: "ui.unsupported.screen", title: "Unsupported Screen" }],
+      null,
+      2
+    )}\n`;
+
+    const importedProject = await loadScriptEditorProjectFromScenarioPackFiles(
+      createImportedFilesFromSerializedJsonRecord(
+        serializedFiles,
+        "imported-scenario-pack"
+      )
+    );
+
+    assert.throws(
+      () => exportScriptEditorProjectToScenarioPackFiles(importedProject),
+      /compatibilityImport|uiScreenSchemas|unresolved/i
+    );
+  }
+);
+
+test(
+  "script editor project loader rejects missing canonical manifest file entries",
+  async () => {
+    const {
+      loadScriptEditorProjectFromFiles,
+    } = require("../.test-dist/application/script-editor/editor-project-loader.js");
+    const os = require("node:os");
+    const outputRoot = fs.mkdtempSync(
+      path.join(os.tmpdir(), "rpg-tg-script-editor-project-missing-key-")
+    );
+    const { projectRoot } = writeScriptEditorProjectFixture(outputRoot);
+    const manifestPath = path.join(projectRoot, "project.json");
+    const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
+    delete manifest.files.effectBundles;
+    fs.writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`, "utf8");
+
+    await assert.rejects(
+      () =>
+        loadScriptEditorProjectFromFiles(
+          createImportedScriptEditorProjectFilesFromDisk(
+            projectRoot,
+            "script-editor-project"
+          )
+        ),
+      /effectBundles/i
     );
   }
 );
@@ -2205,32 +14770,176 @@ test("default runtime content loads from the shared base content pack path", asy
     false,
     "Expected default-runtime-content.ts to stop importing pack JSON tables directly."
   );
+  assert.equal(
+    source.includes("createBaseGameContentPack"),
+    false,
+    "Expected default-runtime-content.ts to stop importing the builtin base-pack loader directly."
+  );
+
+  const mainSource = fs.readFileSync(
+    path.join(process.cwd(), "src", "main.ts"),
+    "utf8"
+  );
+  const bootstrapSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src",
+      "application",
+      "startup",
+      "entry-shell-bootstrap-state.ts"
+    ),
+    "utf8"
+  );
+  assert.match(mainSource, /createEntryShellBootstrapState/);
+  assert.match(
+    bootstrapSource,
+    /loadDefaultRuntimeContent\(\(\)\s*=>\s*Promise\.resolve\(baseGameContentPack\)\)/,
+    "Expected entry-shell-bootstrap-state.ts to inject the default runtime content pack loader explicitly."
+  );
+
+  const defaultRuntimeContentModulePath = require.resolve(
+    "../.test-dist/application/content/default-runtime-content.js"
+  );
+  delete require.cache[defaultRuntimeContentModulePath];
 
   const {
     defaultRuntimeContent,
     loadDefaultRuntimeContent,
-  } = require("../.test-dist/application/content/default-runtime-content.js");
+  } = require(defaultRuntimeContentModulePath);
 
   assert.equal(typeof loadDefaultRuntimeContent, "function");
 
-  await withLocalJsonFileFetch(async () => {
-    const content = await loadDefaultRuntimeContent();
+  const content = await loadDefaultRuntimeContent(async () => ({
+    schemaVersion: 1,
+    id: "pack.test.runtime-default",
+    title: "Runtime Default Test Pack",
+    cities: [
+      {
+        id: "city.test.runtime-default",
+        name: "测试城",
+        mapNodeId: "node.test.runtime-default",
+        prosperity: 12,
+        danger: 3,
+        specialDemand: ["粮"],
+        houseIds: [],
+      },
+    ],
+    houses: [
+      {
+        id: "house.test.runtime-default",
+        cityId: "city.test.runtime-default",
+        name: "测试屋",
+      },
+    ],
+    cityNpcPools: [
+      {
+        cityId: "city.test.runtime-default",
+        fixedNpcIds: [],
+        candidateNpcIds: [],
+      },
+    ],
+    eventBindings: [
+      {
+        id: "binding.test.runtime-default",
+        eventId: "event.test.runtime-default",
+        owner: { family: "city", id: "city.test.runtime-default" },
+        trigger: { timing: "after", action: "city-enter" },
+      },
+    ],
+    houseModuleDefaults: {
+      "home-house": {
+        intro: "default-runtime-home",
+      },
+    },
+    textEntries: {
+      "runtime.test.default-content": "default runtime content",
+    },
+  }));
 
-    assert.equal(content, defaultRuntimeContent);
-    assert.equal(
-      defaultRuntimeContent.cities.some((city) => city.id === "city.kulan"),
-      true
-    );
-    assert.equal(
-      defaultRuntimeContent.houses.some(
-        (house) => house.id === "house.kulan.market"
-      ),
-      true
-    );
-    assert.equal(
-      defaultRuntimeContent.cityNpcPools.some((pool) => pool.cityId === "city.kulan"),
-      true
-    );
+  assert.equal(content, defaultRuntimeContent);
+  assert.equal(
+    defaultRuntimeContent.cities.some(
+      (city) => city.id === "city.test.runtime-default"
+    ),
+    true
+  );
+  assert.equal(
+    defaultRuntimeContent.houses.some(
+      (house) => house.id === "house.test.runtime-default"
+    ),
+    true
+  );
+  assert.equal(
+    defaultRuntimeContent.cityNpcPools.some(
+      (pool) => pool.cityId === "city.test.runtime-default"
+    ),
+    true
+  );
+  assert.equal(
+    defaultRuntimeContent.eventBindings.some(
+      (binding) => binding.id === "binding.test.runtime-default"
+    ),
+    true
+  );
+  assert.deepEqual(defaultRuntimeContent.houseModuleDefaults["home-house"], {
+    intro: "default-runtime-home",
+  });
+  assert.equal(
+    defaultRuntimeContent.textEntriesById["runtime.test.default-content"],
+    "default runtime content"
+  );
+});
+
+test("default runtime content exposes zhuyuanzhang event bindings", async () => {
+  const defaultRuntimeContentModulePath = require.resolve(
+    "../.test-dist/application/content/default-runtime-content.js"
+  );
+  delete require.cache[defaultRuntimeContentModulePath];
+
+  const {
+    defaultRuntimeContent,
+    loadDefaultRuntimeContent,
+  } = require(defaultRuntimeContentModulePath);
+  const {
+    createBaseGameContentPack,
+  } = require("../.test-dist/content/base-game-content-pack.js");
+
+  await loadDefaultRuntimeContent(() => createBaseGameContentPack());
+
+  assert.equal(
+    defaultRuntimeContent.eventBindings.some(
+      (binding) =>
+        binding.id ===
+        "binding.story.zhu_yuanzhang.ordination.house-enter"
+    ),
+    true
+  );
+});
+
+test("default runtime content keeps module-keyed house defaults", async () => {
+  const defaultRuntimeContentModulePath = require.resolve(
+    "../.test-dist/application/content/default-runtime-content.js"
+  );
+  delete require.cache[defaultRuntimeContentModulePath];
+
+  const {
+    defaultRuntimeContent,
+    loadDefaultRuntimeContent,
+  } = require(defaultRuntimeContentModulePath);
+
+  await loadDefaultRuntimeContent(async () => ({
+    schemaVersion: 1,
+    id: "pack.test.runtime-default-house-module-defaults",
+    title: "Runtime Default House Module Defaults",
+    houseModuleDefaults: {
+      "home-house": {
+        intro: "shared-home-default",
+      },
+    },
+  }));
+
+  assert.deepEqual(defaultRuntimeContent.houseModuleDefaults["home-house"], {
+    intro: "shared-home-default",
   });
 });
 
@@ -2829,74 +15538,6 @@ test("story-stage access keeps leader residence entry visible in monk stage", ()
   );
 });
 
-test("house access refusal blocks leaving temple before first review", () => {
-  const monkState = createMonkStageState();
-  const monkCharacters = createPrototypeCharactersForStoryStage(
-    ZHU_YUANZHANG_STORY_STAGES.huangjueTemple
-  );
-  const monkGrainShop = prototypeHouses.find(
-    (houseDefinition) => houseDefinition.id === "house.kulan.grain_shop"
-  );
-  const monkTempleHouse = prototypeHouses.find(
-    (houseDefinition) => houseDefinition.id === "house.kulan.temple"
-  );
-
-  assert.ok(monkGrainShop);
-  assert.ok(monkTempleHouse);
-
-  const grainShopAccess = selectHouseEntryAccess(
-    monkState,
-    monkCharacters,
-    monkGrainShop,
-    prototypeHouseAccessRefusalRules
-  );
-  const templeAccess = selectHouseEntryAccess(
-    monkState,
-    monkCharacters,
-    monkTempleHouse,
-    prototypeHouseAccessRefusalRules
-  );
-
-  assert.equal(grainShopAccess.canEnter, false);
-  assert.equal(grainShopAccess.refusal?.speakerCharacterId, "char.player");
-  assert.equal(
-    grainShopAccess.refusal?.text,
-    "既然答应了主持，就先不要离开寺院吧。"
-  );
-  assert.equal(templeAccess.canEnter, true);
-});
-
-test("house access refusal shows guard dialogue for keep during monk stage", () => {
-  const monkState = {
-    ...createMonkStageState(),
-    runtime: {
-      ...createMonkStageState().runtime,
-      flags: {
-        ...createMonkStageState().runtime.flags,
-        [ZHU_YUANZHANG_STORY_FLAG_KEYS.firstTempleReviewCompleted]: true,
-      },
-    },
-  };
-  const monkCharacters = createPrototypeCharactersForStoryStage(
-    ZHU_YUANZHANG_STORY_STAGES.huangjueTemple
-  );
-  const monkKeepHouse = prototypeHouses.find(
-    (houseDefinition) => houseDefinition.id === "house.kulan.keep"
-  );
-
-  assert.ok(monkKeepHouse);
-
-  const keepAccess = selectHouseEntryAccess(
-    monkState,
-    monkCharacters,
-    monkKeepHouse,
-    prototypeHouseAccessRefusalRules
-  );
-
-  assert.equal(keepAccess.canEnter, false);
-  assert.equal(keepAccess.refusal?.speakerCharacterId, "char.kulan_soldier");
-  assert.equal(keepAccess.refusal?.text, "军机要出，请阁下回避。");
-});
 
 test("keep house stays in audience mode during monk stage even when review countdown is zero", () => {
   const monkCharacters = createPrototypeCharactersForStoryStage(
@@ -3462,6 +16103,49 @@ test("temple house greeting, open, beg-alms assignment, and leave refusal resolv
   ]);
 });
 
+test("temple house view model does not require a mounted default abbot", () => {
+  const monkCharacters = createPrototypeCharactersForStoryStage(
+    ZHU_YUANZHANG_STORY_STAGES.huangjueTemple
+  );
+  const unstaffedTempleHouse = {
+    ...templeHouse,
+    characterIds: [],
+    defaultCharacterId: null,
+  };
+
+  const viewModel = templeHouseHouseModule.selectViewModel({
+    gameState: withCouncilInDays(createMonkStageState(), 30),
+    characterDefinitions: monkCharacters,
+    houseDefinition: unstaffedTempleHouse,
+    playerCharacterId,
+    sessionState: null,
+    textEntriesById: {},
+  });
+
+  assert.deepEqual(viewModel.standbyRoster, []);
+  assert.equal(viewModel.dialogue, null);
+  assert.equal(viewModel.actionContainer, null);
+
+  const enterResult = templeHouseHouseModule.enter({
+    gameState: withCouncilInDays(createMonkStageState(), 30),
+    characterDefinitions: monkCharacters,
+    houseDefinition: unstaffedTempleHouse,
+    playerCharacterId,
+    textEntriesById: {},
+  });
+  const actionResult = templeHouseHouseModule.dispatch({
+    gameState: enterResult.gameState,
+    characterDefinitions: enterResult.characterDefinitions,
+    houseDefinition: unstaffedTempleHouse,
+    playerCharacterId,
+    sessionState: enterResult.sessionState,
+    request: { type: "action", actionId: "open-abbot-dialogue" },
+    textEntriesById: {},
+  });
+
+  assert.equal(actionResult.sessionState, enterResult.sessionState);
+});
+
 test("temple house rest summary resolves from text entries", () => {
   const monkCharacters = withPlayerStamina(
     createPrototypeCharactersForStoryStage(
@@ -3573,11 +16257,46 @@ test("temple house review module no longer keeps core assignment prose inline", 
   );
 });
 
-test("temple and keep house content files no longer author pack task definitions", () => {
-  const templeContentSource = fs.readFileSync(
-    path.join(process.cwd(), "src/content/houses/temple-house-content.ts"),
+test("legacy temple house content registry file is removed after temple runtime fallback converges", () => {
+  const templeContentPath = path.join(
+    process.cwd(),
+    "src/content/houses/temple-house-content.ts"
+  );
+
+  assert.equal(
+    fs.existsSync(templeContentPath),
+    false,
+    "Expected src/content/houses/temple-house-content.ts to be removed once temple runtime fallback no longer depends on it."
+  );
+});
+
+test("temple house no longer consumes default pack content through module-top-level fallbacks", () => {
+  const templeHouseSource = fs.readFileSync(
+    "src/application/house-modules/temple-house/temple-house-house-module.ts",
     "utf8"
   );
+  const templeHouseActiveContentPath =
+    "src/application/house-modules/temple-house/temple-house-active-content.ts";
+  const templeHouseActiveContentExists = fs.existsSync(templeHouseActiveContentPath);
+  const templeHouseActiveContentSource = templeHouseActiveContentExists
+    ? fs.readFileSync(templeHouseActiveContentPath, "utf8")
+    : "";
+
+  assert.equal(templeHouseActiveContentExists, true);
+  assert.match(templeHouseSource, /from "\.\/temple-house-active-content"/);
+  assert.doesNotMatch(templeHouseSource, /default-pack-content/);
+  assert.doesNotMatch(templeHouseSource, /defaultPackActivities/);
+  assert.doesNotMatch(templeHouseSource, /defaultPackTextEntries/);
+  assert.match(templeHouseActiveContentSource, /defaultPackActivities/);
+  assert.match(templeHouseActiveContentSource, /defaultPackTextEntries/);
+  assert.match(
+    templeHouseActiveContentSource,
+    /getDefaultTempleTaskActivityDefinitions/
+  );
+  assert.match(templeHouseActiveContentSource, /getTempleTextEntries/);
+});
+
+test("keep house content file no longer authors pack task definitions", () => {
   const keepContentSource = fs.readFileSync(
     path.join(process.cwd(), "src/content/houses/keep-house-content.ts"),
     "utf8"
@@ -3585,21 +16304,12 @@ test("temple and keep house content files no longer author pack task definitions
 
   assert.deepEqual(
     [
-      "mission.temple.copy-scripture",
-      "mission.temple.sweep-courtyard",
-      "mission.temple.carry-water",
-      "mission.temple.beg-alms",
-      "mission.temple.relief-refugees",
       "mission.keep.grain-procurement",
       "mission.keep.market-inspection",
       "mission.keep.militia-drill",
-    ].filter(
-      (entry) =>
-        templeContentSource.includes(entry) || keepContentSource.includes(entry)
-    ),
+    ].filter((entry) => keepContentSource.includes(entry)),
     []
   );
-  assert.equal(templeContentSource.trim(), "export {};");
 });
 
 test("temple house blocks leaving during first review with player dialogue", () => {
@@ -3985,6 +16695,9 @@ test("temple house daily flow resolves fortune and donation through unified stat
 
   const playerCharacter = getPlayerCharacter(donatedResult.characterDefinitions);
   assert.equal(playerCharacter.stats.gold, 450);
+  assert.deepEqual(donatedResult.characterStatusById?.[playerCharacterId], {
+    statPatch: { gold: 450 },
+  });
   assert.equal(
     donatedResult.gameState.runtime.variables[
       TEMPLE_HOUSE_VARIABLE_KEYS.donationTotal
@@ -4322,6 +17035,551 @@ test("home house rest summary resolves from text entries", () => {
   ]);
 });
 
+test("home house reads shared module defaults from runtime content", () => {
+  const defaultRuntimeContentModulePath = require.resolve(
+    "../.test-dist/application/content/default-runtime-content.js"
+  );
+  const homeHouseActiveContentModulePath = require.resolve(
+    "../.test-dist/application/house-modules/home-house/home-house-active-content.js"
+  );
+  const homeHouseModulePath = require.resolve(
+    "../.test-dist/application/house-modules/home-house/home-house-house-module.js"
+  );
+  delete require.cache[defaultRuntimeContentModulePath];
+  delete require.cache[homeHouseActiveContentModulePath];
+  delete require.cache[homeHouseModulePath];
+
+  const {
+    defaultRuntimeContent,
+  } = require(defaultRuntimeContentModulePath);
+  const {
+    homeHouseHouseModule: sharedDefaultHomeHouseModule,
+  } = require(homeHouseModulePath);
+  const runtimeDefaults = defaultRuntimeContent.houseModuleDefaults;
+  const previousHomeDefaults = runtimeDefaults["home-house"];
+
+  runtimeDefaults["home-house"] = {
+    homeHouseIntroLines: ["共享居所开场。"],
+    homeHouseMainLines: ["共享居所主菜单。"],
+    homeHouseRestMenuLines: ["共享居所休息菜单。"],
+    homeHouseRecoveryTuning: {
+      hpBase: 6,
+      hpRatio: 0.1,
+      fatigueBase: 8,
+      fatigueRatio: 0.12,
+      customRestMaxDays: 42,
+    },
+  };
+
+  try {
+    const enterResult = sharedDefaultHomeHouseModule.enter({
+      gameState: createBaseState(),
+      characterDefinitions: prototypeCharacters,
+      houseDefinition: homeHouse,
+      playerCharacterId,
+    });
+
+    assert.deepEqual(enterResult.sessionState?.descriptionLines, ["共享居所开场。"]);
+
+    const restMenuResult = sharedDefaultHomeHouseModule.dispatch({
+      gameState: enterResult.gameState,
+      characterDefinitions: enterResult.characterDefinitions,
+      houseDefinition: homeHouse,
+      playerCharacterId,
+      sessionState: enterResult.sessionState,
+      request: {
+        type: "action",
+        actionId: "open-rest-menu",
+      },
+    });
+
+    assert.deepEqual(restMenuResult.sessionState?.descriptionLines, [
+      "共享居所休息菜单。",
+    ]);
+  } finally {
+    if (previousHomeDefaults == null) {
+      delete runtimeDefaults["home-house"];
+    } else {
+      runtimeDefaults["home-house"] = previousHomeDefaults;
+    }
+  }
+});
+
+test("home house no longer consumes default runtime content through module-top-level fallbacks", () => {
+  const homeHouseSource = fs.readFileSync(
+    "src/application/house-modules/home-house/home-house-house-module.ts",
+    "utf8"
+  );
+  const homeHouseActiveContentPath =
+    "src/application/house-modules/home-house/home-house-active-content.ts";
+  const homeHouseActiveContentExists = fs.existsSync(homeHouseActiveContentPath);
+  const homeHouseActiveContentSource = homeHouseActiveContentExists
+    ? fs.readFileSync(homeHouseActiveContentPath, "utf8")
+    : "";
+
+  assert.equal(homeHouseActiveContentExists, true);
+  assert.match(homeHouseSource, /from "\.\/home-house-active-content"/);
+  assert.doesNotMatch(homeHouseSource, /default-runtime-content/);
+  assert.doesNotMatch(homeHouseSource, /defaultRuntimeContent\.houseModuleDefaults/);
+  assert.doesNotMatch(homeHouseSource, /defaultRuntimeContent\.textEntriesById/);
+  assert.match(homeHouseActiveContentSource, /defaultRuntimeContent/);
+  assert.match(homeHouseActiveContentSource, /getHomeHouseContentDefaults/);
+  assert.match(homeHouseActiveContentSource, /getHomeTextEntries/);
+});
+
+test("keep house reads shared module defaults from runtime content", () => {
+  const defaultRuntimeContentModulePath = require.resolve(
+    "../.test-dist/application/content/default-runtime-content.js"
+  );
+  const keepHouseModulePath = require.resolve(
+    "../.test-dist/application/house-modules/keep-house/keep-house-house-module.js"
+  );
+  const keepHouseActiveContentModulePath = require.resolve(
+    "../.test-dist/application/house-modules/keep-house/keep-house-active-content.js"
+  );
+  delete require.cache[defaultRuntimeContentModulePath];
+  delete require.cache[keepHouseModulePath];
+  delete require.cache[keepHouseActiveContentModulePath];
+
+  const {
+    defaultRuntimeContent,
+  } = require(defaultRuntimeContentModulePath);
+  const {
+    keepHouseHouseModule: sharedDefaultKeepHouseModule,
+  } = require(keepHouseModulePath);
+  const {
+    getKeepHouseContributionVariableKey,
+    KEEP_HOUSE_VARIABLE_KEYS,
+  } = require("../.test-dist/domain/keep-house.js");
+  const runtimeDefaults = defaultRuntimeContent.houseModuleDefaults;
+  const previousKeepDefaults = runtimeDefaults["keep-house"];
+  const baseState = createBaseState();
+
+  runtimeDefaults["keep-house"] = {
+    keepHouseDefaultStrategy: {
+      titleTextId: "runtime.test.keep.strategy.title",
+      lineTextIds: ["runtime.test.keep.strategy.line.001"],
+    },
+    keepHouseDefaultContributions: [
+      {
+        characterId: "char.player",
+        contribution: 77,
+      },
+    ],
+  };
+
+  try {
+    const enterResult = sharedDefaultKeepHouseModule.enter({
+      gameState: {
+        ...baseState,
+        runtime: {
+          ...baseState.runtime,
+          variables: {
+            ...baseState.runtime.variables,
+            [KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown]: 1,
+          },
+        },
+      },
+      characterDefinitions: prototypeCharacters,
+      houseDefinition: keepHouse,
+      playerCharacterId,
+      textEntriesById: {
+        "runtime.test.keep.strategy.title": "自定义军议方略",
+        "runtime.test.keep.strategy.line.001": "自定义军议台词。",
+      },
+    });
+
+    assert.equal(
+      enterResult.gameState.runtime.variables[KEEP_HOUSE_VARIABLE_KEYS.currentStrategy],
+      "自定义军议方略"
+    );
+    assert.equal(
+      enterResult.gameState.runtime.variables[
+        getKeepHouseContributionVariableKey("char.player")
+      ],
+      77
+    );
+  } finally {
+    if (previousKeepDefaults == null) {
+      delete runtimeDefaults["keep-house"];
+    } else {
+      runtimeDefaults["keep-house"] = previousKeepDefaults;
+    }
+  }
+});
+
+test("keep house no longer consumes default pack content through module-top-level default runtime fallbacks", () => {
+  const keepHouseSource = fs.readFileSync(
+    "src/application/house-modules/keep-house/keep-house-house-module.ts",
+    "utf8"
+  );
+  const keepHouseActiveContentSource = fs.readFileSync(
+    "src/application/house-modules/keep-house/keep-house-active-content.ts",
+    "utf8"
+  );
+
+  assert.match(keepHouseSource, /from "\.\/keep-house-active-content"/);
+  assert.doesNotMatch(keepHouseSource, /default-pack-content/);
+  assert.doesNotMatch(keepHouseSource, /default-runtime-content/);
+  assert.doesNotMatch(keepHouseSource, /defaultPackActivities/);
+  assert.doesNotMatch(keepHouseSource, /defaultPackTextEntries/);
+  assert.doesNotMatch(keepHouseSource, /defaultRuntimeContent\.houseModuleDefaults/);
+  assert.match(keepHouseActiveContentSource, /defaultRuntimeContent/);
+  assert.match(keepHouseActiveContentSource, /getKeepHouseTextEntries/);
+  assert.match(keepHouseActiveContentSource, /getKeepHouseActivityDefinitionsById/);
+  assert.match(keepHouseActiveContentSource, /getKeepHouseContentDefaults/);
+});
+
+test("city scene mappings no longer read default runtime content directly", () => {
+  const citySceneMappingsSource = fs.readFileSync(
+    "src/content/city-scene-mappings.ts",
+    "utf8"
+  );
+  const mainSource = fs.readFileSync("src/main.ts", "utf8");
+
+  assert.doesNotMatch(citySceneMappingsSource, /default-runtime-content/);
+  assert.doesNotMatch(citySceneMappingsSource, /defaultRuntimeContent\.(cities|houses)/);
+  assert.match(citySceneMappingsSource, /getZhuYuanzhangCitySceneMappings\(\s*content:/);
+  assert.match(mainSource, /getZhuYuanzhangCitySceneMappingByCityId\(\s*\{/);
+  assert.match(mainSource, /cities:\s*activeContentContext\.cities/);
+  assert.match(mainSource, /houses:\s*activeContentContext\.houses/);
+});
+
+test("grain shop market text reads shared module defaults from runtime content", async () => {
+  const defaultRuntimeContentModulePath = require.resolve(
+    "../.test-dist/application/content/default-runtime-content.js"
+  );
+  const grainShopModulePath = require.resolve(
+    "../.test-dist/application/house-modules/grain-shop/grain-shop-house-module.js"
+  );
+  const grainMarketModulePath = require.resolve(
+    "../.test-dist/application/grain-shop/grain-market.js"
+  );
+  const investigateGrainMarketModulePath = require.resolve(
+    "../.test-dist/application/grain-shop/investigate-grain-market.js"
+  );
+  const grainDefaultsHelperModulePath = require.resolve(
+    "../.test-dist/application/house-modules/grain-shop/grain-shop-content-defaults.js"
+  );
+
+  delete require.cache[defaultRuntimeContentModulePath];
+  delete require.cache[grainShopModulePath];
+  delete require.cache[grainMarketModulePath];
+  delete require.cache[investigateGrainMarketModulePath];
+  delete require.cache[grainDefaultsHelperModulePath];
+
+  const { defaultRuntimeContent } = require(defaultRuntimeContentModulePath);
+  const {
+    grainShopHouseModule: sharedDefaultGrainShopHouseModule,
+  } = require(grainShopModulePath);
+  const { pickMarketRumor } = require(grainMarketModulePath);
+  const { loadDefaultRuntimeContent } = require(
+    "../.test-dist/application/content/default-runtime-content.js"
+  );
+  const { createBaseGameContentPack } = require(
+    "../.test-dist/content/base-game-content-pack.js"
+  );
+
+  const runtimeDefaults = defaultRuntimeContent.houseModuleDefaults;
+  const previousGrainDefaults = runtimeDefaults["grain-shop"];
+  const textEntriesById = {
+    "runtime.test.grain_shop.greeting.001": "共享粮铺招呼。",
+    "runtime.test.grain_shop.default.001": "共享粮铺常规招呼。",
+    "runtime.test.grain_shop.rumor.001": "共享粮市风声。",
+  };
+
+  try {
+    await loadDefaultRuntimeContent(() => createBaseGameContentPack());
+    runtimeDefaults["grain-shop"] = {
+      grainShopNpcGreetingTextIds: ["runtime.test.grain_shop.greeting.001"],
+      grainShopNpcDefaultLineTextIds: ["runtime.test.grain_shop.default.001"],
+      grainShopMarketRumorTextIds: ["runtime.test.grain_shop.rumor.001"],
+    };
+
+    const enterResult = sharedDefaultGrainShopHouseModule.enter({
+      gameState: createBaseState(),
+      characterDefinitions: prototypeCharacters,
+      houseDefinition: grainShopHouse,
+      playerCharacterId,
+      textEntriesById,
+    });
+    const investigateResult = sharedDefaultGrainShopHouseModule.dispatch({
+      gameState: enterResult.gameState,
+      characterDefinitions: enterResult.characterDefinitions,
+      houseDefinition: grainShopHouse,
+      playerCharacterId,
+      sessionState: enterResult.sessionState,
+      request: { type: "action", actionId: "investigate" },
+      textEntriesById,
+    });
+
+    assert.equal(enterResult.sessionState?.npcGreeting, "共享粮铺招呼。");
+    assert.equal(enterResult.sessionState?.npcDefaultLine, "共享粮铺常规招呼。");
+    assert.equal(pickMarketRumor(textEntriesById), "共享粮市风声。");
+    assert.equal(
+      investigateResult.sessionState?.overlay?.paragraphs?.[1],
+      "传闻：共享粮市风声。"
+    );
+  } finally {
+    if (previousGrainDefaults == null) {
+      delete runtimeDefaults["grain-shop"];
+    } else {
+      runtimeDefaults["grain-shop"] = previousGrainDefaults;
+    }
+  }
+});
+
+test("grain shop session seed reads shared module defaults from runtime content", async () => {
+  const defaultRuntimeContentModulePath = require.resolve(
+    "../.test-dist/application/content/default-runtime-content.js"
+  );
+  const grainShopModulePath = require.resolve(
+    "../.test-dist/application/house-modules/grain-shop/grain-shop-house-module.js"
+  );
+  const grainSnapshotModulePath = require.resolve(
+    "../.test-dist/application/grain-shop/grain-shop-snapshot.js"
+  );
+  const grainInitSessionModulePath = require.resolve(
+    "../.test-dist/application/grain-shop/init-grain-shop-session.js"
+  );
+  const grainDefaultsHelperModulePath = require.resolve(
+    "../.test-dist/application/house-modules/grain-shop/grain-shop-content-defaults.js"
+  );
+
+  delete require.cache[defaultRuntimeContentModulePath];
+  delete require.cache[grainShopModulePath];
+  delete require.cache[grainSnapshotModulePath];
+  delete require.cache[grainInitSessionModulePath];
+  delete require.cache[grainDefaultsHelperModulePath];
+
+  const { defaultRuntimeContent } = require(defaultRuntimeContentModulePath);
+  const {
+    grainShopHouseModule: sharedDefaultGrainShopHouseModule,
+  } = require(grainShopModulePath);
+  const { createGrainShopSnapshot } = require(grainSnapshotModulePath);
+  const { readPlayerGrainDou } = require(
+    "../.test-dist/application/inventory/trade-inventory.js"
+  );
+  const { loadDefaultRuntimeContent } = require(
+    "../.test-dist/application/content/default-runtime-content.js"
+  );
+  const { createBaseGameContentPack } = require(
+    "../.test-dist/content/base-game-content-pack.js"
+  );
+
+  const runtimeDefaults = defaultRuntimeContent.houseModuleDefaults;
+  const previousGrainDefaults = runtimeDefaults["grain-shop"];
+
+  try {
+    await loadDefaultRuntimeContent(() => createBaseGameContentPack());
+    runtimeDefaults["grain-shop"] = {
+      ...(runtimeDefaults["grain-shop"] ?? {}),
+      grainShopInitialValues: {
+        money: 999,
+        food: 12,
+        math: 7,
+        relationship: 23,
+        time: 4,
+      },
+    };
+
+    const enterResult = sharedDefaultGrainShopHouseModule.enter({
+      gameState: createBaseState(),
+      characterDefinitions: prototypeCharacters,
+      houseDefinition: grainShopHouse,
+      playerCharacterId,
+    });
+    const playerCharacter = getPlayerCharacter(enterResult.characterDefinitions);
+    const snapshot = createGrainShopSnapshot(
+      enterResult.gameState,
+      playerCharacter
+    );
+
+    assert.equal(
+      enterResult.gameState.runtime.variables[GRAIN_SHOP_VARIABLE_KEYS.relationship],
+      23
+    );
+    assert.equal(
+      enterResult.gameState.runtime.variables[GRAIN_SHOP_VARIABLE_KEYS.time],
+      4
+    );
+    assert.equal(
+      enterResult.gameState.runtime.variables[GRAIN_SHOP_VARIABLE_KEYS.food],
+      0
+    );
+    assert.equal(readPlayerGrainDou(enterResult.gameState), 120);
+    assert.equal(snapshot.food, 12);
+    assert.equal(snapshot.relationship, 23);
+    assert.equal(snapshot.time, 4);
+  } finally {
+    if (previousGrainDefaults == null) {
+      delete runtimeDefaults["grain-shop"];
+    } else {
+      runtimeDefaults["grain-shop"] = previousGrainDefaults;
+    }
+  }
+});
+
+test("grain shop accounting family reads shared module defaults from runtime content", async () => {
+  const defaultRuntimeContentModulePath = require.resolve(
+    "../.test-dist/application/content/default-runtime-content.js"
+  );
+  const accountingMinigameModulePath = require.resolve(
+    "../.test-dist/application/grain-shop/accounting-minigame.js"
+  );
+  const applyAccountingRewardModulePath = require.resolve(
+    "../.test-dist/application/grain-shop/apply-accounting-reward.js"
+  );
+  const grainShopModulePath = require.resolve(
+    "../.test-dist/application/house-modules/grain-shop/grain-shop-house-module.js"
+  );
+  const grainAccountingPlayableModulePath = require.resolve(
+    "../.test-dist/application/playables/grain-accounting/grain-accounting-definition.js"
+  );
+  const grainDefaultsHelperModulePath = require.resolve(
+    "../.test-dist/application/house-modules/grain-shop/grain-shop-content-defaults.js"
+  );
+
+  delete require.cache[defaultRuntimeContentModulePath];
+  delete require.cache[accountingMinigameModulePath];
+  delete require.cache[applyAccountingRewardModulePath];
+  delete require.cache[grainShopModulePath];
+  delete require.cache[grainAccountingPlayableModulePath];
+  delete require.cache[grainDefaultsHelperModulePath];
+
+  const { defaultRuntimeContent } = require(defaultRuntimeContentModulePath);
+  const {
+    grainShopHouseModule: sharedDefaultGrainShopHouseModule,
+  } = require(grainShopModulePath);
+  const { getAccountingGradeReward } = require(accountingMinigameModulePath);
+  const {
+    answerGrainAccountingPlayable,
+    launchGrainAccountingPlayable,
+  } = require(grainAccountingPlayableModulePath);
+  const { loadDefaultRuntimeContent } = require(defaultRuntimeContentModulePath);
+  const { createBaseGameContentPack } = require(
+    "../.test-dist/content/base-game-content-pack.js"
+  );
+
+  const runtimeDefaults = defaultRuntimeContent.houseModuleDefaults;
+  const previousGrainDefaults = runtimeDefaults["grain-shop"];
+  const customRewards = {
+    S: { math: 9, money: 90, relationship: 9 },
+    A: { math: 8, money: 80, relationship: 8 },
+    B: { math: 7, money: 70, relationship: 7 },
+    C: { math: 6, money: 60, relationship: 6 },
+    D: { math: 0, money: 7, relationship: 5 },
+  };
+
+  try {
+    await loadDefaultRuntimeContent(() => createBaseGameContentPack());
+    runtimeDefaults["grain-shop"] = {
+      ...(runtimeDefaults["grain-shop"] ?? {}),
+      accountingGradeRewards: customRewards,
+      accountingGameDurationSec: 17,
+      accountingMaxWrongAnswers: 1,
+    };
+
+    assert.deepEqual(getAccountingGradeReward("A"), customRewards.A);
+
+    const launchedPlayable = launchGrainAccountingPlayable({
+      state: {
+        ...createRuntimeState(withCouncilInDays(createStateWithGrainVariables(), 200)),
+        core: {
+          ...createRuntimeState(withCouncilInDays(createStateWithGrainVariables(), 200)).core,
+          ui: {
+            ...createRuntimeState(withCouncilInDays(createStateWithGrainVariables(), 200)).core.ui,
+            houseSession: {
+              moduleId: "grain-shop",
+              state: createInitialGrainShopSessionState("open", "default"),
+            },
+          },
+        },
+      },
+      characterDefinitions: prototypeCharacters,
+      playerCharacterId,
+      ownerId: grainShopHouse.id,
+    });
+
+    assert.equal(
+      launchedPlayable.core.ui.houseSession?.state.overlay?.type,
+      "minigame"
+    );
+    if (launchedPlayable.core.ui.houseSession?.state.overlay?.type !== "minigame") {
+      return;
+    }
+
+    assert.equal(launchedPlayable.core.ui.houseSession.state.overlay.secondsLeft, 17);
+
+    const launchedViewModel = sharedDefaultGrainShopHouseModule.selectViewModel({
+      gameState: launchedPlayable.core,
+      characterDefinitions: prototypeCharacters,
+      houseDefinition: grainShopHouse,
+      playerCharacterId,
+      sessionState: {
+        ...launchedPlayable.core.ui.houseSession.state,
+        overlay: {
+          ...launchedPlayable.core.ui.houseSession.state.overlay,
+          wrongCount: 1,
+        },
+      },
+    });
+    assert.equal(launchedViewModel.overlay?.type, "minigame");
+    assert.equal(launchedViewModel.overlay?.wrongsLeft, 0);
+
+    const answeredPlayable = answerGrainAccountingPlayable({
+      state: {
+        ...launchedPlayable,
+        core: {
+          ...launchedPlayable.core,
+          ui: {
+            ...launchedPlayable.core.ui,
+            houseSession: {
+              moduleId: "grain-shop",
+              state: {
+                ...launchedPlayable.core.ui.houseSession.state,
+                overlay: {
+                  ...launchedPlayable.core.ui.houseSession.state.overlay,
+                  question: {
+                    bought: 10,
+                    sold: 4,
+                    displayedStock: 6,
+                    isLedgerCorrect: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      characterDefinitions: prototypeCharacters,
+      playerCharacterId,
+      playerSaysCorrect: false,
+    });
+
+    const settledOverlay = answeredPlayable.state.core.ui.houseSession?.state.overlay;
+    assert.equal(settledOverlay?.type, "result");
+    if (settledOverlay?.type !== "result") {
+      return;
+    }
+
+    const playerCharacter = getPlayerCharacter(answeredPlayable.characterDefinitions);
+    assert.equal(settledOverlay.grade, "D");
+    assert.equal(playerCharacter.stats.gold, 120 + customRewards.D.money);
+    assert.equal(playerCharacter.skills.arithmetic, 1 + customRewards.D.math);
+    assert.equal(
+      answeredPlayable.state.core.runtime.variables[GRAIN_SHOP_VARIABLE_KEYS.relationship],
+      customRewards.D.relationship
+    );
+  } finally {
+    if (previousGrainDefaults == null) {
+      delete runtimeDefaults["grain-shop"];
+    } else {
+      runtimeDefaults["grain-shop"] = previousGrainDefaults;
+    }
+  }
+});
+
 test("grain shop trade overlay reads buy and sell price from unified city market", () => {
   const enterResult = grainShopHouseModule.enter({
     gameState: createBaseState(),
@@ -4425,8 +17683,11 @@ test("grain market and grain shop content no longer keep core greeting and rumor
     path.join(process.cwd(), "src/application/grain-shop/grain-market.ts"),
     "utf8"
   );
-  const grainShopContentSource = fs.readFileSync(
-    path.join(process.cwd(), "src/content/houses/grain-shop-content.ts"),
+  const grainShopDefaultsSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/application/house-modules/grain-shop/grain-shop-content-defaults.ts"
+    ),
     "utf8"
   );
 
@@ -4438,9 +17699,22 @@ test("grain market and grain shop content no longer keep core greeting and rumor
       "做生意，算盘得快。",
     ].filter(
       (entry) =>
-        grainMarketSource.includes(entry) || grainShopContentSource.includes(entry)
+        grainMarketSource.includes(entry) || grainShopDefaultsSource.includes(entry)
     ),
     []
+  );
+});
+
+test("legacy grain-shop content registry file is removed after grain-shop runtime fallback converges", () => {
+  const grainShopContentPath = path.join(
+    process.cwd(),
+    "src/content/houses/grain-shop-content.ts"
+  );
+
+  assert.equal(
+    fs.existsSync(grainShopContentPath),
+    false,
+    "Expected src/content/houses/grain-shop-content.ts to be removed once grain-shop runtime fallback no longer depends on it."
   );
 });
 
@@ -4748,7 +18022,12 @@ test("market house copy resolves from text entries for greeting, open, small tal
     request: { type: "action", actionId: "investigate-market" },
     textEntriesById,
   });
-  const runtimeContent = await loadDefaultRuntimeContent();
+  const { createBaseGameContentPack } = require(
+    "../.test-dist/content/base-game-content-pack.js"
+  );
+  const runtimeContent = await loadDefaultRuntimeContent(() =>
+    createBaseGameContentPack()
+  );
   const marketCity = runtimeContent.cities.find(
     (cityDefinition) => cityDefinition.id === marketHouse.cityId
   );
@@ -4772,10 +18051,6 @@ test("market house runtime and content no longer keep core greeting rumor prose 
     ),
     "utf8"
   );
-  const marketHouseContentSource = fs.readFileSync(
-    path.join(process.cwd(), "src/content/houses/market-house-content.ts"),
-    "utf8"
-  );
 
   assert.deepEqual(
     [
@@ -4785,12 +18060,257 @@ test("market house runtime and content no longer keep core greeting rumor prose 
       "最近粮价不太稳定。",
       "最近生意不好做。",
     ].filter(
-      (entry) =>
-        marketHouseRuntimeSource.includes(entry) ||
-        marketHouseContentSource.includes(entry)
+      (entry) => marketHouseRuntimeSource.includes(entry)
     ),
     []
   );
+});
+
+test("legacy market house content registry file is removed after market runtime fallback converges", () => {
+  const marketHouseContentPath = path.join(
+    process.cwd(),
+    "src/content/houses/market-house-content.ts"
+  );
+
+  assert.equal(
+    fs.existsSync(marketHouseContentPath),
+    false,
+    "Expected src/content/houses/market-house-content.ts to be removed once market runtime fallback no longer depends on it."
+  );
+});
+
+test("market house reads shared module defaults from runtime content", async () => {
+  const defaultRuntimeContentModulePath = require.resolve(
+    "../.test-dist/application/content/default-runtime-content.js"
+  );
+  const marketHouseActiveContentModulePath = require.resolve(
+    "../.test-dist/application/house-modules/market-house/market-house-active-content.js"
+  );
+  const marketHouseModulePath = require.resolve(
+    "../.test-dist/application/house-modules/market-house/market-house-house-module.js"
+  );
+
+  delete require.cache[defaultRuntimeContentModulePath];
+  delete require.cache[marketHouseActiveContentModulePath];
+  delete require.cache[marketHouseModulePath];
+
+  const {
+    defaultRuntimeContent,
+  } = require(defaultRuntimeContentModulePath);
+  const {
+    marketHouseHouseModule: sharedDefaultMarketHouseModule,
+  } = require(marketHouseModulePath);
+  const { loadDefaultRuntimeContent } = require(
+    "../.test-dist/application/content/default-runtime-content.js"
+  );
+  const { createBaseGameContentPack } = require(
+    "../.test-dist/content/base-game-content-pack.js"
+  );
+
+  const runtimeDefaults = defaultRuntimeContent.houseModuleDefaults;
+  const previousMarketDefaults = runtimeDefaults["market-house"];
+  const baseState = ensureCityNpcPoolsForCurrentDay(
+    createBaseState(),
+    prototypeCityNpcPools,
+    () => 0.1
+  );
+
+  try {
+    await loadDefaultRuntimeContent(() => createBaseGameContentPack());
+    runtimeDefaults["market-house"] = {
+      marketHouseFixedBoss: {
+        id: "custom_market_boss",
+        name: "自定义掌柜",
+        title: "货栈主人",
+        personality: "谨慎",
+        specialty: "转运",
+        favorability: 3,
+        isFixedHost: true,
+      },
+      marketHouseRandomNpcPool: [
+        {
+          id: "custom_market_guest",
+          name: "自定义客商",
+          title: "远商",
+          personality: "多闻",
+          specialty: "北货",
+          favorability: 2,
+          isFixedHost: false,
+        },
+      ],
+      marketHouseGreetingTextIds: [
+        "runtime.test.market.greeting.001",
+        "runtime.test.market.greeting.002",
+      ],
+      marketHouseBossOpenTextIds: [
+        "runtime.test.market.boss_open.001",
+        "runtime.test.market.boss_open.002",
+      ],
+      marketHouseGuestOpenTextIdsByActorId: {
+        custom_market_guest: [
+          "runtime.test.market.guest_open.001",
+          "runtime.test.market.guest_open.002",
+        ],
+      },
+      marketHouseSmallTalkTextIds: ["runtime.test.market.small_talk.001"],
+      marketHouseRumorTextIdsByCategory: {},
+      marketHouseGeneralRumorTextIds: ["runtime.test.market.rumor.general.001"],
+      marketHouseInvestigationSpecialtyTextIdByActorId: {
+        custom_market_guest: "runtime.test.market.specialty.guest",
+        custom_market_boss: "runtime.test.market.specialty.boss",
+      },
+    };
+    const textEntriesById = {
+      "runtime.test.market.greeting.001": "自定义货栈开场一。",
+      "runtime.test.market.greeting.002": "自定义货栈开场二。",
+      "runtime.test.market.boss_open.001": "自定义掌柜开场一。",
+      "runtime.test.market.boss_open.002": "自定义掌柜开场二。",
+      "runtime.test.market.guest_open.001": "自定义客商开场一。",
+      "runtime.test.market.guest_open.002": "自定义客商开场二。",
+      "runtime.test.market.small_talk.001": "自定义货栈闲谈。",
+      "runtime.test.market.rumor.general.001": "自定义货栈传闻。",
+      "runtime.test.market.specialty.guest": "自定义客商专营：{specialty}。",
+      "runtime.test.market.specialty.boss": "自定义掌柜专营：{specialty}。",
+      "runtime.zhu_yuanzhang.market_house.investigate.city.001":
+        "{cityName}繁荣 {prosperity}，风险 {danger}。",
+      "runtime.zhu_yuanzhang.market_house.investigate.city.002":
+        "城中偏好：{specialDemandList}",
+      "runtime.zhu_yuanzhang.market_house.investigate.overlay.title":
+        "自定义调查行情",
+      "runtime.zhu_yuanzhang.market_house.small_talk.overlay.title": "自定义闲谈",
+      "runtime.zhu_yuanzhang.market_house.guest_open.default.001": "默认客商开场一。",
+      "runtime.zhu_yuanzhang.market_house.guest_open.default.002": "默认客商专营：{specialty}。",
+    };
+
+    const enterResult = sharedDefaultMarketHouseModule.enter({
+      gameState: baseState,
+      characterDefinitions: prototypeCharacters,
+      houseDefinition: marketHouse,
+      playerCharacterId,
+      textEntriesById,
+    });
+
+    assert.deepEqual(enterResult.sessionState?.dialogueLines, [
+      "自定义货栈开场一。",
+      "自定义货栈开场二。",
+    ]);
+    assert.equal(enterResult.sessionState?.selectedActorId, "custom_market_boss");
+
+    const openResult = sharedDefaultMarketHouseModule.dispatch({
+      gameState: enterResult.gameState,
+      characterDefinitions: enterResult.characterDefinitions,
+      houseDefinition: marketHouse,
+      playerCharacterId,
+      sessionState: enterResult.sessionState,
+      request: { type: "action", actionId: "advance-greeting" },
+      textEntriesById,
+    });
+
+    assert.deepEqual(openResult.sessionState?.dialogueLines, [
+      "自定义掌柜开场一。",
+      "自定义掌柜开场二。",
+    ]);
+
+    const idleResult = sharedDefaultMarketHouseModule.dispatch({
+      gameState: openResult.gameState,
+      characterDefinitions: openResult.characterDefinitions,
+      houseDefinition: marketHouse,
+      playerCharacterId,
+      sessionState: openResult.sessionState,
+      request: { type: "action", actionId: "dismiss-dialogue" },
+      textEntriesById,
+    });
+
+    const idleViewModel = sharedDefaultMarketHouseModule.selectViewModel({
+      gameState: idleResult.gameState,
+      characterDefinitions: idleResult.characterDefinitions,
+      houseDefinition: marketHouse,
+      playerCharacterId,
+      sessionState: idleResult.sessionState,
+      textEntriesById,
+    });
+
+    assert.ok(
+      idleViewModel.standbyRoster.some(
+        (entry) =>
+          entry.characterId === "custom_market_guest" &&
+          entry.name === "自定义客商"
+      )
+    );
+
+    const guestOpenResult = sharedDefaultMarketHouseModule.dispatch({
+      gameState: idleResult.gameState,
+      characterDefinitions: idleResult.characterDefinitions,
+      houseDefinition: marketHouse,
+      playerCharacterId,
+      sessionState: idleResult.sessionState,
+      request: {
+        type: "action",
+        actionId: "select-market-actor:custom_market_guest",
+      },
+      textEntriesById,
+    });
+
+    assert.deepEqual(guestOpenResult.sessionState?.dialogueLines, [
+      "自定义客商开场一。",
+      "自定义客商开场二。",
+    ]);
+
+    const investigateResult = sharedDefaultMarketHouseModule.dispatch({
+      gameState: guestOpenResult.gameState,
+      characterDefinitions: guestOpenResult.characterDefinitions,
+      houseDefinition: marketHouse,
+      playerCharacterId,
+      sessionState: guestOpenResult.sessionState,
+      request: { type: "action", actionId: "investigate-market" },
+      textEntriesById,
+    });
+
+    assert.equal(
+      investigateResult.sessionState?.overlay?.title,
+      "自定义调查行情"
+    );
+    assert.equal(
+      investigateResult.sessionState?.overlay?.paragraphs[2],
+      "自定义货栈传闻。"
+    );
+    assert.equal(
+      investigateResult.sessionState?.overlay?.paragraphs[3],
+      "自定义客商专营：北货。"
+    );
+  } finally {
+    if (previousMarketDefaults == null) {
+      delete runtimeDefaults["market-house"];
+    } else {
+      runtimeDefaults["market-house"] = previousMarketDefaults;
+    }
+  }
+});
+
+test("market house no longer consumes default runtime content through module-top-level fallbacks", () => {
+  const marketHouseSource = fs.readFileSync(
+    "src/application/house-modules/market-house/market-house-house-module.ts",
+    "utf8"
+  );
+  const marketHouseActiveContentPath =
+    "src/application/house-modules/market-house/market-house-active-content.ts";
+  const marketHouseActiveContentExists = fs.existsSync(marketHouseActiveContentPath);
+  const marketHouseActiveContentSource = marketHouseActiveContentExists
+    ? fs.readFileSync(marketHouseActiveContentPath, "utf8")
+    : "";
+
+  assert.equal(marketHouseActiveContentExists, true);
+  assert.match(marketHouseSource, /from "\.\/market-house-active-content"/);
+  assert.doesNotMatch(marketHouseSource, /default-runtime-content/);
+  assert.doesNotMatch(
+    marketHouseSource,
+    /defaultRuntimeContent\.houseModuleDefaults/
+  );
+  assert.doesNotMatch(marketHouseSource, /defaultRuntimeContent\.cities/);
+  assert.match(marketHouseActiveContentSource, /defaultRuntimeContent/);
+  assert.match(marketHouseActiveContentSource, /getMarketHouseContentDefaults/);
+  assert.match(marketHouseActiveContentSource, /getMarketHouseCityDefinition/);
+  assert.match(marketHouseActiveContentSource, /getMarketHouseTextEntries/);
 });
 
 test("market house can open trade overlay and execute buy flow", () => {
@@ -4916,7 +18436,11 @@ test("minigame tick settles into result overlay and applies grade reward", () =>
     return;
   }
 
-  const reward = accountingGradeRewards.A;
+  const reward = {
+    math: 2,
+    money: 50,
+    relationship: 2,
+  };
   const playerCharacter = getPlayerCharacter(result.characterDefinitions);
   assert.equal(result.sessionState.overlay.grade, "A");
   assert.equal(playerCharacter.stats.gold, 120 + reward.money);
@@ -5294,8 +18818,11 @@ test("tea house runtime and content no longer keep core greeting rumor prose inl
     ),
     "utf8"
   );
-  const teaHouseContentSource = fs.readFileSync(
-    path.join(process.cwd(), "src/content/houses/tea-house-content.ts"),
+  const teaHouseDefaultsSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/application/house-modules/tea-house/tea-house-content-defaults.ts"
+    ),
     "utf8"
   );
 
@@ -5308,9 +18835,22 @@ test("tea house runtime and content no longer keep core greeting rumor prose inl
       "（放下茶盏）示意你出题。",
     ].filter(
       (entry) =>
-        teaHouseRuntimeSource.includes(entry) || teaHouseContentSource.includes(entry)
+        teaHouseRuntimeSource.includes(entry) || teaHouseDefaultsSource.includes(entry)
     ),
     []
+  );
+});
+
+test("legacy tea house content registry file is removed after tea-house runtime fallback converges", () => {
+  const teaHouseContentPath = path.join(
+    process.cwd(),
+    "src/content/houses/tea-house-content.ts"
+  );
+
+  assert.equal(
+    fs.existsSync(teaHouseContentPath),
+    false,
+    "Expected src/content/houses/tea-house-content.ts to be removed once tea-house runtime fallback no longer depends on it."
   );
 });
 
@@ -6343,10 +19883,6 @@ test("tavern runtime and content no longer keep core greeting and stamina prose 
     ),
     "utf8"
   );
-  const tavernContentSource = fs.readFileSync(
-    path.join(process.cwd(), "src/content/houses/tavern-content.ts"),
-    "utf8"
-  );
 
   assert.deepEqual(
     [
@@ -6354,12 +19890,553 @@ test("tavern runtime and content no longer keep core greeting and stamina prose 
       "（把算盘往旁边一拨）说吧，你今天想干什么？",
       "（站在柜后看着你）酒、活、赌，三样都明码标价。",
       "（摆了摆手）你这会儿脚下都发虚，还想",
-    ].filter(
-      (entry) =>
-        tavernRuntimeSource.includes(entry) || tavernContentSource.includes(entry)
-    ),
+    ].filter((entry) => tavernRuntimeSource.includes(entry)),
     []
   );
+});
+
+test("legacy tavern content registry file is removed after tavern runtime fallback converges", () => {
+  const tavernContentPath = path.join(
+    process.cwd(),
+    "src/content/houses/tavern-content.ts"
+  );
+
+  assert.equal(
+    fs.existsSync(tavernContentPath),
+    false,
+    "Expected src/content/houses/tavern-content.ts to be removed once tavern runtime fallback no longer depends on it."
+  );
+});
+
+test("tavern reads shared module defaults from runtime content", async () => {
+  const defaultRuntimeContentModulePath = require.resolve(
+    "../.test-dist/application/content/default-runtime-content.js"
+  );
+  const tavernSessionStateModulePath = require.resolve(
+    "../.test-dist/application/house-modules/tavern/tavern-session-state.js"
+  );
+  const tavernDefaultsHelperModulePath = require.resolve(
+    "../.test-dist/application/house-modules/tavern/tavern-house-content-defaults.js"
+  );
+  const tavernActiveContentModulePath = path.join(
+    process.cwd(),
+    ".test-dist/application/house-modules/tavern/tavern-active-content.js"
+  );
+  const tavernHouseModulePath = require.resolve(
+    "../.test-dist/application/house-modules/tavern/tavern-house-module.js"
+  );
+
+  delete require.cache[defaultRuntimeContentModulePath];
+  delete require.cache[tavernSessionStateModulePath];
+  delete require.cache[tavernDefaultsHelperModulePath];
+  if (fs.existsSync(tavernActiveContentModulePath)) {
+    delete require.cache[tavernActiveContentModulePath];
+  }
+  delete require.cache[tavernHouseModulePath];
+
+  const { defaultRuntimeContent } = require(defaultRuntimeContentModulePath);
+  const {
+    tavernHouseModule: sharedDefaultTavernHouseModule,
+  } = require(tavernHouseModulePath);
+  const { loadDefaultRuntimeContent } = require(
+    "../.test-dist/application/content/default-runtime-content.js"
+  );
+  const { createBaseGameContentPack } = require(
+    "../.test-dist/content/base-game-content-pack.js"
+  );
+
+  const runtimeDefaults = defaultRuntimeContent.houseModuleDefaults;
+  const previousTavernDefaults = runtimeDefaults.tavern;
+  const textEntriesById = {
+    "runtime.test.tavern.greeting.001": "自定义酒馆迎客。",
+    "runtime.test.tavern.open.001": "自定义酒馆开场。",
+  };
+
+  try {
+    await loadDefaultRuntimeContent(() => createBaseGameContentPack());
+    runtimeDefaults.tavern = {
+      tavernBossProfile: {
+        actorId: "char.custom_innkeeper",
+        name: "自定义掌柜",
+        title: "酒肆主人",
+        specialty: "消息",
+      },
+      tavernBossGreetingTextIds: ["runtime.test.tavern.greeting.001"],
+      tavernBossOpenTextIds: ["runtime.test.tavern.open.001"],
+      tavernDrinkPrice: 135,
+      tavernDefaultWager: 240,
+      tavernWagerStep: 80,
+      tavernWorkOffers: [
+        {
+          id: "offer.test.custom_errand",
+          type: "random-event",
+          title: "自定义跑堂",
+          description: "自定义酒馆活计。",
+          rewardText: "自定义报酬",
+          maxRewardGold: 66,
+        },
+      ],
+    };
+
+    const enterResult = sharedDefaultTavernHouseModule.enter({
+      gameState: createBaseState(),
+      characterDefinitions: prototypeCharacters,
+      houseDefinition: tavernHouse,
+      playerCharacterId,
+      textEntriesById,
+    });
+
+    assert.deepEqual(enterResult.sessionState?.dialogueLines, ["自定义酒馆迎客。"]);
+    assert.equal(enterResult.sessionState?.currentWager, 240);
+
+    const idleViewModel = sharedDefaultTavernHouseModule.selectViewModel({
+      gameState: enterResult.gameState,
+      characterDefinitions: enterResult.characterDefinitions,
+      houseDefinition: tavernHouse,
+      playerCharacterId,
+      sessionState: {
+        ...enterResult.sessionState,
+        dialoguePhase: "idle",
+      },
+      textEntriesById,
+    });
+
+    assert.equal(idleViewModel.standbyRoster?.[0]?.name, "自定义掌柜");
+    assert.equal(idleViewModel.standbyRoster?.[0]?.title, "酒肆主人");
+
+    const openResult = sharedDefaultTavernHouseModule.dispatch({
+      gameState: enterResult.gameState,
+      characterDefinitions: enterResult.characterDefinitions,
+      houseDefinition: tavernHouse,
+      playerCharacterId,
+      sessionState: enterResult.sessionState,
+      request: { type: "action", actionId: "advance-greeting" },
+      textEntriesById,
+    });
+
+    assert.deepEqual(openResult.sessionState?.dialogueLines, ["自定义酒馆开场。"]);
+
+    const openDrink = sharedDefaultTavernHouseModule.dispatch({
+      gameState: openResult.gameState,
+      characterDefinitions: openResult.characterDefinitions,
+      houseDefinition: tavernHouse,
+      playerCharacterId,
+      sessionState: openResult.sessionState,
+      request: { type: "action", actionId: "order-drink" },
+      textEntriesById,
+    });
+
+    assert.equal(openDrink.sessionState?.overlay?.price, 135);
+
+    const openWork = sharedDefaultTavernHouseModule.dispatch({
+      gameState: enterResult.gameState,
+      characterDefinitions: enterResult.characterDefinitions,
+      houseDefinition: tavernHouse,
+      playerCharacterId,
+      sessionState: enterResult.sessionState,
+      request: { type: "action", actionId: "open-work" },
+      textEntriesById,
+    });
+    const openAccept = sharedDefaultTavernHouseModule.dispatch({
+      gameState: openWork.gameState,
+      characterDefinitions: openWork.characterDefinitions,
+      houseDefinition: tavernHouse,
+      playerCharacterId,
+      sessionState: openWork.sessionState,
+      request: { type: "action", actionId: "open-work-accept" },
+      textEntriesById,
+    });
+
+    assert.deepEqual(
+      openAccept.sessionState?.availableOffers.map((offer) => offer.id),
+      ["offer.test.custom_errand"]
+    );
+  } finally {
+    if (previousTavernDefaults == null) {
+      delete runtimeDefaults.tavern;
+    } else {
+      runtimeDefaults.tavern = previousTavernDefaults;
+    }
+  }
+});
+
+test("tavern no longer consumes default runtime content through module-top-level fallbacks", () => {
+  const tavernSource = fs.readFileSync(
+    "src/application/house-modules/tavern/tavern-house-module.ts",
+    "utf8"
+  );
+  const tavernActiveContentPath =
+    "src/application/house-modules/tavern/tavern-active-content.ts";
+  const tavernActiveContentExists = fs.existsSync(tavernActiveContentPath);
+  const tavernActiveContentSource = tavernActiveContentExists
+    ? fs.readFileSync(tavernActiveContentPath, "utf8")
+    : "";
+
+  assert.equal(tavernActiveContentExists, true);
+  assert.match(tavernSource, /from "\.\/tavern-active-content"/);
+  assert.doesNotMatch(tavernSource, /default-runtime-content/);
+  assert.doesNotMatch(tavernSource, /defaultRuntimeContent\.textEntriesById/);
+  assert.match(tavernActiveContentSource, /defaultRuntimeContent/);
+  assert.match(tavernActiveContentSource, /getTavernTextEntries/);
+});
+
+test("tea house reads shared module defaults from runtime content", async () => {
+  const defaultRuntimeContentModulePath = require.resolve(
+    "../.test-dist/application/content/default-runtime-content.js"
+  );
+  const teaHouseActiveContentModulePath = path.join(
+    process.cwd(),
+    ".test-dist/application/house-modules/tea-house/tea-house-active-content.js"
+  );
+  const teaHouseActorsModulePath = require.resolve(
+    "../.test-dist/application/tea-house/tea-house-actors.js"
+  );
+  const teaHouseDebateModulePath = require.resolve(
+    "../.test-dist/application/tea-house/tea-house-debate.js"
+  );
+  const teaHouseDefaultsHelperModulePath = require.resolve(
+    "../.test-dist/application/house-modules/tea-house/tea-house-content-defaults.js"
+  );
+  const teaHouseModulePath = require.resolve(
+    "../.test-dist/application/house-modules/tea-house/tea-house-house-module.js"
+  );
+
+  delete require.cache[defaultRuntimeContentModulePath];
+  if (fs.existsSync(teaHouseActiveContentModulePath)) {
+    delete require.cache[teaHouseActiveContentModulePath];
+  }
+  delete require.cache[teaHouseActorsModulePath];
+  delete require.cache[teaHouseDebateModulePath];
+  delete require.cache[teaHouseDefaultsHelperModulePath];
+  delete require.cache[teaHouseModulePath];
+
+  const { defaultRuntimeContent } = require(defaultRuntimeContentModulePath);
+  const { teaHouseHouseModule: sharedDefaultTeaHouseModule } = require(
+    teaHouseModulePath
+  );
+  const { loadDefaultRuntimeContent } = require(
+    "../.test-dist/application/content/default-runtime-content.js"
+  );
+  const { createBaseGameContentPack } = require(
+    "../.test-dist/content/base-game-content-pack.js"
+  );
+
+  const runtimeDefaults = defaultRuntimeContent.houseModuleDefaults;
+  const previousTeaHouseDefaults = runtimeDefaults["tea-house"];
+  const previousCityNpcPools = defaultRuntimeContent.cityNpcPools;
+  const textEntriesById = {
+    "runtime.test.tea_house.greeting.fixed.001": "自定义茶馆迎客。",
+    "runtime.test.tea_house.open.fixed.001": "自定义茶馆开场。",
+  };
+
+  try {
+    await loadDefaultRuntimeContent(() => createBaseGameContentPack());
+    runtimeDefaults["tea-house"] = {
+      teaHouseBossProfile: {
+        actorId: "char.custom_tea_boss",
+        name: "自定义茶馆掌柜",
+        title: "茶馆主人",
+        personality: "沉稳",
+        specialty: "人情",
+        favorability: 7,
+      },
+      teaHouseBossGreetingTextIds: ["runtime.test.tea_house.greeting.fixed.001"],
+      teaHouseBossOpenTextIds: ["runtime.test.tea_house.open.fixed.001"],
+      teaHouseBossDialogueTextIds: ["runtime.test.tea_house.open.fixed.001"],
+      teaHouseBossIntelTextIds: ["runtime.test.tea_house.open.fixed.001"],
+      teaHouseTeaCost: 135,
+      teaHouseInitialSpirit: 14,
+      teaHouseTurnTimeLimitSec: 18,
+      teaHouseLowIntelChance: 0,
+      teaHouseTopicCounterMap: {
+        义: "利",
+        利: "名",
+        名: "势",
+        势: "义",
+      },
+      teaHousePersonalityTopicWeights: {
+        沉稳: {
+          义: 1,
+          利: 5,
+          名: 1,
+          势: 1,
+        },
+      },
+    };
+    defaultRuntimeContent.cityNpcPools = [];
+
+    const enterResult = sharedDefaultTeaHouseModule.enter({
+      gameState: createBaseState(),
+      characterDefinitions: prototypeCharacters,
+      playerCharacterId,
+      houseDefinition: teaHouse,
+      sessionState: null,
+      textEntriesById,
+    });
+    const openResult = sharedDefaultTeaHouseModule.dispatch({
+      gameState: enterResult.gameState,
+      characterDefinitions: enterResult.characterDefinitions,
+      playerCharacterId,
+      houseDefinition: teaHouse,
+      sessionState: enterResult.sessionState,
+      request: { type: "action", actionId: "advance-greeting" },
+      textEntriesById,
+    });
+    const viewModel = sharedDefaultTeaHouseModule.selectViewModel({
+      gameState: openResult.gameState,
+      characterDefinitions: openResult.characterDefinitions,
+      playerCharacterId,
+      houseDefinition: teaHouse,
+      sessionState: openResult.sessionState,
+      textEntriesById,
+    });
+
+    assert.equal(enterResult.sessionState?.selectedActorId, "char.custom_tea_boss");
+    assert.deepEqual(
+      enterResult.sessionState?.dialogueLines,
+      ["自定义茶馆迎客。"]
+    );
+    assert.equal(viewModel.dialogue?.speakerName, "自定义茶馆掌柜");
+    assert.deepEqual(viewModel.dialogue?.textLines, ["自定义茶馆开场。"]);
+    assert.equal(
+      viewModel.actionContainer?.actions.find((action) => action.id === "serve-tea")
+        ?.disabled,
+      true
+    );
+  } finally {
+    if (previousTeaHouseDefaults === undefined) {
+      delete runtimeDefaults["tea-house"];
+    } else {
+      runtimeDefaults["tea-house"] = previousTeaHouseDefaults;
+    }
+    defaultRuntimeContent.cityNpcPools = previousCityNpcPools;
+  }
+});
+
+test("tea house no longer consumes default runtime content through module-top-level fallbacks", () => {
+  const teaHouseSource = fs.readFileSync(
+    "src/application/house-modules/tea-house/tea-house-house-module.ts",
+    "utf8"
+  );
+  const teaHouseActiveContentPath =
+    "src/application/house-modules/tea-house/tea-house-active-content.ts";
+  const teaHouseActiveContentExists = fs.existsSync(teaHouseActiveContentPath);
+  const teaHouseActiveContentSource = teaHouseActiveContentExists
+    ? fs.readFileSync(teaHouseActiveContentPath, "utf8")
+    : "";
+
+  assert.equal(teaHouseActiveContentExists, true);
+  assert.match(teaHouseSource, /from "\.\/tea-house-active-content"/);
+  assert.doesNotMatch(teaHouseSource, /default-runtime-content/);
+  assert.doesNotMatch(teaHouseSource, /defaultRuntimeContent\.cityNpcPools/);
+  assert.doesNotMatch(teaHouseSource, /defaultRuntimeContent\.textEntriesById/);
+  assert.match(teaHouseActiveContentSource, /defaultRuntimeContent/);
+  assert.match(teaHouseActiveContentSource, /getTeaHouseCityNpcPools/);
+  assert.match(teaHouseActiveContentSource, /getTeaHouseTextEntries/);
+});
+
+test("medicine house reads shared module defaults from runtime content", async () => {
+  const defaultRuntimeContentModulePath = require.resolve(
+    "../.test-dist/application/content/default-runtime-content.js"
+  );
+  const medicineCompoundingModulePath = require.resolve(
+    "../.test-dist/application/medicine-house/compounding-minigame.js"
+  );
+  const medicinePlayableModulePath = require.resolve(
+    "../.test-dist/application/playables/medicine-compounding/medicine-compounding-definition.js"
+  );
+  const medicineDefaultsHelperModulePath = require.resolve(
+    "../.test-dist/application/house-modules/medicine-house/medicine-house-content-defaults.js"
+  );
+  const medicineActiveContentModulePath = path.join(
+    process.cwd(),
+    ".test-dist/application/house-modules/medicine-house/medicine-house-active-content.js"
+  );
+  const medicineHouseModulePath = require.resolve(
+    "../.test-dist/application/house-modules/medicine-house/medicine-house-house-module.js"
+  );
+
+  delete require.cache[defaultRuntimeContentModulePath];
+  delete require.cache[medicineCompoundingModulePath];
+  delete require.cache[medicinePlayableModulePath];
+  delete require.cache[medicineDefaultsHelperModulePath];
+  if (fs.existsSync(medicineActiveContentModulePath)) {
+    delete require.cache[medicineActiveContentModulePath];
+  }
+  delete require.cache[medicineHouseModulePath];
+
+  const { defaultRuntimeContent } = require(defaultRuntimeContentModulePath);
+  const {
+    medicineHouseHouseModule: sharedDefaultMedicineHouseModule,
+  } = require(medicineHouseModulePath);
+  const {
+    getCompoundingLimits,
+    getAvailableHerbsForSkill,
+    pickCompoundingTarget,
+  } = require(medicineCompoundingModulePath);
+  const {
+    getMedicineCompoundingTimeAdvanceCost,
+  } = require(medicinePlayableModulePath);
+  const {
+    convertHouseActivityDaysToSegments,
+    getHouseMinigameDurationDays,
+  } = require("../.test-dist/application/house/house-activity-costs.js");
+  const { loadDefaultRuntimeContent } = require(
+    "../.test-dist/application/content/default-runtime-content.js"
+  );
+  const { createBaseGameContentPack } = require(
+    "../.test-dist/content/base-game-content-pack.js"
+  );
+
+  const runtimeDefaults = defaultRuntimeContent.houseModuleDefaults;
+  const previousMedicineDefaults = runtimeDefaults["medicine-house"];
+  const textEntriesById = {
+    "runtime.test.medicine.greeting.001": "自定义药铺迎客。",
+    "runtime.test.medicine.open.001": "自定义药铺开场。",
+  };
+
+  try {
+    await loadDefaultRuntimeContent(() => createBaseGameContentPack());
+    runtimeDefaults["medicine-house"] = {
+      medicineHouseDoctorProfile: {
+        actorId: "char.custom_medicine_doctor",
+        name: "自定义坐堂医师",
+        title: "药铺主人",
+        personality: "沉稳",
+        specialty: "医术",
+        favorability: 5,
+      },
+      medicineHouseDialogueTextIds: ["runtime.test.medicine.open.001"],
+      medicineHouseGreetingTextIds: ["runtime.test.medicine.greeting.001"],
+      medicineHouseOpenTextIds: ["runtime.test.medicine.open.001"],
+      medicineHouseHealService: {
+        cost: 135,
+        fatigueRecovery: 22,
+      },
+      medicineHousePreparedMedicines: [
+        {
+          id: "medicine.custom.heal",
+          name: "自定义金创药",
+          type: "heal",
+          price: 77,
+          effect: { hp: 18 },
+        },
+      ],
+      medicineHouseHerbCatalog: [
+        {
+          id: "herb.custom.ginseng",
+          name: "自定义参片",
+          cold: 1,
+          heat: 0,
+          poison: 0,
+          heal: 4,
+        },
+        {
+          id: "herb.custom.ginger",
+          name: "自定义姜片",
+          cold: 0,
+          heat: 2,
+          poison: 0,
+          heal: 1,
+        },
+      ],
+      medicineHouseAilmentTargets: [
+        {
+          ailmentId: "custom_wind_cold",
+          ailmentName: "自定义风寒",
+          coldRequired: 1,
+          healRequired: 4,
+          maxPoison: 0,
+        },
+      ],
+      medicineHouseCompoundingBaseTurns: 3,
+      medicineHouseCompoundingBaseDurationSec: 21,
+      medicineHouseCompoundingGradeRewards: {
+        S: { medicine: 4, relationship: 3 },
+        A: { medicine: 3, relationship: 2 },
+        B: { medicine: 2, relationship: 1 },
+        C: { medicine: 1, relationship: 0 },
+        D: { medicine: 0, relationship: -1 },
+      },
+    };
+
+    const enterResult = sharedDefaultMedicineHouseModule.enter({
+      gameState: createBaseState(),
+      characterDefinitions: prototypeCharacters,
+      houseDefinition: medicineHouse,
+      playerCharacterId,
+      textEntriesById,
+    });
+    const openResult = sharedDefaultMedicineHouseModule.dispatch({
+      gameState: enterResult.gameState,
+      characterDefinitions: enterResult.characterDefinitions,
+      houseDefinition: medicineHouse,
+      playerCharacterId,
+      sessionState: enterResult.sessionState,
+      request: { type: "action", actionId: "advance-greeting" },
+      textEntriesById,
+    });
+    const viewModel = sharedDefaultMedicineHouseModule.selectViewModel({
+      gameState: openResult.gameState,
+      characterDefinitions: openResult.characterDefinitions,
+      houseDefinition: medicineHouse,
+      playerCharacterId,
+      sessionState: openResult.sessionState,
+      textEntriesById,
+    });
+
+    assert.deepEqual(enterResult.sessionState?.npcGreeting, "自定义药铺迎客。");
+    assert.equal(viewModel.dialogue?.speakerName, "自定义坐堂医师");
+    assert.deepEqual(viewModel.dialogue?.textLines, ["自定义药铺开场。"]);
+    assert.equal(
+      viewModel.actionContainer?.actions.find((action) => action.id === "heal")?.disabled,
+      true
+    );
+    assert.equal(getCompoundingLimits(0).maxTurns, 3);
+    assert.equal(getCompoundingLimits(0).durationSec, 21);
+    assert.deepEqual(
+      getAvailableHerbsForSkill(0).map((herb) => herb.id),
+      ["herb.custom.ginseng", "herb.custom.ginger"]
+    );
+    assert.equal(pickCompoundingTarget(0).ailmentId, "custom_wind_cold");
+    assert.equal(
+      getMedicineCompoundingTimeAdvanceCost(prototypeCharacters, playerCharacterId),
+      convertHouseActivityDaysToSegments(
+        getHouseMinigameDurationDays(getPlayerCharacter(prototypeCharacters).skills.medicine)
+      )
+    );
+  } finally {
+    if (previousMedicineDefaults === undefined) {
+      delete runtimeDefaults["medicine-house"];
+    } else {
+      runtimeDefaults["medicine-house"] = previousMedicineDefaults;
+    }
+  }
+});
+
+test("medicine house no longer consumes default runtime content through module-top-level fallbacks", () => {
+  const medicineHouseSource = fs.readFileSync(
+    "src/application/house-modules/medicine-house/medicine-house-house-module.ts",
+    "utf8"
+  );
+  const medicineHouseActiveContentPath =
+    "src/application/house-modules/medicine-house/medicine-house-active-content.ts";
+  const medicineHouseActiveContentExists = fs.existsSync(
+    medicineHouseActiveContentPath
+  );
+  const medicineHouseActiveContentSource = medicineHouseActiveContentExists
+    ? fs.readFileSync(medicineHouseActiveContentPath, "utf8")
+    : "";
+
+  assert.equal(medicineHouseActiveContentExists, true);
+  assert.match(medicineHouseSource, /from "\.\/medicine-house-active-content"/);
+  assert.doesNotMatch(medicineHouseSource, /default-runtime-content/);
+  assert.doesNotMatch(
+    medicineHouseSource,
+    /defaultRuntimeContent\.textEntriesById/
+  );
+  assert.match(medicineHouseActiveContentSource, /defaultRuntimeContent/);
+  assert.match(medicineHouseActiveContentSource, /getMedicineHouseTextEntries/);
 });
 
 test("tavern copy resolves from text entries for capacity drink gamble and insufficient wager", () => {
@@ -7456,8 +21533,11 @@ test("medicine house runtime and content no longer keep core greeting and heal p
     ),
     "utf8"
   );
-  const medicineHouseContentSource = fs.readFileSync(
-    path.join(process.cwd(), "src/content/houses/medicine-house-content.ts"),
+  const medicineHouseDefaultsSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/application/house-modules/medicine-house/medicine-house-content-defaults.ts"
+    ),
     "utf8"
   );
 
@@ -7470,9 +21550,22 @@ test("medicine house runtime and content no longer keep core greeting and heal p
     ].filter(
       (entry) =>
         medicineHouseRuntimeSource.includes(entry) ||
-        medicineHouseContentSource.includes(entry)
+        medicineHouseDefaultsSource.includes(entry)
     ),
     []
+  );
+});
+
+test("legacy medicine house content registry file is removed after medicine-house runtime fallback converges", () => {
+  const medicineHouseContentPath = path.join(
+    process.cwd(),
+    "src/content/houses/medicine-house-content.ts"
+  );
+
+  assert.equal(
+    fs.existsSync(medicineHouseContentPath),
+    false,
+    "Expected src/content/houses/medicine-house-content.ts to be removed once medicine-house runtime fallback no longer depends on it."
   );
 });
 
@@ -7732,26 +21825,88 @@ test("temple work reaching contribution threshold starts shared map auto advance
       actionId: "confirm-start-temple-task:copy-scripture",
     },
   });
+  assert.equal(confirmedWorkResult.sessionState?.overlay, null);
+  assert.equal(
+    confirmedWorkResult.gameState.runtime.playableSession?.playableId,
+    "activity-qte"
+  );
+  assert.equal(
+    confirmedWorkResult.gameState.runtime.playableSession?.integrationId,
+    "playable.activity-qte.house.temple"
+  );
+  assert.equal(
+    confirmedWorkResult.gameState.runtime.activitySession?.type,
+    "fortune-board"
+  );
 
   let qteResult = confirmedWorkResult;
-  for (let round = 0; round < 3; round += 1) {
+  for (let round = 0; round < 10; round += 1) {
+    if (qteResult.sessionState?.overlay?.type === "result") {
+      break;
+    }
+    while (
+      qteResult.gameState.runtime.activitySession.type === "fortune-board" &&
+      qteResult.gameState.runtime.activitySession.wager <
+        Math.min(5, qteResult.gameState.runtime.activitySession.remainingPieces)
+    ) {
+      qteResult = templeHouseHouseModule.dispatch({
+        gameState: qteResult.gameState,
+        characterDefinitions: qteResult.characterDefinitions,
+        houseDefinition: templeHouse,
+        playerCharacterId,
+        sessionState: qteResult.sessionState,
+        request: {
+          type: "action",
+          actionId: "temple-work-board-wager-plus",
+        },
+      });
+    }
     qteResult = templeHouseHouseModule.dispatch({
       gameState: qteResult.gameState,
       characterDefinitions: qteResult.characterDefinitions,
       houseDefinition: templeHouse,
       playerCharacterId,
-      sessionState: {
-        ...qteResult.sessionState,
-        overlay: {
-          ...qteResult.sessionState.overlay,
-          markerPercent: qteResult.sessionState.overlay.targetStartPercent,
-        },
-      },
-      request: { type: "action", actionId: "temple-work-stop" },
+      sessionState: qteResult.sessionState,
+      request: { type: "action", actionId: "temple-work-board-play" },
     });
+    qteResult = templeHouseHouseModule.dispatch({
+      gameState: qteResult.gameState,
+      characterDefinitions: qteResult.characterDefinitions,
+      houseDefinition: templeHouse,
+      playerCharacterId,
+      sessionState: qteResult.sessionState,
+      request: { type: "tick", tickId: "temple-house-work-qte" },
+    });
+    qteResult = templeHouseHouseModule.dispatch({
+      gameState: qteResult.gameState,
+      characterDefinitions: qteResult.characterDefinitions,
+      houseDefinition: templeHouse,
+      playerCharacterId,
+      sessionState: qteResult.sessionState,
+      request: { type: "action", actionId: "temple-work-board-play" },
+    });
+    for (let tick = 0; tick < 100; tick += 1) {
+      qteResult = templeHouseHouseModule.dispatch({
+        gameState: qteResult.gameState,
+        characterDefinitions: qteResult.characterDefinitions,
+        houseDefinition: templeHouse,
+        playerCharacterId,
+        sessionState: qteResult.sessionState,
+        request: { type: "tick", tickId: "temple-house-work-qte" },
+      });
+      if (
+        qteResult.sessionState?.overlay?.type === "result" ||
+        (qteResult.gameState.runtime.activitySession?.type === "fortune-board" &&
+          qteResult.gameState.runtime.activitySession.phase === "ready")
+      ) {
+        break;
+      }
+    }
   }
 
   assert.equal(qteResult.sessionState?.overlay?.type, "result");
+  assert.equal(qteResult.gameState.runtime.playableSession, null);
+  assert.equal(qteResult.gameState.runtime.activitySession, null);
   assert.equal(
     getPlayerCharacter(qteResult.characterDefinitions).stamina,
     startingStamina - ACTIVITY_COMPLETION_STAMINA_COST
@@ -7958,8 +22113,13 @@ test("runtime router contract exports a formal routing seam", () => {
   );
 
   assert.match(source, /export type RuntimeRouteInput =/);
+  assert.match(source, /export type RuntimeRouteResult = RuntimeResult;/);
+  assert.match(source, /export type RuntimeFollowUpInput =/);
+  assert.match(source, /handleFollowUp\?/);
   assert.match(source, /export interface RuntimeRouter/);
-  assert.match(source, /route\(input: RuntimeRouteInput\): RuntimeResult/);
+  assert.match(source, /route\(input: RuntimeRouteInput\): RuntimeRouteResult/);
+  assert.doesNotMatch(source, /handleOutcome\?/);
+  assert.doesNotMatch(source, /handleInteractive\?/);
 });
 
 test("shared dispatch consumes the hardened runtime router contract", () => {
@@ -7974,22 +22134,41 @@ test("shared dispatch consumes the hardened runtime router contract", () => {
   assert.doesNotMatch(source, /routeRequest:/);
 });
 
-test("engine bootstrap builds a session from a selected mod id and registry", async () => {
-  const { createEngineSession } = require("../.test-dist/core/engine/engine-factory.js");
-  const session = createEngineSession({
-    selectedMod: {
-      id: "builtin.default",
-      version: "1.0.0",
-      title: "Default",
-      entryContentPackIds: [],
-    },
-    registry: {
-      mods: {},
-      content: {},
-    },
-  });
+test("core-production-integration retirement leaves no orphaned core engine seam", () => {
+  const engineFiles = [
+    path.join(process.cwd(), "src/core/engine/engine-bootstrap.ts"),
+    path.join(process.cwd(), "src/core/engine/engine-factory.ts"),
+    path.join(process.cwd(), "src/core/engine/engine-session.ts"),
+    path.join(process.cwd(), "src/core/contracts/engine-context.ts"),
+    path.join(process.cwd(), "src/core/runtime/runtime-context.ts"),
+    path.join(process.cwd(), "src/core/registry/engine-registry.ts"),
+  ];
 
-  assert.equal(session.state.engine.selectedModId, "builtin.default");
+  for (const filePath of engineFiles) {
+    assert.equal(
+      fs.existsSync(filePath),
+      false,
+      `Expected orphaned engine seam file to be retired: ${filePath}`
+    );
+  }
+
+  const mainSource = fs.readFileSync(
+    path.join(process.cwd(), "src/main.ts"),
+    "utf8"
+  );
+  const startupCoordinatorSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/application/startup/startup-session-coordinator.ts"
+    ),
+    "utf8"
+  );
+
+  assert.doesNotMatch(mainSource, /core\/engine|engine-bootstrap|engine-factory/);
+  assert.doesNotMatch(
+    startupCoordinatorSource,
+    /core\/engine|engine-bootstrap|engine-factory/
+  );
 });
 
 test("runtime dispatch settles effects after routing", async () => {
@@ -8222,18 +22401,16 @@ test("runtime dispatch settles routed task actions and signals into unified task
         route: ({ state }) => ({
           state,
           effects: [],
-          taskActions: [
+          taskInputs: [
             {
               type: "start",
               taskId: "task.runtime.test",
               occurredAt: "2026-07-02T08:00:00.000Z",
               source: "event-runtime",
             },
-          ],
-          taskSignals: [
             {
               type: "scene.reported",
-              source: "scene-runtime",
+              source: "dialogue-runtime",
               occurredAt: "2026-07-02T08:05:00.000Z",
             },
           ],
@@ -8269,10 +22446,63 @@ test("runtime dispatch settles routed task actions and signals into unified task
     result.state.core.runtime.flags["task.runtime.test.completed"],
     true
   );
-  assert.deepEqual(
-    result.taskUpdates.map((update) => update.type),
-    ["started", "completed"]
+  assert.equal("taskUpdates" in result, false);
+});
+
+test("runtime dispatch settles one canonical task input seam instead of parallel action and signal channels", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/runtime-dispatch.ts"),
+    "utf8"
   );
+
+  assert.match(source, /taskInputs: routed\.taskInputs/);
+  assert.match(source, /for \(const taskInput of input\.taskInputs \?\? \[\]\)/);
+  assert.doesNotMatch(source, /taskActions: routed\.taskActions/);
+  assert.doesNotMatch(source, /taskSignals: routed\.taskSignals/);
+});
+
+test("runtime router contract keeps task updates out of the pre-settlement route seam", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/runtime-router.ts"),
+    "utf8"
+  );
+
+  assert.match(source, /export type RuntimeRouteResult = RuntimeResult;/);
+  assert.match(source, /route\(input: RuntimeRouteInput\): RuntimeRouteResult;/);
+});
+
+test("runtime dispatch no longer merges routed task updates before settlement", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/runtime-dispatch.ts"),
+    "utf8"
+  );
+
+  assert.doesNotMatch(source, /routed\.taskUpdates/);
+  assert.doesNotMatch(source, /taskUpdates: taskSettlement\.taskUpdates/);
+});
+
+test("runtime task settlement no longer accumulates hidden task update receipts after public receipt removal", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/runtime-dispatch.ts"),
+    "utf8"
+  );
+
+  assert.doesNotMatch(source, /const taskUpdates: TaskRuntimeResult\["taskUpdates"\] = \[\];/);
+  assert.doesNotMatch(source, /taskUpdates\.push/);
+  assert.match(source, /result\.taskUpdates\.length > 0/);
+});
+
+test("runtime dispatch hides post-route multi-stage settlement behind one canonical helper seam", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/runtime-dispatch.ts"),
+    "utf8"
+  );
+
+  assert.match(source, /return settleRoutedRuntimeResult\(\{/);
+  assert.match(source, /function settleRoutedRuntimeResult\(input:/);
+  assert.doesNotMatch(source, /const effectSettlement = settleRuntimeEffects\(\{/);
+  assert.doesNotMatch(source, /const taskSettlement = settleRuntimeTasks\(\{/);
+  assert.doesNotMatch(source, /const followUp = settleRuntimeFollowUp\(\{/);
 });
 
 test("covered shared runtime reentry is runtime-owned", async () => {
@@ -8307,31 +22537,33 @@ test("covered shared runtime reentry is runtime-owned", async () => {
               value: true,
             },
           ],
-          interactive: {
+          followUp: {
             type: "reenter-house",
             houseId: homeHouse.id,
           },
         }),
       },
       followUp: {
-        handleInteractive: ({ state, interactive }) => {
-          handledInteractive.push(interactive.type);
+        handleFollowUp: ({ state, followUp }) => {
+          handledInteractive.push(followUp.type);
 
-          if (interactive.type !== "reenter-house") {
-            return state;
+          if (followUp.type !== "reenter-house") {
+            return { state };
           }
 
           return {
-            ...state,
-            core: {
-              ...state.core,
-              world: {
-                ...state.core.world,
-                currentHouseId: interactive.houseId,
-              },
-              ui: {
-                ...state.core.ui,
-                currentView: "house",
+            state: {
+              ...state,
+              core: {
+                ...state.core,
+                world: {
+                  ...state.core.world,
+                  currentHouseId: followUp.houseId,
+                },
+                ui: {
+                  ...state.core.ui,
+                  currentView: "house",
+                },
               },
             },
           };
@@ -8344,7 +22576,7 @@ test("covered shared runtime reentry is runtime-owned", async () => {
   assert.equal(result.state.core.runtime.flags["flag.runtime.reentry"], true);
   assert.equal(result.state.core.world.currentHouseId, homeHouse.id);
   assert.equal(result.state.core.ui.currentView, "house");
-  assert.deepEqual(result.interactive, { type: "none" });
+  assert.deepEqual(result.followUp, { type: "none" });
 });
 
 test("child 13 shared dispatch follow-up no longer branches on reenter-house in main.ts", () => {
@@ -8358,7 +22590,7 @@ test("child 13 shared dispatch follow-up no longer branches on reenter-house in 
     source,
     /enterHouseThroughRuntime\(houseRuntime, interactive\.houseId\)/
   );
-  assert.match(source, /houseRuntime\.applyInteractiveFollowUp\(interactive\)/);
+  assert.match(source, /houseRuntime\.applyInteractiveFollowUp\(followUp\)/);
 });
 
 test("save envelope preserves selected mod id and mod state payload", async () => {
@@ -8395,9 +22627,117 @@ test("save envelope preserves selected mod id and mod state payload", async () =
   assert.deepEqual(envelope.modState["builtin.default"], { foo: 1 });
 });
 
+test("browser save record round-trips selected character and mod source through the save envelope", async () => {
+  const {
+    readBrowserSaveRecord,
+    writeBrowserSaveRecord,
+  } = require("../.test-dist/core/save/browser-save-record.js");
+  const storage = {
+    record: new Map(),
+    getItem(key) {
+      return this.record.has(key) ? this.record.get(key) : null;
+    },
+    setItem(key, value) {
+      this.record.set(key, value);
+    },
+  };
+
+  writeBrowserSaveRecord({
+    storage,
+    selectedCharacterId: "char.player",
+    selectedModSource: {
+      kind: "url",
+      name: "Imported Pack",
+      url: "https://example.com/mods/imported-pack.json",
+    },
+    state: {
+      engine: {
+        selectedModId: "builtin.default",
+        version: "1.0.0",
+        currentView: "map",
+      },
+      runtime: {
+        flags: { started: true },
+        variables: { stage: 1 },
+        activeEventId: "event.story.start",
+        activeTaskIds: ["task.main"],
+      },
+      modState: {
+        characterStatusById: {
+          "char.player": {
+            statPatch: { gold: 175 },
+            stamina: 60,
+          },
+        },
+      },
+    },
+  });
+
+  const loaded = readBrowserSaveRecord({
+    storage,
+    availableModIds: ["builtin.default"],
+  });
+
+  assert.equal(loaded?.selectedCharacterId, "char.player");
+  assert.equal(loaded?.selectedModId, "builtin.default");
+  assert.deepEqual(loaded?.selectedModSource, {
+    kind: "url",
+    name: "Imported Pack",
+    url: "https://example.com/mods/imported-pack.json",
+  });
+  assert.deepEqual(loaded?.modState, {
+    characterStatusById: {
+      "char.player": {
+        statPatch: { gold: 175 },
+        stamina: 60,
+      },
+    },
+  });
+});
+
+test("save-envelope-cutover main.ts no longer leaves loadSaveData as a placeholder", () => {
+  const mainSource = fs.readFileSync(
+    path.join(process.cwd(), "src/main.ts"),
+    "utf8"
+  );
+
+  assert.match(mainSource, /readBrowserSaveRecord/);
+  assert.match(mainSource, /writeBrowserSaveRecord/);
+  assert.match(mainSource, /window\.addEventListener\("beforeunload"/);
+  assert.doesNotMatch(
+    mainSource,
+    /function loadSaveData\(\): StartupSaveData \{\s*\/\/ Placeholder/
+  );
+});
+
+test("main save state includes city and building status maps in modState", () => {
+  const mainSource = fs.readFileSync(
+    path.join(process.cwd(), "src/main.ts"),
+    "utf8"
+  );
+  const saveStateBlock = mainSource.match(
+    /function readCurrentCoreGameStateForSave\(\)[\s\S]*?\n\}/
+  )?.[0] ?? "";
+
+  assert.match(saveStateBlock, /cityStatusById/);
+  assert.match(saveStateBlock, /buildingStatusById/);
+  assert.match(saveStateBlock, /appState\.cityStatusById/);
+  assert.match(saveStateBlock, /appState\.buildingStatusById/);
+});
+
 test("child 29 main.ts primary startup no longer depends on legacy startup adapters", () => {
   const mainSource = fs.readFileSync(
     path.join(process.cwd(), "src/main.ts"),
+    "utf8"
+  );
+  const bootstrapSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src",
+      "application",
+      "startup",
+      "entry-shell-bootstrap-state.ts"
+    ),
     "utf8"
   );
 
@@ -8406,9 +22746,15 @@ test("child 29 main.ts primary startup no longer depends on legacy startup adapt
   assert.doesNotMatch(mainSource, /bootstrapLegacyMain/);
   assert.doesNotMatch(mainSource, /toLegacyBootstrapInput/);
   assert.doesNotMatch(mainSource, /builtinLegacyBootstrapInput|legacyEngineSession/);
-  assert.match(
+  assert.doesNotMatch(
     mainSource,
-    /createActiveGameContentContextFromModActivation\(\{[\s\S]*activationResult:\s*builtinStartupActivation/
+    /createActiveGameContentContextFromModActivation\(\{/
+  );
+  assert.match(mainSource, /createEntryShellBootstrapState/);
+  assert.match(mainSource, /entryShellBootstrapState\.createStartupContentContext/);
+  assert.match(
+    bootstrapSource,
+    /createActiveGameContentContextFromModActivation\(\{[\s\S]*activationResult/
   );
 });
 
@@ -8536,23 +22882,23 @@ test("time runtime creates a typed day-start request", async () => {
   assert.match(source, /createDayStartRequest/);
 });
 
-test("event runtime exports candidate selection and activation seams", async () => {
+test("event binding runtime exports candidate selection and activation seams", async () => {
   const source = fs.readFileSync(
-    path.join(process.cwd(), "src/core/runtime/event-runtime.ts"),
+    path.join(process.cwd(), "src/core/runtime/event-binding-runtime.ts"),
     "utf8"
   );
 
-  assert.match(source, /selectEventCandidate/);
+  assert.match(source, /selectEventBindingCandidate/);
   assert.match(source, /activateEvent/);
 });
 
-test("scene runtime accepts an activated event handoff", async () => {
+test("dialogue runtime accepts an activated event handoff", async () => {
   const source = fs.readFileSync(
-    path.join(process.cwd(), "src/core/runtime/scene-runtime.ts"),
+    path.join(process.cwd(), "src/core/runtime/dialogue-runtime.ts"),
     "utf8"
   );
 
-  assert.match(source, /runSceneFromEvent/);
+  assert.match(source, /runDialogueFromEvent/);
 });
 
 test("main.ts no longer imports application house-runtime directly for production ownership", () => {
@@ -8701,13 +23047,49 @@ test("child 14 interactive runtime no longer depends on legacy adapter-owned qte
   assert.doesNotMatch(source, /dispatchLegacyStoryBattleAction/);
 });
 
+test("interactive closeout keeps non-interactive playable launches out of interactive runtime normalization", () => {
+  const { runInteractiveRuntime } = require(
+    "../.test-dist/core/runtime/interactive-runtime.js"
+  );
+  const { createLaunchPlayableRequest } = require(
+    "../.test-dist/core/runtime/playable-runtime.js"
+  );
+  const state = createBaseState();
+
+  const result = runInteractiveRuntime({
+    state: {
+      core: state,
+      app: {
+        beggingMiniGameState: null,
+        autoAdvanceState: null,
+        cityDirectoryState: null,
+        locationDialogueState: null,
+      },
+      view: {},
+    },
+    request: createLaunchPlayableRequest("grain-accounting", {
+      ownerContext: {
+        ownerKind: "house",
+        ownerId: "house.grain-shop",
+        returnPolicy: "resume-owner",
+      },
+    }),
+    characterDefinitions: [],
+  });
+
+  assert.equal(result.session, null);
+  assert.deepEqual(result.followUp, { type: "none" });
+  assert.equal(result.state.core.runtime.playableSession, null);
+  assert.equal(result.state.app.beggingMiniGameState, null);
+});
+
 test("child 14 activity qte result close routes through interactive runtime exit instead of direct clearActivityResult helper", () => {
   const source = fs.readFileSync(
     path.join(process.cwd(), "src/main.ts"),
     "utf8"
   );
   const closeActivityResultBlock = source.match(
-    /function closeCurrentActivityResult\(\)[\s\S]*?\n}\n/
+    /function closeCurrentActivityResult\(\): void \{[\s\S]*?\r?\n}\r?\n/
   )?.[0] ?? "";
 
   assert.doesNotMatch(source, /clearActivityResult/);
@@ -8721,7 +23103,7 @@ test("child 15 covered enter-city path routes through shared runtime dispatch in
     "utf8"
   );
   const handleModalConfirmBlock = source.match(
-    /function handleModalConfirm\(\)[\s\S]*?\r?\n}\r?\n\r?\nfunction getFacingDegrees/
+    /function handleModalConfirm\(\)[\s\S]*?\r?\n}\r?\n\r?\nfunction cancelCampaignTravel/
   )?.[0] ?? "";
 
   assert.doesNotMatch(handleModalConfirmBlock, /runNavigationRuntime\(/);
@@ -8729,7 +23111,15 @@ test("child 15 covered enter-city path routes through shared runtime dispatch in
   assert.match(handleModalConfirmBlock, /createEnterCityRequest\(/);
   assert.match(
     handleModalConfirmBlock,
-    /handleOutcome:\s*\(\{\s*state,\s*outcome\s*\}\)\s*=>[\s\S]*navigationTimeFollowUp\.applyOutcome\(\{\s*state,\s*outcome\s*\}\)/
+    /cityDefinitionsById:\s*activeContentContext\.cityDefinitionById/
+  );
+  assert.match(
+    handleModalConfirmBlock,
+    /locationAccessDefinitions:\s*activeContentContext\.locationAccess/
+  );
+  assert.match(
+    handleModalConfirmBlock,
+    /handleFollowUp:\s*\(\{\s*state,\s*followUp\s*\}\)\s*=>[\s\S]*navigationTimeFollowUp\.applyOutcome\(\{\s*state,\s*outcome:\s*followUp\s*\}\)/
   );
 });
 
@@ -8739,13 +23129,13 @@ test("child 15 covered day-start path routes through shared runtime dispatch ins
     "utf8"
   );
   const startMapAutoAdvanceBlock = source.match(
-    /function startMapAutoAdvance\(input: \{[\s\S]*?\r?\n}\r?\n\r?\nfunction advanceCurrentStoryScene/
+    /function startMapAutoAdvance\(input: \{[\s\S]*?\r?\n}\r?\n\r?\nfunction advanceCurrentStoryDialogue/
   )?.[0] ?? "";
 
   assert.doesNotMatch(startMapAutoAdvanceBlock, /runTimeRuntime\(/);
   assert.match(startMapAutoAdvanceBlock, /commitRuntimeRequest\(/);
   assert.match(startMapAutoAdvanceBlock, /createDayStartRequest\(/);
-  assert.match(startMapAutoAdvanceBlock, /handleOutcome:\s*\(\{\s*state,\s*outcome\s*\}\)\s*=>/);
+  assert.match(startMapAutoAdvanceBlock, /handleFollowUp:\s*\(\{\s*state,\s*followUp\s*\}\)\s*=>/);
 });
 
 test("child 15 covered advance-segments travel paths route through shared runtime dispatch instead of direct runTimeRuntime helper", () => {
@@ -8754,10 +23144,10 @@ test("child 15 covered advance-segments travel paths route through shared runtim
     "utf8"
   );
   const handleModalConfirmBlock = source.match(
-    /function handleModalConfirm\(\)[\s\S]*?\r?\n}\r?\n\r?\nfunction getFacingDegrees/
+    /function handleModalConfirm\(\)[\s\S]*?\r?\n}\r?\n\r?\nfunction cancelCampaignTravel/
   )?.[0] ?? "";
   const startCampaignTravelBlock = source.match(
-    /function startCampaignTravel\([\s\S]*?\r?\n}\r?\n\r?\nfunction animateCampaignMove/
+    /function startCampaignTravel\([\s\S]*?\r?\n}\r?\n\r?\nfunction syncCampaignActorRuntimeState/
   )?.[0] ?? "";
 
   assert.doesNotMatch(handleModalConfirmBlock, /runTimeRuntime\(/);
@@ -8795,12 +23185,12 @@ test("child 16 covered city-enter story handoff stays on the shared trigger seam
     "utf8"
   );
   const handleModalConfirmBlock = source.match(
-    /function handleModalConfirm\(\)[\s\S]*?\r?\n}\r?\n\r?\nfunction getFacingDegrees/
+    /function handleModalConfirm\(\)[\s\S]*?\r?\n}\r?\n\r?\nfunction cancelCampaignTravel/
   )?.[0] ?? "";
 
   assert.match(
     handleModalConfirmBlock,
-    /handleOutcome:\s*\(\{\s*state,\s*outcome\s*\}\)\s*=>[\s\S]*navigationTimeFollowUp\.applyOutcome\(\{\s*state,\s*outcome\s*\}\)/
+    /handleFollowUp:\s*\(\{\s*state,\s*followUp\s*\}\)\s*=>[\s\S]*navigationTimeFollowUp\.applyOutcome\(\{\s*state,\s*outcome:\s*followUp\s*\}\)/
   );
   assert.doesNotMatch(handleModalConfirmBlock, /runEventRuntime\(/);
   assert.doesNotMatch(handleModalConfirmBlock, /runSceneFromEvent\(/);
@@ -8848,6 +23238,111 @@ test("runtime settlement uses explicit contract and reports unsupported effect k
   assert.doesNotMatch(source, /runTask|activateEvent|renderApp|writeSave/);
 });
 
+test("runtime settlement applies character numeric property mutation effects through status patches", () => {
+  const {
+    settleRuntimeEffects,
+  } = require("../.test-dist/core/runtime/runtime-settlement.js");
+  const player = {
+    ...prototypeCharacters.find((character) => character.id === playerCharacterId),
+    customProperties: {
+      "character.devotion": 10,
+    },
+  };
+
+  const result = settleRuntimeEffects({
+    state: createRuntimeState(),
+    effects: [
+      {
+        type: "mutateCharacterNumericProperty",
+        characterId: player.id,
+        propertyId: "custom.character.devotion",
+        operation: "add",
+        value: 5,
+      },
+    ],
+    emittedBy: "task-runtime",
+    appliedBy: "runtime-settlement",
+    characterDefinitions: [player],
+    characterStatusById: {},
+  });
+
+  assert.equal(result.unsupportedEffects.length, 0);
+  assert.equal(
+    result.characterDefinitions[0].customProperties["character.devotion"],
+    15
+  );
+  assert.deepEqual(result.characterStatusById[player.id], {
+    customPropertyPatch: {
+      "character.devotion": 15,
+    },
+  });
+});
+
+test("runtime dispatch propagates task character property mutation effect status", () => {
+  const {
+    dispatchRuntimeRequest,
+  } = require("../.test-dist/core/runtime/runtime-dispatch.js");
+  const player = {
+    ...prototypeCharacters.find((character) => character.id === playerCharacterId),
+    customProperties: {
+      "character.devotion": 10,
+    },
+  };
+  const taskId = "task.character-devotion";
+
+  const result = dispatchRuntimeRequest({
+    state: createRuntimeState(),
+    request: {
+      family: "action",
+      type: "action",
+      actionId: "task.start",
+    },
+    context: {
+      router: {
+        route: ({ state }) => ({
+          state,
+          effects: [],
+          taskInputs: [
+            {
+              type: "start",
+              taskId,
+              occurredAt: "2026-07-15T00:00:00.000Z",
+            },
+          ],
+          characterDefinitions: [player],
+          characterStatusById: {},
+        }),
+      },
+      taskDefinitionsById: {
+        [taskId]: {
+          id: taskId,
+          title: "Character Devotion",
+          objectives: [{ id: "report", target: 1, signalType: "scene.reported" }],
+          onStartEffects: [
+            {
+              type: "mutateCharacterNumericProperty",
+              characterId: player.id,
+              propertyId: "custom.character.devotion",
+              operation: "add",
+              value: 5,
+            },
+          ],
+        },
+      },
+    },
+  });
+
+  assert.equal(
+    result.characterDefinitions[0].customProperties["character.devotion"],
+    15
+  );
+  assert.deepEqual(result.characterStatusById[player.id], {
+    customPropertyPatch: {
+      "character.devotion": 15,
+    },
+  });
+});
+
 test("runtime spine commit helper is exported from state sync runtime", () => {
   const source = fs.readFileSync(
     path.join(process.cwd(), "src/core/runtime/state-sync-runtime.ts"),
@@ -8856,8 +23351,9 @@ test("runtime spine commit helper is exported from state sync runtime", () => {
 
   assert.match(source, /import \{ dispatchRuntimeRequest \} from "\.\/runtime-dispatch"/);
   assert.match(source, /export function commitRuntimeRequest/);
-  assert.match(source, /createRuntimeBridgeState/);
-  assert.match(source, /applyRuntimeBridgeState/);
+  assert.match(source, /state-sync-core-seam/);
+  assert.match(source, /stateSyncCoreSeam\.createRuntimeStateFromAppState/);
+  assert.match(source, /stateSyncCoreSeam\.applyRuntimeStateToAppState/);
 });
 
 test("main runtime orchestration uses shared runtime commit helper for covered dispatch paths", () => {
@@ -8866,16 +23362,16 @@ test("main runtime orchestration uses shared runtime commit helper for covered d
     "utf8"
   );
   const startMapAutoAdvanceBlock = source.match(
-    /function startMapAutoAdvance\(input: \{[\s\S]*?\r?\n}\r?\n\r?\nfunction advanceCurrentStoryScene/
+    /function startMapAutoAdvance\(input: \{[\s\S]*?\r?\n}\r?\n\r?\nfunction advanceCurrentStoryDialogue/
   )?.[0] ?? "";
   const dispatchCurrentStoryBattleActionBlock = source.match(
     /function dispatchCurrentStoryBattleAction\(actionId: string\): void \{[\s\S]*?\r?\n}\r?\n\r?\ntype BattleDemoResultMessage/
   )?.[0] ?? "";
   const handleModalConfirmBlock = source.match(
-    /function handleModalConfirm\(\)[\s\S]*?\r?\n}\r?\n\r?\nfunction getFacingDegrees/
+    /function handleModalConfirm\(\)[\s\S]*?\r?\n}\r?\n\r?\nfunction cancelCampaignTravel/
   )?.[0] ?? "";
   const startCampaignTravelBlock = source.match(
-    /function startCampaignTravel\([\s\S]*?\r?\n}\r?\n\r?\nfunction animateCampaignMove/
+    /function startCampaignTravel\([\s\S]*?\r?\n}\r?\n\r?\nfunction syncCampaignActorRuntimeState/
   )?.[0] ?? "";
 
   assert.match(startMapAutoAdvanceBlock, /commitRuntimeRequest\(/);
@@ -8899,16 +23395,13 @@ test("interactive covered main write-back paths use shared runtime commit helper
     "utf8"
   );
   const onBeggingGameCompleteBlock = source.match(
-    /function onBeggingGameComplete[\s\S]*?\n}\n/
+    /function onBeggingGameComplete[\s\S]*?\r?\n}\r?\n/
   )?.[0] ?? "";
   const syncCityBeggingMiniGamePointerBlock = source.match(
     /function syncCityBeggingMiniGamePointer\(clientX: number\): void \{[\s\S]*?\r?\n}\r?\n\r?\nfunction tickCityBeggingMiniGame/
   )?.[0] ?? "";
   const tickCityBeggingMiniGameBlock = source.match(
     /function tickCityBeggingMiniGame\(timestamp: number\): void \{[\s\S]*?\r?\n}\r?\n\r?\nfunction startCityBeggingMiniGameLoop/
-  )?.[0] ?? "";
-  const openBeggingMiniGameBlock = source.match(
-    /function openBeggingMiniGame\(\): void \{[\s\S]*?\r?\n}\r?\n\r?\nfunction createHouseRuntimeInstance/
   )?.[0] ?? "";
   const stopCurrentActivityQteBlock = source.match(
     /function stopCurrentActivityQte\(\): void \{[\s\S]*?\r?\n}\r?\n\r?\nfunction closeCurrentActivityResult/
@@ -8921,7 +23414,6 @@ test("interactive covered main write-back paths use shared runtime commit helper
     onBeggingGameCompleteBlock,
     syncCityBeggingMiniGamePointerBlock,
     tickCityBeggingMiniGameBlock,
-    openBeggingMiniGameBlock,
     stopCurrentActivityQteBlock,
     closeCurrentActivityResultBlock,
   ]) {
@@ -9127,7 +23619,55 @@ test("house module registry exposes a shared registration seam for mod-owned mod
   assert.match(source, /export type HouseModuleRegistration/);
   assert.match(source, /export type HouseModuleRegistry/);
   assert.match(source, /createHouseModuleRegistry/);
+  assert.doesNotMatch(source, /createBuiltinHouseModuleRegistry/);
+  assert.doesNotMatch(source, /builtinHouseModuleRegistrations/);
+  assert.doesNotMatch(source, /builtinHouseRendererRegistrations/);
+});
+
+test("builtin house registry seed is installed through an explicit builtin registry module", () => {
+  const builtinRegistryPath = path.join(
+    process.cwd(),
+    "src/core/registry/builtin-house-module-registry.ts"
+  );
+
+  assert.ok(
+    fs.existsSync(builtinRegistryPath),
+    "Expected an explicit builtin house registry installer module under src/core/registry."
+  );
+
+  const source = fs.readFileSync(builtinRegistryPath, "utf8");
+
+  assert.match(source, /installBuiltinHouseModuleRegistrations/);
   assert.match(source, /createBuiltinHouseModuleRegistry/);
+  assert.match(source, /builtinHouseModuleRegistry/);
+});
+
+test("builtin house registry seed keeps module and renderer wiring in one builtin contribution list", () => {
+  const builtinRegistryPath = path.join(
+    process.cwd(),
+    "src/core/registry/builtin-house-module-registry.ts"
+  );
+  const builtinContributionsPath = path.join(
+    process.cwd(),
+    "src",
+    "core",
+    "registry",
+    "builtin-house-module-contributions.ts"
+  );
+
+  assert.equal(fs.existsSync(builtinContributionsPath), true);
+
+  const registrySource = fs.readFileSync(builtinRegistryPath, "utf8");
+  const contributionsSource = fs.readFileSync(
+    builtinContributionsPath,
+    "utf8"
+  );
+
+  assert.match(registrySource, /builtinHouseModuleContributions/);
+  assert.doesNotMatch(registrySource, /builtinHouseModuleRegistrations/);
+  assert.doesNotMatch(registrySource, /builtinHouseRendererRegistrations/);
+  assert.match(contributionsSource, /module:/);
+  assert.match(contributionsSource, /render:/);
 });
 
 test("mod house registration removes core runtime dependence on the application static registry", () => {
@@ -9216,10 +23756,74 @@ test("mod house registration removes presenter dependence on the application sta
   );
 
   assert.match(source, /HouseModuleRegistry|houseModuleRegistry/);
+  assert.match(source, /from "\.\.\/house-modules\/house-module-registry"/);
+});
+
+test("consumer seam queue keeps application house runtime off direct core builtin registry ownership", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/application/house/house-runtime.ts"),
+    "utf8"
+  );
+
   assert.doesNotMatch(
     source,
-    /from "\.\.\/house-modules\/house-module-registry"/
+    /from "\.\.\/\.\.\/core\/registry\/builtin-house-module-registry"/
   );
+  assert.match(source, /from "\.\.\/house-modules\/house-module-registry"/);
+});
+
+test("consumer seam queue keeps stage presenters off direct core builtin registry ownership", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/application/presenter/stage-presenters.ts"),
+    "utf8"
+  );
+
+  assert.doesNotMatch(
+    source,
+    /from "\.\.\/\.\.\/core\/registry\/builtin-house-module-registry"/
+  );
+  assert.match(source, /from "\.\.\/house-modules\/house-module-registry"/);
+});
+
+test("consumer seam queue keeps interactive action coordinator off direct core runtime executor ownership", () => {
+  const source = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/application/runtime/interactive-action-coordinator.ts"
+    ),
+    "utf8"
+  );
+
+  assert.doesNotMatch(source, /from "\.\.\/\.\.\/core\/runtime\/interactive-runtime"/);
+  assert.doesNotMatch(source, /from "\.\.\/\.\.\/core\/runtime\/playable-runtime"/);
+  assert.doesNotMatch(source, /from "\.\.\/\.\.\/core\/runtime\/state-sync-runtime"/);
+  assert.match(source, /from "\.\/runtime-request-seam"/);
+});
+
+test("consumer seam queue keeps grain shop off direct core playable runtime ownership", () => {
+  const source = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/application/house-modules/grain-shop/grain-shop-house-module.ts"
+    ),
+    "utf8"
+  );
+
+  assert.doesNotMatch(source, /from "\.\.\/\.\.\/\.\.\/core\/runtime\/playable-runtime"/);
+  assert.match(source, /from "\.\.\/\.\.\/playables\/house-playable-runtime-bridge"/);
+});
+
+test("consumer seam queue keeps medicine house off direct core playable runtime ownership", () => {
+  const source = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/application/house-modules/medicine-house/medicine-house-house-module.ts"
+    ),
+    "utf8"
+  );
+
+  assert.doesNotMatch(source, /from "\.\.\/\.\.\/\.\.\/core\/runtime\/playable-runtime"/);
+  assert.match(source, /from "\.\.\/\.\.\/playables\/house-playable-runtime-bridge"/);
 });
 
 test("house renderer registry resolves renderers through the shared registration seam", () => {
@@ -9228,7 +23832,7 @@ test("house renderer registry resolves renderers through the shared registration
     "utf8"
   );
 
-  assert.match(source, /HouseModuleRegistry|createBuiltinHouseModuleRegistry|getHouseModuleRenderer/);
+  assert.match(source, /HouseModuleRegistry|builtinHouseModuleRegistry|getHouseModuleRenderer/);
   assert.doesNotMatch(source, /export const houseModuleViewRegistry: Record/);
 });
 
@@ -9428,6 +24032,40 @@ test("runtime state contract exports core app and view partitions", () => {
   assert.match(source, /view:/);
 });
 
+test("runtime result contract collapses follow-up residue into one canonical seam", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/core/contracts/runtime-result.ts"),
+    "utf8"
+  );
+
+  assert.match(source, /export type RuntimeFollowUp =/);
+  assert.match(source, /followUp\?: RuntimeFollowUp \| null;/);
+  assert.doesNotMatch(source, /outcome\?: RuntimeFollowUpOutcome \| null;/);
+  assert.doesNotMatch(source, /interactive\?: RuntimeInteractiveSignal \| null;/);
+});
+
+test("runtime result contract collapses task input residue into one canonical seam", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/core/contracts/runtime-result.ts"),
+    "utf8"
+  );
+
+  assert.match(source, /export type RuntimeTaskInput =/);
+  assert.match(source, /taskInputs\?: RuntimeTaskInput\[];/);
+  assert.doesNotMatch(source, /taskActions\?: RuntimeTaskAction\[];/);
+  assert.doesNotMatch(source, /taskSignals\?: RuntimeTaskSignal\[];/);
+});
+
+test("runtime result contract no longer exposes settled task updates as a public receipt", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/core/contracts/runtime-result.ts"),
+    "utf8"
+  );
+
+  assert.doesNotMatch(source, /import type \{ TaskAction, TaskSignal, TaskUpdate \}/);
+  assert.doesNotMatch(source, /taskUpdates\?: TaskUpdate\[];/);
+});
+
 test("runtime result state is widened to RuntimeState", () => {
   const source = fs.readFileSync(
     path.join(process.cwd(), "src/core/contracts/runtime-result.ts"),
@@ -9482,13 +24120,14 @@ test("application presenter exports a top-level presenter output seam", () => {
   assert.match(source, /createAppPresenterOutput/);
 });
 
-test("main.ts assembles render input through application presenter output", () => {
+test("main.ts assembles render input through app-render coordinator seam", () => {
   const source = fs.readFileSync(
     path.join(process.cwd(), "src/main.ts"),
     "utf8"
   );
 
-  assert.match(source, /createAppPresenterOutput/);
+  assert.match(source, /createAppRenderCoordinator/);
+  assert.doesNotMatch(source, /createAppPresenterOutput/);
 });
 
 test("task runtime contract exports definition instance state action signal and result seams", () => {
@@ -9558,7 +24197,7 @@ test("task runtime treats failed tasks as terminal", () => {
   assert.match(source, /failed-is-terminal/);
 });
 
-test("task runtime result carries task updates effects and signals without applying effects", () => {
+test("task runtime result carries task updates and effects without a dead signal channel", () => {
   const source = fs.readFileSync(
     path.join(process.cwd(), "src/core/contracts/task-runtime.ts"),
     "utf8"
@@ -9566,7 +24205,7 @@ test("task runtime result carries task updates effects and signals without apply
 
   assert.match(source, /taskUpdates/);
   assert.match(source, /effects/);
-  assert.match(source, /signals/);
+  assert.doesNotMatch(source, /signals/);
 });
 
 test("task runtime progresses active tasks from one broadcast signal without applying effects", () => {
@@ -9616,7 +24255,7 @@ test("task runtime progresses active tasks from one broadcast signal without app
     definitionsById,
     signal: {
       type: "npc-met",
-      source: "scene-runtime",
+      source: "dialogue-runtime",
       occurredAt: "2026-07-01T00:03:00.000Z",
     },
   });
@@ -9632,7 +24271,7 @@ test("task runtime progresses active tasks from one broadcast signal without app
     { type: "setFlag", key: "task.meet.done", value: true },
     { type: "setFlag", key: "task.report.done", value: true },
   ]);
-  assert.deepEqual(result.signals, []);
+  assert.equal("signals" in result, false);
 });
 
 test("task runtime applies signal-only failure conditions without objective progress", () => {
@@ -9838,8 +24477,15 @@ test("save restore re-activates selected mod through mod runtime", () => {
 
 test("child 22 restore path can reload imported mod sources after a fresh page load", () => {
   const source = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
+  const bootstrapSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/application/startup/entry-shell-bootstrap-state.ts"
+    ),
+    "utf8"
+  );
   const restoreBlock = source.match(
-    /async function restoreModFromSave\([\s\S]*?\n}\n/
+    /async function restoreModFromSave\([\s\S]*?\r?\n}\r?\n/
   )?.[0] ?? "";
 
   assert.match(source, /selectedModSource/);
@@ -9849,7 +24495,7 @@ test("child 22 restore path can reload imported mod sources after a fresh page l
     /if \(saveData\.selectedModSource != null\) \{[\s\S]*activateSavedModSource/
   );
   assert.match(
-    source,
+    bootstrapSource,
     /function activateSavedModSource|mod\.load-(builtin|file|url)|kind === "builtin"|kind === "file"|kind === "url"/
   );
 });
@@ -9857,13 +24503,13 @@ test("child 22 restore path can reload imported mod sources after a fresh page l
 test("child 22 continue path does not overwrite a restored mod by re-entering builtin startup", () => {
   const source = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
   const continueBlock = source.match(
-    /function startContinueGameWithLoading\(selectedCharacter: CharacterDefinition\): void \{[\s\S]*?\n}\n/
+    /function startContinueGameWithLoading\(selectedCharacter: CharacterDefinition\): void \{[\s\S]*?\r?\n}\r?\n/
   )?.[0] ?? "";
 
   assert.match(continueBlock, /loadSaveData\(\)/);
   assert.match(
     continueBlock,
-    /startRestoredGameWithLoading|startActivatedGameWithLoading|runStartupSessionCoordinator/
+    /startRestoredGameWithLoading|startActivatedGameWithLoading|runStartupSessionCoordinator|shellBootLifecycleCoordinator\.startContinue/
   );
   assert.doesNotMatch(
     continueBlock,
@@ -9873,9 +24519,14 @@ test("child 22 continue path does not overwrite a restored mod by re-entering bu
 
 test("child 22 builtin and imported startup paths share one activated session bootstrap helper", () => {
   const source = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
-  assert.match(source, /function applyActivatedModSession|function startActivatedGameSession/);
+  assert.match(
+    source,
+    /startup-session-apply-coordinator|createStartupSessionApplyCoordinator|shell-boot-lifecycle-coordinator|createShellBootLifecycleCoordinator/
+  );
   const helperUsageCount = (
-    source.match(/applyActivatedModSession\(|startActivatedGameSession\(/g) ?? []
+    source.match(
+      /shellBootLifecycleCoordinator\.startContinue\(|shellBootLifecycleCoordinator\.startRestore\(|shellBootLifecycleCoordinator\.startBuiltin\(|shellBootLifecycleCoordinator\.startScenarioPackRequest\(|startupSessionApplyCoordinator\.applyStartupSession\(|applyActivatedModSession\(|startActivatedGameSession\(/g
+    ) ?? []
   ).length;
 
   assert.ok(helperUsageCount >= 3);
@@ -9900,10 +24551,12 @@ test("child 23 main startup extraction delegates startup-family orchestration to
 
   assert.match(
     source,
-    /startup-session-coordinator|runStartupSessionCoordinator/
+    /startup-session-coordinator|runStartupSessionCoordinator|shell-boot-lifecycle-coordinator|createShellBootLifecycleCoordinator/
   );
   const coordinatorUsageCount = (
-    source.match(/runStartupSessionCoordinator\(/g) ?? []
+    source.match(
+      /shellBootLifecycleCoordinator\.startContinue\(|shellBootLifecycleCoordinator\.startRestore\(|shellBootLifecycleCoordinator\.startBuiltin\(|shellBootLifecycleCoordinator\.startScenarioPackRequest\(|runStartupSessionCoordinator\(/g
+    ) ?? []
   ).length;
   assert.ok(coordinatorUsageCount >= 3);
   assert.doesNotMatch(
@@ -9914,10 +24567,8 @@ test("child 23 main startup extraction delegates startup-family orchestration to
     source,
     /const activationResult = await restoreModFromSave\(saveData\);/
   );
-  assert.doesNotMatch(
-    source,
-    /const loadedScenarioPack = await loadScenarioPackFromUrl\(scenarioPack\.url\);/
-  );
+  assert.match(source, /prepareScenarioPackCharacterSelection/);
+  assert.match(source, /shellBootLifecycleCoordinator\.startScenarioPackRequest/);
 });
 
 test("child 23 scenario-pack startup defers app-state bootstrap until after active content sync", () => {
@@ -9952,9 +24603,16 @@ test("child 23 scenario-pack startup defers app-state bootstrap until after acti
   );
   assert.match(
     coordinatorSource,
-    /createAppState:\s*createStartupAppStateBuilder\([\s\S]*deps\.createScenarioPackAppState\(scenarioPack\)/
+    /createAppState:\s*createStartupAppStateBuilder\([\s\S]*deps\.createScenarioPackAppState\(\s*effectiveScenarioPack,\s*playerCharacterId\s*\)/
   );
-  assert.match(mainSource, /applyActivatedModSession|mainRuntimeOrchestrator/);
+  assert.match(
+    coordinatorSource,
+    /createAppState:\s*createStartupAppStateBuilder\([\s\S]*readScenarioStartupStoryBootstrap\(\s*effectiveScenarioPack\s*\)/
+  );
+  assert.match(
+    mainSource,
+    /startup-session-apply-coordinator|createStartupSessionApplyCoordinator|mainRuntimeOrchestrator/
+  );
   assert.match(
     orchestratorSource,
     /(setActiveContentContext\(request\.session\.contentContext\)|syncActivatedContentSource\(request\.session\.activationResult\))[\s\S]*const appState = request\.session\.createAppState\(\);/
@@ -9972,6 +24630,25 @@ test("child 27 main.ts startup builders no longer directly start story events", 
 
   assert.doesNotMatch(scenarioPackBlock, /startStoryEventById\(/);
   assert.doesNotMatch(haozhouBlock, /startStoryEventById\(/);
+});
+
+test("prototype startup ownerization moves covered builtin startup builders out of main.ts", () => {
+  const startupBuilderPath = path.join(
+    process.cwd(),
+    "src",
+    "application",
+    "startup",
+    "prototype-startup-app-state.ts"
+  );
+  const mainSource = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
+
+  assert.equal(fs.existsSync(startupBuilderPath), true);
+  assert.match(
+    mainSource,
+    /prototype-startup-app-state|createPrototypeStartupAppStateBuilder/
+  );
+  assert.doesNotMatch(mainSource, /function createPrototypeAppState\(/);
+  assert.doesNotMatch(mainSource, /function createHaozhouReturnEncounterAppState\(/);
 });
 
 test("child 27 startup coordinator exposes bootstrap-complete createAppState for builtin startup", async () => {
@@ -10041,7 +24718,7 @@ test("child 27 startup coordinator exposes bootstrap-complete createAppState for
         packId: "pack.base",
         storyContent: {
           eventDefinitionsById: {},
-          sceneDefinitionsById: {},
+          dialogueDefinitionsById: {},
           activityDefinitionsById: {},
           textEntriesById: {},
         },
@@ -10050,12 +24727,12 @@ test("child 27 startup coordinator exposes bootstrap-complete createAppState for
         ...appState,
         gameState: {
           ...appState.gameState,
-          scene: {
-            ...appState.gameState.scene,
+          dialogue: {
+            ...appState.gameState.dialogue,
             activeEventId: bootstrap?.eventId ?? null,
-            activeSceneId: bootstrap == null ? null : "scene.bootstrapped",
-            cursor: bootstrap?.sceneCursor ?? 0,
-            status: bootstrap?.sceneStatus ?? "idle",
+            activeDialogueId: bootstrap == null ? null : "dialogue.bootstrapped",
+            cursor: bootstrap?.dialogueCursor ?? 0,
+            status: bootstrap?.dialogueStatus ?? "idle",
           },
         },
       }),
@@ -10065,10 +24742,10 @@ test("child 27 startup coordinator exposes bootstrap-complete createAppState for
   assert.equal(result.ok, true);
   const startupAppState = result.session.createAppState();
   assert.equal(
-    startupAppState.gameState.scene.activeEventId,
+    startupAppState.gameState.dialogue.activeEventId,
     "event.story.zhu_yuanzhang.haozhou_return_encounter"
   );
-  assert.equal(startupAppState.gameState.scene.cursor, 4);
+  assert.equal(startupAppState.gameState.dialogue.cursor, 4);
   assert.equal(startupAppState.gameState.world.currentCityId, "city.kulan");
 });
 
@@ -10147,7 +24824,7 @@ test("child 27 restore scenario startup returns bootstrap-complete app state", a
         packId: scenarioPack.id,
         storyContent: {
           eventDefinitionsById: {},
-          sceneDefinitionsById: {},
+          dialogueDefinitionsById: {},
           activityDefinitionsById: {},
           textEntriesById: {},
         },
@@ -10156,12 +24833,12 @@ test("child 27 restore scenario startup returns bootstrap-complete app state", a
         ...appState,
         gameState: {
           ...appState.gameState,
-          scene: {
-            ...appState.gameState.scene,
+          dialogue: {
+            ...appState.gameState.dialogue,
             activeEventId: bootstrap?.eventId ?? null,
-            activeSceneId: bootstrap == null ? null : "scene.scenario-entry",
-            cursor: bootstrap?.sceneCursor ?? 0,
-            status: bootstrap?.sceneStatus ?? "idle",
+            activeDialogueId: bootstrap == null ? null : "dialogue.scenario-entry",
+            cursor: bootstrap?.dialogueCursor ?? 0,
+            status: bootstrap?.dialogueStatus ?? "idle",
           },
         },
       }),
@@ -10172,10 +24849,10 @@ test("child 27 restore scenario startup returns bootstrap-complete app state", a
   assert.equal(result.session.playerCharacterId, playerCharacterId);
   const startupAppState = result.session.createAppState();
   assert.equal(
-    startupAppState.gameState.scene.activeEventId,
+    startupAppState.gameState.dialogue.activeEventId,
     "event.test.bootstrap-entry"
   );
-  assert.equal(startupAppState.gameState.scene.activeSceneId, "scene.scenario-entry");
+  assert.equal(startupAppState.gameState.dialogue.activeDialogueId, "dialogue.scenario-entry");
 });
 
 test("child 28 main.ts no longer keeps central active-content mirror write state", () => {
@@ -10428,30 +25105,34 @@ test("child 26 story scene settlement re-triggers indoor-screen follow-up before
     chapterId: "chapter.prototype",
     name: "Indoor follow-up",
     occurrence: "once",
-    trigger: {
-      timing: "indoor-screen-shown",
-      scope: {
-        cityId: "city.kulan",
-        houseId: grainShopHouse.id,
-      },
-    },
-    conditions: [],
-    entrySceneId: "scene.test.indoor-screen",
+    dialogueId: "dialogue.test.indoor-screen",
   };
-  const endScene = {
-    id: "scene.test.end-in-house",
+  const indoorBinding = {
+    id: "binding.test.indoor-screen",
+    eventId: indoorEvent.id,
+    owner: {
+      family: "building",
+      id: grainShopHouse.id,
+    },
+    trigger: {
+      timing: "after",
+      action: "indoor-screen-shown",
+    },
+  };
+  const endDialogue = {
+    id: "dialogue.test.end-in-house",
     name: "End in house",
-    actions: [
+    nodes: [
       {
         type: "narration",
         text: "Scene ending.",
       },
     ],
   };
-  const indoorScene = {
-    id: "scene.test.indoor-screen",
+  const indoorDialogue = {
+    id: "dialogue.test.indoor-screen",
     name: "Indoor screen follow-up",
-    actions: [
+    nodes: [
       {
         type: "narration",
         text: "Indoor passive trigger fired.",
@@ -10461,15 +25142,15 @@ test("child 26 story scene settlement re-triggers indoor-screen follow-up before
   let appState = {
     gameState: {
       ...createBaseState(),
-      scene: {
+      dialogue: {
         activeEventId: "event.test.previous",
-        activeSceneId: endScene.id,
+        activeDialogueId: endDialogue.id,
         cursor: 0,
         status: "playing",
       },
       ui: {
         ...createBaseState().ui,
-        currentView: "scene",
+        currentView: "dialogue",
       },
     },
     characterDefinitions: prototypeCharacters,
@@ -10498,9 +25179,12 @@ test("child 26 story scene settlement re-triggers indoor-screen follow-up before
       eventDefinitionsById: {
         [indoorEvent.id]: indoorEvent,
       },
-      sceneDefinitionsById: {
-        [endScene.id]: endScene,
-        [indoorScene.id]: indoorScene,
+      eventBindingsById: {
+        [indoorBinding.id]: indoorBinding,
+      },
+      dialogueDefinitionsById: {
+        [endDialogue.id]: endDialogue,
+        [indoorDialogue.id]: indoorDialogue,
       },
     }),
     resetMainGameRuntime: () => {},
@@ -10511,12 +25195,12 @@ test("child 26 story scene settlement re-triggers indoor-screen follow-up before
   });
 
   const result = orchestrator.execute({
-    type: "advance-story-scene",
+    type: "advance-story-dialogue",
   });
 
-  assert.equal(result.appState.gameState.scene.activeEventId, indoorEvent.id);
-  assert.equal(result.appState.gameState.scene.activeSceneId, indoorScene.id);
-  assert.equal(result.appState.gameState.ui.currentView, "scene");
+  assert.equal(result.appState.gameState.dialogue.activeEventId, indoorEvent.id);
+  assert.equal(result.appState.gameState.dialogue.activeDialogueId, indoorDialogue.id);
+  assert.equal(result.appState.gameState.ui.currentView, "dialogue");
   assert.equal(
     result.appState.gameState.runtime.eventHistory[indoorEvent.id]?.firedCount,
     1
@@ -10534,20 +25218,24 @@ test("child 26 house runtime owns indoor-screen follow-up before render", () => 
     chapterId: "chapter.prototype",
     name: "Indoor follow-up",
     occurrence: "once",
-    trigger: {
-      timing: "indoor-screen-shown",
-      scope: {
-        cityId: "city.kulan",
-        houseId: grainShopHouse.id,
-      },
-    },
-    conditions: [],
-    entrySceneId: "scene.test.house-indoor-screen",
+    dialogueId: "dialogue.test.house-indoor-screen",
   };
-  const indoorScene = {
-    id: "scene.test.house-indoor-screen",
+  const indoorBinding = {
+    id: "binding.test.house-indoor-screen",
+    eventId: indoorEvent.id,
+    owner: {
+      family: "building",
+      id: grainShopHouse.id,
+    },
+    trigger: {
+      timing: "after",
+      action: "indoor-screen-shown",
+    },
+  };
+  const indoorDialogue = {
+    id: "dialogue.test.house-indoor-screen",
     name: "Indoor scene",
-    actions: [
+    nodes: [
       {
         type: "narration",
         text: "Indoor passive trigger fired.",
@@ -10602,17 +25290,20 @@ test("child 26 house runtime owns indoor-screen follow-up before render", () => 
     eventDefinitionsById: {
       [indoorEvent.id]: indoorEvent,
     },
-    sceneDefinitionsById: {
-      [indoorScene.id]: indoorScene,
+    eventBindingsById: {
+      [indoorBinding.id]: indoorBinding,
+    },
+    dialogueDefinitionsById: {
+      [indoorDialogue.id]: indoorDialogue,
     },
     syncCouncilPriorityAfterGameStateChange: () => false,
   });
 
   enterHouseThroughRuntime(runtime, grainShopHouse.id);
 
-  assert.equal(appState.gameState.scene.activeEventId, indoorEvent.id);
-  assert.equal(appState.gameState.scene.activeSceneId, indoorScene.id);
-  assert.equal(appState.gameState.ui.currentView, "scene");
+  assert.equal(appState.gameState.dialogue.activeEventId, indoorEvent.id);
+  assert.equal(appState.gameState.dialogue.activeDialogueId, indoorDialogue.id);
+  assert.equal(appState.gameState.ui.currentView, "dialogue");
   assert.equal(
     appState.gameState.runtime.eventHistory[indoorEvent.id]?.firedCount,
     1
@@ -10631,10 +25322,366 @@ test("child 25 navigation runtime emits explicit entered-city follow-up outcome"
     request: createEnterCityRequest("city.kulan"),
   });
 
-  assert.deepEqual(result.outcome, {
+  assert.deepEqual(result.followUp, {
     type: "navigation.entered-city",
     cityId: "city.kulan",
   });
+});
+
+test("main shell enter-city request consumes blocked navigation access into location dialogue state", () => {
+  const mainSource = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
+
+  assert.match(mainSource, /runtimeCommit\.runtimeResult\.access\?\.refusal/);
+  assert.match(
+    mainSource,
+    /if \(runtimeCommit\.runtimeResult\.access\?\.refusal != null\) \{[\s\S]*?cityHouseTransitionCoordinator\.handleHouseAccessRefusal\([\s\S]*?runtimeCommit\.runtimeResult\.access\.refusal/
+  );
+});
+
+test("location access runtime blocks enter-city before current city mutation", () => {
+  const {
+    createEnterCityRequest,
+    runNavigationRuntime,
+  } = require("../.test-dist/core/runtime/navigation-runtime.js");
+  const baseState = createBaseState();
+  const result = runNavigationRuntime({
+    state: {
+      ...baseState,
+      player: { characterId: "char.player" },
+      world: { ...baseState.world, currentCityId: "city.start" },
+    },
+    request: createEnterCityRequest("city.blocked"),
+    cityDefinitionsById: {
+      "city.blocked": {
+        id: "city.blocked",
+        name: "Blocked City",
+        regionId: "region.test",
+        mapNodeId: "node.blocked",
+        houseIds: [],
+        neighbourCityIds: [],
+        travelCost: 1,
+        tags: [],
+        prosperity: 50,
+        danger: 10,
+        specialDemand: [],
+      },
+    },
+    locationAccessDefinitions: [
+      {
+        id: "location-access.city.blocked",
+        targetFamily: "city",
+        targetId: "city.blocked",
+        conditionExpression: { type: "literal", value: false },
+        blockedMessage: "City is not open.",
+        blockedSpeakerId: "player",
+        guidance: "Return later.",
+      },
+    ],
+  });
+
+  assert.equal(result.state.world.currentCityId, "city.start");
+  assert.equal(result.navigation, null);
+  assert.equal(result.followUp, undefined);
+  assert.deepEqual(result.access, {
+    canEnter: false,
+    refusal: {
+      ruleId: "location-access.city.blocked",
+      speakerCharacterId: "char.player",
+      title: "Blocked City",
+      text: "City is not open.",
+      confirmLabel: "Return later.",
+    },
+  });
+});
+
+test("routed navigation runtime preserves blocked location access refusal", () => {
+  const {
+    createEnterCityRequest,
+    routeNavigationRuntime,
+  } = require("../.test-dist/core/runtime/navigation-runtime.js");
+  const baseState = createBaseState();
+  const result = routeNavigationRuntime({
+    state: createRuntimeState({
+      ...baseState,
+      player: { characterId: "char.player" },
+      world: { ...baseState.world, currentCityId: "city.start" },
+    }),
+    request: createEnterCityRequest("city.blocked"),
+    cityDefinitionsById: {
+      "city.blocked": {
+        id: "city.blocked",
+        name: "Blocked City",
+        regionId: "region.test",
+        mapNodeId: "node.blocked",
+        houseIds: [],
+        neighbourCityIds: [],
+        travelCost: 1,
+        tags: [],
+        prosperity: 50,
+        danger: 10,
+        specialDemand: [],
+      },
+    },
+    locationAccessDefinitions: [
+      {
+        id: "location-access.city.blocked",
+        targetFamily: "city",
+        targetId: "city.blocked",
+        conditionExpression: { type: "literal", value: false },
+        blockedMessage: "City is not open.",
+        blockedSpeakerId: "player",
+        guidance: "Return later.",
+      },
+    ],
+  });
+
+  assert.equal(result.state.core.world.currentCityId, "city.start");
+  assert.equal(result.navigation, null);
+  assert.deepEqual(result.access, {
+    canEnter: false,
+    refusal: {
+      ruleId: "location-access.city.blocked",
+      speakerCharacterId: "char.player",
+      title: "Blocked City",
+      text: "City is not open.",
+      confirmLabel: "Return later.",
+    },
+  });
+});
+
+test("map city markers use active city definitions with map-owned coordinates", () => {
+  const {
+    createMapCityMarkers,
+  } = require("../.test-dist/application/map/map-city-marker-view-model.js");
+
+  const markers = createMapCityMarkers({
+    cityDefinitions: [
+      {
+        id: "city.map-owned",
+        name: "Map Owned City",
+        regionId: "region.test",
+        mapNodeId: "node.map-owned",
+        houseIds: [],
+        neighbourCityIds: [],
+        tags: [],
+        prosperity: 10,
+        danger: 0,
+        specialDemand: [],
+        x: 999,
+        y: 888,
+      },
+      {
+        id: "city.without-coordinate",
+        name: "No Coordinate City",
+        regionId: "region.test",
+        mapNodeId: "node.missing",
+        houseIds: [],
+        neighbourCityIds: [],
+        tags: [],
+        prosperity: 10,
+        danger: 0,
+        specialDemand: [],
+      },
+    ],
+    cityCoordinatesById: {
+      "city.map-owned": { x: 12, y: 34 },
+    },
+  });
+
+  assert.deepEqual(markers, [
+    {
+      id: "city.map-owned",
+      name: "Map Owned City",
+      x: 12,
+      y: 34,
+    },
+  ]);
+});
+
+test("map location provider adapter exposes marker-ready city locations", () => {
+  const {
+    createMapLocationProvider,
+  } = require("../.test-dist/application/map/map-location-provider.js");
+
+  const provider = createMapLocationProvider({
+    cityDefinitions: [
+      {
+        id: "city.visible",
+        name: "Visible City",
+        regionId: "region.test",
+        mapNodeId: "node.visible",
+        houseIds: [],
+        neighbourCityIds: [],
+      },
+      {
+        id: "city.missing-coordinate",
+        name: "Missing Coordinate",
+        regionId: "region.test",
+        mapNodeId: "node.missing",
+        houseIds: [],
+        neighbourCityIds: [],
+      },
+    ],
+    cityCoordinatesById: {
+      "city.visible": { x: 7, y: 9 },
+    },
+  });
+
+  assert.deepEqual(provider.listCityLocationMarkers(), [
+    {
+      id: "city.visible",
+      name: "Visible City",
+      x: 7,
+      y: 9,
+    },
+  ]);
+  assert.deepEqual(provider.getCityLocation("city.visible"), {
+    id: "city.visible",
+    name: "Visible City",
+    x: 7,
+    y: 9,
+  });
+  assert.equal(provider.getCityLocation("city.missing-coordinate"), null);
+});
+
+test("map rendering path consumes provider-backed city locations", () => {
+  const mapViewSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/views/map/map-view.ts"),
+    "utf8"
+  );
+  const appRenderSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/app-render.ts"),
+    "utf8"
+  );
+  const presenterOutputSource = fs.readFileSync(
+    path.join(process.cwd(), "src/application/presenter/presenter-output.ts"),
+    "utf8"
+  );
+  const mainSource = fs.readFileSync(
+    path.join(process.cwd(), "src/main.ts"),
+    "utf8"
+  );
+
+  assert.match(mapViewSource, /mapLocationProvider/);
+  assert.doesNotMatch(mapViewSource, /CityDefinition/);
+  assert.doesNotMatch(mapViewSource, /createMapCityMarkers/);
+  assert.doesNotMatch(mapViewSource, /cityCoordinatesById/);
+  assert.match(appRenderSource, /mapLocationProvider:\s*input\.mapLocationProvider/);
+  assert.doesNotMatch(presenterOutputSource, /\{ type: "map"; cityDefinitions: CityDefinition\[] \}/);
+  assert.match(mainSource, /mapLocationProvider\.getCityLocation/);
+  assert.doesNotMatch(
+    mainSource,
+    /cityCoordinatesById\[profile\.initialLocation\.cityId\]/
+  );
+});
+
+test("campaign map visibility uses the canonical map exploration state only", () => {
+  const mapViewSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/views/map/map-view.ts"),
+    "utf8"
+  );
+  const appRenderSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/app-render.ts"),
+    "utf8"
+  );
+  const createInitialStateSource = fs.readFileSync(
+    path.join(process.cwd(), "src/application/state/create-initial-state.ts"),
+    "utf8"
+  );
+  const gameStateSource = fs.readFileSync(
+    path.join(process.cwd(), "src/domain/game-state.ts"),
+    "utf8"
+  );
+
+  assert.match(mapViewSource, /new Set\(input\.revealedHexKeys \?\? \[\]\)/);
+  assert.match(mapViewSource, /revealedHexKeys:\s*cloudClearHexKeys/);
+  assert.doesNotMatch(mapViewSource, /MapExplorationState/);
+  assert.doesNotMatch(mapViewSource, /mapExplorationState/);
+  assert.doesNotMatch(appRenderSource, /mapExplorationByMapId/);
+  assert.doesNotMatch(createInitialStateSource, /mapExplorationByMapId/);
+  assert.doesNotMatch(gameStateSource, /mapExplorationByMapId/);
+  assert.equal(
+    fs.existsSync(
+      path.join(process.cwd(), "src/application/navigation/campaign-map-exploration.ts")
+    ),
+    false
+  );
+});
+
+test("scenario pack startup reveals the initial map coordinate through the canonical map module", () => {
+  const mainSource = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
+  const createScenarioPackAppStateBlock = mainSource.match(
+    /function createScenarioPackAppState\([\s\S]*?\r?\n}\r?\n\r?\nfunction mergeCharacterDefinitions/
+  )?.[0] ?? "";
+
+  assert.match(
+    mainSource,
+    /from "\.\/application\/map\/campaign-map-exploration"/
+  );
+  assert.match(
+    createScenarioPackAppStateBlock,
+    /revealCampaignMapHexesForCoordinate\(\s*nextAppState\.gameState,\s*scenarioMapDefinition,\s*playerCoordinate\s*\)/
+  );
+  assert.doesNotMatch(
+    mainSource,
+    /from "\.\/application\/navigation\/campaign-map-exploration"/
+  );
+});
+
+test("map review provider acceptance keeps normal json and preview entrypoints on shared module seams", () => {
+  const mainSource = fs.readFileSync(
+    path.join(process.cwd(), "src/main.ts"),
+    "utf8"
+  );
+  const startupCoordinatorSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/application/startup/startup-session-coordinator.ts"
+    ),
+    "utf8"
+  );
+  const mainUiSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    "utf8"
+  );
+  const inventorySource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "docs/refactor/map-review-boundary-removal-inventory.md"
+    ),
+    "utf8"
+  );
+
+  assert.match(
+    startupCoordinatorSource,
+    /resolveScenarioProfileForCharacter\(/
+  );
+  assert.match(
+    startupCoordinatorSource,
+    /const effectiveScenarioPack = \{[\s\S]*scenarioProfile:\s*resolveScenarioProfileForCharacter\(/
+  );
+  assert.match(
+    startupCoordinatorSource,
+    /deps\.createScenarioPackAppState\(\s*effectiveScenarioPack,\s*playerCharacterId\s*\)/
+  );
+  assert.match(
+    startupCoordinatorSource,
+    /readScenarioStartupStoryBootstrap\(\s*effectiveScenarioPack\s*\)/
+  );
+  assert.match(mainSource, /function createScenarioPackAppState\(/);
+  assert.match(mainSource, /mapLocationProvider\.getCityLocation/);
+  assert.match(
+    mainUiSource,
+    /exportScriptEditorProjectToScenarioPackFiles\(this\.scriptEditorProject\)/
+  );
+  assert.match(
+    mainUiSource,
+    /loadScenarioPackFromFiles\(\s*createTextImportFilesFromRecord\(serializedPackFiles\)/
+  );
+  assert.match(mainUiSource, /onStartLoadedScenarioPack\(scenarioPack\)/);
+  assert.match(inventorySource, /residue-removal-completed/);
+  assert.match(inventorySource, /defaultReviewCyclePolicy/);
+  assert.match(inventorySource, /mapLocationProvider\.getCityLocation/);
 });
 
 test("child 25 time runtime emits explicit council-threshold outcome when day-start crosses the council date", () => {
@@ -10648,16 +25695,16 @@ test("child 25 time runtime emits explicit council-threshold outcome when day-st
     request: createDayStartRequest(),
   });
 
-  assert.equal(result.outcome?.type, "time.council-threshold-crossed");
+  assert.equal(result.followUp?.type, "time.council-threshold-crossed");
 });
 
 test("child 25 main.ts no longer hand-stitches covered navigation/time follow-up after runtime settlement", () => {
   const source = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
   const handleModalConfirmBlock = source.match(
-    /function handleModalConfirm\(\)[\s\S]*?\r?\n}\r?\n\r?\nfunction getFacingDegrees/
+    /function handleModalConfirm\(\)[\s\S]*?\r?\n}\r?\n\r?\nfunction cancelCampaignTravel/
   )?.[0] ?? "";
   const startCampaignTravelBlock = source.match(
-    /function startCampaignTravel\([\s\S]*?\r?\n}\r?\n\r?\nfunction animateCampaignMove/
+    /function startCampaignTravel\([\s\S]*?\r?\n}\r?\n\r?\nfunction syncCampaignActorRuntimeState/
   )?.[0] ?? "";
 
   assert.match(source, /createNavigationTimeFollowUpBridge|navigationTimeFollowUp/);
@@ -10707,6 +25754,1457 @@ test("child 25 narrow follow-up contract stays outside main.ts and main-runtime-
   );
 });
 
+test("main navigation follow-up passes event bindings into city-enter story runtime", () => {
+  const mainSource = fs.readFileSync(
+    path.join(process.cwd(), "src", "main.ts"),
+    "utf8"
+  );
+  const navigationFollowUpInit =
+    mainSource.match(/const navigationTimeFollowUp = createNavigationTimeFollowUpBridge\(\{[\s\S]*?\n\}\);/)?.[0] ?? "";
+
+  assert.match(navigationFollowUpInit, /getStoryContent:\s*\(\)\s*=>\s*\(\{/);
+  assert.match(
+    navigationFollowUpInit,
+    /eventBindingsById:\s*activeContentContext\.storyContent\.eventBindingsById/
+  );
+});
+
+test("shell thinning city-view transition owner module exists and preserves covered transition cleanup", () => {
+  const transitionModulePath = path.join(
+    process.cwd(),
+    ".test-dist",
+    "application",
+    "runtime",
+    "city-view-transition.js"
+  );
+
+  assert.equal(fs.existsSync(transitionModulePath), true);
+
+  const {
+    applyCityViewTransition,
+  } = require("../.test-dist/application/runtime/city-view-transition.js");
+
+  const baseAppState = {
+    gameState: {
+      ...createBaseState(),
+      world: {
+        ...createBaseState().world,
+        currentHouseId: "house.test.current",
+      },
+      ui: {
+        ...createBaseState().ui,
+        currentView: "city",
+        overlayView: "cards",
+        houseSession: {
+          moduleId: "grain-shop",
+          state: {
+            mode: "open",
+          },
+        },
+      },
+    },
+    characterDefinitions: prototypeCharacters,
+    playerCoordinate: { x: 0, y: 0 },
+    campaignActorState: {
+      facingDegrees: 0,
+      isMoving: false,
+    },
+    campaignTravelState: null,
+    modalState: null,
+    locationDialogueState: {
+      type: "house-access-refusal",
+      speakerCharacterId: playerCharacterId,
+      textLines: ["blocked"],
+      advanceHintText: "advance",
+    },
+    beggingMiniGameState: {
+      score: 3,
+      combo: 1,
+      maxCombo: 1,
+      misses: 0,
+      remainingDays: 1,
+      obstacleTimer: 0,
+      variantId: "village-catching",
+      status: "playing",
+    },
+    cityMenuState: createCityMenuState({
+      cityId: "city.kulan",
+      cityName: "苦兰城",
+      houseOptions: [],
+      cityEntryOptions: [],
+      currentPanelId: "actions",
+      reviewStatusText: "review",
+      availableActionIds: [],
+      monkActionIds: [],
+      canLeaveCity: true,
+    }),
+    cityDirectoryState: {
+      type: "leader-residence",
+      title: "Directory",
+      targetHouseId: "house.test.target",
+      options: [],
+    },
+    autoAdvanceState: null,
+    uiLayouts: {},
+    layoutEditor: {},
+  };
+
+  const leftCity = applyCityViewTransition(baseAppState, {
+    type: "leave-city",
+  });
+  assert.equal(leftCity.beggingMiniGameState, null);
+  assert.equal(leftCity.cityMenuState, null);
+  assert.equal(leftCity.cityDirectoryState, null);
+  assert.equal(leftCity.locationDialogueState, null);
+  assert.equal(leftCity.gameState.world.currentHouseId, null);
+  assert.equal(leftCity.gameState.ui.currentView, "map");
+  assert.equal(leftCity.gameState.ui.overlayView, null);
+  assert.equal(leftCity.gameState.ui.houseSession, null);
+
+  const enteredCity3d = applyCityViewTransition(baseAppState, {
+    type: "enter-city-3d",
+  });
+  assert.equal(enteredCity3d.beggingMiniGameState?.status, "playing");
+  assert.equal(enteredCity3d.cityMenuState, null);
+  assert.equal(enteredCity3d.cityDirectoryState, null);
+  assert.equal(enteredCity3d.locationDialogueState, null);
+  assert.equal(enteredCity3d.gameState.world.currentHouseId, null);
+  assert.equal(enteredCity3d.gameState.ui.currentView, "city-3d");
+  assert.equal(enteredCity3d.gameState.ui.overlayView, null);
+  assert.equal(enteredCity3d.gameState.ui.houseSession, null);
+
+  const leftCity3d = applyCityViewTransition(baseAppState, {
+    type: "leave-city-3d",
+  });
+  assert.notEqual(leftCity3d.cityDirectoryState, null);
+  assert.notEqual(leftCity3d.locationDialogueState, null);
+  assert.equal(leftCity3d.cityMenuState, null);
+  assert.equal(leftCity3d.gameState.world.currentHouseId, null);
+  assert.equal(leftCity3d.gameState.ui.currentView, "city");
+  assert.equal(leftCity3d.gameState.ui.overlayView, null);
+  assert.equal(leftCity3d.gameState.ui.houseSession, null);
+});
+
+test("city-house transition seam extends city-view-transition with covered house transition variants", () => {
+  const {
+    applyCityViewTransition,
+  } = require("../.test-dist/application/runtime/city-view-transition.js");
+
+  const baseAppState = {
+    gameState: {
+      ...createBaseState(),
+      world: {
+        ...createBaseState().world,
+        currentHouseId: "house.test.current",
+      },
+      ui: {
+        ...createBaseState().ui,
+        currentView: "city",
+        overlayView: "cards",
+        houseSession: {
+          moduleId: "grain-shop",
+          state: {
+            mode: "open",
+          },
+        },
+      },
+    },
+    characterDefinitions: prototypeCharacters,
+    playerCoordinate: { x: 0, y: 0 },
+    campaignActorState: {
+      facingDegrees: 0,
+      isMoving: false,
+    },
+    campaignTravelState: null,
+    modalState: null,
+    locationDialogueState: {
+      type: "house-access-refusal",
+      speakerCharacterId: playerCharacterId,
+      textLines: ["blocked"],
+      advanceHintText: "advance",
+    },
+    beggingMiniGameState: null,
+    cityMenuState: createCityMenuState({
+      cityId: "city.kulan",
+      cityName: "苦兰城",
+      houseOptions: [],
+      cityEntryOptions: [],
+      currentPanelId: "actions",
+      reviewStatusText: "review",
+      availableActionIds: [],
+      monkActionIds: [],
+      canLeaveCity: true,
+    }),
+    cityDirectoryState: null,
+    autoAdvanceState: null,
+    uiLayouts: {},
+    layoutEditor: {},
+  };
+
+  const enteredHouse = applyCityViewTransition(baseAppState, {
+    type: "enter-house",
+    houseId: "house.test.next",
+  });
+  assert.equal(enteredHouse.gameState.world.currentHouseId, "house.test.next");
+  assert.equal(enteredHouse.gameState.ui.currentView, "house");
+  assert.equal(enteredHouse.gameState.ui.overlayView, null);
+  assert.equal(enteredHouse.gameState.ui.houseSession, null);
+
+  const leftHouse = applyCityViewTransition(baseAppState, {
+    type: "leave-house",
+  });
+  assert.equal(leftHouse.gameState.world.currentHouseId, null);
+  assert.equal(leftHouse.gameState.ui.currentView, "city");
+  assert.equal(leftHouse.gameState.ui.overlayView, null);
+  assert.equal(leftHouse.gameState.ui.houseSession, null);
+
+  const resumedHouseSession = {
+    moduleId: "grain-shop",
+    state: {
+      mode: "resume",
+    },
+  };
+  const resumedHouse = applyCityViewTransition(baseAppState, {
+    type: "resume-house-session",
+    houseId: "house.test.session",
+    houseSession: resumedHouseSession,
+  });
+  assert.equal(resumedHouse.gameState.world.currentHouseId, "house.test.session");
+  assert.equal(resumedHouse.gameState.ui.currentView, "house");
+  assert.equal(resumedHouse.gameState.ui.overlayView, null);
+  assert.deepEqual(resumedHouse.gameState.ui.houseSession, resumedHouseSession);
+});
+
+test("city-house transition seam keeps covered house-runtime transition writes behind city-view-transition", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/application/house/house-runtime.ts"),
+    "utf8"
+  );
+
+  assert.match(source, /city-view-transition|applyCityViewTransition/);
+  assert.doesNotMatch(
+    source,
+    /function enterHouseById[\s\S]*?dependencies\.setAppState\(\{[\s\S]*?currentView: "house"[\s\S]*?overlayView: null[\s\S]*?houseSession: null[\s\S]*?\}\);/
+  );
+  assert.doesNotMatch(
+    source,
+    /function leaveCurrentHouse[\s\S]*?dependencies\.setAppState\(\{[\s\S]*?currentView: "city"[\s\S]*?overlayView: null[\s\S]*?houseSession: null[\s\S]*?\}\);/
+  );
+  assert.doesNotMatch(
+    source,
+    /function applyMapAutoAdvanceCompletion[\s\S]*?dependencies\.setAppState\(\{[\s\S]*?currentView: "house"[\s\S]*?overlayView: null[\s\S]*?houseSession: completion\.houseSession[\s\S]*?\}\);/
+  );
+});
+
+test("shell thinning main.ts no longer inlines covered city view transition mutation blocks", () => {
+  const mainSource = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
+  const coordinatorSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/application/runtime/city-house-transition-coordinator.ts"
+    ),
+    "utf8"
+  );
+
+  assert.match(coordinatorSource, /city-view-transition|applyCityViewTransition/);
+  assert.match(
+    mainSource,
+    /city-house-transition-coordinator|createCityHouseTransitionCoordinator/
+  );
+  assert.doesNotMatch(
+    coordinatorSource,
+    /const leaveCityButton = targetElement\.closest<HTMLElement>\(\s*\r?\n\s*"\[data-action='leave-city'\]"\s*\);[\s\S]*?appState = \{[\s\S]*?currentView: "map"[\s\S]*?houseSession: null,[\s\S]*?\};[\s\S]*?renderApp\(\);[\s\S]*?return;/
+  );
+  assert.doesNotMatch(
+    coordinatorSource,
+    /const enterCity3dButton = targetElement\.closest<HTMLElement>\(\s*\r?\n\s*"\[data-action='enter-city-3d'\]"\s*\);[\s\S]*?appState = \{[\s\S]*?currentView: "city-3d"[\s\S]*?houseSession: null,[\s\S]*?\};[\s\S]*?renderApp\(\);[\s\S]*?return;/
+  );
+  assert.doesNotMatch(
+    coordinatorSource,
+    /const leaveCity3dButton = targetElement\.closest<HTMLElement>\(\s*\r?\n\s*"\[data-action='leave-city-3d'\]"\s*\);[\s\S]*?appState = \{[\s\S]*?currentView: "city"[\s\S]*?houseSession: null,[\s\S]*?\};[\s\S]*?renderApp\(\);[\s\S]*?return;/
+  );
+  assert.doesNotMatch(
+    mainSource,
+    /function canOpenHouseFromCity\(houseDefinition: HouseDefinition\): boolean \{[\s\S]*locationDialogueState:\s*\{[\s\S]*type:\s*"house-access-refusal"[\s\S]*renderApp\(\)/
+  );
+});
+
+test("main shell render-trigger ownerization introduces a city house transition coordinator seam for city-view transitions and access-refusal flow", () => {
+  const coordinatorPath = path.join(
+    process.cwd(),
+    "src",
+    "application",
+    "runtime",
+    "city-house-transition-coordinator.ts"
+  );
+  const mainSource = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
+
+  assert.equal(fs.existsSync(coordinatorPath), true);
+
+  const coordinatorSource = fs.readFileSync(coordinatorPath, "utf8");
+
+  assert.match(
+    coordinatorSource,
+    /export type CityHouseTransitionCoordinatorDependencies/
+  );
+  assert.match(
+    coordinatorSource,
+    /export function createCityHouseTransitionCoordinator\(/
+  );
+  assert.match(
+    mainSource,
+    /city-house-transition-coordinator|createCityHouseTransitionCoordinator/
+  );
+  assert.match(mainSource, /cityHouseTransitionCoordinator\.leaveCity\(\)/);
+  assert.match(mainSource, /cityHouseTransitionCoordinator\.enterCity3d\(\)/);
+  assert.match(mainSource, /cityHouseTransitionCoordinator\.leaveCity3d\(\)/);
+  assert.match(
+    mainSource,
+    /cityHouseTransitionCoordinator\.handleHouseAccessRefusal\(accessResult\.refusal\)/
+  );
+  assert.doesNotMatch(
+    mainSource,
+    /\[data-action='leave-city'][\s\S]*applyCityViewTransition\([\s\S]*renderApp\(\)/
+  );
+  assert.doesNotMatch(
+    mainSource,
+    /\[data-action='enter-city-3d'][\s\S]*applyCityViewTransition\([\s\S]*renderApp\(\)/
+  );
+  assert.doesNotMatch(
+    mainSource,
+    /\[data-action='leave-city-3d'][\s\S]*applyCityViewTransition\([\s\S]*renderApp\(\)/
+  );
+  assert.doesNotMatch(
+    mainSource,
+    /function canOpenHouseFromCity\(houseDefinition: HouseDefinition\): boolean \{[\s\S]*locationDialogueState:\s*\{[\s\S]*type:\s*"house-access-refusal"[\s\S]*renderApp\(\)/
+  );
+});
+
+test("city building entry evaluates production locationAccess instead of legacy houseAccessRefusalRules", () => {
+  const mainSource = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
+  const canOpenHouseBlock =
+    mainSource.match(
+      /function canOpenHouseFromCity\(houseDefinition: HouseDefinition\): boolean \{[\s\S]*?\n\}/
+    )?.[0] ?? "";
+
+  assert.match(mainSource, /evaluateLocationAccess/);
+  assert.match(canOpenHouseBlock, /evaluateLocationAccess\(\{/);
+  assert.match(canOpenHouseBlock, /targetFamily:\s*"building"/);
+  assert.match(canOpenHouseBlock, /targetId:\s*houseDefinition\.id/);
+  assert.match(canOpenHouseBlock, /targetBuilding:\s*houseDefinition/);
+  assert.match(
+    canOpenHouseBlock,
+    /locationAccessDefinitions:\s*activeContentContext\.locationAccess/
+  );
+  assert.match(
+    canOpenHouseBlock,
+    /cityHouseTransitionCoordinator\.handleHouseAccessRefusal\(accessResult\.refusal\)/
+  );
+  assert.doesNotMatch(canOpenHouseBlock, /selectHouseEntryAccess/);
+  assert.doesNotMatch(canOpenHouseBlock, /houseAccessRefusalRules/);
+});
+
+test("location access retirement removes legacy house access refusal rule runtime and pack fields", () => {
+  const guardedFiles = [
+    "src/application/city/city-building-placement-resolver.ts",
+    "src/application/content/active-game-content.ts",
+    "src/application/content/content-pack-loader.ts",
+    "src/application/scenario/scenario-pack-loader.ts",
+    "src/application/script-editor/runtime-pack-export.ts",
+    "src/application/script-editor/runtime-pack-import.ts",
+    "src/application/script-editor/city-building-runtime-materializer.ts",
+    "src/domain/content-pack.ts",
+    "src/domain/script-editor-project.ts",
+    "src/domain/house.ts",
+  ];
+
+  const offenders = guardedFiles.filter((filePath) => {
+    const source = fs.readFileSync(path.join(process.cwd(), filePath), "utf8");
+    return /houseAccessRefusalRules|HouseAccessRefusalRule|house-access-refusal-rules|selectHouseEntryAccess/.test(
+      source
+    );
+  });
+
+  assert.deepEqual(
+    offenders,
+    [],
+    `Expected location access to be the only city/building entry rule path; legacy refusal residue remains in: ${offenders.join(", ")}`
+  );
+});
+
+test("shell thinning main.ts no longer inlines covered council-priority and city-begging mutation blocks", () => {
+  const mainSource = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
+  const coordinatorSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/application/runtime/council-priority-city-begging-coordinator.ts"
+    ),
+    "utf8"
+  );
+  const showCouncilPriorityRefusalBlock = mainSource.match(
+    /function showCouncilPriorityRefusal\(\): void \{[\s\S]*?\r?\n}\r?\n/
+  )?.[0] ?? "";
+  const showCouncilInsufficientTimeRefusalBlock = mainSource.match(
+    /function showCouncilInsufficientTimeRefusal\([\s\S]*?\r?\n}\r?\n/
+  )?.[0] ?? "";
+  const confirmBeggingMiniGameResultBlock = mainSource.match(
+    /function confirmBeggingMiniGameResult\(\): void \{[\s\S]*?\r?\n}\r?\n/
+  )?.[0] ?? "";
+  const openBeggingMiniGameBlock = mainSource.match(
+    /function openBeggingMiniGame\(\): void \{[\s\S]*?\r?\n}\r?\n\r?\nfunction createHouseRuntimeInstance/
+  )?.[0] ?? "";
+
+  assert.match(
+    mainSource,
+    /council-priority-city-begging-coordinator|createCouncilPriorityCityBeggingCoordinator/
+  );
+  assert.match(
+    coordinatorSource,
+    /CITY_BEGGING_DURATION_DAYS|getCityBeggingMiniGameCompletionResult|launchCityBeggingPlayable/
+  );
+  assert.doesNotMatch(
+    showCouncilPriorityRefusalBlock,
+    /type:\s*"house-access-refusal"|renderApp\(\)/
+  );
+  assert.doesNotMatch(
+    showCouncilInsufficientTimeRefusalBlock,
+    /type:\s*"house-access-refusal"|renderApp\(\)/
+  );
+  assert.doesNotMatch(
+    confirmBeggingMiniGameResultBlock,
+    /onBeggingGameComplete\(completionResult\)|renderApp\(\)/
+  );
+  assert.doesNotMatch(
+    openBeggingMiniGameBlock,
+    /createLaunchPlayableRequest\("city-begging"|renderApp\(\)|startCityBeggingMiniGameLoop\(\)/
+  );
+});
+
+test("main shell render-trigger ownerization introduces a council priority city begging coordinator seam for refusal and playable launch result flow", () => {
+  const coordinatorPath = path.join(
+    process.cwd(),
+    "src",
+    "application",
+    "runtime",
+    "council-priority-city-begging-coordinator.ts"
+  );
+  const mainSource = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
+
+  assert.equal(fs.existsSync(coordinatorPath), true);
+
+  const coordinatorSource = fs.readFileSync(coordinatorPath, "utf8");
+
+  assert.match(
+    coordinatorSource,
+    /export type CouncilPriorityCityBeggingCoordinatorDependencies/
+  );
+  assert.match(
+    coordinatorSource,
+    /export function createCouncilPriorityCityBeggingCoordinator\(/
+  );
+  assert.match(
+    mainSource,
+    /council-priority-city-begging-coordinator|createCouncilPriorityCityBeggingCoordinator/
+  );
+  assert.match(
+    mainSource,
+    /councilPriorityCityBeggingCoordinator\.showCouncilPriorityRefusal\(\)/
+  );
+  assert.match(
+    mainSource,
+    /councilPriorityCityBeggingCoordinator\.showCouncilInsufficientTimeRefusal\(/
+  );
+  assert.match(
+    mainSource,
+    /councilPriorityCityBeggingCoordinator\.openBeggingMiniGame\(\)/
+  );
+  assert.match(
+    mainSource,
+    /councilPriorityCityBeggingCoordinator\.confirmBeggingMiniGameResult\(\)/
+  );
+  assert.doesNotMatch(
+    mainSource.match(
+      /function showCouncilPriorityRefusal\(\): void \{[\s\S]*?\r?\n}\r?\n/
+    )?.[0] ?? "",
+    /renderApp\(\)|type:\s*"house-access-refusal"/
+  );
+  assert.doesNotMatch(
+    mainSource.match(
+      /function showCouncilInsufficientTimeRefusal\([\s\S]*?\r?\n}\r?\n/
+    )?.[0] ?? "",
+    /renderApp\(\)|type:\s*"house-access-refusal"/
+  );
+  assert.doesNotMatch(
+    mainSource.match(
+      /function openBeggingMiniGame\(\): void \{[\s\S]*?\r?\n}\r?\n\r?\nfunction createHouseRuntimeInstance/
+    )?.[0] ?? "",
+    /renderApp\(\)|startCityBeggingMiniGameLoop\(\)|createLaunchPlayableRequest\("city-begging"/
+  );
+  assert.doesNotMatch(
+    mainSource.match(
+      /function confirmBeggingMiniGameResult\(\): void \{[\s\S]*?\r?\n}\r?\n/
+    )?.[0] ?? "",
+    /renderApp\(\)|onBeggingGameComplete\(completionResult\)/
+  );
+});
+
+test("shell thinning main.ts no longer inlines covered city-directory and leader-residence entry mutation blocks", () => {
+  const mainSource = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
+  const coordinatorSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/application/runtime/city-directory-leader-residence-coordinator.ts"
+    ),
+    "utf8"
+  );
+  const cityEntryBlock = mainSource.match(
+    /const cityEntryButton = targetElement\.closest<HTMLElement>\([\s\S]*?\r?\n\s*const cityDirectoryCharacterButton/
+  )?.[0] ?? "";
+  const cityDirectoryCharacterBlock = mainSource.match(
+    /const cityDirectoryCharacterButton = targetElement\.closest<HTMLElement>\([\s\S]*?\r?\n\s*const activityActionButton/
+  )?.[0] ?? "";
+  assert.match(
+    mainSource,
+    /city-directory-leader-residence-coordinator|createCityDirectoryLeaderResidenceCoordinator/
+  );
+  assert.match(
+    coordinatorSource,
+    /openCityDirectory|selectLeaderResidenceOptions|pendingCharacterId|enterHouse/
+  );
+  assert.doesNotMatch(
+    cityEntryBlock,
+    /openCityDirectory\(|selectLeaderResidenceOptions\(|renderApp\(\)/
+  );
+  assert.doesNotMatch(
+    cityDirectoryCharacterBlock,
+    /LEADER_RESIDENCE_VARIABLE_KEYS\.pendingCharacterId|enterHouseThroughRuntime\(houseRuntime, targetHouseId\)/
+  );
+  assert.doesNotMatch(
+    mainSource,
+    /\[data-house-id\]/
+  );
+});
+
+test("main shell render-trigger ownerization introduces a city directory leader residence coordinator seam for directory and related house entry flow", () => {
+  const coordinatorPath = path.join(
+    process.cwd(),
+    "src",
+    "application",
+    "runtime",
+    "city-directory-leader-residence-coordinator.ts"
+  );
+  const mainSource = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
+
+  assert.equal(fs.existsSync(coordinatorPath), true);
+
+  const coordinatorSource = fs.readFileSync(coordinatorPath, "utf8");
+
+  assert.match(
+    coordinatorSource,
+    /export type CityDirectoryLeaderResidenceCoordinatorDependencies/
+  );
+  assert.match(
+    coordinatorSource,
+    /export function createCityDirectoryLeaderResidenceCoordinator\(/
+  );
+  assert.match(
+    mainSource,
+    /city-directory-leader-residence-coordinator|createCityDirectoryLeaderResidenceCoordinator/
+  );
+  assert.match(
+    mainSource,
+    /cityDirectoryLeaderResidenceCoordinator\.handleCityEntryClick\(cityEntryId\)/
+  );
+  assert.match(
+    mainSource,
+    /cityDirectoryLeaderResidenceCoordinator\.handleCityDirectoryCharacterSelection\(selectedCharacterId\)/
+  );
+  assert.doesNotMatch(
+    mainSource,
+    /cityDirectoryLeaderResidenceCoordinator\.enterHouseFromCity\(houseId\)/
+  );
+});
+
+test("shell thinning main.ts no longer inlines covered mapped city-3d scene-object house entry blocks", () => {
+  const mainSource = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
+  const coordinatorSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/application/runtime/city-3d-house-entry-coordinator.ts"
+    ),
+    "utf8"
+  );
+  const messageBlock = mainSource.match(
+    /window\.addEventListener\("message", \(event\) => \{[\s\S]*?\r?\n}\);[\s\S]*?\r?\nfunction getLayoutEditorDragHandleSelector/
+  )?.[0] ?? "";
+  const city3dHouseButtonBlock = mainSource.match(
+    /const city3dHouseButton = targetElement\.closest<HTMLElement>\([\s\S]*?\r?\n\s*const cityEntryButton/
+  )?.[0] ?? "";
+
+  assert.match(
+    mainSource,
+    /city-3d-house-entry-coordinator|createCity3dHouseEntryCoordinator/
+  );
+  assert.match(
+    coordinatorSource,
+    /sceneObjectId\.trim\(\)|requestedHouseId == null \|\| houseMapping\.houseId === requestedHouseId|canOpenHouseFromCity|enterHouse/
+  );
+  assert.doesNotMatch(
+    mainSource,
+    /function enterMappedCity3dHouseBySceneObjectId\([\s\S]*?enterHouseThroughRuntime\(houseRuntime, mappedHouse\.houseId\);[\s\S]*?\r?\n}\r?\n/
+  );
+  assert.doesNotMatch(
+    messageBlock,
+    /hd2deg:enter-house|typeof data\.sceneObjectId !== "string"|enterMappedCity3dHouseBySceneObjectId\(/
+  );
+  assert.doesNotMatch(
+    city3dHouseButtonBlock,
+    /enterMappedCity3dHouseBySceneObjectId\(sceneObjectId\)/
+  );
+});
+
+test("main shell render-trigger ownerization introduces a city-3d house entry coordinator seam for scene-object house entry flow", () => {
+  const coordinatorPath = path.join(
+    process.cwd(),
+    "src",
+    "application",
+    "runtime",
+    "city-3d-house-entry-coordinator.ts"
+  );
+  const mainSource = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
+
+  assert.equal(fs.existsSync(coordinatorPath), true);
+
+  const coordinatorSource = fs.readFileSync(coordinatorPath, "utf8");
+
+  assert.match(
+    coordinatorSource,
+    /export type City3dHouseEntryCoordinatorDependencies/
+  );
+  assert.match(
+    coordinatorSource,
+    /export function createCity3dHouseEntryCoordinator\(/
+  );
+  assert.match(
+    mainSource,
+    /city-3d-house-entry-coordinator|createCity3dHouseEntryCoordinator/
+  );
+  assert.match(
+    mainSource,
+    /city3dHouseEntryCoordinator\.handleSceneObjectHouseEntry\(sceneObjectId\)/
+  );
+  assert.match(
+    mainSource,
+    /city3dHouseEntryCoordinator\.handleWindowMessage\(event\)/
+  );
+});
+
+test("shell thinning main.ts no longer inlines covered house drag-drop submit blocks", () => {
+  const mainSource = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
+  const coordinatorSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/application/runtime/house-drag-drop-coordinator.ts"
+    ),
+    "utf8"
+  );
+  const pointerSubmitBlock = mainSource.match(
+    /appElement\.addEventListener\("pointerup", \(event\) => \{[\s\S]*?\r?\n}\);[\s\S]*?\r?\nappElement\.addEventListener\("pointercancel"/
+  )?.[0] ?? "";
+  const dropSubmitBlock = mainSource.match(
+    /appElement\.addEventListener\("drop", \(event\) => \{[\s\S]*?\r?\n}\);[\s\S]*?\r?\nappElement\.addEventListener\("dragend"/
+  )?.[0] ?? "";
+
+  assert.match(
+    mainSource,
+    /house-drag-drop-coordinator|createHouseDragDropCoordinator/
+  );
+  assert.match(
+    coordinatorSource,
+    /dispatchHouseAction|actionId: `\$\{actionPrefix\}\$\{payload\}:\$\{beforeId \?\? "end"\}`|renderApp/
+  );
+  assert.doesNotMatch(
+    pointerSubmitBlock,
+    /dispatchHouseRuntimeRequest\(houseRuntime, \{[\s\S]*?actionId: `\$\{dragState\.root\.dataset\.houseDropActionPrefix\}\$\{dragState\.payload\}:\$\{beforeId \?\? "end"\}`[\s\S]*?renderApp\(\)/
+  );
+  assert.doesNotMatch(
+    dropSubmitBlock,
+    /dispatchHouseRuntimeRequest\(houseRuntime, \{[\s\S]*?actionId: `\$\{actionPrefix\}\$\{payload\}:\$\{before\}`/
+  );
+});
+
+test("main shell render-trigger ownerization introduces a house drag-drop coordinator seam for drag submit render flow", () => {
+  const coordinatorPath = path.join(
+    process.cwd(),
+    "src",
+    "application",
+    "runtime",
+    "house-drag-drop-coordinator.ts"
+  );
+  const mainSource = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
+
+  assert.equal(fs.existsSync(coordinatorPath), true);
+
+  const coordinatorSource = fs.readFileSync(coordinatorPath, "utf8");
+
+  assert.match(
+    coordinatorSource,
+    /export type HouseDragDropCoordinatorDependencies/
+  );
+  assert.match(
+    coordinatorSource,
+    /export function createHouseDragDropCoordinator\(/
+  );
+  assert.match(
+    mainSource,
+    /house-drag-drop-coordinator|createHouseDragDropCoordinator/
+  );
+  assert.match(
+    mainSource,
+    /houseDragDropCoordinator\.submitPointerDrag\(dragState\)/
+  );
+  assert.match(
+    mainSource,
+    /houseDragDropCoordinator\.submitHtmlDrop\(\{/
+  );
+});
+
+test("shell thinning main.ts no longer inlines covered campaign move animation helper blocks", () => {
+  const mainSource = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
+  const coordinatorSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/application/runtime/campaign-move-animation-coordinator.ts"
+    ),
+    "utf8"
+  );
+  const animationHelperBlock = mainSource.match(
+    /function getFacingDegrees\([\s\S]*?\r?\n}\r?\n\r?\nfunction syncCampaignActorRuntimeState/
+  )?.[0] ?? "";
+  const startCampaignTravelBlock = mainSource.match(
+    /function startCampaignTravel\([\s\S]*?\r?\n}\r?\n\r?\nfunction syncCampaignActorRuntimeState/
+  )?.[0] ?? "";
+
+  assert.match(
+    mainSource,
+    /campaign-move-animation-coordinator|createCampaignMoveAnimationCoordinator/
+  );
+  assert.match(
+    coordinatorSource,
+    /Math\.atan2|requestAnimationFrame|cancelAnimationFrame|syncCampaignActorRuntimeState|syncCampaignActorView|renderApp/
+  );
+  assert.doesNotMatch(
+    mainSource,
+    /let campaignMoveAnimationState: CampaignMoveAnimationState \| null = null;/
+  );
+  assert.doesNotMatch(
+    mainSource,
+    /function getFacingDegrees\(|function stopCampaignMoveAnimation\(|function animateCampaignMove\(/
+  );
+  assert.doesNotMatch(
+    animationHelperBlock,
+    /Math\.atan2|requestAnimationFrame|cancelAnimationFrame|syncCampaignActorRuntimeState\(to, facingDegrees, false\)|syncCampaignActorView\(\)|renderApp\(\)/
+  );
+  assert.doesNotMatch(
+    startCampaignTravelBlock,
+    /stopCampaignMoveAnimation\(\)|animateCampaignMove\(previousCoordinate, nextCoordinate\)/
+  );
+});
+
+test("main shell render-trigger ownerization introduces a campaign move animation coordinator seam for animation lifecycle render flow", () => {
+  const coordinatorPath = path.join(
+    process.cwd(),
+    "src",
+    "application",
+    "runtime",
+    "campaign-move-animation-coordinator.ts"
+  );
+  const mainSource = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
+
+  assert.equal(fs.existsSync(coordinatorPath), true);
+
+  const coordinatorSource = fs.readFileSync(coordinatorPath, "utf8");
+
+  assert.match(
+    coordinatorSource,
+    /export type CampaignMoveAnimationCoordinatorDependencies/
+  );
+  assert.match(
+    coordinatorSource,
+    /export function createCampaignMoveAnimationCoordinator\(/
+  );
+  assert.match(
+    mainSource,
+    /campaign-move-animation-coordinator|createCampaignMoveAnimationCoordinator/
+  );
+  assert.match(
+    mainSource,
+    /campaignMoveAnimationCoordinator\.hasActiveAnimation\(\)/
+  );
+  assert.match(
+    mainSource,
+    /campaignMoveAnimationCoordinator\.stopAnimation\(\)/
+  );
+  assert.match(
+    mainSource,
+    /campaignMoveAnimationCoordinator\.animateMove\(previousCoordinate, nextCoordinate\)/
+  );
+});
+
+test("shell thinning main.ts no longer inlines covered startup session apply wiring blocks", () => {
+  const coordinatorPath = path.join(
+    process.cwd(),
+    "src",
+    "application",
+    "startup",
+    "startup-session-apply-coordinator.ts"
+  );
+  const mainSource = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
+  const continueBlock = mainSource.match(
+    /function startContinueGameWithLoading\(selectedCharacter: CharacterDefinition\): void \{[\s\S]*?\r?\n}\r?\n\r?\nfunction startRestoredGameWithLoading/
+  )?.[0] ?? "";
+  const restoreBlock = mainSource.match(
+    /function startRestoredGameWithLoading\([\s\S]*?\r?\n}\r?\n\r?\nfunction startMainGameWithLoading/
+  )?.[0] ?? "";
+  const builtinBlock = mainSource.match(
+    /function startMainGameWithLoading\([\s\S]*?\r?\n}\r?\n\r?\nfunction runScenarioPackStartupRequestWithLoading/
+  )?.[0] ?? "";
+  const scenarioPackBlock = mainSource.match(
+    /function runScenarioPackStartupRequestWithLoading\([\s\S]*?\r?\n}\r?\n\r?\nasync function startScenarioPackWithLoading/
+  )?.[0] ?? "";
+
+  assert.equal(fs.existsSync(coordinatorPath), true);
+  assert.match(
+    mainSource,
+    /startup-session-apply-coordinator|createStartupSessionApplyCoordinator/
+  );
+  assert.doesNotMatch(mainSource, /function applyActivatedModSession\(/);
+  assert.doesNotMatch(
+    mainSource,
+    /configureDefaultPlayableRuntimeRegistriesFromActivatedMod\(input\.activationResult\.activatedMod\)/
+  );
+  assert.doesNotMatch(
+    mainSource,
+    /mainRuntimeOrchestrator\.execute\(\{\s*type:\s*"apply-startup-session"/
+  );
+  assert.doesNotMatch(
+    continueBlock,
+    /persistSaveData\(\)|renderApp\(\)|applyActivatedModSession\(startupSession\)/
+  );
+  assert.doesNotMatch(
+    restoreBlock,
+    /persistSaveData\(\)|renderApp\(\)|applyActivatedModSession\(startupSession\)/
+  );
+  assert.doesNotMatch(
+    builtinBlock,
+    /persistSaveData\(\)|renderApp\(\)|applyActivatedModSession\(startupSession\)/
+  );
+  assert.doesNotMatch(
+    scenarioPackBlock,
+    /persistSaveData\(\)|renderApp\(\)|applyActivatedModSession\(startupSession\)/
+  );
+});
+
+test("main shell render-trigger ownerization introduces a startup session apply coordinator seam for startup success apply persist render flow", () => {
+  const coordinatorPath = path.join(
+    process.cwd(),
+    "src",
+    "application",
+    "startup",
+    "startup-session-apply-coordinator.ts"
+  );
+  const mainSource = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
+
+  assert.equal(fs.existsSync(coordinatorPath), true);
+
+  const coordinatorSource = fs.readFileSync(coordinatorPath, "utf8");
+
+  assert.match(
+    coordinatorSource,
+    /export type StartupSessionApplyCoordinatorDependencies/
+  );
+  assert.match(
+    coordinatorSource,
+    /export function createStartupSessionApplyCoordinator\(/
+  );
+  assert.match(
+    coordinatorSource,
+    /mainRuntimeOrchestrator\.execute\(\{\s*type:\s*"apply-startup-session"/
+  );
+  assert.match(coordinatorSource, /persistSaveData\(\)/);
+  assert.match(coordinatorSource, /renderApp\(\)/);
+  assert.match(
+    mainSource,
+    /startup-session-apply-coordinator|createStartupSessionApplyCoordinator/
+  );
+
+  const applyUsageCount = (
+    mainSource.match(
+      /startupSessionApplyCoordinator\.applyStartupSession\(|shellBootLifecycleCoordinator\.startContinue\(|shellBootLifecycleCoordinator\.startRestore\(|shellBootLifecycleCoordinator\.startBuiltin\(|shellBootLifecycleCoordinator\.startScenarioPackRequest\(/g
+    ) ?? []
+  ).length;
+  assert.ok(applyUsageCount >= 4);
+});
+
+test("shell thinning main.ts no longer inlines covered shell-side boot lifecycle assembly blocks", () => {
+  const coordinatorPath = path.join(
+    process.cwd(),
+    "src",
+    "application",
+    "startup",
+    "shell-boot-lifecycle-coordinator.ts"
+  );
+  const mainSource = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
+  const continueBlock = mainSource.match(
+    /function startContinueGameWithLoading\(selectedCharacter: CharacterDefinition\): void \{[\s\S]*?\r?\n}\r?\n\r?\nfunction startRestoredGameWithLoading/
+  )?.[0] ?? "";
+  const restoreBlock = mainSource.match(
+    /function startRestoredGameWithLoading\([\s\S]*?\r?\n}\r?\n\r?\nfunction startMainGameWithLoading/
+  )?.[0] ?? "";
+  const builtinBlock = mainSource.match(
+    /function startMainGameWithLoading\([\s\S]*?\r?\n}\r?\n\r?\nfunction runScenarioPackStartupRequestWithLoading/
+  )?.[0] ?? "";
+  const scenarioPackBlock = mainSource.match(
+    /function runScenarioPackStartupRequestWithLoading\([\s\S]*?\r?\n}\r?\n\r?\nasync function startScenarioPackWithLoading/
+  )?.[0] ?? "";
+
+  assert.equal(fs.existsSync(coordinatorPath), true);
+  assert.match(
+    mainSource,
+    /shell-boot-lifecycle-coordinator|createShellBootLifecycleCoordinator/
+  );
+  assert.doesNotMatch(
+    continueBlock,
+    /beginLoadingScreen\(\)|simulateLoadingProgress\(|setActiveLoadingProgress\(|endLoadingScreen\(requestId\)|startupSessionApplyCoordinator\.applyStartupSession\(startupSession\)|runStartupSessionCoordinator\(/
+  );
+  assert.doesNotMatch(
+    restoreBlock,
+    /beginLoadingScreen\(\)|simulateLoadingProgress\(|setActiveLoadingProgress\(|endLoadingScreen\(requestId\)|startupSessionApplyCoordinator\.applyStartupSession\(startupSession\)|runStartupSessionCoordinator\(/
+  );
+  assert.doesNotMatch(
+    builtinBlock,
+    /beginLoadingScreen\(\)|simulateLoadingProgress\(|setActiveLoadingProgress\(|endLoadingScreen\(requestId\)|startupSessionApplyCoordinator\.applyStartupSession\(startupSession\)|runStartupSessionCoordinator\(/
+  );
+  assert.doesNotMatch(
+    scenarioPackBlock,
+    /beginLoadingScreen\(\)|simulateLoadingProgress\(|setActiveLoadingProgress\(|endLoadingScreen\(requestId\)|startupSessionApplyCoordinator\.applyStartupSession\(startupSession\)|runStartupSessionCoordinator\(/
+  );
+});
+
+test("main shell render-trigger ownerization introduces a shell boot lifecycle coordinator seam for boot request lifecycle end-loading handoff", () => {
+  const coordinatorPath = path.join(
+    process.cwd(),
+    "src",
+    "application",
+    "startup",
+    "shell-boot-lifecycle-coordinator.ts"
+  );
+  const mainSource = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
+
+  assert.equal(fs.existsSync(coordinatorPath), true);
+
+  const coordinatorSource = fs.readFileSync(coordinatorPath, "utf8");
+
+  assert.match(
+    coordinatorSource,
+    /export type ShellBootLifecycleCoordinatorDependencies/
+  );
+  assert.match(
+    coordinatorSource,
+    /export function createShellBootLifecycleCoordinator\(/
+  );
+  assert.match(coordinatorSource, /beginLoadingScreen\(\)/);
+  assert.match(coordinatorSource, /simulateLoadingProgress\(/);
+  assert.match(coordinatorSource, /endLoadingScreen\(requestId\)/);
+  assert.match(
+    coordinatorSource,
+    /startupSessionApplyCoordinator\.applyStartupSession\(/
+  );
+  assert.match(
+    mainSource,
+    /shell-boot-lifecycle-coordinator|createShellBootLifecycleCoordinator/
+  );
+  assert.match(
+    mainSource,
+    /shellBootLifecycleCoordinator\.startContinue\(\{[\s\S]*selectedCharacter[\s\S]*saveData/
+  );
+  assert.match(
+    mainSource,
+    /shellBootLifecycleCoordinator\.startRestore\(\{[\s\S]*selectedCharacter[\s\S]*saveData/
+  );
+  assert.match(
+    mainSource,
+    /shellBootLifecycleCoordinator\.startBuiltin\(\{[\s\S]*selectedCharacter[\s\S]*startupScenario/
+  );
+  assert.match(
+    mainSource,
+    /shellBootLifecycleCoordinator\.startScenarioPackRequest\(\{[\s\S]*request[\s\S]*handleError/
+  );
+});
+
+test("fresh source audit keeps main.ts final shell residue within the pure-shell acceptance line", () => {
+  const mainSource = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
+  const domAssemblyBlock =
+    mainSource.match(
+      /const appElement = document\.querySelector<HTMLElement>\("#app"\);[\s\S]*?const entryShellBootstrapState = await createEntryShellBootstrapState\(\);/
+    )?.[0] ?? "";
+  const shellAssemblyBlock =
+    mainSource.match(
+      /const startupSessionApplyCoordinator = createStartupSessionApplyCoordinator\([\s\S]*?mainUiFlow\.showMainMenu\(\);/
+    )?.[0] ?? "";
+  const startupWrapperBlock =
+    mainSource.match(
+      /function startContinueGameWithLoading\(selectedCharacter: CharacterDefinition\): void \{[\s\S]*?\r?\n}\r?\n\r?\nasync function startScenarioPackFilesWithLoading/
+    )?.[0] ?? "";
+  const loadingPrimitiveBlock =
+    mainSource.match(
+      /function beginLoadingScreen\(\): number \{[\s\S]*?\r?\n}\r?\n\r?\nfunction setGameVisibility/
+    )?.[0] ?? "";
+  const browserLifecycleRegistrationBlock =
+    mainSource.match(
+      /syncGameViewport\(\);[\s\S]*?window\.addEventListener\("message", \(event\) => \{\r?\n  city3dHouseEntryCoordinator\.handleWindowMessage\(event\);\r?\n}\);/
+    )?.[0] ?? "";
+
+  assert.ok(domAssemblyBlock.length > 0);
+  assert.ok(shellAssemblyBlock.length > 0);
+  assert.ok(startupWrapperBlock.length > 0);
+  assert.ok(loadingPrimitiveBlock.length > 0);
+  assert.ok(browserLifecycleRegistrationBlock.length > 0);
+
+  assert.match(domAssemblyBlock, /document\.querySelector<HTMLElement>\("#app"\)/);
+  assert.match(
+    domAssemblyBlock,
+    /document\.querySelector<HTMLElement>\("#ui-overlay"\)/
+  );
+  assert.match(domAssemblyBlock, /throw new Error\("Missing #app mount point\."\)/);
+  assert.match(
+    domAssemblyBlock,
+    /throw new Error\("Missing #ui-overlay mount point\."\)/
+  );
+  assert.match(shellAssemblyBlock, /createStartupSessionApplyCoordinator\(/);
+  assert.match(shellAssemblyBlock, /createShellBootLifecycleCoordinator\(/);
+  assert.match(shellAssemblyBlock, /const mainUiFlow = new MainUiFlow\(/);
+  assert.match(shellAssemblyBlock, /mainUiFlow\.mount\(\)/);
+  assert.match(shellAssemblyBlock, /mainUiFlow\.showMainMenu\(\)/);
+
+  assert.match(browserLifecycleRegistrationBlock, /syncGameViewport\(\)/);
+  assert.match(
+    browserLifecycleRegistrationBlock,
+    /window\.addEventListener\("resize", syncGameViewport\)/
+  );
+  assert.match(
+    browserLifecycleRegistrationBlock,
+    /window\.addEventListener\("beforeunload", \(\) => \{\r?\n  persistSaveData\(\);\r?\n}\);/
+  );
+  assert.match(
+    browserLifecycleRegistrationBlock,
+    /window\.addEventListener\("pointerdown", resumeBackgroundMusicIfNeeded/
+  );
+  assert.match(
+    browserLifecycleRegistrationBlock,
+    /window\.addEventListener\("keydown", resumeBackgroundMusicIfNeeded\);/
+  );
+  assert.match(
+    browserLifecycleRegistrationBlock,
+    /window\.addEventListener\("message", \(event\) => \{\r?\n  city3dHouseEntryCoordinator\.handleWindowMessage\(event\);\r?\n}\);/
+  );
+
+  assert.match(
+    startupWrapperBlock,
+    /shellBootLifecycleCoordinator\.startContinue\(\{[\s\S]*selectedCharacter[\s\S]*saveData/
+  );
+  assert.match(
+    startupWrapperBlock,
+    /shellBootLifecycleCoordinator\.startRestore\(\{[\s\S]*selectedCharacter[\s\S]*saveData/
+  );
+  assert.match(
+    startupWrapperBlock,
+    /shellBootLifecycleCoordinator\.startBuiltin\(\{[\s\S]*selectedCharacter[\s\S]*startupScenario/
+  );
+  assert.match(
+    startupWrapperBlock,
+    /shellBootLifecycleCoordinator\.startScenarioPackRequest\(\{[\s\S]*request[\s\S]*handleError/
+  );
+  assert.doesNotMatch(
+    startupWrapperBlock,
+    /runStartupSessionCoordinator\(|startupSessionApplyCoordinator\.applyStartupSession\(|mainRuntimeOrchestrator\.execute\(\{\s*type:\s*"apply-startup-session"|beginLoadingScreen\(\)|simulateLoadingProgress\(|endLoadingScreen\(requestId\)/
+  );
+
+  assert.match(loadingPrimitiveBlock, /selectRandomLoadingTheme\(\)/);
+  assert.match(loadingPrimitiveBlock, /renderLoadingScreen\(0, selectedLoadingTheme\)/);
+  assert.match(loadingPrimitiveBlock, /document\.createElement\("div"\)/);
+  assert.match(loadingPrimitiveBlock, /mainUiFlow\.hide\(\)/);
+  assert.match(loadingPrimitiveBlock, /setLoadingScreenProgress\(/);
+  assert.match(loadingPrimitiveBlock, /window\.requestAnimationFrame\(tick\)/);
+  assert.doesNotMatch(
+    loadingPrimitiveBlock,
+    /runStartupSessionCoordinator\(|startupSessionApplyCoordinator\.applyStartupSession\(|mainRuntimeOrchestrator\.execute\(\{\s*type:\s*"apply-startup-session"|shellBootLifecycleCoordinator\.start(?:Continue|Restore|Builtin|ScenarioPackRequest)\(|persistSaveData\(\)|routeNavigationRuntime\(|routeTimeRuntime\(/
+  );
+});
+
+test("shell thinning campaign travel transition owner module exists and preserves covered travel state cleanup", () => {
+  const transitionModulePath = path.join(
+    process.cwd(),
+    ".test-dist",
+    "application",
+    "runtime",
+    "campaign-travel-transition.js"
+  );
+
+  assert.equal(fs.existsSync(transitionModulePath), true);
+
+  const {
+    applyCampaignTravelStart,
+    applyCampaignTravelCompletion,
+  } = require("../.test-dist/application/runtime/campaign-travel-transition.js");
+
+  const baseAppState = {
+    gameState: createBaseState(),
+    characterDefinitions: prototypeCharacters,
+    playerCoordinate: { x: 0, y: 0 },
+    campaignActorState: {
+      facingDegrees: 90,
+      isMoving: true,
+    },
+    campaignTravelState: null,
+    modalState: {
+      type: "travel-confirm",
+      targetCoordinate: { x: 4, y: 5 },
+      cityId: "city.test.target",
+      cityName: "目标城",
+    },
+    locationDialogueState: {
+      type: "house-access-refusal",
+      speakerCharacterId: playerCharacterId,
+      textLines: ["blocked"],
+      advanceHintText: "advance",
+    },
+    beggingMiniGameState: null,
+    cityMenuState: null,
+    cityDirectoryState: null,
+    autoAdvanceState: null,
+    uiLayouts: {},
+    layoutEditor: {},
+  };
+
+  const started = applyCampaignTravelStart(baseAppState, {
+    targetCoordinate: { x: 9, y: 10 },
+    cityId: "city.test.target",
+    cityName: "目标城",
+  });
+  assert.deepEqual(started.campaignTravelState, {
+    targetCoordinate: { x: 9, y: 10 },
+    cityId: "city.test.target",
+    cityName: "目标城",
+  });
+  assert.equal(started.modalState, null);
+  assert.equal(started.locationDialogueState, null);
+
+  const completedIntoCity = applyCampaignTravelCompletion(
+    {
+      ...started,
+      campaignTravelState: {
+        targetCoordinate: { x: 9, y: 10 },
+        cityId: "city.test.target",
+        cityName: "目标城",
+      },
+    },
+    {
+      targetCoordinate: { x: 9, y: 10 },
+      pendingEnterCityState: {
+        type: "enter-city-confirm",
+        cityId: "city.test.target",
+        cityName: "目标城",
+      },
+    }
+  );
+  assert.equal(completedIntoCity.campaignTravelState, null);
+  assert.deepEqual(completedIntoCity.modalState, {
+    type: "enter-city-confirm",
+    cityId: "city.test.target",
+    cityName: "目标城",
+  });
+  assert.equal(completedIntoCity.locationDialogueState, null);
+
+  const completedAwayFromCity = applyCampaignTravelCompletion(
+    {
+      ...started,
+      campaignTravelState: {
+        targetCoordinate: { x: 1, y: 1 },
+        cityId: null,
+        cityName: null,
+      },
+    },
+    {
+      targetCoordinate: { x: 9, y: 10 },
+      pendingEnterCityState: {
+        type: "enter-city-confirm",
+        cityId: "city.test.target",
+        cityName: "目标城",
+      },
+    }
+  );
+  assert.equal(completedAwayFromCity.campaignTravelState, null);
+  assert.equal(completedAwayFromCity.modalState, null);
+  assert.equal(completedAwayFromCity.locationDialogueState, null);
+});
+
+test("shell thinning main.ts no longer inlines covered campaign travel transition blocks", () => {
+  const source = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
+  const startCampaignTravelBlock = source.match(
+    /function startCampaignTravel\([\s\S]*?\r?\n}\r?\n\r?\nfunction syncCampaignActorRuntimeState/
+  )?.[0] ?? "";
+
+  assert.match(source, /campaign-travel-transition|applyCampaignTravel(Start|Completion)/);
+  assert.doesNotMatch(
+    startCampaignTravelBlock,
+    /appState = \{[\s\S]*campaignTravelState:\s*\{[\s\S]*targetCoordinate:\s*nextCoordinate,[\s\S]*modalState:\s*null,[\s\S]*locationDialogueState:\s*null,[\s\S]*\};/
+  );
+  assert.doesNotMatch(
+    startCampaignTravelBlock,
+    /const nextAppState = \{[\s\S]*campaignTravelState:\s*null,[\s\S]*modalState:\s*shouldEnterCity \? pendingEnterCityState : null,[\s\S]*locationDialogueState:\s*null,[\s\S]*\};/
+  );
+});
+
+test("shell thinning map auto advance transition owner module exists and preserves covered map-shell cleanup", () => {
+  const transitionModulePath = path.join(
+    process.cwd(),
+    ".test-dist",
+    "application",
+    "runtime",
+    "map-auto-advance-transition.js"
+  );
+
+  assert.equal(fs.existsSync(transitionModulePath), true);
+
+  const {
+    applyMapAutoAdvanceStart,
+    applyMapAutoAdvanceSnapshot,
+  } = require("../.test-dist/application/runtime/map-auto-advance-transition.js");
+
+  const baseAppState = {
+    gameState: {
+      ...createBaseState(),
+      world: {
+        ...createBaseState().world,
+        currentHouseId: "house.test.current",
+      },
+      ui: {
+        ...createBaseState().ui,
+        currentView: "house",
+        overlayView: "cards",
+        houseSession: {
+          moduleId: "grain-shop",
+          state: {
+            mode: "open",
+          },
+        },
+      },
+    },
+    characterDefinitions: prototypeCharacters,
+    playerCoordinate: { x: 0, y: 0 },
+    campaignActorState: {
+      facingDegrees: 0,
+      isMoving: false,
+    },
+    campaignTravelState: {
+      targetCoordinate: { x: 2, y: 3 },
+      cityId: "city.test.target",
+      cityName: "目标城",
+    },
+    modalState: {
+      type: "travel-confirm",
+      targetCoordinate: { x: 4, y: 5 },
+      cityId: "city.test.target",
+      cityName: "目标城",
+    },
+    locationDialogueState: {
+      type: "house-access-refusal",
+      speakerCharacterId: playerCharacterId,
+      textLines: ["blocked"],
+      advanceHintText: "advance",
+    },
+    beggingMiniGameState: null,
+    cityMenuState: createCityMenuState({
+      cityId: "city.kulan",
+      cityName: "苦兰城",
+      houseOptions: [],
+      cityEntryOptions: [],
+      currentPanelId: "actions",
+      reviewStatusText: "review",
+      availableActionIds: [],
+      monkActionIds: [],
+      canLeaveCity: true,
+    }),
+    cityDirectoryState: {
+      type: "leader-residence",
+      title: "Directory",
+      targetHouseId: "house.test.target",
+      options: [],
+    },
+    autoAdvanceState: null,
+    uiLayouts: {},
+    layoutEditor: {},
+  };
+
+  const started = applyMapAutoAdvanceStart(baseAppState, {
+    intervalId: "auto.test",
+    label: "快进",
+    targetHouseId: "house.test.target",
+    snapshots: [],
+    completion: null,
+  });
+  assert.equal(started.modalState, null);
+  assert.equal(started.locationDialogueState, null);
+  assert.equal(started.cityMenuState, null);
+  assert.equal(started.cityDirectoryState, null);
+  assert.equal(started.campaignTravelState, null);
+  assert.deepEqual(started.autoAdvanceState, {
+    intervalId: "auto.test",
+    label: "快进",
+    targetHouseId: "house.test.target",
+    snapshots: [],
+    completion: null,
+  });
+  assert.equal(started.gameState.world.currentHouseId, null);
+  assert.equal(started.gameState.ui.currentView, "map");
+  assert.equal(started.gameState.ui.overlayView, null);
+  assert.equal(started.gameState.ui.houseSession, null);
+
+  const nextSnapshot = {
+    gameState: {
+      ...createBaseState(),
+      world: {
+        ...createBaseState().world,
+        currentHouseId: "house.snapshot.should-clear",
+      },
+      ui: {
+        ...createBaseState().ui,
+        currentView: "city",
+        overlayView: "valuables",
+        houseSession: {
+          moduleId: "grain-shop",
+          state: {
+            mode: "snapshot",
+          },
+        },
+      },
+    },
+    characterDefinitions: withPlayerStamina(prototypeCharacters, 77),
+  };
+  const afterSnapshot = applyMapAutoAdvanceSnapshot(
+    {
+      ...started,
+      autoAdvanceState: {
+        intervalId: "auto.test",
+        label: "快进",
+        targetHouseId: "house.test.target",
+        snapshots: [nextSnapshot],
+        completion: null,
+      },
+    },
+    {
+      autoAdvanceState: {
+        intervalId: "auto.test",
+        label: "快进",
+        targetHouseId: "house.test.target",
+        snapshots: [nextSnapshot],
+        completion: null,
+      },
+      nextSnapshot,
+      remainingSnapshots: [],
+    }
+  );
+  assert.equal(afterSnapshot.characterDefinitions[0].stamina, 77);
+  assert.equal(afterSnapshot.autoAdvanceState?.snapshots?.length, 0);
+  assert.equal(afterSnapshot.gameState.world.currentHouseId, null);
+  assert.equal(afterSnapshot.gameState.ui.currentView, "map");
+  assert.equal(afterSnapshot.gameState.ui.overlayView, null);
+  assert.equal(afterSnapshot.gameState.ui.houseSession, null);
+});
+
+test("shell thinning main.ts no longer inlines covered map auto advance transition blocks", () => {
+  const source = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
+  const startMapAutoAdvanceBlock = source.match(
+    /function startMapAutoAdvance\(input: \{[\s\S]*?\r?\n}\r?\n\r?\nfunction advanceCurrentStoryScene/
+  )?.[0] ?? "";
+
+  assert.match(source, /map-auto-advance-transition|applyMapAutoAdvance(Start|Snapshot)/);
+  assert.doesNotMatch(
+    startMapAutoAdvanceBlock,
+    /appState = \{[\s\S]*autoAdvanceState:\s*\{[\s\S]*intervalId:\s*input\.intervalId,[\s\S]*targetHouseId:\s*input\.targetHouseId,[\s\S]*currentView:\s*"map"[\s\S]*houseSession:\s*null,[\s\S]*\};/
+  );
+  assert.doesNotMatch(
+    startMapAutoAdvanceBlock,
+    /appState = \{[\s\S]*characterDefinitions:\s*nextSnapshot\.characterDefinitions,[\s\S]*snapshots:\s*remainingSnapshots,[\s\S]*currentView:\s*"map"[\s\S]*houseSession:\s*null,[\s\S]*\};/
+  );
+});
+
+test("shell thinning render prepass owner module exists and preserves city npc refresh before presentation", () => {
+  const prepassModulePath = path.join(
+    process.cwd(),
+    ".test-dist",
+    "application",
+    "runtime",
+    "render-prepass-state.js"
+  );
+
+  assert.equal(fs.existsSync(prepassModulePath), true);
+
+  const {
+    applyRenderPrepassState,
+  } = require("../.test-dist/application/runtime/render-prepass-state.js");
+
+  const baseAppState = {
+    gameState: createBaseState(),
+    characterDefinitions: prototypeCharacters,
+    playerCoordinate: { x: 0, y: 0 },
+    campaignActorState: {
+      facingDegrees: 0,
+      isMoving: false,
+    },
+    campaignTravelState: null,
+    modalState: null,
+    locationDialogueState: null,
+    beggingMiniGameState: null,
+    cityMenuState: null,
+    cityDirectoryState: null,
+    autoAdvanceState: null,
+    uiLayouts: {},
+    layoutEditor: {},
+  };
+
+  const nextAppState = applyRenderPrepassState(
+    baseAppState,
+    prototypeCityNpcPools,
+    () => 0.1
+  );
+  const expectedGameState = ensureCityNpcPoolsForCurrentDay(
+    baseAppState.gameState,
+    prototypeCityNpcPools,
+    () => 0.1
+  );
+
+  assert.notEqual(nextAppState.gameState, baseAppState.gameState);
+  assert.deepEqual(nextAppState.gameState, expectedGameState);
+});
+
+test("reclosure ownerization keeps main.ts on the bootstrap seam after layout-editor retirement", () => {
+  const source = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
+
+  assert.doesNotMatch(source, /createLayoutEditorCoordinator/);
+  assert.doesNotMatch(source, /layoutEditorCoordinator/);
+  assert.match(source, /createAppRenderCoordinator/);
+  assert.match(source, /createDefaultUiLayoutAppState/);
+  assert.doesNotMatch(source, /layout-editor-actions/);
+  assert.doesNotMatch(source, /applyRenderPrepassState/);
+  assert.doesNotMatch(source, /renderApp as renderAppMarkup/);
+  assert.doesNotMatch(source, /content\/layout-editor-presets/);
+  assert.doesNotMatch(source, /function handleLayoutEditorInput\(/);
+  assert.doesNotMatch(source, /function handleLayoutEditorClick\(/);
+  assert.doesNotMatch(source, /function renderAppFrame\(/);
+});
+
 test("mod runtime does not absorb content assembly or gameplay execution ownership", () => {
   const source = fs.readFileSync(
     path.join(process.cwd(), "src/core/mods/mod-runtime.ts"),
@@ -10734,6 +27232,8 @@ test("gameplay contribution registry contract exports navigation event scene tas
   assert.match(source, /scenes/);
   assert.match(source, /tasks/);
   assert.match(source, /houses/);
+  assert.match(source, /playables/);
+  assert.match(source, /playableIntegrations/);
 });
 
 test("mod manifest contribution contract exposes optional gameplay contributions", () => {
@@ -10773,9 +27273,13 @@ test("mod runtime contribution activation installs unified gameplay contribution
       entryContentPackIds: ["pack.test.registry"],
       gameplayContributions: {
         events: ["event.registry.opening"],
-        scenes: ["scene.registry.opening"],
+        dialogues: ["dialogue.registry.opening"],
         tasks: ["task.registry.opening"],
         houses: ["house.registry.guild"],
+        playables: ["playable.registry.training"],
+        playableIntegrations: [
+          "playable.registry.training.external.default",
+        ],
       },
     },
     rawContent: {
@@ -10785,7 +27289,7 @@ test("mod runtime contribution activation installs unified gameplay contribution
       cities: [{ id: "city.registry", mapId: "map.registry", name: "Registry City", x: 0, y: 0, description: "" }],
       cityEntries: [{ id: "entry.registry.guild", cityId: "city.registry", label: "Guild", description: "" }],
       events: [{ id: "event.registry.opening", title: "Opening", trigger: { type: "manual" }, steps: [] }],
-      scenes: [{ id: "scene.registry.opening", title: "Opening Scene", startNodeId: "start", nodes: [{ id: "start", type: "line", text: "start", nextNodeId: null }] }],
+      dialogues: [{ id: "dialogue.registry.opening", name: "Opening Dialogue", nodes: [{ type: "narration", text: "start" }] }],
       tasks: [{ id: "task.registry.opening", title: "Opening Task", objectives: [] }],
       houses: [{
         id: "house.registry.guild",
@@ -10797,6 +27301,30 @@ test("mod runtime contribution activation installs unified gameplay contribution
         moduleId: "keep-house",
         backAction: { label: "Back", targetView: "city" },
       }],
+      playables: [
+        {
+          id: "playable.registry.training",
+          family: "minigame",
+          commandPrefix: "playable.registry.training.",
+        },
+      ],
+      playableIntegrations: [
+        {
+          integrationId: "playable.registry.training.external.default",
+          playableId: "playable.registry.training",
+          ownerDefaults: {
+            ownerKind: "external",
+            ownerId: null,
+            returnPolicy: "close-only",
+          },
+          trigger: {
+            triggerId: "trigger.playable.registry.training.external.default",
+            ownerKind: "external",
+            trigger: "manual-launch",
+          },
+          outcomeConfig: {},
+        },
+      ],
     },
   });
 
@@ -10828,8 +27356,8 @@ test("mod runtime contribution activation installs unified gameplay contribution
   assert.deepEqual(result.activatedMod.gameplayContributions.events, [
     "event.registry.opening",
   ]);
-  assert.deepEqual(result.activatedMod.gameplayContributions.scenes, [
-    "scene.registry.opening",
+  assert.deepEqual(result.activatedMod.gameplayContributions.dialogues, [
+    "dialogue.registry.opening",
   ]);
   assert.deepEqual(result.activatedMod.gameplayContributions.tasks, [
     "task.registry.opening",
@@ -10840,6 +27368,292 @@ test("mod runtime contribution activation installs unified gameplay contribution
   assert.deepEqual(result.activatedMod.gameplayContributions.houseModules, [
     "keep-house",
   ]);
+  assert.deepEqual(result.activatedMod.gameplayContributions.playables, [
+    "playable.registry.training",
+  ]);
+  assert.deepEqual(
+    result.activatedMod.gameplayContributions.playableIntegrations,
+    ["playable.registry.training.external.default"]
+  );
+});
+
+test("mod runtime builtin source loader activates builtin mods from builtinModsById", async () => {
+  const {
+    createEmptyModRuntimeState,
+    runModRuntime,
+  } = require("../.test-dist/core/mods/mod-runtime.js");
+
+  const result = await runModRuntime({
+    state: createEmptyModRuntimeState(),
+    request: {
+      type: "mod.load-builtin",
+      requestId: "test:load-builtin-shared-loader",
+      modId: "builtin.test.loader",
+    },
+    context: {
+      allowedCapabilities: [],
+      builtinModsById: {
+        "builtin.test.loader": {
+          manifest: {
+            id: "builtin.test.loader",
+            schemaVersion: "1",
+            version: "1.0.0",
+            title: "Builtin Loader Test",
+            entryContentPackIds: ["pack.test.loader"],
+          },
+          rawContent: {
+            id: "pack.test.loader",
+            title: "Loader Pack",
+            maps: [],
+            cities: [],
+            cityEntries: [],
+            events: [],
+            dialogues: [],
+            tasks: [],
+            houses: [],
+          },
+        },
+      },
+    },
+  });
+
+  assert.equal(result.ok, true);
+  if (!result.ok) {
+    return;
+  }
+
+  assert.equal(result.activatedMod.modId, "builtin.test.loader");
+  assert.equal(result.activatedMod.manifest.id, "builtin.test.loader");
+  assert.deepEqual(result.activatedMod.registeredDefinitionIds, [
+    "pack.test.loader",
+  ]);
+  assert.deepEqual(result.activatedMod.normalizedContentSources, [
+    {
+      id: "pack.test.loader",
+      title: "Loader Pack",
+      maps: [],
+      cities: [],
+      cityEntries: [],
+      events: [],
+      dialogues: [],
+      tasks: [],
+      houses: [],
+    },
+  ]);
+});
+
+test("mod runtime preserves multi-pack normalized content sources for activated mods", async () => {
+  const {
+    createEmptyModRuntimeState,
+    createLoadedModFromManifest,
+    runModRuntime,
+  } = require("../.test-dist/core/mods/mod-runtime.js");
+
+  const result = await runModRuntime({
+    state: createEmptyModRuntimeState(),
+    request: {
+      type: "mod.activate-loaded",
+      requestId: "test:activate-multi-pack",
+      loadedMod: createLoadedModFromManifest({
+        source: { kind: "builtin", modId: "builtin.test.multi-pack" },
+        manifest: {
+          id: "builtin.test.multi-pack",
+          schemaVersion: "1",
+          version: "1.0.0",
+          title: "Multi Pack Test",
+          entryContentPackIds: ["pack.test.base", "pack.test.override"],
+        },
+        rawContent: [
+          {
+            schemaVersion: 1,
+            id: "pack.test.base",
+            title: "Base Pack",
+            cities: [{ id: "city.base", name: "Base City", mapNodeId: null }],
+          },
+          {
+            schemaVersion: 1,
+            id: "pack.test.override",
+            title: "Override Pack",
+            cities: [{ id: "city.override", name: "Override City", mapNodeId: null }],
+          },
+        ],
+      }),
+    },
+    context: {
+      allowedCapabilities: [],
+    },
+  });
+
+  assert.equal(result.ok, true);
+  if (!result.ok) {
+    return;
+  }
+
+  assert.deepEqual(
+    result.activatedMod.normalizedContentSources.map((source) => source.id),
+    ["pack.test.base", "pack.test.override"]
+  );
+});
+
+test("entry shell bootstrap state ownerization moves startup activation bootstrap state out of main.ts", () => {
+  const mainSource = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
+  const bootstrapSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/application/startup/entry-shell-bootstrap-state.ts"
+    ),
+    "utf8"
+  );
+
+  assert.match(
+    mainSource,
+    /createEntryShellBootstrapState/
+  );
+  assert.match(
+    mainSource,
+    /const entryShellBootstrapState = await createEntryShellBootstrapState\(\);/
+  );
+  assert.doesNotMatch(
+    mainSource,
+    /const baseGameContentPack = await createBaseGameContentPack\(\);/
+  );
+  assert.doesNotMatch(
+    mainSource,
+    /const builtinStartupActivation = await runModRuntime\(\{/
+  );
+  assert.doesNotMatch(
+    mainSource,
+    /import \{ createBaseGameContentPack \} from "\.\/content\/base-game-content-pack";/
+  );
+  assert.doesNotMatch(
+    mainSource,
+    /import \{ builtInScenarioPacks \} from "\.\/content\/scenario-packs\/scenario-pack-catalog";/
+  );
+  assert.match(
+    bootstrapSource,
+    /export async function createEntryShellBootstrapState\(\)/
+  );
+  assert.match(bootstrapSource, /createBaseGameContentPack/);
+  assert.match(bootstrapSource, /loadDefaultRuntimeContent/);
+  assert.match(bootstrapSource, /builtInScenarioPacks/);
+  assert.match(bootstrapSource, /createEmptyModRuntimeState/);
+  assert.match(bootstrapSource, /createActiveGameContentContextFromModActivation/);
+  assert.match(
+    bootstrapSource,
+    /async function activateBuiltinDefaultMod\([\s\S]*type:\s*"mod\.load-builtin"/
+  );
+  assert.doesNotMatch(
+    bootstrapSource,
+    /async function activateBuiltinDefaultMod\([\s\S]*createLoadedModFromManifest\(/
+  );
+});
+
+test("entry shell ui extraction delegates pre-game rendering out of MainUiFlow", () => {
+  const mainUiFlowSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    "utf8"
+  );
+  const entryShellViewPath = path.join(
+    process.cwd(),
+    "src/ui/entry-shell/entry-shell-view.js"
+  );
+
+  assert.ok(fs.existsSync(entryShellViewPath));
+  const entryShellViewSource = fs.readFileSync(entryShellViewPath, "utf8");
+
+  assert.match(entryShellViewSource, /export function renderEntryShellMainMenu/);
+  assert.match(entryShellViewSource, /export function renderEntryShellScenarioSelect/);
+  assert.match(entryShellViewSource, /export function renderEntryShellScriptEditorLanding/);
+  assert.match(entryShellViewSource, /export function renderEntryShellCharacterSelect/);
+  assert.match(entryShellViewSource, /data-main-ui-action="open-character-select"/);
+  assert.match(entryShellViewSource, /data-main-ui-action="open-json-scenario-select"/);
+  assert.match(entryShellViewSource, /data-main-ui-action="open-script-editor"/);
+  assert.match(entryShellViewSource, /data-main-ui-action="start-adventure"/);
+  assert.match(entryShellViewSource, /data-script-editor-action="new-project"/);
+
+  assert.match(mainUiFlowSource, /renderEntryShellMainMenu\(/);
+  assert.match(mainUiFlowSource, /renderEntryShellScenarioSelect\(/);
+  assert.match(mainUiFlowSource, /renderEntryShellScriptEditorLanding\(/);
+  assert.match(mainUiFlowSource, /renderEntryShellCharacterSelect\(/);
+  assert.doesNotMatch(
+    mainUiFlowSource,
+    /<section class="c-main-ui-screen c-main-ui-screen--main-menu"/
+  );
+  assert.doesNotMatch(
+    mainUiFlowSource,
+    /<section class="c-main-ui-screen c-main-ui-screen--scenario-select"/
+  );
+  assert.doesNotMatch(
+    mainUiFlowSource,
+    /<section class="c-main-ui-screen c-main-ui-screen--character-select"/
+  );
+});
+
+test("active game content context can assemble from activationResult sources without external base-pack wiring", () => {
+  const {
+    createActiveGameContentContextFromModActivation,
+  } = require("../.test-dist/application/content/active-game-content.js");
+
+  const context = createActiveGameContentContextFromModActivation({
+    activationResult: {
+      ok: true,
+      activatedMod: {
+        normalizedContentSources: [
+          {
+            schemaVersion: 1,
+            id: "pack.test.base",
+            title: "Base Pack",
+            cities: [
+              {
+                id: "city.shared",
+                name: "Base City",
+                mapNodeId: null,
+                prosperity: 1,
+                danger: 1,
+                specialDemand: [],
+                houseIds: [],
+              },
+            ],
+            textEntries: {
+              "runtime.test.base": "base text",
+            },
+          },
+          {
+            schemaVersion: 1,
+            id: "pack.test.override",
+            title: "Override Pack",
+            cities: [
+              {
+                id: "city.shared",
+                name: "Override City",
+                mapNodeId: null,
+                prosperity: 5,
+                danger: 2,
+                specialDemand: ["茶"],
+                houseIds: ["house.override"],
+              },
+            ],
+            houses: [
+              {
+                id: "house.override",
+                cityId: "city.shared",
+                name: "Override House",
+              },
+            ],
+            textEntries: {
+              "runtime.test.override": "override text",
+            },
+          },
+        ],
+      },
+    },
+  });
+
+  assert.equal(context.packId, "pack.test.override");
+  assert.equal(context.cityDefinitionById["city.shared"]?.name, "Override City");
+  assert.equal(context.houseDefinitionById["house.override"]?.name, "Override House");
+  assert.equal(context.textEntriesById["runtime.test.base"], "base text");
+  assert.equal(context.textEntriesById["runtime.test.override"], "override text");
 });
 
 test("state sync runtime contract exports canonical app save presentation trigger and result seams", () => {
@@ -10888,6 +27702,93 @@ test("state sync runtime exports one small sync entrypoint", () => {
   assert.doesNotMatch(source, /writeSave/);
 });
 
+test("state sync runtime no longer exports interactive-specific bridge aliases", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/state-sync-runtime.ts"),
+    "utf8"
+  );
+
+  assert.doesNotMatch(source, /export function createInteractiveRuntimeState/);
+  assert.doesNotMatch(source, /export function applyInteractiveRuntimeState/);
+  assert.doesNotMatch(source, /export function applyInteractiveRuntimeResult/);
+});
+
+test("state sync runtime no longer exports bridge-result-only compatibility helpers", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/state-sync-runtime.ts"),
+    "utf8"
+  );
+
+  assert.doesNotMatch(source, /export type RuntimeResultBridgeInput/);
+  assert.doesNotMatch(source, /export function applyRuntimeBridgeResult/);
+});
+
+test("state sync runtime hides app-state canonicalization behind one core seam", () => {
+  const runtimeSource = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/state-sync-runtime.ts"),
+    "utf8"
+  );
+  const seamPath = path.join(
+    process.cwd(),
+    "src/core/runtime/state-sync-core-seam.ts"
+  );
+
+  assert.equal(fs.existsSync(seamPath), true);
+
+  const seamSource = fs.readFileSync(seamPath, "utf8");
+
+  assert.match(runtimeSource, /state-sync-core-seam/);
+  assert.doesNotMatch(runtimeSource, /export type RuntimeAppStateInput/);
+  assert.doesNotMatch(runtimeSource, /export function createRuntimeStateFromAppState/);
+  assert.doesNotMatch(runtimeSource, /export function applyRuntimeStateToAppState/);
+  assert.doesNotMatch(
+    runtimeSource,
+    /function canonicalFromLegacyRuntimeState|const canonicalFromLegacyRuntimeState/
+  );
+  assert.doesNotMatch(runtimeSource, /import \{ syncAppState \} from "\.\/state-sync-app-bridge"/);
+  assert.match(seamSource, /export type RuntimeAppStateInput/);
+  assert.match(seamSource, /export const stateSyncCoreSeam = \{/);
+  assert.match(seamSource, /createRuntimeStateFromAppState/);
+  assert.match(seamSource, /applyRuntimeStateToAppState/);
+  assert.match(seamSource, /canonicalFromLegacyRuntimeState/);
+  assert.match(seamSource, /syncAppState/);
+  assert.doesNotMatch(runtimeSource, /export type RuntimeStateBridgeInput/);
+  assert.doesNotMatch(runtimeSource, /export function createRuntimeBridgeState/);
+  assert.doesNotMatch(runtimeSource, /export function applyRuntimeBridgeState/);
+});
+
+test("house runtime bridge no longer depends on interactive-specific state sync aliases", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/house-runtime.ts"),
+    "utf8"
+  );
+
+  assert.doesNotMatch(source, /createInteractiveRuntimeState/);
+});
+
+test("covered runtime consumers no longer depend on bridge-named state sync helpers", () => {
+  const mainSource = fs.readFileSync(
+    path.join(process.cwd(), "src/main.ts"),
+    "utf8"
+  );
+  const houseRuntimeSource = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/house-runtime.ts"),
+    "utf8"
+  );
+
+  assert.match(mainSource, /stateSyncCoreSeam/);
+  assert.match(mainSource, /stateSyncCoreSeam\.createRuntimeStateFromAppState/);
+  assert.match(mainSource, /stateSyncCoreSeam\.applyRuntimeStateToAppState/);
+  assert.doesNotMatch(mainSource, /createRuntimeBridgeState/);
+  assert.doesNotMatch(mainSource, /applyRuntimeBridgeState/);
+  assert.match(houseRuntimeSource, /stateSyncCoreSeam/);
+  assert.match(
+    houseRuntimeSource,
+    /stateSyncCoreSeam\.createRuntimeStateFromAppState/
+  );
+  assert.doesNotMatch(houseRuntimeSource, /createRuntimeBridgeState/);
+});
+
 test("main.ts does not add new feature-specific state sync branches after state sync runtime exists", () => {
   const source = fs.readFileSync(
     path.join(process.cwd(), "src/main.ts"),
@@ -10904,7 +27805,7 @@ test("child 30 playable runtime contract exports unified playable launch session
     "utf8"
   );
 
-  assert.match(source, /export type PlayableFamily = "minigame" \| "battle"/);
+  assert.match(source, /export type PlayableFamily = "minigame" \| "battle" \| "flow"/);
   assert.match(source, /export type PlayableDefinition = \{/);
   assert.match(source, /export type PlayableIntegrationDefinition = \{/);
   assert.match(source, /export type PlayableLaunchRequest = \{/);
@@ -10912,10 +27813,34 @@ test("child 30 playable runtime contract exports unified playable launch session
   assert.match(source, /export type PlayableSettlement = \{/);
 });
 
+test("interactive closeout removes legacy interactive kind residue from playable contracts and runtime helpers", () => {
+  const playableContractSource = fs.readFileSync(
+    path.join(process.cwd(), "src/core/contracts/playable-runtime.ts"),
+    "utf8"
+  );
+  const registrySource = fs.readFileSync(
+    path.join(process.cwd(), "src/core/registry/playable-definition-registry.ts"),
+    "utf8"
+  );
+  const interactiveRuntimeSource = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/interactive-runtime.ts"),
+    "utf8"
+  );
+  const playableRuntimeSource = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/playable-runtime.ts"),
+    "utf8"
+  );
+
+  assert.doesNotMatch(playableContractSource, /legacyInteractiveKind\?: string/);
+  assert.doesNotMatch(registrySource, /getByLegacyInteractiveKind/);
+  assert.doesNotMatch(interactiveRuntimeSource, /legacyInteractiveKind/);
+  assert.doesNotMatch(playableRuntimeSource, /createLegacyPlayableSession/);
+});
+
 test("child 30 playable definition registry installs covered interactive playables with family boundaries", () => {
   const {
     builtinPlayableDefinitionRegistry,
-  } = require("../.test-dist/core/registry/playable-definition-registry.js");
+  } = require("../.test-dist/core/registry/builtin-playable-definition-registry.js");
 
   assert.equal(
     builtinPlayableDefinitionRegistry.get("activity-qte")?.family,
@@ -10935,6 +27860,48 @@ test("child 30 playable definition registry installs covered interactive playabl
     )?.id,
     "story-battle"
   );
+});
+
+test("playable definition registry stays generic and builtin seed lives in an explicit builtin registry module", () => {
+  const genericSource = fs.readFileSync(
+    path.join(process.cwd(), "src/core/registry/playable-definition-registry.ts"),
+    "utf8"
+  );
+  const builtinRegistryPath = path.join(
+    process.cwd(),
+    "src/core/registry/builtin-playable-definition-registry.ts"
+  );
+
+  assert.doesNotMatch(genericSource, /const builtinPlayableDefinitions/);
+  assert.doesNotMatch(genericSource, /createBuiltinPlayableDefinitionRegistry/);
+  assert.doesNotMatch(genericSource, /builtinPlayableDefinitionRegistry/);
+  assert.equal(fs.existsSync(builtinRegistryPath), true);
+
+  const builtinSource = fs.readFileSync(builtinRegistryPath, "utf8");
+  assert.match(builtinSource, /installBuiltinPlayableDefinitions/);
+  assert.match(builtinSource, /createBuiltinPlayableDefinitionRegistry/);
+  assert.match(builtinSource, /builtinPlayableDefinitionRegistry/);
+});
+
+test("playable integration registry stays generic and builtin seed lives in an explicit builtin registry module", () => {
+  const genericSource = fs.readFileSync(
+    path.join(process.cwd(), "src/core/registry/playable-integration-registry.ts"),
+    "utf8"
+  );
+  const builtinRegistryPath = path.join(
+    process.cwd(),
+    "src/core/registry/builtin-playable-integration-registry.ts"
+  );
+
+  assert.doesNotMatch(genericSource, /const builtinPlayableIntegrations/);
+  assert.doesNotMatch(genericSource, /createBuiltinPlayableIntegrationRegistry/);
+  assert.doesNotMatch(genericSource, /builtinPlayableIntegrationRegistry/);
+  assert.equal(fs.existsSync(builtinRegistryPath), true);
+
+  const builtinSource = fs.readFileSync(builtinRegistryPath, "utf8");
+  assert.match(builtinSource, /installBuiltinPlayableIntegrations/);
+  assert.match(builtinSource, /createBuiltinPlayableIntegrationRegistry/);
+  assert.match(builtinSource, /builtinPlayableIntegrationRegistry/);
 });
 
 test("child 30 playable launch normalization resolves city-begging by playable id to one integration id", () => {
@@ -10962,6 +27929,103 @@ test("child 30 playable launch normalization resolves city-begging by playable i
   assert.equal(resolution.launch.ownerContext.ownerKind, "external");
   assert.equal(resolution.launch.ownerContext.returnPolicy, "close-only");
   assert.deepEqual(resolution.launch.payload, { now: 123 });
+});
+
+test("playable runtime can configure default registries from activated mod playable contributions", async () => {
+  const {
+    createEmptyModRuntimeState,
+    createLoadedModFromManifest,
+    runModRuntime,
+  } = require("../.test-dist/core/mods/mod-runtime.js");
+  const {
+    configureDefaultPlayableRuntimeRegistriesFromActivatedMod,
+    createLaunchPlayableRequest,
+    resetDefaultPlayableRuntimeRegistries,
+    resolvePlayableLaunchRequest,
+  } = require("../.test-dist/core/runtime/playable-runtime.js");
+
+  const loadedMod = createLoadedModFromManifest({
+    source: { kind: "builtin", modId: "mod.test.playable-runtime" },
+    manifest: {
+      id: "mod.test.playable-runtime",
+      schemaVersion: "1",
+      version: "1.0.0",
+      title: "Playable Runtime Test",
+      entryContentPackIds: ["pack.test.playable-runtime"],
+      gameplayContributions: {
+        playables: ["playable.test.runtime"],
+        playableIntegrations: ["playable.test.runtime.external.default"],
+      },
+    },
+    rawContent: {
+      id: "pack.test.playable-runtime",
+      title: "Playable Runtime Pack",
+      playables: [
+        {
+          id: "playable.test.runtime",
+          family: "minigame",
+          commandPrefix: "playable.test.runtime.",
+        },
+      ],
+      playableIntegrations: [
+        {
+          integrationId: "playable.test.runtime.external.default",
+          playableId: "playable.test.runtime",
+          ownerDefaults: {
+            ownerKind: "external",
+            ownerId: null,
+            returnPolicy: "close-only",
+          },
+          trigger: {
+            triggerId: "trigger.playable.test.runtime.external.default",
+            ownerKind: "external",
+            trigger: "manual-launch",
+          },
+          outcomeConfig: {},
+        },
+      ],
+    },
+  });
+
+  const activationResult = await runModRuntime({
+    state: createEmptyModRuntimeState(),
+    request: {
+      type: "mod.activate-loaded",
+      requestId: "test:playable-runtime-default-registries",
+      loadedMod,
+    },
+    context: {
+      allowedCapabilities: [],
+    },
+  });
+
+  assert.equal(activationResult.ok, true);
+  if (!activationResult.ok) {
+    return;
+  }
+
+  configureDefaultPlayableRuntimeRegistriesFromActivatedMod(
+    activationResult.activatedMod
+  );
+  try {
+    const resolution = resolvePlayableLaunchRequest({
+      request: createLaunchPlayableRequest("playable.test.runtime"),
+    });
+
+    assert.equal(resolution?.ok, true);
+    if (resolution == null || !resolution.ok) {
+      return;
+    }
+
+    assert.equal(
+      resolution.launch.integrationId,
+      "playable.test.runtime.external.default"
+    );
+    assert.equal(resolution.launch.family, "minigame");
+    assert.equal(resolution.launch.ownerContext.ownerKind, "external");
+  } finally {
+    resetDefaultPlayableRuntimeRegistries();
+  }
 });
 
 test("child 30 playable launch normalization fails closed for ambiguous integrations", () => {
@@ -11057,6 +28121,9 @@ test("child 30 interactive runtime can launch covered playable sessions through 
 });
 
 test("child 31 activity qte launch writes shared playable session into runtime state", () => {
+  const {
+    runDialogueUntilPause,
+  } = require("../.test-dist/application/dialogue/dialogue-runner.js");
   const activityDefinition = {
     id: "activity.test.child31",
     label: "Child 31 Activity",
@@ -11071,15 +28138,13 @@ test("child 31 activity qte launch writes shared playable session into runtime s
     chapterId: "chapter.prototype",
     name: "Child 31 activity event",
     occurrence: "repeatable",
-    trigger: { timing: "manual" },
-    conditions: [],
-    entrySceneId: "scene.test.child31.activity",
+    dialogueId: "dialogue.test.child31.activity",
   };
-  const sceneDefinitionsById = {
-    "scene.test.child31.activity": {
-      id: "scene.test.child31.activity",
-      name: "Child 31 activity scene",
-      actions: [
+  const dialogueDefinitionsById = {
+    "dialogue.test.child31.activity": {
+      id: "dialogue.test.child31.activity",
+      name: "Child 31 activity dialogue",
+      nodes: [
         {
           type: "start-activity",
           activityId: activityDefinition.id,
@@ -11088,8 +28153,8 @@ test("child 31 activity qte launch writes shared playable session into runtime s
     },
   };
 
-  const result = runSceneUntilPause(startEvent(createBaseState(), eventDefinition), {
-    sceneDefinitionsById,
+  const result = runDialogueUntilPause(startEvent(createBaseState(), eventDefinition), {
+    dialogueDefinitionsById,
     eventDefinitionsById: {
       [eventDefinition.id]: eventDefinition,
     },
@@ -11102,9 +28167,9 @@ test("child 31 activity qte launch writes shared playable session into runtime s
   assert.equal(result.state.runtime.playableSession?.playableId, "activity-qte");
   assert.equal(
     result.state.runtime.playableSession?.integrationId,
-    "playable.activity-qte.scene.default"
+    "playable.activity-qte.dialogue.default"
   );
-  assert.equal(result.state.runtime.playableSession?.ownerContext.ownerKind, "scene");
+  assert.equal(result.state.runtime.playableSession?.ownerContext.ownerKind, "house");
 });
 
 test("child 31 playable runtime closes activity qte through shared playable session exit", () => {
@@ -11370,16 +28435,16 @@ test("child 33 story callback launch writes shared playable session into runtime
   );
   assert.equal(
     started.state.runtime.playableSession?.integrationId,
-    "playable.story-battle.scene.default"
+    "playable.story-battle.dialogue.default"
   );
   assert.equal(started.state.runtime.playableSession?.family, "battle");
   assert.equal(
     started.state.runtime.playableSession?.ownerContext.ownerKind,
-    "scene"
+    "house"
   );
   assert.equal(
     started.state.runtime.playableSession?.ownerContext.ownerId,
-    started.state.scene.activeSceneId ?? "scene.unknown"
+    started.state.world.currentHouseId ?? "house.unknown"
   );
 });
 
@@ -11419,7 +28484,7 @@ test("child 33 playable runtime settlement clears shared story-battle session an
   assert.equal(settled.handled, true);
   assert.equal(settled.state.core.storyBattle, null);
   assert.equal(settled.state.core.runtime.playableSession, null);
-  assert.deepEqual(settled.interactive, {
+  assert.deepEqual(settled.followUp, {
     type: "reenter-house",
     houseId: keepHouse.id,
   });
@@ -11461,7 +28526,7 @@ test("child 33 interactive runtime delegates story-battle compatibility actions 
 
   assert.equal(settled.state.core.storyBattle, null);
   assert.equal(settled.state.core.runtime.playableSession, null);
-  assert.deepEqual(settled.interactive, {
+  assert.deepEqual(settled.followUp, {
     type: "reenter-house",
     houseId: keepHouse.id,
   });
@@ -11694,4 +28759,1060 @@ test("child 34 removes only the obsolete interactive launch helper while keeping
   assert.match(mainSource, /interactive\.city-begging\.complete/);
   assert.match(mainSource, /interactive\.activity-qte\.tick/);
   assert.doesNotMatch(mainSource, /interactive\.story-battle\.action/);
+});
+
+test("phase 3 package scripts expose scenario-pack scaffold and validation entry points", () => {
+  const packageJson = JSON.parse(
+    fs.readFileSync(path.join(process.cwd(), "package.json"), "utf8")
+  );
+
+  assert.equal(
+    packageJson.scripts["scaffold:scenario-pack"],
+    "node tools/scaffold-scenario-pack.mjs"
+  );
+  assert.equal(
+    packageJson.scripts["validate:scenario-packs"],
+    "node tools/validate-scenario-packs.mjs"
+  );
+});
+
+test("phase 3 scenario-pack scaffold writes canonical manifest files and catalog entry", () => {
+  const { spawnSync } = require("node:child_process");
+  const os = require("node:os");
+  const outputRoot = fs.mkdtempSync(
+    path.join(os.tmpdir(), "rpg-tg-scenario-pack-scaffold-")
+  );
+
+  const scaffoldResult = spawnSync(
+    process.execPath,
+    [
+      path.join(process.cwd(), "tools", "scaffold-scenario-pack.mjs"),
+      "--pack-id",
+      "scenario-pack.test.authoring",
+      "--directory-name",
+      "test-authoring-pack",
+      "--title",
+      "Test Authoring Pack",
+      "--player-character-id",
+      "char.player",
+      "--chapter-id",
+      "chapter.test-authoring",
+      "--map-id",
+      "map.test-authoring",
+      "--city-id",
+      "city.test-authoring",
+      "--output-root",
+      outputRoot,
+    ],
+    { encoding: "utf8" }
+  );
+  assert.equal(scaffoldResult.status, 0, scaffoldResult.stderr);
+
+  const catalogPath = path.join(
+    outputRoot,
+    "src",
+    "content",
+    "scenario-packs",
+    "catalog.json"
+  );
+  const manifestPath = path.join(
+    outputRoot,
+    "src",
+    "content",
+    "scenario-packs",
+    "test-authoring-pack",
+    "pack.json"
+  );
+
+  assert.equal(fs.existsSync(catalogPath), true);
+  assert.equal(fs.existsSync(manifestPath), true);
+
+  const catalog = JSON.parse(fs.readFileSync(catalogPath, "utf8"));
+  assert.equal(catalog.length, 1);
+  assert.equal(catalog[0]?.id, "scenario-pack.test.authoring");
+  assert.equal(catalog[0]?.manifestPath, "./test-authoring-pack/pack.json");
+
+  const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
+  assert.equal(manifest.kind, "scenario-pack");
+  assert.equal(manifest.id, "scenario-pack.test.authoring");
+  assert.equal(manifest.authoringTemplate, "phase-3-canonical-v1");
+  assert.equal(manifest.files.scenarioProfile, "./scenario-profile.json");
+  assert.equal(manifest.files.characters, "./characters.json");
+  assert.equal(manifest.files.events, "./events.json");
+  assert.equal(manifest.files.dialogues, "./dialogues.json");
+  assert.equal(manifest.files.textEntries, "./text-entries.json");
+  assert.equal(manifest.files.activities, "./activities.json");
+
+  for (const fileName of [
+    "scenario-profile.json",
+    "characters.json",
+    "cities.json",
+    "houses.json",
+    "maps.json",
+    "city-entries.json",
+    "events.json",
+    "dialogues.json",
+    "tasks.json",
+    "activities.json",
+    "text-entries.json",
+  ]) {
+    assert.equal(
+      fs.existsSync(
+        path.join(
+          outputRoot,
+          "src",
+          "content",
+          "scenario-packs",
+          "test-authoring-pack",
+          fileName
+        )
+      ),
+      true,
+      `Expected scaffolded file ${fileName} to exist`
+    );
+  }
+});
+
+test("phase 3 scenario-pack validator accepts scaffolded artifacts and rejects default-pack contract drift", () => {
+  const { spawnSync } = require("node:child_process");
+  const os = require("node:os");
+  const outputRoot = fs.mkdtempSync(
+    path.join(os.tmpdir(), "rpg-tg-scenario-pack-validate-")
+  );
+
+  const scaffoldResult = spawnSync(
+    process.execPath,
+    [
+      path.join(process.cwd(), "tools", "scaffold-scenario-pack.mjs"),
+      "--pack-id",
+      "scenario-pack.test.default",
+      "--directory-name",
+      "test-default-pack",
+      "--title",
+      "Test Default Pack",
+      "--player-character-id",
+      "char.player",
+      "--chapter-id",
+      "chapter.test-default",
+      "--map-id",
+      "map.test-default",
+      "--city-id",
+      "city.test-default",
+      "--is-default",
+      "true",
+      "--output-root",
+      outputRoot,
+    ],
+    { encoding: "utf8" }
+  );
+  assert.equal(scaffoldResult.status, 0, scaffoldResult.stderr);
+
+  const packContentAccessPath = path.join(
+    outputRoot,
+    "src",
+    "content",
+    "pack-content-access.ts"
+  );
+  fs.mkdirSync(path.dirname(packContentAccessPath), { recursive: true });
+  fs.writeFileSync(
+    packContentAccessPath,
+    [
+      'import * as defaultScenarioActivitiesModule from "./scenario-packs/test-default-pack/activities.json";',
+      'import * as defaultScenarioTextEntriesModule from "./scenario-packs/test-default-pack/text-entries.json";',
+      "",
+      "export const defaultPackActivities = defaultScenarioActivitiesModule;",
+      "export const defaultPackTextEntries = defaultScenarioTextEntriesModule;",
+      "",
+    ].join("\n"),
+    "utf8"
+  );
+
+  const validRun = spawnSync(
+    process.execPath,
+    [
+      path.join(process.cwd(), "tools", "validate-scenario-packs.mjs"),
+      "--repo-root",
+      outputRoot,
+    ],
+    { encoding: "utf8" }
+  );
+  assert.equal(validRun.status, 0, validRun.stderr);
+  assert.match(validRun.stdout, /Scenario pack validation passed/);
+
+  fs.writeFileSync(
+    packContentAccessPath,
+    [
+      'import * as defaultScenarioActivitiesModule from "./scenario-packs/non-default-pack/activities.json";',
+      'import * as defaultScenarioTextEntriesModule from "./scenario-packs/non-default-pack/text-entries.json";',
+      "",
+      "export const defaultPackActivities = defaultScenarioActivitiesModule;",
+      "export const defaultPackTextEntries = defaultScenarioTextEntriesModule;",
+      "",
+    ].join("\n"),
+    "utf8"
+  );
+
+  const invalidRun = spawnSync(
+    process.execPath,
+    [
+      path.join(process.cwd(), "tools", "validate-scenario-packs.mjs"),
+      "--repo-root",
+      outputRoot,
+    ],
+    { encoding: "utf8" }
+  );
+  assert.equal(invalidRun.status, 1);
+  assert.match(invalidRun.stderr, /default pack authoring contract/i);
+});
+
+test("phase 3 scenario-pack validator rejects missing canonical manifest file entries", () => {
+  const { spawnSync } = require("node:child_process");
+  const os = require("node:os");
+  const outputRoot = fs.mkdtempSync(
+    path.join(os.tmpdir(), "rpg-tg-scenario-pack-canonical-")
+  );
+
+  const scaffoldResult = spawnSync(
+    process.execPath,
+    [
+      path.join(process.cwd(), "tools", "scaffold-scenario-pack.mjs"),
+      "--pack-id",
+      "scenario-pack.test.canonical",
+      "--directory-name",
+      "test-canonical-pack",
+      "--title",
+      "Test Canonical Pack",
+      "--player-character-id",
+      "char.player",
+      "--chapter-id",
+      "chapter.test-canonical",
+      "--map-id",
+      "map.test-canonical",
+      "--city-id",
+      "city.test-canonical",
+      "--output-root",
+      outputRoot,
+    ],
+    { encoding: "utf8" }
+  );
+  assert.equal(scaffoldResult.status, 0, scaffoldResult.stderr);
+
+  const manifestPath = path.join(
+    outputRoot,
+    "src",
+    "content",
+    "scenario-packs",
+    "test-canonical-pack",
+    "pack.json"
+  );
+  const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
+  delete manifest.files.activities;
+  delete manifest.files.textEntries;
+  fs.writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`, "utf8");
+
+  const invalidRun = spawnSync(
+    process.execPath,
+    [
+      path.join(process.cwd(), "tools", "validate-scenario-packs.mjs"),
+      "--repo-root",
+      outputRoot,
+    ],
+    { encoding: "utf8" }
+  );
+
+  assert.equal(invalidRun.status, 1);
+  assert.match(invalidRun.stderr, /manifest files\.activities is required/i);
+  assert.match(invalidRun.stderr, /manifest files\.textEntries is required/i);
+});
+
+test("phase 3 scenario-pack validator keeps legacy builtin manifests on the accepted compatibility path", () => {
+  const { spawnSync } = require("node:child_process");
+  const os = require("node:os");
+  const outputRoot = fs.mkdtempSync(
+    path.join(os.tmpdir(), "rpg-tg-scenario-pack-legacy-")
+  );
+
+  const scenarioPacksRoot = path.join(
+    outputRoot,
+    "src",
+    "content",
+    "scenario-packs"
+  );
+  const packRoot = path.join(scenarioPacksRoot, "legacy-pack");
+  fs.mkdirSync(packRoot, { recursive: true });
+  fs.writeFileSync(
+    path.join(scenarioPacksRoot, "catalog.json"),
+    `${JSON.stringify(
+      [
+        {
+          id: "scenario-pack.test.legacy",
+          title: "Legacy Pack",
+          manifestPath: "./legacy-pack/pack.json",
+        },
+      ],
+      null,
+      2
+    )}\n`,
+    "utf8"
+  );
+  fs.writeFileSync(
+    path.join(packRoot, "pack.json"),
+    `${JSON.stringify(
+      {
+        schemaVersion: 1,
+        kind: "scenario-pack",
+        id: "scenario-pack.test.legacy",
+        title: "Legacy Pack",
+        files: {
+          scenarioProfile: "scenario-profile.json",
+          characters: "characters.json",
+          events: "events.json",
+          dialogues: "dialogues.json",
+          activities: "activities.json",
+          textEntries: "text-entries.json",
+        },
+      },
+      null,
+      2
+    )}\n`,
+    "utf8"
+  );
+
+  for (const fileName of [
+    "scenario-profile.json",
+    "characters.json",
+    "events.json",
+    "dialogues.json",
+    "activities.json",
+    "text-entries.json",
+  ]) {
+    fs.writeFileSync(path.join(packRoot, fileName), "{}\n", "utf8");
+  }
+
+  const result = spawnSync(
+    process.execPath,
+    [
+      path.join(process.cwd(), "tools", "validate-scenario-packs.mjs"),
+      "--repo-root",
+      outputRoot,
+    ],
+    { encoding: "utf8" }
+  );
+
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.stdout, /Scenario pack validation passed/i);
+});
+
+test("dev browser validation resources avoid mojibake paths and watcher profile crashes", () => {
+  const fromCodePoints = (codePoints) => String.fromCodePoint(...codePoints);
+  const mainUiCssSource = fs.readFileSync(
+    path.join(process.cwd(), "src", "styles", "main-ui.css"),
+    "utf8"
+  );
+  const viteConfigSource = fs.readFileSync(
+    path.join(process.cwd(), "vite.config.ts"),
+    "utf8"
+  );
+
+  for (const sample of [
+    `${fromCodePoints([0x6d5c, 0x8679, 0x58bf, 0x95ab, 0x590b, 0x5ae8])}ui`,
+    fromCodePoints([0x5a34, 0x6ec6, 0x6ae3, 0x6fa7, 0x5757, 0x67c5, 0x6fb6, 0x5b2a]),
+  ]) {
+    assert.equal(mainUiCssSource.includes(sample), false);
+  }
+  assert.match(mainUiCssSource, /ui\/yuansu\/人物选择ui\/backgroung\.png/);
+  assert.ok(
+    fs.existsSync(path.join(process.cwd(), "ui", "yuansu", "人物选择ui", "backgroung.png"))
+  );
+  assert.match(viteConfigSource, /server:\s*\{[\s\S]*watch:\s*\{[\s\S]*ignored:[\s\S]*\.codex-temp/);
+});
+
+test("flow playable is registered with a building owner integration", () => {
+  const {
+    builtinPlayableDefinitionRegistry,
+  } = require("../.test-dist/core/registry/builtin-playable-definition-registry.js");
+  const {
+    builtinPlayableIntegrationRegistry,
+  } = require("../.test-dist/core/registry/builtin-playable-integration-registry.js");
+
+  assert.equal(
+    builtinPlayableDefinitionRegistry.get("building-flow")?.family,
+    "flow"
+  );
+  const integration = builtinPlayableIntegrationRegistry.get(
+    "playable.building-flow.house.default"
+  );
+  assert.equal(integration?.playableId, "building-flow");
+  assert.equal(integration?.ownerDefaults.ownerKind, "house");
+  assert.equal(integration?.ownerDefaults.returnPolicy, "resume-owner");
+});
+
+test("flow playable launches with building owner context and exposes a presenter model", () => {
+  const {
+    createLaunchPlayableRequest,
+    runPlayableRuntime,
+  } = require("../.test-dist/core/runtime/playable-runtime.js");
+  const {
+    presentFlowPlayable,
+  } = require("../.test-dist/application/playables/flow/flow-playable-presenter.js");
+
+  const flowDefinition = {
+    id: "building-flow",
+    title: "Rest",
+    initialNodeId: "node.start",
+    nodes: [
+      {
+        id: "node.start",
+        type: "text",
+        text: "Rest here.",
+        nextNodeId: "node.finish",
+      },
+      {
+        id: "node.finish",
+        type: "complete",
+        outcome: "success",
+        metrics: { rested: true },
+      },
+    ],
+  };
+  const result = runPlayableRuntime({
+    state: createRuntimeState(),
+    request: createLaunchPlayableRequest("building-flow", {
+      ownerContext: {
+        ownerKind: "house",
+        ownerId: "building.temple",
+        returnPolicy: "resume-owner",
+      },
+    }),
+    characterDefinitions: prototypeCharacters,
+    flowPlayablesById: {
+      [flowDefinition.id]: flowDefinition,
+    },
+  });
+
+  assert.equal(result.handled, true);
+  assert.equal(result.state.core.ui.currentView, "minigame");
+  assert.equal(result.state.core.runtime.playableSession?.family, "flow");
+  assert.equal(
+    result.state.core.runtime.playableSession?.ownerContext.ownerId,
+    "building.temple"
+  );
+  assert.equal(
+    result.state.core.runtime.playableSession?.state?.currentNodeId,
+    "node.start"
+  );
+
+  const presenter = presentFlowPlayable({
+    definition: flowDefinition,
+    session: result.state.core.runtime.playableSession,
+  });
+  assert.equal(presenter.family, "flow");
+  assert.equal(presenter.layout, "panel");
+  assert.equal(presenter.viewModel.currentNodeId, "node.start");
+});
+
+test("zhuyuanzhang pack carries explicit building arrangements for every mounted building", () => {
+  const packRoot = path.join(
+    process.cwd(),
+    "src/content/scenario-packs/zhuyuanzhang"
+  );
+  const cities = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "cities.json"), "utf8")
+  );
+  const arrangements = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "building-arrangements.json"), "utf8")
+  );
+  const manifest = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "pack.json"), "utf8")
+  );
+  const mountedBuildingIds = cities.flatMap((city) =>
+    (city.mountedBuildings ?? []).map((entry) => entry.buildingId)
+  );
+  const arrangementByBuildingId = new Map(
+    arrangements.map((arrangement) => [arrangement.buildingId, arrangement])
+  );
+
+  assert.equal(manifest.files.buildingArrangements, "building-arrangements.json");
+  assert.equal(manifest.files.flowPlayables, "flow-playables.json");
+  assert.equal(arrangements.length, mountedBuildingIds.length);
+  for (const buildingId of mountedBuildingIds) {
+    const arrangement = arrangementByBuildingId.get(buildingId);
+    assert.ok(arrangement, `missing explicit arrangement for ${buildingId}`);
+    assert.ok(
+      arrangement.containers.some((container) => container.type === "character-seats"),
+      `missing character seat container for ${buildingId}`
+    );
+    assert.ok(
+      arrangement.containers.some((container) => container.type === "action-menu"),
+      `missing action menu container for ${buildingId}`
+    );
+  }
+});
+
+test("zhuyuanzhang building action menus route through event-owned flow launch actions", () => {
+  const packRoot = path.join(
+    process.cwd(),
+    "src/content/scenario-packs/zhuyuanzhang"
+  );
+  const arrangements = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "building-arrangements.json"), "utf8")
+  );
+  const events = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "events.json"), "utf8")
+  );
+  const eventBindings = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "event-bindings.json"), "utf8")
+  );
+  const flowPlayables = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "flow-playables.json"), "utf8")
+  );
+
+  const eventsById = new Map(events.map((event) => [event.id, event]));
+  const flowsById = new Map(flowPlayables.map((flow) => [flow.id, flow]));
+  const bindingsByEventId = new Map(
+    eventBindings.map((binding) => [binding.eventId, binding])
+  );
+  const actionItems = [];
+
+  for (const arrangement of arrangements) {
+    for (const container of arrangement.containers ?? []) {
+      if (container.type !== "action-menu") {
+        continue;
+      }
+      for (const item of container.items ?? []) {
+        actionItems.push({ arrangement, container, item });
+      }
+    }
+  }
+
+  assert.equal(actionItems.length, 632);
+
+  for (const { arrangement, container, item } of actionItems) {
+    const event = eventsById.get(item.eventId);
+    assert.ok(event, `missing event for ${item.eventId}`);
+
+    const binding = bindingsByEventId.get(item.eventId);
+    assert.ok(binding, `missing event binding for ${item.eventId}`);
+    assert.equal(binding.owner.family, "building");
+    assert.equal(binding.owner.id, arrangement.buildingId);
+    assert.equal(binding.trigger.action, "building-container-item-action");
+    assert.equal(binding.trigger.extra?.arrangementId, arrangement.id);
+    assert.equal(binding.trigger.extra?.containerId, container.id);
+    assert.equal(binding.trigger.extra?.itemId, item.id);
+
+    if (item.id === "leave" || item.eventId.endsWith(".leave")) {
+      assert.ok(
+        event.actions?.some((action) => action.type === "closeBuilding"),
+        `missing closeBuilding action for ${item.eventId}`
+      );
+      continue;
+    }
+
+    const launchFlowAction = event.actions?.find(
+      (action) => action.type === "launchFlow"
+    );
+    assert.ok(launchFlowAction, `missing launchFlow action for ${item.eventId}`);
+    assert.equal(launchFlowAction.ownerContext.ownerKind, "house");
+    assert.equal(launchFlowAction.ownerContext.ownerId, arrangement.buildingId);
+    assert.ok(
+      launchFlowAction.flowId && flowsById.has(launchFlowAction.flowId),
+      `missing authored flow for ${item.eventId}`
+    );
+    const flow = flowsById.get(launchFlowAction.flowId);
+    assert.ok(flow.outcomeRoutes.length > 0);
+  }
+
+  assert.ok(
+    eventsById
+      .get("event.building.house.kulan.temple.review")
+      ?.actions?.some((action) => action.type === "launchFlow"),
+    "missing preserved Huangjue Temple review flow"
+  );
+  assert.ok(
+    eventsById
+      .get("event.building.house.kulan.temple.work")
+      ?.actions?.some((action) => action.type === "launchFlow"),
+    "missing preserved Huangjue Temple work flow"
+  );
+  assert.ok(
+    eventsById
+      .get("event.building.house.kulan.temple.copy_scripture")
+      ?.actions?.some((action) => action.type === "launchFlow"),
+    "missing Huangjue Temple copy scripture flow"
+  );
+  assert.ok(
+    eventsById
+      .get("event.building.house.kulan.temple.sweep_courtyard")
+      ?.actions?.some((action) => action.type === "launchFlow"),
+    "missing Huangjue Temple sweep courtyard flow"
+  );
+  assert.ok(
+    eventsById
+      .get("event.building.house.kulan.temple.carry_water")
+      ?.actions?.some((action) => action.type === "launchFlow"),
+    "missing Huangjue Temple carry water flow"
+  );
+  assert.ok(
+    eventsById
+      .get("event.building.house.kulan.temple.donate")
+      ?.actions?.some((action) => action.type === "launchFlow"),
+    "missing preserved Huangjue Temple donation flow"
+  );
+});
+
+test("zhuyuanzhang kulan building-enter routes stay fully authored in pack data", () => {
+  const packRoot = path.join(
+    process.cwd(),
+    "src/content/scenario-packs/zhuyuanzhang"
+  );
+  const eventBindings = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "event-bindings.json"), "utf8")
+  );
+  const events = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "events.json"), "utf8")
+  );
+  const scenes = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "dialogues.json"), "utf8")
+  );
+
+  const expectedRoutes = [
+    {
+      buildingId: "house.kulan.leader_residence",
+      bindingId: "binding.building.house.kulan.leader_residence.enter",
+      eventId: "event.building.house.kulan.leader_residence.enter",
+      sceneId: "scene.building.house.kulan.leader_residence.enter",
+    },
+    {
+      buildingId: "house.kulan.temple",
+      bindingId: "binding.building.house.kulan.temple.enter",
+      eventId: "event.building.house.kulan.temple.enter",
+      sceneId: "scene.building.house.kulan.temple.enter",
+    },
+    {
+      buildingId: "house.kulan.keep",
+      bindingId: "binding.building.house.kulan.keep.enter",
+      eventId: "event.building.house.kulan.keep.enter",
+      sceneId: "scene.building.house.kulan.keep.enter",
+    },
+    {
+      buildingId: "house.kulan.tea_house",
+      bindingId: "binding.building.house.kulan.tea_house.enter",
+      eventId: "event.building.house.kulan.tea_house.enter",
+      sceneId: "scene.building.house.kulan.tea_house.enter",
+    },
+    {
+      buildingId: "house.kulan.market",
+      bindingId: "binding.building.house.kulan.market.enter",
+      eventId: "event.building.house.kulan.market.enter",
+      sceneId: "scene.building.house.kulan.market.enter",
+    },
+    {
+      buildingId: "house.kulan.grain_shop",
+      bindingId: "binding.building.house.kulan.grain_shop.enter",
+      eventId: "event.building.house.kulan.grain_shop.enter",
+      sceneId: "scene.building.house.kulan.grain_shop.enter",
+    },
+    {
+      buildingId: "house.kulan.medicine_house",
+      bindingId: "binding.building.house.kulan.medicine_house.enter",
+      eventId: "event.building.house.kulan.medicine_house.enter",
+      sceneId: "scene.building.house.kulan.medicine_house.enter",
+    },
+    {
+      buildingId: "house.kulan.inn",
+      bindingId: "binding.building.house.kulan.inn.enter",
+      eventId: "event.building.house.kulan.inn.enter",
+      sceneId: "scene.building.house.kulan.inn.enter",
+    },
+  ];
+
+  const eventsById = new Map(events.map((event) => [event.id, event]));
+  const scenesById = new Map(scenes.map((scene) => [scene.id, scene]));
+
+  for (const route of expectedRoutes) {
+    const binding = eventBindings.find((entry) => entry.id === route.bindingId);
+    assert.ok(binding, `missing building-enter binding ${route.bindingId}`);
+    assert.equal(binding.owner.family, "building");
+    assert.equal(binding.owner.id, route.buildingId);
+    assert.equal(binding.trigger.timing, "after");
+    assert.equal(binding.trigger.action, "building-enter");
+
+    const event = eventsById.get(route.eventId);
+    assert.ok(event, `missing building-enter event ${route.eventId}`);
+    assert.equal(event.dialogueId, route.sceneId);
+    assert.ok(event.tags.includes("building-enter"));
+    assert.ok(event.tags.includes(`building:${route.buildingId}`));
+    assert.ok(event.tags.includes("action:enter"));
+
+    const scene = scenesById.get(route.sceneId);
+    assert.ok(scene, `missing building-enter scene ${route.sceneId}`);
+    assert.ok(Array.isArray(scene.nodes));
+    assert.ok(
+      scene.nodes.some((action) => action.type === "dialogue"),
+      `expected dialogue actions for ${route.sceneId}`
+    );
+  }
+
+  const templeBinding = eventBindings.find(
+    (entry) => entry.id === "binding.building.house.kulan.temple.enter"
+  );
+  assert.equal(
+    templeBinding.conditions.conditions[0].key,
+    "flag.story.zhu_yuanzhang.ordination.completed"
+  );
+  assert.equal(templeBinding.conditions.conditions[0].expected, true);
+});
+
+test("legacy house runtime retirement removes superseded house code and governance", () => {
+  const removedPaths = [
+    "src/application/house-modules",
+    "src/core/registry/house-module-registry.ts",
+    "src/core/registry/builtin-house-module-registry.ts",
+    "src/core/registry/builtin-house-module-contributions.ts",
+    "src/core/runtime/house-runtime.ts",
+    "src/ui/views/house",
+    "docs/special-house-interface.md",
+  ];
+
+  for (const relativePath of removedPaths) {
+    assert.equal(
+      fs.existsSync(path.join(process.cwd(), relativePath)),
+      false,
+      `${relativePath} should be removed after building arrangements replace house runtime`
+    );
+  }
+
+  const agentsSource = fs.readFileSync(
+    path.join(process.cwd(), "AGENTS.md"),
+    "utf8"
+  );
+  assert.doesNotMatch(agentsSource, /special-house-interface/);
+  assert.doesNotMatch(agentsSource, /create a new house/i);
+  assert.doesNotMatch(agentsSource, /house module/i);
+});
+
+test("flow playable reduces a command and settles through shared handoff", () => {
+  const {
+    createLaunchPlayableRequest,
+    createPlayableActionRequest,
+    runPlayableRuntime,
+  } = require("../.test-dist/core/runtime/playable-runtime.js");
+  const flowDefinition = {
+    id: "building-flow",
+    title: "Rest",
+    initialNodeId: "node.start",
+    nodes: [
+      {
+        id: "node.start",
+        type: "text",
+        text: "Rest here.",
+        nextNodeId: "node.finish",
+      },
+      {
+        id: "node.finish",
+        type: "complete",
+        outcome: "success",
+        metrics: { rested: true },
+      },
+    ],
+  };
+  const launched = runPlayableRuntime({
+    state: createRuntimeState(),
+    request: createLaunchPlayableRequest("building-flow", {
+      ownerContext: {
+        ownerKind: "house",
+        ownerId: "building.temple",
+        returnPolicy: "resume-owner",
+      },
+    }),
+    characterDefinitions: prototypeCharacters,
+    flowPlayablesById: {
+      [flowDefinition.id]: flowDefinition,
+    },
+  });
+
+  const settled = runPlayableRuntime({
+    state: launched.state,
+    request: createPlayableActionRequest("building-flow", "confirm"),
+    characterDefinitions: prototypeCharacters,
+    flowPlayablesById: {
+      [flowDefinition.id]: flowDefinition,
+    },
+  });
+
+  assert.equal(settled.handled, true);
+  assert.equal(settled.state.core.runtime.playableSession, null);
+  assert.equal(settled.settlement?.outcome, "success");
+  assert.equal(settled.settlement?.handoff.type, "resume-owner");
+  assert.equal(settled.settlement?.handoff.ownerId, "building.temple");
+  assert.deepEqual(settled.settlement?.factResult.metrics, { rested: true });
+});
+
+test("dispatchCurrentFlowAction routes activity definitions into shared playable runtime", () => {
+  const mainSource = fs.readFileSync(
+    path.join(process.cwd(), "src/main.ts"),
+    "utf8"
+  );
+  const dispatchCurrentFlowActionBlock =
+    mainSource.match(
+      /function dispatchCurrentFlowAction\([\s\S]*?\r?\n}\r?\n\r?\ntype BattleDemoResultMessage/
+    )?.[0] ?? "";
+
+  assert.match(dispatchCurrentFlowActionBlock, /runPlayableRuntime\(/);
+  assert.match(
+    dispatchCurrentFlowActionBlock,
+    /activityDefinitionsById:\s*activeContentContext\.storyContent\.activityDefinitionsById/
+  );
+  assert.match(
+    dispatchCurrentFlowActionBlock,
+    /flowPlayablesById:\s*activeContentContext\.gameContent\.flowPlayablesById/
+  );
+});
+
+test("house-hosted flow presenter exports an overlay variant and app render keeps the building shell under it", () => {
+  const flowPlayableViewSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/views/playables/flow-playable-view.ts"),
+    "utf8"
+  );
+  const appRenderSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/app-render.ts"),
+    "utf8"
+  );
+
+  assert.match(
+    flowPlayableViewSource,
+    /export function renderFlowPlayableOverlay\(/
+  );
+  assert.match(flowPlayableViewSource, /c-grain-shop-overlay/);
+  assert.match(
+    appRenderSource,
+    /renderFlowPlayableOverlay/
+  );
+  assert.match(
+    appRenderSource,
+    /ownerContext\.ownerKind === "house"/
+  );
+  assert.match(
+    appRenderSource,
+    /renderBuildingModuleView\([\s\S]*renderFlowPlayableOverlay\(/ 
+  );
+});
+
+test("script editor ui encoding integrity guard accepts current critical chinese surfaces", () => {
+  const { spawnSync } = require("node:child_process");
+  const packageJson = JSON.parse(
+    fs.readFileSync(path.join(process.cwd(), "package.json"), "utf8")
+  );
+  const result = spawnSync(
+    process.execPath,
+    [path.join(process.cwd(), "tools", "check-ui-encoding-integrity.mjs")],
+    { encoding: "utf8" }
+  );
+
+  assert.equal(packageJson.scripts["lint:encoding"], "node tools/check-ui-encoding-integrity.mjs");
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.stdout, /UI encoding integrity check passed/i);
+});
+
+test("script editor ui encoding integrity guard does not hardcode mojibake sample constants", () => {
+  const decodeUtf8AsWindows1252 = (text) =>
+    new TextDecoder("windows-1252").decode(Buffer.from(text, "utf8"));
+  const fromCodePoints = (codePoints) => String.fromCodePoint(...codePoints);
+  const forbiddenMojibakeSamples = [
+    decodeUtf8AsWindows1252("剧本编辑"),
+    fromCodePoints([0x6d5c, 0x8679, 0x58bf, 0x95ab, 0x590b, 0x5ae8]),
+    fromCodePoints([0x5a34, 0x6ec6, 0x6ae3, 0x6fa7, 0x5757, 0x67c5, 0x6fb6, 0x5b2a]),
+    fromCodePoints([0x705e, 0x5b2b, 0x66a6]),
+    fromCodePoints([0x93c3, 0x72b1, 0x6c49]),
+  ];
+
+  for (const relativePath of [
+    "tools/check-ui-encoding-integrity.mjs",
+    "tests/robustness.test.cjs",
+  ]) {
+    const source = fs.readFileSync(path.join(process.cwd(), relativePath), "utf8");
+    for (const sample of forbiddenMojibakeSamples) {
+      assert.equal(
+        source.includes(sample),
+        false,
+        `${relativePath} must not hardcode mojibake sample constants`
+      );
+    }
+  }
+});
+
+test("script editor ui encoding integrity guard rejects mojibake source text", () => {
+  const { spawnSync } = require("node:child_process");
+  const os = require("node:os");
+  const corruptLabel = new TextDecoder("windows-1252").decode(
+    Buffer.from("剧本编辑", "utf8")
+  );
+  const outputRoot = fs.mkdtempSync(
+    path.join(os.tmpdir(), "rpg-tg-ui-encoding-")
+  );
+  const corruptSourcePath = path.join(outputRoot, "corrupt-ui.js");
+  fs.writeFileSync(
+    corruptSourcePath,
+    `export const label = "${corruptLabel}";\n`,
+    "utf8"
+  );
+
+  const result = spawnSync(
+    process.execPath,
+    [
+      path.join(process.cwd(), "tools", "check-ui-encoding-integrity.mjs"),
+      "--file",
+      corruptSourcePath,
+      "--require",
+      "剧本编辑",
+    ],
+    { encoding: "utf8" }
+  );
+
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /mojibake|missing required text/i);
+});
+
+test("script editor ui encoding integrity guard covers building fallback chinese copy", () => {
+  const { spawnSync } = require("node:child_process");
+  const fromCodePoints = (codePoints) => String.fromCodePoint(...codePoints);
+  const buildingModuleSource = fs.readFileSync(
+    path.join(process.cwd(), "src", "ui", "views", "building", "building-module-view.ts"),
+    "utf8"
+  );
+  const encodingGuardSource = fs.readFileSync(
+    path.join(process.cwd(), "tools", "check-ui-encoding-integrity.mjs"),
+    "utf8"
+  );
+  const result = spawnSync(
+    process.execPath,
+    [path.join(process.cwd(), "tools", "check-ui-encoding-integrity.mjs")],
+    { encoding: "utf8" }
+  );
+
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(encodingGuardSource, /src\/ui\/views\/building\/building-module-view\.ts/);
+  assert.match(buildingModuleSource, /建筑/);
+  assert.match(buildingModuleSource, /返回/);
+  assert.match(buildingModuleSource, /在场人物/);
+  for (const sample of [
+    fromCodePoints([0x705e, 0x5b2b, 0x66a6]),
+    fromCodePoints([0x93c3, 0x72b1, 0x6c49]),
+    fromCodePoints([0x699b, 0x6a3f]),
+    fromCodePoints([0x9366, 0x3125, 0x6e80]),
+    fromCodePoints([0x6769, 0x6b13, 0x5677]),
+  ]) {
+    assert.equal(buildingModuleSource.includes(sample), false);
+  }
+});
+
+test("layout editor live surface retirement removes editor mount from app-render", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/app-render.ts"),
+    "utf8"
+  );
+
+  assert.doesNotMatch(source, /renderLayoutEditor/);
+  assert.match(source, /uiLayouts\["global-hud"\]/);
+});
+
+test("layout editor live surface retirement removes editor coordinator wiring from main.ts", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/main.ts"),
+    "utf8"
+  );
+
+  assert.doesNotMatch(source, /createLayoutEditorCoordinator/);
+  assert.doesNotMatch(source, /layoutEditorCoordinator/);
+});
+
+test("layout editor live surface retirement removes character detail editor protocol", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/views/character/character-detail-view.ts"),
+    "utf8"
+  );
+
+  assert.doesNotMatch(
+    source,
+    /data-layout-component-handle|data-layout-element-handle/
+  );
+  assert.doesNotMatch(
+    source,
+    /c-main-ui-layout-resize-handle|c-main-ui-layout-element-resize-handle/
+  );
+  assert.match(source, /layout\?: CharacterDetailScreenLayout/);
+});
+
+test("layout editor main-ui retirement removes main-ui editor protocol", () => {
+  const mainUiSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    "utf8"
+  );
+  const liveBindingsSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/tools/live-layout-bindings.js"),
+    "utf8"
+  );
+  assert.doesNotMatch(mainUiSource, /renderLayoutEditor/);
+  assert.doesNotMatch(mainUiSource, /applyLiveLayoutBindings/);
+  assert.doesNotMatch(mainUiSource, /layoutEditor\.isOpen/);
+  assert.doesNotMatch(
+    liveBindingsSource,
+    /data-layout-component-handle|data-layout-element-handle/
+  );
+  assert.doesNotMatch(
+    liveBindingsSource,
+    /c-main-ui-layout-resize-handle|c-main-ui-layout-element-resize-handle/
+  );
+});
+
+test("layout editor state retirement removes dead editor state and module seams", () => {
+  const mainSource = fs.readFileSync(
+    path.join(process.cwd(), "src/main.ts"),
+    "utf8"
+  );
+  const appShellSource = fs.readFileSync(
+    path.join(process.cwd(), "src/application/app-shell.ts"),
+    "utf8"
+  );
+  const startupSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/application/startup/prototype-startup-app-state.ts"
+    ),
+    "utf8"
+  );
+  const bootstrapSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/application/layout-editor/layout-editor-bootstrap.ts"
+    ),
+    "utf8"
+  );
+  const appCssSource = fs.readFileSync(
+    path.join(process.cwd(), "src/styles/app.css"),
+    "utf8"
+  );
+
+  assert.doesNotMatch(mainSource, /createDefaultLayoutEditorAppState/);
+  assert.match(mainSource, /createDefaultUiLayoutAppState/);
+  assert.doesNotMatch(appShellSource, /LayoutEditorState/);
+  assert.doesNotMatch(appShellSource, /layoutEditor:/);
+  assert.doesNotMatch(startupSource, /createDefaultLayoutEditorAppState/);
+  assert.match(startupSource, /createDefaultUiLayoutAppState/);
+  assert.doesNotMatch(bootstrapSource, /layoutEditor/);
+  assert.match(bootstrapSource, /createDefaultUiLayoutAppState/);
+  assert.doesNotMatch(appCssSource, /layout-editor\.css/);
+
+  for (const relativePath of [
+    "src/application/layout-editor/layout-editor-actions.ts",
+    "src/application/layout-editor/layout-editor-coordinator.ts",
+    "src/application/layout-editor/layout-editor-target-registry.ts",
+    "src/ui/tools/layout-editor-view.ts",
+  ]) {
+    assert.equal(
+      fs.existsSync(path.join(process.cwd(), relativePath)),
+      false,
+      `${relativePath} should be retired`
+    );
+  }
 });

@@ -1,10 +1,12 @@
 import type { CharacterDefinition } from "../../../domain/character";
-import type { GrainShopSessionState } from "../../../domain/house-modules/grain-shop-session";
+import type { HouseActivityConfirmOverlayState } from "../../../domain/house-activity";
+import type {
+  AccountingGrade,
+  AccountingGradeReward,
+  GrainShopTradeMode,
+  LedgerQuestion,
+} from "../../../domain/grain-shop";
 import type { RuntimeState } from "../../../core/contracts/runtime-state";
-import {
-  accountingGameDurationSec,
-  accountingMaxWrongAnswers,
-} from "../../../content/houses/grain-shop-content";
 import { assertExists } from "../../../shared/assert";
 import {
   convertHouseActivityDaysToSegments,
@@ -17,6 +19,45 @@ import {
   isLedgerAnswerCorrect,
   resolveAccountingGrade,
 } from "../../grain-shop/accounting-minigame";
+import { getGrainShopContentDefaults } from "../../grain-shop/grain-shop-content-defaults";
+
+type GrainShopOverlayState =
+  | {
+      type: "alert";
+      title: string;
+      paragraphs: string[];
+      tone?: "info" | "success" | "warning";
+    }
+  | HouseActivityConfirmOverlayState
+  | {
+      type: "trade";
+      mode: GrainShopTradeMode;
+      quantity: number;
+      grainPrice: number;
+      tradeTotal: number;
+    }
+  | {
+      type: "minigame";
+      score: number;
+      wrongCount: number;
+      secondsLeft: number;
+      question: LedgerQuestion;
+    }
+  | {
+      type: "result";
+      grade: AccountingGrade;
+      score: number;
+      reward: AccountingGradeReward;
+      durationDays: number;
+    }
+  | null;
+
+type GrainShopSessionState = {
+  npcGreeting: string;
+  npcDefaultLine: string;
+  dialoguePhase: "greeting" | "open" | "idle";
+  overlay: GrainShopOverlayState;
+};
 
 function getActiveSession(state: RuntimeState): GrainShopSessionState | null {
   const houseSession = state.core.ui.houseSession;
@@ -24,7 +65,7 @@ function getActiveSession(state: RuntimeState): GrainShopSessionState | null {
     return null;
   }
 
-  return houseSession.state;
+  return houseSession.state as GrainShopSessionState;
 }
 
 function getPlayerArithmeticSkill(
@@ -66,6 +107,7 @@ export function launchGrainAccountingPlayable(input: {
   playerCharacterId: string;
   ownerId: string | null;
 }): RuntimeState {
+  const { accountingGameDurationSec } = getGrainShopContentDefaults();
   const sessionState = getActiveSession(input.state);
   if (sessionState == null) {
     return input.state;
@@ -147,6 +189,7 @@ export function answerGrainAccountingPlayable(input: {
   state: RuntimeState;
   characterDefinitions: CharacterDefinition[];
 } {
+  const { accountingMaxWrongAnswers } = getGrainShopContentDefaults();
   const sessionState = getActiveSession(input.state);
   const overlay = sessionState?.overlay;
   if (sessionState == null || overlay?.type !== "minigame") {

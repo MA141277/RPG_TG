@@ -66,8 +66,10 @@ This queue does not cover:
 
 ### Parent Target
 
-- Target owner:
-  - `docs/blueprints/targets/2026-07-06-project-complete-modularization-target-v1.md`
+- Target spec:
+  - `docs/blueprints/specs/2026-07-06-project-complete-modularization-target.md`
+- Target plan:
+  - `docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md`
 
 ### Closed Review Record
 
@@ -77,7 +79,7 @@ This queue does not cover:
 - Closed Task:
   - `none`
 - Handoff At Closure:
-  - `Return control to the target. This queue is closed evidence only, and the current target is now closed on current evidence unless fresh blocker proof justifies reopening bounded work.`
+  - `Return control to the target plan. This queue is closed evidence only, and the current target is now governed as open + idle-open until explicit target closeout is written.`
 - Verification:
   - `Document consistency check; targeted source-path audit only if baseline drift is rediscovered.`
 - Notes:
@@ -296,7 +298,7 @@ This queue does not cover:
 - `closeout decision`
   - `The target is closeout-ready on written evidence. The acceptance-ready decision is already written, no fresh blocker was rediscovered during synchronization, and the remaining caveats are disclosed baseline/residue rather than evidence for another active queue.`
 - `target status impact`
-  - `queue.final-acceptance-closeout closes as done, and live target disposition must now be read from the v1 target owner rather than inferred from this closed queue alone.`
+  - `queue.final-acceptance-closeout closes as done, and live target disposition must now be read from the target plan rather than inferred from this closed queue alone.`
 - `what remains true after closeout`
   - `Explicit first-party boot inventory, builtin scenario inventory surfacing, accepted UI baseline, and legacy builtin manifest compatibility remain part of honest historical acceptance wording; they do not keep execution active by themselves.`
 
@@ -338,7 +340,7 @@ This queue does not cover:
 
 - 2026-07-07
   - Summary: `Promoted queue.final-acceptance-closeout after queue.first-party-mod-acceptance closed with a coherent proof record: covered builtin runtime paths now count as first-party mod-path behavior, and the remaining first-party baseline plus compatibility items are explicitly disclosed rather than treated as hidden runtime privilege.`
-  - Verification: `Document consistency check across the closed queue, promoted queue, target, blueprint, and project-progress entries`
+  - Verification: `Document consistency check across the closed queue, promoted queue, target plan, target spec, blueprint, and project-progress entries`
   - Next at that time: `Start baseline-reconcile.`
 - 2026-07-07
   - Summary: `Closed baseline-reconcile after the final closeout recheck confirmed that required queue evidence remains coherent, no fresh Phase 1-3 blocker was rediscovered, and the remaining live work is target-level acceptance writing with explicit first-party baseline and compatibility disclosures.`
@@ -350,5 +352,5 @@ This queue does not cover:
   - Next at that time: `Start queue-closeout.`
 - 2026-07-07
   - Summary: `Accepted queue-closeout and closed queue.final-acceptance-closeout after synchronization confirmed that target-level acceptance-ready evidence was complete and no fresh queue family needed reopening.`
-  - Verification: `Document consistency check across the closed queue, closed target, blueprint, project-progress, and target-owner artifacts`
-  - Next at that time: `Return control to the closed target and stop until fresh blocker evidence appears.`
+  - Verification: `Document consistency check across the closed queue, closed target, blueprint, project-progress, and target plan/spec artifacts`
+  - Next at that time: `Return control to target-level review after queue closeout.`

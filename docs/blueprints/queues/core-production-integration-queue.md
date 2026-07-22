@@ -48,8 +48,10 @@ This queue does not cover:
 
 ### Parent Target
 
-- Target owner:
-  - `docs/blueprints/targets/2026-07-06-project-complete-modularization-target-v1.md`
+- Target spec:
+  - `docs/blueprints/specs/2026-07-06-project-complete-modularization-target.md`
+- Target plan:
+  - `docs/blueprints/plans/2026-07-06-project-complete-modularization-target-plan.md`
 
 ### Closed Review Record
 
@@ -171,7 +173,7 @@ This queue does not cover:
 - Task ID:
   - `none`
 - Recorded handoff at closure:
-  - `This queue is closed. Return control to the target and decide whether shell-thinning-and-final-ownerization should become the next Phase 1 queue.`
+  - `This queue is closed. Return control to the target plan and decide whether shell-thinning-and-final-ownerization should become the next Phase 1 queue.`
 - Recorded expected output:
   - `A target-level decision on whether Phase 1 continues through shell-thinning or pauses without a new active queue.`
 

@@ -5,6 +5,10 @@ const repoRoot = process.cwd();
 const plansDir = path.join(repoRoot, "docs", "superpowers", "plans");
 
 const allowedStatuses = new Set([
+  "waiting",
+  "running",
+  "completed-but-open",
+  "closed",
   "not-started",
   "in-progress",
   "blocked",
@@ -97,6 +101,17 @@ for (const filePath of markdownFiles) {
   }
   if (!/Next:/m.test(progressLogBody)) {
     failures.push(`${relativePath}: Progress Log must include Next`);
+  }
+
+  if (statusMatch?.[1] === "closed") {
+    const hasChildCloseout = /^## Child Closeout$/m.test(text);
+    const hasTaskCloseout = /^## Task Closeout$/m.test(text);
+
+    if (!hasChildCloseout && !hasTaskCloseout) {
+      failures.push(
+        `${relativePath}: Status "closed" requires a ## Child Closeout or ## Task Closeout section`
+      );
+    }
   }
 }
 
