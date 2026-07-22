@@ -276,6 +276,20 @@ function renderEntityImage(metrics: CityStageRenderMetrics): string {
   `;
 }
 
+function renderEntityEntryAttribute(
+  entity: ComposedCityStageEntity
+): string {
+  if (entity.entry.type === "house") {
+    return `data-house-id="${entity.entry.houseId}"`;
+  }
+
+  if (entity.entry.type === "city-entry") {
+    return `data-city-entry-id="${entity.entry.cityEntryId}"`;
+  }
+
+  return "";
+}
+
 function renderStaticEntity(metrics: CityStageRenderMetrics): string {
   return `
     <span
@@ -294,6 +308,12 @@ function renderStaticEntity(metrics: CityStageRenderMetrics): string {
 }
 
 function renderInteractiveEntity(metrics: CityStageRenderMetrics): string {
+  const entryAttribute = renderEntityEntryAttribute(metrics.entity);
+  const ariaLabel =
+    entryAttribute.length > 0
+      ? `进入${metrics.entity.name}`
+      : `选中${metrics.entity.name}`;
+
   return `
     <span
       class="c-city-map-stage__entity"
@@ -309,7 +329,9 @@ function renderInteractiveEntity(metrics: CityStageRenderMetrics): string {
         type="button"
         class="c-city-map-stage__entity-hotspot"
         data-city-map-building-id="${metrics.entity.id}"
-        aria-label="选中${metrics.entity.name}"
+        data-city-map-building-label-id="${metrics.entity.id}"
+        ${entryAttribute}
+        aria-label="${ariaLabel}"
         aria-pressed="false"
         style="--entity-box-left:${metrics.boxLeftPercent}; --entity-box-top:${metrics.boxTopPercent}; --entity-box-width:${metrics.boxWidthPercent}; --entity-box-height:${metrics.boxHeightPercent};"
       >
@@ -333,12 +355,7 @@ function renderEntityLabel(metrics: CityStageRenderMetrics): string {
     return "";
   }
 
-  const entryAttribute =
-    metrics.entity.entry.type === "house"
-      ? `data-house-id="${metrics.entity.entry.houseId}"`
-      : metrics.entity.entry.type === "city-entry"
-        ? `data-city-entry-id="${metrics.entity.entry.cityEntryId}"`
-        : "";
+  const entryAttribute = renderEntityEntryAttribute(metrics.entity);
 
   if (entryAttribute.length === 0) {
     return "";

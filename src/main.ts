@@ -4595,7 +4595,13 @@ appElement.addEventListener("click", (event) => {
       );
       hotspot?.setAttribute("aria-pressed", String(isSelected));
     });
-    return;
+
+    const shouldContinueToCityEntry =
+      cityMapBuildingButton.hasAttribute("data-house-id") ||
+      cityMapBuildingButton.hasAttribute("data-city-entry-id");
+    if (!shouldContinueToCityEntry) {
+      return;
+    }
   }
 
   const cityEntryButton = targetElement.closest<HTMLElement>(
