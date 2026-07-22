@@ -5,6 +5,16 @@
 `docs/change-log.md` 的正式定位是“历史记录 + 人类可读摘要”。
 它不是当前 Blueprint / legacy superpowers 治理的 live execution truth，不作为 resume entry、promotion gate、closeout gate 或固定同步门。
 
+## 2026-07-22 Script Editor Asset Library Grouping And Memo Expansion
+
+### Changed
+- 更新 [src/application/script-editor/workspace-shell.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/workspace-shell.ts)，调整剧本编辑器左侧对象树分组：把 `立绘资源`、`立绘变体` 从“世界”组移到与 `文本` 同组，并将该分组标题从“资料库”改为“资产库”。
+- 更新 [docs/blueprints/version-memo.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/version-memo.md)，补入 `MEMO-029: Event-Only Routing, Minigame Simplification, Result-Processing Ownership, And Task Boundary Draft`，记录事件唯一正式路由、玩法结果事件、结果处理模块归属、任务边界与统一“结束后事件”语义的后续候选方向。
+
+### Impact
+- 剧本编辑器侧边导航的资源组织更贴近创作者理解：人物/城市/建筑保留在“世界”，而立绘与文本统一归到“资产库”。
+- MEMO-029 现已作为未来治理输入被结构化记录，但仍处于 `memo-only`，没有直接授权实现或变更当前 active version 的执行真值。
+
 ## 2026-07-22 Event-Only Routing Family Replacement Closeout
 
 ## 2026-07-22 Portrait Resource Family Convergence

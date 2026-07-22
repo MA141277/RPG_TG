@@ -2941,3 +2941,307 @@ Current evidence draft:
 - proposed_class: `future-target-candidate`
 - proposed_goal: `Audit, classify, and retire repository-wide hardcoded scenario compatibility residue by separating live compatibility transition seams from scenario-specific mechanism residue, prioritizing startup, editor defaults, runtime bridge seams, legacy playable triggers, and creator-facing ID exposure before broader content/resource cleanup.`
 - admission_note: `Recorded only. Before admission, Blueprint should require a bounded cleanup inventory, explicit residue classification, and behavior-based prioritization so that content-pack naming and historical documents are not conflated with live production compatibility debt.`
+
+### MEMO-029: Event-Only Routing, Minigame Simplification, Result-Processing Ownership, And Task Boundary Draft
+
+- status: `open`
+- severity: `high`
+- classification: `memo-only`
+- proposed_queue: `none`
+- owning_queue: `none`
+- admission_status: `not-admitted`
+- latest_disposition: `recorded-as-memo`
+- affected_families:
+  - `event authoring`
+  - `minigame authoring`
+  - `dialogue routing`
+  - `task authoring`
+  - `building action event routing`
+  - `result/effect mutation ownership`
+  - `creator-facing script editor information architecture`
+
+#### Problem Summary
+
+- Current creator-facing authoring still risks keeping multiple parallel answers to the question:
+  - `what happens next`
+- Even when runtime or implementation layers can bridge those paths, creator-facing semantics become unstable when:
+  - `event`
+  - `minigame`
+  - `dialogue`
+  - `task`
+  - `flow`
+  - `building function`
+  - settlement/reward configuration
+  continue to expose overlapping routing, return, integration, or follow-up truth.
+- `玩法` authoring in particular still tends to attract fields such as:
+  - `触发来源`
+  - `触发目标`
+  - `接入方案`
+  - `返回`
+  - `返回策略`
+  - `触发载荷`
+- Those fields push creators toward understanding minigame as an independent scheduling system rather than as event-triggered runnable content.
+- Reward, punishment, property mutation, status mutation, and task progression logic also lacks a fully settled creator-facing home, which creates pressure to:
+  - push mutation logic back into minigame settlement fields
+  - let tasks or dialogue own their own follow-up routing
+  - keep event from becoming the only formal creator-facing router
+
+#### Primary Direction
+
+- Continue converging the project toward an `event-only` creator-facing routing model.
+- The intended creator-facing ownership should be:
+  - `事件`: the only formal routing owner
+  - `对话`: performance/content resource
+  - `玩法`: runnable content resource
+  - `任务`: objective and progression resource
+  - `结果处理`: unified mutation/reward/punishment/progression resource
+- This memo rejects a model where:
+  - dialogue keeps its own formal follow-up routing truth
+  - minigame keeps its own trigger/integration/return truth
+  - task becomes a second routing owner
+  - result/effect execution becomes a second routing owner
+  - creator-facing flow/function/task families survive as alternate routing owners next to event
+
+#### Unified Routing Rule
+
+- All creator-facing `what happens next` semantics should converge back to `事件`.
+- Recommended unified chain:
+  - `事件 -> 触发内容 / 执行结果处理 -> 可选触发后续事件`
+- This memo recommends retiring `返回` as the main creator-facing semantic for event-routed content.
+- Use instead:
+  - `结束后事件`
+  - `后续事件`
+- Unified meaning:
+  - if a follow-up event is configured, trigger it
+  - if no follow-up event is configured, default to close
+- This rule should be consistent across:
+  - dialogue end
+  - minigame end
+  - task-related content end
+  - any later event-routed content family
+
+#### Minigame Module Direction
+
+- `玩法` must stop owning creator-facing trigger, integration, and return semantics.
+- `玩法` should answer only:
+  - what minigame instance this is
+  - which minigame prototype it uses
+  - which business parameters it requires
+  - which result events it can emit
+- `玩法` should not answer:
+  - where it comes from
+  - who triggers it
+  - how it is integrated
+  - where it returns
+  - how rewards or punishments are directly packaged into its own private settlement truth
+
+#### Recommended Minigame Authoring Shape
+
+- `玩法` should move toward a single-page creator-facing form rather than multiple tabs.
+- Recommended visible sections:
+  - `基础信息`
+  - `参数配置`
+  - `结果事件`
+  - `备注`
+- Recommended creator-facing fields:
+  - `玩法名称`
+  - `玩法原型`
+  - `玩法参数`
+  - `成功事件`
+  - `失败事件`
+  - `取消事件`
+  - `超时事件`
+  - `结算事件`
+  - `结束后事件`
+  - `备注说明`
+- `结束后事件` may be empty.
+- If `结束后事件` is empty, the default behavior should be close.
+- Minigame result fields may be reduced per prototype when some prototypes do not expose:
+  - cancel
+  - timeout
+  - settlement
+  semantics.
+
+#### Minigame Creator-Facing Deletions
+
+- Remove from creator-facing minigame authoring:
+  - `触发来源`
+  - `触发目标`
+  - `接入方案`
+  - `返回`
+  - `返回策略`
+  - `触发载荷`
+  - `引用关系`
+  - `高级设置`
+  - `系统信息`
+  - creator-visible `ID`
+  - creator-visible runtime/export/payload/binding/integration wording
+- The creator-facing understanding should become:
+  - `事件` decides when minigame starts
+  - `玩法` defines what the minigame is
+  - minigame emits result events
+  - `事件` decides what happens after that
+
+#### Result-Processing Module Direction
+
+- Use the module name:
+  - `结果处理`
+- Do not prefer `效果` / `效果集` as the main creator-facing name because those terms can be read as:
+  - visual effects
+  - presentation effects
+  rather than gameplay mutations and consequences.
+- `结果处理` should own unified state/result mutations such as:
+  - 加减属性
+  - 加减金币
+  - 加减体力
+  - 发放/扣除道具
+  - 改标记
+  - 改状态
+  - 改任务进度
+  - 发奖励
+  - 施加惩罚
+  - other unified gameplay-state changes
+- `结果处理` must not own:
+  - when it triggers
+  - where it is called from
+  - where execution goes next
+  - who the next content owner is
+- Those remain event-owned.
+
+#### Mutation And Follow-Up Chain
+
+- Recommended chain:
+  - `玩法 / 对话 / 任务相关内容结束 -> 触发事件 -> 事件执行结果处理 -> 事件可继续触发后续事件`
+- This means:
+  - `玩法` emits result
+  - `事件` routes
+  - `结果处理` mutates
+  - `事件` may continue follow-up routing
+
+#### Rejected Settlement Pattern
+
+- This memo rejects pushing a reward/punishment container directly into minigame-owned end-routing fields such as:
+  - `结束事件 + 奖励容器参数`
+- Reason:
+  - it couples routing and rewards again
+  - it reintroduces a minigame-private settlement protocol
+  - it makes dialogue/minigame/task harder to unify
+  - it encourages a second creator-facing truth outside event
+- Preferred pattern:
+  - `成功事件` -> event executes `结果处理` -> optional `后续事件`
+  - `失败事件` -> event executes `结果处理` -> optional `后续事件`
+  - `取消事件` -> event executes `结果处理` -> optional `后续事件`
+  - `超时事件` -> event executes `结果处理` -> optional `后续事件`
+
+#### Task Module Direction
+
+- `任务` should be treated as an `目标与进度` resource family.
+- Task owns:
+  - 任务名称
+  - 任务说明
+  - 任务目标
+  - 完成条件
+  - 进度项
+  - 当前状态
+  - optional stage/progression structure
+- Task must not own:
+  - dialogue performance truth
+  - minigame startup truth
+  - formal creator-facing follow-up routing
+  - a second jump chain parallel to event
+- Recommended task-related chain:
+  - `事件 -> 接任务 / 推进任务 / 完成任务 -> 事件决定是否触发对话 / 结果处理 / 后续事件`
+- In this model:
+  - task is the progress object
+  - event is the routing object
+  - result-processing is the mutation object
+
+#### Responsibility Boundary
+
+- Recommended long-term creator-facing ownership:
+  - `事件`: when something happens, what it triggers, whether follow-up continues
+  - `对话`: what is performed or said
+  - `玩法`: what is played and which result events it emits
+  - `任务`: what must be achieved and how progress is measured
+  - `结果处理`: what changes after something happens
+- Future design should not allow these families to each keep their own:
+  - trigger-source truth
+  - integration truth
+  - return truth
+  - follow-up routing truth
+  - private settlement protocols
+
+#### Creator-Facing Meaning
+
+- The desired creator-facing understanding should become:
+  - `事件`: 什么时候发生、接下来触发什么
+  - `对话`: 演什么
+  - `玩法`: 玩什么
+  - `任务`: 做什么目标
+  - `结果处理`: 发生后改什么
+- The project should move away from a model where each module also answers:
+  - how it is triggered
+  - how it is integrated
+  - where it returns
+  - what its own private next-step truth is
+
+#### Minigame UI Direction
+
+- `玩法` should continue moving toward:
+  - single-page form
+  - no tabs
+  - no creator-facing trigger/integration/return terminology
+  - no creator-facing runtime/export/payload wording
+  - no creator-facing ids
+- Recommended visible sections:
+  - `基础信息`
+  - `参数配置`
+  - `结果事件`
+  - `备注`
+- Recommended hint semantics:
+  - `玩法名称`: identify the minigame instance
+  - `玩法原型`: choose the minigame prototype
+  - `玩法参数`: configure minigame business parameters
+  - `结果事件`: configure which events are triggered by each minigame result
+  - `结束后事件`: continue with another event after current content ends; empty means close
+  - `备注说明`: documentation only, not runtime truth
+
+#### Design Constraints
+
+1. `事件` must remain the only formal creator-facing routing owner.
+2. `玩法` must not re-acquire trigger-source, integration, return, or follow-up ownership.
+3. `结果处理` must not become a second routing owner.
+4. Reward, punishment, property mutation, status mutation, and task progression should converge through `事件 + 结果处理`, not through minigame-private settlement truth.
+5. `任务` must not become an independent creator-facing scheduler.
+6. `返回` should be retired as the main creator-facing semantic in favor of `结束后事件` / `后续事件`.
+7. If no follow-up event is configured, default behavior is close.
+8. Creator-facing fields must not expose runtime lowering, hidden bridge truth, internal ids, payload wording, or export implementation details.
+9. If dialogue, minigame, and task all later expose `结束后继续` ability, they should still converge on the same event-owned follow-up semantics rather than separate continuation systems.
+10. Any attempt to push reward containers, settlement payloads, or private return strategies back into minigame should be treated as regression against the event-only routing direction.
+
+#### Suggested Follow-Up Direction
+
+- If promoted later, this memo should likely split into bounded work across at least:
+  - minigame creator-facing information-architecture simplification
+  - result-processing module authoring and mutation-type convergence
+  - unified `结束后事件` semantics across dialogue/minigame/task families
+  - event-owned settlement/result-routing convergence
+  - task boundary cleanup away from routing ownership
+- These follow-ups should not be merged into one oversized queue without a separate split review.
+
+#### Promotion Guard
+
+- This memo is recorded only.
+- It does not authorize immediate implementation.
+- It does not by itself authorize:
+  - adding a new creator-facing module without bounded review
+  - deleting current minigame fields without routing/ownership review
+  - silently moving reward logic into event or task without explicit boundary write-up
+  - weakening the existing event-only direction by reintroducing creator-facing return/integration truth
+
+#### Suggested Candidate Direction
+
+- proposed_queue_id: `queue.event-only-routing-minigame-result-processing-and-task-boundary-convergence`
+- proposed_class: `future-target-candidate`
+- proposed_goal: `Converge creator-facing routing back onto event by simplifying minigame authoring, introducing result-processing as the unified mutation resource, clarifying task as an objective/progression resource, and replacing return/integration/settlement semantics with event-owned follow-up routing.`
+- admission_note: `Recorded only. Before admission, Blueprint should require a bounded split review so that minigame information architecture, result-processing ownership, unified follow-up-event semantics, and task-boundary cleanup do not collapse into one oversized queue or reintroduce parallel routing owners.`
