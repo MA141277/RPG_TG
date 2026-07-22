@@ -164,7 +164,7 @@ const TREE_GROUPS: Array<{
   {
     id: "world",
     label: "世界",
-    families: ["people", "portraits", "portraitVariants", "cities", "buildings"],
+    families: ["people", "cities", "buildings"],
   },
   {
     id: "narrative",
@@ -178,8 +178,8 @@ const TREE_GROUPS: Array<{
   },
   {
     id: "library",
-    label: "资料库",
-    families: ["textEntries"],
+    label: "资产库",
+    families: ["portraits", "portraitVariants", "textEntries"],
   },
 ];
 
