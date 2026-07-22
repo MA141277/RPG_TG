@@ -82,6 +82,10 @@ Rules:
 6. If current governance needs a concept that is not represented by an existing formal field or allowed value, the agent must not improvise a new status word. It must either:
    - describe the situation using existing formal fields only; or
    - update the governing spec/template first through an explicit governance change.
+7. In operator-facing Blueprint output, the agent must not coin mixed Chinese-English lifecycle phrases, routing phrases, or review phrases that look like formal state names, field values, queue classes, or control-block enums when they are only explanatory prose.
+8. Unless a term is already a formal Blueprint field name, allowed field value, template-defined fixed term, or an explicitly accepted fixed project term, operator-facing explanation should prefer natural Chinese rather than half-translated governance labels.
+9. If an English term must be quoted because it is formal truth, quote the exact structured term directly. If it is not formal truth, describe it in natural Chinese and do not style it as a pseudo-status.
+10. The agent must not present explanatory phrases such as queue screening, version-level review, same-version queue admission, or routing follow-up in a way that can be mistaken for a newly invented Blueprint status or lifecycle state.
 
 ## 4. Single-Writer Truth Model
 

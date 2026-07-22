@@ -111,6 +111,13 @@
 - `If none applies, do not stop at task completion, queue closeout, admission, queue activation, queue switch, sync recording, or status reporting; continue directly into the next lawful action.`
 - `If one applies, write stop_reason / stop_basis / next_unblocked_action / human_input_required here before the response ends.`
 
+### Operator-Facing Terminology Rule
+
+- `Do not write mixed Chinese-English governance phrases that could be mistaken for formal Blueprint states, field values, queue classes, or lifecycle enums when they are only explanatory prose.`
+- `If a term is already formal Blueprint truth or an explicitly accepted fixed project term, quote that exact term directly. Otherwise prefer natural Chinese.`
+- `Do not present explanatory phrases such as candidate screening, version-level review, same-version queue admission, or routing follow-up as if they were newly defined formal statuses.`
+- `If operator-facing wording must mention an English governance term for precision, explicitly distinguish whether it is a formal structured term or only explanatory wording.`
+
 ### Post-Queue Closeout Pause Policy
 
 - `post_queue_closeout_pause_policy = auto-continue is the default.`
