@@ -179,6 +179,8 @@ Campaign 地图的迷雾探索状态来自 `runtime.mapExplorationByMapId`。未
 
 Campaign 地图 WebGL renderer 的 GPU 程序资源应放在 `src/ui/views/map/shaders/*.glsl` 中，并由 renderer 通过 raw import 加载；不要把大型 GPU 程序作为模板字符串内嵌在 TypeScript renderer 文件里。
 
+Campaign 地图视图代码按职责拆分：`map-view-model.ts` 负责从地图定义、城市、探索状态和资源 layer 组装 `MapViewModel`；`map-view.ts` 只消费 view model 生成地图页面 markup 和稳定 DOM 标识。云雾层中，`campaign-cloud-webgl.ts` 只负责 overlay canvas 的 WebGL lifecycle、uniform/texture 上传、reveal transition 和绘制；`campaign-cloud-reveal-mask.ts` 负责把探索 hex、当前 terrain camera 投影和 reveal descriptor 转成云洞 mask / boundary distance texture。地形层中，`campaign-terrain-math.ts` 承载矩阵、投影和通用数值工具；`campaign-terrain-webgl.ts` 仍是 campaign terrain renderer 的装配入口，负责全图轻量语义、chunk 派生数据、GPU 资源上传、terrain/shoreline/vegetation/city/actor 绘制协同。已经由 chunk cache 取代的旧全图高度场、旧全图山脉高度和旧全图 mesh 派生路径不得重新接回初始化流程。
+
 ### 3D Renderer 依赖边界
 
 项目可以使用 `three` 作为 3D / WebGL 表现层基础库，但它只属于 `ui` 渲染边界：

@@ -2,6 +2,19 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-21 Campaign Map Renderer Responsibility Split
+
+### Changed
+- `map-view.ts` 保留地图 HTML / DOM markup 渲染职责，地图 view model 组装、marker 资产解析和地图 layer URL 选择迁入 `map-view-model.ts`；原有 `createMapViewModel` / `MapViewModel` 导出保持兼容。
+- `campaign-cloud-webgl.ts` 保留云雾 overlay 的 WebGL lifecycle、uniform/texture 上传、reveal transition 和绘制循环；云洞 descriptor 读取、hex polygon 投影、reveal mask canvas 和 reveal 边界 distance texture 生成迁入 `campaign-cloud-reveal-mask.ts`。
+- `campaign-terrain-webgl.ts` 的矩阵、投影和数值 easing/clamp/smoothstep 工具迁入 `campaign-terrain-math.ts`，terrain renderer 继续负责 chunk terrain、shoreline、vegetation、city depth 和 actor layer 等当前渲染管线。
+
+### Removed
+- 删除 `campaign-terrain-webgl.ts` 中已经被 2026-07-20 chunk 初始化路径取代的旧全图高度/mesh 派生逻辑，包括全图 heightmap 采样、全图高度平滑、旧全图山脉 floor/height samples 和旧全图 smooth terrain mesh 生成函数。
+
+### Impact
+- 该调整只收缩地图 renderer 文件职责和移除不可达旧路径，不改变 campaign 地图视觉效果、Hex 语义、通行、寻路、点击、探索、云洞、岸线、山脉、森林、城市或 actor 行为。
+
 ## 2026-07-21 Campaign Terrain Hex-Clipped Chunk Mesh
 
 ### Fixed
