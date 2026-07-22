@@ -183,7 +183,6 @@ test("script editor building arrangement authoring updates project-level arrange
     dialogues: [],
     events: [],
     eventBindings: [],
-    scenes: [],
     activities: [],
     items: [],
     skills: [],
@@ -397,7 +396,7 @@ test(
         },
       ],
       events: [],
-      scenes: [],
+      dialogues: [],
     });
 
     assert.deepEqual(importedProject.cities[0].mountedBuildings, []);
@@ -414,7 +413,7 @@ test(
 );
 
 test(
-  "script editor projects expose first-class flow authoring records and preserve them through runtime pack export/import",
+  "script editor projects preserve internal flow content through runtime pack export/import",
   async () => {
     const {
       createDefaultScriptEditorProjectDefinition,
@@ -438,20 +437,7 @@ test(
         {
           id: "flow.temple.rest",
           title: "Rest",
-          description: "A creator-authored building flow.",
-          playableId: "flow.temple.rest",
-          integrationId: "playable.flow.temple.rest",
-          ownerKind: "building",
-          ownerId: "arrangement.city.haozhou.temple",
-          returnPolicy: "resume-owner",
-          triggerId: "trigger.flow.temple.rest",
-          triggerSource: "event-destination",
-          triggerEvent: "event.temple.rest",
-          eventStartTarget: {
-            eventId: "event.temple.rest",
-            bindingId: "binding.temple.rest",
-          },
-          launchPayload: [{ key: "hours", value: "2" }],
+          description: "An internal flow playable body.",
           initialNodeId: "node.start",
           nodes: [
             {
@@ -482,7 +468,7 @@ test(
     });
 
     const files = exportScriptEditorProjectToScenarioPackFiles(project);
-    const exportedFlows = JSON.parse(files["flow-definitions.json"]);
+    const exportedFlows = JSON.parse(files["flow-playables.json"]);
     assert.equal(exportedFlows[0].id, "flow.temple.rest");
     assert.equal(exportedFlows[0].nodes[1].type, "complete");
 
@@ -495,14 +481,22 @@ test(
         },
       }))
     );
-    assert.equal(importedProject.flows[0].eventStartTarget.eventId, "event.temple.rest");
-    assert.equal(importedProject.flows[0].ownerKind, "building");
+    assert.equal(importedProject.flows[0].id, "flow.temple.rest");
+    assert.equal(importedProject.flows[0].initialNodeId, "node.start");
+    assert.deepEqual(importedProject.minigames, []);
   }
 );
 
 test(
-  "script editor exposes flows as an independent authoring family",
+  "script editor keeps flows out of the visible authoring shell and fail-closes hidden flow selection",
   () => {
+    const {
+      createDefaultScriptEditorProjectDefinition,
+      getScriptEditorWorkflowVisibleFamilies,
+    } = require("../.test-dist/application/script-editor/minimal-workflow.js");
+    const {
+      createScriptEditorWorkspaceShellViewModel,
+    } = require("../.test-dist/application/script-editor/workspace-shell.js");
     const mainUiSource = fs.readFileSync(
       path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
       "utf8"
@@ -511,10 +505,40 @@ test(
       path.join(process.cwd(), "src/application/script-editor/minimal-workflow.ts"),
       "utf8"
     );
+    const workspaceShellSource = fs.readFileSync(
+      path.join(process.cwd(), "src/application/script-editor/workspace-shell.ts"),
+      "utf8"
+    );
+    const project = createDefaultScriptEditorProjectDefinition();
+    project.flows = [
+      {
+        id: "flow.temple.rest",
+        title: "Rest",
+        initialNodeId: "node.start",
+        nodes: [{ id: "node.start", type: "text", text: "Rest.", nextNodeId: "" }],
+        outcomeRoutes: [],
+      },
+    ];
+    const workspace = createScriptEditorWorkspaceShellViewModel({
+      project,
+      selection: {
+        family: "flows",
+        entityId: "flow.temple.rest",
+      },
+      visibleFamilies: getScriptEditorWorkflowVisibleFamilies(),
+    });
 
     assert.match(workflowSource, /"flows"/);
-    assert.match(mainUiSource, /data-script-editor-record-search-family="flows"/);
-    assert.match(mainUiSource, /renderScriptEditorFlowEditor/);
+    assert.match(workflowSource, /family !== "flows"/);
+    assert.doesNotMatch(mainUiSource, /renderScriptEditorFlowEditor/);
+    assert.doesNotMatch(
+      mainUiSource,
+      /data-script-editor-record-search-family="flows"/
+    );
+    assert.doesNotMatch(workspaceShellSource, /"quests", "minigames", "flows"/);
+    assert.doesNotMatch(workspaceShellSource, /FAMILY_LABELS\.flows/);
+    assert.equal(workspace.selection.family, "storyPack");
+    assert.equal(workspace.selection.entityId, null);
     assert.match(mainUiSource, /不复用 minigame 绑定/);
   }
 );
@@ -537,15 +561,6 @@ test(
       {
         id: "flow.preview.rest",
         title: "Preview Rest",
-        playableId: "flow.preview.rest",
-        integrationId: "playable.flow.preview.rest",
-        ownerKind: "building",
-        ownerId: "arrangement.preview.rest",
-        returnPolicy: "resume-owner",
-        triggerId: "trigger.preview.rest",
-        triggerSource: "container-item",
-        triggerEvent: "event.preview.rest",
-        launchPayload: [],
         initialNodeId: "node.start",
         nodes: [
           { id: "node.start", type: "text", text: "Rest.", nextNodeId: null },
@@ -574,14 +589,14 @@ test(
       buildingArrangements: JSON.parse(files["building-arrangements.json"]),
       events: JSON.parse(files["events.json"]),
       eventBindings: JSON.parse(files["event-bindings.json"]),
-      scenes: JSON.parse(files["scenes.json"]),
+      dialogues: JSON.parse(files["dialogues.json"]),
       playables: JSON.parse(files["playables.json"]),
       playableIntegrations: JSON.parse(files["playable-integrations.json"]),
-      flowDefinitions: JSON.parse(files["flow-definitions.json"]),
+      flowPlayables: JSON.parse(files["flow-playables.json"]),
     });
 
     assert.equal(
-      activeContent.flowDefinitionsById["flow.preview.rest"].initialNodeId,
+      activeContent.flowPlayablesById["flow.preview.rest"].initialNodeId,
       "node.start"
     );
   }

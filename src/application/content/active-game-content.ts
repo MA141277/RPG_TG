@@ -65,8 +65,8 @@ export type ActiveGameContent = {
   taskDefinitionsById: Record<string, TaskDefinition>;
   activityDefinitions: ActivityDefinition[];
   activityDefinitionsById: Record<string, ActivityDefinition>;
-  flowDefinitions: FlowPlayableDefinition[];
-  flowDefinitionsById: Record<string, FlowPlayableDefinition>;
+  flowPlayables: FlowPlayableDefinition[];
+  flowPlayablesById: Record<string, FlowPlayableDefinition>;
   cards: CardDefinition[];
   valuables: ValuableItemDefinition[];
   cityNpcPools: CityNpcPoolDefinition[];
@@ -105,12 +105,13 @@ export type ActiveGameContentContext = {
   characterNameById: Record<string, string>;
   characterManager: CharacterManager;
   taskDefinitionsById: Record<string, TaskDefinition>;
-  flowDefinitionsById: Record<string, FlowPlayableDefinition>;
+  flowPlayablesById: Record<string, FlowPlayableDefinition>;
   storyContent: {
     eventDefinitionsById: Record<string, EventDefinition>;
     eventBindingsById: Record<string, EventBinding>;
     dialogueDefinitionsById: Record<string, RuntimeDialogueDefinition>;
     activityDefinitionsById: Record<string, ActivityDefinition>;
+    flowPlayablesById: Record<string, FlowPlayableDefinition>;
     textEntriesById: Record<string, string>;
   };
 };
@@ -135,7 +136,7 @@ export function createActiveGameContent(
   const dialogueDefinitions = resolvedPack.dialogues ?? [];
   const taskDefinitions = resolvedPack.tasks ?? [];
   const activityDefinitions = resolvedPack.activities ?? [];
-  const flowDefinitions = resolvedPack.flowDefinitions ?? [];
+  const flowPlayables = resolvedPack.flowPlayables ?? [];
   const cards = resolvedPack.cards ?? [];
   const valuables = resolvedPack.valuables ?? [];
   const cityNpcPools = resolvedPack.cityNpcPools ?? [];
@@ -201,9 +202,9 @@ export function createActiveGameContent(
     activityDefinitionsById: Object.fromEntries(
       activityDefinitions.map((activityDefinition) => [activityDefinition.id, activityDefinition])
     ),
-    flowDefinitions,
-    flowDefinitionsById: Object.fromEntries(
-      flowDefinitions.map((flowDefinition) => [flowDefinition.id, flowDefinition])
+    flowPlayables,
+    flowPlayablesById: Object.fromEntries(
+      flowPlayables.map((flowPlayable) => [flowPlayable.id, flowPlayable])
     ),
     cards,
     valuables,
@@ -263,12 +264,13 @@ export function createActiveGameContentContext(
     characterNameById: gameContent.characterNameById,
     characterManager: gameContent.characterManager,
     taskDefinitionsById: gameContent.taskDefinitionsById,
-    flowDefinitionsById: gameContent.flowDefinitionsById,
+    flowPlayablesById: gameContent.flowPlayablesById,
     storyContent: {
       eventDefinitionsById: gameContent.eventDefinitionsById,
       eventBindingsById: gameContent.eventBindingsById,
       dialogueDefinitionsById: gameContent.dialogueDefinitionsById,
       activityDefinitionsById: gameContent.activityDefinitionsById,
+      flowPlayablesById: gameContent.flowPlayablesById,
       textEntriesById: gameContent.textEntriesById,
     },
   };
@@ -333,9 +335,9 @@ export function mergeContentPacks(
     dialogues: mergeById(basePack.dialogues ?? [], overridePack.dialogues ?? []),
     tasks: mergeById(basePack.tasks ?? [], overridePack.tasks ?? []),
     activities: mergeById(basePack.activities ?? [], overridePack.activities ?? []),
-    flowDefinitions: mergeById(
-      basePack.flowDefinitions ?? [],
-      overridePack.flowDefinitions ?? []
+    flowPlayables: mergeById(
+      basePack.flowPlayables ?? [],
+      overridePack.flowPlayables ?? []
     ),
     cards: mergeById(basePack.cards ?? [], overridePack.cards ?? []),
     valuables: mergeById(basePack.valuables ?? [], overridePack.valuables ?? []),
@@ -387,7 +389,7 @@ function normalizeContentPack(pack: ContentPackDefinition): ContentPackDefinitio
     dialogues: pack.dialogues ?? [],
     tasks: pack.tasks ?? [],
     activities: pack.activities ?? [],
-    flowDefinitions: pack.flowDefinitions ?? [],
+    flowPlayables: pack.flowPlayables ?? [],
     cards: pack.cards ?? [],
     valuables: pack.valuables ?? [],
     cityNpcPools: pack.cityNpcPools ?? [],

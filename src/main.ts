@@ -139,7 +139,6 @@ import type {
 } from "./core/contracts/mod-runtime";
 import type { ViewName as CoreSaveViewName } from "./core/contracts/core-state";
 import type { ActivityDefinition } from "./domain/activity";
-import type { SceneDefinition } from "./domain/action";
 import type { GameState } from "./domain/game-state";
 import type { CityDefinition } from "./domain/city";
 import type { CharacterDefinition } from "./domain/character";
@@ -324,7 +323,8 @@ function bootstrapStartupStoryAppState(input: {
     bootstrap: input.bootstrap,
     content: {
       eventDefinitionsById: activeContentContext.storyContent.eventDefinitionsById,
-      sceneDefinitionsById: activeContentContext.storyContent.sceneDefinitionsById,
+      dialogueDefinitionsById:
+        activeContentContext.storyContent.dialogueDefinitionsById,
       activityDefinitionsById:
         activeContentContext.storyContent.activityDefinitionsById,
       textEntriesById: activeContentContext.storyContent.textEntriesById,
@@ -552,7 +552,8 @@ const mainRuntimeOrchestrator = createMainRuntimeOrchestrator({
   getStoryContent: () => ({
     eventDefinitionsById: activeContentContext.storyContent.eventDefinitionsById,
     eventBindingsById: activeContentContext.storyContent.eventBindingsById,
-    sceneDefinitionsById: activeContentContext.storyContent.sceneDefinitionsById,
+    dialogueDefinitionsById:
+      activeContentContext.storyContent.dialogueDefinitionsById,
     activityDefinitionsById:
       activeContentContext.storyContent.activityDefinitionsById,
     textEntriesById: activeContentContext.storyContent.textEntriesById,
@@ -589,7 +590,8 @@ const navigationTimeFollowUp = createNavigationTimeFollowUpBridge({
   getStoryContent: () => ({
     eventDefinitionsById: activeContentContext.storyContent.eventDefinitionsById,
     eventBindingsById: activeContentContext.storyContent.eventBindingsById,
-    sceneDefinitionsById: activeContentContext.storyContent.sceneDefinitionsById,
+    dialogueDefinitionsById:
+      activeContentContext.storyContent.dialogueDefinitionsById,
     activityDefinitionsById:
       activeContentContext.storyContent.activityDefinitionsById,
     textEntriesById: activeContentContext.storyContent.textEntriesById,
@@ -1307,9 +1309,9 @@ function startMapAutoAdvance(input: {
   }, input.everyMs);
 }
 
-function advanceCurrentStoryScene(): void {
+function advanceCurrentStoryDialogue(): void {
   mainRuntimeOrchestrator.execute({
-    type: "advance-story-scene",
+    type: "advance-story-dialogue",
   });
   renderApp();
 }
@@ -1339,7 +1341,7 @@ function dispatchCurrentStoryBattleAction(actionId: string): void {
                 ? {}
                 : { playerCharacterId: currentPlayerCharacterId }),
               textEntriesById: activeContentContext.textEntriesById,
-              flowDefinitionsById: activeContentContext.gameContent.flowDefinitionsById,
+              flowPlayablesById: activeContentContext.gameContent.flowPlayablesById,
             }),
       },
       followUp: {
@@ -1381,7 +1383,7 @@ function dispatchCurrentFlowAction(
             activityDefinitionsById:
               activeContentContext.storyContent.activityDefinitionsById,
             textEntriesById: activeContentContext.textEntriesById,
-            flowDefinitionsById: activeContentContext.gameContent.flowDefinitionsById,
+            flowPlayablesById: activeContentContext.gameContent.flowPlayablesById,
           }),
       },
     },
@@ -1546,7 +1548,7 @@ function readCurrentCoreGameStateForSave() {
     runtime: {
       flags: { ...appState.gameState.runtime.flags },
       variables: { ...appState.gameState.runtime.variables },
-      activeEventId: appState.gameState.scene.activeEventId,
+      activeEventId: appState.gameState.dialogue.activeEventId,
       activeTaskIds: Object.values(
         appState.gameState.runtime.tasks.instancesByTaskId
       )
@@ -1564,7 +1566,7 @@ function normalizeSaveView(
     view === "map" ||
     view === "city" ||
     view === "house" ||
-    view === "scene"
+    view === "dialogue"
   ) {
     return view;
   }
@@ -1922,7 +1924,7 @@ function createScenarioPackAppState(
               )?.id ?? null,
           },
         },
-        activeSceneId: startupTarget.activeSceneId,
+        activeDialogueId: startupTarget.activeDialogueId,
         currentView: startupTarget.currentView,
       }),
       activeContentContext.cityNpcPools
@@ -2844,20 +2846,26 @@ appElement.addEventListener("click", (event) => {
   }
 
   const sceneAdvanceElement = targetElement.closest<HTMLElement>(
-    "[data-scene-action='advance']"
+    "[data-dialogue-action='advance']"
   );
-  if (sceneAdvanceElement != null && appState.gameState.ui.currentView === "scene") {
+  if (
+    sceneAdvanceElement != null &&
+    appState.gameState.ui.currentView === "dialogue"
+  ) {
     if (isActivityQteBlockingScene()) {
       return;
     }
-    advanceCurrentStoryScene();
+    advanceCurrentStoryDialogue();
     return;
   }
 
   const sceneChoiceButton = targetElement.closest<HTMLElement>(
-    "[data-scene-choice-id]"
+    "[data-dialogue-choice-id]"
   );
-  if (sceneChoiceButton != null && appState.gameState.ui.currentView === "scene") {
+  if (
+    sceneChoiceButton != null &&
+    appState.gameState.ui.currentView === "dialogue"
+  ) {
     if (isActivityQteBlockingScene()) {
       return;
     }
@@ -2917,12 +2925,12 @@ appElement.addEventListener("click", (event) => {
             activeContentContext.storyContent.eventDefinitionsById,
           eventBindingsById:
             activeContentContext.storyContent.eventBindingsById,
-          sceneDefinitionsById:
-            activeContentContext.storyContent.sceneDefinitionsById,
+          dialogueDefinitionsById:
+            activeContentContext.storyContent.dialogueDefinitionsById,
           activityDefinitionsById:
             activeContentContext.storyContent.activityDefinitionsById,
-          flowDefinitionsById:
-            activeContentContext.gameContent.flowDefinitionsById,
+          flowPlayablesById:
+            activeContentContext.gameContent.flowPlayablesById,
           textEntriesById: activeContentContext.storyContent.textEntriesById,
         },
         action: {

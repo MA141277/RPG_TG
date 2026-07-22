@@ -94,7 +94,8 @@ export function createAppRenderCoordinator(
       cityNameById: activeContentContext.cityNameById,
       textEntriesById: activeContentContext.textEntriesById,
       citySceneMappingsByCityId,
-      sceneDefinitionsById: activeContentContext.storyContent.sceneDefinitionsById,
+      dialogueDefinitionsById:
+        activeContentContext.storyContent.dialogueDefinitionsById,
     });
 
     appRoot.innerHTML = renderAppMarkup({
@@ -117,7 +118,7 @@ export function createAppRenderCoordinator(
       citySceneMappingsByCityId,
       historicalCharacters: activeContentContext.historicalCharacters,
       historicalCityRosters: activeContentContext.historicalCityRosters,
-      flowDefinitionsById: activeContentContext.gameContent.flowDefinitionsById,
+      flowPlayablesById: activeContentContext.gameContent.flowPlayablesById,
       presenterOutput,
     });
     dependencies.restoreCampaignTerrainCanvases(appRoot, preservedTerrainCanvases);

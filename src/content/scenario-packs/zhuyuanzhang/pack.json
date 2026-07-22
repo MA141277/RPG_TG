@@ -14,18 +14,18 @@
     "characters": "characters.json",
     "events": "events.json",
     "eventBindings": "event-bindings.json",
-    "scenes": "scenes.json",
     "textEntries": "text-entries.json",
     "activities": "activities.json",
     "cards": "cards.json",
     "valuables": "valuables.json",
     "cityNpcPools": "city-npc-pools.json",
-    "flowDefinitions": "flow-definitions.json",
+    "flowPlayables": "flow-playables.json",
     "locationAccess": "location-access.json",
     "houseModuleDefaults": "house-module-defaults.json",
     "cityPortraits": "city-portraits.json",
     "historicalCharacters": "historical-characters.json",
     "historicalCityRosters": "historical-city-rosters.json",
-    "historicalCharacterIdByCharacterId": "historical-character-id-map.json"
+    "historicalCharacterIdByCharacterId": "historical-character-id-map.json",
+    "dialogues": "dialogues.json"
   }
 }

@@ -1,5 +1,6 @@
 import { resolveContentPackMapAssetUrls } from "../content/content-pack-loader";
 import { assertHouseModuleDefaults } from "../content/house-module-defaults";
+import { GAME_VIEW_NAMES } from "../../domain/game-state";
 import type { ScenarioPackDefinition } from "../../domain/scenario-pack";
 
 export async function loadScenarioPackFromUrl(
@@ -98,11 +99,18 @@ export function parseScenarioPack(value: unknown): ScenarioPackDefinition {
   ) {
     throw new Error("scenario initialLocation.houseId must be string or null.");
   }
-  assertOptionalString(
-    value.scenarioProfile.initialLocation.sceneId,
-    "scenario initialLocation.sceneId"
+  if (
+    value.scenarioProfile.initialLocation.dialogueId !== undefined &&
+    value.scenarioProfile.initialLocation.dialogueId !== null &&
+    typeof value.scenarioProfile.initialLocation.dialogueId !== "string"
+  ) {
+    throw new Error("scenario initialLocation.dialogueId must be string or null.");
+  }
+  assertEnum(
+    value.scenarioProfile.initialLocation.view,
+    "scenario initialLocation.view",
+    GAME_VIEW_NAMES
   );
-  assertString(value.scenarioProfile.initialLocation.view, "scenario initialLocation.view");
   if (value.scenarioProfile.launchPolicy != null) {
     assertObject(value.scenarioProfile.launchPolicy, "scenario launchPolicy");
     assertOptionalEnum(
@@ -110,9 +118,10 @@ export function parseScenarioPack(value: unknown): ScenarioPackDefinition {
       "scenario launchPolicy.characterSelection",
       ["shell", "fixed"]
     );
-    assertOptionalString(
+    assertOptionalEnum(
       value.scenarioProfile.launchPolicy.initialView,
-      "scenario launchPolicy.initialView"
+      "scenario launchPolicy.initialView",
+      GAME_VIEW_NAMES
     );
     assertOptionalEnum(
       value.scenarioProfile.launchPolicy.entryEventTiming,
@@ -154,17 +163,18 @@ export function parseScenarioPack(value: unknown): ScenarioPackDefinition {
           );
         }
         if (
-          record.initialLocation.sceneId !== undefined &&
-          record.initialLocation.sceneId !== null &&
-          typeof record.initialLocation.sceneId !== "string"
+          record.initialLocation.dialogueId !== undefined &&
+          record.initialLocation.dialogueId !== null &&
+          typeof record.initialLocation.dialogueId !== "string"
         ) {
           throw new Error(
-            `scenario characterStartups[${index}].initialLocation.sceneId must be string or null.`
+            `scenario characterStartups[${index}].initialLocation.dialogueId must be string or null.`
           );
         }
-        assertOptionalString(
+        assertOptionalEnum(
           record.initialLocation.view,
-          `scenario characterStartups[${index}].initialLocation.view`
+          `scenario characterStartups[${index}].initialLocation.view`,
+          GAME_VIEW_NAMES
         );
       }
       if (record.initialUi != null) {
@@ -192,9 +202,10 @@ export function parseScenarioPack(value: unknown): ScenarioPackDefinition {
           record.launchPolicy,
           `scenario characterStartups[${index}].launchPolicy`
         );
-        assertOptionalString(
+        assertOptionalEnum(
           record.launchPolicy.initialView,
-          `scenario characterStartups[${index}].launchPolicy.initialView`
+          `scenario characterStartups[${index}].launchPolicy.initialView`,
+          GAME_VIEW_NAMES
         );
         assertOptionalEnum(
           record.launchPolicy.entryEventTiming,
@@ -243,7 +254,8 @@ export function parseScenarioPack(value: unknown): ScenarioPackDefinition {
   if (value.eventBindings != null) {
     assertArray(value.eventBindings, "scenario eventBindings");
   }
-  assertArray(value.scenes, "scenario scenes");
+  assertArray(value.dialogues, "scenario dialogues");
+  assertRuntimeDialoguesDoNotUseRetiredActions(value.dialogues);
   if (value.tasks != null) {
     assertArray(value.tasks, "scenario tasks");
   }
@@ -252,9 +264,18 @@ export function parseScenarioPack(value: unknown): ScenarioPackDefinition {
   }
   if (value.playableIntegrations != null) {
     assertArray(value.playableIntegrations, "scenario playable integrations");
+    assertPlayableIntegrationsDoNotUseRetiredSceneOwnerKind(
+      value.playableIntegrations
+    );
   }
   if (value.flowDefinitions != null) {
-    assertArray(value.flowDefinitions, "scenario flow definitions");
+    throw new Error(
+      'scenario flowDefinitions is retired; use flowPlayables as the content-only flow family.'
+    );
+  }
+  if (value.flowPlayables != null) {
+    assertArray(value.flowPlayables, "scenario flow playables");
+    assertFlowPlayablesDoNotUseRetiredSceneOwnerKind(value.flowPlayables);
   }
 
   if (value.activities != null) {
@@ -297,7 +318,14 @@ export function parseScenarioPack(value: unknown): ScenarioPackDefinition {
     );
   }
 
-  return value as ScenarioPackDefinition;
+  const runtimeDialogues = Array.isArray(value.dialogues)
+    ? (value.dialogues as NonNullable<ScenarioPackDefinition["dialogues"]>)
+    : [];
+
+  return {
+    ...(value as ScenarioPackDefinition),
+    dialogues: runtimeDialogues,
+  };
 }
 
 function assertRuntimeEventsDoNotUseRetiredTriggerFields(events: unknown[]): void {
@@ -314,15 +342,83 @@ function assertRuntimeEventsDoNotUseRetiredTriggerFields(events: unknown[]): voi
   });
 }
 
+function assertRuntimeDialoguesDoNotUseRetiredActions(dialogues: unknown[]): void {
+  dialogues.forEach((dialogueDefinition, index) => {
+    assertObject(dialogueDefinition, `scenario dialogues[${index}]`);
+    if (Object.hasOwn(dialogueDefinition, "actions")) {
+      throw new Error(
+        `scenario dialogues[${index}] uses retired actions[]; use dialogues[].nodes instead.`
+      );
+    }
+  });
+}
+
+function assertPlayableIntegrationsDoNotUseRetiredSceneOwnerKind(
+  playableIntegrations: unknown[]
+): void {
+  playableIntegrations.forEach((integrationDefinition, index) => {
+    assertObject(
+      integrationDefinition,
+      `scenario playableIntegrations[${index}]`
+    );
+    const ownerDefaults = isRecord(integrationDefinition.ownerDefaults)
+      ? integrationDefinition.ownerDefaults
+      : null;
+    const trigger = isRecord(integrationDefinition.trigger)
+      ? integrationDefinition.trigger
+      : null;
+    if (
+      ownerDefaults?.ownerKind === "scene" ||
+      trigger?.ownerKind === "scene"
+    ) {
+      throw new Error(
+        `scenario playableIntegrations[${index}] uses retired ownerKind "scene".`
+      );
+    }
+  });
+}
+
+function assertFlowPlayablesDoNotUseRetiredSceneOwnerKind(
+  flowPlayables: unknown[]
+): void {
+  flowPlayables.forEach((flowPlayable, index) => {
+    assertObject(flowPlayable, `scenario flowPlayables[${index}]`);
+    const record = flowPlayable as Record<string, unknown>;
+    if (record.ownerKind === "scene") {
+      throw new Error(
+        `scenario flowPlayables[${index}] uses retired ownerKind "scene".`
+      );
+    }
+    for (const retiredField of [
+      "playableId",
+      "integrationId",
+      "ownerKind",
+      "ownerId",
+      "returnPolicy",
+      "triggerId",
+      "triggerSource",
+      "triggerEvent",
+      "eventStartTarget",
+      "launchPayload",
+    ]) {
+      if (Object.hasOwn(record, retiredField)) {
+        throw new Error(
+          `scenario flowPlayables[${index}] uses retired routing field "${retiredField}".`
+        );
+      }
+    }
+  });
+}
+
 type ScenarioPackManifestFiles = {
   scenarioProfile: string;
   characters: string;
   events: string;
-  scenes: string;
+  dialogues: string;
   tasks?: string;
   playables?: string;
   playableIntegrations?: string;
-  flowDefinitions?: string;
+  flowPlayables?: string;
   cities?: string;
   houses?: string;
   buildingArrangements?: string;
@@ -707,7 +803,7 @@ function isScenarioPackManifest(value: unknown): value is ScenarioPackManifest {
     typeof files.scenarioProfile === "string" &&
     typeof files.characters === "string" &&
     typeof files.events === "string" &&
-    typeof files.scenes === "string"
+    typeof files.dialogues === "string"
   );
 }
 
@@ -732,6 +828,16 @@ function assertString(value: unknown, label: string): asserts value is string {
   }
 }
 
+function assertEnum<T extends string>(
+  value: unknown,
+  label: string,
+  allowedValues: readonly T[]
+): asserts value is T {
+  if (!allowedValues.includes(value as T)) {
+    throw new Error(`${label} must be one of: ${allowedValues.join(", ")}.`);
+  }
+}
+
 function assertOptionalString(
   value: unknown,
   label: string
@@ -749,4 +855,8 @@ function assertOptionalEnum<T extends string>(
   if (value != null && !allowedValues.includes(value as T)) {
     throw new Error(`${label} must be one of: ${allowedValues.join(", ")}.`);
   }
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value != null && typeof value === "object" && !Array.isArray(value);
 }

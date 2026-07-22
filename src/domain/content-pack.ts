@@ -44,7 +44,7 @@ export type ContentPackDefinition = {
   tasks?: TaskDefinition[];
   playables?: PlayableDefinition[];
   playableIntegrations?: PlayableIntegrationDefinition[];
-  flowDefinitions?: FlowPlayableDefinition[];
+  flowPlayables?: FlowPlayableDefinition[];
   activities?: ActivityDefinition[];
   cards?: CardDefinition[];
   valuables?: ValuableItemDefinition[];

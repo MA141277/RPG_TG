@@ -21,7 +21,7 @@ export type BuildingContainerEventStoryContent = {
   eventBindingsById?: Record<string, EventBinding> | undefined;
   dialogueDefinitionsById: Record<string, RuntimeDialogueDefinition>;
   activityDefinitionsById?: Record<string, ActivityDefinition> | undefined;
-  flowDefinitionsById?: Record<string, FlowPlayableDefinition> | undefined;
+  flowPlayablesById?: Record<string, FlowPlayableDefinition> | undefined;
   textEntriesById?: Record<string, string> | undefined;
 };
 
@@ -70,45 +70,44 @@ export function triggerBuildingContainerItemAction(
       characterDefinitions: input.characterDefinitions,
     };
   }
-
-  const activeFlow = Object.values(input.storyContent.flowDefinitionsById ?? {}).find(
-    (flowDefinition) =>
-      flowDefinition.ownerKind === "building" &&
-      flowDefinition.ownerId === currentHouseId &&
-      flowDefinition.eventStartTarget?.eventId ===
-        bindingResult.activation?.activeEventId
+  const activeEvent =
+    input.storyContent.eventDefinitionsById[bindingResult.activation.activeEventId] ?? null;
+  const launchFlowAction = activeEvent?.actions?.find(
+    (action): action is Extract<typeof action, { type: "launchFlow" }> =>
+      action.type === "launchFlow"
   );
-  if (activeFlow != null) {
-    const integrationId =
-      activeFlow.integrationId ?? `playable.${activeFlow.id}`;
-    const nextState = {
-      ...bindingResult.state,
-      dialogue: {
-        ...bindingResult.state.dialogue,
-        activeEventId: null,
-        activeDialogueId: null,
-        cursor: 0,
-        status: "idle" as const,
-      },
-      ui: {
-        ...bindingResult.state.ui,
-        currentView: "minigame" as const,
-      },
-      runtime: {
-        ...bindingResult.state.runtime,
-        playableSession: launchFlowPlayable({
-          definition: activeFlow,
-          integrationId,
-          ownerContext: {
-            ownerKind: "house",
-            ownerId: currentHouseId,
-            returnPolicy: activeFlow.returnPolicy ?? "reenter-owner",
-          },
-        }),
-      },
-    };
+  if (launchFlowAction != null) {
+    const activeFlow =
+      input.storyContent.flowPlayablesById?.[launchFlowAction.flowId] ?? null;
+    if (activeFlow == null) {
+      return {
+        state: bindingResult.state,
+        characterDefinitions: input.characterDefinitions,
+      };
+    }
     return {
-      state: nextState,
+      state: {
+        ...bindingResult.state,
+        dialogue: {
+          ...bindingResult.state.dialogue,
+          activeEventId: null,
+          activeDialogueId: null,
+          cursor: 0,
+          status: "idle" as const,
+        },
+        ui: {
+          ...bindingResult.state.ui,
+          currentView: "minigame" as const,
+        },
+        runtime: {
+          ...bindingResult.state.runtime,
+          playableSession: launchFlowPlayable({
+            definition: activeFlow,
+            integrationId: `playable.${activeFlow.id}`,
+            ownerContext: launchFlowAction.ownerContext,
+          }),
+        },
+      },
       characterDefinitions: input.characterDefinitions,
     };
   }

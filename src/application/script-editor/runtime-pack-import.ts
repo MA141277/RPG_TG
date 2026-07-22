@@ -19,6 +19,7 @@ import {
   SCRIPT_EDITOR_RUNTIME_PACK_SCHEMA_VERSION,
   type ScriptEditorAccessRule,
   type ScriptEditorBuildingArrangementRecord,
+  type ScriptEditorDialogueRecord,
   type ScriptEditorEntityRecord,
   type ScriptEditorEventRecord,
   type ScriptEditorEventTriggerTiming,
@@ -61,11 +62,11 @@ type RuntimePackManifestFiles = {
   scenarioProfile: string;
   characters: string;
   events: string;
-  scenes: string;
+  dialogues: string;
   tasks?: string;
   playables?: string;
   playableIntegrations?: string;
-  flowDefinitions?: string;
+  flowPlayables?: string;
   cities?: string;
   houses?: string;
   buildingArrangements?: string;
@@ -243,7 +244,7 @@ export function importScenarioPackToScriptEditorProject(
     cityEntries: pack.cityEntries ?? [],
     events: mapImportedEvents(pack.events ?? []),
     eventBindings: mapImportedEventBindings(rawPack),
-    scenes: pack.scenes ?? [],
+    dialogues: mapImportedRuntimeDialogues(rawPack),
     quests: pack.tasks ?? [],
     activities: pack.activities ?? [],
     cards: pack.cards ?? [],
@@ -256,9 +257,8 @@ export function importScenarioPackToScriptEditorProject(
     historicalCharacterIdByCharacterId: cloneStringRecord(
       pack.historicalCharacterIdByCharacterId
     ),
-    dialogues: [],
     minigames: mapImportedPlayableIntegrations(rawPack),
-    flows: readFlowDefinitionsFamily(rawPack),
+    flows: readFlowPlayablesFamily(rawPack),
     storyNodes: [],
     textEntries: mapTextEntries(pack.textEntries),
     conditionGroups: [],
@@ -316,6 +316,10 @@ function mapImportedEvents(events: EventDefinition[]): ScriptEditorEventRecord[]
       triggerTiming?: ScriptEditorEventTriggerTiming;
       repeatable?: boolean;
     };
+    const importedDialogueId =
+      typeof importedEvent.dialogueId === "string" && importedEvent.dialogueId.length > 0
+        ? importedEvent.dialogueId
+        : "";
 
     return {
       id: eventDefinition.id,
@@ -323,7 +327,6 @@ function mapImportedEvents(events: EventDefinition[]): ScriptEditorEventRecord[]
       description: buildImportedEventDescription(importedEvent),
       chapterId: eventDefinition.chapterId,
       occurrence: eventDefinition.occurrence,
-      entrySceneId: eventDefinition.entrySceneId,
       participants: eventDefinition.participants ?? [],
       actions: eventDefinition.actions ?? [],
       tags: eventDefinition.tags ?? [],
@@ -334,8 +337,11 @@ function mapImportedEvents(events: EventDefinition[]): ScriptEditorEventRecord[]
       taskInputs: eventDefinition.taskInputs ?? [],
       conditionGroups: [],
       destination: {
-        family: "event",
-        targetId: eventDefinition.nextEventId ?? "",
+        family: importedDialogueId.length > 0 ? "dialogue" : "event",
+        targetId:
+          importedDialogueId.length > 0
+            ? importedDialogueId
+            : eventDefinition.nextEventId ?? "",
       },
       relations: {
         storyNodeId: "",
@@ -345,8 +351,8 @@ function mapImportedEvents(events: EventDefinition[]): ScriptEditorEventRecord[]
       },
       previewSummary: {
         previewNotes:
-          typeof eventDefinition.entrySceneId === "string" && eventDefinition.entrySceneId.length > 0
-            ? `Imported runtime entry scene: ${eventDefinition.entrySceneId}`
+          importedDialogueId.length > 0
+            ? `Imported runtime dialogue: ${importedDialogueId}`
             : "",
         validationNotes: "",
       },
@@ -393,13 +399,135 @@ function buildImportedEventDescription(
   if (typeof eventDefinition.chapterId === "string" && eventDefinition.chapterId.length > 0) {
     summaryParts.push(`Chapter ${eventDefinition.chapterId}.`);
   }
-  if (typeof eventDefinition.entrySceneId === "string" && eventDefinition.entrySceneId.length > 0) {
-    summaryParts.push(`Entry scene ${eventDefinition.entrySceneId}.`);
+  const importedDialogueId =
+    typeof eventDefinition.dialogueId === "string" && eventDefinition.dialogueId.length > 0
+      ? eventDefinition.dialogueId
+      : "";
+  if (importedDialogueId.length > 0) {
+    summaryParts.push(`Dialogue ${importedDialogueId}.`);
   }
   if (typeof eventDefinition.nextEventId === "string" && eventDefinition.nextEventId.length > 0) {
     summaryParts.push(`Next event ${eventDefinition.nextEventId}.`);
   }
   return summaryParts.join(" ");
+}
+
+function mapImportedRuntimeDialogues(
+  rawPack: Record<string, unknown>
+): ScriptEditorDialogueRecord[] {
+  const importedDialogues = Array.isArray(rawPack.dialogues)
+    ? rawPack.dialogues
+    : [];
+
+  return importedDialogues.flatMap((value, dialogueIndex) => {
+    if (value == null || typeof value !== "object" || Array.isArray(value)) {
+      return [];
+    }
+
+    const runtimeDialogue = value as Record<string, unknown>;
+    const id = readString(runtimeDialogue.id) || `dialogue.imported.${dialogueIndex + 1}`;
+    const title = readString(runtimeDialogue.name) || id;
+    if (!Array.isArray(runtimeDialogue.nodes)) {
+      if (Array.isArray(runtimeDialogue.actions)) {
+        throw new Error(
+          `Imported runtime dialogue "${id}" still uses retired actions[]; use dialogues[].nodes instead.`
+        );
+      }
+      return [];
+    }
+    const rawNodes = runtimeDialogue.nodes;
+    const nodes = rawNodes.flatMap((nodeValue, nodeIndex) =>
+      mapImportedRuntimeDialogueNode(nodeValue, nodeIndex)
+    );
+    const participantPersonIds = Array.from(
+      new Set(
+        rawNodes.flatMap((nodeValue) => {
+          if (
+            nodeValue == null ||
+            typeof nodeValue !== "object" ||
+            Array.isArray(nodeValue)
+          ) {
+            return [];
+          }
+
+          const characterId = readString(
+            (nodeValue as Record<string, unknown>).characterId
+          );
+          return characterId.length > 0 ? [characterId] : [];
+        })
+      )
+    );
+
+    return [
+      {
+        id,
+        title,
+        participantPersonIds,
+        nodes,
+      },
+    ];
+  });
+}
+
+function mapImportedRuntimeDialogueNode(
+  value: unknown,
+  nodeIndex: number
+): NonNullable<ScriptEditorDialogueRecord["nodes"]> {
+  if (value == null || typeof value !== "object" || Array.isArray(value)) {
+    return [];
+  }
+
+  const node = value as Record<string, unknown>;
+  const type = readString(node.type);
+  const baseId = readString(node.id) || `imported-node-${nodeIndex + 1}`;
+
+  if (type === "dialogue") {
+    return [
+      {
+        id: baseId,
+        nodeType: "dialogue",
+        speakerPersonId: readString(node.characterId),
+        textId: readString(node.textId),
+        nextNodeId: "",
+        choiceTargetNodeId: "",
+      },
+    ];
+  }
+
+  if (type === "narration") {
+    return [
+      {
+        id: baseId,
+        nodeType: "narration",
+        speakerPersonId: "",
+        textId: readString(node.textId),
+        nextNodeId: "",
+        choiceTargetNodeId: "",
+      },
+    ];
+  }
+
+  if (type === "choice") {
+    const options = Array.isArray(node.options) ? node.options : [];
+    const firstOption =
+      options.find(
+        (option): option is Record<string, unknown> =>
+          option != null && typeof option === "object" && !Array.isArray(option)
+      ) ?? null;
+    return [
+      {
+        id: baseId,
+        nodeType: "choice",
+        speakerPersonId: "",
+        textId: readString(node.promptTextId),
+        nextNodeId: "",
+        choiceTargetNodeId:
+          firstOption == null ? "" : readString(firstOption.nextDialogueId),
+      },
+    ];
+  }
+
+  return [];
 }
 
 function mapTextEntries(
@@ -442,6 +570,11 @@ function mapImportedPlayableIntegrations(
         : typeof trigger?.ownerKind === "string"
           ? trigger.ownerKind
           : "external";
+    if (!isSupportedImportedMinigameOwnerKind(ownerKind)) {
+      throw new Error(
+        `Imported playable integration "${integration.integrationId}" uses retired ownerKind "${ownerKind}".`
+      );
+    }
     const returnPolicy =
       typeof ownerDefaults.returnPolicy === "string"
         ? ownerDefaults.returnPolicy
@@ -458,7 +591,7 @@ function mapImportedPlayableIntegrations(
         description: "",
         playableId: integration.playableId,
         integrationId: integration.integrationId,
-        ownerKind: normalizeImportedOwnerKind(ownerKind),
+        ownerKind,
         ownerId:
           typeof ownerDefaults.ownerId === "string" ? ownerDefaults.ownerId : "",
         returnPolicy: normalizeImportedReturnPolicy(returnPolicy),
@@ -496,12 +629,15 @@ function mapImportedOutcomeRoutes(
   );
 }
 
-function normalizeImportedOwnerKind(
+function isSupportedImportedMinigameOwnerKind(
   value: string
-): ScriptEditorMinigameOwnerKind {
-  return value === "house" || value === "scene" || value === "task" || value === "external"
-    ? value
-    : "external";
+): value is ScriptEditorMinigameOwnerKind {
+  return (
+    value === "house" ||
+    value === "dialogue" ||
+    value === "task" ||
+    value === "external"
+  );
 }
 
 function normalizeImportedReturnPolicy(
@@ -537,13 +673,65 @@ function readEntityArrayFamily(
   return readArrayFamily(rawPack, familyKey) as ScriptEditorEntityRecord[];
 }
 
-function readFlowDefinitionsFamily(
+function readFlowPlayablesFamily(
   rawPack: Record<string, unknown>
 ): ScriptEditorProjectDefinition["flows"] {
-  const value = rawPack.flowDefinitions;
-  return Array.isArray(value)
-    ? (cloneJsonCompatibleValue(value) as ScriptEditorProjectDefinition["flows"])
-    : [];
+  if (rawPack.flowDefinitions != null) {
+    throw new Error(
+      'Imported runtime pack still uses retired family "flowDefinitions"; use "flowPlayables" instead.'
+    );
+  }
+
+  const value = rawPack.flowPlayables;
+  if (!Array.isArray(value)) {
+    return [];
+  }
+  return value.map((flow, index) => mapImportedFlowPlayable(flow, index));
+}
+
+function mapImportedFlowPlayable(
+  value: unknown,
+  index: number
+): ScriptEditorProjectDefinition["flows"][number] {
+  if (value == null || typeof value !== "object" || Array.isArray(value)) {
+    throw new Error(`Imported flowPlayables[${index}] must be an object.`);
+  }
+
+  const flow = value as Record<string, unknown>;
+  for (const retiredField of [
+    "playableId",
+    "integrationId",
+    "ownerKind",
+    "ownerId",
+    "returnPolicy",
+    "triggerId",
+    "triggerSource",
+    "triggerEvent",
+    "eventStartTarget",
+    "launchPayload",
+  ]) {
+    if (Object.hasOwn(flow, retiredField)) {
+      throw new Error(
+        `Imported flowPlayables[${index}] still carries retired routing field "${retiredField}".`
+      );
+    }
+  }
+
+  return {
+    id: readString(flow.id) || `flow.imported.${index + 1}`,
+    title: readString(flow.title) || readString(flow.id) || `flow.imported.${index + 1}`,
+    description: readString(flow.description),
+    initialNodeId: readString(flow.initialNodeId) || "node.start",
+    nodes: Array.isArray(flow.nodes)
+      ? (cloneJsonCompatibleValue(flow.nodes) as ScriptEditorProjectDefinition["flows"][number]["nodes"])
+      : [],
+    outcomeRoutes: Array.isArray(flow.outcomeRoutes)
+      ? (cloneJsonCompatibleValue(
+          flow.outcomeRoutes
+        ) as ScriptEditorProjectDefinition["flows"][number]["outcomeRoutes"])
+      : [],
+    notes: readString(flow.notes),
+  };
 }
 
 function readBuildingArrangementsFamily(
@@ -1020,7 +1208,7 @@ function isScenarioPackManifest(value: unknown): value is RuntimePackManifest {
     typeof files.scenarioProfile === "string" &&
     typeof files.characters === "string" &&
     typeof files.events === "string" &&
-    typeof files.scenes === "string"
+    typeof files.dialogues === "string"
   );
 }
 

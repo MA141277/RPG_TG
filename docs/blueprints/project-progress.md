@@ -5,8 +5,8 @@
 - entry_id: `project-progress.rpg-tg`
 - active_blueprint: `blueprint.rpg-tg`
 - active_version: `target.script-editor-event-centered-authoring-scene-retirement-and-portrait-resource-refactor`
-- has_active_queue: `true`
-- next_file: `docs/blueprints/queues/scene-family-retirement-and-content-migration-queue.md`
+- has_active_queue: `false`
+- next_file: `docs/blueprints/plans/2026-07-22-script-editor-event-centered-authoring-scene-retirement-and-portrait-resource-refactor-target-plan.md`
 - entry_action: `open-next-file`
 
 ## Human Context
@@ -29,7 +29,7 @@
 - Current Version Plan:
   - `docs/blueprints/plans/2026-07-22-script-editor-event-centered-authoring-scene-retirement-and-portrait-resource-refactor-target-plan.md`
 - Current Active Queue:
-  - `queue.scene-family-retirement-and-content-migration`
+  - `none`
 
 ### Live Entry Guardrails
 
@@ -81,7 +81,9 @@
 - `Current entry pointers now route to target.script-editor-event-centered-authoring-scene-retirement-and-portrait-resource-refactor as the lawful active open successor version created from MEMO-025.`
 - `queue.script-editor-event-centered-authoring-model-unification is now closed after ACC-EVENT-CENTER-001 verification confirmed creator-facing event-centered semantics and destination-family ownership with no same-family residue in that bounded queue.`
 - `queue.event-router-only-trigger-contract-freeze is now closed after ACC-EVENT-CENTER-002 verification confirmed event-only runtime routing truth and shared trigger timing/context contract freeze with no same-family residue in that bounded queue.`
-- `queue.scene-family-retirement-and-content-migration is now the active queue under the MEMO-025 successor target. Its evidence-anchor reconcile is complete, and implementation is now confined to ACC-EVENT-CENTER-003 / 004 / 007: formal scene-family retirement, content migration, and no-compatibility-residue removal.`
+- `queue.scene-family-retirement-and-content-migration is now closed after ACC-EVENT-CENTER-003 / 004 / 007 verification confirmed formal scene retirement, preserved building creator-facing meaning, and no same-family compatibility residue in production truth.`
+- `queue.event-centered-runtime-pack-preview-export-sync is now closed after ACC-EVENT-CENTER-005 verification confirmed no-scene preview/export/import/loader/runtime-startup parity with no same-family residue.`
+- `queue.event-only-routing-family-retirement-and-reference-replacement is now closed locally after creator-facing flow-shell retirement, canonical flowPlayables replacement, retired flowDefinitions rejection, and targeted verification. No active queue is lawful until the version-local repository sync batch result is recorded.`
 
 ### Historical References
 

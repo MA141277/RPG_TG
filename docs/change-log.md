@@ -5,7 +5,44 @@
 `docs/change-log.md` 的正式定位是“历史记录 + 人类可读摘要”。
 它不是当前 Blueprint / legacy superpowers 治理的 live execution truth，不作为 resume entry、promotion gate、closeout gate 或固定同步门。
 
+## 2026-07-22 Event-Only Routing Family Replacement Closeout
+
+### Changed
+- 更新 [src/domain/content-pack.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/domain/content-pack.ts)、[src/application/content/active-game-content.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/content/active-game-content.ts)、[src/application/content/content-pack-loader.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/content/content-pack-loader.ts)、[src/application/scenario/scenario-pack-loader.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/scenario/scenario-pack-loader.ts)、[src/application/script-editor/runtime-pack-export.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/runtime-pack-export.ts) 与 [src/application/script-editor/runtime-pack-import.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/runtime-pack-import.ts)，把 runtime/content canonical flow family 从 `flowDefinitions` 正式替换为 `flowPlayables`，并让 manifest / import / loader 对退役的 `flowDefinitions` fail closed，不再保留双轨真值或兼容桥。
+- 更新 [src/core/runtime/playable-runtime.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/core/runtime/playable-runtime.ts)、[src/application/runtime/interactive-action-coordinator.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/runtime/interactive-action-coordinator.ts)、[src/application/building/building-container-event-runtime.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/building/building-container-event-runtime.ts)、[src/application/presenter/app-render-coordinator.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/presenter/app-render-coordinator.ts)、[src/ui/app-render.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/app-render.ts) 与 [src/main.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/main.ts)，统一运行时预览、building launchFlow、presenter 和主入口的 flow playable 查找路径为 `flowPlayablesById`，确保 event-owned launchFlow 之后不再回落到旧 family 名称。
+- 更新 [src/content/scenario-packs/zhuyuanzhang/pack.json](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/content/scenario-packs/zhuyuanzhang/pack.json) 并将 [src/content/scenario-packs/zhuyuanzhang/flow-playables.json](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/content/scenario-packs/zhuyuanzhang/flow-playables.json) 作为新的 canonical 文件名，收口内置包对 content-only flow playable family 的正式声明。
+- 更新 [tests/city-building-mount-authoring.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/city-building-mount-authoring.test.cjs) 与 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，把 round-trip、loader rejection、built-in hydration、runtime preview lookup 和 source guard 全部改到 `flowPlayables` / `flowPlayablesById`，防止 event-only routing queue 只做 UI 隐藏而没有真正替换 canonical truth。
+- 同步 [docs/blueprints/queues/event-only-routing-family-retirement-and-reference-replacement-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/event-only-routing-family-retirement-and-reference-replacement-queue.md)、[docs/blueprints/plans/2026-07-22-script-editor-event-centered-authoring-scene-retirement-and-portrait-resource-refactor-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-22-script-editor-event-centered-authoring-scene-retirement-and-portrait-resource-refactor-target-plan.md) 与 [docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)，记录当前 queue 已 local closeout，下一步需先满足 version-local repository sync gate，之后才能 admission portrait queue。
+
+### Impact
+- `queue.event-only-routing-family-retirement-and-reference-replacement` 不再只是“隐藏 flows UI”；它已经把 runtime/content/export/import/loader/preview 的 canonical truth 一次性替换成 `flowPlayables`，并对退役的 `flowDefinitions` fail closed，满足 no-compatibility-residue 方向。
+- 当前 version 的下一个 lawful action 不是直接开 portrait queue，而是先完成该 queue 的 repository sync batch 记录；只有同步结果返回后，portrait queue admission 才合法。
+
 ## 2026-07-22 Script Editor Event-Centered Authoring Model Unification
+
+## 2026-07-22 Scene Retirement Closeout And Runtime Pack Sync Start
+
+### Changed
+- 更新 [src/application/script-editor/runtime-pack-import.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/runtime-pack-import.ts) 与 [src/application/scenario/scenario-pack-loader.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/scenario/scenario-pack-loader.ts)，将导入的 `playableIntegrations` 明确分流为 `flow` 与 `minigame` 两类：凡是已由 `flowDefinitions` 声明的 integration，不再错误落入 `project.minigames`，同时让编辑器兼容导入与正常 scenario-pack 加载都对退役的 scene-era ownerKind 和 `dialogues[].actions` 形态 fail closed。
+- 更新 [tests/city-building-mount-authoring.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/city-building-mount-authoring.test.cjs)，补充 round-trip 守卫，要求 building-owned flow integration 在 runtime pack 导入后只保留到 `flows`，不得再被误分类到 `minigames`。
+- 同步 [docs/blueprints/queues/scene-family-retirement-and-content-migration-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/scene-family-retirement-and-content-migration-queue.md)、[docs/blueprints/queues/event-centered-runtime-pack-preview-export-sync-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/event-centered-runtime-pack-preview-export-sync-queue.md)、[docs/blueprints/plans/2026-07-22-script-editor-event-centered-authoring-scene-retirement-and-portrait-resource-refactor-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-22-script-editor-event-centered-authoring-scene-retirement-and-portrait-resource-refactor-target-plan.md) 与 [docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)，记录 `scene-family-retirement-and-content-migration` 正式 closeout，并把当前 active queue 切换到 `event-centered-runtime-pack-preview-export-sync`。
+
+### Impact
+- `scene-family-retirement-and-content-migration` 现在可以合法 closeout：formal scene family 已退出 production truth，后续工作不再允许把 scene 退役残留伪装成 runtime/export/import 收口任务。
+- `event-centered-runtime-pack-preview-export-sync` 已正式启动，当前第一批实现重点是把 preview/export/import/loader/runtime 全部锁到同一份 no-scene canonical truth，而不是容忍 editor/runtime 通过宽松兼容重新分叉。
+
+## 2026-07-22 Scene Family Retirement And Content Migration Progress
+
+### Changed
+- 更新 [src/application/script-editor/runtime-pack-export.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/runtime-pack-export.ts) 与 [src/application/scenario/scenario-pack-loader.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/scenario/scenario-pack-loader.ts)，为 scenario profile 与 character startup `initialLocation` 正式补齐 `dialogueId` 契约，避免 scene 退役后启动导出/加载链路仍只认 `houseId/view` 而丢失直接对话启动目标。
+- 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，把导入朱元璋 runtime 包后的 round-trip 断言从旧 `SceneDefinition/actions/entrySceneId` 真值改到当前 `dialogue/nodes/dialogueId` 真值，并修正 `main.ts` runtime commit 守卫对 `advanceCurrentStoryDialogue` 的源码匹配。
+- 更新 [src/application/runtime/main-runtime-orchestrator.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/runtime/main-runtime-orchestrator.ts)、[src/application/runtime/navigation-time-follow-up.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/runtime/navigation-time-follow-up.ts)、[src/application/runtime/indoor-screen-story-follow-up.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/runtime/indoor-screen-story-follow-up.ts)、[src/core/runtime/scene-choice-resolution.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/core/runtime/scene-choice-resolution.ts) 与 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，把 runtime/测试中的 `scene-runtime`、`scene-runner`、`scene choice-resolver` 包装层改为直接依赖 `dialogue-runtime`、`dialogue-runner` 与 `dialogue-choice-resolver`。
+- 删除 [src/application/scene/scene-runner.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/scene/scene-runner.ts)、[src/application/scene/choice-resolver.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/scene/choice-resolver.ts) 与 [src/core/runtime/scene-runtime.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/core/runtime/scene-runtime.ts)，移除这一批已经退化为命名兼容壳的 `scene` 桥接层。
+
+### Impact
+- 启动态正式支持 `dialogueId` 后，event-centered + no-scene 路径下的“直接进对话”不再靠旧 scene 启动字段旁路维持；这条链路已经在导出、loader 和 robustness 回归里被锁定。
+- `scene` 在 runtime 代码层又少了一层正式包装命名，但当前 queue 还没有完成 closeout：`scenes.json`、scenario-pack manifest `files.scenes`、import/export 对旧 `scenes` 表的兼容读取，以及内置内容文件名仍然存在，说明 formal scene family 还没有彻底退出 canonical pack truth。
+- 当前自动验证通过 `npm run typecheck`、`npm run lint:blueprints`、`npm test -- --runInBand tests/robustness.test.cjs`；这证明本批迁移没有引入新回归，但不代表 `scene-family-retirement-and-content-migration` 已经完成。
 
 ### Changed
 - 更新 [src/domain/script-editor-project.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/domain/script-editor-project.ts) 与 [src/application/script-editor/story-dialogue-event-authoring.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/story-dialogue-event-authoring.ts)，把 `task` 纳入正式 `ScriptEditorEventDestinationFamily`，使 `quests` 可以作为事件去向目标进入作者面合同，而不是继续缺席于 event-centered 语义模型。
@@ -3310,3 +3347,18 @@
 ### Impact
 - Entering the covered Kulan buildings can again trigger pre-refactor-style greeting dialogue through scenario-pack data.
 - The same restored enter-dialogue routes are now visible to the script editor after importing the built-in `zhuyuanzhang` pack, keeping later adjustment on the authoring path.
+
+## 2026-07-22 No-Scene Startup Contract Convergence
+
+### Added
+- Added a shared runtime `ViewName` contract helper so scenario-pack loading, runtime export validation, and startup metadata can all fail close on retired startup views instead of silently accepting legacy `scene` startup truth.
+- Added regression coverage for retired startup `scene` views, dialogue startup round-trip through runtime packs, and mod startup metadata alignment on the shared startup target resolver.
+
+### Changed
+- Scenario-pack loader and script-editor runtime export now reject retired startup `scene` views in `scenarioProfile.initialLocation.view`, `launchPolicy.initialView`, and character startup overrides.
+- Scenario startup target resolution is now shared between startup-session application and mod startup metadata so dialogue startup view and dialogue id are preserved through one canonical resolver.
+- The built-in Liu Bang scenario pack now starts from a no-scene startup view that stays compatible with the event-centered startup contract.
+
+### Impact
+- Normal start, JSON runtime-pack import, and Script Editor runtime preview now agree on the same startup-view contract instead of letting legacy `scene` startup values leak through different entry paths.
+- Runtime-pack export/import, loader validation, and activated mod startup metadata no longer keep a hidden scene-era startup divergence after scene retirement.

@@ -38,7 +38,10 @@ import { renderCity3dView } from "./views/city/city-3d-view";
 import { renderCityModuleView } from "./views/city/city-module-view";
 import { renderCityBeggingMiniGameOverlay } from "./views/minigames/city-begging-minigame-view";
 import { createMapViewModel, renderMapView } from "./views/map/map-view";
-import { renderActivityOverlay, renderSceneView } from "./views/scene/scene-view";
+import {
+  renderActivityOverlay,
+  renderDialogueView,
+} from "./views/dialogue/dialogue-view";
 import { renderStoryBattleView } from "./views/battle/story-battle-view";
 import {
   renderFlowPlayableOverlay,
@@ -69,7 +72,7 @@ export type AppRenderInput = {
   historicalCharacters?: HistoricalCharacterRecord[];
   historicalCityRosters?: HistoricalCityRoster[];
   presenterOutput: AppPresenterOutput;
-  flowDefinitionsById?: Record<string, FlowPlayableDefinition>;
+  flowPlayablesById?: Record<string, FlowPlayableDefinition>;
 };
 
 function getPlayerCharacter(
@@ -272,7 +275,7 @@ function renderLocationDialogue(
     body: dialogueState.textLines,
     hintText: dialogueState.advanceHintText,
     ariaLabel: "地点对话",
-    footerClassName: "c-grain-shop-dialogue c-scene-dialogue c-location-dialogue",
+    footerClassName: "c-grain-shop-dialogue c-dialogue-surface c-location-dialogue",
     action: {
       id: "close-location-dialogue",
       label: dialogueState.advanceHintText,
@@ -289,7 +292,7 @@ function renderLocationDialogue(
   });
 
   /*
-    <footer class="c-grain-shop-dialogue c-scene-dialogue c-location-dialogue" aria-label="地点对话">
+    <footer class="c-grain-shop-dialogue c-dialogue-surface c-location-dialogue" aria-label="地点对话">
       <div
         class="c-grain-shop-dialogue__text c-grain-shop-skin-card c-grain-shop-dialogue__text--clickable"
         data-action="close-location-dialogue"
@@ -354,7 +357,7 @@ function renderCitySceneUnderlay(
   playerCharacter: CharacterDefinition
 ): string {
   return `
-    <div class="view-scene__underlay" aria-hidden="true">
+    <div class="view-dialogue__underlay" aria-hidden="true">
       ${renderCityModuleView({
         stage: {
           type: "city",
@@ -379,7 +382,7 @@ function renderBuildingSceneUnderlay(
   input: AppRenderInput
 ): string {
   return `
-    <div class="view-scene__underlay" aria-hidden="true">
+    <div class="view-dialogue__underlay" aria-hidden="true">
       ${renderBuildingModuleView({
         stage: {
           type: "building",
@@ -403,10 +406,10 @@ function renderStage(
   if (
     input.appState.gameState.ui.currentView === "minigame" &&
     input.appState.gameState.runtime.playableSession?.family === "flow" &&
-    input.flowDefinitionsById != null
+    input.flowPlayablesById != null
   ) {
     const session = input.appState.gameState.runtime.playableSession;
-    const definition = input.flowDefinitionsById[session.playableId];
+    const definition = input.flowPlayablesById[session.playableId];
     if (definition != null) {
       if (session.ownerContext.ownerKind === "house" && stage.type === "building") {
         return `
@@ -482,7 +485,7 @@ function renderStage(
           ? undefined
           : renderCitySceneUnderlay(stage.cityUnderlay, input, playerCharacter);
 
-    return renderSceneView({
+    return renderDialogueView({
       currentAction: stage.currentDialogueNode,
       activitySession: input.appState.gameState.runtime.activitySession,
       characterDefinitions: input.appState.characterDefinitions,

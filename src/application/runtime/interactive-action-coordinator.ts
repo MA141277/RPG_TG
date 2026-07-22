@@ -25,7 +25,7 @@ export type InteractiveActionCoordinatorDependencies = {
   getPlayerCharacterId(): string | null;
   getActivityDefinitionsById(): Record<string, ActivityDefinition>;
   getTextEntriesById(): Record<string, string>;
-  getFlowDefinitionsById(): Record<string, import("../../domain/playables/flow").FlowPlayableDefinition>;
+  getFlowPlayablesById(): Record<string, import("../../domain/playables/flow").FlowPlayableDefinition>;
   executeMainRuntime(request: MainRuntimeOrchestratorRequest): void;
   applyInteractiveFollowUp(
     interactive: Exclude<NonNullable<RuntimeInteractiveSignal>, { type: "none" }>
@@ -105,9 +105,9 @@ export function createInteractiveActionCoordinator(
     return false;
   }
 
-  function advanceCurrentStoryScene(): void {
+  function advanceCurrentStoryDialogue(): void {
     dependencies.executeMainRuntime({
-      type: "advance-story-scene",
+      type: "advance-story-dialogue",
     });
     renderApp();
   }
@@ -137,7 +137,7 @@ export function createInteractiveActionCoordinator(
               characterDefinitions: appState.characterDefinitions,
               ...(playerCharacterId == null ? {} : { playerCharacterId }),
               textEntriesById: dependencies.getTextEntriesById(),
-              flowDefinitionsById: dependencies.getFlowDefinitionsById(),
+              flowPlayablesById: dependencies.getFlowPlayablesById(),
             }),
         },
         followUp: {
@@ -176,7 +176,7 @@ export function createInteractiveActionCoordinator(
 
   return {
     handleActivityAction,
-    advanceCurrentStoryScene,
+    advanceCurrentStoryDialogue,
     chooseCurrentStoryOption,
     dispatchCurrentStoryBattleAction,
     handleBattleDemoResultMessage,

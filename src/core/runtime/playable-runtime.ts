@@ -86,7 +86,7 @@ type InteractivePlayableId = "activity-qte" | "city-begging" | "story-battle";
 
 type InteractivePlayableSource =
   | { type: "house"; houseId: string }
-  | { type: "scene"; sceneId: string }
+  | { type: "dialogue"; dialogueId: string }
   | { type: "external"; id: string };
 
 type ResolvedPlayableRuntimeRequest =
@@ -234,7 +234,7 @@ export function runPlayableRuntime(input: {
   playerCharacterId?: string;
   activityDefinitionsById?: Record<string, ActivityDefinition>;
   textEntriesById?: Record<string, string> | undefined;
-  flowDefinitionsById?: Record<string, FlowPlayableDefinition> | undefined;
+  flowPlayablesById?: Record<string, FlowPlayableDefinition> | undefined;
 }): PlayableRuntimeOutput {
   const resolvedRequest = toPlayableRuntimeRequest(input.request);
   if (resolvedRequest == null) {
@@ -248,10 +248,10 @@ export function runPlayableRuntime(input: {
 
   if (resolvedRequest.phase === "launch") {
     if (resolvedRequest.launch.launch.family === "flow") {
-      const flowDefinition =
-        input.flowDefinitionsById?.[resolvedRequest.launch.launch.playableId] ??
+      const flowPlayable =
+        input.flowPlayablesById?.[resolvedRequest.launch.launch.playableId] ??
         null;
-      if (flowDefinition == null) {
+      if (flowPlayable == null) {
         return {
           state: input.state,
           effects: [],
@@ -274,7 +274,7 @@ export function runPlayableRuntime(input: {
           runtime: {
             ...input.state.core.runtime,
             playableSession: launchFlowPlayable({
-              definition: flowDefinition,
+              definition: flowPlayable,
               integrationId: resolvedRequest.launch.launch.integrationId,
               ownerContext: resolvedRequest.launch.launch.ownerContext,
             }),
@@ -285,7 +285,7 @@ export function runPlayableRuntime(input: {
         state: nextState,
         effects: [],
         handled: true,
-        session: getActivePlayableSession(nextState, flowDefinition.id),
+        session: getActivePlayableSession(nextState, flowPlayable.id),
       };
     }
 
@@ -546,9 +546,9 @@ export function runPlayableRuntime(input: {
     input.state,
     resolvedRequest.playableId
   );
-  const flowDefinition =
-    input.flowDefinitionsById?.[resolvedRequest.playableId] ?? null;
-  if (activeFlowSession?.family === "flow" && flowDefinition != null) {
+  const flowPlayable =
+    input.flowPlayablesById?.[resolvedRequest.playableId] ?? null;
+  if (activeFlowSession?.family === "flow" && flowPlayable != null) {
     const command = toFlowPlayableCommand(
       resolvedRequest.action,
       resolvedRequest.payload
@@ -563,7 +563,7 @@ export function runPlayableRuntime(input: {
     }
 
     const reduction = reduceFlowPlayable({
-      definition: flowDefinition,
+      definition: flowPlayable,
       session: activeFlowSession,
       command,
     });
@@ -1152,8 +1152,8 @@ function tryLaunchPlayableFromFlowCompletion(input: {
   const currentView =
     ownerContext.ownerKind === "house"
       ? ("house" as const)
-      : ownerContext.ownerKind === "scene"
-        ? ("scene" as const)
+      : ownerContext.ownerKind === "dialogue"
+        ? ("dialogue" as const)
         : input.input.state.core.ui.currentView;
   const preparedState = {
     ...input.input.state,
@@ -1282,8 +1282,8 @@ function getActivePlayableSession(
     return createInteractivePlayableSession({
       playableId: "activity-qte",
       source: {
-        type: "scene",
-        sceneId: state.core.scene.activeSceneId ?? "scene.unknown",
+        type: "house",
+        houseId: state.core.world.currentHouseId ?? "house.unknown",
       },
     });
   }
@@ -1292,8 +1292,8 @@ function getActivePlayableSession(
     return createInteractivePlayableSession({
       playableId: "story-battle",
       source: {
-        type: "scene",
-        sceneId: state.core.scene.activeSceneId ?? "scene.unknown",
+        type: "house",
+        houseId: state.core.world.currentHouseId ?? "house.unknown",
       },
     });
   }
@@ -1439,7 +1439,7 @@ function normalizeOwnerContext(input: {
   const ownerKind = merged.ownerKind;
   if (
     ownerKind !== "house" &&
-    ownerKind !== "scene" &&
+    ownerKind !== "dialogue" &&
     ownerKind !== "task" &&
     ownerKind !== "external"
   ) {
@@ -1493,13 +1493,13 @@ function createInteractiveOwnerContext(input: {
     };
   }
 
-  if (input.source.type !== "scene") {
+  if (input.source.type !== "dialogue") {
     return null;
   }
 
   return {
-    ownerKind: "scene",
-    ownerId: input.source.sceneId,
+    ownerKind: "dialogue",
+    ownerId: input.source.dialogueId,
     returnPolicy:
       input.playableId === "activity-qte" ? "resume-owner" : "reenter-owner",
   };
@@ -1528,11 +1528,11 @@ function getInteractivePlayableIntegrationId(
   playableId: InteractivePlayableId
 ): PlayableIntegrationId {
   if (playableId === "activity-qte") {
-    return "playable.activity-qte.scene.default";
+    return "playable.activity-qte.dialogue.default";
   }
 
   if (playableId === "story-battle") {
-    return "playable.story-battle.scene.default";
+    return "playable.story-battle.dialogue.default";
   }
 
   return "playable.city-begging.external.default";

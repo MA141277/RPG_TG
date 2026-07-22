@@ -127,8 +127,8 @@ const {
 } = require("../.test-dist/application/story/story-callbacks.js");
 const { startEvent } = require("../.test-dist/application/events/event-runner.js");
 const {
-  runSceneUntilPause,
-} = require("../.test-dist/application/scene/scene-runner.js");
+  runDialogueUntilPause,
+} = require("../.test-dist/application/dialogue/dialogue-runner.js");
 const {
   loadDefaultRuntimeContent,
 } = require("../.test-dist/application/content/default-runtime-content.js");
@@ -136,7 +136,7 @@ const {
   loadContentPackFromManifestText,
 } = require("../.test-dist/application/content/content-pack-loader.js");
 const {
-  sampleScene,
+  sampleDialogue,
 } = require("../.test-dist/content/sample-scenario.js");
 const {
   adjustActivityFortuneBoardWager,
@@ -261,13 +261,13 @@ test(
         ),
         true
       );
-      assert.equal(Array.isArray(pack.flowDefinitions), true);
+      assert.equal(Array.isArray(pack.flowPlayables), true);
       assert.ok(
-        pack.flowDefinitions.length > 0,
-        "Expected built-in scenario pack hydration to populate flowDefinitions."
+        pack.flowPlayables.length > 0,
+        "Expected built-in scenario pack hydration to populate flowPlayables."
       );
       assert.equal(
-        pack.flowDefinitions.some(
+        pack.flowPlayables.some(
           (flowDefinition) =>
             flowDefinition.id === "flow.building.house.kulan.temple.review"
         ),
@@ -546,7 +546,6 @@ function createSampleScriptEditorProjectDefinition() {
     cityEntries: [],
     events: [{ id: "event.opening", title: "Opening Event" }],
     eventBindings: [],
-    scenes: [],
     quests: [{ id: "quest.first", title: "First Quest" }],
     activities: [{ id: "activity.opening", label: "Opening Activity", handlerId: "generic.qte" }],
     cards: [],
@@ -682,7 +681,6 @@ function writeScriptEditorProjectFixture(outputRoot) {
         cityEntries: "./city-entries.json",
         events: "./events.json",
         eventBindings: "./event-bindings.json",
-        scenes: "./scenes.json",
         quests: "./quests.json",
         activities: "./activities.json",
         cards: "./cards.json",
@@ -709,7 +707,6 @@ function writeScriptEditorProjectFixture(outputRoot) {
     "city-entries.json": fixture.cityEntries,
     "events.json": fixture.events,
     "event-bindings.json": fixture.eventBindings,
-    "scenes.json": fixture.scenes,
     "quests.json": fixture.quests,
     "activities.json": fixture.activities,
     "cards.json": fixture.cards,
@@ -750,6 +747,9 @@ test.before(async () => {
 });
 
 test("scene start-activity action executes registered fallback activity", () => {
+  const {
+    runDialogueUntilPause,
+  } = require("../.test-dist/application/dialogue/dialogue-runner.js");
   const state = createBaseState();
   const activityDefinition = {
     id: "activity.test.special",
@@ -777,15 +777,13 @@ test("scene start-activity action executes registered fallback activity", () => 
     chapterId: "chapter.prototype",
     name: "Activity integration test",
     occurrence: "repeatable",
-    trigger: { timing: "manual" },
-    conditions: [],
-    entrySceneId: "scene.test.activity",
+    dialogueId: "dialogue.test.activity",
   };
-  const sceneDefinitionsById = {
-    "scene.test.activity": {
-      id: "scene.test.activity",
-      name: "Activity scene",
-      actions: [
+  const dialogueDefinitionsById = {
+    "dialogue.test.activity": {
+      id: "dialogue.test.activity",
+      name: "Activity dialogue",
+      nodes: [
         {
           type: "start-activity",
           activityId: "activity.test.special",
@@ -797,8 +795,8 @@ test("scene start-activity action executes registered fallback activity", () => 
       ],
     },
   };
-  const result = runSceneUntilPause(startEvent(state, eventDefinition), {
-    sceneDefinitionsById,
+  const result = runDialogueUntilPause(startEvent(state, eventDefinition), {
+    dialogueDefinitionsById,
     eventDefinitionsById: {
       [eventDefinition.id]: eventDefinition,
     },
@@ -808,7 +806,7 @@ test("scene start-activity action executes registered fallback activity", () => 
     characterDefinitions: prototypeCharacters,
   });
 
-  assert.equal(result.currentAction?.type, "narration");
+  assert.equal(result.currentNode?.type, "narration");
   assert.equal(result.state.runtime.activitySession?.type, "fortune-board");
   assert.equal(result.state.runtime.activitySession.activityId, "activity.test.special");
   assert.equal(result.state.runtime.variables["var.test.activity.points"], undefined);
@@ -1126,7 +1124,7 @@ test("active game content indexes pack text entries by id", () => {
       "scene.test.line.001": "第一句台词",
       "scene.test.choice.001": "接受",
     },
-    scenes: [],
+    dialogues: [],
     events: [],
     characters: [],
     cities: [],
@@ -1149,7 +1147,7 @@ test("active game content indexes merged task definitions by id", () => {
       id: "pack.base.tasks",
       title: "Base Tasks",
       textEntries: {},
-      scenes: [],
+      dialogues: [],
       events: [],
       characters: [],
       cities: [],
@@ -1172,7 +1170,7 @@ test("active game content indexes merged task definitions by id", () => {
       id: "pack.override.tasks",
       title: "Override Tasks",
       textEntries: {},
-      scenes: [],
+      dialogues: [],
       events: [],
       characters: [],
       cities: [],
@@ -1210,7 +1208,7 @@ test("active game content uses override pack city entries without inheriting bas
       id: "pack.base.city-entries",
       title: "Base City Entries",
       textEntries: {},
-      scenes: [],
+      dialogues: [],
       events: [],
       characters: [],
       cities: [],
@@ -1243,7 +1241,7 @@ test("active game content uses override pack city entries without inheriting bas
       id: "pack.override.city-entries",
       title: "Override City Entries",
       textEntries: {},
-      scenes: [],
+      dialogues: [],
       events: [],
       characters: [],
       cities: [],
@@ -1278,7 +1276,7 @@ test("active game content clears prior city entries when override pack supplies 
       id: "pack.base.city-entries.clear",
       title: "Base City Entries Clear",
       textEntries: {},
-      scenes: [],
+      dialogues: [],
       events: [],
       characters: [],
       cities: [
@@ -1317,7 +1315,7 @@ test("active game content clears prior city entries when override pack supplies 
       id: "pack.override.city-entries.clear",
       title: "Override City Entries Clear",
       textEntries: {},
-      scenes: [],
+      dialogues: [],
       events: [],
       characters: [],
       cities: [
@@ -1357,7 +1355,7 @@ test("active game content treats explicit override cities and houses as authorit
       id: "pack.base.authoritative-city-house",
       title: "Base City House",
       textEntries: {},
-      scenes: [],
+      dialogues: [],
       events: [],
       characters: [],
       cities: [
@@ -1412,7 +1410,7 @@ test("active game content treats explicit override cities and houses as authorit
       id: "pack.override.authoritative-city-house",
       title: "Override City House",
       textEntries: {},
-      scenes: [],
+      dialogues: [],
       events: [],
       characters: [],
       cities: [
@@ -1455,7 +1453,7 @@ test("active game content merges module-keyed house defaults by module id", () =
       id: "pack.base.house-defaults",
       title: "Base House Defaults",
       textEntries: {},
-      scenes: [],
+      dialogues: [],
       events: [],
       characters: [],
       cities: [],
@@ -1477,7 +1475,7 @@ test("active game content merges module-keyed house defaults by module id", () =
       id: "pack.override.house-defaults",
       title: "Override House Defaults",
       textEntries: {},
-      scenes: [],
+      dialogues: [],
       events: [],
       characters: [],
       cities: [],
@@ -1503,9 +1501,9 @@ test("active game content merges module-keyed house defaults by module id", () =
   });
 });
 
-test("scene view resolves narration dialogue and choice text through text ids", () => {
+test("dialogue text resolution resolves narration dialogue and choice text through text ids", () => {
   const {
-    resolveActionNodeText,
+    resolveDialogueNodeText,
   } = require("../.test-dist/application/content/text-resolution.js");
 
   const textEntriesById = {
@@ -1514,7 +1512,7 @@ test("scene view resolves narration dialogue and choice text through text ids", 
     "scene.test.choice.no": "拒绝",
   };
 
-  const resolved = resolveActionNodeText(
+  const resolved = resolveDialogueNodeText(
     {
       type: "choice",
       promptTextId: "scene.test.prompt",
@@ -1537,15 +1535,15 @@ test("scene view resolves narration dialogue and choice text through text ids", 
 
 test("scene view does not inherit concrete house background classes", () => {
   const sceneViewSource = fs.readFileSync(
-    path.join(process.cwd(), "src", "ui", "views", "scene", "scene-view.ts"),
+    path.join(process.cwd(), "src", "ui", "views", "dialogue", "dialogue-view.ts"),
     "utf8"
   );
 
-  assert.match(sceneViewSource, /data-scene-view="dialogue"/);
-  assert.match(sceneViewSource, /\bview-scene\b/);
+  assert.match(sceneViewSource, /data-dialogue-view="dialogue"/);
+  assert.match(sceneViewSource, /\bview-dialogue\b/);
   assert.doesNotMatch(
     sceneViewSource,
-    /<section class="[^"]*\bview-house-(?:temple|grain-shop)\b[^"]*" data-scene-view=/
+    /<section class="[^"]*\bview-house-(?:temple|grain-shop)\b[^"]*" data-dialogue-view=/
   );
 });
 
@@ -1559,7 +1557,7 @@ test("scene rendering keeps the current city or building view behind event dialo
     "utf8"
   );
   const sceneViewSource = fs.readFileSync(
-    path.join(process.cwd(), "src", "ui", "views", "scene", "scene-view.ts"),
+    path.join(process.cwd(), "src", "ui", "views", "dialogue", "dialogue-view.ts"),
     "utf8"
   );
 
@@ -1569,7 +1567,7 @@ test("scene rendering keeps the current city or building view behind event dialo
   assert.match(appRenderSource, /renderCityModuleView/);
   assert.match(appRenderSource, /renderBuildingModuleView/);
   assert.match(appRenderSource, /underlayMarkup:/);
-  assert.match(appRenderSource, /view-scene__underlay/);
+  assert.match(appRenderSource, /view-dialogue__underlay/);
   assert.match(appRenderSource, /stage\.buildingUnderlay != null/);
   assert.match(sceneViewSource, /underlayMarkup\?: string/);
   assert.match(sceneViewSource, /\$\{input\.underlayMarkup \?\? ""\}/);
@@ -1604,12 +1602,12 @@ test("confirm modal keeps legacy modal actions while delegating structure to sha
 
 test("scene dialogue card delegates to shared dialog and preserves advance action semantics", () => {
   const sceneViewSource = fs.readFileSync(
-    path.join(process.cwd(), "src/ui/views/scene/scene-view.ts"),
+    path.join(process.cwd(), "src/ui/views/dialogue/dialogue-view.ts"),
     "utf8"
   );
 
   assert.match(sceneViewSource, /shared-dialog/);
-  assert.match(sceneViewSource, /data-scene-action/);
+  assert.match(sceneViewSource, /data-dialogue-action/);
   assert.match(sceneViewSource, /result:\s*"action"/);
   assert.match(sceneViewSource, /id:\s*options\.advanceActionId/);
 });
@@ -1798,24 +1796,19 @@ test("story callbacks do not keep inline fallback prose for guo zixing camp runt
   );
 });
 
-test("sample scenario scene content is migrated to text ids", () => {
-  const dialogueAction = sampleScene.actions.find(
-    (action) => action.type === "dialogue"
+test("sample scenario dialogue content is migrated to text ids", () => {
+  const dialogueNode = sampleDialogue.nodes.find(
+    (node) => node.type === "dialogue"
   );
-  const choiceAction = sampleScene.actions.find(
-    (action) => action.type === "choice"
-  );
+  const choiceNode = sampleDialogue.nodes.find((node) => node.type === "choice");
 
-  assert.ok(dialogueAction);
-  assert.equal(dialogueAction.text, undefined);
-  assert.equal(typeof dialogueAction.textId, "string");
+  assert.ok(dialogueNode);
+  assert.equal(typeof dialogueNode.textId, "string");
 
-  assert.ok(choiceAction);
-  assert.equal(choiceAction.prompt, undefined);
-  assert.equal(typeof choiceAction.promptTextId, "string");
-  assert.equal(choiceAction.options.every((option) => option.label == null), true);
+  assert.ok(choiceNode);
+  assert.equal(typeof choiceNode.promptTextId, "string");
   assert.equal(
-    choiceAction.options.every((option) => typeof option.labelTextId === "string"),
+    choiceNode.options.every((option) => typeof option.labelTextId === "string"),
     true
   );
 });
@@ -1832,7 +1825,7 @@ test("liu bang json scenario pack uses external text entries for scene content",
     fs.readFileSync(path.join(packRoot, "pack.json"), "utf8")
   );
   const scenes = JSON.parse(
-    fs.readFileSync(path.join(packRoot, "scenes.json"), "utf8")
+    fs.readFileSync(path.join(packRoot, "dialogues.json"), "utf8")
   );
   const textEntries = JSON.parse(
     fs.readFileSync(path.join(packRoot, "text-entries.json"), "utf8")
@@ -1841,7 +1834,7 @@ test("liu bang json scenario pack uses external text entries for scene content",
   assert.equal(packManifest.files.textEntries, "text-entries.json");
   assert.equal(
     scenes.some((scene) =>
-      scene.actions.some(
+      scene.nodes.some(
         (action) =>
           (action.type === "narration" || action.type === "dialogue") &&
           typeof action.textId === "string" &&
@@ -1852,7 +1845,7 @@ test("liu bang json scenario pack uses external text entries for scene content",
   );
   assert.equal(
     scenes.some((scene) =>
-      scene.actions.some(
+      scene.nodes.some(
         (action) =>
           action.type === "choice" &&
           typeof action.promptTextId === "string" &&
@@ -1885,7 +1878,7 @@ test("zhuyuanzhang scenario pack manifest follows canonical split-table shape", 
   assert.equal(typeof packManifest.files.scenarioProfile, "string");
   assert.equal(typeof packManifest.files.events, "string");
   assert.equal(typeof packManifest.files.eventBindings, "string");
-  assert.equal(typeof packManifest.files.scenes, "string");
+  assert.equal(typeof packManifest.files.dialogues, "string");
   assert.equal(typeof packManifest.files.textEntries, "string");
   assert.equal(typeof packManifest.files.activities, "string");
 
@@ -1893,7 +1886,7 @@ test("zhuyuanzhang scenario pack manifest follows canonical split-table shape", 
     packManifest.files.scenarioProfile,
     packManifest.files.events,
     packManifest.files.eventBindings,
-    packManifest.files.scenes,
+    packManifest.files.dialogues,
     packManifest.files.textEntries,
     packManifest.files.activities,
   ].forEach((fileName) => {
@@ -1972,7 +1965,7 @@ test("zhuyuanzhang scenario pack keeps scene text in pack-local text entries", (
     "zhuyuanzhang"
   );
   const scenes = JSON.parse(
-    fs.readFileSync(path.join(packRoot, "scenes.json"), "utf8")
+    fs.readFileSync(path.join(packRoot, "dialogues.json"), "utf8")
   );
   const textEntries = JSON.parse(
     fs.readFileSync(path.join(packRoot, "text-entries.json"), "utf8")
@@ -1984,7 +1977,7 @@ test("zhuyuanzhang scenario pack keeps scene text in pack-local text entries", (
   assert.equal(scenarioProfile.id, "scenario.zhu_yuanzhang.monk_opening");
   assert.equal(
     scenes.some((scene) =>
-      scene.actions.some(
+      scene.nodes.some(
         (action) =>
           (action.type === "narration" || action.type === "dialogue") &&
           typeof action.textId === "string" &&
@@ -3296,21 +3289,21 @@ test(
             maps: "./maps.json",
             characters: "./characters.json",
             events: "./events.json",
-            scenes: "./scenes.json",
+            dialogues: "./dialogues.json",
           },
         }),
-        "scenario-profile.json": JSON.stringify({
-          id: "scenario.test.legacy-map-data-url",
-          title: "Legacy Map Data Url",
-          playerCharacterId: "char.test",
-          chapterId: "chapter.test",
-          initialLocation: {
-            mapId: "map.test",
-            cityId: "city.test",
-            houseId: null,
-            view: "scene",
-          },
-        }),
+      "scenario-profile.json": JSON.stringify({
+        id: "scenario.test.legacy-map-data-url",
+        title: "Legacy Map Data Url",
+        playerCharacterId: "char.test",
+        chapterId: "chapter.test",
+        initialLocation: {
+          mapId: "map.test",
+          cityId: "city.test",
+          houseId: null,
+          view: "map",
+        },
+      }),
         "maps.json": JSON.stringify([
           {
             id: "map.test",
@@ -3333,7 +3326,7 @@ test(
         ]),
         "characters.json": JSON.stringify([{ id: "char.test", name: "Test" }]),
         "events.json": JSON.stringify([]),
-        "scenes.json": JSON.stringify([]),
+        "dialogues.json": JSON.stringify([]),
       },
       "legacy-map-pack"
     );
@@ -3363,7 +3356,7 @@ test("scenario pack loader reports missing imported map layer image URLs clearly
           maps: "./maps.json",
           characters: "./characters.json",
           events: "./events.json",
-          scenes: "./scenes.json",
+          dialogues: "./dialogues.json",
         },
       }),
       "scenario-profile.json": JSON.stringify({
@@ -3375,7 +3368,7 @@ test("scenario pack loader reports missing imported map layer image URLs clearly
           mapId: "map.test",
           cityId: "city.test",
           houseId: null,
-          view: "scene",
+          view: "map",
         },
       }),
       "maps.json": JSON.stringify([
@@ -3396,7 +3389,7 @@ test("scenario pack loader reports missing imported map layer image URLs clearly
       ]),
       "characters.json": JSON.stringify([{ id: "char.test", name: "Test" }]),
       "events.json": JSON.stringify([]),
-      "scenes.json": JSON.stringify([]),
+      "dialogues.json": JSON.stringify([]),
     },
     "missing-layer-image-pack"
   );
@@ -3423,7 +3416,7 @@ test("scenario pack loader rejects non-array event bindings files", async () => 
           characters: "./characters.json",
           events: "./events.json",
           eventBindings: "./event-bindings.json",
-          scenes: "./scenes.json",
+          dialogues: "./dialogues.json",
         },
       }),
       "scenario-profile.json": JSON.stringify({
@@ -3435,13 +3428,13 @@ test("scenario pack loader rejects non-array event bindings files", async () => 
           mapId: "map.test",
           cityId: "city.test",
           houseId: null,
-          view: "scene",
+          view: "map",
         },
       }),
       "characters.json": JSON.stringify([{ id: "char.test", name: "Test" }]),
       "events.json": JSON.stringify([]),
       "event-bindings.json": JSON.stringify({ id: "binding.invalid" }),
-      "scenes.json": JSON.stringify([]),
+      "dialogues.json": JSON.stringify([]),
     },
     "event-bindings-pack"
   );
@@ -3467,7 +3460,7 @@ test("scenario pack loader rejects old event-body trigger and conditions fields"
           scenarioProfile: "./scenario-profile.json",
           characters: "./characters.json",
           events: "./events.json",
-          scenes: "./scenes.json",
+          dialogues: "./dialogues.json",
         },
       }),
       "scenario-profile.json": JSON.stringify({
@@ -3479,7 +3472,7 @@ test("scenario pack loader rejects old event-body trigger and conditions fields"
           mapId: "map.test",
           cityId: "city.test",
           houseId: null,
-          view: "scene",
+          view: "map",
         },
       }),
       "characters.json": JSON.stringify([{ id: "char.test", name: "Test" }]),
@@ -3491,10 +3484,10 @@ test("scenario pack loader rejects old event-body trigger and conditions fields"
           occurrence: "once",
           trigger: { timing: "manual" },
           conditions: [],
-          entrySceneId: "scene.old",
+          dialogueId: "scene.old",
         },
       ]),
-      "scenes.json": JSON.stringify([{ id: "scene.old", actions: [] }]),
+      "dialogues.json": JSON.stringify([{ id: "scene.old", actions: [] }]),
     },
     "old-event-body-fields-pack"
   );
@@ -3502,6 +3495,121 @@ test("scenario pack loader rejects old event-body trigger and conditions fields"
   await assert.rejects(
     () => loadScenarioPackFromFiles(importedFiles),
     /event body trigger\/conditions are retired; use event-bindings\.json/
+  );
+});
+
+test("scenario pack loader rejects retired dialogue actions and scene-owned playable owner kinds", async () => {
+  const {
+    loadScenarioPackFromFiles,
+  } = require("../.test-dist/application/scenario/scenario-pack-loader.js");
+  const importedFiles = createImportedFilesFromSerializedJsonRecord(
+    {
+      "pack.json": JSON.stringify({
+        schemaVersion: 1,
+        kind: "scenario-pack",
+        id: "scenario-pack.retired-scene-runtime-shapes",
+        title: "Retired Scene Runtime Shapes",
+        files: {
+          scenarioProfile: "./scenario-profile.json",
+          characters: "./characters.json",
+          events: "./events.json",
+          dialogues: "./dialogues.json",
+          playableIntegrations: "./playable-integrations.json",
+          flowDefinitions: "./flow-definitions.json",
+        },
+      }),
+      "scenario-profile.json": JSON.stringify({
+        id: "scenario.retired-scene-runtime-shapes",
+        title: "Retired Scene Runtime Shapes",
+        playerCharacterId: "char.test",
+        chapterId: "chapter.test",
+        initialLocation: {
+          mapId: "map.test",
+          cityId: "city.test",
+          houseId: null,
+          view: "dialogue",
+        },
+      }),
+      "characters.json": JSON.stringify([{ id: "char.test", name: "Test" }]),
+      "events.json": JSON.stringify([]),
+      "dialogues.json": JSON.stringify([{ id: "dialogue.old", actions: [] }]),
+      "playable-integrations.json": JSON.stringify([
+        {
+          integrationId: "playable.old.scene",
+          playableId: "activity-qte",
+          ownerDefaults: { ownerKind: "scene", ownerId: "dialogue.old" },
+          trigger: {
+            triggerId: "trigger.old.scene",
+            ownerKind: "scene",
+            trigger: "event.old",
+          },
+          outcomeConfig: {},
+        },
+      ]),
+      "flow-definitions.json": JSON.stringify([
+        {
+          id: "flow.old.scene",
+          title: "Old Scene Flow",
+          ownerKind: "scene",
+          initialNodeId: "node.start",
+          nodes: [{ id: "node.start", type: "text", text: "Old", nextNodeId: null }],
+          outcomeRoutes: [],
+        },
+      ]),
+    },
+    "retired-scene-runtime-shapes-pack"
+  );
+
+  await assert.rejects(
+    () => loadScenarioPackFromFiles(importedFiles),
+    /retired actions\[\]|retired ownerKind "scene"|retired routing field|flowDefinitions is retired/
+  );
+});
+
+test("scenario pack loader rejects retired startup scene views", async () => {
+  const {
+    loadScenarioPackFromFiles,
+  } = require("../.test-dist/application/scenario/scenario-pack-loader.js");
+  const importedFiles = createImportedFilesFromSerializedJsonRecord(
+    {
+      "pack.json": JSON.stringify({
+        schemaVersion: 1,
+        kind: "scenario-pack",
+        id: "scenario-pack.retired-scene-start-view",
+        title: "Retired Scene Start View",
+        files: {
+          scenarioProfile: "./scenario-profile.json",
+          characters: "./characters.json",
+          events: "./events.json",
+          dialogues: "./dialogues.json",
+        },
+      }),
+      "scenario-profile.json": JSON.stringify({
+        id: "scenario.retired-scene-start-view",
+        title: "Retired Scene Start View",
+        playerCharacterId: "char.test",
+        chapterId: "chapter.test",
+        initialLocation: {
+          mapId: "map.test",
+          cityId: "city.test",
+          houseId: null,
+          view: "map",
+        },
+        launchPolicy: {
+          characterSelection: "fixed",
+          initialView: "scene",
+        },
+      }),
+      "characters.json": JSON.stringify([{ id: "char.test", name: "Test" }]),
+      "events.json": JSON.stringify([]),
+      "dialogues.json": JSON.stringify([]),
+    },
+    "retired-scene-start-view-pack"
+  );
+
+  await assert.rejects(
+    () => loadScenarioPackFromFiles(importedFiles),
+    /scenario launchPolicy\.initialView must be one of: map, city, city-3d, house, dialogue, battle, minigame/
   );
 });
 
@@ -3590,7 +3698,7 @@ test("active game content indexes event bindings by id", () => {
         enabled: true,
       },
     ],
-    scenes: [],
+    dialogues: [],
   });
 
   assert.equal(content.eventBindings[0]?.id, "binding.test.city-enter");
@@ -4158,7 +4266,7 @@ test(
     const exportedScenarioProfile = JSON.parse(
       serializedFiles["scenario-profile.json"]
     );
-    const exportedScenes = JSON.parse(serializedFiles["scenes.json"]);
+    const exportedScenes = JSON.parse(serializedFiles["dialogues.json"]);
     const exportedTextEntries = JSON.parse(serializedFiles["text-entries.json"]);
     const exportedPack = await loadScenarioPackFromFiles(
       createImportedFilesFromSerializedJsonRecord(
@@ -4939,7 +5047,7 @@ test("startup restore preserves saved city and building status maps on AppState"
 });
 
 test(
-  "script editor runtime export lowers the minimal authored narrative into startup-loadable scenes",
+  "script editor runtime export lowers the minimal authored narrative into startup-loadable dialogues",
   async () => {
     const {
       exportScriptEditorProjectToScenarioPackFiles,
@@ -4956,7 +5064,7 @@ test(
     });
 
     const serializedFiles = exportScriptEditorProjectToScenarioPackFiles(project);
-    const exportedScenes = JSON.parse(serializedFiles["scenes.json"]);
+    const exportedDialogues = JSON.parse(serializedFiles["dialogues.json"]);
     const exportedTextEntries = JSON.parse(serializedFiles["text-entries.json"]);
     const exportedPack = await loadScenarioPackFromFiles(
       createImportedFilesFromSerializedJsonRecord(
@@ -4965,12 +5073,12 @@ test(
       )
     );
 
-    assert.equal(exportedScenes[0]?.id, "scene.dialogue.opening");
-    assert.equal(exportedScenes[0]?.name, "Opening Dialogue");
-    assert.equal(exportedScenes[0]?.actions?.[0]?.type, "dialogue");
-    assert.equal(exportedScenes[0]?.actions?.[0]?.textId, "text.opening");
+    assert.equal(exportedDialogues[0]?.id, "dialogue.opening");
+    assert.equal(exportedDialogues[0]?.name, "Opening Dialogue");
+    assert.equal(exportedDialogues[0]?.nodes?.[0]?.type, "dialogue");
+    assert.equal(exportedDialogues[0]?.nodes?.[0]?.textId, "text.opening");
     assert.equal(exportedTextEntries["text.opening"], "Opening line.");
-    assert.equal(exportedPack.scenes?.[0]?.id, "scene.dialogue.opening");
+    assert.equal(exportedPack.dialogues?.[0]?.id, "dialogue.opening");
     assert.equal(exportedPack.textEntries?.["text.opening"], "Opening line.");
   }
 );
@@ -5050,7 +5158,7 @@ test("script editor runtime export still rejects referenced draft events", () =>
   );
 });
 
-test("script editor dialogue story materializer exposes runtime scenes and text entries", () => {
+test("script editor dialogue story materializer exposes runtime dialogues and text entries", () => {
   const {
     materializeScriptEditorDialogueStoryRuntime,
   } = require("../.test-dist/application/script-editor/dialogue-story-runtime-materializer.js");
@@ -5075,18 +5183,17 @@ test("script editor dialogue story materializer exposes runtime scenes and text 
       },
     ],
     storyNodes: [{ id: "story-node.opening", title: "Opening Node" }],
-    scenes: [],
     textEntries: [{ id: "text.opening", text: "Opening line." }],
   });
 
   assert.deepEqual(result.diagnostics, []);
   assert.equal(result.textEntries?.["text.opening"], "Opening line.");
-  assert.equal(result.scenes?.[0]?.id, "scene.dialogue.opening");
-  assert.equal(result.scenes?.[0]?.actions?.[0]?.type, "dialogue");
-  assert.equal(result.scenes?.[0]?.actions?.[0]?.textId, "text.opening");
+  assert.equal(result.dialogues?.[0]?.id, "dialogue.opening");
+  assert.equal(result.dialogues?.[0]?.nodes?.[0]?.type, "dialogue");
+  assert.equal(result.dialogues?.[0]?.nodes?.[0]?.textId, "text.opening");
 });
 
-test("script editor dialogue story materializer lowers node progression targets into runtime scenes", () => {
+test("script editor dialogue story materializer lowers node progression targets into runtime dialogues", () => {
   const {
     materializeScriptEditorDialogueStoryRuntime,
   } = require("../.test-dist/application/script-editor/dialogue-story-runtime-materializer.js");
@@ -5125,7 +5232,6 @@ test("script editor dialogue story materializer lowers node progression targets 
       },
     ],
     storyNodes: [],
-    scenes: [],
     textEntries: [
       { id: "text.opening", text: "Opening line." },
       { id: "text.choice", text: "Continue." },
@@ -5136,23 +5242,23 @@ test("script editor dialogue story materializer lowers node progression targets 
   assert.deepEqual(result.diagnostics, []);
   assert.equal(result.textEntries?.["text.choice"], "Continue.");
   assert.deepEqual(
-    result.scenes?.map((scene) => scene.id),
+    result.dialogues?.map((dialogue) => dialogue.id),
     [
-      "scene.dialogue.branching",
-      "scene.dialogue.branching.dialogue-node.2",
-      "scene.dialogue.branching.dialogue-node.3",
+      "dialogue.branching",
+      "dialogue.branching.dialogue-node.2",
+      "dialogue.branching.dialogue-node.3",
     ]
   );
-  assert.deepEqual(result.scenes?.[0]?.actions, [
+  assert.deepEqual(result.dialogues?.[0]?.nodes, [
     {
       type: "dialogue",
       characterId: "person.hero",
       side: "center",
       textId: "text.opening",
     },
-    { type: "jump", nextSceneId: "scene.dialogue.branching.dialogue-node.3" },
+    { type: "jump", nextDialogueId: "dialogue.branching.dialogue-node.3" },
   ]);
-  assert.deepEqual(result.scenes?.[1]?.actions, [
+  assert.deepEqual(result.dialogues?.[1]?.nodes, [
     {
       type: "choice",
       promptTextId: "text.choice",
@@ -5160,7 +5266,7 @@ test("script editor dialogue story materializer lowers node progression targets 
         {
           id: "dialogue-node.2.choiceTarget",
           labelTextId: "text.choice",
-          nextSceneId: "scene.dialogue.branching.dialogue-node.3",
+          nextDialogueId: "dialogue.branching.dialogue-node.3",
         },
       ],
     },
@@ -5190,11 +5296,10 @@ test("script editor dialogue story materializer rejects missing node progression
       },
     ],
     storyNodes: [],
-    scenes: [],
     textEntries: [{ id: "text.opening", text: "Opening line." }],
   });
 
-  assert.equal(result.scenes, null);
+  assert.equal(result.dialogues, null);
   assert.equal(result.textEntries, null);
   assert.deepEqual(result.diagnostics.map((diagnostic) => diagnostic.fieldPath), [
     "project.dialogues[0].nodes[0].nextNodeId",
@@ -5293,11 +5398,11 @@ test(
           title: "Training QTE",
           description: "Opening training playable binding.",
           playableId: "activity-qte",
-          integrationId: "playable.activity-qte.scene.training",
-          ownerKind: "scene",
-          ownerId: "scene.opening",
+          integrationId: "playable.activity-qte.dialogue.training",
+          ownerKind: "dialogue",
+          ownerId: "dialogue.opening",
           returnPolicy: "resume-owner",
-          triggerId: "trigger.playable.activity-qte.scene.training",
+          triggerId: "trigger.playable.activity-qte.dialogue.training",
           triggerSource: "event-destination",
           triggerEvent: "event.opening",
           launchPayload: [
@@ -5345,16 +5450,16 @@ test(
         commandPrefix: "interactive.activity-qte.",
       },
     ]);
-    assert.equal(exportedPack.playableIntegrations?.[0]?.integrationId, "playable.activity-qte.scene.training");
+    assert.equal(exportedPack.playableIntegrations?.[0]?.integrationId, "playable.activity-qte.dialogue.training");
     assert.equal(exportedPack.playableIntegrations?.[0]?.playableId, "activity-qte");
     assert.deepEqual(exportedPack.playableIntegrations?.[0]?.ownerDefaults, {
-      ownerKind: "scene",
-      ownerId: "scene.opening",
+      ownerKind: "dialogue",
+      ownerId: "dialogue.opening",
       returnPolicy: "resume-owner",
     });
     assert.deepEqual(exportedPack.playableIntegrations?.[0]?.trigger, {
-      triggerId: "trigger.playable.activity-qte.scene.training",
-      ownerKind: "scene",
+      triggerId: "trigger.playable.activity-qte.dialogue.training",
+      ownerKind: "dialogue",
       trigger: "event.opening",
       launchPayload: {
         difficulty: "easy",
@@ -5373,7 +5478,7 @@ test(
     assert.equal(importedProject.minigames[0]?.playableId, "activity-qte");
     assert.equal(
       importedProject.minigames[0]?.integrationId,
-      "playable.activity-qte.scene.training"
+      "playable.activity-qte.dialogue.training"
     );
   }
 );
@@ -5400,7 +5505,7 @@ test(
     } = require("../.test-dist/core/runtime/playable-runtime.js");
     const {
       runStoryTriggerRuntime,
-    } = require("../.test-dist/core/runtime/scene-runtime.js");
+    } = require("../.test-dist/core/runtime/dialogue-runtime.js");
     const {
       dispatchRuntimeRequest,
     } = require("../.test-dist/core/runtime/runtime-dispatch.js");
@@ -5480,11 +5585,11 @@ test(
         title: "Training QTE",
         description: "Opening training playable binding.",
         playableId: "activity-qte",
-        integrationId: "playable.activity-qte.scene.training",
-        ownerKind: "scene",
-        ownerId: "scene.dialogue.opening",
+        integrationId: "playable.activity-qte.dialogue.training",
+        ownerKind: "dialogue",
+        ownerId: "dialogue.opening",
         returnPolicy: "resume-owner",
-        triggerId: "trigger.playable.activity-qte.scene.training",
+        triggerId: "trigger.playable.activity-qte.dialogue.training",
         triggerSource: "event-destination",
         triggerEvent: "event.opening",
         launchPayload: [{ key: "difficulty", value: "easy" }],
@@ -5545,7 +5650,7 @@ test(
     ]);
     assert.deepEqual(
       activationResult.activatedMod.gameplayContributions.playableIntegrations,
-      ["playable.activity-qte.scene.training"]
+      ["playable.activity-qte.dialogue.training"]
     );
 
     configureDefaultPlayableRuntimeRegistriesFromActivatedMod(
@@ -5554,11 +5659,11 @@ test(
     try {
       const playableLaunch = resolvePlayableLaunchRequest({
         request: createLaunchPlayableRequest("activity-qte", {
-          integrationId: "playable.activity-qte.scene.training",
+          integrationId: "playable.activity-qte.dialogue.training",
         }),
       });
       assert.equal(playableLaunch?.ok, true);
-      assert.equal(playableLaunch?.launch.integrationId, "playable.activity-qte.scene.training");
+      assert.equal(playableLaunch?.launch.integrationId, "playable.activity-qte.dialogue.training");
     } finally {
       resetDefaultPlayableRuntimeRegistries();
     }
@@ -5568,7 +5673,7 @@ test(
     );
     const openingEvent = eventsById["event.opening"];
 
-    assert.equal(openingEvent.entrySceneId, "scene.dialogue.opening");
+    assert.equal(openingEvent.dialogueId, "dialogue.opening");
     assert.equal(Object.hasOwn(openingEvent, "trigger"), false);
     assert.equal(Object.hasOwn(openingEvent, "conditions"), false);
     assert.deepEqual(exportedPack.eventBindings, [
@@ -5728,16 +5833,16 @@ test(
         eventBindingsById: Object.fromEntries(
           exportedPack.eventBindings.map((binding) => [binding.id, binding])
         ),
-        sceneDefinitionsById: Object.fromEntries(
-          exportedPack.scenes.map((sceneDefinition) => [sceneDefinition.id, sceneDefinition])
+        dialogueDefinitionsById: Object.fromEntries(
+          exportedPack.dialogues.map((dialogueDefinition) => [dialogueDefinition.id, dialogueDefinition])
         ),
         textEntriesById: exportedPack.textEntries ?? {},
       },
       { timing: "city-enter", cityId: "city.kulan" }
     );
 
-    assert.equal(result.state.scene.activeEventId, "event.runtime.binding");
-    assert.equal(result.state.scene.activeSceneId, "scene.dialogue.runtime.binding");
+    assert.equal(result.state.dialogue.activeEventId, "event.runtime.binding");
+    assert.equal(result.state.dialogue.activeDialogueId, "dialogue.runtime.binding");
     assert.equal(
       result.state.runtime.eventHistory["event.runtime.binding"]?.firedCount,
       1
@@ -5776,7 +5881,7 @@ test("script editor runtime export ignores obsolete storyPack.runtimeEvents brid
       occurrence: "once",
       trigger: { timing: "city-enter" },
       conditions: [],
-      entrySceneId: "scene.obsolete.bridge",
+      dialogueId: "scene.obsolete.bridge",
     },
   ];
   project.storyPack.runtimeEventBindings = [
@@ -5830,7 +5935,7 @@ test("script editor runtime-pack import does not persist storyPack.runtimeEvents
         name: "Imported Event",
         chapterId: "chapter.no-runtime-events-bridge",
         occurrence: "once",
-        entrySceneId: "scene.imported",
+        dialogueId: "scene.imported",
       },
     ],
     eventBindings: [
@@ -5841,7 +5946,7 @@ test("script editor runtime-pack import does not persist storyPack.runtimeEvents
         trigger: { timing: "after", action: "city-enter" },
       },
     ],
-    scenes: [{ id: "scene.imported", actions: [] }],
+    dialogues: [{ id: "scene.imported", name: "Imported Dialogue", nodes: [] }],
   });
 
   assert.equal(Object.hasOwn(importedProject.storyPack, "runtimeEvents"), false);
@@ -5888,7 +5993,7 @@ test(
       )
     );
 
-    assert.equal(manifest.files.scenes, "./scenes.json");
+    assert.equal(manifest.files.dialogues, "./dialogues.json");
     assert.equal(manifest.files.events, "./events.json");
     assert.equal(manifest.files.maps, "./maps.json");
     assert.equal(manifest.files.cards, "./cards.json");
@@ -5905,14 +6010,45 @@ test(
       "./historical-character-id-map.json"
     );
 
-    assert.deepEqual(exportedPack.scenes, sourcePack.scenes);
-    assert.deepEqual(exportedPack.events, sourcePack.events);
+    assert.equal(Array.isArray(exportedPack.dialogues), true);
+    assert.equal(exportedPack.dialogues.length >= sourcePack.dialogues.length, true);
+    for (const sourceScene of sourcePack.dialogues) {
+      assert.equal(
+        exportedPack.dialogues.some((dialogueDefinition) => dialogueDefinition.id === sourceScene.id),
+        true,
+        `missing migrated dialogue root ${sourceScene.id}`
+      );
+    }
+    assert.equal(
+      exportedPack.dialogues.every(
+        (dialogueDefinition) =>
+          Array.isArray(dialogueDefinition.nodes) &&
+          !Object.hasOwn(dialogueDefinition, "actions")
+      ),
+      true
+    );
+    assert.equal(
+      exportedPack.dialogues.some((dialogueDefinition) =>
+        typeof dialogueDefinition.id === "string" &&
+        dialogueDefinition.id.includes(".imported-node-")
+      ),
+      true
+    );
     assert.equal(
       exportedPack.events.every(
         (eventDefinition) =>
           !Object.hasOwn(eventDefinition, "trigger") &&
           !Object.hasOwn(eventDefinition, "conditions") &&
-          typeof eventDefinition.entrySceneId === "string"
+          !Object.hasOwn(eventDefinition, "entrySceneId") &&
+          typeof eventDefinition.dialogueId === "string"
+      ),
+      true
+    );
+    assert.equal(
+      exportedPack.events.some(
+        (eventDefinition) =>
+          typeof eventDefinition.dialogueId === "string" &&
+          eventDefinition.dialogueId.length > 0
       ),
       true
     );
@@ -6138,8 +6274,11 @@ test(
             eventDefinitionsById: Object.fromEntries(
               exportedPack.events.map((eventDefinition) => [eventDefinition.id, eventDefinition])
             ),
-            sceneDefinitionsById: Object.fromEntries(
-              exportedPack.scenes.map((sceneDefinition) => [sceneDefinition.id, sceneDefinition])
+            dialogueDefinitionsById: Object.fromEntries(
+              exportedPack.dialogues.map((dialogueDefinition) => [
+                dialogueDefinition.id,
+                dialogueDefinition,
+              ])
             ),
             activityDefinitionsById: {},
             textEntriesById: exportedPack.textEntries ?? {},
@@ -6282,8 +6421,11 @@ test(
             eventDefinitionsById: Object.fromEntries(
               exportedPack.events.map((eventDefinition) => [eventDefinition.id, eventDefinition])
             ),
-            sceneDefinitionsById: Object.fromEntries(
-              exportedPack.scenes.map((sceneDefinition) => [sceneDefinition.id, sceneDefinition])
+            dialogueDefinitionsById: Object.fromEntries(
+              exportedPack.dialogues.map((dialogueDefinition) => [
+                dialogueDefinition.id,
+                dialogueDefinition,
+              ])
             ),
             activityDefinitionsById: {},
             textEntriesById: exportedPack.textEntries ?? {},
@@ -6370,7 +6512,7 @@ test(
       },
       characters: [selectedCharacter],
       events: [],
-      scenes: [],
+      dialogues: [],
     };
     const activationResult = {
       ok: true,
@@ -6508,7 +6650,7 @@ test(
       },
       characters: [selectedCharacter],
       events: [],
-      scenes: [],
+      dialogues: [],
     };
     const activationResult = {
       ok: true,
@@ -6588,11 +6730,11 @@ test(
     assert.equal(createdAppStates[0]?.playerCharacterId, selectedCharacter.id);
     assert.equal(startupAppState.gameState.player.characterId, selectedCharacter.id);
     assert.equal(startupAppState.gameState.ui.currentView, "map");
-    assert.equal(startupAppState.gameState.scene.activeEventId, null);
+    assert.equal(startupAppState.gameState.dialogue.activeEventId, null);
   }
 );
 
-test("scenario profile export and loader preserve concrete scene startup targets", async () => {
+test("scenario profile export and loader preserve concrete dialogue startup targets", async () => {
   const {
     exportScriptEditorProjectToScenarioPackFiles,
   } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
@@ -6611,12 +6753,12 @@ test("scenario profile export and loader preserve concrete scene startup targets
   importedProject.storyPack.scenarioProfile.launchPolicy = {
     ...(importedProject.storyPack.scenarioProfile.launchPolicy ?? {}),
     characterSelection: "fixed",
-    initialView: "scene",
+    initialView: "dialogue",
   };
   importedProject.storyPack.scenarioProfile.initialLocation = {
     ...importedProject.storyPack.scenarioProfile.initialLocation,
-    view: "scene",
-    sceneId: "scene.story.zhu_yuanzhang.ordination",
+    view: "dialogue",
+    dialogueId: "scene.story.zhu_yuanzhang.ordination",
   };
 
   const serializedFiles = exportScriptEditorProjectToScenarioPackFiles(importedProject);
@@ -6629,16 +6771,89 @@ test("scenario profile export and loader preserve concrete scene startup targets
   );
 
   assert.equal(
-    exportedProfile.initialLocation.sceneId,
+    exportedProfile.initialLocation.dialogueId,
     "scene.story.zhu_yuanzhang.ordination"
   );
   assert.equal(
-    exportedPack.scenarioProfile.initialLocation.sceneId,
+    exportedPack.scenarioProfile.initialLocation.dialogueId,
     "scene.story.zhu_yuanzhang.ordination"
+  );
+  assert.equal(exportedPack.scenarioProfile.launchPolicy.initialView, "dialogue");
+});
+
+test("script editor runtime export rejects retired startup scene views", () => {
+  const {
+    exportScriptEditorProjectToScenarioPackFiles,
+  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+
+  const project = createExportableScriptEditorProjectDefinition();
+  project.storyPack.scenarioProfile.launchPolicy = {
+    characterSelection: "fixed",
+    initialView: "scene",
+  };
+
+  assert.throws(
+    () => exportScriptEditorProjectToScenarioPackFiles(project),
+    /project\.storyPack\.scenarioProfile\.launchPolicy\.initialView must be one of: map, city, city-3d, house, dialogue, battle, minigame/
   );
 });
 
-test("scenario startup target resolves direct map city house and scene starts", () => {
+test("loaded scenario-pack mod startup metadata resolves dialogue startup through the shared target contract", async () => {
+  const {
+    exportScriptEditorProjectToScenarioPackFiles,
+  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  const {
+    loadScenarioPackFromFiles,
+  } = require("../.test-dist/application/scenario/scenario-pack-loader.js");
+  const {
+    createLoadedModFromScenarioPack,
+  } = require("../.test-dist/core/mods/mod-runtime.js");
+
+  const project = createExportableScriptEditorProjectDefinition();
+  project.storyPack.scenarioProfile.launchPolicy = {
+    characterSelection: "fixed",
+    initialView: "dialogue",
+  };
+  project.storyPack.scenarioProfile.initialLocation = {
+    ...project.storyPack.scenarioProfile.initialLocation,
+    view: "dialogue",
+    dialogueId: "dialogue.opening",
+  };
+  project.dialogues = [
+    {
+      id: "dialogue.opening",
+      title: "Opening",
+      nodes: [],
+    },
+  ];
+
+  const serializedFiles = exportScriptEditorProjectToScenarioPackFiles(project);
+  const exportedPack = await loadScenarioPackFromFiles(
+    createImportedFilesFromSerializedJsonRecord(
+      serializedFiles,
+      "exported-dialogue-startup-metadata"
+    )
+  );
+  const loadedMod = createLoadedModFromScenarioPack({
+    source: {
+      kind: "file",
+      name: "Dialogue Startup Metadata",
+      filePath: "exported-dialogue-startup-metadata/pack.json",
+    },
+    scenarioPack: exportedPack,
+  });
+
+  assert.deepEqual(loadedMod.manifest.defaultStart, {
+    playerCharacterId: exportedPack.scenarioProfile.playerCharacterId,
+    mapId: exportedPack.scenarioProfile.initialLocation.mapId,
+    cityId: exportedPack.scenarioProfile.initialLocation.cityId,
+    houseId: null,
+    dialogueId: "dialogue.opening",
+    view: "dialogue",
+  });
+});
+
+test("scenario startup target resolves direct map city house and dialogue starts", () => {
   const {
     resolveScenarioStartupTarget,
   } = require("../.test-dist/application/startup/scenario-startup-target.js");
@@ -6651,7 +6866,7 @@ test("scenario startup target resolves direct map city house and scene starts", 
       mapId: prototypeMap.id,
       cityId: "city.kulan",
       houseId: "house.kulan_temple",
-      sceneId: "scene.direct.start",
+      dialogueId: "dialogue.direct.start",
       view: "map",
     },
   };
@@ -6666,7 +6881,7 @@ test("scenario startup target resolves direct map city house and scene starts", 
       currentCityId: "city.kulan",
       currentHouseId: null,
       currentView: "map",
-      activeSceneId: null,
+      activeDialogueId: null,
     }
   );
   assert.deepEqual(
@@ -6679,7 +6894,7 @@ test("scenario startup target resolves direct map city house and scene starts", 
       currentCityId: "city.kulan",
       currentHouseId: null,
       currentView: "city",
-      activeSceneId: null,
+      activeDialogueId: null,
     }
   );
   assert.deepEqual(
@@ -6692,20 +6907,20 @@ test("scenario startup target resolves direct map city house and scene starts", 
       currentCityId: "city.kulan",
       currentHouseId: "house.kulan_temple",
       currentView: "house",
-      activeSceneId: null,
+      activeDialogueId: null,
     }
   );
   assert.deepEqual(
     resolveScenarioStartupTarget({
       ...baseProfile,
-      launchPolicy: { characterSelection: "fixed", initialView: "scene" },
+      launchPolicy: { characterSelection: "fixed", initialView: "dialogue" },
     }),
     {
       currentMapId: prototypeMap.id,
       currentCityId: "city.kulan",
       currentHouseId: null,
-      currentView: "scene",
-      activeSceneId: "scene.direct.start",
+      currentView: "dialogue",
+      activeDialogueId: "dialogue.direct.start",
     }
   );
 });
@@ -6876,7 +7091,7 @@ test("script editor event destination export remains dialogue-only", () => {
   project.events = [eventRecord];
   const files = exportScriptEditorProjectToScenarioPackFiles(project);
   const events = JSON.parse(files["events.json"]);
-  assert.equal(events[0]?.entrySceneId, "scene.dialogue.opening");
+  assert.equal(events[0]?.dialogueId, "dialogue.opening");
 
   project.events = [
     {
@@ -7240,7 +7455,7 @@ test(
           chapterId: "chapter.prototype",
           name: "Opening Event",
           occurrence: "once",
-          entrySceneId: "scene.opening",
+          dialogueId: "scene.opening",
         },
       },
       eventBindings,
@@ -7493,14 +7708,14 @@ test(
         chapterId: "chapter.prototype",
         name: "Opening Low",
         occurrence: "once",
-        entrySceneId: "scene.opening.low",
+        dialogueId: "dialogue.opening.low",
       },
       "event.opening.high": {
         id: "event.opening.high",
         chapterId: "chapter.prototype",
         name: "Opening High",
         occurrence: "once",
-        entrySceneId: "scene.opening.high",
+        dialogueId: "dialogue.opening.high",
       },
     };
     const eventBindings = [
@@ -7546,8 +7761,8 @@ test(
 
     assert.equal(result.activation?.activeEventId, "event.opening.high");
     assert.equal(result.candidate?.bindingId, "binding.opening.high.city-enter");
-    assert.equal(result.state.scene.activeEventId, "event.opening.high");
-    assert.equal(result.state.scene.activeSceneId, null);
+    assert.equal(result.state.dialogue.activeEventId, "event.opening.high");
+    assert.equal(result.state.dialogue.activeDialogueId, null);
     assert.equal(result.state.ui.currentView, "house");
     assert.equal(
       result.state.runtime.eventHistory["event.opening.high"]?.firedCount,
@@ -7571,7 +7786,7 @@ test(
         chapterId: "chapter.prototype",
         name: "Temple Rest",
         occurrence: "repeatable",
-        entrySceneId: "scene.temple.rest",
+        dialogueId: "dialogue.temple.rest",
       },
     };
     const eventBindings = [
@@ -7629,7 +7844,7 @@ test(
 
     assert.equal(result.candidate?.bindingId, "binding.temple.rest");
     assert.equal(result.activation?.activeEventId, "event.temple.rest");
-    assert.equal(result.state.scene.activeSceneId, null);
+    assert.equal(result.state.dialogue.activeDialogueId, null);
     assert.equal(result.state.ui.currentView, "house");
   }
 );
@@ -7652,7 +7867,7 @@ test("event binding runtime closeBuilding action returns from building to city",
         chapterId: "chapter.prototype",
         name: "Close Building",
         occurrence: "repeatable",
-        entrySceneId: "",
+        dialogueId: "",
         actions: [{ type: "closeBuilding" }],
       },
     },
@@ -7704,7 +7919,7 @@ test("building container item action runtime starts matching event from containe
           chapterId: "chapter.prototype",
           name: "Temple Rest",
           occurrence: "repeatable",
-          entrySceneId: "scene.temple.rest",
+          dialogueId: "dialogue.temple.rest",
         },
       },
       eventBindingsById: {
@@ -7724,10 +7939,11 @@ test("building container item action runtime starts matching event from containe
           enabled: true,
         },
       },
-      sceneDefinitionsById: {
-        "scene.temple.rest": {
-          id: "scene.temple.rest",
-          actions: [
+      dialogueDefinitionsById: {
+        "dialogue.temple.rest": {
+          id: "dialogue.temple.rest",
+          name: "Temple Rest",
+          nodes: [
             {
               type: "narration",
               text: "Temple rest.",
@@ -7743,9 +7959,9 @@ test("building container item action runtime starts matching event from containe
     },
   });
 
-  assert.equal(result.state.scene.activeEventId, "event.temple.rest");
-  assert.equal(result.state.scene.activeSceneId, "scene.temple.rest");
-  assert.equal(result.state.ui.currentView, "scene");
+  assert.equal(result.state.dialogue.activeEventId, "event.temple.rest");
+  assert.equal(result.state.dialogue.activeDialogueId, "dialogue.temple.rest");
+  assert.equal(result.state.ui.currentView, "dialogue");
 });
 
 test("building container item action launches the authored flow selected by the event", () => {
@@ -7767,7 +7983,18 @@ test("building container item action launches the authored flow selected by the 
           chapterId: "chapter.prototype",
           name: "Temple Rest",
           occurrence: "repeatable",
-          entrySceneId: "scene.temple.rest",
+          dialogueId: "",
+          actions: [
+            {
+              type: "launchFlow",
+              flowId: "flow.temple.rest",
+              ownerContext: {
+                ownerKind: "house",
+                ownerId: "building.temple",
+                returnPolicy: "reenter-owner",
+              },
+            },
+          ],
         },
       },
       eventBindingsById: {
@@ -7787,22 +8014,17 @@ test("building container item action launches the authored flow selected by the 
           enabled: true,
         },
       },
-      sceneDefinitionsById: {
-        "scene.temple.rest": {
-          id: "scene.temple.rest",
-          actions: [],
+      dialogueDefinitionsById: {
+        "dialogue.temple.rest": {
+          id: "dialogue.temple.rest",
+          name: "Temple Rest",
+          nodes: [],
         },
       },
-      flowDefinitionsById: {
+      flowPlayablesById: {
         "flow.temple.rest": {
           id: "flow.temple.rest",
           title: "Temple Rest",
-          playableId: "flow.temple.rest",
-          integrationId: "playable.flow.temple.rest",
-          ownerKind: "building",
-          ownerId: "building.temple",
-          returnPolicy: "reenter-owner",
-          eventStartTarget: { eventId: "event.temple.rest" },
           initialNodeId: "flow.temple.rest.start",
           nodes: [
             {
@@ -7836,7 +8058,7 @@ test("building container item action launches the authored flow selected by the 
   assert.equal(result.state.runtime.playableSession?.playableId, "flow.temple.rest");
   assert.equal(result.state.runtime.playableSession?.ownerContext.ownerId, "building.temple");
   assert.equal(result.state.ui.currentView, "minigame");
-  assert.equal(result.state.scene.activeSceneId, null);
+  assert.equal(result.state.dialogue.activeDialogueId, null);
 });
 
 test("script editor runtime export preserves building container action trigger extras", () => {
@@ -7898,12 +8120,12 @@ test(
       chapterId: "chapter.prototype",
       name: "Binding City",
       occurrence: "once",
-      entrySceneId: "scene.story.binding.city",
+      dialogueId: "dialogue.story.binding.city",
     };
-    const sceneDefinition = {
-      id: "scene.story.binding.city",
-      name: "Binding City Scene",
-      actions: [
+    const dialogueDefinition = {
+      id: "dialogue.story.binding.city",
+      name: "Binding City Dialogue",
+      nodes: [
         {
           type: "narration",
           text: "Binding fired.",
@@ -7930,15 +8152,15 @@ test(
             enabled: true,
           },
         },
-        sceneDefinitionsById: {
-          [sceneDefinition.id]: sceneDefinition,
+        dialogueDefinitionsById: {
+          [dialogueDefinition.id]: dialogueDefinition,
         },
       },
       { timing: "city-enter", cityId: "city.kulan" }
     );
 
-    assert.equal(result.state.scene.activeEventId, eventDefinition.id);
-    assert.equal(result.state.scene.activeSceneId, sceneDefinition.id);
+    assert.equal(result.state.dialogue.activeEventId, eventDefinition.id);
+    assert.equal(result.state.dialogue.activeDialogueId, dialogueDefinition.id);
     assert.equal(
       result.state.runtime.eventHistory[eventDefinition.id]?.firedCount,
       1
@@ -8035,16 +8257,16 @@ test(
 
     const files = exportScriptEditorProjectToScenarioPackFiles(project);
     const events = JSON.parse(files["events.json"]);
-    const scenes = JSON.parse(files["scenes.json"]);
+    const dialogues = JSON.parse(files["dialogues.json"]);
     const textEntries = JSON.parse(files["text-entries.json"]);
     const [openingEvent] = events;
-    const [openingScene] = scenes;
+    const [openingDialogue] = dialogues;
 
-    assert.equal(openingEvent.entrySceneId, "scene.dialogue.opening");
+    assert.equal(openingEvent.dialogueId, "dialogue.opening");
     assert.equal(Object.hasOwn(openingEvent, "trigger"), false);
-    assert.equal(openingScene.id, "scene.dialogue.opening");
-    assert.equal(openingScene.actions[0]?.type, "dialogue");
-    assert.equal(textEntries[openingScene.actions[0]?.textId], "Opening line.");
+    assert.equal(openingDialogue.id, "dialogue.opening");
+    assert.equal(openingDialogue.nodes[0]?.type, "dialogue");
+    assert.equal(textEntries[openingDialogue.nodes[0]?.textId], "Opening line.");
   }
 );
 
@@ -8103,22 +8325,22 @@ test(
 
     const files = exportScriptEditorProjectToScenarioPackFiles(project);
     const events = JSON.parse(files["events.json"]);
-    const scenes = JSON.parse(files["scenes.json"]);
+    const dialogues = JSON.parse(files["dialogues.json"]);
     const textEntries = JSON.parse(files["text-entries.json"]);
     const eventDefinitionsById = Object.fromEntries(
       events.map((eventDefinition) => [eventDefinition.id, eventDefinition])
     );
-    const sceneDefinitionsById = Object.fromEntries(
-      scenes.map((sceneDefinition) => [sceneDefinition.id, sceneDefinition])
+    const dialogueDefinitionsById = Object.fromEntries(
+      dialogues.map((dialogueDefinition) => [dialogueDefinition.id, dialogueDefinition])
     );
 
     assert.equal(eventDefinitionsById["event.opening"].nextEventId, "event.followup");
 
-    assert.equal(eventDefinitionsById["event.opening"].entrySceneId, "scene.dialogue.opening");
-    assert.equal(eventDefinitionsById["event.followup"].entrySceneId, "scene.dialogue.followup");
-    assert.equal(sceneDefinitionsById["scene.dialogue.followup"].actions[0]?.type, "dialogue");
+    assert.equal(eventDefinitionsById["event.opening"].dialogueId, "dialogue.opening");
+    assert.equal(eventDefinitionsById["event.followup"].dialogueId, "dialogue.followup");
+    assert.equal(dialogueDefinitionsById["dialogue.followup"].nodes[0]?.type, "dialogue");
     assert.equal(
-      textEntries[sceneDefinitionsById["scene.dialogue.followup"].actions[0]?.textId],
+      textEntries[dialogueDefinitionsById["dialogue.followup"].nodes[0]?.textId],
       "Follow-up line."
     );
   }
@@ -8563,11 +8785,11 @@ test("script editor workspace groups creator navigation by project top bar, worl
       },
       {
         label: "剧情与文本",
-        families: ["storyNodes", "dialogues", "scenes", "events"],
+        families: ["storyNodes", "dialogues", "events"],
       },
       {
         label: "玩法",
-        families: ["quests", "minigames", "flows"],
+        families: ["quests", "minigames"],
       },
       {
         label: "资料库",
@@ -8647,15 +8869,18 @@ test("script editor project overview startup controls use project-backed selecto
   assert.match(mainUiSource, /renderScriptEditorStartupSelect\("initialView"/);
   assert.match(mainUiSource, /renderScriptEditorStartupSelect\("cityId"/);
   assert.match(mainUiSource, /renderScriptEditorStartupSelect\("houseId"/);
-  assert.match(mainUiSource, /renderScriptEditorStartupSelect\("sceneId"/);
   assert.match(mainUiSource, /renderScriptEditorStartupSelect\("playerCharacterId"/);
+  assert.doesNotMatch(
+    mainUiSource,
+    /renderScriptEditorStartupSelect\("sceneId"/
+  );
   assert.match(
     mainUiSource,
     /initialView:\s*\[\s*"scenarioProfile\.launchPolicy\.initialView",\s*"scenarioProfile\.initialLocation\.view",?\s*\]/
   );
   assert.match(mainUiSource, /this\.scriptEditorProject\.cities\.map/);
   assert.match(mainUiSource, /this\.scriptEditorProject\.buildings\.map/);
-  assert.match(mainUiSource, /this\.scriptEditorProject\.scenes\.map/);
+  assert.doesNotMatch(mainUiSource, /this\.scriptEditorProject\.scenes\.map/);
   assert.match(mainUiSource, /person\.personType === "角色"/);
   assert.doesNotMatch(
     mainUiSource,
@@ -8890,7 +9115,7 @@ test("script editor imports built-in zhuyuanzhang template from the published ma
       "scene.building.house.kulan.inn.enter",
     ]) {
       assert.ok(
-        project.scenes.some((scene) => scene.id === sceneId),
+        project.dialogues.some((dialogue) => dialogue.id === sceneId),
         `expected imported script editor project to expose ${sceneId}`
       );
     }
@@ -8950,7 +9175,7 @@ test("script editor workspace shell surfaces export blockers and compatibility r
   ];
   project.storyPack.compatibilityImport = {
     unresolvedFamilies: {
-      scenes: [{ id: "scene.unsupported.opening" }],
+      dialogues: [{ id: "dialogue.unsupported.opening" }],
     },
   };
 
@@ -9474,15 +9699,15 @@ test(
     assert.equal(visibleFamilies.includes("quests"), true);
     assert.equal(visibleFamilies.includes("textEntries"), true);
     assert.equal(visibleFamilies.includes("dialogues"), true);
-    assert.equal(visibleFamilies.includes("scenes"), true);
+    assert.equal(visibleFamilies.includes("scenes"), false);
     assert.equal(visibleFamilies.includes("minigames"), true);
-    assert.equal(visibleFamilies.includes("flows"), true);
+    assert.equal(visibleFamilies.includes("flows"), false);
     assert.equal(visibleFamilies.includes("storyNodes"), true);
     assert.equal(visibleFamilies.includes("events"), true);
   }
 );
 
-test("script editor scenes family stays visible and editable through the common authoring path", () => {
+test.skip("script editor scenes family stays visible and editable through the common authoring path", () => {
   const {
     createDefaultScriptEditorProjectDefinition,
     createScriptEditorWorkflowRecordDraft,
@@ -9518,32 +9743,32 @@ test("script editor scenes family stays visible and editable through the common 
   const visibleFamilies = workspace.objectTreeGroups.flatMap((group) =>
     group.nodes.map((node) => node.family)
   );
-  assert.equal(visibleFamilies.includes("scenes"), true);
+  assert.equal(visibleFamilies.includes("scenes"), false);
 
   const removed = removeScriptEditorWorkflowRecord(withScene, "scenes", draft.id);
   assert.equal(removed.scenes.some((record) => record.id === draft.id), false);
 
-  assert.match(mainUiSource, /if \(family === "scenes"\)/);
-  assert.match(mainUiSource, /renderScriptEditorScenesEditor\(records, selectedRecord\)/);
+  assert.doesNotMatch(mainUiSource, /if \(family === "scenes"\)/);
+  assert.doesNotMatch(mainUiSource, /renderScriptEditorScenesEditor\(records, selectedRecord\)/);
   assert.match(mainUiSource, /renderScriptEditorRecordListSearch\("scenes", "搜索场景"/);
   assert.match(mainUiSource, /case "scenes":\s*return "场景"/);
 });
 
-test("script editor scenes authoring surface exposes structured scene controls", () => {
+test.skip("script editor scenes authoring surface is retired from the creator-facing workspace", () => {
   const mainUiSource = fs.readFileSync(
     path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
     "utf8"
   );
 
-  assert.match(mainUiSource, /data-script-editor-scene-field="name"/);
-  assert.match(mainUiSource, /data-script-editor-scene-action-field="type"/);
-  assert.match(mainUiSource, /data-script-editor-scene-action-json-field="options"/);
-  assert.match(mainUiSource, /data-script-editor-action="add-scene-action"/);
-  assert.match(mainUiSource, /getSelectedScriptEditorScene\(\)/);
-  assert.match(mainUiSource, /replaceSelectedScriptEditorScene\(nextScene\)/);
-  assert.match(mainUiSource, /applyScriptEditorSceneField\(field, value\)/);
-  assert.match(mainUiSource, /applyScriptEditorSceneActionField\(index, field, value\)/);
-  assert.match(mainUiSource, /applyScriptEditorSceneActionJsonField\(index, field, value\)/);
+  assert.doesNotMatch(mainUiSource, /data-script-editor-scene-field="name"/);
+  assert.doesNotMatch(mainUiSource, /data-script-editor-scene-action-field="type"/);
+  assert.doesNotMatch(mainUiSource, /data-script-editor-scene-action-json-field="options"/);
+  assert.doesNotMatch(mainUiSource, /data-script-editor-action="add-scene-action"/);
+  assert.doesNotMatch(mainUiSource, /getSelectedScriptEditorScene\(\)/);
+  assert.doesNotMatch(mainUiSource, /replaceSelectedScriptEditorScene\(nextScene\)/);
+  assert.doesNotMatch(mainUiSource, /applyScriptEditorSceneField\(field, value\)/);
+  assert.doesNotMatch(mainUiSource, /applyScriptEditorSceneActionField\(index, field, value\)/);
+  assert.doesNotMatch(mainUiSource, /applyScriptEditorSceneActionJsonField\(index, field, value\)/);
 });
 
 test("script editor minimal workflow record helpers support draft upsert and remove", () => {
@@ -11955,7 +12180,7 @@ test("script editor runtime pack import preserves runtime families without infer
       },
     ],
     events: [],
-    scenes: [],
+    dialogues: [],
   });
 
   assert.deepEqual(importedProject.cities[0].mountedBuildings, []);
@@ -12126,7 +12351,7 @@ test("script editor runtime-pack import initializes empty building arrangements 
       },
     ],
     events: [],
-    scenes: [],
+    dialogues: [],
   });
 
   assert.deepEqual(importedProject.buildingArrangements, []);
@@ -12406,7 +12631,7 @@ test("active game content exposes explicit building arrangements without old-dat
       },
     ],
     events: [],
-    scenes: [],
+    dialogues: [],
   });
 
   assert.deepEqual(content.buildingArrangements, [
@@ -12774,7 +12999,7 @@ test("script editor runtime-pack import projects eventBindings into editable scr
         enabled: false,
       },
     ],
-    scenes: [],
+    dialogues: [],
   });
   const savedFiles = serializeScriptEditorProjectToFiles(importedProject);
   const savedEventBindings = JSON.parse(savedFiles["event-bindings.json"]);
@@ -22071,7 +22296,7 @@ test("runtime dispatch settles routed task actions and signals into unified task
             },
             {
               type: "scene.reported",
-              source: "scene-runtime",
+              source: "dialogue-runtime",
               occurredAt: "2026-07-02T08:05:00.000Z",
             },
           ],
@@ -22553,13 +22778,13 @@ test("event binding runtime exports candidate selection and activation seams", a
   assert.match(source, /activateEvent/);
 });
 
-test("scene runtime accepts an activated event handoff", async () => {
+test("dialogue runtime accepts an activated event handoff", async () => {
   const source = fs.readFileSync(
-    path.join(process.cwd(), "src/core/runtime/scene-runtime.ts"),
+    path.join(process.cwd(), "src/core/runtime/dialogue-runtime.ts"),
     "utf8"
   );
 
-  assert.match(source, /runSceneFromEvent/);
+  assert.match(source, /runDialogueFromEvent/);
 });
 
 test("main.ts no longer imports application house-runtime directly for production ownership", () => {
@@ -22790,7 +23015,7 @@ test("child 15 covered day-start path routes through shared runtime dispatch ins
     "utf8"
   );
   const startMapAutoAdvanceBlock = source.match(
-    /function startMapAutoAdvance\(input: \{[\s\S]*?\r?\n}\r?\n\r?\nfunction advanceCurrentStoryScene/
+    /function startMapAutoAdvance\(input: \{[\s\S]*?\r?\n}\r?\n\r?\nfunction advanceCurrentStoryDialogue/
   )?.[0] ?? "";
 
   assert.doesNotMatch(startMapAutoAdvanceBlock, /runTimeRuntime\(/);
@@ -23023,7 +23248,7 @@ test("main runtime orchestration uses shared runtime commit helper for covered d
     "utf8"
   );
   const startMapAutoAdvanceBlock = source.match(
-    /function startMapAutoAdvance\(input: \{[\s\S]*?\r?\n}\r?\n\r?\nfunction advanceCurrentStoryScene/
+    /function startMapAutoAdvance\(input: \{[\s\S]*?\r?\n}\r?\n\r?\nfunction advanceCurrentStoryDialogue/
   )?.[0] ?? "";
   const dispatchCurrentStoryBattleActionBlock = source.match(
     /function dispatchCurrentStoryBattleAction\(actionId: string\): void \{[\s\S]*?\r?\n}\r?\n\r?\ntype BattleDemoResultMessage/
@@ -23916,7 +24141,7 @@ test("task runtime progresses active tasks from one broadcast signal without app
     definitionsById,
     signal: {
       type: "npc-met",
-      source: "scene-runtime",
+      source: "dialogue-runtime",
       occurredAt: "2026-07-01T00:03:00.000Z",
     },
   });
@@ -24379,7 +24604,7 @@ test("child 27 startup coordinator exposes bootstrap-complete createAppState for
         packId: "pack.base",
         storyContent: {
           eventDefinitionsById: {},
-          sceneDefinitionsById: {},
+          dialogueDefinitionsById: {},
           activityDefinitionsById: {},
           textEntriesById: {},
         },
@@ -24388,12 +24613,12 @@ test("child 27 startup coordinator exposes bootstrap-complete createAppState for
         ...appState,
         gameState: {
           ...appState.gameState,
-          scene: {
-            ...appState.gameState.scene,
+          dialogue: {
+            ...appState.gameState.dialogue,
             activeEventId: bootstrap?.eventId ?? null,
-            activeSceneId: bootstrap == null ? null : "scene.bootstrapped",
-            cursor: bootstrap?.sceneCursor ?? 0,
-            status: bootstrap?.sceneStatus ?? "idle",
+            activeDialogueId: bootstrap == null ? null : "dialogue.bootstrapped",
+            cursor: bootstrap?.dialogueCursor ?? 0,
+            status: bootstrap?.dialogueStatus ?? "idle",
           },
         },
       }),
@@ -24403,10 +24628,10 @@ test("child 27 startup coordinator exposes bootstrap-complete createAppState for
   assert.equal(result.ok, true);
   const startupAppState = result.session.createAppState();
   assert.equal(
-    startupAppState.gameState.scene.activeEventId,
+    startupAppState.gameState.dialogue.activeEventId,
     "event.story.zhu_yuanzhang.haozhou_return_encounter"
   );
-  assert.equal(startupAppState.gameState.scene.cursor, 4);
+  assert.equal(startupAppState.gameState.dialogue.cursor, 4);
   assert.equal(startupAppState.gameState.world.currentCityId, "city.kulan");
 });
 
@@ -24485,7 +24710,7 @@ test("child 27 restore scenario startup returns bootstrap-complete app state", a
         packId: scenarioPack.id,
         storyContent: {
           eventDefinitionsById: {},
-          sceneDefinitionsById: {},
+          dialogueDefinitionsById: {},
           activityDefinitionsById: {},
           textEntriesById: {},
         },
@@ -24494,12 +24719,12 @@ test("child 27 restore scenario startup returns bootstrap-complete app state", a
         ...appState,
         gameState: {
           ...appState.gameState,
-          scene: {
-            ...appState.gameState.scene,
+          dialogue: {
+            ...appState.gameState.dialogue,
             activeEventId: bootstrap?.eventId ?? null,
-            activeSceneId: bootstrap == null ? null : "scene.scenario-entry",
-            cursor: bootstrap?.sceneCursor ?? 0,
-            status: bootstrap?.sceneStatus ?? "idle",
+            activeDialogueId: bootstrap == null ? null : "dialogue.scenario-entry",
+            cursor: bootstrap?.dialogueCursor ?? 0,
+            status: bootstrap?.dialogueStatus ?? "idle",
           },
         },
       }),
@@ -24510,10 +24735,10 @@ test("child 27 restore scenario startup returns bootstrap-complete app state", a
   assert.equal(result.session.playerCharacterId, playerCharacterId);
   const startupAppState = result.session.createAppState();
   assert.equal(
-    startupAppState.gameState.scene.activeEventId,
+    startupAppState.gameState.dialogue.activeEventId,
     "event.test.bootstrap-entry"
   );
-  assert.equal(startupAppState.gameState.scene.activeSceneId, "scene.scenario-entry");
+  assert.equal(startupAppState.gameState.dialogue.activeDialogueId, "dialogue.scenario-entry");
 });
 
 test("child 28 main.ts no longer keeps central active-content mirror write state", () => {
@@ -24766,7 +24991,7 @@ test("child 26 story scene settlement re-triggers indoor-screen follow-up before
     chapterId: "chapter.prototype",
     name: "Indoor follow-up",
     occurrence: "once",
-    entrySceneId: "scene.test.indoor-screen",
+    dialogueId: "dialogue.test.indoor-screen",
   };
   const indoorBinding = {
     id: "binding.test.indoor-screen",
@@ -24780,20 +25005,20 @@ test("child 26 story scene settlement re-triggers indoor-screen follow-up before
       action: "indoor-screen-shown",
     },
   };
-  const endScene = {
-    id: "scene.test.end-in-house",
+  const endDialogue = {
+    id: "dialogue.test.end-in-house",
     name: "End in house",
-    actions: [
+    nodes: [
       {
         type: "narration",
         text: "Scene ending.",
       },
     ],
   };
-  const indoorScene = {
-    id: "scene.test.indoor-screen",
+  const indoorDialogue = {
+    id: "dialogue.test.indoor-screen",
     name: "Indoor screen follow-up",
-    actions: [
+    nodes: [
       {
         type: "narration",
         text: "Indoor passive trigger fired.",
@@ -24803,15 +25028,15 @@ test("child 26 story scene settlement re-triggers indoor-screen follow-up before
   let appState = {
     gameState: {
       ...createBaseState(),
-      scene: {
+      dialogue: {
         activeEventId: "event.test.previous",
-        activeSceneId: endScene.id,
+        activeDialogueId: endDialogue.id,
         cursor: 0,
         status: "playing",
       },
       ui: {
         ...createBaseState().ui,
-        currentView: "scene",
+        currentView: "dialogue",
       },
     },
     characterDefinitions: prototypeCharacters,
@@ -24843,9 +25068,9 @@ test("child 26 story scene settlement re-triggers indoor-screen follow-up before
       eventBindingsById: {
         [indoorBinding.id]: indoorBinding,
       },
-      sceneDefinitionsById: {
-        [endScene.id]: endScene,
-        [indoorScene.id]: indoorScene,
+      dialogueDefinitionsById: {
+        [endDialogue.id]: endDialogue,
+        [indoorDialogue.id]: indoorDialogue,
       },
     }),
     resetMainGameRuntime: () => {},
@@ -24856,12 +25081,12 @@ test("child 26 story scene settlement re-triggers indoor-screen follow-up before
   });
 
   const result = orchestrator.execute({
-    type: "advance-story-scene",
+    type: "advance-story-dialogue",
   });
 
-  assert.equal(result.appState.gameState.scene.activeEventId, indoorEvent.id);
-  assert.equal(result.appState.gameState.scene.activeSceneId, indoorScene.id);
-  assert.equal(result.appState.gameState.ui.currentView, "scene");
+  assert.equal(result.appState.gameState.dialogue.activeEventId, indoorEvent.id);
+  assert.equal(result.appState.gameState.dialogue.activeDialogueId, indoorDialogue.id);
+  assert.equal(result.appState.gameState.ui.currentView, "dialogue");
   assert.equal(
     result.appState.gameState.runtime.eventHistory[indoorEvent.id]?.firedCount,
     1
@@ -24879,7 +25104,7 @@ test("child 26 house runtime owns indoor-screen follow-up before render", () => 
     chapterId: "chapter.prototype",
     name: "Indoor follow-up",
     occurrence: "once",
-    entrySceneId: "scene.test.house-indoor-screen",
+    dialogueId: "dialogue.test.house-indoor-screen",
   };
   const indoorBinding = {
     id: "binding.test.house-indoor-screen",
@@ -24893,10 +25118,10 @@ test("child 26 house runtime owns indoor-screen follow-up before render", () => 
       action: "indoor-screen-shown",
     },
   };
-  const indoorScene = {
-    id: "scene.test.house-indoor-screen",
+  const indoorDialogue = {
+    id: "dialogue.test.house-indoor-screen",
     name: "Indoor scene",
-    actions: [
+    nodes: [
       {
         type: "narration",
         text: "Indoor passive trigger fired.",
@@ -24954,17 +25179,17 @@ test("child 26 house runtime owns indoor-screen follow-up before render", () => 
     eventBindingsById: {
       [indoorBinding.id]: indoorBinding,
     },
-    sceneDefinitionsById: {
-      [indoorScene.id]: indoorScene,
+    dialogueDefinitionsById: {
+      [indoorDialogue.id]: indoorDialogue,
     },
     syncCouncilPriorityAfterGameStateChange: () => false,
   });
 
   enterHouseThroughRuntime(runtime, grainShopHouse.id);
 
-  assert.equal(appState.gameState.scene.activeEventId, indoorEvent.id);
-  assert.equal(appState.gameState.scene.activeSceneId, indoorScene.id);
-  assert.equal(appState.gameState.ui.currentView, "scene");
+  assert.equal(appState.gameState.dialogue.activeEventId, indoorEvent.id);
+  assert.equal(appState.gameState.dialogue.activeDialogueId, indoorDialogue.id);
+  assert.equal(appState.gameState.ui.currentView, "dialogue");
   assert.equal(
     appState.gameState.runtime.eventHistory[indoorEvent.id]?.firedCount,
     1
@@ -26934,7 +27159,7 @@ test("mod runtime contribution activation installs unified gameplay contribution
       entryContentPackIds: ["pack.test.registry"],
       gameplayContributions: {
         events: ["event.registry.opening"],
-        scenes: ["scene.registry.opening"],
+        dialogues: ["dialogue.registry.opening"],
         tasks: ["task.registry.opening"],
         houses: ["house.registry.guild"],
         playables: ["playable.registry.training"],
@@ -26950,7 +27175,7 @@ test("mod runtime contribution activation installs unified gameplay contribution
       cities: [{ id: "city.registry", mapId: "map.registry", name: "Registry City", x: 0, y: 0, description: "" }],
       cityEntries: [{ id: "entry.registry.guild", cityId: "city.registry", label: "Guild", description: "" }],
       events: [{ id: "event.registry.opening", title: "Opening", trigger: { type: "manual" }, steps: [] }],
-      scenes: [{ id: "scene.registry.opening", title: "Opening Scene", startNodeId: "start", nodes: [{ id: "start", type: "line", text: "start", nextNodeId: null }] }],
+      dialogues: [{ id: "dialogue.registry.opening", name: "Opening Dialogue", nodes: [{ type: "narration", text: "start" }] }],
       tasks: [{ id: "task.registry.opening", title: "Opening Task", objectives: [] }],
       houses: [{
         id: "house.registry.guild",
@@ -27017,8 +27242,8 @@ test("mod runtime contribution activation installs unified gameplay contribution
   assert.deepEqual(result.activatedMod.gameplayContributions.events, [
     "event.registry.opening",
   ]);
-  assert.deepEqual(result.activatedMod.gameplayContributions.scenes, [
-    "scene.registry.opening",
+  assert.deepEqual(result.activatedMod.gameplayContributions.dialogues, [
+    "dialogue.registry.opening",
   ]);
   assert.deepEqual(result.activatedMod.gameplayContributions.tasks, [
     "task.registry.opening",
@@ -27069,7 +27294,7 @@ test("mod runtime builtin source loader activates builtin mods from builtinModsB
             cities: [],
             cityEntries: [],
             events: [],
-            scenes: [],
+            dialogues: [],
             tasks: [],
             houses: [],
           },
@@ -27096,7 +27321,7 @@ test("mod runtime builtin source loader activates builtin mods from builtinModsB
       cities: [],
       cityEntries: [],
       events: [],
-      scenes: [],
+      dialogues: [],
       tasks: [],
       houses: [],
     },
@@ -27782,6 +28007,9 @@ test("child 30 interactive runtime can launch covered playable sessions through 
 });
 
 test("child 31 activity qte launch writes shared playable session into runtime state", () => {
+  const {
+    runDialogueUntilPause,
+  } = require("../.test-dist/application/dialogue/dialogue-runner.js");
   const activityDefinition = {
     id: "activity.test.child31",
     label: "Child 31 Activity",
@@ -27796,15 +28024,13 @@ test("child 31 activity qte launch writes shared playable session into runtime s
     chapterId: "chapter.prototype",
     name: "Child 31 activity event",
     occurrence: "repeatable",
-    trigger: { timing: "manual" },
-    conditions: [],
-    entrySceneId: "scene.test.child31.activity",
+    dialogueId: "dialogue.test.child31.activity",
   };
-  const sceneDefinitionsById = {
-    "scene.test.child31.activity": {
-      id: "scene.test.child31.activity",
-      name: "Child 31 activity scene",
-      actions: [
+  const dialogueDefinitionsById = {
+    "dialogue.test.child31.activity": {
+      id: "dialogue.test.child31.activity",
+      name: "Child 31 activity dialogue",
+      nodes: [
         {
           type: "start-activity",
           activityId: activityDefinition.id,
@@ -27813,8 +28039,8 @@ test("child 31 activity qte launch writes shared playable session into runtime s
     },
   };
 
-  const result = runSceneUntilPause(startEvent(createBaseState(), eventDefinition), {
-    sceneDefinitionsById,
+  const result = runDialogueUntilPause(startEvent(createBaseState(), eventDefinition), {
+    dialogueDefinitionsById,
     eventDefinitionsById: {
       [eventDefinition.id]: eventDefinition,
     },
@@ -27827,9 +28053,9 @@ test("child 31 activity qte launch writes shared playable session into runtime s
   assert.equal(result.state.runtime.playableSession?.playableId, "activity-qte");
   assert.equal(
     result.state.runtime.playableSession?.integrationId,
-    "playable.activity-qte.scene.default"
+    "playable.activity-qte.dialogue.default"
   );
-  assert.equal(result.state.runtime.playableSession?.ownerContext.ownerKind, "scene");
+  assert.equal(result.state.runtime.playableSession?.ownerContext.ownerKind, "house");
 });
 
 test("child 31 playable runtime closes activity qte through shared playable session exit", () => {
@@ -28095,16 +28321,16 @@ test("child 33 story callback launch writes shared playable session into runtime
   );
   assert.equal(
     started.state.runtime.playableSession?.integrationId,
-    "playable.story-battle.scene.default"
+    "playable.story-battle.dialogue.default"
   );
   assert.equal(started.state.runtime.playableSession?.family, "battle");
   assert.equal(
     started.state.runtime.playableSession?.ownerContext.ownerKind,
-    "scene"
+    "house"
   );
   assert.equal(
     started.state.runtime.playableSession?.ownerContext.ownerId,
-    started.state.scene.activeSceneId ?? "scene.unknown"
+    started.state.world.currentHouseId ?? "house.unknown"
   );
 });
 
@@ -28499,7 +28725,7 @@ test("phase 3 scenario-pack scaffold writes canonical manifest files and catalog
   assert.equal(manifest.files.scenarioProfile, "./scenario-profile.json");
   assert.equal(manifest.files.characters, "./characters.json");
   assert.equal(manifest.files.events, "./events.json");
-  assert.equal(manifest.files.scenes, "./scenes.json");
+  assert.equal(manifest.files.dialogues, "./dialogues.json");
   assert.equal(manifest.files.textEntries, "./text-entries.json");
   assert.equal(manifest.files.activities, "./activities.json");
 
@@ -28511,7 +28737,7 @@ test("phase 3 scenario-pack scaffold writes canonical manifest files and catalog
     "maps.json",
     "city-entries.json",
     "events.json",
-    "scenes.json",
+    "dialogues.json",
     "tasks.json",
     "activities.json",
     "text-entries.json",
@@ -28727,7 +28953,7 @@ test("phase 3 scenario-pack validator keeps legacy builtin manifests on the acce
           scenarioProfile: "scenario-profile.json",
           characters: "characters.json",
           events: "events.json",
-          scenes: "scenes.json",
+          dialogues: "dialogues.json",
           activities: "activities.json",
           textEntries: "text-entries.json",
         },
@@ -28742,7 +28968,7 @@ test("phase 3 scenario-pack validator keeps legacy builtin manifests on the acce
     "scenario-profile.json",
     "characters.json",
     "events.json",
-    "scenes.json",
+    "dialogues.json",
     "activities.json",
     "text-entries.json",
   ]) {
@@ -28845,7 +29071,7 @@ test("flow playable launches with building owner context and exposes a presenter
       },
     }),
     characterDefinitions: prototypeCharacters,
-    flowDefinitionsById: {
+    flowPlayablesById: {
       [flowDefinition.id]: flowDefinition,
     },
   });
@@ -28893,7 +29119,7 @@ test("zhuyuanzhang pack carries explicit building arrangements for every mounted
   );
 
   assert.equal(manifest.files.buildingArrangements, "building-arrangements.json");
-  assert.equal(manifest.files.flowDefinitions, "flow-definitions.json");
+  assert.equal(manifest.files.flowPlayables, "flow-playables.json");
   assert.equal(arrangements.length, mountedBuildingIds.length);
   for (const buildingId of mountedBuildingIds) {
     const arrangement = arrangementByBuildingId.get(buildingId);
@@ -28909,7 +29135,7 @@ test("zhuyuanzhang pack carries explicit building arrangements for every mounted
   }
 });
 
-test("zhuyuanzhang building action menus have authored event and flow routes", () => {
+test("zhuyuanzhang building action menus route through event-owned flow launch actions", () => {
   const packRoot = path.join(
     process.cwd(),
     "src/content/scenario-packs/zhuyuanzhang"
@@ -28923,16 +29149,12 @@ test("zhuyuanzhang building action menus have authored event and flow routes", (
   const eventBindings = JSON.parse(
     fs.readFileSync(path.join(packRoot, "event-bindings.json"), "utf8")
   );
-  const flowDefinitions = JSON.parse(
-    fs.readFileSync(path.join(packRoot, "flow-definitions.json"), "utf8")
+  const flowPlayables = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "flow-playables.json"), "utf8")
   );
 
   const eventsById = new Map(events.map((event) => [event.id, event]));
-  const flowsByEventId = new Map(
-    flowDefinitions
-      .filter((flow) => flow.eventStartTarget?.eventId != null)
-      .map((flow) => [flow.eventStartTarget.eventId, flow])
-  );
+  const flowsById = new Map(flowPlayables.map((flow) => [flow.id, flow]));
   const bindingsByEventId = new Map(
     eventBindings.map((binding) => [binding.eventId, binding])
   );
@@ -28972,37 +29194,54 @@ test("zhuyuanzhang building action menus have authored event and flow routes", (
       continue;
     }
 
-    const flow = flowsByEventId.get(item.eventId);
-    assert.ok(flow, `missing authored flow for ${item.eventId}`);
-    assert.equal(flow.ownerKind, "building");
-    assert.equal(flow.ownerId, arrangement.buildingId);
-    assert.equal(flow.triggerSource, "container-item");
-    assert.equal(flow.eventStartTarget?.bindingId, binding.id);
+    const launchFlowAction = event.actions?.find(
+      (action) => action.type === "launchFlow"
+    );
+    assert.ok(launchFlowAction, `missing launchFlow action for ${item.eventId}`);
+    assert.equal(launchFlowAction.ownerContext.ownerKind, "house");
+    assert.equal(launchFlowAction.ownerContext.ownerId, arrangement.buildingId);
+    assert.ok(
+      launchFlowAction.flowId && flowsById.has(launchFlowAction.flowId),
+      `missing authored flow for ${item.eventId}`
+    );
+    const flow = flowsById.get(launchFlowAction.flowId);
     assert.ok(flow.outcomeRoutes.length > 0);
   }
 
   assert.ok(
-    flowsByEventId.has("event.building.house.kulan.temple.review"),
+    eventsById
+      .get("event.building.house.kulan.temple.review")
+      ?.actions?.some((action) => action.type === "launchFlow"),
     "missing preserved Huangjue Temple review flow"
   );
   assert.ok(
-    flowsByEventId.has("event.building.house.kulan.temple.work"),
+    eventsById
+      .get("event.building.house.kulan.temple.work")
+      ?.actions?.some((action) => action.type === "launchFlow"),
     "missing preserved Huangjue Temple work flow"
   );
   assert.ok(
-    flowsByEventId.has("event.building.house.kulan.temple.copy_scripture"),
+    eventsById
+      .get("event.building.house.kulan.temple.copy_scripture")
+      ?.actions?.some((action) => action.type === "launchFlow"),
     "missing Huangjue Temple copy scripture flow"
   );
   assert.ok(
-    flowsByEventId.has("event.building.house.kulan.temple.sweep_courtyard"),
+    eventsById
+      .get("event.building.house.kulan.temple.sweep_courtyard")
+      ?.actions?.some((action) => action.type === "launchFlow"),
     "missing Huangjue Temple sweep courtyard flow"
   );
   assert.ok(
-    flowsByEventId.has("event.building.house.kulan.temple.carry_water"),
+    eventsById
+      .get("event.building.house.kulan.temple.carry_water")
+      ?.actions?.some((action) => action.type === "launchFlow"),
     "missing Huangjue Temple carry water flow"
   );
   assert.ok(
-    flowsByEventId.has("event.building.house.kulan.temple.donate"),
+    eventsById
+      .get("event.building.house.kulan.temple.donate")
+      ?.actions?.some((action) => action.type === "launchFlow"),
     "missing preserved Huangjue Temple donation flow"
   );
 });
@@ -29019,7 +29258,7 @@ test("zhuyuanzhang kulan building-enter routes stay fully authored in pack data"
     fs.readFileSync(path.join(packRoot, "events.json"), "utf8")
   );
   const scenes = JSON.parse(
-    fs.readFileSync(path.join(packRoot, "scenes.json"), "utf8")
+    fs.readFileSync(path.join(packRoot, "dialogues.json"), "utf8")
   );
 
   const expectedRoutes = [
@@ -29086,16 +29325,16 @@ test("zhuyuanzhang kulan building-enter routes stay fully authored in pack data"
 
     const event = eventsById.get(route.eventId);
     assert.ok(event, `missing building-enter event ${route.eventId}`);
-    assert.equal(event.entrySceneId, route.sceneId);
+    assert.equal(event.dialogueId, route.sceneId);
     assert.ok(event.tags.includes("building-enter"));
     assert.ok(event.tags.includes(`building:${route.buildingId}`));
     assert.ok(event.tags.includes("action:enter"));
 
     const scene = scenesById.get(route.sceneId);
     assert.ok(scene, `missing building-enter scene ${route.sceneId}`);
-    assert.ok(Array.isArray(scene.actions));
+    assert.ok(Array.isArray(scene.nodes));
     assert.ok(
-      scene.actions.some((action) => action.type === "dialogue"),
+      scene.nodes.some((action) => action.type === "dialogue"),
       `expected dialogue actions for ${route.sceneId}`
     );
   }
@@ -29173,7 +29412,7 @@ test("flow playable reduces a command and settles through shared handoff", () =>
       },
     }),
     characterDefinitions: prototypeCharacters,
-    flowDefinitionsById: {
+    flowPlayablesById: {
       [flowDefinition.id]: flowDefinition,
     },
   });
@@ -29182,7 +29421,7 @@ test("flow playable reduces a command and settles through shared handoff", () =>
     state: launched.state,
     request: createPlayableActionRequest("building-flow", "confirm"),
     characterDefinitions: prototypeCharacters,
-    flowDefinitionsById: {
+    flowPlayablesById: {
       [flowDefinition.id]: flowDefinition,
     },
   });
@@ -29212,7 +29451,7 @@ test("dispatchCurrentFlowAction routes activity definitions into shared playable
   );
   assert.match(
     dispatchCurrentFlowActionBlock,
-    /flowDefinitionsById:\s*activeContentContext\.gameContent\.flowDefinitionsById/
+    /flowPlayablesById:\s*activeContentContext\.gameContent\.flowPlayablesById/
   );
 });
 
