@@ -16,6 +16,16 @@ $outputLogPath = Join-Path $runtimeDirectory "standalone-service.out.log"
 $errorLogPath = Join-Path $runtimeDirectory "standalone-service.err.log"
 $staticRootPath = [System.IO.Path]::GetFullPath((Join-Path $projectRoot $StaticRoot))
 
+. (Join-Path $PSScriptRoot "resolve-node-path.ps1")
+. (Join-Path $PSScriptRoot "process-environment.ps1")
+
+$nodeExecutable = Get-ProjectNodeExecutable
+$viteCliPath = Get-ProjectPackageExecutable `
+  -ProjectRoot $projectRoot `
+  -PackageName "vite" `
+  -RelativePaths @("bin\vite.js")
+$staticServerEntryPath = Join-Path $projectRoot "scripts\serve-static.mjs"
+
 function Ensure-RuntimeDirectory {
   if (-not (Test-Path -LiteralPath $runtimeDirectory)) {
     New-Item -ItemType Directory -Path $runtimeDirectory | Out-Null
@@ -62,34 +72,34 @@ function Start-StandaloneService {
     return
   }
 
-  if (-not (Test-Path -LiteralPath $staticRootPath)) {
+  if ($SkipBuild -and -not (Test-Path -LiteralPath $staticRootPath)) {
     throw "Static root does not exist: $staticRootPath"
   }
 
   if (-not $SkipBuild) {
-    Push-Location $projectRoot
-    try {
-      npm run build
-    } finally {
-      Pop-Location
+    & $nodeExecutable $viteCliPath build
+    if ($LASTEXITCODE -ne 0) {
+      throw "Build failed with exit code $LASTEXITCODE."
     }
+  }
+
+  if (-not (Test-Path -LiteralPath $staticRootPath)) {
+    throw "Static root does not exist: $staticRootPath"
   }
 
   Ensure-RuntimeDirectory
 
-  $nodeCommand = "node"
   $arguments = @(
-    "scripts/serve-static.mjs",
+    $staticServerEntryPath,
     "--host", $ListenHost,
     "--port", $Port,
     "--root", $StaticRoot
   )
 
-  $process = Start-Process `
-    -FilePath $nodeCommand `
+  $process = Start-ProcessWithSanitizedEnvironment `
+    -FilePath $nodeExecutable `
     -ArgumentList $arguments `
     -WorkingDirectory $projectRoot `
-    -WindowStyle Hidden `
     -RedirectStandardOutput $outputLogPath `
     -RedirectStandardError $errorLogPath `
     -PassThru

@@ -19,6 +19,14 @@ import {
   type HouseModuleRegistry,
 } from "../../core/registry/house-module-registry";
 import type { AppPresenterStageOutput } from "./presenter-output";
+import { createTroopEditorStageViewModel } from "../troop-editor/troop-editor-stage-view-model";
+import {
+  selectTroopManagementStageInput,
+} from "../troop-editor/troop-management-selectors";
+import { createTroopManagementStageViewModel } from "../troop-editor/troop-management-stage-view-model";
+import {
+  selectTroopEditorStageInput,
+} from "../troop-editor/troop-editor-selectors";
 
 export type StagePresenterInput = {
   appState: AppState;
@@ -63,6 +71,40 @@ export function createStagePresenterOutput(
 
   if (currentView === "map") {
     return { type: "map", cityDefinitions };
+  }
+
+  if (currentView === "troop-editor") {
+    const troopEditorInput = selectTroopEditorStageInput(
+      input.appState,
+      input.playerCharacterId
+    );
+
+    return {
+      type: "troop-editor",
+      viewModel: createTroopEditorStageViewModel({
+        resources: troopEditorInput.resources,
+        troopSnapshots: troopEditorInput.troopSnapshots,
+        reserveMembers: troopEditorInput.reserveMembers,
+        shopOffers: troopEditorInput.shopOffers,
+        reserveCount: troopEditorInput.reserveCount,
+        reserveCapacity: troopEditorInput.reserveCapacity,
+        selectedTroopId: input.appState.gameState.ui.selectedTroopId,
+        playerGold: troopEditorInput.playerGold,
+        playerFame: troopEditorInput.playerFame,
+      }),
+    };
+  }
+
+  if (currentView === "troop-management") {
+    const troopManagementInput = selectTroopManagementStageInput(
+      input.appState,
+      input.playerCharacterId
+    );
+
+    return {
+      type: "troop-management",
+      viewModel: createTroopManagementStageViewModel(troopManagementInput),
+    };
   }
 
   if (currentView === "city") {

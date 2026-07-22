@@ -9,15 +9,18 @@
 
 .view-story-battle--embedded {
   display: block;
-  min-height: 100vh;
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
   padding: 0;
+  overflow: hidden;
   background: #090b0a;
 }
 
 .c-story-battle__demo-frame {
   display: block;
-  width: 100vw;
-  height: 100vh;
+  width: 100%;
+  height: 100%;
   border: 0;
   background: #090b0a;
 }

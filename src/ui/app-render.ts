@@ -45,6 +45,10 @@ import {
   createGlobalPlayerPanelModel,
   renderGlobalPlayerPanel,
 } from "./panels/global-player-panel";
+import {
+  createBattleTroopPreviewViewModel,
+} from "../application/troop-editor/troop-editor-stage-view-model";
+import { selectPlayerTroopSnapshots } from "../application/troop-editor/troop-editor-selectors";
 import { renderCharacterDetailView } from "./views/character/character-detail-view";
 import { renderCardLibraryView } from "./views/cards/card-library-view";
 import { renderBackpackView } from "./views/inventory/backpack-view";
@@ -54,6 +58,8 @@ import { renderCityBeggingMiniGameOverlay } from "./views/minigames/city-begging
 import { createHouseViewModel } from "./views/house/house-view";
 import { renderHouseModuleView } from "./views/house/house-module-view-registry";
 import { createMapViewModel, renderMapView } from "./views/map/map-view";
+import { renderTroopEditorView } from "./views/troop-editor/troop-editor-view";
+import { renderTroopManagementView } from "./views/troop-editor/troop-management-view";
 import { renderSceneView } from "./views/scene/scene-view";
 import { renderStoryBattleView } from "./views/battle/story-battle-view";
 import { renderLayoutEditor } from "./tools/layout-editor-view";
@@ -621,8 +627,24 @@ function renderStage(
     });
   }
 
+  if (stage.type === "troop-editor") {
+    return renderTroopEditorView(stage.viewModel);
+  }
+
+  if (stage.type === "troop-management") {
+    return renderTroopManagementView(stage.viewModel);
+  }
+
   if (stage.type === "battle") {
-    return renderStoryBattleView(input.appState.gameState.storyBattle);
+    const troopSnapshots = selectPlayerTroopSnapshots(
+      input.appState,
+      input.playerCharacterId
+    );
+    return renderStoryBattleView(input.appState.gameState.storyBattle, {
+      formationPreview: createBattleTroopPreviewViewModel(
+        troopSnapshots[0] ?? null
+      ),
+    });
   }
 
   return "";

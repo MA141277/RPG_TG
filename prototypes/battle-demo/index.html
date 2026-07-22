@@ -1091,6 +1091,62 @@
       min-height: 540px;
       overflow: hidden;
     }
+    body.preview-formation-only {
+      background:
+        linear-gradient(rgba(12, 16, 18, 0.03), rgba(12, 16, 18, 0.08)),
+        url("../../ui/battle/stage.png") center 42% / cover no-repeat;
+    }
+    body.preview-formation-only > *:not(.formation-battle):not(script) {
+      display: none !important;
+    }
+    body.preview-formation-only .formation-battle {
+      background: transparent;
+    }
+    body.preview-formation-only .formation-battle-box {
+      width: 100%;
+      height: 100%;
+      min-height: 0;
+      background: transparent;
+    }
+    body.preview-formation-only .battle-morale-frame,
+    body.preview-formation-only .formation-side.enemy,
+    body.preview-formation-only .battle-sequence,
+    body.preview-formation-only .battle-damage-layer {
+      display: none;
+    }
+    body.preview-formation-only .formation-side.player {
+      inset: 0;
+      width: auto;
+      height: auto;
+      min-height: 0;
+      transform: none;
+    }
+    body.preview-formation-only .formation-side.player h2 {
+      display: none;
+    }
+    body.preview-formation-only .formation-side.player .formation-grid {
+      transform: translateY(0);
+      transform-origin: center 82%;
+    }
+    body.preview-formation-only .formation-side.player .formation-slot {
+      left: calc((50 + (var(--x) - 50) * 0.56) * 1%);
+      top: calc((64 + (var(--y) - 64) * 0.448) * 1% - 40px);
+    }
+    body.preview-formation-only .formation-side.player .formation-slot.empty {
+      opacity: 1;
+      pointer-events: auto;
+      filter: drop-shadow(0 10px 6px rgba(0,0,0,0.22));
+    }
+    body.preview-formation-only .formation-side.player .formation-slot.empty .formation-spine-frame,
+    body.preview-formation-only .formation-side.player .formation-slot.empty .member-loss {
+      display: none;
+    }
+    body.preview-formation-only .formation-side.player .formation-slot.empty .member-name {
+      color: #6c5228;
+      background:
+        linear-gradient(180deg, rgba(239, 222, 190, 0.96), rgba(218, 194, 153, 0.96));
+      box-shadow: 0 3px 8px rgba(0,0,0,0.18), inset 0 0 0 1px rgba(126, 88, 35, 0.28);
+    }
     .battle-damage-layer {
       position: absolute;
       inset: 0;
@@ -1205,7 +1261,7 @@
     .formation-side.enemy { right: clamp(92px, 12vw, 190px); }
     .formation-side h2 {
       position: absolute;
-      top: -82px;
+      top: -162px;
       left: 0;
       right: 0;
       font-size: 0.78rem;
@@ -2725,6 +2781,7 @@
       spear: { label: '长枪', attack: 45, defense: 55, speed: 28, range: 1 },
       cavalry: { label: '骑兵', attack: 65, defense: 40, speed: 45, range: 1 },
       archer: { label: '弓兵', attack: 55, defense: 35, speed: 32, range: 3 },
+      musketeer: { label: '火枪手', attack: 75, defense: 30, speed: 22, range: 2 },
       gunpowder: { label: '火器', attack: 75, defense: 30, speed: 22, range: 2 },
     };
 
@@ -2766,6 +2823,35 @@
       'rear-center': '后中',
       'rear-right': '后右',
     };
+    const FORMATION_SLOT_ROW_NAMES = ['front', 'middle', 'rear'];
+    const FORMATION_SLOT_COL_NAMES = ['left', 'center', 'right'];
+
+    function getFormationSlotIndices(slotKey) {
+      const [rowName = 'front', colName = 'center'] = String(slotKey).split('-');
+      return {
+        row: Math.max(0, FORMATION_SLOT_ROW_NAMES.indexOf(rowName)),
+        col: Math.max(0, FORMATION_SLOT_COL_NAMES.indexOf(colName)),
+      };
+    }
+
+    function buildFormationSlotKey(row, col) {
+      return `${FORMATION_SLOT_ROW_NAMES[row] || 'front'}-${FORMATION_SLOT_COL_NAMES[col] || 'center'}`;
+    }
+
+    function rotateFormationPanelSlotKey(slotKey, side = 'player') {
+      const { row, col } = getFormationSlotIndices(slotKey);
+      if (side === 'player') {
+        return buildFormationSlotKey(2 - col, row);
+      }
+      if (side === 'enemy') {
+        return buildFormationSlotKey(col, 2 - row);
+      }
+      return buildFormationSlotKey(row, col);
+    }
+
+    function getFormationPanelDisplaySlotKeys(side = 'player') {
+      return FORMATION_SLOT_KEYS.map((slotKey) => rotateFormationPanelSlotKey(slotKey, side));
+    }
     const FORMATION_TEMPLATES = {
       vanguard: {
         label: '先锋',
@@ -4150,7 +4236,8 @@
       `;
 
       const occupiedSlots = new Map((unit.formationMembers || []).map(member => [member.slotKey, member]));
-      grid.innerHTML = FORMATION_SLOT_KEYS.map(slotKey => {
+      const displaySlotKeys = getFormationPanelDisplaySlotKeys(unit.side);
+      grid.innerHTML = displaySlotKeys.map(slotKey => {
         const member = occupiedSlots.get(slotKey);
         if (!member) {
           return `<div class="unit-formation-cell empty"><div>${escapeHtml(FORMATION_SLOT_LABELS[slotKey])}</div><div>空位</div></div>`;
@@ -4938,9 +5025,10 @@
     const BATTLE_PLAYER_FRONT_X = 70;
     const BATTLE_ENEMY_FRONT_X = 30;
     const BATTLE_RANK_HORIZONTAL_STEP = 33;
+    const BATTLE_VERTICAL_FILE_SPACING_MULTIPLIER = 1.95;
     const BATTLE_FILE_DIAGONAL_STEP = {
       x: 11,
-      y: 14,
+      y: 14 * BATTLE_VERTICAL_FILE_SPACING_MULTIPLIER,
     };
 
     function getBattleSlotPosition(slotKey, mirrorCols = false) {
@@ -4948,19 +5036,20 @@
       const colMap = { left: 0, center: 1, right: 2 };
       const rankIndex = rowName === 'front' ? 0 : rowName === 'middle' ? 1 : 2;
       const formationFile = colMap[colName] ?? 0;
+      const visualFile = mirrorCols ? 2 - formationFile : formationFile;
       const frontX = mirrorCols ? BATTLE_PLAYER_FRONT_X : BATTLE_ENEMY_FRONT_X;
       const x =
         frontX +
         (mirrorCols ? -1 : 1) *
-          (rankIndex * BATTLE_RANK_HORIZONTAL_STEP - formationFile * BATTLE_FILE_DIAGONAL_STEP.x);
-      const y = BATTLE_FORMATION_BASELINE_Y - formationFile * BATTLE_FILE_DIAGONAL_STEP.y;
+          (rankIndex * BATTLE_RANK_HORIZONTAL_STEP - visualFile * BATTLE_FILE_DIAGONAL_STEP.x);
+      const y = BATTLE_FORMATION_BASELINE_Y - visualFile * BATTLE_FILE_DIAGONAL_STEP.y;
       return {
         row: rankIndex,
-        col: formationFile,
+        col: visualFile,
         rowClass: `row-${rowName}`,
         x,
         y,
-        z: 100 + Math.round(y * 10) + (mirrorCols ? 2 - formationFile : formationFile),
+        z: 100 + Math.round(y * 10) + visualFile,
         scale: 0.92,
         anchor: 'bottom-center',
       };
@@ -4976,15 +5065,15 @@
         moveActionNames: ['跳跃'],
         materialForegroundImageKeys: [],
         materialForegroundNormalizeOptions: {},
-        renderScaleMultiplier: 1,
+        renderScaleMultiplier: 0.84,
         renderOffsetX: -16,
         renderOffsetXBySide: {
           player: -120,
-          enemy: 85,
+          enemy: 93,
         },
         renderOffsetYBySide: {
-          player: -30,
-          enemy: -30,
+          player: -20,
+          enemy: -20,
         },
         renderOffsetY: 0,
         stationaryAttack: false,
@@ -5003,15 +5092,15 @@
             removeDarkGuideLine: true,
           },
         },
-        renderScaleMultiplier: 1.84,
+        renderScaleMultiplier: 1.5456,
         renderOffsetX: -34,
         renderOffsetXBySide: {
           player: -150,
           enemy: 68,
         },
         renderOffsetYBySide: {
-          player: 57,
-          enemy: 57,
+          player: 47,
+          enemy: 47,
         },
         renderOffsetY: 80,
         stationaryAttack: true,
@@ -5030,15 +5119,15 @@
             removeDarkGuideLine: true,
           },
         },
-        renderScaleMultiplier: 1.2,
+        renderScaleMultiplier: 1.086624,
         renderOffsetX: -16,
         renderOffsetXBySide: {
           player: -110,
-          enemy: 85,
+          enemy: 95,
         },
         renderOffsetYBySide: {
-          player: -30,
-          enemy: -30,
+          player: -25,
+          enemy: -25,
         },
         renderOffsetY: 0,
         stationaryAttack: false,
@@ -5053,15 +5142,15 @@
         moveActionNames: ['冲刺'],
         materialForegroundImageKeys: [],
         materialForegroundNormalizeOptions: {},
-        renderScaleMultiplier: 1.8,
+        renderScaleMultiplier: 1.512,
         renderOffsetX: -16,
         renderOffsetXBySide: {
           player: -110,
           enemy: 85,
         },
         renderOffsetYBySide: {
-          player: -98,
-          enemy: -98,
+          player: -53,
+          enemy: -53,
         },
         renderOffsetY: 0,
         stationaryAttack: false,
@@ -5087,15 +5176,15 @@
             removeDarkGuideLine: true,
           },
         },
-        renderScaleMultiplier: 1.2,
+        renderScaleMultiplier: 0.9408,
         renderOffsetX: -16,
         renderOffsetXBySide: {
           player: -100,
-          enemy: 115,
+          enemy: 95,
         },
         renderOffsetYBySide: {
-          player: -30,
-          enemy: -30,
+          player: -15,
+          enemy: -15,
         },
         renderOffsetY: 0,
         stationaryAttack: true,
@@ -5264,7 +5353,7 @@
         src: '../../ui/battle/战斗/archer_airbreak_effect_v2.png',
         width: 260,
         spawnForwardOffsetX: 18,
-        spawnOffsetY: 0,
+        spawnOffsetY: 10,
         fadeInFrames: 3,
         holdFrames: 3,
         fadeOutFrames: 8,
@@ -5469,6 +5558,23 @@
       });
     }
 
+    function clearBattleSpineCanvasLayers(canvas) {
+      if (!(canvas instanceof HTMLCanvasElement)) return;
+      [canvas, canvas.__battleWhiteFlashOverlayCanvas, canvas.__battleWhiteFlashSourceCanvas].forEach((layer) => {
+        if (!(layer instanceof HTMLCanvasElement)) return;
+        const ctx = layer.getContext('2d');
+        if (!ctx) return;
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.clearRect(0, 0, layer.width, layer.height);
+      });
+      delete canvas.__battleSpineRenderer;
+      delete canvas.__battleLastRenderActionId;
+      delete canvas.__battleLastRenderElapsedMs;
+      delete canvas.__battleLastRenderSide;
+      delete canvas.__battleLastRenderLoop;
+      delete canvas.__battleLastIdleActionFrameBucket;
+    }
+
     class BattleSpineRenderer {
       constructor(project, images, config = {}, whiteFlashImages = null) {
         this.project = project;
@@ -5563,6 +5669,34 @@
           image.src = src;
           images[key] = image;
         })));
+        await Promise.all(Object.entries(project.customImages || {}).map(async ([key, item]) => {
+          if (!item?.cleanup) return;
+          const currentSrc = String(item?.src || '').trim();
+          const sourceKey = String(item?.cleanup?.sourceImageKey || item?.cleanup?.sourceImage || '').trim();
+          const sourceProjectItem =
+            sourceKey && project?.customImages && typeof project.customImages === 'object'
+              ? project.customImages[sourceKey]
+              : null;
+          const sourceSrc = String(
+            item?.cleanup?.sourceSrc ||
+            item?.cleanup?.sourceImageSrc ||
+            sourceProjectItem?.src ||
+            '',
+          ).trim();
+          // Match the editor: if the project already stores a baked cleaned image in item.src,
+          // use it as authoritative instead of running cleanup again at runtime.
+          if (currentSrc && sourceSrc && currentSrc !== sourceSrc) return;
+          try {
+            const sourceImage = await BattleSpineRenderer.resolveCleanupSourceImage(images, imageSources, key, item);
+            if (!sourceImage?.complete) return;
+            images[key] = await BattleSpineRenderer.applySavedImageCleanup(
+              sourceImage,
+              item.cleanup?.options || item.cleanup,
+            );
+          } catch (error) {
+            console.warn('Failed to apply saved image cleanup for battle renderer', key, error);
+          }
+        }));
         const materialKeys = new Set(config.materialForegroundImageKeys || []);
         const materialNormalizeOptions = config.materialForegroundNormalizeOptions || {};
         await Promise.all([...materialKeys].map(async (key) => {
@@ -5627,6 +5761,439 @@
           image.onerror = () => reject(new Error('Failed to create image from image data.'));
           image.src = canvas.toDataURL('image/png');
         });
+      }
+
+      static loadImageSource(src, baseHref = window.location.href) {
+        const resolved = BattleSpineRenderer.resolveImageSource(src, baseHref);
+        if (!resolved) return Promise.resolve(null);
+        return new Promise((resolve) => {
+          const image = new Image();
+          image.onload = () => resolve(image);
+          image.onerror = () => resolve(null);
+          image.src = resolved;
+        });
+      }
+
+      static cloneImageData(imageData) {
+        return new ImageData(new Uint8ClampedArray(imageData.data), imageData.width, imageData.height);
+      }
+
+      static hexToRgbColor(hex) {
+        const normalized = String(hex || '').trim();
+        if (!/^#[0-9a-f]{6}$/i.test(normalized)) return null;
+        return [
+          parseInt(normalized.slice(1, 3), 16),
+          parseInt(normalized.slice(3, 5), 16),
+          parseInt(normalized.slice(5, 7), 16),
+        ];
+      }
+
+      static normalizedImageCleanupOptions(overrides = {}) {
+        const source = { ...(overrides || {}) };
+        return {
+          enabled: source.enabled !== false,
+          backgroundMode: ['white', 'magenta', 'custom'].includes(source.backgroundMode)
+            ? source.backgroundMode
+            : 'white',
+          tolerance: Math.max(0, Math.min(255, Math.round(Number(source.tolerance) || 0))),
+          customColor: /^#[0-9a-f]{6}$/i.test(String(source.customColor || ''))
+            ? String(source.customColor)
+            : '#ffffff',
+          edgeRepair: source.edgeRepair !== false,
+          alphaShrink: source.alphaShrink !== false,
+          supersample: source.supersample !== false,
+          curveRebuild: source.curveRebuild === true,
+        };
+      }
+
+      static resolveImageCleanupBackgroundColor(options = {}) {
+        const mode = String(options?.backgroundMode || 'white');
+        if (mode === 'magenta') return [128, 0, 128];
+        if (mode === 'custom') return BattleSpineRenderer.hexToRgbColor(options?.customColor) || [255, 255, 255];
+        return [255, 255, 255];
+      }
+
+      static colorDistanceToBackground(r, g, b, backgroundColor) {
+        const dr = r - backgroundColor[0];
+        const dg = g - backgroundColor[1];
+        const db = b - backgroundColor[2];
+        return Math.sqrt(dr * dr + dg * dg + db * db);
+      }
+
+      static backgroundMatchesCleanupColor(r, g, b, backgroundColor, tolerance, mode = 'custom') {
+        if (mode === 'white') {
+          const threshold = 255 - tolerance;
+          return r >= threshold && g >= threshold && b >= threshold;
+        }
+        return (
+          Math.abs(r - backgroundColor[0]) <= tolerance &&
+          Math.abs(g - backgroundColor[1]) <= tolerance &&
+          Math.abs(b - backgroundColor[2]) <= tolerance
+        );
+      }
+
+      static fourNeighborIndices(index, width, height) {
+        const neighbors = [];
+        const x = index % width;
+        const y = Math.floor(index / width);
+        if (x > 0) neighbors.push(index - 1);
+        if (x < width - 1) neighbors.push(index + 1);
+        if (y > 0) neighbors.push(index - width);
+        if (y < height - 1) neighbors.push(index + width);
+        return neighbors;
+      }
+
+      static clearImageDataPixel(imageData, index) {
+        const offset = index * 4;
+        imageData.data[offset] = 0;
+        imageData.data[offset + 1] = 0;
+        imageData.data[offset + 2] = 0;
+        imageData.data[offset + 3] = 0;
+      }
+
+      static createOpaqueMask(imageData, alphaThreshold = 16) {
+        const mask = new Uint8Array(imageData.width * imageData.height);
+        for (let index = 0; index < mask.length; index += 1) {
+          mask[index] = imageData.data[index * 4 + 3] >= alphaThreshold ? 1 : 0;
+        }
+        return mask;
+      }
+
+      static averageOpaqueRgbFromImageData(imageData) {
+        let totalR = 0;
+        let totalG = 0;
+        let totalB = 0;
+        let count = 0;
+        for (let index = 0; index < imageData.width * imageData.height; index += 1) {
+          const offset = index * 4;
+          if (imageData.data[offset + 3] < 16) continue;
+          totalR += imageData.data[offset];
+          totalG += imageData.data[offset + 1];
+          totalB += imageData.data[offset + 2];
+          count += 1;
+        }
+        if (!count) return [128, 128, 128];
+        return [
+          Math.round(totalR / count),
+          Math.round(totalG / count),
+          Math.round(totalB / count),
+        ];
+      }
+
+      static countTransparentNeighbors(mask, index, width, height) {
+        let count = 0;
+        BattleSpineRenderer.fourNeighborIndices(index, width, height).forEach((neighbor) => {
+          if (!mask[neighbor]) count += 1;
+        });
+        return count;
+      }
+
+      static sampleNearestCleanOpaqueColor(imageData, mask, x, y, backgroundColor, tolerance, mode = 'custom', maxRadius = 8) {
+        const { width, height, data } = imageData;
+        for (let radius = 1; radius <= maxRadius; radius += 1) {
+          for (let py = Math.max(0, y - radius); py <= Math.min(height - 1, y + radius); py += 1) {
+            for (let px = Math.max(0, x - radius); px <= Math.min(width - 1, x + radius); px += 1) {
+              if (Math.abs(px - x) !== radius && Math.abs(py - y) !== radius) continue;
+              const index = py * width + px;
+              const offset = index * 4;
+              if (!mask[index] || data[offset + 3] < 16) continue;
+              if (BattleSpineRenderer.countTransparentNeighbors(mask, index, width, height) > 0) continue;
+              const r = data[offset];
+              const g = data[offset + 1];
+              const b = data[offset + 2];
+              if (BattleSpineRenderer.backgroundMatchesCleanupColor(r, g, b, backgroundColor, tolerance, mode)) continue;
+              return [r, g, b];
+            }
+          }
+        }
+        return null;
+      }
+
+      static pushColorAwayFromBackground(color, backgroundColor, fallbackColor) {
+        const base = Array.isArray(color) ? color : fallbackColor;
+        return [0, 1, 2].map((channel) => {
+          const delta = base[channel] - backgroundColor[channel];
+          if (Math.abs(delta) >= 26) return base[channel];
+          const direction = delta >= 0 ? 1 : -1;
+          return Math.max(0, Math.min(255, base[channel] + direction * 48));
+        });
+      }
+
+      static floodRemoveCornerConnectedBackground(sourceImageData, options = {}) {
+        const config = BattleSpineRenderer.normalizedImageCleanupOptions(options);
+        const imageData = BattleSpineRenderer.cloneImageData(sourceImageData);
+        if (!config.enabled) {
+          return {
+            imageData,
+            backgroundColor: BattleSpineRenderer.resolveImageCleanupBackgroundColor(config),
+            options: config,
+          };
+        }
+        const { width, height, data } = imageData;
+        const backgroundColor = BattleSpineRenderer.resolveImageCleanupBackgroundColor(config);
+        const queue = [];
+        const visited = new Uint8Array(width * height);
+        const pushIfMatch = (index) => {
+          if (visited[index]) return;
+          const offset = index * 4;
+          if (
+            !BattleSpineRenderer.backgroundMatchesCleanupColor(
+              data[offset],
+              data[offset + 1],
+              data[offset + 2],
+              backgroundColor,
+              config.tolerance,
+              config.backgroundMode,
+            )
+          ) {
+            return;
+          }
+          visited[index] = 1;
+          queue.push(index);
+        };
+        [0, width - 1, (height - 1) * width, height * width - 1].forEach((seed) => {
+          if (seed >= 0 && seed < visited.length) pushIfMatch(seed);
+        });
+        for (let cursor = 0; cursor < queue.length; cursor += 1) {
+          const index = queue[cursor];
+          BattleSpineRenderer.clearImageDataPixel(imageData, index);
+          BattleSpineRenderer.fourNeighborIndices(index, width, height).forEach(pushIfMatch);
+        }
+        return { imageData, backgroundColor, options: config };
+      }
+
+      static detectOpaqueComponentsFromImageData(imageData, minPixels = 1, alphaThreshold = 16) {
+        const { width, height } = imageData;
+        const mask = BattleSpineRenderer.createOpaqueMask(imageData, alphaThreshold);
+        const visited = new Uint8Array(mask.length);
+        const components = [];
+        for (let index = 0; index < mask.length; index += 1) {
+          if (!mask[index] || visited[index]) continue;
+          const pixels = [index];
+          visited[index] = 1;
+          for (let cursor = 0; cursor < pixels.length; cursor += 1) {
+            const current = pixels[cursor];
+            BattleSpineRenderer.fourNeighborIndices(current, width, height).forEach((neighbor) => {
+              if (!mask[neighbor] || visited[neighbor]) return;
+              visited[neighbor] = 1;
+              pixels.push(neighbor);
+            });
+          }
+          if (pixels.length < minPixels) {
+            pixels.forEach((pixelIndex) => BattleSpineRenderer.clearImageDataPixel(imageData, pixelIndex));
+            continue;
+          }
+          components.push({ pixels, count: pixels.length });
+        }
+        return components;
+      }
+
+      static repairTransparentEdgeBleed(sourceImageData, options = {}) {
+        const config = BattleSpineRenderer.normalizedImageCleanupOptions(options);
+        const backgroundColor = BattleSpineRenderer.resolveImageCleanupBackgroundColor(config);
+        const imageData = BattleSpineRenderer.cloneImageData(sourceImageData);
+        const source = BattleSpineRenderer.cloneImageData(sourceImageData);
+        const mask = BattleSpineRenderer.createOpaqueMask(source, 8);
+        const fallbackColor = BattleSpineRenderer.averageOpaqueRgbFromImageData(source);
+        const { width, height } = source;
+        for (let index = 0; index < mask.length; index += 1) {
+          if (!mask[index] || !BattleSpineRenderer.countTransparentNeighbors(mask, index, width, height)) continue;
+          const offset = index * 4;
+          const alpha = source.data[offset + 3];
+          if (alpha < 8) continue;
+          const color = [source.data[offset], source.data[offset + 1], source.data[offset + 2]];
+          const polluted =
+            BattleSpineRenderer.backgroundMatchesCleanupColor(
+              color[0],
+              color[1],
+              color[2],
+              backgroundColor,
+              Math.round(config.tolerance * 1.3),
+              config.backgroundMode,
+            ) ||
+            (alpha < 220 &&
+              BattleSpineRenderer.colorDistanceToBackground(
+                color[0],
+                color[1],
+                color[2],
+                backgroundColor,
+              ) <= config.tolerance * 2.4);
+          if (!polluted) continue;
+          const x = index % width;
+          const y = Math.floor(index / width);
+          const sampled =
+            BattleSpineRenderer.sampleNearestCleanOpaqueColor(
+              source,
+              mask,
+              x,
+              y,
+              backgroundColor,
+              config.tolerance,
+              config.backgroundMode,
+            ) || BattleSpineRenderer.pushColorAwayFromBackground(color, backgroundColor, fallbackColor);
+          imageData.data[offset] = Math.round(color[0] * 0.18 + sampled[0] * 0.82);
+          imageData.data[offset + 1] = Math.round(color[1] * 0.18 + sampled[1] * 0.82);
+          imageData.data[offset + 2] = Math.round(color[2] * 0.18 + sampled[2] * 0.82);
+        }
+        return imageData;
+      }
+
+      static shrinkAndSmoothAlphaEdge(sourceImageData) {
+        const imageData = BattleSpineRenderer.cloneImageData(sourceImageData);
+        const source = sourceImageData.data;
+        const mask = BattleSpineRenderer.createOpaqueMask(sourceImageData, 8);
+        const { width, height } = sourceImageData;
+        for (let index = 0; index < mask.length; index += 1) {
+          if (!mask[index]) continue;
+          const transparentNeighbors = BattleSpineRenderer.countTransparentNeighbors(mask, index, width, height);
+          if (!transparentNeighbors) continue;
+          const x = index % width;
+          const y = Math.floor(index / width);
+          let alphaSum = 0;
+          let sampleCount = 0;
+          for (let py = Math.max(0, y - 1); py <= Math.min(height - 1, y + 1); py += 1) {
+            for (let px = Math.max(0, x - 1); px <= Math.min(width - 1, x + 1); px += 1) {
+              alphaSum += source[(py * width + px) * 4 + 3];
+              sampleCount += 1;
+            }
+          }
+          const currentAlpha = source[index * 4 + 3];
+          const averageAlpha = alphaSum / Math.max(1, sampleCount);
+          const targetAlpha = Math.max(0, Math.min(currentAlpha, averageAlpha * (0.88 - transparentNeighbors * 0.06)));
+          imageData.data[index * 4 + 3] = targetAlpha < 6
+            ? 0
+            : Math.round(currentAlpha * 0.55 + targetAlpha * 0.45);
+        }
+        return imageData;
+      }
+
+      static supersampleAlphaEdge(sourceImageData) {
+        const imageData = BattleSpineRenderer.cloneImageData(sourceImageData);
+        const source = sourceImageData.data;
+        const mask = BattleSpineRenderer.createOpaqueMask(sourceImageData, 8);
+        const { width, height } = sourceImageData;
+        for (let index = 0; index < mask.length; index += 1) {
+          if (!mask[index]) continue;
+          const transparentNeighbors = BattleSpineRenderer.countTransparentNeighbors(mask, index, width, height);
+          if (!transparentNeighbors) continue;
+          const x = index % width;
+          const y = Math.floor(index / width);
+          let coverage = 0;
+          let sampleCount = 0;
+          for (let py = Math.max(0, y - 1); py <= Math.min(height - 1, y + 1); py += 1) {
+            for (let px = Math.max(0, x - 1); px <= Math.min(width - 1, x + 1); px += 1) {
+              coverage += source[(py * width + px) * 4 + 3] / 255;
+              sampleCount += 1;
+            }
+          }
+          const currentAlpha = source[index * 4 + 3];
+          const resampledAlpha = Math.round((coverage / Math.max(1, sampleCount)) * 255);
+          imageData.data[index * 4 + 3] = Math.max(
+            0,
+            Math.min(255, Math.round(currentAlpha * 0.4 + resampledAlpha * 0.6)),
+          );
+        }
+        return imageData;
+      }
+
+      static erodeMask(mask, width, height, steps = 1) {
+        let current = mask.slice();
+        for (let step = 0; step < steps; step += 1) {
+          const next = current.slice();
+          for (let index = 0; index < current.length; index += 1) {
+            if (!current[index]) continue;
+            if (BattleSpineRenderer.countTransparentNeighbors(current, index, width, height) > 0) {
+              next[index] = 0;
+            }
+          }
+          current = next;
+        }
+        return current;
+      }
+
+      static rebuildCurveEdges(sourceImageData, options = {}) {
+        const config = BattleSpineRenderer.normalizedImageCleanupOptions(options);
+        const backgroundColor = BattleSpineRenderer.resolveImageCleanupBackgroundColor(config);
+        const oldMask = BattleSpineRenderer.createOpaqueMask(sourceImageData, 16);
+        const closedMask = BattleSpineRenderer.erodeMask(
+          BattleSpineRenderer.dilateMask(oldMask, sourceImageData.width, sourceImageData.height, 1),
+          sourceImageData.width,
+          sourceImageData.height,
+          1,
+        );
+        const rebuiltMask = BattleSpineRenderer.dilateMask(
+          BattleSpineRenderer.erodeMask(closedMask, sourceImageData.width, sourceImageData.height, 1),
+          sourceImageData.width,
+          sourceImageData.height,
+          1,
+        );
+        const output = BattleSpineRenderer.cloneImageData(sourceImageData);
+        const fallbackColor = BattleSpineRenderer.averageOpaqueRgbFromImageData(sourceImageData);
+        for (let index = 0; index < rebuiltMask.length; index += 1) {
+          if (!rebuiltMask[index]) {
+            BattleSpineRenderer.clearImageDataPixel(output, index);
+            continue;
+          }
+          if (oldMask[index]) continue;
+          const x = index % sourceImageData.width;
+          const y = Math.floor(index / sourceImageData.width);
+          const sampled =
+            BattleSpineRenderer.sampleNearestCleanOpaqueColor(
+              sourceImageData,
+              oldMask,
+              x,
+              y,
+              backgroundColor,
+              config.tolerance,
+              config.backgroundMode,
+            ) || fallbackColor;
+          const offset = index * 4;
+          output.data[offset] = sampled[0];
+          output.data[offset + 1] = sampled[1];
+          output.data[offset + 2] = sampled[2];
+          output.data[offset + 3] = 220;
+        }
+        return BattleSpineRenderer.supersampleAlphaEdge(
+          BattleSpineRenderer.shrinkAndSmoothAlphaEdge(output),
+        );
+      }
+
+      static preprocessImportedImageData(sourceImageData, options = {}) {
+        const config = BattleSpineRenderer.normalizedImageCleanupOptions(options);
+        let imageData = BattleSpineRenderer.cloneImageData(sourceImageData);
+        if (config.enabled) {
+          imageData = BattleSpineRenderer.floodRemoveCornerConnectedBackground(imageData, config).imageData;
+          if (config.edgeRepair) imageData = BattleSpineRenderer.repairTransparentEdgeBleed(imageData, config);
+          if (config.alphaShrink) imageData = BattleSpineRenderer.shrinkAndSmoothAlphaEdge(imageData);
+          if (config.supersample) imageData = BattleSpineRenderer.supersampleAlphaEdge(imageData);
+          if (config.curveRebuild) imageData = BattleSpineRenderer.rebuildCurveEdges(imageData, config);
+        }
+        for (let index = 0; index < imageData.width * imageData.height; index += 1) {
+          if (imageData.data[index * 4 + 3] < 6) {
+            BattleSpineRenderer.clearImageDataPixel(imageData, index);
+          }
+        }
+        return {
+          imageData,
+          components: BattleSpineRenderer.detectOpaqueComponentsFromImageData(imageData, 1, 16),
+        };
+      }
+
+      static async applySavedImageCleanup(image, options = {}) {
+        const processed = BattleSpineRenderer.preprocessImportedImageData(
+          BattleSpineRenderer.imageToImageData(image),
+          options,
+        );
+        return BattleSpineRenderer.imageDataToImage(processed.imageData);
+      }
+
+      static async resolveCleanupSourceImage(images, imageSources, key, item) {
+        const sourceKey = String(item?.cleanup?.sourceImageKey || item?.cleanup?.sourceImage || '').trim();
+        if (sourceKey && sourceKey !== key && images[sourceKey]) return images[sourceKey];
+        if (sourceKey && imageSources[sourceKey] && images[sourceKey]) return images[sourceKey];
+        const sourceSrc = String(item?.cleanup?.sourceSrc || item?.cleanup?.sourceImageSrc || '').trim();
+        if (sourceSrc) return BattleSpineRenderer.loadImageSource(sourceSrc);
+        return images[key];
       }
 
       static createWhiteSilhouetteImage(image, options = {}) {
@@ -7108,8 +7675,16 @@
         if (!image?.complete || !attachment.fullSkin || !restPart) return;
         const segments = this.attachmentSegments(node, attachment, action, frame);
         if (!segments.length) return;
-        const cols = this.lowDetail ? 3 : attachment.restPart.partId === 'torso' ? 5 : 4;
-        const rows = this.lowDetail ? Math.max(4, segments.length * 3) : Math.max(6, segments.length * 5);
+        const defaultCols = this.lowDetail ? 3 : attachment.restPart.partId === 'torso' ? 5 : 4;
+        const defaultRows = this.lowDetail ? Math.max(4, segments.length * 3) : Math.max(6, segments.length * 5);
+        const authoredMeshCols = Math.round(Number(attachment.meshCols));
+        const authoredMeshRows = Math.round(Number(attachment.meshRows));
+        const cols = authoredMeshCols > 0
+          ? Math.max(3, authoredMeshCols)
+          : defaultCols;
+        const rows = authoredMeshRows > 0
+          ? Math.max(6, authoredMeshRows)
+          : defaultRows;
         const source = this.getAttachmentSourceGrid(image, cols, rows);
         const dest = [];
         for (let row = 0; row <= rows; row += 1) {
@@ -7484,14 +8059,24 @@
       return battleSpineRendererPromises.get(asset.cacheKey);
     }
 
+    function clearBattleSpineRendererCache(cacheKey = null) {
+      if (!cacheKey) {
+        battleSpineRendererPromises.clear();
+        return;
+      }
+      battleSpineRendererPromises.delete(String(cacheKey));
+    }
+
     function startBattleSpineIdleLoop() {
       if (battleSpineIdleRaf) return;
       const tick = () => {
         const overlay = document.getElementById('formation-battle');
         if (overlay?.classList.contains('hidden')) return;
         const now = performance.now();
-        if (now - battleSpineLastIdleRender < 83) return;
-        battleSpineLastIdleRender = now;
+        const allowThrottledIdleRender = now - battleSpineLastIdleRender >= 83;
+        if (allowThrottledIdleRender) {
+          battleSpineLastIdleRender = now;
+        }
         for (const entry of getBattleSpineCanvasEntries()) {
           if (
             entry.slot.classList.contains('empty') ||
@@ -7500,21 +8085,41 @@
           ) {
             continue;
           }
+          if (entry.canvas.dataset.freezeIdleFrame === 'true' && entry.canvas.__battleFrozenFrameRendered === true) {
+            continue;
+          }
           const rect = entry.canvas.getBoundingClientRect();
           if (rect.width <= 0 || rect.height <= 0) continue;
           const troopType = entry.canvas.dataset.troopType || 'infantry';
+          if (troopType !== 'cavalry' && !allowThrottledIdleRender) {
+            continue;
+          }
           getBattleSpineRenderer(troopType).then(renderer => {
             if (!renderer) return;
+            const freezeIdleFrame = entry.canvas.dataset.freezeIdleFrame === 'true';
+            const actionId = entry.canvas.dataset.action || 'idle';
+            const elapsedMs = freezeIdleFrame ? 0 : now + Number(entry.canvas.dataset.phase || 0);
+            if (troopType === 'cavalry' && !freezeIdleFrame) {
+              const frameCount = Math.max(1, renderer.getActionFrameCount(actionId));
+              const actionFrameBucket = Math.floor((elapsedMs / 1000) * Math.max(1, renderer.fps || 60)) % (frameCount + 1);
+              if (entry.canvas.__battleLastIdleActionFrameBucket === actionFrameBucket) {
+                return;
+              }
+              entry.canvas.__battleLastIdleActionFrameBucket = actionFrameBucket;
+            }
             renderer.render(
               entry.canvas,
-              entry.canvas.dataset.action || 'idle',
-              now + Number(entry.canvas.dataset.phase || 0),
+              actionId,
+              elapsedMs,
               { side: entry.canvas.dataset.side || '' }
             );
+            if (freezeIdleFrame) {
+              entry.canvas.__battleFrozenFrameRendered = true;
+            }
           });
         }
       };
-      battleSpineIdleRaf = window.setInterval(tick, 100);
+      battleSpineIdleRaf = window.setInterval(tick, 16);
       tick();
     }
 
@@ -7602,6 +8207,7 @@
         canvas,
         whiteFlashCanvas,
         memberName,
+        memberHp,
         memberHpFill,
         memberLoss,
       };
@@ -7724,6 +8330,7 @@
 
     function commitBattleFormationSlot(entry, slotState, side) {
       if (!entry || !slotState) return;
+      const isPreviewOnly = document.body.classList.contains('preview-formation-only');
       const nextState = {
         isEmpty: slotState.current == null,
         isFallen: Boolean(slotState.after && slotState.after.soldiers <= 0),
@@ -7734,13 +8341,15 @@
         side: side || '',
         memberName:
           slotState.current == null
-            ? ''
-            : TROOP_TYPES[slotState.current.troopType]?.label || slotState.current.troopType || '',
+            ? (isPreviewOnly ? '空位' : '')
+            : slotState.current.name || TROOP_TYPES[slotState.current.troopType]?.label || slotState.current.troopType || '',
         hpWidth: `${slotState.hpRatio}%`,
+        hideHp: isPreviewOnly && slotState.current == null,
         lossHidden: !(slotState.loss > 0),
         lossText: slotState.loss > 0 ? `-${slotState.loss}` : '',
       };
       const previous = entry.__battleLastCommittedState;
+      const troopTypeChanged = previous && previous.troopType !== nextState.troopType;
       if (
         previous &&
         previous.isEmpty === nextState.isEmpty &&
@@ -7752,6 +8361,7 @@
         previous.side === nextState.side &&
         previous.memberName === nextState.memberName &&
         previous.hpWidth === nextState.hpWidth &&
+        previous.hideHp === nextState.hideHp &&
         previous.lossHidden === nextState.lossHidden &&
         previous.lossText === nextState.lossText
       ) {
@@ -7764,10 +8374,16 @@
       entry.slot.classList.toggle('targeted', nextState.isTarget);
       entry.slot.dataset.troopType = nextState.troopType;
       entry.canvas.dataset.action = nextState.action;
+      entry.canvas.dataset.freezeIdleFrame = nextState.isFallen ? 'true' : 'false';
       entry.canvas.dataset.troopType = nextState.troopType;
       entry.canvas.dataset.side = nextState.side;
+      entry.canvas.__battleFrozenFrameRendered = false;
       configureBattleSpineCanvasMetrics(entry.canvas);
+      if (troopTypeChanged) {
+        clearBattleSpineCanvasLayers(entry.canvas);
+      }
       entry.memberName.textContent = nextState.memberName;
+      entry.memberHp.hidden = nextState.hideHp;
       entry.memberHpFill.style.width = nextState.hpWidth;
       entry.memberLoss.hidden = nextState.lossHidden;
       entry.memberLoss.textContent = nextState.lossText;
@@ -7831,6 +8447,103 @@
       battleFormationViewState.lastCommittedRenderState = renderState;
     }
 
+    function normalizeFormationPreviewTroopType(value) {
+      const troopType = String(value || '').trim();
+      if (troopType === 'spearman') return 'spear';
+      if (troopType === 'gunpowder' || troopType === 'teppo') return 'musketeer';
+      if (troopType === 'light-cavalry' || troopType === 'heavy-cavalry') return 'cavalry';
+      if (troopType && TROOP_TYPES[troopType]) return troopType;
+      return 'infantry';
+    }
+
+    function normalizeFormationPreviewMember(definition, index) {
+      const slotKey = String(definition?.slotKey || '').trim();
+      if (!FORMATION_SLOT_KEYS.includes(slotKey)) {
+        return null;
+      }
+      const troopType = normalizeFormationPreviewTroopType(
+        definition?.troopType || definition?.role
+      );
+      const base = TROOP_TYPES[troopType] || TROOP_TYPES.infantry;
+      const soldiers = Math.max(1, Math.round(Number(definition?.soldiers) || 100));
+      const maxSoldiers = Math.max(
+        soldiers,
+        Math.round(Number(definition?.maxSoldiers) || soldiers)
+      );
+      return {
+        id: String(definition?.id || `preview-member-${index}`),
+        slotKey,
+        troopType,
+        name: String(definition?.name || base.label),
+        soldiers,
+        maxSoldiers,
+        attack: base.attack,
+        defense: base.defense,
+        speed: base.speed,
+        range: base.range,
+        status: 'normal',
+      };
+    }
+
+    function createFormationPreviewSnapshot(config = {}) {
+      const members = Array.isArray(config.members)
+        ? config.members
+            .map((member, index) => normalizeFormationPreviewMember(member, index))
+            .filter(Boolean)
+        : [];
+      const soldiers = members.reduce((total, member) => total + (member?.soldiers || 0), 0);
+      const maxSoldiers = members.reduce(
+        (total, member) => total + (member?.maxSoldiers || 0),
+        0
+      );
+      return {
+        id: String(config.id || 'preview.player'),
+        name: String(config.name || '编队预览'),
+        side: config.side === 'enemy' ? 'enemy' : 'player',
+        generalName: String(config.generalName || ''),
+        morale: clamp(Number(config.morale) || 0, 0, 100),
+        soldiers,
+        maxSoldiers,
+        formationMembers: members,
+      };
+    }
+
+    function createEmptyFormationPreviewSnapshot(side = 'enemy') {
+      return {
+        id: `preview-empty-${side}`,
+        name: '',
+        side,
+        generalName: '',
+        morale: 0,
+        soldiers: 0,
+        maxSoldiers: 0,
+        formationMembers: [],
+      };
+    }
+
+    function showFormationPreview(previewConfig = {}) {
+      document.body.classList.add('preview-formation-only');
+      ensureBattleFormationViews();
+      const overlay = document.getElementById('formation-battle');
+      if (overlay) {
+        overlay.classList.remove('hidden');
+      }
+
+      const playerSnapshot = createFormationPreviewSnapshot(previewConfig);
+      const enemySnapshot = createEmptyFormationPreviewSnapshot('enemy');
+      const titleElement = document.getElementById('battle-attacker-title');
+      if (titleElement) {
+        titleElement.textContent = playerSnapshot.name || '编队预览';
+      }
+
+      battleFormationViewState.lastCommittedRenderState = null;
+      commitBattleOverlayRenderState({
+        left: buildBattleFormationSideState(playerSnapshot, playerSnapshot, {}),
+        right: buildBattleFormationSideState(enemySnapshot, enemySnapshot, {}),
+      });
+      startBattleSpineIdleLoop();
+    }
+
     function getBattleVisualGridId(report, timelineSide) {
       const leftKey = report.attackerBefore.side === 'player' ? 'attacker' : 'defender';
       return timelineSide === leftKey ? 'battle-attacker-grid' : 'battle-defender-grid';
@@ -7859,13 +8572,13 @@
       };
     }
 
-    function createBattleSpineProxyFromSlot(sourceSlot, box, boxRect, proxySide, troopType) {
+    function createBattleSpineProxyFromSlot(sourceSlot, layer, layerRect, proxySide, troopType, stackOrder = 1000) {
       const proxyAnchor = document.createElement('div');
-      const anchorPosition = getBattleSlotAnchorPosition(sourceSlot, boxRect);
+      const anchorPosition = getBattleSlotAnchorPosition(sourceSlot, layerRect);
       proxyAnchor.className = 'battle-spine-proxy-anchor';
       proxyAnchor.style.setProperty('--battle-proxy-x', `${anchorPosition.x}px`);
       proxyAnchor.style.setProperty('--battle-proxy-y', `${anchorPosition.y}px`);
-      proxyAnchor.style.zIndex = sourceSlot.style.zIndex;
+      proxyAnchor.style.zIndex = String(stackOrder);
 
       const proxySlot = sourceSlot.cloneNode(true);
       proxySlot.classList.add('battle-spine-proxy-slot', proxySide);
@@ -7894,7 +8607,7 @@
 
       proxySlot.dataset.proxySourceSlot = sourceSlot.dataset.slot || '';
       proxyAnchor.appendChild(proxySlot);
-      box.appendChild(proxyAnchor);
+      layer.appendChild(proxyAnchor);
 
       return {
         anchor: proxyAnchor,
@@ -7930,16 +8643,33 @@
       const sourceFrame = sourceSlot?.querySelector('.formation-spine-frame');
       const targetFrame = targetSlot?.querySelector('.formation-spine-frame');
       const box = document.querySelector('.formation-battle-box');
-      if (!sourceCanvas || !sourceFrame || !targetFrame || !box) {
+      if (!sourceCanvas || !sourceFrame || !targetFrame || !sourceGrid || !box) {
         await sleep(380);
         onImpact?.();
         return;
       }
 
-      const boxRect = box.getBoundingClientRect();
+      const layerRect = box.getBoundingClientRect();
       const sourceUnit = getBattleTimelineUnit(report, step.sourceSide);
       const proxySide = sourceUnit.side === 'enemy' ? 'enemy' : 'player';
-      const proxyView = createBattleSpineProxyFromSlot(sourceSlot, box, boxRect, proxySide, troopType);
+      const sourceSlotZ = Number(sourceSlot.style.zIndex || 0);
+      const targetSlotZ = Number(targetSlot?.style.zIndex || 0);
+      const elevateProxyLayer = !troopAsset.stationaryAttack;
+      const proxyLayer = elevateProxyLayer ? box : sourceGrid;
+      const proxyLayerRect = elevateProxyLayer
+        ? layerRect
+        : sourceGrid.getBoundingClientRect();
+      const proxyStackOrder = elevateProxyLayer
+        ? 1000 + Math.max(sourceSlotZ, targetSlotZ) + 1
+        : sourceSlotZ;
+      const proxyView = createBattleSpineProxyFromSlot(
+        sourceSlot,
+        proxyLayer,
+        proxyLayerRect,
+        proxySide,
+        troopType,
+        proxyStackOrder,
+      );
       if (!proxyView) {
         await sleep(380);
         onImpact?.();
@@ -7949,8 +8679,8 @@
       const motionElement = proxyView.anchor;
       const initialLeft = proxyView.position.x;
       const initialTop = proxyView.position.y;
-      const targetAnchor = getBattleSlotAnchorPosition(targetSlot, boxRect);
-      const sourceAnchor = getBattleSlotAnchorPosition(sourceSlot, boxRect);
+      const targetAnchor = getBattleSlotAnchorPosition(targetSlot, layerRect);
+      const sourceAnchor = getBattleSlotAnchorPosition(sourceSlot, layerRect);
 
       sourceSlot.classList.add('is-proxying');
       proxyView.slot.classList.add('striker');
@@ -8160,16 +8890,6 @@
         { kind: 'flight', frame: 45, fadeInFrames: 0, holdFrames: 5, fadeOutFrames: 1, motionStartFrame: 45, motionEndFrame: 50 },
       );
       return plan;
-    }
-
-    function getBattleArcherAttackEffectPlan(hit = false) {
-      return [
-        { kind: 'trail', frame: 41, fadeInFrames: 2, holdFrames: 2, fadeOutFrames: 8 },
-        { kind: 'arrow', frame: 41, fadeInFrames: 2, holdFrames: 0, fadeOutFrames: 2 },
-        { kind: 'flight', frame: 45, fadeInFrames: 0, holdFrames: 4, fadeOutFrames: 0, motionStartFrame: 45, motionEndFrame: 48 },
-        { kind: 'stage1', frame: 49, fadeInFrames: 0, holdFrames: 2, fadeOutFrames: 0 },
-        { kind: 'stage2', frame: 51, fadeInFrames: 0, holdFrames: 2, fadeOutFrames: 2 },
-      ];
     }
 
     function getBattleArcherActiveAttackEffectPlan(hit = false) {
@@ -9340,6 +10060,7 @@
 
     function showFormationBattleOverlay(report) {
       stopBattleSpineIdleLoop();
+      clearBattleSpineRendererCache();
       clearBattleFormationProxyState();
       ensureBattleFormationViews();
       if (activeBattleOverlayResolve) {
@@ -9364,6 +10085,7 @@
 
     function closeFormationBattleOverlay() {
       stopBattleSpineIdleLoop();
+      clearBattleSpineRendererCache();
       clearBattleFormationProxyState();
       document.getElementById('formation-battle').classList.add('hidden');
       if (activeBattleOverlayResolve) {
@@ -10174,6 +10896,7 @@
       return {
         scenarioId: params.get('scenario') || null,
         embedded: params.get('embedded') === '1',
+        previewMode: params.get('preview') || null,
       };
     }
 
@@ -10186,12 +10909,29 @@
       init(initialBattleConfig || {});
     });
 
+    window.addEventListener('message', (event) => {
+      if (event.origin !== window.location.origin) {
+        return;
+      }
+      const data = event.data;
+      if (!data || typeof data !== 'object') {
+        return;
+      }
+      if (data.type === 'rpg-tg:formation-preview') {
+        showFormationPreview(data.preview || {});
+      }
+    });
+
     /** 剧情战役：init({ objectiveId: 'supplyTransport', lessonTags: ['SupplyTransportBattle'] }) */
-    window.BattleDemo = { init, BattleTutorialManager, inferLessonTags };
+    window.BattleDemo = { init, showFormationPreview, BattleTutorialManager, inferLessonTags };
 
     battleFpsState.rafId = window.requestAnimationFrame(tickBattleFpsHud);
     initialBattleConfig = getBattleConfigFromUrl();
-    init(initialBattleConfig);
+    if (initialBattleConfig.previewMode === 'formation') {
+      showFormationPreview({});
+    } else {
+      init(initialBattleConfig);
+    }
   </script>
 </body>
 </html>

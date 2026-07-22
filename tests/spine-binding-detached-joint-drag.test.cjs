@@ -28,14 +28,14 @@ function loadEditorSource() {
 
 test("binding detached root joint drags bypass the generic solver and use direct transforms", () => {
   const source = loadEditorSource();
-  const body = extractFunctionBody(source, "function handleBindingJointDrag(node, dragType, point)");
+  const body = extractFunctionBody(source, "function handleDetachedBindingJointDrag(node, dragType, point)");
   const calls = [];
-  const handleBindingJointDrag = new Function(
+  const handleDetachedBindingJointDrag = new Function(
     "isBindingMode",
     "drag",
     "moveBoneRigid",
-    "rotateBoneEndpointPreserveLength",
-    `return function handleBindingJointDrag(node, dragType, point) {${body}};`,
+    "stretchBoneEndpoint",
+    `return function handleDetachedBindingJointDrag(node, dragType, point) {${body}};`,
   )(
     () => true,
     {
@@ -45,15 +45,15 @@ test("binding detached root joint drags bypass the generic solver and use direct
     (node, deltaWorld, startWorldOrigin) => {
       calls.push({ kind: "move", node, deltaWorld, startWorldOrigin });
     },
-    (node, startWorldOrigin, point) => {
-      calls.push({ kind: "rotate", node, startWorldOrigin, point });
+    (node, mode, point) => {
+      calls.push({ kind: "stretch", node, mode, point });
     },
   );
 
   const detached = { id: "detached-root", parentId: null };
 
-  assert.equal(handleBindingJointDrag(detached, "origin", { x: 18, y: 21 }), true);
-  assert.equal(handleBindingJointDrag(detached, "end", { x: 160, y: 190 }), true);
+  assert.equal(handleDetachedBindingJointDrag(detached, "origin", { x: 18, y: 21 }), true);
+  assert.equal(handleDetachedBindingJointDrag(detached, "end", { x: 160, y: 190 }), true);
   assert.deepEqual(calls, [
     {
       kind: "move",
@@ -62,9 +62,9 @@ test("binding detached root joint drags bypass the generic solver and use direct
       startWorldOrigin: { x: 100, y: 120 },
     },
     {
-      kind: "rotate",
+      kind: "stretch",
       node: detached,
-      startWorldOrigin: { x: 100, y: 120 },
+      mode: "stretch-end",
       point: { x: 160, y: 190 },
     },
   ]);

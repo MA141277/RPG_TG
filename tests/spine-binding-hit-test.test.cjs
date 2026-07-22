@@ -36,7 +36,7 @@ test("binding-mode hitTest prefers the bone body over oversized joint handles on
     "isBindingMode",
     "hitTestSelectedPiece",
     "sortedNodes",
-    "isCanvasVisibleNode",
+    "isNodeVisibleAtFrame",
     "worldPose",
     "endPoint",
     "distance",
@@ -48,7 +48,7 @@ test("binding-mode hitTest prefers the bone body over oversized joint handles on
     `return function hitTest(point) {${body}};`,
   )(
     (value) => value,
-    { editMode: "move", bindingDragMode: "bone" },
+    { editMode: "move" },
     () => {
       throw new Error("stretch mode should not be used");
     },

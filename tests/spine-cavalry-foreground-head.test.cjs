@@ -15,8 +15,8 @@ test("cavalry generation shares hidden contour anchors between whole horse body 
   const source = loadSource();
   assert.match(source, /const horseHeadContourBones = \[/);
   assert.match(source, /const sharedHorseHeadSkinBoneIds = \[/);
-  assert.match(source, /const horseBodyPiece = addPiece\("\\u9a6c\\u8eab", "cavalry-horse-piece", horseBodyImageId, horseBodyComponent, 30, sharedHorseHeadSkinBoneIds\);/);
-  assert.match(source, /const horseNeckHeadPiece = addPiece\(\s*"\\u9a6c\\u8116\\u5b50\\u5230\\u9a6c\\u5934",\s*"cavalry-horse-neck-piece",[\s\S]*?85,[\s\S]*?sharedHorseHeadSkinBoneIds,/);
+  assert.match(source, /const horseBodyPiece = addPiece\("马身", "cavalry-horse-piece", horseBodyImageId, horseBodyComponent, 30, sharedHorseHeadSkinBoneIds\);/);
+  assert.match(source, /const horseNeckHeadPiece = addPiece\(\s*"马脖子到马头",\s*"cavalry-horse-neck-piece",[\s\S]*?85,[\s\S]*?sharedHorseHeadSkinBoneIds,/);
 });
 
 test("cavalry horse full-skin mesh uses explicit low mesh density controls", () => {

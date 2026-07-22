@@ -2,6 +2,8 @@ import type {
   ActiveStoryBattleSession,
   StoryBattleUnit,
 } from "../../../domain/story-battle";
+import type { BattleFormationPreviewViewModel } from "../../../application/troop-editor/troop-editor-stage-view-model";
+import { renderTroopPreviewGrid } from "../troop-editor/troop-preview-grid";
 
 function getUnitClass(unit: StoryBattleUnit): string {
   return [
@@ -79,7 +81,10 @@ function renderBattleAction(session: NonNullable<ActiveStoryBattleSession>): str
   `;
 }
 
-export function renderStoryBattleView(session: ActiveStoryBattleSession): string {
+export function renderStoryBattleView(
+  session: ActiveStoryBattleSession,
+  options: { formationPreview?: BattleFormationPreviewViewModel | null } = {}
+): string {
   if (session == null) {
     return "";
   }
@@ -101,6 +106,18 @@ export function renderStoryBattleView(session: ActiveStoryBattleSession): string
     `;
   }
 
+  const formationPreviewMarkup =
+    options.formationPreview == null
+      ? ""
+      : `
+          <section class="c-story-battle__formation-preview">
+            <h2>${options.formationPreview.teamName}</h2>
+            ${renderTroopPreviewGrid(options.formationPreview.slots, {
+              className: "c-troop-preview-grid c-troop-preview-grid--battle",
+            })}
+          </section>
+        `;
+
   return `
     <section class="view-story-battle" aria-label="${session.title}">
       <header class="c-story-battle__header">
@@ -116,6 +133,7 @@ export function renderStoryBattleView(session: ActiveStoryBattleSession): string
           <div class="c-story-battle__control-note">
             玩家只控制朱重八本队；郭子兴、汤和、徐达等友军由 NPC 自动行动。
           </div>
+          ${formationPreviewMarkup}
           ${renderBattleAction(session)}
         </aside>
 

@@ -12,12 +12,15 @@ import type { ActiveActivitySession } from "./activity-session";
 import type { GlobalUIState } from "./global-ui";
 import type { CardInventory } from "./card";
 import type { ValuableItemInventory } from "./valuable-item";
+import type { TroopRuntimeState } from "./troop-editor";
 import type { TaskRuntimeState } from "../core/contracts/task-runtime";
 import type { ActivePlayableSession } from "../core/contracts/playable-runtime";
 import type { CampaignMapExplorationState } from "./map-exploration";
 
 export type ViewName =
   | "map"
+  | "troop-editor"
+  | "troop-management"
   | "city"
   | "city-3d"
   | "house"
@@ -76,6 +79,7 @@ export type GameState = {
     cityMarkets: Record<CityId, CityMarketData>;
     mapExplorationByMapId: Record<MapId, MapExplorationState>;
     activitySession: ActiveActivitySession;
+    troops: TroopRuntimeState;
     mapExploration: CampaignMapExplorationState;
     eventHistory: Record<
       EventId,

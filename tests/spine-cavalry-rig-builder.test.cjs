@@ -40,7 +40,7 @@ test("spine editor registers cavalry as a dedicated unit type with its own proje
     materialForegroundImageKeys: [],
     materialForegroundNormalizeOptions: {},
     enabled: true,
-    featureGroups: ["swordsman"],
+    featureGroups: [],
   });
   assert.match(source, /SPINE_UNIT_CONFIGS\.cavalry\.label = "\\u9a91\\u5175";/);
 });
@@ -494,12 +494,13 @@ test("generated cavalry import splits horse neck-head pixels out of the horse bo
 
   assert.ok(result.body);
   assert.ok(result.neckHead);
+  assert.equal(result.body.pixels + result.neckHead.pixels, component.pixels);
   assert.ok(result.neckHead.pixels >= 32);
   assert.ok(result.body.pixels >= 32);
   assert.equal(result.neckHead.minX, 4);
   assert.equal(result.neckHead.maxX, 13);
   assert.equal(result.neckHead.minY, 0);
-  assert.ok(result.body.maxX >= 8);
+  assert.equal(result.body.maxX, 9);
   assert.ok(result.neckHead.pixelIndices.includes(1 * imageWidth + 4));
   assert.ok(result.neckHead.pixelIndices.includes(0 * imageWidth + 9));
   assert.ok(result.body.pixelIndices.includes(7 * imageWidth + 8));
@@ -519,11 +520,11 @@ test("generated cavalry project mounts the split horse neck-head image on neck/h
   );
   assert.match(
     source,
-    /addPiece\("\\u9a6c\\u8eab",\s*"cavalry-horse-piece",\s*horseBodyImageId,\s*horseBodyComponent,\s*30,\s*sharedHorseHeadSkinBoneIds\);/,
+    /addPiece\(".*?",\s*"cavalry-horse-piece",\s*horseBodyImageId,\s*horseBodyComponent,\s*30,\s*\[\s*horseBody1\.id,\s*horseBody2\.id,\s*horseBody3\.id,\s*\]\);/,
   );
   assert.match(
     source,
-    /if \(horseNeckHeadImageId && horseNeckHeadComponent\) \{[\s\S]*addPiece\(\s*"\\u9a6c\\u8116\\u5b50\\u5230\\u9a6c\\u5934",\s*"cavalry-horse-neck-piece",\s*horseNeckHeadImageId,\s*horseNeckHeadComponent,\s*85,\s*sharedHorseHeadSkinBoneIds,/,
+    /if \(horseNeckHeadImageId && horseNeckHeadComponent\) \{\s*addPiece\(".*?",\s*"cavalry-horse-neck-piece",\s*horseNeckHeadImageId,\s*horseNeckHeadComponent,\s*35,\s*\[\s*horseNeck1\.id,\s*horseNeck2\.id,\s*horseHead1\.id,\s*\]\);\s*\}/,
   );
 });
 
@@ -762,3 +763,5 @@ test("cavalry project bootstrap json stays valid and readable", () => {
   assert.ok(Array.isArray(project.actions));
   assert.ok(project.actions.length >= 1);
 });
+
+

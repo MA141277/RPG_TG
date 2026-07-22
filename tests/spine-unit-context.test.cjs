@@ -61,8 +61,6 @@ function loadUnitContextFns(overrides = {}) {
     cavalry: {
       label: "Cavalry",
       projectUrl: "/src/faxian/leg/cavalry/project.json",
-      runtimeProjectUrl: "/src/faxian/leg/swordsman/project.json",
-      runtimeAssetUnitType: "swordsman",
       featureGroups: [],
     },
     archer: {
@@ -183,9 +181,11 @@ test("Spine editor keeps the picker source aligned to active in-game troop asset
   assert.match(source, /materialForegroundNormalizeOptions:\s*\{[\s\S]*newSword:\s*\{[\s\S]*removeDarkGuideLine:\s*true/);
 });
 
-test("Spine editor allows cavalry to borrow swordsman runtime project and assets before a dedicated model is ready", () => {
-  assert.match(source, /cavalry:\s*\{[\s\S]*runtimeProjectUrl:\s*"\/src\/faxian\/leg\/swordsman\/project\.json"/);
-  assert.match(source, /cavalry:\s*\{[\s\S]*runtimeAssetUnitType:\s*"swordsman"/);
+test("Spine editor loads cavalry from the same dedicated in-game project and asset folder as the battle runtime", () => {
+  assert.match(source, /cavalry:\s*\{[\s\S]*projectUrl:\s*"\/src\/faxian\/leg\/cavalry\/project\.json"/);
+  assert.match(source, /cavalry:\s*\{[\s\S]*imageBaseUrl:\s*"\/src\/faxian\/leg\/cavalry\/"/);
+  assert.doesNotMatch(source, /cavalry:\s*\{[\s\S]*runtimeProjectUrl:/);
+  assert.doesNotMatch(source, /cavalry:\s*\{[\s\S]*runtimeAssetUnitType:/);
 });
 
 test("Spine editor resolves default unit images from the current unit asset folder", () => {
@@ -210,6 +210,12 @@ test("Spine editor resolves leg asset filenames from the selected unit folder", 
   assert.match(source, /function legAssetUrl\(filename,\s*unitType = state\.currentUnitType\) \{/);
   assert.match(source, /const basePath = spineUnitImageBasePath\(unitType\);/);
   assert.match(source, /function restoreLegAssetImages\(unitType = state\.currentUnitType\) \{/);
+});
+
+test("Spine editor restores custom FX images from the target unit folder during unit switches", () => {
+  assert.match(source, /function restoreCustomImages\(customImages,\s*unitType = state\.currentUnitType\) \{/);
+  assert.match(source, /registerCustomImage\(id,\s*item\.name \|\| id,\s*item\.src,\s*\{\s*unitType\s*\}\);/);
+  assert.match(source, /restoreCustomImages\(data\.customImages,\s*options\.unitType \|\| state\.currentUnitType\);/);
 });
 
 test("Spine editor renders picker options from SPINE_UNIT_CONFIGS labels", () => {
@@ -331,7 +337,7 @@ test("Spine editor resets the picker value when a target project fails to load",
   assert.equal(state.currentUnitType, "swordsman");
 });
 
-test("Spine editor switches into cavalry while loading the swordsman runtime project as a temporary fallback", async () => {
+test("Spine editor switches into cavalry while loading the dedicated cavalry project", async () => {
   const state = { currentUnitType: "swordsman" };
   const select = { value: "cavalry" };
   const loadCalls = [];
@@ -351,7 +357,7 @@ test("Spine editor switches into cavalry while loading the swordsman runtime pro
 
   const result = await switchSpineUnitContext("cavalry");
   assert.equal(result, true);
-  assert.deepEqual(loadCalls, ["/src/faxian/leg/swordsman/project.json"]);
+  assert.deepEqual(loadCalls, ["/src/faxian/leg/cavalry/project.json"]);
   assert.equal(appliedUnitType, "cavalry");
   assert.equal(state.currentUnitType, "cavalry");
   assert.equal(select.value, "cavalry");
@@ -417,7 +423,7 @@ test("Spine editor gates swordsman-like and archer feature groups by unit contex
 
 test("Spine editor renders unit-specific group visibility from currentUnitType", () => {
   assert.match(source, /function renderSpineUnitFeatureGroups\(\) \{/);
-  assert.match(source, /el\.swordsmanFeatureGroup\.hidden = !isSlashFxUnit\(\);/);
+  assert.match(source, /el\.swordsmanFeatureGroup\.hidden = !\["swordsman",\s*"spearman",\s*"musketeer"\]\.includes\(state\.currentUnitType\);/);
   assert.match(source, /el\.archerFeatureGroup\.hidden = state\.currentUnitType !== "archer";/);
 });
 
@@ -425,7 +431,7 @@ test("Spine editor gates binding-panel rig controls by unit context", () => {
   assert.match(source, /function renderSpineUnitBindingControls\(\) \{/);
   assert.match(source, /el\.createBowRigBtn\.hidden = state\.currentUnitType !== "archer";/);
   assert.match(source, /el\.createArrowRigBtn\.hidden = state\.currentUnitType !== "archer";/);
-  assert.match(source, /el\.createSlashFxRigBtn\.hidden = !isSlashFxUnit\(\);/);
+  assert.match(source, /el\.createSlashFxRigBtn\.hidden = !\["swordsman",\s*"spearman",\s*"musketeer"\]\.includes\(state\.currentUnitType\);/);
 });
 
 test("Spine editor defaults project saving to the current unit project file", () => {

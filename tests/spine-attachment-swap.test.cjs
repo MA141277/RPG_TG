@@ -109,8 +109,6 @@ function loadAttachmentSwapFns() {
     "readFileAsDataUrl",
     "customImagePrefix",
     "uid",
-    "normalizeLegAssetFilename",
-    "legAssetPrefix",
     "registerCustomImage",
     "addAttachmentVariant",
     `return async function importAttachmentVariantFromFile(file) {${importAttachmentVariantFromFileBody}};`,
@@ -121,8 +119,6 @@ function loadAttachmentSwapFns() {
     async () => "data:image/png;base64,abc",
     "custom:",
     () => "image-001",
-    (filename) => filename,
-    "leg:",
     (id, name, src) => {
       calls.customRegistered = { id, name, src };
     },
@@ -214,7 +210,7 @@ test("attachment variant file import registers a custom image and adds it to the
   assert.deepEqual(calls.customRegistered, {
     id: "custom:attachment-variant-image-001",
     name: "slash_big.png",
-    src: "leg:slash_big.png",
+    src: "data:image/png;base64,abc",
   });
   assert.deepEqual(calls.added, ["custom:attachment-variant-image-001"]);
 });

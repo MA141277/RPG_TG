@@ -68,7 +68,7 @@ test("battle Spine asset registry defines a dedicated spearman entry with weapon
         removeDarkGuideLine: true,
       },
     },
-    renderScaleMultiplier: 1.2,
+    renderScaleMultiplier: 1.1088,
     renderOffsetX: -16,
     renderOffsetXBySide: {
       player: -110,
