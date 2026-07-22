@@ -12,11 +12,12 @@ import {
 import cloudFragmentShaderRaw from "./shaders/campaign-cloud.frag.glsl?raw";
 import cloudVertexShaderRaw from "./shaders/campaign-cloud.vert.glsl?raw";
 
-const CLOUD_ANIMATION_FRAME_INTERVAL_MS = 1000 / 12;
 const CLOUD_RENDER_MAX_DEVICE_PIXEL_RATIO = 1;
 const CLOUD_RENDER_MAX_LONG_EDGE_PX = 1280;
 const CLOUD_REVEAL_MASK_MAX_TEXTURE_SIZE = 1024;
 const CLOUD_REVEAL_DISSOLVE_DURATION_MS = 1400;
+const CLOUD_PROJECTION_READY_RETRY_INTERVAL_MS = 120;
+const CLOUD_PROJECTION_READY_MAX_RETRIES = 50;
 
 // Reveal mask tuning table. This canvas stores a soft semantic field, not the
 // final visible edge. The shader erodes this field with cloud noise.
@@ -48,6 +49,7 @@ type RevealMaskPolygon = {
 
 type CampaignCloudRenderer = {
   canvas: HTMLCanvasElement;
+  requestRender: () => void;
   syncRevealMask: () => void;
   dispose: () => void;
 };
@@ -127,6 +129,12 @@ export function syncCampaignCloudWebGl(root: ParentNode): void {
     } finally {
       pendingCloudRendererCanvases.delete(canvas);
     }
+  }
+}
+
+export function requestCampaignCloudRender(): void {
+  for (const renderer of activeCloudRenderers.values()) {
+    renderer.requestRender();
   }
 }
 
@@ -242,14 +250,15 @@ function initCampaignCloudWebGl(
     canvas.dataset.mapCloudNoiseUrl ?? fallbackCloudNoiseTextureUrl;
 
   let frameId: number | null = null;
-  let animationTimeoutId: number | null = null;
+  let transitionTimeoutId: number | null = null;
+  let projectionReadyTimeoutId: number | null = null;
+  let projectionReadyRetryCount = 0;
   let isDisposed = false;
   let revealMaskSignature = "";
   let revealHexSignature = "";
   let previousRevealHexes: HexCoordinate[] | null = null;
   let transitionRevealHexes: HexCoordinate[] | null = null;
   let transitionStartMs: number | null = null;
-  const animationStartSeconds = performance.now() * 0.001;
 
   function resolveProjectionRoot(): ParentNode {
     return (
@@ -275,7 +284,11 @@ function initCampaignCloudWebGl(
     const projectionRoot = resolveProjectionRoot();
     const descriptor = readCloudRevealMaskDescriptor(canvas, projectionRoot);
     if (descriptor.signature === revealMaskSignature) {
+      scheduleProjectionReadyRetry();
       return;
+    }
+    if (getCampaignTerrainProjectionSignature(projectionRoot).startsWith("ready|")) {
+      projectionReadyRetryCount = 0;
     }
 
     const currentMaskCanvas = createCloudRevealMaskCanvas(
@@ -346,10 +359,7 @@ function initCampaignCloudWebGl(
     gl.enableVertexAttribArray(positionLocation);
     gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
     gl.uniform2f(resolutionLocation, canvas.width, canvas.height);
-    gl.uniform1f(
-      timeSecondsLocation,
-      performance.now() * 0.001 - animationStartSeconds
-    );
+    gl.uniform1f(timeSecondsLocation, 0);
     const mapCamera = getCampaignTerrainMapCoupledCamera();
     gl.uniform3f(
       mapCameraLocation,
@@ -368,7 +378,8 @@ function initCampaignCloudWebGl(
     gl.uniform1i(previousRevealTextureLocation, 2);
     gl.uniform1f(revealTransitionLocation, resolveRevealTransition());
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-    scheduleAnimationRender();
+    scheduleRevealTransitionRender();
+    scheduleProjectionReadyRetry();
   }
 
   function resolveRevealTransition(): number {
@@ -388,15 +399,38 @@ function initCampaignCloudWebGl(
     return transition;
   }
 
-  function scheduleAnimationRender(): void {
-    if (isDisposed || animationTimeoutId != null || frameId != null) {
+  function scheduleRevealTransitionRender(): void {
+    if (
+      isDisposed ||
+      transitionStartMs == null ||
+      transitionTimeoutId != null ||
+      frameId != null
+    ) {
       return;
     }
 
-    animationTimeoutId = window.setTimeout(() => {
-      animationTimeoutId = null;
+    transitionTimeoutId = window.setTimeout(() => {
+      transitionTimeoutId = null;
       requestRender();
-    }, CLOUD_ANIMATION_FRAME_INTERVAL_MS);
+    }, 1000 / 24);
+  }
+
+  function scheduleProjectionReadyRetry(): void {
+    if (
+      isDisposed ||
+      projectionReadyTimeoutId != null ||
+      frameId != null ||
+      projectionReadyRetryCount >= CLOUD_PROJECTION_READY_MAX_RETRIES ||
+      getCampaignTerrainProjectionSignature(resolveProjectionRoot()).startsWith("ready|")
+    ) {
+      return;
+    }
+
+    projectionReadyRetryCount += 1;
+    projectionReadyTimeoutId = window.setTimeout(() => {
+      projectionReadyTimeoutId = null;
+      requestRender();
+    }, CLOUD_PROJECTION_READY_RETRY_INTERVAL_MS);
   }
 
   const handleResize = () => {
@@ -409,14 +443,18 @@ function initCampaignCloudWebGl(
 
   return {
     canvas,
+    requestRender,
     syncRevealMask,
     dispose: () => {
       isDisposed = true;
       if (frameId != null) {
         window.cancelAnimationFrame(frameId);
       }
-      if (animationTimeoutId != null) {
-        window.clearTimeout(animationTimeoutId);
+      if (transitionTimeoutId != null) {
+        window.clearTimeout(transitionTimeoutId);
+      }
+      if (projectionReadyTimeoutId != null) {
+        window.clearTimeout(projectionReadyTimeoutId);
       }
 
       window.removeEventListener("resize", handleResize);

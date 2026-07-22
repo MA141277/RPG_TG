@@ -2847,7 +2847,7 @@ test("zhuyuanzhang maps use relative pack asset urls instead of imageAssetId", (
   assert.equal(typeof vegetationRules.altitude.maxTerrainHeight, "number");
   assert.equal(vegetationRules.altitude.maxTerrainHeight > 0, true);
   assert.equal(vegetationRules.altitude.maxTerrainHeight < 1, true);
-  assert.equal(vegetationRules.profile, "temperate-pine-tree");
+  assert.equal(vegetationRules.profile, "temperate-willow-grass");
   assert.equal(vegetationRules.placement.baseWorldScale, 0.00105);
   assert.equal(vegetationRules.placement.lift, 0.00062);
   assert.equal(vegetationRules.shader.ambient, 0.68);
@@ -2861,11 +2861,48 @@ test("zhuyuanzhang maps use relative pack asset urls instead of imageAssetId", (
   assert.equal("offsetY" in vegetationRules.shadow, false);
   assert.equal("fadeStartScale" in vegetationRules.shader, false);
   assert.equal("fadeEndScale" in vegetationRules.shader, false);
-  assert.equal(vegetationRules.variants.length, 5);
+  assert.deepEqual(
+    vegetationRules.variants.map((variant) => variant.id),
+    [
+      "willow-1",
+      "willow-2",
+      "willow-3",
+      "willow-4",
+      "willow-5",
+      "grass",
+      "grass-2",
+      "grass-short",
+    ]
+  );
   assert.equal(
     vegetationRules.variants.every((variant) =>
-      variant.meshUrl.startsWith("../vegetation/pine-tree-")
+      variant.meshUrl.startsWith("../vegetation/")
     ),
+    true
+  );
+  assert.equal(
+    vegetationRules.variants
+      .filter((variant) => variant.id.startsWith("willow-"))
+      .every(
+        (variant) =>
+          variant.weight === 3 &&
+          variant.placement.baseWorldScale === 0.00095 &&
+          !("shadow" in variant)
+      ),
+    true
+  );
+  assert.equal(
+    vegetationRules.variants
+      .filter((variant) => variant.id.startsWith("grass"))
+      .every(
+        (variant) =>
+          variant.weight === 1 &&
+          variant.placement.scaleMin === 0.65 &&
+          variant.placement.scaleMax === 1.55 &&
+          variant.placement.baseWorldScale === 0.00042 &&
+          variant.placement.lift === 0.00022 &&
+          variant.shadow.enabled === false
+      ),
     true
   );
   for (const variant of vegetationRules.variants) {
@@ -2879,7 +2916,7 @@ test("zhuyuanzhang maps use relative pack asset urls instead of imageAssetId", (
 
     assert.equal(mesh.format, "campaign-vegetation-mesh-v1");
     assert.equal(mesh.source.kind, "obj-mtl");
-    assert.match(mesh.source.objPath, /PineTree_/);
+    assert.match(mesh.source.objPath, variant.id.startsWith("willow-") ? /Willow_/ : /Grass/);
     assert.equal(mesh.colors.length, mesh.positions.length);
     assert.equal(mesh.normals.length, mesh.positions.length);
     assert.equal(mesh.indices.length % 3, 0);
@@ -3145,31 +3182,41 @@ test("campaign terrain WebGL shader uses separate shared animated water texture 
   assert.match(rendererSource, /smoothMountainContinuityHeightPass/);
   assert.match(rendererSource, /createCampaignHexReferenceHeightSamples/);
   assert.match(rendererSource, /referenceHeightByCellKey/);
+  assert.match(rendererSource, /CAMPAIGN_TERRAIN_CHUNK_HEX_SIZE = 8/);
+  assert.match(rendererSource, /CAMPAIGN_TERRAIN_CHUNK_PADDING_HEX = 2/);
   assert.match(
+    rendererSource,
+    /CAMPAIGN_TERRAIN_CHUNK_CACHE_DB_NAME = "campaign-terrain-cache-v1"/
+  );
+  assert.match(
+    rendererSource,
+    /CAMPAIGN_TERRAIN_CHUNK_ALGORITHM_VERSION = "2026-07-21-owned-grid-smooth-shadows-v1"/
+  );
+  assert.match(rendererSource, /createCampaignTerrainChunkData/);
+  assert.match(rendererSource, /ensureCampaignTerrainChunks/);
+  assert.match(rendererSource, /getCampaignTerrainChunkKeysAroundCell/);
+  assert.match(rendererSource, /readCampaignTerrainChunkFromPersistentCache/);
+  assert.match(rendererSource, /writeCampaignTerrainChunkToPersistentCache/);
+  assert.match(rendererSource, /uShorelineDistanceBounds/);
+  assert.match(terrainFragmentSource, /uniform vec4 uShorelineDistanceBounds/);
+  assert.match(
+    rendererSource,
+    /campaignHexGrid == null \|\| vegetationAsset == null/
+  );
+  assert.doesNotMatch(
     rendererSource,
     /campaignHexGrid == null\s*\?\s*createSmoothTerrainHeightSamples/s
   );
-  assert.match(
-    rendererSource,
-    /nonMountainHeightSamples = createNonMountainFlattenedHeightSamples/
-  );
-  assert.match(
-    rendererSource,
-    /mountainFloorHeightSamples = createMountainFloorHeightSamples/
-  );
-  assert.match(rendererSource, /heightSamples = createCampaignMountainHeightSamples/);
-  assert.match(
-    rendererSource,
-    /createCampaignMountainHeightSamples\(\s*mountainFloorHeightSamples,\s*baseHeightSamples,/s
-  );
+  assert.match(rendererSource, /createCampaignTerrainChunkHeightSamples/);
+  assert.match(rendererSource, /createSmoothTerrainChunkMesh/);
+  assert.match(rendererSource, /createNonMountainFlattenedHeightSamples/);
+  assert.match(rendererSource, /createMountainFloorHeightSamples/);
+  assert.match(rendererSource, /createCampaignMountainHeightSamples/);
   assert.doesNotMatch(
     rendererSource,
     /referenceHeight \+ \(mountainHeight - referenceHeight\)/
   );
-  assert.match(
-    rendererSource,
-    /createSmoothTerrainMesh\(\s*heightSamples,\s*GRID_COLUMNS,\s*GRID_ROWS/s
-  );
+  assert.match(rendererSource, /createSmoothTerrainMesh/);
   assert.match(rendererSource, /campaign-terrain\.frag\.glsl\?raw/);
   assert.match(rendererSource, /const fragmentShaderSource = terrainFragmentShaderRaw/);
   assert.doesNotMatch(rendererSource, /uniform sampler2D uWaterTexture/);
@@ -3215,8 +3262,11 @@ test("campaign terrain WebGL shader uses separate shared animated water texture 
   assert.match(terrainFragmentSource, /currentMountain \*\s*edgeInset/s);
   assert.doesNotMatch(terrainFragmentSource, /mountainBody/);
   assert.doesNotMatch(terrainFragmentSource, /sampleSoftMountainDisk/);
-  assert.match(terrainFragmentSource, /sampleShorelineChainData/);
-  assert.match(terrainFragmentSource, /getLocalShorelineBoundaryData/);
+  assert.match(terrainFragmentSource, /uShorelineDistanceTexture/);
+  assert.match(terrainFragmentSource, /uShorelineDistanceRange/);
+  assert.match(terrainFragmentSource, /decodeShorelineDistance/);
+  assert.match(terrainFragmentSource, /sampleShorelineDistanceField/);
+  assert.match(terrainFragmentSource, /getMapInteriorAndShorelineValid/);
   assert.match(terrainFragmentSource, /getShorelineBoundaryWater/);
   assert.match(terrainFragmentSource, /getShorelineNearShoreTint/);
   assert.match(terrainFragmentSource, /getVisualLandCellData/);
@@ -3227,9 +3277,10 @@ test("campaign terrain WebGL shader uses separate shared animated water texture 
   assert.match(terrainFragmentSource, /sampleLandAtDiskOffset/);
   assert.match(terrainFragmentSource, /sampleSoftLandDisk/);
   assert.match(terrainFragmentSource, /sampleNearShoreEdgeNoise/);
-  assert.match(terrainFragmentSource, /sampleBeachEdgeErosionNoise/);
+  assert.match(terrainFragmentSource, /sampleBeachErosionNoise/);
   assert.match(terrainFragmentSource, /sampleBeachGrain/);
   assert.match(terrainFragmentSource, /sampleBeachDust/);
+  assert.match(terrainFragmentSource, /shoreline = sampleShorelineDistanceField/);
   assert.match(terrainFragmentSource, /boundaryWater = getShorelineBoundaryWater/);
   assert.match(terrainFragmentSource, /nearShoreTint = getShorelineNearShoreTint/);
   assert.doesNotMatch(terrainFragmentSource, /getNearSeaEdgeContribution/);
@@ -3257,10 +3308,10 @@ test("campaign terrain WebGL shader uses separate shared animated water texture 
   assert.match(terrainFragmentSource, /smoothstep\(0\.055, 0\.170, outerLand\)/);
   assert.match(
     terrainFragmentSource,
-    /getShorelineNearShoreTint\(\s*vUv,\s*hexPoint,\s*hexCell,\s*water,\s*hexScale,\s*mapAspect\s*\)/s
+    /getShorelineNearShoreTint\(\s*vUv,\s*shoreline,\s*boundaryWater\s*\)/s
   );
-  assert.match(terrainFragmentSource, /waveInset = sampleShorelineChainWave/);
-  assert.match(terrainFragmentSource, /chainMileage \* uShorelineErosionFrequency/);
+  assert.doesNotMatch(terrainFragmentSource, /sampleShorelineChainWave/);
+  assert.doesNotMatch(terrainFragmentSource, /chainMileage \* uShorelineErosionFrequency/);
   assert.doesNotMatch(terrainFragmentSource, /nearShoreTransition =/);
   assert.match(terrainFragmentSource, /getNearSeaEdgeBand\(\s*vUv,\s*hexScale,\s*mapAspect,\s*boundaryWater,\s*nearSeaBoundaryEdgeShift/s);
   assert.doesNotMatch(

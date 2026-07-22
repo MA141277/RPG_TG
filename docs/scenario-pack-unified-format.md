@@ -358,13 +358,13 @@ Campaign maps may define `campaignVegetationRulesUrl` on their `maps.json` recor
 The vegetation rules file is a visual source of truth for expanding saved hex environments into renderer instances. It must not replace or mutate `campaignHexGridUrl`. The current Yuanmo forest rule uses:
 
 - `environment`: the hex `environment` value that triggers the rule, currently `森林`.
-- `variants`: mesh ids, pack-relative `meshUrl` values, and weights.
+- `variants`: mesh ids, pack-relative `meshUrl` values, weights, and optional per-variant `placement` / `shadow.enabled` overrides for mixed vegetation such as trees plus low grass.
 - `density`: far, medium, and near instance count ranges; far density is the zoomed-out visual baseline and must not be omitted unless forests should disappear entirely.
 - `lod`: zoom thresholds and maximum visible instance cap. `mediumMinScale` and `nearMinScale` should be spaced far enough apart that density changes do not pop on adjacent zoom steps.
-- `placement`: inner/outer placement radius, scale range, base world scale, and lift.
+- `placement`: default inner/outer placement radius, scale range, base world scale, and lift. Variants may override `scaleMin`, `scaleMax`, `baseWorldScale`, and `lift`.
 - `avoidance`: marker/player/path visual clearance radii and density multiplier near clearance points.
 - `shader`: ambient/directional strength applied on top of the terrain camera-light model. Vegetation should sit inside the campaign map's muted historic tone rather than using high key lighting. Vegetation is static in the world-map renderer; do not add wind motion unless the map style explicitly changes.
-- `shadow`: opacity, long-axis scale, width scale, camera-light length scale, and lift for the pure visual tree-ground projection. Runtime shadow geometry pins its near end to the tree trunk and rotates the long axis with the same camera-relative light direction as terrain shading; rules should not use fixed world `offsetX/Y` values.
+- `shadow`: opacity, long-axis scale, width scale, camera-light length scale, and lift for the pure visual tree-ground projection. Runtime shadow geometry pins its near end to the tree trunk and rotates the long axis with the same camera-relative light direction as terrain shading; low vegetation variants may set `shadow.enabled: false`, and rules should not use fixed world `offsetX/Y` values.
 
 Vegetation mesh files use `format: "campaign-vegetation-mesh-v1"`. They contain baked vertex arrays: `positions`, `normals`, `colors`, and `indices`; colors are derived from OBJ/MTL material `Kd` values and may be tone-mapped by the conversion tool for world-map readability. Runtime renderers load these mesh JSON files and must not parse `.obj` or `.mtl` directly.
 

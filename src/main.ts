@@ -276,7 +276,10 @@ import {
   type CampaignCityDepthMeshTransform,
   type CampaignTerrainStyle,
 } from "./ui/views/map/campaign-terrain-webgl";
-import { syncCampaignCloudWebGl } from "./ui/views/map/campaign-cloud-webgl";
+import {
+  requestCampaignCloudRender,
+  syncCampaignCloudWebGl,
+} from "./ui/views/map/campaign-cloud-webgl";
 import { syncCityBeggingMiniGameOverlay } from "./ui/views/minigames/city-begging-minigame-view";
 import { syncTroopEditorInteractions } from "./ui/views/troop-editor/troop-editor-interactions";
 import { syncTroopManagementBattlePreview } from "./ui/views/troop-editor/troop-management-battle-preview";
@@ -6749,6 +6752,7 @@ function syncCampaignMapDebugView(): void {
     offsetX: campaignMapDebugState.offsetX,
     offsetY: campaignMapDebugState.offsetY,
   });
+  requestCampaignCloudRender();
 
   const scaleElement = appRoot.querySelector<HTMLElement>(
     "[data-campaign-map-scale]"
