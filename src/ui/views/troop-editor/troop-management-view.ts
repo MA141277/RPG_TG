@@ -33,7 +33,7 @@ export function renderTroopManagementView(model: TroopManagementStageViewModel):
       <div class="c-troop-management__body">
         <aside class="c-troop-management__troops-panel">
           <div class="c-troop-editor__panel-heading">
-            <p class="c-troop-editor__eyebrow">閮ㄩ槦</p>
+            <p class="c-troop-editor__eyebrow">部队</p>
             <h1 class="c-troop-editor__title">${model.title}</h1>
           </div>
           <div class="c-troop-management__troop-scroll">
@@ -69,13 +69,13 @@ export function renderTroopManagementView(model: TroopManagementStageViewModel):
             >
               <section
                 class="c-troop-management__battlefield"
-                aria-label="${model.troopName} 鎴樺満棰勮"
+                aria-label="${model.troopName} 战斗预览"
               >
                 <div class="c-troop-management__battlefield-stage">
                   <iframe
                     class="c-troop-management__battle-preview-frame"
                     src="/prototypes/troop-management-preview/index.html?previewConfig=${previewConfig}"
-                    title="${model.troopName} 缂栭槦棰勮"
+                    title="${model.troopName} 战斗预览"
                     loading="lazy"
                     data-troop-management-battle-preview
                     data-preview-config="${previewConfig}"
@@ -90,7 +90,7 @@ export function renderTroopManagementView(model: TroopManagementStageViewModel):
                     ? `data-action="open-troop-management" data-troop-id="${model.previousTroopId}"`
                     : "disabled"
                 }
-                aria-label="涓婁竴鏀槦浼?"
+                aria-label="切换到上一支队伍"
               ></button>
               <button
                 type="button"
@@ -100,7 +100,7 @@ export function renderTroopManagementView(model: TroopManagementStageViewModel):
                     ? `data-action="open-troop-management" data-troop-id="${model.nextTroopId}"`
                     : "disabled"
                 }
-                aria-label="涓嬩竴鏀槦浼?"
+                aria-label="切换到下一支队伍"
               ></button>
             </div>
 
@@ -144,7 +144,7 @@ export function renderTroopManagementView(model: TroopManagementStageViewModel):
 
                 <section class="c-troop-management__reserve-panel" data-troop-management-reserve-panel hidden>
                   <header class="c-troop-management__reserve-head">
-                    <h2 class="c-troop-management__reserve-title">棰勫闃?/h2>
+                    <h2 class="c-troop-management__reserve-title">预备队</h2>
                     <div class="c-troop-management__reserve-count">
                       ${model.reserveMembers.length} / ${model.reserveCapacity}
                     </div>
@@ -155,7 +155,8 @@ export function renderTroopManagementView(model: TroopManagementStageViewModel):
                       model.reserveMembers.length === 0
                         ? `
                           <div class="c-troop-management__reserve-empty">
-                            褰撳墠棰勫闃熶腑鏆傛棤鍙紪鍏ュ＋鍏?                          </div>
+                            当前预备队中暂无可编入士兵
+                          </div>
                         `
                         : model.reserveMembers
                             .map(
@@ -180,14 +181,14 @@ export function renderTroopManagementView(model: TroopManagementStageViewModel):
                       class="c-button c-troop-editor__menu-button c-troop-management__reserve-prompt-button"
                       data-troop-management-reserve-prompt-action="assign"
                     >
-                      缂栧叆闃熶紞
+                      编入队伍
                     </button>
                     <button
                       type="button"
                       class="c-button c-troop-editor__menu-button c-troop-management__reserve-prompt-button"
                       data-troop-management-reserve-prompt-action="back"
                     >
-                      杩斿洖
+                      返回
                     </button>
                   </div>
 
@@ -196,7 +197,7 @@ export function renderTroopManagementView(model: TroopManagementStageViewModel):
                     class="c-button c-troop-editor__menu-button c-troop-management__reserve-return"
                     data-troop-management-reserve-close
                   >
-                    杩斿洖缂栬緫
+                    返回编辑
                   </button>
                 </section>
               </div>
@@ -237,10 +238,10 @@ export function renderTroopManagementView(model: TroopManagementStageViewModel):
             id="troop-remove-confirm-title"
             data-troop-management-confirm-title
           >
-            绉婚櫎鍗曚綅
+            移除单位
           </h2>
           <p class="c-troop-management__confirm-text" data-troop-management-confirm-text>
-            纭畾瑕佺Щ闄よ繖涓崟浣嶅悧锛燂紙鍗曚綅灏嗚繑鍥為澶囬槦锛?
+            确定要移除这个单位吗？单位将返回预备队。
           </p>
           <div class="c-troop-management__confirm-actions">
             <button
@@ -248,14 +249,14 @@ export function renderTroopManagementView(model: TroopManagementStageViewModel):
               class="c-button c-troop-editor__menu-button c-troop-management__confirm-button"
               data-troop-management-remove-confirm-choice="confirm"
             >
-              鏄?
+              是
             </button>
             <button
               type="button"
               class="c-button c-troop-editor__menu-button c-troop-management__confirm-button"
               data-troop-management-remove-confirm-choice="cancel"
             >
-              鍚?
+              否
             </button>
           </div>
         </div>
@@ -273,7 +274,7 @@ export function renderTroopManagementView(model: TroopManagementStageViewModel):
           aria-labelledby="troop-management-alert-title"
         >
           <h2 class="c-troop-management__confirm-title" id="troop-management-alert-title">
-            鎻愮ず
+            提示
           </h2>
           <p class="c-troop-management__confirm-text" data-troop-management-alert-text></p>
           <div class="c-troop-management__confirm-actions">
@@ -282,7 +283,7 @@ export function renderTroopManagementView(model: TroopManagementStageViewModel):
               class="c-button c-troop-editor__menu-button c-troop-management__confirm-button"
               data-troop-management-alert-close
             >
-              鐭ラ亾浜?
+              知道了
             </button>
           </div>
         </div>

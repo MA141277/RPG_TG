@@ -157,17 +157,20 @@ export function getTroopRoleLabel(role: string | null): string {
   if (role === "scout") {
     return "斥候";
   }
+  if (role === "infantry") {
+    return "剑士";
+  }
   if (role === "spearman") {
-    return "长枪兵";
+    return "枪兵";
   }
   if (role === "archer") {
-    return "弓兵";
+    return "弓箭手";
   }
   if (role === "crossbow") {
     return "弩兵";
   }
   if (role === "teppo" || role === "gunpowder" || role === "musketeer") {
-    return "火器兵";
+    return "火枪手";
   }
   if (role === "light-cavalry") {
     return "轻骑兵";

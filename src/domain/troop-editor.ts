@@ -60,38 +60,49 @@ export type TroopRuntimeState = {
 export const PLAYER_MAIN_TROOP_ID = "troop.zhu-chongba.main";
 const TROOP_SHOP_SOURCE_ID = "troop.shop.reserve";
 
+function getPreferredUnitDefinitionIdForRole(
+  role: BattleFormationUnitRole,
+  currentUnitDefinitionId: string
+): string {
+  if (role === "teppo") {
+    return "unit.teppo.demo";
+  }
+
+  return currentUnitDefinitionId;
+}
+
 const TROOP_SHOP_ROLE_CATALOG: ReadonlyArray<
   Omit<TroopShopOffer, "id" | "name">
 > = [
   {
-    role: "militia",
-    unitDefinitionId: "unit.militia.demo",
+    role: "infantry",
+    unitDefinitionId: "unit.infantry.demo",
     price: 8,
     requiredFame: 0,
   },
   {
-    role: "scout",
-    unitDefinitionId: "unit.scout.demo",
+    role: "spearman",
+    unitDefinitionId: "unit.spearman.demo",
     price: 12,
     requiredFame: 3,
   },
   {
-    role: "spearman",
-    unitDefinitionId: "unit.spearman.demo",
+    role: "archer",
+    unitDefinitionId: "unit.archer.demo",
     price: 16,
     requiredFame: 5,
   },
   {
-    role: "archer",
-    unitDefinitionId: "unit.archer.demo",
+    role: "teppo",
+    unitDefinitionId: "unit.teppo.demo",
     price: 18,
     requiredFame: 6,
   },
   {
-    role: "light-cavalry",
+    role: "heavy-cavalry",
     unitDefinitionId: "unit.light-cavalry.demo",
     price: 24,
-    requiredFame: 9,
+    requiredFame: 8,
   },
 ] as const;
 
@@ -671,4 +682,85 @@ function createUniqueTroopMemberName(usedNames: Set<string>): string {
   const fallbackName = `义兵${usedNames.size + 1}`;
   usedNames.add(fallbackName);
   return fallbackName;
+}
+
+export function normalizeTroopRuntimeStateUnitDefinitions(
+  troopRuntimeState: TroopRuntimeState
+): TroopRuntimeState {
+  let didChange = false;
+
+  const formations = troopRuntimeState.formations.map((formation) => {
+    let formationChanged = false;
+
+    const members = formation.members.map((member) => {
+      const nextUnitDefinitionId = getPreferredUnitDefinitionIdForRole(
+        member.role,
+        member.unitDefinitionId
+      );
+
+      if (nextUnitDefinitionId === member.unitDefinitionId) {
+        return member;
+      }
+
+      didChange = true;
+      formationChanged = true;
+      return {
+        ...member,
+        unitDefinitionId: nextUnitDefinitionId,
+      };
+    });
+
+    return formationChanged ? { ...formation, members } : formation;
+  });
+
+  const reserveMembers = troopRuntimeState.reserve.members.map((member) => {
+    const nextUnitDefinitionId = getPreferredUnitDefinitionIdForRole(
+      member.role,
+      member.unitDefinitionId
+    );
+
+    if (nextUnitDefinitionId === member.unitDefinitionId) {
+      return member;
+    }
+
+    didChange = true;
+    return {
+      ...member,
+      unitDefinitionId: nextUnitDefinitionId,
+    };
+  });
+
+  const offers = troopRuntimeState.shop.offers.map((offer) => {
+    const nextUnitDefinitionId = getPreferredUnitDefinitionIdForRole(
+      offer.role,
+      offer.unitDefinitionId
+    );
+
+    if (nextUnitDefinitionId === offer.unitDefinitionId) {
+      return offer;
+    }
+
+    didChange = true;
+    return {
+      ...offer,
+      unitDefinitionId: nextUnitDefinitionId,
+    };
+  });
+
+  if (!didChange) {
+    return troopRuntimeState;
+  }
+
+  return {
+    ...troopRuntimeState,
+    formations,
+    reserve: {
+      ...troopRuntimeState.reserve,
+      members: reserveMembers,
+    },
+    shop: {
+      ...troopRuntimeState.shop,
+      offers,
+    },
+  };
 }

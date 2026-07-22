@@ -48,7 +48,7 @@ function renderShopScreen(model: TroopEditorStageViewModel): string {
   return `
     <section class="c-troop-editor__shop-screen" data-troop-editor-shop hidden>
       <header class="c-troop-editor__shop-screen-head">
-        <p class="c-troop-editor__eyebrow">招募</p>
+        <p class="c-troop-editor__eyebrow">商店</p>
         <h2 class="c-troop-editor__title">招兵买马</h2>
       </header>
 
@@ -204,7 +204,7 @@ export function renderTroopEditorView(model: TroopEditorStageViewModel): string 
             class="c-troop-editor__create-input"
             type="text"
             maxlength="10"
-            placeholder="最多 10 字"
+            placeholder="最大 10 字"
             data-troop-editor-create-input
           />
           <div class="c-troop-management__confirm-actions">

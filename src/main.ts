@@ -50,6 +50,7 @@ import {
   updateOverlayView,
 } from "./application/app-actions";
 import type { AppState } from "./application/app-shell";
+import { normalizeTroopRuntimeStateUnitDefinitions } from "./domain/troop-editor";
 import {
   CITY_BEGGING_DURATION_DAYS,
   getCityBeggingMiniGameCompletionResult,
@@ -5786,6 +5787,18 @@ function renderAppFrame(
       appState.gameState,
       activeContentContext.cityNpcPools
     ),
+  };
+  appState = {
+    ...appState,
+    gameState: {
+      ...appState.gameState,
+      runtime: {
+        ...appState.gameState.runtime,
+        troops: normalizeTroopRuntimeStateUnitDefinitions(
+          appState.gameState.runtime.troops
+        ),
+      },
+    },
   };
   const currentMapDefinition = getCurrentMapDefinition();
   const currentCityDefinition =
