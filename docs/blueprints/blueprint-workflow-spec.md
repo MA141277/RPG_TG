@@ -1161,6 +1161,26 @@ Rules:
 3. `accepted-residue` must name why the residue no longer blocks the version boundary.
 4. If final validation discovers an implementation gap, the gap must route to the owning queue family or a new admitted queue; final validation must not silently absorb broad implementation work.
 
+### 8.10.1 Required-Final Queue Startup Rule
+
+Required-final queues are not ordinary auto-continue queues.
+
+Rules:
+
+1. A `required-final` or final-guard queue must not be auto-admitted, auto-activated, or auto-executed merely because all earlier non-final execution queues are closed.
+2. When the next uniquely lawful step would otherwise be starting a `required-final` queue, Blueprint must stop at version-level review and require an explicit operator decision:
+   - start the final-guard queue now
+   - skip the final-guard queue for now
+3. `post_queue_closeout_pause_policy = auto-continue` does not override this rule. Auto-continue applies to ordinary queue-to-queue continuation, not to automatic startup of a required-final guard.
+4. If the operator explicitly chooses to start the final-guard queue, Blueprint may then admit, activate, and execute it normally.
+5. If the operator explicitly chooses to skip the final-guard queue, Blueprint must not counterfeit `covered` status for the related final-acceptance items.
+6. A skipped required-final queue must be recorded explicitly in governance truth as one of:
+   - `accepted-residue`, when the operator intentionally waives that acceptance surface within the current version boundary
+   - `blocked`, when version closeout still cannot proceed without that proof
+7. Skipping a required-final queue is a human routing decision, not an automatic inference from prior test results, repository sync, or queue completion.
+8. The agent must not treat “all implementation queues are done” as permission to silently run final-guard browser tests in the background.
+9. The agent must not treat “all implementation queues are done” as permission to silently skip final-guard coverage either; the operator decision is mandatory.
+
 ## 9. Version State Model
 
 ### 9.1 `version_status`
@@ -1477,6 +1497,7 @@ When `post_queue_closeout_pause_policy = auto-continue`:
 2. If queue completion, verification, governance sync, and repository sync record are complete, and the next legal action is unique, the agent must automatically continue.
 3. Automatic continuation includes queue closeout, version review, same-family residue routing, next queue admission, and next active queue startup when each step is uniquely lawful.
 4. The agent may ask the operator only when multiple mutually exclusive legal branches exist, a real blocker exists, or version closeout would change `version_status` from `open` to `closed`.
+5. Exception: starting a `required-final` / final-guard queue always requires explicit operator choice under `8.10.1`, even when it would otherwise be the unique next step.
 
 When the operator explicitly requests queue-completion pauses, the agent must write the request into version-plan truth by setting:
 

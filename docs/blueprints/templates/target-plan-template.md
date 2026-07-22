@@ -116,6 +116,7 @@
 - `post_queue_closeout_pause_policy = auto-continue is the default.`
 - `When the policy is auto-continue, completing a queue must not create a default "whether to continue" question.`
 - `If the next legal action is unique after queue closeout, continue automatically through closeout, version review, same-family residue routing, next queue admission, or next active queue startup.`
+- `Exception: a required-final / final-guard queue must not auto-start just because earlier queues are done. Starting or skipping that queue requires explicit operator decision, and skipping must be recorded as accepted-residue or blocked rather than covered.`
 - `When an operator explicitly requests queue-completion pauses, write post_queue_closeout_pause_policy = pause-when-explicitly-requested in this version plan.`
 - `When pause-when-explicitly-requested is active, pause only after queue closeout, verification, governance sync, and repository sync record are complete.`
 - `At a configured pause point, report the completed queue, verification result, sync result, next legal action or queue, and ask whether to continue.`
