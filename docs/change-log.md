@@ -2,6 +2,27 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-22 Player UI Cleanup
+
+### Changed
+- 隐藏玩家界面的 `界面编辑器` 启动按钮；编辑器渲染函数在未打开时返回空内容，不再向普通界面注入开发入口。
+- 隐藏 campaign 大地图上的 debug 参数窗口；地图仍保留主地图底部 `背包` 入口。
+- 新增 `tests/dev-ui-visibility.test.cjs`，锁定玩家界面默认不暴露布局编辑器入口和大地图 debug 控件。
+
+## 2026-07-21 Unified Backpack Inventory
+
+### Added
+- 新增统一背包道具契约 `src/domain/item.ts` 与 `src/application/inventory/item-inventory.ts`，把旧贵重品和共享粮食 `var.player_inventory.grain_dou` 投影成同一份可筛选 item 列表。
+- 新增背包 overlay `src/ui/views/inventory/backpack-view.ts`，表格字段为 `icon / 名字 / 价值 / 类型 / 持有数`，支持 `全部 / 装备 / 食物 / 其他` 分类、点击详情和声明式 action 按钮。
+- 新增主界面底部 `背包` 入口，并让角色详情里的道具入口打开背包。
+- 新增 `tests/unified-backpack-inventory.test.cjs` 与 `tests/backpack-ui-contract.test.cjs`，覆盖库存投影、分类、选择、装备 action、UI 字段和 shell wiring。
+- 新增 campaign 主地图底部操作层里的 `背包` 按钮，入口直接由地图视图渲染，避免依赖通用 HUD 层。
+
+### Changed
+- 旧 `valuables` overlay 现在作为兼容入口渲染统一背包，不再直接暴露半成品贵重品界面。
+- 道具交互改为 `data-item-action-id` 到 application handler 的安全分发路径；当前实现支持武器/防具装备，未知 action 保持 unsupported 而不执行任意脚本。
+- 背包 icon 列只渲染真实图片源，旧 `itemImageId` 这类文本标识会保持空白；背包浮层改为固定 grid 行和内部滚动，避免切换到食物/其他等短列表时整体 UI 下移。
+
 ## 2026-07-16 Spine External Image Persistence
 
 ### Added

@@ -240,8 +240,10 @@ type GameState = {
     activeMissionId: MissionId | null;
     reviewDateText: string;
     mainHouseMissionText: string;
-    overlayView: "detail" | "cards" | "valuables" | null;
+    overlayView: "detail" | "cards" | "valuables" | "backpack" | null;
     cardLibraryFilter: CardLibraryFilter;
+    backpackLibraryFilter: BackpackItemCategoryFilter;
+    selectedBackpackItemId: string | null;
     valuableLibraryFilter: ValuableLibraryFilter;
     valuableLibrarySortKey: ValuableLibrarySortKey;
     valuableLibrarySortDirection: "asc" | "desc";

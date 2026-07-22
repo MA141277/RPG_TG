@@ -75,6 +75,8 @@ export function createInitialState(input: InitialStateInput): GameState {
       mainHouseMissionText: input.mainHouseMissionText,
       overlayView: null,
       cardLibraryFilter: "all",
+      backpackLibraryFilter: "all",
+      selectedBackpackItemId: null,
       valuableLibraryFilter: "all",
       valuableLibrarySortKey: "name",
       valuableLibrarySortDirection: "asc",

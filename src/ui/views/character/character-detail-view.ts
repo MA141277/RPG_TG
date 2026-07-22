@@ -572,8 +572,8 @@ export function renderCharacterDetailView(
           <button ${renderComponentLayoutAttributes(options, {
             ...characterDetailLiveBindings.valuablesButton,
             className: "c-character-detail__action-button c-character-detail__action-button--item",
-          })} type="button" data-action="open-valuables">
-            贵重品
+          })} type="button" data-action="open-backpack">
+            背包
             ${renderComponentResizeHandle(options, "character-detail-valuables-button")}
           </button>
           <button ${renderComponentLayoutAttributes(options, {

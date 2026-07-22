@@ -23,14 +23,17 @@ import {
   closeGlobalOverlay,
   closeNpcInteraction,
   chooseNpcDefaultTalk,
-  equipValuable,
   openCharacterDetail,
+  openBackpack,
   openCityMenu,
   openCityDirectory,
   openNpcInteraction,
   openPlayerDetail,
+  runBackpackItemAction,
   selectCard,
+  selectBackpackItem,
   selectValuable,
+  setBackpackFilter,
   setCardFilter,
   setValuableFilter,
   setValuableSort,
@@ -210,6 +213,10 @@ import type {
   ScenarioPackDefinition,
   ScenarioPackSummary,
 } from "./domain/scenario-pack";
+import type {
+  BackpackItemCategoryFilter,
+  ItemActionId,
+} from "./domain/item";
 import type {
   CardLibraryFilter,
   ValuableLibraryFilter,
@@ -4270,11 +4277,20 @@ appElement.addEventListener("click", (event) => {
     return;
   }
 
+  const openBackpackButton = targetElement.closest<HTMLElement>(
+    "[data-action='open-backpack']"
+  );
+  if (openBackpackButton != null) {
+    appState = openBackpack(appState);
+    renderApp();
+    return;
+  }
+
   const openValuablesButton = targetElement.closest<HTMLElement>(
     "[data-action='open-valuables']"
   );
   if (openValuablesButton != null) {
-    appState = updateOverlayView(appState, "valuables");
+    appState = openBackpack(appState);
     renderApp();
     return;
   }
@@ -4298,6 +4314,45 @@ appElement.addEventListener("click", (event) => {
     const cardId = cardButton.dataset.cardId;
     if (cardId != null) {
       appState = selectCard(appState, cardId);
+      renderApp();
+    }
+    return;
+  }
+
+  const backpackActionButton = targetElement.closest<HTMLElement>(
+    "[data-action='run-backpack-item-action'][data-backpack-item-id][data-item-action-id]"
+  );
+  if (backpackActionButton != null) {
+    const itemId = backpackActionButton.dataset.backpackItemId;
+    const actionId = backpackActionButton.dataset.itemActionId;
+    if (itemId != null && actionId != null) {
+      appState = runBackpackItemAction(appState, itemId, actionId as ItemActionId);
+      renderApp();
+    }
+    return;
+  }
+
+  const backpackFilterButton = targetElement.closest<HTMLElement>(
+    "[data-backpack-filter]"
+  );
+  if (backpackFilterButton != null) {
+    const filter = backpackFilterButton.dataset.backpackFilter as
+      | BackpackItemCategoryFilter
+      | undefined;
+    if (filter != null) {
+      appState = setBackpackFilter(appState, filter);
+      renderApp();
+    }
+    return;
+  }
+
+  const backpackItemButton = targetElement.closest<HTMLElement>(
+    "[data-backpack-item-id]"
+  );
+  if (backpackItemButton != null) {
+    const itemId = backpackItemButton.dataset.backpackItemId;
+    if (itemId != null) {
+      appState = selectBackpackItem(appState, itemId);
       renderApp();
     }
     return;
@@ -4340,18 +4395,6 @@ appElement.addEventListener("click", (event) => {
       ?.dataset.valuableId;
     if (valuableId != null) {
       appState = selectValuable(appState, valuableId as ValuableItemId);
-      renderApp();
-    }
-    return;
-  }
-
-  const equipButton = targetElement.closest<HTMLElement>(
-    "[data-action='equip-valuable'][data-valuable-id]"
-  );
-  if (equipButton != null) {
-    const valuableId = equipButton.dataset.valuableId;
-    if (valuableId != null) {
-      appState = equipValuable(appState, valuableId as ValuableItemId);
       renderApp();
     }
     return;

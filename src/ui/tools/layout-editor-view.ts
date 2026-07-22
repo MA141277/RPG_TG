@@ -509,15 +509,7 @@ function renderPreview(appState: AppState): string {
 
 export function renderLayoutEditor(appState: AppState): string {
   if (!appState.layoutEditor.isOpen) {
-    return `
-      <button
-        type="button"
-        class="c-layout-editor-launch"
-        data-action="open-layout-editor"
-      >
-        界面编辑器
-      </button>
-    `;
+    return "";
   }
 
   if (getLayoutEditorTarget(appState.layoutEditor.selectedTargetId).mode === "live") {

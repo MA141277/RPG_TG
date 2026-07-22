@@ -14,6 +14,7 @@
     "src/shared/**/*.ts",
     "src/types/**/*.d.ts",
     "src/ui/components/**/*.ts",
+    "src/ui/views/inventory/**/*.ts",
     "src/content/prototype-world.ts",
     "src/content/scenarios/**/*.ts",
     "src/content/scenario-packs/scenario-pack-catalog.ts",

@@ -28,6 +28,7 @@ import type {
 } from "../domain/historical-character";
 import type { MapDefinition } from "../domain/map";
 import type { ValuableItemDefinition } from "../domain/valuable-item";
+import { projectBackpackItems } from "../application/inventory/item-inventory";
 import { assertExists } from "../shared/assert";
 import { renderConfirmModal } from "./components/modal/confirm-modal";
 import {
@@ -46,6 +47,7 @@ import {
 } from "./panels/global-player-panel";
 import { renderCharacterDetailView } from "./views/character/character-detail-view";
 import { renderCardLibraryView } from "./views/cards/card-library-view";
+import { renderBackpackView } from "./views/inventory/backpack-view";
 import { renderCity3dView } from "./views/city/city-3d-view";
 import { renderCityView } from "./views/city/city-view";
 import { renderCityBeggingMiniGameOverlay } from "./views/minigames/city-begging-minigame-view";
@@ -54,7 +56,6 @@ import { renderHouseModuleView } from "./views/house/house-module-view-registry"
 import { createMapViewModel, renderMapView } from "./views/map/map-view";
 import { renderSceneView } from "./views/scene/scene-view";
 import { renderStoryBattleView } from "./views/battle/story-battle-view";
-import { renderValuableLibraryView } from "./views/valuables/valuable-library-view";
 import { renderLayoutEditor } from "./tools/layout-editor-view";
 
 type CharacterDetailViewOptions = Parameters<typeof renderCharacterDetailView>[1];
@@ -200,12 +201,14 @@ function renderOverlay(input: AppRenderInput, playerCharacter: CharacterDefiniti
     });
   }
 
-  if (overlayView === "valuables") {
-    return renderValuableLibraryView({
-      inventory: input.appState.gameState.valuables,
-      filter: input.appState.gameState.ui.valuableLibraryFilter,
-      sortKey: input.appState.gameState.ui.valuableLibrarySortKey,
-      sortDirection: input.appState.gameState.ui.valuableLibrarySortDirection,
+  if (overlayView === "backpack" || overlayView === "valuables") {
+    return renderBackpackView({
+      items: projectBackpackItems({
+        valuableInventory: input.appState.gameState.valuables,
+        gameState: input.appState.gameState,
+      }),
+      filter: input.appState.gameState.ui.backpackLibraryFilter,
+      selectedItemId: input.appState.gameState.ui.selectedBackpackItemId,
     });
   }
 
@@ -649,10 +652,11 @@ export function renderApp(input: AppRenderInput): string {
                 ${renderCampaignTravelBanner(input.presenterOutput.overlay.campaignTravelState)}
                 ${
                   input.presenterOutput.overlay.shouldShowGlobalHud
-                    ? renderGlobalPlayerPanel(
+                    ? `${renderGlobalPlayerPanel(
                         playerPanelModel,
                         input.appState.uiLayouts["global-hud"]
-                      )
+                      )}
+                      <button class="c-backpack-shortcut" type="button" data-action="open-backpack">背包</button>`
                     : ""
                 }
               </div>

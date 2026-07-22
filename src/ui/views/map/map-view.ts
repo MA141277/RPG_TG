@@ -687,80 +687,15 @@ function renderCampaignMap(model: MapViewModel): string {
           })}
         </div>
         <div class="c-campaign-map__vignette" aria-hidden="true"></div>
-        <div class="c-campaign-map-debug" aria-label="Campaign map debug controls">
-          <div class="c-campaign-map-debug__readout">
-            <span>Scale <strong data-campaign-map-scale>1.00x</strong></span>
-            <span>X <strong data-campaign-map-offset-x>0px</strong></span>
-            <span>Y <strong data-campaign-map-offset-y>0px</strong></span>
-          </div>
-          <div class="c-campaign-map-debug__actions">
-            <button type="button" data-map-debug-action="zoom-out">-</button>
-            <label class="c-campaign-map-debug__scale-field">
-              <span>Zoom</span>
-              <input
-                type="text"
-                inputmode="decimal"
-                value="1.00"
-                data-campaign-map-scale-input
-                aria-label="Map zoom scale"
-              >
-            </label>
-            <button type="button" data-map-debug-action="zoom-in">+</button>
-            <button type="button" data-map-debug-action="reset">Reset</button>
-          </div>
-          <div class="c-campaign-map-debug__terrain-style">
-            <label>
-              <span>Sat <strong data-campaign-terrain-style-value="saturation">1.00</strong></span>
-              <input type="range" min="0" max="3" step="0.01" value="1.00" data-campaign-terrain-style-field="saturation">
-            </label>
-            <label>
-              <span>Bright <strong data-campaign-terrain-style-value="brightness">1.00</strong></span>
-              <input type="range" min="0" max="3" step="0.01" value="1.00" data-campaign-terrain-style-field="brightness">
-            </label>
-            <label>
-              <span>Lift <strong data-campaign-terrain-style-value="brightnessOffset">0.000</strong></span>
-              <input type="range" min="-0.2" max="0.2" step="0.005" value="0.000" data-campaign-terrain-style-field="brightnessOffset">
-            </label>
-            <label>
-              <span>Shade Min <strong data-campaign-terrain-style-value="shadeMin">1.00</strong></span>
-              <input type="range" min="0" max="2" step="0.01" value="1.00" data-campaign-terrain-style-field="shadeMin">
-            </label>
-            <label>
-              <span>Shade Max <strong data-campaign-terrain-style-value="shadeMax">1.00</strong></span>
-              <input type="range" min="0" max="2" step="0.01" value="1.00" data-campaign-terrain-style-field="shadeMax">
-            </label>
-            <button type="button" data-map-debug-action="terrain-style-reset">Reset Terrain</button>
-          </div>
-          <div class="c-campaign-map-debug__terrain-style">
-            <label>
-              <span>City Rot <strong data-campaign-city-mesh-value="rotationDegrees">0deg</strong></span>
-              <input type="range" min="-180" max="180" step="1" value="0" data-campaign-city-mesh-field="rotationDegrees">
-            </label>
-            <label>
-              <span>City Tilt <strong data-campaign-city-mesh-value="pitchDegrees">0deg</strong></span>
-              <input type="range" min="-90" max="90" step="1" value="0" data-campaign-city-mesh-field="pitchDegrees">
-            </label>
-            <label>
-              <span>City Size <strong data-campaign-city-mesh-value="scale">1.00</strong></span>
-              <input type="range" min="0.1" max="6" step="0.01" value="1" data-campaign-city-mesh-field="scale">
-            </label>
-            <label>
-              <span>Tile X <strong data-campaign-city-mesh-value="offsetX">0.00</strong></span>
-              <input type="range" min="-1" max="1" step="0.01" value="0" data-campaign-city-mesh-field="offsetX">
-            </label>
-            <label>
-              <span>Tile Y <strong data-campaign-city-mesh-value="offsetY">0.00</strong></span>
-              <input type="range" min="-1" max="1" step="0.01" value="0" data-campaign-city-mesh-field="offsetY">
-            </label>
-            <label>
-              <span>City Lift <strong data-campaign-city-mesh-value="lift">0.0000</strong></span>
-              <input type="range" min="-0.08" max="0.16" step="0.001" value="0" data-campaign-city-mesh-field="lift">
-            </label>
-            <button type="button" data-map-debug-action="city-mesh-reset">Reset City</button>
-            <button type="button" data-map-debug-action="city-mesh-copy">Copy Params</button>
-            <span data-campaign-city-mesh-copy-status></span>
-          </div>
-        </div>
+      </div>
+      <div class="c-campaign-map-actions" aria-label="主地图操作">
+        <button
+          class="c-campaign-map-actions__button"
+          type="button"
+          data-action="open-backpack"
+        >
+          背包
+        </button>
       </div>
     </div>
   `;

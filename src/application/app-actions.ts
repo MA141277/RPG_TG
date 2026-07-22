@@ -6,15 +6,23 @@ import type {
 } from "../domain/city-entry";
 import type {
   CardLibraryFilter,
+  GlobalOverlayView,
   ValuableLibraryFilter,
   ValuableLibrarySortKey,
 } from "../domain/global-ui";
+import type { BackpackItemCategoryFilter, ItemActionId } from "../domain/item";
 import type { ValuableItemId } from "../domain/valuable-item";
 import type { NpcInteractionContext } from "../domain/npc-interaction";
 import {
   closeNpcInteractionSession,
   createNpcInteractionSession,
 } from "./npc-interaction/npc-interaction";
+import {
+  applyBackpackItemAction,
+  filterBackpackItems,
+  projectBackpackItems,
+  resolveSelectedBackpackItemId,
+} from "./inventory/item-inventory";
 import {
   equipValuableItem,
   getVisibleOwnedCards,
@@ -26,7 +34,7 @@ import type { AppState } from "./app-shell";
 
 export function updateOverlayView(
   appState: AppState,
-  overlayView: AppState["gameState"]["ui"]["overlayView"]
+  overlayView: GlobalOverlayView
 ): AppState {
   return {
     ...appState,
@@ -35,6 +43,41 @@ export function updateOverlayView(
       ui: {
         ...appState.gameState.ui,
         overlayView,
+      },
+    },
+  };
+}
+
+function resolveBackpackSelection(
+  appState: AppState,
+  filter: BackpackItemCategoryFilter,
+  selectedItemId: string | null
+): string | null {
+  const visibleItems = filterBackpackItems(
+    projectBackpackItems({
+      valuableInventory: appState.gameState.valuables,
+      gameState: appState.gameState,
+    }),
+    filter
+  );
+
+  return resolveSelectedBackpackItemId(visibleItems, selectedItemId);
+}
+
+export function openBackpack(appState: AppState): AppState {
+  const filter = appState.gameState.ui.backpackLibraryFilter;
+  return {
+    ...appState,
+    gameState: {
+      ...appState.gameState,
+      ui: {
+        ...appState.gameState.ui,
+        overlayView: "backpack",
+        selectedBackpackItemId: resolveBackpackSelection(
+          appState,
+          filter,
+          appState.gameState.ui.selectedBackpackItemId
+        ),
       },
     },
   };
@@ -260,6 +303,67 @@ export function setValuableFilter(
         ...appState.gameState.ui,
         valuableLibraryFilter: filter,
         overlayView: "valuables",
+      },
+    },
+  };
+}
+
+export function setBackpackFilter(
+  appState: AppState,
+  filter: BackpackItemCategoryFilter
+): AppState {
+  return {
+    ...appState,
+    gameState: {
+      ...appState.gameState,
+      ui: {
+        ...appState.gameState.ui,
+        backpackLibraryFilter: filter,
+        selectedBackpackItemId: resolveBackpackSelection(
+          appState,
+          filter,
+          appState.gameState.ui.selectedBackpackItemId
+        ),
+        overlayView: "backpack",
+      },
+    },
+  };
+}
+
+export function selectBackpackItem(appState: AppState, itemId: string): AppState {
+  return {
+    ...appState,
+    gameState: {
+      ...appState.gameState,
+      ui: {
+        ...appState.gameState.ui,
+        selectedBackpackItemId: itemId,
+        overlayView: "backpack",
+      },
+    },
+  };
+}
+
+export function runBackpackItemAction(
+  appState: AppState,
+  itemId: string,
+  actionId: ItemActionId
+): AppState {
+  const result = applyBackpackItemAction({
+    valuableInventory: appState.gameState.valuables,
+    itemId,
+    actionId,
+  });
+
+  return {
+    ...appState,
+    gameState: {
+      ...appState.gameState,
+      valuables: result.valuableInventory,
+      ui: {
+        ...appState.gameState.ui,
+        selectedBackpackItemId: itemId,
+        overlayView: "backpack",
       },
     },
   };
