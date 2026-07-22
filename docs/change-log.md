@@ -5,6 +5,20 @@
 `docs/change-log.md` 的正式定位是“历史记录 + 人类可读摘要”。
 它不是当前 Blueprint / legacy superpowers 治理的 live execution truth，不作为 resume entry、promotion gate、closeout gate 或固定同步门。
 
+## 2026-07-22 Event Playable Destination And Building Action Event Truth Convergence
+
+### Changed
+- 更新 [src/domain/event.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/domain/event.ts)、新增 [src/application/events/event-playable-runtime.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/events/event-playable-runtime.ts)，为事件运行时补入一等 `launchPlayable` action 契约，并把 event-owned playable/minigame 启动收口到共享 helper，通过 `createLaunchPlayableRequest` + `runPlayableRuntime` 进入统一玩法运行时，而不是继续停留在 authoring-only 或 building-local 分支。
+- 更新 [src/application/script-editor/runtime-pack-export.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/runtime-pack-export.ts) 与 [src/application/script-editor/runtime-pack-import.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/runtime-pack-import.ts)，让 Script Editor `event.destination.family = "minigame"` 正式 lower 成 runtime `launchPlayable` truth，并在导入时按 `launchPlayable.integrationId` 回构 authored minigame destination；同时对缺失 minigame、错误 triggerSource / triggerEvent、非法 owner / returnPolicy 合同 fail closed。
+- 更新 [src/application/building/building-container-event-runtime.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/building/building-container-event-runtime.ts)、[src/application/dialogue/dialogue-runner.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/dialogue/dialogue-runner.ts)、[src/application/story/story-runtime.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/story/story-runtime.ts) 与 [src/main.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/main.ts)，把 building action 渲染出来的 `eventId` 传入 runtime 并作为 canonical EventBindingRuntime 选择条件，同时让 building / story / dialogue 三条事件入口都能直接消费 event-owned `launchPlayable`，不再回退到 dialogue-only truth。
+- 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，补入 event->minigame export/import lowering、building action canonical `eventId` 选择、building event-owned playable launch 与 story-trigger playable launch 的 focused guards。
+- 同步 [docs/blueprints/queues/event-playable-destination-and-building-action-event-truth-convergence-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/event-playable-destination-and-building-action-event-truth-convergence-queue.md)、[docs/blueprints/plans/2026-07-22-script-editor-event-centered-authoring-scene-retirement-and-portrait-resource-refactor-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-22-script-editor-event-centered-authoring-scene-retirement-and-portrait-resource-refactor-target-plan.md) 与 [docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)，记录该 queue closeout、repository sync 结果和版本回到 closeout review 的真值。
+
+### Impact
+- 创作者在事件去向里选择 `minigame` 不再只是作者面可见但 runtime 不可跑的死语义；导出、导入、building/story/dialogue 触发与 shared playable runtime 现在都走同一份 event-owned truth。
+- 建筑容器 action 上的 `eventId` 不再是死 metadata。运行时现在把它当作 authoritative 选择条件，避免同一交互同时依赖“按钮写了一个 eventId，背后还要再维护一条隐藏 binding 真值”的双轨状态。
+- 当前 version 已补齐 ACC-EVENT-ONLY-ROUTING-007 / 008 的实现与验证，后续若要真正关闭该 version，剩余步骤只应是版本级 closeout 确认，而不是再回头把这类实现工作塞进 final acceptance 或 portrait queue。
+
 ## 2026-07-22 Script Editor Asset Library Grouping And Memo Expansion
 
 ### Changed

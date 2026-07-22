@@ -12,6 +12,7 @@ import type { GameState } from "../../domain/game-state";
 import { runEventBindingRuntime } from "../../core/runtime/event-binding-runtime";
 import { createRuntimeTriggerContext } from "../../core/runtime/event-binding-contract";
 import { startEvent } from "../events/event-runner";
+import { runEventPlayableRuntime } from "../events/event-playable-runtime";
 import { resolveDialogueChoiceOption } from "../dialogue/dialogue-choice-resolver";
 import {
   advanceDialogue,
@@ -104,6 +105,22 @@ export function triggerStoryEvents(
 
   if (bindingResult.activation == null) {
     return runtime;
+  }
+
+  const activeEvent =
+    content.eventDefinitionsById[bindingResult.activation.activeEventId] ?? null;
+  const playableResult = runEventPlayableRuntime({
+    state: bindingResult.state,
+    characterDefinitions: runtime.characterDefinitions,
+    eventDefinition: activeEvent,
+    activityDefinitionsById: content.activityDefinitionsById,
+    textEntriesById: content.textEntriesById,
+  });
+  if (playableResult?.handled) {
+    return {
+      state: playableResult.state,
+      characterDefinitions: playableResult.characterDefinitions,
+    };
   }
 
   return syncStoryDialogue(

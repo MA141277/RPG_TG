@@ -9,6 +9,7 @@ import type { GameState } from "../../domain/game-state";
 import { runActivity } from "../activity/activity-runner";
 import { applyEffects } from "../effects/effect-applier";
 import { syncActiveEventPresentation } from "./dialogue-presentation";
+import { runEventPlayableRuntime } from "../events/event-playable-runtime";
 import { startEvent } from "../events/event-runner";
 import { runStoryCallback } from "../story/story-callbacks";
 
@@ -34,6 +35,25 @@ export function runDialogueUntilPause(
   let nextCharacterDefinitions = context.characterDefinitions;
 
   while (true) {
+    const activeEvent =
+      nextState.dialogue.activeEventId == null
+        ? null
+        : context.eventDefinitionsById[nextState.dialogue.activeEventId] ?? null;
+    const playableResult = runEventPlayableRuntime({
+      state: nextState,
+      characterDefinitions: nextCharacterDefinitions,
+      eventDefinition: activeEvent,
+      activityDefinitionsById: context.activityDefinitionsById,
+      textEntriesById: context.textEntriesById,
+    });
+    if (playableResult?.handled) {
+      return {
+        state: playableResult.state,
+        characterDefinitions: playableResult.characterDefinitions,
+        currentNode: null,
+      };
+    }
+
     nextState = syncActiveEventPresentation(
       nextState,
       context.eventDefinitionsById

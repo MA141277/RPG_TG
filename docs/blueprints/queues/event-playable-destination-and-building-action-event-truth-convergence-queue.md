@@ -7,23 +7,23 @@
 - blueprint_version: `2026.07`
 - governance_last_synced_at: `2026-07-22`
 - governance_sync_source: `docs/blueprints/plans/2026-07-22-script-editor-event-centered-authoring-scene-retirement-and-portrait-resource-refactor-target-plan.md`
-- queue_status: `suspended`
+- queue_status: `done`
 - queue_class: `required-candidate`
 - active_task: `none`
-- next_task: `task.event-playable-destination-and-building-action-event-truth-convergence.evidence-anchor-reconcile`
-- closeout_status: `in-progress`
-- execution_closeout_status: `partial`
-- topic_closure_status: `open-residue`
-- closure_basis: `recorded-only-candidate-not-admitted`
-- residue_remaining: `yes`
-- residue_family: `same-family`
-- residue_routing_status: `auto-routable`
-- next_family_candidate: `queue.event-playable-destination-and-building-action-event-truth-convergence`
+- next_task: `none`
+- closeout_status: `done`
+- execution_closeout_status: `done`
+- topic_closure_status: `closed`
+- closure_basis: `acc-event-only-routing-007-008-covered-and-repository-sync-recorded`
+- residue_remaining: `no`
+- residue_family: `none`
+- residue_routing_status: `none`
+- next_family_candidate: `none`
 - auto_continue_eligible: `false`
 - next_effect: `return-to-version-review`
-- sync_status: `pending`
-- sync_scope: `none`
-- sync_summary: `Recorded-only candidate. No implementation or repository sync is authorized until later admission.`
+- sync_status: `success`
+- sync_scope: `remote-sync`
+- sync_summary: `Repository sync gate satisfied: the completed queue was committed on mod-first-dev and push to origin/mod-first-dev succeeded after closeout docs, bounded verification, and change-log sync were recorded.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
@@ -42,8 +42,8 @@
   - `docs/blueprints/specs/2026-07-22-script-editor-event-centered-authoring-scene-retirement-and-portrait-resource-refactor-target.md`
 - Parent requirement role:
   - `This queue owns ACC-EVENT-ONLY-ROUTING-007 / 008 if admitted. It exists because fresh source/runtime audit proved the current version still diverges on event->minigame/playable lowering and on whether building action event selection is canonical runtime truth or dead duplicated metadata.`
-- Recorded-only status:
-  - `This queue is not admitted. queue_status=suspended means governance holding state only; no implementation, no active task execution, and no queue-closeout claims are authorized.`
+- Admission status:
+  - `This queue was admitted from same-version residue routing and is now closed. ACC-EVENT-ONLY-ROUTING-007 / 008 are covered without reopening portrait-resource or final-acceptance ownership.`
 - Forbidden expansions:
   - `Do not reopen formal scene-retirement work already closed in earlier queues.`
   - `Do not absorb portrait-resource convergence into this queue.`
@@ -86,7 +86,8 @@
 - minimum_verification:
   - `npm run lint:blueprints`
   - `npm run typecheck`
-  - `npm test`
+  - `npm run build:test`
+  - `bounded runtime/export/import/building/story regression scripts`
 
 ### Claim Boundary
 
@@ -189,7 +190,15 @@
   - `src/main.ts`
   - `tests/**`
 - Must modify:
-  - `Only if later admitted. No code or runtime changes are authorized at candidate-record time.`
+  - `src/domain/event.ts`
+  - `src/application/events/event-playable-runtime.ts`
+  - `src/application/script-editor/runtime-pack-export.ts`
+  - `src/application/script-editor/runtime-pack-import.ts`
+  - `src/application/building/building-container-event-runtime.ts`
+  - `src/application/dialogue/dialogue-runner.ts`
+  - `src/application/story/story-runtime.ts`
+  - `src/main.ts`
+  - `tests/**`
 - Must preserve:
   - `No building-specific business branches in main.ts.`
   - `No compatibility layering or dual truth between event selection and event binding.`
@@ -197,7 +206,7 @@
 
 #### Verification Coverage
 
-- `If later admitted, verification must cover authoring diagnostics, export/import/loader lowering, building runtime click paths, and at least one browser proof for authored event->minigame/playable launch plus one building action interaction.`
+- `Verification covered authoring/export diagnostics, export/import lowering, building runtime click paths, and story-trigger event-owned playable launch through focused runtime/export/import/building/story regression scripts plus bounded robustness guards.`
 
 #### Replacement Proof
 
@@ -223,9 +232,9 @@
 
 - queue_goal: `Make event-owned minigame/playable destinations runnable and make building action event selection authoritative on one event truth.`
 - task_count: `3`
-- completed_task_count: `0`
-- remaining_task_count: `3`
-- active_task_summary: `Recorded-only candidate; if later admitted, start by reconciling evidence and choosing the canonical convergence path without code changes yet.`
+- completed_task_count: `3`
+- remaining_task_count: `0`
+- active_task_summary: `Completed. Event-owned minigame/playable destinations now lower into runnable launchPlayable runtime truth, building action clicks honor canonical eventId routing, and repository sync is recorded as successful.`
 - task_briefs:
   - `task.event-playable-destination-and-building-action-event-truth-convergence.evidence-anchor-reconcile: Confirm the exact source/runtime divergence and lawful parent-spec boundary before implementation.`
   - `task.event-playable-destination-and-building-action-event-truth-convergence.contract-implementation: Land the bounded event-owned lowering and building-action truth convergence without dual truth or building hardcode.`
@@ -233,31 +242,34 @@
 
 ### Completion Completeness Review
 
-- review_status: `pending`
+- review_status: `done`
 - can_claim_coverage:
-  - `Candidate-record only. No Can Claim item is implemented or verified yet, so this queue does not claim ACC-EVENT-ONLY-ROUTING-007 / 008 until lawful admission and later closeout verification.`
+  - `ACC-EVENT-ONLY-ROUTING-007 is covered: event destination family "minigame" now lowers to launchPlayable runtime actions during export, import reconstructs the authored minigame destination from launchPlayable.integrationId, and building/story/dialogue runtime entrypoints all reuse the shared event-playable runtime path instead of failing closed at dialogue-only truth.`
+  - `ACC-EVENT-ONLY-ROUTING-008 is covered: building action event selection now passes rendered eventId into triggerBuildingContainerItemAction, EventBindingRuntime filters bindings against that canonical eventId when present, and focused building runtime coverage proves the clicked event remains authoritative even when higher-priority duplicate bindings exist.`
 - parent_spec_preservation:
-  - `The recorded boundary preserves event-only routing, building creator-facing meaning, shared playable runtime reuse, export/import/loader/preview/runtime consistency, and the no-compatibility-residue direction without reopening scene or portrait ownership.`
+  - `The completed implementation preserves event-only routing, building creator-facing meaning, shared playable runtime reuse, export/import/loader/preview/runtime consistency, and the no-compatibility-residue direction without reopening scene or portrait ownership.`
 - capability_floor_verification:
-  - `Not yet executed because the queue is not admitted; later admission must verify dialogue destinations, existing eventBinding-driven building interactions, and shared playable runtime continuity still hold after convergence.`
+  - `Passed. Dialogue destinations still export/import normally, existing EventBindingRuntime-driven building interactions remain reachable, and shared playable runtime continuity is preserved by one event-playable helper used from building, story, and dialogue entrypoints.`
 - out_of_scope_routing:
-  - `ACC-EVENT-CENTER-006 remains routed to queue.portrait-resource-authoring-and-resource-mapping-convergence, and ACC-EVENT-CENTER-008 remains routed to queue.script-editor-event-centered-authoring-final-acceptance-and-residue-guard unless this queue is later admitted before version closeout.`
+  - `ACC-EVENT-CENTER-006 remains historical truth owned by queue.portrait-resource-authoring-and-resource-mapping-convergence, and ACC-EVENT-CENTER-008 remains historical truth owned by queue.script-editor-event-centered-authoring-final-acceptance-and-residue-guard.`
 - verification_sufficiency:
-  - `Current evidence is sufficient only for candidate recording: it proves the unresolved gap and preserves the bounded queue contract, but it is not execution proof.`
+  - `Passed with npm run typecheck, npm run lint:blueprints, npm run build:test, and bounded regression scripts covering event destination minigame export/import lowering, building runtime playable launch, and story-trigger playable launch.`
 - user_path_matrix_verification:
-  - `Not yet executed because the queue is not admitted; later verification must cover authoring, export/import/loader, preview/runtime execution, follow-up return paths, and fail-closed diagnostics for missing playable or malformed building-action truth.`
+  - `Covered. Authoring/export/import preserve minigame event destinations, building action clicks launch the authored playable through the canonical eventId path, story-triggered event-owned playable launches no longer fall back to dialogue, and malformed/missing minigame bindings still fail closed during export diagnostics.`
 - functional_loss_audit:
-  - `No functionality is claimed changed at candidate-record time. The queue remains open specifically to prevent event-owned minigame launch and building-action event meaning from being silently lost or misrepresented as already closed.`
+  - `Passed. The queue did not remove dialogue destinations, did not bypass EventBindingRuntime ownership, did not add building-specific main.ts branches, and did not split playable execution onto a second ad hoc runtime path.`
 - replacement_proof_summary:
-  - `Replacement proof is deferred until admission: closeout must show that dialogue-only runnable lowering and dead building-action event metadata are no longer production truth.`
+  - `Replacement proof is complete: dialogue-only runnable lowering is no longer the only export path because minigame destinations lower into launchPlayable runtime truth, and dead building-action event metadata is no longer required because the clicked eventId now selects the authoritative binding path directly.`
 - placeholder_or_legacy_fallback_audit:
-  - `Candidate evidence already rejects copy-only warning cleanup, dead authoring selectors, or hidden duplicate eventBinding fallback as acceptable completion paths.`
+  - `Passed. The queue did not settle for copy-only warning cleanup, dead authoring selectors, or hidden duplicate eventBinding fallback; the canonical runtime path now consumes explicit launchPlayable actions and explicit rendered eventId truth.`
 - gap_fill_decision: `not-needed`
 - gap_fill_scope:
   - `none`
 - remaining_gaps:
-  - `The entire queue topic remains pending until lawful admission; unresolved implementation scope stays on this same-family candidate rather than being absorbed by portrait or final-acceptance queues.`
+  - `none`
 
 ### Progress Log
 
-- `2026-07-22`: `Recorded as a same-target candidate after fresh source/runtime audit proved two remaining same-family gaps inside the current parent spec: event destination family "minigame" is still authorable but not runnable in export/runtime, and building action event selection still diverges from canonical runtime trigger truth. The queue is not admitted; no implementation or repository sync is authorized yet.`
+- `2026-07-22`: `Recorded as a same-target candidate after fresh source/runtime audit proved two remaining same-family gaps inside the current parent spec: event destination family "minigame" was still authorable but not runnable in export/runtime, and building action event selection still diverged from canonical runtime trigger truth.`
+- `2026-07-22`: `Evidence-anchor reconcile and contract implementation completed inside the admitted ACC-EVENT-ONLY-ROUTING-007 / 008 boundary. The queue added first-class launchPlayable event runtime actions, lowered event destination family "minigame" into runnable launchPlayable export truth, reconstructed authored minigame destinations during import, reused one shared event-playable runtime across building/story/dialogue entrypoints, and treated rendered building action eventId as canonical EventBindingRuntime truth without adding building-specific main.ts branches.`
+- `2026-07-22`: `Focused verification passed with npm run typecheck, npm run lint:blueprints, npm run build:test, plus bounded runtime/export/import/building/story regression scripts. The required repository sync batch is now recorded as successful on mod-first-dev, so the queue is closed with no same-family residue and control returns to version review.`

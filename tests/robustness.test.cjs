@@ -7154,10 +7154,13 @@ test("script editor event destination helper stores selected target ids and clea
   assert.equal(eventRecord.destination.targetId, "");
 });
 
-test("script editor event destination export remains dialogue-only", () => {
+test("script editor event destination export lowers minigame targets into runnable playable actions", async () => {
   const {
     exportScriptEditorProjectToScenarioPackFiles,
   } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  const {
+    loadScriptEditorProjectFromScenarioPackFiles,
+  } = require("../.test-dist/application/script-editor/runtime-pack-import.js");
   const project = createExportableScriptEditorProjectDefinition();
   project.textEntries = [{ id: "text.opening", text: "Opening line." }];
   project.dialogues = [
@@ -7196,15 +7199,60 @@ test("script editor event destination export remains dialogue-only", () => {
     /supports only editor events whose destination targets a dialogue/i
   );
 
+  project.minigames = [
+    {
+      id: "minigame.training.begging",
+      title: "Training Begging",
+      playableId: "city-begging",
+      integrationId: "playable.city-begging.external.default",
+      ownerKind: "external",
+      returnPolicy: "close-only",
+      triggerId: "trigger.playable.city-begging.external.default",
+      triggerSource: "event-destination",
+      triggerEvent: "event.opening",
+      outcomeRoutes: [
+        {
+          id: "outcome.success",
+          outcome: "success",
+          handoffPolicy: "close-only",
+          summary: "Begging finished.",
+          effectHint: "",
+        },
+      ],
+    },
+  ];
   project.events = [
     {
       ...eventRecord,
-      destination: { family: "minigame", targetId: "minigame.duel" },
+      destination: { family: "minigame", targetId: "minigame.training.begging" },
     },
   ];
-  assert.throws(
-    () => exportScriptEditorProjectToScenarioPackFiles(project),
-    /supports only editor events whose destination targets a dialogue/i
+  const minigameFiles = exportScriptEditorProjectToScenarioPackFiles(project);
+  const minigameEvents = JSON.parse(minigameFiles["events.json"]);
+  assert.equal(minigameEvents[0]?.dialogueId, "");
+  assert.deepEqual(minigameEvents[0]?.actions, [
+    {
+      type: "launchPlayable",
+      playableId: "city-begging",
+      integrationId: "playable.city-begging.external.default",
+      ownerContext: {
+        ownerKind: "external",
+        ownerId: null,
+        returnPolicy: "close-only",
+      },
+    },
+  ]);
+
+  const importedProject = await loadScriptEditorProjectFromScenarioPackFiles(
+    createImportedFilesFromSerializedJsonRecord(
+      minigameFiles,
+      "imported-event-destination-minigame-pack"
+    )
+  );
+  assert.equal(importedProject.events[0]?.destination.family, "minigame");
+  assert.equal(
+    importedProject.events[0]?.destination.targetId,
+    "minigame.training.begging"
   );
 });
 
@@ -7241,7 +7289,7 @@ test("script editor runtime export fails closed on editor event authoring record
 
   assert.throws(
     () => exportScriptEditorProjectToScenarioPackFiles(project),
-    /supports only editor events whose destination targets a dialogue/i
+    /references missing minigame/i
   );
 });
 
@@ -8150,6 +8198,217 @@ test("building container item action launches the authored flow selected by the 
   assert.equal(result.state.runtime.playableSession?.playableId, "flow.temple.rest");
   assert.equal(result.state.runtime.playableSession?.ownerContext.ownerId, "building.temple");
   assert.equal(result.state.ui.currentView, "minigame");
+  assert.equal(result.state.dialogue.activeDialogueId, null);
+});
+
+test("building container item action launches the authored minigame selected by the event", () => {
+  const {
+    triggerBuildingContainerItemAction,
+  } = require("../.test-dist/application/building/building-container-event-runtime.js");
+  const state = createBaseState();
+  state.world.currentCityId = "city.start";
+  state.world.currentHouseId = "building.temple";
+  state.ui.currentView = "house";
+
+  const result = triggerBuildingContainerItemAction({
+    state,
+    characterDefinitions: prototypeCharacters,
+    storyContent: {
+      eventDefinitionsById: {
+        "event.temple.rest": {
+          id: "event.temple.rest",
+          chapterId: "chapter.prototype",
+          name: "Temple Rest",
+          occurrence: "repeatable",
+          dialogueId: "",
+          actions: [
+            {
+              type: "launchPlayable",
+              playableId: "city-begging",
+              integrationId: "playable.city-begging.external.default",
+              ownerContext: {
+                ownerKind: "external",
+                ownerId: null,
+                returnPolicy: "close-only",
+              },
+            },
+          ],
+        },
+      },
+      eventBindingsById: {
+        "binding.temple.rest": {
+          id: "binding.temple.rest",
+          eventId: "event.temple.rest",
+          owner: { family: "building", id: "building.temple" },
+          trigger: {
+            timing: "after",
+            action: "building-container-item-action",
+            extra: {
+              arrangementId: "building-arrangement.city-start.temple",
+              containerId: "container.temple.menu",
+              itemId: "action.temple.rest",
+            },
+          },
+          enabled: true,
+        },
+      },
+      dialogueDefinitionsById: {},
+    },
+    action: {
+      arrangementId: "building-arrangement.city-start.temple",
+      containerId: "container.temple.menu",
+      itemId: "action.temple.rest",
+    },
+  });
+
+  assert.equal(result.state.runtime.playableSession?.playableId, "city-begging");
+  assert.equal(
+    result.state.runtime.playableSession?.integrationId,
+    "playable.city-begging.external.default"
+  );
+  assert.equal(result.state.ui.currentView, "minigame");
+  assert.equal(result.state.dialogue.activeEventId, null);
+});
+
+test("building container item action treats the clicked eventId as canonical truth", () => {
+  const {
+    triggerBuildingContainerItemAction,
+  } = require("../.test-dist/application/building/building-container-event-runtime.js");
+  const state = createBaseState();
+  state.world.currentCityId = "city.start";
+  state.world.currentHouseId = "building.temple";
+  state.ui.currentView = "house";
+
+  const result = triggerBuildingContainerItemAction({
+    state,
+    characterDefinitions: prototypeCharacters,
+    storyContent: {
+      eventDefinitionsById: {
+        "event.temple.rest": {
+          id: "event.temple.rest",
+          chapterId: "chapter.prototype",
+          name: "Temple Rest",
+          occurrence: "repeatable",
+          dialogueId: "dialogue.temple.rest",
+        },
+        "event.temple.wrong": {
+          id: "event.temple.wrong",
+          chapterId: "chapter.prototype",
+          name: "Wrong Event",
+          occurrence: "repeatable",
+          dialogueId: "dialogue.temple.wrong",
+        },
+      },
+      eventBindingsById: {
+        "binding.temple.rest": {
+          id: "binding.temple.rest",
+          eventId: "event.temple.rest",
+          owner: { family: "building", id: "building.temple" },
+          trigger: {
+            timing: "after",
+            action: "building-container-item-action",
+            extra: {
+              arrangementId: "building-arrangement.city-start.temple",
+              containerId: "container.temple.menu",
+              itemId: "action.temple.rest",
+            },
+          },
+          priority: 100,
+          enabled: true,
+        },
+        "binding.temple.wrong": {
+          id: "binding.temple.wrong",
+          eventId: "event.temple.wrong",
+          owner: { family: "building", id: "building.temple" },
+          trigger: {
+            timing: "after",
+            action: "building-container-item-action",
+            extra: {
+              arrangementId: "building-arrangement.city-start.temple",
+              containerId: "container.temple.menu",
+              itemId: "action.temple.rest",
+            },
+          },
+          priority: 500,
+          enabled: true,
+        },
+      },
+      dialogueDefinitionsById: {
+        "dialogue.temple.rest": {
+          id: "dialogue.temple.rest",
+          name: "Temple Rest",
+          nodes: [{ type: "narration", text: "Temple rest." }],
+        },
+        "dialogue.temple.wrong": {
+          id: "dialogue.temple.wrong",
+          name: "Wrong Event",
+          nodes: [{ type: "narration", text: "Wrong route." }],
+        },
+      },
+    },
+    action: {
+      arrangementId: "building-arrangement.city-start.temple",
+      containerId: "container.temple.menu",
+      itemId: "action.temple.rest",
+      eventId: "event.temple.rest",
+    },
+  });
+
+  assert.equal(result.state.dialogue.activeEventId, "event.temple.rest");
+  assert.equal(result.state.dialogue.activeDialogueId, "dialogue.temple.rest");
+});
+
+test("story trigger runtime launches event-owned playable destinations without dialogue fallback", () => {
+  const {
+    triggerStoryEvents,
+  } = require("../.test-dist/application/story/story-runtime.js");
+  const state = createBaseState();
+  state.world.currentCityId = "city.kulan";
+
+  const result = triggerStoryEvents(
+    {
+      state,
+      characterDefinitions: prototypeCharacters,
+    },
+    {
+      eventDefinitionsById: {
+        "event.story.minigame": {
+          id: "event.story.minigame",
+          chapterId: "chapter.prototype",
+          name: "Story Minigame",
+          occurrence: "repeatable",
+          dialogueId: "",
+          actions: [
+            {
+              type: "launchPlayable",
+              playableId: "city-begging",
+              integrationId: "playable.city-begging.external.default",
+              ownerContext: {
+                ownerKind: "external",
+                ownerId: null,
+                returnPolicy: "close-only",
+              },
+            },
+          ],
+        },
+      },
+      eventBindingsById: {
+        "binding.story.minigame": {
+          id: "binding.story.minigame",
+          eventId: "event.story.minigame",
+          owner: { family: "city", id: "city.kulan" },
+          trigger: { timing: "after", action: "city-enter" },
+          enabled: true,
+        },
+      },
+      dialogueDefinitionsById: {},
+    },
+    { timing: "city-enter", cityId: "city.kulan" }
+  );
+
+  assert.equal(result.state.runtime.playableSession?.playableId, "city-begging");
+  assert.equal(result.state.ui.currentView, "minigame");
+  assert.equal(result.state.dialogue.activeEventId, null);
   assert.equal(result.state.dialogue.activeDialogueId, null);
 });
 

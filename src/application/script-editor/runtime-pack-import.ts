@@ -216,6 +216,7 @@ export function importScenarioPackToScriptEditorProject(
   const importedCities = (pack.cities ?? []).map((city) =>
     applyImportedLocationAccess(city, "city", importedLocationAccess)
   );
+  const importedMinigames = mapImportedPlayableIntegrations(rawPack);
   const project = {
     schemaVersion: SCRIPT_EDITOR_PROJECT_SCHEMA_VERSION,
     kind: SCRIPT_EDITOR_PROJECT_KIND,
@@ -244,7 +245,7 @@ export function importScenarioPackToScriptEditorProject(
     ),
     buildingArrangements: readBuildingArrangementsFamily(rawPack),
     cityEntries: pack.cityEntries ?? [],
-    events: mapImportedEvents(pack.events ?? []),
+    events: mapImportedEvents(pack.events ?? [], importedMinigames),
     eventBindings: mapImportedEventBindings(rawPack),
     dialogues: mapImportedRuntimeDialogues(rawPack),
     quests: pack.tasks ?? [],
@@ -261,7 +262,7 @@ export function importScenarioPackToScriptEditorProject(
     historicalCharacterIdByCharacterId: cloneStringRecord(
       pack.historicalCharacterIdByCharacterId
     ),
-    minigames: mapImportedPlayableIntegrations(rawPack),
+    minigames: importedMinigames,
     flows: readFlowPlayablesFamily(rawPack),
     storyNodes: [],
     textEntries: mapTextEntries(pack.textEntries),
@@ -312,7 +313,19 @@ function createStoryPackRecord(
   };
 }
 
-function mapImportedEvents(events: EventDefinition[]): ScriptEditorEventRecord[] {
+function mapImportedEvents(
+  events: EventDefinition[],
+  importedMinigames: ScriptEditorProjectDefinition["minigames"]
+): ScriptEditorEventRecord[] {
+  const importedMinigameIdByIntegrationId = new Map(
+    importedMinigames
+      .filter(
+        (minigame) =>
+          typeof minigame.integrationId === "string" &&
+          minigame.integrationId.length > 0
+      )
+      .map((minigame) => [minigame.integrationId as string, minigame.id] as const)
+  );
   return events.map((eventDefinition) => {
     const importedEvent = eventDefinition as EventDefinition & {
       title?: string;
@@ -324,6 +337,26 @@ function mapImportedEvents(events: EventDefinition[]): ScriptEditorEventRecord[]
       typeof importedEvent.dialogueId === "string" && importedEvent.dialogueId.length > 0
         ? importedEvent.dialogueId
         : "";
+    const importedPlayableAction = (eventDefinition.actions ?? []).find(
+      (action): action is Extract<NonNullable<EventDefinition["actions"]>[number], { type: "launchPlayable" }> =>
+        action.type === "launchPlayable"
+    );
+    const importedMinigameId =
+      importedPlayableAction == null
+        ? ""
+        : importedMinigameIdByIntegrationId.get(importedPlayableAction.integrationId) ?? "";
+    const destinationFamily =
+      importedDialogueId.length > 0
+        ? "dialogue"
+        : importedMinigameId.length > 0
+          ? "minigame"
+          : "event";
+    const destinationTargetId =
+      destinationFamily === "dialogue"
+        ? importedDialogueId
+        : destinationFamily === "minigame"
+          ? importedMinigameId
+          : eventDefinition.nextEventId ?? "";
 
     return {
       id: eventDefinition.id,
@@ -341,11 +374,8 @@ function mapImportedEvents(events: EventDefinition[]): ScriptEditorEventRecord[]
       taskInputs: eventDefinition.taskInputs ?? [],
       conditionGroups: [],
       destination: {
-        family: importedDialogueId.length > 0 ? "dialogue" : "event",
-        targetId:
-          importedDialogueId.length > 0
-            ? importedDialogueId
-            : eventDefinition.nextEventId ?? "",
+        family: destinationFamily,
+        targetId: destinationTargetId,
       },
       relations: {
         storyNodeId: "",
@@ -357,6 +387,8 @@ function mapImportedEvents(events: EventDefinition[]): ScriptEditorEventRecord[]
         previewNotes:
           importedDialogueId.length > 0
             ? `Imported runtime dialogue: ${importedDialogueId}`
+            : importedMinigameId.length > 0
+              ? `Imported runtime minigame: ${importedMinigameId}`
             : "",
         validationNotes: "",
       },

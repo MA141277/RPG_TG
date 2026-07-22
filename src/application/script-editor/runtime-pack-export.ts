@@ -1091,6 +1091,11 @@ function lowerEditorEventsToRuntimeEvents(
       .map((flowRecord) => flowRecord.id)
       .filter((flowId): flowId is string => typeof flowId === "string" && flowId.length > 0)
   );
+  const minigamesById = new Map(
+    project.minigames
+      .filter((minigame) => typeof minigame.id === "string" && minigame.id.length > 0)
+      .map((minigame) => [minigame.id, minigame] as const)
+  );
   const exportedEvents: EventDefinition[] = [];
   const eventIds = new Set<string>();
   const referencedEventIds = collectRuntimeReferencedEventIds(project);
@@ -1109,6 +1114,7 @@ function lowerEditorEventsToRuntimeEvents(
       sourceEventIds,
       sourceTaskIds,
       sourceFlowIds,
+      minigamesById,
       flowStartEventIds,
       derivedFlowLaunchActionsByEventId.get(eventRecord.id) ?? [],
       diagnostics
@@ -1276,21 +1282,22 @@ function isUnreferencedDraftEditorEvent(
     return false;
   }
 
-  const dialogueId =
-    eventRecord.destination?.family === "dialogue" &&
-    typeof eventRecord.destination.targetId === "string"
-      ? eventRecord.destination.targetId.trim()
-      : "";
   const destinationTargetId =
     typeof eventRecord.destination?.targetId === "string"
       ? eventRecord.destination.targetId.trim()
       : "";
+  if (destinationTargetId.length > 0) {
+    return false;
+  }
+
+  if ((eventRecord.actions?.length ?? 0) > 0) {
+    return false;
+  }
+
   const nextEventId =
     typeof eventRecord.nextEventId === "string" ? eventRecord.nextEventId.trim() : "";
 
   return (
-    dialogueId.length === 0 &&
-    destinationTargetId.length === 0 &&
     nextEventId.length === 0 &&
     (eventRecord.taskInputs == null || eventRecord.taskInputs.length === 0)
   );
@@ -1304,6 +1311,7 @@ function lowerEditorEventToRuntimeEvent(
   sourceEventIds: Set<string>,
   sourceTaskIds: Set<string>,
   sourceFlowIds: Set<string>,
+  minigamesById: Map<string, ScriptEditorProjectDefinition["minigames"][number]>,
   flowStartEventIds: Set<string>,
   derivedFlowActions: EventRuntimeAction[],
   diagnostics: ScriptEditorRuntimeExportDiagnostic[]
@@ -1317,11 +1325,22 @@ function lowerEditorEventToRuntimeEvent(
     return null;
   }
 
+  const destinationLaunchAction = lowerEventDestinationLaunchAction(
+    eventRecord,
+    eventIndex,
+    minigamesById,
+    diagnostics
+  );
+  if (destinationLaunchAction === null) {
+    return null;
+  }
+
   const dialogueId = resolveEventDialogueId(
     eventRecord,
     eventIndex,
     flowStartEventIds,
     derivedFlowActions.length > 0,
+    destinationLaunchAction != null,
     diagnostics
   );
   if (dialogueId == null) {
@@ -1361,6 +1380,7 @@ function lowerEditorEventToRuntimeEvent(
   const actions = lowerEventRuntimeActions(
     eventRecord,
     eventIndex,
+    destinationLaunchAction,
     derivedFlowActions,
     diagnostics
   );
@@ -1410,9 +1430,14 @@ function resolveEventDialogueId(
   eventIndex: number,
   flowStartEventIds: Set<string>,
   hasDerivedFlowAction: boolean,
+  hasDestinationLaunchAction: boolean,
   diagnostics: ScriptEditorRuntimeExportDiagnostic[]
 ): string | null {
   if (hasRuntimeEventActions(eventRecord)) {
+    return "";
+  }
+
+  if (hasDestinationLaunchAction) {
     return "";
   }
 
@@ -1434,7 +1459,7 @@ function resolveEventDialogueId(
       code: "unsupported-lowering",
       fieldPath: `project.events[${eventIndex}].destination`,
       message:
-        "Event export currently supports only editor events whose destination targets a dialogue or event-owned launchFlow actions without dialogue output.",
+        "Event export currently supports only dialogue destinations, minigame destinations with matching event-owned playable bindings, or event-owned runtime actions without dialogue output.",
     });
     return null;
   }
@@ -1449,13 +1474,60 @@ function hasRuntimeEventActions(eventRecord: ScriptEditorEventRecord): boolean {
 function lowerEventRuntimeActions(
   eventRecord: ScriptEditorEventRecord,
   eventIndex: number,
+  destinationLaunchAction:
+    | Extract<EventRuntimeAction, { type: "launchPlayable" }>
+    | null
+    | undefined,
   derivedFlowActions: EventRuntimeAction[],
   diagnostics: ScriptEditorRuntimeExportDiagnostic[]
 ): EventRuntimeAction[] | null {
   const actions: EventRuntimeAction[] = [];
+  if (destinationLaunchAction != null) {
+    actions.push(destinationLaunchAction);
+  }
   for (const [actionIndex, action] of (eventRecord.actions ?? []).entries()) {
     if (action?.type === "closeBuilding") {
       actions.push({ type: "closeBuilding" });
+      continue;
+    }
+    if (
+      action?.type === "launchPlayable" &&
+      typeof action.playableId === "string" &&
+      action.playableId.trim().length > 0 &&
+      typeof action.integrationId === "string" &&
+      action.integrationId.trim().length > 0 &&
+      action.ownerContext != null
+    ) {
+      const ownerKind = action.ownerContext.ownerKind;
+      const ownerId = action.ownerContext.ownerId;
+      const returnPolicy = action.ownerContext.returnPolicy;
+      if (
+        (ownerKind !== "house" &&
+          ownerKind !== "dialogue" &&
+          ownerKind !== "task" &&
+          ownerKind !== "external") ||
+        !isPlayableReturnPolicy(returnPolicy)
+      ) {
+        diagnostics.push({
+          code: "invalid-field",
+          fieldPath: `project.events[${eventIndex}].actions[${actionIndex}]`,
+          message: "launchPlayable actions require a supported ownerContext contract.",
+        });
+        return null;
+      }
+      actions.push({
+        type: "launchPlayable",
+        playableId: action.playableId.trim(),
+        integrationId: action.integrationId.trim(),
+        ownerContext: {
+          ownerKind,
+          ownerId:
+            typeof ownerId === "string" && ownerId.trim().length > 0
+              ? ownerId.trim()
+              : null,
+          returnPolicy,
+        },
+      });
       continue;
     }
     if (
@@ -1499,13 +1571,150 @@ function lowerEventRuntimeActions(
       code: "unsupported-lowering",
       fieldPath: `project.events[${eventIndex}].actions[${actionIndex}]`,
       message:
-        "Event export currently supports only closeBuilding and launchFlow runtime actions.",
+        "Event export currently supports only closeBuilding, launchPlayable, and launchFlow runtime actions.",
     });
     return null;
   }
 
   actions.push(...derivedFlowActions);
   return actions;
+}
+
+function lowerEventDestinationLaunchAction(
+  eventRecord: ScriptEditorEventRecord,
+  eventIndex: number,
+  minigamesById: Map<string, ScriptEditorProjectDefinition["minigames"][number]>,
+  diagnostics: ScriptEditorRuntimeExportDiagnostic[]
+): Extract<EventRuntimeAction, { type: "launchPlayable" }> | null | undefined {
+  const destination = eventRecord.destination;
+  if (destination?.family !== "minigame") {
+    return undefined;
+  }
+
+  const targetId =
+    typeof destination.targetId === "string" ? destination.targetId.trim() : "";
+  if (targetId.length === 0) {
+    diagnostics.push({
+      code: "missing-field",
+      fieldPath: `project.events[${eventIndex}].destination.targetId`,
+      message: "Minigame event destinations require a targetId.",
+    });
+    return null;
+  }
+
+  const minigame = minigamesById.get(targetId);
+  if (minigame == null) {
+    diagnostics.push({
+      code: "missing-reference",
+      fieldPath: `project.events[${eventIndex}].destination.targetId`,
+      message: `Event "${eventRecord.id}" references missing minigame "${targetId}".`,
+    });
+    return null;
+  }
+
+  const fieldPath = `project.events[${eventIndex}].destination`;
+  const playableId = readRequiredTrimmedString(
+    minigame.playableId,
+    `${fieldPath}.playableId`,
+    diagnostics
+  );
+  const integrationId = readRequiredTrimmedString(
+    minigame.integrationId,
+    `${fieldPath}.integrationId`,
+    diagnostics
+  );
+  const ownerKind = readRequiredTrimmedString(
+    minigame.ownerKind,
+    `${fieldPath}.ownerKind`,
+    diagnostics
+  );
+  const returnPolicy = readRequiredTrimmedString(
+    minigame.returnPolicy,
+    `${fieldPath}.returnPolicy`,
+    diagnostics
+  );
+  const triggerSource = readRequiredTrimmedString(
+    minigame.triggerSource,
+    `${fieldPath}.triggerSource`,
+    diagnostics
+  );
+  const triggerEvent = readRequiredTrimmedString(
+    minigame.triggerEvent,
+    `${fieldPath}.triggerEvent`,
+    diagnostics
+  );
+  if (
+    playableId == null ||
+    integrationId == null ||
+    ownerKind == null ||
+    returnPolicy == null ||
+    triggerSource == null ||
+    triggerEvent == null
+  ) {
+    return null;
+  }
+
+  if (!isPlayableOwnerKind(ownerKind)) {
+    diagnostics.push({
+      code: "invalid-field",
+      fieldPath: `${fieldPath}.ownerKind`,
+      message: `Minigame destination ownerKind must be one of: house, dialogue, task, external.`,
+    });
+    return null;
+  }
+
+  if (!isPlayableReturnPolicy(returnPolicy)) {
+    diagnostics.push({
+      code: "invalid-field",
+      fieldPath: `${fieldPath}.returnPolicy`,
+      message:
+        `Minigame destination returnPolicy must be one of: resume-owner, reenter-owner, close-only.`,
+    });
+    return null;
+  }
+
+  if (triggerSource !== "event-destination") {
+    diagnostics.push({
+      code: "invalid-field",
+      fieldPath: `${fieldPath}.triggerSource`,
+      message: `Minigame destination "${targetId}" must use triggerSource "event-destination".`,
+    });
+    return null;
+  }
+
+  if (triggerEvent !== eventRecord.id) {
+    diagnostics.push({
+      code: "invalid-field",
+      fieldPath: `${fieldPath}.triggerEvent`,
+      message:
+        `Minigame destination "${targetId}" must set triggerEvent to "${eventRecord.id}".`,
+    });
+    return null;
+  }
+
+  if (
+    ownerKind !== "external" &&
+    (typeof minigame.ownerId !== "string" || minigame.ownerId.trim().length === 0)
+  ) {
+    diagnostics.push({
+      code: "missing-field",
+      fieldPath: `${fieldPath}.ownerId`,
+      message: `Minigame destination ownerId is required for ${ownerKind} owners.`,
+    });
+    return null;
+  }
+
+  return {
+    type: "launchPlayable",
+    playableId,
+    integrationId,
+    ownerContext: {
+      ownerKind,
+      ownerId:
+        ownerKind === "external" ? null : minigame.ownerId?.trim() ?? null,
+      returnPolicy,
+    },
+  };
 }
 
 function lowerRuntimeEventBindings(

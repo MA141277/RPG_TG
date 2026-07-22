@@ -8,12 +8,14 @@ import { createRuntimeTriggerContext } from "../../core/runtime/event-binding-co
 import { runEventBindingRuntime } from "../../core/runtime/event-binding-runtime";
 import { resolveActiveEventPresentationDialogueId } from "../dialogue/dialogue-presentation";
 import { runDialogueUntilPause } from "../dialogue/dialogue-runner";
+import { runEventPlayableRuntime } from "../events/event-playable-runtime";
 import { launchFlowPlayable } from "../playables/flow/flow-playable-definition";
 
 export type BuildingContainerItemAction = {
   arrangementId: string;
   containerId: string;
   itemId: string;
+  eventId?: string;
 };
 
 export type BuildingContainerEventStoryContent = {
@@ -48,10 +50,15 @@ export function triggerBuildingContainerItemAction(
     };
   }
 
+  const eventBindings = Object.values(input.storyContent.eventBindingsById ?? {});
+  const matchingBindings =
+    typeof input.action.eventId === "string" && input.action.eventId.length > 0
+      ? eventBindings.filter((binding) => binding.eventId === input.action.eventId)
+      : eventBindings;
   const bindingResult = runEventBindingRuntime({
     state: input.state,
     eventDefinitionsById: input.storyContent.eventDefinitionsById,
-    eventBindings: Object.values(input.storyContent.eventBindingsById ?? {}),
+    eventBindings: matchingBindings,
     triggerContext: createRuntimeTriggerContext({
       state: input.state,
       owner: { family: "building", id: currentHouseId },
@@ -72,6 +79,19 @@ export function triggerBuildingContainerItemAction(
   }
   const activeEvent =
     input.storyContent.eventDefinitionsById[bindingResult.activation.activeEventId] ?? null;
+  const playableResult = runEventPlayableRuntime({
+    state: bindingResult.state,
+    characterDefinitions: input.characterDefinitions,
+    eventDefinition: activeEvent,
+    activityDefinitionsById: input.storyContent.activityDefinitionsById,
+    textEntriesById: input.storyContent.textEntriesById,
+  });
+  if (playableResult?.handled) {
+    return {
+      state: playableResult.state,
+      characterDefinitions: playableResult.characterDefinitions,
+    };
+  }
   const launchFlowAction = activeEvent?.actions?.find(
     (action): action is Extract<typeof action, { type: "launchFlow" }> =>
       action.type === "launchFlow"

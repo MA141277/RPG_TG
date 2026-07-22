@@ -71,6 +71,15 @@ export type EventParticipant = {
 export type EventRuntimeAction = {
   type: "closeBuilding";
 } | {
+  type: "launchPlayable";
+  playableId: string;
+  integrationId: string;
+  ownerContext: {
+    ownerKind: "house" | "dialogue" | "task" | "external";
+    ownerId: string | null;
+    returnPolicy: PlayableReturnPolicy;
+  };
+} | {
   type: "launchFlow";
   flowId: string;
   ownerContext: {
