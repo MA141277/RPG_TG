@@ -4,13 +4,13 @@
 
 - document_role: `version-governor`
 - version_id: `target.script-editor-event-centered-authoring-scene-retirement-and-portrait-resource-refactor`
-- version_status: `open`
-- active_phase: `phase.version-review`
+- version_status: `closed`
+- active_phase: `phase.version-closed`
 - active_queue: `none`
-- decision_state: `version-closeout-review`
+- decision_state: `closed`
 - next_decision: `version-closeout`
 - next_action: `write-version-closeout`
-- resume_gate: `version-review`
+- resume_gate: `closed`
 - post_queue_closeout_pause_policy: `auto-continue`
 - promotion_review_result: `queue-closeout-complete`
 - review_subject_id: `none`
@@ -27,13 +27,13 @@
 - closure_review_status: `routed`
 - residue_candidate_id: `none`
 - residue_candidate_family: `none`
-- routing_basis: `queue-closeout-and-repository-sync-complete`
+- routing_basis: `closed-after-explicit-operator-closeout-with-no-same-family-residue`
 - next_lawful_queue_recommendation: `none`
 - auto_admission_ready: `false`
-- stop_reason: `version-closeout-confirmation`
-- stop_basis: `Blueprint workflow spec requires explicit human confirmation before changing version_status from open to closed once version closeout conditions are satisfied.`
-- next_unblocked_action: `write-version-closeout`
-- human_input_required: `true`
+- stop_reason: `none`
+- stop_basis: `none`
+- next_unblocked_action: `none`
+- human_input_required: `false`
 - blocked_by: []
 - candidate_queue_ids:
   - `queue.script-editor-event-centered-authoring-model-unification`
@@ -86,19 +86,19 @@
 - `queue.script-editor-event-centered-authoring-final-acceptance-and-residue-guard is now closed after final acceptance and no same-family residue remains inside this version.`
 - `The remaining completed queues that could no longer be safely isolated by queue boundary were later committed and pushed together to origin/mod-first-dev in one combined repository-sync batch, so their queue-local sync records now reflect successful remote synchronization without rewriting earlier handoff chronology.`
 - `queue.event-playable-destination-and-building-action-event-truth-convergence later closed after ACC-EVENT-ONLY-ROUTING-007 / 008 verification confirmed runnable event-owned minigame/playable lowering, canonical building action event truth, and preserved shared playable runtime reuse with no same-family residue.`
-- `No active queue remains on this version, all current-version acceptance ids are covered, and the next lawful action is version closeout confirmation rather than same-version admission review.`
-- `This target is now the current active open version in the blueprint chain after target.building-arrangement-container-flow-refactor closed on 2026-07-22.`
+- `No active queue remains on this version, all current-version acceptance ids are covered, and version closeout was explicitly confirmed by the operator on 2026-07-22.`
+- `This target is now closed historical evidence only. After closeout, Blueprint repository entry is intentionally stopped on this recorded closeout result rather than silently resuming another older open version with unresolved governance-template drift.`
 
 ### Version Closeout Review
 
-- `Closeout judgement: version closeout conditions are now satisfied. ACC-EVENT-CENTER-001 / 002 / 003 / 004 / 005 / 006 / 008 and ACC-EVENT-ONLY-ROUTING-001 / 002 / 003 / 004 / 005 / 006 / 007 / 008 are all covered by closed queues, no active queue remains, and no same-family residue remains inside this parent target.`
-- `Closeout confirmation: required before changing version_status from open to closed. Per Blueprint workflow spec, explicit human confirmation is the only remaining lawful action because closing the version would alter active truth.`
-- `Future routing: until closeout is explicitly confirmed, this version stays open with active_queue=none and resumes from version closeout review rather than reopening the closed queue or mining new same-version work from future-target candidates.`
+- `Closeout judgement: accepted. ACC-EVENT-CENTER-001 / 002 / 003 / 004 / 005 / 006 / 008 and ACC-EVENT-ONLY-ROUTING-001 / 002 / 003 / 004 / 005 / 006 / 007 / 008 are all covered by closed queues, no active queue remains, and no same-family residue remains inside this parent target.`
+- `Closeout confirmation: the operator explicitly requested closing this version on 2026-07-22, so version_status is now closed.`
+- `Future routing: any further work in this area must route through a lawful successor target or through whichever remaining open version later proves ownership, rather than reopening this closed version implicitly.`
 
 ### Version Lifecycle Rules
 
-- `This version remains open until explicit closeout is recorded here.`
-- `If active_queue = none, that does not close the version; it returns to promotion-review.`
+- `This version is closed and now historical-only for execution purposes.`
+- `If active_queue = none, that did not by itself close the version; explicit closeout was separately recorded here on operator instruction.`
 - `Because this target is now the active version, child-queue admission here is lawful only after version-plan admission truth and queue-doc activation are synchronized.`
 - `Do not turn scene retirement into compatibility layering, temporary shims, dual-path truth, or boundary-thinning.`
 - `Do not split portrait resource convergence into another target/version.`
@@ -278,7 +278,7 @@
 
 - `queue.event-only-routing-family-retirement-and-reference-replacement is closed with no same-family residue and successful repository sync. queue.portrait-resource-authoring-and-resource-mapping-convergence then closed with no same-family portrait residue, and queue.script-editor-event-centered-authoring-final-acceptance-and-residue-guard later closed after ACC-EVENT-CENTER-008 browser/source acceptance. The remaining inseparable completed queues have now also been synchronized together in one combined remote-sync batch to origin/mod-first-dev.`
 - `Fresh post-closeout audit then admitted and completed queue.event-playable-destination-and-building-action-event-truth-convergence. That queue closed after launchPlayable runtime action support, event destination minigame export/import lowering, canonical building action eventId routing, shared playable runtime reuse across building/story/dialogue execution, focused robustness coverage, and successful repository sync toward origin/mod-first-dev.`
-- `The version therefore returns to version closeout review with no active queue, no remaining same-family continuation recommendation, and explicit human confirmation as the only remaining closeout step.`
+- `The version reached closeout review with no active queue and no remaining same-family continuation recommendation, and the operator then explicitly confirmed final version closeout.`
 - `Historical closeout note: queue.event-centered-runtime-pack-preview-export-sync closed before the formal repository-sync gate was written into Blueprint governance and therefore remains an explicitly documented sync-gate exception rather than a compliant model for later queue handoff in this version.`
 
 ### Explicit Operator-Directed Closure Or Suspension
@@ -313,3 +313,4 @@
 - `2026-07-22`: `Admitted queue.event-playable-destination-and-building-action-event-truth-convergence after the post-closeout same-family audit proved one remaining parent-spec gap: event destination family "minigame" still failed closed in export/runtime and building action event selection still diverged from canonical runtime trigger truth. Evidence-anchor reconcile confirmed the bounded solution must preserve shared playable runtime reuse and must not reintroduce building-specific main.ts branches.`
 - `2026-07-22`: `queue.event-playable-destination-and-building-action-event-truth-convergence later closed after bounded implementation added first-class launchPlayable event runtime actions, lowered event destination family "minigame" into runnable launchPlayable export truth, reconstructed minigame destinations during import, reused one shared event-playable runtime across building/story/dialogue entrypoints, and treated rendered building action eventId as the canonical EventBindingRuntime selector. Focused verification passed (`npm run build:test`, `npm run typecheck`, `npm run lint:blueprints`, and bounded runtime/export/import/building/story regression scripts).`
 - `2026-07-22`: `The required repository sync batch for queue.event-playable-destination-and-building-action-event-truth-convergence is now recorded as successful on mod-first-dev. No same-family queue remains inside this version, so active_queue returns to none and the only remaining lawful step is explicit version closeout confirmation.`
+- `2026-07-22`: `The operator explicitly requested closing target.script-editor-event-centered-authoring-scene-retirement-and-portrait-resource-refactor. Final version closeout is now recorded, the target becomes closed historical evidence only, and Blueprint repository entry is intentionally stopped on this closeout result instead of silently switching to an older still-open version with unresolved governance-template drift.`

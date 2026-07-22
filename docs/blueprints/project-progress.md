@@ -7,7 +7,7 @@
 - active_version: `target.script-editor-event-centered-authoring-scene-retirement-and-portrait-resource-refactor`
 - has_active_queue: `false`
 - next_file: `docs/blueprints/plans/2026-07-22-script-editor-event-centered-authoring-scene-retirement-and-portrait-resource-refactor-target-plan.md`
-- entry_action: `open-next-file`
+- entry_action: `stop`
 
 ## Human Context
 
@@ -88,6 +88,7 @@
 - `The remaining completed queues under the current version were later synchronized together in one inseparable repository-sync batch because scene-retirement/runtime-sync/portrait/final-acceptance code and governance updates could no longer be isolated truthfully by queue. That combined batch is now committed and pushed to origin/mod-first-dev.`
 - `queue.script-editor-event-centered-authoring-final-acceptance-and-residue-guard is now closed after ACC-EVENT-CENTER-008 browser/source acceptance covered normal start, JSON runtime-pack import, Script Editor runtime preview, representative building-enter dialogue behavior, and the minimal usable portrait creator path through 剧本编辑 -> 使用模板.`
 - `queue.event-playable-destination-and-building-action-event-truth-convergence is now closed after ACC-EVENT-ONLY-ROUTING-007 / 008 verification confirmed runnable event-owned minigame lowering, canonical building action eventId routing, and shared playable runtime convergence. The active version remains open with no active queue and resumes from version closeout review; do not infer closed status without explicit closeout confirmation.`
+- `target.script-editor-event-centered-authoring-scene-retirement-and-portrait-resource-refactor was explicitly closed on 2026-07-22 after final version closeout confirmation, and repository entry is intentionally stopped on this recorded closeout result rather than silently switching to an older still-open version with unresolved governance-template drift.`
 
 ### Historical References
 
