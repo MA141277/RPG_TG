@@ -13,7 +13,7 @@ import {
   getCurrentDialogueChoiceOptions,
   type StoryTriggerTiming,
 } from "../story/story-runtime";
-import { runStoryTriggerRuntime } from "../../core/runtime/scene-runtime";
+import { runStoryTriggerRuntime } from "../../core/runtime/dialogue-runtime";
 
 export type MainRuntimeOrchestratorRequest =
   | {

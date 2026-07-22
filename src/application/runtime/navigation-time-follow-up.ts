@@ -12,7 +12,7 @@ import type { GameState } from "../../domain/game-state";
 import type { HouseDefinition } from "../../domain/house";
 import type { RuntimeFollowUpOutcome } from "../../core/contracts/runtime-result";
 import type { RuntimeState } from "../../core/contracts/runtime-state";
-import { runStoryTriggerRuntime } from "../../core/runtime/scene-runtime";
+import { runStoryTriggerRuntime } from "../../core/runtime/dialogue-runtime";
 
 export type NavigationTimeFollowUpStoryContent = {
   eventDefinitionsById: Record<string, EventDefinition>;

@@ -1,7 +1,7 @@
 import * as defaultZhuyuanzhangActivitiesModule from "./scenario-packs/zhuyuanzhang/activities.json";
 import * as defaultZhuyuanzhangEventBindingsModule from "./scenario-packs/zhuyuanzhang/event-bindings.json";
 import * as defaultZhuyuanzhangEventsModule from "./scenario-packs/zhuyuanzhang/events.json";
-import * as defaultZhuyuanzhangScenesModule from "./scenario-packs/zhuyuanzhang/scenes.json";
+import * as defaultZhuyuanzhangDialoguesModule from "./scenario-packs/zhuyuanzhang/dialogues.json";
 import * as defaultZhuyuanzhangTextEntriesModule from "./scenario-packs/zhuyuanzhang/text-entries.json";
 import * as homeHouseContentModule from "./scenario-packs/zhuyuanzhang/house-content/home-house-content.json";
 import * as keepHouseContentModule from "./scenario-packs/zhuyuanzhang/house-content/keep-house-content.json";
@@ -27,8 +27,8 @@ export const defaultPackEventDefinitions = unwrapJsonModule<unknown[]>(
 export const defaultPackEventBindings = unwrapJsonModule<unknown[]>(
   defaultZhuyuanzhangEventBindingsModule
 );
-export const defaultPackSceneDefinitions = unwrapJsonModule<unknown[]>(
-  defaultZhuyuanzhangScenesModule
+export const defaultPackDialogues = unwrapJsonModule<unknown[]>(
+  defaultZhuyuanzhangDialoguesModule
 );
 export const defaultPackTextEntries = unwrapJsonModule<Record<string, string>>(
   defaultZhuyuanzhangTextEntriesModule

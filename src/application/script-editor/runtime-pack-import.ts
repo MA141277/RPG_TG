@@ -79,6 +79,8 @@ type RuntimePackManifestFiles = {
   cityNpcPools?: string;
   locationAccess?: string;
   houseModuleDefaults?: string;
+  portraits?: string;
+  portraitVariants?: string;
   historicalCharacters?: string;
   historicalCityRosters?: string;
   cityPortraits?: string;
@@ -251,6 +253,8 @@ export function importScenarioPackToScriptEditorProject(
     valuables: pack.valuables ?? [],
     cityNpcPools,
     houseModuleDefaults: cloneObjectRecord(pack.houseModuleDefaults),
+    portraits: readPortraitFamily(rawPack),
+    portraitVariants: readPortraitVariantFamily(rawPack),
     cityPortraits: cloneStringRecord(pack.cityPortraits),
     historicalCharacters: pack.historicalCharacters ?? [],
     historicalCityRosters: readArrayFamily(rawPack, "historicalCityRosters"),
@@ -393,23 +397,7 @@ function buildImportedEventDescription(
     return eventDefinition.description;
   }
 
-  const summaryParts = [
-    `Imported from runtime event ${eventDefinition.id}.`,
-  ];
-  if (typeof eventDefinition.chapterId === "string" && eventDefinition.chapterId.length > 0) {
-    summaryParts.push(`Chapter ${eventDefinition.chapterId}.`);
-  }
-  const importedDialogueId =
-    typeof eventDefinition.dialogueId === "string" && eventDefinition.dialogueId.length > 0
-      ? eventDefinition.dialogueId
-      : "";
-  if (importedDialogueId.length > 0) {
-    summaryParts.push(`Dialogue ${importedDialogueId}.`);
-  }
-  if (typeof eventDefinition.nextEventId === "string" && eventDefinition.nextEventId.length > 0) {
-    summaryParts.push(`Next event ${eventDefinition.nextEventId}.`);
-  }
-  return summaryParts.join(" ");
+  return "这里仅用于记录事件备注说明，不会参与剧本演出。";
 }
 
 function mapImportedRuntimeDialogues(
@@ -741,6 +729,24 @@ function readBuildingArrangementsFamily(
     rawPack,
     "buildingArrangements"
   ) as ScriptEditorBuildingArrangementRecord[];
+}
+
+function readPortraitFamily(
+  rawPack: Record<string, unknown>
+): ScriptEditorProjectDefinition["portraits"] {
+  return readArrayFamily(
+    rawPack,
+    "portraits"
+  ) as ScriptEditorProjectDefinition["portraits"];
+}
+
+function readPortraitVariantFamily(
+  rawPack: Record<string, unknown>
+): ScriptEditorProjectDefinition["portraitVariants"] {
+  return readArrayFamily(
+    rawPack,
+    "portraitVariants"
+  ) as ScriptEditorProjectDefinition["portraitVariants"];
 }
 
 function collectImportedPeople(

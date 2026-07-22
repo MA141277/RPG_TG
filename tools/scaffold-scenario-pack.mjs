@@ -80,7 +80,7 @@ for (const [relativePath, contents] of Object.entries({
   [SCENARIO_PACK_CANONICAL_FILES.maps]: [],
   [SCENARIO_PACK_CANONICAL_FILES.cityEntries]: [],
   [SCENARIO_PACK_CANONICAL_FILES.events]: [],
-  [SCENARIO_PACK_CANONICAL_FILES.scenes]: [],
+  [SCENARIO_PACK_CANONICAL_FILES.dialogues]: [],
   [SCENARIO_PACK_CANONICAL_FILES.tasks]: [],
   [SCENARIO_PACK_CANONICAL_FILES.activities]: [],
   [SCENARIO_PACK_CANONICAL_FILES.textEntries]: {},

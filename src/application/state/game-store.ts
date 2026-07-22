@@ -23,20 +23,20 @@ export type GameContent = {
 export type GameStoreSnapshot = {
   state: GameState;
   characterDefinitions: CharacterDefinition[];
-  currentAction: RuntimeDialogueDefinition["nodes"][number] | null;
+  currentNode: RuntimeDialogueDefinition["nodes"][number] | null;
 };
 
 export function createGameStore(initialState: GameState, content: GameContent) {
   let state = initialState;
   let characterDefinitions = content.characterDefinitions;
-  let currentAction: RuntimeDialogueDefinition["nodes"][number] | null = null;
+  let currentNode: RuntimeDialogueDefinition["nodes"][number] | null = null;
 
   return {
     getSnapshot(): GameStoreSnapshot {
       return {
         state,
         characterDefinitions,
-        currentAction,
+        currentNode,
       };
     },
     syncDialogue(): GameStoreSnapshot {
@@ -50,7 +50,7 @@ export function createGameStore(initialState: GameState, content: GameContent) {
 
       state = result.state;
       characterDefinitions = result.characterDefinitions;
-      currentAction = result.currentAction;
+      currentNode = result.currentNode;
 
       return this.getSnapshot();
     },
@@ -65,7 +65,7 @@ export function createGameStore(initialState: GameState, content: GameContent) {
 
       state = result.state;
       characterDefinitions = result.characterDefinitions;
-      currentAction = result.currentAction;
+      currentNode = result.currentNode;
 
       return this.getSnapshot();
     },

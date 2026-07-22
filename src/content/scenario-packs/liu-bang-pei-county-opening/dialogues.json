@@ -2,7 +2,7 @@
   {
     "id": "scene.story.liu_bang.pei_county_opening",
     "name": "沛县清晨",
-    "actions": [
+    "nodes": [
       {
         "type": "background",
         "backgroundId": "bg.pei_county.office"
@@ -30,26 +30,26 @@
           {
             "id": "liu-opening-duty",
             "labelTextId": "scene.story.liu_bang.pei_county_opening.choice.duty",
-            "nextSceneId": "scene.story.liu_bang.first_duty",
             "effects": [
               {
                 "type": "change-variable",
                 "key": "var.story.liu_bang.local_reputation",
                 "delta": 1
               }
-            ]
+            ],
+            "nextDialogueId": "scene.story.liu_bang.first_duty"
           },
           {
             "id": "liu-opening-heroes",
             "labelTextId": "scene.story.liu_bang.pei_county_opening.choice.heroes",
-            "nextSceneId": "scene.story.liu_bang.first_heroes",
             "effects": [
               {
                 "type": "set-flag",
                 "key": "flag.story.liu_bang.met_local_heroes",
                 "value": true
               }
-            ]
+            ],
+            "nextDialogueId": "scene.story.liu_bang.first_heroes"
           }
         ]
       }
@@ -58,7 +58,7 @@
   {
     "id": "scene.story.liu_bang.first_duty",
     "name": "县中差役",
-    "actions": [
+    "nodes": [
       {
         "type": "start-activity",
         "activityId": "activity.liu_bang.pei_county.default_errand"
@@ -92,7 +92,7 @@
   {
     "id": "scene.story.liu_bang.first_heroes",
     "name": "乡里故人",
-    "actions": [
+    "nodes": [
       {
         "type": "dialogue",
         "characterId": "char.lu_wan",

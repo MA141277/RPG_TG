@@ -43,12 +43,12 @@ export function startActivityQtePlayable(input: {
           sessionId: "playable.activity-qte",
           playableId: "activity-qte",
           integrationId:
-            input.integrationId ?? "playable.activity-qte.scene.default",
+            input.integrationId ?? "playable.activity-qte.dialogue.default",
           family: "minigame",
           ownerContext:
             input.ownerContext ?? {
-              ownerKind: "scene",
-              ownerId: input.state.core.scene.activeSceneId ?? "scene.unknown",
+              ownerKind: "house",
+              ownerId: input.state.core.world.currentHouseId,
               returnPolicy: "resume-owner",
             },
           status: "active",

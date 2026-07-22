@@ -88,7 +88,7 @@ export function selectHomePersistentState(state: GameState): HomePersistentState
 }
 
 export function resolveHomeRestHook(state: GameState): HomeRestHookResult {
-  if (state.scene.activeEventId != null) {
+  if (state.dialogue.activeEventId != null) {
     return {
       interrupted: true,
       reason: "event",

@@ -214,7 +214,7 @@ function readStoryField(state: GameState, fieldId: string): unknown {
   if (fieldId === "chapterId") {
     return state.calendar.chapterId;
   }
-  return readField(state.scene, fieldId);
+  return readField(state.dialogue, fieldId);
 }
 
 function readField(value: unknown, fieldId: string): unknown {

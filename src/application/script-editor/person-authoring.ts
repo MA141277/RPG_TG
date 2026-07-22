@@ -95,6 +95,8 @@ export type ScriptEditorPersonRuntimeDefaults = {
 export function normalizeScriptEditorPersonRecord(
   value: Record<string, unknown>
 ): ScriptEditorPersonRecord {
+  const { portraitVariants: _portraitVariants, ...valueWithoutPortraitVariants } =
+    value as Record<string, unknown>;
   const personType = value.personType === "角色" ? "角色" : "NPC";
   const role =
     typeof value.role === "string" && value.role.length > 0
@@ -104,7 +106,7 @@ export function normalizeScriptEditorPersonRecord(
         : "support";
 
   return materializeScriptEditorPersonExtendedAttributes({
-    ...value,
+    ...valueWithoutPortraitVariants,
     id: readString(value.id, "person.unknown"),
     name: readString(value.name, "未命名人物"),
     personType,
@@ -118,7 +120,7 @@ export function normalizeScriptEditorPersonRecord(
     portraitVariantId: readString(value.portraitVariantId, ""),
     extendedAttributes: mergeScriptEditorPersonExtendedAttributes(
       normalizeKeyValueEntries(value.extendedAttributes),
-      collectScriptEditorPersonImportedAttributes(value)
+      collectScriptEditorPersonImportedAttributes(valueWithoutPortraitVariants)
     ),
     dialogueIds: normalizeStringArray(value.dialogueIds),
     eventIds: normalizeStringArray(value.eventIds),
@@ -181,7 +183,7 @@ export function materializeScriptEditorPersonRuntimeCharacter(
       typeof normalizedPerson.portraitId === "string" &&
       normalizedPerson.portraitId.length > 0
         ? normalizedPerson.portraitId
-        : (defaults.portraitId ?? "portrait.default"),
+        : (defaults.portraitId ?? ""),
     stats,
     stamina: readFiniteNumber(normalizedPerson.stamina, 100),
     availableFunctions: Array.isArray(normalizedPerson.availableFunctions)

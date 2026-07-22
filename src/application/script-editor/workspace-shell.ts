@@ -136,13 +136,14 @@ export type ScriptEditorWorkspaceExportTarget = {
 const FAMILY_LABELS: Record<string, string> = {
   storyPack: "剧本导出",
   people: "人物",
+  portraits: "立绘资源",
+  portraitVariants: "立绘变体",
   cities: "城市",
   buildings: "建筑",
   events: "事件",
   quests: "任务",
   activities: "活动",
   dialogues: "对话",
-  scenes: "场景",
   minigames: "玩法",
   storyNodes: "剧情节点",
   textEntries: "文本",
@@ -163,17 +164,17 @@ const TREE_GROUPS: Array<{
   {
     id: "world",
     label: "世界",
-    families: ["people", "cities", "buildings"],
+    families: ["people", "portraits", "portraitVariants", "cities", "buildings"],
   },
   {
     id: "narrative",
     label: "剧情与文本",
-    families: ["storyNodes", "dialogues", "scenes", "events"],
+    families: ["storyNodes", "dialogues", "minigames"],
   },
   {
     id: "gameplay",
     label: "玩法",
-    families: ["minigames"],
+    families: ["events"],
   },
   {
     id: "library",
@@ -198,13 +199,11 @@ const DEFERRED_EXPORT_TARGET_FAMILIES = new Set<ScriptEditorProjectFileKey>([
   "effectBundles",
 ]);
 
-FAMILY_LABELS.flows = "建筑功能";
 const gameplayTreeGroup = TREE_GROUPS.find((group) => group.id === "gameplay");
 if (gameplayTreeGroup != null) {
-  gameplayTreeGroup.families = ["quests", "minigames", "flows"];
+  gameplayTreeGroup.families = ["events"];
 }
 DEFERRED_SHELL_FAMILIES.add("quests");
-DEFERRED_SHELL_FAMILIES.add("flows");
 
 const ISSUE_SEVERITY_ORDER: Record<
   ScriptEditorWorkspaceValidationIssue["severity"],
@@ -222,15 +221,16 @@ export function createScriptEditorWorkspaceShellViewModel(input: {
   auxiliaryPanelOpen?: boolean | undefined;
 }): ScriptEditorWorkspaceViewModel {
   const project = input.project;
+  const visibleFamilies = new Set<ScriptEditorProjectFileKey>([
+    "storyPack",
+    ...(input.visibleFamilies ??
+      (Object.keys(FAMILY_LABELS) as ScriptEditorProjectFileKey[])),
+  ]);
   const exportDiagnostics = validateScriptEditorProjectForRuntimeExport(project);
   const attentionFamilies = collectAttentionFamilies(exportDiagnostics);
-  const selection = resolveSelection(project, input.selection);
+  const selection = resolveSelection(project, input.selection, visibleFamilies);
   const compatibilityResidueCount = countCompatibilityResidue(project);
   const badges = createBadges(project, exportDiagnostics, compatibilityResidueCount);
-  const visibleFamilies = new Set(
-    input.visibleFamilies ??
-      (Object.keys(FAMILY_LABELS) as ScriptEditorProjectFileKey[])
-  );
   const auxiliaryPanel = createAuxiliaryPanel({
     project,
     selection,
@@ -531,15 +531,16 @@ function createProjectRiskSummary(
 
 function resolveSelection(
   project: ScriptEditorProjectDefinition,
-  requestedSelection: ScriptEditorWorkspaceSelection | undefined
+  requestedSelection: ScriptEditorWorkspaceSelection | undefined,
+  visibleFamilies: ReadonlySet<ScriptEditorProjectFileKey>
 ): {
   family: ScriptEditorProjectFileKey;
   entityId: string | null;
 } {
   const family = requestedSelection?.family ?? "storyPack";
-  if (family === "storyPack") {
+  if (family === "storyPack" || !visibleFamilies.has(family)) {
     return {
-      family,
+      family: "storyPack",
       entityId: null,
     };
   }
@@ -752,11 +753,6 @@ function describeSelectionLinkPreview(
     return `玩法绑定 outcome ${(minigame?.outcomeRoutes ?? []).length} 条，launch payload ${(minigame?.launchPayload ?? []).length} 条。`;
   }
 
-  if (family === "flows") {
-    const flow = (project.flows ?? []).find((record) => record.id === entityId);
-    return `建筑功能 ${flow?.id ?? entityId} 保留为内部实现缝，创作端去向语义以事件为唯一正式路由入口。`;
-  }
-
   if (family === "storyNodes") {
     const storyNode = project.storyNodes.find((record) => record.id === entityId);
     return `剧情节点关联人物 ${(storyNode?.relatedPersonIds ?? []).length} 条、对话 ${(storyNode?.relatedDialogueIds ?? []).length} 条、事件 ${(storyNode?.relatedEventIds ?? []).length} 条。`;
@@ -794,7 +790,7 @@ function describeSelectionExportPreview(
   }
 
   if (family === "dialogues") {
-    return "对话创作语义已收口为事件去向目标；当前运行包仍会在后续队列内收口到 scenes.json 与 text-entries.json，但这不再是创作者的正式路由真相。";
+    return "对话创作语义已收口为事件去向目标；对话节点与文本条目共同承载演出内容，这才是创作者的正式路由真相。";
   }
 
   if (family === "quests") {
@@ -803,10 +799,6 @@ function describeSelectionExportPreview(
 
   if (family === "minigames") {
     return "玩法绑定采用下沉导出原则，后续需挂到事件、对话或菜单的正式可调用结构，而不是独立新分表。";
-  }
-
-  if (family === "flows") {
-    return "建筑功能作为允许的实现缝保留在 flow/playable 收口上，创作端仍以“功能 -> 事件 -> 对话/玩法/任务/功能”语义理解。";
   }
 
   if (family === "storyNodes") {
@@ -1401,28 +1393,18 @@ function createExportTargets(
     case "dialogues":
       return [
         buildTarget(
-          "export.scenes",
+          "export.dialogues",
           "对话演出",
-          "scenes.json",
-          "对话演出内容未来会下沉到 scenes.json。",
+          "dialogues / text-entries",
+          "对话演出内容由对话节点与文本条目共同承载，不再暴露场景家族。",
           "deferred"
         ),
         buildTarget(
           "export.text-entries",
           "对话文案",
           "text-entries.json",
-          "文案条目会与 scenes lowering 一起进入正式文本分表。",
+          "文案条目会与 dialogues lowering 一起进入正式文本分表。",
           "deferred"
-        ),
-      ];
-    case "scenes":
-      return [
-        buildTarget(
-          "export.authored-scenes",
-          "场景落点",
-          "scenes.json",
-          "场景记录会直接进入 scenes.json，便于建筑进入演出与后续作者面预览统一消费。",
-          blockedStatus
         ),
       ];
     case "minigames":
@@ -1430,7 +1412,7 @@ function createExportTargets(
         buildTarget(
           "export.minigames",
           "玩法调用落点",
-          "events/scenes/menu bindings",
+          "events / dialogues / menu bindings",
           "玩法绑定采用下沉导出，不会生成新的独立 runtime 分表。",
           "deferred"
         ),
@@ -1440,8 +1422,8 @@ function createExportTargets(
         buildTarget(
           "export.story-nodes",
           "剧情承载落点",
-          "events/scenes/runtime config",
-          "剧情节点继续作为组织对象下沉到正式事件/场景承载结构。",
+          "events / dialogues / runtime config",
+          "剧情节点继续作为组织对象下沉到正式事件与对话承载结构。",
           "deferred"
         ),
       ];
@@ -1506,6 +1488,10 @@ function getFamilyRecords(
       return [];
     case "people":
       return project.people;
+    case "portraits":
+      return project.portraits ?? [];
+    case "portraitVariants":
+      return project.portraitVariants ?? [];
     case "cities":
       return project.cities;
     case "buildings":
@@ -1518,8 +1504,6 @@ function getFamilyRecords(
       return project.activities;
     case "dialogues":
       return project.dialogues;
-    case "scenes":
-      return project.scenes;
     case "minigames":
       return project.minigames;
     case "storyNodes":

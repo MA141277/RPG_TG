@@ -8,7 +8,7 @@ export type InteractiveRuntimeKind =
 
 export type InteractiveRuntimeSource =
   | { type: "house"; houseId: string }
-  | { type: "scene"; sceneId: string }
+  | { type: "dialogue"; dialogueId: string }
   | { type: "external"; id: string };
 
 export type ActiveInteractiveRuntimeSession = {

@@ -15,7 +15,7 @@ import {
 import { renderSharedDialog } from "../../components/dialog/shared-dialog";
 import { resolveCharacterPortraitImageUrl } from "../../portrait-assets";
 
-type SceneViewInput = {
+type DialogueViewInput = {
   currentAction: RuntimeDialogueNode | null;
   activitySession: ActiveActivitySession;
   characterDefinitions: CharacterDefinition[];
@@ -24,7 +24,7 @@ type SceneViewInput = {
   textEntriesById?: Record<string, string>;
 };
 
-function getScenePortraitArtClassName(characterId: string): string {
+function getDialoguePortraitArtClassName(characterId: string): string {
   switch (characterId) {
     case "char.kulan_temple_abbot":
       return "c-temple-house-portrait-art--abbot";
@@ -57,7 +57,7 @@ function getCharacterDefinition(
   );
 }
 
-function renderSceneDialogueCard(
+function renderDialogueCard(
   paragraphs: string[],
   options: {
     advanceActionId?: string;
@@ -72,7 +72,7 @@ function renderSceneDialogueCard(
     body: paragraphs,
     hintText: options.advanceActionId == null ? null : "点击继续",
     ariaLabel: "剧情对话",
-    footerClassName: "c-grain-shop-dialogue c-scene-dialogue",
+    footerClassName: "c-grain-shop-dialogue c-dialogue-surface",
     action:
       options.advanceActionId == null
         ? undefined
@@ -81,7 +81,7 @@ function renderSceneDialogueCard(
             label: "点击继续",
             result: "action",
             attributes: {
-              "data-scene-action": options.advanceActionId,
+              "data-dialogue-action": options.advanceActionId,
             },
           },
     speaker:
@@ -107,7 +107,7 @@ function renderChoiceList(choiceOptions: RuntimeDialogueChoiceOption[]): string 
               <button
                 type="button"
                 class="c-button c-grain-shop-button c-grain-shop-button--paper"
-                data-scene-choice-id="${option.id}"
+                data-dialogue-choice-id="${option.id}"
               >
                 ${option.label}
               </button>
@@ -122,17 +122,17 @@ function renderChoiceList(choiceOptions: RuntimeDialogueChoiceOption[]): string 
 function getFortuneBoardKindLabel(kind: string): string {
   switch (kind) {
     case "timing":
-      return "天时";
+      return "时机";
     case "favorable":
-      return "顺意";
+      return "顺势";
     case "complete":
       return "周全";
     case "resonance":
-      return "灵犀";
+      return "灵感";
     case "rumor":
       return "奇闻";
     default:
-      return "平";
+      return "类型";
   }
 }
 
@@ -179,10 +179,10 @@ export function renderActivityOverlay(activitySession: ActiveActivitySession): s
           </div>
           <div class="c-fortune-board__summary" data-fortune-summary>
             <span>基础 ${activitySession.baseScore}</span>
-            <span>天时/顺意/周全/平三连计奖</span>
+            <span>时机/顺势/周全/平三连计分</span>
             ${
               activitySession.resonanceCount > 0
-                ? `<span>灵犀 +${activitySession.resonanceCount * 3} 枚</span>`
+                ? `<span>灵感 +${activitySession.resonanceCount * 3} 枚</span>`
                 : ""
             }
             ${activitySession.rumorCount > 0 ? "<span>奇闻待触发</span>" : ""}
@@ -200,11 +200,11 @@ export function renderActivityOverlay(activitySession: ActiveActivitySession): s
             <strong data-fortune-speed-value>${activitySession.animationTickMs}ms</strong>
           </div>
           <div class="c-grain-shop-modal__actions c-fortune-board__actions">
-            <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--paper" data-activity-action="wager-minus">‹</button>
+            <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--paper" data-activity-action="wager-minus">-</button>
             <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--gold" data-activity-action="play-board">
               ${activitySession.phase === "scanning" ? "选定此列" : "游玩"}
             </button>
-            <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--paper" data-activity-action="wager-plus">›</button>
+            <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--paper" data-activity-action="wager-plus">+</button>
           </div>
         </div>
       </div>
@@ -233,7 +233,7 @@ export function renderActivityOverlay(activitySession: ActiveActivitySession): s
               lastHistoryEntry == null
                 ? ""
                 : `<p class="c-activity-work-sequence__feedback ${lastHistoryEntry.success ? "is-success" : "is-failed"}">
-                    上轮：${lastHistoryEntry.selectedLabel} / ${lastHistoryEntry.success ? "办妥" : `应为 ${lastHistoryEntry.expectedLabel}`}
+                    上轮：${lastHistoryEntry.selectedLabel} / ${lastHistoryEntry.success ? "妥当" : `应为 ${lastHistoryEntry.expectedLabel}`}
                   </p>`
             }
           </div>
@@ -313,7 +313,7 @@ export function renderActivityOverlay(activitySession: ActiveActivitySession): s
   return "";
 }
 
-export function renderSceneView(input: SceneViewInput): string {
+export function renderDialogueView(input: DialogueViewInput): string {
   const textEntriesById = input.textEntriesById ?? {};
   const action =
     input.currentAction == null
@@ -329,9 +329,9 @@ export function renderSceneView(input: SceneViewInput): string {
 
   if (action.type === "narration") {
     return `
-      <section class="view-scene" data-scene-view="narration">
+      <section class="view-dialogue" data-dialogue-view="narration">
         ${input.underlayMarkup ?? ""}
-        ${renderSceneDialogueCard([action.text ?? ""], {
+        ${renderDialogueCard([action.text ?? ""], {
           advanceActionId: "advance",
           narration: true,
         })}
@@ -349,9 +349,9 @@ export function renderSceneView(input: SceneViewInput): string {
       speaker == null ? null : resolveCharacterPortraitImageUrl(speaker);
 
     return `
-      <section class="view-scene" data-scene-view="dialogue">
+      <section class="view-dialogue" data-dialogue-view="dialogue">
         ${input.underlayMarkup ?? ""}
-        ${renderSceneDialogueCard([action.text ?? ""], {
+        ${renderDialogueCard([action.text ?? ""], {
           advanceActionId: "advance",
           speakerName:
             speaker?.name ??
@@ -359,7 +359,7 @@ export function renderSceneView(input: SceneViewInput): string {
           portraitImageUrl,
           ...(portraitImageUrl == null
             ? {
-                portraitArtClassName: getScenePortraitArtClassName(
+                portraitArtClassName: getDialoguePortraitArtClassName(
                   action.characterId
                 ),
               }
@@ -372,9 +372,9 @@ export function renderSceneView(input: SceneViewInput): string {
 
   if (action.type === "choice") {
     return `
-      <section class="view-scene" data-scene-view="choice">
+      <section class="view-dialogue" data-dialogue-view="choice">
         ${input.underlayMarkup ?? ""}
-        ${renderSceneDialogueCard([action.prompt ?? "你要如何回应？"], {
+        ${renderDialogueCard([action.prompt ?? "你要如何回应？"], {
           narration: true,
         })}
         ${renderChoiceList(resolvedChoiceOptions)}
@@ -384,9 +384,9 @@ export function renderSceneView(input: SceneViewInput): string {
   }
 
   return `
-    <section class="view-scene" data-scene-view="transition">
+    <section class="view-dialogue" data-dialogue-view="transition">
       ${input.underlayMarkup ?? ""}
-      ${renderSceneDialogueCard(["场景推进中。"], {
+      ${renderDialogueCard(["对话推进中。"], {
         advanceActionId: "advance",
         narration: true,
       })}

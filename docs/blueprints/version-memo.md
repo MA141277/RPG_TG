@@ -2612,3 +2612,332 @@ Current evidence draft:
 
 - This memo entry is recorded only.
 - It does not itself change formal Blueprint workflow behavior until explicitly promoted into `docs/blueprints/blueprint-workflow-spec.md`.
+
+### MEMO-027: Map Rendering And City Data Separation With Canonical Numeric ID Transition Draft
+
+#### Problem Statement
+
+- The current project direction is `mod-first`, so runtime should consume creator-authored Script Editor truth rather than keep hidden intermediate truth owners.
+- Current city-on-map behavior still mixes:
+  - city authoring truth in `cities`
+  - map-position truth through `city.mapNodeId -> map.nodes`
+  - map-side visual or click handling that is not yet fully expressed as creator-owned data plus unified event routing
+- This weakens creator understanding and makes later authoring features such as direct city placement or preview drag editing harder to govern cleanly.
+- The repository also needs one long-term canonical object-id direction, but an immediate full-pack id rewrite would create merge and compatibility risk if adopted before id consumer routes are audited.
+
+#### Draft Direction
+
+- Formal map-facing city truth should move to `cities`.
+- The map layer should only:
+  - render
+  - detect and trigger interaction
+- The map layer must not own:
+  - business truth
+  - access decisions
+  - event routing
+  - creator-facing semantic data
+- City click handling must always run:
+  - `city click -> access check -> lawful continuation -> event routing`
+- Old map-owned city-position truth should retire once the replacement chain is complete.
+
+#### City-Owned Map Data Direction
+
+- City map position should be a city-owned authored property rather than a hidden map-node dependency.
+- The authoring shape should keep room for future evolution:
+  - current fallback may use point coordinates such as `x/y`
+  - future canonical placement may switch to a grid/cell contract such as `cellId` or `cellIndex`
+- This memo does not freeze the exact field shape yet, but it does freeze the ownership rule:
+  - city placement truth belongs to `cities`
+  - it must not return to `maps` as a hidden intermediate truth owner
+- City intro/description shown from map interaction should also resolve from city-owned authored data first, with temporary fallback text allowed only as an explicit interim policy.
+
+#### Rendering And Routing Boundary
+
+- The correct boundary is:
+  - map renders city markers from city-owned data
+  - map receives click input
+  - map triggers the city interaction
+  - access and event systems decide what happens next
+- The map layer must not do:
+  - string-parsed route ownership
+  - building or dialogue dispatch logic
+  - creator-meaning inference from hidden map-only structures
+- All old click/enter continuations should converge on the same event-routing discipline used elsewhere in the project.
+
+#### `maps` Family Retirement Direction
+
+- If `maps` no longer has an independent creator-facing meaning, it should not remain as a formal authoring/runtime family just to carry city position truth.
+- Retirement must remove truth ownership, not merely hide the family from the editor.
+- Deprecated map-position structures and lookup chains must be deleted after replacement completion rather than preserved as a compatibility layer.
+
+#### Canonical Numeric ID Direction
+
+- The project should move toward canonical numeric ids shared by:
+  - Script Editor
+  - runtime
+  - preview
+  - import/export
+- ID structure should follow numeric segmentation:
+  - high digits identify the module family
+  - low digits identify the per-family sequence
+- The exact digit split does not need operator-prescribed hardcoding in this memo.
+- The system may choose the specific partition size, but once chosen it must remain stable.
+- Script Editor should generate canonical ids.
+- Runtime should consume the same ids directly rather than reassigning or translating them at runtime.
+- New ids must be allocated by:
+  - taking the current maximum sequence within the family
+  - incrementing by one
+- New ids must not be generated from current object count.
+- Deleted ids must not be reused.
+
+#### Transition Constraint For Existing Data
+
+- Existing instance ids must remain unchanged during the first transition stage.
+- This applies to:
+  - repository content already using current ids
+  - existing instances inside the built-in `zhuyuanzhang` template pack
+- New instances created after the rule is adopted must use the new canonical numeric-id rule.
+- For `zhuyuanzhang`, this means:
+  - existing instance ids stay unchanged for now
+  - newly added instances must follow the new canonical rule
+- This memo does not authorize an immediate bulk rewrite of all existing ids.
+
+#### ID Consumer Audit Requirement
+
+- Before broader id cutover, the project must audit all id-consumer paths and classify them as either:
+  - direct lookup
+  - indirect lookup
+- Direct lookup means routes such as:
+  - full-id dictionary access
+  - exact `Map.get(id)`
+  - by-id table lookup using the complete canonical id
+- Indirect lookup means routes such as:
+  - parsing id strings for semantic segments
+  - splitting ids to derive module meaning or resource paths
+  - partial-id reconstruction before lookup
+- If a consumer path is already direct lookup, new instances may begin using the new canonical id rule without needing old string-shape assumptions.
+- If a consumer path is indirect lookup, a temporary transition stage is required before wider id unification.
+
+#### Allowed Temporary Transition Stage
+
+- A temporary transition stage is allowed only for consumer-route cleanup.
+- It may exist to:
+  - replace indirect id parsing with direct full-id lookup
+  - inventory remaining hard assumptions tied to old id forms
+  - verify that new ids can be consumed without semantic string splitting
+- It must not become a long-term dual-truth compatibility layer.
+- After `zhuyuanzhang` and the remaining blocking consumers are unified, the temporary transition stage must be removed.
+- The end state is:
+  - full direct lookup
+  - no semantic string splitting for canonical id consumption
+
+#### Replacement Inventory And Deletion Discipline
+
+- Every old field, lookup route, or compatibility assumption replaced under this memo must be recorded before deletion.
+- The replacement inventory should cover at least:
+  - old field or route
+  - new field or route
+  - consumer sites updated
+  - remaining blockers
+  - deletion readiness
+- Old fields and routes must be deleted only after the replacement inventory shows no remaining lawful owners.
+- This memo rejects:
+  - permanent compatibility residue
+  - hidden fallback truth
+  - informal “we will remember to delete later” cleanup
+
+#### Refactor Log Requirement
+
+- Work promoted from this memo must maintain a running refactor log while changes land.
+- The refactor log is not optional archival prose; it is an active merge-reference artifact for later map-related branch integration.
+- At minimum, the log should record:
+  - changed structures or families
+  - old truth owner and new truth owner
+  - affected files or modules
+  - removed fields, added fields, and rewritten references
+  - direct-lookup paths already converged
+  - indirect-lookup paths still awaiting cleanup
+  - `zhuyuanzhang` template touch points
+  - known merge-sensitive files or high-conflict surfaces
+- The log must stay structured enough to support later branch merge/conflict review rather than becoming free-form narrative.
+- If a later branch touches map truth, city truth, canonical numeric id generation, or id-consumer cleanup, this log should be treated as the primary conflict-reference document during merge analysis.
+
+#### Suggested Candidate Direction
+
+- This memo is recorded as a future requirement source only.
+- It should eventually split into bounded work at least across:
+  - map rendering and city-data truth separation
+  - map-owned truth retirement and source-guard removal
+  - canonical numeric id generation and consumer-route audit
+  - direct-lookup convergence and later full-id unification
+- The numeric-id rule may be designed and frozen before implementation, but should not be bulk-landed into existing packs prematurely if that would increase active merge risk.
+
+#### Promotion Guard
+
+- This memo entry is recorded only.
+- It does not authorize:
+  - immediate bulk replacement of existing instance ids
+  - immediate full rewrite of `zhuyuanzhang` existing ids
+  - long-term transition residue
+  - leaving map-owned city position truth active after the replacement route is complete
+
+#### Suggested Candidate Queue
+
+- proposed_queue_id: `queue.map-rendering-city-data-separation-and-canonical-numeric-id-transition`
+- proposed_class: `future-target-candidate`
+- proposed_goal: `Move map-facing city truth into cities, keep map limited to rendering plus interaction trigger, retire hidden map-owned city position truth after replacement, and govern a canonical numeric id transition that keeps existing ids stable while auditing direct vs indirect id-consumer paths before broader cutover.`
+- admission_note: `Recorded only. This memo does not authorize implementation or same-version admission under the current active target. Before admission, Blueprint must decide a lawful parent target that can own both city-owned map truth and canonical numeric id transition scope, reject immediate bulk replacement of existing ids, require consumer-route audit before broad id cutover, and keep temporary transition cleanup from becoming long-term compatibility residue.`
+
+### MEMO-028: Repository-Wide Hardcoded Scenario Compatibility And Residue Audit Draft
+
+- status: `open`
+- severity: `high`
+- classification: `memo-only`
+- proposed_queue: `none`
+- owning_queue: `none`
+- admission_status: `not-admitted`
+- latest_disposition: `recorded-as-memo`
+- affected_families:
+  - `startup activation`
+  - `script editor default project/template`
+  - `runtime state-sync`
+  - `playable trigger routing`
+  - `story callback routing`
+  - `house module fallback content`
+  - `creator-facing editor ui`
+  - `scenario-pack compatibility governance`
+
+#### Audit Scope
+
+- This audit reviewed the repository with a full-repo search scope rather than limiting review to production `src/` paths only.
+- The audit intentionally distinguishes between:
+  - creator/runtime-affecting code residue
+  - stage-specific or scenario-specific mechanism residue
+  - content-pack data, generated assets, resource naming, and documentation references
+- A large number of `zhuyuanzhang`, `kulan`, `legacy`, and `compatibility` hits exist in:
+  - `docs/**`
+  - `src/content/**`
+  - `HD2DEG/**`
+  - `generated/**`
+  - `tools/**`
+- Those hits are not all evidence of live runtime hardcoding. The cleanup priority must focus first on production behavior, editor semantics, startup routing, and compatibility seams.
+
+#### Distribution Snapshot
+
+- Full-repository keyword audit produced a heavy concentration of hits in:
+  - `docs`
+  - `src`
+  - `HD2DEG`
+  - `generated`
+  - `tools`
+  - `tests`
+  - `prototypes`
+- Within `src`, the strongest concentrations appeared in:
+  - `content`
+  - `application`
+  - `core`
+  - `ui`
+  - `domain`
+  - `main.ts`
+- The distribution shows that:
+  - the repository still carries extensive scenario-specific history and content naming
+  - only a smaller subset is still active as creator/runtime residue
+
+#### Primary Conclusion
+
+- The project still contains real hardcoded scenario compatibility and scenario-specific residue.
+- The highest-value cleanup area is not the content files themselves, but:
+  - startup activation
+  - Script Editor defaults
+  - compatibility import/export seams
+  - legacy playable trigger routing
+  - canonical runtime bridging from legacy state
+  - creator-facing UI exposure of implementation IDs
+- The current residue should be governed as two different classes:
+  - `compatibility transition residue`
+  - `scenario-specific mechanism residue`
+
+#### Compatibility Transition Residue
+
+- Startup activation still merges or carries a built-in base pack into scenario-pack activation paths instead of treating the project/scenario payload as the only creator-facing truth.
+- Script Editor still defaults to the built-in `zhuyuanzhang` template path and base-pack inheritance assumptions.
+- Runtime import/export still preserves `compatibilityImport` and unresolved-family residue as an active lawful path.
+- Playable runtime and integration registration still expose legacy trigger language such as old activity-start and story-battle-start seams.
+- Canonical runtime state still depends on a legacy runtime bridge seam for hydration or conversion.
+- These paths are not merely old content names. They are active compatibility structures still shaping current behavior.
+
+#### Scenario-Specific Mechanism Residue
+
+- Story-stage, council, temple, begging, shortage, and related scenario logic still depend on `zhuyuanzhang` / `kulan` specific values in shared runtime paths.
+- Prototype startup still seeds `kulan`-specific startup assumptions and `zhuyuanzhang` stage variables rather than relying purely on scenario-profile-defined startup truth.
+- Story callback routing still contains direct scenario-specific handler ids, location ids, and return targets.
+- Tea house, medicine house, grain shop, and similar module defaults still bind scenario-specific actor ids and text ids as module fallback truth.
+- Presentation layers still carry scenario-specific mappings such as portrait art classes and city-description overrides.
+- These are not best treated as simple dead-code cleanup. They indicate that some runtime mechanisms are still only partially generalized.
+
+#### Creator-Facing UI Residue
+
+- Script Editor still exposes implementation ids in creator-facing option labels and related surfaces.
+- This violates the intended editor rule that creators should not be asked to reason about raw ids.
+- The creator-facing truth should remain semantic labels such as city name, building name, portrait name, relation target, or event target, while id ownership remains internal.
+
+#### What Should Not Be Counted As Active Runtime Hardcoding
+
+- The following families may lawfully contain scenario-specific naming without being counted as live compatibility residue:
+  - `src/content/scenario-packs/**`
+  - `HD2DEG/**`
+  - `generated/**`
+  - `tools/**`
+  - `docs/**`
+- Those paths can still require cleanup later for consistency, but they must not be conflated with:
+  - active startup compatibility logic
+  - live editor defaults
+  - runtime compatibility seams
+  - shared-module fallback truth
+
+#### Required Governance Distinction
+
+- Future cleanup must explicitly classify every discovered hit as one of:
+  - `active compatibility transition residue`
+  - `scenario-specific mechanism residue`
+  - `content/resource naming only`
+  - `documentation/history only`
+- Repository-wide search evidence alone is not sufficient for prioritization.
+- Promotion decisions must use behavior impact, not raw hit count.
+
+#### Priority Cleanup Direction
+
+- Priority should go first to:
+  - startup base-pack inheritance and activation assumptions
+  - Script Editor template/default pack assumptions
+  - compatibility import/export seams
+  - legacy playable triggers and legacy runtime bridge seams
+  - creator-facing ID exposure in Script Editor
+- After that, the project should address:
+  - scenario-specific startup behavior
+  - story callback specialization
+  - module fallback content specialization
+  - presentation-layer special mappings
+
+#### Audit Recording Requirement
+
+- Each cleanup batch triggered by this memo should record:
+  - the old hardcoded or compatibility-bearing path
+  - whether it was transition residue or scenario-specific mechanism residue
+  - the new owning mechanism or data source
+  - any runtime or editor behavior that changed
+  - the regression points that later testing must cover
+- When data structures change as part of hardcoding removal, runtime behavior changes must be logged as future test reference points.
+
+#### Promotion Guard
+
+- This memo does not authorize blanket deletion of all repository hits involving `zhuyuanzhang`, `kulan`, `legacy`, or `compatibility`.
+- This memo also does not authorize treating content-pack names, generated data, or historical planning docs as defects by default.
+- Promotion must remain limited to live compatibility seams and live creator/runtime behavior residue first.
+
+#### Suggested Candidate Queue
+
+- proposed_queue_id: `queue.repository-wide-hardcoded-scenario-compatibility-and-residue-disposition`
+- proposed_class: `future-target-candidate`
+- proposed_goal: `Audit, classify, and retire repository-wide hardcoded scenario compatibility residue by separating live compatibility transition seams from scenario-specific mechanism residue, prioritizing startup, editor defaults, runtime bridge seams, legacy playable triggers, and creator-facing ID exposure before broader content/resource cleanup.`
+- admission_note: `Recorded only. Before admission, Blueprint should require a bounded cleanup inventory, explicit residue classification, and behavior-based prioritization so that content-pack naming and historical documents are not conflated with live production compatibility debt.`

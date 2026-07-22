@@ -27,19 +27,6 @@ export type FlowPlayableDefinition = {
   id: string;
   title: string;
   description?: string;
-  playableId?: string;
-  integrationId?: string;
-  ownerKind?: "building" | "house" | "scene" | "task" | "external";
-  ownerId?: string | null;
-  returnPolicy?: "resume-owner" | "reenter-owner" | "close-only";
-  eventStartTarget?: {
-    eventId?: string;
-    bindingId?: string;
-  };
-  launchPayload?: Array<{
-    key: string;
-    value: string;
-  }>;
   initialNodeId: string;
   nodes: FlowNode[];
   outcomeRoutes?: Array<{

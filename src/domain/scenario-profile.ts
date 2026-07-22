@@ -73,6 +73,11 @@ export type ScenarioProfileDefinition = {
 export type ScenarioProfileId = ScenarioProfileDefinition["id"];
 export type ScenarioProfileRuntimeFlags = GameState["runtime"]["flags"];
 export type ScenarioProfileRuntimeVariables = GameState["runtime"]["variables"];
+export type ScenarioProfileStartupPresentation = {
+  currentView: ViewName;
+  currentHouseId: HouseId | null;
+  activeDialogueId: DialogueId | null;
+};
 
 export function resolveScenarioProfileForCharacter(
   profile: ScenarioProfileDefinition,
@@ -180,5 +185,22 @@ export function resolveScenarioProfileForCharacter(
             ...override.launchPolicy,
           },
         }),
+  };
+}
+
+export function resolveScenarioProfileStartupPresentation(
+  profile: ScenarioProfileDefinition
+): ScenarioProfileStartupPresentation {
+  const currentView =
+    profile.launchPolicy?.initialView ?? profile.initialLocation.view;
+
+  return {
+    currentView,
+    currentHouseId:
+      currentView === "house" ? profile.initialLocation.houseId : null,
+    activeDialogueId:
+      currentView === "dialogue"
+        ? profile.initialLocation.dialogueId ?? null
+        : null,
   };
 }

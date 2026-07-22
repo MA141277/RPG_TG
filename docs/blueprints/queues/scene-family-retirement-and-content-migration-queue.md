@@ -7,23 +7,23 @@
 - blueprint_version: `2026.07`
 - governance_last_synced_at: `2026-07-22`
 - governance_sync_source: `docs/blueprints/plans/2026-07-22-script-editor-event-centered-authoring-scene-retirement-and-portrait-resource-refactor-target-plan.md`
-- queue_status: `active`
+- queue_status: `done`
 - queue_class: `required`
-- active_task: `task.scene-family-retirement-and-content-migration.content-migration-and-scene-removal`
-- next_task: `task.scene-family-retirement-and-content-migration.queue-closeout-and-handoff`
-- closeout_status: `in-progress`
-- execution_closeout_status: `partial`
-- topic_closure_status: `open-residue`
-- closure_basis: `admitted-third-queue-not-yet-closed`
+- active_task: `none`
+- next_task: `none`
+- closeout_status: `done`
+- execution_closeout_status: `done`
+- topic_closure_status: `closed`
+- closure_basis: `ACC-EVENT-CENTER-003 / 004 / 007 are now covered: scene is no longer a formal authoring/project/runtime/startup/presenter family, building creator-facing meaning remains function -> event -> dialogue/minigame/task/function, and no same-family scene compatibility residue remains in production truth.`
 - residue_remaining: `no`
 - residue_family: `none`
 - residue_routing_status: `none`
-- next_family_candidate: `none`
-- auto_continue_eligible: `false`
-- next_effect: `none`
-- sync_status: `pending`
-- sync_scope: `local-record`
-- sync_summary: `Queue admission and evidence lock are now recorded locally. Repository sync remains deferred while the queue's implementation task is live.`
+- next_family_candidate: `queue.event-centered-runtime-pack-preview-export-sync`
+- auto_continue_eligible: `true`
+- next_effect: `promote-next-queue`
+- sync_status: `success`
+- sync_scope: `remote-sync`
+- sync_summary: `Historical handoff still predates the later formal repository-sync gate, but the inseparable remaining completed-queue batch was later committed and pushed to origin/mod-first-dev in one combined remote-sync pass, so this queue now has recorded remote-sync completion without rewriting the earlier handoff chronology.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
@@ -224,9 +224,9 @@
 
 - queue_goal: `Retire scene as a formal family, migrate its content ownership, and remove scene compatibility residue without weakening event-centered building meaning.`
 - task_count: `3`
-- completed_task_count: `1`
-- remaining_task_count: `2`
-- active_task_summary: `Remove formal scene truth and migrate scene-owned content into dialogue/building/city contracts without leaving compatibility residue.` 
+- completed_task_count: `3`
+- remaining_task_count: `0`
+- active_task_summary: `No active task remains; formal scene retirement is closed and control routes to queue.event-centered-runtime-pack-preview-export-sync.` 
 - task_briefs:
   - `task.scene-family-retirement-and-content-migration.evidence-anchor-reconcile: Confirm exactly where scene still owns project/runtime/startup/presenter truth and lock the no-over-narrowing removal boundary before implementation.`
   - `task.scene-family-retirement-and-content-migration.content-migration-and-scene-removal: Remove scene as formal truth, migrate its content ownership, and preserve building creator-facing meaning.`
@@ -244,31 +244,36 @@
 
 ### Completion Completeness Review
 
-- review_status: `in-progress`
+- review_status: `passed`
 - can_claim_coverage:
-  - `Evidence lock complete. ACC-EVENT-CENTER-003 / 004 / 007 are not yet implemented.`
+  - `ACC-EVENT-CENTER-003 is covered: scene is removed from Script Editor visible families, project formal structure, runtime pack canonical families, runtime state truth, startup truth, and presenter truth.`
+  - `ACC-EVENT-CENTER-004 is covered: building creator-facing meaning remains function -> event -> dialogue/minigame/task/function while implementation still routes through arrangement / event-binding / flow / playable.`
+  - `ACC-EVENT-CENTER-007 is covered: no same-family compatibility residue remains for scenes.json, SceneDefinition, ActionNode, entrySceneId, nextSceneId, activeSceneId, scene runtime/session truth, or dialogue-to-scene lowering seams.`
 - parent_spec_preservation:
   - `This queue must remove scene truth without disguising compatibility residue as retirement and without absorbing runtime/export sync or portrait mapping work.`
 - capability_floor_verification:
-  - `Pending implementation. The queue must prove that no formal scene family or scene compatibility residue remains on the project/runtime/startup/presenter path after migration.`
+  - `Production source audit now shows no surviving formal scene family or scene compatibility residue on the project/runtime/startup/presenter path. Runtime pack canonical files use dialogues.json, startup/profile contracts carry dialogueId instead of scene truth, and presenter/view state no longer route through scene-owned families.`
 - out_of_scope_routing:
   - `Runtime/export/import/loader convergence, portrait-resource convergence, and final acceptance remain owned by later queues in the version plan.`
 - verification_sufficiency:
-  - `Pending implementation. Verification must prove scene truth is removed from authoring/project/runtime/startup/presenter contracts rather than hidden.`
+  - `Passed: npm run lint:blueprints.`
+  - `Passed: npm run typecheck.`
+  - `Passed: npm test -- --runInBand tests/robustness.test.cjs tests/city-building-mount-authoring.test.cjs.`
+  - `Focused regression also proves imported flow integrations no longer misclassify into minigames while retired scene-owned import/export shapes fail closed.`
 - user_path_matrix_verification:
-  - `Pending implementation. Building-enter, building-function, story/dialogue progression, start/import/preview, return/follow-up, and fail-closed paths must all remain coherent without scene fallback truth.`
+  - `Building-enter, building-function, story/dialogue progression, start/import/preview, return/follow-up, and fail-closed paths remain coherent on dialogue/building/event-owned truth rather than scene fallback ownership.`
 - functional_loss_audit:
-  - `Pending implementation. Building/story/dialogue behavior must not silently break during migration.`
+  - `No covered building/story/dialogue behavior was dropped during migration. Imported/runtime/startup paths continue to reach dialogue-owned content, and flow/building function meaning stays preserved through event-centered routing.`
 - replacement_proof_summary:
-  - `Evidence lock complete; replacement proof pending implementation.`
+  - `Formal truth moved from SceneDefinition / ActionNode / scenes.json / scene-runner / startup sceneId / presenter scene view ownership to dialogue/building/city contracts, dialogue view/presentation, and no-scene runtime pack families.`
 - placeholder_or_legacy_fallback_audit:
-  - `Pending implementation. The queue must prove that no claimed behavior survives only through placeholder presentation, disconnected follow-up paths, or hidden scene fallback truth.`
+  - `No claimed path survives only through hidden scene wrappers, bridge readers/writers, compatibility shims, or placeholder presentation. Retired scene import/export/runtime paths now fail closed instead of remaining canonical truth.`
 - gap_fill_decision:
   - `not-needed`
 - gap_fill_scope:
   - `none`
 - remaining_gaps:
-  - `Scene truth currently still occupies domain contracts, runtime pack families, startup sceneId, scene runner/presenter paths, and Script Editor visible families.`
+  - `No still-blocking same-family residue remains inside ACC-EVENT-CENTER-003 / 004 / 007. Runtime/export/import/preview convergence now routes to queue.event-centered-runtime-pack-preview-export-sync.`
 
 ### Admission Preconditions
 
@@ -312,8 +317,8 @@
 | Task ID | State | Summary | Depends On | Notes |
 | --- | --- | --- | --- | --- |
 | `task.scene-family-retirement-and-content-migration.evidence-anchor-reconcile` | `done` | `Confirm exactly where scene still owns project/runtime/startup/presenter truth and lock the no-over-narrowing removal boundary before implementation.` | `queue.event-router-only-trigger-contract-freeze closed` | `Evidence lock confirmed that scene still survives as formal truth in domain/action.ts, project.scenes, scenes.json, runtime pack export/import/loader, startup sceneId, scene-runner/scene-view/presenter paths, and dialogue-story-runtime-materializer. This queue must therefore remove those truths directly rather than re-labeling them.` |
-| `task.scene-family-retirement-and-content-migration.content-migration-and-scene-removal` | `active` | `Remove scene as formal truth, migrate its content ownership, and preserve building creator-facing meaning.` | `task.scene-family-retirement-and-content-migration.evidence-anchor-reconcile` | `This task must remove scene truth in one incompatible batch without widening into runtime/export convergence or portrait-resource work.` |
-| `task.scene-family-retirement-and-content-migration.queue-closeout-and-handoff` | `queued` | `Verify, review completeness, and route the coupled runtime-sync queue without claiming portrait or final-acceptance work.` | `task.scene-family-retirement-and-content-migration.content-migration-and-scene-removal` | `Expected next lawful queue is queue.event-centered-runtime-pack-preview-export-sync if scene retirement closes without same-family residue.` |
+| `task.scene-family-retirement-and-content-migration.content-migration-and-scene-removal` | `done` | `Remove scene as formal truth, migrate its content ownership, and preserve building creator-facing meaning.` | `task.scene-family-retirement-and-content-migration.evidence-anchor-reconcile` | `Completed in one incompatible batch: formal scene wrappers, SceneDefinition/ActionNode aliases, scenes.json canonical truth, scene-owned startup/presenter/view/runtime seams, and scene-facing creator/runtime contracts were removed or renamed onto dialogue/building/city-owned truth without widening into portrait-resource work.` |
+| `task.scene-family-retirement-and-content-migration.queue-closeout-and-handoff` | `done` | `Verify, review completeness, and route the coupled runtime-sync queue without claiming portrait or final-acceptance work.` | `task.scene-family-retirement-and-content-migration.content-migration-and-scene-removal` | `ACC-EVENT-CENTER-003 / 004 / 007 are closed; the next lawful queue is queue.event-centered-runtime-pack-preview-export-sync.` |
 
 ### Task Definitions
 
@@ -365,7 +370,7 @@
 ##### Control Block
 
 - task_id: `task.scene-family-retirement-and-content-migration.content-migration-and-scene-removal`
-- state: `active`
+- state: `done`
 - task_kind: `execution`
 - scope:
   - `src/domain/action.ts`
@@ -397,14 +402,14 @@
 - task_brief:
   - `Remove formal scene truth and migrate scene-owned content into dialogue/building/city contracts.`
 - task_outcome_summary:
-  - `In progress. Scene-retirement implementation must now remove SceneDefinition/ActionNode/project.scenes/scenes.json/startup sceneId/scene runner truth in one incompatible batch while preserving event-centered building meaning.`
+  - `Completed. Production contracts and content now use dialogue/building/city-owned truth instead of scene-owned truth: canonical runtime pack families moved to dialogues.json, scene aliases/contracts were removed, startup/profile and character dialogue hooks renamed to dialogueId-owned paths, presenter/view ownership moved to dialogue view naming, and imported/exported runtime seams fail closed on retired scene-owned structures.`
 
 #### `task.scene-family-retirement-and-content-migration.queue-closeout-and-handoff`
 
 ##### Control Block
 
 - task_id: `task.scene-family-retirement-and-content-migration.queue-closeout-and-handoff`
-- state: `queued`
+- state: `done`
 - task_kind: `decision-dispatch`
 - scope:
   - `docs/blueprints/plans/2026-07-22-script-editor-event-centered-authoring-scene-retirement-and-portrait-resource-refactor-target-plan.md`
@@ -428,9 +433,17 @@
 - task_brief:
   - `Verify, review completeness, and hand off to the coupled runtime-sync queue.`
 - task_outcome_summary:
-  - `Pending.`
+  - `Verification passed on the landed worktree: npm run lint:blueprints, npm run typecheck, and npm test -- --runInBand tests/robustness.test.cjs tests/city-building-mount-authoring.test.cjs all remained green. Completeness review confirmed ACC-EVENT-CENTER-003 / 004 / 007 closed without same-family residue and without narrowing the coupled runtime-sync, portrait-resource, or final-acceptance queues. The next lawful queue is queue.event-centered-runtime-pack-preview-export-sync.`
+
+### Closeout Record
+
+- closed_at: `2026-07-22`
+- closed_by: `AI execution under target.script-editor-event-centered-authoring-scene-retirement-and-portrait-resource-refactor`
+- closeout_pending: `false`
 
 ### Progress Log
 
 - `2026-07-22`: `queue.event-router-only-trigger-contract-freeze closed with ACC-EVENT-CENTER-002 covered and no same-family residue. Per the version plan's auto-continue rule, queue.scene-family-retirement-and-content-migration is now admitted as the next lawful execution slice.`
 - `2026-07-22`: `Evidence-anchor reconcile is complete. Source inspection confirmed that scene still survives as formal truth in domain/action.ts, ScriptEditor project.scenes, runtime pack scenes.json, runtime pack import/export, scenario loader/startup sceneId, scene-runner/scene-view/presenter paths, and dialogue-story-runtime-materializer. Implementation therefore begins with direct scene-family retirement and content migration only.`
+- `2026-07-22`: `Second implementation batch removed runtime/application scene alias wrappers (`application/scene/**`, `core/runtime/scene-runtime.ts`), switched startup scenario profile export/loader to formal dialogueId support, and re-baselined robustness assertions onto dialogue/runtime truth. Verification passed (`npm run typecheck`, `npm run lint:blueprints`, `npm test -- --runInBand tests/robustness.test.cjs`), but queue closeout remains unlawful because scenes.json / manifest.files.scenes / import-export scene fallbacks and pack-content scene file references still survive as canonical residue.`
+- `2026-07-22`: `Final implementation and closeout batch removed the remaining formal scene family truth from runtime pack/content/presenter contracts, switched canonical pack families to dialogues.json, tightened runtime-pack import/export to reject retired scene-owned dialogue/actions and owner kinds, and fixed imported flow integrations so building-owned flow records stay in flows rather than being misclassified as minigames. Verification passed again (`npm run typecheck`, `npm run lint:blueprints`, `npm test -- --runInBand tests/robustness.test.cjs tests/city-building-mount-authoring.test.cjs`). ACC-EVENT-CENTER-003 / 004 / 007 are therefore closed with no same-family residue, and control routes to queue.event-centered-runtime-pack-preview-export-sync.`

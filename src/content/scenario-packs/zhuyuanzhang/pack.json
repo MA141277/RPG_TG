@@ -26,6 +26,8 @@
     "historicalCharacters": "historical-characters.json",
     "historicalCityRosters": "historical-city-rosters.json",
     "historicalCharacterIdByCharacterId": "historical-character-id-map.json",
-    "dialogues": "dialogues.json"
+    "dialogues": "dialogues.json",
+    "portraits": "portraits.json",
+    "portraitVariants": "portrait-variants.json"
   }
 }

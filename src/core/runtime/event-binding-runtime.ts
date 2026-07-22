@@ -140,9 +140,13 @@ function applyEventRuntimeActions(
 }
 
 function hasOnlyStateRuntimeActions(eventDefinition: EventDefinition): boolean {
+  const dialogueId =
+    typeof eventDefinition.dialogueId === "string"
+      ? eventDefinition.dialogueId.trim()
+      : "";
   return (
     (eventDefinition.actions?.length ?? 0) > 0 &&
-    eventDefinition.entrySceneId.length === 0
+    dialogueId.length === 0
   );
 }
 

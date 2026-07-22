@@ -10,6 +10,8 @@ import {
   type ScriptEditorEventRecord,
   type ScriptEditorFlowRecord,
   type ScriptEditorMinigameRecord,
+  type ScriptEditorPortraitResourceRecord,
+  type ScriptEditorPortraitVariantRecord,
   type ScriptEditorMenuEntry,
   type ScriptEditorPersonRecord,
   type ScriptEditorProjectDefinition,
@@ -26,6 +28,10 @@ import { createDefaultScriptEditorPersonRecord } from "./person-authoring";
 import { createDefaultScriptEditorMinigameRecord } from "./minigame-binding-authoring";
 import { createDefaultScriptEditorFlowRecord } from "./flow-authoring";
 import {
+  createDefaultScriptEditorPortraitRecord,
+  createDefaultScriptEditorPortraitVariantRecord,
+} from "./portrait-authoring";
+import {
   createDefaultScriptEditorDialogueRecord,
   createDefaultScriptEditorEventBindingRecord,
   createDefaultScriptEditorEventRecord,
@@ -36,11 +42,12 @@ import { createDraftScriptEditorProjectCompletionState } from "./project-complet
 export const SCRIPT_EDITOR_MINIMAL_WORKFLOW_FAMILIES = [
   "storyPack",
   "people",
+  "portraits",
+  "portraitVariants",
   "cities",
   "buildings",
   "quests",
   "dialogues",
-  "scenes",
   "minigames",
   "flows",
   "textEntries",
@@ -71,6 +78,7 @@ export function createDefaultScriptEditorProjectDefinition(input?: {
 }): ScriptEditorProjectDefinition {
   const idBase = input?.idBase?.trim() || "script-editor.demo";
   const title = input?.title?.trim() || "Script Editor Demo Project";
+  const defaultPortrait = createDefaultScriptEditorPortraitRecord(0);
 
   return {
     schemaVersion: SCRIPT_EDITOR_PROJECT_SCHEMA_VERSION,
@@ -109,6 +117,7 @@ export function createDefaultScriptEditorProjectDefinition(input?: {
         title: "主角",
         occupation: "待定",
         biography: "默认主角，用于最小工作流的导出与作者面首切。",
+        portraitId: defaultPortrait.id,
         extendedAttributes: [],
         dialogueIds: [],
         eventIds: [],
@@ -118,6 +127,15 @@ export function createDefaultScriptEditorProjectDefinition(input?: {
         },
       },
     ],
+    portraits: [
+      {
+        ...defaultPortrait,
+        label: "默认立绘",
+        portraitImage: "builtin:user/20.png",
+        avatarImage: "builtin:user/20 - touxiang.png",
+      },
+    ],
+    portraitVariants: [],
     cities: [
       {
         ...createDefaultScriptEditorCityRecord(0),
@@ -147,7 +165,6 @@ export function createDefaultScriptEditorProjectDefinition(input?: {
       },
     ],
     eventBindings: [],
-    scenes: [],
     quests: [],
     activities: [],
     cards: [],
@@ -202,6 +219,8 @@ export function listScriptEditorWorkflowFamilyRecords(
   family: ScriptEditorMinimalWorkflowRecordFamily
 ):
   | ScriptEditorPersonRecord[]
+  | ScriptEditorPortraitResourceRecord[]
+  | ScriptEditorPortraitVariantRecord[]
   | ScriptEditorCityRecord[]
   | ScriptEditorBuildingRecord[]
   | ScriptEditorDialogueRecord[]
@@ -216,6 +235,10 @@ export function listScriptEditorWorkflowFamilyRecords(
   switch (family) {
     case "people":
       return project.people;
+    case "portraits":
+      return project.portraits;
+    case "portraitVariants":
+      return project.portraitVariants;
     case "cities":
       return project.cities;
     case "buildings":
@@ -224,8 +247,6 @@ export function listScriptEditorWorkflowFamilyRecords(
       return project.quests;
     case "dialogues":
       return project.dialogues;
-    case "scenes":
-      return project.scenes;
     case "minigames":
       return project.minigames;
     case "flows":
@@ -246,6 +267,8 @@ export function createScriptEditorWorkflowRecordDraft(
   index: number
 ):
   | ScriptEditorPersonRecord
+  | ScriptEditorPortraitResourceRecord
+  | ScriptEditorPortraitVariantRecord
   | ScriptEditorCityRecord
   | ScriptEditorBuildingRecord
   | ScriptEditorDialogueRecord
@@ -262,6 +285,10 @@ export function createScriptEditorWorkflowRecordDraft(
   switch (family) {
     case "people":
       return createDefaultScriptEditorPersonRecord(index) as ScriptEditorPersonRecord;
+    case "portraits":
+      return createDefaultScriptEditorPortraitRecord(index);
+    case "portraitVariants":
+      return createDefaultScriptEditorPortraitVariantRecord(index);
     case "cities":
       return createDefaultScriptEditorCityRecord(index) as ScriptEditorCityRecord;
     case "buildings":
@@ -273,12 +300,6 @@ export function createScriptEditorWorkflowRecordDraft(
       };
     case "dialogues":
       return createDefaultScriptEditorDialogueRecord(index) as ScriptEditorDialogueRecord;
-    case "scenes":
-      return {
-        id: `scene.new.${suffix}`,
-        name: `New Scene ${suffix}`,
-        actions: [],
-      };
     case "minigames":
       return createDefaultScriptEditorMinigameRecord(index) as ScriptEditorMinigameRecord;
     case "flows":
@@ -349,6 +370,8 @@ function replaceProjectFamily(
   family: ScriptEditorMinimalWorkflowRecordFamily,
   nextRecords:
     | ScriptEditorPersonRecord[]
+    | ScriptEditorPortraitResourceRecord[]
+    | ScriptEditorPortraitVariantRecord[]
     | ScriptEditorCityRecord[]
     | ScriptEditorBuildingRecord[]
     | ScriptEditorDialogueRecord[]
@@ -363,6 +386,16 @@ function replaceProjectFamily(
   switch (family) {
     case "people":
       return { ...project, people: nextRecords as ScriptEditorPersonRecord[] };
+    case "portraits":
+      return {
+        ...project,
+        portraits: nextRecords as ScriptEditorPortraitResourceRecord[],
+      };
+    case "portraitVariants":
+      return {
+        ...project,
+        portraitVariants: nextRecords as ScriptEditorPortraitVariantRecord[],
+      };
     case "cities":
       return { ...project, cities: nextRecords as ScriptEditorCityRecord[] };
     case "buildings":
@@ -371,8 +404,6 @@ function replaceProjectFamily(
       return { ...project, quests: nextRecords as ScriptEditorEntityRecord[] };
     case "dialogues":
       return { ...project, dialogues: nextRecords as ScriptEditorDialogueRecord[] };
-    case "scenes":
-      return { ...project, scenes: nextRecords as ScriptEditorEntityRecord[] };
     case "minigames":
       return { ...project, minigames: nextRecords as ScriptEditorMinigameRecord[] };
     case "flows":
@@ -535,5 +566,7 @@ function removeDialogueEventFollowUps(
 }
 
 export function getScriptEditorWorkflowVisibleFamilies(): readonly ScriptEditorProjectFileKey[] {
-  return SCRIPT_EDITOR_MINIMAL_WORKFLOW_FAMILIES;
+  return SCRIPT_EDITOR_MINIMAL_WORKFLOW_FAMILIES.filter(
+    (family) => family !== "flows"
+  ) as readonly ScriptEditorProjectFileKey[];
 }

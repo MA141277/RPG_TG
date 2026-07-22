@@ -17,6 +17,10 @@ import type { HouseDefinition } from "../../domain/house";
 import type { LocationAccessDefinition } from "../../domain/location-access";
 import type { MapDefinition, MapNode } from "../../domain/map";
 import type { FlowPlayableDefinition } from "../../domain/playables/flow";
+import type {
+  PortraitResourceDefinition,
+  PortraitVariantDefinition,
+} from "../../domain/portrait-resource";
 import type { GridCoordinate } from "../navigation/travel-to-coordinate";
 import {
   createMapLocationProvider,
@@ -72,6 +76,10 @@ export type ActiveGameContent = {
   cityNpcPools: CityNpcPoolDefinition[];
   locationAccess: LocationAccessDefinition[];
   houseModuleDefaults: HouseModuleDefaults;
+  portraits: PortraitResourceDefinition[];
+  portraitResourceById: Record<string, PortraitResourceDefinition>;
+  portraitVariants: PortraitVariantDefinition[];
+  portraitVariantById: Record<string, PortraitVariantDefinition>;
   cityPortraits: Record<string, string>;
   historicalCharacterIdByCharacterId: Record<string, string>;
   historicalCharacters: HistoricalCharacterRecord[];
@@ -93,6 +101,10 @@ export type ActiveGameContentContext = {
   cityNpcPools: CityNpcPoolDefinition[];
   locationAccess: LocationAccessDefinition[];
   houseModuleDefaults: HouseModuleDefaults;
+  portraits: PortraitResourceDefinition[];
+  portraitResourceById: Record<string, PortraitResourceDefinition>;
+  portraitVariants: PortraitVariantDefinition[];
+  portraitVariantById: Record<string, PortraitVariantDefinition>;
   historicalCharacters: HistoricalCharacterRecord[];
   historicalCityRosters: HistoricalCityRoster[];
   historicalCharacterIdByCharacterId: Record<string, string>;
@@ -130,7 +142,6 @@ export function createActiveGameContent(
   const houses = resolvedPack.houses ?? [];
   const buildingArrangements = resolvedPack.buildingArrangements ?? [];
   const cityEntries = resolvedPack.cityEntries ?? [];
-  const characters = resolvedPack.characters ?? [];
   const eventDefinitions = resolvedPack.events ?? [];
   const eventBindings = resolvedPack.eventBindings ?? [];
   const dialogueDefinitions = resolvedPack.dialogues ?? [];
@@ -143,6 +154,19 @@ export function createActiveGameContent(
   const locationAccess = resolvedPack.locationAccess ?? [];
   const historicalCharacters = resolvedPack.historicalCharacters ?? [];
   const historicalCityRosters = resolvedPack.historicalCityRosters ?? [];
+  const portraits = resolvedPack.portraits ?? [];
+  const portraitVariants = resolvedPack.portraitVariants ?? [];
+  const portraitResourceById = Object.fromEntries(
+    portraits.map((portrait) => [portrait.id, portrait])
+  );
+  const portraitVariantById = Object.fromEntries(
+    portraitVariants.map((variant) => [variant.id, variant])
+  );
+  const characters = materializeCharactersWithPortraitResources(
+    resolvedPack.characters ?? [],
+    portraitResourceById,
+    portraitVariants
+  );
   const characterManager = createCharacterManager(characters);
 
   return {
@@ -214,6 +238,10 @@ export function createActiveGameContent(
       undefined,
       resolvedPack.houseModuleDefaults
     ),
+    portraits,
+    portraitResourceById,
+    portraitVariants,
+    portraitVariantById,
     cityPortraits: { ...(resolvedPack.cityPortraits ?? {}) },
     historicalCharacterIdByCharacterId: {
       ...(resolvedPack.historicalCharacterIdByCharacterId ?? {}),
@@ -248,6 +276,10 @@ export function createActiveGameContentContext(
     cityNpcPools: gameContent.cityNpcPools,
     locationAccess: gameContent.locationAccess,
     houseModuleDefaults: gameContent.houseModuleDefaults,
+    portraits: gameContent.portraits,
+    portraitResourceById: gameContent.portraitResourceById,
+    portraitVariants: gameContent.portraitVariants,
+    portraitVariantById: gameContent.portraitVariantById,
     historicalCharacters: gameContent.historicalCharacters,
     historicalCityRosters: gameContent.historicalCityRosters,
     historicalCharacterIdByCharacterId:
@@ -354,6 +386,11 @@ export function mergeContentPacks(
       basePack.houseModuleDefaults,
       overridePack.houseModuleDefaults
     ),
+    portraits: mergeById(basePack.portraits ?? [], overridePack.portraits ?? []),
+    portraitVariants: mergeById(
+      basePack.portraitVariants ?? [],
+      overridePack.portraitVariants ?? []
+    ),
     cityPortraits: {
       ...(basePack.cityPortraits ?? {}),
       ...(overridePack.cityPortraits ?? {}),
@@ -395,6 +432,8 @@ function normalizeContentPack(pack: ContentPackDefinition): ContentPackDefinitio
     cityNpcPools: pack.cityNpcPools ?? [],
     locationAccess: pack.locationAccess ?? [],
     houseModuleDefaults: mergeHouseModuleDefaults(undefined, pack.houseModuleDefaults),
+    portraits: pack.portraits ?? [],
+    portraitVariants: pack.portraitVariants ?? [],
     cityPortraits: pack.cityPortraits ?? {},
     historicalCharacterIdByCharacterId: pack.historicalCharacterIdByCharacterId ?? {},
     historicalCharacters: pack.historicalCharacters ?? [],
@@ -461,6 +500,52 @@ function mergeById<T extends Identified>(base: T[], override: T[]): T[] {
 
   const overrideIds = new Set(override.map((entry) => entry.id));
   return [...base.filter((entry) => !overrideIds.has(entry.id)), ...override];
+}
+
+function materializeCharactersWithPortraitResources(
+  characters: CharacterDefinition[],
+  portraitResourceById: Record<string, PortraitResourceDefinition>,
+  portraitVariants: PortraitVariantDefinition[]
+): CharacterDefinition[] {
+  return characters.map((character) => {
+    const scopedVariants = portraitVariants
+      .filter((variant) => variant.parentPortraitId === character.portraitId)
+      .map((variant) => {
+        const portrait = portraitResourceById[variant.portraitId];
+        return {
+          id: variant.id,
+          label: variant.label,
+          portraitId: variant.portraitId,
+          ...(portrait == null
+            ? {}
+            : {
+                portraitImageUrl: portrait.portraitImage,
+                ...(portrait.avatarImage == null
+                  ? {}
+                  : { avatarImageUrl: portrait.avatarImage }),
+              }),
+        };
+      });
+    const activeVariant =
+      scopedVariants.find((variant) => variant.id === character.portraitVariantId) ??
+      null;
+    const basePortrait = portraitResourceById[character.portraitId];
+
+    return {
+      ...character,
+      ...(scopedVariants.length === 0 ? {} : { portraitVariants: scopedVariants }),
+      ...(activeVariant?.portraitImageUrl != null
+        ? { portraitImageUrl: activeVariant.portraitImageUrl }
+        : basePortrait == null
+          ? {}
+          : { portraitImageUrl: basePortrait.portraitImage }),
+      ...(activeVariant?.avatarImageUrl != null
+        ? { avatarImageUrl: activeVariant.avatarImageUrl }
+        : basePortrait?.avatarImage == null
+          ? {}
+          : { avatarImageUrl: basePortrait.avatarImage }),
+    };
+  });
 }
 
 function replaceWhenDeclared<T>(

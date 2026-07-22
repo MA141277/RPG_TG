@@ -2,7 +2,7 @@
   {
     "id": "scene.story.zhu_yuanzhang.ordination",
     "name": "皇觉寺剃度",
-    "actions": [
+    "nodes": [
       {
         "type": "background",
         "backgroundId": "bg.temple.courtyard"
@@ -122,7 +122,7 @@
   {
     "id": "scene.story.zhu_yuanzhang.first_temple_review",
     "name": "皇觉寺首轮评定",
-    "actions": [
+    "nodes": [
       {
         "type": "background",
         "backgroundId": "bg.temple.hall"
@@ -159,7 +159,7 @@
   {
     "id": "scene.story.zhu_yuanzhang.unlock_begging",
     "name": "住持准其外出化缘",
-    "actions": [
+    "nodes": [
       {
         "type": "background",
         "backgroundId": "bg.temple.hall"
@@ -196,7 +196,7 @@
   {
     "id": "scene.story.zhu_yuanzhang.runing_broadcast",
     "name": "颍州街头风声",
-    "actions": [
+    "nodes": [
       {
         "type": "narration",
         "textId": "scene.story.zhu_yuanzhang.runing_broadcast.001"
@@ -218,7 +218,7 @@
   {
     "id": "scene.story.zhu_yuanzhang.haozhou_return_encounter",
     "name": "返濠州遇盗与入郭",
-    "actions": [
+    "nodes": [
       {
         "type": "narration",
         "textId": "scene.story.zhu_yuanzhang.haozhou_return_encounter.001"
@@ -330,7 +330,7 @@
   {
     "id": "scene.building.house.kulan.leader_residence.enter",
     "name": "将领府邸 - 进入",
-    "actions": [
+    "nodes": [
       {
         "type": "dialogue",
         "characterId": "char.kulan_liu_bowen",
@@ -348,7 +348,7 @@
   {
     "id": "scene.building.house.kulan.temple.enter",
     "name": "皇觉寺 - 进入",
-    "actions": [
+    "nodes": [
       {
         "type": "dialogue",
         "characterId": "char.kulan_temple_abbot",
@@ -366,7 +366,7 @@
   {
     "id": "scene.building.house.kulan.keep.enter",
     "name": "帅府 - 进入",
-    "actions": [
+    "nodes": [
       {
         "type": "dialogue",
         "characterId": "char.kulan_lord",
@@ -384,7 +384,7 @@
   {
     "id": "scene.building.house.kulan.tea_house.enter",
     "name": "茶馆 - 进入",
-    "actions": [
+    "nodes": [
       {
         "type": "dialogue",
         "characterId": "char.kulan_tea_boss",
@@ -402,7 +402,7 @@
   {
     "id": "scene.building.house.kulan.market.enter",
     "name": "货栈 - 进入",
-    "actions": [
+    "nodes": [
       {
         "type": "dialogue",
         "characterId": "char.kulan_merchant",
@@ -420,7 +420,7 @@
   {
     "id": "scene.building.house.kulan.grain_shop.enter",
     "name": "粮铺 - 进入",
-    "actions": [
+    "nodes": [
       {
         "type": "dialogue",
         "characterId": "char.kulan_grain_shopkeeper",
@@ -438,7 +438,7 @@
   {
     "id": "scene.building.house.kulan.medicine_house.enter",
     "name": "药铺 - 进入",
-    "actions": [
+    "nodes": [
       {
         "type": "dialogue",
         "characterId": "char.kulan_medicine_doctor",
@@ -456,7 +456,7 @@
   {
     "id": "scene.building.house.kulan.inn.enter",
     "name": "客栈 - 进入",
-    "actions": [
+    "nodes": [
       {
         "type": "dialogue",
         "characterId": "char.kulan_innkeeper",

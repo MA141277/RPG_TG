@@ -19,6 +19,10 @@ import type { ScreenLayoutPreset } from "./ui/screen-layout";
 import type { ScreenSchema } from "./ui/screen-schema";
 import type { ScreenSkinPreset } from "./ui/screen-skin";
 import type { ValuableItemDefinition } from "./valuable-item";
+import type {
+  PortraitResourceDefinition,
+  PortraitVariantDefinition,
+} from "./portrait-resource";
 import type { TaskDefinition } from "../core/contracts/task-runtime";
 import type {
   PlayableDefinition,
@@ -51,6 +55,8 @@ export type ContentPackDefinition = {
   cityNpcPools?: CityNpcPoolDefinition[];
   locationAccess?: LocationAccessDefinition[];
   houseModuleDefaults?: Record<string, Record<string, unknown>>;
+  portraits?: PortraitResourceDefinition[];
+  portraitVariants?: PortraitVariantDefinition[];
   cityPortraits?: Record<string, string>;
   historicalCharacterIdByCharacterId?: Record<string, string>;
   historicalCharacters?: HistoricalCharacterRecord[];

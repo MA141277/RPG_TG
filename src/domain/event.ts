@@ -1,4 +1,5 @@
 import type { RuntimeTaskInput } from "../core/contracts/runtime-result";
+import type { PlayableReturnPolicy } from "../core/contracts/playable-runtime";
 
 export type EventId = string;
 export type ChapterId = string;
@@ -69,6 +70,14 @@ export type EventParticipant = {
 
 export type EventRuntimeAction = {
   type: "closeBuilding";
+} | {
+  type: "launchFlow";
+  flowId: string;
+  ownerContext: {
+    ownerKind: "house" | "dialogue" | "task" | "external";
+    ownerId: string | null;
+    returnPolicy: PlayableReturnPolicy;
+  };
 };
 
 export type EventDefinition = {

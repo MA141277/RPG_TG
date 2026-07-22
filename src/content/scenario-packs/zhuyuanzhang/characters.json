@@ -13,38 +13,6 @@
     "cityId": "city.kulan",
     "houseId": "home_001",
     "portraitId": "portrait.player",
-    "portraitVariants": [
-      {
-        "id": "stage-20",
-        "label": "通常",
-        "portraitId": "portrait.player.stage.20"
-      },
-      {
-        "id": "stage-25",
-        "label": "微笑",
-        "portraitId": "portrait.player.stage.25"
-      },
-      {
-        "id": "stage-26",
-        "label": "二十六岁",
-        "portraitId": "portrait.player.stage.26"
-      },
-      {
-        "id": "stage-29",
-        "label": "二十九岁",
-        "portraitId": "portrait.player.stage.29"
-      },
-      {
-        "id": "stage-34-39",
-        "label": "三十四至三十九岁",
-        "portraitId": "portrait.player.stage.34_39"
-      },
-      {
-        "id": "stage-40",
-        "label": "四十岁",
-        "portraitId": "portrait.player.stage.40"
-      }
-    ],
     "portraitVariantId": "stage-20",
     "stats": {
       "leadership": 60,

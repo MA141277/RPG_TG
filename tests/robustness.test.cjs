@@ -540,7 +540,23 @@ function createSampleScriptEditorProjectDefinition() {
       description: "Authoring-side project root.",
     },
     maps: [{ id: "map.test.script-editor", name: "Test Map" }],
-    people: [{ id: "person.hero", name: "Hero", role: "playable" }],
+    people: [
+      {
+        id: "person.hero",
+        name: "Hero",
+        role: "playable",
+        portraitId: "portrait.hero",
+      },
+    ],
+    portraits: [
+      {
+        id: "portrait.hero",
+        label: "Hero Portrait",
+        portraitImage: "builtin:user/20.png",
+        avatarImage: "builtin:user/20 - touxiang.png",
+      },
+    ],
+    portraitVariants: [],
     cities: [{ id: "city.start", name: "Starting City" }],
     buildings: [{ id: "building.home", cityId: "city.start", name: "Home" }],
     cityEntries: [],
@@ -2424,11 +2440,15 @@ test("zhuyuanzhang scenario pack manifest includes pack-local city and access ta
   assert.equal(typeof packManifest.files.cityEntries, "string");
   assert.equal(typeof packManifest.files.cityNpcPools, "string");
   assert.equal(typeof packManifest.files.cityPortraits, "string");
+  assert.equal(typeof packManifest.files.portraits, "string");
+  assert.equal(typeof packManifest.files.portraitVariants, "string");
 
   [
     packManifest.files.cityEntries,
     packManifest.files.cityNpcPools,
     packManifest.files.cityPortraits,
+    packManifest.files.portraits,
+    packManifest.files.portraitVariants,
   ].forEach((fileName) => {
     assert.equal(
       fs.existsSync(path.join(packRoot, fileName)),
@@ -4293,7 +4313,7 @@ test(
     assert.equal(exportedPack.characters[0]?.birthYear, 0);
     assert.equal(exportedPack.characters[0]?.age, 0);
     assert.equal(exportedPack.characters[0]?.cityId, "city.start");
-    assert.equal(exportedPack.characters[0]?.portraitId, "portrait.default");
+    assert.equal(exportedPack.characters[0]?.portraitId, "portrait.hero");
     assert.equal(exportedPack.characters[0]?.stats?.leadership, 0);
     assert.equal(exportedPack.characters[0]?.stats?.gold, 0);
     assert.equal(exportedPack.characters[0]?.skills?.military, 0);
@@ -6005,6 +6025,8 @@ test(
     assert.equal(manifest.files.historicalCharacters, "./historical-characters.json");
     assert.equal(manifest.files.historicalCityRosters, "./historical-city-rosters.json");
     assert.equal(manifest.files.cityPortraits, "./city-portraits.json");
+    assert.equal(manifest.files.portraits, "./portraits.json");
+    assert.equal(manifest.files.portraitVariants, "./portrait-variants.json");
     assert.equal(
       manifest.files.historicalCharacterIdByCharacterId,
       "./historical-character-id-map.json"
@@ -6119,6 +6141,8 @@ test(
     assert.deepEqual(exportedPack.historicalCharacters, sourcePack.historicalCharacters);
     assert.deepEqual(exportedPack.historicalCityRosters, sourcePack.historicalCityRosters);
     assert.deepEqual(exportedPack.cityPortraits, sourcePack.cityPortraits);
+    assert.deepEqual(exportedPack.portraits, sourcePack.portraits);
+    assert.deepEqual(exportedPack.portraitVariants, sourcePack.portraitVariants);
     assert.deepEqual(
       exportedPack.historicalCharacterIdByCharacterId,
       sourcePack.historicalCharacterIdByCharacterId
@@ -6851,6 +6875,74 @@ test("loaded scenario-pack mod startup metadata resolves dialogue startup throug
     dialogueId: "dialogue.opening",
     view: "dialogue",
   });
+});
+
+test("zhuyuanzhang portrait resources are pack-owned and characters no longer inline portrait variants", () => {
+  const packRoot = path.join(
+    process.cwd(),
+    "src",
+    "content",
+    "scenario-packs",
+    "zhuyuanzhang"
+  );
+  const characters = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "characters.json"), "utf8")
+  );
+  const portraits = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "portraits.json"), "utf8")
+  );
+  const portraitVariants = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "portrait-variants.json"), "utf8")
+  );
+
+  assert.equal(
+    characters.every((character) => !Object.hasOwn(character, "portraitVariants")),
+    true
+  );
+  assert.equal(
+    portraits.some((portrait) => portrait.id === "portrait.player"),
+    true
+  );
+  assert.equal(
+    portraits.some((portrait) => portrait.id === "portrait.kulan_xu_da"),
+    true
+  );
+  assert.equal(
+    portraitVariants.some(
+      (variant) =>
+        variant.id === "stage-20" &&
+        variant.parentPortraitId === "portrait.player" &&
+        variant.portraitId === "portrait.player.stage.20"
+    ),
+    true
+  );
+});
+
+test("prototype startup materializes portrait variants from pack-owned portrait families", () => {
+  const playerDefinition = prototypeCharacters.find(
+    (character) => character.id === "char.player"
+  );
+  const stageCharacters = createPrototypeCharactersForStoryStage(
+    ZHU_YUANZHANG_STORY_STAGES.guoZixingCamp
+  );
+  const stagedPlayer = stageCharacters.find(
+    (character) => character.id === "char.player"
+  );
+
+  assert.equal(Object.hasOwn(playerDefinition, "portraitVariants"), false);
+  assert.equal(playerDefinition.portraitVariantId, "stage-20");
+  assert.equal(Array.isArray(stagedPlayer.portraitVariants), true);
+  assert.equal(
+    stagedPlayer.portraitVariants.some(
+      (variant) =>
+        variant.id === "stage-20" &&
+        variant.parentPortraitId === undefined &&
+        variant.portraitId === "portrait.player.stage.20" &&
+        typeof variant.portraitImageUrl === "string"
+    ),
+    true
+  );
+  assert.equal(stagedPlayer.portraitImageUrl, "builtin:user/20.png");
 });
 
 test("scenario startup target resolves direct map city house and dialogue starts", () => {
@@ -8781,7 +8873,7 @@ test("script editor workspace groups creator navigation by project top bar, worl
       },
       {
         label: "世界",
-        families: ["people", "cities", "buildings"],
+        families: ["people", "portraits", "portraitVariants", "cities", "buildings"],
       },
       {
         label: "剧情与文本",
@@ -8804,6 +8896,28 @@ test("script editor workspace groups creator navigation by project top bar, worl
     true
   );
   assert.equal(workspace.objectTreeGroups[0]?.nodes[0]?.label, "剧本导出");
+});
+
+test("script editor workspace shell exposes portrait families in the world group for new projects", () => {
+  const {
+    createScriptEditorWorkspaceShellViewModel,
+  } = require("../.test-dist/application/script-editor/workspace-shell.js");
+  const {
+    createDefaultScriptEditorProjectDefinition,
+  } = require("../.test-dist/application/script-editor/minimal-workflow.js");
+  const project = createDefaultScriptEditorProjectDefinition();
+
+  const workspace = createScriptEditorWorkspaceShellViewModel({ project });
+  const worldGroup = workspace.objectTreeGroups.find((group) => group.id === "world");
+
+  assert.deepEqual(
+    worldGroup?.nodes.map((node) => node.family),
+    ["people", "portraits", "portraitVariants", "cities", "buildings"]
+  );
+  assert.equal(
+    worldGroup?.nodes.find((node) => node.family === "portraits")?.itemCount,
+    1
+  );
 });
 
 test("script editor PRD workspace shell exposes a Chinese-first project overview", () => {

@@ -1,9 +1,10 @@
 import {
   getSampleChoiceOptions,
   sampleCharacters,
+  sampleDialogue,
+  sampleDialoguesById,
   sampleEvent,
   sampleEventsById,
-  sampleScenesById,
 } from "../../content/sample-scenario";
 import { createInitialState } from "./create-initial-state";
 import { createGameStore } from "./game-store";
@@ -34,20 +35,20 @@ export function runSampleSceneFlow() {
       },
     },
     activeEventId: sampleEvent.id,
-    activeSceneId: sampleEvent.entrySceneId,
-    currentView: "scene",
+    activeDialogueId: sampleDialogue.id,
+    currentView: "dialogue",
   });
 
   const gameStore = createGameStore(initialState, {
     characterDefinitions: sampleCharacters,
     eventDefinitionsById: sampleEventsById,
-    sceneDefinitionsById: sampleScenesById,
+    dialogueDefinitionsById: sampleDialoguesById,
   });
 
-  const firstSnapshot = gameStore.syncScene();
-  const secondSnapshot = gameStore.advanceScene();
-  const thirdSnapshot = gameStore.advanceScene();
-  const fourthSnapshot = gameStore.advanceScene();
+  const firstSnapshot = gameStore.syncDialogue();
+  const secondSnapshot = gameStore.advanceDialogue();
+  const thirdSnapshot = gameStore.advanceDialogue();
+  const fourthSnapshot = gameStore.advanceDialogue();
 
   const choiceOptions = getSampleChoiceOptions();
   const finalSnapshot =

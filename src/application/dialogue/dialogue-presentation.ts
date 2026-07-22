@@ -8,7 +8,10 @@ export function resolveEventPresentationDialogueId(
     return null;
   }
 
-  const dialogueId = eventDefinition.dialogueId.trim();
+  const dialogueId =
+    typeof eventDefinition.dialogueId === "string"
+      ? eventDefinition.dialogueId.trim()
+      : "";
   return dialogueId.length > 0 ? dialogueId : null;
 }
 

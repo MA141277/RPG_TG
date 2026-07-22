@@ -1,4 +1,7 @@
-import { resolveContentPackMapAssetUrls } from "../content/content-pack-loader";
+import {
+  resolveContentPackMapAssetUrls,
+  resolveContentPackPortraitAssetUrls,
+} from "../content/content-pack-loader";
 import { assertHouseModuleDefaults } from "../content/house-module-defaults";
 import { GAME_VIEW_NAMES } from "../../domain/game-state";
 import type { ScenarioPackDefinition } from "../../domain/scenario-pack";
@@ -308,6 +311,12 @@ export function parseScenarioPack(value: unknown): ScenarioPackDefinition {
   if (value.cityPortraits != null) {
     assertObject(value.cityPortraits, "scenario city portraits");
   }
+  if (value.portraits != null) {
+    assertArray(value.portraits, "scenario portraits");
+  }
+  if (value.portraitVariants != null) {
+    assertArray(value.portraitVariants, "scenario portrait variants");
+  }
   if (value.textEntries != null) {
     assertObject(value.textEntries, "scenario text entries");
   }
@@ -432,6 +441,8 @@ type ScenarioPackManifestFiles = {
   cityNpcPools?: string;
   locationAccess?: string;
   houseModuleDefaults?: string;
+  portraits?: string;
+  portraitVariants?: string;
   historicalCharacters?: string;
   historicalCityRosters?: string;
   cityPortraits?: string;
@@ -530,6 +541,10 @@ async function hydrateScenarioPackManifest(
     hydratedFields.maps,
     manifestUrl
   );
+  const resolvedPortraits = resolveContentPackPortraitAssetUrls(
+    hydratedFields.portraits,
+    manifestUrl
+  );
 
   return {
     schemaVersion: manifest.schemaVersion,
@@ -538,6 +553,7 @@ async function hydrateScenarioPackManifest(
     ...(manifest.description == null ? {} : { description: manifest.description }),
     ...hydratedFields,
     ...(resolvedMaps == null ? {} : { maps: resolvedMaps }),
+    ...(resolvedPortraits == null ? {} : { portraits: resolvedPortraits }),
   };
 }
 
@@ -567,6 +583,11 @@ async function hydrateScenarioPackManifestFromFiles(
     manifestDirectoryPath,
     indexedFiles
   );
+  const resolvedPortraits = resolveImportedScenarioPackPortraitAssetUrls(
+    hydratedFields.portraits,
+    manifestDirectoryPath,
+    indexedFiles
+  );
 
   return {
     schemaVersion: manifest.schemaVersion,
@@ -575,7 +596,41 @@ async function hydrateScenarioPackManifestFromFiles(
     ...(manifest.description == null ? {} : { description: manifest.description }),
     ...hydratedFields,
     ...(resolvedMaps == null ? {} : { maps: resolvedMaps }),
+    ...(resolvedPortraits == null ? {} : { portraits: resolvedPortraits }),
   };
+}
+
+function resolveImportedScenarioPackPortraitAssetUrls(
+  portraits: ScenarioPackDefinition["portraits"],
+  manifestDirectoryPath: string,
+  indexedFiles: Record<string, ScenarioPackImportFileEntry>
+) {
+  if (!Array.isArray(portraits)) {
+    return portraits;
+  }
+
+  const assetUrlCache: Record<string, string> = {};
+  return portraits.map((portrait, index) => ({
+    ...portrait,
+    portraitImage: resolveImportedScenarioPackAssetReference(
+      portrait.portraitImage,
+      `scenario portraits[${index}].portraitImage`,
+      manifestDirectoryPath,
+      indexedFiles,
+      assetUrlCache
+    ),
+    ...(portrait.avatarImage == null
+      ? {}
+      : {
+          avatarImage: resolveImportedScenarioPackAssetReference(
+            portrait.avatarImage,
+            `scenario portraits[${index}].avatarImage`,
+            manifestDirectoryPath,
+            indexedFiles,
+            assetUrlCache
+          ),
+        }),
+  }));
 }
 
 function resolveImportedScenarioPackMapAssetUrls(
@@ -804,6 +859,25 @@ function isScenarioPackManifest(value: unknown): value is ScenarioPackManifest {
     typeof files.characters === "string" &&
     typeof files.events === "string" &&
     typeof files.dialogues === "string"
+  );
+}
+
+function resolveImportedScenarioPackAssetReference(
+  value: string,
+  label: string,
+  manifestDirectoryPath: string,
+  indexedFiles: Record<string, ScenarioPackImportFileEntry>,
+  assetUrlCache: Record<string, string>
+): string {
+  if (value.startsWith("builtin:")) {
+    return value;
+  }
+
+  return resolveImportedScenarioPackAssetUrl(
+    readImportedScenarioPackAssetPath(value, label),
+    manifestDirectoryPath,
+    indexedFiles,
+    assetUrlCache
   );
 }
 

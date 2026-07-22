@@ -47,12 +47,15 @@
 - `building creator-facing meaning remains function -> event -> dialogue/minigame/task/function even when implementation still travels through arrangement / event-binding / flow / playable.`
 - `trigger timing and shared trigger-context contracts are frozen across building enter, building function, dialogue, minigame, and task environments.`
 - `runtime export/import, runtime loading, editor preview, and reference resolution all understand the same event-centered no-scene model in the same incompatible batch.`
+- `building-function, task, and flow do not remain as alternate routing owners once event-only routing replacement is complete.`
+- `flow-originated event/reference semantics are replaced by first-class event/event-binding truth across editor-visible references, export/import, loader resolution, preview behavior, and runtime behavior.`
 - `portrait resources and portrait variants become project-owned authoring families with stable resource-to-file mapping, thumbnail/preview rendering, and runtime continuity.`
 
 ### Explicit Non-Goals
 
 - `Do not keep scene as a hidden secondary routing owner through entrySceneId, nextSceneId, scene-local callback chains, or dialogue-to-scene lowering seams.`
 - `Do not implement boundary-thinning, compatibility layering, temporary shims, bridge exports, or dual-path truth for scene retirement.`
+- `Do not preserve building-function, task, or flow as thin hidden routing wrappers after event-only routing replacement is claimed.`
 - `Do not weaken building runtime implementation seams that still travel through arrangement / event-binding / flow / playable.`
 - `Do not preserve portrait selection by reverse-collecting people[].portraitId values or leaking file paths into person records.`
 - `Do not split portrait resource convergence into a separate successor target/version that would leave MEMO-025 partially closed.`
@@ -88,6 +91,7 @@
 | `scene family retirement and content migration without compatibility residue` | `ACC-EVENT-CENTER-003; ACC-EVENT-CENTER-007` | `mapped` |
 | `building function meaning preservation under the new model` | `ACC-EVENT-CENTER-004` | `mapped` |
 | `runtime pack / loader / preview / export convergence for the new model` | `ACC-EVENT-CENTER-005` | `mapped` |
+| `event-only routing-family retirement and flow-to-event reference replacement` | `ACC-EVENT-ONLY-ROUTING-001; ACC-EVENT-ONLY-ROUTING-002; ACC-EVENT-ONLY-ROUTING-003; ACC-EVENT-ONLY-ROUTING-004; ACC-EVENT-ONLY-ROUTING-005; ACC-EVENT-ONLY-ROUTING-006` | `mapped` |
 | `portrait resource authoring, variant, and resource mapping convergence` | `ACC-EVENT-CENTER-006` | `mapped` |
 | `cross-environment trigger proof and portrait creator-path proof` | `ACC-EVENT-CENTER-008` | `mapped` |
 
@@ -99,6 +103,7 @@
 | `queue.event-router-only-trigger-contract-freeze` | `required` | `Freeze event as the only formal router and lock a shared trigger timing + trigger-context contract across building, dialogue, minigame, and task environments.` | `Admit after model unification and before scene retirement so every later queue can delete scene routing truth without redefining trigger semantics mid-flight.` |
 | `queue.scene-family-retirement-and-content-migration` | `required` | `Remove scene from Script Editor/project/runtime/startup/presenter truth and migrate backgrounds, narration, speaker lines, portrait placement, choice presentation, and follow-up ownership into city/building/dialogue/event families.` | `Admit only after event-centered model and router-only contracts are frozen. This queue and runtime-pack sync must execute inside the same parent execution domain with no interleaving queue.` |
 | `queue.event-centered-runtime-pack-preview-export-sync` | `required` | `Converge runtime pack export/import, loader, preview, reference resolution, and runtime reader behavior on the new no-scene event-centered model.` | `Admit immediately after scene retirement. The scene-retirement queue cannot claim completion while this queue leaves editor/runtime/export divergence or old scene compatibility truth.` |
+| `queue.event-only-routing-family-retirement-and-reference-replacement` | `required` | `Retire building-function/task/flow as alternate routing owners and replace flow-originated event/reference truth with first-class event/event-binding ownership without widening existing queue claim boundaries.` | `Admit only after queue.event-centered-runtime-pack-preview-export-sync closes. It must remain a distinct same-target queue and must execute before portrait convergence or final acceptance.` |
 | `queue.portrait-resource-authoring-and-resource-mapping-convergence` | `required` | `Add first-class portrait resources/variants/mappings with shared thumbnail, preview, and runtime resolution rules that align with dialogue/person authoring under the new model.` | `Admit after the event-centered model and no-scene runtime contract are stable. It may execute last inside the same target/version, but must not be routed to a different target/version.` |
 
 ## Acceptance Matrix Draft
@@ -110,6 +115,12 @@
 | `ACC-EVENT-CENTER-003` | `scene is removed from Script Editor visible families, project formal structure, runtime pack canonical families, startup truth, runtime state truth, and presenter truth.` | `queue.scene-family-retirement-and-content-migration` | `source-removal guards + migration tests` | `src/domain/action.ts; src/domain/script-editor-project.ts; src/application/scene/**; src/application/story/**; src/application/startup/**; src/ui/views/scene/**` | `Scene is only hidden in UI while remaining formal runtime/startup/export truth.` |
 | `ACC-EVENT-CENTER-004` | `Building creator-facing meaning remains function -> event -> dialogue/minigame/task/function while implementation may still use arrangement / event-binding / flow / playable.` | `queue.scene-family-retirement-and-content-migration` | `building runtime tests + browser proof + source review` | `src/application/building/**; src/application/script-editor/**; src/content/scenario-packs/**; tests/**` | `Building functions lose meaning, bypass event ownership, or are forced back into scene-shaped configuration.` |
 | `ACC-EVENT-CENTER-005` | `Editor preview, runtime export/import, runtime loading, and reference resolution all converge on the new event-centered no-scene model in the same incompatible batch.` | `queue.event-centered-runtime-pack-preview-export-sync` | `export/import/loader tests + preview/runtime tests + source guard` | `src/application/script-editor/runtime-pack-export.ts; src/application/script-editor/runtime-pack-import.ts; src/application/scenario/scenario-pack-loader.ts; preview/runtime loaders; tests/**` | `Editor can write the new model while runtime still expects scene truth, or old scene families remain as compatibility bridges.` |
+| `ACC-EVENT-ONLY-ROUTING-001` | `Script Editor no longer presents building-function or task as independent creator-facing routing systems parallel to event.` | `queue.event-only-routing-family-retirement-and-reference-replacement` | `UI/source review + authoring tests` | `src/domain/script-editor-project.ts; src/application/script-editor/**; src/ui/main-ui/main-ui-flow.js` | `Creators can still author follow-up routing through extra module families instead of event.` |
+| `ACC-EVENT-ONLY-ROUTING-002` | `Flow is removed as creator-facing routing family, runtime canonical routing family, pack canonical routing family, preview routing truth, and follow-up orchestration owner.` | `queue.event-only-routing-family-retirement-and-reference-replacement` | `source-removal guards + export/import/runtime tests` | `src/application/script-editor/runtime-pack-export.ts; src/application/script-editor/runtime-pack-import.ts; src/application/scenario/scenario-pack-loader.ts; src/application/runtime/**; tests/**` | `Flow remains canonical truth in any editor-visible, pack, loader, preview, or runtime routing surface.` |
+| `ACC-EVENT-ONLY-ROUTING-003` | `All effective flow-produced event semantics are replaced by first-class event/event-binding ownership without broken follow-up chains.` | `queue.event-only-routing-family-retirement-and-reference-replacement` | `runtime tests + preview tests + source review` | `src/application/building/**; src/application/story/**; src/application/runtime/**; tests/**` | `Deleting flow breaks trigger reachability, follow-up routing, return routing, or result dispatch.` |
+| `ACC-EVENT-ONLY-ROUTING-004` | `Editor-visible references, exported references, imported references, loader resolution, preview behavior, and runtime behavior all align on the same event-only routing truth.` | `queue.event-only-routing-family-retirement-and-reference-replacement` | `round-trip tests + preview/runtime tests` | `src/application/script-editor/runtime-pack-export.ts; src/application/script-editor/runtime-pack-import.ts; src/application/scenario/scenario-pack-loader.ts; preview/runtime loaders; tests/**` | `Editor writes event truth while export/import/loader/runtime still consume flow truth or compatibility reconstruction.` |
+| `ACC-EVENT-ONLY-ROUTING-005` | `Building interaction meaning remains interaction -> event -> dialogue/minigame/task/module after creator-facing family cleanup and flow retirement.` | `queue.event-only-routing-family-retirement-and-reference-replacement` | `building runtime tests + browser proof + source review` | `src/application/building/**; arrangement-hosted interaction dispatch paths; tests/**` | `Building interactions become placeholder-only, lose meaning, or bypass event ownership.` |
+| `ACC-EVENT-ONLY-ROUTING-006` | `No compatibility residue remains for flow/building-function/task routing truth once the replacement is claimed complete.` | `queue.event-only-routing-family-retirement-and-reference-replacement` | `source-removal guards + rejection tests` | `src/application/script-editor/**; src/application/runtime/**; tests/**` | `Bridge exports, loader-side reconstruction, hidden callback chains, or dual-path routing truth survive as production behavior.` |
 | `ACC-EVENT-CENTER-006` | `Portrait resources and portrait variants are first-class project-owned authoring/runtime families with stable mapping, thumbnail rendering, current preview rendering, and runtime continuity.` | `queue.portrait-resource-authoring-and-resource-mapping-convergence` | `authoring tests + export/import tests + runtime render tests + browser proof` | `src/domain/script-editor-project.ts; portrait authoring helpers/UI; resource mapping/runtime loaders; tests/**` | `Portrait lists stay empty in new projects, file mapping remains unstable, or editor/runtime resolve portraits differently.` |
 | `ACC-EVENT-CENTER-007` | `No compatibility residue remains for scene retirement, including scenes.json, SceneDefinition, ActionNode, entrySceneId, nextSceneId, activeSceneId, scene runtime session truth, or dialogue-to-scene lowering seams.` | `queue.scene-family-retirement-and-content-migration` | `source-removal guards + export/import rejection tests` | `src/domain/action.ts; src/application/script-editor/dialogue-story-runtime-materializer.ts; src/application/scene/**; src/application/content/active-game-content.ts; tests/**` | `Any compatibility reader/writer/materializer/shim survives as accepted production truth.` |
 | `ACC-EVENT-CENTER-008` | `Cross-environment simulated-human proof covers building, dialogue, minigame, and task trigger environments plus the smallest usable portrait creator path.` | `future required-final acceptance queue at formal target promotion time` | `browser simulated-human + acceptance ledger` | `tests/**; browser flow; version acceptance ledger` | `The target tries to close on unit tests alone or without proving the smallest usable creator path for portraits and trigger environments.` |
@@ -154,6 +165,25 @@
 - `src/application/presenter/**`
   - still consumes scene-shaped presenter inputs.
 
+### Current Event-Only Routing Replacement Anchors
+
+- `src/domain/script-editor-project.ts`
+  - still hosts creator-facing family and visible-object truth that can leave building-function/task as parallel routing surfaces.
+- `src/application/script-editor/**`
+  - still contains editor-visible routing family panels and reference surfaces that must converge on event-only truth.
+- `src/ui/main-ui/main-ui-flow.js`
+  - still contains authoring/UI surfaces whose naming and structure can preserve flow/building-function/task as hidden routing owners.
+- `src/application/script-editor/runtime-pack-export.ts`
+  - must stop exporting any canonical flow-owned routing truth once the replacement queue closes.
+- `src/application/script-editor/runtime-pack-import.ts`
+  - must stop importing or reconstructing flow-owned routing truth as canonical behavior.
+- `src/application/scenario/scenario-pack-loader.ts`
+  - must resolve event-only references directly rather than depending on flow reconstruction.
+- `src/application/building/**`
+  - still contains building interaction entry/settlement paths whose meaning must survive the routing-owner retirement.
+- `src/application/runtime/**`
+  - still contains runtime follow-up/return/result-dispatch paths that can preserve flow-owned truth if not explicitly replaced.
+
 ### Current Scene Removal Targets
 
 - `src/application/script-editor/dialogue-story-runtime-materializer.ts`
@@ -185,6 +215,12 @@
 - `sceneDefinitions` and `sceneDefinitionsById`
 - `people-driven reverse collection as portrait option truth`
 - `person-owned file-path portrait resolution`
+- `creator-facing building-function module ownership when it acts as a routing owner`
+- `creator-facing task module ownership when it acts as a follow-up router`
+- `flow as canonical routing truth in editor-visible structures`
+- `flow as canonical routing truth in pack export/import structures`
+- `flow as canonical routing truth in loader resolution and runtime execution`
+- `component-local callback chains that bypass event ownership`
 
 ## Compatibility Paths To Preserve
 
@@ -192,6 +228,7 @@
 - `Dialogue/minigame/task/function follow-up behavior remains event-routed and runnable after migration.`
 - `Normal start, JSON runtime pack import, and Script Editor runtime preview continue to converge on one shared runtime truth.`
 - `Portrait references remain stable ids after authoring/export/import/runtime round-trip.`
+- `Building interaction meaning and reachable outcomes survive after routing-owner retirement.`
 
 ## Candidate Queue Evidence Matrix
 
@@ -201,6 +238,7 @@
 | `queue.event-router-only-trigger-contract-freeze` | `MEMO-025; EventBindingRuntime governance history` | `ACC-EVENT-CENTER-002` | `src/domain/event.ts; trigger-context contracts; runtime entrypoints; tests/**` | `entrySceneId; nextSceneId; scene-local callback routing truth` | `EventBindingRuntime trigger discipline; arrangement/event-binding/flow/playable implementation path` | `The queue preserves scene routing as hidden fallback or leaves trigger timing/context under family-specific ad hoc contracts.` |
 | `queue.scene-family-retirement-and-content-migration` | `MEMO-025; this evidence draft` | `ACC-EVENT-CENTER-003; ACC-EVENT-CENTER-004; ACC-EVENT-CENTER-007` | `src/domain/action.ts; src/domain/script-editor-project.ts; src/application/scene/**; src/application/story/**; src/application/startup/**; src/ui/views/scene/**` | `SceneDefinition; ActionNode; activeSceneId; scene runtime/session/presenter/startup truth` | `building meaning preservation; dialogue presentation after migration` | `The queue only hides scenes from UI, leaves dialogue-to-scene lowering, or tries to close before runtime/export/preview sync lands.` |
 | `queue.event-centered-runtime-pack-preview-export-sync` | `MEMO-025; runtime pack/export/import/runtime preview contracts` | `ACC-EVENT-CENTER-005` | `src/application/script-editor/runtime-pack-export.ts; src/application/script-editor/runtime-pack-import.ts; src/application/scenario/scenario-pack-loader.ts; preview/runtime loaders; tests/**` | `scenes.json; scene import/export bridges; scene startup pack truth` | `editor/runtime/export/import alignment under one incompatible model` | `The queue accepts editor-side new structures while runtime still consumes old scene truth or fallback bridges.` |
+| `queue.event-only-routing-family-retirement-and-reference-replacement` | `MEMO-025; docs/blueprints/specs/2026-07-22-script-editor-event-only-routing-and-flow-retirement-requirement-draft.md; this evidence draft` | `ACC-EVENT-ONLY-ROUTING-001; ACC-EVENT-ONLY-ROUTING-002; ACC-EVENT-ONLY-ROUTING-003; ACC-EVENT-ONLY-ROUTING-004; ACC-EVENT-ONLY-ROUTING-005; ACC-EVENT-ONLY-ROUTING-006` | `src/domain/script-editor-project.ts; src/application/script-editor/**; src/ui/main-ui/main-ui-flow.js; src/application/script-editor/runtime-pack-export.ts; src/application/script-editor/runtime-pack-import.ts; src/application/scenario/scenario-pack-loader.ts; src/application/building/**; src/application/runtime/**; tests/**` | `creator-facing building-function/task routing ownership; canonical flow routing truth; flow-originated callback/reference chains` | `building interaction meaning; event-binding trigger semantics; normal start / JSON import / editor preview convergence` | `The queue is merged into scene retirement, runtime sync, or portrait convergence and therefore becomes thin UI-only cleanup or thin runtime-only cleanup.` |
 | `queue.portrait-resource-authoring-and-resource-mapping-convergence` | `MEMO-025; this evidence draft` | `ACC-EVENT-CENTER-006` | `src/domain/script-editor-project.ts; portrait authoring helpers/UI; resource mapping/runtime loaders; tests/**` | `reverse-collected portrait options; unstable person-side mapping; text-only portrait selection without shared mapping rules` | `portraitId / portraitVariantId as stable references; shared runtime resolution; thumbnails/current preview continuity` | `The queue routes portrait resources to a later target/version or keeps file-path truth in people/dialogue records.` |
 
 ## Split Completeness Review
@@ -211,6 +249,7 @@
 - `event-only routing and trigger contract freeze are owned by queue.event-router-only-trigger-contract-freeze.`
 - `scene family retirement, content migration, and no-compatibility residue removal are owned by queue.scene-family-retirement-and-content-migration.`
 - `runtime pack / loader / preview / export / reference-resolution convergence is owned by queue.event-centered-runtime-pack-preview-export-sync.`
+- `event-only routing-family retirement and flow-to-event reference replacement are owned by queue.event-only-routing-family-retirement-and-reference-replacement.`
 - `portrait resources, portrait variants, resource mapping, and preview/list/thumbnail convergence are owned by queue.portrait-resource-authoring-and-resource-mapping-convergence.`
 
 ### Parent Capabilities Not Yet Owned
@@ -230,6 +269,7 @@
 
 - `queue.scene-family-retirement-and-content-migration` and `queue.event-centered-runtime-pack-preview-export-sync` must belong to the same parent execution domain and the same successor target/version.`
 - `Those two queues may remain split for execution clarity, but they must execute as a coupled consecutive pair with no unrelated queue interleaving and no claim of lawful completion while editor/runtime divergence remains.`
+- `queue.event-only-routing-family-retirement-and-reference-replacement` must remain a distinct same-target queue after queue.event-centered-runtime-pack-preview-export-sync closes; it must not be merged into scene retirement, runtime sync, or portrait convergence because doing so would erase the explicit cross-cutting routing-replacement obligation.`
 - `queue.portrait-resource-authoring-and-resource-mapping-convergence` may be sequenced last inside the same successor target/version, but it must not be deferred into a separate target/version because portrait resource convergence is part of MEMO-025's parent capability boundary.`
 
 ### Drift Risks Beyond Parent Requirement
@@ -243,7 +283,7 @@
 - `Current active version target.building-arrangement-container-flow-refactor must not absorb this work; the current parent target is insufficient.`
 - `Existing open targets target.city-building-module-entry-and-project-startup-authoring, target.script-editor-event-runtime-production-hardening, and target.map-review-provider-boundary-extraction are also insufficient because each would need parent-goal widening to own scene retirement plus portrait resource convergence.`
 - `The minimum lawful route is a new successor target/version: target.script-editor-event-centered-authoring-scene-retirement-and-portrait-resource-refactor.`
-- `Formal target promotion now exists and preserves the five proposed execution queues plus one required-final acceptance-and-residue-guard queue; no child queue has been admitted.`
+- `Formal target promotion now exists and preserves the original five proposed execution queues plus one required-final acceptance-and-residue-guard queue; mid-version candidate intake additionally records queue.event-only-routing-family-retirement-and-reference-replacement as a distinct same-target candidate queue.`
 
 ## First Queue Recommendation
 

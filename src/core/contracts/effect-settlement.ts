@@ -9,7 +9,6 @@ export type EffectEmitter =
   | "house-runtime"
   | "task-runtime"
   | "event-runtime"
-  | "scene-runtime"
   | "unknown";
 
 export type EffectSettlementApplier = "runtime-settlement";

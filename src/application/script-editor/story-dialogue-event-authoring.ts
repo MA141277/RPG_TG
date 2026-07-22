@@ -344,7 +344,6 @@ export function normalizeScriptEditorEventRecord(
     description: normalizeOptionalString(record.description),
     chapterId: normalizeOptionalString(record.chapterId),
     occurrence: normalizeEventOccurrence(record.occurrence),
-    entrySceneId: normalizeOptionalString(record.entrySceneId),
     participants: Array.isArray(record.participants)
       ? record.participants
       : [],

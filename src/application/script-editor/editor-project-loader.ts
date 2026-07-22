@@ -17,6 +17,8 @@ const OPTIONAL_SCRIPT_EDITOR_PROJECT_FILE_KEYS = new Set<ScriptEditorProjectFile
   "buildingArrangements",
   "eventBindings",
   "flows",
+  "portraits",
+  "portraitVariants",
 ]);
 
 type ScriptEditorProjectImportFileEntry = {
@@ -108,13 +110,20 @@ export function parseScriptEditorProject(
     value.eventBindings ?? [],
     "script editor project eventBindings"
   );
-  assertEntityRecordArray(value.scenes, "script editor project scenes");
   assertEntityRecordArray(value.quests, "script editor project quests");
   assertEntityRecordArray(value.activities, "script editor project activities");
   assertEntityRecordArray(value.cards, "script editor project cards");
   assertEntityRecordArray(value.valuables, "script editor project valuables");
   assertObjectRecordArray(value.cityNpcPools, "script editor project cityNpcPools");
   assertObject(value.houseModuleDefaults, "script editor project houseModuleDefaults");
+  assertEntityRecordArray(
+    value.portraits ?? [],
+    "script editor project portraits"
+  );
+  assertEntityRecordArray(
+    value.portraitVariants ?? [],
+    "script editor project portraitVariants"
+  );
   assertStringRecord(value.cityPortraits, "script editor project cityPortraits");
   assertEntityRecordArray(
     value.historicalCharacters,
@@ -147,6 +156,9 @@ export function parseScriptEditorProject(
     completionState: normalizeScriptEditorProjectCompletionState(
       value.completionState
     ),
+    portraits: (value.portraits ?? []) as ScriptEditorProjectDefinition["portraits"],
+    portraitVariants:
+      (value.portraitVariants ?? []) as ScriptEditorProjectDefinition["portraitVariants"],
     buildingArrangements:
       (value.buildingArrangements ?? []) as ScriptEditorProjectDefinition["buildingArrangements"],
     eventBindings: (value.eventBindings ?? []) as ScriptEditorProjectDefinition["eventBindings"],
@@ -382,14 +394,6 @@ function assertFlowRecordArray(value: unknown, label: string): void {
     assertObject(entry, entryLabel);
     assertString(entry.id, `${entryLabel}.id`);
     assertString(entry.title, `${entryLabel}.title`);
-    assertString(entry.playableId, `${entryLabel}.playableId`);
-    assertString(entry.integrationId, `${entryLabel}.integrationId`);
-    assertString(entry.ownerKind, `${entryLabel}.ownerKind`);
-    assertString(entry.ownerId, `${entryLabel}.ownerId`);
-    assertString(entry.returnPolicy, `${entryLabel}.returnPolicy`);
-    assertString(entry.triggerId, `${entryLabel}.triggerId`);
-    assertString(entry.triggerSource, `${entryLabel}.triggerSource`);
-    assertString(entry.triggerEvent, `${entryLabel}.triggerEvent`);
     assertString(entry.initialNodeId, `${entryLabel}.initialNodeId`);
     assertArray(entry.nodes, `${entryLabel}.nodes`);
     entry.nodes.forEach((node, nodeIndex) => {
@@ -397,18 +401,7 @@ function assertFlowRecordArray(value: unknown, label: string): void {
       assertString(node.id, `${entryLabel}.nodes[${nodeIndex}].id`);
       assertString(node.type, `${entryLabel}.nodes[${nodeIndex}].type`);
     });
-    assertArray(entry.launchPayload, `${entryLabel}.launchPayload`);
     assertArray(entry.outcomeRoutes, `${entryLabel}.outcomeRoutes`);
-    if (entry.eventStartTarget != null) {
-      assertObject(entry.eventStartTarget, `${entryLabel}.eventStartTarget`);
-      assertString(entry.eventStartTarget.eventId, `${entryLabel}.eventStartTarget.eventId`);
-      if (entry.eventStartTarget.bindingId != null) {
-        assertString(
-          entry.eventStartTarget.bindingId,
-          `${entryLabel}.eventStartTarget.bindingId`
-        );
-      }
-    }
   });
 }
 

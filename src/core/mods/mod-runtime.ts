@@ -14,6 +14,7 @@ import type {
 } from "../contracts/gameplay-contribution";
 import type { ContentPackDefinition } from "../../domain/content-pack";
 import type { ScenarioPackDefinition } from "../../domain/scenario-pack";
+import { resolveScenarioProfileStartupPresentation } from "../../domain/scenario-profile";
 import {
   loadModSource,
   type ModSourceLoaderContext,
@@ -52,6 +53,7 @@ export function createLoadedModFromScenarioPack(input: {
   baseContentPack?: ContentPackDefinition;
 }): LoadedMod {
   const profile = input.scenarioPack.scenarioProfile;
+  const startupPresentation = resolveScenarioProfileStartupPresentation(profile);
   const entryContentPackIds = Array.from(
     new Set([
       ...(input.baseContentPack == null ? [] : [input.baseContentPack.id]),
@@ -75,8 +77,11 @@ export function createLoadedModFromScenarioPack(input: {
         playerCharacterId: profile.playerCharacterId,
         mapId: profile.initialLocation.mapId,
         cityId: profile.initialLocation.cityId,
-        houseId: profile.initialLocation.houseId,
-        view: profile.initialLocation.view,
+        houseId: startupPresentation.currentHouseId,
+        ...(startupPresentation.activeDialogueId == null
+          ? {}
+          : { dialogueId: startupPresentation.activeDialogueId }),
+        view: startupPresentation.currentView,
       },
     },
     rawContent:
@@ -380,6 +385,9 @@ function createActivatedMod(loadedMod: LoadedMod): ActivatedMod {
       ...(loadedMod.manifest.defaultStart?.houseId == null
         ? {}
         : { houseId: loadedMod.manifest.defaultStart.houseId }),
+      ...(loadedMod.manifest.defaultStart?.dialogueId == null
+        ? {}
+        : { dialogueId: loadedMod.manifest.defaultStart.dialogueId }),
       ...(loadedMod.manifest.defaultStart?.view == null
         ? {}
         : { view: loadedMod.manifest.defaultStart.view }),
@@ -393,7 +401,7 @@ type ContributionSource = {
   cities?: unknown;
   cityEntries?: unknown;
   events?: unknown;
-  scenes?: unknown;
+  dialogues?: unknown;
   tasks?: unknown;
   houses?: unknown;
   playables?: unknown;
@@ -414,7 +422,9 @@ function installGameplayContributions(input: {
     ...collectRecordIds(sources, "cityEntries"),
   ]);
   const availableEvents = uniqueStrings(collectRecordIds(sources, "events"));
-  const availableScenes = uniqueStrings(collectRecordIds(sources, "scenes"));
+  const availableDialogues = uniqueStrings(
+    collectRecordIds(sources, "dialogues")
+  );
   const availableTasks = uniqueStrings(collectRecordIds(sources, "tasks"));
   const availableHouses = uniqueStrings(collectRecordIds(sources, "houses"));
   const availablePlayables = uniqueStrings(collectRecordIds(sources, "playables"));
@@ -457,10 +467,10 @@ function installGameplayContributions(input: {
       declaredIds: input.manifest.gameplayContributions?.events,
       availableIds: availableEvents,
     }),
-    scenes: resolveContributionIds({
-      family: "scenes",
-      declaredIds: input.manifest.gameplayContributions?.scenes,
-      availableIds: availableScenes,
+    dialogues: resolveContributionIds({
+      family: "dialogues",
+      declaredIds: input.manifest.gameplayContributions?.dialogues,
+      availableIds: availableDialogues,
     }),
     tasks: resolveContributionIds({
       family: "tasks",

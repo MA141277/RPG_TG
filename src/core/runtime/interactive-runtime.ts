@@ -266,8 +266,8 @@ function getActiveInteractiveSession(
     state.core.runtime.activitySession.type !== "result"
   ) {
     const source = {
-      type: "scene" as const,
-      sceneId: state.core.scene.activeSceneId ?? "scene.unknown",
+      type: "house" as const,
+      houseId: state.core.world.currentHouseId ?? "house.unknown",
     };
     return {
       kind,
@@ -279,11 +279,11 @@ function getActiveInteractiveSession(
       }) ?? {
         sessionId: "playable.activity-qte",
         playableId: "activity-qte",
-        integrationId: "playable.activity-qte.scene.default",
+        integrationId: "playable.activity-qte.dialogue.default",
         family: "minigame",
         ownerContext: {
-          ownerKind: "scene",
-          ownerId: source.sceneId,
+          ownerKind: "house",
+          ownerId: source.houseId,
           returnPolicy: "resume-owner",
         },
         status: "active",
@@ -293,8 +293,8 @@ function getActiveInteractiveSession(
 
   if (kind === "story-battle" && state.core.storyBattle != null) {
     const source = {
-      type: "scene" as const,
-      sceneId: state.core.scene.activeSceneId ?? "scene.unknown",
+      type: "house" as const,
+      houseId: state.core.world.currentHouseId ?? "house.unknown",
     };
     return {
       kind,
@@ -306,11 +306,11 @@ function getActiveInteractiveSession(
       }) ?? {
         sessionId: "playable.story-battle",
         playableId: "story-battle",
-        integrationId: "playable.story-battle.scene.default",
+        integrationId: "playable.story-battle.dialogue.default",
         family: "battle",
         ownerContext: {
-          ownerKind: "scene",
-          ownerId: source.sceneId,
+          ownerKind: "house",
+          ownerId: source.houseId,
           returnPolicy: "reenter-owner",
         },
         status: "active",

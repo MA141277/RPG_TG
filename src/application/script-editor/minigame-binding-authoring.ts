@@ -16,7 +16,7 @@ import type {
 
 export const SCRIPT_EDITOR_MINIGAME_OWNER_KINDS: readonly ScriptEditorMinigameOwnerKind[] = [
   "house",
-  "scene",
+  "dialogue",
   "task",
   "external",
 ] as const;
@@ -100,11 +100,11 @@ export function createDefaultScriptEditorMinigameRecord(
     title: `玩法绑定 ${suffix}`,
     description: "",
     playableId: "activity-qte",
-    integrationId: "playable.activity-qte.scene.default",
-    ownerKind: "scene",
+    integrationId: "playable.activity-qte.dialogue.default",
+    ownerKind: "dialogue",
     ownerId: "",
     returnPolicy: "resume-owner",
-    triggerId: "trigger.playable.activity-qte.scene.default",
+    triggerId: "trigger.playable.activity-qte.dialogue.default",
     triggerSource: "manual",
     triggerEvent: "legacy-activity-start",
     launchPayload: [createDefaultKeyValueEntry(0)],

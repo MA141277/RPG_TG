@@ -77,6 +77,8 @@ type RuntimePackManifestFiles = {
   cityNpcPools: string;
   locationAccess: string;
   houseModuleDefaults: string;
+  portraits: string;
+  portraitVariants: string;
   cityPortraits: string;
   historicalCharacters: string;
   historicalCityRosters: string;
@@ -120,6 +122,8 @@ const RUNTIME_PACK_CANONICAL_FILES: RuntimePackManifestFiles = {
   cityNpcPools: "./city-npc-pools.json",
   locationAccess: "./location-access.json",
   houseModuleDefaults: "./house-module-defaults.json",
+  portraits: "./portraits.json",
+  portraitVariants: "./portrait-variants.json",
   cityPortraits: "./city-portraits.json",
   historicalCharacters: "./historical-characters.json",
   historicalCityRosters: "./historical-city-rosters.json",
@@ -201,6 +205,8 @@ export function validateScriptEditorProjectForRuntimeExport(
       cityNpcPools: cityBuildingRuntimeFamilies.cityNpcPools,
       locationAccess: cityBuildingRuntimeFamilies.locationAccess,
       houseModuleDefaults: project.houseModuleDefaults,
+      portraits: project.portraits,
+      portraitVariants: project.portraitVariants,
       cityPortraits: project.cityPortraits,
       historicalCharacters: project.historicalCharacters,
       historicalCityRosters: project.historicalCityRosters,
@@ -403,6 +409,12 @@ export function exportScriptEditorProjectToScenarioPackFiles(
     ),
     [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.houseModuleDefaults)]: stringifyJson(
       project.houseModuleDefaults
+    ),
+    [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.portraits)]: stringifyJson(
+      project.portraits
+    ),
+    [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.portraitVariants)]: stringifyJson(
+      project.portraitVariants
     ),
     [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.cityPortraits)]: stringifyJson(
       project.cityPortraits
@@ -711,12 +723,54 @@ function materializeRuntimeCharacters(
   project: ScriptEditorProjectDefinition
 ) {
   const defaultCityId = project.cities[0]?.id;
-  return project.people.map((person) =>
-    materializeScriptEditorPersonRuntimeCharacter(person, {
-      ...(defaultCityId == null ? {} : { cityId: defaultCityId }),
-      portraitId: "portrait.default",
-    })
+  const defaultPortraitId = project.portraits[0]?.id;
+  const portraitResourceById = Object.fromEntries(
+    project.portraits.map((portrait) => [portrait.id, portrait])
   );
+
+  return project.people.map((person) => {
+    const character = materializeScriptEditorPersonRuntimeCharacter(person, {
+      ...(defaultCityId == null ? {} : { cityId: defaultCityId }),
+      ...(defaultPortraitId == null ? {} : { portraitId: defaultPortraitId }),
+    });
+    const portraitVariants = project.portraitVariants
+      .filter((variant) => variant.parentPortraitId === character.portraitId)
+      .map((variant) => {
+        const portrait = portraitResourceById[variant.portraitId];
+        return {
+          id: variant.id,
+          label: variant.label,
+          portraitId: variant.portraitId,
+          ...(portrait == null
+            ? {}
+            : {
+                portraitImageUrl: portrait.portraitImage,
+                ...(portrait.avatarImage == null
+                  ? {}
+                  : { avatarImageUrl: portrait.avatarImage }),
+              }),
+        };
+      });
+    const activeVariant =
+      portraitVariants.find((variant) => variant.id === character.portraitVariantId) ??
+      null;
+    const basePortrait = portraitResourceById[character.portraitId];
+
+    return {
+      ...character,
+      portraitVariants,
+      ...(activeVariant?.portraitImageUrl != null
+        ? { portraitImageUrl: activeVariant.portraitImageUrl }
+        : basePortrait == null
+          ? {}
+          : { portraitImageUrl: basePortrait.portraitImage }),
+      ...(activeVariant?.avatarImageUrl != null
+        ? { avatarImageUrl: activeVariant.avatarImageUrl }
+        : basePortrait?.avatarImage == null
+          ? {}
+          : { avatarImageUrl: basePortrait.avatarImage }),
+    };
+  });
 }
 
 function extractScenarioProfile(

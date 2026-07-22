@@ -6,7 +6,7 @@ export const SCENARIO_PACK_CANONICAL_FILES = {
   maps: "./maps.json",
   cityEntries: "./city-entries.json",
   events: "./events.json",
-  scenes: "./scenes.json",
+  dialogues: "./dialogues.json",
   tasks: "./tasks.json",
   activities: "./activities.json",
   textEntries: "./text-entries.json",

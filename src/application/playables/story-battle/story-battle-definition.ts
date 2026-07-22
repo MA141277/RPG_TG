@@ -19,10 +19,10 @@ function withPlayableSession(
       playableSession: {
         sessionId: "playable.story-battle",
         playableId: "story-battle",
-        integrationId: "playable.story-battle.scene.default",
+        integrationId: "playable.story-battle.dialogue.default",
         family: "battle",
         ownerContext: {
-          ownerKind: "scene",
+          ownerKind: ownerId == null ? "external" : "house",
           ownerId,
           returnPolicy: "reenter-owner",
         },
@@ -62,8 +62,9 @@ export function dispatchStoryBattlePlayableAction(input: {
   });
   const ownerId =
     input.state.core.runtime.playableSession?.ownerContext.ownerId ??
-    input.state.core.scene.activeSceneId ??
-    "scene.unknown";
+    input.state.core.dialogue.activeDialogueId ??
+    input.state.core.dialogue.activeEventId ??
+    input.state.core.world.currentHouseId;
   const nextCore =
     result.state.storyBattle == null
       ? {

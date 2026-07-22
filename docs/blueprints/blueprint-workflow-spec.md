@@ -66,6 +66,23 @@ Rules:
 6. A version memo is not a candidate queue set. Memo entries may record observations, drafts, or possible future work, but they must not be treated as executable candidates unless an operator explicitly asks to promote, inspect, or modify a memo entry.
 7. After a candidate or execution queue completes, the agent must not mine `docs/blueprints/version-memo.md` to decide what to execute next on its own. Memo lookup after queue completion is allowed only when the operator explicitly asks for memo screening, memo promotion, or a named memo/queue review.
 
+## 3.2 Controlled Vocabulary And Status Discipline
+
+Blueprint governance uses controlled field names and controlled values.
+
+Rules:
+
+1. The agent must use only the formal field names, status names, and allowed values defined by this spec, the active Blueprint templates, or the currently governed Blueprint documents.
+2. The agent must not invent new governance vocabulary, new pseudo-statuses, new blended status phrases, or new phase labels in order to summarize current truth.
+3. For version lifecycle, the only legal `version_status` values are:
+   - `open`
+   - `closed`
+4. Terms such as `done`, `archived`, `closeout-ready`, `closeout review`, `completed-but-open`, or any similar agent-invented wording are forbidden as version-status replacements, surrogate states, or implicit lifecycle labels unless a future formal spec explicitly adds them.
+5. `decision_state` is not a substitute for `version_status`. Combinations such as `open + promotion-review` are explanatory compositions of two formal fields, not third statuses.
+6. If current governance needs a concept that is not represented by an existing formal field or allowed value, the agent must not improvise a new status word. It must either:
+   - describe the situation using existing formal fields only; or
+   - update the governing spec/template first through an explicit governance change.
+
 ## 4. Single-Writer Truth Model
 
 ### 4.1 `project-progress.md`
@@ -278,7 +295,7 @@ Historical sections must be explicitly marked with historical or archival wordin
 - `Historical Handoff Note`
 - `Historical Candidate Notes`
 - `Closeout Decision`
-- `Archived Interpretation`
+- `Historical Interpretation`
 - `Historical Task Ledger`
 - `Progress Log`
 
@@ -1060,11 +1077,23 @@ Hard rules:
    - trigger timing or trigger-context behavior
    - runtime routing that must be observed through real interaction
 2. `proof_mode` must name the strongest available proof path, such as in-app browser interaction, runtime execution trace, test harness with visible output, or an explicitly justified equivalent.
-3. If local browser interaction is available, the gate should prefer the in-app browser or equivalent directly observable path over source-only reasoning.
-4. `proof_artifacts` must identify the concrete evidence used, such as commands, screenshots, traces, reports, or test cases.
-5. `fail_closed_check` must state how the covered behavior responds when required data, binding, or trigger prerequisites are absent.
-6. If the gate is waived, `waiver_basis` must state why browser/runtime interaction proof is unnecessary or currently impossible and what evidence replaces it.
-7. A queue or version must not claim UI/runtime completion on source-only evidence when the covered behavior is materially interaction-dependent.
+3. If local browser interaction is available, the gate must use the built-in in-app browser path for interaction proof rather than an external browser or source-only reasoning.
+4. If `proof_mode` claims simulated-human, browser-interaction, or equivalent UI proof, that proof must be human-visible and human-observable by default rather than a hidden or background-only automation run.
+5. Human-visible browser proof means:
+   - the built-in in-app browser surface is visibly rendered on screen
+   - the interactive target can be seen in that surface
+   - the click/input/scroll path can be observed while it happens
+6. Simulated-human proof must not be claimed from any of the following by themselves:
+   - direct business-function invocation
+   - direct state mutation
+   - non-visible background automation
+   - script-only success where the UI path itself was not visibly exercised
+7. If a tool is used to automate interaction, its role is to execute visible pointer/keyboard/scroll interaction on the rendered UI path rather than bypassing the interaction path.
+8. External visible browsers do not satisfy this gate when built-in in-app browser proof is required. If built-in in-app browser proof is unavailable, the gate must not describe the result as simulated-human proof; it must fall back to another truthful `proof_mode` or record a waiver/blocker.
+9. `proof_artifacts` must identify the concrete evidence used, such as commands, screenshots, traces, reports, or test cases.
+10. `fail_closed_check` must state how the covered behavior responds when required data, binding, or trigger prerequisites are absent.
+11. If the gate is waived, `waiver_basis` must state why browser/runtime interaction proof is unnecessary or currently impossible and what evidence replaces it.
+12. A queue or version must not claim UI/runtime completion on source-only evidence when the covered behavior is materially interaction-dependent.
 
 ### 8.9.2 Closeout Status Semantics
 
@@ -1139,8 +1168,7 @@ Rules:
 Allowed values:
 
 - `open`
-- `done`
-- `archived`
+- `closed`
 
 ### 9.2 `decision_state`
 
@@ -1161,16 +1189,15 @@ Allowed values while the version is open:
   - no active queue exists and no admission review is live
 - `open + blocked`
   - the version cannot advance until an explicit blocker is resolved
-- `done`
+- `closed`
   - the version is formally closed and no new queue may be added under it
-- `archived`
-  - the version is historical only
 
 Clarifications:
 
-1. `active_queue = none` does not mean the version is `done`.
+1. `active_queue = none` does not mean the version is `closed`.
 2. `active_queue = none` does not authorize fresh implementation.
 3. As long as `version_status = open`, a new queue may still be admitted through `promotion-review`.
+4. `decision_state` may change while `version_status` stays `open`; this does not create a new version status.
 
 ### 9.4 Version lifecycle authority
 
@@ -1182,10 +1209,11 @@ Rules:
 2. if no `open` version exists, version creation is the required next governance act before any new queue admission or implementation may begin
 3. an `open` version remains open until version closeout is explicitly confirmed and written into version-plan truth
 4. an `open` version may continue admitting new same-version queues even after all current queues are closed
-5. queue closeout may be automatic when the next legal step is unique; version closeout may become `closeout-ready`, but it must not become `done` without explicit human confirmation
+5. queue closeout may be automatic when the next legal step is unique, but the version must not become `closed` without explicit human confirmation
 6. if version closeout conditions are satisfied and no active queue remains, the agent may ask exactly one closeout confirmation question:
    - `close current version now, or keep it open for possible additional same-version queue admission`
 7. if the user does not explicitly confirm version closeout, the version stays `open`
+8. The agent must not coin a surrogate lifecycle term for an `open` version that is waiting on closeout confirmation. Use the existing structured fields instead.
 
 ### 9.5 State transitions
 
@@ -1201,6 +1229,10 @@ Rules:
   - when an active queue closes and version-level review is now the only legal next point
 - `active-execution -> idle-open`
   - when an active queue closes and no new review subject is pending
+- `idle-open -> closed`
+  - when the operator explicitly confirms closing the version and governing truth is synchronized
+- `promotion-review -> closed`
+  - when the operator explicitly confirms closing the version and governing truth is synchronized
 
 ## 10. Queue And Task Model
 
@@ -1355,6 +1387,15 @@ Blueprint must use a lawful-stop allow-list as the primary rule. A stop is legal
 
 If none of those are true, the agent must not stop. It must record the governance decision and continue to the next lawful step.
 
+Required self-check order:
+
+1. First evaluate the lawful-stop allow-list.
+2. Only if the agent believes a stop may be legal, then evaluate whether the current situation is merely a forbidden-stop state or other non-stop execution transition.
+3. If the allow-list is not satisfied, execution must continue regardless of whether the current state feels like a natural pause point.
+4. Forbidden-stop states are explanatory and defensive; they must not replace the allow-list as the primary legal test for stopping.
+
+The allow-list governs stop legality by stop-condition state, not by workflow stage. Reaching a stage such as task completion, queue closeout, queue switch, documentation sync, repository-sync record, or admission sync does not by itself satisfy the allow-list.
+
 Agent-local uncertainty is not a lawful stop condition. In particular, the agent must not treat any of the following as a stop basis by themselves:
 
 - incomplete memory of the current queue/task/doc state
@@ -1374,7 +1415,14 @@ Forbidden-stop states remain a secondary guardrail. In particular, if none of th
 
 Those are execution transitions, not lawful pause points.
 
-If any of those are true and the agent therefore stops or asks for input, it must first write the structured stop record in current version truth.
+If the agent concludes that a stop is lawful, it must write the structured stop record in current version truth before the response ends. The required fields are:
+
+- `stop_reason`
+- `stop_basis`
+- `next_unblocked_action`
+- `human_input_required`
+
+If any forbidden-stop state is present and the agent still stops or asks for input, the same structured stop record is required before the response ends.
 
 ### 11.2.0A Active Queue Continuous Execution Duty
 
@@ -1428,7 +1476,7 @@ When `post_queue_closeout_pause_policy = auto-continue`:
 1. Queue completion must not create a default pause or default `是否继续` question.
 2. If queue completion, verification, governance sync, and repository sync record are complete, and the next legal action is unique, the agent must automatically continue.
 3. Automatic continuation includes queue closeout, version review, same-family residue routing, next queue admission, and next active queue startup when each step is uniquely lawful.
-4. The agent may ask the operator only when multiple mutually exclusive legal branches exist, a real blocker exists, or version closeout would change `version_status` from `open` to `done`.
+4. The agent may ask the operator only when multiple mutually exclusive legal branches exist, a real blocker exists, or version closeout would change `version_status` from `open` to `closed`.
 
 When the operator explicitly requests queue-completion pauses, the agent must write the request into version-plan truth by setting:
 
@@ -1466,7 +1514,7 @@ The agent must then write:
 
 This policy does not change:
 
-1. the mandatory human confirmation before `version_status` changes from `open` to `done`
+1. the mandatory human confirmation before `version_status` changes from `open` to `closed`
 2. blocker handling
 3. human choice when multiple mutually exclusive legal branches exist
 4. the rule that a unique next step must not prompt the operator when pause policy is `auto-continue`
@@ -1569,9 +1617,19 @@ Rules:
 5. A test case may be marked complete only after it passes on the rerun that verifies the fix.
 6. A test suite may be marked complete only when every requested case has been run and every failed case has been rerun successfully, or when the remaining cases are explicitly unreachable because of a blocking bug that has been recorded.
 7. Do not silently skip cases, collapse cases into one representative case, or mark a partially run suite as complete.
-8. Every simulated-human test case must use the built-in browser control path for UI interaction and observation unless the operator explicitly authorizes a different UI-control channel.
-9. During test execution, failures must be recorded in a buglist instead of being fixed immediately, except when the operator explicitly asks to fix a specific bug or all bugs before the case set finishes.
-10. Buglist entries must record at minimum:
+8. Every simulated-human test case must use the built-in in-app browser control path for UI interaction and observation.
+9. Simulated-human means visible rendered-UI interaction in the built-in in-app browser, not hidden automation success. The browser surface must remain human-visible while the case runs.
+10. Simulated-human interaction should follow the closest available human path through visible UI elements, including pointer movement/click, keyboard input, scrolling, and other observable interactions as applicable.
+11. The following do not count as simulated-human proof by themselves:
+   - direct function calls
+   - direct state writes
+   - synthetic completion that bypasses the rendered control path
+   - non-visible or background-only browser automation
+   - external-browser-only interaction
+12. If an automation tool is still used, it may only count as simulated-human proof when it drives the visible UI path inside the built-in in-app browser rather than bypassing it.
+13. If the required interaction cannot be kept human-visible in the built-in in-app browser, record the result as another proof type or as blocked/waived; do not label it simulated-human.
+14. During test execution, failures must be recorded in a buglist instead of being fixed immediately, except when the operator explicitly asks to fix a specific bug or all bugs before the case set finishes.
+15. Buglist entries must record at minimum:
    - owning queue or affected queue candidate when known
    - test case id or scenario name
    - reproduction path
@@ -1579,10 +1637,10 @@ Rules:
    - suspected or confirmed cause
    - blocking level: `blocking | non-blocking`
    - repair status: `recorded | fixed | verified | reopened`
-11. Non-blocking bugs do not prevent the current test case set or execution queue from continuing.
-12. If a blocking bug prevents one test case from continuing, record the blocker and proceed to the next independent test case when possible.
-13. Bug repair normally begins after all planned queues finish. Repair may begin earlier only when the operator explicitly asks to fix a named bug, a subset of bugs, or all bugs.
-14. After each bug repair, rerun the failed built-in-browser test case(s) that produced the bug and update the buglist status only after verification passes.
+16. Non-blocking bugs do not prevent the current test case set or execution queue from continuing.
+17. If a blocking bug prevents one test case from continuing, record the blocker and proceed to the next independent test case when possible.
+18. Bug repair normally begins after all planned queues finish. Repair may begin earlier only when the operator explicitly asks to fix a named bug, a subset of bugs, or all bugs.
+19. After each bug repair, rerun the failed built-in-browser test case(s) that produced the bug and update the buglist status only after verification passes.
 
 ### 11.7 Task And Queue Repository Sync
 
@@ -1605,6 +1663,8 @@ After a queue reaches queue closeout:
 7. a completed queue-local `branch-commit` is not a pause boundary by itself
 8. after repository sync result is recorded, continue to the next lawful Blueprint scheduling action unless `post_queue_closeout_pause_policy = pause-when-explicitly-requested`, a blocker exists, multiple mutually exclusive legal branches exist, or version closeout confirmation is required
 9. local-record, branch-commit, attempted remote-sync, and recorded sync result are not lawful pause points by themselves
+10. If remote sync cannot actually be attempted, the queue-local sync record must state the concrete reason that prevented the attempt.
+11. A queue, version plan, or operator-facing summary must not describe repository sync as completed, attempted, or satisfied when the required sync step never started.
 
 Repository sync success or failure must not rewrite the already-recorded execution conclusion.
 
@@ -1647,7 +1707,7 @@ Hard throttle:
 
 Version-level exception:
 
-- version closeout confirmation is allowed, and required, when the version is closeout-ready and changing `version_status` to `done` would alter active truth
+- version closeout confirmation is allowed, and required, when version closeout conditions are already satisfied and changing `version_status` from `open` to `closed` would alter active truth
 - if closeout is not confirmed, resume from the still-open version rather than inferring closure
 
 ### 12.1 Explicit Operator-Directed Closure Or Suspension
@@ -1678,10 +1738,11 @@ Hard rules:
    - keep `version_status = open`
    - record `stop_reason = operator-requested-suspend`
    - record `stop_basis`, `next_unblocked_action`, and `human_input_required = false`
-   - do not mark the version `done` or `archived` merely to express suspension
+   - do not invent another version status merely to express suspension
 7. When the operator explicitly requests closing the current version:
-   - use `version_status = done` only if closeout truth is actually satisfied
-   - otherwise use `version_status = archived`
+   - use `version_status = closed`
+   - do not invent a third version status to represent early closure, forced closure, archival, or paused closure
+   - if closeout truth is not actually satisfied, record that fact explicitly in the version-plan closure/routing truth instead of counterfeiting acceptance completion
    - reconcile `active_queue`, candidate routing, and any remaining residue in the same write batch
 8. Operator-directed closure or suspension is a document-write action, not a conversation-only note. `project-progress`, `blueprint`, the current version plan, and any affected queue docs must be synchronized before the response ends when their owned truth changes.
 9. If a suspended queue or version is later resumed, resume from the written governance truth rather than recreating the item from scratch.
@@ -1692,7 +1753,7 @@ At minimum, Blueprint governance must satisfy:
 
 1. `project-progress.active_version == blueprint.active_version`
 2. `project-progress.has_active_queue == false` implies the version plan does not name an active queue
-3. `version_status = done` implies:
+3. `version_status = closed` implies:
    - `active_queue = none`
    - no active task may exist in any queue under that version
 4. a `done` queue must not contain:

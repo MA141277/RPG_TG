@@ -7,6 +7,10 @@ import type {
 } from "./location-access";
 import type { RuntimeTaskInput } from "../core/contracts/runtime-result";
 import type { FlowNode } from "./playables/flow";
+import type {
+  PortraitResourceDefinition,
+  PortraitVariantDefinition,
+} from "./portrait-resource";
 
 export const SCRIPT_EDITOR_PROJECT_KIND = "script-editor-project";
 export const SCRIPT_EDITOR_PROJECT_MANIFEST_FILE = "project.json";
@@ -34,6 +38,8 @@ export const SCRIPT_EDITOR_PROJECT_FILE_KEYS = [
   "valuables",
   "cityNpcPools",
   "houseModuleDefaults",
+  "portraits",
+  "portraitVariants",
   "cityPortraits",
   "historicalCharacters",
   "historicalCityRosters",
@@ -69,6 +75,8 @@ export const SCRIPT_EDITOR_PROJECT_CANONICAL_FILES: Record<
   valuables: "./valuables.json",
   cityNpcPools: "./city-npc-pools.json",
   houseModuleDefaults: "./house-module-defaults.json",
+  portraits: "./portraits.json",
+  portraitVariants: "./portrait-variants.json",
   cityPortraits: "./city-portraits.json",
   historicalCharacters: "./historical-characters.json",
   historicalCityRosters: "./historical-city-rosters.json",
@@ -99,6 +107,9 @@ export type ScriptEditorPersonTradeBinding = {
   enabled: boolean;
   entryId: string;
 };
+
+export type ScriptEditorPortraitResourceRecord = PortraitResourceDefinition;
+export type ScriptEditorPortraitVariantRecord = PortraitVariantDefinition;
 
 export type ScriptEditorMenuTargetFamily =
   | "dialogue"
@@ -486,7 +497,7 @@ export type ScriptEditorEventPreviewSummary = {
 
 export type ScriptEditorMinigameOwnerKind =
   | "house"
-  | "scene"
+  | "dialogue"
   | "task"
   | "external";
 
@@ -533,7 +544,7 @@ export type ScriptEditorMinigameRecord = ScriptEditorEntityRecord & {
 
 export type ScriptEditorFlowOwnerKind =
   | "building"
-  | "scene"
+  | "dialogue"
   | "task"
   | "external";
 
@@ -546,19 +557,6 @@ export type ScriptEditorFlowTriggerSource =
 export type ScriptEditorFlowRecord = ScriptEditorEntityRecord & {
   title: string;
   description?: string;
-  playableId: string;
-  integrationId: string;
-  ownerKind: ScriptEditorFlowOwnerKind;
-  ownerId: string;
-  returnPolicy: ScriptEditorMinigameReturnPolicy;
-  triggerId: string;
-  triggerSource: ScriptEditorFlowTriggerSource;
-  triggerEvent: string;
-  eventStartTarget?: {
-    eventId: string;
-    bindingId?: string;
-  };
-  launchPayload: ScriptEditorKeyValueEntry[];
   initialNodeId: string;
   nodes: FlowNode[];
   outcomeRoutes: ScriptEditorMinigameOutcomeRoute[];
@@ -661,6 +659,8 @@ export type ScriptEditorProjectDefinition = {
   valuables: ScriptEditorEntityRecord[];
   cityNpcPools: ScriptEditorRuntimeRecord[];
   houseModuleDefaults: Record<string, unknown>;
+  portraits: ScriptEditorPortraitResourceRecord[];
+  portraitVariants: ScriptEditorPortraitVariantRecord[];
   cityPortraits: Record<string, string>;
   historicalCharacters: ScriptEditorEntityRecord[];
   historicalCityRosters: ScriptEditorRuntimeRecord[];

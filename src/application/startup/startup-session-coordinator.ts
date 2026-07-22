@@ -436,8 +436,8 @@ function readBuiltinStartupStoryBootstrap(
 
   return {
     eventId: "event.story.zhu_yuanzhang.haozhou_return_encounter",
-    sceneCursor: 4,
-    sceneStatus: "playing",
+    dialogueCursor: 4,
+    dialogueStatus: "playing",
   };
 }
 

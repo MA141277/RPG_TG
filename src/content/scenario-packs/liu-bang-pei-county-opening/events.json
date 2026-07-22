@@ -16,10 +16,10 @@
         "required": true
       }
     ],
-    "entrySceneId": "scene.story.liu_bang.pei_county_opening",
     "tags": [
       "json-pack",
       "opening"
-    ]
+    ],
+    "dialogueId": "scene.story.liu_bang.pei_county_opening"
   }
 ]

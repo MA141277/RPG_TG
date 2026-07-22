@@ -21,15 +21,15 @@ const builtinPlayableIntegrations: PlayableIntegrationDefinition[] = [
     outcomeConfig: {},
   },
   {
-    integrationId: "playable.activity-qte.scene.default",
+    integrationId: "playable.activity-qte.dialogue.default",
     playableId: "activity-qte",
     ownerDefaults: {
-      ownerKind: "scene",
+      ownerKind: "dialogue",
       returnPolicy: "resume-owner",
     },
     trigger: {
-      triggerId: "trigger.playable.activity-qte.scene.default",
-      ownerKind: "scene",
+      triggerId: "trigger.playable.activity-qte.dialogue.default",
+      ownerKind: "dialogue",
       trigger: "legacy-activity-start",
     },
     outcomeConfig: {},
@@ -77,15 +77,15 @@ const builtinPlayableIntegrations: PlayableIntegrationDefinition[] = [
     outcomeConfig: {},
   },
   {
-    integrationId: "playable.story-battle.scene.default",
+    integrationId: "playable.story-battle.dialogue.default",
     playableId: "story-battle",
     ownerDefaults: {
-      ownerKind: "scene",
+      ownerKind: "dialogue",
       returnPolicy: "reenter-owner",
     },
     trigger: {
-      triggerId: "trigger.playable.story-battle.scene.default",
-      ownerKind: "scene",
+      triggerId: "trigger.playable.story-battle.dialogue.default",
+      ownerKind: "dialogue",
       trigger: "legacy-story-battle-start",
     },
     outcomeConfig: {},

@@ -270,13 +270,17 @@
 - interaction_path:
   - `Replace with the real interaction path that was executed or intentionally waived.`
 - proof_mode:
-  - `in-app-browser | runtime-trace | automated-test-visible-output | equivalent-waiver`
+  - `human-visible-in-app-browser | runtime-trace | automated-test-visible-output | equivalent-waiver`
 - proof_artifacts:
   - `Replace with commands, screenshots, traces, reports, or test cases that prove the covered behavior.`
 - fail_closed_check:
   - `Replace with how missing data, missing binding, blocked trigger, or empty state behaves on the covered path.`
 - waiver_basis:
   - `none | Replace with why interaction proof is not required or not currently possible and what evidence replaces it.`
+- simulated_human_visibility:
+  - `visible-human-observed | not-applicable | waived`
+- interaction_semantics:
+  - `Replace with whether proof used visible pointer/keyboard/scroll interaction on rendered UI controls inside the built-in in-app browser rather than hidden/background automation, external-browser-only interaction, or direct function/state bypass.`
 
 ### Admission Preconditions
 

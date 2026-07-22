@@ -302,7 +302,7 @@ export function dispatchStoryBattleAction(
       },
       ui: {
         ...reviewSyncedState.ui,
-        currentView: completion.enterHouseId == null ? "scene" : "house",
+        currentView: completion.enterHouseId == null ? "dialogue" : "house",
         mainHouseMissionText:
           completion.mainMissionText ??
           getStoryBattleText(
@@ -427,7 +427,7 @@ export function dispatchStoryBattleAction(
       },
       ui: {
         ...reviewSyncedState.ui,
-        currentView: completion.enterHouseId == null ? "scene" : "house",
+        currentView: completion.enterHouseId == null ? "dialogue" : "house",
         mainHouseMissionText:
           completion.mainMissionText ??
           getStoryBattleText(

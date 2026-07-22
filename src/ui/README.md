@@ -12,7 +12,7 @@
 
 - `views/map/map-view.ts`
 - `views/city/city-view.ts`
-- `views/scene/scene-view.ts`
+- `views/dialogue/dialogue-view.ts`
 - `views/minigame/minigame-view.ts`
 
 优先补齐的组件：

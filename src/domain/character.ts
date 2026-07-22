@@ -1,4 +1,4 @@
-import type { SceneId } from "./action";
+import type { DialogueId } from "./dialogue";
 import type { EventId } from "./event";
 
 export type CharacterId = string;
@@ -52,6 +52,8 @@ export type PortraitVariant = {
   id: string;
   label: string;
   portraitId: string;
+  portraitImageUrl?: string;
+  avatarImageUrl?: string;
 };
 
 export type LeaderResidenceStatus = "available" | "busy" | "closed";
@@ -60,7 +62,7 @@ export type CharacterFunctionType =
   | "trade"
   | "minigame"
   | "modify-stats"
-  | "open-scene"
+  | "open-dialogue"
   | "open-event"
   | "recruit"
   | "gift"
@@ -71,7 +73,7 @@ export type CharacterFunction = {
   label: string;
   type: CharacterFunctionType;
   enabled?: boolean;
-  sceneId?: SceneId;
+  dialogueId?: DialogueId;
   eventId?: EventId;
   minigameId?: string;
   effects?: Array<{
@@ -101,6 +103,8 @@ export type CharacterDefinition = {
   portraitId: string;
   portraitVariants?: PortraitVariant[];
   portraitVariantId?: string | null;
+  portraitImageUrl?: string;
+  avatarImageUrl?: string;
   spriteId?: string;
   defaultSide?: "left" | "right";
   stats: CharacterStats;
@@ -112,7 +116,7 @@ export type CharacterDefinition = {
   leaderResidenceStatus?: LeaderResidenceStatus;
   availableFunctions: CharacterFunction[];
   customProperties?: CharacterCustomProperties;
-  onTalkSceneId?: SceneId;
+  onTalkDialogueId?: DialogueId;
   skills?: Record<SkillKey, number>;
   teachableSkillKeys?: SkillKey[];
 };

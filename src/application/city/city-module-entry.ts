@@ -19,7 +19,7 @@ export type CityModuleEntryInput = {
 
 export type CityModuleStage = Extract<AppPresenterStageOutput, { type: "city" }>;
 export type CityModuleUnderlay = NonNullable<
-  Extract<AppPresenterStageOutput, { type: "scene" }>["cityUnderlay"]
+  Extract<AppPresenterStageOutput, { type: "dialogue" }>["cityUnderlay"]
 >;
 
 export function selectCityModuleUnderlay(

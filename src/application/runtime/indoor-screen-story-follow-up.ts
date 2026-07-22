@@ -1,14 +1,14 @@
 import type { AppState } from "../app-shell";
 import type { ActivityDefinition } from "../../domain/activity";
-import type { SceneDefinition } from "../../domain/action";
+import type { RuntimeDialogueDefinition } from "../../domain/dialogue";
 import type { CharacterDefinition } from "../../domain/character";
 import type { EventBinding, EventDefinition } from "../../domain/event";
-import { runStoryTriggerRuntime } from "../../core/runtime/scene-runtime";
+import { runStoryTriggerRuntime } from "../../core/runtime/dialogue-runtime";
 
 export type IndoorScreenStoryFollowUpContent = {
   eventDefinitionsById: Record<string, EventDefinition>;
   eventBindingsById?: Record<string, EventBinding>;
-  sceneDefinitionsById: Record<string, SceneDefinition>;
+  dialogueDefinitionsById: Record<string, RuntimeDialogueDefinition>;
   activityDefinitionsById?: Record<string, ActivityDefinition>;
   textEntriesById?: Record<string, string>;
 };
@@ -18,7 +18,7 @@ export function applyIndoorScreenStoryFollowUp(input: {
   content: IndoorScreenStoryFollowUpContent;
 }): AppState {
   const { appState, content } = input;
-  if (appState.gameState.scene.activeSceneId != null) {
+  if (appState.gameState.dialogue.activeDialogueId != null) {
     return appState;
   }
 
@@ -34,7 +34,7 @@ export function applyIndoorScreenStoryFollowUp(input: {
     ...(content.eventBindingsById == null
       ? {}
       : { eventBindingsById: content.eventBindingsById }),
-    sceneDefinitionsById: content.sceneDefinitionsById,
+    dialogueDefinitionsById: content.dialogueDefinitionsById,
     ...(content.activityDefinitionsById == null
       ? {}
       : { activityDefinitionsById: content.activityDefinitionsById }),

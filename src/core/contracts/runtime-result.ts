@@ -47,12 +47,6 @@ export type RuntimeResult = {
   buildingStatusById?: BuildingStatusById;
   access?: LocationAccessResult;
   navigation?: NavigationTarget | null;
-  scene?:
-    | {
-        sceneId: string;
-        currentNodeId?: string | null;
-      }
-    | null;
   taskInputs?: RuntimeTaskInput[];
   followUp?: RuntimeFollowUp | null;
 };

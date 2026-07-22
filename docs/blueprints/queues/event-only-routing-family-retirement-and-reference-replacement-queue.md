@@ -21,9 +21,9 @@
 - next_family_candidate: `none`
 - auto_continue_eligible: `false`
 - next_effect: `none`
-- sync_status: `pending`
-- sync_scope: `local-record`
-- sync_summary: `Queue closeout truth is synchronized locally. Under the current version-local repository sync gate, the next queue may not be admitted until one minimum branch-commit and remote push attempt has been attempted and its result recorded.`
+- sync_status: `success`
+- sync_scope: `remote-sync`
+- sync_summary: `Repository sync gate satisfied: commit 8c9f1f2 landed locally and push to origin/mod-first-dev succeeded before portrait-queue admission began.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
@@ -218,9 +218,9 @@
 
 - queue_goal: `Replace creator-facing and runtime flow/task/building-function routing truth with one event-only routing model.`
 - task_count: `3`
-- completed_task_count: `1`
-- remaining_task_count: `2`
-- active_task_summary: `Retire visible flow/task/building-function routing ownership and replace canonical flow references with event/event-binding truth without compatibility residue.`
+- completed_task_count: `3`
+- remaining_task_count: `0`
+- active_task_summary: `Completed. Creator-facing flow routing ownership is retired, canonical runtime/content truth is flowPlayables, and the queue is closed with repository sync already satisfied.`
 - task_briefs:
   - `task.event-only-routing-family-retirement-and-reference-replacement.evidence-anchor-reconcile: Lock the creator-facing/runtime routing-owner residue boundary and confirm the first lawful implementation slice.`
   - `task.event-only-routing-family-retirement-and-reference-replacement.contract-implementation: Land the first event-only routing replacement slice without hiding remaining canonical routing truth.`
@@ -238,7 +238,7 @@
 
 ### Completion Completeness Review
 
-- review_status: `in-progress`
+- review_status: `done`
 - can_claim_coverage:
   - `ACC-EVENT-ONLY-ROUTING-001 / 002 / 003 / 004 / 005 / 006 are now covered: creator-facing flow routing is hidden from the visible shell, canonical runtime/content family truth has been renamed to flowPlayables, retired flowDefinitions imports fail closed, and runtime preview/runtime execution now consume flowPlayablesById on one event-owned routing chain.`
 - parent_spec_preservation:

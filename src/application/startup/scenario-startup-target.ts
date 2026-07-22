@@ -1,5 +1,8 @@
 import type { GameState } from "../../domain/game-state";
-import type { ScenarioProfileDefinition } from "../../domain/scenario-profile";
+import {
+  resolveScenarioProfileStartupPresentation,
+  type ScenarioProfileDefinition,
+} from "../../domain/scenario-profile";
 
 export type ScenarioStartupTarget = {
   currentMapId: string;
@@ -12,18 +15,13 @@ export type ScenarioStartupTarget = {
 export function resolveScenarioStartupTarget(
   profile: ScenarioProfileDefinition
 ): ScenarioStartupTarget {
-  const currentView =
-    profile.launchPolicy?.initialView ?? profile.initialLocation.view;
+  const presentation = resolveScenarioProfileStartupPresentation(profile);
 
   return {
     currentMapId: profile.initialLocation.mapId,
     currentCityId: profile.initialLocation.cityId,
-    currentHouseId:
-      currentView === "house" ? profile.initialLocation.houseId : null,
-    currentView,
-    activeDialogueId:
-      currentView === "dialogue"
-        ? profile.initialLocation.dialogueId ?? null
-        : null,
+    currentHouseId: presentation.currentHouseId,
+    currentView: presentation.currentView,
+    activeDialogueId: presentation.activeDialogueId,
   };
 }

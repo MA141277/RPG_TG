@@ -24,6 +24,22 @@ export type ViewName =
   | "dialogue"
   | "battle"
   | "minigame";
+export const GAME_VIEW_NAMES = [
+  "map",
+  "city",
+  "city-3d",
+  "house",
+  "dialogue",
+  "battle",
+  "minigame",
+] as const satisfies readonly ViewName[];
+
+export function isViewName(value: unknown): value is ViewName {
+  return (
+    typeof value === "string" &&
+    (GAME_VIEW_NAMES as readonly string[]).includes(value)
+  );
+}
 export type DialogueStatus = "idle" | "playing" | "waiting-choice";
 export type TimeOfDay = "morning" | "afternoon" | "night";
 export type CalendarDate = {

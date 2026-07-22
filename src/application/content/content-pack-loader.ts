@@ -21,6 +21,8 @@ const CONTENT_PACK_FILE_KEYS = [
   "cityNpcPools",
   "locationAccess",
   "houseModuleDefaults",
+  "portraits",
+  "portraitVariants",
   "cityPortraits",
   "historicalCharacters",
   "historicalCityRosters",
@@ -61,6 +63,10 @@ export async function loadContentPackFromManifestText(
     hydratedFields.maps,
     manifestUrl
   );
+  const resolvedPortraits = resolveContentPackPortraitAssetUrls(
+    hydratedFields.portraits,
+    manifestUrl
+  );
 
   const pack = {
     schemaVersion: manifest.schemaVersion,
@@ -69,6 +75,7 @@ export async function loadContentPackFromManifestText(
     ...(manifest.description == null ? {} : { description: manifest.description }),
     ...hydratedFields,
     ...(resolvedMaps == null ? {} : { maps: resolvedMaps }),
+    ...(resolvedPortraits == null ? {} : { portraits: resolvedPortraits }),
   };
 
   if (pack.houseModuleDefaults != null) {
@@ -168,6 +175,25 @@ export function resolveContentPackMapAssetUrls(
       ...(layers == null ? {} : { layers }),
     };
   });
+}
+
+export function resolveContentPackPortraitAssetUrls(
+  portraits: Partial<ContentPackDefinition>["portraits"],
+  manifestUrl: string
+): ContentPackDefinition["portraits"] | undefined {
+  return portraits?.map((portrait) => ({
+    ...portrait,
+    portraitImage:
+      resolvePackRelativeUrl(manifestUrl, portrait.portraitImage) ??
+      portrait.portraitImage,
+    ...(portrait.avatarImage == null
+      ? {}
+      : {
+          avatarImage:
+            resolvePackRelativeUrl(manifestUrl, portrait.avatarImage) ??
+            portrait.avatarImage,
+        }),
+  }));
 }
 
 function assertObject(

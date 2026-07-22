@@ -1,4 +1,4 @@
-import type { SceneDefinition } from "../../domain/action";
+import type { RuntimeDialogueDefinition } from "../../domain/dialogue";
 import type { EventDefinition } from "../../domain/event";
 import type { StoryArcDefinition, StoryBeatDefinition } from "../../domain/story";
 import { createStoryBeatFlagKey } from "../../domain/story";
@@ -90,7 +90,7 @@ export const zhuYuanzhangMainStoryEvents: EventDefinition[] = [
     chapterId: zhuYuanzhangMainStoryArc.chapterId,
     name: "皇觉寺剃度",
     occurrence: "once",
-    entrySceneId: "scene.story.zhu_yuanzhang.ordination",
+    dialogueId: "scene.story.zhu_yuanzhang.ordination",
     tags: ["main-story", "temple-opening", "fictionalized-bridge"],
   },
   {
@@ -98,7 +98,7 @@ export const zhuYuanzhangMainStoryEvents: EventDefinition[] = [
     chapterId: zhuYuanzhangMainStoryArc.chapterId,
     name: "皇觉寺首轮评定",
     occurrence: "once-per-chapter",
-    entrySceneId: "scene.story.zhu_yuanzhang.first_temple_review",
+    dialogueId: "scene.story.zhu_yuanzhang.first_temple_review",
     tags: ["main-story", "temple-review"],
   },
   {
@@ -106,7 +106,7 @@ export const zhuYuanzhangMainStoryEvents: EventDefinition[] = [
     chapterId: zhuYuanzhangMainStoryArc.chapterId,
     name: "方丈准其外出化缘",
     occurrence: "once",
-    entrySceneId: "scene.story.zhu_yuanzhang.unlock_begging",
+    dialogueId: "scene.story.zhu_yuanzhang.unlock_begging",
     tags: ["main-story", "unlock", "temple-loop"],
   },
   {
@@ -114,7 +114,7 @@ export const zhuYuanzhangMainStoryEvents: EventDefinition[] = [
     chapterId: zhuYuanzhangMainStoryArc.chapterId,
     name: "颍州街头风声",
     occurrence: "once",
-    entrySceneId: "scene.story.zhu_yuanzhang.runing_broadcast",
+    dialogueId: "scene.story.zhu_yuanzhang.runing_broadcast",
     tags: ["main-story", "city-enter", "foreshadowing"],
   },
   {
@@ -122,16 +122,16 @@ export const zhuYuanzhangMainStoryEvents: EventDefinition[] = [
     chapterId: zhuYuanzhangMainStoryArc.chapterId,
     name: "归濠州遇盗与入郭",
     occurrence: "once",
-    entrySceneId: "scene.story.zhu_yuanzhang.haozhou_return_encounter",
+    dialogueId: "scene.story.zhu_yuanzhang.haozhou_return_encounter",
     tags: ["main-story", "city-enter", "battle-hook", "join-guo-zixing"],
   },
 ];
 
-export const zhuYuanzhangMainStoryScenes: SceneDefinition[] = [
+export const zhuYuanzhangMainStoryDialogues: RuntimeDialogueDefinition[] = [
   {
     id: "scene.story.zhu_yuanzhang.ordination",
     name: "皇觉寺剃度",
-    actions: [
+    nodes: [
       {
         type: "background",
         backgroundId: "bg.temple.courtyard",
@@ -252,7 +252,7 @@ export const zhuYuanzhangMainStoryScenes: SceneDefinition[] = [
   {
     id: "scene.story.zhu_yuanzhang.first_temple_review",
     name: "皇觉寺首轮评定",
-    actions: [
+    nodes: [
       {
         type: "background",
         backgroundId: "bg.temple.hall",
@@ -289,7 +289,7 @@ export const zhuYuanzhangMainStoryScenes: SceneDefinition[] = [
   {
     id: "scene.story.zhu_yuanzhang.unlock_begging",
     name: "方丈准其外出化缘",
-    actions: [
+    nodes: [
       {
         type: "background",
         backgroundId: "bg.temple.hall",
@@ -326,7 +326,7 @@ export const zhuYuanzhangMainStoryScenes: SceneDefinition[] = [
   {
     id: "scene.story.zhu_yuanzhang.runing_broadcast",
     name: "颍州街头风声",
-    actions: [
+    nodes: [
       {
         type: "narration",
         textId: "scene.story.zhu_yuanzhang.runing_broadcast.001",
@@ -348,7 +348,7 @@ export const zhuYuanzhangMainStoryScenes: SceneDefinition[] = [
   {
     id: "scene.story.zhu_yuanzhang.haozhou_return_encounter",
     name: "归濠州遇盗与入郭",
-    actions: [
+    nodes: [
       {
         type: "narration",
         textId: "scene.story.zhu_yuanzhang.haozhou_return_encounter.001",
@@ -471,9 +471,12 @@ export const zhuYuanzhangMainStoryEventsById: Record<string, EventDefinition> =
     ])
   );
 
-export const zhuYuanzhangMainStoryScenesById: Record<string, SceneDefinition> =
+export const zhuYuanzhangMainStoryDialoguesById: Record<
+  string,
+  RuntimeDialogueDefinition
+> =
   Object.fromEntries(
-    zhuYuanzhangMainStoryScenes.map((sceneDefinition) => [
+    zhuYuanzhangMainStoryDialogues.map((sceneDefinition) => [
       sceneDefinition.id,
       sceneDefinition,
     ])

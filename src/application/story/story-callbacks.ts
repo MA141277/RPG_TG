@@ -50,7 +50,7 @@ function runPlaceholderBattleCallback(
   payload: StoryCallbackPayload
 ): StoryCallbackRuntime {
   // Reserve a stable hook for future battle integration; the story currently
-  // auto-resolves to a scripted result so downstream scenes remain testable.
+  // auto-resolves to a scripted result so downstream dialogue paths remain testable.
   const battleId = readStringPayloadValue(payload, "battleId") ?? "story.placeholder";
   const result = readStringPayloadValue(payload, "result") ?? "victory";
   const completedFlagKey = readStringPayloadValue(payload, "completedFlagKey");
@@ -169,7 +169,10 @@ function runStartSundeyaRescueBattleCallback(
   return {
     state: launchStoryBattlePlayable({
       state: runtime.state,
-      ownerId: runtime.state.scene.activeSceneId ?? "scene.unknown",
+      ownerId:
+        runtime.state.dialogue.activeDialogueId ??
+        runtime.state.dialogue.activeEventId ??
+        runtime.state.world.currentHouseId,
       completion: {
         completedFlagKey,
         winFlagKey,

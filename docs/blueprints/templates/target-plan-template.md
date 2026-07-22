@@ -205,13 +205,17 @@
 - interaction_path:
   - `Replace with the executed path or recorded reason it was waived.`
 - proof_mode:
-  - `in-app-browser | runtime-trace | automated-test-visible-output | equivalent-waiver`
+  - `human-visible-in-app-browser | runtime-trace | automated-test-visible-output | equivalent-waiver`
 - proof_artifacts:
   - `Replace with the concrete artifacts used for closeout-level acceptance.`
 - fail_closed_check:
   - `Replace with the fail-closed / blocked / empty-state behavior evidence relevant to this review.`
 - waiver_basis:
   - `none | Replace with why direct interaction proof is not required or not currently possible and what evidence replaces it.`
+- simulated_human_visibility:
+  - `visible-human-observed | not-applicable | waived`
+- interaction_semantics:
+  - `Replace with whether proof used visible pointer/keyboard/scroll interaction on rendered UI controls inside the built-in in-app browser rather than hidden/background automation, external-browser-only interaction, or direct function/state bypass.`
 
 ### Closure Routing Record
 

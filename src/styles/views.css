@@ -12,13 +12,13 @@
 
 .l-stage:has(> .view-city),
 .l-stage:has(> .view-house),
-.l-stage:has(> .view-scene) {
+.l-stage:has(> .view-dialogue) {
   background:
     linear-gradient(rgb(0 0 0 / 28%), rgb(0 0 0 / 28%)),
     linear-gradient(180deg, rgb(0 0 0 / 100%), rgb(0 0 0 / 100%));
 }
 
-.view-scene {
+.view-dialogue {
   position: relative;
   display: grid;
   grid-template-columns: 1fr;
@@ -32,12 +32,12 @@
     linear-gradient(180deg, rgb(18 25 26), rgb(7 10 12));
 }
 
-.view-scene > * {
+.view-dialogue > * {
   position: relative;
   z-index: 1;
 }
 
-.view-scene__underlay {
+.view-dialogue__underlay {
   position: absolute;
   inset: 0;
   z-index: 0;
@@ -45,6 +45,6 @@
   pointer-events: none;
 }
 
-.view-scene__underlay > .view-city {
+.view-dialogue__underlay > .view-city {
   min-height: 100%;
 }

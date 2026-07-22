@@ -1,7 +1,7 @@
 export type GameplayContributionDeclaration = {
   navigation?: string[];
   events?: string[];
-  scenes?: string[];
+  dialogues?: string[];
   tasks?: string[];
   houses?: string[];
   playables?: string[];
@@ -12,7 +12,7 @@ export type GameplayContributionRegistry = {
   contentPackIds: string[];
   navigation: string[];
   events: string[];
-  scenes: string[];
+  dialogues: string[];
   tasks: string[];
   houses: string[];
   houseModules: string[];
