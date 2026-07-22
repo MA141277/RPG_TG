@@ -10,9 +10,13 @@ import type { CityEntryDefinition } from "../../domain/city-entry";
 import type { CitySceneMapping } from "../../domain/city-scene-mapping";
 import type { HouseDefinition } from "../../domain/house";
 import type { HouseModuleViewModel } from "../../domain/house-module";
+import type { TroopEditorStageViewModel } from "../troop-editor/troop-editor-stage-view-model";
+import type { TroopManagementStageViewModel } from "../troop-editor/troop-management-stage-view-model";
 
 export type AppPresenterStageOutput =
   | { type: "map"; cityDefinitions: CityDefinition[] }
+  | { type: "troop-editor"; viewModel: TroopEditorStageViewModel }
+  | { type: "troop-management"; viewModel: TroopManagementStageViewModel }
   | {
       type: "city";
       activeCityDefinition: CityDefinition;

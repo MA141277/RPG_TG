@@ -1,6 +1,7 @@
 import type { CardInventory } from "../../domain/card";
 import type { GameState } from "../../domain/game-state";
 import type { ValuableItemInventory } from "../../domain/valuable-item";
+import { createDefaultTroopRuntimeState } from "../../domain/troop-editor";
 import type { TaskRuntimeState } from "../../core/contracts/task-runtime";
 import { createInitialCampaignMapExplorationState } from "../map/campaign-map-exploration";
 
@@ -70,6 +71,7 @@ export function createInitialState(input: InitialStateInput): GameState {
       visiblePanels: ["player-card", "main-mission", "notifications"],
       pinnedCharacterId: input.pinnedCharacterId,
       detailCharacterId: null,
+      selectedTroopId: null,
       activeMissionId: null,
       reviewDateText: input.reviewDateText,
       mainHouseMissionText: input.mainHouseMissionText,
@@ -97,6 +99,7 @@ export function createInitialState(input: InitialStateInput): GameState {
       cityMarkets: {},
       mapExplorationByMapId: {},
       activitySession: null,
+      troops: createDefaultTroopRuntimeState(input.playerCharacterId),
       mapExploration: createInitialCampaignMapExplorationState(),
       eventHistory: {},
     },

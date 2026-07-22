@@ -22,6 +22,14 @@ import {
   closeCityDirectory,
   closeGlobalOverlay,
   closeNpcInteraction,
+  closeTroopEditor,
+  closeTroopManagement,
+  clearTroopManagementUnit,
+  createTroopEditorTeam,
+  dismissTroopEditorReserveUnit,
+  disbandTroopManagementUnit,
+  purchaseTroopEditorShopOffer,
+  swapTroopEditorTeams,
   chooseNpcDefaultTalk,
   equipValuable,
   openCharacterDetail,
@@ -29,11 +37,16 @@ import {
   openCityDirectory,
   openNpcInteraction,
   openPlayerDetail,
+  openTroopEditor,
+  openTroopManagement,
+  addTroopManagementUnitFromReserve,
+  removeTroopManagementUnit,
   selectCard,
   selectValuable,
   setCardFilter,
   setValuableFilter,
   setValuableSort,
+  moveTroopManagementUnit,
   updateOverlayView,
 } from "./application/app-actions";
 import type { AppState } from "./application/app-shell";
@@ -257,6 +270,9 @@ import {
 } from "./ui/views/map/campaign-terrain-webgl";
 import { syncCampaignCloudWebGl } from "./ui/views/map/campaign-cloud-webgl";
 import { syncCityBeggingMiniGameOverlay } from "./ui/views/minigames/city-begging-minigame-view";
+import { syncTroopEditorInteractions } from "./ui/views/troop-editor/troop-editor-interactions";
+import { syncTroopManagementBattlePreview } from "./ui/views/troop-editor/troop-management-battle-preview";
+import { syncTroopManagementMoveInteractions } from "./ui/views/troop-editor/troop-management-move-interactions";
 
 const GAME_VIEWPORT_WIDTH = 1600;
 const GAME_VIEWPORT_HEIGHT = 900;
@@ -4186,6 +4202,44 @@ appElement.addEventListener("click", (event) => {
     return;
   }
 
+  const openTroopEditorButton = targetElement.closest<HTMLElement>(
+    "[data-action='open-troop-editor']"
+  );
+  if (openTroopEditorButton != null) {
+    appState = openTroopEditor(appState);
+    renderApp();
+    return;
+  }
+
+  const closeTroopEditorButton = targetElement.closest<HTMLElement>(
+    "[data-action='close-troop-editor']"
+  );
+  if (closeTroopEditorButton != null) {
+    appState = closeTroopEditor(appState);
+    renderApp();
+    return;
+  }
+
+  const openTroopManagementButton = targetElement.closest<HTMLElement>(
+    "[data-action='open-troop-management']"
+  );
+  if (openTroopManagementButton != null) {
+    appState = openTroopManagement(appState, {
+      troopId: openTroopManagementButton.dataset.troopId ?? null,
+    });
+    renderApp();
+    return;
+  }
+
+  const closeTroopManagementButton = targetElement.closest<HTMLElement>(
+    "[data-action='close-troop-management']"
+  );
+  if (closeTroopManagementButton != null) {
+    appState = closeTroopManagement(appState);
+    renderApp();
+    return;
+  }
+
   const npcTargetButton = targetElement.closest<HTMLElement>(
     "[data-npc-target][data-npc-context]"
   );
@@ -5795,6 +5849,56 @@ function renderAppFrame(
   syncCampaignTerrainWebGl(appRoot);
   syncCampaignCloudWebGl(appRoot);
   syncCityBeggingMiniGameOverlay(appRoot, appState.beggingMiniGameState);
+  syncTroopEditorInteractions(appRoot, {
+    onOpenTroopManagement: (input) => {
+      appState = openTroopManagement(appState, input);
+      renderApp();
+    },
+    onDisbandTroop: (input) => {
+      appState = disbandTroopManagementUnit(appState, input);
+      renderApp();
+    },
+    onCreateTeam: (input) => {
+      appState = createTroopEditorTeam(appState, input);
+      renderApp();
+    },
+    onSwapTeams: (input) => {
+      appState = swapTroopEditorTeams(appState, input);
+      renderApp();
+    },
+    onDismissReserveUnit: (input) => {
+      appState = dismissTroopEditorReserveUnit(appState, input);
+      renderApp();
+    },
+    onPurchaseShopOffer: (input) => {
+      appState = purchaseTroopEditorShopOffer(appState, input);
+      renderApp();
+    },
+  });
+  syncTroopManagementBattlePreview(appRoot);
+  syncTroopManagementMoveInteractions(appRoot, {
+    onMoveUnit: (input) => {
+      appState = moveTroopManagementUnit(appState, input);
+      renderApp();
+    },
+    onAddUnit: (input) => {
+      appState = addTroopManagementUnitFromReserve(appState, input);
+      renderApp();
+    },
+    onRemoveUnit: (input) => {
+      appState = removeTroopManagementUnit(appState, input);
+      renderApp();
+    },
+    onClearTroop: (input) => {
+      appState = clearTroopManagementUnit(appState, input);
+      renderApp();
+    },
+    onDisbandTroop: (input) => {
+      appState = disbandTroopManagementUnit(appState, input);
+      appState = closeTroopManagement(appState);
+      renderApp();
+    },
+  });
   syncEmbeddedBattleUiEditor();
 }
 

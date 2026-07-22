@@ -513,6 +513,20 @@ export function renderCampaignStats(stats: MapStats | null): string {
   `;
 }
 
+function renderMapStageActions(): string {
+  return `
+    <div class="c-map-stage-actions">
+      <button
+        type="button"
+        class="c-map-troop-editor-entry c-button c-grain-shop-button c-grain-shop-button--gold"
+        data-action="open-troop-editor"
+      >
+        部队
+      </button>
+    </div>
+  `;
+}
+
 function renderCampaignMapVisualLayer(
   model: MapViewModel,
   options: {
@@ -771,12 +785,14 @@ export function renderMapView(model: MapViewModel): string {
     return `
       <section class="view-map view-map--campaign">
         ${renderCampaignMap(model)}
+        ${renderMapStageActions()}
       </section>
     `;
   }
 
   return `
     <section class="view-map view-map--grid">
+      ${renderMapStageActions()}
       <div class="c-stage-header">
         <div>
           <p class="c-stage-header__eyebrow">鍦板浘宸¤</p>

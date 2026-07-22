@@ -2,8 +2,8 @@ import type {
   ActiveStoryBattleSession,
   StoryBattleUnit,
 } from "../../../domain/story-battle";
-import type { BattleFormationPreviewViewModel } from "../../../application/formation/formation-stage-view-model";
-import { renderFormationPreviewGrid } from "../party/formation-preview-grid";
+import type { BattleFormationPreviewViewModel } from "../../../application/troop-editor/troop-editor-stage-view-model";
+import { renderTroopPreviewGrid } from "../troop-editor/troop-preview-grid";
 
 function getUnitClass(unit: StoryBattleUnit): string {
   return [
@@ -112,8 +112,8 @@ export function renderStoryBattleView(
       : `
           <section class="c-story-battle__formation-preview">
             <h2>${options.formationPreview.teamName}</h2>
-            ${renderFormationPreviewGrid(options.formationPreview.slots, {
-              className: "c-formation-preview-grid c-formation-preview-grid--battle",
+            ${renderTroopPreviewGrid(options.formationPreview.slots, {
+              className: "c-troop-preview-grid c-troop-preview-grid--battle",
             })}
           </section>
         `;

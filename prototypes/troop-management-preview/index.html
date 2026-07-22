@@ -2433,7 +2433,7 @@
     }
   </style>
 </head>
-<body>
+<body class="preview-formation-only">
   <div class="battle-fps-hud" data-battle-fps-hud="true">FPS: 0</div>
   <div class="battle-stage">
   <div class="battle-ui-overlays" aria-hidden="true">
@@ -10907,6 +10907,26 @@
       init(initialBattleConfig || {});
     });
 
+    function parseInitialTroopManagementPreviewConfig() {
+      const params = new URLSearchParams(window.location.search);
+      const encodedConfig = params.get('previewConfig') || '';
+      if (!encodedConfig.trim()) {
+        return {};
+      }
+      try {
+        return JSON.parse(decodeURIComponent(encodedConfig));
+      } catch (_error) {
+        return {};
+      }
+    }
+
+    function showTroopManagementPreview(previewConfig = {}) {
+      stopBattleSpineIdleLoop();
+      clearBattleSpineRendererCache();
+      clearBattleFormationProxyState();
+      showFormationPreview(previewConfig);
+    }
+
     window.addEventListener('message', (event) => {
       if (event.origin !== window.location.origin) {
         return;
@@ -10915,21 +10935,15 @@
       if (!data || typeof data !== 'object') {
         return;
       }
-      if (data.type === 'rpg-tg:formation-preview') {
-        showFormationPreview(data.preview || {});
+      if (data.type === 'rpg-tg:troop-management-preview') {
+        showTroopManagementPreview(data.preview || {});
       }
     });
 
-    /** 剧情战役：init({ objectiveId: 'supplyTransport', lessonTags: ['SupplyTransportBattle'] }) */
-    window.BattleDemo = { init, showFormationPreview, BattleTutorialManager, inferLessonTags };
+    window.TroopManagementPreview = { showPreview: showTroopManagementPreview };
 
     battleFpsState.rafId = window.requestAnimationFrame(tickBattleFpsHud);
-    initialBattleConfig = getBattleConfigFromUrl();
-    if (initialBattleConfig.previewMode === 'formation') {
-      showFormationPreview({});
-    } else {
-      init(initialBattleConfig);
-    }
+    showTroopManagementPreview(parseInitialTroopManagementPreviewConfig());
   </script>
 </body>
 </html>
