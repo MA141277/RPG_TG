@@ -8,6 +8,24 @@
 
 **Tech Stack:** Standalone HTML/CSS/JS editor in `tools/city-map-building-editor/index.html`, JSON-backed city/prefab data, Node test runner (`node --test`), TypeScript compiler (`npm run typecheck`).
 
+## Execution State
+
+- Status: `completed-but-open`
+- Last Updated: `2026-07-22`
+- Current Focus: `Merged from origin/mmz; implementation appears present and needs only repository sync verification before closeout.`
+- Next Step: `Keep this plan open until the merged branch verification and repository sync are recorded.`
+- Verification: `node --test tests/city-map-building-editor.test.cjs`; `npm run typecheck`
+- Notes: `This plan was merged from origin/mmz and normalized to the current plan governance template.`
+
+## Progress Log
+
+- 2026-07-22
+  - Summary: `Normalized the merged city layout auto-place plan to include required execution state and progress log sections.`
+  - Verification: `npm run lint:plans`
+  - Next: `Run plan lint after merge and continue repository verification.`
+
+---
+
 ## Global Constraints
 
 - The action must run only in `City Layout`.

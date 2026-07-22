@@ -753,7 +753,7 @@
   min-height: 58px;
   padding: 0 32px;
   border: 14px solid transparent;
-  border-image-source: url("../../ui/yuansu/评定/generated/20260709-205123_button-clean-seamless.png");
+  border-image-source: var(--grain-shop-button-gold);
   border-image-slice: 16 fill;
   border-image-width: 14px;
   border-image-repeat: stretch;
