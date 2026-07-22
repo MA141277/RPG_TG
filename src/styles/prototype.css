@@ -1875,9 +1875,17 @@
 .c-kulan-city::after {
   content: "";
   position: absolute;
-  inset: auto 0 0;
-  height: 38%;
-  background: transparent;
+  inset: 0;
+  z-index: 3;
+  background:
+    radial-gradient(
+      ellipse at center,
+      rgb(0 0 0 / 0%) 0%,
+      rgb(0 0 0 / 0%) 34%,
+      rgb(18 16 12 / 24%) 58%,
+      rgb(10 9 7 / 48%) 78%,
+      rgb(4 3 2 / 70%) 100%
+    );
   pointer-events: none;
 }
 
@@ -2079,6 +2087,7 @@
   left: var(--entity-ring-center-x);
   top: var(--entity-ring-center-y);
   z-index: 1;
+  display: none;
   width: var(--entity-ring-width);
   height: var(--entity-ring-height);
   border: 2px solid rgb(255 214 86 / 0%);
@@ -2102,18 +2111,15 @@
 .c-city-map-stage__entity:focus-within .c-city-map-stage__entity-image,
 .c-city-map-stage__entity.is-hovered .c-city-map-stage__entity-image,
 .c-city-map-stage__entity.is-selected .c-city-map-stage__entity-image {
-  filter:
-    brightness(1.16)
-    saturate(1.08)
-    drop-shadow(0 0 14px rgb(255 213 88 / 78%));
+  animation: city-building-image-glow-pulse 1.45s ease-in-out infinite;
 }
 
 .c-city-map-stage__entity:hover .c-city-map-stage__entity-ring,
 .c-city-map-stage__entity:focus-within .c-city-map-stage__entity-ring,
 .c-city-map-stage__entity.is-hovered .c-city-map-stage__entity-ring,
 .c-city-map-stage__entity.is-selected .c-city-map-stage__entity-ring {
-  opacity: 1;
-  animation: city-building-ring-pulse 1.45s ease-in-out infinite;
+  opacity: 0;
+  animation: none;
 }
 
 .c-city-map-stage__entity-hotspot:focus-visible {
@@ -2183,6 +2189,7 @@
   bottom: var(--building-ring-offset-y);
   left: 50%;
   z-index: 1;
+  display: none;
   width: var(--building-ring-width);
   height: var(--building-ring-height);
   border: 2px solid rgb(255 214 86 / 0%);
@@ -2206,18 +2213,15 @@
 .c-city-map-stage__building:focus-within .c-city-map-stage__building-image,
 .c-city-map-stage__building.is-hovered .c-city-map-stage__building-image,
 .c-city-map-stage__building.is-selected .c-city-map-stage__building-image {
-  filter:
-    brightness(1.16)
-    saturate(1.08)
-    drop-shadow(0 0 14px rgb(255 213 88 / 78%));
+  animation: city-building-image-glow-pulse 1.45s ease-in-out infinite;
 }
 
 .c-city-map-stage__building:hover .c-city-map-stage__building-ring,
 .c-city-map-stage__building:focus-within .c-city-map-stage__building-ring,
 .c-city-map-stage__building.is-hovered .c-city-map-stage__building-ring,
 .c-city-map-stage__building.is-selected .c-city-map-stage__building-ring {
-  opacity: 1;
-  animation: city-building-ring-pulse 1.45s ease-in-out infinite;
+  opacity: 0;
+  animation: none;
 }
 
 .c-city-map-stage__building-hotspot:focus-visible {
@@ -2238,6 +2242,23 @@
       0 0 24px rgb(255 208 64 / 72%),
       inset 0 0 16px rgb(255 238 150 / 44%);
     transform: translate(-50%, 50%) scale(1.08);
+  }
+}
+
+@keyframes city-building-image-glow-pulse {
+  0%,
+  100% {
+    filter:
+      brightness(1.08)
+      saturate(1.03)
+      drop-shadow(0 0 8px rgb(255 213 88 / 38%));
+  }
+
+  50% {
+    filter:
+      brightness(1.18)
+      saturate(1.1)
+      drop-shadow(0 0 18px rgb(255 213 88 / 78%));
   }
 }
 
@@ -2269,20 +2290,12 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 24px;
-  min-height: 68px;
-  padding: 6px 3px;
-  border: 1px solid rgb(236 198 104 / 72%);
-  border-radius: 999px;
-  background:
-    linear-gradient(
-      180deg,
-      rgb(43 72 66 / 86%),
-      rgb(18 44 41 / 88%)
-    );
-  box-shadow:
-    0 3px 8px rgb(0 0 0 / 18%),
-    inset 0 0 0 1px rgb(255 244 188 / 10%);
+  min-width: 28px;
+  min-height: 78px;
+  padding: 8px 5px;
+  border: 0;
+  background: url("../../ui/yuansu/菱形格子/img_v3_0213q_d39adb77-f101-4f6f-98b9-899e55f79ddg.png") center / 100% 100% no-repeat;
+  box-shadow: 0 4px 10px rgb(0 0 0 / 18%);
   color: #f9e4a8;
   font-family: var(--font-title);
   font-size: 0.74rem;
@@ -2300,11 +2313,9 @@
 
 .c-city-map-stage__building-label:hover,
 .c-city-map-stage__building-label:focus-visible {
-  border-color: rgb(255 224 128 / 92%);
   box-shadow:
     0 0 12px rgb(255 207 76 / 38%),
-    0 3px 8px rgb(0 0 0 / 18%),
-    inset 0 0 0 1px rgb(255 244 188 / 18%);
+    0 4px 10px rgb(0 0 0 / 18%);
   color: #fff1bd;
   filter: brightness(1.1);
 }
@@ -4218,6 +4229,11 @@
   overflow: visible;
 }
 
+.c-city-menu__item {
+  display: grid;
+  gap: 0;
+}
+
 .c-city-menu__button {
   position: relative;
   display: grid;
@@ -4242,9 +4258,39 @@
     filter var(--duration-fast) ease;
 }
 
+.c-city-menu__button::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  box-sizing: border-box;
+  border-width: 18px 22px;
+  border-style: solid;
+  border-color: transparent;
+  border-image-source: var(--kulan-return-button);
+  border-image-slice: 92 116 fill;
+  border-image-width: 18px 22px;
+  border-image-repeat: stretch;
+  background: #214c48;
+  background-clip: padding-box;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--duration-fast) ease;
+}
+
 .c-city-menu__button:hover {
   transform: translateY(-2px);
   filter: brightness(1.05);
+}
+
+.c-city-menu__button:hover::before,
+.c-city-menu__button:focus-visible::before {
+  opacity: 1;
+}
+
+.c-city-menu__button:hover .c-city-menu-button-skin,
+.c-city-menu__button:focus-visible .c-city-menu-button-skin {
+  opacity: 0;
 }
 
 .c-city-menu__button--active {
@@ -4262,37 +4308,140 @@
 }
 
 .c-city-menu__subnav {
+  position: relative;
   display: grid;
   gap: 6px;
-  margin: -2px 0 2px;
-  padding-left: 18px;
+  max-height: 0;
+  margin: 0;
+  padding-top: 0;
+  padding-left: 42px;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(-4px);
+  pointer-events: none;
+  transition:
+    max-height var(--duration-normal) ease,
+    opacity var(--duration-fast) ease,
+    transform var(--duration-fast) ease,
+    margin var(--duration-fast) ease,
+    padding-top var(--duration-fast) ease;
+}
+
+.c-city-menu__item--locations:hover .c-city-menu__subnav,
+.c-city-menu__item--locations:focus-within .c-city-menu__subnav {
+  max-height: 420px;
+  margin: 0 0 2px;
+  padding-top: 4px;
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.c-city-menu__subnav::before {
+  content: "";
+  position: absolute;
+  top: 8px;
+  bottom: 10px;
+  left: 20px;
+  z-index: 2;
+  width: 1px;
+  background: linear-gradient(
+    180deg,
+    rgb(204 162 92 / 0%),
+    rgb(204 162 92 / 64%) 10%,
+    rgb(204 162 92 / 64%) 90%,
+    rgb(204 162 92 / 0%)
+  );
+  box-shadow:
+    0 0 0 1px rgb(46 31 19 / 20%),
+    0 0 6px rgb(214 173 98 / 20%);
 }
 
 .c-city-menu__subnav-button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   box-sizing: border-box;
-  min-height: 30px;
-  width: 100%;
-  padding: 0 10px;
-  color: #e2d2aa;
-  border: 1px solid rgb(164 132 78 / 52%);
-  border-radius: 5px;
-  background:
-    linear-gradient(180deg, rgb(40 58 48 / 84%), rgb(29 39 36 / 84%)),
-    #293a34;
+  min-height: 34px;
+  width: 68%;
+  justify-self: end;
+  padding: 0 10px 0 26px;
+  color: #f1ddb0;
+  border-width: 10px 12px;
+  border-style: solid;
+  border-color: transparent;
+  border-image-source: var(--kulan-menu-button);
+  border-image-slice: 72 88 fill;
+  border-image-width: 10px 12px;
+  border-image-repeat: stretch;
+  background: #26453d;
+  background-clip: padding-box;
   font-family: var(--font-body);
   font-size: clamp(0.72rem, 0.8vw, 0.86rem);
   line-height: 1;
   text-align: center;
-  box-shadow:
-    inset 0 1px 0 rgb(255 238 190 / 10%),
-    0 4px 8px rgb(0 0 0 / 16%);
+  box-shadow: 0 3px 7px rgb(0 0 0 / 16%);
   cursor: pointer;
+}
+
+.c-city-menu__subnav-button::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 8px;
+  width: 13px;
+  height: 13px;
+  background: url("../../ui/yuansu/菱形格子/20260722-113107.png") center / contain no-repeat;
+  filter: drop-shadow(0 1px 1px rgb(52 28 13 / 40%));
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.c-city-menu__subnav-button-label {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: clip;
+  white-space: nowrap;
+}
+
+.c-city-menu__subnav-button::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: calc(100% + 8px);
+  z-index: 1;
+  width: calc(47.0589% + 26px);
+  height: 1px;
+  background: rgb(204 162 92 / 66%);
+  box-shadow:
+    -1px 0 0 rgb(55 34 18 / 28%),
+    0 0 5px rgb(214 173 98 / 18%);
+  transform: translateY(-50%);
+  pointer-events: none;
+  transition:
+    width var(--duration-fast) ease,
+    background-color var(--duration-fast) ease,
+    box-shadow var(--duration-fast) ease;
 }
 
 .c-city-menu__subnav-button:hover {
   color: #fff0c8;
-  border-color: rgb(217 179 96 / 76%);
+  border-image-source: var(--kulan-return-button);
+  border-image-slice: 92 116 fill;
+  border-image-width: 10px 12px;
+  background: #214c48;
   filter: brightness(1.06);
+}
+
+.c-city-menu__subnav-button:hover::after,
+.c-city-menu__subnav-button:focus-visible::after {
+  width: calc(47.0589% + 26px);
+  background: rgb(255 222 139 / 92%);
+  box-shadow:
+    -1px 0 0 rgb(58 34 16 / 30%),
+    0 0 8px rgb(255 218 132 / 48%);
 }
 
 .c-city-menu-button-skin {
@@ -4306,6 +4455,7 @@
   z-index: 0;
   overflow: hidden;
   pointer-events: none;
+  transition: opacity var(--duration-fast) ease;
 }
 
 .c-city-menu-button-skin__part {

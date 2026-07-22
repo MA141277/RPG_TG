@@ -213,7 +213,7 @@
       "id": "instance.inn",
       "prefabId": "inn",
       "gridX": 10,
-      "gridY": 35,
+      "gridY": 34,
       "render": {
         "visible": true,
         "locked": false,

@@ -15,7 +15,7 @@ import { renderCityStageScene } from "./city-stage-layout";
 import haozhouCityBackgroundUrl from "../../../../ui/background/upload_1784207698799091496 (1).png?url";
 import cityDiamondBaseTextureUrl from "../../../../ui/yuansu/菱形格子/20260716-111958.png?url";
 import cityDiamondForegroundWallUrl from "../../../../ui/yuansu/菱形格子/20260716-141239.png?url";
-import cityBuildingLeaderResidenceUrl from "../../../../ui/yuansu/菱形格子/jianglingfudi.png?url";
+import cityBuildingLeaderResidenceUrl from "../../../../ui/yuansu/菱形格子/upload_1784633870754903686.png?url";
 import cityBuildingKeepUrl from "../../../../ui/yuansu/菱形格子/shuaifu.png?url";
 import cityBuildingTeaHouseUrl from "../../../../ui/yuansu/菱形格子/chaguan.png?url";
 import cityBuildingMarketUrl from "../../../../ui/yuansu/菱形格子/huozhai.png?url";
@@ -161,8 +161,8 @@ const CITY_MAP_BUILDING_PROTOTYPES: CityMapBuildingPrototype[] = [
     imageUrl: cityBuildingLeaderResidenceUrl,
     baseX: 675,
     baseY: 455,
-    assetWidth: 1294,
-    assetHeight: 695,
+    assetWidth: 1259,
+    assetHeight: 859,
     renderScale: CITY_BUILDING_RENDER_SCALE,
     ringWidth: 132,
     ringHeight: 56,
@@ -480,7 +480,7 @@ function renderCityLocationSubnav(input: {
         data-city-entry-id="${cityEntry.id}"
         data-city-location-entry-ref="${cityEntry.id}"
       >
-        ${cityEntry.name}
+        <span class="c-city-menu__subnav-button-label">${cityEntry.name}</span>
       </button>
     `
   );
@@ -492,7 +492,7 @@ function renderCityLocationSubnav(input: {
         data-house-id="${houseDefinition.id}"
         data-city-location-house-ref="${houseDefinition.id}"
       >
-        ${houseDefinition.name}
+        <span class="c-city-menu__subnav-button-label">${houseDefinition.name}</span>
       </button>
     `
   );
@@ -523,30 +523,32 @@ function renderCityMenuButtons(input: {
       ${buttons
         .map(
           (button) => `
-            <button
-              type="button"
-              class="c-city-menu__button${
-                button.id === "locations"
-                  ? " c-city-menu__button--active"
-                  : ""
-              }"
+            <div class="c-city-menu__item c-city-menu__item--${button.id}">
+              <button
+                type="button"
+                class="c-city-menu__button${
+                  button.id === "locations"
+                    ? " c-city-menu__button--active"
+                    : ""
+                }"
+                ${
+                  button.id === "locations"
+                    ? 'aria-haspopup="true"'
+                    : `data-city-menu-open="${button.id}"`
+                }
+              >
+                ${renderCityMenuButtonSkin()}
+                <span class="c-city-menu__button-label">${button.label}</span>
+              </button>
               ${
                 button.id === "locations"
-                  ? 'aria-expanded="true"'
-                  : `data-city-menu-open="${button.id}"`
+                  ? renderCityLocationSubnav({
+                      visibleHouseDefinitions,
+                      cityEntries: input.cityEntries,
+                    })
+                  : ""
               }
-            >
-              ${renderCityMenuButtonSkin()}
-              <span class="c-city-menu__button-label">${button.label}</span>
-            </button>
-            ${
-              button.id === "locations"
-                ? renderCityLocationSubnav({
-                    visibleHouseDefinitions,
-                    cityEntries: input.cityEntries,
-                  })
-                : ""
-            }
+            </div>
           `
         )
         .join("")}
