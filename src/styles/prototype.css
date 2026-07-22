@@ -1877,8 +1877,7 @@
   position: absolute;
   inset: auto 0 0;
   height: 38%;
-  background:
-    linear-gradient(180deg, rgb(80 54 33 / 0%), rgb(72 50 29 / 52%) 26%, rgb(58 40 24 / 86%) 100%);
+  background: transparent;
   pointer-events: none;
 }
 
@@ -1961,6 +1960,357 @@
   z-index: 2;
   overflow: visible;
   pointer-events: none;
+}
+
+.c-city-map-stage {
+  position: absolute;
+  top: 52%;
+  left: 54%;
+  width: min(1260px, 118%);
+  aspect-ratio: 2048 / 1152;
+  overflow: visible;
+  transform: translate(-50%, -50%);
+  transform-origin: center center;
+  pointer-events: none;
+}
+
+.c-city-map-stage__base-space,
+.c-city-map-stage__base,
+.c-city-map-stage__ground-decorations,
+.c-city-map-stage__visual-items,
+.c-city-map-stage__foreground-wall {
+  position: absolute;
+  pointer-events: none;
+}
+
+.c-city-map-stage__base-space {
+  top: var(--base-space-top);
+  left: var(--base-space-left);
+  z-index: 1;
+  width: var(--base-space-width);
+  height: var(--base-space-height);
+}
+
+.c-city-map-stage__base {
+  inset: 0;
+  z-index: 1;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  user-select: none;
+}
+
+.c-city-map-stage__ground-decorations {
+  inset: 0;
+  z-index: 2;
+}
+
+.c-city-map-stage__ground-decor {
+  position: absolute;
+  top: var(--ground-decor-y);
+  left: var(--ground-decor-x);
+  z-index: var(--ground-decor-z-index);
+  display: block;
+  width: var(--ground-decor-width);
+  opacity: var(--ground-decor-opacity, 1);
+  transform: translate(-50%, -100%);
+  transform-origin: 50% 100%;
+  pointer-events: none;
+}
+
+.c-city-map-stage__ground-decor-image {
+  display: block;
+  width: 100%;
+  height: auto;
+  pointer-events: none;
+  user-select: none;
+}
+
+.c-city-map-stage__visual-items {
+  inset: 0;
+  z-index: 3;
+}
+
+.c-city-map-stage__entity {
+  position: absolute;
+  inset: 0;
+  z-index: var(--entity-z-index);
+  pointer-events: none;
+}
+
+.c-city-map-stage__entity-static,
+.c-city-map-stage__entity-hotspot {
+  position: absolute;
+  display: block;
+  left: var(--entity-box-left);
+  top: var(--entity-box-top);
+  width: var(--entity-box-width);
+  height: var(--entity-box-height);
+}
+
+.c-city-map-stage__entity-static {
+  pointer-events: none;
+}
+
+.c-city-map-stage__entity-hotspot {
+  appearance: none;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.c-city-map-stage__entity-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  pointer-events: none;
+  user-select: none;
+  transition:
+    filter var(--duration-fast) ease,
+    transform var(--duration-fast) ease;
+}
+
+.c-city-map-stage__entity-ring {
+  position: absolute;
+  left: var(--entity-ring-center-x);
+  top: var(--entity-ring-center-y);
+  z-index: 1;
+  width: var(--entity-ring-width);
+  height: var(--entity-ring-height);
+  border: 2px solid rgb(255 214 86 / 0%);
+  border-radius: 50%;
+  background:
+    radial-gradient(
+      ellipse,
+      rgb(255 222 92 / 28%) 0%,
+      rgb(255 199 50 / 16%) 42%,
+      rgb(255 199 50 / 0%) 72%
+    );
+  box-shadow:
+    0 0 18px rgb(255 208 64 / 0%),
+    inset 0 0 12px rgb(255 238 150 / 0%);
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.86);
+  pointer-events: none;
+}
+
+.c-city-map-stage__entity:hover .c-city-map-stage__entity-image,
+.c-city-map-stage__entity:focus-within .c-city-map-stage__entity-image,
+.c-city-map-stage__entity.is-hovered .c-city-map-stage__entity-image,
+.c-city-map-stage__entity.is-selected .c-city-map-stage__entity-image {
+  filter:
+    brightness(1.16)
+    saturate(1.08)
+    drop-shadow(0 0 14px rgb(255 213 88 / 78%));
+}
+
+.c-city-map-stage__entity:hover .c-city-map-stage__entity-ring,
+.c-city-map-stage__entity:focus-within .c-city-map-stage__entity-ring,
+.c-city-map-stage__entity.is-hovered .c-city-map-stage__entity-ring,
+.c-city-map-stage__entity.is-selected .c-city-map-stage__entity-ring {
+  opacity: 1;
+  animation: city-building-ring-pulse 1.45s ease-in-out infinite;
+}
+
+.c-city-map-stage__entity-hotspot:focus-visible {
+  outline: none;
+}
+
+.c-city-map-stage__decor-house {
+  position: absolute;
+  top: var(--decor-y);
+  left: var(--decor-x);
+  z-index: var(--decor-z-index);
+  display: block;
+  width: var(--decor-width);
+  transform: translate(-50%, -100%);
+  transform-origin: 50% 100%;
+  pointer-events: none;
+}
+
+.c-city-map-stage__decor-house-image {
+  display: block;
+  width: 100%;
+  height: auto;
+  pointer-events: none;
+  user-select: none;
+}
+
+.c-city-map-stage__building {
+  position: absolute;
+  top: var(--building-y);
+  left: var(--building-x);
+  z-index: var(--building-z-index);
+  display: block;
+  width: var(--building-width);
+  transform: translate(-50%, -100%);
+  transform-origin: 50% 100%;
+  pointer-events: none;
+}
+
+.c-city-map-stage__building-hotspot {
+  appearance: none;
+  position: relative;
+  z-index: 2;
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.c-city-map-stage__building-image {
+  position: relative;
+  z-index: 2;
+  display: block;
+  width: 100%;
+  height: auto;
+  pointer-events: none;
+  user-select: none;
+  transition:
+    filter var(--duration-fast) ease,
+    transform var(--duration-fast) ease;
+}
+
+.c-city-map-stage__building-ring {
+  position: absolute;
+  bottom: var(--building-ring-offset-y);
+  left: 50%;
+  z-index: 1;
+  width: var(--building-ring-width);
+  height: var(--building-ring-height);
+  border: 2px solid rgb(255 214 86 / 0%);
+  border-radius: 50%;
+  background:
+    radial-gradient(
+      ellipse,
+      rgb(255 222 92 / 28%) 0%,
+      rgb(255 199 50 / 16%) 42%,
+      rgb(255 199 50 / 0%) 72%
+    );
+  box-shadow:
+    0 0 18px rgb(255 208 64 / 0%),
+    inset 0 0 12px rgb(255 238 150 / 0%);
+  opacity: 0;
+  transform: translate(-50%, 50%) scale(0.86);
+  pointer-events: none;
+}
+
+.c-city-map-stage__building:hover .c-city-map-stage__building-image,
+.c-city-map-stage__building:focus-within .c-city-map-stage__building-image,
+.c-city-map-stage__building.is-hovered .c-city-map-stage__building-image,
+.c-city-map-stage__building.is-selected .c-city-map-stage__building-image {
+  filter:
+    brightness(1.16)
+    saturate(1.08)
+    drop-shadow(0 0 14px rgb(255 213 88 / 78%));
+}
+
+.c-city-map-stage__building:hover .c-city-map-stage__building-ring,
+.c-city-map-stage__building:focus-within .c-city-map-stage__building-ring,
+.c-city-map-stage__building.is-hovered .c-city-map-stage__building-ring,
+.c-city-map-stage__building.is-selected .c-city-map-stage__building-ring {
+  opacity: 1;
+  animation: city-building-ring-pulse 1.45s ease-in-out infinite;
+}
+
+.c-city-map-stage__building-hotspot:focus-visible {
+  outline: none;
+}
+
+@keyframes city-building-ring-pulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 10px rgb(255 208 64 / 34%),
+      inset 0 0 8px rgb(255 238 150 / 22%);
+    transform: translate(-50%, 50%) scale(0.88);
+  }
+
+  50% {
+    box-shadow:
+      0 0 24px rgb(255 208 64 / 72%),
+      inset 0 0 16px rgb(255 238 150 / 44%);
+    transform: translate(-50%, 50%) scale(1.08);
+  }
+}
+
+.c-city-map-stage__foreground-wall {
+  inset: 0;
+  z-index: 4;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  user-select: none;
+}
+
+.c-city-map-stage__labels {
+  position: absolute;
+  top: var(--base-space-top);
+  left: var(--base-space-left);
+  z-index: 5;
+  width: var(--base-space-width);
+  height: var(--base-space-height);
+  pointer-events: none;
+}
+
+.c-city-map-stage__building-label {
+  position: absolute;
+  top: var(--building-label-y);
+  left: var(--building-label-x);
+  z-index: var(--building-label-z-index);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  min-height: 68px;
+  padding: 6px 3px;
+  border: 1px solid rgb(236 198 104 / 72%);
+  border-radius: 999px;
+  background:
+    linear-gradient(
+      180deg,
+      rgb(43 72 66 / 86%),
+      rgb(18 44 41 / 88%)
+    );
+  box-shadow:
+    0 3px 8px rgb(0 0 0 / 18%),
+    inset 0 0 0 1px rgb(255 244 188 / 10%);
+  color: #f9e4a8;
+  font-family: var(--font-title);
+  font-size: 0.74rem;
+  line-height: 1;
+  letter-spacing: 0.06em;
+  writing-mode: vertical-rl;
+  transform: translate(-50%, -100%);
+  cursor: pointer;
+  pointer-events: auto;
+  transition:
+    filter var(--duration-fast) ease,
+    transform var(--duration-fast) ease,
+    box-shadow var(--duration-fast) ease;
+}
+
+.c-city-map-stage__building-label:hover,
+.c-city-map-stage__building-label:focus-visible {
+  border-color: rgb(255 224 128 / 92%);
+  box-shadow:
+    0 0 12px rgb(255 207 76 / 38%),
+    0 3px 8px rgb(0 0 0 / 18%),
+    inset 0 0 0 1px rgb(255 244 188 / 18%);
+  color: #fff1bd;
+  filter: brightness(1.1);
+}
+
+.c-city-map-stage__building-label:focus-visible {
+  outline: none;
 }
 
 .c-city-map-scene__ambient {

@@ -1,0 +1,256 @@
+{
+  "version": 2,
+  "map": {
+    "id": "haozhou-city",
+    "name": "濠州城",
+    "stageWidth": 2048,
+    "stageHeight": 1152,
+    "baseSpace": {
+      "x": 139,
+      "y": 88,
+      "width": 1771,
+      "height": 976
+    },
+    "backgroundImage": "ui/yuansu/菱形格子/20260716-111958.png",
+    "foregroundImage": "ui/yuansu/菱形格子/20260716-141239.png",
+    "forbiddenPolygons": []
+  },
+  "grid": {
+    "type": "isometric-board",
+    "cols": 40,
+    "rows": 40,
+    "cellWidth": 40,
+    "cellHeight": 20,
+    "originX": 885,
+    "originY": 110,
+    "snap": true,
+    "visible": true,
+    "showCoordinates": true,
+    "showOutline": true
+  },
+  "instances": [
+    {
+      "id": "instance.leader-residence",
+      "prefabId": "leader-residence",
+      "gridX": 18,
+      "gridY": 18,
+      "render": {
+        "visible": true,
+        "locked": false,
+        "zIndexMode": "y-sort",
+        "zIndex": null
+      }
+    },
+    {
+      "id": "instance.keep",
+      "prefabId": "keep",
+      "gridX": 18,
+      "gridY": 7,
+      "render": {
+        "visible": true,
+        "locked": false,
+        "zIndexMode": "y-sort",
+        "zIndex": null
+      }
+    },
+    {
+      "id": "instance.market",
+      "prefabId": "market",
+      "gridX": 8,
+      "gridY": 18,
+      "render": {
+        "visible": true,
+        "locked": false,
+        "zIndexMode": "y-sort",
+        "zIndex": null
+      }
+    },
+    {
+      "id": "instance.decor-house-05",
+      "prefabId": "decor-house-05",
+      "gridX": 18,
+      "gridY": 28,
+      "render": {
+        "visible": true,
+        "locked": false,
+        "zIndexMode": "y-sort",
+        "zIndex": null
+      }
+    },
+    {
+      "id": "instance.decor-house-03",
+      "prefabId": "decor-house-03",
+      "gridX": 9,
+      "gridY": 9,
+      "render": {
+        "visible": true,
+        "locked": false,
+        "zIndexMode": "y-sort",
+        "zIndex": null
+      }
+    },
+    {
+      "id": "instance.decor-house-06",
+      "prefabId": "decor-house-06",
+      "gridX": 0,
+      "gridY": 18,
+      "render": {
+        "visible": true,
+        "locked": false,
+        "zIndexMode": "y-sort",
+        "zIndex": null
+      }
+    },
+    {
+      "id": "instance.grass-03",
+      "prefabId": "grass-03",
+      "gridX": 9,
+      "gridY": 27,
+      "render": {
+        "visible": true,
+        "locked": false,
+        "zIndexMode": "y-sort",
+        "zIndex": null
+      }
+    },
+    {
+      "id": "instance.grass-01",
+      "prefabId": "grass-01",
+      "gridX": 31,
+      "gridY": 18,
+      "render": {
+        "visible": true,
+        "locked": false,
+        "zIndexMode": "y-sort",
+        "zIndex": null
+      }
+    },
+    {
+      "id": "instance.grass-02",
+      "prefabId": "grass-02",
+      "gridX": 18,
+      "gridY": 0,
+      "render": {
+        "visible": true,
+        "locked": false,
+        "zIndexMode": "y-sort",
+        "zIndex": null
+      }
+    },
+    {
+      "id": "instance.medicine-house",
+      "prefabId": "medicine-house",
+      "gridX": 30,
+      "gridY": 10,
+      "render": {
+        "visible": true,
+        "locked": false,
+        "zIndexMode": "y-sort",
+        "zIndex": null
+      }
+    },
+    {
+      "id": "instance.temple",
+      "prefabId": "temple",
+      "gridX": 31,
+      "gridY": 25,
+      "render": {
+        "visible": true,
+        "locked": false,
+        "zIndexMode": "y-sort",
+        "zIndex": null
+      }
+    },
+    {
+      "id": "instance.tea-house",
+      "prefabId": "tea-house",
+      "gridX": 10,
+      "gridY": 2,
+      "render": {
+        "visible": true,
+        "locked": false,
+        "zIndexMode": "y-sort",
+        "zIndex": null
+      }
+    },
+    {
+      "id": "instance.decor-house-01",
+      "prefabId": "decor-house-01",
+      "gridX": 3,
+      "gridY": 10,
+      "render": {
+        "visible": true,
+        "locked": false,
+        "zIndexMode": "y-sort",
+        "zIndex": null
+      }
+    },
+    {
+      "id": "instance.decor-house-02",
+      "prefabId": "decor-house-02",
+      "gridX": 1,
+      "gridY": 26,
+      "render": {
+        "visible": true,
+        "locked": false,
+        "zIndexMode": "y-sort",
+        "zIndex": null
+      }
+    },
+    {
+      "id": "instance.decor-house-07",
+      "prefabId": "decor-house-07",
+      "gridX": 18,
+      "gridY": 36,
+      "render": {
+        "visible": true,
+        "locked": false,
+        "zIndexMode": "y-sort",
+        "zIndex": null
+      }
+    },
+    {
+      "id": "instance.inn",
+      "prefabId": "inn",
+      "gridX": 10,
+      "gridY": 35,
+      "render": {
+        "visible": true,
+        "locked": false,
+        "zIndexMode": "y-sort",
+        "zIndex": null
+      }
+    },
+    {
+      "id": "instance.decor-house-04",
+      "prefabId": "decor-house-04",
+      "gridX": 25,
+      "gridY": 36,
+      "render": {
+        "visible": true,
+        "locked": false,
+        "zIndexMode": "y-sort",
+        "zIndex": null
+      }
+    },
+    {
+      "id": "instance.grain-shop",
+      "prefabId": "grain-shop",
+      "gridX": 26,
+      "gridY": 1,
+      "render": {
+        "visible": true,
+        "locked": false,
+        "zIndexMode": "y-sort",
+        "zIndex": null
+      }
+    }
+  ],
+  "randomPools": [
+    {
+      "id": "decor-house-pool-basic",
+      "name": "普通民居池",
+      "candidates": []
+    }
+  ]
+}

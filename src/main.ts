@@ -841,6 +841,22 @@ function getCurrentPlayerCharacter(): CharacterDefinition | null {
   );
 }
 
+function syncCityMapBuildingLabelHover(
+  labelElement: HTMLElement,
+  isHovered: boolean
+): void {
+  const buildingId = labelElement.dataset.cityMapBuildingLabelId;
+  if (buildingId == null) {
+    return;
+  }
+
+  const cityMapStage = labelElement.closest<HTMLElement>(".c-city-map-stage");
+  const buildingGroup = cityMapStage?.querySelector<HTMLElement>(
+    `[data-city-map-building-group-id="${CSS.escape(buildingId)}"]`
+  );
+  buildingGroup?.classList.toggle("is-hovered", isHovered);
+}
+
 function getCurrentCityUiContext(): {
   cityDefinition: CityDefinition;
   houseDefinitions: HouseDefinition[];
@@ -4596,6 +4612,35 @@ appElement.addEventListener("click", (event) => {
     return;
   }
 
+  const cityMapBuildingButton = targetElement.closest<HTMLElement>(
+    "[data-city-map-building-id]"
+  );
+  if (cityMapBuildingButton != null) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const cityMapBuildingGroup = cityMapBuildingButton.closest<HTMLElement>(
+      "[data-city-map-building-group-id]"
+    );
+    const cityMapStage = cityMapBuildingGroup?.closest<HTMLElement>(
+      ".c-city-map-stage"
+    );
+    const buildingGroups =
+      cityMapStage?.querySelectorAll<HTMLElement>(
+        "[data-city-map-building-group-id]"
+      ) ?? [];
+
+    buildingGroups.forEach((buildingGroup) => {
+      const isSelected = buildingGroup === cityMapBuildingGroup;
+      buildingGroup.classList.toggle("is-selected", isSelected);
+      const hotspot = buildingGroup.querySelector<HTMLElement>(
+        "[data-city-map-building-id]"
+      );
+      hotspot?.setAttribute("aria-pressed", String(isSelected));
+    });
+    return;
+  }
+
   const cityEntryButton = targetElement.closest<HTMLElement>(
     "[data-city-entry-id]"
   );
@@ -4890,6 +4935,80 @@ appElement.addEventListener("click", (event) => {
       null
     );
   }
+});
+
+appElement.addEventListener("mouseover", (event) => {
+  const targetElement = event.target;
+  if (!(targetElement instanceof HTMLElement)) {
+    return;
+  }
+
+  const cityMapBuildingLabel = targetElement.closest<HTMLElement>(
+    "[data-city-map-building-label-id]"
+  );
+  if (cityMapBuildingLabel != null) {
+    syncCityMapBuildingLabelHover(cityMapBuildingLabel, true);
+  }
+});
+
+appElement.addEventListener("mouseout", (event) => {
+  const targetElement = event.target;
+  if (!(targetElement instanceof HTMLElement)) {
+    return;
+  }
+
+  const cityMapBuildingLabel = targetElement.closest<HTMLElement>(
+    "[data-city-map-building-label-id]"
+  );
+  if (cityMapBuildingLabel == null) {
+    return;
+  }
+
+  if (
+    event.relatedTarget instanceof Node &&
+    cityMapBuildingLabel.contains(event.relatedTarget)
+  ) {
+    return;
+  }
+
+  syncCityMapBuildingLabelHover(cityMapBuildingLabel, false);
+});
+
+appElement.addEventListener("focusin", (event) => {
+  const targetElement = event.target;
+  if (!(targetElement instanceof HTMLElement)) {
+    return;
+  }
+
+  const cityMapBuildingLabel = targetElement.closest<HTMLElement>(
+    "[data-city-map-building-label-id]"
+  );
+  if (cityMapBuildingLabel != null) {
+    syncCityMapBuildingLabelHover(cityMapBuildingLabel, true);
+  }
+});
+
+appElement.addEventListener("focusout", (event) => {
+  const targetElement = event.target;
+  if (!(targetElement instanceof HTMLElement)) {
+    return;
+  }
+
+  const cityMapBuildingLabel = targetElement.closest<HTMLElement>(
+    "[data-city-map-building-label-id]"
+  );
+  if (cityMapBuildingLabel == null) {
+    return;
+  }
+
+  if (
+    event.relatedTarget instanceof Node &&
+    cityMapBuildingLabel.contains(event.relatedTarget)
+  ) {
+    return;
+  }
+
+  syncCityMapBuildingLabelHover(cityMapBuildingLabel, false);
 });
 
 function handleModalConfirm() {

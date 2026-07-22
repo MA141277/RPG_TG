@@ -1078,36 +1078,6 @@ function createPachinkoGapCenterRow(anchorRow: number[]): number[] {
   );
 }
 
-function createShuffledPachinkoSlotValues(
-  seed: string
-): Array<number | "wheel"> {
-  const values = [...PACHINKO_SLOT_VALUES];
-  for (let index = values.length - 1; index > 0; index -= 1) {
-    const swapIndex = hashToPercent(`${seed}:${index}`) % (index + 1);
-    const currentValue = values[index];
-    const swapValue = values[swapIndex];
-    if (currentValue == null || swapValue == null) {
-      continue;
-    }
-    values[index] = swapValue;
-    values[swapIndex] = currentValue;
-  }
-  return values;
-}
-
-function createChangedPachinkoSlotValues(
-  previousValues: Array<number | "wheel">,
-  seed: string
-): Array<number | "wheel"> {
-  const nextValues = createShuffledPachinkoSlotValues(seed);
-  if (nextValues.join("|") !== previousValues.join("|")) {
-    return nextValues;
-  }
-
-  const [firstValue, ...restValues] = nextValues;
-  return firstValue == null ? nextValues : [...restValues, firstValue];
-}
-
 function createPachinkoFlipperSegments(
   session: ActivityPachinkoBoardSession
 ): [PachinkoFlipperSegment, PachinkoFlipperSegment] {
@@ -1174,21 +1144,6 @@ function advancePachinkoBoardMechanisms(
     PACHINKO_MOVING_GATE_MIN_X,
     Math.min(PACHINKO_MOVING_GATE_MAX_X, nextMovingGateX)
   );
-  const elapsedMs = session.layoutRefreshElapsedMs + session.animationTickMs;
-  const shouldRefreshLayout = elapsedMs >= session.layoutRefreshPeriodMs;
-  const layoutVersion = shouldRefreshLayout
-    ? session.layoutVersion + 1
-    : session.layoutVersion;
-  const layoutRefreshElapsedMs = shouldRefreshLayout
-    ? elapsedMs % session.layoutRefreshPeriodMs
-    : elapsedMs;
-  const slotValues = shouldRefreshLayout
-    ? createChangedPachinkoSlotValues(
-        session.slotValues,
-        `${session.activityId}:layout:${layoutVersion}:${session.score}:${session.gatePassCount}`
-      )
-    : session.slotValues;
-
   return {
     ...session,
     flipperAngle: boundedFlipperAngle,
@@ -1196,9 +1151,7 @@ function advancePachinkoBoardMechanisms(
     movingGateX: boundedMovingGateX,
     movingGateDirection: gateHitMax ? -1 : gateHitMin ? 1 : session.movingGateDirection,
     movingGatePins: createPachinkoMovingGatePins(boundedMovingGateX),
-    layoutRefreshElapsedMs,
-    layoutVersion,
-    slotValues,
+    layoutRefreshElapsedMs: session.layoutRefreshElapsedMs + session.animationTickMs,
   };
 }
 
