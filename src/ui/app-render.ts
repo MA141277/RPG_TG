@@ -69,6 +69,7 @@ type CharacterDetailViewOptions = Parameters<typeof renderCharacterDetailView>[1
 export type AppRenderInput = {
   appState: AppState;
   playerCharacterId: string;
+  coinRewardDisplayValue?: number | null;
   mapDefinition: MapDefinition;
   cityDefinition: CityDefinition;
   cityDefinitions?: CityDefinition[];
@@ -655,12 +656,23 @@ export function renderApp(input: AppRenderInput): string {
     input.appState,
     input.playerCharacterId
   );
-  const playerPanelModel = createGlobalPlayerPanelModel(
+  const basePlayerPanelModel = createGlobalPlayerPanelModel(
     playerCharacter,
     input.appState.gameState,
     null,
     input.presenterOutput.overlay.locationText
   );
+  const goldTextOverride =
+    input.coinRewardDisplayValue == null
+      ? null
+      : basePlayerPanelModel.goldText.replace(
+          /^\d+/,
+          String(input.coinRewardDisplayValue)
+        );
+  const playerPanelModel = {
+    ...basePlayerPanelModel,
+    goldTextOverride,
+  };
   const stageMarkup = renderStage(input, playerCharacter);
 
   return `
@@ -695,6 +707,7 @@ export function renderApp(input: AppRenderInput): string {
             )}
             ${renderNpcInteractionOverlay(input)}
             ${renderCityBeggingMiniGameOverlay(input.appState.beggingMiniGameState)}
+            <div class="p-ui-coin-reward-layer" data-ui-coin-reward-layer aria-hidden="true"></div>
             ${renderOverlay(input, playerCharacter)}
             ${renderLayoutEditor(input.appState)}
           </div>

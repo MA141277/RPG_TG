@@ -1,215 +1,94 @@
-﻿## Task 2: Temple And Tavern View Models
+## Task 2: Add The City Button And HUD/Overlay Contracts
 
 **Files:**
-- Modify: `src/application/house-modules/temple-house/temple-house-house-module.ts`
-- Modify: `src/application/house-modules/tavern/tavern-house-module.ts`
-- Modify: `tests/robustness.test.cjs`
+- Modify: `src/ui/views/city/city-view.ts`
+- Modify: `src/ui/panels/global-player-panel.ts`
+- Modify: `src/ui/app-render.ts`
+- Test: `tests/haozhou-city-coin-reward-source.test.cjs`
 
 **Interfaces:**
-- Consumes: `orderHouseStandbyRoster({ primaryCharacterId, actors })` from Task 1.
-- Produces: temple and tavern `HouseModuleViewModel.standbyRoster` with `defaultCharacterId` first while greeting/open dialogue is active.
+- Consumes:
+  - `renderCityView(...)` existing city-page template
+  - `renderGlobalPlayerPanel(model, layout)` existing HUD template
+- Produces:
+  - `data-action="grant-haozhou-test-coin"` button in city page
+  - `data-ui-gold-target` anchor on HUD target node
+  - `data-ui-gold-value` anchor on HUD numeric text node
+  - `data-ui-coin-reward-layer` container in app shell render output
+  - optional `goldTextOverride?: string | null` in the HUD render path
 
-- [ ] **Step 1: Write failing temple and tavern view-model tests**
-
-Add these tests to `tests/robustness.test.cjs`:
+- [ ] **Step 1: Write the failing test**
 
 ```js
-test("primary house actor appears first in temple daily roster during greeting", () => {
-  const state = createInitialState({
-    cards: prototypeCards,
-    characters: prototypeCharacters,
-    houses: prototypeHouses,
-    cityEntries: prototypeCityEntries,
-    map: prototypeMap,
-  });
-  const entered = templeHouseHouseModule.enter({
-    gameState: state,
-    characterDefinitions: prototypeCharacters,
-    houseDefinition: templeHouse,
-    playerCharacterId,
-  });
-  const viewModel = templeHouseHouseModule.selectViewModel({
-    gameState: entered.gameState,
-    characterDefinitions: entered.characterDefinitions,
-    houseDefinition: templeHouse,
-    playerCharacterId,
-    sessionState: entered.sessionState,
-  });
+const test = require("node:test");
+const assert = require("node:assert/strict");
+const fs = require("node:fs");
 
-  assert.equal(viewModel.dialogue?.characterId, templeHouse.defaultCharacterId);
-  assert.equal(viewModel.standbyRoster[0]?.characterId, templeHouse.defaultCharacterId);
-  assert.ok(
-    viewModel.standbyRoster.some(
-      (actor) => actor.characterId === templeHouse.defaultCharacterId
-    )
-  );
-});
+test("city view and hud expose the coin reward animation anchors", () => {
+  const cityViewSource = fs.readFileSync("src/ui/views/city/city-view.ts", "utf8");
+  const panelSource = fs.readFileSync("src/ui/panels/global-player-panel.ts", "utf8");
+  const appRenderSource = fs.readFileSync("src/ui/app-render.ts", "utf8");
 
-test("primary house actor appears first in tavern roster during greeting", () => {
-  const state = createInitialState({
-    cards: prototypeCards,
-    characters: prototypeCharacters,
-    houses: prototypeHouses,
-    cityEntries: prototypeCityEntries,
-    map: prototypeMap,
-  });
-  const entered = tavernHouseModule.enter({
-    gameState: state,
-    characterDefinitions: prototypeCharacters,
-    houseDefinition: tavernHouse,
-    playerCharacterId,
-  });
-  const viewModel = tavernHouseModule.selectViewModel({
-    gameState: entered.gameState,
-    characterDefinitions: entered.characterDefinitions,
-    houseDefinition: tavernHouse,
-    playerCharacterId,
-    sessionState: entered.sessionState,
-  });
-
-  assert.equal(viewModel.dialogue?.characterId, tavernHouse.defaultCharacterId);
-  assert.equal(viewModel.standbyRoster[0]?.characterId, tavernHouse.defaultCharacterId);
-  assert.ok(viewModel.standbyRoster[0]?.actionId);
+  assert.match(cityViewSource, /data-action="grant-haozhou-test-coin"/);
+  assert.match(panelSource, /data-ui-gold-target/);
+  assert.match(panelSource, /data-ui-gold-value/);
+  assert.match(appRenderSource, /data-ui-coin-reward-layer/);
 });
 ```
 
-- [ ] **Step 2: Run the focused tests to verify they fail**
+- [ ] **Step 2: Run test to verify it fails**
 
-Run:
+Run: `node --test tests/haozhou-city-coin-reward-source.test.cjs`
 
-```bash
-npm run build:test
-node --test tests/robustness.test.cjs --test-name-pattern "primary house actor appears first"
-```
+Expected: FAIL because one or more anchor attributes are missing.
 
-Expected:
-
-- Temple or tavern focused tests fail because the owner is missing from active dialogue roster or is not first.
-
-- [ ] **Step 3: Migrate tavern `selectViewModel()`**
-
-In `src/application/house-modules/tavern/tavern-house-module.ts`, import the helper:
+- [ ] **Step 3: Write minimal implementation**
 
 ```ts
-import { orderHouseStandbyRoster } from "../../house/house-primary-actor-roster";
+// src/ui/views/city/city-view.ts
+const haozhouCoinTestButton = `
+  <button
+    type="button"
+    class="c-kulan-city__coin-test-action"
+    data-action="grant-haozhou-test-coin"
+  >
+    测试 +10�?  </button>
+`;
 ```
 
-Replace the `standbyRoster: isIdle ? [...] : []` expression in `selectViewModel()` with a roster that is always present:
-
 ```ts
-const tavernPrimaryActorId =
-  input.houseDefinition.defaultCharacterId ?? tavernBossProfile.actorId;
-const tavernBossActor = {
-  characterId: tavernPrimaryActorId,
-  name: tavernBossProfile.name,
-  title: tavernBossProfile.title,
-  actionId: "open-boss-dialogue",
-  isSelected: !isIdle,
+// src/ui/panels/global-player-panel.ts
+export type GlobalPlayerPanelModel = {
+  // ...
+  goldTextOverride?: string | null;
 };
-```
 
-Use it in the returned view model:
+const resolvedGoldText = model.goldTextOverride ?? `银两 ${model.goldText}`;
+```
 
 ```ts
-standbyRoster: orderHouseStandbyRoster({
-  primaryCharacterId: tavernPrimaryActorId,
-  actors: [tavernBossActor],
-}),
+// inside HUD markup
+<div class="p-global-status-compact__gold-wrap" data-ui-gold-target>
+  <strong class="p-global-status-compact__gold" data-ui-gold-value>${resolvedGoldText}</strong>
+</div>
 ```
-
-Keep the existing dialogue, action container, status card, overlay, and leave action behavior unchanged.
-
-- [ ] **Step 4: Migrate temple daily `standbyRoster` ordering**
-
-In `src/application/house-modules/temple-house/temple-house-house-module.ts`, import the helper:
 
 ```ts
-import { orderHouseStandbyRoster } from "../../house/house-primary-actor-roster";
+// src/ui/app-render.ts
+${renderGlobalPlayerPanel(globalPlayerPanelModel, layout)}
+<div class="p-ui-coin-reward-layer" data-ui-coin-reward-layer aria-hidden="true"></div>
 ```
 
-After `const standbyCharacterIds = ...`, add a daily roster actor list before the `return`:
+- [ ] **Step 4: Run test to verify it passes**
 
-```ts
-const standbyActors = standbyCharacterIds.map((characterId) => {
-  const characterDefinition = input.characterDefinitions.find(
-    (candidateCharacter) => candidateCharacter.id === characterId
-  );
-  assertExists(
-    characterDefinition,
-    `Temple standby character not found for id "${characterId}".`
-  );
-  return {
-    characterId: characterDefinition.id,
-    name: characterDefinition.name,
-    ...(sessionState.mode === "daily" &&
-    characterDefinition.id === abbotCharacter.id
-      ? { actionId: "open-abbot-dialogue" }
-      : {}),
-    ...(sessionState.mode === "meeting" &&
-    characterDefinition.id === input.playerCharacterId
-      ? { isSelected: true }
-      : sessionState.mode === "meeting"
-        ? { isSelected: false }
-        : characterDefinition.id === dialogueSpeaker.id
-          ? { isSelected: true }
-          : {}),
-    ...(characterDefinition.id === abbotCharacter.id
-      ? {
-          avatarArtClassName: "c-temple-house-avatar-art--abbot",
-          portraitArtClassName: "c-temple-house-portrait-art--abbot",
-        }
-      : characterDefinition.id === input.playerCharacterId
-        ? {
-            avatarArtClassName: "c-temple-house-avatar-art--player",
-            portraitArtClassName: "c-temple-house-portrait-art--player",
-          }
-        : {
-            avatarArtClassName: "c-temple-house-avatar-art--senior-monk",
-            portraitArtClassName: "c-temple-house-portrait-art--senior-monk",
-          }),
-    ...(characterDefinition.title == null
-      ? {}
-      : { title: characterDefinition.title }),
-  };
-});
-const orderedStandbyActors =
-  sessionState.mode === "meeting"
-    ? standbyActors
-    : orderHouseStandbyRoster({
-        primaryCharacterId: input.houseDefinition.defaultCharacterId,
-        actors: standbyActors,
-      });
-```
+Run: `node --test tests/haozhou-city-coin-reward-source.test.cjs`
 
-Replace the existing inline `standbyRoster: standbyCharacterIds.map(...)` expression with:
+Expected: PASS with all four source assertions green.
 
-```ts
-standbyRoster: orderedStandbyActors,
-```
-
-- [ ] **Step 5: Run the focused view-model tests**
-
-Run:
+- [ ] **Step 5: Commit**
 
 ```bash
-npm run build:test
-node --test tests/robustness.test.cjs --test-name-pattern "primary house actor appears first"
+git add tests/haozhou-city-coin-reward-source.test.cjs src/ui/views/city/city-view.ts src/ui/panels/global-player-panel.ts src/ui/app-render.ts
+git commit -m "feat: add coin reward ui anchors"
 ```
-
-Expected:
-
-- Both focused tests pass.
-
-- [ ] **Step 6: Commit Task 2**
-
-Run:
-
-```bash
-git add src/application/house-modules/temple-house/temple-house-house-module.ts src/application/house-modules/tavern/tavern-house-module.ts tests/robustness.test.cjs
-git commit -m "feat: keep house primary actors in roster"
-```
-
-Expected:
-
-- Commit succeeds and contains only Task 2 files.
 

@@ -1,0 +1,63 @@
+# Review package: 87c8eaa5f959efffe982aa1beca761a00a518a68 .. working-tree (with untracked files)
+
+## Commits
+(no task commit created; review uncommitted working tree diff)
+
+## Files changed
+src/application/rewards/coin-reward.ts | 560 bytes | untracked/new
+tests/coin-reward-state.test.cjs | 671 bytes | untracked/new
+
+## Diff
+diff --git "a/C:\\Users\\29636\\AppData\\Local\\Temp\\codex-empty-file.txt" "b/D:\\GitHub\345\205\213\351\232\206\346\226\207\344\273\266\\RPG_TG\\RPG_TG\\src\\application\\rewards\\coin-reward.ts"
+index e69de29b..018c6824 100644
+--- "a/C:\\Users\\29636\\AppData\\Local\\Temp\\codex-empty-file.txt"
++++ "b/D:\\GitHub\345\205\213\351\232\206\346\226\207\344\273\266\\RPG_TG\\RPG_TG\\src\\application\\rewards\\coin-reward.ts"
+@@ -0,0 +1,22 @@
++import type { AppState } from "../app-shell";
++
++export function applyCoinReward(
++  state: AppState,
++  playerCharacterId: string,
++  delta: number
++): AppState {
++  return {
++    ...state,
++    characterDefinitions: state.characterDefinitions.map((characterDefinition) =>
++      characterDefinition.id !== playerCharacterId
++        ? characterDefinition
++        : {
++            ...characterDefinition,
++            stats: {
++              ...characterDefinition.stats,
++              gold: characterDefinition.stats.gold + delta,
++            },
++          }
++    ),
++  };
++}
+
+diff --git "a/C:\\Users\\29636\\AppData\\Local\\Temp\\codex-empty-file.txt" "b/D:\\GitHub\345\205\213\351\232\206\346\226\207\344\273\266\\RPG_TG\\RPG_TG\\tests\\coin-reward-state.test.cjs"
+index e69de29b..9e0b9b68 100644
+--- "a/C:\\Users\\29636\\AppData\\Local\\Temp\\codex-empty-file.txt"
++++ "b/D:\\GitHub\345\205\213\351\232\206\346\226\207\344\273\266\\RPG_TG\\RPG_TG\\tests\\coin-reward-state.test.cjs"
+@@ -0,0 +1,19 @@
++const test = require("node:test");
++const assert = require("node:assert/strict");
++
++test("applyCoinReward adds gold only to the targeted player character", async () => {
++  const { applyCoinReward } = await import("../src/application/rewards/coin-reward.ts");
++
++  const state = {
++    characterDefinitions: [
++      { id: "char.player", stats: { gold: 10, fame: 0 } },
++      { id: "char.other", stats: { gold: 99, fame: 0 } },
++    ],
++  };
++
++  const nextState = applyCoinReward(state, "char.player", 10);
++
++  assert.equal(nextState.characterDefinitions[0].stats.gold, 20);
++  assert.equal(nextState.characterDefinitions[1].stats.gold, 99);
++  assert.notEqual(nextState, state);
++});
+

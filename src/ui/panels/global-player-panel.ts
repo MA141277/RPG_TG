@@ -24,6 +24,7 @@ export type GlobalPlayerPanelModel = {
   currentDateText: string;
   locationText: string;
   goldText: string;
+  goldTextOverride?: string | null;
   stamina: number;
   fame: number;
   reviewDateText: string;
@@ -82,6 +83,7 @@ export function renderGlobalPlayerPanel(
   layout: GlobalHudLayout
 ): string {
   const taskComponent = getComponent(layout, "task-panel");
+  const resolvedGoldText = model.goldTextOverride ?? `银两 ${model.goldText}`;
   const taskItems = [
     {
       id: "review",
@@ -123,7 +125,9 @@ export function renderGlobalPlayerPanel(
           <strong class="p-global-status-compact__location">${model.locationText}</strong>
           <span class="p-global-status-compact__date-separator" aria-hidden="true"></span>
           <strong class="p-global-status-compact__date">${model.currentDateText}</strong>
-          <strong class="p-global-status-compact__gold">银两 ${model.goldText}</strong>
+          <div class="p-global-status-compact__gold-wrap" data-ui-gold-target>
+            <strong class="p-global-status-compact__gold" data-ui-gold-value>${resolvedGoldText}</strong>
+          </div>
           <strong class="p-global-status-compact__stamina">体力 ${model.stamina}</strong>
           <strong class="p-global-status-compact__prestige">威望 ${model.fame}</strong>
           <button

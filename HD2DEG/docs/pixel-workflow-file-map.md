@@ -48,6 +48,9 @@
 | 路径 | 状态 | 作用 | 对应蓝图 |
 | --- | --- | --- | --- |
 | `scripts/app/boot.js` | current | `file://` 警告兜底、`ls()` 本地存储封装、全局 `CONFIG`（接口 base / API key / 默认模型 / 图片尺寸）。**必须在其它脚本之前加载**（被 `ls` / `CONFIG` 引用点达 40 处）。 | split-blueprint §4 Phase 3 |
+| `scripts/app/city-ambient-npc-scene-index.js` | current | 从当前已加载场景对象提取城市环境 NPC 使用的建筑占位、入口节点、城门节点与场景边界。 | city-ambient-npc spec / plan |
+| `scripts/app/city-ambient-npc-pathfinder.js` | current | 基于 scene index 的四向最短路搜索，供城市环境 NPC 选择有效步行路线。 | city-ambient-npc spec / plan |
+| `scripts/app/city-ambient-npc-runtime.js` | current | 维护 4..8 个城市环境 NPC 的生成、移动、销毁与胶囊占位渲染元数据。 | city-ambient-npc spec / plan |
 | `scripts/pixel-workflow.js` | legacy | Phase 2 过渡单体文件。Phase 3.1 后已剥离 boot，当前仍包含 DOM refs、`animator`、生成、场景、渲染、FX、库等全部逻辑。继续按 §3.2 顺序外迁。 | split-blueprint §1 |
 
 ### 3.2 Phase 3+ 计划模块（按加载顺序）

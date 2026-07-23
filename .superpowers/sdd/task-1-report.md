@@ -1,44 +1,71 @@
-# Task 1 Report: Shared Primary Actor Roster Helper
+# Task 1 Report: Add The Pure Coin Reward State Mutation
 
-Status: DONE
+## Implemented
 
-## Summary
-
-Implemented `orderHouseStandbyRoster` in `src/application/house/house-primary-actor-roster.ts` and added the requested robustness tests in `tests/robustness.test.cjs`.
-
-The helper:
-
-- Deduplicates standby actors by `characterId`, preserving the first model for each actor.
-- Moves the first matching `primaryCharacterId` actor to the front.
-- Leaves roster order unchanged when `primaryCharacterId` is `null` or missing from the deduplicated roster.
+- Added `applyCoinReward(state, playerCharacterId, delta)` in `src/application/rewards/coin-reward.ts`.
+- The mutation returns a new `AppState` object.
+- Only the matching `characterDefinitions` entry is copied and updated.
+- Non-targeted character definitions retain their original object references.
+- The targeted character's `stats.gold` is incremented by `delta`.
 
 ## TDD Evidence
 
-RED:
+### RED
 
-- Added the two requested tests before creating the helper.
-- Ran `npm run build:test`: exited 0.
-- Ran `node --test tests/robustness.test.cjs --test-name-pattern "primary house actor roster helper"`: exited 1 with `MODULE_NOT_FOUND` for `../.test-dist/application/house/house-primary-actor-roster.js`, the expected missing-helper failure.
+Command attempted:
 
-GREEN:
+```powershell
+node --test tests/coin-reward-state.test.cjs
+```
 
-- Created `src/application/house/house-primary-actor-roster.ts` with the requested function.
-- Ran `npm run build:test`: exited 0.
-- Ran `node --test tests/robustness.test.cjs --test-name-pattern "primary house actor roster helper"`: exited 0; the two helper tests passed.
+Result:
 
-## Commit
+- Failed before test execution because `node` was not available on the PowerShell PATH.
+- Error: `The term 'node' is not recognized as the name of a cmdlet...`
 
-- `b9bd39b6 test: add house primary actor roster helper`
+I then located the bundled Codex Node runtime through the available `pnpm.cmd` wrapper and used it for follow-up verification.
 
-## Scope Control
+### GREEN
 
-Committed only:
+Command attempted with bundled Node and the exact `--test` runner semantics:
 
-- `src/application/house/house-primary-actor-roster.ts`
-- `tests/robustness.test.cjs`
+```powershell
+C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe --test tests/coin-reward-state.test.cjs
+```
 
-The repository had unrelated uncommitted changes before this task; they were not reverted, staged, or committed.
+Result:
+
+- Failed before executing the test body due to sandbox child-process restrictions.
+- Error: `spawn EPERM`
+
+Fallback focused verification command:
+
+```powershell
+C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe tests\coin-reward-state.test.cjs
+```
+
+Result:
+
+- PASS
+- `1` test passed
+- `0` tests failed
+- Output included: `✔ applyCoinReward adds gold only to the targeted player character`
+
+## Files Changed
+
+- `src/application/rewards/coin-reward.ts`
+- `tests/coin-reward-state.test.cjs`
+- `.superpowers/sdd/task-1-report.md`
+
+## Self-Review Notes
+
+- Scope stayed limited to application-layer state mutation and focused test.
+- No UI, DOM, animation, Haozhou city button, or runtime wiring was added.
+- Implementation is immutable for the top-level state, target character, and target stats object.
+- The function uses the existing `AppState` type import from `src/application/app-shell`.
 
 ## Concerns
 
-None.
+- The exact brief command `node --test tests/coin-reward-state.test.cjs` could not be completed in this sandbox because `node` is not on PATH.
+- Running the bundled Node binary with `--test` reached Node but failed with `spawn EPERM`, apparently due to sandbox child-process restrictions.
+- The focused test did pass when run in-process with the bundled Node binary.

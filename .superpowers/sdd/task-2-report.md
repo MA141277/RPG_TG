@@ -1,92 +1,118 @@
-# Task 2 Report: Temple And Tavern View Models
+# Task 2 Report: Add The City Button And HUD/Overlay Contracts
 
 ## Status
 
-DONE
+DONE_WITH_CONCERNS
 
-## Scope
+## Implemented
 
-Modified only the Task 2 implementation files:
+- Added the Haozhou city test button in `src/ui/views/city/city-view.ts`.
+- The button is permanently rendered in the city page and exposes `data-action="grant-haozhou-test-coin"`.
+- Added `goldTextOverride?: string | null` to `GlobalPlayerPanelModel` in `src/ui/panels/global-player-panel.ts`.
+- Added `resolvedGoldText = model.goldTextOverride ?? \`银两 ${model.goldText}\`` in the HUD render path.
+- Added `data-ui-gold-target` on the HUD gold target wrapper.
+- Added `data-ui-gold-value` on the HUD gold numeric text node.
+- Added the global coin reward layer mount point in `src/ui/app-render.ts`:
+  `<div class="p-ui-coin-reward-layer" data-ui-coin-reward-layer aria-hidden="true"></div>`.
+- Added the requested source-contract test in `tests/haozhou-city-coin-reward-source.test.cjs`.
 
-- `src/application/house-modules/temple-house/temple-house-house-module.ts`
-- `src/application/house-modules/tavern/tavern-house-module.ts`
-- `tests/robustness.test.cjs`
+No runtime action handling, state mutation wiring, or animator implementation was added.
 
-The report file was created as requested and was not included in the original Task 2 implementation commit.
+## TDD RED Evidence
 
-## TDD Evidence
+Added `tests/haozhou-city-coin-reward-source.test.cjs` with the exact assertions from the task brief.
 
-Added the requested failing tests to `tests/robustness.test.cjs`:
+Initial task command:
 
-- `primary house actor appears first in temple daily roster during greeting`
-- `primary house actor appears first in tavern roster during greeting`
-
-Red run:
-
-```bash
-npm run build:test
-node --test tests/robustness.test.cjs --test-name-pattern "primary house actor appears first"
+```powershell
+node --test tests\haozhou-city-coin-reward-source.test.cjs
 ```
 
-Result: build succeeded; focused test run failed as expected on Tavern because the greeting roster was empty and `viewModel.standbyRoster[0]?.characterId` was `undefined` instead of `char.kulan_innkeeper`.
+Result: could not run because `node` is not on this PowerShell PATH.
 
-Green run:
+Bundled Node default test runner:
 
-```bash
-npm run build:test
-node --test tests/robustness.test.cjs --test-name-pattern "primary house actor appears first"
+```powershell
+& 'C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe' --test tests\haozhou-city-coin-reward-source.test.cjs
 ```
 
-Result: build succeeded; focused test run passed with 298 passing tests and 0 failures under the name pattern.
+Result: failed before assertions with `Error: spawn EPERM`.
 
-## Implementation Notes
+Sandbox-compatible RED run:
 
-Tavern `selectViewModel()` now imports and uses `orderHouseStandbyRoster()`, creates a stable boss actor from `defaultCharacterId ?? tavernBossProfile.actorId`, and returns that actor in `standbyRoster` during greeting/open dialogue as well as idle.
+```powershell
+& 'C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe' --test --test-isolation=none tests\haozhou-city-coin-reward-source.test.cjs
+```
 
-Temple `selectViewModel()` now builds the standby actor list before returning, preserves meeting participant order, and applies `orderHouseStandbyRoster()` for non-meeting daily view models so the default abbot actor is first.
+Result: failed as expected on missing `data-action="grant-haozhou-test-coin"`.
 
-No `main.ts` house-specific branch was added, no application HTML strings were introduced, and no persistent gameplay state was changed.
+## TDD GREEN Evidence
 
-## Commit
+After minimal implementation, reran:
 
-Created commit:
+```powershell
+& 'C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe' --test --test-isolation=none tests\haozhou-city-coin-reward-source.test.cjs
+```
 
-- `6a0900ee feat: keep house primary actors in roster`
+Result:
+
+```text
+✔ city view and hud expose the coin reward animation anchors (2.1893ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 14.9598
+```
+
+## Additional Verification
+
+TypeScript check:
+
+```powershell
+& 'C:\Users\29636\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe' node_modules\typescript\bin\tsc --noEmit -p tsconfig.json
+```
+
+Result: exit code 0, no diagnostics.
+
+## Files Changed
+
+- `src/ui/views/city/city-view.ts`
+- `src/ui/panels/global-player-panel.ts`
+- `src/ui/app-render.ts`
+- `tests/haozhou-city-coin-reward-source.test.cjs`
+- `.superpowers/sdd/task-2-report.md`
+
+## Self-Review Notes
+
+- Scope stayed limited to UI/source contracts.
+- The city button only emits the requested action attribute; no handler was implemented.
+- HUD override is optional and preserves existing text when unset.
+- The app shell layer is a passive mount point only.
+- No `main.ts` changes were made.
+- No gameplay state mutation or persistent data wiring was added.
+
+## Git / Commit
+
+Attempted:
+
+```powershell
+git add tests/haozhou-city-coin-reward-source.test.cjs src/ui/views/city/city-view.ts src/ui/panels/global-player-panel.ts src/ui/app-render.ts
+```
+
+Result:
+
+```text
+fatal: Unable to create 'D:/GitHub克隆文件/RPG_TG/RPG_TG/.git/index.lock': Permission denied
+```
+
+No commit was created because git index writes are blocked in this environment.
 
 ## Concerns
 
-None.
-
-## Reviewer Fix: Temple Meeting Primary Actor
-
-Reviewer finding addressed:
-
-- Temple meeting view models omitted the abbot/default primary actor because `getTempleMeetingParticipantIds()` filtered the abbot out and meeting mode bypassed `orderHouseStandbyRoster()`.
-
-Test coverage added:
-
-- `primary house actor appears first in temple meeting roster with player still selected`
-
-Red run:
-
-```bash
-npm run build:test
-node --test tests/robustness.test.cjs --test-name-pattern "primary house actor"
-```
-
-Result: build succeeded; focused test run failed as expected because the meeting roster started with `char.player` instead of `char.kulan_temple_abbot`.
-
-Fix:
-
-- Temple meeting participant ids now include the abbot/default primary actor.
-- Temple `selectViewModel()` now applies `orderHouseStandbyRoster()` to meeting and daily rosters.
-- The existing meeting player selected state remains on the player actor, and non-primary meeting participants remain in the roster.
-
-Green run:
-
-```bash
-npm run build:test
-node --test tests/robustness.test.cjs --test-name-pattern "primary house actor"
-```
-
-Result: build succeeded; focused test run passed with 299 passing tests and 0 failures under the name pattern.
+- The exact requested `node --test ...` command cannot run from the current PATH because `node` is not available there.
+- The bundled Node default test runner cannot spawn child test processes in this sandbox (`spawn EPERM`), so RED/GREEN evidence used `--test-isolation=none`.
+- Git staging/commit is blocked by `.git/index.lock` permission denial, as anticipated in the task brief.

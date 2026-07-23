@@ -1,0 +1,464 @@
+# Review package: working-tree task 5
+
+## Commits
+(no task commit created; review uncommitted working tree diff for task-5 file set)
+
+## Files changed
+src/ui/animations/coin-reward-animation.ts | 9152 bytes | untracked/new
+tests/coin-reward-animation.test.cjs | 1600 bytes | untracked/new
+ src/styles/prototype.css | 26 ++++++++++++++++++++++++++
+ 1 file changed, 26 insertions(+)
+
+## Diff
+diff --git "a/C:\\Users\\29636\\AppData\\Local\\Temp\\codex-empty-file.txt" "b/D:\\GitHub\345\205\213\351\232\206\346\226\207\344\273\266\\RPG_TG\\RPG_TG\\src\\ui\\animations\\coin-reward-animation.ts"
+index e69de29b..9e15e5f1 100644
+--- "a/C:\\Users\\29636\\AppData\\Local\\Temp\\codex-empty-file.txt"
++++ "b/D:\\GitHub\345\205\213\351\232\206\346\226\207\344\273\266\\RPG_TG\\RPG_TG\\src\\ui\\animations\\coin-reward-animation.ts"
+@@ -0,0 +1,324 @@
++type CoinRewardAnimator = {
++  setGoldTargetElement(element: HTMLElement | null): void;
++  play(input: {
++    sourceElement: HTMLElement;
++    sourceClientX?: number;
++    sourceClientY?: number;
++    startValue: number;
++    targetValue: number;
++    amount: number;
++  }): void;
++};
++
++type Point = {
++  x: number;
++  y: number;
++};
++
++type ActiveIngot = {
++  node: HTMLSpanElement;
++  burstPoint: Point;
++  controlPoint: Point;
++};
++
++const INGOT_MIN_COUNT = 10;
++const INGOT_MAX_COUNT = 20;
++const INGOT_BURST_MS = 160;
++const INGOT_PAUSE_MS = 500;
++const INGOT_GATHER_MS = 420;
++
++function createIngotNode(document: Document): HTMLSpanElement {
++  const node = document.createElement("span");
++  node.className = "p-ui-coin-reward-layer__ingot";
++  node.setAttribute("aria-hidden", "true");
++  return node;
++}
++
++function quadraticBezier(from: number, control: number, to: number, t: number): number {
++  return (1 - t) * (1 - t) * from + 2 * (1 - t) * t * control + t * t * to;
++}
++
++function clampIngotCount(amount: number): number {
++  const normalizedAmount = Number.isFinite(amount)
++    ? Math.trunc(amount)
++    : INGOT_MIN_COUNT;
++
++  return Math.max(INGOT_MIN_COUNT, Math.min(INGOT_MAX_COUNT, normalizedAmount));
++}
++
++function buildRollingDisplayValues(
++  startValue: number,
++  targetValue: number,
++  ingotCount: number
++): number[] {
++  return Array.from({ length: ingotCount }, (_, index) =>
++    Math.round(startValue + ((targetValue - startValue) * (index + 1)) / ingotCount)
++  );
++}
++
++function getElementCenter(element: HTMLElement): Point {
++  const rect = element.getBoundingClientRect();
++
++  return {
++    x: rect.left + rect.width / 2,
++    y: rect.top + rect.height / 2,
++  };
++}
++
++function getSourceCenter(input: {
++  sourceElement: HTMLElement;
++  sourceClientX: number | undefined;
++  sourceClientY: number | undefined;
++}): Point {
++  const sourceCenter = getElementCenter(input.sourceElement);
++
++  return {
++    x: input.sourceClientX ?? sourceCenter.x,
++    y: input.sourceClientY ?? sourceCenter.y,
++  };
++}
++
++function toLayerPoint(layer: HTMLElement, viewportPoint: Point): Point {
++  const layerRect =
++    typeof layer.getBoundingClientRect === "function"
++      ? layer.getBoundingClientRect()
++      : { left: 0, top: 0, width: 0, height: 0 };
++  const layerWidth = layer.clientWidth || layerRect.width || 1;
++  const layerHeight = layer.clientHeight || layerRect.height || 1;
++  const scaleX = layerRect.width > 0 ? layerWidth / layerRect.width : 1;
++  const scaleY = layerRect.height > 0 ? layerHeight / layerRect.height : 1;
++
++  return {
++    x: (viewportPoint.x - layerRect.left) * scaleX,
++    y: (viewportPoint.y - layerRect.top) * scaleY,
++  };
++}
++
++function getBurstPoint(sourcePoint: Point, index: number, ingotCount: number): Point {
++  const angle = (Math.PI * 2 * index) / ingotCount - Math.PI / 2;
++  const ringOffset = index % 2 === 0 ? 18 : 0;
++  const radius = 54 + ringOffset;
++
++  return {
++    x: sourcePoint.x + Math.cos(angle) * radius,
++    y: sourcePoint.y + Math.sin(angle) * radius * 0.66,
++  };
++}
++
++function getControlPoint(from: Point, to: Point, index: number): Point {
++  const side = index % 2 === 0 ? -1 : 1;
++
++  return {
++    x: (from.x + to.x) / 2 + side * (52 + (index % 3) * 16),
++    y: Math.min(from.y, to.y) - 96 - (index % 4) * 12,
++  };
++}
++
++function moveIngot(node: HTMLSpanElement, point: Point, scale = 1): void {
++  node.style.left = `${point.x}px`;
++  node.style.top = `${point.y}px`;
++  node.style.transform = `translate(-50%, -50%) scale(${scale})`;
++}
++
++function resetIngot(node: HTMLSpanElement): void {
++  node.className = "p-ui-coin-reward-layer__ingot";
++  node.style.left = "";
++  node.style.top = "";
++  node.style.opacity = "";
++  node.style.transform = "";
++  node.style.transition = "";
++  node.style.transitionDelay = "";
++}
++
++function requestAnimationStep(callback: FrameRequestCallback): number {
++  if (typeof requestAnimationFrame === "function") {
++    return requestAnimationFrame(callback);
++  }
++
++  return globalThis.setTimeout(() => callback(performance.now()), 16);
++}
++
++function cancelAnimationStep(frameId: number): void {
++  if (typeof cancelAnimationFrame === "function") {
++    cancelAnimationFrame(frameId);
++    return;
++  }
++
++  globalThis.clearTimeout(frameId);
++}
++
++export function createCoinRewardAnimator(input: {
++  layer: HTMLElement;
++  onDisplayValueChange: (displayValue: number | null) => void;
++}): CoinRewardAnimator {
++  let goldTargetElement: HTMLElement | null = null;
++  const ingotPool: HTMLSpanElement[] = [];
++  let activeIngots: ActiveIngot[] = [];
++  let scheduledTimeouts: number[] = [];
++  let scheduledFrame: number | null = null;
++
++  function acquireIngot(): HTMLSpanElement {
++    const node = ingotPool.pop() ?? createIngotNode(input.layer.ownerDocument);
++    resetIngot(node);
++    input.layer.appendChild(node);
++    return node;
++  }
++
++  function releaseIngot(node: HTMLSpanElement): void {
++    resetIngot(node);
++    node.remove();
++    ingotPool.push(node);
++  }
++
++  function releaseActiveIngots(): void {
++    activeIngots.forEach((ingot) => releaseIngot(ingot.node));
++    activeIngots = [];
++  }
++
++  function schedule(callback: () => void, delayMs: number): void {
++    const timeoutId = globalThis.setTimeout(callback, delayMs);
++    scheduledTimeouts.push(timeoutId);
++  }
++
++  function clearScheduledWork(): void {
++    scheduledTimeouts.forEach((timeoutId) => globalThis.clearTimeout(timeoutId));
++    scheduledTimeouts = [];
++
++    if (scheduledFrame != null) {
++      cancelAnimationStep(scheduledFrame);
++      scheduledFrame = null;
++    }
++  }
++
++  function stopCurrentAnimation(): void {
++    clearScheduledWork();
++    releaseActiveIngots();
++  }
++
++  function scheduleGather(inputForGather: {
++    targetPoint: Point;
++    hitValues: number[];
++    targetValue: number;
++    ingotCount: number;
++  }): void {
++    const gatherStartedAt = performance.now();
++    const animateGather = (now: number): void => {
++      const progress = Math.min((now - gatherStartedAt) / INGOT_GATHER_MS, 1);
++
++      activeIngots.forEach((ingot) => {
++        const nextPoint = {
++          x: quadraticBezier(
++            ingot.burstPoint.x,
++            ingot.controlPoint.x,
++            inputForGather.targetPoint.x,
++            progress
++          ),
++          y: quadraticBezier(
++            ingot.burstPoint.y,
++            ingot.controlPoint.y,
++            inputForGather.targetPoint.y,
++            progress
++          ),
++        };
++        moveIngot(ingot.node, nextPoint, 0.88 + progress * 0.16);
++      });
++
++      if (progress < 1) {
++        scheduledFrame = requestAnimationStep(animateGather);
++      } else {
++        scheduledFrame = null;
++      }
++    };
++
++    scheduledFrame = requestAnimationStep(animateGather);
++
++    activeIngots.forEach((_, hitIndex) => {
++      const hitDelay =
++        inputForGather.ingotCount === 1
++          ? 0
++          : (INGOT_GATHER_MS * hitIndex) / (inputForGather.ingotCount - 1);
++
++      schedule(() => {
++        if (hitIndex === inputForGather.ingotCount - 1) {
++          input.onDisplayValueChange(inputForGather.targetValue);
++          input.onDisplayValueChange(null);
++          clearScheduledWork();
++          releaseActiveIngots();
++          return;
++        }
++
++        input.onDisplayValueChange(
++          inputForGather.hitValues[hitIndex] ?? inputForGather.targetValue
++        );
++      }, hitDelay);
++    });
++  }
++
++  return {
++    setGoldTargetElement(element) {
++      goldTargetElement = element;
++    },
++    play({
++      sourceElement,
++      sourceClientX,
++      sourceClientY,
++      startValue,
++      targetValue,
++      amount,
++    }) {
++      stopCurrentAnimation();
++
++      const ingotCount = clampIngotCount(amount);
++      const sourcePoint = toLayerPoint(
++        input.layer,
++        getSourceCenter({ sourceElement, sourceClientX, sourceClientY })
++      );
++      const targetPoint = toLayerPoint(
++        input.layer,
++        goldTargetElement == null
++          ? getSourceCenter({
++              sourceElement,
++              sourceClientX: undefined,
++              sourceClientY: undefined,
++            })
++          : getElementCenter(goldTargetElement)
++      );
++      const hitValues = buildRollingDisplayValues(startValue, targetValue, ingotCount);
++
++      activeIngots = Array.from({ length: ingotCount }, (_, index) => {
++        const node = acquireIngot();
++        const burstPoint = getBurstPoint(sourcePoint, index, ingotCount);
++
++        moveIngot(node, sourcePoint, 0.52);
++        node.style.opacity = "1";
++        node.style.transition =
++          `left ${INGOT_BURST_MS}ms cubic-bezier(.18,.8,.28,1), ` +
++          `top ${INGOT_BURST_MS}ms cubic-bezier(.18,.8,.28,1), ` +
++          `transform ${INGOT_BURST_MS}ms ease-out, opacity 120ms ease-out`;
++
++        schedule(() => {
++          moveIngot(node, burstPoint, 1);
++        }, 0);
++
++        return {
++          node,
++          burstPoint,
++          controlPoint: getControlPoint(burstPoint, targetPoint, index),
++        };
++      });
++
++      schedule(() => {
++        activeIngots.forEach((ingot) => {
++          ingot.node.style.transition = "";
++          ingot.node.style.transitionDelay = "";
++        });
++        scheduleGather({
++          targetPoint,
++          hitValues,
++          targetValue,
++          ingotCount,
++        });
++      }, INGOT_BURST_MS + INGOT_PAUSE_MS);
++    },
++  };
++}
+
+diff --git "a/C:\\Users\\29636\\AppData\\Local\\Temp\\codex-empty-file.txt" "b/D:\\GitHub\345\205\213\351\232\206\346\226\207\344\273\266\\RPG_TG\\RPG_TG\\tests\\coin-reward-animation.test.cjs"
+index e69de29b..dedf0994 100644
+--- "a/C:\\Users\\29636\\AppData\\Local\\Temp\\codex-empty-file.txt"
++++ "b/D:\\GitHub\345\205\213\351\232\206\346\226\207\344\273\266\\RPG_TG\\RPG_TG\\tests\\coin-reward-animation.test.cjs"
+@@ -0,0 +1,64 @@
++const test = require("node:test");
++const assert = require("node:assert/strict");
++
++test("coin reward animator finalizes display value on the last ingot hit", async () => {
++  const { createCoinRewardAnimator } = await import("../src/ui/animations/coin-reward-animation.ts");
++
++  const fakeLayer = {
++    appendChild(child) {
++      child.parentNode = this;
++      return child;
++    },
++    removeChild(child) {
++      child.parentNode = null;
++      return child;
++    },
++    ownerDocument: {
++      createElement() {
++        return {
++          style: {},
++          className: "",
++          dataset: {},
++          parentNode: null,
++          setAttribute(name, value) {
++            this[name] = value;
++          },
++          remove() {
++            if (this.parentNode) {
++              this.parentNode.removeChild(this);
++            }
++          },
++        };
++      },
++    },
++  };
++  const fakeSource = {
++    getBoundingClientRect: () => ({ left: 10, top: 10, width: 20, height: 20 }),
++  };
++  const fakeTarget = {
++    getBoundingClientRect: () => ({ left: 100, top: 20, width: 40, height: 20 }),
++  };
++
++  const seenValues = [];
++  const animator = createCoinRewardAnimator({
++    layer: fakeLayer,
++    onDisplayValueChange(value) {
++      seenValues.push(value);
++    },
++  });
++
++  animator.setGoldTargetElement(fakeTarget);
++  animator.play({
++    sourceElement: fakeSource,
++    startValue: 10,
++    targetValue: 20,
++    amount: 10,
++  });
++
++  assert.deepEqual(seenValues, []);
++
++  await new Promise((resolve) => setTimeout(resolve, 1200));
++
++  assert.equal(seenValues.at(-2), 20);
++  assert.equal(seenValues.at(-1), null);
++});
+
+diff --git a/src/styles/prototype.css b/src/styles/prototype.css
+index b379e3c9..e9a5e5f2 100644
+--- a/src/styles/prototype.css
++++ b/src/styles/prototype.css
+@@ -15,20 +15,46 @@
+ 
+ .p-global-hud {
+   display: flex;
+   align-items: flex-start;
+   justify-content: space-between;
+   gap: 12px;
+   width: 100%;
+   pointer-events: none;
+ }
+ 
++.p-ui-coin-reward-layer {
++  position: absolute;
++  inset: 0;
++  z-index: calc(var(--z-scene-overlay) + 20);
++  overflow: visible;
++  pointer-events: none;
++}
++
++.p-ui-coin-reward-layer__ingot {
++  position: absolute;
++  display: block;
++  width: 22px;
++  height: 15px;
++  border: 1px solid rgb(255 247 188 / 90%);
++  border-radius: 50% 50% 46% 46%;
++  background:
++    radial-gradient(ellipse at 50% 18%, rgb(255 252 193 / 94%) 0 24%, transparent 25%),
++    linear-gradient(180deg, #ffe879 0%, #e6a229 48%, #a86712 100%);
++  box-shadow:
++    0 0 14px rgb(255 216 92 / 62%),
++    inset 0 -3px 2px rgb(107 55 9 / 38%);
++  opacity: 0;
++  will-change: left, top, transform, opacity;
++  pointer-events: none;
++}
++
+ .c-campaign-travel-banner {
+   position: absolute;
+   top: 6px;
+   left: 50%;
+   z-index: calc(var(--z-global-ui) + 1);
+   display: inline-flex;
+   align-items: center;
+   gap: 14px;
+   min-width: 280px;
+   max-width: min(620px, 72vw);
+

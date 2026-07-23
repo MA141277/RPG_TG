@@ -1,0 +1,193 @@
+# Review package: working-tree task 2
+
+## Commits
+(no task commit created; review uncommitted working tree diff)
+
+## Files changed
+ src/ui/views/city/city-view.ts | 18 ++++++++++++++----
+ 1 file changed, 14 insertions(+), 4 deletions(-)
+ src/ui/panels/global-player-panel.ts | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+ src/ui/app-render.ts | 1 +
+ 1 file changed, 1 insertion(+)
+tests/haozhou-city-coin-reward-source.test.cjs | 677 bytes | untracked/new
+
+## Diff
+diff --git a/src/ui/views/city/city-view.ts b/src/ui/views/city/city-view.ts
+index d467404e..c09a3bc2 100644
+--- a/src/ui/views/city/city-view.ts
++++ b/src/ui/views/city/city-view.ts
+@@ -1340,39 +1340,49 @@ export function renderCityView(
+ ): string {
+   const city3dButton =
+     citySceneMapping == null
+       ? ""
+       : `
+         <button
+           type="button"
+           class="c-kulan-city__three-d-action"
+           data-action="enter-city-3d"
+           aria-label="进入 3D 城市场景"
+-        >
+-          3D
+-        </button>
+-      `;
++      >
++        3D
++      </button>
++    `;
++  const haozhouCoinTestButton = `
++    <button
++      type="button"
++      class="c-kulan-city__coin-test-action"
++      data-action="grant-haozhou-test-coin"
++    >
++      测试 +10文
++    </button>
++  `;
+ 
+   return `
+     <section class="view-city view-city--kulan">
+       <div class="c-kulan-city">
+         <img class="c-kulan-city__background-image" src="${haozhouCityBackgroundUrl}" alt="" aria-hidden="true" />
+         <div class="c-kulan-city__body">
+           <div class="c-kulan-city__stage">
+             ${renderCityMapScene({
+               cityDefinition,
+               houseDefinitions,
+               cityEntries,
+             })}
+             <button type="button" class="c-kulan-city__leave-action" data-action="leave-city">
+               返回地图
+             </button>
++            ${haozhouCoinTestButton}
+             ${city3dButton}
+             ${renderCityMenuButtons({
+               houseDefinitions,
+               cityEntries,
+             })}
+           </div>
+         </div>
+         ${renderCityMenuPanel({
+           cityDefinition,
+           houseDefinitions,
+
+diff --git a/src/ui/panels/global-player-panel.ts b/src/ui/panels/global-player-panel.ts
+index 81f348fa..11402312 100644
+--- a/src/ui/panels/global-player-panel.ts
++++ b/src/ui/panels/global-player-panel.ts
+@@ -17,20 +17,21 @@ const compactHudAssets = {
+ };
+ 
+ export type GlobalPlayerPanelModel = {
+   portraitLabel: string;
+   portraitImageUrl: string | null;
+   name: string;
+   title: string;
+   currentDateText: string;
+   locationText: string;
+   goldText: string;
++  goldTextOverride?: string | null;
+   stamina: number;
+   fame: number;
+   reviewDateText: string;
+   mainHouseMissionText: string;
+ };
+ 
+ function formatTimeOfDayLabel(timeOfDay: GameState["world"]["timeOfDay"]): string {
+   switch (timeOfDay) {
+     case "morning":
+       return "早晨";
+@@ -75,20 +76,21 @@ export function createGlobalPlayerPanelModel(
+     mainHouseMissionText:
+       activeMission?.title ?? state.ui.mainHouseMissionText ?? "暂无任务",
+   };
+ }
+ 
+ export function renderGlobalPlayerPanel(
+   model: GlobalPlayerPanelModel,
+   layout: GlobalHudLayout
+ ): string {
+   const taskComponent = getComponent(layout, "task-panel");
++  const resolvedGoldText = model.goldTextOverride ?? `银两 ${model.goldText}`;
+   const taskItems = [
+     {
+       id: "review",
+       label: "评定",
+       value: model.reviewDateText,
+       title: model.reviewDateText,
+     },
+     {
+       id: "mission",
+       label: "当前任务",
+@@ -116,21 +118,23 @@ export function renderGlobalPlayerPanel(
+                 <div class="p-global-status-compact__portrait-mask">
+                   <img class="p-global-status-compact__portrait-art" src="${model.portraitImageUrl}" alt="${model.name}">
+                 </div>
+               `
+           }
+           <strong class="p-global-status-compact__name">${model.name}</strong>
+           <span class="p-global-status-compact__title">${model.title}</span>
+           <strong class="p-global-status-compact__location">${model.locationText}</strong>
+           <span class="p-global-status-compact__date-separator" aria-hidden="true"></span>
+           <strong class="p-global-status-compact__date">${model.currentDateText}</strong>
+-          <strong class="p-global-status-compact__gold">银两 ${model.goldText}</strong>
++          <div class="p-global-status-compact__gold-wrap" data-ui-gold-target>
++            <strong class="p-global-status-compact__gold" data-ui-gold-value>${resolvedGoldText}</strong>
++          </div>
+           <strong class="p-global-status-compact__stamina">体力 ${model.stamina}</strong>
+           <strong class="p-global-status-compact__prestige">威望 ${model.fame}</strong>
+           <button
+             class="u-click-layer p-global-status-compact__attribute"
+             data-action="open-player-detail"
+             aria-label="打开人物详细属性"
+           ></button>
+         </div>
+       </div>
+       ${
+
+diff --git a/src/ui/app-render.ts b/src/ui/app-render.ts
+index 1a280fac..0ff1c645 100644
+--- a/src/ui/app-render.ts
++++ b/src/ui/app-render.ts
+@@ -688,18 +688,19 @@ export function renderApp(input: AppRenderInput): string {
+               input.appState.characterDefinitions
+             )}
+             ${renderModal(
+               input.presenterOutput.overlay.modalState,
+               input.cityPortraits,
+               input.mapDefinition,
+               input.cityDefinitions ?? []
+             )}
+             ${renderNpcInteractionOverlay(input)}
+             ${renderCityBeggingMiniGameOverlay(input.appState.beggingMiniGameState)}
++            <div class="p-ui-coin-reward-layer" data-ui-coin-reward-layer aria-hidden="true"></div>
+             ${renderOverlay(input, playerCharacter)}
+             ${renderLayoutEditor(input.appState)}
+           </div>
+         </div>
+       </div>
+     </div>
+   `;
+ }
+
+diff --git "a/C:\\Users\\29636\\AppData\\Local\\Temp\\codex-empty-file.txt" "b/D:\\GitHub\345\205\213\351\232\206\346\226\207\344\273\266\\RPG_TG\\RPG_TG\\tests\\haozhou-city-coin-reward-source.test.cjs"
+index e69de29b..92c090ae 100644
+--- "a/C:\\Users\\29636\\AppData\\Local\\Temp\\codex-empty-file.txt"
++++ "b/D:\\GitHub\345\205\213\351\232\206\346\226\207\344\273\266\\RPG_TG\\RPG_TG\\tests\\haozhou-city-coin-reward-source.test.cjs"
+@@ -0,0 +1,14 @@
++const test = require("node:test");
++const assert = require("node:assert/strict");
++const fs = require("node:fs");
++
++test("city view and hud expose the coin reward animation anchors", () => {
++  const cityViewSource = fs.readFileSync("src/ui/views/city/city-view.ts", "utf8");
++  const panelSource = fs.readFileSync("src/ui/panels/global-player-panel.ts", "utf8");
++  const appRenderSource = fs.readFileSync("src/ui/app-render.ts", "utf8");
++
++  assert.match(cityViewSource, /data-action="grant-haozhou-test-coin"/);
++  assert.match(panelSource, /data-ui-gold-target/);
++  assert.match(panelSource, /data-ui-gold-value/);
++  assert.match(appRenderSource, /data-ui-coin-reward-layer/);
++});
+

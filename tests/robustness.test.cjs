@@ -15647,6 +15647,29 @@ test("child 34 removes only the obsolete interactive launch helper while keeping
   assert.doesNotMatch(mainSource, /interactive\.story-battle\.action/);
 });
 
+test("haozhou test button grants 10 gold and starts reward animation", () => {
+  const mainSource = fs.readFileSync("src/main.ts", "utf8");
+
+  assert.match(mainSource, /\[data-action='grant-haozhou-test-coin'\]/);
+  assert.match(mainSource, /applyCoinReward\(appState,\s*currentPlayerCharacterId,\s*10\)/);
+  assert.match(mainSource, /coinRewardAnimator\.play\(/);
+  assert.doesNotMatch(
+    mainSource,
+    /grantHaozhouTestCoinButton[\s\S]*?coinRewardAnimator\.play\([\s\S]*?renderApp\(\);[\s\S]*?return;/
+  );
+});
+
+test("coin reward hud updates do not trigger a full app rerender", () => {
+  const mainSource = fs.readFileSync("src/main.ts", "utf8");
+
+  assert.match(mainSource, /function syncCoinRewardGoldDisplay\(\): void/);
+  assert.match(mainSource, /coinRewardDisplayValue = value;\s*syncCoinRewardGoldDisplay\(\);/);
+  assert.doesNotMatch(
+    mainSource,
+    /coinRewardDisplayValue = value;\s*renderApp\(\);/
+  );
+});
+
 test("global NPC interaction does not add concrete house business branches to main", () => {
   const mainSource = fs.readFileSync(
     path.join(process.cwd(), "src", "main.ts"),
