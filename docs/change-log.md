@@ -3453,3 +3453,6 @@
 ### Impact
 - 现在城市里只挂载建筑、但还没有配置“建筑编排”时，点击地点不会再黑屏；运行时会明确拒绝进入该建筑，并提示该建筑尚未配置建筑编排。
 - 建筑进入链路继续保持在共享 navigation runtime 上收口，没有把“缺少建筑编排”的房屋入口边界重新散落回 `main.ts` 的临时分支。
+## 2026-07-23 Temple Copy Scripture Event Route
+
+- 更新 [src/application/events/event-playable-runtime.ts](/D:/workspace/project/RPG_TG/src/application/events/event-playable-runtime.ts)、[src/content/scenario-packs/zhuyuanzhang/events.json](/D:/workspace/project/RPG_TG/src/content/scenario-packs/zhuyuanzhang/events.json)、[src/content/scenario-packs/zhuyuanzhang/flow-playables.json](/D:/workspace/project/RPG_TG/src/content/scenario-packs/zhuyuanzhang/flow-playables.json) 与 [tests/robustness.test.cjs](/D:/workspace/project/RPG_TG/tests/robustness.test.cjs)，把皇觉寺 `抄经` 从过渡 `flow` 收口为 `event` 直接 `launchPlayable` 到 `activity-qte`，并补齐事件动作 `payload` 透传，保证建筑菜单继续以 event 路由为唯一真值。

@@ -44,6 +44,9 @@ export function runEventPlayableRuntime(
     request: createLaunchPlayableRequest(launchPlayableAction.playableId, {
       integrationId: launchPlayableAction.integrationId,
       ownerContext: launchPlayableAction.ownerContext,
+      ...(launchPlayableAction.payload == null
+        ? {}
+        : { payload: launchPlayableAction.payload }),
     }),
     characterDefinitions: input.characterDefinitions,
     ...(input.activityDefinitionsById == null

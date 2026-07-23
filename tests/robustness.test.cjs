@@ -8232,12 +8232,15 @@ test("building container item action launches the authored minigame selected by 
           actions: [
             {
               type: "launchPlayable",
-              playableId: "city-begging",
-              integrationId: "playable.city-begging.external.default",
+              playableId: "activity-qte",
+              integrationId: "playable.activity-qte.house.temple",
               ownerContext: {
-                ownerKind: "external",
-                ownerId: null,
-                returnPolicy: "close-only",
+                ownerKind: "house",
+                ownerId: "building.temple",
+                returnPolicy: "resume-owner",
+              },
+              payload: {
+                activityId: "activity.test.temple.copy-scripture",
               },
             },
           ],
@@ -8260,6 +8263,22 @@ test("building container item action launches the authored minigame selected by 
           enabled: true,
         },
       },
+      activityDefinitionsById: {
+        "activity.test.temple.copy-scripture": {
+          id: "activity.test.temple.copy-scripture",
+          label: "Temple Copy Scripture",
+          chapterId: "chapter.prototype",
+          moduleId: "temple",
+          kind: "fortune-board",
+          taskId: "copy-scripture",
+          missionId: "mission.temple.copy-scripture",
+          briefing: "Copy scripture test.",
+          instructions: [],
+          durationHours: 1,
+          staminaCost: 1,
+          rewards: [],
+        },
+      },
       dialogueDefinitionsById: {},
     },
     action: {
@@ -8269,10 +8288,14 @@ test("building container item action launches the authored minigame selected by 
     },
   });
 
-  assert.equal(result.state.runtime.playableSession?.playableId, "city-begging");
+  assert.equal(result.state.runtime.playableSession?.playableId, "activity-qte");
   assert.equal(
     result.state.runtime.playableSession?.integrationId,
-    "playable.city-begging.external.default"
+    "playable.activity-qte.house.temple"
+  );
+  assert.equal(
+    result.state.runtime.activitySession?.activityId,
+    "activity.test.temple.copy-scripture"
   );
   assert.equal(result.state.ui.currentView, "minigame");
   assert.equal(result.state.dialogue.activeEventId, null);
@@ -8702,6 +8725,44 @@ test(
       textEntries[dialogueDefinitionsById["dialogue.followup"].nodes[0]?.textId],
       "Follow-up line."
     );
+  }
+);
+
+test(
+  "script editor exported event body preserves launchPlayable payload",
+  () => {
+    const {
+      exportScriptEditorProjectToScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    const project = createExportableScriptEditorProjectDefinition();
+    project.events = [
+      {
+        id: "event.temple.copy-scripture",
+        title: "Temple Copy Scripture",
+        actions: [
+          {
+            type: "launchPlayable",
+            playableId: "activity-qte",
+            integrationId: "playable.activity-qte.house.temple",
+            ownerContext: {
+              ownerKind: "house",
+              ownerId: "house.kulan.temple",
+              returnPolicy: "resume-owner",
+            },
+            payload: {
+              activityId: "activity.zhu_yuanzhang.temple.copy_scripture",
+            },
+          },
+        ],
+      },
+    ];
+
+    const files = exportScriptEditorProjectToScenarioPackFiles(project);
+    const events = JSON.parse(files["events.json"]);
+
+    assert.deepEqual(events[0]?.actions?.[0]?.payload, {
+      activityId: "activity.zhu_yuanzhang.temple.copy_scripture",
+    });
   }
 );
 
@@ -30173,7 +30234,7 @@ test("zhuyuanzhang pack carries explicit building arrangements for every mounted
   }
 });
 
-test("zhuyuanzhang building action menus route through event-owned flow launch actions", () => {
+test("zhuyuanzhang building action menus route through event-owned runtime actions", () => {
   const packRoot = path.join(
     process.cwd(),
     "src/content/scenario-packs/zhuyuanzhang"
@@ -30235,15 +30296,37 @@ test("zhuyuanzhang building action menus route through event-owned flow launch a
     const launchFlowAction = event.actions?.find(
       (action) => action.type === "launchFlow"
     );
-    assert.ok(launchFlowAction, `missing launchFlow action for ${item.eventId}`);
-    assert.equal(launchFlowAction.ownerContext.ownerKind, "house");
-    assert.equal(launchFlowAction.ownerContext.ownerId, arrangement.buildingId);
-    assert.ok(
-      launchFlowAction.flowId && flowsById.has(launchFlowAction.flowId),
-      `missing authored flow for ${item.eventId}`
+    const launchPlayableAction = event.actions?.find(
+      (action) => action.type === "launchPlayable"
     );
-    const flow = flowsById.get(launchFlowAction.flowId);
-    assert.ok(flow.outcomeRoutes.length > 0);
+    assert.ok(
+      launchFlowAction || launchPlayableAction,
+      `missing runtime action for ${item.eventId}`
+    );
+    if (launchFlowAction) {
+      assert.equal(launchFlowAction.ownerContext.ownerKind, "house");
+      assert.equal(launchFlowAction.ownerContext.ownerId, arrangement.buildingId);
+      assert.ok(
+        launchFlowAction.flowId && flowsById.has(launchFlowAction.flowId),
+        `missing authored flow for ${item.eventId}`
+      );
+      const flow = flowsById.get(launchFlowAction.flowId);
+      assert.ok(flow.outcomeRoutes.length > 0);
+      continue;
+    }
+
+    assert.equal(launchPlayableAction.ownerContext.ownerKind, "house");
+    assert.equal(launchPlayableAction.ownerContext.ownerId, arrangement.buildingId);
+    assert.ok(
+      typeof launchPlayableAction.playableId === "string" &&
+        launchPlayableAction.playableId.length > 0,
+      `missing playable id for ${item.eventId}`
+    );
+    assert.ok(
+      typeof launchPlayableAction.integrationId === "string" &&
+        launchPlayableAction.integrationId.length > 0,
+      `missing integration id for ${item.eventId}`
+    );
   }
 
   assert.ok(
@@ -30261,8 +30344,8 @@ test("zhuyuanzhang building action menus route through event-owned flow launch a
   assert.ok(
     eventsById
       .get("event.building.house.kulan.temple.copy_scripture")
-      ?.actions?.some((action) => action.type === "launchFlow"),
-    "missing Huangjue Temple copy scripture flow"
+      ?.actions?.some((action) => action.type === "launchPlayable"),
+    "missing Huangjue Temple copy scripture minigame route"
   );
   assert.ok(
     eventsById
@@ -30281,6 +30364,10 @@ test("zhuyuanzhang building action menus route through event-owned flow launch a
       .get("event.building.house.kulan.temple.donate")
       ?.actions?.some((action) => action.type === "launchFlow"),
     "missing preserved Huangjue Temple donation flow"
+  );
+  assert.ok(
+    !flowsById.has("flow.building.house.kulan.temple.copy_scripture"),
+    "copy scripture should not keep a dedicated bridge flow"
   );
 });
 

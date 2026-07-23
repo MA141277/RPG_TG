@@ -1527,6 +1527,7 @@ function lowerEventRuntimeActions(
               : null,
           returnPolicy,
         },
+        ...(action.payload == null ? {} : { payload: action.payload }),
       });
       continue;
     }

@@ -182,12 +182,16 @@
     "dialogueId": "",
     "actions": [
       {
-        "type": "launchFlow",
-        "flowId": "flow.building.house.kulan.temple.copy_scripture",
+        "type": "launchPlayable",
+        "playableId": "activity-qte",
+        "integrationId": "playable.activity-qte.house.temple",
         "ownerContext": {
           "ownerKind": "house",
           "ownerId": "house.kulan.temple",
-          "returnPolicy": "reenter-owner"
+          "returnPolicy": "resume-owner"
+        },
+        "payload": {
+          "activityId": "activity.zhu_yuanzhang.temple.copy_scripture"
         }
       }
     ]

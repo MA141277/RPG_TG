@@ -80,49 +80,6 @@
     ]
   },
   {
-    "id": "flow.building.house.kulan.temple.copy_scripture",
-    "title": "皇觉寺抄经",
-    "description": "皇觉寺的作者定义抄经入口。",
-    "initialNodeId": "flow.building.house.kulan.temple.copy_scripture.start",
-    "nodes": [
-      {
-        "id": "flow.building.house.kulan.temple.copy_scripture.start",
-        "type": "text",
-        "text": "住持命你在偏殿抄录残经，先定心，再落笔。",
-        "nextNodeId": "flow.building.house.kulan.temple.copy_scripture.complete"
-      },
-      {
-        "id": "flow.building.house.kulan.temple.copy_scripture.complete",
-        "type": "complete",
-        "outcome": "success",
-        "detail": {
-          "buildingId": "house.kulan.temple",
-          "functionId": "copy-scripture",
-          "launchPlayable": {
-            "playableId": "activity-qte",
-            "integrationId": "playable.activity-qte.house.temple",
-            "ownerContext": {
-              "ownerKind": "house",
-              "returnPolicy": "resume-owner"
-            },
-            "payload": {
-              "activityId": "activity.zhu_yuanzhang.temple.copy_scripture"
-            }
-          }
-        }
-      }
-    ],
-    "outcomeRoutes": [
-      {
-        "id": "flow.building.house.kulan.temple.copy_scripture.success",
-        "outcome": "success",
-        "handoffPolicy": "reenter-owner",
-        "summary": "返回皇觉寺。",
-        "effectHint": ""
-      }
-    ]
-  },
-  {
     "id": "flow.building.house.kulan.temple.sweep_courtyard",
     "title": "皇觉寺打扫庭院",
     "description": "皇觉寺的作者定义扫院入口。",

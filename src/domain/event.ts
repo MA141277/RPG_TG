@@ -79,6 +79,7 @@ export type EventRuntimeAction = {
     ownerId: string | null;
     returnPolicy: PlayableReturnPolicy;
   };
+  payload?: Record<string, unknown>;
 } | {
   type: "launchFlow";
   flowId: string;
