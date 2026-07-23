@@ -1086,6 +1086,85 @@
   align-items: center;
 }
 
+.c-script-editor-city-mounted-building-card {
+  position: relative;
+  gap: 14px;
+  min-height: 108px;
+}
+
+.c-script-editor-city-mounted-building-card__summary-wrap {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: start;
+  padding-right: 36px;
+}
+
+.c-script-editor-city-mounted-building-card__summary {
+  align-items: end;
+}
+
+.c-script-editor-city-mounted-building-card__summary .c-script-editor-form-field {
+  min-width: 0;
+}
+
+.c-script-editor-city-mounted-building-card__toggle {
+  min-width: 84px;
+}
+
+.c-script-editor-city-mounted-building-card__remove {
+  top: 10px;
+  right: 10px;
+  z-index: 1;
+}
+
+.c-script-editor-city-mounted-building-card__details {
+  display: grid;
+  gap: 14px;
+}
+
+.c-script-editor-city-mounted-building-card__toolbar {
+  gap: 16px;
+}
+
+.c-script-editor-city-mounted-building-card__search {
+  flex: 1 1 280px;
+  min-width: min(100%, 320px);
+}
+
+.c-script-editor-city-mounted-building-list {
+  min-height: calc(108px * 6 + 16px * 5);
+  align-content: start;
+}
+
+.c-script-editor-city-mounted-building-npc-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-auto-rows: 154px;
+  gap: 14px;
+  align-items: stretch;
+  min-height: calc(154px * 2 + 14px);
+}
+
+.c-script-editor-city-mounted-building-npc-card {
+  position: relative;
+  display: grid;
+  gap: 12px;
+  height: 154px;
+  padding: 18px 14px 14px;
+  border: 1px solid rgba(145, 111, 72, 0.12);
+  border-radius: 16px;
+  background: rgba(255, 252, 247, 0.92);
+}
+
+.c-script-editor-city-mounted-building-npc-card .c-script-editor-form-field__input {
+  min-height: 40px;
+}
+
+.c-script-editor-city-mounted-building-card__actions {
+  justify-content: space-between;
+}
+
 .c-script-editor-narrative-panel {
   padding: 18px;
   border: 1px solid rgba(145, 111, 72, 0.12);
@@ -1182,6 +1261,10 @@
   .c-script-editor-project-library__grid {
     grid-template-columns: minmax(0, 1fr);
   }
+
+  .c-script-editor-city-mounted-building-npc-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 720px) {
@@ -1237,6 +1320,20 @@
 
   .c-script-editor-minigame-list__item {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .c-script-editor-city-mounted-building-card__summary-wrap {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .c-script-editor-city-mounted-building-card__toggle,
+  .c-script-editor-city-mounted-building-card__search {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .c-script-editor-city-mounted-building-npc-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .c-script-editor-project-card__meta div {

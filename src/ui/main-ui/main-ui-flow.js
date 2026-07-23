@@ -401,6 +401,8 @@ const characterSelectLayoutBindings = [
 
 const SCRIPT_EDITOR_SECONDARY_LIST_PAGE_SIZE = 6;
 const SCRIPT_EDITOR_PERSON_ATTRIBUTE_PAGE_SIZE = 10;
+const SCRIPT_EDITOR_CITY_MOUNTED_BUILDING_PAGE_SIZE = 6;
+const SCRIPT_EDITOR_CITY_MOUNTED_BUILDING_NPC_PAGE_SIZE = 12;
 const SCRIPT_EDITOR_VISIBLE_WORKFLOW_FAMILIES = new Set(
   getScriptEditorWorkflowVisibleFamilies()
 );
@@ -490,6 +492,7 @@ export class MainUiFlow {
       portraits: "",
       portraitVariants: "",
     };
+    this.scriptEditorCityMountedBuildingUiState = {};
     this.scriptEditorPersonAttributePage = 1;
     this.scriptEditorPersonAttributeVisibleIndices = null;
     this.scriptEditorPersonAttributeScrollLeft = 0;
@@ -1122,6 +1125,208 @@ export class MainUiFlow {
       [family]: value,
     };
     this.setScriptEditorRecordListPage(family, 1);
+    this.render();
+  }
+
+  getScriptEditorCityMountedBuildingUiKey(buildingIndex) {
+    if (
+      this.scriptEditorSelection.family !== "cities" ||
+      this.scriptEditorSelection.entityId == null
+    ) {
+      return null;
+    }
+
+    return `${this.scriptEditorSelection.entityId}:${buildingIndex}`;
+  }
+
+  getScriptEditorCityMountedBuildingListUiKey() {
+    return this.getScriptEditorCityMountedBuildingUiKey("__list__");
+  }
+
+  getScriptEditorCityMountedBuildingListUiState() {
+    const key = this.getScriptEditorCityMountedBuildingListUiKey();
+    if (key == null) {
+      return {
+        page: 1,
+      };
+    }
+
+    return {
+      page: 1,
+      ...(this.scriptEditorCityMountedBuildingUiState[key] ?? {}),
+    };
+  }
+
+  setScriptEditorCityMountedBuildingListUiState(nextState) {
+    const key = this.getScriptEditorCityMountedBuildingListUiKey();
+    if (key == null) {
+      return;
+    }
+
+    this.scriptEditorCityMountedBuildingUiState = {
+      ...this.scriptEditorCityMountedBuildingUiState,
+      [key]: {
+        ...this.getScriptEditorCityMountedBuildingListUiState(),
+        ...nextState,
+      },
+    };
+  }
+
+  getScriptEditorCityMountedBuildingUiState(buildingIndex) {
+    const key = this.getScriptEditorCityMountedBuildingUiKey(buildingIndex);
+    if (key == null) {
+      return {
+        expanded: false,
+        search: "",
+        page: 1,
+      };
+    }
+
+    return {
+      expanded: false,
+      search: "",
+      page: 1,
+      ...(this.scriptEditorCityMountedBuildingUiState[key] ?? {}),
+    };
+  }
+
+  setScriptEditorCityMountedBuildingUiState(buildingIndex, nextState) {
+    const key = this.getScriptEditorCityMountedBuildingUiKey(buildingIndex);
+    if (key == null) {
+      return;
+    }
+
+    this.scriptEditorCityMountedBuildingUiState = {
+      ...this.scriptEditorCityMountedBuildingUiState,
+      [key]: {
+        ...this.getScriptEditorCityMountedBuildingUiState(buildingIndex),
+        ...nextState,
+      },
+    };
+  }
+
+  setScriptEditorCityMountedBuildingExpanded(buildingIndex, expanded) {
+    this.setScriptEditorCityMountedBuildingUiState(buildingIndex, { expanded });
+    this.render();
+  }
+
+  setScriptEditorCityMountedBuildingSearchValue(buildingIndex, value) {
+    this.setScriptEditorCityMountedBuildingUiState(buildingIndex, {
+      search: value,
+      page: 1,
+    });
+    this.render();
+  }
+
+  getFilteredScriptEditorCityMountedBuildingNpcEntries(entry, searchValue) {
+    const npcOptionsById = new Map(
+      (this.scriptEditorProject?.people ?? [])
+        .map((person) => normalizeScriptEditorPersonRecord(person))
+        .map((person) => [person.id, person])
+    );
+    const query = searchValue.trim().toLowerCase();
+    const npcIds = entry.npcIds ?? [];
+
+    return npcIds
+      .map((npcId, npcIndex) => ({
+        npcId,
+        npcIndex,
+        npcRecord: npcOptionsById.get(npcId) ?? null,
+      }))
+      .filter((npcEntry) => {
+        if (query.length === 0) {
+          return true;
+        }
+
+        return [npcEntry.npcRecord?.name ?? ""]
+          .join(" ")
+          .toLowerCase()
+          .includes(query);
+      });
+  }
+
+  getScriptEditorCityMountedBuildingNpcPageState(entry, buildingIndex) {
+    const uiState = this.getScriptEditorCityMountedBuildingUiState(buildingIndex);
+    const filteredEntries = this.getFilteredScriptEditorCityMountedBuildingNpcEntries(
+      entry,
+      uiState.search
+    );
+    const totalPages = Math.max(
+      1,
+      Math.ceil(
+        filteredEntries.length / SCRIPT_EDITOR_CITY_MOUNTED_BUILDING_NPC_PAGE_SIZE
+      )
+    );
+    const currentPage = Math.min(Math.max(uiState.page, 1), totalPages);
+    const startIndex =
+      (currentPage - 1) * SCRIPT_EDITOR_CITY_MOUNTED_BUILDING_NPC_PAGE_SIZE;
+
+    return {
+      uiState,
+      filteredEntries,
+      totalPages,
+      currentPage,
+      visibleEntries: filteredEntries.slice(
+        startIndex,
+        startIndex + SCRIPT_EDITOR_CITY_MOUNTED_BUILDING_NPC_PAGE_SIZE
+      ),
+    };
+  }
+
+  getScriptEditorCityMountedBuildingListPageState(city) {
+    const mountedBuildings = city.mountedBuildings ?? [];
+    const uiState = this.getScriptEditorCityMountedBuildingListUiState();
+    const totalPages = Math.max(
+      1,
+      Math.ceil(mountedBuildings.length / SCRIPT_EDITOR_CITY_MOUNTED_BUILDING_PAGE_SIZE)
+    );
+    const currentPage = Math.min(Math.max(uiState.page, 1), totalPages);
+    const startIndex = (currentPage - 1) * SCRIPT_EDITOR_CITY_MOUNTED_BUILDING_PAGE_SIZE;
+
+    return {
+      uiState,
+      totalPages,
+      currentPage,
+      totalEntries: mountedBuildings.length,
+      visibleEntries: mountedBuildings
+        .slice(startIndex, startIndex + SCRIPT_EDITOR_CITY_MOUNTED_BUILDING_PAGE_SIZE)
+        .map((entry, offset) => ({
+          entry,
+          buildingIndex: startIndex + offset,
+        })),
+    };
+  }
+
+  changeScriptEditorCityMountedBuildingNpcPage(buildingIndex, delta) {
+    const city = this.getSelectedScriptEditorLocation();
+    if (city == null) {
+      return;
+    }
+
+    const entry = city.mountedBuildings?.[buildingIndex] ?? null;
+    if (entry == null) {
+      return;
+    }
+
+    const { currentPage, totalPages } =
+      this.getScriptEditorCityMountedBuildingNpcPageState(entry, buildingIndex);
+    this.setScriptEditorCityMountedBuildingUiState(buildingIndex, {
+      page: Math.min(Math.max(currentPage + delta, 1), totalPages),
+    });
+    this.render();
+  }
+
+  changeScriptEditorCityMountedBuildingListPage(delta) {
+    const city = this.getSelectedScriptEditorLocation();
+    if (city == null) {
+      return;
+    }
+
+    const { currentPage, totalPages } =
+      this.getScriptEditorCityMountedBuildingListPageState(city);
+    this.setScriptEditorCityMountedBuildingListUiState({
+      page: Math.min(Math.max(currentPage + delta, 1), totalPages),
+    });
     this.render();
   }
 
@@ -2255,7 +2460,7 @@ export class MainUiFlow {
 
   renderScriptEditorLocationTabPanel(family, location) {
     if (this.scriptEditorLocationTab === "mounted" && family === "cities") {
-      return this.renderScriptEditorCityMountedBuildingsPanel(location);
+      return this.renderScriptEditorLocationMountedContent(location);
     }
 
     if (this.scriptEditorLocationTab === "arrangements" && family === "cities") {
@@ -3227,6 +3432,253 @@ export class MainUiFlow {
             )
             .join("")}
         </div>
+      </section>
+    `;
+  }
+
+  renderScriptEditorLocationMountedContent(city) {
+    const mountedBuildings = city.mountedBuildings ?? [];
+    const {
+      visibleEntries: visibleMountedBuildings,
+      currentPage: currentBuildingPage,
+      totalPages: totalBuildingPages,
+      totalEntries: totalMountedBuildings,
+    } = this.getScriptEditorCityMountedBuildingListPageState(city);
+    const buildingOptions = (this.scriptEditorProject?.buildings ?? []).map((building) =>
+      normalizeScriptEditorBuildingRecord(building)
+    );
+    const npcOptions = (this.scriptEditorProject?.people ?? [])
+      .map((person) => normalizeScriptEditorPersonRecord(person))
+      .filter((person) => person.personType !== "瑙掕壊");
+    const npcOptionsById = new Map(npcOptions.map((person) => [person.id, person]));
+    const renderBuildingOptions = (selectedBuildingId) => `
+      <option value="">未选择建筑</option>
+      ${buildingOptions
+        .map(
+          (building) => `
+            <option value="${escapeHtml(building.id)}" ${building.id === selectedBuildingId ? "selected" : ""}>
+              ${escapeHtml(building.name)}
+            </option>
+          `
+        )
+        .join("")}
+    `;
+    const renderNpcOptions = (selectedNpcId, allowEmpty = true, allowedNpcIds = null) => `
+      ${allowEmpty ? `<option value="">未选择人物</option>` : ""}
+      ${npcOptions
+        .filter((person) => allowedNpcIds == null || allowedNpcIds.includes(person.id))
+        .map(
+          (person) => `
+            <option value="${escapeHtml(person.id)}" ${person.id === selectedNpcId ? "selected" : ""}>
+              ${escapeHtml(person.name)}
+            </option>
+          `
+        )
+        .join("")}
+    `;
+    const resolveNpcSummaryLabel = (npcId) => {
+      if (npcId == null || npcId.length === 0) {
+        return "未选择主 NPC";
+      }
+
+      const npc = npcOptionsById.get(npcId) ?? null;
+      return npc == null ? npcId : npc.name;
+    };
+    const renderMountedNpcCard = (entry, buildingIndex, npcEntry) => `
+      <article class="c-script-editor-city-mounted-building-npc-card">
+        <button
+          type="button"
+          class="c-script-editor-person-summary__remove"
+          aria-label="删除挂载 NPC"
+          data-script-editor-action="remove-city-mounted-building-npc"
+          data-script-editor-city-mounted-building-index="${buildingIndex}"
+          data-script-editor-city-mounted-building-npc-index="${npcEntry.npcIndex}"
+        >
+          <span aria-hidden="true">×</span>
+        </button>
+        <div class="c-script-editor-person-summary__field">
+          <strong class="c-script-editor-person-summary__value">
+            ${escapeHtml(resolveNpcSummaryLabel(npcEntry.npcId))}
+          </strong>
+        </div>
+        <label class="c-script-editor-form-field">
+          <select
+            class="c-script-editor-form-field__input"
+            aria-label="选择人物"
+            data-script-editor-city-mounted-building-npc
+            data-script-editor-city-mounted-building-index="${buildingIndex}"
+            data-script-editor-city-mounted-building-npc-index="${npcEntry.npcIndex}"
+          >
+            ${renderNpcOptions(npcEntry.npcId)}
+          </select>
+        </label>
+      </article>
+    `;
+
+    return `
+      <section class="c-script-editor-location-attributes" aria-label="城市挂载建筑与人物">
+        <header class="c-script-editor-location-menu__header">
+          <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="add-city-mounted-building">
+            新增挂载建筑
+          </button>
+        </header>
+        <div class="c-script-editor-location-menu__list c-script-editor-city-mounted-building-list">
+          ${visibleMountedBuildings
+            .map(({ entry, buildingIndex }) => {
+              const { uiState, filteredEntries, visibleEntries, currentPage, totalPages } =
+                this.getScriptEditorCityMountedBuildingNpcPageState(entry, buildingIndex);
+
+              return `
+                <article
+                  class="c-script-editor-location-menu__item c-script-editor-city-mounted-building-card${uiState.expanded ? " is-expanded" : ""}"
+                  data-script-editor-city-mounted-building-panel
+                >
+                  <button
+                    type="button"
+                    class="c-script-editor-person-summary__remove c-script-editor-city-mounted-building-card__remove"
+                    aria-label="删除挂载建筑"
+                    data-script-editor-action="remove-city-mounted-building"
+                    data-script-editor-city-mounted-building-index="${buildingIndex}"
+                  >
+                    <span aria-hidden="true">×</span>
+                  </button>
+                  <div class="c-script-editor-city-mounted-building-card__summary-wrap">
+                    <div
+                      class="c-script-editor-form-grid c-script-editor-city-mounted-building-card__summary"
+                      data-script-editor-city-mounted-building-summary
+                    >
+                      <label class="c-script-editor-form-field">
+                        <span>挂载建筑</span>
+                        <select
+                          class="c-script-editor-form-field__input"
+                          data-script-editor-city-mounted-building
+                          data-script-editor-city-mounted-building-index="${buildingIndex}"
+                        >
+                          ${renderBuildingOptions(entry.buildingId)}
+                        </select>
+                      </label>
+                      <label class="c-script-editor-form-field">
+                        <span>主 NPC</span>
+                        <select
+                          class="c-script-editor-form-field__input"
+                          data-script-editor-city-primary-npc
+                          data-script-editor-city-mounted-building-index="${buildingIndex}"
+                        >
+                          ${renderNpcOptions(entry.primaryNpcId ?? "", true, entry.npcIds)}
+                        </select>
+                      </label>
+                    </div>
+                    <button
+                      type="button"
+                      class="c-main-ui-json-text-button c-script-editor-city-mounted-building-card__toggle"
+                      aria-expanded="${uiState.expanded ? "true" : "false"}"
+                      data-script-editor-action="toggle-city-mounted-building-expanded"
+                      data-script-editor-city-mounted-building-index="${buildingIndex}"
+                    >
+                      ${uiState.expanded ? "收起" : "展开"}
+                    </button>
+                  </div>
+                  ${
+                    uiState.expanded
+                      ? `
+                        <div class="c-script-editor-city-mounted-building-card__details">
+                          <div class="c-script-editor-location-menu__header c-script-editor-city-mounted-building-card__toolbar">
+                            <label class="c-script-editor-record-list__search c-script-editor-city-mounted-building-card__search">
+                              <span>搜索建筑里的 NPC</span>
+                              <input
+                                class="c-script-editor-form-field__input"
+                                type="search"
+                                value="${escapeHtml(uiState.search)}"
+                                placeholder="按 NPC 名称搜索"
+                                data-script-editor-city-mounted-building-search
+                                data-script-editor-city-mounted-building-index="${buildingIndex}"
+                              />
+                            </label>
+                          </div>
+                          ${
+                            visibleEntries.length === 0
+                              ? `
+                                <p class="c-script-editor-record-list__empty">
+                                  ${
+                                    filteredEntries.length === 0 && uiState.search.trim().length > 0
+                                      ? "没有命中的已挂载 NPC。"
+                                      : "当前建筑还没有已挂载 NPC。"
+                                  }
+                                </p>
+                              `
+                              : `
+                                <div class="c-script-editor-city-mounted-building-npc-grid">
+                                  ${visibleEntries
+                                    .map((npcEntry) =>
+                                      renderMountedNpcCard(entry, buildingIndex, npcEntry)
+                                    )
+                                    .join("")}
+                                </div>
+                              `
+                          }
+                          <div class="c-script-editor-location-menu__toggles c-script-editor-city-mounted-building-card__actions">
+                            <button
+                              type="button"
+                              class="c-main-ui-json-text-button"
+                              data-script-editor-action="add-city-mounted-building-npc"
+                              data-script-editor-city-mounted-building-index="${buildingIndex}"
+                            >
+                              新增 NPC
+                            </button>
+                          </div>
+                          <nav class="c-script-editor-record-pagination" aria-label="挂载 NPC 分页">
+                            <button
+                              type="button"
+                              class="c-main-ui-json-text-button c-script-editor-record-pagination__button"
+                              data-script-editor-action="city-mounted-building-page-prev"
+                              data-script-editor-city-mounted-building-index="${buildingIndex}"
+                              ${currentPage <= 1 ? "disabled" : ""}
+                            >
+                              ‹
+                            </button>
+                            <span class="c-script-editor-record-pagination__status">
+                              第 ${currentPage} / ${totalPages} 页 · 共 ${filteredEntries.length} 个
+                            </span>
+                            <button
+                              type="button"
+                              class="c-main-ui-json-text-button c-script-editor-record-pagination__button"
+                              data-script-editor-action="city-mounted-building-page-next"
+                              data-script-editor-city-mounted-building-index="${buildingIndex}"
+                              ${currentPage >= totalPages ? "disabled" : ""}
+                            >
+                              ›
+                            </button>
+                          </nav>
+                        </div>
+                      `
+                      : ""
+                  }
+                </article>
+              `;
+            })
+            .join("")}
+        </div>
+        <nav class="c-script-editor-record-pagination" aria-label="挂载建筑分页">
+          <button
+            type="button"
+            class="c-main-ui-json-text-button c-script-editor-record-pagination__button"
+            data-script-editor-action="city-mounted-building-list-page-prev"
+            ${currentBuildingPage <= 1 ? "disabled" : ""}
+          >
+            ‹
+          </button>
+          <span class="c-script-editor-record-pagination__status">
+            第 ${currentBuildingPage} / ${totalBuildingPages} 页 · 共 ${totalMountedBuildings} 个
+          </span>
+          <button
+            type="button"
+            class="c-main-ui-json-text-button c-script-editor-record-pagination__button"
+            data-script-editor-action="city-mounted-building-list-page-next"
+            ${currentBuildingPage >= totalBuildingPages ? "disabled" : ""}
+          >
+            ›
+          </button>
+        </nav>
       </section>
     `;
   }
@@ -6507,6 +6959,20 @@ export class MainUiFlow {
       }
     }
 
+    if (target.matches("[data-script-editor-city-mounted-building-search]")) {
+      if (event.isComposing === true) {
+        return;
+      }
+      const buildingIndex = Number.parseInt(
+        target.dataset.scriptEditorCityMountedBuildingIndex ?? "-1",
+        10
+      );
+      if (Number.isInteger(buildingIndex) && buildingIndex >= 0) {
+        this.setScriptEditorCityMountedBuildingSearchValue(buildingIndex, target.value);
+      }
+      return;
+    }
+
     if (target.matches("[data-script-editor-location-access-condition-field]")) {
       const index = Number.parseInt(
         target.dataset.scriptEditorLocationAccessConditionIndex ?? "-1",
@@ -6545,6 +7011,16 @@ export class MainUiFlow {
       const family = target.dataset.scriptEditorRecordSearchFamily;
       if (family != null) {
         this.setScriptEditorRecordSearchValue(family, target.value);
+      }
+    }
+
+    if (target.matches("[data-script-editor-city-mounted-building-search]")) {
+      const buildingIndex = Number.parseInt(
+        target.dataset.scriptEditorCityMountedBuildingIndex ?? "-1",
+        10
+      );
+      if (Number.isInteger(buildingIndex) && buildingIndex >= 0) {
+        this.setScriptEditorCityMountedBuildingSearchValue(buildingIndex, target.value);
       }
     }
   }
@@ -7092,6 +7568,23 @@ export class MainUiFlow {
       return;
     }
 
+    if (action === "toggle-city-mounted-building-expanded") {
+      const mountedBuildingIndex = Number.parseInt(
+        actionElement?.dataset.scriptEditorCityMountedBuildingIndex ?? "-1",
+        10
+      );
+      if (Number.isInteger(mountedBuildingIndex) && mountedBuildingIndex >= 0) {
+        const expanded = this.getScriptEditorCityMountedBuildingUiState(
+          mountedBuildingIndex
+        ).expanded;
+        this.setScriptEditorCityMountedBuildingExpanded(
+          mountedBuildingIndex,
+          !expanded
+        );
+      }
+      return;
+    }
+
     if (action === "remove-city-mounted-building") {
       const mountedBuildingIndex = Number.parseInt(
         actionElement?.dataset.scriptEditorCityMountedBuildingIndex ?? "-1",
@@ -7133,6 +7626,38 @@ export class MainUiFlow {
           mountedBuildingIndex,
           mountedNpcIndex
         );
+      }
+      return;
+    }
+
+    if (action === "city-mounted-building-page-prev") {
+      const mountedBuildingIndex = Number.parseInt(
+        actionElement?.dataset.scriptEditorCityMountedBuildingIndex ?? "-1",
+        10
+      );
+      if (Number.isInteger(mountedBuildingIndex) && mountedBuildingIndex >= 0) {
+        this.changeScriptEditorCityMountedBuildingNpcPage(mountedBuildingIndex, -1);
+      }
+      return;
+    }
+
+    if (action === "city-mounted-building-list-page-prev") {
+      this.changeScriptEditorCityMountedBuildingListPage(-1);
+      return;
+    }
+
+    if (action === "city-mounted-building-list-page-next") {
+      this.changeScriptEditorCityMountedBuildingListPage(1);
+      return;
+    }
+
+    if (action === "city-mounted-building-page-next") {
+      const mountedBuildingIndex = Number.parseInt(
+        actionElement?.dataset.scriptEditorCityMountedBuildingIndex ?? "-1",
+        10
+      );
+      if (Number.isInteger(mountedBuildingIndex) && mountedBuildingIndex >= 0) {
+        this.changeScriptEditorCityMountedBuildingNpcPage(mountedBuildingIndex, 1);
       }
       return;
     }
@@ -8792,9 +9317,23 @@ export class MainUiFlow {
       return;
     }
 
-    this.replaceSelectedScriptEditorLocation(
-      appendScriptEditorCityMountedBuilding(city)
+    const nextCity = appendScriptEditorCityMountedBuilding(city);
+    const nextBuildingCount = nextCity.mountedBuildings?.length ?? 0;
+    this.setScriptEditorCityMountedBuildingUiState(
+      Math.max(nextBuildingCount - 1, 0),
+      {
+        expanded: false,
+        search: "",
+        page: 1,
+      }
     );
+    this.setScriptEditorCityMountedBuildingListUiState({
+      page: Math.max(
+        1,
+        Math.ceil(nextBuildingCount / SCRIPT_EDITOR_CITY_MOUNTED_BUILDING_PAGE_SIZE)
+      ),
+    });
+    this.replaceSelectedScriptEditorLocation(nextCity);
   }
 
   removeScriptEditorCityMountedBuilding(index) {
@@ -8807,9 +9346,19 @@ export class MainUiFlow {
       return;
     }
 
-    this.replaceSelectedScriptEditorLocation(
-      removeScriptEditorCityMountedBuilding(city, index)
-    );
+    const { currentPage } = this.getScriptEditorCityMountedBuildingListPageState(city);
+    const nextCity = removeScriptEditorCityMountedBuilding(city, index);
+    const nextBuildingCount = nextCity.mountedBuildings?.length ?? 0;
+    this.setScriptEditorCityMountedBuildingListUiState({
+      page: Math.min(
+        currentPage,
+        Math.max(
+          1,
+          Math.ceil(nextBuildingCount / SCRIPT_EDITOR_CITY_MOUNTED_BUILDING_PAGE_SIZE)
+        )
+      ),
+    });
+    this.replaceSelectedScriptEditorLocation(nextCity);
   }
 
   applyScriptEditorCityMountedBuilding(index, buildingId) {
@@ -8838,9 +9387,20 @@ export class MainUiFlow {
     }
     const nextNpcId = this.findNextScriptEditorCityMountedNpcId(city, buildingIndex);
 
-    this.replaceSelectedScriptEditorLocation(
-      appendScriptEditorCityMountedBuildingNpc(city, buildingIndex, nextNpcId)
+    const nextCity = appendScriptEditorCityMountedBuildingNpc(
+      city,
+      buildingIndex,
+      nextNpcId
     );
+    const nextNpcCount = nextCity.mountedBuildings?.[buildingIndex]?.npcIds?.length ?? 0;
+    this.setScriptEditorCityMountedBuildingUiState(buildingIndex, {
+      expanded: true,
+      page: Math.max(
+        1,
+        Math.ceil(nextNpcCount / SCRIPT_EDITOR_CITY_MOUNTED_BUILDING_NPC_PAGE_SIZE)
+      ),
+    });
+    this.replaceSelectedScriptEditorLocation(nextCity);
   }
 
   findNextScriptEditorCityMountedNpcId(city, buildingIndex) {
@@ -8864,9 +9424,17 @@ export class MainUiFlow {
       return;
     }
 
-    this.replaceSelectedScriptEditorLocation(
-      removeScriptEditorCityMountedBuildingNpc(city, buildingIndex, npcIndex)
+    const nextCity = removeScriptEditorCityMountedBuildingNpc(city, buildingIndex, npcIndex);
+    const nextEntry = nextCity.mountedBuildings?.[buildingIndex] ?? { npcIds: [] };
+    const { totalPages } = this.getScriptEditorCityMountedBuildingNpcPageState(
+      nextEntry,
+      buildingIndex
     );
+    this.setScriptEditorCityMountedBuildingUiState(buildingIndex, {
+      expanded: true,
+      page: totalPages,
+    });
+    this.replaceSelectedScriptEditorLocation(nextCity);
   }
 
   applyScriptEditorCityMountedBuildingNpc(buildingIndex, npcIndex, npcId) {

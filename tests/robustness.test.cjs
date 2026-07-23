@@ -10856,6 +10856,178 @@ test(
 );
 
 test(
+  "script editor city mounted building authoring uses collapsible summary cards with building-local npc search and pagination",
+  () => {
+    const source = fs.readFileSync("src/ui/main-ui/main-ui-flow.js", "utf8");
+    const cssSource = fs.readFileSync("src/styles/script-editor.css", "utf8");
+    const mountedPanelSource =
+      source.match(
+        /renderScriptEditorLocationMountedContent\(city\) \{[\s\S]*?\n  renderScriptEditorLocationCustomAttributes/
+      )?.[0] ?? "";
+
+    assert.match(source, /SCRIPT_EDITOR_CITY_MOUNTED_BUILDING_NPC_PAGE_SIZE\s*=\s*12/);
+    assert.match(source, /scriptEditorCityMountedBuildingUiState/);
+    assert.match(
+      mountedPanelSource,
+      /data-script-editor-action="toggle-city-mounted-building-expanded"/
+    );
+    assert.match(
+      mountedPanelSource,
+      /data-script-editor-city-mounted-building-search/
+    );
+    assert.match(
+      mountedPanelSource,
+      /data-script-editor-action="city-mounted-building-page-prev"/
+    );
+    assert.match(
+      mountedPanelSource,
+      /data-script-editor-action="city-mounted-building-page-next"/
+    );
+    assert.match(mountedPanelSource, /data-script-editor-city-mounted-building-summary/);
+    assert.match(mountedPanelSource, /data-script-editor-city-mounted-building-panel/);
+    assert.match(mountedPanelSource, /c-script-editor-city-mounted-building-card/);
+    assert.match(mountedPanelSource, /c-script-editor-city-mounted-building-npc-grid/);
+    assert.match(mountedPanelSource, /c-script-editor-city-mounted-building-npc-card/);
+    assert.match(cssSource, /\.c-script-editor-city-mounted-building-card/);
+    assert.match(cssSource, /\.c-script-editor-city-mounted-building-card__summary/);
+    assert.match(cssSource, /\.c-script-editor-city-mounted-building-npc-grid/);
+    assert.match(cssSource, /\.c-script-editor-city-mounted-building-npc-card/);
+  }
+);
+
+test(
+  "script editor city mounted building authoring hides id copy and removes building ownership text from npc cards",
+  () => {
+    const source = fs.readFileSync("src/ui/main-ui/main-ui-flow.js", "utf8");
+    const mountedPanelSource =
+      source.match(
+        /renderScriptEditorLocationMountedContent\(city\) \{[\s\S]*?\n  renderScriptEditorLocationCustomAttributes/
+      )?.[0] ?? "";
+    const mountedMetaSource =
+      mountedPanelSource.match(
+        /<div class="c-script-editor-city-mounted-building-card__meta">[\s\S]*?<\/div>/
+      )?.[0] ?? "";
+
+    assert.doesNotMatch(mountedPanelSource, /按 NPC 名称或 ID 搜索/);
+    assert.match(mountedPanelSource, /按 NPC 名称搜索/);
+    assert.doesNotMatch(mountedPanelSource, /所属建筑/);
+    assert.doesNotMatch(mountedMetaSource, /<span>当前建筑<\/span>/);
+    assert.doesNotMatch(mountedMetaSource, /<span>主 NPC<\/span>/);
+    assert.doesNotMatch(mountedPanelSource, /\$\{escapeHtml\(building\.name\)\} \(\$\{escapeHtml\(building\.id\)\}\)/);
+    assert.doesNotMatch(mountedPanelSource, /\$\{escapeHtml\(person\.name\)\} \(\$\{escapeHtml\(person\.id\)\}\)/);
+  }
+);
+
+test(
+  "script editor city mounted building npc grid keeps a fixed two-row footprint even when fewer cards are visible",
+  () => {
+    const cssSource = fs.readFileSync("src/styles/script-editor.css", "utf8");
+
+    assert.match(
+      cssSource,
+      /\.c-script-editor-city-mounted-building-npc-grid\s*\{[\s\S]*min-height:\s*calc\(154px \* 2 \+ 14px\)/
+    );
+    assert.match(
+      cssSource,
+      /\.c-script-editor-city-mounted-building-npc-card\s*\{[\s\S]*height:\s*154px/
+    );
+  }
+);
+
+test(
+  "script editor city mounted building authoring omits the mounted panel header copy and side summary box",
+  () => {
+    const source = fs.readFileSync("src/ui/main-ui/main-ui-flow.js", "utf8");
+    const mountedPanelSource =
+      source.match(
+        /renderScriptEditorLocationMountedContent\(city\) \{[\s\S]*?\n  renderScriptEditorLocationCustomAttributes/
+      )?.[0] ?? "";
+
+    assert.doesNotMatch(
+      mountedPanelSource,
+      /<h3 class="c-script-editor-editor-card__title">[\s\S]*?<\/h3>/
+    );
+    assert.doesNotMatch(
+      mountedPanelSource,
+      /<p class="c-script-editor-editor-card__hint">[\s\S]*?<\/p>/
+    );
+    assert.doesNotMatch(
+      mountedPanelSource,
+      /c-script-editor-city-mounted-building-card__meta/
+    );
+  }
+);
+
+test(
+  "script editor city mounted building npc cards omit redundant mounted npc labels",
+  () => {
+    const source = fs.readFileSync("src/ui/main-ui/main-ui-flow.js", "utf8");
+    const mountedNpcCardSource =
+      source.match(
+        /const renderMountedNpcCard = \(entry, buildingIndex, npcEntry\) => `[\s\S]*?`;\n/
+      )?.[0] ?? "";
+
+    assert.doesNotMatch(
+      mountedNpcCardSource,
+      /<span class="c-script-editor-person-summary__label">已挂载 NPC<\/span>/
+    );
+    assert.doesNotMatch(mountedNpcCardSource, /<span>挂载 NPC<\/span>/);
+  }
+);
+
+test(
+  "script editor city mounted building authoring promotes remove-building into a top-right danger icon",
+  () => {
+    const source = fs.readFileSync("src/ui/main-ui/main-ui-flow.js", "utf8");
+    const mountedPanelSource =
+      source.match(
+        /renderScriptEditorLocationMountedContent\(city\) \{[\s\S]*?\n  renderScriptEditorLocationCustomAttributes/
+      )?.[0] ?? "";
+
+    assert.match(mountedPanelSource, /c-script-editor-city-mounted-building-card__remove/);
+    assert.match(mountedPanelSource, /aria-label="删除挂载建筑"/);
+    assert.doesNotMatch(
+      mountedPanelSource,
+      /<button[\s\S]*?data-script-editor-action="remove-city-mounted-building"[\s\S]*?>[\s\S]*?删除挂载建筑[\s\S]*?<\/button>/
+    );
+  }
+);
+
+test(
+  "script editor city mounted building authoring paginates building cards in fixed six-card pages and adds new buildings collapsed",
+  () => {
+    const source = fs.readFileSync("src/ui/main-ui/main-ui-flow.js", "utf8");
+    const cssSource = fs.readFileSync("src/styles/script-editor.css", "utf8");
+    const mountedPanelSource =
+      source.match(
+        /renderScriptEditorLocationMountedContent\(city\) \{[\s\S]*?\n  renderScriptEditorLocationCustomAttributes/
+      )?.[0] ?? "";
+    const addMountedBuildingSource =
+      source.match(/addScriptEditorCityMountedBuilding\(\) \{[\s\S]*?\n  removeScriptEditorCityMountedBuilding/)?.[0] ?? "";
+
+    assert.match(source, /SCRIPT_EDITOR_CITY_MOUNTED_BUILDING_PAGE_SIZE\s*=\s*6/);
+    assert.match(source, /getScriptEditorCityMountedBuildingListPageState/);
+    assert.match(
+      mountedPanelSource,
+      /data-script-editor-action="city-mounted-building-list-page-prev"/
+    );
+    assert.match(
+      mountedPanelSource,
+      /data-script-editor-action="city-mounted-building-list-page-next"/
+    );
+    assert.match(mountedPanelSource, /c-script-editor-city-mounted-building-list/);
+    assert.match(
+      cssSource,
+      /\.c-script-editor-city-mounted-building-list\s*\{[\s\S]*min-height:\s*calc\(/
+    );
+    assert.match(
+      addMountedBuildingSource,
+      /expanded:\s*false,\s*search:\s*"",\s*page:\s*1/
+    );
+  }
+);
+
+test(
   "script editor city/building access conditions collapse empty groups and resolve refusal prompt dialogue",
   () => {
     const {
