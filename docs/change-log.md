@@ -5,6 +5,17 @@
 `docs/change-log.md` 的正式定位是“历史记录 + 人类可读摘要”。
 它不是当前 Blueprint / legacy superpowers 治理的 live execution truth，不作为 resume entry、promotion gate、closeout gate 或固定同步门。
 
+## 2026-07-23 Blueprint Governance Skill Sync Tooling
+
+### Changed
+- 新增 [tools/blueprint-skill-sync.mjs](/D:/workspace/project/RPG_TG/.worktrees/blueprint-skill-sync-20260723/tools/blueprint-skill-sync.mjs)，从 [docs/blueprints/blueprint-workflow-spec.md](/D:/workspace/project/RPG_TG/.worktrees/blueprint-skill-sync-20260723/docs/blueprints/blueprint-workflow-spec.md) 与 [docs/blueprints/classification-rule-layer-spec.md](/D:/workspace/project/RPG_TG/.worktrees/blueprint-skill-sync-20260723/docs/blueprints/classification-rule-layer-spec.md) 的 `blueprint-skill:*` marker block 生成并校验 [ .codex/skills/blueprint-governance/SKILL.md ](/D:/workspace/project/RPG_TG/.worktrees/blueprint-skill-sync-20260723/.codex/skills/blueprint-governance/SKILL.md)。
+- 在 [docs/blueprints/blueprint-workflow-spec.md](/D:/workspace/project/RPG_TG/.worktrees/blueprint-skill-sync-20260723/docs/blueprints/blueprint-workflow-spec.md) 补入 reading-order、sync-checklist、verification、red-flags 四组 skill-sync marker，并在 [docs/blueprints/classification-rule-layer-spec.md](/D:/workspace/project/RPG_TG/.worktrees/blueprint-skill-sync-20260723/docs/blueprints/classification-rule-layer-spec.md) 补入 routing-rules marker。
+- 更新 [package.json](/D:/workspace/project/RPG_TG/.worktrees/blueprint-skill-sync-20260723/package.json)，新增 `sync:blueprint-skill` 与 `lint:blueprint-skill`，并把 skill lint 接入总 `lint`，同时把 [tests/blueprint-skill-sync.test.cjs](/D:/workspace/project/RPG_TG/.worktrees/blueprint-skill-sync-20260723/tests/blueprint-skill-sync.test.cjs) 纳入默认测试集。
+
+### Impact
+- Blueprint 工作流规范现在可以作为 `blueprint-governance` skill 的单一生成源，文档改动后不再依赖手工双写 skill 正文。
+- skill 同步现在 fail closed：缺失 marker、重复 marker、生成文件缺失或生成结果漂移都会让校验失败，而不是静默接受歧义输入。
+
 ## 2026-07-23 Map Rendering City Data Separation And Canonical Numeric ID Transition Acceptance Closeout
 
 ### Changed

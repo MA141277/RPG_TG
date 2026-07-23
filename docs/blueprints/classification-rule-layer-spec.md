@@ -237,3 +237,13 @@ This layer is successful only when:
 - `queue-candidate` defaults to governance escalation rather than human escalation
 - `open + no active queue` remains legal and non-ambiguous
 - `historical residue stays recorded without pretending to be active work`
+
+### Blueprint Skill Routing Rules
+
+<!-- blueprint-skill:routing-rules:start -->
+- classify first, route second, promote later
+- current execution truth still comes only from `project-progress -> blueprint -> version plan -> active queue -> active task`
+- if classification concludes `queue-candidate`, return control to version-plan admission review before implementation
+- route content or asset items through existing pipelines unless written evidence requires new governance structure
+- low-confidence routing falls back to `uncertain-needs-review` unless a stronger written override exists
+<!-- blueprint-skill:routing-rules:end -->

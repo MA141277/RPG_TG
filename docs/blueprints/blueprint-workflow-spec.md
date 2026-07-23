@@ -1955,3 +1955,44 @@ The Blueprint model is successful only when:
 - active-task completion, queue closeout, admission sync, and active-queue switching do not create default pause points
 - queue specs cannot pass by shrinking inherited capability surfaces down to one happy path or one local seam
 
+## 21. Blueprint Skill Sync Blocks
+
+The generated `blueprint-governance` skill must be synchronized from the marker blocks in this spec and `docs/blueprints/classification-rule-layer-spec.md`.
+
+### 21.1 Reading Order
+
+<!-- blueprint-skill:reading-order:start -->
+1. `docs/blueprints/project-progress.md`
+2. `docs/blueprints/blueprint.md`
+3. the active version plan referenced by `blueprint.md`
+4. the active queue doc referenced by the version plan when `active_queue != none`
+5. the active task definition inside the active queue doc
+<!-- blueprint-skill:reading-order:end -->
+
+### 21.2 Sync Checklist
+
+<!-- blueprint-skill:sync-checklist:start -->
+- update the active queue doc when queue truth, active task truth, queue closeout truth, or queue-local verification truth changes
+- update the active version plan when admission truth, routing truth, closure review truth, residue routing truth, or version closeout truth changes
+- update `docs/blueprints/project-progress.md` when repository entry truth, active queue presence, or next-file pointer truth changes
+- update `docs/blueprints/blueprint.md` when active version pointers, version registry truth, or routing references change
+- update `docs/change-log.md` when code, runtime, data compatibility, shared interface, or user-visible behavior changes are recorded
+<!-- blueprint-skill:sync-checklist:end -->
+
+### 21.3 Verification
+
+<!-- blueprint-skill:verification:start -->
+- `npm run lint:blueprints`
+- `npm run lint:blueprint-skill`
+- `npm run blueprint:governance:check` when governed queue or version shell truth changes
+<!-- blueprint-skill:verification:end -->
+
+### 21.4 Red Flags
+
+<!-- blueprint-skill:red-flags:start -->
+- do not use `docs/change-log.md` as live execution truth
+- do not start implementation for a `queue-candidate` before version-plan admission truth and queue truth both exist
+- do not activate a second queue when Blueprint execution mode is single-active-task
+- do not treat closed queues, old `docs/superpowers/**`, or version memos as default next-step truth
+<!-- blueprint-skill:red-flags:end -->
+
