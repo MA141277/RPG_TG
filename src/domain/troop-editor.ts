@@ -4,6 +4,10 @@ import type {
   BattleFormationSlotKey,
   BattleFormationUnitRole,
 } from "./battle-formation";
+import {
+  getBattleFormationCaptainMember,
+  resolveBattleFormationCaptainMemberId,
+} from "./battle-formation";
 import type { CharacterId } from "./character";
 
 export type TroopEditorResourceSlot = {
@@ -23,12 +27,15 @@ export type SharedTroopSlotSnapshot = {
   occupantName: string | null;
   occupantRole: BattleFormationUnitRole | null;
   isOccupied: boolean;
+  isCaptain: boolean;
 };
 
 export type SharedTroopSnapshot = {
   id: string;
   name: string;
   subtitle: string;
+  captainMemberId: string | null;
+  captainName: string | null;
   slots: SharedTroopSlotSnapshot[];
 };
 
@@ -81,6 +88,18 @@ const TROOP_SHOP_ROLE_CATALOG: ReadonlyArray<
     requiredFame: 0,
   },
   {
+    role: "infantry",
+    unitDefinitionId: "unit.infantry.demo",
+    price: 8,
+    requiredFame: 0,
+  },
+  {
+    role: "spearman",
+    unitDefinitionId: "unit.spearman.demo",
+    price: 12,
+    requiredFame: 3,
+  },
+  {
     role: "spearman",
     unitDefinitionId: "unit.spearman.demo",
     price: 12,
@@ -93,10 +112,28 @@ const TROOP_SHOP_ROLE_CATALOG: ReadonlyArray<
     requiredFame: 5,
   },
   {
+    role: "archer",
+    unitDefinitionId: "unit.archer.demo",
+    price: 16,
+    requiredFame: 5,
+  },
+  {
     role: "teppo",
     unitDefinitionId: "unit.teppo.demo",
     price: 18,
     requiredFame: 6,
+  },
+  {
+    role: "teppo",
+    unitDefinitionId: "unit.teppo.demo",
+    price: 18,
+    requiredFame: 6,
+  },
+  {
+    role: "heavy-cavalry",
+    unitDefinitionId: "unit.light-cavalry.demo",
+    price: 24,
+    requiredFame: 8,
   },
   {
     role: "heavy-cavalry",
@@ -298,6 +335,11 @@ export function removeTroopFormationMember(
       return formation;
     }
 
+    const captain = getBattleFormationCaptainMember(formation);
+    if (captain?.slotKey === input.slotKey) {
+      return formation;
+    }
+
     const sourceMember =
       formation.members.find((member) => member.slotKey === input.slotKey) ?? null;
     if (sourceMember == null) {
@@ -434,6 +476,7 @@ export function createTroopFormation(
   input: {
     leaderCharacterId: CharacterId;
     name: string;
+    captainReserveMemberId: string;
   }
 ): TroopRuntimeState {
   const normalizedName = input.name.trim().slice(0, 10);
@@ -444,6 +487,14 @@ export function createTroopFormation(
   if (
     troopRuntimeState.formations.some((formation) => formation.name === normalizedName)
   ) {
+    return troopRuntimeState;
+  }
+
+  const reserveCaptain =
+    troopRuntimeState.reserve.members.find(
+      (member) => member.id === input.captainReserveMemberId
+    ) ?? null;
+  if (reserveCaptain == null) {
     return troopRuntimeState;
   }
 
@@ -462,9 +513,30 @@ export function createTroopFormation(
         id: nextId,
         name: normalizedName,
         leaderCharacterId: input.leaderCharacterId,
-        members: [],
+        captainMemberId: reserveCaptain.id,
+        members: [
+          {
+            id: reserveCaptain.id,
+            unitDefinitionId: reserveCaptain.unitDefinitionId,
+            name: reserveCaptain.name,
+            role: reserveCaptain.role,
+            slotKey: "middle-center",
+            ...(reserveCaptain.characterId == null
+              ? {}
+              : { characterId: reserveCaptain.characterId }),
+            ...(reserveCaptain.capacityCost == null
+              ? {}
+              : { capacityCost: reserveCaptain.capacityCost }),
+          },
+        ],
       },
     ],
+    reserve: {
+      ...troopRuntimeState.reserve,
+      members: troopRuntimeState.reserve.members.filter(
+        (member) => member.id !== reserveCaptain.id
+      ),
+    },
   };
 }
 
@@ -653,7 +725,12 @@ function collectUsedTroopMemberNames(
 }
 
 function createTroopShopOffers(usedNames: Set<string>): TroopShopOffer[] {
-  return TROOP_SHOP_ROLE_CATALOG.map((offer, index) => {
+  const sortedCatalog = [...TROOP_SHOP_ROLE_CATALOG].sort(
+    (left, right) =>
+      right.requiredFame - left.requiredFame || right.price - left.price
+  );
+
+  return sortedCatalog.map((offer, index) => {
     const name = createUniqueTroopMemberName(usedNames);
     return {
       id: `shop.offer.${index + 1}`,
@@ -709,8 +786,20 @@ export function normalizeTroopRuntimeStateUnitDefinitions(
         unitDefinitionId: nextUnitDefinitionId,
       };
     });
+    const nextFormation = formationChanged ? { ...formation, members } : formation;
+    const resolvedCaptainMemberId = resolveBattleFormationCaptainMemberId(nextFormation);
+    if (
+      resolvedCaptainMemberId != null &&
+      nextFormation.captainMemberId !== resolvedCaptainMemberId
+    ) {
+      didChange = true;
+      return {
+        ...nextFormation,
+        captainMemberId: resolvedCaptainMemberId,
+      };
+    }
 
-    return formationChanged ? { ...formation, members } : formation;
+    return nextFormation;
   });
 
   const reserveMembers = troopRuntimeState.reserve.members.map((member) => {

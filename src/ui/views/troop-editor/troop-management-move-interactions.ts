@@ -61,6 +61,7 @@ const ALERT_TEXT = {
   clearReserveFull: "预备队空间不足，无法清空队伍",
   disbandReserveFull: "预备队空间不足，无法解散队伍",
   disbandForbidden: "本队不可解散",
+  captainRemoveForbidden: "褰撳墠闃熼暱涓嶅彲鐩存帴绉诲嚭闃熶紞",
 } as const;
 
 function injectInteractionStyles(documentNode: Document): void {
@@ -406,6 +407,8 @@ function attachTroopManagementMoveHandlers(
   input: SyncTroopManagementMoveInteractionsInput
 ): void {
   const troopId = root.dataset.troopId ?? "";
+  const captainSlotKey =
+    (root.dataset.captainSlotKey as BattleFormationSlotKey | undefined) ?? null;
   const moveButton = root.querySelector<HTMLButtonElement>(
     "[data-troop-management-action='move']"
   );
@@ -884,6 +887,12 @@ function attachTroopManagementMoveHandlers(
 
       if (state.mode === "remove-select") {
         if (slotKey != null && !isEmptySlot) {
+          if (slotKey === captainSlotKey) {
+            resetToIdle();
+            showAlert(ALERT_TEXT.captainRemoveForbidden);
+            return;
+          }
+
           if (readReserveCount(root) >= readReserveCapacity(root)) {
             resetToIdle();
             showAlert(ALERT_TEXT.reserveFullForRemove);

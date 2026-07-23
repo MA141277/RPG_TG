@@ -26,9 +26,10 @@ export function renderTroopPreviewGrid(
 
           return `
             <article
-              class="c-troop-preview-grid__slot${slot.isOccupied ? " is-occupied" : ""}"
+              class="c-troop-preview-grid__slot${slot.isOccupied ? " is-occupied" : ""}${slot.isCaptain ? " is-captain" : ""}"
               data-slot-key="${slot.slotKey}"
             >
+              ${slot.isCaptain ? '<span class="c-troop-preview-grid__captain-badge">L</span>' : ""}
               <span class="c-troop-preview-grid__slot-key">${slot.slotKey}</span>
               ${
                 labelMode === "default" && roleLabel != null

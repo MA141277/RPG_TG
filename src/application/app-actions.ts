@@ -297,11 +297,13 @@ export function createTroopEditorTeam(
   appState: AppState,
   input: {
     name: string;
+    captainReserveMemberId: string;
   }
 ): AppState {
   const nextTroops = createTroopFormation(appState.gameState.runtime.troops, {
     leaderCharacterId: appState.gameState.player.characterId,
     name: input.name,
+    captainReserveMemberId: input.captainReserveMemberId,
   });
   if (nextTroops === appState.gameState.runtime.troops) {
     return appState;

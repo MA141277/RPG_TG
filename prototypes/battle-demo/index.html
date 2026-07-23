@@ -344,6 +344,7 @@
       border: 1px solid var(--border);
       background: rgba(42, 34, 24, 0.88);
       border-radius: 4px;
+      position: relative;
       padding: 4px;
       display: flex;
       flex-direction: column;
@@ -386,6 +387,24 @@
     .unit-formation-cell .fill {
       height: 100%;
       background: linear-gradient(90deg, #6fa3d8, #c9a227);
+    }
+    .formation-slot__captain-badge {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      width: 16px;
+      height: 16px;
+      border-radius: 4px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(180deg, #f3d37d, #c9962f);
+      color: #25170b;
+      font-size: 0.56rem;
+      font-weight: 700;
+      box-shadow:
+        inset 0 0 0 1px rgba(255, 240, 198, 0.48),
+        0 1px 3px rgba(88, 58, 12, 0.3);
     }
 
     .board-wrap {
@@ -688,6 +707,28 @@
       border-radius: 6px;
       overflow: hidden;
     }
+
+    .army-turn-footer {
+      position: absolute;
+      left: 50%;
+      bottom: 8px;
+      transform: translateX(-50%);
+      z-index: 4;
+      min-width: 11rem;
+      padding: 0.22rem 0.9rem;
+      border: 1px solid rgba(201, 162, 39, 0.44);
+      border-radius: 999px;
+      background: rgba(18, 16, 14, 0.82);
+      color: #f1dfb3;
+      font-size: 0.62rem;
+      font-weight: 700;
+      line-height: 1;
+      letter-spacing: 0.06em;
+      text-align: center;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.72);
+      pointer-events: none;
+    }
+    .army-turn-footer.hidden { display: none; }
 
     button {
       font-family: inherit;
@@ -1073,6 +1114,435 @@
       transform: translateY(-15px);
     }
 
+    .turn-transition-overlay {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0);
+      z-index: 115;
+      pointer-events: auto;
+      transition: background-color 0.5s ease;
+    }
+    .turn-transition-overlay.hidden { display: none; }
+    .turn-transition-overlay.is-active {
+      background: rgba(0, 0, 0, 0.5);
+    }
+    .turn-transition-copy {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.45rem;
+      text-align: center;
+      pointer-events: none;
+    }
+    .turn-transition-title,
+    .turn-transition-subtitle {
+      opacity: 0;
+      transform: translateY(12px);
+      transition:
+        opacity 0.5s ease,
+        transform 0.5s ease;
+      color: #f4ddb0;
+      text-shadow:
+        0 2px 4px rgba(0, 0, 0, 0.72),
+        0 0 12px rgba(0, 0, 0, 0.36);
+      letter-spacing: 0.08em;
+    }
+    .turn-transition-title {
+      font-size: clamp(1.25rem, 2.8vw, 2.2rem);
+      font-weight: 800;
+    }
+    .turn-transition-subtitle {
+      font-size: clamp(0.82rem, 1.8vw, 1.18rem);
+      font-weight: 700;
+    }
+    .turn-transition-overlay.is-text-visible .turn-transition-title,
+    .turn-transition-overlay.is-text-visible .turn-transition-subtitle {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .quick-battle-overlay {
+      position: fixed;
+      top: calc(var(--header-h) + 8px);
+      right: 8px;
+      bottom: 8px;
+      left: 8px;
+      z-index: 118;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: clamp(12px, 1.6vw, 26px);
+      pointer-events: auto;
+      overflow: hidden;
+    }
+    .quick-battle-overlay.hidden { display: none; }
+    .quick-battle-stage {
+      width: 100%;
+      height: min(100%, 680px);
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 56px minmax(0, 1fr);
+      justify-content: center;
+      align-items: center;
+      gap: clamp(8px, 1vw, 14px);
+      opacity: 0;
+      transform: scale(0.985);
+      transition:
+        opacity 0.22s ease,
+        transform 0.22s ease;
+    }
+    .quick-battle-overlay.is-active .quick-battle-stage {
+      opacity: 1;
+      transform: scale(1);
+    }
+    .quick-battle-panel {
+      position: relative;
+      min-width: 0;
+      min-height: min(100%, 620px);
+      padding: clamp(14px, 1.4vw, 20px);
+      border-radius: 20px;
+      border: 1px solid rgba(201, 162, 39, 0.34);
+      background:
+        linear-gradient(180deg, rgba(71, 47, 22, 0.9), rgba(28, 18, 11, 0.86)),
+        radial-gradient(circle at top, rgba(255, 226, 154, 0.12), transparent 58%);
+      box-shadow:
+        inset 0 0 0 1px rgba(255, 238, 187, 0.08),
+        0 18px 40px rgba(0, 0, 0, 0.28);
+      display: flex;
+      flex-direction: column;
+      gap: clamp(10px, 1.2vw, 16px);
+      overflow: hidden;
+      backdrop-filter: blur(4px);
+    }
+    .quick-battle-panel.enemy {
+      background:
+        linear-gradient(180deg, rgba(67, 28, 24, 0.9), rgba(28, 11, 11, 0.88)),
+        radial-gradient(circle at top, rgba(233, 120, 101, 0.12), transparent 58%);
+    }
+    .quick-battle-result {
+      position: absolute;
+      top: 12px;
+      left: 50%;
+      transform: translate(-50%, -8px);
+      padding: 4px 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 237, 196, 0.28);
+      background: rgba(33, 21, 14, 0.78);
+      color: #f7e4af;
+      font-size: 0.84rem;
+      font-weight: 800;
+      letter-spacing: 0.18em;
+      opacity: 0;
+      transition:
+        opacity 0.28s ease,
+        transform 0.28s ease;
+    }
+    .quick-battle-overlay.is-results-visible .quick-battle-panel.is-winner .quick-battle-result,
+    .quick-battle-overlay.is-results-visible .quick-battle-panel.is-draw .quick-battle-result {
+      opacity: 1;
+      transform: translate(-50%, 0);
+    }
+    .quick-battle-side-label {
+      padding-top: 22px;
+      color: rgba(247, 228, 175, 0.8);
+      font-size: 0.74rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-align: center;
+    }
+    .quick-battle-portrait-frame {
+      position: relative;
+      min-height: 176px;
+      border-radius: 16px;
+      border: 1px solid rgba(201, 162, 39, 0.26);
+      background:
+        linear-gradient(180deg, rgba(255, 239, 204, 0.08), rgba(0, 0, 0, 0.06)),
+        radial-gradient(circle at center top, rgba(255, 234, 179, 0.18), transparent 62%),
+        rgba(21, 13, 8, 0.62);
+      overflow: hidden;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      padding: 14px 14px 18px;
+    }
+    .quick-battle-portrait-frame.is-hit {
+      box-shadow: 0 0 0 1px rgba(255, 243, 207, 0.12), 0 0 24px rgba(255, 242, 220, 0.18);
+    }
+    .quick-battle-portrait-frame.is-critical {
+      box-shadow: 0 0 0 1px rgba(214, 124, 87, 0.3), 0 0 26px rgba(183, 66, 49, 0.22);
+    }
+    .quick-battle-portrait-frame.is-fallen {
+      filter: grayscale(1) brightness(0.6);
+      opacity: 0.85;
+    }
+    .quick-battle-portrait-renderer {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      pointer-events: none;
+      transform: translateX(55px);
+    }
+    .quick-battle-portrait-renderer .formation-spine-frame {
+      width: min(100%, 320px);
+      height: clamp(190px, 20vw, 260px);
+      margin: -12px auto -6px;
+      filter:
+        drop-shadow(0 18px 18px rgba(0, 0, 0, 0.42))
+        drop-shadow(0 0 12px rgba(255, 236, 188, 0.08));
+    }
+    .quick-battle-portrait-renderer.enemy .formation-spine-frame {
+      transform: scaleX(-1);
+    }
+    .quick-battle-portrait-copy {
+      position: absolute;
+      left: 18px;
+      right: 18px;
+      bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 8px;
+      pointer-events: none;
+    }
+    .quick-battle-portrait-title {
+      color: #f4ddb0;
+      font-size: 0.92rem;
+      font-weight: 800;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
+    }
+    .quick-battle-portrait-subtitle {
+      color: rgba(244, 221, 176, 0.74);
+      font-size: 0.66rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+    }
+    .quick-battle-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 9px;
+    }
+    .quick-battle-slot {
+      position: relative;
+      min-width: 0;
+      min-height: 68px;
+      padding: 8px 8px 7px;
+      border-radius: 12px;
+      border: 1px solid rgba(201, 162, 39, 0.2);
+      background:
+        linear-gradient(180deg, rgba(255, 244, 220, 0.08), rgba(0, 0, 0, 0.08)),
+        rgba(12, 8, 6, 0.38);
+      display: grid;
+      grid-template-columns: 42px minmax(0, 1fr);
+      gap: 8px;
+      align-items: center;
+      transform-origin: center;
+      transition:
+        transform 0.2s ease,
+        border-color 0.2s ease,
+        background-color 0.2s ease;
+    }
+    .quick-battle-slot.is-empty {
+      opacity: 0.32;
+    }
+    .quick-battle-slot.is-fallen {
+      opacity: 0.58;
+      filter: grayscale(0.85);
+    }
+    .quick-battle-slot.is-captain {
+      border-color: rgba(241, 207, 121, 0.5);
+      box-shadow: inset 0 0 0 1px rgba(255, 240, 198, 0.08);
+    }
+    .quick-battle-slot.is-damaged {
+      animation: quick-battle-slot-shake 0.48s ease;
+    }
+    .quick-battle-slot.is-damaged::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background: rgba(255, 255, 255, 0.7);
+      opacity: 0;
+      animation: quick-battle-slot-flash 0.4s ease;
+      pointer-events: none;
+    }
+    .quick-battle-slot-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+      border: 1px solid rgba(233, 218, 181, 0.18);
+      background:
+        linear-gradient(180deg, rgba(255, 245, 222, 0.08), rgba(0, 0, 0, 0.04)),
+        rgba(23, 15, 10, 0.45);
+      position: relative;
+      overflow: hidden;
+    }
+    .quick-battle-slot-icon::before {
+      content: "";
+      position: absolute;
+      inset: 4px;
+      background: var(--unit-sprite) center bottom / contain no-repeat;
+      filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.38));
+    }
+    .quick-battle-slot-copy {
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .quick-battle-slot-name-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      min-width: 0;
+    }
+    .quick-battle-slot-name {
+      min-width: 0;
+      color: #f0dfb8;
+      font-size: 0.66rem;
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .quick-battle-slot-captain {
+      width: 16px;
+      height: 16px;
+      border-radius: 4px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(180deg, #f3d37d, #c9962f);
+      color: #25170b;
+      font-size: 0.54rem;
+      font-weight: 800;
+      flex: 0 0 auto;
+    }
+    .quick-battle-slot-hp-row {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 4px;
+      align-items: start;
+    }
+    .quick-battle-slot-hp-bar {
+      display: block;
+      min-width: 64px;
+      width: 100%;
+      height: 10px;
+      border-radius: 999px;
+      background: rgba(0, 0, 0, 0.38);
+      overflow: hidden;
+    }
+    .quick-battle-slot-hp-fill {
+      display: block;
+      height: 100%;
+      width: var(--hp-ratio, 0%);
+      background: linear-gradient(90deg, #c9a227, #1b8d72);
+      transition: width 1s ease;
+    }
+    .quick-battle-slot.is-fallen .quick-battle-slot-hp-fill {
+      background: linear-gradient(90deg, #5b4032, #7a3d2d);
+    }
+    .quick-battle-slot-hp-text {
+      color: rgba(244, 221, 176, 0.82);
+      font-size: 0.58rem;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .quick-battle-slot-loss {
+      color: #ffb395;
+      font-size: 0.54rem;
+      font-weight: 700;
+      min-height: 1em;
+    }
+    .quick-battle-info {
+      margin-top: auto;
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: rgba(11, 8, 6, 0.34);
+      border: 1px solid rgba(201, 162, 39, 0.14);
+      display: grid;
+      gap: 8px;
+    }
+    .quick-battle-info-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+      color: #f0dfb8;
+      font-size: 0.68rem;
+    }
+    .quick-battle-info-row span {
+      color: rgba(244, 221, 176, 0.72);
+    }
+    .quick-battle-info-row strong {
+      font-size: 0.76rem;
+      font-weight: 800;
+    }
+    .quick-battle-morale-meter {
+      height: 9px;
+      border-radius: 999px;
+      background: rgba(0, 0, 0, 0.42);
+      overflow: hidden;
+    }
+    .quick-battle-morale-fill {
+      display: block;
+      height: 100%;
+      width: var(--morale-ratio, 0%);
+      background: linear-gradient(90deg, #1780a5, #35d7ce);
+      transition: width 1s ease;
+    }
+    .quick-battle-panel.enemy .quick-battle-morale-fill {
+      background: linear-gradient(90deg, #9c312e, #d56a56);
+    }
+    .quick-battle-center-emblem {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      border: 1px solid rgba(233, 218, 181, 0.2);
+      background:
+        radial-gradient(circle at center, rgba(255, 228, 160, 0.18), rgba(49, 27, 13, 0.92)),
+        rgba(28, 16, 9, 0.82);
+      color: #f4ddb0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: clamp(1.1rem, 2vw, 1.6rem);
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.24);
+    }
+    @keyframes quick-battle-slot-flash {
+      0% { opacity: 0; }
+      24% { opacity: 0.88; }
+      100% { opacity: 0; }
+    }
+    @keyframes quick-battle-slot-shake {
+      0% { transform: translate3d(0, 0, 0); }
+      20% { transform: translate3d(-4px, 0, 0); }
+      40% { transform: translate3d(4px, 0, 0); }
+      60% { transform: translate3d(-3px, 0, 0); }
+      80% { transform: translate3d(3px, 0, 0); }
+      100% { transform: translate3d(0, 0, 0); }
+    }
+    @media (max-width: 1180px) {
+      .quick-battle-overlay {
+        right: calc(var(--right-w) + 10px);
+        left: calc(var(--left-w) + 10px);
+        padding: 10px;
+      }
+      .quick-battle-stage {
+        grid-template-columns: minmax(0, 1fr);
+        height: auto;
+      }
+      .quick-battle-center-emblem {
+        order: -1;
+        margin: 0 auto;
+      }
+    }
+
     .formation-battle {
       position: fixed;
       inset: 0;
@@ -1312,7 +1782,9 @@
                 .formation-slot.hit-white-flash {
       --hit-white-opacity: 0;
     }
-    .formation-slot.hit-white-flash .formation-spine-frame {
+    .formation-slot.hit-white-flash .formation-spine-frame,
+    .quick-battle-portrait-renderer.hit-white-flash .formation-spine-frame,
+    .quick-battle-portrait-frame.hit-white-flash .formation-spine-frame {
       filter: none;
       will-change: translate;
     }
@@ -2283,6 +2755,14 @@
       display: none;
     }
 
+    .battle-stage .army-turn-footer {
+      bottom: 0.9%;
+      min-width: 10.5rem;
+      padding: 0.24rem 0.95rem;
+      font-size: 0.58rem;
+      z-index: 8;
+    }
+
     .battle-stage .deploy-pool {
       left: var(--battle-deploy-left);
       right: auto;
@@ -2492,6 +2972,7 @@
         <button id="btn-wait" disabled>待机</button>
         <div class="skill-bar" id="skill-bar"></div>
       </div>
+      <div class="army-turn-footer hidden" id="army-turn-footer" aria-live="polite"></div>
       <div class="action-menu hidden" id="action-menu">
         <button id="action-wait">待机</button>
         <button id="action-rally">整顿</button>
@@ -2531,6 +3012,13 @@
     </div>
   </div>
 
+  <div class="turn-transition-overlay hidden" id="turn-transition-overlay" aria-hidden="true">
+    <div class="turn-transition-copy">
+      <div class="turn-transition-title" id="turn-transition-title"></div>
+      <div class="turn-transition-subtitle" id="turn-transition-subtitle"></div>
+    </div>
+  </div>
+
   <div class="tutorial-toast hidden" id="tutorial-toast">
     <h3 id="tutorial-title"></h3>
     <p id="tutorial-body"></p>
@@ -2546,6 +3034,14 @@
         <ul id="recap-list"></ul>
       </div>
       <button class="primary" id="btn-restart" style="margin-top: 14px;">重新开始</button>
+    </div>
+  </div>
+
+  <div class="quick-battle-overlay hidden" id="quick-battle-overlay" aria-hidden="true">
+    <div class="quick-battle-stage">
+      <section class="quick-battle-panel" id="quick-battle-left-panel"></section>
+      <div class="quick-battle-center-emblem" id="quick-battle-center-emblem">⚔</div>
+      <section class="quick-battle-panel enemy" id="quick-battle-right-panel"></section>
     </div>
   </div>
 
@@ -2957,10 +3453,74 @@
     const STRONGPOINT_MIN_POINT_DISTANCE = 3;
     const STRONGPOINT_MIN_CAMP_DISTANCE = 3;
     const STRONGPOINT_TYPES = ['camp', 'supplyDepot', 'watchTower', 'watchTower'];
+    const turnTransitionState = {
+      isActive: false,
+      activeType: null,
+      currentPromise: null,
+    };
+    const quickBattleState = {
+      isActive: false,
+      currentPromise: null,
+    };
     let battleRecap = [];
     let battleConfig = { lessonTags: [] };
     let initialBattleConfig = null;
     let lastBattleResult = null;
+
+    function getTurnTransitionContent(type) {
+      if (type === 'ally') {
+        return { title: '盟友行动回合', subtitle: '明军' };
+      }
+      if (type === 'enemy') {
+        return { title: '敌军行动回合', subtitle: '元军' };
+      }
+      return { title: '你的行动回合', subtitle: '明军' };
+    }
+
+    function isNonPlayerControlledUnit(unit) {
+      if (!unit) return false;
+      return unit.side === 'enemy' || unit.controller === 'npc';
+    }
+
+    function shouldUseQuickNpcBattle(attacker, defender) {
+      return isNonPlayerControlledUnit(attacker) && isNonPlayerControlledUnit(defender);
+    }
+
+    function isBattleInteractionLocked() {
+      return turnTransitionState.isActive === true || quickBattleState.isActive === true;
+    }
+
+    async function playTurnTransition(type) {
+      if (turnTransitionState.isActive) {
+        return turnTransitionState.currentPromise ?? Promise.resolve();
+      }
+      const run = (async () => {
+        const overlay = document.getElementById('turn-transition-overlay');
+        const title = document.getElementById('turn-transition-title');
+        const subtitle = document.getElementById('turn-transition-subtitle');
+        if (!overlay || !title || !subtitle) return;
+        const content = getTurnTransitionContent(type);
+        title.textContent = content.title;
+        subtitle.textContent = content.subtitle;
+        turnTransitionState.isActive = true;
+        turnTransitionState.activeType = type;
+        overlay.classList.remove('hidden', 'is-active', 'is-text-visible');
+        void overlay.offsetWidth;
+        overlay.classList.add('is-active');
+        await sleep(500);
+        overlay.classList.add('is-text-visible');
+        await sleep(2500);
+        overlay.classList.remove('is-text-visible');
+        overlay.classList.remove('is-active');
+        await sleep(500);
+        overlay.classList.add('hidden');
+        turnTransitionState.isActive = false;
+        turnTransitionState.activeType = null;
+        turnTransitionState.currentPromise = null;
+      })();
+      turnTransitionState.currentPromise = run;
+      return run;
+    }
     const STORY_BATTLE_SCENARIOS = {
       'sundeya-rescue': {
         scenarioId: 'sundeya-rescue',
@@ -3567,7 +4127,12 @@
         id: unit.id,
         name: unit.name,
         side: unit.side,
+        controller: unit.controller || null,
         generalName: unit.general.name,
+        troopType: unit.troopType,
+        facing: unit.facing,
+        isCommander: unit.isCommander === true,
+        captainMemberId: unit.captainMemberId || null,
         morale: unit.morale,
         soldiers: unit.soldiers,
         maxSoldiers: unit.maxSoldiers,
@@ -4154,6 +4719,27 @@
         .join(' / ');
     }
 
+    function getFormationCaptainMember(unit) {
+      if (!unit || !Array.isArray(unit.formationMembers)) {
+        return null;
+      }
+
+      if (unit.captainMemberId) {
+        const explicitCaptain = unit.formationMembers.find(member => member.id === unit.captainMemberId) || null;
+        if (explicitCaptain) {
+          return explicitCaptain;
+        }
+      }
+
+      const middleCaptain = unit.formationMembers.find(member => (member.slotKey || member.slot) === 'middle-center') || null;
+      if (middleCaptain) {
+        return middleCaptain;
+      }
+
+      const troopTypeCaptain = unit.formationMembers.find(member => member.troopType === unit.troopType) || null;
+      return troopTypeCaptain || unit.formationMembers[0] || null;
+    }
+
     function renderFormationChips(unit) {
       if (!unit.formationMembers?.length) return '';
       const occupiedSlots = new Map(unit.formationMembers.map(member => [member.slotKey, member]));
@@ -4210,6 +4796,7 @@
       const actionState = unit.hasActed || unit.hasMoved ? '已行动' : '待命';
       const moveText = typeof moveRange === 'function' ? moveRange(unit) : 0;
       const rangeText = unit.range ?? getEffectiveRange(unit);
+      const captain = getFormationCaptainMember(unit);
       card.innerHTML = `
         <div class="unit-portrait">${escapeHtml(unit.general?.name || unit.name)}</div>
         <div class="unit-summary">
@@ -4228,6 +4815,7 @@
             <div class="unit-meter-track"><i class="unit-meter-fill" style="width:${moralePercent}%"></i></div>
             <strong>${unit.morale ?? 0}/100</strong>
           </div>
+          <div class="unit-stat-row"><span>队长</span><strong>${escapeHtml(captain?.name || '暂无')}</strong></div>
           <div class="unit-stat-row"><span>阵型</span><strong>${escapeHtml(getFormationTemplateLabel(unit))}</strong></div>
           <div class="unit-stat-row"><span>机动/射程</span><strong>${moveText} / ${rangeText}</strong></div>
           <div class="unit-stat-row"><span>兵种构成</span><strong>${escapeHtml(getFormationCompositionText(unit))}</strong></div>
@@ -4247,6 +4835,7 @@
         if (member.soldiers <= 0) classes.push('fallen');
         return `
           <div class="${classes.join(' ')}">
+            ${captain && member.id === captain.id ? '<span class="formation-slot__captain-badge">L</span>' : ''}
             <div class="slot">${escapeHtml(FORMATION_SLOT_LABELS[slotKey])}</div>
             <div class="troop">${escapeHtml(TROOP_TYPES[member.troopType]?.label || member.troopType)}</div>
             <div class="hp">${member.soldiers}/${member.maxSoldiers}</div>
@@ -4709,6 +5298,7 @@
       const distance = manhattan(attacker.x, attacker.y, defender.x, defender.y);
       const attackerBefore = cloneFormationSnapshot(attacker);
       const defenderBefore = cloneFormationSnapshot(defender);
+      const useQuickNpcBattle = shouldUseQuickNpcBattle(attacker, defender);
       const timeline = [];
       let totalDamageToDefender = 0;
       let totalDamageToAttacker = 0;
@@ -4803,14 +5393,17 @@
       log(`  ${defender.name} 损失 ${totalDamageToDefender}，${attacker.name} 损失 ${totalDamageToAttacker}`, 'damage');
       if (defender.soldiers <= 0) onGeneralFallen(defender);
       if (attacker.soldiers <= 0) onGeneralFallen(attacker);
-      return showFormationBattleOverlay({
+      const battleReport = {
         attackerBefore,
         defenderBefore,
         attackerAfter: cloneFormationSnapshot(attacker),
         defenderAfter: cloneFormationSnapshot(defender),
         timeline,
         distance,
-      });
+      };
+      return useQuickNpcBattle
+        ? showQuickBattleOverlay(buildQuickBattleReport(battleReport))
+        : showFormationBattleOverlay(battleReport);
     }
 
     // ─── 技能 ───────────────────────────────────────────────
@@ -8070,8 +8663,14 @@
     function startBattleSpineIdleLoop() {
       if (battleSpineIdleRaf) return;
       const tick = () => {
-        const overlay = document.getElementById('formation-battle');
-        if (overlay?.classList.contains('hidden')) return;
+        const formationOverlay = document.getElementById('formation-battle');
+        const quickOverlay = document.getElementById('quick-battle-overlay');
+        const formationVisible = !formationOverlay?.classList.contains('hidden');
+        const quickVisible = !quickOverlay?.classList.contains('hidden');
+        if (!formationVisible && !quickVisible) {
+          stopBattleSpineIdleLoop();
+          return;
+        }
         const now = performance.now();
         const allowThrottledIdleRender = now - battleSpineLastIdleRender >= 83;
         if (allowThrottledIdleRender) {
@@ -8131,17 +8730,57 @@
     }
 
     function getBattleSpineCanvasEntries() {
-      if (!battleFormationViewState.initialized) {
-        return [];
-      }
       const entries = [];
-      for (const view of [battleFormationViewState.attacker, battleFormationViewState.defender]) {
-        if (!view) continue;
-        for (const entry of view.slots.values()) {
-          entries.push(entry);
+      if (battleFormationViewState.initialized) {
+        for (const view of [battleFormationViewState.attacker, battleFormationViewState.defender]) {
+          if (!view) continue;
+          for (const entry of view.slots.values()) {
+            entries.push(entry);
+          }
         }
       }
+      document.querySelectorAll('[data-quick-role="portrait-renderer"]').forEach((host) => {
+        const entry = host.__quickBattlePortraitEntry;
+        if (entry?.canvas instanceof HTMLCanvasElement) {
+          entries.push(entry);
+        }
+      });
       return entries;
+    }
+
+    function createQuickBattlePortraitSpineEntry(side = 'player', troopType = 'infantry') {
+      const root = document.createElement('div');
+      root.className = `quick-battle-portrait-renderer ${side === 'enemy' ? 'enemy' : 'player'}`;
+
+      const frame = document.createElement('div');
+      frame.className = 'formation-spine-frame quick-battle-portrait-spine-frame';
+
+      const canvas = document.createElement('canvas');
+      canvas.className = 'formation-spine-canvas';
+      canvas.dataset.action = 'idle';
+      canvas.dataset.phase = String(Math.floor(Math.random() * 1000));
+      canvas.dataset.side = side;
+      canvas.dataset.troopType = troopType;
+      canvas.setAttribute('aria-hidden', 'true');
+
+      const whiteFlashCanvas = document.createElement('canvas');
+      whiteFlashCanvas.className = 'formation-spine-white-flash-canvas';
+      whiteFlashCanvas.setAttribute('aria-hidden', 'true');
+      const whiteFlashSourceCanvas = document.createElement('canvas');
+      whiteFlashSourceCanvas.className = 'formation-spine-white-flash-source-canvas';
+      whiteFlashSourceCanvas.setAttribute('aria-hidden', 'true');
+
+      canvas.__battleWhiteFlashOverlayCanvas = whiteFlashCanvas;
+      canvas.__battleWhiteFlashSourceCanvas = whiteFlashSourceCanvas;
+      frame.appendChild(canvas);
+      frame.appendChild(whiteFlashSourceCanvas);
+      frame.appendChild(whiteFlashCanvas);
+      root.appendChild(frame);
+      configureBattleSpineCanvasMetrics(canvas);
+
+      const entry = { root, slot: root, frame, canvas, whiteFlashCanvas };
+      root.__quickBattlePortraitEntry = entry;
+      return entry;
     }
 
     function createBattleFormationSlotElement(slotKey, mirrorCols = false) {
@@ -10058,6 +10697,383 @@
       updateUI();
     }
 
+    function getQuickBattleSideLabel(snapshot) {
+      if (!snapshot) return '';
+      return snapshot.side === 'enemy' ? '敌方军队' : '我方盟友队伍';
+    }
+
+    function getQuickBattleMemberSprite(side, member) {
+      if (!member) return '';
+      return getBoardUnitSprite({
+        side,
+        facing: side === 'enemy' ? 'down' : 'up',
+        isCommander: member.troopType === 'cavalry',
+      });
+    }
+
+    function getQuickBattleCaptainImpact(sideState) {
+      const captainBefore = sideState.captainBefore;
+      const captainAfter = sideState.captainAfter || captainBefore;
+      if (!captainBefore || !captainAfter) return '';
+      const beforeSoldiers = captainBefore.soldiers || 0;
+      const afterSoldiers = captainAfter.soldiers || 0;
+      const loss = Math.max(0, beforeSoldiers - afterSoldiers);
+      if (loss <= 0) return '';
+      if (afterSoldiers <= 0) return 'is-fallen';
+      if (beforeSoldiers > 0 && afterSoldiers / beforeSoldiers <= 0.35) return 'is-critical';
+      return 'is-hit';
+    }
+
+    function buildQuickBattleSideState(snapshotBefore, snapshotAfter) {
+      const beforeBySlot = new Map((snapshotBefore?.formationMembers || []).map(member => [member.slotKey, member]));
+      const afterBySlot = new Map((snapshotAfter?.formationMembers || []).map(member => [member.slotKey, member]));
+      const side = snapshotAfter?.side || snapshotBefore?.side || '';
+      const displaySlotKeys = getFormationPanelDisplaySlotKeys(snapshotAfter?.side || snapshotBefore?.side || 'player');
+      const captainBefore = getFormationCaptainMember(snapshotBefore);
+      const captainAfter = getFormationCaptainMember(snapshotAfter) || captainBefore;
+      const captainSlotKey = captainAfter?.slotKey || captainAfter?.slot || captainBefore?.slotKey || captainBefore?.slot || null;
+      const slots = displaySlotKeys.map((slotKey) => {
+        const before = beforeBySlot.get(slotKey) || null;
+        const after = afterBySlot.get(slotKey) || null;
+        return {
+          slotKey,
+          before,
+          after,
+          loss: Math.max(0, (before?.soldiers || 0) - (after?.soldiers || 0)),
+          isCaptain: slotKey === captainSlotKey,
+        };
+      });
+
+      return {
+        side,
+        controller: snapshotAfter?.controller || snapshotBefore?.controller || null,
+        sideLabel: snapshotAfter?.name || snapshotBefore?.name || getQuickBattleSideLabel(snapshotAfter || snapshotBefore),
+        snapshotBefore,
+        snapshotAfter,
+        slots,
+        leaderName: snapshotAfter?.generalName || snapshotBefore?.generalName || '',
+        captainBefore,
+        captainAfter,
+        captainName: captainAfter?.name || captainBefore?.name || '暂无',
+        captainTroopType: captainAfter?.troopType || captainBefore?.troopType || snapshotAfter?.troopType || snapshotBefore?.troopType || 'infantry',
+        moraleBefore: snapshotBefore?.morale ?? 0,
+        moraleAfter: snapshotAfter?.morale ?? 0,
+        moraleLoss: Math.max(0, (snapshotBefore?.morale ?? 0) - (snapshotAfter?.morale ?? 0)),
+        soldiersLoss: Math.max(0, (snapshotBefore?.soldiers ?? 0) - (snapshotAfter?.soldiers ?? 0)),
+        portraitUnit: {
+          side: snapshotAfter?.side || snapshotBefore?.side || 'player',
+          facing: snapshotAfter?.facing || snapshotBefore?.facing || getDefaultUnitFacing(snapshotAfter?.side || snapshotBefore?.side || 'player'),
+          isCommander: (captainAfter?.troopType || captainBefore?.troopType) === 'cavalry' || snapshotAfter?.isCommander === true || snapshotBefore?.isCommander === true,
+        },
+      };
+    }
+
+    function buildQuickBattleReport(report) {
+      const leftKey = report.attackerBefore.side === 'player' ? 'attacker' : 'defender';
+      const rightKey = leftKey === 'attacker' ? 'defender' : 'attacker';
+      const sourceByKey = {
+        attacker: {
+          before: report.attackerBefore,
+          after: report.attackerAfter,
+        },
+        defender: {
+          before: report.defenderBefore,
+          after: report.defenderAfter,
+        },
+      };
+      const left = buildQuickBattleSideState(sourceByKey[leftKey].before, sourceByKey[leftKey].after);
+      const right = buildQuickBattleSideState(sourceByKey[rightKey].before, sourceByKey[rightKey].after);
+      let leftResult = '';
+      let rightResult = '';
+      const leftRemainingSoldiers = left.snapshotAfter?.soldiers ?? 0;
+      const rightRemainingSoldiers = right.snapshotAfter?.soldiers ?? 0;
+
+      if (leftRemainingSoldiers <= 0 && rightRemainingSoldiers > 0) {
+        rightResult = 'victory';
+      } else if (rightRemainingSoldiers <= 0 && leftRemainingSoldiers > 0) {
+        leftResult = 'victory';
+      } else if (left.moraleLoss < right.moraleLoss) {
+        leftResult = 'victory';
+      } else if (left.moraleLoss > right.moraleLoss) {
+        rightResult = 'victory';
+      } else if (left.soldiersLoss < right.soldiersLoss) {
+        leftResult = 'victory';
+      } else if (left.soldiersLoss > right.soldiersLoss) {
+        rightResult = 'victory';
+      } else {
+        leftResult = 'draw';
+        rightResult = 'draw';
+      }
+
+      left.result = leftResult;
+      right.result = rightResult;
+      left.resultLabel = leftResult === 'victory' ? '胜利' : leftResult === 'draw' ? '平局' : '';
+      right.resultLabel = rightResult === 'victory' ? '胜利' : rightResult === 'draw' ? '平局' : '';
+      return { left, right };
+    }
+
+    function createQuickBattlePanelMarkup(sideState) {
+      return `
+        <div class="quick-battle-result">${escapeHtml(sideState.resultLabel || '')}</div>
+        <div class="quick-battle-side-label" data-quick-role="side-label"></div>
+        <div class="quick-battle-portrait-frame" data-quick-role="portrait-frame">
+          <div class="quick-battle-portrait-renderer" data-quick-role="portrait-renderer"></div>
+          <div class="quick-battle-portrait-copy">
+            <div>
+              <div class="quick-battle-portrait-title" data-quick-role="portrait-title"></div>
+              <div class="quick-battle-portrait-subtitle" data-quick-role="portrait-subtitle"></div>
+            </div>
+          </div>
+        </div>
+        <div class="quick-battle-grid">
+          ${sideState.slots.map(slot => `
+            <div class="quick-battle-slot" data-slot-key="${slot.slotKey}">
+              <div class="quick-battle-slot-icon" data-quick-role="slot-icon"></div>
+              <div class="quick-battle-slot-copy">
+                <div class="quick-battle-slot-name-row">
+                  <span class="quick-battle-slot-name" data-quick-role="slot-name"></span>
+                  <span class="quick-battle-slot-captain" data-quick-role="slot-captain">L</span>
+                </div>
+                <div class="quick-battle-slot-hp-row">
+                  <span class="quick-battle-slot-hp-bar"><span class="quick-battle-slot-hp-fill" data-quick-role="slot-hp-fill"></span></span>
+                  <span class="quick-battle-slot-hp-text" data-quick-role="slot-hp-text"></span>
+                </div>
+                <div class="quick-battle-slot-loss" data-quick-role="slot-loss"></div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+        <div class="quick-battle-info">
+          <div class="quick-battle-info-row"><span>领导</span><strong data-quick-role="leader-name"></strong></div>
+          <div class="quick-battle-info-row"><span>队长</span><strong data-quick-role="captain-name"></strong></div>
+          <div class="quick-battle-info-row"><span>士气</span><strong data-quick-role="morale-value"></strong></div>
+          <div class="quick-battle-morale-meter"><span class="quick-battle-morale-fill" data-quick-role="morale-fill"></span></div>
+        </div>
+      `;
+    }
+
+    function ensureQuickBattlePortraitEntry(panel, sideState) {
+      const host = panel?.querySelector('[data-quick-role="portrait-renderer"]');
+      if (!(host instanceof HTMLElement) || !sideState) return null;
+      const portraitEntry = createQuickBattlePortraitSpineEntry(sideState.side, sideState.captainTroopType);
+      host.classList.toggle('enemy', sideState.side === 'enemy');
+      host.classList.toggle('player', sideState.side !== 'enemy');
+      host.replaceChildren(portraitEntry.root);
+      host.__quickBattlePortraitEntry = portraitEntry;
+      panel.__quickBattlePortraitEntry = portraitEntry;
+      return portraitEntry;
+    }
+
+    function applyQuickBattlePanelState(panel, sideState, settled = false) {
+      if (!panel || !sideState) return;
+      panel.classList.toggle('is-winner', sideState.result === 'victory');
+      panel.classList.toggle('is-draw', sideState.result === 'draw');
+      const activeSnapshot = settled ? sideState.snapshotAfter : sideState.snapshotBefore;
+      const portraitFrame = panel.querySelector('[data-quick-role="portrait-frame"]');
+      const portraitTitle = panel.querySelector('[data-quick-role="portrait-title"]');
+      const portraitSubtitle = panel.querySelector('[data-quick-role="portrait-subtitle"]');
+      const sideLabel = panel.querySelector('[data-quick-role="side-label"]');
+      const leaderName = panel.querySelector('[data-quick-role="leader-name"]');
+      const captainName = panel.querySelector('[data-quick-role="captain-name"]');
+      const moraleValue = panel.querySelector('[data-quick-role="morale-value"]');
+      const moraleFill = panel.querySelector('[data-quick-role="morale-fill"]');
+      const portraitEntry = panel.__quickBattlePortraitEntry || ensureQuickBattlePortraitEntry(panel, sideState);
+      const impactClass = settled ? getQuickBattleCaptainImpact(sideState) : '';
+      const shouldPlayPortraitHit = settled && sideState.soldiersLoss > 0;
+
+      if (portraitFrame) {
+        portraitFrame.classList.remove('is-hit', 'is-critical', 'is-fallen', 'hit-white-flash');
+        if (impactClass) portraitFrame.classList.add(impactClass);
+      }
+      if (portraitEntry?.canvas) {
+        portraitEntry.canvas.dataset.side = sideState.side || '';
+        portraitEntry.canvas.dataset.troopType = sideState.captainTroopType || 'infantry';
+        portraitEntry.canvas.dataset.action = 'idle';
+        portraitEntry.canvas.dataset.freezeIdleFrame = impactClass === 'is-fallen' ? 'true' : 'false';
+        if (impactClass !== 'is-fallen') {
+          delete portraitEntry.canvas.__battleFrozenFrameRendered;
+        }
+        configureBattleSpineCanvasMetrics(portraitEntry.canvas);
+        if (shouldPlayPortraitHit) {
+          syncBattleWhiteFlashOverlayCanvas(portraitEntry.canvas);
+          queueBattleWhiteFlash(portraitEntry.root, performance.now() + 90, 16);
+          queueBattleModelShake(portraitEntry.root, performance.now() + 90, 16);
+        }
+      }
+      if (portraitTitle) {
+        portraitTitle.textContent = activeSnapshot?.generalName || sideState.leaderName || '';
+      }
+      if (portraitSubtitle) {
+        portraitSubtitle.textContent = TROOP_TYPES[sideState.captainTroopType]?.label || sideState.captainTroopType || '';
+      }
+      if (sideLabel) sideLabel.textContent = sideState.sideLabel;
+      if (leaderName) leaderName.textContent = sideState.leaderName;
+      if (captainName) captainName.textContent = sideState.captainName;
+      if (moraleValue) {
+        moraleValue.textContent = String(Math.round(settled ? sideState.moraleAfter : sideState.moraleBefore));
+      }
+      if (moraleFill) {
+        moraleFill.style.width = `${clamp(settled ? sideState.moraleAfter : sideState.moraleBefore, 0, 100)}%`;
+      }
+
+      sideState.slots.forEach((slotState) => {
+        const slotElement = panel.querySelector(`[data-slot-key="${slotState.slotKey}"]`);
+        if (!slotElement) return;
+        const activeMember = settled ? (slotState.after || slotState.before) : (slotState.before || slotState.after);
+        const beforeSoldiers = slotState.before?.soldiers ?? slotState.after?.soldiers ?? 0;
+        const activeSoldiers = settled
+          ? (slotState.after?.soldiers ?? slotState.before?.soldiers ?? 0)
+          : (slotState.before?.soldiers ?? slotState.after?.soldiers ?? 0);
+        const maxSoldiers = activeMember?.maxSoldiers || slotState.before?.maxSoldiers || slotState.after?.maxSoldiers || 0;
+        const hpRatio = maxSoldiers > 0 ? clamp((activeSoldiers / maxSoldiers) * 100, 0, 100) : 0;
+        const slotIcon = slotElement.querySelector('[data-quick-role="slot-icon"]');
+        const slotName = slotElement.querySelector('[data-quick-role="slot-name"]');
+        const slotCaptain = slotElement.querySelector('[data-quick-role="slot-captain"]');
+        const slotHpFill = slotElement.querySelector('[data-quick-role="slot-hp-fill"]');
+        const slotHpText = slotElement.querySelector('[data-quick-role="slot-hp-text"]');
+        const slotLoss = slotElement.querySelector('[data-quick-role="slot-loss"]');
+
+        slotElement.classList.toggle('is-empty', !activeMember);
+        slotElement.classList.toggle('is-captain', slotState.isCaptain);
+        slotElement.classList.toggle('is-fallen', Boolean(settled && activeMember && activeSoldiers <= 0));
+        slotElement.classList.toggle('is-damaged', Boolean(settled && slotState.loss > 0));
+
+        if (slotIcon) {
+          if (activeMember) {
+            slotIcon.style.setProperty('--unit-sprite', `url("${getQuickBattleMemberSprite(sideState.side, activeMember)}")`);
+            slotIcon.style.opacity = '1';
+          } else {
+            slotIcon.style.removeProperty('--unit-sprite');
+            slotIcon.style.opacity = '0.18';
+          }
+        }
+        if (slotName) {
+          slotName.textContent = activeMember
+            ? TROOP_TYPES[activeMember.troopType]?.label || activeMember.name || ''
+            : '空位';
+        }
+        if (slotCaptain) {
+          slotCaptain.style.display = slotState.isCaptain ? 'inline-flex' : 'none';
+        }
+        if (slotHpFill) {
+          slotHpFill.style.width = `${hpRatio}%`;
+        }
+        if (slotHpText) {
+          if (!activeMember) {
+            slotHpText.textContent = '--';
+          } else if (settled) {
+            animateQuickBattleSlotHp(slotHpText, beforeSoldiers, activeSoldiers);
+          } else {
+            slotHpText.textContent = `${activeSoldiers}/${maxSoldiers}`;
+          }
+        }
+        if (slotLoss) {
+          slotLoss.textContent = settled && slotState.loss > 0 ? `损失 ${slotState.loss}` : '';
+        }
+      });
+    }
+
+    function animateQuickBattleMorale(panel, fromValue, toValue) {
+      const valueElement = panel?.querySelector('[data-quick-role="morale-value"]');
+      const fillElement = panel?.querySelector('[data-quick-role="morale-fill"]');
+      if (!valueElement || !fillElement) return;
+      const start = performance.now();
+      const durationMs = 1000;
+      const from = Number.isFinite(fromValue) ? fromValue : 0;
+      const to = Number.isFinite(toValue) ? toValue : 0;
+      valueElement.textContent = String(Math.round(from));
+      fillElement.style.width = `${clamp(from, 0, 100)}%`;
+
+      function tick(now) {
+        const ratio = clamp((now - start) / durationMs, 0, 1);
+        const nextValue = from + (to - from) * ratio;
+        valueElement.textContent = String(Math.round(nextValue));
+        fillElement.style.width = `${clamp(nextValue, 0, 100)}%`;
+        if (ratio < 1) {
+          window.requestAnimationFrame(tick);
+        }
+      }
+
+      window.requestAnimationFrame(tick);
+    }
+
+    function animateQuickBattleSlotHp(slotHpText, fromValue, toValue) {
+      if (!slotHpText) return;
+      const start = performance.now();
+      const durationMs = 1000;
+      const from = Math.max(0, Number(fromValue) || 0);
+      const to = Math.max(0, Number(toValue) || 0);
+      const maxValue = Math.max(from, to, 0);
+
+      function tick(now) {
+        const ratio = clamp((now - start) / durationMs, 0, 1);
+        const nextValue = Math.round(from + (to - from) * ratio);
+        slotHpText.textContent = `${nextValue}/${maxValue}`;
+        if (ratio < 1) {
+          window.requestAnimationFrame(tick);
+        }
+      }
+
+      window.requestAnimationFrame(tick);
+    }
+
+    function renderQuickBattleOverlay(report) {
+      const leftPanel = document.getElementById('quick-battle-left-panel');
+      const rightPanel = document.getElementById('quick-battle-right-panel');
+      if (!leftPanel || !rightPanel) return;
+      leftPanel.innerHTML = createQuickBattlePanelMarkup(report.left);
+      rightPanel.innerHTML = createQuickBattlePanelMarkup(report.right);
+      ensureQuickBattlePortraitEntry(leftPanel, report.left);
+      ensureQuickBattlePortraitEntry(rightPanel, report.right);
+      applyQuickBattlePanelState(leftPanel, report.left, false);
+      applyQuickBattlePanelState(rightPanel, report.right, false);
+    }
+
+    function settleQuickBattleOverlay(report) {
+      const leftPanel = document.getElementById('quick-battle-left-panel');
+      const rightPanel = document.getElementById('quick-battle-right-panel');
+      if (!leftPanel || !rightPanel) return;
+      applyQuickBattlePanelState(leftPanel, report.left, true);
+      applyQuickBattlePanelState(rightPanel, report.right, true);
+      animateQuickBattleMorale(leftPanel, report.left.moraleBefore, report.left.moraleAfter);
+      animateQuickBattleMorale(rightPanel, report.right.moraleBefore, report.right.moraleAfter);
+    }
+
+    function showQuickBattleOverlay(report) {
+      if (quickBattleState.isActive) {
+        return quickBattleState.currentPromise ?? Promise.resolve();
+      }
+      const run = (async () => {
+        const overlay = document.getElementById('quick-battle-overlay');
+        if (!overlay) return;
+        quickBattleState.isActive = true;
+        overlay.classList.remove('hidden', 'is-active', 'is-results-visible');
+        overlay.setAttribute('aria-hidden', 'false');
+        renderQuickBattleOverlay(report);
+        startBattleSpineIdleLoop();
+        void overlay.offsetWidth;
+        overlay.classList.add('is-active');
+        await sleep(2000);
+        settleQuickBattleOverlay(report);
+        renderBoard();
+        updateDebug();
+        updateUI();
+        await sleep(1000);
+        overlay.classList.add('is-results-visible');
+        await sleep(3000);
+        overlay.classList.remove('is-results-visible', 'is-active');
+        await sleep(220);
+        overlay.classList.add('hidden');
+        overlay.setAttribute('aria-hidden', 'true');
+        stopBattleSpineIdleLoop();
+      })().finally(() => {
+        quickBattleState.isActive = false;
+        quickBattleState.currentPromise = null;
+      });
+      quickBattleState.currentPromise = run;
+      return run;
+    }
+
     function showFormationBattleOverlay(report) {
       stopBattleSpineIdleLoop();
       clearBattleSpineRendererCache();
@@ -10179,9 +11195,14 @@
 
     async function runNpcAllyTurn() {
       const allies = units.filter(u => u.side === 'player' && u.controller === 'npc' && u.soldiers > 0 && !isRout(u));
-      if (!allies.length) return false;
+      if (!allies.length) {
+        await playTurnTransition("enemy");
+        return await runEnemyTurn();
+      }
 
-      log('——友军行动——', 'system');
+      turn = 'ally';
+      updateUI();
+      log('——盟友行动——', 'system');
       for (const ally of allies) {
         if (checkVictory()) return true;
         ally.hasMoved = false;
@@ -10213,7 +11234,9 @@
 
       processCaptureProgress();
       processRout();
-      return checkVictory();
+      if (checkVictory()) return true;
+      await playTurnTransition("enemy");
+      return await runEnemyTurn();
     }
 
     async function runEnemyTurn() {
@@ -10262,6 +11285,7 @@
       if (checkVictory()) return;
 
       recoverMorale('enemy');
+      await playTurnTransition("player");
       turn = 'player';
       resetPlayerTurn();
       log('——我方回合——', 'system');
@@ -10509,6 +11533,7 @@
     function updateUI() {
       const badge = document.getElementById('phase-badge');
       const turnInfo = document.getElementById('turn-info');
+      const armyTurnFooter = document.getElementById('army-turn-footer');
       const btnStart = document.getElementById('btn-start');
       const btnEnd = document.getElementById('btn-end-turn');
       const btnWait = document.getElementById('btn-wait');
@@ -10525,17 +11550,26 @@
         btnEnd.disabled = true;
         btnWait.disabled = true;
       } else if (phase === 'battle') {
-        badge.textContent = turn === 'player' ? '我方回合' : '敌方回合';
-        badge.className = 'phase-badge ' + turn;
+        badge.textContent = turn === 'enemy' ? '敌方回合' : '我方回合';
+        badge.className = 'phase-badge ' + (turn === 'enemy' ? 'enemy' : 'player');
         turnInfo.textContent = turn === 'player'
           ? battleObjective?.id === 'defense'
             ? `守住${getDefenseZoneLabel()} · 至少 ${DEFENSE_PLAYER_UNITS_REQUIRED} 人驻守且敌军不得进入`
             : '移动、占点、维持士气'
-          : '敌方行动中…';
+          : turn === 'ally'
+            ? '盟友行动中…'
+            : '敌方行动中…';
         btnStart.disabled = true;
-        btnEnd.disabled = turn !== 'player';
-        btnWait.disabled = turn !== 'player' || !selectedUnit;
+        btnEnd.disabled = turn !== 'player' || isBattleInteractionLocked();
+        btnWait.disabled = turn !== 'player' || !selectedUnit || isBattleInteractionLocked();
       }
+
+      armyTurnFooter.textContent = turn === 'ally'
+        ? '我方军团回合'
+        : turn === 'enemy'
+          ? '敌方军团回合'
+          : '';
+      armyTurnFooter.classList.toggle('hidden', phase !== 'battle' || turn === 'player');
 
       updateObjectiveBar();
       renderSkillBar();
@@ -10587,7 +11621,10 @@
       rallyBtn.hidden = selectingAttackTarget;
       attackBtn.hidden = selectingAttackTarget;
       cancelBtn.hidden = false;
-      attackBtn.disabled = attackCount === 0;
+      waitBtn.disabled = isBattleInteractionLocked();
+      rallyBtn.disabled = isBattleInteractionLocked();
+      attackBtn.disabled = attackCount === 0 || isBattleInteractionLocked();
+      cancelBtn.disabled = isBattleInteractionLocked();
       attackBtn.textContent = mode === 'target-attack' ? '选择目标' : `攻击${attackCount ? `(${attackCount})` : ''}`;
       menu.classList.remove('hidden');
       positionActionMenu(menu);
@@ -10691,12 +11728,14 @@
     }
 
     function undoPendingMove() {
+      if (isBattleInteractionLocked()) return;
       if (!selectedUnit?.movedFrom || !['post-move', 'target-attack'].includes(mode)) return;
       cancelCurrentOperation();
       updateUI();
     }
 
     function waitSelectedUnit() {
+      if (isBattleInteractionLocked()) return;
       if (!selectedUnit) return;
       finishUnitAction(selectedUnit);
       clearSelection();
@@ -10704,6 +11743,7 @@
     }
 
     function rallySelectedUnit() {
+      if (isBattleInteractionLocked()) return;
       if (!selectedUnit) return;
       const isAfterMove = Boolean(selectedUnit.movedFrom);
       const moraleGain = isAfterMove ? 8 : 12;
@@ -10715,6 +11755,7 @@
     }
 
     async function onCellClick(x, y) {
+      if (isBattleInteractionLocked()) return;
       const clicked = unitAt(x, y);
       if (clicked) inspectUnit(clicked);
       if (phase !== 'battle' || turn !== 'player') {
@@ -10777,11 +11818,13 @@
     }
 
     function onSkillClick(id) {
+      if (isBattleInteractionLocked()) return;
       if (!selectedUnit || selectedUnit.hasActed) return;
       if (id === 'inspire') { mode = 'skill-inspire'; log('选择友军使用【鼓舞】', 'skill'); }
     }
 
     function onDeployDrop(x, y) {
+      if (isBattleInteractionLocked()) return;
       if (phase !== 'deploy' || !dragUnit) return;
       if (!PLAYER_DEPLOY_ROWS.includes(y)) { log('只能部署在底部三排', 'system'); return; }
       if (unitAt(x, y)) { log('该格已有部队', 'system'); return; }
@@ -10804,7 +11847,7 @@
       showObjectiveIntro();
     }
 
-    function beginBattle() {
+    async function beginBattle() {
       hideObjectiveIntro();
       phase = 'battle';
       turn = 'player';
@@ -10814,6 +11857,8 @@
       if (isSupplyTransportBattle()) BattleTutorialManager.maybeShow('lesson_supply_transport');
       log(`战斗开始：${battleObjective.friendlyTitle}`, 'system');
       log('——我方回合——', 'system');
+      updateUI();
+      await playTurnTransition("player");
       updateUI();
     }
 
@@ -10849,6 +11894,11 @@
       document.getElementById('morale-log').innerHTML = '';
       document.getElementById('overlay').classList.add('hidden');
       document.getElementById('recap-box').classList.add('hidden');
+      document.getElementById('turn-transition-overlay').classList.add('hidden');
+      document.getElementById('turn-transition-overlay').classList.remove('is-active', 'is-text-visible');
+      turnTransitionState.isActive = false;
+      turnTransitionState.activeType = null;
+      turnTransitionState.currentPromise = null;
       log('部署部队，观察地图上的据点与地形', 'system');
       if (battleObjective?.id === 'defense') {
         log(`本局需守住${getDefenseZoneLabel()}：至少 ${DEFENSE_PLAYER_UNITS_REQUIRED} 支未溃逃部队驻守，且敌军不得踏入，连续 ${DEFENSE_HOLD_REQUIRED} 回合。`, 'system');
@@ -10866,13 +11916,14 @@
     document.getElementById('btn-objective-ok').addEventListener('click', beginBattle);
     document.getElementById('btn-tutorial-close').addEventListener('click', () => BattleTutorialManager.hideToast());
     document.getElementById('btn-end-turn').addEventListener('click', async () => {
+      if (isBattleInteractionLocked()) return;
       if (turn !== 'player') return;
       processCaptureProgress();
       if (processSupplyCartMoves()) return;
       processRout();
       if (checkVictory()) return;
+      await playTurnTransition("ally");
       if (await runNpcAllyTurn()) return;
-      runEnemyTurn();
     });
     document.getElementById('btn-wait').addEventListener('click', () => {
       waitSelectedUnit();
@@ -10880,6 +11931,7 @@
     document.getElementById('action-wait').addEventListener('click', waitSelectedUnit);
     document.getElementById('action-rally').addEventListener('click', rallySelectedUnit);
     document.getElementById('action-attack').addEventListener('click', () => {
+      if (isBattleInteractionLocked()) return;
       if (!selectedUnit || !attackable.length) return;
       mode = 'target-attack';
       log('选择敌方编队进入战斗演出', 'skill');
@@ -10889,6 +11941,7 @@
     document.getElementById('battle-close').addEventListener('click', closeFormationBattleOverlay);
     document.getElementById('board').addEventListener('contextmenu', event => {
       event.preventDefault();
+      if (isBattleInteractionLocked()) return;
       undoPendingMove();
     });
     function getBattleConfigFromUrl() {

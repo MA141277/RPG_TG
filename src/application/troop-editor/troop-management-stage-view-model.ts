@@ -63,13 +63,15 @@ export type TroopManagementBattlePreviewViewModel = {
 
 export type TroopManagementStageViewModel = {
   title: string;
-  resources: TroopEditorResourceSlot[];
+  resources: TroopEditorResourceSlot[]; 
   troops: TroopListItemViewModel[];
   previousTroopId: string | null;
   nextTroopId: string | null;
   canCycleTroops: boolean;
   selectedTroopId: string;
   troopName: string;
+  captainName: string | null;
+  captainSlotKey: string | null;
   previewSlots: TroopPreviewSlotViewModel[];
   actions: TroopManagementActionViewModel[];
   summaryFields: TroopManagementSummaryFieldViewModel[];
@@ -215,6 +217,9 @@ export function createTroopManagementStageViewModel(input: {
     canCycleTroops,
     selectedTroopId: input.selectedTroopSnapshot.id,
     troopName: input.selectedTroopSnapshot.name,
+    captainName: input.selectedTroopSnapshot.captainName,
+    captainSlotKey:
+      input.selectedTroopSnapshot.slots.find((slot) => slot.isCaptain)?.slotKey ?? null,
     previewSlots: createTroopPreviewSlots(input.selectedTroopSnapshot),
     actions: [
       { id: "move", label: "移动单位", actionId: null },
