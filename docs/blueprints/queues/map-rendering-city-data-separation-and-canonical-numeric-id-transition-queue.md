@@ -5,7 +5,7 @@
 - queue_id: `queue.map-rendering-city-data-separation-and-canonical-numeric-id-transition`
 - belongs_to_version: `target.map-rendering-city-data-separation-and-canonical-numeric-id-transition`
 - blueprint_version: `2026.07`
-- governance_last_synced_at: `2026-07-23`
+- governance_last_synced_at: `2026-07-24`
 - governance_sync_source: `docs/blueprints/blueprint.md`
 - queue_status: `done`
 - queue_class: `required`
@@ -21,9 +21,9 @@
 - next_family_candidate: `none`
 - auto_continue_eligible: `false`
 - next_effect: `return-to-version-review`
-- sync_status: `pending`
-- sync_scope: `local-record`
-- sync_summary: `Queue closeout truth is now written locally after automated verification stayed green and visible in-app browser acceptance covered normal start, built-in JSON runtime-pack import, and Script Editor runtime preview. No repository sync batch has been recorded yet for this completed queue.`
+- sync_status: `success`
+- sync_scope: `branch-push`
+- sync_summary: `The completed queue repository-sync batch is now recorded as successful on mod-first-dev: commit f91c1796 was pushed to origin/mod-first-dev, carrying the MEMO-027 implementation, acceptance evidence, and Blueprint queue/version governance updates.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
@@ -277,7 +277,7 @@
 - gap_fill_scope:
   - `none`
 - remaining_gaps:
-  - `No queue-local capability gap remains. Repository sync is still pending before any future same-version queue admission can be recorded.`
+  - `No queue-local capability gap remains. Repository sync is now recorded, so control returns cleanly to version closeout review.`
 
 ### Execution Self-Review Gate
 

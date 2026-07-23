@@ -4,13 +4,13 @@
 
 - document_role: `version-governor`
 - version_id: `target.map-rendering-city-data-separation-and-canonical-numeric-id-transition`
-- version_status: `open`
-- active_phase: `phase.promotion-review`
+- version_status: `closed`
+- active_phase: `phase.version-closed`
 - active_queue: `none`
-- decision_state: `promotion-review`
-- next_decision: `same-version-admission-or-version-closeout`
-- next_action: `return-to-promotion-review`
-- resume_gate: `promotion-review`
+- decision_state: `closed`
+- next_decision: `version-closeout`
+- next_action: `write-version-closeout`
+- resume_gate: `closed`
 - post_queue_closeout_pause_policy: `auto-continue`
 - promotion_review_result: `queue-closeout-complete`
 - review_subject_id: `none`
@@ -27,7 +27,7 @@
 - closure_review_status: `routed`
 - residue_candidate_id: `none`
 - residue_candidate_family: `none`
-- routing_basis: `queue-closed-locally-after-human-visible-in-app-browser-acceptance`
+- routing_basis: `closed-after-explicit-operator-closeout-with-no-same-family-residue`
 - next_lawful_queue_recommendation: `none`
 - auto_admission_ready: `false`
 - stop_reason: `none`
@@ -39,7 +39,7 @@
   - `queue.map-rendering-city-data-separation-and-canonical-numeric-id-transition`
 - candidate_backlog_refresh_status: `fresh`
 - candidate_backlog_snapshot:
-  - `queue.map-rendering-city-data-separation-and-canonical-numeric-id-transition: closed locally after ACC-MAP-ID-006 human-visible in-app browser acceptance covered normal start, JSON runtime-pack import, and Script Editor runtime preview through campaign map click and city-enter continuation. The version remains open with no active queue and returns to promotion/version review while repository sync is still pending.`
+  - `queue.map-rendering-city-data-separation-and-canonical-numeric-id-transition: closed after ACC-MAP-ID-006 human-visible in-app browser acceptance, successful repository sync to origin/mod-first-dev, and explicit operator-directed version closeout with no same-family residue remaining in MEMO-027 scope.`
 - candidate_backlog_scan_sources:
   - `project-progress`
   - `blueprint`
@@ -81,10 +81,16 @@
 - Required truth sync:
   - `Satisfied in this document batch before implementation continues.`
 
+### Version Closeout Review
+
+- `Closeout judgement: accepted. ACC-MAP-ID-001 / 002 / 003 / 004 / 005 / 006 are all covered by the closed queue, no active queue remains, repository sync is now recorded as successful, and no same-family residue remains inside this parent target.`
+- `Closeout confirmation: the operator explicitly requested closing this version on 2026-07-24, so version_status is now closed.`
+- `Future routing: any further work around broader map/review modularization, later id-family rewrites, or new map/event authoring expansion must route through a lawful successor version rather than reopening this closed target implicitly.`
+
 ### Version Lifecycle Rules
 
-- `This version is open and currently owns exactly one lawful active queue: queue.map-rendering-city-data-separation-and-canonical-numeric-id-transition.`
-- `If active_queue = none later, that does not by itself close the version; version closeout still requires explicit closeout review and recorded acceptance coverage.`
+- `This version is closed and now historical-only for execution purposes.`
+- `If active_queue = none, that did not by itself close the version; explicit closeout review and operator confirmation were separately recorded here on 2026-07-24.`
 - `Because this target is the active version, child-queue admission here is lawful only after version-plan admission truth and queue-doc activation are synchronized.`
 - `Do not thin MEMO-027 down to one map-view happy path, one helper seam, one content migration only, or one family-only id tweak.`
 - `Do not split city-owned map truth and canonical numeric-id transition into separate versions while this parent target remains active.`
@@ -145,7 +151,7 @@
 
 | Candidate ID | Last Classification | Proposed Queue | Latest Disposition | Recheck Trigger Type | Recheck Trigger Basis | Acceptance Refs | Implementation Anchors | Can Claim | Cannot Claim | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| `item.map-rendering-city-data-separation-and-canonical-numeric-id-transition` | `queue-candidate` | `queue.map-rendering-city-data-separation-and-canonical-numeric-id-transition` | `closed-local-record` | `operator-explicit-recheck` | `The operator explicitly requested new-version promotion and immediate admission.` | `ACC-MAP-ID-001; ACC-MAP-ID-002; ACC-MAP-ID-003; ACC-MAP-ID-004; ACC-MAP-ID-005; ACC-MAP-ID-006` | `src/application/content/active-game-content.ts; src/application/map/**; src/application/script-editor/**; src/domain/script-editor-project.ts; src/content/scenario-packs/zhuyuanzhang/**; tests/**` | `full MEMO-027 implementation boundary inside this version` | `bulk rewrite of existing ids outside first-stage transition; unrelated map/review modularization` | `Admitted on 2026-07-22 as the only active queue under the new successor version; closed locally on 2026-07-23 after human-visible in-app browser acceptance covered the remaining runtime entrypoints.` |
+| `item.map-rendering-city-data-separation-and-canonical-numeric-id-transition` | `queue-candidate` | `queue.map-rendering-city-data-separation-and-canonical-numeric-id-transition` | `closed-and-synced` | `operator-explicit-recheck` | `The operator explicitly requested new-version promotion and immediate admission.` | `ACC-MAP-ID-001; ACC-MAP-ID-002; ACC-MAP-ID-003; ACC-MAP-ID-004; ACC-MAP-ID-005; ACC-MAP-ID-006` | `src/application/content/active-game-content.ts; src/application/map/**; src/application/script-editor/**; src/domain/script-editor-project.ts; src/content/scenario-packs/zhuyuanzhang/**; tests/**` | `full MEMO-027 implementation boundary inside this version` | `bulk rewrite of existing ids outside first-stage transition; unrelated map/review modularization` | `Admitted on 2026-07-22 as the only active queue under the new successor version; closed with human-visible in-app browser acceptance, successful repository sync to origin/mod-first-dev, and explicit version closeout on 2026-07-24.` |
 
 ### Queue Promotion Ledger
 
@@ -225,7 +231,7 @@
 
 ### Execution Self-Review Gate
 
-- review_scope: `promotion-review`
+- review_scope: `version-closeout`
 - version_acceptance_alignment:
   - `All version acceptance ids are fully owned by the one admitted queue; no parent capability remains unowned.`
 - parent_spec_alignment:
@@ -237,9 +243,9 @@
 - residue_or_blocker_routing_check:
   - `No blocker or same-family residue remains inside the queue boundary. Hidden/background browser automation stays excluded historically, but the required visible in-app browser proof has now been captured truthfully.`
 - verification_adequacy_check:
-  - `Verification is complete for queue-local closeout: automated coverage remains green and ACC-MAP-ID-006 now has human-visible in-app browser proof across the required entrypoints.`
+  - `Verification is complete for version closeout: automated coverage remains green, ACC-MAP-ID-006 has human-visible in-app browser proof across the required entrypoints, and repository sync is recorded as successful on origin/mod-first-dev.`
 - next_lawful_action_check:
-  - `Queue closeout is now synchronized locally. Control returns to version-level promotion/version review, and repository sync remains the next gate before any future same-version queue admission.`
+  - `No further same-version action remains. The version reached closeout review with no active queue, successful repository sync, and no same-family continuation recommendation, so explicit operator-directed closeout is now the recorded terminal state.`
 
 ### Runtime/Browser Acceptance Gate
 
@@ -267,7 +273,8 @@
 
 ### Closure Routing Record
 
-- `queue.map-rendering-city-data-separation-and-canonical-numeric-id-transition is closed locally with no same-family residue. The version remains open with active_queue=none and returns to promotion/version review while the repository-sync gate is still pending.`
+- `queue.map-rendering-city-data-separation-and-canonical-numeric-id-transition closed with no same-family residue, and its completed repository-sync batch is now recorded as successful on mod-first-dev: commit f91c1796 was pushed to origin/mod-first-dev.`
+- `The version then reached closeout review with no active queue, no remaining same-version continuation recommendation, and complete acceptance coverage. The operator explicitly requested closing the version, so target.map-rendering-city-data-separation-and-canonical-numeric-id-transition is now closed historical evidence only.`
 
 ### Operator Receipt Record
 
@@ -294,3 +301,5 @@
 - `2026-07-22`: `Evidence-anchor reconcile is now complete. Source inspection confirmed that campaign map marker truth had already started moving into city.mapPlacement, while remaining risk sits in stale queue truth, residual mapNodeId-dependent consumers, incomplete direct-vs-indirect id-consumer audit, and targeted regression failures. Active execution therefore advances into implementation without widening the queue boundary.`
 - `2026-07-22`: `Acceptance accounting was corrected to match Blueprint runtime/browser rules. Earlier system-browser/background automation exploration is no longer counted as simulated-human or human-visible browser proof. ACC-MAP-ID-006 is now recorded as blocked until the Codex built-in in-app browser can be kept visibly rendered on screen for observable interaction.`
 - `2026-07-23`: `The current session exposed truthful Codex built-in in-app browser pointer-level control. A visible mouse/keyboard/scroll handshake passed first, then human-visible browser proof covered normal start, built-in JSON runtime-pack import, and Script Editor runtime preview through campaign map rendering, clicking 濠州, confirming city entry, and reaching the city function menu. ACC-MAP-ID-006 is now covered, the queue is closed locally with no same-family residue, and the version returns to promotion/version review with repository sync still pending.`
+- `2026-07-24`: `Recorded the completed queue repository-sync batch as successful on mod-first-dev because commit f91c1796 is now on origin/mod-first-dev carrying the MEMO-027 implementation, acceptance evidence, and Blueprint closeout truth. No same-version continuation remains.`
+- `2026-07-24`: `The operator explicitly requested closing target.map-rendering-city-data-separation-and-canonical-numeric-id-transition. Final version closeout is now recorded, and Blueprint repository entry intentionally stays on this closed result rather than silently switching to an older still-open version with unresolved governance drift.`
