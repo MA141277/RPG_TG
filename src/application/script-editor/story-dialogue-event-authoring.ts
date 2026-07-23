@@ -235,10 +235,15 @@ export const SCRIPT_EDITOR_EVENT_DESTINATION_FAMILIES: readonly ScriptEditorEven
   "task",
 ] as const;
 
-export function createDefaultScriptEditorStoryNodeRecord(index: number): ScriptEditorStoryNodeRecord {
-  const suffix = index + 1;
+export function createDefaultScriptEditorStoryNodeRecord(
+  indexOrId: number | string
+): ScriptEditorStoryNodeRecord {
+  const suffix = typeof indexOrId === "number" ? indexOrId + 1 : 1;
   return {
-    id: `story-node.new.${suffix}`,
+    id:
+      typeof indexOrId === "string"
+        ? indexOrId
+        : `story-node.new.${suffix}`,
     title: `剧情段 ${suffix}`,
     chapterId: `chapter.${suffix}`,
     summary: "",
@@ -249,10 +254,12 @@ export function createDefaultScriptEditorStoryNodeRecord(index: number): ScriptE
   };
 }
 
-export function createDefaultScriptEditorDialogueRecord(index: number): ScriptEditorDialogueRecord {
-  const suffix = index + 1;
+export function createDefaultScriptEditorDialogueRecord(
+  indexOrId: number | string
+): ScriptEditorDialogueRecord {
+  const suffix = typeof indexOrId === "number" ? indexOrId + 1 : 1;
   return {
-    id: `dialogue.new.${suffix}`,
+    id: typeof indexOrId === "string" ? indexOrId : `dialogue.new.${suffix}`,
     title: `对话 ${suffix}`,
     storyNodeId: "",
     participantPersonIds: [],
@@ -261,10 +268,12 @@ export function createDefaultScriptEditorDialogueRecord(index: number): ScriptEd
   };
 }
 
-export function createDefaultScriptEditorEventRecord(index: number): ScriptEditorEventRecord {
-  const suffix = index + 1;
+export function createDefaultScriptEditorEventRecord(
+  indexOrId: number | string
+): ScriptEditorEventRecord {
+  const suffix = typeof indexOrId === "number" ? indexOrId + 1 : 1;
   return {
-    id: `event.new.${suffix}`,
+    id: typeof indexOrId === "string" ? indexOrId : `event.new.${suffix}`,
     title: `事件 ${suffix}`,
     description: "",
     triggerTiming: "manual",
@@ -288,11 +297,14 @@ export function createDefaultScriptEditorEventRecord(index: number): ScriptEdito
 }
 
 export function createDefaultScriptEditorEventBindingRecord(
-  index: number
+  indexOrId: number | string
 ): ScriptEditorEventBindingRecord {
-  const suffix = index + 1;
+  const suffix = typeof indexOrId === "number" ? indexOrId + 1 : 1;
   return {
-    id: `event-binding.new.${suffix}`,
+    id:
+      typeof indexOrId === "string"
+        ? indexOrId
+        : `event-binding.new.${suffix}`,
     eventId: "",
     owner: {
       family: "manual",

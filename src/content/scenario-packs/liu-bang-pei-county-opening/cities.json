@@ -19,6 +19,14 @@
       "grain",
       "labor",
       "cloth"
-    ]
+    ],
+    "mapPlacement": {
+      "mapNodeId": "settlement.fenyang_province",
+      "x": 334,
+      "y": 318,
+      "kind": "settlement",
+      "label": "濠州",
+      "summary": "剧情: 朱元璋和尚时期起点，钟离/皇觉寺附近 | 阵营: 红巾军/小明王宋 | 所有者: 郭子兴部，名义尊小明王韩林儿 | 相关NPC: 朱元璋、郭子兴、马氏、汤和、韩林儿 | 注记: 适合作为早年主线出生点"
+    }
   }
 ]

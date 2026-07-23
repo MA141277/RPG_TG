@@ -32,6 +32,7 @@ import {
   removeScriptEditorLocationAccessCondition,
   updateScriptEditorLocationAccessConditionField,
 } from "./location-access-authoring";
+import { allocateNextScriptEditorProjectCanonicalId } from "./script-editor-id-allocation";
 
 export const SCRIPT_EDITOR_CITY_DEFAULT_MENU_FAMILIES = [
   "overview",
@@ -181,13 +182,23 @@ function isBuildingLayoutActionFilter(
   );
 }
 
-export function createDefaultScriptEditorCityRecord(index: number): ScriptEditorCityRecord {
-  const suffix = index + 1;
-  const id = `city.new.${suffix}`;
+export function createDefaultScriptEditorCityRecord(
+  indexOrId: number | string
+): ScriptEditorCityRecord {
+  const suffix = typeof indexOrId === "number" ? indexOrId + 1 : 1;
+  const id = typeof indexOrId === "string" ? indexOrId : `city.new.${suffix}`;
   const name = `New City ${suffix}`;
   return {
     id,
     name,
+    mapPlacement: {
+      placementMode: "coordinate",
+      x: 0,
+      y: 0,
+      label: name,
+      summary: "",
+      kind: "city",
+    },
     baseAttributes: {},
     profileMap: { displayName: name, description: "", tags: [] },
     extendedAttributes: [],
@@ -201,11 +212,12 @@ export function createDefaultScriptEditorCityRecord(index: number): ScriptEditor
 }
 
 export function createDefaultScriptEditorBuildingRecord(
-  index: number,
+  indexOrId: number | string,
   cityId = "city.start"
 ): ScriptEditorBuildingRecord {
-  const suffix = index + 1;
-  const id = `building.new.${suffix}`;
+  const suffix = typeof indexOrId === "number" ? indexOrId + 1 : 1;
+  const id =
+    typeof indexOrId === "string" ? indexOrId : `building.new.${suffix}`;
   const name = `New Building ${suffix}`;
   return {
     id,
@@ -243,6 +255,15 @@ export function normalizeScriptEditorCityRecord(
     ...(normalizeOptionalString(rawCity.mapNodeId).length === 0
       ? {}
       : { mapNodeId: normalizeOptionalString(rawCity.mapNodeId) }),
+    ...(normalizeCityMapPlacement(rawCity.mapPlacement, rawCity.mapNodeId, city.name) == null
+      ? {}
+      : {
+          mapPlacement: normalizeCityMapPlacement(
+            rawCity.mapPlacement,
+            rawCity.mapNodeId,
+            city.name
+          ) as NonNullable<ScriptEditorCityRecord["mapPlacement"]>,
+        }),
     houseIds: normalizeStringArray(rawCity.houseIds),
     mountedBuildings: normalizeCityMountedBuildings(rawCity.mountedBuildings),
     neighbourCityIds: normalizeStringArray(rawCity.neighbourCityIds),
@@ -285,7 +306,88 @@ export function updateScriptEditorCityField(
   if (field === "description") {
     return normalizeScriptEditorCityRecord({ ...city, description: value });
   }
+  if (field === "name") {
+    return normalizeScriptEditorCityRecord(
+      syncDerivedCityNameFields(city, value.trim())
+    );
+  }
   return normalizeScriptEditorCityRecord({ ...city, [field]: value.trim() });
+}
+
+export function updateScriptEditorCityMapPlacementField(
+  city: ScriptEditorCityRecord,
+  field: "label" | "x" | "y" | "kind" | "placementMode" | "gridIndex",
+  value: string
+): ScriptEditorCityRecord {
+  const placement = normalizeCityMapPlacement(
+    city.mapPlacement,
+    city.mapNodeId,
+    city.name
+  ) ?? {
+    placementMode: "coordinate" as const,
+    x: 0,
+    y: 0,
+    label: normalizeString(city.name, city.id),
+    summary: "",
+    kind: "city" as const,
+  };
+
+  if (field === "label") {
+    return normalizeScriptEditorCityRecord({
+      ...city,
+      mapPlacement: {
+        ...placement,
+        label: value,
+      },
+    });
+  }
+
+  if (field === "kind") {
+    return normalizeScriptEditorCityRecord({
+      ...city,
+      mapPlacement: {
+        ...placement,
+        kind: value === "settlement" || value === "fort" || value === "city" ? value : "city",
+      },
+    });
+  }
+
+  if (field === "placementMode") {
+    return normalizeScriptEditorCityRecord({
+      ...city,
+      mapPlacement: {
+        ...placement,
+        placementMode: value === "grid-index" ? "grid-index" : "coordinate",
+      },
+    });
+  }
+
+  if (field === "gridIndex") {
+    const nextGridIndex = Number.parseInt(value, 10);
+    if (!Number.isFinite(nextGridIndex)) {
+      return city;
+    }
+    return normalizeScriptEditorCityRecord({
+      ...city,
+      mapPlacement: {
+        ...placement,
+        gridIndex: nextGridIndex,
+      },
+    });
+  }
+
+  const nextCoordinate = Number.parseFloat(value);
+  if (!Number.isFinite(nextCoordinate)) {
+    return city;
+  }
+
+  return normalizeScriptEditorCityRecord({
+    ...city,
+    mapPlacement: {
+      ...placement,
+      [field]: nextCoordinate,
+    },
+  });
 }
 
 export function appendScriptEditorCityMountedBuilding(
@@ -410,13 +512,16 @@ export function appendScriptEditorBuildingArrangement(
   if (defaultBuilding == null) {
     return project;
   }
-  const nextIndex = listScriptEditorCityBuildingArrangements(project, cityId).length + 1;
+  const nextArrangementId = allocateNextScriptEditorProjectCanonicalId(
+    project,
+    "buildingArrangements"
+  );
   return {
     ...project,
     buildingArrangements: [
       ...project.buildingArrangements,
       {
-        id: `${cityId}.building-arrangement.${nextIndex}`,
+        id: nextArrangementId,
         cityId,
         buildingId: defaultBuilding.id,
         displayName: defaultBuilding.name,
@@ -1186,6 +1291,86 @@ function normalizeCityMountedBuildings(value: unknown): ScriptEditorCityMountedB
         primaryNpcId != null && npcIds.includes(primaryNpcId) ? primaryNpcId : null,
     };
   });
+}
+
+function syncDerivedCityNameFields(
+  city: ScriptEditorCityRecord,
+  nextName: string
+): ScriptEditorCityRecord {
+  const previousName = normalizeString(city.name, city.id);
+  const currentMapPlacement =
+    city.mapPlacement != null && typeof city.mapPlacement === "object"
+      ? city.mapPlacement
+      : null;
+  const currentLabel = normalizeOptionalString(currentMapPlacement?.label).trim();
+  const shouldSyncMapLabel =
+    currentMapPlacement != null &&
+    currentLabel.length > 0 &&
+    currentLabel === previousName;
+
+  return {
+    ...city,
+    name: nextName,
+    ...(shouldSyncMapLabel
+      ? {
+          mapPlacement: {
+            ...currentMapPlacement,
+            label: nextName,
+          },
+        }
+      : {}),
+  };
+}
+
+function normalizeCityMapPlacement(
+  value: unknown,
+  legacyMapNodeId: unknown,
+  fallbackLabel: unknown
+): ScriptEditorCityRecord["mapPlacement"] | undefined {
+  const rawValue =
+    value != null && typeof value === "object" && !Array.isArray(value)
+      ? (value as Record<string, unknown>)
+      : null;
+  const x =
+    rawValue != null && typeof rawValue.x === "number" && Number.isFinite(rawValue.x)
+      ? rawValue.x
+      : null;
+  const y =
+    rawValue != null && typeof rawValue.y === "number" && Number.isFinite(rawValue.y)
+      ? rawValue.y
+      : null;
+
+  if (x == null || y == null) {
+    return undefined;
+  }
+
+  const kind = normalizeOptionalString(rawValue?.kind);
+  const placementMode = normalizeOptionalString(rawValue?.placementMode);
+  const gridIndex =
+    rawValue != null &&
+    typeof rawValue.gridIndex === "number" &&
+    Number.isFinite(rawValue.gridIndex)
+      ? rawValue.gridIndex
+      : null;
+  return {
+    placementMode: placementMode === "grid-index" ? "grid-index" : "coordinate",
+    x,
+    y,
+    ...(gridIndex == null ? {} : { gridIndex }),
+    ...(normalizeOptionalString(rawValue?.mapId).length === 0
+      ? {}
+      : { mapId: normalizeOptionalString(rawValue?.mapId) }),
+    ...(normalizeOptionalString(rawValue?.mapNodeId ?? legacyMapNodeId).length === 0
+      ? {}
+      : { mapNodeId: normalizeOptionalString(rawValue?.mapNodeId ?? legacyMapNodeId) }),
+    ...(kind === "city" || kind === "settlement" || kind === "fort" ? { kind } : {}),
+    ...(normalizeOptionalString(rawValue?.label).length === 0
+      ? { label: normalizeString(fallbackLabel, "") }
+      : { label: normalizeOptionalString(rawValue?.label) }),
+    ...(normalizeOptionalString(rawValue?.summary).length === 0
+      ? {}
+      : { summary: normalizeOptionalString(rawValue?.summary) }),
+  };
 }
 
 function normalizeAccessRule(access?: ScriptEditorAccessRule): ScriptEditorAccessRule {

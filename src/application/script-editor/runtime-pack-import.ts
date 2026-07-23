@@ -213,9 +213,14 @@ export function importScenarioPackToScriptEditorProject(
   const importedLocationAccess = readLocationAccessFamily(rawPack);
   const cityNpcPools = readArrayFamily(rawPack, "cityNpcPools");
   const importedPeople = collectImportedPeople(pack.characters ?? [], cityNpcPools);
+  const importedMapNodeById = indexImportedMapNodes(pack.maps ?? []);
   const importedCities = (pack.cities ?? []).map((city) =>
-    applyImportedLocationAccess(city, "city", importedLocationAccess)
+    applyImportedCityMapPlacement(
+      applyImportedLocationAccess(city, "city", importedLocationAccess),
+      importedMapNodeById
+    )
   );
+  const importedMinigames = mapImportedPlayableIntegrations(rawPack);
   const project = {
     schemaVersion: SCRIPT_EDITOR_PROJECT_SCHEMA_VERSION,
     kind: SCRIPT_EDITOR_PROJECT_KIND,
@@ -244,7 +249,7 @@ export function importScenarioPackToScriptEditorProject(
     ),
     buildingArrangements: readBuildingArrangementsFamily(rawPack),
     cityEntries: pack.cityEntries ?? [],
-    events: mapImportedEvents(pack.events ?? []),
+    events: mapImportedEvents(pack.events ?? [], importedMinigames),
     eventBindings: mapImportedEventBindings(rawPack),
     dialogues: mapImportedRuntimeDialogues(rawPack),
     quests: pack.tasks ?? [],
@@ -261,7 +266,7 @@ export function importScenarioPackToScriptEditorProject(
     historicalCharacterIdByCharacterId: cloneStringRecord(
       pack.historicalCharacterIdByCharacterId
     ),
-    minigames: mapImportedPlayableIntegrations(rawPack),
+    minigames: importedMinigames,
     flows: readFlowPlayablesFamily(rawPack),
     storyNodes: [],
     textEntries: mapTextEntries(pack.textEntries),
@@ -285,6 +290,73 @@ export function importScenarioPackToScriptEditorProject(
       ])
     );
   }
+}
+
+function indexImportedMapNodes(
+  maps: readonly Record<string, unknown>[]
+): Map<string, Record<string, unknown>> {
+  const mapNodeById = new Map<string, Record<string, unknown>>();
+
+  for (const mapDefinition of maps) {
+    const nodes = Array.isArray(mapDefinition.nodes) ? mapDefinition.nodes : [];
+    for (const node of nodes) {
+      if (node == null || typeof node !== "object" || Array.isArray(node)) {
+        continue;
+      }
+      const record = node as Record<string, unknown>;
+      const id = readString(record.id);
+      if (id.length === 0) {
+        continue;
+      }
+      mapNodeById.set(id, record);
+    }
+  }
+
+  return mapNodeById;
+}
+
+function applyImportedCityMapPlacement<
+  T extends { id: string; name?: string; mapNodeId?: string; mapPlacement?: unknown }
+>(
+  city: T,
+  mapNodeById: Map<string, Record<string, unknown>>
+): T & { mapPlacement?: Record<string, unknown> } {
+  if (city.mapPlacement != null) {
+    return city as T & { mapPlacement?: Record<string, unknown> };
+  }
+
+  const mapNodeId = typeof city.mapNodeId === "string" ? city.mapNodeId : "";
+  if (mapNodeId.length === 0) {
+    return city as T & { mapPlacement?: Record<string, unknown> };
+  }
+
+  const mapNode = mapNodeById.get(mapNodeId);
+  if (
+    mapNode == null ||
+    typeof mapNode.x !== "number" ||
+    !Number.isFinite(mapNode.x) ||
+    typeof mapNode.y !== "number" ||
+    !Number.isFinite(mapNode.y)
+  ) {
+    return city as T & { mapPlacement?: Record<string, unknown> };
+  }
+
+  return {
+    ...city,
+    mapPlacement: {
+      placementMode: "coordinate",
+      mapNodeId,
+      x: mapNode.x,
+      y: mapNode.y,
+      ...(typeof mapNode.kind === "string" ? { kind: mapNode.kind } : {}),
+      ...(typeof mapNode.label === "string"
+        ? { label: mapNode.label }
+        : typeof city.name === "string"
+          ? { label: city.name }
+          : {}),
+      ...(typeof mapNode.summary === "string" ? { summary: mapNode.summary } : {}),
+    },
+  };
 }
 
 function createStoryPackRecord(
@@ -312,7 +384,19 @@ function createStoryPackRecord(
   };
 }
 
-function mapImportedEvents(events: EventDefinition[]): ScriptEditorEventRecord[] {
+function mapImportedEvents(
+  events: EventDefinition[],
+  importedMinigames: ScriptEditorProjectDefinition["minigames"]
+): ScriptEditorEventRecord[] {
+  const importedMinigameIdByIntegrationId = new Map(
+    importedMinigames
+      .filter(
+        (minigame) =>
+          typeof minigame.integrationId === "string" &&
+          minigame.integrationId.length > 0
+      )
+      .map((minigame) => [minigame.integrationId as string, minigame.id] as const)
+  );
   return events.map((eventDefinition) => {
     const importedEvent = eventDefinition as EventDefinition & {
       title?: string;
@@ -324,6 +408,26 @@ function mapImportedEvents(events: EventDefinition[]): ScriptEditorEventRecord[]
       typeof importedEvent.dialogueId === "string" && importedEvent.dialogueId.length > 0
         ? importedEvent.dialogueId
         : "";
+    const importedPlayableAction = (eventDefinition.actions ?? []).find(
+      (action): action is Extract<NonNullable<EventDefinition["actions"]>[number], { type: "launchPlayable" }> =>
+        action.type === "launchPlayable"
+    );
+    const importedMinigameId =
+      importedPlayableAction == null
+        ? ""
+        : importedMinigameIdByIntegrationId.get(importedPlayableAction.integrationId) ?? "";
+    const destinationFamily =
+      importedDialogueId.length > 0
+        ? "dialogue"
+        : importedMinigameId.length > 0
+          ? "minigame"
+          : "event";
+    const destinationTargetId =
+      destinationFamily === "dialogue"
+        ? importedDialogueId
+        : destinationFamily === "minigame"
+          ? importedMinigameId
+          : eventDefinition.nextEventId ?? "";
 
     return {
       id: eventDefinition.id,
@@ -341,11 +445,8 @@ function mapImportedEvents(events: EventDefinition[]): ScriptEditorEventRecord[]
       taskInputs: eventDefinition.taskInputs ?? [],
       conditionGroups: [],
       destination: {
-        family: importedDialogueId.length > 0 ? "dialogue" : "event",
-        targetId:
-          importedDialogueId.length > 0
-            ? importedDialogueId
-            : eventDefinition.nextEventId ?? "",
+        family: destinationFamily,
+        targetId: destinationTargetId,
       },
       relations: {
         storyNodeId: "",
@@ -357,6 +458,8 @@ function mapImportedEvents(events: EventDefinition[]): ScriptEditorEventRecord[]
         previewNotes:
           importedDialogueId.length > 0
             ? `Imported runtime dialogue: ${importedDialogueId}`
+            : importedMinigameId.length > 0
+              ? `Imported runtime minigame: ${importedMinigameId}`
             : "",
         validationNotes: "",
       },

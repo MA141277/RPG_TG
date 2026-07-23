@@ -18,11 +18,11 @@ export function normalizeScriptEditorPortraitRecord(
 }
 
 export function createDefaultScriptEditorPortraitRecord(
-  index: number
+  indexOrId: number | string
 ): ScriptEditorPortraitResourceRecord {
-  const suffix = index + 1;
+  const suffix = typeof indexOrId === "number" ? indexOrId + 1 : 1;
   return {
-    id: `portrait.new.${suffix}`,
+    id: typeof indexOrId === "string" ? indexOrId : `portrait.new.${suffix}`,
     label: `立绘资源 ${suffix}`,
     portraitImage: "",
     avatarImage: "",
@@ -52,11 +52,14 @@ export function normalizeScriptEditorPortraitVariantRecord(
 }
 
 export function createDefaultScriptEditorPortraitVariantRecord(
-  index: number
+  indexOrId: number | string
 ): ScriptEditorPortraitVariantRecord {
-  const suffix = index + 1;
+  const suffix = typeof indexOrId === "number" ? indexOrId + 1 : 1;
   return {
-    id: `portrait-variant.new.${suffix}`,
+    id:
+      typeof indexOrId === "string"
+        ? indexOrId
+        : `portrait-variant.new.${suffix}`,
     label: `立绘变体 ${suffix}`,
     parentPortraitId: "",
     portraitId: "",

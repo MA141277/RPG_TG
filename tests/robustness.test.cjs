@@ -7154,10 +7154,13 @@ test("script editor event destination helper stores selected target ids and clea
   assert.equal(eventRecord.destination.targetId, "");
 });
 
-test("script editor event destination export remains dialogue-only", () => {
+test("script editor event destination export lowers minigame targets into runnable playable actions", async () => {
   const {
     exportScriptEditorProjectToScenarioPackFiles,
   } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  const {
+    loadScriptEditorProjectFromScenarioPackFiles,
+  } = require("../.test-dist/application/script-editor/runtime-pack-import.js");
   const project = createExportableScriptEditorProjectDefinition();
   project.textEntries = [{ id: "text.opening", text: "Opening line." }];
   project.dialogues = [
@@ -7193,18 +7196,63 @@ test("script editor event destination export remains dialogue-only", () => {
   ];
   assert.throws(
     () => exportScriptEditorProjectToScenarioPackFiles(project),
-    /supports only editor events whose destination targets a dialogue/i
+    /supports only dialogue destinations, minigame destinations with matching event-owned playable bindings, or event-owned runtime actions without dialogue output/i
   );
 
+  project.minigames = [
+    {
+      id: "minigame.training.begging",
+      title: "Training Begging",
+      playableId: "city-begging",
+      integrationId: "playable.city-begging.external.default",
+      ownerKind: "external",
+      returnPolicy: "close-only",
+      triggerId: "trigger.playable.city-begging.external.default",
+      triggerSource: "event-destination",
+      triggerEvent: "event.opening",
+      outcomeRoutes: [
+        {
+          id: "outcome.success",
+          outcome: "success",
+          handoffPolicy: "close-only",
+          summary: "Begging finished.",
+          effectHint: "",
+        },
+      ],
+    },
+  ];
   project.events = [
     {
       ...eventRecord,
-      destination: { family: "minigame", targetId: "minigame.duel" },
+      destination: { family: "minigame", targetId: "minigame.training.begging" },
     },
   ];
-  assert.throws(
-    () => exportScriptEditorProjectToScenarioPackFiles(project),
-    /supports only editor events whose destination targets a dialogue/i
+  const minigameFiles = exportScriptEditorProjectToScenarioPackFiles(project);
+  const minigameEvents = JSON.parse(minigameFiles["events.json"]);
+  assert.equal(minigameEvents[0]?.dialogueId, "");
+  assert.deepEqual(minigameEvents[0]?.actions, [
+    {
+      type: "launchPlayable",
+      playableId: "city-begging",
+      integrationId: "playable.city-begging.external.default",
+      ownerContext: {
+        ownerKind: "external",
+        ownerId: null,
+        returnPolicy: "close-only",
+      },
+    },
+  ]);
+
+  const importedProject = await loadScriptEditorProjectFromScenarioPackFiles(
+    createImportedFilesFromSerializedJsonRecord(
+      minigameFiles,
+      "imported-event-destination-minigame-pack"
+    )
+  );
+  assert.equal(importedProject.events[0]?.destination.family, "minigame");
+  assert.equal(
+    importedProject.events[0]?.destination.targetId,
+    "minigame.training.begging"
   );
 });
 
@@ -7241,7 +7289,7 @@ test("script editor runtime export fails closed on editor event authoring record
 
   assert.throws(
     () => exportScriptEditorProjectToScenarioPackFiles(project),
-    /supports only editor events whose destination targets a dialogue/i
+    /references missing minigame/i
   );
 });
 
@@ -8153,6 +8201,217 @@ test("building container item action launches the authored flow selected by the 
   assert.equal(result.state.dialogue.activeDialogueId, null);
 });
 
+test("building container item action launches the authored minigame selected by the event", () => {
+  const {
+    triggerBuildingContainerItemAction,
+  } = require("../.test-dist/application/building/building-container-event-runtime.js");
+  const state = createBaseState();
+  state.world.currentCityId = "city.start";
+  state.world.currentHouseId = "building.temple";
+  state.ui.currentView = "house";
+
+  const result = triggerBuildingContainerItemAction({
+    state,
+    characterDefinitions: prototypeCharacters,
+    storyContent: {
+      eventDefinitionsById: {
+        "event.temple.rest": {
+          id: "event.temple.rest",
+          chapterId: "chapter.prototype",
+          name: "Temple Rest",
+          occurrence: "repeatable",
+          dialogueId: "",
+          actions: [
+            {
+              type: "launchPlayable",
+              playableId: "city-begging",
+              integrationId: "playable.city-begging.external.default",
+              ownerContext: {
+                ownerKind: "external",
+                ownerId: null,
+                returnPolicy: "close-only",
+              },
+            },
+          ],
+        },
+      },
+      eventBindingsById: {
+        "binding.temple.rest": {
+          id: "binding.temple.rest",
+          eventId: "event.temple.rest",
+          owner: { family: "building", id: "building.temple" },
+          trigger: {
+            timing: "after",
+            action: "building-container-item-action",
+            extra: {
+              arrangementId: "building-arrangement.city-start.temple",
+              containerId: "container.temple.menu",
+              itemId: "action.temple.rest",
+            },
+          },
+          enabled: true,
+        },
+      },
+      dialogueDefinitionsById: {},
+    },
+    action: {
+      arrangementId: "building-arrangement.city-start.temple",
+      containerId: "container.temple.menu",
+      itemId: "action.temple.rest",
+    },
+  });
+
+  assert.equal(result.state.runtime.playableSession?.playableId, "city-begging");
+  assert.equal(
+    result.state.runtime.playableSession?.integrationId,
+    "playable.city-begging.external.default"
+  );
+  assert.equal(result.state.ui.currentView, "minigame");
+  assert.equal(result.state.dialogue.activeEventId, null);
+});
+
+test("building container item action treats the clicked eventId as canonical truth", () => {
+  const {
+    triggerBuildingContainerItemAction,
+  } = require("../.test-dist/application/building/building-container-event-runtime.js");
+  const state = createBaseState();
+  state.world.currentCityId = "city.start";
+  state.world.currentHouseId = "building.temple";
+  state.ui.currentView = "house";
+
+  const result = triggerBuildingContainerItemAction({
+    state,
+    characterDefinitions: prototypeCharacters,
+    storyContent: {
+      eventDefinitionsById: {
+        "event.temple.rest": {
+          id: "event.temple.rest",
+          chapterId: "chapter.prototype",
+          name: "Temple Rest",
+          occurrence: "repeatable",
+          dialogueId: "dialogue.temple.rest",
+        },
+        "event.temple.wrong": {
+          id: "event.temple.wrong",
+          chapterId: "chapter.prototype",
+          name: "Wrong Event",
+          occurrence: "repeatable",
+          dialogueId: "dialogue.temple.wrong",
+        },
+      },
+      eventBindingsById: {
+        "binding.temple.rest": {
+          id: "binding.temple.rest",
+          eventId: "event.temple.rest",
+          owner: { family: "building", id: "building.temple" },
+          trigger: {
+            timing: "after",
+            action: "building-container-item-action",
+            extra: {
+              arrangementId: "building-arrangement.city-start.temple",
+              containerId: "container.temple.menu",
+              itemId: "action.temple.rest",
+            },
+          },
+          priority: 100,
+          enabled: true,
+        },
+        "binding.temple.wrong": {
+          id: "binding.temple.wrong",
+          eventId: "event.temple.wrong",
+          owner: { family: "building", id: "building.temple" },
+          trigger: {
+            timing: "after",
+            action: "building-container-item-action",
+            extra: {
+              arrangementId: "building-arrangement.city-start.temple",
+              containerId: "container.temple.menu",
+              itemId: "action.temple.rest",
+            },
+          },
+          priority: 500,
+          enabled: true,
+        },
+      },
+      dialogueDefinitionsById: {
+        "dialogue.temple.rest": {
+          id: "dialogue.temple.rest",
+          name: "Temple Rest",
+          nodes: [{ type: "narration", text: "Temple rest." }],
+        },
+        "dialogue.temple.wrong": {
+          id: "dialogue.temple.wrong",
+          name: "Wrong Event",
+          nodes: [{ type: "narration", text: "Wrong route." }],
+        },
+      },
+    },
+    action: {
+      arrangementId: "building-arrangement.city-start.temple",
+      containerId: "container.temple.menu",
+      itemId: "action.temple.rest",
+      eventId: "event.temple.rest",
+    },
+  });
+
+  assert.equal(result.state.dialogue.activeEventId, "event.temple.rest");
+  assert.equal(result.state.dialogue.activeDialogueId, "dialogue.temple.rest");
+});
+
+test("story trigger runtime launches event-owned playable destinations without dialogue fallback", () => {
+  const {
+    triggerStoryEvents,
+  } = require("../.test-dist/application/story/story-runtime.js");
+  const state = createBaseState();
+  state.world.currentCityId = "city.kulan";
+
+  const result = triggerStoryEvents(
+    {
+      state,
+      characterDefinitions: prototypeCharacters,
+    },
+    {
+      eventDefinitionsById: {
+        "event.story.minigame": {
+          id: "event.story.minigame",
+          chapterId: "chapter.prototype",
+          name: "Story Minigame",
+          occurrence: "repeatable",
+          dialogueId: "",
+          actions: [
+            {
+              type: "launchPlayable",
+              playableId: "city-begging",
+              integrationId: "playable.city-begging.external.default",
+              ownerContext: {
+                ownerKind: "external",
+                ownerId: null,
+                returnPolicy: "close-only",
+              },
+            },
+          ],
+        },
+      },
+      eventBindingsById: {
+        "binding.story.minigame": {
+          id: "binding.story.minigame",
+          eventId: "event.story.minigame",
+          owner: { family: "city", id: "city.kulan" },
+          trigger: { timing: "after", action: "city-enter" },
+          enabled: true,
+        },
+      },
+      dialogueDefinitionsById: {},
+    },
+    { timing: "city-enter", cityId: "city.kulan" }
+  );
+
+  assert.equal(result.state.runtime.playableSession?.playableId, "city-begging");
+  assert.equal(result.state.ui.currentView, "minigame");
+  assert.equal(result.state.dialogue.activeEventId, null);
+  assert.equal(result.state.dialogue.activeDialogueId, null);
+});
+
 test("script editor runtime export preserves building container action trigger extras", () => {
   const {
     exportScriptEditorProjectToScenarioPackFiles,
@@ -8853,7 +9112,7 @@ test("script editor workspace shell builds a reusable object-tree scaffold", () 
   assert.match(workspace.inspector.cards[0]?.body ?? "", /Hero|勇者|player/i);
 });
 
-test("script editor workspace groups creator navigation by project top bar, world, narrative, and gameplay", () => {
+test.skip("script editor workspace groups creator navigation by project top bar, world, narrative, gameplay, and asset library", () => {
   const {
     createScriptEditorWorkspaceShellViewModel,
   } = require("../.test-dist/application/script-editor/workspace-shell.js");
@@ -8863,7 +9122,7 @@ test("script editor workspace groups creator navigation by project top bar, worl
 
   assert.deepEqual(
     workspace.objectTreeGroups.map((group) => ({
-      label: group.label,
+      id: group.id,
       families: group.nodes.map((node) => node.family),
     })),
     [
@@ -8873,19 +9132,19 @@ test("script editor workspace groups creator navigation by project top bar, worl
       },
       {
         label: "世界",
-        families: ["people", "portraits", "portraitVariants", "cities", "buildings"],
+        families: ["people", "cities", "buildings"],
       },
       {
         label: "剧情与文本",
-        families: ["storyNodes", "dialogues", "events"],
+        families: ["storyNodes", "dialogues", "minigames"],
       },
       {
         label: "玩法",
-        families: ["quests", "minigames"],
+        families: ["events"],
       },
       {
         label: "资料库",
-        families: ["textEntries"],
+        families: ["portraits", "portraitVariants", "textEntries"],
       },
     ]
   );
@@ -8898,7 +9157,7 @@ test("script editor workspace groups creator navigation by project top bar, worl
   assert.equal(workspace.objectTreeGroups[0]?.nodes[0]?.label, "剧本导出");
 });
 
-test("script editor workspace shell exposes portrait families in the world group for new projects", () => {
+test("script editor workspace shell exposes portrait families in the asset library group for new projects", () => {
   const {
     createScriptEditorWorkspaceShellViewModel,
   } = require("../.test-dist/application/script-editor/workspace-shell.js");
@@ -8908,14 +9167,14 @@ test("script editor workspace shell exposes portrait families in the world group
   const project = createDefaultScriptEditorProjectDefinition();
 
   const workspace = createScriptEditorWorkspaceShellViewModel({ project });
-  const worldGroup = workspace.objectTreeGroups.find((group) => group.id === "world");
+  const libraryGroup = workspace.objectTreeGroups.find((group) => group.id === "library");
 
   assert.deepEqual(
-    worldGroup?.nodes.map((node) => node.family),
-    ["people", "portraits", "portraitVariants", "cities", "buildings"]
+    libraryGroup?.nodes.map((node) => node.family),
+    ["portraits", "portraitVariants", "textEntries"]
   );
   assert.equal(
-    worldGroup?.nodes.find((node) => node.family === "portraits")?.itemCount,
+    libraryGroup?.nodes.find((node) => node.family === "portraits")?.itemCount,
     1
   );
 });
@@ -9630,7 +9889,7 @@ test("script editor person authoring queue removes the advanced system details f
   assert.doesNotMatch(mainUiSource, /<span>人物 ID<\/span>/);
 });
 
-test("script editor visual alignment queue hides system fields behind advanced details panels", () => {
+test.skip("script editor visual alignment queue hides system fields behind advanced details panels", () => {
   const mainUiSource = fs.readFileSync(
     path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
     "utf8"
@@ -9810,7 +10069,7 @@ test(
     assert.equal(visibleFamilies.includes("people"), true);
     assert.equal(visibleFamilies.includes("cities"), true);
     assert.equal(visibleFamilies.includes("buildings"), true);
-    assert.equal(visibleFamilies.includes("quests"), true);
+    assert.equal(visibleFamilies.includes("quests"), false);
     assert.equal(visibleFamilies.includes("textEntries"), true);
     assert.equal(visibleFamilies.includes("dialogues"), true);
     assert.equal(visibleFamilies.includes("scenes"), false);
@@ -9893,9 +10152,10 @@ test("script editor minimal workflow record helpers support draft upsert and rem
     upsertScriptEditorWorkflowRecord,
   } = require("../.test-dist/application/script-editor/minimal-workflow.js");
   let project = createDefaultScriptEditorProjectDefinition();
-  const draft = createScriptEditorWorkflowRecordDraft("people", project.people.length);
+  const draft = createScriptEditorWorkflowRecordDraft("people", project);
 
   project = upsertScriptEditorWorkflowRecord(project, "people", draft);
+  assert.match(draft.id, /^\d+$/);
   assert.equal(project.people.some((record) => record.id === draft.id), true);
 
   project = upsertScriptEditorWorkflowRecord(project, "people", {
@@ -9909,6 +10169,29 @@ test("script editor minimal workflow record helpers support draft upsert and rem
 
   project = removeScriptEditorWorkflowRecord(project, "people", draft.id);
   assert.equal(project.people.some((record) => record.id === draft.id), false);
+});
+
+test("script editor draft creation allocates canonical numeric ids by family max+1 without deleted-id reuse", () => {
+  const {
+    createDefaultScriptEditorProjectDefinition,
+    createScriptEditorWorkflowRecordDraft,
+  } = require("../.test-dist/application/script-editor/minimal-workflow.js");
+  const project = createDefaultScriptEditorProjectDefinition();
+
+  project.people = [{ id: "110001" }, { id: "110003" }];
+  project.textEntries = [{ id: "440001", text: "One." }, { id: "440003", text: "Three." }];
+  project.eventBindings = [{ id: "470001" }];
+
+  const personDraft = createScriptEditorWorkflowRecordDraft("people", project);
+  const textEntryDraft = createScriptEditorWorkflowRecordDraft("textEntries", project);
+  const eventBindingDraft = createScriptEditorWorkflowRecordDraft(
+    "eventBindings",
+    project
+  );
+
+  assert.equal(personDraft.id, "110004");
+  assert.equal(textEntryDraft.id, "440004");
+  assert.equal(eventBindingDraft.id, "470002");
 });
 
 test("script editor person authoring helpers normalize trade and relation entry fields", () => {
@@ -10487,9 +10770,10 @@ test(
     assert.match(source, /remove-location-menu-entry/);
     assert.match(source, /data-script-editor-location-access-field/);
     assert.match(source, /data-script-editor-location-field="backgroundId"/);
+    assert.match(source, /data-script-editor-location-field="mapPlacement.x"/);
     assert.match(
       source,
-      /field === "description" \|\|\s+field === "cityId" \|\|\s+field === "backgroundId"/
+      /if \(target\.matches\("\[data-script-editor-location-field\]"\)\) \{[\s\S]*?this\.applyScriptEditorLocationField\(field, target\.value\);/
     );
     assert.doesNotMatch(source, /data-script-editor-location-access-field="refusalEventId"/);
     assert.match(source, /data-script-editor-location-access-field="blockedDialogueId"/);
@@ -10928,6 +11212,14 @@ test(
       id: "city.start",
       name: "Start City",
       mapNodeId: "node.start",
+      mapPlacement: {
+        mapNodeId: "node.start",
+        x: 12,
+        y: 34,
+        kind: "settlement",
+        label: "Start Marker",
+        summary: "A governed city definition.",
+      },
       baseAttributes: {
         ownerFactionId: "faction.ming",
         prosperity: 72,
@@ -10983,6 +11275,15 @@ test(
     });
     assert.equal(city.baseAttributes.prosperity, 72);
     assert.equal(city.profileMap.displayName, "Start");
+    assert.deepEqual(city.mapPlacement, {
+      placementMode: "coordinate",
+      mapNodeId: "node.start",
+      x: 12,
+      y: 34,
+      kind: "settlement",
+      label: "Start Marker",
+      summary: "A governed city definition.",
+    });
     assert.equal(city.extendedAttributes[0].key, "tradeRank");
     assert.equal("type" in building, false);
     assert.equal(building.baseAttributes.houseType, "merchant");
@@ -11006,6 +11307,14 @@ test(
         name: "Start City",
         regionId: "region.test",
         mapNodeId: "node.start",
+        mapPlacement: {
+          mapNodeId: "node.start",
+          x: 12,
+          y: 34,
+          kind: "settlement",
+          label: "Start Marker",
+          summary: "A governed city definition.",
+        },
         neighbourCityIds: [],
         travelCost: 1,
         baseAttributes: {
@@ -11071,6 +11380,14 @@ test(
     assert.equal(cities[0].id, "city.start");
     assert.equal(cities[0].name, "Start City");
     assert.equal(cities[0].mapNodeId, "node.start");
+    assert.deepEqual(cities[0].mapPlacement, {
+      mapNodeId: "node.start",
+      x: 12,
+      y: 34,
+      kind: "settlement",
+      label: "Start Marker",
+      summary: "A governed city definition.",
+    });
     assert.equal(cities[0].prosperity, 72);
     assert.equal(cities[0].danger, 55);
     assert.deepEqual(cities[0].specialDemand, ["salt"]);
@@ -13789,7 +14106,9 @@ test(
     assert.match(source, /基础信息|去向|关联对象|预览与校验/);
     assert.doesNotMatch(source, /data-script-editor-event-tab="conditions"/);
     assert.match(source, /data-script-editor-action="select-narrative-tab"/);
-    assert.match(source, /data-script-editor-action="select-event-tab"/);
+    assert.doesNotMatch(source, /data-script-editor-action="select-event-tab"/);
+    assert.match(source, /renderScriptEditorEventTabPanel\(eventRecord\)/);
+    assert.match(source, /data-script-editor-event-destination-field="family"/);
     assert.match(source, /SCRIPT_EDITOR_INSPECTOR_SUPPRESS_TEXT/);
     assert.match(source, /data-script-editor-inspector-header-slot/);
     assert.match(source, /"add-dialogue-node"/);
@@ -13814,7 +14133,7 @@ test(
   }
 );
 
-test("script editor event editor exposes event binding navigation", () => {
+test.skip("script editor event editor exposes event binding navigation", () => {
   const source = fs.readFileSync("src/ui/main-ui/main-ui-flow.js", "utf8");
 
   assert.match(source, /renderScriptEditorEventBindingSummary/);
@@ -14245,25 +14564,92 @@ test("script editor event binding authoring helpers edit records and workflow me
   });
 
   const project = createDefaultScriptEditorProjectDefinition();
-  const draft = createScriptEditorWorkflowRecordDraft("eventBindings", 0);
+  const draft = createScriptEditorWorkflowRecordDraft("eventBindings", project);
   const withDraft = upsertScriptEditorWorkflowRecord(project, "eventBindings", draft);
   const withUpdatedBinding = upsertScriptEditorWorkflowRecord(
     withDraft,
     "eventBindings",
-    normalizedBinding
+    {
+      ...normalizedBinding,
+      id: draft.id,
+    }
   );
   assert.deepEqual(
     listScriptEditorWorkflowFamilyRecords(withUpdatedBinding, "eventBindings").map(
       (record) => record.id
     ),
-    ["event-binding.new.1"]
+    [draft.id]
   );
   const withoutBinding = removeScriptEditorWorkflowRecord(
     withUpdatedBinding,
     "eventBindings",
-    "event-binding.new.1"
+    draft.id
   );
   assert.deepEqual(listScriptEditorWorkflowFamilyRecords(withoutBinding, "eventBindings"), []);
+});
+
+test("script editor visual alignment queue keeps story/dialogue/minigame system ids behind shared advanced-details foldouts while event routing stays selector-first", () => {
+  const mainUiSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    "utf8"
+  );
+  const scriptEditorCssSource = fs.readFileSync(
+    path.join(process.cwd(), "src/styles/script-editor.css"),
+    "utf8"
+  );
+
+  assert.match(mainUiSource, /renderScriptEditorSystemDetails\(title, hint, body\)/);
+  assert.match(mainUiSource, /data-script-editor-story-field="id"/);
+  assert.match(mainUiSource, /data-script-editor-dialogue-field="id"/);
+  assert.doesNotMatch(mainUiSource, /data-script-editor-event-field="id"/);
+  assert.match(mainUiSource, /data-script-editor-event-destination-field="family"/);
+  assert.match(mainUiSource, /data-script-editor-event-destination-field="targetId"/);
+  assert.match(mainUiSource, /data-script-editor-minigame-field="id"/);
+  assert.match(mainUiSource, /<details class="c-script-editor-system-details">/);
+  assert.match(scriptEditorCssSource, /c-script-editor-system-details/);
+  assert.match(scriptEditorCssSource, /c-script-editor-system-details__summary/);
+});
+
+test("script editor event editor shows binding summaries without exposing owner-local binding editing controls", () => {
+  const source = fs.readFileSync("src/ui/main-ui/main-ui-flow.js", "utf8");
+
+  assert.match(source, /renderScriptEditorEventBindingSummary/);
+  assert.match(source, /scriptEditorProject\?\.eventBindings/);
+  assert.match(source, /binding\.eventId === eventRecord\.id/);
+  assert.match(source, /data-script-editor-event-binding-id/);
+  const eventTabPanelSource =
+    source.match(/renderScriptEditorEventTabPanel\(eventRecord\) \{[\s\S]*?\n  renderScriptEditorMinigameTabPanel/)?.[0] ?? "";
+  assert.match(eventTabPanelSource, /renderScriptEditorEventBindingSummary/);
+  assert.doesNotMatch(eventTabPanelSource, /data-script-editor-action="add-event-binding"/);
+  assert.doesNotMatch(eventTabPanelSource, /data-script-editor-action="remove-event-binding"/);
+  assert.doesNotMatch(eventTabPanelSource, /renderScriptEditorEventBindingEditor/);
+  assert.doesNotMatch(eventTabPanelSource, /data-script-editor-event-binding-condition/);
+});
+
+test("script editor workspace groups creator navigation using current world, narrative, gameplay, and asset-library boundaries", () => {
+  const {
+    createScriptEditorWorkspaceShellViewModel,
+  } = require("../.test-dist/application/script-editor/workspace-shell.js");
+  const {
+    createDefaultScriptEditorProjectDefinition,
+  } = require("../.test-dist/application/script-editor/minimal-workflow.js");
+  const project = createDefaultScriptEditorProjectDefinition();
+
+  const workspace = createScriptEditorWorkspaceShellViewModel({ project });
+
+  assert.deepEqual(
+    workspace.objectTreeGroups.map((group) => ({
+      id: group.id,
+      families: group.nodes.map((node) => node.family),
+    })),
+    [
+      { id: "project", families: ["storyPack"] },
+      { id: "world", families: ["people", "cities", "buildings"] },
+      { id: "narrative", families: ["storyNodes", "dialogues", "minigames"] },
+      { id: "gameplay", families: ["events"] },
+      { id: "library", families: ["portraits", "portraitVariants", "textEntries"] },
+    ]
+  );
 });
 
 test("script editor event binding conditions authoring preserves flag and variable conditions on EventBinding", () => {
@@ -14570,8 +14956,9 @@ test(
     assert.match(source, /"add-minigame-launch-payload-entry"/);
     assert.match(source, /"add-minigame-outcome-route"/);
     assert.match(source, /data-script-editor-minigame-field=/);
-    assert.match(source, /data-script-editor-minigame-launch-field=/);
+    assert.doesNotMatch(source, /data-script-editor-minigame-launch-field=/);
     assert.match(source, /data-script-editor-minigame-outcome-field=/);
+    assert.match(source, /this\.scriptEditorMinigameTab === "references"/);
     assert.match(cssSource, /\.c-script-editor-minigame-editor/);
     assert.match(cssSource, /\.c-script-editor-minigame-list/);
     assert.doesNotMatch(workspaceShellSource, /"dialogues", "storyNodes", "minigames"/);
@@ -25449,7 +25836,7 @@ test("routed navigation runtime preserves blocked location access refusal", () =
   });
 });
 
-test("map city markers use active city definitions with map-owned coordinates", () => {
+test("map city markers use city-owned map placement", () => {
   const {
     createMapCityMarkers,
   } = require("../.test-dist/application/map/map-city-marker-view-model.js");
@@ -25461,14 +25848,39 @@ test("map city markers use active city definitions with map-owned coordinates", 
         name: "Map Owned City",
         regionId: "region.test",
         mapNodeId: "node.map-owned",
+        mapPlacement: {
+          mapNodeId: "node.map-owned",
+          x: 12,
+          y: 34,
+          kind: "settlement",
+          label: "Marker Label",
+          summary: "Marker Summary",
+        },
         houseIds: [],
         neighbourCityIds: [],
         tags: [],
         prosperity: 10,
         danger: 0,
         specialDemand: [],
-        x: 999,
-        y: 888,
+      },
+      {
+        id: "city.placement-without-node",
+        name: "Placement Without Node",
+        regionId: "region.test",
+        mapNodeId: "node.legacy-only",
+        mapPlacement: {
+          x: 18,
+          y: 52,
+          kind: "city",
+          label: "Placement Only",
+          summary: "No node binding.",
+        },
+        houseIds: [],
+        neighbourCityIds: [],
+        tags: [],
+        prosperity: 10,
+        danger: 0,
+        specialDemand: [],
       },
       {
         id: "city.without-coordinate",
@@ -25483,17 +25895,26 @@ test("map city markers use active city definitions with map-owned coordinates", 
         specialDemand: [],
       },
     ],
-    cityCoordinatesById: {
-      "city.map-owned": { x: 12, y: 34 },
-    },
   });
 
   assert.deepEqual(markers, [
     {
       id: "city.map-owned",
-      name: "Map Owned City",
+      name: "Marker Label",
       x: 12,
       y: 34,
+      kind: "settlement",
+      summary: "Marker Summary",
+      mapNodeId: "node.map-owned",
+    },
+    {
+      id: "city.placement-without-node",
+      name: "Placement Only",
+      x: 18,
+      y: 52,
+      kind: "city",
+      summary: "No node binding.",
+      mapNodeId: null,
     },
   ]);
 });
@@ -25510,6 +25931,14 @@ test("map location provider adapter exposes marker-ready city locations", () => 
         name: "Visible City",
         regionId: "region.test",
         mapNodeId: "node.visible",
+        mapPlacement: {
+          mapNodeId: "node.visible",
+          x: 7,
+          y: 9,
+          kind: "city",
+          label: "Visible Marker",
+          summary: "Visible Summary",
+        },
         houseIds: [],
         neighbourCityIds: [],
       },
@@ -25522,26 +25951,30 @@ test("map location provider adapter exposes marker-ready city locations", () => 
         neighbourCityIds: [],
       },
     ],
-    cityCoordinatesById: {
-      "city.visible": { x: 7, y: 9 },
-    },
   });
 
   assert.deepEqual(provider.listCityLocationMarkers(), [
     {
       id: "city.visible",
-      name: "Visible City",
+      name: "Visible Marker",
       x: 7,
       y: 9,
+      kind: "city",
+      summary: "Visible Summary",
+      mapNodeId: "node.visible",
     },
   ]);
   assert.deepEqual(provider.getCityLocation("city.visible"), {
     id: "city.visible",
-    name: "Visible City",
+    name: "Visible Marker",
     x: 7,
     y: 9,
+    kind: "city",
+    summary: "Visible Summary",
+    mapNodeId: "node.visible",
   });
   assert.equal(provider.getCityLocation("city.missing-coordinate"), null);
+  assert.equal(provider.getCityIdByMapNodeId("node.visible"), "city.visible");
 });
 
 test("map rendering path consumes provider-backed city locations", () => {
@@ -25566,7 +25999,22 @@ test("map rendering path consumes provider-backed city locations", () => {
   assert.doesNotMatch(mapViewSource, /CityDefinition/);
   assert.doesNotMatch(mapViewSource, /createMapCityMarkers/);
   assert.doesNotMatch(mapViewSource, /cityCoordinatesById/);
+  assert.doesNotMatch(mapViewSource, /input\.mapDefinition\.nodes/);
+  assert.equal(
+    fs.existsSync(
+      path.join(
+        process.cwd(),
+        "src",
+        "application",
+        "map",
+        "map-node-render-policy.ts"
+      )
+    ),
+    false
+  );
   assert.match(appRenderSource, /mapLocationProvider:\s*input\.mapLocationProvider/);
+  assert.doesNotMatch(appRenderSource, /mapDefinition\.nodes\.find/);
+  assert.doesNotMatch(appRenderSource, /cityDefinition\?\.mapNodeId/);
   assert.doesNotMatch(presenterOutputSource, /\{ type: "map"; cityDefinitions: CityDefinition\[] \}/);
   assert.match(mainSource, /mapLocationProvider\.getCityLocation/);
   assert.doesNotMatch(
@@ -25621,6 +26069,10 @@ test("scenario pack startup reveals the initial map coordinate through the canon
   assert.match(
     createScenarioPackAppStateBlock,
     /revealCampaignMapHexesForCoordinate\(\s*nextAppState\.gameState,\s*scenarioMapDefinition,\s*playerCoordinate\s*\)/
+  );
+  assert.match(
+    createScenarioPackAppStateBlock,
+    /activeContentContext\.mapLocationProvider\.getCityLocation\(\s*profile\.initialLocation\.cityId\s*\)\s*\?\?\s*profile\.initialPlayerCoordinate/
   );
   assert.doesNotMatch(
     mainSource,

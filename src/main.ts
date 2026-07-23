@@ -1880,10 +1880,10 @@ function createScenarioPackAppState(
     day: 1,
   };
   const playerCoordinate =
-    profile.initialPlayerCoordinate ??
     activeContentContext.mapLocationProvider.getCityLocation(
       profile.initialLocation.cityId
     ) ??
+    profile.initialPlayerCoordinate ??
     scenarioMapDefinition.initialPlayerCoordinate ??
     { x: 0, y: 0 };
   const startupTarget = resolveScenarioStartupTarget(profile);
@@ -2916,6 +2916,8 @@ appElement.addEventListener("click", (event) => {
       buildingContainerItemActionButton.dataset.buildingContainerId;
     const itemId =
       buildingContainerItemActionButton.dataset.buildingContainerActionId;
+    const eventId =
+      buildingContainerItemActionButton.dataset.buildingContainerEventId;
     if (arrangementId != null && containerId != null && itemId != null) {
       const result = triggerBuildingContainerItemAction({
         state: appState.gameState,
@@ -2937,6 +2939,7 @@ appElement.addEventListener("click", (event) => {
           arrangementId,
           containerId,
           itemId,
+          ...(eventId == null ? {} : { eventId }),
         },
       });
       appState = {

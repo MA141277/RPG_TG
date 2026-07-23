@@ -4,9 +4,9 @@
 
 - entry_id: `project-progress.rpg-tg`
 - active_blueprint: `blueprint.rpg-tg`
-- active_version: `target.script-editor-event-centered-authoring-scene-retirement-and-portrait-resource-refactor`
+- active_version: `target.map-rendering-city-data-separation-and-canonical-numeric-id-transition`
 - has_active_queue: `false`
-- next_file: `docs/blueprints/plans/2026-07-22-script-editor-event-centered-authoring-scene-retirement-and-portrait-resource-refactor-target-plan.md`
+- next_file: `docs/blueprints/plans/2026-07-22-map-rendering-city-data-separation-and-canonical-numeric-id-transition-target-plan.md`
 - entry_action: `open-next-file`
 
 ## Human Context
@@ -25,9 +25,9 @@
 - Current Blueprint:
   - `docs/blueprints/blueprint.md`
 - Current Version Spec:
-  - `docs/blueprints/specs/2026-07-22-script-editor-event-centered-authoring-scene-retirement-and-portrait-resource-refactor-target.md`
+  - `docs/blueprints/specs/2026-07-22-map-rendering-city-data-separation-and-canonical-numeric-id-transition-target.md`
 - Current Version Plan:
-  - `docs/blueprints/plans/2026-07-22-script-editor-event-centered-authoring-scene-retirement-and-portrait-resource-refactor-target-plan.md`
+  - `docs/blueprints/plans/2026-07-22-map-rendering-city-data-separation-and-canonical-numeric-id-transition-target-plan.md`
 - Current Active Queue:
   - `none`
 
@@ -87,7 +87,9 @@
 - `queue.portrait-resource-authoring-and-resource-mapping-convergence is now closed after ACC-EVENT-CENTER-006 verification confirmed project-owned portrait families, explicit built-in pack portrait files, shared preview/runtime/export/import/loader mapping, and prototype startup portrait cutover with no same-family portrait residue.`
 - `The remaining completed queues under the current version were later synchronized together in one inseparable repository-sync batch because scene-retirement/runtime-sync/portrait/final-acceptance code and governance updates could no longer be isolated truthfully by queue. That combined batch is now committed and pushed to origin/mod-first-dev.`
 - `queue.script-editor-event-centered-authoring-final-acceptance-and-residue-guard is now closed after ACC-EVENT-CENTER-008 browser/source acceptance covered normal start, JSON runtime-pack import, Script Editor runtime preview, representative building-enter dialogue behavior, and the minimal usable portrait creator path through 剧本编辑 -> 使用模板.`
-- `Fresh same-version audit then recorded queue.event-playable-destination-and-building-action-event-truth-convergence as a candidate-only same-family continuation inside the current active version. The active version therefore remains open with no active queue and returns to same-version admission review rather than version closeout.`
+- `queue.event-playable-destination-and-building-action-event-truth-convergence is now closed after ACC-EVENT-ONLY-ROUTING-007 / 008 verification confirmed runnable event-owned minigame lowering, canonical building action eventId routing, and shared playable runtime convergence. The active version remains open with no active queue and resumes from version closeout review; do not infer closed status without explicit closeout confirmation.`
+- `target.script-editor-event-centered-authoring-scene-retirement-and-portrait-resource-refactor was explicitly closed on 2026-07-22 after final version closeout confirmation, and repository entry is intentionally stopped on this recorded closeout result rather than silently switching to an older still-open version with unresolved governance-template drift.`
+- `Current entry pointers now route to target.map-rendering-city-data-separation-and-canonical-numeric-id-transition after the operator explicitly requested a new MEMO-027 successor version. queue.map-rendering-city-data-separation-and-canonical-numeric-id-transition is now closed locally after ACC-MAP-ID-006 human-visible Codex in-app browser proof covered normal start, built-in JSON runtime-pack import, and Script Editor runtime preview through campaign map click on 濠州 plus city-enter continuation into the city function menu. The active version remains open with no active queue and resumes from version-level promotion/closeout review while repository sync is still pending.`
 
 ### Historical References
 

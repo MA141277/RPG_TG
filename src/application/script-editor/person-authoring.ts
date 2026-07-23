@@ -129,11 +129,12 @@ export function normalizeScriptEditorPersonRecord(
 }
 
 export function createDefaultScriptEditorPersonRecord(
-  index: number
+  indexOrId: number | string
 ): ScriptEditorPersonRecord {
-  const suffix = index + 1;
+  const suffix =
+    typeof indexOrId === "number" ? indexOrId + 1 : 1;
   return {
-    id: `person.new.${suffix}`,
+    id: typeof indexOrId === "string" ? indexOrId : `person.new.${suffix}`,
     name: `人物 ${suffix}`,
     personType: suffix === 1 ? "角色" : "NPC",
     role: suffix === 1 ? "playable" : "support",

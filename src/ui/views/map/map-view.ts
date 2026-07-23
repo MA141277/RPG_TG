@@ -15,7 +15,6 @@ import type {
 import type {
   MapDefinition,
   MapLayer,
-  MapNode,
   MapStats,
 } from "../../../domain/map";
 import {
@@ -34,7 +33,7 @@ type CampaignMarker = {
   name: string;
   x: number;
   y: number;
-  kind: NonNullable<MapNode["kind"]>;
+  kind: MapCityLocation["kind"];
   summary: string;
   isRevealed: boolean;
   historicalCharacters: {
@@ -160,53 +159,75 @@ export function createMapViewModel(input: {
     cityDepthTextureUrl,
     cityDepthMeshCoordinate: input.mapDefinition.initialPlayerCoordinate ?? null,
     cloudClearHexKeys,
-    campaignMarkers: input.mapDefinition.nodes
-      .map((node, index) => {
-        const nodeId = node.id ?? node.cityId ?? `map-node.${index}`;
-        const roster =
-          node.id == null ? null : historicalRosterByCityNodeId[node.id] ?? null;
-        const resolveCharacterNames = (characterIds: string[]) =>
-          characterIds.map(
-            (characterId) => historicalCharacterNameById[characterId] ?? characterId
-          );
-
-        return {
-          id: nodeId,
-          cityId:
-            node.cityId ??
-            (node.id == null
+    campaignMarkers: input.mapLocationProvider
+      .listCityLocationMarkers()
+      .map((cityMarker) =>
+        createCampaignMarker({
+          id: cityMarker.mapNodeId ?? cityMarker.id,
+          cityId: cityMarker.id,
+          name: cityMarker.name,
+          x: cityMarker.x,
+          y: cityMarker.y,
+          kind: cityMarker.kind,
+          summary: cityMarker.summary,
+          roster:
+            cityMarker.mapNodeId == null
               ? null
-              : input.mapLocationProvider.getCityIdByMapNodeId(node.id)),
-          name: node.label ?? node.cityId ?? `Node ${index + 1}`,
-          x: node.x,
-          y: node.y,
-          kind: node.kind ?? (node.cityId == null ? "landmark" : "city"),
-          summary: node.summary ?? "",
-          isRevealed: revealedHexKeySet.has(
-            getHexKey(
-              coordinateToRoundedHex(
-                { x: node.x, y: node.y },
-                input.mapDefinition.coordinateSpace ?? {
-                  width: input.mapDefinition.size ?? 1,
-                  height: input.mapDefinition.size ?? 1,
-                }
-              )
-            )
-          ),
-          historicalCharacters:
-            roster == null
-              ? null
-              : {
-                  primary: resolveCharacterNames(roster.primaryCharacterIds),
-                  secondary: resolveCharacterNames(roster.secondaryCharacterIds),
-                  background: resolveCharacterNames(roster.backgroundCharacterIds),
-                  notes: roster.notes,
-                },
-        };
-      })
-      .filter((marker) => marker.kind !== "landmark"),
+              : historicalRosterByCityNodeId[cityMarker.mapNodeId] ?? null,
+          historicalCharacterNameById,
+          coordinateSpace:
+            input.mapDefinition.coordinateSpace ?? {
+              width: input.mapDefinition.size ?? 1,
+              height: input.mapDefinition.size ?? 1,
+            },
+          revealedHexKeySet,
+        })
+      ),
     layers: input.mapDefinition.layers ?? [],
     stats: input.mapDefinition.stats ?? null,
+  };
+}
+
+function createCampaignMarker(input: {
+  id: string;
+  cityId: string | null;
+  name: string;
+  x: number;
+  y: number;
+  kind: CampaignMarker["kind"];
+  summary: string;
+  roster: HistoricalCityRoster | null;
+  historicalCharacterNameById: Record<string, string>;
+  coordinateSpace: { width: number; height: number };
+  revealedHexKeySet: Set<string>;
+}): CampaignMarker {
+  const resolveCharacterNames = (characterIds: string[]) =>
+    characterIds.map(
+      (characterId) => input.historicalCharacterNameById[characterId] ?? characterId
+    );
+
+  return {
+    id: input.id,
+    cityId: input.cityId,
+    name: input.name,
+    x: input.x,
+    y: input.y,
+    kind: input.kind,
+    summary: input.summary,
+    isRevealed: input.revealedHexKeySet.has(
+      getHexKey(
+        coordinateToRoundedHex({ x: input.x, y: input.y }, input.coordinateSpace)
+      )
+    ),
+    historicalCharacters:
+      input.roster == null
+        ? null
+        : {
+            primary: resolveCharacterNames(input.roster.primaryCharacterIds),
+            secondary: resolveCharacterNames(input.roster.secondaryCharacterIds),
+            background: resolveCharacterNames(input.roster.backgroundCharacterIds),
+            notes: input.roster.notes,
+          },
   };
 }
 

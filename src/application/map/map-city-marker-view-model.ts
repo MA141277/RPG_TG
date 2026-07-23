@@ -1,4 +1,3 @@
-import type { GridCoordinate } from "../navigation/travel-to-coordinate";
 import type { CityDefinition } from "../../domain/city";
 
 export type MapCityMarker = {
@@ -6,25 +5,29 @@ export type MapCityMarker = {
   name: string;
   x: number;
   y: number;
+  kind: "city" | "settlement" | "fort";
+  summary: string;
+  mapNodeId: string | null;
 };
 
 export function createMapCityMarkers(input: {
   cityDefinitions: readonly CityDefinition[];
-  cityCoordinatesById: Record<string, GridCoordinate>;
 }): MapCityMarker[] {
   return input.cityDefinitions
-    .map((cityDefinition) => {
-      const coordinate = input.cityCoordinatesById[cityDefinition.id];
-      if (coordinate == null) {
-        return null;
+    .flatMap((cityDefinition) => {
+      const placement = cityDefinition.mapPlacement;
+      if (placement == null) {
+        return [];
       }
 
-      return {
+      return [{
         id: cityDefinition.id,
-        name: cityDefinition.name,
-        x: coordinate.x,
-        y: coordinate.y,
-      };
-    })
-    .filter((cityMarker): cityMarker is MapCityMarker => cityMarker != null);
+        name: placement.label ?? cityDefinition.name,
+        x: placement.x,
+        y: placement.y,
+        kind: placement.kind ?? "city",
+        summary: placement.summary ?? "",
+        mapNodeId: placement.mapNodeId ?? null,
+      }];
+    });
 }
