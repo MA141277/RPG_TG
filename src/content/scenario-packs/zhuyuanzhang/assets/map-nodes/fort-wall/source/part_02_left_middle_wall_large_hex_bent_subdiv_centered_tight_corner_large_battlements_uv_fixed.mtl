@@ -1,0 +1,15 @@
+# Independent material file generated from 城墙.mtl
+# Texture paths are local to this part directory.
+
+newmtl brick1
+Ka 0.000000 0.000000 0.000000
+Kd 0.466667 0.462745 0.458824
+Ks 0.330000 0.330000 0.330000
+map_Kd textures/brick1.jpg
+
+newmtl Brick
+Ka 0.000000 0.000000 0.000000
+Kd 0.537255 0.525490 0.517647
+Ks 0.330000 0.330000 0.330000
+map_Kd textures/Brick.jpg
+

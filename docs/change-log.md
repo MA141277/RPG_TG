@@ -2,6 +2,50 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-23 Campaign Exploration Terrain Load Deferral
+
+### Changed
+- Campaign 探索状态仍会在玩家移动时即时写入并驱动云层 reveal，但 terrain chunk 的新请求和已完成 chunk 的 GPU 上传会在移动动画持续期间延后。
+- `main.ts` 在玩家移动帧和新增探索 hex 时调用 terrain renderer 的加载延迟闸门；`campaign-terrain-webgl.ts` 只渲染已加载 chunk，并把延迟期间完成构建的 chunk 暂存在 renderer 本地队列，等移动和云洞消散窗口结束后再上传。
+- `campaign-cloud-webgl.ts` 在实际检测到 revealed hex 集合变化并启动云洞 dissolve transition 时，会持有 terrain chunk 加载暂停令牌；只有云层 transition 自己判定完成后，才延迟释放加载，避免 terrain 只按固定时间恢复并和云层消散同步抢主线程。
+- Campaign fort wall mesh 签名改为只依赖实际 fort 实例集合，不再把所有已加载 terrain chunk key 纳入签名；无关 chunk 到达不会重建整批 fort wall GPU buffer。
+- Campaign vegetation mesh 的避让输入只保留稳定 marker 点，不再把移动中的玩家和路线点纳入静态植被 mesh 签名，避免玩家每帧移动触发整批植被 mesh 重建。
+
+### Impact
+- 玩家探索新区域时，新地形不会抢在玩家移动、云洞消散等动画完成前显示出来，避免新地图在云层动画中途突然加载。
+- 该变更只调整 campaign terrain chunk 的加载/上传时机，不改变探索状态、云层遮罩、寻路、点击、通行、marker 或 fort wall 语义。
+
+## 2026-07-23 Campaign Marker Dot Scale Stability
+
+### Changed
+- Campaign DOM marker 视觉统一为小圆点，不再使用不同图片图标；普通地图点使用更淡的黄色黑描边，要塞点使用灰色黑描边。marker kind class 继续保留给进入逻辑、summary 和 fort wall mesh 识别使用。
+- Campaign 地图缩放低于 20 时隐藏 marker 文字与 summary，低于 5 时连同小点交互一起隐藏。
+- `renderApp` 现在在地图重绘时保留 `data-campaign-marker-layer`，terrain renderer 对 marker 节点做增量同步，不再因为玩家移动或投影刷新把 marker layer 清空重建。
+
+### Impact
+- 玩家移动、actor 状态更新或 terrain 投影刷新不会导致地图小标志闪烁；只有已加载 chunk / 平原 Hex / marker 源数据导致可见集合变化时，marker DOM 才会增删。
+- 该变更只影响 campaign marker 的 DOM 表现与同步策略，不改变地图节点数据、进入城市、寻路、探索、fort wall mesh 或通行语义。
+
+## 2026-07-22 Campaign Fort Complete Wall Visuals
+
+### Added
+- 新增 `campaign-map-node-mesh-v1` 地图节点视觉 mesh 资产格式，用于加载带 UV、normal、indices、材质 draw groups 和贴图引用的地图节点模型；浏览器 runtime 继续加载转换后的 JSON 和贴图，不直接解析 OBJ/MTL。
+- 新增 `tools/convert-campaign-fort-wall-obj.mjs`，把已经建好的完整 Hex 围墙 `part_02_left_middle_wall_large_hex_bent_subdiv_centered_tight_corner_large_battlements_uv_fixed.obj/.mtl` 转成 `fort-hex-wall.json` 与砖墙贴图资产；转换阶段只做 OBJ 三角化、材质分组、UV 保留、法线生成、地块尺寸等比缩放、朝向修正和平面居中偏移，不再弯曲或重复铺设直墙段。
+
+### Changed
+- Campaign terrain renderer 会为当前已加载视觉 chunk 内、且 Hex `terrain === "平原"` 的 `kind: "fort"` marker 绘制 Hex 中心锚定的完整围墙模型；同一 Hex 上的多个 fort 节点只绘制一个围墙模型，避免重复叠模。
+- Campaign marker 不再由 `map-view.ts` 初始渲染为全图 DOM；view 只输出 marker JSON 数据源和空 marker layer，terrain renderer 根据已加载 chunk 与 Hex terrain 语义异步生成当前局部 marker DOM。未加载区域和非平原格不生成城市入口按钮、summary 或 fort 城墙。
+- fort wall footprint 从 `innerHexRadius: 0.74` 调整为 `1.0`，通过 `placement.rotationDegrees: 30` 与当前六边形网格方向对齐，并通过 `placement.offsetY: -0.0015` 修正模型整体偏上的问题。
+- fort wall 转换器改为使用单一模型缩放系数，按旋转后的完整包围盒适配 Hex footprint，避免为了填满宽/深/高而把完整围墙拉长或压扁变形。
+- fort wall 转换器拆分 `FORT_WALL_FIT_INNER_HEX_RADIUS` 与 `FORT_WALL_UNIFORM_SCALE`：前者只定义 Hex footprint 参考范围，后者才是整座城墙的统一放大倍率；fit 计算改为使用实际 `FORT_WALL_ROTATION_DEGREES` 旋转后的包围盒，避免非 90 度朝向下尺寸调节表现成单向变化。
+
+### Fixed
+- fort 城墙贴图按 OBJ 原始 UV 语义使用平铺采样；非 2 的幂 JPG 会先转换成 repeatable POT canvas 再上传 WebGL，避免墙体被 `CLAMP_TO_EDGE` 采成大块灰色。
+- 移除 fort 资产转换中的样条弯曲/分段重复逻辑，避免运行时或转换时把城墙体、城墙垛拆成看起来像自建模型的碎段。
+
+### Impact
+- 该变更只替换 fort 的大地图视觉表现和 marker DOM 的生成时机，不改变地图节点数据、城市绑定、通行、寻路、探索或进入城市流程；非平原/未加载区域没有 marker DOM，因此也不会触发城市入口。
+
 ## 2026-07-21 Campaign Map Renderer Responsibility Split
 
 ### Changed

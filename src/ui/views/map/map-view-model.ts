@@ -5,6 +5,7 @@ import {
 } from "../../../application/navigation/travel-to-coordinate";
 import cityDepthMeshAssetUrl from "../../../3dasset/city_hun/city-hun-campaign-lowpoly.json?url";
 import cityDepthTextureUrl from "../../../3dasset/city_hun/texture_pbr_20250901.png?url";
+import fortWallMeshAssetUrl from "../../../content/scenario-packs/zhuyuanzhang/assets/map-nodes/fort-wall/fort-hex-wall.json?url";
 import type { CityDefinition } from "../../../domain/city";
 import {
   campaignMapCoordinateToHex,
@@ -83,6 +84,7 @@ export type MapViewModel = {
     x: number;
     y: number;
   } | null;
+  fortWallMeshAssetUrl: string | null;
   cloudClearHexKeys: string[];
   campaignMarkers: CampaignMarker[];
   layers: MapLayer[];
@@ -208,6 +210,7 @@ export function createMapViewModel(input: {
     cityDepthMeshAssetUrl,
     cityDepthTextureUrl,
     cityDepthMeshCoordinate: input.mapDefinition.initialPlayerCoordinate ?? null,
+    fortWallMeshAssetUrl: mode === "campaign" ? fortWallMeshAssetUrl : null,
     cloudClearHexKeys,
     campaignMarkers: input.mapDefinition.nodes
       .map((node, index) => {

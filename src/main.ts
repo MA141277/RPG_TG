@@ -221,6 +221,7 @@ import {
   DEFAULT_CAMPAIGN_CITY_DEPTH_MESH_TRANSFORM,
   DEFAULT_CAMPAIGN_TERRAIN_STYLE,
   createCampaignTerrainCameraCenteredOnCoordinate,
+  deferCampaignTerrainChunkLoadingUntil,
   getCampaignTerrainCameraTiltRadiansForScale,
   getCampaignTerrainTravelGrid,
   isCampaignTerrainUvPassable,
@@ -251,6 +252,7 @@ const CAMPAIGN_TRAVEL_MS_PER_MAP_UNIT = 55 / CAMPAIGN_TRAVEL_SPEED_SCALE;
 const CAMPAIGN_TRAVEL_MIN_DURATION_MS = 1400 / CAMPAIGN_TRAVEL_SPEED_SCALE;
 const CAMPAIGN_TRAVEL_MAX_DURATION_MS = 18000 / CAMPAIGN_TRAVEL_SPEED_SCALE;
 const CAMPAIGN_TURN_DEGREES_PER_SECOND = 180;
+const CAMPAIGN_EXPLORATION_TERRAIN_LOAD_DELAY_MS = 1500;
 const ACTIVITY_QTE_INTERVAL_MS = 90;
 const OPENING_BGM_URL = new URL("../BGM/开局.mp3", import.meta.url).href;
 const IN_GAME_BGM_URL = new URL("../BGM/游戏内.mp3", import.meta.url).href;
@@ -356,6 +358,34 @@ function getCurrentMapDefinition(): MapDefinition | null {
   );
 }
 
+function deferCampaignExplorationTerrainLoading(): void {
+  deferCampaignTerrainChunkLoadingUntil(
+    performance.now() + CAMPAIGN_EXPLORATION_TERRAIN_LOAD_DELAY_MS
+  );
+}
+
+function revealCampaignMapHexesForAppState(
+  state: AppState,
+  mapDefinition: MapDefinition,
+  coordinate: GridCoordinate
+): AppState {
+  const nextGameState = revealCampaignMapHexesForCoordinate(
+    state.gameState,
+    mapDefinition,
+    coordinate
+  );
+  if (nextGameState === state.gameState) {
+    return state;
+  }
+
+  deferCampaignExplorationTerrainLoading();
+
+  return {
+    ...state,
+    gameState: nextGameState,
+  };
+}
+
 let activeContentContext: ActiveGameContentContext =
   createActiveGameContentContextFromModActivation({
     basePack: baseGameContentPack,
@@ -393,6 +423,10 @@ function revealCampaignMapAroundAppCoordinate(
   });
   if (nextGameState === state.gameState) {
     return state;
+  }
+
+  if (options?.animateNewHexes !== false) {
+    deferCampaignExplorationTerrainLoading();
   }
 
   return {
@@ -4581,7 +4615,7 @@ function handleModalConfirm() {
         appState.campaignTravelState != null &&
         appState.campaignTravelState.targetCoordinate.x === nextCoordinate.x &&
         appState.campaignTravelState.targetCoordinate.y === nextCoordinate.y;
-      let nextAppState = {
+      let nextAppState: AppState = {
         ...appState,
         campaignTravelState: null,
         modalState: shouldEnterCity ? pendingEnterCityState : null,
@@ -4589,14 +4623,11 @@ function handleModalConfirm() {
       };
       const currentMapDefinition = getCurrentMapDefinition();
       if (currentMapDefinition != null) {
-        nextAppState = {
-          ...nextAppState,
-          gameState: revealCampaignMapHexesForCoordinate(
-            nextAppState.gameState,
-            currentMapDefinition,
-            nextCoordinate
-          ),
-        };
+        nextAppState = revealCampaignMapHexesForAppState(
+          nextAppState,
+          currentMapDefinition,
+          nextCoordinate
+        );
       }
       const runtimeCommit = commitRuntimeRequest({
         state: nextAppState,
@@ -4726,7 +4757,7 @@ function startCampaignTravel(
       activeTravelState != null &&
       activeTravelState.targetCoordinate.x === nextCoordinate.x &&
       activeTravelState.targetCoordinate.y === nextCoordinate.y;
-    let nextAppState = {
+    let nextAppState: AppState = {
       ...appState,
       campaignTravelState: null,
       modalState: shouldEnterCity ? pendingEnterCityState : null,
@@ -4734,14 +4765,11 @@ function startCampaignTravel(
     };
     const currentMapDefinition = getCurrentMapDefinition();
     if (currentMapDefinition != null) {
-      nextAppState = {
-        ...nextAppState,
-        gameState: revealCampaignMapHexesForCoordinate(
-          nextAppState.gameState,
-          currentMapDefinition,
-          nextCoordinate
-        ),
-      };
+      nextAppState = revealCampaignMapHexesForAppState(
+        nextAppState,
+        currentMapDefinition,
+        nextCoordinate
+      );
     }
     const runtimeCommit = commitRuntimeRequest({
       state: nextAppState,
@@ -5076,6 +5104,9 @@ function syncCampaignActorRuntimeState(
       isMoving,
     },
   };
+  if (isMoving) {
+    deferCampaignExplorationTerrainLoading();
+  }
   const nextAppState = revealCampaignMapAroundAppCoordinate(appState, coordinate, {
     animateNewHexes: true,
   });
@@ -5186,91 +5217,26 @@ function restoreCampaignTerrainCanvases(
   });
 }
 
-function getCampaignMarkerStableKey(element: HTMLElement): string | null {
-  if (element.dataset.campaignMarkerId != null) {
-    return `marker:${element.dataset.campaignMarkerId}`;
-  }
-  if (element.dataset.campaignMarkerSummaryId != null) {
-    return `summary:${element.dataset.campaignMarkerSummaryId}`;
-  }
-
-  return null;
+function captureCampaignMarkerLayer(root: ParentNode): HTMLElement | null {
+  return root.querySelector<HTMLElement>("[data-campaign-marker-layer]");
 }
 
-function captureCampaignMarkerElements(
-  root: ParentNode
-): Map<string, HTMLElement> | null {
-  const markerElements = Array.from(
-    root.querySelectorAll<HTMLElement>(
-      "[data-campaign-marker-id], [data-campaign-marker-summary-id]"
-    )
-  );
-  if (markerElements.length === 0) {
-    return null;
-  }
-
-  const preservedElements = new Map<string, HTMLElement>();
-  for (const markerElement of markerElements) {
-    const stableKey = getCampaignMarkerStableKey(markerElement);
-    if (stableKey != null) {
-      preservedElements.set(stableKey, markerElement);
-    }
-  }
-
-  return preservedElements.size === 0 ? null : preservedElements;
-}
-
-function syncPreservedCampaignMarkerAttributes(
-  preservedElement: HTMLElement,
-  replacementElement: HTMLElement
-): void {
-  const dynamicProjectionAttributes = new Set([
-    "style",
-    "hidden",
-    "data-terrain-projection-ready",
-  ]);
-
-  for (const attribute of Array.from(preservedElement.attributes)) {
-    if (dynamicProjectionAttributes.has(attribute.name)) {
-      continue;
-    }
-    if (!replacementElement.hasAttribute(attribute.name)) {
-      preservedElement.removeAttribute(attribute.name);
-    }
-  }
-
-  for (const attribute of Array.from(replacementElement.attributes)) {
-    if (dynamicProjectionAttributes.has(attribute.name)) {
-      continue;
-    }
-    preservedElement.setAttribute(attribute.name, attribute.value);
-  }
-}
-
-function restoreCampaignMarkerElements(
+function restoreCampaignMarkerLayer(
   root: ParentNode,
-  preservedElements: Map<string, HTMLElement> | null
+  preservedLayer: HTMLElement | null
 ): void {
-  if (preservedElements == null || preservedElements.size === 0) {
+  if (preservedLayer == null) {
     return;
   }
 
-  const replacementElements = Array.from(
-    root.querySelectorAll<HTMLElement>(
-      "[data-campaign-marker-id], [data-campaign-marker-summary-id]"
-    )
+  const replacementLayer = root.querySelector<HTMLElement>(
+    "[data-campaign-marker-layer]"
   );
-  for (const replacementElement of replacementElements) {
-    const stableKey = getCampaignMarkerStableKey(replacementElement);
-    const preservedElement =
-      stableKey == null ? null : preservedElements.get(stableKey) ?? null;
-    if (preservedElement == null) {
-      continue;
-    }
-
-    syncPreservedCampaignMarkerAttributes(preservedElement, replacementElement);
-    replacementElement.replaceWith(preservedElement);
+  if (replacementLayer == null) {
+    return;
   }
+
+  replacementLayer.replaceWith(preservedLayer);
 }
 
 function renderApp() {
@@ -5316,9 +5282,9 @@ function renderAppFrame(
     appState.gameState.ui.currentView === "map"
       ? captureCampaignTerrainCanvases(appRoot)
       : null;
-  const preservedCampaignMarkers =
+  const preservedCampaignMarkerLayer =
     appState.gameState.ui.currentView === "map"
-      ? captureCampaignMarkerElements(appRoot)
+      ? captureCampaignMarkerLayer(appRoot)
       : null;
   const presenterOutput = createAppPresenterOutput({
     appState,
@@ -5356,7 +5322,7 @@ function renderAppFrame(
     presenterOutput,
   });
   restoreCampaignTerrainCanvases(appRoot, preservedTerrainCanvases);
-  restoreCampaignMarkerElements(appRoot, preservedCampaignMarkers);
+  restoreCampaignMarkerLayer(appRoot, preservedCampaignMarkerLayer);
   startInitialCampaignMapDebugAnimationIfNeeded();
   syncCampaignMapDebugView();
   syncCampaignTerrainStyleView();
@@ -6030,6 +5996,12 @@ function syncCampaignMapDebugView(): void {
     "--map-debug-offset-y",
     "0px"
   );
+  transformElement.dataset.campaignMapScaleTier =
+    campaignMapDebugState.scale < 5
+      ? "hide-points"
+      : campaignMapDebugState.scale < 20
+        ? "hide-labels"
+        : "full";
   setCampaignTerrainCamera({
     scale: campaignMapDebugState.scale,
     offsetX: campaignMapDebugState.offsetX,

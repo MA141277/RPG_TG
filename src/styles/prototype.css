@@ -1077,8 +1077,8 @@
   bottom: var(--terrain-point-bottom, var(--marker-bottom));
   z-index: 2;
   display: grid;
-  grid-template-columns: 36px max-content;
-  gap: 8px;
+  grid-template-columns: 10px max-content;
+  gap: 6px;
   align-items: center;
   max-width: calc(140px * var(--map-marker-inverse-scale, 1));
   border: 0;
@@ -1092,12 +1092,16 @@
     0 0 6px rgb(0 0 0 / 70%);
   transform:
     translate(
-      calc(-18px + var(--terrain-point-offset-x, 0px)),
-      calc(18px + var(--terrain-point-offset-y, 0px))
+      calc(-5px + var(--terrain-point-offset-x, 0px)),
+      calc(5px + var(--terrain-point-offset-y, 0px))
     )
     scale(var(--terrain-point-perspective-scale, 1));
-  transform-origin: 18px 18px;
+  transform-origin: 5px 5px;
   cursor: pointer;
+}
+
+.c-campaign-marker-layer {
+  display: contents;
 }
 
 .c-campaign-marker:not([data-terrain-projection-ready]),
@@ -1118,23 +1122,23 @@
 }
 
 .c-campaign-marker__dot {
-  width: 36px;
-  height: 36px;
-  border: 0;
-  border-radius: 0;
-  background: center / contain no-repeat url("../../ui/yuansu/zhen.png");
-  box-shadow: none;
+  box-sizing: border-box;
+  width: 10px;
+  height: 10px;
+  border: 1.5px solid #090805;
+  border-radius: 999px;
+  background: #ffe68a;
+  box-shadow:
+    0 1px 0 rgb(255 251 210 / 78%) inset,
+    0 1px 3px rgb(0 0 0 / 72%);
   transform: scale(calc(var(--map-marker-inverse-scale, 1) / var(--terrain-point-perspective-scale, 1)));
   transform-origin: center;
 }
 
 .c-campaign-marker--fort .c-campaign-marker__dot {
-  border-radius: 0;
-  background: center / contain no-repeat url("../../ui/yuansu/cheng.png");
-}
-
-.c-campaign-marker--landmark .c-campaign-marker__dot {
-  background: #e6b84a;
+  border-radius: 999px;
+  background: #9b9b91;
+  opacity: 1;
 }
 
 .c-campaign-marker__label {
@@ -1206,6 +1210,24 @@
 
 .c-campaign-marker:hover + .c-campaign-marker__summary {
   display: grid;
+}
+
+[data-campaign-map-scale-tier="hide-labels"] .c-campaign-marker .c-campaign-marker__label,
+[data-campaign-map-scale-tier="hide-points"] .c-campaign-marker .c-campaign-marker__label {
+  display: none !important;
+}
+
+[data-campaign-map-scale-tier="hide-points"] .c-campaign-marker {
+  pointer-events: none;
+}
+
+[data-campaign-map-scale-tier="hide-points"] .c-campaign-marker .c-campaign-marker__dot {
+  display: none;
+}
+
+[data-campaign-map-scale-tier="hide-labels"] .c-campaign-marker:hover + .c-campaign-marker__summary,
+[data-campaign-map-scale-tier="hide-points"] .c-campaign-marker:hover + .c-campaign-marker__summary {
+  display: none !important;
 }
 
 .c-campaign-player {

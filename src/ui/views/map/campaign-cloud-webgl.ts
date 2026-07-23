@@ -3,6 +3,7 @@ import type { HexCoordinate } from "../../../application/navigation/travel-to-co
 import {
   getCampaignTerrainMapCoupledCamera,
   getCampaignTerrainProjectionSignature,
+  holdCampaignTerrainChunkLoading,
 } from "./campaign-terrain-webgl";
 import {
   createCloudRevealMaskCanvas,
@@ -14,6 +15,7 @@ import cloudVertexShaderRaw from "./shaders/campaign-cloud.vert.glsl?raw";
 const CLOUD_RENDER_MAX_DEVICE_PIXEL_RATIO = 1;
 const CLOUD_RENDER_MAX_LONG_EDGE_PX = 1280;
 const CLOUD_REVEAL_DISSOLVE_DURATION_MS = 1400;
+const CLOUD_REVEAL_TERRAIN_LOAD_BUFFER_MS = 700;
 const CLOUD_PROJECTION_READY_RETRY_INTERVAL_MS = 120;
 const CLOUD_PROJECTION_READY_MAX_RETRIES = 50;
 
@@ -229,6 +231,8 @@ function initCampaignCloudWebGl(
   let previousRevealHexes: HexCoordinate[] | null = null;
   let transitionRevealHexes: HexCoordinate[] | null = null;
   let transitionStartMs: number | null = null;
+  let releaseTerrainChunkLoadingHold: (() => void) | null = null;
+  let terrainChunkLoadingReleaseTimeoutId: number | null = null;
 
   function resolveProjectionRoot(): ParentNode {
     return (
@@ -244,6 +248,31 @@ function initCampaignCloudWebGl(
     }
 
     frameId = window.requestAnimationFrame(render);
+  }
+
+  function holdTerrainChunkLoadingForRevealTransition(): void {
+    if (terrainChunkLoadingReleaseTimeoutId != null) {
+      window.clearTimeout(terrainChunkLoadingReleaseTimeoutId);
+      terrainChunkLoadingReleaseTimeoutId = null;
+    }
+    if (releaseTerrainChunkLoadingHold == null) {
+      releaseTerrainChunkLoadingHold = holdCampaignTerrainChunkLoading();
+    }
+  }
+
+  function scheduleTerrainChunkLoadingHoldRelease(): void {
+    if (
+      releaseTerrainChunkLoadingHold == null ||
+      terrainChunkLoadingReleaseTimeoutId != null
+    ) {
+      return;
+    }
+
+    terrainChunkLoadingReleaseTimeoutId = window.setTimeout(() => {
+      terrainChunkLoadingReleaseTimeoutId = null;
+      releaseTerrainChunkLoadingHold?.();
+      releaseTerrainChunkLoadingHold = null;
+    }, CLOUD_REVEAL_TERRAIN_LOAD_BUFFER_MS);
   }
 
   function syncRevealMask(): void {
@@ -271,6 +300,7 @@ function initCampaignCloudWebGl(
       descriptor.revealedHexSignature !== revealHexSignature;
     if (didRevealSetChange && previousRevealHexes != null) {
       transitionRevealHexes = previousRevealHexes;
+      holdTerrainChunkLoadingForRevealTransition();
       updateTexture(
         gl,
         previousRevealTexture,
@@ -364,6 +394,7 @@ function initCampaignCloudWebGl(
     if (transition >= 1) {
       transitionStartMs = null;
       transitionRevealHexes = null;
+      scheduleTerrainChunkLoadingHoldRelease();
     }
 
     return transition;
@@ -426,6 +457,11 @@ function initCampaignCloudWebGl(
       if (projectionReadyTimeoutId != null) {
         window.clearTimeout(projectionReadyTimeoutId);
       }
+      if (terrainChunkLoadingReleaseTimeoutId != null) {
+        window.clearTimeout(terrainChunkLoadingReleaseTimeoutId);
+      }
+      releaseTerrainChunkLoadingHold?.();
+      releaseTerrainChunkLoadingHold = null;
 
       window.removeEventListener("resize", handleResize);
       gl.deleteBuffer(vertexBuffer);

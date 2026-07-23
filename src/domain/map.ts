@@ -221,6 +221,55 @@ export type CampaignVegetationRulesDefinition = {
   };
 };
 
+export type CampaignMapNodeMeshDefinition = {
+  schemaVersion: 1;
+  format: "campaign-map-node-mesh-v1";
+  id: string;
+  label: string;
+  source: {
+    kind: "obj-mtl";
+    objPath: string;
+    mtlPath: string;
+    localAxes: {
+      horizontalX: string;
+      horizontalY: string;
+      height: string;
+    };
+  };
+  placement: {
+    innerHexRadius: number;
+    uniformScale?: number;
+    baseWorldScale: number;
+    rotationDegrees: number;
+    offsetX?: number;
+    offsetY?: number;
+    lift: number;
+  };
+  counts: {
+    vertices: number;
+    faces: number;
+  };
+  bounds: {
+    min: [number, number, number];
+    max: [number, number, number];
+  };
+  sourceBounds: {
+    min: [number, number, number];
+    max: [number, number, number];
+  };
+  positions: number[];
+  normals: number[];
+  uvs: number[];
+  indices: number[];
+  drawGroups: Array<{
+    materialName: string;
+    textureUrl: string | null;
+    start: number;
+    count: number;
+  }>;
+  textures: string[];
+};
+
 export type MapDefinition = {
   id: MapId;
   name: string;

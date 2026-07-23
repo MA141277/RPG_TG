@@ -3,7 +3,6 @@ import type { MapLayer, MapStats } from "../../../domain/map";
 import redTurbanMarkerUrl from "../../../assets/yuanmo-map/chuang-swordsman-marker.png";
 import {
   createMapViewModel,
-  type CampaignMarker,
   type MapViewModel,
 } from "./map-view-model";
 
@@ -51,31 +50,6 @@ function renderGridMap(model: MapViewModel): string {
   `;
 }
 
-function getMarkerClass(kind: CampaignMarker["kind"]): string {
-  if (kind === "fort") {
-    return "c-campaign-marker--fort";
-  }
-
-  if (kind === "settlement" || kind === "city") {
-    return "c-campaign-marker--settlement";
-  }
-
-  return "c-campaign-marker--landmark";
-}
-
-function getMarkerDisplayName(name: string): string {
-  const markerIndex = Math.max(
-    name.lastIndexOf("\u2605"),
-    name.lastIndexOf("\u203b"),
-    name.lastIndexOf("\u25cf")
-  );
-  if (markerIndex >= 0) {
-    return name.slice(markerIndex + 1).trim();
-  }
-
-  return name.replace(/^\u3010(.+)\u3011$/, "$1");
-}
-
 function escapeHtml(value: string): string {
   return value
     .replace(/&/g, "&amp;")
@@ -84,94 +58,28 @@ function escapeHtml(value: string): string {
     .replace(/"/g, "&quot;");
 }
 
-function renderCharacterGroup(label: string, names: string[]): string {
-  if (names.length === 0) {
-    return "";
-  }
-
-  return `<span><b>${label}</b>${names.map(escapeHtml).join(" / ")}</span>`;
+function escapeJsonForHtmlScript(value: string): string {
+  return value
+    .replace(/</g, "\\u003c")
+    .replace(/>/g, "\\u003e")
+    .replace(/&/g, "\\u0026")
+    .replace(/\u2028/g, "\\u2028")
+    .replace(/\u2029/g, "\\u2029");
 }
 
-function renderHistoricalCharacters(
-  marker: CampaignMarker
-): string {
-  if (marker.historicalCharacters == null) {
-    return "";
-  }
+function renderCampaignMarkerRuntimeSource(model: MapViewModel): string {
+  const markerSource = model.campaignMarkers.map((marker) => ({
+    ...marker,
+    left: marker.x / model.coordinateSpace.width * 100,
+    bottom: marker.y / model.coordinateSpace.height * 100,
+    u: marker.x / model.coordinateSpace.width,
+    v: 1 - marker.y / model.coordinateSpace.height,
+  }));
 
-  const characterGroups = [
-    renderCharacterGroup("Primary: ", marker.historicalCharacters.primary),
-    renderCharacterGroup("Related: ", marker.historicalCharacters.secondary),
-    renderCharacterGroup("Background: ", marker.historicalCharacters.background),
-  ]
-    .filter((item) => item !== "")
-    .join("");
-  const notes =
-    marker.historicalCharacters.notes === ""
-      ? ""
-      : `<span><b>Notes: </b>${escapeHtml(marker.historicalCharacters.notes)}</span>`;
-
-  return `<span class="c-campaign-marker__characters">${characterGroups}${notes}</span>`;
-}
-
-function renderCampaignMarkers(model: MapViewModel): string {
-  return model.campaignMarkers
-    .map((marker) => {
-      const left = (marker.x / model.coordinateSpace.width) * 100;
-      const bottom = (marker.y / model.coordinateSpace.height) * 100;
-      const heightU = marker.x / model.coordinateSpace.width;
-      const heightV = 1 - marker.y / model.coordinateSpace.height;
-      const displayName = getMarkerDisplayName(marker.name);
-      const markerName = escapeHtml(marker.name);
-      const markerSummary = escapeHtml(marker.summary);
-      const markerPositionStyle = `--marker-left:${left.toFixed(3)}%; --marker-bottom:${bottom.toFixed(3)}%;`;
-      const markerInteractionAttributes = marker.isRevealed
-        ? `
-          data-map-node-id="${marker.id}"
-          data-map-node-name="${markerName}"
-          title="${markerName} (${marker.x}, ${marker.y})"
-        `
-        : `
-          disabled
-          aria-hidden="true"
-          tabindex="-1"
-          data-map-node-revealed="false"
-        `;
-      const markerProjectionAttributes = `
-          data-terrain-projected-point="true"
-          data-map-height-u="${heightU.toFixed(5)}"
-          data-map-height-v="${heightV.toFixed(5)}"
-        `;
-
-      return `
-        <button
-          class="c-campaign-marker ${getMarkerClass(marker.kind)}"
-          style="${markerPositionStyle}"
-          ${markerProjectionAttributes}
-          data-campaign-marker-id="${escapeHtml(marker.id)}"
-          data-map-x="${marker.x}"
-          data-map-y="${marker.y}"
-          data-city-id="${marker.cityId ?? ""}"
-          ${markerInteractionAttributes}
-        >
-          <span class="c-campaign-marker__dot"></span>
-          <span class="c-campaign-marker__label">${escapeHtml(displayName)}</span>
-        </button>
-        <span
-          class="c-campaign-marker__summary"
-          style="${markerPositionStyle}"
-          ${markerProjectionAttributes}
-          data-campaign-marker-summary-id="${escapeHtml(marker.id)}"
-          aria-hidden="true"
-          data-map-node-revealed="${marker.isRevealed ? "true" : "false"}"
-        >
-          <strong>${markerName}</strong>
-          ${marker.summary === "" ? "" : `<span>${markerSummary}</span>`}
-          ${renderHistoricalCharacters(marker)}
-        </span>
-      `;
-    })
-    .join("");
+  return `
+    <script type="application/json" data-campaign-marker-source="true">${escapeJsonForHtmlScript(JSON.stringify(markerSource))}</script>
+    <div class="c-campaign-marker-layer" data-campaign-marker-layer="true"></div>
+  `;
 }
 
 export function renderCampaignLayers(layers: MapLayer[]): string {
@@ -243,6 +151,10 @@ function renderCampaignMapVisualLayer(
           data-campaign-city-u="${cityDepthMeshU.toFixed(5)}"
           data-campaign-city-v="${cityDepthMeshV.toFixed(5)}"
         `;
+  const fortWallMeshAttributes =
+    model.fortWallMeshAssetUrl == null
+      ? ""
+      : `data-campaign-fort-wall-mesh-url="${model.fortWallMeshAssetUrl}"`;
   const terrainCanvasMarkup =
     !canRenderWebGlTerrain
       ? ""
@@ -261,6 +173,7 @@ function renderCampaignMapVisualLayer(
           ${model.snowTextureImageUrl == null ? "" : `data-map-snow-texture-url="${model.snowTextureImageUrl}"`}
           ${model.waterTextureImageUrl == null ? "" : `data-map-water-texture-url="${model.waterTextureImageUrl}"`}
           ${cityDepthMeshAttributes}
+          ${fortWallMeshAttributes}
           aria-label="${model.mapName} terrain"
         ></canvas>
       `;
@@ -306,7 +219,7 @@ function renderCampaignMapVisualLayer(
       ${
         options.includeInteractivePoints
           ? `
-            ${renderCampaignMarkers(model)}
+            ${renderCampaignMarkerRuntimeSource(model)}
             ${actorCanvasMarkup}
             <span
               class="${playerClassName}"

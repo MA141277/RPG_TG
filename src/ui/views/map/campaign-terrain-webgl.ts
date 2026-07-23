@@ -5,6 +5,7 @@ import type {
 } from "../../../application/navigation/travel-to-coordinate";
 import type {
   CampaignHexGridDefinition,
+  CampaignMapNodeMeshDefinition,
   CampaignVegetationMeshDefinition,
   CampaignVegetationRulesDefinition,
 } from "../../../domain/map";
@@ -38,6 +39,7 @@ type CampaignTerrainInput = {
   materialUrl: string;
   campaignHexGridUrl: string | null;
   campaignVegetationRulesUrl: string | null;
+  campaignFortWallMeshUrl: string | null;
   grassTextureUrl: string | null;
   sandTextureUrl: string | null;
   rockTextureUrl: string | null;
@@ -59,6 +61,12 @@ type ActorMeshData = {
 type CityDepthMeshData = {
   vertices: Float32Array;
   indices: Uint32Array;
+};
+
+type FortWallMeshData = {
+  vertices: Float32Array;
+  indices: Uint32Array;
+  drawGroups: FortWallMeshDrawGroup[];
 };
 
 type VegetationMeshData = {
@@ -139,6 +147,54 @@ type CityDepthMeshAsset = {
   u: number;
   v: number;
   minHeight: number;
+};
+
+type FortWallMeshAsset = {
+  positions: Float32Array;
+  normals: Float32Array;
+  uvs: Float32Array;
+  indices: Uint32Array;
+  drawGroups: Array<{
+    materialName: string;
+    textureUrl: string | null;
+    start: number;
+    count: number;
+  }>;
+  placement: CampaignMapNodeMeshDefinition["placement"];
+  texturesByUrl: Map<string, HTMLImageElement>;
+};
+
+type FortWallMeshDrawGroup = {
+  textureUrl: string | null;
+  start: number;
+  count: number;
+};
+
+type FortWallInstance = {
+  u: number;
+  v: number;
+  key: string;
+};
+
+type CampaignRuntimeMarker = {
+  id: string;
+  cityId: string | null;
+  name: string;
+  x: number;
+  y: number;
+  kind: "city" | "settlement" | "fort" | "landmark";
+  summary: string;
+  isRevealed: boolean;
+  left: number;
+  bottom: number;
+  u: number;
+  v: number;
+  historicalCharacters: {
+    primary: string[];
+    secondary: string[];
+    background: string[];
+    notes: string;
+  } | null;
 };
 
 type CityDepthMeshAssetJson = {
@@ -442,6 +498,9 @@ type CampaignActorData = {
 
 const activeRenderers = new Map<HTMLCanvasElement, CampaignTerrainRenderer>();
 const pendingRendererCanvases = new Set<HTMLCanvasElement>();
+let terrainChunkLoadingDeferredUntilMs = 0;
+let terrainChunkLoadingHoldCount = 0;
+let terrainChunkLoadingResumeTimeoutId: number | null = null;
 
 type CampaignTerrainProjectionInput = {
   canvas: HTMLCanvasElement;
@@ -506,6 +565,7 @@ type CampaignMaterialSemanticModel = {
   cells: GridCoordinate[];
   landByCellKey: Map<string, boolean>;
   mountainByCellKey: Map<string, boolean>;
+  terrainByCellKey: Map<string, string>;
   referenceHeightByCellKey: Map<string, number>;
 };
 
@@ -528,6 +588,7 @@ const shorelineChainEdgesBySemanticModel = new WeakMap<
   CampaignMaterialSemanticModel,
   ShorelineChainEdge[]
 >();
+const campaignMarkerSourceCache = new WeakMap<HTMLScriptElement, CampaignRuntimeMarker[]>();
 let campaignTerrainChunkCacheDbPromise: Promise<IDBDatabase | null> | null = null;
 
 type ShorelineChainEdge = {
@@ -579,6 +640,72 @@ export function requestCampaignTerrainRender(reason: "static" | "dynamic" = "dyn
   for (const renderer of activeRenderers.values()) {
     renderer.requestRender(reason);
   }
+}
+
+export function deferCampaignTerrainChunkLoadingUntil(timestampMs: number): void {
+  if (!Number.isFinite(timestampMs)) {
+    return;
+  }
+
+  terrainChunkLoadingDeferredUntilMs = Math.max(
+    terrainChunkLoadingDeferredUntilMs,
+    timestampMs
+  );
+  scheduleCampaignTerrainChunkLoadingResume();
+}
+
+export function holdCampaignTerrainChunkLoading(): () => void {
+  let released = false;
+  terrainChunkLoadingHoldCount += 1;
+  if (terrainChunkLoadingResumeTimeoutId != null) {
+    window.clearTimeout(terrainChunkLoadingResumeTimeoutId);
+    terrainChunkLoadingResumeTimeoutId = null;
+  }
+
+  return () => {
+    if (released) {
+      return;
+    }
+
+    released = true;
+    terrainChunkLoadingHoldCount = Math.max(terrainChunkLoadingHoldCount - 1, 0);
+    scheduleCampaignTerrainChunkLoadingResume();
+  };
+}
+
+function getCampaignTerrainChunkLoadingResumeDelayMs(): number {
+  return Math.max(terrainChunkLoadingDeferredUntilMs - performance.now(), 0);
+}
+
+function isCampaignTerrainChunkLoadingDeferred(): boolean {
+  return terrainChunkLoadingHoldCount > 0 ||
+    getCampaignTerrainChunkLoadingResumeDelayMs() > 0;
+}
+
+function isCampaignTerrainChunkLoadingHeld(): boolean {
+  return terrainChunkLoadingHoldCount > 0;
+}
+
+function scheduleCampaignTerrainChunkLoadingResume(): void {
+  if (terrainChunkLoadingResumeTimeoutId != null) {
+    window.clearTimeout(terrainChunkLoadingResumeTimeoutId);
+    terrainChunkLoadingResumeTimeoutId = null;
+  }
+
+  if (terrainChunkLoadingHoldCount > 0) {
+    return;
+  }
+
+  const delayMs = getCampaignTerrainChunkLoadingResumeDelayMs();
+  if (delayMs <= 0) {
+    requestCampaignTerrainRender("static");
+    return;
+  }
+
+  terrainChunkLoadingResumeTimeoutId = window.setTimeout(() => {
+    terrainChunkLoadingResumeTimeoutId = null;
+    requestCampaignTerrainRender("static");
+  }, delayMs);
 }
 
 function clampTerrainBeachTuning(
@@ -888,6 +1015,8 @@ function readCampaignTerrainInput(canvas: HTMLCanvasElement): CampaignTerrainInp
       renderMode === "terrain"
         ? canvas.dataset.mapVegetationRulesUrl ?? null
         : null,
+    campaignFortWallMeshUrl:
+      renderMode === "terrain" ? canvas.dataset.campaignFortWallMeshUrl ?? null : null,
     grassTextureUrl:
       renderMode === "terrain" ? canvas.dataset.mapGrassTextureUrl ?? null : null,
     sandTextureUrl:
@@ -910,6 +1039,7 @@ function getCampaignTerrainInputSignature(input: CampaignTerrainInput): string {
     input.materialUrl,
     input.campaignHexGridUrl ?? "",
     input.campaignVegetationRulesUrl ?? "",
+    input.campaignFortWallMeshUrl ?? "",
     input.grassTextureUrl ?? "",
     input.sandTextureUrl ?? "",
     input.rockTextureUrl ?? "",
@@ -1008,6 +1138,15 @@ async function initCampaignTerrainWebGl(
       return null;
     })
     : Promise.resolve(null);
+  const fortWallAssetPromise =
+    renderTerrain && input.campaignFortWallMeshUrl != null
+      ? loadCampaignFortWallMeshAsset(input.campaignFortWallMeshUrl).catch(
+        (error: unknown) => {
+          console.error("Failed to load campaign fort wall mesh asset.", error);
+          return null;
+        }
+      )
+      : Promise.resolve(null);
   const campaignHexGridPromise =
     input.campaignHexGridUrl == null
       ? Promise.resolve(null)
@@ -1069,6 +1208,7 @@ async function initCampaignTerrainWebGl(
     snowTextureImage,
     actorAsset,
     cityDepthAsset,
+    fortWallAsset,
     campaignHexGrid,
     vegetationAsset,
   ] = await Promise.all([
@@ -1081,6 +1221,7 @@ async function initCampaignTerrainWebGl(
     snowTextureImagePromise,
     actorAssetPromise,
     cityDepthAssetPromise,
+    fortWallAssetPromise,
     campaignHexGridPromise,
     vegetationAssetPromise,
   ]);
@@ -1287,6 +1428,8 @@ async function initCampaignTerrainWebGl(
   const actorIndexBuffer = gl.createBuffer();
   const cityDepthVertexBuffer = gl.createBuffer();
   const cityDepthIndexBuffer = gl.createBuffer();
+  const fortWallVertexBuffer = gl.createBuffer();
+  const fortWallIndexBuffer = gl.createBuffer();
   const vegetationVertexBuffer = gl.createBuffer();
   const vegetationIndexBuffer = gl.createBuffer();
   const vegetationShadowVertexBuffer = gl.createBuffer();
@@ -1321,6 +1464,12 @@ async function initCampaignTerrainWebGl(
       });
   const cityDepthTexture =
     cityDepthAsset == null ? null : createTexture(gl, cityDepthAsset.textureImage);
+  const fortWallTexturesByUrl = new Map<string, WebGLTexture>();
+  if (fortWallAsset != null) {
+    for (const [textureUrl, textureImage] of fortWallAsset.texturesByUrl.entries()) {
+      fortWallTexturesByUrl.set(textureUrl, createRepeatableTexture(gl, textureImage));
+    }
+  }
 
   const missingResources = [
     positionLocation < 0 ? "aPosition" : null,
@@ -1409,6 +1558,8 @@ async function initCampaignTerrainWebGl(
     actorIndexBuffer == null ? "actor.indexBuffer" : null,
     cityDepthVertexBuffer == null ? "cityDepth.vertexBuffer" : null,
     cityDepthIndexBuffer == null ? "cityDepth.indexBuffer" : null,
+    fortWallVertexBuffer == null ? "fortWall.vertexBuffer" : null,
+    fortWallIndexBuffer == null ? "fortWall.indexBuffer" : null,
     vegetationVertexBuffer == null ? "vegetation.vertexBuffer" : null,
     vegetationIndexBuffer == null ? "vegetation.indexBuffer" : null,
     vegetationShadowVertexBuffer == null ? "vegetationShadow.vertexBuffer" : null,
@@ -1427,6 +1578,7 @@ async function initCampaignTerrainWebGl(
     }
   }
   let cityDepthMesh: CityDepthMeshData | null = null;
+  let fortWallMesh: FortWallMeshData | null = null;
   gl.enable(gl.DEPTH_TEST);
   gl.disable(gl.BLEND);
   gl.disable(gl.CULL_FACE);
@@ -1436,6 +1588,8 @@ async function initCampaignTerrainWebGl(
   let projectedPointsNeedSync = true;
   let lastActorSignature = "";
   let lastCityDepthMeshSignature = "";
+  let lastFortWallMeshSignature = "";
+  let lastCampaignMarkerLayerSignature = "";
   let lastVegetationMeshSignature = "";
   let lastChunkShorelineSignature = getShorelineDistanceTextureSignature(terrainBeachTuning);
   let lastCanvasWidth = 0;
@@ -1450,6 +1604,8 @@ async function initCampaignTerrainWebGl(
   const chunkDataByKey = new Map<string, CampaignTerrainChunkData>();
   const chunkResourcesByKey = new Map<string, CampaignTerrainChunkRenderResource>();
   const pendingChunkKeys = new Set<string>();
+  const deferredChunkUploadsByKey = new Map<string, CampaignTerrainChunkData>();
+  let deferredChunkUploadTimeoutId: number | null = null;
   const sampleHeightAtUv = (u: number, v: number): number =>
     sampleHeightFromCampaignTerrainChunks({
       materialSemanticModel,
@@ -1472,7 +1628,9 @@ async function initCampaignTerrainWebGl(
       projectedPointsNeedSync = true;
       lastVegetationMeshSignature = "";
       lastCityDepthMeshSignature = "";
+      lastFortWallMeshSignature = "";
       cityDepthMesh = null;
+      fortWallMesh = null;
       return;
     }
 
@@ -1506,12 +1664,55 @@ async function initCampaignTerrainWebGl(
     projectedPointsNeedSync = true;
     lastVegetationMeshSignature = "";
     lastCityDepthMeshSignature = "";
+    lastFortWallMeshSignature = "";
     cityDepthMesh = null;
+    fortWallMesh = null;
+  };
+  const scheduleDeferredChunkUploadFlush = (): void => {
+    if (deferredChunkUploadTimeoutId != null) {
+      window.clearTimeout(deferredChunkUploadTimeoutId);
+      deferredChunkUploadTimeoutId = null;
+    }
+
+    if (isCampaignTerrainChunkLoadingHeld()) {
+      return;
+    }
+
+    const delayMs = getCampaignTerrainChunkLoadingResumeDelayMs();
+    if (delayMs <= 0) {
+      requestRender("static");
+      return;
+    }
+
+    deferredChunkUploadTimeoutId = window.setTimeout(() => {
+      deferredChunkUploadTimeoutId = null;
+      requestRender("static");
+    }, delayMs);
+  };
+  const flushDeferredChunkUploads = (): void => {
+    if (deferredChunkUploadsByKey.size <= 0) {
+      return;
+    }
+    if (isCampaignTerrainChunkLoadingDeferred()) {
+      scheduleDeferredChunkUploadFlush();
+      return;
+    }
+
+    for (const chunk of deferredChunkUploadsByKey.values()) {
+      uploadCampaignTerrainChunk(chunk);
+    }
+    deferredChunkUploadsByKey.clear();
   };
   const ensureCampaignTerrainChunkKeys = (keys: Iterable<string>): void => {
+    if (isCampaignTerrainChunkLoadingDeferred()) {
+      scheduleCampaignTerrainChunkLoadingResume();
+      return;
+    }
+
     for (const chunkKey of keys) {
       if (
         chunkResourcesByKey.has(chunkKey) ||
+        deferredChunkUploadsByKey.has(chunkKey) ||
         pendingChunkKeys.has(chunkKey)
       ) {
         continue;
@@ -1525,6 +1726,12 @@ async function initCampaignTerrainWebGl(
         beachTuning: terrainBeachTuning,
       }).then((chunk) => {
         pendingChunkKeys.delete(chunkKey);
+        if (isCampaignTerrainChunkLoadingDeferred()) {
+          deferredChunkUploadsByKey.set(chunk.key, chunk);
+          scheduleDeferredChunkUploadFlush();
+          return;
+        }
+
         uploadCampaignTerrainChunk(chunk);
         requestRender("static");
       }).catch((error: unknown) => {
@@ -1557,6 +1764,7 @@ async function initCampaignTerrainWebGl(
     frameId = null;
     hasPendingRender = false;
     resizeCanvasToDisplaySize(input.canvas);
+    flushDeferredChunkUploads();
     const resized =
       input.canvas.width !== lastCanvasWidth || input.canvas.height !== lastCanvasHeight;
     if (resized) {
@@ -1583,7 +1791,23 @@ async function initCampaignTerrainWebGl(
       chunkDataByKey.clear();
       lastChunkShorelineSignature = chunkShorelineSignature;
       lastVegetationMeshSignature = "";
+      lastFortWallMeshSignature = "";
       cityDepthMesh = null;
+      fortWallMesh = null;
+    }
+
+    if (renderTerrain) {
+      const campaignMarkerLayerSignature = syncCampaignMarkerLayer({
+        canvas: input.canvas,
+        materialSemanticModel,
+        loadedChunkKeys: new Set(chunkResourcesByKey.keys()),
+      });
+      if (campaignMarkerLayerSignature !== lastCampaignMarkerLayerSignature) {
+        lastCampaignMarkerLayerSignature = campaignMarkerLayerSignature;
+        projectedPointsNeedSync = true;
+        lastFortWallMeshSignature = "";
+        fortWallMesh = null;
+      }
     }
 
     if (renderTerrain) {
@@ -1960,6 +2184,90 @@ async function initCampaignTerrainWebGl(
       gl.drawElements(gl.TRIANGLES, cityDepthMesh.indices.length, gl.UNSIGNED_INT, 0);
     }
 
+    if (renderTerrain && fortWallAsset != null && fortWallTexturesByUrl.size > 0) {
+      const fortWallInstances = readCampaignFortWallInstances(
+        input.canvas,
+        new Set(chunkResourcesByKey.keys())
+      );
+      const fortWallMeshSignature = getCampaignFortWallMeshSignature(
+        fortWallInstances
+      );
+      if (fortWallMesh == null || fortWallMeshSignature !== lastFortWallMeshSignature) {
+        fortWallMesh = createCampaignFortWallMesh(
+          fortWallAsset,
+          fortWallInstances,
+          sampleHeightAtUv
+        );
+        gl.bindBuffer(gl.ARRAY_BUFFER, fortWallVertexBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, fortWallMesh.vertices, gl.DYNAMIC_DRAW);
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, fortWallIndexBuffer);
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, fortWallMesh.indices, gl.DYNAMIC_DRAW);
+        lastFortWallMeshSignature = fortWallMeshSignature;
+      }
+
+      if (fortWallMesh.indices.length > 0) {
+        gl.useProgram(actorProgram);
+        gl.bindBuffer(gl.ARRAY_BUFFER, fortWallVertexBuffer);
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, fortWallIndexBuffer);
+        const fortWallStride = 8 * Float32Array.BYTES_PER_ELEMENT;
+        gl.enableVertexAttribArray(actorPositionLocation);
+        gl.vertexAttribPointer(
+          actorPositionLocation,
+          3,
+          gl.FLOAT,
+          false,
+          fortWallStride,
+          0
+        );
+        gl.enableVertexAttribArray(actorNormalLocation);
+        gl.vertexAttribPointer(
+          actorNormalLocation,
+          3,
+          gl.FLOAT,
+          false,
+          fortWallStride,
+          3 * Float32Array.BYTES_PER_ELEMENT
+        );
+        gl.enableVertexAttribArray(actorUvLocation);
+        gl.vertexAttribPointer(
+          actorUvLocation,
+          2,
+          gl.FLOAT,
+          false,
+          fortWallStride,
+          6 * Float32Array.BYTES_PER_ELEMENT
+        );
+        gl.uniformMatrix4fv(
+          actorMatrixLocation,
+          false,
+          createTerrainMatrix(input.canvas.width / Math.max(input.canvas.height, 1))
+        );
+        gl.uniform3f(actorLightLocation, -0.58, 0.52, 0.62);
+        gl.uniform3f(actorTintLocation, 1, 1, 1);
+        gl.uniform1f(actorForceOpaqueAlphaLocation, 0);
+        gl.disable(gl.CULL_FACE);
+        gl.depthMask(true);
+        for (const drawGroup of fortWallMesh.drawGroups) {
+          const textureObject =
+            drawGroup.textureUrl == null
+              ? null
+              : fortWallTexturesByUrl.get(drawGroup.textureUrl);
+          if (textureObject == null || drawGroup.count <= 0) {
+            continue;
+          }
+          gl.activeTexture(gl.TEXTURE0);
+          gl.bindTexture(gl.TEXTURE_2D, textureObject);
+          gl.uniform1i(actorTextureLocation, 0);
+          gl.drawElements(
+            gl.TRIANGLES,
+            drawGroup.count,
+            gl.UNSIGNED_INT,
+            drawGroup.start * Uint32Array.BYTES_PER_ELEMENT
+          );
+        }
+      }
+    }
+
     const actor = readCampaignActorData(input.canvas);
     if (shouldRenderActorInThisCanvas && actor != null && actorAsset != null && actorTexture != null) {
       const actorSignature = [
@@ -2094,6 +2402,9 @@ async function initCampaignTerrainWebGl(
       if (dynamicAnimationTimeoutId != null) {
         window.clearTimeout(dynamicAnimationTimeoutId);
       }
+      if (deferredChunkUploadTimeoutId != null) {
+        window.clearTimeout(deferredChunkUploadTimeoutId);
+      }
 
       window.removeEventListener("resize", handleResize);
       for (const chunkResource of chunkResourcesByKey.values()) {
@@ -2106,6 +2417,8 @@ async function initCampaignTerrainWebGl(
       gl.deleteBuffer(actorIndexBuffer);
       gl.deleteBuffer(cityDepthVertexBuffer);
       gl.deleteBuffer(cityDepthIndexBuffer);
+      gl.deleteBuffer(fortWallVertexBuffer);
+      gl.deleteBuffer(fortWallIndexBuffer);
       gl.deleteBuffer(vegetationVertexBuffer);
       gl.deleteBuffer(vegetationIndexBuffer);
       gl.deleteBuffer(vegetationShadowVertexBuffer);
@@ -2125,6 +2438,9 @@ async function initCampaignTerrainWebGl(
       }
       if (cityDepthTexture != null) {
         gl.deleteTexture(cityDepthTexture);
+      }
+      for (const fortWallTexture of fortWallTexturesByUrl.values()) {
+        gl.deleteTexture(fortWallTexture);
       }
       gl.deleteProgram(program);
       gl.deleteProgram(actorProgram);
@@ -3254,6 +3570,49 @@ async function loadCampaignCityDepthMeshAsset(
   };
 }
 
+async function loadCampaignFortWallMeshAsset(
+  meshUrl: string
+): Promise<FortWallMeshAsset> {
+  const asset = await loadJson<CampaignMapNodeMeshDefinition>(meshUrl);
+  if (asset.format !== "campaign-map-node-mesh-v1") {
+    throw new Error(`Unsupported campaign map node mesh format "${asset.format}".`);
+  }
+  if (
+    asset.positions.length % 3 !== 0 ||
+    asset.normals.length !== asset.positions.length ||
+    asset.uvs.length !== (asset.positions.length / 3) * 2 ||
+    asset.indices.length % 3 !== 0
+  ) {
+    throw new Error("Campaign map node mesh arrays are inconsistent.");
+  }
+
+  const textureUrls = Array.from(
+    new Set(
+      asset.drawGroups
+        .map((drawGroup) => drawGroup.textureUrl)
+        .filter((textureUrl): textureUrl is string => textureUrl != null)
+    )
+  );
+  const texturesByUrl = new Map<string, HTMLImageElement>();
+  const absoluteMeshUrl = new URL(meshUrl, window.location.href).toString();
+  await Promise.all(
+    textureUrls.map(async (textureUrl) => {
+      const resolvedTextureUrl = new URL(textureUrl, absoluteMeshUrl).toString();
+      texturesByUrl.set(textureUrl, await loadImage(resolvedTextureUrl));
+    })
+  );
+
+  return {
+    positions: new Float32Array(asset.positions),
+    normals: new Float32Array(asset.normals),
+    uvs: new Float32Array(asset.uvs),
+    indices: new Uint32Array(asset.indices),
+    drawGroups: asset.drawGroups,
+    placement: asset.placement,
+    texturesByUrl,
+  };
+}
+
 function createCityDepthMesh(
   asset: CityDepthMeshAsset,
   sampleHeightAtUv: (u: number, v: number) => number,
@@ -3325,6 +3684,532 @@ function createCityDepthMesh(
     vertices,
     indices: asset.indices,
   };
+}
+
+function createCampaignFortWallMesh(
+  asset: FortWallMeshAsset,
+  instances: FortWallInstance[],
+  sampleHeightAtUv: (u: number, v: number) => number
+): FortWallMeshData {
+  const sourceVertexCount = asset.positions.length / 3;
+  const vertices = new Float32Array(instances.length * sourceVertexCount * 8);
+  const groupIndicesByTextureUrl = new Map<string | null, number[]>();
+  const rotation = asset.placement.rotationDegrees * Math.PI / 180;
+  const rotationCos = Math.cos(rotation);
+  const rotationSin = Math.sin(rotation);
+
+  for (let instanceIndex = 0; instanceIndex < instances.length; instanceIndex += 1) {
+    const instance = instances[instanceIndex];
+    if (instance == null) {
+      continue;
+    }
+    const terrainHeight = sampleHeightAtUv(instance.u, instance.v);
+    const center = createTerrainWorldPoint(instance.u, instance.v, terrainHeight);
+    const vertexBase = instanceIndex * sourceVertexCount;
+    const outputVertexOffset = instanceIndex * sourceVertexCount * 8;
+
+    for (let vertexIndex = 0; vertexIndex < sourceVertexCount; vertexIndex += 1) {
+      const sourcePositionOffset = vertexIndex * 3;
+      const sourceUvOffset = vertexIndex * 2;
+      const outputOffset = outputVertexOffset + vertexIndex * 8;
+      const localX =
+        (asset.positions[sourcePositionOffset] ?? 0) * asset.placement.baseWorldScale;
+      const localY =
+        (asset.positions[sourcePositionOffset + 1] ?? 0) *
+        asset.placement.baseWorldScale;
+      const rotatedX = localX * rotationCos - localY * rotationSin;
+      const rotatedY = localX * rotationSin + localY * rotationCos;
+      const normalX = asset.normals[sourcePositionOffset] ?? 0;
+      const normalY = asset.normals[sourcePositionOffset + 1] ?? 0;
+      const rotatedNormalX = normalX * rotationCos - normalY * rotationSin;
+      const rotatedNormalY = normalX * rotationSin + normalY * rotationCos;
+
+      vertices[outputOffset] =
+        center[0] + (asset.placement.offsetX ?? 0) + rotatedX;
+      vertices[outputOffset + 1] =
+        center[1] + (asset.placement.offsetY ?? 0) + rotatedY;
+      vertices[outputOffset + 2] =
+        center[2] +
+        asset.placement.lift +
+        (asset.positions[sourcePositionOffset + 2] ?? 0) * asset.placement.baseWorldScale;
+      vertices[outputOffset + 3] = rotatedNormalX;
+      vertices[outputOffset + 4] = rotatedNormalY;
+      vertices[outputOffset + 5] = asset.normals[sourcePositionOffset + 2] ?? 1;
+      vertices[outputOffset + 6] = asset.uvs[sourceUvOffset] ?? 0;
+      vertices[outputOffset + 7] = asset.uvs[sourceUvOffset + 1] ?? 0;
+    }
+
+    for (const drawGroup of asset.drawGroups) {
+      if (drawGroup.count <= 0) {
+        continue;
+      }
+
+      let indices = groupIndicesByTextureUrl.get(drawGroup.textureUrl);
+      if (indices == null) {
+        indices = [];
+        groupIndicesByTextureUrl.set(drawGroup.textureUrl, indices);
+      }
+
+      const end = drawGroup.start + drawGroup.count;
+      for (let index = drawGroup.start; index < end; index += 1) {
+        indices.push((asset.indices[index] ?? 0) + vertexBase);
+      }
+    }
+  }
+
+  const indexChunks = Array.from(groupIndicesByTextureUrl.entries())
+    .filter(([, indices]) => indices.length > 0)
+    .sort(([leftTextureUrl], [rightTextureUrl]) =>
+      String(leftTextureUrl ?? "").localeCompare(String(rightTextureUrl ?? ""))
+    );
+  const mergedIndices: number[] = [];
+  const drawGroups: FortWallMeshDrawGroup[] = [];
+  for (const [textureUrl, indices] of indexChunks) {
+    const start = mergedIndices.length;
+    for (const index of indices) {
+      mergedIndices.push(index);
+    }
+    drawGroups.push({
+      textureUrl,
+      start,
+      count: indices.length,
+    });
+  }
+
+  return {
+    vertices,
+    indices: new Uint32Array(mergedIndices),
+    drawGroups,
+  };
+}
+
+function syncCampaignMarkerLayer(input: {
+  canvas: HTMLCanvasElement;
+  materialSemanticModel: CampaignMaterialSemanticModel;
+  loadedChunkKeys: Set<string>;
+}): string {
+  const stage = input.canvas.closest<HTMLElement>("[data-campaign-map-transform]");
+  if (stage == null) {
+    return "";
+  }
+
+  const markerLayer = stage.querySelector<HTMLElement>("[data-campaign-marker-layer]");
+  if (markerLayer == null) {
+    return "";
+  }
+
+  const markers = readCampaignRuntimeMarkers(stage);
+  const visibleMarkers = markers.filter((marker) =>
+    isCampaignRuntimeMarkerInLoadedPlainTerrain({
+      marker,
+      materialSemanticModel: input.materialSemanticModel,
+      loadedChunkKeys: input.loadedChunkKeys,
+    })
+  );
+  const signature = visibleMarkers
+    .map(
+      (marker) =>
+        `${marker.id}:${marker.kind}:${marker.isRevealed ? "1" : "0"}:${marker.u.toFixed(5)}:${marker.v.toFixed(5)}`
+    )
+    .join("|");
+
+  if (markerLayer.dataset.campaignMarkerLayerSignature === signature) {
+    return signature;
+  }
+
+  syncCampaignRuntimeMarkerElements(markerLayer, visibleMarkers);
+  markerLayer.dataset.campaignMarkerLayerSignature = signature;
+  return signature;
+}
+
+function syncCampaignRuntimeMarkerElements(
+  markerLayer: HTMLElement,
+  visibleMarkers: CampaignRuntimeMarker[]
+): void {
+  const visibleMarkerIds = new Set(visibleMarkers.map((marker) => marker.id));
+  for (const markerElement of Array.from(
+    markerLayer.querySelectorAll<HTMLElement>("[data-campaign-marker-id]")
+  )) {
+    const markerId = markerElement.dataset.campaignMarkerId;
+    if (markerId != null && visibleMarkerIds.has(markerId)) {
+      continue;
+    }
+
+    const summaryElement =
+      markerId == null
+        ? null
+        : markerLayer.querySelector<HTMLElement>(
+          `[data-campaign-marker-summary-id="${escapeCssAttributeValue(markerId)}"]`
+        );
+    markerElement.remove();
+    summaryElement?.remove();
+  }
+
+  const markerElementsById = new Map<string, HTMLElement>();
+  markerLayer
+    .querySelectorAll<HTMLElement>("[data-campaign-marker-id]")
+    .forEach((element) => {
+      const markerId = element.dataset.campaignMarkerId;
+      if (markerId != null) {
+        markerElementsById.set(markerId, element);
+      }
+    });
+  const summaryElementsById = new Map<string, HTMLElement>();
+  markerLayer
+    .querySelectorAll<HTMLElement>("[data-campaign-marker-summary-id]")
+    .forEach((element) => {
+      const markerId = element.dataset.campaignMarkerSummaryId;
+      if (markerId != null) {
+        summaryElementsById.set(markerId, element);
+      }
+    });
+
+  for (const marker of visibleMarkers) {
+    const renderedElements = createCampaignRuntimeMarkerElements(marker);
+    let markerElement = markerElementsById.get(marker.id) ?? null;
+    let summaryElement = summaryElementsById.get(marker.id) ?? null;
+
+    if (markerElement == null) {
+      markerElement = renderedElements.markerElement;
+    } else {
+      syncCampaignRuntimeMarkerElement(
+        markerElement,
+        renderedElements.markerElement
+      );
+    }
+
+    if (summaryElement == null) {
+      summaryElement = renderedElements.summaryElement;
+    } else {
+      syncCampaignRuntimeMarkerElement(
+        summaryElement,
+        renderedElements.summaryElement
+      );
+    }
+
+    markerLayer.append(markerElement, summaryElement);
+  }
+}
+
+function createCampaignRuntimeMarkerElements(marker: CampaignRuntimeMarker): {
+  markerElement: HTMLElement;
+  summaryElement: HTMLElement;
+} {
+  const template = document.createElement("template");
+  template.innerHTML = renderCampaignRuntimeMarker(marker);
+  const markerElement = template.content.querySelector<HTMLElement>(
+    "[data-campaign-marker-id]"
+  );
+  const summaryElement = template.content.querySelector<HTMLElement>(
+    "[data-campaign-marker-summary-id]"
+  );
+  if (markerElement == null || summaryElement == null) {
+    throw new Error("Failed to render campaign runtime marker elements.");
+  }
+
+  return {
+    markerElement,
+    summaryElement,
+  };
+}
+
+function syncCampaignRuntimeMarkerElement(
+  preservedElement: HTMLElement,
+  replacementElement: HTMLElement
+): void {
+  const dynamicProjectionAttributes = new Set([
+    "style",
+    "hidden",
+    "data-terrain-projection-ready",
+  ]);
+
+  for (const attribute of Array.from(preservedElement.attributes)) {
+    if (dynamicProjectionAttributes.has(attribute.name)) {
+      continue;
+    }
+    if (!replacementElement.hasAttribute(attribute.name)) {
+      preservedElement.removeAttribute(attribute.name);
+    }
+  }
+
+  for (const attribute of Array.from(replacementElement.attributes)) {
+    if (dynamicProjectionAttributes.has(attribute.name)) {
+      continue;
+    }
+    preservedElement.setAttribute(attribute.name, attribute.value);
+  }
+
+  if (preservedElement.dataset.campaignMarkerContentSignature !==
+    replacementElement.dataset.campaignMarkerContentSignature) {
+    preservedElement.innerHTML = replacementElement.innerHTML;
+  }
+}
+
+function isCampaignRuntimeMarkerInLoadedPlainTerrain(input: {
+  marker: CampaignRuntimeMarker;
+  materialSemanticModel: CampaignMaterialSemanticModel;
+  loadedChunkKeys: Set<string>;
+}): boolean {
+  if (!Number.isFinite(input.marker.u) || !Number.isFinite(input.marker.v)) {
+    return false;
+  }
+
+  const hexCell = getCampaignTerrainHexCellAtUv(input.marker.u, input.marker.v);
+  const chunkKey = getCampaignTerrainChunkKey(
+    getCampaignTerrainChunkForHexCell(hexCell)
+  );
+  return (
+    input.loadedChunkKeys.has(chunkKey) &&
+    isPlainTerrainHexCell(input.materialSemanticModel, hexCell)
+  );
+}
+
+function readCampaignRuntimeMarkers(stage: HTMLElement): CampaignRuntimeMarker[] {
+  const sourceElement = stage.querySelector<HTMLScriptElement>(
+    "script[data-campaign-marker-source]"
+  );
+  if (sourceElement == null) {
+    return [];
+  }
+
+  const cachedMarkers = campaignMarkerSourceCache.get(sourceElement);
+  if (cachedMarkers != null) {
+    return cachedMarkers;
+  }
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(sourceElement.textContent ?? "[]");
+  } catch (error) {
+    console.error("Failed to parse campaign marker source.", error);
+    campaignMarkerSourceCache.set(sourceElement, []);
+    return [];
+  }
+
+  const markers = Array.isArray(parsed)
+    ? parsed.filter(isCampaignRuntimeMarker)
+    : [];
+  campaignMarkerSourceCache.set(sourceElement, markers);
+  return markers;
+}
+
+function isCampaignRuntimeMarker(value: unknown): value is CampaignRuntimeMarker {
+  if (value == null || typeof value !== "object") {
+    return false;
+  }
+
+  const marker = value as Partial<CampaignRuntimeMarker>;
+  return (
+    typeof marker.id === "string" &&
+    (typeof marker.cityId === "string" || marker.cityId == null) &&
+    typeof marker.name === "string" &&
+    Number.isFinite(marker.x) &&
+    Number.isFinite(marker.y) &&
+    (marker.kind === "city" ||
+      marker.kind === "settlement" ||
+      marker.kind === "fort" ||
+      marker.kind === "landmark") &&
+    typeof marker.summary === "string" &&
+    typeof marker.isRevealed === "boolean" &&
+    Number.isFinite(marker.left) &&
+    Number.isFinite(marker.bottom) &&
+    Number.isFinite(marker.u) &&
+    Number.isFinite(marker.v)
+  );
+}
+
+function renderCampaignRuntimeMarker(marker: CampaignRuntimeMarker): string {
+  const displayName = getCampaignMarkerDisplayName(marker.name);
+  const markerName = escapeHtml(marker.name);
+  const markerSummary = escapeHtml(marker.summary);
+  const contentSignature = escapeHtml(getCampaignRuntimeMarkerContentSignature(marker));
+  const markerPositionStyle =
+    `--marker-left:${marker.left.toFixed(3)}%; --marker-bottom:${marker.bottom.toFixed(3)}%;`;
+  const markerInteractionAttributes = marker.isRevealed
+    ? `
+          data-map-node-id="${escapeHtml(marker.id)}"
+          data-map-node-name="${markerName}"
+          title="${markerName} (${marker.x}, ${marker.y})"
+        `
+    : `
+          disabled
+          aria-hidden="true"
+          tabindex="-1"
+          data-map-node-revealed="false"
+        `;
+  const markerProjectionAttributes = `
+          data-terrain-projected-point="true"
+          data-map-height-u="${marker.u.toFixed(5)}"
+          data-map-height-v="${marker.v.toFixed(5)}"
+        `;
+
+  return `
+        <button
+          class="c-campaign-marker ${getCampaignMarkerClass(marker.kind)}"
+          style="${markerPositionStyle}"
+          ${markerProjectionAttributes}
+          data-campaign-marker-id="${escapeHtml(marker.id)}"
+          data-campaign-marker-content-signature="${contentSignature}"
+          data-map-x="${marker.x}"
+          data-map-y="${marker.y}"
+          data-city-id="${escapeHtml(marker.cityId ?? "")}"
+          ${markerInteractionAttributes}
+        >
+          <span class="c-campaign-marker__dot"></span>
+          <span class="c-campaign-marker__label">${escapeHtml(displayName)}</span>
+        </button>
+        <span
+          class="c-campaign-marker__summary"
+          style="${markerPositionStyle}"
+          ${markerProjectionAttributes}
+          data-campaign-marker-summary-id="${escapeHtml(marker.id)}"
+          data-campaign-marker-content-signature="${contentSignature}"
+          aria-hidden="true"
+          data-map-node-revealed="${marker.isRevealed ? "true" : "false"}"
+        >
+          <strong>${markerName}</strong>
+          ${marker.summary === "" ? "" : `<span>${markerSummary}</span>`}
+          ${renderCampaignRuntimeMarkerHistoricalCharacters(marker)}
+        </span>
+      `;
+}
+
+function getCampaignRuntimeMarkerContentSignature(
+  marker: CampaignRuntimeMarker
+): string {
+  return JSON.stringify({
+    name: marker.name,
+    kind: marker.kind,
+    summary: marker.summary,
+    isRevealed: marker.isRevealed,
+    historicalCharacters: marker.historicalCharacters,
+  });
+}
+
+function getCampaignMarkerClass(kind: CampaignRuntimeMarker["kind"]): string {
+  if (kind === "fort") {
+    return "c-campaign-marker--fort";
+  }
+
+  if (kind === "settlement" || kind === "city") {
+    return "c-campaign-marker--settlement";
+  }
+
+  return "c-campaign-marker--landmark";
+}
+
+function getCampaignMarkerDisplayName(name: string): string {
+  const markerIndex = Math.max(
+    name.lastIndexOf("\u2605"),
+    name.lastIndexOf("\u203b"),
+    name.lastIndexOf("\u25cf")
+  );
+  if (markerIndex >= 0) {
+    return name.slice(markerIndex + 1).trim();
+  }
+
+  return name.replace(/^\u3010(.+)\u3011$/, "$1");
+}
+
+function renderCampaignRuntimeMarkerHistoricalCharacters(
+  marker: CampaignRuntimeMarker
+): string {
+  if (marker.historicalCharacters == null) {
+    return "";
+  }
+
+  const characterGroups = [
+    renderCampaignRuntimeMarkerCharacterGroup(
+      "Primary: ",
+      marker.historicalCharacters.primary
+    ),
+    renderCampaignRuntimeMarkerCharacterGroup(
+      "Related: ",
+      marker.historicalCharacters.secondary
+    ),
+    renderCampaignRuntimeMarkerCharacterGroup(
+      "Background: ",
+      marker.historicalCharacters.background
+    ),
+  ]
+    .filter((item) => item !== "")
+    .join("");
+  const notes =
+    marker.historicalCharacters.notes === ""
+      ? ""
+      : `<span><b>Notes: </b>${escapeHtml(marker.historicalCharacters.notes)}</span>`;
+
+  return `<span class="c-campaign-marker__characters">${characterGroups}${notes}</span>`;
+}
+
+function renderCampaignRuntimeMarkerCharacterGroup(
+  label: string,
+  names: string[]
+): string {
+  if (names.length === 0) {
+    return "";
+  }
+
+  return `<span><b>${label}</b>${names.map(escapeHtml).join(" / ")}</span>`;
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function escapeCssAttributeValue(value: string): string {
+  return value.replace(/\\/g, "\\\\").replace(/"/g, "\\\"");
+}
+
+function readCampaignFortWallInstances(
+  canvas: HTMLCanvasElement,
+  loadedChunkKeys: Set<string>
+): FortWallInstance[] {
+  const stage = canvas.closest<HTMLElement>("[data-campaign-map-transform]");
+  if (stage == null || loadedChunkKeys.size === 0) {
+    return [];
+  }
+
+  const instancesByHexKey = new Map<string, FortWallInstance>();
+  for (const marker of stage.querySelectorAll<HTMLElement>(
+    ".c-campaign-marker--fort[data-map-height-u][data-map-height-v]"
+  )) {
+    const u = Number(marker.dataset.mapHeightU);
+    const v = Number(marker.dataset.mapHeightV);
+    if (!Number.isFinite(u) || !Number.isFinite(v)) {
+      continue;
+    }
+
+    const hexCell = getCampaignTerrainHexCellAtUv(u, v);
+    const chunkKey = getCampaignTerrainChunkKey(
+      getCampaignTerrainChunkForHexCell(hexCell)
+    );
+    if (!loadedChunkKeys.has(chunkKey)) {
+      continue;
+    }
+
+    const center = hexToPixel(hexCell.x, hexCell.y);
+    const instance = {
+      u: hexPointToTerrainU(center.x),
+      v: hexPointToTerrainV(center.y),
+      key: getHexCellKey(hexCell.x, hexCell.y),
+    };
+    instancesByHexKey.set(instance.key, instance);
+  }
+
+  return Array.from(instancesByHexKey.values()).sort((left, right) =>
+    left.key.localeCompare(right.key)
+  );
+}
+
+function getCampaignFortWallMeshSignature(
+  instances: FortWallInstance[]
+): string {
+  return instances.map((instance) => instance.key).join(",");
 }
 
 function snapTerrainUvToHexCenter(u: number, v: number): { u: number; v: number } {
@@ -3399,6 +4284,7 @@ function createCampaignMaterialSemanticModel(
   const pixels = new Uint8ClampedArray(textureColumns * textureRows * 4);
   const landByCellKey = new Map<string, boolean>();
   const mountainByCellKey = new Map<string, boolean>();
+  const terrainByCellKey = new Map<string, string>();
   const referenceHeightByCellKey = new Map<string, number>();
 
   for (const cell of cells) {
@@ -3415,6 +4301,7 @@ function createCampaignMaterialSemanticModel(
 
     landByCellKey.set(getHexCellKey(cell.x, cell.y), isLand);
     mountainByCellKey.set(getHexCellKey(cell.x, cell.y), false);
+    terrainByCellKey.set(getHexCellKey(cell.x, cell.y), isLand ? "平原" : "");
     referenceHeightByCellKey.set(getHexCellKey(cell.x, cell.y), 0);
     pixels[pixelOffset] = value;
     pixels[pixelOffset + 1] = 0;
@@ -3433,6 +4320,7 @@ function createCampaignMaterialSemanticModel(
     cells,
     landByCellKey,
     mountainByCellKey,
+    terrainByCellKey,
     referenceHeightByCellKey,
   };
 }
@@ -3460,6 +4348,7 @@ function createCampaignMaterialSemanticModelFromHexGrid(
   const pixels = new Uint8ClampedArray(textureColumns * textureRows * 4);
   const landByCellKey = new Map<string, boolean>();
   const mountainByCellKey = new Map<string, boolean>();
+  const terrainByCellKey = new Map<string, string>();
   const referenceHeightByCellKey = new Map<string, number>();
 
   for (const cell of campaignHexGrid.cells) {
@@ -3482,6 +4371,7 @@ function createCampaignMaterialSemanticModelFromHexGrid(
 
     landByCellKey.set(getHexCellKey(cell.x, cell.y), cell.land);
     mountainByCellKey.set(getHexCellKey(cell.x, cell.y), mountainValue > 0);
+    terrainByCellKey.set(getHexCellKey(cell.x, cell.y), cell.land ? cell.terrain : "");
     referenceHeightByCellKey.set(
       getHexCellKey(cell.x, cell.y),
       cell.land ? clamp(cell.referenceHeight, 0, 1) : 0
@@ -3503,6 +4393,7 @@ function createCampaignMaterialSemanticModelFromHexGrid(
     cells,
     landByCellKey,
     mountainByCellKey,
+    terrainByCellKey,
     referenceHeightByCellKey,
   };
 }
@@ -3564,16 +4455,6 @@ function readCampaignVegetationAvoidancePoints(
     .querySelectorAll<HTMLElement>("[data-campaign-marker-id][data-map-height-u][data-map-height-v]")
     .forEach((element) => {
       appendPoint(element, rules.avoidance.markerRadius);
-    });
-  stage
-    .querySelectorAll<HTMLElement>("[data-campaign-player='true'][data-map-height-u][data-map-height-v]")
-    .forEach((element) => {
-      appendPoint(element, rules.avoidance.playerRadius);
-    });
-  stage
-    .querySelectorAll<HTMLElement>("[data-campaign-travel-path-point][data-map-height-u][data-map-height-v]")
-    .forEach((element) => {
-      appendPoint(element, rules.avoidance.pathRadius);
     });
 
   return points;
@@ -6188,6 +7069,18 @@ function isLandTerrainHexCell(
   return materialSemanticModel.landByCellKey.get(getHexCellKey(cell.x, cell.y)) === true;
 }
 
+function isPlainTerrainHexCell(
+  materialSemanticModel: CampaignMaterialSemanticModel,
+  cell: GridCoordinate
+): boolean {
+  const cellKey = getHexCellKey(cell.x, cell.y);
+
+  return (
+    materialSemanticModel.landByCellKey.get(cellKey) === true &&
+    materialSemanticModel.terrainByCellKey.get(cellKey) === "平原"
+  );
+}
+
 function isLandTerrainSample(
   materialSemanticModel: CampaignMaterialSemanticModel,
   u: number,
@@ -6429,6 +7322,49 @@ function createTexture(
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, options?.magFilter ?? gl.LINEAR);
 
   return texture;
+}
+
+function createRepeatableTexture(
+  gl: WebGLRenderingContext,
+  image: HTMLImageElement
+): WebGLTexture {
+  const width = Math.max(image.naturalWidth || image.width, 1);
+  const height = Math.max(image.naturalHeight || image.height, 1);
+  const repeatableImage =
+    isPowerOfTwo(width) && isPowerOfTwo(height)
+      ? image
+      : createPowerOfTwoTextureCanvas(image, width, height);
+
+  return createTexture(gl, repeatableImage, {
+    wrapS: gl.REPEAT,
+    wrapT: gl.REPEAT,
+  });
+}
+
+function createPowerOfTwoTextureCanvas(
+  image: HTMLImageElement,
+  width: number,
+  height: number
+): HTMLCanvasElement {
+  const canvas = document.createElement("canvas");
+  canvas.width = nextPowerOfTwo(width);
+  canvas.height = nextPowerOfTwo(height);
+
+  const context = canvas.getContext("2d");
+  if (context == null) {
+    throw new Error("Failed to create repeatable texture canvas.");
+  }
+
+  context.drawImage(image, 0, 0, canvas.width, canvas.height);
+  return canvas;
+}
+
+function isPowerOfTwo(value: number): boolean {
+  return value > 0 && (value & (value - 1)) === 0;
+}
+
+function nextPowerOfTwo(value: number): number {
+  return 2 ** Math.ceil(Math.log2(Math.max(value, 1)));
 }
 
 function resizeCanvasToDisplaySize(canvas: HTMLCanvasElement): void {
