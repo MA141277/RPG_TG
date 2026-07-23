@@ -4,9 +4,9 @@
 
 - blueprint_id: `blueprint.rpg-tg`
 - blueprint_version: `2026.07`
-- active_version: `target.map-rendering-city-data-separation-and-canonical-numeric-id-transition`
-- active_version_plan: `docs/blueprints/plans/2026-07-22-map-rendering-city-data-separation-and-canonical-numeric-id-transition-target-plan.md`
-- active_version_spec: `docs/blueprints/specs/2026-07-22-map-rendering-city-data-separation-and-canonical-numeric-id-transition-target.md`
+- active_version: `target.event-follow-up-routing-settlement-and-canonical-reuse-convergence`
+- active_version_plan: `docs/blueprints/plans/2026-07-24-event-follow-up-routing-settlement-and-canonical-reuse-convergence-target-plan.md`
+- active_version_spec: `docs/blueprints/specs/2026-07-24-event-follow-up-routing-settlement-and-canonical-reuse-convergence-target.md`
 - classification_rules_ref: `docs/blueprints/classification-rule-layer-spec.md`
 - execution_mode: `single-active-task`
 - allow_parallel: `false`
@@ -22,6 +22,7 @@
 
 | Version ID | Spec | Plan | Notes |
 | --- | --- | --- | --- |
+| `target.event-follow-up-routing-settlement-and-canonical-reuse-convergence` | `docs/blueprints/specs/2026-07-24-event-follow-up-routing-settlement-and-canonical-reuse-convergence-target.md` | `docs/blueprints/plans/2026-07-24-event-follow-up-routing-settlement-and-canonical-reuse-convergence-target-plan.md` | `Open successor version created on 2026-07-24 from the operator-approved event-routing / settlement iteration draft. It owns event/building canonical reuse and duplicate folding, unified nextEventId follow-up routing, settlement resource plus event(type=settlement) convergence, PlayableResult naming cleanup, full export/import/preview/runtime/startup consistency, and explicit fail-closed migration/acceptance with no compatibility import.` |
 | `target.map-rendering-city-data-separation-and-canonical-numeric-id-transition` | `docs/blueprints/specs/2026-07-22-map-rendering-city-data-separation-and-canonical-numeric-id-transition-target.md` | `docs/blueprints/plans/2026-07-22-map-rendering-city-data-separation-and-canonical-numeric-id-transition-target-plan.md` | `Closed on 2026-07-24 after explicit operator version closeout. The version completed MEMO-027 city-owned map rendering truth, runtime/export/import/startup convergence for map placement, first-stage canonical numeric id generation, direct-vs-indirect consumer cleanup, visible in-app browser acceptance for city enter continuation, and successful repository sync to origin/mod-first-dev, with no remaining same-family residue inside the parent target.` |
 | `target.building-arrangement-container-flow-refactor` | `docs/blueprints/specs/2026-07-20-building-arrangement-container-flow-refactor-target.md` | `docs/blueprints/plans/2026-07-20-building-arrangement-container-flow-refactor-target-plan.md` | `Closed on 2026-07-22 after explicit operator version closeout. The version completed MEMO-022 building-arrangement/container/flow migration, legacy-house runtime removal, runtime layout generalization, and final acceptance review, with the shared flow-playable Continue progression issue preserved as explicit accepted residue rather than reopened implementation.` |
 | `target.script-editor-event-centered-authoring-scene-retirement-and-portrait-resource-refactor` | `docs/blueprints/specs/2026-07-22-script-editor-event-centered-authoring-scene-retirement-and-portrait-resource-refactor-target.md` | `docs/blueprints/plans/2026-07-22-script-editor-event-centered-authoring-scene-retirement-and-portrait-resource-refactor-target-plan.md` | `Closed on 2026-07-22 after explicit operator version closeout. The version completed event-centered authoring model unification, event-only routing freeze, scene retirement, no-scene runtime/export/import convergence, portrait resource convergence, final acceptance, and the later event-playable / building-action truth convergence queue, with no remaining same-family residue inside the parent target.` |
