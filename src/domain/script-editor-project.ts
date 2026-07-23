@@ -150,6 +150,7 @@ export type {
 
 export type ScriptEditorAccessRule = {
   conditionExpression?: LocationAccessConditionExpression | undefined;
+  leaveConditionExpression?: LocationAccessConditionExpression | undefined;
   blockedReason?: string | undefined;
   blockedTitle?: string | undefined;
   blockedMessage?: string | undefined;

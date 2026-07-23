@@ -908,32 +908,48 @@ function applyImportedLocationAccess<T extends { id: string }>(
 ): T & { access?: ScriptEditorAccessRule } {
   const accessDefinition = locationAccessDefinitions.find(
     (definition) =>
+      (definition.purpose ?? "enter") === "enter" &&
       definition.targetFamily === targetFamily &&
       definition.targetId === record.id
   );
-  if (accessDefinition == null) {
+  const leaveAccessDefinition = locationAccessDefinitions.find(
+    (definition) =>
+      definition.purpose === "leave" &&
+      definition.targetFamily === targetFamily &&
+      definition.targetId === record.id
+  );
+  if (accessDefinition == null && leaveAccessDefinition == null) {
     return record;
   }
 
   return {
     ...record,
     access: {
-      conditionExpression: accessDefinition.conditionExpression,
-      ...(accessDefinition.blockedReason == null
+      ...(accessDefinition == null
         ? {}
-        : { blockedReason: accessDefinition.blockedReason }),
-      ...(accessDefinition.blockedTitle == null
+        : {
+            conditionExpression: accessDefinition.conditionExpression,
+            ...(accessDefinition.blockedReason == null
+              ? {}
+              : { blockedReason: accessDefinition.blockedReason }),
+            ...(accessDefinition.blockedTitle == null
+              ? {}
+              : { blockedTitle: accessDefinition.blockedTitle }),
+            ...(accessDefinition.blockedMessage == null
+              ? {}
+              : { blockedMessage: accessDefinition.blockedMessage }),
+            ...(accessDefinition.blockedSpeakerId == null
+              ? {}
+              : { blockedSpeakerId: accessDefinition.blockedSpeakerId }),
+            ...(accessDefinition.guidance == null
+              ? {}
+              : { guidance: accessDefinition.guidance }),
+          }),
+      ...(leaveAccessDefinition == null
         ? {}
-        : { blockedTitle: accessDefinition.blockedTitle }),
-      ...(accessDefinition.blockedMessage == null
-        ? {}
-        : { blockedMessage: accessDefinition.blockedMessage }),
-      ...(accessDefinition.blockedSpeakerId == null
-        ? {}
-        : { blockedSpeakerId: accessDefinition.blockedSpeakerId }),
-      ...(accessDefinition.guidance == null
-        ? {}
-        : { guidance: accessDefinition.guidance }),
+        : {
+            leaveConditionExpression: leaveAccessDefinition.conditionExpression,
+          }),
     },
   };
 }

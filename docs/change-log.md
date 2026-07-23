@@ -5,6 +5,17 @@
 `docs/change-log.md` 的正式定位是“历史记录 + 人类可读摘要”。
 它不是当前 Blueprint / legacy superpowers 治理的 live execution truth，不作为 resume entry、promotion gate、closeout gate 或固定同步门。
 
+## 2026-07-23 Blueprint Governance Skill Sync Tooling
+
+### Changed
+- 新增 [tools/blueprint-skill-sync.mjs](/D:/workspace/project/RPG_TG/.worktrees/blueprint-skill-sync-20260723/tools/blueprint-skill-sync.mjs)，从 [docs/blueprints/blueprint-workflow-spec.md](/D:/workspace/project/RPG_TG/.worktrees/blueprint-skill-sync-20260723/docs/blueprints/blueprint-workflow-spec.md) 与 [docs/blueprints/classification-rule-layer-spec.md](/D:/workspace/project/RPG_TG/.worktrees/blueprint-skill-sync-20260723/docs/blueprints/classification-rule-layer-spec.md) 的 `blueprint-skill:*` marker block 生成并校验 [ .codex/skills/blueprint-governance/SKILL.md ](/D:/workspace/project/RPG_TG/.worktrees/blueprint-skill-sync-20260723/.codex/skills/blueprint-governance/SKILL.md)。
+- 在 [docs/blueprints/blueprint-workflow-spec.md](/D:/workspace/project/RPG_TG/.worktrees/blueprint-skill-sync-20260723/docs/blueprints/blueprint-workflow-spec.md) 补入 reading-order、sync-checklist、verification、red-flags 四组 skill-sync marker，并在 [docs/blueprints/classification-rule-layer-spec.md](/D:/workspace/project/RPG_TG/.worktrees/blueprint-skill-sync-20260723/docs/blueprints/classification-rule-layer-spec.md) 补入 routing-rules marker。
+- 更新 [package.json](/D:/workspace/project/RPG_TG/.worktrees/blueprint-skill-sync-20260723/package.json)，新增 `sync:blueprint-skill` 与 `lint:blueprint-skill`，并把 skill lint 接入总 `lint`，同时把 [tests/blueprint-skill-sync.test.cjs](/D:/workspace/project/RPG_TG/.worktrees/blueprint-skill-sync-20260723/tests/blueprint-skill-sync.test.cjs) 纳入默认测试集。
+
+### Impact
+- Blueprint 工作流规范现在可以作为 `blueprint-governance` skill 的单一生成源，文档改动后不再依赖手工双写 skill 正文。
+- skill 同步现在 fail closed：缺失 marker、重复 marker、生成文件缺失或生成结果漂移都会让校验失败，而不是静默接受歧义输入。
+
 ## 2026-07-23 Map Rendering City Data Separation And Canonical Numeric ID Transition Acceptance Closeout
 
 ### Changed
@@ -3423,3 +3434,22 @@
 ### Impact
 - Normal start, JSON runtime-pack import, and Script Editor runtime preview now agree on the same startup-view contract instead of letting legacy `scene` startup values leak through different entry paths.
 - Runtime-pack export/import, loader validation, and activated mod startup metadata no longer keep a hidden scene-era startup divergence after scene retirement.
+## 2026-07-23 City Access Leave Conditions And City Editor Tab Cleanup
+
+### Changed
+- 更新 [src/domain/script-editor-project.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/domain/script-editor-project.ts)、[src/domain/location-access.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/domain/location-access.ts)、[src/application/location-access/location-access-runtime.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/location-access/location-access-runtime.ts)、[src/application/script-editor/city-building-authoring.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/city-building-authoring.ts)、[src/application/script-editor/city-building-runtime-materializer.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/city-building-runtime-materializer.ts)、[src/application/script-editor/runtime-pack-import.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/runtime-pack-import.ts) 与 [src/main.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/main.ts)，为城市 `access` 增加 `leaveConditionExpression` / `purpose: "leave"` 合同，让导出、导入、运行时评估和离城按钮统一支持“离开条件”。
+- 更新 [src/ui/main-ui/main-ui-flow.js](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/main-ui/main-ui-flow.js)，城市详情分栏补齐 `挂载`、`建筑编排` 页签切换白名单，移除城市基础页的“高级设置与系统信息”，并在 `进入条件` 下新增独立的“离开条件”编辑区，确保 enter/leave 两组条件分别编辑、分别写回。
+- 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs) 与 [tests/city-building-mount-authoring.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/city-building-mount-authoring.test.cjs)，补齐城市页签白名单、leave-purpose runtime、leave-condition export/import round-trip 和离城守卫的回归覆盖。
+
+### Impact
+- 创作者现在可以在城市实例的“进入条件”页签下分别维护进入条件与离开条件，且离城运行时会真正读取城市 `access.leaveConditionExpression`，不再与进城条件混用同一条 runtime truth。
+- 城市页签的 `挂载` / `建筑编排` 现在可正常切换，城市基础页不再暴露面向创作者无意义的系统字段；同时新增回归测试防止后续把页签白名单或 leave-purpose 规则退回到旧行为。
+## 2026-07-23 Building Entry Fails Closed Without Arrangement
+
+### Changed
+- 更新 [src/core/runtime/navigation-runtime.ts](/D:/workspace/project/RPG_TG/src/core/runtime/navigation-runtime.ts) 与 [src/main.ts](/D:/workspace/project/RPG_TG/src/main.ts)，让 `navigation.enter-house` 在进入建筑前显式校验当前城市下是否存在对应 `buildingArrangement`，并将激活内容里的 `buildingArrangements` 传入共享 navigation runtime，而不是切到 `house` 视图后渲染空 stage。
+- 更新 [tests/robustness.test.cjs](/D:/workspace/project/RPG_TG/tests/robustness.test.cjs)，补齐“无建筑编排时拒绝进入建筑”“有显式编排时正常进入建筑”以及 `enterBuilding()` 向共享 runtime 传递 `buildingArrangements` 的回归覆盖。
+
+### Impact
+- 现在城市里只挂载建筑、但还没有配置“建筑编排”时，点击地点不会再黑屏；运行时会明确拒绝进入该建筑，并提示该建筑尚未配置建筑编排。
+- 建筑进入链路继续保持在共享 navigation runtime 上收口，没有把“缺少建筑编排”的房屋入口边界重新散落回 `main.ts` 的临时分支。

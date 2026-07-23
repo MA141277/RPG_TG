@@ -5,6 +5,7 @@ import type { HouseDefinition } from "../../domain/house";
 import type {
   LocationAccessConditionExpression,
   LocationAccessDefinition,
+  LocationAccessPurpose,
   LocationAccessResult,
   LocationAccessTargetFamily,
   LocationAccessValueRef,
@@ -13,6 +14,7 @@ import { readZhuYuanzhangStoryStage } from "../../domain/zhu-yuanzhang-story";
 
 export type EvaluateLocationAccessInput = {
   state: GameState;
+  purpose?: LocationAccessPurpose;
   targetFamily: LocationAccessTargetFamily;
   targetId: string;
   targetCity?: CityDefinition | null;
@@ -24,8 +26,10 @@ export type EvaluateLocationAccessInput = {
 export function evaluateLocationAccess(
   input: EvaluateLocationAccessInput
 ): LocationAccessResult {
+  const purpose = input.purpose ?? "enter";
   const accessDefinition = input.locationAccessDefinitions?.find(
     (definition) =>
+      (definition.purpose ?? "enter") === purpose &&
       definition.targetFamily === input.targetFamily &&
       definition.targetId === input.targetId
   );

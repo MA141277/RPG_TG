@@ -3,6 +3,7 @@ import type { BuildingArrangementDefinition } from "../../domain/building-arrang
 import type { CityDefinition } from "../../domain/city";
 import type {
   LocationAccessDefinition,
+  LocationAccessPurpose,
   LocationAccessTargetFamily,
 } from "../../domain/location-access";
 import type {
@@ -49,7 +50,7 @@ export function materializeScriptEditorCityBuildingRuntimeFamilies(
   return {
     cities: materializeCities(cities, buildings),
     houses: materializeHouses(buildings, people, cities),
-    buildingArrangements: materializeBuildingArrangements(project),
+    buildingArrangements: materializeBuildingArrangements(project, cities),
     cityEntries: materializeCityEntries(project.cityEntries, cities, buildings),
     cityNpcPools: materializeCityNpcPools(project.cityNpcPools, people, cities),
     locationAccess: materializeLocationAccess(
@@ -62,39 +63,58 @@ export function materializeScriptEditorCityBuildingRuntimeFamilies(
 }
 
 function materializeBuildingArrangements(
-  project: ScriptEditorProjectDefinition
+  project: ScriptEditorProjectDefinition,
+  cities: readonly ScriptEditorCityRecord[]
 ): BuildingArrangementDefinition[] {
-  return project.buildingArrangements.map((arrangement) => ({
-    id: arrangement.id,
-    cityId: arrangement.cityId,
-    buildingId: arrangement.buildingId,
-    ...(arrangement.displayName == null ? {} : { displayName: arrangement.displayName }),
-    ...(arrangement.description == null ? {} : { description: arrangement.description }),
-    ...(arrangement.backgroundId == null ? {} : { backgroundId: arrangement.backgroundId }),
-    ...(arrangement.layout == null
-      ? {}
-      : {
-          layout: cloneJsonCompatibleValue(
-            arrangement.layout
-          ) as BuildingArrangementDefinition["layout"],
-        }),
-    mountedNpcIds: [...arrangement.mountedNpcIds],
-    primaryNpcId: arrangement.primaryNpcId,
-    containers: arrangement.containers.map((container) => ({
-      id: container.id,
-      type: container.type,
-      ...(container.title == null ? {} : { title: container.title }),
-      ...(container.source == null
+  const mountedBuildingById = indexMountedBuildings(cities);
+  return project.buildingArrangements.map((arrangement) => {
+    const mountedBuilding = mountedBuildingById.get(arrangement.buildingId);
+    return {
+      id: arrangement.id,
+      cityId: arrangement.cityId,
+      buildingId: arrangement.buildingId,
+      ...(arrangement.displayName == null ? {} : { displayName: arrangement.displayName }),
+      ...(arrangement.description == null ? {} : { description: arrangement.description }),
+      ...(arrangement.backgroundId == null ? {} : { backgroundId: arrangement.backgroundId }),
+      ...(arrangement.layout == null
         ? {}
-        : { source: cloneJsonCompatibleValue(container.source) as BuildingArrangementDefinition["containers"][number]["source"] }),
-      ...(container.items == null
+        : {
+            layout: cloneJsonCompatibleValue(
+              arrangement.layout
+            ) as BuildingArrangementDefinition["layout"],
+          }),
+      mountedNpcIds:
+        mountedBuilding == null
+          ? [...arrangement.mountedNpcIds]
+          : [...mountedBuilding.npcIds],
+      primaryNpcId:
+        mountedBuilding == null ? arrangement.primaryNpcId : mountedBuilding.primaryNpcId,
+      containers: arrangement.containers.map((container) => ({
+        id: container.id,
+        type: container.type,
+        ...(container.title == null ? {} : { title: container.title }),
+        ...(container.source == null
+          ? {}
+          : {
+              source: cloneJsonCompatibleValue(
+                container.source
+              ) as BuildingArrangementDefinition["containers"][number]["source"],
+            }),
+        ...(container.items == null
+          ? {}
+          : { items: container.items.map((item) => ({ ...item })) }),
+      })),
+      ...(arrangement.visibleRule == null
         ? {}
-        : { items: container.items.map((item) => ({ ...item })) }),
-    })),
-    ...(arrangement.visibleRule == null ? {} : { visibleRule: cloneJsonCompatibleValue(arrangement.visibleRule) }),
-    ...(arrangement.enterRule == null ? {} : { enterRule: cloneJsonCompatibleValue(arrangement.enterRule) }),
-    ...(arrangement.exitRule == null ? {} : { exitRule: cloneJsonCompatibleValue(arrangement.exitRule) }),
-  }));
+        : { visibleRule: cloneJsonCompatibleValue(arrangement.visibleRule) }),
+      ...(arrangement.enterRule == null
+        ? {}
+        : { enterRule: cloneJsonCompatibleValue(arrangement.enterRule) }),
+      ...(arrangement.exitRule == null
+        ? {}
+        : { exitRule: cloneJsonCompatibleValue(arrangement.exitRule) }),
+    };
+  });
 }
 
 function materializeCities(
@@ -521,36 +541,64 @@ function materializeLocationAccessDefinition(
   dialogues: readonly ScriptEditorDialogueRecord[],
   textEntries: readonly ScriptEditorTextEntryRecord[]
 ): LocationAccessDefinition[] {
-  if (access?.conditionExpression == null) {
-    return [];
-  }
   const blockedMessage = resolveAccessBlockedMessage(access, dialogues, textEntries);
 
   return [
-    {
-      id: `location-access.${targetFamily}.${slugifyIdSegment(targetId)}`,
+    materializeSingleLocationAccessDefinition(
+      "enter",
       targetFamily,
       targetId,
-      conditionExpression: access.conditionExpression,
-      ...pickOptionalString("blockedReason", access.blockedReason),
-      ...pickOptionalString("blockedTitle", access.blockedTitle),
-      ...pickOptionalString("blockedMessage", blockedMessage),
-      ...pickOptionalString("blockedSpeakerId", access.blockedSpeakerId),
-      ...pickOptionalString("guidance", access.guidance),
-    },
-  ];
+      access?.conditionExpression,
+      access,
+      blockedMessage
+    ),
+    materializeSingleLocationAccessDefinition(
+      "leave",
+      targetFamily,
+      targetId,
+      access?.leaveConditionExpression,
+      access,
+      blockedMessage
+    ),
+  ].filter((definition) => definition != null);
+}
+
+function materializeSingleLocationAccessDefinition(
+  purpose: LocationAccessPurpose,
+  targetFamily: LocationAccessTargetFamily,
+  targetId: string,
+  conditionExpression: ScriptEditorAccessRule["conditionExpression"],
+  access: ScriptEditorAccessRule | undefined,
+  blockedMessage: string | undefined
+): LocationAccessDefinition | null {
+  if (conditionExpression == null) {
+    return null;
+  }
+
+  return {
+    id: `location-access.${purpose}.${targetFamily}.${slugifyIdSegment(targetId)}`,
+    purpose,
+    targetFamily,
+    targetId,
+    conditionExpression,
+    ...pickOptionalString("blockedReason", access?.blockedReason),
+    ...pickOptionalString("blockedTitle", access?.blockedTitle),
+    ...pickOptionalString("blockedMessage", blockedMessage),
+    ...pickOptionalString("blockedSpeakerId", access?.blockedSpeakerId),
+    ...pickOptionalString("guidance", access?.guidance),
+  };
 }
 
 function resolveAccessBlockedMessage(
-  access: ScriptEditorAccessRule,
+  access: ScriptEditorAccessRule | undefined,
   dialogues: readonly ScriptEditorDialogueRecord[],
   textEntries: readonly ScriptEditorTextEntryRecord[]
 ): string | undefined {
-  const dialogueId = access.blockedDialogueId?.trim() ?? "";
+  const dialogueId = access?.blockedDialogueId?.trim() ?? "";
   if (dialogueId.length > 0) {
     const dialogue = dialogues.find((entry) => entry.id === dialogueId);
     if (dialogue == null) {
-      return access.blockedMessage;
+      return access?.blockedMessage;
     }
     const textEntryId = dialogue.nodes?.find((node) => node.textId.length > 0)?.textId ?? "";
     if (textEntryId.length > 0) {
@@ -569,7 +617,7 @@ function resolveAccessBlockedMessage(
       return dialogue.title;
     }
   }
-  const legacyTextEntryId = (access as ScriptEditorAccessRule & {
+  const legacyTextEntryId = ((access ?? {}) as ScriptEditorAccessRule & {
     blockedMessageTextEntryId?: string;
   }).blockedMessageTextEntryId?.trim() ?? "";
   if (legacyTextEntryId.length > 0) {
@@ -584,7 +632,7 @@ function resolveAccessBlockedMessage(
       return rawTextEntry.body;
     }
   }
-  return access.blockedMessage;
+  return access?.blockedMessage;
 }
 
 

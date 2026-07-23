@@ -4216,14 +4216,22 @@ test(
     );
     const locationAccessPanelSource = mainUiSource.slice(
       mainUiSource.indexOf("renderScriptEditorLocationAccessPanel(location) {"),
-      mainUiSource.indexOf("renderScriptEditorLocationAccessConditionEditor(conditionExpression) {")
+      mainUiSource.indexOf(
+        'renderScriptEditorLocationAccessConditionEditor(conditionExpression, conditionField = "conditionExpression") {'
+      )
     );
     const conditionEditorSource = mainUiSource.slice(
-      mainUiSource.indexOf("renderScriptEditorLocationAccessConditionEditor(conditionExpression) {"),
-      mainUiSource.indexOf("renderScriptEditorLocationAccessConditionRow(condition, index) {")
+      mainUiSource.indexOf(
+        'renderScriptEditorLocationAccessConditionEditor(conditionExpression, conditionField = "conditionExpression") {'
+      ),
+      mainUiSource.indexOf(
+        'renderScriptEditorLocationAccessConditionRow(condition, index, conditionField = "conditionExpression") {'
+      )
     );
     const conditionRowSource = mainUiSource.slice(
-      mainUiSource.indexOf("renderScriptEditorLocationAccessConditionRow(condition, index) {"),
+      mainUiSource.indexOf(
+        'renderScriptEditorLocationAccessConditionRow(condition, index, conditionField = "conditionExpression") {'
+      ),
       mainUiSource.indexOf("renderScriptEditorLocationAccessEventConditionControls(condition, index) {")
     );
     const personConditionSource = mainUiSource.slice(
@@ -10848,6 +10856,178 @@ test(
 );
 
 test(
+  "script editor city mounted building authoring uses collapsible summary cards with building-local npc search and pagination",
+  () => {
+    const source = fs.readFileSync("src/ui/main-ui/main-ui-flow.js", "utf8");
+    const cssSource = fs.readFileSync("src/styles/script-editor.css", "utf8");
+    const mountedPanelSource =
+      source.match(
+        /renderScriptEditorLocationMountedContent\(city\) \{[\s\S]*?\n  renderScriptEditorLocationCustomAttributes/
+      )?.[0] ?? "";
+
+    assert.match(source, /SCRIPT_EDITOR_CITY_MOUNTED_BUILDING_NPC_PAGE_SIZE\s*=\s*12/);
+    assert.match(source, /scriptEditorCityMountedBuildingUiState/);
+    assert.match(
+      mountedPanelSource,
+      /data-script-editor-action="toggle-city-mounted-building-expanded"/
+    );
+    assert.match(
+      mountedPanelSource,
+      /data-script-editor-city-mounted-building-search/
+    );
+    assert.match(
+      mountedPanelSource,
+      /data-script-editor-action="city-mounted-building-page-prev"/
+    );
+    assert.match(
+      mountedPanelSource,
+      /data-script-editor-action="city-mounted-building-page-next"/
+    );
+    assert.match(mountedPanelSource, /data-script-editor-city-mounted-building-summary/);
+    assert.match(mountedPanelSource, /data-script-editor-city-mounted-building-panel/);
+    assert.match(mountedPanelSource, /c-script-editor-city-mounted-building-card/);
+    assert.match(mountedPanelSource, /c-script-editor-city-mounted-building-npc-grid/);
+    assert.match(mountedPanelSource, /c-script-editor-city-mounted-building-npc-card/);
+    assert.match(cssSource, /\.c-script-editor-city-mounted-building-card/);
+    assert.match(cssSource, /\.c-script-editor-city-mounted-building-card__summary/);
+    assert.match(cssSource, /\.c-script-editor-city-mounted-building-npc-grid/);
+    assert.match(cssSource, /\.c-script-editor-city-mounted-building-npc-card/);
+  }
+);
+
+test(
+  "script editor city mounted building authoring hides id copy and removes building ownership text from npc cards",
+  () => {
+    const source = fs.readFileSync("src/ui/main-ui/main-ui-flow.js", "utf8");
+    const mountedPanelSource =
+      source.match(
+        /renderScriptEditorLocationMountedContent\(city\) \{[\s\S]*?\n  renderScriptEditorLocationCustomAttributes/
+      )?.[0] ?? "";
+    const mountedMetaSource =
+      mountedPanelSource.match(
+        /<div class="c-script-editor-city-mounted-building-card__meta">[\s\S]*?<\/div>/
+      )?.[0] ?? "";
+
+    assert.doesNotMatch(mountedPanelSource, /按 NPC 名称或 ID 搜索/);
+    assert.match(mountedPanelSource, /按 NPC 名称搜索/);
+    assert.doesNotMatch(mountedPanelSource, /所属建筑/);
+    assert.doesNotMatch(mountedMetaSource, /<span>当前建筑<\/span>/);
+    assert.doesNotMatch(mountedMetaSource, /<span>主 NPC<\/span>/);
+    assert.doesNotMatch(mountedPanelSource, /\$\{escapeHtml\(building\.name\)\} \(\$\{escapeHtml\(building\.id\)\}\)/);
+    assert.doesNotMatch(mountedPanelSource, /\$\{escapeHtml\(person\.name\)\} \(\$\{escapeHtml\(person\.id\)\}\)/);
+  }
+);
+
+test(
+  "script editor city mounted building npc grid keeps a fixed two-row footprint even when fewer cards are visible",
+  () => {
+    const cssSource = fs.readFileSync("src/styles/script-editor.css", "utf8");
+
+    assert.match(
+      cssSource,
+      /\.c-script-editor-city-mounted-building-npc-grid\s*\{[\s\S]*min-height:\s*calc\(154px \* 2 \+ 14px\)/
+    );
+    assert.match(
+      cssSource,
+      /\.c-script-editor-city-mounted-building-npc-card\s*\{[\s\S]*height:\s*154px/
+    );
+  }
+);
+
+test(
+  "script editor city mounted building authoring omits the mounted panel header copy and side summary box",
+  () => {
+    const source = fs.readFileSync("src/ui/main-ui/main-ui-flow.js", "utf8");
+    const mountedPanelSource =
+      source.match(
+        /renderScriptEditorLocationMountedContent\(city\) \{[\s\S]*?\n  renderScriptEditorLocationCustomAttributes/
+      )?.[0] ?? "";
+
+    assert.doesNotMatch(
+      mountedPanelSource,
+      /<h3 class="c-script-editor-editor-card__title">[\s\S]*?<\/h3>/
+    );
+    assert.doesNotMatch(
+      mountedPanelSource,
+      /<p class="c-script-editor-editor-card__hint">[\s\S]*?<\/p>/
+    );
+    assert.doesNotMatch(
+      mountedPanelSource,
+      /c-script-editor-city-mounted-building-card__meta/
+    );
+  }
+);
+
+test(
+  "script editor city mounted building npc cards omit redundant mounted npc labels",
+  () => {
+    const source = fs.readFileSync("src/ui/main-ui/main-ui-flow.js", "utf8");
+    const mountedNpcCardSource =
+      source.match(
+        /const renderMountedNpcCard = \(entry, buildingIndex, npcEntry\) => `[\s\S]*?`;\n/
+      )?.[0] ?? "";
+
+    assert.doesNotMatch(
+      mountedNpcCardSource,
+      /<span class="c-script-editor-person-summary__label">已挂载 NPC<\/span>/
+    );
+    assert.doesNotMatch(mountedNpcCardSource, /<span>挂载 NPC<\/span>/);
+  }
+);
+
+test(
+  "script editor city mounted building authoring promotes remove-building into a top-right danger icon",
+  () => {
+    const source = fs.readFileSync("src/ui/main-ui/main-ui-flow.js", "utf8");
+    const mountedPanelSource =
+      source.match(
+        /renderScriptEditorLocationMountedContent\(city\) \{[\s\S]*?\n  renderScriptEditorLocationCustomAttributes/
+      )?.[0] ?? "";
+
+    assert.match(mountedPanelSource, /c-script-editor-city-mounted-building-card__remove/);
+    assert.match(mountedPanelSource, /aria-label="删除挂载建筑"/);
+    assert.doesNotMatch(
+      mountedPanelSource,
+      /<button[\s\S]*?data-script-editor-action="remove-city-mounted-building"[\s\S]*?>[\s\S]*?删除挂载建筑[\s\S]*?<\/button>/
+    );
+  }
+);
+
+test(
+  "script editor city mounted building authoring paginates building cards in fixed six-card pages and adds new buildings collapsed",
+  () => {
+    const source = fs.readFileSync("src/ui/main-ui/main-ui-flow.js", "utf8");
+    const cssSource = fs.readFileSync("src/styles/script-editor.css", "utf8");
+    const mountedPanelSource =
+      source.match(
+        /renderScriptEditorLocationMountedContent\(city\) \{[\s\S]*?\n  renderScriptEditorLocationCustomAttributes/
+      )?.[0] ?? "";
+    const addMountedBuildingSource =
+      source.match(/addScriptEditorCityMountedBuilding\(\) \{[\s\S]*?\n  removeScriptEditorCityMountedBuilding/)?.[0] ?? "";
+
+    assert.match(source, /SCRIPT_EDITOR_CITY_MOUNTED_BUILDING_PAGE_SIZE\s*=\s*6/);
+    assert.match(source, /getScriptEditorCityMountedBuildingListPageState/);
+    assert.match(
+      mountedPanelSource,
+      /data-script-editor-action="city-mounted-building-list-page-prev"/
+    );
+    assert.match(
+      mountedPanelSource,
+      /data-script-editor-action="city-mounted-building-list-page-next"/
+    );
+    assert.match(mountedPanelSource, /c-script-editor-city-mounted-building-list/);
+    assert.match(
+      cssSource,
+      /\.c-script-editor-city-mounted-building-list\s*\{[\s\S]*min-height:\s*calc\(/
+    );
+    assert.match(
+      addMountedBuildingSource,
+      /expanded:\s*false,\s*search:\s*"",\s*page:\s*1/
+    );
+  }
+);
+
+test(
   "script editor city/building access conditions collapse empty groups and resolve refusal prompt dialogue",
   () => {
     const {
@@ -11000,6 +11180,58 @@ test(
 );
 
 test(
+  "script editor access authoring keeps enter and leave condition expressions isolated",
+  () => {
+    const {
+      createDefaultScriptEditorCityRecord,
+      appendScriptEditorAccessCondition,
+      updateScriptEditorAccessConditionField,
+    } = require("../.test-dist/application/script-editor/city-building-authoring.js");
+
+    let city = createDefaultScriptEditorCityRecord(0);
+    city = appendScriptEditorAccessCondition(city, "conditionExpression");
+    city = updateScriptEditorAccessConditionField(
+      city,
+      0,
+      "eventId",
+      "event.city.enter",
+      "conditionExpression"
+    );
+    city = appendScriptEditorAccessCondition(city, "leaveConditionExpression");
+    city = updateScriptEditorAccessConditionField(
+      city,
+      0,
+      "timeField",
+      "year",
+      "leaveConditionExpression"
+    );
+    city = updateScriptEditorAccessConditionField(
+      city,
+      0,
+      "operator",
+      "greater-than-or-equal",
+      "leaveConditionExpression"
+    );
+    city = updateScriptEditorAccessConditionField(
+      city,
+      0,
+      "literalValue",
+      "1356",
+      "leaveConditionExpression"
+    );
+
+    assert.equal(city.access.conditionExpression.conditions[0].left.subject, "event");
+    assert.equal(
+      city.access.conditionExpression.conditions[0].left.entityId,
+      "event.city.enter"
+    );
+    assert.equal(city.access.leaveConditionExpression.conditions[0].left.subject, "time");
+    assert.equal(city.access.leaveConditionExpression.conditions[0].left.fieldId, "year");
+    assert.equal(city.access.leaveConditionExpression.conditions[0].right.value, 1356);
+  }
+);
+
+test(
   "script editor city/building default background persists through runtime export and import",
   async () => {
     const {
@@ -11033,6 +11265,61 @@ test(
     );
     assert.equal(importedProject.cities[0].backgroundId, "chengzhen");
     assert.equal(importedProject.buildings[0].backgroundId, "zizhai");
+  }
+);
+
+test(
+  "script editor runtime export/import preserves city leave conditions separately from enter conditions",
+  async () => {
+    const {
+      createDefaultScriptEditorProjectDefinition,
+    } = require("../.test-dist/application/script-editor/minimal-workflow.js");
+    const {
+      exportScriptEditorProjectToScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    const {
+      loadScriptEditorProjectFromScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-import.js");
+
+    const project = createDefaultScriptEditorProjectDefinition();
+    project.cities[0] = {
+      ...project.cities[0],
+      access: {
+        conditionExpression: {
+          type: "compare",
+          left: { type: "field", subject: "event", entityId: "event.city.enter", fieldId: "completed" },
+          operator: "equals",
+          right: { type: "literal", value: true },
+        },
+        leaveConditionExpression: {
+          type: "compare",
+          left: { type: "field", subject: "time", fieldId: "year" },
+          operator: "greater-than-or-equal",
+          right: { type: "literal", value: 1356 },
+        },
+      },
+    };
+
+    const files = exportScriptEditorProjectToScenarioPackFiles(project);
+    const locationAccess = JSON.parse(files["location-access.json"]);
+
+    assert.equal(locationAccess.filter((entry) => entry.targetId === project.cities[0].id).length, 2);
+    assert.equal(
+      locationAccess.some((entry) => entry.targetId === project.cities[0].id && entry.purpose === "enter"),
+      true
+    );
+    assert.equal(
+      locationAccess.some((entry) => entry.targetId === project.cities[0].id && entry.purpose === "leave"),
+      true
+    );
+
+    const importedProject = await loadScriptEditorProjectFromScenarioPackFiles(
+      createImportedFilesFromSerializedJsonRecord(files, "leave-access")
+    );
+
+    assert.equal(importedProject.cities[0].access.conditionExpression.left.subject, "event");
+    assert.equal(importedProject.cities[0].access.leaveConditionExpression.left.subject, "time");
+    assert.equal(importedProject.cities[0].access.leaveConditionExpression.right.value, 1356);
   }
 );
 
@@ -11904,6 +12191,76 @@ test("location access runtime evaluates event person and time conditions", () =>
 
   assert.equal(failed.canEnter, false);
   assert.equal(failed.refusal.text, "Access denied.");
+});
+
+test("location access runtime evaluates leave-purpose rules independently from enter rules", () => {
+  const {
+    evaluateLocationAccess,
+  } = require("../.test-dist/application/location-access/location-access-runtime.js");
+  const baseState = createBaseState();
+
+  const locationAccessDefinitions = [
+    {
+      id: "location-access.enter.city.gated",
+      purpose: "enter",
+      targetFamily: "city",
+      targetId: "city.gated",
+      conditionExpression: { type: "literal", value: true },
+    },
+    {
+      id: "location-access.leave.city.gated",
+      purpose: "leave",
+      targetFamily: "city",
+      targetId: "city.gated",
+      conditionExpression: { type: "literal", value: false },
+      blockedMessage: "Cannot leave yet.",
+    },
+  ];
+
+  const enterResult = evaluateLocationAccess({
+    state: baseState,
+    targetFamily: "city",
+    targetId: "city.gated",
+    targetCity: {
+      id: "city.gated",
+      name: "Gated City",
+      regionId: "region.test",
+      mapNodeId: "node.gated",
+      houseIds: [],
+      neighbourCityIds: [],
+      travelCost: 1,
+      tags: [],
+      prosperity: 50,
+      danger: 20,
+      specialDemand: [],
+    },
+    locationAccessDefinitions,
+  });
+  const leaveResult = evaluateLocationAccess({
+    state: baseState,
+    purpose: "leave",
+    targetFamily: "city",
+    targetId: "city.gated",
+    targetCity: {
+      id: "city.gated",
+      name: "Gated City",
+      regionId: "region.test",
+      mapNodeId: "node.gated",
+      houseIds: [],
+      neighbourCityIds: [],
+      travelCost: 1,
+      tags: [],
+      prosperity: 50,
+      danger: 20,
+      specialDemand: [],
+    },
+    locationAccessDefinitions,
+  });
+
+  assert.deepEqual(enterResult, { canEnter: true, refusal: null });
+  assert.equal(leaveResult.canEnter, false);
+  assert.equal(leaveResult.refusal.ruleId, "location-access.leave.city.gated");
+  assert.equal(leaveResult.refusal.text, "Cannot leave yet.");
 });
 
 test("location access runtime evaluates event condition independently", () => {
@@ -13903,7 +14260,7 @@ test("script editor export writes building access rules only as runtime location
   assert.deepEqual(blocked, {
     canEnter: false,
     refusal: {
-      ruleId: "location-access.building.building.market",
+      ruleId: "location-access.enter.building.building.market",
       speakerCharacterId: "char.player",
       title: "Stay in temple",
       text: "Do not leave the temple yet.",
@@ -14276,7 +14633,10 @@ test("script editor tab selectors allow owner-local event tabs and reject event-
   const eventSelectorSource =
     source.match(/selectScriptEditorEventTab\(tab\) \{[\s\S]*?\n  selectScriptEditorMinigameTab/)?.[0] ?? "";
 
-  assert.match(locationSelectorSource, /\["profile", "menus", "access", "events"\]/);
+  assert.match(
+    locationSelectorSource,
+    /\["profile", "mounted", "arrangements", "menus", "access", "events"\]/
+  );
   assert.match(locationSelectorSource, /\["profile", "menus", "access", "entry", "events"\]/);
   assert.match(narrativeSelectorSource, /\["profile", "links", "summary", "events"\]/);
   assert.match(narrativeSelectorSource, /\["profile", "nodes", "summary", "events"\]/);
@@ -25836,6 +26196,103 @@ test("routed navigation runtime preserves blocked location access refusal", () =
   });
 });
 
+test("building entry runtime blocks mounted building access when the current city has no explicit building arrangement", () => {
+  const {
+    createEnterHouseRequest,
+    runNavigationRuntime,
+  } = require("../.test-dist/core/runtime/navigation-runtime.js");
+  const baseState = createBaseState();
+
+  const result = runNavigationRuntime({
+    state: {
+      ...baseState,
+      player: { characterId: "char.player" },
+      world: {
+        ...baseState.world,
+        currentCityId: "city.start",
+        currentHouseId: null,
+      },
+    },
+    request: createEnterHouseRequest("house.city.start.temple"),
+    houseDefinition: {
+      id: "house.city.start.temple",
+      cityId: "city.start",
+      name: "Temple",
+      type: "temple",
+      characterIds: [],
+      defaultCharacterId: null,
+      activityLocationId: "temple",
+    },
+    buildingArrangements: [],
+  });
+
+  assert.equal(result.state.world.currentHouseId, null);
+  assert.equal(result.navigation, null);
+  assert.equal(result.followUp, undefined);
+  assert.deepEqual(result.access, {
+    canEnter: false,
+    refusal: {
+      ruleId: "building-arrangement.required.house.city.start.temple",
+      speakerCharacterId: "char.player",
+      title: "Temple",
+      text: "Temple 尚未配置建筑编排，暂时无法进入。",
+      confirmLabel: "知道了",
+    },
+  });
+});
+
+test("building entry runtime enters mounted building when the current city has an explicit building arrangement", () => {
+  const {
+    createEnterHouseRequest,
+    runNavigationRuntime,
+  } = require("../.test-dist/core/runtime/navigation-runtime.js");
+  const baseState = createBaseState();
+
+  const result = runNavigationRuntime({
+    state: {
+      ...baseState,
+      player: { characterId: "char.player" },
+      world: {
+        ...baseState.world,
+        currentCityId: "city.start",
+        currentHouseId: null,
+      },
+    },
+    request: createEnterHouseRequest("house.city.start.temple"),
+    houseDefinition: {
+      id: "house.city.start.temple",
+      cityId: "city.start",
+      name: "Temple",
+      type: "temple",
+      characterIds: [],
+      defaultCharacterId: null,
+      activityLocationId: "temple",
+    },
+    buildingArrangements: [
+      {
+        id: "building-arrangement.city.start.temple",
+        cityId: "city.start",
+        buildingId: "house.city.start.temple",
+        displayName: "Temple Shell",
+        mountedNpcIds: [],
+        primaryNpcId: null,
+        containers: [],
+      },
+    ],
+  });
+
+  assert.equal(result.state.world.currentHouseId, "house.city.start.temple");
+  assert.deepEqual(result.navigation, {
+    view: "house",
+    houseId: "house.city.start.temple",
+  });
+  assert.deepEqual(result.followUp, {
+    type: "navigation.entered-house",
+    houseId: "house.city.start.temple",
+  });
+  assert.equal(result.access, undefined);
+});
+
 test("map city markers use city-owned map placement", () => {
   const {
     createMapCityMarkers,
@@ -26508,6 +26965,8 @@ test("main shell render-trigger ownerization introduces a city house transition 
     /city-house-transition-coordinator|createCityHouseTransitionCoordinator/
   );
   assert.match(mainSource, /cityHouseTransitionCoordinator\.leaveCity\(\)/);
+  assert.match(mainSource, /function canLeaveCurrentCity\(\): boolean \{/);
+  assert.match(mainSource, /purpose:\s*"leave"/);
   assert.match(mainSource, /cityHouseTransitionCoordinator\.enterCity3d\(\)/);
   assert.match(mainSource, /cityHouseTransitionCoordinator\.leaveCity3d\(\)/);
   assert.match(
@@ -26554,6 +27013,19 @@ test("city building entry evaluates production locationAccess instead of legacy 
   );
   assert.doesNotMatch(canOpenHouseBlock, /selectHouseEntryAccess/);
   assert.doesNotMatch(canOpenHouseBlock, /houseAccessRefusalRules/);
+});
+
+test("main enterBuilding route passes explicit building arrangements into shared navigation runtime", () => {
+  const mainSource = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
+  const enterBuildingBlock =
+    mainSource.match(/function enterBuilding\(houseId: string\): void \{[\s\S]*?\n\}/)?.[0] ??
+    "";
+
+  assert.match(enterBuildingBlock, /routeNavigationRuntime\(\{/);
+  assert.match(
+    enterBuildingBlock,
+    /buildingArrangements:\s*activeContentContext\.buildingArrangements/
+  );
 });
 
 test("location access retirement removes legacy house access refusal rule runtime and pack fields", () => {

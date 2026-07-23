@@ -1,4 +1,5 @@
 import { enterCity } from "../../application/navigation/enter-city";
+import type { BuildingArrangementDefinition } from "../../domain/building-arrangement";
 import { enterHouse } from "../../application/navigation/enter-house";
 import { evaluateLocationAccess } from "../../application/location-access/location-access-runtime";
 import type { CharacterDefinition } from "../../domain/character";
@@ -47,6 +48,7 @@ export function runNavigationRuntime(input: {
   request: RuntimeRequest;
   houseDefinition?: HouseDefinition | null;
   cityDefinitionsById?: Record<string, CityDefinition>;
+  buildingArrangements?: readonly BuildingArrangementDefinition[];
   characterDefinitions?: readonly CharacterDefinition[];
   locationAccessDefinitions?: readonly LocationAccessDefinition[];
 }): NavigationRuntimeResult {
@@ -96,6 +98,22 @@ export function runNavigationRuntime(input: {
     input.request.eventId === "navigation.enter-house" &&
     input.houseDefinition != null
   ) {
+    const activeArrangement = selectActiveBuildingArrangement(
+      input.buildingArrangements,
+      input.state.world.currentCityId,
+      input.houseDefinition.id
+    );
+    if (activeArrangement == null) {
+      return {
+        state: input.state,
+        navigation: null,
+        access: createMissingBuildingArrangementAccessResult(
+          input.state,
+          input.houseDefinition
+        ),
+      };
+    }
+
     const access = evaluateLocationAccess({
       state: input.state,
       targetFamily: "building",
@@ -136,6 +154,7 @@ export function routeNavigationRuntime(input: {
   request: RuntimeRequest;
   houseDefinition?: HouseDefinition | null;
   cityDefinitionsById?: Record<string, CityDefinition>;
+  buildingArrangements?: readonly BuildingArrangementDefinition[];
   characterDefinitions?: readonly CharacterDefinition[];
   locationAccessDefinitions?: readonly LocationAccessDefinition[];
 }): RuntimeResult {
@@ -148,6 +167,9 @@ export function routeNavigationRuntime(input: {
     ...(input.cityDefinitionsById === undefined
       ? {}
       : { cityDefinitionsById: input.cityDefinitionsById }),
+    ...(input.buildingArrangements === undefined
+      ? {}
+      : { buildingArrangements: input.buildingArrangements }),
     ...(input.characterDefinitions === undefined
       ? {}
       : { characterDefinitions: input.characterDefinitions }),
@@ -165,5 +187,41 @@ export function routeNavigationRuntime(input: {
     ...(result.followUp == null ? {} : { followUp: result.followUp }),
     ...(result.access == null ? {} : { access: result.access }),
     navigation: result.navigation,
+  };
+}
+
+function selectActiveBuildingArrangement(
+  buildingArrangements: readonly BuildingArrangementDefinition[] | undefined,
+  cityId: string | null | undefined,
+  houseId: string
+): BuildingArrangementDefinition | null {
+  if (cityId == null) {
+    return null;
+  }
+
+  return (
+    buildingArrangements?.find(
+      (arrangement) =>
+        arrangement.cityId === cityId && arrangement.buildingId === houseId
+    ) ?? null
+  );
+}
+
+function createMissingBuildingArrangementAccessResult(
+  state: GameState,
+  houseDefinition: HouseDefinition
+): LocationAccessResult {
+  return {
+    canEnter: false,
+    refusal: {
+      ruleId: `building-arrangement.required.${houseDefinition.id}`,
+      speakerCharacterId:
+        state.player.characterId ??
+        houseDefinition.defaultCharacterId ??
+        "char.player",
+      title: houseDefinition.name,
+      text: `${houseDefinition.name} 尚未配置建筑编排，暂时无法进入。`,
+      confirmLabel: "知道了",
+    },
   };
 }

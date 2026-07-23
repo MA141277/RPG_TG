@@ -401,6 +401,8 @@ const characterSelectLayoutBindings = [
 
 const SCRIPT_EDITOR_SECONDARY_LIST_PAGE_SIZE = 6;
 const SCRIPT_EDITOR_PERSON_ATTRIBUTE_PAGE_SIZE = 10;
+const SCRIPT_EDITOR_CITY_MOUNTED_BUILDING_PAGE_SIZE = 6;
+const SCRIPT_EDITOR_CITY_MOUNTED_BUILDING_NPC_PAGE_SIZE = 12;
 const SCRIPT_EDITOR_VISIBLE_WORKFLOW_FAMILIES = new Set(
   getScriptEditorWorkflowVisibleFamilies()
 );
@@ -490,6 +492,7 @@ export class MainUiFlow {
       portraits: "",
       portraitVariants: "",
     };
+    this.scriptEditorCityMountedBuildingUiState = {};
     this.scriptEditorPersonAttributePage = 1;
     this.scriptEditorPersonAttributeVisibleIndices = null;
     this.scriptEditorPersonAttributeScrollLeft = 0;
@@ -1122,6 +1125,208 @@ export class MainUiFlow {
       [family]: value,
     };
     this.setScriptEditorRecordListPage(family, 1);
+    this.render();
+  }
+
+  getScriptEditorCityMountedBuildingUiKey(buildingIndex) {
+    if (
+      this.scriptEditorSelection.family !== "cities" ||
+      this.scriptEditorSelection.entityId == null
+    ) {
+      return null;
+    }
+
+    return `${this.scriptEditorSelection.entityId}:${buildingIndex}`;
+  }
+
+  getScriptEditorCityMountedBuildingListUiKey() {
+    return this.getScriptEditorCityMountedBuildingUiKey("__list__");
+  }
+
+  getScriptEditorCityMountedBuildingListUiState() {
+    const key = this.getScriptEditorCityMountedBuildingListUiKey();
+    if (key == null) {
+      return {
+        page: 1,
+      };
+    }
+
+    return {
+      page: 1,
+      ...(this.scriptEditorCityMountedBuildingUiState[key] ?? {}),
+    };
+  }
+
+  setScriptEditorCityMountedBuildingListUiState(nextState) {
+    const key = this.getScriptEditorCityMountedBuildingListUiKey();
+    if (key == null) {
+      return;
+    }
+
+    this.scriptEditorCityMountedBuildingUiState = {
+      ...this.scriptEditorCityMountedBuildingUiState,
+      [key]: {
+        ...this.getScriptEditorCityMountedBuildingListUiState(),
+        ...nextState,
+      },
+    };
+  }
+
+  getScriptEditorCityMountedBuildingUiState(buildingIndex) {
+    const key = this.getScriptEditorCityMountedBuildingUiKey(buildingIndex);
+    if (key == null) {
+      return {
+        expanded: false,
+        search: "",
+        page: 1,
+      };
+    }
+
+    return {
+      expanded: false,
+      search: "",
+      page: 1,
+      ...(this.scriptEditorCityMountedBuildingUiState[key] ?? {}),
+    };
+  }
+
+  setScriptEditorCityMountedBuildingUiState(buildingIndex, nextState) {
+    const key = this.getScriptEditorCityMountedBuildingUiKey(buildingIndex);
+    if (key == null) {
+      return;
+    }
+
+    this.scriptEditorCityMountedBuildingUiState = {
+      ...this.scriptEditorCityMountedBuildingUiState,
+      [key]: {
+        ...this.getScriptEditorCityMountedBuildingUiState(buildingIndex),
+        ...nextState,
+      },
+    };
+  }
+
+  setScriptEditorCityMountedBuildingExpanded(buildingIndex, expanded) {
+    this.setScriptEditorCityMountedBuildingUiState(buildingIndex, { expanded });
+    this.render();
+  }
+
+  setScriptEditorCityMountedBuildingSearchValue(buildingIndex, value) {
+    this.setScriptEditorCityMountedBuildingUiState(buildingIndex, {
+      search: value,
+      page: 1,
+    });
+    this.render();
+  }
+
+  getFilteredScriptEditorCityMountedBuildingNpcEntries(entry, searchValue) {
+    const npcOptionsById = new Map(
+      (this.scriptEditorProject?.people ?? [])
+        .map((person) => normalizeScriptEditorPersonRecord(person))
+        .map((person) => [person.id, person])
+    );
+    const query = searchValue.trim().toLowerCase();
+    const npcIds = entry.npcIds ?? [];
+
+    return npcIds
+      .map((npcId, npcIndex) => ({
+        npcId,
+        npcIndex,
+        npcRecord: npcOptionsById.get(npcId) ?? null,
+      }))
+      .filter((npcEntry) => {
+        if (query.length === 0) {
+          return true;
+        }
+
+        return [npcEntry.npcRecord?.name ?? ""]
+          .join(" ")
+          .toLowerCase()
+          .includes(query);
+      });
+  }
+
+  getScriptEditorCityMountedBuildingNpcPageState(entry, buildingIndex) {
+    const uiState = this.getScriptEditorCityMountedBuildingUiState(buildingIndex);
+    const filteredEntries = this.getFilteredScriptEditorCityMountedBuildingNpcEntries(
+      entry,
+      uiState.search
+    );
+    const totalPages = Math.max(
+      1,
+      Math.ceil(
+        filteredEntries.length / SCRIPT_EDITOR_CITY_MOUNTED_BUILDING_NPC_PAGE_SIZE
+      )
+    );
+    const currentPage = Math.min(Math.max(uiState.page, 1), totalPages);
+    const startIndex =
+      (currentPage - 1) * SCRIPT_EDITOR_CITY_MOUNTED_BUILDING_NPC_PAGE_SIZE;
+
+    return {
+      uiState,
+      filteredEntries,
+      totalPages,
+      currentPage,
+      visibleEntries: filteredEntries.slice(
+        startIndex,
+        startIndex + SCRIPT_EDITOR_CITY_MOUNTED_BUILDING_NPC_PAGE_SIZE
+      ),
+    };
+  }
+
+  getScriptEditorCityMountedBuildingListPageState(city) {
+    const mountedBuildings = city.mountedBuildings ?? [];
+    const uiState = this.getScriptEditorCityMountedBuildingListUiState();
+    const totalPages = Math.max(
+      1,
+      Math.ceil(mountedBuildings.length / SCRIPT_EDITOR_CITY_MOUNTED_BUILDING_PAGE_SIZE)
+    );
+    const currentPage = Math.min(Math.max(uiState.page, 1), totalPages);
+    const startIndex = (currentPage - 1) * SCRIPT_EDITOR_CITY_MOUNTED_BUILDING_PAGE_SIZE;
+
+    return {
+      uiState,
+      totalPages,
+      currentPage,
+      totalEntries: mountedBuildings.length,
+      visibleEntries: mountedBuildings
+        .slice(startIndex, startIndex + SCRIPT_EDITOR_CITY_MOUNTED_BUILDING_PAGE_SIZE)
+        .map((entry, offset) => ({
+          entry,
+          buildingIndex: startIndex + offset,
+        })),
+    };
+  }
+
+  changeScriptEditorCityMountedBuildingNpcPage(buildingIndex, delta) {
+    const city = this.getSelectedScriptEditorLocation();
+    if (city == null) {
+      return;
+    }
+
+    const entry = city.mountedBuildings?.[buildingIndex] ?? null;
+    if (entry == null) {
+      return;
+    }
+
+    const { currentPage, totalPages } =
+      this.getScriptEditorCityMountedBuildingNpcPageState(entry, buildingIndex);
+    this.setScriptEditorCityMountedBuildingUiState(buildingIndex, {
+      page: Math.min(Math.max(currentPage + delta, 1), totalPages),
+    });
+    this.render();
+  }
+
+  changeScriptEditorCityMountedBuildingListPage(delta) {
+    const city = this.getSelectedScriptEditorLocation();
+    if (city == null) {
+      return;
+    }
+
+    const { currentPage, totalPages } =
+      this.getScriptEditorCityMountedBuildingListPageState(city);
+    this.setScriptEditorCityMountedBuildingListUiState({
+      page: Math.min(Math.max(currentPage + delta, 1), totalPages),
+    });
     this.render();
   }
 
@@ -2209,6 +2414,16 @@ export class MainUiFlow {
                   <template data-script-editor-inspector-header-slot>
                     <div class="c-script-editor-location-editor__tabs" role="tablist" aria-label="${isCityFamily ? "城市详情分栏" : "建筑详情分栏"}">
                       ${this.renderScriptEditorLocationTabButton("profile", "基础")}
+                      ${
+                        !isCityFamily
+                          ? ""
+                          : this.renderScriptEditorLocationTabButton("mounted", "挂载")
+                      }
+                      ${
+                        !isCityFamily
+                          ? ""
+                          : this.renderScriptEditorLocationTabButton("arrangements", "建筑编排")
+                      }
                       ${this.renderScriptEditorLocationTabButton("menus", "菜单")}
                       ${this.renderScriptEditorLocationTabButton("access", "进入条件")}
                       ${this.renderScriptEditorLocationTabButton("events", "事件")}
@@ -2244,6 +2459,14 @@ export class MainUiFlow {
   }
 
   renderScriptEditorLocationTabPanel(family, location) {
+    if (this.scriptEditorLocationTab === "mounted" && family === "cities") {
+      return this.renderScriptEditorLocationMountedContent(location);
+    }
+
+    if (this.scriptEditorLocationTab === "arrangements" && family === "cities") {
+      return this.renderScriptEditorBuildingArrangementPanel(location);
+    }
+
     if (this.scriptEditorLocationTab === "menus") {
       return this.renderScriptEditorLocationMenuPanel(family, location);
     }
@@ -2335,7 +2558,7 @@ export class MainUiFlow {
               `
           }
         </div>
-        ${this.renderScriptEditorSystemDetails(
+        ${isCityFamily ? "" : this.renderScriptEditorSystemDetails(
           "高级设置与系统信息",
           isCityFamily
             ? "城市内部标识默认折叠，主视图只保留创作描述。"
@@ -2365,7 +2588,6 @@ export class MainUiFlow {
             </div>
           `
         )}
-        ${isCityFamily ? this.renderScriptEditorBuildingArrangementPanel(location) : ""}
         ${this.renderScriptEditorLocationCustomAttributes(location)}
       </section>
     `;
@@ -2375,6 +2597,7 @@ export class MainUiFlow {
     if (project == null) {
       return "";
     }
+    return this.renderScriptEditorCityBuildingArrangementPlanner(city, project);
     const arrangements = listScriptEditorCityBuildingArrangements(project, city.id);
     const buildingOptions = (project.buildings ?? []).map((building) =>
       normalizeScriptEditorBuildingRecord(building)
@@ -2384,7 +2607,7 @@ export class MainUiFlow {
       .filter((person) => person.personType !== "瑙掕壊");
     const eventOptions = project.events ?? [];
     const renderBuildingOptions = (selectedBuildingId) => `
-      <option value="">Select building</option>
+      <option value="">未选择建筑</option>
       ${buildingOptions
         .map(
           (building) => `
@@ -2396,7 +2619,7 @@ export class MainUiFlow {
         .join("")}
     `;
     const renderNpcOptions = (selectedNpcId, allowEmpty = true, allowedNpcIds = null) => `
-      ${allowEmpty ? `<option value="">Select NPC</option>` : ""}
+      ${allowEmpty ? `<option value="">未选择人物</option>` : ""}
       ${npcOptions
         .filter((person) => allowedNpcIds == null || allowedNpcIds.includes(person.id))
         .map(
@@ -2415,7 +2638,7 @@ export class MainUiFlow {
         `
       ).join("");
     const renderEventOptions = (selectedEventId) => `
-      <option value="">Select event</option>
+      <option value="">未选择事件</option>
       ${eventOptions
         .map(
           (event) => `
@@ -2435,7 +2658,7 @@ export class MainUiFlow {
         `
       ).join("");
     const renderOptionalContainerTypeOptions = (selectedType = "") => `
-      <option value="">Auto</option>
+      <option value="">自动</option>
       ${renderContainerTypeOptions(selectedType)}
     `;
     const renderLayoutNodeKindOptions = (selectedKind) =>
@@ -2445,7 +2668,7 @@ export class MainUiFlow {
         `
       ).join("");
     const renderLayoutCharacterFilterOptions = (selectedFilter = "") => `
-      <option value="">Unset</option>
+      <option value="">未设置</option>
       ${SCRIPT_EDITOR_BUILDING_LAYOUT_CHARACTER_FILTERS.map(
         (filter) => `
           <option value="${escapeHtml(filter)}" ${filter === selectedFilter ? "selected" : ""}>${escapeHtml(filter)}</option>
@@ -2453,7 +2676,7 @@ export class MainUiFlow {
       ).join("")}
     `;
     const renderLayoutActionFilterOptions = (selectedFilter = "") => `
-      <option value="">Unset</option>
+      <option value="">未设置</option>
       ${SCRIPT_EDITOR_BUILDING_LAYOUT_ACTION_FILTERS.map(
         (filter) => `
           <option value="${escapeHtml(filter)}" ${filter === selectedFilter ? "selected" : ""}>${escapeHtml(filter)}</option>
@@ -2462,13 +2685,16 @@ export class MainUiFlow {
     `;
 
     return `
-      <section class="c-script-editor-location-attributes" aria-label="Building Arrangement">
+      <section class="c-script-editor-location-attributes" aria-label="城市建筑编排">
         <header class="c-script-editor-location-menu__header">
           <div>
-            <h3 class="c-script-editor-editor-card__title">Building Arrangement</h3>
+            <h3 class="c-script-editor-editor-card__title">建筑编排</h3>
+            <p class="c-script-editor-editor-card__hint">
+              这里只定义建筑内部布局、容器和动作，不会自动把建筑加入城市地点列表。城市地点入口由“挂载”分栏负责。
+            </p>
           </div>
           <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="add-building-arrangement">
-            Add Arrangement
+            新增编排
           </button>
         </header>
         <div class="c-script-editor-location-menu__list">
@@ -2478,21 +2704,21 @@ export class MainUiFlow {
                 <article class="c-script-editor-location-menu__item" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}">
                   <div class="c-script-editor-form-grid">
                     <label class="c-script-editor-form-field">
-                      <span>Arrangement ID</span>
+                      <span>编排 ID</span>
                       <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(arrangement.id)}" data-script-editor-building-arrangement-field="id" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}" />
                     </label>
                     <label class="c-script-editor-form-field">
-                      <span>Building</span>
+                      <span>建筑</span>
                       <select class="c-script-editor-form-field__input" data-script-editor-building-arrangement-field="buildingId" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}">
                         ${renderBuildingOptions(arrangement.buildingId)}
                       </select>
                     </label>
                     <label class="c-script-editor-form-field">
-                      <span>Display Name</span>
+                      <span>显示名称</span>
                       <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(arrangement.displayName ?? "")}" data-script-editor-building-arrangement-field="displayName" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}" />
                     </label>
                     <label class="c-script-editor-form-field">
-                      <span>Primary NPC</span>
+                      <span>主人物</span>
                       <select class="c-script-editor-form-field__input" data-script-editor-building-arrangement-primary-npc data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}">
                         ${renderNpcOptions(arrangement.primaryNpcId ?? "", true, arrangement.mountedNpcIds)}
                       </select>
@@ -2504,13 +2730,13 @@ export class MainUiFlow {
                         (npcId, npcIndex) => `
                           <div class="c-script-editor-form-grid">
                             <label class="c-script-editor-form-field">
-                              <span>Mounted NPC</span>
+                              <span>挂载人物</span>
                               <select class="c-script-editor-form-field__input" data-script-editor-building-arrangement-npc data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}" data-script-editor-building-arrangement-npc-index="${npcIndex}">
                                 ${renderNpcOptions(npcId)}
                               </select>
                             </label>
                             <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="remove-building-arrangement-npc" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}" data-script-editor-building-arrangement-npc-index="${npcIndex}">
-                              Remove NPC
+                              删除人物
                             </button>
                           </div>
                         `
@@ -2519,16 +2745,16 @@ export class MainUiFlow {
                   </div>
                   <div class="c-script-editor-location-menu__toggles">
                     <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="add-building-arrangement-npc" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}">
-                      Add NPC
+                      新增人物
                     </button>
                     <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="add-building-layout-node" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}">
-                      Add Layout Node
+                      新增布局节点
                     </button>
                     <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="add-building-arrangement-container" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}">
-                      Add Container
+                      新增容器
                     </button>
                     <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="remove-building-arrangement" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}">
-                      Remove Arrangement
+                      删除编排
                     </button>
                   </div>
                   ${(() => {
@@ -2537,18 +2763,18 @@ export class MainUiFlow {
                       <article class="c-script-editor-location-menu__item">
                         <header class="c-script-editor-location-menu__header">
                           <div>
-                            <h4 class="c-script-editor-editor-card__title">Layout</h4>
+                            <h4 class="c-script-editor-editor-card__title">布局</h4>
                           </div>
                         </header>
                         <div class="c-script-editor-form-grid">
                           <label class="c-script-editor-form-field">
-                            <span>Template</span>
+                            <span>模板</span>
                             <select class="c-script-editor-form-field__input" data-script-editor-building-layout-field="templateId" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}">
                               ${renderLayoutTemplateOptions(layout.templateId)}
                             </select>
                           </label>
                           <label class="c-script-editor-form-field">
-                            <span>Shell Classes</span>
+                            <span>外壳类名</span>
                             <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml((layout.shellClassNames ?? []).join(", "))}" data-script-editor-building-layout-field="shellClassNames" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}" />
                           </label>
                         </div>
@@ -2559,65 +2785,65 @@ export class MainUiFlow {
                                 <article class="c-script-editor-location-menu__item">
                                   <div class="c-script-editor-form-grid">
                                     <label class="c-script-editor-form-field">
-                                      <span>Node ID</span>
+                                      <span>节点 ID</span>
                                       <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(node.id)}" data-script-editor-building-layout-node-field="id" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}" data-script-editor-building-layout-node-index="${nodeIndex}" />
                                     </label>
                                     <label class="c-script-editor-form-field">
-                                      <span>Kind</span>
+                                      <span>节点类型</span>
                                       <select class="c-script-editor-form-field__input" data-script-editor-building-layout-node-field="kind" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}" data-script-editor-building-layout-node-index="${nodeIndex}">
                                         ${renderLayoutNodeKindOptions(node.kind)}
                                       </select>
                                     </label>
                                     <label class="c-script-editor-form-field">
-                                      <span>Region ID</span>
+                                      <span>区域 ID</span>
                                       <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(node.regionId)}" data-script-editor-building-layout-node-field="regionId" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}" data-script-editor-building-layout-node-index="${nodeIndex}" />
                                     </label>
                                     <label class="c-script-editor-form-field">
-                                      <span>Source Container Type</span>
+                                      <span>来源容器类型</span>
                                       <select class="c-script-editor-form-field__input" data-script-editor-building-layout-node-field="sourceContainerType" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}" data-script-editor-building-layout-node-index="${nodeIndex}">
                                         ${renderOptionalContainerTypeOptions(node.sourceContainerType ?? "")}
                                       </select>
                                     </label>
                                     <label class="c-script-editor-form-field">
-                                      <span>Source Container ID</span>
+                                      <span>来源容器 ID</span>
                                       <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(node.sourceContainerId ?? "")}" data-script-editor-building-layout-node-field="sourceContainerId" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}" data-script-editor-building-layout-node-index="${nodeIndex}" />
                                     </label>
                                     <label class="c-script-editor-form-field">
-                                      <span>Presentation</span>
+                                      <span>表现标识</span>
                                       <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(node.presentation ?? "")}" data-script-editor-building-layout-node-field="presentation" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}" data-script-editor-building-layout-node-index="${nodeIndex}" />
                                     </label>
                                     <label class="c-script-editor-form-field">
-                                      <span>Character Filter</span>
+                                      <span>人物过滤</span>
                                       <select class="c-script-editor-form-field__input" data-script-editor-building-layout-node-field="characterFilter" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}" data-script-editor-building-layout-node-index="${nodeIndex}">
                                         ${renderLayoutCharacterFilterOptions(node.characterFilter ?? "")}
                                       </select>
                                     </label>
                                     <label class="c-script-editor-form-field">
-                                      <span>Action Filter</span>
+                                      <span>动作过滤</span>
                                       <select class="c-script-editor-form-field__input" data-script-editor-building-layout-node-field="actionFilter" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}" data-script-editor-building-layout-node-index="${nodeIndex}">
                                         ${renderLayoutActionFilterOptions(node.actionFilter ?? "")}
                                       </select>
                                     </label>
                                     <label class="c-script-editor-form-field">
-                                      <span>Click Action ID</span>
+                                      <span>点击动作 ID</span>
                                       <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(node.clickActionId ?? "")}" data-script-editor-building-layout-node-field="clickActionId" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}" data-script-editor-building-layout-node-index="${nodeIndex}" />
                                     </label>
                                   </div>
                                   <div class="c-script-editor-location-menu__toggles">
                                     <label class="c-script-editor-form-field">
-                                      <span>Preview Selectable</span>
+                                      <span>预览可选中</span>
                                       <input type="checkbox" ${node.previewSelectable === true ? "checked" : ""} data-script-editor-building-layout-node-flag="previewSelectable" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}" data-script-editor-building-layout-node-index="${nodeIndex}" />
                                     </label>
                                     <label class="c-script-editor-form-field">
-                                      <span>Preview Draggable</span>
+                                      <span>预览可拖拽</span>
                                       <input type="checkbox" ${node.previewDraggable === true ? "checked" : ""} data-script-editor-building-layout-node-flag="previewDraggable" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}" data-script-editor-building-layout-node-index="${nodeIndex}" />
                                     </label>
                                     <label class="c-script-editor-form-field">
-                                      <span>Preview Drop Target</span>
+                                      <span>预览可放置</span>
                                       <input type="checkbox" ${node.previewDropTarget === true ? "checked" : ""} data-script-editor-building-layout-node-flag="previewDropTarget" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}" data-script-editor-building-layout-node-index="${nodeIndex}" />
                                     </label>
                                     <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="remove-building-layout-node" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}" data-script-editor-building-layout-node-index="${nodeIndex}">
-                                      Remove Layout Node
+                                      删除布局节点
                                     </button>
                                   </div>
                                 </article>
@@ -2635,17 +2861,17 @@ export class MainUiFlow {
                           <article class="c-script-editor-location-menu__item">
                             <div class="c-script-editor-form-grid">
                               <label class="c-script-editor-form-field">
-                                <span>Container ID</span>
+                                <span>容器 ID</span>
                                 <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(container.id)}" data-script-editor-building-container-field="id" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}" data-script-editor-building-container-index="${containerIndex}" />
                               </label>
                               <label class="c-script-editor-form-field">
-                                <span>Container Type</span>
+                                <span>容器类型</span>
                                 <select class="c-script-editor-form-field__input" data-script-editor-building-container-field="type" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}" data-script-editor-building-container-index="${containerIndex}">
                                   ${renderContainerTypeOptions(container.type)}
                                 </select>
                               </label>
                               <label class="c-script-editor-form-field">
-                                <span>Title</span>
+                                <span>标题</span>
                                 <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(container.title ?? "")}" data-script-editor-building-container-field="title" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}" data-script-editor-building-container-index="${containerIndex}" />
                               </label>
                             </div>
@@ -2658,17 +2884,17 @@ export class MainUiFlow {
                                         (item, actionIndex) => `
                                           <div class="c-script-editor-form-grid">
                                             <label class="c-script-editor-form-field">
-                                              <span>Action Label</span>
+                                              <span>动作标签</span>
                                               <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(item.label)}" data-script-editor-building-container-action-field="label" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}" data-script-editor-building-container-index="${containerIndex}" data-script-editor-building-container-action-index="${actionIndex}" />
                                             </label>
                                             <label class="c-script-editor-form-field">
-                                              <span>Event</span>
+                                              <span>事件</span>
                                               <select class="c-script-editor-form-field__input" data-script-editor-building-container-action-field="eventId" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}" data-script-editor-building-container-index="${containerIndex}" data-script-editor-building-container-action-index="${actionIndex}">
                                                 ${renderEventOptions(item.eventId)}
                                               </select>
                                             </label>
                                             <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="remove-building-container-action" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}" data-script-editor-building-container-index="${containerIndex}" data-script-editor-building-container-action-index="${actionIndex}">
-                                              Remove Action
+                                              删除动作
                                             </button>
                                           </div>
                                         `
@@ -2676,13 +2902,13 @@ export class MainUiFlow {
                                       .join("")}
                                   </div>
                                   <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="add-building-container-action" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}" data-script-editor-building-container-index="${containerIndex}">
-                                    Add Action
+                                    新增动作
                                   </button>
                                 `
                                 : ""
                             }
                             <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="remove-building-arrangement-container" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}" data-script-editor-building-container-index="${containerIndex}">
-                              Remove Container
+                              删除容器
                             </button>
                           </article>
                         `
@@ -2697,6 +2923,388 @@ export class MainUiFlow {
       </section>
     `;
   }
+
+  renderScriptEditorCityBuildingArrangementPlanner(city, project) {
+    const arrangements = listScriptEditorCityBuildingArrangements(project, city.id);
+    const mountedBuildings = city.mountedBuildings ?? [];
+    const buildingById = new Map(
+      (project.buildings ?? [])
+        .map((building) => normalizeScriptEditorBuildingRecord(building))
+        .map((building) => [building.id, building])
+    );
+    const mountedBuildingIds = new Set(
+      mountedBuildings.map((mountedBuilding) => mountedBuilding.buildingId).filter(Boolean)
+    );
+    const eventOptions = project.events ?? [];
+    const renderContainerTypeOptions = (selectedType) =>
+      SCRIPT_EDITOR_BUILDING_CONTAINER_TYPES.map(
+        (type) => `
+          <option value="${escapeHtml(type)}" ${type === selectedType ? "selected" : ""}>${escapeHtml(type)}</option>
+        `
+      ).join("");
+    const renderEventOptions = (selectedEventId) => `
+      <option value="">未选择事件</option>
+      ${eventOptions
+        .map(
+          (event) => `
+            <option value="${escapeHtml(event.id)}" ${event.id === selectedEventId ? "selected" : ""}>
+              ${escapeHtml(event.name ?? event.id)}
+            </option>
+          `
+        )
+        .join("")}
+    `;
+    const renderLayoutTemplateOptions = (selectedTemplateId) =>
+      SCRIPT_EDITOR_BUILDING_LAYOUT_TEMPLATE_IDS.map(
+        (templateId) => `
+          <option value="${escapeHtml(templateId)}" ${templateId === selectedTemplateId ? "selected" : ""}>${escapeHtml(templateId)}</option>
+        `
+      ).join("");
+    const renderOptionalContainerTypeOptions = (selectedType = "") => `
+      <option value="">自动</option>
+      ${renderContainerTypeOptions(selectedType)}
+    `;
+    const renderLayoutNodeKindOptions = (selectedKind) =>
+      SCRIPT_EDITOR_BUILDING_LAYOUT_NODE_KINDS.map(
+        (kind) => `
+          <option value="${escapeHtml(kind)}" ${kind === selectedKind ? "selected" : ""}>${escapeHtml(kind)}</option>
+        `
+      ).join("");
+    const renderLayoutCharacterFilterOptions = (selectedFilter = "") => `
+      <option value="">未设置</option>
+      ${SCRIPT_EDITOR_BUILDING_LAYOUT_CHARACTER_FILTERS.map(
+        (filter) => `
+          <option value="${escapeHtml(filter)}" ${filter === selectedFilter ? "selected" : ""}>${escapeHtml(filter)}</option>
+        `
+      ).join("")}
+    `;
+    const renderLayoutActionFilterOptions = (selectedFilter = "") => `
+      <option value="">未设置</option>
+      ${SCRIPT_EDITOR_BUILDING_LAYOUT_ACTION_FILTERS.map(
+        (filter) => `
+          <option value="${escapeHtml(filter)}" ${filter === selectedFilter ? "selected" : ""}>${escapeHtml(filter)}</option>
+        `
+      ).join("")}
+    `;
+    const renderArrangementEditor = (arrangement, building) => {
+      const layout = readScriptEditorBuildingLayoutRecord(arrangement.layout);
+      return `
+        <article class="c-script-editor-location-menu__item c-script-editor-location-menu__item--arrangement" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}">
+          <header class="c-script-editor-location-menu__header">
+            <div>
+              <h4 class="c-script-editor-editor-card__title">${escapeHtml(
+                arrangement.displayName ?? building.name
+              )}</h4>
+              <p class="c-script-editor-editor-card__hint">
+                这里只编排室内布局、容器和动作。建筑入口、挂载人物和主人物请回“挂载”分栏维护。
+              </p>
+            </div>
+            <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="remove-building-arrangement" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}">
+              删除编排
+            </button>
+          </header>
+          <div class="c-script-editor-form-grid">
+            <label class="c-script-editor-form-field">
+              <span>室内名称</span>
+              <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(arrangement.displayName ?? "")}" data-script-editor-building-arrangement-field="displayName" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}" />
+            </label>
+            <label class="c-script-editor-form-field">
+              <span>室内背景</span>
+              <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(arrangement.backgroundId ?? "")}" data-script-editor-building-arrangement-field="backgroundId" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}" />
+            </label>
+            <label class="c-script-editor-form-field c-script-editor-form-field--wide">
+              <span>室内说明</span>
+              <textarea class="c-script-editor-record-editor__textarea c-script-editor-record-editor__textarea--compact" data-script-editor-building-arrangement-field="description" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}" spellcheck="false">${escapeHtml(arrangement.description ?? "")}</textarea>
+            </label>
+          </div>
+          <article class="c-script-editor-location-menu__item c-script-editor-location-menu__item--nested">
+            <header class="c-script-editor-location-menu__header">
+              <div>
+                <h5 class="c-script-editor-editor-card__title">布局</h5>
+                <p class="c-script-editor-editor-card__hint">定义室内区域、节点和点击逻辑。</p>
+              </div>
+              <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="add-building-layout-node" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}">
+                新增布局节点
+              </button>
+            </header>
+            <div class="c-script-editor-form-grid">
+              <label class="c-script-editor-form-field">
+                <span>布局模板</span>
+                <select class="c-script-editor-form-field__input" data-script-editor-building-layout-field="templateId" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}">
+                  ${renderLayoutTemplateOptions(layout.templateId)}
+                </select>
+              </label>
+              <label class="c-script-editor-form-field">
+                <span>外壳类名</span>
+                <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml((layout.shellClassNames ?? []).join(", "))}" data-script-editor-building-layout-field="shellClassNames" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}" />
+              </label>
+            </div>
+            <div class="c-script-editor-location-menu__list">
+              ${(layout.nodes ?? [])
+                .map(
+                  (node, nodeIndex) => `
+                    <article class="c-script-editor-location-menu__item c-script-editor-location-menu__item--nested">
+                      <div class="c-script-editor-form-grid">
+                        <label class="c-script-editor-form-field">
+                          <span>节点类型</span>
+                          <select class="c-script-editor-form-field__input" data-script-editor-building-layout-node-field="kind" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}" data-script-editor-building-layout-node-index="${nodeIndex}">
+                            ${renderLayoutNodeKindOptions(node.kind)}
+                          </select>
+                        </label>
+                        <label class="c-script-editor-form-field">
+                          <span>区域标识</span>
+                          <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(node.regionId)}" data-script-editor-building-layout-node-field="regionId" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}" data-script-editor-building-layout-node-index="${nodeIndex}" />
+                        </label>
+                        <label class="c-script-editor-form-field">
+                          <span>来源容器类型</span>
+                          <select class="c-script-editor-form-field__input" data-script-editor-building-layout-node-field="sourceContainerType" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}" data-script-editor-building-layout-node-index="${nodeIndex}">
+                            ${renderOptionalContainerTypeOptions(node.sourceContainerType ?? "")}
+                          </select>
+                        </label>
+                        <label class="c-script-editor-form-field">
+                          <span>来源容器标识</span>
+                          <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(node.sourceContainerId ?? "")}" data-script-editor-building-layout-node-field="sourceContainerId" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}" data-script-editor-building-layout-node-index="${nodeIndex}" />
+                        </label>
+                        <label class="c-script-editor-form-field">
+                          <span>表现标识</span>
+                          <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(node.presentation ?? "")}" data-script-editor-building-layout-node-field="presentation" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}" data-script-editor-building-layout-node-index="${nodeIndex}" />
+                        </label>
+                        <label class="c-script-editor-form-field">
+                          <span>人物过滤</span>
+                          <select class="c-script-editor-form-field__input" data-script-editor-building-layout-node-field="characterFilter" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}" data-script-editor-building-layout-node-index="${nodeIndex}">
+                            ${renderLayoutCharacterFilterOptions(node.characterFilter ?? "")}
+                          </select>
+                        </label>
+                        <label class="c-script-editor-form-field">
+                          <span>动作过滤</span>
+                          <select class="c-script-editor-form-field__input" data-script-editor-building-layout-node-field="actionFilter" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}" data-script-editor-building-layout-node-index="${nodeIndex}">
+                            ${renderLayoutActionFilterOptions(node.actionFilter ?? "")}
+                          </select>
+                        </label>
+                        <label class="c-script-editor-form-field">
+                          <span>点击动作标识</span>
+                          <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(node.clickActionId ?? "")}" data-script-editor-building-layout-node-field="clickActionId" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}" data-script-editor-building-layout-node-index="${nodeIndex}" />
+                        </label>
+                      </div>
+                      <div class="c-script-editor-location-menu__toggles">
+                        <label class="c-script-editor-form-field">
+                          <span>预览可选中</span>
+                          <input type="checkbox" ${node.previewSelectable === true ? "checked" : ""} data-script-editor-building-layout-node-flag="previewSelectable" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}" data-script-editor-building-layout-node-index="${nodeIndex}" />
+                        </label>
+                        <label class="c-script-editor-form-field">
+                          <span>预览可拖拽</span>
+                          <input type="checkbox" ${node.previewDraggable === true ? "checked" : ""} data-script-editor-building-layout-node-flag="previewDraggable" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}" data-script-editor-building-layout-node-index="${nodeIndex}" />
+                        </label>
+                        <label class="c-script-editor-form-field">
+                          <span>预览可放置</span>
+                          <input type="checkbox" ${node.previewDropTarget === true ? "checked" : ""} data-script-editor-building-layout-node-flag="previewDropTarget" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}" data-script-editor-building-layout-node-index="${nodeIndex}" />
+                        </label>
+                        <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="remove-building-layout-node" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}" data-script-editor-building-layout-node-index="${nodeIndex}">
+                          删除节点
+                        </button>
+                      </div>
+                    </article>
+                  `
+                )
+                .join("")}
+            </div>
+          </article>
+          <article class="c-script-editor-location-menu__item c-script-editor-location-menu__item--nested">
+            <header class="c-script-editor-location-menu__header">
+              <div>
+                <h5 class="c-script-editor-editor-card__title">容器与动作</h5>
+                <p class="c-script-editor-editor-card__hint">定义人物席位、动作菜单和信息容器。</p>
+              </div>
+              <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="add-building-arrangement-container" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}">
+                新增容器
+              </button>
+            </header>
+            <div class="c-script-editor-location-menu__list">
+              ${arrangement.containers
+                .map(
+                  (container, containerIndex) => `
+                    <article class="c-script-editor-location-menu__item c-script-editor-location-menu__item--nested">
+                      <div class="c-script-editor-form-grid">
+                        <label class="c-script-editor-form-field">
+                          <span>容器标识</span>
+                          <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(container.id)}" data-script-editor-building-container-field="id" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}" data-script-editor-building-container-index="${containerIndex}" />
+                        </label>
+                        <label class="c-script-editor-form-field">
+                          <span>容器类型</span>
+                          <select class="c-script-editor-form-field__input" data-script-editor-building-container-field="type" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}" data-script-editor-building-container-index="${containerIndex}">
+                            ${renderContainerTypeOptions(container.type)}
+                          </select>
+                        </label>
+                        <label class="c-script-editor-form-field">
+                          <span>标题</span>
+                          <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(container.title ?? "")}" data-script-editor-building-container-field="title" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}" data-script-editor-building-container-index="${containerIndex}" />
+                        </label>
+                      </div>
+                      ${
+                        container.type === "action-menu"
+                          ? `
+                            <div class="c-script-editor-location-menu__list">
+                              ${(container.items ?? [])
+                                .map(
+                                  (item, actionIndex) => `
+                                    <div class="c-script-editor-form-grid">
+                                      <label class="c-script-editor-form-field">
+                                        <span>动作标签</span>
+                                        <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(item.label)}" data-script-editor-building-container-action-field="label" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}" data-script-editor-building-container-index="${containerIndex}" data-script-editor-building-container-action-index="${actionIndex}" />
+                                      </label>
+                                      <label class="c-script-editor-form-field">
+                                        <span>事件</span>
+                                        <select class="c-script-editor-form-field__input" data-script-editor-building-container-action-field="eventId" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}" data-script-editor-building-container-index="${containerIndex}" data-script-editor-building-container-action-index="${actionIndex}">
+                                          ${renderEventOptions(item.eventId)}
+                                        </select>
+                                      </label>
+                                      <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="remove-building-container-action" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}" data-script-editor-building-container-index="${containerIndex}" data-script-editor-building-container-action-index="${actionIndex}">
+                                        删除动作
+                                      </button>
+                                    </div>
+                                  `
+                                )
+                                .join("")}
+                            </div>
+                            <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="add-building-container-action" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}" data-script-editor-building-container-index="${containerIndex}">
+                              新增动作
+                            </button>
+                          `
+                          : ""
+                      }
+                      <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="remove-building-arrangement-container" data-script-editor-building-arrangement-id="${escapeHtml(arrangement.id)}" data-script-editor-building-container-index="${containerIndex}">
+                        删除容器
+                      </button>
+                    </article>
+                  `
+                )
+                .join("")}
+            </div>
+          </article>
+        </article>
+      `;
+    };
+    const unmountedArrangements = arrangements.filter(
+      (arrangement) => !mountedBuildingIds.has(arrangement.buildingId)
+    );
+
+    return `
+      <section class="c-script-editor-location-attributes" aria-label="城市建筑编排">
+        <header class="c-script-editor-location-menu__header">
+          <div>
+            <h3 class="c-script-editor-editor-card__title">建筑编排</h3>
+            <p class="c-script-editor-editor-card__hint">
+              这里只编排已挂载建筑的室内内容。建筑入口、挂载人物和主人物统一在“挂载”分栏维护，这里不再重复配置。
+            </p>
+          </div>
+        </header>
+        <div class="c-script-editor-location-menu__list">
+          ${
+            mountedBuildings.length === 0
+              ? `
+                <article class="c-script-editor-location-menu__item">
+                  <p class="c-script-editor-editor-card__hint">
+                    请先到“挂载”分栏添加城市入口建筑，再回来编排室内内容。
+                  </p>
+                </article>
+              `
+              : mountedBuildings
+                  .map((mountedBuilding) => {
+                    const building = buildingById.get(mountedBuilding.buildingId) ?? null;
+                    const buildingArrangements = arrangements.filter(
+                      (arrangement) => arrangement.buildingId === mountedBuilding.buildingId
+                    );
+                    if (building == null) {
+                      return `
+                        <article class="c-script-editor-location-menu__item">
+                          <header class="c-script-editor-location-menu__header">
+                            <div>
+                              <h4 class="c-script-editor-editor-card__title">挂载建筑数据无效</h4>
+                              <p class="c-script-editor-editor-card__hint">
+                                当前挂载记录指向的建筑已不存在，请先回“挂载”分栏清理。
+                              </p>
+                            </div>
+                          </header>
+                        </article>
+                      `;
+                    }
+                    return `
+                      <article class="c-script-editor-location-menu__item c-script-editor-location-menu__item--arrangement-group">
+                        <header class="c-script-editor-location-menu__header">
+                          <div>
+                            <h4 class="c-script-editor-editor-card__title">${escapeHtml(
+                              building.name
+                            )}</h4>
+                            <p class="c-script-editor-editor-card__hint">
+                              ${
+                                buildingArrangements.length === 0
+                                  ? "还没有室内编排，可以先新建一套。"
+                                  : "当前建筑的室内编排如下。"
+                              }
+                            </p>
+                          </div>
+                          ${
+                            buildingArrangements.length === 0
+                              ? `
+                                <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="add-building-arrangement" data-script-editor-building-id="${escapeHtml(building.id)}">
+                                  新建编排
+                                </button>
+                              `
+                              : ""
+                          }
+                        </header>
+                        ${
+                          buildingArrangements.length === 0
+                            ? ""
+                            : `
+                              <div class="c-script-editor-location-menu__list">
+                                ${buildingArrangements
+                                  .map((arrangement) =>
+                                    renderArrangementEditor(arrangement, building)
+                                  )
+                                  .join("")}
+                              </div>
+                            `
+                        }
+                      </article>
+                    `;
+                  })
+                  .join("")
+          }
+          ${
+            unmountedArrangements.length === 0
+              ? ""
+              : `
+                <article class="c-script-editor-location-menu__item">
+                  <header class="c-script-editor-location-menu__header">
+                    <div>
+                      <h4 class="c-script-editor-editor-card__title">未挂载的旧编排</h4>
+                      <p class="c-script-editor-editor-card__hint">
+                        这些编排不会出现在进城后的地点列表里。若仍需使用，请先回“挂载”分栏把对应建筑挂到城市入口。
+                      </p>
+                    </div>
+                  </header>
+                  <div class="c-script-editor-location-menu__list">
+                    ${unmountedArrangements
+                      .map((arrangement) => {
+                        const building =
+                          buildingById.get(arrangement.buildingId) ??
+                          {
+                            id: arrangement.buildingId,
+                            name: arrangement.displayName ?? arrangement.buildingId,
+                          };
+                        return renderArrangementEditor(arrangement, building);
+                      })
+                      .join("")}
+                  </div>
+                </article>
+              `
+          }
+        </div>
+      </section>
+    `;
+  }
+
   renderScriptEditorCityMountedBuildingsPanel(city) {
     const mountedBuildings = city.mountedBuildings ?? [];
     const buildingOptions = (this.scriptEditorProject?.buildings ?? []).map((building) =>
@@ -2736,6 +3344,9 @@ export class MainUiFlow {
         <header class="c-script-editor-location-menu__header">
           <div>
             <h3 class="c-script-editor-editor-card__title">挂载建筑与人物</h3>
+            <p class="c-script-editor-editor-card__hint">
+              这里决定城市地点列表会出现哪些建筑入口；仅添加建筑编排不会自动出现在进城后的地点选择里。
+            </p>
           </div>
           <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="add-city-mounted-building">
             新增挂载建筑
@@ -2821,6 +3432,253 @@ export class MainUiFlow {
             )
             .join("")}
         </div>
+      </section>
+    `;
+  }
+
+  renderScriptEditorLocationMountedContent(city) {
+    const mountedBuildings = city.mountedBuildings ?? [];
+    const {
+      visibleEntries: visibleMountedBuildings,
+      currentPage: currentBuildingPage,
+      totalPages: totalBuildingPages,
+      totalEntries: totalMountedBuildings,
+    } = this.getScriptEditorCityMountedBuildingListPageState(city);
+    const buildingOptions = (this.scriptEditorProject?.buildings ?? []).map((building) =>
+      normalizeScriptEditorBuildingRecord(building)
+    );
+    const npcOptions = (this.scriptEditorProject?.people ?? [])
+      .map((person) => normalizeScriptEditorPersonRecord(person))
+      .filter((person) => person.personType !== "瑙掕壊");
+    const npcOptionsById = new Map(npcOptions.map((person) => [person.id, person]));
+    const renderBuildingOptions = (selectedBuildingId) => `
+      <option value="">未选择建筑</option>
+      ${buildingOptions
+        .map(
+          (building) => `
+            <option value="${escapeHtml(building.id)}" ${building.id === selectedBuildingId ? "selected" : ""}>
+              ${escapeHtml(building.name)}
+            </option>
+          `
+        )
+        .join("")}
+    `;
+    const renderNpcOptions = (selectedNpcId, allowEmpty = true, allowedNpcIds = null) => `
+      ${allowEmpty ? `<option value="">未选择人物</option>` : ""}
+      ${npcOptions
+        .filter((person) => allowedNpcIds == null || allowedNpcIds.includes(person.id))
+        .map(
+          (person) => `
+            <option value="${escapeHtml(person.id)}" ${person.id === selectedNpcId ? "selected" : ""}>
+              ${escapeHtml(person.name)}
+            </option>
+          `
+        )
+        .join("")}
+    `;
+    const resolveNpcSummaryLabel = (npcId) => {
+      if (npcId == null || npcId.length === 0) {
+        return "未选择主 NPC";
+      }
+
+      const npc = npcOptionsById.get(npcId) ?? null;
+      return npc == null ? npcId : npc.name;
+    };
+    const renderMountedNpcCard = (entry, buildingIndex, npcEntry) => `
+      <article class="c-script-editor-city-mounted-building-npc-card">
+        <button
+          type="button"
+          class="c-script-editor-person-summary__remove"
+          aria-label="删除挂载 NPC"
+          data-script-editor-action="remove-city-mounted-building-npc"
+          data-script-editor-city-mounted-building-index="${buildingIndex}"
+          data-script-editor-city-mounted-building-npc-index="${npcEntry.npcIndex}"
+        >
+          <span aria-hidden="true">×</span>
+        </button>
+        <div class="c-script-editor-person-summary__field">
+          <strong class="c-script-editor-person-summary__value">
+            ${escapeHtml(resolveNpcSummaryLabel(npcEntry.npcId))}
+          </strong>
+        </div>
+        <label class="c-script-editor-form-field">
+          <select
+            class="c-script-editor-form-field__input"
+            aria-label="选择人物"
+            data-script-editor-city-mounted-building-npc
+            data-script-editor-city-mounted-building-index="${buildingIndex}"
+            data-script-editor-city-mounted-building-npc-index="${npcEntry.npcIndex}"
+          >
+            ${renderNpcOptions(npcEntry.npcId)}
+          </select>
+        </label>
+      </article>
+    `;
+
+    return `
+      <section class="c-script-editor-location-attributes" aria-label="城市挂载建筑与人物">
+        <header class="c-script-editor-location-menu__header">
+          <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="add-city-mounted-building">
+            新增挂载建筑
+          </button>
+        </header>
+        <div class="c-script-editor-location-menu__list c-script-editor-city-mounted-building-list">
+          ${visibleMountedBuildings
+            .map(({ entry, buildingIndex }) => {
+              const { uiState, filteredEntries, visibleEntries, currentPage, totalPages } =
+                this.getScriptEditorCityMountedBuildingNpcPageState(entry, buildingIndex);
+
+              return `
+                <article
+                  class="c-script-editor-location-menu__item c-script-editor-city-mounted-building-card${uiState.expanded ? " is-expanded" : ""}"
+                  data-script-editor-city-mounted-building-panel
+                >
+                  <button
+                    type="button"
+                    class="c-script-editor-person-summary__remove c-script-editor-city-mounted-building-card__remove"
+                    aria-label="删除挂载建筑"
+                    data-script-editor-action="remove-city-mounted-building"
+                    data-script-editor-city-mounted-building-index="${buildingIndex}"
+                  >
+                    <span aria-hidden="true">×</span>
+                  </button>
+                  <div class="c-script-editor-city-mounted-building-card__summary-wrap">
+                    <div
+                      class="c-script-editor-form-grid c-script-editor-city-mounted-building-card__summary"
+                      data-script-editor-city-mounted-building-summary
+                    >
+                      <label class="c-script-editor-form-field">
+                        <span>挂载建筑</span>
+                        <select
+                          class="c-script-editor-form-field__input"
+                          data-script-editor-city-mounted-building
+                          data-script-editor-city-mounted-building-index="${buildingIndex}"
+                        >
+                          ${renderBuildingOptions(entry.buildingId)}
+                        </select>
+                      </label>
+                      <label class="c-script-editor-form-field">
+                        <span>主 NPC</span>
+                        <select
+                          class="c-script-editor-form-field__input"
+                          data-script-editor-city-primary-npc
+                          data-script-editor-city-mounted-building-index="${buildingIndex}"
+                        >
+                          ${renderNpcOptions(entry.primaryNpcId ?? "", true, entry.npcIds)}
+                        </select>
+                      </label>
+                    </div>
+                    <button
+                      type="button"
+                      class="c-main-ui-json-text-button c-script-editor-city-mounted-building-card__toggle"
+                      aria-expanded="${uiState.expanded ? "true" : "false"}"
+                      data-script-editor-action="toggle-city-mounted-building-expanded"
+                      data-script-editor-city-mounted-building-index="${buildingIndex}"
+                    >
+                      ${uiState.expanded ? "收起" : "展开"}
+                    </button>
+                  </div>
+                  ${
+                    uiState.expanded
+                      ? `
+                        <div class="c-script-editor-city-mounted-building-card__details">
+                          <div class="c-script-editor-location-menu__header c-script-editor-city-mounted-building-card__toolbar">
+                            <label class="c-script-editor-record-list__search c-script-editor-city-mounted-building-card__search">
+                              <span>搜索建筑里的 NPC</span>
+                              <input
+                                class="c-script-editor-form-field__input"
+                                type="search"
+                                value="${escapeHtml(uiState.search)}"
+                                placeholder="按 NPC 名称搜索"
+                                data-script-editor-city-mounted-building-search
+                                data-script-editor-city-mounted-building-index="${buildingIndex}"
+                              />
+                            </label>
+                          </div>
+                          ${
+                            visibleEntries.length === 0
+                              ? `
+                                <p class="c-script-editor-record-list__empty">
+                                  ${
+                                    filteredEntries.length === 0 && uiState.search.trim().length > 0
+                                      ? "没有命中的已挂载 NPC。"
+                                      : "当前建筑还没有已挂载 NPC。"
+                                  }
+                                </p>
+                              `
+                              : `
+                                <div class="c-script-editor-city-mounted-building-npc-grid">
+                                  ${visibleEntries
+                                    .map((npcEntry) =>
+                                      renderMountedNpcCard(entry, buildingIndex, npcEntry)
+                                    )
+                                    .join("")}
+                                </div>
+                              `
+                          }
+                          <div class="c-script-editor-location-menu__toggles c-script-editor-city-mounted-building-card__actions">
+                            <button
+                              type="button"
+                              class="c-main-ui-json-text-button"
+                              data-script-editor-action="add-city-mounted-building-npc"
+                              data-script-editor-city-mounted-building-index="${buildingIndex}"
+                            >
+                              新增 NPC
+                            </button>
+                          </div>
+                          <nav class="c-script-editor-record-pagination" aria-label="挂载 NPC 分页">
+                            <button
+                              type="button"
+                              class="c-main-ui-json-text-button c-script-editor-record-pagination__button"
+                              data-script-editor-action="city-mounted-building-page-prev"
+                              data-script-editor-city-mounted-building-index="${buildingIndex}"
+                              ${currentPage <= 1 ? "disabled" : ""}
+                            >
+                              ‹
+                            </button>
+                            <span class="c-script-editor-record-pagination__status">
+                              第 ${currentPage} / ${totalPages} 页 · 共 ${filteredEntries.length} 个
+                            </span>
+                            <button
+                              type="button"
+                              class="c-main-ui-json-text-button c-script-editor-record-pagination__button"
+                              data-script-editor-action="city-mounted-building-page-next"
+                              data-script-editor-city-mounted-building-index="${buildingIndex}"
+                              ${currentPage >= totalPages ? "disabled" : ""}
+                            >
+                              ›
+                            </button>
+                          </nav>
+                        </div>
+                      `
+                      : ""
+                  }
+                </article>
+              `;
+            })
+            .join("")}
+        </div>
+        <nav class="c-script-editor-record-pagination" aria-label="挂载建筑分页">
+          <button
+            type="button"
+            class="c-main-ui-json-text-button c-script-editor-record-pagination__button"
+            data-script-editor-action="city-mounted-building-list-page-prev"
+            ${currentBuildingPage <= 1 ? "disabled" : ""}
+          >
+            ‹
+          </button>
+          <span class="c-script-editor-record-pagination__status">
+            第 ${currentBuildingPage} / ${totalBuildingPages} 页 · 共 ${totalMountedBuildings} 个
+          </span>
+          <button
+            type="button"
+            class="c-main-ui-json-text-button c-script-editor-record-pagination__button"
+            data-script-editor-action="city-mounted-building-list-page-next"
+            ${currentBuildingPage >= totalBuildingPages ? "disabled" : ""}
+          >
+            ›
+          </button>
+        </nav>
       </section>
     `;
   }
@@ -2955,6 +3813,7 @@ export class MainUiFlow {
   renderScriptEditorLocationAccessPanel(location) {
     const access = location.access ?? {
       conditionExpression: null,
+      leaveConditionExpression: null,
       blockedDialogueId: "",
     };
     const dialogueOptions = (this.scriptEditorProject?.dialogues ?? []).map((dialogue) => ({
@@ -2986,14 +3845,20 @@ export class MainUiFlow {
         <div class="c-script-editor-location-access-section">
           <label class="c-script-editor-form-field">
             <span>进入条件</span>
-            ${this.renderScriptEditorLocationAccessConditionEditor(access.conditionExpression)}
+            ${this.renderScriptEditorLocationAccessConditionEditor(access.conditionExpression, "conditionExpression")}
+          </label>
+        </div>
+        <div class="c-script-editor-location-access-section">
+          <label class="c-script-editor-form-field">
+            <span>绂诲紑鏉′欢</span>
+            ${this.renderScriptEditorLocationAccessConditionEditor(access.leaveConditionExpression, "leaveConditionExpression")}
           </label>
         </div>
       </section>
     `;
   }
 
-  renderScriptEditorLocationAccessConditionEditor(conditionExpression) {
+  renderScriptEditorLocationAccessConditionEditor(conditionExpression, conditionField = "conditionExpression") {
     const conditions = readEditableScriptEditorLocationAccessConditions(
       conditionExpression
     );
@@ -3002,11 +3867,11 @@ export class MainUiFlow {
         ? `<p class="c-script-editor-editor-card__hint">没有条件时，运行时默认允许进入。</p>`
         : conditions
             .map((condition, index) =>
-              this.renderScriptEditorLocationAccessConditionRow(condition, index)
+              this.renderScriptEditorLocationAccessConditionRow(condition, index, conditionField)
             )
             .join("");
     return `
-      <div class="c-script-editor-location-access-condition">
+      <div class="c-script-editor-location-access-condition" data-script-editor-location-access-condition-scope="${conditionField}">
         <div class="c-script-editor-location-access-condition__rows">
           ${conditionRows}
         </div>
@@ -3018,7 +3883,7 @@ export class MainUiFlow {
     `;
   }
 
-  renderScriptEditorLocationAccessConditionRow(condition, index) {
+  renderScriptEditorLocationAccessConditionRow(condition, index, conditionField = "conditionExpression") {
     const compareCondition =
       condition.type === "compare"
         ? condition
@@ -6030,7 +6895,8 @@ export class MainUiFlow {
       const field = target.dataset.scriptEditorLocationAccessField;
       if (
         field === "blockedDialogueId" ||
-        field === "conditionExpression"
+        field === "conditionExpression" ||
+        field === "leaveConditionExpression"
       ) {
         this.applyScriptEditorLocationAccessField(field, target.value);
       }
@@ -6055,10 +6921,16 @@ export class MainUiFlow {
           field === "operator" ||
           field === "literalValue")
       ) {
+        const conditionField =
+          target
+            .closest("[data-script-editor-location-access-condition-scope]")
+            ?.dataset.scriptEditorLocationAccessConditionScope ??
+          "conditionExpression";
         this.applyScriptEditorLocationAccessConditionField(
           index,
           field,
-          target.value
+          target.value,
+          conditionField
         );
       }
       return;
@@ -6087,12 +6959,31 @@ export class MainUiFlow {
       }
     }
 
+    if (target.matches("[data-script-editor-city-mounted-building-search]")) {
+      if (event.isComposing === true) {
+        return;
+      }
+      const buildingIndex = Number.parseInt(
+        target.dataset.scriptEditorCityMountedBuildingIndex ?? "-1",
+        10
+      );
+      if (Number.isInteger(buildingIndex) && buildingIndex >= 0) {
+        this.setScriptEditorCityMountedBuildingSearchValue(buildingIndex, target.value);
+      }
+      return;
+    }
+
     if (target.matches("[data-script-editor-location-access-condition-field]")) {
       const index = Number.parseInt(
         target.dataset.scriptEditorLocationAccessConditionIndex ?? "-1",
         10
       );
       const field = target.dataset.scriptEditorLocationAccessConditionField;
+      const conditionField =
+        target
+          .closest("[data-script-editor-location-access-condition-scope]")
+          ?.dataset.scriptEditorLocationAccessConditionScope ??
+        "conditionExpression";
       if (
         Number.isInteger(index) &&
         index >= 0 &&
@@ -6103,7 +6994,8 @@ export class MainUiFlow {
         this.applyScriptEditorLocationAccessConditionField(
           index,
           field,
-          target.value
+          target.value,
+          conditionField
         );
       }
     }
@@ -6119,6 +7011,16 @@ export class MainUiFlow {
       const family = target.dataset.scriptEditorRecordSearchFamily;
       if (family != null) {
         this.setScriptEditorRecordSearchValue(family, target.value);
+      }
+    }
+
+    if (target.matches("[data-script-editor-city-mounted-building-search]")) {
+      const buildingIndex = Number.parseInt(
+        target.dataset.scriptEditorCityMountedBuildingIndex ?? "-1",
+        10
+      );
+      if (Number.isInteger(buildingIndex) && buildingIndex >= 0) {
+        this.setScriptEditorCityMountedBuildingSearchValue(buildingIndex, target.value);
       }
     }
   }
@@ -6362,6 +7264,7 @@ export class MainUiFlow {
       actionElement?.dataset.scriptEditorMinigameOutcomeIndex ?? "-1",
       10
     );
+    const buildingId = actionElement?.dataset.scriptEditorBuildingId ?? null;
     const targetFamily = actionElement?.dataset.scriptEditorFamily ?? null;
     const targetEntityId = actionElement?.dataset.scriptEditorEntityId ?? null;
 
@@ -6607,12 +7510,22 @@ export class MainUiFlow {
     }
 
     if (action === "add-location-access-condition") {
-      this.addScriptEditorLocationAccessCondition();
+      const conditionField =
+        actionElement
+          ?.closest("[data-script-editor-location-access-condition-scope]")
+          ?.dataset.scriptEditorLocationAccessConditionScope ??
+        "conditionExpression";
+      this.addScriptEditorLocationAccessCondition(conditionField);
       return;
     }
 
     if (action === "clear-location-access-conditions") {
-      this.clearScriptEditorLocationAccessConditions();
+      const conditionField =
+        actionElement
+          ?.closest("[data-script-editor-location-access-condition-scope]")
+          ?.dataset.scriptEditorLocationAccessConditionScope ??
+        "conditionExpression";
+      this.clearScriptEditorLocationAccessConditions(conditionField);
       return;
     }
 
@@ -6621,7 +7534,15 @@ export class MainUiFlow {
         Number.isInteger(locationAccessConditionIndex) &&
         locationAccessConditionIndex >= 0
       ) {
-        this.removeScriptEditorLocationAccessCondition(locationAccessConditionIndex);
+        const conditionField =
+          actionElement
+            ?.closest("[data-script-editor-location-access-condition-scope]")
+            ?.dataset.scriptEditorLocationAccessConditionScope ??
+          "conditionExpression";
+        this.removeScriptEditorLocationAccessCondition(
+          locationAccessConditionIndex,
+          conditionField
+        );
       }
       return;
     }
@@ -6644,6 +7565,23 @@ export class MainUiFlow {
 
     if (action === "add-city-mounted-building") {
       this.addScriptEditorCityMountedBuilding();
+      return;
+    }
+
+    if (action === "toggle-city-mounted-building-expanded") {
+      const mountedBuildingIndex = Number.parseInt(
+        actionElement?.dataset.scriptEditorCityMountedBuildingIndex ?? "-1",
+        10
+      );
+      if (Number.isInteger(mountedBuildingIndex) && mountedBuildingIndex >= 0) {
+        const expanded = this.getScriptEditorCityMountedBuildingUiState(
+          mountedBuildingIndex
+        ).expanded;
+        this.setScriptEditorCityMountedBuildingExpanded(
+          mountedBuildingIndex,
+          !expanded
+        );
+      }
       return;
     }
 
@@ -6692,8 +7630,40 @@ export class MainUiFlow {
       return;
     }
 
+    if (action === "city-mounted-building-page-prev") {
+      const mountedBuildingIndex = Number.parseInt(
+        actionElement?.dataset.scriptEditorCityMountedBuildingIndex ?? "-1",
+        10
+      );
+      if (Number.isInteger(mountedBuildingIndex) && mountedBuildingIndex >= 0) {
+        this.changeScriptEditorCityMountedBuildingNpcPage(mountedBuildingIndex, -1);
+      }
+      return;
+    }
+
+    if (action === "city-mounted-building-list-page-prev") {
+      this.changeScriptEditorCityMountedBuildingListPage(-1);
+      return;
+    }
+
+    if (action === "city-mounted-building-list-page-next") {
+      this.changeScriptEditorCityMountedBuildingListPage(1);
+      return;
+    }
+
+    if (action === "city-mounted-building-page-next") {
+      const mountedBuildingIndex = Number.parseInt(
+        actionElement?.dataset.scriptEditorCityMountedBuildingIndex ?? "-1",
+        10
+      );
+      if (Number.isInteger(mountedBuildingIndex) && mountedBuildingIndex >= 0) {
+        this.changeScriptEditorCityMountedBuildingNpcPage(mountedBuildingIndex, 1);
+      }
+      return;
+    }
+
     if (action === "add-building-arrangement") {
-      this.addScriptEditorBuildingArrangement();
+      this.addScriptEditorBuildingArrangement(buildingId);
       return;
     }
 
@@ -7177,7 +8147,7 @@ export class MainUiFlow {
     }
 
     const allowedTabs = this.scriptEditorSelection.family === "cities"
-      ? ["profile", "menus", "access", "events"]
+      ? ["profile", "mounted", "arrangements", "menus", "access", "events"]
       : ["profile", "menus", "access", "entry", "events"];
     if (!allowedTabs.includes(tab)) {
       return;
@@ -8347,9 +9317,23 @@ export class MainUiFlow {
       return;
     }
 
-    this.replaceSelectedScriptEditorLocation(
-      appendScriptEditorCityMountedBuilding(city)
+    const nextCity = appendScriptEditorCityMountedBuilding(city);
+    const nextBuildingCount = nextCity.mountedBuildings?.length ?? 0;
+    this.setScriptEditorCityMountedBuildingUiState(
+      Math.max(nextBuildingCount - 1, 0),
+      {
+        expanded: false,
+        search: "",
+        page: 1,
+      }
     );
+    this.setScriptEditorCityMountedBuildingListUiState({
+      page: Math.max(
+        1,
+        Math.ceil(nextBuildingCount / SCRIPT_EDITOR_CITY_MOUNTED_BUILDING_PAGE_SIZE)
+      ),
+    });
+    this.replaceSelectedScriptEditorLocation(nextCity);
   }
 
   removeScriptEditorCityMountedBuilding(index) {
@@ -8362,9 +9346,19 @@ export class MainUiFlow {
       return;
     }
 
-    this.replaceSelectedScriptEditorLocation(
-      removeScriptEditorCityMountedBuilding(city, index)
-    );
+    const { currentPage } = this.getScriptEditorCityMountedBuildingListPageState(city);
+    const nextCity = removeScriptEditorCityMountedBuilding(city, index);
+    const nextBuildingCount = nextCity.mountedBuildings?.length ?? 0;
+    this.setScriptEditorCityMountedBuildingListUiState({
+      page: Math.min(
+        currentPage,
+        Math.max(
+          1,
+          Math.ceil(nextBuildingCount / SCRIPT_EDITOR_CITY_MOUNTED_BUILDING_PAGE_SIZE)
+        )
+      ),
+    });
+    this.replaceSelectedScriptEditorLocation(nextCity);
   }
 
   applyScriptEditorCityMountedBuilding(index, buildingId) {
@@ -8393,9 +9387,20 @@ export class MainUiFlow {
     }
     const nextNpcId = this.findNextScriptEditorCityMountedNpcId(city, buildingIndex);
 
-    this.replaceSelectedScriptEditorLocation(
-      appendScriptEditorCityMountedBuildingNpc(city, buildingIndex, nextNpcId)
+    const nextCity = appendScriptEditorCityMountedBuildingNpc(
+      city,
+      buildingIndex,
+      nextNpcId
     );
+    const nextNpcCount = nextCity.mountedBuildings?.[buildingIndex]?.npcIds?.length ?? 0;
+    this.setScriptEditorCityMountedBuildingUiState(buildingIndex, {
+      expanded: true,
+      page: Math.max(
+        1,
+        Math.ceil(nextNpcCount / SCRIPT_EDITOR_CITY_MOUNTED_BUILDING_NPC_PAGE_SIZE)
+      ),
+    });
+    this.replaceSelectedScriptEditorLocation(nextCity);
   }
 
   findNextScriptEditorCityMountedNpcId(city, buildingIndex) {
@@ -8419,9 +9424,17 @@ export class MainUiFlow {
       return;
     }
 
-    this.replaceSelectedScriptEditorLocation(
-      removeScriptEditorCityMountedBuildingNpc(city, buildingIndex, npcIndex)
+    const nextCity = removeScriptEditorCityMountedBuildingNpc(city, buildingIndex, npcIndex);
+    const nextEntry = nextCity.mountedBuildings?.[buildingIndex] ?? { npcIds: [] };
+    const { totalPages } = this.getScriptEditorCityMountedBuildingNpcPageState(
+      nextEntry,
+      buildingIndex
     );
+    this.setScriptEditorCityMountedBuildingUiState(buildingIndex, {
+      expanded: true,
+      page: totalPages,
+    });
+    this.replaceSelectedScriptEditorLocation(nextCity);
   }
 
   applyScriptEditorCityMountedBuildingNpc(buildingIndex, npcIndex, npcId) {
@@ -8454,7 +9467,7 @@ export class MainUiFlow {
     );
   }
 
-  addScriptEditorBuildingArrangement() {
+  addScriptEditorBuildingArrangement(buildingId = null) {
     if (
       this.scriptEditorProject == null ||
       this.scriptEditorSelection.family !== "cities" ||
@@ -8466,7 +9479,8 @@ export class MainUiFlow {
     this.commitScriptEditorProject(
       appendScriptEditorBuildingArrangement(
         this.scriptEditorProject,
-        this.scriptEditorSelection.entityId
+        this.scriptEditorSelection.entityId,
+        typeof buildingId === "string" && buildingId.length > 0 ? buildingId : undefined
       )
     );
     this.scriptEditorNotice = null;
@@ -8772,47 +9786,58 @@ export class MainUiFlow {
     );
   }
 
-  addScriptEditorLocationAccessCondition() {
+  addScriptEditorLocationAccessCondition(conditionField = "conditionExpression") {
     const location = this.getSelectedScriptEditorLocation();
     if (location == null) {
       return;
     }
 
     this.replaceSelectedScriptEditorLocation(
-      appendScriptEditorAccessCondition(location)
+      appendScriptEditorAccessCondition(location, conditionField)
     );
   }
 
-  removeScriptEditorLocationAccessCondition(index) {
+  removeScriptEditorLocationAccessCondition(index, conditionField = "conditionExpression") {
     const location = this.getSelectedScriptEditorLocation();
     if (location == null) {
       return;
     }
 
     this.replaceSelectedScriptEditorLocation(
-      removeScriptEditorAccessCondition(location, index)
+      removeScriptEditorAccessCondition(location, index, conditionField)
     );
   }
 
-  clearScriptEditorLocationAccessConditions() {
+  clearScriptEditorLocationAccessConditions(conditionField = "conditionExpression") {
     const location = this.getSelectedScriptEditorLocation();
     if (location == null) {
       return;
     }
 
     this.replaceSelectedScriptEditorLocation(
-      updateScriptEditorAccessField(location, "conditionExpression", "")
+      updateScriptEditorAccessField(location, conditionField, "")
     );
   }
 
-  applyScriptEditorLocationAccessConditionField(index, field, value) {
+  applyScriptEditorLocationAccessConditionField(
+    index,
+    field,
+    value,
+    conditionField = "conditionExpression"
+  ) {
     const location = this.getSelectedScriptEditorLocation();
     if (location == null) {
       return;
     }
 
     this.replaceSelectedScriptEditorLocation(
-      updateScriptEditorAccessConditionField(location, index, field, value)
+      updateScriptEditorAccessConditionField(
+        location,
+        index,
+        field,
+        value,
+        conditionField
+      )
     );
   }
 
