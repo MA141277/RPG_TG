@@ -213,8 +213,12 @@ export function importScenarioPackToScriptEditorProject(
   const importedLocationAccess = readLocationAccessFamily(rawPack);
   const cityNpcPools = readArrayFamily(rawPack, "cityNpcPools");
   const importedPeople = collectImportedPeople(pack.characters ?? [], cityNpcPools);
+  const importedMapNodeById = indexImportedMapNodes(pack.maps ?? []);
   const importedCities = (pack.cities ?? []).map((city) =>
-    applyImportedLocationAccess(city, "city", importedLocationAccess)
+    applyImportedCityMapPlacement(
+      applyImportedLocationAccess(city, "city", importedLocationAccess),
+      importedMapNodeById
+    )
   );
   const importedMinigames = mapImportedPlayableIntegrations(rawPack);
   const project = {
@@ -286,6 +290,72 @@ export function importScenarioPackToScriptEditorProject(
       ])
     );
   }
+}
+
+function indexImportedMapNodes(
+  maps: readonly Record<string, unknown>[]
+): Map<string, Record<string, unknown>> {
+  const mapNodeById = new Map<string, Record<string, unknown>>();
+
+  for (const mapDefinition of maps) {
+    const nodes = Array.isArray(mapDefinition.nodes) ? mapDefinition.nodes : [];
+    for (const node of nodes) {
+      if (node == null || typeof node !== "object" || Array.isArray(node)) {
+        continue;
+      }
+      const record = node as Record<string, unknown>;
+      const id = readString(record.id);
+      if (id.length === 0) {
+        continue;
+      }
+      mapNodeById.set(id, record);
+    }
+  }
+
+  return mapNodeById;
+}
+
+function applyImportedCityMapPlacement<
+  T extends { id: string; name?: string; mapNodeId?: string; mapPlacement?: unknown }
+>(
+  city: T,
+  mapNodeById: Map<string, Record<string, unknown>>
+): T & { mapPlacement?: Record<string, unknown> } {
+  if (city.mapPlacement != null) {
+    return city as T & { mapPlacement?: Record<string, unknown> };
+  }
+
+  const mapNodeId = typeof city.mapNodeId === "string" ? city.mapNodeId : "";
+  if (mapNodeId.length === 0) {
+    return city as T & { mapPlacement?: Record<string, unknown> };
+  }
+
+  const mapNode = mapNodeById.get(mapNodeId);
+  if (
+    mapNode == null ||
+    typeof mapNode.x !== "number" ||
+    !Number.isFinite(mapNode.x) ||
+    typeof mapNode.y !== "number" ||
+    !Number.isFinite(mapNode.y)
+  ) {
+    return city as T & { mapPlacement?: Record<string, unknown> };
+  }
+
+  return {
+    ...city,
+    mapPlacement: {
+      mapNodeId,
+      x: mapNode.x,
+      y: mapNode.y,
+      ...(typeof mapNode.kind === "string" ? { kind: mapNode.kind } : {}),
+      ...(typeof mapNode.label === "string"
+        ? { label: mapNode.label }
+        : typeof city.name === "string"
+          ? { label: city.name }
+          : {}),
+      ...(typeof mapNode.summary === "string" ? { summary: mapNode.summary } : {}),
+    },
+  };
 }
 
 function createStoryPackRecord(

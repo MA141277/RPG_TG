@@ -184,6 +184,15 @@ export type ScriptEditorCityRecord = ScriptEditorEntityRecord & {
   name: string;
   regionId?: string;
   mapNodeId?: string;
+  mapPlacement?: {
+    mapId?: string;
+    mapNodeId?: string;
+    x: number;
+    y: number;
+    kind?: "city" | "settlement" | "fort";
+    label?: string;
+    summary?: string;
+  };
   backgroundId?: string;
   houseIds?: string[];
   mountedBuildings?: ScriptEditorCityMountedBuilding[];

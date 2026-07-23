@@ -21,7 +21,6 @@ import type {
   PortraitResourceDefinition,
   PortraitVariantDefinition,
 } from "../../domain/portrait-resource";
-import type { GridCoordinate } from "../navigation/travel-to-coordinate";
 import {
   createMapLocationProvider,
   type MapLocationProvider,
@@ -110,7 +109,6 @@ export type ActiveGameContentContext = {
   historicalCharacterIdByCharacterId: Record<string, string>;
   cityPortraits: Record<string, string>;
   textEntriesById: Record<string, string>;
-  cityCoordinatesById: Record<string, GridCoordinate>;
   mapLocationProvider: MapLocationProvider;
   cityNameById: Record<string, string>;
   houseNameById: Record<string, string>;
@@ -256,10 +254,6 @@ export function createActiveGameContentContext(
   overridePack?: ContentPackDefinition
 ): ActiveGameContentContext {
   const gameContent = createActiveGameContent(basePack, overridePack);
-  const cityCoordinatesById = createCityCoordinatesById(
-    gameContent.cities,
-    gameContent.mapNodesById
-  );
 
   return {
     packId: gameContent.packId,
@@ -286,10 +280,8 @@ export function createActiveGameContentContext(
       gameContent.historicalCharacterIdByCharacterId,
     cityPortraits: gameContent.cityPortraits,
     textEntriesById: gameContent.textEntriesById,
-    cityCoordinatesById,
     mapLocationProvider: createMapLocationProvider({
       cityDefinitions: gameContent.cities,
-      cityCoordinatesById,
     }),
     cityNameById: createCityNameById(gameContent.cities),
     houseNameById: createHouseNameById(gameContent.houses),
@@ -451,27 +443,6 @@ function readActivatedContentSources(
   return activationResult.activatedMod.normalizedContentSources.filter(
     (source): source is ScenarioPackDefinition | ContentPackDefinition =>
       source != null && typeof source === "object"
-  );
-}
-
-function createCityCoordinatesById(
-  definitions: CityDefinition[],
-  mapNodesById: ActiveGameContent["mapNodesById"]
-): Record<string, GridCoordinate> {
-  return Object.fromEntries(
-    definitions.flatMap((cityDefinition) => {
-      const mapNodeId = cityDefinition.mapNodeId;
-      if (mapNodeId == null) {
-        return [];
-      }
-
-      const mapNode = mapNodesById[mapNodeId];
-      if (mapNode == null) {
-        return [];
-      }
-
-      return [[cityDefinition.id, { x: mapNode.x, y: mapNode.y }]];
-    })
   );
 }
 

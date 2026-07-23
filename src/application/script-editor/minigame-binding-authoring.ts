@@ -92,11 +92,11 @@ export function listScriptEditorBuiltinMinigameIntegrationOptions(
 }
 
 export function createDefaultScriptEditorMinigameRecord(
-  index: number
+  indexOrId: number | string
 ): ScriptEditorMinigameRecord {
-  const suffix = index + 1;
+  const suffix = typeof indexOrId === "number" ? indexOrId + 1 : 1;
   return {
-    id: `minigame.new.${suffix}`,
+    id: typeof indexOrId === "string" ? indexOrId : `minigame.new.${suffix}`,
     title: `玩法绑定 ${suffix}`,
     description: "",
     playableId: "activity-qte",

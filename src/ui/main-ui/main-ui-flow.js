@@ -30,6 +30,7 @@ import {
   validateScriptEditorProjectForRuntimeExport,
 } from "../../application/script-editor/runtime-pack-export";
 import { loadScriptEditorProjectFromScenarioPackUrl } from "../../application/script-editor/runtime-pack-import";
+import { allocateNextScriptEditorProjectCanonicalId } from "../../application/script-editor/script-editor-id-allocation";
 import {
   canContinueScriptEditorProjectEntry,
   createScriptEditorProjectLibraryEntry,
@@ -4130,7 +4131,7 @@ export class MainUiFlow {
   }
 
   renderScriptEditorMinigameTabPanel(minigame) {
-    if (!["basics", "launch", "settlement", "events"].includes(this.scriptEditorMinigameTab)) {
+    if (!["basics", "launch", "settlement", "references", "events"].includes(this.scriptEditorMinigameTab)) {
       this.scriptEditorMinigameTab = "basics";
     }
 
@@ -7254,7 +7255,7 @@ export class MainUiFlow {
     };
     const draft = createScriptEditorWorkflowRecordDraft(
       family,
-      listScriptEditorWorkflowFamilyRecords(this.scriptEditorProject, family).length
+      this.scriptEditorProject
     );
 
     this.commitScriptEditorProject(
@@ -7907,7 +7908,10 @@ export class MainUiFlow {
         : this.getScriptEditorEventBindingTriggerOptions(defaults.ownerFamily)[0] ?? null;
     const draft = {
       ...createDefaultScriptEditorEventBindingRecord(
-        this.scriptEditorProject.eventBindings.length
+        allocateNextScriptEditorProjectCanonicalId(
+          this.scriptEditorProject,
+          "eventBindings"
+        )
       ),
       eventId: selectedEventId,
       ...(defaultTrigger == null

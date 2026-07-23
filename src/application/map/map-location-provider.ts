@@ -1,5 +1,4 @@
 import type { CityDefinition } from "../../domain/city";
-import type { GridCoordinate } from "../navigation/travel-to-coordinate";
 import {
   createMapCityMarkers,
   type MapCityMarker,
@@ -15,19 +14,15 @@ export type MapLocationProvider = {
 
 export function createMapLocationProvider(input: {
   cityDefinitions: readonly CityDefinition[];
-  cityCoordinatesById: Record<string, GridCoordinate>;
 }): MapLocationProvider {
   const cityLocations = createMapCityMarkers(input);
   const cityLocationById = Object.fromEntries(
     cityLocations.map((cityLocation) => [cityLocation.id, cityLocation])
   );
   const cityIdByMapNodeId = Object.fromEntries(
-    input.cityDefinitions
-      .filter((cityDefinition) => cityDefinition.mapNodeId != null)
-      .map((cityDefinition) => [
-        cityDefinition.mapNodeId as string,
-        cityDefinition.id,
-      ])
+    cityLocations
+      .filter((cityLocation) => cityLocation.mapNodeId != null)
+      .map((cityLocation) => [cityLocation.mapNodeId as string, cityLocation.id])
   );
 
   return {

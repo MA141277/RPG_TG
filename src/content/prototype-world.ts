@@ -21,6 +21,8 @@ import type {
   PortraitResourceDefinition,
   PortraitVariantDefinition,
 } from "../domain/portrait-resource";
+import type { MapNode } from "../domain/map";
+import * as defaultZhuyuanzhangMapsModule from "./scenario-packs/zhuyuanzhang/maps.json";
 import * as defaultZhuyuanzhangPortraitsModule from "./scenario-packs/zhuyuanzhang/portraits.json";
 import * as defaultZhuyuanzhangPortraitVariantsModule from "./scenario-packs/zhuyuanzhang/portrait-variants.json";
 
@@ -42,8 +44,18 @@ const prototypePortraitResources = unwrapJsonModule<PortraitResourceDefinition[]
 const prototypePortraitVariants = unwrapJsonModule<PortraitVariantDefinition[]>(
   defaultZhuyuanzhangPortraitVariantsModule
 );
+const prototypeScenarioMaps = unwrapJsonModule<MapDefinition[]>(
+  defaultZhuyuanzhangMapsModule
+);
 const prototypePortraitResourceById = Object.fromEntries(
   prototypePortraitResources.map((portrait) => [portrait.id, portrait])
+);
+const prototypeScenarioMapNodeById = Object.fromEntries(
+  prototypeScenarioMaps.flatMap((mapDefinition) =>
+    mapDefinition.nodes
+      .filter((node): node is MapNode & { id: string } => typeof node.id === "string")
+      .map((node) => [node.id, node] as const)
+  )
 );
 
 export const prototypeMap: MapDefinition = {
@@ -58,6 +70,7 @@ export const prototypeCity: CityDefinition = {
   name: "濠州",
   regionId: "region.frontier",
   mapNodeId: "settlement.fenyang_province",
+  mapPlacement: createPrototypeCityMapPlacement("settlement.fenyang_province", "濠州"),
   houseIds: [
     "house.kulan.leader_residence",
     "house.kulan.temple",
@@ -280,12 +293,30 @@ function getCityHouseIds(slug: string): string[] {
   ];
 }
 
+function createPrototypeCityMapPlacement(
+  mapNodeId: string,
+  fallbackLabel: string
+): NonNullable<CityDefinition["mapPlacement"]> {
+  const node = prototypeScenarioMapNodeById[mapNodeId];
+  return {
+    mapNodeId,
+    x: node?.x ?? 0,
+    y: node?.y ?? 0,
+    ...(node?.kind === "city" || node?.kind === "settlement" || node?.kind === "fort"
+      ? { kind: node.kind }
+      : {}),
+    label: node?.label ?? fallbackLabel,
+    ...(typeof node?.summary === "string" ? { summary: node.summary } : {}),
+  };
+}
+
 const generatedPrototypeCities: CityDefinition[] = playableYuanmoCitySpecs.map(
   (spec) => ({
     id: getCityId(spec),
     name: spec.name,
     regionId: "region.yuanmo_china",
     mapNodeId: spec.mapNodeId,
+    mapPlacement: createPrototypeCityMapPlacement(spec.mapNodeId, spec.name),
     houseIds: getCityHouseIds(spec.slug),
     neighbourCityIds: [],
     travelCost: 1,

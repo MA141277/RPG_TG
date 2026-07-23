@@ -38,6 +38,7 @@ import {
   createDefaultScriptEditorStoryNodeRecord,
 } from "./story-dialogue-event-authoring";
 import { createDraftScriptEditorProjectCompletionState } from "./project-completion-state";
+import { allocateNextScriptEditorProjectCanonicalId } from "./script-editor-id-allocation";
 
 export const SCRIPT_EDITOR_MINIMAL_WORKFLOW_FAMILIES = [
   "storyPack",
@@ -264,7 +265,7 @@ export function listScriptEditorWorkflowFamilyRecords(
 
 export function createScriptEditorWorkflowRecordDraft(
   family: ScriptEditorMinimalWorkflowRecordFamily,
-  index: number
+  projectOrIndex: ScriptEditorProjectDefinition | number
 ):
   | ScriptEditorPersonRecord
   | ScriptEditorPortraitResourceRecord
@@ -280,41 +281,93 @@ export function createScriptEditorWorkflowRecordDraft(
   | ScriptEditorEventBindingRecord
   | ScriptEditorEntityRecord
   | ScriptEditorTextEntryRecord {
-  const suffix = index + 1;
+  const project =
+    typeof projectOrIndex === "number" ? null : projectOrIndex;
+  const legacyIndex = typeof projectOrIndex === "number" ? projectOrIndex : 0;
 
   switch (family) {
     case "people":
-      return createDefaultScriptEditorPersonRecord(index) as ScriptEditorPersonRecord;
+      return createDefaultScriptEditorPersonRecord(
+        project == null
+          ? legacyIndex
+          : allocateNextScriptEditorProjectCanonicalId(project, "people")
+      ) as ScriptEditorPersonRecord;
     case "portraits":
-      return createDefaultScriptEditorPortraitRecord(index);
+      return createDefaultScriptEditorPortraitRecord(
+        project == null
+          ? legacyIndex
+          : allocateNextScriptEditorProjectCanonicalId(project, "portraits")
+      );
     case "portraitVariants":
-      return createDefaultScriptEditorPortraitVariantRecord(index);
+      return createDefaultScriptEditorPortraitVariantRecord(
+        project == null
+          ? legacyIndex
+          : allocateNextScriptEditorProjectCanonicalId(project, "portraitVariants")
+      );
     case "cities":
-      return createDefaultScriptEditorCityRecord(index) as ScriptEditorCityRecord;
+      return createDefaultScriptEditorCityRecord(
+        project == null
+          ? legacyIndex
+          : allocateNextScriptEditorProjectCanonicalId(project, "cities")
+      ) as ScriptEditorCityRecord;
     case "buildings":
-      return createDefaultScriptEditorBuildingRecord(index) as ScriptEditorBuildingRecord;
+      return createDefaultScriptEditorBuildingRecord(
+        project == null
+          ? legacyIndex
+          : allocateNextScriptEditorProjectCanonicalId(project, "buildings")
+      ) as ScriptEditorBuildingRecord;
     case "quests":
       return {
-        id: `task.new.${suffix}`,
-        title: `Task ${suffix}`,
+        id:
+          project == null
+            ? `task.new.${legacyIndex + 1}`
+            : allocateNextScriptEditorProjectCanonicalId(project, "quests"),
+        title: `Task ${(project?.quests.length ?? legacyIndex) + 1}`,
       };
     case "dialogues":
-      return createDefaultScriptEditorDialogueRecord(index) as ScriptEditorDialogueRecord;
+      return createDefaultScriptEditorDialogueRecord(
+        project == null
+          ? legacyIndex
+          : allocateNextScriptEditorProjectCanonicalId(project, "dialogues")
+      ) as ScriptEditorDialogueRecord;
     case "minigames":
-      return createDefaultScriptEditorMinigameRecord(index) as ScriptEditorMinigameRecord;
+      return createDefaultScriptEditorMinigameRecord(
+        project == null
+          ? legacyIndex
+          : allocateNextScriptEditorProjectCanonicalId(project, "minigames")
+      ) as ScriptEditorMinigameRecord;
     case "flows":
-      return createDefaultScriptEditorFlowRecord(index);
+      return createDefaultScriptEditorFlowRecord(
+        project == null
+          ? legacyIndex
+          : allocateNextScriptEditorProjectCanonicalId(project, "flows")
+      );
     case "textEntries":
       return {
-        id: `text.new.${suffix}`,
-        text: `Text entry ${suffix}.`,
+        id:
+          project == null
+            ? `text.new.${legacyIndex + 1}`
+            : allocateNextScriptEditorProjectCanonicalId(project, "textEntries"),
+        text: `Text entry ${(project?.textEntries.length ?? legacyIndex) + 1}.`,
       };
     case "storyNodes":
-      return createDefaultScriptEditorStoryNodeRecord(index) as ScriptEditorStoryNodeRecord;
+      return createDefaultScriptEditorStoryNodeRecord(
+        project == null
+          ? legacyIndex
+          : allocateNextScriptEditorProjectCanonicalId(project, "storyNodes")
+      ) as ScriptEditorStoryNodeRecord;
     case "events":
-      return createDefaultScriptEditorEventRecord(index) as ScriptEditorEventRecord;
+      return createDefaultScriptEditorEventRecord(
+        project == null
+          ? legacyIndex
+          : allocateNextScriptEditorProjectCanonicalId(project, "events")
+      ) as ScriptEditorEventRecord;
     case "eventBindings":
-      return createDefaultScriptEditorEventBindingRecord(index) as ScriptEditorEventBindingRecord;
+      return createDefaultScriptEditorEventBindingRecord(
+        project == null
+          ? legacyIndex
+          : allocateNextScriptEditorProjectCanonicalId(project, "eventBindings")
+      ) as ScriptEditorEventBindingRecord;
   }
 }
 

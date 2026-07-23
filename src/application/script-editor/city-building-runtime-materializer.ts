@@ -103,6 +103,7 @@ function materializeCities(
 ): CityDefinition[] {
   return cities.map((city) => {
     const baseAttributes = city.baseAttributes ?? {};
+    const mapPlacement = materializeCityMapPlacement(city);
     const security =
       typeof baseAttributes.security === "number"
         ? clampNumber(baseAttributes.security, 0, 100)
@@ -113,6 +114,7 @@ function materializeCities(
       backgroundId: readString(city.backgroundId),
       regionId: readString(city.regionId) || "region.default",
       mapNodeId: readString(city.mapNodeId) || city.id,
+      ...(mapPlacement == null ? {} : { mapPlacement }),
       houseIds:
         city.mountedBuildings != null && city.mountedBuildings.length > 0
           ? readStringArray(
@@ -141,6 +143,47 @@ function materializeCities(
       ),
     };
   });
+}
+
+function materializeCityMapPlacement(
+  city: ScriptEditorCityRecord
+): CityDefinition["mapPlacement"] | undefined {
+  const placement =
+    city.mapPlacement != null && typeof city.mapPlacement === "object"
+      ? city.mapPlacement
+      : null;
+  if (
+    placement == null ||
+    typeof placement.x !== "number" ||
+    !Number.isFinite(placement.x) ||
+    typeof placement.y !== "number" ||
+    !Number.isFinite(placement.y)
+  ) {
+    return undefined;
+  }
+
+  const kind = readString(placement.kind);
+  return {
+    x: placement.x,
+    y: placement.y,
+    ...(readString(placement.mapId).length === 0
+      ? {}
+      : { mapId: readString(placement.mapId) }),
+    ...(readString(placement.mapNodeId).length === 0
+      ? readString(city.mapNodeId).length === 0
+        ? {}
+        : { mapNodeId: readString(city.mapNodeId) }
+      : { mapNodeId: readString(placement.mapNodeId) }),
+    ...(kind === "city" || kind === "settlement" || kind === "fort" ? { kind } : {}),
+    ...(readString(placement.label).length === 0
+      ? { label: city.profileMap?.displayName || city.name }
+      : { label: readString(placement.label) }),
+    ...(readString(placement.summary).length === 0
+      ? city.profileMap?.description == null || city.profileMap.description.length === 0
+        ? {}
+        : { summary: city.profileMap.description }
+      : { summary: readString(placement.summary) }),
+  };
 }
 
 function materializeHouses(

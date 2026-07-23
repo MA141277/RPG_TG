@@ -32,6 +32,7 @@ import {
   removeScriptEditorLocationAccessCondition,
   updateScriptEditorLocationAccessConditionField,
 } from "./location-access-authoring";
+import { allocateNextScriptEditorProjectCanonicalId } from "./script-editor-id-allocation";
 
 export const SCRIPT_EDITOR_CITY_DEFAULT_MENU_FAMILIES = [
   "overview",
@@ -181,13 +182,22 @@ function isBuildingLayoutActionFilter(
   );
 }
 
-export function createDefaultScriptEditorCityRecord(index: number): ScriptEditorCityRecord {
-  const suffix = index + 1;
-  const id = `city.new.${suffix}`;
+export function createDefaultScriptEditorCityRecord(
+  indexOrId: number | string
+): ScriptEditorCityRecord {
+  const suffix = typeof indexOrId === "number" ? indexOrId + 1 : 1;
+  const id = typeof indexOrId === "string" ? indexOrId : `city.new.${suffix}`;
   const name = `New City ${suffix}`;
   return {
     id,
     name,
+    mapPlacement: {
+      x: 0,
+      y: 0,
+      label: name,
+      summary: "",
+      kind: "city",
+    },
     baseAttributes: {},
     profileMap: { displayName: name, description: "", tags: [] },
     extendedAttributes: [],
@@ -201,11 +211,12 @@ export function createDefaultScriptEditorCityRecord(index: number): ScriptEditor
 }
 
 export function createDefaultScriptEditorBuildingRecord(
-  index: number,
+  indexOrId: number | string,
   cityId = "city.start"
 ): ScriptEditorBuildingRecord {
-  const suffix = index + 1;
-  const id = `building.new.${suffix}`;
+  const suffix = typeof indexOrId === "number" ? indexOrId + 1 : 1;
+  const id =
+    typeof indexOrId === "string" ? indexOrId : `building.new.${suffix}`;
   const name = `New Building ${suffix}`;
   return {
     id,
@@ -243,6 +254,15 @@ export function normalizeScriptEditorCityRecord(
     ...(normalizeOptionalString(rawCity.mapNodeId).length === 0
       ? {}
       : { mapNodeId: normalizeOptionalString(rawCity.mapNodeId) }),
+    ...(normalizeCityMapPlacement(rawCity.mapPlacement, rawCity.mapNodeId, city.name) == null
+      ? {}
+      : {
+          mapPlacement: normalizeCityMapPlacement(
+            rawCity.mapPlacement,
+            rawCity.mapNodeId,
+            city.name
+          ) as NonNullable<ScriptEditorCityRecord["mapPlacement"]>,
+        }),
     houseIds: normalizeStringArray(rawCity.houseIds),
     mountedBuildings: normalizeCityMountedBuildings(rawCity.mountedBuildings),
     neighbourCityIds: normalizeStringArray(rawCity.neighbourCityIds),
@@ -410,13 +430,16 @@ export function appendScriptEditorBuildingArrangement(
   if (defaultBuilding == null) {
     return project;
   }
-  const nextIndex = listScriptEditorCityBuildingArrangements(project, cityId).length + 1;
+  const nextArrangementId = allocateNextScriptEditorProjectCanonicalId(
+    project,
+    "buildingArrangements"
+  );
   return {
     ...project,
     buildingArrangements: [
       ...project.buildingArrangements,
       {
-        id: `${cityId}.building-arrangement.${nextIndex}`,
+        id: nextArrangementId,
         cityId,
         buildingId: defaultBuilding.id,
         displayName: defaultBuilding.name,
@@ -1186,6 +1209,48 @@ function normalizeCityMountedBuildings(value: unknown): ScriptEditorCityMountedB
         primaryNpcId != null && npcIds.includes(primaryNpcId) ? primaryNpcId : null,
     };
   });
+}
+
+function normalizeCityMapPlacement(
+  value: unknown,
+  legacyMapNodeId: unknown,
+  fallbackLabel: unknown
+): ScriptEditorCityRecord["mapPlacement"] | undefined {
+  const rawValue =
+    value != null && typeof value === "object" && !Array.isArray(value)
+      ? (value as Record<string, unknown>)
+      : null;
+  const x =
+    rawValue != null && typeof rawValue.x === "number" && Number.isFinite(rawValue.x)
+      ? rawValue.x
+      : null;
+  const y =
+    rawValue != null && typeof rawValue.y === "number" && Number.isFinite(rawValue.y)
+      ? rawValue.y
+      : null;
+
+  if (x == null || y == null) {
+    return undefined;
+  }
+
+  const kind = normalizeOptionalString(rawValue?.kind);
+  return {
+    x,
+    y,
+    ...(normalizeOptionalString(rawValue?.mapId).length === 0
+      ? {}
+      : { mapId: normalizeOptionalString(rawValue?.mapId) }),
+    ...(normalizeOptionalString(rawValue?.mapNodeId ?? legacyMapNodeId).length === 0
+      ? {}
+      : { mapNodeId: normalizeOptionalString(rawValue?.mapNodeId ?? legacyMapNodeId) }),
+    ...(kind === "city" || kind === "settlement" || kind === "fort" ? { kind } : {}),
+    ...(normalizeOptionalString(rawValue?.label).length === 0
+      ? { label: normalizeString(fallbackLabel, "") }
+      : { label: normalizeOptionalString(rawValue?.label) }),
+    ...(normalizeOptionalString(rawValue?.summary).length === 0
+      ? {}
+      : { summary: normalizeOptionalString(rawValue?.summary) }),
+  };
 }
 
 function normalizeAccessRule(access?: ScriptEditorAccessRule): ScriptEditorAccessRule {

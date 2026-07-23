@@ -218,7 +218,6 @@ function renderModal(
 
   const mapEntryVisualKind = resolveMapEntryVisualKind(
     modalState.cityId,
-    mapDefinition,
     cityDefinitions
   );
 
@@ -235,7 +234,6 @@ function renderModal(
 
 function resolveMapEntryVisualKind(
   cityId: string,
-  mapDefinition: MapDefinition,
   cityDefinitions: CityDefinition[]
 ): "city" | "village" {
   const cityDefinition = cityDefinitions.find((city) => city.id === cityId);
@@ -247,11 +245,11 @@ function resolveMapEntryVisualKind(
     return "city";
   }
 
-  const mapNode = mapDefinition.nodes.find(
-    (node) => node.id === cityDefinition?.mapNodeId
-  );
+  if (cityDefinition?.mapPlacement?.kind === "settlement") {
+    return "village";
+  }
 
-  return mapNode?.kind === "settlement" ? "village" : "city";
+  return "city";
 }
 
 function renderLocationDialogue(

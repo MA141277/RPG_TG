@@ -1,11 +1,11 @@
 import type { ScriptEditorFlowRecord } from "../../domain/script-editor-project";
 
 export function createDefaultScriptEditorFlowRecord(
-  index: number
+  indexOrId: number | string
 ): ScriptEditorFlowRecord {
-  const suffix = index + 1;
+  const suffix = typeof indexOrId === "number" ? indexOrId + 1 : 1;
   return {
-    id: `flow.new.${suffix}`,
+    id: typeof indexOrId === "string" ? indexOrId : `flow.new.${suffix}`,
     title: `寤虹瓚鍔熻兘 ${suffix}`,
     description: "",
     initialNodeId: "node.start",

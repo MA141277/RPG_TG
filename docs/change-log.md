@@ -1,9 +1,30 @@
-﻿# 变更记录
+# 变更记录
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
 `docs/change-log.md` 的正式定位是“历史记录 + 人类可读摘要”。
 它不是当前 Blueprint / legacy superpowers 治理的 live execution truth，不作为 resume entry、promotion gate、closeout gate 或固定同步门。
+
+## 2026-07-23 Map Rendering City Data Separation And Canonical Numeric ID Transition Acceptance Closeout
+
+### Changed
+- 同步 [docs/blueprints/queues/map-rendering-city-data-separation-and-canonical-numeric-id-transition-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/map-rendering-city-data-separation-and-canonical-numeric-id-transition-queue.md)、[docs/blueprints/plans/2026-07-22-map-rendering-city-data-separation-and-canonical-numeric-id-transition-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-22-map-rendering-city-data-separation-and-canonical-numeric-id-transition-target-plan.md)、[docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)、[docs/blueprints/blueprint.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/blueprint.md) 与 [docs/blueprints/specs/2026-07-22-map-rendering-city-data-separation-and-canonical-numeric-id-transition-refactor-log.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/specs/2026-07-22-map-rendering-city-data-separation-and-canonical-numeric-id-transition-refactor-log.md)，把 `ACC-MAP-ID-006` 从 blocker 改为 covered，并把当前 queue 切到 local closeout / version review 态。
+
+### Impact
+- 这次 `ACC-MAP-ID-006` 不再依赖任何 hidden/background automation、DOM synthetic click 或“只看日志成功”的伪证明。可计入 simulated-human / human-visible 的证据现在明确来自可见的 Codex built-in in-app browser pointer-level 控制。
+- 同一轮可见 proof 先完成鼠标/键盘/滚动握手，然后分别覆盖 `开始游戏`、内置 `JSON 开局` 读取和 `运行预览` 三条入口；每条路径都到达 campaign map，点击 `濠州`，确认 `进入城市`，并进入城市功能菜单，证明 city-owned map placement truth 已经贯穿正常开局、JSON runtime-pack import 和 Script Editor runtime preview。
+
+## 2026-07-22 Map Rendering City Data Separation And Canonical Numeric ID Transition Progress
+
+### Changed
+- 更新 [src/application/map/map-city-marker-view-model.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/map/map-city-marker-view-model.ts) 与 [src/ui/app-render.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/app-render.ts)，把城市 marker 与入城视觉类型的主真值继续收口到 `city.mapPlacement`：marker 不再从 top-level `city.mapNodeId` 偷回落，入城确认样式也不再回读 `map.nodes` 来判断 settlement/city。
+- 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs)，补入 `mapPlacement` 无 `mapNodeId` 时不得回退到 legacy 节点字段、`app-render` 不得再通过 `mapDefinition.nodes.find(...)` 推断城市视觉类型，以及 top-level Script Editor draft 新纪录必须按 family-segmented canonical numeric `max+1` 分配且不复用删除号位的回归。
+- 同步 [docs/blueprints/specs/2026-07-22-map-rendering-city-data-separation-and-canonical-numeric-id-transition-refactor-log.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/specs/2026-07-22-map-rendering-city-data-separation-and-canonical-numeric-id-transition-refactor-log.md)、[docs/blueprints/queues/map-rendering-city-data-separation-and-canonical-numeric-id-transition-queue.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/queues/map-rendering-city-data-separation-and-canonical-numeric-id-transition-queue.md)、[docs/blueprints/plans/2026-07-22-map-rendering-city-data-separation-and-canonical-numeric-id-transition-target-plan.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/plans/2026-07-22-map-rendering-city-data-separation-and-canonical-numeric-id-transition-target-plan.md) 与 [docs/blueprints/project-progress.md](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/docs/blueprints/project-progress.md)，把 active task 推进到 acceptance/documentation 阶段，并记录自动验证结果。
+
+### Impact
+- 城市地图标记与入城 UI 的剩余“地图反推城市”路径又少了一层：当前 production truth 已经把 `mapNodeId` 限定在关联/去重用途，而不是继续承担城市 marker 数据或视觉语义所有权。
+- top-level Script Editor add-record 路径现已用测试锁住 canonical numeric 分配语义：同 family 取 `max+1`，跨 family 不串号，删除后的号位不回收。
+- 当前 queue 的 acceptance 口径已按蓝图纠偏：此前用于摸索路径的 system-browser/background automation 不再计入 simulated-human / human-visible browser acceptance。`ACC-MAP-ID-006` 现明确阻塞在“必须使用可见的 Codex built-in in-app browser”这一 proof gate 上，后续若无该可见路径，只能记其他 truthful proof_mode 或 blocker/waiver，不能冒充浏览器可见验收。
 
 ## 2026-07-22 Event Playable Destination And Building Action Event Truth Convergence
 

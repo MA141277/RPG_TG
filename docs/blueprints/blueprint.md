@@ -4,9 +4,9 @@
 
 - blueprint_id: `blueprint.rpg-tg`
 - blueprint_version: `2026.07`
-- active_version: `target.script-editor-event-centered-authoring-scene-retirement-and-portrait-resource-refactor`
-- active_version_plan: `docs/blueprints/plans/2026-07-22-script-editor-event-centered-authoring-scene-retirement-and-portrait-resource-refactor-target-plan.md`
-- active_version_spec: `docs/blueprints/specs/2026-07-22-script-editor-event-centered-authoring-scene-retirement-and-portrait-resource-refactor-target.md`
+- active_version: `target.map-rendering-city-data-separation-and-canonical-numeric-id-transition`
+- active_version_plan: `docs/blueprints/plans/2026-07-22-map-rendering-city-data-separation-and-canonical-numeric-id-transition-target-plan.md`
+- active_version_spec: `docs/blueprints/specs/2026-07-22-map-rendering-city-data-separation-and-canonical-numeric-id-transition-target.md`
 - classification_rules_ref: `docs/blueprints/classification-rule-layer-spec.md`
 - execution_mode: `single-active-task`
 - allow_parallel: `false`
@@ -22,6 +22,7 @@
 
 | Version ID | Spec | Plan | Notes |
 | --- | --- | --- | --- |
+| `target.map-rendering-city-data-separation-and-canonical-numeric-id-transition` | `docs/blueprints/specs/2026-07-22-map-rendering-city-data-separation-and-canonical-numeric-id-transition-target.md` | `docs/blueprints/plans/2026-07-22-map-rendering-city-data-separation-and-canonical-numeric-id-transition-target-plan.md` | `Open successor version created on 2026-07-22 from MEMO-027 after the operator explicitly required a new version, immediate admission of queue.map-rendering-city-data-separation-and-canonical-numeric-id-transition, and continuous execution. That queue is now closed locally after human-visible Codex in-app browser proof covered normal start, built-in JSON runtime-pack import, and Script Editor runtime preview through campaign map click plus city-enter continuation on the new city-owned map placement truth; the version remains open for version-level review while repository sync is still pending.` |
 | `target.building-arrangement-container-flow-refactor` | `docs/blueprints/specs/2026-07-20-building-arrangement-container-flow-refactor-target.md` | `docs/blueprints/plans/2026-07-20-building-arrangement-container-flow-refactor-target-plan.md` | `Closed on 2026-07-22 after explicit operator version closeout. The version completed MEMO-022 building-arrangement/container/flow migration, legacy-house runtime removal, runtime layout generalization, and final acceptance review, with the shared flow-playable Continue progression issue preserved as explicit accepted residue rather than reopened implementation.` |
 | `target.script-editor-event-centered-authoring-scene-retirement-and-portrait-resource-refactor` | `docs/blueprints/specs/2026-07-22-script-editor-event-centered-authoring-scene-retirement-and-portrait-resource-refactor-target.md` | `docs/blueprints/plans/2026-07-22-script-editor-event-centered-authoring-scene-retirement-and-portrait-resource-refactor-target-plan.md` | `Closed on 2026-07-22 after explicit operator version closeout. The version completed event-centered authoring model unification, event-only routing freeze, scene retirement, no-scene runtime/export/import convergence, portrait resource convergence, final acceptance, and the later event-playable / building-action truth convergence queue, with no remaining same-family residue inside the parent target.` |
 | `target.entry-shell-ui-module-extraction` | `docs/blueprints/specs/2026-07-19-entry-shell-ui-module-extraction-target.md` | `docs/blueprints/plans/2026-07-19-entry-shell-ui-module-extraction-target-plan.md` | `Closed on 2026-07-19 after queue.entry-shell-ui-module-extraction extracted startup/pre-game Entry Shell rendering from MainUiFlow while preserving start game, continue game, JSON start, Script Editor entry, and character-selection behavior.` |

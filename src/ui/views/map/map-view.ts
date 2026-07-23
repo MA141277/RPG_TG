@@ -160,53 +160,106 @@ export function createMapViewModel(input: {
     cityDepthTextureUrl,
     cityDepthMeshCoordinate: input.mapDefinition.initialPlayerCoordinate ?? null,
     cloudClearHexKeys,
-    campaignMarkers: input.mapDefinition.nodes
-      .map((node, index) => {
-        const nodeId = node.id ?? node.cityId ?? `map-node.${index}`;
-        const roster =
-          node.id == null ? null : historicalRosterByCityNodeId[node.id] ?? null;
-        const resolveCharacterNames = (characterIds: string[]) =>
-          characterIds.map(
-            (characterId) => historicalCharacterNameById[characterId] ?? characterId
-          );
-
-        return {
-          id: nodeId,
-          cityId:
+    campaignMarkers: [
+      ...input.mapLocationProvider.listCityLocationMarkers().map((cityMarker) =>
+        createCampaignMarker({
+          id: cityMarker.mapNodeId ?? cityMarker.id,
+          cityId: cityMarker.id,
+          name: cityMarker.name,
+          x: cityMarker.x,
+          y: cityMarker.y,
+          kind: cityMarker.kind,
+          summary: cityMarker.summary,
+          roster:
+            cityMarker.mapNodeId == null
+              ? null
+              : historicalRosterByCityNodeId[cityMarker.mapNodeId] ?? null,
+          historicalCharacterNameById,
+          coordinateSpace:
+            input.mapDefinition.coordinateSpace ?? {
+              width: input.mapDefinition.size ?? 1,
+              height: input.mapDefinition.size ?? 1,
+            },
+          revealedHexKeySet,
+        })
+      ),
+      ...input.mapDefinition.nodes
+        .map((node, index) => {
+          const cityId =
             node.cityId ??
             (node.id == null
               ? null
-              : input.mapLocationProvider.getCityIdByMapNodeId(node.id)),
-          name: node.label ?? node.cityId ?? `Node ${index + 1}`,
-          x: node.x,
-          y: node.y,
-          kind: node.kind ?? (node.cityId == null ? "landmark" : "city"),
-          summary: node.summary ?? "",
-          isRevealed: revealedHexKeySet.has(
-            getHexKey(
-              coordinateToRoundedHex(
-                { x: node.x, y: node.y },
-                input.mapDefinition.coordinateSpace ?? {
-                  width: input.mapDefinition.size ?? 1,
-                  height: input.mapDefinition.size ?? 1,
-                }
-              )
-            )
-          ),
-          historicalCharacters:
-            roster == null
-              ? null
-              : {
-                  primary: resolveCharacterNames(roster.primaryCharacterIds),
-                  secondary: resolveCharacterNames(roster.secondaryCharacterIds),
-                  background: resolveCharacterNames(roster.backgroundCharacterIds),
-                  notes: roster.notes,
-                },
-        };
-      })
-      .filter((marker) => marker.kind !== "landmark"),
+              : input.mapLocationProvider.getCityIdByMapNodeId(node.id));
+          if (cityId != null) {
+            return null;
+          }
+
+          return createCampaignMarker({
+            id: node.id ?? node.cityId ?? `map-node.${index}`,
+            cityId: null,
+            name: node.label ?? node.cityId ?? `Node ${index + 1}`,
+            x: node.x,
+            y: node.y,
+            kind: node.kind ?? "landmark",
+            summary: node.summary ?? "",
+            roster:
+              node.id == null ? null : historicalRosterByCityNodeId[node.id] ?? null,
+            historicalCharacterNameById,
+            coordinateSpace:
+              input.mapDefinition.coordinateSpace ?? {
+                width: input.mapDefinition.size ?? 1,
+                height: input.mapDefinition.size ?? 1,
+              },
+            revealedHexKeySet,
+          });
+        })
+        .filter((marker): marker is CampaignMarker => marker != null),
+    ].filter((marker) => marker.kind !== "landmark"),
     layers: input.mapDefinition.layers ?? [],
     stats: input.mapDefinition.stats ?? null,
+  };
+}
+
+function createCampaignMarker(input: {
+  id: string;
+  cityId: string | null;
+  name: string;
+  x: number;
+  y: number;
+  kind: CampaignMarker["kind"];
+  summary: string;
+  roster: HistoricalCityRoster | null;
+  historicalCharacterNameById: Record<string, string>;
+  coordinateSpace: { width: number; height: number };
+  revealedHexKeySet: Set<string>;
+}): CampaignMarker {
+  const resolveCharacterNames = (characterIds: string[]) =>
+    characterIds.map(
+      (characterId) => input.historicalCharacterNameById[characterId] ?? characterId
+    );
+
+  return {
+    id: input.id,
+    cityId: input.cityId,
+    name: input.name,
+    x: input.x,
+    y: input.y,
+    kind: input.kind,
+    summary: input.summary,
+    isRevealed: input.revealedHexKeySet.has(
+      getHexKey(
+        coordinateToRoundedHex({ x: input.x, y: input.y }, input.coordinateSpace)
+      )
+    ),
+    historicalCharacters:
+      input.roster == null
+        ? null
+        : {
+            primary: resolveCharacterNames(input.roster.primaryCharacterIds),
+            secondary: resolveCharacterNames(input.roster.secondaryCharacterIds),
+            background: resolveCharacterNames(input.roster.backgroundCharacterIds),
+            notes: input.roster.notes,
+          },
   };
 }
 
