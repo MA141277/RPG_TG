@@ -562,12 +562,13 @@ test("script editor city profile UI exposes building arrangement and generic con
     path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
     "utf8"
   );
+  const normalizedMainUiSource = mainUiSource.replace(/\r\n/g, "\n");
   const authoringSource = fs.readFileSync(
     path.join(process.cwd(), "src/application/script-editor/city-building-authoring.ts"),
     "utf8"
   );
   const plannerBlock =
-    mainUiSource.match(
+    normalizedMainUiSource.match(
       /renderScriptEditorCityBuildingArrangementPlanner\(city, project\) \{[\s\S]*?\n  \}\n\n  renderScriptEditorCityMountedBuildingsPanel/
     )?.[0] ?? "";
 
