@@ -10770,9 +10770,10 @@ test(
     assert.match(source, /remove-location-menu-entry/);
     assert.match(source, /data-script-editor-location-access-field/);
     assert.match(source, /data-script-editor-location-field="backgroundId"/);
+    assert.match(source, /data-script-editor-location-field="mapPlacement.x"/);
     assert.match(
       source,
-      /field === "description" \|\|\s+field === "cityId" \|\|\s+field === "backgroundId"/
+      /if \(target\.matches\("\[data-script-editor-location-field\]"\)\) \{[\s\S]*?this\.applyScriptEditorLocationField\(field, target\.value\);/
     );
     assert.doesNotMatch(source, /data-script-editor-location-access-field="refusalEventId"/);
     assert.match(source, /data-script-editor-location-access-field="blockedDialogueId"/);
@@ -11275,6 +11276,7 @@ test(
     assert.equal(city.baseAttributes.prosperity, 72);
     assert.equal(city.profileMap.displayName, "Start");
     assert.deepEqual(city.mapPlacement, {
+      placementMode: "coordinate",
       mapNodeId: "node.start",
       x: 12,
       y: 34,
@@ -25997,6 +25999,19 @@ test("map rendering path consumes provider-backed city locations", () => {
   assert.doesNotMatch(mapViewSource, /CityDefinition/);
   assert.doesNotMatch(mapViewSource, /createMapCityMarkers/);
   assert.doesNotMatch(mapViewSource, /cityCoordinatesById/);
+  assert.doesNotMatch(mapViewSource, /input\.mapDefinition\.nodes/);
+  assert.equal(
+    fs.existsSync(
+      path.join(
+        process.cwd(),
+        "src",
+        "application",
+        "map",
+        "map-node-render-policy.ts"
+      )
+    ),
+    false
+  );
   assert.match(appRenderSource, /mapLocationProvider:\s*input\.mapLocationProvider/);
   assert.doesNotMatch(appRenderSource, /mapDefinition\.nodes\.find/);
   assert.doesNotMatch(appRenderSource, /cityDefinition\?\.mapNodeId/);
@@ -26054,6 +26069,10 @@ test("scenario pack startup reveals the initial map coordinate through the canon
   assert.match(
     createScenarioPackAppStateBlock,
     /revealCampaignMapHexesForCoordinate\(\s*nextAppState\.gameState,\s*scenarioMapDefinition,\s*playerCoordinate\s*\)/
+  );
+  assert.match(
+    createScenarioPackAppStateBlock,
+    /activeContentContext\.mapLocationProvider\.getCityLocation\(\s*profile\.initialLocation\.cityId\s*\)\s*\?\?\s*profile\.initialPlayerCoordinate/
   );
   assert.doesNotMatch(
     mainSource,

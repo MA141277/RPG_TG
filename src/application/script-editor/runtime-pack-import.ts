@@ -344,6 +344,7 @@ function applyImportedCityMapPlacement<
   return {
     ...city,
     mapPlacement: {
+      placementMode: "coordinate",
       mapNodeId,
       x: mapNode.x,
       y: mapNode.y,

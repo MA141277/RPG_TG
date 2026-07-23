@@ -185,8 +185,10 @@ export type ScriptEditorCityRecord = ScriptEditorEntityRecord & {
   regionId?: string;
   mapNodeId?: string;
   mapPlacement?: {
+    placementMode?: "coordinate" | "grid-index";
     mapId?: string;
     mapNodeId?: string;
+    gridIndex?: number;
     x: number;
     y: number;
     kind?: "city" | "settlement" | "fort";

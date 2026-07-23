@@ -15,7 +15,6 @@ import type {
 import type {
   MapDefinition,
   MapLayer,
-  MapNode,
   MapStats,
 } from "../../../domain/map";
 import {
@@ -34,7 +33,7 @@ type CampaignMarker = {
   name: string;
   x: number;
   y: number;
-  kind: NonNullable<MapNode["kind"]>;
+  kind: MapCityLocation["kind"];
   summary: string;
   isRevealed: boolean;
   historicalCharacters: {
@@ -160,8 +159,9 @@ export function createMapViewModel(input: {
     cityDepthTextureUrl,
     cityDepthMeshCoordinate: input.mapDefinition.initialPlayerCoordinate ?? null,
     cloudClearHexKeys,
-    campaignMarkers: [
-      ...input.mapLocationProvider.listCityLocationMarkers().map((cityMarker) =>
+    campaignMarkers: input.mapLocationProvider
+      .listCityLocationMarkers()
+      .map((cityMarker) =>
         createCampaignMarker({
           id: cityMarker.mapNodeId ?? cityMarker.id,
           cityId: cityMarker.id,
@@ -183,38 +183,6 @@ export function createMapViewModel(input: {
           revealedHexKeySet,
         })
       ),
-      ...input.mapDefinition.nodes
-        .map((node, index) => {
-          const cityId =
-            node.cityId ??
-            (node.id == null
-              ? null
-              : input.mapLocationProvider.getCityIdByMapNodeId(node.id));
-          if (cityId != null) {
-            return null;
-          }
-
-          return createCampaignMarker({
-            id: node.id ?? node.cityId ?? `map-node.${index}`,
-            cityId: null,
-            name: node.label ?? node.cityId ?? `Node ${index + 1}`,
-            x: node.x,
-            y: node.y,
-            kind: node.kind ?? "landmark",
-            summary: node.summary ?? "",
-            roster:
-              node.id == null ? null : historicalRosterByCityNodeId[node.id] ?? null,
-            historicalCharacterNameById,
-            coordinateSpace:
-              input.mapDefinition.coordinateSpace ?? {
-                width: input.mapDefinition.size ?? 1,
-                height: input.mapDefinition.size ?? 1,
-              },
-            revealedHexKeySet,
-          });
-        })
-        .filter((marker): marker is CampaignMarker => marker != null),
-    ].filter((marker) => marker.kind !== "landmark"),
     layers: input.mapDefinition.layers ?? [],
     stats: input.mapDefinition.stats ?? null,
   };

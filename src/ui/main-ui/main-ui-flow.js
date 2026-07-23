@@ -85,6 +85,7 @@ import {
   updateScriptEditorCityMountedBuildingNpc,
   updateScriptEditorCityMountedBuildingPrimaryNpc,
   updateScriptEditorCityField,
+  updateScriptEditorCityMapPlacementField,
   updateScriptEditorLocationAttribute,
   updateScriptEditorMenuEntryField,
 } from "../../application/script-editor/city-building-authoring";
@@ -2269,6 +2270,10 @@ export class MainUiFlow {
     const backgroundOptions = isCityFamily
       ? CITY_DEFAULT_BACKGROUND_OPTIONS
       : BUILDING_DEFAULT_BACKGROUND_OPTIONS;
+    const mapPlacement =
+      isCityFamily && location.mapPlacement != null && typeof location.mapPlacement === "object"
+        ? location.mapPlacement
+        : null;
     return `
       <section class="c-script-editor-location-panel" aria-label="${isCityFamily ? "城市基础分栏" : "建筑基础分栏"}">
         <div class="c-script-editor-form-grid">
@@ -2294,6 +2299,41 @@ export class MainUiFlow {
             <span>${isCityFamily ? "城市说明" : "建筑说明"}</span>
             <textarea class="c-script-editor-record-editor__textarea c-script-editor-record-editor__textarea--compact" data-script-editor-location-field="description" spellcheck="false">${escapeHtml(location.description ?? "")}</textarea>
           </label>
+          ${
+            !isCityFamily
+              ? ""
+              : `
+                <label class="c-script-editor-form-field">
+                  <span>位置标签</span>
+                  <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(mapPlacement?.label ?? location.name ?? "")}" data-script-editor-location-field="mapPlacement.label" />
+                </label>
+                <label class="c-script-editor-form-field">
+                  <span>位置 X</span>
+                  <input class="c-script-editor-form-field__input" type="number" step="any" value="${escapeHtml(String(mapPlacement?.x ?? 0))}" data-script-editor-location-field="mapPlacement.x" />
+                </label>
+                <label class="c-script-editor-form-field">
+                  <span>位置 Y</span>
+                  <input class="c-script-editor-form-field__input" type="number" step="any" value="${escapeHtml(String(mapPlacement?.y ?? 0))}" data-script-editor-location-field="mapPlacement.y" />
+                </label>
+                <label class="c-script-editor-form-field">
+                  <span>位置类型</span>
+                  <select class="c-script-editor-form-field__input" data-script-editor-location-field="mapPlacement.placementMode">
+                    ${this.renderScriptEditorSelectOptions(
+                      [
+                        { value: "coordinate", label: "坐标" },
+                        { value: "grid-index", label: "格子索引" },
+                      ],
+                      mapPlacement?.placementMode === "grid-index" ? "grid-index" : "coordinate",
+                      "坐标"
+                    )}
+                  </select>
+                </label>
+                <label class="c-script-editor-form-field">
+                  <span>位置索引</span>
+                  <input class="c-script-editor-form-field__input" type="number" step="1" value="${escapeHtml(String(mapPlacement?.gridIndex ?? 0))}" data-script-editor-location-field="mapPlacement.gridIndex" />
+                </label>
+              `
+          }
         </div>
         ${this.renderScriptEditorSystemDetails(
           "高级设置与系统信息",
@@ -5720,13 +5760,7 @@ export class MainUiFlow {
 
     if (target.matches("[data-script-editor-location-field]")) {
       const field = target.dataset.scriptEditorLocationField;
-      if (
-        field === "id" ||
-        field === "name" ||
-        field === "description" ||
-        field === "cityId" ||
-        field === "backgroundId"
-      ) {
+      if (typeof field === "string" && field.length > 0) {
         this.applyScriptEditorLocationField(field, target.value);
       }
       return;
@@ -8192,6 +8226,23 @@ export class MainUiFlow {
     }
 
     if (this.scriptEditorSelection.family === "cities") {
+      if (
+        field === "mapPlacement.label" ||
+        field === "mapPlacement.x" ||
+        field === "mapPlacement.y" ||
+        field === "mapPlacement.kind" ||
+        field === "mapPlacement.placementMode" ||
+        field === "mapPlacement.gridIndex"
+      ) {
+        this.replaceSelectedScriptEditorLocation(
+          updateScriptEditorCityMapPlacementField(
+            location,
+            field.slice("mapPlacement.".length),
+            value
+          )
+        );
+        return;
+      }
       if (field === "id" || field === "name" || field === "description" || field === "backgroundId") {
         this.replaceSelectedScriptEditorLocation(
           updateScriptEditorCityField(location, field, value)

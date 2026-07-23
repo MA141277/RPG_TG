@@ -1880,10 +1880,10 @@ function createScenarioPackAppState(
     day: 1,
   };
   const playerCoordinate =
-    profile.initialPlayerCoordinate ??
     activeContentContext.mapLocationProvider.getCityLocation(
       profile.initialLocation.cityId
     ) ??
+    profile.initialPlayerCoordinate ??
     scenarioMapDefinition.initialPlayerCoordinate ??
     { x: 0, y: 0 };
   const startupTarget = resolveScenarioStartupTarget(profile);

@@ -109,8 +109,60 @@ test(
       "Renamed City"
     );
 
-    assert.equal(city.name, "Renamed City");
-    assert.equal(city.mapPlacement.label, "Capital District");
+  assert.equal(city.name, "Renamed City");
+  assert.equal(city.mapPlacement.label, "Capital District");
+  }
+);
+
+test(
+  "script editor city authoring updates position label mode index and coordinate fields on map placement",
+  () => {
+    const {
+      updateScriptEditorCityMapPlacementField,
+    } = require("../.test-dist/application/script-editor/city-building-authoring.js");
+
+    let city = {
+      id: "city.start",
+      name: "Start City",
+      mapPlacement: {
+        placementMode: "coordinate",
+        x: 3,
+        y: 5,
+        label: "Start City",
+        summary: "",
+        kind: "city",
+      },
+    };
+
+    city = updateScriptEditorCityMapPlacementField(city, "label", "South Gate");
+    city = updateScriptEditorCityMapPlacementField(city, "placementMode", "grid-index");
+    city = updateScriptEditorCityMapPlacementField(city, "gridIndex", "27");
+    city = updateScriptEditorCityMapPlacementField(city, "x", "12");
+    city = updateScriptEditorCityMapPlacementField(city, "y", "34");
+
+    assert.deepEqual(city.mapPlacement, {
+      placementMode: "grid-index",
+      gridIndex: 27,
+      x: 12,
+      y: 34,
+      label: "South Gate",
+      kind: "city",
+    });
+  }
+);
+
+test(
+  "script editor new city records default map placement to coordinate mode for future positioning expansion",
+  () => {
+    const {
+      createDefaultScriptEditorCityRecord,
+    } = require("../.test-dist/application/script-editor/city-building-authoring.js");
+
+    const city = createDefaultScriptEditorCityRecord(0);
+
+    assert.equal(city.mapPlacement?.placementMode, "coordinate");
+    assert.equal(city.mapPlacement?.x, 0);
+    assert.equal(city.mapPlacement?.y, 0);
   }
 );
 
@@ -204,6 +256,30 @@ test(
     assert.doesNotMatch(actionHandlerBlock, /target\.dataset\.scriptEditorCityMountedBuildingNpcIndex/);
   }
 );
+
+test("script editor city profile UI exposes position label and coordinate controls", () => {
+  const mainUiSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    "utf8"
+  );
+
+  assert.match(mainUiSource, /位置标签/);
+  assert.match(mainUiSource, /位置 X/);
+  assert.match(mainUiSource, /位置 Y/);
+  assert.match(mainUiSource, /位置类型/);
+  assert.match(mainUiSource, /位置索引/);
+  assert.match(mainUiSource, /data-script-editor-location-field="mapPlacement.label"/);
+  assert.match(mainUiSource, /data-script-editor-location-field="mapPlacement.x"/);
+  assert.match(mainUiSource, /data-script-editor-location-field="mapPlacement.y"/);
+  assert.match(mainUiSource, /data-script-editor-location-field="mapPlacement.placementMode"/);
+  assert.match(mainUiSource, /data-script-editor-location-field="mapPlacement.gridIndex"/);
+  assert.match(mainUiSource, /updateScriptEditorCityMapPlacementField/);
+  const locationFieldHandlerBlock = mainUiSource.match(
+    /if \(target\.matches\("\[data-script-editor-location-field\]"\)\) \{[\s\S]*?\n    \}/
+  )?.[0] ?? "";
+  assert.match(locationFieldHandlerBlock, /this\.applyScriptEditorLocationField\(field, target\.value\);/);
+  assert.doesNotMatch(locationFieldHandlerBlock, /field === "backgroundId"/);
+});
 
 test("script editor building arrangement authoring updates project-level arrangements", () => {
   const {

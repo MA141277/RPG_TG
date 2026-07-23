@@ -192,6 +192,7 @@ export function createDefaultScriptEditorCityRecord(
     id,
     name,
     mapPlacement: {
+      placementMode: "coordinate",
       x: 0,
       y: 0,
       label: name,
@@ -311,6 +312,82 @@ export function updateScriptEditorCityField(
     );
   }
   return normalizeScriptEditorCityRecord({ ...city, [field]: value.trim() });
+}
+
+export function updateScriptEditorCityMapPlacementField(
+  city: ScriptEditorCityRecord,
+  field: "label" | "x" | "y" | "kind" | "placementMode" | "gridIndex",
+  value: string
+): ScriptEditorCityRecord {
+  const placement = normalizeCityMapPlacement(
+    city.mapPlacement,
+    city.mapNodeId,
+    city.name
+  ) ?? {
+    placementMode: "coordinate" as const,
+    x: 0,
+    y: 0,
+    label: normalizeString(city.name, city.id),
+    summary: "",
+    kind: "city" as const,
+  };
+
+  if (field === "label") {
+    return normalizeScriptEditorCityRecord({
+      ...city,
+      mapPlacement: {
+        ...placement,
+        label: value,
+      },
+    });
+  }
+
+  if (field === "kind") {
+    return normalizeScriptEditorCityRecord({
+      ...city,
+      mapPlacement: {
+        ...placement,
+        kind: value === "settlement" || value === "fort" || value === "city" ? value : "city",
+      },
+    });
+  }
+
+  if (field === "placementMode") {
+    return normalizeScriptEditorCityRecord({
+      ...city,
+      mapPlacement: {
+        ...placement,
+        placementMode: value === "grid-index" ? "grid-index" : "coordinate",
+      },
+    });
+  }
+
+  if (field === "gridIndex") {
+    const nextGridIndex = Number.parseInt(value, 10);
+    if (!Number.isFinite(nextGridIndex)) {
+      return city;
+    }
+    return normalizeScriptEditorCityRecord({
+      ...city,
+      mapPlacement: {
+        ...placement,
+        gridIndex: nextGridIndex,
+      },
+    });
+  }
+
+  const nextCoordinate = Number.parseFloat(value);
+  if (!Number.isFinite(nextCoordinate)) {
+    return city;
+  }
+
+  return normalizeScriptEditorCityRecord({
+    ...city,
+    mapPlacement: {
+      ...placement,
+      [field]: nextCoordinate,
+    },
+  });
 }
 
 export function appendScriptEditorCityMountedBuilding(
@@ -1268,9 +1345,18 @@ function normalizeCityMapPlacement(
   }
 
   const kind = normalizeOptionalString(rawValue?.kind);
+  const placementMode = normalizeOptionalString(rawValue?.placementMode);
+  const gridIndex =
+    rawValue != null &&
+    typeof rawValue.gridIndex === "number" &&
+    Number.isFinite(rawValue.gridIndex)
+      ? rawValue.gridIndex
+      : null;
   return {
+    placementMode: placementMode === "grid-index" ? "grid-index" : "coordinate",
     x,
     y,
+    ...(gridIndex == null ? {} : { gridIndex }),
     ...(normalizeOptionalString(rawValue?.mapId).length === 0
       ? {}
       : { mapId: normalizeOptionalString(rawValue?.mapId) }),
