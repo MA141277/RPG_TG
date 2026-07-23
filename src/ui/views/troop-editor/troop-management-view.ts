@@ -14,6 +14,7 @@ export function renderTroopManagementView(model: TroopManagementStageViewModel):
       aria-label="${model.title}"
       data-troop-management-root
       data-troop-id="${model.selectedTroopId}"
+      data-captain-slot-key="${model.captainSlotKey ?? ""}"
       data-reserve-count="${model.reserveMembers.length}"
       data-reserve-capacity="${model.reserveCapacity}"
     >
@@ -206,6 +207,10 @@ export function renderTroopManagementView(model: TroopManagementStageViewModel):
 
           <section class="c-troop-management__summary">
             <div class="c-troop-management__summary-nameplate">${model.troopName}</div>
+            <div class="c-troop-management__captain-line">
+              <span class="c-troop-management__captain-label">队长</span>
+              <strong class="c-troop-management__captain-value">${model.captainName ?? "暂无"}</strong>
+            </div>
             <div class="c-troop-management__summary-grid">
               ${model.summaryFields
                 .map(

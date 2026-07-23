@@ -114,6 +114,36 @@ function renderShopScreen(model: TroopEditorStageViewModel): string {
   `;
 }
 
+function renderCreateCaptainList(model: TroopEditorStageViewModel): string {
+  if (model.createCaptainOptions.length === 0) {
+    return `
+      <div class="c-troop-editor__create-captain-empty" data-troop-editor-create-captain-list>
+        当前预备队中暂无可选队长单位
+      </div>
+    `;
+  }
+
+  return `
+    <div class="c-troop-editor__create-captain-list" data-troop-editor-create-captain-list>
+      ${model.createCaptainOptions
+        .map(
+          (member) => `
+            <button
+              type="button"
+              class="c-button c-troop-editor__create-captain-option"
+              data-troop-editor-create-member="${member.id}"
+            >
+              <strong class="c-troop-editor__create-captain-name">${member.name}</strong>
+              <span class="c-troop-editor__create-captain-role">${member.roleLabel}</span>
+              <span class="c-troop-editor__create-captain-flag">队长</span>
+            </button>
+          `
+        )
+        .join("")}
+    </div>
+  `;
+}
+
 export function renderTroopEditorView(model: TroopEditorStageViewModel): string {
   return `
     <section
@@ -204,16 +234,20 @@ export function renderTroopEditorView(model: TroopEditorStageViewModel): string 
             class="c-troop-editor__create-input"
             type="text"
             maxlength="10"
-            placeholder="最大 10 字"
+            placeholder="最多 10 字"
             data-troop-editor-create-input
           />
+          <div class="c-troop-editor__create-captain-block">
+            <p class="c-troop-editor__create-label">请从预备队中选择队长</p>
+            ${renderCreateCaptainList(model)}
+          </div>
           <div class="c-troop-management__confirm-actions">
             <button
               type="button"
               class="c-button c-troop-editor__menu-button c-troop-management__confirm-button"
               data-troop-editor-create-choice="confirm"
             >
-              确定队伍名称
+              确定创建
             </button>
             <button
               type="button"
@@ -304,7 +338,7 @@ export function renderTroopEditorView(model: TroopEditorStageViewModel): string 
             解雇单位
           </h2>
           <p class="c-troop-management__confirm-text">
-            确定要解雇这个单位吗？单位将永远地离开！
+            确定要解雇这个单位吗？单位将永久离开。
           </p>
           <div class="c-troop-management__confirm-actions">
             <button

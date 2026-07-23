@@ -127,6 +127,7 @@ import {
   applyStartupStoryBootstrap,
   type StartupStoryBootstrap,
 } from "./application/startup/startup-story-bootstrap";
+import { createHaozhouReturnEncounterBattleState } from "./application/startup/haozhou-return-battle-state";
 import {
   createEnterCityRequest,
   routeNavigationRuntime,
@@ -2612,49 +2613,13 @@ function mergeCharacterDefinitions(
 function createHaozhouReturnEncounterAppState(baseState: AppState): AppState {
   let nextAppState: AppState = {
     ...baseState,
-    gameState: {
-      ...baseState.gameState,
-      world: {
-        ...baseState.gameState.world,
-        currentCityId: "city.kulan",
-        currentHouseId: null,
-      },
-      ui: {
-        ...baseState.gameState.ui,
-        currentView: "city",
-        overlayView: null,
-        houseSession: null,
-        mainHouseMissionText: getRuntimeText(
-          "runtime.zhu_yuanzhang.main_mission.haozhou_return"
-        ),
-      },
-      runtime: {
-        ...baseState.gameState.runtime,
-        flags: {
-          ...baseState.gameState.runtime.flags,
-          [ZHU_YUANZHANG_STORY_FLAG_KEYS.ordinationCompleted]: true,
-          [ZHU_YUANZHANG_STORY_FLAG_KEYS.firstTempleReviewCompleted]: true,
-          [ZHU_YUANZHANG_STORY_FLAG_KEYS.templeWorkUnlocked]: true,
-          [ZHU_YUANZHANG_STORY_FLAG_KEYS.beggingUnlocked]: true,
-          [ZHU_YUANZHANG_STORY_FLAG_KEYS.beggingTransitionAssigned]: true,
-          [ZHU_YUANZHANG_STORY_FLAG_KEYS.banditBattleCompleted]: true,
-          [ZHU_YUANZHANG_STORY_FLAG_KEYS.banditBattleWon]: true,
-          [ZHU_YUANZHANG_STORY_FLAG_KEYS.sundeyaRescueBattleCompleted]: false,
-          [ZHU_YUANZHANG_STORY_FLAG_KEYS.sundeyaRescueBattleWon]: false,
-        },
-        variables: {
-          ...baseState.gameState.runtime.variables,
-          [KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown]: 0,
-          [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.stage]:
-            ZHU_YUANZHANG_STORY_STAGES.huangjueBeggingJourney,
-          [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.templeWeek]: 4,
-          [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.templeContribution]: 30,
-          [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.lastBattleId]:
-            "story.zhu_yuanzhang.week4.roadside-bandits",
-          [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.lastBattleResult]: "victory",
-        },
-      },
-    },
+    gameState: createHaozhouReturnEncounterBattleState({
+      state: baseState.gameState,
+      mainMissionText: getRuntimeText(
+        "runtime.zhu_yuanzhang.main_mission.sundeya_battle_review"
+      ),
+      textEntriesById: activeContentContext.textEntriesById,
+    }),
     characterDefinitions: createPrototypeCharactersForStoryStage(
       ZHU_YUANZHANG_STORY_STAGES.huangjueBeggingJourney
     ),

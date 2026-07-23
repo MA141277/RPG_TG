@@ -18,6 +18,7 @@ export type TroopPreviewSlotViewModel = {
   label: string;
   role: string | null;
   isOccupied: boolean;
+  isCaptain: boolean;
 };
 
 export type TroopListItemViewModel = {
@@ -43,10 +44,17 @@ export type TroopShopOfferViewModel = {
   requiredFameText: string;
 };
 
+export type TroopCreateCaptainOptionViewModel = {
+  id: string;
+  name: string;
+  roleLabel: string;
+};
+
 export type TroopEditorStageViewModel = {
   title: string;
   resources: TroopEditorResourceSlot[];
   troops: TroopListItemViewModel[];
+  createCaptainOptions: TroopCreateCaptainOptionViewModel[];
   reserveMembers: TroopReserveMemberViewModel[];
   shopOffers: TroopShopOfferViewModel[];
   menu: TroopEditorMenuItem[];
@@ -135,6 +143,7 @@ export function createTroopPreviewSlots(
       label: slot?.occupantName ?? "空位",
       role: slot?.occupantRole ?? null,
       isOccupied: slot?.isOccupied ?? false,
+      isCaptain: slot?.isCaptain ?? false,
     };
   });
 }
@@ -208,24 +217,32 @@ function createShopOfferViewModel(offer: TroopShopOffer): TroopShopOfferViewMode
 export function createTroopEditorStageViewModel(input: {
   resources: TroopEditorResourceSlot[];
   troopSnapshots: SharedTroopSnapshot[];
-  reserveMembers: TroopReserveMember[];
-  shopOffers: TroopShopOffer[];
-  reserveCount: number;
-  reserveCapacity: number;
-  selectedTroopId: string | null;
-  playerGold: number;
-  playerFame: number;
+  reserveMembers?: TroopReserveMember[];
+  shopOffers?: TroopShopOffer[];
+  reserveCount?: number;
+  reserveCapacity?: number;
+  selectedTroopId?: string | null;
+  playerGold?: number;
+  playerFame?: number;
 }): TroopEditorStageViewModel {
+  const reserveMembers = input.reserveMembers ?? [];
+  const shopOffers = input.shopOffers ?? [];
+
   return {
     title: "队伍编辑",
     resources: input.resources,
     troops: input.troopSnapshots.map(createTroopListItemViewModel),
-    reserveMembers: input.reserveMembers.map((member) => ({
+    createCaptainOptions: reserveMembers.map((member) => ({
       id: member.id,
       name: member.name,
       roleLabel: getTroopRoleLabel(member.role),
     })),
-    shopOffers: input.shopOffers.map(createShopOfferViewModel),
+    reserveMembers: reserveMembers.map((member) => ({
+      id: member.id,
+      name: member.name,
+      roleLabel: getTroopRoleLabel(member.role),
+    })),
+    shopOffers: shopOffers.map(createShopOfferViewModel),
     menu: [
       { id: "manage", label: "队伍管理", actionId: "open-troop-management" },
       { id: "disband", label: "解散队伍", actionId: null },
@@ -236,14 +253,15 @@ export function createTroopEditorStageViewModel(input: {
       { id: "exit", label: "退出", actionId: "close-troop-editor" },
     ],
     selectedTroopId:
+      input.selectedTroopId != null &&
       input.troopSnapshots.some((troop) => troop.id === input.selectedTroopId)
         ? input.selectedTroopId
         : (input.troopSnapshots[0]?.id ?? null),
     selectedMenuId: "manage",
-    reserveCount: input.reserveCount,
-    reserveCapacity: input.reserveCapacity,
-    playerGold: input.playerGold,
-    playerFame: input.playerFame,
+    reserveCount: input.reserveCount ?? reserveMembers.length,
+    reserveCapacity: input.reserveCapacity ?? reserveMembers.length,
+    playerGold: input.playerGold ?? 0,
+    playerFame: input.playerFame ?? 0,
   };
 }
 

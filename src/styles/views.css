@@ -749,6 +749,24 @@
   font-size: 1.24rem;
 }
 
+.c-troop-management__captain-line {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #4a2816;
+}
+
+.c-troop-management__captain-label {
+  color: rgb(131 93 64 / 82%);
+  font-size: 0.88rem;
+  letter-spacing: 0.08em;
+}
+
+.c-troop-management__captain-value {
+  font-family: var(--font-title);
+  font-size: 1.06rem;
+}
+
 .c-troop-management__summary-grid {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
@@ -880,6 +898,33 @@
 .c-troop-preview-grid__slot.is-occupied {
   background: linear-gradient(180deg, rgb(253 246 224 / 92%), rgb(234 213 172 / 88%));
   color: #4c2d19;
+}
+
+.c-troop-preview-grid__slot.is-captain {
+  position: relative;
+  box-shadow:
+    inset 0 0 0 2px rgb(170 116 48 / 42%),
+    0 8px 18px rgb(89 52 23 / 18%);
+}
+
+.c-troop-preview-grid__captain-badge {
+  position: absolute;
+  top: 4px;
+  right: 5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  background: linear-gradient(180deg, #f3d37d, #c9962f);
+  color: #2f1c09;
+  font-size: 0.68rem;
+  font-weight: 800;
+  line-height: 1;
+  box-shadow:
+    inset 0 0 0 1px rgb(255 240 198 / 48%),
+    0 4px 10px rgb(88 58 12 / 20%);
 }
 
 .c-troop-preview-grid__slot-key {
@@ -1025,6 +1070,56 @@
   color: #b33b2f;
   font-size: 0.88rem;
   line-height: 1.35;
+}
+
+.c-troop-editor__create-captain-block {
+  display: grid;
+  gap: 10px;
+  width: min(100%, 420px);
+}
+
+.c-troop-editor__create-captain-list {
+  display: grid;
+  gap: 8px;
+  max-height: 220px;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.c-troop-editor__create-captain-option,
+.c-troop-editor__create-captain-empty {
+  display: grid;
+  gap: 4px;
+  border: 12px solid transparent;
+  border-image-source: var(--grain-shop-panel-light);
+  border-image-slice: 18 fill;
+  border-image-width: 12px;
+  border-image-repeat: stretch;
+  padding: 10px 12px;
+  background: rgb(255 247 230 / 84%);
+  color: #4a2816;
+  text-align: left;
+}
+
+.c-troop-editor__create-captain-option.is-selected {
+  background: linear-gradient(180deg, rgb(253 244 214 / 96%), rgb(234 209 158 / 92%));
+  box-shadow: inset 0 0 0 2px rgb(170 116 48 / 38%);
+}
+
+.c-troop-editor__create-captain-name {
+  font-size: 1rem;
+}
+
+.c-troop-editor__create-captain-role {
+  color: rgb(92 63 38 / 92%);
+  font-size: 0.8rem;
+}
+
+.c-troop-editor__create-captain-flag {
+  color: #9d3f2d;
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
 }
 
 .c-troop-preview-grid--battle {

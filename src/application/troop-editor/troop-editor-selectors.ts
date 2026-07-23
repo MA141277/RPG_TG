@@ -1,5 +1,8 @@
 import type { AppState } from "../app-shell";
-import { BATTLE_FORMATION_SLOT_KEYS } from "../../domain/battle-formation";
+import {
+  BATTLE_FORMATION_SLOT_KEYS,
+  getBattleFormationCaptainMember,
+} from "../../domain/battle-formation";
 import type {
   SharedTroopSlotSnapshot,
   SharedTroopSnapshot,
@@ -27,6 +30,9 @@ function createTroopSlots(
   const formation =
     appState.gameState.runtime.troops.formations.find((entry) => entry.id === troopId) ??
     null;
+  const captainMemberId = formation == null
+    ? null
+    : getBattleFormationCaptainMember(formation)?.id ?? null;
 
   return BATTLE_FORMATION_SLOT_KEYS.map((slotKey) => {
     const occupant = formation?.members.find((member) => member.slotKey === slotKey) ?? null;
@@ -36,6 +42,7 @@ function createTroopSlots(
       occupantName: occupant?.name ?? null,
       occupantRole: occupant?.role ?? null,
       isOccupied: occupant != null,
+      isCaptain: occupant?.id === captainMemberId,
     };
   });
 }
@@ -68,12 +75,17 @@ export function selectPlayerTroopSnapshots(
 
   return appState.gameState.runtime.troops.formations
     .filter((formation) => formation.leaderCharacterId === playerCharacter.id)
-    .map((formation) => ({
-      id: formation.id,
-      name: formation.name,
-      subtitle: "",
-      slots: createTroopSlots(appState, formation.id),
-    }));
+    .map((formation) => {
+      const captain = getBattleFormationCaptainMember(formation);
+      return {
+        id: formation.id,
+        name: formation.name,
+        subtitle: "",
+        captainMemberId: captain?.id ?? null,
+        captainName: captain?.name ?? null,
+        slots: createTroopSlots(appState, formation.id),
+      };
+    });
 }
 
 export function selectTroopEditorStageInput(

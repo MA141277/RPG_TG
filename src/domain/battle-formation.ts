@@ -75,6 +75,7 @@ export type BattleFormation = {
   name: string;
   leaderCharacterId: CharacterId;
   members: BattleFormationMember[];
+  captainMemberId?: BattleFormationMemberId;
   rankCapacityBonus?: number;
   traitCapacityBonus?: number;
 };
@@ -172,6 +173,46 @@ export function calculateBattleFormationLoad(members: ReadonlyArray<BattleFormat
   return members.reduce((total, member) => total + getBattleFormationMemberCapacityCost(member), 0);
 }
 
+export function getBattleFormationCaptainMember(
+  formation: BattleFormation
+): BattleFormationMember | null {
+  if (formation.captainMemberId != null) {
+    const explicitCaptain =
+      formation.members.find((member) => member.id === formation.captainMemberId) ?? null;
+    if (explicitCaptain != null) {
+      return explicitCaptain;
+    }
+  }
+
+  return formation.members.find((member) => member.slotKey === "middle-center") ?? null;
+}
+
+export function resolveBattleFormationCaptainMemberId(
+  formation: BattleFormation
+): BattleFormationMemberId | null {
+  const captain = getBattleFormationCaptainMember(formation);
+  if (captain != null) {
+    return captain.id;
+  }
+
+  if (formation.members.length === 0) {
+    return null;
+  }
+
+  const orderedMembers = [...formation.members].sort((left, right) => {
+    const leftIndex = BATTLE_FORMATION_SLOT_KEYS.indexOf(left.slotKey);
+    const rightIndex = BATTLE_FORMATION_SLOT_KEYS.indexOf(right.slotKey);
+    if (leftIndex !== rightIndex) {
+      return leftIndex - rightIndex;
+    }
+
+    return left.id.localeCompare(right.id);
+  });
+  const seed = `${formation.id}:${orderedMembers.map((member) => member.id).join("|")}`;
+  const selectedIndex = calculateStableFormationCaptainIndex(seed, orderedMembers.length);
+  return orderedMembers[selectedIndex]?.id ?? orderedMembers[0]?.id ?? null;
+}
+
 export function validateBattleFormation(
   formation: BattleFormation,
   leaderStats: Pick<CharacterStats, "leadership">,
@@ -229,4 +270,17 @@ function sanitizeNonNegativeNumber(value: number): number {
 
 function sanitizePositiveNumber(value: number): number {
   return Number.isFinite(value) ? Math.max(1, Math.floor(value)) : 1;
+}
+
+function calculateStableFormationCaptainIndex(seed: string, length: number): number {
+  if (length <= 1) {
+    return 0;
+  }
+
+  let hash = 0;
+  for (let index = 0; index < seed.length; index += 1) {
+    hash = (hash * 131 + seed.charCodeAt(index)) >>> 0;
+  }
+
+  return hash % length;
 }

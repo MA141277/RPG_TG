@@ -3,7 +3,7 @@ import { PLAYER_MAIN_TROOP_ID } from "../../../domain/troop-editor";
 type SyncTroopEditorInteractionsInput = {
   onOpenTroopManagement: (input: { troopId: string }) => void;
   onDisbandTroop: (input: { troopId: string }) => void;
-  onCreateTeam: (input: { name: string }) => void;
+  onCreateTeam: (input: { name: string; captainReserveMemberId: string }) => void;
   onSwapTeams: (input: { firstTroopId: string; secondTroopId: string }) => void;
   onDismissReserveUnit: (input: { reserveMemberId: string }) => void;
   onPurchaseShopOffer: (input: { offerId: string }) => void;
@@ -25,6 +25,7 @@ type InteractionState = {
   mode: InteractionMode;
   targetTroopId: string | null;
   selectedSortTroopId: string | null;
+  selectedCreateCaptainId: string | null;
   selectedDismissReserveMemberId: string | null;
   selectedRecruitOfferId: string | null;
   alertText: string | null;
@@ -34,17 +35,19 @@ type InteractionState = {
 };
 
 const ALERT_TEXT = {
-  disbandForbidden: "æœ¬é˜Ÿä¸å¯è§£æ•£",
-  disbandReserveFull: "é¢„å¤‡é˜Ÿç©ºé—´ä¸è¶³ï¼Œæ— æ³•è§£æ•£é˜Ÿä¼",
-  recruitReserveFull: "é¢„å¤‡é˜Ÿå·²æ»¡ï¼Œè¯·å…ˆè§£é›‡å£«å…µ",
-  recruitGoldInsufficient: "é‡‘é’±ä¸è¶³",
-  recruitFameInsufficient: "å£°æœ›ä¸è¶³",
+  disbandForbidden: "±¾¶Ó²»¿É½âÉ¢",
+  disbandReserveFull: "Ô¤±¸¶Ó¿Õ¼ä²»×ã£¬ÎŞ·¨½âÉ¢¶ÓÎé",
+  recruitReserveFull: "Ô¤±¸¶ÓÒÑÂú£¬ÇëÏÈ½â¹ÍÊ¿±ø",
+  recruitGoldInsufficient: "½ğÇ®²»×ã",
+  recruitFameInsufficient: "ÉùÍû²»×ã",
 } as const;
 
 const CREATE_ERROR_TEXT = {
-  emptyName: "é˜Ÿä¼åç§°ä¸èƒ½ä¸ºçº¯ç©ºæ ¼æˆ–ä¸ºç©º",
-  duplicateName: "é˜Ÿä¼åç§°ä¸èƒ½é‡å¤",
+  emptyName: "¶ÓÎéÃû³Æ²»ÄÜÎª¿Õ",
+  duplicateName: "¶ÓÎéÃû³Æ²»ÄÜÖØ¸´",
+  missingCaptain: "±ØĞëÏÈÑ¡Ôñ¶Ó³¤",
 } as const;
+
 
 function readReserveCapacity(root: HTMLElement): number {
   const parsed = Number(root.dataset.reserveCapacity ?? 0);
@@ -184,6 +187,11 @@ export function syncTroopEditorInteractions(
   const createError = troopEditorRoot.querySelector<HTMLElement>(
     "[data-troop-editor-create-error]"
   );
+  const createCaptainButtons = [
+    ...troopEditorRoot.querySelectorAll<HTMLButtonElement>(
+      "[data-troop-editor-create-member]"
+    ),
+  ];
   const createConfirmButton = troopEditorRoot.querySelector<HTMLButtonElement>(
     "[data-troop-editor-create-choice='confirm']"
   );
@@ -277,6 +285,7 @@ export function syncTroopEditorInteractions(
     mode: "idle",
     targetTroopId: null,
     selectedSortTroopId: null,
+    selectedCreateCaptainId: null,
     selectedDismissReserveMemberId: null,
     selectedRecruitOfferId: null,
     alertText: null,
@@ -339,7 +348,7 @@ export function syncTroopEditorInteractions(
     }
 
     if (confirmText != null) {
-      confirmText.textContent = "ç¡®å®šè¦è§£æ•£é˜Ÿä¼å—ï¼Ÿè¢«è§£æ•£çš„å•ä½å°†è¿”å›é¢„å¤‡é˜Ÿã€‚";
+      confirmText.textContent = "È·¶¨Òª½âÉ¢¶ÓÎéÂğ£¿±»½âÉ¢µÄµ¥Î»½«·µ»ØÔ¤±¸¶Ó¡£";
     }
 
     if (alertText != null) {
@@ -372,6 +381,14 @@ export function syncTroopEditorInteractions(
       );
     });
 
+    createCaptainButtons.forEach((button) => {
+      button.classList.toggle(
+        "is-selected",
+        state.selectedCreateCaptainId != null &&
+          button.dataset.troopEditorCreateMember === state.selectedCreateCaptainId
+      );
+    });
+
     shopOfferButtons.forEach((button) => {
       button.classList.toggle(
         "is-selected",
@@ -386,6 +403,7 @@ export function syncTroopEditorInteractions(
     state.mode = "idle";
     state.targetTroopId = null;
     state.selectedSortTroopId = null;
+    state.selectedCreateCaptainId = null;
     state.selectedDismissReserveMemberId = null;
     state.selectedRecruitOfferId = null;
     state.alertText = null;
@@ -412,6 +430,7 @@ export function syncTroopEditorInteractions(
     state.mode = "create";
     state.targetTroopId = null;
     state.selectedSortTroopId = null;
+    state.selectedCreateCaptainId = null;
     state.selectedDismissReserveMemberId = null;
     state.selectedRecruitOfferId = null;
     state.alertText = null;
@@ -643,6 +662,17 @@ export function syncTroopEditorInteractions(
     });
   });
 
+  createCaptainButtons.forEach((button) => {
+    button.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      state.selectedCreateCaptainId =
+        button.dataset.troopEditorCreateMember ?? null;
+      state.createErrorText = null;
+      syncUi();
+    });
+  });
+
   createConfirmButton?.addEventListener("click", (event) => {
     event.preventDefault();
     event.stopPropagation();
@@ -660,7 +690,16 @@ export function syncTroopEditorInteractions(
       return;
     }
 
-    input.onCreateTeam({ name: normalizedName });
+    if (state.selectedCreateCaptainId == null) {
+      state.createErrorText = "å¿…é¡»å…ˆé€‰æ‹©é˜Ÿé•¿";
+      syncUi();
+      return;
+    }
+
+    input.onCreateTeam({
+      name: normalizedName,
+      captainReserveMemberId: state.selectedCreateCaptainId,
+    });
   });
 
   createCancelButton?.addEventListener("click", (event) => {
