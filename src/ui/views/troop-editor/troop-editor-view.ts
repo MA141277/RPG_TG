@@ -46,9 +46,8 @@ function renderMenuButton(
 
 function renderShopScreen(model: TroopEditorStageViewModel): string {
   return `
-    <section class="c-troop-editor__shop-screen" data-troop-editor-shop hidden>
+    <section class="c-troop-editor__shop-screen c-troop-editor__recruit-popup c-troop-assessment-popup c-troop-assessment-popup--list" data-troop-editor-shop hidden>
       <header class="c-troop-editor__shop-screen-head">
-        <p class="c-troop-editor__eyebrow">商店</p>
         <h2 class="c-troop-editor__title">招兵买马</h2>
       </header>
 
@@ -218,7 +217,7 @@ export function renderTroopEditorView(model: TroopEditorStageViewModel): string 
 
       <div class="c-troop-management__confirm-overlay" data-troop-editor-create hidden>
         <div
-          class="c-troop-management__confirm-dialog c-troop-editor__create-dialog"
+          class="c-troop-management__confirm-dialog c-troop-editor__create-dialog c-troop-assessment-popup"
           role="dialog"
           aria-modal="true"
           aria-labelledby="troop-editor-create-title"
@@ -234,7 +233,7 @@ export function renderTroopEditorView(model: TroopEditorStageViewModel): string 
             class="c-troop-editor__create-input"
             type="text"
             maxlength="10"
-            placeholder="最多 10 字"
+            placeholder="最大 10 字"
             data-troop-editor-create-input
           />
           <div class="c-troop-editor__create-captain-block">
@@ -264,11 +263,11 @@ export function renderTroopEditorView(model: TroopEditorStageViewModel): string 
       <div class="c-troop-management__confirm-overlay" data-troop-editor-dismiss-overlay hidden>
         <div class="c-troop-editor__reserve-overlay-shell">
           <section
-            class="c-troop-management__reserve-panel c-troop-editor__reserve-panel"
+            class="c-troop-management__reserve-panel c-troop-editor__reserve-panel c-troop-assessment-popup c-troop-assessment-popup--list"
             data-troop-editor-dismiss-panel
           >
             <header class="c-troop-management__reserve-head">
-              <h2 class="c-troop-management__reserve-title">预备队</h2>
+              <h2 class="c-troop-management__reserve-title">解雇单位</h2>
               <div class="c-troop-management__reserve-count">
                 ${model.reserveMembers.length} / ${model.reserveCapacity}
               </div>
@@ -329,7 +328,7 @@ export function renderTroopEditorView(model: TroopEditorStageViewModel): string 
 
       <div class="c-troop-management__confirm-overlay" data-troop-editor-dismiss-confirm hidden>
         <div
-          class="c-troop-management__confirm-dialog"
+          class="c-troop-management__confirm-dialog c-troop-assessment-popup"
           role="dialog"
           aria-modal="true"
           aria-labelledby="troop-editor-dismiss-confirm-title"
@@ -338,7 +337,7 @@ export function renderTroopEditorView(model: TroopEditorStageViewModel): string 
             解雇单位
           </h2>
           <p class="c-troop-management__confirm-text">
-            确定要解雇这个单位吗？单位将永久离开。
+            确定要解雇这个单位吗？单位将永远地离开！
           </p>
           <div class="c-troop-management__confirm-actions">
             <button
@@ -361,7 +360,7 @@ export function renderTroopEditorView(model: TroopEditorStageViewModel): string 
 
       <div class="c-troop-management__confirm-overlay" data-troop-editor-confirm hidden>
         <div
-          class="c-troop-management__confirm-dialog"
+          class="c-troop-management__confirm-dialog c-troop-assessment-popup"
           role="dialog"
           aria-modal="true"
           aria-labelledby="troop-editor-confirm-title"
@@ -393,7 +392,7 @@ export function renderTroopEditorView(model: TroopEditorStageViewModel): string 
 
       <div class="c-troop-management__confirm-overlay" data-troop-editor-alert hidden>
         <div
-          class="c-troop-management__confirm-dialog"
+          class="c-troop-management__confirm-dialog c-troop-assessment-popup"
           role="alertdialog"
           aria-modal="true"
           aria-labelledby="troop-editor-alert-title"

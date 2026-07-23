@@ -4223,9 +4223,13 @@
     function chooseFormationTarget(attackerUnit, attackerMember, defenderUnit) {
       const alive = getAliveFormationMembers(defenderUnit);
       if (!alive.length) return null;
-      const attackerMeta = getFormationSlotMeta(attackerMember?.slotKey || '');
+      const attackerMeta = getFormationSlotMeta(
+        attackerMember?.slotKey || '',
+        shouldMirrorFormationCols(attackerUnit)
+      );
+      const defenderMirrorCols = shouldMirrorFormationCols(defenderUnit);
       const sameLaneTargets = alive
-        .filter(member => getFormationSlotMeta(member.slotKey).col === attackerMeta.col)
+        .filter(member => getFormationSlotMeta(member.slotKey, defenderMirrorCols).visualCol === attackerMeta.visualCol)
         .sort((a, b) => getFormationResolutionOrder(a).rank - getFormationResolutionOrder(b).rank);
       if (sameLaneTargets.length) {
         return sameLaneTargets[0];
