@@ -403,8 +403,21 @@
       overflow: hidden;
     }
 
+    .board-wrap::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(ellipse at center, rgba(0, 0, 0, 0) 42%, rgba(0, 0, 0, 0.26) 78%, rgba(0, 0, 0, 0.54) 100%),
+        linear-gradient(90deg, rgba(0, 0, 0, 0.28), rgba(0, 0, 0, 0) 18%, rgba(0, 0, 0, 0) 82%, rgba(0, 0, 0, 0.28)),
+        linear-gradient(180deg, rgba(0, 0, 0, 0.22), rgba(0, 0, 0, 0) 20%, rgba(0, 0, 0, 0) 78%, rgba(0, 0, 0, 0.36));
+    }
+
     #board {
       position: relative;
+      z-index: 1;
       user-select: none;
       width: calc((12 + 10) * var(--tile-w) / 2);
       height: calc((12 + 10) * var(--tile-h) / 2 + var(--tile-h));
