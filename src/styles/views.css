@@ -17,3 +17,2269 @@
     linear-gradient(rgb(0 0 0 / 28%), rgb(0 0 0 / 28%)),
     linear-gradient(180deg, rgb(0 0 0 / 100%), rgb(0 0 0 / 100%));
 }
+<<<<<<< Updated upstream
+=======
+
+.c-map-stage-actions {
+  position: absolute;
+  bottom: 24px;
+  left: 28px;
+  z-index: calc(var(--z-global-ui) + 1);
+  display: flex;
+  align-items: center;
+  pointer-events: auto;
+}
+
+.view-map .c-map-stage-actions .c-map-troop-editor-entry {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 108px;
+  min-width: 108px;
+  max-width: 108px;
+  height: 42px;
+  min-height: 42px;
+  max-height: 42px;
+  border: solid transparent;
+  border-width: 10px 18px;
+  border-radius: 0;
+  border-image-source: url("../../ui/yuansu/编队详细/city-menu-button-280x74.png");
+  border-image-slice: 18 34 fill;
+  border-image-width: 10px 18px;
+  border-image-repeat: stretch;
+  padding: 0 8px;
+  background: transparent;
+  box-shadow: none;
+  color: #4a2f1b;
+  font-family: var(--font-title);
+  font-size: 1.08rem;
+  letter-spacing: 0.2em;
+  line-height: 1;
+  text-align: center;
+  text-shadow: 0 1px 0 rgb(255 238 183 / 52%);
+  text-orientation: mixed;
+  white-space: nowrap;
+  writing-mode: horizontal-tb;
+}
+
+.view-map .c-map-stage-actions .c-map-troop-editor-entry:hover,
+.view-map .c-map-stage-actions .c-map-troop-editor-entry:focus-visible {
+  transform: none;
+  filter: brightness(1.05) saturate(1.05);
+}
+
+.view-troop-editor {
+  --troop-detail-page-bg: url("../../ui/background/budui.png");
+  --troop-detail-panel: url("../../ui/yuansu/编队详细/generated/troop-management-panel.png");
+  --troop-detail-resource-bar: url("../../ui/yuansu/编队详细/generated/resource-bar.png");
+  --troop-detail-resource-divider: url("../../ui/yuansu/编队详细/下载 (2).png");
+  --troop-detail-slot: url("../../ui/yuansu/编队详细/20260702-195813(1).png");
+  --troop-detail-button: url("../../ui/yuansu/编队详细/20260722-203253.png");
+  --troop-detail-button-active: url("../../ui/yuansu/编队详细/20260722-203218.png");
+
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-rows: minmax(48px, 4.2vw) minmax(0, 1fr);
+  gap: 4px;
+  padding: 6px 10px 14px;
+  background:
+    linear-gradient(rgb(0 0 0 / 50%), rgb(0 0 0 / 50%)),
+    var(--troop-detail-page-bg) center / cover no-repeat;
+}
+
+.view-troop-editor:has(.c-troop-editor__recruit-popup:not([hidden]))::after {
+  position: absolute;
+  inset: 0;
+  z-index: 7;
+  background: rgb(12 7 4 / 52%);
+  content: "";
+  pointer-events: none;
+}
+
+.view-troop-management {
+  --troop-detail-page-bg: url("../../ui/background/budui.png");
+  --troop-detail-bg: url("../../ui/background/shuaifu.png");
+  --troop-detail-panel: url("../../ui/yuansu/编队详细/generated/troop-management-panel.png");
+  --troop-detail-resource-bar: url("../../ui/yuansu/编队详细/generated/resource-bar.png");
+  --troop-detail-gold-icon: url("../../ui/yuansu/编队详细/generated/resource-gold.png");
+  --troop-detail-prestige-icon: url("../../ui/yuansu/编队详细/generated/resource-prestige.png");
+  --troop-detail-resource-divider: url("../../ui/yuansu/编队详细/下载 (2).png");
+  --troop-detail-heading-divider: url("../../ui/yuansu/编队详细/下载 (22).png");
+  --troop-detail-slot: url("../../ui/yuansu/编队详细/20260702-195813(1).png");
+  --troop-detail-button: url("../../ui/yuansu/编队详细/20260722-203253.png");
+  --troop-detail-button-active: url("../../ui/yuansu/编队详细/20260722-203218.png");
+  --troop-detail-return-button: url("../../ui/yuansu/编队详细/20260713-203034.png");
+  --troop-detail-button-selected-filter: brightness(0.92) saturate(1.08);
+  --troop-management-stage-top: calc(136 / 1152 * 100%);
+
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-rows: minmax(48px, 4.2vw) minmax(0, 1fr);
+  gap: 4px;
+  padding: 6px 10px 14px;
+  background:
+    linear-gradient(rgb(8 8 6 / 8%), rgb(8 8 6 / 12%)),
+    var(--troop-detail-page-bg) center / cover no-repeat;
+}
+
+.view-troop-management:has(.c-troop-management__reserve-panel.c-troop-assessment-popup:not([hidden]))::after {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  background: rgb(12 7 4 / 52%);
+  content: "";
+  pointer-events: none;
+}
+
+.c-troop-assessment-popup {
+  --troop-popup-field-width: 256px;
+  --troop-popup-content-side: 22px;
+  --troop-popup-width: calc(
+    var(--troop-popup-field-width) +
+    (var(--troop-popup-content-side) * 2)
+  );
+  --troop-popup-actions-width: var(--troop-popup-field-width);
+  --troop-popup-top-border: 64px;
+  --troop-popup-side-border: 96px;
+  --troop-popup-bottom-border: 28px;
+
+  position: relative;
+  box-sizing: border-box;
+  width: min(var(--troop-popup-width), calc(100vw - 96px));
+  min-height: 0;
+  border: 0;
+  padding: 68px var(--troop-popup-content-side) 28px;
+  background: transparent;
+  box-shadow: none;
+  color: #54321b;
+  overflow: visible;
+}
+
+.c-troop-assessment-popup--list {
+  --troop-popup-field-width: 304px;
+  --troop-popup-content-side: 26px;
+}
+
+.c-troop-assessment-popup::before {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-style: solid;
+  border-color: transparent;
+  border-width:
+    var(--troop-popup-top-border)
+    var(--troop-popup-side-border)
+    var(--troop-popup-bottom-border);
+  border-image-source: url("../../ui/yuansu/评定/generated/20260709-205114_popup-slice-seamless.png");
+  border-image-slice: 64 96 28 96 fill;
+  border-image-width:
+    var(--troop-popup-top-border)
+    var(--troop-popup-side-border)
+    var(--troop-popup-bottom-border)
+    var(--troop-popup-side-border);
+  border-image-repeat: stretch;
+  content: "";
+  pointer-events: none;
+}
+
+.c-troop-assessment-popup > * {
+  position: relative;
+  z-index: 1;
+}
+
+.c-troop-editor__resource-bar,
+.c-troop-editor__troops-panel,
+.c-troop-editor__menu {
+  border: 18px solid transparent;
+  border-image-slice: 18 fill;
+  border-image-width: 18px;
+  border-image-repeat: stretch;
+  box-shadow: 0 16px 36px rgb(0 0 0 / 28%);
+}
+
+.c-troop-editor__resource-bar {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 220px));
+  gap: 14px;
+  align-items: stretch;
+  justify-content: start;
+  border-image-source: var(--grain-shop-panel-dark);
+  padding: 10px 14px;
+}
+
+.c-troop-editor__resource-slot {
+  display: grid;
+  grid-template-columns: auto auto;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 50px;
+  border: 12px solid transparent;
+  border-image-source: var(--grain-shop-button-gold);
+  border-image-slice: 16 fill;
+  border-image-width: 12px;
+  border-image-repeat: stretch;
+  padding: 2px 14px;
+  background: rgb(40 20 8 / 72%);
+  color: #f3dfb6;
+}
+
+.c-troop-editor__resource-label {
+  color: rgb(255 237 186 / 84%);
+  font-size: 0.92rem;
+  letter-spacing: 0.14em;
+}
+
+.c-troop-editor__resource-value {
+  color: #fff0ca;
+  font-size: 1.1rem;
+  font-weight: 800;
+}
+
+.c-troop-editor__body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(248px, 288px);
+  gap: 22px;
+  min-height: 0;
+}
+
+.c-troop-editor__troops-panel {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 14px;
+  min-height: 0;
+  border-image-source: var(--grain-shop-frame-large);
+  padding: 18px;
+  background:
+    linear-gradient(180deg, rgb(251 240 212 / 86%), rgb(224 199 156 / 88%));
+}
+
+.c-troop-editor__troops-panel-body {
+  position: relative;
+  min-height: 0;
+}
+
+.c-troop-editor__menu {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 16px;
+  border-image-source: var(--grain-shop-frame-large);
+  padding: 18px 18px 22px;
+  background:
+    linear-gradient(180deg, rgb(247 235 205 / 90%), rgb(220 194 153 / 90%));
+}
+
+.c-troop-editor__panel-heading {
+  display: grid;
+  gap: 4px;
+  color: #58331a;
+}
+
+.c-troop-editor__eyebrow {
+  margin: 0;
+  color: rgb(129 72 35 / 72%);
+  font-size: 0.86rem;
+  letter-spacing: 0.2em;
+}
+
+.c-troop-editor__title {
+  margin: 0;
+  color: #432412;
+  font-family: var(--font-title);
+  font-size: 1.85rem;
+  font-weight: 700;
+}
+
+.c-troop-editor__troop-scroll {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  align-content: start;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 8px;
+}
+
+.c-troop-editor__shop-panel {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 14px;
+  min-height: 0;
+}
+
+.c-troop-editor__shop-panel[hidden] {
+  display: none;
+}
+
+.c-troop-editor__shop-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.c-troop-editor__shop-title {
+  margin: 0;
+  color: #432412;
+  font-family: var(--font-title);
+  font-size: 1.75rem;
+  font-weight: 700;
+}
+
+.c-troop-editor__shop-screen {
+  position: relative;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 14px;
+  min-height: 0;
+  border: 18px solid transparent;
+  border-image-source: var(--grain-shop-frame-large);
+  border-image-slice: 18 fill;
+  border-image-width: 18px;
+  border-image-repeat: stretch;
+  box-shadow: 0 16px 36px rgb(0 0 0 / 28%);
+  padding: 18px;
+  background:
+    linear-gradient(180deg, rgb(251 240 212 / 86%), rgb(224 199 156 / 88%));
+}
+
+.c-troop-editor__recruit-popup {
+  --troop-recruit-popup-width: min(var(--troop-popup-width), calc(100% - 64px));
+  --troop-popup-field-width: 284px;
+  --troop-popup-content-side: 26px;
+
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  box-sizing: border-box;
+  z-index: 8;
+  width: var(--troop-recruit-popup-width);
+  height: min(414px, calc(100% - 32px));
+  max-height: min(414px, calc(100% - 32px));
+  border: 0;
+  border-image: none;
+  padding: 68px var(--troop-popup-content-side) 28px;
+  background: transparent;
+  box-shadow: none;
+  isolation: isolate;
+  overflow: visible;
+  transform: translate(-50%, -50%);
+}
+
+.c-troop-editor__recruit-popup > * {
+  position: relative;
+  z-index: 1;
+}
+
+.c-troop-editor__shop-screen[hidden] {
+  display: none;
+}
+
+.c-troop-editor__shop-screen-head {
+  display: grid;
+  gap: 4px;
+  color: #58331a;
+}
+
+.c-troop-editor__recruit-popup .c-troop-editor__shop-screen-head {
+  position: absolute;
+  top: 9px;
+  right: var(--troop-popup-side-border);
+  left: var(--troop-popup-side-border);
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  height: 34px;
+  color: #f7dfab;
+  pointer-events: none;
+}
+
+.c-troop-editor__recruit-popup .c-troop-editor__title {
+  margin: 0;
+  color: #f7dfab;
+  font-family: var(--font-title);
+  font-size: 1rem;
+  line-height: 1;
+  letter-spacing: 0.08em;
+  text-align: center;
+  text-shadow:
+    0 1px 1px rgb(52 13 7 / 88%),
+    0 0 6px rgb(255 219 149 / 24%);
+  transform: translateY(-3px);
+}
+
+.c-troop-editor__shop-scroll {
+  position: relative;
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 6px;
+}
+
+.c-troop-editor__recruit-popup .c-troop-editor__shop-scroll {
+  scrollbar-color: #9f332a rgb(237 218 168 / 42%);
+  scrollbar-width: thin;
+  gap: 6px;
+  padding-right: 8px;
+}
+
+.c-troop-editor__recruit-popup .c-troop-editor__shop-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.c-troop-editor__recruit-popup .c-troop-editor__shop-scroll::-webkit-scrollbar-track {
+  background: rgb(237 218 168 / 34%);
+}
+
+.c-troop-editor__recruit-popup .c-troop-editor__shop-scroll::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: #9f332a;
+}
+
+.c-troop-editor__shop-offer {
+  display: grid;
+  gap: 8px;
+  min-height: 88px;
+  border: 14px solid transparent;
+  border-image-source: var(--grain-shop-panel-light);
+  border-image-slice: 18 fill;
+  border-image-width: 14px;
+  border-image-repeat: stretch;
+  padding: 12px 16px;
+  background: rgb(255 248 232 / 84%);
+  color: #462715;
+  text-align: left;
+}
+
+.c-troop-editor__recruit-popup .c-troop-editor__shop-offer {
+  min-height: 56px;
+  border-width: 6px 11px;
+  border-image-source: url("../../ui/yuansu/评定/generated/20260709-205119_item-slice-seamless.png");
+  border-image-slice: 10 18 fill;
+  border-image-width: 6px 11px;
+  border-image-repeat: stretch;
+  padding: 6px 8px;
+  background: transparent;
+}
+
+.c-troop-editor__shop-offer.is-selected {
+  box-shadow:
+    inset 0 0 0 1px rgb(132 78 41 / 24%),
+    0 8px 18px rgb(67 33 12 / 12%);
+}
+
+.c-troop-editor__shop-offer-main,
+.c-troop-editor__shop-offer-costs {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.c-troop-editor__shop-offer-name {
+  font-family: var(--font-title);
+  font-size: 1rem;
+}
+
+.c-troop-editor__shop-offer-role,
+.c-troop-editor__shop-offer-cost {
+  color: rgb(109 79 52 / 84%);
+  font-size: 0.88rem;
+}
+
+.c-troop-management__body {
+  display: grid;
+  grid-template-columns: minmax(220px, 260px) minmax(0, 1fr);
+  gap: 22px;
+  min-height: 0;
+}
+
+.c-troop-management__troops-panel,
+.c-troop-management__summary,
+.c-troop-management__preview-card,
+.c-troop-management__action-list {
+  border: 18px solid transparent;
+  border-image-slice: 18 fill;
+  border-image-width: 18px;
+  border-image-repeat: stretch;
+  box-shadow: 0 16px 36px rgb(0 0 0 / 24%);
+}
+
+.c-troop-management__troops-panel {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 14px;
+  min-height: 0;
+  border-image-source: var(--grain-shop-frame-large);
+  padding: 18px;
+  background:
+    linear-gradient(180deg, rgb(251 240 212 / 88%), rgb(224 199 156 / 88%));
+}
+
+.c-troop-management__troop-scroll {
+  display: grid;
+  gap: 12px;
+  align-content: start;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 8px;
+}
+
+.c-troop-management__workspace {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: 18px;
+  min-height: 0;
+}
+
+.c-troop-management__stage-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(360px, 430px);
+  gap: 20px;
+  min-height: 0;
+}
+
+.c-troop-management__battlefield-shell {
+  position: relative;
+  min-height: 0;
+  overflow: visible;
+}
+
+.c-troop-management__cycle-button {
+  position: absolute;
+  top: 50%;
+  z-index: 7;
+  width: 40px;
+  height: 84px;
+  border: none;
+  background: linear-gradient(180deg, rgb(212 169 86 / 98%), rgb(128 82 36 / 98%));
+  box-shadow: 0 10px 20px rgb(88 58 10 / 24%);
+  cursor: pointer;
+}
+
+.c-troop-management__cycle-button::before {
+  content: none;
+}
+
+.c-troop-management__cycle-button--left {
+  left: 30px;
+  transform: translateY(-50%);
+  clip-path: polygon(0 50%, 100% 0, 100% 100%);
+}
+
+.c-troop-management__cycle-button--right {
+  right: 30px;
+  transform: translateY(-50%);
+  clip-path: polygon(0 0, 100% 50%, 0 100%);
+}
+
+.c-troop-management__cycle-button:disabled {
+  cursor: default;
+  opacity: 0.42;
+  filter: saturate(0.6) brightness(0.96);
+}
+
+.c-troop-management__battlefield {
+  min-height: 0;
+  padding: 0;
+  overflow: visible;
+}
+
+.c-troop-management__battlefield::before {
+  content: none;
+}
+
+.c-troop-management__battlefield-stage {
+  position: relative;
+  z-index: 1;
+  height: 100%;
+  min-height: 460px;
+  overflow: hidden;
+  background:
+    linear-gradient(rgb(12 16 18 / 3%), rgb(12 16 18 / 8%)),
+    url("/ui/battle/stage.png") center 42% / cover no-repeat;
+}
+
+.c-troop-management__battle-preview-frame {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: block;
+  width: 100%;
+  height: 145%;
+  border: 0;
+  background: transparent;
+  transform: translateY(-2%);
+  transform-origin: center top;
+}
+
+.c-troop-management__battlefield-grid {
+  position: absolute;
+  left: 50%;
+  top: 54%;
+  width: min(76%, 540px);
+  aspect-ratio: 1.24 / 1;
+  transform: translate(-50%, -50%) skewX(-28deg);
+}
+
+.c-troop-management__battlefield-units {
+  position: absolute;
+  inset: 0;
+  display: none;
+}
+
+.c-troop-management__battle-slot {
+  position: absolute;
+  left: calc(var(--slot-column) * 30% + var(--slot-row) * 6%);
+  top: calc(var(--slot-row) * 22% + var(--slot-column) * 4%);
+  width: 28%;
+  aspect-ratio: 1 / 0.8;
+  transform: translate(-50%, -50%) skewX(28deg);
+}
+
+.c-troop-management__battle-slot-frame {
+  position: absolute;
+  inset: 0;
+  border: 2px solid rgb(73 99 43 / 34%);
+  background: linear-gradient(180deg, rgb(255 246 216 / 12%), rgb(255 243 207 / 2%));
+  box-shadow: inset 0 0 0 1px rgb(255 247 207 / 14%);
+}
+
+.c-troop-management__battle-slot.is-occupied .c-troop-management__battle-slot-frame {
+  background:
+    linear-gradient(180deg, rgb(255 243 198 / 30%), rgb(255 228 170 / 12%)),
+    radial-gradient(circle at 50% 25%, rgb(102 130 173 / 26%), transparent 42%);
+  border-color: rgb(71 53 25 / 54%);
+  box-shadow:
+    inset 0 0 0 1px rgb(255 241 203 / 24%),
+    0 10px 22px rgb(43 28 10 / 18%);
+}
+
+.c-troop-management__battle-slot-label {
+  display: none;
+}
+
+.c-troop-management__battle-unit {
+  display: none;
+}
+
+.c-troop-management__battle-unit-sprite {
+  display: none;
+}
+
+.c-troop-management__battle-unit-sprite::before,
+.c-troop-management__battle-unit-sprite::after {
+  display: none;
+}
+
+.c-troop-management__battle-unit-sprite::before {
+  display: none;
+}
+
+.c-troop-management__battle-unit-sprite::after {
+  display: none;
+}
+
+.c-troop-management__battle-unit.is-spearman .c-troop-management__battle-unit-sprite {
+  display: none;
+}
+
+.c-troop-management__battle-unit.is-archer .c-troop-management__battle-unit-sprite {
+  display: none;
+}
+
+.c-troop-management__battle-unit-label {
+  display: none;
+}
+
+.c-troop-management__inspector {
+  min-height: 0;
+}
+
+.c-troop-management__action-list {
+  display: grid;
+  grid-auto-rows: 1fr;
+  gap: 12px;
+  min-height: 100%;
+  border-image-source: var(--grain-shop-frame-large);
+  padding: 14px;
+  background:
+    linear-gradient(180deg, rgb(247 235 205 / 92%), rgb(220 194 153 / 90%));
+}
+
+.c-troop-management__action-button {
+  min-height: 0;
+  height: 100%;
+}
+
+.c-troop-management__sidebar-stack {
+  position: relative;
+  min-height: 100%;
+}
+
+.c-troop-management__action-list,
+.c-troop-management__reserve-panel {
+  position: absolute;
+  inset: 0;
+}
+
+.c-troop-management__reserve-panel {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 14px;
+  border: 18px solid transparent;
+  border-image-source: var(--grain-shop-frame-large);
+  border-image-slice: 18 fill;
+  border-image-width: 18px;
+  border-image-repeat: stretch;
+  box-shadow: 0 16px 36px rgb(0 0 0 / 24%);
+  padding: 16px 14px 14px;
+  background:
+    linear-gradient(180deg, rgb(247 235 205 / 92%), rgb(220 194 153 / 90%));
+}
+
+.c-troop-management__reserve-panel[hidden] {
+  display: none;
+}
+
+.c-troop-management__reserve-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.c-troop-management__reserve-title {
+  margin: 0;
+  color: #432412;
+  font-family: var(--font-title);
+  font-size: 1.85rem;
+  font-weight: 700;
+}
+
+.c-troop-management__reserve-count {
+  min-width: 86px;
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 12px solid transparent;
+  border-image-source: var(--grain-shop-panel-light);
+  border-image-slice: 18 fill;
+  border-image-width: 12px;
+  border-image-repeat: stretch;
+  color: #4a2b18;
+  font-family: var(--font-title);
+  font-size: 0.96rem;
+  background: rgb(255 247 228 / 82%);
+}
+
+.c-troop-management__reserve-scroll {
+  position: relative;
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 6px;
+}
+
+.c-troop-management__reserve-empty {
+  display: grid;
+  place-items: center;
+  min-height: 180px;
+  border: 12px solid transparent;
+  border-image-source: var(--grain-shop-panel-light);
+  border-image-slice: 18 fill;
+  border-image-width: 12px;
+  border-image-repeat: stretch;
+  padding: 20px;
+  color: rgb(95 67 43 / 88%);
+  text-align: center;
+  line-height: 1.7;
+  background: rgb(255 248 232 / 78%);
+}
+
+.c-troop-management__reserve-member {
+  display: grid;
+  gap: 4px;
+  align-content: center;
+  justify-items: start;
+  min-height: 72px;
+  border: 14px solid transparent;
+  border-image-source: var(--grain-shop-panel-light);
+  border-image-slice: 18 fill;
+  border-image-width: 14px;
+  border-image-repeat: stretch;
+  padding: 10px 14px;
+  background: rgb(255 248 232 / 82%);
+  color: #462715;
+  text-align: left;
+}
+
+.c-troop-management__reserve-member.is-selected {
+  box-shadow:
+    inset 0 0 0 1px rgb(132 78 41 / 24%),
+    0 8px 18px rgb(67 33 12 / 12%);
+}
+
+.c-troop-management__reserve-member-name {
+  font-family: var(--font-title);
+  font-size: 1rem;
+}
+
+.c-troop-management__reserve-member-role {
+  color: rgb(109 79 52 / 82%);
+  font-size: 0.86rem;
+}
+
+.c-troop-management__reserve-prompt {
+  position: absolute;
+  z-index: 3;
+  display: grid;
+  gap: 8px;
+  width: 180px;
+  padding: 10px;
+  border: 14px solid transparent;
+  border-image-source: var(--grain-shop-frame-large);
+  border-image-slice: 18 fill;
+  border-image-width: 14px;
+  border-image-repeat: stretch;
+  background:
+    linear-gradient(180deg, rgb(248 236 210 / 97%), rgb(226 199 156 / 96%));
+  box-shadow: 0 14px 28px rgb(18 9 3 / 24%);
+}
+
+.c-troop-management__reserve-prompt[hidden] {
+  display: none;
+}
+
+.c-troop-management__reserve-prompt-button {
+  min-height: 46px;
+}
+
+.c-troop-management__reserve-return {
+  min-height: 54px;
+}
+
+.c-troop-editor__recruit-popup .c-troop-management__reserve-return {
+  box-sizing: border-box;
+  justify-self: end;
+  width: 86px;
+  min-width: 86px;
+  max-width: 86px;
+  min-height: 30px;
+  border-style: solid;
+  border-color: transparent;
+  border-width: 8px 18px;
+  border-image-source: url("../../ui/yuansu/评定/generated/temple-yellow-button-seamless.png");
+  border-image-slice: 26 64 fill;
+  border-image-width: 8px 18px;
+  border-image-repeat: stretch;
+  padding: 0 6px;
+  background: transparent;
+  color: #5b351d;
+  text-shadow: 0 1px 0 rgb(255 232 172 / 42%);
+  transform: translateY(-5px);
+}
+
+.c-troop-management__confirm-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgb(12 7 4 / 52%);
+  backdrop-filter: none;
+}
+
+.c-troop-management__confirm-overlay[hidden] {
+  display: none;
+}
+
+.c-troop-management__confirm-dialog {
+  display: grid;
+  gap: 8px;
+  justify-items: center;
+}
+
+.c-troop-management__confirm-title {
+  position: absolute;
+  top: 9px;
+  left: var(--troop-popup-side-border);
+  right: var(--troop-popup-side-border);
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  height: 34px;
+  margin: 0;
+  color: #f6dfae;
+  font-family: var(--font-title);
+  font-size: 1rem;
+  line-height: 1;
+  letter-spacing: 0.08em;
+  text-align: center;
+  text-shadow:
+    0 1px 1px rgb(52 13 7 / 82%),
+    0 0 6px rgb(255 219 149 / 22%);
+  pointer-events: none;
+}
+
+.c-troop-management__confirm-text,
+.c-troop-editor__create-label {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: min(var(--troop-popup-field-width), 100%);
+  min-height: 46px;
+  margin: 0;
+  border-style: solid;
+  border-color: transparent;
+  border-width: 9px 12px;
+  border-image-source: url("../../ui/yuansu/评定/generated/20260709-205119_item-slice-seamless.png");
+  border-image-slice: 10 18 fill;
+  border-image-width: 9px 12px;
+  border-image-repeat: stretch;
+  padding: 0 5px;
+  background: transparent;
+  color: #5a371d;
+  font-family: var(--font-title);
+  font-size: 0.88rem;
+  line-height: 1.45;
+  text-align: center;
+  overflow-wrap: break-word;
+  text-wrap: pretty;
+}
+
+.c-troop-management__confirm-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  width: var(--troop-popup-actions-width);
+  max-width: 100%;
+  margin: 8px auto 0;
+}
+
+.c-troop-management__confirm-button {
+  box-sizing: border-box;
+  flex: 0 0 auto;
+  width: 108px;
+  min-width: 108px;
+  max-width: 108px;
+  height: 38px;
+  min-height: 38px;
+  border-style: solid;
+  border-color: transparent;
+  border-width: 10px 18px;
+  border-image-source: url("../../ui/yuansu/评定/generated/temple-yellow-button-seamless.png");
+  border-image-slice: 26 64 fill;
+  border-image-width: 10px 18px;
+  border-image-repeat: stretch;
+  padding: 0 8px;
+  background: transparent;
+  color: #5b351d;
+  font-family: var(--font-title);
+  font-size: 0.9rem;
+  line-height: 1;
+  text-align: center;
+  text-shadow: 0 1px 0 rgb(255 232 172 / 42%);
+  white-space: nowrap;
+}
+
+.c-troop-management__confirm-button--danger,
+.c-troop-management__confirm-button[data-troop-editor-create-choice="confirm"],
+.c-troop-management__confirm-button[data-troop-editor-confirm-choice="confirm"],
+.c-troop-management__confirm-button[data-troop-management-remove-confirm-choice="confirm"],
+.c-troop-management__confirm-button[data-troop-editor-alert-close],
+.c-troop-management__confirm-button[data-troop-management-alert-close] {
+  border-image-source: url("../../ui/yuansu/评定/generated/20260709-205123_button-clean-seamless.png");
+  border-image-slice: 10 18 fill;
+  color: #fff1df;
+  text-shadow: 0 1px 1px rgb(46 18 10 / 62%);
+}
+
+.c-troop-management__summary {
+  display: grid;
+  gap: 12px;
+  border-image-source: var(--grain-shop-frame-large);
+  padding: 16px 18px 18px;
+  background:
+    linear-gradient(180deg, rgb(249 238 212 / 92%), rgb(229 206 168 / 92%));
+}
+
+.c-troop-management__summary-nameplate {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 54px;
+  width: fit-content;
+  max-width: 100%;
+  border: 14px solid transparent;
+  border-image-source: var(--grain-shop-panel-light);
+  border-image-slice: 18 fill;
+  border-image-width: 14px;
+  border-image-repeat: stretch;
+  padding: 0 18px;
+  color: #402212;
+  font-family: var(--font-title);
+  font-size: 1.24rem;
+}
+
+.c-troop-management__summary-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.c-troop-management__summary-field {
+  display: grid;
+  gap: 6px;
+  min-height: 88px;
+  border: 12px solid transparent;
+  border-image-source: var(--grain-shop-panel-light);
+  border-image-slice: 18 fill;
+  border-image-width: 12px;
+  border-image-repeat: stretch;
+  padding: 10px 12px;
+  background: rgb(255 249 233 / 76%);
+}
+
+.c-troop-management__summary-label {
+  color: rgb(131 93 64 / 82%);
+  font-size: 0.88rem;
+  letter-spacing: 0.08em;
+}
+
+.c-troop-management__summary-value {
+  color: #442413;
+  font-family: var(--font-title);
+  font-size: 1.18rem;
+  line-height: 1.2;
+}
+
+.c-troop-editor__troop-card {
+  display: grid;
+  gap: 10px;
+  aspect-ratio: 5 / 6;
+  align-content: start;
+  border: 16px solid transparent;
+  border-image-source: var(--grain-shop-panel-medium);
+  border-image-slice: 18 fill;
+  border-image-width: 16px;
+  border-image-repeat: stretch;
+  padding: 12px;
+  background: rgb(248 233 200 / 82%);
+}
+
+.c-troop-editor__troop-card.is-selected {
+  box-shadow:
+    inset 0 0 0 1px rgb(132 78 41 / 24%),
+    0 10px 22px rgb(67 33 12 / 12%);
+}
+
+.c-troop-editor__troop-card.is-disband-selectable {
+  cursor: pointer;
+  transform: translateY(-2px);
+  box-shadow:
+    inset 0 0 0 3px rgb(191 126 54 / 68%),
+    0 0 0 4px rgb(247 222 164 / 78%),
+    0 0 22px rgb(221 171 88 / 34%),
+    0 16px 28px rgb(67 33 12 / 20%);
+}
+
+.c-troop-editor__troop-card.is-disband-target {
+  transform: translateY(-2px);
+  box-shadow:
+    inset 0 0 0 3px rgb(163 42 28 / 82%),
+    0 0 0 4px rgb(247 205 149 / 82%),
+    0 0 24px rgb(206 96 57 / 36%),
+    0 18px 32px rgb(70 19 12 / 28%);
+}
+
+.c-troop-editor__troop-card.is-sort-selectable {
+  cursor: pointer;
+  box-shadow:
+    inset 0 0 0 3px rgb(73 116 161 / 46%),
+    0 0 0 4px rgb(184 220 246 / 72%),
+    0 0 20px rgb(114 176 224 / 26%),
+    0 16px 28px rgb(26 45 66 / 16%);
+}
+
+.c-troop-editor__troop-card.is-sort-selected {
+  transform: translateY(-2px);
+  box-shadow:
+    inset 0 0 0 3px rgb(49 107 170 / 84%),
+    0 0 0 4px rgb(199 232 253 / 88%),
+    0 0 26px rgb(123 189 238 / 40%),
+    0 18px 32px rgb(26 45 66 / 22%);
+}
+
+.c-troop-editor__troop-head {
+  display: grid;
+  gap: 0;
+  justify-items: center;
+  align-content: start;
+}
+
+.c-troop-editor__troop-name {
+  margin: 0;
+  width: 100%;
+  color: #402212;
+  font-family: var(--font-title);
+  font-size: 1rem;
+  text-align: center;
+}
+
+.c-troop-preview-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 5px;
+}
+
+.c-troop-preview-grid__slot {
+  display: grid;
+  width: 100%;
+  gap: 3px;
+  aspect-ratio: 1 / 1;
+  align-content: space-between;
+  min-height: 0;
+  padding: 5px 4px;
+  border: 12px solid transparent;
+  border-image-source: var(--grain-shop-panel-light);
+  border-image-slice: 18 fill;
+  border-image-width: 12px;
+  border-image-repeat: stretch;
+  background: rgb(255 247 230 / 76%);
+  color: rgb(104 77 52 / 82%);
+}
+
+.c-troop-preview-grid__slot.is-occupied {
+  background: linear-gradient(180deg, rgb(253 246 224 / 92%), rgb(234 213 172 / 88%));
+  color: #4c2d19;
+}
+
+.c-troop-preview-grid__slot-key {
+  color: rgb(131 93 64 / 72%);
+  font-size: 0.5rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.c-troop-preview-grid__slot-role {
+  align-self: end;
+  margin-bottom: 2px;
+  color: rgb(92 63 38 / 92%);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  text-align: center;
+  white-space: nowrap;
+  transform: translate(-19px, 16px);
+}
+
+.c-troop-preview-grid__slot-label {
+  align-self: end;
+  font-size: 1.056rem;
+  line-height: 1.05;
+}
+
+.c-troop-editor__menu-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.c-troop-editor__menu-button {
+  box-sizing: border-box;
+  min-height: 54px;
+  justify-content: center;
+  border: 20px solid transparent;
+  border-image-source: url("../../ui/yuansu/选项/20260709-150818_button-inset.png");
+  border-image-slice: 21 28;
+  border-image-width: 20px 28px;
+  border-image-repeat: stretch;
+  padding: 0 20px;
+  background: #f1e4c2;
+  color: #402615;
+  font-family: var(--font-title);
+  font-size: 1rem;
+  line-height: 1;
+  text-align: center;
+}
+
+.c-troop-editor__menu-button.is-selected,
+.c-troop-editor__menu-button[aria-selected="true"] {
+  border-image-source: url("../../ui/yuansu/选项/20260709-150804_button-inset.png");
+  background: #7a3524;
+  color: #f9ebc6;
+  text-shadow: 0 1px 1px rgb(46 18 10 / 62%);
+}
+
+.c-troop-editor__menu-button:disabled {
+  color: #71553c;
+  cursor: default;
+  filter: saturate(0.72);
+}
+
+.c-troop-editor__menu-button.c-troop-management__confirm-button--danger {
+  border-image-source: url("../../ui/yuansu/选项/20260709-150804_button-inset.png");
+  background: #8f3327;
+  color: #fff1df;
+  text-shadow: 0 1px 1px rgb(46 18 10 / 62%);
+}
+
+.c-troop-assessment-popup .c-troop-editor__menu-button.c-troop-management__confirm-button {
+  box-sizing: border-box;
+  flex: 0 0 auto;
+  width: 108px;
+  min-width: 108px;
+  max-width: 108px;
+  height: 38px;
+  min-height: 38px;
+  border-width: 10px 18px;
+  border-image-source: url("../../ui/yuansu/评定/generated/temple-yellow-button-seamless.png");
+  border-image-slice: 26 64 fill;
+  border-image-width: 10px 18px;
+  padding: 0 8px;
+  background: transparent;
+  color: #5b351d;
+  font-size: 0.9rem;
+  text-shadow: 0 1px 0 rgb(255 232 172 / 42%);
+  white-space: nowrap;
+}
+
+.c-troop-assessment-popup
+  .c-troop-editor__menu-button.c-troop-management__confirm-button--danger,
+.c-troop-assessment-popup
+  .c-troop-editor__menu-button.c-troop-management__confirm-button[data-troop-editor-create-choice="confirm"],
+.c-troop-assessment-popup
+  .c-troop-editor__menu-button.c-troop-management__confirm-button[data-troop-editor-confirm-choice="confirm"],
+.c-troop-assessment-popup
+  .c-troop-editor__menu-button.c-troop-management__confirm-button[data-troop-management-remove-confirm-choice="confirm"],
+.c-troop-assessment-popup
+  .c-troop-editor__menu-button.c-troop-management__confirm-button[data-troop-editor-alert-close],
+.c-troop-assessment-popup
+  .c-troop-editor__menu-button.c-troop-management__confirm-button[data-troop-management-alert-close] {
+  border-image-source: url("../../ui/yuansu/评定/generated/20260709-205123_button-clean-seamless.png");
+  border-image-slice: 10 18 fill;
+  color: #fff1df;
+  text-shadow: 0 1px 1px rgb(46 18 10 / 62%);
+}
+
+.c-troop-editor__create-dialog {
+  gap: 14px;
+}
+
+.c-troop-editor__toast {
+  position: absolute;
+  top: 28px;
+  left: 50%;
+  z-index: 6;
+  min-width: 320px;
+  max-width: min(70vw, 520px);
+  transform: translateX(-50%);
+  border: 16px solid transparent;
+  border-image-source: var(--grain-shop-panel-medium);
+  border-image-slice: 18 fill;
+  border-image-width: 16px;
+  border-image-repeat: stretch;
+  padding: 12px 22px;
+  background: rgb(248 233 200 / 94%);
+  color: #432515;
+  font-family: var(--font-title);
+  font-size: 1rem;
+  text-align: center;
+  box-shadow: 0 18px 34px rgb(58 29 13 / 22%);
+}
+
+.c-troop-editor__reserve-overlay-shell {
+  width: min(540px, calc(100% - 48px));
+  max-height: min(720px, calc(100% - 56px));
+  display: grid;
+}
+
+.c-troop-editor__reserve-panel {
+  position: relative;
+  inset: auto;
+  min-height: 0;
+  height: 100%;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 14px;
+}
+
+.c-troop-editor__create-label {
+  color: rgb(86 55 32 / 88%);
+  font-size: 0.95rem;
+  letter-spacing: 0.06em;
+}
+
+.c-troop-editor__create-input {
+  width: min(100%, 320px);
+  min-height: 52px;
+  border: 2px solid rgb(157 114 70 / 42%);
+  border-radius: 12px;
+  padding: 0 16px;
+  background: rgb(255 250 236 / 94%);
+  color: #3f2415;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  outline: none;
+}
+
+.c-troop-editor__create-input:focus {
+  border-color: rgb(177 120 51 / 72%);
+  box-shadow: 0 0 0 3px rgb(235 211 152 / 38%);
+}
+
+.c-troop-editor__create-error {
+  min-height: 1.2em;
+  margin: 0;
+  color: #b33b2f;
+  font-size: 0.88rem;
+  line-height: 1.35;
+}
+
+.c-troop-preview-grid--battle {
+  gap: 6px;
+}
+
+.c-troop-preview-grid--battle .c-troop-preview-grid__slot {
+  min-height: 78px;
+}
+
+.c-troop-preview-grid--compact .c-troop-preview-grid__slot-label {
+  align-self: center;
+  font-size: 0.46rem;
+  line-height: 1;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.c-troop-preview-grid--compact .c-troop-preview-grid__slot-role {
+  margin-bottom: 1px;
+  font-size: 0.46rem;
+}
+
+.c-troop-preview-grid--compact .c-troop-preview-grid__slot {
+  gap: 0;
+  padding: 3px;
+}
+
+.c-troop-preview-grid--compact .c-troop-preview-grid__slot-key {
+  display: none;
+}
+
+.view-troop-management .c-troop-editor__resource-bar {
+  position: relative;
+  z-index: 2;
+  display: inline-flex;
+  grid-template-columns: none;
+  gap: 0;
+  align-items: center;
+  justify-content: flex-start;
+  box-sizing: border-box;
+  justify-self: stretch;
+  width: calc(100% + 20px);
+  margin-inline: -10px;
+  height: clamp(48px, 4.2vw, 76px);
+  aspect-ratio: auto;
+  min-height: 0;
+  border: solid transparent;
+  border-width: 14px 260px 14px 32px;
+  border-image-source: var(--troop-detail-resource-bar);
+  border-image-slice: 18 260 18 32 fill;
+  border-image-width: 14px 260px 14px 32px;
+  border-image-repeat: stretch;
+  padding: 0 56px;
+  background: transparent;
+  box-shadow: none;
+}
+
+.view-troop-management .c-troop-editor__resource-slot {
+  position: relative;
+  display: inline-grid;
+  grid-template-columns: auto auto auto;
+  gap: 6px;
+  align-items: center;
+  justify-content: center;
+  min-height: 30px;
+  min-width: 108px;
+  border: 0;
+  padding: 0 18px;
+  background: transparent;
+  color: #e9d6a7;
+  box-shadow: none;
+}
+
+.view-troop-management .c-troop-editor__resource-slot:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: -5px;
+  width: 10px;
+  height: 32px;
+  background: var(--troop-detail-resource-divider) center / contain no-repeat;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.view-troop-management .c-troop-editor__resource-icon {
+  width: 22px;
+  height: 22px;
+  background: transparent center / contain no-repeat;
+}
+
+.view-troop-management .c-troop-editor__resource-slot--gold .c-troop-editor__resource-icon {
+  width: 27px;
+  background-image: var(--troop-detail-gold-icon);
+}
+
+.view-troop-management .c-troop-editor__resource-slot--fame .c-troop-editor__resource-icon {
+  background-image: var(--troop-detail-prestige-icon);
+}
+
+.view-troop-management .c-troop-editor__resource-slot--scale .c-troop-editor__resource-icon {
+  display: none;
+}
+
+.view-troop-management .c-troop-editor__resource-label {
+  color: rgb(235 218 174 / 90%);
+  font-family: var(--font-title);
+  font-size: 0.82rem;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+
+.view-troop-management .c-troop-editor__resource-value {
+  color: #f9eac6;
+  font-size: 0.95rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.view-troop-management .c-troop-management__body {
+  display: block;
+  min-height: 0;
+}
+
+.view-troop-management .c-troop-management__left-column {
+  position: absolute;
+  left: calc(12 / 2048 * 100%);
+  top: var(--troop-management-stage-top);
+  bottom: 14px;
+  width: calc(371 / 2048 * 100%);
+  min-width: 248px;
+  max-width: 371px;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 10px;
+  align-content: start;
+  min-height: 0;
+}
+
+.view-troop-management .c-troop-management__troops-panel {
+  position: relative;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 12px;
+  box-sizing: border-box;
+  width: 100%;
+  height: clamp(390px, 47vh, 462px);
+  min-height: auto;
+  border: 0;
+  padding: 34px 18px 24px;
+  background: transparent;
+  box-shadow: none;
+}
+
+.view-troop-management .c-troop-management__troops-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border: solid transparent;
+  border-width: 44px 32px 46px;
+  border-image-source: var(--troop-detail-panel);
+  border-image-slice: 54 42 54 42 fill;
+  border-image-width: 44px 32px 46px;
+  border-image-repeat: stretch;
+  pointer-events: none;
+}
+
+.view-troop-management .c-troop-management__troops-panel > * {
+  position: relative;
+  z-index: 1;
+}
+
+.view-troop-management .c-troop-editor__panel-heading {
+  display: grid;
+  gap: 8px;
+  justify-items: center;
+  color: #d6be86;
+  text-align: center;
+}
+
+.view-troop-management .c-troop-editor__title {
+  margin: 0;
+  color: #ead8ae;
+  font-size: 1.18rem;
+  letter-spacing: 0.12em;
+  text-shadow: 0 1px 2px rgb(0 0 0 / 70%);
+}
+
+.view-troop-management .c-troop-management__heading-rule {
+  display: block;
+  width: 148px;
+  height: 8px;
+  background: var(--troop-detail-heading-divider) center / contain no-repeat;
+}
+
+.view-troop-management .c-troop-management__current-troop-name {
+  display: block;
+  max-width: 180px;
+  overflow: hidden;
+  color: #f0dfba;
+  font-family: var(--font-title);
+  font-size: 0.9rem;
+  font-weight: 700;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  text-shadow: 0 1px 2px rgb(0 0 0 / 68%);
+  white-space: nowrap;
+}
+
+.view-troop-management .c-troop-management__troop-scroll {
+  display: grid;
+  place-items: center;
+  min-height: 0;
+  overflow: visible;
+  padding: 0;
+}
+
+.view-troop-management .c-troop-editor__troop-card {
+  display: grid;
+  place-items: center;
+  width: min(100%, 196px);
+  aspect-ratio: auto;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.view-troop-management .c-troop-editor__troop-card.is-selected {
+  box-shadow: none;
+}
+
+.view-troop-editor .c-troop-preview-grid {
+  gap: 6px;
+}
+
+.view-troop-editor .c-troop-preview-grid__slot {
+  aspect-ratio: 432 / 482;
+  border: 0;
+  padding: 8px 6px;
+  background: var(--troop-detail-slot) center / contain no-repeat;
+  color: rgb(76 52 32 / 86%);
+}
+
+.view-troop-editor .c-troop-preview-grid__slot.is-occupied {
+  background: var(--troop-detail-slot) center / contain no-repeat;
+  color: #3f2916;
+  filter: brightness(1.03);
+}
+
+.view-troop-editor .c-troop-preview-grid__slot-key {
+  color: rgb(123 84 56 / 62%);
+}
+
+.view-troop-editor .c-troop-preview-grid__slot-role {
+  color: rgb(70 45 27 / 88%);
+}
+
+.view-troop-editor .c-troop-preview-grid__slot-label {
+  color: #4a2d18;
+}
+
+.view-troop-management .c-troop-preview-grid--management-panel {
+  width: min(100%, 224px);
+  gap: 5px;
+}
+
+.view-troop-management .c-troop-preview-grid--management-panel .c-troop-preview-grid__slot {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 432 / 482;
+  border: 0;
+  padding: 6px 4px;
+  background: var(--troop-detail-slot) center / contain no-repeat;
+  color: rgb(67 49 30 / 88%);
+}
+
+.view-troop-management .c-troop-preview-grid--management-panel .c-troop-preview-grid__slot.is-occupied {
+  background: var(--troop-detail-slot) center / contain no-repeat;
+  color: #382617;
+  filter: brightness(1.03);
+}
+
+.view-troop-management .c-troop-preview-grid--management-panel .c-troop-preview-grid__slot-role {
+  align-self: center;
+  margin: 0;
+  color: #47321e;
+  font-size: 0.58rem;
+  line-height: 1;
+  text-align: center;
+  transform: none;
+}
+
+.view-troop-management .c-troop-preview-grid--management-panel .c-troop-preview-grid__slot-label {
+  align-self: center;
+  color: #3f2916;
+  font-size: 0.56rem;
+  line-height: 1;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.view-troop-management .c-troop-management__workspace {
+  position: absolute;
+  inset:
+    var(--troop-management-stage-top)
+    calc(10 / 2048 * 100%)
+    calc(22 / 1152 * 100%)
+    calc(390 / 2048 * 100%);
+  display: grid;
+  place-items: start center;
+  min-height: 0;
+}
+
+.view-troop-management .c-troop-management__battlefield-shell {
+  position: relative;
+  width: min(100%, calc((100vh - 118px) * 16 / 9));
+  aspect-ratio: 16 / 9;
+  min-height: 0;
+  max-height: 100%;
+  overflow: visible;
+}
+
+.view-troop-management .c-troop-management__battlefield {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+
+.view-troop-management .c-troop-management__battlefield-stage {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  background:
+    linear-gradient(rgb(4 6 5 / 8%), rgb(4 6 5 / 14%)),
+    var(--troop-detail-bg) center / cover no-repeat;
+  box-shadow:
+    inset 0 0 0 1px rgb(236 214 165 / 18%),
+    0 18px 36px rgb(0 0 0 / 34%);
+}
+
+.view-troop-management .c-troop-management__battle-preview-frame {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: block;
+  width: 100%;
+  height: 145%;
+  border: 0;
+  background: transparent;
+  transform: translateY(-2%);
+  transform-origin: center top;
+}
+
+.view-troop-management .c-troop-management__cycle-button {
+  width: 46px;
+  height: 112px;
+  border: 0;
+  background: rgb(177 127 55 / 88%);
+  box-shadow: 0 10px 18px rgb(0 0 0 / 22%);
+}
+
+.view-troop-management .c-troop-management__cycle-button--left {
+  left: 24px;
+}
+
+.view-troop-management .c-troop-management__cycle-button--right {
+  right: 24px;
+}
+
+.view-troop-management .c-troop-management__action-area {
+  position: relative;
+  width: 100%;
+  min-height: 286px;
+  grid-row: 3;
+  place-self: end start;
+  margin-bottom: calc(62 / 1152 * 100vh);
+}
+
+.view-troop-management .c-troop-management__action-list,
+.view-troop-management .c-troop-management__reserve-panel {
+  position: absolute;
+  inset: 0;
+}
+
+.view-troop-management .c-troop-management__action-list {
+  display: grid;
+  grid-template-rows: auto auto;
+  gap: 12px;
+  min-height: 0;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.view-troop-management .c-troop-management__action-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 100%);
+  gap: 8px;
+  justify-content: start;
+}
+
+.view-troop-management .c-troop-management__return-row {
+  display: grid;
+  justify-items: start;
+}
+
+.view-troop-management .c-troop-editor__menu-button.c-troop-management__action-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 100%;
+  height: 38px;
+  min-height: 0;
+  border-width: 9px 14px;
+  border-style: solid;
+  border-color: transparent;
+  border-image-source: var(--troop-detail-button);
+  border-image-slice: 30 44 fill;
+  border-image-width: 9px 14px;
+  border-image-repeat: stretch;
+  padding: 0 8px;
+  background: transparent;
+  color: #432918;
+  font-size: 0.84rem;
+  line-height: 1;
+  text-align: center;
+  text-shadow: none;
+  white-space: nowrap;
+}
+
+.view-troop-management .c-troop-editor__menu-button.c-troop-management__action-button:hover,
+.view-troop-management .c-troop-editor__menu-button.c-troop-management__action-button:focus-visible,
+.view-troop-management .c-troop-editor__menu-button.c-troop-management__action-button:active,
+.view-troop-management .c-troop-editor__menu-button.c-troop-management__action-button[aria-pressed="true"] {
+  border-image-source: var(--troop-detail-button-active);
+  border-image-slice: 82 128 fill;
+  color: #f9edcf;
+}
+
+.view-troop-management .c-troop-editor__menu-button.c-troop-management__action-button--return {
+  width: 100%;
+  height: 44px;
+  min-height: 0;
+  border: solid transparent;
+  border-width: 11px 13px;
+  border-image-source: var(--troop-detail-return-button);
+  border-image-slice: 96 120 fill;
+  border-image-width: 11px 13px;
+  border-image-repeat: stretch;
+  padding: 0 12px;
+  background: transparent;
+  color: #f1ddb0;
+}
+
+.view-troop-management .c-troop-editor__menu-button.c-troop-management__action-button--return:hover,
+.view-troop-management .c-troop-editor__menu-button.c-troop-management__action-button--return:focus-visible,
+.view-troop-management .c-troop-editor__menu-button.c-troop-management__action-button--return:active {
+  border-image-source: var(--troop-detail-return-button);
+  background: transparent;
+  color: #fff2c8;
+  filter: var(--troop-detail-button-selected-filter);
+}
+
+.view-troop-management .c-troop-management__reserve-panel {
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 8px;
+  border: 0;
+  padding: 8px 10px;
+  background: rgb(18 25 23 / 92%);
+  box-shadow: 0 12px 24px rgb(0 0 0 / 24%);
+}
+
+.view-troop-management .c-troop-management__reserve-title,
+.view-troop-management .c-troop-management__reserve-count {
+  color: #f0dfba;
+}
+
+.view-troop-management .c-troop-management__reserve-scroll {
+  gap: 6px;
+}
+
+.view-troop-management .c-troop-management__reserve-member {
+  min-height: 42px;
+  border: 0;
+  padding: 6px 8px;
+  background: rgb(241 225 190 / 90%);
+  color: #432918;
+}
+
+.view-troop-management .c-troop-management__reserve-empty {
+  min-height: 72px;
+  border: 0;
+  padding: 12px;
+  background: rgb(241 225 190 / 90%);
+}
+
+.c-troop-assessment-popup .c-troop-management__reserve-head {
+  position: static;
+  display: block;
+  min-height: 0;
+}
+
+.c-troop-assessment-popup .c-troop-management__reserve-title {
+  position: absolute;
+  top: 9px;
+  left: var(--troop-popup-side-border);
+  right: var(--troop-popup-side-border);
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  height: 34px;
+  margin: 0;
+  color: #f6dfae;
+  font-family: var(--font-title);
+  font-size: 1rem;
+  line-height: 1;
+  letter-spacing: 0.08em;
+  text-align: center;
+  text-shadow:
+    0 1px 1px rgb(52 13 7 / 82%),
+    0 0 6px rgb(255 219 149 / 22%);
+  pointer-events: none;
+}
+
+.c-troop-assessment-popup .c-troop-management__reserve-count {
+  position: absolute;
+  top: 44px;
+  right: var(--troop-popup-content-side);
+  z-index: 2;
+  min-width: 0;
+  min-height: 0;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: rgb(96 61 34 / 76%);
+  font-size: 0.78rem;
+}
+
+.c-troop-management__reserve-panel.c-troop-assessment-popup {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 8px;
+  width: min(var(--troop-popup-width), calc(100vw - 96px));
+  height: min(380px, calc(100vh - 96px));
+  max-height: calc(100vh - 96px);
+  padding: 68px var(--troop-popup-content-side) 28px;
+  background: transparent;
+  box-shadow: none;
+}
+
+.c-troop-management__reserve-panel.c-troop-assessment-popup:has(
+    .c-troop-management__reserve-empty
+  ) {
+  height: auto;
+  min-height: 304px;
+}
+
+.c-troop-assessment-popup .c-troop-management__reserve-scroll {
+  gap: 6px;
+  width: min(var(--troop-popup-field-width), 100%);
+  margin-inline: auto;
+  padding-right: 8px;
+  scrollbar-color: #9f332a rgb(237 218 168 / 42%);
+  scrollbar-width: thin;
+}
+
+.c-troop-assessment-popup .c-troop-management__reserve-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.c-troop-assessment-popup .c-troop-management__reserve-scroll::-webkit-scrollbar-track {
+  background: rgb(237 218 168 / 34%);
+}
+
+.c-troop-assessment-popup .c-troop-management__reserve-scroll::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: #9f332a;
+}
+
+.c-troop-assessment-popup .c-troop-management__reserve-member,
+.c-troop-assessment-popup .c-troop-management__reserve-empty,
+.c-troop-assessment-popup .c-troop-editor__create-input {
+  box-sizing: border-box;
+  width: min(var(--troop-popup-field-width), 100%);
+  min-height: 46px;
+  border-style: solid;
+  border-color: transparent;
+  border-width: 9px 12px;
+  border-image-source: url("../../ui/yuansu/评定/generated/20260709-205119_item-slice-seamless.png");
+  border-image-slice: 10 18 fill;
+  border-image-width: 9px 12px;
+  border-image-repeat: stretch;
+  padding: 4px 5px;
+  background: transparent;
+  color: #5a371d;
+}
+
+.c-troop-assessment-popup .c-troop-management__reserve-member {
+  min-height: 50px;
+  gap: 2px;
+  margin-inline: auto;
+  text-align: left;
+}
+
+.c-troop-assessment-popup .c-troop-management__reserve-empty {
+  display: grid;
+  place-items: center;
+  min-height: 72px;
+  margin-inline: auto;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.c-troop-assessment-popup .c-troop-editor__create-input {
+  display: block;
+  height: 46px;
+  min-height: 46px;
+  margin-inline: auto;
+  font-family: var(--font-title);
+  font-size: 0.9rem;
+  line-height: 1;
+  outline: none;
+}
+
+.c-troop-assessment-popup .c-troop-management__reserve-prompt {
+  border: 0;
+  padding: 6px;
+  background: transparent;
+  box-shadow: none;
+}
+
+.c-troop-assessment-popup .c-troop-management__reserve-prompt-button,
+.c-troop-assessment-popup .c-troop-management__reserve-return {
+  box-sizing: border-box;
+  width: 108px;
+  min-width: 108px;
+  max-width: 108px;
+  height: 38px;
+  min-height: 38px;
+  border-style: solid;
+  border-color: transparent;
+  border-width: 10px 18px;
+  border-image-source: url("../../ui/yuansu/评定/generated/temple-yellow-button-seamless.png");
+  border-image-slice: 26 64 fill;
+  border-image-width: 10px 18px;
+  border-image-repeat: stretch;
+  padding: 0 8px;
+  background: transparent;
+  color: #5b351d;
+  font-family: var(--font-title);
+  font-size: 0.9rem;
+  line-height: 1;
+  text-align: center;
+  text-shadow: 0 1px 0 rgb(255 232 172 / 42%);
+  white-space: nowrap;
+}
+
+.c-troop-assessment-popup .c-troop-management__reserve-prompt-button[data-troop-editor-dismiss-prompt-action="dismiss"],
+.c-troop-assessment-popup .c-troop-management__reserve-prompt-button[data-troop-management-reserve-prompt-action="assign"],
+.c-troop-assessment-popup .c-troop-management__reserve-prompt-button[data-troop-editor-shop-prompt-action="buy"] {
+  border-image-source: url("../../ui/yuansu/评定/generated/20260709-205123_button-clean-seamless.png");
+  border-image-slice: 10 18 fill;
+  color: #fff1df;
+  text-shadow: 0 1px 1px rgb(46 18 10 / 62%);
+}
+
+.view-troop-management .c-troop-management__reserve-panel.c-troop-assessment-popup {
+  position: fixed;
+  inset: auto;
+  top: 50%;
+  left: 50%;
+  z-index: 22;
+  padding: 68px var(--troop-popup-content-side) 28px;
+  background: transparent;
+  box-shadow: none;
+  transform: translate(-50%, -50%);
+}
+
+.view-troop-management .c-troop-management__reserve-panel[hidden],
+.c-troop-management__reserve-panel.c-troop-assessment-popup[hidden] {
+  display: none;
+}
+
+.view-troop-editor .c-troop-editor__resource-bar {
+  position: relative;
+  z-index: 2;
+  display: inline-flex;
+  grid-template-columns: none;
+  gap: 0;
+  align-items: center;
+  justify-content: flex-start;
+  box-sizing: border-box;
+  justify-self: stretch;
+  width: calc(100% + 20px);
+  height: clamp(48px, 4.2vw, 76px);
+  min-height: 0;
+  margin-inline: -10px;
+  border: solid transparent;
+  border-width: 14px 260px 14px 32px;
+  border-image-source: var(--troop-detail-resource-bar);
+  border-image-slice: 18 260 18 32 fill;
+  border-image-width: 14px 260px 14px 32px;
+  border-image-repeat: stretch;
+  padding: 0 56px;
+  background: transparent;
+  box-shadow: none;
+}
+
+.view-troop-editor .c-troop-editor__resource-slot {
+  position: relative;
+  display: inline-grid;
+  grid-template-columns: auto auto;
+  gap: 6px;
+  align-items: center;
+  justify-content: center;
+  min-width: 108px;
+  min-height: 30px;
+  border: 0;
+  padding: 0 18px;
+  background: transparent;
+  color: #e9d6a7;
+  box-shadow: none;
+}
+
+.view-troop-editor .c-troop-editor__resource-slot:not(:last-child)::after {
+  position: absolute;
+  top: 50%;
+  right: -5px;
+  width: 10px;
+  height: 32px;
+  background: var(--troop-detail-resource-divider) center / contain no-repeat;
+  content: "";
+  pointer-events: none;
+  transform: translateY(-50%);
+}
+
+.view-troop-editor .c-troop-editor__resource-label {
+  color: rgb(235 218 174 / 90%);
+  font-family: var(--font-title);
+  font-size: 0.82rem;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+
+.view-troop-editor .c-troop-editor__resource-value {
+  color: #f9eac6;
+  font-size: 0.95rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.view-troop-editor .c-troop-editor__body {
+  grid-template-columns: minmax(0, 1fr) minmax(248px, 288px);
+  gap: 20px;
+}
+
+.view-troop-editor .c-troop-editor__troops-panel {
+  border: 0;
+  padding: 30px 32px 28px;
+  background: transparent;
+  box-shadow: none;
+}
+
+.view-troop-editor .c-troop-editor__troop-scroll {
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: start;
+  padding-right: 0;
+}
+
+.view-troop-editor .c-troop-editor__panel-heading {
+  color: #d6be86;
+}
+
+.view-troop-editor .c-troop-editor__eyebrow {
+  color: rgb(224 203 158 / 72%);
+}
+
+.view-troop-editor .c-troop-editor__title {
+  color: #ead8ae;
+  text-shadow: 0 1px 2px rgb(0 0 0 / 70%);
+}
+
+.view-troop-editor .c-troop-editor__troop-card {
+  position: relative;
+  box-sizing: border-box;
+  width: min(100%, 360px);
+  border: 0;
+  padding: 38px 26px 34px;
+  background: transparent;
+  box-shadow: none;
+  overflow: visible;
+}
+
+.view-troop-editor .c-troop-editor__troop-card::before {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-style: solid;
+  border-color: transparent;
+  border-width: 68px 58px 48px;
+  border-image-source: var(--troop-detail-panel);
+  border-image-slice: 76 70 56 70 fill;
+  border-image-width: 68px 58px 48px;
+  border-image-repeat: stretch;
+  content: "";
+  pointer-events: none;
+}
+
+.view-troop-editor .c-troop-editor__troop-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+.view-troop-editor .c-troop-editor__troop-card.is-selected {
+  filter: brightness(1.08);
+  box-shadow:
+    inset 0 0 0 1px rgb(244 220 155 / 22%),
+    0 0 18px rgb(239 207 124 / 18%);
+}
+
+.view-troop-editor .c-troop-editor__troop-name {
+  color: #f0dfba;
+  text-shadow: 0 1px 2px rgb(0 0 0 / 68%);
+}
+
+.view-troop-editor .c-troop-editor__menu {
+  align-content: start;
+  grid-template-rows: minmax(0, auto);
+  border: 0;
+  padding: 74px 18px 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.view-troop-editor .c-troop-editor__menu > .c-troop-editor__panel-heading {
+  display: none;
+}
+
+.view-troop-editor .c-troop-editor__menu > .c-troop-editor__menu-list {
+  gap: 10px;
+}
+
+.view-troop-editor
+  .c-troop-editor__menu
+  > .c-troop-editor__menu-list
+  > .c-troop-editor__menu-button {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 42px;
+  border-width: 9px 14px;
+  border-style: solid;
+  border-color: transparent;
+  border-image-source: var(--troop-detail-button);
+  border-image-slice: 30 44 fill;
+  border-image-width: 9px 14px;
+  border-image-repeat: stretch;
+  padding: 0 8px;
+  background: transparent;
+  color: #432918;
+  font-size: 0.9rem;
+  text-shadow: none;
+  white-space: nowrap;
+}
+
+.view-troop-editor
+  .c-troop-editor__menu
+  > .c-troop-editor__menu-list
+  > .c-troop-editor__menu-button:hover,
+.view-troop-editor
+  .c-troop-editor__menu
+  > .c-troop-editor__menu-list
+  > .c-troop-editor__menu-button:focus-visible,
+.view-troop-editor
+  .c-troop-editor__menu
+  > .c-troop-editor__menu-list
+  > .c-troop-editor__menu-button:active,
+.view-troop-editor
+  .c-troop-editor__menu
+  > .c-troop-editor__menu-list
+  > .c-troop-editor__menu-button.is-selected,
+.view-troop-editor
+  .c-troop-editor__menu
+  > .c-troop-editor__menu-list
+  > .c-troop-editor__menu-button[aria-selected="true"] {
+  border-image-source: var(--troop-detail-button-active);
+  border-image-slice: 82 128 fill;
+  background: transparent;
+  color: #f9edcf;
+  text-shadow: 0 1px 1px rgb(46 18 10 / 62%);
+}
+
+@media (width <= 900px) {
+  .view-troop-editor {
+    gap: 16px;
+    padding: 18px;
+  }
+
+  .view-troop-management {
+    gap: 16px;
+    padding: 18px;
+  }
+
+  .c-troop-editor__body {
+    grid-template-columns: 1fr;
+  }
+
+  .c-troop-management__body,
+  .c-troop-management__stage-row,
+  .c-troop-management__summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .c-troop-editor__resource-bar {
+    grid-template-columns: 1fr;
+  }
+
+  .c-troop-editor__troop-scroll {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .c-troop-management__battlefield {
+    min-height: 420px;
+    padding-inline: 34px;
+  }
+}
+>>>>>>> Stashed changes
