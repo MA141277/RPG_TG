@@ -54,7 +54,63 @@ test(
       0
     );
 
-    assert.deepEqual(city.mountedBuildings[0].npcIds, [""]);
+  assert.deepEqual(city.mountedBuildings[0].npcIds, [""]);
+  }
+);
+
+test(
+  "script editor city rename keeps map label in sync while the label still follows the default city name",
+  () => {
+    const {
+      updateScriptEditorCityField,
+    } = require("../.test-dist/application/script-editor/city-building-authoring.js");
+
+    const city = updateScriptEditorCityField(
+      {
+        id: "city.start",
+        name: "Start City",
+        mapPlacement: {
+          x: 3,
+          y: 5,
+          label: "Start City",
+          summary: "",
+          kind: "city",
+        },
+      },
+      "name",
+      "Renamed City"
+    );
+
+    assert.equal(city.name, "Renamed City");
+    assert.equal(city.mapPlacement.label, "Renamed City");
+  }
+);
+
+test(
+  "script editor city rename preserves an explicitly customized map label",
+  () => {
+    const {
+      updateScriptEditorCityField,
+    } = require("../.test-dist/application/script-editor/city-building-authoring.js");
+
+    const city = updateScriptEditorCityField(
+      {
+        id: "city.start",
+        name: "Start City",
+        mapPlacement: {
+          x: 3,
+          y: 5,
+          label: "Capital District",
+          summary: "",
+          kind: "city",
+        },
+      },
+      "name",
+      "Renamed City"
+    );
+
+    assert.equal(city.name, "Renamed City");
+    assert.equal(city.mapPlacement.label, "Capital District");
   }
 );
 

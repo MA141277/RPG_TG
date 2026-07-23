@@ -305,6 +305,11 @@ export function updateScriptEditorCityField(
   if (field === "description") {
     return normalizeScriptEditorCityRecord({ ...city, description: value });
   }
+  if (field === "name") {
+    return normalizeScriptEditorCityRecord(
+      syncDerivedCityNameFields(city, value.trim())
+    );
+  }
   return normalizeScriptEditorCityRecord({ ...city, [field]: value.trim() });
 }
 
@@ -1209,6 +1214,35 @@ function normalizeCityMountedBuildings(value: unknown): ScriptEditorCityMountedB
         primaryNpcId != null && npcIds.includes(primaryNpcId) ? primaryNpcId : null,
     };
   });
+}
+
+function syncDerivedCityNameFields(
+  city: ScriptEditorCityRecord,
+  nextName: string
+): ScriptEditorCityRecord {
+  const previousName = normalizeString(city.name, city.id);
+  const currentMapPlacement =
+    city.mapPlacement != null && typeof city.mapPlacement === "object"
+      ? city.mapPlacement
+      : null;
+  const currentLabel = normalizeOptionalString(currentMapPlacement?.label).trim();
+  const shouldSyncMapLabel =
+    currentMapPlacement != null &&
+    currentLabel.length > 0 &&
+    currentLabel === previousName;
+
+  return {
+    ...city,
+    name: nextName,
+    ...(shouldSyncMapLabel
+      ? {
+          mapPlacement: {
+            ...currentMapPlacement,
+            label: nextName,
+          },
+        }
+      : {}),
+  };
 }
 
 function normalizeCityMapPlacement(
