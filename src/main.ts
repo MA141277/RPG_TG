@@ -1019,6 +1019,7 @@ function enterBuilding(houseId: string): void {
             request,
             houseDefinition,
             cityDefinitionsById: activeContentContext.cityDefinitionById,
+            buildingArrangements: activeContentContext.buildingArrangements,
             characterDefinitions: appState.characterDefinitions,
             locationAccessDefinitions: activeContentContext.locationAccess,
           }),

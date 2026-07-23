@@ -3433,3 +3433,12 @@
 ### Impact
 - 创作者现在可以在城市实例的“进入条件”页签下分别维护进入条件与离开条件，且离城运行时会真正读取城市 `access.leaveConditionExpression`，不再与进城条件混用同一条 runtime truth。
 - 城市页签的 `挂载` / `建筑编排` 现在可正常切换，城市基础页不再暴露面向创作者无意义的系统字段；同时新增回归测试防止后续把页签白名单或 leave-purpose 规则退回到旧行为。
+## 2026-07-23 Building Entry Fails Closed Without Arrangement
+
+### Changed
+- 更新 [src/core/runtime/navigation-runtime.ts](/D:/workspace/project/RPG_TG/src/core/runtime/navigation-runtime.ts) 与 [src/main.ts](/D:/workspace/project/RPG_TG/src/main.ts)，让 `navigation.enter-house` 在进入建筑前显式校验当前城市下是否存在对应 `buildingArrangement`，并将激活内容里的 `buildingArrangements` 传入共享 navigation runtime，而不是切到 `house` 视图后渲染空 stage。
+- 更新 [tests/robustness.test.cjs](/D:/workspace/project/RPG_TG/tests/robustness.test.cjs)，补齐“无建筑编排时拒绝进入建筑”“有显式编排时正常进入建筑”以及 `enterBuilding()` 向共享 runtime 传递 `buildingArrangements` 的回归覆盖。
+
+### Impact
+- 现在城市里只挂载建筑、但还没有配置“建筑编排”时，点击地点不会再黑屏；运行时会明确拒绝进入该建筑，并提示该建筑尚未配置建筑编排。
+- 建筑进入链路继续保持在共享 navigation runtime 上收口，没有把“缺少建筑编排”的房屋入口边界重新散落回 `main.ts` 的临时分支。

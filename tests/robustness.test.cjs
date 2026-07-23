@@ -26024,6 +26024,103 @@ test("routed navigation runtime preserves blocked location access refusal", () =
   });
 });
 
+test("building entry runtime blocks mounted building access when the current city has no explicit building arrangement", () => {
+  const {
+    createEnterHouseRequest,
+    runNavigationRuntime,
+  } = require("../.test-dist/core/runtime/navigation-runtime.js");
+  const baseState = createBaseState();
+
+  const result = runNavigationRuntime({
+    state: {
+      ...baseState,
+      player: { characterId: "char.player" },
+      world: {
+        ...baseState.world,
+        currentCityId: "city.start",
+        currentHouseId: null,
+      },
+    },
+    request: createEnterHouseRequest("house.city.start.temple"),
+    houseDefinition: {
+      id: "house.city.start.temple",
+      cityId: "city.start",
+      name: "Temple",
+      type: "temple",
+      characterIds: [],
+      defaultCharacterId: null,
+      activityLocationId: "temple",
+    },
+    buildingArrangements: [],
+  });
+
+  assert.equal(result.state.world.currentHouseId, null);
+  assert.equal(result.navigation, null);
+  assert.equal(result.followUp, undefined);
+  assert.deepEqual(result.access, {
+    canEnter: false,
+    refusal: {
+      ruleId: "building-arrangement.required.house.city.start.temple",
+      speakerCharacterId: "char.player",
+      title: "Temple",
+      text: "Temple 尚未配置建筑编排，暂时无法进入。",
+      confirmLabel: "知道了",
+    },
+  });
+});
+
+test("building entry runtime enters mounted building when the current city has an explicit building arrangement", () => {
+  const {
+    createEnterHouseRequest,
+    runNavigationRuntime,
+  } = require("../.test-dist/core/runtime/navigation-runtime.js");
+  const baseState = createBaseState();
+
+  const result = runNavigationRuntime({
+    state: {
+      ...baseState,
+      player: { characterId: "char.player" },
+      world: {
+        ...baseState.world,
+        currentCityId: "city.start",
+        currentHouseId: null,
+      },
+    },
+    request: createEnterHouseRequest("house.city.start.temple"),
+    houseDefinition: {
+      id: "house.city.start.temple",
+      cityId: "city.start",
+      name: "Temple",
+      type: "temple",
+      characterIds: [],
+      defaultCharacterId: null,
+      activityLocationId: "temple",
+    },
+    buildingArrangements: [
+      {
+        id: "building-arrangement.city.start.temple",
+        cityId: "city.start",
+        buildingId: "house.city.start.temple",
+        displayName: "Temple Shell",
+        mountedNpcIds: [],
+        primaryNpcId: null,
+        containers: [],
+      },
+    ],
+  });
+
+  assert.equal(result.state.world.currentHouseId, "house.city.start.temple");
+  assert.deepEqual(result.navigation, {
+    view: "house",
+    houseId: "house.city.start.temple",
+  });
+  assert.deepEqual(result.followUp, {
+    type: "navigation.entered-house",
+    houseId: "house.city.start.temple",
+  });
+  assert.equal(result.access, undefined);
+});
+
 test("map city markers use city-owned map placement", () => {
   const {
     createMapCityMarkers,
@@ -26744,6 +26841,19 @@ test("city building entry evaluates production locationAccess instead of legacy 
   );
   assert.doesNotMatch(canOpenHouseBlock, /selectHouseEntryAccess/);
   assert.doesNotMatch(canOpenHouseBlock, /houseAccessRefusalRules/);
+});
+
+test("main enterBuilding route passes explicit building arrangements into shared navigation runtime", () => {
+  const mainSource = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
+  const enterBuildingBlock =
+    mainSource.match(/function enterBuilding\(houseId: string\): void \{[\s\S]*?\n\}/)?.[0] ??
+    "";
+
+  assert.match(enterBuildingBlock, /routeNavigationRuntime\(\{/);
+  assert.match(
+    enterBuildingBlock,
+    /buildingArrangements:\s*activeContentContext\.buildingArrangements/
+  );
 });
 
 test("location access retirement removes legacy house access refusal rule runtime and pack fields", () => {
