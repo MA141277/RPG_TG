@@ -38,11 +38,12 @@ export function renderBlueprintGovernanceSkill(repoRoot = process.cwd()) {
   }));
 
   return [
-    "<!-- GENERATED FILE: do not edit by hand -->",
     "---",
     "name: blueprint-governance",
     "description: Use when work in RPG_TG may change Blueprint-governed routing, queue admission, queue closeout, version review, or governed documentation under docs/blueprints and docs/change-log.md.",
     "---",
+    "",
+    "<!-- GENERATED FILE: do not edit by hand -->",
     "",
     "# Blueprint Governance",
     "",

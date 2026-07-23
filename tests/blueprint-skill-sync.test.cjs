@@ -96,8 +96,11 @@ test("blueprint skill sync renders a generated governance skill from blueprint m
   assert.match(result.messages.join("\n"), /updated .*blueprint-governance/i);
 
   const skillText = readFile(repoRoot, ".codex/skills/blueprint-governance/SKILL.md");
+  assert.match(skillText, /^---\nname: blueprint-governance\n/s);
+  assert.doesNotMatch(skillText, /^<!-- GENERATED FILE: do not edit by hand -->/);
   assert.match(skillText, /name: blueprint-governance/);
   assert.match(skillText, /<!-- GENERATED FILE: do not edit by hand -->/);
+  assert.match(skillText, /\n<!-- GENERATED FILE: do not edit by hand -->\n\n# Blueprint Governance/);
   assert.match(skillText, /## Required Reading Order/);
   assert.match(skillText, /docs\/blueprints\/project-progress\.md/);
   assert.match(skillText, /## Routing Rules/);

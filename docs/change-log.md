@@ -8,6 +8,12 @@
 ## 2026-07-23 Blueprint Governance Skill Sync Tooling
 
 ### Changed
+- 调整 [tools/blueprint-skill-sync.mjs](/D:/workspace/project/RPG_TG/tools/blueprint-skill-sync.mjs:34) 生成的 [SKILL.md](/D:/workspace/project/RPG_TG/.codex/skills/blueprint-governance/SKILL.md:1) 文件头顺序：YAML frontmatter 现在位于文件首行，生成注释移到 frontmatter 之后，避免 repo-local skill 因文件首行不是 frontmatter 而无法被会话索引。
+
+### Impact
+- `blueprint-governance` 与同仓库下其他 repo-local skills 的文件头格式保持一致，Codex 更容易把它识别为可注册 skill，而不只是磁盘上存在的普通 Markdown 文件。
+
+### Changed
 - 新增 [tools/blueprint-skill-sync.mjs](/D:/workspace/project/RPG_TG/.worktrees/blueprint-skill-sync-20260723/tools/blueprint-skill-sync.mjs)，从 [docs/blueprints/blueprint-workflow-spec.md](/D:/workspace/project/RPG_TG/.worktrees/blueprint-skill-sync-20260723/docs/blueprints/blueprint-workflow-spec.md) 与 [docs/blueprints/classification-rule-layer-spec.md](/D:/workspace/project/RPG_TG/.worktrees/blueprint-skill-sync-20260723/docs/blueprints/classification-rule-layer-spec.md) 的 `blueprint-skill:*` marker block 生成并校验 [ .codex/skills/blueprint-governance/SKILL.md ](/D:/workspace/project/RPG_TG/.worktrees/blueprint-skill-sync-20260723/.codex/skills/blueprint-governance/SKILL.md)。
 - 在 [docs/blueprints/blueprint-workflow-spec.md](/D:/workspace/project/RPG_TG/.worktrees/blueprint-skill-sync-20260723/docs/blueprints/blueprint-workflow-spec.md) 补入 reading-order、sync-checklist、verification、red-flags 四组 skill-sync marker，并在 [docs/blueprints/classification-rule-layer-spec.md](/D:/workspace/project/RPG_TG/.worktrees/blueprint-skill-sync-20260723/docs/blueprints/classification-rule-layer-spec.md) 补入 routing-rules marker。
 - 更新 [package.json](/D:/workspace/project/RPG_TG/.worktrees/blueprint-skill-sync-20260723/package.json)，新增 `sync:blueprint-skill` 与 `lint:blueprint-skill`，并把 skill lint 接入总 `lint`，同时把 [tests/blueprint-skill-sync.test.cjs](/D:/workspace/project/RPG_TG/.worktrees/blueprint-skill-sync-20260723/tests/blueprint-skill-sync.test.cjs) 纳入默认测试集。

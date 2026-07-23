@@ -1234,17 +1234,16 @@ test("live version plan exposes version-first control fields and lifecycle wordi
       targetPlan,
       /^- decision_state: `(idle-open|promotion-review|active-execution|blocked)`$/m
     );
-  } else if (versionStatusMatch[1] === "done") {
+  } else if (versionStatusMatch[1] === "closed") {
     assert.match(targetPlan, /^- active_queue: `none`$/m);
     assert.match(targetPlan, /^- decision_state: `closed`$/m);
-    assert.match(targetPlan, /^- resume_gate: `closed-version-record`$/m);
+    assert.match(targetPlan, /^- resume_gate: `closed`$/m);
+    assert.match(targetPlan, /^- next_lawful_queue_recommendation: `none`$/m);
     assert.match(projectProgress, /^- active_version: `[^`]+`$/m);
     assert.match(projectProgress, /^- has_active_queue: `false`$/m);
-    assert.match(projectProgress, /^- active_queue: `none`$/m);
-    assert.match(projectProgress, /^- active_task: `none`$/m);
-    assert.match(projectProgress, /^- entry_action: `stop`$/m);
-    assert.match(targetPlan, /Final version closeout completed/);
-    assert.match(targetPlan, /no next same-version action/);
+    assert.match(projectProgress, /^- entry_action: `open-next-file`$/m);
+    assert.match(targetPlan, /Closeout confirmation:/);
+    assert.match(targetPlan, /^- routing_basis: `closed-after-explicit-operator-closeout-with-no-same-family-residue`$/m);
   } else {
     assert.fail(`unexpected live version_status: ${versionStatusMatch[1]}`);
   }
