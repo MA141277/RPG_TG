@@ -503,13 +503,27 @@ export function listScriptEditorCityBuildingArrangements(
 
 export function appendScriptEditorBuildingArrangement(
   project: ScriptEditorProjectDefinition,
-  cityId: string
+  cityId: string,
+  buildingId?: string
 ): ScriptEditorProjectDefinition {
   const defaultBuilding =
+    (buildingId == null
+      ? null
+      : project.buildings.find(
+          (building) => building.cityId === cityId && building.id === buildingId
+        )) ??
     project.buildings.find((building) => building.cityId === cityId) ??
     project.buildings[0] ??
     null;
   if (defaultBuilding == null) {
+    return project;
+  }
+  if (
+    project.buildingArrangements.some(
+      (arrangement) =>
+        arrangement.cityId === cityId && arrangement.buildingId === defaultBuilding.id
+    )
+  ) {
     return project;
   }
   const nextArrangementId = allocateNextScriptEditorProjectCanonicalId(
@@ -1161,7 +1175,10 @@ export function updateScriptEditorAccessField<
   TRecord extends ScriptEditorCityRecord | ScriptEditorBuildingRecord,
 >(
   record: TRecord,
-  field: keyof ScriptEditorAccessRule | "state" | "blockedSpeaker",
+  field:
+    | keyof ScriptEditorAccessRule
+    | "state"
+    | "blockedSpeaker",
   value: string
 ): TRecord {
   const access = normalizeAccessRule(record.access);
@@ -1176,13 +1193,18 @@ export function updateScriptEditorAccessField<
       },
     };
   }
-  if (field === "conditionExpression") {
+  if (
+    field === "conditionExpression" ||
+    field === "leaveConditionExpression"
+  ) {
     const conditionExpression = parseLocationAccessConditionExpression(value);
     return {
       ...record,
       access: {
-        ...omitAccessField(access, "conditionExpression"),
-        ...(conditionExpression == null ? {} : { conditionExpression }),
+        ...omitAccessField(access, field),
+        ...(conditionExpression == null
+          ? {}
+          : { [field]: conditionExpression }),
       },
     };
   }
@@ -1197,14 +1219,17 @@ export function updateScriptEditorAccessField<
 
 export function appendScriptEditorAccessCondition<
   TRecord extends ScriptEditorCityRecord | ScriptEditorBuildingRecord,
->(record: TRecord): TRecord {
+>(
+  record: TRecord,
+  conditionField: "conditionExpression" | "leaveConditionExpression" = "conditionExpression"
+): TRecord {
   const access = normalizeAccessRule(record.access);
   return {
     ...record,
     access: {
       ...access,
-      conditionExpression: appendScriptEditorLocationAccessCondition(
-        access.conditionExpression
+      [conditionField]: appendScriptEditorLocationAccessCondition(
+        access[conditionField]
       ),
     },
   };
@@ -1212,17 +1237,23 @@ export function appendScriptEditorAccessCondition<
 
 export function removeScriptEditorAccessCondition<
   TRecord extends ScriptEditorCityRecord | ScriptEditorBuildingRecord,
->(record: TRecord, index: number): TRecord {
+>(
+  record: TRecord,
+  index: number,
+  conditionField: "conditionExpression" | "leaveConditionExpression" = "conditionExpression"
+): TRecord {
   const access = normalizeAccessRule(record.access);
   const conditionExpression = removeScriptEditorLocationAccessCondition(
-    access.conditionExpression,
+    access[conditionField],
     index
   );
   return {
     ...record,
     access: {
-      ...omitAccessField(access, "conditionExpression"),
-      ...(conditionExpression == null ? {} : { conditionExpression }),
+      ...omitAccessField(access, conditionField),
+      ...(conditionExpression == null
+        ? {}
+        : { [conditionField]: conditionExpression }),
     },
   };
 }
@@ -1242,11 +1273,12 @@ export function updateScriptEditorAccessConditionField<
     | "operator"
     | "literalValue"
     | "sourceField",
-  value: string
+  value: string,
+  conditionField: "conditionExpression" | "leaveConditionExpression" = "conditionExpression"
 ): TRecord {
   const access = normalizeAccessRule(record.access);
   const conditionExpression = updateScriptEditorLocationAccessConditionField(
-    access.conditionExpression,
+    access[conditionField],
     index,
     field,
     value
@@ -1254,8 +1286,10 @@ export function updateScriptEditorAccessConditionField<
   return {
     ...record,
     access: {
-      ...omitAccessField(access, "conditionExpression"),
-      ...(conditionExpression == null ? {} : { conditionExpression }),
+      ...omitAccessField(access, conditionField),
+      ...(conditionExpression == null
+        ? {}
+        : { [conditionField]: conditionExpression }),
     },
   };
 }
@@ -1378,8 +1412,12 @@ function normalizeAccessRule(access?: ScriptEditorAccessRule): ScriptEditorAcces
   const conditionExpression =
     normalizeLocationAccessConditionExpression(rawAccess?.conditionExpression) ??
     normalizeLegacyAccessCondition(rawAccess?.state);
+  const leaveConditionExpression = normalizeLocationAccessConditionExpression(
+    rawAccess?.leaveConditionExpression
+  );
   return {
     ...(conditionExpression == null ? {} : { conditionExpression }),
+    ...(leaveConditionExpression == null ? {} : { leaveConditionExpression }),
     ...pickOptionalString("blockedReason", rawAccess?.blockedReason),
     ...pickOptionalString("blockedTitle", rawAccess?.blockedTitle),
     ...pickOptionalString("blockedMessage", rawAccess?.blockedMessage),

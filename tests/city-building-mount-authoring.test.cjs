@@ -244,6 +244,7 @@ test(
     assert.match(mainUiSource, /data-script-editor-city-mounted-building/);
     assert.match(mainUiSource, /data-script-editor-city-mounted-building-npc/);
     assert.match(mainUiSource, /data-script-editor-city-primary-npc/);
+    assert.match(mainUiSource, /renderScriptEditorLocationTabButton\("mounted", "挂载"\)/);
     assert.match(mainUiSource, /findNextScriptEditorCityMountedNpcId/);
     assert.match(
       mainUiSource,
@@ -414,6 +415,148 @@ test("script editor building arrangement authoring updates project-level arrange
   assert.deepEqual(baseProject.buildingArrangements, []);
 });
 
+test("script editor building arrangement authoring avoids duplicate arrangement rows for the same mounted building", () => {
+  const {
+    appendScriptEditorBuildingArrangement,
+  } = require("../.test-dist/application/script-editor/city-building-authoring.js");
+
+  const baseProject = {
+    schemaVersion: 1,
+    id: "project.arrangement",
+    title: "Arrangement Project",
+    scenarioProfile: {},
+    maps: [],
+    cities: [{ id: "city.start", name: "Start City" }],
+    buildings: [
+      { id: "building.temple", cityId: "city.start", name: "Temple" },
+      { id: "building.market", cityId: "city.start", name: "Market" },
+    ],
+    buildingArrangements: [],
+    people: [],
+    factions: [],
+    chapters: [],
+    storyNodes: [],
+    dialogues: [],
+    events: [],
+    eventBindings: [],
+    activities: [],
+    items: [],
+    skills: [],
+    relationships: [],
+    endingRules: [],
+    minigames: [],
+    cityEntries: [],
+    cityNpcPools: [],
+    locationAccess: [],
+    playableIntegrations: [],
+    workflow: { currentStepId: "draft", completedSteps: [], records: {} },
+  };
+
+  const firstPass = appendScriptEditorBuildingArrangement(
+    baseProject,
+    "city.start",
+    "building.temple"
+  );
+  const secondPass = appendScriptEditorBuildingArrangement(
+    firstPass,
+    "city.start",
+    "building.temple"
+  );
+
+  assert.equal(firstPass.buildingArrangements.length, 1);
+  assert.equal(secondPass.buildingArrangements.length, 1);
+  assert.equal(secondPass.buildingArrangements[0].buildingId, "building.temple");
+});
+
+test("script editor runtime families source arrangement npc ownership from city mounted buildings", () => {
+  const {
+    materializeScriptEditorCityBuildingRuntimeFamilies,
+  } = require("../.test-dist/application/script-editor/city-building-runtime-materializer.js");
+
+  const runtimeFamilies = materializeScriptEditorCityBuildingRuntimeFamilies({
+    schemaVersion: 1,
+    id: "project.runtime",
+    title: "Runtime Project",
+    scenarioProfile: {},
+    maps: [],
+    cities: [
+      {
+        id: "city.start",
+        name: "Start City",
+        mountedBuildings: [
+          {
+            buildingId: "building.temple",
+            npcIds: ["person.guard", "person.host"],
+            primaryNpcId: "person.host",
+          },
+        ],
+      },
+    ],
+    buildings: [{ id: "building.temple", cityId: "city.start", name: "Temple" }],
+    buildingArrangements: [
+      {
+        id: "building-arrangement.temple",
+        cityId: "city.start",
+        buildingId: "building.temple",
+        displayName: "Temple",
+        mountedNpcIds: ["person.legacy"],
+        primaryNpcId: "person.legacy",
+        containers: [],
+      },
+    ],
+    people: [
+      { id: "person.host", name: "Host", personType: "NPC" },
+      { id: "person.guard", name: "Guard", personType: "NPC" },
+    ],
+    factions: [],
+    chapters: [],
+    storyNodes: [],
+    dialogues: [],
+    events: [],
+    eventBindings: [],
+    activities: [],
+    items: [],
+    skills: [],
+    relationships: [],
+    endingRules: [],
+    minigames: [],
+    cityEntries: [],
+    cityNpcPools: [],
+    locationAccess: [],
+    playableIntegrations: [],
+    workflow: { currentStepId: "draft", completedSteps: [], records: {} },
+  });
+
+  assert.deepEqual(runtimeFamilies.buildingArrangements, [
+    {
+      id: "building-arrangement.temple",
+      cityId: "city.start",
+      buildingId: "building.temple",
+      displayName: "Temple",
+      mountedNpcIds: ["person.guard", "person.host"],
+      primaryNpcId: "person.host",
+      containers: [],
+    },
+  ]);
+});
+
+test("script editor city tabs separate mounted buildings from building arrangements", () => {
+  const mainUiSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    "utf8"
+  );
+
+  assert.match(mainUiSource, /renderScriptEditorLocationTabButton\("arrangements", "建筑编排"\)/);
+  assert.match(mainUiSource, /this\.scriptEditorLocationTab === "mounted" && family === "cities"/);
+  assert.match(mainUiSource, /this\.scriptEditorLocationTab === "arrangements" && family === "cities"/);
+  assert.match(
+    mainUiSource,
+    /\["profile", "mounted", "arrangements", "menus", "access", "events"\]/
+  );
+  assert.match(mainUiSource, /城市地点入口由“挂载”分栏负责/);
+  assert.match(mainUiSource, /仅添加建筑编排不会自动出现在进城后的地点选择里/);
+});
+
 test("script editor city profile UI exposes building arrangement and generic container controls", () => {
   const mainUiSource = fs.readFileSync(
     path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
@@ -423,15 +566,27 @@ test("script editor city profile UI exposes building arrangement and generic con
     path.join(process.cwd(), "src/application/script-editor/city-building-authoring.ts"),
     "utf8"
   );
+  const plannerBlock =
+    mainUiSource.match(
+      /renderScriptEditorCityBuildingArrangementPlanner\(city, project\) \{[\s\S]*?\n  \}\n\n  renderScriptEditorCityMountedBuildingsPanel/
+    )?.[0] ?? "";
 
   assert.match(mainUiSource, /renderScriptEditorBuildingArrangementPanel\(location\)/);
-  assert.match(mainUiSource, /data-script-editor-building-arrangement-field/);
-  assert.match(mainUiSource, /data-script-editor-building-arrangement-npc/);
-  assert.match(mainUiSource, /data-script-editor-building-layout-field/);
-  assert.match(mainUiSource, /data-script-editor-building-layout-node-field/);
-  assert.match(mainUiSource, /data-script-editor-building-layout-node-flag/);
-  assert.match(mainUiSource, /data-script-editor-building-container-field/);
-  assert.match(mainUiSource, /data-script-editor-building-container-action-field/);
+  assert.match(mainUiSource, /renderScriptEditorCityBuildingArrangementPlanner\(city, project\)/);
+  assert.match(plannerBlock, /data-script-editor-building-id=/);
+  assert.match(plannerBlock, /未挂载的旧编排/);
+  assert.match(plannerBlock, /这里只编排已挂载建筑的室内内容/);
+  assert.match(plannerBlock, /data-script-editor-building-arrangement-field/);
+  assert.match(plannerBlock, /data-script-editor-building-layout-field/);
+  assert.match(plannerBlock, /data-script-editor-building-layout-node-field/);
+  assert.match(plannerBlock, /data-script-editor-building-layout-node-flag/);
+  assert.match(plannerBlock, /data-script-editor-building-container-field/);
+  assert.match(plannerBlock, /data-script-editor-building-container-action-field/);
+  assert.doesNotMatch(plannerBlock, /data-script-editor-building-arrangement-npc/);
+  assert.doesNotMatch(plannerBlock, /data-script-editor-building-arrangement-primary-npc/);
+  assert.doesNotMatch(plannerBlock, /data-script-editor-building-arrangement-field="id"/);
+  assert.doesNotMatch(plannerBlock, /data-script-editor-building-arrangement-field="buildingId"/);
+  assert.doesNotMatch(plannerBlock, /<span>编排 ID<\/span>/);
   assert.match(mainUiSource, /SCRIPT_EDITOR_BUILDING_CONTAINER_TYPES/);
   assert.match(authoringSource, /SCRIPT_EDITOR_BUILDING_LAYOUT_TEMPLATE_IDS/);
   assert.match(authoringSource, /readScriptEditorBuildingLayoutRecord/);

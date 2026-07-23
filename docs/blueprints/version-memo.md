@@ -1915,28 +1915,6 @@ Current evidence draft:
 
 - A focused regression test now passes for the explicit override case where the base pack contains `婵犲窞` and the override pack contains only a new city.
 - The verified fix makes explicit override cities and houses authoritative runtime families for activation.
-### MEMO-025: Script Editor Event-Centered Authoring And Portrait Resource Refactor Draft
-
-- status: `open`
-- severity: `high`
-- classification: `future-target-candidate`
-- proposed_queue: `queue.script-editor-event-centered-authoring-scene-retirement-and-portrait-resource-refactor`
-- owning_queue: `none`
-- admission_status: `not-admitted`
-- latest_disposition: `recorded-as-memo-and-candidate`
-- evidence_draft: `docs/blueprints/specs/2026-07-22-script-editor-event-centered-authoring-scene-retirement-and-portrait-resource-refactor-evidence-draft.md`
-- proposed_version: `target.script-editor-event-centered-authoring-scene-retirement-and-portrait-resource-refactor`
-- affected_families:
-  - `script editor event authoring`
-  - `script editor minigame authoring`
-  - `script editor person authoring`
-  - `script editor portrait resource authoring`
-  - `script editor building authoring`
-  - `runtime export/import`
-  - `runtime event triggering`
-  - `runtime resource loading`
-  - `simulated-human acceptance`
-
 #### Problem Statement
 
 - The current Script Editor still mixes creator-facing authoring with implementation-facing concepts such as standalone minigame dispatch, object-to-object direct jumps, and ad hoc runtime-oriented tabs.
@@ -3104,3 +3082,254 @@ Current evidence draft:
 - proposed_class: `future-target-candidate`
 - proposed_goal: `Converge creator-facing routing back onto event by simplifying minigame authoring, introducing result-processing as the unified mutation resource, clarifying task as an objective/progression resource, and replacing return/integration/settlement semantics with event-owned follow-up routing.`
 - admission_note: `Recorded only. Before admission, Blueprint should require a bounded split review so that minigame information architecture, result-processing ownership, unified follow-up-event semantics, and task-boundary cleanup do not collapse into one oversized queue or reintroduce parallel routing owners.`
+
+## City Authoring Layout And Entry Mapping Notes
+
+### Observed Problem
+
+- In Script Editor city authoring, creators can add a `将领府邸` building arrangement under a city and still fail to see the building after entering the city during runtime preview.
+- The current city authoring information architecture makes `建筑编排` look like the place where city地点入口 is configured, but runtime preview location cards are actually sourced from city-mounted building entries.
+- This mismatch is causing repeated authoring confusion and false bug reports against runtime preview.
+
+### Current Implementation Evidence
+
+- City location cards render from `cityEntries`, not from building arrangements.
+- Script editor runtime materialization only auto-generates mounted city entries from `city.mountedBuildings`.
+- City profile currently mixes base fields, map position fields, mounted building semantics, building arrangement editing, and custom attributes too closely, which hides the ownership boundary between:
+  - city location exposure
+  - building interior arrangement
+  - general city metadata
+
+### Required UX Direction
+
+- City authoring should separate:
+  - `基础`
+  - `挂载`
+  - `建筑编排`
+  - existing menu / access / event authoring
+- `挂载` must be the creator-facing place that clearly states it controls which buildings appear in the city location list.
+- `建筑编排` must clearly state it only defines building interior layout, containers, and actions, and does not itself create city location entries.
+
+### Acceptance Expectation
+
+- A creator should be able to distinguish, without reading source code, between:
+  - “this building appears in the city menu”
+  - “this building has an interior arrangement”
+- Adding only a building arrangement should no longer imply that runtime preview will show the building in the city location deck.
+
+### Promotion Guard
+
+- Recorded only.
+- This note does not by itself authorize a new queue or target.
+
+### MEMO-030: Settlement Module Design Draft
+
+- status: `open`
+- severity: `high`
+- classification: `memo-only`
+- proposed_queue: `none`
+- owning_queue: `none`
+- admission_status: `not-admitted`
+- latest_disposition: `recorded-as-memo`
+- affected_families:
+  - `event authoring`
+  - `settlement authoring`
+  - `runtime settlement`
+  - `dialogue result handoff`
+  - `task reward/progression mutation`
+  - `playable result mutation`
+  - `creator-facing script editor information architecture`
+
+#### Problem Summary
+
+- The project already has a partial unified settlement seam, but creator-facing reward and mutation semantics are still not fully settled.
+- If dialogue, task, playable, or later content families each keep their own reward container or private write-back protocol, the project will reintroduce parallel integration truth next to `event`.
+- Settlement cannot be limited to fixed rewards such as:
+  - `money`
+  - `exp`
+- The creator requirement is broader:
+  - any formally supported creator-configurable attribute should be eligible for settlement.
+- At the same time, runtime cannot allow arbitrary free-form state path mutation without boundary control.
+
+#### Primary Direction
+
+- Keep `event` as the only formal routing owner.
+- Introduce `settlement` as a formal event type under the event module.
+- A `settlement` event may only bind to a settlement list entry rather than embedding ad hoc mutation payload inline.
+- Settlement should be split into two coordinated parts:
+  - script-editor settlement authoring
+  - runtime settlement execution
+- The creator-facing meaning should be:
+  - `event`: decides when settlement runs and what happens next
+  - `settlement`: defines what state changes should be applied
+  - runtime settlement: executes those changes against allowed runtime state
+
+#### Target Strategy
+
+- Use the rule:
+  - `目标按第二版，投产按第一版`
+- This means:
+  - architecture and contracts should be designed for a generic multi-type settlement system
+  - first production slice should stay bounded to numeric property settlement
+- The bounded first slice should support:
+  - creator-selected target
+  - creator-selected registered attribute
+  - numeric operators such as add/set/subtract within bounded validation
+- Later expansion may add:
+  - inventory/item grant or removal
+  - status flags
+  - task progression mutation
+  - typed structured writes
+- That later expansion should extend the same settlement contract rather than create a second runtime or second authoring system.
+
+#### Flow Boundary
+
+- Do not introduce `flow` for this settlement design.
+- Current model should remain:
+  - `event` = routing owner
+  - `dialogue` = performance/content
+  - `task` = objective/progression
+  - `playable` = runnable content
+  - `settlement` = mutation/write-back
+- Any attempt to add a new orchestration owner above `event` should be treated as unnecessary at the current stage.
+
+#### Creator-Facing Authoring Direction
+
+- Script Editor should expose a dedicated settlement resource/list.
+- Each settlement entry should at minimum describe:
+  - settlement name
+  - optional notes
+  - one or more settlement items
+- Each settlement item should describe bounded mutation intent such as:
+  - target scope
+  - target selector
+  - registered attribute key
+  - operator
+  - value source
+  - optional condition or guard
+- Creator-facing settlement should not directly expose:
+  - raw runtime paths
+  - arbitrary JSON pointer writes
+  - hidden dispatch payload vocabulary
+  - engine-private lowering details
+
+#### Event Routing Direction
+
+- Event module should add `settlement` as a first-class type.
+- When an event is of type `settlement`:
+  - its bindable data source must come only from the settlement list
+- Recommended event-owned chain:
+  - `dialogue/playable/task emits or completes` -> `event route matches` -> `event type = settlement` -> `runtime executes settlement` -> `optional follow-up event`
+- This preserves one routing truth:
+  - settlement does not decide when it is called
+  - settlement does not decide where execution goes next
+  - those remain event-owned
+
+#### Settlement List Definition Direction
+
+- Settlement list should become the canonical creator-authored settlement catalog.
+- A settlement entry should be reusable across:
+  - dialogue completion
+  - task completion
+  - playable results
+  - building actions
+  - later event-routed content families
+- Settlement definition should be built on an attribute registry rather than hardcoded reward names.
+- The attribute registry should define:
+  - which attributes are creator-bindable
+  - which target families they belong to
+  - which operator/value types they support
+  - which runtime validator/executor owns them
+- This is required so that settlement remains generic without degenerating into arbitrary unsafe writes.
+
+#### Runtime Direction
+
+- Do not create a brand new parallel settlement runtime owner.
+- Reuse and extend the existing `runtime-settlement` seam as the unified executor.
+- Runtime settlement responsibility should be split into three concerns:
+  - `event` route entry resolution
+  - settlement definition consumption
+  - settlement execution and reporting
+
+#### Runtime Concern 1: Event Route Entry Resolution
+
+- Runtime must accept settlement dispatch from the unified event route.
+- It should resolve:
+  - which settlement id/list entry is requested
+  - which runtime context is available
+  - whether a follow-up event is configured after execution
+- Dialogue, task, playable, and later modules should not each invent separate settlement dispatch rules.
+
+#### Runtime Concern 2: Settlement Definition Consumption
+
+- Runtime must consume the author-authored settlement list entry and materialize an executable settlement instance.
+- This stage should resolve:
+  - target family
+  - target id or implicit actor
+  - attribute contract
+  - operator
+  - value source
+  - bounded guards
+- This is where numeric-only first-version limits can be enforced without damaging the long-term contract shape.
+
+#### Runtime Concern 3: Settlement Execution
+
+- Runtime settlement must execute the resolved settlement items against canonical runtime state.
+- It should:
+  - resolve target
+  - validate attribute ownership
+  - validate operator and value type
+  - apply the mutation through the correct state owner
+  - emit a structured settlement result/report
+- Settlement execution should never bypass canonical gameplay state ownership.
+- Any persistent change still needs to flow through unified runtime state structures.
+
+#### Reporting Direction
+
+- Settlement runtime should return a structured report/result rather than only mutating silently.
+- The report should be able to describe:
+  - applied changes
+  - skipped changes
+  - rejected changes
+  - follow-up relevant context if needed by dispatcher/UI
+- This keeps later UI feedback and debugging on the shared contract rather than on per-feature ad hoc logging.
+
+#### Existing Seam Reuse
+
+- Current project already has useful convergence points and should build on them rather than replace them:
+  - existing `runtime-settlement`
+  - runtime dispatch/result effect seams
+  - task/playable effect propagation paths
+  - script-editor-side `effectBundles` family
+- Promotion work should prefer extending those seams toward the bounded settlement contract instead of starting a second settlement stack beside them.
+
+#### Design Constraints
+
+1. `event` must remain the only formal creator-facing routing owner.
+2. `settlement` may become an event type, but must not become a second routing owner.
+3. Creator-facing settlement must stay generic and must not be hardcoded to `money/exp`.
+4. Runtime settlement must not allow arbitrary unrestricted state-path writes.
+5. First production version should stay bounded to numeric attribute settlement even if the target contract is broader.
+6. Dialogue, task, playable, and building actions should all converge on the same settlement route rather than private reward protocols.
+7. No `flow` layer should be introduced for this design stage.
+8. This memo records design direction only and does not authorize immediate implementation.
+
+#### Suggested Follow-Up Direction
+
+- If promoted later, the work should likely be split into bounded slices such as:
+  - settlement resource/list authoring contract
+  - event `settlement` type and binding restrictions
+  - attribute registry and numeric-first validator design
+  - existing `runtime-settlement` convergence
+  - settlement reporting and dispatcher integration
+- These slices should be reviewed independently so the project does not collapse editor authoring, runtime mutation, and cross-family integration into one oversized queue.
+
+#### Promotion Guard
+
+- Recorded only.
+- This memo does not by itself authorize implementation.
+- This memo does not by itself authorize:
+  - replacing existing runtime settlement immediately
+  - adding unrestricted attribute mutation
+  - creating a parallel settlement runtime beside current seams
+  - reintroducing private reward containers under dialogue/task/playable

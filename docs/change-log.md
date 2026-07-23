@@ -3423,3 +3423,13 @@
 ### Impact
 - Normal start, JSON runtime-pack import, and Script Editor runtime preview now agree on the same startup-view contract instead of letting legacy `scene` startup values leak through different entry paths.
 - Runtime-pack export/import, loader validation, and activated mod startup metadata no longer keep a hidden scene-era startup divergence after scene retirement.
+## 2026-07-23 City Access Leave Conditions And City Editor Tab Cleanup
+
+### Changed
+- 更新 [src/domain/script-editor-project.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/domain/script-editor-project.ts)、[src/domain/location-access.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/domain/location-access.ts)、[src/application/location-access/location-access-runtime.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/location-access/location-access-runtime.ts)、[src/application/script-editor/city-building-authoring.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/city-building-authoring.ts)、[src/application/script-editor/city-building-runtime-materializer.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/city-building-runtime-materializer.ts)、[src/application/script-editor/runtime-pack-import.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/application/script-editor/runtime-pack-import.ts) 与 [src/main.ts](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/main.ts)，为城市 `access` 增加 `leaveConditionExpression` / `purpose: "leave"` 合同，让导出、导入、运行时评估和离城按钮统一支持“离开条件”。
+- 更新 [src/ui/main-ui/main-ui-flow.js](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/src/ui/main-ui/main-ui-flow.js)，城市详情分栏补齐 `挂载`、`建筑编排` 页签切换白名单，移除城市基础页的“高级设置与系统信息”，并在 `进入条件` 下新增独立的“离开条件”编辑区，确保 enter/leave 两组条件分别编辑、分别写回。
+- 更新 [tests/robustness.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/robustness.test.cjs) 与 [tests/city-building-mount-authoring.test.cjs](/C:/Users/Administrator/Desktop/workspace/project/RPG_TG/tests/city-building-mount-authoring.test.cjs)，补齐城市页签白名单、leave-purpose runtime、leave-condition export/import round-trip 和离城守卫的回归覆盖。
+
+### Impact
+- 创作者现在可以在城市实例的“进入条件”页签下分别维护进入条件与离开条件，且离城运行时会真正读取城市 `access.leaveConditionExpression`，不再与进城条件混用同一条 runtime truth。
+- 城市页签的 `挂载` / `建筑编排` 现在可正常切换，城市基础页不再暴露面向创作者无意义的系统字段；同时新增回归测试防止后续把页签白名单或 leave-purpose 规则退回到旧行为。

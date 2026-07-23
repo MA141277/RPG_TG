@@ -4216,14 +4216,22 @@ test(
     );
     const locationAccessPanelSource = mainUiSource.slice(
       mainUiSource.indexOf("renderScriptEditorLocationAccessPanel(location) {"),
-      mainUiSource.indexOf("renderScriptEditorLocationAccessConditionEditor(conditionExpression) {")
+      mainUiSource.indexOf(
+        'renderScriptEditorLocationAccessConditionEditor(conditionExpression, conditionField = "conditionExpression") {'
+      )
     );
     const conditionEditorSource = mainUiSource.slice(
-      mainUiSource.indexOf("renderScriptEditorLocationAccessConditionEditor(conditionExpression) {"),
-      mainUiSource.indexOf("renderScriptEditorLocationAccessConditionRow(condition, index) {")
+      mainUiSource.indexOf(
+        'renderScriptEditorLocationAccessConditionEditor(conditionExpression, conditionField = "conditionExpression") {'
+      ),
+      mainUiSource.indexOf(
+        'renderScriptEditorLocationAccessConditionRow(condition, index, conditionField = "conditionExpression") {'
+      )
     );
     const conditionRowSource = mainUiSource.slice(
-      mainUiSource.indexOf("renderScriptEditorLocationAccessConditionRow(condition, index) {"),
+      mainUiSource.indexOf(
+        'renderScriptEditorLocationAccessConditionRow(condition, index, conditionField = "conditionExpression") {'
+      ),
       mainUiSource.indexOf("renderScriptEditorLocationAccessEventConditionControls(condition, index) {")
     );
     const personConditionSource = mainUiSource.slice(
@@ -11000,6 +11008,58 @@ test(
 );
 
 test(
+  "script editor access authoring keeps enter and leave condition expressions isolated",
+  () => {
+    const {
+      createDefaultScriptEditorCityRecord,
+      appendScriptEditorAccessCondition,
+      updateScriptEditorAccessConditionField,
+    } = require("../.test-dist/application/script-editor/city-building-authoring.js");
+
+    let city = createDefaultScriptEditorCityRecord(0);
+    city = appendScriptEditorAccessCondition(city, "conditionExpression");
+    city = updateScriptEditorAccessConditionField(
+      city,
+      0,
+      "eventId",
+      "event.city.enter",
+      "conditionExpression"
+    );
+    city = appendScriptEditorAccessCondition(city, "leaveConditionExpression");
+    city = updateScriptEditorAccessConditionField(
+      city,
+      0,
+      "timeField",
+      "year",
+      "leaveConditionExpression"
+    );
+    city = updateScriptEditorAccessConditionField(
+      city,
+      0,
+      "operator",
+      "greater-than-or-equal",
+      "leaveConditionExpression"
+    );
+    city = updateScriptEditorAccessConditionField(
+      city,
+      0,
+      "literalValue",
+      "1356",
+      "leaveConditionExpression"
+    );
+
+    assert.equal(city.access.conditionExpression.conditions[0].left.subject, "event");
+    assert.equal(
+      city.access.conditionExpression.conditions[0].left.entityId,
+      "event.city.enter"
+    );
+    assert.equal(city.access.leaveConditionExpression.conditions[0].left.subject, "time");
+    assert.equal(city.access.leaveConditionExpression.conditions[0].left.fieldId, "year");
+    assert.equal(city.access.leaveConditionExpression.conditions[0].right.value, 1356);
+  }
+);
+
+test(
   "script editor city/building default background persists through runtime export and import",
   async () => {
     const {
@@ -11033,6 +11093,61 @@ test(
     );
     assert.equal(importedProject.cities[0].backgroundId, "chengzhen");
     assert.equal(importedProject.buildings[0].backgroundId, "zizhai");
+  }
+);
+
+test(
+  "script editor runtime export/import preserves city leave conditions separately from enter conditions",
+  async () => {
+    const {
+      createDefaultScriptEditorProjectDefinition,
+    } = require("../.test-dist/application/script-editor/minimal-workflow.js");
+    const {
+      exportScriptEditorProjectToScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+    const {
+      loadScriptEditorProjectFromScenarioPackFiles,
+    } = require("../.test-dist/application/script-editor/runtime-pack-import.js");
+
+    const project = createDefaultScriptEditorProjectDefinition();
+    project.cities[0] = {
+      ...project.cities[0],
+      access: {
+        conditionExpression: {
+          type: "compare",
+          left: { type: "field", subject: "event", entityId: "event.city.enter", fieldId: "completed" },
+          operator: "equals",
+          right: { type: "literal", value: true },
+        },
+        leaveConditionExpression: {
+          type: "compare",
+          left: { type: "field", subject: "time", fieldId: "year" },
+          operator: "greater-than-or-equal",
+          right: { type: "literal", value: 1356 },
+        },
+      },
+    };
+
+    const files = exportScriptEditorProjectToScenarioPackFiles(project);
+    const locationAccess = JSON.parse(files["location-access.json"]);
+
+    assert.equal(locationAccess.filter((entry) => entry.targetId === project.cities[0].id).length, 2);
+    assert.equal(
+      locationAccess.some((entry) => entry.targetId === project.cities[0].id && entry.purpose === "enter"),
+      true
+    );
+    assert.equal(
+      locationAccess.some((entry) => entry.targetId === project.cities[0].id && entry.purpose === "leave"),
+      true
+    );
+
+    const importedProject = await loadScriptEditorProjectFromScenarioPackFiles(
+      createImportedFilesFromSerializedJsonRecord(files, "leave-access")
+    );
+
+    assert.equal(importedProject.cities[0].access.conditionExpression.left.subject, "event");
+    assert.equal(importedProject.cities[0].access.leaveConditionExpression.left.subject, "time");
+    assert.equal(importedProject.cities[0].access.leaveConditionExpression.right.value, 1356);
   }
 );
 
@@ -11904,6 +12019,76 @@ test("location access runtime evaluates event person and time conditions", () =>
 
   assert.equal(failed.canEnter, false);
   assert.equal(failed.refusal.text, "Access denied.");
+});
+
+test("location access runtime evaluates leave-purpose rules independently from enter rules", () => {
+  const {
+    evaluateLocationAccess,
+  } = require("../.test-dist/application/location-access/location-access-runtime.js");
+  const baseState = createBaseState();
+
+  const locationAccessDefinitions = [
+    {
+      id: "location-access.enter.city.gated",
+      purpose: "enter",
+      targetFamily: "city",
+      targetId: "city.gated",
+      conditionExpression: { type: "literal", value: true },
+    },
+    {
+      id: "location-access.leave.city.gated",
+      purpose: "leave",
+      targetFamily: "city",
+      targetId: "city.gated",
+      conditionExpression: { type: "literal", value: false },
+      blockedMessage: "Cannot leave yet.",
+    },
+  ];
+
+  const enterResult = evaluateLocationAccess({
+    state: baseState,
+    targetFamily: "city",
+    targetId: "city.gated",
+    targetCity: {
+      id: "city.gated",
+      name: "Gated City",
+      regionId: "region.test",
+      mapNodeId: "node.gated",
+      houseIds: [],
+      neighbourCityIds: [],
+      travelCost: 1,
+      tags: [],
+      prosperity: 50,
+      danger: 20,
+      specialDemand: [],
+    },
+    locationAccessDefinitions,
+  });
+  const leaveResult = evaluateLocationAccess({
+    state: baseState,
+    purpose: "leave",
+    targetFamily: "city",
+    targetId: "city.gated",
+    targetCity: {
+      id: "city.gated",
+      name: "Gated City",
+      regionId: "region.test",
+      mapNodeId: "node.gated",
+      houseIds: [],
+      neighbourCityIds: [],
+      travelCost: 1,
+      tags: [],
+      prosperity: 50,
+      danger: 20,
+      specialDemand: [],
+    },
+    locationAccessDefinitions,
+  });
+
+  assert.deepEqual(enterResult, { canEnter: true, refusal: null });
+  assert.equal(leaveResult.canEnter, false);
+  assert.equal(leaveResult.refusal.ruleId, "location-access.leave.city.gated");
+  assert.equal(leaveResult.refusal.text, "Cannot leave yet.");
 });
 
 test("location access runtime evaluates event condition independently", () => {
@@ -13903,7 +14088,7 @@ test("script editor export writes building access rules only as runtime location
   assert.deepEqual(blocked, {
     canEnter: false,
     refusal: {
-      ruleId: "location-access.building.building.market",
+      ruleId: "location-access.enter.building.building.market",
       speakerCharacterId: "char.player",
       title: "Stay in temple",
       text: "Do not leave the temple yet.",
@@ -14276,7 +14461,10 @@ test("script editor tab selectors allow owner-local event tabs and reject event-
   const eventSelectorSource =
     source.match(/selectScriptEditorEventTab\(tab\) \{[\s\S]*?\n  selectScriptEditorMinigameTab/)?.[0] ?? "";
 
-  assert.match(locationSelectorSource, /\["profile", "menus", "access", "events"\]/);
+  assert.match(
+    locationSelectorSource,
+    /\["profile", "mounted", "arrangements", "menus", "access", "events"\]/
+  );
   assert.match(locationSelectorSource, /\["profile", "menus", "access", "entry", "events"\]/);
   assert.match(narrativeSelectorSource, /\["profile", "links", "summary", "events"\]/);
   assert.match(narrativeSelectorSource, /\["profile", "nodes", "summary", "events"\]/);
@@ -26508,6 +26696,8 @@ test("main shell render-trigger ownerization introduces a city house transition 
     /city-house-transition-coordinator|createCityHouseTransitionCoordinator/
   );
   assert.match(mainSource, /cityHouseTransitionCoordinator\.leaveCity\(\)/);
+  assert.match(mainSource, /function canLeaveCurrentCity\(\): boolean \{/);
+  assert.match(mainSource, /purpose:\s*"leave"/);
   assert.match(mainSource, /cityHouseTransitionCoordinator\.enterCity3d\(\)/);
   assert.match(mainSource, /cityHouseTransitionCoordinator\.leaveCity3d\(\)/);
   assert.match(

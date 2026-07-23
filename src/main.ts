@@ -2173,6 +2173,45 @@ function canOpenHouseFromCity(houseDefinition: HouseDefinition): boolean {
   return false;
 }
 
+function canLeaveCurrentCity(): boolean {
+  const currentCityId = appState.gameState.world.currentCityId;
+  if (currentCityId == null) {
+    return true;
+  }
+
+  const cityDefinition =
+    activeContentContext.cityDefinitionById[currentCityId] ?? null;
+  if (cityDefinition == null) {
+    return true;
+  }
+
+  const accessResult = evaluateLocationAccess({
+    state: appState.gameState,
+    purpose: "leave",
+    targetFamily: "city",
+    targetId: appState.gameState.world.currentCityId,
+    targetCity: cityDefinition,
+    characterDefinitions: appState.characterDefinitions,
+    locationAccessDefinitions: activeContentContext.locationAccess,
+  });
+
+  if (accessResult.canEnter) {
+    if (appState.locationDialogueState != null) {
+      appState = {
+        ...appState,
+        locationDialogueState: null,
+      };
+    }
+    return true;
+  }
+
+  if (accessResult.refusal != null) {
+    cityHouseTransitionCoordinator.handleHouseAccessRefusal(accessResult.refusal);
+  }
+
+  return false;
+}
+
 window.addEventListener("pointerdown", resumeBackgroundMusicIfNeeded, {
   passive: true,
 });
@@ -2780,6 +2819,9 @@ appElement.addEventListener("click", (event) => {
     "[data-action='leave-city']"
   );
   if (leaveCityButton != null) {
+    if (!canLeaveCurrentCity()) {
+      return;
+    }
     cityHouseTransitionCoordinator.leaveCity();
     return;
   }

@@ -1,6 +1,7 @@
 import type { CharacterId } from "./character";
 
 export type LocationAccessTargetFamily = "city" | "building";
+export type LocationAccessPurpose = "enter" | "leave";
 
 export type LocationAccessConditionSubject =
   | "event"
@@ -48,6 +49,7 @@ export type LocationAccessDefinition = {
   id: string;
   targetFamily: LocationAccessTargetFamily;
   targetId: string;
+  purpose?: LocationAccessPurpose;
   conditionExpression: LocationAccessConditionExpression;
   blockedReason?: string;
   blockedTitle?: string;
