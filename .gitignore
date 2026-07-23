@@ -27,5 +27,6 @@ HD2DEG/building/*/normal-side.png
 HD2DEG/building/*/normal-top.png
 
 # Local prototype/export scratch assets
+output/
 prototypes/assets/
 tools/noesis-plugins-official/

@@ -221,6 +221,76 @@ export type CampaignVegetationRulesDefinition = {
   };
 };
 
+export type CampaignFortCityRulesDefinition = {
+  schemaVersion: 1;
+  format: "campaign-fort-city-rules-v1";
+  id: string;
+  seed: string;
+  count: {
+    min: number;
+    max: number;
+  };
+  fortifiedNodeIds?: string[];
+  settlementVillage?: {
+    count: {
+      min: number;
+      max: number;
+    };
+    lod: {
+      maxVisibleInstances: number;
+    };
+    placement: {
+      innerRadius: number;
+      outerRadius: number;
+      scaleMin: number;
+      scaleMax: number;
+      baseWorldScale: number;
+      lift: number;
+      footprintRadius: number;
+      minSpacing: number;
+      maxAttemptsPerBuilding: number;
+    };
+    shader: {
+      ambient: number;
+      directional: number;
+    };
+  };
+  lod: {
+    maxVisibleInstances: number;
+  };
+  variants: Array<{
+    id: string;
+    meshUrl: string;
+    weight: number;
+    placement?: Partial<{
+      scaleMin: number;
+      scaleMax: number;
+      baseWorldScale: number;
+      lift: number;
+      footprintRadius: number;
+    }>;
+  }>;
+  placement: {
+    innerRadius: number;
+    outerRadius: number;
+    scaleMin: number;
+    scaleMax: number;
+    baseWorldScale: number;
+    lift: number;
+    footprintRadius: number;
+    minSpacing: number;
+    maxAttemptsPerBuilding: number;
+  };
+  avoidance: {
+    wallRadius: number;
+    buildingRadiusPadding: number;
+  };
+  shader: {
+    ambient: number;
+    directional: number;
+  };
+};
+
 export type CampaignMapNodeMeshDefinition = {
   schemaVersion: 1;
   format: "campaign-map-node-mesh-v1";

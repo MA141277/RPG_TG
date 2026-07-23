@@ -3,8 +3,15 @@ import {
   getHexKey,
   type GridCoordinate,
 } from "../../../application/navigation/travel-to-coordinate";
-import cityDepthMeshAssetUrl from "../../../3dasset/city_hun/city-hun-campaign-lowpoly.json?url";
-import cityDepthTextureUrl from "../../../3dasset/city_hun/texture_pbr_20250901.png?url";
+import fortCityBuilding01 from "../../../content/scenario-packs/zhuyuanzhang/assets/map-nodes/fort-city/building-01-9352cd035676.json";
+import fortCityBuilding03 from "../../../content/scenario-packs/zhuyuanzhang/assets/map-nodes/fort-city/building-03-e1e0e8793236.json";
+import fortCityBuilding04 from "../../../content/scenario-packs/zhuyuanzhang/assets/map-nodes/fort-city/building-04-part-01-front-segment.json";
+import fortCityBuilding10 from "../../../content/scenario-packs/zhuyuanzhang/assets/map-nodes/fort-city/building-10-25d33f33ab0d.json";
+import fortCityBuilding35 from "../../../content/scenario-packs/zhuyuanzhang/assets/map-nodes/fort-city/building-35-eab9d92f772c.json";
+import fortCityBuilding42 from "../../../content/scenario-packs/zhuyuanzhang/assets/map-nodes/fort-city/building-42-126e96a0f4c9.json";
+import fortCityBuilding45 from "../../../content/scenario-packs/zhuyuanzhang/assets/map-nodes/fort-city/building-45-part-01-main-building.json";
+import fortCityBuilding46 from "../../../content/scenario-packs/zhuyuanzhang/assets/map-nodes/fort-city/building-46-1b59f0c93fa9.json";
+import fortCityRulesDefinition from "../../../content/scenario-packs/zhuyuanzhang/assets/map-nodes/fort-city/fort-city-rules.json";
 import fortWallMeshAssetUrl from "../../../content/scenario-packs/zhuyuanzhang/assets/map-nodes/fort-wall/fort-hex-wall.json?url";
 import type { CityDefinition } from "../../../domain/city";
 import {
@@ -22,7 +29,10 @@ import type {
   MapLayer,
   MapNode,
   MapStats,
+  CampaignFortCityRulesDefinition,
+  CampaignVegetationMeshDefinition,
 } from "../../../domain/map";
+import { registerCampaignFortCityAsset } from "./campaign-fort-city-asset-registry";
 
 type CityMarker = {
   id: string;
@@ -30,6 +40,30 @@ type CityMarker = {
   x: number;
   y: number;
 };
+
+const FORT_CITY_ASSET_ID = "builtin.zhuyuanzhang.fort-city";
+
+registerCampaignFortCityAsset(FORT_CITY_ASSET_ID, {
+  rules: fortCityRulesDefinition as CampaignFortCityRulesDefinition,
+  meshesByVariantId: {
+    "building-01-9352cd035676":
+      fortCityBuilding01 as CampaignVegetationMeshDefinition,
+    "building-03-e1e0e8793236":
+      fortCityBuilding03 as CampaignVegetationMeshDefinition,
+    "building-04-part-01-front-segment":
+      fortCityBuilding04 as CampaignVegetationMeshDefinition,
+    "building-10-25d33f33ab0d":
+      fortCityBuilding10 as CampaignVegetationMeshDefinition,
+    "building-35-eab9d92f772c":
+      fortCityBuilding35 as CampaignVegetationMeshDefinition,
+    "building-42-126e96a0f4c9":
+      fortCityBuilding42 as CampaignVegetationMeshDefinition,
+    "building-45-part-01-main-building":
+      fortCityBuilding45 as CampaignVegetationMeshDefinition,
+    "building-46-1b59f0c93fa9":
+      fortCityBuilding46 as CampaignVegetationMeshDefinition,
+  },
+});
 
 export type CampaignMarker = {
   id: string;
@@ -73,6 +107,8 @@ export type MapViewModel = {
   materialTextureImageUrl: string | null;
   grassTextureImageUrl: string | null;
   sandTextureImageUrl: string | null;
+  villageGroundTextureImageUrl: string | null;
+  cityGroundTextureImageUrl: string | null;
   rockTextureImageUrl: string | null;
   snowTextureImageUrl: string | null;
   waterTextureImageUrl: string | null;
@@ -84,6 +120,7 @@ export type MapViewModel = {
     x: number;
     y: number;
   } | null;
+  fortCityAssetId: string | null;
   fortWallMeshAssetUrl: string | null;
   cloudClearHexKeys: string[];
   campaignMarkers: CampaignMarker[];
@@ -192,6 +229,12 @@ export function createMapViewModel(input: {
     sandTextureImageUrl:
       input.mapDefinition.layers?.find((layer) => layer.id === "map_sand_texture")
         ?.imageUrl ?? null,
+    villageGroundTextureImageUrl:
+      input.mapDefinition.layers?.find((layer) => layer.id === "map_village_ground_texture")
+        ?.imageUrl ?? null,
+    cityGroundTextureImageUrl:
+      input.mapDefinition.layers?.find((layer) => layer.id === "map_city_ground_texture")
+        ?.imageUrl ?? null,
     rockTextureImageUrl:
       input.mapDefinition.layers?.find((layer) => layer.id === "map_rock_texture")
         ?.imageUrl ?? null,
@@ -207,9 +250,10 @@ export function createMapViewModel(input: {
     revealedHexKeys: Array.from(
       new Set(input.mapExplorationState?.revealedHexKeys ?? [])
     ).sort(),
-    cityDepthMeshAssetUrl,
-    cityDepthTextureUrl,
-    cityDepthMeshCoordinate: input.mapDefinition.initialPlayerCoordinate ?? null,
+    cityDepthMeshAssetUrl: null,
+    cityDepthTextureUrl: null,
+    cityDepthMeshCoordinate: null,
+    fortCityAssetId: mode === "campaign" ? FORT_CITY_ASSET_ID : null,
     fortWallMeshAssetUrl: mode === "campaign" ? fortWallMeshAssetUrl : null,
     cloudClearHexKeys,
     campaignMarkers: input.mapDefinition.nodes

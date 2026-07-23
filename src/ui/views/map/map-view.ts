@@ -155,6 +155,10 @@ function renderCampaignMapVisualLayer(
     model.fortWallMeshAssetUrl == null
       ? ""
       : `data-campaign-fort-wall-mesh-url="${model.fortWallMeshAssetUrl}"`;
+  const fortCityAssetAttributes =
+    model.fortCityAssetId == null
+      ? ""
+      : `data-campaign-fort-city-asset-id="${model.fortCityAssetId}"`;
   const terrainCanvasMarkup =
     !canRenderWebGlTerrain
       ? ""
@@ -169,10 +173,13 @@ function renderCampaignMapVisualLayer(
           ${model.campaignVegetationRulesUrl == null ? "" : `data-map-vegetation-rules-url="${model.campaignVegetationRulesUrl}"`}
           ${model.grassTextureImageUrl == null ? "" : `data-map-grass-texture-url="${model.grassTextureImageUrl}"`}
           ${model.sandTextureImageUrl == null ? "" : `data-map-sand-texture-url="${model.sandTextureImageUrl}"`}
+          ${model.villageGroundTextureImageUrl == null ? "" : `data-map-village-ground-texture-url="${model.villageGroundTextureImageUrl}"`}
+          ${model.cityGroundTextureImageUrl == null ? "" : `data-map-city-ground-texture-url="${model.cityGroundTextureImageUrl}"`}
           ${model.rockTextureImageUrl == null ? "" : `data-map-rock-texture-url="${model.rockTextureImageUrl}"`}
           ${model.snowTextureImageUrl == null ? "" : `data-map-snow-texture-url="${model.snowTextureImageUrl}"`}
           ${model.waterTextureImageUrl == null ? "" : `data-map-water-texture-url="${model.waterTextureImageUrl}"`}
           ${cityDepthMeshAttributes}
+          ${fortCityAssetAttributes}
           ${fortWallMeshAttributes}
           aria-label="${model.mapName} terrain"
         ></canvas>

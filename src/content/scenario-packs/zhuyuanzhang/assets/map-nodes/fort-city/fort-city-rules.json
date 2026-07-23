@@ -1,0 +1,125 @@
+{
+  "schemaVersion": 1,
+  "format": "campaign-fort-city-rules-v1",
+  "id": "yuanmo-fort-city-buildings",
+  "seed": "fort-hex-city-buildings-v1",
+  "count": {
+    "min": 10,
+    "max": 15
+  },
+  "fortifiedNodeIds": [
+    "settlement.fenyang_province"
+  ],
+  "settlementVillage": {
+    "count": {
+      "min": 2,
+      "max": 6
+    },
+    "lod": {
+      "maxVisibleInstances": 150
+    },
+    "placement": {
+      "innerRadius": 0.02,
+      "outerRadius": 0.48,
+      "scaleMin": 0.72,
+      "scaleMax": 1.0,
+      "baseWorldScale": 0.00019,
+      "lift": 0.00265,
+      "footprintRadius": 0.12,
+      "minSpacing": 0.025,
+      "maxAttemptsPerBuilding": 90
+    },
+    "shader": {
+      "ambient": 0.74,
+      "directional": 0.14
+    }
+  },
+  "lod": {
+    "maxVisibleInstances": 180
+  },
+  "placement": {
+    "innerRadius": 0.08,
+    "outerRadius": 0.62,
+    "scaleMin": 0.82,
+    "scaleMax": 1.18,
+    "baseWorldScale": 0.00019,
+    "lift": 0.00265,
+    "footprintRadius": 0.12,
+    "minSpacing": 0.025,
+    "maxAttemptsPerBuilding": 120
+  },
+  "avoidance": {
+    "wallRadius": 0.64,
+    "buildingRadiusPadding": 0.08
+  },
+  "shader": {
+    "ambient": 0.72,
+    "directional": 0.16
+  },
+  "variants": [
+    {
+      "id": "building-01-9352cd035676",
+      "meshUrl": "building-01-9352cd035676.json",
+      "weight": 2,
+      "placement": {
+        "footprintRadius": 0.16
+      }
+    },
+    {
+      "id": "building-03-e1e0e8793236",
+      "meshUrl": "building-03-e1e0e8793236.json",
+      "weight": 3,
+      "placement": {
+        "footprintRadius": 0.1
+      }
+    },
+    {
+      "id": "building-04-part-01-front-segment",
+      "meshUrl": "building-04-part-01-front-segment.json",
+      "weight": 3,
+      "placement": {
+        "footprintRadius": 0.08
+      }
+    },
+    {
+      "id": "building-10-25d33f33ab0d",
+      "meshUrl": "building-10-25d33f33ab0d.json",
+      "weight": 2,
+      "placement": {
+        "footprintRadius": 0.14
+      }
+    },
+    {
+      "id": "building-35-eab9d92f772c",
+      "meshUrl": "building-35-eab9d92f772c.json",
+      "weight": 2,
+      "placement": {
+        "footprintRadius": 0.14
+      }
+    },
+    {
+      "id": "building-42-126e96a0f4c9",
+      "meshUrl": "building-42-126e96a0f4c9.json",
+      "weight": 2,
+      "placement": {
+        "footprintRadius": 0.15
+      }
+    },
+    {
+      "id": "building-45-part-01-main-building",
+      "meshUrl": "building-45-part-01-main-building.json",
+      "weight": 1,
+      "placement": {
+        "footprintRadius": 0.22
+      }
+    },
+    {
+      "id": "building-46-1b59f0c93fa9",
+      "meshUrl": "building-46-1b59f0c93fa9.json",
+      "weight": 3,
+      "placement": {
+        "footprintRadius": 0.11
+      }
+    }
+  ]
+}

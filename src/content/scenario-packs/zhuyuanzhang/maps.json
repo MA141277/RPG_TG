@@ -7696,6 +7696,14 @@
         "imageUrl": "./assets/maps/campaign-sand-texture.png"
       },
       {
+        "id": "map_village_ground_texture",
+        "label": "Campaign village ground texture",
+        "width": 1024,
+        "height": 1024,
+        "description": "field.png",
+        "imageUrl": "./assets/maps/campaign-village-ground-texture.png"
+      },
+      {
         "id": "map_rock_texture",
         "label": "Campaign rock texture",
         "width": 1254,

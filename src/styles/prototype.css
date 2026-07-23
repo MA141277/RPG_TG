@@ -1143,7 +1143,8 @@
 
 .c-campaign-marker__label {
   overflow: hidden;
-  max-width: 128px;
+  max-width: 256px;
+  font-size: 14px;
   text-overflow: ellipsis;
   white-space: nowrap;
   transform: scale(calc(var(--map-marker-inverse-scale, 1) / var(--terrain-point-perspective-scale, 1)));

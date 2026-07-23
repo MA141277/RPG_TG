@@ -2,6 +2,55 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-23 Campaign Marker Label Size
+
+### Changed
+- Campaign 地图地区 marker 文字字号从继承的 `10px` 提升到 `20px`，并把 label 最大宽度从 `128px` 提升到 `256px`；marker 点尺寸、颜色、缩放隐藏阈值和 hover 点放大规则保持不变。
+
+### Impact
+- 该变更只影响地图地区标记文字可读性，不改变 marker DOM 同步、点击、进入城市、寻路、探索、点尺寸或地形渲染。
+
+## 2026-07-23 Campaign City Ground Texture Removal
+
+### Changed
+- 从内置元末地图和朱元璋 scenario pack 中移除当前 `land.png` 城市地表 layer 注册；城市/要塞/fortified settlement 格在没有 `map_city_ground_texture` 时回退到原本地表材质。
+- 删除两份已复制进项目的 `campaign-city-ground-texture.png` 资源，保留村庄 `field.png` 地表贴图。
+
+### Impact
+- 该变更只移除当前内容使用的城市地表贴图，不改变村庄田地贴图、城市/要塞建筑、城墙、结构地表语义、通行、寻路、探索或 marker 交互。renderer 仍保留可选 `map_city_ground_texture` 支持，后续可在内容 layer 中挂入更合适的城市地表资源。
+
+## 2026-07-23 Campaign Terrain Hex Grid Stroke
+
+### Changed
+- Campaign terrain shader 的 Hex 网格描边宽度从 `0.026` 调整为 `0.042`，让地块边界更清晰；描边颜色和陆/水透明度参数保持不变。
+
+### Impact
+- 该变更只影响大地图 Hex 网格线视觉粗细，不改变地形材质、地块语义、通行、寻路、探索或 marker 交互。
+
+## 2026-07-23 Campaign Fort City Buildings
+
+### Added
+- 新增 `campaign-fort-city-rules-v1` 要塞内部建筑造景规则资产：`src/content/scenario-packs/zhuyuanzhang/assets/map-nodes/fort-city/fort-city-rules.json` 定义每个 fort 的建筑数量、随机布局半径、缩放范围、建筑 footprint、城墙避障半径和顶点色 shader 参数。
+- 新增 8 个由 `D:\model` 中轻量城市建筑 OBJ/MTL 转换来的 `campaign-vegetation-mesh-v1` 顶点色建筑 mesh；浏览器 runtime 只加载项目内 JSON，不直接解析外部 OBJ/MTL，也不依赖 DDS/TGA 贴图。
+- 新增 `tools/convert-campaign-fort-city-obj.mjs`，用于把城市建筑 OBJ/MTL 转换为 fort-city 可复用 mesh，并生成规则文件。
+- 新增 fort-city 预注册资产表，内置朱元璋地图通过 `builtin.zhuyuanzhang.fort-city` 在进入地图前准备建筑 mesh，renderer 不再等地图出现后逐个 fetch 内置建筑 JSON。
+- 新增 `settlementVillage` 视觉规则：普通 `kind: "settlement"` 节点所在 Hex 会生成 2-6 个村庄建筑，并使用同一批已预注册建筑 mesh；同格存在 city/fort/fortified settlement 时，城市化视觉优先，村庄不再生成。
+- 新增 `map_village_ground_texture` 和 `map_city_ground_texture` 地表图层，朱元璋 scenario pack 与内置元末地图分别注册本次提供的田地图和裸地图作为村庄/城市地面材质。
+
+### Changed
+- Campaign terrain renderer 会在已加载视觉 chunk 内的 `kind: "fort"` Hex 中心，按 fort hex 坐标和规则 seed 生成稳定建筑布局；同一个 fort 每次加载保持相同建筑位置、朝向和缩放，避免 chunk 顺序或玩家移动造成视觉跳变。内置规则现在每个可见 city/fort 生成 10-15 个目标建筑，并通过 `lod.maxVisibleInstances` 控制同屏建筑预算。
+- fort-city 建筑布局从纯随机散点改为六边形范围内的确定性随机 best-candidate 采样：每个建筑会在 Hex 内生成多批候选点，选择离已放建筑最远且满足避障的点，从而保持随机感但避免聚团；避障按缩放后的建筑 footprint 与 `placement.minSpacing` 判定，失败时跳过该建筑，不再关闭间距检查强行兜底放置。
+- fort-city variant 选择从单次加权抽样改为本城内的 variant 尝试队列：优先尝试当前城市中尚未出现或出现次数较少的模型，同等次数再按权重和稳定随机排序；某个模型因 footprint 放不下时会继续尝试其它模型，避免部分建筑长期完全不生成。
+- fort-city 建筑从 vegetation fragment shader 中拆出为独立 fort-city shader pass：建筑仍复用顶点色 mesh 格式和 terrain camera 顶点变换，但不再共享树木的双面片元受光策略；建筑 shader 使用 terrain 同源光向量和建筑模型法线直接受光，修正建筑受光面/背光面反置问题。
+- `settlement.fenyang_province`（濠州）加入 fort-city 规则的 `fortifiedNodeIds`，改用城墙+内部建筑群视觉；旧 `city_hun` depth 模型不再挂载到 Campaign 地图 canvas。
+- 植被避障输入新增 fort 结构 footprint：树木会同时避开 fort 城墙中心占位和 fort 内部建筑 footprint，防止森林树与城墙或建筑穿模。
+- `uMaterialSemanticTexture` 的 B 通道从预留改为结构化地表覆盖语义：村庄格写入 village 值，城市/要塞/fortified settlement 格写入 city 值；terrain shader 根据该语义在原草地上替换为村庄或城市地表纹理，缺少对应图层时回退到原草地材质。
+- 村庄/城市地表贴图采样改为 Hex 局部 UV，每个结构化地表格大致铺满一张村庄或城市贴图，不再复用全图 `uLandTextureTiling` 导致单张贴图跨过过多地块。
+
+### Impact
+- fort 和被规则指定的 fortified settlement 现在会呈现为带城墙和内部建筑群的城市化节点；该表现仍是纯视觉层，不改变城市进入、寻路、探索、地图节点数据或 gameplay 状态。
+- 普通 settlement 现在拥有轻量村庄聚落和田地地面表现；该表现同样只由 marker 源数据、已加载视觉 chunk 和 Hex terrain 语义驱动，不改变 `cities.json`、寻路、探索或进入逻辑。
+
 ## 2026-07-23 Campaign Exploration Terrain Load Deferral
 
 ### Changed
@@ -10,6 +59,7 @@
 - `campaign-cloud-webgl.ts` 在实际检测到 revealed hex 集合变化并启动云洞 dissolve transition 时，会持有 terrain chunk 加载暂停令牌；只有云层 transition 自己判定完成后，才延迟释放加载，避免 terrain 只按固定时间恢复并和云层消散同步抢主线程。
 - Campaign fort wall mesh 签名改为只依赖实际 fort 实例集合，不再把所有已加载 terrain chunk key 纳入签名；无关 chunk 到达不会重建整批 fort wall GPU buffer。
 - Campaign vegetation mesh 的避让输入只保留稳定 marker 点，不再把移动中的玩家和路线点纳入静态植被 mesh 签名，避免玩家每帧移动触发整批植被 mesh 重建。
+- 普通 Campaign 地图移动结束后不再无条件执行 `renderApp()` 全量 DOM 重建；没有进入城市、modal 或地点对话时，只局部移除 travel banner、同步玩家 DOM、探索云层数据和全局任务栏文本，避免每次移动结束都重建地图页面。
 
 ### Impact
 - 玩家探索新区域时，新地形不会抢在玩家移动、云洞消散等动画完成前显示出来，避免新地图在云层动画中途突然加载。

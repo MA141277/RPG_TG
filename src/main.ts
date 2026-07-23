@@ -54,6 +54,7 @@ import {
 } from "./application/player/player-stamina";
 import {
   formatCouncilStatusText,
+  getCouncilStatusText,
   readCalendarDateNumber,
 } from "./application/time/time-progression";
 import {
@@ -4643,7 +4644,9 @@ function handleModalConfirm() {
         }),
       });
       appState = runtimeCommit.state;
-      renderApp();
+      if (!syncCampaignTravelCompletionView()) {
+        renderApp();
+      }
     });
     return;
   }
@@ -4785,7 +4788,9 @@ function startCampaignTravel(
       }),
     });
     appState = runtimeCommit.state;
-    renderApp();
+    if (!syncCampaignTravelCompletionView()) {
+      renderApp();
+    }
   });
 }
 
@@ -5333,6 +5338,70 @@ function renderAppFrame(
   syncCampaignTerrainWebGl(appRoot);
   syncCampaignCloudWebGl(appRoot);
   syncCityBeggingMiniGameOverlay(appRoot, appState.beggingMiniGameState);
+}
+
+function syncCampaignTravelCompletionView(): boolean {
+  if (
+    appState.gameState.ui.currentView !== "map" ||
+    appState.modalState != null ||
+    appState.locationDialogueState != null
+  ) {
+    return false;
+  }
+
+  appRoot.querySelector<HTMLElement>(".c-campaign-travel-banner")?.remove();
+  syncCampaignActorView();
+  syncCampaignMapExplorationCanvasData();
+  syncGlobalHudTaskPanelView();
+  syncCampaignCloudWebGl(appRoot);
+  requestCampaignTerrainRender("static");
+  return true;
+}
+
+function syncCampaignMapExplorationCanvasData(): void {
+  const mapDefinition = getCurrentMapDefinition();
+  if (mapDefinition == null) {
+    return;
+  }
+
+  const revealedHexKeys =
+    appState.gameState.runtime.mapExplorationByMapId[mapDefinition.id]
+      ?.revealedHexKeys ?? [];
+  for (const cloudCanvas of appRoot.querySelectorAll<HTMLCanvasElement>(
+    "[data-campaign-map-cloud]"
+  )) {
+    cloudCanvas.dataset.mapRevealedHexKeys = revealedHexKeys.join(" ");
+  }
+}
+
+function syncGlobalHudTaskPanelView(): void {
+  const reviewItem = appRoot.querySelector<HTMLElement>(
+    "[data-task-item='review']"
+  );
+  const reviewValue = reviewItem?.querySelector<HTMLElement>(
+    ".p-global-task-panel__value"
+  );
+  const reviewText = getCouncilStatusText(appState.gameState);
+  if (reviewItem != null) {
+    reviewItem.title = reviewText;
+  }
+  if (reviewValue != null) {
+    reviewValue.textContent = reviewText;
+  }
+
+  const missionItem = appRoot.querySelector<HTMLElement>(
+    "[data-task-item='mission']"
+  );
+  const missionValue = missionItem?.querySelector<HTMLElement>(
+    ".p-global-task-panel__value"
+  );
+  const missionText = appState.gameState.ui.mainHouseMissionText ?? "暂无任务";
+  if (missionItem != null) {
+    missionItem.title = missionText;
+  }
+  if (missionValue != null) {
+    missionValue.textContent = missionText;
+  }
 }
 
 function restoreCampaignMapScaleInputFocus(
