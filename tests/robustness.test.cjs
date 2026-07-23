@@ -1913,6 +1913,138 @@ test("runtime zhuyuanzhang text ids in main.ts do not keep inline fallback prose
   );
 });
 
+test("map chapter intro uses a full-screen black backdrop that holds before fading", () => {
+  const prototypeCss = fs.readFileSync(
+    path.join(process.cwd(), "src", "styles", "prototype.css"),
+    "utf8"
+  );
+
+  assert.match(
+    prototypeCss,
+    /\.c-map-intro-overlay\s*\{[\s\S]*?background:\s*rgb\(0 0 0 \/ 92%\);[\s\S]*?animation:\s*map-intro-backdrop-fade 4000ms ease forwards;/s
+  );
+  assert.match(
+    prototypeCss,
+    /\.c-map-intro-overlay__title\s*\{(?:(?!background:)[\s\S])*?animation:\s*map-intro-title-fade 4000ms ease forwards;/s
+  );
+  assert.match(
+    prototypeCss,
+    /\.c-map-intro-overlay__title::before,\s*\.c-map-intro-overlay__title::after\s*\{/s
+  );
+  assert.match(
+    prototypeCss,
+    /80%\s*\{\s*opacity:\s*1;\s*transform:\s*translateY\(0\) scale\(1\);/s
+  );
+  assert.match(
+    prototypeCss,
+    /@keyframes map-intro-backdrop-fade \{[\s\S]*?80%\s*\{\s*opacity:\s*1;/s
+  );
+});
+
+test("map chapter intro hide path keeps the backdrop node for its css fade", () => {
+  const mainSource = fs.readFileSync(
+    path.join(process.cwd(), "src", "main.ts"),
+    "utf8"
+  );
+  const hideFunctionMatch = mainSource.match(
+    /function hideMapIntroOverlay\(\): void \{([\s\S]*?)\r?\n\}/
+  );
+
+  assert.ok(hideFunctionMatch, "Expected hideMapIntroOverlay to exist.");
+  assert.doesNotMatch(
+    hideFunctionMatch[1],
+    /\.remove\(/,
+    "Expected map intro hide path to keep the overlay DOM node so its CSS fade can finish."
+  );
+  assert.match(
+    hideFunctionMatch[1],
+    /activeMapIntroOverlay\s*=\s*null;/,
+    "Expected map intro hide path to clear the active overlay reference."
+  );
+});
+
+test("startup loading waits for initial map view assets before hiding loading screen", () => {
+  const mainSource = fs.readFileSync(
+    path.join(process.cwd(), "src", "main.ts"),
+    "utf8"
+  );
+
+  assert.match(
+    mainSource,
+    /import \{\s*preloadInitialMapViewAssets\s*\} from "\.\/ui\/startup-asset-preloader";/,
+    "Expected main startup flow to import the startup asset preloader."
+  );
+  assert.match(
+    mainSource,
+    /const STARTUP_LOADING_SIMULATED_PROGRESS_CAP = 0\.7;/,
+    "Expected loading progress to reserve its final segment for real asset preloading."
+  );
+
+  const startupFunctions = [
+    "startContinueGameWithLoading",
+    "startRestoredGameWithLoading",
+    "startMainGameWithLoading",
+    "runScenarioPackStartupRequestWithLoading",
+  ];
+
+  for (const functionName of startupFunctions) {
+    const match = mainSource.match(
+      new RegExp(
+        `function ${functionName}[\\s\\S]*?applyActivatedModSession\\(startupSession\\);[\\s\\S]*?await preloadInitialMapViewAssets\\(\\s*appRoot,[\\s\\S]*?endLoadingScreen\\(requestId\\);`
+      )
+    );
+    assert.ok(
+      match,
+      `Expected ${functionName} to preload initial map view assets after rendering and before ending the loading screen.`
+    );
+  }
+});
+
+test("startup asset preloader gathers first-screen map webgl and image assets", () => {
+  const preloaderSource = fs.readFileSync(
+    path.join(process.cwd(), "src", "ui", "startup-asset-preloader.ts"),
+    "utf8"
+  );
+
+  for (const attribute of [
+    "data-map-texture-url",
+    "data-map-height-url",
+    "data-map-material-url",
+    "data-map-hex-grid-url",
+    "data-map-vegetation-rules-url",
+    "data-map-grass-texture-url",
+    "data-map-sand-texture-url",
+    "data-map-rock-texture-url",
+    "data-map-snow-texture-url",
+    "data-map-water-texture-url",
+    "data-map-cloud-noise-url",
+    "data-campaign-city-texture-url",
+    "data-campaign-city-mesh-url",
+    "data-campaign-player-sprite-url",
+    "data-campaign-player-texture-url",
+    "data-campaign-player-model-url",
+    "data-campaign-player-idle-animation-url",
+    "data-campaign-player-walk-animation-url",
+  ]) {
+    assert.match(
+      preloaderSource,
+      new RegExp(attribute),
+      `Expected startup asset preloader to collect ${attribute}.`
+    );
+  }
+
+  assert.match(
+    preloaderSource,
+    /image\.decode\(\)/,
+    "Expected image preloading to wait for browser decode when available."
+  );
+  assert.match(
+    preloaderSource,
+    /fetch\(url\)/,
+    "Expected non-image startup assets to be fetched before loading ends."
+  );
+});
+
 test("story callback resolves guo zixing camp copy from text entries", () => {
   const result = runStoryCallback(
     "story.zhu_yuanzhang.join-guo-zixing-camp",
@@ -3474,6 +3606,334 @@ test("campaign terrain WebGL shader uses separate shared animated water texture 
     /vec4\(shadedColor, 1\.0\)/
   );
   assert.doesNotMatch(rendererSource, /getCampaignVegetationAlpha/);
+});
+
+test("campaign map render keeps a unified low-resolution budget during zoom", () => {
+  const cloudRendererSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src",
+      "ui",
+      "views",
+      "map",
+      "campaign-cloud-webgl.ts"
+    ),
+    "utf8"
+  );
+  const terrainRendererSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src",
+      "ui",
+      "views",
+      "map",
+      "campaign-terrain-webgl.ts"
+    ),
+    "utf8"
+  );
+
+  assert.match(
+    terrainRendererSource,
+    /const pixelRatio = Math\.min\(window\.devicePixelRatio \|\| 1, 1\);/,
+    "Expected terrain and actor canvases to use a unified DPR 1 budget instead of redrawing at high DPI during map zoom."
+  );
+  assert.doesNotMatch(
+    terrainRendererSource,
+    /const pixelRatio = Math\.min\(window\.devicePixelRatio \|\| 1, 2\);/,
+    "Expected terrain and actor canvases not to keep the previous DPR 2 budget."
+  );
+  assert.match(
+    cloudRendererSource,
+    /const CLOUD_RENDER_MAX_DEVICE_PIXEL_RATIO = 1;/
+  );
+  assert.match(
+    cloudRendererSource,
+    /const CLOUD_RENDER_MAX_LONG_EDGE_PX = 1280;/
+  );
+  assert.match(
+    cloudRendererSource,
+    /const devicePixelRatio = Math\.min\(\s*window\.devicePixelRatio \|\| 1,\s*CLOUD_RENDER_MAX_DEVICE_PIXEL_RATIO\s*\);/s
+  );
+  assert.match(
+    cloudRendererSource,
+    /const longEdgeScale = Math\.min\(\s*1,\s*CLOUD_RENDER_MAX_LONG_EDGE_PX \/ Math\.max\(rawWidth, rawHeight\)\s*\);/s,
+    "Expected cloud rendering to keep shoreamend-style long-edge downsampling at rest and during map interaction to avoid canvas reallocations."
+  );
+  assert.match(
+    cloudRendererSource,
+    /const rawWidth = Math\.max\(1, Math\.round\(rect\.width \* devicePixelRatio\)\);/
+  );
+  assert.match(
+    cloudRendererSource,
+    /const width = Math\.max\(1, Math\.round\(rawWidth \* longEdgeScale\)\);/
+  );
+  assert.doesNotMatch(
+    cloudRendererSource,
+    /CLOUD_INTERACTION_RENDER_MAX_DEVICE_PIXEL_RATIO|CLOUD_INTERACTION_RENDER_MAX_LONG_EDGE_PX|interactionLongEdgeScale/,
+    "Expected cloud canvas size to stay stable instead of changing budget when zoom starts or stops."
+  );
+});
+
+test("campaign cloud render keeps flowing cloud animation timing", () => {
+  const cloudRendererSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src",
+      "ui",
+      "views",
+      "map",
+      "campaign-cloud-webgl.ts"
+    ),
+    "utf8"
+  );
+
+  assert.match(
+    cloudRendererSource,
+    /const CLOUD_ANIMATION_FRAME_INTERVAL_MS = 1000 \/ 12;/,
+    "Expected idle cloud animation to refresh at 12fps after lowering the unified render budget."
+  );
+  assert.match(
+    cloudRendererSource,
+    /const CLOUD_IDLE_TIME_SCALE = 0\.35;/
+  );
+  assert.match(
+    cloudRendererSource,
+    /let idleCloudTimeOffsetSeconds = 0;/
+  );
+  assert.match(
+    cloudRendererSource,
+    /gl\.uniform1f\(\s*timeSecondsLocation,\s*resolveCloudTimeSeconds\(\)\s*\);/s
+  );
+  assert.doesNotMatch(
+    cloudRendererSource,
+    /gl\.uniform1f\(timeSecondsLocation,\s*0\);/,
+    "Cloud shader time must advance so online-style flowing clouds remain visible."
+  );
+  assert.match(
+    cloudRendererSource,
+    /function scheduleAnimationRender\(\): void \{[\s\S]*?CLOUD_ANIMATION_FRAME_INTERVAL_MS/s
+  );
+  assert.match(
+    cloudRendererSource,
+    /scheduleAnimationRender\(\);/
+  );
+});
+
+test("campaign cloud freezes animation during map drag and zoom instead of using a css proxy", () => {
+  const cloudRendererSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src",
+      "ui",
+      "views",
+      "map",
+      "campaign-cloud-webgl.ts"
+    ),
+    "utf8"
+  );
+  const mainSource = fs.readFileSync(
+    path.join(process.cwd(), "src", "main.ts"),
+    "utf8"
+  );
+  assert.match(
+    cloudRendererSource,
+    /const activeCloudInteractionReasons = new Set<string>\(\);/
+  );
+  assert.match(
+    cloudRendererSource,
+    /export function beginCampaignCloudInteraction\(reason: string\): void/
+  );
+  assert.match(
+    cloudRendererSource,
+    /export function endCampaignCloudInteraction\(reason: string\): void/
+  );
+  assert.match(
+    cloudRendererSource,
+    /function isCloudInteractionActive\(\): boolean \{\s*return activeCloudInteractionReasons\.size > 0;\s*\}/
+  );
+  const beginInteractionFreezeMatch = cloudRendererSource.match(
+    /function beginInteractionFreeze\(\): void \{([\s\S]*?)\n  \}/
+  );
+  assert.ok(
+    beginInteractionFreezeMatch,
+    "Expected beginInteractionFreeze to exist."
+  );
+  assert.match(
+    beginInteractionFreezeMatch[1],
+    /frozenCloudTimeSeconds = resolveIdleCloudTimeSeconds\(\);[\s\S]*?requestRender\(\);/s,
+    "Expected cloud interaction freeze to request an immediate low-budget redraw before zoom frames do expensive cloud work."
+  );
+  assert.match(
+    cloudRendererSource,
+    /function endInteractionFreeze\(\): void \{[\s\S]*?idleCloudTimeOffsetSeconds = frozenCloudTimeSeconds;[\s\S]*?idleCloudResumeMs = performance\.now\(\);/s
+  );
+  assert.match(
+    cloudRendererSource,
+    /function resolveCloudTimeSeconds\(\): number \{[\s\S]*?if \(isCloudInteractionActive\(\)\) \{[\s\S]*?return frozenCloudTimeSeconds;[\s\S]*?return resolveIdleCloudTimeSeconds\(\);/s
+  );
+  assert.match(
+    cloudRendererSource,
+    /function scheduleAnimationRender\(\): void \{[\s\S]*?isCloudInteractionActive\(\)/s,
+    "Expected cloud animation ticks to stop while map drag or zoom is active."
+  );
+  assert.doesNotMatch(
+    cloudRendererSource,
+    /applyInteractionProxyTransform|clearInteractionProxyTransform|is-interaction-proxy|canvas\.style\.transform/,
+    "Expected the rejected css proxy method to be removed."
+  );
+  assert.match(
+    mainSource,
+    /beginCampaignCloudInteraction,\s*endCampaignCloudInteraction,[\s\S]*?from "\.\/ui\/views\/map\/campaign-cloud-webgl";/s
+  );
+  assert.match(
+    mainSource,
+    /function startCampaignMapZoomAnimation[\s\S]*?beginCampaignCloudInteraction\("zoom"\);[\s\S]*?endCampaignCloudInteraction\("zoom"\);/s
+  );
+  assert.match(
+    mainSource,
+    /function cancelCampaignMapZoomAnimation[\s\S]*?endCampaignCloudInteraction\("zoom"\);/s
+  );
+  assert.match(
+    mainSource,
+    /campaignMapDragState = \{[\s\S]*?\};\s*beginCampaignCloudInteraction\("drag"\);/s
+  );
+  assert.match(
+    mainSource,
+    /campaignMapDragState = null;\s*endCampaignCloudInteraction\("drag"\);/s
+  );
+});
+
+test("campaign cloud stays frozen briefly after repeated zoom input stops", () => {
+  const mainSource = fs.readFileSync(
+    path.join(process.cwd(), "src", "main.ts"),
+    "utf8"
+  );
+
+  assert.match(
+    mainSource,
+    /const CAMPAIGN_MAP_ZOOM_CLOUD_IDLE_RESUME_DELAY_MS = 500;/,
+    "Expected map zoom to keep clouds frozen for half a second after the final zoom tick."
+  );
+  assert.match(
+    mainSource,
+    /let campaignMapZoomCloudResumeTimeoutId: number \| null = null;/
+  );
+  assert.match(
+    mainSource,
+    /function startCampaignMapZoomAnimation[\s\S]*?cancelCampaignMapZoomCloudResume\(\);[\s\S]*?beginCampaignCloudInteraction\("zoom"\);[\s\S]*?campaignMapZoomAnimationState\.target = targetState;[\s\S]*?return;/s,
+    "Expected repeated zoom starts to update the active zoom target instead of rebuilding the animation."
+  );
+  assert.doesNotMatch(
+    mainSource,
+    /function startCampaignMapZoomAnimation[\s\S]*?cancelCampaignMapZoomAnimation\(\{\s*keepCloudInteraction: true\s*\}\);/s,
+    "Expected wheel zoom to keep a persistent animation controller instead of canceling and recreating it on every tick."
+  );
+  assert.match(
+    mainSource,
+    /function scheduleCampaignMapZoomCloudResume\(\): void \{[\s\S]*?window\.setTimeout\(\(\) => \{[\s\S]*?endCampaignCloudInteraction\("zoom"\);[\s\S]*?CAMPAIGN_MAP_ZOOM_CLOUD_IDLE_RESUME_DELAY_MS/s
+  );
+  assert.match(
+    mainSource,
+    /function cancelCampaignMapZoomCloudResume\(\): void \{[\s\S]*?window\.clearTimeout\(campaignMapZoomCloudResumeTimeoutId\);/s
+  );
+  assert.match(
+    mainSource,
+    /function cancelCampaignMapZoomAnimation\(\s*options: \{ keepCloudInteraction\?: boolean \} = \{\}\s*\): void \{[\s\S]*?if \(options\.keepCloudInteraction !== true\) \{[\s\S]*?cancelCampaignMapZoomCloudResume\(\);[\s\S]*?endCampaignCloudInteraction\("zoom"\);[\s\S]*?\}/s
+  );
+  assert.doesNotMatch(
+    mainSource,
+    /campaignMapZoomAnimationState = null;\s*endCampaignCloudInteraction\("zoom"\);/,
+    "Expected completed zoom animations to schedule delayed cloud resume instead of ending immediately."
+  );
+}
+);
+
+test("campaign map zoom uses a persistent target-chasing controller", () => {
+  const mainSource = fs.readFileSync(
+    path.join(process.cwd(), "src", "main.ts"),
+    "utf8"
+  );
+
+  assert.match(
+    mainSource,
+    /type CampaignMapZoomAnimationState = \{[\s\S]*?target: CampaignMapDebugState;[\s\S]*?lastFrameMs: number \| null;[\s\S]*?\};/s,
+    "Expected zoom animation state to hold the current target and last frame timestamp."
+  );
+  assert.match(
+    mainSource,
+    /function scheduleCampaignMapZoomAnimationFrame\(\): void \{[\s\S]*?window\.requestAnimationFrame\(animateCampaignMapZoom\)/s,
+    "Expected zoom animation to be driven by one reusable RAF loop."
+  );
+  assert.match(
+    mainSource,
+    /function animateCampaignMapZoom\(timestamp: number\): void \{[\s\S]*?campaignMapZoomAnimationState\.target[\s\S]*?interpolateCampaignMapState\(\s*campaignMapDebugState,\s*targetState,/s,
+    "Expected each zoom frame to chase the latest target from the current map state."
+  );
+  assert.match(
+    mainSource,
+    /function isCampaignMapZoomStateSettled\([\s\S]*?scaleDelta[\s\S]*?offsetDelta/s,
+    "Expected zoom completion to be based on settling near the latest target."
+  );
+});
+
+test("campaign map performance panel is hidden by default and exposes render stats on demand", () => {
+  const mainSource = fs.readFileSync(
+    path.join(process.cwd(), "src", "main.ts"),
+    "utf8"
+  );
+  const terrainSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src",
+      "ui",
+      "views",
+      "map",
+      "campaign-terrain-webgl.ts"
+    ),
+    "utf8"
+  );
+  const cloudSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src",
+      "ui",
+      "views",
+      "map",
+      "campaign-cloud-webgl.ts"
+    ),
+    "utf8"
+  );
+
+  assert.match(
+    mainSource,
+    /rpgMapPerf\?: CampaignMapPerfConsoleCommand;/,
+    "Expected a console command for opening the map performance panel."
+  );
+  assert.match(
+    mainSource,
+    /let campaignMapPerfPanelEnabled = false;/,
+    "Expected the map performance panel to be hidden by default."
+  );
+  assert.match(
+    mainSource,
+    /window\.rpgMapPerf = \(command = "status"\) => \{[\s\S]*?syncCampaignMapPerfPanel\(\);[\s\S]*?return getCampaignMapPerfSnapshot\(\);[\s\S]*?\};/s,
+    "Expected the performance command to toggle the panel and return a live snapshot."
+  );
+  assert.match(
+    mainSource,
+    /data-campaign-map-perf-panel/,
+    "Expected the panel to use a stable DOM marker for browser inspection."
+  );
+  assert.match(
+    terrainSource,
+    /export function getCampaignTerrainRenderStats\(\): CampaignTerrainRenderStats/,
+    "Expected terrain renderer stats to be readable by the perf panel."
+  );
+  assert.match(
+    cloudSource,
+    /export function getCampaignCloudRenderStats\(\): CampaignCloudRenderStats/,
+    "Expected cloud renderer stats to be readable by the perf panel."
+  );
 });
 
 test("campaign hex grid and shader treat outside-map edge cells as water", () => {

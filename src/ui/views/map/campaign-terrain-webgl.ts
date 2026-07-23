@@ -423,6 +423,17 @@ type CampaignTerrainRenderer = {
   sampleHeightAtUv: (u: number, v: number) => number;
 };
 
+export type CampaignTerrainRenderStats = {
+  canvasWidth: number;
+  canvasHeight: number;
+  lastRenderDurationMs: number;
+  lastDrawCalls: number;
+  lastRenderReason: "static" | "dynamic" | null;
+  renderCount: number;
+  rendererCount: number;
+  pendingRendererCount: number;
+};
+
 type CampaignActorData = {
   u: number;
   v: number;
@@ -436,6 +447,16 @@ type CampaignActorData = {
 
 const activeRenderers = new Map<HTMLCanvasElement, CampaignTerrainRenderer>();
 const pendingRendererCanvases = new Set<HTMLCanvasElement>();
+let campaignTerrainRenderStats: CampaignTerrainRenderStats = {
+  canvasWidth: 0,
+  canvasHeight: 0,
+  lastRenderDurationMs: 0,
+  lastDrawCalls: 0,
+  lastRenderReason: null,
+  renderCount: 0,
+  rendererCount: 0,
+  pendingRendererCount: 0,
+};
 
 type CampaignTerrainProjectionInput = {
   canvas: HTMLCanvasElement;
@@ -573,6 +594,14 @@ export function requestCampaignTerrainRender(reason: "static" | "dynamic" = "dyn
   for (const renderer of activeRenderers.values()) {
     renderer.requestRender(reason);
   }
+}
+
+export function getCampaignTerrainRenderStats(): CampaignTerrainRenderStats {
+  return {
+    ...campaignTerrainRenderStats,
+    rendererCount: activeRenderers.size,
+    pendingRendererCount: pendingRendererCanvases.size,
+  };
 }
 
 function clampTerrainBeachTuning(
@@ -1427,6 +1456,7 @@ async function initCampaignTerrainWebGl(
   let frameId: number | null = null;
   let isDisposed = false;
   let hasPendingRender = false;
+  let lastRequestedRenderReason: "static" | "dynamic" | null = null;
   let projectedPointsNeedSync = true;
   let lastActorSignature = "";
   let lastCityDepthMeshSignature = "";
@@ -1548,6 +1578,8 @@ async function initCampaignTerrainWebGl(
       return;
     }
 
+    const renderStartedAtMs = performance.now();
+    let drawCalls = 0;
     frameId = null;
     hasPendingRender = false;
     resizeCanvasToDisplaySize(input.canvas);
@@ -1726,6 +1758,7 @@ async function initCampaignTerrainWebGl(
           gl.UNSIGNED_INT,
           0
         );
+        drawCalls += 1;
       };
 
       for (const chunkResource of chunkResourcesByKey.values()) {
@@ -1812,6 +1845,7 @@ async function initCampaignTerrainWebGl(
             gl.UNSIGNED_INT,
             0
           );
+          drawCalls += 1;
           gl.depthMask(true);
           gl.disable(gl.BLEND);
         }
@@ -1886,6 +1920,7 @@ async function initCampaignTerrainWebGl(
         gl.polygonOffset(-4, -8);
         gl.depthMask(true);
         gl.drawElements(gl.TRIANGLES, vegetationMesh.indices.length, gl.UNSIGNED_INT, 0);
+        drawCalls += 1;
         gl.disable(gl.POLYGON_OFFSET_FILL);
       }
     }
@@ -1952,6 +1987,7 @@ async function initCampaignTerrainWebGl(
       gl.disable(gl.CULL_FACE);
       gl.depthMask(true);
       gl.drawElements(gl.TRIANGLES, cityDepthMesh.indices.length, gl.UNSIGNED_INT, 0);
+      drawCalls += 1;
     }
 
     const actor = readCampaignActorData(input.canvas);
@@ -2020,6 +2056,7 @@ async function initCampaignTerrainWebGl(
       gl.uniform1f(actorForceOpaqueAlphaLocation, 1);
       gl.disable(gl.CULL_FACE);
       gl.drawElements(gl.TRIANGLES, actorMesh.indices.length, gl.UNSIGNED_SHORT, 0);
+      drawCalls += 1;
       gl.disable(gl.CULL_FACE);
     } else {
       if (lastActorSignature !== "") {
@@ -2036,6 +2073,16 @@ async function initCampaignTerrainWebGl(
     if (animatesTerrainWater || animatesActorModel || animatesVegetation) {
       scheduleDynamicAnimationRender();
     }
+    campaignTerrainRenderStats = {
+      canvasWidth: input.canvas.width,
+      canvasHeight: input.canvas.height,
+      lastRenderDurationMs: performance.now() - renderStartedAtMs,
+      lastDrawCalls: drawCalls,
+      lastRenderReason: lastRequestedRenderReason,
+      renderCount: campaignTerrainRenderStats.renderCount + 1,
+      rendererCount: activeRenderers.size,
+      pendingRendererCount: pendingRendererCanvases.size,
+    };
   };
 
   const scheduleDynamicAnimationRender = () => {
@@ -2057,6 +2104,7 @@ async function initCampaignTerrainWebGl(
     if (reason === "static") {
       projectedPointsNeedSync = true;
     }
+    lastRequestedRenderReason = reason;
     if (hasPendingRender) {
       return;
     }
@@ -7307,7 +7355,7 @@ function updateTextureImage(
 }
 
 function resizeCanvasToDisplaySize(canvas: HTMLCanvasElement): void {
-  const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+  const pixelRatio = Math.min(window.devicePixelRatio || 1, 1);
   const width = Math.max(Math.floor(canvas.clientWidth * pixelRatio), 1);
   const height = Math.max(Math.floor(canvas.clientHeight * pixelRatio), 1);
 
