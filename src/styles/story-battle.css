@@ -8,21 +8,25 @@
 }
 
 .view-story-battle--embedded {
+  position: absolute;
+  inset: 0;
   display: block;
   width: 100%;
   height: 100%;
   min-height: 100%;
   padding: 0;
   overflow: hidden;
-  background: #090b0a;
+  background: transparent;
 }
 
 .c-story-battle__demo-frame {
+  position: absolute;
+  inset: 0;
   display: block;
   width: 100%;
   height: 100%;
   border: 0;
-  background: #090b0a;
+  background: transparent;
 }
 
 .c-story-battle__header {

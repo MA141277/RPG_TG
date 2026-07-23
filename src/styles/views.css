@@ -20,6 +20,11 @@
     linear-gradient(180deg, rgb(0 0 0 / 100%), rgb(0 0 0 / 100%));
 }
 
+.l-stage:has(> .view-story-battle) {
+  padding: 0;
+  background: #000;
+}
+
 .c-map-stage-actions {
   position: absolute;
   bottom: 26px;
