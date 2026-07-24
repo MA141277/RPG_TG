@@ -982,3 +982,68 @@ test("workflow inspection drives isolated end-to-end Blueprint routing with auto
   assert.match(result.humanDecisionReason, /multiple lawful candidate queues/i);
   assert.deepEqual(result.candidateQueueIds, ["queue.delta", "queue.gamma"]);
 });
+
+test("workflow inspection exposes machine-readable active-task and stop inspection fields", async (t) => {
+  const {
+    repoRoot,
+    blueprintVersion,
+    targetPlanPath,
+    queueOwnerId,
+  } = createGovernanceFixture({
+    activeQueueId: "none",
+    candidateQueueIds: ["queue.alpha"],
+  });
+  t.after(() => removeFixtureRepo(repoRoot));
+
+  const { inspectBlueprintWorkflow } = await loadGovernanceTool();
+  const { lintBlueprintDocs } = await loadBlueprintLintModule();
+
+  writeProjectProgressFixture(repoRoot, {
+    activeVersion: queueOwnerId,
+    hasActiveQueue: true,
+  });
+  writeVersionPlanFixture(repoRoot, targetPlanPath, {
+    versionId: queueOwnerId,
+    activeQueue: "queue.alpha",
+    decisionState: "active-execution",
+    nextDecision: "queue-closeout-or-return-to-version-review",
+    nextAction: "resume-active-queue",
+    resumeGate: "open-active-queue",
+    candidateQueueIds: ["queue.alpha"],
+  });
+  writeFixtureFile(
+    repoRoot,
+    targetPlanPath,
+    fs.readFileSync(path.join(repoRoot, ...targetPlanPath.split("/")), "utf8")
+      .replace("- stop_reason: `none`", "- stop_reason: `real-blocker`")
+      .replace("- stop_basis: `none`", "- stop_basis: `fixture blocker evidence`")
+      .replace("- next_unblocked_action: `none`", "- next_unblocked_action: `resolve-blocker`")
+      .replace("- human_input_required: `false`", "- human_input_required: `true`")
+  );
+  writeMultiTaskQueueFixture(repoRoot, "docs/blueprints/queues/alpha.md", {
+    queueId: "queue.alpha",
+    ownerId: queueOwnerId,
+    blueprintVersion,
+    queueStatus: "active",
+    activeTask: "task.queue.alpha.audit",
+    nextTask: "task.queue.alpha.impl",
+    tasks: [
+      { taskId: "task.queue.alpha.audit", state: "active", summary: "Audit the queue boundary." },
+      { taskId: "task.queue.alpha.impl", state: "queued", summary: "Implement the bounded slice.", dependsOn: "task.queue.alpha.audit" },
+    ],
+  });
+
+  assert.deepEqual(lintBlueprintDocs(repoRoot), []);
+  const result = inspectBlueprintWorkflow(repoRoot);
+  assert.equal(result.ok, true);
+  assert.equal(result.activeQueueId, "queue.alpha");
+  assert.equal(result.activeTaskId, "task.queue.alpha.audit");
+  assert.equal(result.activeVersionPlanPath, targetPlanPath);
+  assert.deepEqual(result.stop, {
+    stopReason: "real-blocker",
+    stopBasis: "fixture blocker evidence",
+    nextUnblockedAction: "resolve-blocker",
+    humanInputRequired: true,
+    stopAllowed: true,
+  });
+});

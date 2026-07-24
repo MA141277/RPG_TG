@@ -2,9 +2,24 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-export function runBlueprintVersionGovernance(mode, repoRoot = process.cwd()) {
+export function runBlueprintVersionGovernance(mode, repoRoot = process.cwd(), options = {}) {
   if (mode === "inspect") {
-    return inspectBlueprintWorkflow(repoRoot);
+    const result = inspectBlueprintWorkflow(repoRoot);
+    if (options.json) {
+      return result;
+    }
+    return {
+      ok: result.ok,
+      messages: result.ok
+        ? [
+            `recommendedAction=${result.recommendedAction}`,
+            `activeQueueId=${result.activeQueueId ?? "none"}`,
+            `activeTaskId=${result.activeTaskId ?? "none"}`,
+            `stopAllowed=${String(result.stop.stopAllowed)}`,
+            `stopReason=${result.stop.stopReason}`,
+          ]
+        : (result.messages ?? ["Blueprint workflow inspection failed."]),
+    };
   }
 
   const context = readGovernanceContext(repoRoot);
@@ -144,6 +159,21 @@ function inspectBlueprintWorkflowContext(context) {
   const candidateQueueIds = extractListEntries(context.activePlanText, "candidate_queue_ids")
     .filter((queueId) => queueId.startsWith("queue."))
     .sort();
+  const stop = inspectStopState(context.activePlanText);
+  const baseResult = {
+    ok: true,
+    humanDecisionRequired: false,
+    humanDecisionReason: null,
+    activeVersionPlanPath: relative(context.repoRoot, context.activePlanPath),
+    activeQueueId: null,
+    activeTaskId: null,
+    activeQueue: null,
+    candidateQueueIds,
+    promotionCandidate: null,
+    nextLawfulQueueRecommendation: "none",
+    residueSourceQueueId: null,
+    stop,
+  };
 
   if (activeQueueId !== "none") {
     const activeQueue = readQueueWorkflowDetails(context.repoRoot, activeQueueId);
@@ -152,15 +182,11 @@ function inspectBlueprintWorkflowContext(context) {
     }
 
     return {
-      ok: true,
+      ...baseResult,
       recommendedAction: "continue-active-queue",
-      humanDecisionRequired: false,
-      humanDecisionReason: null,
+      activeQueueId: activeQueue.queue.queueId,
+      activeTaskId: activeQueue.queue.activeTask === "none" ? null : activeQueue.queue.activeTask,
       activeQueue: activeQueue.queue,
-      candidateQueueIds,
-      promotionCandidate: null,
-      nextLawfulQueueRecommendation: "none",
-      residueSourceQueueId: null,
     };
   }
 
@@ -170,13 +196,8 @@ function inspectBlueprintWorkflowContext(context) {
     nextLawfulQueueRecommendation !== "none"
   ) {
     return {
-      ok: true,
+      ...baseResult,
       recommendedAction: "auto-route-same-family-residue",
-      humanDecisionRequired: false,
-      humanDecisionReason: null,
-      activeQueue: null,
-      candidateQueueIds,
-      promotionCandidate: null,
       nextLawfulQueueRecommendation,
       residueSourceQueueId: closureReviewSubject === "none" ? null : closureReviewSubject,
     };
@@ -184,42 +205,43 @@ function inspectBlueprintWorkflowContext(context) {
 
   if (proposedQueueId !== "none") {
     return {
-      ok: true,
+      ...baseResult,
       recommendedAction: "promote-candidate",
-      humanDecisionRequired: false,
-      humanDecisionReason: null,
-      activeQueue: null,
-      candidateQueueIds,
       promotionCandidate: { queueId: proposedQueueId },
-      nextLawfulQueueRecommendation: "none",
-      residueSourceQueueId: null,
     };
   }
 
   if (candidateQueueIds.length > 1) {
     return {
-      ok: true,
+      ...baseResult,
       recommendedAction: "ask-human-routing-decision",
       humanDecisionRequired: true,
       humanDecisionReason: `multiple lawful candidate queues remain: ${candidateQueueIds.join(", ")}`,
-      activeQueue: null,
-      candidateQueueIds,
-      promotionCandidate: null,
-      nextLawfulQueueRecommendation: "none",
-      residueSourceQueueId: null,
     };
   }
 
   return {
-    ok: true,
+    ...baseResult,
     recommendedAction: "idle-version-review",
-    humanDecisionRequired: false,
-    humanDecisionReason: null,
-    activeQueue: null,
-    candidateQueueIds,
-    promotionCandidate: null,
-    nextLawfulQueueRecommendation: "none",
-    residueSourceQueueId: null,
+  };
+}
+
+function inspectStopState(activePlanText) {
+  const stopReason = matchField(activePlanText, "stop_reason") ?? "none";
+  const stopBasis = matchField(activePlanText, "stop_basis") ?? "none";
+  const nextUnblockedAction = matchField(activePlanText, "next_unblocked_action") ?? "none";
+  const humanInputRequired =
+    (matchField(activePlanText, "human_input_required") ?? "false") === "true";
+
+  return {
+    stopReason,
+    stopBasis,
+    nextUnblockedAction,
+    humanInputRequired,
+    stopAllowed:
+      stopReason !== "none" &&
+      stopBasis !== "none" &&
+      nextUnblockedAction !== "none",
   };
 }
 
@@ -382,8 +404,15 @@ function escapeRegExp(value) {
 
 const currentFilePath = fileURLToPath(import.meta.url);
 if (process.argv[1] != null && path.resolve(process.argv[1]) === currentFilePath) {
-  const mode = process.argv[2] ?? "check";
-  const result = runBlueprintVersionGovernance(mode, process.cwd());
+  const args = process.argv.slice(2);
+  const mode = args[0] ?? "check";
+  const result = runBlueprintVersionGovernance(mode, process.cwd(), {
+    json: args.includes("--json"),
+  });
+  if (args.includes("--json")) {
+    console.log(JSON.stringify(result, null, 2));
+    process.exit(result.ok ? 0 : 1);
+  }
   for (const message of result.messages) {
     console.log(message);
   }
