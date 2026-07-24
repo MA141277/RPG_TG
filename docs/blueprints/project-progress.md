@@ -5,8 +5,8 @@
 - entry_id: `project-progress.rpg-tg`
 - active_blueprint: `blueprint.rpg-tg`
 - active_version: `target.event-follow-up-routing-settlement-and-canonical-reuse-convergence`
-- has_active_queue: `true`
-- next_file: `docs/blueprints/queues/script-editor-settlement-authoring-surface-completion-queue.md`
+- has_active_queue: `false`
+- next_file: `docs/blueprints/plans/2026-07-24-event-canonical-reuse-routing-and-settlement-governance-target-plan.md`
 - entry_action: `open-next-file`
 
 ## Human Context
@@ -29,12 +29,12 @@
 - Current Version Plan:
   - `docs/blueprints/plans/2026-07-24-event-canonical-reuse-routing-and-settlement-governance-target-plan.md`
 - Current Active Queue:
-  - `docs/blueprints/queues/script-editor-settlement-authoring-surface-completion-queue.md`
+  - `none`
 
 ### Live Entry Guardrails
 
 - `This file only states the current resume entry and downstream pointer set.`
-- `queue.script-editor-settlement-authoring-surface-completion is now the active same-version residue queue. The live active task is task.script-editor-settlement-authoring-surface-completion.queue-closeout-review-and-sync-gate after local settlement authoring surface implementation and verification completed on 2026-07-25.`
+- `queue.script-editor-settlement-authoring-surface-completion is now closed after local settlement authoring surface completion and repository sync through commit 6a39f81 on origin/mod-first-dev. No active queue remains, so the lawful resume point is the version plan's closeout review state.`
 - `Admission history, queue closeout history, and review narrative must stay in the version plan, queue docs, or docs/change-log.md rather than living here as competing current-state prose.`
 - `The pointed version is now the closed Entry Shell UI module extraction successor version created from MEMO-011 after the city/building background queue closed.`
 - `target.entry-shell-ui-module-extraction is done with no active queue after queue.entry-shell-ui-module-extraction closed and final version closeout was recorded.`

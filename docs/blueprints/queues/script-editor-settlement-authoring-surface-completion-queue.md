@@ -7,14 +7,14 @@
 - blueprint_version: `2026.07`
 - governance_last_synced_at: `2026-07-25`
 - governance_sync_source: `docs/blueprints/plans/2026-07-24-event-canonical-reuse-routing-and-settlement-governance-target-plan.md`
-- queue_status: `active`
+- queue_status: `done`
 - queue_class: `required`
-- active_task: `task.script-editor-settlement-authoring-surface-completion.queue-closeout-review-and-sync-gate`
+- active_task: `none`
 - next_task: `none`
-- closeout_status: `in-progress`
-- execution_closeout_status: `partial`
-- topic_closure_status: `open-residue`
-- closure_basis: `Local implementation and verification for the Script Editor settlement authoring surface are complete, but queue closeout proof and repository-sync gate have not yet been recorded.`
+- closeout_status: `done`
+- execution_closeout_status: `done`
+- topic_closure_status: `closed`
+- closure_basis: `Queue closeout proof is complete and repository-sync gate succeeded: commit 6a39f81 landed the settlement authoring surface batch on mod-first-dev and push to origin/mod-first-dev succeeded.`
 - residue_remaining: `no`
 - residue_family: `none`
 - residue_routing_status: `none`
@@ -24,9 +24,9 @@
 - auto_continue_policy: `required`
 - idle_after_task_completion: `forbidden`
 - queue_close_handoff: `version-plan-routing`
-- sync_status: `pending`
-- sync_scope: `local-record`
-- sync_summary: `Local implementation is verified; repository-sync gate has not yet been attempted for this residue queue.`
+- sync_status: `success`
+- sync_scope: `remote-sync`
+- sync_summary: `Repository-sync gate satisfied: commit 6a39f81 landed on mod-first-dev and push to origin/mod-first-dev succeeded after queue closeout proof and governance synchronization.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
@@ -147,9 +147,9 @@
 
 - queue_goal: `Expose the missing settlement module and event settlement controls in the Script Editor while preserving the already-landed routing/settlement contracts.`
 - task_count: `4`
-- completed_task_count: `3`
-- remaining_task_count: `1`
-- active_task_summary: `Local implementation and regression verification are complete. The next lawful action is queue closeout proof plus repository-sync gate recording.`
+- completed_task_count: `4`
+- remaining_task_count: `0`
+- active_task_summary: `Queue is closed. Local implementation, verification, and repository-sync gating are complete, and control returns to the version plan for closeout review.`
 - task_briefs:
   - `task.script-editor-settlement-authoring-surface-completion.evidence-anchor-reconcile: freeze the missing editor-surface anchors against the already-landed settlement/runtime truth.`
   - `task.script-editor-settlement-authoring-surface-completion.surface-inventory-and-boundary-lock: freeze the bounded UI/helper/workspace surfaces that must change without reopening other queues.`
@@ -158,7 +158,7 @@
 
 ### Completion Completeness Review
 
-- review_status: `pending`
+- review_status: `complete`
 - can_claim_coverage:
   - `Local code now exposes settlements under 剧情与文本, adds settlement record editing plus result-local nextEventId authoring, and adds event-side type/settlementId/nextEventId controls on the same settled contracts already used by save/load/export/import/runtime.`
 - parent_spec_preservation:
@@ -176,7 +176,7 @@
 - placeholder_or_legacy_fallback_audit:
   - `The claimed behavior no longer depends on hidden formal contracts alone: workflow navigation, settlement editor rendering, and event settlement controls are all present in production source with regression guards.`
 - remaining_gaps:
-  - `Queue closeout proof and repository-sync gate are still pending.`
+  - `none`
 
 ### Task Ledger
 
@@ -185,7 +185,7 @@
 | `task.script-editor-settlement-authoring-surface-completion.evidence-anchor-reconcile` | `done` | `Freeze the missing editor-surface evidence against the already-landed settlement/runtime truth.` | `none` | `Completed from source audit: formal settlement/runtime contracts existed, but MainUiFlow and workflow grouping still lacked first-class settlement authoring.` |
 | `task.script-editor-settlement-authoring-surface-completion.surface-inventory-and-boundary-lock` | `done` | `Freeze the bounded UI/helper/workspace surfaces to modify.` | `task.script-editor-settlement-authoring-surface-completion.evidence-anchor-reconcile` | `Completed across minimal-workflow, workspace-shell, story-dialogue-event-authoring, main-ui-flow, and robustness guards.` |
 | `task.script-editor-settlement-authoring-surface-completion.authoring-surface-implementation` | `done` | `Land settlement family authoring and event settlement-routing controls.` | `task.script-editor-settlement-authoring-surface-completion.surface-inventory-and-boundary-lock` | `Completed locally with green build:test and robustness coverage.` |
-| `task.script-editor-settlement-authoring-surface-completion.queue-closeout-review-and-sync-gate` | `active` | `Record closeout proof, synchronize governed truth, and attempt the repository-sync gate.` | `task.script-editor-settlement-authoring-surface-completion.authoring-surface-implementation` | `Current active task.` |
+| `task.script-editor-settlement-authoring-surface-completion.queue-closeout-review-and-sync-gate` | `done` | `Record closeout proof, synchronize governed truth, and attempt the repository-sync gate.` | `task.script-editor-settlement-authoring-surface-completion.authoring-surface-implementation` | `Done. Repository-sync gate succeeded through commit 6a39f81 on origin/mod-first-dev.` |
 
 ### Task Definitions
 
@@ -285,7 +285,7 @@
 ##### Control Block
 
 - task_id: `task.script-editor-settlement-authoring-surface-completion.queue-closeout-review-and-sync-gate`
-- state: `active`
+- state: `done`
 - task_kind: `queue-closeout`
 - scope:
   - `docs/blueprints/queues/script-editor-settlement-authoring-surface-completion-queue.md`
@@ -327,7 +327,7 @@
 - task_brief:
   - `Close out the settlement authoring surface residue queue and drive repository sync.`
 - task_outcome_summary:
-  - `Pending. Local implementation and verification are done; queue closeout proof and repository-sync attempt are next.`
+  - `Done. Local closeout proof was synchronized, commit 6a39f81 landed the residue queue batch, and push to origin/mod-first-dev succeeded.`
 
 ### Progress Log
 
@@ -335,3 +335,4 @@
 - `2026-07-25`: `task.script-editor-settlement-authoring-surface-completion.evidence-anchor-reconcile and task.script-editor-settlement-authoring-surface-completion.surface-inventory-and-boundary-lock both completed from the bounded source audit across minimal-workflow, workspace-shell, story-dialogue-event-authoring, main-ui-flow, and robustness guards.`
 - `2026-07-25`: `task.script-editor-settlement-authoring-surface-completion.authoring-surface-implementation completed locally. Script Editor now exposes settlements under 剧情与文本, supports settlement record/result editing, and exposes event-side type/settlementId/nextEventId controls on the same formal contracts already used by save/load/export/import/runtime.`
 - `2026-07-25`: `The queue auto-promoted task.script-editor-settlement-authoring-surface-completion.queue-closeout-review-and-sync-gate to active.`
+- `2026-07-25`: `Queue closeout proof is complete and repository-sync gate succeeded. Commit 6a39f81 landed on mod-first-dev, push to origin/mod-first-dev succeeded, and the queue closed with no remaining same-family residue inside its bounded topic surface.`

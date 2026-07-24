@@ -5,14 +5,14 @@
 - document_role: `version-governor`
 - version_id: `target.event-follow-up-routing-settlement-and-canonical-reuse-convergence`
 - version_status: `open`
-- active_phase: `phase.active-execution`
-- active_queue: `queue.script-editor-settlement-authoring-surface-completion`
-- decision_state: `active-execution`
-- next_decision: `queue-closeout-or-return-to-version-review`
-- next_action: `resume-active-queue`
-- resume_gate: `active-queue`
+- active_phase: `phase.promotion-review`
+- active_queue: `none`
+- decision_state: `promotion-review`
+- next_decision: `same-version-admission-or-version-closeout`
+- next_action: `return-to-promotion-review`
+- resume_gate: `promotion-review`
 - post_queue_closeout_pause_policy: `auto-continue`
-- promotion_review_result: `same-version-residue-admitted`
+- promotion_review_result: `queue-closeout-complete`
 - review_subject_id: `none`
 - review_subject_classification: `none`
 - proposed_queue_id: `none`
@@ -27,13 +27,13 @@
 - closure_review_status: `routed`
 - residue_candidate_id: `none`
 - residue_candidate_family: `none`
-- routing_basis: `After version-level closeout review resumed, the operator identified a missing settlement module and missing event-side settlement controls in the Script Editor. Because the parent version already requires Script Editor/export/import/loading/preview/startup/runtime consistency, Blueprint routes this as a same-version residue queue instead of treating the version as complete.`
+- routing_basis: `queue.script-editor-settlement-authoring-surface-completion completed queue closeout proof and repository sync through commit 6a39f81 on origin/mod-first-dev, so no active queue remains and the version returns to closeout review.`
 - next_lawful_queue_recommendation: `none`
 - auto_admission_ready: `false`
-- stop_reason: `none`
-- stop_basis: `none`
-- next_unblocked_action: `none`
-- human_input_required: `false`
+- stop_reason: `version-closeout-confirmation`
+- stop_basis: `All active same-version queues are now closed and repository-synced, including queue.script-editor-settlement-authoring-surface-completion through commit 6a39f81 on origin/mod-first-dev. The next version-level move is explicit closeout rather than another lawful local implementation action.`
+- next_unblocked_action: `write-version-closeout`
+- human_input_required: `true`
 - blocked_by: []
 - candidate_queue_ids:
   - `queue.event-and-building-instance-canonical-reuse`
@@ -51,7 +51,7 @@
   - `queue.same-display-name-building-host-instance-canonicalization: closed after same-name host merge, direct host-id rewrite, queue-closeout proof, and successful repository sync through commit acf24fe on origin/mod-first-dev.`
   - `queue.full-chain-event-routing-and-settlement-consistency: closed after queue-closeout proof, repository sync through commit fe14a03, and full-chain parity coverage for ACC-EVENT-SETTLE-006.`
   - `queue.event-routing-settlement-migration-and-final-acceptance: closed after compatibilityImport retirement, automated acceptance coverage, queue-closeout proof, and repository sync through commit 9a28a9a on origin/mod-first-dev.`
-  - `queue.script-editor-settlement-authoring-surface-completion: active same-version residue queue admitted on 2026-07-25 after source audit proved that creator-facing settlement authoring still lagged behind the already-landed settlement/runtime truth.`
+  - `queue.script-editor-settlement-authoring-surface-completion: closed after local settlement authoring surface completion, queue-closeout proof, and repository sync through commit 6a39f81 on origin/mod-first-dev.`
 - candidate_backlog_scan_sources:
   - `project-progress`
   - `blueprint`
@@ -381,3 +381,4 @@
 - `2026-07-25`: `Version-level closeout review then found same-version residue: the formal settlement/runtime model was present, but the Script Editor still lacked a creator-facing settlement module and event-side settlement controls. Blueprint therefore admitted queue.script-editor-settlement-authoring-surface-completion as the lawful same-version residue queue instead of treating the version as complete.`
 - `2026-07-25`: `The residue queue completed its bounded local implementation slice. Script Editor workflow/navigation now exposes settlements under 剧情与文本, settlement records support result-local nextEventId editing, event authoring exposes type / settlementId / nextEventId controls, build:test is green, and robustness coverage is green.`
 - `2026-07-25`: `The version auto-promoted task.script-editor-settlement-authoring-surface-completion.queue-closeout-review-and-sync-gate as the live active task. The next lawful action is governed closeout proof plus repository-sync gating for the residue queue, not version closeout.`
+- `2026-07-25`: `Repository-sync gate for queue.script-editor-settlement-authoring-surface-completion is now satisfied. Commit 6a39f81 landed on origin/mod-first-dev, active_queue is now none again, and the version returns to promotion-review / closeout-review state with stop_reason=version-closeout-confirmation recorded before any pause.`
