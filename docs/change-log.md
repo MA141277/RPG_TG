@@ -2,6 +2,18 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-24 Faction Review Structured House Overlays
+
+### Added
+- 为 shared `HouseOverlayViewModel` 新增 typed review assignment-table 与 policy-panel overlay variants，用于把阵营评定的委任表和方针面板从普通文本提升为结构化 house view model。
+- 新增 shared house UI renderers，统一渲染 `委任` 表格字段 `人物 / 委任 / 完成情况`，以及方针面板字段 `总目标 / 阶段目标 / 执行计划`。
+
+### Changed
+- keep house 与 temple house view 现已接入 shared house UI renderer，通过 UI 代码渲染上述结构化评定 overlay，而不是在各自视图内复制评定表格或方针面板拼装。
+
+### Impact
+- 后续阵营据点复用评定委任表和方针面板时，应继续扩展 shared house overlay view model 与 shared renderer contract，避免把评定 UI 结构分散进单个 house 视图或 `main.ts`。
+
 ## 2026-07-24 Faction Review Domain Contracts
 
 ### Added
