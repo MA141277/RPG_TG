@@ -112,6 +112,7 @@
       "runtime.zhu_yuanzhang.keep.task.grain_procurement.order.002"
     ],
     "keepMinTier": "runner",
+    "reviewMinRankId": "red_turban.bodyguard",
     "tags": ["scenario", "keep", "task"]
   },
   {
@@ -128,6 +129,7 @@
       "runtime.zhu_yuanzhang.keep.task.market_inspection.order.002"
     ],
     "keepMinTier": "officer",
+    "reviewMinRankId": "red_turban.guard_captain",
     "tags": ["scenario", "keep", "task"]
   },
   {
@@ -144,6 +146,7 @@
       "runtime.zhu_yuanzhang.keep.task.militia_drill.order.002"
     ],
     "keepMinTier": "commander",
+    "reviewMinRankId": "red_turban.zhenfu",
     "tags": ["scenario", "keep", "task"]
   }
 ]

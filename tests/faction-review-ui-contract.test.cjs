@@ -42,7 +42,7 @@ test("review assignment table renders requested title, columns, and grade labels
 test("review policy panel renders all policy fields and can remain visible during advice prompt", () => {
   const html = renderHouseReviewPolicyPanelOverlay({
     type: "review-policy-panel",
-    title: "方针",
+    title: "方略",
     policy: {
       overallGoal: "保全寺众",
       phaseGoal: "筹足粮米",
@@ -65,4 +65,20 @@ test("main entry does not gain review business imports or hardcoded review branc
     mainSource,
     /赫赫之功|尽职尽责|差强人意|不尽人意|碌碌无为/
   );
+});
+
+test("keep review source uses normalized Chinese review copy and advice choices", () => {
+  const source = readSource(
+    "src/application/house-modules/keep-house/keep-house-house-module.ts"
+  );
+  for (const text of [
+    "这段时间大家辛苦了",
+    "看看大家这期间的进展吧",
+    "有谁要进言吗",
+    "发表意见",
+    "一言不发",
+  ]) {
+    assert.match(source, new RegExp(text));
+  }
+  assert.doesNotMatch(source, /Contribution Report|Current Orders|Continue|Dismiss/);
 });

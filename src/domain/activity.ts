@@ -29,6 +29,7 @@ export type ActivityDefinition = {
   briefingTextId?: string;
   orderLineTextIds?: string[];
   keepMinTier?: "runner" | "officer" | "commander";
+  reviewMinRankId?: string;
   staminaCost?: number;
   timeAdvanceCost?: number;
   qte?: ActivityQteTuning;

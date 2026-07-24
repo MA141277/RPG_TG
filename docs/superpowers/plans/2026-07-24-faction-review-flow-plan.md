@@ -30,9 +30,9 @@
 
 - Status: `running`
 - Last Updated: `2026-07-24`
-- Current Focus: `Task 2 complete; Task 3 next`
-- Next Step: `Execute Task 3 with failing keep flow and rank-gate tests first.`
-- Verification: `npm run build:test; if ($LASTEXITCODE -eq 0) { node --test tests/faction-review-ui-contract.test.cjs }`
+- Current Focus: `Task 3 complete; Task 4 next`
+- Next Step: `Execute Task 4 with failing temple flow tests first.`
+- Verification: `npm run build:test; if ($LASTEXITCODE -eq 0) { node --test tests/faction-review-domain.test.cjs tests/faction-review-ui-contract.test.cjs }`; `node --test --test-name-pattern "keep house" tests/robustness.test.cjs`; `npm run typecheck`
 - Notes: `Plan created after approval of docs/superpowers/specs/2026-07-24-faction-review-flow-design.md.`
 
 ## Progress Log
@@ -49,6 +49,10 @@
   - Summary: `Completed Task 2 structured review assignment table and policy panel overlay contracts with shared UI renderers.`
   - Verification: `npm run build:test; if ($LASTEXITCODE -eq 0) { node --test tests/faction-review-ui-contract.test.cjs }`
   - Next: `Execute Task 3 with failing keep flow and rank-gate tests first.`
+- 2026-07-24
+  - Summary: `Completed Task 3 keep review normalization with structured assignment table/policy stages, Red Turban merit rank gates, and visible minimum-identity task labels while preserving keep assignment commit effects.`
+  - Verification: `npm run build:test; if ($LASTEXITCODE -eq 0) { node --test tests/faction-review-domain.test.cjs tests/faction-review-ui-contract.test.cjs }`; `node --test --test-name-pattern "keep house" tests/robustness.test.cjs`; `npm run typecheck`
+  - Next: `Execute Task 4 with failing temple flow tests first.`
 
 ---
 
@@ -586,7 +590,7 @@ Update this plan:
 - Consumes: Task 1 helpers and Task 2 overlay variants.
 - Produces: keep review sequence `intro -> assignment-table -> praise -> situation -> policy -> advice -> assign-task -> assigned`, rank-gated ordinary tasks, Chinese labels, and no fame-based task filtering.
 
-- [ ] **Step 1: Add failing keep flow and rank-gate tests**
+- [x] **Step 1: Add failing keep flow and rank-gate tests**
 
 Append tests to `tests/faction-review-domain.test.cjs` that import keep module helpers only if they are exported; if no helper is practical, assert source-level removal:
 
@@ -621,7 +625,7 @@ test("keep review source uses normalized Chinese review copy and advice choices"
 });
 ```
 
-- [ ] **Step 2: Run targeted tests and verify RED**
+- [x] **Step 2: Run targeted tests and verify RED**
 
 Run:
 
@@ -633,7 +637,7 @@ Expected:
 
 - Fails because keep still uses fame-derived tiers or English review copy.
 
-- [ ] **Step 3: Add rank metadata to keep activities**
+- [x] **Step 3: Add rank metadata to keep activities**
 
 Modify keep task definitions in `src/content/scenario-packs/zhuyuanzhang/activities.json`:
 
@@ -643,7 +647,7 @@ Modify keep task definitions in `src/content/scenario-packs/zhuyuanzhang/activit
 
 Keep `keepMinTier` only as a backward-compatible field if removing it would affect unrelated code.
 
-- [ ] **Step 4: Update keep task parsing**
+- [x] **Step 4: Update keep task parsing**
 
 Modify `src/domain/activity.ts` to add optional:
 
@@ -659,7 +663,7 @@ minRankId: string;
 
 Use `activityDefinition.reviewMinRankId ?? "red_turban.bodyguard"` while bridging old content.
 
-- [ ] **Step 5: Replace fame gate with faction merit gate**
+- [x] **Step 5: Replace fame gate with faction merit gate**
 
 Remove `getTaskTier()` from `keep-house-house-module.ts`.
 
@@ -672,7 +676,7 @@ const playerRank = resolveFactionMeritRank(RED_TURBAN_FACTION_RANKS, playerMerit
 
 Use `createReviewTaskChoiceViewModels()` to produce available actions. Keep disabled tasks visible only during task selection if the UI can show disabled buttons; otherwise filter disabled entries before rendering but keep labels in tests through view-model helper coverage.
 
-- [ ] **Step 6: Normalize keep meeting stages and overlays**
+- [x] **Step 6: Normalize keep meeting stages and overlays**
 
 Update keep meeting progression:
 
@@ -687,7 +691,7 @@ Update keep meeting progression:
 - `一言不发` proceeds to assignment selection
 - assignment choices append `（最低身份：...）`
 
-- [ ] **Step 7: Keep assignment commit behavior local**
+- [x] **Step 7: Keep assignment commit behavior local**
 
 Do not move `assignTaskToPlayer()` effects out of keep module. Ensure task acceptance still sets:
 
@@ -697,7 +701,7 @@ Do not move `assignTaskToPlayer()` effects out of keep module. Ensure task accep
 - `ui.mainHouseMissionText`
 - `KEEP_HOUSE_VARIABLE_KEYS.lastAssignedTaskId`
 
-- [ ] **Step 8: Verify GREEN**
+- [x] **Step 8: Verify GREEN**
 
 Run:
 
@@ -709,7 +713,7 @@ Expected:
 
 - Targeted review tests pass.
 
-- [ ] **Step 9: Update plan progress**
+- [x] **Step 9: Update plan progress**
 
 Update this plan:
 

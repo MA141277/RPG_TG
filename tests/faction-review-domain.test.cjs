@@ -86,3 +86,18 @@ test("review task choices include minimum identity labels and rank gating", () =
 test("default special task hook is empty and falls back to ordinary choices", () => {
   assert.deepEqual(getDefaultReviewSpecialTaskHookResult(), { type: "none" });
 });
+
+test("keep review task access is not derived from player fame", () => {
+  const source = require("node:fs").readFileSync(
+    require("node:path").join(
+      __dirname,
+      "..",
+      "src/application/house-modules/keep-house/keep-house-house-module.ts"
+    ),
+    "utf8"
+  );
+  assert.doesNotMatch(source, /stats\.fame\s*>=/);
+  assert.doesNotMatch(source, /function getTaskTier/);
+  assert.match(source, /readFactionMerit/);
+  assert.match(source, /createReviewTaskChoiceViewModels/);
+});

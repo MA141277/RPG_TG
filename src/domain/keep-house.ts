@@ -9,6 +9,7 @@ export type KeepHouseTaskDefinition = {
   briefing: string;
   orderLines: string[];
   minTier: KeepHouseTaskTier;
+  minRankId: string;
 };
 
 export type KeepHouseContributionDefinition = {

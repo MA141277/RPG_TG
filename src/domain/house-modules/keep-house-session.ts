@@ -1,4 +1,5 @@
 import type { CharacterId } from "../character";
+import type { ReviewAssignmentRow, ReviewPolicyPanel } from "../review";
 
 export type KeepHouseAlertOverlayState = {
   type: "alert";
@@ -7,7 +8,25 @@ export type KeepHouseAlertOverlayState = {
   tone?: "info" | "success" | "warning";
 };
 
-export type KeepHouseOverlayState = KeepHouseAlertOverlayState | null;
+export type KeepHouseReviewAssignmentTableOverlayState = {
+  type: "review-assignment-table";
+  title: string;
+  rows: ReviewAssignmentRow[];
+  confirmActionId: string;
+  confirmLabel: string;
+};
+
+export type KeepHouseReviewPolicyPanelOverlayState = {
+  type: "review-policy-panel";
+  title: string;
+  policy: ReviewPolicyPanel;
+};
+
+export type KeepHouseOverlayState =
+  | KeepHouseAlertOverlayState
+  | KeepHouseReviewAssignmentTableOverlayState
+  | KeepHouseReviewPolicyPanelOverlayState
+  | null;
 
 export type KeepHouseDialoguePhase = "greeting" | "open" | "idle";
 
@@ -15,9 +34,11 @@ export type KeepHouseSessionMode = "audience" | "meeting";
 
 export type KeepHouseMeetingStage =
   | "intro"
-  | "contribution"
+  | "assignment-table"
   | "praise"
-  | "strategy"
+  | "situation"
+  | "policy"
+  | "advice"
   | "assign-task"
   | "assigned"
   | "finished";

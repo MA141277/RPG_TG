@@ -17,6 +17,7 @@ import type {
   HouseModuleViewModel,
   HouseOverlayViewModel,
 } from "../../../domain/house-module";
+import type { ReviewAssignmentRow, ReviewPolicyPanel } from "../../../domain/review";
 import type {
   KeepHouseContributionEntry,
   KeepHouseOverlayState,
@@ -28,6 +29,13 @@ import {
   type KeepHouseTaskDefinition,
   type KeepHouseTaskTier,
 } from "../../../domain/keep-house";
+import {
+  createReviewTaskChoiceViewModels,
+  readFactionMerit,
+  RED_TURBAN_FACTION_RANKS,
+  resolveFactionMeritRank,
+  resolveReviewCompletionGrade,
+} from "../../review/faction-review";
 import { assertExists } from "../../../shared/assert";
 import {
   markLateCouncilAttendancePenaltyProcessed,
@@ -107,6 +115,7 @@ function isKeepTaskActivityDefinition(
   briefingTextId: string;
   orderLineTextIds: string[];
   keepMinTier: KeepHouseTaskTier;
+  reviewMinRankId?: string;
 } {
   return (
     activityDefinition.houseModuleId === "keep-house" &&
@@ -121,6 +130,17 @@ function isKeepTaskActivityDefinition(
 
 function resolveKeepDefaultStrategyTitle(textEntriesById: Record<string, string>): string {
   return resolveKeepText(textEntriesById, keepHouseDefaultStrategy.titleTextId);
+}
+
+function getFallbackKeepTaskRankId(minTier: KeepHouseTaskTier): string {
+  switch (minTier) {
+    case "commander":
+      return "red_turban.zhenfu";
+    case "officer":
+      return "red_turban.guard_captain";
+    case "runner":
+      return "red_turban.bodyguard";
+  }
 }
 
 function resolveKeepTaskDefinition(
@@ -146,6 +166,7 @@ function resolveKeepTaskDefinition(
     briefingTextId,
     orderLineTextIds,
     keepMinTier,
+    reviewMinRankId,
   } = taskActivityDefinition;
   assertExists(resolvedTaskId, `Keep house task is missing taskId for "${taskId}".`);
   assertExists(missionId, `Keep house task is missing missionId for "${taskId}".`);
@@ -172,6 +193,7 @@ function resolveKeepTaskDefinition(
       resolveKeepText(textEntriesById, textId)
     ),
     minTier: keepMinTier,
+    minRankId: reviewMinRankId ?? getFallbackKeepTaskRankId(keepMinTier),
   };
 }
 
@@ -280,17 +302,6 @@ function addDaysToDate(date: CalendarDate, days: number): CalendarDate {
   };
 }
 
-function getTaskTier(character: CharacterDefinition): KeepHouseTaskTier {
-  const title = character.title ?? "";
-  if (character.stats.fame >= 35) {
-    return "commander";
-  }
-  if (character.stats.fame >= 18) {
-    return "officer";
-  }
-  return "runner";
-}
-
 function ensureKeepRuntimeState(
   gameState: HouseModuleDispatchInput["gameState"],
   characterDefinitions: CharacterDefinition[],
@@ -357,6 +368,30 @@ function createContributionEntries(
     .sort((leftEntry, rightEntry) => rightEntry.contribution - leftEntry.contribution);
 }
 
+function createReviewAssignmentRows(
+  contributionEntries: KeepHouseContributionEntry[]
+): ReviewAssignmentRow[] {
+  return contributionEntries.map((entry) => ({
+    characterId: entry.characterId,
+    characterName: entry.name,
+    assignmentTitle: entry.title ?? "本期军务",
+    contribution: entry.contribution,
+    grade: resolveReviewCompletionGrade(entry.contribution),
+  }));
+}
+
+function createReviewPolicyPanel(
+  textEntriesById: Record<string, string>
+): ReviewPolicyPanel {
+  const strategyLines = getMeetingStrategyLines(textEntriesById);
+
+  return {
+    overallGoal: resolveKeepDefaultStrategyTitle(textEntriesById),
+    phaseGoal: strategyLines[1] ?? strategyLines[0] ?? "",
+    executionPlan: strategyLines[2] ?? strategyLines[1] ?? strategyLines[0] ?? "",
+  };
+}
+
 function createAlertOverlay(
   title: string,
   paragraphs: string[],
@@ -367,6 +402,28 @@ function createAlertOverlay(
     title,
     paragraphs,
     ...(tone == null ? {} : { tone }),
+  };
+}
+
+function createReviewAssignmentTableOverlay(
+  rows: ReviewAssignmentRow[]
+): KeepHouseOverlayState {
+  return {
+    type: "review-assignment-table",
+    title: "委任",
+    rows,
+    confirmActionId: "close-review-assignment-table",
+    confirmLabel: "继续",
+  };
+}
+
+function createReviewPolicyPanelOverlay(
+  policy: ReviewPolicyPanel
+): KeepHouseOverlayState {
+  return {
+    type: "review-policy-panel",
+    title: "方略",
+    policy,
   };
 }
 
@@ -422,20 +479,33 @@ function isPlayersLord(
   );
 }
 
-function getAvailableTasks(
+function getReviewTaskChoices(
   input: {
     activityDefinitionsById?: Record<string, ActivityDefinition> | undefined;
     textEntriesById?: Record<string, string> | undefined;
+    gameState: GameState;
   },
   playerCharacter: CharacterDefinition
-): KeepHouseTaskDefinition[] {
-  const tierOrder: KeepHouseTaskTier[] = ["runner", "officer", "commander"];
-  const playerTier = getTaskTier(playerCharacter);
-
-  return getKeepTaskDefinitions(input).filter(
-    (taskDefinition) =>
-      tierOrder.indexOf(taskDefinition.minTier) <= tierOrder.indexOf(playerTier)
+): ReturnType<typeof createReviewTaskChoiceViewModels> {
+  const playerMerit = readFactionMerit(
+    input.gameState,
+    "red_turban",
+    playerCharacter.id
   );
+  const playerRank = resolveFactionMeritRank(
+    RED_TURBAN_FACTION_RANKS,
+    playerMerit
+  );
+
+  return createReviewTaskChoiceViewModels({
+    currentRankId: playerRank.id,
+    ranks: RED_TURBAN_FACTION_RANKS,
+    tasks: getKeepTaskDefinitions(input).map((taskDefinition) => ({
+      id: taskDefinition.id,
+      label: taskDefinition.title,
+      minRankId: taskDefinition.minRankId,
+    })),
+  });
 }
 
 function getAudienceGreetingLines(textEntriesById: Record<string, string>): string[] {
@@ -645,7 +715,7 @@ function getMeetingStrategyLines(textEntriesById: Record<string, string>): strin
 function getAssignTaskLines(
   textEntriesById: Record<string, string>,
   playerCharacter: CharacterDefinition,
-  availableTasks: KeepHouseTaskDefinition[]
+  taskChoiceLabels: string[]
 ): string[] {
   return [
     resolveKeepTemplateText(
@@ -661,9 +731,9 @@ function getAssignTaskLines(
       {
         playerName: playerCharacter.name,
         availableTaskList:
-          availableTasks.length === 0
+          taskChoiceLabels.length === 0
             ? "none"
-            : availableTasks.map((taskDefinition) => taskDefinition.title).join(", "),
+            : taskChoiceLabels.join(", "),
       }
     ),
     resolveKeepText(textEntriesById, "runtime.zhu_yuanzhang.keep.review.assign.003"),
@@ -781,29 +851,38 @@ function handleAction(
       switch (sessionState.meetingStage) {
         case "intro":
           return withSessionState(input, sessionState, {
-            meetingStage: "contribution",
+            meetingStage: "assignment-table",
             dialoguePhase: "open",
-            overlay: createAlertOverlay(
-              "Contribution Report",
-              sessionState.contributionEntries.map(
-                (entry) => `${entry.name}: ${entry.contribution} contribution`
-              )
+            dialogueLines: ["看看大家这期间的进展吧。"],
+            overlay: createReviewAssignmentTableOverlay(
+              createReviewAssignmentRows(sessionState.contributionEntries)
             ),
           });
         case "praise":
           return withSessionState(input, sessionState, {
-            meetingStage: "strategy",
+            meetingStage: "situation",
             dialoguePhase: "open",
-            dialogueLines: getMeetingStrategyLines(textEntriesById),
+            dialogueLines: [
+              "这段时间大家辛苦了。",
+              ...getMeetingStrategyLines(textEntriesById).slice(0, 1),
+            ],
           });
-        case "strategy":
+        case "situation":
           return withSessionState(input, sessionState, {
-            meetingStage: "assign-task",
+            meetingStage: "policy",
             dialoguePhase: "open",
-            dialogueLines: getAssignTaskLines(
-              textEntriesById,
-              playerCharacter,
-              getAvailableTasks(input, playerCharacter)
+            dialogueLines: ["所以接下来的计划如下："],
+            overlay: createReviewPolicyPanelOverlay(
+              createReviewPolicyPanel(textEntriesById)
+            ),
+          });
+        case "policy":
+          return withSessionState(input, sessionState, {
+            meetingStage: "advice",
+            dialoguePhase: "open",
+            dialogueLines: ["有谁要进言吗？"],
+            overlay: createReviewPolicyPanelOverlay(
+              createReviewPolicyPanel(textEntriesById)
             ),
           });
         default:
@@ -818,8 +897,8 @@ function handleAction(
     });
   }
 
-  if (input.request.actionId === "close-alert") {
-    if (sessionState.mode === "meeting" && sessionState.meetingStage === "contribution") {
+  if (input.request.actionId === "close-review-assignment-table") {
+    if (sessionState.mode === "meeting" && sessionState.meetingStage === "assignment-table") {
       return withSessionState(input, sessionState, {
         meetingStage: "praise",
         overlay: null,
@@ -832,6 +911,12 @@ function handleAction(
       });
     }
 
+    return withSessionState(input, sessionState, {
+      overlay: null,
+    });
+  }
+
+  if (input.request.actionId === "close-alert") {
     if (sessionState.mode === "meeting" && sessionState.meetingStage === "assigned") {
       return withSessionState(input, sessionState, {
         meetingStage: "finished",
@@ -842,6 +927,31 @@ function handleAction(
 
     return withSessionState(input, sessionState, {
       overlay: null,
+    });
+  }
+
+  if (
+    input.request.actionId === "keep-review-give-advice" ||
+    input.request.actionId === "keep-review-stay-silent"
+  ) {
+    const taskChoices = getReviewTaskChoices(input, playerCharacter);
+    const adviceResponseLines =
+      input.request.actionId === "keep-review-give-advice"
+        ? ["此议暂且记下。"]
+        : [];
+
+    return withSessionState(input, sessionState, {
+      meetingStage: "assign-task",
+      dialoguePhase: "open",
+      overlay: null,
+      dialogueLines: [
+        ...adviceResponseLines,
+        ...getAssignTaskLines(
+          textEntriesById,
+          playerCharacter,
+          taskChoices.map((taskChoice) => taskChoice.label)
+        ),
+      ],
     });
   }
 
@@ -861,6 +971,18 @@ function handleAction(
   const selectedTaskId = parseTaskActionId(input.request.actionId);
   if (selectedTaskId != null) {
     const taskDefinition = resolveKeepTaskDefinition(input, selectedTaskId);
+    const taskChoice = getReviewTaskChoices(input, playerCharacter).find(
+      (choice) => choice.id === selectedTaskId
+    );
+    if (taskChoice?.disabled === true) {
+      return withSessionState(input, sessionState, {
+        overlay: createAlertOverlay(
+          "身份不足",
+          [`此委任最低身份为${taskChoice.minRankLabel}。`],
+          "warning"
+        ),
+      });
+    }
     return assignTaskToPlayer(input, taskDefinition);
   }
 
@@ -874,13 +996,21 @@ function selectOverlayViewModel(
     return null;
   }
 
+  if (overlay.type === "review-assignment-table") {
+    return overlay;
+  }
+
+  if (overlay.type === "review-policy-panel") {
+    return overlay;
+  }
+
   return {
     type: "alert",
     title: overlay.title,
     paragraphs: overlay.paragraphs,
     ...(overlay.tone == null ? {} : { tone: overlay.tone }),
     confirmActionId: "close-alert",
-    confirmLabel: "Close",
+    confirmLabel: "关闭",
   };
 }
 
@@ -1004,7 +1134,13 @@ export const keepHouseHouseModule: HouseModuleDefinition<"keep-house"> = {
       KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown,
       0
     );
-    const availableTasks = getAvailableTasks(input, playerCharacter);
+    const taskChoices = getReviewTaskChoices(
+      {
+        ...input,
+        gameState: nextState,
+      },
+      playerCharacter
+    );
     const assignedTask =
       sessionState.selectedTaskId == null
         ? null
@@ -1012,6 +1148,10 @@ export const keepHouseHouseModule: HouseModuleDefinition<"keep-house"> = {
     const shouldShowMeetingTasks =
       sessionState.mode === "meeting" &&
       sessionState.meetingStage === "assign-task" &&
+      sessionState.dialoguePhase === "open";
+    const shouldShowAdviceActions =
+      sessionState.mode === "meeting" &&
+      sessionState.meetingStage === "advice" &&
       sessionState.dialoguePhase === "open";
     const shouldShowDialogue = sessionState.dialoguePhase !== "idle";
     const rosterEntries =
@@ -1068,7 +1208,9 @@ export const keepHouseHouseModule: HouseModuleDefinition<"keep-house"> = {
             advanceActionId:
               sessionState.overlay == null &&
               ((sessionState.mode === "meeting" &&
-                ["intro", "praise", "strategy"].includes(sessionState.meetingStage)) ||
+                ["intro", "praise", "situation", "policy"].includes(
+                  sessionState.meetingStage
+                )) ||
                 (sessionState.mode === "audience" &&
                   sessionState.meetingStage === "finished" &&
                   sessionState.dialoguePhase === "greeting"))
@@ -1077,26 +1219,37 @@ export const keepHouseHouseModule: HouseModuleDefinition<"keep-house"> = {
             advanceHintText:
               sessionState.overlay == null &&
               ((sessionState.mode === "meeting" &&
-                ["intro", "praise", "strategy"].includes(sessionState.meetingStage)) ||
+                ["intro", "praise", "situation", "policy"].includes(
+                  sessionState.meetingStage
+                )) ||
                 (sessionState.mode === "audience" &&
                   sessionState.meetingStage === "finished" &&
                   sessionState.dialoguePhase === "greeting"))
-                ? "Continue"
+                ? "继续"
                 : null,
           },
-      actionContainer: shouldShowMeetingTasks
+      actionContainer: shouldShowAdviceActions
         ? {
-            title: "Current Orders",
-            actions: availableTasks.map<HouseActionViewModel>((taskDefinition) => ({
-              id: `${ASSIGN_TASK_ACTION_PREFIX}${taskDefinition.id}`,
-              label: taskDefinition.title,
+            title: "进言",
+            actions: [
+              { id: "keep-review-give-advice", label: "发表意见" },
+              { id: "keep-review-stay-silent", label: "一言不发" },
+            ],
+          }
+        : shouldShowMeetingTasks
+        ? {
+            title: "委任",
+            actions: taskChoices.map<HouseActionViewModel>((taskChoice) => ({
+              id: `${ASSIGN_TASK_ACTION_PREFIX}${taskChoice.id}`,
+              label: taskChoice.label,
+              ...(taskChoice.disabled ? { disabled: true } : {}),
             })),
           }
         : sessionState.mode === "audience" && sessionState.dialoguePhase === "open"
           ? {
               title: "Audience Actions",
               actions: [
-                { id: "dismiss-dialogue", label: "Dismiss" },
+                { id: "dismiss-dialogue", label: "离开" },
               ],
             }
           : null,

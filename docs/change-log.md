@@ -2,6 +2,16 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-24 Keep Faction Review Normalization
+
+### Changed
+- keep house 评定流程改为 normalized cadence：开场、结构化委任表、表彰、形势、方略面板、进言选择、委任选择、已委任。
+- keep house 普通委任任务改为使用 Red Turban faction merit rank 进行身份门槛判断，并在任务选择中显示最低身份要求。
+- keep house 委任提交仍在 keep module 内本地完成，继续写入下次评定日期、当前 mission、UI mission text 与 `KEEP_HOUSE_VARIABLE_KEYS.lastAssignedTaskId`。
+
+### Impact
+- keep review 不再根据玩家 fame 推导任务可接等级；后续 Red Turban 评定任务应继续通过 `reviewMinRankId` 和 shared faction review helpers 接入。
+
 ## 2026-07-24 Faction Review Structured House Overlays
 
 ### Added

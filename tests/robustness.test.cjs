@@ -6132,7 +6132,7 @@ test("keep house starts review meeting at countdown zero and resets to 60 after 
   assert.equal(enterResult.sessionState?.mode, "meeting");
   assert.equal(enterResult.sessionState?.meetingStage, "intro");
 
-  const contributionResult = keepHouseHouseModule.dispatch({
+  const assignmentTableResult = keepHouseHouseModule.dispatch({
     gameState: enterResult.gameState,
     characterDefinitions: enterResult.characterDefinitions,
     houseDefinition: keepHouse,
@@ -6140,20 +6140,23 @@ test("keep house starts review meeting at countdown zero and resets to 60 after 
     sessionState: enterResult.sessionState,
     request: { type: "action", actionId: "advance-keep-dialogue" },
   });
-  assert.equal(contributionResult.sessionState?.meetingStage, "contribution");
-  assert.equal(contributionResult.sessionState?.overlay?.type, "alert");
+  assert.equal(assignmentTableResult.sessionState?.meetingStage, "assignment-table");
+  assert.equal(
+    assignmentTableResult.sessionState?.overlay?.type,
+    "review-assignment-table"
+  );
 
   const praiseResult = keepHouseHouseModule.dispatch({
-    gameState: contributionResult.gameState,
-    characterDefinitions: contributionResult.characterDefinitions,
+    gameState: assignmentTableResult.gameState,
+    characterDefinitions: assignmentTableResult.characterDefinitions,
     houseDefinition: keepHouse,
     playerCharacterId,
-    sessionState: contributionResult.sessionState,
-    request: { type: "action", actionId: "close-alert" },
+    sessionState: assignmentTableResult.sessionState,
+    request: { type: "action", actionId: "close-review-assignment-table" },
   });
   assert.equal(praiseResult.sessionState?.meetingStage, "praise");
 
-  const strategyResult = keepHouseHouseModule.dispatch({
+  const situationResult = keepHouseHouseModule.dispatch({
     gameState: praiseResult.gameState,
     characterDefinitions: praiseResult.characterDefinitions,
     houseDefinition: keepHouse,
@@ -6161,15 +6164,37 @@ test("keep house starts review meeting at countdown zero and resets to 60 after 
     sessionState: praiseResult.sessionState,
     request: { type: "action", actionId: "advance-keep-dialogue" },
   });
-  assert.equal(strategyResult.sessionState?.meetingStage, "strategy");
+  assert.equal(situationResult.sessionState?.meetingStage, "situation");
 
-  const assignTaskResult = keepHouseHouseModule.dispatch({
-    gameState: strategyResult.gameState,
-    characterDefinitions: strategyResult.characterDefinitions,
+  const policyResult = keepHouseHouseModule.dispatch({
+    gameState: situationResult.gameState,
+    characterDefinitions: situationResult.characterDefinitions,
     houseDefinition: keepHouse,
     playerCharacterId,
-    sessionState: strategyResult.sessionState,
+    sessionState: situationResult.sessionState,
     request: { type: "action", actionId: "advance-keep-dialogue" },
+  });
+  assert.equal(policyResult.sessionState?.meetingStage, "policy");
+  assert.equal(policyResult.sessionState?.overlay?.type, "review-policy-panel");
+
+  const adviceResult = keepHouseHouseModule.dispatch({
+    gameState: policyResult.gameState,
+    characterDefinitions: policyResult.characterDefinitions,
+    houseDefinition: keepHouse,
+    playerCharacterId,
+    sessionState: policyResult.sessionState,
+    request: { type: "action", actionId: "advance-keep-dialogue" },
+  });
+  assert.equal(adviceResult.sessionState?.meetingStage, "advice");
+  assert.equal(adviceResult.sessionState?.overlay?.type, "review-policy-panel");
+
+  const assignTaskResult = keepHouseHouseModule.dispatch({
+    gameState: adviceResult.gameState,
+    characterDefinitions: adviceResult.characterDefinitions,
+    houseDefinition: keepHouse,
+    playerCharacterId,
+    sessionState: adviceResult.sessionState,
+    request: { type: "action", actionId: "keep-review-stay-silent" },
   });
   assert.equal(assignTaskResult.sessionState?.meetingStage, "assign-task");
 
@@ -6263,7 +6288,7 @@ test("keep house review copy resolves from text entries during strategy and assi
     "自定义评定开场二。",
   ]);
 
-  const contributionResult = keepHouseHouseModule.dispatch({
+  const assignmentTableResult = keepHouseHouseModule.dispatch({
     gameState: enterResult.gameState,
     characterDefinitions: enterResult.characterDefinitions,
     houseDefinition: keepHouse,
@@ -6273,13 +6298,19 @@ test("keep house review copy resolves from text entries during strategy and assi
     activityDefinitionsById,
     textEntriesById,
   });
+  assert.equal(assignmentTableResult.sessionState?.meetingStage, "assignment-table");
+  assert.equal(
+    assignmentTableResult.sessionState?.overlay?.type,
+    "review-assignment-table"
+  );
+
   const praiseResult = keepHouseHouseModule.dispatch({
-    gameState: contributionResult.gameState,
-    characterDefinitions: contributionResult.characterDefinitions,
+    gameState: assignmentTableResult.gameState,
+    characterDefinitions: assignmentTableResult.characterDefinitions,
     houseDefinition: keepHouse,
     playerCharacterId,
-    sessionState: contributionResult.sessionState,
-    request: { type: "action", actionId: "close-alert" },
+    sessionState: assignmentTableResult.sessionState,
+    request: { type: "action", actionId: "close-review-assignment-table" },
     activityDefinitionsById,
     textEntriesById,
   });
@@ -6288,7 +6319,7 @@ test("keep house review copy resolves from text entries during strategy and assi
     "主帅先翻阅功簿。"
   );
 
-  const strategyResult = keepHouseHouseModule.dispatch({
+  const situationResult = keepHouseHouseModule.dispatch({
     gameState: praiseResult.gameState,
     characterDefinitions: praiseResult.characterDefinitions,
     houseDefinition: keepHouse,
@@ -6299,23 +6330,49 @@ test("keep house review copy resolves from text entries during strategy and assi
     textEntriesById,
   });
   assert.equal(
-    strategyResult.sessionState?.dialogueLines[0],
+    situationResult.sessionState?.dialogueLines[1],
     "自定义军议开场。"
   );
 
-  const assignTaskResult = keepHouseHouseModule.dispatch({
-    gameState: strategyResult.gameState,
-    characterDefinitions: strategyResult.characterDefinitions,
+  const policyResult = keepHouseHouseModule.dispatch({
+    gameState: situationResult.gameState,
+    characterDefinitions: situationResult.characterDefinitions,
     houseDefinition: keepHouse,
     playerCharacterId,
-    sessionState: strategyResult.sessionState,
+    sessionState: situationResult.sessionState,
     request: { type: "action", actionId: "advance-keep-dialogue" },
+    activityDefinitionsById,
+    textEntriesById,
+  });
+  assert.equal(policyResult.sessionState?.meetingStage, "policy");
+  assert.equal(policyResult.sessionState?.overlay?.type, "review-policy-panel");
+
+  const adviceResult = keepHouseHouseModule.dispatch({
+    gameState: policyResult.gameState,
+    characterDefinitions: policyResult.characterDefinitions,
+    houseDefinition: keepHouse,
+    playerCharacterId,
+    sessionState: policyResult.sessionState,
+    request: { type: "action", actionId: "advance-keep-dialogue" },
+    activityDefinitionsById,
+    textEntriesById,
+  });
+  assert.equal(adviceResult.sessionState?.meetingStage, "advice");
+  assert.equal(adviceResult.sessionState?.overlay?.type, "review-policy-panel");
+
+  const assignTaskResult = keepHouseHouseModule.dispatch({
+    gameState: adviceResult.gameState,
+    characterDefinitions: adviceResult.characterDefinitions,
+    houseDefinition: keepHouse,
+    playerCharacterId,
+    sessionState: adviceResult.sessionState,
+    request: { type: "action", actionId: "keep-review-stay-silent" },
     activityDefinitionsById,
     textEntriesById,
   });
   assert.deepEqual(assignTaskResult.sessionState?.dialogueLines, [
     "朱元璋出列听令。",
-    "当前可领差事：自定义采办军粮。",
+    "当前可领差事：自定义采办军粮（最低身份：亲兵）, 巡看市面（最低身份：亲兵队长）, 整练军伍（最低身份：镇抚）。",
     "领命后立即出发。",
   ]);
 
