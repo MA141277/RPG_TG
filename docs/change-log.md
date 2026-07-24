@@ -2,6 +2,15 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-24 Faction Review Domain Contracts
+
+### Added
+- 新增 shared faction review domain contracts 与纯 review helpers，覆盖完成评级、阵营身份等级、阵营功绩 read/write/clear、任务身份门槛视图，以及默认 special-task hook。
+- 新增 `GameState.runtime.factionMerit`，并在 `createInitialState()` 初始化，用于按 faction 存储玩家阵营功绩。
+
+### Impact
+- 阵营评定相关的等级、功绩和任务门槛逻辑现在有共享 domain/application 契约，后续 temple、keep 或其他阵营据点应复用该契约，而不是在各自流程内复制持久状态或评级规则。
+
 ## 2026-07-22 Player UI Cleanup
 
 ### Changed
