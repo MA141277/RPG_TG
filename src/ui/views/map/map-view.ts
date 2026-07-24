@@ -378,12 +378,12 @@ function renderCampaignStructureVisuals(model: MapViewModel): string {
   }
 
   return model.campaignMarkers
-    .filter(
-      (marker) =>
-        marker.structureVisual?.kind === "settlement-building" &&
-        marker.isRevealed
-    )
     .map((marker) => {
+      const structureVisual = marker.structureVisual;
+      if (structureVisual?.kind !== "settlement-building" || !marker.isRevealed) {
+        return "";
+      }
+
       const left = (marker.x / model.coordinateSpace.width) * 100;
       const bottom = (marker.y / model.coordinateSpace.height) * 100;
       const heightU = marker.x / model.coordinateSpace.width;
@@ -393,7 +393,7 @@ function renderCampaignStructureVisuals(model: MapViewModel): string {
         <span
           class="c-campaign-hex-building"
           style="--hex-building-left:${left.toFixed(3)}%; --hex-building-bottom:${bottom.toFixed(3)}%;"
-          data-campaign-structure-kind="${marker.structureVisual.kind}"
+          data-campaign-structure-kind="${structureVisual.kind}"
           data-terrain-projected-point="true"
           data-map-height-u="${heightU.toFixed(5)}"
           data-map-height-v="${heightV.toFixed(5)}"
