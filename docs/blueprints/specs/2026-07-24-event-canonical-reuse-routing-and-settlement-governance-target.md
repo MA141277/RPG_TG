@@ -37,7 +37,7 @@
 
 ### Scope
 
-- `Event-module instances, building-module instances, host-owned related instances, and their references are deduplicated and rewritten onto canonical ids before later routing or settlement work begins.`
+- `Event-module instances, building-module route truth, host-owned related instances, and their references are deduplicated and rewritten onto canonical ids before later routing work begins.`
 - `Deduplication-first is the required first phase for this version.`
 - `nextEventId is the single formal follow-up field name across dialogue / task / playable / function / settlement ownership surfaces.`
 - `nextEventId stores only an event id and carries no condition, reward, settlement, payload, selector, or lowering truth.`
@@ -56,6 +56,7 @@
 - `If old meaning does not require a follow-up event, the migrated path must close directly instead of inventing a compatibility bridge.`
 - `Any missing follow-up EventId and EventBinding created during migration must land in the formal configuration tables such as events.json and event-bindings.json.`
 - `Building-side work must continue through the Script Editor arrangement / event-binding / playable-flow / shared-runtime path and must not reintroduce building business hardcoding in src/main.ts.`
+- `If same-display-name real building host duplicates remain after the first canonical-reuse queue closes, Blueprint must route that residual host-instance cleanup into a later same-version queue before full-chain consistency or final acceptance claims completion.`
 
 ### Formal Deduplication Contract
 
@@ -68,6 +69,7 @@
 - `Different nextEventId, different binding conditions, different host semantics, different settlement semantics, different result-entry structure, or explicit author intent to separate must prevent merging.`
 - `Canonical id selection must be stable and repeatable: prefer highest reference count, then default-template-library baseline id, then earlier stable template-library id, then one deterministic tie-breaker.`
 - `Every deduplication batch must rewrite all owned references to the selected canonical id.`
+- `For real building host instances, duplicate candidacy is keyed by creator-facing display name rather than legacy host id survival; same-display-name host duplicates must converge to one surviving canonical host instance and all owned direct host references must rewrite to that survivor.`
 - `No retired duplicate id may survive in export/import/loading/preview/startup truth after the queue claims canonical reuse.`
 - `Canonical merge records must preserve source id, canonical id, merge reason, whether strong template dedup applied, and whether exception review was needed.`
 
@@ -92,6 +94,10 @@
   - `runtime-preview event mappings`
   - `normal-startup event loading/materialization references`
   - `Script Editor materialization-generated event and binding references`
+  - `houses.json host ids referenced by city and entry surfaces`
+  - `cities[].buildingIds`
+  - `cities[].mountedBuildings[].buildingId`
+  - `city-entries[].targetHouseId`
 - required_outcome:
   - `Every old reference points to a canonical surviving id, and no dangling or dual truth remains.`
 
@@ -150,6 +156,7 @@
 | `queue.event-and-building-instance-canonical-reuse` | `required-first` | `Own event/building/host-instance deduplication, canonical id selection, event-binding rewrite boundary, and full reference rewrite onto canonical ids.` | `Must admit first and become the initial active queue.` |
 | `queue.instance-next-event-id-and-event-routing-convergence` | `required` | `Unify nextEventId ownership and direct event-owned continuation without adding a middle layer.` | `Admit only after canonical reuse is closed and synchronized.` |
 | `queue.settlement-resource-and-event-type-convergence` | `required` | `Introduce settlement resources, event(type=settlement), numeric-first settlement semantics, and PlayableResult naming convergence.` | `Admit only after nextEventId routing truth is stable.` |
+| `queue.same-display-name-building-host-instance-canonicalization` | `required-candidate` | `Remove duplicate real building host instances that share one creator-facing display name and rewrite direct host references onto one surviving canonical host per name.` | `Admit only after settlement contract freeze and before full-chain consistency claims host-id parity.` |
 | `queue.full-chain-event-routing-and-settlement-consistency` | `required` | `Converge Script Editor, export/import, loader, preview, startup, and runtime onto the same landed truth.` | `Admit only after settlement contract freeze.` |
 | `queue.event-routing-settlement-migration-and-final-acceptance` | `required-final` | `Run explicit migration, fail-closed rejection, acceptance proof, residue guard, and version-closeout evidence.` | `Admit last.` |
 
@@ -162,6 +169,7 @@
 | `ACC-EVENT-SETTLE-003` | `All follow-up event references converge on nextEventId, store only eventId, allow result-entry ownership where applicable, close directly when empty, and forbid explicit self-reference.` | `queue.instance-next-event-id-and-event-routing-convergence` | `authoring tests + runtime routing tests + source review` | `Mixed follow-up field names, payload-bearing follow-up fields, or self-referential routing remain live.` |
 | `ACC-EVENT-SETTLE-004` | `event remains the only formal creator-facing routing owner and runtime routes directly from completion to startEvent(nextEventId) with no resolver, selector, or settlement-owned router in the middle.` | `queue.instance-next-event-id-and-event-routing-convergence` | `runtime tests + source-removal guards + building-path review` | `Any second router or middle routing layer survives.` |
 | `ACC-EVENT-SETTLE-005` | `settlement becomes a first-class resource and event(type=settlement) formal type, references settlement entries only, stays numeric-first, and does not inline ad hoc payload mutation truth.` | `queue.settlement-resource-and-event-type-convergence` | `authoring tests + runtime settlement tests + source review` | `Settlement events embed payloads, expose engine-private lowering, or become a second router.` |
+| `ACC-EVENT-SETTLE-005A` | `Same-display-name real building host instances converge to one surviving canonical host per name, and direct references in cities[].buildingIds, cities[].mountedBuildings[].buildingId, city-entries[].targetHouseId, and related host-owned building-enter/owner paths rewrite to that survivor with no stale duplicate host truth.` | `queue.same-display-name-building-host-instance-canonicalization` | `source audit + rewrite tests + startup/module-entry checks` | `Same-display-name duplicate host truth or stale direct host references survive.` |
 | `ACC-EVENT-SETTLE-006` | `Script Editor, export/import, loader, preview, normal startup, and runtime execution all share the same canonical-id, nextEventId, settlement, and event-type truth.` | `queue.full-chain-event-routing-and-settlement-consistency` | `round-trip tests + preview/runtime tests + source guards` | `Any chain can author the new truth while another chain drops, downgrades, or silently reconstructs old truth.` |
 | `ACC-EVENT-SETTLE-007` | `Migration is explicit and fail-closed: compatibility import is absent, missing follow-up meaning splits to explicit event + event-binding or direct close as required, missing event ids/bindings land in formal config tables, and PlayableSettlement retires into PlayableResult.` | `queue.event-routing-settlement-migration-and-final-acceptance` | `migration tests + rejection tests + source-removal guards` | `Legacy compatibility import or private settlement/routing truth survives in production.` |
 | `ACC-EVENT-SETTLE-008` | `Final acceptance proves normal start, JSON import, Script Editor runtime preview, city/building module entry, result routing, settlement execution, and chained follow-up event behavior on the formal landed model.` | `queue.event-routing-settlement-migration-and-final-acceptance` | `browser proof + acceptance ledger + automated regression coverage` | `The version attempts closeout without cross-entrypoint acceptance on the landed truth.` |
@@ -185,6 +193,7 @@
 - `Compatibility import is forbidden.`
 - `If old meaning needs a follow-up event and nextEventId is missing, migration must create explicit event + event-binding records in events.json / event-bindings.json.`
 - `If old meaning does not need a follow-up event, the path closes directly.`
+- `Same-display-name real building host instances must not survive as duplicate canonical truth once their direct references can be rewritten to one surviving host instance per display name.`
 
 ### Version-Level Order Approval
 
@@ -193,8 +202,9 @@
 1. `event/building/host-instance deduplication, canonical reuse, and full reference rewrite`
 2. `instance-level nextEventId plus event-only routing convergence`
 3. `settlement resources, event(type=settlement), and PlayableResult boundary convergence`
-4. `Script Editor/export/import/loading/preview/startup/runtime full-chain consistency`
-5. `explicit migration, fail-closed acceptance, governance sync, and version closeout`
+4. `same-display-name real building host canonicalization and direct host-reference rewrite`
+5. `Script Editor/export/import/loading/preview/startup/runtime full-chain consistency`
+6. `explicit migration, fail-closed acceptance, governance sync, and version closeout`
 
 ### Final Acceptance Coverage Contract
 

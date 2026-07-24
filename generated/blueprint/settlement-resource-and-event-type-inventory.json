@@ -1,0 +1,67 @@
+{
+  "versionId": "target.event-follow-up-routing-settlement-and-canonical-reuse-convergence",
+  "queueId": "queue.settlement-resource-and-event-type-convergence",
+  "taskId": "task.settlement-resource-and-event-type-convergence.surface-inventory-and-boundary-lock",
+  "generatedAt": "2026-07-24",
+  "acceptanceScope": [
+    "ACC-EVENT-SETTLE-005"
+  ],
+  "ownedSurfaceInventory": {
+    "domainContracts": [
+      "src/domain/event.ts",
+      "src/domain/script-editor-project.ts"
+    ],
+    "editorAuthoring": [
+      "src/application/script-editor/minigame-binding-authoring.ts",
+      "src/application/script-editor/flow-authoring.ts",
+      "src/application/script-editor/workspace-shell.ts"
+    ],
+    "importExport": [
+      "src/application/script-editor/runtime-pack-export.ts",
+      "src/application/script-editor/runtime-pack-import.ts"
+    ],
+    "runtimeContracts": [
+      "src/core/contracts/playable-runtime.ts",
+      "src/core/runtime/playable-runtime.ts",
+      "src/core/runtime/runtime-settlement.ts"
+    ],
+    "verificationAnchors": [
+      "tests/robustness.test.cjs"
+    ]
+  },
+  "currentTruthGaps": [
+    "Event contracts do not distinguish settlement events from other event kinds.",
+    "Script Editor project truth has no settlement resource/object file family.",
+    "Minigame and flow settlement meaning still survives through outcomeRoutes instead of settlement references.",
+    "Shared runtime still exports PlayableSettlement rather than PlayableResult.",
+    "Import/export only round-trip settlement-adjacent handoffByOutcome hints and do not materialize settlement records."
+  ],
+  "boundedRewriteOrder": [
+    "Freeze domain/editor contracts for formal settlement resources and event(type=settlement).",
+    "Replace minigame/flow settlement-hint-only authoring with formal settlement references while preserving event-owned routing.",
+    "Rename the shared playable settlement shell to PlayableResult and strip routing/settlement truth ownership from it.",
+    "Align import/export/validation/runtime seams on the new settlement contract without adding compatibility import.",
+    "Hand the resulting landed contract to the later full-chain consistency queue."
+  ],
+  "firstImplementationSlice": {
+    "sliceId": "slice.settlement-contract-domain-and-editor-freeze",
+    "goal": "Introduce the minimum formal settlement/event-type contract surface before runtime-wide rewrites.",
+    "targets": [
+      "src/domain/event.ts",
+      "src/domain/script-editor-project.ts",
+      "src/application/script-editor/runtime-pack-export.ts",
+      "src/application/script-editor/runtime-pack-import.ts",
+      "src/application/script-editor/workspace-shell.ts"
+    ],
+    "mustPreserve": [
+      "event remains the only routing owner",
+      "nextEventId remains eventId-only and already landed",
+      "no compatibility import"
+    ],
+    "mustNotDoYet": [
+      "do not widen into final migration",
+      "do not claim full-chain parity",
+      "do not redesign runtime-settlement itself beyond the contract seam needed for formal settlement references"
+    ]
+  }
+}

@@ -10,6 +10,7 @@ import type {
   ScriptEditorEventDestinationFamily,
   ScriptEditorEventBindingRecord,
   ScriptEditorEventRecord,
+  ScriptEditorEventType,
   ScriptEditorEventTriggerTiming,
   ScriptEditorStoryNodeRecord,
   ScriptEditorStoryProgressMode,
@@ -42,6 +43,10 @@ export const SCRIPT_EDITOR_EVENT_TRIGGER_TIMINGS: readonly ScriptEditorEventTrig
   "building-enter",
   "dialogue-finished",
   "story-progress",
+] as const;
+
+export const SCRIPT_EDITOR_EVENT_TYPES: readonly ScriptEditorEventType[] = [
+  "settlement",
 ] as const;
 
 export const SCRIPT_EDITOR_EVENT_BINDING_CONDITION_GROUP_OPERATORS: readonly ScriptEditorConditionGroupOperator[] = [
@@ -351,15 +356,22 @@ export function normalizeScriptEditorDialogueRecord(
 export function normalizeScriptEditorEventRecord(
   record: Partial<ScriptEditorEventRecord> & { id: string }
 ): ScriptEditorEventRecord {
+  const eventType = normalizeScriptEditorEventType(record.type);
   return {
     ...record,
     title: normalizeString(record.title, record.id),
     description: normalizeOptionalString(record.description),
     chapterId: normalizeOptionalString(record.chapterId),
     occurrence: normalizeEventOccurrence(record.occurrence),
+    ...(eventType == null ? {} : { type: eventType }),
     participants: Array.isArray(record.participants)
       ? record.participants
       : [],
+    ...(eventType !== "settlement"
+      ? {}
+      : {
+          settlementId: normalizeOptionalTrimmedString(record.settlementId),
+        }),
     tags: normalizeStringArray(record.tags),
     triggerTiming: normalizeEventTriggerTiming(record.triggerTiming),
     repeatable: record.repeatable === true,
@@ -696,11 +708,26 @@ export function removeScriptEditorDialogueNode(
 
 export function updateScriptEditorEventField(
   record: ScriptEditorEventRecord,
-  field: "id" | "title" | "description",
+  field: "id" | "title" | "description" | "type" | "settlementId",
   value: string
 ): ScriptEditorEventRecord {
   if (field === "description") {
     return { ...record, description: value };
+  }
+  if (field === "type") {
+    const nextType = normalizeScriptEditorEventType(value);
+    if (nextType == null) {
+      const { type: _ignoredType, settlementId: _ignoredSettlementId, ...nextRecord } =
+        record;
+      return nextRecord;
+    }
+    return { ...record, type: nextType };
+  }
+  if (field === "settlementId") {
+    if (record.type !== "settlement") {
+      return record;
+    }
+    return { ...record, settlementId: value.trim() };
   }
   if (field !== "id" && field !== "title") {
     return record;
@@ -1126,6 +1153,14 @@ function normalizeEventTriggerTiming(value?: string): ScriptEditorEventTriggerTi
   return SCRIPT_EDITOR_EVENT_TRIGGER_TIMINGS.includes(value as ScriptEditorEventTriggerTiming)
     ? (value as ScriptEditorEventTriggerTiming)
     : "manual";
+}
+
+function normalizeScriptEditorEventType(
+  value: unknown
+): ScriptEditorEventType | undefined {
+  return SCRIPT_EDITOR_EVENT_TYPES.includes(value as ScriptEditorEventType)
+    ? (value as ScriptEditorEventType)
+    : undefined;
 }
 
 function normalizeConditionGroupMode(value?: string): ScriptEditorConditionGroupOperator {

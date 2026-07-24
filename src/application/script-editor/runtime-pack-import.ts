@@ -249,6 +249,7 @@ export function importScenarioPackToScriptEditorProject(
     ),
     buildingArrangements: readBuildingArrangementsFamily(rawPack),
     cityEntries: pack.cityEntries ?? [],
+    settlements: [],
     events: mapImportedEvents(pack.events ?? [], importedMinigames),
     eventBindings: mapImportedEventBindings(rawPack),
     dialogues: mapImportedRuntimeDialogues(rawPack),
@@ -435,8 +436,13 @@ function mapImportedEvents(
       description: buildImportedEventDescription(importedEvent),
       chapterId: eventDefinition.chapterId,
       occurrence: eventDefinition.occurrence,
+      ...(eventDefinition.type === "settlement" ? { type: "settlement" as const } : {}),
       participants: eventDefinition.participants ?? [],
       actions: eventDefinition.actions ?? [],
+      ...(eventDefinition.type === "settlement" &&
+      typeof eventDefinition.settlementId === "string"
+        ? { settlementId: eventDefinition.settlementId }
+        : {}),
       tags: eventDefinition.tags ?? [],
       triggerTiming: importedEvent.triggerTiming ?? "manual",
       repeatable:

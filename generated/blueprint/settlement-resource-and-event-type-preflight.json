@@ -1,0 +1,48 @@
+{
+  "versionId": "target.event-follow-up-routing-settlement-and-canonical-reuse-convergence",
+  "queueId": "queue.settlement-resource-and-event-type-convergence",
+  "taskId": "task.settlement-resource-and-event-type-convergence.contract-cutover-preflight",
+  "generatedAt": "2026-07-24",
+  "status": "completed",
+  "firstWriteBatch": {
+    "batchId": "batch.settlement-contract-domain-and-editor-freeze",
+    "contractTargets": [
+      "src/domain/event.ts",
+      "src/domain/script-editor-project.ts",
+      "src/application/script-editor/runtime-pack-export.ts",
+      "src/application/script-editor/runtime-pack-import.ts",
+      "src/application/script-editor/workspace-shell.ts"
+    ],
+    "redTestTargets": [
+      "tests/robustness.test.cjs: replace the shared-contract assertion that currently expects PlayableSettlement to remain exported.",
+      "tests/robustness.test.cjs: add source guards for formal event(type=settlement) and settlement-entry references in editor/runtime contracts.",
+      "tests/robustness.test.cjs: add fail-closed expectations for settlement events that are missing settlement references."
+    ],
+    "mustPreserve": [
+      "event remains the only routing owner",
+      "nextEventId remains eventId-only and already landed",
+      "shared numeric write-back continues to flow through runtime-settlement",
+      "compatibility import stays forbidden"
+    ],
+    "immediateRisks": [
+      "renaming the shared PlayableSettlement contract will ripple through existing robustness guards and runtime output typing.",
+      "adding a formal settlement resource family changes project canonical files and field-path routing in Script Editor validation.",
+      "event(type=settlement) must not accidentally become a second router or bypass nextEventId truth."
+    ],
+    "landedChanges": [
+      "Script Editor project canonical files now include settlements.json and project parsing/save/default creation preserve settlements[].",
+      "EventDefinition and ScriptEditorEventRecord now carry formal type=settlement plus settlementId seams.",
+      "runtime-pack export/import preserve settlement event typing and fail closed on missing settlementId.",
+      "shared playable runtime now exports PlayableResult instead of PlayableSettlement."
+    ],
+    "verification": [
+      "cmd /c npm run build:test",
+      "node --test tests/robustness.test.cjs --test-name-pattern \"script editor project save emits canonical split files|script editor settlement event export preserves formal settlement event type and reference|script editor story/dialogue/event authoring helpers normalize bounded narrative fields|child 30 playable runtime contract exports unified playable launch session and settlement seams\""
+    ]
+  },
+  "deferredUntilAfterFirstBatch": [
+    "formal settlement record shape beyond id/title shell and dedicated authoring UI",
+    "runtime-pack first-class settlements family materialization and later full-chain parity proof",
+    "residual consumer audit proving no production PlayableSettlement contract surfaces survive outside historical evidence"
+  ]
+}

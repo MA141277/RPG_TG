@@ -1081,6 +1081,11 @@ function lowerEditorEventsToRuntimeEvents(
       .map((eventRecord) => eventRecord.id)
       .filter((eventId): eventId is string => typeof eventId === "string" && eventId.length > 0)
   );
+  appendSettlementRecordDiagnostics(
+    project.settlements,
+    sourceEventIds,
+    diagnostics
+  );
   const sourceTaskIds = new Set(
     project.quests
       .map((questRecord) => questRecord.id)
@@ -1090,6 +1095,14 @@ function lowerEditorEventsToRuntimeEvents(
     project.flows
       .map((flowRecord) => flowRecord.id)
       .filter((flowId): flowId is string => typeof flowId === "string" && flowId.length > 0)
+  );
+  const sourceSettlementIds = new Set(
+    project.settlements
+      .map((settlementRecord) => settlementRecord.id)
+      .filter(
+        (settlementId): settlementId is string =>
+          typeof settlementId === "string" && settlementId.length > 0
+      )
   );
   const minigamesById = new Map(
     project.minigames
@@ -1114,6 +1127,7 @@ function lowerEditorEventsToRuntimeEvents(
       sourceEventIds,
       sourceTaskIds,
       sourceFlowIds,
+      sourceSettlementIds,
       minigamesById,
       flowStartEventIds,
       derivedFlowLaunchActionsByEventId.get(eventRecord.id) ?? [],
@@ -1168,7 +1182,78 @@ function collectRuntimeReferencedEventIds(
     }
   }
 
+  for (const settlementRecord of project.settlements) {
+    for (const result of settlementRecord.results ?? []) {
+      if (
+        typeof result.nextEventId === "string" &&
+        result.nextEventId.length > 0
+      ) {
+        eventIds.add(result.nextEventId);
+      }
+    }
+  }
+
   return eventIds;
+}
+
+function appendSettlementRecordDiagnostics(
+  settlements: ScriptEditorProjectDefinition["settlements"],
+  sourceEventIds: Set<string>,
+  diagnostics: ScriptEditorRuntimeExportDiagnostic[]
+): void {
+  for (const [settlementIndex, settlementRecord] of settlements.entries()) {
+    const fieldPath = `project.settlements[${settlementIndex}]`;
+    const resultIds = new Set<string>();
+    for (const [resultIndex, resultRecord] of (settlementRecord.results ?? []).entries()) {
+      const resultFieldPath = `${fieldPath}.results[${resultIndex}]`;
+      const resultId =
+        typeof resultRecord?.id === "string" ? resultRecord.id.trim() : "";
+      const resultLabel =
+        typeof resultRecord?.label === "string" ? resultRecord.label.trim() : "";
+      if (resultId.length === 0) {
+        diagnostics.push({
+          code: "missing-field",
+          fieldPath: `${resultFieldPath}.id`,
+          message:
+            `Settlement "${settlementRecord.id}" result entry requires a non-empty id.`,
+        });
+      } else if (resultIds.has(resultId)) {
+        diagnostics.push({
+          code: "duplicate-id",
+          fieldPath: `${resultFieldPath}.id`,
+          message:
+            `Settlement "${settlementRecord.id}" duplicates result id "${resultId}".`,
+        });
+      } else {
+        resultIds.add(resultId);
+      }
+
+      if (resultLabel.length === 0) {
+        diagnostics.push({
+          code: "missing-field",
+          fieldPath: `${resultFieldPath}.label`,
+          message:
+            `Settlement "${settlementRecord.id}" result "${resultId || `result.${resultIndex + 1}`}" requires a non-empty label.`,
+        });
+      }
+
+      const nextEventId =
+        typeof resultRecord?.nextEventId === "string"
+          ? resultRecord.nextEventId.trim()
+          : "";
+      if (nextEventId.length === 0) {
+        continue;
+      }
+      if (!sourceEventIds.has(nextEventId)) {
+        diagnostics.push({
+          code: "missing-reference",
+          fieldPath: `${resultFieldPath}.nextEventId`,
+          message:
+            `Settlement "${settlementRecord.id}" result "${resultId || `result.${resultIndex + 1}`}" references missing next event "${nextEventId}".`,
+        });
+      }
+    }
+  }
 }
 
 function collectLegacyFlowLaunchActionsByEventId(
@@ -1247,6 +1332,7 @@ function lowerEditorEventToRuntimeEvent(
   sourceEventIds: Set<string>,
   sourceTaskIds: Set<string>,
   sourceFlowIds: Set<string>,
+  sourceSettlementIds: Set<string>,
   minigamesById: Map<string, ScriptEditorProjectDefinition["minigames"][number]>,
   flowStartEventIds: Set<string>,
   derivedFlowActions: EventRuntimeAction[],
@@ -1334,6 +1420,16 @@ function lowerEditorEventToRuntimeEvent(
     }
   }
 
+  const settlementId = lowerEventSettlementId(
+    eventRecord,
+    eventIndex,
+    sourceSettlementIds,
+    diagnostics
+  );
+  if (settlementId === null) {
+    return null;
+  }
+
   return {
     id: eventRecord.id,
     chapterId:
@@ -1351,14 +1447,60 @@ function lowerEditorEventToRuntimeEvent(
     ...(Array.isArray(eventRecord.participants) && eventRecord.participants.length > 0
     ? { participants: eventRecord.participants }
       : {}),
+    ...(eventRecord.type === "settlement" ? { type: "settlement" as const } : {}),
     dialogueId,
     ...(actions.length === 0 ? {} : { actions }),
+    ...(settlementId.length === 0 ? {} : { settlementId }),
     ...(nextEventId.length === 0 ? {} : { nextEventId }),
     ...(taskInputs.length === 0 ? {} : { taskInputs }),
     ...(Array.isArray(eventRecord.tags) && eventRecord.tags.length > 0
       ? { tags: eventRecord.tags }
       : {}),
   };
+}
+
+function lowerEventSettlementId(
+  eventRecord: ScriptEditorEventRecord,
+  eventIndex: number,
+  sourceSettlementIds: Set<string>,
+  diagnostics: ScriptEditorRuntimeExportDiagnostic[]
+): string | null {
+  const settlementId =
+    typeof eventRecord.settlementId === "string" ? eventRecord.settlementId.trim() : "";
+  if (eventRecord.type !== "settlement") {
+    if (settlementId.length > 0) {
+      diagnostics.push({
+        code: "invalid-field",
+        fieldPath: `project.events[${eventIndex}].settlementId`,
+        message:
+          `Event "${eventRecord.id}" cannot carry settlementId unless type=settlement.`,
+      });
+      return null;
+    }
+    return "";
+  }
+
+  if (settlementId.length === 0) {
+    diagnostics.push({
+      code: "missing-field",
+      fieldPath: `project.events[${eventIndex}].settlementId`,
+      message:
+        `Settlement event "${eventRecord.id}" requires a non-empty settlementId.`,
+    });
+    return null;
+  }
+
+  if (!sourceSettlementIds.has(settlementId)) {
+    diagnostics.push({
+      code: "missing-reference",
+      fieldPath: `project.events[${eventIndex}].settlementId`,
+      message:
+        `Settlement event "${eventRecord.id}" references missing settlement "${settlementId}".`,
+    });
+    return null;
+  }
+
+  return settlementId;
 }
 
 function resolveEventDialogueId(

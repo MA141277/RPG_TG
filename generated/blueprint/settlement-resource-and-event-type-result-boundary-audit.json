@@ -1,0 +1,42 @@
+{
+  "versionId": "target.event-follow-up-routing-settlement-and-canonical-reuse-convergence",
+  "queueId": "queue.settlement-resource-and-event-type-convergence",
+  "taskId": "task.settlement-resource-and-event-type-convergence.result-boundary-consumer-audit",
+  "generatedAt": "2026-07-24",
+  "status": "completed",
+  "completedSlices": [
+    "task.settlement-resource-and-event-type-convergence.contract-cutover-preflight",
+    "task.settlement-resource-and-event-type-convergence.domain-editor-contract-freeze",
+    "task.settlement-resource-and-event-type-convergence.settlement-reference-guard-alignment"
+  ],
+  "landedProductionTruth": [
+    "Script Editor project schema/save/load now recognizes settlements.json as a canonical family.",
+    "Script Editor event authoring/runtime contracts now expose type=settlement and settlementId.",
+    "runtime-pack export/import preserve settlement event typing and reject missing settlementId or missing settlement records.",
+    "workspace-shell now surfaces missing settlementId and missing settlement record blockers through the standard risk/export path.",
+    "shared playable runtime contract now uses PlayableResult as the surviving settlement-shaped result shell."
+  ],
+  "historicalOnlyResidue": [
+    "generated/blueprint/settlement-resource-and-event-type-evidence.json records the pre-cutover baseline and still names PlayableSettlement intentionally as historical evidence.",
+    "generated/blueprint/settlement-resource-and-event-type-inventory.json records the pre-implementation inventory and still names PlayableSettlement intentionally as historical evidence.",
+    "docs/blueprints/queues/flow-playable-runtime-and-presenter-queue.md mentions PlayableSettlement as closed historical proof from an older queue."
+  ],
+  "remainingProductionGaps": [
+    "settlements[] currently freezes family existence only; dedicated settlement record shape, result-entry schema, and authoring UI are not landed yet.",
+    "runtime-pack still lacks a first-class settlements family file, so full-chain parity remains deferred to queue.full-chain-event-routing-and-settlement-consistency.",
+    "current queue still needs a bounded audit of runtime consumers that may depend on settlement-shaped result detail beyond the renamed PlayableResult contract."
+  ],
+  "nextBatchRecommendation": {
+    "batchId": "batch.settlement-record-shape-and-reference-freeze",
+    "focus": [
+      "freeze the first formal ScriptEditorSettlementRecord shape around result entries and nextEventId-ready exits",
+      "keep event as the sole router while making settlement references point only at formal settlement records",
+      "avoid widening into runtime-pack family materialization or browser acceptance"
+    ]
+  },
+  "nextTaskId": "task.settlement-resource-and-event-type-convergence.settlement-record-shape-freeze",
+  "verification": [
+    "cmd /c npm run build:test",
+    "node --test tests/robustness.test.cjs --test-name-pattern \"script editor runtime export rejects settlement events without settlementId|script editor runtime export rejects settlement events with missing settlement records|script editor workspace shell surfaces settlement events missing settlementId blockers|script editor workspace shell surfaces settlement events missing settlement records blockers\""
+  ]
+}

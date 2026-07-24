@@ -30,6 +30,7 @@ export const SCRIPT_EDITOR_PROJECT_FILE_KEYS = [
   "buildings",
   "buildingArrangements",
   "cityEntries",
+  "settlements",
   "events",
   "eventBindings",
   "quests",
@@ -67,6 +68,7 @@ export const SCRIPT_EDITOR_PROJECT_CANONICAL_FILES: Record<
   buildings: "./buildings.json",
   buildingArrangements: "./building-arrangements.json",
   cityEntries: "./city-entries.json",
+  settlements: "./settlements.json",
   events: "./events.json",
   eventBindings: "./event-bindings.json",
   quests: "./quests.json",
@@ -490,6 +492,8 @@ export type ScriptEditorEventDestinationFamily =
   | "minigame"
   | "task";
 
+export type ScriptEditorEventType = "settlement";
+
 export type ScriptEditorEventDestination = {
   family: ScriptEditorEventDestinationFamily;
   targetId: string;
@@ -505,6 +509,18 @@ export type ScriptEditorEventRelationRecord = {
 export type ScriptEditorEventPreviewSummary = {
   previewNotes?: string;
   validationNotes?: string;
+};
+
+export type ScriptEditorSettlementResultRecord = {
+  id: string;
+  label: string;
+  nextEventId?: string;
+};
+
+export type ScriptEditorSettlementRecord = ScriptEditorEntityRecord & {
+  title: string;
+  description?: string;
+  results?: ScriptEditorSettlementResultRecord[];
 };
 
 export type ScriptEditorMinigameOwnerKind =
@@ -585,8 +601,10 @@ export type ScriptEditorEventRecord = ScriptEditorEntityRecord & {
   description?: string;
   chapterId?: string;
   occurrence?: EventOccurrence;
+  type?: ScriptEditorEventType;
   participants?: EventParticipant[];
   actions?: EventRuntimeAction[];
+  settlementId?: string;
   tags?: string[];
   triggerTiming?: ScriptEditorEventTriggerTiming;
   repeatable?: boolean;
@@ -663,6 +681,7 @@ export type ScriptEditorProjectDefinition = {
   buildings: ScriptEditorBuildingRecord[];
   buildingArrangements: ScriptEditorBuildingArrangementRecord[];
   cityEntries: ScriptEditorEntityRecord[];
+  settlements: ScriptEditorSettlementRecord[];
   events: ScriptEditorEventRecord[];
   eventBindings: ScriptEditorEventBindingRecord[];
   quests: ScriptEditorEntityRecord[];

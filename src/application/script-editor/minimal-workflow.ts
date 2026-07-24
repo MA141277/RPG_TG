@@ -154,6 +154,7 @@ export function createDefaultScriptEditorProjectDefinition(input?: {
     ],
     buildingArrangements: [],
     cityEntries: [],
+    settlements: [],
     events: [
       {
         ...createDefaultScriptEditorEventRecord(0),

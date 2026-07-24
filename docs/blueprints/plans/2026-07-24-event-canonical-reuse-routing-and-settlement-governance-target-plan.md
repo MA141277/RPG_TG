@@ -6,11 +6,11 @@
 - version_id: `target.event-follow-up-routing-settlement-and-canonical-reuse-convergence`
 - version_status: `open`
 - active_phase: `phase.active-execution`
-- active_queue: `none`
-- decision_state: `promotion-review`
-- next_decision: `same-version-admission-or-version-closeout`
-- next_action: `write-queue-closeout`
-- resume_gate: `promotion-review`
+- active_queue: `queue.settlement-resource-and-event-type-convergence`
+- decision_state: `active-execution`
+- next_decision: `queue-closeout-or-return-to-version-review`
+- next_action: `resume-active-queue`
+- resume_gate: `active-queue`
 - post_queue_closeout_pause_policy: `auto-continue`
 - promotion_review_result: `queue-admitted`
 - review_subject_id: `none`
@@ -23,12 +23,12 @@
 - intake_summary: `Create a new formal version spec/plan from the approved 2026-07-24 iteration draft, fully absorb the approved boundaries, and immediately admit the first required canonical-reuse queue instead of stopping at a version shell.`
 - intake_result: `promoted-to-admission`
 - intake_feedback_mode: `fixed-receipt`
-- closure_review_subject: `queue.instance-next-event-id-and-event-routing-convergence`
+- closure_review_subject: `queue.settlement-resource-and-event-type-convergence`
 - closure_review_status: `evaluating`
 - residue_candidate_id: `none`
 - residue_candidate_family: `none`
-- routing_basis: `Queue closeout proof is locally complete, but the formal repository-sync gate must be recorded before the next same-version queue admission.`
-- next_lawful_queue_recommendation: `queue.settlement-resource-and-event-type-convergence`
+- routing_basis: `queue.instance-next-event-id-and-event-routing-convergence completed repository sync, so queue.settlement-resource-and-event-type-convergence is now the uniquely lawful active queue under the approved phase order.`
+- next_lawful_queue_recommendation: `queue.same-display-name-building-host-instance-canonicalization`
 - auto_admission_ready: `false`
 - stop_reason: `none`
 - stop_basis: `none`
@@ -39,13 +39,15 @@
   - `queue.event-and-building-instance-canonical-reuse`
   - `queue.instance-next-event-id-and-event-routing-convergence`
   - `queue.settlement-resource-and-event-type-convergence`
+  - `queue.same-display-name-building-host-instance-canonicalization`
   - `queue.full-chain-event-routing-and-settlement-consistency`
   - `queue.event-routing-settlement-migration-and-final-acceptance`
 - candidate_backlog_refresh_status: `fresh`
 - candidate_backlog_snapshot:
   - `queue.event-and-building-instance-canonical-reuse: closed after canonical reuse, duplicate-binding review, full owned reference rewrite, queue-closeout proof, and successful repository sync to origin/mod-first-dev.`
-  - `queue.instance-next-event-id-and-event-routing-convergence: admitted and active; it follows canonical reuse and now owns unified nextEventId routing with event as the only routing owner.`
-  - `queue.settlement-resource-and-event-type-convergence: not yet admitted; it follows nextEventId routing convergence and owns settlement resources, event(type=settlement), numeric-first settlement semantics, and PlayableResult naming cleanup.`
+  - `queue.instance-next-event-id-and-event-routing-convergence: closed after repository sync to origin/mod-first-dev; it completed unified nextEventId routing with event as the only routing owner.`
+  - `queue.settlement-resource-and-event-type-convergence: admitted and active; it follows nextEventId routing convergence and now owns settlement resources, event(type=settlement), numeric-first settlement semantics, and PlayableResult naming cleanup.`
+  - `queue.same-display-name-building-host-instance-canonicalization: candidate-recorded; it follows settlement contract freeze and owns same-display-name real building host deduplication plus direct host-reference rewrite across cities, mountedBuildings, city entries, and related host-owned paths.`
   - `queue.full-chain-event-routing-and-settlement-consistency: not yet admitted; it follows settlement-contract freeze and owns Script Editor/export/import/loading/preview/startup/runtime full-chain consistency.`
   - `queue.event-routing-settlement-migration-and-final-acceptance: not yet admitted; required-final queue for explicit migration, fail-closed rejection, acceptance, and residue guard.`
 - candidate_backlog_scan_sources:
@@ -102,8 +104,9 @@
 1. `event/building/host-instance deduplication, canonical reuse, duplicate-binding review, and full owned reference rewrite`
 2. `instance-level nextEventId plus event-only routing convergence`
 3. `settlement resources, event(type=settlement), and PlayableResult boundary convergence`
-4. `Script Editor/export/import/loading/preview/startup/runtime full-chain consistency`
-5. `explicit migration, fail-closed rejection, acceptance, and final governance closeout`
+4. `same-display-name real building host canonicalization and direct host-reference rewrite`
+5. `Script Editor/export/import/loading/preview/startup/runtime full-chain consistency`
+6. `explicit migration, fail-closed rejection, acceptance, and final governance closeout`
 
 - `Bulk identification, bulk folding, bulk reference rewrite, and bulk validation are the default working modes inside this version.`
 - `The workflow must not pause again for already approved boundaries such as strong template-layer deduplication, empty nextEventId meaning direct close, explicit self-reference prohibition, settlement-entry-only references, or PlayableSettlement -> PlayableResult convergence.`
@@ -152,16 +155,16 @@
 
 - receipt_join_status: `success`
 - receipt_join_type: `execution-queue`
-- receipt_join_queue_id: `queue.event-and-building-instance-canonical-reuse`
-- receipt_reason_code: `admission-routing-required`
+- receipt_join_queue_id: `queue.settlement-resource-and-event-type-convergence`
+- receipt_reason_code: `phase-order-auto-admission`
 - receipt_reason_basis:
-  - `The operator required a formal version record plus immediate first-queue activation, and canonical reuse is the only lawful first queue under the approved phase order.`
-- receipt_active_queue: `queue.event-and-building-instance-canonical-reuse`
-- receipt_active_task: `task.event-and-building-instance-canonical-reuse.reference-rewrite-and-guard-baseline`
+  - `The approved phase order and completed repository-sync gate for queue.instance-next-event-id-and-event-routing-convergence make settlement convergence the uniquely lawful next admission.`
+- receipt_active_queue: `queue.settlement-resource-and-event-type-convergence`
+- receipt_active_task: `task.settlement-resource-and-event-type-convergence.contract-cutover-preflight`
 - receipt_queue_goal:
-  - `Establish canonical event/building/host-instance reuse and full owned reference rewrite as the foundation for later nextEventId, settlement, and full-chain consistency work.`
+  - `Formalize settlement resources, event(type=settlement), and the PlayableResult boundary without regressing event-owned routing.`
 - receipt_next_step:
-  - `Continue from the queue's active rewrite-and-guard task rather than returning to version review.`
+  - `Continue from the settlement queue's active contract-cutover-preflight task rather than returning to version review.`
 - receipt_human_action: `none-required`
 - receipt_internal_analysis_exposed: `false`
 
@@ -170,8 +173,9 @@
 | Candidate ID | Last Classification | Proposed Queue | Latest Disposition | Recheck Trigger Type | Recheck Trigger Basis | Acceptance Refs | Can Claim | Cannot Claim | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | `item.event-and-building-instance-canonical-reuse` | `queue-candidate` | `queue.event-and-building-instance-canonical-reuse` | `closed` | `queue-closeout-complete` | `It was the approved first phase and is now closed after sync succeeded.` | `ACC-EVENT-SETTLE-001; ACC-EVENT-SETTLE-002` | `canonical id selection, strong deduplication, duplicate-binding review, full owned reference rewrite` | `nextEventId routing, settlement resources, final migration acceptance` | `Must not be bypassed by later routing or settlement work.` |
-| `item.instance-next-event-id-and-event-routing-convergence` | `queue-candidate` | `queue.instance-next-event-id-and-event-routing-convergence` | `closeout-recorded-awaiting-sync` | `repository-sync-gate` | `Queue-local closeout proof is now recorded, so the next lawful action is the repository-sync gate before same-version promotion may continue.` | `ACC-EVENT-SETTLE-003; ACC-EVENT-SETTLE-004` | `nextEventId field unification and direct event-owned follow-up routing` | `settlement resource authoring, final migration acceptance` | `Must preserve event as sole routing owner.` |
-| `item.settlement-resource-and-event-type-convergence` | `queue-candidate` | `queue.settlement-resource-and-event-type-convergence` | `candidate-recorded` | `queue-closeout` | `Recheck only after nextEventId routing truth is stable.` | `ACC-EVENT-SETTLE-005` | `settlement resource/event-type convergence and PlayableResult naming cleanup` | `cross-chain consistency or final migration ownership` | `Must preserve numeric-first settlement boundary.` |
+| `item.instance-next-event-id-and-event-routing-convergence` | `queue-candidate` | `queue.instance-next-event-id-and-event-routing-convergence` | `closed` | `queue-closeout-complete` | `Repository sync succeeded, so the queue is closed and no longer the active execution target.` | `ACC-EVENT-SETTLE-003; ACC-EVENT-SETTLE-004` | `nextEventId field unification and direct event-owned follow-up routing` | `settlement resource authoring, final migration acceptance` | `Must preserve event as sole routing owner.` |
+| `item.settlement-resource-and-event-type-convergence` | `queue-candidate` | `queue.settlement-resource-and-event-type-convergence` | `active` | `task-progression` | `nextEventId routing truth is stable and repository sync is recorded, so the queue is now the live execution owner.` | `ACC-EVENT-SETTLE-005` | `settlement resource/event-type convergence and PlayableResult naming cleanup` | `cross-chain consistency or final migration ownership` | `Must preserve numeric-first settlement boundary.` |
+| `item.same-display-name-building-host-instance-canonicalization` | `queue-candidate` | `queue.same-display-name-building-host-instance-canonicalization` | `candidate-recorded` | `queue-closeout` | `The operator clarified that the current version still preserves duplicate real building host instances when multiple hosts share one creator-facing display name; because queue.settlement-resource-and-event-type-convergence is already the single active queue, Blueprint records this as a later same-version candidate instead of activating a second queue.` | `ACC-EVENT-SETTLE-005A` | `same-display-name real building host deduplication and direct host-reference rewrite across cities/mountedBuildings/city entries/related host-owned paths` | `settlement contract freeze, whole-chain parity, or final migration acceptance` | `Must not be reframed as taxonomy cleanup or preserve duplicate host instances only because legacy ids differ.` |
 | `item.full-chain-event-routing-and-settlement-consistency` | `queue-candidate` | `queue.full-chain-event-routing-and-settlement-consistency` | `candidate-recorded` | `queue-closeout` | `Recheck only after settlement contracts are frozen.` | `ACC-EVENT-SETTLE-006` | `full-chain parity on canonical ids, nextEventId, and settlement events` | `migration closeout or new router invention` | `Must remain distinct from settlement authoring and final acceptance.` |
 | `item.event-routing-settlement-migration-and-final-acceptance` | `queue-candidate` | `queue.event-routing-settlement-migration-and-final-acceptance` | `candidate-recorded` | `queue-closeout` | `Recheck only after all implementation-bearing queues close.` | `ACC-EVENT-SETTLE-007; ACC-EVENT-SETTLE-008` | `explicit migration, rejection coverage, final acceptance, residue guard` | `primary ownership of earlier implementation-bearing queues` | `Required-final queue only.` |
 
@@ -180,9 +184,10 @@
 | Queue ID | Current Disposition | Promote When | Notes |
 | --- | --- | --- | --- |
 | `queue.event-and-building-instance-canonical-reuse` | `closed` | `already promoted` | `Closed after repository sync succeeded.` |
-| `queue.instance-next-event-id-and-event-routing-convergence` | `active` | `already promoted` | `Phase order was already approved, and canonical reuse has now closed with sync recorded.` |
-| `queue.settlement-resource-and-event-type-convergence` | `candidate-ready` | `only after queue.instance-next-event-id-and-event-routing-convergence closes` | `Must not admit before event-only routing truth is stable.` |
-| `queue.full-chain-event-routing-and-settlement-consistency` | `candidate-ready` | `only after queue.settlement-resource-and-event-type-convergence closes` | `Must stay distinct from settlement authoring and final acceptance.` |
+| `queue.instance-next-event-id-and-event-routing-convergence` | `closed` | `already promoted` | `Closed after repository sync succeeded.` |
+| `queue.settlement-resource-and-event-type-convergence` | `active` | `already promoted` | `Admitted immediately after queue.instance-next-event-id-and-event-routing-convergence recorded successful repository sync.` |
+| `queue.same-display-name-building-host-instance-canonicalization` | `candidate-ready` | `only after queue.settlement-resource-and-event-type-convergence closes` | `Same-display-name real building host deduplication must land before full-chain consistency or final acceptance can claim host-id parity.` |
+| `queue.full-chain-event-routing-and-settlement-consistency` | `candidate-ready` | `only after queue.same-display-name-building-host-instance-canonicalization closes` | `Must stay distinct from settlement authoring, host-instance canonicalization, and final acceptance.` |
 | `queue.event-routing-settlement-migration-and-final-acceptance` | `candidate-ready` | `only after all implementation-bearing queues close` | `Required-final queue.` |
 
 ### Candidate Backlog Refresh Rule
@@ -251,12 +256,12 @@
 - verification_adequacy_check:
   - `Governed-doc verification must pass before this activation batch is treated as synchronized.`
 - next_lawful_action_check:
-  - `Run the repository-sync gate for queue.instance-next-event-id-and-event-routing-convergence using the local closeout batch. After sync is recorded, auto-admit queue.settlement-resource-and-event-type-convergence as the next lawful queue under the already-approved phase order.`
+  - `Continue queue.settlement-resource-and-event-type-convergence from task.settlement-resource-and-event-type-convergence.queue-closeout-review-and-sync-gate.`
 
 ### Closure Routing Record
 
 - `queue.event-and-building-instance-canonical-reuse is now closed after canonical-reuse proof and repository sync succeeded through commit 8e661da pushed to origin/mod-first-dev. The version remains open and has already auto-promoted queue.instance-next-event-id-and-event-routing-convergence as the next lawful active queue.`
-- `queue.instance-next-event-id-and-event-routing-convergence is now locally closed after generated/blueprint/instance-next-event-id-routing-closeout-proof.json established ACC-EVENT-SETTLE-003 / 004 readiness. The version remains open and is now paused only on the required repository-sync gate before queue.settlement-resource-and-event-type-convergence may be admitted.`
+- `queue.instance-next-event-id-and-event-routing-convergence is now closed after repository sync succeeded through commit 954dd32a pushed to origin/mod-first-dev. The version remains open and has auto-admitted queue.settlement-resource-and-event-type-convergence as the next lawful active queue.`
 
 ### Progress Log
 
@@ -320,3 +325,17 @@
 - `2026-07-24`: `Task3 slice 4 then removed navigation-entered followUp transport from shared runtime truth. navigation-runtime no longer emits navigation.entered-city / navigation.entered-house, src/main.ts now uses applyPostNavigationStoryTrigger(...) after covered navigation commits, and the navigation-time follow-up bridge no longer owns authored story routing.`
 - `2026-07-24`: `Task3 slice 5 then removed time followUp transport from shared runtime truth. time-runtime no longer emits time.advanced / time.council-threshold-crossed, src/main.ts now calls syncCouncilPriorityAfterGameStateChange(previousGameState) explicitly after covered time commits, and createNavigationTimeFollowUpBridge is removed from production code.`
 - `2026-07-24`: `generated/blueprint/instance-next-event-id-runtime-followup-residue.json is now refreshed to show authored routing residue removed from runtime followUp ownership, with only reenter-house preserved as a return-only signal. generated/blueprint/instance-next-event-id-routing-closeout-proof.json now records local ACC-EVENT-SETTLE-003 / 004 closeout readiness, so the next lawful action is the repository-sync gate for queue.instance-next-event-id-and-event-routing-convergence.`
+- `2026-07-24`: `Repository-sync gate for queue.instance-next-event-id-and-event-routing-convergence is now satisfied. Commit 954dd32a is on origin/mod-first-dev, so queue.settlement-resource-and-event-type-convergence is now the uniquely lawful active queue under the approved phase order.`
+- `2026-07-24`: `task.settlement-resource-and-event-type-convergence.evidence-anchor-reconcile is now complete. generated/blueprint/settlement-resource-and-event-type-evidence.json freezes the current settlement contract gaps: no formal settlement resource family, no event(type=settlement) contract, minigame/flow settlement meaning still hidden in outcomeRoutes, and PlayableSettlement still live on the shared contract surface.`
+- `2026-07-24`: `task.settlement-resource-and-event-type-convergence.surface-inventory-and-boundary-lock is now complete. generated/blueprint/settlement-resource-and-event-type-inventory.json freezes the bounded rewrite order and the first implementation slice centered on src/domain/event.ts, src/domain/script-editor-project.ts, and Script Editor import/export contract seams.`
+- `2026-07-24`: `The version automatically promoted task.settlement-resource-and-event-type-convergence.contract-cutover-preflight to the live active task. The next lawful action is bounded contract preflight for event(type=settlement), settlement-resource authoring truth, and the PlayableSettlement -> PlayableResult boundary replacement.`
+- `2026-07-24`: `Task3 preflight has now started without landing code yet. generated/blueprint/settlement-resource-and-event-type-preflight.json freezes the first write batch, targeted red-test surfaces, and the must-preserve contract for the upcoming settlement/event-type cutover.`
+- `2026-07-24`: `task.settlement-resource-and-event-type-convergence.contract-cutover-preflight is now complete. generated/blueprint/settlement-resource-and-event-type-preflight.json records the landed first batch across settlements.json, settlement event typing, runtime-pack preservation, and PlayableResult rename.`
+- `2026-07-24`: `The queue then landed task.settlement-resource-and-event-type-convergence.domain-editor-contract-freeze. Script Editor project schema/save/load now preserves settlements[], formal type=settlement plus settlementId survives runtime-pack export/import, and the shared playable runtime contract now exports PlayableResult instead of PlayableSettlement.`
+- `2026-07-24`: `The queue then landed task.settlement-resource-and-event-type-convergence.settlement-reference-guard-alignment. Settlement events now fail closed when settlementId is missing or references no project settlement record, and workspace-shell mirrors the same blocked contract through the risk/export path.`
+- `2026-07-24`: `The version automatically promoted task.settlement-resource-and-event-type-convergence.result-boundary-consumer-audit to the live active task. generated/blueprint/settlement-resource-and-event-type-result-boundary-audit.json now freezes the landed production truth, historical-only residue, and the next bounded settlement-record-shape recommendation.`
+- `2026-07-24`: `task.settlement-resource-and-event-type-convergence.result-boundary-consumer-audit is now complete. The queue confirmed that remaining PlayableSettlement mentions are historical-only evidence/doc residue and selected batch.settlement-record-shape-and-reference-freeze as the next bounded same-family slice.`
+- `2026-07-24`: `The version automatically promoted task.settlement-resource-and-event-type-convergence.settlement-record-shape-freeze to the live active task. generated/blueprint/settlement-record-shape-freeze-preflight.json now freezes the next non-destructive settlement-record-shape batch.`
+- `2026-07-24`: `task.settlement-resource-and-event-type-convergence.settlement-record-shape-freeze is now complete locally. Settlement result entries preserve project save/load shape, runtime export fails closed on settlement-result nextEventId references that target missing events, workspace-shell now recognizes valid settlement references instead of treating them as missing by default, and malformed settlement-result routing becomes blocked risk/export truth.`
+- `2026-07-24`: `The version automatically promoted task.settlement-resource-and-event-type-convergence.queue-closeout-review-and-sync-gate to the live active task. Settlement implementation work is complete locally, and the next lawful action is queue-closeout proof plus repository-sync gating before queue.same-display-name-building-host-instance-canonicalization can be admitted.`
+- `2026-07-24`: `Operator clarification during active settlement execution proved that duplicate real building host instances still survive when multiple hosts share one creator-facing display name. Single-active-task governance keeps queue.settlement-resource-and-event-type-convergence as the only live queue, so the version now records item.same-display-name-building-host-instance-canonicalization as the next same-version candidate after settlement; that candidate will own duplicate host removal plus direct reference rewrite across cities[].buildingIds, cities[].mountedBuildings[].buildingId, city-entries[].targetHouseId, and related host-owned building-enter/owner paths.`

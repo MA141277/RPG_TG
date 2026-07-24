@@ -1,0 +1,42 @@
+{
+  "versionId": "target.event-follow-up-routing-settlement-and-canonical-reuse-convergence",
+  "queueId": "queue.settlement-resource-and-event-type-convergence",
+  "taskId": "task.settlement-resource-and-event-type-convergence.settlement-record-shape-freeze",
+  "generatedAt": "2026-07-24",
+  "status": "completed",
+  "batchId": "batch.settlement-record-shape-and-reference-freeze",
+  "targets": [
+    "src/domain/script-editor-project.ts",
+    "src/application/script-editor/story-dialogue-event-authoring.ts",
+    "src/application/script-editor/runtime-pack-export.ts",
+    "src/application/script-editor/workspace-shell.ts",
+    "tests/robustness.test.cjs"
+  ],
+  "goal": [
+    "freeze the first formal ScriptEditorSettlementRecord shape around result entries",
+    "prepare result-local nextEventId-ready exits without introducing a second router",
+    "make settlement references point only at formal settlement records"
+  ],
+  "mustPreserve": [
+    "event remains the only routing owner",
+    "nextEventId stays eventId-only",
+    "empty nextEventId still means direct close",
+    "no compatibility import",
+    "runtime-pack first-class settlements family materialization remains deferred"
+  ],
+  "firstRedTests": [
+    "tests/robustness.test.cjs: settlement records preserve result-entry ids and nextEventId-ready fields through project save/load",
+    "tests/robustness.test.cjs: workspace/export reject malformed settlement result entries before full-chain parity work",
+    "tests/robustness.test.cjs: settlement record shape does not add routing ownership beyond event + result-local references"
+  ],
+  "completedSlices": [
+    "workspace-shell now recognizes settlement records as first-class project references instead of treating every settlement event reference as missing",
+    "runtime-pack export now fails closed when settlement result entries reference missing nextEventId targets, while preserving empty nextEventId as direct close",
+    "targeted robustness coverage now freezes settlement result save/load preservation plus export/workspace fail-closed guards"
+  ],
+  "verification": [
+    "cmd /c npm run build:test",
+    "node --test tests/robustness.test.cjs --test-name-pattern \"script editor project save and load preserve settlement result entries|script editor runtime export rejects settlement results with missing nextEventId references|script editor workspace shell accepts settlement events with existing settlement records|script editor workspace shell surfaces settlement result nextEventId blockers|script editor workspace shell surfaces settlement events missing settlement records blockers\""
+  ],
+  "blockedBy": []
+}

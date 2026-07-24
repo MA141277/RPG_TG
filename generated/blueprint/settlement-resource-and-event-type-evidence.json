@@ -1,0 +1,67 @@
+{
+  "versionId": "target.event-follow-up-routing-settlement-and-canonical-reuse-convergence",
+  "queueId": "queue.settlement-resource-and-event-type-convergence",
+  "taskId": "task.settlement-resource-and-event-type-convergence.evidence-anchor-reconcile",
+  "generatedAt": "2026-07-24",
+  "acceptanceScope": [
+    "ACC-EVENT-SETTLE-005"
+  ],
+  "runtimeAnchors": [
+    {
+      "path": "src/domain/event.ts",
+      "summary": "EventDefinition currently exposes id/chapterId/dialogueId/actions/nextEventId/taskInputs but no event type discriminator or settlement entry reference."
+    },
+    {
+      "path": "src/domain/script-editor-project.ts",
+      "summary": "ScriptEditorEventRecord and ScriptEditorProjectDefinition do not yet expose a formal settlement resource/object file family; settlement-adjacent meaning currently survives through minigame and flow records."
+    },
+    {
+      "path": "src/application/script-editor/minigame-binding-authoring.ts",
+      "summary": "Settlement-adjacent authoring currently lives in outcomeRoutes with handoffPolicy, summary, and effectHint instead of formal settlement references."
+    },
+    {
+      "path": "src/application/script-editor/runtime-pack-export.ts",
+      "summary": "Export lowers minigame outcomeRoutes only into PlayableIntegrationDefinition.outcomeConfig.handoffByOutcome."
+    },
+    {
+      "path": "src/application/script-editor/runtime-pack-import.ts",
+      "summary": "Import reconstructs minigame outcomeRoutes from outcomeConfig.handoffByOutcome and does not materialize settlement resource records."
+    },
+    {
+      "path": "src/core/contracts/playable-runtime.ts",
+      "summary": "The shared contract still exports PlayableSettlement as the settlement-shaped result shell."
+    },
+    {
+      "path": "src/core/runtime/playable-runtime.ts",
+      "summary": "Runtime still creates PlayableSettlement via createPlayableSettlementShell(...) and emits it as settlement output."
+    },
+    {
+      "path": "src/core/runtime/runtime-settlement.ts",
+      "summary": "Shared numeric write-back already exists and remains the likely write-back anchor once formal settlement resources point into it."
+    }
+  ],
+  "residueSurfaces": [
+    {
+      "family": "event-contract",
+      "summary": "No formal event(type=settlement) boundary exists yet."
+    },
+    {
+      "family": "editor-resource-family",
+      "summary": "No formal settlement object/resource family exists in Script Editor project truth."
+    },
+    {
+      "family": "playable-contract",
+      "summary": "PlayableSettlement still exists and PlayableResult does not yet replace it as the shared surviving result shell."
+    },
+    {
+      "family": "authoring-lowering",
+      "summary": "Minigame and flow outcomeRoutes still express settlement-adjacent meaning through handoffPolicy/summary/effectHint instead of formal settlement references."
+    }
+  ],
+  "outOfScopeAnchors": [
+    {
+      "path": "src/domain/city.ts",
+      "summary": "city/map placement kind=settlement already exists but is map-topology truth, not the formal settlement resource owned by this queue."
+    }
+  ]
+}

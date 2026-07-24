@@ -3782,6 +3782,7 @@ test("script editor project save emits canonical split files", async () => {
   const manifest = JSON.parse(serializedFiles["project.json"]);
   const savedStoryPack = JSON.parse(serializedFiles["story-pack.json"]);
   const savedPeople = JSON.parse(serializedFiles["people.json"]);
+  const savedSettlements = JSON.parse(serializedFiles["settlements.json"]);
   const savedEventBindings = JSON.parse(serializedFiles["event-bindings.json"]);
   const loadedProject = await loadScriptEditorProjectFromFiles(
     createImportedFilesFromSerializedJsonRecord(serializedFiles, "script-editor-project")
@@ -3790,11 +3791,14 @@ test("script editor project save emits canonical split files", async () => {
   assert.equal(manifest.kind, "script-editor-project");
   assert.equal(Object.hasOwn(serializedFiles, "pack.json"), false);
   assert.equal(manifest.files.storyPack, "./story-pack.json");
+  assert.equal(manifest.files.settlements, "./settlements.json");
   assert.equal(manifest.files.eventBindings, "./event-bindings.json");
   assert.equal(manifest.files.effectBundles, "./effect-bundles.json");
   assert.equal(savedStoryPack.id, project.storyPack.id);
   assert.equal(savedPeople[0]?.id, project.people[0]?.id);
+  assert.deepEqual(savedSettlements, []);
   assert.equal(savedEventBindings[0]?.id, "binding.opening.city-enter");
+  assert.deepEqual(loadedProject.settlements, []);
   assert.equal(loadedProject.eventBindings[0]?.eventId, "event.opening");
 });
 
@@ -7268,6 +7272,102 @@ test("script editor event destination export lowers minigame targets into runnab
   );
 });
 
+test("script editor settlement event export preserves formal settlement event type and reference", async () => {
+  const {
+    exportScriptEditorProjectToScenarioPackFiles,
+  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  const {
+    loadScriptEditorProjectFromScenarioPackFiles,
+  } = require("../.test-dist/application/script-editor/runtime-pack-import.js");
+  const project = createExportableScriptEditorProjectDefinition();
+  project.settlements = [
+    {
+      id: "settlement.opening.default",
+      title: "Opening Settlement",
+    },
+  ];
+
+  project.events = [
+    {
+      id: "event.settlement.opening",
+      title: "Opening Settlement Event",
+      type: "settlement",
+      settlementId: "settlement.opening.default",
+      actions: [{ type: "closeBuilding" }],
+    },
+  ];
+
+  const files = exportScriptEditorProjectToScenarioPackFiles(project);
+  const exportedEvents = JSON.parse(files["events.json"]);
+  assert.equal(exportedEvents[0]?.type, "settlement");
+  assert.equal(exportedEvents[0]?.settlementId, "settlement.opening.default");
+
+  const importedProject = await loadScriptEditorProjectFromScenarioPackFiles(
+    createImportedFilesFromSerializedJsonRecord(files, "imported-settlement-event-pack")
+  );
+  assert.equal(importedProject.events[0]?.type, "settlement");
+  assert.equal(importedProject.events[0]?.settlementId, "settlement.opening.default");
+});
+
+test("script editor project save and load preserve settlement result entries", async () => {
+  const {
+    serializeScriptEditorProjectToFiles,
+  } = require("../.test-dist/application/script-editor/editor-project-save.js");
+  const {
+    loadScriptEditorProjectFromFiles,
+  } = require("../.test-dist/application/script-editor/editor-project-loader.js");
+  const project = createExportableScriptEditorProjectDefinition();
+  project.settlements = [
+    {
+      id: "settlement.opening.default",
+      title: "Opening Settlement",
+      results: [
+        {
+          id: "result.success",
+          label: "Success",
+          nextEventId: "event.follow-up",
+        },
+        {
+          id: "result.close",
+          label: "Close",
+          nextEventId: "",
+        },
+      ],
+    },
+  ];
+  project.events.push({
+    id: "event.follow-up",
+    title: "Follow Up Event",
+    destination: { family: "dialogue", targetId: "dialogue.opening" },
+  });
+
+  const serializedFiles = serializeScriptEditorProjectToFiles(project);
+  const savedSettlements = JSON.parse(serializedFiles["settlements.json"]);
+  const loadedProject = await loadScriptEditorProjectFromFiles(
+    createImportedFilesFromSerializedJsonRecord(serializedFiles, "settlement-result-project")
+  );
+
+  assert.deepEqual(savedSettlements, [
+    {
+      id: "settlement.opening.default",
+      title: "Opening Settlement",
+      results: [
+        {
+          id: "result.success",
+          label: "Success",
+          nextEventId: "event.follow-up",
+        },
+        {
+          id: "result.close",
+          label: "Close",
+          nextEventId: "",
+        },
+      ],
+    },
+  ]);
+  assert.deepEqual(loadedProject.settlements, savedSettlements);
+});
+
 test(
   "script editor runtime export fails closed on deferred authoring families",
   () => {
@@ -9157,6 +9257,81 @@ test("script editor runtime export rejects self-referential nextEventId targets"
   );
 });
 
+test("script editor runtime export rejects settlement events without settlementId", () => {
+  const {
+    exportScriptEditorProjectToScenarioPackFiles,
+  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  const project = createExportableScriptEditorProjectDefinition();
+  project.events = [
+    {
+      id: "event.settlement.missing-id",
+      title: "Broken Settlement Event",
+      type: "settlement",
+      actions: [{ type: "closeBuilding" }],
+    },
+  ];
+
+  assert.throws(
+    () => exportScriptEditorProjectToScenarioPackFiles(project),
+    /settlementId|event\.settlement\.missing-id|settlement event/i
+  );
+});
+
+test("script editor runtime export rejects settlement events with missing settlement records", () => {
+  const {
+    exportScriptEditorProjectToScenarioPackFiles,
+  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  const project = createExportableScriptEditorProjectDefinition();
+  project.events = [
+    {
+      id: "event.settlement.missing-record",
+      title: "Broken Settlement Event",
+      type: "settlement",
+      settlementId: "settlement.missing.record",
+      actions: [{ type: "closeBuilding" }],
+    },
+  ];
+
+  assert.throws(
+    () => exportScriptEditorProjectToScenarioPackFiles(project),
+    /settlement\.missing\.record|missing settlement|settlementId/i
+  );
+});
+
+test("script editor runtime export rejects settlement results with missing nextEventId references", () => {
+  const {
+    exportScriptEditorProjectToScenarioPackFiles,
+  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  const project = createExportableScriptEditorProjectDefinition();
+  project.settlements = [
+    {
+      id: "settlement.opening.default",
+      title: "Opening Settlement",
+      results: [
+        {
+          id: "result.success",
+          label: "Success",
+          nextEventId: "event.missing.follow-up",
+        },
+      ],
+    },
+  ];
+  project.events = [
+    {
+      id: "event.settlement.opening",
+      title: "Opening Settlement Event",
+      type: "settlement",
+      settlementId: "settlement.opening.default",
+      actions: [{ type: "closeBuilding" }],
+    },
+  ];
+
+  assert.throws(
+    () => exportScriptEditorProjectToScenarioPackFiles(project),
+    /result\.success|event\.missing\.follow-up|nextEventId/i
+  );
+});
+
 test("script editor runtime export rejects legacy flow eventStartTarget routing residue", () => {
   const {
     exportScriptEditorProjectToScenarioPackFiles,
@@ -9858,6 +10033,125 @@ test("script editor workspace shell surfaces self-referential nextEventId blocke
   assert.equal(workspace.handoffSummary.blockedCount > 0, true);
   const riskCard = workspace.inspector.cards.find((card) => card.id === "project.risk");
   assert.match(riskCard?.body ?? "", /nextEventId|event\.loop|self/i);
+});
+
+test("script editor workspace shell surfaces settlement events missing settlementId blockers", () => {
+  const {
+    createScriptEditorWorkspaceShellViewModel,
+  } = require("../.test-dist/application/script-editor/workspace-shell.js");
+  const project = createExportableScriptEditorProjectDefinition();
+  project.events = [
+    {
+      id: "event.settlement.missing-id",
+      title: "Broken Settlement Event",
+      type: "settlement",
+      actions: [{ type: "closeBuilding" }],
+    },
+  ];
+
+  const workspace = createScriptEditorWorkspaceShellViewModel({ project });
+
+  assert.equal(workspace.toolbarActions.find((action) => action.id === "export")?.status, "blocked");
+  assert.equal(workspace.handoffSummary.blockedCount > 0, true);
+  const riskCard = workspace.inspector.cards.find((card) => card.id === "project.risk");
+  assert.match(
+    riskCard?.body ?? "",
+    /settlementId|event\.settlement\.missing-id|settlement event/i
+  );
+});
+
+test("script editor workspace shell surfaces settlement events missing settlement records blockers", () => {
+  const {
+    createScriptEditorWorkspaceShellViewModel,
+  } = require("../.test-dist/application/script-editor/workspace-shell.js");
+  const project = createExportableScriptEditorProjectDefinition();
+  project.events = [
+    {
+      id: "event.settlement.missing-record",
+      title: "Broken Settlement Event",
+      type: "settlement",
+      settlementId: "settlement.missing.record",
+      actions: [{ type: "closeBuilding" }],
+    },
+  ];
+
+  const workspace = createScriptEditorWorkspaceShellViewModel({ project });
+
+  assert.equal(workspace.toolbarActions.find((action) => action.id === "export")?.status, "blocked");
+  assert.equal(workspace.handoffSummary.blockedCount > 0, true);
+  const riskCard = workspace.inspector.cards.find((card) => card.id === "project.risk");
+  assert.match(
+    riskCard?.body ?? "",
+    /settlement\.missing\.record|missing settlement|settlementId/i
+  );
+});
+
+test("script editor workspace shell accepts settlement events with existing settlement records", () => {
+  const {
+    createScriptEditorWorkspaceShellViewModel,
+  } = require("../.test-dist/application/script-editor/workspace-shell.js");
+  const project = createExportableScriptEditorProjectDefinition();
+  project.settlements = [
+    {
+      id: "settlement.opening.default",
+      title: "Opening Settlement",
+    },
+  ];
+  project.events = [
+    {
+      id: "event.settlement.opening",
+      title: "Opening Settlement Event",
+      type: "settlement",
+      settlementId: "settlement.opening.default",
+      actions: [{ type: "closeBuilding" }],
+    },
+  ];
+
+  const workspace = createScriptEditorWorkspaceShellViewModel({ project });
+
+  assert.equal(workspace.toolbarActions.find((action) => action.id === "export")?.status, "ready");
+  assert.equal(workspace.handoffSummary.blockedCount, 0);
+  const riskCard = workspace.inspector.cards.find((card) => card.id === "project.risk");
+  assert.doesNotMatch(riskCard?.body ?? "", /missing settlement|settlementId/i);
+});
+
+test("script editor workspace shell surfaces settlement result nextEventId blockers", () => {
+  const {
+    createScriptEditorWorkspaceShellViewModel,
+  } = require("../.test-dist/application/script-editor/workspace-shell.js");
+  const project = createExportableScriptEditorProjectDefinition();
+  project.settlements = [
+    {
+      id: "settlement.opening.default",
+      title: "Opening Settlement",
+      results: [
+        {
+          id: "result.success",
+          label: "Success",
+          nextEventId: "event.missing.follow-up",
+        },
+      ],
+    },
+  ];
+  project.events = [
+    {
+      id: "event.settlement.opening",
+      title: "Opening Settlement Event",
+      type: "settlement",
+      settlementId: "settlement.opening.default",
+      actions: [{ type: "closeBuilding" }],
+    },
+  ];
+
+  const workspace = createScriptEditorWorkspaceShellViewModel({ project });
+
+  assert.equal(workspace.toolbarActions.find((action) => action.id === "export")?.status, "blocked");
+  assert.equal(workspace.handoffSummary.blockedCount > 0, true);
+  const riskCard = workspace.inspector.cards.find((card) => card.id === "project.risk");
+  assert.match(
+    riskCard?.body ?? "",
+    /result\.success|event\.missing\.follow-up|nextEventId/i
+  );
 });
 
 test("script editor workspace shell surfaces legacy flow eventStartTarget blockers", () => {
@@ -15118,6 +15412,12 @@ test("script editor story/dialogue/event authoring helpers normalize bounded nar
 
   let eventRecord = createDefaultScriptEditorEventRecord(0);
   eventRecord = updateScriptEditorEventField(eventRecord, "title", "Opening Event");
+  eventRecord = updateScriptEditorEventField(eventRecord, "type", "settlement");
+  eventRecord = updateScriptEditorEventField(
+    eventRecord,
+    "settlementId",
+    " settlement.opening.default "
+  );
   eventRecord = toggleScriptEditorEventRepeatable(eventRecord, true);
   eventRecord = updateScriptEditorEventDestinationField(eventRecord, "family", "event");
   eventRecord = updateScriptEditorEventDestinationField(
@@ -15159,6 +15459,8 @@ test("script editor story/dialogue/event authoring helpers normalize bounded nar
   assert.equal(normalizedDialogue.nodes[1].nodeType, "choice");
   assert.equal(Object.hasOwn(normalizedDialogue, "followUps"), false);
   assert.equal(normalizedEvent.title, "Opening Event");
+  assert.equal(normalizedEvent.type, "settlement");
+  assert.equal(normalizedEvent.settlementId, "settlement.opening.default");
   assert.equal(normalizedEvent.triggerTiming, "manual");
   assert.equal(normalizedEvent.repeatable, true);
   assert.equal(Object.hasOwn(normalizedEvent, "conditionGroups"), false);
@@ -29086,7 +29388,7 @@ test("child 30 playable runtime contract exports unified playable launch session
   assert.match(source, /export type PlayableIntegrationDefinition = \{/);
   assert.match(source, /export type PlayableLaunchRequest = \{/);
   assert.match(source, /export type ActivePlayableSession = \{/);
-  assert.match(source, /export type PlayableSettlement = \{/);
+  assert.match(source, /export type PlayableResult = \{/);
 });
 
 test("interactive closeout removes legacy interactive kind residue from playable contracts and runtime helpers", () => {

@@ -95,9 +95,11 @@ export type EventDefinition = {
   chapterId: ChapterId;
   name: string;
   occurrence: EventOccurrence;
+  type?: "settlement";
   participants?: EventParticipant[];
   dialogueId: string;
   actions?: EventRuntimeAction[];
+  settlementId?: string;
   nextEventId?: EventId;
   taskInputs?: RuntimeTaskInput[];
   tags?: string[];

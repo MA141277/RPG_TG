@@ -17,7 +17,7 @@ import type {
   PlayableLaunchInput,
   PlayableLaunchResolution,
   PlayableOwnerContext,
-  PlayableSettlement,
+  PlayableResult,
 } from "../contracts/playable-runtime";
 import type { FlowPlayableDefinition } from "../../domain/playables/flow";
 import {
@@ -79,7 +79,7 @@ export type PlayableRuntimeOutput = RuntimeResult & {
   session: ActivePlayableSession | null;
   characterDefinitions?: CharacterDefinition[];
   followUp?: RuntimeInteractiveSignal | null;
-  settlement?: PlayableSettlement | null;
+  settlement?: PlayableResult | null;
 };
 
 type InteractivePlayableId = "activity-qte" | "city-begging" | "story-battle";
@@ -580,7 +580,7 @@ export function runPlayableRuntime(input: {
         return launchedFromFlowCompletion;
       }
 
-      const settlement = createPlayableSettlementShell({
+      const settlement = createPlayableResultShell({
         session: reduction.session,
         outcome:
           reduction.lifecycle.type === "cancelled"
@@ -1111,12 +1111,12 @@ export function createInteractivePlayableSession(input: {
   });
 }
 
-export function createPlayableSettlementShell(input: {
+export function createPlayableResultShell(input: {
   session: ActivePlayableSession;
-  outcome: PlayableSettlement["outcome"];
-  factResult: PlayableSettlement["factResult"];
-  effects?: PlayableSettlement["effects"] | undefined;
-}): PlayableSettlement {
+  outcome: PlayableResult["outcome"];
+  factResult: PlayableResult["factResult"];
+  effects?: PlayableResult["effects"] | undefined;
+}): PlayableResult {
   return {
     integrationId: input.session.integrationId,
     outcome: input.outcome,

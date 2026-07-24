@@ -5,8 +5,8 @@
 - entry_id: `project-progress.rpg-tg`
 - active_blueprint: `blueprint.rpg-tg`
 - active_version: `target.event-follow-up-routing-settlement-and-canonical-reuse-convergence`
-- has_active_queue: `false`
-- next_file: `docs/blueprints/plans/2026-07-24-event-canonical-reuse-routing-and-settlement-governance-target-plan.md`
+- has_active_queue: `true`
+- next_file: `docs/blueprints/queues/settlement-resource-and-event-type-convergence-queue.md`
 - entry_action: `open-next-file`
 
 ## Human Context
@@ -29,7 +29,7 @@
 - Current Version Plan:
   - `docs/blueprints/plans/2026-07-24-event-canonical-reuse-routing-and-settlement-governance-target-plan.md`
 - Current Active Queue:
-  - `none`
+  - `docs/blueprints/queues/settlement-resource-and-event-type-convergence-queue.md`
 
 ### Live Entry Guardrails
 
@@ -90,7 +90,7 @@
 - `queue.event-playable-destination-and-building-action-event-truth-convergence is now closed after ACC-EVENT-ONLY-ROUTING-007 / 008 verification confirmed runnable event-owned minigame lowering, canonical building action eventId routing, and shared playable runtime convergence. The active version remains open with no active queue and resumes from version closeout review; do not infer closed status without explicit closeout confirmation.`
 - `target.script-editor-event-centered-authoring-scene-retirement-and-portrait-resource-refactor was explicitly closed on 2026-07-22 after final version closeout confirmation, and repository entry is intentionally stopped on this recorded closeout result rather than silently switching to an older still-open version with unresolved governance-template drift.`
 - `Current entry pointers now stop on target.map-rendering-city-data-separation-and-canonical-numeric-id-transition after the operator explicitly requested closing the current version on 2026-07-24. queue.map-rendering-city-data-separation-and-canonical-numeric-id-transition is closed with human-visible Codex in-app browser acceptance, successful repository sync to origin/mod-first-dev, and no same-family residue, and the version is now closed historical evidence only.`
-- `Current entry pointers now route to target.event-follow-up-routing-settlement-and-canonical-reuse-convergence through the new formal spec/plan file pair created from the 2026-07-24 iteration draft. queue.event-and-building-instance-canonical-reuse is closed after canonical-reuse closeout proof and successful repository sync to origin/mod-first-dev, and queue.instance-next-event-id-and-event-routing-convergence is now locally closed after generated/blueprint/instance-next-event-id-routing-closeout-proof.json established ACC-EVENT-SETTLE-003 / 004 readiness. The live execution truth is temporarily version-plan level only because the required repository-sync gate must be recorded before queue.settlement-resource-and-event-type-convergence may become the next active queue.`
+- `Current entry pointers now route to target.event-follow-up-routing-settlement-and-canonical-reuse-convergence through the new formal spec/plan file pair created from the 2026-07-24 iteration draft. queue.event-and-building-instance-canonical-reuse is closed after canonical-reuse closeout proof and successful repository sync to origin/mod-first-dev, queue.instance-next-event-id-and-event-routing-convergence is closed after repository sync through commit 954dd32a on origin/mod-first-dev, and queue.settlement-resource-and-event-type-convergence remains the active queue while task.settlement-resource-and-event-type-convergence.queue-closeout-review-and-sync-gate is now the live active task after all seven implementation-bearing settlement tasks completed locally.`
 
 ### Historical References
 

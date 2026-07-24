@@ -7,6 +7,26 @@
 
 ## 2026-07-24 Runtime Follow-Up Transport Retirement
 
+## 2026-07-24 Settlement Result Shape Freeze And Guard Alignment
+
+- Frozen the first formal `settlements[]` result-entry boundary inside the active routing/settlement governance version.
+- Added targeted robustness coverage showing settlement result entries survive project save/load, malformed settlement-result `nextEventId` references fail closed during runtime export, and workspace-shell no longer treats valid settlement references as missing by default.
+- Tightened `runtime-pack-export` and `workspace-shell` so settlement references remain first-class project truth while malformed result-routing shape is surfaced as blocked governance risk rather than silently downgraded.
+
+## 2026-07-24 Settlement Contract Freeze And Guards
+
+### Changed
+- Added canonical `settlements.json` project-family support in [src/domain/script-editor-project.ts](/D:/workspace/project/RPG_TG/src/domain/script-editor-project.ts:25), [src/application/script-editor/editor-project-loader.ts](/D:/workspace/project/RPG_TG/src/application/script-editor/editor-project-loader.ts:16), and [src/application/script-editor/minimal-workflow.ts](/D:/workspace/project/RPG_TG/src/application/script-editor/minimal-workflow.ts:84), so Script Editor project save/load/default creation now preserves a formal settlement resource family instead of leaving settlement truth entirely implicit.
+- Extended [src/domain/event.ts](/D:/workspace/project/RPG_TG/src/domain/event.ts:96), [src/application/script-editor/story-dialogue-event-authoring.ts](/D:/workspace/project/RPG_TG/src/application/script-editor/story-dialogue-event-authoring.ts:355), [src/application/script-editor/runtime-pack-export.ts](/D:/workspace/project/RPG_TG/src/application/script-editor/runtime-pack-export.ts:1323), and [src/application/script-editor/runtime-pack-import.ts](/D:/workspace/project/RPG_TG/src/application/script-editor/runtime-pack-import.ts:432) so `event(type=settlement)` plus `settlementId` is now a formal editor/runtime-pack contract rather than an implicit hint.
+- Renamed the surviving shared playable result shell from `PlayableSettlement` to `PlayableResult` in [src/core/contracts/playable-runtime.ts](/D:/workspace/project/RPG_TG/src/core/contracts/playable-runtime.ts:113) and [src/core/runtime/playable-runtime.ts](/D:/workspace/project/RPG_TG/src/core/runtime/playable-runtime.ts:82), while preserving the existing `settlement` output slot and numeric write-back seam.
+- Added fail-closed settlement guards in [src/application/script-editor/runtime-pack-export.ts](/D:/workspace/project/RPG_TG/src/application/script-editor/runtime-pack-export.ts:1379) and [src/application/script-editor/workspace-shell.ts](/D:/workspace/project/RPG_TG/src/application/script-editor/workspace-shell.ts:1000), so settlement events now block on missing `settlementId` or missing referenced settlement records instead of exporting ambiguous residue.
+- Expanded [tests/robustness.test.cjs](/D:/workspace/project/RPG_TG/tests/robustness.test.cjs:3780) with coverage for `settlements.json` canonical save/load, settlement event export/import preservation, `PlayableResult` source guards, and settlement-reference fail-closed behavior in both runtime-pack export and workspace-shell risk reporting.
+
+### Impact
+- Settlement now has a formal foothold in governed Script Editor project truth, and settlement events no longer depend solely on implicit playable/minigame outcome meaning.
+- Event remains the only routing owner: settlement validation is reference-only, `nextEventId` remains unchanged, and no resolver/selector/private settlement router was introduced.
+- The active settlement queue can continue from consumer/residue audit and the next settlement-record-shape batch instead of re-deriving the initial contract freeze.
+
 ### Changed
 - Removed navigation-entered follow-up transport from [src/core/runtime/navigation-runtime.ts](/D:/workspace/project/RPG_TG/src/core/runtime/navigation-runtime.ts:46) and narrowed [src/core/contracts/runtime-result.ts](/D:/workspace/project/RPG_TG/src/core/contracts/runtime-result.ts:27) so the shared runtime follow-up contract no longer carries `navigation.entered-city` or `navigation.entered-house`.
 - Reworked [src/main.ts](/D:/workspace/project/RPG_TG/src/main.ts:1019) to trigger covered `city-enter` / `house-enter` story checks through explicit post-commit `applyPostNavigationStoryTrigger(...)` calls instead of routing those authored continuations through runtime follow-up transport.

@@ -1010,6 +1010,33 @@ function collectLinkedValidationIssues(
       });
     }
 
+    if (eventRecord.type === "settlement") {
+      const settlementId =
+        typeof eventRecord.settlementId === "string" ? eventRecord.settlementId.trim() : "";
+      if (settlementId.length === 0) {
+        addMissingReferenceIssue({
+          id: `linked.events.settlement-id-missing.${eventRecord.id}`,
+          severity: "blocked",
+          title: "Settlement event missing settlementId",
+          message: `Settlement event ${eventRecord.id} requires a non-empty settlementId.`,
+          targetFamily: "events",
+          targetEntityId: eventRecord.id,
+          targetTab: "destination",
+        });
+      } else if (!hasRecord(project, "settlements", settlementId)) {
+        addMissingReferenceIssue({
+          id: `linked.events.settlement.${eventRecord.id}`,
+          severity: "blocked",
+          title: "Settlement event settlement reference missing",
+          message:
+            `Settlement event ${eventRecord.id} references missing settlement ${settlementId}.`,
+          targetFamily: "events",
+          targetEntityId: eventRecord.id,
+          targetTab: "destination",
+        });
+      }
+    }
+
     if (
       eventRecord.relations?.storyNodeId != null &&
       eventRecord.relations.storyNodeId.length > 0 &&
@@ -1510,6 +1537,8 @@ function getFamilyRecords(
       return project.cities;
     case "buildings":
       return project.buildings;
+    case "settlements":
+      return project.settlements ?? [];
     case "events":
       return project.events;
     case "quests":

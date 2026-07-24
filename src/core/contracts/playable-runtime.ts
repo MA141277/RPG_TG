@@ -110,7 +110,7 @@ export type PlayablePresenterModel = {
   detail?: Record<string, unknown> | undefined;
 };
 
-export type PlayableSettlement = {
+export type PlayableResult = {
   integrationId: PlayableIntegrationId;
   outcome: PlayableOutcome;
   factResult: PlayableFactResult;

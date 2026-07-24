@@ -19,6 +19,7 @@ const OPTIONAL_SCRIPT_EDITOR_PROJECT_FILE_KEYS = new Set<ScriptEditorProjectFile
   "flows",
   "portraits",
   "portraitVariants",
+  "settlements",
 ]);
 
 type ScriptEditorProjectImportFileEntry = {
@@ -105,6 +106,10 @@ export function parseScriptEditorProject(
     "script editor project buildingArrangements"
   );
   assertEntityRecordArray(value.cityEntries, "script editor project cityEntries");
+  assertEntityRecordArray(
+    value.settlements ?? [],
+    "script editor project settlements"
+  );
   assertEntityRecordArray(value.events, "script editor project events");
   assertEntityRecordArray(
     value.eventBindings ?? [],
@@ -161,6 +166,7 @@ export function parseScriptEditorProject(
       (value.portraitVariants ?? []) as ScriptEditorProjectDefinition["portraitVariants"],
     buildingArrangements:
       (value.buildingArrangements ?? []) as ScriptEditorProjectDefinition["buildingArrangements"],
+    settlements: (value.settlements ?? []) as ScriptEditorProjectDefinition["settlements"],
     eventBindings: (value.eventBindings ?? []) as ScriptEditorProjectDefinition["eventBindings"],
     flows: (value.flows ?? []) as ScriptEditorProjectDefinition["flows"],
   };
