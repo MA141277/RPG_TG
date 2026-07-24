@@ -111,6 +111,10 @@ const queueClosureJudgementFields = [
   "auto_continue_eligible",
 ];
 
+function isExplicitContinuationAction(value) {
+  return typeof value === "string" && /^continue-task\./u.test(value);
+}
+
 export function lintBlueprintDocs(repoRoot = process.cwd()) {
   const failures = [];
   const blueprintsRoot = path.join(repoRoot, "docs", "blueprints");
@@ -851,27 +855,6 @@ function lintTargetPlan(filePath, failures, repoRoot, label) {
     );
   }
 
-  if (
-    !isTemplate &&
-    nextUnblockedAction != null &&
-    nextUnblockedAction !== "none" &&
-    !allowedVersionNextActions.has(nextUnblockedAction)
-  ) {
-    failures.push(
-      `${relativePath}: ${label} next_unblocked_action "${nextUnblockedAction}" is not an allowed enum value`
-    );
-  }
-
-  if (
-    !isTemplate &&
-    humanInputRequired != null &&
-    !allowedBooleanStrings.has(humanInputRequired)
-  ) {
-    failures.push(
-      `${relativePath}: ${label} human_input_required "${humanInputRequired}" is not an allowed boolean value`
-    );
-  }
-
   const activeQueue = matchField(text, "active_queue");
   const decisionState = matchField(text, "decision_state");
   const reviewSubjectClassification = matchField(
@@ -887,6 +870,33 @@ function lintTargetPlan(filePath, failures, repoRoot, label) {
   const routingBasis = closureRoutingValues.routing_basis;
   const nextLawfulQueueRecommendation =
     closureRoutingValues.next_lawful_queue_recommendation;
+  const allowsExplicitContinuationTruth =
+    activeQueue != null &&
+    activeQueue !== "none" &&
+    decisionState === "active-execution" &&
+    isExplicitContinuationAction(nextUnblockedAction);
+
+  if (
+    !isTemplate &&
+    nextUnblockedAction != null &&
+    nextUnblockedAction !== "none" &&
+    !allowedVersionNextActions.has(nextUnblockedAction) &&
+    !allowsExplicitContinuationTruth
+  ) {
+    failures.push(
+      `${relativePath}: ${label} next_unblocked_action "${nextUnblockedAction}" is not an allowed enum value`
+    );
+  }
+
+  if (
+    !isTemplate &&
+    humanInputRequired != null &&
+    !allowedBooleanStrings.has(humanInputRequired)
+  ) {
+    failures.push(
+      `${relativePath}: ${label} human_input_required "${humanInputRequired}" is not an allowed boolean value`
+    );
+  }
   const hasClosureRoutingTruth = [
     closureReviewSubject,
     closureReviewStatus,
@@ -1041,12 +1051,16 @@ function lintTargetPlan(filePath, failures, repoRoot, label) {
     stopReason === "none" &&
     (
       (stopBasis != null && stopBasis !== "none") ||
-      (nextUnblockedAction != null && nextUnblockedAction !== "none") ||
+      (
+        nextUnblockedAction != null &&
+        nextUnblockedAction !== "none" &&
+        !allowsExplicitContinuationTruth
+      ) ||
       humanInputRequired === "true"
     )
   ) {
     failures.push(
-      `${relativePath}: ${label} stop_reason=none requires stop_basis=none, next_unblocked_action=none, and human_input_required=false`
+      `${relativePath}: ${label} stop_reason=none requires stop_basis=none and human_input_required=false; next_unblocked_action may be non-none only for an explicit active-queue continuation`
     );
   }
 
