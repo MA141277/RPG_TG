@@ -608,6 +608,13 @@ let appState: AppState = applyPersistedBattleUiEditorValues(
   createPrototypeAppState(currentPlayerCharacterId)
 );
 let coinRewardDisplayValue: number | null = null;
+let coinRewardAnchorEditorState = {
+  isOpen: false,
+  actualOffsetX: -151,
+  actualOffsetY: 25,
+  draftOffsetX: -151,
+  draftOffsetY: 25,
+};
 let coinRewardAnimatorInstance: ReturnType<typeof createCoinRewardAnimator> | null =
   null;
 const coinRewardAnimator = {
@@ -647,7 +654,11 @@ window.rpgMapPerf = (command = "status") => {
   return getCampaignMapPerfSnapshot();
 };
 let activeMapIntroOverlay: HTMLElement | null = null;
-let cityStageDomRuntimeHandle: { destroy(): void } | null = null;
+let cityStageDomRuntimeHandle: {
+  cityId: string;
+  attach(root: HTMLElement): void;
+  destroy(): void;
+} | null = null;
 let activeBackgroundMusicMode: BackgroundMusicMode | null = null;
 let campaignMapScaleDraftValue: string | null = null;
 let campaignMapDragState:
@@ -765,6 +776,78 @@ function syncCoinRewardGoldDisplay(): void {
     coinRewardDisplayValue ??
     getPlayerCharacter(appState, currentPlayerCharacterId).stats.gold;
   goldValueElement.textContent = `银两 ${resolvedGoldValue}`;
+}
+
+function isCoinRewardAnchorEditorDirty(): boolean {
+  return (
+    coinRewardAnchorEditorState.actualOffsetX !== coinRewardAnchorEditorState.draftOffsetX ||
+    coinRewardAnchorEditorState.actualOffsetY !== coinRewardAnchorEditorState.draftOffsetY
+  );
+}
+
+function syncCoinRewardAnchorEditor(): void {
+  const animator = getCoinRewardAnimator();
+  animator.setTargetOffset(
+    coinRewardAnchorEditorState.actualOffsetX,
+    coinRewardAnchorEditorState.actualOffsetY
+  );
+  animator.setPreviewTargetOffset(
+    coinRewardAnchorEditorState.isOpen
+      ? coinRewardAnchorEditorState.draftOffsetX
+      : coinRewardAnchorEditorState.actualOffsetX,
+    coinRewardAnchorEditorState.isOpen
+      ? coinRewardAnchorEditorState.draftOffsetY
+      : coinRewardAnchorEditorState.actualOffsetY
+  );
+}
+
+function syncCoinRewardAnchorEditorView(): void {
+  const editorElement = document.querySelector<HTMLElement>("[data-ui-coin-anchor-editor]");
+  if (editorElement == null) {
+    return;
+  }
+
+  const isDirty = isCoinRewardAnchorEditorDirty();
+  editorElement.classList.toggle("is-open", coinRewardAnchorEditorState.isOpen);
+  editorElement.dataset.uiCoinAnchorEditorOpen = coinRewardAnchorEditorState.isOpen
+    ? "true"
+    : "false";
+  editorElement.dataset.uiCoinAnchorEditorDirty = isDirty ? "true" : "false";
+
+  const xInput = editorElement.querySelector<HTMLInputElement>(
+    "[data-ui-coin-anchor-input='x']"
+  );
+  const yInput = editorElement.querySelector<HTMLInputElement>(
+    "[data-ui-coin-anchor-input='y']"
+  );
+  if (xInput != null && document.activeElement !== xInput) {
+    xInput.value = String(coinRewardAnchorEditorState.draftOffsetX);
+  }
+  if (yInput != null && document.activeElement !== yInput) {
+    yInput.value = String(coinRewardAnchorEditorState.draftOffsetY);
+  }
+
+  editorElement
+    .querySelectorAll<HTMLButtonElement>(
+      "[data-action='confirm-coin-anchor-editor'], [data-action='revert-coin-anchor-editor']"
+    )
+    .forEach((button) => {
+      button.disabled = !isDirty;
+      button.classList.toggle(
+        "p-global-coin-anchor-editor__action--active",
+        isDirty
+      );
+    });
+
+  const toggleButton = document.querySelector<HTMLElement>(
+    "[data-action='toggle-coin-anchor-editor']"
+  );
+  if (toggleButton != null) {
+    toggleButton.setAttribute(
+      "aria-expanded",
+      coinRewardAnchorEditorState.isOpen ? "true" : "false"
+    );
+  }
 }
 
 let houseRuntime: HouseRuntimeBridge = createHouseRuntimeInstance();
@@ -3578,6 +3661,32 @@ appElement.addEventListener("input", (event) => {
   const targetElement = event.target;
   if (
     targetElement instanceof HTMLInputElement &&
+    targetElement.dataset.uiCoinAnchorInput != null
+  ) {
+    const nextValue = Number(targetElement.value);
+    if (!Number.isFinite(nextValue)) {
+      return;
+    }
+
+    if (targetElement.dataset.uiCoinAnchorInput === "x") {
+      coinRewardAnchorEditorState = {
+        ...coinRewardAnchorEditorState,
+        draftOffsetX: Math.round(nextValue),
+      };
+    } else if (targetElement.dataset.uiCoinAnchorInput === "y") {
+      coinRewardAnchorEditorState = {
+        ...coinRewardAnchorEditorState,
+        draftOffsetY: Math.round(nextValue),
+      };
+    }
+
+    syncCoinRewardAnchorEditor();
+    syncCoinRewardAnchorEditorView();
+    return;
+  }
+
+  if (
+    targetElement instanceof HTMLInputElement &&
     targetElement.hasAttribute("data-campaign-map-scale-input")
   ) {
     campaignMapScaleDraftValue = targetElement.value;
@@ -3954,6 +4063,10 @@ appElement.addEventListener("pointerdown", (event) => {
     return;
   }
 
+  if (targetElement.closest("[data-ui-coin-anchor-editor]") != null) {
+    return;
+  }
+
    // City markers are clickable buttons; do not turn their press into a drag capture.
   if (targetElement.closest("[data-map-node-id]") != null) {
     return;
@@ -4312,6 +4425,53 @@ appElement.addEventListener("click", (event) => {
     if (targetElement.closest(".c-begging-game") != null) {
       return;
     }
+  }
+
+  const toggleCoinAnchorEditorButton = targetElement.closest<HTMLElement>(
+    "[data-action='toggle-coin-anchor-editor']"
+  );
+  if (toggleCoinAnchorEditorButton != null) {
+    const nextIsOpen = !coinRewardAnchorEditorState.isOpen;
+    coinRewardAnchorEditorState = {
+      ...coinRewardAnchorEditorState,
+      isOpen: nextIsOpen,
+      draftOffsetX: nextIsOpen
+        ? coinRewardAnchorEditorState.actualOffsetX
+        : coinRewardAnchorEditorState.actualOffsetX,
+      draftOffsetY: nextIsOpen
+        ? coinRewardAnchorEditorState.actualOffsetY
+        : coinRewardAnchorEditorState.actualOffsetY,
+    };
+    renderApp();
+    return;
+  }
+
+  const confirmCoinAnchorEditorButton = targetElement.closest<HTMLElement>(
+    "[data-action='confirm-coin-anchor-editor']"
+  );
+  if (confirmCoinAnchorEditorButton != null) {
+    coinRewardAnchorEditorState = {
+      ...coinRewardAnchorEditorState,
+      actualOffsetX: coinRewardAnchorEditorState.draftOffsetX,
+      actualOffsetY: coinRewardAnchorEditorState.draftOffsetY,
+    };
+    syncCoinRewardAnchorEditor();
+    syncCoinRewardAnchorEditorView();
+    return;
+  }
+
+  const revertCoinAnchorEditorButton = targetElement.closest<HTMLElement>(
+    "[data-action='revert-coin-anchor-editor']"
+  );
+  if (revertCoinAnchorEditorButton != null) {
+    coinRewardAnchorEditorState = {
+      ...coinRewardAnchorEditorState,
+      draftOffsetX: coinRewardAnchorEditorState.actualOffsetX,
+      draftOffsetY: coinRewardAnchorEditorState.actualOffsetY,
+    };
+    syncCoinRewardAnchorEditor();
+    syncCoinRewardAnchorEditorView();
+    return;
   }
 
   const grantHaozhouTestCoinButton = targetElement.closest<HTMLElement>(
@@ -6133,9 +6293,6 @@ function renderAppFrame(
     selectionEnd: number | null;
   } | null = null
 ) {
-  cityStageDomRuntimeHandle?.destroy();
-  cityStageDomRuntimeHandle = null;
-
   appState = {
     ...appState,
     gameState: ensureCityNpcPoolsForCurrentDay(
@@ -6189,6 +6346,12 @@ function renderAppFrame(
     appState,
     playerCharacterId: currentPlayerCharacterId,
     coinRewardDisplayValue,
+    coinRewardAnchorEditor: {
+      isOpen: coinRewardAnchorEditorState.isOpen,
+      draftX: coinRewardAnchorEditorState.draftOffsetX,
+      draftY: coinRewardAnchorEditorState.draftOffsetY,
+      isDirty: isCoinRewardAnchorEditorDirty(),
+    },
     mapDefinition: currentMapDefinition,
     cityDefinition: currentCityDefinition,
     cityDefinitions: activeContentContext.cities,
@@ -6222,6 +6385,8 @@ function renderAppFrame(
   syncCityBeggingMiniGameOverlay(appRoot, appState.beggingMiniGameState);
   syncCityStageDomRuntime();
   syncCoinRewardAnimatorTarget();
+  syncCoinRewardAnchorEditor();
+  syncCoinRewardAnchorEditorView();
   syncCoinRewardGoldDisplay();
   syncTroopEditorInteractions(appRoot, {
     onOpenTroopManagement: (input) => {
@@ -6291,6 +6456,12 @@ function syncCityStageDomRuntime(): void {
     return;
   }
 
+  if (cityStageDomRuntimeHandle?.cityId === cityId) {
+    cityStageDomRuntimeHandle.attach(stageRoot);
+    return;
+  }
+
+  cityStageDomRuntimeHandle?.destroy();
   cityStageDomRuntimeHandle = mountCityStageDomRuntime(stageRoot, { cityId });
 }
 

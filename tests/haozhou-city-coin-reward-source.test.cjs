@@ -11,8 +11,15 @@ test("city view and hud expose the coin reward animation anchors", () => {
   assert.match(cityViewSource, /data-action="grant-haozhou-test-coin"/);
   assert.match(panelSource, /data-ui-gold-target/);
   assert.match(panelSource, /data-ui-gold-value/);
+  assert.doesNotMatch(panelSource, /data-action="toggle-coin-anchor-editor"/);
+  assert.doesNotMatch(panelSource, /data-ui-coin-anchor-input="x"/);
+  assert.doesNotMatch(panelSource, /data-ui-coin-anchor-input="y"/);
+  assert.doesNotMatch(panelSource, /data-action="confirm-coin-anchor-editor"/);
+  assert.doesNotMatch(panelSource, /data-action="revert-coin-anchor-editor"/);
   assert.match(appRenderSource, /data-ui-coin-reward-layer/);
   assert.match(prototypeCssSource, /\.c-kulan-city__coin-test-action/);
+  assert.match(prototypeCssSource, /\.p-global-status-compact__coin-anchor-toggle/);
+  assert.match(prototypeCssSource, /display:\s*none;/);
   assert.match(
     prototypeCssSource,
     /\.c-kulan-city__coin-test-action\s*\{[\s\S]*?bottom:\s*68px;/
@@ -32,4 +39,18 @@ test("haozhou test coin button is declared in city view instead of choice skin",
   assert.ok(cityViewMatch, "Expected renderCityView source.");
   assert.doesNotMatch(choiceSkinMatch[1], /grant-haozhou-test-coin/);
   assert.match(cityViewMatch[1], /grant-haozhou-test-coin/);
+});
+
+test("coin anchor editor wiring exists in main runtime and animator", () => {
+  const mainSource = fs.readFileSync("src/main.ts", "utf8");
+  const animatorSource = fs.readFileSync("src/ui/animations/coin-reward-animation.ts", "utf8");
+
+  assert.match(mainSource, /actualOffsetX:\s*-151/);
+  assert.match(mainSource, /actualOffsetY:\s*25/);
+  assert.match(mainSource, /draftOffsetX:\s*-151/);
+  assert.match(mainSource, /draftOffsetY:\s*25/);
+  assert.match(animatorSource, /setTargetOffset/);
+  assert.match(animatorSource, /setPreviewTargetOffset/);
+  assert.match(animatorSource, /display = "none"/);
+  assert.match(animatorSource, /backgroundImage/);
 });

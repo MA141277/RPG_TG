@@ -70,6 +70,12 @@ export type AppRenderInput = {
   appState: AppState;
   playerCharacterId: string;
   coinRewardDisplayValue?: number | null;
+  coinRewardAnchorEditor?: {
+    isOpen: boolean;
+    draftX: number;
+    draftY: number;
+    isDirty: boolean;
+  };
   mapDefinition: MapDefinition;
   cityDefinition: CityDefinition;
   cityDefinitions?: CityDefinition[];
@@ -672,6 +678,7 @@ export function renderApp(input: AppRenderInput): string {
   const playerPanelModel = {
     ...basePlayerPanelModel,
     goldTextOverride,
+    coinAnchorEditor: input.coinRewardAnchorEditor,
   };
   const stageMarkup = renderStage(input, playerCharacter);
 

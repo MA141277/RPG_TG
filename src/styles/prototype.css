@@ -295,6 +295,109 @@
   width: calc(var(--game-width) * 82 / 2048);
 }
 
+.p-global-status-compact__coin-anchor-toggle {
+  display: none;
+  all: unset;
+  position: absolute;
+  top: calc(var(--game-height) * 56 / 1152);
+  left: calc(var(--game-width) * 440 / 2048);
+  z-index: 20;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: calc(var(--game-width) * 92 / 2048);
+  height: calc(var(--game-height) * 30 / 1152);
+  padding: 0 calc(var(--game-width) * 10 / 2048);
+  border: 1px solid rgb(122 79 34 / 88%);
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgb(82 50 22 / 96%), rgb(45 26 12 / 96%));
+  color: #f4dfae;
+  font-family: var(--font-title);
+  font-size: clamp(10px, 1.42cqw, 13px);
+  line-height: 1;
+  cursor: pointer;
+  pointer-events: auto;
+  box-shadow: 0 4px 10px rgb(0 0 0 / 18%);
+}
+
+.p-global-status-compact__coin-anchor-toggle:focus-visible {
+  outline: 2px solid #f7df94;
+  outline-offset: 2px;
+}
+
+.p-global-coin-anchor-editor {
+  display: none;
+  position: absolute;
+  top: calc(var(--game-height) * 94 / 1152);
+  left: calc(var(--game-width) * 438 / 2048);
+  z-index: 21;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: calc(var(--game-height) * 8 / 1152);
+  width: calc(var(--game-width) * 238 / 2048);
+  padding: calc(var(--game-height) * 10 / 1152) calc(var(--game-width) * 12 / 2048);
+  border: 1px solid rgb(116 75 30 / 88%);
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgb(54 33 16 / 96%), rgb(31 19 10 / 96%));
+  box-shadow: 0 10px 24px rgb(0 0 0 / 28%);
+  pointer-events: auto;
+}
+
+.p-global-coin-anchor-editor.is-open {
+  display: grid;
+}
+
+.p-global-coin-anchor-editor__field {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  color: #f4dfae;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.p-global-coin-anchor-editor__field input {
+  width: 100%;
+  min-width: 0;
+  padding: 6px 8px;
+  border: 1px solid rgb(145 103 54 / 88%);
+  border-radius: 8px;
+  background: rgb(248 237 212 / 96%);
+  color: #45270f;
+  font: inherit;
+}
+
+.p-global-coin-anchor-editor__field input:focus {
+  outline: 2px solid rgb(247 223 148 / 82%);
+  outline-offset: 1px;
+}
+
+.p-global-coin-anchor-editor__actions {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: calc(var(--game-width) * 8 / 2048);
+}
+
+.p-global-coin-anchor-editor__action {
+  min-width: 0;
+  padding: 6px 8px;
+  border: 1px solid rgb(103 71 37 / 72%);
+  border-radius: 8px;
+  background: rgb(81 57 35 / 72%);
+  color: rgb(232 212 176 / 72%);
+  font: inherit;
+  font-size: 0.76rem;
+  font-weight: 700;
+  cursor: default;
+}
+
+.p-global-coin-anchor-editor__action--active {
+  border-color: rgb(189 137 57 / 92%);
+  background: linear-gradient(180deg, rgb(164 111 38 / 96%), rgb(116 75 22 / 96%));
+  color: #fff0c4;
+  cursor: pointer;
+}
+
 .p-layout-component {
   position: absolute;
   overflow: visible;
@@ -2139,6 +2242,7 @@
 .c-city-map-stage__entity:focus-within .c-city-map-stage__entity-image,
 .c-city-map-stage__entity.is-hovered .c-city-map-stage__entity-image,
 .c-city-map-stage__entity.is-selected .c-city-map-stage__entity-image {
+  opacity: 1;
   animation: city-building-image-glow-pulse 1.45s ease-in-out infinite;
 }
 

@@ -60,3 +60,12 @@ test("city-stage CSS does not isolate NPC and building sorting into fixed siblin
   assert.match(source, /\.c-city-stage-ambient-npc__sprite\s*\{/);
   assert.doesNotMatch(source, /\.c-city-stage-ambient-npc__capsule\s*\{/);
 });
+
+test("city-stage building hover glow keeps the highlighted building image visible", () => {
+  const source = readText(prototypeCssPath);
+
+  assert.match(
+    source,
+    /\.c-city-map-stage__entity:hover\s+\.c-city-map-stage__entity-image,\s*\n\.c-city-map-stage__entity:focus-within\s+\.c-city-map-stage__entity-image,\s*\n\.c-city-map-stage__entity\.is-hovered\s+\.c-city-map-stage__entity-image,\s*\n\.c-city-map-stage__entity\.is-selected\s+\.c-city-map-stage__entity-image\s*\{\s*\n\s*opacity:\s*1;\s*\n\s*animation:\s*city-building-image-glow-pulse\s+1\.45s\s+ease-in-out\s+infinite;\s*\n\}/s
+  );
+});

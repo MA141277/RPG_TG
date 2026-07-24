@@ -29,6 +29,12 @@ export type GlobalPlayerPanelModel = {
   fame: number;
   reviewDateText: string;
   mainHouseMissionText: string;
+  coinAnchorEditor?: {
+    isOpen: boolean;
+    draftX: number;
+    draftY: number;
+    isDirty: boolean;
+  };
 };
 
 function formatTimeOfDayLabel(timeOfDay: GameState["world"]["timeOfDay"]): string {

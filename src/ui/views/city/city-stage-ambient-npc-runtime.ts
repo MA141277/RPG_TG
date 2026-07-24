@@ -15,6 +15,7 @@ type CityStageAmbientNpcTilePoint = {
 type CityStageAmbientNpcWalker = {
   descriptor: CityStageAmbientNpcDescriptor;
   id: string;
+  order: number;
   path: CityStageAmbientNpcTilePoint[];
   pathIndex: number;
   stepPhase: number;
@@ -38,6 +39,7 @@ const MIN_AMBIENT_NPC_COUNT = 4;
 const MAX_AMBIENT_NPC_COUNT = 8;
 const AMBIENT_NPC_BASE_SPEED = 21;
 const SPAWN_RETRY_LIMIT = 12;
+const AMBIENT_NPC_MIN_SEPARATION = 20;
 
 function toTileKey(tileX: number, tileY: number): string {
   return `${tileX},${tileY}`;
@@ -174,10 +176,32 @@ function resolveFacingFromDelta(
   return deltaX < 0 ? "left-down" : "right-down";
 }
 
+function findNearbyWalker(input: {
+  x: number;
+  y: number;
+  walkers: CityStageAmbientNpcWalker[];
+  excludeId: string;
+}): CityStageAmbientNpcWalker | null {
+  for (const walker of input.walkers) {
+    if (walker.id === input.excludeId) {
+      continue;
+    }
+    if (
+      Math.hypot(walker.x - input.x, walker.y - input.y) <
+      AMBIENT_NPC_MIN_SEPARATION
+    ) {
+      return walker;
+    }
+  }
+
+  return null;
+}
+
 function createWalker(
   index: number,
   geometry: CityStageGeometry,
-  descriptors: CityStageAmbientNpcDescriptor[]
+  descriptors: CityStageAmbientNpcDescriptor[],
+  walkers: CityStageAmbientNpcWalker[]
 ): CityStageAmbientNpcWalker | null {
   const routeNodes = pickRouteNodes(geometry);
   const descriptor =
@@ -192,10 +216,21 @@ function createWalker(
   if (startPoint == null) {
     return null;
   }
+  if (
+    findNearbyWalker({
+      x: startPoint.worldX,
+      y: startPoint.worldY,
+      walkers,
+      excludeId: "",
+    }) != null
+  ) {
+    return null;
+  }
 
   return {
     descriptor,
     id: `${descriptor.id}-${index}-${Math.floor(Math.random() * 100000)}`,
+    order: index,
     path,
     pathIndex: 0,
     stepPhase: Math.random() * Math.PI * 2,
@@ -233,7 +268,8 @@ export function createCityStageAmbientNpcRuntime(input: {
       const walker = createWalker(
         nextWalkerIndex,
         input.geometry,
-        input.descriptors
+        input.descriptors,
+        walkers
       );
       nextWalkerIndex += 1;
       attempts += 1;
@@ -244,10 +280,24 @@ export function createCityStageAmbientNpcRuntime(input: {
     }
   }
 
-  function moveWalker(walker: CityStageAmbientNpcWalker, deltaMs: number): boolean {
+  function moveWalker(
+    walker: CityStageAmbientNpcWalker,
+    deltaMs: number,
+    walkers: CityStageAmbientNpcWalker[]
+  ): boolean {
     const speed = walker.descriptor.speed * AMBIENT_NPC_BASE_SPEED;
     let remainingDistance = (speed * deltaMs) / 1000;
     walker.stepPhase += (deltaMs / 1000) * walker.descriptor.speed * 7;
+
+    const currentBlocker = findNearbyWalker({
+      x: walker.x,
+      y: walker.y,
+      walkers,
+      excludeId: walker.id,
+    });
+    if (currentBlocker != null && currentBlocker.order < walker.order) {
+      return false;
+    }
 
     while (remainingDistance > 0) {
       const nextPoint = walker.path[walker.pathIndex + 1];
@@ -258,18 +308,37 @@ export function createCityStageAmbientNpcRuntime(input: {
       const deltaX = nextPoint.worldX - walker.x;
       const deltaY = nextPoint.worldY - walker.y;
       const distance = Math.hypot(deltaX, deltaY);
-      walker.facing = resolveFacingFromDelta(deltaX, deltaY, walker.facing);
+      const nextFacing = resolveFacingFromDelta(deltaX, deltaY, walker.facing);
+      walker.facing = nextFacing;
+      let nextX = walker.x;
+      let nextY = walker.y;
       if (distance <= remainingDistance) {
-        walker.x = nextPoint.worldX;
-        walker.y = nextPoint.worldY;
+        nextX = nextPoint.worldX;
+        nextY = nextPoint.worldY;
+      } else {
+        const ratio = remainingDistance / distance;
+        nextX += deltaX * ratio;
+        nextY += deltaY * ratio;
+      }
+
+      const nextBlocker = findNearbyWalker({
+        x: nextX,
+        y: nextY,
+        walkers,
+        excludeId: walker.id,
+      });
+      if (nextBlocker != null && nextBlocker.order < walker.order) {
+        return false;
+      }
+
+      walker.x = nextX;
+      walker.y = nextY;
+      if (distance <= remainingDistance) {
         walker.pathIndex += 1;
         remainingDistance -= distance;
         continue;
       }
 
-      const ratio = remainingDistance / distance;
-      walker.x += deltaX * ratio;
-      walker.y += deltaY * ratio;
       remainingDistance = 0;
     }
 
@@ -289,7 +358,7 @@ export function createCityStageAmbientNpcRuntime(input: {
         if (walker == null) {
           continue;
         }
-        if (moveWalker(walker, deltaMs)) {
+        if (moveWalker(walker, deltaMs, walkers)) {
           walkers.splice(index, 1);
         }
       }

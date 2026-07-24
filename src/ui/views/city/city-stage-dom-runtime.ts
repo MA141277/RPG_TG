@@ -31,13 +31,12 @@ function applyNpcFacing(
 export function mountCityStageDomRuntime(
   root: HTMLElement,
   input: { cityId: string }
-): { destroy(): void } {
+): { cityId: string; attach(root: HTMLElement): void; destroy(): void } {
   const bundle = getCityStageBundleForCity(input.cityId);
-  const baseSpaceElement = root.querySelector<HTMLElement>(
-    "[data-city-stage-base-space]"
-  );
-  if (bundle == null || baseSpaceElement == null) {
+  if (bundle == null) {
     return {
+      cityId: input.cityId,
+      attach() {},
       destroy() {},
     };
   }
@@ -53,7 +52,6 @@ export function mountCityStageDomRuntime(
   const runtime = createCityStageAmbientNpcRuntime({ geometry, descriptors });
   const layer = document.createElement("div");
   layer.className = "c-city-stage-ambient-npc-layer";
-  baseSpaceElement.append(layer);
 
   const nodeById = new Map<string, HTMLDivElement>();
   let animationFrameId: number | null = null;
@@ -106,6 +104,18 @@ export function mountCityStageDomRuntime(
     }
   }
 
+  function attach(nextRoot: HTMLElement): void {
+    const baseSpaceElement = nextRoot.querySelector<HTMLElement>(
+      "[data-city-stage-base-space]"
+    );
+    if (destroyed || baseSpaceElement == null) {
+      return;
+    }
+
+    baseSpaceElement.append(layer);
+    render();
+  }
+
   function tick(timestamp: number): void {
     if (destroyed) {
       return;
@@ -119,10 +129,12 @@ export function mountCityStageDomRuntime(
     animationFrameId = window.requestAnimationFrame(tick);
   }
 
-  render();
+  attach(root);
   animationFrameId = window.requestAnimationFrame(tick);
 
   return {
+    cityId: input.cityId,
+    attach,
     destroy() {
       destroyed = true;
       if (animationFrameId != null) {
