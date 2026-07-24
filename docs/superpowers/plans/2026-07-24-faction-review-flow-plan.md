@@ -30,9 +30,9 @@
 
 - Status: `completed-but-open`
 - Last Updated: `2026-07-24`
-- Current Focus: `Implementation complete; waiting for review/sync/push before closeout`
-- Next Step: `Review Task 4 diff and resolve or explicitly accept the known unrelated child 27 startup coordinator full-suite failure before closing.`
-- Verification: `npm run build:test; if ($LASTEXITCODE -eq 0) { node --test tests/faction-review-domain.test.cjs tests/faction-review-ui-contract.test.cjs }`; `node --test --test-name-pattern "temple house review|temple review|global NPC interaction does not append default choices to temple review" tests/robustness.test.cjs`; `npm run lint:plans`; `npm run typecheck`; `$env:TEMP='D:\RPG_TG\.tmp'; $env:TMP='D:\RPG_TG\.tmp'; npm test` failed only known unrelated `child 27 startup coordinator exposes bootstrap-complete createAppState for builtin startup`, expected `event.story.zhu_yuanzhang.haozhou_return_encounter`, actual `null`; `$env:TEMP='D:\RPG_TG\.tmp'; $env:TMP='D:\RPG_TG\.tmp'; $env:npm_config_cache='D:\RPG_TG\.npm-cache'; npm run build`
+- Current Focus: `Implementation complete; waiting for final review/push before closeout`
+- Next Step: `Run final whole-branch review if agent capacity is available, then push or explicitly accept the known unrelated child 27 startup coordinator full-suite failure before closing.`
+- Verification: `node --test --test-name-pattern "temple review|temple house review|unlocked begging|disabled work choice|global NPC interaction does not append default choices to temple review" tests/robustness.test.cjs`; `npm run build:test; if ($LASTEXITCODE -eq 0) { node --test tests/faction-review-domain.test.cjs tests/faction-review-ui-contract.test.cjs }`; `npm run typecheck`; `npm run lint:plans`; `$env:TEMP='D:\RPG_TG\.tmp'; $env:TMP='D:\RPG_TG\.tmp'; npm test` failed only known unrelated `child 27 startup coordinator exposes bootstrap-complete createAppState for builtin startup`, expected `event.story.zhu_yuanzhang.haozhou_return_encounter`, actual `null`; `$env:TEMP='D:\RPG_TG\.tmp'; $env:TMP='D:\RPG_TG\.tmp'; $env:npm_config_cache='D:\RPG_TG\.npm-cache'; npm run build`
 - Notes: `Plan created after approval of docs/superpowers/specs/2026-07-24-faction-review-flow-design.md.`
 
 ## Progress Log
@@ -57,6 +57,10 @@
   - Summary: `Completed Task 4 temple review normalization with shared review assignment rows, policy panel/advice stages, temple merit rank-gated work choices, and preserved temple work-plan assignment commits.`
   - Verification: `RED npm run build:test; if ($LASTEXITCODE -eq 0) { node --test tests/faction-review-domain.test.cjs tests/faction-review-ui-contract.test.cjs }` failed on missing temple normalized review copy; `GREEN npm run build:test; if ($LASTEXITCODE -eq 0) { node --test tests/faction-review-domain.test.cjs tests/faction-review-ui-contract.test.cjs }` passed 11/11; `node --test --test-name-pattern "temple house review|temple review|global NPC interaction does not append default choices to temple review" tests/robustness.test.cjs` passed 4/4; `npm run lint:plans` passed; `npm run typecheck` passed; `$env:TEMP='D:\RPG_TG\.tmp'; $env:TMP='D:\RPG_TG\.tmp'; npm test` failed only known unrelated child 27 startup coordinator expected `event.story.zhu_yuanzhang.haozhou_return_encounter`, actual `null`; `$env:TEMP='D:\RPG_TG\.tmp'; $env:TMP='D:\RPG_TG\.tmp'; $env:npm_config_cache='D:\RPG_TG\.npm-cache'; npm run build` passed.`
   - Next: `Commit Task 4 changes and keep child completed-but-open until review, push, and the known unrelated full-suite failure are handled.`
+- 2026-07-24
+  - Summary: `Fixed Task 4 review findings by enforcing disabled temple review work choices during dispatch, preserving existing unlocked begging progression, and adding actionContainer/forced-dispatch regression coverage.`
+  - Verification: `node --test --test-name-pattern "temple review|temple house review|unlocked begging|disabled work choice|global NPC interaction does not append default choices to temple review" tests/robustness.test.cjs`; `npm run build:test; if ($LASTEXITCODE -eq 0) { node --test tests/faction-review-domain.test.cjs tests/faction-review-ui-contract.test.cjs }`; `npm run typecheck`; `npm run lint:plans`
+  - Next: `Run final review if agent capacity is available, then push/review before child closeout; do not close while the known unrelated full-suite failure remains unresolved or unaccepted.`
 
 ---
 
@@ -899,9 +903,9 @@ Update this plan:
 - Project Progress Synced: `yes`
 - Next Child: `none`
 - Next Child Status: `none`
-- Next Required Action: `review-commit-and-push-before-closeout`
+- Next Required Action: `final-review-and-push-before-closeout`
 - Next Entry Document: `docs/superpowers/project-progress.md`
 - Next Owner Document: `docs/superpowers/plans/2026-07-24-faction-review-flow-plan.md`
 - Push Status: `not-pushed`
 - Push Commit: `none`
-- Resume From: `Open docs/superpowers/project-progress.md, then review/commit/push Task 4; do not close this child while the known unrelated child 27 full-suite failure remains unresolved or unaccepted.`
+- Resume From: `Open docs/superpowers/project-progress.md, then run final review/push; do not close this child while the known unrelated child 27 full-suite failure remains unresolved or unaccepted.`
