@@ -8,6 +8,22 @@
 
 **Tech Stack:** Plain HTML/CSS/JavaScript in `prototypes/battle-demo/index.html`, Node built-in test runner (`node --test`), CommonJS test files under `tests/`.
 
+## Execution State
+
+- Status: `waiting`
+- Last Updated: `2026-07-24`
+- Current Focus: `Plan exists in legacy handoff state; not active for current execution.`
+- Next Step: `Open docs/superpowers/project-progress.md before starting this plan.`
+- Verification: `npm run lint:plans`
+- Notes: `Added current governance sections without changing the battle turn transition scope.`
+
+## Progress Log
+
+- 2026-07-24
+  - Summary: `Added required plan governance sections so npm run lint:plans can validate the repository.`
+  - Verification: `npm run lint:plans`
+  - Next: `No execution for this plan unless project-progress selects it.`
+
 ## Global Constraints
 
 - Only modify the actual `prototypes/battle-demo/index.html` battle board implementation.
