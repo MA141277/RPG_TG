@@ -12,8 +12,8 @@
 
 - Status: `running`
 - Last Updated: `2026-07-25`
-- Current Focus: `Task 2 complete; preparing Task 3 with Subagent-Driven Development.`
-- Next Step: `Dispatch Task 3 implementer from a generated task brief, then run task review before moving to Task 4.`
+- Current Focus: `Task 3 complete after review fix; preparing Task 4 with Subagent-Driven Development.`
+- Next Step: `Dispatch Task 4 implementer from a generated task brief, then run task review before final verification.`
 - Verification: `npm run lint:plans passed`
 - Notes: `User selected Subagent-Driven execution on 2026-07-25.`
 
@@ -35,6 +35,10 @@
   - Summary: `Completed Task 2: map-view now resolves the campaign structure profile through the engine-owned registry and threads it through MapViewModel while leaving hardcoded building removal for Task 3. Task review approved with no findings.`
   - Verification: `npm run build:test; if ($LASTEXITCODE -eq 0) { node --test --test-name-pattern "campaign map view resolves structure profiles without scenario pack imports" tests/robustness.test.cjs }`
   - Next: `Dispatch Task 3 implementer, then run task review before moving to Task 4.`
+- 2026-07-25
+  - Summary: `Completed Task 3: removed the hardcoded Yuanmo building branch, added node-driven structure visual metadata including visualKind, and kept semantic marker interaction in renderCampaignMarkers. Initial review found the missing visualKind contract; fix was applied and re-review approved.`
+  - Verification: `npm run build:test; if ($LASTEXITCODE -eq 0) { node --test --test-name-pattern "campaign map structures are node-driven instead of hardcoded Yuanmo building state" tests/robustness.test.cjs }`
+  - Next: `Dispatch Task 4 implementer, then run task review before final verification.`
 
 ---
 
@@ -414,7 +418,7 @@ git commit -m "feat: resolve campaign structure profiles in map view"
 - Produces: `MapNode.structureVisual?: { kind: "settlement-building" }`
 - Consumes: `campaignStructureProfile.settlementBuildingImageUrl`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Append:
 
@@ -444,7 +448,7 @@ test("campaign map structures are node-driven instead of hardcoded Yuanmo buildi
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run:
 
@@ -457,7 +461,7 @@ Expected:
 - `FAIL`
 - Failure mentions `YUANMO_HEX_BUILDING` still exists or `structureVisual` is missing.
 
-- [ ] **Step 3: Add node visual metadata types**
+- [x] **Step 3: Add node visual metadata types**
 
 In `src/domain/map.ts`, update `MapNode`:
 
@@ -476,7 +480,7 @@ export type MapNode = {
 };
 ```
 
-- [ ] **Step 4: Move the Haizhou structure declaration into map data**
+- [x] **Step 4: Move the Haizhou structure declaration into map data**
 
 In `src/content/yuanmo-campaign-map.ts`, find the node with:
 
@@ -492,7 +496,7 @@ Add:
 
 Keep the existing node id, label, coordinates, kind, summary, and city mapping unchanged.
 
-- [ ] **Step 5: Extend the marker model**
+- [x] **Step 5: Extend the marker model**
 
 In `src/ui/views/map/map-view.ts`, add this to `CampaignMarker`:
 
@@ -506,7 +510,7 @@ In `createMapViewModel`, when returning each marker, add:
           structureVisual: node.structureVisual ?? null,
 ```
 
-- [ ] **Step 6: Replace the hardcoded render function**
+- [x] **Step 6: Replace the hardcoded render function**
 
 Delete:
 
@@ -584,7 +588,7 @@ ${renderCampaignStructureVisuals(model)}
 
 Do not add a second hotspot button in this visual function. Existing `renderCampaignMarkers` remains the semantic interaction surface.
 
-- [ ] **Step 7: Run test to verify it passes**
+- [x] **Step 7: Run test to verify it passes**
 
 Run:
 
@@ -596,7 +600,7 @@ Expected:
 
 - `PASS`
 
-- [ ] **Step 8: Commit Task 3**
+- [x] **Step 8: Commit Task 3**
 
 Run:
 
