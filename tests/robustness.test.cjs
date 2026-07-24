@@ -3131,6 +3131,21 @@ test("campaign map structures are node-driven instead of hardcoded Yuanmo buildi
   assert.match(mapViewSource, /settlementBuildingImageUrl/);
 });
 
+test("campaign terrain canvas receives structure profile urls as renderer attributes", () => {
+  const fs = require("node:fs");
+  const path = require("node:path");
+  const mapViewSource = fs.readFileSync(
+    path.join(process.cwd(), "src", "ui", "views", "map", "map-view.ts"),
+    "utf8"
+  );
+
+  assert.match(mapViewSource, /data-campaign-structure-profile-id/);
+  assert.match(mapViewSource, /data-campaign-city-mesh-url/);
+  assert.match(mapViewSource, /data-campaign-city-texture-url/);
+  assert.match(mapViewSource, /campaignStructureProfile\?\.cityDepthMeshUrl/);
+  assert.match(mapViewSource, /campaignStructureProfile\?\.cityDepthTextureUrl/);
+});
+
 test("content pack loader resolves zhuyuanzhang map asset urls", async () => {
   const {
     loadContentPackFromManifestText,

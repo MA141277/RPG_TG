@@ -84,8 +84,6 @@ export type MapViewModel = {
   cloudNoiseTextureImageUrl: string | null;
   revealedHexKeys: string[];
   campaignStructureProfile: CampaignStructureVisualProfile | null;
-  cityDepthMeshAssetUrl: string | null;
-  cityDepthTextureUrl: string | null;
   cityDepthMeshCoordinate: {
     x: number;
     y: number;
@@ -217,8 +215,6 @@ export function createMapViewModel(input: {
       new Set(input.mapExplorationState?.revealedHexKeys ?? [])
     ).sort(),
     campaignStructureProfile,
-    cityDepthMeshAssetUrl: campaignStructureProfile?.cityDepthMeshUrl ?? null,
-    cityDepthTextureUrl: campaignStructureProfile?.cityDepthTextureUrl ?? null,
     cityDepthMeshCoordinate: input.mapDefinition.initialPlayerCoordinate ?? null,
     cloudClearHexKeys,
     campaignMarkers: input.mapDefinition.nodes
@@ -538,6 +534,7 @@ function renderCampaignMapVisualLayer(
     model.hexTextureAtlasImageUrl != null &&
     model.heightmapImageUrl != null &&
     model.materialTextureImageUrl != null;
+  const campaignStructureProfile = model.campaignStructureProfile;
   const cityDepthMeshU =
     model.cityDepthMeshCoordinate == null
       ? null
@@ -547,14 +544,15 @@ function renderCampaignMapVisualLayer(
       ? null
       : 1 - model.cityDepthMeshCoordinate.y / model.coordinateSpace.height;
   const cityDepthMeshAttributes =
-    model.cityDepthMeshAssetUrl == null ||
-    model.cityDepthTextureUrl == null ||
+    campaignStructureProfile?.cityDepthMeshUrl == null ||
+    campaignStructureProfile?.cityDepthTextureUrl == null ||
     cityDepthMeshU == null ||
     cityDepthMeshV == null
       ? ""
       : `
-          data-campaign-city-mesh-url="${model.cityDepthMeshAssetUrl}"
-          data-campaign-city-texture-url="${model.cityDepthTextureUrl}"
+          data-campaign-structure-profile-id="${campaignStructureProfile.id}"
+          data-campaign-city-mesh-url="${campaignStructureProfile.cityDepthMeshUrl}"
+          data-campaign-city-texture-url="${campaignStructureProfile.cityDepthTextureUrl}"
           data-campaign-city-u="${cityDepthMeshU.toFixed(5)}"
           data-campaign-city-v="${cityDepthMeshV.toFixed(5)}"
         `;
