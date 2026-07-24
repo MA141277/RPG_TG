@@ -26,18 +26,6 @@ import {
   type CampaignStructureVisualProfile,
 } from "../../../content/campaign-structure-visual-profiles";
 import redTurbanMarkerUrl from "../../../assets/yuanmo-map/chuang-swordsman-marker.png";
-import yuanmoHexBuildingUrl from "../../../../ui/yuansu/20260715-120754.png?url";
-
-const YUANMO_HEX_BUILDING = {
-  mapId: "map.yuanmo_campaign",
-  nodeId: "settlement.fenyang_province",
-  cityId: "city.kulan",
-  x: 336.6,
-  y: 318.6,
-  travelX: 334,
-  travelY: 318,
-  label: "濠州",
-} as const;
 
 type CityMarker = {
   id: string;
@@ -54,6 +42,7 @@ type CampaignMarker = {
   y: number;
   kind: NonNullable<MapNode["kind"]>;
   summary: string;
+  structureVisual: MapNode["structureVisual"] | null;
   isRevealed: boolean;
   historicalCharacters: {
     primary: string[];
@@ -252,6 +241,7 @@ export function createMapViewModel(input: {
           y: node.y,
           kind: node.kind ?? (node.cityId == null ? "landmark" : "city"),
           summary: node.summary ?? "",
+          structureVisual: node.structureVisual ?? null,
           isRevealed: revealedHexKeySet.has(
             getHexKey(
               coordinateToRoundedHex(
@@ -384,44 +374,45 @@ function renderHistoricalCharacters(
   return `<span class="c-campaign-marker__characters">${characterGroups}${notes}</span>`;
 }
 
-function renderCampaignHexBuilding(model: MapViewModel): string {
-  if (model.mapId !== YUANMO_HEX_BUILDING.mapId) {
+function renderCampaignStructureVisuals(model: MapViewModel): string {
+  const buildingImageUrl =
+    model.campaignStructureProfile?.settlementBuildingImageUrl ?? null;
+  if (buildingImageUrl == null) {
     return "";
   }
 
-  const left = (YUANMO_HEX_BUILDING.x / model.coordinateSpace.width) * 100;
-  const bottom = (YUANMO_HEX_BUILDING.y / model.coordinateSpace.height) * 100;
-  const heightU = YUANMO_HEX_BUILDING.x / model.coordinateSpace.width;
-  const heightV = 1 - YUANMO_HEX_BUILDING.y / model.coordinateSpace.height;
+  return model.campaignMarkers
+    .filter(
+      (marker) =>
+        marker.structureVisual?.kind === "settlement-building" &&
+        marker.isRevealed
+    )
+    .map((marker) => {
+      const left = (marker.x / model.coordinateSpace.width) * 100;
+      const bottom = (marker.y / model.coordinateSpace.height) * 100;
+      const heightU = marker.x / model.coordinateSpace.width;
+      const heightV = 1 - marker.y / model.coordinateSpace.height;
 
-  return `
-    <span
-      class="c-campaign-hex-building"
-      style="--hex-building-left:${left.toFixed(3)}%; --hex-building-bottom:${bottom.toFixed(3)}%;"
-      data-terrain-projected-point="true"
-      data-map-height-u="${heightU.toFixed(5)}"
-      data-map-height-v="${heightV.toFixed(5)}"
-      aria-label="${escapeHtml(YUANMO_HEX_BUILDING.label)}"
-    >
-      <img
-        class="c-campaign-hex-building__image"
-        src="${yuanmoHexBuildingUrl}"
-        alt=""
-        aria-hidden="true"
-      >
-      <button
-        type="button"
-        class="c-campaign-hex-building__hotspot"
-        data-map-node-id="${YUANMO_HEX_BUILDING.nodeId}"
-        data-map-node-name="${escapeHtml(YUANMO_HEX_BUILDING.label)}"
-        data-map-x="${YUANMO_HEX_BUILDING.travelX}"
-        data-map-y="${YUANMO_HEX_BUILDING.travelY}"
-        data-city-id="${YUANMO_HEX_BUILDING.cityId}"
-        title="${escapeHtml(YUANMO_HEX_BUILDING.label)} (${YUANMO_HEX_BUILDING.travelX}, ${YUANMO_HEX_BUILDING.travelY})"
-        aria-label="进入${escapeHtml(YUANMO_HEX_BUILDING.label)}"
-      ></button>
-    </span>
-  `;
+      return `
+        <span
+          class="c-campaign-hex-building"
+          style="--hex-building-left:${left.toFixed(3)}%; --hex-building-bottom:${bottom.toFixed(3)}%;"
+          data-campaign-structure-kind="${marker.structureVisual.kind}"
+          data-terrain-projected-point="true"
+          data-map-height-u="${heightU.toFixed(5)}"
+          data-map-height-v="${heightV.toFixed(5)}"
+          aria-label="${escapeHtml(marker.name)}"
+        >
+          <img
+            class="c-campaign-hex-building__image"
+            src="${buildingImageUrl}"
+            alt=""
+            aria-hidden="true"
+          >
+        </span>
+      `;
+    })
+    .join("");
 }
 
 function renderCampaignMarkers(model: MapViewModel): string {
@@ -630,7 +621,7 @@ function renderCampaignMapVisualLayer(
       ${
         options.includeInteractivePoints
           ? `
-            ${renderCampaignHexBuilding(model)}
+            ${renderCampaignStructureVisuals(model)}
             ${renderCampaignMarkers(model)}
             ${actorCanvasMarkup}
             <span

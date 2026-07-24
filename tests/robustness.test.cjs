@@ -3103,6 +3103,30 @@ test("campaign map view resolves structure profiles without scenario pack import
   assert.doesNotMatch(mapViewSource, /content\/scenario-packs/);
 });
 
+test("campaign map structures are node-driven instead of hardcoded Yuanmo building state", () => {
+  const fs = require("node:fs");
+  const path = require("node:path");
+  const mapDomainSource = fs.readFileSync(
+    path.join(process.cwd(), "src", "domain", "map.ts"),
+    "utf8"
+  );
+  const yuanmoMapSource = fs.readFileSync(
+    path.join(process.cwd(), "src", "content", "yuanmo-campaign-map.ts"),
+    "utf8"
+  );
+  const mapViewSource = fs.readFileSync(
+    path.join(process.cwd(), "src", "ui", "views", "map", "map-view.ts"),
+    "utf8"
+  );
+
+  assert.match(mapDomainSource, /structureVisual\?:/);
+  assert.match(yuanmoMapSource, /structureVisual: \{ kind: "settlement-building" \}/);
+  assert.doesNotMatch(mapViewSource, /YUANMO_HEX_BUILDING/);
+  assert.doesNotMatch(mapViewSource, /renderCampaignHexBuilding/);
+  assert.match(mapViewSource, /renderCampaignStructureVisuals/);
+  assert.match(mapViewSource, /settlementBuildingImageUrl/);
+});
+
 test("content pack loader resolves zhuyuanzhang map asset urls", async () => {
   const {
     loadContentPackFromManifestText,
