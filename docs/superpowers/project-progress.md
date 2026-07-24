@@ -10,13 +10,13 @@
 - Current Child Status: `completed-but-open`
 - Next Child: `none`
 - Next Child Status: `none`
-- Next Required Action: `final-review-and-push-before-closeout`
+- Next Required Action: `push-before-closeout`
 - Next Entry Document: `docs/superpowers/project-progress.md`
 - Next Owner Document: `docs/superpowers/plans/2026-07-25-campaign-map-visual-profile-plan.md`
 - Last Closed Item: `none`
 - Push Status: `not-pushed`
 - Push Commit: `none`
-- Resume From: `Open docs/superpowers/project-progress.md, then run final branch review for docs/superpowers/plans/2026-07-25-campaign-map-visual-profile-plan.md; do not mark closed until remote push succeeds and the known child 27 baseline is accepted or resolved.`
+- Resume From: `Open docs/superpowers/project-progress.md, then push/review before closing docs/superpowers/plans/2026-07-25-campaign-map-visual-profile-plan.md; do not mark closed until remote push succeeds and the known child 27 baseline is accepted or resolved.`
 
 ## Progress Log
 
@@ -60,6 +60,10 @@
   - Summary: `Completed the campaign map visual profile foundation implementation: MapDefinition now selects an engine-owned campaign structure profile, Yuanmo map nodes drive settlement-building visuals, map-view resolves profile URLs without scenario-pack imports, and renderer canvas attributes are emitted from campaignStructureProfile.`
   - Verification: `Targeted campaign visual profile contracts passed; npm run lint:plans passed; npm run typecheck passed after nullable marker narrowing fix 92db0c15; npm run build passed with existing Vite warnings; $env:TEMP='D:\RPG_TG\.tmp'; $env:TMP='D:\RPG_TG\.tmp'; npm test failed only known unrelated child 27 startup coordinator failure, expected event.story.zhu_yuanzhang.haozhou_return_encounter, actual null.`
   - Next: `Run final branch review, then push/review before child closeout; do not close while remote push is absent or the child 27 baseline remains unresolved/unaccepted.`
+- 2026-07-25
+  - Summary: `Resolved final review coverage issues for the campaign map visual profile foundation by guarding map-view against direct city_hun and Yuanmo settlement image imports and rerunning all four targeted campaign visual profile contracts.`
+  - Verification: `npm run build:test; if ($LASTEXITCODE -eq 0) { node --test --test-name-pattern "campaign structure visual profiles|campaign map view resolves structure profiles|campaign map structures are node-driven|campaign terrain canvas receives structure profile" tests/robustness.test.cjs }` passed 4 tests.
+  - Next: `Push/review before child closeout; do not close while remote push is absent or the child 27 baseline remains unresolved/unaccepted.`
 
 ## Latest Closeout
 

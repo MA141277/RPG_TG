@@ -3101,6 +3101,8 @@ test("campaign map view resolves structure profiles without scenario pack import
   assert.match(mapViewSource, /input\.mapDefinition\.campaignStructureProfileId/);
   assert.doesNotMatch(mapViewSource, /scenario-packs\/zhuyuanzhang/);
   assert.doesNotMatch(mapViewSource, /content\/scenario-packs/);
+  assert.doesNotMatch(mapViewSource, /3dasset\/city_hun/);
+  assert.doesNotMatch(mapViewSource, /ui\/yuansu\/20260715-120754/);
 });
 
 test("campaign map structures are node-driven instead of hardcoded Yuanmo building state", () => {
