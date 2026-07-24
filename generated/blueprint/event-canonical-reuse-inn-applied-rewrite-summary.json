@@ -1,0 +1,30 @@
+{
+  "generatedAt": "2026-07-24T03:04:31.270Z",
+  "family": "inn",
+  "canonicalBuildingId": "house.template.inn",
+  "canonicalEventIds": [
+    "event.building.template.house.inn.drink",
+    "event.building.template.house.inn.gamble",
+    "event.building.template.house.inn.talk",
+    "event.building.template.house.inn.work",
+    "event.building.template.house.inn.leave"
+  ],
+  "canonicalFlowIds": [
+    "flow.building.template.house.inn.drink",
+    "flow.building.template.house.inn.gamble",
+    "flow.building.template.house.inn.talk",
+    "flow.building.template.house.inn.work"
+  ],
+  "counts": {
+    "arrangementActionItemsRewritten": 105,
+    "bindingsRewritten": 105,
+    "sourceEventsCollapsed": 105,
+    "sourceFlowsCollapsed": 84
+  },
+  "payloadAnchorPolicy": {
+    "arrangementId": "preserved-live",
+    "containerId": "preserved-live",
+    "itemId": "preserved-live"
+  },
+  "arrangementCanonicalFold": "not-applied-in-this-batch"
+}

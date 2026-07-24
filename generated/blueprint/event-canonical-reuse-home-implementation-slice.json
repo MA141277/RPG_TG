@@ -1,0 +1,414 @@
+{
+  "generatedAt": "2026-07-23T21:41:29.836Z",
+  "versionId": "target.event-follow-up-routing-settlement-and-canonical-reuse-convergence",
+  "queueId": "queue.event-and-building-instance-canonical-reuse",
+  "activeTask": "task.event-and-building-instance-canonical-reuse.reference-rewrite-and-guard-baseline",
+  "sliceId": "slice.home-canonical-reuse-first-implementation",
+  "rationale": [
+    "home is the only family with fully aligned arrangement payload coverage for both mapped binding groups",
+    "home splits cleanly into one launchFlow event family and one closeBuilding event family",
+    "home therefore minimizes trigger.extra canonicalization risk while still forcing real source+consumer+guard coupling"
+  ],
+  "scope": {
+    "eventGroups": [
+      {
+        "family": "home",
+        "action": "rest",
+        "canonicalEventId": "event.building.template.home.rest",
+        "sourceEventIds": [
+          "event.building.home.anfeng.rest",
+          "event.building.home.anqing.rest",
+          "event.building.home.chengdu.rest",
+          "event.building.home.chongqing.rest",
+          "event.building.home.dadu.rest",
+          "event.building.home.fengyuan.rest",
+          "event.building.home.fuzhou.rest",
+          "event.building.home.gongchang.rest",
+          "event.building.home.huaian.rest",
+          "event.building.home.kaifeng.rest",
+          "event.building.home.luzhou.rest",
+          "event.building.home.nanchang.rest",
+          "event.building.home.ningbo.rest",
+          "event.building.home.runing.rest",
+          "event.building.home.suzhou.rest",
+          "event.building.home.taiping.rest",
+          "event.building.home.wenzhou.rest",
+          "event.building.home.wuchang.rest",
+          "event.building.home.yangzhou.rest",
+          "event.building.home.yingtian.rest"
+        ],
+        "actionKind": "launchFlow",
+        "canonicalOwnerId": "home.template",
+        "canonicalFlowId": "flow.building.template.home.rest",
+        "requiresOwnerTokenRewrite": true
+      },
+      {
+        "family": "home",
+        "action": "leave",
+        "canonicalEventId": "event.building.template.home.leave",
+        "sourceEventIds": [
+          "event.building.home.anfeng.leave",
+          "event.building.home.anqing.leave",
+          "event.building.home.chengdu.leave",
+          "event.building.home.chongqing.leave",
+          "event.building.home.dadu.leave",
+          "event.building.home.fengyuan.leave",
+          "event.building.home.fuzhou.leave",
+          "event.building.home.gongchang.leave",
+          "event.building.home.huaian.leave",
+          "event.building.home.kaifeng.leave",
+          "event.building.home.luzhou.leave",
+          "event.building.home.nanchang.leave",
+          "event.building.home.ningbo.leave",
+          "event.building.home.runing.leave",
+          "event.building.home.suzhou.leave",
+          "event.building.home.taiping.leave",
+          "event.building.home.wenzhou.leave",
+          "event.building.home.wuchang.leave",
+          "event.building.home.yangzhou.leave",
+          "event.building.home.yingtian.leave"
+        ],
+        "actionKind": "closeBuilding",
+        "canonicalOwnerId": "home.template",
+        "canonicalFlowId": null,
+        "requiresOwnerTokenRewrite": false
+      }
+    ],
+    "bindingGroups": [
+      {
+        "family": "home",
+        "itemId": "rest",
+        "canonicalBindingId": "binding.building.template.home.rest.container-item",
+        "sourceBindingIds": [
+          "binding.building.home.anfeng.rest.container-item",
+          "binding.building.home.anqing.rest.container-item",
+          "binding.building.home.chengdu.rest.container-item",
+          "binding.building.home.chongqing.rest.container-item",
+          "binding.building.home.dadu.rest.container-item",
+          "binding.building.home.fengyuan.rest.container-item",
+          "binding.building.home.fuzhou.rest.container-item",
+          "binding.building.home.gongchang.rest.container-item",
+          "binding.building.home.huaian.rest.container-item",
+          "binding.building.home.kaifeng.rest.container-item",
+          "binding.building.home.luzhou.rest.container-item",
+          "binding.building.home.nanchang.rest.container-item",
+          "binding.building.home.ningbo.rest.container-item",
+          "binding.building.home.runing.rest.container-item",
+          "binding.building.home.suzhou.rest.container-item",
+          "binding.building.home.taiping.rest.container-item",
+          "binding.building.home.wenzhou.rest.container-item",
+          "binding.building.home.wuchang.rest.container-item",
+          "binding.building.home.yangzhou.rest.container-item",
+          "binding.building.home.yingtian.rest.container-item"
+        ],
+        "canonicalEventId": "event.building.template.home.rest",
+        "canonicalOwnerId": "home.template",
+        "arrangementPayloadCoverage": "full",
+        "canonicalArrangementId": "arrangement.template.home.standard",
+        "canonicalContainerId": "home.template.actions",
+        "requiresCurrentHouseIdCanonicalization": true,
+        "requiresClickPayloadCanonicalization": false
+      },
+      {
+        "family": "home",
+        "itemId": "leave",
+        "canonicalBindingId": "binding.building.template.home.leave.container-item",
+        "sourceBindingIds": [
+          "binding.building.home.anfeng.leave.container-item",
+          "binding.building.home.anqing.leave.container-item",
+          "binding.building.home.chengdu.leave.container-item",
+          "binding.building.home.chongqing.leave.container-item",
+          "binding.building.home.dadu.leave.container-item",
+          "binding.building.home.fengyuan.leave.container-item",
+          "binding.building.home.fuzhou.leave.container-item",
+          "binding.building.home.gongchang.leave.container-item",
+          "binding.building.home.huaian.leave.container-item",
+          "binding.building.home.kaifeng.leave.container-item",
+          "binding.building.home.luzhou.leave.container-item",
+          "binding.building.home.nanchang.leave.container-item",
+          "binding.building.home.ningbo.leave.container-item",
+          "binding.building.home.runing.leave.container-item",
+          "binding.building.home.suzhou.leave.container-item",
+          "binding.building.home.taiping.leave.container-item",
+          "binding.building.home.wenzhou.leave.container-item",
+          "binding.building.home.wuchang.leave.container-item",
+          "binding.building.home.yangzhou.leave.container-item",
+          "binding.building.home.yingtian.leave.container-item"
+        ],
+        "canonicalEventId": "event.building.template.home.leave",
+        "canonicalOwnerId": "home.template",
+        "arrangementPayloadCoverage": "full",
+        "canonicalArrangementId": "arrangement.template.home.standard",
+        "canonicalContainerId": "home.template.actions",
+        "requiresCurrentHouseIdCanonicalization": true,
+        "requiresClickPayloadCanonicalization": false
+      }
+    ],
+    "arrangementGroups": [
+      {
+        "groupKey": "home.standard",
+        "canonicalArrangementId": "arrangement.template.home.standard",
+        "sourceArrangementIds": [
+          "arrangement.city.anfeng.home.anfeng",
+          "arrangement.city.anqing.home.anqing",
+          "arrangement.city.chengdu.home.chengdu",
+          "arrangement.city.chongqing.home.chongqing",
+          "arrangement.city.dadu.home.dadu",
+          "arrangement.city.fengyuan.home.fengyuan",
+          "arrangement.city.fuzhou.home.fuzhou",
+          "arrangement.city.gongchang.home.gongchang",
+          "arrangement.city.huaian.home.huaian",
+          "arrangement.city.kaifeng.home.kaifeng",
+          "arrangement.city.luzhou.home.luzhou",
+          "arrangement.city.nanchang.home.nanchang",
+          "arrangement.city.ningbo.home.ningbo",
+          "arrangement.city.runing.home.runing",
+          "arrangement.city.suzhou.home.suzhou",
+          "arrangement.city.taiping.home.taiping",
+          "arrangement.city.wenzhou.home.wenzhou",
+          "arrangement.city.wuchang.home.wuchang",
+          "arrangement.city.yangzhou.home.yangzhou",
+          "arrangement.city.yingtian.home.yingtian"
+        ],
+        "canonicalBuildingId": "home.template",
+        "sampleContainerIds": [
+          "home.anfeng.actions",
+          "home.anfeng.seats"
+        ]
+      }
+    ]
+  },
+  "requiredConsumerAreas": [
+    {
+      "id": "editor-export",
+      "category": "consumer",
+      "concerns": [
+        "raw event id export",
+        "ownerContext.ownerId export",
+        "flowId/playableId validation",
+        "event binding owner id export"
+      ],
+      "fileCount": 1,
+      "files": [
+        {
+          "path": "src/application/script-editor/runtime-pack-export.ts",
+          "exists": true,
+          "bytes": 81935,
+          "patternHits": {
+            "extractRuntimeEvents": 3,
+            "extractRuntimeEventBindings": 3,
+            "ownerContext.ownerId": 2,
+            "binding.owner.id": 3,
+            "flowId": 20
+          }
+        }
+      ]
+    },
+    {
+      "id": "editor-import",
+      "category": "consumer",
+      "concerns": [
+        "mapImportedEvents",
+        "mapImportedEventBindings",
+        "readBuildingArrangementsFamily",
+        "raw token rehydration"
+      ],
+      "fileCount": 1,
+      "files": [
+        {
+          "path": "src/application/script-editor/runtime-pack-import.ts",
+          "exists": true,
+          "bytes": 44874,
+          "patternHits": {
+            "mapImportedEvents": 2,
+            "mapImportedEventBindings": 2,
+            "readBuildingArrangementsFamily": 2
+          }
+        }
+      ]
+    },
+    {
+      "id": "active-content-index",
+      "category": "consumer",
+      "concerns": [
+        "eventDefinitionsById canonical truth",
+        "eventBindingsById canonical truth",
+        "buildingArrangementById canonical truth",
+        "flowPlayablesById linkage"
+      ],
+      "fileCount": 1,
+      "files": [
+        {
+          "path": "src/application/content/active-game-content.ts",
+          "exists": true,
+          "bytes": 21676,
+          "patternHits": {
+            "eventDefinitionsById": 5,
+            "eventBindingsById": 5,
+            "buildingArrangementById": 2,
+            "flowPlayablesById": 8
+          }
+        }
+      ]
+    },
+    {
+      "id": "building-runtime",
+      "category": "consumer",
+      "concerns": [
+        "currentHouseId exact owner matching",
+        "clicked eventId narrowing",
+        "cityId + buildingId host resolution",
+        "arrangement lookup continuity"
+      ],
+      "fileCount": 4,
+      "files": [
+        {
+          "path": "src/application/building/building-container-event-runtime.ts",
+          "exists": true,
+          "bytes": 6047,
+          "patternHits": {
+            "currentHouseId": 4,
+            "binding.owner.id": 0,
+            "triggerContext.owner.id": 0,
+            "arrangement.buildingId": 0,
+            "eventId": 5
+          }
+        },
+        {
+          "path": "src/application/building/building-module-entry.ts",
+          "exists": true,
+          "bytes": 4526,
+          "patternHits": {
+            "currentHouseId": 1,
+            "binding.owner.id": 0,
+            "triggerContext.owner.id": 0,
+            "arrangement.buildingId": 1,
+            "eventId": 2
+          }
+        },
+        {
+          "path": "src/core/runtime/event-binding-runtime.ts",
+          "exists": true,
+          "bytes": 8810,
+          "patternHits": {
+            "currentHouseId": 1,
+            "binding.owner.id": 2,
+            "triggerContext.owner.id": 1,
+            "arrangement.buildingId": 0,
+            "eventId": 10
+          }
+        },
+        {
+          "path": "src/core/runtime/navigation-runtime.ts",
+          "exists": true,
+          "bytes": 6918,
+          "patternHits": {
+            "currentHouseId": 0,
+            "binding.owner.id": 0,
+            "triggerContext.owner.id": 0,
+            "arrangement.buildingId": 1,
+            "eventId": 4
+          }
+        }
+      ]
+    },
+    {
+      "id": "story-playable-owner",
+      "category": "consumer",
+      "concerns": [
+        "ownerContext.ownerId propagation",
+        "dialogue/event/house owner reuse",
+        "playable handoff owner continuity"
+      ],
+      "fileCount": 4,
+      "files": [
+        {
+          "path": "src/application/story/story-runtime.ts",
+          "exists": true,
+          "bytes": 7830,
+          "patternHits": {
+            "ownerId": 0,
+            "currentHouseId": 10,
+            "ownerContext": 0,
+            "houseId": 4
+          }
+        },
+        {
+          "path": "src/application/story/story-callbacks.ts",
+          "exists": true,
+          "bytes": 7184,
+          "patternHits": {
+            "ownerId": 1,
+            "currentHouseId": 2,
+            "ownerContext": 0,
+            "houseId": 1
+          }
+        },
+        {
+          "path": "src/core/runtime/playable-runtime.ts",
+          "exists": true,
+          "bytes": 46535,
+          "patternHits": {
+            "ownerId": 17,
+            "currentHouseId": 2,
+            "ownerContext": 47,
+            "houseId": 3
+          }
+        },
+        {
+          "path": "src/core/runtime/interactive-runtime.ts",
+          "exists": true,
+          "bytes": 9863,
+          "patternHits": {
+            "ownerId": 3,
+            "currentHouseId": 2,
+            "ownerContext": 5,
+            "houseId": 4
+          }
+        }
+      ]
+    },
+    {
+      "id": "test-coverage",
+      "category": "guard",
+      "concerns": [
+        "one-binding-per-eventId masking",
+        "ownerContext.ownerId === arrangement.buildingId assertions",
+        "building action routing invariants"
+      ],
+      "fileCount": 1,
+      "files": [
+        {
+          "path": "tests/robustness.test.cjs",
+          "exists": true,
+          "bytes": 1080182,
+          "patternHits": {
+            "bindingsByEventId": 2,
+            "binding.owner.id": 2,
+            "ownerContext.ownerId": 5,
+            "arrangement.buildingId": 4,
+            "flowId": 4
+          }
+        }
+      ]
+    }
+  ],
+  "guardedNonGoals": [
+    "do not include temple/keep/market/grain_shop/medicine_house/tea_house/leader_residence partial payload families in the first implementation slice",
+    "do not include inn families in the first implementation slice",
+    "do not widen into nextEventId or settlement work"
+  ],
+  "successShape": {
+    "canonicalEvents": [
+      "event.building.template.home.rest",
+      "event.building.template.home.leave"
+    ],
+    "canonicalBindings": [
+      "binding.building.template.home.rest.container-item",
+      "binding.building.template.home.leave.container-item"
+    ],
+    "canonicalArrangement": "arrangement.template.home.standard",
+    "canonicalBuildingId": "home.template",
+    "canonicalContainerId": "home.template.actions"
+  }
+}

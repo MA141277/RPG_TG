@@ -1,0 +1,39 @@
+{
+  "artifactId": "event-canonical-reuse-market-applied-rewrite-summary",
+  "generatedAt": "2026-07-24",
+  "status": "applied",
+  "family": "market",
+  "canonicalTargets": {
+    "eventIds": [
+      "event.building.template.house.market.trade",
+      "event.building.template.house.market.talk",
+      "event.building.template.house.market.intel",
+      "event.building.template.house.market.leave"
+    ],
+    "flowIds": [
+      "flow.building.template.house.market.trade",
+      "flow.building.template.house.market.talk",
+      "flow.building.template.house.market.intel"
+    ],
+    "bindingOwnerId": "house.template.market"
+  },
+  "appliedCounts": {
+    "arrangementActionItemsRewritten": 84,
+    "bindingsRewritten": 84,
+    "sourceEventsCollapsed": 84,
+    "sourceFlowsCollapsed": 63
+  },
+  "preservedLivePayloadAnchors": [
+    "trigger.extra.arrangementId",
+    "trigger.extra.containerId",
+    "trigger.extra.itemId"
+  ],
+  "productionResidue": {
+    "cityScopedMarketEventIdsRemaining": 0,
+    "cityScopedMarketFlowIdsRemaining": 0
+  },
+  "remainingReferenceClasses": [
+    "generated/blueprint historical preflight artifacts",
+    "synthetic runtime test fixtures"
+  ]
+}

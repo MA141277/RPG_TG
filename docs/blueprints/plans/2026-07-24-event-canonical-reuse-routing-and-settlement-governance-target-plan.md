@@ -1,0 +1,309 @@
+# Event Canonical Reuse, Routing, And Settlement Governance Version Plan
+
+## Control Block
+
+- document_role: `version-governor`
+- version_id: `target.event-follow-up-routing-settlement-and-canonical-reuse-convergence`
+- version_status: `open`
+- active_phase: `phase.promotion-review`
+- active_queue: `none`
+- decision_state: `promotion-review`
+- next_decision: `same-version-admission-or-version-closeout`
+- next_action: `return-to-promotion-review`
+- resume_gate: `version-plan`
+- post_queue_closeout_pause_policy: `auto-continue`
+- promotion_review_result: `queue-admitted`
+- review_subject_id: `none`
+- review_subject_classification: `none`
+- proposed_queue_id: `none`
+- review_basis: `none`
+- admission_status: `none`
+- intake_status: `admission-review`
+- intake_item_id: `item.event-and-building-instance-canonical-reuse`
+- intake_summary: `Create a new formal version spec/plan from the approved 2026-07-24 iteration draft, fully absorb the approved boundaries, and immediately admit the first required canonical-reuse queue instead of stopping at a version shell.`
+- intake_result: `promoted-to-admission`
+- intake_feedback_mode: `fixed-receipt`
+- closure_review_subject: `queue.event-and-building-instance-canonical-reuse`
+- closure_review_status: `routed`
+- residue_candidate_id: `none`
+- residue_candidate_family: `none`
+- routing_basis: `queue.event-and-building-instance-canonical-reuse is locally closed after canonical-reuse proof, but the mandatory repository-sync gate still has to record its result before queue.instance-next-event-id-and-event-routing-convergence can be admitted.`
+- next_lawful_queue_recommendation: `queue.instance-next-event-id-and-event-routing-convergence`
+- auto_admission_ready: `false`
+- stop_reason: `none`
+- stop_basis: `none`
+- next_unblocked_action: `none`
+- human_input_required: `false`
+- blocked_by: []
+- candidate_queue_ids:
+  - `queue.event-and-building-instance-canonical-reuse`
+  - `queue.instance-next-event-id-and-event-routing-convergence`
+  - `queue.settlement-resource-and-event-type-convergence`
+  - `queue.full-chain-event-routing-and-settlement-consistency`
+  - `queue.event-routing-settlement-migration-and-final-acceptance`
+- candidate_backlog_refresh_status: `fresh`
+- candidate_backlog_snapshot:
+  - `queue.event-and-building-instance-canonical-reuse: locally closed and waiting only for the repository-sync gate because canonical reuse, duplicate-binding review, full owned reference rewrite, and queue-closeout proof are complete.`
+  - `queue.instance-next-event-id-and-event-routing-convergence: not yet admitted; it follows canonical reuse and owns unified nextEventId routing with event as the only routing owner.`
+  - `queue.settlement-resource-and-event-type-convergence: not yet admitted; it follows nextEventId routing convergence and owns settlement resources, event(type=settlement), numeric-first settlement semantics, and PlayableResult naming cleanup.`
+  - `queue.full-chain-event-routing-and-settlement-consistency: not yet admitted; it follows settlement-contract freeze and owns Script Editor/export/import/loading/preview/startup/runtime full-chain consistency.`
+  - `queue.event-routing-settlement-migration-and-final-acceptance: not yet admitted; required-final queue for explicit migration, fail-closed rejection, acceptance, and residue guard.`
+- candidate_backlog_scan_sources:
+  - `project-progress`
+  - `blueprint`
+  - `docs/blueprints/specs/2026-07-24-event-routing-settlement-version-scope-iteration-draft.md`
+  - `docs/blueprints/specs/2026-07-24-event-canonical-reuse-routing-and-settlement-governance-target.md`
+  - `docs/blueprints/queues/event-and-building-instance-canonical-reuse-queue.md`
+
+## Human Context
+
+### Activation Record
+
+- Scope approval:
+  - `The operator explicitly requested creating a new formal version spec/plan from the 2026-07-24 iteration draft, fully absorbing the approved boundary, reducing future queue-splitting pauses, and immediately activating the first canonical-reuse queue instead of stopping at version-shell state.`
+- Inherits from:
+  - `docs/blueprints/specs/2026-07-24-event-routing-settlement-version-scope-iteration-draft.md`
+  - `docs/blueprints/specs/2026-07-22-script-editor-event-only-routing-and-flow-retirement-requirement-draft.md`
+- Inheritance boundary:
+  - `This version owns event/building/host-instance deduplication and canonical reuse, full owned reference rewrite, nextEventId convergence, event-only routing, settlement resource plus settlement event-type convergence, PlayableResult naming cleanup, cross-chain consistency, explicit migration, and final acceptance as one inseparable incompatible batch.`
+  - `It does not reopen closed versions or split the owned chain into separate parent versions.`
+- Activation conclusion:
+  - `A new formal spec and plan now exist under distinct file names for the same governed version id.`
+  - `queue.event-and-building-instance-canonical-reuse is now the active queue, and task.event-and-building-instance-canonical-reuse.reference-rewrite-and-guard-baseline is the live active task after canonical-candidate inventory finished.`
+
+### Admission Review Record
+
+- Intake handling:
+  - `The operator intake already named the exact draft source, the required boundary, the required sync targets, the requirement to avoid ambiguity with the draft name, and the requirement to activate the first queue immediately.`
+  - `Blueprint therefore records version creation and queue admission in one governed update batch.`
+- Scope approval:
+  - `Yes. The operator already approved deduplication-first phase ordering, nextEventId-only follow-up naming, event-only routing, settlement as resource plus event type, PlayableSettlement -> PlayableResult convergence, no compatibility import, and no middle routing layer.`
+- Admission basis:
+  - `The active entry pointed at an open shell with no admitted queue; this request requires the version to move into formal execution truth with an active queue and live active task.`
+  - `queue.event-and-building-instance-canonical-reuse is the only lawful first queue because later nextEventId and settlement work depend on canonical ids and duplicate-truth removal.`
+- Required truth sync:
+  - `Satisfied in this document batch: blueprint pointers, version-plan pointers, project-progress entry pointers, queue doc activation, and active-task truth are all synchronized.`
+
+### Version Lifecycle Rules
+
+- `This version is open and actively executing through one active queue.`
+- `If active_queue is not none, execution truth comes from the active queue and active task rather than promotion review.`
+- `Do not implement code for later phases before the canonical-reuse queue closes and repository-sync gate is recorded.`
+- `Do not reverse the approved high-level phase order unless a real blocker or governing-doc conflict is recorded here first.`
+- `Do not split event/building canonical reuse, nextEventId routing, settlement convergence, and cross-chain consistency into separate parent targets while this version remains open.`
+- `Task completion, queue admission, queue activation, or doc-only sync are not lawful stopping points by themselves.`
+- `When an active task finishes, Blueprint must automatically promote the next lawful task in the same queue if one exists. If the queue has no remaining task, Blueprint must continue into the lawful queue-closeout and next-queue admission path instead of idling at completed-task state.`
+- `When a queue closes and repository-sync gate truth is recorded, Blueprint must automatically continue into the next lawful queue under the approved phase order when one exists. It must not wait for a second operator prompt merely to leave an empty active-queue state.`
+
+### Approved Phase Order And No-Pause Rule
+
+- `The operator already approved version-level order. Blueprint may split bounded queues within a phase, but it must not pause again to ask which phase comes first.`
+
+1. `event/building/host-instance deduplication, canonical reuse, duplicate-binding review, and full owned reference rewrite`
+2. `instance-level nextEventId plus event-only routing convergence`
+3. `settlement resources, event(type=settlement), and PlayableResult boundary convergence`
+4. `Script Editor/export/import/loading/preview/startup/runtime full-chain consistency`
+5. `explicit migration, fail-closed rejection, acceptance, and final governance closeout`
+
+- `Bulk identification, bulk folding, bulk reference rewrite, and bulk validation are the default working modes inside this version.`
+- `The workflow must not pause again for already approved boundaries such as strong template-layer deduplication, empty nextEventId meaning direct close, explicit self-reference prohibition, settlement-entry-only references, or PlayableSettlement -> PlayableResult convergence.`
+- `Escalation is lawful only when the parent goal would change, a new routing owner would be introduced, numeric-first settlement boundary would break, unrecoverable author content would be deleted without reconstruction, or governing docs conflict beyond the declared priority order.`
+
+### Repository Sync Gate Application
+
+- `This version follows the formal Blueprint repository-sync gate: task-level local-record during execution, then queue-level repository sync as the mandatory closeout-to-handoff gate.`
+- `Task completion by itself does not require commit, push, or merge.`
+- `Queue completion is different: once a queue reaches closeout truth, Blueprint must not admit or activate the next queue until one minimum repository-sync batch has been attempted and its result recorded.`
+- `The minimum queue-closeout sync batch is: queue closeout docs first, one local branch commit attempt, one remote push attempt after successful commit, and one merge attempt only if the repository workflow requires it.`
+- `This gate is result-driven rather than success-driven, but it must be recorded truthfully.`
+
+### Formal Stop-Rule Application
+
+- `Before ending a response while an active queue, active task, or uniquely lawful next governance action still exists, run the stop-condition self-check.`
+- `Only these causes may lawfully stop execution: explicit answer-only request, real blocker, outside-parent-spec work, parent-spec change, capability downgrade risk, retired-rewrite risk, or genuine product decision.`
+- `If none applies, do not stop at version creation, queue creation, queue admission, queue activation, or status reporting; continue to the active task.`
+- `Temporary version-local enforcement: before any stop/closeout decision, emit a visible stop-check in commentary instead of relying on internal judgment alone.`
+- `The stop-check must explicitly list: active_version, active_queue, active_task, whitelist_match, and result.`
+- `If active_queue != none or active_task != none, the default result is continue. Stop is lawful only when whitelist_match names one of the approved stop-rule causes explicitly.`
+- `If whitelist_match = none, do not emit a summary-style final answer that behaves like a stop. Continue to the next lawful action instead.`
+- `If no visible stop-check was emitted, a stop decision is non-compliant for this version even if the internal reasoning would otherwise have been valid.`
+- `Temporary operator override on 2026-07-24: do not stop to ask for confirmation while this version still has a live active queue or active task. Record blockers, conflicts, and assumptions in queue/version truth, then continue to the next lawful local action instead of pausing for operator input.`
+- `Under this override, "needs confirmation" is not a lawful pause reason by itself. Only a hard execution impossibility may end the turn, and even then Blueprint should first record the blocker truthfully in the governed docs before stopping.`
+- `Unattended-execution enforcement on 2026-07-24: while active_queue != none or active_task != none, do not use a final-answer closeout as a progress report. Mid-task progress must remain in commentary, and final-answer style summaries are forbidden until no further lawful local action exists.`
+- `Governance sync, generated artifacts, successful lint/check runs, and stage-complete preflight results are explicitly non-terminal. They are checkpoints that must immediately hand off to the next lawful local action inside the same active task or queue.`
+- `If the current active task still has any bounded local action such as audit, preflight, source rewrite preview, consumer-impact derivation, guard strengthening, or implementation slice preparation, the agent must continue without asking and without issuing a final closeout message.`
+- `For unattended execution, the default loop is: update governed truth if needed -> run the next lawful local action -> re-sync governed truth if it changed -> continue. Do not convert that loop into answer/final turns merely because one checkpoint completed successfully.`
+
+### Queue Admission Startup Rules
+
+1. `Read project-progress -> blueprint -> current version plan -> active queue -> active task before touching queue work.`
+2. `queue.event-and-building-instance-canonical-reuse is the only lawful first queue under this version.`
+3. `Before admitting any later queue, verify that canonical reuse and full owned reference rewrite are already closed and synchronized.`
+4. `Do not admit later routing or settlement queues while duplicate instance truth or retired duplicate ids still survive.`
+5. `Only after the queue doc exposes queue_status=active and a live active_task may implementation start.`
+
+### Queue Spec Integrity Rule
+
+- `No child queue under this version may pass by shrinking the parent boundary to one content family, one helper seam, or one editor-only path.`
+- `Each queue must name its inherited capability floor, alternate-path preservation, replacement proof, and fail-closed requirements before closeout.`
+- `If a queue spec is too thin, revise the queue spec first rather than pushing missing structure into a later queue by default.`
+
+### Operator Receipt Record
+
+- receipt_join_status: `success`
+- receipt_join_type: `execution-queue`
+- receipt_join_queue_id: `queue.event-and-building-instance-canonical-reuse`
+- receipt_reason_code: `admission-routing-required`
+- receipt_reason_basis:
+  - `The operator required a formal version record plus immediate first-queue activation, and canonical reuse is the only lawful first queue under the approved phase order.`
+- receipt_active_queue: `queue.event-and-building-instance-canonical-reuse`
+- receipt_active_task: `task.event-and-building-instance-canonical-reuse.reference-rewrite-and-guard-baseline`
+- receipt_queue_goal:
+  - `Establish canonical event/building/host-instance reuse and full owned reference rewrite as the foundation for later nextEventId, settlement, and full-chain consistency work.`
+- receipt_next_step:
+  - `Continue from the queue's active rewrite-and-guard task rather than returning to version review.`
+- receipt_human_action: `none-required`
+- receipt_internal_analysis_exposed: `false`
+
+### Candidate Recovery Ledger
+
+| Candidate ID | Last Classification | Proposed Queue | Latest Disposition | Recheck Trigger Type | Recheck Trigger Basis | Acceptance Refs | Can Claim | Cannot Claim | Notes |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `item.event-and-building-instance-canonical-reuse` | `queue-candidate` | `queue.event-and-building-instance-canonical-reuse` | `active` | `active-task-complete` | `It is the approved first phase and is now the live queue.` | `ACC-EVENT-SETTLE-001; ACC-EVENT-SETTLE-002` | `canonical id selection, strong deduplication, duplicate-binding review, full owned reference rewrite` | `nextEventId routing, settlement resources, final migration acceptance` | `Must not be bypassed by later routing or settlement work.` |
+| `item.instance-next-event-id-and-event-routing-convergence` | `queue-candidate` | `queue.instance-next-event-id-and-event-routing-convergence` | `candidate-recorded` | `queue-closeout` | `Recheck only after canonical reuse closes and sync is recorded.` | `ACC-EVENT-SETTLE-003; ACC-EVENT-SETTLE-004` | `nextEventId field unification and direct event-owned follow-up routing` | `settlement resource authoring, final migration acceptance` | `Must preserve event as sole routing owner.` |
+| `item.settlement-resource-and-event-type-convergence` | `queue-candidate` | `queue.settlement-resource-and-event-type-convergence` | `candidate-recorded` | `queue-closeout` | `Recheck only after nextEventId routing truth is stable.` | `ACC-EVENT-SETTLE-005` | `settlement resource/event-type convergence and PlayableResult naming cleanup` | `cross-chain consistency or final migration ownership` | `Must preserve numeric-first settlement boundary.` |
+| `item.full-chain-event-routing-and-settlement-consistency` | `queue-candidate` | `queue.full-chain-event-routing-and-settlement-consistency` | `candidate-recorded` | `queue-closeout` | `Recheck only after settlement contracts are frozen.` | `ACC-EVENT-SETTLE-006` | `full-chain parity on canonical ids, nextEventId, and settlement events` | `migration closeout or new router invention` | `Must remain distinct from settlement authoring and final acceptance.` |
+| `item.event-routing-settlement-migration-and-final-acceptance` | `queue-candidate` | `queue.event-routing-settlement-migration-and-final-acceptance` | `candidate-recorded` | `queue-closeout` | `Recheck only after all implementation-bearing queues close.` | `ACC-EVENT-SETTLE-007; ACC-EVENT-SETTLE-008` | `explicit migration, rejection coverage, final acceptance, residue guard` | `primary ownership of earlier implementation-bearing queues` | `Required-final queue only.` |
+
+### Queue Promotion Ledger
+
+| Queue ID | Current Disposition | Promote When | Notes |
+| --- | --- | --- | --- |
+| `queue.event-and-building-instance-canonical-reuse` | `active` | `already promoted` | `This is the live first queue.` |
+| `queue.instance-next-event-id-and-event-routing-convergence` | `candidate-ready` | `only after queue.event-and-building-instance-canonical-reuse closes and sync is recorded` | `Phase order is already approved.` |
+| `queue.settlement-resource-and-event-type-convergence` | `candidate-ready` | `only after queue.instance-next-event-id-and-event-routing-convergence closes` | `Must not admit before event-only routing truth is stable.` |
+| `queue.full-chain-event-routing-and-settlement-consistency` | `candidate-ready` | `only after queue.settlement-resource-and-event-type-convergence closes` | `Must stay distinct from settlement authoring and final acceptance.` |
+| `queue.event-routing-settlement-migration-and-final-acceptance` | `candidate-ready` | `only after all implementation-bearing queues close` | `Required-final queue.` |
+
+### Candidate Backlog Refresh Rule
+
+- `After an execution queue closes or candidate routing changes, refresh candidate truth before answering whether more same-version candidate queues remain.`
+- `Read project-progress -> blueprint -> current version plan -> candidate_queue_ids -> Candidate Recovery Ledger -> Queue Promotion Ledger -> named queue docs.`
+- `Use docs/change-log.md only when structured governance docs are insufficient or explicitly cited by the version plan.`
+
+### Blueprint Lint Failure Handling
+
+- `If npm run lint:blueprints fails during version admission, queue activation, execution, or closeout, repair the governing docs/spec structure inside the current lawful boundary first.`
+- `If lint failure proves the queue spec is too thin, revise the queue spec before continuing implementation.`
+- `Blueprint lint failure must not be treated as accepted residue or bypassed by queue handoff.`
+
+### Operator Intake Contract
+
+- Allowed operator intake:
+  - `新需求`
+  - `参考治理规范`
+- Internal-only Blueprint work:
+  - `read project-progress -> blueprint -> version plan -> active queue -> active task`
+  - `attempt active-queue absorption`
+  - `classify and route the intake`
+  - `record candidate truth or admission truth without asking the operator to fill internal fields`
+- Fixed receipt:
+  - `处理结果：已进入 Blueprint 内部治理。`
+  - `当前执行情况：继续当前 active queue / active task，或按治理结果切换到下一 lawful action。`
+  - `人工操作：当前不需要 / 当前需要确认 xxx`
+- Default operator output:
+
+```text
+处理结果：
+- 鍔犲叆鐘舵€侊細鎴愬姛 / 澶辫触 / 鎴愬姛锛屽凡鍔犲叆
+- 鍔犲叆绫诲瀷锛氭墽琛岄槦鍒?/ 鍊欓€夐槦鍒?/ 鏈姞鍏?
+- 鍔犲叆闃熷垪锛歚鍏蜂綋闃熷垪ID` / `none`
+
+原因说明：
+- 鐢?2~4 鍙ヨ瘽璇存槑涓轰粈涔堣繘鍏ヨ闃熷垪锛屾垨鑰呬负浠€涔堟病鏈夋垚鍔熷姞鍏ャ€?
+
+当前执行情况：
+- 褰撳墠鎵ц闃熷垪锛歚鍏蜂綋闃熷垪ID`
+- 褰撳墠浠诲姟锛歚鍏蜂綋 task ID`
+- 褰撳墠闃熷垪鐩爣锛氫竴鍙ヨ瘽璇存槑
+
+下一步：
+- 璇存槑 Blueprint 鎺ヤ笅鏉ヤ細濡備綍澶勭悊
+- 人工操作：当前不需要 / 当前需要确认 xxx
+```
+
+- Default visibility rule:
+  - `默认不向人工暴露真值链细节。`
+
+### Execution Self-Review Gate
+
+- review_scope: `version-admission-and-active-queue-activation`
+- version_acceptance_alignment:
+  - `All version acceptance ids are assigned to one bounded queue portfolio in the approved high-level phase order.`
+- parent_spec_alignment:
+  - `The formal spec fully absorbs the approved iteration-draft boundary without dropping deduplication, nextEventId, settlement, migration, or no-middle-layer routing commitments.`
+- queue_claim_alignment:
+  - `The active queue claims only ACC-EVENT-SETTLE-001 / 002 foundation work and does not over-claim later routing or settlement convergence.`
+- over_narrowing_check:
+  - `The first queue owns deduplication, canonical selection, duplicate-binding review, and full owned reference rewrite rather than a thin helper-only slice.`
+- residue_or_blocker_routing_check:
+  - `No hard blocker is recorded. Canonical-reuse source rewrites are complete for home, home_001, leader_residence, temple, keep, tea_house, market, grain_shop, medicine_house, and inn; generated/blueprint/event-canonical-reuse-closeout-proof.json now proves that the remaining city-scoped truth is limited to explicit building-enter routes plus the recorded Kulan temple exceptions.`
+- verification_adequacy_check:
+  - `Governed-doc verification must pass before this activation batch is treated as synchronized.`
+- next_lawful_action_check:
+  - `Current queue execution is locally complete. The next lawful action is the mandatory repository-sync gate for queue.event-and-building-instance-canonical-reuse; once its result is recorded, Blueprint must auto-admit and activate queue.instance-next-event-id-and-event-routing-convergence.`
+
+### Closure Routing Record
+
+- `No queue has closed under this version yet. Version closeout is not in review.`
+
+### Progress Log
+
+- `2026-07-24`: `Created a new formal spec and version plan under distinct file names for target.event-follow-up-routing-settlement-and-canonical-reuse-convergence so formal execution truth no longer depends on the iteration-draft file or the earlier version-shell-only document naming.`
+- `2026-07-24`: `Synchronized blueprint.md and project-progress.md to the new formal spec/plan paths and moved the repository resume chain from version-shell state into queue-level execution truth.`
+- `2026-07-24`: `Created and admitted queue.event-and-building-instance-canonical-reuse as the first active queue, with task.event-and-building-instance-canonical-reuse.evidence-anchor-reconcile as the live active task.`
+- `2026-07-24`: `Completed task.event-and-building-instance-canonical-reuse.evidence-anchor-reconcile after built-in pack audit and code-anchor inspection locked the owned duplicate surfaces, rewrite anchors, and no-missing-ref baseline.`
+- `2026-07-24`: `Advanced active execution to task.event-and-building-instance-canonical-reuse.canonical-candidate-inventory-and-selection-rules. The live queue now inventories semantic duplicate families and canonical-selection exceptions rather than assuming trivial exact duplicate merges.`
+- `2026-07-24`: `Active canonical-candidate inventory has already found one concrete uniqueness drift sample inside the owned surface: zhuyuanzhang has 633 building-container-item-action bindings but only 632 arrangement action-menu items, and binding.building.house.kulan.temple.work.container-item no longer matches the current Huangjue Temple action-menu item ids. The queue remains active because this is canonical-inventory truth rather than a closeout blocker.`
+- `2026-07-24`: `Semantic inventory now shows repeatable host-family structure rather than random flat duplication: leader_residence / temple / keep / tea_house / market / grain_shop / medicine_house / inn each repeat 21 times in zhuyuanzhang, while the 14 binding-only routes partition into building-enter, city-enter, story-progress, indoor-screen-shown, and one container-item drift family. Active execution therefore keeps task.event-and-building-instance-canonical-reuse.canonical-candidate-inventory-and-selection-rules open for family-by-family canonical selection rules and preservation exceptions.`
+- `2026-07-24`: `Canonical-candidate inventory is now complete for the first rewrite batch. Semantic normalization exposed 30 duplicate event families and 30 duplicate action-menu binding families, while arrangement strong-fold groups narrowed to home(20), temple(20), keep(20), market(20), grain_shop(20), medicine_house(20), tea_house(19), and leader_residence(7) instead of one flat 21-city merge rule.`
+- `2026-07-24`: `The version now records deterministic template-scope canonical naming for the active queue rather than preserving one city-owned id by fiat. Kulan temple work, Kulan/Suzhou arrangement variants, non-standard leader_residence cities, and all inn arrangements are explicit preservation exceptions for the current rewrite batch.`
+- `2026-07-24`: `Active execution advanced to task.event-and-building-instance-canonical-reuse.reference-rewrite-and-guard-baseline. The next lawful work is coordinated owned rewrite across arrangement event refs, event ownerContext+flow refs, binding owner+trigger refs, import/export/loading indexes, and guard coverage.`
+- `2026-07-24`: `Task3 source audit confirmed the rewrite batch cannot be scoped to eventId replacement alone: main.ts still forwards arrangement/container/item/event payload directly into building runtime, building-container-event-runtime still filters by clicked eventId before binding activation, building-module-entry still resolves arrangements by cityId + buildingId, active-game-content still builds one by-id index per family with no alias table, and the current robustness pack audit still masks multi-binding collisions by collapsing bindings to one Map key per eventId.`
+- `2026-07-24`: `Task3 Slice 1 is now frozen in docs/blueprints/reports/2026-07-24-event-canonical-reuse-first-batch-map.md. The active queue no longer relies only on prose summaries; it now has an explicit first-batch canonical id artifact for 30 event families, 30 binding families, eight arrangement subgroup ids, and the recorded preservation-exception list.`
+- `2026-07-24`: `Added a temporary version-local stop-check enforcement rule after repeated premature stop misjudgments. For this version, any attempt to stop must first emit a visible commentary stop-check containing active_version, active_queue, active_task, whitelist_match, and result; otherwise execution must continue by default.`
+- `2026-07-24`: `Task3 Slice 1 now also has a machine-readable artifact at generated/blueprint/event-canonical-reuse-first-batch-map.json, so rewrite scripts and guard scripts can consume the same canonical family truth without re-deriving it from prose.`
+- `2026-07-24`: `Task3 rewrite preflight now includes generated/blueprint/event-canonical-reuse-rewrite-audit.json. The simulated audit proves that the 30 first-batch canonical event ids currently create only safe owner/payload-distinguished multi-binding multiplex groups and 0 duplicate-payload conflicts, while isolating the remaining out-of-batch event / binding / arrangement surfaces and re-confirming the preserved Kulan temple work drift sample.`
+- `2026-07-24`: `Task3 owner/flow token preflight now includes generated/blueprint/event-canonical-reuse-token-preflight.json. The derived token audit shows that the first mapped batch splits cleanly into 21 launchFlow families and 9 closeBuilding-only families with 0 mixed-action groups, so canonical flowId / ownerId / buildingId / containerId rewrite can follow one deterministic template-token rule instead of per-family invention.`
+- `2026-07-24`: `Task3 also confirmed that canonical owner-token rewrite is consumer-coupled rather than pack-only: event-binding-runtime matches binding.owner.id by exact equality against triggerContext.owner.id, building-container runtime feeds that equality from currentHouseId, story/playable ownerContext paths reuse the same house token, and current robustness coverage still asserts ownerContext.ownerId === arrangement.buildingId. The next rewrite slice therefore needs coupled source+consumer+test change, not a fake isolated data preview.`
+- `2026-07-24`: `Task3 coupled rewrite impact is now frozen at generated/blueprint/event-canonical-reuse-coupled-rewrite-impact.json. The next lawful rewrite slice is concretized as 9 impact areas / 15 files across pack data, export/import, active-content indexing, building runtime, story/playable owner propagation, and robustness guards rather than a vague source+consumer warning.`
+- `2026-07-24`: `Task3 source-side rewrite preview is now frozen at generated/blueprint/event-canonical-reuse-source-rewrite-preview.json. The preview proves that the first writeable slice is not "all mapped bindings at once": only 2 home binding groups currently have full arrangement payload alignment, while 23 groups are partial and 5 inn groups are arrangement-unaligned, so full binding trigger.extra templating still requires coupled runtime payload handling beyond pure source-id replacement.`
+- `2026-07-24`: `Task3 now also freezes the first implementation seam at generated/blueprint/event-canonical-reuse-home-implementation-slice.json. That artifact narrows real code-writing to the home family as the first lawful write slice because it is the only fully aligned binding family and it still exercises both launchFlow and closeBuilding behavior under the current queue boundary.`
+- `2026-07-24`: `Task3 live guard hardening has now started in repository code. The zhuyuanzhang robustness audit no longer collapses bindings to one entry per eventId; it now groups container-item bindings per eventId, rejects duplicate exact payload tuples, and requires exactly one owner/payload-exact binding match for each action-menu item so future canonical eventId folding cannot hide collisions behind Map overwrite behavior.`
+- `2026-07-24`: `Task3 flow preflight is now frozen at generated/blueprint/event-canonical-reuse-flow-preflight.json. The first-write home slice is no longer backed only by event/binding alignment; it now also has audited launchFlow dependency proof that 20 home.rest flow definitions normalize to one reusable structural shape for later canonical flowId rewrite.`
+- `2026-07-24`: `Task3 has now moved one consumer seam from preflight into production code. EventBindingRuntime accepts canonical home.template binding owners against live city home owner ids through a dedicated canonicalization helper, and new robustness guards prove both the positive template-to-live-home path and the negative no-city-to-city widening path. The next lawful local action remains extending canonical owner/flow rewrite into the remaining home slice consumers rather than stopping at this guard milestone.`
+- `2026-07-24`: `Task3 then aligned the pack-level zhuyuanzhang action-menu audit with the same canonical-owner rule. The queue no longer depends on exact ownerContext.ownerId === arrangement.buildingId equality inside that guard; canonical-equivalent owner ids now pass there too, which removes a false blocker for the future home source rewrite batch while preserving mismatch detection.`
+- `2026-07-24`: `Task3 then locked the shared flow settlement side of the same home-slice owner boundary. New robustness coverage proves that a flow launched from canonical ownerContext.ownerId = home.template preserves that canonical owner id through shared playable settlement while the live world.currentHouseId remains the city-specific home token, so the remaining home-slice work can focus on source rewrite plus export/import consumers rather than an unverified flow handoff risk.`
+- `2026-07-24`: `Task3 then re-audited runtime-pack-export / runtime-pack-import against the same home-slice canonical-owner boundary. Export already preserves launchFlow / launchPlayable ownerContext.ownerId as raw string truth after only ownerKind / returnPolicy validation, import rehydrates integration ownerDefaults.ownerId without any alias table, and imported flowPlayables reject retired routing fields instead of backfilling them. The next lawful implementation step is therefore direct source-truth rewrite for home event action owner ids plus canonical flow ids, not compatibility handling at import/export time.`
+- `2026-07-24`: `Task3 then flattened that upcoming direct source rewrite into one bounded concrete batch: 20 home.<city>.rest launchFlow events, 20 paired home.<city>.leave closeBuilding events, 20 flow.building.home.<city>.rest definitions, and 40 matching home container-item bindings. The batch still carries raw city tokens at event action ownerId / flowId / binding owner.id / binding eventId, while arrangementId / containerId / itemId stay as live city payload anchors and no home_001 record is part of this first write slice.`
+- `2026-07-24`: `Task3 has now executed that first bounded home source rewrite batch in production pack data. zhuyuanzhang home arrangements now point rest/leave action items at canonical template-home event ids, the 40 matching home container-item bindings now keep live city payload anchors but target canonical home event ids with owner.id = home.template, the 20 city-scoped home rest flows have collapsed to flow.building.template.home.rest, and the 40 city-scoped home rest/leave events have collapsed to two canonical template-home event records with canonical ownerContext.ownerId / flowId truth.`
+- `2026-07-24`: `Task3 post-rewrite residue scan confirms that production source tables no longer retain direct city-scoped home event or flow ids. Remaining same-family direct references are now limited to generated/blueprint historical preflight artifacts and one synthetic runtime test fixture, so the next lawful action is to refresh or supersede those historical artifacts and then continue toward the next non-home family rewrite slice.`
+- `2026-07-24`: `Task3 has now materialized that post-home selector step at generated/blueprint/event-canonical-reuse-next-slice-candidates.json. The artifact demotes the pre-home source-preview / home-implementation-slice / flow-preflight artifacts to historical-only selector evidence and selects keep as the next bounded non-home source-rewrite family by deterministic tie-break over grain_shop and medicine_house.`
+- `2026-07-24`: `Task3 then executed the keep-family bounded source rewrite batch in production pack data. zhuyuanzhang keep arrangements now point review/work/leave items at canonical template-house keep event ids, the 63 matching keep container-item bindings now target canonical keep event ids with owner.id = house.template.keep while preserving live arrangementId / containerId / itemId payload anchors, the 42 city-scoped keep review/work flows have collapsed to canonical template-house keep flow ids, and the 63 city-scoped keep review/work/leave events have collapsed to three canonical template-house keep event records with canonical ownerContext.ownerId / flowId truth.`
+- `2026-07-24`: `Task3 has now refreshed the selector again after keep landed. generated/blueprint/event-canonical-reuse-keep-applied-rewrite-summary.json records the applied keep batch, and generated/blueprint/event-canonical-reuse-next-slice-candidates.json now records home+keep as completed and promotes grain_shop as the next bounded non-home source-rewrite family ahead of medicine_house.`
+- `2026-07-24`: `Task3 then executed the grain-shop bounded source rewrite batch in production pack data. zhuyuanzhang grain-shop arrangements now point trade/accounting/leave items at canonical template-house grain_shop event ids, the 63 matching grain-shop container-item bindings now target canonical grain-shop event ids with owner.id = house.template.grain_shop while preserving live arrangementId / containerId / itemId payload anchors, the 42 city-scoped grain-shop trade/accounting flows have collapsed to canonical template-house grain_shop flow ids, and the 63 city-scoped grain-shop trade/accounting/leave events have collapsed to three canonical template-house grain_shop event records with canonical ownerContext.ownerId / flowId truth.`
+- `2026-07-24`: `Task3 has now refreshed the selector once more after grain_shop landed. generated/blueprint/event-canonical-reuse-grain_shop-applied-rewrite-summary.json records the applied grain-shop batch, generated/blueprint/event-canonical-reuse-next-slice-candidates.json now records home+keep+grain_shop as completed, and the next bounded non-home source-rewrite family is medicine_house.`
+- `2026-07-24`: `Task3 then executed the medicine-house bounded source rewrite batch in production pack data. zhuyuanzhang medicine-house arrangements now point treatment/compounding/leave items at canonical template-house medicine_house event ids, the 63 matching medicine-house container-item bindings now target canonical medicine-house event ids with owner.id = house.template.medicine_house while preserving live arrangementId / containerId / itemId payload anchors, the 42 city-scoped medicine-house treatment/compounding flows have collapsed to canonical template-house medicine_house flow ids, and the 63 city-scoped medicine-house treatment/compounding/leave events have collapsed to three canonical template-house medicine_house event records with canonical ownerContext.ownerId / flowId truth.`
+- `2026-07-24`: `Task3 has now refreshed the selector after medicine_house landed. generated/blueprint/event-canonical-reuse-medicine_house-applied-rewrite-summary.json records the applied medicine-house batch, generated/blueprint/event-canonical-reuse-next-slice-candidates.json now records home+keep+grain_shop+medicine_house as completed, and the next bounded non-home source-rewrite family is market.`
+- `2026-07-24`: `Task3 then executed the market bounded source rewrite batch in production pack data. zhuyuanzhang market arrangements now point trade/talk/intel/leave items at canonical template-house market event ids, the 84 matching market container-item bindings now target canonical market event ids with owner.id = house.template.market while preserving live arrangementId / containerId / itemId payload anchors, the 63 city-scoped market trade/talk/intel flows have collapsed to canonical template-house market flow ids, and the 84 city-scoped market trade/talk/intel/leave events have collapsed to four canonical template-house market event records with canonical ownerContext.ownerId / flowId truth.`
+- `2026-07-24`: `Task3 has now refreshed the selector after market landed. generated/blueprint/event-canonical-reuse-market-applied-rewrite-summary.json records the applied market batch, generated/blueprint/event-canonical-reuse-next-slice-candidates.json now records home+keep+market+grain_shop+medicine_house as completed, and the next bounded non-home source-rewrite family is tea_house.`
+- `2026-07-24`: `Task3 then executed the tea-house bounded source rewrite batch in production pack data. zhuyuanzhang tea-house arrangements now point tea/talk/intel/leave items at canonical template-house tea_house event ids, the 84 matching tea-house container-item bindings now target canonical tea-house event ids with owner.id = house.template.tea_house while preserving live arrangementId / containerId / itemId payload anchors, the 63 city-scoped tea-house tea/talk/intel flows have collapsed to canonical template-house tea_house flow ids, and the 84 city-scoped tea-house tea/talk/intel/leave events have collapsed to four canonical template-house tea_house event records with canonical ownerContext.ownerId / flowId truth.`
+- `2026-07-24`: `Task3 has now refreshed the selector after tea_house landed. generated/blueprint/event-canonical-reuse-tea_house-applied-rewrite-summary.json records the applied tea-house batch, generated/blueprint/event-canonical-reuse-next-slice-candidates.json now records home+keep+tea_house+market+grain_shop+medicine_house as completed, and the next bounded non-home source-rewrite family is leader_residence.`
+- `2026-07-24`: `Task3 then executed the leader-residence bounded source rewrite batch in production pack data. zhuyuanzhang leader-residence arrangements now point review/leave items at canonical template-house leader_residence event ids, the 42 matching leader-residence container-item bindings now target canonical leader-residence event ids with owner.id = house.template.leader_residence while preserving live arrangementId / containerId / itemId payload anchors, the 21 city-scoped leader-residence review flows have collapsed to canonical template-house leader_residence flow ids, and the 42 city-scoped leader-residence review/leave events have collapsed to two canonical template-house leader_residence event records with canonical ownerContext.ownerId / flowId truth.`
+- `2026-07-24`: `Task3 has now refreshed the selector after leader_residence landed. generated/blueprint/event-canonical-reuse-leader_residence-applied-rewrite-summary.json records the applied leader-residence batch, generated/blueprint/event-canonical-reuse-next-slice-candidates.json now records home+leader_residence+keep+tea_house+market+grain_shop+medicine_house as completed, and the next bounded non-home source-rewrite family is inn.`
+- `2026-07-24`: `Task3 then executed the inn bounded source rewrite batch in production pack data. zhuyuanzhang inn arrangements now point drink/gamble/talk/work/leave items at canonical template-house inn event ids, the 105 matching inn container-item bindings now target canonical inn event ids with owner.id = house.template.inn while preserving live arrangementId / containerId / itemId payload anchors, the 84 city-scoped inn drink/gamble/talk/work flows have collapsed to canonical template-house inn flow ids, and the 105 city-scoped inn drink/gamble/talk/work/leave events have collapsed to five canonical template-house inn event records with canonical ownerContext.ownerId / flowId truth.`
+- `2026-07-24`: `Task3 has now refreshed the selector after inn landed. generated/blueprint/event-canonical-reuse-inn-applied-rewrite-summary.json records the applied inn batch, generated/blueprint/event-canonical-reuse-next-slice-candidates.json now records home+leader_residence+keep+tea_house+market+grain_shop+medicine_house+inn as completed, and the next bounded non-home source-rewrite family is temple.`
+- `2026-07-24`: `Task3 then executed the temple bounded source rewrite batch in production pack data. zhuyuanzhang temple arrangements now point review/donate/leave items across all 21 cities plus work across the 20 standard cities at canonical template-house temple event ids, the 83 matching temple container-item bindings now target canonical temple event ids with owner.id = house.template.temple while preserving live arrangementId / containerId / itemId payload anchors, the 62 standard-city temple review/work/donate flows have collapsed to canonical template-house temple flow ids, and the 83 standard-city temple review/work/donate/leave events have collapsed to four canonical template-house temple event records with canonical ownerContext.ownerId / flowId truth.`
+- `2026-07-24`: `Temple closeout truth keeps the recorded Kulan exceptions explicit instead of pretending to full-fold them away: binding.building.house.kulan.temple.work.container-item plus event/flow.building.house.kulan.temple.work remain city-scoped preserved drift evidence, and Kulan copy-scripture / sweep-courtyard / carry-water action routes remain city-scoped authored exceptions.`
+- `2026-07-24`: `Task3 has now refreshed the selector after temple landed. generated/blueprint/event-canonical-reuse-temple-applied-rewrite-summary.json records the applied temple batch, generated/blueprint/event-canonical-reuse-next-slice-candidates.json now records home+leader_residence+temple+keep+tea_house+market+grain_shop+medicine_house+inn as completed, and no remaining non-home source-rewrite family candidates survive in the selector.`
+- `2026-07-24`: `Canonical-reuse closeout proof is now established locally. The final home_001 residue is folded into the canonical home graph, generated/blueprint/event-canonical-reuse-closeout-proof.json proves that no disallowed city-scoped event / flow / owner truth remains in the completed queue surface, full node --test tests/robustness.test.cjs is green, and npm run lint:blueprints, npm run lint:blueprint-skill, and npm run blueprint:governance:check all pass. The next lawful action is now the repository-sync gate for queue.event-and-building-instance-canonical-reuse before next-queue admission.`

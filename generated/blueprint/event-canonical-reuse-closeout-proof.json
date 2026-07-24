@@ -1,0 +1,78 @@
+{
+  "generatedAt": "2026-07-24T03:23:32.143Z",
+  "versionId": "target.event-follow-up-routing-settlement-and-canonical-reuse-convergence",
+  "queueId": "queue.event-and-building-instance-canonical-reuse",
+  "activeTask": "task.event-and-building-instance-canonical-reuse.reference-rewrite-and-guard-baseline",
+  "checkedPack": "zhuyuanzhang",
+  "status": "queue-closeout-proof",
+  "completedFamilies": [
+    "home",
+    "leader_residence",
+    "temple",
+    "keep",
+    "tea_house",
+    "market",
+    "grain_shop",
+    "medicine_house",
+    "inn"
+  ],
+  "allowedResidualTruth": {
+    "buildingEnterEventIds": [
+      "event.building.house.kulan.grain_shop.enter",
+      "event.building.house.kulan.inn.enter",
+      "event.building.house.kulan.keep.enter",
+      "event.building.house.kulan.leader_residence.enter",
+      "event.building.house.kulan.market.enter",
+      "event.building.house.kulan.medicine_house.enter",
+      "event.building.house.kulan.tea_house.enter",
+      "event.building.house.kulan.temple.enter"
+    ],
+    "buildingEnterBindingIds": [
+      "binding.building.house.kulan.grain_shop.enter",
+      "binding.building.house.kulan.inn.enter",
+      "binding.building.house.kulan.keep.enter",
+      "binding.building.house.kulan.leader_residence.enter",
+      "binding.building.house.kulan.market.enter",
+      "binding.building.house.kulan.medicine_house.enter",
+      "binding.building.house.kulan.tea_house.enter",
+      "binding.building.house.kulan.temple.enter"
+    ],
+    "preservedTempleEventIds": [
+      "event.building.house.kulan.temple.carry_water",
+      "event.building.house.kulan.temple.copy_scripture",
+      "event.building.house.kulan.temple.sweep_courtyard",
+      "event.building.house.kulan.temple.work"
+    ],
+    "preservedTempleBindingIds": [
+      "binding.building.house.kulan.temple.carry_water.container-item",
+      "binding.building.house.kulan.temple.copy_scripture.container-item",
+      "binding.building.house.kulan.temple.sweep_courtyard.container-item",
+      "binding.building.house.kulan.temple.work.container-item"
+    ],
+    "preservedTempleFlowIds": [
+      "flow.building.house.kulan.temple.carry_water",
+      "flow.building.house.kulan.temple.sweep_courtyard",
+      "flow.building.house.kulan.temple.work"
+    ]
+  },
+  "canonicalCounts": {
+    "arrangementActionRefs": 629,
+    "bindingEventTargets": 629,
+    "bindingOwnerIds": 629,
+    "eventDefinitions": 30,
+    "eventActionOwnerIds": 21,
+    "eventActionFlowIds": 21,
+    "flowDefinitions": 21
+  },
+  "disallowedResiduals": {
+    "arrangementActionEventIds": [],
+    "bindingEventIds": [],
+    "bindingOwnerIds": [],
+    "eventDefinitionIds": [],
+    "eventActionOwnerIds": [],
+    "eventActionFlowIds": [],
+    "flowIds": []
+  },
+  "pass": true,
+  "summary": "Canonical-reuse closeout proof passed: completed action-menu families now resolve through template canonical ids, and remaining city-scoped truth is limited to building-enter routes plus the recorded Kulan temple exceptions."
+}

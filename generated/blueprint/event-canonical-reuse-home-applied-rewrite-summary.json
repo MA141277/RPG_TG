@@ -1,0 +1,35 @@
+{
+  "artifactId": "event-canonical-reuse-home-applied-rewrite-summary",
+  "generatedAt": "2026-07-24",
+  "status": "applied",
+  "family": "home",
+  "canonicalTargets": {
+    "eventIds": [
+      "event.building.template.home.rest",
+      "event.building.template.home.leave"
+    ],
+    "flowIds": [
+      "flow.building.template.home.rest"
+    ],
+    "bindingOwnerId": "home.template"
+  },
+  "appliedCounts": {
+    "arrangementActionItemsRewritten": 40,
+    "bindingsRewritten": 40,
+    "sourceEventsCollapsed": 40,
+    "sourceFlowsCollapsed": 20
+  },
+  "preservedLivePayloadAnchors": [
+    "trigger.extra.arrangementId",
+    "trigger.extra.containerId",
+    "trigger.extra.itemId"
+  ],
+  "productionResidue": {
+    "cityScopedHomeEventIdsRemaining": 0,
+    "cityScopedHomeFlowIdsRemaining": 0
+  },
+  "remainingReferenceClasses": [
+    "generated/blueprint historical preflight artifacts",
+    "synthetic runtime test fixtures"
+  ]
+}

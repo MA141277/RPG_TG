@@ -1,0 +1,37 @@
+{
+  "artifactId": "event-canonical-reuse-medicine_house-applied-rewrite-summary",
+  "generatedAt": "2026-07-24",
+  "status": "applied",
+  "family": "medicine_house",
+  "canonicalTargets": {
+    "eventIds": [
+      "event.building.template.house.medicine_house.treatment",
+      "event.building.template.house.medicine_house.compounding",
+      "event.building.template.house.medicine_house.leave"
+    ],
+    "flowIds": [
+      "flow.building.template.house.medicine_house.treatment",
+      "flow.building.template.house.medicine_house.compounding"
+    ],
+    "bindingOwnerId": "house.template.medicine_house"
+  },
+  "appliedCounts": {
+    "arrangementActionItemsRewritten": 63,
+    "bindingsRewritten": 63,
+    "sourceEventsCollapsed": 63,
+    "sourceFlowsCollapsed": 42
+  },
+  "preservedLivePayloadAnchors": [
+    "trigger.extra.arrangementId",
+    "trigger.extra.containerId",
+    "trigger.extra.itemId"
+  ],
+  "productionResidue": {
+    "cityScopedMedicineHouseEventIdsRemaining": 0,
+    "cityScopedMedicineHouseFlowIdsRemaining": 0
+  },
+  "remainingReferenceClasses": [
+    "generated/blueprint historical preflight artifacts",
+    "synthetic runtime test fixtures"
+  ]
+}

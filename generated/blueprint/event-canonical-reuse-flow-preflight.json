@@ -1,0 +1,1114 @@
+{
+  "generatedAt": "2026-07-23T21:48:28.714Z",
+  "versionId": "target.event-follow-up-routing-settlement-and-canonical-reuse-convergence",
+  "queueId": "queue.event-and-building-instance-canonical-reuse",
+  "activeTask": "task.event-and-building-instance-canonical-reuse.reference-rewrite-and-guard-baseline",
+  "summary": {
+    "launchFlowGroups": 21,
+    "homeLaunchFlowGroups": 1,
+    "totalFlowDefinitions": 443
+  },
+  "flowGroups": [
+    {
+      "family": "home",
+      "action": "rest",
+      "canonicalEventId": "event.building.template.home.rest",
+      "canonicalFlowId": "flow.building.template.home.rest",
+      "sourceFlowIds": [
+        "flow.building.home.anfeng.rest",
+        "flow.building.home.anqing.rest",
+        "flow.building.home.chengdu.rest",
+        "flow.building.home.chongqing.rest",
+        "flow.building.home.dadu.rest",
+        "flow.building.home.fengyuan.rest",
+        "flow.building.home.fuzhou.rest",
+        "flow.building.home.gongchang.rest",
+        "flow.building.home.huaian.rest",
+        "flow.building.home.kaifeng.rest",
+        "flow.building.home.luzhou.rest",
+        "flow.building.home.nanchang.rest",
+        "flow.building.home.ningbo.rest",
+        "flow.building.home.runing.rest",
+        "flow.building.home.suzhou.rest",
+        "flow.building.home.taiping.rest",
+        "flow.building.home.wenzhou.rest",
+        "flow.building.home.wuchang.rest",
+        "flow.building.home.yangzhou.rest",
+        "flow.building.home.yingtian.rest"
+      ],
+      "sourceCount": 20,
+      "uniqueTitles": [
+        "自宅 - 休息"
+      ],
+      "uniqueInitialNodeShapes": [
+        {
+          "initialNodeIdPattern": "flow.building.<owner>.rest.start",
+          "outcomeCount": 1,
+          "nodeCount": 2
+        }
+      ],
+      "uniqueCompleteDetailShapes": [
+        {
+          "outcome": "success",
+          "detailKeys": [
+            "buildingId",
+            "functionId"
+          ],
+          "functionId": "rest"
+        }
+      ]
+    },
+    {
+      "family": "leader_residence",
+      "action": "review",
+      "canonicalEventId": "event.building.template.house.leader_residence.review",
+      "canonicalFlowId": "flow.building.template.house.leader_residence.review",
+      "sourceFlowIds": [
+        "flow.building.house.anfeng.leader_residence.review",
+        "flow.building.house.anqing.leader_residence.review",
+        "flow.building.house.chengdu.leader_residence.review",
+        "flow.building.house.chongqing.leader_residence.review",
+        "flow.building.house.dadu.leader_residence.review",
+        "flow.building.house.fengyuan.leader_residence.review",
+        "flow.building.house.fuzhou.leader_residence.review",
+        "flow.building.house.gongchang.leader_residence.review",
+        "flow.building.house.huaian.leader_residence.review",
+        "flow.building.house.kaifeng.leader_residence.review",
+        "flow.building.house.kulan.leader_residence.review",
+        "flow.building.house.luzhou.leader_residence.review",
+        "flow.building.house.nanchang.leader_residence.review",
+        "flow.building.house.ningbo.leader_residence.review",
+        "flow.building.house.runing.leader_residence.review",
+        "flow.building.house.suzhou.leader_residence.review",
+        "flow.building.house.taiping.leader_residence.review",
+        "flow.building.house.wenzhou.leader_residence.review",
+        "flow.building.house.wuchang.leader_residence.review",
+        "flow.building.house.yangzhou.leader_residence.review",
+        "flow.building.house.yingtian.leader_residence.review"
+      ],
+      "sourceCount": 21,
+      "uniqueTitles": [
+        "将领府邸 - 议事"
+      ],
+      "uniqueInitialNodeShapes": [
+        {
+          "initialNodeIdPattern": "flow.building.<owner>.review.start",
+          "outcomeCount": 1,
+          "nodeCount": 2
+        }
+      ],
+      "uniqueCompleteDetailShapes": [
+        {
+          "outcome": "success",
+          "detailKeys": [
+            "buildingId",
+            "functionId"
+          ],
+          "functionId": "review"
+        }
+      ]
+    },
+    {
+      "family": "temple",
+      "action": "review",
+      "canonicalEventId": "event.building.template.house.temple.review",
+      "canonicalFlowId": "flow.building.template.house.temple.review",
+      "sourceFlowIds": [
+        "flow.building.house.anfeng.temple.review",
+        "flow.building.house.anqing.temple.review",
+        "flow.building.house.chengdu.temple.review",
+        "flow.building.house.chongqing.temple.review",
+        "flow.building.house.dadu.temple.review",
+        "flow.building.house.fengyuan.temple.review",
+        "flow.building.house.fuzhou.temple.review",
+        "flow.building.house.gongchang.temple.review",
+        "flow.building.house.huaian.temple.review",
+        "flow.building.house.kaifeng.temple.review",
+        "flow.building.house.kulan.temple.review",
+        "flow.building.house.luzhou.temple.review",
+        "flow.building.house.nanchang.temple.review",
+        "flow.building.house.ningbo.temple.review",
+        "flow.building.house.runing.temple.review",
+        "flow.building.house.suzhou.temple.review",
+        "flow.building.house.taiping.temple.review",
+        "flow.building.house.wenzhou.temple.review",
+        "flow.building.house.wuchang.temple.review",
+        "flow.building.house.yangzhou.temple.review",
+        "flow.building.house.yingtian.temple.review"
+      ],
+      "sourceCount": 21,
+      "uniqueTitles": [
+        "寺庙 - 评定",
+        "皇觉寺评定"
+      ],
+      "uniqueInitialNodeShapes": [
+        {
+          "initialNodeIdPattern": "flow.building.<owner>.review.start",
+          "outcomeCount": 1,
+          "nodeCount": 2
+        }
+      ],
+      "uniqueCompleteDetailShapes": [
+        {
+          "outcome": "success",
+          "detailKeys": [
+            "buildingId",
+            "functionId"
+          ],
+          "functionId": "review"
+        }
+      ]
+    },
+    {
+      "family": "temple",
+      "action": "work",
+      "canonicalEventId": "event.building.template.house.temple.work",
+      "canonicalFlowId": "flow.building.template.house.temple.work",
+      "sourceFlowIds": [
+        "flow.building.house.anfeng.temple.work",
+        "flow.building.house.anqing.temple.work",
+        "flow.building.house.chengdu.temple.work",
+        "flow.building.house.chongqing.temple.work",
+        "flow.building.house.dadu.temple.work",
+        "flow.building.house.fengyuan.temple.work",
+        "flow.building.house.fuzhou.temple.work",
+        "flow.building.house.gongchang.temple.work",
+        "flow.building.house.huaian.temple.work",
+        "flow.building.house.kaifeng.temple.work",
+        "flow.building.house.luzhou.temple.work",
+        "flow.building.house.nanchang.temple.work",
+        "flow.building.house.ningbo.temple.work",
+        "flow.building.house.runing.temple.work",
+        "flow.building.house.suzhou.temple.work",
+        "flow.building.house.taiping.temple.work",
+        "flow.building.house.wenzhou.temple.work",
+        "flow.building.house.wuchang.temple.work",
+        "flow.building.house.yangzhou.temple.work",
+        "flow.building.house.yingtian.temple.work"
+      ],
+      "sourceCount": 20,
+      "uniqueTitles": [
+        "寺庙 - 寺内工作"
+      ],
+      "uniqueInitialNodeShapes": [
+        {
+          "initialNodeIdPattern": "flow.building.<owner>.work.start",
+          "outcomeCount": 1,
+          "nodeCount": 2
+        }
+      ],
+      "uniqueCompleteDetailShapes": [
+        {
+          "outcome": "success",
+          "detailKeys": [
+            "buildingId",
+            "functionId"
+          ],
+          "functionId": "work"
+        }
+      ]
+    },
+    {
+      "family": "temple",
+      "action": "donate",
+      "canonicalEventId": "event.building.template.house.temple.donate",
+      "canonicalFlowId": "flow.building.template.house.temple.donate",
+      "sourceFlowIds": [
+        "flow.building.house.anfeng.temple.donate",
+        "flow.building.house.anqing.temple.donate",
+        "flow.building.house.chengdu.temple.donate",
+        "flow.building.house.chongqing.temple.donate",
+        "flow.building.house.dadu.temple.donate",
+        "flow.building.house.fengyuan.temple.donate",
+        "flow.building.house.fuzhou.temple.donate",
+        "flow.building.house.gongchang.temple.donate",
+        "flow.building.house.huaian.temple.donate",
+        "flow.building.house.kaifeng.temple.donate",
+        "flow.building.house.kulan.temple.donate",
+        "flow.building.house.luzhou.temple.donate",
+        "flow.building.house.nanchang.temple.donate",
+        "flow.building.house.ningbo.temple.donate",
+        "flow.building.house.runing.temple.donate",
+        "flow.building.house.suzhou.temple.donate",
+        "flow.building.house.taiping.temple.donate",
+        "flow.building.house.wenzhou.temple.donate",
+        "flow.building.house.wuchang.temple.donate",
+        "flow.building.house.yangzhou.temple.donate",
+        "flow.building.house.yingtian.temple.donate"
+      ],
+      "sourceCount": 21,
+      "uniqueTitles": [
+        "寺庙 - 捐香火",
+        "皇觉寺捐香火"
+      ],
+      "uniqueInitialNodeShapes": [
+        {
+          "initialNodeIdPattern": "flow.building.<owner>.donate.start",
+          "outcomeCount": 1,
+          "nodeCount": 2
+        }
+      ],
+      "uniqueCompleteDetailShapes": [
+        {
+          "outcome": "success",
+          "detailKeys": [
+            "buildingId",
+            "functionId"
+          ],
+          "functionId": "donate"
+        }
+      ]
+    },
+    {
+      "family": "keep",
+      "action": "review",
+      "canonicalEventId": "event.building.template.house.keep.review",
+      "canonicalFlowId": "flow.building.template.house.keep.review",
+      "sourceFlowIds": [
+        "flow.building.house.anfeng.keep.review",
+        "flow.building.house.anqing.keep.review",
+        "flow.building.house.chengdu.keep.review",
+        "flow.building.house.chongqing.keep.review",
+        "flow.building.house.dadu.keep.review",
+        "flow.building.house.fengyuan.keep.review",
+        "flow.building.house.fuzhou.keep.review",
+        "flow.building.house.gongchang.keep.review",
+        "flow.building.house.huaian.keep.review",
+        "flow.building.house.kaifeng.keep.review",
+        "flow.building.house.kulan.keep.review",
+        "flow.building.house.luzhou.keep.review",
+        "flow.building.house.nanchang.keep.review",
+        "flow.building.house.ningbo.keep.review",
+        "flow.building.house.runing.keep.review",
+        "flow.building.house.suzhou.keep.review",
+        "flow.building.house.taiping.keep.review",
+        "flow.building.house.wenzhou.keep.review",
+        "flow.building.house.wuchang.keep.review",
+        "flow.building.house.yangzhou.keep.review",
+        "flow.building.house.yingtian.keep.review"
+      ],
+      "sourceCount": 21,
+      "uniqueTitles": [
+        "帅府 - 评定"
+      ],
+      "uniqueInitialNodeShapes": [
+        {
+          "initialNodeIdPattern": "flow.building.<owner>.review.start",
+          "outcomeCount": 1,
+          "nodeCount": 2
+        }
+      ],
+      "uniqueCompleteDetailShapes": [
+        {
+          "outcome": "success",
+          "detailKeys": [
+            "buildingId",
+            "functionId"
+          ],
+          "functionId": "review"
+        }
+      ]
+    },
+    {
+      "family": "keep",
+      "action": "work",
+      "canonicalEventId": "event.building.template.house.keep.work",
+      "canonicalFlowId": "flow.building.template.house.keep.work",
+      "sourceFlowIds": [
+        "flow.building.house.anfeng.keep.work",
+        "flow.building.house.anqing.keep.work",
+        "flow.building.house.chengdu.keep.work",
+        "flow.building.house.chongqing.keep.work",
+        "flow.building.house.dadu.keep.work",
+        "flow.building.house.fengyuan.keep.work",
+        "flow.building.house.fuzhou.keep.work",
+        "flow.building.house.gongchang.keep.work",
+        "flow.building.house.huaian.keep.work",
+        "flow.building.house.kaifeng.keep.work",
+        "flow.building.house.kulan.keep.work",
+        "flow.building.house.luzhou.keep.work",
+        "flow.building.house.nanchang.keep.work",
+        "flow.building.house.ningbo.keep.work",
+        "flow.building.house.runing.keep.work",
+        "flow.building.house.suzhou.keep.work",
+        "flow.building.house.taiping.keep.work",
+        "flow.building.house.wenzhou.keep.work",
+        "flow.building.house.wuchang.keep.work",
+        "flow.building.house.yangzhou.keep.work",
+        "flow.building.house.yingtian.keep.work"
+      ],
+      "sourceCount": 21,
+      "uniqueTitles": [
+        "帅府 - 安排工作"
+      ],
+      "uniqueInitialNodeShapes": [
+        {
+          "initialNodeIdPattern": "flow.building.<owner>.work.start",
+          "outcomeCount": 1,
+          "nodeCount": 2
+        }
+      ],
+      "uniqueCompleteDetailShapes": [
+        {
+          "outcome": "success",
+          "detailKeys": [
+            "buildingId",
+            "functionId"
+          ],
+          "functionId": "work"
+        }
+      ]
+    },
+    {
+      "family": "tea_house",
+      "action": "talk",
+      "canonicalEventId": "event.building.template.house.tea_house.talk",
+      "canonicalFlowId": "flow.building.template.house.tea_house.talk",
+      "sourceFlowIds": [
+        "flow.building.house.anfeng.tea_house.talk",
+        "flow.building.house.anqing.tea_house.talk",
+        "flow.building.house.chengdu.tea_house.talk",
+        "flow.building.house.chongqing.tea_house.talk",
+        "flow.building.house.dadu.tea_house.talk",
+        "flow.building.house.fengyuan.tea_house.talk",
+        "flow.building.house.fuzhou.tea_house.talk",
+        "flow.building.house.gongchang.tea_house.talk",
+        "flow.building.house.huaian.tea_house.talk",
+        "flow.building.house.kaifeng.tea_house.talk",
+        "flow.building.house.kulan.tea_house.talk",
+        "flow.building.house.luzhou.tea_house.talk",
+        "flow.building.house.nanchang.tea_house.talk",
+        "flow.building.house.ningbo.tea_house.talk",
+        "flow.building.house.runing.tea_house.talk",
+        "flow.building.house.suzhou.tea_house.talk",
+        "flow.building.house.taiping.tea_house.talk",
+        "flow.building.house.wenzhou.tea_house.talk",
+        "flow.building.house.wuchang.tea_house.talk",
+        "flow.building.house.yangzhou.tea_house.talk",
+        "flow.building.house.yingtian.tea_house.talk"
+      ],
+      "sourceCount": 21,
+      "uniqueTitles": [
+        "茶馆 - 交谈"
+      ],
+      "uniqueInitialNodeShapes": [
+        {
+          "initialNodeIdPattern": "flow.building.<owner>.talk.start",
+          "outcomeCount": 1,
+          "nodeCount": 2
+        }
+      ],
+      "uniqueCompleteDetailShapes": [
+        {
+          "outcome": "success",
+          "detailKeys": [
+            "buildingId",
+            "functionId"
+          ],
+          "functionId": "talk"
+        }
+      ]
+    },
+    {
+      "family": "tea_house",
+      "action": "intel",
+      "canonicalEventId": "event.building.template.house.tea_house.intel",
+      "canonicalFlowId": "flow.building.template.house.tea_house.intel",
+      "sourceFlowIds": [
+        "flow.building.house.anfeng.tea_house.intel",
+        "flow.building.house.anqing.tea_house.intel",
+        "flow.building.house.chengdu.tea_house.intel",
+        "flow.building.house.chongqing.tea_house.intel",
+        "flow.building.house.dadu.tea_house.intel",
+        "flow.building.house.fengyuan.tea_house.intel",
+        "flow.building.house.fuzhou.tea_house.intel",
+        "flow.building.house.gongchang.tea_house.intel",
+        "flow.building.house.huaian.tea_house.intel",
+        "flow.building.house.kaifeng.tea_house.intel",
+        "flow.building.house.kulan.tea_house.intel",
+        "flow.building.house.luzhou.tea_house.intel",
+        "flow.building.house.nanchang.tea_house.intel",
+        "flow.building.house.ningbo.tea_house.intel",
+        "flow.building.house.runing.tea_house.intel",
+        "flow.building.house.suzhou.tea_house.intel",
+        "flow.building.house.taiping.tea_house.intel",
+        "flow.building.house.wenzhou.tea_house.intel",
+        "flow.building.house.wuchang.tea_house.intel",
+        "flow.building.house.yangzhou.tea_house.intel",
+        "flow.building.house.yingtian.tea_house.intel"
+      ],
+      "sourceCount": 21,
+      "uniqueTitles": [
+        "茶馆 - 打听消息"
+      ],
+      "uniqueInitialNodeShapes": [
+        {
+          "initialNodeIdPattern": "flow.building.<owner>.intel.start",
+          "outcomeCount": 1,
+          "nodeCount": 2
+        }
+      ],
+      "uniqueCompleteDetailShapes": [
+        {
+          "outcome": "success",
+          "detailKeys": [
+            "buildingId",
+            "functionId"
+          ],
+          "functionId": "intel"
+        }
+      ]
+    },
+    {
+      "family": "tea_house",
+      "action": "tea",
+      "canonicalEventId": "event.building.template.house.tea_house.tea",
+      "canonicalFlowId": "flow.building.template.house.tea_house.tea",
+      "sourceFlowIds": [
+        "flow.building.house.anfeng.tea_house.tea",
+        "flow.building.house.anqing.tea_house.tea",
+        "flow.building.house.chengdu.tea_house.tea",
+        "flow.building.house.chongqing.tea_house.tea",
+        "flow.building.house.dadu.tea_house.tea",
+        "flow.building.house.fengyuan.tea_house.tea",
+        "flow.building.house.fuzhou.tea_house.tea",
+        "flow.building.house.gongchang.tea_house.tea",
+        "flow.building.house.huaian.tea_house.tea",
+        "flow.building.house.kaifeng.tea_house.tea",
+        "flow.building.house.kulan.tea_house.tea",
+        "flow.building.house.luzhou.tea_house.tea",
+        "flow.building.house.nanchang.tea_house.tea",
+        "flow.building.house.ningbo.tea_house.tea",
+        "flow.building.house.runing.tea_house.tea",
+        "flow.building.house.suzhou.tea_house.tea",
+        "flow.building.house.taiping.tea_house.tea",
+        "flow.building.house.wenzhou.tea_house.tea",
+        "flow.building.house.wuchang.tea_house.tea",
+        "flow.building.house.yangzhou.tea_house.tea",
+        "flow.building.house.yingtian.tea_house.tea"
+      ],
+      "sourceCount": 21,
+      "uniqueTitles": [
+        "茶馆 - 喝茶"
+      ],
+      "uniqueInitialNodeShapes": [
+        {
+          "initialNodeIdPattern": "flow.building.<owner>.tea.start",
+          "outcomeCount": 1,
+          "nodeCount": 2
+        }
+      ],
+      "uniqueCompleteDetailShapes": [
+        {
+          "outcome": "success",
+          "detailKeys": [
+            "buildingId",
+            "functionId"
+          ],
+          "functionId": "tea"
+        }
+      ]
+    },
+    {
+      "family": "market",
+      "action": "talk",
+      "canonicalEventId": "event.building.template.house.market.talk",
+      "canonicalFlowId": "flow.building.template.house.market.talk",
+      "sourceFlowIds": [
+        "flow.building.house.anfeng.market.talk",
+        "flow.building.house.anqing.market.talk",
+        "flow.building.house.chengdu.market.talk",
+        "flow.building.house.chongqing.market.talk",
+        "flow.building.house.dadu.market.talk",
+        "flow.building.house.fengyuan.market.talk",
+        "flow.building.house.fuzhou.market.talk",
+        "flow.building.house.gongchang.market.talk",
+        "flow.building.house.huaian.market.talk",
+        "flow.building.house.kaifeng.market.talk",
+        "flow.building.house.kulan.market.talk",
+        "flow.building.house.luzhou.market.talk",
+        "flow.building.house.nanchang.market.talk",
+        "flow.building.house.ningbo.market.talk",
+        "flow.building.house.runing.market.talk",
+        "flow.building.house.suzhou.market.talk",
+        "flow.building.house.taiping.market.talk",
+        "flow.building.house.wenzhou.market.talk",
+        "flow.building.house.wuchang.market.talk",
+        "flow.building.house.yangzhou.market.talk",
+        "flow.building.house.yingtian.market.talk"
+      ],
+      "sourceCount": 21,
+      "uniqueTitles": [
+        "货栈 - 交谈"
+      ],
+      "uniqueInitialNodeShapes": [
+        {
+          "initialNodeIdPattern": "flow.building.<owner>.talk.start",
+          "outcomeCount": 1,
+          "nodeCount": 2
+        }
+      ],
+      "uniqueCompleteDetailShapes": [
+        {
+          "outcome": "success",
+          "detailKeys": [
+            "buildingId",
+            "functionId"
+          ],
+          "functionId": "talk"
+        }
+      ]
+    },
+    {
+      "family": "market",
+      "action": "trade",
+      "canonicalEventId": "event.building.template.house.market.trade",
+      "canonicalFlowId": "flow.building.template.house.market.trade",
+      "sourceFlowIds": [
+        "flow.building.house.anfeng.market.trade",
+        "flow.building.house.anqing.market.trade",
+        "flow.building.house.chengdu.market.trade",
+        "flow.building.house.chongqing.market.trade",
+        "flow.building.house.dadu.market.trade",
+        "flow.building.house.fengyuan.market.trade",
+        "flow.building.house.fuzhou.market.trade",
+        "flow.building.house.gongchang.market.trade",
+        "flow.building.house.huaian.market.trade",
+        "flow.building.house.kaifeng.market.trade",
+        "flow.building.house.kulan.market.trade",
+        "flow.building.house.luzhou.market.trade",
+        "flow.building.house.nanchang.market.trade",
+        "flow.building.house.ningbo.market.trade",
+        "flow.building.house.runing.market.trade",
+        "flow.building.house.suzhou.market.trade",
+        "flow.building.house.taiping.market.trade",
+        "flow.building.house.wenzhou.market.trade",
+        "flow.building.house.wuchang.market.trade",
+        "flow.building.house.yangzhou.market.trade",
+        "flow.building.house.yingtian.market.trade"
+      ],
+      "sourceCount": 21,
+      "uniqueTitles": [
+        "货栈 - 交易"
+      ],
+      "uniqueInitialNodeShapes": [
+        {
+          "initialNodeIdPattern": "flow.building.<owner>.trade.start",
+          "outcomeCount": 1,
+          "nodeCount": 2
+        }
+      ],
+      "uniqueCompleteDetailShapes": [
+        {
+          "outcome": "success",
+          "detailKeys": [
+            "buildingId",
+            "functionId"
+          ],
+          "functionId": "trade"
+        }
+      ]
+    },
+    {
+      "family": "market",
+      "action": "intel",
+      "canonicalEventId": "event.building.template.house.market.intel",
+      "canonicalFlowId": "flow.building.template.house.market.intel",
+      "sourceFlowIds": [
+        "flow.building.house.anfeng.market.intel",
+        "flow.building.house.anqing.market.intel",
+        "flow.building.house.chengdu.market.intel",
+        "flow.building.house.chongqing.market.intel",
+        "flow.building.house.dadu.market.intel",
+        "flow.building.house.fengyuan.market.intel",
+        "flow.building.house.fuzhou.market.intel",
+        "flow.building.house.gongchang.market.intel",
+        "flow.building.house.huaian.market.intel",
+        "flow.building.house.kaifeng.market.intel",
+        "flow.building.house.kulan.market.intel",
+        "flow.building.house.luzhou.market.intel",
+        "flow.building.house.nanchang.market.intel",
+        "flow.building.house.ningbo.market.intel",
+        "flow.building.house.runing.market.intel",
+        "flow.building.house.suzhou.market.intel",
+        "flow.building.house.taiping.market.intel",
+        "flow.building.house.wenzhou.market.intel",
+        "flow.building.house.wuchang.market.intel",
+        "flow.building.house.yangzhou.market.intel",
+        "flow.building.house.yingtian.market.intel"
+      ],
+      "sourceCount": 21,
+      "uniqueTitles": [
+        "货栈 - 打听消息"
+      ],
+      "uniqueInitialNodeShapes": [
+        {
+          "initialNodeIdPattern": "flow.building.<owner>.intel.start",
+          "outcomeCount": 1,
+          "nodeCount": 2
+        }
+      ],
+      "uniqueCompleteDetailShapes": [
+        {
+          "outcome": "success",
+          "detailKeys": [
+            "buildingId",
+            "functionId"
+          ],
+          "functionId": "intel"
+        }
+      ]
+    },
+    {
+      "family": "grain_shop",
+      "action": "trade",
+      "canonicalEventId": "event.building.template.house.grain_shop.trade",
+      "canonicalFlowId": "flow.building.template.house.grain_shop.trade",
+      "sourceFlowIds": [
+        "flow.building.house.anfeng.grain_shop.trade",
+        "flow.building.house.anqing.grain_shop.trade",
+        "flow.building.house.chengdu.grain_shop.trade",
+        "flow.building.house.chongqing.grain_shop.trade",
+        "flow.building.house.dadu.grain_shop.trade",
+        "flow.building.house.fengyuan.grain_shop.trade",
+        "flow.building.house.fuzhou.grain_shop.trade",
+        "flow.building.house.gongchang.grain_shop.trade",
+        "flow.building.house.huaian.grain_shop.trade",
+        "flow.building.house.kaifeng.grain_shop.trade",
+        "flow.building.house.kulan.grain_shop.trade",
+        "flow.building.house.luzhou.grain_shop.trade",
+        "flow.building.house.nanchang.grain_shop.trade",
+        "flow.building.house.ningbo.grain_shop.trade",
+        "flow.building.house.runing.grain_shop.trade",
+        "flow.building.house.suzhou.grain_shop.trade",
+        "flow.building.house.taiping.grain_shop.trade",
+        "flow.building.house.wenzhou.grain_shop.trade",
+        "flow.building.house.wuchang.grain_shop.trade",
+        "flow.building.house.yangzhou.grain_shop.trade",
+        "flow.building.house.yingtian.grain_shop.trade"
+      ],
+      "sourceCount": 21,
+      "uniqueTitles": [
+        "粮铺 - 粮食交易"
+      ],
+      "uniqueInitialNodeShapes": [
+        {
+          "initialNodeIdPattern": "flow.building.<owner>.trade.start",
+          "outcomeCount": 1,
+          "nodeCount": 2
+        }
+      ],
+      "uniqueCompleteDetailShapes": [
+        {
+          "outcome": "success",
+          "detailKeys": [
+            "buildingId",
+            "functionId"
+          ],
+          "functionId": "trade"
+        }
+      ]
+    },
+    {
+      "family": "grain_shop",
+      "action": "accounting",
+      "canonicalEventId": "event.building.template.house.grain_shop.accounting",
+      "canonicalFlowId": "flow.building.template.house.grain_shop.accounting",
+      "sourceFlowIds": [
+        "flow.building.house.anfeng.grain_shop.accounting",
+        "flow.building.house.anqing.grain_shop.accounting",
+        "flow.building.house.chengdu.grain_shop.accounting",
+        "flow.building.house.chongqing.grain_shop.accounting",
+        "flow.building.house.dadu.grain_shop.accounting",
+        "flow.building.house.fengyuan.grain_shop.accounting",
+        "flow.building.house.fuzhou.grain_shop.accounting",
+        "flow.building.house.gongchang.grain_shop.accounting",
+        "flow.building.house.huaian.grain_shop.accounting",
+        "flow.building.house.kaifeng.grain_shop.accounting",
+        "flow.building.house.kulan.grain_shop.accounting",
+        "flow.building.house.luzhou.grain_shop.accounting",
+        "flow.building.house.nanchang.grain_shop.accounting",
+        "flow.building.house.ningbo.grain_shop.accounting",
+        "flow.building.house.runing.grain_shop.accounting",
+        "flow.building.house.suzhou.grain_shop.accounting",
+        "flow.building.house.taiping.grain_shop.accounting",
+        "flow.building.house.wenzhou.grain_shop.accounting",
+        "flow.building.house.wuchang.grain_shop.accounting",
+        "flow.building.house.yangzhou.grain_shop.accounting",
+        "flow.building.house.yingtian.grain_shop.accounting"
+      ],
+      "sourceCount": 21,
+      "uniqueTitles": [
+        "粮铺 - 账目核算"
+      ],
+      "uniqueInitialNodeShapes": [
+        {
+          "initialNodeIdPattern": "flow.building.<owner>.accounting.start",
+          "outcomeCount": 1,
+          "nodeCount": 2
+        }
+      ],
+      "uniqueCompleteDetailShapes": [
+        {
+          "outcome": "success",
+          "detailKeys": [
+            "buildingId",
+            "functionId"
+          ],
+          "functionId": "accounting"
+        }
+      ]
+    },
+    {
+      "family": "medicine_house",
+      "action": "treatment",
+      "canonicalEventId": "event.building.template.house.medicine_house.treatment",
+      "canonicalFlowId": "flow.building.template.house.medicine_house.treatment",
+      "sourceFlowIds": [
+        "flow.building.house.anfeng.medicine_house.treatment",
+        "flow.building.house.anqing.medicine_house.treatment",
+        "flow.building.house.chengdu.medicine_house.treatment",
+        "flow.building.house.chongqing.medicine_house.treatment",
+        "flow.building.house.dadu.medicine_house.treatment",
+        "flow.building.house.fengyuan.medicine_house.treatment",
+        "flow.building.house.fuzhou.medicine_house.treatment",
+        "flow.building.house.gongchang.medicine_house.treatment",
+        "flow.building.house.huaian.medicine_house.treatment",
+        "flow.building.house.kaifeng.medicine_house.treatment",
+        "flow.building.house.kulan.medicine_house.treatment",
+        "flow.building.house.luzhou.medicine_house.treatment",
+        "flow.building.house.nanchang.medicine_house.treatment",
+        "flow.building.house.ningbo.medicine_house.treatment",
+        "flow.building.house.runing.medicine_house.treatment",
+        "flow.building.house.suzhou.medicine_house.treatment",
+        "flow.building.house.taiping.medicine_house.treatment",
+        "flow.building.house.wenzhou.medicine_house.treatment",
+        "flow.building.house.wuchang.medicine_house.treatment",
+        "flow.building.house.yangzhou.medicine_house.treatment",
+        "flow.building.house.yingtian.medicine_house.treatment"
+      ],
+      "sourceCount": 21,
+      "uniqueTitles": [
+        "药铺 - 治疗"
+      ],
+      "uniqueInitialNodeShapes": [
+        {
+          "initialNodeIdPattern": "flow.building.<owner>.treatment.start",
+          "outcomeCount": 1,
+          "nodeCount": 2
+        }
+      ],
+      "uniqueCompleteDetailShapes": [
+        {
+          "outcome": "success",
+          "detailKeys": [
+            "buildingId",
+            "functionId"
+          ],
+          "functionId": "treatment"
+        }
+      ]
+    },
+    {
+      "family": "medicine_house",
+      "action": "compounding",
+      "canonicalEventId": "event.building.template.house.medicine_house.compounding",
+      "canonicalFlowId": "flow.building.template.house.medicine_house.compounding",
+      "sourceFlowIds": [
+        "flow.building.house.anfeng.medicine_house.compounding",
+        "flow.building.house.anqing.medicine_house.compounding",
+        "flow.building.house.chengdu.medicine_house.compounding",
+        "flow.building.house.chongqing.medicine_house.compounding",
+        "flow.building.house.dadu.medicine_house.compounding",
+        "flow.building.house.fengyuan.medicine_house.compounding",
+        "flow.building.house.fuzhou.medicine_house.compounding",
+        "flow.building.house.gongchang.medicine_house.compounding",
+        "flow.building.house.huaian.medicine_house.compounding",
+        "flow.building.house.kaifeng.medicine_house.compounding",
+        "flow.building.house.kulan.medicine_house.compounding",
+        "flow.building.house.luzhou.medicine_house.compounding",
+        "flow.building.house.nanchang.medicine_house.compounding",
+        "flow.building.house.ningbo.medicine_house.compounding",
+        "flow.building.house.runing.medicine_house.compounding",
+        "flow.building.house.suzhou.medicine_house.compounding",
+        "flow.building.house.taiping.medicine_house.compounding",
+        "flow.building.house.wenzhou.medicine_house.compounding",
+        "flow.building.house.wuchang.medicine_house.compounding",
+        "flow.building.house.yangzhou.medicine_house.compounding",
+        "flow.building.house.yingtian.medicine_house.compounding"
+      ],
+      "sourceCount": 21,
+      "uniqueTitles": [
+        "药铺 - 炼药"
+      ],
+      "uniqueInitialNodeShapes": [
+        {
+          "initialNodeIdPattern": "flow.building.<owner>.compounding.start",
+          "outcomeCount": 1,
+          "nodeCount": 2
+        }
+      ],
+      "uniqueCompleteDetailShapes": [
+        {
+          "outcome": "success",
+          "detailKeys": [
+            "buildingId",
+            "functionId"
+          ],
+          "functionId": "compounding"
+        }
+      ]
+    },
+    {
+      "family": "inn",
+      "action": "talk",
+      "canonicalEventId": "event.building.template.house.inn.talk",
+      "canonicalFlowId": "flow.building.template.house.inn.talk",
+      "sourceFlowIds": [
+        "flow.building.house.anfeng.inn.talk",
+        "flow.building.house.anqing.inn.talk",
+        "flow.building.house.chengdu.inn.talk",
+        "flow.building.house.chongqing.inn.talk",
+        "flow.building.house.dadu.inn.talk",
+        "flow.building.house.fengyuan.inn.talk",
+        "flow.building.house.fuzhou.inn.talk",
+        "flow.building.house.gongchang.inn.talk",
+        "flow.building.house.huaian.inn.talk",
+        "flow.building.house.kaifeng.inn.talk",
+        "flow.building.house.kulan.inn.talk",
+        "flow.building.house.luzhou.inn.talk",
+        "flow.building.house.nanchang.inn.talk",
+        "flow.building.house.ningbo.inn.talk",
+        "flow.building.house.runing.inn.talk",
+        "flow.building.house.suzhou.inn.talk",
+        "flow.building.house.taiping.inn.talk",
+        "flow.building.house.wenzhou.inn.talk",
+        "flow.building.house.wuchang.inn.talk",
+        "flow.building.house.yangzhou.inn.talk",
+        "flow.building.house.yingtian.inn.talk"
+      ],
+      "sourceCount": 21,
+      "uniqueTitles": [
+        "客栈 - 交谈"
+      ],
+      "uniqueInitialNodeShapes": [
+        {
+          "initialNodeIdPattern": "flow.building.<owner>.talk.start",
+          "outcomeCount": 1,
+          "nodeCount": 2
+        }
+      ],
+      "uniqueCompleteDetailShapes": [
+        {
+          "outcome": "success",
+          "detailKeys": [
+            "buildingId",
+            "functionId"
+          ],
+          "functionId": "talk"
+        }
+      ]
+    },
+    {
+      "family": "inn",
+      "action": "drink",
+      "canonicalEventId": "event.building.template.house.inn.drink",
+      "canonicalFlowId": "flow.building.template.house.inn.drink",
+      "sourceFlowIds": [
+        "flow.building.house.anfeng.inn.drink",
+        "flow.building.house.anqing.inn.drink",
+        "flow.building.house.chengdu.inn.drink",
+        "flow.building.house.chongqing.inn.drink",
+        "flow.building.house.dadu.inn.drink",
+        "flow.building.house.fengyuan.inn.drink",
+        "flow.building.house.fuzhou.inn.drink",
+        "flow.building.house.gongchang.inn.drink",
+        "flow.building.house.huaian.inn.drink",
+        "flow.building.house.kaifeng.inn.drink",
+        "flow.building.house.kulan.inn.drink",
+        "flow.building.house.luzhou.inn.drink",
+        "flow.building.house.nanchang.inn.drink",
+        "flow.building.house.ningbo.inn.drink",
+        "flow.building.house.runing.inn.drink",
+        "flow.building.house.suzhou.inn.drink",
+        "flow.building.house.taiping.inn.drink",
+        "flow.building.house.wenzhou.inn.drink",
+        "flow.building.house.wuchang.inn.drink",
+        "flow.building.house.yangzhou.inn.drink",
+        "flow.building.house.yingtian.inn.drink"
+      ],
+      "sourceCount": 21,
+      "uniqueTitles": [
+        "客栈 - 饮酒"
+      ],
+      "uniqueInitialNodeShapes": [
+        {
+          "initialNodeIdPattern": "flow.building.<owner>.drink.start",
+          "outcomeCount": 1,
+          "nodeCount": 2
+        }
+      ],
+      "uniqueCompleteDetailShapes": [
+        {
+          "outcome": "success",
+          "detailKeys": [
+            "buildingId",
+            "functionId"
+          ],
+          "functionId": "drink"
+        }
+      ]
+    },
+    {
+      "family": "inn",
+      "action": "gamble",
+      "canonicalEventId": "event.building.template.house.inn.gamble",
+      "canonicalFlowId": "flow.building.template.house.inn.gamble",
+      "sourceFlowIds": [
+        "flow.building.house.anfeng.inn.gamble",
+        "flow.building.house.anqing.inn.gamble",
+        "flow.building.house.chengdu.inn.gamble",
+        "flow.building.house.chongqing.inn.gamble",
+        "flow.building.house.dadu.inn.gamble",
+        "flow.building.house.fengyuan.inn.gamble",
+        "flow.building.house.fuzhou.inn.gamble",
+        "flow.building.house.gongchang.inn.gamble",
+        "flow.building.house.huaian.inn.gamble",
+        "flow.building.house.kaifeng.inn.gamble",
+        "flow.building.house.kulan.inn.gamble",
+        "flow.building.house.luzhou.inn.gamble",
+        "flow.building.house.nanchang.inn.gamble",
+        "flow.building.house.ningbo.inn.gamble",
+        "flow.building.house.runing.inn.gamble",
+        "flow.building.house.suzhou.inn.gamble",
+        "flow.building.house.taiping.inn.gamble",
+        "flow.building.house.wenzhou.inn.gamble",
+        "flow.building.house.wuchang.inn.gamble",
+        "flow.building.house.yangzhou.inn.gamble",
+        "flow.building.house.yingtian.inn.gamble"
+      ],
+      "sourceCount": 21,
+      "uniqueTitles": [
+        "客栈 - 赌局"
+      ],
+      "uniqueInitialNodeShapes": [
+        {
+          "initialNodeIdPattern": "flow.building.<owner>.gamble.start",
+          "outcomeCount": 1,
+          "nodeCount": 2
+        }
+      ],
+      "uniqueCompleteDetailShapes": [
+        {
+          "outcome": "success",
+          "detailKeys": [
+            "buildingId",
+            "functionId"
+          ],
+          "functionId": "gamble"
+        }
+      ]
+    },
+    {
+      "family": "inn",
+      "action": "work",
+      "canonicalEventId": "event.building.template.house.inn.work",
+      "canonicalFlowId": "flow.building.template.house.inn.work",
+      "sourceFlowIds": [
+        "flow.building.house.anfeng.inn.work",
+        "flow.building.house.anqing.inn.work",
+        "flow.building.house.chengdu.inn.work",
+        "flow.building.house.chongqing.inn.work",
+        "flow.building.house.dadu.inn.work",
+        "flow.building.house.fengyuan.inn.work",
+        "flow.building.house.fuzhou.inn.work",
+        "flow.building.house.gongchang.inn.work",
+        "flow.building.house.huaian.inn.work",
+        "flow.building.house.kaifeng.inn.work",
+        "flow.building.house.kulan.inn.work",
+        "flow.building.house.luzhou.inn.work",
+        "flow.building.house.nanchang.inn.work",
+        "flow.building.house.ningbo.inn.work",
+        "flow.building.house.runing.inn.work",
+        "flow.building.house.suzhou.inn.work",
+        "flow.building.house.taiping.inn.work",
+        "flow.building.house.wenzhou.inn.work",
+        "flow.building.house.wuchang.inn.work",
+        "flow.building.house.yangzhou.inn.work",
+        "flow.building.house.yingtian.inn.work"
+      ],
+      "sourceCount": 21,
+      "uniqueTitles": [
+        "客栈 - 酒馆工作"
+      ],
+      "uniqueInitialNodeShapes": [
+        {
+          "initialNodeIdPattern": "flow.building.<owner>.work.start",
+          "outcomeCount": 1,
+          "nodeCount": 2
+        }
+      ],
+      "uniqueCompleteDetailShapes": [
+        {
+          "outcome": "success",
+          "detailKeys": [
+            "buildingId",
+            "functionId"
+          ],
+          "functionId": "work"
+        }
+      ]
+    }
+  ],
+  "homeFlows": [
+    {
+      "family": "home",
+      "action": "rest",
+      "canonicalEventId": "event.building.template.home.rest",
+      "canonicalFlowId": "flow.building.template.home.rest",
+      "sourceFlowIds": [
+        "flow.building.home.anfeng.rest",
+        "flow.building.home.anqing.rest",
+        "flow.building.home.chengdu.rest",
+        "flow.building.home.chongqing.rest",
+        "flow.building.home.dadu.rest",
+        "flow.building.home.fengyuan.rest",
+        "flow.building.home.fuzhou.rest",
+        "flow.building.home.gongchang.rest",
+        "flow.building.home.huaian.rest",
+        "flow.building.home.kaifeng.rest",
+        "flow.building.home.luzhou.rest",
+        "flow.building.home.nanchang.rest",
+        "flow.building.home.ningbo.rest",
+        "flow.building.home.runing.rest",
+        "flow.building.home.suzhou.rest",
+        "flow.building.home.taiping.rest",
+        "flow.building.home.wenzhou.rest",
+        "flow.building.home.wuchang.rest",
+        "flow.building.home.yangzhou.rest",
+        "flow.building.home.yingtian.rest"
+      ],
+      "sourceCount": 20,
+      "uniqueTitles": [
+        "自宅 - 休息"
+      ],
+      "uniqueInitialNodeShapes": [
+        {
+          "initialNodeIdPattern": "flow.building.<owner>.rest.start",
+          "outcomeCount": 1,
+          "nodeCount": 2
+        }
+      ],
+      "uniqueCompleteDetailShapes": [
+        {
+          "outcome": "success",
+          "detailKeys": [
+            "buildingId",
+            "functionId"
+          ],
+          "functionId": "rest"
+        }
+      ]
+    }
+  ]
+}

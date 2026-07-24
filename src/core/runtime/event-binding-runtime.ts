@@ -8,6 +8,7 @@ import type { GameState } from "../../domain/game-state";
 import { startEvent } from "../../application/events/event-runner";
 import { activateEvent, type ActivatedEvent } from "./event-activation";
 import type { EventRuntimeCandidate } from "../contracts/event-runtime";
+import { matchesCanonicalBuildingOwnerId } from "./building-owner-canonicalization";
 
 export type EventBindingRuntimeCandidate = EventRuntimeCandidate & {
   bindingId: string;
@@ -94,11 +95,27 @@ function matchesTriggerContext(
 ): boolean {
   return (
     binding.owner.family === triggerContext.owner.family &&
-    (binding.owner.id == null || binding.owner.id === triggerContext.owner.id) &&
+    (binding.owner.id == null ||
+      matchesBindingOwnerId(binding.owner, triggerContext.owner)) &&
     binding.trigger.timing === triggerContext.timing &&
     binding.trigger.action === triggerContext.action &&
     matchesTriggerExtra(binding.trigger.extra, triggerContext.payload)
   );
+}
+
+function matchesBindingOwnerId(
+  owner: EventBinding["owner"],
+  triggerOwner: TriggerContext["owner"]
+): boolean {
+  if (owner.id == null) {
+    return true;
+  }
+
+  if (owner.family !== "building") {
+    return owner.id === triggerOwner.id;
+  }
+
+  return matchesCanonicalBuildingOwnerId(owner.id, triggerOwner.id);
 }
 
 function matchesTriggerExtra(

@@ -5,6 +5,102 @@
 `docs/change-log.md` 的正式定位是“历史记录 + 人类可读摘要”。
 它不是当前 Blueprint / legacy superpowers 治理的 live execution truth，不作为 resume entry、promotion gate、closeout gate 或固定同步门。
 
+## 2026-07-24 Event Canonical Reuse Queue Closeout Proof
+
+### Changed
+- Folded the final home-family residue into the canonical home graph inside `src/content/scenario-packs/zhuyuanzhang/`: `arrangement.city.kulan.home_001` now routes `rest` / `leave` through `event.building.template.home.rest` / `.leave`, its two matching bindings now target the canonical home event ids with `owner.id = home.template`, and the retired `event.building.home_001.rest` / `.leave` plus `flow.building.home_001.rest` records were removed from production source truth.
+- Materialized `generated/blueprint/event-canonical-reuse-closeout-proof.json` to prove that the completed canonical-reuse families no longer retain disallowed city-scoped event / flow / owner truth and that the only remaining city-scoped routing truth is the explicit building-enter set plus the recorded Kulan temple exception set.
+- Re-ran the full queue verification chain after the residue fix: `node --test tests/robustness.test.cjs`, `npm run lint:blueprints`, `npm run lint:blueprint-skill`, and `npm run blueprint:governance:check` all passed.
+
+### Impact
+- The first Blueprint queue now has a complete canonical event/building/host reference graph for its bounded surface instead of stopping at family-by-family rewrites with one leftover home outlier.
+- `home_001` remains a unique arrangement-level host record, but it no longer preserves its own duplicate event/flow routing truth.
+- The version can now lawfully leave canonical-reuse execution and promote the next queue after the repository-sync gate is recorded.
+
+## 2026-07-24 Event Canonical Owner Runtime Seam
+
+### Changed
+- Added [src/core/runtime/building-owner-canonicalization.ts](/D:/workspace/project/RPG_TG/src/core/runtime/building-owner-canonicalization.ts:1) and wired [src/core/runtime/event-binding-runtime.ts](/D:/workspace/project/RPG_TG/src/core/runtime/event-binding-runtime.ts:1) to accept canonical `home.template` binding owners against live city home owner ids without widening city-specific home owners into each other.
+- Extended [tests/robustness.test.cjs](/D:/workspace/project/RPG_TG/tests/robustness.test.cjs:7996) with positive and negative home-owner canonicalization guards, and verified them through a full `node --test tests/robustness.test.cjs` run.
+- Updated the Zhu Yuanzhang building action-menu audit in [tests/robustness.test.cjs](/D:/workspace/project/RPG_TG/tests/robustness.test.cjs:30237) to compare building owners through canonical equivalence instead of exact `arrangement.buildingId` equality.
+
+### Impact
+- The first live consumer seam for the active Blueprint `home` canonical-reuse slice is now in production code instead of remaining only in preflight artifacts.
+- Later home-family source rewrites can move binding owner ids to template truth without requiring exact city-specific owner equality on the runtime side.
+- The pack-level audit path will no longer become a false blocker when home-family event or binding owners move to template ids during the current active queue.
+
+## 2026-07-24 Home Canonical Source Rewrite Batch
+
+### Changed
+- Canonicalized the first live home slice in `src/content/scenario-packs/zhuyuanzhang/` by collapsing 20 city-scoped home rest flows into `flow.building.template.home.rest` and 40 city-scoped home rest/leave events into `event.building.template.home.rest` and `event.building.template.home.leave`.
+- Rewrote home arrangement action-menu `eventId` refs and the 40 matching home container-item bindings to the canonical home event ids; the bindings now use `owner.id = home.template` while preserving live `arrangementId` / `containerId` / `itemId` payload anchors.
+- Updated `tests/robustness.test.cjs` to guard the new lawful one-event-to-many-binding home shape and to assert that the pack no longer keeps city-scoped home rest/leave source ids after canonical folding.
+
+### Impact
+- The active queue has moved beyond consumer-seam preparation into the first real canonical source rewrite batch.
+- Production source tables no longer keep city-scoped home rest/leave event or home rest flow ids as live truth; those ids now survive only in historical generated preflight artifacts or deliberate synthetic test fixtures.
+- Later queue work can treat the home family as the reference proof for canonical event/flow/binding rewrite while keeping city-local trigger payload anchors intact.
+
+## 2026-07-24 Keep, Grain Shop, And Medicine House Canonical Source Rewrite Batches
+
+### Changed
+- Canonicalized the next three bounded non-home slices in `src/content/scenario-packs/zhuyuanzhang/`: `keep`, `grain_shop`, and `medicine_house`. Their city-scoped launchFlow event families now collapse respectively into `event.building.template.house.keep.*`, `event.building.template.house.grain_shop.*`, and `event.building.template.house.medicine_house.*`, with paired canonical flow ids under `flow.building.template.house.*`.
+- Rewrote the matching arrangement action-menu `eventId` refs plus 63 `building-container-item-action` bindings per family to the canonical event ids while preserving live `trigger.extra.arrangementId`, `trigger.extra.containerId`, and `trigger.extra.itemId` anchors; the rewritten bindings now use `owner.id = house.template.keep`, `house.template.grain_shop`, and `house.template.medicine_house`.
+- Extended [tests/robustness.test.cjs](/D:/workspace/project/RPG_TG/tests/robustness.test.cjs:30674) with focused keep / grain-shop / medicine-house guards, and materialized the applied-state artifacts `generated/blueprint/event-canonical-reuse-keep-applied-rewrite-summary.json`, `generated/blueprint/event-canonical-reuse-grain_shop-applied-rewrite-summary.json`, and `generated/blueprint/event-canonical-reuse-medicine_house-applied-rewrite-summary.json`.
+
+### Impact
+- Production source truth no longer retains city-scoped keep, grain-shop, or medicine-house action-menu event/flow ids; those families now reuse one canonical event graph per template family while keeping city-local trigger payload anchors intact.
+- The active Blueprint queue has advanced past four completed rewrite families (`home`, `keep`, `grain_shop`, `medicine_house`) and can now continue deterministically into `market` as the next bounded non-home source-rewrite slice.
+- The canonical-reuse queue still remains open: later non-home families plus broader consumer and closeout proof are outstanding, but the already-applied family batches now have explicit source and guard evidence rather than preflight-only intent.
+
+## 2026-07-24 Market Canonical Source Rewrite Batch
+
+### Changed
+- Canonicalized the `market` action-menu family in `src/content/scenario-packs/zhuyuanzhang/` by collapsing 63 city-scoped market launchFlow records into `flow.building.template.house.market.trade`, `.talk`, and `.intel`, and 84 city-scoped market action events into `event.building.template.house.market.trade`, `.talk`, `.intel`, and `.leave`.
+- Rewrote 84 market arrangement action-menu `eventId` refs and the 84 matching `building-container-item-action` bindings to the canonical market event ids; the rewritten bindings now use `owner.id = house.template.market` while preserving live `trigger.extra.arrangementId`, `trigger.extra.containerId`, and `trigger.extra.itemId` anchors.
+- Extended [tests/robustness.test.cjs](/D:/workspace/project/RPG_TG/tests/robustness.test.cjs:31084) with a focused market route guard and materialized `generated/blueprint/event-canonical-reuse-market-applied-rewrite-summary.json` as the applied-state artifact for this family batch.
+
+### Impact
+- Production source truth no longer retains city-scoped market action-menu event or flow ids; the market family now reuses one canonical event graph while preserving city-local trigger payload anchors for runtime matching.
+- The active canonical-reuse queue has advanced to five completed rewrite families and can now continue deterministically into `tea_house` as the next bounded non-home source-rewrite slice.
+- Full queue closeout is still not claimable yet because tea-house, leader-residence, inn, temple, and broader consumer residue remain open, but market is no longer a live duplicate-id surface.
+
+## 2026-07-24 Tea House And Leader Residence Canonical Source Rewrite Batches
+
+### Changed
+- Canonicalized the `tea_house` and `leader_residence` action-menu families in `src/content/scenario-packs/zhuyuanzhang/`. The tea-house batch collapsed 63 city-scoped launchFlow records into `flow.building.template.house.tea_house.tea`, `.talk`, and `.intel`, plus 84 city-scoped action events into `event.building.template.house.tea_house.tea`, `.talk`, `.intel`, and `.leave`; the leader-residence batch collapsed 21 city-scoped review flows into `flow.building.template.house.leader_residence.review` and 42 city-scoped action events into `event.building.template.house.leader_residence.review` and `.leave`.
+- Rewrote 84 tea-house arrangement action-menu `eventId` refs and matching container-item bindings to canonical tea-house event ids with `owner.id = house.template.tea_house`, and rewrote 42 leader-residence arrangement action-menu `eventId` refs and matching container-item bindings to canonical leader-residence event ids with `owner.id = house.template.leader_residence`; both batches preserved live `trigger.extra.arrangementId`, `trigger.extra.containerId`, and `trigger.extra.itemId` anchors.
+- Extended [tests/robustness.test.cjs](/D:/workspace/project/RPG_TG/tests/robustness.test.cjs:31221) with the tea-house route guard and [tests/robustness.test.cjs](/D:/workspace/project/RPG_TG/tests/robustness.test.cjs:31360) with the leader-residence route guard, and materialized `generated/blueprint/event-canonical-reuse-tea_house-applied-rewrite-summary.json` plus `generated/blueprint/event-canonical-reuse-leader_residence-applied-rewrite-summary.json` as applied-state artifacts.
+
+### Impact
+- Production source truth no longer retains city-scoped tea-house or leader-residence action-menu event/flow ids; both families now reuse one canonical event graph while preserving city-local trigger payload anchors for runtime matching.
+- The active canonical-reuse queue has advanced to seven completed rewrite families and can now continue deterministically into `inn` as the next bounded non-home source-rewrite slice.
+- Full queue closeout is still not claimable yet because inn, temple, and broader consumer residue remain open, but tea-house and leader-residence are no longer live duplicate-id surfaces.
+
+## 2026-07-24 Inn Canonical Source Rewrite Batch
+
+### Changed
+- Canonicalized the `inn` action-menu family in `src/content/scenario-packs/zhuyuanzhang/` by collapsing 84 city-scoped inn launchFlow records into `flow.building.template.house.inn.drink`, `.gamble`, `.talk`, and `.work`, and 105 city-scoped inn action events into `event.building.template.house.inn.drink`, `.gamble`, `.talk`, `.work`, and `.leave`.
+- Rewrote 105 inn arrangement action-menu `eventId` refs and the 105 matching `building-container-item-action` bindings to canonical inn event ids; the rewritten bindings now use `owner.id = house.template.inn` while preserving live `trigger.extra.arrangementId`, `trigger.extra.containerId`, and `trigger.extra.itemId` anchors.
+- Extended [tests/robustness.test.cjs](/D:/workspace/project/RPG_TG/tests/robustness.test.cjs:31495) with a focused inn route guard and materialized `generated/blueprint/event-canonical-reuse-inn-applied-rewrite-summary.json` as the applied-state artifact for this family batch.
+
+### Impact
+- Production source truth no longer retains city-scoped inn action-menu event or flow ids; the inn family now reuses one canonical event graph while preserving city-local trigger payload anchors for runtime matching.
+- The active canonical-reuse queue has advanced to eight completed rewrite families and can now continue deterministically into `temple` as the next bounded non-home source-rewrite slice.
+- Full queue closeout is still not claimable yet because temple and broader consumer residue remain open, but inn is no longer a live duplicate-id surface.
+
+## 2026-07-24 Temple Canonical Source Rewrite Batch
+
+### Changed
+- Canonicalized the standard `temple` action-menu family in `src/content/scenario-packs/zhuyuanzhang/` by collapsing 62 standard-city temple launchFlow records into `flow.building.template.house.temple.review`, `.work`, and `.donate`, and 83 standard-city temple action events into `event.building.template.house.temple.review`, `.work`, `.donate`, and `.leave`.
+- Rewrote 83 temple arrangement action-menu `eventId` refs and the 83 matching `building-container-item-action` bindings to canonical temple event ids; the rewritten bindings now use `owner.id = house.template.temple` while preserving live `trigger.extra.arrangementId`, `trigger.extra.containerId`, and `trigger.extra.itemId` anchors.
+- Kept the recorded Kulan exception set explicit instead of silently flattening it: `binding.building.house.kulan.temple.work.container-item` plus `event/flow.building.house.kulan.temple.work` remain preserved drift evidence, and Kulan `copy-scripture` / `sweep-courtyard` / `carry-water` routes stay city-scoped authored exceptions. Extended [tests/robustness.test.cjs](/D:/workspace/project/RPG_TG/tests/robustness.test.cjs:31629) with a focused temple canonical-vs-preserved-exception guard and materialized `generated/blueprint/event-canonical-reuse-temple-applied-rewrite-summary.json`.
+
+### Impact
+- Production source truth now uses one canonical event graph across all remaining standard temple routes while still preserving the explicitly recorded Huangjue Temple exception surfaces.
+- The family-level canonical source rewrite selector is exhausted: `home`, `leader_residence`, `temple`, `keep`, `tea_house`, `market`, `grain_shop`, `medicine_house`, and `inn` are all applied.
+- The active queue now moves from family-by-family source rewrite into consumer residue alignment and queue-closeout verification rather than admitting another family slice.
+
 ## 2026-07-23 Blueprint Governance Skill Sync Tooling
 
 ### Changed

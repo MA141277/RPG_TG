@@ -1,0 +1,37 @@
+{
+  "artifactId": "event-canonical-reuse-keep-applied-rewrite-summary",
+  "generatedAt": "2026-07-24",
+  "status": "applied",
+  "family": "keep",
+  "canonicalTargets": {
+    "eventIds": [
+      "event.building.template.house.keep.review",
+      "event.building.template.house.keep.work",
+      "event.building.template.house.keep.leave"
+    ],
+    "flowIds": [
+      "flow.building.template.house.keep.review",
+      "flow.building.template.house.keep.work"
+    ],
+    "bindingOwnerId": "house.template.keep"
+  },
+  "appliedCounts": {
+    "arrangementActionItemsRewritten": 63,
+    "bindingsRewritten": 63,
+    "sourceEventsCollapsed": 63,
+    "sourceFlowsCollapsed": 42
+  },
+  "preservedLivePayloadAnchors": [
+    "trigger.extra.arrangementId",
+    "trigger.extra.containerId",
+    "trigger.extra.itemId"
+  ],
+  "productionResidue": {
+    "cityScopedKeepEventIdsRemaining": 0,
+    "cityScopedKeepFlowIdsRemaining": 0
+  },
+  "remainingReferenceClasses": [
+    "generated/blueprint historical preflight artifacts",
+    "synthetic runtime test fixtures"
+  ]
+}

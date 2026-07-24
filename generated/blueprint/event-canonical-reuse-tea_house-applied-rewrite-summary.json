@@ -1,0 +1,39 @@
+{
+  "artifactId": "event-canonical-reuse-tea_house-applied-rewrite-summary",
+  "generatedAt": "2026-07-24",
+  "status": "applied",
+  "family": "tea_house",
+  "canonicalTargets": {
+    "eventIds": [
+      "event.building.template.house.tea_house.tea",
+      "event.building.template.house.tea_house.talk",
+      "event.building.template.house.tea_house.intel",
+      "event.building.template.house.tea_house.leave"
+    ],
+    "flowIds": [
+      "flow.building.template.house.tea_house.tea",
+      "flow.building.template.house.tea_house.talk",
+      "flow.building.template.house.tea_house.intel"
+    ],
+    "bindingOwnerId": "house.template.tea_house"
+  },
+  "appliedCounts": {
+    "arrangementActionItemsRewritten": 84,
+    "bindingsRewritten": 84,
+    "sourceEventsCollapsed": 84,
+    "sourceFlowsCollapsed": 63
+  },
+  "preservedLivePayloadAnchors": [
+    "trigger.extra.arrangementId",
+    "trigger.extra.containerId",
+    "trigger.extra.itemId"
+  ],
+  "productionResidue": {
+    "cityScopedTeaHouseEventIdsRemaining": 0,
+    "cityScopedTeaHouseFlowIdsRemaining": 0
+  },
+  "remainingReferenceClasses": [
+    "generated/blueprint historical preflight artifacts",
+    "synthetic runtime test fixtures"
+  ]
+}

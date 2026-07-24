@@ -1,0 +1,284 @@
+{
+  "generatedAt": "2026-07-23T21:34:10.584Z",
+  "versionId": "target.event-follow-up-routing-settlement-and-canonical-reuse-convergence",
+  "queueId": "queue.event-and-building-instance-canonical-reuse",
+  "activeTask": "task.event-and-building-instance-canonical-reuse.reference-rewrite-and-guard-baseline",
+  "summary": {
+    "impactAreas": 9,
+    "dataSourceAreas": 3,
+    "consumerAreas": 5,
+    "guardAreas": 1,
+    "impactedFiles": 15
+  },
+  "areas": [
+    {
+      "id": "pack-data-events",
+      "category": "data-source",
+      "concerns": [
+        "canonical event ids",
+        "launchFlow flowId rewrite",
+        "launchPlayable ownerContext.ownerId rewrite",
+        "closeBuilding family coverage"
+      ],
+      "fileCount": 1,
+      "files": [
+        {
+          "path": "src/content/scenario-packs/zhuyuanzhang/events.json",
+          "exists": true,
+          "bytes": 353204,
+          "patternHits": {}
+        }
+      ]
+    },
+    {
+      "id": "pack-data-bindings",
+      "category": "data-source",
+      "concerns": [
+        "canonical binding ids",
+        "binding.eventId rewrite",
+        "binding.owner.id rewrite",
+        "binding.trigger.extra arrangement/container/item rewrite"
+      ],
+      "fileCount": 1,
+      "files": [
+        {
+          "path": "src/content/scenario-packs/zhuyuanzhang/event-bindings.json",
+          "exists": true,
+          "bytes": 367521,
+          "patternHits": {}
+        }
+      ]
+    },
+    {
+      "id": "pack-data-arrangements",
+      "category": "data-source",
+      "concerns": [
+        "action-menu eventId rewrite",
+        "template arrangement ids",
+        "host cityId+buildingId preservation"
+      ],
+      "fileCount": 1,
+      "files": [
+        {
+          "path": "src/content/scenario-packs/zhuyuanzhang/building-arrangements.json",
+          "exists": true,
+          "bytes": 559804,
+          "patternHits": {}
+        }
+      ]
+    },
+    {
+      "id": "editor-export",
+      "category": "consumer",
+      "concerns": [
+        "raw event id export",
+        "ownerContext.ownerId export",
+        "flowId/playableId validation",
+        "event binding owner id export"
+      ],
+      "fileCount": 1,
+      "files": [
+        {
+          "path": "src/application/script-editor/runtime-pack-export.ts",
+          "exists": true,
+          "bytes": 81935,
+          "patternHits": {
+            "extractRuntimeEvents": 3,
+            "extractRuntimeEventBindings": 3,
+            "ownerContext.ownerId": 2,
+            "binding.owner.id": 3,
+            "flowId": 20
+          }
+        }
+      ]
+    },
+    {
+      "id": "editor-import",
+      "category": "consumer",
+      "concerns": [
+        "mapImportedEvents",
+        "mapImportedEventBindings",
+        "readBuildingArrangementsFamily",
+        "raw token rehydration"
+      ],
+      "fileCount": 1,
+      "files": [
+        {
+          "path": "src/application/script-editor/runtime-pack-import.ts",
+          "exists": true,
+          "bytes": 44874,
+          "patternHits": {
+            "mapImportedEvents": 2,
+            "mapImportedEventBindings": 2,
+            "readBuildingArrangementsFamily": 2
+          }
+        }
+      ]
+    },
+    {
+      "id": "active-content-index",
+      "category": "consumer",
+      "concerns": [
+        "eventDefinitionsById canonical truth",
+        "eventBindingsById canonical truth",
+        "buildingArrangementById canonical truth",
+        "flowPlayablesById linkage"
+      ],
+      "fileCount": 1,
+      "files": [
+        {
+          "path": "src/application/content/active-game-content.ts",
+          "exists": true,
+          "bytes": 21676,
+          "patternHits": {
+            "eventDefinitionsById": 5,
+            "eventBindingsById": 5,
+            "buildingArrangementById": 2,
+            "flowPlayablesById": 8
+          }
+        }
+      ]
+    },
+    {
+      "id": "building-runtime",
+      "category": "consumer",
+      "concerns": [
+        "currentHouseId exact owner matching",
+        "clicked eventId narrowing",
+        "cityId + buildingId host resolution",
+        "arrangement lookup continuity"
+      ],
+      "fileCount": 4,
+      "files": [
+        {
+          "path": "src/application/building/building-container-event-runtime.ts",
+          "exists": true,
+          "bytes": 6047,
+          "patternHits": {
+            "currentHouseId": 4,
+            "binding.owner.id": 0,
+            "triggerContext.owner.id": 0,
+            "arrangement.buildingId": 0,
+            "eventId": 5
+          }
+        },
+        {
+          "path": "src/application/building/building-module-entry.ts",
+          "exists": true,
+          "bytes": 4526,
+          "patternHits": {
+            "currentHouseId": 1,
+            "binding.owner.id": 0,
+            "triggerContext.owner.id": 0,
+            "arrangement.buildingId": 1,
+            "eventId": 2
+          }
+        },
+        {
+          "path": "src/core/runtime/event-binding-runtime.ts",
+          "exists": true,
+          "bytes": 8810,
+          "patternHits": {
+            "currentHouseId": 1,
+            "binding.owner.id": 2,
+            "triggerContext.owner.id": 1,
+            "arrangement.buildingId": 0,
+            "eventId": 10
+          }
+        },
+        {
+          "path": "src/core/runtime/navigation-runtime.ts",
+          "exists": true,
+          "bytes": 6918,
+          "patternHits": {
+            "currentHouseId": 0,
+            "binding.owner.id": 0,
+            "triggerContext.owner.id": 0,
+            "arrangement.buildingId": 1,
+            "eventId": 4
+          }
+        }
+      ]
+    },
+    {
+      "id": "story-playable-owner",
+      "category": "consumer",
+      "concerns": [
+        "ownerContext.ownerId propagation",
+        "dialogue/event/house owner reuse",
+        "playable handoff owner continuity"
+      ],
+      "fileCount": 4,
+      "files": [
+        {
+          "path": "src/application/story/story-runtime.ts",
+          "exists": true,
+          "bytes": 7830,
+          "patternHits": {
+            "ownerId": 0,
+            "currentHouseId": 10,
+            "ownerContext": 0,
+            "houseId": 4
+          }
+        },
+        {
+          "path": "src/application/story/story-callbacks.ts",
+          "exists": true,
+          "bytes": 7184,
+          "patternHits": {
+            "ownerId": 1,
+            "currentHouseId": 2,
+            "ownerContext": 0,
+            "houseId": 1
+          }
+        },
+        {
+          "path": "src/core/runtime/playable-runtime.ts",
+          "exists": true,
+          "bytes": 46535,
+          "patternHits": {
+            "ownerId": 17,
+            "currentHouseId": 2,
+            "ownerContext": 47,
+            "houseId": 3
+          }
+        },
+        {
+          "path": "src/core/runtime/interactive-runtime.ts",
+          "exists": true,
+          "bytes": 9863,
+          "patternHits": {
+            "ownerId": 3,
+            "currentHouseId": 2,
+            "ownerContext": 5,
+            "houseId": 4
+          }
+        }
+      ]
+    },
+    {
+      "id": "test-coverage",
+      "category": "guard",
+      "concerns": [
+        "one-binding-per-eventId masking",
+        "ownerContext.ownerId === arrangement.buildingId assertions",
+        "building action routing invariants"
+      ],
+      "fileCount": 1,
+      "files": [
+        {
+          "path": "tests/robustness.test.cjs",
+          "exists": true,
+          "bytes": 1080182,
+          "patternHits": {
+            "bindingsByEventId": 2,
+            "binding.owner.id": 2,
+            "ownerContext.ownerId": 5,
+            "arrangement.buildingId": 4,
+            "flowId": 4
+          }
+        }
+      ]
+    }
+  ]
+}

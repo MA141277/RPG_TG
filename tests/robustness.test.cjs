@@ -269,7 +269,7 @@ test(
       assert.equal(
         pack.flowPlayables.some(
           (flowDefinition) =>
-            flowDefinition.id === "flow.building.house.kulan.temple.review"
+            flowDefinition.id === "flow.building.template.house.temple.review"
         ),
         true
       );
@@ -1941,11 +1941,15 @@ test("zhuyuanzhang scenario pack migrates event triggers to event bindings", () 
   const buildingActionBindings = eventBindings.filter((binding) =>
     binding.id.startsWith("binding.building.")
   );
+  const buildingBindingEventIds = new Set(
+    buildingActionBindings.map((binding) => binding.eventId)
+  );
 
   assert.equal(storyEvents.length, 5);
   assert.equal(storyEventBindings.length, 5);
-  assert.equal(buildingActionBindings.length, buildingActionEvents.length);
-  assert.ok(buildingActionEvents.length > 600);
+  assert.ok(buildingActionBindings.length >= buildingActionEvents.length);
+  assert.equal(buildingBindingEventIds.size, buildingActionEvents.length);
+  assert.ok(buildingActionBindings.length > 600);
   assert.equal(events.every((eventRecord) => !Object.hasOwn(eventRecord, "trigger")), true);
   assert.equal(events.every((eventRecord) => !Object.hasOwn(eventRecord, "conditions")), true);
   assert.deepEqual(
@@ -7994,6 +7998,126 @@ test(
     assert.equal(result.activation?.activeEventId, "event.temple.rest");
     assert.equal(result.state.dialogue.activeDialogueId, null);
     assert.equal(result.state.ui.currentView, "house");
+  }
+);
+
+test(
+  "event binding runtime lets canonical home template owners match live home owner ids",
+  () => {
+    const {
+      runEventBindingRuntime,
+    } = require("../.test-dist/core/runtime/event-binding-runtime.js");
+    const state = createBaseState();
+    state.world.currentCityId = "city.ningbo";
+    state.world.currentHouseId = "home.ningbo";
+
+    const result = runEventBindingRuntime({
+      state,
+      eventDefinitionsById: {
+        "event.building.template.home.rest": {
+          id: "event.building.template.home.rest",
+          chapterId: "chapter.prototype",
+          name: "Home Rest",
+          occurrence: "repeatable",
+          dialogueId: "dialogue.home.rest",
+        },
+      },
+      eventBindings: [
+        {
+          id: "binding.building.template.home.rest.container-item",
+          eventId: "event.building.template.home.rest",
+          owner: { family: "building", id: "home.template" },
+          trigger: {
+            timing: "after",
+            action: "building-container-item-action",
+            extra: {
+              arrangementId: "arrangement.city.ningbo.home.ningbo",
+              containerId: "home.ningbo.actions",
+              itemId: "rest",
+            },
+          },
+          enabled: true,
+        },
+      ],
+      triggerContext: {
+        owner: { family: "building", id: "home.ningbo" },
+        timing: "after",
+        action: "building-container-item-action",
+        currentCityId: "city.ningbo",
+        currentHouseId: "home.ningbo",
+        payload: {
+          arrangementId: "arrangement.city.ningbo.home.ningbo",
+          containerId: "home.ningbo.actions",
+          itemId: "rest",
+        },
+      },
+    });
+
+    assert.equal(
+      result.candidate?.bindingId,
+      "binding.building.template.home.rest.container-item"
+    );
+    assert.equal(
+      result.activation?.activeEventId,
+      "event.building.template.home.rest"
+    );
+  }
+);
+
+test(
+  "event binding runtime does not widen city-specific home owner ids into each other",
+  () => {
+    const {
+      runEventBindingRuntime,
+    } = require("../.test-dist/core/runtime/event-binding-runtime.js");
+    const state = createBaseState();
+    state.world.currentCityId = "city.suzhou";
+    state.world.currentHouseId = "home.suzhou";
+
+    const result = runEventBindingRuntime({
+      state,
+      eventDefinitionsById: {
+        "event.building.home.ningbo.rest": {
+          id: "event.building.home.ningbo.rest",
+          chapterId: "chapter.prototype",
+          name: "Wrong Home Rest",
+          occurrence: "repeatable",
+          dialogueId: "dialogue.home.rest",
+        },
+      },
+      eventBindings: [
+        {
+          id: "binding.building.home.ningbo.rest.container-item",
+          eventId: "event.building.home.ningbo.rest",
+          owner: { family: "building", id: "home.ningbo" },
+          trigger: {
+            timing: "after",
+            action: "building-container-item-action",
+            extra: {
+              arrangementId: "arrangement.city.suzhou.home.suzhou",
+              containerId: "home.suzhou.actions",
+              itemId: "rest",
+            },
+          },
+          enabled: true,
+        },
+      ],
+      triggerContext: {
+        owner: { family: "building", id: "home.suzhou" },
+        timing: "after",
+        action: "building-container-item-action",
+        currentCityId: "city.suzhou",
+        currentHouseId: "home.suzhou",
+        payload: {
+          arrangementId: "arrangement.city.suzhou.home.suzhou",
+          containerId: "home.suzhou.actions",
+          itemId: "rest",
+        },
+      },
+    });
+
+    assert.equal(result.candidate, null);
+    assert.equal(result.activation, null);
   }
 );
 
@@ -30235,6 +30359,9 @@ test("zhuyuanzhang pack carries explicit building arrangements for every mounted
 });
 
 test("zhuyuanzhang building action menus route through event-owned runtime actions", () => {
+  const {
+    matchesCanonicalBuildingOwnerId,
+  } = require("../.test-dist/core/runtime/building-owner-canonicalization.js");
   const packRoot = path.join(
     process.cwd(),
     "src/content/scenario-packs/zhuyuanzhang"
@@ -30254,9 +30381,31 @@ test("zhuyuanzhang building action menus route through event-owned runtime actio
 
   const eventsById = new Map(events.map((event) => [event.id, event]));
   const flowsById = new Map(flowPlayables.map((flow) => [flow.id, flow]));
-  const bindingsByEventId = new Map(
-    eventBindings.map((binding) => [binding.eventId, binding])
+  const containerItemBindings = eventBindings.filter(
+    (binding) => binding.trigger?.action === "building-container-item-action"
   );
+  const bindingsByEventId = new Map();
+  const bindingPayloadKeys = new Set();
+  for (const binding of containerItemBindings) {
+    const eventId = binding.eventId;
+    const bindingList = bindingsByEventId.get(eventId) ?? [];
+    bindingList.push(binding);
+    bindingsByEventId.set(eventId, bindingList);
+
+    const payloadKey = JSON.stringify({
+      eventId,
+      ownerFamily: binding.owner.family,
+      ownerId: binding.owner.id ?? null,
+      arrangementId: binding.trigger.extra?.arrangementId ?? null,
+      containerId: binding.trigger.extra?.containerId ?? null,
+      itemId: binding.trigger.extra?.itemId ?? null,
+    });
+    assert.ok(
+      !bindingPayloadKeys.has(payloadKey),
+      `duplicate container binding payload for ${eventId}`
+    );
+    bindingPayloadKeys.add(payloadKey);
+  }
   const actionItems = [];
 
   for (const arrangement of arrangements) {
@@ -30276,10 +30425,31 @@ test("zhuyuanzhang building action menus route through event-owned runtime actio
     const event = eventsById.get(item.eventId);
     assert.ok(event, `missing event for ${item.eventId}`);
 
-    const binding = bindingsByEventId.get(item.eventId);
-    assert.ok(binding, `missing event binding for ${item.eventId}`);
+    const bindingCandidates = bindingsByEventId.get(item.eventId) ?? [];
+    assert.ok(bindingCandidates.length > 0, `missing event binding for ${item.eventId}`);
+    const exactBindingMatches = bindingCandidates.filter(
+      (binding) =>
+        binding.owner.family === "building" &&
+        matchesCanonicalBuildingOwnerId(
+          binding.owner.id,
+          arrangement.buildingId
+        ) &&
+        binding.trigger.action === "building-container-item-action" &&
+        binding.trigger.extra?.arrangementId === arrangement.id &&
+        binding.trigger.extra?.containerId === container.id &&
+        binding.trigger.extra?.itemId === item.id
+    );
+    assert.equal(
+      exactBindingMatches.length,
+      1,
+      `expected exactly one exact binding match for ${item.eventId} on ${arrangement.id}/${container.id}/${item.id}`
+    );
+    const [binding] = exactBindingMatches;
     assert.equal(binding.owner.family, "building");
-    assert.equal(binding.owner.id, arrangement.buildingId);
+    assert.ok(
+      matchesCanonicalBuildingOwnerId(binding.owner.id, arrangement.buildingId),
+      `binding owner mismatch for ${item.eventId}`
+    );
     assert.equal(binding.trigger.action, "building-container-item-action");
     assert.equal(binding.trigger.extra?.arrangementId, arrangement.id);
     assert.equal(binding.trigger.extra?.containerId, container.id);
@@ -30305,7 +30475,13 @@ test("zhuyuanzhang building action menus route through event-owned runtime actio
     );
     if (launchFlowAction) {
       assert.equal(launchFlowAction.ownerContext.ownerKind, "house");
-      assert.equal(launchFlowAction.ownerContext.ownerId, arrangement.buildingId);
+      assert.ok(
+        matchesCanonicalBuildingOwnerId(
+          launchFlowAction.ownerContext.ownerId,
+          arrangement.buildingId
+        ),
+        `launchFlow owner mismatch for ${item.eventId}`
+      );
       assert.ok(
         launchFlowAction.flowId && flowsById.has(launchFlowAction.flowId),
         `missing authored flow for ${item.eventId}`
@@ -30316,7 +30492,13 @@ test("zhuyuanzhang building action menus route through event-owned runtime actio
     }
 
     assert.equal(launchPlayableAction.ownerContext.ownerKind, "house");
-    assert.equal(launchPlayableAction.ownerContext.ownerId, arrangement.buildingId);
+    assert.ok(
+      matchesCanonicalBuildingOwnerId(
+        launchPlayableAction.ownerContext.ownerId,
+        arrangement.buildingId
+      ),
+      `launchPlayable owner mismatch for ${item.eventId}`
+    );
     assert.ok(
       typeof launchPlayableAction.playableId === "string" &&
         launchPlayableAction.playableId.length > 0,
@@ -30331,9 +30513,9 @@ test("zhuyuanzhang building action menus route through event-owned runtime actio
 
   assert.ok(
     eventsById
-      .get("event.building.house.kulan.temple.review")
+      .get("event.building.template.house.temple.review")
       ?.actions?.some((action) => action.type === "launchFlow"),
-    "missing preserved Huangjue Temple review flow"
+    "missing canonical temple review flow"
   );
   assert.ok(
     eventsById
@@ -30361,14 +30543,1284 @@ test("zhuyuanzhang building action menus route through event-owned runtime actio
   );
   assert.ok(
     eventsById
-      .get("event.building.house.kulan.temple.donate")
+      .get("event.building.template.house.temple.donate")
       ?.actions?.some((action) => action.type === "launchFlow"),
-    "missing preserved Huangjue Temple donation flow"
+    "missing canonical temple donation flow"
   );
   assert.ok(
     !flowsById.has("flow.building.house.kulan.temple.copy_scripture"),
     "copy scripture should not keep a dedicated bridge flow"
   );
+});
+
+test("zhuyuanzhang home rest and leave routes use canonical template ids while keeping live payload anchors", () => {
+  const packRoot = path.join(
+    process.cwd(),
+    "src/content/scenario-packs/zhuyuanzhang"
+  );
+  const arrangements = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "building-arrangements.json"), "utf8")
+  );
+  const eventBindings = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "event-bindings.json"), "utf8")
+  );
+  const events = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "events.json"), "utf8")
+  );
+  const flowPlayables = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "flow-playables.json"), "utf8")
+  );
+
+  const homeArrangements = arrangements.filter((arrangement) =>
+    /^home\.[a-z0-9_]+$/.test(arrangement.buildingId)
+  );
+  assert.equal(homeArrangements.length, 20);
+
+  const homeActionItems = [];
+  for (const arrangement of homeArrangements) {
+    for (const container of arrangement.containers ?? []) {
+      if (container.type !== "action-menu") {
+        continue;
+      }
+      for (const item of container.items ?? []) {
+        if (item.id === "rest" || item.id === "leave") {
+          homeActionItems.push({
+            arrangement,
+            container,
+            item,
+          });
+        }
+      }
+    }
+  }
+
+  assert.equal(homeActionItems.length, 40);
+  const eventsById = new Map(events.map((event) => [event.id, event]));
+  const flowsById = new Map(flowPlayables.map((flow) => [flow.id, flow]));
+  const bindingsByArrangementItem = new Map();
+
+  for (const binding of eventBindings) {
+    if (
+      binding.trigger?.action !== "building-container-item-action" ||
+      (binding.trigger?.extra?.itemId !== "rest" &&
+        binding.trigger?.extra?.itemId !== "leave")
+    ) {
+      continue;
+    }
+    const key = [
+      binding.trigger.extra?.arrangementId ?? "",
+      binding.trigger.extra?.containerId ?? "",
+      binding.trigger.extra?.itemId ?? "",
+    ].join("::");
+    bindingsByArrangementItem.set(key, binding);
+  }
+
+  assert.equal(
+    events.filter((event) => /^event\.building\.home\.[^.]+\.(rest|leave)$/.test(event.id))
+      .length,
+    0,
+    "retired city-scoped home event ids should be removed from pack truth"
+  );
+  assert.equal(
+    flowPlayables.filter((flow) => /^flow\.building\.home\.[^.]+\.rest$/.test(flow.id))
+      .length,
+    0,
+    "retired city-scoped home flow ids should be removed from pack truth"
+  );
+  assert.ok(eventsById.has("event.building.template.home.rest"));
+  assert.ok(eventsById.has("event.building.template.home.leave"));
+  assert.ok(flowsById.has("flow.building.template.home.rest"));
+
+  for (const { arrangement, container, item } of homeActionItems) {
+    const expectedEventId =
+      item.id === "rest"
+        ? "event.building.template.home.rest"
+        : "event.building.template.home.leave";
+    assert.equal(item.eventId, expectedEventId);
+
+    const binding = bindingsByArrangementItem.get(
+      [arrangement.id, container.id, item.id].join("::")
+    );
+    assert.ok(binding, `missing home binding for ${arrangement.id}/${item.id}`);
+    assert.equal(binding.eventId, expectedEventId);
+    assert.equal(binding.owner.id, "home.template");
+    assert.equal(binding.trigger.extra?.arrangementId, arrangement.id);
+    assert.equal(binding.trigger.extra?.containerId, container.id);
+    assert.equal(binding.trigger.extra?.itemId, item.id);
+
+    const event = eventsById.get(expectedEventId);
+    assert.ok(event, `missing canonical home event ${expectedEventId}`);
+
+    if (item.id === "rest") {
+      const launchFlowAction = event.actions?.find(
+        (action) => action.type === "launchFlow"
+      );
+      assert.ok(launchFlowAction, "home rest should launch canonical flow");
+      assert.equal(launchFlowAction.ownerContext.ownerId, "home.template");
+      assert.equal(
+        launchFlowAction.flowId,
+        "flow.building.template.home.rest"
+      );
+      continue;
+    }
+
+    assert.ok(
+      event.actions?.some((action) => action.type === "closeBuilding"),
+      "home leave should stay closeBuilding"
+    );
+  }
+});
+
+test("zhuyuanzhang keep review work and leave routes use canonical template ids while keeping live payload anchors", () => {
+  const packRoot = path.join(
+    process.cwd(),
+    "src/content/scenario-packs/zhuyuanzhang"
+  );
+  const arrangements = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "building-arrangements.json"), "utf8")
+  );
+  const eventBindings = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "event-bindings.json"), "utf8")
+  );
+  const events = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "events.json"), "utf8")
+  );
+  const flowPlayables = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "flow-playables.json"), "utf8")
+  );
+
+  const keepActionItems = [];
+  for (const arrangement of arrangements) {
+    if (!arrangement.buildingId.endsWith(".keep")) {
+      continue;
+    }
+    for (const container of arrangement.containers ?? []) {
+      if (container.type !== "action-menu") {
+        continue;
+      }
+      for (const item of container.items ?? []) {
+        if (
+          item.id !== "review" &&
+          item.id !== "work" &&
+          item.id !== "leave"
+        ) {
+          continue;
+        }
+        keepActionItems.push({ arrangement, container, item });
+      }
+    }
+  }
+
+  assert.equal(keepActionItems.length, 63);
+  const eventsById = new Map(events.map((event) => [event.id, event]));
+  const flowsById = new Map(flowPlayables.map((flow) => [flow.id, flow]));
+  const bindingsByArrangementItem = new Map();
+
+  for (const binding of eventBindings) {
+    if (
+      binding.trigger?.action !== "building-container-item-action" ||
+      (binding.trigger?.extra?.itemId !== "review" &&
+        binding.trigger?.extra?.itemId !== "work" &&
+        binding.trigger?.extra?.itemId !== "leave")
+    ) {
+      continue;
+    }
+    if (!binding.id.includes(".keep.")) {
+      continue;
+    }
+    const key = [
+      binding.trigger.extra?.arrangementId ?? "",
+      binding.trigger.extra?.containerId ?? "",
+      binding.trigger.extra?.itemId ?? "",
+    ].join("::");
+    bindingsByArrangementItem.set(key, binding);
+  }
+
+  assert.equal(
+    events.filter((event) =>
+      /^event\.building\.house\.[^.]+\.keep\.(review|work|leave)$/.test(
+        event.id
+      )
+    ).length,
+    0,
+    "retired city-scoped keep event ids should be removed from pack truth"
+  );
+  assert.equal(
+    flowPlayables.filter((flow) =>
+      /^flow\.building\.house\.[^.]+\.keep\.(review|work)$/.test(flow.id)
+    ).length,
+    0,
+    "retired city-scoped keep flow ids should be removed from pack truth"
+  );
+  assert.ok(eventsById.has("event.building.template.house.keep.review"));
+  assert.ok(eventsById.has("event.building.template.house.keep.work"));
+  assert.ok(eventsById.has("event.building.template.house.keep.leave"));
+  assert.ok(flowsById.has("flow.building.template.house.keep.review"));
+  assert.ok(flowsById.has("flow.building.template.house.keep.work"));
+
+  for (const { arrangement, container, item } of keepActionItems) {
+    const expectedEventId = `event.building.template.house.keep.${item.id}`;
+    assert.equal(item.eventId, expectedEventId);
+
+    const binding = bindingsByArrangementItem.get(
+      [arrangement.id, container.id, item.id].join("::")
+    );
+    assert.ok(binding, `missing keep binding for ${arrangement.id}/${item.id}`);
+    assert.equal(binding.eventId, expectedEventId);
+    assert.equal(binding.owner.id, "house.template.keep");
+    assert.equal(binding.trigger.extra?.arrangementId, arrangement.id);
+    assert.equal(binding.trigger.extra?.containerId, container.id);
+    assert.equal(binding.trigger.extra?.itemId, item.id);
+
+    const event = eventsById.get(expectedEventId);
+    assert.ok(event, `missing canonical keep event ${expectedEventId}`);
+
+    if (item.id === "leave") {
+      assert.ok(
+        event.actions?.some((action) => action.type === "closeBuilding"),
+        "keep leave should stay closeBuilding"
+      );
+      continue;
+    }
+
+    const launchFlowAction = event.actions?.find(
+      (action) => action.type === "launchFlow"
+    );
+    assert.ok(launchFlowAction, `keep ${item.id} should launch canonical flow`);
+    assert.equal(launchFlowAction.ownerContext.ownerId, "house.template.keep");
+    assert.equal(
+      launchFlowAction.flowId,
+      `flow.building.template.house.keep.${item.id}`
+    );
+  }
+});
+
+nodeTest("zhuyuanzhang grain shop trade accounting and leave routes use canonical template ids while keeping live payload anchors", () => {
+  const packRoot = path.join(
+    process.cwd(),
+    "src/content/scenario-packs/zhuyuanzhang"
+  );
+  const arrangements = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "building-arrangements.json"), "utf8")
+  );
+  const eventBindings = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "event-bindings.json"), "utf8")
+  );
+  const events = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "events.json"), "utf8")
+  );
+  const flowPlayables = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "flow-playables.json"), "utf8")
+  );
+
+  const grainShopActionItems = [];
+  for (const arrangement of arrangements) {
+    if (!arrangement.buildingId.endsWith(".grain_shop")) {
+      continue;
+    }
+    for (const container of arrangement.containers ?? []) {
+      if (container.type !== "action-menu") {
+        continue;
+      }
+      for (const item of container.items ?? []) {
+        if (
+          item.id !== "trade" &&
+          item.id !== "accounting" &&
+          item.id !== "leave"
+        ) {
+          continue;
+        }
+        grainShopActionItems.push({ arrangement, container, item });
+      }
+    }
+  }
+
+  assert.equal(grainShopActionItems.length, 63);
+  const eventsById = new Map(events.map((event) => [event.id, event]));
+  const flowsById = new Map(flowPlayables.map((flow) => [flow.id, flow]));
+  const bindingsByArrangementItem = new Map();
+
+  for (const binding of eventBindings) {
+    if (
+      binding.trigger?.action !== "building-container-item-action" ||
+      (binding.trigger?.extra?.itemId !== "trade" &&
+        binding.trigger?.extra?.itemId !== "accounting" &&
+        binding.trigger?.extra?.itemId !== "leave")
+    ) {
+      continue;
+    }
+    if (!binding.id.includes(".grain_shop.")) {
+      continue;
+    }
+    const key = [
+      binding.trigger.extra?.arrangementId ?? "",
+      binding.trigger.extra?.containerId ?? "",
+      binding.trigger.extra?.itemId ?? "",
+    ].join("::");
+    bindingsByArrangementItem.set(key, binding);
+  }
+
+  assert.equal(
+    events.filter((event) =>
+      /^event\.building\.house\.[^.]+\.grain_shop\.(trade|accounting|leave)$/.test(
+        event.id
+      )
+    ).length,
+    0,
+    "retired city-scoped grain shop event ids should be removed from pack truth"
+  );
+  assert.equal(
+    flowPlayables.filter((flow) =>
+      /^flow\.building\.house\.[^.]+\.grain_shop\.(trade|accounting)$/.test(
+        flow.id
+      )
+    ).length,
+    0,
+    "retired city-scoped grain shop flow ids should be removed from pack truth"
+  );
+  assert.ok(eventsById.has("event.building.template.house.grain_shop.trade"));
+  assert.ok(
+    eventsById.has("event.building.template.house.grain_shop.accounting")
+  );
+  assert.ok(eventsById.has("event.building.template.house.grain_shop.leave"));
+  assert.ok(flowsById.has("flow.building.template.house.grain_shop.trade"));
+  assert.ok(
+    flowsById.has("flow.building.template.house.grain_shop.accounting")
+  );
+
+  for (const { arrangement, container, item } of grainShopActionItems) {
+    const expectedEventId = `event.building.template.house.grain_shop.${item.id}`;
+    assert.equal(item.eventId, expectedEventId);
+
+    const binding = bindingsByArrangementItem.get(
+      [arrangement.id, container.id, item.id].join("::")
+    );
+    assert.ok(
+      binding,
+      `missing grain shop binding for ${arrangement.id}/${item.id}`
+    );
+    assert.equal(binding.eventId, expectedEventId);
+    assert.equal(binding.owner.id, "house.template.grain_shop");
+    assert.equal(binding.trigger.extra?.arrangementId, arrangement.id);
+    assert.equal(binding.trigger.extra?.containerId, container.id);
+    assert.equal(binding.trigger.extra?.itemId, item.id);
+
+    const event = eventsById.get(expectedEventId);
+    assert.ok(event, `missing canonical grain shop event ${expectedEventId}`);
+
+    if (item.id === "leave") {
+      assert.ok(
+        event.actions?.some((action) => action.type === "closeBuilding"),
+        "grain shop leave should stay closeBuilding"
+      );
+      continue;
+    }
+
+    const launchFlowAction = event.actions?.find(
+      (action) => action.type === "launchFlow"
+    );
+    assert.ok(
+      launchFlowAction,
+      `grain shop ${item.id} should launch canonical flow`
+    );
+    assert.equal(
+      launchFlowAction.ownerContext.ownerId,
+      "house.template.grain_shop"
+    );
+    assert.equal(
+      launchFlowAction.flowId,
+      `flow.building.template.house.grain_shop.${item.id}`
+    );
+  }
+});
+
+nodeTest("zhuyuanzhang medicine house treatment compounding and leave routes use canonical template ids while keeping live payload anchors", () => {
+  const packRoot = path.join(
+    process.cwd(),
+    "src/content/scenario-packs/zhuyuanzhang"
+  );
+  const arrangements = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "building-arrangements.json"), "utf8")
+  );
+  const eventBindings = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "event-bindings.json"), "utf8")
+  );
+  const events = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "events.json"), "utf8")
+  );
+  const flowPlayables = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "flow-playables.json"), "utf8")
+  );
+
+  const medicineHouseActionItems = [];
+  for (const arrangement of arrangements) {
+    if (!arrangement.buildingId.endsWith(".medicine_house")) {
+      continue;
+    }
+    for (const container of arrangement.containers ?? []) {
+      if (container.type !== "action-menu") {
+        continue;
+      }
+      for (const item of container.items ?? []) {
+        if (
+          item.id !== "treatment" &&
+          item.id !== "compounding" &&
+          item.id !== "leave"
+        ) {
+          continue;
+        }
+        medicineHouseActionItems.push({ arrangement, container, item });
+      }
+    }
+  }
+
+  assert.equal(medicineHouseActionItems.length, 63);
+  const eventsById = new Map(events.map((event) => [event.id, event]));
+  const flowsById = new Map(flowPlayables.map((flow) => [flow.id, flow]));
+  const bindingsByArrangementItem = new Map();
+
+  for (const binding of eventBindings) {
+    if (
+      binding.trigger?.action !== "building-container-item-action" ||
+      (binding.trigger?.extra?.itemId !== "treatment" &&
+        binding.trigger?.extra?.itemId !== "compounding" &&
+        binding.trigger?.extra?.itemId !== "leave")
+    ) {
+      continue;
+    }
+    if (!binding.id.includes(".medicine_house.")) {
+      continue;
+    }
+    const key = [
+      binding.trigger.extra?.arrangementId ?? "",
+      binding.trigger.extra?.containerId ?? "",
+      binding.trigger.extra?.itemId ?? "",
+    ].join("::");
+    bindingsByArrangementItem.set(key, binding);
+  }
+
+  assert.equal(
+    events.filter((event) =>
+      /^event\.building\.house\.[^.]+\.medicine_house\.(treatment|compounding|leave)$/.test(
+        event.id
+      )
+    ).length,
+    0,
+    "retired city-scoped medicine house event ids should be removed from pack truth"
+  );
+  assert.equal(
+    flowPlayables.filter((flow) =>
+      /^flow\.building\.house\.[^.]+\.medicine_house\.(treatment|compounding)$/.test(
+        flow.id
+      )
+    ).length,
+    0,
+    "retired city-scoped medicine house flow ids should be removed from pack truth"
+  );
+  assert.ok(
+    eventsById.has("event.building.template.house.medicine_house.treatment")
+  );
+  assert.ok(
+    eventsById.has("event.building.template.house.medicine_house.compounding")
+  );
+  assert.ok(
+    eventsById.has("event.building.template.house.medicine_house.leave")
+  );
+  assert.ok(
+    flowsById.has("flow.building.template.house.medicine_house.treatment")
+  );
+  assert.ok(
+    flowsById.has("flow.building.template.house.medicine_house.compounding")
+  );
+
+  for (const { arrangement, container, item } of medicineHouseActionItems) {
+    const expectedEventId = `event.building.template.house.medicine_house.${item.id}`;
+    assert.equal(item.eventId, expectedEventId);
+
+    const binding = bindingsByArrangementItem.get(
+      [arrangement.id, container.id, item.id].join("::")
+    );
+    assert.ok(
+      binding,
+      `missing medicine house binding for ${arrangement.id}/${item.id}`
+    );
+    assert.equal(binding.eventId, expectedEventId);
+    assert.equal(binding.owner.id, "house.template.medicine_house");
+    assert.equal(binding.trigger.extra?.arrangementId, arrangement.id);
+    assert.equal(binding.trigger.extra?.containerId, container.id);
+    assert.equal(binding.trigger.extra?.itemId, item.id);
+
+    const event = eventsById.get(expectedEventId);
+    assert.ok(event, `missing canonical medicine house event ${expectedEventId}`);
+
+    if (item.id === "leave") {
+      assert.ok(
+        event.actions?.some((action) => action.type === "closeBuilding"),
+        "medicine house leave should stay closeBuilding"
+      );
+      continue;
+    }
+
+    const launchFlowAction = event.actions?.find(
+      (action) => action.type === "launchFlow"
+    );
+    assert.ok(
+      launchFlowAction,
+      `medicine house ${item.id} should launch canonical flow`
+    );
+    assert.equal(
+      launchFlowAction.ownerContext.ownerId,
+      "house.template.medicine_house"
+    );
+    assert.equal(
+      launchFlowAction.flowId,
+      `flow.building.template.house.medicine_house.${item.id}`
+    );
+  }
+});
+
+test("zhuyuanzhang market trade talk intel and leave routes use canonical template ids while keeping live payload anchors", () => {
+  const packRoot = path.join(
+    process.cwd(),
+    "src/content/scenario-packs/zhuyuanzhang"
+  );
+  const arrangements = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "building-arrangements.json"), "utf8")
+  );
+  const eventBindings = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "event-bindings.json"), "utf8")
+  );
+  const events = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "events.json"), "utf8")
+  );
+  const flowPlayables = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "flow-playables.json"), "utf8")
+  );
+
+  const marketActionItems = [];
+  for (const arrangement of arrangements) {
+    if (!arrangement.buildingId.endsWith(".market")) {
+      continue;
+    }
+    for (const container of arrangement.containers ?? []) {
+      if (container.type !== "action-menu") {
+        continue;
+      }
+      for (const item of container.items ?? []) {
+        if (
+          item.id !== "trade" &&
+          item.id !== "talk" &&
+          item.id !== "intel" &&
+          item.id !== "leave"
+        ) {
+          continue;
+        }
+        marketActionItems.push({ arrangement, container, item });
+      }
+    }
+  }
+
+  assert.equal(marketActionItems.length, 84);
+  const eventsById = new Map(events.map((event) => [event.id, event]));
+  const flowsById = new Map(flowPlayables.map((flow) => [flow.id, flow]));
+  const bindingsByArrangementItem = new Map();
+
+  for (const binding of eventBindings) {
+    if (
+      binding.trigger?.action !== "building-container-item-action" ||
+      (binding.trigger?.extra?.itemId !== "trade" &&
+        binding.trigger?.extra?.itemId !== "talk" &&
+        binding.trigger?.extra?.itemId !== "intel" &&
+        binding.trigger?.extra?.itemId !== "leave")
+    ) {
+      continue;
+    }
+    if (!binding.id.includes(".market.")) {
+      continue;
+    }
+    const key = [
+      binding.trigger.extra?.arrangementId ?? "",
+      binding.trigger.extra?.containerId ?? "",
+      binding.trigger.extra?.itemId ?? "",
+    ].join("::");
+    bindingsByArrangementItem.set(key, binding);
+  }
+
+  assert.equal(
+    events.filter((event) =>
+      /^event\.building\.house\.[^.]+\.market\.(trade|talk|intel|leave)$/.test(
+        event.id
+      )
+    ).length,
+    0,
+    "retired city-scoped market event ids should be removed from pack truth"
+  );
+  assert.equal(
+    flowPlayables.filter((flow) =>
+      /^flow\.building\.house\.[^.]+\.market\.(trade|talk|intel)$/.test(
+        flow.id
+      )
+    ).length,
+    0,
+    "retired city-scoped market flow ids should be removed from pack truth"
+  );
+  assert.ok(eventsById.has("event.building.template.house.market.trade"));
+  assert.ok(eventsById.has("event.building.template.house.market.talk"));
+  assert.ok(eventsById.has("event.building.template.house.market.intel"));
+  assert.ok(eventsById.has("event.building.template.house.market.leave"));
+  assert.ok(flowsById.has("flow.building.template.house.market.trade"));
+  assert.ok(flowsById.has("flow.building.template.house.market.talk"));
+  assert.ok(flowsById.has("flow.building.template.house.market.intel"));
+
+  for (const { arrangement, container, item } of marketActionItems) {
+    const expectedEventId = `event.building.template.house.market.${item.id}`;
+    assert.equal(item.eventId, expectedEventId);
+
+    const binding = bindingsByArrangementItem.get(
+      [arrangement.id, container.id, item.id].join("::")
+    );
+    assert.ok(
+      binding,
+      `missing market binding for ${arrangement.id}/${item.id}`
+    );
+    assert.equal(binding.eventId, expectedEventId);
+    assert.equal(binding.owner.id, "house.template.market");
+    assert.equal(binding.trigger.extra?.arrangementId, arrangement.id);
+    assert.equal(binding.trigger.extra?.containerId, container.id);
+    assert.equal(binding.trigger.extra?.itemId, item.id);
+
+    const event = eventsById.get(expectedEventId);
+    assert.ok(event, `missing canonical market event ${expectedEventId}`);
+
+    if (item.id === "leave") {
+      assert.ok(
+        event.actions?.some((action) => action.type === "closeBuilding"),
+        "market leave should stay closeBuilding"
+      );
+      continue;
+    }
+
+    const launchFlowAction = event.actions?.find(
+      (action) => action.type === "launchFlow"
+    );
+    assert.ok(
+      launchFlowAction,
+      `market ${item.id} should launch canonical flow`
+    );
+    assert.equal(
+      launchFlowAction.ownerContext.ownerId,
+      "house.template.market"
+    );
+    assert.equal(
+      launchFlowAction.flowId,
+      `flow.building.template.house.market.${item.id}`
+    );
+  }
+});
+
+nodeTest("zhuyuanzhang tea house tea talk intel and leave routes use canonical template ids while keeping live payload anchors", () => {
+  const packRoot = path.join(
+    process.cwd(),
+    "src/content/scenario-packs/zhuyuanzhang"
+  );
+  const arrangements = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "building-arrangements.json"), "utf8")
+  );
+  const eventBindings = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "event-bindings.json"), "utf8")
+  );
+  const events = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "events.json"), "utf8")
+  );
+  const flowPlayables = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "flow-playables.json"), "utf8")
+  );
+
+  const teaHouseActionItems = [];
+  for (const arrangement of arrangements) {
+    if (!arrangement.buildingId.endsWith(".tea_house")) {
+      continue;
+    }
+    for (const container of arrangement.containers ?? []) {
+      if (container.type !== "action-menu") {
+        continue;
+      }
+      for (const item of container.items ?? []) {
+        if (
+          item.id !== "tea" &&
+          item.id !== "talk" &&
+          item.id !== "intel" &&
+          item.id !== "leave"
+        ) {
+          continue;
+        }
+        teaHouseActionItems.push({ arrangement, container, item });
+      }
+    }
+  }
+
+  assert.equal(teaHouseActionItems.length, 84);
+  const eventsById = new Map(events.map((event) => [event.id, event]));
+  const flowsById = new Map(flowPlayables.map((flow) => [flow.id, flow]));
+  const bindingsByArrangementItem = new Map();
+
+  for (const binding of eventBindings) {
+    if (
+      binding.trigger?.action !== "building-container-item-action" ||
+      (binding.trigger?.extra?.itemId !== "tea" &&
+        binding.trigger?.extra?.itemId !== "talk" &&
+        binding.trigger?.extra?.itemId !== "intel" &&
+        binding.trigger?.extra?.itemId !== "leave")
+    ) {
+      continue;
+    }
+    if (!binding.id.includes(".tea_house.")) {
+      continue;
+    }
+    const key = [
+      binding.trigger.extra?.arrangementId ?? "",
+      binding.trigger.extra?.containerId ?? "",
+      binding.trigger.extra?.itemId ?? "",
+    ].join("::");
+    bindingsByArrangementItem.set(key, binding);
+  }
+
+  assert.equal(
+    events.filter((event) =>
+      /^event\.building\.house\.[^.]+\.tea_house\.(tea|talk|intel|leave)$/.test(
+        event.id
+      )
+    ).length,
+    0,
+    "retired city-scoped tea house event ids should be removed from pack truth"
+  );
+  assert.equal(
+    flowPlayables.filter((flow) =>
+      /^flow\.building\.house\.[^.]+\.tea_house\.(tea|talk|intel)$/.test(
+        flow.id
+      )
+    ).length,
+    0,
+    "retired city-scoped tea house flow ids should be removed from pack truth"
+  );
+  assert.ok(eventsById.has("event.building.template.house.tea_house.tea"));
+  assert.ok(eventsById.has("event.building.template.house.tea_house.talk"));
+  assert.ok(eventsById.has("event.building.template.house.tea_house.intel"));
+  assert.ok(eventsById.has("event.building.template.house.tea_house.leave"));
+  assert.ok(flowsById.has("flow.building.template.house.tea_house.tea"));
+  assert.ok(flowsById.has("flow.building.template.house.tea_house.talk"));
+  assert.ok(flowsById.has("flow.building.template.house.tea_house.intel"));
+
+  for (const { arrangement, container, item } of teaHouseActionItems) {
+    const expectedEventId = `event.building.template.house.tea_house.${item.id}`;
+    assert.equal(item.eventId, expectedEventId);
+
+    const binding = bindingsByArrangementItem.get(
+      [arrangement.id, container.id, item.id].join("::")
+    );
+    assert.ok(
+      binding,
+      `missing tea house binding for ${arrangement.id}/${item.id}`
+    );
+    assert.equal(binding.eventId, expectedEventId);
+    assert.equal(binding.owner.id, "house.template.tea_house");
+    assert.equal(binding.trigger.extra?.arrangementId, arrangement.id);
+    assert.equal(binding.trigger.extra?.containerId, container.id);
+    assert.equal(binding.trigger.extra?.itemId, item.id);
+
+    const event = eventsById.get(expectedEventId);
+    assert.ok(event, `missing canonical tea house event ${expectedEventId}`);
+
+    if (item.id === "leave") {
+      assert.ok(
+        event.actions?.some((action) => action.type === "closeBuilding"),
+        "tea house leave should stay closeBuilding"
+      );
+      continue;
+    }
+
+    const launchFlowAction = event.actions?.find(
+      (action) => action.type === "launchFlow"
+    );
+    assert.ok(
+      launchFlowAction,
+      `tea house ${item.id} should launch canonical flow`
+    );
+    assert.equal(
+      launchFlowAction.ownerContext.ownerId,
+      "house.template.tea_house"
+    );
+    assert.equal(
+      launchFlowAction.flowId,
+      `flow.building.template.house.tea_house.${item.id}`
+    );
+  }
+});
+
+nodeTest("zhuyuanzhang leader residence review and leave routes use canonical template ids while keeping live payload anchors", () => {
+  const packRoot = path.join(
+    process.cwd(),
+    "src/content/scenario-packs/zhuyuanzhang"
+  );
+  const arrangements = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "building-arrangements.json"), "utf8")
+  );
+  const eventBindings = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "event-bindings.json"), "utf8")
+  );
+  const events = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "events.json"), "utf8")
+  );
+  const flowPlayables = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "flow-playables.json"), "utf8")
+  );
+
+  const leaderResidenceActionItems = [];
+  for (const arrangement of arrangements) {
+    if (!arrangement.buildingId.endsWith(".leader_residence")) {
+      continue;
+    }
+    for (const container of arrangement.containers ?? []) {
+      if (container.type !== "action-menu") {
+        continue;
+      }
+      for (const item of container.items ?? []) {
+        if (item.id !== "review" && item.id !== "leave") {
+          continue;
+        }
+        leaderResidenceActionItems.push({ arrangement, container, item });
+      }
+    }
+  }
+
+  assert.equal(leaderResidenceActionItems.length, 42);
+  const eventsById = new Map(events.map((event) => [event.id, event]));
+  const flowsById = new Map(flowPlayables.map((flow) => [flow.id, flow]));
+  const bindingsByArrangementItem = new Map();
+
+  for (const binding of eventBindings) {
+    if (
+      binding.trigger?.action !== "building-container-item-action" ||
+      (binding.trigger?.extra?.itemId !== "review" &&
+        binding.trigger?.extra?.itemId !== "leave")
+    ) {
+      continue;
+    }
+    if (!binding.id.includes(".leader_residence.")) {
+      continue;
+    }
+    const key = [
+      binding.trigger.extra?.arrangementId ?? "",
+      binding.trigger.extra?.containerId ?? "",
+      binding.trigger.extra?.itemId ?? "",
+    ].join("::");
+    bindingsByArrangementItem.set(key, binding);
+  }
+
+  assert.equal(
+    events.filter((event) =>
+      /^event\.building\.house\.[^.]+\.leader_residence\.(review|leave)$/.test(
+        event.id
+      )
+    ).length,
+    0,
+    "retired city-scoped leader residence event ids should be removed from pack truth"
+  );
+  assert.equal(
+    flowPlayables.filter((flow) =>
+      /^flow\.building\.house\.[^.]+\.leader_residence\.review$/.test(flow.id)
+    ).length,
+    0,
+    "retired city-scoped leader residence flow ids should be removed from pack truth"
+  );
+  assert.ok(
+    eventsById.has("event.building.template.house.leader_residence.review")
+  );
+  assert.ok(
+    eventsById.has("event.building.template.house.leader_residence.leave")
+  );
+  assert.ok(
+    flowsById.has("flow.building.template.house.leader_residence.review")
+  );
+
+  for (const { arrangement, container, item } of leaderResidenceActionItems) {
+    const expectedEventId = `event.building.template.house.leader_residence.${item.id}`;
+    assert.equal(item.eventId, expectedEventId);
+
+    const binding = bindingsByArrangementItem.get(
+      [arrangement.id, container.id, item.id].join("::")
+    );
+    assert.ok(
+      binding,
+      `missing leader residence binding for ${arrangement.id}/${item.id}`
+    );
+    assert.equal(binding.eventId, expectedEventId);
+    assert.equal(binding.owner.id, "house.template.leader_residence");
+    assert.equal(binding.trigger.extra?.arrangementId, arrangement.id);
+    assert.equal(binding.trigger.extra?.containerId, container.id);
+    assert.equal(binding.trigger.extra?.itemId, item.id);
+
+    const event = eventsById.get(expectedEventId);
+    assert.ok(
+      event,
+      `missing canonical leader residence event ${expectedEventId}`
+    );
+
+    if (item.id === "leave") {
+      assert.ok(
+        event.actions?.some((action) => action.type === "closeBuilding"),
+        "leader residence leave should stay closeBuilding"
+      );
+      continue;
+    }
+
+    const launchFlowAction = event.actions?.find(
+      (action) => action.type === "launchFlow"
+    );
+    assert.ok(
+      launchFlowAction,
+      `leader residence ${item.id} should launch canonical flow`
+    );
+    assert.equal(
+      launchFlowAction.ownerContext.ownerId,
+      "house.template.leader_residence"
+    );
+    assert.equal(
+      launchFlowAction.flowId,
+      "flow.building.template.house.leader_residence.review"
+    );
+  }
+});
+
+nodeTest("zhuyuanzhang inn drink gamble talk work and leave routes use canonical template ids while keeping live payload anchors", () => {
+  const packRoot = path.join(
+    process.cwd(),
+    "src/content/scenario-packs/zhuyuanzhang"
+  );
+  const arrangements = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "building-arrangements.json"), "utf8")
+  );
+  const eventBindings = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "event-bindings.json"), "utf8")
+  );
+  const events = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "events.json"), "utf8")
+  );
+  const flowPlayables = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "flow-playables.json"), "utf8")
+  );
+
+  const innActionItems = [];
+  for (const arrangement of arrangements) {
+    if (!arrangement.buildingId.endsWith(".inn")) {
+      continue;
+    }
+    for (const container of arrangement.containers ?? []) {
+      if (container.type !== "action-menu") {
+        continue;
+      }
+      for (const item of container.items ?? []) {
+        if (
+          item.id !== "drink" &&
+          item.id !== "gamble" &&
+          item.id !== "talk" &&
+          item.id !== "work" &&
+          item.id !== "leave"
+        ) {
+          continue;
+        }
+        innActionItems.push({ arrangement, container, item });
+      }
+    }
+  }
+
+  assert.equal(innActionItems.length, 105);
+  const eventsById = new Map(events.map((event) => [event.id, event]));
+  const flowsById = new Map(flowPlayables.map((flow) => [flow.id, flow]));
+  const bindingsByArrangementItem = new Map();
+
+  for (const binding of eventBindings) {
+    if (
+      binding.trigger?.action !== "building-container-item-action" ||
+      (binding.trigger?.extra?.itemId !== "drink" &&
+        binding.trigger?.extra?.itemId !== "gamble" &&
+        binding.trigger?.extra?.itemId !== "talk" &&
+        binding.trigger?.extra?.itemId !== "work" &&
+        binding.trigger?.extra?.itemId !== "leave")
+    ) {
+      continue;
+    }
+    if (!binding.id.includes(".inn.")) {
+      continue;
+    }
+    const key = [
+      binding.trigger.extra?.arrangementId ?? "",
+      binding.trigger.extra?.containerId ?? "",
+      binding.trigger.extra?.itemId ?? "",
+    ].join("::");
+    bindingsByArrangementItem.set(key, binding);
+  }
+
+  assert.equal(
+    events.filter((event) =>
+      /^event\.building\.house\.[^.]+\.inn\.(drink|gamble|talk|work|leave)$/.test(
+        event.id
+      )
+    ).length,
+    0,
+    "retired city-scoped inn event ids should be removed from pack truth"
+  );
+  assert.equal(
+    flowPlayables.filter((flow) =>
+      /^flow\.building\.house\.[^.]+\.inn\.(drink|gamble|talk|work)$/.test(
+        flow.id
+      )
+    ).length,
+    0,
+    "retired city-scoped inn flow ids should be removed from pack truth"
+  );
+  assert.ok(eventsById.has("event.building.template.house.inn.drink"));
+  assert.ok(eventsById.has("event.building.template.house.inn.gamble"));
+  assert.ok(eventsById.has("event.building.template.house.inn.talk"));
+  assert.ok(eventsById.has("event.building.template.house.inn.work"));
+  assert.ok(eventsById.has("event.building.template.house.inn.leave"));
+  assert.ok(flowsById.has("flow.building.template.house.inn.drink"));
+  assert.ok(flowsById.has("flow.building.template.house.inn.gamble"));
+  assert.ok(flowsById.has("flow.building.template.house.inn.talk"));
+  assert.ok(flowsById.has("flow.building.template.house.inn.work"));
+
+  for (const { arrangement, container, item } of innActionItems) {
+    const expectedEventId = `event.building.template.house.inn.${item.id}`;
+    assert.equal(item.eventId, expectedEventId);
+
+    const binding = bindingsByArrangementItem.get(
+      [arrangement.id, container.id, item.id].join("::")
+    );
+    assert.ok(binding, `missing inn binding for ${arrangement.id}/${item.id}`);
+    assert.equal(binding.eventId, expectedEventId);
+    assert.equal(binding.owner.id, "house.template.inn");
+    assert.equal(binding.trigger.extra?.arrangementId, arrangement.id);
+    assert.equal(binding.trigger.extra?.containerId, container.id);
+    assert.equal(binding.trigger.extra?.itemId, item.id);
+
+    const event = eventsById.get(expectedEventId);
+    assert.ok(event, `missing canonical inn event ${expectedEventId}`);
+
+    if (item.id === "leave") {
+      assert.ok(
+        event.actions?.some((action) => action.type === "closeBuilding"),
+        "inn leave should stay closeBuilding"
+      );
+      continue;
+    }
+
+    const launchFlowAction = event.actions?.find(
+      (action) => action.type === "launchFlow"
+    );
+    assert.ok(launchFlowAction, `inn ${item.id} should launch canonical flow`);
+    assert.equal(launchFlowAction.ownerContext.ownerId, "house.template.inn");
+    assert.equal(
+      launchFlowAction.flowId,
+      `flow.building.template.house.inn.${item.id}`
+    );
+  }
+});
+
+nodeTest("zhuyuanzhang temple standard routes use canonical template ids while preserved kulan exceptions stay city-scoped", () => {
+  const packRoot = path.join(
+    process.cwd(),
+    "src/content/scenario-packs/zhuyuanzhang"
+  );
+  const arrangements = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "building-arrangements.json"), "utf8")
+  );
+  const eventBindings = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "event-bindings.json"), "utf8")
+  );
+  const events = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "events.json"), "utf8")
+  );
+  const flowPlayables = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "flow-playables.json"), "utf8")
+  );
+
+  const standardTempleActionItems = [];
+  const preservedKulanItems = [];
+  for (const arrangement of arrangements) {
+    if (!arrangement.buildingId.endsWith(".temple")) {
+      continue;
+    }
+    for (const container of arrangement.containers ?? []) {
+      if (container.type !== "action-menu") {
+        continue;
+      }
+      for (const item of container.items ?? []) {
+        const record = { arrangement, container, item };
+        if (
+          item.id === "review" ||
+          item.id === "donate" ||
+          item.id === "leave" ||
+          (item.id === "work" && !arrangement.buildingId.startsWith("house.kulan."))
+        ) {
+          standardTempleActionItems.push(record);
+          continue;
+        }
+        if (
+          arrangement.buildingId === "house.kulan.temple" &&
+          (item.id === "copy-scripture" ||
+            item.id === "sweep-courtyard" ||
+            item.id === "carry-water")
+        ) {
+          preservedKulanItems.push(record);
+        }
+      }
+    }
+  }
+
+  assert.equal(standardTempleActionItems.length, 83);
+  assert.equal(preservedKulanItems.length, 3);
+  const eventsById = new Map(events.map((event) => [event.id, event]));
+  const flowsById = new Map(flowPlayables.map((flow) => [flow.id, flow]));
+  const bindingsByArrangementItem = new Map();
+
+  for (const binding of eventBindings) {
+    if (
+      binding.trigger?.action !== "building-container-item-action" ||
+      !binding.id.includes(".temple.")
+    ) {
+      continue;
+    }
+    const key = [
+      binding.trigger.extra?.arrangementId ?? "",
+      binding.trigger.extra?.containerId ?? "",
+      binding.trigger.extra?.itemId ?? "",
+    ].join("::");
+    bindingsByArrangementItem.set(key, binding);
+  }
+
+  assert.equal(
+    events.filter((event) =>
+      /^event\.building\.house\.[^.]+\.temple\.(review|donate|leave)$/.test(
+        event.id
+      )
+    ).length,
+    0,
+    "retired city-scoped temple review/donate/leave event ids should be removed from pack truth"
+  );
+  assert.equal(
+    events.filter((event) =>
+      /^event\.building\.house\.[^.]+\.temple\.work$/.test(event.id)
+    ).length,
+    1,
+    "only the preserved kulan temple work event should remain city-scoped"
+  );
+  assert.equal(
+    flowPlayables.filter((flow) =>
+      /^flow\.building\.house\.[^.]+\.temple\.(review|donate)$/.test(flow.id)
+    ).length,
+    0,
+    "retired city-scoped temple review/donate flow ids should be removed from pack truth"
+  );
+  assert.equal(
+    flowPlayables.filter((flow) =>
+      /^flow\.building\.house\.[^.]+\.temple\.work$/.test(flow.id)
+    ).length,
+    1,
+    "only the preserved kulan temple work flow should remain city-scoped"
+  );
+  assert.ok(eventsById.has("event.building.template.house.temple.review"));
+  assert.ok(eventsById.has("event.building.template.house.temple.work"));
+  assert.ok(eventsById.has("event.building.template.house.temple.donate"));
+  assert.ok(eventsById.has("event.building.template.house.temple.leave"));
+  assert.ok(flowsById.has("flow.building.template.house.temple.review"));
+  assert.ok(flowsById.has("flow.building.template.house.temple.work"));
+  assert.ok(flowsById.has("flow.building.template.house.temple.donate"));
+  assert.ok(eventsById.has("event.building.house.kulan.temple.work"));
+  assert.ok(eventsById.has("event.building.house.kulan.temple.copy_scripture"));
+  assert.ok(eventsById.has("event.building.house.kulan.temple.sweep_courtyard"));
+  assert.ok(eventsById.has("event.building.house.kulan.temple.carry_water"));
+  assert.ok(flowsById.has("flow.building.house.kulan.temple.work"));
+  assert.ok(flowsById.has("flow.building.house.kulan.temple.sweep_courtyard"));
+  assert.ok(flowsById.has("flow.building.house.kulan.temple.carry_water"));
+
+  for (const { arrangement, container, item } of standardTempleActionItems) {
+    const expectedEventId = `event.building.template.house.temple.${item.id}`;
+    assert.equal(item.eventId, expectedEventId);
+
+    const binding = bindingsByArrangementItem.get(
+      [arrangement.id, container.id, item.id].join("::")
+    );
+    assert.ok(
+      binding,
+      `missing temple binding for ${arrangement.id}/${item.id}`
+    );
+    assert.equal(binding.eventId, expectedEventId);
+    assert.equal(binding.owner.id, "house.template.temple");
+    assert.equal(binding.trigger.extra?.arrangementId, arrangement.id);
+    assert.equal(binding.trigger.extra?.containerId, container.id);
+    assert.equal(binding.trigger.extra?.itemId, item.id);
+
+    const event = eventsById.get(expectedEventId);
+    assert.ok(event, `missing canonical temple event ${expectedEventId}`);
+
+    if (item.id === "leave") {
+      assert.ok(
+        event.actions?.some((action) => action.type === "closeBuilding"),
+        "temple leave should stay closeBuilding"
+      );
+      continue;
+    }
+
+    const launchFlowAction = event.actions?.find(
+      (action) => action.type === "launchFlow"
+    );
+    assert.ok(
+      launchFlowAction,
+      `temple ${item.id} should launch canonical flow`
+    );
+    assert.equal(
+      launchFlowAction.ownerContext.ownerId,
+      "house.template.temple"
+    );
+    assert.equal(
+      launchFlowAction.flowId,
+      `flow.building.template.house.temple.${item.id}`
+    );
+  }
+
+  for (const { arrangement, container, item } of preservedKulanItems) {
+    const binding = bindingsByArrangementItem.get(
+      [arrangement.id, container.id, item.id].join("::")
+    );
+    assert.ok(
+      binding,
+      `missing preserved kulan temple binding for ${arrangement.id}/${item.id}`
+    );
+    const normalizedItemId = item.id.replace(/-/g, "_");
+    assert.equal(
+      binding.eventId,
+      `event.building.house.kulan.temple.${normalizedItemId}`
+    );
+    assert.equal(binding.owner.id, "house.kulan.temple");
+    assert.equal(item.eventId, binding.eventId);
+  }
+
+  const preservedKulanWorkBinding = bindingsByArrangementItem.get(
+    [
+      "arrangement.city.kulan.house.kulan.temple",
+      "house.kulan.temple.actions",
+      "work",
+    ].join("::")
+  );
+  assert.ok(
+    preservedKulanWorkBinding,
+    "preserved kulan temple work binding should remain recorded"
+  );
+  assert.equal(
+    preservedKulanWorkBinding.eventId,
+    "event.building.house.kulan.temple.work"
+  );
+  assert.equal(preservedKulanWorkBinding.owner.id, "house.kulan.temple");
 });
 
 test("zhuyuanzhang kulan building-enter routes stay fully authored in pack data", () => {
@@ -30557,6 +32009,72 @@ test("flow playable reduces a command and settles through shared handoff", () =>
   assert.equal(settled.settlement?.handoff.type, "resume-owner");
   assert.equal(settled.settlement?.handoff.ownerId, "building.temple");
   assert.deepEqual(settled.settlement?.factResult.metrics, { rested: true });
+});
+
+test("flow playable settlement preserves canonical home template owner id in shared handoff", () => {
+  const {
+    createLaunchPlayableRequest,
+    createPlayableActionRequest,
+    runPlayableRuntime,
+  } = require("../.test-dist/core/runtime/playable-runtime.js");
+  const flowDefinition = {
+    id: "building-flow",
+    title: "Rest",
+    initialNodeId: "node.start",
+    nodes: [
+      {
+        id: "node.start",
+        type: "text",
+        text: "Rest here.",
+        nextNodeId: "node.finish",
+      },
+      {
+        id: "node.finish",
+        type: "complete",
+        outcome: "success",
+        metrics: { rested: true },
+      },
+    ],
+  };
+  const launched = runPlayableRuntime({
+    state: createRuntimeState({
+      world: {
+        ...createBaseState().world,
+        currentHouseId: "home.ningbo",
+      },
+    }),
+    request: createLaunchPlayableRequest("building-flow", {
+      ownerContext: {
+        ownerKind: "house",
+        ownerId: "home.template",
+        returnPolicy: "resume-owner",
+      },
+    }),
+    characterDefinitions: prototypeCharacters,
+    flowPlayablesById: {
+      [flowDefinition.id]: flowDefinition,
+    },
+  });
+
+  assert.equal(
+    launched.state.core.runtime.playableSession?.ownerContext.ownerId,
+    "home.template"
+  );
+
+  const settled = runPlayableRuntime({
+    state: launched.state,
+    request: createPlayableActionRequest("building-flow", "confirm"),
+    characterDefinitions: prototypeCharacters,
+    flowPlayablesById: {
+      [flowDefinition.id]: flowDefinition,
+    },
+  });
+
+  assert.equal(settled.handled, true);
+  assert.equal(settled.state.core.runtime.playableSession, null);
+  assert.equal(settled.settlement?.handoff.type, "resume-owner");
+  assert.equal(settled.settlement?.handoff.ownerId, "home.template");
+  assert.equal(settled.state.core.world.currentHouseId, "home.ningbo");
 });
 
 test("dispatchCurrentFlowAction routes activity definitions into shared playable runtime", () => {

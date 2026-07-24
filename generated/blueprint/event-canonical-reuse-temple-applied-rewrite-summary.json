@@ -1,0 +1,46 @@
+{
+  "generatedAt": "2026-07-24T03:10:00.585Z",
+  "family": "temple",
+  "canonicalBuildingId": "house.template.temple",
+  "canonicalEventIds": [
+    "event.building.template.house.temple.review",
+    "event.building.template.house.temple.work",
+    "event.building.template.house.temple.donate",
+    "event.building.template.house.temple.leave"
+  ],
+  "canonicalFlowIds": [
+    "flow.building.template.house.temple.review",
+    "flow.building.template.house.temple.work",
+    "flow.building.template.house.temple.donate"
+  ],
+  "preservedCityScopedEventIds": [
+    "event.building.house.kulan.temple.work",
+    "event.building.house.kulan.temple.copy_scripture",
+    "event.building.house.kulan.temple.sweep_courtyard",
+    "event.building.house.kulan.temple.carry_water"
+  ],
+  "preservedCityScopedFlowIds": [
+    "flow.building.house.kulan.temple.work",
+    "flow.building.house.kulan.temple.sweep_courtyard",
+    "flow.building.house.kulan.temple.carry_water"
+  ],
+  "counts": {
+    "arrangementActionItemsRewritten": 83,
+    "bindingsRewritten": 83,
+    "sourceEventsCollapsed": 83,
+    "sourceFlowsCollapsed": 62
+  },
+  "payloadAnchorPolicy": {
+    "arrangementId": "preserved-live",
+    "containerId": "preserved-live",
+    "itemId": "preserved-live"
+  },
+  "preservedExceptions": {
+    "kulanTempleWorkBinding": "binding.building.house.kulan.temple.work.container-item",
+    "kulanTempleSpecialItems": [
+      "copy-scripture",
+      "sweep-courtyard",
+      "carry-water"
+    ]
+  }
+}

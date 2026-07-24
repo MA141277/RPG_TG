@@ -1,0 +1,84 @@
+{
+  "generatedAt": "2026-07-24T03:12:48.173Z",
+  "versionId": "target.event-follow-up-routing-settlement-and-canonical-reuse-convergence",
+  "queueId": "queue.event-and-building-instance-canonical-reuse",
+  "activeTask": "task.event-and-building-instance-canonical-reuse.reference-rewrite-and-guard-baseline",
+  "status": "post-home-next-slice-selection",
+  "appliedSlices": {
+    "completed": [
+      "home",
+      "leader_residence",
+      "temple",
+      "keep",
+      "tea_house",
+      "market",
+      "grain_shop",
+      "medicine_house",
+      "inn"
+    ],
+    "summaryArtifacts": [
+      {
+        "family": "home",
+        "path": "generated/blueprint/event-canonical-reuse-home-applied-rewrite-summary.json"
+      },
+      {
+        "family": "leader_residence",
+        "path": "generated/blueprint/event-canonical-reuse-leader_residence-applied-rewrite-summary.json"
+      },
+      {
+        "family": "temple",
+        "path": "generated/blueprint/event-canonical-reuse-temple-applied-rewrite-summary.json"
+      },
+      {
+        "family": "keep",
+        "path": "generated/blueprint/event-canonical-reuse-keep-applied-rewrite-summary.json"
+      },
+      {
+        "family": "tea_house",
+        "path": "generated/blueprint/event-canonical-reuse-tea_house-applied-rewrite-summary.json"
+      },
+      {
+        "family": "market",
+        "path": "generated/blueprint/event-canonical-reuse-market-applied-rewrite-summary.json"
+      },
+      {
+        "family": "grain_shop",
+        "path": "generated/blueprint/event-canonical-reuse-grain_shop-applied-rewrite-summary.json"
+      },
+      {
+        "family": "medicine_house",
+        "path": "generated/blueprint/event-canonical-reuse-medicine_house-applied-rewrite-summary.json"
+      },
+      {
+        "family": "inn",
+        "path": "generated/blueprint/event-canonical-reuse-inn-applied-rewrite-summary.json"
+      }
+    ]
+  },
+  "historicalArtifacts": [
+    {
+      "path": "generated/blueprint/event-canonical-reuse-source-rewrite-preview.json",
+      "status": "historical-pre-home-applied",
+      "reason": "It still describes the pre-home readiness partition and remains valid as pre-home evidence only."
+    },
+    {
+      "path": "generated/blueprint/event-canonical-reuse-home-implementation-slice.json",
+      "status": "historical-applied",
+      "reason": "Its selected implementation slice is complete and should no longer be treated as the pending next slice."
+    },
+    {
+      "path": "generated/blueprint/event-canonical-reuse-flow-preflight.json",
+      "status": "historical-pre-home-applied",
+      "reason": "It remains the audited launchFlow evidence for the completed home slice, not the live next-family selector."
+    }
+  ],
+  "candidates": [],
+  "selectedNextSlice": {
+    "family": null,
+    "type": "none",
+    "rationale": [
+      "No remaining non-home family candidates are left in the current selector."
+    ],
+    "deterministicTieBreak": "candidate priority sorts by arrangement deviation count, launchPlayable anomaly count, flow shape variants, launchFlow group count, and then canonical family order."
+  }
+}

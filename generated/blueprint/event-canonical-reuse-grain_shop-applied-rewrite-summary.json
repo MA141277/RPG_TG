@@ -1,0 +1,37 @@
+{
+  "artifactId": "event-canonical-reuse-grain_shop-applied-rewrite-summary",
+  "generatedAt": "2026-07-24",
+  "status": "applied",
+  "family": "grain_shop",
+  "canonicalTargets": {
+    "eventIds": [
+      "event.building.template.house.grain_shop.trade",
+      "event.building.template.house.grain_shop.accounting",
+      "event.building.template.house.grain_shop.leave"
+    ],
+    "flowIds": [
+      "flow.building.template.house.grain_shop.trade",
+      "flow.building.template.house.grain_shop.accounting"
+    ],
+    "bindingOwnerId": "house.template.grain_shop"
+  },
+  "appliedCounts": {
+    "arrangementActionItemsRewritten": 63,
+    "bindingsRewritten": 63,
+    "sourceEventsCollapsed": 63,
+    "sourceFlowsCollapsed": 42
+  },
+  "preservedLivePayloadAnchors": [
+    "trigger.extra.arrangementId",
+    "trigger.extra.containerId",
+    "trigger.extra.itemId"
+  ],
+  "productionResidue": {
+    "cityScopedGrainShopEventIdsRemaining": 0,
+    "cityScopedGrainShopFlowIdsRemaining": 0
+  },
+  "remainingReferenceClasses": [
+    "generated/blueprint historical preflight artifacts",
+    "synthetic runtime test fixtures"
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "generatedAt": "2026-07-24T03:01:01.963Z",
+  "family": "leader_residence",
+  "canonicalBuildingId": "house.template.leader_residence",
+  "canonicalEventIds": [
+    "event.building.template.house.leader_residence.review",
+    "event.building.template.house.leader_residence.leave"
+  ],
+  "canonicalFlowIds": [
+    "flow.building.template.house.leader_residence.review"
+  ],
+  "counts": {
+    "arrangementActionItemsRewritten": 42,
+    "bindingsRewritten": 42,
+    "sourceEventsCollapsed": 42,
+    "sourceFlowsCollapsed": 21
+  },
+  "payloadAnchorPolicy": {
+    "arrangementId": "preserved-live",
+    "containerId": "preserved-live",
+    "itemId": "preserved-live"
+  }
+}
