@@ -5,6 +5,48 @@
 `docs/change-log.md` 的正式定位是“历史记录 + 人类可读摘要”。
 它不是当前 Blueprint / legacy superpowers 治理的 live execution truth，不作为 resume entry、promotion gate、closeout gate 或固定同步门。
 
+## 2026-07-24 Same-Name Host Canonical Merge And Legacy Arrangement Tolerance
+
+### Changed
+- Rewrote [src/content/scenario-packs/zhuyuanzhang/houses.json](/D:/workspace/project/RPG_TG/src/content/scenario-packs/zhuyuanzhang/houses.json:1), [src/content/scenario-packs/zhuyuanzhang/cities.json](/D:/workspace/project/RPG_TG/src/content/scenario-packs/zhuyuanzhang/cities.json:1), [src/content/scenario-packs/zhuyuanzhang/city-entries.json](/D:/workspace/project/RPG_TG/src/content/scenario-packs/zhuyuanzhang/city-entries.json:1), [src/content/scenario-packs/zhuyuanzhang/characters.json](/D:/workspace/project/RPG_TG/src/content/scenario-packs/zhuyuanzhang/characters.json:1), and [src/content/scenario-packs/zhuyuanzhang/location-access.json](/D:/workspace/project/RPG_TG/src/content/scenario-packs/zhuyuanzhang/location-access.json:1) so repeated-name building hosts now merge onto canonical ids such as `home.template` and `house.template.*`, while unique `house.kulan.temple` remains preserved.
+- Updated [src/application/building/building-module-entry.ts](/D:/workspace/project/RPG_TG/src/application/building/building-module-entry.ts:1), [src/core/runtime/navigation-runtime.ts](/D:/workspace/project/RPG_TG/src/core/runtime/navigation-runtime.ts:1), [src/application/runtime/navigation-time-follow-up.ts](/D:/workspace/project/RPG_TG/src/application/runtime/navigation-time-follow-up.ts:1), and [src/main.ts](/D:/workspace/project/RPG_TG/src/main.ts:1) to accept canonical host ids against same-family legacy `buildingArrangements[].buildingId` rows instead of requiring exact city-scoped host-id equality.
+- Added focused host-only regression coverage in [tests/robustness.test.cjs](/D:/workspace/project/RPG_TG/tests/robustness.test.cjs:31556) proving that same-name hosts converge on canonical ids across direct host-reference surfaces, plus canonical-vs-legacy arrangement matching coverage for building-stage and navigation entry seams.
+
+### Impact
+- Same-name building host merge is now judged by creator-facing name equality rather than legacy host id or event-binding drift, matching the narrowed queue scope.
+- This queue no longer treats retained city-scoped arrangement rows as a completion blocker; canonical host ids remain the only direct source/runtime truth while legacy arrangement ids survive temporarily as authored input anchors.
+
+## 2026-07-24 Canonical Host Placement City Scoping Guard
+
+### Changed
+- Adjusted [src/application/city/city-building-placement-resolver.ts](/D:/workspace/project/RPG_TG/src/application/city/city-building-placement-resolver.ts:122) so city-entry placement views no longer forward a shared canonical house's raw `cityId` into city-scoped consumers. When a repeated-name building host is reused across multiple cities, `placement.house.cityId` now follows `cityEntry.cityId`.
+- Added focused coverage in [tests/robustness.test.cjs](/D:/workspace/project/RPG_TG/tests/robustness.test.cjs:14703) for the shared-canonical-house placement path, proving that city NPC lookup stays on the active entry city instead of leaking the first canonical host city's pool.
+
+### Impact
+- Same-display-name host canonicalization can continue using one shared host id without breaking city placement NPC lookup for later cities.
+- This keeps the active queue on direct host-id rewrite and consumer alignment, instead of reintroducing duplicate real house records as a workaround.
+
+## 2026-07-24 Canonical Host Council Reminder Speaker Projection
+
+### Changed
+- Updated [src/application/runtime/navigation-time-follow-up.ts](/D:/workspace/project/RPG_TG/src/application/runtime/navigation-time-follow-up.ts:24) so council-arrival reminders may consume `buildingArrangements` and project `speakerCharacterId` from the arrangement matched by `currentCityId + canonical buildingId`, instead of always reusing the shared canonical house record's `defaultCharacterId`.
+- Updated [src/main.ts](/D:/workspace/project/RPG_TG/src/main.ts:833) so the council-priority follow-up path now passes `activeContentContext.buildingArrangements` into that reminder projection seam.
+- Added focused coverage in [tests/robustness.test.cjs](/D:/workspace/project/RPG_TG/tests/robustness.test.cjs:27384) proving that a council-arrival reminder can keep canonical `targetHouseId = house.template.keep` while switching the default speaker to the current city's arrangement-level `primaryNpcId`.
+
+### Impact
+- Same-display-name host canonicalization no longer forces council-arrival reminders to speak with the first canonical host record's NPC across every city.
+- The queue keeps canonical house id routing intact while moving city-local speaker truth onto an already-existing arrangement seam instead of reintroducing duplicate real house records.
+
+## 2026-07-24 Canonical Host Council Refusal Selector Projection
+
+### Changed
+- Updated [src/main.ts](/D:/workspace/project/RPG_TG/src/main.ts:756) so `getCouncilPriorityHouseDefinition()` no longer stops at selecting the shared canonical house record by `moduleId`; it now projects `cityId` plus `defaultCharacterId` from `activeContentContext.buildingArrangements` when `currentCityId + canonical buildingId` yields a city-local `primaryNpcId`.
+- Added focused source coverage in [tests/robustness.test.cjs](/D:/workspace/project/RPG_TG/tests/robustness.test.cjs:27480) proving that the main-shell council-priority selector reads `activeContentContext.buildingArrangements` and rewrites `defaultCharacterId` from the city-local arrangement seam for canonical shared houses.
+
+### Impact
+- Council-priority refusal consumers now inherit the same canonical-house-id / city-local-speaker rule already used by council-arrival reminders, so repeated cities sharing one canonical host id no longer drift back to the first canonical host record's speaker.
+- The remaining missing-arrangement refusal drift is now isolated to a separate bounded consumer instead of leaking through the normal council-priority selector path.
+
 ## 2026-07-24 Runtime Follow-Up Transport Retirement
 
 ## 2026-07-24 Settlement Result Shape Freeze And Guard Alignment
@@ -3627,3 +3669,12 @@
 ## 2026-07-23 Temple Copy Scripture Event Route
 
 - 更新 [src/application/events/event-playable-runtime.ts](/D:/workspace/project/RPG_TG/src/application/events/event-playable-runtime.ts)、[src/content/scenario-packs/zhuyuanzhang/events.json](/D:/workspace/project/RPG_TG/src/content/scenario-packs/zhuyuanzhang/events.json)、[src/content/scenario-packs/zhuyuanzhang/flow-playables.json](/D:/workspace/project/RPG_TG/src/content/scenario-packs/zhuyuanzhang/flow-playables.json) 与 [tests/robustness.test.cjs](/D:/workspace/project/RPG_TG/tests/robustness.test.cjs)，把皇觉寺 `抄经` 从过渡 `flow` 收口为 `event` 直接 `launchPlayable` 到 `activity-qte`，并补齐事件动作 `payload` 透传，保证建筑菜单继续以 event 路由为唯一真值。
+## 2026-07-24 Canonical Host Runtime Materialization Guard
+
+### Changed
+- Updated [src/application/script-editor/city-building-runtime-materializer.ts](/D:/workspace/project/RPG_TG/src/application/script-editor/city-building-runtime-materializer.ts) so mounted building ownership is keyed by `cityId + buildingId` instead of bare `buildingId` during Script Editor runtime-family materialization.
+- Added regression coverage in [tests/city-building-mount-authoring.test.cjs](/D:/workspace/project/RPG_TG/tests/city-building-mount-authoring.test.cjs) for repeated cities sharing one canonical building id, proving that each city's arrangement keeps its own mounted NPC ownership instead of being overwritten by another city's mounted-building row.
+
+### Impact
+- The first same-display-name host canonicalization implementation slice is now safe against cross-city mounted NPC overwrite when repeated-name buildings converge onto one canonical host id.
+- This change is bounded to Script Editor runtime-family materialization and does not yet claim the broader source-pack host-id rewrite or the later full-chain parity queue.

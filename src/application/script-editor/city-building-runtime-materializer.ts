@@ -68,7 +68,9 @@ function materializeBuildingArrangements(
 ): BuildingArrangementDefinition[] {
   const mountedBuildingById = indexMountedBuildings(cities);
   return project.buildingArrangements.map((arrangement) => {
-    const mountedBuilding = mountedBuildingById.get(arrangement.buildingId);
+    const mountedBuilding = mountedBuildingById.get(
+      createMountedBuildingKey(arrangement.cityId, arrangement.buildingId)
+    );
     return {
       id: arrangement.id,
       cityId: arrangement.cityId,
@@ -213,7 +215,9 @@ function materializeHouses(
 ): HouseDefinition[] {
   const mountedBuildingById = indexMountedBuildings(cities);
   return buildings.map((building) => {
-    const mountedBuilding = mountedBuildingById.get(building.id);
+    const mountedBuilding = mountedBuildingById.get(
+      createMountedBuildingKey(building.cityId, building.id)
+    );
     const baseAttributes = building.baseAttributes ?? {
       houseType: "custom",
       characterIds: [],
@@ -492,15 +496,22 @@ function indexMountedBuildings(
       if (mountedBuilding.buildingId.length === 0) {
         continue;
       }
-      mountedBuildingById.set(mountedBuilding.buildingId, {
+      mountedBuildingById.set(
+        createMountedBuildingKey(city.id, mountedBuilding.buildingId),
+        {
         cityId: city.id,
         npcIds: readStringArray(mountedBuilding.npcIds),
         primaryNpcId: mountedBuilding.primaryNpcId,
-      });
+        }
+      );
     }
   }
 
   return mountedBuildingById;
+}
+
+function createMountedBuildingKey(cityId: string, buildingId: string): string {
+  return `${cityId}\u0000${buildingId}`;
 }
 
 function materializeLocationAccess(

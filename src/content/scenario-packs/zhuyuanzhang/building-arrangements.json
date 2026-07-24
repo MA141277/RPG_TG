@@ -231,7 +231,7 @@
   {
     "id": "arrangement.city.kulan.home_001",
     "cityId": "city.kulan",
-    "buildingId": "home_001",
+    "buildingId": "home.template",
     "displayName": "自宅",
     "mountedNpcIds": [
       "char.player"
@@ -1153,7 +1153,7 @@
   {
     "id": "arrangement.city.yingtian.home.yingtian",
     "cityId": "city.yingtian",
-    "buildingId": "home.yingtian",
+    "buildingId": "home.template",
     "displayName": "自宅",
     "mountedNpcIds": [],
     "primaryNpcId": null,
@@ -2037,7 +2037,7 @@
   {
     "id": "arrangement.city.luzhou.home.luzhou",
     "cityId": "city.luzhou",
-    "buildingId": "home.luzhou",
+    "buildingId": "home.template",
     "displayName": "自宅",
     "mountedNpcIds": [],
     "primaryNpcId": null,
@@ -2921,7 +2921,7 @@
   {
     "id": "arrangement.city.anqing.home.anqing",
     "cityId": "city.anqing",
-    "buildingId": "home.anqing",
+    "buildingId": "home.template",
     "displayName": "自宅",
     "mountedNpcIds": [],
     "primaryNpcId": null,
@@ -3808,7 +3808,7 @@
   {
     "id": "arrangement.city.taiping.home.taiping",
     "cityId": "city.taiping",
-    "buildingId": "home.taiping",
+    "buildingId": "home.template",
     "displayName": "自宅",
     "mountedNpcIds": [],
     "primaryNpcId": null,
@@ -4691,7 +4691,7 @@
   {
     "id": "arrangement.city.anfeng.home.anfeng",
     "cityId": "city.anfeng",
-    "buildingId": "home.anfeng",
+    "buildingId": "home.template",
     "displayName": "自宅",
     "mountedNpcIds": [],
     "primaryNpcId": null,
@@ -5576,7 +5576,7 @@
   {
     "id": "arrangement.city.runing.home.runing",
     "cityId": "city.runing",
-    "buildingId": "home.runing",
+    "buildingId": "home.template",
     "displayName": "自宅",
     "mountedNpcIds": [],
     "primaryNpcId": null,
@@ -6460,7 +6460,7 @@
   {
     "id": "arrangement.city.huaian.home.huaian",
     "cityId": "city.huaian",
-    "buildingId": "home.huaian",
+    "buildingId": "home.template",
     "displayName": "自宅",
     "mountedNpcIds": [],
     "primaryNpcId": null,
@@ -7346,7 +7346,7 @@
   {
     "id": "arrangement.city.yangzhou.home.yangzhou",
     "cityId": "city.yangzhou",
-    "buildingId": "home.yangzhou",
+    "buildingId": "home.template",
     "displayName": "自宅",
     "mountedNpcIds": [],
     "primaryNpcId": null,
@@ -8234,7 +8234,7 @@
   {
     "id": "arrangement.city.suzhou.home.suzhou",
     "cityId": "city.suzhou",
-    "buildingId": "home.suzhou",
+    "buildingId": "home.template",
     "displayName": "自宅",
     "mountedNpcIds": [],
     "primaryNpcId": null,
@@ -9122,7 +9122,7 @@
   {
     "id": "arrangement.city.wuchang.home.wuchang",
     "cityId": "city.wuchang",
-    "buildingId": "home.wuchang",
+    "buildingId": "home.template",
     "displayName": "自宅",
     "mountedNpcIds": [],
     "primaryNpcId": null,
@@ -10010,7 +10010,7 @@
   {
     "id": "arrangement.city.nanchang.home.nanchang",
     "cityId": "city.nanchang",
-    "buildingId": "home.nanchang",
+    "buildingId": "home.template",
     "displayName": "自宅",
     "mountedNpcIds": [],
     "primaryNpcId": null,
@@ -10893,7 +10893,7 @@
   {
     "id": "arrangement.city.chongqing.home.chongqing",
     "cityId": "city.chongqing",
-    "buildingId": "home.chongqing",
+    "buildingId": "home.template",
     "displayName": "自宅",
     "mountedNpcIds": [],
     "primaryNpcId": null,
@@ -11777,7 +11777,7 @@
   {
     "id": "arrangement.city.chengdu.home.chengdu",
     "cityId": "city.chengdu",
-    "buildingId": "home.chengdu",
+    "buildingId": "home.template",
     "displayName": "自宅",
     "mountedNpcIds": [],
     "primaryNpcId": null,
@@ -12663,7 +12663,7 @@
   {
     "id": "arrangement.city.ningbo.home.ningbo",
     "cityId": "city.ningbo",
-    "buildingId": "home.ningbo",
+    "buildingId": "home.template",
     "displayName": "自宅",
     "mountedNpcIds": [],
     "primaryNpcId": null,
@@ -13545,7 +13545,7 @@
   {
     "id": "arrangement.city.wenzhou.home.wenzhou",
     "cityId": "city.wenzhou",
-    "buildingId": "home.wenzhou",
+    "buildingId": "home.template",
     "displayName": "自宅",
     "mountedNpcIds": [],
     "primaryNpcId": null,
@@ -14430,7 +14430,7 @@
   {
     "id": "arrangement.city.fuzhou.home.fuzhou",
     "cityId": "city.fuzhou",
-    "buildingId": "home.fuzhou",
+    "buildingId": "home.template",
     "displayName": "自宅",
     "mountedNpcIds": [],
     "primaryNpcId": null,
@@ -15315,7 +15315,7 @@
   {
     "id": "arrangement.city.dadu.home.dadu",
     "cityId": "city.dadu",
-    "buildingId": "home.dadu",
+    "buildingId": "home.template",
     "displayName": "自宅",
     "mountedNpcIds": [],
     "primaryNpcId": null,
@@ -16200,7 +16200,7 @@
   {
     "id": "arrangement.city.kaifeng.home.kaifeng",
     "cityId": "city.kaifeng",
-    "buildingId": "home.kaifeng",
+    "buildingId": "home.template",
     "displayName": "自宅",
     "mountedNpcIds": [],
     "primaryNpcId": null,
@@ -17088,7 +17088,7 @@
   {
     "id": "arrangement.city.gongchang.home.gongchang",
     "cityId": "city.gongchang",
-    "buildingId": "home.gongchang",
+    "buildingId": "home.template",
     "displayName": "自宅",
     "mountedNpcIds": [],
     "primaryNpcId": null,
@@ -17970,7 +17970,7 @@
   {
     "id": "arrangement.city.fengyuan.home.fengyuan",
     "cityId": "city.fengyuan",
-    "buildingId": "home.fengyuan",
+    "buildingId": "home.template",
     "displayName": "自宅",
     "mountedNpcIds": [],
     "primaryNpcId": null,

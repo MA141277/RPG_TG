@@ -1,0 +1,40 @@
+{
+  "artifactId": "same-display-name-host-canonicalization-preflight",
+  "generatedAt": "2026-07-24",
+  "status": "completed",
+  "versionId": "target.event-follow-up-routing-settlement-and-canonical-reuse-convergence",
+  "queueId": "queue.same-display-name-building-host-instance-canonicalization",
+  "taskId": "task.same-display-name-building-host-instance-canonicalization.rewrite-anchor-and-consumer-preflight",
+  "firstWriteBatch": {
+    "sourceFamilies": [
+      "src/content/scenario-packs/zhuyuanzhang/houses.json",
+      "src/content/scenario-packs/zhuyuanzhang/building-arrangements.json",
+      "src/content/scenario-packs/zhuyuanzhang/cities.json",
+      "src/content/scenario-packs/zhuyuanzhang/city-entries.json"
+    ],
+    "consumerSeams": [
+      "src/application/script-editor/city-building-runtime-materializer.ts",
+      "src/application/city/city-building-placement-resolver.ts",
+      "src/application/city/city-module-entry.ts",
+      "src/application/runtime/city-directory-leader-residence-coordinator.ts",
+      "src/application/building/building-module-entry.ts",
+      "src/application/building/building-container-event-runtime.ts",
+      "src/core/runtime/navigation-runtime.ts",
+      "src/main.ts"
+    ]
+  },
+  "mustPreserve": [
+    "arrangement lookup remains keyed by cityId + canonical buildingId",
+    "currentHouseId-backed building/event/playable owner paths remain routable",
+    "unique hosts such as house.kulan.temple remain explicit preservation exceptions",
+    "no compatibility import or alias layer is introduced"
+  ],
+  "guardTargets": [
+    "stale duplicate host ids fail closed or are fully rewritten in queue-owned surfaces",
+    "mountedBuildings and targetHouseId resolve canonical hosts",
+    "building module entry and runtime selection accept canonical host ids for repeated-name families",
+    "script-editor runtime materializer no longer requires duplicate city-scoped host records for repeated-name families"
+  ],
+  "nextTask": "task.same-display-name-building-host-instance-canonicalization.canonical-host-id-rewrite-and-reference-guard-baseline",
+  "conclusion": "The first implementation batch is frozen. The next lawful action is to land canonical host ids plus direct reference rewrite and targeted guards across the owned source/runtime surfaces."
+}

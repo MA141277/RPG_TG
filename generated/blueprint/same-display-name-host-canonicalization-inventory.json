@@ -1,0 +1,75 @@
+{
+  "artifactId": "same-display-name-host-canonicalization-inventory",
+  "generatedAt": "2026-07-24",
+  "status": "completed",
+  "versionId": "target.event-follow-up-routing-settlement-and-canonical-reuse-convergence",
+  "queueId": "queue.same-display-name-building-host-instance-canonicalization",
+  "taskId": "task.same-display-name-building-host-instance-canonicalization.duplicate-surface-inventory-and-canonical-selection-lock",
+  "canonicalHostIds": [
+    {
+      "familyKey": "home",
+      "canonicalId": "home.template",
+      "sourceCount": 21
+    },
+    {
+      "familyKey": "leader_residence",
+      "canonicalId": "house.template.leader_residence",
+      "sourceCount": 21
+    },
+    {
+      "familyKey": "keep",
+      "canonicalId": "house.template.keep",
+      "sourceCount": 21
+    },
+    {
+      "familyKey": "tea_house",
+      "canonicalId": "house.template.tea_house",
+      "sourceCount": 21
+    },
+    {
+      "familyKey": "market",
+      "canonicalId": "house.template.market",
+      "sourceCount": 21
+    },
+    {
+      "familyKey": "grain_shop",
+      "canonicalId": "house.template.grain_shop",
+      "sourceCount": 21
+    },
+    {
+      "familyKey": "medicine_house",
+      "canonicalId": "house.template.medicine_house",
+      "sourceCount": 21
+    },
+    {
+      "familyKey": "inn",
+      "canonicalId": "house.template.inn",
+      "sourceCount": 21
+    },
+    {
+      "familyKey": "temple_standard",
+      "canonicalId": "house.template.temple",
+      "sourceCount": 20
+    }
+  ],
+  "preservationExceptions": [
+    {
+      "id": "house.kulan.temple",
+      "reason": "Unique display-name/content family; not part of the 20-city repeated-name temple duplicate set."
+    }
+  ],
+  "rewriteOrder": [
+    "houses.json canonical host record creation plus duplicate host retirement",
+    "building-arrangements.json buildingId rewrite",
+    "cities.json mountedBuildings[].buildingId rewrite",
+    "city-entries.json targetHouseId rewrite",
+    "script-editor/runtime materializer and placement resolver lookup alignment",
+    "building entry/runtime and city-directory/startup consumer alignment",
+    "targeted guard/test coverage for stale duplicate host ids"
+  ],
+  "selectionRule": "Repeated-name real building hosts canonicalize to new template-scope ids instead of preserving a city-owned survivor because no reusable template host ids currently exist and city-owned ids would leak locality into shared truth.",
+  "nonGoals": [
+    "Do not claim full-chain export/import/loading/preview/startup/runtime parity here.",
+    "Do not claim migration rejection or final acceptance here."
+  ]
+}

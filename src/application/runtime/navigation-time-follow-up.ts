@@ -1,9 +1,11 @@
 import type { AppState } from "../app-shell";
+import type { BuildingArrangementDefinition } from "../../domain/building-arrangement";
 import {
   resolveTextEntry,
   resolveTextTemplateEntry,
 } from "../content/text-resolution";
 import { defaultReviewCyclePolicy } from "../review/review-cycle-provider";
+import { matchesCanonicalBuildingOwnerId } from "../../core/runtime/building-owner-canonicalization";
 import type { CharacterDefinition } from "../../domain/character";
 import type { GameState } from "../../domain/game-state";
 import type { HouseDefinition } from "../../domain/house";
@@ -25,6 +27,7 @@ export function applyCouncilPriorityFollowUp(input: {
   previousGameState?: GameState;
   state: RuntimeState;
   houseDefinitions: HouseDefinition[];
+  buildingArrangements?: readonly BuildingArrangementDefinition[];
   textEntriesById: Record<string, string>;
   councilArrivalNotice?: CouncilArrivalNotice;
 }): NavigationTimeFollowUpResult {
@@ -41,7 +44,8 @@ export function applyCouncilPriorityFollowUp(input: {
 
   const priorityHouse = getCouncilPriorityHouseDefinition(
     input.state.core,
-    input.houseDefinitions
+    input.houseDefinitions,
+    input.buildingArrangements
   );
   if (priorityHouse == null) {
     return {
@@ -61,6 +65,9 @@ export function applyCouncilPriorityFollowUp(input: {
           gameState: input.state.core,
           houseDefinitions: input.houseDefinitions,
           textEntriesById: input.textEntriesById,
+          ...(input.buildingArrangements == null
+            ? {}
+            : { buildingArrangements: input.buildingArrangements }),
           ...(input.councilArrivalNotice == null
             ? {}
             : { councilArrivalNotice: input.councilArrivalNotice }),
@@ -77,12 +84,13 @@ export function applyCouncilPriorityFollowUp(input: {
 
 function getCouncilPriorityHouseDefinition(
   gameState: GameState,
-  houseDefinitions: HouseDefinition[]
+  houseDefinitions: HouseDefinition[],
+  buildingArrangements?: readonly BuildingArrangementDefinition[]
 ): HouseDefinition | null {
   const priorityModuleId = defaultReviewCyclePolicy.getPriorityHouseModuleId(gameState);
   const currentCityId = gameState.world.currentCityId;
 
-  return (
+  const priorityHouse =
     houseDefinitions.find(
       (houseDefinition) =>
         houseDefinition.moduleId === priorityModuleId &&
@@ -91,19 +99,45 @@ function getCouncilPriorityHouseDefinition(
     houseDefinitions.find(
       (houseDefinition) => houseDefinition.moduleId === priorityModuleId
     ) ??
-    null
-  );
+    null;
+  if (priorityHouse == null) {
+    return null;
+  }
+
+  if (currentCityId == null) {
+    return priorityHouse;
+  }
+
+  const cityScopedArrangement =
+    buildingArrangements?.find(
+      (arrangement) =>
+        arrangement.cityId === currentCityId &&
+        matchesCanonicalBuildingOwnerId(arrangement.buildingId, priorityHouse.id)
+    ) ?? null;
+  if (cityScopedArrangement?.primaryNpcId == null) {
+    return priorityHouse.cityId === currentCityId
+      ? priorityHouse
+      : { ...priorityHouse, cityId: currentCityId };
+  }
+
+  return {
+    ...priorityHouse,
+    cityId: currentCityId,
+    defaultCharacterId: cityScopedArrangement.primaryNpcId,
+  };
 }
 
 function createCouncilArrivalDialogue(input: {
   gameState: GameState;
   houseDefinitions: HouseDefinition[];
+  buildingArrangements?: readonly BuildingArrangementDefinition[];
   textEntriesById: Record<string, string>;
   councilArrivalNotice?: CouncilArrivalNotice;
 }): NonNullable<AppState["locationDialogueState"]> | null {
   const priorityHouse = getCouncilPriorityHouseDefinition(
     input.gameState,
-    input.houseDefinitions
+    input.houseDefinitions,
+    input.buildingArrangements
   );
   if (priorityHouse == null) {
     return null;

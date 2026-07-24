@@ -1,0 +1,72 @@
+{
+  "generatedAt": "2026-07-24",
+  "versionId": "target.event-follow-up-routing-settlement-and-canonical-reuse-convergence",
+  "queueId": "queue.same-display-name-building-host-instance-canonicalization",
+  "taskId": "task.same-display-name-building-host-instance-canonicalization.queue-closeout-review-and-sync-gate",
+  "acceptanceIds": [
+    "ACC-EVENT-SETTLE-005A"
+  ],
+  "scopeClarification": {
+    "hostMergeOnly": true,
+    "mergeJudge": "displayName/name equality only",
+    "ignoreLegacyIdDifferences": true,
+    "ignoreEventBindingDifferences": true,
+    "arrangementConvergenceRequiredForQueueCloseout": false
+  },
+  "canonicalHostGraph": {
+    "houseCount": 10,
+    "sameNameDuplicateHostsRemaining": [],
+    "canonicalTemplateHostIds": [
+      "home.template",
+      "house.template.grain_shop",
+      "house.template.inn",
+      "house.template.keep",
+      "house.template.leader_residence",
+      "house.template.market",
+      "house.template.medicine_house",
+      "house.template.tea_house",
+      "house.template.temple"
+    ],
+    "preservedUniqueHosts": [
+      "house.kulan.temple"
+    ]
+  },
+  "directReferenceRewrite": {
+    "cityHouseIdsCanonicalRefs": 188,
+    "mountedBuildingsCanonicalRefs": 188,
+    "cityEntriesCanonicalRefs": 27,
+    "characterHouseIdCanonicalRefs": 110,
+    "locationAccessCanonicalRefs": 8,
+    "arrangementCanonicalRefs": 21
+  },
+  "runtimeAndStartupProof": [
+    "src/application/script-editor/city-building-runtime-materializer.ts keys mounted building ownership by cityId + buildingId so shared canonical host ids do not collapse city-local NPC ownership",
+    "src/application/city/city-building-placement-resolver.ts re-scopes canonical host city truth to cityEntry.cityId before placement lookup",
+    "src/application/presenter/stage-presenters.ts passes cityDefinitions into building stage selection so canonical host lookup still resolves city-local placement context",
+    "src/application/building/building-module-entry.ts accepts same-family legacy arrangement ids for canonical host ids",
+    "src/core/runtime/navigation-runtime.ts accepts same-family legacy arrangement ids for canonical host ids",
+    "src/application/runtime/navigation-time-follow-up.ts and src/main.ts project city-local council speaker truth while preserving canonical host ids"
+  ],
+  "arrangementTruth": {
+    "queueRequirement": "non-blocking",
+    "actualState": "repeated-name families already target canonical template host ids in building-arrangements.json",
+    "preservedUniqueCityScopedArrangementIds": [
+      "house.kulan.temple"
+    ]
+  },
+  "verification": {
+    "passed": [
+      "cmd /c npm run build:test",
+      "cmd /c npm run lint:blueprints",
+      "cmd /c npm run lint:blueprint-skill",
+      "cmd /c npm run blueprint:governance:check",
+      "cmd /c node --test tests/robustness.test.cjs --test-name-pattern \"same-name host records converge to canonical ids across direct host reference surfaces|building module stage resolves canonical host ids against same-family legacy arrangement ids|navigation runtime resolves canonical host ids against same-family legacy arrangement ids|pack carries explicit building arrangements for every mounted building|imports built-in zhuyuanzhang template from the published manifest url\""
+    ],
+    "knownNonOwnedBaseline": "tests/robustness.test.cjs:13204 script editor runtime export materializes city mounted buildings and npcs over imported runtime tables still expects city.start instead of the imported-runtime truth city.imported"
+  },
+  "queueCloseoutReadiness": {
+    "accEventSettle005A": true,
+    "remainingOwnedBlocker": "none"
+  },
+  "summary": "Same-name building hosts are now merged onto one canonical host graph, the queue-owned direct host-id surfaces consume canonical ids, and no same-name duplicate host remains in owned source truth. Arrangement convergence was not required for closeout, but repeated-name arrangement rows are already canonicalized as landed truth."
+}

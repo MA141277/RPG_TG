@@ -1,0 +1,41 @@
+{
+  "generatedAt": "2026-07-24",
+  "queueId": "queue.same-display-name-building-host-instance-canonicalization",
+  "activeTaskId": "task.same-display-name-building-host-instance-canonicalization.canonical-host-id-rewrite-and-reference-guard-baseline",
+  "auditId": "slice.missing-arrangement-refusal-speaker-anchor-audit",
+  "kind": "non-destructive-audit",
+  "currentSurface": {
+    "runtime": "src/core/runtime/navigation-runtime.ts",
+    "function": "createMissingBuildingArrangementAccessResult",
+    "currentBehavior": [
+      "When canonical enter-house routing finds no arrangement for currentCityId + canonical houseId, the refusal speaker falls back to state.player.characterId, then houseDefinition.defaultCharacterId, then char.player.",
+      "The refusal path currently receives only GameState and HouseDefinition; it does not receive a city-scoped arrangement or another city-local speaker anchor."
+    ]
+  },
+  "availableInputsReviewed": [
+    {
+      "surface": "src/core/runtime/navigation-runtime.ts",
+      "finding": "runNavigationRuntime already receives currentCityId and optional cityDefinitionsById, but CityDefinition does not expose mountedBuildings or primaryNpcId in the current runtime contract."
+    },
+    {
+      "surface": "src/domain/city.ts",
+      "finding": "CityDefinition contains houseIds and map metadata only; it is not a carrier for mounted building speaker truth."
+    },
+    {
+      "surface": "src/application/runtime/navigation-time-follow-up.ts / src/main.ts",
+      "finding": "Council-priority reminder and refusal paths can project city-local speaker truth from buildingArrangements because an arrangement still exists there; missing-arrangement refusal cannot reuse that seam by definition."
+    }
+  ],
+  "frozenConclusion": {
+    "result": "The missing-arrangement refusal seam remains a separate bounded consumer after council-priority selector projection landed.",
+    "reason": "No already-available runtime input exposes city-local primaryNpcId once the arrangement lookup itself has failed.",
+    "noImmediateWideningRule": "Do not widen this slice by inventing a resolver layer or by backfilling duplicate house records just to recover a city-local refusal speaker."
+  },
+  "nextLawfulLocalAction": {
+    "type": "bounded-source-rewrite-or-input-preflight",
+    "options": [
+      "continue direct canonical host source rewrite on owned data surfaces",
+      "or later preflight a narrow runtime input extension if missing-arrangement refusal must become city-local before queue closeout"
+    ]
+  }
+}

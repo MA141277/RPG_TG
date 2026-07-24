@@ -10,6 +10,7 @@ import type {
   LocationAccessDefinition,
   LocationAccessResult,
 } from "../../domain/location-access";
+import { matchesCanonicalBuildingOwnerId } from "./building-owner-canonicalization";
 import type { NavigationTarget } from "../contracts/navigation";
 import type { RuntimeRequest } from "../contracts/runtime-request";
 import type { RuntimeResult } from "../contracts/runtime-result";
@@ -189,7 +190,8 @@ function selectActiveBuildingArrangement(
   return (
     buildingArrangements?.find(
       (arrangement) =>
-        arrangement.cityId === cityId && arrangement.buildingId === houseId
+        arrangement.cityId === cityId &&
+        matchesCanonicalBuildingOwnerId(arrangement.buildingId, houseId)
     ) ?? null
   );
 }

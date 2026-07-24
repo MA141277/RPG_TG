@@ -1,7 +1,9 @@
 import type { AppState } from "../app-shell";
 import type { BuildingArrangementDefinition } from "../../domain/building-arrangement";
+import type { CityDefinition } from "../../domain/city";
 import type { CityNpcPoolDefinition } from "../../domain/city-npc";
 import type { HouseDefinition } from "../../domain/house";
+import { matchesCanonicalBuildingOwnerId } from "../../core/runtime/building-owner-canonicalization";
 import type {
   AppPresenterStageOutput,
   BuildingContainerViewModel,
@@ -9,6 +11,7 @@ import type {
 
 export type BuildingModuleEntryInput = {
   appState: AppState;
+  cityDefinitions?: CityDefinition[] | undefined;
   houseDefinitions: HouseDefinition[];
   buildingArrangements?: BuildingArrangementDefinition[] | undefined;
   cityNpcPoolDefinitions: CityNpcPoolDefinition[];
@@ -45,9 +48,45 @@ function selectActiveBuildingArrangement(
     input.buildingArrangements?.find(
       (arrangement) =>
         arrangement.cityId === currentCityId &&
-        arrangement.buildingId === activeHouse.id
+        matchesCanonicalBuildingOwnerId(arrangement.buildingId, activeHouse.id)
     ) ?? null
   );
+}
+
+function projectActiveHouseDefinition(input: {
+  appState: AppState;
+  cityDefinitions?: readonly CityDefinition[] | undefined;
+  activeHouse: HouseDefinition;
+  activeArrangement: BuildingArrangementDefinition;
+}): HouseDefinition {
+  const currentCityId = input.appState.gameState.world.currentCityId;
+  if (currentCityId == null) {
+    return input.activeHouse;
+  }
+
+  const currentCity =
+    input.cityDefinitions?.find((cityDefinition) => cityDefinition.id === currentCityId) ??
+    null;
+  const currentCityName = currentCity?.name?.trim();
+  const projectedBackAction =
+    input.activeHouse.backAction?.targetView === "city" && currentCityName != null && currentCityName.length > 0
+      ? {
+          ...input.activeHouse.backAction,
+          label: `返回${currentCityName}`,
+        }
+      : input.activeHouse.backAction;
+
+  return {
+    ...input.activeHouse,
+    cityId: currentCityId,
+    characterIds:
+      input.activeArrangement.mountedNpcIds.length > 0
+        ? [...input.activeArrangement.mountedNpcIds]
+        : input.activeHouse.characterIds,
+    defaultCharacterId:
+      input.activeArrangement.primaryNpcId ?? input.activeHouse.defaultCharacterId,
+    ...(projectedBackAction == null ? {} : { backAction: projectedBackAction }),
+  };
 }
 
 function createContainerViewModels(
@@ -134,7 +173,12 @@ export function selectBuildingModuleStage(
   if (activeArrangement != null) {
     return {
       type: "building",
-      activeHouse,
+      activeHouse: projectActiveHouseDefinition({
+        appState: input.appState,
+        cityDefinitions: input.cityDefinitions,
+        activeHouse,
+        activeArrangement,
+      }),
       arrangement: activeArrangement,
       containerViewModels: createContainerViewModels(activeArrangement, input),
     };

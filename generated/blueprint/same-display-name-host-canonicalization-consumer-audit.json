@@ -1,0 +1,46 @@
+{
+  "generatedAt": "2026-07-24",
+  "queueId": "queue.same-display-name-building-host-instance-canonicalization",
+  "activeTaskId": "task.same-display-name-building-host-instance-canonicalization.canonical-host-id-rewrite-and-reference-guard-baseline",
+  "landedSlices": [
+    {
+      "id": "slice.runtime-materialization-mounted-ownership",
+      "status": "landed",
+      "surface": "src/application/script-editor/city-building-runtime-materializer.ts",
+      "guard": "cityId + buildingId keeps repeated-city mounted npc ownership distinct"
+    },
+    {
+      "id": "slice.city-placement-city-scoping",
+      "status": "landed",
+      "surface": "src/application/city/city-building-placement-resolver.ts",
+      "guard": "placement.house.cityId follows cityEntry.cityId for canonical shared houses"
+    }
+  ],
+  "remainingConsumerAnchors": [
+    {
+      "surface": "src/main.ts",
+      "symbol": "getCouncilPriorityHouseDefinition",
+      "risk": "prefers houseDefinition.cityId === currentCityId before falling back to any matching module house, so canonical shared houses still leave city-scoped council-priority selection implicit"
+    },
+    {
+      "surface": "src/application/runtime/navigation-time-follow-up.ts",
+      "symbol": "getCouncilPriorityHouseDefinition",
+      "risk": "historical council-arrival reminder helper still assumes module house selection can key on houseDefinition.cityId directly"
+    },
+    {
+      "surface": "src/core/runtime/navigation-runtime.ts",
+      "symbol": "createMissingBuildingArrangementAccessResult",
+      "risk": "missing-arrangement refusal still reads houseDefinition.defaultCharacterId from the shared canonical house record"
+    },
+    {
+      "surface": "src/application/runtime/council-priority-city-begging-coordinator.ts",
+      "symbol": "showCouncilPriorityRefusal/showCouncilInsufficientTimeRefusal",
+      "risk": "coordinator consumes priorityHouse.defaultCharacterId from the current selection seam and therefore inherits unresolved city-scoped host-speaker truth"
+    }
+  ],
+  "nextSliceCandidate": {
+    "id": "slice.council-priority-canonical-house-selection-audit",
+    "goal": "freeze whether council-priority reminder and refusal chains need a city-scoped house projection or a mounted-building derived speaker/source seam before broad source rewrite begins",
+    "kind": "non-destructive-audit"
+  }
+}

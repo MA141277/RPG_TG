@@ -2500,7 +2500,7 @@ test("zhuyuanzhang pack-local city and access tables contain kulan content", () 
       {
         name: "将领府邸",
         directoryType: "leader-residence",
-        targetHouseId: "house.kulan.leader_residence",
+        targetHouseId: "house.template.leader_residence",
         artworkId: "leader-residence",
       },
       {
@@ -2512,37 +2512,37 @@ test("zhuyuanzhang pack-local city and access tables contain kulan content", () 
       {
         name: "帅府",
         directoryType: "building",
-        targetHouseId: "house.kulan.keep",
+        targetHouseId: "house.template.keep",
         artworkId: "keep-house",
       },
       {
         name: "茶馆",
         directoryType: "building",
-        targetHouseId: "house.kulan.tea_house",
+        targetHouseId: "house.template.tea_house",
         artworkId: "tea-house",
       },
       {
         name: "货栈",
         directoryType: "building",
-        targetHouseId: "house.kulan.market",
+        targetHouseId: "house.template.market",
         artworkId: "market-house",
       },
       {
         name: "粮铺",
         directoryType: "building",
-        targetHouseId: "house.kulan.grain_shop",
+        targetHouseId: "house.template.grain_shop",
         artworkId: "grain-shop",
       },
       {
         name: "药铺",
         directoryType: "building",
-        targetHouseId: "house.kulan.medicine_house",
+        targetHouseId: "house.template.medicine_house",
         artworkId: "medicine-house",
       },
       {
         name: "客栈",
         directoryType: "building",
-        targetHouseId: "house.kulan.inn",
+        targetHouseId: "house.template.inn",
         artworkId: "tavern",
       },
     ]
@@ -6114,7 +6114,7 @@ test(
       exportedPack.cityEntries.some(
         (entry) =>
           entry.cityId === "city.kulan" &&
-          entry.targetHouseId === "house.kulan.keep" &&
+          entry.targetHouseId === "house.template.keep" &&
           entry.name === "帅府"
       ),
       true
@@ -6123,7 +6123,7 @@ test(
       exportedPack.cityEntries.some(
         (entry) =>
           entry.cityId === "city.yingtian" &&
-          entry.targetHouseId === "house.yingtian.tea_house"
+          entry.targetHouseId === "house.template.tea_house"
       ),
       true
     );
@@ -9860,23 +9860,24 @@ test("script editor imports built-in zhuyuanzhang template from the published ma
     assert.deepEqual(
       haozhouCity.mountedBuildings.map((mountedBuilding) => mountedBuilding.buildingId),
       [
-        "house.kulan.leader_residence",
+        "house.template.leader_residence",
         "house.kulan.temple",
-        "home_001",
-        "house.kulan.keep",
-        "house.kulan.tea_house",
-        "house.kulan.market",
-        "house.kulan.grain_shop",
-        "house.kulan.medicine_house",
-        "house.kulan.inn",
+        "home.template",
+        "house.template.keep",
+        "house.template.tea_house",
+        "house.template.market",
+        "house.template.grain_shop",
+        "house.template.medicine_house",
+        "house.template.inn",
       ]
     );
     assert.deepEqual(
       haozhouCity.mountedBuildings.find(
-        (mountedBuilding) => mountedBuilding.buildingId === "house.kulan.keep"
+        (mountedBuilding) =>
+          mountedBuilding.buildingId === "house.template.keep"
       ),
       {
-        buildingId: "house.kulan.keep",
+        buildingId: "house.template.keep",
         npcIds: [
           "char.kulan_lord",
           "char.kulan_xu_da",
@@ -14140,6 +14141,238 @@ test("building module stage selects generic arrangement shell before old house r
   );
 });
 
+test("building module stage projects city-local metadata for canonical shared home ids", () => {
+  const {
+    selectBuildingModuleStage,
+  } = require("../.test-dist/application/building/building-module-entry.js");
+  const baseState = createBaseState();
+  const appState = {
+    gameState: {
+      ...baseState,
+      world: {
+        ...baseState.world,
+        currentCityId: "city.other",
+        currentHouseId: "home.template",
+      },
+      ui: {
+        ...baseState.ui,
+        currentView: "house",
+      },
+    },
+    characterDefinitions: [{ id: "person.other", name: "Other Host" }],
+    playerCoordinate: { x: 0, y: 0 },
+    campaignActorState: { facingDegrees: 0, isMoving: false },
+    campaignTravelState: null,
+    modalState: null,
+    locationDialogueState: null,
+    beggingMiniGameState: null,
+    cityMenuState: null,
+    cityDirectoryState: null,
+    autoAdvanceState: null,
+    uiLayouts: {},
+  };
+
+  const stage = selectBuildingModuleStage({
+    appState,
+    cityDefinitions: [
+      {
+        id: "city.start",
+        name: "Start City",
+        regionId: "region.test",
+        mapNodeId: "map.start",
+        houseIds: ["home.template"],
+        neighbourCityIds: [],
+        travelCost: 1,
+        tags: [],
+        prosperity: 1,
+        danger: 1,
+        specialDemand: [],
+      },
+      {
+        id: "city.other",
+        name: "Other City",
+        regionId: "region.test",
+        mapNodeId: "map.other",
+        houseIds: ["home.template"],
+        neighbourCityIds: [],
+        travelCost: 1,
+        tags: [],
+        prosperity: 1,
+        danger: 1,
+        specialDemand: [],
+      },
+    ],
+    houseDefinitions: [
+      {
+        id: "home.template",
+        cityId: "city.start",
+        name: "Canonical Home",
+        type: "residence",
+        characterIds: ["person.start"],
+        defaultCharacterId: "person.start",
+        moduleId: "home-house",
+        backAction: { label: "返回Start City", targetView: "city" },
+      },
+    ],
+    buildingArrangements: [
+      {
+        id: "arrangement.city.other.home.template",
+        cityId: "city.other",
+        buildingId: "home.template",
+        displayName: "Other City Home",
+        mountedNpcIds: ["person.other"],
+        primaryNpcId: "person.other",
+        containers: [],
+      },
+    ],
+    cityNpcPoolDefinitions: [],
+    playerCharacterId,
+  });
+
+  assert.equal(stage.type, "building");
+  assert.equal(stage.activeHouse.cityId, "city.other");
+  assert.deepEqual(stage.activeHouse.characterIds, ["person.other"]);
+  assert.equal(stage.activeHouse.defaultCharacterId, "person.other");
+  assert.deepEqual(stage.activeHouse.backAction, {
+    label: "返回Other City",
+    targetView: "city",
+  });
+});
+
+test("building module stage resolves canonical host ids against same-family legacy arrangement ids", () => {
+  const {
+    selectBuildingModuleStage,
+  } = require("../.test-dist/application/building/building-module-entry.js");
+  const baseState = createBaseState();
+  const appState = {
+    gameState: {
+      ...baseState,
+      world: {
+        ...baseState.world,
+        currentCityId: "city.other",
+        currentHouseId: "house.template.keep",
+      },
+      ui: {
+        ...baseState.ui,
+        currentView: "house",
+      },
+    },
+    characterDefinitions: [{ id: "person.other.guard", name: "Other Guard" }],
+    playerCoordinate: { x: 0, y: 0 },
+    campaignActorState: { facingDegrees: 0, isMoving: false },
+    campaignTravelState: null,
+    modalState: null,
+    locationDialogueState: null,
+    beggingMiniGameState: null,
+    cityMenuState: null,
+    cityDirectoryState: null,
+    autoAdvanceState: null,
+    uiLayouts: {},
+  };
+
+  const stage = selectBuildingModuleStage({
+    appState,
+    cityDefinitions: [
+      {
+        id: "city.other",
+        name: "Other City",
+        regionId: "region.test",
+        mapNodeId: "map.other",
+        houseIds: ["house.template.keep"],
+        neighbourCityIds: [],
+        travelCost: 1,
+        tags: [],
+        prosperity: 1,
+        danger: 1,
+        specialDemand: [],
+      },
+    ],
+    houseDefinitions: [
+      {
+        id: "house.template.keep",
+        cityId: "city.start",
+        name: "帅府",
+        type: "castle",
+        characterIds: [],
+        defaultCharacterId: null,
+        moduleId: "keep-house",
+        backAction: { label: "返回", targetView: "city" },
+      },
+    ],
+    buildingArrangements: [
+      {
+        id: "arrangement.city.other.house.other.keep",
+        cityId: "city.other",
+        buildingId: "house.other.keep",
+        displayName: "Other City Keep",
+        mountedNpcIds: ["person.other.guard"],
+        primaryNpcId: "person.other.guard",
+        containers: [],
+      },
+    ],
+    cityNpcPoolDefinitions: [],
+    playerCharacterId,
+  });
+
+  assert.equal(stage.type, "building");
+  assert.equal(stage.arrangement.id, "arrangement.city.other.house.other.keep");
+  assert.equal(stage.activeHouse.cityId, "city.other");
+  assert.deepEqual(stage.activeHouse.characterIds, ["person.other.guard"]);
+  assert.equal(stage.activeHouse.defaultCharacterId, "person.other.guard");
+});
+
+test("navigation runtime resolves canonical host ids against same-family legacy arrangement ids", () => {
+  const {
+    runNavigationRuntime,
+    createEnterHouseRequest,
+  } = require("../.test-dist/core/runtime/navigation-runtime.js");
+  const baseState = createBaseState();
+  const result = runNavigationRuntime({
+    state: {
+      ...baseState,
+      world: {
+        ...baseState.world,
+        currentCityId: "city.other",
+        currentHouseId: null,
+      },
+    },
+    request: createEnterHouseRequest("house.template.keep"),
+    houseDefinition: {
+      id: "house.template.keep",
+      cityId: "city.start",
+      name: "帅府",
+      type: "castle",
+      characterIds: [],
+      defaultCharacterId: null,
+      moduleId: "keep-house",
+    },
+    buildingArrangements: [
+      {
+        id: "arrangement.city.other.house.other.keep",
+        cityId: "city.other",
+        buildingId: "house.other.keep",
+        displayName: "Other City Keep",
+        mountedNpcIds: [],
+        primaryNpcId: null,
+        containers: [],
+      },
+    ],
+    locationAccessDefinitions: [
+      {
+        id: "location-access.keep",
+        targetFamily: "building",
+        targetId: "house.template.keep",
+        conditionExpression: { type: "literal", value: true },
+      },
+    ],
+  });
+
+  assert.equal(result.navigation?.view, "house");
+  assert.equal(result.navigation?.houseId, "house.template.keep");
+  assert.equal(result.access?.canEnter ?? true, true);
+  assert.equal(result.state.world.currentHouseId, "house.template.keep");
+});
+
 test("minigame presenter preserves the building stage when a house-hosted playable is active", () => {
   const {
     createStagePresenterOutput,
@@ -14678,6 +14911,131 @@ test(
       }),
       null
     );
+  }
+);
+
+test(
+  "city building placement resolver keeps city-scoped npc lookup when repeated cities share one canonical house id",
+  () => {
+    const {
+      resolveCityBuildingView,
+    } = require("../.test-dist/application/city/city-building-placement-resolver.js");
+    const baseState = createBaseState();
+    const state = {
+      ...baseState,
+      player: { characterId: "char.player" },
+      runtime: {
+        ...baseState.runtime,
+        flags: {},
+        cityNpcPools: {
+          "city.start": {
+            cityId: "city.start",
+            lastRefreshedOn: "1356-01-01",
+            residents: {
+              "npc.start.host": {
+                npcId: "npc.start.host",
+                favorability: 10,
+                currentLocationId: "market",
+              },
+            },
+          },
+          "city.other": {
+            cityId: "city.other",
+            lastRefreshedOn: "1356-01-01",
+            residents: {
+              "npc.other.host": {
+                npcId: "npc.other.host",
+                favorability: 20,
+                currentLocationId: "market",
+              },
+            },
+          },
+        },
+      },
+      world: {
+        ...baseState.world,
+        currentCityId: "city.other",
+      },
+    };
+
+    const view = resolveCityBuildingView({
+      state,
+      placementId: "city-entry.other.market",
+      characterDefinitions: [{ id: "char.player", name: "Player" }],
+      cityEntries: [
+        {
+          id: "city-entry.start.market",
+          cityId: "city.start",
+          name: "Start Market",
+          targetHouseId: "house.template.market",
+        },
+        {
+          id: "city-entry.other.market",
+          cityId: "city.other",
+          name: "Other Market",
+          targetHouseId: "house.template.market",
+        },
+      ],
+      houses: [
+        {
+          id: "house.template.market",
+          cityId: "city.start",
+          name: "Canonical Market",
+          type: "merchant",
+          characterIds: ["npc.start.host", "npc.other.host"],
+          defaultCharacterId: "npc.start.host",
+          activityLocationId: "market",
+          backAction: { label: "杩斿洖", targetView: "city" },
+        },
+      ],
+      cityNpcPools: [
+        {
+          cityId: "city.start",
+          residents: [
+            {
+              id: "npc.start.host",
+              cityId: "city.start",
+              name: "Start Host",
+              title: "Start Shopkeeper",
+              personality: "",
+              specialty: "",
+              favorability: 10,
+              activityWeight: { market: 1 },
+              dialoguePool: [],
+              intelPool: [],
+            },
+          ],
+        },
+        {
+          cityId: "city.other",
+          residents: [
+            {
+              id: "npc.other.host",
+              cityId: "city.other",
+              name: "Other Host",
+              title: "Other Shopkeeper",
+              personality: "",
+              specialty: "",
+              favorability: 20,
+              activityWeight: { market: 1 },
+              dialoguePool: [],
+              intelPool: [],
+            },
+          ],
+        },
+      ],
+      locationAccessDefinitions: [],
+    });
+
+    assert.equal(view?.cityId, "city.other");
+    assert.equal(view?.house.cityId, "city.other");
+    assert.deepEqual(view?.npcs, [
+      {
+        id: "npc.other.host",
+        name: "Other Host",
+        title: "Other Shopkeeper",
+      },
+    ]);
   }
 );
 
@@ -27255,6 +27613,79 @@ test("child 25 time runtime no longer emits council-threshold follow-up outcome"
   assert.equal(result.followUp, undefined);
 });
 
+test("council arrival reminder keeps canonical targetHouseId but projects city-local speaker from arrangement truth", () => {
+  const {
+    applyCouncilPriorityFollowUp,
+  } = require("../.test-dist/application/runtime/navigation-time-follow-up.js");
+
+  const state = createRuntimeState({
+    ...withCouncilInDays(createBaseState(), 0),
+    world: {
+      ...withCouncilInDays(createBaseState(), 0).world,
+      currentCityId: "city.other",
+      currentHouseId: null,
+    },
+    ui: {
+      ...withCouncilInDays(createBaseState(), 0).ui,
+      currentView: "city",
+    },
+  });
+
+  const result = applyCouncilPriorityFollowUp({
+    state,
+    houseDefinitions: [
+      {
+        id: "house.template.keep",
+        cityId: "city.start",
+        name: "帅府",
+        type: "castle",
+        moduleId: "keep-house",
+        characterIds: ["npc.start.guard", "npc.other.guard"],
+        defaultCharacterId: "npc.start.guard",
+        backAction: { label: "返回", targetView: "city" },
+      },
+    ],
+    buildingArrangements: [
+      {
+        id: "building-arrangement.start.keep",
+        cityId: "city.start",
+        buildingId: "house.template.keep",
+        mountedNpcIds: ["npc.start.guard"],
+        primaryNpcId: "npc.start.guard",
+        containers: [],
+      },
+      {
+        id: "building-arrangement.other.keep",
+        cityId: "city.other",
+        buildingId: "house.template.keep",
+        mountedNpcIds: ["npc.other.guard"],
+        primaryNpcId: "npc.other.guard",
+        containers: [],
+      },
+    ],
+    textEntriesById: {
+      "runtime.zhu_yuanzhang.council_arrival.keep.001":
+        "评定日期已到，速去{targetHouseName}应评。",
+      "runtime.zhu_yuanzhang.council_arrival.keep.002":
+        "门前亲兵已经来催，你该先把这一轮评定办完。",
+    },
+  });
+
+  assert.equal(result.handled, true);
+  assert.equal(
+    result.state.app.locationDialogueState?.type,
+    "council-arrival-reminder"
+  );
+  assert.equal(
+    result.state.app.locationDialogueState?.targetHouseId,
+    "house.template.keep"
+  );
+  assert.equal(
+    result.state.app.locationDialogueState?.speakerCharacterId,
+    "npc.other.guard"
+  );
+});
+
 test("child 25 main.ts routes covered navigation and council sync through explicit post-commit seams", () => {
   const source = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
   const handleModalConfirmBlock = source.match(
@@ -27276,6 +27707,23 @@ test("child 25 main.ts routes covered navigation and council sync through explic
   assert.match(
     startCampaignTravelBlock,
     /syncCouncilPriorityAfterGameStateChange\(previousGameState\)/
+  );
+});
+
+test("main council-priority selector projects city-local speaker from arrangement truth for canonical shared houses", () => {
+  const source = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
+  const selectorBlock = source.match(
+    /function getCouncilPriorityHouseDefinition\(\): HouseDefinition \| null \{[\s\S]*?\r?\n}\r?\n\r?\nfunction createCouncilArrivalDialogue/
+  )?.[0] ?? "";
+
+  assert.match(selectorBlock, /activeContentContext\.buildingArrangements/);
+  assert.match(
+    selectorBlock,
+    /matchesCanonicalBuildingOwnerId\(arrangement\.buildingId,\s*priorityHouse\.id\)/
+  );
+  assert.match(
+    selectorBlock,
+    /defaultCharacterId:\s*cityScopedArrangement\.primaryNpcId/
   );
 });
 
@@ -30790,6 +31238,9 @@ test("flow playable launches with building owner context and exposes a presenter
 });
 
 test("zhuyuanzhang pack carries explicit building arrangements for every mounted building", () => {
+  const {
+    matchesCanonicalBuildingOwnerId,
+  } = require("../.test-dist/core/runtime/building-owner-canonicalization.js");
   const packRoot = path.join(
     process.cwd(),
     "src/content/scenario-packs/zhuyuanzhang"
@@ -30806,15 +31257,15 @@ test("zhuyuanzhang pack carries explicit building arrangements for every mounted
   const mountedBuildingIds = cities.flatMap((city) =>
     (city.mountedBuildings ?? []).map((entry) => entry.buildingId)
   );
-  const arrangementByBuildingId = new Map(
-    arrangements.map((arrangement) => [arrangement.buildingId, arrangement])
-  );
 
   assert.equal(manifest.files.buildingArrangements, "building-arrangements.json");
   assert.equal(manifest.files.flowPlayables, "flow-playables.json");
   assert.equal(arrangements.length, mountedBuildingIds.length);
   for (const buildingId of mountedBuildingIds) {
-    const arrangement = arrangementByBuildingId.get(buildingId);
+    const arrangement =
+      arrangements.find((candidate) =>
+        matchesCanonicalBuildingOwnerId(candidate.buildingId, buildingId)
+      ) ?? null;
     assert.ok(arrangement, `missing explicit arrangement for ${buildingId}`);
     assert.ok(
       arrangement.containers.some((container) => container.type === "character-seats"),
@@ -31040,10 +31491,10 @@ test("zhuyuanzhang home rest and leave routes use canonical template ids while k
     fs.readFileSync(path.join(packRoot, "flow-playables.json"), "utf8")
   );
 
-  const homeArrangements = arrangements.filter((arrangement) =>
-    /^home\.[a-z0-9_]+$/.test(arrangement.buildingId)
+  const homeArrangements = arrangements.filter(
+    (arrangement) => arrangement.buildingId === "home.template"
   );
-  assert.equal(homeArrangements.length, 20);
+  assert.equal(homeArrangements.length, 21);
 
   const homeActionItems = [];
   for (const arrangement of homeArrangements) {
@@ -31063,7 +31514,7 @@ test("zhuyuanzhang home rest and leave routes use canonical template ids while k
     }
   }
 
-  assert.equal(homeActionItems.length, 40);
+  assert.equal(homeActionItems.length, 42);
   const eventsById = new Map(events.map((event) => [event.id, event]));
   const flowsById = new Map(flowPlayables.map((flow) => [flow.id, flow]));
   const bindingsByArrangementItem = new Map();
@@ -31138,6 +31589,242 @@ test("zhuyuanzhang home rest and leave routes use canonical template ids while k
       "home leave should stay closeBuilding"
     );
   }
+});
+
+test("zhuyuanzhang home source surfaces converge on canonical home.template ids", () => {
+  const packRoot = path.join(
+    process.cwd(),
+    "src/content/scenario-packs/zhuyuanzhang"
+  );
+  const houses = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "houses.json"), "utf8")
+  );
+  const arrangements = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "building-arrangements.json"), "utf8")
+  );
+  const cities = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "cities.json"), "utf8")
+  );
+  const characters = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "characters.json"), "utf8")
+  );
+  const locationAccess = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "location-access.json"), "utf8")
+  );
+
+  const homeHouses = houses.filter(
+    (house) => house.moduleId === "home-house"
+  );
+  assert.deepEqual(
+    homeHouses.map((house) => house.id),
+    ["home.template"]
+  );
+  assert.equal(homeHouses[0].defaultCharacterId, "char.player");
+  assert.deepEqual(homeHouses[0].characterIds, ["char.player"]);
+
+  const homeArrangements = arrangements.filter(
+    (arrangement) => arrangement.buildingId === "home.template"
+  );
+  assert.equal(homeArrangements.length, 21);
+  assert.equal(
+    arrangements.some(
+      (arrangement) =>
+        /^home(?:_[0-9]+|\.[a-z0-9_]+)$/.test(arrangement.buildingId) &&
+        arrangement.buildingId !== "home.template"
+    ),
+    false,
+    "retired city-scoped home arrangement buildingIds should be removed"
+  );
+
+  for (const city of cities) {
+    assert.ok(
+      city.houseIds.includes("home.template"),
+      `missing canonical home id in ${city.id}.houseIds`
+    );
+    assert.equal(
+      city.houseIds.some(
+        (houseId) =>
+          /^home(?:_[0-9]+|\.[a-z0-9_]+)$/.test(houseId) &&
+          houseId !== "home.template"
+      ),
+      false,
+      `retired city-scoped home id should be removed from ${city.id}.houseIds`
+    );
+    assert.ok(
+      (city.mountedBuildings ?? []).some(
+        (entry) => entry.buildingId === "home.template"
+      ),
+      `missing canonical home mounted building in ${city.id}`
+    );
+    assert.equal(
+      (city.mountedBuildings ?? []).some((entry) =>
+        /^home(?:_[0-9]+|\.[a-z0-9_]+)$/.test(entry.buildingId) &&
+        entry.buildingId !== "home.template"
+      ),
+      false,
+      `retired city-scoped home mounted building id should be removed from ${city.id}`
+    );
+  }
+
+  const playerCharacter = characters.find(
+    (character) => character.id === "char.player"
+  );
+  assert.equal(playerCharacter?.houseId, "home.template");
+
+  const homeLocationAccess = locationAccess.filter(
+    (entry) => entry.targetId === "home.template"
+  );
+  assert.equal(homeLocationAccess.length, 1);
+  assert.equal(
+    locationAccess.some(
+      (entry) =>
+        /^home(?:_[0-9]+|\.[a-z0-9_]+)$/.test(entry.targetId) &&
+        entry.targetId !== "home.template"
+    ),
+    false,
+    "retired city-scoped home location-access targetIds should be removed"
+  );
+});
+
+test("zhuyuanzhang same-name host records converge to canonical ids across direct host reference surfaces", () => {
+  const packRoot = path.join(
+    process.cwd(),
+    "src/content/scenario-packs/zhuyuanzhang"
+  );
+  const houses = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "houses.json"), "utf8")
+  );
+  const cities = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "cities.json"), "utf8")
+  );
+  const cityEntries = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "city-entries.json"), "utf8")
+  );
+  const characters = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "characters.json"), "utf8")
+  );
+  const locationAccess = JSON.parse(
+    fs.readFileSync(path.join(packRoot, "location-access.json"), "utf8")
+  );
+
+  const canonicalFamilies = [
+    { name: "自宅", canonicalId: "home.template", count: 21 },
+    {
+      name: "将领府邸",
+      canonicalId: "house.template.leader_residence",
+      count: 21,
+    },
+    { name: "帅府", canonicalId: "house.template.keep", count: 21 },
+    { name: "茶馆", canonicalId: "house.template.tea_house", count: 21 },
+    { name: "货栈", canonicalId: "house.template.market", count: 21 },
+    { name: "粮铺", canonicalId: "house.template.grain_shop", count: 21 },
+    {
+      name: "药铺",
+      canonicalId: "house.template.medicine_house",
+      count: 21,
+    },
+    { name: "客栈", canonicalId: "house.template.inn", count: 21 },
+    { name: "寺庙", canonicalId: "house.template.temple", count: 20 },
+  ];
+
+  for (const family of canonicalFamilies) {
+    assert.deepEqual(
+      houses
+        .filter((house) => house.name === family.name)
+        .map((house) => house.id),
+      [family.canonicalId],
+      `${family.name} should keep only ${family.canonicalId} in houses.json`
+    );
+  }
+
+  assert.ok(
+    houses.some((house) => house.id === "house.kulan.temple"),
+    "unique non-duplicate host should stay preserved"
+  );
+
+  const retiredDuplicateIds = new Set([
+    ...houses
+      .filter(
+        (house) =>
+          house.id.startsWith("house.") &&
+          !house.id.startsWith("house.template.") &&
+          house.id !== "house.kulan.temple"
+      )
+      .map((house) => house.id),
+  ]);
+
+  for (const family of canonicalFamilies) {
+    const houseIdCount = cities.reduce(
+      (total, city) =>
+        total +
+        (city.houseIds ?? []).filter((houseId) => houseId === family.canonicalId)
+          .length,
+      0
+    );
+    assert.equal(
+      houseIdCount,
+      family.count,
+      `${family.canonicalId} should be the only direct city houseId for ${family.name}`
+    );
+
+    const mountedCount = cities.reduce(
+      (total, city) =>
+        total +
+        (city.mountedBuildings ?? []).filter(
+          (entry) => entry.buildingId === family.canonicalId
+        ).length,
+      0
+    );
+    assert.equal(
+      mountedCount,
+      family.count,
+      `${family.canonicalId} should be the only direct mounted building id for ${family.name}`
+    );
+  }
+
+  assert.equal(
+    cities.some((city) =>
+      (city.houseIds ?? []).some((houseId) => retiredDuplicateIds.has(houseId))
+    ),
+    false,
+    "retired duplicate host ids should be removed from city houseIds"
+  );
+  assert.equal(
+    cities.some((city) =>
+      (city.mountedBuildings ?? []).some((entry) =>
+        retiredDuplicateIds.has(entry.buildingId)
+      )
+    ),
+    false,
+    "retired duplicate host ids should be removed from mountedBuildings"
+  );
+  assert.equal(
+    cityEntries.some((entry) => retiredDuplicateIds.has(entry.targetHouseId)),
+    false,
+    "retired duplicate host ids should be removed from city-entries targetHouseId"
+  );
+
+  assert.equal(
+    cityEntries.filter(
+      (entry) => entry.targetHouseId === "house.template.leader_residence"
+    ).length,
+    21,
+    "leader-residence city entries should point to canonical host id"
+  );
+  assert.equal(
+    characters.some(
+      (character) =>
+        typeof character.houseId === "string" &&
+        retiredDuplicateIds.has(character.houseId)
+    ),
+    false,
+    "retired duplicate host ids should be removed from characters.houseId"
+  );
+  assert.equal(
+    locationAccess.some((entry) => retiredDuplicateIds.has(entry.targetId)),
+    false,
+    "retired duplicate host ids should be removed from location-access targetId"
+  );
 });
 
 test("zhuyuanzhang keep review work and leave routes use canonical template ids while keeping live payload anchors", () => {

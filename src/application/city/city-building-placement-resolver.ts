@@ -143,13 +143,15 @@ function createPlacement(
   cityEntry: CityEntryDefinition,
   house: HouseDefinition
 ): CityBuildingPlacement {
+  const placementHouse =
+    house.cityId === cityEntry.cityId ? house : { ...house, cityId: cityEntry.cityId };
   return {
     placementId: cityEntry.id,
     cityId: cityEntry.cityId,
-    houseId: house.id,
-    label: cityEntry.name || house.name,
+    houseId: placementHouse.id,
+    label: cityEntry.name || placementHouse.name,
     cityEntry,
-    house,
+    house: placementHouse,
   };
 }
 

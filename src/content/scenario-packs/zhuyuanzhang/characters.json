@@ -11,7 +11,7 @@
     "title": "亲兵",
     "occupation": "军中跑腿",
     "cityId": "city.kulan",
-    "houseId": "home_001",
+    "houseId": "home.template",
     "portraitId": "portrait.player",
     "portraitVariantId": "stage-20",
     "stats": {
@@ -55,7 +55,7 @@
     "title": "主帅",
     "occupation": "红巾军首领",
     "cityId": "city.kulan",
-    "houseId": "house.kulan.keep",
+    "houseId": "house.template.keep",
     "portraitId": "portrait.kulan_lord",
     "stats": {
       "leadership": 74,
@@ -98,7 +98,7 @@
     "title": "值守小兵",
     "occupation": "步卒",
     "cityId": "city.kulan",
-    "houseId": "house.kulan.keep",
+    "houseId": "house.template.keep",
     "portraitId": "portrait.kulan_soldier",
     "stats": {
       "leadership": 24,
@@ -141,7 +141,7 @@
     "title": "卫士",
     "occupation": "步卒",
     "cityId": "city.kulan",
-    "houseId": "house.kulan.keep",
+    "houseId": "house.template.keep",
     "portraitId": "portrait.kulan_guard",
     "stats": {
       "leadership": 40,
@@ -186,7 +186,7 @@
     "title": "前锋大将",
     "occupation": "武将",
     "cityId": "city.kulan",
-    "houseId": "house.kulan.keep",
+    "houseId": "house.template.keep",
     "portraitId": "portrait.kulan_xu_da",
     "affiliationLabel": "濠州军中",
     "stats": {
@@ -240,7 +240,7 @@
     "title": "宿将",
     "occupation": "武将",
     "cityId": "city.kulan",
-    "houseId": "house.kulan.keep",
+    "houseId": "house.template.keep",
     "portraitId": "portrait.kulan_tang_he",
     "stats": {
       "leadership": 75,
@@ -294,7 +294,7 @@
     "title": "骁将",
     "occupation": "武将",
     "cityId": "city.kulan",
-    "houseId": "house.kulan.keep",
+    "houseId": "house.template.keep",
     "portraitId": "portrait.kulan_chang_yuchun",
     "stats": {
       "leadership": 73,
@@ -347,7 +347,7 @@
     "occupation": "谋士",
     "affiliationLabel": "濠州士人",
     "cityId": "city.kulan",
-    "houseId": "house.kulan.leader_residence",
+    "houseId": "house.template.leader_residence",
     "portraitId": "portrait.kulan_liu_bowen",
     "stats": {
       "leadership": 52,
@@ -400,7 +400,7 @@
     "occupation": "幕僚",
     "affiliationLabel": "濠州士人",
     "cityId": "city.kulan",
-    "houseId": "house.kulan.leader_residence",
+    "houseId": "house.template.leader_residence",
     "portraitId": "portrait.kulan_li_shanchang",
     "stats": {
       "leadership": 48,
@@ -534,7 +534,7 @@
     "title": "茶馆老板",
     "occupation": "茶馆老板",
     "cityId": "city.kulan",
-    "houseId": "house.kulan.tea_house",
+    "houseId": "house.template.tea_house",
     "portraitId": "portrait.kulan_tea_boss",
     "stats": {
       "leadership": 28,
@@ -576,7 +576,7 @@
     "title": "掌柜",
     "occupation": "商人",
     "cityId": "city.kulan",
-    "houseId": "house.kulan.grain_shop",
+    "houseId": "house.template.grain_shop",
     "portraitId": "portrait.kulan_grain_shopkeeper",
     "stats": {
       "leadership": 30,
@@ -618,7 +618,7 @@
     "title": "坐堂医师",
     "occupation": "医师",
     "cityId": "city.kulan",
-    "houseId": "house.kulan.medicine_house",
+    "houseId": "house.template.medicine_house",
     "portraitId": "portrait.kulan_medicine_doctor",
     "stats": {
       "leadership": 24,
@@ -660,7 +660,7 @@
     "title": "货栈老板",
     "occupation": "商人",
     "cityId": "city.kulan",
-    "houseId": "house.kulan.market",
+    "houseId": "house.template.market",
     "portraitId": "portrait.kulan_merchant",
     "stats": {
       "leadership": 32,
@@ -702,7 +702,7 @@
     "title": "掌柜",
     "occupation": "旅宿主人",
     "cityId": "city.kulan",
-    "houseId": "house.kulan.inn",
+    "houseId": "house.template.inn",
     "portraitId": "portrait.kulan_innkeeper",
     "stats": {
       "leadership": 28,
@@ -746,7 +746,7 @@
     "occupation": "历史人物",
     "affiliationLabel": "濠州郭子兴集团",
     "cityId": "city.kulan",
-    "houseId": "house.kulan.inn",
+    "houseId": "house.template.inn",
     "portraitId": "portrait.yuanmo.ma_shi",
     "stats": {
       "leadership": 56,
@@ -798,7 +798,7 @@
     "occupation": "历史人物",
     "affiliationLabel": "濠州郭子兴集团",
     "cityId": "city.kulan",
-    "houseId": "house.kulan.inn",
+    "houseId": "house.template.inn",
     "portraitId": "portrait.yuanmo.guo_tianxu",
     "stats": {
       "leadership": 66,
@@ -850,7 +850,7 @@
     "occupation": "历史人物",
     "affiliationLabel": "濠州郭子兴集团",
     "cityId": "city.kulan",
-    "houseId": "house.kulan.inn",
+    "houseId": "house.template.inn",
     "portraitId": "portrait.yuanmo.zhang_tianyou",
     "stats": {
       "leadership": 66,
@@ -902,7 +902,7 @@
     "occupation": "历史人物",
     "affiliationLabel": "濠州郭子兴集团",
     "cityId": "city.kulan",
-    "houseId": "house.kulan.inn",
+    "houseId": "house.template.inn",
     "portraitId": "portrait.yuanmo.sun_deya",
     "stats": {
       "leadership": 66,
@@ -954,7 +954,7 @@
     "occupation": "历史人物",
     "affiliationLabel": "朱元璋早期集团",
     "cityId": "city.luzhou",
-    "houseId": "house.luzhou.inn",
+    "houseId": "house.template.inn",
     "portraitId": "portrait.yuanmo.feng_guoyong",
     "stats": {
       "leadership": 54,
@@ -1006,7 +1006,7 @@
     "occupation": "历史人物",
     "affiliationLabel": "朱元璋早期集团",
     "cityId": "city.nanchang",
-    "houseId": "house.nanchang.inn",
+    "houseId": "house.template.inn",
     "portraitId": "portrait.yuanmo.feng_sheng",
     "stats": {
       "leadership": 66,
@@ -1058,7 +1058,7 @@
     "occupation": "历史人物",
     "affiliationLabel": "朱元璋早期集团",
     "cityId": "city.anqing",
-    "houseId": "house.anqing.inn",
+    "houseId": "house.template.inn",
     "portraitId": "portrait.yuanmo.deng_yu",
     "stats": {
       "leadership": 66,
@@ -1110,7 +1110,7 @@
     "occupation": "历史人物",
     "affiliationLabel": "朱元璋早期集团",
     "cityId": "city.taiping",
-    "houseId": "house.taiping.inn",
+    "houseId": "house.template.inn",
     "portraitId": "portrait.yuanmo.hu_dahai",
     "stats": {
       "leadership": 66,
@@ -1162,7 +1162,7 @@
     "occupation": "历史人物",
     "affiliationLabel": "朱元璋早期集团",
     "cityId": "city.kulan",
-    "houseId": "house.kulan.inn",
+    "houseId": "house.template.inn",
     "portraitId": "portrait.yuanmo.zhou_dexing",
     "stats": {
       "leadership": 66,
@@ -1214,7 +1214,7 @@
     "occupation": "历史人物",
     "affiliationLabel": "朱元璋早期集团",
     "cityId": "city.kulan",
-    "houseId": "house.kulan.inn",
+    "houseId": "house.template.inn",
     "portraitId": "portrait.yuanmo.guo_ying",
     "stats": {
       "leadership": 66,
@@ -1266,7 +1266,7 @@
     "occupation": "历史人物",
     "affiliationLabel": "朱元璋早期集团",
     "cityId": "city.luzhou",
-    "houseId": "house.luzhou.inn",
+    "houseId": "house.template.inn",
     "portraitId": "portrait.yuanmo.geng_bingwen",
     "stats": {
       "leadership": 66,
@@ -1318,7 +1318,7 @@
     "occupation": "历史人物",
     "affiliationLabel": "朱元璋早期集团",
     "cityId": "city.luzhou",
-    "houseId": "house.luzhou.inn",
+    "houseId": "house.template.inn",
     "portraitId": "portrait.yuanmo.li_wenzhong",
     "stats": {
       "leadership": 66,
@@ -1370,7 +1370,7 @@
     "occupation": "历史人物",
     "affiliationLabel": "朱元璋早期集团",
     "cityId": "city.nanchang",
-    "houseId": "house.nanchang.inn",
+    "houseId": "house.template.inn",
     "portraitId": "portrait.yuanmo.zhu_wenzheng",
     "stats": {
       "leadership": 66,
@@ -1422,7 +1422,7 @@
     "occupation": "历史人物",
     "affiliationLabel": "朱元璋早期集团",
     "cityId": "city.taiping",
-    "houseId": "house.taiping.inn",
+    "houseId": "house.template.inn",
     "portraitId": "portrait.yuanmo.hua_yun",
     "stats": {
       "leadership": 66,
@@ -1474,7 +1474,7 @@
     "occupation": "历史人物",
     "affiliationLabel": "小明王宋",
     "cityId": "city.anfeng",
-    "houseId": "house.anfeng.inn",
+    "houseId": "house.template.inn",
     "portraitId": "portrait.yuanmo.han_liner",
     "stats": {
       "leadership": 74,
@@ -1526,7 +1526,7 @@
     "occupation": "历史人物",
     "affiliationLabel": "小明王宋",
     "cityId": "city.anfeng",
-    "houseId": "house.anfeng.inn",
+    "houseId": "house.template.inn",
     "portraitId": "portrait.yuanmo.liu_futong",
     "stats": {
       "leadership": 74,
@@ -1578,7 +1578,7 @@
     "occupation": "历史人物",
     "affiliationLabel": "小明王宋",
     "cityId": "city.runing",
-    "houseId": "house.runing.inn",
+    "houseId": "house.template.inn",
     "portraitId": "portrait.yuanmo.han_shantong",
     "stats": {
       "leadership": 48,
@@ -1630,7 +1630,7 @@
     "occupation": "历史人物",
     "affiliationLabel": "小明王宋",
     "cityId": "city.runing",
-    "houseId": "house.runing.inn",
+    "houseId": "house.template.inn",
     "portraitId": "portrait.yuanmo.du_zundao",
     "stats": {
       "leadership": 54,
@@ -1682,7 +1682,7 @@
     "occupation": "历史人物",
     "affiliationLabel": "小明王宋",
     "cityId": "city.anfeng",
-    "houseId": "house.anfeng.inn",
+    "houseId": "house.template.inn",
     "portraitId": "portrait.yuanmo.sheng_wenyu",
     "stats": {
       "leadership": 54,
@@ -1734,7 +1734,7 @@
     "occupation": "历史人物",
     "affiliationLabel": "小明王宋",
     "cityId": "city.runing",
-    "houseId": "house.runing.inn",
+    "houseId": "house.template.inn",
     "portraitId": "portrait.yuanmo.bai_buxin",
     "stats": {
       "leadership": 60,
@@ -1786,7 +1786,7 @@
     "occupation": "历史人物",
     "affiliationLabel": "张士诚周",
     "cityId": "city.yangzhou",
-    "houseId": "house.yangzhou.inn",
+    "houseId": "house.template.inn",
     "portraitId": "portrait.yuanmo.zhang_shicheng",
     "stats": {
       "leadership": 74,
@@ -1838,7 +1838,7 @@
     "occupation": "历史人物",
     "affiliationLabel": "张士诚周",
     "cityId": "city.yangzhou",
-    "houseId": "house.yangzhou.inn",
+    "houseId": "house.template.inn",
     "portraitId": "portrait.yuanmo.zhang_shide",
     "stats": {
       "leadership": 66,
@@ -1890,7 +1890,7 @@
     "occupation": "历史人物",
     "affiliationLabel": "张士诚周",
     "cityId": "city.suzhou",
-    "houseId": "house.suzhou.inn",
+    "houseId": "house.template.inn",
     "portraitId": "portrait.yuanmo.zhang_shixin",
     "stats": {
       "leadership": 66,
@@ -1942,7 +1942,7 @@
     "occupation": "历史人物",
     "affiliationLabel": "张士诚周",
     "cityId": "city.yangzhou",
-    "houseId": "house.yangzhou.inn",
+    "houseId": "house.template.inn",
     "portraitId": "portrait.yuanmo.li_bosheng",
     "stats": {
       "leadership": 66,
@@ -1994,7 +1994,7 @@
     "occupation": "历史人物",
     "affiliationLabel": "张士诚周",
     "cityId": "city.huaian",
-    "houseId": "house.huaian.inn",
+    "houseId": "house.template.inn",
     "portraitId": "portrait.yuanmo.lv_zhen",
     "stats": {
       "leadership": 66,
@@ -2046,7 +2046,7 @@
     "occupation": "历史人物",
     "affiliationLabel": "张士诚周",
     "cityId": "city.huaian",
-    "houseId": "house.huaian.inn",
+    "houseId": "house.template.inn",
     "portraitId": "portrait.yuanmo.panyuan_shao",
     "stats": {
       "leadership": 66,
@@ -2098,7 +2098,7 @@
     "occupation": "历史人物",
     "affiliationLabel": "张士诚周",
     "cityId": "city.yangzhou",
-    "houseId": "house.yangzhou.inn",
+    "houseId": "house.template.inn",
     "portraitId": "portrait.yuanmo.rao_jie",
     "stats": {
       "leadership": 48,
@@ -2150,7 +2150,7 @@
     "occupation": "历史人物",
     "affiliationLabel": "陈友谅汉",
     "cityId": "city.wuchang",
-    "houseId": "house.wuchang.inn",
+    "houseId": "house.template.inn",
     "portraitId": "portrait.yuanmo.chen_youliang",
     "stats": {
       "leadership": 74,
@@ -2202,7 +2202,7 @@
     "occupation": "历史人物",
     "affiliationLabel": "陈友谅汉",
     "cityId": "city.wuchang",
-    "houseId": "house.wuchang.inn",
+    "houseId": "house.template.inn",
     "portraitId": "portrait.yuanmo.zhang_dingbian",
     "stats": {
       "leadership": 74,
@@ -2254,7 +2254,7 @@
     "occupation": "历史人物",
     "affiliationLabel": "天完/陈汉前身",
     "cityId": "city.wuchang",
-    "houseId": "house.wuchang.inn",
+    "houseId": "house.template.inn",
     "portraitId": "portrait.yuanmo.xu_shouhui",
     "stats": {
       "leadership": 66,
@@ -2306,7 +2306,7 @@
     "occupation": "历史人物",
     "affiliationLabel": "天完/陈汉前身",
     "cityId": "city.wuchang",
-    "houseId": "house.wuchang.inn",
+    "houseId": "house.template.inn",
     "portraitId": "portrait.yuanmo.zou_pusheng",
     "stats": {
       "leadership": 54,
@@ -2358,7 +2358,7 @@
     "occupation": "历史人物",
     "affiliationLabel": "明玉珍夏",
     "cityId": "city.chengdu",
-    "houseId": "house.chengdu.inn",
+    "houseId": "house.template.inn",
     "portraitId": "portrait.yuanmo.ming_yuzhen",
     "stats": {
       "leadership": 66,
@@ -2410,7 +2410,7 @@
     "occupation": "历史人物",
     "affiliationLabel": "明玉珍夏",
     "cityId": "city.chongqing",
-    "houseId": "house.chongqing.inn",
+    "houseId": "house.template.inn",
     "portraitId": "portrait.yuanmo.wan_sheng",
     "stats": {
       "leadership": 60,
@@ -2462,7 +2462,7 @@
     "occupation": "历史人物",
     "affiliationLabel": "方国珍浙东",
     "cityId": "city.ningbo",
-    "houseId": "house.ningbo.inn",
+    "houseId": "house.template.inn",
     "portraitId": "portrait.yuanmo.fang_guozhen",
     "stats": {
       "leadership": 66,
@@ -2514,7 +2514,7 @@
     "occupation": "历史人物",
     "affiliationLabel": "方国珍浙东",
     "cityId": "city.wenzhou",
-    "houseId": "house.wenzhou.inn",
+    "houseId": "house.template.inn",
     "portraitId": "portrait.yuanmo.fang_li",
     "stats": {
       "leadership": 60,
@@ -2566,7 +2566,7 @@
     "occupation": "历史人物",
     "affiliationLabel": "福建陈友定",
     "cityId": "city.fuzhou",
-    "houseId": "house.fuzhou.inn",
+    "houseId": "house.template.inn",
     "portraitId": "portrait.yuanmo.chen_youding",
     "stats": {
       "leadership": 66,
@@ -2618,7 +2618,7 @@
     "occupation": "历史人物",
     "affiliationLabel": "元廷中央",
     "cityId": "city.dadu",
-    "houseId": "house.dadu.inn",
+    "houseId": "house.template.inn",
     "portraitId": "portrait.yuanmo.toghon_temur",
     "stats": {
       "leadership": 74,
@@ -2670,7 +2670,7 @@
     "occupation": "历史人物",
     "affiliationLabel": "元廷中央",
     "cityId": "city.dadu",
-    "houseId": "house.dadu.inn",
+    "houseId": "house.template.inn",
     "portraitId": "portrait.yuanmo.ayushiridara",
     "stats": {
       "leadership": 48,
@@ -2722,7 +2722,7 @@
     "occupation": "历史人物",
     "affiliationLabel": "河南山东元军",
     "cityId": "city.kaifeng",
-    "houseId": "house.kaifeng.inn",
+    "houseId": "house.template.inn",
     "portraitId": "portrait.yuanmo.chaghan_temur",
     "stats": {
       "leadership": 66,
@@ -2774,7 +2774,7 @@
     "occupation": "历史人物",
     "affiliationLabel": "河南山东元军",
     "cityId": "city.kaifeng",
-    "houseId": "house.kaifeng.inn",
+    "houseId": "house.template.inn",
     "portraitId": "portrait.yuanmo.koketumur",
     "stats": {
       "leadership": 66,
@@ -2826,7 +2826,7 @@
     "occupation": "历史人物",
     "affiliationLabel": "陕西甘肃元军",
     "cityId": "city.gongchang",
-    "houseId": "house.gongchang.inn",
+    "houseId": "house.template.inn",
     "portraitId": "portrait.yuanmo.li_siqi",
     "stats": {
       "leadership": 66,
@@ -2878,7 +2878,7 @@
     "occupation": "历史人物",
     "affiliationLabel": "陕西甘肃元军",
     "cityId": "city.fengyuan",
-    "houseId": "house.fengyuan.inn",
+    "houseId": "house.template.inn",
     "portraitId": "portrait.yuanmo.zhang_liangbi",
     "stats": {
       "leadership": 66,
@@ -3034,7 +3034,7 @@
     "occupation": "历史人物",
     "affiliationLabel": "寺院与民间",
     "cityId": "city.kulan",
-    "houseId": "house.kulan.tea_house",
+    "houseId": "house.template.tea_house",
     "portraitId": "portrait.yuanmo.zhongli_elder",
     "stats": {
       "leadership": 54,
@@ -3086,7 +3086,7 @@
     "occupation": "谋士",
     "affiliationLabel": "朱元璋幕府",
     "cityId": "city.yingtian",
-    "houseId": "house.yingtian.leader_residence",
+    "houseId": "house.template.leader_residence",
     "portraitId": "portrait.yuanmo.song_lian",
     "stats": {
       "leadership": 48,
@@ -3142,7 +3142,7 @@
     "occupation": "谋士",
     "affiliationLabel": "朱元璋幕府",
     "cityId": "city.yingtian",
-    "houseId": "house.yingtian.leader_residence",
+    "houseId": "house.template.leader_residence",
     "portraitId": "portrait.yuanmo.zhu_sheng",
     "stats": {
       "leadership": 48,
@@ -3198,7 +3198,7 @@
     "occupation": "武将",
     "affiliationLabel": "朱元璋军府",
     "cityId": "city.luzhou",
-    "houseId": "house.luzhou.leader_residence",
+    "houseId": "house.template.leader_residence",
     "portraitId": "portrait.yuanmo.miao_daheng",
     "stats": {
       "leadership": 60,
@@ -3254,7 +3254,7 @@
     "occupation": "武将",
     "affiliationLabel": "朱元璋亲军",
     "cityId": "city.yingtian",
-    "houseId": "house.yingtian.leader_residence",
+    "houseId": "house.template.leader_residence",
     "portraitId": "portrait.yuanmo.mu_ying",
     "stats": {
       "leadership": 60,
@@ -3310,7 +3310,7 @@
     "occupation": "武将",
     "affiliationLabel": "朱元璋军府",
     "cityId": "city.yingtian",
-    "houseId": "house.yingtian.leader_residence",
+    "houseId": "house.template.leader_residence",
     "portraitId": "portrait.yuanmo.fu_youdej",
     "stats": {
       "leadership": 60,
@@ -3366,7 +3366,7 @@
     "occupation": "武将",
     "affiliationLabel": "濠州军府",
     "cityId": "city.kulan",
-    "houseId": "house.kulan.leader_residence",
+    "houseId": "house.template.leader_residence",
     "portraitId": "portrait.yuanmo.guo_xing",
     "stats": {
       "leadership": 60,
@@ -3422,7 +3422,7 @@
     "occupation": "武将",
     "affiliationLabel": "朱元璋军府",
     "cityId": "city.luzhou",
-    "houseId": "house.luzhou.leader_residence",
+    "houseId": "house.template.leader_residence",
     "portraitId": "portrait.yuanmo.ding_pulang",
     "stats": {
       "leadership": 60,
@@ -3478,7 +3478,7 @@
     "occupation": "市井",
     "affiliationLabel": "寺院与民间",
     "cityId": "city.kulan",
-    "houseId": "house.kulan.market",
+    "houseId": "house.template.market",
     "portraitId": "portrait.yuanmo.haozhou_salt_runner",
     "stats": {
       "leadership": 42,
@@ -3530,7 +3530,7 @@
     "occupation": "斥候",
     "affiliationLabel": "濠州郭子兴集团",
     "cityId": "city.kulan",
-    "houseId": "house.kulan.tea_house",
+    "houseId": "house.template.tea_house",
     "portraitId": "portrait.yuanmo.haozhou_red_turban_scout",
     "stats": {
       "leadership": 42,
@@ -3582,7 +3582,7 @@
     "occupation": "谋士",
     "affiliationLabel": "朱元璋幕府",
     "cityId": "city.yingtian",
-    "houseId": "house.yingtian.leader_residence",
+    "houseId": "house.template.leader_residence",
     "portraitId": "portrait.yuanmo.hu_weiyong",
     "stats": {
       "leadership": 48,
@@ -3638,7 +3638,7 @@
     "occupation": "武将",
     "affiliationLabel": "朱元璋军府",
     "cityId": "city.yingtian",
-    "houseId": "house.yingtian.leader_residence",
+    "houseId": "house.template.leader_residence",
     "portraitId": "portrait.yuanmo.lan_yu",
     "stats": {
       "leadership": 60,
@@ -3694,7 +3694,7 @@
     "occupation": "礼制",
     "affiliationLabel": "小明王宋",
     "cityId": "city.anfeng",
-    "houseId": "house.anfeng.inn",
+    "houseId": "house.template.inn",
     "portraitId": "portrait.yuanmo.han_tong",
     "stats": {
       "leadership": 42,
@@ -3746,7 +3746,7 @@
     "occupation": "军政",
     "affiliationLabel": "小明王宋",
     "cityId": "city.kaifeng",
-    "houseId": "house.kaifeng.inn",
+    "houseId": "house.template.inn",
     "portraitId": "portrait.yuanmo.tian_feng",
     "stats": {
       "leadership": 66,
@@ -3798,7 +3798,7 @@
     "occupation": "军务",
     "affiliationLabel": "小明王宋",
     "cityId": "city.kaifeng",
-    "houseId": "house.kaifeng.inn",
+    "houseId": "house.template.inn",
     "portraitId": "portrait.yuanmo.wang_shicheng_song",
     "stats": {
       "leadership": 60,
@@ -3850,7 +3850,7 @@
     "occupation": "宗族",
     "affiliationLabel": "张士诚周",
     "cityId": "city.yangzhou",
-    "houseId": "house.yangzhou.leader_residence",
+    "houseId": "house.template.leader_residence",
     "portraitId": "portrait.yuanmo.zhang_tianyou_zhou",
     "stats": {
       "leadership": 42,
@@ -3905,7 +3905,7 @@
     "occupation": "武将",
     "affiliationLabel": "张士诚周",
     "cityId": "city.yangzhou",
-    "houseId": "house.yangzhou.leader_residence",
+    "houseId": "house.template.leader_residence",
     "portraitId": "portrait.yuanmo.zhang_shiyi",
     "stats": {
       "leadership": 60,
@@ -3961,7 +3961,7 @@
     "occupation": "谋士",
     "affiliationLabel": "张士诚周",
     "cityId": "city.suzhou",
-    "houseId": "house.suzhou.leader_residence",
+    "houseId": "house.template.leader_residence",
     "portraitId": "portrait.yuanmo.ye_dexin",
     "stats": {
       "leadership": 48,
@@ -4017,7 +4017,7 @@
     "occupation": "谋士",
     "affiliationLabel": "张士诚周",
     "cityId": "city.suzhou",
-    "houseId": "house.suzhou.leader_residence",
+    "houseId": "house.template.leader_residence",
     "portraitId": "portrait.yuanmo.chen_ji",
     "stats": {
       "leadership": 48,
@@ -4073,7 +4073,7 @@
     "occupation": "传闻",
     "affiliationLabel": "张士诚周",
     "cityId": "city.suzhou",
-    "houseId": "house.suzhou.tea_house",
+    "houseId": "house.template.tea_house",
     "portraitId": "portrait.yuanmo.shi_naian",
     "stats": {
       "leadership": 48,
@@ -4125,7 +4125,7 @@
     "occupation": "宗族",
     "affiliationLabel": "陈友谅汉",
     "cityId": "city.wuchang",
-    "houseId": "house.wuchang.inn",
+    "houseId": "house.template.inn",
     "portraitId": "portrait.yuanmo.chen_li",
     "stats": {
       "leadership": 48,
@@ -4177,7 +4177,7 @@
     "occupation": "谋士",
     "affiliationLabel": "陈友谅汉",
     "cityId": "city.wuchang",
-    "houseId": "house.wuchang.leader_residence",
+    "houseId": "house.template.leader_residence",
     "portraitId": "portrait.yuanmo.zhang_bixian",
     "stats": {
       "leadership": 54,
@@ -4233,7 +4233,7 @@
     "occupation": "谋士",
     "affiliationLabel": "陈友谅汉",
     "cityId": "city.nanchang",
-    "houseId": "house.nanchang.leader_residence",
+    "houseId": "house.template.leader_residence",
     "portraitId": "portrait.yuanmo.hu_mei",
     "stats": {
       "leadership": 66,
@@ -4289,7 +4289,7 @@
     "occupation": "谋士",
     "affiliationLabel": "陈友谅汉",
     "cityId": "city.wuchang",
-    "houseId": "house.wuchang.leader_residence",
+    "houseId": "house.template.leader_residence",
     "portraitId": "portrait.yuanmo.luo_furen",
     "stats": {
       "leadership": 48,
@@ -4345,7 +4345,7 @@
     "occupation": "宗族",
     "affiliationLabel": "明玉珍夏",
     "cityId": "city.chengdu",
-    "houseId": "house.chengdu.inn",
+    "houseId": "house.template.inn",
     "portraitId": "portrait.yuanmo.ming_sheng",
     "stats": {
       "leadership": 42,
@@ -4397,7 +4397,7 @@
     "occupation": "谋士",
     "affiliationLabel": "明玉珍夏",
     "cityId": "city.chengdu",
-    "houseId": "house.chengdu.leader_residence",
+    "houseId": "house.template.leader_residence",
     "portraitId": "portrait.yuanmo.dai_shou",
     "stats": {
       "leadership": 66,
@@ -4453,7 +4453,7 @@
     "occupation": "武将",
     "affiliationLabel": "方国珍浙东",
     "cityId": "city.ningbo",
-    "houseId": "house.ningbo.leader_residence",
+    "houseId": "house.template.leader_residence",
     "portraitId": "portrait.yuanmo.fang_guoying",
     "stats": {
       "leadership": 60,
@@ -4509,7 +4509,7 @@
     "occupation": "谋士",
     "affiliationLabel": "方国珍浙东",
     "cityId": "city.ningbo",
-    "houseId": "house.ningbo.leader_residence",
+    "houseId": "house.template.leader_residence",
     "portraitId": "portrait.yuanmo.ni_keren",
     "stats": {
       "leadership": 48,
@@ -4565,7 +4565,7 @@
     "occupation": "武将",
     "affiliationLabel": "福建陈友定",
     "cityId": "city.fuzhou",
-    "houseId": "house.fuzhou.leader_residence",
+    "houseId": "house.template.leader_residence",
     "portraitId": "portrait.yuanmo.chen_zonghai",
     "stats": {
       "leadership": 60,
@@ -4621,7 +4621,7 @@
     "occupation": "谋士",
     "affiliationLabel": "福建陈友定",
     "cityId": "city.fuzhou",
-    "houseId": "house.fuzhou.leader_residence",
+    "houseId": "house.template.leader_residence",
     "portraitId": "portrait.yuanmo.zheng_ding",
     "stats": {
       "leadership": 48,
@@ -4677,7 +4677,7 @@
     "occupation": "谋士",
     "affiliationLabel": "元廷中央",
     "cityId": "city.dadu",
-    "houseId": "house.dadu.leader_residence",
+    "houseId": "house.template.leader_residence",
     "portraitId": "portrait.yuanmo.hama",
     "stats": {
       "leadership": 48,
@@ -4733,7 +4733,7 @@
     "occupation": "武将",
     "affiliationLabel": "河南山东元军",
     "cityId": "city.kaifeng",
-    "houseId": "house.kaifeng.leader_residence",
+    "houseId": "house.template.leader_residence",
     "portraitId": "portrait.yuanmo.guan_bao",
     "stats": {
       "leadership": 60,
@@ -4789,7 +4789,7 @@
     "occupation": "武将",
     "affiliationLabel": "陕西甘肃元军",
     "cityId": "city.gongchang",
-    "houseId": "house.gongchang.leader_residence",
+    "houseId": "house.template.leader_residence",
     "portraitId": "portrait.yuanmo.li_shichang",
     "stats": {
       "leadership": 60,
@@ -4845,7 +4845,7 @@
     "occupation": "谋士",
     "affiliationLabel": "陕西甘肃元军",
     "cityId": "city.gongchang",
-    "houseId": "house.gongchang.leader_residence",
+    "houseId": "house.template.leader_residence",
     "portraitId": "portrait.yuanmo.baitemur",
     "stats": {
       "leadership": 66,
@@ -4901,7 +4901,7 @@
     "occupation": "乡里人情",
     "affiliationLabel": "钟离乡里",
     "cityId": "city.kulan",
-    "houseId": "house.kulan.tea_house",
+    "houseId": "house.template.tea_house",
     "portraitId": "portrait.yuanmo.liu_jizu",
     "stats": {
       "leadership": 48,
@@ -4953,7 +4953,7 @@
     "occupation": "武将",
     "affiliationLabel": "徐州红巾余部",
     "cityId": "city.kulan",
-    "houseId": "house.kulan.leader_residence",
+    "houseId": "house.template.leader_residence",
     "portraitId": "portrait.yuanmo.peng_da",
     "stats": {
       "leadership": 66,
@@ -5009,7 +5009,7 @@
     "occupation": "武将",
     "affiliationLabel": "徐州红巾余部",
     "cityId": "city.kulan",
-    "houseId": "house.kulan.leader_residence",
+    "houseId": "house.template.leader_residence",
     "portraitId": "portrait.yuanmo.zhao_junyong",
     "stats": {
       "leadership": 66,
@@ -5065,7 +5065,7 @@
     "occupation": "武将",
     "affiliationLabel": "濠州元军",
     "cityId": "city.kulan",
-    "houseId": "house.kulan.leader_residence",
+    "houseId": "house.template.leader_residence",
     "portraitId": "portrait.yuanmo.cheli_buhua",
     "stats": {
       "leadership": 60,
@@ -5121,7 +5121,7 @@
     "occupation": "武将",
     "affiliationLabel": "濠州元军",
     "cityId": "city.kulan",
-    "houseId": "house.kulan.leader_residence",
+    "houseId": "house.template.leader_residence",
     "portraitId": "portrait.yuanmo.jia_lu",
     "stats": {
       "leadership": 60,
@@ -5177,7 +5177,7 @@
     "occupation": "武将",
     "affiliationLabel": "朱元璋军府",
     "cityId": "city.kulan",
-    "houseId": "house.kulan.leader_residence",
+    "houseId": "house.template.leader_residence",
     "portraitId": "portrait.yuanmo.fei_ju",
     "stats": {
       "leadership": 60,
@@ -5233,7 +5233,7 @@
     "occupation": "武将",
     "affiliationLabel": "朱元璋军府",
     "cityId": "city.luzhou",
-    "houseId": "house.luzhou.leader_residence",
+    "houseId": "house.template.leader_residence",
     "portraitId": "portrait.yuanmo.geng_zaicheng",
     "stats": {
       "leadership": 60,
@@ -5289,7 +5289,7 @@
     "occupation": "武将",
     "affiliationLabel": "朱元璋水师",
     "cityId": "city.taiping",
-    "houseId": "house.taiping.leader_residence",
+    "houseId": "house.template.leader_residence",
     "portraitId": "portrait.yuanmo.yu_tonghai",
     "stats": {
       "leadership": 66,
@@ -5345,7 +5345,7 @@
     "occupation": "武将",
     "affiliationLabel": "朱元璋水师",
     "cityId": "city.taiping",
-    "houseId": "house.taiping.leader_residence",
+    "houseId": "house.template.leader_residence",
     "portraitId": "portrait.yuanmo.liao_yongan",
     "stats": {
       "leadership": 60,
@@ -5401,7 +5401,7 @@
     "occupation": "武将",
     "affiliationLabel": "朱元璋水师",
     "cityId": "city.taiping",
-    "houseId": "house.taiping.leader_residence",
+    "houseId": "house.template.leader_residence",
     "portraitId": "portrait.yuanmo.liao_yongzhong",
     "stats": {
       "leadership": 60,
@@ -5457,7 +5457,7 @@
     "occupation": "武将",
     "affiliationLabel": "天完/陈汉阵营",
     "cityId": "city.wuchang",
-    "houseId": "house.wuchang.leader_residence",
+    "houseId": "house.template.leader_residence",
     "portraitId": "portrait.yuanmo.zhao_pusheng",
     "stats": {
       "leadership": 60,
@@ -5513,7 +5513,7 @@
     "occupation": "武将",
     "affiliationLabel": "朱元璋军府",
     "cityId": "city.yingtian",
-    "houseId": "house.yingtian.leader_residence",
+    "houseId": "house.template.leader_residence",
     "portraitId": "portrait.yuanmo.kang_maocai",
     "stats": {
       "leadership": 60,
@@ -5569,7 +5569,7 @@
     "occupation": "武将",
     "affiliationLabel": "朱元璋军府",
     "cityId": "city.yingtian",
-    "houseId": "house.yingtian.leader_residence",
+    "houseId": "house.template.leader_residence",
     "portraitId": "portrait.yuanmo.wu_liang",
     "stats": {
       "leadership": 60,
@@ -5625,7 +5625,7 @@
     "occupation": "武将",
     "affiliationLabel": "朱元璋军府",
     "cityId": "city.yingtian",
-    "houseId": "house.yingtian.leader_residence",
+    "houseId": "house.template.leader_residence",
     "portraitId": "portrait.yuanmo.wu_zhen",
     "stats": {
       "leadership": 60,
@@ -5681,7 +5681,7 @@
     "occupation": "武将",
     "affiliationLabel": "朱元璋军府",
     "cityId": "city.yingtian",
-    "houseId": "house.yingtian.leader_residence",
+    "houseId": "house.template.leader_residence",
     "portraitId": "portrait.yuanmo.xie_zaixing",
     "stats": {
       "leadership": 60,
@@ -5737,7 +5737,7 @@
     "occupation": "战报",
     "affiliationLabel": "徐州红巾余部",
     "cityId": "city.kulan",
-    "houseId": "house.kulan.inn",
+    "houseId": "house.template.inn",
     "portraitId": "portrait.yuanmo.li_er",
     "stats": {
       "leadership": 60,
@@ -5789,7 +5789,7 @@
     "occupation": "武将",
     "affiliationLabel": "定远元军",
     "cityId": "city.kulan",
-    "houseId": "house.kulan.leader_residence",
+    "houseId": "house.template.leader_residence",
     "portraitId": "portrait.yuanmo.zhang_zhiyuan",
     "stats": {
       "leadership": 60,
@@ -5845,7 +5845,7 @@
     "occupation": "谋士",
     "affiliationLabel": "元廷中央",
     "cityId": "city.dadu",
-    "houseId": "house.dadu.leader_residence",
+    "houseId": "house.template.leader_residence",
     "portraitId": "portrait.yuanmo.tuotuo",
     "stats": {
       "leadership": 72,
@@ -5901,7 +5901,7 @@
     "occupation": "武将",
     "affiliationLabel": "朱元璋军府",
     "cityId": "city.yingtian",
-    "houseId": "house.yingtian.leader_residence",
+    "houseId": "house.template.leader_residence",
     "portraitId": "portrait.yuanmo.shao_rong",
     "stats": {
       "leadership": 60,
@@ -5957,7 +5957,7 @@
     "occupation": "武将",
     "affiliationLabel": "江南元军",
     "cityId": "city.taiping",
-    "houseId": "house.taiping.leader_residence",
+    "houseId": "house.template.leader_residence",
     "portraitId": "portrait.yuanmo.chen_yexian",
     "stats": {
       "leadership": 60,

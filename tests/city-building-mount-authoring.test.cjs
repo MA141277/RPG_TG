@@ -540,6 +540,117 @@ test("script editor runtime families source arrangement npc ownership from city 
   ]);
 });
 
+test("script editor runtime families keep mounted npc ownership distinct when repeated cities share one canonical building id", () => {
+  const {
+    materializeScriptEditorCityBuildingRuntimeFamilies,
+  } = require("../.test-dist/application/script-editor/city-building-runtime-materializer.js");
+
+  const runtimeFamilies = materializeScriptEditorCityBuildingRuntimeFamilies({
+    schemaVersion: 1,
+    id: "project.runtime",
+    title: "Runtime Project",
+    scenarioProfile: {},
+    maps: [],
+    cities: [
+      {
+        id: "city.start",
+        name: "Start City",
+        mountedBuildings: [
+          {
+            buildingId: "house.template.keep",
+            npcIds: ["person.start.guard", "person.start.host"],
+            primaryNpcId: "person.start.host",
+          },
+        ],
+      },
+      {
+        id: "city.other",
+        name: "Other City",
+        mountedBuildings: [
+          {
+            buildingId: "house.template.keep",
+            npcIds: ["person.other.guard", "person.other.host"],
+            primaryNpcId: "person.other.host",
+          },
+        ],
+      },
+    ],
+    buildings: [
+      {
+        id: "house.template.keep",
+        cityId: "city.start",
+        name: "Keep",
+      },
+    ],
+    buildingArrangements: [
+      {
+        id: "building-arrangement.start.keep",
+        cityId: "city.start",
+        buildingId: "house.template.keep",
+        displayName: "Start Keep",
+        mountedNpcIds: ["person.legacy.start"],
+        primaryNpcId: "person.legacy.start",
+        containers: [],
+      },
+      {
+        id: "building-arrangement.other.keep",
+        cityId: "city.other",
+        buildingId: "house.template.keep",
+        displayName: "Other Keep",
+        mountedNpcIds: ["person.legacy.other"],
+        primaryNpcId: "person.legacy.other",
+        containers: [],
+      },
+    ],
+    people: [
+      { id: "person.start.host", name: "Start Host", personType: "NPC" },
+      { id: "person.start.guard", name: "Start Guard", personType: "NPC" },
+      { id: "person.other.host", name: "Other Host", personType: "NPC" },
+      { id: "person.other.guard", name: "Other Guard", personType: "NPC" },
+    ],
+    factions: [],
+    chapters: [],
+    storyNodes: [],
+    dialogues: [],
+    events: [],
+    eventBindings: [],
+    activities: [],
+    items: [],
+    skills: [],
+    relationships: [],
+    endingRules: [],
+    minigames: [],
+    cityEntries: [],
+    cityNpcPools: [],
+    locationAccess: [],
+    playableIntegrations: [],
+    workflow: { currentStepId: "draft", completedSteps: [], records: {} },
+  });
+
+  assert.deepEqual(
+    runtimeFamilies.buildingArrangements.map((arrangement) => ({
+      id: arrangement.id,
+      cityId: arrangement.cityId,
+      mountedNpcIds: arrangement.mountedNpcIds,
+      primaryNpcId: arrangement.primaryNpcId,
+    })),
+    [
+      {
+        id: "building-arrangement.start.keep",
+        cityId: "city.start",
+        mountedNpcIds: ["person.start.guard", "person.start.host"],
+        primaryNpcId: "person.start.host",
+      },
+      {
+        id: "building-arrangement.other.keep",
+        cityId: "city.other",
+        mountedNpcIds: ["person.other.guard", "person.other.host"],
+        primaryNpcId: "person.other.host",
+      },
+    ]
+  );
+});
+
 test("script editor city tabs separate mounted buildings from building arrangements", () => {
   const mainUiSource = fs.readFileSync(
     path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),

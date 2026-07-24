@@ -38,6 +38,7 @@ import { createCity3dHouseEntryCoordinator } from "./application/runtime/city-3d
 import { createCityDirectoryLeaderResidenceCoordinator } from "./application/runtime/city-directory-leader-residence-coordinator";
 import { createCouncilPriorityCityBeggingCoordinator } from "./application/runtime/council-priority-city-begging-coordinator";
 import { createCityHouseTransitionCoordinator } from "./application/runtime/city-house-transition-coordinator";
+import { matchesCanonicalBuildingOwnerId } from "./core/runtime/building-owner-canonicalization";
 import { applyCityViewTransition } from "./application/runtime/city-view-transition";
 import { createHouseDragDropCoordinator } from "./application/runtime/house-drag-drop-coordinator";
 import { triggerBuildingContainerItemAction } from "./application/building/building-container-event-runtime";
@@ -757,7 +758,7 @@ function getCouncilPriorityHouseDefinition(): HouseDefinition | null {
   const priorityModuleId = getCouncilPriorityHouseModuleId(appState.gameState);
   const currentCityId = appState.gameState.world.currentCityId;
 
-  return (
+  const priorityHouse =
     activeContentContext.houses.find(
       (houseDefinition) =>
         houseDefinition.moduleId === priorityModuleId &&
@@ -766,8 +767,32 @@ function getCouncilPriorityHouseDefinition(): HouseDefinition | null {
     activeContentContext.houses.find(
       (houseDefinition) => houseDefinition.moduleId === priorityModuleId
     ) ??
-    null
-  );
+    null;
+  if (priorityHouse == null) {
+    return null;
+  }
+
+  if (currentCityId == null) {
+    return priorityHouse;
+  }
+
+  const cityScopedArrangement =
+    activeContentContext.buildingArrangements.find(
+      (arrangement) =>
+        arrangement.cityId === currentCityId &&
+        matchesCanonicalBuildingOwnerId(arrangement.buildingId, priorityHouse.id)
+    ) ?? null;
+  if (cityScopedArrangement?.primaryNpcId == null) {
+    return priorityHouse.cityId === currentCityId
+      ? priorityHouse
+      : { ...priorityHouse, cityId: currentCityId };
+  }
+
+  return {
+    ...priorityHouse,
+    cityId: currentCityId,
+    defaultCharacterId: cityScopedArrangement.primaryNpcId,
+  };
 }
 
 function createCouncilArrivalDialogue(
@@ -834,6 +859,7 @@ function syncCouncilPriorityAfterGameStateChange(
     state: stateSyncCoreSeam.createRuntimeStateFromAppState(appState),
     previousGameState,
     houseDefinitions: activeContentContext.houses,
+    buildingArrangements: activeContentContext.buildingArrangements,
     textEntriesById: activeContentContext.textEntriesById,
     ...(councilArrivalNotice == null ? {} : { councilArrivalNotice }),
   });

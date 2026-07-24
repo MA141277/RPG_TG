@@ -69,6 +69,7 @@ export function createStagePresenterOutput(
   if (currentView === "house") {
     return selectBuildingModuleStage({
       appState: input.appState,
+      cityDefinitions,
       houseDefinitions: input.houseDefinitions,
       buildingArrangements: input.buildingArrangements,
       cityNpcPoolDefinitions: input.cityNpcPoolDefinitions,
@@ -90,6 +91,7 @@ export function createStagePresenterOutput(
             },
           },
         },
+        cityDefinitions,
         houseDefinitions: input.houseDefinitions,
         buildingArrangements: input.buildingArrangements,
         cityNpcPoolDefinitions: input.cityNpcPoolDefinitions,
@@ -143,6 +145,7 @@ export function createStagePresenterOutput(
                 },
               },
             },
+            cityDefinitions,
             houseDefinitions: input.houseDefinitions,
             buildingArrangements: input.buildingArrangements,
             cityNpcPoolDefinitions: input.cityNpcPoolDefinitions,

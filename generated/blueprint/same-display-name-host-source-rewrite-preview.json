@@ -1,0 +1,115 @@
+{
+  "generatedAt": "2026-07-24",
+  "queueId": "queue.same-display-name-building-host-instance-canonicalization",
+  "activeTaskId": "task.same-display-name-building-host-instance-canonicalization.canonical-host-id-rewrite-and-reference-guard-baseline",
+  "previewId": "slice.production-source-rewrite-preview",
+  "kind": "non-destructive-preview",
+  "currentProductionState": {
+    "housesFile": "src/content/scenario-packs/zhuyuanzhang/houses.json",
+    "arrangementsFile": "src/content/scenario-packs/zhuyuanzhang/building-arrangements.json",
+    "citiesFile": "src/content/scenario-packs/zhuyuanzhang/cities.json",
+    "cityEntriesFile": "src/content/scenario-packs/zhuyuanzhang/city-entries.json",
+    "finding": "No canonical house record such as home.template or house.template.* currently exists in production pack source; repeated-name real hosts still survive as city-scoped records across all four owned surfaces."
+  },
+  "familySurfaceCounts": [
+    {
+      "familyKey": "home",
+      "moduleId": "home-house",
+      "canonicalId": "home.template",
+      "houses": 21,
+      "buildingArrangements": 21,
+      "mountedBuildings": 21,
+      "cityEntries": 0,
+      "existingCanonicalHouse": false
+    },
+    {
+      "familyKey": "leader_residence",
+      "moduleId": "leader-residence",
+      "canonicalId": "house.template.leader_residence",
+      "houses": 21,
+      "buildingArrangements": 21,
+      "mountedBuildings": 21,
+      "cityEntries": 21,
+      "existingCanonicalHouse": false
+    },
+    {
+      "familyKey": "keep",
+      "moduleId": "keep-house",
+      "canonicalId": "house.template.keep",
+      "houses": 21,
+      "buildingArrangements": 21,
+      "mountedBuildings": 21,
+      "cityEntries": 1,
+      "existingCanonicalHouse": false
+    },
+    {
+      "familyKey": "tea_house",
+      "moduleId": "tea-house",
+      "canonicalId": "house.template.tea_house",
+      "houses": 21,
+      "buildingArrangements": 21,
+      "mountedBuildings": 21,
+      "cityEntries": 1,
+      "existingCanonicalHouse": false
+    },
+    {
+      "familyKey": "market",
+      "moduleId": "market-house",
+      "canonicalId": "house.template.market",
+      "houses": 21,
+      "buildingArrangements": 21,
+      "mountedBuildings": 21,
+      "cityEntries": 1,
+      "existingCanonicalHouse": false
+    },
+    {
+      "familyKey": "grain_shop",
+      "moduleId": "grain-shop",
+      "canonicalId": "house.template.grain_shop",
+      "houses": 21,
+      "buildingArrangements": 21,
+      "mountedBuildings": 21,
+      "cityEntries": 1,
+      "existingCanonicalHouse": false
+    },
+    {
+      "familyKey": "medicine_house",
+      "moduleId": "medicine-house",
+      "canonicalId": "house.template.medicine_house",
+      "houses": 21,
+      "buildingArrangements": 21,
+      "mountedBuildings": 21,
+      "cityEntries": 1,
+      "existingCanonicalHouse": false
+    },
+    {
+      "familyKey": "inn",
+      "moduleId": "tavern",
+      "canonicalId": "house.template.inn",
+      "houses": 21,
+      "buildingArrangements": 21,
+      "mountedBuildings": 21,
+      "cityEntries": 1,
+      "existingCanonicalHouse": false
+    },
+    {
+      "familyKey": "temple_standard",
+      "moduleId": "temple-house",
+      "canonicalId": "house.template.temple",
+      "houses": 21,
+      "buildingArrangements": 21,
+      "mountedBuildings": 21,
+      "cityEntries": 1,
+      "existingCanonicalHouse": false,
+      "preservationException": "house.kulan.temple remains explicit preserve-list residue and should be routed outside the standard 20-city fold."
+    }
+  ],
+  "firstBatchRecommendation": {
+    "familyKey": "home",
+    "reason": [
+      "It is the first canonical id in the frozen inventory order.",
+      "It touches three of the four owned source surfaces without city-entry rewrite, so it is the narrowest production data batch that still proves canonical host creation plus full direct rewrite on houses/building-arrangements/cities.",
+      "It has no preserve-list exception like house.kulan.temple."
+    ]
+  }
+}

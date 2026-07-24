@@ -1,0 +1,56 @@
+{
+  "generatedAt": "2026-07-24",
+  "queueId": "queue.same-display-name-building-host-instance-canonicalization",
+  "activeTaskId": "task.same-display-name-building-host-instance-canonicalization.canonical-host-id-rewrite-and-reference-guard-baseline",
+  "preflightId": "slice.council-priority-house-projection-preflight",
+  "kind": "non-destructive-preflight",
+  "frozenContract": {
+    "goal": "preserve canonical targetHouseId for council-priority routing while sourcing city-local speaker truth from a city-scoped projection seam",
+    "projectionShape": [
+      "houseId",
+      "cityId",
+      "moduleId",
+      "houseName",
+      "defaultSpeakerCharacterId"
+    ],
+    "mustPreserve": [
+      "canonical shared house id remains the routing token",
+      "keep-house and temple-house selection still follows currentCityId plus review policy",
+      "no duplicate real house records are reintroduced as a speaker workaround"
+    ]
+  },
+  "availableInputs": [
+    {
+      "surface": "src/main.ts",
+      "input": "activeContentContext.buildingArrangements",
+      "evidence": "main runtime already passes buildingArrangements into covered navigation/runtime consumers"
+    },
+    {
+      "surface": "src/application/content/active-game-content.ts",
+      "input": "ActiveGameContentContext.buildingArrangements",
+      "evidence": "buildingArrangements are first-class active content and remain available at runtime"
+    },
+    {
+      "surface": "src/core/runtime/navigation-runtime.ts",
+      "input": "currentCityId + houseDefinition.id",
+      "evidence": "existing arrangement lookup already uses cityId + buildingId as the canonical runtime selection seam"
+    }
+  ],
+  "derivedInference": {
+    "speakerSource": "A city-scoped arrangement.primaryNpcId is the narrowest already-available source for council-priority speaker truth once keep-house or temple-house ids become canonical shared host ids.",
+    "nameSource": "Because the queue only targets same-display-name duplicate families, targetHouseName may remain on the canonical shared house record for this slice unless later evidence shows city-local display divergence.",
+    "fallbackPolicy": "If the city-scoped arrangement lacks primaryNpcId, the projection may fall back to HouseDefinition.defaultCharacterId without reintroducing duplicate house records."
+  },
+  "firstWriteTargets": [
+    "src/main.ts",
+    "src/application/runtime/navigation-time-follow-up.ts",
+    "src/application/runtime/council-priority-city-begging-coordinator.ts",
+    "tests/robustness.test.cjs"
+  ],
+  "deferredRelatedRisk": [
+    {
+      "surface": "src/core/runtime/navigation-runtime.ts",
+      "reason": "missing-arrangement refusal also reads HouseDefinition.defaultCharacterId, but it is a separate bounded consumer and does not need to be widened into the first council-priority projection slice"
+    }
+  ]
+}

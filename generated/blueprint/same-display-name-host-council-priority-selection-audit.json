@@ -1,0 +1,58 @@
+{
+  "generatedAt": "2026-07-24",
+  "queueId": "queue.same-display-name-building-host-instance-canonicalization",
+  "activeTaskId": "task.same-display-name-building-host-instance-canonicalization.canonical-host-id-rewrite-and-reference-guard-baseline",
+  "auditId": "slice.council-priority-canonical-house-selection-audit",
+  "kind": "non-destructive-audit",
+  "anchors": [
+    {
+      "surface": "src/main.ts",
+      "symbol": "getCouncilPriorityHouseDefinition",
+      "behavior": "selects by moduleId and prefers houseDefinition.cityId === currentCityId before falling back to any matching module house"
+    },
+    {
+      "surface": "src/application/runtime/navigation-time-follow-up.ts",
+      "symbol": "getCouncilPriorityHouseDefinition/createCouncilArrivalDialogue",
+      "behavior": "council-arrival reminder derives both targetHouseId and defaultSpeakerCharacterId from the selected HouseDefinition"
+    },
+    {
+      "surface": "src/application/runtime/council-priority-city-begging-coordinator.ts",
+      "symbol": "showCouncilPriorityRefusal/showCouncilInsufficientTimeRefusal",
+      "behavior": "refusal flows reuse the same selected HouseDefinition for targetHouseName and speakerCharacterId"
+    }
+  ],
+  "frozenInference": {
+    "currentSelectorContract": "The selector assumes city-scoped HouseDefinition records still exist for keep-house and temple-house review owners.",
+    "canonicalHostRisk": "Once repeated-name hosts converge onto one shared canonical house record, city-scoped preference by houseDefinition.cityId becomes advisory only. The fallback branch can still return the first canonical house record even when currentCityId belongs to another city.",
+    "speakerRisk": "Because the selected HouseDefinition also owns defaultCharacterId, council reminder/refusal flows would inherit one city's host speaker as the default across every city sharing the canonical house unless a city-scoped projection seam exists."
+  },
+  "exampleScenario": {
+    "currentCityId": "city.other",
+    "canonicalHouse": {
+      "id": "house.template.keep",
+      "cityId": "city.start",
+      "moduleId": "keep-house",
+      "defaultCharacterId": "npc.start.guard"
+    },
+    "selectorOutcome": "fallback returns house.template.keep even though cityId does not match city.other",
+    "resultingDrift": [
+      "targetHouseId remains usable as a canonical routing token",
+      "speakerCharacterId still drifts to npc.start.guard instead of a city.other host unless another seam supplies city-scoped speaker truth"
+    ]
+  },
+  "nonGoals": [
+    "does not widen into full source rewrite",
+    "does not decide final speaker-authoring policy for all module houses",
+    "does not reopen settlement or nextEventId queues"
+  ],
+  "recommendedNextSlice": {
+    "id": "slice.council-priority-house-projection-preflight",
+    "goal": "freeze a city-scoped council-priority projection seam that can preserve canonical targetHouseId while sourcing city-local speaker/name truth before broad host-id source rewrite lands",
+    "boundedTargets": [
+      "src/main.ts",
+      "src/application/runtime/navigation-time-follow-up.ts",
+      "src/application/runtime/council-priority-city-begging-coordinator.ts",
+      "tests/robustness.test.cjs"
+    ]
+  }
+}

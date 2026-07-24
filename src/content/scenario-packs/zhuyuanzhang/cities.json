@@ -5,15 +5,15 @@
     "regionId": "region.frontier",
     "mapNodeId": "settlement.fenyang_province",
     "houseIds": [
-      "house.kulan.leader_residence",
+      "house.template.leader_residence",
       "house.kulan.temple",
-      "home_001",
-      "house.kulan.keep",
-      "house.kulan.tea_house",
-      "house.kulan.market",
-      "house.kulan.grain_shop",
-      "house.kulan.medicine_house",
-      "house.kulan.inn"
+      "home.template",
+      "house.template.keep",
+      "house.template.tea_house",
+      "house.template.market",
+      "house.template.grain_shop",
+      "house.template.medicine_house",
+      "house.template.inn"
     ],
     "neighbourCityIds": [],
     "travelCost": 1,
@@ -33,7 +33,7 @@
     ],
     "mountedBuildings": [
       {
-        "buildingId": "house.kulan.leader_residence",
+        "buildingId": "house.template.leader_residence",
         "npcIds": [
           "char.kulan_liu_bowen",
           "char.kulan_li_shanchang",
@@ -58,14 +58,14 @@
         "primaryNpcId": "char.kulan_temple_abbot"
       },
       {
-        "buildingId": "home_001",
+        "buildingId": "home.template",
         "npcIds": [
           "char.player"
         ],
         "primaryNpcId": "char.player"
       },
       {
-        "buildingId": "house.kulan.keep",
+        "buildingId": "house.template.keep",
         "npcIds": [
           "char.kulan_lord",
           "char.kulan_xu_da",
@@ -77,7 +77,7 @@
         "primaryNpcId": "char.kulan_lord"
       },
       {
-        "buildingId": "house.kulan.tea_house",
+        "buildingId": "house.template.tea_house",
         "npcIds": [
           "char.kulan_tea_boss",
           "char.yuanmo.zhongli_elder",
@@ -87,7 +87,7 @@
         "primaryNpcId": "char.kulan_tea_boss"
       },
       {
-        "buildingId": "house.kulan.market",
+        "buildingId": "house.template.market",
         "npcIds": [
           "char.kulan_merchant",
           "char.yuanmo.haozhou_salt_runner"
@@ -95,21 +95,21 @@
         "primaryNpcId": "char.kulan_merchant"
       },
       {
-        "buildingId": "house.kulan.grain_shop",
+        "buildingId": "house.template.grain_shop",
         "npcIds": [
           "char.kulan_grain_shopkeeper"
         ],
         "primaryNpcId": "char.kulan_grain_shopkeeper"
       },
       {
-        "buildingId": "house.kulan.medicine_house",
+        "buildingId": "house.template.medicine_house",
         "npcIds": [
           "char.kulan_medicine_doctor"
         ],
         "primaryNpcId": "char.kulan_medicine_doctor"
       },
       {
-        "buildingId": "house.kulan.inn",
+        "buildingId": "house.template.inn",
         "npcIds": [
           "char.kulan_innkeeper",
           "char.yuanmo.ma_shi",
@@ -138,15 +138,15 @@
     "regionId": "region.yuanmo_china",
     "mapNodeId": "settlement.yingtian_province",
     "houseIds": [
-      "house.yingtian.leader_residence",
-      "house.yingtian.temple",
-      "home.yingtian",
-      "house.yingtian.keep",
-      "house.yingtian.tea_house",
-      "house.yingtian.market",
-      "house.yingtian.grain_shop",
-      "house.yingtian.medicine_house",
-      "house.yingtian.inn"
+      "house.template.leader_residence",
+      "house.template.temple",
+      "home.template",
+      "house.template.keep",
+      "house.template.tea_house",
+      "house.template.market",
+      "house.template.grain_shop",
+      "house.template.medicine_house",
+      "house.template.inn"
     ],
     "neighbourCityIds": [],
     "travelCost": 1,
@@ -164,7 +164,7 @@
     ],
     "mountedBuildings": [
       {
-        "buildingId": "house.yingtian.leader_residence",
+        "buildingId": "house.template.leader_residence",
         "npcIds": [
           "char.yuanmo.song_lian",
           "char.yuanmo.zhu_sheng",
@@ -181,42 +181,42 @@
         "primaryNpcId": "char.yuanmo.song_lian"
       },
       {
-        "buildingId": "house.yingtian.temple",
+        "buildingId": "house.template.temple",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "home.yingtian",
+        "buildingId": "home.template",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.yingtian.keep",
+        "buildingId": "house.template.keep",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.yingtian.tea_house",
+        "buildingId": "house.template.tea_house",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.yingtian.market",
+        "buildingId": "house.template.market",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.yingtian.grain_shop",
+        "buildingId": "house.template.grain_shop",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.yingtian.medicine_house",
+        "buildingId": "house.template.medicine_house",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.yingtian.inn",
+        "buildingId": "house.template.inn",
         "npcIds": [],
         "primaryNpcId": null
       }
@@ -236,15 +236,15 @@
     "regionId": "region.yuanmo_china",
     "mapNodeId": "settlement.luzhou_province",
     "houseIds": [
-      "house.luzhou.leader_residence",
-      "house.luzhou.temple",
-      "home.luzhou",
-      "house.luzhou.keep",
-      "house.luzhou.tea_house",
-      "house.luzhou.market",
-      "house.luzhou.grain_shop",
-      "house.luzhou.medicine_house",
-      "house.luzhou.inn"
+      "house.template.leader_residence",
+      "house.template.temple",
+      "home.template",
+      "house.template.keep",
+      "house.template.tea_house",
+      "house.template.market",
+      "house.template.grain_shop",
+      "house.template.medicine_house",
+      "house.template.inn"
     ],
     "neighbourCityIds": [],
     "travelCost": 1,
@@ -262,7 +262,7 @@
     ],
     "mountedBuildings": [
       {
-        "buildingId": "house.luzhou.leader_residence",
+        "buildingId": "house.template.leader_residence",
         "npcIds": [
           "char.yuanmo.miao_daheng",
           "char.yuanmo.ding_pulang",
@@ -271,42 +271,42 @@
         "primaryNpcId": "char.yuanmo.miao_daheng"
       },
       {
-        "buildingId": "house.luzhou.temple",
+        "buildingId": "house.template.temple",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "home.luzhou",
+        "buildingId": "home.template",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.luzhou.keep",
+        "buildingId": "house.template.keep",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.luzhou.tea_house",
+        "buildingId": "house.template.tea_house",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.luzhou.market",
+        "buildingId": "house.template.market",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.luzhou.grain_shop",
+        "buildingId": "house.template.grain_shop",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.luzhou.medicine_house",
+        "buildingId": "house.template.medicine_house",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.luzhou.inn",
+        "buildingId": "house.template.inn",
         "npcIds": [
           "char.yuanmo.feng_guoyong",
           "char.yuanmo.geng_bingwen",
@@ -330,15 +330,15 @@
     "regionId": "region.yuanmo_china",
     "mapNodeId": "settlement.anqing_province",
     "houseIds": [
-      "house.anqing.leader_residence",
-      "house.anqing.temple",
-      "home.anqing",
-      "house.anqing.keep",
-      "house.anqing.tea_house",
-      "house.anqing.market",
-      "house.anqing.grain_shop",
-      "house.anqing.medicine_house",
-      "house.anqing.inn"
+      "house.template.leader_residence",
+      "house.template.temple",
+      "home.template",
+      "house.template.keep",
+      "house.template.tea_house",
+      "house.template.market",
+      "house.template.grain_shop",
+      "house.template.medicine_house",
+      "house.template.inn"
     ],
     "neighbourCityIds": [],
     "travelCost": 1,
@@ -356,47 +356,47 @@
     ],
     "mountedBuildings": [
       {
-        "buildingId": "house.anqing.leader_residence",
+        "buildingId": "house.template.leader_residence",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.anqing.temple",
+        "buildingId": "house.template.temple",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "home.anqing",
+        "buildingId": "home.template",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.anqing.keep",
+        "buildingId": "house.template.keep",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.anqing.tea_house",
+        "buildingId": "house.template.tea_house",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.anqing.market",
+        "buildingId": "house.template.market",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.anqing.grain_shop",
+        "buildingId": "house.template.grain_shop",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.anqing.medicine_house",
+        "buildingId": "house.template.medicine_house",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.anqing.inn",
+        "buildingId": "house.template.inn",
         "npcIds": [
           "char.yuanmo.deng_yu"
         ],
@@ -418,15 +418,15 @@
     "regionId": "region.yuanmo_china",
     "mapNodeId": "settlement.taiping_province",
     "houseIds": [
-      "house.taiping.leader_residence",
-      "house.taiping.temple",
-      "home.taiping",
-      "house.taiping.keep",
-      "house.taiping.tea_house",
-      "house.taiping.market",
-      "house.taiping.grain_shop",
-      "house.taiping.medicine_house",
-      "house.taiping.inn"
+      "house.template.leader_residence",
+      "house.template.temple",
+      "home.template",
+      "house.template.keep",
+      "house.template.tea_house",
+      "house.template.market",
+      "house.template.grain_shop",
+      "house.template.medicine_house",
+      "house.template.inn"
     ],
     "neighbourCityIds": [],
     "travelCost": 1,
@@ -444,7 +444,7 @@
     ],
     "mountedBuildings": [
       {
-        "buildingId": "house.taiping.leader_residence",
+        "buildingId": "house.template.leader_residence",
         "npcIds": [
           "char.yuanmo.yu_tonghai",
           "char.yuanmo.liao_yongan",
@@ -454,42 +454,42 @@
         "primaryNpcId": "char.yuanmo.yu_tonghai"
       },
       {
-        "buildingId": "house.taiping.temple",
+        "buildingId": "house.template.temple",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "home.taiping",
+        "buildingId": "home.template",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.taiping.keep",
+        "buildingId": "house.template.keep",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.taiping.tea_house",
+        "buildingId": "house.template.tea_house",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.taiping.market",
+        "buildingId": "house.template.market",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.taiping.grain_shop",
+        "buildingId": "house.template.grain_shop",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.taiping.medicine_house",
+        "buildingId": "house.template.medicine_house",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.taiping.inn",
+        "buildingId": "house.template.inn",
         "npcIds": [
           "char.yuanmo.hu_dahai",
           "char.yuanmo.hua_yun"
@@ -512,15 +512,15 @@
     "regionId": "region.yuanmo_china",
     "mapNodeId": "settlement.tieling_province",
     "houseIds": [
-      "house.anfeng.leader_residence",
-      "house.anfeng.temple",
-      "home.anfeng",
-      "house.anfeng.keep",
-      "house.anfeng.tea_house",
-      "house.anfeng.market",
-      "house.anfeng.grain_shop",
-      "house.anfeng.medicine_house",
-      "house.anfeng.inn"
+      "house.template.leader_residence",
+      "house.template.temple",
+      "home.template",
+      "house.template.keep",
+      "house.template.tea_house",
+      "house.template.market",
+      "house.template.grain_shop",
+      "house.template.medicine_house",
+      "house.template.inn"
     ],
     "neighbourCityIds": [],
     "travelCost": 1,
@@ -538,47 +538,47 @@
     ],
     "mountedBuildings": [
       {
-        "buildingId": "house.anfeng.leader_residence",
+        "buildingId": "house.template.leader_residence",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.anfeng.temple",
+        "buildingId": "house.template.temple",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "home.anfeng",
+        "buildingId": "home.template",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.anfeng.keep",
+        "buildingId": "house.template.keep",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.anfeng.tea_house",
+        "buildingId": "house.template.tea_house",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.anfeng.market",
+        "buildingId": "house.template.market",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.anfeng.grain_shop",
+        "buildingId": "house.template.grain_shop",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.anfeng.medicine_house",
+        "buildingId": "house.template.medicine_house",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.anfeng.inn",
+        "buildingId": "house.template.inn",
         "npcIds": [
           "char.yuanmo.han_liner",
           "char.yuanmo.liu_futong",
@@ -603,15 +603,15 @@
     "regionId": "region.yuanmo_china",
     "mapNodeId": "settlement.runing_province",
     "houseIds": [
-      "house.runing.leader_residence",
-      "house.runing.temple",
-      "home.runing",
-      "house.runing.keep",
-      "house.runing.tea_house",
-      "house.runing.market",
-      "house.runing.grain_shop",
-      "house.runing.medicine_house",
-      "house.runing.inn"
+      "house.template.leader_residence",
+      "house.template.temple",
+      "home.template",
+      "house.template.keep",
+      "house.template.tea_house",
+      "house.template.market",
+      "house.template.grain_shop",
+      "house.template.medicine_house",
+      "house.template.inn"
     ],
     "neighbourCityIds": [],
     "travelCost": 1,
@@ -629,47 +629,47 @@
     ],
     "mountedBuildings": [
       {
-        "buildingId": "house.runing.leader_residence",
+        "buildingId": "house.template.leader_residence",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.runing.temple",
+        "buildingId": "house.template.temple",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "home.runing",
+        "buildingId": "home.template",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.runing.keep",
+        "buildingId": "house.template.keep",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.runing.tea_house",
+        "buildingId": "house.template.tea_house",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.runing.market",
+        "buildingId": "house.template.market",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.runing.grain_shop",
+        "buildingId": "house.template.grain_shop",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.runing.medicine_house",
+        "buildingId": "house.template.medicine_house",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.runing.inn",
+        "buildingId": "house.template.inn",
         "npcIds": [
           "char.yuanmo.han_shantong",
           "char.yuanmo.du_zundao",
@@ -693,15 +693,15 @@
     "regionId": "region.yuanmo_china",
     "mapNodeId": "settlement.huaian_province",
     "houseIds": [
-      "house.huaian.leader_residence",
-      "house.huaian.temple",
-      "home.huaian",
-      "house.huaian.keep",
-      "house.huaian.tea_house",
-      "house.huaian.market",
-      "house.huaian.grain_shop",
-      "house.huaian.medicine_house",
-      "house.huaian.inn"
+      "house.template.leader_residence",
+      "house.template.temple",
+      "home.template",
+      "house.template.keep",
+      "house.template.tea_house",
+      "house.template.market",
+      "house.template.grain_shop",
+      "house.template.medicine_house",
+      "house.template.inn"
     ],
     "neighbourCityIds": [],
     "travelCost": 1,
@@ -719,47 +719,47 @@
     ],
     "mountedBuildings": [
       {
-        "buildingId": "house.huaian.leader_residence",
+        "buildingId": "house.template.leader_residence",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.huaian.temple",
+        "buildingId": "house.template.temple",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "home.huaian",
+        "buildingId": "home.template",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.huaian.keep",
+        "buildingId": "house.template.keep",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.huaian.tea_house",
+        "buildingId": "house.template.tea_house",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.huaian.market",
+        "buildingId": "house.template.market",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.huaian.grain_shop",
+        "buildingId": "house.template.grain_shop",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.huaian.medicine_house",
+        "buildingId": "house.template.medicine_house",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.huaian.inn",
+        "buildingId": "house.template.inn",
         "npcIds": [
           "char.yuanmo.lv_zhen",
           "char.yuanmo.panyuan_shao"
@@ -782,15 +782,15 @@
     "regionId": "region.yuanmo_china",
     "mapNodeId": "settlement.yangzhou_province",
     "houseIds": [
-      "house.yangzhou.leader_residence",
-      "house.yangzhou.temple",
-      "home.yangzhou",
-      "house.yangzhou.keep",
-      "house.yangzhou.tea_house",
-      "house.yangzhou.market",
-      "house.yangzhou.grain_shop",
-      "house.yangzhou.medicine_house",
-      "house.yangzhou.inn"
+      "house.template.leader_residence",
+      "house.template.temple",
+      "home.template",
+      "house.template.keep",
+      "house.template.tea_house",
+      "house.template.market",
+      "house.template.grain_shop",
+      "house.template.medicine_house",
+      "house.template.inn"
     ],
     "neighbourCityIds": [],
     "travelCost": 1,
@@ -808,7 +808,7 @@
     ],
     "mountedBuildings": [
       {
-        "buildingId": "house.yangzhou.leader_residence",
+        "buildingId": "house.template.leader_residence",
         "npcIds": [
           "char.yuanmo.zhang_tianyou_zhou",
           "char.yuanmo.zhang_shiyi"
@@ -816,42 +816,42 @@
         "primaryNpcId": "char.yuanmo.zhang_tianyou_zhou"
       },
       {
-        "buildingId": "house.yangzhou.temple",
+        "buildingId": "house.template.temple",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "home.yangzhou",
+        "buildingId": "home.template",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.yangzhou.keep",
+        "buildingId": "house.template.keep",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.yangzhou.tea_house",
+        "buildingId": "house.template.tea_house",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.yangzhou.market",
+        "buildingId": "house.template.market",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.yangzhou.grain_shop",
+        "buildingId": "house.template.grain_shop",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.yangzhou.medicine_house",
+        "buildingId": "house.template.medicine_house",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.yangzhou.inn",
+        "buildingId": "house.template.inn",
         "npcIds": [
           "char.yuanmo.zhang_shicheng",
           "char.yuanmo.zhang_shide",
@@ -876,15 +876,15 @@
     "regionId": "region.yuanmo_china",
     "mapNodeId": "settlement.suzhou_province",
     "houseIds": [
-      "house.suzhou.leader_residence",
-      "house.suzhou.temple",
-      "home.suzhou",
-      "house.suzhou.keep",
-      "house.suzhou.tea_house",
-      "house.suzhou.market",
-      "house.suzhou.grain_shop",
-      "house.suzhou.medicine_house",
-      "house.suzhou.inn"
+      "house.template.leader_residence",
+      "house.template.temple",
+      "home.template",
+      "house.template.keep",
+      "house.template.tea_house",
+      "house.template.market",
+      "house.template.grain_shop",
+      "house.template.medicine_house",
+      "house.template.inn"
     ],
     "neighbourCityIds": [],
     "travelCost": 1,
@@ -902,7 +902,7 @@
     ],
     "mountedBuildings": [
       {
-        "buildingId": "house.suzhou.leader_residence",
+        "buildingId": "house.template.leader_residence",
         "npcIds": [
           "char.yuanmo.ye_dexin",
           "char.yuanmo.chen_ji"
@@ -910,44 +910,44 @@
         "primaryNpcId": "char.yuanmo.ye_dexin"
       },
       {
-        "buildingId": "house.suzhou.temple",
+        "buildingId": "house.template.temple",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "home.suzhou",
+        "buildingId": "home.template",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.suzhou.keep",
+        "buildingId": "house.template.keep",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.suzhou.tea_house",
+        "buildingId": "house.template.tea_house",
         "npcIds": [
           "char.yuanmo.shi_naian"
         ],
         "primaryNpcId": "char.yuanmo.shi_naian"
       },
       {
-        "buildingId": "house.suzhou.market",
+        "buildingId": "house.template.market",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.suzhou.grain_shop",
+        "buildingId": "house.template.grain_shop",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.suzhou.medicine_house",
+        "buildingId": "house.template.medicine_house",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.suzhou.inn",
+        "buildingId": "house.template.inn",
         "npcIds": [
           "char.yuanmo.zhang_shixin"
         ],
@@ -969,15 +969,15 @@
     "regionId": "region.yuanmo_china",
     "mapNodeId": "settlement.wuchang_province",
     "houseIds": [
-      "house.wuchang.leader_residence",
-      "house.wuchang.temple",
-      "home.wuchang",
-      "house.wuchang.keep",
-      "house.wuchang.tea_house",
-      "house.wuchang.market",
-      "house.wuchang.grain_shop",
-      "house.wuchang.medicine_house",
-      "house.wuchang.inn"
+      "house.template.leader_residence",
+      "house.template.temple",
+      "home.template",
+      "house.template.keep",
+      "house.template.tea_house",
+      "house.template.market",
+      "house.template.grain_shop",
+      "house.template.medicine_house",
+      "house.template.inn"
     ],
     "neighbourCityIds": [],
     "travelCost": 1,
@@ -995,7 +995,7 @@
     ],
     "mountedBuildings": [
       {
-        "buildingId": "house.wuchang.leader_residence",
+        "buildingId": "house.template.leader_residence",
         "npcIds": [
           "char.yuanmo.zhang_bixian",
           "char.yuanmo.luo_furen",
@@ -1004,42 +1004,42 @@
         "primaryNpcId": "char.yuanmo.zhang_bixian"
       },
       {
-        "buildingId": "house.wuchang.temple",
+        "buildingId": "house.template.temple",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "home.wuchang",
+        "buildingId": "home.template",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.wuchang.keep",
+        "buildingId": "house.template.keep",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.wuchang.tea_house",
+        "buildingId": "house.template.tea_house",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.wuchang.market",
+        "buildingId": "house.template.market",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.wuchang.grain_shop",
+        "buildingId": "house.template.grain_shop",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.wuchang.medicine_house",
+        "buildingId": "house.template.medicine_house",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.wuchang.inn",
+        "buildingId": "house.template.inn",
         "npcIds": [
           "char.yuanmo.chen_youliang",
           "char.yuanmo.zhang_dingbian",
@@ -1065,15 +1065,15 @@
     "regionId": "region.yuanmo_china",
     "mapNodeId": "settlement.nanchang_province",
     "houseIds": [
-      "house.nanchang.leader_residence",
-      "house.nanchang.temple",
-      "home.nanchang",
-      "house.nanchang.keep",
-      "house.nanchang.tea_house",
-      "house.nanchang.market",
-      "house.nanchang.grain_shop",
-      "house.nanchang.medicine_house",
-      "house.nanchang.inn"
+      "house.template.leader_residence",
+      "house.template.temple",
+      "home.template",
+      "house.template.keep",
+      "house.template.tea_house",
+      "house.template.market",
+      "house.template.grain_shop",
+      "house.template.medicine_house",
+      "house.template.inn"
     ],
     "neighbourCityIds": [],
     "travelCost": 1,
@@ -1091,49 +1091,49 @@
     ],
     "mountedBuildings": [
       {
-        "buildingId": "house.nanchang.leader_residence",
+        "buildingId": "house.template.leader_residence",
         "npcIds": [
           "char.yuanmo.hu_mei"
         ],
         "primaryNpcId": "char.yuanmo.hu_mei"
       },
       {
-        "buildingId": "house.nanchang.temple",
+        "buildingId": "house.template.temple",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "home.nanchang",
+        "buildingId": "home.template",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.nanchang.keep",
+        "buildingId": "house.template.keep",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.nanchang.tea_house",
+        "buildingId": "house.template.tea_house",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.nanchang.market",
+        "buildingId": "house.template.market",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.nanchang.grain_shop",
+        "buildingId": "house.template.grain_shop",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.nanchang.medicine_house",
+        "buildingId": "house.template.medicine_house",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.nanchang.inn",
+        "buildingId": "house.template.inn",
         "npcIds": [
           "char.yuanmo.feng_sheng",
           "char.yuanmo.zhu_wenzheng"
@@ -1156,15 +1156,15 @@
     "regionId": "region.yuanmo_china",
     "mapNodeId": "settlement.chongqing_province",
     "houseIds": [
-      "house.chongqing.leader_residence",
-      "house.chongqing.temple",
-      "home.chongqing",
-      "house.chongqing.keep",
-      "house.chongqing.tea_house",
-      "house.chongqing.market",
-      "house.chongqing.grain_shop",
-      "house.chongqing.medicine_house",
-      "house.chongqing.inn"
+      "house.template.leader_residence",
+      "house.template.temple",
+      "home.template",
+      "house.template.keep",
+      "house.template.tea_house",
+      "house.template.market",
+      "house.template.grain_shop",
+      "house.template.medicine_house",
+      "house.template.inn"
     ],
     "neighbourCityIds": [],
     "travelCost": 1,
@@ -1182,47 +1182,47 @@
     ],
     "mountedBuildings": [
       {
-        "buildingId": "house.chongqing.leader_residence",
+        "buildingId": "house.template.leader_residence",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.chongqing.temple",
+        "buildingId": "house.template.temple",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "home.chongqing",
+        "buildingId": "home.template",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.chongqing.keep",
+        "buildingId": "house.template.keep",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.chongqing.tea_house",
+        "buildingId": "house.template.tea_house",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.chongqing.market",
+        "buildingId": "house.template.market",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.chongqing.grain_shop",
+        "buildingId": "house.template.grain_shop",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.chongqing.medicine_house",
+        "buildingId": "house.template.medicine_house",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.chongqing.inn",
+        "buildingId": "house.template.inn",
         "npcIds": [
           "char.yuanmo.wan_sheng"
         ],
@@ -1244,15 +1244,15 @@
     "regionId": "region.yuanmo_china",
     "mapNodeId": "settlement.chendu_province",
     "houseIds": [
-      "house.chengdu.leader_residence",
-      "house.chengdu.temple",
-      "home.chengdu",
-      "house.chengdu.keep",
-      "house.chengdu.tea_house",
-      "house.chengdu.market",
-      "house.chengdu.grain_shop",
-      "house.chengdu.medicine_house",
-      "house.chengdu.inn"
+      "house.template.leader_residence",
+      "house.template.temple",
+      "home.template",
+      "house.template.keep",
+      "house.template.tea_house",
+      "house.template.market",
+      "house.template.grain_shop",
+      "house.template.medicine_house",
+      "house.template.inn"
     ],
     "neighbourCityIds": [],
     "travelCost": 1,
@@ -1270,49 +1270,49 @@
     ],
     "mountedBuildings": [
       {
-        "buildingId": "house.chengdu.leader_residence",
+        "buildingId": "house.template.leader_residence",
         "npcIds": [
           "char.yuanmo.dai_shou"
         ],
         "primaryNpcId": "char.yuanmo.dai_shou"
       },
       {
-        "buildingId": "house.chengdu.temple",
+        "buildingId": "house.template.temple",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "home.chengdu",
+        "buildingId": "home.template",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.chengdu.keep",
+        "buildingId": "house.template.keep",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.chengdu.tea_house",
+        "buildingId": "house.template.tea_house",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.chengdu.market",
+        "buildingId": "house.template.market",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.chengdu.grain_shop",
+        "buildingId": "house.template.grain_shop",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.chengdu.medicine_house",
+        "buildingId": "house.template.medicine_house",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.chengdu.inn",
+        "buildingId": "house.template.inn",
         "npcIds": [
           "char.yuanmo.ming_yuzhen",
           "char.yuanmo.ming_sheng"
@@ -1335,15 +1335,15 @@
     "regionId": "region.yuanmo_china",
     "mapNodeId": "settlement.ningbo_province",
     "houseIds": [
-      "house.ningbo.leader_residence",
-      "house.ningbo.temple",
-      "home.ningbo",
-      "house.ningbo.keep",
-      "house.ningbo.tea_house",
-      "house.ningbo.market",
-      "house.ningbo.grain_shop",
-      "house.ningbo.medicine_house",
-      "house.ningbo.inn"
+      "house.template.leader_residence",
+      "house.template.temple",
+      "home.template",
+      "house.template.keep",
+      "house.template.tea_house",
+      "house.template.market",
+      "house.template.grain_shop",
+      "house.template.medicine_house",
+      "house.template.inn"
     ],
     "neighbourCityIds": [],
     "travelCost": 1,
@@ -1361,7 +1361,7 @@
     ],
     "mountedBuildings": [
       {
-        "buildingId": "house.ningbo.leader_residence",
+        "buildingId": "house.template.leader_residence",
         "npcIds": [
           "char.yuanmo.fang_guoying",
           "char.yuanmo.ni_keren"
@@ -1369,42 +1369,42 @@
         "primaryNpcId": "char.yuanmo.fang_guoying"
       },
       {
-        "buildingId": "house.ningbo.temple",
+        "buildingId": "house.template.temple",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "home.ningbo",
+        "buildingId": "home.template",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.ningbo.keep",
+        "buildingId": "house.template.keep",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.ningbo.tea_house",
+        "buildingId": "house.template.tea_house",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.ningbo.market",
+        "buildingId": "house.template.market",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.ningbo.grain_shop",
+        "buildingId": "house.template.grain_shop",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.ningbo.medicine_house",
+        "buildingId": "house.template.medicine_house",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.ningbo.inn",
+        "buildingId": "house.template.inn",
         "npcIds": [
           "char.yuanmo.fang_guozhen"
         ],
@@ -1426,15 +1426,15 @@
     "regionId": "region.yuanmo_china",
     "mapNodeId": "settlement.wenzhou_province",
     "houseIds": [
-      "house.wenzhou.leader_residence",
-      "house.wenzhou.temple",
-      "home.wenzhou",
-      "house.wenzhou.keep",
-      "house.wenzhou.tea_house",
-      "house.wenzhou.market",
-      "house.wenzhou.grain_shop",
-      "house.wenzhou.medicine_house",
-      "house.wenzhou.inn"
+      "house.template.leader_residence",
+      "house.template.temple",
+      "home.template",
+      "house.template.keep",
+      "house.template.tea_house",
+      "house.template.market",
+      "house.template.grain_shop",
+      "house.template.medicine_house",
+      "house.template.inn"
     ],
     "neighbourCityIds": [],
     "travelCost": 1,
@@ -1452,47 +1452,47 @@
     ],
     "mountedBuildings": [
       {
-        "buildingId": "house.wenzhou.leader_residence",
+        "buildingId": "house.template.leader_residence",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.wenzhou.temple",
+        "buildingId": "house.template.temple",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "home.wenzhou",
+        "buildingId": "home.template",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.wenzhou.keep",
+        "buildingId": "house.template.keep",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.wenzhou.tea_house",
+        "buildingId": "house.template.tea_house",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.wenzhou.market",
+        "buildingId": "house.template.market",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.wenzhou.grain_shop",
+        "buildingId": "house.template.grain_shop",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.wenzhou.medicine_house",
+        "buildingId": "house.template.medicine_house",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.wenzhou.inn",
+        "buildingId": "house.template.inn",
         "npcIds": [
           "char.yuanmo.fang_li"
         ],
@@ -1514,15 +1514,15 @@
     "regionId": "region.yuanmo_china",
     "mapNodeId": "settlement.fuzhou_province",
     "houseIds": [
-      "house.fuzhou.leader_residence",
-      "house.fuzhou.temple",
-      "home.fuzhou",
-      "house.fuzhou.keep",
-      "house.fuzhou.tea_house",
-      "house.fuzhou.market",
-      "house.fuzhou.grain_shop",
-      "house.fuzhou.medicine_house",
-      "house.fuzhou.inn"
+      "house.template.leader_residence",
+      "house.template.temple",
+      "home.template",
+      "house.template.keep",
+      "house.template.tea_house",
+      "house.template.market",
+      "house.template.grain_shop",
+      "house.template.medicine_house",
+      "house.template.inn"
     ],
     "neighbourCityIds": [],
     "travelCost": 1,
@@ -1540,7 +1540,7 @@
     ],
     "mountedBuildings": [
       {
-        "buildingId": "house.fuzhou.leader_residence",
+        "buildingId": "house.template.leader_residence",
         "npcIds": [
           "char.yuanmo.chen_zonghai",
           "char.yuanmo.zheng_ding"
@@ -1548,42 +1548,42 @@
         "primaryNpcId": "char.yuanmo.chen_zonghai"
       },
       {
-        "buildingId": "house.fuzhou.temple",
+        "buildingId": "house.template.temple",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "home.fuzhou",
+        "buildingId": "home.template",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.fuzhou.keep",
+        "buildingId": "house.template.keep",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.fuzhou.tea_house",
+        "buildingId": "house.template.tea_house",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.fuzhou.market",
+        "buildingId": "house.template.market",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.fuzhou.grain_shop",
+        "buildingId": "house.template.grain_shop",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.fuzhou.medicine_house",
+        "buildingId": "house.template.medicine_house",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.fuzhou.inn",
+        "buildingId": "house.template.inn",
         "npcIds": [
           "char.yuanmo.chen_youding"
         ],
@@ -1605,15 +1605,15 @@
     "regionId": "region.yuanmo_china",
     "mapNodeId": "settlement.shuntian_province",
     "houseIds": [
-      "house.dadu.leader_residence",
-      "house.dadu.temple",
-      "home.dadu",
-      "house.dadu.keep",
-      "house.dadu.tea_house",
-      "house.dadu.market",
-      "house.dadu.grain_shop",
-      "house.dadu.medicine_house",
-      "house.dadu.inn"
+      "house.template.leader_residence",
+      "house.template.temple",
+      "home.template",
+      "house.template.keep",
+      "house.template.tea_house",
+      "house.template.market",
+      "house.template.grain_shop",
+      "house.template.medicine_house",
+      "house.template.inn"
     ],
     "neighbourCityIds": [],
     "travelCost": 1,
@@ -1631,7 +1631,7 @@
     ],
     "mountedBuildings": [
       {
-        "buildingId": "house.dadu.leader_residence",
+        "buildingId": "house.template.leader_residence",
         "npcIds": [
           "char.yuanmo.hama",
           "char.yuanmo.tuotuo"
@@ -1639,42 +1639,42 @@
         "primaryNpcId": "char.yuanmo.hama"
       },
       {
-        "buildingId": "house.dadu.temple",
+        "buildingId": "house.template.temple",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "home.dadu",
+        "buildingId": "home.template",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.dadu.keep",
+        "buildingId": "house.template.keep",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.dadu.tea_house",
+        "buildingId": "house.template.tea_house",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.dadu.market",
+        "buildingId": "house.template.market",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.dadu.grain_shop",
+        "buildingId": "house.template.grain_shop",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.dadu.medicine_house",
+        "buildingId": "house.template.medicine_house",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.dadu.inn",
+        "buildingId": "house.template.inn",
         "npcIds": [
           "char.yuanmo.toghon_temur",
           "char.yuanmo.ayushiridara"
@@ -1697,15 +1697,15 @@
     "regionId": "region.yuanmo_china",
     "mapNodeId": "settlement.kaifeng_province",
     "houseIds": [
-      "house.kaifeng.leader_residence",
-      "house.kaifeng.temple",
-      "home.kaifeng",
-      "house.kaifeng.keep",
-      "house.kaifeng.tea_house",
-      "house.kaifeng.market",
-      "house.kaifeng.grain_shop",
-      "house.kaifeng.medicine_house",
-      "house.kaifeng.inn"
+      "house.template.leader_residence",
+      "house.template.temple",
+      "home.template",
+      "house.template.keep",
+      "house.template.tea_house",
+      "house.template.market",
+      "house.template.grain_shop",
+      "house.template.medicine_house",
+      "house.template.inn"
     ],
     "neighbourCityIds": [],
     "travelCost": 1,
@@ -1723,49 +1723,49 @@
     ],
     "mountedBuildings": [
       {
-        "buildingId": "house.kaifeng.leader_residence",
+        "buildingId": "house.template.leader_residence",
         "npcIds": [
           "char.yuanmo.guan_bao"
         ],
         "primaryNpcId": "char.yuanmo.guan_bao"
       },
       {
-        "buildingId": "house.kaifeng.temple",
+        "buildingId": "house.template.temple",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "home.kaifeng",
+        "buildingId": "home.template",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.kaifeng.keep",
+        "buildingId": "house.template.keep",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.kaifeng.tea_house",
+        "buildingId": "house.template.tea_house",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.kaifeng.market",
+        "buildingId": "house.template.market",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.kaifeng.grain_shop",
+        "buildingId": "house.template.grain_shop",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.kaifeng.medicine_house",
+        "buildingId": "house.template.medicine_house",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.kaifeng.inn",
+        "buildingId": "house.template.inn",
         "npcIds": [
           "char.yuanmo.chaghan_temur",
           "char.yuanmo.koketumur",
@@ -1790,15 +1790,15 @@
     "regionId": "region.yuanmo_china",
     "mapNodeId": "settlement.gongchang_province",
     "houseIds": [
-      "house.gongchang.leader_residence",
-      "house.gongchang.temple",
-      "home.gongchang",
-      "house.gongchang.keep",
-      "house.gongchang.tea_house",
-      "house.gongchang.market",
-      "house.gongchang.grain_shop",
-      "house.gongchang.medicine_house",
-      "house.gongchang.inn"
+      "house.template.leader_residence",
+      "house.template.temple",
+      "home.template",
+      "house.template.keep",
+      "house.template.tea_house",
+      "house.template.market",
+      "house.template.grain_shop",
+      "house.template.medicine_house",
+      "house.template.inn"
     ],
     "neighbourCityIds": [],
     "travelCost": 1,
@@ -1816,7 +1816,7 @@
     ],
     "mountedBuildings": [
       {
-        "buildingId": "house.gongchang.leader_residence",
+        "buildingId": "house.template.leader_residence",
         "npcIds": [
           "char.yuanmo.li_shichang",
           "char.yuanmo.baitemur"
@@ -1824,42 +1824,42 @@
         "primaryNpcId": "char.yuanmo.li_shichang"
       },
       {
-        "buildingId": "house.gongchang.temple",
+        "buildingId": "house.template.temple",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "home.gongchang",
+        "buildingId": "home.template",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.gongchang.keep",
+        "buildingId": "house.template.keep",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.gongchang.tea_house",
+        "buildingId": "house.template.tea_house",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.gongchang.market",
+        "buildingId": "house.template.market",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.gongchang.grain_shop",
+        "buildingId": "house.template.grain_shop",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.gongchang.medicine_house",
+        "buildingId": "house.template.medicine_house",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.gongchang.inn",
+        "buildingId": "house.template.inn",
         "npcIds": [
           "char.yuanmo.li_siqi"
         ],
@@ -1881,15 +1881,15 @@
     "regionId": "region.yuanmo_china",
     "mapNodeId": "settlement.xian_province",
     "houseIds": [
-      "house.fengyuan.leader_residence",
-      "house.fengyuan.temple",
-      "home.fengyuan",
-      "house.fengyuan.keep",
-      "house.fengyuan.tea_house",
-      "house.fengyuan.market",
-      "house.fengyuan.grain_shop",
-      "house.fengyuan.medicine_house",
-      "house.fengyuan.inn"
+      "house.template.leader_residence",
+      "house.template.temple",
+      "home.template",
+      "house.template.keep",
+      "house.template.tea_house",
+      "house.template.market",
+      "house.template.grain_shop",
+      "house.template.medicine_house",
+      "house.template.inn"
     ],
     "neighbourCityIds": [],
     "travelCost": 1,
@@ -1907,47 +1907,47 @@
     ],
     "mountedBuildings": [
       {
-        "buildingId": "house.fengyuan.leader_residence",
+        "buildingId": "house.template.leader_residence",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.fengyuan.temple",
+        "buildingId": "house.template.temple",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "home.fengyuan",
+        "buildingId": "home.template",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.fengyuan.keep",
+        "buildingId": "house.template.keep",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.fengyuan.tea_house",
+        "buildingId": "house.template.tea_house",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.fengyuan.market",
+        "buildingId": "house.template.market",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.fengyuan.grain_shop",
+        "buildingId": "house.template.grain_shop",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.fengyuan.medicine_house",
+        "buildingId": "house.template.medicine_house",
         "npcIds": [],
         "primaryNpcId": null
       },
       {
-        "buildingId": "house.fengyuan.inn",
+        "buildingId": "house.template.inn",
         "npcIds": [
           "char.yuanmo.zhang_liangbi"
         ],
