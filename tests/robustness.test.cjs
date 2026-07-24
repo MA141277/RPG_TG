@@ -3088,6 +3088,21 @@ test("campaign structure visual profiles are engine-owned and map-selected", asy
   assert.doesNotMatch(profileSource, /scenario-packs\/zhuyuanzhang/);
 });
 
+test("campaign map view resolves structure profiles without scenario pack imports", () => {
+  const fs = require("node:fs");
+  const path = require("node:path");
+  const mapViewSource = fs.readFileSync(
+    path.join(process.cwd(), "src", "ui", "views", "map", "map-view.ts"),
+    "utf8"
+  );
+
+  assert.match(mapViewSource, /resolveCampaignStructureVisualProfile/);
+  assert.match(mapViewSource, /campaignStructureProfile:/);
+  assert.match(mapViewSource, /input\.mapDefinition\.campaignStructureProfileId/);
+  assert.doesNotMatch(mapViewSource, /scenario-packs\/zhuyuanzhang/);
+  assert.doesNotMatch(mapViewSource, /content\/scenario-packs/);
+});
+
 test("content pack loader resolves zhuyuanzhang map asset urls", async () => {
   const {
     loadContentPackFromManifestText,

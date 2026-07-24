@@ -21,9 +21,11 @@ import {
   getCampaignHexCellKey,
   getCampaignHexDisc,
 } from "../../../domain/campaign-hex";
+import {
+  resolveCampaignStructureVisualProfile,
+  type CampaignStructureVisualProfile,
+} from "../../../content/campaign-structure-visual-profiles";
 import redTurbanMarkerUrl from "../../../assets/yuanmo-map/chuang-swordsman-marker.png";
-import cityDepthMeshAssetUrl from "../../../3dasset/city_hun/city-hun-campaign-lowpoly.json?url";
-import cityDepthTextureUrl from "../../../3dasset/city_hun/texture_pbr_20250901.png?url";
 import yuanmoHexBuildingUrl from "../../../../ui/yuansu/20260715-120754.png?url";
 
 const YUANMO_HEX_BUILDING = {
@@ -92,6 +94,7 @@ export type MapViewModel = {
   waterTextureImageUrl: string | null;
   cloudNoiseTextureImageUrl: string | null;
   revealedHexKeys: string[];
+  campaignStructureProfile: CampaignStructureVisualProfile | null;
   cityDepthMeshAssetUrl: string | null;
   cityDepthTextureUrl: string | null;
   cityDepthMeshCoordinate: {
@@ -125,6 +128,9 @@ export function createMapViewModel(input: {
     width: input.mapDefinition.size ?? 5,
     height: input.mapDefinition.size ?? 5,
   };
+  const campaignStructureProfile = resolveCampaignStructureVisualProfile(
+    input.mapDefinition.campaignStructureProfileId
+  );
   const playerHex = campaignMapCoordinateToHex(
     input.playerCoordinate,
     coordinateSpace
@@ -221,8 +227,9 @@ export function createMapViewModel(input: {
     revealedHexKeys: Array.from(
       new Set(input.mapExplorationState?.revealedHexKeys ?? [])
     ).sort(),
-    cityDepthMeshAssetUrl,
-    cityDepthTextureUrl,
+    campaignStructureProfile,
+    cityDepthMeshAssetUrl: campaignStructureProfile?.cityDepthMeshUrl ?? null,
+    cityDepthTextureUrl: campaignStructureProfile?.cityDepthTextureUrl ?? null,
     cityDepthMeshCoordinate: input.mapDefinition.initialPlayerCoordinate ?? null,
     cloudClearHexKeys,
     campaignMarkers: input.mapDefinition.nodes
