@@ -12,8 +12,8 @@
 
 - Status: `running`
 - Last Updated: `2026-07-25`
-- Current Focus: `Executing Task 1 with Subagent-Driven Development.`
-- Next Step: `Dispatch Task 1 implementer from the generated task brief, then run task review before moving to Task 2.`
+- Current Focus: `Task 1 complete; preparing Task 2 with Subagent-Driven Development.`
+- Next Step: `Dispatch Task 2 implementer from a generated task brief, then run task review before moving to Task 3.`
 - Verification: `npm run lint:plans passed`
 - Notes: `User selected Subagent-Driven execution on 2026-07-25.`
 
@@ -27,6 +27,10 @@
   - Summary: `Promoted this child to running after user selected Subagent-Driven execution.`
   - Verification: `Not run as part of this governance-only update`
   - Next: `Dispatch Task 1 implementer, then run task review before moving to Task 2.`
+- 2026-07-25
+  - Summary: `Completed Task 1: added MapDefinition campaignStructureProfileId, created the engine-owned campaign structure visual profile registry, selected the Yuanmo profile, and added the targeted contract test. Task review approved with no findings.`
+  - Verification: `npm run build:test; if ($LASTEXITCODE -eq 0) { node --test --test-name-pattern "campaign structure visual profiles are engine-owned and map-selected" tests/robustness.test.cjs }`
+  - Next: `Dispatch Task 2 implementer, then run task review before moving to Task 3.`
 
 ---
 
@@ -120,7 +124,7 @@
 - Produces: `CampaignStructureVisualProfile`
 - Produces: `resolveCampaignStructureVisualProfile(profileId: string | undefined): CampaignStructureVisualProfile | null`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Append this test block near the existing campaign map asset contract tests in `tests/robustness.test.cjs`:
 
@@ -155,7 +159,7 @@ test("campaign structure visual profiles are engine-owned and map-selected", asy
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run:
 
@@ -168,7 +172,7 @@ Expected:
 - `FAIL`
 - Failure mentions missing `campaignStructureProfileId` or missing `campaign-structure-visual-profiles.ts`.
 
-- [ ] **Step 3: Add the domain field**
+- [x] **Step 3: Add the domain field**
 
 In `src/domain/map.ts`, update `MapDefinition`:
 
@@ -202,7 +206,7 @@ export type MapDefinition = {
 };
 ```
 
-- [ ] **Step 4: Add the engine-owned profile registry**
+- [x] **Step 4: Add the engine-owned profile registry**
 
 Create `src/content/campaign-structure-visual-profiles.ts`:
 
@@ -241,7 +245,7 @@ export function resolveCampaignStructureVisualProfile(
 }
 ```
 
-- [ ] **Step 5: Select the profile in the built-in map**
+- [x] **Step 5: Select the profile in the built-in map**
 
 In `src/content/yuanmo-campaign-map.ts`, add this field to the `yuanmoCampaignMap` object near the other campaign URLs:
 
@@ -249,7 +253,7 @@ In `src/content/yuanmo-campaign-map.ts`, add this field to the `yuanmoCampaignMa
   campaignStructureProfileId: "yuanmo.campaign-structures",
 ```
 
-- [ ] **Step 6: Run test to verify it passes**
+- [x] **Step 6: Run test to verify it passes**
 
 Run:
 
@@ -261,7 +265,7 @@ Expected:
 
 - `PASS`
 
-- [ ] **Step 7: Commit Task 1**
+- [x] **Step 7: Commit Task 1**
 
 Run:
 

@@ -14,3 +14,4 @@
 - Task 2: complete (commits 9875aca..da77592, review clean after changelog fix).
 - Task 3: complete (commits da77592..2e3ce62, review clean).
 - Task 4: complete locally (commits 2e3ce62..c0dc1c6, prior review findings fixed; re-review agent could not start because the active agent limit was reached after compaction).
+- 2026-07-25: Campaign Map Visual Profile Task 1 complete (commits dab5f130..931c4e5e, review clean; controller verified asset files and RED/GREEN report evidence).
