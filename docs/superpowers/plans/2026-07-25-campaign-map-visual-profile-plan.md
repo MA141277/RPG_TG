@@ -12,8 +12,8 @@
 
 - Status: `running`
 - Last Updated: `2026-07-25`
-- Current Focus: `Task 1 complete; preparing Task 2 with Subagent-Driven Development.`
-- Next Step: `Dispatch Task 2 implementer from a generated task brief, then run task review before moving to Task 3.`
+- Current Focus: `Task 2 complete; preparing Task 3 with Subagent-Driven Development.`
+- Next Step: `Dispatch Task 3 implementer from a generated task brief, then run task review before moving to Task 4.`
 - Verification: `npm run lint:plans passed`
 - Notes: `User selected Subagent-Driven execution on 2026-07-25.`
 
@@ -31,6 +31,10 @@
   - Summary: `Completed Task 1: added MapDefinition campaignStructureProfileId, created the engine-owned campaign structure visual profile registry, selected the Yuanmo profile, and added the targeted contract test. Task review approved with no findings.`
   - Verification: `npm run build:test; if ($LASTEXITCODE -eq 0) { node --test --test-name-pattern "campaign structure visual profiles are engine-owned and map-selected" tests/robustness.test.cjs }`
   - Next: `Dispatch Task 2 implementer, then run task review before moving to Task 3.`
+- 2026-07-25
+  - Summary: `Completed Task 2: map-view now resolves the campaign structure profile through the engine-owned registry and threads it through MapViewModel while leaving hardcoded building removal for Task 3. Task review approved with no findings.`
+  - Verification: `npm run build:test; if ($LASTEXITCODE -eq 0) { node --test --test-name-pattern "campaign map view resolves structure profiles without scenario pack imports" tests/robustness.test.cjs }`
+  - Next: `Dispatch Task 3 implementer, then run task review before moving to Task 4.`
 
 ---
 
@@ -284,7 +288,7 @@ git commit -m "feat: add campaign structure visual profiles"
 - Consumes: `resolveCampaignStructureVisualProfile(profileId)`
 - Produces: `MapViewModel.campaignStructureProfile`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Append this test near Task 1's test in `tests/robustness.test.cjs`:
 
@@ -305,7 +309,7 @@ test("campaign map view resolves structure profiles without scenario pack import
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run:
 
@@ -318,7 +322,7 @@ Expected:
 - `FAIL`
 - Failure mentions missing `resolveCampaignStructureVisualProfile` or `campaignStructureProfile`.
 
-- [ ] **Step 3: Import and type the profile in `map-view.ts`**
+- [x] **Step 3: Import and type the profile in `map-view.ts`**
 
 In `src/ui/views/map/map-view.ts`, add:
 
@@ -345,7 +349,7 @@ Update `MapViewModel`:
 
 Keep existing `cityDepthMeshAssetUrl`, `cityDepthTextureUrl`, and marker fields for this task; remove them in Task 3 after rendering is migrated.
 
-- [ ] **Step 4: Resolve the profile in `createMapViewModel`**
+- [x] **Step 4: Resolve the profile in `createMapViewModel`**
 
 In the returned object from `createMapViewModel`, add:
 
@@ -376,7 +380,7 @@ During implementation, refactor to avoid calling the resolver three times:
 
 Then return `campaignStructureProfile` and derive city fields from that local constant.
 
-- [ ] **Step 5: Run test to verify it passes**
+- [x] **Step 5: Run test to verify it passes**
 
 Run:
 
@@ -388,7 +392,7 @@ Expected:
 
 - `PASS`
 
-- [ ] **Step 6: Commit Task 2**
+- [x] **Step 6: Commit Task 2**
 
 Run:
 
