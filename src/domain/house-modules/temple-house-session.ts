@@ -1,4 +1,5 @@
 import type { HouseActivityConfirmOverlayState } from "../house-activity";
+import type { ReviewAssignmentRow, ReviewPolicyPanel } from "../review";
 export type TempleHouseAlertOverlayState = {
   type: "alert";
   title: string;
@@ -45,6 +46,20 @@ export type TempleHouseResultOverlayState = {
   rewardLines: string[];
 };
 
+export type TempleHouseReviewAssignmentTableOverlayState = {
+  type: "review-assignment-table";
+  title: string;
+  rows: ReviewAssignmentRow[];
+  confirmActionId: string;
+  confirmLabel: string;
+};
+
+export type TempleHouseReviewPolicyPanelOverlayState = {
+  type: "review-policy-panel";
+  title: string;
+  policy: ReviewPolicyPanel;
+};
+
 export type TempleHouseOverlayState =
   | TempleHouseAlertOverlayState
   | HouseActivityConfirmOverlayState
@@ -53,6 +68,8 @@ export type TempleHouseOverlayState =
   | TempleHouseFoodSubmitOverlayState
   | TempleHouseRestDaysOverlayState
   | TempleHouseResultOverlayState
+  | TempleHouseReviewAssignmentTableOverlayState
+  | TempleHouseReviewPolicyPanelOverlayState
   | null;
 
 export type TempleHouseDialoguePhase = "greeting" | "open" | "idle";
@@ -72,9 +89,11 @@ export type TempleHouseDailyActionPanel = "root" | "work" | "rest";
 
 export type TempleHouseMeetingStage =
   | "intro"
-  | "contribution"
+  | "assignment-table"
   | "praise"
+  | "situation"
   | "policy"
+  | "advice"
   | "assign-duty"
   | "assigned"
   | "finished";

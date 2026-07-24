@@ -7,16 +7,16 @@
 - Current Task: `Normalize faction review cadence`
 - Current Task Status: `running`
 - Current Child: `Faction Review Flow`
-- Current Child Status: `running`
+- Current Child Status: `completed-but-open`
 - Next Child: `none`
 - Next Child Status: `none`
-- Next Required Action: `execute-plan-from-task-1`
+- Next Required Action: `review-commit-and-push-before-closeout`
 - Next Entry Document: `docs/superpowers/project-progress.md`
 - Next Owner Document: `docs/superpowers/plans/2026-07-24-faction-review-flow-plan.md`
 - Last Closed Item: `none`
 - Push Status: `not-pushed`
 - Push Commit: `none`
-- Resume From: `Open docs/superpowers/project-progress.md, then execute docs/superpowers/plans/2026-07-24-faction-review-flow-plan.md from Task 1.`
+- Resume From: `Open docs/superpowers/project-progress.md, then review docs/superpowers/plans/2026-07-24-faction-review-flow-plan.md for closeout; remaining blocker is the known unrelated child 27 startup coordinator test failure until fixed or accepted.`
 
 ## Progress Log
 
@@ -44,6 +44,10 @@
   - Summary: `Opened the faction review flow child to normalize temple and keep review cadence, contribution tables, policy announcement, advice prompt, and rank-gated assignment choices.`
   - Verification: `npm run lint:plans`
   - Next: `Execute docs/superpowers/plans/2026-07-24-faction-review-flow-plan.md from Task 1.`
+- 2026-07-24
+  - Summary: `Completed temple review normalization for Task 4 with shared assignment table, policy panel, advice prompt, and rank-gated temple work choices; implementation remains completed-but-open pending review, push, and known unrelated full-suite failure resolution.`
+  - Verification: `npm run build:test; if ($LASTEXITCODE -eq 0) { node --test tests/faction-review-domain.test.cjs tests/faction-review-ui-contract.test.cjs }`; `node --test --test-name-pattern "temple house review|temple review|global NPC interaction does not append default choices to temple review" tests/robustness.test.cjs`; `npm run lint:plans`; `npm run typecheck`; `$env:TEMP='D:\RPG_TG\.tmp'; $env:TMP='D:\RPG_TG\.tmp'; npm test` failed only known unrelated `child 27 startup coordinator exposes bootstrap-complete createAppState for builtin startup`, expected `event.story.zhu_yuanzhang.haozhou_return_encounter`, actual `null`; `$env:TEMP='D:\RPG_TG\.tmp'; $env:TMP='D:\RPG_TG\.tmp'; $env:npm_config_cache='D:\RPG_TG\.npm-cache'; npm run build`
+  - Next: `Commit Task 4 changes, then push/review before child closeout; do not close while the known unrelated full-suite failure remains unresolved.`
 
 ## Latest Closeout
 

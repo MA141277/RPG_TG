@@ -17,6 +17,10 @@ import type { CharacterDefinition } from "../../../domain/character";
 import type { CalendarDate, GameState } from "../../../domain/game-state";
 import type { HouseActivityConfirmOverlayState } from "../../../domain/house-activity";
 import type {
+  ReviewAssignmentRow,
+  ReviewPolicyPanel,
+} from "../../../domain/review";
+import type {
   ActiveHouseModuleSession,
   HouseActionViewModel,
   HouseModuleDefinition,
@@ -91,6 +95,14 @@ import {
   resolveTextEntry,
   resolveTextTemplateEntry,
 } from "../../content/text-resolution";
+import {
+  createReviewTaskChoiceViewModels,
+  getDefaultReviewSpecialTaskHookResult,
+  readFactionMerit,
+  resolveFactionMeritRank,
+  resolveReviewCompletionGrade,
+  TEMPLE_FACTION_RANKS,
+} from "../../review/faction-review";
 import { createInitialTempleHouseSessionState } from "./temple-house-session-state";
 
 const DONATION_AMOUNT = 50;
@@ -102,6 +114,8 @@ const TEMPLE_WORK_WAGER_MINUS_ACTION_ID = "temple-work-board-wager-minus";
 const TEMPLE_WORK_WAGER_PLUS_ACTION_ID = "temple-work-board-wager-plus";
 const TEMPLE_WORK_SPEED_FIELD_ID = "temple-work-board-speed";
 const SELECT_REVIEW_WORK_ACTION_PREFIX = "select-review-work:";
+const TEMPLE_REVIEW_GIVE_ADVICE_ACTION_ID = "temple-review-give-advice";
+const TEMPLE_REVIEW_STAY_SILENT_ACTION_ID = "temple-review-stay-silent";
 const OPEN_TEMPLE_WORK_MENU_ACTION_ID = "open-temple-work-menu";
 const CLOSE_TEMPLE_WORK_MENU_ACTION_ID = "close-temple-work-menu";
 const OPEN_TEMPLE_REST_MENU_ACTION_ID = "open-temple-rest-menu";
@@ -176,6 +190,7 @@ type TempleTaskActivityDefinition = ActivityDefinition & {
   titleTextId: string;
   briefingTextId: string;
   orderLineTextIds: string[];
+  reviewMinRankId?: string;
 };
 
 function isTempleTaskActivityDefinition(
@@ -360,6 +375,7 @@ function resolveTempleTaskDefinition(
     orderLines: activityDefinition.orderLineTextIds.map((textId) =>
       resolveTempleText(textEntriesById, textId)
     ),
+    minRankId: activityDefinition.reviewMinRankId ?? "temple.laborer",
   };
 }
 
@@ -1669,15 +1685,61 @@ function getTempleContributionEntries(
   ].sort((leftEntry, rightEntry) => rightEntry.contribution - leftEntry.contribution);
 }
 
-function getTempleContributionReportLines(
+function createTempleReviewAssignmentRows(
+  gameState: GameState,
   contributionEntries: Array<{
+    characterId: string;
     name: string;
     contribution: number;
-  }>
-): string[] {
-  return contributionEntries.map(
-    (entry, index) => `${index + 1}. ${entry.name}：${entry.contribution} 点贡献`
-  );
+  }>,
+  textEntriesById?: Record<string, string>
+): ReviewAssignmentRow[] {
+  const currentWorkPlan = readTempleWorkPlan(gameState);
+  const assignmentTitle =
+    getTempleWorkPlanLabel(gameState, currentWorkPlan, textEntriesById) || "寺中执事";
+
+  return contributionEntries.map((entry) => ({
+    characterId: entry.characterId,
+    characterName: entry.name,
+    assignmentTitle,
+    contribution: entry.contribution,
+    grade: resolveReviewCompletionGrade(entry.contribution),
+  }));
+}
+
+function createTempleReviewPolicyPanel(
+  gameState: GameState,
+  textEntriesById?: Record<string, string>
+): ReviewPolicyPanel {
+  const policyLines = getTempleMeetingPolicyLines(gameState, textEntriesById);
+
+  return {
+    overallGoal: "保全寺众",
+    phaseGoal: policyLines[0] ?? "",
+    executionPlan: policyLines[1] ?? policyLines[0] ?? "",
+  };
+}
+
+function createTempleReviewAssignmentTableOverlay(
+  rows: ReviewAssignmentRow[]
+): TempleHouseOverlayState {
+  return {
+    type: "review-assignment-table",
+    title: "委任",
+    rows,
+    confirmActionId: "close-review-assignment-table",
+    confirmLabel: "继续",
+  };
+}
+
+function createTempleReviewPolicyPanelOverlay(
+  policy: ReviewPolicyPanel
+): TempleHouseOverlayState {
+  return {
+    type: "review-policy-panel",
+    title: "方略",
+    policy,
+  };
 }
 
 function getTempleMeetingPraiseLines(
@@ -1865,6 +1927,8 @@ function getTempleAssignDutyLines(
 
 function getReviewWorkChoices(
   gameState: GameState,
+  playerCharacterId: string,
+  activityDefinitionsById?: Record<string, ActivityDefinition>,
   textEntriesById?: Record<string, string>
 ): Array<{
   id: "temple-help" | "beg-alms";
@@ -1905,7 +1969,6 @@ function getReviewWorkChoices(
   const choices: Array<{
     id: "temple-help" | "beg-alms";
     label: string;
-    disabled?: boolean;
     tone?: HouseActionViewModel["tone"];
   }> = [
     {
@@ -1922,11 +1985,45 @@ function getReviewWorkChoices(
         getTempleBegAlmsWorkPlanTextId(gameState, true)
       ),
       tone: "accent",
-      disabled: !isBeggingUnlocked(gameState),
     },
   ];
 
-  return choices;
+  const playerMerit = readFactionMerit(gameState, "temple", playerCharacterId);
+  const playerRank = resolveFactionMeritRank(TEMPLE_FACTION_RANKS, playerMerit);
+  const templeHelpRankId =
+    getTaskDefinitionsByIds(
+      FIRST_WEEK_TEMPLE_TASK_IDS,
+      activityDefinitionsById,
+      textEntriesById
+    )[0]?.minRankId ?? "temple.laborer";
+  const begAlmsRankId = findTempleTaskDefinition(
+    "beg-alms",
+    activityDefinitionsById,
+    textEntriesById
+  ).minRankId;
+  const choiceViewModels = createReviewTaskChoiceViewModels({
+    currentRankId: playerRank.id,
+    ranks: TEMPLE_FACTION_RANKS,
+    tasks: choices.map((choice) => ({
+      id: choice.id,
+      label: choice.label,
+      minRankId:
+        choice.id === "beg-alms" ? begAlmsRankId : templeHelpRankId,
+    })),
+  });
+
+  return choiceViewModels.map((choiceViewModel) => {
+    const baseChoice = choices.find((choice) => choice.id === choiceViewModel.id);
+
+    return {
+      id: choiceViewModel.id as "temple-help" | "beg-alms",
+      label: choiceViewModel.label,
+      disabled:
+        choiceViewModel.disabled ||
+        (choiceViewModel.id === "beg-alms" && !isBeggingUnlocked(gameState)),
+      ...(baseChoice?.tone == null ? {} : { tone: baseChoice.tone }),
+    };
+  });
 }
 
 function getTempleRootActions(
@@ -3048,10 +3145,6 @@ function handleAction(
         playerCharacter,
         seniorMonkCharacter
       );
-      const reviewWorkChoices = getReviewWorkChoices(
-        nextState,
-        input.textEntriesById
-      );
       switch (sessionState.meetingStage) {
         case "intro":
           return withSessionState(
@@ -3061,11 +3154,15 @@ function handleAction(
             },
             sessionState,
             {
-              meetingStage: "contribution",
+              meetingStage: "assignment-table",
               dialoguePhase: "open",
-              overlay: createAlertOverlay(
-                "上期寺中贡献",
-                getTempleContributionReportLines(contributionEntries)
+              dialogueLines: ["看看大家这期间的进展吧。"],
+              overlay: createTempleReviewAssignmentTableOverlay(
+                createTempleReviewAssignmentRows(
+                  nextState,
+                  contributionEntries,
+                  input.textEntriesById
+                )
               ),
             }
           );
@@ -3077,11 +3174,30 @@ function handleAction(
             },
             sessionState,
             {
+              meetingStage: "situation",
+              dialoguePhase: "open",
+              dialogueLines: [
+                "这段时间大家辛苦了。",
+                ...getTempleMeetingPolicyLines(
+                  nextState,
+                  input.textEntriesById
+                ).slice(0, 1),
+              ],
+            }
+          );
+        case "situation":
+          return withSessionState(
+            {
+              gameState: nextState,
+              characterDefinitions: input.characterDefinitions,
+            },
+            sessionState,
+            {
               meetingStage: "policy",
               dialoguePhase: "open",
-              dialogueLines: getTempleMeetingPolicyLines(
-                nextState,
-                input.textEntriesById
+              dialogueLines: ["所以接下来的计划如下："],
+              overlay: createTempleReviewPolicyPanelOverlay(
+                createTempleReviewPolicyPanel(nextState, input.textEntriesById)
               ),
             }
           );
@@ -3093,12 +3209,11 @@ function handleAction(
             },
             sessionState,
             {
-              meetingStage: "assign-duty",
+              meetingStage: "advice",
               dialoguePhase: "open",
-              dialogueLines: getTempleAssignDutyLines(
-                nextState,
-                reviewWorkChoices,
-                input.textEntriesById
+              dialogueLines: ["有谁要进言吗？"],
+              overlay: createTempleReviewPolicyPanelOverlay(
+                createTempleReviewPolicyPanel(nextState, input.textEntriesById)
               ),
             }
           );
@@ -3121,6 +3236,55 @@ function handleAction(
         dialogueLines: getTempleOpenLines(input.textEntriesById),
       }
     );
+  }
+
+  if (
+    input.request.actionId === TEMPLE_REVIEW_GIVE_ADVICE_ACTION_ID ||
+    input.request.actionId === TEMPLE_REVIEW_STAY_SILENT_ACTION_ID
+  ) {
+    if (sessionState.mode === "meeting" && sessionState.meetingStage === "advice") {
+      const reviewWorkChoices = getReviewWorkChoices(
+        nextState,
+        input.playerCharacterId,
+        input.activityDefinitionsById,
+        input.textEntriesById
+      );
+      const adviceResponseLines =
+        input.request.actionId === TEMPLE_REVIEW_GIVE_ADVICE_ACTION_ID
+          ? ["此议暂且记下。"]
+          : [];
+      const specialTaskHookResult = getDefaultReviewSpecialTaskHookResult();
+      const specialTaskLines =
+        specialTaskHookResult.type === "none"
+          ? []
+          : specialTaskHookResult.descriptionLines;
+
+      return withSessionState(
+        {
+          gameState: nextState,
+          characterDefinitions: input.characterDefinitions,
+        },
+        sessionState,
+        {
+          meetingStage: "assign-duty",
+          dialoguePhase: "open",
+          overlay: null,
+          dialogueLines: [
+            ...adviceResponseLines,
+            ...specialTaskLines,
+            ...getTempleAssignDutyLines(
+              nextState,
+              reviewWorkChoices,
+              input.textEntriesById
+            ),
+          ],
+        }
+      );
+    }
+
+    return createTransitionResult(input, {
+      gameState: nextState,
+    });
   }
 
   if (input.request.actionId === "dismiss-dialogue") {
@@ -3578,8 +3742,8 @@ function handleAction(
   }
 
   if (
-    input.request.actionId === "close-temple-overlay" &&
-    sessionState.meetingStage === "contribution"
+    input.request.actionId === "close-review-assignment-table" &&
+    sessionState.meetingStage === "assignment-table"
   ) {
     const contributionEntries = getTempleContributionEntries(
       nextState,
@@ -4217,6 +4381,14 @@ function selectOverlayViewModel(
     };
   }
 
+  if (overlay.type === "review-assignment-table") {
+    return overlay;
+  }
+
+  if (overlay.type === "review-policy-panel") {
+    return overlay;
+  }
+
   return {
     type: "result",
     title: overlay.title,
@@ -4374,6 +4546,8 @@ export const templeHouseHouseModule: HouseModuleDefinition<"temple-house"> = {
     );
     const reviewWorkChoices = getReviewWorkChoices(
       nextState,
+      input.playerCharacterId,
+      input.activityDefinitionsById,
       input.textEntriesById
     );
     const templeTaskDefinitions = getTempleTaskDefinitions(
@@ -4404,6 +4578,10 @@ export const templeHouseHouseModule: HouseModuleDefinition<"temple-house"> = {
       sessionState.mode === "meeting" &&
       sessionState.meetingStage === "assign-duty" &&
       sessionState.overlay == null &&
+      !hasActiveTempleWorkPlayable;
+    const shouldShowMeetingAdvice =
+      sessionState.mode === "meeting" &&
+      sessionState.meetingStage === "advice" &&
       !hasActiveTempleWorkPlayable;
     const selectedTask =
       sessionState.selectedTaskId == null
@@ -4513,7 +4691,7 @@ export const templeHouseHouseModule: HouseModuleDefinition<"temple-house"> = {
                 ((sessionState.mode === "daily" &&
                   sessionState.dialoguePhase === "greeting") ||
                   (sessionState.mode === "meeting" &&
-                    ["intro", "praise", "policy"].includes(sessionState.meetingStage)))
+                    ["intro", "praise", "situation", "policy"].includes(sessionState.meetingStage)))
                   ? "advance-temple-dialogue"
                   : null),
               advanceHintText:
@@ -4522,7 +4700,7 @@ export const templeHouseHouseModule: HouseModuleDefinition<"temple-house"> = {
                 ((sessionState.mode === "daily" &&
                   sessionState.dialoguePhase === "greeting") ||
                   (sessionState.mode === "meeting" &&
-                    ["intro", "praise", "policy"].includes(sessionState.meetingStage)))
+                    ["intro", "praise", "situation", "policy"].includes(sessionState.meetingStage)))
                   ? "点击继续"
                   : null),
             },
@@ -4536,6 +4714,14 @@ export const templeHouseHouseModule: HouseModuleDefinition<"temple-house"> = {
               ...(workChoice.tone == null ? {} : { tone: workChoice.tone }),
             })),
           }
+        : shouldShowMeetingAdvice
+          ? {
+              title: "进言",
+              actions: [
+                { id: TEMPLE_REVIEW_GIVE_ADVICE_ACTION_ID, label: "发表意见" },
+                { id: TEMPLE_REVIEW_STAY_SILENT_ACTION_ID, label: "一言不发" },
+              ],
+            }
         : shouldShowDailyActions
           ? {
               title:

@@ -5,6 +5,7 @@ export type TempleHouseTaskDefinition = {
   title: string;
   briefing: string;
   orderLines: string[];
+  minRankId: string;
 };
 
 export const TEMPLE_HOUSE_VARIABLE_KEYS = {

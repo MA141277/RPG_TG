@@ -5356,6 +5356,71 @@ test("global NPC interaction house action panel keeps dismiss actions below defa
   );
 });
 
+function advanceTempleReviewToAssignDuty(input) {
+  const assignmentTable = templeHouseHouseModule.dispatch({
+    gameState: input.enterResult.gameState,
+    characterDefinitions: input.enterResult.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: input.enterResult.sessionState,
+    request: { type: "action", actionId: "advance-temple-dialogue" },
+    activityDefinitionsById: input.activityDefinitionsById,
+    textEntriesById: input.textEntriesById,
+  });
+  const praise = templeHouseHouseModule.dispatch({
+    gameState: assignmentTable.gameState,
+    characterDefinitions: assignmentTable.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: assignmentTable.sessionState,
+    request: { type: "action", actionId: "close-review-assignment-table" },
+    activityDefinitionsById: input.activityDefinitionsById,
+    textEntriesById: input.textEntriesById,
+  });
+  const situation = templeHouseHouseModule.dispatch({
+    gameState: praise.gameState,
+    characterDefinitions: praise.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: praise.sessionState,
+    request: { type: "action", actionId: "advance-temple-dialogue" },
+    activityDefinitionsById: input.activityDefinitionsById,
+    textEntriesById: input.textEntriesById,
+  });
+  const policy = templeHouseHouseModule.dispatch({
+    gameState: situation.gameState,
+    characterDefinitions: situation.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: situation.sessionState,
+    request: { type: "action", actionId: "advance-temple-dialogue" },
+    activityDefinitionsById: input.activityDefinitionsById,
+    textEntriesById: input.textEntriesById,
+  });
+  const advice = templeHouseHouseModule.dispatch({
+    gameState: policy.gameState,
+    characterDefinitions: policy.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: policy.sessionState,
+    request: { type: "action", actionId: "advance-temple-dialogue" },
+    activityDefinitionsById: input.activityDefinitionsById,
+    textEntriesById: input.textEntriesById,
+  });
+  const assignDuty = templeHouseHouseModule.dispatch({
+    gameState: advice.gameState,
+    characterDefinitions: advice.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: advice.sessionState,
+    request: { type: "action", actionId: "temple-review-stay-silent" },
+    activityDefinitionsById: input.activityDefinitionsById,
+    textEntriesById: input.textEntriesById,
+  });
+
+  return { assignmentTable, praise, situation, policy, advice, assignDuty };
+}
+
 test("global NPC interaction does not append default choices to temple review work assignment", () => {
   const monkCharacters = createPrototypeCharactersForStoryStage(
     ZHU_YUANZHANG_STORY_STAGES.huangjueTemple
@@ -5375,38 +5440,7 @@ test("global NPC interaction does not append default choices to temple review wo
     houseDefinition: templeHouse,
     playerCharacterId,
   });
-  const contribution = templeHouseHouseModule.dispatch({
-    gameState: entered.gameState,
-    characterDefinitions: entered.characterDefinitions,
-    houseDefinition: templeHouse,
-    playerCharacterId,
-    sessionState: entered.sessionState,
-    request: { type: "action", actionId: "advance-temple-dialogue" },
-  });
-  const praise = templeHouseHouseModule.dispatch({
-    gameState: contribution.gameState,
-    characterDefinitions: contribution.characterDefinitions,
-    houseDefinition: templeHouse,
-    playerCharacterId,
-    sessionState: contribution.sessionState,
-    request: { type: "action", actionId: "close-temple-overlay" },
-  });
-  const policy = templeHouseHouseModule.dispatch({
-    gameState: praise.gameState,
-    characterDefinitions: praise.characterDefinitions,
-    houseDefinition: templeHouse,
-    playerCharacterId,
-    sessionState: praise.sessionState,
-    request: { type: "action", actionId: "advance-temple-dialogue" },
-  });
-  const assignDuty = templeHouseHouseModule.dispatch({
-    gameState: policy.gameState,
-    characterDefinitions: policy.characterDefinitions,
-    houseDefinition: templeHouse,
-    playerCharacterId,
-    sessionState: policy.sessionState,
-    request: { type: "action", actionId: "advance-temple-dialogue" },
-  });
+  const { assignDuty } = advanceTempleReviewToAssignDuty({ enterResult: entered });
   const viewModel = templeHouseHouseModule.selectViewModel({
     gameState: assignDuty.gameState,
     characterDefinitions: assignDuty.characterDefinitions,
@@ -6727,45 +6761,25 @@ test("temple house review only selects work direction and daily actions start te
   assert.equal(enterResult.sessionState?.mode, "meeting");
   assert.equal(enterResult.sessionState?.meetingStage, "intro");
 
-  const contributionResult = templeHouseHouseModule.dispatch({
-    gameState: enterResult.gameState,
-    characterDefinitions: enterResult.characterDefinitions,
-    houseDefinition: templeHouse,
-    playerCharacterId,
-    sessionState: enterResult.sessionState,
-    request: { type: "action", actionId: "advance-temple-dialogue" },
-  });
-  assert.equal(contributionResult.sessionState?.meetingStage, "contribution");
-  assert.equal(contributionResult.sessionState?.overlay?.type, "alert");
+  const {
+    assignmentTable: contributionResult,
+    praise: praiseResult,
+    situation: situationResult,
+    policy: policyResult,
+    advice: adviceResult,
+    assignDuty: assignDutyResult,
+  } = advanceTempleReviewToAssignDuty({ enterResult });
+  assert.equal(contributionResult.sessionState?.meetingStage, "assignment-table");
+  assert.equal(contributionResult.sessionState?.overlay?.type, "review-assignment-table");
 
-  const praiseResult = templeHouseHouseModule.dispatch({
-    gameState: contributionResult.gameState,
-    characterDefinitions: contributionResult.characterDefinitions,
-    houseDefinition: templeHouse,
-    playerCharacterId,
-    sessionState: contributionResult.sessionState,
-    request: { type: "action", actionId: "close-temple-overlay" },
-  });
   assert.equal(praiseResult.sessionState?.meetingStage, "praise");
+  assert.equal(situationResult.sessionState?.meetingStage, "situation");
 
-  const policyResult = templeHouseHouseModule.dispatch({
-    gameState: praiseResult.gameState,
-    characterDefinitions: praiseResult.characterDefinitions,
-    houseDefinition: templeHouse,
-    playerCharacterId,
-    sessionState: praiseResult.sessionState,
-    request: { type: "action", actionId: "advance-temple-dialogue" },
-  });
   assert.equal(policyResult.sessionState?.meetingStage, "policy");
+  assert.equal(policyResult.sessionState?.overlay?.type, "review-policy-panel");
 
-  const assignDutyResult = templeHouseHouseModule.dispatch({
-    gameState: policyResult.gameState,
-    characterDefinitions: policyResult.characterDefinitions,
-    houseDefinition: templeHouse,
-    playerCharacterId,
-    sessionState: policyResult.sessionState,
-    request: { type: "action", actionId: "advance-temple-dialogue" },
-  });
+  assert.equal(adviceResult.sessionState?.meetingStage, "advice");
+  assert.equal(adviceResult.sessionState?.overlay?.type, "review-policy-panel");
   assert.equal(assignDutyResult.sessionState?.meetingStage, "assign-duty");
 
   const assignedResult = templeHouseHouseModule.dispatch({
@@ -6956,43 +6970,8 @@ test("temple house review copy resolves from text entries during work-plan assig
     "自定义寺评开场二。",
   ]);
 
-  const contributionResult = templeHouseHouseModule.dispatch({
-    gameState: enterResult.gameState,
-    characterDefinitions: enterResult.characterDefinitions,
-    houseDefinition: templeHouse,
-    playerCharacterId,
-    sessionState: enterResult.sessionState,
-    request: { type: "action", actionId: "advance-temple-dialogue" },
-    activityDefinitionsById,
-    textEntriesById,
-  });
-  const praiseResult = templeHouseHouseModule.dispatch({
-    gameState: contributionResult.gameState,
-    characterDefinitions: contributionResult.characterDefinitions,
-    houseDefinition: templeHouse,
-    playerCharacterId,
-    sessionState: contributionResult.sessionState,
-    request: { type: "action", actionId: "close-temple-overlay" },
-    activityDefinitionsById,
-    textEntriesById,
-  });
-  const policyResult = templeHouseHouseModule.dispatch({
-    gameState: praiseResult.gameState,
-    characterDefinitions: praiseResult.characterDefinitions,
-    houseDefinition: templeHouse,
-    playerCharacterId,
-    sessionState: praiseResult.sessionState,
-    request: { type: "action", actionId: "advance-temple-dialogue" },
-    activityDefinitionsById,
-    textEntriesById,
-  });
-  const assignDutyResult = templeHouseHouseModule.dispatch({
-    gameState: policyResult.gameState,
-    characterDefinitions: policyResult.characterDefinitions,
-    houseDefinition: templeHouse,
-    playerCharacterId,
-    sessionState: policyResult.sessionState,
-    request: { type: "action", actionId: "advance-temple-dialogue" },
+  const { assignDuty: assignDutyResult } = advanceTempleReviewToAssignDuty({
+    enterResult,
     activityDefinitionsById,
     textEntriesById,
   });
@@ -7166,40 +7145,8 @@ test("temple house greeting, open, beg-alms assignment, and leave refusal resolv
     playerCharacterId,
     textEntriesById: begAlmsTextEntries,
   });
-  const contributionResult = templeHouseHouseModule.dispatch({
-    gameState: reviewEnterResult.gameState,
-    characterDefinitions: reviewEnterResult.characterDefinitions,
-    houseDefinition: templeHouse,
-    playerCharacterId,
-    sessionState: reviewEnterResult.sessionState,
-    request: { type: "action", actionId: "advance-temple-dialogue" },
-    textEntriesById: begAlmsTextEntries,
-  });
-  const praiseResult = templeHouseHouseModule.dispatch({
-    gameState: contributionResult.gameState,
-    characterDefinitions: contributionResult.characterDefinitions,
-    houseDefinition: templeHouse,
-    playerCharacterId,
-    sessionState: contributionResult.sessionState,
-    request: { type: "action", actionId: "close-temple-overlay" },
-    textEntriesById: begAlmsTextEntries,
-  });
-  const policyResult = templeHouseHouseModule.dispatch({
-    gameState: praiseResult.gameState,
-    characterDefinitions: praiseResult.characterDefinitions,
-    houseDefinition: templeHouse,
-    playerCharacterId,
-    sessionState: praiseResult.sessionState,
-    request: { type: "action", actionId: "advance-temple-dialogue" },
-    textEntriesById: begAlmsTextEntries,
-  });
-  const assignDutyResult = templeHouseHouseModule.dispatch({
-    gameState: policyResult.gameState,
-    characterDefinitions: policyResult.characterDefinitions,
-    houseDefinition: templeHouse,
-    playerCharacterId,
-    sessionState: policyResult.sessionState,
-    request: { type: "action", actionId: "advance-temple-dialogue" },
+  const { assignDuty: assignDutyResult } = advanceTempleReviewToAssignDuty({
+    enterResult: reviewEnterResult,
     textEntriesById: begAlmsTextEntries,
   });
   const assignedResult = templeHouseHouseModule.dispatch({
@@ -7558,40 +7505,14 @@ test("temple house unlocked begging is chosen in review and executes later witho
     playerCharacterId,
   });
 
-  const contributionResult = templeHouseHouseModule.dispatch({
-    gameState: enterResult.gameState,
-    characterDefinitions: enterResult.characterDefinitions,
-    houseDefinition: templeHouse,
-    playerCharacterId,
-    sessionState: enterResult.sessionState,
-    request: { type: "action", actionId: "advance-temple-dialogue" },
-  });
-  assert.equal(contributionResult.sessionState?.meetingStage, "contribution");
-  const praiseResult = templeHouseHouseModule.dispatch({
-    gameState: contributionResult.gameState,
-    characterDefinitions: contributionResult.characterDefinitions,
-    houseDefinition: templeHouse,
-    playerCharacterId,
-    sessionState: contributionResult.sessionState,
-    request: { type: "action", actionId: "close-temple-overlay" },
-  });
+  const {
+    assignmentTable: contributionResult,
+    praise: praiseResult,
+    assignDuty: assignDutyResult,
+  } = advanceTempleReviewToAssignDuty({ enterResult });
+  assert.equal(contributionResult.sessionState?.meetingStage, "assignment-table");
+  assert.equal(contributionResult.sessionState?.overlay?.type, "review-assignment-table");
   assert.equal(praiseResult.sessionState?.meetingStage, "praise");
-  const policyResult = templeHouseHouseModule.dispatch({
-    gameState: praiseResult.gameState,
-    characterDefinitions: praiseResult.characterDefinitions,
-    houseDefinition: templeHouse,
-    playerCharacterId,
-    sessionState: praiseResult.sessionState,
-    request: { type: "action", actionId: "advance-temple-dialogue" },
-  });
-  const assignDutyResult = templeHouseHouseModule.dispatch({
-    gameState: policyResult.gameState,
-    characterDefinitions: policyResult.characterDefinitions,
-    houseDefinition: templeHouse,
-    playerCharacterId,
-    sessionState: policyResult.sessionState,
-    request: { type: "action", actionId: "advance-temple-dialogue" },
-  });
   const reviewChoiceResult = templeHouseHouseModule.dispatch({
     gameState: assignDutyResult.gameState,
     characterDefinitions: assignDutyResult.characterDefinitions,

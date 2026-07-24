@@ -2,6 +2,12 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-24 Faction Review Flow
+
+- Normalized temple and keep review cadence into shared review semantics for assignment tables, contribution grades, praise, policy panels, advice prompt, and rank-gated task choices.
+- Added faction-internal merit rank tables for temple and Red Turban identities, with task choices displaying minimum identity requirements.
+- Added structured review assignment and policy panel view models so application modules no longer pass table-like HTML or paragraph-only reports.
+
 ## 2026-07-24 Keep Faction Review Normalization
 
 ### Changed

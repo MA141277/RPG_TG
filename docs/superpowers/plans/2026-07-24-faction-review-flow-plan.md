@@ -28,11 +28,11 @@
 
 ## Execution State
 
-- Status: `running`
+- Status: `completed-but-open`
 - Last Updated: `2026-07-24`
-- Current Focus: `Task 3 complete; Task 4 next`
-- Next Step: `Execute Task 4 with failing temple flow tests first.`
-- Verification: `npm run build:test; if ($LASTEXITCODE -eq 0) { node --test tests/faction-review-domain.test.cjs tests/faction-review-ui-contract.test.cjs }`; `node --test --test-name-pattern "keep house" tests/robustness.test.cjs`; `npm run typecheck`
+- Current Focus: `Implementation complete; waiting for review/sync/push before closeout`
+- Next Step: `Review Task 4 diff and resolve or explicitly accept the known unrelated child 27 startup coordinator full-suite failure before closing.`
+- Verification: `npm run build:test; if ($LASTEXITCODE -eq 0) { node --test tests/faction-review-domain.test.cjs tests/faction-review-ui-contract.test.cjs }`; `node --test --test-name-pattern "temple house review|temple review|global NPC interaction does not append default choices to temple review" tests/robustness.test.cjs`; `npm run lint:plans`; `npm run typecheck`; `$env:TEMP='D:\RPG_TG\.tmp'; $env:TMP='D:\RPG_TG\.tmp'; npm test` failed only known unrelated `child 27 startup coordinator exposes bootstrap-complete createAppState for builtin startup`, expected `event.story.zhu_yuanzhang.haozhou_return_encounter`, actual `null`; `$env:TEMP='D:\RPG_TG\.tmp'; $env:TMP='D:\RPG_TG\.tmp'; $env:npm_config_cache='D:\RPG_TG\.npm-cache'; npm run build`
 - Notes: `Plan created after approval of docs/superpowers/specs/2026-07-24-faction-review-flow-design.md.`
 
 ## Progress Log
@@ -53,6 +53,10 @@
   - Summary: `Completed Task 3 keep review normalization with structured assignment table/policy stages, Red Turban merit rank gates, and visible minimum-identity task labels while preserving keep assignment commit effects.`
   - Verification: `npm run build:test; if ($LASTEXITCODE -eq 0) { node --test tests/faction-review-domain.test.cjs tests/faction-review-ui-contract.test.cjs }`; `node --test --test-name-pattern "keep house" tests/robustness.test.cjs`; `npm run typecheck`
   - Next: `Execute Task 4 with failing temple flow tests first.`
+- 2026-07-24
+  - Summary: `Completed Task 4 temple review normalization with shared review assignment rows, policy panel/advice stages, temple merit rank-gated work choices, and preserved temple work-plan assignment commits.`
+  - Verification: `RED npm run build:test; if ($LASTEXITCODE -eq 0) { node --test tests/faction-review-domain.test.cjs tests/faction-review-ui-contract.test.cjs }` failed on missing temple normalized review copy; `GREEN npm run build:test; if ($LASTEXITCODE -eq 0) { node --test tests/faction-review-domain.test.cjs tests/faction-review-ui-contract.test.cjs }` passed 11/11; `node --test --test-name-pattern "temple house review|temple review|global NPC interaction does not append default choices to temple review" tests/robustness.test.cjs` passed 4/4; `npm run lint:plans` passed; `npm run typecheck` passed; `$env:TEMP='D:\RPG_TG\.tmp'; $env:TMP='D:\RPG_TG\.tmp'; npm test` failed only known unrelated child 27 startup coordinator expected `event.story.zhu_yuanzhang.haozhou_return_encounter`, actual `null`; `$env:TEMP='D:\RPG_TG\.tmp'; $env:TMP='D:\RPG_TG\.tmp'; $env:npm_config_cache='D:\RPG_TG\.npm-cache'; npm run build` passed.`
+  - Next: `Commit Task 4 changes and keep child completed-but-open until review, push, and the known unrelated full-suite failure are handled.`
 
 ---
 
@@ -738,7 +742,7 @@ Update this plan:
 - Consumes: Task 1 helpers and Task 2 overlays.
 - Produces: temple review sequence matching the shared flow, with existing temple story gates preserved.
 
-- [ ] **Step 1: Add failing temple source and flow contract tests**
+- [x] **Step 1: Add failing temple source and flow contract tests**
 
 Append to `tests/faction-review-ui-contract.test.cjs`:
 
@@ -760,7 +764,7 @@ test("temple review source uses normalized review table, policy panel, and advic
 });
 ```
 
-- [ ] **Step 2: Run targeted tests and verify RED**
+- [x] **Step 2: Run targeted tests and verify RED**
 
 Run:
 
@@ -772,7 +776,7 @@ Expected:
 
 - Fails because temple still uses old contribution alert flow or lacks normalized advice choices.
 
-- [ ] **Step 3: Add rank metadata to temple activities**
+- [x] **Step 3: Add rank metadata to temple activities**
 
 Modify temple task definitions in `src/content/scenario-packs/zhuyuanzhang/activities.json`:
 
@@ -780,7 +784,7 @@ Modify temple task definitions in `src/content/scenario-packs/zhuyuanzhang/activ
 - `beg-alms`: `reviewMinRankId: "temple.novice"` unless story-specific week logic forces it
 - later relief/refugee-style tasks: use `temple.itinerant` or higher only if currently exposed by review choices
 
-- [ ] **Step 4: Normalize temple contribution rows**
+- [x] **Step 4: Normalize temple contribution rows**
 
 Use shared `ReviewAssignmentRow[]` for temple contribution entries:
 
@@ -791,7 +795,7 @@ Use shared `ReviewAssignmentRow[]` for temple contribution entries:
 
 Do not replace existing temple story flags or current work-plan commit behavior.
 
-- [ ] **Step 5: Normalize temple meeting flow**
+- [x] **Step 5: Normalize temple meeting flow**
 
 Update temple meeting progression to match the shared sequence:
 
@@ -810,11 +814,11 @@ Preserve existing special week behavior:
 - locked begging still blocks as before
 - existing mission and review-date updates still happen in `submitReviewWorkPlan()`
 
-- [ ] **Step 6: Ensure policy panel remains visible during advice prompt**
+- [x] **Step 6: Ensure policy panel remains visible during advice prompt**
 
 Keep `sessionState.overlay` or an equivalent typed visible panel as `review-policy-panel` while dialogue text is `有谁要进言吗`.
 
-- [ ] **Step 7: Update changelog and governance state**
+- [x] **Step 7: Update changelog and governance state**
 
 Append to `docs/change-log.md`:
 
@@ -828,7 +832,7 @@ Append to `docs/change-log.md`:
 
 Update `docs/superpowers/project-progress.md` so the current task points to this plan as `completed-but-open` only after verification passes; otherwise keep status `running` and record the next concrete step.
 
-- [ ] **Step 8: Run targeted verification**
+- [x] **Step 8: Run targeted verification**
 
 Run:
 
@@ -840,7 +844,7 @@ Expected:
 
 - Targeted review tests pass.
 
-- [ ] **Step 9: Run full verification**
+- [x] **Step 9: Run full verification**
 
 Run:
 
@@ -855,7 +859,7 @@ Expected:
 
 - Each command exits 0.
 
-- [ ] **Step 10: Update plan progress and close implementation state**
+- [x] **Step 10: Update plan progress and close implementation state**
 
 Update this plan:
 
@@ -868,36 +872,36 @@ Update this plan:
 
 ## Exit Check
 
-- [ ] `Temple and keep review flows share the same review semantics for table rows, grades, ranking, policy, and task-rank gating.`
-- [ ] `The visible flow follows leader opening, assignment table, praise, situation, policy, advice, and assignment selection.`
-- [ ] `Assignment table and policy panel are typed view models rendered in UI code.`
-- [ ] `Temple and Red Turban rank tables are implemented and tested.`
-- [ ] `Ordinary task choices show minimum identity labels.`
-- [ ] `Special task hook exists and cleanly falls back to ordinary task choices when empty.`
-- [ ] `No new review business logic is added to src/main.ts.`
+- [x] `Temple and keep review flows share the same review semantics for table rows, grades, ranking, policy, and task-rank gating.`
+- [x] `The visible flow follows leader opening, assignment table, praise, situation, policy, advice, and assignment selection.`
+- [x] `Assignment table and policy panel are typed view models rendered in UI code.`
+- [x] `Temple and Red Turban rank tables are implemented and tested.`
+- [x] `Ordinary task choices show minimum identity labels.`
+- [x] `Special task hook exists and cleanly falls back to ordinary task choices when empty.`
+- [x] `No new review business logic is added to src/main.ts.`
 - [ ] `Required tests and verification commands pass.`
-- [ ] `docs/change-log.md is updated.`
-- [ ] `Project progress sync is updated if the child state changed.`
+- [x] `docs/change-log.md is updated.`
+- [x] `Project progress sync is updated if the child state changed.`
 
 ## Completion Checklist
 
-- [ ] Plan checkboxes updated
-- [ ] `Execution State` updated
-- [ ] `Progress Log` updated
-- [ ] Verification recorded
+- [x] Plan checkboxes updated
+- [x] `Execution State` updated
+- [x] `Progress Log` updated
+- [x] Verification recorded
 
 ## Child Closeout
 
 - Closed Child: `Faction Review Flow`
 - Parent Task: `Normalize faction review cadence`
 - Parent Stage: `Faction Review Flow Implementation`
-- Closeout Status: `not-closed`
-- Project Progress Synced: `no`
+- Closeout Status: `completed-but-open`
+- Project Progress Synced: `yes`
 - Next Child: `none`
 - Next Child Status: `none`
-- Next Required Action: `complete-implementation-and-verify`
+- Next Required Action: `review-commit-and-push-before-closeout`
 - Next Entry Document: `docs/superpowers/project-progress.md`
 - Next Owner Document: `docs/superpowers/plans/2026-07-24-faction-review-flow-plan.md`
 - Push Status: `not-pushed`
 - Push Commit: `none`
-- Resume From: `Open docs/superpowers/project-progress.md, then continue docs/superpowers/plans/2026-07-24-faction-review-flow-plan.md from the first unchecked task.`
+- Resume From: `Open docs/superpowers/project-progress.md, then review/commit/push Task 4; do not close this child while the known unrelated child 27 full-suite failure remains unresolved or unaccepted.`

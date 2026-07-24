@@ -82,3 +82,21 @@ test("keep review source uses normalized Chinese review copy and advice choices"
   }
   assert.doesNotMatch(source, /Contribution Report|Current Orders|Continue|Dismiss/);
 });
+
+test("temple review source uses normalized review table, policy panel, and advice choices", () => {
+  const source = readSource(
+    "src/application/house-modules/temple-house/temple-house-house-module.ts"
+  );
+  for (const text of [
+    "\u8fd9\u6bb5\u65f6\u95f4\u5927\u5bb6\u8f9b\u82e6\u4e86",
+    "\u770b\u770b\u5927\u5bb6\u8fd9\u671f\u95f4\u7684\u8fdb\u5c55\u5427",
+    "\u6709\u8c01\u8981\u8fdb\u8a00\u5417",
+    "\u53d1\u8868\u610f\u89c1",
+    "\u4e00\u8a00\u4e0d\u53d1",
+    "review-assignment-table",
+    "review-policy-panel",
+  ]) {
+    assert.match(source, new RegExp(text));
+  }
+  assert.doesNotMatch(source, /\u4e0a\u671f\u5bfa\u4e2d\u8d21\u732e/);
+});

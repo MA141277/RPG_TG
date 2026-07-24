@@ -36,6 +36,7 @@
       "runtime.zhu_yuanzhang.temple.task.copy_scripture.order.001",
       "runtime.zhu_yuanzhang.temple.task.copy_scripture.order.002"
     ],
+    "reviewMinRankId": "temple.laborer",
     "tags": ["scenario", "temple", "task"]
   },
   {
@@ -51,6 +52,7 @@
       "runtime.zhu_yuanzhang.temple.task.sweep_courtyard.order.001",
       "runtime.zhu_yuanzhang.temple.task.sweep_courtyard.order.002"
     ],
+    "reviewMinRankId": "temple.laborer",
     "tags": ["scenario", "temple", "task"]
   },
   {
@@ -66,6 +68,7 @@
       "runtime.zhu_yuanzhang.temple.task.carry_water.order.001",
       "runtime.zhu_yuanzhang.temple.task.carry_water.order.002"
     ],
+    "reviewMinRankId": "temple.laborer",
     "tags": ["scenario", "temple", "task"]
   },
   {
@@ -81,6 +84,7 @@
       "runtime.zhu_yuanzhang.temple.task.beg_alms.order.001",
       "runtime.zhu_yuanzhang.temple.task.beg_alms.order.002"
     ],
+    "reviewMinRankId": "temple.novice",
     "tags": ["scenario", "temple", "task"]
   },
   {
@@ -96,6 +100,7 @@
       "runtime.zhu_yuanzhang.temple.task.relief_refugees.order.001",
       "runtime.zhu_yuanzhang.temple.task.relief_refugees.order.002"
     ],
+    "reviewMinRankId": "temple.itinerant",
     "tags": ["scenario", "temple", "task"]
   },
   {
