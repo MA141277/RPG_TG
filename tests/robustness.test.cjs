@@ -3637,6 +3637,94 @@ test("scenario pack loader rejects retired startup scene views", async () => {
   );
 });
 
+test("scenario pack loader rejects missing nextEventId targets", async () => {
+  const {
+    exportScriptEditorProjectToScenarioPackFiles,
+  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  const {
+    loadScenarioPackFromFiles,
+  } = require("../.test-dist/application/scenario/scenario-pack-loader.js");
+  const project = createExportableScriptEditorProjectDefinition();
+  project.textEntries = [{ id: "text.opening", text: "Opening line." }];
+  project.dialogues = [
+    {
+      id: "dialogue.opening",
+      title: "Opening",
+      nodes: [
+        {
+          id: "dialogue-node.opening",
+          nodeType: "dialogue",
+          speakerPersonId: "person.hero",
+          textId: "text.opening",
+        },
+      ],
+    },
+  ];
+  project.events = [
+    {
+      id: "event.opening",
+      title: "Opening Event",
+      destination: { family: "dialogue", targetId: "dialogue.opening" },
+      nextEventId: "event.follow-up",
+    },
+    {
+      id: "event.follow-up",
+      title: "Follow Up Event",
+      destination: { family: "dialogue", targetId: "dialogue.opening" },
+    },
+  ];
+
+  const files = exportScriptEditorProjectToScenarioPackFiles(project);
+  const exportedEvents = JSON.parse(files["events.json"]);
+  exportedEvents[0].nextEventId = "event.missing";
+  files["events.json"] = JSON.stringify(exportedEvents, null, 2);
+
+  await assert.rejects(
+    () =>
+      loadScenarioPackFromFiles(
+        createImportedFilesFromSerializedJsonRecord(
+          files,
+          "missing-next-event-pack"
+        )
+      ),
+    /nextEventId|event\.missing|missing next event/i
+  );
+});
+
+test("scenario pack loader rejects settlement events without settlementId", async () => {
+  const {
+    exportScriptEditorProjectToScenarioPackFiles,
+  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  const {
+    loadScenarioPackFromFiles,
+  } = require("../.test-dist/application/scenario/scenario-pack-loader.js");
+  const project = createExportableScriptEditorProjectDefinition();
+  project.events = [
+    {
+      id: "event.opening",
+      title: "Opening Event",
+      actions: [{ type: "closeBuilding" }],
+    },
+  ];
+
+  const files = exportScriptEditorProjectToScenarioPackFiles(project);
+  const exportedEvents = JSON.parse(files["events.json"]);
+  exportedEvents[0].type = "settlement";
+  delete exportedEvents[0].settlementId;
+  files["events.json"] = JSON.stringify(exportedEvents, null, 2);
+
+  await assert.rejects(
+    () =>
+      loadScenarioPackFromFiles(
+        createImportedFilesFromSerializedJsonRecord(
+          files,
+          "missing-settlement-id-pack"
+        )
+      ),
+    /settlementId|event\.opening|settlement event/i
+  );
+});
+
 test("built-in Liu Bang pack uses event-bindings instead of event-body trigger fields", async () => {
   const {
     loadScenarioPackFromFiles,

@@ -1,0 +1,50 @@
+{
+  "generatedAt": "2026-07-24",
+  "versionId": "target.event-follow-up-routing-settlement-and-canonical-reuse-convergence",
+  "queueId": "queue.full-chain-event-routing-and-settlement-consistency",
+  "taskId": "task.full-chain-event-routing-and-settlement-consistency.evidence-anchor-reconcile",
+  "acceptanceIds": [
+    "ACC-EVENT-SETTLE-006"
+  ],
+  "chainAnchors": {
+    "projectSaveLoad": [
+      "src/application/script-editor/editor-project-loader.ts validates and preserves buildingArrangements plus settlements on the authoring project boundary",
+      "tests/robustness.test.cjs: script editor project save and load preserve settlement result entries"
+    ],
+    "runtimeExportImport": [
+      "src/application/script-editor/runtime-pack-export.ts collects event.nextEventId and settlement.results[].nextEventId references, fails closed on self-reference and missing targets, and lowers settlement event settlementId only when event.type=settlement",
+      "src/application/script-editor/runtime-pack-import.ts maps runtime EventDefinition.nextEventId and settlementId back into editable authoring records",
+      "tests/robustness.test.cjs: script editor settlement event export preserves formal settlement event type and reference",
+      "tests/robustness.test.cjs: script editor exported event body preserves nextEventId chain data"
+    ],
+    "loaderAndStartup": [
+      "src/application/scenario/scenario-pack-loader.ts hydrates buildingArrangements and rejects retired runtime families",
+      "src/application/startup/startup-session-coordinator.ts and src/main.ts both start file-based packs through loadScenarioPackFromFiles(...)",
+      "tests/robustness.test.cjs: script editor imports built-in zhuyuanzhang template from the published manifest url"
+    ],
+    "runtimePreview": [
+      "src/ui/main-ui/main-ui-flow.js previewScriptEditorProjectRuntime exports the in-memory project to scenario-pack files and immediately reloads them through loadScenarioPackFromFiles(...)",
+      "src/main.ts startLoadedScenarioPackWithLoading(...) marks previewSession=true and routes preview startup through the same startup path as file-loaded packs",
+      "tests/robustness.test.cjs: script editor runtime preview launches from current in-memory project data"
+    ],
+    "canonicalHostGraph": [
+      "tests/robustness.test.cjs: zhuyuanzhang same-name host records converge to canonical ids across direct host reference surfaces",
+      "tests/robustness.test.cjs: zhuyuanzhang pack carries explicit building arrangements for every mounted building"
+    ]
+  },
+  "knownResidue": {
+    "compatibilityImportStillLive": [
+      "src/application/script-editor/runtime-pack-import.ts still records compatibilityImport residue for unsupported imported families",
+      "src/application/script-editor/runtime-pack-export.ts still fails closed when project.storyPack.compatibilityImport.unresolvedFamilies is present",
+      "src/application/script-editor/workspace-shell.ts still surfaces compatibility residue counters and cards"
+    ],
+    "fullChainProofGap": [
+      "No single ACC-EVENT-SETTLE-006 proof artifact yet demonstrates one end-to-end chain across Script Editor save/export/import, loader, runtime preview, and normal startup while exercising canonical host ids, nextEventId, and settlement references together."
+    ],
+    "baselineOutsideThisQueueYetRelevant": [
+      "tests/robustness.test.cjs:13204 imported-runtime materialization baseline still fails and may affect final full-chain parity accounting even though it was outside the prior host-canonicalization queue."
+    ]
+  },
+  "nextRecommendedTask": "task.full-chain-event-routing-and-settlement-consistency.surface-inventory-and-acceptance-lock",
+  "summary": "Evidence lock is complete for the full-chain consistency queue: the repo already has distributed save/load, export/import, loader, preview, and startup anchors for canonical host ids, nextEventId, and settlement references, but ACC-EVENT-SETTLE-006 still lacks one queue-owned end-to-end proof chain and compatibilityImport residue remains live on import/export/workspace surfaces."
+}

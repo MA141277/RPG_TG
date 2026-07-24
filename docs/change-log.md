@@ -5,6 +5,16 @@
 `docs/change-log.md` 的正式定位是“历史记录 + 人类可读摘要”。
 它不是当前 Blueprint / legacy superpowers 治理的 live execution truth，不作为 resume entry、promotion gate、closeout gate 或固定同步门。
 
+## 2026-07-24 Shared Loader Routing And Settlement Guard Alignment
+
+### Changed
+- Updated [src/application/scenario/scenario-pack-loader.ts](/D:/workspace/project/RPG_TG/src/application/scenario/scenario-pack-loader.ts:1) so imported runtime packs now fail closed on missing `nextEventId` targets, self-referential `nextEventId`, and `type = "settlement"` events without a non-empty `settlementId` on the shared loader seam used by Script Editor runtime preview and normal startup.
+- Added focused regression coverage in [tests/robustness.test.cjs](/D:/workspace/project/RPG_TG/tests/robustness.test.cjs:3640) for loader-side rejection of missing `nextEventId` targets and missing `settlementId` on settlement events, keeping the shared loader aligned with the already-landed runtime export guards.
+
+### Impact
+- Script Editor runtime preview and normal startup no longer accept routing/settlement residue that runtime export already rejects, which closes the shared preview/startup half of the active full-chain consistency slice.
+- Event remains the only routing owner and settlement remains reference-only on this seam; the loader adds fail-closed validation instead of introducing a compatibility alias or second router.
+
 ## 2026-07-24 Same-Name Host Canonical Merge And Legacy Arrangement Tolerance
 
 ### Changed

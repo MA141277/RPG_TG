@@ -1,0 +1,46 @@
+{
+  "generatedAt": "2026-07-24",
+  "versionId": "target.event-follow-up-routing-settlement-and-canonical-reuse-convergence",
+  "queueId": "queue.full-chain-event-routing-and-settlement-consistency",
+  "taskId": "task.full-chain-event-routing-and-settlement-consistency.queue-closeout-review-and-sync-gate",
+  "acceptanceIds": [
+    "ACC-EVENT-SETTLE-006"
+  ],
+  "queueOwnedProof": {
+    "importedRuntimeBaseline": [
+      "src/application/script-editor/city-building-runtime-materializer.ts now falls back to a unique mounted-building owner by buildingId when stale imported building.cityId prevents an exact cityId + buildingId match",
+      "tests/robustness.test.cjs: script editor runtime export materializes city mounted buildings and npcs over imported runtime tables"
+    ],
+    "sharedPreviewStartupLoader": [
+      "src/application/scenario/scenario-pack-loader.ts now rejects missing nextEventId targets on imported runtime packs",
+      "src/application/scenario/scenario-pack-loader.ts now rejects self-referential nextEventId on imported runtime packs",
+      "src/application/scenario/scenario-pack-loader.ts now rejects type=settlement events without a non-empty settlementId",
+      "src/ui/main-ui/main-ui-flow.js previewScriptEditorProjectRuntime and src/main.ts file-based startup both route through loadScenarioPackFromFiles(...)"
+    ],
+    "preservedCanonicalBoundary": [
+      "event remains the only routing owner",
+      "nextEventId remains event-id-only and empty nextEventId still closes directly",
+      "settlement remains reference-only on the loader seam and does not become a second router",
+      "canonical host ids remain the shared host truth for repeated-name building hosts"
+    ]
+  },
+  "verification": {
+    "passed": [
+      "cmd /c npm run build:test",
+      "cmd /c node --test tests/robustness.test.cjs --test-name-pattern \"scenario pack loader rejects missing nextEventId targets|scenario pack loader rejects settlement events without settlementId|script editor runtime export materializes city mounted buildings and npcs over imported runtime tables\"",
+      "cmd /c npm run lint:blueprints",
+      "cmd /c npm run lint:blueprint-skill",
+      "cmd /c npm run blueprint:governance:check"
+    ],
+    "knownQueueLocalBlocker": "none"
+  },
+  "residueRouting": {
+    "compatibilityImport": "stays routed to queue.event-routing-settlement-migration-and-final-acceptance for final rejection/removal closeout",
+    "requiredFinalQueue": "queue.event-routing-settlement-migration-and-final-acceptance"
+  },
+  "queueCloseoutReadiness": {
+    "accEventSettle006": true,
+    "remainingOwnedBlocker": "none"
+  },
+  "summary": "The full-chain consistency queue now has local proof for both halves of its first bounded slice: imported-runtime materialization preserves canonical mounted-building ownership, and the shared loader used by runtime preview plus normal startup fails closed on invalid nextEventId and settlement event shapes. No further queue-local implementation gap remains before the repository-sync gate."
+}

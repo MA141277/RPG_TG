@@ -1,0 +1,97 @@
+{
+  "generatedAt": "2026-07-24",
+  "versionId": "target.event-follow-up-routing-settlement-and-canonical-reuse-convergence",
+  "queueId": "queue.full-chain-event-routing-and-settlement-consistency",
+  "taskId": "task.full-chain-event-routing-and-settlement-consistency.surface-inventory-and-acceptance-lock",
+  "acceptanceIds": [
+    "ACC-EVENT-SETTLE-006"
+  ],
+  "ownedAcceptanceMatrix": [
+    {
+      "surface": "project-save-load",
+      "mustProve": [
+        "settlements preserve result.nextEventId",
+        "authoring project preserves canonical buildingArrangements and host ids"
+      ],
+      "anchors": [
+        "src/application/script-editor/editor-project-loader.ts",
+        "tests/robustness.test.cjs: script editor project save and load preserve settlement result entries"
+      ]
+    },
+    {
+      "surface": "runtime-export-import",
+      "mustProve": [
+        "event.nextEventId exports and imports without router drift",
+        "settlement event settlementId exports and imports without shape drift",
+        "canonical host ids survive exported pack families"
+      ],
+      "anchors": [
+        "src/application/script-editor/runtime-pack-export.ts",
+        "src/application/script-editor/runtime-pack-import.ts",
+        "tests/robustness.test.cjs: script editor settlement event export preserves formal settlement event type and reference",
+        "tests/robustness.test.cjs: script editor exported event body preserves nextEventId chain data"
+      ]
+    },
+    {
+      "surface": "runtime-preview",
+      "mustProve": [
+        "preview launches from in-memory project data through export->load path",
+        "preview startup consumes the same canonical contracts as file-based startup"
+      ],
+      "anchors": [
+        "src/ui/main-ui/main-ui-flow.js previewScriptEditorProjectRuntime",
+        "src/main.ts startLoadedScenarioPackWithLoading",
+        "tests/robustness.test.cjs: script editor runtime preview launches from current in-memory project data"
+      ]
+    },
+    {
+      "surface": "normal-startup-and-loader",
+      "mustProve": [
+        "file-loaded packs use the same canonical contracts as preview",
+        "scenario loader preserves buildingArrangements and rejects retired families"
+      ],
+      "anchors": [
+        "src/application/scenario/scenario-pack-loader.ts",
+        "src/application/startup/startup-session-coordinator.ts",
+        "src/main.ts startScenarioPackFilesWithLoading"
+      ]
+    },
+    {
+      "surface": "shared-runtime-execution",
+      "mustProve": [
+        "canonical host ids remain valid through building entry/navigation/runtime follow-up",
+        "settlement handoff and nextEventId follow-up remain event-owned"
+      ],
+      "anchors": [
+        "tests/robustness.test.cjs: building module stage resolves canonical host ids against same-family legacy arrangement ids",
+        "tests/robustness.test.cjs: navigation runtime resolves canonical host ids against same-family legacy arrangement ids",
+        "tests/robustness.test.cjs: flow playable settlement preserves canonical home template owner id in shared handoff"
+      ]
+    }
+  ],
+  "residueRouting": {
+    "compatibilityImport": {
+      "currentTruth": "still live on runtime-pack import/export/workspace-shell",
+      "queueOwnership": "this queue must prove canonical paths do not depend on compatibilityImport",
+      "requiredFinalQueueOwnership": "queue.event-routing-settlement-migration-and-final-acceptance owns final removal/rejection closeout"
+    },
+    "importedRuntimeMaterializationBaseline": {
+      "test": "tests/robustness.test.cjs:13204",
+      "currentClassification": "same-family full-chain parity residue",
+      "note": "No longer attributable to host-canonicalization; keep under this queue's chain audit."
+    }
+  },
+  "firstBoundedSlice": {
+    "sliceId": "slice.full-chain.shared-preview-startup-proof-and-imported-runtime-baseline",
+    "goal": "Add one queue-owned proof harness that exercises canonical host ids, nextEventId, and settlement references through export/import plus preview/startup shared loader seams, then reconcile the imported-runtime materialization baseline against that same chain.",
+    "targetSurfaces": [
+      "tests/robustness.test.cjs",
+      "src/ui/main-ui/main-ui-flow.js",
+      "src/main.ts",
+      "src/application/startup/startup-session-coordinator.ts",
+      "src/application/scenario/scenario-pack-loader.ts"
+    ],
+    "reason": "This is the smallest slice that spans more than one entrypoint, strengthens ACC-EVENT-SETTLE-006 proof directly, and prevents the queue from shrinking into another source-only or editor-only audit."
+  },
+  "summary": "Acceptance inventory is now locked. The queue owns end-to-end parity across save/load, export/import, preview, startup, loader, and runtime execution on the canonical contracts; compatibilityImport removal stays final-queue work, while the first bounded slice is a shared preview/startup proof harness plus imported-runtime baseline reconciliation."
+}

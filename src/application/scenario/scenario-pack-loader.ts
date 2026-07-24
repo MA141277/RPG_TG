@@ -254,6 +254,13 @@ export function parseScenarioPack(value: unknown): ScenarioPackDefinition {
   }
   assertArray(value.events, "scenario events");
   assertRuntimeEventsDoNotUseRetiredTriggerFields(value.events);
+  assertRuntimeEventsPreserveCanonicalRoutingContracts(
+    value.events,
+    isRecord((value as Record<string, unknown>).settlements) ||
+      Array.isArray((value as Record<string, unknown>).settlements)
+      ? (value as Record<string, unknown>).settlements
+      : undefined
+  );
   if (value.eventBindings != null) {
     assertArray(value.eventBindings, "scenario eventBindings");
   }
@@ -346,6 +353,72 @@ function assertRuntimeEventsDoNotUseRetiredTriggerFields(events: unknown[]): voi
     ) {
       throw new Error(
         `scenario events[${index}] event body trigger/conditions are retired; use event-bindings.json for runtime trigger configuration.`
+      );
+    }
+  });
+}
+
+function assertRuntimeEventsPreserveCanonicalRoutingContracts(
+  events: unknown[],
+  settlements: unknown
+): void {
+  const eventIds = new Set<string>();
+  const settlementIds = new Set<string>();
+
+  if (settlements != null) {
+    assertArray(settlements, "scenario settlements");
+    settlements.forEach((settlementDefinition, index) => {
+      assertObject(settlementDefinition, `scenario settlements[${index}]`);
+      const settlementId = settlementDefinition.id;
+      assertString(settlementId, `scenario settlements[${index}].id`);
+      settlementIds.add(settlementId.trim());
+    });
+  }
+
+  events.forEach((eventDefinition, index) => {
+    assertObject(eventDefinition, `scenario events[${index}]`);
+    const eventId = eventDefinition.id;
+    assertString(eventId, `scenario events[${index}].id`);
+    eventIds.add(eventId.trim());
+  });
+
+  events.forEach((eventDefinition, index) => {
+    assertObject(eventDefinition, `scenario events[${index}]`);
+    const eventIdValue = eventDefinition.id;
+    assertString(eventIdValue, `scenario events[${index}].id`);
+    const eventId = eventIdValue.trim();
+    const nextEventId =
+      typeof eventDefinition.nextEventId === "string"
+        ? eventDefinition.nextEventId.trim()
+        : "";
+    if (nextEventId.length > 0) {
+      if (nextEventId === eventId) {
+        throw new Error(
+          `Event "${eventId}" cannot reference itself through nextEventId.`
+        );
+      }
+      if (!eventIds.has(nextEventId)) {
+        throw new Error(
+          `Event "${eventId}" references missing next event "${nextEventId}".`
+        );
+      }
+    }
+
+    const settlementId =
+      typeof eventDefinition.settlementId === "string"
+        ? eventDefinition.settlementId.trim()
+        : "";
+    if (eventDefinition.type !== "settlement") {
+      return;
+    }
+    if (settlementId.length === 0) {
+      throw new Error(
+        `Settlement event "${eventId}" requires a non-empty settlementId.`
+      );
+    }
+    if (settlements != null && !settlementIds.has(settlementId)) {
+      throw new Error(
+        `Settlement event "${eventId}" references missing settlement "${settlementId}".`
       );
     }
   });

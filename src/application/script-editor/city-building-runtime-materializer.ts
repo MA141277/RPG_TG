@@ -214,10 +214,11 @@ function materializeHouses(
   cities: readonly ScriptEditorCityRecord[]
 ): HouseDefinition[] {
   const mountedBuildingById = indexMountedBuildings(cities);
+  const mountedBuildingsByBuildingId = indexMountedBuildingsByBuildingId(cities);
   return buildings.map((building) => {
-    const mountedBuilding = mountedBuildingById.get(
-      createMountedBuildingKey(building.cityId, building.id)
-    );
+    const mountedBuilding =
+      mountedBuildingById.get(createMountedBuildingKey(building.cityId, building.id)) ??
+      resolveUniqueMountedBuildingById(mountedBuildingsByBuildingId, building.id);
     const baseAttributes = building.baseAttributes ?? {
       houseType: "custom",
       characterIds: [],
@@ -508,6 +509,46 @@ function indexMountedBuildings(
   }
 
   return mountedBuildingById;
+}
+
+function indexMountedBuildingsByBuildingId(
+  cities: readonly ScriptEditorCityRecord[]
+): Map<string, { cityId: string; npcIds: string[]; primaryNpcId: string | null }[]> {
+  const mountedBuildingsByBuildingId = new Map<
+    string,
+    { cityId: string; npcIds: string[]; primaryNpcId: string | null }[]
+  >();
+
+  for (const city of cities) {
+    for (const mountedBuilding of city.mountedBuildings ?? []) {
+      if (mountedBuilding.buildingId.length === 0) {
+        continue;
+      }
+      const existing = mountedBuildingsByBuildingId.get(mountedBuilding.buildingId) ?? [];
+      existing.push({
+        cityId: city.id,
+        npcIds: readStringArray(mountedBuilding.npcIds),
+        primaryNpcId: mountedBuilding.primaryNpcId,
+      });
+      mountedBuildingsByBuildingId.set(mountedBuilding.buildingId, existing);
+    }
+  }
+
+  return mountedBuildingsByBuildingId;
+}
+
+function resolveUniqueMountedBuildingById(
+  mountedBuildingsByBuildingId: Map<
+    string,
+    { cityId: string; npcIds: string[]; primaryNpcId: string | null }[]
+  >,
+  buildingId: string
+): { cityId: string; npcIds: string[]; primaryNpcId: string | null } | undefined {
+  const mountedBuildings = mountedBuildingsByBuildingId.get(buildingId);
+  if (mountedBuildings == null || mountedBuildings.length !== 1) {
+    return undefined;
+  }
+  return mountedBuildings[0];
 }
 
 function createMountedBuildingKey(cityId: string, buildingId: string): string {
