@@ -17,8 +17,6 @@
     linear-gradient(rgb(0 0 0 / 28%), rgb(0 0 0 / 28%)),
     linear-gradient(180deg, rgb(0 0 0 / 100%), rgb(0 0 0 / 100%));
 }
-<<<<<<< Updated upstream
-=======
 
 .c-map-stage-actions {
   position: absolute;
@@ -1179,8 +1177,6 @@
   color: #4c2d19;
 }
 
-<<<<<<< Updated upstream
-=======
 .c-troop-preview-grid__slot.is-captain {
   position: relative;
   box-shadow:
@@ -1239,7 +1235,6 @@
   --troop-role-thumbnail: var(--troop-role-spearman);
 }
 
->>>>>>> Stashed changes
 .c-troop-preview-grid__slot-key {
   position: relative;
   z-index: 2;
@@ -2367,4 +2362,3 @@
     padding-inline: 34px;
   }
 }
->>>>>>> Stashed changes
