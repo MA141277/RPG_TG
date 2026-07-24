@@ -2811,6 +2811,7 @@
   top: 40.7%;
   width: 54.9%;
   height: 18%;
+  position: relative;
   padding: 3.2% 4.4% 1.6%;
   background: url("../../ui/yuansu/具体面板ui/006_panel_ability_info_with_tab_1.0.png") center / contain no-repeat;
 }
@@ -2872,26 +2873,57 @@
 }
 
 .c-character-detail__ability-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 7% 10%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 6px;
   height: 100%;
-  padding-top: 1%;
+  padding-top: 1.2%;
+  overflow: hidden;
+}
+
+.c-character-detail__ability-group {
+  display: grid;
+  align-items: stretch;
+  min-width: 0;
+  min-height: 0;
+}
+
+.c-character-detail__ability-group--reputation {
+  grid-column: auto;
+}
+
+.c-character-detail__ability-grid .c-character-detail__substat-line,
+.c-character-detail__ability-group--reputation .c-character-detail__substat-line {
+  display: none;
 }
 
 .c-character-detail__stat-row {
   display: grid;
-  grid-template-columns: 16% minmax(0, 1fr) 12%;
-  gap: 4%;
+  grid-template-columns: clamp(2.5rem, 4.2vw, 4.5rem) minmax(0, 1fr) clamp(1.8rem, 3vw, 2.6rem);
+  gap: 10px;
   align-items: center;
   min-width: 0;
+  width: 100%;
   color: #2c241a;
-  font-size: clamp(0.62rem, 1vw, 1.06rem);
+  font-size: clamp(0.66rem, 1.02vw, 1.06rem);
+  min-height: clamp(20px, 2.1vw, 28px);
+}
+
+.c-character-detail__stat-row--primary {
+  font-weight: 700;
+}
+
+.c-character-detail__substat-line {
+  margin: 0;
+  color: #5c4a31;
+  font-size: clamp(0.58rem, 0.95vw, 0.92rem);
+  line-height: 1.3;
 }
 
 .c-character-detail__meter {
   position: relative;
-  height: clamp(8px, 1vw, 16px);
+  height: clamp(12px, 1.05vw, 16px);
   border: 1px solid rgb(91 80 55 / 66%);
   background: rgb(128 128 120 / 42%);
   overflow: hidden;
@@ -2907,26 +2939,116 @@
   background: linear-gradient(90deg, #9f463a, #6f2b27);
 }
 
-.c-character-detail__skills-grid {
+.c-character-detail__detail-toggle {
+  position: absolute;
+  top: 8%;
+  right: 3.2%;
+  border: 1px solid rgb(97 73 38 / 48%);
+  border-radius: 999px;
+  padding: 0.18rem 0.7rem;
+  color: #5b3b1c;
+  background: rgb(243 231 193 / 92%);
+  font-size: clamp(0.58rem, 0.88vw, 0.86rem);
+  font-weight: 700;
+  line-height: 1.2;
+  cursor: pointer;
+  z-index: 2;
+}
+
+.c-character-detail__ability-detail-backdrop {
+  position: absolute;
+  inset: 0;
   display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
-  grid-template-rows: repeat(2, minmax(0, 1fr));
-  gap: 6px 10px;
-  align-items: stretch;
+  place-items: center;
+  padding: 2.5% 2%;
+  background: rgb(30 20 11 / 22%);
+  backdrop-filter: blur(2px);
+  z-index: 3;
+}
+
+.c-character-detail__ability-detail-popup {
+  width: min(100%, 760px);
+  max-height: 100%;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 10px;
+  padding: 14px 16px;
+  border: 1px solid rgb(94 69 37 / 38%);
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgb(248 239 213 / 98%), rgb(233 219 181 / 96%));
+  box-shadow: 0 20px 36px rgb(38 26 16 / 22%);
+  overflow: hidden;
+}
+
+.c-character-detail__ability-detail-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.c-character-detail__ability-detail-title {
+  margin: 0;
+  color: #3d2a18;
+  font-size: clamp(0.8rem, 1.15vw, 1.16rem);
+}
+
+.c-character-detail__ability-detail-close {
+  border: 1px solid rgb(96 70 38 / 44%);
+  border-radius: 999px;
+  padding: 0.22rem 0.72rem;
+  color: #5b3b1c;
+  background: rgb(248 239 213 / 96%);
+  font: inherit;
+  font-size: clamp(0.58rem, 0.88vw, 0.84rem);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.c-character-detail__ability-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 12px;
+  overflow: auto;
+  padding-right: 2px;
+}
+
+.c-character-detail__ability-detail-group {
+  display: grid;
+  gap: 8px;
+}
+
+.c-character-detail__ability-detail-group--reputation {
+  grid-column: 1 / -1;
+}
+
+.c-character-detail__ability-detail-list {
+  display: grid;
+  gap: 6px;
+}
+
+.c-character-detail__skills-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  align-content: start;
   height: 100%;
   margin: 0;
   padding: 0;
   list-style: none;
+  overflow: auto;
 }
 
 .c-character-detail__skill-item {
-  display: grid;
-  grid-template-columns: 2.2em minmax(0, 1fr);
-  gap: 4px;
+  display: inline-grid;
+  grid-template-columns: auto auto;
+  gap: 6px;
   align-items: center;
   min-width: 0;
   min-height: 0;
-  overflow: hidden;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgb(250 243 223 / 82%);
 }
 
 .c-character-detail__skill-name {
@@ -2934,26 +3056,14 @@
   font-size: clamp(0.62rem, 1.05vw, 1.08rem);
   font-weight: 700;
   line-height: 1.05;
-  white-space: nowrap;
-}
-
-.c-character-detail__skill-icons {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 2px;
-  align-items: center;
   min-width: 0;
-  height: 100%;
 }
 
-.c-character-detail__skill-icon {
-  display: block;
-  width: auto;
-  max-width: 100%;
-  height: clamp(12px, 1.15vw, 20px);
-  object-fit: contain;
-  pointer-events: none;
-  user-select: none;
+.c-character-detail__skill-level {
+  color: #7b532a;
+  font-size: clamp(0.6rem, 0.96vw, 0.96rem);
+  font-weight: 700;
+  white-space: nowrap;
 }
 
 .c-character-detail__actions {

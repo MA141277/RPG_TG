@@ -24,3 +24,41 @@ test("layout editor exposes battle UI target and persistent variable state", () 
   assert.match(main, /function syncEmbeddedBattleUiEditor\(/);
   assert.match(main, /type:\s*"rpg-tg:battle-ui-config"/);
 });
+
+test("battle UI editor defaults preserve the prototype action menu size", () => {
+  const battleUiEditor = read("src/domain/battle-ui-editor.ts");
+  const battlePrototype = read("prototypes/battle-demo/index.html");
+
+  assert.match(
+    battlePrototype,
+    /--battle-action-menu-width:\s*6\.75%;/
+  );
+  assert.match(
+    battlePrototype,
+    /--battle-action-menu-height:\s*17\.7%;/
+  );
+  assert.match(
+    battleUiEditor,
+    /name:\s*"--battle-action-menu-width"[\s\S]*?defaultValue:\s*"6\.75%"/
+  );
+  assert.match(
+    battleUiEditor,
+    /name:\s*"--battle-action-menu-height"[\s\S]*?defaultValue:\s*"17\.7%"/
+  );
+});
+
+test("battle UI persistence normalizes the legacy stretched action menu defaults", () => {
+  const main = read("src/main.ts");
+
+  assert.match(main, /const LEGACY_BATTLE_UI_EDITOR_VALUE_FIXES/);
+  assert.match(
+    main,
+    /"--battle-action-menu-width":\s*\{[\s\S]*?oldValue:\s*"29\.75%"[\s\S]*?newValue:\s*"6\.75%"[\s\S]*?\}/
+  );
+  assert.match(
+    main,
+    /"--battle-action-menu-height":\s*\{[\s\S]*?oldValue:\s*"26\.85%"[\s\S]*?newValue:\s*"17\.7%"[\s\S]*?\}/
+  );
+  assert.match(main, /function normalizePersistedBattleUiEditorValue\(/);
+  assert.match(main, /normalizePersistedBattleUiEditorValue\(definition\.name, value\)/);
+});

@@ -25,6 +25,7 @@ import {
   getMedicineHouseFavorabilityVariableKey,
   getMedicineHouseTimeVariableKey,
 } from "../../../domain/medicine-house";
+import { formatPlayableSkillActionLabel } from "../../../domain/playable-skill";
 import { assertExists } from "../../../shared/assert";
 import { pickRandom } from "../../../shared/random";
 import {
@@ -1051,7 +1052,11 @@ export const medicineHouseHouseModule: HouseModuleDefinition<"medicine-house"> =
                   { id: "open-buy", label: "买药", kind: "special" },
                   {
                     id: "start-compounding",
-                    label: "配药",
+                    label: formatPlayableSkillActionLabel(
+                      "配药",
+                      playerCharacter,
+                      "compounding"
+                    ),
                     kind: "special",
                     tone: "accent",
                   },
@@ -1096,7 +1101,15 @@ export const medicineHouseHouseModule: HouseModuleDefinition<"medicine-house"> =
                   disabled: playerCharacter.stats.gold < medicineHouseHealService.cost,
                 },
                 { id: "open-buy", label: "买药" },
-                { id: "start-compounding", label: "配药", tone: "accent" },
+                {
+                  id: "start-compounding",
+                  label: formatPlayableSkillActionLabel(
+                    "配药",
+                    playerCharacter,
+                    "compounding"
+                  ),
+                  tone: "accent",
+                },
                 { id: "dismiss-dialogue", label: "离开" },
               ],
             }

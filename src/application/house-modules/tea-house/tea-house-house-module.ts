@@ -29,6 +29,7 @@ import {
   type TeaHouseTopicCard,
   TEA_HOUSE_TOPIC_CARDS,
 } from "../../../domain/tea-house";
+import { formatPlayableSkillActionLabel } from "../../../domain/playable-skill";
 import { assertExists } from "../../../shared/assert";
 import { pickRandom } from "../../../shared/random";
 import { defaultRuntimeContent } from "../../content/default-runtime-content";
@@ -49,7 +50,7 @@ import {
   increaseTeaHouseIntel,
   increaseTeaHouseTime,
   mutatePlayerGold,
-  mutatePlayerRhetoric,
+  mutatePlayerDebateLevel,
   mutateTeaHouseActorFavorability,
 } from "../../tea-house/tea-house-mutations";
 import {
@@ -409,7 +410,7 @@ function applyTeaHouseOutcome(
   if (outcome.attributeChange.length > 0) {
     for (const attributeChange of outcome.attributeChange) {
       if (attributeChange.key === "rhetoric" && attributeChange.delta !== 0) {
-        const rhetoricMutation = mutatePlayerRhetoric(
+        const rhetoricMutation = mutatePlayerDebateLevel(
           nextState,
           nextCharacterDefinitions,
           input.playerCharacterId,
@@ -628,7 +629,7 @@ function resolveDebateTurn(
       input.playerCharacterId
     );
     const durationDays = getHouseMinigameDurationDays(
-      Math.max(1, playerCharacter.skills?.rhetoric ?? 1)
+      Math.max(0, playerCharacter.skills?.rhetoric ?? 0)
     );
     const finishedOutcome =
       roundResult.outcome.winner === "player"
@@ -838,7 +839,7 @@ function handleActorAction(
       input.playerCharacterId
     );
     const durationDays = getHouseMinigameDurationDays(
-      Math.max(1, playerCharacter.skills?.rhetoric ?? 1)
+      Math.max(0, playerCharacter.skills?.rhetoric ?? 0)
     );
     const remainingDays = getInsufficientDaysForTimedActivity(
       input.gameState,
@@ -1046,7 +1047,7 @@ function handleActorAction(
       }
 
       const durationDays = getHouseMinigameDurationDays(
-        Math.max(1, playerCharacter.skills?.rhetoric ?? 1)
+        Math.max(0, playerCharacter.skills?.rhetoric ?? 0)
       );
       const remainingDays = getInsufficientDaysForTimedActivity(
         input.gameState,
@@ -1240,7 +1241,11 @@ export const teaHouseHouseModule: HouseModuleDefinition<"tea-house"> = {
           { id: "inquire", label: "打听", kind: "special" },
           {
             id: "start-debate",
-            label: "舌战",
+            label: formatPlayableSkillActionLabel(
+              "舌战",
+              playerCharacter,
+              "debate"
+            ),
             kind: "special",
             tone: "accent",
           },
@@ -1280,7 +1285,15 @@ export const teaHouseHouseModule: HouseModuleDefinition<"tea-house"> = {
                   label: "请喝茶",
                   disabled: playerCharacter.stats.gold < teaHouseTeaCost,
                 },
-                { id: "start-debate", label: "舌战", tone: "accent" },
+                {
+                  id: "start-debate",
+                  label: formatPlayableSkillActionLabel(
+                    "舌战",
+                    playerCharacter,
+                    "debate"
+                  ),
+                  tone: "accent",
+                },
                 { id: "inquire", label: "打听消息" },
                 { id: "dismiss-dialogue", label: "离开" },
               ],

@@ -4,7 +4,7 @@ import type { AccountingGrade } from "../../domain/grain-shop";
 import {
   advanceGrainShopTime,
   mutateGrainShopRelationship,
-  mutatePlayerArithmetic,
+  mutatePlayerAccountingLevel,
   mutatePlayerGold,
   type GrainShopMutationResult,
 } from "./grain-shop-mutations";
@@ -32,7 +32,7 @@ export function applyAccountingReward(
   nextState = goldMutation.state;
   nextCharacters = goldMutation.characterDefinitions;
 
-  const mathMutation = mutatePlayerArithmetic(
+  const mathMutation = mutatePlayerAccountingLevel(
     nextState,
     nextCharacters,
     playerCharacterId,

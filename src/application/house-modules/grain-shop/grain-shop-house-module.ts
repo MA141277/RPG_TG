@@ -14,6 +14,7 @@ import type {
   GrainShopDialoguePhase,
   GrainShopSessionState,
 } from "../../../domain/house-modules/grain-shop-session";
+import { formatPlayableSkillActionLabel } from "../../../domain/playable-skill";
 import { isHaozhouShortageDuringBeggingJourney } from "../../../domain/zhu-yuanzhang-story";
 import { generateLedgerQuestion, getAccountingGradeReward, isLedgerAnswerCorrect, resolveAccountingGrade } from "../../grain-shop/accounting-minigame";
 import { applyAccountingReward } from "../../grain-shop/apply-accounting-reward";
@@ -70,7 +71,7 @@ function getPlayerCharacter(
 }
 
 function getPlayerArithmeticSkill(playerCharacter: CharacterDefinition): number {
-  return Math.max(1, playerCharacter.skills?.arithmetic ?? 1);
+  return Math.max(0, playerCharacter.skills?.arithmetic ?? 0);
 }
 
 function getGrainShopTextEntries(
@@ -951,7 +952,15 @@ export const grainShopHouseModule: HouseModuleDefinition<"grain-shop"> = {
               },
               { id: "sell", label: "卖粮" },
               { id: "investigate", label: "调查" },
-              { id: "accounting", label: "算账", tone: "accent" },
+              {
+                id: "accounting",
+                label: formatPlayableSkillActionLabel(
+                  "算账",
+                  playerCharacter,
+                  "accounting"
+                ),
+                tone: "accent",
+              },
               { id: "dismiss-dialogue", label: "关闭" },
             ],
           }

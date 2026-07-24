@@ -16,6 +16,7 @@ export type GlobalUIState = {
   visiblePanels: GlobalPanelType[];
   pinnedCharacterId: CharacterId;
   detailCharacterId: CharacterId | null;
+  isCharacterAbilityDetailOpen: boolean;
   selectedTroopId: string | null;
   activeMissionId: MissionId | null;
   reviewDateText: string;

@@ -27,7 +27,10 @@ export type SkillKey =
   | "etiquette"
   | "rhetoric"
   | "tea"
-  | "medicine";
+  | "medicine"
+  | "accounting"
+  | "debate"
+  | "compounding";
 
 export const SKILL_LABELS: Record<SkillKey, string> = {
   ashigaru: "足轻",
@@ -46,6 +49,9 @@ export const SKILL_LABELS: Record<SkillKey, string> = {
   rhetoric: "辩才",
   tea: "茶道",
   medicine: "医术",
+  accounting: "绠楄处",
+  debate: "鑸屾垬",
+  compounding: "閰嶈嵂",
 };
 
 export type PortraitVariant = {
@@ -109,6 +115,6 @@ export type CharacterDefinition = {
   leaderResidenceStatus?: LeaderResidenceStatus;
   availableFunctions: CharacterFunction[];
   onTalkSceneId?: SceneId;
-  skills?: Record<SkillKey, number>;
+  skills?: Partial<Record<SkillKey, number>>;
   teachableSkillKeys?: SkillKey[];
 };
