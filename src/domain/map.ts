@@ -239,6 +239,7 @@ export type MapDefinition = {
   regionOverlayImageUrl?: string;
   campaignHexGridUrl?: string;
   campaignVegetationRulesUrl?: string;
+  campaignStructureProfileId?: string;
   initialPlayerCoordinate?: {
     x: number;
     y: number;

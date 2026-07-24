@@ -27,6 +27,7 @@ export const yuanmoCampaignMap: MapDefinition = {
   primaryImageUrl: map_HDUrl,
   campaignHexGridUrl: map_hex_gridUrl,
   campaignVegetationRulesUrl: map_vegetation_rulesUrl,
+  campaignStructureProfileId: "yuanmo.campaign-structures",
   nodes: [
     {"id": "settlement.newguinea_province", "label": "美拉尼西亚人聚集地（Melanesia）", "x": 472, "y": 49, "kind": "settlement", "summary": "Region: 伊里安岛 | Owner: slave | Level: town | Type: town"},
     {"id": "settlement.ryukyu_province", "label": "首里城", "x": 416, "y": 269, "kind": "settlement", "summary": "Region: 琉球王国 | Owner: slave | Level: large_town | Type: town"},

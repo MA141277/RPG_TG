@@ -3059,6 +3059,35 @@ test("zhuyuanzhang maps use relative pack asset urls instead of imageAssetId", (
   }
 });
 
+test("campaign structure visual profiles are engine-owned and map-selected", async () => {
+  const fs = require("node:fs");
+  const path = require("node:path");
+  const mapDomainSource = fs.readFileSync(
+    path.join(process.cwd(), "src", "domain", "map.ts"),
+    "utf8"
+  );
+  const yuanmoMapSource = fs.readFileSync(
+    path.join(process.cwd(), "src", "content", "yuanmo-campaign-map.ts"),
+    "utf8"
+  );
+  const profileSourcePath = path.join(
+    process.cwd(),
+    "src",
+    "content",
+    "campaign-structure-visual-profiles.ts"
+  );
+
+  assert.match(mapDomainSource, /campaignStructureProfileId\?: string/);
+  assert.match(yuanmoMapSource, /campaignStructureProfileId: "yuanmo\.campaign-structures"/);
+  assert.equal(fs.existsSync(profileSourcePath), true);
+
+  const profileSource = fs.readFileSync(profileSourcePath, "utf8");
+  assert.match(profileSource, /export type CampaignStructureVisualProfile/);
+  assert.match(profileSource, /resolveCampaignStructureVisualProfile/);
+  assert.match(profileSource, /"yuanmo\.campaign-structures"/);
+  assert.doesNotMatch(profileSource, /scenario-packs\/zhuyuanzhang/);
+});
+
 test("content pack loader resolves zhuyuanzhang map asset urls", async () => {
   const {
     loadContentPackFromManifestText,
