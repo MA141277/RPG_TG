@@ -10,3 +10,7 @@
 - Final review: complete (commit e296cda4, review clean; local verification passed: npm run typecheck, npm test, npm run build, npm run lint:plans).
 - Task 1: complete (commits 7205b44..c4e2945, review clean after read-only example loader fix).
 - 2026-07-24: Starting Faction Review Flow from `docs/superpowers/plans/2026-07-24-faction-review-flow-plan.md`.
+- Task 1: complete (commits 0230324..9875aca, review clean after changelog fix).
+- Task 2: complete (commits 9875aca..da77592, review clean after changelog fix).
+- Task 3: complete (commits da77592..2e3ce62, review clean).
+- Task 4: complete locally (commits 2e3ce62..c0dc1c6, prior review findings fixed; re-review agent could not start because the active agent limit was reached after compaction).
