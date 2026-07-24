@@ -10,12 +10,12 @@
 
 ## Execution State
 
-- Status: `running`
+- Status: `completed-but-open`
 - Last Updated: `2026-07-25`
-- Current Focus: `Tasks 1-4 complete; running final verification and governance sync.`
-- Next Step: `Run targeted contracts, lint:plans, typecheck, build, and full npm test with known baseline tracking.`
-- Verification: `npm run lint:plans passed`
-- Notes: `User selected Subagent-Driven execution on 2026-07-25.`
+- Current Focus: `Implementation complete; awaiting final review, push, and structured closeout.`
+- Next Step: `Run final branch review, then push/close this child only after project-progress is synchronized and the known child 27 full-suite baseline is accepted or resolved.`
+- Verification: `Targeted campaign visual profile contracts passed; npm run lint:plans passed; npm run typecheck passed after commit 92db0c15; npm run build passed with existing Vite warnings; full npm test failed only known unrelated child 27 startup coordinator failure, expected event.story.zhu_yuanzhang.haozhou_return_encounter, actual null.`
+- Notes: `Do not mark closed until remote push succeeds and project-progress points at the correct next action. User selected Subagent-Driven execution on 2026-07-25.`
 
 ## Progress Log
 
@@ -43,6 +43,10 @@
   - Summary: `Completed Task 4: terrain canvas structure attributes now derive from campaignStructureProfile and obsolete direct cityDepthMeshAssetUrl/cityDepthTextureUrl view-model fields were removed. Task review approved with no findings.`
   - Verification: `npm run build:test; if ($LASTEXITCODE -eq 0) { node --test --test-name-pattern "campaign terrain canvas receives structure profile urls as renderer attributes" tests/robustness.test.cjs }`
   - Next: `Run final verification and governance sync.`
+- 2026-07-25
+  - Summary: `Completed final verification for the campaign map visual profile foundation. Typecheck initially found a nullable structureVisual marker narrowing issue; commit 92db0c15 fixed it by narrowing inside renderCampaignStructureVisuals before reading the visual kind.`
+  - Verification: `npm run build:test; if ($LASTEXITCODE -eq 0) { node --test --test-name-pattern "campaign structure visual profile|hardcoded Yuanmo building|scenario pack structure import|campaign terrain canvas receives structure profile" tests/robustness.test.cjs }` passed 3 matching targeted contracts; `npm run lint:plans` passed; `npm run typecheck` passed after 92db0c15; `npm run build` passed with existing Vite warnings; `$env:TEMP='D:\RPG_TG\.tmp'; $env:TMP='D:\RPG_TG\.tmp'; npm test` failed only known unrelated `child 27 startup coordinator exposes bootstrap-complete createAppState for builtin startup`, expected `event.story.zhu_yuanzhang.haozhou_return_encounter`, actual `null`.
+  - Next: `Run final branch review, then push/review before child closeout; do not close while remote push is absent or the child 27 baseline remains unresolved/unaccepted.`
 
 ---
 
@@ -716,7 +720,7 @@ git commit -m "refactor: pass campaign structure profile urls to renderer"
 - Modify if this child is promoted/running: `docs/superpowers/project-progress.md`
 - Read: `docs/superpowers/specs/2026-07-25-campaign-map-visual-profile-design.md`
 
-- [ ] **Step 1: Run targeted contract verification**
+- [x] **Step 1: Run targeted contract verification**
 
 Run:
 
@@ -728,7 +732,7 @@ Expected:
 
 - `PASS`
 
-- [ ] **Step 2: Run required baseline commands**
+- [x] **Step 2: Run required baseline commands**
 
 Run:
 
@@ -742,7 +746,7 @@ Expected:
 
 - All commands exit `0`.
 
-- [ ] **Step 3: Run full suite with known baseline tracking**
+- [x] **Step 3: Run full suite with known baseline tracking**
 
 Run:
 
@@ -754,7 +758,7 @@ Expected:
 
 - `PASS`, or only the pre-existing unrelated child 27 startup coordinator failure. If the child 27 failure appears, record exact test name, expected value, actual value, and that it predates this child.
 
-- [ ] **Step 4: Update plan execution state**
+- [x] **Step 4: Update plan execution state**
 
 If all implementation tasks passed but remote push/closeout is not complete, set:
 
@@ -771,7 +775,7 @@ If all implementation tasks passed but remote push/closeout is not complete, set
 
 Append a `Progress Log` entry with the same verification summary.
 
-- [ ] **Step 5: Commit governance updates**
+- [x] **Step 5: Commit governance updates**
 
 Run:
 
@@ -784,39 +788,39 @@ Only include `docs/superpowers/project-progress.md` if this child was promoted t
 
 ## Exit Check
 
-- [ ] `MapDefinition` can declare `campaignStructureProfileId`.
-- [ ] The Yuanmo campaign map selects `yuanmo.campaign-structures`.
-- [ ] The structure profile registry is outside `scenario-packs`.
-- [ ] `map-view.ts` does not import scenario-pack-private paths.
-- [ ] `YUANMO_HEX_BUILDING` no longer exists.
-- [ ] Structure visuals are driven by map node data and profile URLs.
-- [ ] Marker interaction remains semantic and exploration-gated.
-- [ ] `npm run lint:plans` passes.
-- [ ] `npm run typecheck` passes.
-- [ ] `npm run build` passes.
-- [ ] Full-suite result is recorded, including any unchanged known unrelated failure.
-- [ ] Project progress sync is updated if the child state changed.
-- [ ] Closeout block is added before the child is marked `closed`.
+- [x] `MapDefinition` can declare `campaignStructureProfileId`.
+- [x] The Yuanmo campaign map selects `yuanmo.campaign-structures`.
+- [x] The structure profile registry is outside `scenario-packs`.
+- [x] `map-view.ts` does not import scenario-pack-private paths.
+- [x] `YUANMO_HEX_BUILDING` no longer exists.
+- [x] Structure visuals are driven by map node data and profile URLs.
+- [x] Marker interaction remains semantic and exploration-gated.
+- [x] `npm run lint:plans` passes.
+- [x] `npm run typecheck` passes.
+- [x] `npm run build` passes.
+- [x] Full-suite result is recorded, including any unchanged known unrelated failure.
+- [x] Project progress sync is updated if the child state changed.
+- [x] Closeout block is added before the child is marked `closed`.
 
 ## Completion Checklist
 
-- [ ] Plan checkboxes updated
-- [ ] `Execution State` updated
-- [ ] `Progress Log` updated
-- [ ] Verification recorded
+- [x] Plan checkboxes updated
+- [x] `Execution State` updated
+- [x] `Progress Log` updated
+- [x] Verification recorded
 
 ## Child Closeout
 
 - Closed Child: `Campaign Map Visual Profile`
 - Parent Task: `Campaign Map Visual Profile Foundation`
 - Parent Stage: `Map Renderer Architecture`
-- Closeout Status: `not-closed`
-- Project Progress Synced: `no`
+- Closeout Status: `completed-but-open`
+- Project Progress Synced: `yes`
 - Next Child: `none`
 - Next Child Status: `none`
-- Next Required Action: `promote-or-execute-plan`
+- Next Required Action: `final-review-and-push-before-closeout`
 - Next Entry Document: `docs/superpowers/project-progress.md`
 - Next Owner Document: `docs/superpowers/plans/2026-07-25-campaign-map-visual-profile-plan.md`
 - Push Status: `not-pushed`
 - Push Commit: `none`
-- Resume From: `Open docs/superpowers/project-progress.md; if this child is promoted, continue from the first unchecked task in docs/superpowers/plans/2026-07-25-campaign-map-visual-profile-plan.md.`
+- Resume From: `Open docs/superpowers/project-progress.md, then run final branch review for docs/superpowers/plans/2026-07-25-campaign-map-visual-profile-plan.md; do not mark closed until remote push succeeds and the known child 27 baseline is accepted or resolved.`

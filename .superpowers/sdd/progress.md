@@ -18,3 +18,4 @@
 - 2026-07-25: Campaign Map Visual Profile Task 2 complete (commits 571e7aac..196d0873, review clean; controller verified RED/GREEN report evidence).
 - 2026-07-25: Campaign Map Visual Profile Task 3 complete (commits bbbdf174..9054e577, review clean after visualKind contract fix; controller verified RED/GREEN report evidence).
 - 2026-07-25: Campaign Map Visual Profile Task 4 complete (commits f017d921..5847d1db, review clean; controller verified RED/GREEN report evidence).
+- 2026-07-25: Campaign Map Visual Profile final verification complete (commit 92db0c15 fixed nullable marker narrowing; targeted contracts, lint:plans, typecheck, and build passed; full npm test failed only known unrelated child 27 startup coordinator baseline, expected event.story.zhu_yuanzhang.haozhou_return_encounter, actual null).
