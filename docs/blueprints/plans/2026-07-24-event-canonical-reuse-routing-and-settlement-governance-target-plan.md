@@ -8,11 +8,11 @@
 - active_phase: `phase.promotion-review`
 - active_queue: `none`
 - decision_state: `promotion-review`
-- next_decision: `queue-closeout-or-return-to-version-review`
+- next_decision: `same-version-admission-or-version-closeout`
 - next_action: `return-to-promotion-review`
 - resume_gate: `promotion-review`
 - post_queue_closeout_pause_policy: `auto-continue`
-- promotion_review_result: `queue-admitted`
+- promotion_review_result: `queue-closeout-complete`
 - review_subject_id: `none`
 - review_subject_classification: `none`
 - proposed_queue_id: `none`
@@ -30,10 +30,10 @@
 - routing_basis: `queue.event-routing-settlement-migration-and-final-acceptance completed repository sync through commit 9a28a9a on origin/mod-first-dev, so no active queue remains and the version returns to closeout review.`
 - next_lawful_queue_recommendation: `none`
 - auto_admission_ready: `false`
-- stop_reason: `none`
-- stop_basis: `none`
-- next_unblocked_action: `none`
-- human_input_required: `false`
+- stop_reason: `outside-parent-spec`
+- stop_basis: `All approved queues inside target.event-follow-up-routing-settlement-and-canonical-reuse-convergence are now closed and repository-synced. Further movement would be explicit version closeout and/or cross-version routing to another open target, which is no longer queue-local work inside this version.`
+- next_unblocked_action: `write-version-closeout`
+- human_input_required: `true`
 - blocked_by: []
 - candidate_queue_ids:
   - `queue.event-and-building-instance-canonical-reuse`
@@ -49,7 +49,7 @@
   - `queue.settlement-resource-and-event-type-convergence: closed after settlement boundary convergence, queue-closeout proof, and successful repository sync through commit b391e09 on origin/mod-first-dev.`
   - `queue.same-display-name-building-host-instance-canonicalization: closed after same-name host merge, direct host-id rewrite, queue-closeout proof, and successful repository sync through commit acf24fe on origin/mod-first-dev.`
   - `queue.full-chain-event-routing-and-settlement-consistency: closed after queue-closeout proof, repository sync through commit fe14a03, and full-chain parity coverage for ACC-EVENT-SETTLE-006.`
-  - `queue.event-routing-settlement-migration-and-final-acceptance: admitted and active; required-final queue for explicit migration, fail-closed rejection, acceptance, and residue guard.`
+  - `queue.event-routing-settlement-migration-and-final-acceptance: closed after compatibilityImport retirement, automated acceptance coverage, queue-closeout proof, and repository sync through commit 9a28a9a on origin/mod-first-dev.`
 - candidate_backlog_scan_sources:
   - `project-progress`
   - `blueprint`
@@ -177,7 +177,7 @@
 | `item.settlement-resource-and-event-type-convergence` | `queue-candidate` | `queue.settlement-resource-and-event-type-convergence` | `closed` | `queue-closeout-complete` | `Settlement boundary convergence is complete and repository sync succeeded through commit b391e09, so the queue is no longer the active execution target.` | `ACC-EVENT-SETTLE-005` | `settlement resource/event-type convergence and PlayableResult naming cleanup` | `cross-chain consistency or final migration ownership` | `Must preserve numeric-first settlement boundary.` |
 | `item.same-display-name-building-host-instance-canonicalization` | `queue-candidate` | `queue.same-display-name-building-host-instance-canonicalization` | `closed` | `queue-closeout-complete` | `Repository sync succeeded through commit acf24fe, so the queue is closed and no longer the active execution target.` | `ACC-EVENT-SETTLE-005A` | `same-display-name real building host deduplication and direct host-reference rewrite across houses/building-arrangements/cities/city entries/characters/location-access/related host-owned paths` | `whole-chain parity or final migration acceptance` | `Must not be reframed as taxonomy cleanup or preserve duplicate host instances only because legacy ids differ.` |
 | `item.full-chain-event-routing-and-settlement-consistency` | `queue-candidate` | `queue.full-chain-event-routing-and-settlement-consistency` | `closed` | `queue-closeout-complete` | `Repository sync succeeded through commit fe14a03, so the queue is closed and no longer the active execution target.` | `ACC-EVENT-SETTLE-006` | `full-chain parity on canonical ids, nextEventId, and settlement events` | `migration closeout or new router invention` | `Must remain distinct from settlement authoring and final acceptance.` |
-| `item.event-routing-settlement-migration-and-final-acceptance` | `queue-candidate` | `queue.event-routing-settlement-migration-and-final-acceptance` | `active` | `task-progression` | `Full-chain consistency closeout and repository sync succeeded, so the required-final queue is now the live execution owner under the approved phase order.` | `ACC-EVENT-SETTLE-007; ACC-EVENT-SETTLE-008` | `explicit migration, rejection coverage, final acceptance, residue guard` | `primary ownership of earlier implementation-bearing queues` | `Required-final queue only.` |
+| `item.event-routing-settlement-migration-and-final-acceptance` | `queue-candidate` | `queue.event-routing-settlement-migration-and-final-acceptance` | `closed` | `queue-closeout-complete` | `Required-final compatibilityImport retirement, queue-closeout proof, and repository sync are all complete through commit 9a28a9a on origin/mod-first-dev.` | `ACC-EVENT-SETTLE-007; ACC-EVENT-SETTLE-008` | `explicit migration, rejection coverage, final acceptance, residue guard` | `primary ownership of earlier implementation-bearing queues` | `Required-final queue only.` |
 
 ### Queue Promotion Ledger
 
@@ -188,7 +188,7 @@
 | `queue.settlement-resource-and-event-type-convergence` | `closed` | `already promoted` | `Closed after repository sync succeeded through commit b391e09 on origin/mod-first-dev.` |
 | `queue.same-display-name-building-host-instance-canonicalization` | `closed` | `already promoted` | `Closed after repository sync through commit acf24fe.` |
 | `queue.full-chain-event-routing-and-settlement-consistency` | `closed` | `already promoted` | `Closed after repository sync through commit fe14a03.` |
-| `queue.event-routing-settlement-migration-and-final-acceptance` | `active` | `already promoted` | `Now active after queue.full-chain-event-routing-and-settlement-consistency repository sync through commit fe14a03.` |
+| `queue.event-routing-settlement-migration-and-final-acceptance` | `closed` | `already promoted` | `Closed after required-final compatibilityImport retirement, queue-closeout proof, and repository sync through commit 9a28a9a on origin/mod-first-dev.` |
 
 ### Candidate Backlog Refresh Rule
 
