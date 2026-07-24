@@ -268,7 +268,12 @@ function seedSupervisorFixture({
       nextTask: "task.queue.alpha.impl",
       tasks: [
         { taskId: activeTaskId, state: "active", summary: "Run the current queue task." },
-        { taskId: "task.queue.alpha.impl", state: "queued", summary: "Run the next queue task.", dependsOn: activeTaskId },
+        {
+          taskId: "task.queue.alpha.impl",
+          state: "queued",
+          summary: "Run the next queue task.",
+          dependsOn: activeTaskId,
+        },
       ],
     });
   }
@@ -296,7 +301,7 @@ test("supervisor rejects final-answer stop while active_task still exists", asyn
     agentRunner: async () =>
       makeAgentTurnResult({
         channel: "final",
-        text: "已完成，下面是总结。",
+        text: "\u5df2\u5b8c\u6210\uff0c\u4e0b\u9762\u662f\u603b\u7ed3\u3002",
         intent: "stop",
       }),
   });
@@ -328,7 +333,7 @@ test("supervisor rejects stop when stop_reason is none", async (t) => {
     agentRunner: async () =>
       makeAgentTurnResult({
         channel: "final",
-        text: "我不确定，先停一下。",
+        text: "\u6211\u4e0d\u786e\u5b9a\uff0c\u5148\u505c\u4e00\u4e0b\u3002",
         intent: "stop",
       }),
   });
@@ -370,4 +375,36 @@ test("supervisor accepts stop only when structured stop truth is present", async
 
   assert.equal(result.stoppedLegally, true);
   assert.equal(result.illegalStopCount, 0);
+});
+
+test("supervisor treats Chinese stop-cue commentary as illegal stop even without explicit stop intent", async (t) => {
+  const { repoRoot, blueprintVersion, targetPlanPath, queueOwnerId } = createGovernanceFixture({
+    activeQueueId: "none",
+    candidateQueueIds: ["queue.alpha"],
+  });
+  t.after(() => removeFixtureRepo(repoRoot));
+
+  seedSupervisorFixture({
+    repoRoot,
+    targetPlanPath,
+    queueOwnerId,
+    blueprintVersion,
+    activeQueueId: "queue.alpha",
+    activeTaskId: "task.queue.alpha.audit",
+    stopReason: "none",
+  });
+
+  const { runBlueprintSupervisor } = await loadSupervisorTool();
+  const result = await runBlueprintSupervisor(repoRoot, {
+    once: true,
+    agentRunner: async () =>
+      makeAgentTurnResult({
+        channel: "commentary",
+        text: "\u5df2\u5b8c\u6210\uff0c\u5148\u505c\u4e00\u4e0b\uff0c\u7b49\u5f85\u786e\u8ba4\u3002",
+        intent: "continue",
+      }),
+  });
+
+  assert.equal(result.stoppedLegally, false);
+  assert.equal(result.illegalStopCount, 1);
 });

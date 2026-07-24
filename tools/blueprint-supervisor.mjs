@@ -4,6 +4,16 @@ import { fileURLToPath } from "node:url";
 import { inspectBlueprintWorkflow } from "./blueprint-version-governance.mjs";
 import { lintBlueprintDocs } from "./lint-blueprints.mjs";
 
+const STOP_CUE_FRAGMENTS = [
+  "\u5df2\u5b8c\u6210",
+  "\u5b8c\u6210",
+  "\u505c\u6b62",
+  "\u5148\u505c\u4e00\u4e0b",
+  "\u7b49\u5f85\u786e\u8ba4",
+  "summary",
+  "final",
+];
+
 export async function runBlueprintSupervisor(repoRoot = process.cwd(), options = {}) {
   const mergedOptions = {
     once: false,
@@ -177,14 +187,7 @@ function detectAgentTriedToStop(turn) {
   }
 
   const text = String(turn.text ?? "").toLowerCase();
-  return (
-    text.includes("已完成") ||
-    text.includes("完成") ||
-    text.includes("停止") ||
-    text.includes("等待确认") ||
-    text.includes("summary") ||
-    text.includes("final")
-  );
+  return STOP_CUE_FRAGMENTS.some((fragment) => text.includes(fragment.toLowerCase()));
 }
 
 function buildSupervisorInstruction(state) {
