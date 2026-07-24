@@ -13,8 +13,10 @@ import type {
 import actorFragmentShaderRaw from "./shaders/campaign-actor.frag.glsl?raw";
 import actorVertexShaderRaw from "./shaders/campaign-actor.vert.glsl?raw";
 import fortCityFragmentShaderRaw from "./shaders/campaign-fort-city.frag.glsl?raw";
+import fortCityInstancedVertexShaderRaw from "./shaders/campaign-fort-city-instanced.vert.glsl?raw";
 import terrainFragmentShaderRaw from "./shaders/campaign-terrain.frag.glsl?raw";
 import terrainVertexShaderRaw from "./shaders/campaign-terrain.vert.glsl?raw";
+import structureShadowFragmentShaderRaw from "./shaders/campaign-structure-shadow.frag.glsl?raw";
 import vegetationFragmentShaderRaw from "./shaders/campaign-vegetation.frag.glsl?raw";
 import vegetationShadowFragmentShaderRaw from "./shaders/campaign-vegetation-shadow.frag.glsl?raw";
 import vegetationShadowVertexShaderRaw from "./shaders/campaign-vegetation-shadow.vert.glsl?raw";
@@ -85,6 +87,11 @@ type VegetationMeshData = {
   shadowVertices: Float32Array;
   shadowIndices: Uint32Array;
   instanceCount: number;
+};
+
+type CampaignProjectedShadowMeshData = {
+  vertices: Float32Array;
+  indices: Uint16Array;
 };
 
 type VegetationMeshAsset = {
@@ -186,6 +193,43 @@ type CampaignFortCityBuildingInstance = {
   footprintRadius: number;
 };
 
+type CampaignStructureBuildingCacheKind = "city" | "village";
+
+type CampaignStructureBuildingCellCacheEntry = {
+  signature: string;
+  instances: CampaignFortCityBuildingInstance[];
+};
+
+type CampaignStructureBuildingChunkCache = Map<
+  string,
+  CampaignStructureBuildingCellCacheEntry
+>;
+
+type CampaignStructureBuildingCache = Map<
+  string,
+  CampaignStructureBuildingChunkCache
+>;
+
+type CampaignFortCityInstancedBatch = {
+  mesh: VegetationMeshAsset;
+  variant: CampaignFortCityRulesAsset["variants"][number];
+  instances: CampaignFortCityBuildingInstance[];
+  instanceData: Float32Array;
+};
+
+type CampaignFortCityInstancedRenderModel = {
+  signature: string;
+  batches: CampaignFortCityInstancedBatch[];
+  instanceCount: number;
+};
+
+type CampaignFortCityInstancedVariantResource = {
+  mesh: VegetationMeshAsset;
+  vertexBuffer: WebGLBuffer;
+  indexBuffer: WebGLBuffer;
+  indexCount: number;
+};
+
 type CampaignFortCityVisibleFort = {
   fort: FortCityInstance;
   targetCount: number;
@@ -195,6 +239,7 @@ type CampaignFortCityVisibleFort = {
 type CampaignFortCityFortAllocation = {
   fort: FortCityInstance;
   count: number;
+  targetCount: number;
 };
 
 type CampaignFortCityAcceptedPoint = {
@@ -407,9 +452,22 @@ const TERRAIN_DIRECTIONAL_LIGHT_STRENGTH = 0.18;
 const TERRAIN_BACK_SHADOW_STRENGTH = 0.32;
 const TERRAIN_STEEP_SHADOW_STRENGTH = 0;
 const TERRAIN_WATER_SHADOW_STRENGTH = 0.12;
+const CAMPAIGN_MODEL_DIRECTIONAL_LIGHT_STRENGTH = 0.18;
+const CAMPAIGN_MODEL_BACK_SHADOW_STRENGTH = 0.32;
+const CAMPAIGN_MODEL_STEEP_SHADOW_STRENGTH = 0;
 const TERRAIN_CAMERA_LIGHT_HEIGHT = 0.26;
 const TERRAIN_CAMERA_LIGHT_HORIZONTAL_PULL = 0.58;
 const TERRAIN_LAND_TEXTURE_TILING = 7.5;
+const CAMPAIGN_STRUCTURE_SHADOW_OPACITY = 0.18;
+const CAMPAIGN_STRUCTURE_SHADOW_RADIUS_SCALE_X = 0.64;
+const CAMPAIGN_STRUCTURE_SHADOW_RADIUS_SCALE_Y = 0.46;
+const CAMPAIGN_STRUCTURE_SHADOW_LIGHT_OFFSET_SCALE = 0.08;
+const CAMPAIGN_STRUCTURE_SHADOW_LIFT = 0.00050;
+const CAMPAIGN_ACTOR_SHADOW_OPACITY = 0.52;
+const CAMPAIGN_ACTOR_SHADOW_RADIUS_SCALE_X = 1.18;
+const CAMPAIGN_ACTOR_SHADOW_RADIUS_SCALE_Y = 0.72;
+const CAMPAIGN_ACTOR_SHADOW_LIGHT_OFFSET_SCALE = 0.30;
+const CAMPAIGN_ACTOR_SHADOW_LIFT = 0.00046;
 const TERRAIN_SNOW_HEIGHT_START = 0.38;
 const TERRAIN_SNOW_HEIGHT_FULL = 0.42;
 const SHORELINE_DISTANCE_TEXTURE_DISTANCE_RANGE = 4.25;
@@ -485,6 +543,7 @@ const vegetationVertexShaderSource = vegetationVertexShaderRaw;
 const vegetationFragmentShaderSource = vegetationFragmentShaderRaw;
 const vegetationShadowVertexShaderSource = vegetationShadowVertexShaderRaw;
 const vegetationShadowFragmentShaderSource = vegetationShadowFragmentShaderRaw;
+const structureShadowFragmentShaderSource = structureShadowFragmentShaderRaw;
 export const DEFAULT_CAMPAIGN_CITY_DEPTH_MESH_TRANSFORM: CampaignCityDepthMeshTransform = {
   rotationDegrees: 0,
   pitchDegrees: 0,
@@ -1367,10 +1426,25 @@ async function initCampaignTerrainWebGl(
     vegetationVertexShaderSource,
     fortCityFragmentShaderRaw
   );
+  const fortCityInstancedArrays =
+    renderTerrain ? gl.getExtension("ANGLE_instanced_arrays") : null;
+  const fortCityInstancedProgram =
+    fortCityInstancedArrays == null
+      ? null
+      : createProgram(
+        gl,
+        fortCityInstancedVertexShaderRaw,
+        fortCityFragmentShaderRaw
+      );
   const vegetationShadowProgram = createProgram(
     gl,
     vegetationShadowVertexShaderSource,
     vegetationShadowFragmentShaderSource
+  );
+  const structureShadowProgram = createProgram(
+    gl,
+    vegetationShadowVertexShaderSource,
+    structureShadowFragmentShaderSource
   );
   const positionLocation = gl.getAttribLocation(program, "aPosition");
   const uvLocation = gl.getAttribLocation(program, "aUv");
@@ -1585,6 +1659,96 @@ async function initCampaignTerrainWebGl(
     fortCityProgram,
     "uTerrainSteepShadowStrength"
   );
+  const fortCityInstancedPositionLocation =
+    fortCityInstancedProgram == null
+      ? -1
+      : gl.getAttribLocation(fortCityInstancedProgram, "aPosition");
+  const fortCityInstancedNormalLocation =
+    fortCityInstancedProgram == null
+      ? -1
+      : gl.getAttribLocation(fortCityInstancedProgram, "aNormal");
+  const fortCityInstancedColorLocation =
+    fortCityInstancedProgram == null
+      ? -1
+      : gl.getAttribLocation(fortCityInstancedProgram, "aColor");
+  const fortCityInstancedCenterLocation =
+    fortCityInstancedProgram == null
+      ? -1
+      : gl.getAttribLocation(fortCityInstancedProgram, "aInstanceCenter");
+  const fortCityInstancedRotationLocation =
+    fortCityInstancedProgram == null
+      ? -1
+      : gl.getAttribLocation(fortCityInstancedProgram, "aInstanceRotation");
+  const fortCityInstancedWorldScaleLocation =
+    fortCityInstancedProgram == null
+      ? -1
+      : gl.getAttribLocation(fortCityInstancedProgram, "aInstanceWorldScale");
+  const fortCityInstancedLiftLocation =
+    fortCityInstancedProgram == null
+      ? -1
+      : gl.getAttribLocation(fortCityInstancedProgram, "aInstanceLift");
+  const fortCityInstancedColorJitterLocation =
+    fortCityInstancedProgram == null
+      ? -1
+      : gl.getAttribLocation(fortCityInstancedProgram, "aInstanceColorJitter");
+  const fortCityInstancedMatrixLocation =
+    fortCityInstancedProgram == null
+      ? null
+      : gl.getUniformLocation(fortCityInstancedProgram, "uMatrix");
+  const fortCityInstancedCameraTiltSinCosLocation =
+    fortCityInstancedProgram == null
+      ? null
+      : gl.getUniformLocation(
+        fortCityInstancedProgram,
+        "uTerrainCameraTiltSinCos"
+      );
+  const fortCityInstancedAmbientLocation =
+    fortCityInstancedProgram == null
+      ? null
+      : gl.getUniformLocation(fortCityInstancedProgram, "uAmbient");
+  const fortCityInstancedDirectionalLocation =
+    fortCityInstancedProgram == null
+      ? null
+      : gl.getUniformLocation(fortCityInstancedProgram, "uDirectional");
+  const fortCityInstancedViewportSizeLocation =
+    fortCityInstancedProgram == null
+      ? null
+      : gl.getUniformLocation(fortCityInstancedProgram, "uTerrainViewportSize");
+  const fortCityInstancedCameraLightHeightLocation =
+    fortCityInstancedProgram == null
+      ? null
+      : gl.getUniformLocation(
+        fortCityInstancedProgram,
+        "uTerrainCameraLightHeight"
+      );
+  const fortCityInstancedCameraLightHorizontalPullLocation =
+    fortCityInstancedProgram == null
+      ? null
+      : gl.getUniformLocation(
+        fortCityInstancedProgram,
+        "uTerrainCameraLightHorizontalPull"
+      );
+  const fortCityInstancedTerrainDirectionalLightStrengthLocation =
+    fortCityInstancedProgram == null
+      ? null
+      : gl.getUniformLocation(
+        fortCityInstancedProgram,
+        "uTerrainDirectionalLightStrength"
+      );
+  const fortCityInstancedTerrainBackShadowStrengthLocation =
+    fortCityInstancedProgram == null
+      ? null
+      : gl.getUniformLocation(
+        fortCityInstancedProgram,
+        "uTerrainBackShadowStrength"
+      );
+  const fortCityInstancedTerrainSteepShadowStrengthLocation =
+    fortCityInstancedProgram == null
+      ? null
+      : gl.getUniformLocation(
+        fortCityInstancedProgram,
+        "uTerrainSteepShadowStrength"
+      );
   const vegetationShadowPositionLocation = gl.getAttribLocation(
     vegetationShadowProgram,
     "aPosition"
@@ -1598,6 +1762,19 @@ async function initCampaignTerrainWebGl(
     vegetationShadowProgram,
     "uOpacity"
   );
+  const structureShadowPositionLocation = gl.getAttribLocation(
+    structureShadowProgram,
+    "aPosition"
+  );
+  const structureShadowUvLocation = gl.getAttribLocation(structureShadowProgram, "aUv");
+  const structureShadowMatrixLocation = gl.getUniformLocation(
+    structureShadowProgram,
+    "uMatrix"
+  );
+  const structureShadowOpacityLocation = gl.getUniformLocation(
+    structureShadowProgram,
+    "uOpacity"
+  );
   const actorVertexBuffer = gl.createBuffer();
   const actorIndexBuffer = gl.createBuffer();
   const cityDepthVertexBuffer = gl.createBuffer();
@@ -1606,12 +1783,16 @@ async function initCampaignTerrainWebGl(
   const fortCityIndexBuffer = gl.createBuffer();
   const settlementVillageVertexBuffer = gl.createBuffer();
   const settlementVillageIndexBuffer = gl.createBuffer();
+  const fortCityInstancedInstanceBuffer =
+    fortCityInstancedProgram == null ? null : gl.createBuffer();
   const fortWallVertexBuffer = gl.createBuffer();
   const fortWallIndexBuffer = gl.createBuffer();
   const vegetationVertexBuffer = gl.createBuffer();
   const vegetationIndexBuffer = gl.createBuffer();
   const vegetationShadowVertexBuffer = gl.createBuffer();
   const vegetationShadowIndexBuffer = gl.createBuffer();
+  const projectedShadowVertexBuffer = gl.createBuffer();
+  const projectedShadowIndexBuffer = gl.createBuffer();
   const texture = createTexture(gl, textureImage);
   const materialTexture = createTexture(gl, materialImage);
   const materialSemanticTexture = createTexture(
@@ -1759,10 +1940,72 @@ async function initCampaignTerrainWebGl(
     fortCityTerrainSteepShadowStrengthLocation == null
       ? "fortCity.uTerrainSteepShadowStrength"
       : null,
+    fortCityInstancedProgram != null && fortCityInstancedPositionLocation < 0
+      ? "fortCityInstanced.aPosition"
+      : null,
+    fortCityInstancedProgram != null && fortCityInstancedNormalLocation < 0
+      ? "fortCityInstanced.aNormal"
+      : null,
+    fortCityInstancedProgram != null && fortCityInstancedColorLocation < 0
+      ? "fortCityInstanced.aColor"
+      : null,
+    fortCityInstancedProgram != null && fortCityInstancedCenterLocation < 0
+      ? "fortCityInstanced.aInstanceCenter"
+      : null,
+    fortCityInstancedProgram != null && fortCityInstancedRotationLocation < 0
+      ? "fortCityInstanced.aInstanceRotation"
+      : null,
+    fortCityInstancedProgram != null && fortCityInstancedWorldScaleLocation < 0
+      ? "fortCityInstanced.aInstanceWorldScale"
+      : null,
+    fortCityInstancedProgram != null && fortCityInstancedLiftLocation < 0
+      ? "fortCityInstanced.aInstanceLift"
+      : null,
+    fortCityInstancedProgram != null && fortCityInstancedColorJitterLocation < 0
+      ? "fortCityInstanced.aInstanceColorJitter"
+      : null,
+    fortCityInstancedProgram != null && fortCityInstancedMatrixLocation == null
+      ? "fortCityInstanced.uMatrix"
+      : null,
+    fortCityInstancedProgram != null && fortCityInstancedCameraTiltSinCosLocation == null
+      ? "fortCityInstanced.uTerrainCameraTiltSinCos"
+      : null,
+    fortCityInstancedProgram != null && fortCityInstancedAmbientLocation == null
+      ? "fortCityInstanced.uAmbient"
+      : null,
+    fortCityInstancedProgram != null && fortCityInstancedDirectionalLocation == null
+      ? "fortCityInstanced.uDirectional"
+      : null,
+    fortCityInstancedProgram != null && fortCityInstancedViewportSizeLocation == null
+      ? "fortCityInstanced.uTerrainViewportSize"
+      : null,
+    fortCityInstancedProgram != null && fortCityInstancedCameraLightHeightLocation == null
+      ? "fortCityInstanced.uTerrainCameraLightHeight"
+      : null,
+    fortCityInstancedProgram != null &&
+      fortCityInstancedCameraLightHorizontalPullLocation == null
+      ? "fortCityInstanced.uTerrainCameraLightHorizontalPull"
+      : null,
+    fortCityInstancedProgram != null &&
+      fortCityInstancedTerrainDirectionalLightStrengthLocation == null
+      ? "fortCityInstanced.uTerrainDirectionalLightStrength"
+      : null,
+    fortCityInstancedProgram != null &&
+      fortCityInstancedTerrainBackShadowStrengthLocation == null
+      ? "fortCityInstanced.uTerrainBackShadowStrength"
+      : null,
+    fortCityInstancedProgram != null &&
+      fortCityInstancedTerrainSteepShadowStrengthLocation == null
+      ? "fortCityInstanced.uTerrainSteepShadowStrength"
+      : null,
     vegetationShadowPositionLocation < 0 ? "vegetationShadow.aPosition" : null,
     vegetationShadowUvLocation < 0 ? "vegetationShadow.aUv" : null,
     vegetationShadowMatrixLocation == null ? "vegetationShadow.uMatrix" : null,
     vegetationShadowOpacityLocation == null ? "vegetationShadow.uOpacity" : null,
+    structureShadowPositionLocation < 0 ? "structureShadow.aPosition" : null,
+    structureShadowUvLocation < 0 ? "structureShadow.aUv" : null,
+    structureShadowMatrixLocation == null ? "structureShadow.uMatrix" : null,
+    structureShadowOpacityLocation == null ? "structureShadow.uOpacity" : null,
     actorVertexBuffer == null ? "actor.vertexBuffer" : null,
     actorIndexBuffer == null ? "actor.indexBuffer" : null,
     cityDepthVertexBuffer == null ? "cityDepth.vertexBuffer" : null,
@@ -1771,12 +2014,17 @@ async function initCampaignTerrainWebGl(
     fortCityIndexBuffer == null ? "fortCity.indexBuffer" : null,
     settlementVillageVertexBuffer == null ? "settlementVillage.vertexBuffer" : null,
     settlementVillageIndexBuffer == null ? "settlementVillage.indexBuffer" : null,
+    fortCityInstancedProgram != null && fortCityInstancedInstanceBuffer == null
+      ? "fortCityInstanced.instanceBuffer"
+      : null,
     fortWallVertexBuffer == null ? "fortWall.vertexBuffer" : null,
     fortWallIndexBuffer == null ? "fortWall.indexBuffer" : null,
     vegetationVertexBuffer == null ? "vegetation.vertexBuffer" : null,
     vegetationIndexBuffer == null ? "vegetation.indexBuffer" : null,
     vegetationShadowVertexBuffer == null ? "vegetationShadow.vertexBuffer" : null,
     vegetationShadowIndexBuffer == null ? "vegetationShadow.indexBuffer" : null,
+    projectedShadowVertexBuffer == null ? "projectedShadow.vertexBuffer" : null,
+    projectedShadowIndexBuffer == null ? "projectedShadow.indexBuffer" : null,
   ].filter((resource): resource is string => resource != null);
   if (missingResources.length > 0) {
     throw new Error(
@@ -1804,7 +2052,11 @@ async function initCampaignTerrainWebGl(
   let lastActorSignature = "";
   let lastCityDepthMeshSignature = "";
   let lastFortCityMeshSignature = "";
+  let lastFortCityInstancedModelSignature = "";
+  let lastFortCityShadowMeshSignature = "";
   let lastSettlementVillageMeshSignature = "";
+  let lastSettlementVillageInstancedModelSignature = "";
+  let lastSettlementVillageShadowMeshSignature = "";
   let lastFortWallMeshSignature = "";
   let lastCampaignMarkerLayerSignature = "";
   let lastVegetationMeshSignature = "";
@@ -1812,6 +2064,13 @@ async function initCampaignTerrainWebGl(
   let lastCanvasWidth = 0;
   let lastCanvasHeight = 0;
   let vegetationMesh: VegetationMeshData | null = null;
+  let fortCityInstancedModel: CampaignFortCityInstancedRenderModel | null = null;
+  let settlementVillageInstancedModel: CampaignFortCityInstancedRenderModel | null = null;
+  let fortCityShadowMesh: CampaignProjectedShadowMeshData | null = null;
+  let settlementVillageShadowMesh: CampaignProjectedShadowMeshData | null = null;
+  const structureBuildingCache: CampaignStructureBuildingCache = new Map();
+  const fortCityInstancedVariantResourcesById =
+    new Map<string, CampaignFortCityInstancedVariantResource>();
   const actorAnimationState = createActorAnimationPlaybackState();
   const animatesTerrainWater = renderTerrain && waterTexture != null;
   const animatesActorModel = shouldRenderActorInThisCanvas && actorAsset != null && actorTexture != null;
@@ -1835,6 +2094,307 @@ async function initCampaignTerrainWebGl(
     materialSemanticModel,
     sampleHeightAtUv,
   };
+  const clearCampaignStructureRenderModels = (): void => {
+    lastFortCityMeshSignature = "";
+    lastFortCityInstancedModelSignature = "";
+    lastFortCityShadowMeshSignature = "";
+    lastSettlementVillageMeshSignature = "";
+    lastSettlementVillageInstancedModelSignature = "";
+    lastSettlementVillageShadowMeshSignature = "";
+    fortCityMesh = null;
+    settlementVillageMesh = null;
+    fortCityInstancedModel = null;
+    settlementVillageInstancedModel = null;
+    fortCityShadowMesh = null;
+    settlementVillageShadowMesh = null;
+  };
+  const clearCampaignStructureBuildingCache = (): void => {
+    structureBuildingCache.clear();
+    clearCampaignStructureRenderModels();
+  };
+  const drawCampaignProjectedShadowMesh = (
+    mesh: CampaignProjectedShadowMeshData | null,
+    opacity: number,
+    terrainMatrix: Mat4
+  ): void => {
+    if (mesh == null || mesh.indices.length <= 0 || opacity <= 0) {
+      return;
+    }
+
+    gl.useProgram(vegetationShadowProgram);
+    gl.bindBuffer(gl.ARRAY_BUFFER, projectedShadowVertexBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, mesh.vertices, gl.DYNAMIC_DRAW);
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, projectedShadowIndexBuffer);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, mesh.indices, gl.DYNAMIC_DRAW);
+    const shadowStride = 5 * Float32Array.BYTES_PER_ELEMENT;
+    gl.enableVertexAttribArray(vegetationShadowPositionLocation);
+    gl.vertexAttribPointer(
+      vegetationShadowPositionLocation,
+      3,
+      gl.FLOAT,
+      false,
+      shadowStride,
+      0
+    );
+    gl.enableVertexAttribArray(vegetationShadowUvLocation);
+    gl.vertexAttribPointer(
+      vegetationShadowUvLocation,
+      2,
+      gl.FLOAT,
+      false,
+      shadowStride,
+      3 * Float32Array.BYTES_PER_ELEMENT
+    );
+    gl.uniformMatrix4fv(vegetationShadowMatrixLocation, false, terrainMatrix);
+    gl.uniform1f(vegetationShadowOpacityLocation, opacity);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    gl.depthMask(false);
+    gl.drawElements(gl.TRIANGLES, mesh.indices.length, gl.UNSIGNED_SHORT, 0);
+    gl.depthMask(true);
+    gl.disable(gl.BLEND);
+  };
+  const drawCampaignStructureShadowMesh = (
+    mesh: CampaignProjectedShadowMeshData | null,
+    opacity: number,
+    terrainMatrix: Mat4
+  ): void => {
+    if (mesh == null || mesh.indices.length <= 0 || opacity <= 0) {
+      return;
+    }
+
+    gl.useProgram(structureShadowProgram);
+    gl.bindBuffer(gl.ARRAY_BUFFER, projectedShadowVertexBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, mesh.vertices, gl.DYNAMIC_DRAW);
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, projectedShadowIndexBuffer);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, mesh.indices, gl.DYNAMIC_DRAW);
+    const shadowStride = 5 * Float32Array.BYTES_PER_ELEMENT;
+    gl.enableVertexAttribArray(structureShadowPositionLocation);
+    gl.vertexAttribPointer(
+      structureShadowPositionLocation,
+      3,
+      gl.FLOAT,
+      false,
+      shadowStride,
+      0
+    );
+    gl.enableVertexAttribArray(structureShadowUvLocation);
+    gl.vertexAttribPointer(
+      structureShadowUvLocation,
+      2,
+      gl.FLOAT,
+      false,
+      shadowStride,
+      3 * Float32Array.BYTES_PER_ELEMENT
+    );
+    gl.uniformMatrix4fv(structureShadowMatrixLocation, false, terrainMatrix);
+    gl.uniform1f(structureShadowOpacityLocation, opacity);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    gl.depthMask(false);
+    gl.drawElements(gl.TRIANGLES, mesh.indices.length, gl.UNSIGNED_SHORT, 0);
+    gl.depthMask(true);
+    gl.disable(gl.BLEND);
+  };
+  const drawCampaignFortCityInstancedModel = (
+    model: CampaignFortCityInstancedRenderModel,
+    rules: CampaignStructureBuildingRulesAsset,
+    terrainMatrix: Mat4,
+    terrainCameraTiltRadians: number,
+    polygonOffsetFactor: number,
+    polygonOffsetUnits: number
+  ): boolean => {
+    const programForDraw = fortCityInstancedProgram;
+    const arraysForDraw = fortCityInstancedArrays;
+    const instanceBufferForDraw = fortCityInstancedInstanceBuffer;
+    const matrixForDraw = fortCityInstancedMatrixLocation;
+    const tiltForDraw = fortCityInstancedCameraTiltSinCosLocation;
+    const ambientForDraw = fortCityInstancedAmbientLocation;
+    const directionalForDraw = fortCityInstancedDirectionalLocation;
+    const viewportSizeForDraw = fortCityInstancedViewportSizeLocation;
+    const lightHeightForDraw = fortCityInstancedCameraLightHeightLocation;
+    const lightHorizontalPullForDraw =
+      fortCityInstancedCameraLightHorizontalPullLocation;
+    const terrainDirectionalForDraw =
+      fortCityInstancedTerrainDirectionalLightStrengthLocation;
+    const terrainBackShadowForDraw =
+      fortCityInstancedTerrainBackShadowStrengthLocation;
+    const terrainSteepShadowForDraw =
+      fortCityInstancedTerrainSteepShadowStrengthLocation;
+    if (
+      programForDraw == null ||
+      arraysForDraw == null ||
+      instanceBufferForDraw == null ||
+      matrixForDraw == null ||
+      tiltForDraw == null ||
+      ambientForDraw == null ||
+      directionalForDraw == null ||
+      viewportSizeForDraw == null ||
+      lightHeightForDraw == null ||
+      lightHorizontalPullForDraw == null ||
+      terrainDirectionalForDraw == null ||
+      terrainBackShadowForDraw == null ||
+      terrainSteepShadowForDraw == null
+    ) {
+      return false;
+    }
+    if (model.instanceCount <= 0) {
+      return true;
+    }
+
+    gl.useProgram(programForDraw);
+    gl.uniformMatrix4fv(matrixForDraw, false, terrainMatrix);
+    gl.uniform2f(
+      tiltForDraw,
+      Math.sin(terrainCameraTiltRadians),
+      Math.cos(terrainCameraTiltRadians)
+    );
+    gl.uniform1f(ambientForDraw, rules.shader.ambient);
+    gl.uniform1f(directionalForDraw, rules.shader.directional);
+    gl.uniform2f(viewportSizeForDraw, input.canvas.width, input.canvas.height);
+    gl.uniform1f(lightHeightForDraw, TERRAIN_CAMERA_LIGHT_HEIGHT);
+    gl.uniform1f(
+      lightHorizontalPullForDraw,
+      TERRAIN_CAMERA_LIGHT_HORIZONTAL_PULL
+    );
+    gl.uniform1f(
+      terrainDirectionalForDraw,
+      CAMPAIGN_MODEL_DIRECTIONAL_LIGHT_STRENGTH
+    );
+    gl.uniform1f(terrainBackShadowForDraw, CAMPAIGN_MODEL_BACK_SHADOW_STRENGTH);
+    gl.uniform1f(terrainSteepShadowForDraw, CAMPAIGN_MODEL_STEEP_SHADOW_STRENGTH);
+    gl.disable(gl.BLEND);
+    gl.disable(gl.CULL_FACE);
+    gl.enable(gl.POLYGON_OFFSET_FILL);
+    gl.polygonOffset(polygonOffsetFactor, polygonOffsetUnits);
+    gl.depthMask(true);
+
+    const vertexStride = 9 * Float32Array.BYTES_PER_ELEMENT;
+    const instanceStride = 8 * Float32Array.BYTES_PER_ELEMENT;
+    for (const batch of model.batches) {
+      if (batch.instances.length <= 0) {
+        continue;
+      }
+      const resource = getOrCreateCampaignFortCityInstancedVariantResource({
+        gl,
+        resourcesById: fortCityInstancedVariantResourcesById,
+        mesh: batch.mesh,
+      });
+      if (resource == null) {
+        continue;
+      }
+
+      gl.bindBuffer(gl.ARRAY_BUFFER, resource.vertexBuffer);
+      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, resource.indexBuffer);
+      gl.enableVertexAttribArray(fortCityInstancedPositionLocation);
+      gl.vertexAttribPointer(
+        fortCityInstancedPositionLocation,
+        3,
+        gl.FLOAT,
+        false,
+        vertexStride,
+        0
+      );
+      gl.enableVertexAttribArray(fortCityInstancedNormalLocation);
+      gl.vertexAttribPointer(
+        fortCityInstancedNormalLocation,
+        3,
+        gl.FLOAT,
+        false,
+        vertexStride,
+        3 * Float32Array.BYTES_PER_ELEMENT
+      );
+      gl.enableVertexAttribArray(fortCityInstancedColorLocation);
+      gl.vertexAttribPointer(
+        fortCityInstancedColorLocation,
+        3,
+        gl.FLOAT,
+        false,
+        vertexStride,
+        6 * Float32Array.BYTES_PER_ELEMENT
+      );
+
+      gl.bindBuffer(gl.ARRAY_BUFFER, instanceBufferForDraw);
+      gl.bufferData(gl.ARRAY_BUFFER, batch.instanceData, gl.DYNAMIC_DRAW);
+      gl.enableVertexAttribArray(fortCityInstancedCenterLocation);
+      gl.vertexAttribPointer(
+        fortCityInstancedCenterLocation,
+        3,
+        gl.FLOAT,
+        false,
+        instanceStride,
+        0
+      );
+      gl.enableVertexAttribArray(fortCityInstancedRotationLocation);
+      gl.vertexAttribPointer(
+        fortCityInstancedRotationLocation,
+        2,
+        gl.FLOAT,
+        false,
+        instanceStride,
+        3 * Float32Array.BYTES_PER_ELEMENT
+      );
+      gl.enableVertexAttribArray(fortCityInstancedWorldScaleLocation);
+      gl.vertexAttribPointer(
+        fortCityInstancedWorldScaleLocation,
+        1,
+        gl.FLOAT,
+        false,
+        instanceStride,
+        5 * Float32Array.BYTES_PER_ELEMENT
+      );
+      gl.enableVertexAttribArray(fortCityInstancedLiftLocation);
+      gl.vertexAttribPointer(
+        fortCityInstancedLiftLocation,
+        1,
+        gl.FLOAT,
+        false,
+        instanceStride,
+        6 * Float32Array.BYTES_PER_ELEMENT
+      );
+      gl.enableVertexAttribArray(fortCityInstancedColorJitterLocation);
+      gl.vertexAttribPointer(
+        fortCityInstancedColorJitterLocation,
+        1,
+        gl.FLOAT,
+        false,
+        instanceStride,
+        7 * Float32Array.BYTES_PER_ELEMENT
+      );
+      arraysForDraw.vertexAttribDivisorANGLE(fortCityInstancedCenterLocation, 1);
+      arraysForDraw.vertexAttribDivisorANGLE(fortCityInstancedRotationLocation, 1);
+      arraysForDraw.vertexAttribDivisorANGLE(
+        fortCityInstancedWorldScaleLocation,
+        1
+      );
+      arraysForDraw.vertexAttribDivisorANGLE(fortCityInstancedLiftLocation, 1);
+      arraysForDraw.vertexAttribDivisorANGLE(
+        fortCityInstancedColorJitterLocation,
+        1
+      );
+      arraysForDraw.drawElementsInstancedANGLE(
+        gl.TRIANGLES,
+        resource.indexCount,
+        gl.UNSIGNED_INT,
+        0,
+        batch.instances.length
+      );
+    }
+
+    arraysForDraw.vertexAttribDivisorANGLE(fortCityInstancedCenterLocation, 0);
+    arraysForDraw.vertexAttribDivisorANGLE(fortCityInstancedRotationLocation, 0);
+    arraysForDraw.vertexAttribDivisorANGLE(
+      fortCityInstancedWorldScaleLocation,
+      0
+    );
+    arraysForDraw.vertexAttribDivisorANGLE(fortCityInstancedLiftLocation, 0);
+    arraysForDraw.vertexAttribDivisorANGLE(
+      fortCityInstancedColorJitterLocation,
+      0
+    );
+    gl.disable(gl.POLYGON_OFFSET_FILL);
+    return true;
+  };
   const uploadCampaignTerrainChunk = (chunk: CampaignTerrainChunkData): void => {
     if (isDisposed) {
       return;
@@ -1845,12 +2405,9 @@ async function initCampaignTerrainWebGl(
       projectedPointsNeedSync = true;
       lastVegetationMeshSignature = "";
       lastCityDepthMeshSignature = "";
-      lastFortCityMeshSignature = "";
-      lastSettlementVillageMeshSignature = "";
+      clearCampaignStructureRenderModels();
       lastFortWallMeshSignature = "";
       cityDepthMesh = null;
-      fortCityMesh = null;
-      settlementVillageMesh = null;
       fortWallMesh = null;
       return;
     }
@@ -1885,12 +2442,9 @@ async function initCampaignTerrainWebGl(
     projectedPointsNeedSync = true;
     lastVegetationMeshSignature = "";
     lastCityDepthMeshSignature = "";
-    lastFortCityMeshSignature = "";
-    lastSettlementVillageMeshSignature = "";
+    clearCampaignStructureRenderModels();
     lastFortWallMeshSignature = "";
     cityDepthMesh = null;
-    fortCityMesh = null;
-    settlementVillageMesh = null;
     fortWallMesh = null;
   };
   const scheduleDeferredChunkUploadFlush = (): void => {
@@ -2016,12 +2570,9 @@ async function initCampaignTerrainWebGl(
       chunkDataByKey.clear();
       lastChunkShorelineSignature = chunkShorelineSignature;
       lastVegetationMeshSignature = "";
-      lastFortCityMeshSignature = "";
-      lastSettlementVillageMeshSignature = "";
+      clearCampaignStructureBuildingCache();
       lastFortWallMeshSignature = "";
       cityDepthMesh = null;
-      fortCityMesh = null;
-      settlementVillageMesh = null;
       fortWallMesh = null;
     }
 
@@ -2034,11 +2585,8 @@ async function initCampaignTerrainWebGl(
       if (campaignMarkerLayerSignature !== lastCampaignMarkerLayerSignature) {
         lastCampaignMarkerLayerSignature = campaignMarkerLayerSignature;
         projectedPointsNeedSync = true;
-        lastFortCityMeshSignature = "";
-        lastSettlementVillageMeshSignature = "";
+        clearCampaignStructureBuildingCache();
         lastFortWallMeshSignature = "";
-        fortCityMesh = null;
-        settlementVillageMesh = null;
         fortWallMesh = null;
       }
     }
@@ -2063,11 +2611,12 @@ async function initCampaignTerrainWebGl(
           sampleHeightAtUv,
           onVariantMeshNeeded: (variant) => {
             ensureCampaignFortCityVariantMesh(fortCityAsset, variant, () => {
-              lastFortCityMeshSignature = "";
-              lastSettlementVillageMeshSignature = "";
+              clearCampaignStructureBuildingCache();
               requestRender("static");
             });
           },
+          cacheKind: "city",
+          structureBuildingCache,
         })
         : [];
     const settlementVillageRules =
@@ -2096,10 +2645,12 @@ async function initCampaignTerrainWebGl(
           sampleHeightAtUv,
           onVariantMeshNeeded: (variant) => {
             ensureCampaignFortCityVariantMesh(fortCityAsset, variant, () => {
-              lastSettlementVillageMeshSignature = "";
+              clearCampaignStructureBuildingCache();
               requestRender("static");
             });
           },
+          cacheKind: "village",
+          structureBuildingCache,
         })
         : [];
     const fortStructureAvoidancePoints = renderTerrain
@@ -2412,15 +2963,15 @@ async function initCampaignTerrainWebGl(
         );
         gl.uniform1f(
           vegetationTerrainDirectionalLightStrengthLocation,
-          TERRAIN_DIRECTIONAL_LIGHT_STRENGTH
+          CAMPAIGN_MODEL_DIRECTIONAL_LIGHT_STRENGTH
         );
         gl.uniform1f(
           vegetationTerrainBackShadowStrengthLocation,
-          TERRAIN_BACK_SHADOW_STRENGTH
+          CAMPAIGN_MODEL_BACK_SHADOW_STRENGTH
         );
         gl.uniform1f(
           vegetationTerrainSteepShadowStrengthLocation,
-          TERRAIN_STEEP_SHADOW_STRENGTH
+          CAMPAIGN_MODEL_STEEP_SHADOW_STRENGTH
         );
         gl.disable(gl.BLEND);
         gl.disable(gl.CULL_FACE);
@@ -2442,26 +2993,79 @@ async function initCampaignTerrainWebGl(
         settlementVillageBuildingInstances
       );
       if (
-        settlementVillageMesh == null ||
-        settlementVillageMeshSignature !== lastSettlementVillageMeshSignature
+        settlementVillageShadowMesh == null ||
+        settlementVillageMeshSignature !== lastSettlementVillageShadowMeshSignature
       ) {
-        settlementVillageMesh = createCampaignFortCityMesh({
+        settlementVillageShadowMesh = createCampaignFortCityShadowMesh({
           instances: settlementVillageBuildingInstances,
           sampleHeightAtUv,
           rules: settlementVillageRules,
+          matrix: terrainMatrix,
+          viewportAspectRatio: input.canvas.width / Math.max(input.canvas.height, 1),
         });
-        gl.bindBuffer(gl.ARRAY_BUFFER, settlementVillageVertexBuffer);
-        gl.bufferData(gl.ARRAY_BUFFER, settlementVillageMesh.vertices, gl.DYNAMIC_DRAW);
-        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, settlementVillageIndexBuffer);
-        gl.bufferData(
-          gl.ELEMENT_ARRAY_BUFFER,
-          settlementVillageMesh.indices,
-          gl.DYNAMIC_DRAW
-        );
-        lastSettlementVillageMeshSignature = settlementVillageMeshSignature;
+        lastSettlementVillageShadowMeshSignature = settlementVillageMeshSignature;
+      }
+      drawCampaignStructureShadowMesh(
+        settlementVillageShadowMesh,
+        CAMPAIGN_STRUCTURE_SHADOW_OPACITY * 0.82,
+        terrainMatrix
+      );
+      const drewSettlementVillageInstanced =
+        fortCityInstancedProgram != null &&
+        (() => {
+          if (
+            settlementVillageInstancedModel == null ||
+            settlementVillageMeshSignature !==
+              lastSettlementVillageInstancedModelSignature
+          ) {
+            settlementVillageInstancedModel =
+              createCampaignFortCityInstancedRenderModel({
+                instances: settlementVillageBuildingInstances,
+                sampleHeightAtUv,
+                rules: settlementVillageRules,
+                signature: settlementVillageMeshSignature,
+              });
+            lastSettlementVillageInstancedModelSignature =
+              settlementVillageMeshSignature;
+          }
+
+          return drawCampaignFortCityInstancedModel(
+            settlementVillageInstancedModel,
+            settlementVillageRules,
+            terrainMatrix,
+            terrainCameraTilt,
+            -4.75,
+            -8.75
+          );
+        })();
+
+      if (!drewSettlementVillageInstanced) {
+        if (
+          settlementVillageMesh == null ||
+          settlementVillageMeshSignature !== lastSettlementVillageMeshSignature
+        ) {
+          settlementVillageMesh = createCampaignFortCityMesh({
+            instances: settlementVillageBuildingInstances,
+            sampleHeightAtUv,
+            rules: settlementVillageRules,
+          });
+          gl.bindBuffer(gl.ARRAY_BUFFER, settlementVillageVertexBuffer);
+          gl.bufferData(gl.ARRAY_BUFFER, settlementVillageMesh.vertices, gl.DYNAMIC_DRAW);
+          gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, settlementVillageIndexBuffer);
+          gl.bufferData(
+            gl.ELEMENT_ARRAY_BUFFER,
+            settlementVillageMesh.indices,
+            gl.DYNAMIC_DRAW
+          );
+          lastSettlementVillageMeshSignature = settlementVillageMeshSignature;
+        }
       }
 
-      if (settlementVillageMesh.indices.length > 0) {
+      if (
+        !drewSettlementVillageInstanced &&
+        settlementVillageMesh != null &&
+        settlementVillageMesh.indices.length > 0
+      ) {
         gl.useProgram(fortCityProgram);
         gl.bindBuffer(gl.ARRAY_BUFFER, settlementVillageVertexBuffer);
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, settlementVillageIndexBuffer);
@@ -2516,15 +3120,15 @@ async function initCampaignTerrainWebGl(
         );
         gl.uniform1f(
           fortCityTerrainDirectionalLightStrengthLocation,
-          TERRAIN_DIRECTIONAL_LIGHT_STRENGTH
+          CAMPAIGN_MODEL_DIRECTIONAL_LIGHT_STRENGTH
         );
         gl.uniform1f(
           fortCityTerrainBackShadowStrengthLocation,
-          TERRAIN_BACK_SHADOW_STRENGTH
+          CAMPAIGN_MODEL_BACK_SHADOW_STRENGTH
         );
         gl.uniform1f(
           fortCityTerrainSteepShadowStrengthLocation,
-          TERRAIN_STEEP_SHADOW_STRENGTH
+          CAMPAIGN_MODEL_STEEP_SHADOW_STRENGTH
         );
         gl.disable(gl.BLEND);
         gl.disable(gl.CULL_FACE);
@@ -2551,22 +3155,72 @@ async function initCampaignTerrainWebGl(
         fortCityBuildingInstances
       );
       if (
-        fortCityMesh == null ||
-        fortCityMeshSignature !== lastFortCityMeshSignature
+        fortCityShadowMesh == null ||
+        fortCityMeshSignature !== lastFortCityShadowMeshSignature
       ) {
-        fortCityMesh = createCampaignFortCityMesh({
+        fortCityShadowMesh = createCampaignFortCityShadowMesh({
           instances: fortCityBuildingInstances,
           sampleHeightAtUv,
           rules: fortCityAsset.rules,
+          matrix: terrainMatrix,
+          viewportAspectRatio: input.canvas.width / Math.max(input.canvas.height, 1),
         });
-        gl.bindBuffer(gl.ARRAY_BUFFER, fortCityVertexBuffer);
-        gl.bufferData(gl.ARRAY_BUFFER, fortCityMesh.vertices, gl.DYNAMIC_DRAW);
-        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, fortCityIndexBuffer);
-        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, fortCityMesh.indices, gl.DYNAMIC_DRAW);
-        lastFortCityMeshSignature = fortCityMeshSignature;
+        lastFortCityShadowMeshSignature = fortCityMeshSignature;
+      }
+      drawCampaignStructureShadowMesh(
+        fortCityShadowMesh,
+        CAMPAIGN_STRUCTURE_SHADOW_OPACITY,
+        terrainMatrix
+      );
+      const drewFortCityInstanced =
+        fortCityInstancedProgram != null &&
+        (() => {
+          if (
+            fortCityInstancedModel == null ||
+            fortCityMeshSignature !== lastFortCityInstancedModelSignature
+          ) {
+            fortCityInstancedModel = createCampaignFortCityInstancedRenderModel({
+              instances: fortCityBuildingInstances,
+              sampleHeightAtUv,
+              rules: fortCityAsset.rules,
+              signature: fortCityMeshSignature,
+            });
+            lastFortCityInstancedModelSignature = fortCityMeshSignature;
+          }
+
+          return drawCampaignFortCityInstancedModel(
+            fortCityInstancedModel,
+            fortCityAsset.rules,
+            terrainMatrix,
+            terrainCameraTilt,
+            -5,
+            -9
+          );
+        })();
+
+      if (!drewFortCityInstanced) {
+        if (
+          fortCityMesh == null ||
+          fortCityMeshSignature !== lastFortCityMeshSignature
+        ) {
+          fortCityMesh = createCampaignFortCityMesh({
+            instances: fortCityBuildingInstances,
+            sampleHeightAtUv,
+            rules: fortCityAsset.rules,
+          });
+          gl.bindBuffer(gl.ARRAY_BUFFER, fortCityVertexBuffer);
+          gl.bufferData(gl.ARRAY_BUFFER, fortCityMesh.vertices, gl.DYNAMIC_DRAW);
+          gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, fortCityIndexBuffer);
+          gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, fortCityMesh.indices, gl.DYNAMIC_DRAW);
+          lastFortCityMeshSignature = fortCityMeshSignature;
+        }
       }
 
-      if (fortCityMesh.indices.length > 0) {
+      if (
+        !drewFortCityInstanced &&
+        fortCityMesh != null &&
+        fortCityMesh.indices.length > 0
+      ) {
         gl.useProgram(fortCityProgram);
         gl.bindBuffer(gl.ARRAY_BUFFER, fortCityVertexBuffer);
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, fortCityIndexBuffer);
@@ -2621,15 +3275,15 @@ async function initCampaignTerrainWebGl(
         );
         gl.uniform1f(
           fortCityTerrainDirectionalLightStrengthLocation,
-          TERRAIN_DIRECTIONAL_LIGHT_STRENGTH
+          CAMPAIGN_MODEL_DIRECTIONAL_LIGHT_STRENGTH
         );
         gl.uniform1f(
           fortCityTerrainBackShadowStrengthLocation,
-          TERRAIN_BACK_SHADOW_STRENGTH
+          CAMPAIGN_MODEL_BACK_SHADOW_STRENGTH
         );
         gl.uniform1f(
           fortCityTerrainSteepShadowStrengthLocation,
-          TERRAIN_STEEP_SHADOW_STRENGTH
+          CAMPAIGN_MODEL_STEEP_SHADOW_STRENGTH
         );
         gl.disable(gl.BLEND);
         gl.disable(gl.CULL_FACE);
@@ -2798,6 +3452,19 @@ async function initCampaignTerrainWebGl(
         lastActorSignature = actorSignature;
       }
       const actorHeight = sampleHeightAtUv(actor.u, actor.v);
+      const terrainMatrix = createTerrainMatrix(input.canvas.width / Math.max(input.canvas.height, 1));
+      const actorShadowMesh = createCampaignActorShadowMesh({
+        actor,
+        height: actorHeight,
+        model: actorAsset.model,
+        matrix: terrainMatrix,
+        viewportAspectRatio: input.canvas.width / Math.max(input.canvas.height, 1),
+      });
+      drawCampaignProjectedShadowMesh(
+        actorShadowMesh,
+        CAMPAIGN_ACTOR_SHADOW_OPACITY,
+        terrainMatrix
+      );
       const actorMesh = createActorMesh(
         actor,
         actorHeight,
@@ -2841,7 +3508,7 @@ async function initCampaignTerrainWebGl(
       gl.uniformMatrix4fv(
         actorMatrixLocation,
         false,
-        createTerrainMatrix(input.canvas.width / Math.max(input.canvas.height, 1))
+        terrainMatrix
       );
       gl.uniform3f(actorLightLocation, -0.92, 0.28, 0.36);
       gl.activeTexture(gl.TEXTURE0);
@@ -2938,12 +3605,22 @@ async function initCampaignTerrainWebGl(
       gl.deleteBuffer(fortCityIndexBuffer);
       gl.deleteBuffer(settlementVillageVertexBuffer);
       gl.deleteBuffer(settlementVillageIndexBuffer);
+      if (fortCityInstancedInstanceBuffer != null) {
+        gl.deleteBuffer(fortCityInstancedInstanceBuffer);
+      }
+      for (const resource of fortCityInstancedVariantResourcesById.values()) {
+        gl.deleteBuffer(resource.vertexBuffer);
+        gl.deleteBuffer(resource.indexBuffer);
+      }
+      fortCityInstancedVariantResourcesById.clear();
       gl.deleteBuffer(fortWallVertexBuffer);
       gl.deleteBuffer(fortWallIndexBuffer);
       gl.deleteBuffer(vegetationVertexBuffer);
       gl.deleteBuffer(vegetationIndexBuffer);
       gl.deleteBuffer(vegetationShadowVertexBuffer);
       gl.deleteBuffer(vegetationShadowIndexBuffer);
+      gl.deleteBuffer(projectedShadowVertexBuffer);
+      gl.deleteBuffer(projectedShadowIndexBuffer);
       gl.deleteTexture(texture);
       gl.deleteTexture(materialTexture);
       gl.deleteTexture(materialSemanticTexture);
@@ -2968,7 +3645,11 @@ async function initCampaignTerrainWebGl(
       gl.deleteProgram(actorProgram);
       gl.deleteProgram(vegetationProgram);
       gl.deleteProgram(fortCityProgram);
+      if (fortCityInstancedProgram != null) {
+        gl.deleteProgram(fortCityInstancedProgram);
+      }
       gl.deleteProgram(vegetationShadowProgram);
+      gl.deleteProgram(structureShadowProgram);
     },
   };
 }
@@ -5084,6 +5765,7 @@ function createCampaignFortCityFortAllocations(
     return sortedForts.slice(0, budget).map((item) => ({
       fort: item.fort,
       count: 1,
+      targetCount: item.targetCount,
     }));
   }
 
@@ -5132,6 +5814,7 @@ function createCampaignFortCityFortAllocations(
     .map((allocation) => ({
       fort: allocation.item.fort,
       count: allocation.count,
+      targetCount: allocation.item.targetCount,
     }));
 }
 
@@ -5177,6 +5860,8 @@ function createCampaignFortCityBuildingInstances(input: {
   onVariantMeshNeeded: (
     variant: CampaignFortCityRulesAsset["variants"][number]
   ) => void;
+  cacheKind?: CampaignStructureBuildingCacheKind;
+  structureBuildingCache?: CampaignStructureBuildingCache;
 }): CampaignFortCityBuildingInstance[] {
   const rules = input.rules;
   const instances: CampaignFortCityBuildingInstance[] = [];
@@ -5190,49 +5875,148 @@ function createCampaignFortCityBuildingInstances(input: {
     input.matrix,
     input.sampleHeightAtUv
   );
+  const rulesSignature =
+    input.structureBuildingCache == null
+      ? ""
+      : getCampaignStructureBuildingRulesSignature(rules);
+  const meshReadinessSignature =
+    input.structureBuildingCache == null
+      ? ""
+      : getCampaignFortCityVariantMeshReadinessSignature(input.asset, rules);
 
   for (const allocation of allocations) {
-    const fortCenter = hexToPixel(allocation.fort.x, allocation.fort.y);
-    const accepted: CampaignFortCityAcceptedPoint[] = [];
-    const variantUsage = new Map<string, number>();
-
-    for (let slotIndex = 0; slotIndex < allocation.count; slotIndex += 1) {
-      let placedInstance: {
-        instance: CampaignFortCityBuildingInstance;
-        point: CampaignFortCityAcceptedPoint;
-      } | null = null;
-      const variantAttempts = getCampaignFortCityVariantAttemptOrder({
-        rules,
-        fort: allocation.fort,
-        slotIndex,
-        variantUsage,
-      });
-
-      for (const variant of variantAttempts) {
-        placedInstance = createCampaignFortCityBuildingInstance({
+    const cellInstances =
+      input.cacheKind == null || input.structureBuildingCache == null
+        ? createCampaignFortCityBuildingInstancesForFort({
           asset: input.asset,
           rules,
           fort: allocation.fort,
-          fortCenter,
-          accepted,
-          slotIndex,
-          variant,
-          maxAttemptCount: maxAttemptsPerBuilding,
+          targetCount: allocation.targetCount,
+          maxAttemptsPerBuilding,
           onVariantMeshNeeded: input.onVariantMeshNeeded,
+        })
+        : getCachedCampaignFortCityBuildingInstancesForFort({
+          asset: input.asset,
+          rules,
+          fort: allocation.fort,
+          targetCount: allocation.targetCount,
+          maxAttemptsPerBuilding,
+          onVariantMeshNeeded: input.onVariantMeshNeeded,
+          cacheKind: input.cacheKind,
+          structureBuildingCache: input.structureBuildingCache,
+          rulesSignature,
+          meshReadinessSignature,
         });
-        if (placedInstance != null) {
-          break;
-        }
-      }
+    instances.push(...cellInstances.slice(0, allocation.count));
+  }
 
+  return instances;
+}
+
+function getCachedCampaignFortCityBuildingInstancesForFort(input: {
+  asset: CampaignFortCityAsset;
+  rules: CampaignStructureBuildingRulesAsset;
+  fort: FortCityInstance;
+  targetCount: number;
+  maxAttemptsPerBuilding: number;
+  onVariantMeshNeeded: (
+    variant: CampaignFortCityRulesAsset["variants"][number]
+  ) => void;
+  cacheKind: CampaignStructureBuildingCacheKind;
+  structureBuildingCache: CampaignStructureBuildingCache;
+  rulesSignature: string;
+  meshReadinessSignature: string;
+}): CampaignFortCityBuildingInstance[] {
+  const chunkKey = getCampaignTerrainChunkKey(
+    getCampaignTerrainChunkForHexCell({
+      x: input.fort.x,
+      y: input.fort.y,
+    })
+  );
+  const cellKey = `${input.cacheKind}:${input.fort.key}`;
+  const signature = [
+    input.cacheKind,
+    input.fort.key,
+    input.targetCount,
+    input.rulesSignature,
+    input.meshReadinessSignature,
+  ].join("|");
+  let chunkCache = input.structureBuildingCache.get(chunkKey);
+  if (chunkCache == null) {
+    chunkCache = new Map();
+    input.structureBuildingCache.set(chunkKey, chunkCache);
+  }
+  const cached = chunkCache.get(cellKey);
+  if (cached != null && cached.signature === signature) {
+    return cached.instances;
+  }
+
+  const instances = createCampaignFortCityBuildingInstancesForFort({
+    asset: input.asset,
+    rules: input.rules,
+    fort: input.fort,
+    targetCount: input.targetCount,
+    maxAttemptsPerBuilding: input.maxAttemptsPerBuilding,
+    onVariantMeshNeeded: input.onVariantMeshNeeded,
+  });
+  chunkCache.set(cellKey, {
+    signature,
+    instances,
+  });
+  return instances;
+}
+
+function createCampaignFortCityBuildingInstancesForFort(input: {
+  asset: CampaignFortCityAsset;
+  rules: CampaignStructureBuildingRulesAsset;
+  fort: FortCityInstance;
+  targetCount: number;
+  maxAttemptsPerBuilding: number;
+  onVariantMeshNeeded: (
+    variant: CampaignFortCityRulesAsset["variants"][number]
+  ) => void;
+}): CampaignFortCityBuildingInstance[] {
+  const instances: CampaignFortCityBuildingInstance[] = [];
+  const fortCenter = hexToPixel(input.fort.x, input.fort.y);
+  const accepted: CampaignFortCityAcceptedPoint[] = [];
+  const variantUsage = new Map<string, number>();
+
+  for (let slotIndex = 0; slotIndex < input.targetCount; slotIndex += 1) {
+    let placedInstance: {
+      instance: CampaignFortCityBuildingInstance;
+      point: CampaignFortCityAcceptedPoint;
+    } | null = null;
+    const variantAttempts = getCampaignFortCityVariantAttemptOrder({
+      rules: input.rules,
+      fort: input.fort,
+      slotIndex,
+      variantUsage,
+    });
+
+    for (const variant of variantAttempts) {
+      placedInstance = createCampaignFortCityBuildingInstance({
+        asset: input.asset,
+        rules: input.rules,
+        fort: input.fort,
+        fortCenter,
+        accepted,
+        slotIndex,
+        variant,
+        maxAttemptCount: input.maxAttemptsPerBuilding,
+        onVariantMeshNeeded: input.onVariantMeshNeeded,
+      });
       if (placedInstance != null) {
-        instances.push(placedInstance.instance);
-        accepted.push(placedInstance.point);
-        variantUsage.set(
-          placedInstance.instance.variant.id,
-          (variantUsage.get(placedInstance.instance.variant.id) ?? 0) + 1
-        );
+        break;
       }
+    }
+
+    if (placedInstance != null) {
+      instances.push(placedInstance.instance);
+      accepted.push(placedInstance.point);
+      variantUsage.set(
+        placedInstance.instance.variant.id,
+        (variantUsage.get(placedInstance.instance.variant.id) ?? 0) + 1
+      );
     }
   }
 
@@ -5465,6 +6249,176 @@ function getCampaignFortCityMeshSignature(
         ].join(":")
     )
     .join("|");
+}
+
+function getCampaignStructureBuildingRulesSignature(
+  rules: CampaignStructureBuildingRulesAsset
+): string {
+  return JSON.stringify({
+    count: rules.count,
+    placement: rules.placement,
+    variants: rules.variants.map((variant) => ({
+      id: variant.id,
+      weight: variant.weight,
+      placement: variant.placement ?? null,
+    })),
+  });
+}
+
+function getCampaignFortCityVariantMeshReadinessSignature(
+  asset: CampaignFortCityAsset,
+  rules: CampaignStructureBuildingRulesAsset
+): string {
+  return rules.variants
+    .map((variant) => `${variant.id}:${asset.meshesById.has(variant.id) ? 1 : 0}`)
+    .join(",");
+}
+
+function createCampaignFortCityInstancedRenderModel(input: {
+  instances: CampaignFortCityBuildingInstance[];
+  sampleHeightAtUv: (u: number, v: number) => number;
+  rules: CampaignStructureBuildingRulesAsset;
+  signature: string;
+}): CampaignFortCityInstancedRenderModel {
+  const groupedInstances = new Map<
+    string,
+    {
+      mesh: VegetationMeshAsset;
+      variant: CampaignFortCityRulesAsset["variants"][number];
+      instances: CampaignFortCityBuildingInstance[];
+    }
+  >();
+  for (const instance of input.instances) {
+    if (instance.mesh == null) {
+      continue;
+    }
+    const group = groupedInstances.get(instance.variant.id);
+    if (group == null) {
+      groupedInstances.set(instance.variant.id, {
+        mesh: instance.mesh,
+        variant: instance.variant,
+        instances: [instance],
+      });
+      continue;
+    }
+
+    group.instances.push(instance);
+  }
+
+  const batches = Array.from(groupedInstances.values())
+    .sort((left, right) => left.variant.id.localeCompare(right.variant.id))
+    .map((group): CampaignFortCityInstancedBatch => {
+      const instanceData = new Float32Array(group.instances.length * 8);
+      const placement = getCampaignFortCityVariantPlacement(
+        input.rules,
+        group.variant
+      );
+      for (let index = 0; index < group.instances.length; index += 1) {
+        const instance = group.instances[index];
+        if (instance == null) {
+          continue;
+        }
+        const height = input.sampleHeightAtUv(instance.u, instance.v);
+        const center = createTerrainWorldPoint(instance.u, instance.v, height);
+        const outputOffset = index * 8;
+        instanceData[outputOffset] = center[0];
+        instanceData[outputOffset + 1] = center[1];
+        instanceData[outputOffset + 2] = center[2];
+        instanceData[outputOffset + 3] = Math.cos(instance.rotation);
+        instanceData[outputOffset + 4] = Math.sin(instance.rotation);
+        instanceData[outputOffset + 5] = placement.baseWorldScale * instance.scale;
+        instanceData[outputOffset + 6] = placement.lift;
+        instanceData[outputOffset + 7] = instance.colorJitter;
+      }
+
+      return {
+        mesh: group.mesh,
+        variant: group.variant,
+        instances: group.instances,
+        instanceData,
+      };
+    });
+
+  return {
+    signature: input.signature,
+    batches,
+    instanceCount: batches.reduce(
+      (sum, batch) => sum + batch.instances.length,
+      0
+    ),
+  };
+}
+
+function getOrCreateCampaignFortCityInstancedVariantResource(input: {
+  gl: WebGLRenderingContext;
+  resourcesById: Map<string, CampaignFortCityInstancedVariantResource>;
+  mesh: VegetationMeshAsset;
+}): CampaignFortCityInstancedVariantResource | null {
+  const cached = input.resourcesById.get(input.mesh.id);
+  if (cached != null && cached.mesh === input.mesh) {
+    return cached;
+  }
+  if (cached != null) {
+    input.gl.deleteBuffer(cached.vertexBuffer);
+    input.gl.deleteBuffer(cached.indexBuffer);
+    input.resourcesById.delete(input.mesh.id);
+  }
+
+  const vertexBuffer = input.gl.createBuffer();
+  const indexBuffer = input.gl.createBuffer();
+  if (vertexBuffer == null || indexBuffer == null) {
+    if (vertexBuffer != null) {
+      input.gl.deleteBuffer(vertexBuffer);
+    }
+    if (indexBuffer != null) {
+      input.gl.deleteBuffer(indexBuffer);
+    }
+    return null;
+  }
+
+  input.gl.bindBuffer(input.gl.ARRAY_BUFFER, vertexBuffer);
+  input.gl.bufferData(
+    input.gl.ARRAY_BUFFER,
+    createCampaignFortCityInstancedVariantVertices(input.mesh),
+    input.gl.STATIC_DRAW
+  );
+  input.gl.bindBuffer(input.gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+  input.gl.bufferData(
+    input.gl.ELEMENT_ARRAY_BUFFER,
+    input.mesh.indices,
+    input.gl.STATIC_DRAW
+  );
+
+  const resource: CampaignFortCityInstancedVariantResource = {
+    mesh: input.mesh,
+    vertexBuffer,
+    indexBuffer,
+    indexCount: input.mesh.indices.length,
+  };
+  input.resourcesById.set(input.mesh.id, resource);
+  return resource;
+}
+
+function createCampaignFortCityInstancedVariantVertices(
+  mesh: VegetationMeshAsset
+): Float32Array {
+  const sourceVertexCount = mesh.positions.length / 3;
+  const vertices = new Float32Array(sourceVertexCount * 9);
+  for (let sourceVertexIndex = 0; sourceVertexIndex < sourceVertexCount; sourceVertexIndex += 1) {
+    const sourceOffset = sourceVertexIndex * 3;
+    const outputOffset = sourceVertexIndex * 9;
+    vertices[outputOffset] = mesh.positions[sourceOffset] ?? 0;
+    vertices[outputOffset + 1] = mesh.positions[sourceOffset + 1] ?? 0;
+    vertices[outputOffset + 2] = mesh.positions[sourceOffset + 2] ?? 0;
+    vertices[outputOffset + 3] = mesh.normals[sourceOffset] ?? 0;
+    vertices[outputOffset + 4] = mesh.normals[sourceOffset + 1] ?? 0;
+    vertices[outputOffset + 5] = mesh.normals[sourceOffset + 2] ?? 1;
+    vertices[outputOffset + 6] = mesh.colors[sourceOffset] ?? 1;
+    vertices[outputOffset + 7] = mesh.colors[sourceOffset + 1] ?? 1;
+    vertices[outputOffset + 8] = mesh.colors[sourceOffset + 2] ?? 1;
+  }
+
+  return vertices;
 }
 
 function createCampaignFortCityMesh(input: {
@@ -6484,22 +7438,59 @@ function appendCampaignVegetationShadowGeometry(
     instance.mesh.bounds.max[2] - instance.mesh.bounds.min[2],
     0.0001
   ) * worldScale;
-  const shadowLength =
-    Math.max(width, height * 0.58) *
-    rules.shadow.radiusScaleX *
-    (1 + clamp(rules.shadow.lightOffsetScale, 0, 0.72));
-  const shadowWidth = Math.max(width * 0.42, height * 0.12) * rules.shadow.radiusScaleY;
-  const shadowDirection = getCampaignVegetationShadowWorldDirection(
+  appendCampaignProjectedShadowGeometry({
+    vertices,
+    indices,
+    vertexOffset,
+    indexOffset,
     center,
+    width,
+    height,
     matrix,
-    getCampaignVegetationTerrainShadowScreenDirection(center, matrix, viewportAspectRatio)
+    viewportAspectRatio,
+    radiusScaleX: rules.shadow.radiusScaleX,
+    radiusScaleY: rules.shadow.radiusScaleY,
+    lightOffsetScale: rules.shadow.lightOffsetScale,
+    lift: rules.shadow.lift,
+  });
+}
+
+function appendCampaignProjectedShadowGeometry(input: {
+  vertices: Float32Array;
+  indices: Uint16Array | Uint32Array;
+  vertexOffset: number;
+  indexOffset: number;
+  center: [number, number, number];
+  width: number;
+  height: number;
+  matrix: Mat4;
+  viewportAspectRatio: number;
+  radiusScaleX: number;
+  radiusScaleY: number;
+  lightOffsetScale: number;
+  lift: number;
+}): void {
+  const shadowLength =
+    Math.max(input.width, input.height * 0.58) *
+    input.radiusScaleX *
+    (1 + clamp(input.lightOffsetScale, 0, 0.72));
+  const shadowWidth =
+    Math.max(input.width * 0.42, input.height * 0.12) * input.radiusScaleY;
+  const shadowDirection = getCampaignVegetationShadowWorldDirection(
+    input.center,
+    input.matrix,
+    getCampaignVegetationTerrainShadowScreenDirection(
+      input.center,
+      input.matrix,
+      input.viewportAspectRatio
+    )
   );
   const perpendicular: [number, number] = [-shadowDirection[1], shadowDirection[0]];
-  const rootX = center[0];
-  const rootY = center[1];
+  const rootX = input.center[0];
+  const rootY = input.center[1];
   const farX = rootX + shadowDirection[0] * shadowLength;
   const farY = rootY + shadowDirection[1] * shadowLength;
-  const shadowZ = center[2] + rules.shadow.lift;
+  const shadowZ = input.center[2] + input.lift;
   const corners: Array<{
     x: number;
     y: number;
@@ -6534,20 +7525,219 @@ function appendCampaignVegetationShadowGeometry(
 
   for (let index = 0; index < corners.length; index += 1) {
     const corner = corners[index] ?? { x: rootX, y: rootY, u: 0, v: 0 };
-    const offset = (vertexOffset + index) * 5;
-    vertices[offset] = corner.x;
-    vertices[offset + 1] = corner.y;
-    vertices[offset + 2] = shadowZ;
-    vertices[offset + 3] = corner.u;
-    vertices[offset + 4] = corner.v;
+    const offset = (input.vertexOffset + index) * 5;
+    input.vertices[offset] = corner.x;
+    input.vertices[offset + 1] = corner.y;
+    input.vertices[offset + 2] = shadowZ;
+    input.vertices[offset + 3] = corner.u;
+    input.vertices[offset + 4] = corner.v;
   }
 
-  indices[indexOffset] = vertexOffset;
-  indices[indexOffset + 1] = vertexOffset + 1;
-  indices[indexOffset + 2] = vertexOffset + 2;
-  indices[indexOffset + 3] = vertexOffset;
-  indices[indexOffset + 4] = vertexOffset + 2;
-  indices[indexOffset + 5] = vertexOffset + 3;
+  input.indices[input.indexOffset] = input.vertexOffset;
+  input.indices[input.indexOffset + 1] = input.vertexOffset + 1;
+  input.indices[input.indexOffset + 2] = input.vertexOffset + 2;
+  input.indices[input.indexOffset + 3] = input.vertexOffset;
+  input.indices[input.indexOffset + 4] = input.vertexOffset + 2;
+  input.indices[input.indexOffset + 5] = input.vertexOffset + 3;
+}
+
+function appendCampaignStructureBlobShadowGeometry(input: {
+  vertices: Float32Array;
+  indices: Uint16Array | Uint32Array;
+  vertexOffset: number;
+  indexOffset: number;
+  center: [number, number, number];
+  width: number;
+  height: number;
+  footprintRadius: number;
+  matrix: Mat4;
+  viewportAspectRatio: number;
+  radiusScaleX: number;
+  radiusScaleY: number;
+  lightOffsetScale: number;
+  lift: number;
+}): void {
+  const shadowDirection = getCampaignVegetationShadowWorldDirection(
+    input.center,
+    input.matrix,
+    getCampaignVegetationTerrainShadowScreenDirection(
+      input.center,
+      input.matrix,
+      input.viewportAspectRatio
+    )
+  );
+  const perpendicular: [number, number] = [-shadowDirection[1], shadowDirection[0]];
+  const visualRadius = Math.max(input.width * 0.50, 0.0001);
+  const placementRadius = Math.max(input.footprintRadius * 0.42, 0.0001);
+  const footprintRadius = clamp(
+    Math.max(visualRadius, placementRadius),
+    visualRadius * 0.72,
+    visualRadius * 1.35
+  );
+  const shadowHalfWidth = footprintRadius * input.radiusScaleX;
+  const shadowHalfLength =
+    Math.max(footprintRadius * 0.58, input.height * 0.040) *
+    input.radiusScaleY;
+  const shadowOffset =
+    Math.max(footprintRadius * 0.18, input.height * 0.018) *
+    clamp(input.lightOffsetScale, 0, 0.24);
+  const centerX = input.center[0] + shadowDirection[0] * shadowOffset;
+  const centerY = input.center[1] + shadowDirection[1] * shadowOffset;
+  const shadowZ = input.center[2] + input.lift;
+  const corners: Array<{
+    x: number;
+    y: number;
+    u: number;
+    v: number;
+  }> = [
+    {
+      x: centerX - perpendicular[0] * shadowHalfWidth - shadowDirection[0] * shadowHalfLength,
+      y: centerY - perpendicular[1] * shadowHalfWidth - shadowDirection[1] * shadowHalfLength,
+      u: -1,
+      v: -1,
+    },
+    {
+      x: centerX + perpendicular[0] * shadowHalfWidth - shadowDirection[0] * shadowHalfLength,
+      y: centerY + perpendicular[1] * shadowHalfWidth - shadowDirection[1] * shadowHalfLength,
+      u: 1,
+      v: -1,
+    },
+    {
+      x: centerX + perpendicular[0] * shadowHalfWidth + shadowDirection[0] * shadowHalfLength,
+      y: centerY + perpendicular[1] * shadowHalfWidth + shadowDirection[1] * shadowHalfLength,
+      u: 1,
+      v: 1,
+    },
+    {
+      x: centerX - perpendicular[0] * shadowHalfWidth + shadowDirection[0] * shadowHalfLength,
+      y: centerY - perpendicular[1] * shadowHalfWidth + shadowDirection[1] * shadowHalfLength,
+      u: -1,
+      v: 1,
+    },
+  ];
+
+  for (let index = 0; index < corners.length; index += 1) {
+    const corner = corners[index] ?? { x: centerX, y: centerY, u: 0, v: 0 };
+    const offset = (input.vertexOffset + index) * 5;
+    input.vertices[offset] = corner.x;
+    input.vertices[offset + 1] = corner.y;
+    input.vertices[offset + 2] = shadowZ;
+    input.vertices[offset + 3] = corner.u;
+    input.vertices[offset + 4] = corner.v;
+  }
+
+  input.indices[input.indexOffset] = input.vertexOffset;
+  input.indices[input.indexOffset + 1] = input.vertexOffset + 1;
+  input.indices[input.indexOffset + 2] = input.vertexOffset + 2;
+  input.indices[input.indexOffset + 3] = input.vertexOffset;
+  input.indices[input.indexOffset + 4] = input.vertexOffset + 2;
+  input.indices[input.indexOffset + 5] = input.vertexOffset + 3;
+}
+
+function createCampaignFortCityShadowMesh(input: {
+  instances: CampaignFortCityBuildingInstance[];
+  sampleHeightAtUv: (u: number, v: number) => number;
+  rules: CampaignStructureBuildingRulesAsset;
+  matrix: Mat4;
+  viewportAspectRatio: number;
+}): CampaignProjectedShadowMeshData {
+  const drawableInstances = input.instances.filter(
+    (instance): instance is CampaignFortCityBuildingInstance & {
+      mesh: VegetationMeshAsset;
+    } => instance.mesh != null
+  );
+  const shadowVertices = new Float32Array(drawableInstances.length * 4 * 5);
+  const shadowIndices = new Uint16Array(drawableInstances.length * 6);
+  let shadowVertexOffset = 0;
+  let shadowIndexOffset = 0;
+
+  for (const instance of drawableInstances) {
+    const height = input.sampleHeightAtUv(instance.u, instance.v);
+    const center = createTerrainWorldPoint(instance.u, instance.v, height);
+    const placement = getCampaignFortCityVariantPlacement(
+      input.rules,
+      instance.variant
+    );
+    const worldScale = placement.baseWorldScale * instance.scale;
+    const width = Math.max(
+      instance.mesh.bounds.max[0] - instance.mesh.bounds.min[0],
+      instance.mesh.bounds.max[1] - instance.mesh.bounds.min[1],
+      0.0001
+    ) * worldScale;
+    const meshHeight = Math.max(
+      instance.mesh.bounds.max[2] - instance.mesh.bounds.min[2],
+      0.0001
+    ) * worldScale;
+    appendCampaignStructureBlobShadowGeometry({
+      vertices: shadowVertices,
+      indices: shadowIndices,
+      vertexOffset: shadowVertexOffset,
+      indexOffset: shadowIndexOffset,
+      center,
+      width,
+      height: meshHeight,
+      footprintRadius: instance.footprintRadius,
+      matrix: input.matrix,
+      viewportAspectRatio: input.viewportAspectRatio,
+      radiusScaleX: CAMPAIGN_STRUCTURE_SHADOW_RADIUS_SCALE_X,
+      radiusScaleY: CAMPAIGN_STRUCTURE_SHADOW_RADIUS_SCALE_Y,
+      lightOffsetScale: CAMPAIGN_STRUCTURE_SHADOW_LIGHT_OFFSET_SCALE,
+      lift: CAMPAIGN_STRUCTURE_SHADOW_LIFT,
+    });
+    shadowVertexOffset += 4;
+    shadowIndexOffset += 6;
+  }
+
+  return {
+    vertices: shadowVertices.subarray(0, shadowVertexOffset * 5),
+    indices: shadowIndices.subarray(0, shadowIndexOffset),
+  };
+}
+
+function createCampaignActorShadowMesh(input: {
+  actor: CampaignActorData;
+  height: number;
+  model: ActorModelAsset;
+  matrix: Mat4;
+  viewportAspectRatio: number;
+}): CampaignProjectedShadowMeshData {
+  const center = createTerrainWorldPoint(
+    input.actor.u,
+    input.actor.v,
+    input.height
+  );
+  const scale = getCampaignActorModelWorldScale(input.model);
+  const width = Math.max(
+    input.model.bounds.max[0] - input.model.bounds.min[0],
+    input.model.bounds.max[1] - input.model.bounds.min[1],
+    0.0001
+  ) * scale;
+  const height = Math.max(
+    input.model.bounds.max[2] - input.model.bounds.min[2],
+    0.0001
+  ) * scale;
+  const shadowVertices = new Float32Array(4 * 5);
+  const shadowIndices = new Uint16Array(6);
+  appendCampaignProjectedShadowGeometry({
+    vertices: shadowVertices,
+    indices: shadowIndices,
+    vertexOffset: 0,
+    indexOffset: 0,
+    center,
+    width,
+    height,
+    matrix: input.matrix,
+    viewportAspectRatio: input.viewportAspectRatio,
+    radiusScaleX: CAMPAIGN_ACTOR_SHADOW_RADIUS_SCALE_X,
+    radiusScaleY: CAMPAIGN_ACTOR_SHADOW_RADIUS_SCALE_Y,
+    lightOffsetScale: CAMPAIGN_ACTOR_SHADOW_LIGHT_OFFSET_SCALE,
+    lift: CAMPAIGN_ACTOR_SHADOW_LIFT,
+  });
+
+  return {
+    vertices: shadowVertices,
+    indices: shadowIndices,
+  };
 }
 
 function getCampaignVegetationTerrainShadowScreenDirection(
@@ -7524,11 +8714,6 @@ function createActorMesh(
   animations: ActorAnimationSetAsset,
   animationState: ActorAnimationPlaybackState
 ): ActorMeshData {
-  const scaleCompensation = clamp(
-    ACTOR_REFERENCE_CAMERA_SCALE / Math.max(currentCamera.scale, 0.0001),
-    0.18,
-    1.6
-  );
   const angle =
     actor.facingDegrees * Math.PI / 180 +
     (Number.isFinite(model.facingOffsetDegrees)
@@ -7548,7 +8733,7 @@ function createActorMesh(
     actor.v,
     height
   );
-  const scale = ACTOR_MODEL_BASE_SCALE * model.scale * scaleCompensation;
+  const scale = getCampaignActorModelWorldScale(model);
   const positions = model.positions;
   const normals = model.normals;
   const vertexBoneInfluenceIndices = model.vertexBoneInfluenceIndices;
@@ -7627,6 +8812,16 @@ function createActorMesh(
     vertices: output,
     indices: model.indices,
   };
+}
+
+function getCampaignActorModelWorldScale(model: ActorModelAsset): number {
+  const scaleCompensation = clamp(
+    ACTOR_REFERENCE_CAMERA_SCALE / Math.max(currentCamera.scale, 0.0001),
+    0.18,
+    1.6
+  );
+
+  return ACTOR_MODEL_BASE_SCALE * model.scale * scaleCompensation;
 }
 
 function createSingleInfluenceIndices(vertexBoneIndices: Uint16Array): Uint16Array {

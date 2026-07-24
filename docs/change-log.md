@@ -2,6 +2,29 @@
 
 用于持续记录项目结构、公共契约、功能能力和开发规则的变化。
 
+## 2026-07-24 Campaign Lighting And Structure Shadows
+
+### Added
+- 重新注册 `map_city_ground_texture` 城市地表图层，并把本次提供的 `land.png` 复制为内置元末地图和朱元璋 scenario pack 的 `campaign-city-ground-texture.png`。
+- Campaign 建筑和玩家模型新增贴地投影阴影：玩家沿用 vegetation 长条投影 shader，建筑改用专用的软体块投影 shader 和 terrain camera 投影方向；建筑阴影按当前可见建筑实例签名缓存，玩家阴影随 actor 动态重建。
+
+### Changed
+- Campaign terrain shader 的城市地表覆盖改为类似山地边缘的 Hex 内部羽化：城市格中心显示城市地表贴图，靠近相邻非城市格的边缘逐步过渡回草地，避免城市地表硬切块；城市贴图 atlas 选择保持二值化，羽化强度不再参与选择 village/city 半边，避免城市边缘误采样 `field.png`。
+- 回退本次尝试中对 terrain、vegetation、fort-city 建筑和贴图模型背光面的额外压暗，保留原有 terrain/model 受光参数；阴影深度只通过贴地投影层增强，不再通过整体压暗背光面实现。
+
+### Impact
+- 该变更只影响 Campaign 地图光照、地表和投影阴影视觉，不改变 marker DOM、城市进入、寻路、探索、结构语义、城墙/建筑布局、树木避障或 scenario gameplay 数据。
+
+## 2026-07-24 Campaign Structure Instanced Rendering
+
+### Changed
+- Campaign fort-city 与 settlement-village 建筑生成改为按视觉 chunk / Hex cell 缓存静态结构实例：同一城市或村庄的确定性建筑候选点、variant 选择和 footprint 避障结果不再在玩家每次移动后重新计算，只有 marker 集合、规则签名或建筑 mesh ready 状态变化时才失效。
+- fort-city / settlement-village 建筑渲染新增 `ANGLE_instanced_arrays` 实例化路径：建筑 variant 的顶点色 mesh 会按 WebGL context 常驻静态 vertex/index buffer，可见建筑只上传 center、旋转、缩放、lift 和 color jitter 等 per-instance 数据；不支持实例化扩展时保留旧的 CPU 合并 mesh fallback。
+
+### Impact
+- 该变更减少玩家移动结束后的 CPU 顶点变换、建筑避障重算和整批动态 buffer 上传，降低同屏城市/村庄建筑较多时的卡顿风险。
+- 该变更只影响 Campaign 地图三维结构模型的渲染与缓存策略，不改变 marker DOM、城市进入、寻路、探索、城墙语义、建筑布局规则、树木避障语义或 scenario 内容数据。
+
 ## 2026-07-23 Campaign Marker Label Size
 
 ### Changed
