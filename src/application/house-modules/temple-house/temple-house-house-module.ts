@@ -2014,16 +2014,36 @@ function getReviewWorkChoices(
 
   return choiceViewModels.map((choiceViewModel) => {
     const baseChoice = choices.find((choice) => choice.id === choiceViewModel.id);
+    const hasStoryBeggingPermission =
+      choiceViewModel.id === "beg-alms" &&
+      (isBeggingUnlocked(gameState) || getTempleContribution(gameState) >= 30);
 
     return {
       id: choiceViewModel.id as "temple-help" | "beg-alms",
       label: choiceViewModel.label,
       disabled:
-        choiceViewModel.disabled ||
-        (choiceViewModel.id === "beg-alms" && !isBeggingUnlocked(gameState)),
+        (choiceViewModel.disabled && !hasStoryBeggingPermission) ||
+        (choiceViewModel.id === "beg-alms" && !hasStoryBeggingPermission),
       ...(baseChoice?.tone == null ? {} : { tone: baseChoice.tone }),
     };
   });
+}
+
+function findReviewWorkChoice(
+  gameState: GameState,
+  workPlan: "temple-help" | "beg-alms",
+  playerCharacterId: string,
+  activityDefinitionsById?: Record<string, ActivityDefinition> | undefined,
+  textEntriesById?: Record<string, string>
+): ReturnType<typeof getReviewWorkChoices>[number] | null {
+  return (
+    getReviewWorkChoices(
+      gameState,
+      playerCharacterId,
+      activityDefinitionsById,
+      textEntriesById
+    ).find((choice) => choice.id === workPlan) ?? null
+  );
 }
 
 function getTempleRootActions(
@@ -3819,6 +3839,30 @@ function handleAction(
 
   const selectedReviewWorkPlan = parseReviewWorkActionId(input.request.actionId);
   if (selectedReviewWorkPlan != null) {
+    const selectedReviewWorkChoice = findReviewWorkChoice(
+      nextState,
+      selectedReviewWorkPlan,
+      input.playerCharacterId,
+      input.activityDefinitionsById,
+      input.textEntriesById
+    );
+    if (selectedReviewWorkChoice?.disabled === true) {
+      return withSessionState(
+        {
+          gameState: nextState,
+          characterDefinitions: input.characterDefinitions,
+        },
+        sessionState,
+        {
+          overlay: createAlertOverlay(
+            "身份不足",
+            ["目前还不能接下这项委任。", "先积累寺中功勋，再来请命。"],
+            "warning"
+          ),
+        }
+      );
+    }
+
     return submitReviewWorkPlan(
       {
         ...input,

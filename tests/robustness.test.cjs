@@ -7513,6 +7513,19 @@ test("temple house unlocked begging is chosen in review and executes later witho
   assert.equal(contributionResult.sessionState?.meetingStage, "assignment-table");
   assert.equal(contributionResult.sessionState?.overlay?.type, "review-assignment-table");
   assert.equal(praiseResult.sessionState?.meetingStage, "praise");
+  const assignDutyViewModel = templeHouseHouseModule.selectViewModel({
+    gameState: assignDutyResult.gameState,
+    characterDefinitions: assignDutyResult.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: assignDutyResult.sessionState,
+  });
+  const begAlmsChoice = assignDutyViewModel.actionContainer?.actions.find(
+    (action) => action.id === "select-review-work:beg-alms"
+  );
+  assert.ok(begAlmsChoice);
+  assert.equal(begAlmsChoice.disabled, false);
+  assert.match(begAlmsChoice.label, /（最低身份：沙弥）/);
   const reviewChoiceResult = templeHouseHouseModule.dispatch({
     gameState: assignDutyResult.gameState,
     characterDefinitions: assignDutyResult.characterDefinitions,
@@ -7570,6 +7583,66 @@ test("temple house unlocked begging is chosen in review and executes later witho
     30
   );
   assert.equal(confirmBegAlmsResult.sessionState?.overlay?.type, "activity-confirm");
+});
+
+test("temple review disabled work choice cannot be forced through dispatch", () => {
+  const monkCharacters = createPrototypeCharactersForStoryStage(
+    ZHU_YUANZHANG_STORY_STAGES.huangjueTemple
+  );
+  const baseState = createMonkStageState();
+  const enterResult = templeHouseHouseModule.enter({
+    gameState: {
+      ...baseState,
+      runtime: {
+        ...baseState.runtime,
+        flags: {
+          ...baseState.runtime.flags,
+          [ZHU_YUANZHANG_STORY_FLAG_KEYS.templeWorkUnlocked]: true,
+        },
+        variables: {
+          ...baseState.runtime.variables,
+          [KEEP_HOUSE_VARIABLE_KEYS.reviewCountdown]: 0,
+          [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.templeContribution]: 0,
+          [ZHU_YUANZHANG_STORY_VARIABLE_KEYS.templeWeek]: 2,
+        },
+      },
+    },
+    characterDefinitions: monkCharacters,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+  });
+  const { assignDuty: assignDutyResult } = advanceTempleReviewToAssignDuty({
+    enterResult,
+  });
+  const assignDutyViewModel = templeHouseHouseModule.selectViewModel({
+    gameState: assignDutyResult.gameState,
+    characterDefinitions: assignDutyResult.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: assignDutyResult.sessionState,
+  });
+  const begAlmsChoice = assignDutyViewModel.actionContainer?.actions.find(
+    (action) => action.id === "select-review-work:beg-alms"
+  );
+  assert.ok(begAlmsChoice);
+  assert.equal(begAlmsChoice.disabled, true);
+  assert.match(begAlmsChoice.label, /（最低身份：沙弥）/);
+
+  const forcedChoiceResult = templeHouseHouseModule.dispatch({
+    gameState: assignDutyResult.gameState,
+    characterDefinitions: assignDutyResult.characterDefinitions,
+    houseDefinition: templeHouse,
+    playerCharacterId,
+    sessionState: assignDutyResult.sessionState,
+    request: { type: "action", actionId: "select-review-work:beg-alms" },
+  });
+
+  assert.equal(forcedChoiceResult.sessionState?.meetingStage, "assign-duty");
+  assert.equal(forcedChoiceResult.sessionState?.overlay?.type, "alert");
+  assert.equal(
+    forcedChoiceResult.gameState.runtime.variables[TEMPLE_HOUSE_VARIABLE_KEYS.currentWorkPlan],
+    ""
+  );
 });
 
 test("temple house daily flow resolves fortune and donation through unified state", () => {
