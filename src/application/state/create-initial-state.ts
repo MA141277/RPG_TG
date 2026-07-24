@@ -95,6 +95,7 @@ export function createInitialState(input: InitialStateInput): GameState {
     runtime: {
       flags: {},
       variables: {},
+      factionMerit: {},
       tasks: createInitialTaskRuntimeState(),
       playableSession: null,
       cityNpcPools: {},

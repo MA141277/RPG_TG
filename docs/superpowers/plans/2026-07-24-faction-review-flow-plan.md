@@ -30,9 +30,9 @@
 
 - Status: `running`
 - Last Updated: `2026-07-24`
-- Current Focus: `Create shared review contracts, then wire temple and keep reviews to the normalized flow.`
-- Next Step: `Execute Task 1 with failing review-domain tests first.`
-- Verification: `npm run lint:plans`
+- Current Focus: `Task 1 complete; Task 2 next`
+- Next Step: `Execute Task 2 with failing UI contract tests first.`
+- Verification: `npm run build:test; if ($LASTEXITCODE -eq 0) { node --test tests/faction-review-domain.test.cjs }`; `npm run typecheck`
 - Notes: `Plan created after approval of docs/superpowers/specs/2026-07-24-faction-review-flow-design.md.`
 
 ## Progress Log
@@ -41,6 +41,10 @@
   - Summary: `Created the implementation plan for normalized faction review flow after spec approval.`
   - Verification: `npm run lint:plans`
   - Next: `Run npm run lint:plans, then start Task 1 with TDD.`
+- 2026-07-24
+  - Summary: `Completed Task 1 shared review domain helpers, faction merit runtime storage, and focused domain coverage.`
+  - Verification: `npm run build:test; if ($LASTEXITCODE -eq 0) { node --test tests/faction-review-domain.test.cjs }`; `npm run typecheck`
+  - Next: `Execute Task 2 with failing UI contract tests first.`
 
 ---
 
@@ -164,7 +168,7 @@
 - Produces: `ReviewCompletionGrade`, `ReviewAssignmentRow`, `ReviewPolicyPanel`, `FactionMeritRank`, `ReviewTaskChoice`, `ReviewSpecialTaskHookResult`, `REVIEW_COMPLETION_GRADE_LABELS`, `TEMPLE_FACTION_RANKS`, `RED_TURBAN_FACTION_RANKS`, `getReviewCompletionGradeLabel()`, `resolveReviewCompletionGrade()`, `resolveFactionMeritRank()`, `readFactionMerit()`, `writeFactionMerit()`, `clearFactionMerit()`, `createReviewTaskChoiceViewModels()`, `getDefaultReviewSpecialTaskHookResult()`.
 - Consumes: `GameState.runtime` and existing character/task IDs.
 
-- [ ] **Step 1: Write the failing domain tests**
+- [x] **Step 1: Write the failing domain tests**
 
 Create `tests/faction-review-domain.test.cjs` with tests that require the not-yet-created compiled module:
 
@@ -259,7 +263,7 @@ test("default special task hook is empty and falls back to ordinary choices", ()
 });
 ```
 
-- [ ] **Step 2: Run the targeted tests and verify RED**
+- [x] **Step 2: Run the targeted tests and verify RED**
 
 Run:
 
@@ -271,7 +275,7 @@ Expected:
 
 - Fails because `../.test-dist/application/review/faction-review.js` does not exist.
 
-- [ ] **Step 3: Add shared review domain types**
+- [x] **Step 3: Add shared review domain types**
 
 Create `src/domain/review.ts` with exported types matching the spec:
 
@@ -328,7 +332,7 @@ export type ReviewSpecialTaskHookResult =
     };
 ```
 
-- [ ] **Step 4: Add faction merit runtime storage**
+- [x] **Step 4: Add faction merit runtime storage**
 
 Modify `src/domain/game-state.ts` so `GameState.runtime` includes:
 
@@ -338,7 +342,7 @@ factionMerit: Record<string, Record<CharacterId, number>>;
 
 Then update initial state creation if TypeScript reports missing `factionMerit`; initialize it as `{}`.
 
-- [ ] **Step 5: Implement pure review helpers**
+- [x] **Step 5: Implement pure review helpers**
 
 Create `src/application/review/faction-review.ts` exporting the functions used in Step 1. Use these exact rank ids:
 
@@ -365,7 +369,7 @@ export const RED_TURBAN_FACTION_RANKS: FactionMeritRank[] = [
 
 Use thresholds `>= 90` outstanding, `>= 60` fulfilled, `>= 25` acceptable, `> 0` poor, otherwise idle.
 
-- [ ] **Step 6: Verify GREEN**
+- [x] **Step 6: Verify GREEN**
 
 Run:
 
@@ -377,7 +381,7 @@ Expected:
 
 - `faction-review-domain.test.cjs` passes.
 
-- [ ] **Step 7: Update plan progress**
+- [x] **Step 7: Update plan progress**
 
 Update this plan:
 

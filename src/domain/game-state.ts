@@ -73,6 +73,7 @@ export type GameState = {
   runtime: {
     flags: Record<string, boolean>;
     variables: Record<string, number | string>;
+    factionMerit: Record<string, Record<CharacterId, number>>;
     tasks: TaskRuntimeState;
     playableSession: ActivePlayableSession | null;
     cityNpcPools: Record<CityId, CityNpcPoolRuntimeState>;
