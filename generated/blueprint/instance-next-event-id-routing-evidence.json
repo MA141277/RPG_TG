@@ -1,0 +1,28 @@
+{
+  "generatedAt": "2026-07-24",
+  "queueId": "queue.instance-next-event-id-and-event-routing-convergence",
+  "runtimeAnchors": {
+    "eventDefinitionNextEventId": "src/domain/event.ts",
+    "dialogueFinishUsesStartEvent": "src/application/dialogue/dialogue-runner.ts",
+    "choiceOptionSupportsNextEventId": "src/application/dialogue/dialogue-choice-resolver.ts",
+    "runtimeExportPreservesNextEventId": "src/application/script-editor/runtime-pack-export.ts",
+    "runtimeImportPreservesNextEventId": "src/application/script-editor/runtime-pack-import.ts",
+    "workspaceShellChecksMissingNextEventId": "src/application/script-editor/workspace-shell.ts"
+  },
+  "residueSurfaces": {
+    "scenarioEventReturnPolicyCount": 25,
+    "scenarioFlowNodeNextNodeIdCount": 23,
+    "mainTsHandleFollowUpSites": 6,
+    "mainTsReenterHouseBranches": 6
+  },
+  "unresolvedMixedFollowUpFamilies": [
+    "ScriptEditorDialogueRecord.followUps remains normalized and removable in authoring/minimal-workflow, while dialogue runtime materializer still rejects lowering it in this bounded slice.",
+    "Legacy flow eventStartTarget + returnPolicy lowering still converts flows into launchFlow actions during export.",
+    "Playable/navigation runtime followUp contracts still exist in core/runtime and are handled from main.ts and interactive-action-coordinator."
+  ],
+  "acceptanceScopeReady": [
+    "Evidence confirms nextEventId already exists as the formal event follow-up field on runtime event and dialogue-choice surfaces.",
+    "Evidence confirms owned runtime still has helper-owned followUp residue that blocks ACC-EVENT-SETTLE-004 closeout."
+  ],
+  "sourceOfTruthDoc": "docs/blueprints/queues/instance-next-event-id-and-event-routing-convergence-queue.md"
+}

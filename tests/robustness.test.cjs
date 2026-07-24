@@ -9122,6 +9122,66 @@ test("script editor runtime export rejects missing nextEventId targets", () => {
   );
 });
 
+test("script editor runtime export rejects self-referential nextEventId targets", () => {
+  const {
+    exportScriptEditorProjectToScenarioPackFiles,
+  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  const project = createExportableScriptEditorProjectDefinition();
+  project.textEntries = [{ id: "text.opening", text: "Opening line." }];
+  project.dialogues = [
+    {
+      id: "dialogue.opening",
+      title: "Opening",
+      nodes: [
+        {
+          id: "dialogue-node.opening",
+          nodeType: "dialogue",
+          speakerPersonId: "person.hero",
+          textId: "text.opening",
+        },
+      ],
+    },
+  ];
+  project.events = [
+    {
+      id: "event.loop",
+      title: "Loop Event",
+      destination: { family: "dialogue", targetId: "dialogue.opening" },
+      nextEventId: "event.loop",
+    },
+  ];
+
+  assert.throws(
+    () => exportScriptEditorProjectToScenarioPackFiles(project),
+    /nextEventId|event\.loop|self/i
+  );
+});
+
+test("script editor runtime export rejects legacy flow eventStartTarget routing residue", () => {
+  const {
+    exportScriptEditorProjectToScenarioPackFiles,
+  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  const project = createExportableScriptEditorProjectDefinition();
+  project.flows = [
+    {
+      id: "flow.legacy",
+      title: "Legacy Flow",
+      initialNodeId: "node.start",
+      nodes: [{ id: "node.start", type: "text", text: "Legacy.", nextNodeId: "" }],
+      outcomeRoutes: [],
+      eventStartTarget: { eventId: "event.opening" },
+      ownerKind: "building",
+      ownerId: "building.home",
+      returnPolicy: "resume-owner",
+    },
+  ];
+
+  assert.throws(
+    () => exportScriptEditorProjectToScenarioPackFiles(project),
+    /eventStartTarget|retired routing field|legacy flow/i
+  );
+});
+
 test(
   "script editor runtime export validator rejects missing opening scenario profile fields",
   () => {
@@ -9761,6 +9821,70 @@ test("script editor workspace shell surfaces export blockers and compatibility r
     riskCard?.body ?? "",
     /unresolved|fail closed|阻塞/i
   );
+});
+
+test("script editor workspace shell surfaces self-referential nextEventId blockers", () => {
+  const {
+    createScriptEditorWorkspaceShellViewModel,
+  } = require("../.test-dist/application/script-editor/workspace-shell.js");
+  const project = createExportableScriptEditorProjectDefinition();
+  project.textEntries = [{ id: "text.opening", text: "Opening line." }];
+  project.dialogues = [
+    {
+      id: "dialogue.opening",
+      title: "Opening",
+      nodes: [
+        {
+          id: "dialogue-node.opening",
+          nodeType: "dialogue",
+          speakerPersonId: "person.hero",
+          textId: "text.opening",
+        },
+      ],
+    },
+  ];
+  project.events = [
+    {
+      id: "event.loop",
+      title: "Loop Event",
+      destination: { family: "dialogue", targetId: "dialogue.opening" },
+      nextEventId: "event.loop",
+    },
+  ];
+
+  const workspace = createScriptEditorWorkspaceShellViewModel({ project });
+
+  assert.equal(workspace.toolbarActions.find((action) => action.id === "export")?.status, "blocked");
+  assert.equal(workspace.handoffSummary.blockedCount > 0, true);
+  const riskCard = workspace.inspector.cards.find((card) => card.id === "project.risk");
+  assert.match(riskCard?.body ?? "", /nextEventId|event\.loop|self/i);
+});
+
+test("script editor workspace shell surfaces legacy flow eventStartTarget blockers", () => {
+  const {
+    createScriptEditorWorkspaceShellViewModel,
+  } = require("../.test-dist/application/script-editor/workspace-shell.js");
+  const project = createExportableScriptEditorProjectDefinition();
+  project.flows = [
+    {
+      id: "flow.legacy",
+      title: "Legacy Flow",
+      initialNodeId: "node.start",
+      nodes: [{ id: "node.start", type: "text", text: "Legacy.", nextNodeId: "" }],
+      outcomeRoutes: [],
+      eventStartTarget: { eventId: "event.opening" },
+      ownerKind: "building",
+      ownerId: "building.home",
+      returnPolicy: "resume-owner",
+    },
+  ];
+
+  const workspace = createScriptEditorWorkspaceShellViewModel({ project });
+
+  assert.equal(workspace.toolbarActions.find((action) => action.id === "export")?.status, "blocked");
+  assert.equal(workspace.handoffSummary.blockedCount > 0, true);
+  const riskCard = workspace.inspector.cards.find((card) => card.id === "project.risk");
+  assert.match(riskCard?.body ?? "", /eventStartTarget|retired routing field|legacy flow/i);
 });
 
 test("script editor workspace view omits the top project pill text block", () => {
@@ -14941,6 +15065,7 @@ test("script editor event binding condition field registry covers owner attribut
 });
 
 test("script editor story/dialogue/event authoring helpers normalize bounded narrative fields", () => {
+  const authoringHelpers = require("../.test-dist/application/script-editor/story-dialogue-event-authoring.js");
   const {
     createDefaultScriptEditorDialogueRecord,
     createDefaultScriptEditorEventBindingRecord,
@@ -14950,14 +15075,12 @@ test("script editor story/dialogue/event authoring helpers normalize bounded nar
     normalizeScriptEditorEventBindingRecord,
     normalizeScriptEditorEventRecord,
     normalizeScriptEditorStoryNodeRecord,
-    appendScriptEditorDialogueFollowUp,
     appendScriptEditorDialogueNode,
     appendScriptEditorDialogueParticipant,
     appendScriptEditorEventRelationEntry,
     appendScriptEditorStoryNodeRelation,
     toggleScriptEditorEventRepeatable,
     updateScriptEditorDialogueField,
-    updateScriptEditorDialogueFollowUpField,
     updateScriptEditorDialogueNodeField,
     updateScriptEditorDialogueParticipant,
     updateScriptEditorEventDestinationField,
@@ -14966,7 +15089,11 @@ test("script editor story/dialogue/event authoring helpers normalize bounded nar
     updateScriptEditorEventRelationField,
     updateScriptEditorStoryNodeField,
     updateScriptEditorStoryNodeRelation,
-  } = require("../.test-dist/application/script-editor/story-dialogue-event-authoring.js");
+  } = authoringHelpers;
+
+  assert.equal(typeof authoringHelpers.appendScriptEditorDialogueFollowUp, "undefined");
+  assert.equal(typeof authoringHelpers.updateScriptEditorDialogueFollowUpField, "undefined");
+  assert.equal(typeof authoringHelpers.removeScriptEditorDialogueFollowUp, "undefined");
 
   let storyNode = createDefaultScriptEditorStoryNodeRecord(0);
   storyNode = updateScriptEditorStoryNodeField(storyNode, "progressMode", "invalid-mode");
@@ -14980,15 +15107,13 @@ test("script editor story/dialogue/event authoring helpers normalize bounded nar
   const normalizedStoryNode = normalizeScriptEditorStoryNodeRecord(storyNode);
 
   let dialogue = createDefaultScriptEditorDialogueRecord(0);
+  assert.equal(Object.hasOwn(dialogue, "followUps"), false);
   dialogue = updateScriptEditorDialogueField(dialogue, "storyNodeId", "story-node.hero");
   dialogue = appendScriptEditorDialogueParticipant(dialogue);
   dialogue = updateScriptEditorDialogueParticipant(dialogue, 0, "person.hero");
   dialogue = appendScriptEditorDialogueNode(dialogue);
   dialogue = updateScriptEditorDialogueNodeField(dialogue, 1, "nodeType", "choice");
   dialogue = updateScriptEditorDialogueNodeField(dialogue, 1, "textId", "text.dialogue.choice");
-  dialogue = appendScriptEditorDialogueFollowUp(dialogue);
-  dialogue = updateScriptEditorDialogueFollowUpField(dialogue, 0, "targetFamily", "building");
-  dialogue = updateScriptEditorDialogueFollowUpField(dialogue, 0, "targetId", "building.teahouse");
   const normalizedDialogue = normalizeScriptEditorDialogueRecord(dialogue);
 
   let eventRecord = createDefaultScriptEditorEventRecord(0);
@@ -15032,8 +15157,7 @@ test("script editor story/dialogue/event authoring helpers normalize bounded nar
   assert.equal(normalizedDialogue.storyNodeId, "story-node.hero");
   assert.equal(normalizedDialogue.participantPersonIds[0], "person.hero");
   assert.equal(normalizedDialogue.nodes[1].nodeType, "choice");
-  assert.equal(normalizedDialogue.followUps[0].targetFamily, "building");
-  assert.equal(normalizedDialogue.followUps[0].targetId, "building.teahouse");
+  assert.equal(Object.hasOwn(normalizedDialogue, "followUps"), false);
   assert.equal(normalizedEvent.title, "Opening Event");
   assert.equal(normalizedEvent.triggerTiming, "manual");
   assert.equal(normalizedEvent.repeatable, true);
@@ -24051,7 +24175,7 @@ test("child 15 covered enter-city path routes through shared runtime dispatch in
   );
   assert.match(
     handleModalConfirmBlock,
-    /handleFollowUp:\s*\(\{\s*state,\s*followUp\s*\}\)\s*=>[\s\S]*navigationTimeFollowUp\.applyOutcome\(\{\s*state,\s*outcome:\s*followUp\s*\}\)/
+    /applyPostNavigationStoryTrigger\("city-enter"\)/
   );
 });
 
@@ -24067,7 +24191,11 @@ test("child 15 covered day-start path routes through shared runtime dispatch ins
   assert.doesNotMatch(startMapAutoAdvanceBlock, /runTimeRuntime\(/);
   assert.match(startMapAutoAdvanceBlock, /commitRuntimeRequest\(/);
   assert.match(startMapAutoAdvanceBlock, /createDayStartRequest\(/);
-  assert.match(startMapAutoAdvanceBlock, /handleFollowUp:\s*\(\{\s*state,\s*followUp\s*\}\)\s*=>/);
+  assert.match(
+    startMapAutoAdvanceBlock,
+    /syncCouncilPriorityAfterGameStateChange\(previousGameState\)/
+  );
+  assert.doesNotMatch(startMapAutoAdvanceBlock, /handleFollowUp:\s*\(\{/);
 });
 
 test("child 15 covered advance-segments travel paths route through shared runtime dispatch instead of direct runTimeRuntime helper", () => {
@@ -24088,10 +24216,18 @@ test("child 15 covered advance-segments travel paths route through shared runtim
   assert.match(startCampaignTravelBlock, /createAdvanceTimeSegmentsRequest\(1\)/);
   assert.match(handleModalConfirmBlock, /commitRuntimeRequest\(/);
   assert.match(startCampaignTravelBlock, /commitRuntimeRequest\(/);
+  assert.match(
+    handleModalConfirmBlock,
+    /syncCouncilPriorityAfterGameStateChange\(previousGameState\)/
+  );
+  assert.match(
+    startCampaignTravelBlock,
+    /syncCouncilPriorityAfterGameStateChange\(previousGameState\)/
+  );
 });
 
 test("child 16 story trigger helper routes through one runtime-owned seam instead of direct event and scene stitching", () => {
-  const followUpSource = fs.readFileSync(
+  const orchestratorSource = fs.readFileSync(
     path.join(
       process.cwd(),
       "src/application/runtime/main-runtime-orchestrator.ts"
@@ -24106,9 +24242,10 @@ test("child 16 story trigger helper routes through one runtime-owned seam instea
     "utf8"
   );
 
-  assert.doesNotMatch(followUpSource, /runEventRuntime\(/);
-  assert.doesNotMatch(followUpSource, /runSceneFromEvent\(/);
-  assert.match(navigationFollowUpSource, /runStoryTriggerRuntime\(/);
+  assert.doesNotMatch(orchestratorSource, /runEventRuntime\(/);
+  assert.doesNotMatch(orchestratorSource, /runSceneFromEvent\(/);
+  assert.doesNotMatch(navigationFollowUpSource, /runStoryTriggerRuntime\(/);
+  assert.match(orchestratorSource, /type:\s*"trigger-story-events"/);
 });
 
 test("child 16 covered city-enter story handoff stays on the shared trigger seam", () => {
@@ -24119,13 +24256,43 @@ test("child 16 covered city-enter story handoff stays on the shared trigger seam
   const handleModalConfirmBlock = source.match(
     /function handleModalConfirm\(\)[\s\S]*?\r?\n}\r?\n\r?\nfunction cancelCampaignTravel/
   )?.[0] ?? "";
+  const navigationTriggerHelper = source.match(
+    /function applyPostNavigationStoryTrigger\([\s\S]*?\r?\n}\r?\n\r?\nfunction stopMapAutoAdvance/
+  )?.[0] ?? "";
 
   assert.match(
     handleModalConfirmBlock,
-    /handleFollowUp:\s*\(\{\s*state,\s*followUp\s*\}\)\s*=>[\s\S]*navigationTimeFollowUp\.applyOutcome\(\{\s*state,\s*outcome:\s*followUp\s*\}\)/
+    /applyPostNavigationStoryTrigger\("city-enter"\)/
+  );
+  assert.match(
+    navigationTriggerHelper,
+    /mainRuntimeOrchestrator\.execute\(\{\s*type:\s*"trigger-story-events"[\s\S]*timing/
+  );
+  assert.match(
+    navigationTriggerHelper,
+    /function applyPostNavigationStoryTrigger\([\s\S]*timing: "city-enter" \| "house-enter" \| null/
   );
   assert.doesNotMatch(handleModalConfirmBlock, /runEventRuntime\(/);
   assert.doesNotMatch(handleModalConfirmBlock, /runSceneFromEvent\(/);
+});
+
+test("covered house-enter story handoff uses the shared trigger seam after runtime commit", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/main.ts"),
+    "utf8"
+  );
+  const enterBuildingBlock = source.match(
+    /function enterBuilding\(houseId: string\): void \{[\s\S]*?\r?\n}\r?\n\r?\nfunction leaveBuilding/
+  )?.[0] ?? "";
+
+  assert.match(
+    enterBuildingBlock,
+    /applyPostNavigationStoryTrigger\("house-enter"\)/
+  );
+  assert.doesNotMatch(
+    enterBuildingBlock,
+    /navigationTimeFollowUp\.applyOutcome\(\{\s*state,\s*outcome:\s*followUp\s*\}\)/
+  );
 });
 
 test("child 16 covered indoor-screen-shown story handoff stays on the shared trigger seam", () => {
@@ -26243,7 +26410,7 @@ test("child 26 house runtime owns indoor-screen follow-up before render", () => 
   assert.equal(renderCount, 1);
 });
 
-test("child 25 navigation runtime emits explicit entered-city follow-up outcome", () => {
+test("child 25 navigation runtime no longer emits city-enter follow-up outcome", () => {
   const {
     createEnterCityRequest,
     runNavigationRuntime,
@@ -26254,10 +26421,7 @@ test("child 25 navigation runtime emits explicit entered-city follow-up outcome"
     request: createEnterCityRequest("city.kulan"),
   });
 
-  assert.deepEqual(result.followUp, {
-    type: "navigation.entered-city",
-    cityId: "city.kulan",
-  });
+  assert.equal(result.followUp, undefined);
 });
 
 test("main shell enter-city request consumes blocked navigation access into location dialogue state", () => {
@@ -26471,10 +26635,7 @@ test("building entry runtime enters mounted building when the current city has a
     view: "house",
     houseId: "house.city.start.temple",
   });
-  assert.deepEqual(result.followUp, {
-    type: "navigation.entered-house",
-    houseId: "house.city.start.temple",
-  });
+  assert.equal(result.followUp, undefined);
   assert.equal(result.access, undefined);
 });
 
@@ -26778,7 +26939,7 @@ test("map review provider acceptance keeps normal json and preview entrypoints o
   assert.match(inventorySource, /mapLocationProvider\.getCityLocation/);
 });
 
-test("child 25 time runtime emits explicit council-threshold outcome when day-start crosses the council date", () => {
+test("child 25 time runtime no longer emits council-threshold follow-up outcome", () => {
   const {
     createDayStartRequest,
     runTimeRuntime,
@@ -26789,10 +26950,10 @@ test("child 25 time runtime emits explicit council-threshold outcome when day-st
     request: createDayStartRequest(),
   });
 
-  assert.equal(result.followUp?.type, "time.council-threshold-crossed");
+  assert.equal(result.followUp, undefined);
 });
 
-test("child 25 main.ts no longer hand-stitches covered navigation/time follow-up after runtime settlement", () => {
+test("child 25 main.ts routes covered navigation and council sync through explicit post-commit seams", () => {
   const source = fs.readFileSync(path.join(process.cwd(), "src/main.ts"), "utf8");
   const handleModalConfirmBlock = source.match(
     /function handleModalConfirm\(\)[\s\S]*?\r?\n}\r?\n\r?\nfunction cancelCampaignTravel/
@@ -26801,16 +26962,16 @@ test("child 25 main.ts no longer hand-stitches covered navigation/time follow-up
     /function startCampaignTravel\([\s\S]*?\r?\n}\r?\n\r?\nfunction syncCampaignActorRuntimeState/
   )?.[0] ?? "";
 
-  assert.match(source, /createNavigationTimeFollowUpBridge|navigationTimeFollowUp/);
-  assert.doesNotMatch(
+  assert.doesNotMatch(source, /createNavigationTimeFollowUpBridge|navigationTimeFollowUp/);
+  assert.match(
     handleModalConfirmBlock,
-    /type:\s*"trigger-story-events"[\s\S]*timing:\s*"city-enter"/
+    /applyPostNavigationStoryTrigger\("city-enter"\)/
   );
-  assert.doesNotMatch(
+  assert.match(
     handleModalConfirmBlock,
     /syncCouncilPriorityAfterGameStateChange\(previousGameState\)/
   );
-  assert.doesNotMatch(
+  assert.match(
     startCampaignTravelBlock,
     /syncCouncilPriorityAfterGameStateChange\(previousGameState\)/
   );
@@ -26837,30 +26998,36 @@ test("child 25 narrow follow-up contract stays outside main.ts and main-runtime-
     ),
     "utf8"
   );
+  const runtimeResultSource = fs.readFileSync(
+    path.join(process.cwd(), "src", "core", "contracts", "runtime-result.ts"),
+    "utf8"
+  );
 
-  assert.match(followUpSource, /navigation\.entered-city/);
-  assert.match(followUpSource, /time\.advanced/);
-  assert.match(followUpSource, /time\.council-threshold-crossed/);
-  assert.match(followUpSource, /timing:\s*"city-enter"/);
+  assert.doesNotMatch(followUpSource, /navigation\.entered-city/);
+  assert.doesNotMatch(followUpSource, /navigation\.entered-house/);
+  assert.doesNotMatch(followUpSource, /applyOutcome/);
+  assert.doesNotMatch(followUpSource, /time\.advanced/);
+  assert.doesNotMatch(followUpSource, /time\.council-threshold-crossed/);
+  assert.doesNotMatch(followUpSource, /timing:\s*"city-enter"/);
+  assert.doesNotMatch(
+    runtimeResultSource,
+    /navigation\.entered-city|navigation\.entered-house|time\.advanced|time\.council-threshold-crossed/
+  );
   assert.doesNotMatch(
     orchestratorSource,
     /navigation\.entered-city|time\.advanced|time\.council-threshold-crossed/
   );
 });
 
-test("main navigation follow-up passes event bindings into city-enter story runtime", () => {
+test("main no longer initializes a navigation-time follow-up bridge", () => {
   const mainSource = fs.readFileSync(
     path.join(process.cwd(), "src", "main.ts"),
     "utf8"
   );
-  const navigationFollowUpInit =
-    mainSource.match(/const navigationTimeFollowUp = createNavigationTimeFollowUpBridge\(\{[\s\S]*?\n\}\);/)?.[0] ?? "";
 
-  assert.match(navigationFollowUpInit, /getStoryContent:\s*\(\)\s*=>\s*\(\{/);
-  assert.match(
-    navigationFollowUpInit,
-    /eventBindingsById:\s*activeContentContext\.storyContent\.eventBindingsById/
-  );
+  assert.match(mainSource, /function syncCouncilPriorityAfterGameStateChange\(/);
+  assert.doesNotMatch(mainSource, /createNavigationTimeFollowUpBridge\(/);
+  assert.doesNotMatch(mainSource, /navigationTimeFollowUp/);
 });
 
 test("shell thinning city-view transition owner module exists and preserves covered transition cleanup", () => {

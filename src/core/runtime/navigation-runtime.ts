@@ -12,16 +12,12 @@ import type {
 } from "../../domain/location-access";
 import type { NavigationTarget } from "../contracts/navigation";
 import type { RuntimeRequest } from "../contracts/runtime-request";
-import type {
-  RuntimeFollowUpOutcome,
-  RuntimeResult,
-} from "../contracts/runtime-result";
+import type { RuntimeResult } from "../contracts/runtime-result";
 import type { RuntimeState } from "../contracts/runtime-state";
 
 type NavigationRuntimeResult = {
   state: GameState;
   navigation: NavigationTarget | null;
-  followUp?: RuntimeFollowUpOutcome | null;
   access?: LocationAccessResult;
 };
 
@@ -87,10 +83,6 @@ export function runNavigationRuntime(input: {
     return {
       state: enterCity(input.state, cityId),
       navigation: { view: "city", cityId },
-      followUp: {
-        type: "navigation.entered-city",
-        cityId,
-      },
     };
   }
 
@@ -134,10 +126,6 @@ export function runNavigationRuntime(input: {
       state: enterHouse(input.state, input.houseDefinition),
       navigation: {
         view: "house",
-        houseId: input.houseDefinition.id,
-      },
-      followUp: {
-        type: "navigation.entered-house",
         houseId: input.houseDefinition.id,
       },
     };
@@ -184,7 +172,6 @@ export function routeNavigationRuntime(input: {
       core: result.state,
     },
     effects: [],
-    ...(result.followUp == null ? {} : { followUp: result.followUp }),
     ...(result.access == null ? {} : { access: result.access }),
     navigation: result.navigation,
   };

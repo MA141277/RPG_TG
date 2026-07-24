@@ -264,7 +264,6 @@ export function createDefaultScriptEditorDialogueRecord(
     storyNodeId: "",
     participantPersonIds: [],
     nodes: [createDefaultDialogueNode(0)],
-    followUps: [],
   };
 }
 
@@ -343,7 +342,9 @@ export function normalizeScriptEditorDialogueRecord(
     storyNodeId: normalizeOptionalString(record.storyNodeId),
     participantPersonIds: normalizeStringArray(record.participantPersonIds),
     nodes: (record.nodes ?? []).map(normalizeDialogueNodeRecord),
-    followUps: (record.followUps ?? []).map(normalizeDialogueFollowUp),
+    ...(Array.isArray(record.followUps) && record.followUps.length > 0
+      ? { followUps: record.followUps.map(normalizeDialogueFollowUp) }
+      : {}),
   };
 }
 
@@ -690,51 +691,6 @@ export function removeScriptEditorDialogueNode(
   return {
     ...record,
     nodes: (record.nodes ?? []).filter((_, nodeIndex) => nodeIndex !== index),
-  };
-}
-
-export function appendScriptEditorDialogueFollowUp(
-  record: ScriptEditorDialogueRecord
-): ScriptEditorDialogueRecord {
-  return {
-    ...record,
-    followUps: [...(record.followUps ?? []), { targetFamily: "event", targetId: "" }],
-  };
-}
-
-export function updateScriptEditorDialogueFollowUpField(
-  record: ScriptEditorDialogueRecord,
-  index: number,
-  field: keyof ScriptEditorDialogueFollowUp,
-  value: string
-): ScriptEditorDialogueRecord {
-  return {
-    ...record,
-    followUps: (record.followUps ?? []).map((followUp, followUpIndex) => {
-      if (followUpIndex !== index) {
-        return followUp;
-      }
-      if (field === "targetFamily") {
-        return {
-          ...followUp,
-          targetFamily: normalizeDialogueFollowUpTargetFamily(value),
-        };
-      }
-      return {
-        ...followUp,
-        targetId: value.trim(),
-      };
-    }),
-  };
-}
-
-export function removeScriptEditorDialogueFollowUp(
-  record: ScriptEditorDialogueRecord,
-  index: number
-): ScriptEditorDialogueRecord {
-  return {
-    ...record,
-    followUps: (record.followUps ?? []).filter((_, followUpIndex) => followUpIndex !== index),
   };
 }
 

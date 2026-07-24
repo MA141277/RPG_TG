@@ -4,29 +4,10 @@ import {
   resolveTextTemplateEntry,
 } from "../content/text-resolution";
 import { defaultReviewCyclePolicy } from "../review/review-cycle-provider";
-import type { ActivityDefinition } from "../../domain/activity";
-import type { RuntimeDialogueDefinition } from "../../domain/dialogue";
 import type { CharacterDefinition } from "../../domain/character";
-import type { EventBinding, EventDefinition } from "../../domain/event";
 import type { GameState } from "../../domain/game-state";
 import type { HouseDefinition } from "../../domain/house";
-import type { RuntimeFollowUpOutcome } from "../../core/contracts/runtime-result";
 import type { RuntimeState } from "../../core/contracts/runtime-state";
-import { runStoryTriggerRuntime } from "../../core/runtime/dialogue-runtime";
-
-export type NavigationTimeFollowUpStoryContent = {
-  eventDefinitionsById: Record<string, EventDefinition>;
-  eventBindingsById?: Record<string, EventBinding>;
-  dialogueDefinitionsById: Record<string, RuntimeDialogueDefinition>;
-  activityDefinitionsById?: Record<string, ActivityDefinition>;
-  textEntriesById?: Record<string, string>;
-};
-
-export type NavigationTimeFollowUpDependencies = {
-  getCharacterDefinitions(): CharacterDefinition[];
-  getHouseDefinitions(): HouseDefinition[];
-  getStoryContent(): NavigationTimeFollowUpStoryContent;
-};
 
 export type NavigationTimeFollowUpResult = {
   state: RuntimeState;
@@ -39,100 +20,6 @@ export type CouncilArrivalNotice = {
   textLines?: string[];
   advanceHintText?: string;
 };
-
-export type NavigationTimeFollowUpBridge = {
-  applyOutcome(input: {
-    state: RuntimeState;
-    outcome: RuntimeFollowUpOutcome;
-  }): NavigationTimeFollowUpResult;
-};
-
-export function createNavigationTimeFollowUpBridge(
-  dependencies: NavigationTimeFollowUpDependencies
-): NavigationTimeFollowUpBridge {
-  return {
-    applyOutcome(input) {
-      if (input.outcome.type === "navigation.entered-city") {
-        const storyContent = dependencies.getStoryContent();
-        const result = runStoryTriggerRuntime({
-          timing: "city-enter",
-          state: input.state.core,
-          characterDefinitions: dependencies.getCharacterDefinitions(),
-          eventDefinitionsById: storyContent.eventDefinitionsById,
-          ...(storyContent.eventBindingsById == null
-            ? {}
-            : { eventBindingsById: storyContent.eventBindingsById }),
-          dialogueDefinitionsById: storyContent.dialogueDefinitionsById,
-          ...(storyContent.activityDefinitionsById == null
-            ? {}
-            : { activityDefinitionsById: storyContent.activityDefinitionsById }),
-          ...(storyContent.textEntriesById == null
-            ? {}
-            : { textEntriesById: storyContent.textEntriesById }),
-        });
-
-        return {
-          handled: true,
-          state: {
-            ...input.state,
-            core: result.state,
-          },
-          characterDefinitions: result.characterDefinitions,
-        };
-      }
-
-      if (input.outcome.type === "navigation.entered-house") {
-        const storyContent = dependencies.getStoryContent();
-        const result = runStoryTriggerRuntime({
-          timing: "house-enter",
-          state: input.state.core,
-          characterDefinitions: dependencies.getCharacterDefinitions(),
-          eventDefinitionsById: storyContent.eventDefinitionsById,
-          ...(storyContent.eventBindingsById == null
-            ? {}
-            : { eventBindingsById: storyContent.eventBindingsById }),
-          dialogueDefinitionsById: storyContent.dialogueDefinitionsById,
-          ...(storyContent.activityDefinitionsById == null
-            ? {}
-            : { activityDefinitionsById: storyContent.activityDefinitionsById }),
-          ...(storyContent.textEntriesById == null
-            ? {}
-            : { textEntriesById: storyContent.textEntriesById }),
-        });
-
-        return {
-          handled: true,
-          state: {
-            ...input.state,
-            core: result.state,
-          },
-          characterDefinitions: result.characterDefinitions,
-        };
-      }
-
-      if (input.outcome.type === "time.council-threshold-crossed") {
-        return applyCouncilPriorityFollowUp({
-          state: input.state,
-          houseDefinitions: dependencies.getHouseDefinitions(),
-          textEntriesById:
-            dependencies.getStoryContent().textEntriesById ?? {},
-        });
-      }
-
-      if (input.outcome.type === "time.advanced") {
-        return {
-          handled: false,
-          state: input.state,
-        };
-      }
-
-      return {
-        handled: false,
-        state: input.state,
-      };
-    },
-  };
-}
 
 export function applyCouncilPriorityFollowUp(input: {
   previousGameState?: GameState;

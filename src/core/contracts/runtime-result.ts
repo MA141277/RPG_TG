@@ -28,15 +28,7 @@ export type RuntimeInteractiveSignal =
   | { type: "reenter-house"; houseId: string }
   | { type: "none" };
 
-export type RuntimeFollowUpOutcome =
-  | { type: "navigation.entered-city"; cityId: string }
-  | { type: "navigation.entered-house"; houseId: string }
-  | { type: "time.advanced" }
-  | { type: "time.council-threshold-crossed" };
-
-export type RuntimeFollowUp =
-  | RuntimeFollowUpOutcome
-  | RuntimeInteractiveSignal;
+export type RuntimeFollowUp = RuntimeInteractiveSignal;
 
 export type RuntimeResult = {
   state: RuntimeState;

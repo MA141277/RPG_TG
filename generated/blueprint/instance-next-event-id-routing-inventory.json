@@ -1,0 +1,89 @@
+{
+  "generatedAt": "2026-07-24",
+  "queueId": "queue.instance-next-event-id-and-event-routing-convergence",
+  "taskId": "task.instance-next-event-id-and-event-routing-convergence.follow-up-surface-inventory-and-routing-boundary-lock",
+  "ownedSurfaceInventory": [
+    {
+      "family": "event-next-event-id-runtime",
+      "status": "authoritative-anchor",
+      "files": [
+        "src/domain/event.ts",
+        "src/application/dialogue/dialogue-runner.ts",
+        "src/application/dialogue/dialogue-choice-resolver.ts",
+        "src/application/script-editor/runtime-pack-export.ts",
+        "src/application/script-editor/runtime-pack-import.ts",
+        "src/application/script-editor/workspace-shell.ts"
+      ],
+      "migrationRule": "Preserve as the only formal event follow-up field family; empty string means direct close; add explicit self-reference rejection in task3."
+    },
+    {
+      "family": "dialogue-followups-legacy",
+      "status": "residue",
+      "files": [
+        "src/domain/script-editor-project.ts",
+        "src/application/script-editor/story-dialogue-event-authoring.ts",
+        "src/application/script-editor/minimal-workflow.ts",
+        "src/application/script-editor/dialogue-story-runtime-materializer.ts"
+      ],
+      "migrationRule": "Do not compatibility-lower. If old semantics need another authored continuation, split to explicit event + event-binding or result-local nextEventId; otherwise remove and close directly."
+    },
+    {
+      "family": "legacy-flow-event-start-target",
+      "status": "residue",
+      "files": [
+        "src/application/script-editor/runtime-pack-export.ts",
+        "src/application/script-editor/runtime-pack-import.ts",
+        "src/domain/script-editor-project.ts"
+      ],
+      "migrationRule": "Retire eventStartTarget as a routing surface. Flow launch ownership must live on event.actions / event.nextEventId; returnPolicy remains playable return metadata, not a second router."
+    },
+    {
+      "family": "runtime-follow-up-helper-ownership",
+      "status": "residue",
+      "files": [
+        "src/core/contracts/runtime-result.ts",
+        "src/core/runtime/runtime-dispatch.ts",
+        "src/application/runtime/navigation-time-follow-up.ts",
+        "src/application/runtime/interactive-action-coordinator.ts",
+        "src/main.ts"
+      ],
+      "migrationRule": "Helpers may settle effects, but must not own authored routing truth. When old helper outcomes imply a new authored continuation, split to explicit event + event-binding; if they only mean stop/return, close directly."
+    }
+  ],
+  "migrationDecisionTable": {
+    "directClose": [
+      "event.nextEventId is empty",
+      "dialogue choice has neither nextEventId nor nextDialogueId",
+      "legacy follow-up semantics only mean stop/return with no new authored event obligation"
+    ],
+    "splitToEventAndBinding": [
+      "old follow-up semantics still require a new authored event after runtime/playable/navigation completion",
+      "helper-owned followUp currently triggers a domain continuation that should be event-owned",
+      "legacy dialogue/flow continuation carries a target concept outside the current event record"
+    ],
+    "preserveResultLocalNextEventId": [
+      "multi-result or choice result instances that already resolve through RuntimeDialogueChoiceOption.nextEventId"
+    ]
+  },
+  "frozenFirstImplementationSlice": {
+    "id": "slice.next-event-id-self-reference-and-legacy-routing-guards",
+    "whyFirst": "It enforces approved parent constraints without requiring the full routing cutover in one patch.",
+    "productionFiles": [
+      "src/application/script-editor/runtime-pack-export.ts",
+      "src/application/script-editor/workspace-shell.ts"
+    ],
+    "testFiles": [
+      "tests/robustness.test.cjs"
+    ],
+    "expectedGuards": [
+      "reject explicit event.nextEventId self-reference during export/validation",
+      "keep empty nextEventId as direct close",
+      "leave broader dialogue.followUps / runtime followUp residue removal for subsequent task3 slices under the same queue"
+    ]
+  },
+  "evidenceCounts": {
+    "mainHandleFollowUpSites": 6,
+    "runtimeFollowUpUnionPresent": true,
+    "dialogueFollowUpLoweringRejected": true
+  }
+}

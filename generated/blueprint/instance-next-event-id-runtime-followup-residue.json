@@ -1,0 +1,59 @@
+{
+  "generatedAt": "2026-07-24",
+  "queueId": "queue.instance-next-event-id-and-event-routing-convergence",
+  "taskId": "task.instance-next-event-id-and-event-routing-convergence.next-event-id-cutover-and-guard-baseline",
+  "residueFamily": "runtime-followUp-helper-ownership",
+  "status": "authored-routing-residue-removed",
+  "remainingFollowUpContract": [
+    {
+      "type": "reenter-house",
+      "handler": "src/application/runtime/interactive-action-coordinator.ts and src/main.ts",
+      "currentBehavior": "restores house shell/session as a return-path-only interactive signal",
+      "residueClass": "return-path-only",
+      "closeoutDisposition": "preserve-outside-event-routing"
+    }
+  ],
+  "retiredFollowUpTypes": [
+    {
+      "type": "navigation.entered-city",
+      "replacement": "src/main.ts applyPostNavigationStoryTrigger(\"city-enter\") after navigation commit"
+    },
+    {
+      "type": "navigation.entered-house",
+      "replacement": "src/main.ts applyPostNavigationStoryTrigger(\"house-enter\") after navigation commit"
+    },
+    {
+      "type": "time.council-threshold-crossed",
+      "replacement": "src/main.ts syncCouncilPriorityAfterGameStateChange(previousGameState) after time commit"
+    },
+    {
+      "type": "time.advanced",
+      "replacement": "direct close after time commit"
+    }
+  ],
+  "postCommitSeams": {
+    "navigationStoryTrigger": [
+      "src/main.ts: applyPostNavigationStoryTrigger(\"city-enter\")",
+      "src/main.ts: applyPostNavigationStoryTrigger(\"house-enter\")"
+    ],
+    "councilPrioritySync": [
+      "src/main.ts: syncCouncilPriorityAfterGameStateChange(previousGameState)"
+    ]
+  },
+  "centralDelegationSeams": {
+    "settleRuntimeFollowUp": true,
+    "mainHandleFollowUpCount": 1,
+    "interactiveHandleFollowUpCount": 1,
+    "runtimeFollowUpContract": [
+      "reenter-house",
+      "none"
+    ]
+  },
+  "migrationHeuristics": {
+    "authoredRoutingResidueRemoved": true,
+    "preservedReturnOnlyOrDirectClose": [
+      "reenter-house"
+    ],
+    "remainingBoundaryDecisionWithinQueue": []
+  }
+}

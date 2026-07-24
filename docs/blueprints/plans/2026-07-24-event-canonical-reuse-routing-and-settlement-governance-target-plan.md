@@ -5,12 +5,12 @@
 - document_role: `version-governor`
 - version_id: `target.event-follow-up-routing-settlement-and-canonical-reuse-convergence`
 - version_status: `open`
-- active_phase: `phase.promotion-review`
+- active_phase: `phase.active-execution`
 - active_queue: `none`
 - decision_state: `promotion-review`
 - next_decision: `same-version-admission-or-version-closeout`
-- next_action: `return-to-promotion-review`
-- resume_gate: `version-plan`
+- next_action: `write-queue-closeout`
+- resume_gate: `promotion-review`
 - post_queue_closeout_pause_policy: `auto-continue`
 - promotion_review_result: `queue-admitted`
 - review_subject_id: `none`
@@ -23,12 +23,12 @@
 - intake_summary: `Create a new formal version spec/plan from the approved 2026-07-24 iteration draft, fully absorb the approved boundaries, and immediately admit the first required canonical-reuse queue instead of stopping at a version shell.`
 - intake_result: `promoted-to-admission`
 - intake_feedback_mode: `fixed-receipt`
-- closure_review_subject: `queue.event-and-building-instance-canonical-reuse`
-- closure_review_status: `routed`
+- closure_review_subject: `queue.instance-next-event-id-and-event-routing-convergence`
+- closure_review_status: `evaluating`
 - residue_candidate_id: `none`
 - residue_candidate_family: `none`
-- routing_basis: `queue.event-and-building-instance-canonical-reuse is locally closed after canonical-reuse proof, but the mandatory repository-sync gate still has to record its result before queue.instance-next-event-id-and-event-routing-convergence can be admitted.`
-- next_lawful_queue_recommendation: `queue.instance-next-event-id-and-event-routing-convergence`
+- routing_basis: `Queue closeout proof is locally complete, but the formal repository-sync gate must be recorded before the next same-version queue admission.`
+- next_lawful_queue_recommendation: `queue.settlement-resource-and-event-type-convergence`
 - auto_admission_ready: `false`
 - stop_reason: `none`
 - stop_basis: `none`
@@ -43,8 +43,8 @@
   - `queue.event-routing-settlement-migration-and-final-acceptance`
 - candidate_backlog_refresh_status: `fresh`
 - candidate_backlog_snapshot:
-  - `queue.event-and-building-instance-canonical-reuse: locally closed and waiting only for the repository-sync gate because canonical reuse, duplicate-binding review, full owned reference rewrite, and queue-closeout proof are complete.`
-  - `queue.instance-next-event-id-and-event-routing-convergence: not yet admitted; it follows canonical reuse and owns unified nextEventId routing with event as the only routing owner.`
+  - `queue.event-and-building-instance-canonical-reuse: closed after canonical reuse, duplicate-binding review, full owned reference rewrite, queue-closeout proof, and successful repository sync to origin/mod-first-dev.`
+  - `queue.instance-next-event-id-and-event-routing-convergence: admitted and active; it follows canonical reuse and now owns unified nextEventId routing with event as the only routing owner.`
   - `queue.settlement-resource-and-event-type-convergence: not yet admitted; it follows nextEventId routing convergence and owns settlement resources, event(type=settlement), numeric-first settlement semantics, and PlayableResult naming cleanup.`
   - `queue.full-chain-event-routing-and-settlement-consistency: not yet admitted; it follows settlement-contract freeze and owns Script Editor/export/import/loading/preview/startup/runtime full-chain consistency.`
   - `queue.event-routing-settlement-migration-and-final-acceptance: not yet admitted; required-final queue for explicit migration, fail-closed rejection, acceptance, and residue guard.`
@@ -169,8 +169,8 @@
 
 | Candidate ID | Last Classification | Proposed Queue | Latest Disposition | Recheck Trigger Type | Recheck Trigger Basis | Acceptance Refs | Can Claim | Cannot Claim | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| `item.event-and-building-instance-canonical-reuse` | `queue-candidate` | `queue.event-and-building-instance-canonical-reuse` | `active` | `active-task-complete` | `It is the approved first phase and is now the live queue.` | `ACC-EVENT-SETTLE-001; ACC-EVENT-SETTLE-002` | `canonical id selection, strong deduplication, duplicate-binding review, full owned reference rewrite` | `nextEventId routing, settlement resources, final migration acceptance` | `Must not be bypassed by later routing or settlement work.` |
-| `item.instance-next-event-id-and-event-routing-convergence` | `queue-candidate` | `queue.instance-next-event-id-and-event-routing-convergence` | `candidate-recorded` | `queue-closeout` | `Recheck only after canonical reuse closes and sync is recorded.` | `ACC-EVENT-SETTLE-003; ACC-EVENT-SETTLE-004` | `nextEventId field unification and direct event-owned follow-up routing` | `settlement resource authoring, final migration acceptance` | `Must preserve event as sole routing owner.` |
+| `item.event-and-building-instance-canonical-reuse` | `queue-candidate` | `queue.event-and-building-instance-canonical-reuse` | `closed` | `queue-closeout-complete` | `It was the approved first phase and is now closed after sync succeeded.` | `ACC-EVENT-SETTLE-001; ACC-EVENT-SETTLE-002` | `canonical id selection, strong deduplication, duplicate-binding review, full owned reference rewrite` | `nextEventId routing, settlement resources, final migration acceptance` | `Must not be bypassed by later routing or settlement work.` |
+| `item.instance-next-event-id-and-event-routing-convergence` | `queue-candidate` | `queue.instance-next-event-id-and-event-routing-convergence` | `closeout-recorded-awaiting-sync` | `repository-sync-gate` | `Queue-local closeout proof is now recorded, so the next lawful action is the repository-sync gate before same-version promotion may continue.` | `ACC-EVENT-SETTLE-003; ACC-EVENT-SETTLE-004` | `nextEventId field unification and direct event-owned follow-up routing` | `settlement resource authoring, final migration acceptance` | `Must preserve event as sole routing owner.` |
 | `item.settlement-resource-and-event-type-convergence` | `queue-candidate` | `queue.settlement-resource-and-event-type-convergence` | `candidate-recorded` | `queue-closeout` | `Recheck only after nextEventId routing truth is stable.` | `ACC-EVENT-SETTLE-005` | `settlement resource/event-type convergence and PlayableResult naming cleanup` | `cross-chain consistency or final migration ownership` | `Must preserve numeric-first settlement boundary.` |
 | `item.full-chain-event-routing-and-settlement-consistency` | `queue-candidate` | `queue.full-chain-event-routing-and-settlement-consistency` | `candidate-recorded` | `queue-closeout` | `Recheck only after settlement contracts are frozen.` | `ACC-EVENT-SETTLE-006` | `full-chain parity on canonical ids, nextEventId, and settlement events` | `migration closeout or new router invention` | `Must remain distinct from settlement authoring and final acceptance.` |
 | `item.event-routing-settlement-migration-and-final-acceptance` | `queue-candidate` | `queue.event-routing-settlement-migration-and-final-acceptance` | `candidate-recorded` | `queue-closeout` | `Recheck only after all implementation-bearing queues close.` | `ACC-EVENT-SETTLE-007; ACC-EVENT-SETTLE-008` | `explicit migration, rejection coverage, final acceptance, residue guard` | `primary ownership of earlier implementation-bearing queues` | `Required-final queue only.` |
@@ -179,8 +179,8 @@
 
 | Queue ID | Current Disposition | Promote When | Notes |
 | --- | --- | --- | --- |
-| `queue.event-and-building-instance-canonical-reuse` | `active` | `already promoted` | `This is the live first queue.` |
-| `queue.instance-next-event-id-and-event-routing-convergence` | `candidate-ready` | `only after queue.event-and-building-instance-canonical-reuse closes and sync is recorded` | `Phase order is already approved.` |
+| `queue.event-and-building-instance-canonical-reuse` | `closed` | `already promoted` | `Closed after repository sync succeeded.` |
+| `queue.instance-next-event-id-and-event-routing-convergence` | `active` | `already promoted` | `Phase order was already approved, and canonical reuse has now closed with sync recorded.` |
 | `queue.settlement-resource-and-event-type-convergence` | `candidate-ready` | `only after queue.instance-next-event-id-and-event-routing-convergence closes` | `Must not admit before event-only routing truth is stable.` |
 | `queue.full-chain-event-routing-and-settlement-consistency` | `candidate-ready` | `only after queue.settlement-resource-and-event-type-convergence closes` | `Must stay distinct from settlement authoring and final acceptance.` |
 | `queue.event-routing-settlement-migration-and-final-acceptance` | `candidate-ready` | `only after all implementation-bearing queues close` | `Required-final queue.` |
@@ -247,15 +247,16 @@
 - over_narrowing_check:
   - `The first queue owns deduplication, canonical selection, duplicate-binding review, and full owned reference rewrite rather than a thin helper-only slice.`
 - residue_or_blocker_routing_check:
-  - `No hard blocker is recorded. Canonical-reuse source rewrites are complete for home, home_001, leader_residence, temple, keep, tea_house, market, grain_shop, medicine_house, and inn; generated/blueprint/event-canonical-reuse-closeout-proof.json now proves that the remaining city-scoped truth is limited to explicit building-enter routes plus the recorded Kulan temple exceptions.`
+  - `No hard blocker is recorded. queue.instance-next-event-id-and-event-routing-convergence now has local closeout proof for ACC-EVENT-SETTLE-003 / 004, and the only remaining gate before same-version promotion is repository sync.`
 - verification_adequacy_check:
   - `Governed-doc verification must pass before this activation batch is treated as synchronized.`
 - next_lawful_action_check:
-  - `Current queue execution is locally complete. The next lawful action is the mandatory repository-sync gate for queue.event-and-building-instance-canonical-reuse; once its result is recorded, Blueprint must auto-admit and activate queue.instance-next-event-id-and-event-routing-convergence.`
+  - `Run the repository-sync gate for queue.instance-next-event-id-and-event-routing-convergence using the local closeout batch. After sync is recorded, auto-admit queue.settlement-resource-and-event-type-convergence as the next lawful queue under the already-approved phase order.`
 
 ### Closure Routing Record
 
-- `No queue has closed under this version yet. Version closeout is not in review.`
+- `queue.event-and-building-instance-canonical-reuse is now closed after canonical-reuse proof and repository sync succeeded through commit 8e661da pushed to origin/mod-first-dev. The version remains open and has already auto-promoted queue.instance-next-event-id-and-event-routing-convergence as the next lawful active queue.`
+- `queue.instance-next-event-id-and-event-routing-convergence is now locally closed after generated/blueprint/instance-next-event-id-routing-closeout-proof.json established ACC-EVENT-SETTLE-003 / 004 readiness. The version remains open and is now paused only on the required repository-sync gate before queue.settlement-resource-and-event-type-convergence may be admitted.`
 
 ### Progress Log
 
@@ -307,3 +308,15 @@
 - `2026-07-24`: `Temple closeout truth keeps the recorded Kulan exceptions explicit instead of pretending to full-fold them away: binding.building.house.kulan.temple.work.container-item plus event/flow.building.house.kulan.temple.work remain city-scoped preserved drift evidence, and Kulan copy-scripture / sweep-courtyard / carry-water action routes remain city-scoped authored exceptions.`
 - `2026-07-24`: `Task3 has now refreshed the selector after temple landed. generated/blueprint/event-canonical-reuse-temple-applied-rewrite-summary.json records the applied temple batch, generated/blueprint/event-canonical-reuse-next-slice-candidates.json now records home+leader_residence+temple+keep+tea_house+market+grain_shop+medicine_house+inn as completed, and no remaining non-home source-rewrite family candidates survive in the selector.`
 - `2026-07-24`: `Canonical-reuse closeout proof is now established locally. The final home_001 residue is folded into the canonical home graph, generated/blueprint/event-canonical-reuse-closeout-proof.json proves that no disallowed city-scoped event / flow / owner truth remains in the completed queue surface, full node --test tests/robustness.test.cjs is green, and npm run lint:blueprints, npm run lint:blueprint-skill, and npm run blueprint:governance:check all pass. The next lawful action is now the repository-sync gate for queue.event-and-building-instance-canonical-reuse before next-queue admission.`
+- `2026-07-24`: `Repository-sync gate for queue.event-and-building-instance-canonical-reuse is now satisfied. Commit 8e661da landed locally with the formal canonical-reuse spec/plan/queue/report, canonical source rewrites, runtime/test coverage, and generated proof artifacts; push to origin/mod-first-dev also succeeded.`
+- `2026-07-24`: `queue.instance-next-event-id-and-event-routing-convergence is now admitted as the live active queue under the already-approved phase order. Blueprint execution immediately leaves queue-closeout review and continues from task.instance-next-event-id-and-event-routing-convergence.evidence-anchor-reconcile.`
+- `2026-07-24`: `task.instance-next-event-id-and-event-routing-convergence.evidence-anchor-reconcile is now complete. generated/blueprint/instance-next-event-id-routing-evidence.json freezes the current nextEventId runtime anchors plus the three blocking residue families: dialogue.followUps authoring residue, legacy flow eventStartTarget/returnPolicy lowering, and helper-owned runtime followUp seams.`
+- `2026-07-24`: `The version automatically promoted task.instance-next-event-id-and-event-routing-convergence.follow-up-surface-inventory-and-routing-boundary-lock to the live active task. The next lawful action is no longer queue admission or evidence gathering; it is explicit inventory and migration-rule freezing for the owned rewrite boundary.`
+- `2026-07-24`: `task.instance-next-event-id-and-event-routing-convergence.follow-up-surface-inventory-and-routing-boundary-lock is now complete. generated/blueprint/instance-next-event-id-routing-inventory.json freezes the owned-surface inventory, the direct-close vs split-event migration table, and the first bounded implementation slice centered on explicit nextEventId self-reference rejection.`
+- `2026-07-24`: `The version automatically promoted task.instance-next-event-id-and-event-routing-convergence.next-event-id-cutover-and-guard-baseline to the live active task. The next lawful action is to land the first TDD-backed guard slice rather than pausing at the inventory checkpoint.`
+- `2026-07-24`: `Task3 slice 1 is now landed and verified. runtime-pack-export rejects self-referential nextEventId, workspace-shell surfaces the same shape as a blocked editor issue, and targeted robustness coverage for self-referential nextEventId is green after a fresh build:test.`
+- `2026-07-24`: `Task3 slice 2 then removed new dialogue.followUps authoring residue without silently backfilling it elsewhere: default dialogue records no longer allocate empty followUps arrays, authoring helper exports for appending/updating/removing dialogue follow-ups are gone, and normalization only preserves followUps when legacy data already carries them.`
+- `2026-07-24`: `Task3 slice 3 then retired legacy flow eventStartTarget export lowering. runtime-pack-export now fails closed on retired flow routing fields such as eventStartTarget / ownerKind / ownerId / returnPolicy instead of converting them into event-owned launchFlow actions, and workspace-shell blocks the same residue through export diagnostics.`
+- `2026-07-24`: `Task3 slice 4 then removed navigation-entered followUp transport from shared runtime truth. navigation-runtime no longer emits navigation.entered-city / navigation.entered-house, src/main.ts now uses applyPostNavigationStoryTrigger(...) after covered navigation commits, and the navigation-time follow-up bridge no longer owns authored story routing.`
+- `2026-07-24`: `Task3 slice 5 then removed time followUp transport from shared runtime truth. time-runtime no longer emits time.advanced / time.council-threshold-crossed, src/main.ts now calls syncCouncilPriorityAfterGameStateChange(previousGameState) explicitly after covered time commits, and createNavigationTimeFollowUpBridge is removed from production code.`
+- `2026-07-24`: `generated/blueprint/instance-next-event-id-runtime-followup-residue.json is now refreshed to show authored routing residue removed from runtime followUp ownership, with only reenter-house preserved as a return-only signal. generated/blueprint/instance-next-event-id-routing-closeout-proof.json now records local ACC-EVENT-SETTLE-003 / 004 closeout readiness, so the next lawful action is the repository-sync gate for queue.instance-next-event-id-and-event-routing-convergence.`

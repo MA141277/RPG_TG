@@ -1180,94 +1180,30 @@ function collectLegacyFlowLaunchActionsByEventId(
   for (const [index, flowRecord] of project.flows.entries()) {
     const fieldPath = `project.flows[${index}]`;
     const flow = flowRecord as ScriptEditorFlowRecord & Record<string, unknown>;
-    const eventStartTarget = isPlainObject(flow.eventStartTarget)
-      ? flow.eventStartTarget
-      : null;
-    if (eventStartTarget == null) {
-      continue;
-    }
-
-    const eventId = readRequiredTrimmedString(
-      eventStartTarget.eventId,
-      `${fieldPath}.eventStartTarget.eventId`,
-      diagnostics
-    );
-    const ownerKind = readRequiredTrimmedString(
-      flow.ownerKind,
-      `${fieldPath}.ownerKind`,
-      diagnostics
-    );
-    const ownerId = readRequiredTrimmedString(
-      flow.ownerId,
-      `${fieldPath}.ownerId`,
-      diagnostics
-    );
-    const returnPolicy = readRequiredTrimmedString(
-      flow.returnPolicy,
-      `${fieldPath}.returnPolicy`,
-      diagnostics
-    );
-    if (
-      eventId == null ||
-      ownerKind == null ||
-      ownerId == null ||
-      returnPolicy == null
-    ) {
-      continue;
-    }
-
-    const mappedOwnerKind = mapLegacyFlowOwnerKind(
-      ownerKind,
-      `${fieldPath}.ownerKind`,
-      diagnostics
-    );
-    if (mappedOwnerKind == null) {
-      continue;
-    }
-    if (!isPlayableReturnPolicy(returnPolicy)) {
+    for (const retiredField of [
+      "eventStartTarget",
+      "ownerKind",
+      "ownerId",
+      "returnPolicy",
+      "triggerId",
+      "triggerSource",
+      "triggerEvent",
+      "launchPayload",
+      "playableId",
+      "integrationId",
+    ]) {
+      if (!Object.hasOwn(flow, retiredField)) {
+        continue;
+      }
       diagnostics.push({
-        code: "invalid-field",
-        fieldPath: `${fieldPath}.returnPolicy`,
-        message:
-          'Legacy flow returnPolicy must be one of: "resume-owner", "reenter-owner", or "close-only".',
+        code: "unsupported-lowering",
+        fieldPath: `${fieldPath}.${retiredField}`,
+        message: `Flow "${flow.id ?? `flow.${index + 1}`}" still carries retired routing field "${retiredField}".`,
       });
-      continue;
     }
-
-    const nextActions = actionsByEventId.get(eventId) ?? [];
-    nextActions.push({
-      type: "launchFlow",
-      flowId: flow.id,
-      ownerContext: {
-        ownerKind: mappedOwnerKind,
-        ownerId,
-        returnPolicy,
-      },
-    });
-    actionsByEventId.set(eventId, nextActions);
   }
 
   return actionsByEventId;
-}
-
-function mapLegacyFlowOwnerKind(
-  value: string,
-  fieldPath: string,
-  diagnostics: ScriptEditorRuntimeExportDiagnostic[]
-): "house" | "dialogue" | "task" | "external" | null {
-  if (value === "building") {
-    return "house";
-  }
-  if (value === "dialogue" || value === "task" || value === "external") {
-    return value;
-  }
-  diagnostics.push({
-    code: "invalid-field",
-    fieldPath,
-    message:
-      'Legacy flow ownerKind must be one of: "building", "dialogue", "task", or "external".',
-  });
-  return null;
 }
 
 function isUnreferencedDraftEditorEvent(
@@ -2153,6 +2089,16 @@ function lowerEventNextEventId(
     typeof eventRecord.nextEventId === "string" ? eventRecord.nextEventId.trim() : "";
   if (nextEventId.length === 0) {
     return "";
+  }
+
+  if (nextEventId === eventRecord.id) {
+    diagnostics.push({
+      code: "invalid-field",
+      fieldPath: `project.events[${eventIndex}].nextEventId`,
+      message:
+        `Event "${eventRecord.id}" cannot reference itself through nextEventId.`,
+    });
+    return null;
   }
 
   if (!sourceEventIds.has(nextEventId)) {

@@ -983,6 +983,20 @@ function collectLinkedValidationIssues(
     if (
       eventRecord.nextEventId != null &&
       eventRecord.nextEventId.length > 0 &&
+      eventRecord.nextEventId === eventRecord.id
+    ) {
+      addMissingReferenceIssue({
+        id: `linked.events.next-event-self.${eventRecord.id}`,
+        severity: "blocked",
+        title: "Self-referential next event",
+        message: `Event ${eventRecord.id} cannot reference itself through nextEventId.`,
+        targetFamily: "events",
+        targetEntityId: eventRecord.id,
+        targetTab: "destination",
+      });
+    } else if (
+      eventRecord.nextEventId != null &&
+      eventRecord.nextEventId.length > 0 &&
       !hasRecord(project, "events", eventRecord.nextEventId)
     ) {
       addMissingReferenceIssue({

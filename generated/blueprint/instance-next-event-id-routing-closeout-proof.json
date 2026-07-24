@@ -1,0 +1,53 @@
+{
+  "generatedAt": "2026-07-24",
+  "queueId": "queue.instance-next-event-id-and-event-routing-convergence",
+  "taskId": "task.instance-next-event-id-and-event-routing-convergence.next-event-id-cutover-and-guard-baseline",
+  "acceptanceIds": [
+    "ACC-EVENT-SETTLE-003",
+    "ACC-EVENT-SETTLE-004"
+  ],
+  "formalNextEventIdAnchors": [
+    "src/domain/event.ts",
+    "src/application/dialogue/dialogue-runner.ts",
+    "src/application/dialogue/dialogue-choice-resolver.ts",
+    "src/application/script-editor/runtime-pack-export.ts",
+    "src/application/script-editor/runtime-pack-import.ts",
+    "src/application/script-editor/workspace-shell.ts"
+  ],
+  "failClosedLegacyResidue": {
+    "dialogueFollowUps": [
+      "src/application/script-editor/story-dialogue-event-authoring.ts preserves legacy followUps only when already present",
+      "src/application/script-editor/dialogue-story-runtime-materializer.ts rejects lowering dialogue.followUps into runtime truth"
+    ],
+    "legacyFlowRoutingFields": [
+      "src/application/script-editor/runtime-pack-export.ts rejects eventStartTarget/ownerKind/ownerId/returnPolicy routing residue",
+      "src/application/script-editor/workspace-shell.ts surfaces the same retired routing blockers before export"
+    ]
+  },
+  "eventOnlyRoutingProof": {
+    "runtimeFollowUpContract": [
+      "reenter-house",
+      "none"
+    ],
+    "removedSecondRouterContracts": [
+      "navigation.entered-city",
+      "navigation.entered-house",
+      "time.council-threshold-crossed",
+      "time.advanced",
+      "createNavigationTimeFollowUpBridge"
+    ],
+    "explicitPostCommitSeams": [
+      "src/main.ts applyPostNavigationStoryTrigger(\"city-enter\")",
+      "src/main.ts applyPostNavigationStoryTrigger(\"house-enter\")",
+      "src/main.ts syncCouncilPriorityAfterGameStateChange(previousGameState)"
+    ],
+    "preservedNonRoutingReturnSignal": [
+      "reenter-house"
+    ]
+  },
+  "queueCloseoutReadiness": {
+    "accEventSettle003": true,
+    "accEventSettle004": true,
+    "remainingOwnedRoutingBlocker": "none"
+  }
+}

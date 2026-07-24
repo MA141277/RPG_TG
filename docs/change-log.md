@@ -5,6 +5,55 @@
 `docs/change-log.md` 的正式定位是“历史记录 + 人类可读摘要”。
 它不是当前 Blueprint / legacy superpowers 治理的 live execution truth，不作为 resume entry、promotion gate、closeout gate 或固定同步门。
 
+## 2026-07-24 Runtime Follow-Up Transport Retirement
+
+### Changed
+- Removed navigation-entered follow-up transport from [src/core/runtime/navigation-runtime.ts](/D:/workspace/project/RPG_TG/src/core/runtime/navigation-runtime.ts:46) and narrowed [src/core/contracts/runtime-result.ts](/D:/workspace/project/RPG_TG/src/core/contracts/runtime-result.ts:27) so the shared runtime follow-up contract no longer carries `navigation.entered-city` or `navigation.entered-house`.
+- Reworked [src/main.ts](/D:/workspace/project/RPG_TG/src/main.ts:1019) to trigger covered `city-enter` / `house-enter` story checks through explicit post-commit `applyPostNavigationStoryTrigger(...)` calls instead of routing those authored continuations through runtime follow-up transport.
+- Removed time follow-up transport from [src/core/runtime/time-runtime.ts](/D:/workspace/project/RPG_TG/src/core/runtime/time-runtime.ts:12) and deleted the now-obsolete `createNavigationTimeFollowUpBridge()` owner from [src/application/runtime/navigation-time-follow-up.ts](/D:/workspace/project/RPG_TG/src/application/runtime/navigation-time-follow-up.ts:1); covered time-commit paths in [src/main.ts](/D:/workspace/project/RPG_TG/src/main.ts:1292) now call `syncCouncilPriorityAfterGameStateChange(previousGameState)` explicitly after settlement.
+- Updated [tests/robustness.test.cjs](/D:/workspace/project/RPG_TG/tests/robustness.test.cjs:24183) so guard coverage now proves that covered navigation and council-priority continuations use explicit post-commit seams while the shared runtime follow-up contract is reduced to the non-routing `reenter-house` return signal.
+
+### Impact
+- Authored routing no longer depends on helper-owned runtime `followUp` transport for covered navigation or time continuations, which clears the remaining second-router residue inside the active nextEventId/event-only-routing queue.
+- Event-owned follow-up truth stays on `nextEventId`, while non-routing post-commit orchestration is explicit in `main.ts` instead of hidden in a shared continuation contract.
+- The active queue can now enter closeout proof and repository-sync gating for `ACC-EVENT-SETTLE-003 / 004`.
+
+## 2026-07-24 Next Event Id Guard Baseline
+
+### Changed
+- Added explicit `nextEventId` self-reference rejection in [src/application/script-editor/runtime-pack-export.ts](/D:/workspace/project/RPG_TG/src/application/script-editor/runtime-pack-export.ts:2152), so `event.nextEventId === event.id` now fails closed during runtime-pack export instead of silently creating a self-loop.
+- Extended [src/application/script-editor/workspace-shell.ts](/D:/workspace/project/RPG_TG/src/application/script-editor/workspace-shell.ts:984) to surface the same self-referential `nextEventId` shape as a blocked editor issue, keeping the authoring workspace aligned with export-time validation.
+- Added focused robustness coverage in [tests/robustness.test.cjs](/D:/workspace/project/RPG_TG/tests/robustness.test.cjs:9090) for self-referential `nextEventId` export rejection and workspace blocking, then re-ran `npm run build:test` plus targeted `node --test` coverage for the new guard slice.
+
+### Impact
+- The active nextEventId/routing queue now enforces one of the parent-version hard constraints in production code: explicit self-reference through `nextEventId` is forbidden.
+- Script Editor authoring and runtime-pack export no longer disagree about this invalid routing shape.
+- Later queue slices can focus on remaining second-router residue (`dialogue.followUps`, legacy flow `eventStartTarget`, helper-owned runtime `followUp`) without revisiting the self-loop baseline.
+
+## 2026-07-24 Dialogue Follow-Up Authoring Residue Retirement
+
+### Changed
+- Stopped creating new empty dialogue `followUps` authoring residue in [src/application/script-editor/story-dialogue-event-authoring.ts](/D:/workspace/project/RPG_TG/src/application/script-editor/story-dialogue-event-authoring.ts:257): default dialogue records no longer allocate `followUps: []`.
+- Removed the dialogue follow-up append/update/remove authoring helper exports from the same module, since the current UI no longer exposes dialogue follow-up editing and runtime lowering already fails closed on that legacy family.
+- Narrowed normalization so `followUps` is preserved only when legacy data already carries a non-empty value, and updated [tests/robustness.test.cjs](/D:/workspace/project/RPG_TG/tests/robustness.test.cjs:15020) to guard that no new empty follow-up residue is authored by default.
+
+### Impact
+- The active queue no longer creates fresh `dialogue.followUps` residue through default authoring paths while task3 is converging toward `nextEventId` as the sole formal follow-up field family.
+- Legacy projects that already contain non-empty `followUps` still remain visible for bounded fail-closed handling; this slice only stops new residue authoring.
+- The next lawful routing-convergence slice can now focus on retiring legacy flow `eventStartTarget` as the next remaining explicit second-router family.
+
+## 2026-07-24 Legacy Flow Routing Residue Retirement
+
+### Changed
+- Removed the last export-side lowering bridge for legacy flow routing fields in [src/application/script-editor/runtime-pack-export.ts](/D:/workspace/project/RPG_TG/src/application/script-editor/runtime-pack-export.ts:1174). Flows that still carry retired routing fields such as `eventStartTarget`, `ownerKind`, `ownerId`, or `returnPolicy` now fail closed during export instead of being converted into event-owned `launchFlow` actions.
+- Reused the same export diagnostic path so [src/application/script-editor/workspace-shell.ts](/D:/workspace/project/RPG_TG/src/application/script-editor/workspace-shell.ts:582) now blocks these legacy flow routing shapes in the authoring workspace without a separate compatibility bridge.
+- Added focused regression coverage in [tests/robustness.test.cjs](/D:/workspace/project/RPG_TG/tests/robustness.test.cjs:9163) for export rejection and workspace blocking of legacy flow `eventStartTarget` residue.
+
+### Impact
+- Export and import are now aligned on the same contract: legacy flow routing fields are retired and rejected rather than silently lowered on one side but rejected on the other.
+- The active nextEventId/routing queue has removed another explicit second-router family from the authoring/export surface.
+- The main remaining same-family residue inside the queue is helper-owned runtime `followUp` ownership.
+
 ## 2026-07-24 Event Canonical Reuse Queue Closeout Proof
 
 ### Changed

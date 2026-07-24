@@ -27,7 +27,6 @@ import { createAppRenderCoordinator } from "./application/presenter/app-render-c
 import { createMainRuntimeOrchestrator } from "./application/runtime/main-runtime-orchestrator";
 import {
   applyCouncilPriorityFollowUp,
-  createNavigationTimeFollowUpBridge,
   type CouncilArrivalNotice,
 } from "./application/runtime/navigation-time-follow-up";
 import {
@@ -584,20 +583,6 @@ const shellBootLifecycleCoordinator = createShellBootLifecycleCoordinator({
   endLoadingScreen,
   showStartupError,
 });
-const navigationTimeFollowUp = createNavigationTimeFollowUpBridge({
-  getCharacterDefinitions: () => appState.characterDefinitions,
-  getHouseDefinitions: () => activeContentContext.houses,
-  getStoryContent: () => ({
-    eventDefinitionsById: activeContentContext.storyContent.eventDefinitionsById,
-    eventBindingsById: activeContentContext.storyContent.eventBindingsById,
-    dialogueDefinitionsById:
-      activeContentContext.storyContent.dialogueDefinitionsById,
-    activityDefinitionsById:
-      activeContentContext.storyContent.activityDefinitionsById,
-    textEntriesById: activeContentContext.storyContent.textEntriesById,
-  }),
-});
-
 const backgroundMusicPlayer = createBackgroundMusicPlayer();
 const mainUiFlow = new MainUiFlow({
   overlayRoot: uiOverlayElement,
@@ -1024,12 +1009,6 @@ function enterBuilding(houseId: string): void {
             locationAccessDefinitions: activeContentContext.locationAccess,
           }),
       },
-      followUp: {
-        handleFollowUp: ({ state, followUp }) =>
-          followUp.type === "reenter-house"
-            ? { state }
-            : navigationTimeFollowUp.applyOutcome({ state, outcome: followUp }),
-      },
     }),
   });
   appState = runtimeCommit.state;
@@ -1039,6 +1018,7 @@ function enterBuilding(houseId: string): void {
     );
     return;
   }
+  applyPostNavigationStoryTrigger("house-enter");
   renderApp();
 }
 
@@ -1076,6 +1056,34 @@ function applyRuntimeReenterBuilding(
         houseSession: null,
       },
     },
+  };
+}
+
+function applyPostNavigationStoryTrigger(
+  timing: "city-enter" | "house-enter" | null
+): void {
+  if (timing == null) {
+    return;
+  }
+
+  const triggerResult = mainRuntimeOrchestrator.execute({
+    type: "trigger-story-events",
+    timing,
+    state: appState.gameState,
+    characterDefinitions: appState.characterDefinitions,
+  });
+  if (!triggerResult.didChange) {
+    return;
+  }
+
+  appState = {
+    ...appState,
+    ...(triggerResult.gameState == null
+      ? {}
+      : { gameState: triggerResult.gameState }),
+    ...(triggerResult.characterDefinitions == null
+      ? {}
+      : { characterDefinitions: triggerResult.characterDefinitions }),
   };
 }
 
@@ -1286,12 +1294,6 @@ function startMapAutoAdvance(input: {
         router: {
           route: ({ state, request }) => routeTimeRuntime({ state, request }),
         },
-        followUp: {
-          handleFollowUp: ({ state, followUp }) =>
-            followUp.type === "reenter-house"
-              ? { state }
-              : navigationTimeFollowUp.applyOutcome({ state, outcome: followUp }),
-        },
       }),
     });
     appState = runtimeCommit.state;
@@ -1301,6 +1303,10 @@ function startMapAutoAdvance(input: {
     if (councilArrived && autoAdvanceState.completion != null) {
       stopMapAutoAdvance(input.intervalId);
       applyBuildingAutoAdvanceCompletion(autoAdvanceState.completion);
+      return;
+    }
+    if (syncCouncilPriorityAfterGameStateChange(previousGameState)) {
+      stopMapAutoAdvance(input.intervalId);
       return;
     }
     if (appState.autoAdvanceState == null) {
@@ -3110,6 +3116,7 @@ function handleModalConfirm() {
         modalState: shouldEnterCity ? pendingEnterCityState : null,
         locationDialogueState: null,
       };
+      const previousGameState = nextAppState.gameState;
       const runtimeCommit = commitRuntimeRequest({
         state: nextAppState,
         request: createAdvanceTimeSegmentsRequest(1),
@@ -3117,18 +3124,12 @@ function handleModalConfirm() {
           router: {
             route: ({ state, request }) => routeTimeRuntime({ state, request }),
           },
-          followUp: {
-            handleFollowUp: ({ state, followUp }) =>
-              followUp.type === "reenter-house"
-                ? { state }
-                : navigationTimeFollowUp.applyOutcome({
-                    state,
-                    outcome: followUp,
-                  }),
-          },
         }),
       });
       appState = runtimeCommit.state;
+      if (syncCouncilPriorityAfterGameStateChange(previousGameState)) {
+        return;
+      }
       renderApp();
     });
     return;
@@ -3153,12 +3154,6 @@ function handleModalConfirm() {
             locationAccessDefinitions: activeContentContext.locationAccess,
           }),
       },
-      followUp: {
-        handleFollowUp: ({ state, followUp }) =>
-          followUp.type === "reenter-house"
-            ? { state }
-            : navigationTimeFollowUp.applyOutcome({ state, outcome: followUp }),
-      },
     }),
   });
   appState = runtimeCommit.state;
@@ -3168,6 +3163,7 @@ function handleModalConfirm() {
     );
     return;
   }
+  applyPostNavigationStoryTrigger("city-enter");
   renderApp();
 }
 
@@ -3231,6 +3227,7 @@ function startCampaignTravel(
       targetCoordinate: nextCoordinate,
       pendingEnterCityState: pendingEnterCityState,
     });
+    const previousGameState = nextAppState.gameState;
     const runtimeCommit = commitRuntimeRequest({
       state: nextAppState,
       request: createAdvanceTimeSegmentsRequest(1),
@@ -3238,18 +3235,12 @@ function startCampaignTravel(
         router: {
           route: ({ state, request }) => routeTimeRuntime({ state, request }),
         },
-        followUp: {
-          handleFollowUp: ({ state, followUp }) =>
-            followUp.type === "reenter-house"
-              ? { state }
-              : navigationTimeFollowUp.applyOutcome({
-                  state,
-                  outcome: followUp,
-                }),
-        },
       }),
     });
     appState = runtimeCommit.state;
+    if (syncCouncilPriorityAfterGameStateChange(previousGameState)) {
+      return;
+    }
     renderApp();
   });
 }
