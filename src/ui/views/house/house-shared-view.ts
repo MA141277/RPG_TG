@@ -5,6 +5,7 @@ import type {
   HouseOverlayViewModel,
   HouseStandbyActorViewModel,
 } from "../../../domain/house-module";
+import { getReviewCompletionGradeLabel } from "../../../application/review/faction-review";
 import { NPC_INTERACTION_DEFAULT_OPTIONS } from "../../../domain/npc-interaction";
 import {
   renderDialogueTypewriterHint,
@@ -248,6 +249,67 @@ export function renderHouseQuantityConfirmOverlay(
           <button type="button" class="c-button c-grain-shop-button c-grain-shop-button--gold" data-house-action="${overlay.confirmActionId}">
             ${overlay.confirmLabel}
           </button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+export function renderHouseReviewAssignmentTableOverlay(
+  overlay: Extract<HouseOverlayViewModel, { type: "review-assignment-table" }>
+): string {
+  const rows = overlay.rows
+    .map(
+      (row) => `
+        <tr>
+          <td>${escapeHtml(row.characterName)}</td>
+          <td>${escapeHtml(row.assignmentTitle)}</td>
+          <td>${escapeHtml(getReviewCompletionGradeLabel(row.grade))}</td>
+        </tr>
+      `
+    )
+    .join("");
+
+  return `
+    <div class="c-grain-shop-overlay" data-house-overlay="review-assignment-table" data-house-overlay-variant="review-assignment-table">
+      <div class="c-grain-shop-modal c-grain-shop-skin-panel c-assessment-popup c-assessment-popup--wide" role="dialog" aria-modal="true">
+        <h3 class="c-grain-shop-modal__title c-grain-shop-nameplate">${escapeHtml(overlay.title)}</h3>
+        <div class="c-grain-shop-modal__body">
+          <table class="c-house-review-table">
+            <thead><tr><th>人物</th><th>委任</th><th>完成情况</th></tr></thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>
+        <div class="c-grain-shop-modal__actions">
+          <button
+            type="button"
+            class="c-button c-grain-shop-button c-grain-shop-button--gold"
+            data-house-action="${escapeHtml(overlay.confirmActionId)}"
+          >
+            ${escapeHtml(overlay.confirmLabel)}
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+export function renderHouseReviewPolicyPanelOverlay(
+  overlay: Extract<HouseOverlayViewModel, { type: "review-policy-panel" }>
+): string {
+  return `
+    <div class="c-grain-shop-overlay" data-house-overlay="review-policy-panel" data-house-overlay-variant="review-policy-panel">
+      <div class="c-grain-shop-modal c-grain-shop-skin-panel c-assessment-popup" role="dialog" aria-modal="true">
+        <h3 class="c-grain-shop-modal__title c-grain-shop-nameplate">${escapeHtml(overlay.title)}</h3>
+        <div class="c-grain-shop-modal__body">
+          <dl class="c-house-review-policy">
+            <dt>总目标</dt>
+            <dd>${escapeHtml(overlay.policy.overallGoal)}</dd>
+            <dt>阶段目标</dt>
+            <dd>${escapeHtml(overlay.policy.phaseGoal)}</dd>
+            <dt>执行计划</dt>
+            <dd>${escapeHtml(overlay.policy.executionPlan)}</dd>
+          </dl>
         </div>
       </div>
     </div>

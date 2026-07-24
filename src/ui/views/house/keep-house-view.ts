@@ -6,6 +6,8 @@ import {
   renderHouseCharacterCard,
   renderHouseLeaveButton,
   renderHouseNpcTargetAttributes,
+  renderHouseReviewAssignmentTableOverlay,
+  renderHouseReviewPolicyPanelOverlay,
   renderHouseStandbyRoster,
   renderHouseStatusCard,
 } from "./house-shared-view";
@@ -17,6 +19,14 @@ function renderOverlay(overlay: HouseOverlayViewModel | null): string {
 
   if (overlay.type === "alert") {
     return renderHouseAlertOverlay(overlay);
+  }
+
+  if (overlay.type === "review-assignment-table") {
+    return renderHouseReviewAssignmentTableOverlay(overlay);
+  }
+
+  if (overlay.type === "review-policy-panel") {
+    return renderHouseReviewPolicyPanelOverlay(overlay);
   }
 
   return "";

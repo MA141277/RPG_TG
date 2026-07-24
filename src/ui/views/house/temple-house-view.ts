@@ -14,6 +14,8 @@ import {
   renderHouseLeaveButton,
   renderHouseNpcTargetAttributes,
   renderHouseQuantityConfirmOverlay,
+  renderHouseReviewAssignmentTableOverlay,
+  renderHouseReviewPolicyPanelOverlay,
   renderHouseStandbyRoster,
 } from "./house-shared-view";
 
@@ -495,6 +497,14 @@ function renderOverlay(overlay: HouseOverlayViewModel | null): string {
 
   if (overlay.type === "result") {
     return renderResultOverlay(overlay);
+  }
+
+  if (overlay.type === "review-assignment-table") {
+    return renderHouseReviewAssignmentTableOverlay(overlay);
+  }
+
+  if (overlay.type === "review-policy-panel") {
+    return renderHouseReviewPolicyPanelOverlay(overlay);
   }
 
   return "";

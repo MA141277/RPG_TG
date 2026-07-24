@@ -21,6 +21,7 @@ import type { TempleHouseSessionState } from "./house-modules/temple-house-sessi
 import type { TeaHouseSessionState } from "./house-modules/tea-house-session";
 import type { TavernSessionState } from "./house-modules/tavern-session";
 import type { NpcInteractionOptionViewModel } from "./npc-interaction";
+import type { ReviewAssignmentRow, ReviewPolicyPanel } from "./review";
 
 export type HouseModuleId =
   | "home-house"
@@ -172,6 +173,18 @@ export type HouseOverlayViewModel =
       tone?: "info" | "success" | "warning";
       confirmActionId: string;
       confirmLabel: string;
+    }
+  | {
+      type: "review-assignment-table";
+      title: string;
+      rows: ReviewAssignmentRow[];
+      confirmActionId: string;
+      confirmLabel: string;
+    }
+  | {
+      type: "review-policy-panel";
+      title: string;
+      policy: ReviewPolicyPanel;
     }
   | {
       type: "confirm";

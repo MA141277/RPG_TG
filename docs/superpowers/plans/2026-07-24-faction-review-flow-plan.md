@@ -30,9 +30,9 @@
 
 - Status: `running`
 - Last Updated: `2026-07-24`
-- Current Focus: `Task 1 complete; Task 2 next`
-- Next Step: `Execute Task 2 with failing UI contract tests first.`
-- Verification: `npm run build:test; if ($LASTEXITCODE -eq 0) { node --test tests/faction-review-domain.test.cjs }`; `npm run typecheck`
+- Current Focus: `Task 2 complete; Task 3 next`
+- Next Step: `Execute Task 3 with failing keep flow and rank-gate tests first.`
+- Verification: `npm run build:test; if ($LASTEXITCODE -eq 0) { node --test tests/faction-review-ui-contract.test.cjs }`
 - Notes: `Plan created after approval of docs/superpowers/specs/2026-07-24-faction-review-flow-design.md.`
 
 ## Progress Log
@@ -45,6 +45,10 @@
   - Summary: `Completed Task 1 shared review domain helpers, faction merit runtime storage, and focused domain coverage.`
   - Verification: `npm run build:test; if ($LASTEXITCODE -eq 0) { node --test tests/faction-review-domain.test.cjs }`; `npm run typecheck`
   - Next: `Execute Task 2 with failing UI contract tests first.`
+- 2026-07-24
+  - Summary: `Completed Task 2 structured review assignment table and policy panel overlay contracts with shared UI renderers.`
+  - Verification: `npm run build:test; if ($LASTEXITCODE -eq 0) { node --test tests/faction-review-ui-contract.test.cjs }`
+  - Next: `Execute Task 3 with failing keep flow and rank-gate tests first.`
 
 ---
 
@@ -401,7 +405,7 @@ Update this plan:
 - Consumes: `ReviewAssignmentRow`, `ReviewPolicyPanel`.
 - Produces: `HouseOverlayViewModel` variants `review-assignment-table` and `review-policy-panel`, rendered by `renderHouseReviewAssignmentTableOverlay()` and `renderHouseReviewPolicyPanelOverlay()` inside `renderHouseOverlay` or equivalent shared renderer.
 
-- [ ] **Step 1: Write failing UI contract tests**
+- [x] **Step 1: Write failing UI contract tests**
 
 Create `tests/faction-review-ui-contract.test.cjs`:
 
@@ -473,7 +477,7 @@ test("main entry does not gain review business imports or hardcoded review branc
 });
 ```
 
-- [ ] **Step 2: Run the targeted UI tests and verify RED**
+- [x] **Step 2: Run the targeted UI tests and verify RED**
 
 Run:
 
@@ -485,7 +489,7 @@ Expected:
 
 - Fails because the shared overlay renderers are not exported.
 
-- [ ] **Step 3: Extend `HouseOverlayViewModel`**
+- [x] **Step 3: Extend `HouseOverlayViewModel`**
 
 Modify `src/domain/house-module.ts` to add:
 
@@ -513,7 +517,7 @@ Add union members:
   }
 ```
 
-- [ ] **Step 4: Render assignment table and policy panel in shared view**
+- [x] **Step 4: Render assignment table and policy panel in shared view**
 
 Modify `src/ui/views/house/house-shared-view.ts`:
 
@@ -543,7 +547,7 @@ The policy panel must use:
 </dl>
 ```
 
-- [ ] **Step 5: Verify GREEN**
+- [x] **Step 5: Verify GREEN**
 
 Run:
 
@@ -555,7 +559,7 @@ Expected:
 
 - UI contract tests pass.
 
-- [ ] **Step 6: Update plan progress**
+- [x] **Step 6: Update plan progress**
 
 Update this plan:
 
