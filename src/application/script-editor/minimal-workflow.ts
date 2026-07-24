@@ -16,6 +16,7 @@ import {
   type ScriptEditorPersonRecord,
   type ScriptEditorProjectDefinition,
   type ScriptEditorProjectFileKey,
+  type ScriptEditorSettlementRecord,
   type ScriptEditorStoryNodeRecord,
   type ScriptEditorStoryPackRecord,
   type ScriptEditorTextEntryRecord,
@@ -35,6 +36,7 @@ import {
   createDefaultScriptEditorDialogueRecord,
   createDefaultScriptEditorEventBindingRecord,
   createDefaultScriptEditorEventRecord,
+  createDefaultScriptEditorSettlementRecord,
   createDefaultScriptEditorStoryNodeRecord,
 } from "./story-dialogue-event-authoring";
 import { createDraftScriptEditorProjectCompletionState } from "./project-completion-state";
@@ -53,6 +55,7 @@ export const SCRIPT_EDITOR_MINIMAL_WORKFLOW_FAMILIES = [
   "flows",
   "textEntries",
   "storyNodes",
+  "settlements",
   "events",
   "eventBindings",
 ] as const;
@@ -225,6 +228,7 @@ export function listScriptEditorWorkflowFamilyRecords(
   | ScriptEditorPortraitVariantRecord[]
   | ScriptEditorCityRecord[]
   | ScriptEditorBuildingRecord[]
+  | ScriptEditorSettlementRecord[]
   | ScriptEditorDialogueRecord[]
   | ScriptEditorEntityRecord[]
   | ScriptEditorMinigameRecord[]
@@ -257,6 +261,8 @@ export function listScriptEditorWorkflowFamilyRecords(
       return project.textEntries;
     case "storyNodes":
       return project.storyNodes;
+    case "settlements":
+      return project.settlements;
     case "events":
       return project.events;
     case "eventBindings":
@@ -273,6 +279,7 @@ export function createScriptEditorWorkflowRecordDraft(
   | ScriptEditorPortraitVariantRecord
   | ScriptEditorCityRecord
   | ScriptEditorBuildingRecord
+  | ScriptEditorSettlementRecord
   | ScriptEditorDialogueRecord
   | ScriptEditorEntityRecord
   | ScriptEditorMinigameRecord
@@ -357,6 +364,12 @@ export function createScriptEditorWorkflowRecordDraft(
           ? legacyIndex
           : allocateNextScriptEditorProjectCanonicalId(project, "storyNodes")
       ) as ScriptEditorStoryNodeRecord;
+    case "settlements":
+      return createDefaultScriptEditorSettlementRecord(
+        project == null
+          ? legacyIndex
+          : allocateNextScriptEditorProjectCanonicalId(project, "settlements")
+      ) as ScriptEditorSettlementRecord;
     case "events":
       return createDefaultScriptEditorEventRecord(
         project == null
@@ -379,6 +392,7 @@ export function upsertScriptEditorWorkflowRecord(
     | ScriptEditorPersonRecord
     | ScriptEditorCityRecord
     | ScriptEditorBuildingRecord
+    | ScriptEditorSettlementRecord
     | ScriptEditorDialogueRecord
     | ScriptEditorEntityRecord
     | ScriptEditorMinigameRecord
@@ -428,6 +442,7 @@ function replaceProjectFamily(
     | ScriptEditorPortraitVariantRecord[]
     | ScriptEditorCityRecord[]
     | ScriptEditorBuildingRecord[]
+    | ScriptEditorSettlementRecord[]
     | ScriptEditorDialogueRecord[]
     | ScriptEditorMinigameRecord[]
     | ScriptEditorFlowRecord[]
@@ -466,6 +481,11 @@ function replaceProjectFamily(
       return { ...project, textEntries: nextRecords as ScriptEditorTextEntryRecord[] };
     case "storyNodes":
       return { ...project, storyNodes: nextRecords as ScriptEditorStoryNodeRecord[] };
+    case "settlements":
+      return {
+        ...project,
+        settlements: nextRecords as ScriptEditorSettlementRecord[],
+      };
     case "events":
       return { ...project, events: nextRecords as ScriptEditorEventRecord[] };
     case "eventBindings":

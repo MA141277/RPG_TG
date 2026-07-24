@@ -9,6 +9,7 @@ const SCRIPT_EDITOR_CANONICAL_ID_FAMILY_CODE = {
   cities: 21,
   buildings: 22,
   buildingArrangements: 23,
+  settlements: 24,
   quests: 31,
   dialogues: 41,
   minigames: 42,
@@ -71,6 +72,8 @@ export function allocateNextScriptEditorProjectCanonicalId(
         family,
         project.buildingArrangements
       );
+    case "settlements":
+      return allocateNextScriptEditorCanonicalId(family, project.settlements);
     case "quests":
       return allocateNextScriptEditorCanonicalId(family, project.quests);
     case "dialogues":

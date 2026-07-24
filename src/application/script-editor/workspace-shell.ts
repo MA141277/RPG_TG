@@ -134,6 +134,7 @@ export type ScriptEditorWorkspaceExportTarget = {
 };
 
 const FAMILY_LABELS: Record<string, string> = {
+  settlements: "结算",
   storyPack: "剧本导出",
   people: "人物",
   portraits: "立绘资源",
@@ -169,7 +170,7 @@ const TREE_GROUPS: Array<{
   {
     id: "narrative",
     label: "剧情与文本",
-    families: ["storyNodes", "dialogues", "minigames"],
+    families: ["storyNodes", "dialogues", "minigames", "settlements"],
   },
   {
     id: "gameplay",

@@ -5,14 +5,14 @@
 - document_role: `version-governor`
 - version_id: `target.event-follow-up-routing-settlement-and-canonical-reuse-convergence`
 - version_status: `open`
-- active_phase: `phase.promotion-review`
-- active_queue: `none`
-- decision_state: `promotion-review`
-- next_decision: `same-version-admission-or-version-closeout`
-- next_action: `return-to-promotion-review`
-- resume_gate: `promotion-review`
+- active_phase: `phase.active-execution`
+- active_queue: `queue.script-editor-settlement-authoring-surface-completion`
+- decision_state: `active-execution`
+- next_decision: `queue-closeout-or-return-to-version-review`
+- next_action: `resume-active-queue`
+- resume_gate: `active-queue`
 - post_queue_closeout_pause_policy: `auto-continue`
-- promotion_review_result: `queue-closeout-complete`
+- promotion_review_result: `same-version-residue-admitted`
 - review_subject_id: `none`
 - review_subject_classification: `none`
 - proposed_queue_id: `none`
@@ -27,13 +27,13 @@
 - closure_review_status: `routed`
 - residue_candidate_id: `none`
 - residue_candidate_family: `none`
-- routing_basis: `queue.event-routing-settlement-migration-and-final-acceptance completed repository sync through commit 9a28a9a on origin/mod-first-dev, so no active queue remains and the version returns to closeout review.`
+- routing_basis: `After version-level closeout review resumed, the operator identified a missing settlement module and missing event-side settlement controls in the Script Editor. Because the parent version already requires Script Editor/export/import/loading/preview/startup/runtime consistency, Blueprint routes this as a same-version residue queue instead of treating the version as complete.`
 - next_lawful_queue_recommendation: `none`
 - auto_admission_ready: `false`
-- stop_reason: `outside-parent-spec`
-- stop_basis: `All approved queues inside target.event-follow-up-routing-settlement-and-canonical-reuse-convergence are now closed and repository-synced. Further movement would be explicit version closeout and/or cross-version routing to another open target, which is no longer queue-local work inside this version.`
-- next_unblocked_action: `write-version-closeout`
-- human_input_required: `true`
+- stop_reason: `none`
+- stop_basis: `none`
+- next_unblocked_action: `none`
+- human_input_required: `false`
 - blocked_by: []
 - candidate_queue_ids:
   - `queue.event-and-building-instance-canonical-reuse`
@@ -42,6 +42,7 @@
   - `queue.same-display-name-building-host-instance-canonicalization`
   - `queue.full-chain-event-routing-and-settlement-consistency`
   - `queue.event-routing-settlement-migration-and-final-acceptance`
+  - `queue.script-editor-settlement-authoring-surface-completion`
 - candidate_backlog_refresh_status: `fresh`
 - candidate_backlog_snapshot:
   - `queue.event-and-building-instance-canonical-reuse: closed after canonical reuse, duplicate-binding review, full owned reference rewrite, queue-closeout proof, and successful repository sync to origin/mod-first-dev.`
@@ -50,6 +51,7 @@
   - `queue.same-display-name-building-host-instance-canonicalization: closed after same-name host merge, direct host-id rewrite, queue-closeout proof, and successful repository sync through commit acf24fe on origin/mod-first-dev.`
   - `queue.full-chain-event-routing-and-settlement-consistency: closed after queue-closeout proof, repository sync through commit fe14a03, and full-chain parity coverage for ACC-EVENT-SETTLE-006.`
   - `queue.event-routing-settlement-migration-and-final-acceptance: closed after compatibilityImport retirement, automated acceptance coverage, queue-closeout proof, and repository sync through commit 9a28a9a on origin/mod-first-dev.`
+  - `queue.script-editor-settlement-authoring-surface-completion: active same-version residue queue admitted on 2026-07-25 after source audit proved that creator-facing settlement authoring still lagged behind the already-landed settlement/runtime truth.`
 - candidate_backlog_scan_sources:
   - `project-progress`
   - `blueprint`
@@ -376,3 +378,6 @@
 - `2026-07-24`: `The version automatically promoted task.event-routing-settlement-migration-and-final-acceptance.queue-closeout-review-and-version-handoff to the live active task. The next lawful action is queue-closeout proof plus final acceptance-ledger synchronization rather than reopening additional production implementation scope.`
 - `2026-07-24`: `Local closeout proof is now recorded at generated/blueprint/event-routing-settlement-migration-final-acceptance-closeout-proof.json. The required-final queue is locally ready for repository-sync gating, and because this is the final approved queue in the version, the post-sync handoff target is version-level closeout review rather than another queue admission.`
 - `2026-07-24`: `Repository-sync gate for queue.event-routing-settlement-migration-and-final-acceptance is now satisfied. Commit 9a28a9a landed on origin/mod-first-dev, active_queue is now none, and the version returns to promotion-review / closeout-review state because all approved queues in the version are now closed.`
+- `2026-07-25`: `Version-level closeout review then found same-version residue: the formal settlement/runtime model was present, but the Script Editor still lacked a creator-facing settlement module and event-side settlement controls. Blueprint therefore admitted queue.script-editor-settlement-authoring-surface-completion as the lawful same-version residue queue instead of treating the version as complete.`
+- `2026-07-25`: `The residue queue completed its bounded local implementation slice. Script Editor workflow/navigation now exposes settlements under 剧情与文本, settlement records support result-local nextEventId editing, event authoring exposes type / settlementId / nextEventId controls, build:test is green, and robustness coverage is green.`
+- `2026-07-25`: `The version auto-promoted task.script-editor-settlement-authoring-surface-completion.queue-closeout-review-and-sync-gate as the live active task. The next lawful action is governed closeout proof plus repository-sync gating for the residue queue, not version closeout.`

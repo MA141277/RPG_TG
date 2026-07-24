@@ -10775,6 +10775,7 @@ test(
     assert.equal(visibleFamilies.includes("dialogues"), true);
     assert.equal(visibleFamilies.includes("scenes"), false);
     assert.equal(visibleFamilies.includes("minigames"), true);
+    assert.equal(visibleFamilies.includes("settlements"), true);
     assert.equal(visibleFamilies.includes("flows"), false);
     assert.equal(visibleFamilies.includes("storyNodes"), true);
     assert.equal(visibleFamilies.includes("events"), true);
@@ -10870,6 +10871,35 @@ test("script editor minimal workflow record helpers support draft upsert and rem
 
   project = removeScriptEditorWorkflowRecord(project, "people", draft.id);
   assert.equal(project.people.some((record) => record.id === draft.id), false);
+});
+
+test("script editor settlement workflow helpers support draft upsert and remove", () => {
+  const {
+    createDefaultScriptEditorProjectDefinition,
+    createScriptEditorWorkflowRecordDraft,
+    removeScriptEditorWorkflowRecord,
+    upsertScriptEditorWorkflowRecord,
+  } = require("../.test-dist/application/script-editor/minimal-workflow.js");
+  let project = createDefaultScriptEditorProjectDefinition();
+  const draft = createScriptEditorWorkflowRecordDraft("settlements", project);
+
+  assert.ok(draft);
+  assert.match(draft.id, /^\d+$/);
+
+  project = upsertScriptEditorWorkflowRecord(project, "settlements", draft);
+  assert.equal(project.settlements.some((record) => record.id === draft.id), true);
+
+  project = upsertScriptEditorWorkflowRecord(project, "settlements", {
+    ...draft,
+    title: "Updated Settlement",
+  });
+  assert.equal(
+    project.settlements.find((record) => record.id === draft.id)?.title,
+    "Updated Settlement"
+  );
+
+  project = removeScriptEditorWorkflowRecord(project, "settlements", draft.id);
+  assert.equal(project.settlements.some((record) => record.id === draft.id), false);
 });
 
 test("script editor draft creation allocates canonical numeric ids by family max+1 without deleted-id reuse", () => {
@@ -15694,6 +15724,30 @@ test("script editor tab selectors allow owner-local event tabs and reject event-
   assert.doesNotMatch(eventSelectorSource, /"conditions"/);
 });
 
+test("script editor settlement authoring exposes settlement module and event settlement routing controls", () => {
+  const source = fs.readFileSync("src/ui/main-ui/main-ui-flow.js", "utf8");
+  const workspaceSource = fs.readFileSync(
+    "src/application/script-editor/workspace-shell.ts",
+    "utf8"
+  );
+
+  assert.match(source, /family === "settlements"/);
+  assert.match(source, /renderScriptEditorSettlementEditor\(records, selectedRecord\)/);
+  assert.match(source, /data-script-editor-settlement-field="title"/);
+  assert.match(source, /data-script-editor-settlement-field="description"/);
+  assert.match(source, /data-script-editor-settlement-result-field="id"/);
+  assert.match(source, /data-script-editor-settlement-result-field="label"/);
+  assert.match(source, /data-script-editor-settlement-result-field="nextEventId"/);
+  assert.match(source, /data-script-editor-action="add-settlement-result"/);
+  assert.match(source, /data-script-editor-action="remove-settlement-result"/);
+  assert.match(source, /data-script-editor-event-field="type"/);
+  assert.match(source, /data-script-editor-event-field="settlementId"/);
+  assert.match(source, /data-script-editor-event-field="nextEventId"/);
+  assert.match(source, /getScriptEditorProjectRecordOptions\("settlements"\)/);
+  assert.match(workspaceSource, /families: \["storyNodes", "dialogues", "minigames", "settlements"\]/);
+  assert.match(workspaceSource, /settlements: ".*?"/);
+});
+
 test("script editor event binding editor uses event and trigger selectors", () => {
   const source = fs.readFileSync("src/ui/main-ui/main-ui-flow.js", "utf8");
   const editorSource =
@@ -15811,10 +15865,12 @@ test("script editor story/dialogue/event authoring helpers normalize bounded nar
     createDefaultScriptEditorDialogueRecord,
     createDefaultScriptEditorEventBindingRecord,
     createDefaultScriptEditorEventRecord,
+    createDefaultScriptEditorSettlementRecord,
     createDefaultScriptEditorStoryNodeRecord,
     normalizeScriptEditorDialogueRecord,
     normalizeScriptEditorEventBindingRecord,
     normalizeScriptEditorEventRecord,
+    normalizeScriptEditorSettlementRecord,
     normalizeScriptEditorStoryNodeRecord,
     appendScriptEditorDialogueNode,
     appendScriptEditorDialogueParticipant,
@@ -15828,6 +15884,8 @@ test("script editor story/dialogue/event authoring helpers normalize bounded nar
     updateScriptEditorEventField,
     updateScriptEditorEventPreviewSummaryField,
     updateScriptEditorEventRelationField,
+    updateScriptEditorSettlementField,
+    updateScriptEditorSettlementResultField,
     updateScriptEditorStoryNodeField,
     updateScriptEditorStoryNodeRelation,
   } = authoringHelpers;
@@ -15865,6 +15923,11 @@ test("script editor story/dialogue/event authoring helpers normalize bounded nar
     "settlementId",
     " settlement.opening.default "
   );
+  eventRecord = updateScriptEditorEventField(
+    eventRecord,
+    "nextEventId",
+    " event.follow-up "
+  );
   eventRecord = toggleScriptEditorEventRepeatable(eventRecord, true);
   eventRecord = updateScriptEditorEventDestinationField(eventRecord, "family", "event");
   eventRecord = updateScriptEditorEventDestinationField(
@@ -15890,6 +15953,36 @@ test("script editor story/dialogue/event authoring helpers normalize bounded nar
     "Preview the event branch."
   );
   const normalizedEvent = normalizeScriptEditorEventRecord(eventRecord);
+  let settlementRecord = createDefaultScriptEditorSettlementRecord(0);
+  settlementRecord = updateScriptEditorSettlementField(
+    settlementRecord,
+    "title",
+    " Opening Settlement "
+  );
+  settlementRecord = updateScriptEditorSettlementField(
+    settlementRecord,
+    "description",
+    " Settlement details "
+  );
+  settlementRecord = updateScriptEditorSettlementResultField(
+    settlementRecord,
+    0,
+    "id",
+    " result.success "
+  );
+  settlementRecord = updateScriptEditorSettlementResultField(
+    settlementRecord,
+    0,
+    "label",
+    " Success "
+  );
+  settlementRecord = updateScriptEditorSettlementResultField(
+    settlementRecord,
+    0,
+    "nextEventId",
+    " event.follow-up "
+  );
+  const normalizedSettlement = normalizeScriptEditorSettlementRecord(settlementRecord);
   const eventBinding = normalizeScriptEditorEventBindingRecord({
     ...createDefaultScriptEditorEventBindingRecord(0),
     eventId: " event.opening ",
@@ -15908,6 +16001,7 @@ test("script editor story/dialogue/event authoring helpers normalize bounded nar
   assert.equal(normalizedEvent.title, "Opening Event");
   assert.equal(normalizedEvent.type, "settlement");
   assert.equal(normalizedEvent.settlementId, "settlement.opening.default");
+  assert.equal(normalizedEvent.nextEventId, "event.follow-up");
   assert.equal(normalizedEvent.triggerTiming, "manual");
   assert.equal(normalizedEvent.repeatable, true);
   assert.equal(Object.hasOwn(normalizedEvent, "conditionGroups"), false);
@@ -15916,6 +16010,15 @@ test("script editor story/dialogue/event authoring helpers normalize bounded nar
   assert.equal(normalizedEvent.relations.storyNodeId, "story-node.hero");
   assert.deepEqual(normalizedEvent.relations.personIds, ["person.hero"]);
   assert.equal(normalizedEvent.previewSummary.previewNotes, "Preview the event branch.");
+  assert.equal(normalizedSettlement.title, "Opening Settlement");
+  assert.equal(normalizedSettlement.description, " Settlement details ");
+  assert.deepEqual(normalizedSettlement.results, [
+    {
+      id: "result.success",
+      label: "Success",
+      nextEventId: "event.follow-up",
+    },
+  ]);
   assert.equal(eventBinding.id, "event-binding.new.1");
   assert.equal(eventBinding.eventId, "event.opening");
   assert.deepEqual(eventBinding.owner, { family: "city", id: "city.start" });
@@ -16063,7 +16166,7 @@ test("script editor workspace groups creator navigation using current world, nar
     [
       { id: "project", families: ["storyPack"] },
       { id: "world", families: ["people", "cities", "buildings"] },
-      { id: "narrative", families: ["storyNodes", "dialogues", "minigames"] },
+      { id: "narrative", families: ["storyNodes", "dialogues", "minigames", "settlements"] },
       { id: "gameplay", families: ["events"] },
       { id: "library", families: ["portraits", "portraitVariants", "textEntries"] },
     ]

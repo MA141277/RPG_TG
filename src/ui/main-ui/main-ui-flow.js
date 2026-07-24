@@ -135,21 +135,25 @@ import {
   appendScriptEditorDialogueParticipant,
   appendScriptEditorEventBindingConditionItem,
   appendScriptEditorEventRelationEntry,
+  appendScriptEditorSettlementResult,
   appendScriptEditorStoryNodeRelation,
   createDefaultScriptEditorEventBindingRecord,
   listScriptEditorEventBindingConditionFieldOptions,
   normalizeScriptEditorDialogueRecord,
   normalizeScriptEditorEventBindingRecord,
   normalizeScriptEditorEventRecord,
+  normalizeScriptEditorSettlementRecord,
   normalizeScriptEditorStoryNodeRecord,
   removeScriptEditorDialogueNode,
   removeScriptEditorDialogueParticipant,
   removeScriptEditorEventBindingConditionItem,
   removeScriptEditorEventRelationEntry,
+  removeScriptEditorSettlementResult,
   removeScriptEditorStoryNodeRelation,
   SCRIPT_EDITOR_DIALOGUE_NODE_TYPES,
   SCRIPT_EDITOR_EVENT_BINDING_CONDITION_GROUP_OPERATORS,
   SCRIPT_EDITOR_EVENT_DESTINATION_FAMILIES,
+  SCRIPT_EDITOR_EVENT_TYPES,
   SCRIPT_EDITOR_EVENT_TRIGGER_TIMINGS,
   SCRIPT_EDITOR_STORY_PROGRESS_MODES,
   toggleScriptEditorEventRepeatable,
@@ -165,6 +169,8 @@ import {
   updateScriptEditorEventField,
   updateScriptEditorEventPreviewSummaryField,
   updateScriptEditorEventRelationField,
+  updateScriptEditorSettlementField,
+  updateScriptEditorSettlementResultField,
   updateScriptEditorStoryNodeField,
   updateScriptEditorStoryNodeRelation,
 } from "../../application/script-editor/story-dialogue-event-authoring";
@@ -415,6 +421,7 @@ const SCRIPT_EDITOR_RECORD_SEARCH_FAMILY_ATTRIBUTES = {
   quests: 'data-script-editor-record-search-family="quests"',
   storyNodes: 'data-script-editor-record-search-family="storyNodes"',
   dialogues: 'data-script-editor-record-search-family="dialogues"',
+  settlements: 'data-script-editor-record-search-family="settlements"',
   events: 'data-script-editor-record-search-family="events"',
   minigames: 'data-script-editor-record-search-family="minigames"',
   textEntries: 'data-script-editor-record-search-family="textEntries"',
@@ -491,6 +498,7 @@ export class MainUiFlow {
       people: "",
       portraits: "",
       portraitVariants: "",
+      settlements: "",
     };
     this.scriptEditorCityMountedBuildingUiState = {};
     this.scriptEditorPersonAttributePage = 1;
@@ -876,6 +884,10 @@ export class MainUiFlow {
       return this.renderScriptEditorDialogueEditor(records, selectedRecord);
     }
 
+    if (family === "settlements") {
+      return this.renderScriptEditorSettlementEditor(records, selectedRecord);
+    }
+
 
     if (family === "events") {
       return this.renderScriptEditorEventEditor(records, selectedRecord);
@@ -1053,6 +1065,7 @@ export class MainUiFlow {
       quests: "",
       storyNodes: "",
       dialogues: "",
+      settlements: "",
       events: "",
       minigames: "",
       textEntries: "",
@@ -4272,6 +4285,121 @@ export class MainUiFlow {
     `;
   }
 
+  renderScriptEditorSettlementEditor(records, selectedRecord) {
+    const settlement =
+      selectedRecord == null ? null : normalizeScriptEditorSettlementRecord(selectedRecord);
+    const filteredRecords = this.filterScriptEditorRecords("settlements", records);
+    const nextEventOptions = this.getScriptEditorProjectRecordOptions("events");
+
+    return `
+      <div class="c-script-editor-editor-card">
+        <div class="c-script-editor-record-layout c-script-editor-record-layout--narrative">
+          ${this.renderScriptEditorPaginatedRecordList({
+            family: "settlements",
+            records: filteredRecords,
+            ariaLabel: "结算列表",
+            modifierClass: "c-script-editor-record-list--narrative",
+            toolbar: `
+              <div class="c-script-editor-record-list__toolbar">
+                ${this.renderScriptEditorRecordListSearch("settlements", "搜索结算", "按结算标题或 ID 搜索")}
+                <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="add-record">
+                  新增结算
+                </button>
+                <button
+                  type="button"
+                  class="c-main-ui-json-text-button"
+                  data-script-editor-action="remove-record"
+                  ${settlement == null ? "disabled" : ""}
+                >
+                  删除结算
+                </button>
+              </div>
+            `,
+            renderRecord: (record) => {
+              const normalizedRecord = normalizeScriptEditorSettlementRecord(record);
+              return `
+                <button
+                  type="button"
+                  class="c-script-editor-record-list__item c-script-editor-record-list__item--narrative ${record.id === selectedRecord?.id ? "is-selected" : ""}"
+                  data-script-editor-record-id="${escapeHtml(record.id)}"
+                >
+                  <strong>${escapeHtml(normalizedRecord.title)}</strong>
+                  <span>${escapeHtml(normalizedRecord.id)}</span>
+                </button>
+              `;
+            },
+          })}
+          <div class="c-script-editor-narrative-editor">
+            ${
+              settlement == null
+                ? `<p class="c-script-editor-editor-card__hint">请选择一个结算以继续编辑。</p>`
+                : `
+                  <section class="c-script-editor-narrative-panel" aria-label="结算编辑面板">
+                    <div class="c-script-editor-form-grid">
+                      <label class="c-script-editor-form-field">
+                        <span>结算 ID</span>
+                        <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(settlement.id)}" data-script-editor-settlement-field="id" />
+                      </label>
+                      <label class="c-script-editor-form-field">
+                        <span>结算标题</span>
+                        <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(settlement.title)}" data-script-editor-settlement-field="title" />
+                      </label>
+                      <label class="c-script-editor-form-field c-script-editor-form-field--wide">
+                        <span>结算说明</span>
+                        <textarea class="c-script-editor-record-editor__textarea c-script-editor-record-editor__textarea--compact" data-script-editor-settlement-field="description" spellcheck="false">${escapeHtml(settlement.description ?? "")}</textarea>
+                      </label>
+                    </div>
+                    <section class="c-script-editor-minigame-list">
+                      <div class="c-script-editor-narrative-panel__header">
+                        <div>
+                          <p class="c-script-editor-editor-card__eyebrow">结果路由</p>
+                          <h3 class="c-script-editor-editor-card__title">结算结果</h3>
+                        </div>
+                        <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="add-settlement-result">
+                          新增结果
+                        </button>
+                      </div>
+                      ${(settlement.results ?? [])
+                        .map(
+                          (result, index) => `
+                            <article class="c-script-editor-minigame-list__route">
+                              <div class="c-script-editor-form-grid">
+                                <label class="c-script-editor-form-field">
+                                  <span>结果 ID</span>
+                                  <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(result.id)}" data-script-editor-settlement-result-field="id" data-script-editor-settlement-result-index="${index}" />
+                                </label>
+                                <label class="c-script-editor-form-field">
+                                  <span>结果标签</span>
+                                  <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(result.label)}" data-script-editor-settlement-result-field="label" data-script-editor-settlement-result-index="${index}" />
+                                </label>
+                                <label class="c-script-editor-form-field c-script-editor-form-field--wide">
+                                  <span>后续事件</span>
+                                  <select class="c-script-editor-form-field__input" data-script-editor-settlement-result-field="nextEventId" data-script-editor-settlement-result-index="${index}">
+                                    ${this.renderScriptEditorSelectOptions(
+                                      nextEventOptions,
+                                      result.nextEventId ?? "",
+                                      "空表示直接关闭"
+                                    )}
+                                  </select>
+                                </label>
+                              </div>
+                              <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="remove-settlement-result" data-script-editor-settlement-result-index="${index}">
+                                删除结果
+                              </button>
+                            </article>
+                          `
+                        )
+                        .join("")}
+                    </section>
+                  </section>
+                `
+            }
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
   renderScriptEditorMinigameEditor(records, selectedRecord) {
     const minigame =
       selectedRecord == null ? null : normalizeScriptEditorMinigameRecord(selectedRecord);
@@ -4716,6 +4844,12 @@ export class MainUiFlow {
     return [];
   }
 
+  getScriptEditorEventNextEventOptions(currentEventId = "") {
+    return this.getScriptEditorProjectRecordOptions("events").filter(
+      (option) => option.value !== currentEventId
+    );
+  }
+
   getScriptEditorMinigamePlayableLabel(playableId) {
     const labels = {
       "activity-qte": "互动问答",
@@ -4830,6 +4964,16 @@ export class MainUiFlow {
       this.scriptEditorEventTab = "basics";
     }
 
+    const eventType = eventRecord.type ?? "";
+    const eventTypeOptions = [
+      { value: "", label: "普通事件" },
+      ...SCRIPT_EDITOR_EVENT_TYPES.map((type) => ({
+        value: type,
+        label: type === "settlement" ? "结算" : type,
+      })),
+    ];
+    const settlementOptions = this.getScriptEditorProjectRecordOptions("settlements");
+    const nextEventOptions = this.getScriptEditorEventNextEventOptions(eventRecord.id);
     const currentDestinationFamily = eventRecord.destination?.family ?? "dialogue";
     const currentDestinationTargetId = eventRecord.destination?.targetId ?? "";
     const destinationFamilyOptions = this.createScriptEditorEventDestinationFamilyOptions();
@@ -4976,6 +5120,12 @@ export class MainUiFlow {
             <span>事件标题</span>
             <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(eventRecord.title)}" data-script-editor-event-field="title" />
           </label>
+          <label class="c-script-editor-form-field">
+            <span>事件类型</span>
+            <select class="c-script-editor-form-field__input" data-script-editor-event-field="type">
+              ${this.renderScriptEditorSelectOptions(eventTypeOptions, eventType, "普通事件")}
+            </select>
+          </label>
           <label class="c-script-editor-person-editor__toggle">
             <input type="checkbox" data-script-editor-event-repeatable ${eventRecord.repeatable ? "checked" : ""} />
             <span>允许重复触发</span>
@@ -4984,6 +5134,28 @@ export class MainUiFlow {
             <span>事件说明</span>
             <textarea class="c-script-editor-record-editor__textarea c-script-editor-record-editor__textarea--compact" data-script-editor-event-field="description" spellcheck="false" placeholder="填写这个事件的用途、触发结果或创作备注。">${escapeHtml(eventRecord.description ?? "")}</textarea>
           </label>
+          <label class="c-script-editor-form-field">
+            <span>后续事件</span>
+            <select class="c-script-editor-form-field__input" data-script-editor-event-field="nextEventId">
+              ${this.renderScriptEditorSelectOptions(nextEventOptions, eventRecord.nextEventId ?? "", "空表示直接关闭")}
+            </select>
+          </label>
+          ${
+            eventType === "settlement"
+              ? `
+                <label class="c-script-editor-form-field">
+                  <span>结算模块</span>
+                  <select class="c-script-editor-form-field__input" data-script-editor-event-field="settlementId">
+                    ${this.renderScriptEditorSelectOptions(
+                      settlementOptions,
+                      eventRecord.settlementId ?? "",
+                      "请选择结算"
+                    )}
+                  </select>
+                </label>
+              `
+              : ""
+          }
           <label class="c-script-editor-form-field">
             <span>去向类型</span>
             <select class="c-script-editor-form-field__input" data-script-editor-event-destination-field="family">
@@ -6415,9 +6587,40 @@ export class MainUiFlow {
       return;
     }
 
+    if (target.matches("[data-script-editor-settlement-field]")) {
+      const field = target.dataset.scriptEditorSettlementField;
+      if (field === "id" || field === "title" || field === "description") {
+        this.applyScriptEditorSettlementField(field, target.value);
+      }
+      return;
+    }
+
+    if (target.matches("[data-script-editor-settlement-result-field]")) {
+      const field = target.dataset.scriptEditorSettlementResultField;
+      const index = Number.parseInt(
+        target.dataset.scriptEditorSettlementResultIndex ?? "-1",
+        10
+      );
+      if (
+        (field === "id" || field === "label" || field === "nextEventId") &&
+        Number.isInteger(index) &&
+        index >= 0
+      ) {
+        this.applyScriptEditorSettlementResultField(index, field, target.value);
+      }
+      return;
+    }
+
     if (target.matches("[data-script-editor-event-field]")) {
       const field = target.dataset.scriptEditorEventField;
-      if (field === "id" || field === "title" || field === "description") {
+      if (
+        field === "id" ||
+        field === "title" ||
+        field === "description" ||
+        field === "type" ||
+        field === "settlementId" ||
+        field === "nextEventId"
+      ) {
         this.applyScriptEditorEventField(field, target.value);
       }
       return;
@@ -7854,6 +8057,22 @@ export class MainUiFlow {
       return;
     }
 
+    if (action === "add-settlement-result") {
+      this.addScriptEditorSettlementResult();
+      return;
+    }
+
+    if (action === "remove-settlement-result") {
+      const settlementResultIndex = Number.parseInt(
+        actionElement?.dataset.scriptEditorSettlementResultIndex ?? "-1",
+        10
+      );
+      if (Number.isInteger(settlementResultIndex) && settlementResultIndex >= 0) {
+        this.removeScriptEditorSettlementResult(settlementResultIndex);
+      }
+      return;
+    }
+
     if (action === "add-event-binding") {
       this.addScriptEditorEventBinding();
       return;
@@ -8811,6 +9030,50 @@ export class MainUiFlow {
     }
 
     this.replaceSelectedScriptEditorDialogue(updateScriptEditorDialogueField(dialogue, field, value));
+  }
+
+  applyScriptEditorSettlementField(field, value) {
+    const settlement = this.getSelectedScriptEditorSettlement();
+    if (settlement == null) {
+      return;
+    }
+
+    this.replaceSelectedScriptEditorSettlement(
+      updateScriptEditorSettlementField(settlement, field, value)
+    );
+  }
+
+  addScriptEditorSettlementResult() {
+    const settlement = this.getSelectedScriptEditorSettlement();
+    if (settlement == null) {
+      return;
+    }
+
+    this.replaceSelectedScriptEditorSettlement(
+      appendScriptEditorSettlementResult(settlement)
+    );
+  }
+
+  removeScriptEditorSettlementResult(index) {
+    const settlement = this.getSelectedScriptEditorSettlement();
+    if (settlement == null) {
+      return;
+    }
+
+    this.replaceSelectedScriptEditorSettlement(
+      removeScriptEditorSettlementResult(settlement, index)
+    );
+  }
+
+  applyScriptEditorSettlementResultField(index, field, value) {
+    const settlement = this.getSelectedScriptEditorSettlement();
+    if (settlement == null) {
+      return;
+    }
+
+    this.replaceSelectedScriptEditorSettlement(
+      updateScriptEditorSettlementResultField(settlement, index, field, value)
+    );
   }
 
   addScriptEditorDialogueParticipant() {
@@ -10164,6 +10427,8 @@ export class MainUiFlow {
         return "城市";
       case "buildings":
         return "建筑";
+      case "settlements":
+        return "结算";
       case "quests":
         return "任务";
       case "dialogues":
@@ -10439,6 +10704,44 @@ export class MainUiFlow {
       ...this.scriptEditorProject,
       dialogues: this.scriptEditorProject.dialogues.map((dialogue) =>
         dialogue.id === this.scriptEditorSelection.entityId ? nextDialogue : dialogue
+      ),
+    });
+    this.scriptEditorNotice = null;
+    this.render();
+  }
+
+  getSelectedScriptEditorSettlement() {
+    if (
+      this.scriptEditorProject == null ||
+      this.scriptEditorSelection.family !== "settlements" ||
+      this.scriptEditorSelection.entityId == null
+    ) {
+      return null;
+    }
+
+    const selectedSettlement = this.scriptEditorProject.settlements.find(
+      (settlementRecord) => settlementRecord.id === this.scriptEditorSelection.entityId
+    );
+    return selectedSettlement == null
+      ? null
+      : normalizeScriptEditorSettlementRecord(selectedSettlement);
+  }
+
+  replaceSelectedScriptEditorSettlement(nextSettlement) {
+    if (
+      this.scriptEditorProject == null ||
+      this.scriptEditorSelection.family !== "settlements" ||
+      this.scriptEditorSelection.entityId == null
+    ) {
+      return;
+    }
+
+    this.commitScriptEditorProject({
+      ...this.scriptEditorProject,
+      settlements: this.scriptEditorProject.settlements.map((settlementRecord) =>
+        settlementRecord.id === this.scriptEditorSelection.entityId
+          ? nextSettlement
+          : settlementRecord
       ),
     });
     this.scriptEditorNotice = null;

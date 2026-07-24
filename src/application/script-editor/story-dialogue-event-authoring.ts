@@ -12,6 +12,8 @@ import type {
   ScriptEditorEventRecord,
   ScriptEditorEventType,
   ScriptEditorEventTriggerTiming,
+  ScriptEditorSettlementRecord,
+  ScriptEditorSettlementResultRecord,
   ScriptEditorStoryNodeRecord,
   ScriptEditorStoryProgressMode,
 } from "../../domain/script-editor-project";
@@ -300,6 +302,21 @@ export function createDefaultScriptEditorEventRecord(
   };
 }
 
+export function createDefaultScriptEditorSettlementRecord(
+  indexOrId: number | string
+): ScriptEditorSettlementRecord {
+  const suffix = typeof indexOrId === "number" ? indexOrId + 1 : 1;
+  return {
+    id:
+      typeof indexOrId === "string"
+        ? indexOrId
+        : `settlement.new.${suffix}`,
+    title: `缁撶畻 ${suffix}`,
+    description: "",
+    results: [createDefaultScriptEditorSettlementResultRecord(0)],
+  };
+}
+
 export function createDefaultScriptEditorEventBindingRecord(
   indexOrId: number | string
 ): ScriptEditorEventBindingRecord {
@@ -387,6 +404,18 @@ export function normalizeScriptEditorEventRecord(
       previewNotes: normalizeOptionalString(record.previewSummary?.previewNotes),
       validationNotes: normalizeOptionalString(record.previewSummary?.validationNotes),
     },
+  };
+}
+
+export function normalizeScriptEditorSettlementRecord(
+  record: Partial<ScriptEditorSettlementRecord> & { id: string }
+): ScriptEditorSettlementRecord {
+  return {
+    ...record,
+    id: normalizeString(record.id, "settlement.unknown"),
+    title: normalizeString(record.title, record.id),
+    description: normalizeOptionalString(record.description),
+    results: (record.results ?? []).map(normalizeScriptEditorSettlementResultRecord),
   };
 }
 
@@ -708,11 +737,14 @@ export function removeScriptEditorDialogueNode(
 
 export function updateScriptEditorEventField(
   record: ScriptEditorEventRecord,
-  field: "id" | "title" | "description" | "type" | "settlementId",
+  field: "id" | "title" | "description" | "type" | "settlementId" | "nextEventId",
   value: string
 ): ScriptEditorEventRecord {
   if (field === "description") {
     return { ...record, description: value };
+  }
+  if (field === "nextEventId") {
+    return { ...record, nextEventId: value.trim() };
   }
   if (field === "type") {
     const nextType = normalizeScriptEditorEventType(value);
@@ -733,6 +765,58 @@ export function updateScriptEditorEventField(
     return record;
   }
   return { ...record, [field]: value.trim() };
+}
+
+export function updateScriptEditorSettlementField(
+  record: ScriptEditorSettlementRecord,
+  field: "id" | "title" | "description",
+  value: string
+): ScriptEditorSettlementRecord {
+  if (field === "description") {
+    return { ...record, description: value };
+  }
+  return { ...record, [field]: value.trim() };
+}
+
+export function appendScriptEditorSettlementResult(
+  record: ScriptEditorSettlementRecord
+): ScriptEditorSettlementRecord {
+  return {
+    ...record,
+    results: [
+      ...(record.results ?? []),
+      createDefaultScriptEditorSettlementResultRecord(record.results?.length ?? 0),
+    ],
+  };
+}
+
+export function removeScriptEditorSettlementResult(
+  record: ScriptEditorSettlementRecord,
+  index: number
+): ScriptEditorSettlementRecord {
+  return {
+    ...record,
+    results: (record.results ?? []).filter((_, resultIndex) => resultIndex !== index),
+  };
+}
+
+export function updateScriptEditorSettlementResultField(
+  record: ScriptEditorSettlementRecord,
+  index: number,
+  field: "id" | "label" | "nextEventId",
+  value: string
+): ScriptEditorSettlementRecord {
+  return {
+    ...record,
+    results: (record.results ?? []).map((result, resultIndex) =>
+      resultIndex === index
+        ? {
+            ...result,
+            [field]: value.trim(),
+          }
+        : result
+    ),
+  };
 }
 
 export function toggleScriptEditorEventRepeatable(
@@ -1153,6 +1237,26 @@ function normalizeEventTriggerTiming(value?: string): ScriptEditorEventTriggerTi
   return SCRIPT_EDITOR_EVENT_TRIGGER_TIMINGS.includes(value as ScriptEditorEventTriggerTiming)
     ? (value as ScriptEditorEventTriggerTiming)
     : "manual";
+}
+
+function createDefaultScriptEditorSettlementResultRecord(
+  index: number
+): ScriptEditorSettlementResultRecord {
+  return {
+    id: `result.${index + 1}`,
+    label: `缁撶畻缁撴灉 ${index + 1}`,
+    nextEventId: "",
+  };
+}
+
+function normalizeScriptEditorSettlementResultRecord(
+  record: Partial<ScriptEditorSettlementResultRecord> | undefined
+): ScriptEditorSettlementResultRecord {
+  return {
+    id: normalizeString(record?.id, "result.unknown"),
+    label: normalizeString(record?.label, record?.id ?? "result"),
+    nextEventId: normalizeOptionalTrimmedString(record?.nextEventId),
+  };
 }
 
 function normalizeScriptEditorEventType(

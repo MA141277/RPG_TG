@@ -5,6 +5,17 @@
 `docs/change-log.md` 的正式定位是“历史记录 + 人类可读摘要”。
 它不是当前 Blueprint / legacy superpowers 治理的 live execution truth，不作为 resume entry、promotion gate、closeout gate 或固定同步门。
 
+## 2026-07-25 Script Editor Settlement Authoring Surface Completion
+
+### Changed
+- Updated [src/application/script-editor/minimal-workflow.ts](/D:/workspace/project/RPG_TG/src/application/script-editor/minimal-workflow.ts:1), [src/application/script-editor/workspace-shell.ts](/D:/workspace/project/RPG_TG/src/application/script-editor/workspace-shell.ts:1), and [src/application/script-editor/story-dialogue-event-authoring.ts](/D:/workspace/project/RPG_TG/src/application/script-editor/story-dialogue-event-authoring.ts:1) so the Script Editor now treats `settlements` as a first-class workflow family, supports settlement draft/upsert/remove flows, and preserves settlement result-local `nextEventId` editing helpers.
+- Updated [src/ui/main-ui/main-ui-flow.js](/D:/workspace/project/RPG_TG/src/ui/main-ui/main-ui-flow.js:1) so 剧本编辑器 under `剧情与文本` now exposes a dedicated settlement module, settlement result editing, and event-side `type` / `settlementId` / `nextEventId` controls on top of the already-landed formal settlement contracts.
+- Updated [tests/robustness.test.cjs](/D:/workspace/project/RPG_TG/tests/robustness.test.cjs:1) with settlement authoring regressions covering workflow visibility, settlement helper normalization, event settlement-routing controls, and the updated narrative group truth.
+
+### Impact
+- Creators can now author settlement records directly in the Script Editor instead of relying on hidden/generic-only settlement truth.
+- Event authoring now exposes the creator-facing fields needed to point an event at a settlement record and to configure direct-close vs `nextEventId` continuation on the same governed model already used by save/load/export/import/runtime.
+
 ## 2026-07-24 Shared Loader Routing And Settlement Guard Alignment
 
 ### Changed
