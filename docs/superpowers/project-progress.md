@@ -2,21 +2,21 @@
 
 ## Current State
 
-- Current Stage: `Faction Review Flow Implementation`
+- Current Stage: `Map Renderer Architecture`
 - Current Stage Status: `running`
-- Current Task: `Normalize faction review cadence`
+- Current Task: `Campaign Map Visual Profile Foundation`
 - Current Task Status: `running`
-- Current Child: `Faction Review Flow`
-- Current Child Status: `completed-but-open`
+- Current Child: `Campaign Map Visual Profile`
+- Current Child Status: `running`
 - Next Child: `none`
 - Next Child Status: `none`
-- Next Required Action: `final-review-and-push-before-closeout`
+- Next Required Action: `execute-campaign-map-visual-profile-plan`
 - Next Entry Document: `docs/superpowers/project-progress.md`
-- Next Owner Document: `docs/superpowers/plans/2026-07-24-faction-review-flow-plan.md`
+- Next Owner Document: `docs/superpowers/plans/2026-07-25-campaign-map-visual-profile-plan.md`
 - Last Closed Item: `none`
 - Push Status: `not-pushed`
 - Push Commit: `none`
-- Resume From: `Open docs/superpowers/project-progress.md, then review docs/superpowers/plans/2026-07-24-faction-review-flow-plan.md for final review/push; remaining blocker is the known unrelated child 27 startup coordinator test failure until fixed or accepted.`
+- Resume From: `Open docs/superpowers/project-progress.md, then execute docs/superpowers/plans/2026-07-25-campaign-map-visual-profile-plan.md from the first unchecked task.`
 
 ## Progress Log
 
@@ -52,6 +52,10 @@
   - Summary: `Committed the Task 4 review fix for temple review task gates: disabled choices are enforced in dispatch, unlocked begging remains available, and actionContainer/forced-dispatch regressions are covered.`
   - Verification: `node --test --test-name-pattern "temple review|temple house review|unlocked begging|disabled work choice|global NPC interaction does not append default choices to temple review" tests/robustness.test.cjs`; `npm run build:test; if ($LASTEXITCODE -eq 0) { node --test tests/faction-review-domain.test.cjs tests/faction-review-ui-contract.test.cjs }`; `npm run typecheck`; `npm run lint:plans`
   - Next: `Run final review if agent capacity is available, then push/review before child closeout; do not close while the known unrelated full-suite failure remains unresolved.`
+- 2026-07-25
+  - Summary: `Promoted the campaign map visual profile foundation child after user selected Subagent-Driven execution.`
+  - Verification: `Not run as part of this governance-only update`
+  - Next: `Execute docs/superpowers/plans/2026-07-25-campaign-map-visual-profile-plan.md from Task 1.`
 
 ## Latest Closeout
 

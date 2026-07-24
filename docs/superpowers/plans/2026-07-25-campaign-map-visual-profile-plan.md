@@ -10,12 +10,12 @@
 
 ## Execution State
 
-- Status: `waiting`
+- Status: `running`
 - Last Updated: `2026-07-25`
-- Current Focus: `Plan created; waiting for explicit promotion because project-progress currently points at the faction review closeout.`
-- Next Step: `Before implementation, open docs/superpowers/project-progress.md and either close/sync the current faction review child or explicitly promote this child as the current owner document.`
+- Current Focus: `Executing Task 1 with Subagent-Driven Development.`
+- Next Step: `Dispatch Task 1 implementer from the generated task brief, then run task review before moving to Task 2.`
 - Verification: `npm run lint:plans passed`
-- Notes: `This plan intentionally does not mark the child running because docs/superpowers/project-progress.md currently identifies docs/superpowers/plans/2026-07-24-faction-review-flow-plan.md as the active owner document.`
+- Notes: `User selected Subagent-Driven execution on 2026-07-25.`
 
 ## Progress Log
 
@@ -23,6 +23,10 @@
   - Summary: `Created the campaign map visual profile implementation plan from the approved spec.`
   - Verification: `npm run lint:plans`
   - Next: `Wait for explicit execution promotion because project-progress currently points at the faction review closeout.`
+- 2026-07-25
+  - Summary: `Promoted this child to running after user selected Subagent-Driven execution.`
+  - Verification: `Not run as part of this governance-only update`
+  - Next: `Dispatch Task 1 implementer, then run task review before moving to Task 2.`
 
 ---
 
