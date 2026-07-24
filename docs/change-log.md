@@ -3649,6 +3649,18 @@
 - Added a shared runtime `ViewName` contract helper so scenario-pack loading, runtime export validation, and startup metadata can all fail close on retired startup views instead of silently accepting legacy `scene` startup truth.
 - Added regression coverage for retired startup `scene` views, dialogue startup round-trip through runtime packs, and mod startup metadata alignment on the shared startup target resolver.
 
+## 2026-07-24 Compatibility Import Retirement Guard
+
+### Changed
+- Updated [src/application/script-editor/runtime-pack-import.ts](/D:/workspace/project/RPG_TG/src/application/script-editor/runtime-pack-import.ts) so Script Editor runtime-pack import now fails closed on unsupported UI reserve runtime families instead of preserving `storyPack.compatibilityImport` residue.
+- Updated [src/application/script-editor/runtime-pack-export.ts](/D:/workspace/project/RPG_TG/src/application/script-editor/runtime-pack-export.ts) so runtime export treats `project.storyPack.compatibilityImport` as a retired field-level blocker rather than a queue-routable unresolved-family carry-forward.
+- Updated [src/application/script-editor/workspace-shell.ts](/D:/workspace/project/RPG_TG/src/application/script-editor/workspace-shell.ts) and [src/ui/main-ui/main-ui-flow.js](/D:/workspace/project/RPG_TG/src/ui/main-ui/main-ui-flow.js) so creator-facing risk surfaces no longer count compatibility residue as an active carry-forward path.
+- Updated [tests/robustness.test.cjs](/D:/workspace/project/RPG_TG/tests/robustness.test.cjs) with required-final regression coverage for import fail-close, retired-field export blocking, and workspace-shell blocker surfacing.
+
+### Impact
+- Runtime-pack import, runtime export, and creator-facing risk surfacing now agree that `compatibilityImport` is retired production truth rather than a supported migration lane.
+- The required-final queue can move from bounded compatibilityImport retirement into queue-closeout review and final acceptance-ledger synchronization without reopening earlier routing, settlement, or canonical-host implementation scope.
+
 ### Changed
 - Scenario-pack loader and script-editor runtime export now reject retired startup `scene` views in `scenarioProfile.initialLocation.view`, `launchPolicy.initialView`, and character startup overrides.
 - Scenario startup target resolution is now shared between startup-session application and mod startup metadata so dialogue startup view and dialogue id are preserved through one canonical resolver.

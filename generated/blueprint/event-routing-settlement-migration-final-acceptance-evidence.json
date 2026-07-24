@@ -1,0 +1,61 @@
+{
+  "generatedAt": "2026-07-24",
+  "versionId": "target.event-follow-up-routing-settlement-and-canonical-reuse-convergence",
+  "queueId": "queue.event-routing-settlement-migration-and-final-acceptance",
+  "taskId": "task.event-routing-settlement-migration-and-final-acceptance.evidence-anchor-reconcile",
+  "acceptanceIds": [
+    "ACC-EVENT-SETTLE-007",
+    "ACC-EVENT-SETTLE-008"
+  ],
+  "migrationResidueAnchors": {
+    "compatibilityImportStillLive": [
+      "src/application/script-editor/runtime-pack-import.ts still records compatibilityImport residue for unsupported imported families",
+      "src/application/script-editor/runtime-pack-export.ts still fails closed when project.storyPack.compatibilityImport.unresolvedFamilies is present",
+      "src/application/script-editor/workspace-shell.ts still surfaces compatibilityImport unresolved-family cards and counters",
+      "src/ui/main-ui/main-ui-flow.js still renders compatibilityImport unresolved-family summary in the Script Editor shell",
+      "tests/robustness.test.cjs still covers compatibilityImport residue persistence and export rejection"
+    ],
+    "playableSettlementResidue": [
+      "No live PlayableSettlement production symbol remains in src/**",
+      "Remaining PlayableSettlement mentions are historical-only docs/spec evidence and do not currently block production runtime behavior"
+    ]
+  },
+  "failClosedAnchorsAlreadyLanded": {
+    "nextEventIdAndSettlementGuards": [
+      "src/application/script-editor/runtime-pack-export.ts rejects missing or self-referential nextEventId and settlement events missing settlementId",
+      "src/application/scenario/scenario-pack-loader.ts now rejects missing nextEventId targets, self-referential nextEventId, and settlement events without settlementId on the shared preview/startup loader seam",
+      "src/application/script-editor/workspace-shell.ts still surfaces the same invalid nextEventId and settlement shapes before export"
+    ],
+    "fullChainParityBaseline": [
+      "queue.full-chain-event-routing-and-settlement-consistency closed through commit fe14a03 on origin/mod-first-dev",
+      "Script Editor runtime preview and normal startup now share the same loadScenarioPackFromFiles(...) fail-closed boundary on canonical routing and settlement contracts"
+    ]
+  },
+  "finalAcceptanceSurfaceAnchors": {
+    "normalStart": [
+      "src/main.ts startScenarioPackFilesWithLoading",
+      "src/application/startup/startup-session-coordinator.ts"
+    ],
+    "jsonImportAndLoader": [
+      "src/application/scenario/scenario-pack-loader.ts",
+      "tests/robustness.test.cjs scenario pack loader coverage"
+    ],
+    "runtimePreview": [
+      "src/ui/main-ui/main-ui-flow.js previewScriptEditorProjectRuntime",
+      "tests/robustness.test.cjs script editor runtime preview launches from current in-memory project data"
+    ],
+    "buildingEntryAndResultRouting": [
+      "src/application/building/building-module-entry.ts",
+      "src/core/runtime/navigation-runtime.ts",
+      "tests/robustness.test.cjs building module stage resolves canonical host ids against same-family legacy arrangement ids",
+      "tests/robustness.test.cjs navigation runtime resolves canonical host ids against same-family legacy arrangement ids"
+    ]
+  },
+  "knownRequiredFinalGaps": [
+    "No final queue inventory yet freezes exactly which compatibilityImport surfaces must be removed versus retained only as creator-facing rejection evidence.",
+    "No final acceptance ledger yet proves normal start, JSON import, runtime preview, building entry, settlement execution, and chained follow-up behavior together on the landed model.",
+    "No required-final queue doc or artifact existed before this admission batch."
+  ],
+  "nextRecommendedTask": "task.event-routing-settlement-migration-and-final-acceptance.migration-residue-inventory-and-acceptance-lock",
+  "summary": "The required-final queue now has an evidence lock: compatibilityImport remains the last explicit production migration residue family, live fail-closed routing/settlement guards are already landed, and final acceptance still needs one explicit cross-entrypoint ledger before version closeout can be considered."
+}

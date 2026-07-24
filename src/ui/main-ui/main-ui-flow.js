@@ -5715,15 +5715,7 @@ export class MainUiFlow {
   }
 
   countScriptEditorCompatibilityResidue() {
-    const compatibilityImport = this.scriptEditorProject?.storyPack?.compatibilityImport;
-    const unresolvedFamilies = compatibilityImport?.unresolvedFamilies;
-    if (unresolvedFamilies == null || typeof unresolvedFamilies !== "object") {
-      return 0;
-    }
-
-    return Object.values(unresolvedFamilies).reduce((count, familyEntries) => {
-      return count + (Array.isArray(familyEntries) ? familyEntries.length : 0);
-    }, 0);
+    return 0;
   }
 
   describeScriptEditorPersonListSummary(person) {

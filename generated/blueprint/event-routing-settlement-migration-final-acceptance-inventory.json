@@ -1,0 +1,108 @@
+{
+  "generatedAt": "2026-07-24",
+  "versionId": "target.event-follow-up-routing-settlement-and-canonical-reuse-convergence",
+  "queueId": "queue.event-routing-settlement-migration-and-final-acceptance",
+  "taskId": "task.event-routing-settlement-migration-and-final-acceptance.migration-residue-inventory-and-acceptance-lock",
+  "acceptanceIds": [
+    "ACC-EVENT-SETTLE-007",
+    "ACC-EVENT-SETTLE-008"
+  ],
+  "migrationResidueInventory": {
+    "compatibilityImportProductionSurfaces": [
+      {
+        "file": "src/application/script-editor/runtime-pack-import.ts",
+        "role": "persists compatibilityImport residue onto imported Script Editor storyPack truth"
+      },
+      {
+        "file": "src/application/script-editor/runtime-pack-export.ts",
+        "role": "fails closed when unresolved compatibilityImport families remain before runtime export"
+      },
+      {
+        "file": "src/application/script-editor/workspace-shell.ts",
+        "role": "counts and surfaces unresolved compatibility residue to creators"
+      },
+      {
+        "file": "src/ui/main-ui/main-ui-flow.js",
+        "role": "renders unresolved compatibility residue summary in the Script Editor shell"
+      },
+      {
+        "file": "tests/robustness.test.cjs",
+        "role": "guards compatibilityImport persistence and export rejection behavior"
+      }
+    ],
+    "playableSettlementRetirement": {
+      "productionResidue": [],
+      "historicalOnlyResidue": [
+        "docs/blueprints/specs/**",
+        "docs/blueprints/queues/settlement-resource-and-event-type-convergence-queue.md",
+        "docs/change-log.md"
+      ]
+    }
+  },
+  "explicitMigrationAndRejectionRules": [
+    "No compatibility import may remain on production Script Editor project truth once required-final implementation closes.",
+    "Missing legacy follow-up meaning must split into explicit event plus event-binding records in formal config tables or close directly when no follow-up meaning exists.",
+    "Runtime export, loader, and workspace-shell fail-closed diagnostics remain the canonical rejection surfaces; required-final work may remove migration residue but must not weaken these guards.",
+    "PlayableResult remains the surviving result shell name, and required-final work must not reintroduce PlayableSettlement or settlement-owned routing truth."
+  ],
+  "finalAcceptanceMatrix": [
+    {
+      "surface": "normal-startup",
+      "anchors": [
+        "src/main.ts startScenarioPackFilesWithLoading",
+        "src/application/startup/startup-session-coordinator.ts"
+      ],
+      "currentProof": "automated only",
+      "requiredForAccEventSettle008": true
+    },
+    {
+      "surface": "json-import-and-loader",
+      "anchors": [
+        "tests/robustness.test.cjs scenario pack loader rejects missing nextEventId targets",
+        "tests/robustness.test.cjs scenario pack loader rejects settlement events without settlementId",
+        "tests/robustness.test.cjs script editor imports built-in zhuyuanzhang template from the published manifest url"
+      ],
+      "currentProof": "automated only",
+      "requiredForAccEventSettle008": true
+    },
+    {
+      "surface": "runtime-preview",
+      "anchors": [
+        "tests/robustness.test.cjs script editor runtime preview launches from current in-memory project data"
+      ],
+      "currentProof": "automated only",
+      "requiredForAccEventSettle008": true
+    },
+    {
+      "surface": "building-entry-and-host-routing",
+      "anchors": [
+        "tests/robustness.test.cjs building module stage resolves canonical host ids against same-family legacy arrangement ids",
+        "tests/robustness.test.cjs navigation runtime resolves canonical host ids against same-family legacy arrangement ids"
+      ],
+      "currentProof": "automated only",
+      "requiredForAccEventSettle008": true
+    },
+    {
+      "surface": "settlement-and-follow-up-result-routing",
+      "anchors": [
+        "tests/robustness.test.cjs flow playable settlement preserves canonical home template owner id in shared handoff"
+      ],
+      "currentProof": "automated only",
+      "requiredForAccEventSettle008": true
+    }
+  ],
+  "firstBoundedSlice": {
+    "sliceId": "slice.required-final.compatibility-import-retirement-and-acceptance-ledger-preflight",
+    "goal": "Freeze the exact compatibilityImport retirement batch and acceptance-ledger scope before browser proof or version closeout is attempted.",
+    "targetSurfaces": [
+      "src/application/script-editor/runtime-pack-import.ts",
+      "src/application/script-editor/runtime-pack-export.ts",
+      "src/application/script-editor/workspace-shell.ts",
+      "src/ui/main-ui/main-ui-flow.js",
+      "tests/robustness.test.cjs",
+      "docs/blueprints/**"
+    ],
+    "reason": "This is the smallest lawful required-final slice that removes explicit migration residue without reopening earlier implementation queues and that prepares ACC-EVENT-SETTLE-008 acceptance proof on the landed model."
+  },
+  "summary": "Required-final inventory is now frozen: compatibilityImport is the remaining production migration residue family, PlayableSettlement is historical-only residue, fail-closed rejection anchors are already landed, and final acceptance still needs an explicit cross-entrypoint ledger before version closeout can begin."
+}

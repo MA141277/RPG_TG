@@ -48,11 +48,6 @@ export type ScriptEditorCompatibilityImportDiagnostic = {
   message: string;
 };
 
-export type ScriptEditorCompatibilityImportResidue = {
-  unresolvedFamilies: Record<string, unknown>;
-  diagnostics: ScriptEditorCompatibilityImportDiagnostic[];
-};
-
 type RuntimePackImportFileEntry = {
   file: File;
   relativePath: string;
@@ -209,6 +204,9 @@ export function importScenarioPackToScriptEditorProject(
 ): ScriptEditorProjectDefinition {
   const pack = parseScenarioPack(value);
   const diagnostics = validateScenarioPackForScriptEditorImport(pack);
+  if (diagnostics.length > 0) {
+    throw new Error(formatDiagnostics(diagnostics));
+  }
   const rawPack = pack as Record<string, unknown>;
   const importedLocationAccess = readLocationAccessFamily(rawPack);
   const cityNpcPools = readArrayFamily(rawPack, "cityNpcPools");
@@ -228,11 +226,7 @@ export function importScenarioPackToScriptEditorProject(
     title: pack.title,
     ...(pack.description == null ? {} : { description: pack.description }),
     completionState: createDraftScriptEditorProjectCompletionState(),
-    storyPack: createStoryPackRecord(
-      pack,
-      rawPack,
-      collectCompatibilityImportResidue(rawPack, diagnostics)
-    ),
+    storyPack: createStoryPackRecord(pack, rawPack),
     maps: readEntityArrayFamily(rawPack, "maps"),
     people: importedPeople.map((character) =>
       normalizeScriptEditorPersonRecord(character as Record<string, unknown>)
@@ -362,8 +356,7 @@ function applyImportedCityMapPlacement<
 
 function createStoryPackRecord(
   pack: ReturnType<typeof parseScenarioPack>,
-  rawPack: Record<string, unknown>,
-  compatibilityImportResidue: ScriptEditorCompatibilityImportResidue | null
+  rawPack: Record<string, unknown>
 ): ScriptEditorStoryPackRecord {
   return {
     id: pack.id,
@@ -379,9 +372,6 @@ function createStoryPackRecord(
     rawPack.tags.every((tag) => typeof tag === "string")
       ? { tags: [...rawPack.tags] as string[] }
       : {}),
-    ...(compatibilityImportResidue == null
-      ? {}
-      : { compatibilityImport: compatibilityImportResidue }),
   };
 }
 
@@ -1361,27 +1351,6 @@ function cloneStringRecord(
   value: Record<string, string> | undefined
 ): Record<string, string> {
   return value == null ? {} : { ...value };
-}
-
-function collectCompatibilityImportResidue(
-  rawPack: Record<string, unknown>,
-  diagnostics: ScriptEditorCompatibilityImportDiagnostic[]
-): ScriptEditorCompatibilityImportResidue | null {
-  if (diagnostics.length === 0) {
-    return null;
-  }
-
-  const unresolvedFamilies = Object.fromEntries(
-    UNSUPPORTED_RUNTIME_FAMILY_MESSAGES.flatMap((entry) => {
-      const value = rawPack[entry.familyKey];
-      return entry.hasValue(rawPack) ? [[entry.familyKey, cloneJsonCompatibleValue(value)]] : [];
-    })
-  );
-
-  return {
-    unresolvedFamilies,
-    diagnostics: diagnostics.map((diagnostic) => ({ ...diagnostic })),
-  };
 }
 
 function cloneJsonCompatibleValue(value: unknown): unknown {

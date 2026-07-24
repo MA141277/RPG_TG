@@ -9506,7 +9506,7 @@ test(
 );
 
 test(
-  "script editor compatibility import preserves unsupported ui reserve families as explicit residue",
+  "script editor runtime-pack import rejects unsupported ui reserve families without compatibility import",
   async () => {
     const {
       exportScriptEditorProjectToScenarioPackFiles,
@@ -9551,28 +9551,9 @@ test(
       true
     );
 
-    const importedProject = await loadScriptEditorProjectFromScenarioPackFiles(
-      importedFiles
-    );
-
-    assert.deepEqual(importedProject.dialogues, []);
-    assert.deepEqual(importedProject.minigames, []);
-    assert.deepEqual(importedProject.storyNodes, []);
-    assert.deepEqual(
-      importedProject.storyPack.compatibilityImport?.unresolvedFamilies?.uiScreenSchemas,
-      [{ id: "ui.unsupported.screen", title: "Unsupported Screen" }]
-    );
-    assert.equal(importedProject.activities[0]?.id, "activity.unsupported.demo");
-    assert.equal(importedProject.activities[0]?.label, "Unsupported Activity");
-    assert.equal(
-      importedProject.storyPack.compatibilityImport?.unresolvedFamilies?.activities,
-      undefined
-    );
-    assert.deepEqual(
-      importedProject.storyPack.compatibilityImport?.diagnostics?.map(
-        (diagnostic) => diagnostic.fieldPath
-      ),
-      ["pack.uiScreenSchemas"]
+    await assert.rejects(
+      () => loadScriptEditorProjectFromScenarioPackFiles(importedFiles),
+      /unsupported-family|uiScreenSchemas|compatibility import/i
     );
   }
 );
@@ -10043,10 +10024,13 @@ test("script editor landing help action is styled as a circular question button"
   assert.match(scriptEditorStyles, /aspect-ratio:\s*1/);
 });
 
-test("script editor workspace shell surfaces export blockers and compatibility residue", () => {
+test("script editor workspace shell treats compatibilityImport as a retired export blocker", () => {
   const {
     createScriptEditorWorkspaceShellViewModel,
   } = require("../.test-dist/application/script-editor/workspace-shell.js");
+  const {
+    validateScriptEditorProjectForRuntimeExport,
+  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
   const project = createExportableScriptEditorProjectDefinition();
   project.quests = [
     {
@@ -10069,8 +10053,25 @@ test("script editor workspace shell surfaces export blockers and compatibility r
     },
   };
 
+  const exportDiagnostics = validateScriptEditorProjectForRuntimeExport(project);
   const workspace = createScriptEditorWorkspaceShellViewModel({ project });
 
+  assert.deepEqual(
+    exportDiagnostics.map((diagnostic) => ({
+      code: diagnostic.code,
+      fieldPath: diagnostic.fieldPath,
+    })),
+    [
+      {
+        code: "unsupported-family",
+        fieldPath: "project.storyPack.compatibilityImport",
+      },
+      {
+        code: "unsupported-lowering",
+        fieldPath: "project.quests[0].completionConditionGroupId#condition.unsupported.operator",
+      },
+    ]
+  );
   assert.equal(workspace.toolbarActions.find((action) => action.id === "export")?.status, "blocked");
   assert.deepEqual(workspace.badges, []);
   assert.equal(workspace.handoffSummary.blockedCount > 0, true);
@@ -16456,7 +16457,7 @@ test(
 );
 
 test(
-  "script editor runtime export fails closed when imported compatibility residue is still unresolved",
+  "script editor runtime-pack import fails closed before unresolved compatibility residue reaches export",
   async () => {
     const {
       exportScriptEditorProjectToScenarioPackFiles,
@@ -16476,16 +16477,15 @@ test(
       2
     )}\n`;
 
-    const importedProject = await loadScriptEditorProjectFromScenarioPackFiles(
-      createImportedFilesFromSerializedJsonRecord(
+    await assert.rejects(
+      () =>
+        loadScriptEditorProjectFromScenarioPackFiles(
+          createImportedFilesFromSerializedJsonRecord(
         serializedFiles,
         "imported-scenario-pack"
       )
-    );
-
-    assert.throws(
-      () => exportScriptEditorProjectToScenarioPackFiles(importedProject),
-      /compatibilityImport|uiScreenSchemas|unresolved/i
+        ),
+      /unsupported-family|uiScreenSchemas|compatibility import/i
     );
   }
 );

@@ -7,26 +7,26 @@
 - blueprint_version: `2026.07`
 - governance_last_synced_at: `2026-07-24`
 - governance_sync_source: `docs/blueprints/plans/2026-07-24-event-canonical-reuse-routing-and-settlement-governance-target-plan.md`
-- queue_status: `active`
+- queue_status: `done`
 - queue_class: `required`
-- active_task: `task.full-chain-event-routing-and-settlement-consistency.queue-closeout-review-and-sync-gate`
+- active_task: `none`
 - next_task: `none`
-- closeout_status: `in-progress`
-- execution_closeout_status: `partial`
-- topic_closure_status: `open-residue`
-- closure_basis: `queue.same-display-name-building-host-instance-canonicalization completed repository sync through commit acf24fe on origin/mod-first-dev, so full-chain event-routing and settlement consistency is now the uniquely lawful active queue under the approved phase order.`
-- residue_remaining: `yes`
-- residue_family: `same-family`
-- residue_routing_status: `auto-routable`
-- next_family_candidate: `task.full-chain-event-routing-and-settlement-consistency.queue-closeout-review-and-sync-gate`
-- auto_continue_eligible: `true`
-- next_effect: `none`
+- closeout_status: `done`
+- execution_closeout_status: `done`
+- topic_closure_status: `closed`
+- closure_basis: `Queue closeout proof and repository-sync gate are complete. ACC-EVENT-SETTLE-006 is covered for the queue-owned boundary, commit fe14a03 landed the final full-chain parity batch, and push to origin/mod-first-dev succeeded before required-final queue admission.`
+- residue_remaining: `no`
+- residue_family: `none`
+- residue_routing_status: `none`
+- next_family_candidate: `queue.event-routing-settlement-migration-and-final-acceptance`
+- auto_continue_eligible: `false`
+- next_effect: `return-to-version-review`
 - auto_continue_policy: `required`
 - idle_after_task_completion: `forbidden`
 - queue_close_handoff: `version-plan-routing`
-- sync_status: `pending`
-- sync_scope: `local-record`
-- sync_summary: `Queue closeout proof is now recorded locally at generated/blueprint/full-chain-event-routing-and-settlement-consistency-closeout-proof.json. The repository-sync gate is now the only lawful gate before queue.event-routing-settlement-migration-and-final-acceptance may be admitted.`
+- sync_status: `success`
+- sync_scope: `remote-sync`
+- sync_summary: `Repository-sync gate satisfied: closeout truth was synchronized, commit fe14a03 landed on mod-first-dev, and push to origin/mod-first-dev succeeded before queue.event-routing-settlement-migration-and-final-acceptance admission.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
@@ -93,9 +93,9 @@
 
 - queue_goal: `Close the remaining full-chain consistency gap across authoring, export/import, loading, preview, startup, and runtime on the canonical routing and settlement contracts.`
 - task_count: `4`
-- completed_task_count: `3`
-- remaining_task_count: `1`
-- active_task_summary: `Evidence lock, acceptance inventory, and the full first bounded implementation/proof slice are now complete, and generated/blueprint/full-chain-event-routing-and-settlement-consistency-closeout-proof.json now records local closeout readiness for ACC-EVENT-SETTLE-006. The live active task is queue-closeout-review-and-sync-gate, and the repository-sync batch is the only remaining lawful local action before required-final queue admission.`
+- completed_task_count: `4`
+- remaining_task_count: `0`
+- active_task_summary: `Queue is closed. Full-chain parity proof, local closeout proof, and repository sync are complete, and execution has already handed off to queue.event-routing-settlement-migration-and-final-acceptance.`
 - task_briefs:
   - `task.full-chain-event-routing-and-settlement-consistency.evidence-anchor-reconcile: lock the existing chain anchors and current residue before implementation.`
   - `task.full-chain-event-routing-and-settlement-consistency.surface-inventory-and-acceptance-lock: freeze the owned acceptance matrix, explicit residue routing, and first bounded proof/implementation slice.`
@@ -108,7 +108,7 @@
 - can_claim_coverage:
   - `ACC-EVENT-SETTLE-006 is now locally claimable: the owned imported-runtime baseline and the shared preview/startup loader seam are both guarded on the canonical contracts, and local closeout proof is recorded in generated/blueprint/full-chain-event-routing-and-settlement-consistency-closeout-proof.json.`
 - remaining_gaps:
-  - `Only the repository-sync gate remains before final-acceptance admission may begin.`
+  - `No further queue-local implementation or governance gap remains.`
 
 ### Task Ledger
 
@@ -117,7 +117,7 @@
 | `task.full-chain-event-routing-and-settlement-consistency.evidence-anchor-reconcile` | `done` | `Lock the existing chain anchors and current residue before implementation.` | `none` | `Completed with generated/blueprint/full-chain-event-routing-and-settlement-consistency-evidence.json.` |
 | `task.full-chain-event-routing-and-settlement-consistency.surface-inventory-and-acceptance-lock` | `done` | `Freeze the owned acceptance matrix, explicit residue routing, and first bounded proof/implementation slice.` | `task.full-chain-event-routing-and-settlement-consistency.evidence-anchor-reconcile` | `Done. generated/blueprint/full-chain-event-routing-and-settlement-consistency-inventory.json freezes the owned acceptance matrix, routes compatibilityImport residue, and selects the first bounded proof/implementation slice.` |
 | `task.full-chain-event-routing-and-settlement-consistency.chain-consistency-gap-closure-baseline` | `done` | `Land the first bounded gap-closure batch and proof coverage for the owned chain.` | `task.full-chain-event-routing-and-settlement-consistency.surface-inventory-and-acceptance-lock` | `Done. Imported-runtime materialization now preserves unique mounted-building city ownership, and the shared scenario-pack loader now fails closed on missing nextEventId targets plus settlement events missing settlementId.` |
-| `task.full-chain-event-routing-and-settlement-consistency.queue-closeout-review-and-sync-gate` | `active` | `Verify queue closeout proof, synchronize governed truth, and attempt repository sync before final-acceptance admission.` | `task.full-chain-event-routing-and-settlement-consistency.chain-consistency-gap-closure-baseline` | `Active. The next lawful action is to freeze closeout proof, run the repository-sync gate, and then route to the required-final queue if the owned boundary stays clean.` |
+| `task.full-chain-event-routing-and-settlement-consistency.queue-closeout-review-and-sync-gate` | `done` | `Verify queue closeout proof, synchronize governed truth, and attempt repository sync before final-acceptance admission.` | `task.full-chain-event-routing-and-settlement-consistency.chain-consistency-gap-closure-baseline` | `Done. Queue closeout proof was synchronized, commit fe14a03 landed, push to origin/mod-first-dev succeeded, and same-version execution moved directly to queue.event-routing-settlement-migration-and-final-acceptance.` |
 
 ### Task Definitions
 
@@ -195,7 +195,7 @@
 ##### Control Block
 
 - task_id: `task.full-chain-event-routing-and-settlement-consistency.queue-closeout-review-and-sync-gate`
-- state: `active`
+- state: `done`
 - task_kind: `queue-closeout`
 
 ##### Human Context
@@ -203,7 +203,7 @@
 - task_brief:
   - `Close out the full-chain consistency queue lawfully and drive the repository-sync gate before final-acceptance admission.`
 - task_outcome_summary:
-  - `Active. generated/blueprint/full-chain-event-routing-and-settlement-consistency-closeout-proof.json now records local closeout readiness, so this task now owns repository-sync attempt recording and the handoff decision toward queue.event-routing-settlement-migration-and-final-acceptance.`
+  - `Done. generated/blueprint/full-chain-event-routing-and-settlement-consistency-closeout-proof.json recorded local closeout readiness, commit fe14a03 landed on mod-first-dev, push to origin/mod-first-dev succeeded, and same-version execution moved directly to queue.event-routing-settlement-migration-and-final-acceptance.`
 
 ### Progress Log
 
@@ -215,3 +215,4 @@
 - `2026-07-24`: `Implementation slice 1A is now landed inside the active task. src/application/script-editor/city-building-runtime-materializer.ts no longer requires stale imported building.cityId to match the mounted-building city when a building id has one unique mounted owner, so runtime export now materializes the mounted building city/NPC truth over imported runtime tables instead of leaking stale imported city ownership. build:test is green again, and the previously failing baseline script editor runtime export materializes city mounted buildings and npcs over imported runtime tables now passes.`
 - `2026-07-24`: `Implementation slice 1B is now landed inside the same active task. src/application/scenario/scenario-pack-loader.ts now fails closed on missing nextEventId targets and settlement events missing settlementId, so Script Editor runtime preview and normal startup share the same canonical routing/settlement contract already enforced by runtime export. build:test, lint:blueprints, lint:blueprint-skill, and blueprint:governance:check all passed, and the queue automatically promoted task.full-chain-event-routing-and-settlement-consistency.queue-closeout-review-and-sync-gate to active.`
 - `2026-07-24`: `Local closeout proof is now recorded at generated/blueprint/full-chain-event-routing-and-settlement-consistency-closeout-proof.json. ACC-EVENT-SETTLE-006 is locally covered across the imported-runtime baseline and the shared preview/startup loader seam, compatibilityImport residue stays routed to the required-final queue, and the repository-sync gate is now the only remaining local action before required-final admission.`
+- `2026-07-24`: `Repository-sync gate for queue.full-chain-event-routing-and-settlement-consistency is now satisfied. Commit fe14a03 landed on origin/mod-first-dev, so queue.event-routing-settlement-migration-and-final-acceptance is now the uniquely lawful active queue under the approved phase order.`

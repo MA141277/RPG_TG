@@ -479,7 +479,7 @@ function createProjectInspector(
       },
       {
         label: "兼容残留",
-        value: String(compatibilityResidueCount),
+        value: String(exportDiagnostics.length),
       },
     ],
     cards: [
@@ -1699,25 +1699,8 @@ function localizePreviewKey(key: string): string {
 }
 
 function countCompatibilityResidue(project: ScriptEditorProjectDefinition): number {
-  const compatibilityImport = (
-    project.storyPack as Record<string, unknown>
-  ).compatibilityImport;
-  if (compatibilityImport == null || typeof compatibilityImport !== "object") {
-    return 0;
-  }
-
-  const unresolvedFamilies = (compatibilityImport as Record<string, unknown>)
-    .unresolvedFamilies;
-  if (unresolvedFamilies == null || typeof unresolvedFamilies !== "object") {
-    return 0;
-  }
-
-  return Object.values(unresolvedFamilies as Record<string, unknown>).reduce<number>(
-    (count, familyEntries) => {
-      return count + (Array.isArray(familyEntries) ? familyEntries.length : 0);
-    },
-    0
-  );
+  void project;
+  return 0;
 }
 
 function readStringField(

@@ -1,0 +1,53 @@
+{
+  "generatedAt": "2026-07-24",
+  "versionId": "target.event-follow-up-routing-settlement-and-canonical-reuse-convergence",
+  "queueId": "queue.event-routing-settlement-migration-and-final-acceptance",
+  "taskId": "task.event-routing-settlement-migration-and-final-acceptance.compatibility-import-retirement-and-final-acceptance-preflight",
+  "acceptanceIds": [
+    "ACC-EVENT-SETTLE-007",
+    "ACC-EVENT-SETTLE-008"
+  ],
+  "firstWriteBatch": {
+    "batchId": "batch.compatibility-import-retirement-and-acceptance-ledger",
+    "goal": "Retire the remaining compatibilityImport production residue and add the first explicit acceptance ledger without reopening earlier implementation queues.",
+    "mustModify": [
+      "src/application/script-editor/runtime-pack-import.ts",
+      "src/application/script-editor/runtime-pack-export.ts",
+      "src/application/script-editor/workspace-shell.ts",
+      "src/ui/main-ui/main-ui-flow.js",
+      "tests/robustness.test.cjs",
+      "docs/blueprints/queues/event-routing-settlement-migration-and-final-acceptance-queue.md",
+      "docs/blueprints/plans/2026-07-24-event-canonical-reuse-routing-and-settlement-governance-target-plan.md",
+      "docs/change-log.md"
+    ],
+    "mustNotModify": [
+      "closed queue implementation surfaces except for explicit migration residue removal",
+      "settlement/nextEventId/canonical-host behavior already closed by earlier queues",
+      "src/main.ts business branching for building-specific behavior"
+    ]
+  },
+  "targetedRedTests": [
+    "script editor compatibility import preserves unsupported ui reserve families as explicit residue",
+    "script editor compatibility import explains when a project export is passed to the runtime-pack importer",
+    "script editor workspace shell surfaces export blockers and compatibility residue"
+  ],
+  "mustPreserveContract": [
+    "runtime export, loader, and workspace-shell must remain fail-closed on invalid nextEventId and settlement shapes",
+    "event remains the only routing owner and settlement remains mutation/write-back only",
+    "normal startup and runtime preview continue sharing the same loadScenarioPackFromFiles(...) loader seam",
+    "PlayableResult remains the surviving result shell and no PlayableSettlement production truth is reintroduced"
+  ],
+  "acceptanceLedgerPlan": {
+    "automationFirst": [
+      "normal-startup automated coverage",
+      "json-import/loader automated coverage",
+      "runtime-preview automated coverage",
+      "building-entry and canonical-host routing automated coverage",
+      "settlement/follow-up result-routing automated coverage"
+    ],
+    "browserOrRuntimeProofNeeded": [
+      "cross-entrypoint final acceptance ledger for ACC-EVENT-SETTLE-008 after compatibilityImport retirement lands"
+    ]
+  },
+  "summary": "The first required-final bounded batch is now frozen: retire compatibilityImport from production Script Editor truth, preserve the already-landed fail-closed routing/settlement guards, and prepare an explicit acceptance ledger before any version-closeout attempt."
+}

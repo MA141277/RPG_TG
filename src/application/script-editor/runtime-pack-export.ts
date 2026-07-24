@@ -2563,27 +2563,12 @@ function appendCompatibilityImportResidueDiagnostics(
     return;
   }
 
-  const unresolvedFamilies = (compatibilityImport as Record<string, unknown>)[
-    "unresolvedFamilies"
-  ];
-  if (
-    unresolvedFamilies == null ||
-    typeof unresolvedFamilies !== "object" ||
-    Array.isArray(unresolvedFamilies)
-  ) {
-    return;
-  }
-
-  for (const familyKey of Object.keys(
-    unresolvedFamilies as Record<string, unknown>
-  ).sort()) {
-    diagnostics.push({
-      code: "unsupported-family",
-      fieldPath: `project.storyPack.compatibilityImport.unresolvedFamilies.${familyKey}`,
-      message:
-        `Unresolved imported runtime family "${familyKey}" must be resolved or preserved by a later compatibility/export step before runtime export can proceed.`,
-    });
-  }
+  diagnostics.push({
+    code: "unsupported-family",
+    fieldPath: "project.storyPack.compatibilityImport",
+    message:
+      "compatibilityImport is retired and now fail closed. Remove the leftover field instead of preserving compatibility residue for runtime export.",
+  });
 }
 
 function formatDiagnostics(

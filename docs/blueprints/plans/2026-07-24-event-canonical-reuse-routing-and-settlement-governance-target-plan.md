@@ -6,7 +6,7 @@
 - version_id: `target.event-follow-up-routing-settlement-and-canonical-reuse-convergence`
 - version_status: `open`
 - active_phase: `phase.active-execution`
-- active_queue: `queue.full-chain-event-routing-and-settlement-consistency`
+- active_queue: `queue.event-routing-settlement-migration-and-final-acceptance`
 - decision_state: `active-execution`
 - next_decision: `queue-closeout-or-return-to-version-review`
 - next_action: `resume-active-queue`
@@ -23,12 +23,12 @@
 - intake_summary: `Create a new formal version spec/plan from the approved 2026-07-24 iteration draft, fully absorb the approved boundaries, and immediately admit the first required canonical-reuse queue instead of stopping at a version shell.`
 - intake_result: `promoted-to-admission`
 - intake_feedback_mode: `fixed-receipt`
-- closure_review_subject: `queue.full-chain-event-routing-and-settlement-consistency`
+- closure_review_subject: `queue.event-routing-settlement-migration-and-final-acceptance`
 - closure_review_status: `evaluating`
 - residue_candidate_id: `none`
 - residue_candidate_family: `none`
-- routing_basis: `queue.same-display-name-building-host-instance-canonicalization completed repository sync through commit acf24fe on origin/mod-first-dev, so queue.full-chain-event-routing-and-settlement-consistency is now the uniquely lawful active queue under the approved phase order.`
-- next_lawful_queue_recommendation: `queue.event-routing-settlement-migration-and-final-acceptance`
+- routing_basis: `queue.full-chain-event-routing-and-settlement-consistency completed repository sync through commit fe14a03 on origin/mod-first-dev, so queue.event-routing-settlement-migration-and-final-acceptance is now the uniquely lawful active queue under the approved phase order.`
+- next_lawful_queue_recommendation: `none`
 - auto_admission_ready: `false`
 - stop_reason: `none`
 - stop_basis: `none`
@@ -48,8 +48,8 @@
   - `queue.instance-next-event-id-and-event-routing-convergence: closed after repository sync to origin/mod-first-dev; it completed unified nextEventId routing with event as the only routing owner.`
   - `queue.settlement-resource-and-event-type-convergence: closed after settlement boundary convergence, queue-closeout proof, and successful repository sync through commit b391e09 on origin/mod-first-dev.`
   - `queue.same-display-name-building-host-instance-canonicalization: closed after same-name host merge, direct host-id rewrite, queue-closeout proof, and successful repository sync through commit acf24fe on origin/mod-first-dev.`
-  - `queue.full-chain-event-routing-and-settlement-consistency: admitted and active; it follows same-name host canonicalization closeout and now owns Script Editor/save-load/export-import/loading/preview/startup/runtime full-chain consistency on canonical host ids, nextEventId, and settlements.`
-  - `queue.event-routing-settlement-migration-and-final-acceptance: not yet admitted; required-final queue for explicit migration, fail-closed rejection, acceptance, and residue guard.`
+  - `queue.full-chain-event-routing-and-settlement-consistency: closed after queue-closeout proof, repository sync through commit fe14a03, and full-chain parity coverage for ACC-EVENT-SETTLE-006.`
+  - `queue.event-routing-settlement-migration-and-final-acceptance: admitted and active; required-final queue for explicit migration, fail-closed rejection, acceptance, and residue guard.`
 - candidate_backlog_scan_sources:
   - `project-progress`
   - `blueprint`
@@ -176,8 +176,8 @@
 | `item.instance-next-event-id-and-event-routing-convergence` | `queue-candidate` | `queue.instance-next-event-id-and-event-routing-convergence` | `closed` | `queue-closeout-complete` | `Repository sync succeeded, so the queue is closed and no longer the active execution target.` | `ACC-EVENT-SETTLE-003; ACC-EVENT-SETTLE-004` | `nextEventId field unification and direct event-owned follow-up routing` | `settlement resource authoring, final migration acceptance` | `Must preserve event as sole routing owner.` |
 | `item.settlement-resource-and-event-type-convergence` | `queue-candidate` | `queue.settlement-resource-and-event-type-convergence` | `closed` | `queue-closeout-complete` | `Settlement boundary convergence is complete and repository sync succeeded through commit b391e09, so the queue is no longer the active execution target.` | `ACC-EVENT-SETTLE-005` | `settlement resource/event-type convergence and PlayableResult naming cleanup` | `cross-chain consistency or final migration ownership` | `Must preserve numeric-first settlement boundary.` |
 | `item.same-display-name-building-host-instance-canonicalization` | `queue-candidate` | `queue.same-display-name-building-host-instance-canonicalization` | `closed` | `queue-closeout-complete` | `Repository sync succeeded through commit acf24fe, so the queue is closed and no longer the active execution target.` | `ACC-EVENT-SETTLE-005A` | `same-display-name real building host deduplication and direct host-reference rewrite across houses/building-arrangements/cities/city entries/characters/location-access/related host-owned paths` | `whole-chain parity or final migration acceptance` | `Must not be reframed as taxonomy cleanup or preserve duplicate host instances only because legacy ids differ.` |
-| `item.full-chain-event-routing-and-settlement-consistency` | `queue-candidate` | `queue.full-chain-event-routing-and-settlement-consistency` | `active` | `task-progression` | `Host-canonicalization closeout and repository sync succeeded, so full-chain parity is now the live execution owner under the approved phase order.` | `ACC-EVENT-SETTLE-006` | `full-chain parity on canonical ids, nextEventId, and settlement events` | `migration closeout or new router invention` | `Must remain distinct from settlement authoring and final acceptance.` |
-| `item.event-routing-settlement-migration-and-final-acceptance` | `queue-candidate` | `queue.event-routing-settlement-migration-and-final-acceptance` | `candidate-recorded` | `queue-closeout` | `Recheck only after all implementation-bearing queues close.` | `ACC-EVENT-SETTLE-007; ACC-EVENT-SETTLE-008` | `explicit migration, rejection coverage, final acceptance, residue guard` | `primary ownership of earlier implementation-bearing queues` | `Required-final queue only.` |
+| `item.full-chain-event-routing-and-settlement-consistency` | `queue-candidate` | `queue.full-chain-event-routing-and-settlement-consistency` | `closed` | `queue-closeout-complete` | `Repository sync succeeded through commit fe14a03, so the queue is closed and no longer the active execution target.` | `ACC-EVENT-SETTLE-006` | `full-chain parity on canonical ids, nextEventId, and settlement events` | `migration closeout or new router invention` | `Must remain distinct from settlement authoring and final acceptance.` |
+| `item.event-routing-settlement-migration-and-final-acceptance` | `queue-candidate` | `queue.event-routing-settlement-migration-and-final-acceptance` | `active` | `task-progression` | `Full-chain consistency closeout and repository sync succeeded, so the required-final queue is now the live execution owner under the approved phase order.` | `ACC-EVENT-SETTLE-007; ACC-EVENT-SETTLE-008` | `explicit migration, rejection coverage, final acceptance, residue guard` | `primary ownership of earlier implementation-bearing queues` | `Required-final queue only.` |
 
 ### Queue Promotion Ledger
 
@@ -186,9 +186,9 @@
 | `queue.event-and-building-instance-canonical-reuse` | `closed` | `already promoted` | `Closed after repository sync succeeded.` |
 | `queue.instance-next-event-id-and-event-routing-convergence` | `closed` | `already promoted` | `Closed after repository sync succeeded.` |
 | `queue.settlement-resource-and-event-type-convergence` | `closed` | `already promoted` | `Closed after repository sync succeeded through commit b391e09 on origin/mod-first-dev.` |
-| `queue.same-display-name-building-host-instance-canonicalization` | `active` | `already promoted` | `Admitted immediately after queue.settlement-resource-and-event-type-convergence recorded successful repository sync.` |
-| `queue.full-chain-event-routing-and-settlement-consistency` | `active` | `already promoted` | `Now active after queue.same-display-name-building-host-instance-canonicalization repository sync through commit acf24fe.` |
-| `queue.event-routing-settlement-migration-and-final-acceptance` | `candidate-ready` | `only after all implementation-bearing queues close` | `Required-final queue.` |
+| `queue.same-display-name-building-host-instance-canonicalization` | `closed` | `already promoted` | `Closed after repository sync through commit acf24fe.` |
+| `queue.full-chain-event-routing-and-settlement-consistency` | `closed` | `already promoted` | `Closed after repository sync through commit fe14a03.` |
+| `queue.event-routing-settlement-migration-and-final-acceptance` | `active` | `already promoted` | `Now active after queue.full-chain-event-routing-and-settlement-consistency repository sync through commit fe14a03.` |
 
 ### Candidate Backlog Refresh Rule
 
@@ -366,3 +366,12 @@
 - `2026-07-24`: `Task3 slice 1B is now landed for queue.full-chain-event-routing-and-settlement-consistency. src/application/scenario/scenario-pack-loader.ts now rejects missing nextEventId targets and settlement events without settlementId on the shared loader seam used by runtime preview and normal startup, so the shared preview/startup proof half of ACC-EVENT-SETTLE-006 is now covered on the same canonical contract as runtime export. build:test, lint:blueprints, lint:blueprint-skill, and blueprint:governance:check all passed.`
 - `2026-07-24`: `The version automatically promoted task.full-chain-event-routing-and-settlement-consistency.queue-closeout-review-and-sync-gate to the live active task. The next lawful action is queue closeout proof plus repository-sync gating before queue.event-routing-settlement-migration-and-final-acceptance can be admitted.`
 - `2026-07-24`: `Local closeout proof is now recorded at generated/blueprint/full-chain-event-routing-and-settlement-consistency-closeout-proof.json. ACC-EVENT-SETTLE-006 is locally covered across the imported-runtime baseline and the shared preview/startup loader seam, compatibilityImport residue remains routed to queue.event-routing-settlement-migration-and-final-acceptance, and the repository-sync gate is now the only remaining local action before required-final queue admission.`
+- `2026-07-24`: `Repository-sync gate for queue.full-chain-event-routing-and-settlement-consistency is now satisfied. Commit fe14a03 landed on origin/mod-first-dev, so queue.event-routing-settlement-migration-and-final-acceptance is now the uniquely lawful active queue under the approved phase order.`
+- `2026-07-24`: `task.event-routing-settlement-migration-and-final-acceptance.evidence-anchor-reconcile is now complete. generated/blueprint/event-routing-settlement-migration-final-acceptance-evidence.json freezes the remaining compatibilityImport production surfaces, the already-landed fail-closed routing/settlement anchors, and the missing final acceptance ledger surfaces for ACC-EVENT-SETTLE-007 / 008.`
+- `2026-07-24`: `The version automatically promoted task.event-routing-settlement-migration-and-final-acceptance.migration-residue-inventory-and-acceptance-lock to the live active task. The next lawful action is explicit final migration/removal inventory and acceptance-lock sync rather than version closeout.`
+- `2026-07-24`: `task.event-routing-settlement-migration-and-final-acceptance.migration-residue-inventory-and-acceptance-lock is now complete. generated/blueprint/event-routing-settlement-migration-final-acceptance-inventory.json freezes compatibilityImport production surfaces, fail-closed migration/rejection rules, and the final acceptance matrix across normal start, JSON import, runtime preview, building entry, and settlement/follow-up result routing.`
+- `2026-07-24`: `The version automatically promoted task.event-routing-settlement-migration-and-final-acceptance.compatibility-import-retirement-and-final-acceptance-preflight to the live active task. The next lawful action is to freeze the first bounded compatibilityImport-retirement plus acceptance-ledger batch without reopening earlier implementation queues.`
+- `2026-07-24`: `task.event-routing-settlement-migration-and-final-acceptance.compatibility-import-retirement-and-final-acceptance-preflight has now frozen its first bounded batch at generated/blueprint/event-routing-settlement-migration-final-acceptance-preflight.json. The required-final implementation slice is explicitly limited to compatibilityImport retirement plus acceptance-ledger preparation and may not reopen closed nextEventId, settlement, canonical-host, or full-chain implementation scope.`
+- `2026-07-24`: `task.event-routing-settlement-migration-and-final-acceptance.compatibility-import-retirement-and-final-acceptance-preflight is now complete locally. Script Editor runtime-pack import fails closed on unsupported UI reserve families instead of preserving compatibilityImport residue, runtime export treats project.storyPack.compatibilityImport as a retired field-level blocker, workspace-shell/main-ui no longer count compatibility residue as an active carry-forward path, and generated/blueprint/event-routing-settlement-migration-final-acceptance-automation-ledger.json records green local automation coverage for the bounded batch.`
+- `2026-07-24`: `The version automatically promoted task.event-routing-settlement-migration-and-final-acceptance.queue-closeout-review-and-version-handoff to the live active task. The next lawful action is queue-closeout proof plus final acceptance-ledger synchronization rather than reopening additional production implementation scope.`
+- `2026-07-24`: `Local closeout proof is now recorded at generated/blueprint/event-routing-settlement-migration-final-acceptance-closeout-proof.json. The required-final queue is locally ready for repository-sync gating, and because this is the final approved queue in the version, the post-sync handoff target is version-level closeout review rather than another queue admission.`

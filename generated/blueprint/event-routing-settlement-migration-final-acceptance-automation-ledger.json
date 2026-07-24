@@ -1,0 +1,38 @@
+{
+  "generatedAt": "2026-07-24",
+  "versionId": "target.event-follow-up-routing-settlement-and-canonical-reuse-convergence",
+  "queueId": "queue.event-routing-settlement-migration-and-final-acceptance",
+  "taskId": "task.event-routing-settlement-migration-and-final-acceptance.queue-closeout-review-and-version-handoff",
+  "landedBatch": {
+    "batchId": "batch.compatibility-import-retirement-and-acceptance-ledger",
+    "summary": [
+      "Script Editor runtime-pack import now fails closed on unsupported UI reserve families instead of preserving compatibilityImport residue.",
+      "Runtime export now treats project.storyPack.compatibilityImport as a retired field-level blocker.",
+      "Workspace-shell and main-ui risk surfaces no longer count compatibilityImport residue as a queue-routable creator signal."
+    ]
+  },
+  "automationCoverage": [
+    {
+      "acceptanceId": "ACC-EVENT-SETTLE-007",
+      "status": "covered-local",
+      "commands": [
+        "npm run build:test",
+        "node --test tests/robustness.test.cjs --test-name-pattern \"script editor runtime-pack import rejects unsupported ui reserve families without compatibility import|script editor runtime-pack import fails closed before unresolved compatibility residue reaches export|script editor workspace shell treats compatibilityImport as a retired export blocker\"",
+        "node --test tests/robustness.test.cjs"
+      ]
+    },
+    {
+      "acceptanceId": "ACC-EVENT-SETTLE-008",
+      "status": "automation-ledger-started",
+      "commands": [
+        "npm run build:test",
+        "node --test tests/robustness.test.cjs"
+      ],
+      "note": "Automated cross-entrypoint coverage is green locally; final closeout still needs governed acceptance-ledger sync and queue-closeout proof."
+    }
+  ],
+  "remainingGap": [
+    "Finalize queue-closeout proof and governed residue truth for the required-final queue.",
+    "Run blueprint governance lint/check after documentation sync."
+  ]
+}

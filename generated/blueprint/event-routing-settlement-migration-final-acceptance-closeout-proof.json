@@ -1,0 +1,22 @@
+{
+  "generatedAt": "2026-07-24",
+  "versionId": "target.event-follow-up-routing-settlement-and-canonical-reuse-convergence",
+  "queueId": "queue.event-routing-settlement-migration-and-final-acceptance",
+  "taskId": "task.event-routing-settlement-migration-and-final-acceptance.queue-closeout-review-and-version-handoff",
+  "status": "local-closeout-ready",
+  "proof": [
+    "compatibilityImport no longer survives any supported runtime-pack import path.",
+    "runtime export fail-closes the retired project.storyPack.compatibilityImport field.",
+    "workspace-shell and main-ui no longer expose compatibilityImport as an active carry-forward residue count.",
+    "Full robustness coverage is green after the required-final compatibilityImport retirement batch."
+  ],
+  "verification": [
+    "npm run build:test",
+    "node --test tests/robustness.test.cjs",
+    "npm run lint:blueprints",
+    "npm run lint:blueprint-skill",
+    "npm run blueprint:governance:check"
+  ],
+  "nextLawfulAction": "repository-sync-gate",
+  "note": "The queue is locally ready for repository sync. After commit/push result recording, control should return to version-level closeout review because this is the final approved queue in the version."
+}
