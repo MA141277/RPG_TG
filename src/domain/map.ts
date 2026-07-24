@@ -171,6 +171,15 @@ export type CampaignVegetationRulesDefinition = {
     id: string;
     meshUrl: string;
     weight: number;
+    placement?: Partial<{
+      scaleMin: number;
+      scaleMax: number;
+      baseWorldScale: number;
+      lift: number;
+    }>;
+    shadow?: {
+      enabled?: boolean;
+    };
   }>;
   density: {
     far: { min: number; max: number };

@@ -9,6 +9,64 @@
 - 隐藏 campaign 大地图上的 debug 参数窗口；地图仍保留主地图底部 `背包` 入口。
 - 新增 `tests/dev-ui-visibility.test.cjs`，锁定玩家界面默认不暴露布局编辑器入口和大地图 debug 控件。
 
+## 2026-07-21 Campaign Terrain Hex-Clipped Chunk Mesh
+
+### Fixed
+- `campaign-terrain-webgl.ts` 将 chunk terrain mesh 从三角中心 ownership 裁剪改为连续网格 + fragment 级 Hex ownership discard：mesh 保持连续覆盖，shader 通过 `uTerrainChunkCellBounds` 丢弃不属于当前 chunk 的 Hex 像素。
+- chunk terrain mesh 的几何覆盖范围改为与 padded 采样范围一致，再由 fragment ownership 裁掉非本 chunk 像素，避免核心 mesh 边界过紧时被 discard 后没有任何 chunk 覆盖而露出黑色接缝。
+- bump `CAMPAIGN_TERRAIN_CHUNK_ALGORITHM_VERSION`，避免浏览器继续命中旧 IndexedDB 中三角中心裁剪 mesh 缓存。
+
+### Impact
+- 修复三角中心裁剪和过紧 mesh 覆盖在 chunk 边界留下的小三角/短线接缝；岸线距离场仍保持 chunk 局部化，实际像素归属与 Hex 语义归属对齐。
+
+## 2026-07-20 Campaign Terrain Chunked Initialization Cache
+
+### Changed
+- `campaign-terrain-webgl.ts` 将 campaign terrain 初始化拆成全图轻量语义层和按需视觉 chunk：全图只保留 Hex `materialSemanticModel` 与 `travelGrid`，地形高度 samples、terrain mesh、局部 shoreline distance texture、植被实例高度查询和城市/actor 高度查询改为围绕玩家当前位置按 8x8 Hex chunk 构建。
+- 初始渲染只请求玩家附近 8 Hex 半径内的 chunk，并预取 12 Hex 半径外圈；玩家移动后 renderer 会继续按当前位置补齐缺失 chunk。terrain canvas 会为每个可见 chunk 独立上传 WebGL buffer 和 shoreline texture，actor layer 只复用 CPU/IndexedDB chunk 数据，不上传 terrain GPU buffer。
+- 新增 `campaign-terrain-cache-v1` IndexedDB 持久缓存和当前会话内存缓存。缓存 key 包含地图输入签名、chunk 坐标、网格参数、chunk 算法版本和岸线关键调参签名；缓存命中时直接反序列化 typed array 并上传/复用，避免刷新或重进地图后重复构建同一 chunk。
+- 岸线 signed-distance texture 改为支持局部 UV bounds；shader 通过 `uShorelineDistanceBounds` 将全局 `vUv` 映射到当前 chunk 的局部距离场，仍从 Hex 陆水语义派生同一条岸线视觉规则。
+
+### Impact
+- 该调整只改变 campaign terrain 的初始化/缓存/上传粒度，不改变 Hex 数据图、通行、寻路、点击、探索或 marker 语义。基础草/沙/岩/雪/水贴图仍按现有 URL 整张加载；图片切 tile 不属于本次变更。
+
+## 2026-07-20 Campaign Shoreline Distance Field Fallback
+
+### Changed
+- `campaign-terrain-webgl.ts` 修正 CPU shoreline signed-distance texture 的无采样像素写入逻辑：地图内部但未被任何 shoreline edge 覆盖的 texel 不再写成透明无效区域，而是根据所在 Hex 的水陆语义写入远距离陆地/水域 signed distance，并保持 A 通道有效。
+- 默认沙滩视觉宽度收窄：`innerRadius` 从 `2.0` 调整为 `1.0`，`outerRadius` 从 `2.4` 调整为 `1.1`；沙滩粗细仍由 `DEFAULT_TERRAIN_BEACH_TUNING` 和运行时 `window.rpgTerrainBeach(...)` 调整。
+
+### Fixed
+- 移除沙滩内部细黄色描边的真实来源：此前 shoreline 距离场局部采样窗口外的 `alpha = 0` 会被 shader 当作沙滩有效区边界参与混合，在陆地内部和 Hex 角点形成可见描边；现在地图内部距离场连续，采样窗口边界不会再被绘制出来。
+
+### Impact
+- 该调整只影响 campaign terrain 的岸线/沙滩视觉采样和默认表现参数，不改变 Hex 水陆语义、通行、寻路、点击、探索、云层、山脉、森林或其他 gameplay 数据。
+
+## 2026-07-17 Campaign Shoreline Distance Field Sampling
+
+### Changed
+- `campaign-terrain-webgl.ts` 将岸线视觉采样从 shader 内逐 Hex 六方向 edge probe 改为 CPU 侧 `ShorelineDistanceTextureModel`：renderer 仍从 Hex 陆水相邻关系组装 shoreline chain edge、chain mileage 和稳定 seed，但会把结果栅格化为 terrain 网格分辨率的 signed-distance texture，再传给 terrain shader 做双线性采样。
+- `campaign-terrain.frag.glsl` 删除旧 `uShorelineChainTexture` 视觉采样路径，改为通过 `uShorelineDistanceTexture` 派生 `boundaryWater`、近岸水色和沙滩/草地过渡；沙滩不再另走一套六方向胶囊边采样，避免水陆分界、近岸 tint 和沙滩边界互相错位。
+- 岸线侵蚀统一按陆地方向向内偏移，低频 chain 噪声负责连续岸线起伏，高频噪声只做细微侵蚀；`window.rpgTerrainBeach(...)` 保持可用，影响岸线形状的参数变化时会在下一次渲染前重建并上传距离场。
+- 距离场栅格化现在被硬性限制在每条 shoreline edge 相邻的陆/水两格内；shader 只在岸线零交叉窄带内使用距离场改写视觉边界，允许曲线跨过原 Hex 边界进入相邻水格以避免硬截断，但禁止单条边的法线场影响第三格或扩散成全图三角水/沙伪影。
+
+### Impact
+- 该调整只改变 campaign terrain 的岸线视觉采样和材质混合，不改变 Hex 数据图、通行、寻路、点击、探索、云洞、山脉/森林语义、最终高度场或水体内部动态噪声。
+
+## 2026-07-17 Campaign Vegetation Willow Grass Mix
+
+### Added
+- `campaign-vegetation-rules-v1` 的 `variants` 支持可选 `placement` 覆盖和 `shadow.enabled`，允许同一森林规则混合树木与低矮地被；未声明覆盖的旧规则继续使用全局 `placement` / `shadow` 参数。
+- 新增 `willow-1..5.json`、`grass.json`、`grass-2.json`、`grass-short.json` 植被 mesh 资产，均由 `src/3dasset/obj` 中对应 OBJ/MTL 源素材转换得到。
+
+### Changed
+- 元末森林规则 profile 改为 `temperate-willow-grass`，variants 从 PineTree 替换为 Willow 为主、Grass 点缀；柳树保留树影，草丛使用独立缩放/lift 并关闭树影。
+- `tools/convert-campaign-vegetation-obj.mjs` 默认转换源改为 `Willow_1..5,Grass,Grass_2,Grass_Short`，重新生成规则时会保留既有密度、LOD、海拔裁剪、避让、shader 和全局树影调参，只替换 profile 与 variants。
+- 移除未再被运行时规则引用的 `pine-tree-1..5.json` 资产。
+
+### Impact
+- 该调整只改变森林格的视觉植被资产和纯表现规则，不改变 Hex `environment: "森林"`、通行、寻路、点击、探索、云洞、海拔裁剪或森林实例预算/均匀裁剪机制。
+
 ## 2026-07-21 Unified Backpack Inventory
 
 ### Added

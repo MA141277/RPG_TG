@@ -270,6 +270,7 @@ import {
   setLoadingScreenProgress,
   type LoadingTheme,
 } from "./ui/loading-screen";
+import { preloadInitialMapViewAssets } from "./ui/startup-asset-preloader";
 import { MainUiFlow } from "./ui/main-ui/main-ui-flow.js";
 import {
   DEFAULT_CAMPAIGN_CITY_DEPTH_MESH_TRANSFORM,
@@ -277,6 +278,7 @@ import {
   createCampaignTerrainCameraCenteredOnCoordinate,
   getCampaignTerrainCameraTiltRadiansForScale,
   getCampaignTerrainTravelGrid,
+  getCampaignTerrainRenderStats,
   isCampaignTerrainUvPassable,
   projectCampaignTerrainUvToClientPointAtHeightAnchor,
   resolveCampaignTerrainUvFromClientPosition,
@@ -286,7 +288,13 @@ import {
   type CampaignCityDepthMeshTransform,
   type CampaignTerrainStyle,
 } from "./ui/views/map/campaign-terrain-webgl";
-import { syncCampaignCloudWebGl } from "./ui/views/map/campaign-cloud-webgl";
+import {
+  beginCampaignCloudInteraction,
+  endCampaignCloudInteraction,
+  getCampaignCloudRenderStats,
+  requestCampaignCloudRender,
+  syncCampaignCloudWebGl,
+} from "./ui/views/map/campaign-cloud-webgl";
 import { syncCityBeggingMiniGameOverlay } from "./ui/views/minigames/city-begging-minigame-view";
 import { syncTroopEditorInteractions } from "./ui/views/troop-editor/troop-editor-interactions";
 import { syncTroopManagementBattlePreview } from "./ui/views/troop-editor/troop-management-battle-preview";
@@ -299,7 +307,11 @@ const MAP_DEBUG_MAX_SCALE = Number.POSITIVE_INFINITY;
 const MAP_DEBUG_SCALE_STEP_RATIO = 1.3;
 const INITIAL_MAP_DEBUG_ANIMATION_DURATION_MS = 250;
 const CAMPAIGN_MAP_ZOOM_ANIMATION_DURATION_MS = 220;
+const CAMPAIGN_MAP_ZOOM_CLOUD_IDLE_RESUME_DELAY_MS = 500;
+const CAMPAIGN_MAP_ZOOM_SETTLE_SCALE_EPSILON = 0.002;
+const CAMPAIGN_MAP_ZOOM_SETTLE_OFFSET_EPSILON_PX = 1;
 const LOADING_SCREEN_SIMULATION_DURATION_MS = 350;
+const STARTUP_LOADING_SIMULATED_PROGRESS_CAP = 0.7;
 const CAMPAIGN_TRAVEL_SPEED_SCALE = 0.6;
 const CAMPAIGN_TRAVEL_MS_PER_MAP_UNIT = 55 / CAMPAIGN_TRAVEL_SPEED_SCALE;
 const CAMPAIGN_TRAVEL_MIN_DURATION_MS = 1400 / CAMPAIGN_TRAVEL_SPEED_SCALE;
@@ -322,6 +334,7 @@ declare global {
     onBeggingGameComplete?: (
       result: CityBeggingGameCompletionResult
     ) => void;
+    rpgMapPerf?: CampaignMapPerfConsoleCommand;
   }
 }
 
@@ -333,11 +346,21 @@ type CampaignMapDebugState = {
 
 type CampaignMapZoomAnimationState = {
   frameId: number | null;
-  startedAtMs: number | null;
-  from: CampaignMapDebugState;
-  to: CampaignMapDebugState;
+  target: CampaignMapDebugState;
+  lastFrameMs: number | null;
 };
 
+type CampaignMapPerfSnapshot = {
+  enabled: boolean;
+  map: CampaignMapDebugState;
+  zoomActive: boolean;
+  terrain: ReturnType<typeof getCampaignTerrainRenderStats>;
+  cloud: ReturnType<typeof getCampaignCloudRenderStats>;
+};
+
+type CampaignMapPerfConsoleCommand = (
+  command?: boolean | "on" | "off" | "toggle" | "status"
+) => CampaignMapPerfSnapshot;
 type CampaignMoveAnimationState = {
   frameId: number | null;
   startedAtMs: number;
@@ -641,6 +664,20 @@ let hasStartedInitialCampaignMapDebugAnimation = false;
 let initialCampaignMapDebugAnimationFrame: number | null = null;
 let initialCampaignMapDebugAnimationStartTime: number | null = null;
 let campaignMapZoomAnimationState: CampaignMapZoomAnimationState | null = null;
+let campaignMapZoomCloudResumeTimeoutId: number | null = null;
+let campaignMapPerfPanelEnabled = false;
+window.rpgMapPerf = (command = "status") => {
+  if (command === "toggle") {
+    campaignMapPerfPanelEnabled = !campaignMapPerfPanelEnabled;
+  } else if (command === "on" || command === true) {
+    campaignMapPerfPanelEnabled = true;
+  } else if (command === "off" || command === false) {
+    campaignMapPerfPanelEnabled = false;
+  }
+
+  syncCampaignMapPerfPanel();
+  return getCampaignMapPerfSnapshot();
+};
 let activeMapIntroOverlay: HTMLElement | null = null;
 let campaignMapScaleDraftValue: string | null = null;
 let campaignMapDragState:
@@ -2354,7 +2391,7 @@ function startContinueGameWithLoading(selectedCharacter: CharacterDefinition): v
       return;
     }
 
-    setActiveLoadingProgress(progress);
+    setActiveLoadingProgress(progress * STARTUP_LOADING_SIMULATED_PROGRESS_CAP);
   })
     .then(async () => {
       if (requestId !== loadingScreenRequestId) {
@@ -2372,6 +2409,10 @@ function startContinueGameWithLoading(selectedCharacter: CharacterDefinition): v
         )
       );
       applyActivatedModSession(startupSession);
+      await preloadInitialMapViewAssets(
+        appRoot,
+        createStartupPreloadProgressHandler(requestId)
+      );
       endLoadingScreen(requestId);
     })
     .catch((error: unknown) => {
@@ -2391,7 +2432,7 @@ function startRestoredGameWithLoading(
       return;
     }
 
-    setActiveLoadingProgress(progress);
+    setActiveLoadingProgress(progress * STARTUP_LOADING_SIMULATED_PROGRESS_CAP);
   })
     .then(async () => {
       if (requestId !== loadingScreenRequestId) {
@@ -2409,6 +2450,10 @@ function startRestoredGameWithLoading(
         )
       );
       applyActivatedModSession(startupSession);
+      await preloadInitialMapViewAssets(
+        appRoot,
+        createStartupPreloadProgressHandler(requestId)
+      );
       endLoadingScreen(requestId);
     })
     .catch((error: unknown) => {
@@ -2428,7 +2473,7 @@ function startMainGameWithLoading(
       return;
     }
 
-    setActiveLoadingProgress(progress);
+    setActiveLoadingProgress(progress * STARTUP_LOADING_SIMULATED_PROGRESS_CAP);
   }).then(async () => {
     if (requestId !== loadingScreenRequestId) {
       return;
@@ -2445,6 +2490,10 @@ function startMainGameWithLoading(
       )
     );
     applyActivatedModSession(startupSession);
+    await preloadInitialMapViewAssets(
+      appRoot,
+      createStartupPreloadProgressHandler(requestId)
+    );
     endLoadingScreen(requestId);
   }).catch((error: unknown) => {
     endLoadingScreen(requestId);
@@ -2464,7 +2513,7 @@ function runScenarioPackStartupRequestWithLoading(
       return;
     }
 
-    setActiveLoadingProgress(progress);
+    setActiveLoadingProgress(progress * STARTUP_LOADING_SIMULATED_PROGRESS_CAP);
   }).then(async () => {
     if (requestId !== loadingScreenRequestId) {
       return;
@@ -2474,6 +2523,10 @@ function runScenarioPackStartupRequestWithLoading(
       await runStartupSessionCoordinator(request, startupSessionCoordinatorDeps)
     );
     applyActivatedModSession(startupSession);
+    await preloadInitialMapViewAssets(
+      appRoot,
+      createStartupPreloadProgressHandler(requestId)
+    );
     endLoadingScreen(requestId);
   }).catch((error) => {
     endLoadingScreen(requestId);
@@ -2780,6 +2833,22 @@ function setActiveLoadingProgress(progress: number): void {
   }
 
   setLoadingScreenProgress(activeLoadingScreenElement, progress, activeLoadingTheme);
+}
+
+function createStartupPreloadProgressHandler(
+  requestId: number
+): Parameters<typeof preloadInitialMapViewAssets>[1] {
+  return ({ loaded, total }) => {
+    if (requestId !== loadingScreenRequestId) {
+      return;
+    }
+
+    const preloadProgress = total === 0 ? 1 : loaded / total;
+    const progress =
+      STARTUP_LOADING_SIMULATED_PROGRESS_CAP +
+      (1 - STARTUP_LOADING_SIMULATED_PROGRESS_CAP) * preloadProgress;
+    setActiveLoadingProgress(progress);
+  };
 }
 
 function endLoadingScreen(requestId: number): void {
@@ -3891,6 +3960,7 @@ appElement.addEventListener("pointerdown", (event) => {
     startOffsetY: campaignMapDebugState.offsetY,
     didMove: false,
   };
+  beginCampaignCloudInteraction("drag");
   hideCampaignHoverHexOutline();
   campaignMap.classList.add("is-dragging");
   campaignMap.setPointerCapture(event.pointerId);
@@ -6667,7 +6737,6 @@ function showMapIntroOverlay(title: string): void {
 }
 
 function hideMapIntroOverlay(): void {
-  activeMapIntroOverlay?.remove();
   activeMapIntroOverlay = null;
 }
 
@@ -6719,55 +6788,98 @@ function createCampaignMapZoomTargetState(nextScale: number): CampaignMapDebugSt
 }
 
 function startCampaignMapZoomAnimation(targetState: CampaignMapDebugState): void {
-  cancelCampaignMapZoomAnimation();
+  cancelCampaignMapZoomCloudResume();
+  beginCampaignCloudInteraction("zoom");
+
+  if (campaignMapZoomAnimationState != null) {
+    campaignMapZoomAnimationState.target = targetState;
+    return;
+  }
 
   campaignMapZoomAnimationState = {
     frameId: null,
-    startedAtMs: null,
-    from: { ...campaignMapDebugState },
-    to: targetState,
+    target: targetState,
+    lastFrameMs: null,
   };
 
-  const animate = (timestamp: number) => {
-    if (campaignMapZoomAnimationState == null) {
-      return;
-    }
-    if (campaignMapZoomAnimationState.startedAtMs == null) {
-      campaignMapZoomAnimationState.startedAtMs = timestamp;
-    }
-
-    const elapsedMs = timestamp - campaignMapZoomAnimationState.startedAtMs;
-    const progress = clamp(
-      elapsedMs / CAMPAIGN_MAP_ZOOM_ANIMATION_DURATION_MS,
-      0,
-      1
-    );
-    const easedProgress = easeOutCubic(progress);
-    setCampaignMapDebugState(
-      interpolateCampaignMapState(
-        campaignMapZoomAnimationState.from,
-        campaignMapZoomAnimationState.to,
-        easedProgress
-      )
-    );
-
-    if (progress < 1) {
-      campaignMapZoomAnimationState.frameId = window.requestAnimationFrame(animate);
-      return;
-    }
-
-    setCampaignMapDebugState(campaignMapZoomAnimationState.to);
-    campaignMapZoomAnimationState = null;
-  };
-
-  campaignMapZoomAnimationState.frameId = window.requestAnimationFrame(animate);
+  scheduleCampaignMapZoomAnimationFrame();
 }
 
-function cancelCampaignMapZoomAnimation(): void {
+function scheduleCampaignMapZoomAnimationFrame(): void {
+  if (
+    campaignMapZoomAnimationState == null ||
+    campaignMapZoomAnimationState.frameId != null
+  ) {
+    return;
+  }
+
+  campaignMapZoomAnimationState.frameId =
+    window.requestAnimationFrame(animateCampaignMapZoom);
+}
+
+function animateCampaignMapZoom(timestamp: number): void {
+  if (campaignMapZoomAnimationState == null) {
+    return;
+  }
+
+  const targetState = campaignMapZoomAnimationState.target;
+  const lastFrameMs = campaignMapZoomAnimationState.lastFrameMs ?? timestamp;
+  const elapsedMs = Math.max(0, timestamp - lastFrameMs);
+  campaignMapZoomAnimationState.frameId = null;
+  campaignMapZoomAnimationState.lastFrameMs = timestamp;
+
+  const progress = clamp(
+    elapsedMs / CAMPAIGN_MAP_ZOOM_ANIMATION_DURATION_MS,
+    0,
+    1
+  );
+  const easedProgress = easeOutCubic(progress);
+  setCampaignMapDebugState(
+    interpolateCampaignMapState(
+      campaignMapDebugState,
+      targetState,
+      easedProgress
+    )
+  );
+
+  if (isCampaignMapZoomStateSettled(campaignMapDebugState, targetState)) {
+    setCampaignMapDebugState(targetState);
+    campaignMapZoomAnimationState = null;
+    scheduleCampaignMapZoomCloudResume();
+    return;
+  }
+
+  scheduleCampaignMapZoomAnimationFrame();
+}
+
+function cancelCampaignMapZoomAnimation(
+  options: { keepCloudInteraction?: boolean } = {}
+): void {
   if (campaignMapZoomAnimationState?.frameId != null) {
     window.cancelAnimationFrame(campaignMapZoomAnimationState.frameId);
   }
   campaignMapZoomAnimationState = null;
+  if (options.keepCloudInteraction !== true) {
+    cancelCampaignMapZoomCloudResume();
+    endCampaignCloudInteraction("zoom");
+  }
+}
+
+function scheduleCampaignMapZoomCloudResume(): void {
+  cancelCampaignMapZoomCloudResume();
+  campaignMapZoomCloudResumeTimeoutId = window.setTimeout(() => {
+    campaignMapZoomCloudResumeTimeoutId = null;
+    endCampaignCloudInteraction("zoom");
+  }, CAMPAIGN_MAP_ZOOM_CLOUD_IDLE_RESUME_DELAY_MS);
+}
+
+function cancelCampaignMapZoomCloudResume(): void {
+  if (campaignMapZoomCloudResumeTimeoutId == null) {
+    return;
+  }
+
+  window.clearTimeout(campaignMapZoomCloudResumeTimeoutId);
+  campaignMapZoomCloudResumeTimeoutId = null;
 }
 
 function interpolateCampaignMapState(
@@ -6821,6 +6933,7 @@ function syncCampaignMapDebugView(): void {
     offsetX: campaignMapDebugState.offsetX,
     offsetY: campaignMapDebugState.offsetY,
   });
+  requestCampaignCloudRender();
 
   const scaleElement = appRoot.querySelector<HTMLElement>(
     "[data-campaign-map-scale]"
@@ -6849,6 +6962,52 @@ function syncCampaignMapDebugView(): void {
   if (offsetYElement != null) {
     offsetYElement.textContent = `${campaignMapDebugState.offsetY}px`;
   }
+  syncCampaignMapPerfPanel();
+}
+
+function getCampaignMapPerfSnapshot(): CampaignMapPerfSnapshot {
+  return {
+    enabled: campaignMapPerfPanelEnabled,
+    map: { ...campaignMapDebugState },
+    zoomActive: campaignMapZoomAnimationState != null,
+    terrain: getCampaignTerrainRenderStats(),
+    cloud: getCampaignCloudRenderStats(),
+  };
+}
+
+function syncCampaignMapPerfPanel(): void {
+  const existingPanel = appRoot.querySelector<HTMLElement>(
+    "[data-campaign-map-perf-panel]"
+  );
+  if (!campaignMapPerfPanelEnabled) {
+    existingPanel?.remove();
+    return;
+  }
+
+  const panel = existingPanel ?? document.createElement("aside");
+  if (existingPanel == null) {
+    panel.className = "c-campaign-map-perf-panel";
+    panel.dataset.campaignMapPerfPanel = "true";
+    appRoot.append(panel);
+  }
+
+  const snapshot = getCampaignMapPerfSnapshot();
+  const terrain = snapshot.terrain;
+  const cloud = snapshot.cloud;
+  panel.textContent = [
+    `Map ${snapshot.map.scale.toFixed(2)}x ${snapshot.zoomActive ? "zoom" : "idle"}`,
+    `Terrain ${formatMapPerfMs(terrain.lastRenderDurationMs)} ${terrain.lastDrawCalls} draws ${terrain.canvasWidth}x${terrain.canvasHeight} ${terrain.lastRenderReason ?? "-"}`,
+    `Cloud ${formatMapPerfMs(cloud.lastRenderDurationMs)} ${cloud.lastDrawCalls} draws ${cloud.canvasWidth}x${cloud.canvasHeight} ${cloud.interactionActive ? "frozen" : "flow"}`,
+    `Renderers T${terrain.rendererCount}/${terrain.pendingRendererCount} C${cloud.rendererCount}/${cloud.pendingRendererCount}`,
+  ].join("\n");
+}
+
+function formatMapPerfMs(value: number): string {
+  if (!Number.isFinite(value)) {
+    return "0.00ms";
+  }
+
+  return `${value.toFixed(2)}ms`;
 }
 
 function syncCampaignTerrainStyleView(): void {
@@ -6936,9 +7095,26 @@ function endCampaignMapDrag(event: PointerEvent): void {
   shouldSuppressNextClickAfterMapDrag = campaignMapDragState.didMove;
   const shouldUpdateHoverOutline = !campaignMapDragState.didMove;
   campaignMapDragState = null;
+  endCampaignCloudInteraction("drag");
   if (shouldUpdateHoverOutline) {
     updateCampaignHoverHexOutline(event);
   }
+}
+
+function isCampaignMapZoomStateSettled(
+  currentState: CampaignMapDebugState,
+  targetState: CampaignMapDebugState
+): boolean {
+  const scaleDelta = Math.abs(currentState.scale - targetState.scale);
+  const offsetDelta = Math.max(
+    Math.abs(currentState.offsetX - targetState.offsetX),
+    Math.abs(currentState.offsetY - targetState.offsetY)
+  );
+
+  return (
+    scaleDelta <= CAMPAIGN_MAP_ZOOM_SETTLE_SCALE_EPSILON &&
+    offsetDelta <= CAMPAIGN_MAP_ZOOM_SETTLE_OFFSET_EPSILON_PX
+  );
 }
 
 function easeOutCubic(value: number): number {

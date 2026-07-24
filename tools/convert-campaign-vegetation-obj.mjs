@@ -4,11 +4,14 @@ import fs from "node:fs";
 import path from "node:path";
 
 const DEFAULT_SOURCES = [
-  "PineTree_1",
-  "PineTree_2",
-  "PineTree_3",
-  "PineTree_4",
-  "PineTree_5",
+  "Willow_1",
+  "Willow_2",
+  "Willow_3",
+  "Willow_4",
+  "Willow_5",
+  "Grass",
+  "Grass_2",
+  "Grass_Short",
 ];
 
 const args = parseArgs(process.argv.slice(2));
@@ -26,6 +29,7 @@ const sourceNames = (args.sources ?? DEFAULT_SOURCES.join(","))
   .split(",")
   .map((item) => item.trim())
   .filter(Boolean);
+const existingRules = readExistingVegetationRules(rulesPath);
 
 fs.mkdirSync(outputDirectory, { recursive: true });
 fs.mkdirSync(path.dirname(rulesPath), { recursive: true });
@@ -42,31 +46,29 @@ const variants = sourceNames.map((sourceName) => {
   const outputPath = path.join(outputDirectory, `${asset.id}.json`);
   fs.writeFileSync(outputPath, `${JSON.stringify(asset)}\n`, "utf8");
 
-  return {
-    id: asset.id,
-    meshUrl: path
+  return createVariantDefinition(
+    asset.id,
+    path
       .relative(path.dirname(rulesPath), outputPath)
-      .replaceAll("\\", "/"),
-    weight: 1,
-  };
+      .replaceAll("\\", "/")
+  );
 });
 
-const rules = {
+const defaultRules = {
   schemaVersion: 1,
   format: "campaign-vegetation-rules-v1",
   id: "yuanmo-temperate-forest",
   environment: "森林",
-  profile: "temperate-pine-tree",
+  profile: "temperate-willow-grass",
   seed: "hex-cell-and-instance-v1",
-  variants,
   density: {
-    far: { min: 1, max: 2 },
-    medium: { min: 4, max: 6 },
-    near: { min: 12, max: 18 },
+    far: { min: 2, max: 4 },
+    medium: { min: 12, max: 24 },
+    near: { min: 48, max: 64 },
   },
   lod: {
     mediumMinScale: 22,
-    nearMinScale: 46,
+    nearMinScale: 80,
     maxVisibleInstances: 840,
   },
   altitude: {
@@ -99,6 +101,13 @@ const rules = {
   },
 };
 
+const rules = {
+  ...defaultRules,
+  ...(existingRules ?? {}),
+  profile: "temperate-willow-grass",
+  variants,
+};
+
 fs.writeFileSync(rulesPath, `${JSON.stringify(rules, null, 2)}\n`, "utf8");
 
 console.log(
@@ -113,6 +122,55 @@ console.log(
     2
   )
 );
+
+function readExistingVegetationRules(filePath) {
+  if (!fs.existsSync(filePath)) {
+    return null;
+  }
+
+  const rules = JSON.parse(fs.readFileSync(filePath, "utf8"));
+  if (rules?.format !== "campaign-vegetation-rules-v1") {
+    return null;
+  }
+
+  return rules;
+}
+
+function createVariantDefinition(id, meshUrl) {
+  if (id.startsWith("willow-")) {
+    return {
+      id,
+      meshUrl,
+      weight: 3,
+      placement: {
+        baseWorldScale: 0.00095,
+      },
+    };
+  }
+
+  if (id.startsWith("grass")) {
+    return {
+      id,
+      meshUrl,
+      weight: 1,
+      placement: {
+        scaleMin: 0.65,
+        scaleMax: 1.55,
+        baseWorldScale: 0.00042,
+        lift: 0.00022,
+      },
+      shadow: {
+        enabled: false,
+      },
+    };
+  }
+
+  return {
+    id,
+    meshUrl,
+    weight: 1,
+  };
+}
 
 function parseArgs(tokens) {
   const output = {};
