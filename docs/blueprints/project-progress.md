@@ -5,8 +5,8 @@
 - entry_id: `project-progress.rpg-tg`
 - active_blueprint: `blueprint.rpg-tg`
 - active_version: `target.event-follow-up-routing-settlement-and-canonical-reuse-convergence`
-- has_active_queue: `true`
-- next_file: `docs/blueprints/queues/event-routing-settlement-migration-and-final-acceptance-queue.md`
+- has_active_queue: `false`
+- next_file: `docs/blueprints/plans/2026-07-24-event-canonical-reuse-routing-and-settlement-governance-target-plan.md`
 - entry_action: `open-next-file`
 
 ## Human Context
@@ -29,7 +29,7 @@
 - Current Version Plan:
   - `docs/blueprints/plans/2026-07-24-event-canonical-reuse-routing-and-settlement-governance-target-plan.md`
 - Current Active Queue:
-  - `docs/blueprints/queues/event-routing-settlement-migration-and-final-acceptance-queue.md`
+  - `none`
 
 ### Live Entry Guardrails
 
@@ -90,7 +90,7 @@
 - `queue.event-playable-destination-and-building-action-event-truth-convergence is now closed after ACC-EVENT-ONLY-ROUTING-007 / 008 verification confirmed runnable event-owned minigame lowering, canonical building action eventId routing, and shared playable runtime convergence. The active version remains open with no active queue and resumes from version closeout review; do not infer closed status without explicit closeout confirmation.`
 - `target.script-editor-event-centered-authoring-scene-retirement-and-portrait-resource-refactor was explicitly closed on 2026-07-22 after final version closeout confirmation, and repository entry is intentionally stopped on this recorded closeout result rather than silently switching to an older still-open version with unresolved governance-template drift.`
 - `Current entry pointers now stop on target.map-rendering-city-data-separation-and-canonical-numeric-id-transition after the operator explicitly requested closing the current version on 2026-07-24. queue.map-rendering-city-data-separation-and-canonical-numeric-id-transition is closed with human-visible Codex in-app browser acceptance, successful repository sync to origin/mod-first-dev, and no same-family residue, and the version is now closed historical evidence only.`
-- `Current entry pointers now route to target.event-follow-up-routing-settlement-and-canonical-reuse-convergence through the new formal spec/plan file pair created from the 2026-07-24 iteration draft. queue.event-and-building-instance-canonical-reuse is closed after canonical-reuse closeout proof and successful repository sync to origin/mod-first-dev, queue.instance-next-event-id-and-event-routing-convergence is closed after repository sync through commit 954dd32a on origin/mod-first-dev, queue.settlement-resource-and-event-type-convergence is closed after repository sync through commit b391e09 on origin/mod-first-dev, queue.same-display-name-building-host-instance-canonicalization is closed after repository sync through commit acf24fe on origin/mod-first-dev, queue.full-chain-event-routing-and-settlement-consistency is closed after repository sync through commit fe14a03 on origin/mod-first-dev, and queue.event-routing-settlement-migration-and-final-acceptance is now the active queue while task.event-routing-settlement-migration-and-final-acceptance.queue-closeout-review-and-version-handoff is the live active task after bounded compatibilityImport retirement and green local automation coverage were recorded.`
+- `Current entry pointers now route to target.event-follow-up-routing-settlement-and-canonical-reuse-convergence through the new formal spec/plan file pair created from the 2026-07-24 iteration draft. queue.event-and-building-instance-canonical-reuse is closed after canonical-reuse closeout proof and successful repository sync to origin/mod-first-dev, queue.instance-next-event-id-and-event-routing-convergence is closed after repository sync through commit 954dd32a on origin/mod-first-dev, queue.settlement-resource-and-event-type-convergence is closed after repository sync through commit b391e09 on origin/mod-first-dev, queue.same-display-name-building-host-instance-canonicalization is closed after repository sync through commit acf24fe on origin/mod-first-dev, queue.full-chain-event-routing-and-settlement-consistency is closed after repository sync through commit fe14a03 on origin/mod-first-dev, and queue.event-routing-settlement-migration-and-final-acceptance is now closed after repository sync through commit 9a28a9a on origin/mod-first-dev. No active queue remains, so the lawful resume point is the version plan's closeout review state.`
 
 ### Historical References
 

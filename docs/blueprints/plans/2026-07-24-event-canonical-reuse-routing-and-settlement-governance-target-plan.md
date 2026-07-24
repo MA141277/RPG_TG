@@ -5,12 +5,12 @@
 - document_role: `version-governor`
 - version_id: `target.event-follow-up-routing-settlement-and-canonical-reuse-convergence`
 - version_status: `open`
-- active_phase: `phase.active-execution`
-- active_queue: `queue.event-routing-settlement-migration-and-final-acceptance`
-- decision_state: `active-execution`
+- active_phase: `phase.promotion-review`
+- active_queue: `none`
+- decision_state: `promotion-review`
 - next_decision: `queue-closeout-or-return-to-version-review`
-- next_action: `resume-active-queue`
-- resume_gate: `active-queue`
+- next_action: `return-to-promotion-review`
+- resume_gate: `promotion-review`
 - post_queue_closeout_pause_policy: `auto-continue`
 - promotion_review_result: `queue-admitted`
 - review_subject_id: `none`
@@ -24,10 +24,10 @@
 - intake_result: `promoted-to-admission`
 - intake_feedback_mode: `fixed-receipt`
 - closure_review_subject: `queue.event-routing-settlement-migration-and-final-acceptance`
-- closure_review_status: `evaluating`
+- closure_review_status: `routed`
 - residue_candidate_id: `none`
 - residue_candidate_family: `none`
-- routing_basis: `queue.full-chain-event-routing-and-settlement-consistency completed repository sync through commit fe14a03 on origin/mod-first-dev, so queue.event-routing-settlement-migration-and-final-acceptance is now the uniquely lawful active queue under the approved phase order.`
+- routing_basis: `queue.event-routing-settlement-migration-and-final-acceptance completed repository sync through commit 9a28a9a on origin/mod-first-dev, so no active queue remains and the version returns to closeout review.`
 - next_lawful_queue_recommendation: `none`
 - auto_admission_ready: `false`
 - stop_reason: `none`
@@ -375,3 +375,4 @@
 - `2026-07-24`: `task.event-routing-settlement-migration-and-final-acceptance.compatibility-import-retirement-and-final-acceptance-preflight is now complete locally. Script Editor runtime-pack import fails closed on unsupported UI reserve families instead of preserving compatibilityImport residue, runtime export treats project.storyPack.compatibilityImport as a retired field-level blocker, workspace-shell/main-ui no longer count compatibility residue as an active carry-forward path, and generated/blueprint/event-routing-settlement-migration-final-acceptance-automation-ledger.json records green local automation coverage for the bounded batch.`
 - `2026-07-24`: `The version automatically promoted task.event-routing-settlement-migration-and-final-acceptance.queue-closeout-review-and-version-handoff to the live active task. The next lawful action is queue-closeout proof plus final acceptance-ledger synchronization rather than reopening additional production implementation scope.`
 - `2026-07-24`: `Local closeout proof is now recorded at generated/blueprint/event-routing-settlement-migration-final-acceptance-closeout-proof.json. The required-final queue is locally ready for repository-sync gating, and because this is the final approved queue in the version, the post-sync handoff target is version-level closeout review rather than another queue admission.`
+- `2026-07-24`: `Repository-sync gate for queue.event-routing-settlement-migration-and-final-acceptance is now satisfied. Commit 9a28a9a landed on origin/mod-first-dev, active_queue is now none, and the version returns to promotion-review / closeout-review state because all approved queues in the version are now closed.`
