@@ -3090,6 +3090,43 @@
   line-height: 1.05;
 }
 
+.view-backpack-overlay {
+  background: url("../../ui/background/beibao.png") center / cover no-repeat #101720;
+}
+
+.view-backpack-overlay .c-backpack-shell {
+  border: 1px solid rgb(255 244 196 / 18%);
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 6%),
+    0 18px 42px rgb(0 0 0 / 22%);
+  background: rgb(0 0 0 / 50%);
+}
+
+.view-backpack-overlay .c-library-shell__eyebrow,
+.view-backpack-overlay .c-library-shell__title {
+  color: #f2dfb7;
+  text-shadow: 0 2px 4px rgb(0 0 0 / 58%);
+}
+
+.view-backpack-overlay .c-library-shell__header > .c-button {
+  box-sizing: border-box;
+  min-width: 116px;
+  min-height: 40px;
+  padding: 0 18px;
+  color: #f7e5b7;
+  border: 16px solid transparent;
+  border-image-source: url("../../ui/yuansu/按钮/generated/20260714-141203-return-anti-seam.png");
+  border-image-slice: 92 116 fill;
+  border-image-width: 16px 20px;
+  border-image-repeat: stretch;
+  border-radius: 0;
+  background: transparent;
+  font-family: var(--font-title);
+  font-size: 1rem;
+  line-height: 1;
+  text-shadow: 0 1px 2px rgb(55 28 10 / 74%);
+}
+
 .c-library-shell__toolbar {
   display: flex;
   flex-wrap: wrap;
@@ -3118,6 +3155,43 @@
 .c-filter-chip.is-active {
   color: #f4ede3;
   background: linear-gradient(180deg, #a44c37, #7d2a1e);
+}
+
+.view-backpack-overlay .c-filter-chip,
+.view-backpack-overlay .c-library-detail__actions .c-button {
+  box-sizing: border-box;
+  min-width: 92px;
+  min-height: 34px;
+  padding: 0 16px;
+  color: #f1ddb0;
+  border: 12px solid transparent;
+  border-image-source: url("../../ui/yuansu/按钮/generated/20260714-141153-city-menu-seamless.png");
+  border-image-slice: 72 88 fill;
+  border-image-width: 10px 14px;
+  border-image-repeat: stretch;
+  border-radius: 0;
+  background: transparent;
+  background-clip: padding-box;
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  line-height: 1;
+  text-shadow: 0 1px 2px rgb(42 24 12 / 52%);
+}
+
+.view-backpack-overlay .c-library-shell__header > .c-button:hover,
+.view-backpack-overlay .c-library-shell__header > .c-button:focus-visible {
+  filter: brightness(1.06);
+}
+
+.view-backpack-overlay .c-filter-chip:hover,
+.view-backpack-overlay .c-filter-chip:focus-visible,
+.view-backpack-overlay .c-filter-chip.is-active,
+.view-backpack-overlay .c-library-detail__actions .c-button:hover,
+.view-backpack-overlay .c-library-detail__actions .c-button:focus-visible {
+  color: #fff0bd;
+  border-image-source: url("../../ui/yuansu/按钮/generated/20260724-120251.png");
+  background: transparent;
+  filter: brightness(1.04);
 }
 
 .c-equipment-summary {
@@ -3156,6 +3230,13 @@
 .c-library-table tr.is-selected {
   box-shadow: inset 0 0 0 2px rgb(141 76 50 / 48%);
   background: linear-gradient(180deg, rgb(229 213 181 / 98%), rgb(210 185 138 / 98%));
+}
+
+.view-backpack-overlay .c-backpack-table tr.is-selected {
+  box-shadow:
+    inset 0 0 0 1px rgb(255 224 147 / 34%),
+    0 0 0 1px rgb(0 0 0 / 16%);
+  background: rgb(0 0 0 / 40%);
 }
 
 .c-library-list__title {

@@ -14,6 +14,15 @@ const BACKPACK_FILTER_LABELS: Record<BackpackItemCategoryFilter, string> = {
   other: "其他",
 };
 
+const BACKPACK_TYPE_LABELS: Record<string, string> = {
+  equipment: "装备",
+  weapon: "武器",
+  armor: "防具",
+  food: "食物",
+  grain: "粮食",
+  other: "其他",
+};
+
 function renderCityChoiceSkin(): string {
   return `
     <span class="c-city-choice-skin" aria-hidden="true">
@@ -31,7 +40,7 @@ function renderCityChoiceSkin(): string {
 }
 
 function renderItemTypes(types: string[]): string {
-  return types.join(";");
+  return types.map((type) => BACKPACK_TYPE_LABELS[type] ?? type).join("；");
 }
 
 function isImageIcon(icon: string): boolean {
@@ -103,7 +112,7 @@ export function renderBackpackView(input: {
             <table class="c-library-table c-backpack-table">
               <thead>
                 <tr>
-                  <th>icon</th>
+                  <th aria-label="图标"></th>
                   <th>名字</th>
                   <th>价值</th>
                   <th>类型</th>
