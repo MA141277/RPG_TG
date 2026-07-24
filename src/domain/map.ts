@@ -10,6 +10,7 @@ export type MapNode = {
   y: number;
   kind?: "city" | "settlement" | "fort" | "landmark";
   summary?: string;
+  visualKind?: "structure";
   structureVisual?: {
     kind: "settlement-building";
   };

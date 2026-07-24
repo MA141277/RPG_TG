@@ -3119,8 +3119,12 @@ test("campaign map structures are node-driven instead of hardcoded Yuanmo buildi
     "utf8"
   );
 
+  assert.match(mapDomainSource, /visualKind\?:\s*"structure"/);
   assert.match(mapDomainSource, /structureVisual\?:/);
-  assert.match(yuanmoMapSource, /structureVisual: \{ kind: "settlement-building" \}/);
+  assert.match(
+    yuanmoMapSource,
+    /"id": "settlement\.fenyang_province"[\s\S]*visualKind: "structure"[\s\S]*structureVisual: \{ kind: "settlement-building" \}/
+  );
   assert.doesNotMatch(mapViewSource, /YUANMO_HEX_BUILDING/);
   assert.doesNotMatch(mapViewSource, /renderCampaignHexBuilding/);
   assert.match(mapViewSource, /renderCampaignStructureVisuals/);

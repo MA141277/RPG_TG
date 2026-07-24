@@ -145,7 +145,7 @@ export const yuanmoCampaignMap: MapDefinition = {
     {"id": "settlement.huizhou_province", "label": "徽州路※歙县", "x": 337, "y": 294, "kind": "settlement", "summary": "Region: 江浙行省 | Owner: papal_states | Level: city | Type: town"},
     {"id": "settlement.anqing_province", "label": "安庆路※怀宁", "x": 328, "y": 300, "kind": "settlement", "summary": "剧情: 江淮西线通道 | 阵营: 元末多方争夺，后属朱元璋吴军 | 所有者: 早期不稳，后为朱元璋集团 | 相关NPC: 汤和、邓愈、李文忠、丁普郎 | 注记: 可作为从濠州南下江南的过渡节点"},
     {"id": "settlement.changzhou_province", "label": "常州路※晋陵", "x": 351, "y": 306, "kind": "settlement", "summary": "Region: 江浙行省 | Owner: papal_states | Level: city | Type: town"},
-    {"id": "settlement.fenyang_province", "label": "濠州", "x": 334, "y": 318, "kind": "settlement", "summary": "剧情: 朱元璋和尚时期起点，钟离/皇觉寺附近 | 阵营: 红巾军/小明王宋 | 所有者: 郭子兴部，名义尊小明王韩林儿 | 相关NPC: 朱元璋、郭子兴、马氏、汤和、韩林儿 | 注记: 适合作为早年主线出生点", structureVisual: { kind: "settlement-building" }},
+    {"id": "settlement.fenyang_province", "label": "濠州", "x": 334, "y": 318, "kind": "settlement", "summary": "剧情: 朱元璋和尚时期起点，钟离/皇觉寺附近 | 阵营: 红巾军/小明王宋 | 所有者: 郭子兴部，名义尊小明王韩林儿 | 相关NPC: 朱元璋、郭子兴、马氏、汤和、韩林儿 | 注记: 适合作为早年主线出生点", visualKind: "structure", structureVisual: { kind: "settlement-building" }},
     {"id": "settlement.huaian_province", "label": "高邮府※高邮军", "x": 347, "y": 322, "kind": "settlement", "summary": "剧情: 淮东门户 | 阵营: 张士诚势力 | 所有者: 张士诚集团 | 相关NPC: 张士诚、施耐庵、潘元绍 | 注记: 与濠州、扬州形成早期江淮压力线"},
     {"id": "settlement.kaifeng_province", "label": "汴梁路★开封", "x": 318, "y": 327, "kind": "settlement", "summary": "剧情: 河南元军重镇 | 阵营: 元廷/扩廓帖木儿系 | 所有者: 元廷河南势力 | 相关NPC: 扩廓帖木儿、脱因帖木儿、阎思孝、陈秉直 | 注记: 朱元璋早期北方强敌"},
     {"id": "settlement.henan_province", "label": "河南府路※洛阳", "x": 302, "y": 325, "kind": "settlement", "summary": "Region: 河南江北行省 | Owner: turks | Level: huge_city | Type: town"},
