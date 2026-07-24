@@ -12,8 +12,8 @@
 
 - Status: `running`
 - Last Updated: `2026-07-25`
-- Current Focus: `Task 3 complete after review fix; preparing Task 4 with Subagent-Driven Development.`
-- Next Step: `Dispatch Task 4 implementer from a generated task brief, then run task review before final verification.`
+- Current Focus: `Tasks 1-4 complete; running final verification and governance sync.`
+- Next Step: `Run targeted contracts, lint:plans, typecheck, build, and full npm test with known baseline tracking.`
 - Verification: `npm run lint:plans passed`
 - Notes: `User selected Subagent-Driven execution on 2026-07-25.`
 
@@ -39,6 +39,10 @@
   - Summary: `Completed Task 3: removed the hardcoded Yuanmo building branch, added node-driven structure visual metadata including visualKind, and kept semantic marker interaction in renderCampaignMarkers. Initial review found the missing visualKind contract; fix was applied and re-review approved.`
   - Verification: `npm run build:test; if ($LASTEXITCODE -eq 0) { node --test --test-name-pattern "campaign map structures are node-driven instead of hardcoded Yuanmo building state" tests/robustness.test.cjs }`
   - Next: `Dispatch Task 4 implementer, then run task review before final verification.`
+- 2026-07-25
+  - Summary: `Completed Task 4: terrain canvas structure attributes now derive from campaignStructureProfile and obsolete direct cityDepthMeshAssetUrl/cityDepthTextureUrl view-model fields were removed. Task review approved with no findings.`
+  - Verification: `npm run build:test; if ($LASTEXITCODE -eq 0) { node --test --test-name-pattern "campaign terrain canvas receives structure profile urls as renderer attributes" tests/robustness.test.cjs }`
+  - Next: `Run final verification and governance sync.`
 
 ---
 
@@ -620,7 +624,7 @@ git commit -m "refactor: drive campaign structure visuals from map nodes"
 - Produces: `data-campaign-city-mesh-url`
 - Produces: `data-campaign-city-texture-url`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Append:
 
@@ -641,7 +645,7 @@ test("campaign terrain canvas receives structure profile urls as renderer attrib
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run:
 
@@ -653,7 +657,7 @@ Expected:
 
 - `FAIL` if Task 2 only preserved old city fields.
 
-- [ ] **Step 3: Derive canvas attributes from `campaignStructureProfile`**
+- [x] **Step 3: Derive canvas attributes from `campaignStructureProfile`**
 
 In `renderCampaignMapVisualLayer`, replace the city depth condition with:
 
@@ -684,7 +688,7 @@ In `renderCampaignMapVisualLayer`, replace the city depth condition with:
 
 Remove `cityDepthMeshAssetUrl` and `cityDepthTextureUrl` from `MapViewModel` after all usages are gone.
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run:
 
@@ -696,7 +700,7 @@ Expected:
 
 - `PASS`
 
-- [ ] **Step 5: Commit Task 4**
+- [x] **Step 5: Commit Task 4**
 
 Run:
 

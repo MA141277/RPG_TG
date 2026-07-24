@@ -17,3 +17,4 @@
 - 2026-07-25: Campaign Map Visual Profile Task 1 complete (commits dab5f130..931c4e5e, review clean; controller verified asset files and RED/GREEN report evidence).
 - 2026-07-25: Campaign Map Visual Profile Task 2 complete (commits 571e7aac..196d0873, review clean; controller verified RED/GREEN report evidence).
 - 2026-07-25: Campaign Map Visual Profile Task 3 complete (commits bbbdf174..9054e577, review clean after visualKind contract fix; controller verified RED/GREEN report evidence).
+- 2026-07-25: Campaign Map Visual Profile Task 4 complete (commits f017d921..5847d1db, review clean; controller verified RED/GREEN report evidence).
