@@ -43,6 +43,7 @@ function settleRoutedRuntimeResult(input: {
   taskDefinitionsById: Record<string, TaskDefinition> | undefined;
 }): RuntimeResult {
   const { routed, followUp, taskDefinitionsById } = input;
+  const progressionSettlementInstances = routed.settlementInstances ?? [];
   const settledEffects = settleRuntimeEffects({
     state: routed.state,
     effects: routed.effects,
@@ -86,8 +87,24 @@ function settleRoutedRuntimeResult(input: {
           ? {}
           : { characterStatusById: settledEffects.characterStatusById }),
       });
+  const settledProgression =
+    progressionSettlementInstances.length === 0
+      ? finalState
+      : settleRuntimeEffects({
+          state: finalState.state,
+          effects: [],
+          settlementInstances: progressionSettlementInstances,
+          emittedBy: "progression-runtime",
+          appliedBy: "runtime-settlement",
+          ...(finalState.characterDefinitions == null
+            ? {}
+            : { characterDefinitions: finalState.characterDefinitions }),
+          ...(finalState.characterStatusById == null
+            ? {}
+            : { characterStatusById: finalState.characterStatusById }),
+        });
   const handledFollowUp = settleRuntimeFollowUp({
-    state: finalState.state,
+    state: settledProgression.state,
     followUp: routed.followUp,
     context: followUp,
   });
@@ -98,12 +115,12 @@ function settleRoutedRuntimeResult(input: {
       ? {}
       : { characterDefinitions: handledFollowUp.characterDefinitions }),
     ...(handledFollowUp.characterDefinitions !== undefined ||
-    finalState.characterDefinitions === undefined
+    settledProgression.characterDefinitions === undefined
       ? {}
-      : { characterDefinitions: finalState.characterDefinitions }),
-    ...(finalState.characterStatusById === undefined
+      : { characterDefinitions: settledProgression.characterDefinitions }),
+    ...(settledProgression.characterStatusById === undefined
       ? {}
-      : { characterStatusById: finalState.characterStatusById }),
+      : { characterStatusById: settledProgression.characterStatusById }),
     state: handledFollowUp.state,
     ...(handledFollowUp.followUp === undefined
       ? {}

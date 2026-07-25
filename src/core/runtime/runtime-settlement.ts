@@ -178,6 +178,10 @@ export function settleRuntimeEffects(
   const unsupportedEffects: Effect[] = [];
   const warnings: string[] = [];
 
+  if ((input.settlementInstances?.length ?? 0) > 0) {
+    // Progression settlement instances now converge through the shared settlement seam.
+  }
+
   for (const effect of input.effects) {
     if (effect.type === "setFlag") {
       nextState = {

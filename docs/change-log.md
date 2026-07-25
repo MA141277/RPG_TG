@@ -5,6 +5,18 @@
 `docs/change-log.md` 的正式定位是“历史记录 + 人类可读摘要”。
 它不是当前 Blueprint / legacy superpowers 治理的 live execution truth，不作为 resume entry、promotion gate、closeout gate 或固定同步门。
 
+## 2026-07-25 Generic Progression Track Task 2 Runtime And Settlement Handoff
+
+### Changed
+- Added [src/core/runtime/progression-runtime.ts](/D:/workspace/project/RPG_TG/src/core/runtime/progression-runtime.ts:1) with the first generic progression runtime slice, including target-tier selection, optional demotion handling, repeat-policy-aware settlement emission, and unified progression state upsert by owner key plus track id.
+- Extended [src/core/contracts/progression-runtime.ts](/D:/workspace/project/RPG_TG/src/core/contracts/progression-runtime.ts:1), [src/core/contracts/runtime-result.ts](/D:/workspace/project/RPG_TG/src/core/contracts/runtime-result.ts:1), and [src/core/contracts/effect-settlement.ts](/D:/workspace/project/RPG_TG/src/core/contracts/effect-settlement.ts:1) so progression can emit canonical `settlementInstances` through the existing shared `RuntimeResult` / settlement seam without inventing a second runtime result path.
+- Updated [src/core/runtime/runtime-dispatch.ts](/D:/workspace/project/RPG_TG/src/core/runtime/runtime-dispatch.ts:1) and [src/core/runtime/runtime-settlement.ts](/D:/workspace/project/RPG_TG/src/core/runtime/runtime-settlement.ts:1) so routed progression settlement instances are forwarded into `settleRuntimeEffects(...)` on the shared post-route settlement seam rather than being applied directly or routed through a parallel dispatcher.
+- Updated [tests/robustness.test.cjs](/D:/workspace/project/RPG_TG/tests/robustness.test.cjs:26543) with Task 2 coverage for target-tier settlement-instance emission and the dispatch-side shared settlement handoff guard.
+
+### Impact
+- Progression now owns threshold evaluation and settlement-instance emission only; it still does not execute effects, write final gameplay mutations directly, or become a second routing owner.
+- The shared runtime settlement seam now has a coherent lane for future progression settlement execution while preserving event as the only formal routing owner.
+
 ## 2026-07-25 Generic Progression Track Task 1 Contracts And Schema
 
 ### Changed

@@ -55,3 +55,15 @@ export type ProgressionTierSettlementPayload = {
   toTierId: string | null;
   metricValue: number;
 };
+
+export type ProgressionSettlementInstance = {
+  settlementId: string;
+  payload: ProgressionTierSettlementPayload;
+};
+
+export type ProgressionRuntimeResult = {
+  state: RuntimeProgressState;
+  settlementInstances: ProgressionSettlementInstance[];
+  diagnostics: string[];
+  eventRequests?: never;
+};

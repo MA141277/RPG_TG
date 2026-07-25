@@ -26562,6 +26562,80 @@ test("runtime state reserves a unified progression runtime partition", () => {
   assert.match(source, /progression\?: RuntimeProgressState/);
 });
 
+test("progression runtime emits settlement instances only for target-tier convergence", async () => {
+  const { runProgressionRuntime } = require("../.test-dist/core/runtime/progression-runtime.js");
+
+  const result = runProgressionRuntime({
+    state: {
+      trackStatesByOwnerKey: {
+        "person:char.player": {
+          "track.cultivation": {
+            trackId: "track.cultivation",
+            ownerKind: "person",
+            ownerId: "char.player",
+            metricValue: 90,
+            currentTierId: "tier.1",
+            enteredTierHistory: ["tier.1"],
+            updatedAt: "2026-07-25T00:00:00.000Z",
+          },
+        },
+      },
+    },
+    track: {
+      id: "track.cultivation",
+      title: "修为阶段轨道",
+      metricLabel: "修为值",
+      ownerKind: "person",
+      allowDemotion: true,
+      tiers: [
+        {
+          id: "tier.1",
+          title: "入门",
+          threshold: 0,
+          targetTierSettlementId: "settlement.tier.1",
+        },
+        {
+          id: "tier.2",
+          title: "熟练",
+          threshold: 100,
+          targetTierSettlementId: "settlement.tier.2",
+        },
+      ],
+    },
+    binding: {
+      id: "binding.player.cultivation",
+      trackId: "track.cultivation",
+      owner: { ownerKind: "person", ownerId: "char.player" },
+      enabled: true,
+    },
+    metricValue: 100,
+    occurredAt: "2026-07-25T01:00:00.000Z",
+  });
+
+  assert.equal(result.settlementInstances.length, 1);
+  assert.equal(result.settlementInstances[0].settlementId, "settlement.tier.2");
+  assert.deepEqual(result.settlementInstances[0].payload, {
+    ownerKind: "person",
+    ownerId: "char.player",
+    trackId: "track.cultivation",
+    fromTierId: "tier.1",
+    toTierId: "tier.2",
+    metricValue: 100,
+  });
+  assert.equal(result.eventRequests, undefined);
+});
+
+test("runtime dispatch keeps progression settlement handoff on the shared settlement seam", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/runtime-dispatch.ts"),
+    "utf8"
+  );
+
+  assert.match(source, /settleRuntimeEffects/);
+  assert.match(source, /settlementInstances/);
+  assert.doesNotMatch(source, /runProgressionRuntime\([^)]*\)\.state/);
+});
+
 test("script editor project definition declares progression track and binding files", () => {
   const source = fs.readFileSync(
     path.join(process.cwd(), "src/domain/script-editor-project.ts"),
