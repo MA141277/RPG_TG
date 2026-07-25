@@ -17,6 +17,18 @@
 - Progression now owns threshold evaluation and settlement-instance emission only; it still does not execute effects, write final gameplay mutations directly, or become a second routing owner.
 - The shared runtime settlement seam now has a coherent lane for future progression settlement execution while preserving event as the only formal routing owner.
 
+## 2026-07-25 Generic Progression Track Task 5 Full-Chain Verification And Documentation
+
+### Changed
+- Added final Task 5 regression coverage in [tests/robustness.test.cjs](/D:/workspace/project/RPG_TG/tests/robustness.test.cjs:14436) for authoring data round-trip through runtime-pack export/import and loader, plus source-level proof that the Event-routing chain immediately hands progression settlement instances to `SettlementRuntime`.
+- Added first-version `阶段轨道` authoring and runtime support.
+- Progression now emits settlement instances only; the Event-routing chain immediately hands them to `SettlementRuntime`.
+- Runtime-pack export/import and loader now understand `progress-tracks.json` and `progress-track-bindings.json`.
+
+### Impact
+- The Task 1-4 generic progression slices now have end-to-end regression proof across authoring data -> runtime-pack resources -> loader -> shared settlement handoff into runtime settlement execution.
+- No new progression runtime behavior was added in this verification slice beyond the already-landed chain.
+
 ## 2026-07-25 Generic Progression Track Task 1 Contracts And Schema
 
 ### Changed

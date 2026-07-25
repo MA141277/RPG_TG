@@ -14433,7 +14433,7 @@ test("script editor runtime export and scenario loader carry explicit building a
   assert.deepEqual(loadedPack.buildingArrangements, project.buildingArrangements);
 });
 
-test("script editor runtime export and import carry progression tracks and bindings", async () => {
+test("progression resources round-trip through runtime-pack export import and loader", async () => {
   const {
     exportScriptEditorProjectToScenarioPackFiles,
   } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
@@ -14487,6 +14487,8 @@ test("script editor runtime export and import carry progression tracks and bindi
   ];
 
   const serializedFiles = exportScriptEditorProjectToScenarioPackFiles(project);
+  assert.ok(serializedFiles["progress-tracks.json"]);
+  assert.ok(serializedFiles["progress-track-bindings.json"]);
   const manifest = JSON.parse(serializedFiles["pack.json"]);
   const progressTracks = JSON.parse(serializedFiles["progress-tracks.json"]);
   const progressTrackBindings = JSON.parse(
@@ -26929,14 +26931,16 @@ test("progression runtime skips disabled bindings without updating state or sett
   ]);
 });
 
-test("runtime dispatch keeps progression settlement handoff on the shared settlement seam", () => {
+test("event-routing call chain immediately hands progression settlement instances to settlement runtime", () => {
   const source = fs.readFileSync(
     path.join(process.cwd(), "src/core/runtime/runtime-dispatch.ts"),
     "utf8"
   );
 
+  assert.match(source, /progression/i);
   assert.match(source, /settleRuntimeEffects/);
   assert.match(source, /settlementInstances/);
+  assert.match(source, /appliedBy: "runtime-settlement"/);
   assert.doesNotMatch(source, /runProgressionRuntime\([^)]*\)\.state/);
 });
 
