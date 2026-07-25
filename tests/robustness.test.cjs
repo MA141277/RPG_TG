@@ -10039,6 +10039,41 @@ test("script editor workspace shell builds a reusable object-tree scaffold", () 
   assert.match(workspace.inspector.cards[0]?.body ?? "", /Hero|勇者|player/i);
 });
 
+test("script editor workspace shell exposes progression authoring families in gameplay navigation", () => {
+  const {
+    createScriptEditorWorkspaceShellViewModel,
+  } = require("../.test-dist/application/script-editor/workspace-shell.js");
+  const project = createExportableScriptEditorProjectDefinition();
+  project.progressTracks = [
+    {
+      id: "track.cultivation",
+      title: "Cultivation Track",
+      metricLabel: "Cultivation",
+      ownerKind: "person",
+      tiers: [],
+    },
+  ];
+  project.progressTrackBindings = [
+    {
+      id: "binding.cultivation.hero",
+      trackId: "track.cultivation",
+      owner: {
+        ownerKind: "person",
+        ownerId: "person.hero",
+      },
+      enabled: true,
+    },
+  ];
+
+  const workspace = createScriptEditorWorkspaceShellViewModel({ project });
+  const gameplayGroup = workspace.objectTreeGroups.find((group) => group.id === "gameplay");
+
+  assert.deepEqual(
+    gameplayGroup?.nodes.map((node) => node.family),
+    ["events", "progressTracks", "progressTrackBindings"]
+  );
+});
+
 test.skip("script editor workspace groups creator navigation by project top bar, world, narrative, gameplay, and asset library", () => {
   const {
     createScriptEditorWorkspaceShellViewModel,
@@ -16745,7 +16780,10 @@ test("script editor workspace groups creator navigation using current world, nar
       { id: "project", families: ["storyPack"] },
       { id: "world", families: ["people", "cities", "buildings"] },
       { id: "narrative", families: ["storyNodes", "dialogues", "minigames", "settlements"] },
-      { id: "gameplay", families: ["events"] },
+      {
+        id: "gameplay",
+        families: ["events", "progressTracks", "progressTrackBindings"],
+      },
       { id: "library", families: ["portraits", "portraitVariants", "textEntries"] },
     ]
   );

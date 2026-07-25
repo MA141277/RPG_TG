@@ -134,6 +134,8 @@ export type ScriptEditorWorkspaceExportTarget = {
 };
 
 const FAMILY_LABELS: Record<string, string> = {
+  progressTracks: "阶段轨道",
+  progressTrackBindings: "轨道绑定",
   settlements: "结算",
   storyPack: "剧本导出",
   people: "人物",
@@ -175,7 +177,7 @@ const TREE_GROUPS: Array<{
   {
     id: "gameplay",
     label: "玩法",
-    families: ["events"],
+    families: ["events", "progressTracks", "progressTrackBindings"],
   },
   {
     id: "library",
@@ -200,14 +202,11 @@ const DEFERRED_EXPORT_TARGET_FAMILIES = new Set<ScriptEditorProjectFileKey>([
   "effectBundles",
 ]);
 
-const BLOCKER_ONLY_WORKSPACE_FAMILIES = new Set<ScriptEditorProjectFileKey>([
-  "progressTracks",
-  "progressTrackBindings",
-]);
+const BLOCKER_ONLY_WORKSPACE_FAMILIES = new Set<ScriptEditorProjectFileKey>([]);
 
 const gameplayTreeGroup = TREE_GROUPS.find((group) => group.id === "gameplay");
 if (gameplayTreeGroup != null) {
-  gameplayTreeGroup.families = ["events"];
+  gameplayTreeGroup.families = ["events", "progressTracks", "progressTrackBindings"];
 }
 DEFERRED_SHELL_FAMILIES.add("quests");
 
