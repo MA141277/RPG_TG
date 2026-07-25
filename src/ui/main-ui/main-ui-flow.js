@@ -357,7 +357,6 @@ const SCRIPT_EDITOR_SETTLEMENT_CITY_BASE_ATTRIBUTE_OPTIONS = [
   { value: "travelCost", label: "移动成本", attributeType: "number" },
   { value: "baseAttributes.prosperity", label: "繁荣", attributeType: "number" },
   { value: "baseAttributes.security", label: "治安", attributeType: "number" },
-  { value: "baseAttributes.population", label: "人口", attributeType: "number" },
 ];
 
 const SCRIPT_EDITOR_SETTLEMENT_BUILDING_BASE_ATTRIBUTE_OPTIONS = [
@@ -1917,7 +1916,7 @@ export class MainUiFlow {
       );
       return [
         ...SCRIPT_EDITOR_SETTLEMENT_CITY_BASE_ATTRIBUTE_OPTIONS,
-        ...this.createScriptEditorSettlementCustomAttributeOptions(city?.extendedAttributes),
+        ...this.createScriptEditorSettlementTypedAttributeOptions(city?.extendedAttributes),
       ];
     }
     if (targetFamily === "building") {
@@ -1926,7 +1925,9 @@ export class MainUiFlow {
       );
       return [
         ...SCRIPT_EDITOR_SETTLEMENT_BUILDING_BASE_ATTRIBUTE_OPTIONS,
-        ...this.createScriptEditorSettlementCustomAttributeOptions(building?.extendedAttributes),
+        ...this.createScriptEditorSettlementTypedAttributeOptions(
+          building?.extendedAttributes
+        ),
       ];
     }
 
@@ -1952,37 +1953,6 @@ export class MainUiFlow {
         attributeType: attribute.type,
         options: attribute.type === "enum" ? attribute.options ?? [] : undefined,
       }));
-  }
-
-  createScriptEditorSettlementCustomAttributeOptions(attributes) {
-    return (attributes ?? [])
-      .map((attribute) => {
-        const attributeType = this.inferScriptEditorSettlementCustomAttributeType(
-          attribute.value
-        );
-        return attributeType == null
-          ? null
-          : {
-              value: attribute.key,
-              label: attribute.label?.trim() || attribute.key,
-              attributeType,
-              options: Array.isArray(attribute.value) ? attribute.value : undefined,
-            };
-      })
-      .filter(Boolean);
-  }
-
-  inferScriptEditorSettlementCustomAttributeType(value) {
-    if (typeof value === "number") {
-      return "number";
-    }
-    if (typeof value === "boolean") {
-      return "boolean";
-    }
-    if (Array.isArray(value) && value.every((entry) => typeof entry === "string")) {
-      return "enum";
-    }
-    return null;
   }
 
   resolveScriptEditorSettlementAttributeType(content, attributeKey) {
@@ -3956,10 +3926,30 @@ export class MainUiFlow {
                       <span>属性名</span>
                       <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(entry.label ?? "")}" data-script-editor-location-attribute-field="label" data-script-editor-location-attribute-index="${index}" />
                     </label>
+                    <label class="c-script-editor-form-field">
+                      <span>属性类型</span>
+                      <select class="c-script-editor-form-field__input" data-script-editor-location-attribute-field="type" data-script-editor-location-attribute-index="${index}">
+                        ${this.renderScriptEditorSelectOptions(
+                          SCRIPT_EDITOR_PERSON_ATTRIBUTE_TYPE_OPTIONS,
+                          entry.type ?? "string",
+                          "文本"
+                        )}
+                      </select>
+                    </label>
                     <label class="c-script-editor-form-field c-script-editor-form-field--wide">
                       <span>属性值</span>
-                      <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(entry.value)}" data-script-editor-location-attribute-field="value" data-script-editor-location-attribute-index="${index}" />
+                      <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(String(entry.value ?? ""))}" data-script-editor-location-attribute-field="value" data-script-editor-location-attribute-index="${index}" />
                     </label>
+                    ${
+                      entry.type === "enum"
+                        ? `
+                          <label class="c-script-editor-form-field c-script-editor-form-field--wide">
+                            <span>枚举选项</span>
+                            <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml((entry.options ?? []).join(", "))}" data-script-editor-location-attribute-field="options" data-script-editor-location-attribute-index="${index}" />
+                          </label>
+                        `
+                        : ""
+                    }
                   </div>
                   <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="remove-location-attribute" data-script-editor-location-attribute-index="${index}">
                     删除属性
@@ -7649,7 +7639,13 @@ export class MainUiFlow {
         10
       );
       if (
-        (field === "key" || field === "label" || field === "value") &&
+        (
+          field === "key" ||
+          field === "label" ||
+          field === "type" ||
+          field === "value" ||
+          field === "options"
+        ) &&
         Number.isInteger(index) &&
         index >= 0
       ) {

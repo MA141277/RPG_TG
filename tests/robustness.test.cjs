@@ -171,10 +171,6 @@ const LEGACY_CUTOVER_RESIDUE_CANDIDATE_PATTERNS = [
     label: "baseAttributes.damaged",
     pattern: /"baseAttributes\.damaged"\s*:/,
   },
-  {
-    label: "population?: number",
-    pattern: /\bpopulation\?\s*:\s*number\b/,
-  },
 ];
 
 const LEGACY_CUTOVER_CANONICAL_RUNTIME_FIELDS = {
@@ -13242,6 +13238,26 @@ test("city and building runtime views consume configured background ids", () => 
 });
 
 test(
+  "city and building authoring use typed attributes and remove retired population residue",
+  () => {
+    const source = fs.readFileSync(
+      path.join(process.cwd(), "src/domain/script-editor-project.ts"),
+      "utf8"
+    );
+
+    assert.match(
+      source,
+      /ScriptEditorCityRecord[\s\S]*extendedAttributes\?: ScriptEditorTypedAttributeRecord\[\]/
+    );
+    assert.match(
+      source,
+      /ScriptEditorBuildingRecord[\s\S]*extendedAttributes\?: ScriptEditorTypedAttributeRecord\[\]/
+    );
+    assert.doesNotMatch(source, /population\?: number/);
+  }
+);
+
+test(
   "script editor city/building custom attribute helpers edit bounded extendedAttributes entries",
   () => {
     const {
@@ -13259,7 +13275,7 @@ test(
     city = updateScriptEditorLocationAttribute(city, 0, "value", "3");
 
     assert.deepEqual(city.extendedAttributes, [
-      { key: "tradeRank", label: "Trade Rank", value: "3" },
+      { key: "tradeRank", label: "Trade Rank", type: "string", value: "3" },
     ]);
 
     let building = createDefaultScriptEditorBuildingRecord(0, "city.start");
@@ -13271,7 +13287,7 @@ test(
     building = removeScriptEditorLocationAttribute(building, 0);
 
     assert.deepEqual(building.extendedAttributes, [
-      { key: "emptySlot", value: "" },
+      { key: "emptySlot", type: "string", value: "" },
     ]);
   }
 );
@@ -26775,7 +26791,7 @@ test("legacy cutover inventory separates canonical keep fields from residue cand
       {
         sourceLabel: "script editor schema",
         sourceText: schemaSource,
-        residueLabels: ["population?: number"],
+        residueLabels: [],
       },
       {
         sourceLabel: "runtime pack export",
@@ -26841,9 +26857,10 @@ test("legacy cutover inventory separates canonical keep fields from residue cand
       );
     }
 
-    assert.match(
+    assert.match(cityBuildingAuthoringSource, /normalizeCityBaseAttributes[\s\S]*security/);
+    assert.doesNotMatch(
       cityBuildingAuthoringSource,
-      /normalizeCityBaseAttributes[\s\S]*security[\s\S]*population/
+      /normalizeCityBaseAttributes[\s\S]*population/
     );
     assert.match(cityBuildingAuthoringSource, /normalizeBuildingBaseAttributes/);
     assert.match(cityBuildingAuthoringSource, /typeof base\.level === "number"/);
@@ -26859,7 +26876,7 @@ test("legacy cutover inventory separates canonical keep fields from residue cand
       /"baseAttributes\.outputMultiplier"\s*:\s*"outputMultiplier"/
     );
     assert.match(runtimeSettlementSource, /"baseAttributes\.damaged"\s*:\s*"damaged"/);
-    assert.match(schemaSource, /\bpopulation\?\s*:\s*number\b/);
+    assert.doesNotMatch(schemaSource, /\bpopulation\?\s*:\s*number\b/);
     assert.match(saveMigrationsSource, /export function migrateSaveEnvelope/);
     assert.doesNotMatch(
       saveMigrationsSource,

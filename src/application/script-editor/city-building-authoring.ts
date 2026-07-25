@@ -14,10 +14,11 @@ import type {
   ScriptEditorBuildingRecord,
   ScriptEditorCityMountedBuilding,
   ScriptEditorCityRecord,
-  ScriptEditorCustomAttributeEntry,
   ScriptEditorMenuEntry,
   ScriptEditorMenuTargetFamily,
   ScriptEditorProjectDefinition,
+  ScriptEditorTypedAttributeRecord,
+  ScriptEditorTypedAttributeType,
 } from "../../domain/script-editor-project";
 import type { HouseDefinition } from "../../domain/house";
 import {
@@ -1060,12 +1061,20 @@ export function updateScriptEditorBuildingField(
 
 export function appendScriptEditorLocationAttribute<
   TRecord extends ScriptEditorCityRecord | ScriptEditorBuildingRecord,
->(record: TRecord): TRecord {
+>(
+  record: TRecord,
+  type: ScriptEditorTypedAttributeType = "string"
+): TRecord {
   return {
     ...record,
     extendedAttributes: [
       ...normalizeEditableCustomAttributes(record.extendedAttributes),
-      { key: "", label: "", value: "" },
+      {
+        key: "",
+        label: "",
+        type: normalizeTypedAttributeType(type),
+        value: "",
+      },
     ],
   };
 }
@@ -1086,7 +1095,7 @@ export function updateScriptEditorLocationAttribute<
 >(
   record: TRecord,
   index: number,
-  field: keyof ScriptEditorCustomAttributeEntry | "key",
+  field: keyof ScriptEditorTypedAttributeRecord | "key",
   value: string
 ): TRecord {
   return {
@@ -1094,7 +1103,17 @@ export function updateScriptEditorLocationAttribute<
     extendedAttributes: normalizeEditableCustomAttributes(
       record.extendedAttributes
     ).map((entry, entryIndex) =>
-      entryIndex === index ? { ...entry, [field]: value } : entry
+      entryIndex === index
+        ? normalizeCustomAttributeEntry({
+            ...entry,
+            [field]:
+              field === "type"
+                ? normalizeTypedAttributeType(value)
+                : field === "options"
+                  ? splitTypedAttributeOptions(value)
+                  : value,
+          })
+        : entry
     ),
   };
 }
@@ -1470,7 +1489,6 @@ function normalizeCityBaseAttributes(
     ...pickOptionalString("ownerFactionId", value?.ownerFactionId),
     ...(typeof value?.prosperity === "number" ? { prosperity: value.prosperity } : {}),
     ...(typeof value?.security === "number" ? { security: value.security } : {}),
-    ...(typeof value?.population === "number" ? { population: value.population } : {}),
   };
 }
 
@@ -1522,41 +1540,116 @@ function normalizeProfileMap<T extends { displayName?: string; description?: str
 }
 
 function normalizeCustomAttributes(
-  entries: readonly ScriptEditorCustomAttributeEntry[] | undefined
-): ScriptEditorCustomAttributeEntry[] {
+  entries: readonly ScriptEditorTypedAttributeRecord[] | undefined
+): ScriptEditorTypedAttributeRecord[] {
   return (entries ?? [])
-    .map((entry) => ({
-      key: normalizeOptionalString(entry.key),
-      ...pickOptionalString("label", entry.label),
-      value: normalizeCustomAttributeValue(entry.value),
-    }))
+    .map((entry) => normalizeCustomAttributeEntry(entry as Record<string, unknown>))
     .filter((entry) => entry.key.length > 0);
 }
 
 function normalizeEditableCustomAttributes(
-  entries: readonly ScriptEditorCustomAttributeEntry[] | undefined
-): ScriptEditorCustomAttributeEntry[] {
-  return (entries ?? []).map((entry) => ({
-    key: normalizeOptionalString(entry.key),
-    ...pickOptionalString("label", entry.label),
-    value: normalizeCustomAttributeValue(entry.value),
-  }));
+  entries: readonly ScriptEditorTypedAttributeRecord[] | undefined
+): ScriptEditorTypedAttributeRecord[] {
+  return (entries ?? []).map((entry) =>
+    normalizeCustomAttributeEntry(entry as Record<string, unknown>)
+  );
 }
 
-function normalizeCustomAttributeValue(
-  value: ScriptEditorCustomAttributeEntry["value"]
-): ScriptEditorCustomAttributeEntry["value"] {
+function normalizeCustomAttributeEntry(
+  entry: Record<string, unknown>
+): ScriptEditorTypedAttributeRecord {
+  const type = normalizeTypedAttributeType(
+    entry.type,
+    readLegacyTypedAttributeValue(entry.value)
+  );
+  const options = normalizeTypedAttributeOptions(type, entry.options, entry.value);
+  return {
+    key: normalizeOptionalString(entry.key),
+    ...pickOptionalString("label", entry.label),
+    type,
+    value: normalizeTypedAttributeValue(type, entry.value),
+    ...(type === "enum" && options.length > 0 ? { options } : {}),
+  };
+}
+
+function normalizeTypedAttributeType(
+  value: unknown,
+  legacyValue?: unknown
+): ScriptEditorTypedAttributeType {
   if (
-    value == null ||
-    typeof value === "string" ||
-    typeof value === "number" ||
-    typeof value === "boolean"
+    value === "number" ||
+    value === "boolean" ||
+    value === "enum" ||
+    value === "string"
   ) {
     return value;
   }
-  return Array.isArray(value)
-    ? value.filter((entry): entry is string => typeof entry === "string")
-    : null;
+  if (typeof legacyValue === "number") {
+    return "number";
+  }
+  if (typeof legacyValue === "boolean") {
+    return "boolean";
+  }
+  if (
+    Array.isArray(legacyValue) &&
+    legacyValue.every((entry) => typeof entry === "string")
+  ) {
+    return "enum";
+  }
+  return "string";
+}
+
+function normalizeTypedAttributeOptions(
+  type: ScriptEditorTypedAttributeType,
+  optionsValue: unknown,
+  legacyValue: unknown
+): string[] {
+  if (type !== "enum") {
+    return [];
+  }
+  const sourceValue = Array.isArray(optionsValue) ? optionsValue : legacyValue;
+  if (!Array.isArray(sourceValue)) {
+    return [];
+  }
+  return sourceValue
+    .filter((entry): entry is string => typeof entry === "string")
+    .map((entry) => entry.trim())
+    .filter((entry) => entry.length > 0);
+}
+
+function readLegacyTypedAttributeValue(value: unknown): unknown {
+  if (
+    typeof value === "number" ||
+    typeof value === "boolean" ||
+    Array.isArray(value)
+  ) {
+    return value;
+  }
+  return undefined;
+}
+
+function normalizeTypedAttributeValue(
+  type: ScriptEditorTypedAttributeType,
+  value: unknown
+): string | number | boolean {
+  if (type === "number") {
+    const numericValue = Number(String(value ?? "").trim());
+    return Number.isFinite(numericValue) ? numericValue : 0;
+  }
+  if (type === "boolean") {
+    return value === true || String(value ?? "").trim() === "true";
+  }
+  if (typeof value === "string") {
+    return value.trim();
+  }
+  return "";
+}
+
+function splitTypedAttributeOptions(value: string): string[] {
+  return value
+    .split(/[\r\n,]+/)
+    .map((entry) => entry.trim())
+    .filter((entry) => entry.length > 0);
 }
 
 function normalizeLocationAccessConditionExpression(

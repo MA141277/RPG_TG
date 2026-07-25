@@ -158,13 +158,26 @@ function materializeCities(
           ? baseAttributes.prosperity
           : 50,
       danger: 100 - security,
-      specialDemand: readStringArray(
-        city.extendedAttributes
-          ?.filter((entry) => entry.key === "specialDemand")
-          .flatMap((entry) => entry.value)
-      ),
+      specialDemand: readSpecialDemandAttributeOptions(city.extendedAttributes),
     };
   });
+}
+
+function readSpecialDemandAttributeOptions(
+  attributes: ScriptEditorCityRecord["extendedAttributes"]
+): string[] {
+  const specialDemandAttribute = (attributes ?? []).find(
+    (entry) => entry.key === "specialDemand"
+  );
+  if (specialDemandAttribute == null) {
+    return [];
+  }
+  if (specialDemandAttribute.type === "enum") {
+    return readStringArray(specialDemandAttribute.options);
+  }
+  return typeof specialDemandAttribute.value === "string"
+    ? readStringArray([specialDemandAttribute.value])
+    : [];
 }
 
 function materializeCityMapPlacement(

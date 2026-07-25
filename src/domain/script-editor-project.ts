@@ -157,19 +157,6 @@ export type ScriptEditorMenuEntry = {
   disabledHint: string;
 };
 
-export type ScriptEditorCustomAttributeValue =
-  | string
-  | number
-  | boolean
-  | string[]
-  | null;
-
-export type ScriptEditorCustomAttributeEntry = {
-  key: string;
-  label?: string | undefined;
-  value: ScriptEditorCustomAttributeValue;
-};
-
 export type {
   LocationAccessConditionExpression,
   LocationAccessConditionSubject,
@@ -233,14 +220,13 @@ export type ScriptEditorCityRecord = ScriptEditorEntityRecord & {
     ownerFactionId?: string;
     prosperity?: number;
     security?: number;
-    population?: number;
   };
   profileMap?: {
     displayName?: string;
     description?: string;
     tags?: string[];
   };
-  extendedAttributes?: ScriptEditorCustomAttributeEntry[];
+  extendedAttributes?: ScriptEditorTypedAttributeRecord[];
   description?: string;
   menuEntries?: ScriptEditorMenuEntry[];
   access?: ScriptEditorAccessRule;
@@ -367,7 +353,7 @@ export type ScriptEditorBuildingRecord = ScriptEditorEntityRecord & {
     description?: string;
     tags?: string[];
   };
-  extendedAttributes?: ScriptEditorCustomAttributeEntry[];
+  extendedAttributes?: ScriptEditorTypedAttributeRecord[];
   description?: string;
   menuEntries?: ScriptEditorMenuEntry[];
   access?: ScriptEditorAccessRule;
