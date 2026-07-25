@@ -1183,13 +1183,11 @@ function collectRuntimeReferencedEventIds(
   }
 
   for (const settlementRecord of project.settlements) {
-    for (const result of settlementRecord.results ?? []) {
-      if (
-        typeof result.nextEventId === "string" &&
-        result.nextEventId.length > 0
-      ) {
-        eventIds.add(result.nextEventId);
-      }
+    if (
+      typeof settlementRecord.nextEventId === "string" &&
+      settlementRecord.nextEventId.length > 0
+    ) {
+      eventIds.add(settlementRecord.nextEventId);
     }
   }
 
@@ -1203,56 +1201,19 @@ function appendSettlementRecordDiagnostics(
 ): void {
   for (const [settlementIndex, settlementRecord] of settlements.entries()) {
     const fieldPath = `project.settlements[${settlementIndex}]`;
-    const resultIds = new Set<string>();
-    for (const [resultIndex, resultRecord] of (settlementRecord.results ?? []).entries()) {
-      const resultFieldPath = `${fieldPath}.results[${resultIndex}]`;
-      const resultId =
-        typeof resultRecord?.id === "string" ? resultRecord.id.trim() : "";
-      const resultLabel =
-        typeof resultRecord?.label === "string" ? resultRecord.label.trim() : "";
-      if (resultId.length === 0) {
-        diagnostics.push({
-          code: "missing-field",
-          fieldPath: `${resultFieldPath}.id`,
-          message:
-            `Settlement "${settlementRecord.id}" result entry requires a non-empty id.`,
-        });
-      } else if (resultIds.has(resultId)) {
-        diagnostics.push({
-          code: "duplicate-id",
-          fieldPath: `${resultFieldPath}.id`,
-          message:
-            `Settlement "${settlementRecord.id}" duplicates result id "${resultId}".`,
-        });
-      } else {
-        resultIds.add(resultId);
-      }
-
-      if (resultLabel.length === 0) {
-        diagnostics.push({
-          code: "missing-field",
-          fieldPath: `${resultFieldPath}.label`,
-          message:
-            `Settlement "${settlementRecord.id}" result "${resultId || `result.${resultIndex + 1}`}" requires a non-empty label.`,
-        });
-      }
-
-      const nextEventId =
-        typeof resultRecord?.nextEventId === "string"
-          ? resultRecord.nextEventId.trim()
-          : "";
-      if (nextEventId.length === 0) {
-        continue;
-      }
-      if (!sourceEventIds.has(nextEventId)) {
-        diagnostics.push({
-          code: "missing-reference",
-          fieldPath: `${resultFieldPath}.nextEventId`,
-          message:
-            `Settlement "${settlementRecord.id}" result "${resultId || `result.${resultIndex + 1}`}" references missing next event "${nextEventId}".`,
-        });
-      }
+    const nextEventId =
+      typeof settlementRecord.nextEventId === "string"
+        ? settlementRecord.nextEventId.trim()
+        : "";
+    if (nextEventId.length === 0 || sourceEventIds.has(nextEventId)) {
+      continue;
     }
+    diagnostics.push({
+      code: "missing-reference",
+      fieldPath: `${fieldPath}.nextEventId`,
+      message:
+        `Settlement "${settlementRecord.id}" references missing next event "${nextEventId}".`,
+    });
   }
 }
 

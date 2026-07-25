@@ -99,6 +99,20 @@ export type ScriptEditorEntityRecord = {
 
 export type ScriptEditorRuntimeRecord = Record<string, unknown>;
 
+export type ScriptEditorTypedAttributeType =
+  | "number"
+  | "boolean"
+  | "enum"
+  | "string";
+
+export type ScriptEditorTypedAttributeRecord = {
+  key: string;
+  label?: string | undefined;
+  type: ScriptEditorTypedAttributeType;
+  value?: string | number | boolean | undefined;
+  options?: string[] | undefined;
+};
+
 export type ScriptEditorKeyValueEntry = {
   key: string;
   label?: string | undefined;
@@ -177,7 +191,7 @@ export type ScriptEditorPersonRecord = ScriptEditorEntityRecord & {
   houseId?: string;
   portraitId?: string;
   portraitVariantId?: string | null | undefined;
-  extendedAttributes?: ScriptEditorKeyValueEntry[];
+  extendedAttributes?: ScriptEditorTypedAttributeRecord[];
   dialogueIds?: string[];
   eventIds?: string[];
   tradeBinding?: ScriptEditorPersonTradeBinding;
@@ -511,16 +525,19 @@ export type ScriptEditorEventPreviewSummary = {
   validationNotes?: string;
 };
 
-export type ScriptEditorSettlementResultRecord = {
-  id: string;
-  label: string;
-  nextEventId?: string;
+export type ScriptEditorSettlementContentRecord = {
+  targetFamily: "person" | "city" | "building";
+  targetId: string;
+  attributeKey: string;
+  attributeType: "number" | "boolean" | "enum";
+  operation: "add" | "subtract" | "set";
+  value: string | number | boolean;
 };
 
 export type ScriptEditorSettlementRecord = ScriptEditorEntityRecord & {
   title: string;
-  description?: string;
-  results?: ScriptEditorSettlementResultRecord[];
+  nextEventId?: string;
+  contents?: ScriptEditorSettlementContentRecord[];
 };
 
 export type ScriptEditorMinigameOwnerKind =

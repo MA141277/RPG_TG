@@ -12,8 +12,8 @@ import type {
   ScriptEditorEventRecord,
   ScriptEditorEventType,
   ScriptEditorEventTriggerTiming,
+  ScriptEditorSettlementContentRecord,
   ScriptEditorSettlementRecord,
-  ScriptEditorSettlementResultRecord,
   ScriptEditorStoryNodeRecord,
   ScriptEditorStoryProgressMode,
 } from "../../domain/script-editor-project";
@@ -312,8 +312,8 @@ export function createDefaultScriptEditorSettlementRecord(
         ? indexOrId
         : `settlement.new.${suffix}`,
     title: `缁撶畻 ${suffix}`,
-    description: "",
-    results: [createDefaultScriptEditorSettlementResultRecord(0)],
+    nextEventId: "",
+    contents: [createDefaultScriptEditorSettlementContentRecord()],
   };
 }
 
@@ -414,8 +414,8 @@ export function normalizeScriptEditorSettlementRecord(
     ...record,
     id: normalizeString(record.id, "settlement.unknown"),
     title: normalizeString(record.title, record.id),
-    description: normalizeOptionalString(record.description),
-    results: (record.results ?? []).map(normalizeScriptEditorSettlementResultRecord),
+    nextEventId: normalizeOptionalTrimmedString(record.nextEventId),
+    contents: (record.contents ?? []).map(normalizeScriptEditorSettlementContentRecord),
   };
 }
 
@@ -769,35 +769,67 @@ export function updateScriptEditorEventField(
 
 export function updateScriptEditorSettlementField(
   record: ScriptEditorSettlementRecord,
-  field: "id" | "title" | "description",
+  field: "id" | "title" | "nextEventId",
   value: string
 ): ScriptEditorSettlementRecord {
-  if (field === "description") {
-    return { ...record, description: value };
+  if (field === "nextEventId") {
+    return { ...record, nextEventId: value.trim() };
   }
   return { ...record, [field]: value.trim() };
+}
+
+export function appendScriptEditorSettlementContent(
+  record: ScriptEditorSettlementRecord
+): ScriptEditorSettlementRecord {
+  return {
+    ...record,
+    contents: [
+      ...(record.contents ?? []),
+      createDefaultScriptEditorSettlementContentRecord(),
+    ],
+  };
+}
+
+export function removeScriptEditorSettlementContent(
+  record: ScriptEditorSettlementRecord,
+  index: number
+): ScriptEditorSettlementRecord {
+  return {
+    ...record,
+    contents: (record.contents ?? []).filter((_, contentIndex) => contentIndex !== index),
+  };
+}
+
+export function updateScriptEditorSettlementContentField(
+  record: ScriptEditorSettlementRecord,
+  index: number,
+  field: keyof ScriptEditorSettlementContentRecord,
+  value: string | number | boolean
+): ScriptEditorSettlementRecord {
+  return {
+    ...record,
+    contents: (record.contents ?? []).map((content, contentIndex) =>
+      contentIndex === index
+        ? normalizeScriptEditorSettlementContentRecord({
+            ...content,
+            [field]: value,
+          })
+        : content
+    ),
+  };
 }
 
 export function appendScriptEditorSettlementResult(
   record: ScriptEditorSettlementRecord
 ): ScriptEditorSettlementRecord {
-  return {
-    ...record,
-    results: [
-      ...(record.results ?? []),
-      createDefaultScriptEditorSettlementResultRecord(record.results?.length ?? 0),
-    ],
-  };
+  return appendScriptEditorSettlementContent(record);
 }
 
 export function removeScriptEditorSettlementResult(
   record: ScriptEditorSettlementRecord,
   index: number
 ): ScriptEditorSettlementRecord {
-  return {
-    ...record,
-    results: (record.results ?? []).filter((_, resultIndex) => resultIndex !== index),
-  };
+  return removeScriptEditorSettlementContent(record, index);
 }
 
 export function updateScriptEditorSettlementResultField(
@@ -806,17 +838,10 @@ export function updateScriptEditorSettlementResultField(
   field: "id" | "label" | "nextEventId",
   value: string
 ): ScriptEditorSettlementRecord {
-  return {
-    ...record,
-    results: (record.results ?? []).map((result, resultIndex) =>
-      resultIndex === index
-        ? {
-            ...result,
-            [field]: value.trim(),
-          }
-        : result
-    ),
-  };
+  if (field === "nextEventId") {
+    return updateScriptEditorSettlementField(record, "nextEventId", value);
+  }
+  return record;
 }
 
 export function toggleScriptEditorEventRepeatable(
@@ -1239,24 +1264,67 @@ function normalizeEventTriggerTiming(value?: string): ScriptEditorEventTriggerTi
     : "manual";
 }
 
-function createDefaultScriptEditorSettlementResultRecord(
-  index: number
-): ScriptEditorSettlementResultRecord {
+function createDefaultScriptEditorSettlementContentRecord(): ScriptEditorSettlementContentRecord {
   return {
-    id: `result.${index + 1}`,
-    label: `缁撶畻缁撴灉 ${index + 1}`,
-    nextEventId: "",
+    targetFamily: "person",
+    targetId: "",
+    attributeKey: "",
+    attributeType: "number",
+    operation: "set",
+    value: 0,
   };
 }
 
-function normalizeScriptEditorSettlementResultRecord(
-  record: Partial<ScriptEditorSettlementResultRecord> | undefined
-): ScriptEditorSettlementResultRecord {
+function normalizeScriptEditorSettlementContentRecord(
+  record: Partial<ScriptEditorSettlementContentRecord> | undefined
+): ScriptEditorSettlementContentRecord {
+  const attributeType = normalizeSettlementAttributeType(record?.attributeType);
   return {
-    id: normalizeString(record?.id, "result.unknown"),
-    label: normalizeString(record?.label, record?.id ?? "result"),
-    nextEventId: normalizeOptionalTrimmedString(record?.nextEventId),
+    targetFamily: normalizeSettlementTargetFamily(record?.targetFamily),
+    targetId: normalizeOptionalTrimmedString(record?.targetId),
+    attributeKey: normalizeOptionalTrimmedString(record?.attributeKey),
+    attributeType,
+    operation: normalizeSettlementOperation(record?.operation, attributeType),
+    value: normalizeSettlementValue(record?.value, attributeType),
   };
+}
+
+function normalizeSettlementTargetFamily(
+  value: unknown
+): ScriptEditorSettlementContentRecord["targetFamily"] {
+  return value === "city" || value === "building" ? value : "person";
+}
+
+function normalizeSettlementAttributeType(
+  value: unknown
+): ScriptEditorSettlementContentRecord["attributeType"] {
+  return value === "boolean" || value === "enum" ? value : "number";
+}
+
+function normalizeSettlementOperation(
+  value: unknown,
+  attributeType: ScriptEditorSettlementContentRecord["attributeType"]
+): ScriptEditorSettlementContentRecord["operation"] {
+  if (attributeType !== "number") {
+    return "set";
+  }
+  return value === "add" || value === "subtract" || value === "set"
+    ? value
+    : "set";
+}
+
+function normalizeSettlementValue(
+  value: unknown,
+  attributeType: ScriptEditorSettlementContentRecord["attributeType"]
+): string | number | boolean {
+  if (attributeType === "number") {
+    const numberValue = Number(String(value ?? "").trim());
+    return Number.isFinite(numberValue) ? numberValue : 0;
+  }
+  if (attributeType === "boolean") {
+    return value === true || String(value).trim() === "true";
+  }
+  return normalizeOptionalTrimmedString(value);
 }
 
 function normalizeScriptEditorEventType(

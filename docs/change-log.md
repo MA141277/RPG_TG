@@ -5,6 +5,16 @@
 `docs/change-log.md` 的正式定位是“历史记录 + 人类可读摘要”。
 它不是当前 Blueprint / legacy superpowers 治理的 live execution truth，不作为 resume entry、promotion gate、closeout gate 或固定同步门。
 
+## 2026-07-25 Script Editor Settlement Domain Shape Convergence
+
+### Changed
+- Updated [src/domain/script-editor-project.ts](/D:/workspace/project/RPG_TG/src/domain/script-editor-project.ts:1), [src/application/script-editor/story-dialogue-event-authoring.ts](/D:/workspace/project/RPG_TG/src/application/script-editor/story-dialogue-event-authoring.ts:1), and [src/application/script-editor/person-authoring.ts](/D:/workspace/project/RPG_TG/src/application/script-editor/person-authoring.ts:1) so settlement records now use typed executable `contents` rows with settlement-level `nextEventId`, while person custom attributes carry calculable typed values.
+- Updated [src/application/script-editor/runtime-pack-export.ts](/D:/workspace/project/RPG_TG/src/application/script-editor/runtime-pack-export.ts:1) and [tests/robustness.test.cjs](/D:/workspace/project/RPG_TG/tests/robustness.test.cjs:1) so settlement follow-up validation is owned by the settlement record instead of result rows.
+
+### Impact
+- Event remains the only routing owner; this slice only converges domain/helper shape and keeps creator-visible settlement rows free of result-local routing ids.
+- Person custom attributes now preserve hidden storage keys while exposing typed values that later settlement authoring can execute without free-text interpretation.
+
 ## 2026-07-25 Script Editor Settlement Authoring Surface Completion
 
 ### Changed

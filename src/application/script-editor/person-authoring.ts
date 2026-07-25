@@ -4,8 +4,9 @@ import type {
   SkillKey,
 } from "../../domain/character";
 import type {
-  ScriptEditorKeyValueEntry,
   ScriptEditorPersonRecord,
+  ScriptEditorTypedAttributeRecord,
+  ScriptEditorTypedAttributeType,
 } from "../../domain/script-editor-project";
 
 export const SCRIPT_EDITOR_PERSON_TAB_KEYS = [
@@ -335,13 +336,14 @@ export function toggleScriptEditorPersonTradeEnabled(
 }
 
 export function appendScriptEditorPersonAttribute(
-  person: ScriptEditorPersonRecord
+  person: ScriptEditorPersonRecord,
+  type: ScriptEditorTypedAttributeType = "string"
 ): ScriptEditorPersonRecord {
   return materializeScriptEditorPersonExtendedAttributes({
     ...person,
     extendedAttributes: [
       ...normalizeKeyValueEntries(person.extendedAttributes),
-      { key: "", label: "", value: "" },
+      { key: "", label: "", type: normalizeTypedAttributeType(type), value: "" },
     ],
   });
 }
@@ -361,14 +363,19 @@ export function removeScriptEditorPersonAttribute(
 export function updateScriptEditorPersonAttribute(
   person: ScriptEditorPersonRecord,
   index: number,
-  field: keyof ScriptEditorKeyValueEntry | "key",
+  field: keyof ScriptEditorTypedAttributeRecord | "key",
   value: string
 ): ScriptEditorPersonRecord {
   return materializeScriptEditorPersonExtendedAttributes({
     ...person,
     extendedAttributes: normalizeKeyValueEntries(person.extendedAttributes).map(
       (entry, entryIndex) =>
-        entryIndex === index ? { ...entry, [field]: value } : entry
+        entryIndex === index
+          ? normalizeScriptEditorPersonAttributeEntry({
+              ...entry,
+              [field]: field === "type" ? normalizeTypedAttributeType(value) : value,
+            })
+          : entry
     ),
   });
 }
@@ -427,6 +434,7 @@ function updateScriptEditorPersonMappedAttribute(
   const nextEntry = {
     key: normalizedKey,
     label: getScriptEditorPersonAttributeLabel(normalizedKey),
+    type: inferScriptEditorPersonAttributeType(normalizedKey, value),
     value,
   };
   const nextEntries =
@@ -462,8 +470,8 @@ function normalizeTradeBinding(value: unknown) {
 
 function collectScriptEditorPersonImportedAttributes(
   value: Record<string, unknown>
-): ScriptEditorKeyValueEntry[] {
-  const entries: ScriptEditorKeyValueEntry[] = [];
+): ScriptEditorTypedAttributeRecord[] {
+  const entries: ScriptEditorTypedAttributeRecord[] = [];
 
   for (const [key, nestedValue] of Object.entries(value)) {
     if (SCRIPT_EDITOR_PERSON_ATTRIBUTE_EXCLUDED_ROOT_KEYS.has(key)) {
@@ -477,7 +485,7 @@ function collectScriptEditorPersonImportedAttributes(
 }
 
 function appendScriptEditorPersonImportedAttribute(
-  entries: ScriptEditorKeyValueEntry[],
+  entries: ScriptEditorTypedAttributeRecord[],
   keyPath: string,
   value: unknown
 ): void {
@@ -498,17 +506,19 @@ function appendScriptEditorPersonImportedAttribute(
     return;
   }
 
+  const type = inferScriptEditorPersonAttributeType(keyPath, value);
   entries.push({
     key: keyPath,
     label: getScriptEditorPersonAttributeLabel(keyPath),
-    value: String(value),
+    type,
+    value: normalizeTypedAttributeValue(type, value),
   });
 }
 
 function mergeScriptEditorPersonExtendedAttributes(
-  existing: ScriptEditorKeyValueEntry[],
-  imported: ScriptEditorKeyValueEntry[]
-): ScriptEditorKeyValueEntry[] {
+  existing: ScriptEditorTypedAttributeRecord[],
+  imported: ScriptEditorTypedAttributeRecord[]
+): ScriptEditorTypedAttributeRecord[] {
   const merged = normalizeKeyValueEntries(existing);
   const existingEntryIndexByKey = new Map<string, number>();
 
@@ -546,6 +556,7 @@ function mergeScriptEditorPersonExtendedAttributes(
     merged.push({
       key: normalizedKey,
       label: entry.label,
+      type: entry.type,
       value: entry.value,
     });
     existingEntryIndexByKey.set(normalizedKey, merged.length - 1);
@@ -609,10 +620,10 @@ function materializeScriptEditorPersonExtendedAttributes(
 
 function parseScriptEditorPersonAttributeValue(
   keyPath: string,
-  value: string,
+  value: string | number | boolean | undefined,
   previousValue: unknown
 ): string | number | boolean | null | undefined {
-  const normalizedValue = value.trim();
+  const normalizedValue = String(value ?? "").trim();
 
   if (
     typeof previousValue === "number" ||
@@ -626,7 +637,10 @@ function parseScriptEditorPersonAttributeValue(
     return Number.isFinite(numericValue) ? numericValue : value;
   }
 
-  if (typeof previousValue === "boolean") {
+  if (typeof previousValue === "boolean" || typeof value === "boolean") {
+    if (typeof value === "boolean") {
+      return value;
+    }
     if (normalizedValue === "true") {
       return true;
     }
@@ -772,7 +786,7 @@ function deleteScriptEditorPersonValueAtPath(
   }
 }
 
-function normalizeKeyValueEntries(value: unknown): ScriptEditorKeyValueEntry[] {
+function normalizeKeyValueEntries(value: unknown): ScriptEditorTypedAttributeRecord[] {
   if (!Array.isArray(value)) {
     return [];
   }
@@ -781,14 +795,70 @@ function normalizeKeyValueEntries(value: unknown): ScriptEditorKeyValueEntry[] {
     .filter(
       (entry) => entry != null && typeof entry === "object" && !Array.isArray(entry)
     )
-    .map((entry) => ({
-      key: readString((entry as Record<string, unknown>).key, ""),
-      label: readString((entry as Record<string, unknown>).label, ""),
-      value: readString((entry as Record<string, unknown>).value, ""),
-    }))
+    .map((entry) =>
+      normalizeScriptEditorPersonAttributeEntry(entry as Record<string, unknown>)
+    )
     .filter(
       (entry) => !SCRIPT_EDITOR_PERSON_FIXED_ATTRIBUTE_KEYS.has(entry.key.trim())
     );
+}
+
+function normalizeScriptEditorPersonAttributeEntry(
+  entry: Record<string, unknown>
+): ScriptEditorTypedAttributeRecord {
+  const key = readString(entry.key, "");
+  const type = normalizeTypedAttributeType(entry.type);
+  const value = normalizeTypedAttributeValue(type, entry.value);
+  return {
+    key,
+    label: readString(entry.label, ""),
+    type,
+    value,
+    ...(type === "enum" && Array.isArray(entry.options)
+      ? {
+          options: entry.options
+            .filter((option) => typeof option === "string")
+            .map((option) => option.trim())
+            .filter((option) => option.length > 0),
+        }
+      : {}),
+  };
+}
+
+function normalizeTypedAttributeType(value: unknown): ScriptEditorTypedAttributeType {
+  return value === "number" ||
+    value === "boolean" ||
+    value === "enum" ||
+    value === "string"
+    ? value
+    : "string";
+}
+
+function normalizeTypedAttributeValue(
+  type: ScriptEditorTypedAttributeType,
+  value: unknown
+): string | number | boolean {
+  if (type === "number") {
+    const numberValue = Number(String(value ?? "").trim());
+    return Number.isFinite(numberValue) ? numberValue : 0;
+  }
+  if (type === "boolean") {
+    return value === true || String(value).trim() === "true";
+  }
+  return readString(value, "");
+}
+
+function inferScriptEditorPersonAttributeType(
+  keyPath: string,
+  value: unknown
+): ScriptEditorTypedAttributeType {
+  if (typeof value === "number" || isScriptEditorPersonNumericAttribute(keyPath)) {
+    return "number";
+  }
+  if (typeof value === "boolean") {
+    return "boolean";
+  }
+  return "string";
 }
 
 function getScriptEditorPersonAttributeLabel(keyPath: string): string {

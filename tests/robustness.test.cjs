@@ -9386,7 +9386,7 @@ test("script editor runtime export rejects settlement events with missing settle
   );
 });
 
-test("script editor runtime export rejects settlement results with missing nextEventId references", () => {
+test("script editor runtime export rejects settlements with missing nextEventId references", () => {
   const {
     exportScriptEditorProjectToScenarioPackFiles,
   } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
@@ -9395,13 +9395,7 @@ test("script editor runtime export rejects settlement results with missing nextE
     {
       id: "settlement.opening.default",
       title: "Opening Settlement",
-      results: [
-        {
-          id: "result.success",
-          label: "Success",
-          nextEventId: "event.missing.follow-up",
-        },
-      ],
+      nextEventId: "event.missing.follow-up",
     },
   ];
   project.events = [
@@ -9416,7 +9410,7 @@ test("script editor runtime export rejects settlement results with missing nextE
 
   assert.throws(
     () => exportScriptEditorProjectToScenarioPackFiles(project),
-    /result\.success|event\.missing\.follow-up|nextEventId/i
+    /settlement\.opening\.default|event\.missing\.follow-up|nextEventId/i
   );
 });
 
@@ -10205,7 +10199,7 @@ test("script editor workspace shell accepts settlement events with existing sett
   assert.doesNotMatch(riskCard?.body ?? "", /missing settlement|settlementId/i);
 });
 
-test("script editor workspace shell surfaces settlement result nextEventId blockers", () => {
+test("script editor workspace shell surfaces settlement nextEventId blockers", () => {
   const {
     createScriptEditorWorkspaceShellViewModel,
   } = require("../.test-dist/application/script-editor/workspace-shell.js");
@@ -10214,13 +10208,7 @@ test("script editor workspace shell surfaces settlement result nextEventId block
     {
       id: "settlement.opening.default",
       title: "Opening Settlement",
-      results: [
-        {
-          id: "result.success",
-          label: "Success",
-          nextEventId: "event.missing.follow-up",
-        },
-      ],
+      nextEventId: "event.missing.follow-up",
     },
   ];
   project.events = [
@@ -10240,7 +10228,7 @@ test("script editor workspace shell surfaces settlement result nextEventId block
   const riskCard = workspace.inspector.cards.find((card) => card.id === "project.risk");
   assert.match(
     riskCard?.body ?? "",
-    /result\.success|event\.missing\.follow-up|nextEventId/i
+    /settlement\.opening\.default|event\.missing\.follow-up|nextEventId/i
   );
 });
 
@@ -11081,7 +11069,7 @@ test("script editor field mapping validation rejects duplicate ids and invalid m
   );
 });
 
-test("script editor person authoring helpers absorb imported runtime attributes into editable extended attributes", () => {
+test("script editor person custom attribute helpers absorb imported runtime attributes into editable typed extended attributes", () => {
   const {
     appendScriptEditorPersonAttribute,
     normalizeScriptEditorPersonRecord,
@@ -11176,7 +11164,7 @@ test("script editor person authoring helpers absorb imported runtime attributes 
   );
   assert.equal("age" in removed, false);
 
-  const appended = appendScriptEditorPersonAttribute(removed);
+  const appended = appendScriptEditorPersonAttribute(removed, "number");
   const appendedIndex = appended.extendedAttributes.length - 1;
   const relabeled = updateScriptEditorPersonAttribute(
     appended,
@@ -11184,15 +11172,22 @@ test("script editor person authoring helpers absorb imported runtime attributes 
     "label",
     "忠诚"
   );
-  const withValue = updateScriptEditorPersonAttribute(
+  const typed = updateScriptEditorPersonAttribute(
     relabeled,
+    appendedIndex,
+    "type",
+    "number"
+  );
+  const withValue = updateScriptEditorPersonAttribute(
+    typed,
     appendedIndex,
     "value",
     "80"
   );
   assert.equal(withValue.extendedAttributes[appendedIndex].key, "");
   assert.equal(withValue.extendedAttributes[appendedIndex].label, "忠诚");
-  assert.equal(withValue.extendedAttributes[appendedIndex].value, "80");
+  assert.equal(withValue.extendedAttributes[appendedIndex].type, "number");
+  assert.equal(withValue.extendedAttributes[appendedIndex].value, 80);
   assert.equal("忠诚" in withValue, false);
 });
 
@@ -15884,8 +15879,10 @@ test("script editor story/dialogue/event authoring helpers normalize bounded nar
     updateScriptEditorEventField,
     updateScriptEditorEventPreviewSummaryField,
     updateScriptEditorEventRelationField,
+    appendScriptEditorSettlementContent,
+    removeScriptEditorSettlementContent,
+    updateScriptEditorSettlementContentField,
     updateScriptEditorSettlementField,
-    updateScriptEditorSettlementResultField,
     updateScriptEditorStoryNodeField,
     updateScriptEditorStoryNodeRelation,
   } = authoringHelpers;
@@ -15957,31 +15954,33 @@ test("script editor story/dialogue/event authoring helpers normalize bounded nar
   settlementRecord = updateScriptEditorSettlementField(
     settlementRecord,
     "title",
-    " Opening Settlement "
+    "寮€鍦虹粨绠?"
   );
   settlementRecord = updateScriptEditorSettlementField(
     settlementRecord,
-    "description",
-    " Settlement details "
-  );
-  settlementRecord = updateScriptEditorSettlementResultField(
-    settlementRecord,
-    0,
-    "id",
-    " result.success "
-  );
-  settlementRecord = updateScriptEditorSettlementResultField(
-    settlementRecord,
-    0,
-    "label",
-    " Success "
-  );
-  settlementRecord = updateScriptEditorSettlementResultField(
-    settlementRecord,
-    0,
     "nextEventId",
-    " event.follow-up "
+    "event.followup"
   );
+  settlementRecord = updateScriptEditorSettlementContentField(
+    settlementRecord,
+    0,
+    "targetFamily",
+    "person"
+  );
+  settlementRecord = updateScriptEditorSettlementContentField(
+    settlementRecord,
+    0,
+    "attributeType",
+    "number"
+  );
+  settlementRecord = updateScriptEditorSettlementContentField(
+    settlementRecord,
+    0,
+    "operation",
+    "add"
+  );
+  settlementRecord = appendScriptEditorSettlementContent(settlementRecord);
+  settlementRecord = removeScriptEditorSettlementContent(settlementRecord, 1);
   const normalizedSettlement = normalizeScriptEditorSettlementRecord(settlementRecord);
   const eventBinding = normalizeScriptEditorEventBindingRecord({
     ...createDefaultScriptEditorEventBindingRecord(0),
@@ -16010,13 +16009,18 @@ test("script editor story/dialogue/event authoring helpers normalize bounded nar
   assert.equal(normalizedEvent.relations.storyNodeId, "story-node.hero");
   assert.deepEqual(normalizedEvent.relations.personIds, ["person.hero"]);
   assert.equal(normalizedEvent.previewSummary.previewNotes, "Preview the event branch.");
-  assert.equal(normalizedSettlement.title, "Opening Settlement");
-  assert.equal(normalizedSettlement.description, " Settlement details ");
-  assert.deepEqual(normalizedSettlement.results, [
+  assert.equal(normalizedSettlement.title, "寮€鍦虹粨绠?");
+  assert.equal(normalizedSettlement.nextEventId, "event.followup");
+  assert.equal(Object.hasOwn(normalizedSettlement, "description"), false);
+  assert.equal(Object.hasOwn(normalizedSettlement, "results"), false);
+  assert.deepEqual(normalizedSettlement.contents, [
     {
-      id: "result.success",
-      label: "Success",
-      nextEventId: "event.follow-up",
+      targetFamily: "person",
+      targetId: "",
+      attributeKey: "",
+      attributeType: "number",
+      operation: "add",
+      value: 0,
     },
   ]);
   assert.equal(eventBinding.id, "event-binding.new.1");
