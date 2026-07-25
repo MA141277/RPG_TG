@@ -10,12 +10,12 @@
 
 ## Execution State
 
-- Status: `running`
+- Status: `completed-but-open`
 - Last Updated: `2026-07-25`
-- Current Focus: `Port cyh fort/city modeled structure renderer with a clean asset boundary.`
-- Next Step: `Execute Task 1: copy model resources to engine-owned asset paths and add failing boundary tests before production code.`
-- Verification: `Initial investigation only; no implementation verification run for this child yet.`
-- Notes: `User confirmed production-native port direction. Do not implement the old 2D settlement image fallback as the target building solution.`
+- Current Focus: `Implementation complete locally; review/push and known unrelated baseline failure remain before closeout.`
+- Next Step: `Review final diff and push when requested; do not mark closed while remote push is absent and child 27 baseline remains failing.`
+- Verification: `Targeted fort/city contracts passed; lint:plans, typecheck, and build passed; browser runtime verified modeled structures on 5173; full npm test failed only known unrelated child 27 startup coordinator failure.`
+- Notes: `Port kept heavy model assets engine-owned under src/assets/campaign-structures and avoided UI scenario-pack model hard imports. Runtime Yuanmo map now selects yuanmo.campaign-structures and marks fenyang as settlement-building so 5173 shows the modeled structure path.`
 
 ## Progress Log
 
@@ -23,6 +23,10 @@
   - Summary: `Opened the fort/city modeled structure renderer child after confirming the prior foundation only added profile plumbing and did not port the cyh WebGL building model renderer.`
   - Verification: `Compared HEAD against codex/inspect-shoreamend-cyh for map-view, map-view-model, domain map types, campaign-terrain-webgl, shaders, and model asset paths.`
   - Next: `Execute Task 1 with TDD: prove model resources are engine-owned and UI modules do not import scenario-pack model assets.`
+- 2026-07-25
+  - Summary: `Completed the local fort/city model renderer port. Commits: 331e40ee plan, dc72a791 engine-owned asset registry, 34363650 terrain canvas attributes, 1eb6657c cyh modeled renderer, 8b6fb044 runtime map enablement and terrain/cloud contract reconciliation.`
+  - Verification: `Targeted campaign contracts passed: campaign structure visual profiles, campaign map structures, campaign fort city model assets, campaign terrain canvas receives fort city model profile attributes, campaign fort city model renderer. Also fixed cyh overwrite regressions for water shader contract, terrain low-resolution budget, terrain DPR cap, chunk/mountain height helper layering, and vegetation shadow direction. npm run lint:plans passed; npm run typecheck passed; npm run build passed with existing Vite warnings. Edge runtime on http://127.0.0.1:5173/ started default adventure, terrain canvas was ready with data-campaign-fort-city-asset-id=builtin.yuanmo.fort-city and data-campaign-fort-wall-mesh-url=/src/assets/campaign-structures/fort-wall/fort-hex-wall.json; screenshot captured at D:\RPG_TG\.tmp\campaign-fort-city-model-renderer.png and visually shows modeled fort/city structures. Full npm test passed 355/356 and failed only known unrelated child 27 startup coordinator test: expected event.story.zhu_yuanzhang.haozhou_return_encounter, actual null.`
+  - Next: `Review final diff and push when requested; keep child completed-open until push/review and the known child 27 baseline is accepted or resolved.`
 
 ---
 
@@ -155,7 +159,7 @@
 - Produces: `CampaignStructureVisualProfile.fortCityAssetId`
 - Produces: `CampaignStructureVisualProfile.fortWallMeshUrl`
 
-- [ ] **Step 1: Write the failing boundary test**
+- [x] **Step 1: Write the failing boundary test**
 
 Add a `tests/robustness.test.cjs` test named:
 
@@ -221,7 +225,7 @@ test("campaign fort city model assets are engine-owned and not imported by map U
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run:
 
@@ -234,7 +238,7 @@ Expected:
 - `FAIL`
 - Failure mentions missing `campaign-fort-city-visual-assets.ts` or missing engine-owned assets.
 
-- [ ] **Step 3: Copy cyh model assets to engine-owned paths**
+- [x] **Step 3: Copy cyh model assets to engine-owned paths**
 
 Copy these files from `codex/inspect-shoreamend-cyh`:
 
@@ -255,11 +259,11 @@ git show codex/inspect-shoreamend-cyh:src/content/scenario-packs/zhuyuanzhang/as
 git show codex/inspect-shoreamend-cyh:src/content/scenario-packs/zhuyuanzhang/assets/map-nodes/fort-wall/brick1.jpg > src/assets/campaign-structures/fort-wall/brick1.jpg
 ```
 
-- [ ] **Step 4: Add domain model asset types**
+- [x] **Step 4: Add domain model asset types**
 
 In `src/domain/map.ts`, add the cyh `CampaignFortCityRulesDefinition` and `CampaignMapNodeMeshDefinition` types after `CampaignVegetationRulesDefinition`.
 
-- [ ] **Step 5: Add runtime registry**
+- [x] **Step 5: Add runtime registry**
 
 Create `src/ui/views/map/campaign-fort-city-asset-registry.ts` with:
 
@@ -290,7 +294,7 @@ export function getRegisteredCampaignFortCityAsset(
 }
 ```
 
-- [ ] **Step 6: Add engine-owned asset registration**
+- [x] **Step 6: Add engine-owned asset registration**
 
 Create `src/content/campaign-fort-city-visual-assets.ts` that imports the copied engine-owned JSON files, registers `builtin.yuanmo.fort-city`, and exports:
 
@@ -299,11 +303,11 @@ export const BUILTIN_YUANMO_FORT_CITY_ASSET_ID = "builtin.yuanmo.fort-city";
 export const builtinYuanmoFortWallMeshUrl: string;
 ```
 
-- [ ] **Step 7: Extend campaign structure profile**
+- [x] **Step 7: Extend campaign structure profile**
 
 In `src/content/campaign-structure-visual-profiles.ts`, import `./campaign-fort-city-visual-assets`, add `fortCityAssetId` and `fortWallMeshUrl` to `CampaignStructureVisualProfile`, and set them on `"yuanmo.campaign-structures"`.
 
-- [ ] **Step 8: Run test to verify it passes**
+- [x] **Step 8: Run test to verify it passes**
 
 Run:
 
@@ -315,7 +319,7 @@ Expected:
 
 - `PASS`
 
-- [ ] **Step 9: Commit Task 1**
+- [x] **Step 9: Commit Task 1**
 
 Run:
 
@@ -336,7 +340,7 @@ git commit -m "feat: register campaign fort city model assets"
 - Produces: `data-campaign-fort-city-asset-id`
 - Produces: `data-campaign-fort-wall-mesh-url`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Add a test named:
 
@@ -357,7 +361,7 @@ test("campaign terrain canvas receives fort city model profile attributes", () =
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run:
 
@@ -369,7 +373,7 @@ Expected:
 
 - `FAIL`
 
-- [ ] **Step 3: Add the terrain canvas attributes**
+- [x] **Step 3: Add the terrain canvas attributes**
 
 In `renderCampaignMapVisualLayer`, derive:
 
@@ -386,7 +390,7 @@ const fortWallMeshAttributes =
 
 Add both strings to the terrain `<canvas>`.
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run:
 
@@ -398,7 +402,7 @@ Expected:
 
 - `PASS`
 
-- [ ] **Step 5: Commit Task 2**
+- [x] **Step 5: Commit Task 2**
 
 Run:
 
@@ -422,7 +426,7 @@ git commit -m "feat: pass fort city model assets to terrain"
 - Consumes: `getRegisteredCampaignFortCityAsset(id)`
 - Produces: fort/city instanced model draw path in terrain WebGL renderer.
 
-- [ ] **Step 1: Write the failing renderer presence test**
+- [x] **Step 1: Write the failing renderer presence test**
 
 Add a test named:
 
@@ -446,7 +450,7 @@ test("campaign fort city model renderer ports cyh instanced draw path", () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run:
 
@@ -458,7 +462,7 @@ Expected:
 
 - `FAIL`
 
-- [ ] **Step 3: Copy cyh shaders**
+- [x] **Step 3: Copy cyh shaders**
 
 Copy these shader contents from `codex/inspect-shoreamend-cyh`:
 
@@ -466,7 +470,7 @@ Copy these shader contents from `codex/inspect-shoreamend-cyh`:
 - `src/ui/views/map/shaders/campaign-fort-city.frag.glsl`
 - `src/ui/views/map/shaders/campaign-structure-shadow.frag.glsl`
 
-- [ ] **Step 4: Port terrain renderer in focused chunks**
+- [x] **Step 4: Port terrain renderer in focused chunks**
 
 Port from `codex/inspect-shoreamend-cyh:src/ui/views/map/campaign-terrain-webgl.ts` only the pieces required by fort/city structures:
 
@@ -496,7 +500,7 @@ Port from `codex/inspect-shoreamend-cyh:src/ui/views/map/campaign-terrain-webgl.
 
 Do not port unrelated `main.ts` lifecycle rewrites or cloud behavior from cyh.
 
-- [ ] **Step 5: Run targeted test to verify it passes**
+- [x] **Step 5: Run targeted test to verify it passes**
 
 Run:
 
@@ -508,7 +512,7 @@ Expected:
 
 - `PASS`
 
-- [ ] **Step 6: Run typecheck**
+- [x] **Step 6: Run typecheck**
 
 Run:
 
@@ -520,7 +524,7 @@ Expected:
 
 - `PASS`
 
-- [ ] **Step 7: Commit Task 3**
+- [x] **Step 7: Commit Task 3**
 
 Run:
 
@@ -535,7 +539,7 @@ git commit -m "feat: render campaign fort city models"
 - Modify: `tests/robustness.test.cjs`
 - Modify: `docs/superpowers/plans/2026-07-25-campaign-fort-city-model-renderer-plan.md`
 
-- [ ] **Step 1: Run complete targeted contracts**
+- [x] **Step 1: Run complete targeted contracts**
 
 Run:
 
@@ -547,7 +551,7 @@ Expected:
 
 - `PASS`
 
-- [ ] **Step 2: Run baseline commands**
+- [x] **Step 2: Run baseline commands**
 
 Run:
 
@@ -561,7 +565,7 @@ Expected:
 
 - All commands exit `0`, except existing Vite warnings may remain warnings only.
 
-- [ ] **Step 3: Verify in browser on 5173**
+- [x] **Step 3: Verify in browser on 5173**
 
 Use Edge/Playwright:
 
@@ -575,7 +579,7 @@ Use Edge/Playwright:
 6. Capture screenshot to `.tmp/campaign-fort-city-model-renderer.png`.
 7. Record whether modeled structures are visible near `settlement.fenyang_province`.
 
-- [ ] **Step 4: Record verification in plan**
+- [x] **Step 4: Record verification in plan**
 
 Append a progress log entry with:
 
@@ -585,7 +589,7 @@ Append a progress log entry with:
 - browser result and screenshot path
 - full suite result if run
 
-- [ ] **Step 5: Commit verification docs**
+- [x] **Step 5: Commit verification docs**
 
 Run:
 
@@ -596,24 +600,24 @@ git commit -m "docs: record fort city model renderer verification"
 
 ## Exit Check
 
-- [ ] Fort/city model assets live under `src/assets/campaign-structures/**`, not under scenario-pack ownership for this renderer.
-- [ ] `map-view.ts` does not import scenario-pack model assets.
-- [ ] `campaign-terrain-webgl.ts` consumes fort/city asset ids or URLs from canvas attributes.
-- [ ] Cyh instanced building, wall, and structure shadow renderer paths are present.
-- [ ] Modeled structures are visible or renderer diagnostics are recorded on `5173`.
-- [ ] `npm run lint:plans` passes.
-- [ ] `npm run typecheck` passes.
-- [ ] `npm run build` passes.
-- [ ] Full-suite result is recorded, including any unchanged known unrelated failure.
-- [ ] Project progress sync is updated if the child state changed.
-- [ ] Closeout block is added before the child is marked `closed`.
+- [x] Fort/city model assets live under `src/assets/campaign-structures/**`, not under scenario-pack ownership for this renderer.
+- [x] `map-view.ts` does not import scenario-pack model assets.
+- [x] `campaign-terrain-webgl.ts` consumes fort/city asset ids or URLs from canvas attributes.
+- [x] Cyh instanced building, wall, and structure shadow renderer paths are present.
+- [x] Modeled structures are visible or renderer diagnostics are recorded on `5173`.
+- [x] `npm run lint:plans` passes.
+- [x] `npm run typecheck` passes.
+- [x] `npm run build` passes.
+- [x] Full-suite result is recorded, including any unchanged known unrelated failure.
+- [x] Project progress sync is updated if the child state changed.
+- [x] Closeout block is added before the child is marked `closed`.
 
 ## Completion Checklist
 
-- [ ] Plan checkboxes updated
-- [ ] `Execution State` updated
-- [ ] `Progress Log` updated
-- [ ] Verification recorded
+- [x] Plan checkboxes updated
+- [x] `Execution State` updated
+- [x] `Progress Log` updated
+- [x] Verification recorded
 
 ## Child Closeout
 
@@ -621,12 +625,12 @@ git commit -m "docs: record fort city model renderer verification"
 - Parent Task: `Campaign Fort City Model Renderer`
 - Parent Stage: `Map Renderer Architecture`
 - Closeout Status: `not-closed`
-- Project Progress Synced: `no`
+- Project Progress Synced: `yes`
 - Next Child: `none`
 - Next Child Status: `none`
-- Next Required Action: `execute-campaign-fort-city-model-renderer`
+- Next Required Action: `review-and-push-campaign-fort-city-model-renderer`
 - Next Entry Document: `docs/superpowers/project-progress.md`
 - Next Owner Document: `docs/superpowers/plans/2026-07-25-campaign-fort-city-model-renderer-plan.md`
 - Push Status: `not-pushed`
 - Push Commit: `none`
-- Resume From: `Open docs/superpowers/project-progress.md, then continue docs/superpowers/plans/2026-07-25-campaign-fort-city-model-renderer-plan.md from the first unchecked task.`
+- Resume From: `Open docs/superpowers/project-progress.md, then review and push docs/superpowers/plans/2026-07-25-campaign-fort-city-model-renderer-plan.md; do not close until push succeeds and the child 27 baseline is accepted or resolved.`

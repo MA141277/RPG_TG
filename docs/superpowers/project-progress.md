@@ -5,18 +5,18 @@
 - Current Stage: `Map Renderer Architecture`
 - Current Stage Status: `running`
 - Current Task: `Campaign Fort City Model Renderer`
-- Current Task Status: `running`
+- Current Task Status: `completed-but-open`
 - Current Child: `Campaign Fort City Model Renderer`
-- Current Child Status: `running`
+- Current Child Status: `completed-but-open`
 - Next Child: `none`
 - Next Child Status: `none`
-- Next Required Action: `execute-campaign-fort-city-model-renderer`
+- Next Required Action: `review-and-push-campaign-fort-city-model-renderer`
 - Next Entry Document: `docs/superpowers/project-progress.md`
 - Next Owner Document: `docs/superpowers/plans/2026-07-25-campaign-fort-city-model-renderer-plan.md`
 - Last Closed Item: `none`
 - Push Status: `not-pushed`
 - Push Commit: `none`
-- Resume From: `Open docs/superpowers/project-progress.md, then continue docs/superpowers/plans/2026-07-25-campaign-fort-city-model-renderer-plan.md from the first unchecked task.`
+- Resume From: `Open docs/superpowers/project-progress.md, then review and push docs/superpowers/plans/2026-07-25-campaign-fort-city-model-renderer-plan.md; do not close until push succeeds and the child 27 baseline is accepted or resolved.`
 
 ## Progress Log
 
@@ -68,6 +68,10 @@
   - Summary: `Opened the campaign fort/city model renderer child to port the cyh WebGL modeled building pipeline without copying its UI hard imports from scenario-pack model assets.`
   - Verification: `Compared HEAD against codex/inspect-shoreamend-cyh for map-view, map-view-model, domain map types, campaign-terrain-webgl, shaders, and model asset paths.`
   - Next: `Execute docs/superpowers/plans/2026-07-25-campaign-fort-city-model-renderer-plan.md from Task 1.`
+- 2026-07-25
+  - Summary: `Completed the local campaign fort/city model renderer port: engine-owned model asset registry, terrain canvas profile attributes, cyh instanced building/wall/shadow renderer path, runtime Yuanmo map enablement, and terrain/cloud contract reconciliation.`
+  - Verification: `Targeted fort/city contracts passed; npm run lint:plans passed; npm run typecheck passed; npm run build passed with existing Vite warnings; Edge runtime on http://127.0.0.1:5173/ started default adventure and screenshot D:\RPG_TG\.tmp\campaign-fort-city-model-renderer.png visually shows modeled structures. Full npm test passed 355/356 and failed only known unrelated child 27 startup coordinator failure, expected event.story.zhu_yuanzhang.haozhou_return_encounter, actual null.`
+  - Next: `Review final diff and push when requested; do not close while remote push is absent or the child 27 baseline remains unresolved/unaccepted.`
 
 ## Latest Closeout
 
