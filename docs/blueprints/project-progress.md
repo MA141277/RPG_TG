@@ -34,7 +34,7 @@
 ### Live Entry Guardrails
 
 - `This file only states the current resume entry and downstream pointer set.`
-- `queue.script-editor-settlement-authoring-surface-completion is now closed after local settlement authoring surface completion and repository sync through commit 6a39f81 on origin/mod-first-dev. No active queue remains, so the lawful resume point is the version plan's closeout review state.`
+- `target.event-follow-up-routing-settlement-and-canonical-reuse-convergence is now closed after explicit version closeout on 2026-07-25. queue.script-editor-settlement-authoring-surface-completion already synchronized through commit 6a39f81 on origin/mod-first-dev, no active queue remains, and this target is now historical evidence only until a lawful successor version is promoted.`
 - `Admission history, queue closeout history, and review narrative must stay in the version plan, queue docs, or docs/change-log.md rather than living here as competing current-state prose.`
 - `The pointed version is now the closed Entry Shell UI module extraction successor version created from MEMO-011 after the city/building background queue closed.`
 - `target.entry-shell-ui-module-extraction is done with no active queue after queue.entry-shell-ui-module-extraction closed and final version closeout was recorded.`

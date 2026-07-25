@@ -4,13 +4,13 @@
 
 - document_role: `version-governor`
 - version_id: `target.event-follow-up-routing-settlement-and-canonical-reuse-convergence`
-- version_status: `open`
-- active_phase: `phase.promotion-review`
+- version_status: `closed`
+- active_phase: `phase.version-closed`
 - active_queue: `none`
-- decision_state: `promotion-review`
-- next_decision: `same-version-admission-or-version-closeout`
-- next_action: `return-to-promotion-review`
-- resume_gate: `promotion-review`
+- decision_state: `closed`
+- next_decision: `version-closeout`
+- next_action: `write-version-closeout`
+- resume_gate: `closed`
 - post_queue_closeout_pause_policy: `auto-continue`
 - promotion_review_result: `queue-closeout-complete`
 - review_subject_id: `none`
@@ -27,13 +27,13 @@
 - closure_review_status: `routed`
 - residue_candidate_id: `none`
 - residue_candidate_family: `none`
-- routing_basis: `queue.script-editor-settlement-authoring-surface-completion completed queue closeout proof and repository sync through commit 6a39f81 on origin/mod-first-dev, so no active queue remains and the version returns to closeout review.`
+- routing_basis: `closed-after-explicit-version-closeout-with-no-same-version-residue`
 - next_lawful_queue_recommendation: `none`
 - auto_admission_ready: `false`
-- stop_reason: `version-closeout-confirmation`
-- stop_basis: `All active same-version queues are now closed and repository-synced, including queue.script-editor-settlement-authoring-surface-completion through commit 6a39f81 on origin/mod-first-dev. The next version-level move is explicit closeout rather than another lawful local implementation action.`
-- next_unblocked_action: `write-version-closeout`
-- human_input_required: `true`
+- stop_reason: `none`
+- stop_basis: `none`
+- next_unblocked_action: `none`
+- human_input_required: `false`
 - blocked_by: []
 - candidate_queue_ids:
   - `queue.event-and-building-instance-canonical-reuse`
@@ -88,11 +88,17 @@
 - Required truth sync:
   - `Satisfied in this document batch: blueprint pointers, version-plan pointers, project-progress entry pointers, queue doc activation, and active-task truth are all synchronized.`
 
+### Version Closeout Review
+
+- `Closeout judgement: accepted. ACC-EVENT-SETTLE-001 / 002 / 003 / 004 / 005 / 005A / 006 / 007 / 008 are now covered across the closed queue portfolio, including the later same-version residue queue queue.script-editor-settlement-authoring-surface-completion.`
+- `Closeout confirmation: the operator-selected closeout continuation is now recorded on 2026-07-25 after the residue queue synchronized through commit 6a39f81 on origin/mod-first-dev and no further lawful same-version residue remained inside this target.`
+- `Future routing: any further event-routing, settlement, or authoring work must route through a lawful successor version rather than reopening this closed target implicitly.`
+
 ### Version Lifecycle Rules
 
-- `This version is open and actively executing through one active queue.`
+- `This version is closed and now historical-only for execution purposes.`
 - `If active_queue is not none, execution truth comes from the active queue and active task rather than promotion review.`
-- `Do not implement code for later phases before the canonical-reuse queue closes and repository-sync gate is recorded.`
+- `Do not implement new code inside this target without an explicit successor-version decision; this parent version no longer owns live execution.`
 - `Do not reverse the approved high-level phase order unless a real blocker or governing-doc conflict is recorded here first.`
 - `Do not split event/building canonical reuse, nextEventId routing, settlement convergence, and cross-chain consistency into separate parent targets while this version remains open.`
 - `Task completion, queue admission, queue activation, or doc-only sync are not lawful stopping points by themselves.`
@@ -258,13 +264,14 @@
 - verification_adequacy_check:
   - `Governed-doc verification must pass before this activation batch is treated as synchronized.`
 - next_lawful_action_check:
-  - `Continue queue.same-display-name-building-host-instance-canonicalization from task.same-display-name-building-host-instance-canonicalization.canonical-host-id-rewrite-and-reference-guard-baseline.`
+  - `none; version closeout is now recorded and no further same-version queue admission is lawful inside this closed target.`
 
 ### Closure Routing Record
 
 - `queue.event-and-building-instance-canonical-reuse is now closed after canonical-reuse proof and repository sync succeeded through commit 8e661da pushed to origin/mod-first-dev. The version remains open and has already auto-promoted queue.instance-next-event-id-and-event-routing-convergence as the next lawful active queue.`
 - `queue.instance-next-event-id-and-event-routing-convergence is now closed after repository sync succeeded through commit 954dd32a pushed to origin/mod-first-dev. The version remains open and has auto-admitted queue.settlement-resource-and-event-type-convergence as the next lawful active queue.`
 - `queue.settlement-resource-and-event-type-convergence is now closed after repository sync succeeded through commit b391e09 pushed to origin/mod-first-dev. The version remains open and has auto-admitted queue.same-display-name-building-host-instance-canonicalization as the next lawful active queue.`
+- `queue.script-editor-settlement-authoring-surface-completion is now closed after repository sync succeeded through commit 6a39f81 pushed to origin/mod-first-dev, and the parent version is now explicitly closed because no further same-version residue remains.`
 
 ### Progress Log
 
@@ -382,3 +389,4 @@
 - `2026-07-25`: `The residue queue completed its bounded local implementation slice. Script Editor workflow/navigation now exposes settlements under 剧情与文本, settlement records support result-local nextEventId editing, event authoring exposes type / settlementId / nextEventId controls, build:test is green, and robustness coverage is green.`
 - `2026-07-25`: `The version auto-promoted task.script-editor-settlement-authoring-surface-completion.queue-closeout-review-and-sync-gate as the live active task. The next lawful action is governed closeout proof plus repository-sync gating for the residue queue, not version closeout.`
 - `2026-07-25`: `Repository-sync gate for queue.script-editor-settlement-authoring-surface-completion is now satisfied. Commit 6a39f81 landed on origin/mod-first-dev, active_queue is now none again, and the version returns to promotion-review / closeout-review state with stop_reason=version-closeout-confirmation recorded before any pause.`
+- `2026-07-25`: `Version closeout is now recorded. All same-version queues, including the residue queue.script-editor-settlement-authoring-surface-completion, are closed and repository-synced; ACC-EVENT-SETTLE-001 through 008 remain covered; no same-version residue remains; and this target is now closed historical evidence only until a lawful successor version is promoted.`
