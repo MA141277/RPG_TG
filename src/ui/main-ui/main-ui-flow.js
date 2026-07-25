@@ -135,7 +135,7 @@ import {
   appendScriptEditorDialogueParticipant,
   appendScriptEditorEventBindingConditionItem,
   appendScriptEditorEventRelationEntry,
-  appendScriptEditorSettlementResult,
+  appendScriptEditorSettlementContent,
   appendScriptEditorStoryNodeRelation,
   createDefaultScriptEditorEventBindingRecord,
   listScriptEditorEventBindingConditionFieldOptions,
@@ -148,7 +148,7 @@ import {
   removeScriptEditorDialogueParticipant,
   removeScriptEditorEventBindingConditionItem,
   removeScriptEditorEventRelationEntry,
-  removeScriptEditorSettlementResult,
+  removeScriptEditorSettlementContent,
   removeScriptEditorStoryNodeRelation,
   SCRIPT_EDITOR_DIALOGUE_NODE_TYPES,
   SCRIPT_EDITOR_EVENT_BINDING_CONDITION_GROUP_OPERATORS,
@@ -169,8 +169,8 @@ import {
   updateScriptEditorEventField,
   updateScriptEditorEventPreviewSummaryField,
   updateScriptEditorEventRelationField,
+  updateScriptEditorSettlementContentField,
   updateScriptEditorSettlementField,
-  updateScriptEditorSettlementResultField,
   updateScriptEditorStoryNodeField,
   updateScriptEditorStoryNodeRelation,
 } from "../../application/script-editor/story-dialogue-event-authoring";
@@ -294,6 +294,54 @@ const SCRIPT_EDITOR_EVENT_BINDING_TRIGGER_OPTIONS_BY_OWNER = {
     { timing: "after", action: "story-progress", label: "剧情推进后" },
   ],
 };
+
+const SCRIPT_EDITOR_PERSON_ATTRIBUTE_TYPE_OPTIONS = [
+  { value: "number", label: "鏁板€?" },
+  { value: "boolean", label: "寮€鍏?" },
+  { value: "enum", label: "閫夐」" },
+  { value: "string", label: "鏂囨湰" },
+];
+
+const SCRIPT_EDITOR_SETTLEMENT_TARGET_FAMILY_OPTIONS = [
+  { value: "person", label: "人物" },
+  { value: "city", label: "城市" },
+  { value: "building", label: "建筑" },
+];
+
+const SCRIPT_EDITOR_SETTLEMENT_NUMERIC_OPERATION_OPTIONS = [
+  { value: "set", label: "设为" },
+  { value: "add", label: "增加" },
+  { value: "subtract", label: "减少" },
+];
+
+const SCRIPT_EDITOR_SETTLEMENT_SET_ONLY_OPERATION_OPTIONS = [
+  { value: "set", label: "设为" },
+];
+
+const SCRIPT_EDITOR_SETTLEMENT_PERSON_BASE_ATTRIBUTE_OPTIONS = [
+  { value: "age", label: "年龄", attributeType: "number" },
+  { value: "stamina", label: "体力", attributeType: "number" },
+  { value: "stats.leadership", label: "统率", attributeType: "number" },
+  { value: "stats.martial", label: "武勇", attributeType: "number" },
+  { value: "stats.intelligence", label: "智略", attributeType: "number" },
+  { value: "stats.politics", label: "政务", attributeType: "number" },
+  { value: "stats.charm", label: "魅力", attributeType: "number" },
+  { value: "stats.fame", label: "名声", attributeType: "number" },
+  { value: "stats.gold", label: "金钱", attributeType: "number" },
+];
+
+const SCRIPT_EDITOR_SETTLEMENT_CITY_BASE_ATTRIBUTE_OPTIONS = [
+  { value: "travelCost", label: "移动成本", attributeType: "number" },
+  { value: "baseAttributes.prosperity", label: "繁荣", attributeType: "number" },
+  { value: "baseAttributes.security", label: "治安", attributeType: "number" },
+  { value: "baseAttributes.population", label: "人口", attributeType: "number" },
+];
+
+const SCRIPT_EDITOR_SETTLEMENT_BUILDING_BASE_ATTRIBUTE_OPTIONS = [
+  { value: "baseAttributes.level", label: "等级", attributeType: "number" },
+  { value: "baseAttributes.outputMultiplier", label: "产出倍率", attributeType: "number" },
+  { value: "baseAttributes.damaged", label: "损坏状态", attributeType: "boolean" },
+];
 
 const characterSelectLayoutBindings = [
   { componentId: "character-layout", selector: ".c-main-ui-character-layout" },
@@ -1625,6 +1673,17 @@ export class MainUiFlow {
                     data-script-editor-person-attribute-field="label"
                     data-script-editor-person-attribute-index="${index}"
                   />
+                  <select
+                    class="c-script-editor-form-field__input"
+                    data-script-editor-person-attribute-field="type"
+                    data-script-editor-person-attribute-index="${index}"
+                  >
+                    ${this.renderScriptEditorSelectOptions(
+                      SCRIPT_EDITOR_PERSON_ATTRIBUTE_TYPE_OPTIONS,
+                      entry.type ?? "string",
+                      "鏂囨湰"
+                    )}
+                  </select>
                   <input
                     class="c-script-editor-form-field__input"
                     type="text"
@@ -1774,6 +1833,117 @@ export class MainUiFlow {
       value: record.id,
       label: `${this.getScriptEditorRecordLabel(record)} (${record.id})`,
     }));
+  }
+
+  getScriptEditorCreatorRecordOptions(family) {
+    if (this.scriptEditorProject == null) {
+      return [];
+    }
+
+    const records = listScriptEditorWorkflowFamilyRecords(this.scriptEditorProject, family);
+    return records.map((record) => ({
+      value: record.id,
+      label: this.getScriptEditorRecordLabel(record),
+    }));
+  }
+
+  getScriptEditorSettlementTargetOptions(targetFamily) {
+    const familyByTargetFamily = {
+      person: "people",
+      city: "cities",
+      building: "buildings",
+    };
+    const family = familyByTargetFamily[targetFamily] ?? "";
+    return family.length === 0 ? [] : this.getScriptEditorCreatorRecordOptions(family);
+  }
+
+  getScriptEditorSettlementAttributeOptions(content) {
+    const targetFamily = content?.targetFamily ?? "person";
+    const targetId = content?.targetId ?? "";
+    if (targetFamily === "city") {
+      const city = (this.scriptEditorProject?.cities ?? []).find(
+        (record) => record.id === targetId
+      );
+      return [
+        ...SCRIPT_EDITOR_SETTLEMENT_CITY_BASE_ATTRIBUTE_OPTIONS,
+        ...this.createScriptEditorSettlementCustomAttributeOptions(city?.extendedAttributes),
+      ];
+    }
+    if (targetFamily === "building") {
+      const building = (this.scriptEditorProject?.buildings ?? []).find(
+        (record) => record.id === targetId
+      );
+      return [
+        ...SCRIPT_EDITOR_SETTLEMENT_BUILDING_BASE_ATTRIBUTE_OPTIONS,
+        ...this.createScriptEditorSettlementCustomAttributeOptions(building?.extendedAttributes),
+      ];
+    }
+
+    const person = (this.scriptEditorProject?.people ?? []).find(
+      (record) => record.id === targetId
+    );
+    return [
+      ...SCRIPT_EDITOR_SETTLEMENT_PERSON_BASE_ATTRIBUTE_OPTIONS,
+      ...this.createScriptEditorSettlementTypedAttributeOptions(person?.extendedAttributes),
+    ];
+  }
+
+  createScriptEditorSettlementTypedAttributeOptions(attributes) {
+    return (attributes ?? [])
+      .filter((attribute) =>
+        attribute.type === "number" ||
+        attribute.type === "boolean" ||
+        attribute.type === "enum"
+      )
+      .map((attribute) => ({
+        value: attribute.key,
+        label: attribute.label?.trim() || attribute.key,
+        attributeType: attribute.type,
+      }));
+  }
+
+  createScriptEditorSettlementCustomAttributeOptions(attributes) {
+    return (attributes ?? [])
+      .map((attribute) => {
+        const attributeType = this.inferScriptEditorSettlementCustomAttributeType(
+          attribute.value
+        );
+        return attributeType == null
+          ? null
+          : {
+              value: attribute.key,
+              label: attribute.label?.trim() || attribute.key,
+              attributeType,
+            };
+      })
+      .filter(Boolean);
+  }
+
+  inferScriptEditorSettlementCustomAttributeType(value) {
+    if (typeof value === "number") {
+      return "number";
+    }
+    if (typeof value === "boolean") {
+      return "boolean";
+    }
+    if (Array.isArray(value) && value.every((entry) => typeof entry === "string")) {
+      return "enum";
+    }
+    return null;
+  }
+
+  resolveScriptEditorSettlementAttributeType(content, attributeKey) {
+    const option = this.getScriptEditorSettlementAttributeOptions({
+      ...content,
+      attributeKey,
+    }).find((entry) => entry.value === attributeKey);
+    return option?.attributeType ?? "number";
+  }
+
+  getScriptEditorSettlementOperationOptions(attributeType) {
+    return attributeType === "number"
+      ? SCRIPT_EDITOR_SETTLEMENT_NUMERIC_OPERATION_OPTIONS
+      : SCRIPT_EDITOR_SETTLEMENT_SET_ONLY_OPERATION_OPTIONS;
   }
 
   getScriptEditorLocationMenuTargetOptions(targetFamily) {
@@ -4289,7 +4459,7 @@ export class MainUiFlow {
     const settlement =
       selectedRecord == null ? null : normalizeScriptEditorSettlementRecord(selectedRecord);
     const filteredRecords = this.filterScriptEditorRecords("settlements", records);
-    const nextEventOptions = this.getScriptEditorProjectRecordOptions("events");
+    const nextEventOptions = this.getScriptEditorCreatorRecordOptions("events");
 
     return `
       <div class="c-script-editor-editor-card">
@@ -4301,7 +4471,7 @@ export class MainUiFlow {
             modifierClass: "c-script-editor-record-list--narrative",
             toolbar: `
               <div class="c-script-editor-record-list__toolbar">
-                ${this.renderScriptEditorRecordListSearch("settlements", "搜索结算", "按结算标题或 ID 搜索")}
+                ${this.renderScriptEditorRecordListSearch("settlements", "搜索结算", "按结算标题搜索")}
                 <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="add-record">
                   新增结算
                 </button>
@@ -4324,7 +4494,7 @@ export class MainUiFlow {
                   data-script-editor-record-id="${escapeHtml(record.id)}"
                 >
                   <strong>${escapeHtml(normalizedRecord.title)}</strong>
-                  <span>${escapeHtml(normalizedRecord.id)}</span>
+                  <span>结构化结算</span>
                 </button>
               `;
             },
@@ -4337,59 +4507,31 @@ export class MainUiFlow {
                   <section class="c-script-editor-narrative-panel" aria-label="结算编辑面板">
                     <div class="c-script-editor-form-grid">
                       <label class="c-script-editor-form-field">
-                        <span>结算 ID</span>
-                        <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(settlement.id)}" data-script-editor-settlement-field="id" />
-                      </label>
-                      <label class="c-script-editor-form-field">
                         <span>结算标题</span>
                         <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(settlement.title)}" data-script-editor-settlement-field="title" />
                       </label>
-                      <label class="c-script-editor-form-field c-script-editor-form-field--wide">
-                        <span>结算说明</span>
-                        <textarea class="c-script-editor-record-editor__textarea c-script-editor-record-editor__textarea--compact" data-script-editor-settlement-field="description" spellcheck="false">${escapeHtml(settlement.description ?? "")}</textarea>
+                      <label class="c-script-editor-form-field">
+                        <span>后续事件</span>
+                        <select class="c-script-editor-form-field__input" data-script-editor-settlement-field="nextEventId">
+                          ${this.renderScriptEditorSelectOptions(
+                            nextEventOptions,
+                            settlement.nextEventId ?? "",
+                            "空表示直接关闭"
+                          )}
+                        </select>
                       </label>
                     </div>
                     <section class="c-script-editor-minigame-list">
                       <div class="c-script-editor-narrative-panel__header">
                         <div>
-                          <p class="c-script-editor-editor-card__eyebrow">结果路由</p>
-                          <h3 class="c-script-editor-editor-card__title">结算结果</h3>
+                          <p class="c-script-editor-editor-card__eyebrow">结算</p>
+                          <h3 class="c-script-editor-editor-card__title">缁撶畻鍐呭</h3>
                         </div>
-                        <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="add-settlement-result">
-                          新增结果
+                        <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="add-settlement-content">
+                          新增结算内容
                         </button>
                       </div>
-                      ${(settlement.results ?? [])
-                        .map(
-                          (result, index) => `
-                            <article class="c-script-editor-minigame-list__route">
-                              <div class="c-script-editor-form-grid">
-                                <label class="c-script-editor-form-field">
-                                  <span>结果 ID</span>
-                                  <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(result.id)}" data-script-editor-settlement-result-field="id" data-script-editor-settlement-result-index="${index}" />
-                                </label>
-                                <label class="c-script-editor-form-field">
-                                  <span>结果标签</span>
-                                  <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(result.label)}" data-script-editor-settlement-result-field="label" data-script-editor-settlement-result-index="${index}" />
-                                </label>
-                                <label class="c-script-editor-form-field c-script-editor-form-field--wide">
-                                  <span>后续事件</span>
-                                  <select class="c-script-editor-form-field__input" data-script-editor-settlement-result-field="nextEventId" data-script-editor-settlement-result-index="${index}">
-                                    ${this.renderScriptEditorSelectOptions(
-                                      nextEventOptions,
-                                      result.nextEventId ?? "",
-                                      "空表示直接关闭"
-                                    )}
-                                  </select>
-                                </label>
-                              </div>
-                              <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="remove-settlement-result" data-script-editor-settlement-result-index="${index}">
-                                删除结果
-                              </button>
-                            </article>
-                          `
-                        )
-                        .join("")}
+                      ${this.renderScriptEditorSettlementContentRows(settlement)}
                     </section>
                   </section>
                 `
@@ -4398,6 +4540,71 @@ export class MainUiFlow {
         </div>
       </div>
     `;
+  }
+
+  renderScriptEditorSettlementContentRows(settlement) {
+    return (settlement.contents ?? [])
+      .map((content, index) => {
+        const targetOptions = this.getScriptEditorSettlementTargetOptions(content.targetFamily);
+        const attributeOptions = this.getScriptEditorSettlementAttributeOptions(content);
+        const operationOptions = this.getScriptEditorSettlementOperationOptions(
+          content.attributeType
+        );
+        return `
+          <article class="c-script-editor-minigame-list__route">
+            <div class="c-script-editor-form-grid">
+              <label class="c-script-editor-form-field">
+                <span>目标类型</span>
+                <select class="c-script-editor-form-field__input" data-script-editor-settlement-content-field="targetFamily" data-script-editor-settlement-content-index="${index}">
+                  ${this.renderScriptEditorSelectOptions(
+                    SCRIPT_EDITOR_SETTLEMENT_TARGET_FAMILY_OPTIONS,
+                    content.targetFamily,
+                    "选择目标类型"
+                  )}
+                </select>
+              </label>
+              <label class="c-script-editor-form-field">
+                <span>目标</span>
+                <select class="c-script-editor-form-field__input" data-script-editor-settlement-content-field="targetId" data-script-editor-settlement-content-index="${index}">
+                  ${this.renderScriptEditorSelectOptions(
+                    targetOptions,
+                    content.targetId,
+                    "选择目标"
+                  )}
+                </select>
+              </label>
+              <label class="c-script-editor-form-field">
+                <span>属性</span>
+                <select class="c-script-editor-form-field__input" data-script-editor-settlement-content-field="attributeKey" data-script-editor-settlement-content-index="${index}">
+                  ${this.renderScriptEditorSelectOptions(
+                    attributeOptions,
+                    content.attributeKey,
+                    "选择可计算属性"
+                  )}
+                </select>
+              </label>
+              <label class="c-script-editor-form-field">
+                <span>操作</span>
+                <select class="c-script-editor-form-field__input" data-script-editor-settlement-content-field="operation" data-script-editor-settlement-content-index="${index}">
+                  ${this.renderScriptEditorSelectOptions(
+                    operationOptions,
+                    content.operation,
+                    "选择操作"
+                  )}
+                </select>
+              </label>
+              <label class="c-script-editor-form-field">
+                <span>值</span>
+                <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(String(content.value ?? ""))}" data-script-editor-settlement-content-field="value" data-script-editor-settlement-content-index="${index}" />
+              </label>
+            </div>
+            <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="remove-settlement-content" data-script-editor-settlement-content-index="${index}">
+              删除结算内容
+            </button>
+          </article>
+        `;
+      })
+      .join("");
   }
 
   renderScriptEditorMinigameEditor(records, selectedRecord) {
@@ -6514,7 +6721,7 @@ export class MainUiFlow {
         10
       );
       if (
-        (field === "key" || field === "label" || field === "value") &&
+        (field === "key" || field === "label" || field === "type" || field === "value") &&
         Number.isInteger(index) &&
         index >= 0
       ) {
@@ -6589,24 +6796,30 @@ export class MainUiFlow {
 
     if (target.matches("[data-script-editor-settlement-field]")) {
       const field = target.dataset.scriptEditorSettlementField;
-      if (field === "id" || field === "title" || field === "description") {
+      if (field === "title" || field === "nextEventId") {
         this.applyScriptEditorSettlementField(field, target.value);
       }
       return;
     }
 
-    if (target.matches("[data-script-editor-settlement-result-field]")) {
-      const field = target.dataset.scriptEditorSettlementResultField;
+    if (target.matches("[data-script-editor-settlement-content-field]")) {
+      const field = target.dataset.scriptEditorSettlementContentField;
       const index = Number.parseInt(
-        target.dataset.scriptEditorSettlementResultIndex ?? "-1",
+        target.dataset.scriptEditorSettlementContentIndex ?? "-1",
         10
       );
       if (
-        (field === "id" || field === "label" || field === "nextEventId") &&
+        (
+          field === "targetFamily" ||
+          field === "targetId" ||
+          field === "attributeKey" ||
+          field === "operation" ||
+          field === "value"
+        ) &&
         Number.isInteger(index) &&
         index >= 0
       ) {
-        this.applyScriptEditorSettlementResultField(index, field, target.value);
+        this.applyScriptEditorSettlementContentField(index, field, target.value);
       }
       return;
     }
@@ -8057,18 +8270,18 @@ export class MainUiFlow {
       return;
     }
 
-    if (action === "add-settlement-result") {
-      this.addScriptEditorSettlementResult();
+    if (action === "add-settlement-content") {
+      this.addScriptEditorSettlementContent();
       return;
     }
 
-    if (action === "remove-settlement-result") {
-      const settlementResultIndex = Number.parseInt(
-        actionElement?.dataset.scriptEditorSettlementResultIndex ?? "-1",
+    if (action === "remove-settlement-content") {
+      const settlementContentIndex = Number.parseInt(
+        actionElement?.dataset.scriptEditorSettlementContentIndex ?? "-1",
         10
       );
-      if (Number.isInteger(settlementResultIndex) && settlementResultIndex >= 0) {
-        this.removeScriptEditorSettlementResult(settlementResultIndex);
+      if (Number.isInteger(settlementContentIndex) && settlementContentIndex >= 0) {
+        this.removeScriptEditorSettlementContent(settlementContentIndex);
       }
       return;
     }
@@ -9043,37 +9256,87 @@ export class MainUiFlow {
     );
   }
 
-  addScriptEditorSettlementResult() {
+  addScriptEditorSettlementContent() {
     const settlement = this.getSelectedScriptEditorSettlement();
     if (settlement == null) {
       return;
     }
 
     this.replaceSelectedScriptEditorSettlement(
-      appendScriptEditorSettlementResult(settlement)
+      appendScriptEditorSettlementContent(settlement)
     );
   }
 
-  removeScriptEditorSettlementResult(index) {
+  removeScriptEditorSettlementContent(index) {
     const settlement = this.getSelectedScriptEditorSettlement();
     if (settlement == null) {
       return;
     }
 
     this.replaceSelectedScriptEditorSettlement(
-      removeScriptEditorSettlementResult(settlement, index)
+      removeScriptEditorSettlementContent(settlement, index)
     );
   }
 
-  applyScriptEditorSettlementResultField(index, field, value) {
+  applyScriptEditorSettlementContentField(index, field, value) {
     const settlement = this.getSelectedScriptEditorSettlement();
     if (settlement == null) {
       return;
     }
 
-    this.replaceSelectedScriptEditorSettlement(
-      updateScriptEditorSettlementResultField(settlement, index, field, value)
+    let nextSettlement = updateScriptEditorSettlementContentField(
+      settlement,
+      index,
+      field,
+      value
     );
+    if (field === "targetFamily") {
+      nextSettlement = updateScriptEditorSettlementContentField(
+        nextSettlement,
+        index,
+        "targetId",
+        ""
+      );
+      nextSettlement = updateScriptEditorSettlementContentField(
+        nextSettlement,
+        index,
+        "attributeKey",
+        ""
+      );
+      nextSettlement = updateScriptEditorSettlementContentField(
+        nextSettlement,
+        index,
+        "attributeType",
+        "number"
+      );
+    } else if (field === "targetId") {
+      nextSettlement = updateScriptEditorSettlementContentField(
+        nextSettlement,
+        index,
+        "attributeKey",
+        ""
+      );
+      nextSettlement = updateScriptEditorSettlementContentField(
+        nextSettlement,
+        index,
+        "attributeType",
+        "number"
+      );
+    } else if (field === "attributeKey") {
+      const nextContent = nextSettlement.contents?.[index];
+      const attributeType = this.resolveScriptEditorSettlementAttributeType(
+        nextContent,
+        value
+      );
+      nextSettlement = updateScriptEditorSettlementContentField(
+        nextSettlement,
+        index,
+        "attributeType",
+        attributeType
+      );
+    }
+
+    this.replaceSelectedScriptEditorSettlement(nextSettlement);
   }
 
   addScriptEditorDialogueParticipant() {
