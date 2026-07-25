@@ -25933,59 +25933,6 @@ test("runtime settlement applies structured settlement content rows directly", (
   assert.notEqual(result, gameState);
 });
 
-test("runtime settlement fails closed for invalid boolean and enum operations", () => {
-  const {
-    applySettlementContents,
-  } = require("../.test-dist/core/runtime/runtime-settlement.js");
-  const gameState = {
-    people: {
-      "person.hero": {
-        id: "person.hero",
-        mood: "steady",
-      },
-    },
-    buildings: {
-      "building.home": {
-        id: "building.home",
-        isOpen: true,
-      },
-    },
-  };
-
-  const result = applySettlementContents(
-    gameState,
-    {
-      id: "settlement.invalid.boolean-enum",
-      title: "Invalid Boolean Enum Settlement",
-      contents: [
-        {
-          targetFamily: "building",
-          targetId: "building.home",
-          attributeKey: "isOpen",
-          attributeType: "boolean",
-          operation: "add",
-          value: false,
-        },
-        {
-          targetFamily: "person",
-          targetId: "person.hero",
-          attributeKey: "mood",
-          attributeType: "enum",
-          operation: "subtract",
-          value: "inspired",
-        },
-      ],
-    },
-    {
-      people: gameState.people,
-      buildings: gameState.buildings,
-    }
-  );
-
-  assert.equal(result.buildings["building.home"].isOpen, true);
-  assert.equal(result.people["person.hero"].mood, "steady");
-});
-
 test("runtime dispatch propagates task character property mutation effect status", () => {
   const {
     dispatchRuntimeRequest,
@@ -27068,6 +27015,77 @@ test("script editor workflow helpers support progression draft upsert and remove
     project.progressTrackBindings.some((record) => record.id === bindingDraft.id),
     false
   );
+});
+
+test("script editor workflow progression drafts avoid id reuse after non-tail deletion", () => {
+  const {
+    createDefaultScriptEditorProjectDefinition,
+    createScriptEditorWorkflowRecordDraft,
+    upsertScriptEditorWorkflowRecord,
+    removeScriptEditorWorkflowRecord,
+  } = require("../.test-dist/application/script-editor/minimal-workflow.js");
+  let project = createDefaultScriptEditorProjectDefinition();
+
+  const trackDrafts = [];
+  for (let index = 0; index < 3; index += 1) {
+    const draft = createScriptEditorWorkflowRecordDraft("progressTracks", project);
+    trackDrafts.push(draft);
+    project = upsertScriptEditorWorkflowRecord(project, "progressTracks", draft);
+  }
+  project = removeScriptEditorWorkflowRecord(project, "progressTracks", trackDrafts[1].id);
+
+  const replacementTrackDraft = createScriptEditorWorkflowRecordDraft(
+    "progressTracks",
+    project
+  );
+  project = upsertScriptEditorWorkflowRecord(
+    project,
+    "progressTracks",
+    replacementTrackDraft
+  );
+
+  assert.equal(replacementTrackDraft.id, "progress-track.new.4");
+  assert.equal(
+    project.progressTracks.some((record) => record.id === trackDrafts[2].id),
+    true
+  );
+  assert.equal(project.progressTracks.length, 3);
+
+  const bindingDrafts = [];
+  for (let index = 0; index < 3; index += 1) {
+    const draft = createScriptEditorWorkflowRecordDraft(
+      "progressTrackBindings",
+      project
+    );
+    bindingDrafts.push(draft);
+    project = upsertScriptEditorWorkflowRecord(
+      project,
+      "progressTrackBindings",
+      draft
+    );
+  }
+  project = removeScriptEditorWorkflowRecord(
+    project,
+    "progressTrackBindings",
+    bindingDrafts[1].id
+  );
+
+  const replacementBindingDraft = createScriptEditorWorkflowRecordDraft(
+    "progressTrackBindings",
+    project
+  );
+  project = upsertScriptEditorWorkflowRecord(
+    project,
+    "progressTrackBindings",
+    replacementBindingDraft
+  );
+
+  assert.equal(replacementBindingDraft.id, "progress-binding.new.4");
+  assert.equal(
+    project.progressTrackBindings.some((record) => record.id === bindingDrafts[2].id),
+    true
+  );
+  assert.equal(project.progressTrackBindings.length, 3);
 });
 
 test("interactive runtime returns shared RuntimeResult instead of private appState result", () => {

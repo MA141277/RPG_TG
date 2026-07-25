@@ -402,13 +402,19 @@ export function createScriptEditorWorkflowRecordDraft(
       return createDefaultScriptEditorProgressTrackRecord(
         project == null
           ? legacyIndex
-          : `progress-track.new.${(project.progressTracks?.length ?? 0) + 1}`
+          : allocateNextProgressDraftId(
+              project.progressTracks,
+              "progress-track.new."
+            )
       ) as ScriptEditorProgressTrackRecord;
     case "progressTrackBindings":
       return createDefaultScriptEditorProgressTrackBindingRecord(
         project == null
           ? legacyIndex
-          : `progress-binding.new.${(project.progressTrackBindings?.length ?? 0) + 1}`
+          : allocateNextProgressDraftId(
+              project.progressTrackBindings,
+              "progress-binding.new."
+            )
       ) as ScriptEditorProgressTrackBindingRecord;
   }
 }
@@ -549,6 +555,27 @@ function replaceOrAppendRecord<
   return records.map((record, index) =>
     index === existingIndex ? nextRecord : record
   );
+}
+
+function allocateNextProgressDraftId(
+  records:
+    | readonly ScriptEditorProgressTrackRecord[]
+    | readonly ScriptEditorProgressTrackBindingRecord[]
+    | undefined,
+  prefix: string
+): string {
+  let maxSuffix = 0;
+  for (const record of records ?? []) {
+    if (!record.id.startsWith(prefix)) {
+      continue;
+    }
+    const suffix = record.id.slice(prefix.length);
+    if (!/^\d+$/.test(suffix)) {
+      continue;
+    }
+    maxSuffix = Math.max(maxSuffix, Number.parseInt(suffix, 10));
+  }
+  return `${prefix}${maxSuffix + 1}`;
 }
 
 function removeEventReferencesFromScriptEditorProject(
