@@ -3148,6 +3148,66 @@ test("campaign terrain canvas receives structure profile urls as renderer attrib
   assert.match(mapViewSource, /campaignStructureProfile\?\.cityDepthTextureUrl/);
 });
 
+test("campaign fort city model assets are engine-owned and not imported by map UI", () => {
+  const fs = require("node:fs");
+  const path = require("node:path");
+  const registryPath = path.join(
+    process.cwd(),
+    "src",
+    "content",
+    "campaign-fort-city-visual-assets.ts"
+  );
+  const runtimeRegistryPath = path.join(
+    process.cwd(),
+    "src",
+    "ui",
+    "views",
+    "map",
+    "campaign-fort-city-asset-registry.ts"
+  );
+  const mapViewSource = fs.readFileSync(
+    path.join(process.cwd(), "src", "ui", "views", "map", "map-view.ts"),
+    "utf8"
+  );
+  const profileSource = fs.readFileSync(
+    path.join(process.cwd(), "src", "content", "campaign-structure-visual-profiles.ts"),
+    "utf8"
+  );
+
+  assert.equal(fs.existsSync(registryPath), true);
+  assert.equal(fs.existsSync(runtimeRegistryPath), true);
+  assert.equal(
+    fs.existsSync(
+      path.join(
+        process.cwd(),
+        "src",
+        "assets",
+        "campaign-structures",
+        "fort-city",
+        "fort-city-rules.json"
+      )
+    ),
+    true
+  );
+  assert.equal(
+    fs.existsSync(
+      path.join(
+        process.cwd(),
+        "src",
+        "assets",
+        "campaign-structures",
+        "fort-wall",
+        "fort-hex-wall.json"
+      )
+    ),
+    true
+  );
+  assert.match(profileSource, /fortCityAssetId: "builtin\.yuanmo\.fort-city"/);
+  assert.match(profileSource, /fortWallMeshUrl:/);
+  assert.doesNotMatch(mapViewSource, /scenario-packs\/zhuyuanzhang\/assets\/map-nodes/);
+  assert.doesNotMatch(mapViewSource, /fort-city\/building-/);
+});
+
 test("content pack loader resolves zhuyuanzhang map asset urls", async () => {
   const {
     loadContentPackFromManifestText,
