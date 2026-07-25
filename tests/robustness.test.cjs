@@ -3070,6 +3070,17 @@ test("campaign structure visual profiles are engine-owned and map-selected", asy
     path.join(process.cwd(), "src", "content", "yuanmo-campaign-map.ts"),
     "utf8"
   );
+  const yuanmoPackMapSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src",
+      "content",
+      "scenario-packs",
+      "zhuyuanzhang",
+      "maps.json"
+    ),
+    "utf8"
+  );
   const profileSourcePath = path.join(
     process.cwd(),
     "src",
@@ -3079,6 +3090,7 @@ test("campaign structure visual profiles are engine-owned and map-selected", asy
 
   assert.match(mapDomainSource, /campaignStructureProfileId\?: string/);
   assert.match(yuanmoMapSource, /campaignStructureProfileId: "yuanmo\.campaign-structures"/);
+  assert.match(yuanmoPackMapSource, /"campaignStructureProfileId": "yuanmo\.campaign-structures"/);
   assert.equal(fs.existsSync(profileSourcePath), true);
 
   const profileSource = fs.readFileSync(profileSourcePath, "utf8");
@@ -3116,6 +3128,17 @@ test("campaign map structures are node-driven instead of hardcoded Yuanmo buildi
     path.join(process.cwd(), "src", "content", "yuanmo-campaign-map.ts"),
     "utf8"
   );
+  const yuanmoPackMapSource = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src",
+      "content",
+      "scenario-packs",
+      "zhuyuanzhang",
+      "maps.json"
+    ),
+    "utf8"
+  );
   const mapViewSource = fs.readFileSync(
     path.join(process.cwd(), "src", "ui", "views", "map", "map-view.ts"),
     "utf8"
@@ -3126,6 +3149,10 @@ test("campaign map structures are node-driven instead of hardcoded Yuanmo buildi
   assert.match(
     yuanmoMapSource,
     /"id": "settlement\.fenyang_province"[\s\S]*visualKind: "structure"[\s\S]*structureVisual: \{ kind: "settlement-building" \}/
+  );
+  assert.match(
+    yuanmoPackMapSource,
+    /"id": "settlement\.fenyang_province"[\s\S]*"visualKind": "structure"[\s\S]*"structureVisual": \{\s*"kind": "settlement-building"\s*\}/
   );
   assert.doesNotMatch(mapViewSource, /YUANMO_HEX_BUILDING/);
   assert.doesNotMatch(mapViewSource, /renderCampaignHexBuilding/);

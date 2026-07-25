@@ -4157,13 +4157,640 @@ function createCampaignTerrainChunkHeightSamples(
     }
   }
 
-  return smoothCampaignTerrainChunkHeightSamples(
+  const flattenedHeights = createNonMountainFlattenedHeightSamples(
     heights,
     columns,
     rows,
     bounds,
     materialSemanticModel
   );
+  const mountainFloorHeights = createMountainFloorHeightSamples(
+    flattenedHeights,
+    columns,
+    rows,
+    bounds,
+    materialSemanticModel
+  );
+  const mountainHeights = createCampaignMountainHeightSamples(
+    mountainFloorHeights,
+    materialSemanticModel,
+    bounds,
+    columns,
+    rows
+  );
+
+  return smoothCampaignTerrainChunkHeightSamples(
+    mountainHeights,
+    columns,
+    rows,
+    bounds,
+    materialSemanticModel
+  );
+}
+
+function createCampaignMountainHeightSamples(
+  terrainBaseHeights: Float32Array,
+  materialSemanticModel: CampaignMaterialSemanticModel,
+  bounds: CampaignTerrainChunkBounds,
+  columns: number,
+  rows: number
+): Float32Array {
+  const mountainHeights = new Float32Array(terrainBaseHeights);
+
+  for (let y = 0; y < rows; y += 1) {
+    const v = getCampaignTerrainChunkSampleV(bounds, rows, y);
+    for (let x = 0; x < columns; x += 1) {
+      const u = getCampaignTerrainChunkSampleU(bounds, columns, x);
+      const point = terrainUvToHexPoint(u, v);
+      const cell = pixelToRoundedHex(point.x, point.y);
+      const index = y * columns + x;
+      if (!isLandTerrainHexCell(materialSemanticModel, cell)) {
+        mountainHeights[index] = 0;
+        continue;
+      }
+      if (!isMountainHexCell(materialSemanticModel, cell)) {
+        continue;
+      }
+
+      const referenceHeight = getCampaignTerrainReferenceHeightForCell(
+        materialSemanticModel,
+        cell
+      );
+      const boundaryFactor = getMountainBoundaryHeightFactor(
+        materialSemanticModel,
+        point,
+        cell
+      );
+      mountainHeights[index] = createMountainHeightAtPoint(
+        point,
+        terrainBaseHeights[index] ?? referenceHeight,
+        referenceHeight,
+        boundaryFactor
+      );
+    }
+  }
+
+  return smoothMountainContinuityHeightPass(
+    mountainHeights,
+    terrainBaseHeights,
+    columns,
+    rows,
+    bounds,
+    materialSemanticModel
+  );
+}
+
+function createCampaignHexReferenceHeightSamples(
+  materialSemanticModel: CampaignMaterialSemanticModel,
+  columns: number,
+  rows: number
+): Float32Array {
+  let heightSamples: Float32Array<ArrayBufferLike> = new Float32Array(
+    columns * rows
+  );
+
+  for (let y = 0; y < rows; y += 1) {
+    const v = y / Math.max(rows - 1, 1);
+    for (let x = 0; x < columns; x += 1) {
+      const u = x / Math.max(columns - 1, 1);
+      const point = terrainUvToHexPoint(u, v);
+      const cell = pixelToRoundedHex(point.x, point.y);
+      const cellKey = getHexCellKey(cell.x, cell.y);
+
+      heightSamples[y * columns + x] =
+        materialSemanticModel.landByCellKey.get(cellKey) === true
+          ? materialSemanticModel.referenceHeightByCellKey.get(cellKey) ?? 0
+          : 0;
+    }
+  }
+
+  for (let pass = 0; pass < SMOOTH_TERRAIN_PASSES; pass += 1) {
+    heightSamples = smoothCampaignHexReferenceHeightPass(
+      heightSamples,
+      columns,
+      rows,
+      materialSemanticModel
+    );
+  }
+
+  return heightSamples;
+}
+
+function smoothCampaignHexReferenceHeightPass(
+  heights: Float32Array,
+  columns: number,
+  rows: number,
+  materialSemanticModel: CampaignMaterialSemanticModel
+): Float32Array {
+  const smoothedHeights = new Float32Array(heights);
+  const maxX = Math.max(columns - 1, 0);
+  const maxY = Math.max(rows - 1, 0);
+
+  for (let y = 0; y < rows; y += 1) {
+    const v = y / Math.max(rows - 1, 1);
+    for (let x = 0; x < columns; x += 1) {
+      const u = x / Math.max(columns - 1, 1);
+      if (!isLandTerrainSample(materialSemanticModel, u, v)) {
+        smoothedHeights[y * columns + x] = 0;
+        continue;
+      }
+
+      const outputIndex = y * columns + x;
+      const centerHeight = heights[outputIndex] ?? 0;
+      let heightSum = 0;
+      let heightWeight = 0;
+      for (const sample of SMOOTH_TERRAIN_KERNEL) {
+        const sampleX = clamp(x + sample.x, 0, maxX);
+        const sampleY = clamp(y + sample.y, 0, maxY);
+        const sampleU = sampleX / Math.max(columns - 1, 1);
+        const sampleV = sampleY / Math.max(rows - 1, 1);
+        if (!isLandTerrainSample(materialSemanticModel, sampleU, sampleV)) {
+          continue;
+        }
+
+        heightSum += (heights[sampleY * columns + sampleX] ?? centerHeight) *
+          sample.weight;
+        heightWeight += sample.weight;
+      }
+
+      if (heightWeight <= 0) {
+        continue;
+      }
+
+      smoothedHeights[outputIndex] =
+        centerHeight + (heightSum / heightWeight - centerHeight) * 0.42;
+    }
+  }
+
+  return smoothedHeights;
+}
+
+function smoothMountainContinuityHeightPass(
+  heights: Float32Array,
+  terrainBaseHeights: Float32Array,
+  columns: number,
+  rows: number,
+  bounds: CampaignTerrainChunkBounds,
+  materialSemanticModel: CampaignMaterialSemanticModel
+): Float32Array {
+  const smoothedHeights = new Float32Array(heights);
+  const maxX = Math.max(columns - 1, 0);
+  const maxY = Math.max(rows - 1, 0);
+
+  for (let y = 0; y < rows; y += 1) {
+    const v = getCampaignTerrainChunkSampleV(bounds, rows, y);
+    for (let x = 0; x < columns; x += 1) {
+      const u = getCampaignTerrainChunkSampleU(bounds, columns, x);
+      const outputIndex = y * columns + x;
+      if (!isLandTerrainSample(materialSemanticModel, u, v)) {
+        smoothedHeights[outputIndex] = 0;
+        continue;
+      }
+
+      let heightSum = 0;
+      let landWeight = 0;
+      for (const sample of SMOOTH_TERRAIN_KERNEL) {
+        const sampleX = clamp(x + sample.x, 0, maxX);
+        const sampleY = clamp(y + sample.y, 0, maxY);
+        const sampleU = getCampaignTerrainChunkSampleU(bounds, columns, sampleX);
+        const sampleV = getCampaignTerrainChunkSampleV(bounds, rows, sampleY);
+        if (!isLandTerrainSample(materialSemanticModel, sampleU, sampleV)) {
+          continue;
+        }
+
+        heightSum += (heights[sampleY * columns + sampleX] ?? heights[outputIndex] ?? 0) *
+          sample.weight;
+        landWeight += sample.weight;
+      }
+
+      if (landWeight <= 0) {
+        continue;
+      }
+
+      const centerHeight = heights[outputIndex] ?? 0;
+      const terrainBaseHeight = terrainBaseHeights[outputIndex] ?? centerHeight;
+      const smoothHeight = heightSum / landWeight;
+      const continuityHeight =
+        centerHeight + (smoothHeight - centerHeight) * MOUNTAIN_HEIGHT_CONTINUITY_BLEND;
+      smoothedHeights[outputIndex] = Math.max(terrainBaseHeight, continuityHeight);
+    }
+  }
+
+  return smoothedHeights;
+}
+
+type NonMountainHeightCellStats = {
+  sum: number;
+  count: number;
+  average: number;
+};
+
+function createNonMountainFlattenedHeightSamples(
+  heights: Float32Array,
+  columns: number,
+  rows: number,
+  bounds: CampaignTerrainChunkBounds,
+  materialSemanticModel: CampaignMaterialSemanticModel
+): Float32Array {
+  const cellStats = createNonMountainHeightCellStats(
+    heights,
+    columns,
+    rows,
+    bounds,
+    materialSemanticModel
+  );
+  const flattenedHeights = new Float32Array(heights);
+
+  for (let y = 0; y < rows; y += 1) {
+    const v = getCampaignTerrainChunkSampleV(bounds, rows, y);
+    for (let x = 0; x < columns; x += 1) {
+      const u = getCampaignTerrainChunkSampleU(bounds, columns, x);
+      const point = terrainUvToHexPoint(u, v);
+      const cell = pixelToRoundedHex(point.x, point.y);
+      if (!isNonMountainTerrainHexCell(materialSemanticModel, cell)) {
+        continue;
+      }
+
+      const cellStatsForSample = cellStats.get(getHexCellKey(cell.x, cell.y));
+      if (cellStatsForSample == null || cellStatsForSample.count <= 0) {
+        continue;
+      }
+
+      const index = y * columns + x;
+      const frame = getHexLocalMountainFrame(point, cell);
+      const interiorAmount =
+        1 - smoothstepRange(
+          NON_MOUNTAIN_HEIGHT_EDGE_FADE_START,
+          NON_MOUNTAIN_HEIGHT_EDGE_FADE_END,
+          frame.hexRadius
+        );
+      const flattenStrength = NON_MOUNTAIN_HEIGHT_FLATTEN_STRENGTH * interiorAmount;
+      const currentHeight = heights[index] ?? 0;
+      flattenedHeights[index] =
+        currentHeight +
+        (cellStatsForSample.average - currentHeight) * flattenStrength;
+    }
+  }
+
+  return smoothNonMountainFlattenedHeightSamples(
+    flattenedHeights,
+    columns,
+    rows,
+    bounds,
+    materialSemanticModel
+  );
+}
+
+function createNonMountainHeightCellStats(
+  heights: Float32Array,
+  columns: number,
+  rows: number,
+  bounds: CampaignTerrainChunkBounds,
+  materialSemanticModel: CampaignMaterialSemanticModel
+): Map<string, NonMountainHeightCellStats> {
+  const cellStats = new Map<string, NonMountainHeightCellStats>();
+
+  for (let y = 0; y < rows; y += 1) {
+    const v = getCampaignTerrainChunkSampleV(bounds, rows, y);
+    for (let x = 0; x < columns; x += 1) {
+      const u = getCampaignTerrainChunkSampleU(bounds, columns, x);
+      const point = terrainUvToHexPoint(u, v);
+      const cell = pixelToRoundedHex(point.x, point.y);
+      if (!isNonMountainTerrainHexCell(materialSemanticModel, cell)) {
+        continue;
+      }
+
+      const key = getHexCellKey(cell.x, cell.y);
+      const stats = cellStats.get(key) ?? { sum: 0, count: 0, average: 0 };
+      stats.sum += heights[y * columns + x] ?? 0;
+      stats.count += 1;
+      cellStats.set(key, stats);
+    }
+  }
+
+  for (const stats of cellStats.values()) {
+    stats.average = stats.count > 0 ? stats.sum / stats.count : 0;
+  }
+
+  return cellStats;
+}
+
+function smoothNonMountainFlattenedHeightSamples(
+  heights: Float32Array,
+  columns: number,
+  rows: number,
+  bounds: CampaignTerrainChunkBounds,
+  materialSemanticModel: CampaignMaterialSemanticModel
+): Float32Array {
+  const smoothedHeights = new Float32Array(heights);
+  const maxX = Math.max(columns - 1, 0);
+  const maxY = Math.max(rows - 1, 0);
+
+  for (let y = 0; y < rows; y += 1) {
+    const v = getCampaignTerrainChunkSampleV(bounds, rows, y);
+    for (let x = 0; x < columns; x += 1) {
+      const u = getCampaignTerrainChunkSampleU(bounds, columns, x);
+      const point = terrainUvToHexPoint(u, v);
+      const cell = pixelToRoundedHex(point.x, point.y);
+      if (!isNonMountainTerrainHexCell(materialSemanticModel, cell)) {
+        continue;
+      }
+
+      const outputIndex = y * columns + x;
+      const centerHeight = heights[outputIndex] ?? 0;
+      let heightSum = 0;
+      let heightWeight = 0;
+      for (const sample of SMOOTH_TERRAIN_KERNEL) {
+        const sampleX = clamp(x + sample.x, 0, maxX);
+        const sampleY = clamp(y + sample.y, 0, maxY);
+        const sampleU = getCampaignTerrainChunkSampleU(bounds, columns, sampleX);
+        const sampleV = getCampaignTerrainChunkSampleV(bounds, rows, sampleY);
+        const samplePoint = terrainUvToHexPoint(sampleU, sampleV);
+        const sampleCell = pixelToRoundedHex(samplePoint.x, samplePoint.y);
+        if (sampleCell.x !== cell.x || sampleCell.y !== cell.y) {
+          continue;
+        }
+
+        heightSum += (heights[sampleY * columns + sampleX] ?? centerHeight) *
+          sample.weight;
+        heightWeight += sample.weight;
+      }
+
+      if (heightWeight <= 0) {
+        continue;
+      }
+
+      smoothedHeights[outputIndex] =
+        centerHeight +
+        (heightSum / heightWeight - centerHeight) *
+          NON_MOUNTAIN_HEIGHT_SMOOTH_STRENGTH;
+    }
+  }
+
+  return smoothedHeights;
+}
+
+function createMountainFloorHeightSamples(
+  heights: Float32Array,
+  columns: number,
+  rows: number,
+  bounds: CampaignTerrainChunkBounds,
+  materialSemanticModel: CampaignMaterialSemanticModel
+): Float32Array {
+  let floorHeights: Float32Array<ArrayBufferLike> = new Float32Array(heights);
+  let seededSamples = createMountainFloorSeedMask(
+    heights,
+    columns,
+    rows,
+    bounds,
+    materialSemanticModel
+  );
+  const fallbackFloorHeight = createMountainFloorFallbackHeight(
+    heights,
+    seededSamples
+  );
+
+  for (let pass = 0; pass < MOUNTAIN_FLOOR_DIFFUSION_PASSES; pass += 1) {
+    const nextHeights = new Float32Array(floorHeights);
+    const nextSeededSamples = new Uint8Array(seededSamples);
+    let filledAnySample = false;
+
+    for (let y = 0; y < rows; y += 1) {
+      const v = getCampaignTerrainChunkSampleV(bounds, rows, y);
+      for (let x = 0; x < columns; x += 1) {
+        const u = getCampaignTerrainChunkSampleU(bounds, columns, x);
+        const point = terrainUvToHexPoint(u, v);
+        const cell = pixelToRoundedHex(point.x, point.y);
+        if (!isMountainHexCell(materialSemanticModel, cell)) {
+          continue;
+        }
+
+        const index = y * columns + x;
+        if (seededSamples[index] === 1) {
+          continue;
+        }
+
+        const neighborHeight = sampleSeededNeighborHeight(
+          floorHeights,
+          seededSamples,
+          columns,
+          rows,
+          x,
+          y
+        );
+        if (neighborHeight == null) {
+          continue;
+        }
+
+        nextHeights[index] = neighborHeight;
+        nextSeededSamples[index] = 1;
+        filledAnySample = true;
+      }
+    }
+
+    floorHeights = nextHeights;
+    seededSamples = nextSeededSamples;
+    if (!filledAnySample) {
+      break;
+    }
+  }
+
+  fillUnseededMountainFloorSamples(
+    floorHeights,
+    seededSamples,
+    fallbackFloorHeight,
+    columns,
+    rows,
+    bounds,
+    materialSemanticModel
+  );
+
+  for (let pass = 0; pass < MOUNTAIN_FLOOR_SMOOTH_PASSES; pass += 1) {
+    floorHeights = smoothMountainFloorHeightSamples(
+      floorHeights,
+      columns,
+      rows,
+      bounds,
+      materialSemanticModel
+    );
+  }
+
+  return floorHeights;
+}
+
+function createMountainFloorFallbackHeight(
+  heights: Float32Array,
+  seededSamples: Uint8Array
+): number {
+  let seededHeightSum = 0;
+  let seededCount = 0;
+  let fallbackHeightSum = 0;
+  let fallbackCount = 0;
+
+  for (let index = 0; index < heights.length; index += 1) {
+    const height = heights[index] ?? 0;
+    if (!Number.isFinite(height)) {
+      continue;
+    }
+
+    fallbackHeightSum += height;
+    fallbackCount += 1;
+    if (seededSamples[index] === 1) {
+      seededHeightSum += height;
+      seededCount += 1;
+    }
+  }
+
+  if (seededCount > 0) {
+    return seededHeightSum / seededCount;
+  }
+
+  return fallbackCount > 0 ? fallbackHeightSum / fallbackCount : 0;
+}
+
+function fillUnseededMountainFloorSamples(
+  heights: Float32Array,
+  seededSamples: Uint8Array,
+  fallbackFloorHeight: number,
+  columns: number,
+  rows: number,
+  bounds: CampaignTerrainChunkBounds,
+  materialSemanticModel: CampaignMaterialSemanticModel
+): void {
+  for (let y = 0; y < rows; y += 1) {
+    const v = getCampaignTerrainChunkSampleV(bounds, rows, y);
+    for (let x = 0; x < columns; x += 1) {
+      const u = getCampaignTerrainChunkSampleU(bounds, columns, x);
+      const point = terrainUvToHexPoint(u, v);
+      const cell = pixelToRoundedHex(point.x, point.y);
+      if (!isMountainHexCell(materialSemanticModel, cell)) {
+        continue;
+      }
+
+      const index = y * columns + x;
+      if (seededSamples[index] === 1) {
+        continue;
+      }
+
+      heights[index] = fallbackFloorHeight;
+      seededSamples[index] = 1;
+    }
+  }
+}
+
+function createMountainFloorSeedMask(
+  heights: Float32Array,
+  columns: number,
+  rows: number,
+  bounds: CampaignTerrainChunkBounds,
+  materialSemanticModel: CampaignMaterialSemanticModel
+): Uint8Array {
+  const seededSamples = new Uint8Array(columns * rows);
+
+  for (let y = 0; y < rows; y += 1) {
+    const v = getCampaignTerrainChunkSampleV(bounds, rows, y);
+    for (let x = 0; x < columns; x += 1) {
+      const u = getCampaignTerrainChunkSampleU(bounds, columns, x);
+      const point = terrainUvToHexPoint(u, v);
+      const cell = pixelToRoundedHex(point.x, point.y);
+      const index = y * columns + x;
+
+      if (!isLandTerrainSample(materialSemanticModel, u, v)) {
+        seededSamples[index] = 0;
+        continue;
+      }
+
+      if (isMountainHexCell(materialSemanticModel, cell)) {
+        seededSamples[index] = 0;
+        continue;
+      }
+
+      seededSamples[index] = Number.isFinite(heights[index]) ? 1 : 0;
+    }
+  }
+
+  return seededSamples;
+}
+
+function sampleSeededNeighborHeight(
+  heights: Float32Array,
+  seededSamples: Uint8Array,
+  columns: number,
+  rows: number,
+  x: number,
+  y: number
+): number | null {
+  const maxX = Math.max(columns - 1, 0);
+  const maxY = Math.max(rows - 1, 0);
+  let heightSum = 0;
+  let heightWeight = 0;
+
+  for (const sample of SMOOTH_TERRAIN_KERNEL) {
+    const sampleX = clamp(x + sample.x, 0, maxX);
+    const sampleY = clamp(y + sample.y, 0, maxY);
+    const sampleIndex = sampleY * columns + sampleX;
+    if (seededSamples[sampleIndex] !== 1) {
+      continue;
+    }
+
+    heightSum += (heights[sampleIndex] ?? 0) * sample.weight;
+    heightWeight += sample.weight;
+  }
+
+  return heightWeight > 0 ? heightSum / heightWeight : null;
+}
+
+function smoothMountainFloorHeightSamples(
+  heights: Float32Array,
+  columns: number,
+  rows: number,
+  bounds: CampaignTerrainChunkBounds,
+  materialSemanticModel: CampaignMaterialSemanticModel
+): Float32Array {
+  const smoothedHeights = new Float32Array(heights);
+  const maxX = Math.max(columns - 1, 0);
+  const maxY = Math.max(rows - 1, 0);
+
+  for (let y = 0; y < rows; y += 1) {
+    const v = getCampaignTerrainChunkSampleV(bounds, rows, y);
+    for (let x = 0; x < columns; x += 1) {
+      const u = getCampaignTerrainChunkSampleU(bounds, columns, x);
+      const point = terrainUvToHexPoint(u, v);
+      const cell = pixelToRoundedHex(point.x, point.y);
+      if (!isMountainHexCell(materialSemanticModel, cell)) {
+        continue;
+      }
+
+      const outputIndex = y * columns + x;
+      const centerHeight = heights[outputIndex] ?? 0;
+      let heightSum = 0;
+      let heightWeight = 0;
+      for (const sample of SMOOTH_TERRAIN_KERNEL) {
+        const sampleX = clamp(x + sample.x, 0, maxX);
+        const sampleY = clamp(y + sample.y, 0, maxY);
+        const sampleU = getCampaignTerrainChunkSampleU(bounds, columns, sampleX);
+        const sampleV = getCampaignTerrainChunkSampleV(bounds, rows, sampleY);
+        const samplePoint = terrainUvToHexPoint(sampleU, sampleV);
+        const sampleCell = pixelToRoundedHex(samplePoint.x, samplePoint.y);
+        if (!isMountainHexCell(materialSemanticModel, sampleCell)) {
+          continue;
+        }
+
+        heightSum += (heights[sampleY * columns + sampleX] ?? centerHeight) *
+          sample.weight;
+        heightWeight += sample.weight;
+      }
+
+      if (heightWeight <= 0) {
+        continue;
+      }
+
+      smoothedHeights[outputIndex] =
+        centerHeight + (heightSum / heightWeight - centerHeight) * 0.22;
+    }
+  }
+
+  return smoothedHeights;
 }
 
 function createCampaignTerrainChunkHeightAtPoint(
@@ -4378,6 +5005,95 @@ function createSmoothTerrainChunkMesh(
     vertices: new Float32Array(vertices),
     indices: new Uint32Array(indices),
   };
+}
+
+function createSmoothTerrainMesh(
+  heights: Float32Array,
+  columns: number,
+  rows: number,
+  meshStep: number
+): MeshData {
+  const vertices: number[] = [];
+  const indices: number[] = [];
+  const columnSamples = createTerrainMeshSampleIndices(columns, meshStep);
+  const rowSamples = createTerrainMeshSampleIndices(rows, meshStep);
+  const vertexColumns = columnSamples.length;
+
+  for (const sampleY of rowSamples) {
+    const v = sampleY / Math.max(rows - 1, 1);
+    for (const sampleX of columnSamples) {
+      const u = sampleX / Math.max(columns - 1, 1);
+      addSmoothTerrainVertex(
+        vertices,
+        u,
+        v,
+        sampleHeightAt(heights, columns, rows, u, v),
+        createSmoothTerrainNormal(heights, columns, rows, u, v)
+      );
+    }
+  }
+
+  for (let row = 0; row < rowSamples.length - 1; row += 1) {
+    for (let column = 0; column < columnSamples.length - 1; column += 1) {
+      const topLeft = row * vertexColumns + column;
+      const topRight = topLeft + 1;
+      const bottomLeft = topLeft + vertexColumns;
+      const bottomRight = bottomLeft + 1;
+      indices.push(topLeft, bottomLeft, topRight, topRight, bottomLeft, bottomRight);
+    }
+  }
+
+  return {
+    vertices: new Float32Array(vertices),
+    indices: new Uint32Array(indices),
+  };
+}
+
+function createTerrainMeshSampleIndices(count: number, step: number): number[] {
+  const sampleIndices: number[] = [];
+  const safeStep = Math.max(Math.floor(step), 1);
+
+  for (let index = 0; index < count; index += safeStep) {
+    sampleIndices.push(index);
+  }
+
+  const lastIndex = Math.max(count - 1, 0);
+  if (sampleIndices[sampleIndices.length - 1] !== lastIndex) {
+    sampleIndices.push(lastIndex);
+  }
+
+  return sampleIndices;
+}
+
+function createSmoothTerrainNormal(
+  heights: Float32Array,
+  columns: number,
+  rows: number,
+  u: number,
+  v: number
+): [number, number, number] {
+  const deltaU = TERRAIN_NORMAL_SAMPLE_RADIUS_PIXELS / Math.max(columns - 1, 1);
+  const deltaV = TERRAIN_NORMAL_SAMPLE_RADIUS_PIXELS / Math.max(rows - 1, 1);
+  const leftHeight = sampleHeightAt(heights, columns, rows, u - deltaU, v);
+  const rightHeight = sampleHeightAt(heights, columns, rows, u + deltaU, v);
+  const topHeight = sampleHeightAt(heights, columns, rows, u, v - deltaV);
+  const bottomHeight = sampleHeightAt(heights, columns, rows, u, v + deltaV);
+  const tangentU: [number, number, number] = [
+    deltaU * 2,
+    0,
+    (rightHeight - leftHeight) * HEIGHT_SCALE * TERRAIN_NORMAL_RELIEF_SCALE,
+  ];
+  const tangentV: [number, number, number] = [
+    0,
+    -deltaV * 2,
+    (bottomHeight - topHeight) * HEIGHT_SCALE * TERRAIN_NORMAL_RELIEF_SCALE,
+  ];
+  const nx = tangentU[1] * tangentV[2] - tangentU[2] * tangentV[1];
+  const ny = tangentU[2] * tangentV[0] - tangentU[0] * tangentV[2];
+  const nz = tangentU[0] * tangentV[1] - tangentU[1] * tangentV[0];
+  const length = Math.hypot(nx, ny, nz) || 1;
+
+  return [nx / length, ny / length, nz / length];
 }
 
 function isCampaignTerrainChunkMeshQuadOwnedByChunk(
@@ -10033,7 +10749,7 @@ function nextPowerOfTwo(value: number): number {
 }
 
 function resizeCanvasToDisplaySize(canvas: HTMLCanvasElement): void {
-  const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+  const pixelRatio = Math.min(window.devicePixelRatio || 1, 1);
   const width = Math.max(Math.floor(canvas.clientWidth * pixelRatio), 1);
   const height = Math.max(Math.floor(canvas.clientHeight * pixelRatio), 1);
 

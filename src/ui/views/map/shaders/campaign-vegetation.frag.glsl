@@ -22,8 +22,13 @@ void main() {
   vec2 centerToFragment =
     (vec2(0.5, 0.5) - viewportUv) *
     vec2(safeViewportSize.x / safeViewportSize.y, 1.0);
+  vec2 vegetationShadowDirection = vec2(
+    -centerToFragment.x,
+    -max(abs(centerToFragment.y), uTerrainCameraLightHeight)
+  );
+  vec2 vegetationLightDirection = -vegetationShadowDirection;
   vec3 terrainLight = normalize(vec3(
-    centerToFragment * uTerrainCameraLightHorizontalPull,
+    vegetationLightDirection * uTerrainCameraLightHorizontalPull,
     uTerrainCameraLightHeight
   ));
   float directionalLight = clamp(dot(cameraNormal, terrainLight), 0.0, 1.0);
