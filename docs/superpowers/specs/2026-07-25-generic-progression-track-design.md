@@ -9,7 +9,7 @@ Add a reusable progression mechanism that supports:
 - one-time enter-tier results
 - sustained current-tier effects
 - optional demotion
-- Event-routed follow-up content
+- settlement-instance-driven target-tier convergence
 
 This mechanism must align with the repository's current routing rules:
 
@@ -17,6 +17,8 @@ This mechanism must align with the repository's current routing rules:
 - progression must not introduce a second router
 - creator-facing data must be authorable in Script Editor
 - runtime must consume authored data through unified state and resource structures
+- all final property and state changes must execute only through settlement instances
+- progress-value changes must also execute only through settlement instances
 
 ## Non-Goals
 
@@ -47,6 +49,14 @@ Experience and level become one authored example of this model:
 - tiers = levels
 - enter-tier result = level-up reward or event
 - sustained effect = current level modifier or unlocked status
+
+Recommended creator-facing Chinese terminology:
+
+- mechanism name = `阶段轨道`
+- metric name = `进度值`
+- tier name = `阶段`
+
+These terms should remain stable across authoring, documentation, and implementation.
 
 ## Authoring Resources
 
@@ -93,6 +103,10 @@ type ProgressTrackBinding = {
 };
 ```
 
+First-version bindings should not support partial per-owner overrides of track thresholds or tier templates.
+
+If one owner needs different thresholds or tier behavior, create a distinct track definition rather than mixing local override semantics into bindings.
+
 ### Tier Definition
 
 ```ts
@@ -101,9 +115,7 @@ type ProgressTierDefinition = {
   title: string;
   threshold: number;
   onEnterRepeatPolicy?: "once-ever" | "once-per-entry";
-  sustainedModifiers?: ProgressModifierDefinition[];
-  onEnterEffects?: Effect[];
-  onEnterEventId?: string | null;
+  targetTierSettlementId?: string | null;
 };
 ```
 
@@ -132,11 +144,17 @@ Recommended authoring surfaces:
 2. `阶段列表`
    - Tier name, threshold, repeat policy
 3. `进入阶段时`
-   - One-time effects and event trigger
+   - Enter-tier settlement policy
 4. `当前阶段持续生效`
-   - Sustained modifiers and capability gates
+   - Target-tier settlement meaning and capability gates
 5. `挂载对象`
    - Which owner families or concrete authored objects use the track
+
+First-version authoring should not support:
+
+- per-owner tier threshold overrides
+- cross-track linked conditions
+- creator-authored composite rule expressions
 
 ## Runtime Boundary
 
@@ -156,15 +174,20 @@ The progression runtime owns:
 - updating metric values
 - recalculating tier transitions
 - recording current tier state
-- producing enter-tier results
-- exposing sustained tier meaning for later materialization/presentation
+- producing settlement instances for tier convergence
+- exposing progression diagnostics for later debugging
 
 The progression runtime does **not** own:
 
+- direct settlement execution
 - direct event routing
 - direct playable routing
 - ad hoc UI updates
 - feature-specific object lookup rules in `main.ts`
+
+The progression runtime's only execution-facing output is settlement instances.
+
+The current Event-routing call chain must immediately hand those settlement instances to `SettlementRuntime` for formal execution.
 
 ## Runtime State
 
@@ -197,6 +220,13 @@ This keeps the model generic:
 - no character/building/city-specific storage fork is needed
 - state sync and save/load can stay on one runtime truth
 
+Recommended state boundary:
+
+- `metricValue` changes are formal gameplay mutations and therefore must execute through settlement instances
+- final business-facing property and state changes must execute through settlement instances
+- `currentTierId` and `enteredTierHistory` belong to progression-owned runtime state
+- if external runtime families need a formal mirrored current-tier field, that mirror must be written through settlement rather than by directly reading and mutating progression internals ad hoc
+
 ## Execution Flow
 
 The progression mechanism should run in this order:
@@ -205,103 +235,113 @@ The progression mechanism should run in this order:
 2. The progression runtime recalculates the highest tier whose threshold is satisfied.
 3. If the tier does not change:
    - update metric state
-   - keep sustained tier meaning available
+   - emit no execution-side mutation directly
 4. If the tier changes:
    - write the new current tier
    - evaluate demotion or promotion transition
-   - emit one-time enter-tier results according to repeat policy
-   - expose sustained current-tier meaning
-5. If an enter-tier event or playable is configured:
-   - emit a standard event-start request
-   - hand it to the existing event runtime path
+   - emit settlement instances that describe target-tier convergence
+   - rely on settlement execution to perform all final property and state changes
+5. If later content routing is needed:
+   - settlement execution owns the formal write-back and any resulting routed truth
+   - progression does not emit standalone event-start requests
+6. The current Event-routing call chain must immediately submit emitted settlement instances to `SettlementRuntime`.
 
-## Event Routing Alignment
+In the first version, the progression runtime must not evaluate cross-track coupled requirements while performing this flow.
 
-This design must stay compatible with the repository's event-only routing direction.
+## Settlement Alignment
 
-Required routing rule:
+This design must stay compatible with the repository's settlement boundary.
 
-- progression may request that an event start
-- progression may not itself become a route owner
-- event remains the only formal creator-facing route owner
+Required execution rule:
+
+- progression may only emit settlement instances
+- settlement runtime may only consume settlement instances
+- progression may not directly execute effects, state writes, or routed content requests
+- the current Event-routing call chain is the required handoff point between progression output and settlement execution
 
 Therefore:
 
-- `onEnterEventId` means "request start of this event after this tier transition"
-- the progression runtime emits a standard event-start request
-- the existing event runtime decides actual startup and subsequent `nextEventId` continuation
-- if tier entry should lead to a playable, the entered event owns that playable destination rather than progression directly routing to playable
+- `targetTierSettlementId` means "use this settlement template when converging onto this tier"
+- the progression runtime emits settlement instances only
+- the settlement runtime performs all final state mutation, reward delivery, and follow-up write-back
+- the current Event-routing call chain must immediately forward progression-emitted settlement instances into `SettlementRuntime`
 
 Progression must not:
 
 - directly jump to scenes
+- directly emit effect execution
+- directly emit event-start requests
 - privately call alternate routers
 - create a separate follow-up routing layer
 
-## Effect And Settlement Alignment
+## Event Routing Alignment
 
-The mechanism should reuse the project's existing effect/settlement style rather than inventing a feature-specific reward system.
+This design must still stay compatible with the repository's event-only routing direction.
 
-Recommended new effect family:
+Required routing rule:
+
+- event remains the only formal creator-facing route owner
+- if tier convergence should lead to later event content, that routed truth must arise from formal settlement execution output rather than from progression directly
+- progression must not become a second routing owner
+
+If later routed content should happen because a tier changed, settlement-owned formal output must feed the next routed truth. Progression itself still does not emit standalone event-start requests.
+
+## Settlement Instance Payload
+
+The target-tier settlement handoff should carry enough canonical context for settlement execution to converge correctly.
+
+Recommended settlement-instance payload:
 
 ```ts
-type ModifyProgressMetricEffect = {
-  type: "modify-progress-metric";
+type ProgressionTierSettlementPayload = {
   ownerKind: string;
   ownerId: string;
   trackId: string;
-  delta: number;
+  fromTierId: string | null;
+  toTierId: string | null;
+  metricValue: number;
 };
 ```
 
-Optional explicit recalculation effect:
+This payload lets settlement execution reason about:
 
-```ts
-type RecalculateProgressTrackEffect = {
-  type: "recalculate-progress-track";
-  ownerKind: string;
-  ownerId: string;
-  trackId: string;
-};
-```
+- who changed
+- which track changed
+- what the previous tier was
+- what the target tier is
+- what the latest canonical progress value is
 
-In the normal case, `modify-progress-metric` may trigger recalculation implicitly so creators do not need two separate steps for common usage.
+Settlement templates should not need progression-specific hidden globals or ad hoc side channels to determine convergence meaning.
 
-## One-Time Results Versus Sustained Effects
+## Target-Tier Convergence
 
-The design must keep permanent writes separate from current-tier meaning.
+The design must converge by target tier instead of direct modifier execution inside progression.
 
-### One-Time Enter Results
+This means:
 
-Used for:
+- progression determines which tier is now correct
+- progression emits settlement instances representing convergence onto that target tier
+- settlement execution applies the final mutations and canonical write-back
+- leaving one tier and entering another is handled by convergence semantics in settlement, not by progression directly applying and undoing modifiers
 
-- granting permanent stats
-- setting flags
-- awarding items
-- requesting an event
+This avoids:
 
-These are executed only when crossing into a tier and are controlled by:
+- duplicated modifier stacking
+- progression-owned direct state mutation
+- drift between progression state and settlement-owned final state
 
-- `once-ever`
-- `once-per-entry`
+## Repeat Policy
 
-### Sustained Effects
+Repeat policy must be explicit when a tier is re-entered after demotion.
 
-Used for:
+Required semantics:
 
-- current-tier stat modifiers
-- current-stage capability gates
-- current-stage labels or presentation meaning
+- transition `A -> B` triggers B-tier entry once
+- transition `B -> A -> B` behaves by policy
+- `once-ever` means B-tier entry content does not trigger a second time after re-entry
+- `once-per-entry` means B-tier entry content triggers again each time the runtime re-enters B
 
-These should not repeatedly mutate base authored or saved values on every recalculation.
-
-Instead:
-
-- runtime state records the current tier
-- materializers, resolvers, or presenters consume sustained modifiers from current tier state
-- permanent writes remain one-time enter results only
-
-This avoids duplicate stacking and incorrect rollback behavior during demotion.
+These semantics must remain the same across Script Editor authoring, export/import, runtime preview, and production startup.
 
 ## Demotion
 
@@ -311,8 +351,8 @@ If `allowDemotion` is enabled:
 
 - the runtime recalculates the highest satisfied tier after any metric change
 - a lower satisfied tier becomes the new current tier
-- the new tier's sustained meaning applies
-- one-time enter-tier results follow the tier's repeat policy
+- the new tier emits its target-tier settlement instance
+- settlement runtime converges final state onto the demoted tier outcome
 
 Demotion does not require a separate feature-specific path.
 
@@ -324,11 +364,12 @@ The first production slice should support:
 - arbitrary stable owner identities
 - creator-authored tier names and thresholds
 - optional demotion
-- one-time enter-tier results
-- sustained tier effects
-- event start requests on enter-tier
+- settlement-instance-driven target-tier convergence
+- no direct progression-owned mutation path
 - Script Editor authoring in Chinese business labels
 - save/load and runtime state sync through unified runtime state
+- existing Event-routing-chain handoff into settlement runtime
+- canonical settlement payload carrying owner, track, previous tier, target tier, and progress value
 
 The first production slice should not support:
 
@@ -337,6 +378,20 @@ The first production slice should not support:
 - creator-defined formula languages
 - cross-track dependency expressions
 - custom author code hooks
+- per-owner partial track-template overrides
+- multi-track linked convergence rules
+
+## Existing Chain Integration
+
+The first-version landing should explicitly cover these chain seams:
+
+1. Script Editor authoring for `阶段轨道` and bindings
+2. runtime-pack export/import for track and binding resources
+3. loader hydration into active content/runtime lookup structures
+4. Event-routing-chain handoff from progression output to `SettlementRuntime`
+5. settlement execution consuming canonical progression settlement payload
+
+The mechanism must not land editor-only. Preview, export/import, loader, and runtime handoff must all understand the same progression resource truth.
 
 ## Why This Fits The Current Repository
 
@@ -345,12 +400,14 @@ This design follows the repository's active constraints:
 - it avoids building or feature-specific hardcoding in `src/main.ts`
 - it keeps persistent state inside unified runtime state structures
 - it treats creator-facing progression as authored data
+- it leaves final mutation ownership to settlement runtime
 - it leaves routing ownership to the existing event system
+- it uses the existing Event-routing call chain as the formal handoff path instead of introducing a new orchestrator
 - it provides a reusable mechanism instead of a one-off experience-level patch
 
 In short:
 
-- progression owns threshold evaluation and result emission
-- effects and settlements own mutation delivery
+- progression owns threshold evaluation and settlement-instance emission
+- settlement owns final mutation delivery
 - event owns routing
 - Script Editor owns creator-facing authoring
