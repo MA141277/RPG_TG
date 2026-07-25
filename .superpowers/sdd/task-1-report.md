@@ -58,3 +58,13 @@ Status: DONE_WITH_CONCERNS
 ### Verification
 - Executed: `node --test tests/robustness.test.cjs --test-name-pattern "legacy cutover inventory separates canonical keep fields from residue candidates"`
 - Result: passed with exit code `0`; in this environment the run still executed the full `tests/robustness.test.cjs` file and finished with `559` passing, `0` failing, and `176` skipped.
+## Fix Wave 3
+
+### Summary
+- Strengthened the canonical runtime field audit so flat runtime keys are matched through surrounding source syntax instead of bare substrings that residue aliases could satisfy.
+- Kept the residue candidate inventory on explicit alias-path patterns.
+- Recorded the follow-up code fix commit for this wave: `69f21643 test: harden task 1 inventory field guard`
+
+### Verification
+- Executed: `node --test tests/robustness.test.cjs --test-name-pattern "legacy cutover inventory separates canonical keep fields from residue candidates"`
+- Result: passed with exit code `0`; in this environment the run executed the full `tests/robustness.test.cjs` file and finished with `559` passing, `0` failing, and `176` skipped.
