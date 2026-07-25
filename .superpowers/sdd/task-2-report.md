@@ -17,3 +17,8 @@ Concerns:
 - `npm run build` is blocked by the local PowerShell execution policy for `npm.ps1`; `npm.cmd run build` was used instead.
 - Vite build emitted existing bundle-size/static-asset warnings.
 - Full repository test verification currently has an unrelated city/building authoring source assertion failure; focused Task 2 regression remains green.
+
+Fix Wave:
+- Commit: `f9496f0 fix: correct script editor creator labels`
+- RED: `node --test tests/robustness.test.cjs --test-name-pattern "settlement authoring|person attribute"` failed after changing assertions to exact `数值` / `开关` / `选项` / `文本` and `结算内容` labels.
+- GREEN: `node --test tests/robustness.test.cjs --test-name-pattern "settlement authoring|person attribute"` passed with `fail 0`.

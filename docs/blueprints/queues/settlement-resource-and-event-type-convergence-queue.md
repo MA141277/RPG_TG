@@ -7,26 +7,26 @@
 - blueprint_version: `2026.07`
 - governance_last_synced_at: `2026-07-24`
 - governance_sync_source: `docs/blueprints/plans/2026-07-24-event-canonical-reuse-routing-and-settlement-governance-target-plan.md`
-- queue_status: `active`
+- queue_status: `done`
 - queue_class: `required`
-- active_task: `task.settlement-resource-and-event-type-convergence.queue-closeout-review-and-sync-gate`
+- active_task: `none`
 - next_task: `none`
-- closeout_status: `in-progress`
-- execution_closeout_status: `partial`
-- topic_closure_status: `open-residue`
-- closure_basis: `Queue admission remains lawful after queue.instance-next-event-id-and-event-routing-convergence repository sync, the seven implementation-bearing queue tasks are now complete locally, and the live active task is the required queue-closeout review plus repository-sync gate before same-version host canonicalization admission.`
-- residue_remaining: `yes`
-- residue_family: `same-family`
-- residue_routing_status: `auto-routable`
-- next_family_candidate: `task.settlement-resource-and-event-type-convergence.queue-closeout-review-and-sync-gate`
-- auto_continue_eligible: `true`
-- next_effect: `none`
+- closeout_status: `done`
+- execution_closeout_status: `done`
+- topic_closure_status: `closed`
+- closure_basis: `Queue closeout proof and repository-sync gate are complete. ACC-EVENT-SETTLE-005 is covered for the queue-owned boundary, commit b391e09 landed the completed settlement batch, and push to origin/mod-first-dev succeeded before the next same-version queue was admitted.`
+- residue_remaining: `no`
+- residue_family: `none`
+- residue_routing_status: `none`
+- next_family_candidate: `queue.same-display-name-building-host-instance-canonicalization`
+- auto_continue_eligible: `false`
+- next_effect: `return-to-version-review`
 - auto_continue_policy: `required`
 - idle_after_task_completion: `forbidden`
 - queue_close_handoff: `version-plan-routing`
-- sync_status: `pending`
-- sync_scope: `local-record`
-- sync_summary: `Settlement queue has finished all implementation-bearing local tasks. Queue-closeout review and repository-sync gating are now executing as the active task before later same-version admission.`
+- sync_status: `success`
+- sync_scope: `remote-sync`
+- sync_summary: `Repository-sync gate satisfied: closeout truth was synchronized, commit b391e09 landed on mod-first-dev, and push to origin/mod-first-dev succeeded before queue.same-display-name-building-host-instance-canonicalization admission.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
@@ -189,9 +189,9 @@
 
 - queue_goal: `Freeze and land the formal settlement resource/event-type/PlayableResult boundary without regressing event-owned routing.`
 - task_count: `8`
-- completed_task_count: `7`
-- remaining_task_count: `1`
-- active_task_summary: `Implementation-bearing settlement tasks are complete locally. The live active task is queue-closeout review plus repository-sync gating so the queue can hand off lawfully into the same-version host canonicalization queue.`
+- completed_task_count: `8`
+- remaining_task_count: `0`
+- active_task_summary: `Queue is closed. All settlement-owned implementation and closeout work is complete, repository sync succeeded, and same-version execution has already handed off to queue.same-display-name-building-host-instance-canonicalization.`
 - task_briefs:
   - `task.settlement-resource-and-event-type-convergence.evidence-anchor-reconcile: lock current settlement/event-type/PlayableResult anchors and residue surfaces before implementation.`
   - `task.settlement-resource-and-event-type-convergence.surface-inventory-and-boundary-lock: inventory settlement-adjacent authoring/runtime surfaces and freeze the bounded rewrite order plus first implementation slice.`
@@ -204,7 +204,7 @@
 
 ### Completion Completeness Review
 
-- review_status: `in-progress`
+- review_status: `complete`
 - can_claim_coverage:
   - `Locally claimable for ACC-EVENT-SETTLE-005. Settlement is now a first-class project family, event(type=settlement) references settlement entries only, result-entry nextEventId stays eventId-only, and workspace/export fail closed on malformed settlement result references.`
 - parent_spec_preservation:
@@ -215,7 +215,7 @@
   - `ACC-EVENT-SETTLE-006 routes to queue.full-chain-event-routing-and-settlement-consistency.`
   - `ACC-EVENT-SETTLE-007 / 008 route to queue.event-routing-settlement-migration-and-final-acceptance.`
 - verification_sufficiency:
-  - `Sufficient for queue-closeout review. Targeted project save/load coverage, runtime export fail-closed coverage, workspace-shell blocker coverage, build:test, and the earlier settlement contract/reference guard regressions are now all present locally.`
+  - `Sufficient for queue closeout. Targeted project save/load coverage, runtime export fail-closed coverage, workspace-shell blocker coverage, build:test, and the earlier settlement contract/reference guard regressions all passed before repository sync was recorded.`
 - user_path_matrix_verification:
   - `Satisfied for the owned queue boundary. Settlement events can point only at formal settlement records, settlement result entries preserve direct-close vs nextEventId exits without creating a second router, and workspace/export surfaces now block malformed settlement references before later full-chain parity work.`
 - functional_loss_audit:
@@ -229,9 +229,9 @@
 - gap_fill_scope:
   - `none`
 - remaining_gaps:
-  - `runtime-pack still lacks a first-class settlements family file, so full-chain parity remains deferred to the next queue.`
+  - `runtime-pack still lacks a first-class settlements family file, so full-chain parity remains deferred to queue.full-chain-event-routing-and-settlement-consistency.`
   - `Dedicated creator-facing settlement authoring UI remains thin and can stay on the generic shell until the later full-chain consistency queue widens creator/runtime parity proof.`
-  - `Queue-closeout proof and repository-sync gating are still in progress before later same-version queue admission can claim lawful handoff.`
+  - `No further queue-local implementation or governance gap remains.`
 
 ### Task Ledger
 
@@ -244,7 +244,7 @@
 | `task.settlement-resource-and-event-type-convergence.settlement-reference-guard-alignment` | `done` | `Fail close missing settlement references through export diagnostics and workspace risk surfaces.` | `task.settlement-resource-and-event-type-convergence.domain-editor-contract-freeze` | `Done. Missing settlementId and missing settlement records now block export and surface through workspace-shell risk cards.` |
 | `task.settlement-resource-and-event-type-convergence.result-boundary-consumer-audit` | `done` | `Audit remaining PlayableResult and settlement-family consumer/residue surfaces, then select the next bounded settlement-record-shape batch.` | `task.settlement-resource-and-event-type-convergence.settlement-reference-guard-alignment` | `Done. generated/blueprint/settlement-resource-and-event-type-result-boundary-audit.json freezes landed production truth, historical-only residue, and the next bounded settlement-record-shape recommendation.` |
 | `task.settlement-resource-and-event-type-convergence.settlement-record-shape-freeze` | `done` | `Freeze the first formal settlement record shape around result entries and result-local nextEventId-ready exits.` | `task.settlement-resource-and-event-type-convergence.result-boundary-consumer-audit` | `Done. Settlement result entries now preserve save/load shape, runtime export fails closed on missing nextEventId targets, and workspace-shell recognizes valid settlement references while surfacing malformed settlement-result blockers.` |
-| `task.settlement-resource-and-event-type-convergence.queue-closeout-review-and-sync-gate` | `active` | `Verify queue-closeout proof, synchronize governed truth, and attempt the repository-sync gate before admitting the next same-version queue.` | `task.settlement-resource-and-event-type-convergence.settlement-record-shape-freeze` | `Active. The next lawful action is queue-closeout proof plus repository-sync gating, not a return to idle active-queue state.` |
+| `task.settlement-resource-and-event-type-convergence.queue-closeout-review-and-sync-gate` | `done` | `Verify queue-closeout proof, synchronize governed truth, and attempt the repository-sync gate before admitting the next same-version queue.` | `task.settlement-resource-and-event-type-convergence.settlement-record-shape-freeze` | `Done. Queue closeout proof was synchronized, commit b391e09 landed, push to origin/mod-first-dev succeeded, and same-version handoff moved directly to queue.same-display-name-building-host-instance-canonicalization.` |
 
 ### Task Definitions
 
@@ -534,7 +534,7 @@
 ##### Control Block
 
 - task_id: `task.settlement-resource-and-event-type-convergence.queue-closeout-review-and-sync-gate`
-- state: `active`
+- state: `done`
 - task_kind: `queue-closeout`
 - scope:
   - `docs/blueprints/queues/settlement-resource-and-event-type-convergence-queue.md`
@@ -575,7 +575,7 @@
 - task_brief:
   - `Close out the settlement queue lawfully and drive the repository-sync gate.`
 - task_outcome_summary:
-  - `In progress. Local implementation proof is complete, and the queue is now executing its closeout-review plus repository-sync gate before the next same-version queue can be admitted.`
+  - `Done. Local closeout proof was synchronized, commit b391e09 landed the queue batch, push to origin/mod-first-dev succeeded, and same-version execution handed off directly to queue.same-display-name-building-host-instance-canonicalization.`
 
 ### Progress Log
 
@@ -593,3 +593,4 @@
 - `2026-07-24`: `The queue automatically promoted task.settlement-resource-and-event-type-convergence.settlement-record-shape-freeze to active. generated/blueprint/settlement-record-shape-freeze-preflight.json now freezes the next non-destructive settlement-record-shape batch.`
 - `2026-07-24`: `task.settlement-resource-and-event-type-convergence.settlement-record-shape-freeze is now complete. Settlement result entries preserve project save/load shape, runtime export now fails closed on settlement-result nextEventId references that target missing events, workspace-shell now recognizes valid settlement references instead of treating them as missing by default, and malformed settlement-result routing surfaces as blocked risk/export truth.`
 - `2026-07-24`: `The queue automatically promoted task.settlement-resource-and-event-type-convergence.queue-closeout-review-and-sync-gate to active. Settlement implementation work is complete locally, and the queue now advances through closeout proof plus repository-sync gating before queue.same-display-name-building-host-instance-canonicalization can be admitted as the next same-version active queue.`
+- `2026-07-24`: `Queue closeout proof and repository-sync gate are now complete. Commit b391e09 landed the completed settlement queue batch, push to origin/mod-first-dev succeeded, and the queue closed without same-family residue inside its owned boundary.`

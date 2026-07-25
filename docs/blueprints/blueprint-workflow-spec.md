@@ -188,6 +188,9 @@ The version plan is the only live governor for:
 - `stop_basis`
 - `next_unblocked_action`
 - `human_input_required`
+- `stop_gate_owner`
+- `default_task_completion_effect`
+- `default_queue_completion_effect`
 - `candidate_backlog_refresh_status`
 - `candidate_backlog_snapshot`
 - `candidate_backlog_scan_sources`
@@ -216,6 +219,9 @@ The queue doc is the only live governor for:
 - `next_family_candidate`
 - `auto_continue_eligible`
 - `next_effect`
+- `auto_continue_policy`
+- `idle_after_task_completion`
+- `queue_close_handoff`
 
 ### 4.6 `docs/change-log.md`
 
@@ -701,9 +707,12 @@ Rules:
 4. `product-decision` is legal only when two or more mutually exclusive lawful branches remain and choosing among them would change active truth.
 5. `stop_basis` must summarize the concrete evidence or rule that makes the stop lawful; it must not be left implicit in prose history.
 6. `next_unblocked_action` must name the next governance action expected after the blocking input or confirmation is received.
-7. `human_input_required = true` is legal only when `stop_reason != none`.
-8. A stop is lawful only when current truth can be mapped to one of the allowed `stop_reason` values above; if it cannot, the agent must continue.
-9. Forbidden-stop examples elsewhere in this workflow are explanatory guardrails, not the primary legal test.
+7. If `stop_reason = none` and current truth still has an `active_queue`, an `active_task`, or another uniquely lawful next governance action, `next_unblocked_action` must not be `none`; it must point to that continuation target explicitly.
+8. `human_input_required = true` is legal only when `stop_reason != none`.
+9. `stop_gate_owner` may be recorded in the version plan to name the governing component that decides stop legality. When present, the agent must not treat its own conversational completion heuristic as a higher-priority stop gate.
+10. `default_task_completion_effect` and `default_queue_completion_effect` may be recorded in the version plan to express the default continuation effect when no lawful stop applies.
+11. A stop is lawful only when current truth can be mapped to one of the allowed `stop_reason` values above; if it cannot, the agent must continue.
+12. Forbidden-stop examples elsewhere in this workflow are explanatory guardrails, not the primary legal test.
 
 ## 8.5 Evidence-Bound Version Creation
 
@@ -1311,6 +1320,21 @@ Required task fields:
 - `promote_next_if_done`
 - `stop_if`
 
+Continuation fields for active execution tasks:
+
+- `human_input_required`
+- `next_lawful_action_if_done`
+- `next_lawful_action_if_blocked`
+- `auto_promote_if_done`
+
+Continuation rules:
+
+1. `promote_next_if_done` remains the queue-local next-task pointer when another task exists in the same queue.
+2. `next_lawful_action_if_done` must name the next lawful action even when `promote_next_if_done = none`, for example queue closeout proof, sync gate recording, or version-plan routing.
+3. `next_lawful_action_if_blocked` must point to an explicit blocker-routing action such as writing structured stop truth; it must not be left implicit in prose.
+4. `auto_promote_if_done = true` is the default for active execution tasks unless a lawful stop record already exists upstream.
+5. `human_input_required = false` is the default for active execution tasks unless the current version plan already records a lawful stop that requires human input.
+
 Hard queue rules:
 
 1. A queue must not expose an `active_task` unless `queue_status = active`.
@@ -1326,6 +1350,7 @@ Hard queue rules:
 8. `execution_closeout_status = done` must not by itself imply `topic_closure_status = closed`.
 9. A queue may declare `topic_closure_status = closed` only after queue closeout judgement confirms that no still-blocking same-family residue remains inside the queue's bounded topic surface.
 10. If residue remains after execution closeout, the queue must classify it as `same-family`, `cross-family`, `accepted-residue`, or `none` before version-level routing can conclude.
+11. If a queue is expected to continue unattended after task completion, it should record `auto_continue_policy`, `idle_after_task_completion`, and `queue_close_handoff` explicitly rather than relying on prose-only continuation intent.
 
 ## 11. Post-Task Auto-Reconcile And Closeout Auto-Advance
 

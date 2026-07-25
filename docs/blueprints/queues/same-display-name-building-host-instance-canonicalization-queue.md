@@ -7,26 +7,26 @@
 - blueprint_version: `2026.07`
 - governance_last_synced_at: `2026-07-24`
 - governance_sync_source: `docs/blueprints/plans/2026-07-24-event-canonical-reuse-routing-and-settlement-governance-target-plan.md`
-- queue_status: `active`
+- queue_status: `done`
 - queue_class: `required`
-- active_task: `task.same-display-name-building-host-instance-canonicalization.queue-closeout-review-and-sync-gate`
+- active_task: `none`
 - next_task: `none`
-- closeout_status: `in-progress`
-- execution_closeout_status: `partial`
-- topic_closure_status: `open-residue`
-- closure_basis: `Settlement closeout and repository sync are complete, same-display-name host canonicalization is the approved phase-4 queue, and the implementation-bearing host merge plus direct host-reference rewrite work is now complete locally. Operator scope clarification on 2026-07-24 narrowed queue completion to host merge plus necessary direct host-id rewrite, with arrangement convergence explicitly non-blocking; the landed source truth now exceeds that minimum by also canonicalizing repeated-name arrangement rows. The live active task is now the required queue-closeout review plus repository-sync gate.`
-- residue_remaining: `yes`
-- residue_family: `same-family`
-- residue_routing_status: `auto-routable`
-- next_family_candidate: `task.same-display-name-building-host-instance-canonicalization.queue-closeout-review-and-sync-gate`
-- auto_continue_eligible: `true`
-- next_effect: `none`
+- closeout_status: `done`
+- execution_closeout_status: `done`
+- topic_closure_status: `closed`
+- closure_basis: `Queue closeout proof and repository-sync gate are complete. ACC-EVENT-SETTLE-005A is covered for the queue-owned boundary, commit acf24fe landed the same-name host canonicalization batch, and push to origin/mod-first-dev succeeded before the next same-version queue was admitted.`
+- residue_remaining: `no`
+- residue_family: `none`
+- residue_routing_status: `none`
+- next_family_candidate: `queue.full-chain-event-routing-and-settlement-consistency`
+- auto_continue_eligible: `false`
+- next_effect: `return-to-version-review`
 - auto_continue_policy: `required`
 - idle_after_task_completion: `forbidden`
 - queue_close_handoff: `version-plan-routing`
-- sync_status: `pending`
-- sync_scope: `local-record`
-- sync_summary: `Local closeout proof is now recorded. Repository-sync gating is the live active task before queue.full-chain-event-routing-and-settlement-consistency can be admitted lawfully.`
+- sync_status: `success`
+- sync_scope: `remote-sync`
+- sync_summary: `Repository-sync gate satisfied: closeout truth was synchronized, commit acf24fe landed on mod-first-dev, and push to origin/mod-first-dev succeeded before queue.full-chain-event-routing-and-settlement-consistency admission.`
 - blocked_by: []
 - allowed_item_classifications:
   - `current-target-item`
@@ -189,9 +189,9 @@
 
 - queue_goal: `Canonicalize repeated-name real building hosts and rewrite the owned direct house-reference graph before full-chain parity work begins.`
 - task_count: `5`
-- completed_task_count: `4`
-- remaining_task_count: `1`
-- active_task_summary: `The queue has already frozen duplicate-host evidence, canonical selection, and the first rewrite preflight. Implementation slices 1 through 4 are landed, repeated-name hosts in houses.json are merged onto canonical template ids, direct host-id source surfaces across cities/building-arrangements/city-entries/characters/location-access now consume canonical ids, and building/runtime/council lookup accepts canonical host ids without regressing city-local behavior. The live active task is now queue-closeout review plus repository-sync gating; arrangement convergence was not required for closeout, but the landed source truth already canonicalizes repeated-name arrangement rows as well.`
+- completed_task_count: `5`
+- remaining_task_count: `0`
+- active_task_summary: `Queue is closed. Same-name host merge, direct host-id rewrite, canonical-aware runtime consumption, closeout proof, and repository sync are all complete, and execution has already handed off to queue.full-chain-event-routing-and-settlement-consistency.`
 - task_briefs:
   - `task.same-display-name-building-host-instance-canonicalization.evidence-anchor-reconcile: lock duplicate-host groups, direct rewrite counts, and runtime/startup consumer anchors before implementation.`
   - `task.same-display-name-building-host-instance-canonicalization.duplicate-surface-inventory-and-canonical-selection-lock: freeze the repeated-name family inventory, canonical ids, preservation exceptions, and direct rewrite order.`
@@ -202,6 +202,7 @@
 ### Completion Completeness Review
 
 - review_status: `in-progress`
+- review_status: `complete`
 - can_claim_coverage:
   - `Locally claimable for ACC-EVENT-SETTLE-005A. Same-name host merge plus direct host-id rewrite are landed, no repeated-name duplicate host remains in owned source truth, and local closeout proof is now recorded.`
 - parent_spec_preservation:
@@ -227,7 +228,7 @@
   - `task.same-display-name-building-host-instance-canonicalization.canonical-host-id-rewrite-and-reference-guard-baseline`
 - remaining_gaps:
   - `The unrelated baseline test script editor runtime export materializes city mounted buildings and npcs over imported runtime tables still fails outside this queue's owned slice and must not be misclassified as a new host-canonicalization regression.`
-  - `Repository-sync gating still remains to be attempted before the next same-version queue can be admitted.`
+  - `No further queue-local implementation or governance gap remains.`
 
 ### Task Ledger
 
@@ -237,7 +238,7 @@
 | `task.same-display-name-building-host-instance-canonicalization.duplicate-surface-inventory-and-canonical-selection-lock` | `done` | `Freeze repeated-name family inventory, canonical ids, preservation exceptions, and direct rewrite order.` | `task.same-display-name-building-host-instance-canonicalization.evidence-anchor-reconcile` | `Completed with generated/blueprint/same-display-name-host-canonicalization-inventory.json.` |
 | `task.same-display-name-building-host-instance-canonicalization.rewrite-anchor-and-consumer-preflight` | `done` | `Freeze the first implementation batch across source families and runtime/startup consumers that still assume city-scoped host ids.` | `task.same-display-name-building-host-instance-canonicalization.duplicate-surface-inventory-and-canonical-selection-lock` | `Completed with generated/blueprint/same-display-name-host-canonicalization-preflight.json.` |
 | `task.same-display-name-building-host-instance-canonicalization.canonical-host-id-rewrite-and-reference-guard-baseline` | `done` | `Land canonical host ids, direct reference rewrite, and guard coverage across the owned surfaces.` | `task.same-display-name-building-host-instance-canonicalization.rewrite-anchor-and-consumer-preflight` | `Done. Same-name host merge, direct source/runtime host-id rewrite, canonical-aware arrangement lookup, and queue-owned guard coverage are all landed locally.` |
-| `task.same-display-name-building-host-instance-canonicalization.queue-closeout-review-and-sync-gate` | `active` | `Verify queue-closeout proof, synchronize governed truth, and attempt the repository-sync gate before admitting the next same-version queue.` | `task.same-display-name-building-host-instance-canonicalization.canonical-host-id-rewrite-and-reference-guard-baseline` | `Active. Local closeout proof is now recorded, and the next lawful action is repository-sync gating rather than another implementation slice.` |
+| `task.same-display-name-building-host-instance-canonicalization.queue-closeout-review-and-sync-gate` | `done` | `Verify queue-closeout proof, synchronize governed truth, and attempt the repository-sync gate before admitting the next same-version queue.` | `task.same-display-name-building-host-instance-canonicalization.canonical-host-id-rewrite-and-reference-guard-baseline` | `Done. Queue closeout proof was synchronized, commit acf24fe landed, push to origin/mod-first-dev succeeded, and same-version execution moved directly to queue.full-chain-event-routing-and-settlement-consistency.` |
 
 ### Task Definitions
 
@@ -378,7 +379,7 @@
 ##### Control Block
 
 - task_id: `task.same-display-name-building-host-instance-canonicalization.canonical-host-id-rewrite-and-reference-guard-baseline`
-- state: `active`
+- state: `done`
 - task_kind: `implementation`
 - scope:
   - `src/content/scenario-packs/zhuyuanzhang/**`
@@ -454,7 +455,7 @@
 - task_brief:
   - `Close out the same-name host canonicalization queue lawfully and drive the repository-sync gate.`
 - task_outcome_summary:
-  - `Active. Local closeout proof is recorded, governed truth is synchronized to the closeout stage, and the next lawful action is the required repository-sync batch before queue.full-chain-event-routing-and-settlement-consistency can become the active queue.`
+  - `Done. Local closeout proof was synchronized, commit acf24fe landed the queue batch, push to origin/mod-first-dev succeeded, and same-version execution handed off directly to queue.full-chain-event-routing-and-settlement-consistency.`
 
 ### Progress Log
 
@@ -479,3 +480,4 @@
 - `2026-07-24`: `The active task then aligned canonical host consumption with retained legacy arrangement rows instead of forcing arrangement convergence into this queue. src/application/building/building-module-entry.ts, src/core/runtime/navigation-runtime.ts, src/application/runtime/navigation-time-follow-up.ts, and src/main.ts now accept same-family legacy arrangement.buildingId rows for canonical host ids, and focused robustness guards plus built-in-template/source checks pass after rebuild.`
 - `2026-07-24`: `Queue-local closeout proof is now recorded at generated/blueprint/same-display-name-host-canonicalization-closeout-proof.json. The repeated-name host graph is fully canonicalized in owned source truth, the required governance lint/check commands pass, build:test passes, and the only remaining failing robustness baseline is the older imported-runtime materialization assertion at tests/robustness.test.cjs:13204 outside this queue's owned slice.`
 - `2026-07-24`: `The queue automatically promoted task.same-display-name-building-host-instance-canonicalization.queue-closeout-review-and-sync-gate to active. The next lawful action is the repository-sync batch before queue.full-chain-event-routing-and-settlement-consistency admission.`
+- `2026-07-24`: `Queue closeout proof and repository-sync gate are now complete. Commit acf24fe landed the same-name host canonicalization batch, push to origin/mod-first-dev succeeded, and the queue closed without remaining same-family residue inside its owned boundary.`

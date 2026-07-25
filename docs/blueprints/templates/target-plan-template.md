@@ -32,8 +32,11 @@
 - auto_admission_ready: `true | false`
 - stop_reason: `none | version-closeout-confirmation | explicit-answer-only | operator-requested-suspend | real-blocker | outside-parent-spec | parent-spec-change | capability-downgrade-risk | retired-rewrite-risk | product-decision`
 - stop_basis: `replace-with-written-stop-evidence | none`
-- next_unblocked_action: `classify-fresh-work | write-admission-review | activate-admitted-queue | resume-active-queue | auto-reconcile-active-task | write-queue-closeout | return-to-promotion-review | write-version-closeout | resolve-blocker | none`
+- next_unblocked_action: `replace-with-explicit-next-lawful-action | none`
 - human_input_required: `true | false`
+- stop_gate_owner: `blueprint-supervisor | version-plan-only | none`
+- default_task_completion_effect: `continue-next-lawful-task | write-queue-closeout | none`
+- default_queue_completion_effect: `route-next-lawful-queue | return-to-promotion-review | write-version-closeout | none`
 - blocked_by: []
 - candidate_queue_ids:
   - `queue.replace-me`
@@ -102,6 +105,9 @@
 - `Queue closeout may auto-advance; version closeout must not be inferred from queue completion alone.`
 - `When version acceptance and closeout conditions are satisfied, ask exactly one human confirmation before changing version_status to done.`
 - `If the agent lawfully stops or asks for input, it must first write stop_reason / stop_basis / next_unblocked_action / human_input_required into this version plan.`
+- `If stop_reason=none while active_queue, active_task, or another uniquely lawful next action still exists, next_unblocked_action must still name that continuation explicitly rather than remaining none.`
+- `When used, stop_gate_owner names the governing stop gate; agent-local completion heuristics must not override it.`
+- `When used, default_task_completion_effect and default_queue_completion_effect should make continuation intent machine-readable rather than prose-only.`
 - `Task completion, queue closeout sync, admission sync, active queue switch, repository sync result recording, and doc-only state sync are not lawful stop points by themselves.`
 
 ### Auto-Continue Stop Rule

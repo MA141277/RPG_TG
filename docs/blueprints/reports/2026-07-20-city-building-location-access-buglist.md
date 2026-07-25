@@ -3,127 +3,68 @@
 ## Control
 
 - date: `2026-07-20`
+- updated_at: `2026-07-24`
 - version: `target.city-building-module-entry-and-project-startup-authoring`
 - queue: `queue.script-editor-city-building-location-access-condition-authoring-correction`
 - task: `task.script-editor-city-building-location-access-condition-authoring-correction.queue-closeout-and-handoff`
 - source_acceptance: `ACC-CITY-BUILDING-ACCESS-CONDITION-007`
 - test_surface: `in-app browser simulated-human operation`
 - status: `open`
-- closeout_effect: `Queue cannot be closed from this evidence. Bugs are recorded for later unified handling.`
+- closeout_effect: `Queue cannot be closed from this evidence. The report now retains only still-open bugs after a 2026-07-24 follow-up audit removed later-fixed or stale entries.`
 
 ## Test Discipline
 
 - The tested matrix is city/building entry access conditions across event, person, and time factors.
 - Each bug below records the simulated-human path, observed failure, current cause assessment, fix status, and owning version.
 - No production fix is claimed in this document.
-- Remaining cases should resume from this buglist or a successor acceptance report after the listed blockers are handled.
+- Historical BUG-ACC007-001..003 were removed on `2026-07-24` after later queue closeout evidence and current source/test audit showed they no longer represent open defects.
 
 ## Bug List
 
-### BUG-ACC007-001: City event entry condition did not block city entry in runtime preview
+### BUG-ACC007-004: Re-mounted template keep building still triggered inherited location-access refusal in runtime preview
 
 - version: `target.city-building-module-entry-and-project-startup-authoring`
 - queue: `queue.script-editor-city-building-location-access-condition-authoring-correction`
-- case: `City - Event condition`
+- case: `Building - Template remount residual access binding`
 - bug_status: `open`
 - fixed: `no`
 - simulated_path:
   - Open `http://localhost:5173/` in the in-app browser.
   - Enter Script Editor.
   - Click `使用模板`.
-  - Select the city family and default selected city `city.kulan` / `濠州`.
-  - Open the `进入条件` tab.
-  - Add or reuse one condition row.
-  - Set factor to `事件`.
-  - Set event to `event.story.zhu_yuanzhang.first_temple_review`.
-  - Set event state to `完成`.
+  - Delete all existing cities.
+  - Create one new city.
+  - Mount one `帅府` building instance onto the new city.
+  - Clear the visible building-instance enter-condition and event configuration.
   - Click `运行预览`.
-  - Confirm preview enters the unified character-selection flow.
-  - Click `开始冒险`.
-  - On map, click `濠州`.
-  - In the confirmation overlay, click `进入城市`.
+  - Complete the unified character-selection flow.
+  - Enter the only authored city.
+  - Open `地点`.
+  - Click `打开帅府`.
 - observed:
-  - Runtime preview launched successfully.
-  - The map showed `濠州`.
-  - City entry confirmation appeared.
-  - After clicking `进入城市`, no refusal dialogue/text appeared.
-  - Browser evidence showed city scene state became present instead of a blocked entry state.
+  - The runtime preview did not enter the building.
+  - A refusal dialogue appeared before entry with text `军机要出，请阁下回避。`
+  - The speaker rendered as the template soldier role rather than as a newly authored city/building-local configuration.
+  - The triggered refusal came from the inherited `location-access` rule on `house.kulan.keep`, not from the visible building-instance event fields that had been cleared.
 - expected:
-  - If the selected event is not completed at that runtime point, entry should be refused.
-  - If the selected event is already completed by startup flow, the test setup must use an event known to be incomplete or explicitly document that the condition is satisfied.
+  - After deleting the template cities and remounting the building into a new city, clearing the visible instance-side enter conditions/events should prevent inherited template refusal behavior from firing.
+  - If inherited building-id-scoped template bindings are intentionally preserved, Script Editor should surface that preserved ownership explicitly instead of making the remounted building appear locally clean while runtime still uses hidden template bindings.
 - current_cause_assessment:
-  - Root cause is not fully confirmed.
-  - Candidate causes:
-    - The selected event may already be completed by scenario startup before map interaction.
-    - The preview-exported `location-access.json` may not contain the edited city condition.
-    - The map city-entry path may not be consuming the `LocationAccessRuntime` result for city entry.
-    - The runtime access result may be computed but not converted into the visible refusal dialogue state.
-  - Requires inspection across editor memory, runtime-pack export, loaded active content, navigation commit, and refusal UI handoff.
+  - Root cause is confirmed.
+  - `使用模板` imports the built-in Zhu Yuanzhang scenario pack rather than a blank template shell.
+  - The remounted `帅府` reused the concrete template building id `house.kulan.keep`.
+  - `src/content/scenario-packs/zhuyuanzhang/location-access.json` contains `location-access.zhu_yuanzhang.temple.keep_closed.house.kulan.keep`, keyed to `targetFamily=building` and `targetId=house.kulan.keep`, with blocked message `军机要出，请阁下回避。`
+  - `src/application/location-access/location-access-runtime.ts` evaluates access by `targetFamily + targetId`, so deleting cities and remounting the same building id does not detach that refusal rule.
+  - A separate inherited enter-event chain also still exists for the same building id through `event-bindings.json -> events.json -> dialogues.json`, so even after access refusal is removed the reused template building id still carries old template-owned behavior.
 - next_needed:
-  - Capture exported preview `location-access.json` for the edited city.
-  - Inspect runtime event completion state before clicking the city.
-  - Verify whether `routeNavigationRuntime` returns `runtimeResult.access.refusal`.
-  - Verify the city entry UI consumes that refusal result.
-
-### BUG-ACC007-002: City entry condition factor switch to person did not reveal person-specific controls
-
-- version: `target.city-building-module-entry-and-project-startup-authoring`
-- queue: `queue.script-editor-city-building-location-access-condition-authoring-correction`
-- case: `City - Person condition`
-- bug_status: `open`
-- fixed: `no`
-- simulated_path:
-  - Start from Script Editor workspace after the city event-condition test.
-  - Stay on city `city.kulan` / `濠州`.
-  - Stay on the `进入条件` tab.
-  - In the existing condition row, change factor from `事件` to `人物`.
-- observed:
-  - The factor select displayed `人物`.
-  - The dependent controls still displayed event selector options and the `完成` / `未完成` select.
-  - No person selector, person attribute selector, operator selector, or value control appeared.
-  - Because the UI could not configure a person condition through the visible authoring surface, the remaining person runtime test could not proceed from this state.
-- expected:
-  - Selecting `人物` should immediately render:
-    - person selector sourced from the project people list,
-    - attribute selector sourced from the selected person's base/custom attributes,
-    - operator selector appropriate to the attribute type,
-    - value input/select appropriate to the attribute type.
-- current_cause_assessment:
-  - Root cause is not fully confirmed.
-  - Evidence indicates the DOM select value changed, but the dependent controls did not re-render to the person branch.
-  - Candidate causes:
-    - The change event for native select did not reach the Script Editor delegated change handler during simulated operation.
-    - The update handler did not persist the `factor` change into `location.access.conditionExpression`.
-    - The render branch still read the prior event-shaped condition.
-  - A follow-up should verify this with a real UI event listener trace and by inspecting the in-memory selected city access shape immediately after factor change.
-- next_needed:
-  - Add a focused UI regression test or browser diagnostic proving factor changes update `conditionExpression.left.subject`.
-  - Re-run the same simulated-human path after any fix.
-
-### BUG-ACC007-003: ACC-007 matrix could not continue to city time and building cases after person-factor blocker
-
-- version: `target.city-building-module-entry-and-project-startup-authoring`
-- queue: `queue.script-editor-city-building-location-access-condition-authoring-correction`
-- case: `City - Time condition`, `Building - Event condition`, `Building - Person condition`, `Building - Time condition`
-- bug_status: `blocked-by-earlier-bug`
-- fixed: `no`
-- simulated_path:
-  - Planned continuation after city-person condition setup.
-  - Required matrix cases were not executed because the visible authoring UI did not allow person condition configuration after factor switch.
-- observed:
-  - The full six-case ACC-007 matrix remains incomplete.
-- expected:
-  - Each of the six cases must be separately operated and recorded before queue closeout can claim simulated-human acceptance.
-- current_cause_assessment:
-  - This is a test-continuation blocker, not a separate runtime root cause.
-  - It depends first on resolving or bypassing `BUG-ACC007-002`.
-- next_needed:
-  - After `BUG-ACC007-002` is handled, resume the full matrix from city-person and continue through city-time and all building event/person/time cases.
+  - Decide the intended authoring contract for `使用模板` plus city deletion/remount flows.
+  - If the intended result is a creator-clean city/building setup, remounting must clone to a fresh building id or detach inherited `location-access` and building-enter event bindings from the reused template id.
+  - If inherited template behavior is intentional, add explicit Script Editor visibility for building-id-scoped inherited access/event ownership so creators can see and clear the real runtime bindings.
 
 ## Non-Bug Notes
 
-- The imported template used in this browser pass exposed no project dialogues in the refusal prompt select, so the refusal prompt dropdown only showed `不弹出拒绝对话`.
-- That is not enough by itself to prove a runtime refusal-dialogue bug; a later simulated-human case must create/select a dialogue before validating refusal dialogue display.
+- `使用模板` currently loads `/scenario-packs/zhuyuanzhang/pack.json`; this is a built-in authored scenario pack, not a blank project template.
+- The reproduced popup in this report was a pre-entry `location-access` refusal, not the later building-enter event dialogue chain.
 - PowerShell `Get-Content` rendered some UTF-8 Chinese source and markdown text as mojibake during investigation. Browser-rendered UI text was readable in the observed session, so this document does not treat shell display mojibake as a runtime UI bug.
 
 ## Current Outcome
@@ -131,4 +72,4 @@
 - ACC-CITY-BUILDING-ACCESS-CONDITION-007: `not passed`
 - Queue closeout: `blocked`
 - Version closeout: `not entered`
-- Follow-up handling: `defer listed bugs to later unified fix/test pass`
+- Follow-up handling: `defer the remaining open bug to later unified fix/test pass`

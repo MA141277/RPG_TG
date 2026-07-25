@@ -21,6 +21,9 @@
 - next_family_candidate: `queue.replace-me-next | item.replace-me-next | none`
 - auto_continue_eligible: `true | false`
 - next_effect: `promote-next-queue | return-to-version-review | block-version | none`
+- auto_continue_policy: `required | version-controlled | not-applicable`
+- idle_after_task_completion: `forbidden | allowed-when-stop-is-lawful`
+- queue_close_handoff: `version-plan-routing | block-version | none`
 - sync_status: `pending | success | failed`
 - sync_scope: `local-record | branch-commit | branch-push | baseline-merge | baseline-push | remote-sync | none`
 - sync_summary: `Replace with the latest repository sync result.`
@@ -374,6 +377,10 @@
 - if_blocked:
   - `Return to version review or split a prerequisite queue.`
 - promote_next_if_done: `task.replace-me`
+- human_input_required: `true | false`
+- next_lawful_action_if_done: `task.replace-me | queue-closeout-proof-and-sync-gate | none`
+- next_lawful_action_if_blocked: `write-version-stop-truth-and-record-blocker | replace-with-explicit-blocked-handoff`
+- auto_promote_if_done: `true | false`
 - stop_if:
   - `implementation_anchor_status is missing or conflicting`
   - `prerequisite_status is needs-prior-queue or split-required`
@@ -421,6 +428,10 @@
   - `Record execution blockers in the queue doc, not repository sync failures.`
   - `Do not silently widen scope.`
 - promote_next_if_done: `task.replace-me-next`
+- human_input_required: `true | false`
+- next_lawful_action_if_done: `task.replace-me-next | queue-closeout-proof-and-sync-gate | none`
+- next_lawful_action_if_blocked: `write-version-stop-truth-and-record-blocker | replace-with-explicit-blocked-handoff`
+- auto_promote_if_done: `true | false`
 - stop_if:
   - `condition-a`
   - `condition-b`
