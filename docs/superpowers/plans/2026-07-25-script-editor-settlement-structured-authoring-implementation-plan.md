@@ -24,12 +24,12 @@
 
 ## Execution State
 
-- Status: `waiting`
+- Status: `closed`
 - Last Updated: `2026-07-25`
-- Current Focus: `Plan approved and waiting for execution mode selection.`
-- Next Step: `Choose Subagent-Driven or Inline Execution, then start Task 1 with tests first.`
-- Verification: `Not run as part of this plan-only change`
-- Notes: `Current repository execution truth still lives under docs/blueprints/**; this plan is an implementation artifact derived from the approved settlement structured authoring spec.`
+- Current Focus: `Task 4 complete: runtime settlement executes structured contents and docs closeout is recorded.`
+- Next Step: `No next child remains for this implementation plan.`
+- Verification: `npm.cmd run build:test and node --test tests/robustness.test.cjs --test-name-pattern "settlement|person custom attribute|runtime settlement" passed after the Task 4 red/green cycle.`
+- Notes: `Current repository execution truth still lives under docs/blueprints/**; this plan is closed as implementation evidence derived from the approved settlement structured authoring spec.`
 
 ## Progress Log
 
@@ -37,6 +37,22 @@
   - Summary: `Created the implementation plan for settlement structured authoring, typed person custom attributes, migration, and runtime consumption.`
   - Verification: `Not run as part of this plan-only change`
   - Next: `Select execution mode and begin Task 1 with failing regression coverage.`
+- 2026-07-25
+  - Summary: `Completed and re-reviewed Task 1. Settlement domain/helpers now converge on settlement-level nextEventId plus typed contents, legacy description/results are stripped during normalization, and person custom attributes now carry typed metadata for later UI/runtime slices.`
+  - Verification: `Reviewer approved after Fix Wave 1; npm.cmd run build:test and node --test tests/robustness.test.cjs --test-name-pattern "settlement|person custom attribute" passed.`
+  - Next: `Dispatch Task 2 for creator-facing settlement and person-attribute UI controls.`
+- 2026-07-25
+  - Summary: `Completed and re-reviewed Task 2. The Script Editor settlement authoring UI now hides creator-visible technical settlement/result fields, uses settlement-level follow-up plus structured content controls, and person custom attributes now expose the required creator-facing type labels.`
+  - Verification: `Reviewer approved after the creator-label fix wave; node --test tests/robustness.test.cjs --test-name-pattern "settlement authoring|person attribute" passed and npm.cmd run build passed in the implementer report.`
+  - Next: `Dispatch Task 3 for export/import/workspace validation and fail-closed legacy migration.`
+- 2026-07-25
+  - Summary: `Completed and re-reviewed Task 3. Export/import/workspace/loader validation now fail closed on duplicate settlement titles, invalid target families and operations, malformed settlement content rows, and ambiguous legacy result routing, while preserving the one safe migration path to settlement-level nextEventId.`
+  - Verification: `Reviewer approved after three fix waves; npm.cmd run build:test and focused legacy settlement validation regressions passed in the implementer report.`
+  - Next: `Dispatch Task 4 for runtime settlement execution and docs closeout.`
+- 2026-07-25
+  - Summary: `Completed Task 4. Runtime settlement now consumes structured contents[] directly for person, city, and building targets, and docs/change-log.md records the final authoring/runtime closeout.`
+  - Verification: `RED node --test tests/robustness.test.cjs --test-name-pattern "runtime settlement" failed with applySettlementContents missing; GREEN npm.cmd run build:test and node --test tests/robustness.test.cjs --test-name-pattern "settlement|person custom attribute|runtime settlement" passed.`
+  - Next: `No next child; plan closed.`
 
 ---
 
@@ -144,7 +160,7 @@
   - `appendScriptEditorPersonAttribute(person, type?)`
   - `updateScriptEditorPersonAttribute(person, index, field, value)`
 
-- [ ] **Step 1: Write the failing tests for the new settlement and typed-attribute shape**
+- [x] **Step 1: Write the failing tests for the new settlement and typed-attribute shape**
 
 Add or replace regressions in `tests/robustness.test.cjs` so they assert the new helpers normalize a settlement like this:
 
@@ -188,7 +204,7 @@ person = updateScriptEditorPersonAttribute(person, 0, "label", "忠诚");
 person = updateScriptEditorPersonAttribute(person, 0, "type", "number");
 ```
 
-- [ ] **Step 2: Run the focused regression to verify it fails**
+- [x] **Step 2: Run the focused regression to verify it fails**
 
 Run:
 
@@ -201,7 +217,7 @@ Expected:
 - `FAIL`
 - errors mentioning missing settlement content helpers, unexpected `results`, or missing typed attribute fields
 
-- [ ] **Step 3: Update the domain types and helper seams with the minimal typed shape**
+- [x] **Step 3: Update the domain types and helper seams with the minimal typed shape**
 
 Modify `src/domain/script-editor-project.ts`, `src/application/script-editor/person-authoring.ts`, and `src/application/script-editor/story-dialogue-event-authoring.ts` so the minimal model is:
 
@@ -234,7 +250,7 @@ export type ScriptEditorSettlementRecord = ScriptEditorEntityRecord & {
 
 Use the helper names from the `Interfaces` block and remove write paths that still manufacture `description` or `results`.
 
-- [ ] **Step 4: Run the focused regression to verify the helper layer passes**
+- [x] **Step 4: Run the focused regression to verify the helper layer passes**
 
 Run:
 
@@ -246,7 +262,7 @@ Expected:
 
 - `PASS` for the updated helper tests
 
-- [ ] **Step 5: Commit the bounded helper/domain slice**
+- [x] **Step 5: Commit the bounded helper/domain slice**
 
 Run:
 
@@ -276,7 +292,7 @@ git commit -m "feat: converge settlement domain shape" -m "Summary:
   - settlement content row fields using `data-script-editor-settlement-content-field="..."`
   - person attribute type controls using `data-script-editor-person-attribute-field="type"`
 
-- [ ] **Step 1: Write failing UI-source assertions for the new creator-facing controls**
+- [x] **Step 1: Write failing UI-source assertions for the new creator-facing controls**
 
 Update `tests/robustness.test.cjs` to assert that `src/ui/main-ui/main-ui-flow.js`:
 
@@ -294,7 +310,7 @@ assert.match(source, /选项/);
 assert.match(source, /文本/);
 ```
 
-- [ ] **Step 2: Run the focused UI regression to verify it fails**
+- [x] **Step 2: Run the focused UI regression to verify it fails**
 
 Run:
 
@@ -307,7 +323,7 @@ Expected:
 - `FAIL`
 - assertions still finding settlement description/result fields or missing typed person controls
 
-- [ ] **Step 3: Rewrite the settlement and person authoring UI with creator-facing controls only**
+- [x] **Step 3: Rewrite the settlement and person authoring UI with creator-facing controls only**
 
 Modify `src/ui/main-ui/main-ui-flow.js` so the settlement editor layout looks like:
 
@@ -343,7 +359,7 @@ And update person custom-attribute rows to include:
 
 Do not render creator-visible settlement id, result id, or settlement description fields.
 
-- [ ] **Step 4: Run the focused UI regression to verify it passes**
+- [x] **Step 4: Run the focused UI regression to verify it passes**
 
 Run:
 
@@ -355,7 +371,7 @@ Expected:
 
 - `PASS` for the new UI-source assertions
 
-- [ ] **Step 5: Commit the UI slice**
+- [x] **Step 5: Commit the UI slice**
 
 Run:
 
@@ -385,7 +401,7 @@ git commit -m "feat: redesign settlement editor controls" -m "Summary:
   - import normalization for `contents[] + nextEventId`
   - fail-closed migration on ambiguous legacy `results[]`
 
-- [ ] **Step 1: Write failing validation and migration regressions**
+- [x] **Step 1: Write failing validation and migration regressions**
 
 Add tests covering:
 
@@ -397,7 +413,7 @@ assert.throws(() => importScriptEditorRuntimePack(files), /legacy settlement res
 
 Include one positive migration case where all old result rows point to the same `nextEventId` and the importer lowers it to settlement-level `nextEventId`.
 
-- [ ] **Step 2: Run the targeted validation regression to verify it fails**
+- [x] **Step 2: Run the targeted validation regression to verify it fails**
 
 Run:
 
@@ -410,7 +426,7 @@ Expected:
 - `FAIL`
 - exporter/importer/workspace-shell still accepting retired settlement-result ambiguity
 
-- [ ] **Step 3: Implement fail-closed validation and the one safe migration path**
+- [x] **Step 3: Implement fail-closed validation and the one safe migration path**
 
 Update export/import/workspace validation to enforce:
 
@@ -428,7 +444,7 @@ if (legacyResultsHaveDifferentNextEventIds) {
 
 Also remove export/load assumptions that settlement records always carry `results[]`.
 
-- [ ] **Step 4: Run the targeted validation regression to verify it passes**
+- [x] **Step 4: Run the targeted validation regression to verify it passes**
 
 Run:
 
@@ -440,7 +456,7 @@ Expected:
 
 - `PASS`
 
-- [ ] **Step 5: Commit the validation and migration slice**
+- [x] **Step 5: Commit the validation and migration slice**
 
 Run:
 
@@ -468,7 +484,7 @@ git commit -m "feat: enforce structured settlement validation" -m "Summary:
   - runtime applicators for boolean and enum `set`
   - final change-log entry and end-to-end regression proof
 
-- [ ] **Step 1: Write failing runtime settlement regressions**
+- [x] **Step 1: Write failing runtime settlement regressions**
 
 Add tests that expect:
 
@@ -482,7 +498,7 @@ assert.equal(result.people["person.hero"].mood, "inspired");
 
 Use one case each for numeric `增加`, numeric `减少`, numeric `设为`, boolean `设为`, and enum `设为`.
 
-- [ ] **Step 2: Run the targeted runtime regression to verify it fails**
+- [x] **Step 2: Run the targeted runtime regression to verify it fails**
 
 Run:
 
@@ -495,7 +511,7 @@ Expected:
 - `FAIL`
 - runtime settlement still ignoring structured settlement content
 
-- [ ] **Step 3: Implement typed runtime settlement application and document the behavior**
+- [x] **Step 3: Implement typed runtime settlement application and document the behavior**
 
 Update `src/core/runtime/runtime-settlement.ts` with a narrow typed applicator seam such as:
 
@@ -517,7 +533,7 @@ function applySettlementContent(
 
 Then append a `docs/change-log.md` entry describing the creator-visible settlement editor rewrite, typed person attributes, and runtime structured settlement execution.
 
-- [ ] **Step 4: Run the full verification pass**
+- [x] **Step 4: Run the full verification pass**
 
 Run:
 
@@ -530,7 +546,7 @@ Expected:
 
 - `PASS`
 
-- [ ] **Step 5: Commit the runtime and docs closeout slice**
+- [x] **Step 5: Commit the runtime and docs closeout slice**
 
 Run:
 
@@ -543,34 +559,34 @@ git commit -m "feat: execute structured settlement contents" -m "Summary:
 
 ## Exit Check
 
-- [ ] `Settlement editor no longer shows creator-visible settlement id, result id, or settlement description.`
-- [ ] `Settlement authoring uses settlement-level nextEventId and structured contents[].`
-- [ ] `Only calculable attributes appear in settlement content pickers.`
-- [ ] `Person custom attributes require creator-facing type selection using 数值 / 开关 / 选项 / 文本.`
-- [ ] `Runtime can consume structured settlement content directly without free-text interpretation.`
-- [ ] `Legacy ambiguous settlement-result data fails closed.`
-- [ ] Project progress sync is updated if the child state changed.
-- [ ] Closeout block is added before the child is marked `closed`.
+- [x] `Settlement editor no longer shows creator-visible settlement id, result id, or settlement description.`
+- [x] `Settlement authoring uses settlement-level nextEventId and structured contents[].`
+- [x] `Only calculable attributes appear in settlement content pickers.`
+- [x] `Person custom attributes require creator-facing type selection using 数值 / 开关 / 选项 / 文本.`
+- [x] `Runtime can consume structured settlement content directly without free-text interpretation.`
+- [x] `Legacy ambiguous settlement-result data fails closed.`
+- [x] Project progress sync is updated if the child state changed.
+- [x] Closeout block is added before the child is marked `closed`.
 
 ## Completion Checklist
 
-- [ ] Plan checkboxes updated
-- [ ] `Execution State` updated
-- [ ] `Progress Log` updated
-- [ ] Verification recorded
+- [x] Plan checkboxes updated
+- [x] `Execution State` updated
+- [x] `Progress Log` updated
+- [x] Verification recorded
 
 ## Child Closeout
 
-- Closed Child: `Replace when closing.`
-- Parent Task: `Replace when closing.`
-- Parent Stage: `Replace when closing.`
+- Closed Child: `Task 4: Consume Structured Settlement Content In Runtime And Close Out Docs`
+- Parent Task: `Script Editor Settlement Structured Authoring Implementation Plan`
+- Parent Stage: `Settlement structured authoring implementation`
 - Closeout Status: `closed`
-- Project Progress Synced: `yes/no`
-- Next Child: `Replace when closing.`
-- Next Child Status: `waiting/running/blocked/none`
-- Next Required Action: `Replace when closing.`
-- Next Entry Document: `docs/superpowers/project-progress.md`
-- Next Owner Document: `Replace when closing.`
-- Push Status: `success/failed`
-- Push Commit: `commit-sha-or-none`
-- Resume From: `Replace when closing.`
+- Project Progress Synced: `yes - checked docs/superpowers/project-progress.md and docs/blueprints/project-progress.md; no live pointer change required because both identify this plan as historical implementation evidence with no active child/queue.`
+- Next Child: `none`
+- Next Child Status: `none`
+- Next Required Action: `none`
+- Next Entry Document: `docs/blueprints/project-progress.md`
+- Next Owner Document: `docs/blueprints/plans/2026-07-24-event-canonical-reuse-routing-and-settlement-governance-target-plan.md`
+- Push Status: `not-requested`
+- Push Commit: `none`
+- Resume From: `No further child in this implementation plan; live repository entry remains docs/blueprints/project-progress.md.`

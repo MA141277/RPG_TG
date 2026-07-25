@@ -5,6 +5,17 @@
 `docs/change-log.md` 的正式定位是“历史记录 + 人类可读摘要”。
 它不是当前 Blueprint / legacy superpowers 治理的 live execution truth，不作为 resume entry、promotion gate、closeout gate 或固定同步门。
 
+## 2026-07-25 Structured Settlement Runtime Execution Closeout
+
+### Changed
+- Updated [src/core/runtime/runtime-settlement.ts](/D:/workspace/project/RPG_TG/src/core/runtime/runtime-settlement.ts:1) so runtime settlement can directly consume exported structured `contents[]` rows for `person`, `city`, and `building` targets without interpreting free-text result descriptions.
+- Updated [tests/robustness.test.cjs](/D:/workspace/project/RPG_TG/tests/robustness.test.cjs:25626) with runtime coverage for numeric add, numeric subtract, numeric set, boolean set, and enum set settlement content operations.
+- Closed out the settlement authoring rewrite landed across the prior slices: creator-visible settlement ids/result ids/descriptions are removed from authoring, settlement follow-up lives on settlement-level `nextEventId`, and person custom attributes expose typed creator-facing choices while preserving hidden runtime identity.
+
+### Impact
+- Event remains the only routing owner; settlement content rows now execute as typed state writes and do not introduce resolver, selector, or intermediate routing layers.
+- The structured settlement model is now covered from Script Editor authoring through export/import validation and runtime execution for the bounded `person / city / building` target families.
+
 ## 2026-07-25 Script Editor Settlement Domain Shape Convergence
 
 ### Changed

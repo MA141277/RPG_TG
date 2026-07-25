@@ -25626,6 +25626,95 @@ test("runtime settlement applies character numeric property mutation effects thr
   });
 });
 
+test("runtime settlement applies structured settlement content rows directly", () => {
+  const {
+    applySettlementContents,
+  } = require("../.test-dist/core/runtime/runtime-settlement.js");
+  const gameState = {
+    people: {
+      "person.hero": {
+        id: "person.hero",
+        stamina: 100,
+        mood: "steady",
+      },
+    },
+    cities: {
+      "city.start": {
+        id: "city.start",
+        prosperity: 100,
+        danger: 10,
+      },
+    },
+    buildings: {
+      "building.home": {
+        id: "building.home",
+        isOpen: true,
+        level: 1,
+      },
+    },
+  };
+  const settlement = {
+    id: "settlement.opening.structured",
+    title: "Opening Settlement",
+    contents: [
+      {
+        targetFamily: "person",
+        targetId: "person.hero",
+        attributeKey: "stamina",
+        attributeType: "number",
+        operation: "add",
+        value: 30,
+      },
+      {
+        targetFamily: "city",
+        targetId: "city.start",
+        attributeKey: "prosperity",
+        attributeType: "number",
+        operation: "subtract",
+        value: 10,
+      },
+      {
+        targetFamily: "city",
+        targetId: "city.start",
+        attributeKey: "danger",
+        attributeType: "number",
+        operation: "set",
+        value: 25,
+      },
+      {
+        targetFamily: "building",
+        targetId: "building.home",
+        attributeKey: "isOpen",
+        attributeType: "boolean",
+        operation: "set",
+        value: false,
+      },
+      {
+        targetFamily: "person",
+        targetId: "person.hero",
+        attributeKey: "mood",
+        attributeType: "enum",
+        operation: "set",
+        value: "inspired",
+      },
+    ],
+  };
+  const context = {
+    people: gameState.people,
+    cities: gameState.cities,
+    buildings: gameState.buildings,
+  };
+
+  const result = applySettlementContents(gameState, settlement, context);
+
+  assert.equal(result.people["person.hero"].stamina, 130);
+  assert.equal(result.cities["city.start"].prosperity, 90);
+  assert.equal(result.cities["city.start"].danger, 25);
+  assert.equal(result.buildings["building.home"].isOpen, false);
+  assert.equal(result.people["person.hero"].mood, "inspired");
+  assert.notEqual(result, gameState);
+});
+
 test("runtime dispatch propagates task character property mutation effect status", () => {
   const {
     dispatchRuntimeRequest,

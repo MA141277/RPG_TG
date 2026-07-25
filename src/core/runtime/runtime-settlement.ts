@@ -8,6 +8,39 @@ import { HOUSE_ACTIVITY_SEGMENTS_PER_DAY } from "../../application/house/house-a
 import { mutateCharacterNumericProperty } from "../../application/character/runtime-property-mutation";
 import { advanceGameStateTimeSegments } from "../../application/time/time-progression";
 
+export type ExportedSettlementContent = {
+  targetFamily: "person" | "city" | "building";
+  targetId: string;
+  attributeKey: string;
+  attributeType: "number" | "boolean" | "enum";
+  operation: "add" | "subtract" | "set";
+  value: string | number | boolean;
+};
+
+export type ExportedSettlement = {
+  contents?: readonly ExportedSettlementContent[];
+};
+
+type SettlementTargetRecord = Record<string, unknown>;
+type SettlementTargetCollection = Record<string, SettlementTargetRecord | undefined>;
+
+export type SettlementRuntimeTargetState = {
+  people?: SettlementTargetCollection;
+  cities?: SettlementTargetCollection;
+  buildings?: SettlementTargetCollection;
+};
+
+export type SettlementRuntimeContext = SettlementRuntimeTargetState;
+
+const SETTLEMENT_TARGET_COLLECTION_BY_FAMILY = {
+  person: "people",
+  city: "cities",
+  building: "buildings",
+} as const satisfies Record<
+  ExportedSettlementContent["targetFamily"],
+  keyof SettlementRuntimeTargetState
+>;
+
 export function applyEffects(
   state: RuntimeState,
   effects: Effect[]
@@ -18,6 +51,121 @@ export function applyEffects(
     emittedBy: "runtime-router",
     appliedBy: "runtime-settlement",
   }).state;
+}
+
+export function applySettlementContents<TState extends SettlementRuntimeTargetState>(
+  gameState: TState,
+  settlement: ExportedSettlement,
+  context: SettlementRuntimeContext = {}
+): TState {
+  let nextState: SettlementRuntimeTargetState = gameState;
+
+  for (const content of settlement.contents ?? []) {
+    nextState = applySettlementContent(nextState, content, context);
+  }
+
+  return nextState as TState;
+}
+
+function applySettlementContent(
+  state: SettlementRuntimeTargetState,
+  content: ExportedSettlementContent,
+  context: SettlementRuntimeContext
+): SettlementRuntimeTargetState {
+  if (content.attributeType === "number" && content.operation === "add") {
+    return applyNumericDelta(state, content, context, Number(content.value));
+  }
+  if (content.attributeType === "number" && content.operation === "subtract") {
+    return applyNumericDelta(state, content, context, -Number(content.value));
+  }
+  return applyTypedSet(state, content, context);
+}
+
+function applyNumericDelta(
+  state: SettlementRuntimeTargetState,
+  content: ExportedSettlementContent,
+  context: SettlementRuntimeContext,
+  delta: number
+): SettlementRuntimeTargetState {
+  if (!Number.isFinite(delta)) {
+    return state;
+  }
+
+  const currentValue = readSettlementTargetValue(state, content, context);
+  if (typeof currentValue !== "number" || !Number.isFinite(currentValue)) {
+    return state;
+  }
+
+  return patchSettlementTargetValue(state, content, context, currentValue + delta);
+}
+
+function applyTypedSet(
+  state: SettlementRuntimeTargetState,
+  content: ExportedSettlementContent,
+  context: SettlementRuntimeContext
+): SettlementRuntimeTargetState {
+  if (content.attributeType === "number") {
+    const numericValue = Number(content.value);
+    return Number.isFinite(numericValue)
+      ? patchSettlementTargetValue(state, content, context, numericValue)
+      : state;
+  }
+  if (content.attributeType === "boolean") {
+    return typeof content.value === "boolean"
+      ? patchSettlementTargetValue(state, content, context, content.value)
+      : state;
+  }
+  if (content.attributeType === "enum") {
+    return typeof content.value === "string"
+      ? patchSettlementTargetValue(state, content, context, content.value)
+      : state;
+  }
+  return state;
+}
+
+function readSettlementTargetValue(
+  state: SettlementRuntimeTargetState,
+  content: ExportedSettlementContent,
+  context: SettlementRuntimeContext
+): unknown {
+  const target = readSettlementTarget(state, content, context);
+  return target?.[content.attributeKey];
+}
+
+function patchSettlementTargetValue(
+  state: SettlementRuntimeTargetState,
+  content: ExportedSettlementContent,
+  context: SettlementRuntimeContext,
+  value: string | number | boolean
+): SettlementRuntimeTargetState {
+  const collectionKey =
+    SETTLEMENT_TARGET_COLLECTION_BY_FAMILY[content.targetFamily];
+  const collection = state[collectionKey] ?? context[collectionKey];
+  const target = collection?.[content.targetId];
+  if (collection == null || target == null) {
+    return state;
+  }
+
+  return {
+    ...state,
+    [collectionKey]: {
+      ...collection,
+      [content.targetId]: {
+        ...target,
+        [content.attributeKey]: value,
+      },
+    },
+  };
+}
+
+function readSettlementTarget(
+  state: SettlementRuntimeTargetState,
+  content: ExportedSettlementContent,
+  context: SettlementRuntimeContext
+): SettlementTargetRecord | undefined {
+  const collectionKey =
+    SETTLEMENT_TARGET_COLLECTION_BY_FAMILY[content.targetFamily];
+  return (state[collectionKey] ?? context[collectionKey])?.[content.targetId];
 }
 
 export function settleRuntimeEffects(
