@@ -15981,6 +15981,17 @@ test("script editor story/dialogue/event authoring helpers normalize bounded nar
   );
   settlementRecord = appendScriptEditorSettlementContent(settlementRecord);
   settlementRecord = removeScriptEditorSettlementContent(settlementRecord, 1);
+  settlementRecord = {
+    ...settlementRecord,
+    description: "Legacy settlement description must not survive normalization.",
+    results: [
+      {
+        id: "result.legacy",
+        label: "Legacy Result",
+        nextEventId: "event.legacy",
+      },
+    ],
+  };
   const normalizedSettlement = normalizeScriptEditorSettlementRecord(settlementRecord);
   const eventBinding = normalizeScriptEditorEventBindingRecord({
     ...createDefaultScriptEditorEventBindingRecord(0),

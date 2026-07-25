@@ -411,7 +411,6 @@ export function normalizeScriptEditorSettlementRecord(
   record: Partial<ScriptEditorSettlementRecord> & { id: string }
 ): ScriptEditorSettlementRecord {
   return {
-    ...record,
     id: normalizeString(record.id, "settlement.unknown"),
     title: normalizeString(record.title, record.id),
     nextEventId: normalizeOptionalTrimmedString(record.nextEventId),

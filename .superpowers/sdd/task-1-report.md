@@ -22,3 +22,17 @@ Status: DONE_WITH_CONCERNS
 ## Concerns
 - Full suite is not green because of the unrelated city-building source-pattern assertion above.
 - `src/ui/main-ui/main-ui-flow.js` still has legacy settlement-result authoring UI text/import names; compatibility exports now delegate those old names to the new content/settlement-level helpers without recreating `results`, because this task is not the full settlement UI rollout.
+
+## Fix Wave 1
+
+### Summary
+- Added a regression proving legacy settlement `description` and `results` input fields are stripped by `normalizeScriptEditorSettlementRecord()`.
+- Replaced the settlement normalizer spread return with a clean minimal settlement object.
+
+### TDD Evidence
+- Red: `node --test tests\robustness.test.cjs --test-name-pattern "settlement|person custom attribute"` failed before rebuilding/fixing with `true !== false` on the legacy `description` leakage assertion.
+- Green: after the normalizer fix and `npm.cmd run build:test`, the same focused command passed with 512 passing, 0 failing, 176 skipped.
+
+### Verification
+- `npm.cmd run build:test`: passed.
+- `node --test tests\robustness.test.cjs --test-name-pattern "settlement|person custom attribute"`: passed, 512 passing, 0 failing, 176 skipped.
