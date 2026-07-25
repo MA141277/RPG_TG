@@ -11,6 +11,9 @@ import type {
   ScriptEditorEventBindingRecord,
   ScriptEditorEventRecord,
   ScriptEditorEventType,
+  ScriptEditorProgressTrackBindingRecord,
+  ScriptEditorProgressTrackRecord,
+  ScriptEditorProgressTrackTierRecord,
   ScriptEditorEventTriggerTiming,
   ScriptEditorSettlementContentRecord,
   ScriptEditorSettlementRecord,
@@ -317,6 +320,42 @@ export function createDefaultScriptEditorSettlementRecord(
   };
 }
 
+export function createDefaultScriptEditorProgressTrackRecord(
+  indexOrId: number | string
+): ScriptEditorProgressTrackRecord {
+  const suffix = typeof indexOrId === "number" ? indexOrId + 1 : 1;
+  return {
+    id:
+      typeof indexOrId === "string"
+        ? indexOrId
+        : `progress-track.new.${suffix}`,
+    title: `阶段轨道 ${suffix}`,
+    metricLabel: "进度值",
+    ownerKind: "person",
+    allowDemotion: false,
+    tiers: [createDefaultScriptEditorProgressTrackTierRecord(0)],
+  };
+}
+
+export function createDefaultScriptEditorProgressTrackBindingRecord(
+  indexOrId: number | string
+): ScriptEditorProgressTrackBindingRecord {
+  const suffix = typeof indexOrId === "number" ? indexOrId + 1 : 1;
+  return {
+    id:
+      typeof indexOrId === "string"
+        ? indexOrId
+        : `progress-binding.new.${suffix}`,
+    trackId: "",
+    owner: {
+      ownerKind: "person",
+      ownerId: "",
+      ownerTag: "",
+    },
+    enabled: true,
+  };
+}
+
 export function createDefaultScriptEditorEventBindingRecord(
   indexOrId: number | string
 ): ScriptEditorEventBindingRecord {
@@ -415,6 +454,34 @@ export function normalizeScriptEditorSettlementRecord(
     title: normalizeString(record.title, record.id),
     nextEventId: normalizeOptionalTrimmedString(record.nextEventId),
     contents: (record.contents ?? []).map(normalizeScriptEditorSettlementContentRecord),
+  };
+}
+
+export function normalizeScriptEditorProgressTrackRecord(
+  record: Partial<ScriptEditorProgressTrackRecord> & { id: string }
+): ScriptEditorProgressTrackRecord {
+  return {
+    id: normalizeString(record.id, "progress-track.unknown"),
+    title: normalizeString(record.title, record.id),
+    metricLabel: normalizeString(record.metricLabel, "进度值"),
+    ownerKind: normalizeString(record.ownerKind, "person"),
+    allowDemotion: record.allowDemotion === true,
+    tiers: (record.tiers ?? []).map(normalizeScriptEditorProgressTrackTierRecord),
+  };
+}
+
+export function normalizeScriptEditorProgressTrackBindingRecord(
+  record: Partial<ScriptEditorProgressTrackBindingRecord> & { id: string }
+): ScriptEditorProgressTrackBindingRecord {
+  return {
+    id: normalizeString(record.id, "progress-binding.unknown"),
+    trackId: normalizeOptionalTrimmedString(record.trackId),
+    owner: {
+      ownerKind: normalizeString(record.owner?.ownerKind, "person"),
+      ownerId: normalizeOptionalTrimmedString(record.owner?.ownerId),
+      ownerTag: normalizeOptionalTrimmedString(record.owner?.ownerTag),
+    },
+    enabled: record.enabled !== false,
   };
 }
 
@@ -775,6 +842,89 @@ export function updateScriptEditorSettlementField(
     return { ...record, nextEventId: value.trim() };
   }
   return { ...record, [field]: value.trim() };
+}
+
+export function updateScriptEditorProgressTrackField(
+  record: ScriptEditorProgressTrackRecord,
+  field: "id" | "title" | "metricLabel" | "ownerKind" | "allowDemotion",
+  value: string | boolean
+): ScriptEditorProgressTrackRecord {
+  if (field === "allowDemotion") {
+    return { ...record, allowDemotion: value === true };
+  }
+  return {
+    ...record,
+    [field]: String(value).trim(),
+  };
+}
+
+export function appendScriptEditorProgressTrackTier(
+  record: ScriptEditorProgressTrackRecord
+): ScriptEditorProgressTrackRecord {
+  return {
+    ...record,
+    tiers: [
+      ...(record.tiers ?? []),
+      createDefaultScriptEditorProgressTrackTierRecord(record.tiers?.length ?? 0),
+    ],
+  };
+}
+
+export function removeScriptEditorProgressTrackTier(
+  record: ScriptEditorProgressTrackRecord,
+  index: number
+): ScriptEditorProgressTrackRecord {
+  return {
+    ...record,
+    tiers: (record.tiers ?? []).filter((_, tierIndex) => tierIndex !== index),
+  };
+}
+
+export function updateScriptEditorProgressTrackTierField(
+  record: ScriptEditorProgressTrackRecord,
+  index: number,
+  field:
+    | "id"
+    | "title"
+    | "threshold"
+    | "onEnterRepeatPolicy"
+    | "targetTierSettlementId",
+  value: string
+): ScriptEditorProgressTrackRecord {
+  return {
+    ...record,
+    tiers: (record.tiers ?? []).map((tier, tierIndex) =>
+      tierIndex === index
+        ? normalizeScriptEditorProgressTrackTierRecord({
+            ...tier,
+            [field]: value,
+          })
+        : tier
+    ),
+  };
+}
+
+export function updateScriptEditorProgressTrackBindingField(
+  record: ScriptEditorProgressTrackBindingRecord,
+  field: "id" | "trackId" | "enabled" | "ownerKind" | "ownerId" | "ownerTag",
+  value: string | boolean
+): ScriptEditorProgressTrackBindingRecord {
+  if (field === "enabled") {
+    return { ...record, enabled: value === true };
+  }
+  if (field === "ownerKind" || field === "ownerId" || field === "ownerTag") {
+    return {
+      ...record,
+      owner: {
+        ...record.owner,
+        [field]: String(value).trim(),
+      },
+    };
+  }
+  return {
+    ...record,
+    [field]: String(value).trim(),
+  };
 }
 
 export function appendScriptEditorSettlementContent(
@@ -1271,6 +1421,40 @@ function createDefaultScriptEditorSettlementContentRecord(): ScriptEditorSettlem
     attributeType: "number",
     operation: "set",
     value: 0,
+  };
+}
+
+function createDefaultScriptEditorProgressTrackTierRecord(
+  index: number
+): ScriptEditorProgressTrackTierRecord {
+  const suffix = index + 1;
+  return {
+    id: `progress-tier.${suffix}`,
+    title: `阶段 ${suffix}`,
+    threshold: index === 0 ? 0 : suffix * 10,
+    onEnterRepeatPolicy: "once-ever",
+    targetTierSettlementId: "",
+  };
+}
+
+function normalizeScriptEditorProgressTrackTierRecord(
+  record: Partial<ScriptEditorProgressTrackTierRecord> | undefined
+): ScriptEditorProgressTrackTierRecord {
+  const threshold =
+    typeof record?.threshold === "number"
+      ? record.threshold
+      : Number(String(record?.threshold ?? "").trim());
+  return {
+    id: normalizeString(record?.id, "progress-tier.unknown"),
+    title: normalizeString(record?.title, record?.id ?? "阶段"),
+    threshold: Number.isFinite(threshold) ? threshold : 0,
+    onEnterRepeatPolicy:
+      record?.onEnterRepeatPolicy === "once-per-entry"
+        ? "once-per-entry"
+        : "once-ever",
+    targetTierSettlementId: normalizeOptionalTrimmedString(
+      record?.targetTierSettlementId
+    ),
   };
 }
 

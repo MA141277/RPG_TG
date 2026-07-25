@@ -25947,6 +25947,7 @@ test("runtime settlement fails closed for invalid boolean and enum operations", 
   assert.equal(result.buildings["building.home"].isOpen, true);
   assert.equal(result.people["person.hero"].mood, "steady");
 });
+
 test("runtime dispatch propagates task character property mutation effect status", () => {
   const {
     dispatchRuntimeRequest,
@@ -26966,6 +26967,68 @@ test("script editor project definition declares progression track and binding fi
   assert.match(
     source,
     /progressTrackBindings: "\.\/progress-track-bindings\.json"/
+  );
+});
+
+test("script editor progression authoring exposes Chinese track and binding controls", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    "utf8"
+  );
+
+  assert.match(source, /阶段轨道/);
+  assert.match(source, /进度值/);
+  assert.match(source, /阶段/);
+  assert.match(source, /允许回退/);
+  assert.match(source, /data-script-editor-progress-track-field="title"/);
+  assert.match(source, /data-script-editor-progress-track-tier-field="threshold"/);
+  assert.match(source, /data-script-editor-progress-binding-field="ownerKind"/);
+  assert.doesNotMatch(source, /data-script-editor-progress-track-field="id"/);
+});
+
+test("script editor workflow helpers support progression draft upsert and remove", () => {
+  const {
+    createDefaultScriptEditorProjectDefinition,
+    createScriptEditorWorkflowRecordDraft,
+    upsertScriptEditorWorkflowRecord,
+    removeScriptEditorWorkflowRecord,
+  } = require("../.test-dist/application/script-editor/minimal-workflow.js");
+  let project = createDefaultScriptEditorProjectDefinition();
+
+  const trackDraft = createScriptEditorWorkflowRecordDraft("progressTracks", project);
+  project = upsertScriptEditorWorkflowRecord(project, "progressTracks", trackDraft);
+  assert.equal(
+    project.progressTracks.some((record) => record.id === trackDraft.id),
+    true
+  );
+
+  const bindingDraft = createScriptEditorWorkflowRecordDraft(
+    "progressTrackBindings",
+    project
+  );
+  project = upsertScriptEditorWorkflowRecord(
+    project,
+    "progressTrackBindings",
+    bindingDraft
+  );
+  assert.equal(
+    project.progressTrackBindings.some((record) => record.id === bindingDraft.id),
+    true
+  );
+
+  project = removeScriptEditorWorkflowRecord(project, "progressTracks", trackDraft.id);
+  project = removeScriptEditorWorkflowRecord(
+    project,
+    "progressTrackBindings",
+    bindingDraft.id
+  );
+  assert.equal(
+    project.progressTracks.some((record) => record.id === trackDraft.id),
+    false
+  );
+  assert.equal(
+    project.progressTrackBindings.some((record) => record.id === bindingDraft.id),
+    false
   );
 });
 

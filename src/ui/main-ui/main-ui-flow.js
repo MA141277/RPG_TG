@@ -135,6 +135,7 @@ import {
   appendScriptEditorDialogueParticipant,
   appendScriptEditorEventBindingConditionItem,
   appendScriptEditorEventRelationEntry,
+  appendScriptEditorProgressTrackTier,
   appendScriptEditorSettlementContent,
   appendScriptEditorStoryNodeRelation,
   createDefaultScriptEditorEventBindingRecord,
@@ -142,12 +143,15 @@ import {
   normalizeScriptEditorDialogueRecord,
   normalizeScriptEditorEventBindingRecord,
   normalizeScriptEditorEventRecord,
+  normalizeScriptEditorProgressTrackBindingRecord,
+  normalizeScriptEditorProgressTrackRecord,
   normalizeScriptEditorSettlementRecord,
   normalizeScriptEditorStoryNodeRecord,
   removeScriptEditorDialogueNode,
   removeScriptEditorDialogueParticipant,
   removeScriptEditorEventBindingConditionItem,
   removeScriptEditorEventRelationEntry,
+  removeScriptEditorProgressTrackTier,
   removeScriptEditorSettlementContent,
   removeScriptEditorStoryNodeRelation,
   SCRIPT_EDITOR_DIALOGUE_NODE_TYPES,
@@ -169,6 +173,9 @@ import {
   updateScriptEditorEventField,
   updateScriptEditorEventPreviewSummaryField,
   updateScriptEditorEventRelationField,
+  updateScriptEditorProgressTrackBindingField,
+  updateScriptEditorProgressTrackField,
+  updateScriptEditorProgressTrackTierField,
   updateScriptEditorSettlementContentField,
   updateScriptEditorSettlementField,
   updateScriptEditorStoryNodeField,
@@ -316,6 +323,22 @@ const SCRIPT_EDITOR_SETTLEMENT_NUMERIC_OPERATION_OPTIONS = [
 
 const SCRIPT_EDITOR_SETTLEMENT_SET_ONLY_OPERATION_OPTIONS = [
   { value: "set", label: "设为" },
+];
+
+const SCRIPT_EDITOR_PROGRESS_OWNER_KIND_OPTIONS = [
+  { value: "person", label: "人物" },
+  { value: "city", label: "城市" },
+  { value: "building", label: "建筑" },
+  { value: "dialogue", label: "对话" },
+  { value: "story", label: "剧情节点" },
+  { value: "minigame", label: "玩法" },
+  { value: "task", label: "任务" },
+  { value: "*", label: "全部对象" },
+];
+
+const SCRIPT_EDITOR_PROGRESS_TIER_REPEAT_POLICY_OPTIONS = [
+  { value: "once-ever", label: "仅首次进入触发" },
+  { value: "once-per-entry", label: "每次进入都触发" },
 ];
 
 const SCRIPT_EDITOR_SETTLEMENT_PERSON_BASE_ATTRIBUTE_OPTIONS = [
@@ -470,6 +493,8 @@ const SCRIPT_EDITOR_RECORD_SEARCH_FAMILY_ATTRIBUTES = {
   storyNodes: 'data-script-editor-record-search-family="storyNodes"',
   dialogues: 'data-script-editor-record-search-family="dialogues"',
   settlements: 'data-script-editor-record-search-family="settlements"',
+  progressTracks: 'data-script-editor-record-search-family="progressTracks"',
+  progressTrackBindings: 'data-script-editor-record-search-family="progressTrackBindings"',
   events: 'data-script-editor-record-search-family="events"',
   minigames: 'data-script-editor-record-search-family="minigames"',
   textEntries: 'data-script-editor-record-search-family="textEntries"',
@@ -547,6 +572,8 @@ export class MainUiFlow {
       portraits: "",
       portraitVariants: "",
       settlements: "",
+      progressTracks: "",
+      progressTrackBindings: "",
     };
     this.scriptEditorCityMountedBuildingUiState = {};
     this.scriptEditorPersonAttributePage = 1;
@@ -936,6 +963,13 @@ export class MainUiFlow {
       return this.renderScriptEditorSettlementEditor(records, selectedRecord);
     }
 
+    if (family === "progressTracks") {
+      return this.renderScriptEditorProgressTrackEditor(records, selectedRecord);
+    }
+
+    if (family === "progressTrackBindings") {
+      return this.renderScriptEditorProgressTrackBindingEditor(records, selectedRecord);
+    }
 
     if (family === "events") {
       return this.renderScriptEditorEventEditor(records, selectedRecord);
@@ -1114,6 +1148,8 @@ export class MainUiFlow {
       storyNodes: "",
       dialogues: "",
       settlements: "",
+      progressTracks: "",
+      progressTrackBindings: "",
       events: "",
       minigames: "",
       textEntries: "",
@@ -1855,6 +1891,21 @@ export class MainUiFlow {
     };
     const family = familyByTargetFamily[targetFamily] ?? "";
     return family.length === 0 ? [] : this.getScriptEditorCreatorRecordOptions(family);
+  }
+
+  getScriptEditorProgressOwnerKindLabel(ownerKind) {
+    return (
+      SCRIPT_EDITOR_PROGRESS_OWNER_KIND_OPTIONS.find((option) => option.value === ownerKind)
+        ?.label ?? ownerKind ?? "未设置对象"
+    );
+  }
+
+  getScriptEditorProgressBindingLabel(binding) {
+    const ownerKindLabel = this.getScriptEditorProgressOwnerKindLabel(
+      binding.owner?.ownerKind ?? ""
+    );
+    const ownerId = binding.owner?.ownerId?.trim?.() ?? "";
+    return ownerId.length > 0 ? `${ownerKindLabel} / ${ownerId}` : ownerKindLabel;
   }
 
   getScriptEditorSettlementAttributeOptions(content) {
@@ -4607,6 +4658,240 @@ export class MainUiFlow {
       .join("");
   }
 
+  renderScriptEditorProgressTrackEditor(records, selectedRecord) {
+    const track =
+      selectedRecord == null ? null : normalizeScriptEditorProgressTrackRecord(selectedRecord);
+    const filteredRecords = this.filterScriptEditorRecords("progressTracks", records);
+    const settlementOptions = this.getScriptEditorCreatorRecordOptions("settlements");
+
+    return `
+      <div class="c-script-editor-editor-card">
+        <div class="c-script-editor-record-layout c-script-editor-record-layout--narrative">
+          ${this.renderScriptEditorPaginatedRecordList({
+            family: "progressTracks",
+            records: filteredRecords,
+            ariaLabel: "阶段轨道列表",
+            modifierClass: "c-script-editor-record-list--narrative",
+            toolbar: `
+              <div class="c-script-editor-record-list__toolbar">
+                ${this.renderScriptEditorRecordListSearch("progressTracks", "搜索阶段轨道", "按阶段轨道名称搜索")}
+                <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="add-record">
+                  新增阶段轨道
+                </button>
+                <button
+                  type="button"
+                  class="c-main-ui-json-text-button"
+                  data-script-editor-action="remove-record"
+                  ${track == null ? "disabled" : ""}
+                >
+                  删除阶段轨道
+                </button>
+              </div>
+            `,
+            renderRecord: (record) => {
+              const normalizedRecord = normalizeScriptEditorProgressTrackRecord(record);
+              return `
+                <button
+                  type="button"
+                  class="c-script-editor-record-list__item c-script-editor-record-list__item--narrative ${record.id === selectedRecord?.id ? "is-selected" : ""}"
+                  data-script-editor-record-id="${escapeHtml(record.id)}"
+                >
+                  <strong>${escapeHtml(normalizedRecord.title)}</strong>
+                  <span>${escapeHtml(this.getScriptEditorProgressOwnerKindLabel(normalizedRecord.ownerKind))} / ${escapeHtml(normalizedRecord.metricLabel)}</span>
+                </button>
+              `;
+            },
+          })}
+          <div class="c-script-editor-narrative-editor">
+            ${
+              track == null
+                ? `<p class="c-script-editor-editor-card__hint">请选择一个阶段轨道后继续编辑。</p>`
+                : `
+                  <section class="c-script-editor-narrative-panel" aria-label="阶段轨道编辑面板">
+                    <div class="c-script-editor-form-grid">
+                      <label class="c-script-editor-form-field">
+                        <span>阶段轨道</span>
+                        <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(track.title)}" data-script-editor-progress-track-field="title" />
+                      </label>
+                      <label class="c-script-editor-form-field">
+                        <span>进度值</span>
+                        <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(track.metricLabel ?? "")}" data-script-editor-progress-track-field="metricLabel" />
+                      </label>
+                      <label class="c-script-editor-form-field">
+                        <span>适用对象</span>
+                        <select class="c-script-editor-form-field__input" data-script-editor-progress-track-field="ownerKind">
+                          ${this.renderScriptEditorSelectOptions(
+                            SCRIPT_EDITOR_PROGRESS_OWNER_KIND_OPTIONS,
+                            track.ownerKind ?? "",
+                            "未设置适用对象"
+                          )}
+                        </select>
+                      </label>
+                      <label class="c-script-editor-person-editor__toggle">
+                        <input type="checkbox" data-script-editor-progress-track-field="allowDemotion" ${track.allowDemotion === true ? "checked" : ""} />
+                        <span>允许回退</span>
+                      </label>
+                    </div>
+                    <section class="c-script-editor-minigame-list">
+                      <div class="c-script-editor-narrative-panel__header">
+                        <div>
+                          <p class="c-script-editor-editor-card__eyebrow">阶段</p>
+                          <h3 class="c-script-editor-editor-card__title">阶段设置</h3>
+                        </div>
+                        <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="add-progress-track-tier">
+                          新增阶段
+                        </button>
+                      </div>
+                      ${this.renderScriptEditorProgressTrackTierRows(track, settlementOptions)}
+                    </section>
+                  </section>
+                `
+            }
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  renderScriptEditorProgressTrackTierRows(track, settlementOptions) {
+    return (track.tiers ?? [])
+      .map(
+        (tier, index) => `
+          <article class="c-script-editor-minigame-list__route">
+            <div class="c-script-editor-form-grid">
+              <label class="c-script-editor-form-field">
+                <span>阶段</span>
+                <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(tier.title ?? "")}" data-script-editor-progress-track-tier-field="title" data-script-editor-progress-track-tier-index="${index}" />
+              </label>
+              <label class="c-script-editor-form-field">
+                <span>进度值门槛</span>
+                <input class="c-script-editor-form-field__input" type="number" value="${escapeHtml(String(tier.threshold ?? 0))}" data-script-editor-progress-track-tier-field="threshold" data-script-editor-progress-track-tier-index="${index}" />
+              </label>
+              <label class="c-script-editor-form-field">
+                <span>进入结算</span>
+                <select class="c-script-editor-form-field__input" data-script-editor-progress-track-tier-field="targetTierSettlementId" data-script-editor-progress-track-tier-index="${index}">
+                  ${this.renderScriptEditorSelectOptions(
+                    settlementOptions,
+                    tier.targetTierSettlementId ?? "",
+                    "不触发结算"
+                  )}
+                </select>
+              </label>
+              <label class="c-script-editor-form-field">
+                <span>重复策略</span>
+                <select class="c-script-editor-form-field__input" data-script-editor-progress-track-tier-field="onEnterRepeatPolicy" data-script-editor-progress-track-tier-index="${index}">
+                  ${this.renderScriptEditorSelectOptions(
+                    SCRIPT_EDITOR_PROGRESS_TIER_REPEAT_POLICY_OPTIONS,
+                    tier.onEnterRepeatPolicy ?? "once-ever",
+                    "仅首次进入触发"
+                  )}
+                </select>
+              </label>
+            </div>
+            <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="remove-progress-track-tier" data-script-editor-progress-track-tier-index="${index}">
+              删除阶段
+            </button>
+          </article>
+        `
+      )
+      .join("");
+  }
+
+  renderScriptEditorProgressTrackBindingEditor(records, selectedRecord) {
+    const binding =
+      selectedRecord == null
+        ? null
+        : normalizeScriptEditorProgressTrackBindingRecord(selectedRecord);
+    const filteredRecords = this.filterScriptEditorRecords("progressTrackBindings", records);
+    const trackOptions = this.getScriptEditorCreatorRecordOptions("progressTracks");
+
+    return `
+      <div class="c-script-editor-editor-card">
+        <div class="c-script-editor-record-layout c-script-editor-record-layout--narrative">
+          ${this.renderScriptEditorPaginatedRecordList({
+            family: "progressTrackBindings",
+            records: filteredRecords,
+            ariaLabel: "阶段轨道绑定列表",
+            modifierClass: "c-script-editor-record-list--narrative",
+            toolbar: `
+              <div class="c-script-editor-record-list__toolbar">
+                ${this.renderScriptEditorRecordListSearch("progressTrackBindings", "搜索绑定", "按绑定对象或轨道搜索")}
+                <button type="button" class="c-main-ui-json-text-button" data-script-editor-action="add-record">
+                  新增轨道绑定
+                </button>
+                <button
+                  type="button"
+                  class="c-main-ui-json-text-button"
+                  data-script-editor-action="remove-record"
+                  ${binding == null ? "disabled" : ""}
+                >
+                  删除轨道绑定
+                </button>
+              </div>
+            `,
+            renderRecord: (record) => {
+              const normalizedRecord = normalizeScriptEditorProgressTrackBindingRecord(record);
+              return `
+                <button
+                  type="button"
+                  class="c-script-editor-record-list__item c-script-editor-record-list__item--narrative ${record.id === selectedRecord?.id ? "is-selected" : ""}"
+                  data-script-editor-record-id="${escapeHtml(record.id)}"
+                >
+                  <strong>${escapeHtml(this.getScriptEditorProgressBindingLabel(normalizedRecord))}</strong>
+                  <span>${escapeHtml(normalizedRecord.trackId || "未绑定阶段轨道")}</span>
+                </button>
+              `;
+            },
+          })}
+          <div class="c-script-editor-narrative-editor">
+            ${
+              binding == null
+                ? `<p class="c-script-editor-editor-card__hint">请选择一个阶段轨道绑定后继续编辑。</p>`
+                : `
+                  <section class="c-script-editor-narrative-panel" aria-label="阶段轨道绑定编辑面板">
+                    <div class="c-script-editor-form-grid">
+                      <label class="c-script-editor-form-field">
+                        <span>阶段轨道</span>
+                        <select class="c-script-editor-form-field__input" data-script-editor-progress-binding-field="trackId">
+                          ${this.renderScriptEditorSelectOptions(
+                            trackOptions,
+                            binding.trackId ?? "",
+                            "未选择阶段轨道"
+                          )}
+                        </select>
+                      </label>
+                      <label class="c-script-editor-form-field">
+                        <span>绑定对象类型</span>
+                        <select class="c-script-editor-form-field__input" data-script-editor-progress-binding-field="ownerKind">
+                          ${this.renderScriptEditorSelectOptions(
+                            SCRIPT_EDITOR_PROGRESS_OWNER_KIND_OPTIONS.filter((option) => option.value !== "*"),
+                            binding.owner?.ownerKind ?? "",
+                            "未设置对象类型"
+                          )}
+                        </select>
+                      </label>
+                      <label class="c-script-editor-form-field">
+                        <span>对象标识</span>
+                        <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(binding.owner?.ownerId ?? "")}" data-script-editor-progress-binding-field="ownerId" />
+                      </label>
+                      <label class="c-script-editor-form-field">
+                        <span>对象标签</span>
+                        <input class="c-script-editor-form-field__input" type="text" value="${escapeHtml(binding.owner?.ownerTag ?? "")}" data-script-editor-progress-binding-field="ownerTag" />
+                      </label>
+                      <label class="c-script-editor-person-editor__toggle">
+                        <input type="checkbox" data-script-editor-progress-binding-field="enabled" ${binding.enabled !== false ? "checked" : ""} />
+                        <span>启用绑定</span>
+                      </label>
+                    </div>
+                  </section>
+                `
+            }
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
   renderScriptEditorMinigameEditor(records, selectedRecord) {
     const minigame =
       selectedRecord == null ? null : normalizeScriptEditorMinigameRecord(selectedRecord);
@@ -6824,6 +7109,55 @@ export class MainUiFlow {
       return;
     }
 
+    if (target.matches("[data-script-editor-progress-track-field]")) {
+      const field = target.dataset.scriptEditorProgressTrackField;
+      if (
+        field === "title" ||
+        field === "metricLabel" ||
+        field === "ownerKind" ||
+        field === "allowDemotion"
+      ) {
+        const nextValue =
+          field === "allowDemotion" && target instanceof globalThis.HTMLInputElement
+            ? target.checked
+            : target.value;
+        this.applyScriptEditorProgressTrackField(field, nextValue);
+      }
+      return;
+    }
+
+    if (target.matches("[data-script-editor-progress-track-tier-field]")) {
+      const field = target.dataset.scriptEditorProgressTrackTierField;
+      const index = Number.parseInt(
+        target.dataset.scriptEditorProgressTrackTierIndex ?? "-1",
+        10
+      );
+      if (
+        ["title", "threshold", "onEnterRepeatPolicy", "targetTierSettlementId"].includes(
+          field ?? ""
+        ) &&
+        Number.isInteger(index) &&
+        index >= 0
+      ) {
+        this.applyScriptEditorProgressTrackTierField(index, field, target.value);
+      }
+      return;
+    }
+
+    if (target.matches("[data-script-editor-progress-binding-field]")) {
+      const field = target.dataset.scriptEditorProgressBindingField;
+      if (
+        ["trackId", "ownerKind", "ownerId", "ownerTag", "enabled"].includes(field ?? "")
+      ) {
+        const nextValue =
+          field === "enabled" && target instanceof globalThis.HTMLInputElement
+            ? target.checked
+            : target.value;
+        this.applyScriptEditorProgressTrackBindingField(field, nextValue);
+      }
+      return;
+    }
+
     if (target.matches("[data-script-editor-event-field]")) {
       const field = target.dataset.scriptEditorEventField;
       if (
@@ -7822,6 +8156,22 @@ export class MainUiFlow {
 
     if (action === "remove-record") {
       this.removeScriptEditorRecord();
+      return;
+    }
+
+    if (action === "add-progress-track-tier") {
+      this.addScriptEditorProgressTrackTier();
+      return;
+    }
+
+    if (action === "remove-progress-track-tier") {
+      const tierIndex = Number.parseInt(
+        target.dataset.scriptEditorProgressTrackTierIndex ?? "-1",
+        10
+      );
+      if (Number.isInteger(tierIndex) && tierIndex >= 0) {
+        this.removeScriptEditorProgressTrackTier(tierIndex);
+      }
       return;
     }
 
@@ -10704,6 +11054,10 @@ export class MainUiFlow {
         return "事件";
       case "minigames":
         return "玩法";
+      case "progressTracks":
+        return "阶段轨道";
+      case "progressTrackBindings":
+        return "轨道绑定";
       default:
         return family;
     }
@@ -11009,6 +11363,136 @@ export class MainUiFlow {
     });
     this.scriptEditorNotice = null;
     this.render();
+  }
+
+  getSelectedScriptEditorProgressTrack() {
+    if (
+      this.scriptEditorProject == null ||
+      this.scriptEditorSelection.family !== "progressTracks" ||
+      this.scriptEditorSelection.entityId == null
+    ) {
+      return null;
+    }
+
+    const selectedTrack = this.scriptEditorProject.progressTracks?.find(
+      (trackRecord) => trackRecord.id === this.scriptEditorSelection.entityId
+    );
+    return selectedTrack == null
+      ? null
+      : normalizeScriptEditorProgressTrackRecord(selectedTrack);
+  }
+
+  replaceSelectedScriptEditorProgressTrack(nextTrack) {
+    if (
+      this.scriptEditorProject == null ||
+      this.scriptEditorSelection.family !== "progressTracks" ||
+      this.scriptEditorSelection.entityId == null
+    ) {
+      return;
+    }
+
+    this.commitScriptEditorProject({
+      ...this.scriptEditorProject,
+      progressTracks: (this.scriptEditorProject.progressTracks ?? []).map((trackRecord) =>
+        trackRecord.id === this.scriptEditorSelection.entityId ? nextTrack : trackRecord
+      ),
+    });
+    this.scriptEditorNotice = null;
+    this.render();
+  }
+
+  applyScriptEditorProgressTrackField(field, value) {
+    const track = this.getSelectedScriptEditorProgressTrack();
+    if (track == null) {
+      return;
+    }
+
+    this.replaceSelectedScriptEditorProgressTrack(
+      updateScriptEditorProgressTrackField(track, field, value)
+    );
+  }
+
+  addScriptEditorProgressTrackTier() {
+    const track = this.getSelectedScriptEditorProgressTrack();
+    if (track == null) {
+      return;
+    }
+
+    this.replaceSelectedScriptEditorProgressTrack(
+      appendScriptEditorProgressTrackTier(track)
+    );
+  }
+
+  removeScriptEditorProgressTrackTier(index) {
+    const track = this.getSelectedScriptEditorProgressTrack();
+    if (track == null) {
+      return;
+    }
+
+    this.replaceSelectedScriptEditorProgressTrack(
+      removeScriptEditorProgressTrackTier(track, index)
+    );
+  }
+
+  applyScriptEditorProgressTrackTierField(index, field, value) {
+    const track = this.getSelectedScriptEditorProgressTrack();
+    if (track == null) {
+      return;
+    }
+
+    this.replaceSelectedScriptEditorProgressTrack(
+      updateScriptEditorProgressTrackTierField(track, index, field, value)
+    );
+  }
+
+  getSelectedScriptEditorProgressTrackBinding() {
+    if (
+      this.scriptEditorProject == null ||
+      this.scriptEditorSelection.family !== "progressTrackBindings" ||
+      this.scriptEditorSelection.entityId == null
+    ) {
+      return null;
+    }
+
+    const selectedBinding = this.scriptEditorProject.progressTrackBindings?.find(
+      (bindingRecord) => bindingRecord.id === this.scriptEditorSelection.entityId
+    );
+    return selectedBinding == null
+      ? null
+      : normalizeScriptEditorProgressTrackBindingRecord(selectedBinding);
+  }
+
+  replaceSelectedScriptEditorProgressTrackBinding(nextBinding) {
+    if (
+      this.scriptEditorProject == null ||
+      this.scriptEditorSelection.family !== "progressTrackBindings" ||
+      this.scriptEditorSelection.entityId == null
+    ) {
+      return;
+    }
+
+    this.commitScriptEditorProject({
+      ...this.scriptEditorProject,
+      progressTrackBindings: (this.scriptEditorProject.progressTrackBindings ?? []).map(
+        (bindingRecord) =>
+          bindingRecord.id === this.scriptEditorSelection.entityId
+            ? nextBinding
+            : bindingRecord
+      ),
+    });
+    this.scriptEditorNotice = null;
+    this.render();
+  }
+
+  applyScriptEditorProgressTrackBindingField(field, value) {
+    const binding = this.getSelectedScriptEditorProgressTrackBinding();
+    if (binding == null) {
+      return;
+    }
+
+    this.replaceSelectedScriptEditorProgressTrackBinding(
+      updateScriptEditorProgressTrackBindingField(binding, field, value)
+    );
   }
 
   getSelectedScriptEditorEvent() {

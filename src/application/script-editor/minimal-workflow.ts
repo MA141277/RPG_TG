@@ -14,6 +14,8 @@ import {
   type ScriptEditorPortraitVariantRecord,
   type ScriptEditorMenuEntry,
   type ScriptEditorPersonRecord,
+  type ScriptEditorProgressTrackBindingRecord,
+  type ScriptEditorProgressTrackRecord,
   type ScriptEditorProjectDefinition,
   type ScriptEditorProjectFileKey,
   type ScriptEditorSettlementRecord,
@@ -36,6 +38,8 @@ import {
   createDefaultScriptEditorDialogueRecord,
   createDefaultScriptEditorEventBindingRecord,
   createDefaultScriptEditorEventRecord,
+  createDefaultScriptEditorProgressTrackBindingRecord,
+  createDefaultScriptEditorProgressTrackRecord,
   createDefaultScriptEditorSettlementRecord,
   createDefaultScriptEditorStoryNodeRecord,
 } from "./story-dialogue-event-authoring";
@@ -58,6 +62,8 @@ export const SCRIPT_EDITOR_MINIMAL_WORKFLOW_FAMILIES = [
   "settlements",
   "events",
   "eventBindings",
+  "progressTracks",
+  "progressTrackBindings",
 ] as const;
 
 export type ScriptEditorMinimalWorkflowFamily =
@@ -158,6 +164,8 @@ export function createDefaultScriptEditorProjectDefinition(input?: {
     buildingArrangements: [],
     cityEntries: [],
     settlements: [],
+    progressTracks: [],
+    progressTrackBindings: [],
     events: [
       {
         ...createDefaultScriptEditorEventRecord(0),
@@ -229,6 +237,8 @@ export function listScriptEditorWorkflowFamilyRecords(
   | ScriptEditorCityRecord[]
   | ScriptEditorBuildingRecord[]
   | ScriptEditorSettlementRecord[]
+  | ScriptEditorProgressTrackRecord[]
+  | ScriptEditorProgressTrackBindingRecord[]
   | ScriptEditorDialogueRecord[]
   | ScriptEditorEntityRecord[]
   | ScriptEditorMinigameRecord[]
@@ -267,6 +277,10 @@ export function listScriptEditorWorkflowFamilyRecords(
       return project.events;
     case "eventBindings":
       return project.eventBindings;
+    case "progressTracks":
+      return project.progressTracks ?? [];
+    case "progressTrackBindings":
+      return project.progressTrackBindings ?? [];
   }
 }
 
@@ -280,6 +294,8 @@ export function createScriptEditorWorkflowRecordDraft(
   | ScriptEditorCityRecord
   | ScriptEditorBuildingRecord
   | ScriptEditorSettlementRecord
+  | ScriptEditorProgressTrackRecord
+  | ScriptEditorProgressTrackBindingRecord
   | ScriptEditorDialogueRecord
   | ScriptEditorEntityRecord
   | ScriptEditorMinigameRecord
@@ -382,6 +398,18 @@ export function createScriptEditorWorkflowRecordDraft(
           ? legacyIndex
           : allocateNextScriptEditorProjectCanonicalId(project, "eventBindings")
       ) as ScriptEditorEventBindingRecord;
+    case "progressTracks":
+      return createDefaultScriptEditorProgressTrackRecord(
+        project == null
+          ? legacyIndex
+          : `progress-track.new.${(project.progressTracks?.length ?? 0) + 1}`
+      ) as ScriptEditorProgressTrackRecord;
+    case "progressTrackBindings":
+      return createDefaultScriptEditorProgressTrackBindingRecord(
+        project == null
+          ? legacyIndex
+          : `progress-binding.new.${(project.progressTrackBindings?.length ?? 0) + 1}`
+      ) as ScriptEditorProgressTrackBindingRecord;
   }
 }
 
@@ -393,6 +421,8 @@ export function upsertScriptEditorWorkflowRecord(
     | ScriptEditorCityRecord
     | ScriptEditorBuildingRecord
     | ScriptEditorSettlementRecord
+    | ScriptEditorProgressTrackRecord
+    | ScriptEditorProgressTrackBindingRecord
     | ScriptEditorDialogueRecord
     | ScriptEditorEntityRecord
     | ScriptEditorMinigameRecord
@@ -443,6 +473,8 @@ function replaceProjectFamily(
     | ScriptEditorCityRecord[]
     | ScriptEditorBuildingRecord[]
     | ScriptEditorSettlementRecord[]
+    | ScriptEditorProgressTrackRecord[]
+    | ScriptEditorProgressTrackBindingRecord[]
     | ScriptEditorDialogueRecord[]
     | ScriptEditorMinigameRecord[]
     | ScriptEditorFlowRecord[]
@@ -492,6 +524,16 @@ function replaceProjectFamily(
       return {
         ...project,
         eventBindings: nextRecords as ScriptEditorEventBindingRecord[],
+      };
+    case "progressTracks":
+      return {
+        ...project,
+        progressTracks: nextRecords as ScriptEditorProgressTrackRecord[],
+      };
+    case "progressTrackBindings":
+      return {
+        ...project,
+        progressTrackBindings: nextRecords as ScriptEditorProgressTrackBindingRecord[],
       };
   }
 }
