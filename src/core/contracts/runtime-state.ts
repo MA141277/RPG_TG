@@ -1,7 +1,12 @@
 import type { AppState } from "../../application/app-shell";
 import type { GameState } from "../../domain/game-state";
+import type { RuntimeProgressState } from "./progression-runtime";
 
-export type RuntimeCoreState = GameState;
+export type RuntimeCoreState = GameState & {
+  runtime: GameState["runtime"] & {
+    progression?: RuntimeProgressState;
+  };
+};
 
 export type RuntimeAppState = Pick<
   AppState,

@@ -11,6 +11,11 @@ import type {
   PortraitResourceDefinition,
   PortraitVariantDefinition,
 } from "./portrait-resource";
+import type {
+  ProgressTierDefinition,
+  ProgressTrackBinding,
+  ProgressTrackDefinition,
+} from "../core/contracts/progression-runtime";
 
 export const SCRIPT_EDITOR_PROJECT_KIND = "script-editor-project";
 export const SCRIPT_EDITOR_PROJECT_MANIFEST_FILE = "project.json";
@@ -33,6 +38,8 @@ export const SCRIPT_EDITOR_PROJECT_FILE_KEYS = [
   "settlements",
   "events",
   "eventBindings",
+  "progressTracks",
+  "progressTrackBindings",
   "quests",
   "activities",
   "cards",
@@ -71,6 +78,8 @@ export const SCRIPT_EDITOR_PROJECT_CANONICAL_FILES: Record<
   settlements: "./settlements.json",
   events: "./events.json",
   eventBindings: "./event-bindings.json",
+  progressTracks: "./progress-tracks.json",
+  progressTrackBindings: "./progress-track-bindings.json",
   quests: "./quests.json",
   activities: "./activities.json",
   cards: "./cards.json",
@@ -126,6 +135,9 @@ export type ScriptEditorPersonTradeBinding = {
 
 export type ScriptEditorPortraitResourceRecord = PortraitResourceDefinition;
 export type ScriptEditorPortraitVariantRecord = PortraitVariantDefinition;
+export type ScriptEditorProgressTrackTierRecord = ProgressTierDefinition;
+export type ScriptEditorProgressTrackRecord = ProgressTrackDefinition;
+export type ScriptEditorProgressTrackBindingRecord = ProgressTrackBinding;
 
 export type ScriptEditorMenuTargetFamily =
   | "dialogue"
@@ -701,6 +713,8 @@ export type ScriptEditorProjectDefinition = {
   settlements: ScriptEditorSettlementRecord[];
   events: ScriptEditorEventRecord[];
   eventBindings: ScriptEditorEventBindingRecord[];
+  progressTracks?: ScriptEditorProgressTrackRecord[];
+  progressTrackBindings?: ScriptEditorProgressTrackBindingRecord[];
   quests: ScriptEditorEntityRecord[];
   activities: ScriptEditorActivityRecord[];
   cards: ScriptEditorEntityRecord[];

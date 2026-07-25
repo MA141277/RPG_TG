@@ -5,6 +5,18 @@
 `docs/change-log.md` 的正式定位是“历史记录 + 人类可读摘要”。
 它不是当前 Blueprint / legacy superpowers 治理的 live execution truth，不作为 resume entry、promotion gate、closeout gate 或固定同步门。
 
+## 2026-07-25 Generic Progression Track Task 1 Contracts And Schema
+
+### Changed
+- Added [src/core/contracts/progression-runtime.ts](/D:/workspace/project/RPG_TG/src/core/contracts/progression-runtime.ts:1) with the first generic progression-track contract slice: `ProgressTrackDefinition`, `ProgressTrackBinding`, `ProgressTrackRuntimeState`, `RuntimeProgressState`, and `ProgressionTierSettlementPayload`.
+- Updated [src/core/contracts/runtime-state.ts](/D:/workspace/project/RPG_TG/src/core/contracts/runtime-state.ts:1) so shared runtime state now reserves `core.runtime.progression` without replacing the existing `GameState`-owned runtime partition.
+- Updated [src/domain/script-editor-project.ts](/D:/workspace/project/RPG_TG/src/domain/script-editor-project.ts:1) and [src/application/script-editor/editor-project-loader.ts](/D:/workspace/project/RPG_TG/src/application/script-editor/editor-project-loader.ts:1) so Script Editor project schema now declares `progress-tracks.json` and `progress-track-bindings.json`, with load/save normalization to empty arrays when those resources are not yet authored.
+- Updated [tests/robustness.test.cjs](/D:/workspace/project/RPG_TG/tests/robustness.test.cjs:1) with Task 1 coverage for the new contract exports, unified runtime-state seam, canonical project files, and project save/load defaults.
+
+### Impact
+- Event remains the only formal routing owner. This slice adds only contract, runtime-state, and project-schema groundwork for generic progression tracks.
+- No progression runtime dispatch, no settlement execution behavior, and no direct progress mutation path were introduced in this task.
+
 ## 2026-07-25 Structured Settlement Runtime Execution Closeout
 
 ### Changed

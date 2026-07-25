@@ -16,6 +16,8 @@ import { normalizeScriptEditorProjectCompletionState } from "./project-completio
 const OPTIONAL_SCRIPT_EDITOR_PROJECT_FILE_KEYS = new Set<ScriptEditorProjectFileKey>([
   "buildingArrangements",
   "eventBindings",
+  "progressTracks",
+  "progressTrackBindings",
   "flows",
   "portraits",
   "portraitVariants",
@@ -115,6 +117,14 @@ export function parseScriptEditorProject(
     value.eventBindings ?? [],
     "script editor project eventBindings"
   );
+  assertEntityRecordArray(
+    value.progressTracks ?? [],
+    "script editor project progressTracks"
+  );
+  assertEntityRecordArray(
+    value.progressTrackBindings ?? [],
+    "script editor project progressTrackBindings"
+  );
   assertEntityRecordArray(value.quests, "script editor project quests");
   assertEntityRecordArray(value.activities, "script editor project activities");
   assertEntityRecordArray(value.cards, "script editor project cards");
@@ -168,6 +178,14 @@ export function parseScriptEditorProject(
       (value.buildingArrangements ?? []) as ScriptEditorProjectDefinition["buildingArrangements"],
     settlements: (value.settlements ?? []) as ScriptEditorProjectDefinition["settlements"],
     eventBindings: (value.eventBindings ?? []) as ScriptEditorProjectDefinition["eventBindings"],
+    progressTracks:
+      (value.progressTracks ?? []) as NonNullable<
+        ScriptEditorProjectDefinition["progressTracks"]
+      >,
+    progressTrackBindings:
+      (value.progressTrackBindings ?? []) as NonNullable<
+        ScriptEditorProjectDefinition["progressTrackBindings"]
+      >,
     flows: (value.flows ?? []) as ScriptEditorProjectDefinition["flows"],
   };
 }

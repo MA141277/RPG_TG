@@ -3908,6 +3908,10 @@ test("script editor project save emits canonical split files", async () => {
   const manifest = JSON.parse(serializedFiles["project.json"]);
   const savedStoryPack = JSON.parse(serializedFiles["story-pack.json"]);
   const savedPeople = JSON.parse(serializedFiles["people.json"]);
+  const savedProgressTracks = JSON.parse(serializedFiles["progress-tracks.json"]);
+  const savedProgressTrackBindings = JSON.parse(
+    serializedFiles["progress-track-bindings.json"]
+  );
   const savedSettlements = JSON.parse(serializedFiles["settlements.json"]);
   const savedEventBindings = JSON.parse(serializedFiles["event-bindings.json"]);
   const loadedProject = await loadScriptEditorProjectFromFiles(
@@ -3917,13 +3921,22 @@ test("script editor project save emits canonical split files", async () => {
   assert.equal(manifest.kind, "script-editor-project");
   assert.equal(Object.hasOwn(serializedFiles, "pack.json"), false);
   assert.equal(manifest.files.storyPack, "./story-pack.json");
+  assert.equal(manifest.files.progressTracks, "./progress-tracks.json");
+  assert.equal(
+    manifest.files.progressTrackBindings,
+    "./progress-track-bindings.json"
+  );
   assert.equal(manifest.files.settlements, "./settlements.json");
   assert.equal(manifest.files.eventBindings, "./event-bindings.json");
   assert.equal(manifest.files.effectBundles, "./effect-bundles.json");
   assert.equal(savedStoryPack.id, project.storyPack.id);
   assert.equal(savedPeople[0]?.id, project.people[0]?.id);
+  assert.deepEqual(savedProgressTracks, []);
+  assert.deepEqual(savedProgressTrackBindings, []);
   assert.deepEqual(savedSettlements, []);
   assert.equal(savedEventBindings[0]?.id, "binding.opening.city-enter");
+  assert.deepEqual(loadedProject.progressTracks, []);
+  assert.deepEqual(loadedProject.progressTrackBindings, []);
   assert.deepEqual(loadedProject.settlements, []);
   assert.equal(loadedProject.eventBindings[0]?.eventId, "event.opening");
 });
@@ -26525,6 +26538,43 @@ test("shared runtime dispatch routes RuntimeState instead of CoreGameState only"
 
   assert.match(dispatchSource, /RuntimeState/);
   assert.match(routerSource, /RuntimeState/);
+});
+
+test("progression runtime contract exports canonical track and settlement payload seams", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/core/contracts/progression-runtime.ts"),
+    "utf8"
+  );
+
+  assert.match(source, /export type ProgressTrackDefinition = \{/);
+  assert.match(source, /export type ProgressTrackBinding = \{/);
+  assert.match(source, /export type ProgressTrackRuntimeState = \{/);
+  assert.match(source, /export type ProgressionTierSettlementPayload = \{/);
+  assert.match(source, /targetTierSettlementId\?: string \| null;/);
+});
+
+test("runtime state reserves a unified progression runtime partition", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/core/contracts/runtime-state.ts"),
+    "utf8"
+  );
+
+  assert.match(source, /progression\?: RuntimeProgressState/);
+});
+
+test("script editor project definition declares progression track and binding files", () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), "src/domain/script-editor-project.ts"),
+    "utf8"
+  );
+
+  assert.match(source, /"progressTracks"/);
+  assert.match(source, /"progressTrackBindings"/);
+  assert.match(source, /progressTracks: "\.\/progress-tracks\.json"/);
+  assert.match(
+    source,
+    /progressTrackBindings: "\.\/progress-track-bindings\.json"/
+  );
 });
 
 test("interactive runtime returns shared RuntimeResult instead of private appState result", () => {
