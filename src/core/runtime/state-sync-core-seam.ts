@@ -104,27 +104,6 @@ function applyRuntimeStateToAppState<TAppState extends RuntimeAppStateInput>(
   } as TAppState;
 }
 
-function canonicalFromLegacyRuntimeState(
-  state: LegacyBridgeRuntimeState | undefined
-): CanonicalRuntimeState {
-  if (state == null) {
-    throw new Error("StateSync Runtime requires runtime state input.");
-  }
-
-  return normalizeRuntimeState({
-    core: state.core,
-    tasks: {},
-    events: {},
-    narrative: {},
-    world: {},
-    interactive: {
-      ...state.app,
-      core: state.core,
-    },
-    modules: {},
-  });
-}
-
 function syncAppState(
   runtimeState: CanonicalRuntimeState,
   appState: AppStateBridge | undefined
@@ -133,13 +112,13 @@ function syncAppState(
 }
 
 function hydrateRuntimeState(
-  saveState: SaveState | undefined,
-  legacyRuntimeState: LegacyBridgeRuntimeState | undefined
+  saveState: SaveState | undefined
 ): CanonicalRuntimeState {
-  return (
-    hydrateCanonicalRuntimeState(saveState) ??
-    canonicalFromLegacyRuntimeState(legacyRuntimeState)
-  );
+  const hydrated = hydrateCanonicalRuntimeState(saveState);
+  if (hydrated == null) {
+    throw new Error("StateSync Runtime requires canonical save state input.");
+  }
+  return hydrated;
 }
 
 function createPresentationInput(
@@ -159,7 +138,6 @@ function createSaveState(
 export const stateSyncCoreSeam = {
   createRuntimeStateFromAppState,
   applyRuntimeStateToAppState,
-  canonicalFromLegacyRuntimeState,
   syncAppState,
   hydrateRuntimeState,
   normalizeRuntimeState,

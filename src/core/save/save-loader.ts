@@ -1,11 +1,11 @@
 import type { SaveEnvelope } from "./save-envelope";
-import { migrateSaveEnvelope } from "./save-migrations";
+import { normalizeSaveEnvelope } from "./save-migrations";
 
 export function loadSaveEnvelope(
   envelope: Record<string, unknown>,
   input: { availableModIds: string[] }
 ): SaveEnvelope {
-  const migrated = migrateSaveEnvelope(envelope);
+  const migrated = normalizeSaveEnvelope(envelope);
 
   const canRestoreFromSource =
     migrated.selectedModSource != null &&

@@ -26061,28 +26061,39 @@ test("child 29 main.ts primary startup no longer depends on legacy startup adapt
   );
 });
 
-test("loadSaveEnvelope normalizes a legacy save into the current envelope", async () => {
-  const { loadSaveEnvelope } = require("../.test-dist/core/save/save-loader.js");
-  const normalized = loadSaveEnvelope(
-    {
-      version: "0.9.0",
-      selectedModId: "builtin.default",
-      state: {
-        flags: { started: true },
-        variables: { stage: 1 },
-      },
-    },
-    { availableModIds: ["builtin.default"] }
+test("save loading rejects retired legacy envelopes after cutover", () => {
+  const saveMigrationsSource = fs.readFileSync(
+    path.join(process.cwd(), "src/core/save/save-migrations.ts"),
+    "utf8"
+  );
+  const seamSource = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/state-sync-core-seam.ts"),
+    "utf8"
   );
 
-  assert.equal(normalized.selectedModId, "builtin.default");
-  assert.equal(normalized.engineState.selectedModId, "builtin.default");
-  assert.deepEqual(normalized.selectedModSource, {
-    kind: "builtin",
-    modId: "builtin.default",
-  });
-  assert.equal(normalized.runtimeState.flags.started, true);
-  assert.equal(normalized.runtimeState.variables.stage, 1);
+  assert.doesNotMatch(saveMigrationsSource, /\blegacyState\b/);
+  assert.doesNotMatch(saveMigrationsSource, /export function migrateSaveEnvelope/);
+  assert.doesNotMatch(seamSource, /canonicalFromLegacyRuntimeState/);
+  assert.doesNotMatch(seamSource, /legacyRuntimeState/);
+});
+
+test("loadSaveEnvelope rejects retired legacy save envelopes", async () => {
+  const { loadSaveEnvelope } = require("../.test-dist/core/save/save-loader.js");
+  assert.throws(
+    () =>
+      loadSaveEnvelope(
+        {
+          version: "0.9.0",
+          selectedModId: "builtin.default",
+          state: {
+            flags: { started: true },
+            variables: { stage: 1 },
+          },
+        },
+        { availableModIds: ["builtin.default"] }
+      ),
+    /unsupported save format|runtimeState|engineState/i
+  );
 });
 
 test("loadSaveEnvelope rejects a missing selected mod id", async () => {
@@ -26152,18 +26163,13 @@ test("serializeSaveEnvelope preserves unknown mod payload after load", async () 
   assert.deepEqual(parsed.modState["unknown.mod"], { nested: { keep: true } });
 });
 
-test("save migration upgrades legacy runtime state to the current envelope version", async () => {
-  const { migrateSaveEnvelope } = require("../.test-dist/core/save/save-migrations.js");
-  const migrated = migrateSaveEnvelope({
-    version: "0.8.0",
-    selectedModId: "builtin.default",
-    state: {
-      flags: { started: true },
-    },
-  });
+test("save migration module rejects direct legacy envelope upgrade requests", async () => {
+  const saveMigrationsSource = fs.readFileSync(
+    path.join(process.cwd(), "src/core/save/save-migrations.ts"),
+    "utf8"
+  );
 
-  assert.equal(migrated.version, "1.0.0");
-  assert.equal(migrated.runtimeState.flags.started, true);
+  assert.doesNotMatch(saveMigrationsSource, /export function migrateSaveEnvelope/);
 });
 
 test("runtime request contract supports navigation external entry ids", async () => {
@@ -26971,7 +26977,7 @@ test("legacy cutover inventory separates canonical keep fields from residue cand
     assert.doesNotMatch(runtimeSettlementSource, /baseAttributes\.outputMultiplier/);
     assert.doesNotMatch(runtimeSettlementSource, /baseAttributes\.damaged/);
     assert.doesNotMatch(schemaSource, /\bpopulation\?\s*:\s*number\b/);
-    assert.match(saveMigrationsSource, /export function migrateSaveEnvelope/);
+    assert.doesNotMatch(saveMigrationsSource, /export function migrateSaveEnvelope/);
     assert.doesNotMatch(
       saveMigrationsSource,
       /baseAttributes\.(security|level|outputMultiplier|damaged)|\bdanger\b|\bpopulation\b/
@@ -32708,7 +32714,7 @@ test("state sync runtime hides app-state canonicalization behind one core seam",
   assert.match(seamSource, /export const stateSyncCoreSeam = \{/);
   assert.match(seamSource, /createRuntimeStateFromAppState/);
   assert.match(seamSource, /applyRuntimeStateToAppState/);
-  assert.match(seamSource, /canonicalFromLegacyRuntimeState/);
+  assert.doesNotMatch(seamSource, /canonicalFromLegacyRuntimeState/);
   assert.match(seamSource, /syncAppState/);
   assert.doesNotMatch(runtimeSource, /export type RuntimeStateBridgeInput/);
   assert.doesNotMatch(runtimeSource, /export function createRuntimeBridgeState/);

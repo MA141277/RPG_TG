@@ -49,7 +49,6 @@ export type StateSyncTrigger =
 
 export type StateSyncContext = {
   runtimeState?: CanonicalRuntimeState;
-  legacyRuntimeState?: LegacyBridgeRuntimeState;
   appState?: AppStateBridge;
   saveState?: SaveState;
   presentationInput?: PresentationInput;

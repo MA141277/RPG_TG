@@ -60,10 +60,7 @@ export function syncState(
   let runtimeState =
     context.runtimeState ??
     stateSyncCoreSeam.normalizeRuntimeState(
-      stateSyncCoreSeam.hydrateRuntimeState(
-        context.saveState,
-        context.legacyRuntimeState
-      )
+      stateSyncCoreSeam.hydrateRuntimeState(context.saveState)
     );
 
   if (trigger.type === "mod-activated") {
