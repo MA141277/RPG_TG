@@ -412,12 +412,8 @@ function assertRuntimeSettlementDefinitions(
       `scenario settlements[${settlementIndex}]`
     );
     if (Object.hasOwn(settlementDefinition, "results")) {
-      assertLegacySettlementResultsRouteUnambiguously(
-        settlementDefinition.results,
-        settlementIndex,
-        typeof settlementDefinition.nextEventId === "string"
-          ? settlementDefinition.nextEventId.trim()
-          : ""
+      throw new Error(
+        `scenario settlements[${settlementIndex}].results is a retired routing field and is not supported.`
       );
     }
     if (settlementDefinition.contents != null) {
@@ -719,42 +715,6 @@ function assertRuntimeProgressTrackDefinitions(
       }
     });
   });
-}
-
-function assertLegacySettlementResultsRouteUnambiguously(
-  results: unknown,
-  settlementIndex: number,
-  settlementNextEventId: string
-): void {
-  assertArray(results, `scenario settlements[${settlementIndex}].results`);
-  const nextEventIds = new Set<string>();
-  results.forEach((resultDefinition, resultIndex) => {
-    assertObject(
-      resultDefinition,
-      `scenario settlements[${settlementIndex}].results[${resultIndex}]`
-    );
-    const nextEventId =
-      typeof resultDefinition.nextEventId === "string"
-        ? resultDefinition.nextEventId.trim()
-        : "";
-    nextEventIds.add(nextEventId);
-  });
-
-  if (nextEventIds.size > 1) {
-    throw new Error(
-      "Ambiguous legacy settlement result routing must fail closed."
-    );
-  }
-  const legacyNextEventId = [...nextEventIds][0] ?? "";
-  if (
-    legacyNextEventId.length > 0 &&
-    settlementNextEventId.length > 0 &&
-    legacyNextEventId !== settlementNextEventId
-  ) {
-    throw new Error(
-      "Conflicting legacy settlement result routing and settlement nextEventId is ambiguous and must fail closed."
-    );
-  }
 }
 
 function assertRuntimeEventsPreserveCanonicalRoutingContracts(

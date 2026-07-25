@@ -40,7 +40,7 @@ import type { EventDefinition } from "../../domain/event";
 import type { LocationAccessDefinition } from "../../domain/location-access";
 import type { PlayableIntegrationDefinition } from "../../core/contracts/playable-runtime";
 
-export type ScriptEditorCompatibilityImportDiagnostic = {
+export type ScriptEditorRuntimePackImportDiagnostic = {
   code:
     | "unsupported-family"
     | "missing-field"
@@ -216,7 +216,7 @@ export async function loadScriptEditorProjectFromScenarioPackUrl(
 
 export function validateScenarioPackForScriptEditorImport(
   value: unknown
-): ScriptEditorCompatibilityImportDiagnostic[] {
+): ScriptEditorRuntimePackImportDiagnostic[] {
   const pack = parseScenarioPack(value);
   const rawPack = pack as Record<string, unknown>;
 
@@ -678,7 +678,12 @@ function mapImportedSettlements(
 
     const settlement = value as Record<string, unknown>;
     const id = readString(settlement.id) || `settlement.imported.${index + 1}`;
-    const nextEventId = readImportedSettlementNextEventId(settlement);
+    if (Object.hasOwn(settlement, "results")) {
+      throw new Error(
+        `Imported settlements[${index}] uses retired results routing and is not supported.`
+      );
+    }
+    const nextEventId = readString(settlement.nextEventId);
     const contents = Array.isArray(settlement.contents)
       ? settlement.contents.map((content, contentIndex) =>
           mapImportedSettlementContent(
@@ -697,47 +702,6 @@ function mapImportedSettlements(
       ...(contents.length === 0 ? {} : { contents }),
     };
   });
-}
-
-function readImportedSettlementNextEventId(
-  settlement: Record<string, unknown>
-): string {
-  if (!Object.hasOwn(settlement, "results")) {
-    return readString(settlement.nextEventId);
-  }
-
-  const results = settlement.results;
-  if (!Array.isArray(results)) {
-    throw new Error("Imported legacy settlement results must be an array.");
-  }
-
-  const nextEventIds = new Set<string>();
-  for (const result of results) {
-    if (result == null || typeof result !== "object" || Array.isArray(result)) {
-      throw new Error("Imported legacy settlement result must be an object.");
-    }
-    const nextEventId = readString((result as Record<string, unknown>).nextEventId);
-    nextEventIds.add(nextEventId);
-  }
-
-  if (nextEventIds.size > 1) {
-    throw new Error(
-      "Ambiguous legacy settlement result routing must fail closed."
-    );
-  }
-
-  const legacyNextEventId = [...nextEventIds][0] ?? "";
-  const settlementNextEventId = readString(settlement.nextEventId);
-  if (
-    legacyNextEventId.length > 0 &&
-    settlementNextEventId.length > 0 &&
-    legacyNextEventId !== settlementNextEventId
-  ) {
-    throw new Error(
-      "Conflicting legacy settlement result routing and settlement nextEventId is ambiguous and must fail closed."
-    );
-  }
-  return legacyNextEventId.length === 0 ? settlementNextEventId : legacyNextEventId;
 }
 
 function mapImportedSettlementContent(
@@ -1771,10 +1735,10 @@ function cloneJsonCompatibleValue(value: unknown): unknown {
 }
 
 function formatDiagnostics(
-  diagnostics: ScriptEditorCompatibilityImportDiagnostic[]
+  diagnostics: ScriptEditorRuntimePackImportDiagnostic[]
 ): string {
   return [
-    "Script editor compatibility import validation failed.",
+    "Script editor runtime-pack import validation failed.",
     ...diagnostics.map(
       (diagnostic) => `- ${diagnostic.fieldPath}: ${diagnostic.message}`
     ),

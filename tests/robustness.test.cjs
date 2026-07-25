@@ -8070,7 +8070,7 @@ test("script editor runtime import fails closed on ambiguous legacy settlement r
       loadScriptEditorProjectFromScenarioPackFiles(
         createImportedFilesFromSerializedJsonRecord(files, "ambiguous-legacy-settlement-pack")
       ),
-    /legacy settlement result|ambiguous nextEventId/i
+    /results|retired routing field|nextEventId/i
   );
 });
 
@@ -8127,7 +8127,7 @@ test("script editor runtime import fails closed on mixed empty legacy settlement
     } = require("../.test-dist/application/script-editor/runtime-pack-import.js");
     assert.throws(
       () => importScenarioPackToScriptEditorProject(pack),
-      /legacy settlement result|ambiguous nextEventId/i
+      /results|retired routing field|nextEventId/i
     );
   } finally {
     loaderModule.parseScenarioPack = originalParseScenarioPack;
@@ -8231,11 +8231,26 @@ test("script editor runtime import rejects conflicting legacy and settlement nex
           "conflicting-legacy-settlement-pack"
         )
       ),
-    /conflicting|ambiguous|nextEventId/i
+    /results|retired routing field|nextEventId/i
   );
 });
 
-test("script editor runtime import migrates legacy settlement result routing when unambiguous", async () => {
+test("runtime import and scenario loader reject compatibility paths after cutover", () => {
+  const importSource = fs.readFileSync(
+    path.join(process.cwd(), "src/application/script-editor/runtime-pack-import.ts"),
+    "utf8"
+  );
+  const loaderSource = fs.readFileSync(
+    path.join(process.cwd(), "src/application/scenario/scenario-pack-loader.ts"),
+    "utf8"
+  );
+
+  assert.doesNotMatch(importSource, /compatibility import/i);
+  assert.doesNotMatch(importSource, /readImportedSettlementNextEventId/);
+  assert.doesNotMatch(loaderSource, /assertLegacySettlementResultsRouteUnambiguously/);
+});
+
+test("script editor runtime import rejects legacy settlement result routing even when unambiguous", async () => {
   const {
     exportScriptEditorProjectToScenarioPackFiles,
   } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
@@ -8301,30 +8316,16 @@ test("script editor runtime import migrates legacy settlement result routing whe
     2
   );
 
-  const importedProject = await loadScriptEditorProjectFromScenarioPackFiles(
-    createImportedFilesFromSerializedJsonRecord(files, "safe-legacy-settlement-pack")
+  await assert.rejects(
+    () =>
+      loadScriptEditorProjectFromScenarioPackFiles(
+        createImportedFilesFromSerializedJsonRecord(files, "safe-legacy-settlement-pack")
+      ),
+    /results|retired routing field|nextEventId/i
   );
-
-  assert.deepEqual(importedProject.settlements, [
-    {
-      id: "settlement.opening.default",
-      title: "Opening Settlement",
-      nextEventId: "event.follow-up",
-      contents: [
-        {
-          targetFamily: "person",
-          targetId: "person.hero",
-          attributeKey: "merit",
-          attributeType: "number",
-          operation: "add",
-          value: 5,
-        },
-      ],
-    },
-  ]);
 });
 
-test("script editor runtime import preserves settlement nextEventId when legacy settlement result routing is empty", async () => {
+test("script editor runtime import rejects empty legacy settlement result routing residue", async () => {
   const {
     exportScriptEditorProjectToScenarioPackFiles,
   } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
@@ -8358,13 +8359,12 @@ test("script editor runtime import preserves settlement nextEventId when legacy 
   ];
   files["settlements.json"] = JSON.stringify(settlements, null, 2);
 
-  const importedProject = await loadScriptEditorProjectFromScenarioPackFiles(
-    createImportedFilesFromSerializedJsonRecord(files, "empty-legacy-settlement-pack")
-  );
-
-  assert.equal(
-    importedProject.settlements[0]?.nextEventId,
-    "event.follow-up"
+  await assert.rejects(
+    () =>
+      loadScriptEditorProjectFromScenarioPackFiles(
+        createImportedFilesFromSerializedJsonRecord(files, "empty-legacy-settlement-pack")
+      ),
+    /results|retired routing field|nextEventId/i
   );
 });
 
@@ -10606,7 +10606,7 @@ test(
 
     await assert.rejects(
       () => loadScriptEditorProjectFromScenarioPackFiles(importedFiles),
-      /unsupported-family|uiScreenSchemas|compatibility import/i
+      /unsupported-family|uiScreenSchemas|runtime-pack import/i
     );
   }
 );
@@ -17984,7 +17984,7 @@ test(
         "imported-scenario-pack"
       )
         ),
-      /unsupported-family|uiScreenSchemas|compatibility import/i
+      /unsupported-family|uiScreenSchemas|runtime-pack import/i
     );
   }
 );
