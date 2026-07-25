@@ -166,18 +166,11 @@ function materializeCities(
 function readSpecialDemandAttributeOptions(
   attributes: ScriptEditorCityRecord["extendedAttributes"]
 ): string[] {
-  const specialDemandAttribute = (attributes ?? []).find(
-    (entry) => entry.key === "specialDemand"
-  );
-  if (specialDemandAttribute == null) {
-    return [];
-  }
-  if (specialDemandAttribute.type === "enum") {
-    return readStringArray(specialDemandAttribute.options);
-  }
-  return typeof specialDemandAttribute.value === "string"
-    ? readStringArray([specialDemandAttribute.value])
-    : [];
+  return (attributes ?? [])
+    .filter(
+      (entry) => entry.key === "specialDemand" && entry.type === "enum"
+    )
+    .flatMap((entry) => readStringArray(entry.options));
 }
 
 function materializeCityMapPlacement(

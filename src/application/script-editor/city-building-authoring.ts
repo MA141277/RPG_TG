@@ -1558,11 +1558,8 @@ function normalizeEditableCustomAttributes(
 function normalizeCustomAttributeEntry(
   entry: Record<string, unknown>
 ): ScriptEditorTypedAttributeRecord {
-  const type = normalizeTypedAttributeType(
-    entry.type,
-    readLegacyTypedAttributeValue(entry.value)
-  );
-  const options = normalizeTypedAttributeOptions(type, entry.options, entry.value);
+  const type = normalizeTypedAttributeType(entry.type);
+  const options = normalizeTypedAttributeOptions(type, entry.options);
   return {
     key: normalizeOptionalString(entry.key),
     ...pickOptionalString("label", entry.label),
@@ -1572,10 +1569,7 @@ function normalizeCustomAttributeEntry(
   };
 }
 
-function normalizeTypedAttributeType(
-  value: unknown,
-  legacyValue?: unknown
-): ScriptEditorTypedAttributeType {
+function normalizeTypedAttributeType(value: unknown): ScriptEditorTypedAttributeType {
   if (
     value === "number" ||
     value === "boolean" ||
@@ -1584,48 +1578,23 @@ function normalizeTypedAttributeType(
   ) {
     return value;
   }
-  if (typeof legacyValue === "number") {
-    return "number";
-  }
-  if (typeof legacyValue === "boolean") {
-    return "boolean";
-  }
-  if (
-    Array.isArray(legacyValue) &&
-    legacyValue.every((entry) => typeof entry === "string")
-  ) {
-    return "enum";
-  }
   return "string";
 }
 
 function normalizeTypedAttributeOptions(
   type: ScriptEditorTypedAttributeType,
-  optionsValue: unknown,
-  legacyValue: unknown
+  optionsValue: unknown
 ): string[] {
   if (type !== "enum") {
     return [];
   }
-  const sourceValue = Array.isArray(optionsValue) ? optionsValue : legacyValue;
-  if (!Array.isArray(sourceValue)) {
+  if (!Array.isArray(optionsValue)) {
     return [];
   }
-  return sourceValue
+  return optionsValue
     .filter((entry): entry is string => typeof entry === "string")
     .map((entry) => entry.trim())
     .filter((entry) => entry.length > 0);
-}
-
-function readLegacyTypedAttributeValue(value: unknown): unknown {
-  if (
-    typeof value === "number" ||
-    typeof value === "boolean" ||
-    Array.isArray(value)
-  ) {
-    return value;
-  }
-  return undefined;
 }
 
 function normalizeTypedAttributeValue(

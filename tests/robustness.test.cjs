@@ -13433,7 +13433,9 @@ test(
         description: "A governed city definition.",
         tags: ["river-port"],
       },
-      extendedAttributes: [{ key: "tradeRank", label: "Trade Rank", value: 3 }],
+      extendedAttributes: [
+        { key: "tradeRank", label: "Trade Rank", type: "number", value: 3 },
+      ],
       access: {
         conditionExpression: { type: "literal", value: false },
         blockedMessage: "City closed.",
@@ -13463,7 +13465,7 @@ test(
         description: "A governed building definition.",
         tags: ["trade"],
       },
-      extendedAttributes: [{ key: "taxRate", value: 5 }],
+      extendedAttributes: [{ key: "taxRate", type: "number", value: 5 }],
       access: {
         conditionExpression: { type: "literal", value: true },
         blockedMessage: "",
@@ -13530,7 +13532,14 @@ test(
           description: "A governed city definition.",
           tags: ["river-port"],
         },
-        extendedAttributes: [{ key: "specialDemand", value: ["salt"] }],
+        extendedAttributes: [
+          {
+            key: "specialDemand",
+            type: "enum",
+            value: "salt",
+            options: ["salt"],
+          },
+        ],
         access: {
           conditionExpression: { type: "literal", value: true },
         },
@@ -13621,8 +13630,18 @@ test(
         id: "city.start",
         name: "Start City",
         extendedAttributes: [
-          { key: "tradeRank", label: "Trade Rank", value: "3" },
-          { key: "specialDemand", value: ["salt"] },
+          {
+            key: "tradeRank",
+            label: "Trade Rank",
+            type: "string",
+            value: "3",
+          },
+          {
+            key: "specialDemand",
+            type: "enum",
+            value: "salt",
+            options: ["salt"],
+          },
         ],
       },
     ];
@@ -13631,7 +13650,14 @@ test(
         id: "building.market",
         cityId: "city.start",
         name: "Market",
-        extendedAttributes: [{ key: "taxRate", label: "Tax Rate", value: "5" }],
+        extendedAttributes: [
+          {
+            key: "taxRate",
+            label: "Tax Rate",
+            type: "string",
+            value: "5",
+          },
+        ],
       },
     ];
 
@@ -13657,6 +13683,70 @@ test(
       () => exportScriptEditorProjectToScenarioPackFiles(project),
       /city custom attribute|building custom attribute|tradeRank|taxRate/i
     );
+  }
+);
+
+test(
+  "script editor city and building custom attributes fail closed on retired untyped payloads",
+  () => {
+    const {
+      normalizeScriptEditorBuildingRecord,
+      normalizeScriptEditorCityRecord,
+    } = require("../.test-dist/application/script-editor/city-building-authoring.js");
+
+    const city = normalizeScriptEditorCityRecord({
+      id: "city.start",
+      name: "Start City",
+      extendedAttributes: [
+        { key: "specialDemand", value: ["salt", "tea"] },
+        { key: "tradeRank", value: 3 },
+      ],
+    });
+    const building = normalizeScriptEditorBuildingRecord({
+      id: "building.market",
+      cityId: "city.start",
+      name: "Market",
+      extendedAttributes: [{ key: "taxRate", value: 5 }],
+    });
+
+    assert.deepEqual(city.extendedAttributes, [
+      { key: "specialDemand", type: "string", value: "" },
+      { key: "tradeRank", type: "string", value: "" },
+    ]);
+    assert.deepEqual(building.extendedAttributes, [
+      { key: "taxRate", type: "string", value: "" },
+    ]);
+  }
+);
+
+test(
+  "script editor runtime materializer only consumes typed specialDemand enums and preserves all matching entries",
+  () => {
+    const {
+      materializeScriptEditorCityBuildingRuntimeFamilies,
+    } = require("../.test-dist/application/script-editor/city-building-runtime-materializer.js");
+
+    const runtimeFamilies = materializeScriptEditorCityBuildingRuntimeFamilies({
+      ...createExportableScriptEditorProjectDefinition(),
+      cities: [
+        {
+          id: "city.start",
+          name: "Start City",
+          mapNodeId: "node.start",
+          extendedAttributes: [
+            { key: "specialDemand", type: "enum", value: "salt", options: ["salt"] },
+            { key: "specialDemand", type: "enum", value: "tea", options: ["tea"] },
+            { key: "specialDemand", value: ["legacy-rice"] },
+          ],
+          mountedBuildings: [],
+          menuEntries: [],
+          access: {},
+        },
+      ],
+      buildings: [],
+    });
+
+    assert.deepEqual(runtimeFamilies.cities[0].specialDemand, ["salt", "tea"]);
   }
 );
 
