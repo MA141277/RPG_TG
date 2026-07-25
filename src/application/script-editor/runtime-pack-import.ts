@@ -676,9 +676,7 @@ function readImportedSettlementNextEventId(
       throw new Error("Imported legacy settlement result must be an object.");
     }
     const nextEventId = readString((result as Record<string, unknown>).nextEventId);
-    if (nextEventId.length > 0) {
-      nextEventIds.add(nextEventId);
-    }
+    nextEventIds.add(nextEventId);
   }
 
   if (nextEventIds.size > 1) {
@@ -687,7 +685,10 @@ function readImportedSettlementNextEventId(
     );
   }
 
-  return [...nextEventIds][0] ?? readString(settlement.nextEventId);
+  const legacyNextEventId = [...nextEventIds][0] ?? "";
+  return legacyNextEventId.length === 0
+    ? readString(settlement.nextEventId)
+    : legacyNextEventId;
 }
 
 function mapImportedSettlementContent(

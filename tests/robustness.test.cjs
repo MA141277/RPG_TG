@@ -7637,6 +7637,67 @@ test("script editor runtime import fails closed on ambiguous legacy settlement r
   );
 });
 
+test("script editor runtime import fails closed on mixed empty legacy settlement result routing", () => {
+  const {
+    exportScriptEditorProjectToScenarioPackFiles,
+  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  const project = createExportableScriptEditorProjectDefinition();
+  project.settlements = [
+    {
+      id: "settlement.opening.default",
+      title: "Opening Settlement",
+    },
+  ];
+  project.events = [
+    {
+      id: "event.follow-up",
+      title: "Follow Up Event",
+      actions: [{ type: "closeBuilding" }],
+    },
+  ];
+
+  const files = exportScriptEditorProjectToScenarioPackFiles(project);
+  const pack = JSON.parse(files["pack.json"]);
+  for (const [family, filePath] of Object.entries(pack.files)) {
+    pack[family] = JSON.parse(files[filePath.replace(/^\.\//, "")]);
+  }
+  pack.settlements[0].results = [
+    {
+      id: "result.success",
+      label: "Success",
+      nextEventId: "event.follow-up",
+    },
+    {
+      id: "result.close",
+      label: "Close",
+      nextEventId: "",
+    },
+  ];
+
+  const loaderPath = require.resolve(
+    "../.test-dist/application/scenario/scenario-pack-loader.js"
+  );
+  const importerPath = require.resolve(
+    "../.test-dist/application/script-editor/runtime-pack-import.js"
+  );
+  const loaderModule = require(loaderPath);
+  const originalParseScenarioPack = loaderModule.parseScenarioPack;
+  delete require.cache[importerPath];
+  loaderModule.parseScenarioPack = (value) => value;
+  try {
+    const {
+      importScenarioPackToScriptEditorProject,
+    } = require("../.test-dist/application/script-editor/runtime-pack-import.js");
+    assert.throws(
+      () => importScenarioPackToScriptEditorProject(pack),
+      /legacy settlement result|ambiguous nextEventId/i
+    );
+  } finally {
+    loaderModule.parseScenarioPack = originalParseScenarioPack;
+    delete require.cache[importerPath];
+  }
+});
+
 test("script editor runtime import migrates legacy settlement result routing when unambiguous", async () => {
   const {
     exportScriptEditorProjectToScenarioPackFiles,
