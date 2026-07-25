@@ -9774,6 +9774,54 @@ test("script editor runtime export rejects settlement events with missing settle
   );
 });
 
+test("scenario pack loader rejects progression tiers that reference missing settlements", async () => {
+  const {
+    exportScriptEditorProjectToScenarioPackFiles,
+  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  const {
+    loadScenarioPackFromFiles,
+  } = require("../.test-dist/application/scenario/scenario-pack-loader.js");
+  const project = createExportableScriptEditorProjectDefinition();
+  project.settlements = [
+    {
+      id: "settlement.tier.1",
+      title: "Tier 1 Settlement",
+    },
+  ];
+  project.progressTracks = [
+    {
+      id: "track.cultivation",
+      title: "Cultivation Track",
+      metricLabel: "Cultivation",
+      ownerKind: "person",
+      tiers: [
+        {
+          id: "tier.1",
+          title: "Entry",
+          threshold: 0,
+          targetTierSettlementId: "settlement.tier.1",
+        },
+      ],
+    },
+  ];
+
+  const files = exportScriptEditorProjectToScenarioPackFiles(project);
+  const progressTracks = JSON.parse(files["progress-tracks.json"]);
+  progressTracks[0].tiers[0].targetTierSettlementId = "settlement.missing";
+  files["progress-tracks.json"] = JSON.stringify(progressTracks, null, 2);
+
+  await assert.rejects(
+    () =>
+      loadScenarioPackFromFiles(
+        createImportedFilesFromSerializedJsonRecord(
+          files,
+          "progression-missing-settlement-pack"
+        )
+      ),
+    /targetTierSettlementId|settlement\.missing|track\.cultivation|tier\.1/i
+  );
+});
+
 test("script editor runtime export rejects settlements with missing nextEventId references", () => {
   const {
     exportScriptEditorProjectToScenarioPackFiles,
@@ -10585,6 +10633,40 @@ test("script editor workspace shell accepts settlement events with existing sett
   assert.equal(workspace.handoffSummary.blockedCount, 0);
   const riskCard = workspace.inspector.cards.find((card) => card.id === "project.risk");
   assert.doesNotMatch(riskCard?.body ?? "", /missing settlement|settlementId/i);
+});
+
+test("script editor workspace shell surfaces progression tier settlement blockers", () => {
+  const {
+    createScriptEditorWorkspaceShellViewModel,
+  } = require("../.test-dist/application/script-editor/workspace-shell.js");
+  const project = createExportableScriptEditorProjectDefinition();
+  project.progressTracks = [
+    {
+      id: "track.cultivation",
+      title: "Cultivation Track",
+      metricLabel: "Cultivation",
+      ownerKind: "person",
+      allowDemotion: true,
+      tiers: [
+        {
+          id: "tier.1",
+          title: "Entry",
+          threshold: 0,
+          targetTierSettlementId: "settlement.missing.tier",
+        },
+      ],
+    },
+  ];
+
+  const workspace = createScriptEditorWorkspaceShellViewModel({ project });
+
+  assert.equal(workspace.toolbarActions.find((action) => action.id === "export")?.status, "blocked");
+  assert.equal(workspace.handoffSummary.blockedCount > 0, true);
+  const riskCard = workspace.inspector.cards.find((card) => card.id === "project.risk");
+  assert.match(
+    riskCard?.body ?? "",
+    /targetTierSettlementId|settlement\.missing\.tier|track\.cultivation|tier\.1/i
+  );
 });
 
 test("script editor workspace shell surfaces settlement nextEventId blockers", () => {
@@ -14314,6 +14396,91 @@ test("script editor runtime export and scenario loader carry explicit building a
   assert.equal(manifest.files.buildingArrangements, "./building-arrangements.json");
   assert.deepEqual(arrangements, project.buildingArrangements);
   assert.deepEqual(loadedPack.buildingArrangements, project.buildingArrangements);
+});
+
+test("script editor runtime export and import carry progression tracks and bindings", async () => {
+  const {
+    exportScriptEditorProjectToScenarioPackFiles,
+  } = require("../.test-dist/application/script-editor/runtime-pack-export.js");
+  const {
+    loadScenarioPackFromFiles,
+  } = require("../.test-dist/application/scenario/scenario-pack-loader.js");
+  const {
+    loadScriptEditorProjectFromScenarioPackFiles,
+  } = require("../.test-dist/application/script-editor/runtime-pack-import.js");
+  const project = createExportableScriptEditorProjectDefinition();
+  project.settlements = [
+    {
+      id: "settlement.tier.1",
+      title: "Tier 1 Settlement",
+    },
+    {
+      id: "settlement.tier.2",
+      title: "Tier 2 Settlement",
+    },
+  ];
+  project.progressTracks = [
+    {
+      id: "track.cultivation",
+      title: "Cultivation Track",
+      metricLabel: "Cultivation",
+      ownerKind: "person",
+      allowDemotion: true,
+      tiers: [
+        {
+          id: "tier.1",
+          title: "Entry",
+          threshold: 0,
+          targetTierSettlementId: "settlement.tier.1",
+        },
+        {
+          id: "tier.2",
+          title: "Skilled",
+          threshold: 100,
+          targetTierSettlementId: "settlement.tier.2",
+        },
+      ],
+    },
+  ];
+  project.progressTrackBindings = [
+    {
+      id: "binding.player.cultivation",
+      trackId: "track.cultivation",
+      owner: { ownerKind: "person", ownerId: "person.hero" },
+      enabled: true,
+    },
+  ];
+
+  const serializedFiles = exportScriptEditorProjectToScenarioPackFiles(project);
+  const manifest = JSON.parse(serializedFiles["pack.json"]);
+  const progressTracks = JSON.parse(serializedFiles["progress-tracks.json"]);
+  const progressTrackBindings = JSON.parse(
+    serializedFiles["progress-track-bindings.json"]
+  );
+  const loadedPack = await loadScenarioPackFromFiles(
+    createImportedFilesFromSerializedJsonRecord(serializedFiles, "runtime-pack")
+  );
+  const importedProject = await loadScriptEditorProjectFromScenarioPackFiles(
+    createImportedFilesFromSerializedJsonRecord(serializedFiles, "runtime-pack")
+  );
+
+  assert.equal(manifest.files.progressTracks, "./progress-tracks.json");
+  assert.equal(
+    manifest.files.progressTrackBindings,
+    "./progress-track-bindings.json"
+  );
+  assert.deepEqual(progressTracks, project.progressTracks);
+  assert.deepEqual(progressTrackBindings, project.progressTrackBindings);
+  assert.deepEqual(loadedPack.progressTracks, project.progressTracks);
+  assert.deepEqual(
+    loadedPack.progressTrackBindings,
+    project.progressTrackBindings
+  );
+  assert.deepEqual(importedProject.progressTracks, project.progressTracks);
+  assert.deepEqual(
+    importedProject.progressTrackBindings,
+    project.progressTrackBindings
+  );
 });
 
 test("script editor runtime-pack import preserves explicit building arrangements", async () => {

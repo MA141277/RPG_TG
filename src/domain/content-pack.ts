@@ -28,6 +28,10 @@ import type {
   PlayableDefinition,
   PlayableIntegrationDefinition,
 } from "../core/contracts/playable-runtime";
+import type {
+  ProgressTrackBinding,
+  ProgressTrackDefinition,
+} from "../core/contracts/progression-runtime";
 import type { FlowPlayableDefinition } from "./playables/flow";
 
 export type ContentPackDefinition = {
@@ -44,6 +48,8 @@ export type ContentPackDefinition = {
   characters?: CharacterDefinition[];
   events?: EventDefinition[];
   eventBindings?: EventBinding[];
+  progressTracks?: ProgressTrackDefinition[];
+  progressTrackBindings?: ProgressTrackBinding[];
   dialogues?: RuntimeDialogueDefinition[];
   tasks?: TaskDefinition[];
   playables?: PlayableDefinition[];

@@ -66,6 +66,8 @@ type RuntimePackManifestFiles = {
   settlements: string;
   events: string;
   eventBindings: string;
+  progressTracks: string;
+  progressTrackBindings: string;
   dialogues: string;
   activities: string;
   playables: string;
@@ -112,6 +114,8 @@ const RUNTIME_PACK_CANONICAL_FILES: RuntimePackManifestFiles = {
   settlements: "./settlements.json",
   events: "./events.json",
   eventBindings: "./event-bindings.json",
+  progressTracks: "./progress-tracks.json",
+  progressTrackBindings: "./progress-track-bindings.json",
   dialogues: "./dialogues.json",
   activities: "./activities.json",
   playables: "./playables.json",
@@ -156,6 +160,7 @@ export function validateScriptEditorProjectForRuntimeExport(
   appendMountedBuildingDiagnostics(project, diagnostics);
   appendCityBuildingCustomAttributeDiagnostics(project, diagnostics);
   appendSettlementAuthoringDiagnostics(project, diagnostics);
+  appendProgressTrackAuthoringDiagnostics(project, diagnostics);
   const exportedDialogues = narrativeRuntime.dialogues;
   const exportedEvents = extractRuntimeEvents(
     project,
@@ -197,6 +202,8 @@ export function validateScriptEditorProjectForRuntimeExport(
       settlements: project.settlements,
       events: exportedEvents,
       eventBindings: exportedEventBindings,
+      progressTracks: project.progressTracks ?? [],
+      progressTrackBindings: project.progressTrackBindings ?? [],
       dialogues: exportedDialogues,
       activities: project.activities,
       playables: playableRuntimeFamilies.playables,
@@ -352,6 +359,49 @@ function appendSettlementAuthoringDiagnostics(
           message: "Settlement content attribute type boolean or enum requires operation set.",
         });
       }
+    });
+  });
+}
+
+function appendProgressTrackAuthoringDiagnostics(
+  project: ScriptEditorProjectDefinition,
+  diagnostics: ScriptEditorRuntimeExportDiagnostic[]
+): void {
+  const settlementIds = new Set(
+    project.settlements
+      .map((settlementRecord) =>
+        typeof settlementRecord.id === "string" ? settlementRecord.id.trim() : ""
+      )
+      .filter((settlementId) => settlementId.length > 0)
+  );
+
+  (project.progressTracks ?? []).forEach((trackRecord, trackIndex) => {
+    const trackId =
+      typeof trackRecord.id === "string" && trackRecord.id.length > 0
+        ? trackRecord.id
+        : `progress-track.${trackIndex + 1}`;
+    const tiers = Array.isArray(trackRecord.tiers) ? trackRecord.tiers : [];
+
+    tiers.forEach((tierRecord, tierIndex) => {
+      const settlementId =
+        typeof tierRecord?.targetTierSettlementId === "string"
+          ? tierRecord.targetTierSettlementId.trim()
+          : "";
+      if (settlementId.length === 0 || settlementIds.has(settlementId)) {
+        return;
+      }
+
+      const tierId =
+        typeof tierRecord?.id === "string" && tierRecord.id.length > 0
+          ? tierRecord.id
+          : `tier.${tierIndex + 1}`;
+      diagnostics.push({
+        code: "missing-reference",
+        fieldPath:
+          `project.progressTracks[${trackIndex}].tiers[${tierIndex}].targetTierSettlementId`,
+        message:
+          `Progress tier "${trackId}:${tierId}" references missing settlement "${settlementId}" through targetTierSettlementId.`,
+      });
     });
   });
 }
@@ -514,6 +564,11 @@ export function exportScriptEditorProjectToScenarioPackFiles(
     [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.eventBindings)]: stringifyJson(
       exportedEventBindings
     ),
+    [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.progressTracks)]: stringifyJson(
+      project.progressTracks ?? []
+    ),
+    [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.progressTrackBindings)]:
+      stringifyJson(project.progressTrackBindings ?? []),
     [stripRelativePrefix(RUNTIME_PACK_CANONICAL_FILES.dialogues)]: stringifyJson(
       exportedDialogues
     ),

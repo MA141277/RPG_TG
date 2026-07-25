@@ -200,6 +200,11 @@ const DEFERRED_EXPORT_TARGET_FAMILIES = new Set<ScriptEditorProjectFileKey>([
   "effectBundles",
 ]);
 
+const BLOCKER_ONLY_WORKSPACE_FAMILIES = new Set<ScriptEditorProjectFileKey>([
+  "progressTracks",
+  "progressTrackBindings",
+]);
+
 const gameplayTreeGroup = TREE_GROUPS.find((group) => group.id === "gameplay");
 if (gameplayTreeGroup != null) {
   gameplayTreeGroup.families = ["events"];
@@ -1239,7 +1244,10 @@ function resolveFieldPathTarget(
       tab: null,
     };
   }
-  if (!(rawFamily in FAMILY_LABELS)) {
+  if (
+    !(rawFamily in FAMILY_LABELS) &&
+    !BLOCKER_ONLY_WORKSPACE_FAMILIES.has(rawFamily as ScriptEditorProjectFileKey)
+  ) {
     return {
       family: "storyPack",
       entityId: null,
@@ -1334,6 +1342,14 @@ function resolveIssueTab(
       return "routing";
     }
     return "profile";
+  }
+
+  if (family === "progressTracks") {
+    return remainder.startsWith("tiers") ? "tiers" : "profile";
+  }
+
+  if (family === "progressTrackBindings") {
+    return "bindings";
   }
 
   if (family === "storyNodes") {
@@ -1509,7 +1525,11 @@ function collectAttentionFamilies(
 
   for (const diagnostic of exportDiagnostics) {
     const target = /^project\.([^.]+)/u.exec(diagnostic.fieldPath)?.[1];
-    if (target != null && target in FAMILY_LABELS) {
+    if (
+      target != null &&
+      ((target in FAMILY_LABELS) ||
+        BLOCKER_ONLY_WORKSPACE_FAMILIES.has(target as ScriptEditorProjectFileKey))
+    ) {
       families.add(target as ScriptEditorProjectFileKey);
       continue;
     }
@@ -1552,6 +1572,10 @@ function getFamilyRecords(
       return project.settlements ?? [];
     case "events":
       return project.events;
+    case "progressTracks":
+      return project.progressTracks ?? [];
+    case "progressTrackBindings":
+      return project.progressTrackBindings ?? [];
     case "quests":
       return project.quests;
     case "activities":

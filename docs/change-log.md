@@ -3756,3 +3756,15 @@
 ### Impact
 - The first same-display-name host canonicalization implementation slice is now safe against cross-city mounted NPC overwrite when repeated-name buildings converge onto one canonical host id.
 - This change is bounded to Script Editor runtime-family materialization and does not yet claim the broader source-pack host-id rewrite or the later full-chain parity queue.
+
+## 2026-07-25 Generic Progression Runtime-Pack Resource Chain
+
+### Changed
+- Updated [src/application/script-editor/runtime-pack-export.ts](/D:/workspace/project/RPG_TG/src/application/script-editor/runtime-pack-export.ts), [src/application/script-editor/runtime-pack-import.ts](/D:/workspace/project/RPG_TG/src/application/script-editor/runtime-pack-import.ts), [src/application/scenario/scenario-pack-loader.ts](/D:/workspace/project/RPG_TG/src/application/scenario/scenario-pack-loader.ts), and [src/domain/content-pack.ts](/D:/workspace/project/RPG_TG/src/domain/content-pack.ts) so runtime packs now carry `progress-tracks.json` and `progress-track-bindings.json` through export, manifest hydration, loader parsing, and Script Editor re-import.
+- Added bounded settlement-reference validation for `targetTierSettlementId` on progression tiers during runtime-pack export validation and scenario-pack loading.
+- Updated [src/application/script-editor/workspace-shell.ts](/D:/workspace/project/RPG_TG/src/application/script-editor/workspace-shell.ts) so progression-track export blockers are routed through the existing workspace validation surface instead of being treated as generic story-pack residue.
+- Added Task 3 regression coverage in [tests/robustness.test.cjs](/D:/workspace/project/RPG_TG/tests/robustness.test.cjs) for progression resource export/import, loader rejection on missing settlement references, and workspace-shell blocker surfacing.
+
+### Impact
+- Script Editor progression tracks and bindings now survive the runtime-pack resource chain without adding any new editor authoring UI in this slice.
+- Missing tier settlement targets now fail closed at export, load, and creator-facing blocker stages instead of leaking invalid progression references into authored scenario packs.

@@ -58,6 +58,8 @@ type RuntimePackManifestFiles = {
   characters: string;
   events: string;
   dialogues: string;
+  progressTracks?: string;
+  progressTrackBindings?: string;
   tasks?: string;
   playables?: string;
   playableIntegrations?: string;
@@ -247,6 +249,8 @@ export function importScenarioPackToScriptEditorProject(
     settlements: mapImportedSettlements(rawPack),
     events: mapImportedEvents(pack.events ?? [], importedMinigames),
     eventBindings: mapImportedEventBindings(rawPack),
+    progressTracks: readProgressTrackFamily(rawPack),
+    progressTrackBindings: readProgressTrackBindingFamily(rawPack),
     dialogues: mapImportedRuntimeDialogues(rawPack),
     quests: pack.tasks ?? [],
     activities: pack.activities ?? [],
@@ -961,6 +965,24 @@ function readBuildingArrangementsFamily(
     rawPack,
     "buildingArrangements"
   ) as ScriptEditorBuildingArrangementRecord[];
+}
+
+function readProgressTrackFamily(
+  rawPack: Record<string, unknown>
+): NonNullable<ScriptEditorProjectDefinition["progressTracks"]> {
+  return readArrayFamily(
+    rawPack,
+    "progressTracks"
+  ) as NonNullable<ScriptEditorProjectDefinition["progressTracks"]>;
+}
+
+function readProgressTrackBindingFamily(
+  rawPack: Record<string, unknown>
+): NonNullable<ScriptEditorProjectDefinition["progressTrackBindings"]> {
+  return readArrayFamily(
+    rawPack,
+    "progressTrackBindings"
+  ) as NonNullable<ScriptEditorProjectDefinition["progressTrackBindings"]>;
 }
 
 function readPortraitFamily(

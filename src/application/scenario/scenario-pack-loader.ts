@@ -256,6 +256,15 @@ export function parseScenarioPack(value: unknown): ScenarioPackDefinition {
   if (rawSettlements != null) {
     assertRuntimeSettlementDefinitions(rawSettlements);
   }
+  const rawProgressTracks = (value as Record<string, unknown>).progressTracks;
+  if (rawProgressTracks != null) {
+    assertRuntimeProgressTrackDefinitions(rawProgressTracks, rawSettlements);
+  }
+  const rawProgressTrackBindings = (value as Record<string, unknown>)
+    .progressTrackBindings;
+  if (rawProgressTrackBindings != null) {
+    assertArray(rawProgressTrackBindings, "scenario progressTrackBindings");
+  }
   assertArray(value.events, "scenario events");
   assertRuntimeEventsDoNotUseRetiredTriggerFields(value.events);
   assertRuntimeEventsPreserveCanonicalRoutingContracts(
@@ -411,6 +420,58 @@ function assertRuntimeSettlementDefinitions(settlements: unknown): void {
         }
       });
     }
+  });
+}
+
+function assertRuntimeProgressTrackDefinitions(
+  progressTracks: unknown,
+  settlements: unknown
+): void {
+  assertArray(progressTracks, "scenario progressTracks");
+  const settlementIds = new Set<string>();
+
+  if (Array.isArray(settlements)) {
+    settlements.forEach((settlementDefinition, index) => {
+      assertObject(settlementDefinition, `scenario settlements[${index}]`);
+      const settlementId = settlementDefinition.id;
+      assertString(settlementId, `scenario settlements[${index}].id`);
+      settlementIds.add(settlementId.trim());
+    });
+  }
+
+  progressTracks.forEach((trackDefinition, trackIndex) => {
+    assertObject(trackDefinition, `scenario progressTracks[${trackIndex}]`);
+    const trackIdValue =
+      typeof trackDefinition.id === "string" && trackDefinition.id.trim().length > 0
+        ? trackDefinition.id.trim()
+        : `progressTracks[${trackIndex}]`;
+    assertArray(
+      trackDefinition.tiers,
+      `scenario progressTracks[${trackIndex}].tiers`
+    );
+    trackDefinition.tiers.forEach((tierDefinition, tierIndex) => {
+      assertObject(
+        tierDefinition,
+        `scenario progressTracks[${trackIndex}].tiers[${tierIndex}]`
+      );
+      const settlementId =
+        typeof tierDefinition.targetTierSettlementId === "string"
+          ? tierDefinition.targetTierSettlementId.trim()
+          : "";
+      if (settlementId.length === 0 || settlementIds.size === 0) {
+        return;
+      }
+
+      if (!settlementIds.has(settlementId)) {
+        const tierIdValue =
+          typeof tierDefinition.id === "string" && tierDefinition.id.trim().length > 0
+            ? tierDefinition.id.trim()
+            : `tiers[${tierIndex}]`;
+        throw new Error(
+          `Progress tier "${trackIdValue}:${tierIdValue}" references missing settlement "${settlementId}" through targetTierSettlementId.`
+        );
+      }
+    });
   });
 }
 
@@ -578,6 +639,8 @@ type ScenarioPackManifestFiles = {
   characters: string;
   events: string;
   dialogues: string;
+  progressTracks?: string;
+  progressTrackBindings?: string;
   tasks?: string;
   playables?: string;
   playableIntegrations?: string;
