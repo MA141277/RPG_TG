@@ -355,14 +355,14 @@ const SCRIPT_EDITOR_SETTLEMENT_PERSON_BASE_ATTRIBUTE_OPTIONS = [
 
 const SCRIPT_EDITOR_SETTLEMENT_CITY_BASE_ATTRIBUTE_OPTIONS = [
   { value: "travelCost", label: "移动成本", attributeType: "number" },
-  { value: "baseAttributes.prosperity", label: "繁荣", attributeType: "number" },
-  { value: "baseAttributes.security", label: "治安", attributeType: "number" },
+  { value: "prosperity", label: "繁荣", attributeType: "number" },
+  { value: "danger", label: "治安", attributeType: "number" },
 ];
 
 const SCRIPT_EDITOR_SETTLEMENT_BUILDING_BASE_ATTRIBUTE_OPTIONS = [
-  { value: "baseAttributes.level", label: "等级", attributeType: "number" },
-  { value: "baseAttributes.outputMultiplier", label: "产出倍率", attributeType: "number" },
-  { value: "baseAttributes.damaged", label: "损坏状态", attributeType: "boolean" },
+  { value: "level", label: "等级", attributeType: "number" },
+  { value: "outputMultiplier", label: "产出倍率", attributeType: "number" },
+  { value: "damaged", label: "损坏状态", attributeType: "boolean" },
 ];
 
 const characterSelectLayoutBindings = [

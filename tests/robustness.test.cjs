@@ -152,26 +152,9 @@ const {
 const fs = require("node:fs");
 const path = require("node:path");
 
-// Residue candidates are still inventoried before cleanup; canonical runtime
-// fields remain live runtime contracts and are audited separately.
-const LEGACY_CUTOVER_RESIDUE_CANDIDATE_PATTERNS = [
-  {
-    label: "baseAttributes.security",
-    pattern: /"baseAttributes\.security"\s*:/,
-  },
-  {
-    label: "baseAttributes.level",
-    pattern: /"baseAttributes\.level"\s*:/,
-  },
-  {
-    label: "baseAttributes.outputMultiplier",
-    pattern: /"baseAttributes\.outputMultiplier"\s*:/,
-  },
-  {
-    label: "baseAttributes.damaged",
-    pattern: /"baseAttributes\.damaged"\s*:/,
-  },
-];
+// Canonical runtime fields remain live contracts. Residue candidates should
+// shrink to empty as the cutover removes alias and compatibility paths.
+const LEGACY_CUTOVER_RESIDUE_CANDIDATE_PATTERNS = [];
 
 const LEGACY_CUTOVER_CANONICAL_RUNTIME_FIELDS = {
   danger: "number",
@@ -3844,7 +3827,7 @@ test("scenario pack loader rejects settlement contents with invalid typed values
     {
       targetFamily: "city",
       targetId: "city.start",
-      attributeKey: "baseAttributes.prosperity",
+      attributeKey: "prosperity",
       attributeType: "number",
       operation: "set",
       value: "not-a-number",
@@ -3852,7 +3835,7 @@ test("scenario pack loader rejects settlement contents with invalid typed values
     {
       targetFamily: "building",
       targetId: "building.missing",
-      attributeKey: "baseAttributes.damaged",
+      attributeKey: "damaged",
       attributeType: "boolean",
       operation: "set",
       value: false,
@@ -3860,7 +3843,7 @@ test("scenario pack loader rejects settlement contents with invalid typed values
     {
       targetFamily: "building",
       targetId: "building.home",
-      attributeKey: "baseAttributes.damaged",
+      attributeKey: "damaged",
       attributeType: "boolean",
       operation: "set",
       value: "false",
@@ -7823,7 +7806,7 @@ test("script editor runtime export rejects settlement content target value and e
         {
           targetFamily: "city",
           targetId: "",
-          attributeKey: "baseAttributes.prosperity",
+          attributeKey: "prosperity",
           attributeType: "number",
           operation: "set",
           value: 10,
@@ -7839,7 +7822,7 @@ test("script editor runtime export rejects settlement content target value and e
         {
           targetFamily: "city",
           targetId: "city.missing",
-          attributeKey: "baseAttributes.prosperity",
+          attributeKey: "prosperity",
           attributeType: "number",
           operation: "set",
           value: 10,
@@ -7855,7 +7838,7 @@ test("script editor runtime export rejects settlement content target value and e
         {
           targetFamily: "city",
           targetId: "city.start",
-          attributeKey: "baseAttributes.prosperity",
+          attributeKey: "prosperity",
           attributeType: "number",
           operation: "set",
           value: "not-a-number",
@@ -7863,7 +7846,7 @@ test("script editor runtime export rejects settlement content target value and e
         {
           targetFamily: "building",
           targetId: "building.home",
-          attributeKey: "baseAttributes.damaged",
+          attributeKey: "damaged",
           attributeType: "boolean",
           operation: "set",
           value: "false",
@@ -8173,7 +8156,7 @@ test("script editor runtime import rejects settlement content instead of normali
     {
       targetFamily: "city",
       targetId: "",
-      attributeKey: "baseAttributes.prosperity",
+      attributeKey: "prosperity",
       attributeType: "number",
       operation: "set",
       value: "not-a-number",
@@ -26780,7 +26763,7 @@ test("runtime settlement executes progression settlement instances through autho
   assert.equal(result.characterDefinitions[0].stamina, 105);
 });
 
-test("runtime settlement applies UI-authored city and building baseAttributes keys", () => {
+test("runtime settlement applies canonical city and building runtime keys", () => {
   const {
     applySettlementContents,
   } = require("../.test-dist/core/runtime/runtime-settlement.js");
@@ -26788,18 +26771,14 @@ test("runtime settlement applies UI-authored city and building baseAttributes ke
     cities: {
       "city.start": {
         id: "city.start",
-        baseAttributes: {
           prosperity: 50,
-        },
       },
     },
     buildings: {
       "building.home": {
         id: "building.home",
-        baseAttributes: {
           damaged: true,
           level: 1,
-        },
       },
     },
   };
@@ -26811,7 +26790,7 @@ test("runtime settlement applies UI-authored city and building baseAttributes ke
       {
         targetFamily: "city",
         targetId: "city.start",
-        attributeKey: "baseAttributes.prosperity",
+        attributeKey: "prosperity",
         attributeType: "number",
         operation: "add",
         value: 15,
@@ -26819,7 +26798,7 @@ test("runtime settlement applies UI-authored city and building baseAttributes ke
       {
         targetFamily: "building",
         targetId: "building.home",
-        attributeKey: "baseAttributes.damaged",
+        attributeKey: "damaged",
         attributeType: "boolean",
         operation: "set",
         value: false,
@@ -26827,7 +26806,7 @@ test("runtime settlement applies UI-authored city and building baseAttributes ke
       {
         targetFamily: "building",
         targetId: "building.home",
-        attributeKey: "baseAttributes.level",
+        attributeKey: "level",
         attributeType: "number",
         operation: "set",
         value: 3,
@@ -26835,10 +26814,58 @@ test("runtime settlement applies UI-authored city and building baseAttributes ke
     ],
   });
 
-  assert.equal(result.cities["city.start"].baseAttributes.prosperity, 65);
-  assert.equal(result.buildings["building.home"].baseAttributes.damaged, false);
-  assert.equal(result.buildings["building.home"].baseAttributes.level, 3);
-  assert.equal(Object.hasOwn(result.cities["city.start"], "baseAttributes.prosperity"), false);
+  assert.equal(result.cities["city.start"].prosperity, 65);
+  assert.equal(result.buildings["building.home"].damaged, false);
+  assert.equal(result.buildings["building.home"].level, 3);
+});
+
+test("settlement contract rejects alias keys and accepts canonical runtime keys", () => {
+  const runtimeSettlementSource = fs.readFileSync(
+    path.join(process.cwd(), "src/core/runtime/runtime-settlement.ts"),
+    "utf8"
+  );
+  const runtimePackExportSource = fs.readFileSync(
+    path.join(process.cwd(), "src/application/script-editor/runtime-pack-export.ts"),
+    "utf8"
+  );
+  const runtimePackImportSource = fs.readFileSync(
+    path.join(process.cwd(), "src/application/script-editor/runtime-pack-import.ts"),
+    "utf8"
+  );
+  const scenarioPackLoaderSource = fs.readFileSync(
+    path.join(process.cwd(), "src/application/scenario/scenario-pack-loader.ts"),
+    "utf8"
+  );
+  const mainUiSource = fs.readFileSync(
+    path.join(process.cwd(), "src/ui/main-ui/main-ui-flow.js"),
+    "utf8"
+  );
+
+  for (const source of [
+    runtimeSettlementSource,
+    runtimePackExportSource,
+    runtimePackImportSource,
+    scenarioPackLoaderSource,
+    mainUiSource,
+  ]) {
+    assert.doesNotMatch(source, /baseAttributes\.security/);
+    assert.doesNotMatch(source, /baseAttributes\.prosperity/);
+    assert.doesNotMatch(source, /baseAttributes\.level/);
+    assert.doesNotMatch(source, /baseAttributes\.outputMultiplier/);
+    assert.doesNotMatch(source, /baseAttributes\.damaged/);
+  }
+
+  for (const source of [
+    runtimePackExportSource,
+    runtimePackImportSource,
+    scenarioPackLoaderSource,
+    mainUiSource,
+  ]) {
+    assert.match(source, /\bdanger\b/);
+    assert.match(source, /\blevel\b/);
+    assert.match(source, /\boutputMultiplier\b/);
+    assert.match(source, /\bdamaged\b/);
+  }
 });
 
 test("legacy cutover inventory separates canonical keep fields from residue candidates", () => {
@@ -26886,42 +26913,22 @@ test("legacy cutover inventory separates canonical keep fields from residue cand
       {
         sourceLabel: "runtime pack export",
         sourceText: runtimePackExportSource,
-        residueLabels: [
-          "baseAttributes.security",
-          "baseAttributes.level",
-          "baseAttributes.outputMultiplier",
-          "baseAttributes.damaged",
-        ],
+        residueLabels: [],
       },
       {
         sourceLabel: "runtime pack import",
         sourceText: runtimePackImportSource,
-        residueLabels: [
-          "baseAttributes.security",
-          "baseAttributes.level",
-          "baseAttributes.outputMultiplier",
-          "baseAttributes.damaged",
-        ],
+        residueLabels: [],
       },
       {
         sourceLabel: "scenario pack loader",
         sourceText: scenarioPackLoaderSource,
-        residueLabels: [
-          "baseAttributes.security",
-          "baseAttributes.level",
-          "baseAttributes.outputMultiplier",
-          "baseAttributes.damaged",
-        ],
+        residueLabels: [],
       },
       {
         sourceLabel: "runtime settlement",
         sourceText: runtimeSettlementSource,
-        residueLabels: [
-          "baseAttributes.security",
-          "baseAttributes.level",
-          "baseAttributes.outputMultiplier",
-          "baseAttributes.damaged",
-        ],
+        residueLabels: [],
       },
     ];
 
@@ -26959,13 +26966,10 @@ test("legacy cutover inventory separates canonical keep fields from residue cand
       cityBuildingAuthoringSource,
       /typeof base\.outputMultiplier === "number"/
     );
-    assert.match(runtimeSettlementSource, /"baseAttributes\.security"\s*:\s*"danger"/);
-    assert.match(runtimeSettlementSource, /"baseAttributes\.level"\s*:\s*"level"/);
-    assert.match(
-      runtimeSettlementSource,
-      /"baseAttributes\.outputMultiplier"\s*:\s*"outputMultiplier"/
-    );
-    assert.match(runtimeSettlementSource, /"baseAttributes\.damaged"\s*:\s*"damaged"/);
+    assert.doesNotMatch(runtimeSettlementSource, /baseAttributes\.security/);
+    assert.doesNotMatch(runtimeSettlementSource, /baseAttributes\.level/);
+    assert.doesNotMatch(runtimeSettlementSource, /baseAttributes\.outputMultiplier/);
+    assert.doesNotMatch(runtimeSettlementSource, /baseAttributes\.damaged/);
     assert.doesNotMatch(schemaSource, /\bpopulation\?\s*:\s*number\b/);
     assert.match(saveMigrationsSource, /export function migrateSaveEnvelope/);
     assert.doesNotMatch(
@@ -27303,7 +27307,7 @@ test("startup story bootstrap writes city and building settlement results into a
             {
               targetFamily: "city",
               targetId: "city.status.runtime",
-              attributeKey: "baseAttributes.prosperity",
+              attributeKey: "prosperity",
               attributeType: "number",
               operation: "set",
               value: 72,
@@ -27311,7 +27315,7 @@ test("startup story bootstrap writes city and building settlement results into a
             {
               targetFamily: "building",
               targetId: "house.status.runtime",
-              attributeKey: "baseAttributes.level",
+              attributeKey: "level",
               attributeType: "number",
               operation: "set",
               value: 3,

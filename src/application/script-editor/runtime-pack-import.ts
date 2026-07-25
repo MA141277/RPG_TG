@@ -110,15 +110,14 @@ const PERSON_SETTLEMENT_BASE_ATTRIBUTES: Record<string, SettlementAttributeMetad
 
 const CITY_SETTLEMENT_BASE_ATTRIBUTES: Record<string, SettlementAttributeMetadata> = {
   travelCost: { attributeType: "number" },
-  "baseAttributes.prosperity": { attributeType: "number" },
-  "baseAttributes.security": { attributeType: "number" },
-  "baseAttributes.population": { attributeType: "number" },
+  prosperity: { attributeType: "number" },
+  danger: { attributeType: "number" },
 };
 
 const BUILDING_SETTLEMENT_BASE_ATTRIBUTES: Record<string, SettlementAttributeMetadata> = {
-  "baseAttributes.level": { attributeType: "number" },
-  "baseAttributes.outputMultiplier": { attributeType: "number" },
-  "baseAttributes.damaged": { attributeType: "boolean" },
+  level: { attributeType: "number" },
+  outputMultiplier: { attributeType: "number" },
+  damaged: { attributeType: "boolean" },
 };
 
 type RuntimePackManifest = {

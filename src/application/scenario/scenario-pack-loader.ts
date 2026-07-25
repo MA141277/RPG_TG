@@ -27,18 +27,12 @@ const CITY_SETTLEMENT_BASE_ATTRIBUTES: Record<string, SettlementAttributeMetadat
   travelCost: { attributeType: "number" },
   prosperity: { attributeType: "number" },
   danger: { attributeType: "number" },
-  "baseAttributes.prosperity": { attributeType: "number" },
-  "baseAttributes.security": { attributeType: "number" },
-  "baseAttributes.population": { attributeType: "number" },
 };
 
 const BUILDING_SETTLEMENT_BASE_ATTRIBUTES: Record<string, SettlementAttributeMetadata> = {
   level: { attributeType: "number" },
   outputMultiplier: { attributeType: "number" },
   damaged: { attributeType: "boolean" },
-  "baseAttributes.level": { attributeType: "number" },
-  "baseAttributes.outputMultiplier": { attributeType: "number" },
-  "baseAttributes.damaged": { attributeType: "boolean" },
 };
 
 export async function loadScenarioPackFromUrl(

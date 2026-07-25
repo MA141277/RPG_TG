@@ -41,22 +41,6 @@ const SETTLEMENT_TARGET_COLLECTION_BY_FAMILY = {
   keyof SettlementRuntimeTargetState
 >;
 
-const RUNTIME_ATTRIBUTE_ALIASES: Record<
-  ExportedSettlementContent["targetFamily"],
-  Record<string, string>
-> = {
-  person: {},
-  city: {
-    "baseAttributes.prosperity": "prosperity",
-    "baseAttributes.security": "danger",
-  },
-  building: {
-    "baseAttributes.level": "level",
-    "baseAttributes.damaged": "damaged",
-    "baseAttributes.outputMultiplier": "outputMultiplier",
-  },
-};
-
 export function applyEffects(
   state: RuntimeState,
   effects: Effect[]
@@ -156,12 +140,7 @@ function readSettlementTargetValue(
   }
 
   const pathValue = readRecordPath(target, content.attributeKey);
-  if (pathValue !== undefined) {
-    return pathValue;
-  }
-
-  const alias = readRuntimeAttributeAlias(content);
-  return alias == null ? undefined : target[alias];
+  return pathValue;
 }
 
 function patchSettlementTargetValue(
@@ -177,14 +156,7 @@ function patchSettlementTargetValue(
   if (collection == null || target == null) {
     return state;
   }
-  const alias = readRuntimeAttributeAlias(content);
-  const nextTarget =
-    hasRecordPath(target, content.attributeKey) || alias == null || !hasOwn(target, alias)
-      ? patchRecordPath(target, content.attributeKey, value)
-      : {
-          ...target,
-          [alias]: value,
-        };
+  const nextTarget = patchRecordPath(target, content.attributeKey, value);
 
   return {
     ...state,
@@ -193,12 +165,6 @@ function patchSettlementTargetValue(
       [content.targetId]: nextTarget,
     },
   };
-}
-
-function readRuntimeAttributeAlias(
-  content: ExportedSettlementContent
-): string | undefined {
-  return RUNTIME_ATTRIBUTE_ALIASES[content.targetFamily]?.[content.attributeKey];
 }
 
 function readRecordPath(target: SettlementTargetRecord, attributeKey: string): unknown {
